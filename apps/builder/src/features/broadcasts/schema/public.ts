@@ -14,6 +14,10 @@ import { zodBigintAsString } from "@chatbotx.io/utils"
 import { recurrenceRuleSchema } from "@chatbotx.io/utils/recurrence"
 import { z } from "zod"
 import { strictContactFilter } from "@/features/contacts/schema/public/crud"
+import {
+  countModeRequestShape,
+  countResultShape,
+} from "@/features/contacts/schema/query"
 import { publicListRequest } from "@/lib/public-api/list"
 import {
   broadcastRunDateSchema,
@@ -178,6 +182,7 @@ export const previewBroadcastAudiencePublicRequest = z
       .max(50)
       .optional()
       .describe("Rows per page, 1-50. Defaults to 20."),
+    countMode: countModeRequestShape.countMode,
   })
   .refine(isAudienceRangeOrdered, {
     path: ["audienceRangeEnd"],
@@ -188,8 +193,9 @@ export const previewBroadcastAudiencePublicResponse = z.object({
   total: z
     .number()
     .describe(
-      "Size of the whole audience (the audience window applied), not just this page. A contact on several channels counts once per channel.",
+      "Size of the whole audience (the audience window applied), not just this page. A contact on several channels counts once per channel. A lower bound when `totalCountCapped` is true.",
     ),
+  ...countResultShape,
   data: z.array(
     z.object({
       contactId: z.string().describe("Contact id."),

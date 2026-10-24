@@ -140,6 +140,39 @@ export const flowsPublicRouter = {
       return { ...flow, welcomeMessageFlows }
     }),
 
+  listNodes: workspaceTokenAuthAPI
+    .route({
+      method: "GET",
+      path: "/v1/flows/{id}/nodes",
+      summary: "List flow nodes",
+      description:
+        "Lists the nodes (canvas blocks) of a flow's published version: `nodeId`, the node's display `label` and `nodeType`. Get the flow id from `flows.list`. A node is identified by its flow and node id together, so the `Executed Step` contact filter takes it as `{flowId}:{nodeId}`. Returns an empty list for a flow that was never published.",
+      tags: ["Flows"],
+    })
+    .input(publicIdParam("flow", "flows.list"))
+    .output(
+      z.object({
+        data: z.array(
+          z.object({
+            flowId: z.string().describe("Id of the flow the node belongs to."),
+            nodeId: z.string().describe("Node id within its flow."),
+            label: z.string().describe("Node display name on the canvas."),
+            nodeType: z
+              .string()
+              .nullable()
+              .describe("Node type, e.g. `sendMessage` or `condition`."),
+          }),
+        ),
+      }),
+    )
+    .errors(possibleErrorsOnFindingResource)
+    .handler(async ({ context, input }) => ({
+      data: await flowService.listNodes({
+        workspaceId: context.workspace.id,
+        flowId: input.id,
+      }),
+    })),
+
   create: workspaceTokenAuthAPI
     .route({
       method: "POST",

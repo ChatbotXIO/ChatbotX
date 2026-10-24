@@ -42,6 +42,7 @@
     "./meta-capi": "./src/meta-capi.ts",
     "./money": "./src/money.ts",
     "./no-avatar-sentinel": "./src/no-avatar-sentinel.ts",
+    "./normalize-for-match": "./src/normalize-for-match.ts",
     "./placeholder-email": "./src/placeholder-email.ts",
     "./recurrence": "./src/recurrence.ts",
     "./referral": "./src/referral.ts",

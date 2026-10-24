@@ -69,3 +69,23 @@ describe("Integration.hasChannelHandler", () => {
     ).rejects.toThrow("not registered")
   })
 })
+
+describe("Integration.deliveryReceipts", () => {
+  it("is false unless the integration declares delivery receipts", () => {
+    expect(new Integration(definition).deliveryReceipts).toBe(false)
+  })
+
+  it("is true only for an explicit declaration", () => {
+    const declared = new Integration({
+      ...definition,
+      deliveryReceipts: true,
+    } as unknown as IntegrationDefinition<never, never, never>)
+    const notDeclared = new Integration({
+      ...definition,
+      deliveryReceipts: undefined,
+    } as unknown as IntegrationDefinition<never, never, never>)
+
+    expect(declared.deliveryReceipts).toBe(true)
+    expect(notDeclared.deliveryReceipts).toBe(false)
+  })
+})

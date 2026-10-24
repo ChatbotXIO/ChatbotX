@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, test, vi } from "vitest"
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 
 // The broadcast policy import reaches quota/workspace modules these narrow mocks omit.
 vi.mock("../plan-policy.service", () => ({ broadcastPlanPolicyService: {} }))
@@ -6,6 +6,8 @@ vi.mock("../plan-policy.service", () => ({ broadcastPlanPolicyService: {} }))
 const mocks = vi.hoisted(() => ({
   resolveBroadcastInboxIds: vi.fn(),
   count: vi.fn(),
+  countQueryCapped: vi.fn(),
+  isStatementTimeoutError: vi.fn(() => false),
   findBroadcast: vi.fn(),
   selectRows: [] as Record<string, unknown>[],
   selectInnerJoin: vi.fn(),
@@ -120,7 +122,15 @@ vi.mock("@chatbotx.io/database/schema", () => ({
 }))
 
 vi.mock("@chatbotx.io/database/client", () => ({
+  countQueryCapped: mocks.countQueryCapped,
+  isStatementTimeoutError: mocks.isStatementTimeoutError,
+  setLocalStatementTimeout: vi.fn(),
+  sql: (strings: TemplateStringsArray) => ({ __sql: strings.join("?") }),
   db: {
+    // Runs the callback against the same mock, like a real transaction handle.
+    transaction(this: unknown, callback: (tx: unknown) => Promise<unknown>) {
+      return callback(this)
+    },
     $count: mocks.count,
     query: {
       broadcastModel: {
@@ -219,6 +229,7 @@ vi.mock("@chatbotx.io/database/utils", () => ({
 const { broadcastService, broadcastTemplateSelections } = await import(
   "../service"
 )
+const { contactRepository } = await import("@chatbotx.io/database/repositories")
 // The real loop (packages/database/src/utils.ts), used by the
 // `forEachAudienceChunk` window tests so they prove the actual stop/continue
 // contract instead of a hand-rolled re-implementation of it.
@@ -240,6 +251,8 @@ const contactFilter = {
 beforeEach(() => {
   mocks.resolveBroadcastInboxIds.mockReset()
   mocks.count.mockReset()
+  mocks.countQueryCapped.mockReset()
+  mocks.isStatementTimeoutError.mockReset()
   mocks.findBroadcast.mockReset()
   mocks.selectRows = []
   mocks.selectRowsQueue = []
@@ -282,7 +295,7 @@ describe("broadcastService.countAudience", () => {
   test("returns zero without counting when no inboxes resolve", async () => {
     mocks.resolveBroadcastInboxIds.mockResolvedValue([])
 
-    const total = await broadcastService.countAudience({
+    const { total } = await broadcastService.countAudience({
       workspaceId: "ws-1",
       channels: ["messenger"],
     })
@@ -295,7 +308,7 @@ describe("broadcastService.countAudience", () => {
     mocks.resolveBroadcastInboxIds.mockResolvedValue(["inbox-1"])
     mocks.count.mockResolvedValue(7)
 
-    const total = await broadcastService.countAudience({
+    const { total } = await broadcastService.countAudience({
       workspaceId: "ws-1",
       channels: ["whatsapp"],
       contactFilter,
@@ -449,7 +462,7 @@ describe("broadcastService.countAudience", () => {
     mocks.resolveBroadcastInboxIds.mockResolvedValue(["inbox-1"])
     mocks.selectRows = [{ count: 2 }]
 
-    const total = await broadcastService.countAudience({
+    const { total } = await broadcastService.countAudience({
       workspaceId: "ws-1",
       channels: ["messenger"],
       restrictToAssignedUserId: "user-1",
@@ -489,7 +502,7 @@ describe("broadcastService.countAudience", () => {
     mocks.resolveBroadcastInboxIds.mockResolvedValue(["inbox-tiktok"])
     mocks.selectRows = [{ count: 3 }]
 
-    const total = await broadcastService.countAudience({
+    const { total } = await broadcastService.countAudience({
       workspaceId: "ws-1",
       channels: ["tiktok"],
       subaction: "tiktokActiveContacts",
@@ -512,7 +525,7 @@ describe("broadcastService.countAudience", () => {
     mocks.resolveBroadcastInboxIds.mockResolvedValue(["inbox-1"])
     mocks.count.mockResolvedValue(100)
 
-    const total = await broadcastService.countAudience({
+    const { total } = await broadcastService.countAudience({
       workspaceId: "ws-1",
       channels: ["messenger"],
       audienceRange: { offset: 10, size: 20 },
@@ -525,7 +538,7 @@ describe("broadcastService.countAudience", () => {
     mocks.resolveBroadcastInboxIds.mockResolvedValue(["inbox-1"])
     mocks.count.mockResolvedValue(100)
 
-    const total = await broadcastService.countAudience({
+    const { total } = await broadcastService.countAudience({
       workspaceId: "ws-1",
       channels: ["messenger"],
     })
@@ -537,7 +550,7 @@ describe("broadcastService.countAudience", () => {
     mocks.resolveBroadcastInboxIds.mockResolvedValue(["inbox-1"])
     mocks.selectRows = [{ count: 100 }]
 
-    const total = await broadcastService.countAudience({
+    const { total } = await broadcastService.countAudience({
       workspaceId: "ws-1",
       channels: ["messenger"],
       restrictToAssignedUserId: "user-1",
@@ -545,6 +558,139 @@ describe("broadcastService.countAudience", () => {
     })
 
     expect(total).toBe(10)
+  })
+  describe("countMode bounded", () => {
+    const CAP = 100_000
+
+    test("counts through the capped helper and reports an uncapped total", async () => {
+      mocks.resolveBroadcastInboxIds.mockResolvedValue(["inbox-1"])
+      mocks.countQueryCapped.mockResolvedValue({
+        total: 42,
+        capped: false,
+        cap: CAP,
+      })
+
+      const result = await broadcastService.countAudience({
+        workspaceId: "ws-1",
+        channels: ["messenger"],
+        countMode: "bounded",
+      })
+
+      expect(result).toEqual({
+        total: 42,
+        totalCountCapped: false,
+        countCap: CAP,
+      })
+      expect(mocks.count).not.toHaveBeenCalled()
+      expect(mocks.countQueryCapped).toHaveBeenCalledWith(
+        expect.objectContaining({ cap: CAP }),
+      )
+    })
+
+    test("reports a lower bound when the count hits the cap", async () => {
+      mocks.resolveBroadcastInboxIds.mockResolvedValue(["inbox-1"])
+      mocks.countQueryCapped.mockResolvedValue({
+        total: CAP,
+        capped: true,
+        cap: CAP,
+      })
+
+      const result = await broadcastService.countAudience({
+        workspaceId: "ws-1",
+        channels: ["messenger"],
+        countMode: "bounded",
+      })
+
+      expect(result).toEqual({
+        total: CAP,
+        totalCountCapped: true,
+        countCap: CAP,
+      })
+    })
+
+    test("is exact when the window ends inside the counted rows", async () => {
+      mocks.resolveBroadcastInboxIds.mockResolvedValue(["inbox-1"])
+      mocks.countQueryCapped.mockResolvedValue({
+        total: CAP,
+        capped: true,
+        cap: CAP,
+      })
+
+      const result = await broadcastService.countAudience({
+        workspaceId: "ws-1",
+        channels: ["messenger"],
+        countMode: "bounded",
+        audienceRange: { offset: 0, size: 500 },
+      })
+
+      expect(result.total).toBe(500)
+      expect(result.totalCountCapped).toBe(false)
+    })
+
+    test("stays capped, never 0, when the window starts past the cap", async () => {
+      mocks.resolveBroadcastInboxIds.mockResolvedValue(["inbox-1"])
+      mocks.countQueryCapped.mockResolvedValue({
+        total: CAP,
+        capped: true,
+        cap: CAP,
+      })
+
+      const result = await broadcastService.countAudience({
+        workspaceId: "ws-1",
+        channels: ["messenger"],
+        countMode: "bounded",
+        audienceRange: { offset: CAP + 10, size: null },
+      })
+
+      expect(result.totalCountCapped).toBe(true)
+    })
+
+    test("uses the capped helper for the restricted DM-join branch", async () => {
+      mocks.resolveBroadcastInboxIds.mockResolvedValue(["inbox-1"])
+      mocks.countQueryCapped.mockResolvedValue({
+        total: 7,
+        capped: false,
+        cap: CAP,
+      })
+
+      const result = await broadcastService.countAudience({
+        workspaceId: "ws-1",
+        channels: ["messenger"],
+        restrictToAssignedUserId: "user-1",
+        countMode: "bounded",
+      })
+
+      expect(result.total).toBe(7)
+      expect(mocks.selectInnerJoin).toHaveBeenCalled()
+      expect(mocks.countQueryCapped).toHaveBeenCalledTimes(1)
+    })
+  })
+
+  test("turns a statement timeout into the typed countTimeout error", async () => {
+    mocks.resolveBroadcastInboxIds.mockResolvedValue(["inbox-1"])
+    const timeout = new Error("canceling statement due to statement timeout")
+    mocks.count.mockRejectedValue(timeout)
+    mocks.isStatementTimeoutError.mockReturnValueOnce(true)
+
+    await expect(
+      broadcastService.countAudience({
+        workspaceId: "ws-1",
+        channels: ["messenger"],
+      }),
+    ).rejects.toMatchObject({ code: "countTimeout", httpStatusCode: 503 })
+  })
+
+  test("rethrows an unrelated count failure untouched", async () => {
+    mocks.resolveBroadcastInboxIds.mockResolvedValue(["inbox-1"])
+    const failure = new Error("connection reset")
+    mocks.count.mockRejectedValue(failure)
+
+    await expect(
+      broadcastService.countAudience({
+        workspaceId: "ws-1",
+        channels: ["messenger"],
+      }),
+    ).rejects.toBe(failure)
   })
 })
 
@@ -1357,6 +1503,205 @@ describe("broadcastService.forEachAudienceChunk", () => {
     expect(onChunk).toHaveBeenCalledTimes(2)
     expect(onChunk).toHaveBeenNthCalledWith(1, firstBatch)
     expect(onChunk).toHaveBeenNthCalledWith(2, secondBatch)
+  })
+})
+
+describe("broadcastService.forEachAudienceChunk with a contact filter", () => {
+  const SCAN_PAGE = 5000
+  const scanRow = (index: number) => ({
+    id: `ci-${index}`,
+    contactId: `c-${index}`,
+  })
+  const scanPage = (from: number, length: number) =>
+    Array.from({ length }, (_, i) => scanRow(from + i))
+
+  const matchContacts = (matching: Set<string>) =>
+    vi
+      .spyOn(contactRepository, "findIdsMatchingFilter")
+      .mockImplementation(({ contactIds }) =>
+        Promise.resolve(contactIds.filter((id) => matching.has(id))),
+      )
+
+  const audience = {
+    workspaceId: "ws-1",
+    channels: ["messenger" as const],
+    contactFilter,
+  }
+
+  beforeEach(() => {
+    mocks.resolveBroadcastInboxIds.mockResolvedValue(["inbox-1"])
+    mocks.chunkById.mockImplementation(actualChunkById)
+  })
+
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  test("scans by scope only, filters per page and re-chunks in id order", async () => {
+    mocks.selectRowsQueue = [scanPage(1, 7)]
+    const matching = matchContacts(new Set(["c-2", "c-4", "c-5", "c-7"]))
+    const onChunk = vi.fn().mockResolvedValue(undefined)
+
+    await broadcastService.forEachAudienceChunk(
+      { ...audience, chunkSize: 3 },
+      onChunk,
+    )
+
+    expect(mocks.buildContactInboxContactFilterSQL).not.toHaveBeenCalled()
+    expect(mocks.selectLimit).toHaveBeenCalledWith(SCAN_PAGE)
+    expect(matching).toHaveBeenCalledTimes(1)
+    expect(matching).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      contactIds: scanPage(1, 7).map((row) => row.contactId),
+      contactFilter,
+    })
+    expect(onChunk).toHaveBeenCalledTimes(2)
+    expect(onChunk).toHaveBeenNthCalledWith(1, [
+      scanRow(2),
+      scanRow(4),
+      scanRow(5),
+    ])
+    expect(onChunk).toHaveBeenNthCalledWith(2, [scanRow(7)])
+  })
+
+  test("applies the window over the filtered rows, not the scanned ones", async () => {
+    mocks.selectRowsQueue = [scanPage(1, 7)]
+    matchContacts(new Set(["c-2", "c-4", "c-5", "c-7"]))
+    const onChunk = vi.fn().mockResolvedValue(undefined)
+
+    await broadcastService.forEachAudienceChunk(
+      { ...audience, chunkSize: 10, audienceRange: { offset: 1, size: 2 } },
+      onChunk,
+    )
+
+    expect(onChunk).toHaveBeenCalledTimes(1)
+    expect(onChunk).toHaveBeenCalledWith([scanRow(4), scanRow(5)])
+  })
+
+  test("stops mid-page once the window size is reached", async () => {
+    mocks.selectRowsQueue = [scanPage(1, SCAN_PAGE), scanPage(SCAN_PAGE + 1, 3)]
+    matchContacts(new Set(scanPage(1, SCAN_PAGE + 3).map((r) => r.contactId)))
+    const onChunk = vi.fn().mockResolvedValue(undefined)
+
+    await broadcastService.forEachAudienceChunk(
+      { ...audience, chunkSize: 100, audienceRange: { offset: 0, size: 2 } },
+      onChunk,
+    )
+
+    expect(onChunk).toHaveBeenCalledTimes(1)
+    expect(onChunk).toHaveBeenCalledWith([scanRow(1), scanRow(2)])
+    expect(mocks.selectLimit).toHaveBeenCalledTimes(1)
+  })
+
+  test("carries the offset across scan pages", async () => {
+    mocks.selectRowsQueue = [scanPage(1, SCAN_PAGE), scanPage(SCAN_PAGE + 1, 4)]
+    matchContacts(
+      new Set([
+        "c-1",
+        "c-2",
+        "c-3",
+        `c-${SCAN_PAGE + 1}`,
+        `c-${SCAN_PAGE + 3}`,
+      ]),
+    )
+    const onChunk = vi.fn().mockResolvedValue(undefined)
+
+    await broadcastService.forEachAudienceChunk(
+      { ...audience, chunkSize: 10, audienceRange: { offset: 4, size: null } },
+      onChunk,
+    )
+
+    expect(onChunk).toHaveBeenCalledTimes(1)
+    expect(onChunk).toHaveBeenCalledWith([scanRow(SCAN_PAGE + 3)])
+  })
+
+  test("keeps scanning past a page with no matches", async () => {
+    mocks.selectRowsQueue = [scanPage(1, SCAN_PAGE), scanPage(SCAN_PAGE + 1, 2)]
+    const matching = matchContacts(new Set([`c-${SCAN_PAGE + 2}`]))
+    const onChunk = vi.fn().mockResolvedValue(undefined)
+
+    await broadcastService.forEachAudienceChunk(
+      { ...audience, chunkSize: 10 },
+      onChunk,
+    )
+
+    expect(matching).toHaveBeenCalledTimes(2)
+    expect(mocks.selectWhere).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        __and: expect.arrayContaining([
+          { __gt: ["ContactInbox.id", `ci-${SCAN_PAGE}`] },
+        ]),
+      }),
+    )
+    expect(onChunk).toHaveBeenCalledWith([scanRow(SCAN_PAGE + 2)])
+  })
+
+  test("does not call the callback when nothing matches or the offset passes every match", async () => {
+    mocks.selectRowsQueue = [scanPage(1, 3), scanPage(1, 3)]
+    matchContacts(new Set())
+    const noMatch = vi.fn()
+    await broadcastService.forEachAudienceChunk(
+      { ...audience, chunkSize: 10 },
+      noMatch,
+    )
+    expect(noMatch).not.toHaveBeenCalled()
+
+    vi.restoreAllMocks()
+    matchContacts(new Set(["c-1", "c-2"]))
+    const pastOffset = vi.fn()
+    await broadcastService.forEachAudienceChunk(
+      { ...audience, chunkSize: 10, audienceRange: { offset: 5, size: 3 } },
+      pastOffset,
+    )
+    expect(pastOffset).not.toHaveBeenCalled()
+  })
+
+  test("stops scanning when the callback returns false", async () => {
+    mocks.selectRowsQueue = [scanPage(1, SCAN_PAGE), scanPage(SCAN_PAGE + 1, 5)]
+    matchContacts(new Set(scanPage(1, SCAN_PAGE + 5).map((r) => r.contactId)))
+    const onChunk = vi.fn().mockResolvedValue(false)
+
+    await broadcastService.forEachAudienceChunk(
+      { ...audience, chunkSize: 2 },
+      onChunk,
+    )
+
+    expect(onChunk).toHaveBeenCalledTimes(1)
+    expect(mocks.selectLimit).toHaveBeenCalledTimes(1)
+  })
+
+  test("takes nothing for an empty window", async () => {
+    mocks.selectRowsQueue = [scanPage(1, 3)]
+    matchContacts(new Set(["c-1"]))
+    const onChunk = vi.fn()
+
+    await broadcastService.forEachAudienceChunk(
+      { ...audience, audienceRange: { offset: 0, size: 0 } },
+      onChunk,
+    )
+
+    expect(onChunk).not.toHaveBeenCalled()
+    expect(mocks.selectLimit).not.toHaveBeenCalled()
+  })
+
+  test("keeps the unfiltered walk for an empty condition list", async () => {
+    mocks.selectRowsQueue = [scanPage(1, 2)]
+    const matching = matchContacts(new Set())
+    const onChunk = vi.fn().mockResolvedValue(undefined)
+
+    await broadcastService.forEachAudienceChunk(
+      {
+        workspaceId: "ws-1",
+        channels: ["messenger"],
+        contactFilter: { operator: "and", conditions: [] },
+        chunkSize: 500,
+      },
+      onChunk,
+    )
+
+    expect(matching).not.toHaveBeenCalled()
+    expect(mocks.selectLimit).toHaveBeenCalledWith(500)
+    expect(onChunk).toHaveBeenCalledWith(scanPage(1, 2))
   })
 })
 

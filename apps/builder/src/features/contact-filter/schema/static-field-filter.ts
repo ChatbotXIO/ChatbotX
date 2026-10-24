@@ -1,7 +1,11 @@
 import {
+  CONTACT_ACTIVITY_FILTERS,
+  isContactActivityFilterField,
   type OperatorType,
   operatorTypes,
+  parseContactActivityReferences,
 } from "@chatbotx.io/database/partials"
+import { normalizeForMatch } from "@chatbotx.io/utils/normalize-for-match"
 import { z } from "zod"
 import { isChannelPostId } from "@/features/channel-posts/schema"
 import { sampleStringSchema } from "./shared"
@@ -77,6 +81,15 @@ const DATE_OPERATORS = [
   ...RANGE_OPERATORS,
 ] as const satisfies readonly OperatorType[]
 
+// "Last Delivered" is a plain date plus the explicit "has a value" operator.
+const DATE_PRESENCE_OPERATORS = [
+  ...DATE_OPERATORS,
+  operatorTypes.enum.isNotEmpty,
+] as const satisfies readonly OperatorType[]
+
+// Longest "Sent message" text a condition may compare against.
+const MAX_SENT_MESSAGE_FILTER_LENGTH = 1000
+
 const STATIC_OPERATOR_RULES: Record<string, readonly OperatorType[]> = {
   locale: BASE_OPERATORS,
   language: SET_OPERATORS,
@@ -102,6 +115,17 @@ const STATIC_OPERATOR_RULES: Record<string, readonly OperatorType[]> = {
   consecutiveAiFailures: NUMBER_OPERATORS,
   followerCountOnInstagram: NUMBER_OPERATORS,
   commentedOnPost: BASE_OPERATORS,
+  // Activity-backed fields: Is (any of) / Is Not (none of) / Has no value.
+  executedFlow: SET_OPERATORS,
+  executedStep: SET_OPERATORS,
+  keywordsReceived: SET_OPERATORS,
+  completedWhatsAppFlows: SET_OPERATORS,
+  emailSent: SET_OPERATORS,
+  emailDelivered: SET_OPERATORS,
+  emailOpened: SET_OPERATORS,
+  emailClicked: SET_OPERATORS,
+  sentMessage: TEXT_FREE_OPERATORS,
+  lastDelivered: DATE_PRESENCE_OPERATORS,
   lastUserInputType: [
     operatorTypes.enum.eq,
     operatorTypes.enum.ne,
@@ -223,6 +247,41 @@ export const staticFieldFilter = <T extends string>(field: T) =>
           ctx.addIssue({
             code: "custom",
             message: "Commented posts require one to 100 unique bigint ids",
+            path: ["value"],
+          })
+        }
+        return
+      }
+
+      if (isContactActivityFilterField(field)) {
+        if (
+          !parseContactActivityReferences(
+            CONTACT_ACTIVITY_FILTERS[field],
+            condition.value,
+          )
+        ) {
+          ctx.addIssue({
+            code: "custom",
+            message: `Values must be ${CONTACT_ACTIVITY_FILTERS[field].valueFormat} ids${
+              CONTACT_ACTIVITY_FILTERS[field].fixedValues.length > 0
+                ? ` or ${CONTACT_ACTIVITY_FILTERS[field].fixedValues.join(", ")}`
+                : ""
+            } (one to 500)`,
+            path: ["value"],
+          })
+        }
+        return
+      }
+
+      if (field === "sentMessage") {
+        if (
+          typeof condition.value !== "string" ||
+          normalizeForMatch(condition.value).trim() === "" ||
+          condition.value.length > MAX_SENT_MESSAGE_FILTER_LENGTH
+        ) {
+          ctx.addIssue({
+            code: "custom",
+            message: `Sent message requires text of at most ${MAX_SENT_MESSAGE_FILTER_LENGTH} characters`,
             path: ["value"],
           })
         }

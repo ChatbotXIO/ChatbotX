@@ -30,7 +30,10 @@ import {
   IntegrationJobAction,
   integrationQueue,
 } from "@chatbotx.io/worker-config"
-import { emitBotMessageSentEvents } from "../../../chat/handlers/send-message"
+import {
+  emitBotMessageSentEvents,
+  recordDeliveredWhenNoReceipts,
+} from "../../../chat/handlers/send-message"
 import { logger } from "../../../lib/logger"
 import { TIKTOK_HIGH_INTENT_ATTRIBUTE } from "../tiktok-high-intent-comment"
 import type { CommentAutomationChannelType } from "./channel-type"
@@ -327,6 +330,13 @@ export async function recordInlinePrivateReply(props: {
   if (!CHANNELS_RECORDING_INLINE_PRIVATE_REPLY.has(props.channelType)) {
     return
   }
+
+  // The DM already left, so Last Delivered does not depend on the inbox row.
+  await recordDeliveredWhenNoReceipts({
+    contactInbox: props.contactInbox,
+    sentCount: 1,
+    workspaceId: props.workspaceId,
+  })
 
   const sourceId = readSentMessageId(props.sendResult)
   const message = await recordDeliveredPrivateReply({

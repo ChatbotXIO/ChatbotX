@@ -2,6 +2,7 @@ import { db } from "@chatbotx.io/database/client"
 import { whatsappFlowRepository } from "@chatbotx.io/database/repositories"
 import type { ContactInboxModel } from "@chatbotx.io/database/types"
 import type { WhatsappFlowFieldMapping } from "@chatbotx.io/flow-config"
+import { contactActivityService } from "../contact-activity/service"
 import { contactCustomFieldService } from "../contact-custom-field/service"
 import { logger } from "../logger"
 
@@ -32,12 +33,47 @@ class WhatsappFlowResponseService {
     }
 
     await Promise.all([
-      whatsappFlowRepository.incrementCompletedCount({
-        integrationWhatsappId,
-        sourceId: input.flowSourceId,
-      }),
+      this.recordCompletion({ ...input, integrationWhatsappId }),
       this.applyFieldMappings(input),
     ])
+  }
+
+  /**
+   * Counts the completion and records the contact's "completed this form"
+   * activity in one transaction, so a failure between the two cannot leave one
+   * without the other. The count is per submission, as before; the activity
+   * (keyed by the flow's internal id) is idempotent per contact.
+   */
+  private async recordCompletion(
+    input: ApplyWhatsappFlowResponseInput & { integrationWhatsappId: string },
+  ): Promise<void> {
+    await db.transaction(async (tx) => {
+      const whatsappFlowId =
+        await whatsappFlowRepository.incrementCompletedCount(
+          {
+            integrationWhatsappId: input.integrationWhatsappId,
+            sourceId: input.flowSourceId,
+          },
+          tx,
+        )
+      if (!whatsappFlowId) {
+        return
+      }
+
+      await contactActivityService.record({
+        entries: [
+          {
+            activityType: "formCompleted",
+            contactId: input.contactId,
+            occurredAt: new Date(),
+            referenceId: whatsappFlowId,
+            referenceType: "whatsappFlow",
+          },
+        ],
+        tx,
+        workspaceId: input.workspaceId,
+      })
+    })
   }
 
   private async resolveIntegrationWhatsappId(

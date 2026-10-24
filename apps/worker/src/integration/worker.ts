@@ -74,6 +74,7 @@ import {
 } from "./handlers/received-message"
 import { runRef } from "./handlers/ref"
 import { replyToInboundCart } from "./handlers/reply-to-inbound-cart"
+import { recordEmailTrackingTransition } from "./handlers/send-email"
 import { handleSendSequenceFlow } from "./handlers/sequence-flow"
 import { captureTemplateFlowResponse } from "./handlers/template-flow-response"
 import {
@@ -409,6 +410,10 @@ async function startIntegrationWorker() {
             }
             case IntegrationJobAction.messageStatus: {
               await handleMessageStatus(job.data.data, job)
+              return
+            }
+            case IntegrationJobAction.recordEmailTrackingTransition: {
+              await recordEmailTrackingTransition(job.data.data)
               return
             }
             case IntegrationJobAction.coexistWhatsappBuffer: {

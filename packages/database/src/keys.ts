@@ -8,6 +8,11 @@ export const keys = () =>
       DATABASE_DEBUG: z.stringbool().optional().default(false),
       MESSAGE_SHARDS_PASSWORD: z.string().optional(),
       MESSAGE_SHARDS_SSL: z.stringbool().optional().default(false),
+      // Kill switch for the ten activity-backed contact filters (Executed
+      // Flow/Step, Keywords Received, Sent message, Last Delivered, WhatsApp
+      // Flows, Email x4). Off: discovery omits them and any saved condition
+      // fails closed (matches nobody), so an audience never silently widens.
+      CONTACT_ACTIVITY_FILTERS_ENABLED: z.stringbool().default(true),
     },
     runtimeEnv: process.env,
     skipValidation: process.env.SKIP_ENV_CHECK === "true",

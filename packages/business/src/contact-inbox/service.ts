@@ -22,9 +22,9 @@ import {
   type ContactInboxIdentityFields,
   type ContactInboxIdentityGuard,
   contactInboxOperationalColumns,
-  contactInboxPostRepository,
   contactInboxRepository,
   type GoogleClickInboxRow,
+  workspaceRepository,
 } from "@chatbotx.io/database/repositories"
 import type {
   ContactInboxIdentityChangeReason,
@@ -379,11 +379,10 @@ class ContactInboxService extends BaseService {
     )
 
     return await db.transaction(async (tx) => {
-      const canWrite =
-        await contactInboxPostRepository.lockWorkspaceForPostWrite(
-          { workspaceId: props.workspaceId },
-          tx,
-        )
+      const canWrite = await workspaceRepository.lockWorkspaceForChildWrite(
+        { workspaceId: props.workspaceId },
+        tx,
+      )
       if (!canWrite) {
         return
       }
@@ -454,11 +453,10 @@ class ContactInboxService extends BaseService {
       PROFILE_SNAPSHOT_MAX_RETRY_MS,
     )
     const updated = await db.transaction(async (tx) => {
-      const canWrite =
-        await contactInboxPostRepository.lockWorkspaceForPostWrite(
-          { workspaceId: props.workspaceId },
-          tx,
-        )
+      const canWrite = await workspaceRepository.lockWorkspaceForChildWrite(
+        { workspaceId: props.workspaceId },
+        tx,
+      )
       if (!canWrite) {
         return
       }
@@ -1172,11 +1170,10 @@ class ContactInboxService extends BaseService {
   }): Promise<boolean> {
     const now = new Date()
     const contactId = await db.transaction(async (tx) => {
-      const canWrite =
-        await contactInboxPostRepository.lockWorkspaceForPostWrite(
-          { workspaceId: props.workspaceId },
-          tx,
-        )
+      const canWrite = await workspaceRepository.lockWorkspaceForChildWrite(
+        { workspaceId: props.workspaceId },
+        tx,
+      )
       if (!canWrite) {
         return
       }

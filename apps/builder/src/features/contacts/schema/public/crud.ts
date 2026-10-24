@@ -1,6 +1,10 @@
 import { z } from "zod"
 import { contactFilterCriteriaSchema } from "@/features/contact-filter/schema"
-import { listContactsRequest } from "../query"
+import {
+  countContactsRequest,
+  countResultShape,
+  listContactsRequest,
+} from "../query"
 
 const contactIncludeOptions = z.enum([
   "tags",
@@ -56,7 +60,7 @@ export type ListContactsPublicRequest = z.infer<
   typeof listContactsPublicRequest
 >
 
-export const countContactsPublicRequest = listContactsRequest
+export const countContactsPublicRequest = countContactsRequest
   .omit({ workspaceId: true })
   .extend({ contactFilter: strictContactFilter })
 export type CountContactsPublicRequest = z.infer<
@@ -64,7 +68,12 @@ export type CountContactsPublicRequest = z.infer<
 >
 
 export const countContactsPublicResponse = z.object({
-  total: z.number().describe("Number of contacts matching the filter."),
+  total: z
+    .number()
+    .describe(
+      "Number of contacts matching the filter (a lower bound when `totalCountCapped` is true).",
+    ),
+  ...countResultShape,
 })
 
 export const importContactsPublicResponse = z.object({

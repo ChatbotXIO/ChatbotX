@@ -18,6 +18,20 @@ export const isFilterValueId = (id: string): boolean =>
   BigInt(id).toString() === id &&
   BigInt(id) <= MAX_BIGINT_ID
 
+/** A `{flowId}:{nodeId}` reference ("Executed Step"): two bigint ids. */
+export const isFilterValueNodeReference = (value: string): boolean => {
+  const parts = value.split(":")
+  return (
+    parts.length === 2 &&
+    parts.every((part) => part !== undefined && isFilterValueId(part))
+  )
+}
+
+const filterValueNodeReferencesSchema = z
+  .array(z.string().refine(isFilterValueNodeReference, "Invalid reference"))
+  .max(MAX_FILTER_VALUE_LABEL_IDS)
+  .optional()
+
 const filterValueIdsSchema = z
   .array(z.string().refine(isFilterValueId, "Invalid id"))
   .max(MAX_FILTER_VALUE_LABEL_IDS)
@@ -32,6 +46,11 @@ export const resolveFilterValueLabelsRequest = z.object({
   inboxes: filterValueIdsSchema,
   members: filterValueIdsSchema,
   inboxTeams: filterValueIdsSchema,
+  flows: filterValueIdsSchema,
+  flowNodes: filterValueNodeReferencesSchema,
+  keywords: filterValueIdsSchema,
+  whatsappFlows: filterValueIdsSchema,
+  emailTopics: filterValueIdsSchema,
 })
 
 const filterValueLabelSchema = z.object({ id: z.string(), name: z.string() })
@@ -44,6 +63,11 @@ export const resolveFilterValueLabelsResponse = z.object({
   inboxes: z.array(filterValueLabelSchema),
   members: z.array(filterValueLabelSchema),
   inboxTeams: z.array(filterValueLabelSchema),
+  flows: z.array(filterValueLabelSchema),
+  flowNodes: z.array(filterValueLabelSchema),
+  keywords: z.array(filterValueLabelSchema),
+  whatsappFlows: z.array(filterValueLabelSchema),
+  emailTopics: z.array(filterValueLabelSchema),
 })
 
 export type ResolveFilterValueLabelsResponse = z.infer<

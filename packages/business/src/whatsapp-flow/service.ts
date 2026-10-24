@@ -10,6 +10,7 @@ import {
   integrationWhatsappModel,
   whatsappFlowModel,
 } from "@chatbotx.io/database/schema"
+import { likeContains } from "@chatbotx.io/database/utils"
 import { createId } from "@chatbotx.io/utils"
 import { BaseService } from "../base.service"
 
@@ -23,17 +24,42 @@ export type MetaWhatsappFlow = {
 }
 
 class WhatsappFlowService extends BaseService {
+  /**
+   * Existing flows of the workspace's WhatsApp integrations only (a flow has no
+   * workspace column of its own; it belongs to one through its integration).
+   */
+  async listLabelsByIds(input: {
+    workspaceId: string
+    ids: string[]
+  }): Promise<{ id: string; name: string }[]> {
+    if (input.ids.length === 0) {
+      return []
+    }
+    return await db.query.whatsappFlowModel.findMany({
+      where: {
+        id: { in: input.ids },
+        integrationWhatsapp: { workspaceId: input.workspaceId },
+      },
+      columns: { id: true, name: true },
+    })
+  }
+
   list(props: {
     tx?: DatabaseClient
     where: {
       workspaceId: string
       inboxId?: string
       integrationWhatsappId?: string
+      /** Case-insensitive substring match on the flow name. */
+      name?: string
     }
+    /** Caps the rows returned (pickers); omitted = every flow. */
+    limit?: number
   }) {
-    const { tx = db, where } = props
+    const { tx = db, where, limit } = props
 
     const queryWhere = {
+      name: where.name ? { ilike: likeContains(where.name) } : undefined,
       integrationWhatsappId: where.integrationWhatsappId,
       integrationWhatsapp: {
         workspaceId: where.workspaceId,
@@ -47,6 +73,7 @@ class WhatsappFlowService extends BaseService {
         integrationWhatsapp: true,
       },
       orderBy: { createdAt: "asc" },
+      limit,
     })
   }
 

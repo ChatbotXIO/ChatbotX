@@ -1,5 +1,8 @@
-import { emailTopicAnalyticsService } from "@chatbotx.io/analytics"
-import { emailTopicService, verifyEmailClickToken } from "@chatbotx.io/business"
+import {
+  emailTopicService,
+  emailTrackingService,
+  verifyEmailClickToken,
+} from "@chatbotx.io/business"
 import { awardLeaderboardEmailEngagement } from "@chatbotx.io/business/leaderboard"
 import { NextResponse } from "next/server"
 import { loadServableWorkspace } from "@/lib/workspace/load-servable-workspace"
@@ -67,7 +70,12 @@ export async function GET(request: Request) {
       }
 
       if (shouldRecordClick && token) {
-        await emailTopicAnalyticsService.recordClick(token)
+        await emailTrackingService.recordTransitionOrEnqueueRepair({
+          phase: "clicked",
+          token,
+          workspaceId: trackedWorkspaceId,
+          link: payload.url,
+        })
         await awardLeaderboardEmailEngagement({
           token,
           kind: "click",
@@ -83,7 +91,11 @@ export async function GET(request: Request) {
   }
 
   if (shouldRecordClick && !signedUrl && token) {
-    await emailTopicAnalyticsService.recordClick(token)
+    await emailTrackingService.recordTransitionOrEnqueueRepair({
+      phase: "clicked",
+      token,
+      workspaceId: trackedWorkspaceId,
+    })
     await awardLeaderboardEmailEngagement({ token, kind: "click" })
   }
 

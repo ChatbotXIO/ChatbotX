@@ -3,7 +3,7 @@ import {
   type BroadcastAudienceRangeInput,
   type BroadcastSendLimit,
   broadcastSendLimitIssues,
-  clampAudienceCountToRange,
+  clampCappedAudienceCount,
   resolveBroadcastAudienceRange,
 } from "@chatbotx.io/database/partials"
 
@@ -38,17 +38,43 @@ export const resolveSendLimitIssueKey = (
   return issue ? SEND_LIMIT_ISSUE_LABEL_KEY[issue] : undefined
 }
 
+/** A receivers count that may be a lower bound (a bounded count hit its cap). */
+export type ReceiversCount = { count: number; capped: boolean }
+
 /**
  * The receivers count shown in the form: the fetched (unwindowed) total
  * clamped to the range currently typed into the two range fields. Never
  * triggers a new count request — the form's `count` state is unaffected by
- * the range fields, only this derivation is.
+ * the range fields, only this derivation is. A capped total stays a lower
+ * bound unless the window ends inside the counted rows.
  */
 export const resolveWindowedReceiversCount = (
-  total: number,
+  counted: { total: number; capped: boolean },
   range: BroadcastAudienceRangeInput,
-): number =>
-  clampAudienceCountToRange(total, resolveBroadcastAudienceRange(range))
+): ReceiversCount => {
+  const { total, capped } = clampCappedAudienceCount(
+    counted,
+    resolveBroadcastAudienceRange(range),
+  )
+  return { count: total, capped }
+}
+
+/**
+ * i18n key for the receivers label. A capped count reads "N+"; a capped
+ * window past the counted rows has no lower bound to show, so it reads
+ * "unknown" instead of a misleading 0.
+ */
+export const resolveReceiversCountLabelKey = ({
+  count,
+  capped,
+}: ReceiversCount): string => {
+  if (!capped) {
+    return "broadcasts.receiversCount"
+  }
+  return count > 0
+    ? "broadcasts.receiversCountCapped"
+    : "broadcasts.receiversCountUnknown"
+}
 
 type SendLimitFields = Pick<
   BroadcastSendLimit,

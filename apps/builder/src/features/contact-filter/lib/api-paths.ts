@@ -4,3 +4,11 @@ export const FILTER_VALUE_LABELS_POST_PATH =
 
 /** Workspace-token twin of the value-label lookup (pure read, POST for the id lists). */
 export const FILTER_VALUE_LABELS_TOKEN_PATH = "/v1/contacts/filter-value-labels"
+
+/** Searchable values for the keyword / WhatsApp Flow / email topic filters. */
+export const ACTIVITY_VALUE_OPTIONS_PATH =
+  "/workspaces/{workspaceId}/contact-filter/activity-value-options"
+
+/** Whether the activity-backed filters are switched on (kill switch). */
+export const ACTIVITY_AVAILABILITY_PATH =
+  "/workspaces/{workspaceId}/contact-filter/activity-availability"

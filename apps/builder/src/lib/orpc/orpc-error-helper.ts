@@ -171,6 +171,21 @@ export const possibleErrorsOnListingResource = {
 } satisfies ErrorMap
 
 /**
+ * A count that outruns its statement timeout answers 503 `countTimeout`
+ * (`countTimeoutException` in `@chatbotx.io/business`); the caller retries
+ * with `countMode: "bounded"`.
+ */
+const countTimeout = {
+  message: "Counting took too long",
+  status: 503,
+} as const
+
+export const possibleErrorsOnCounting = {
+  businessError,
+  countTimeout,
+} satisfies ErrorMap
+
+/**
  * Per-router sets carry only what varies by operation shape. The auth,
  * rate-limit, and both validation codes come from `commonApiErrors`, attached
  * once to the public stacks in `@/orpc` — never re-declare them here.
@@ -315,6 +330,12 @@ export const possibleErrorsOnStartingContactImport = {
 export const possibleErrorsOnReadingWithBody = {
   notFound,
   businessError,
+} satisfies ErrorMap
+
+/** A body-filtered read that counts (`broadcasts.previewAudience`). */
+export const possibleErrorsOnCountingWithBody = {
+  ...possibleErrorsOnReadingWithBody,
+  countTimeout,
 } satisfies ErrorMap
 
 /** Starting a product import: one import per workspace (409), file checks (404/422). */

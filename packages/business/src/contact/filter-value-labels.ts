@@ -1,10 +1,15 @@
+import type { ContactActivityValueSource } from "@chatbotx.io/database/partials"
+import { automatedResponseService } from "../automated-response/service"
 import { broadcastService } from "../broadcast/service"
+import { emailTopicService } from "../email-topic/service"
 import { inboxTeamService } from "../enterprise/inbox-team/service"
+import { flowService } from "../flow/service"
 import { inboxService } from "../inbox/service"
 import { reflinkService } from "../reflink/service"
 import type { IdLabel } from "../select-labels-by-ids"
 import { sequenceService } from "../sequence/service"
 import { tagService } from "../tag/service"
+import { whatsappFlowService } from "../whatsapp-flow/service"
 import { workspaceMemberService } from "../workspace-member/service"
 
 export type FilterValueLabelTypes = {
@@ -17,6 +22,13 @@ export type FilterValueLabelTypes = {
   members: string[]
   /** Team ids (not the `t_` prefixed filter values). */
   inboxTeams: string[]
+  flows: string[]
+  /** `{flowId}:{nodeId}` references, the "Executed Step" filter value. */
+  flowNodes: string[]
+  /** Contact keyword rule ids; the label is the rule's keywords. */
+  keywords: string[]
+  whatsappFlows: string[]
+  emailTopics: string[]
 }
 
 export type FilterValueLabels = Record<keyof FilterValueLabelTypes, IdLabel[]>
@@ -42,6 +54,11 @@ const labelResolvers: Record<keyof FilterValueLabelTypes, LabelResolver> = {
   members: ({ workspaceId, ids }) =>
     workspaceMemberService.listLabelsByUserIds({ workspaceId, userIds: ids }),
   inboxTeams: (input) => inboxTeamService.listLabelsByIds(input),
+  flows: (input) => flowService.listLabelsByIds(input),
+  flowNodes: (input) => flowService.listNodeLabelsByIds(input),
+  keywords: (input) => automatedResponseService.listKeywordLabelsByIds(input),
+  whatsappFlows: (input) => whatsappFlowService.listLabelsByIds(input),
+  emailTopics: (input) => emailTopicService.listLabelsByIds(input),
 }
 
 const labelTypes = Object.keys(
@@ -70,3 +87,60 @@ export const resolveContactFilterValueLabels = async (input: {
   )
   return Object.fromEntries(resolved) as FilterValueLabels
 }
+
+export type ContactActivityValueOption = { value: string; label: string }
+
+/** Rows a picker shows per search; narrowing the search finds the rest. */
+const ACTIVITY_VALUE_OPTIONS_LIMIT = 50
+
+type ActivityValueOptionLoader = (input: {
+  workspaceId: string
+  search: string
+}) => Promise<ContactActivityValueOption[]>
+
+// One loader per searchable activity value source, each reusing the service
+// that already lists that entity (so pickers and the public list routes agree).
+const activityValueOptionLoaders: Record<
+  ContactActivityValueSource,
+  ActivityValueOptionLoader
+> = {
+  keywords: async ({ workspaceId, search }) =>
+    (
+      await automatedResponseService.listKeywordOptions({
+        workspaceId,
+        search,
+        limit: ACTIVITY_VALUE_OPTIONS_LIMIT,
+      })
+    ).map((rule) => ({ value: rule.id, label: rule.keywords.join(", ") })),
+  whatsappFlows: async ({ workspaceId, search }) =>
+    (
+      await whatsappFlowService.list({
+        where: { workspaceId, name: search || undefined },
+        limit: ACTIVITY_VALUE_OPTIONS_LIMIT,
+      })
+    ).map((flow) => ({ value: flow.id, label: flow.name })),
+  emailTopics: async ({ workspaceId, search }) => {
+    const { data } = await emailTopicService.list({
+      workspaceId,
+      name: search || null,
+      page: 1,
+      perPage: ACTIVITY_VALUE_OPTIONS_LIMIT,
+    })
+    return data.map((topic) => ({ value: topic.id, label: topic.name }))
+  },
+}
+
+/**
+ * Searchable values for the activity-backed contact filters whose entity has
+ * no cheap full list (keyword rules, WhatsApp Flows, email topics). Bounded to
+ * one page; selected values are named separately by id (`labelResolvers`).
+ */
+export const listContactActivityValueOptions = async (input: {
+  workspaceId: string
+  source: ContactActivityValueSource
+  search?: string
+}): Promise<ContactActivityValueOption[]> =>
+  await activityValueOptionLoaders[input.source]({
+    workspaceId: input.workspaceId,
+    search: input.search?.trim() ?? "",
+  })

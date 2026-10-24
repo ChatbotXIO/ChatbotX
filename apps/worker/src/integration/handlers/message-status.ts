@@ -154,7 +154,11 @@ export const handleMessageStatus = async (
     }
 
     if (eventStatus === "delivered") {
-      await emit(messageEventTypeSchema.enum["message:delivered"], eventLog)
+      await emit(messageEventTypeSchema.enum["message:delivered"], {
+        ...eventLog,
+        providerOccurredAt:
+          normalizeEpochTimestamp(payload.timestamp) ?? undefined,
+      })
 
       emit(messageEventTypeSchema.enum["message:received"], {
         workspaceId: inbox.workspaceId,

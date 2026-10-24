@@ -1,5 +1,8 @@
 import { trackingResponseTypes } from "@chatbotx.io/analytics"
-import { adsConversionService } from "@chatbotx.io/business"
+import {
+  adsConversionService,
+  contactActivityService,
+} from "@chatbotx.io/business"
 import { enqueueLeaderboardAward } from "@chatbotx.io/business/leaderboard"
 import { db } from "@chatbotx.io/database/client"
 import type { AutomatedResponseType } from "@chatbotx.io/database/partials"
@@ -55,6 +58,33 @@ const awardKeywordLeaderboard = async (props: {
     rule: "keywords",
     sourceRef: props.messageId,
     eventAt,
+  })
+}
+
+/**
+ * Records the "keyword received" activity and the matched message text for the
+ * rule that is about to be dispatched. Only inbound-type rules count (an
+ * outbound/Page rule is not something the contact said). Called right before
+ * the dispatch side effect, so a failure throws and the job retries without
+ * having sent anything; the message id makes the retry a no-op.
+ */
+const recordKeywordReceived = async (props: {
+  conversation: ConversationModel
+  contactInbox: ContactInboxModel
+  messageId: string
+  rule: Pick<AutomatedResponseModel, "id" | "type">
+  text: string
+}): Promise<void> => {
+  if (props.rule.type !== "inbound") {
+    return
+  }
+  await contactActivityService.recordKeywordMatch({
+    automatedResponseId: props.rule.id,
+    contactId: props.contactInbox.contactId,
+    messageId: props.messageId,
+    occurredAt: createdAtFromId(props.messageId) ?? new Date(),
+    text: props.text,
+    workspaceId: props.conversation.workspaceId,
   })
 }
 
@@ -122,6 +152,13 @@ export const dispatchAutomatedResponseReply = async (props: {
         },
       })
       if (flow) {
+        await recordKeywordReceived({
+          conversation,
+          contactInbox,
+          messageId,
+          rule,
+          text,
+        })
         await integrationQueue.add(IntegrationJobAction.sendFlow, {
           type: IntegrationJobAction.sendFlow,
           data: {
@@ -144,6 +181,13 @@ export const dispatchAutomatedResponseReply = async (props: {
         return true
       }
     } else if (rule.text) {
+      await recordKeywordReceived({
+        conversation,
+        contactInbox,
+        messageId,
+        rule,
+        text,
+      })
       const variables = await contactVariableService.getAll({
         contactId: conversation.contactId,
         contactInbox,

@@ -4,7 +4,7 @@ import type {
   BroadcastSubaction,
   ChannelType,
 } from "@chatbotx.io/database/partials"
-import { useTranslations } from "next-intl"
+import { useFormatter, useTranslations } from "next-intl"
 import { memo, useCallback } from "react"
 import {
   type StatsContactRow,
@@ -18,6 +18,8 @@ type BroadcastAudiencePreviewDialogProps = {
   onOpenChange: (open: boolean) => void
   workspaceId: string
   total: number
+  /** `total` is a lower bound (a bounded count hit its cap). */
+  totalCapped?: boolean
   channel: ChannelType
   subaction: BroadcastSubaction
   inboxIds?: string[]
@@ -39,6 +41,7 @@ export const BroadcastAudiencePreviewDialog = memo(
     onOpenChange,
     workspaceId,
     total,
+    totalCapped = false,
     channel,
     subaction,
     inboxIds,
@@ -49,6 +52,12 @@ export const BroadcastAudiencePreviewDialog = memo(
     audienceRangeEnd,
   }: BroadcastAudiencePreviewDialogProps) {
     const t = useTranslations()
+    const formatter = useFormatter()
+    // A capped total reads "N+", and a window past the cap has no bound: "?".
+    let totalLabel: string | undefined
+    if (totalCapped) {
+      totalLabel = total > 0 ? `${formatter.number(total)}+` : "?"
+    }
 
     const fetchPage = useCallback(
       async (page: number, perPage: number): Promise<StatsContactRow[]> => {
@@ -92,6 +101,7 @@ export const BroadcastAudiencePreviewDialog = memo(
         open={open}
         title={t("broadcasts.stats.receivers")}
         total={total}
+        totalLabel={totalLabel}
         workspaceId={workspaceId}
       />
     )

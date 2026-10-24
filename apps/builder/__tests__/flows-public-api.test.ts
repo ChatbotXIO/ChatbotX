@@ -54,6 +54,7 @@ vi.mock("@/orpc", () => ({ workspaceTokenAuthAPIForScope }))
 
 const flowService = {
   list: vi.fn(),
+  listNodes: vi.fn(),
   findById: vi.fn(),
   createDraft: vi.fn(),
   createPublished: vi.fn(),
@@ -134,6 +135,44 @@ beforeEach(() => {
 
 test("registers the flows public router under the automation scope", () => {
   expect(scopeArgAtImport).toBe("automation")
+})
+
+describe("GET /v1/flows/{id}/nodes", () => {
+  const procedure = findProcedure("GET", "/v1/flows/{id}/nodes")
+
+  test("lists the published nodes of the flow, scoped to the token's workspace", async () => {
+    const nodes = [
+      { flowId: "7", nodeId: "9", label: "Welcome", nodeType: "sendMessage" },
+    ]
+    flowService.listNodes.mockResolvedValue(nodes)
+
+    const result = await procedure.handler?.({
+      context: { workspace: { id: "ws-1" } },
+      input: { id: "7" },
+    })
+
+    expect(flowService.listNodes).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      flowId: "7",
+    })
+    expect(result).toEqual({ data: nodes })
+  })
+
+  test("tells the agent which operation supplies the flow id", () => {
+    expect(procedure.route.summary).toBe("List flow nodes")
+    expect(procedure.route.tags).toEqual(["Flows"])
+  })
+
+  test("surfaces a missing flow instead of returning an empty list", async () => {
+    flowService.listNodes.mockRejectedValue(new Error("Flow does not exists."))
+
+    await expect(
+      procedure.handler?.({
+        context: { workspace: { id: "ws-1" } },
+        input: { id: "404" },
+      }),
+    ).rejects.toThrow("Flow does not exists.")
+  })
 })
 
 describe("GET /v1/flows", () => {

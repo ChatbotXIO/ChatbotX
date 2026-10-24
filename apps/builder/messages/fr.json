@@ -435,6 +435,8 @@
       "description": "Envoyez un flux à tous les contacts."
     },
     "receiversCount": "Destinataires : {count}",
+    "receiversCountCapped": "Destinataires : {count}+",
+    "receiversCountUnknown": "Destinataires : ?",
     "receiversLoading": "Destinataires : chargement...",
     "whatsappTemplateMessage": {
       "title": "Message modèle",
@@ -685,6 +687,7 @@
   },
   "condition": {
     "unknownValue": "Inconnu",
+    "deletedValue": "Supprimé (#{id})",
     "yes": "Oui",
     "no": "Non",
     "valuePlaceholder": "...",
@@ -877,7 +880,9 @@
       },
       "adPrefix": "annonce",
       "allAds": "toutes les annonces"
-    }
+    },
+    "noTopic": "Sans sujet",
+    "trackingSince": "Suivi depuis le {date}. L'activité antérieure n'est pas incluse."
   },
   "fields": {
     "optionalHint": "(facultatif)",

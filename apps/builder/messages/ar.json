@@ -435,6 +435,8 @@
       "description": "إرسال مسار إلى جميع جهات الاتصال."
     },
     "receiversCount": "المستلمون: {count}",
+    "receiversCountCapped": "المستلمون: {count}+",
+    "receiversCountUnknown": "المستلمون: ?",
     "receiversLoading": "المستلمون: جارٍ التحميل...",
     "whatsappTemplateMessage": {
       "title": "رسالة قالب",
@@ -685,6 +687,7 @@
   },
   "condition": {
     "unknownValue": "غير معروف",
+    "deletedValue": "محذوف (#{id})",
     "yes": "نعم",
     "no": "لا",
     "valuePlaceholder": "...",
@@ -877,7 +880,9 @@
       },
       "adPrefix": "إعلان",
       "allAds": "جميع الإعلانات"
-    }
+    },
+    "noTopic": "بدون موضوع",
+    "trackingSince": "يتم التتبع منذ {date}. لا يتم تضمين النشاط السابق."
   },
   "channels": {
     "title": "القنوات",

@@ -1,7 +1,9 @@
 import {
+  BOUNDED_COUNT_CAP,
   broadcastAudienceRangeSchema,
   broadcastSubactions,
   channelTypes,
+  countModes,
 } from "@chatbotx.io/database/partials"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import z from "zod"
@@ -89,6 +91,38 @@ export const listContactsRequest = basePaginationRequest.extend({
     .describe("Broadcast recipient sub-action filter."),
 })
 export type ListContactsRequest = z.infer<typeof listContactsRequest>
+
+/** Opt-in capped counting, shared by every count endpoint. */
+export const countModeRequestShape = {
+  countMode: countModes
+    .optional()
+    .describe(
+      `\`exact\` (default) counts every match and answers 503 \`countTimeout\` if that takes too long. \`bounded\` stops at ${BOUNDED_COUNT_CAP} and sets \`totalCountCapped\`, so \`total\` is then a lower bound.`,
+    ),
+}
+
+export const countContactsRequest = listContactsRequest.extend(
+  countModeRequestShape,
+)
+export type CountContactsRequest = z.infer<typeof countContactsRequest>
+
+export const countResultShape = {
+  totalCountCapped: z
+    .boolean()
+    .optional()
+    .describe(
+      "True when `countMode` was `bounded` and the count stopped at `countCap`; `total` is then a lower bound.",
+    ),
+  countCap: z
+    .number()
+    .optional()
+    .describe("The cap a bounded count stops at. Absent for exact counts."),
+}
+
+export const countContactsResponse = z.object({
+  total: z.number(),
+  ...countResultShape,
+})
 
 export const listContactInboxesAudiencePreviewRequest =
   listContactsRequest.extend({

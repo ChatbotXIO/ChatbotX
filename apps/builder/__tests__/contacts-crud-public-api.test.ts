@@ -210,6 +210,26 @@ describe("GET /v1/contacts/count", () => {
       scope: "unscoped",
     })
   })
+
+  test("forwards countMode and returns the capped outcome", async () => {
+    const outcome = {
+      total: 100_000,
+      totalCountCapped: true,
+      countCap: 100_000,
+    }
+    countContacts.mockResolvedValueOnce(outcome)
+
+    await expect(
+      procedure.handler?.({
+        context: { workspace: { id: "workspace-1" } },
+        input: { page: 1, perPage: 20, countMode: "bounded" },
+      }),
+    ).resolves.toEqual(outcome)
+
+    expect(countContacts).toHaveBeenCalledWith(
+      expect.objectContaining({ countMode: "bounded" }),
+    )
+  })
 })
 
 describe("GET /v1/contacts/{identifier}", () => {

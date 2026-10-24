@@ -5,6 +5,7 @@ import { contactSources, genderTypes } from "@chatbotx.io/database/partials"
 import { z } from "zod"
 import { mcpSpec } from "@/lib/orpc/mcp-annotations"
 import {
+  possibleErrorsOnCounting,
   possibleErrorsOnCreatingContact,
   possibleErrorsOnCreatingResource,
   possibleErrorsOnFindingResource,
@@ -121,12 +122,12 @@ export const contactsCrudPublicRouter = {
       path: "/v1/contacts/count",
       summary: "Count contacts matching filter",
       description:
-        "Counts contacts matching the same filter shape as `contacts.list`, without paginating the rows.",
+        'Counts contacts matching the same filter shape as `contacts.list`, without paginating the rows. Pass `countMode: "bounded"` on very large workspaces: the count then stops at `countCap` and `totalCountCapped` says `total` is a lower bound. An exact count that takes too long fails with 503 `countTimeout`.',
       tags: ["Contacts"],
     })
     .input(countContactsPublicRequest)
     .output(countContactsPublicResponse)
-    .errors(possibleErrorsOnListingResource)
+    .errors(possibleErrorsOnCounting)
     .handler(
       async ({ context, input }) =>
         await contactService.count({

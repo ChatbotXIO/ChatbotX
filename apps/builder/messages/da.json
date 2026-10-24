@@ -435,6 +435,8 @@
       "description": "Send et flow til alle kontakter."
     },
     "receiversCount": "Modtagere: {count}",
+    "receiversCountCapped": "Modtagere: {count}+",
+    "receiversCountUnknown": "Modtagere: ?",
     "receiversLoading": "Modtagere: Indlæser...",
     "whatsappTemplateMessage": {
       "title": "Skabelonbesked",
@@ -685,6 +687,7 @@
   },
   "condition": {
     "unknownValue": "Ukendt",
+    "deletedValue": "Slettet (#{id})",
     "yes": "Ja",
     "no": "Nej",
     "valuePlaceholder": "...",
@@ -877,7 +880,9 @@
       },
       "adPrefix": "annonce",
       "allAds": "alle annoncer"
-    }
+    },
+    "noTopic": "Intet emne",
+    "trackingSince": "Registreret siden {date}. Tidligere aktivitet er ikke medregnet."
   },
   "fields": {
     "optionalHint": "(valgfri)",

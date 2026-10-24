@@ -9,6 +9,7 @@ const {
   mockFindMessengerIntegrationByInboxId,
   mockFindInstagramIntegrationByInboxId,
   mockHasEnabledTriggerRule,
+  mockRecordDelivered,
 } = vi.hoisted(() => ({
   mockRecordSendFailure: vi.fn().mockResolvedValue(undefined),
   mockEnqueueContactRepliedEvaluation: vi.fn().mockResolvedValue(undefined),
@@ -16,6 +17,7 @@ const {
   mockFindMessengerIntegrationByInboxId: vi.fn(),
   mockFindInstagramIntegrationByInboxId: vi.fn(),
   mockHasEnabledTriggerRule: vi.fn(),
+  mockRecordDelivered: vi.fn().mockResolvedValue(true),
 }))
 
 const makeService = (methods: string[]) =>
@@ -50,6 +52,7 @@ vi.mock("@chatbotx.io/analytics", () => ({
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
+  contactActivityService: { recordDelivered: mockRecordDelivered },
   contactInboxService: {
     recordSendFailure: mockRecordSendFailure,
   },
@@ -532,5 +535,125 @@ describe("messageListeners", () => {
 
     expect(mockHasEnabledTriggerRule).toHaveBeenCalledTimes(1)
     expect(mockEnqueueContactRepliedEvaluation).toHaveBeenCalledTimes(2)
+  })
+
+  describe("last-delivered listener", () => {
+    const lastDeliveredListener = () => {
+      const listener = messageListeners[
+        messageEventTypeSchema.enum["message:delivered"]
+      ]?.find((candidate) => candidate.name === "last-delivered")
+      if (!listener?.handler) {
+        throw new Error("last-delivered listener is missing")
+      }
+      return listener
+    }
+
+    const delivered = (overrides: Record<string, unknown> = {}) => ({
+      context: {
+        workspaceId: "ws-1",
+        contactId: "contact-1",
+        conversationId: "conv-1",
+        channel: "whatsapp",
+      },
+      action: { messageId: "msg-1" },
+      occurredAt: new Date("2026-07-09T00:10:00.000Z"),
+      ...overrides,
+    })
+
+    beforeEach(() => {
+      mockRecordDelivered.mockResolvedValue(true)
+    })
+
+    test("is registered on message:delivered only", () => {
+      expect(listenerNames("message:delivered")).toContain("last-delivered")
+      expect(listenerNames("message:sent")).not.toContain("last-delivered")
+    })
+
+    test("prefers the provider's delivery time over the processing time", async () => {
+      await lastDeliveredListener().handler?.([
+        delivered({
+          providerOccurredAt: new Date("2026-07-09T00:05:00.000Z"),
+        }),
+      ])
+
+      expect(mockRecordDelivered).toHaveBeenCalledWith({
+        records: [
+          {
+            contactId: "contact-1",
+            deliveredAt: new Date("2026-07-09T00:05:00.000Z"),
+          },
+        ],
+        workspaceId: "ws-1",
+      })
+    })
+
+    test("falls back to occurredAt, including when the bus delivers it as a string", async () => {
+      await lastDeliveredListener().handler?.([
+        delivered({ occurredAt: "2026-07-09T00:10:00.000Z" }),
+      ])
+
+      expect(
+        mockRecordDelivered.mock.calls[0]?.[0].records[0].deliveredAt,
+      ).toEqual(new Date("2026-07-09T00:10:00.000Z"))
+    })
+
+    test("clamps a provider clock that is ahead so the state cannot be pinned to the future", async () => {
+      const before = Date.now()
+      await lastDeliveredListener().handler?.([
+        delivered({ providerOccurredAt: new Date("2999-01-01T00:00:00.000Z") }),
+      ])
+
+      const recorded =
+        mockRecordDelivered.mock.calls[0]?.[0].records[0].deliveredAt.getTime()
+      expect(recorded).toBeGreaterThanOrEqual(before)
+      expect(recorded).toBeLessThanOrEqual(Date.now())
+    })
+
+    test("writes one fenced call per workspace", async () => {
+      await lastDeliveredListener().handler?.([
+        delivered(),
+        delivered({
+          context: {
+            workspaceId: "ws-2",
+            contactId: "contact-9",
+            conversationId: "conv-9",
+            channel: "whatsapp",
+          },
+        }),
+        delivered({ occurredAt: new Date("2026-07-09T00:20:00.000Z") }),
+      ])
+
+      expect(mockRecordDelivered).toHaveBeenCalledTimes(2)
+      const byWorkspace = Object.fromEntries(
+        mockRecordDelivered.mock.calls.map(([arg]) => [
+          arg.workspaceId,
+          arg.records.length,
+        ]),
+      )
+      expect(byWorkspace).toEqual({ "ws-1": 2, "ws-2": 1 })
+    })
+
+    test("logs a failed workspace group and still records the others", async () => {
+      mockRecordDelivered
+        .mockRejectedValueOnce(new Error("database down"))
+        .mockResolvedValueOnce(true)
+
+      const result = await lastDeliveredListener().handler?.([
+        delivered({ [EVENT_BUS_MESSAGE_ID]: "stream-1-0" }),
+        delivered({
+          [EVENT_BUS_MESSAGE_ID]: "stream-2-0",
+          context: {
+            workspaceId: "ws-2",
+            contactId: "contact-9",
+            conversationId: "conv-9",
+            channel: "whatsapp",
+          },
+        }),
+      ])
+
+      // The bus acks the whole batch regardless, so nothing is reported back.
+      expect(result).toBeUndefined()
+      expect(mockRecordDelivered).toHaveBeenCalledTimes(2)
+    })
   })
 })

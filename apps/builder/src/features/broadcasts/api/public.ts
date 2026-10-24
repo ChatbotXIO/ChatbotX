@@ -10,12 +10,12 @@ import { resolveContactAvatars } from "@/features/contacts/queries/resolve-conta
 import { mcpSpec } from "@/lib/orpc/mcp-annotations"
 import {
   possibleErrorsOnActivatingBroadcast,
+  possibleErrorsOnCountingWithBody,
   possibleErrorsOnCreatingBroadcast,
   possibleErrorsOnDeletingResource,
   possibleErrorsOnFindingResource,
   possibleErrorsOnListingResource,
   possibleErrorsOnMutatingResource,
-  possibleErrorsOnReadingWithBody,
 } from "@/lib/orpc/orpc-error-helper"
 import { BROADCAST_STOP_TOKEN_PATH } from "@/lib/workspace/authorize-workspace-access"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
@@ -166,12 +166,12 @@ export const broadcastsPublicRouter = {
       path: BROADCAST_AUDIENCE_PREVIEW_TOKEN_PATH,
       summary: "Preview broadcast audience before send",
       description:
-        "Counts and lists the contact inboxes a broadcast would be sent to, without creating anything. `total` is the size of the whole audience (the `audienceRangeStart`/`audienceRangeEnd` window already applied, one contact on several channels counts once per channel); `data` is one page of it in send order (ascending contact inbox id), `page` from 1 and `perPage` up to 50. Select the audience like `broadcasts.create`: `subaction`, `contactFilter`, the window, and the inboxes with `inboxIds`, or `channels` (`omnichannel` = every channel), or an integration id; none given means an empty audience (`total` 0). `fullName`, `avatar` and `occurredAt` come from the contact. Use `perPage: 1` when you only need `total`. A page past the window is empty. Use `broadcasts.getAudience` for a broadcast that already exists.",
+        'Counts and lists the contact inboxes a broadcast would be sent to, without creating anything. `total` is the size of the whole audience (the `audienceRangeStart`/`audienceRangeEnd` window already applied, one contact on several channels counts once per channel); `data` is one page of it in send order (ascending contact inbox id), `page` from 1 and `perPage` up to 50. Select the audience like `broadcasts.create`: `subaction`, `contactFilter`, the window, and the inboxes with `inboxIds`, or `channels` (`omnichannel` = every channel), or an integration id; none given means an empty audience (`total` 0). `fullName`, `avatar` and `occurredAt` come from the contact. Use `perPage: 1` when you only need `total`. On very large audiences pass `countMode: "bounded"`: the count then stops at `countCap` and `totalCountCapped: true` means `total` is a lower bound (it can even be 0 when the window starts past `countCap`, which is not an empty audience); an exact count that takes too long fails with 503 `countTimeout`. A page past the window is empty. Use `broadcasts.getAudience` for a broadcast that already exists.',
       tags: ["Broadcasts"],
     })
     .input(previewBroadcastAudiencePublicRequest)
     .output(previewBroadcastAudiencePublicResponse)
-    .errors(possibleErrorsOnReadingWithBody)
+    .errors(possibleErrorsOnCountingWithBody)
     .handler(async ({ context, input }) => {
       const audience = {
         workspaceId: context.workspace.id,
@@ -183,8 +183,11 @@ export const broadcastsPublicRouter = {
         subaction: input.subaction,
         audienceRange: resolveBroadcastAudienceRange(input),
       }
-      const [total, rows] = await Promise.all([
-        broadcastService.countAudience(audience),
+      const [counted, rows] = await Promise.all([
+        broadcastService.countAudience({
+          ...audience,
+          countMode: input.countMode,
+        }),
         broadcastService.listAudiencePreview({
           ...audience,
           page: input.page ?? 1,
@@ -197,7 +200,7 @@ export const broadcastsPublicRouter = {
         { publicUrls: true },
       )
       return {
-        total,
+        ...counted,
         data: withAvatars.map(({ id: _id, createdAt, ...row }) => ({
           ...row,
           occurredAt: createdAt.toISOString(),

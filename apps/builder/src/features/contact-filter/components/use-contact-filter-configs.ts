@@ -8,7 +8,10 @@ import {
   useBotFields,
   useCustomFields,
 } from "@/features/custom-fields/provider/custom-field-hook"
-import { useFlowSelectOptions } from "@/features/flows/provider/flow-hook"
+import {
+  useFlowNodeReferenceOptions,
+  useFlowSelectOptions,
+} from "@/features/flows/provider/flow-hook"
 import { useInboxOptionsByChannel } from "@/features/inboxes/provider/inbox-hook"
 import { useLeaderboardOptions } from "@/features/leaderboards/lib/use-leaderboard-options"
 import { useSequenceOptions } from "@/features/sequences/provider/sequence-hook"
@@ -24,6 +27,7 @@ import {
   getConditionOptions,
   getFieldConfigs,
 } from "./contact-filter-config"
+import { useActivityFiltersEnabled } from "./use-activity-filters-enabled"
 import { useFilterValueLabels } from "./use-filter-value-labels"
 import { useProductFilterOptions } from "./use-product-filter-options"
 import {
@@ -81,6 +85,8 @@ export const useContactFilterConfigs = (
   const botFields =
     useBotFields(workspaceId, { enabled: includeBotFields }).data ?? []
   const flowVersionOptions = useFlowSelectOptions()
+  const flowNodeOptions = useFlowNodeReferenceOptions()
+  const activityFiltersEnabled = useActivityFiltersEnabled()
   // `omnichannel` here means "all inboxes", not the broadcast channel, so it
   // falls back to the hook's default like an unknown channel does.
   const parsedChannel = channelTypes.safeParse(inboxChannel)
@@ -125,6 +131,8 @@ export const useContactFilterConfigs = (
         inboxOptions,
         customFields,
         flowVersionOptions,
+        flowNodeOptions,
+        activityFiltersEnabled,
         broadcastOptions,
         sequenceOptions,
         reflinkOptions,
@@ -145,6 +153,8 @@ export const useContactFilterConfigs = (
       inboxOptions,
       customFields,
       flowVersionOptions,
+      flowNodeOptions,
+      activityFiltersEnabled,
       broadcastOptions,
       sequenceOptions,
       reflinkOptions,

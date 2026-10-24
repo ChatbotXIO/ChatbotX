@@ -435,6 +435,8 @@
       "description": "Envía un flujo a todos los contactos."
     },
     "receiversCount": "Receivers: {count}",
+    "receiversCountCapped": "Receivers: {count}+",
+    "receiversCountUnknown": "Receivers: ?",
     "receiversLoading": "Receivers: Cargando...",
     "whatsappTemplateMessage": {
       "title": "Plantilla Mensaje",
@@ -685,6 +687,7 @@
   },
   "condition": {
     "unknownValue": "Desconocido",
+    "deletedValue": "Eliminado (#{id})",
     "yes": "Sí",
     "no": "No",
     "valuePlaceholder": "...",
@@ -877,7 +880,9 @@
       },
       "adPrefix": "anuncio",
       "allAds": "todos los anuncios"
-    }
+    },
+    "noTopic": "Sin tema",
+    "trackingSince": "Registrado desde {date}. No incluye la actividad anterior."
   },
   "channels": {
     "title": "Canales",

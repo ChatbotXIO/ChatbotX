@@ -435,6 +435,8 @@
       "description": "Tüm kişilere bir akış gönderin."
     },
     "receiversCount": "Alıcılar: {count}",
+    "receiversCountCapped": "Alıcılar: {count}+",
+    "receiversCountUnknown": "Alıcılar: ?",
     "receiversLoading": "Alıcılar: Yükleniyor...",
     "whatsappTemplateMessage": {
       "title": "Şablon Mesajı",
@@ -685,6 +687,7 @@
   },
   "condition": {
     "unknownValue": "Bilinmiyor",
+    "deletedValue": "Silindi (#{id})",
     "yes": "Evet",
     "no": "Hayır",
     "valuePlaceholder": "...",
@@ -877,7 +880,9 @@
       },
       "adPrefix": "reklam",
       "allAds": "tüm reklamlar"
-    }
+    },
+    "noTopic": "Konusuz",
+    "trackingSince": "{date} tarihinden beri izleniyor. Önceki etkinlik dahil değildir."
   },
   "channels": {
     "title": "Kanallar",

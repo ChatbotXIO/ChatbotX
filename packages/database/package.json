@@ -64,7 +64,9 @@
     "./queries/date-bucket": "./src/queries/date-bucket.ts",
     "./queries/google-click": "./src/queries/google-click.ts",
     "./repositories": "./src/repositories/index.ts",
+    "./repositories/contact-activity": "./src/repositories/contact-activity/index.ts",
     "./repositories/contact-inbox-post": "./src/repositories/contact-inbox-post/index.ts",
+    "./repositories/workspace": "./src/repositories/workspace/index.ts",
     "./schema": "./src/schema/index.ts",
     "./types": "./src/types.ts",
     "./utils": "./src/utils.ts"

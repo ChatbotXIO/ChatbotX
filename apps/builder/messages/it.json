@@ -2000,6 +2000,8 @@
       "description": "Invia un flusso a tutti i contatti."
     },
     "receiversCount": "Destinatari: {count}",
+    "receiversCountCapped": "Destinatari: {count}+",
+    "receiversCountUnknown": "Destinatari: ?",
     "receiversLoading": "Destinatari: caricamento...",
     "whatsappTemplateMessage": {
       "title": "Messaggio modello",
@@ -2250,6 +2252,7 @@
   },
   "condition": {
     "unknownValue": "Sconosciuto",
+    "deletedValue": "Eliminato (#{id})",
     "yes": "Sì",
     "no": "No",
     "valuePlaceholder": "...",
@@ -2442,7 +2445,9 @@
       },
       "adPrefix": "inserzione",
       "allAds": "tutte le inserzioni"
-    }
+    },
+    "noTopic": "Nessun argomento",
+    "trackingSince": "Monitorato dal {date}. L'attività precedente non è inclusa."
   },
   "flows": {
     "export": {

@@ -2248,6 +2248,8 @@
       "description": "向所有聯絡人傳送流。"
     },
     "receiversCount": "接收器：{count}",
+    "receiversCountCapped": "接收器：{count}+",
+    "receiversCountUnknown": "接收器：?",
     "receiversLoading": "接收器：正在載入...",
     "whatsappTemplateMessage": {
       "title": "範本訊息",
@@ -2498,6 +2500,7 @@
   },
   "condition": {
     "unknownValue": "未知",
+    "deletedValue": "已刪除 (#{id})",
     "yes": "是",
     "no": "否",
     "valuePlaceholder": "...",
@@ -2690,7 +2693,9 @@
       },
       "adPrefix": "廣告",
       "allAds": "所有廣告"
-    }
+    },
+    "noTopic": "無主題",
+    "trackingSince": "自 {date} 起記錄。先前的活動不包含在內。"
   },
   "channels": {
     "title": "頻道",

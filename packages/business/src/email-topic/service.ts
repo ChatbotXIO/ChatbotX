@@ -6,9 +6,13 @@ import {
   findOrFail,
   inArray,
   relationsFilterToSQL,
+  sql,
 } from "@chatbotx.io/database/client"
 import { rootFolderId } from "@chatbotx.io/database/partials"
-import { emailTopicModel } from "@chatbotx.io/database/schema"
+import {
+  analyticsEmailTopicModel,
+  emailTopicModel,
+} from "@chatbotx.io/database/schema"
 import type { EmailTopicModel } from "@chatbotx.io/database/types"
 import {
   likeContains,
@@ -18,6 +22,7 @@ import {
 import { createId } from "@chatbotx.io/utils"
 import { ChatbotXException, notFoundException } from "../errors"
 import { folderService } from "../folder/service"
+import { type IdLabel, selectLabelsByIds } from "../select-labels-by-ids"
 import type { PaginatedResult } from "../types"
 
 type ListEmailTopicsInput = {
@@ -39,6 +44,14 @@ type UpdateEmailTopicData = {
 }
 
 class EmailTopicService {
+  /** Existing rows only — `id`s absent from the result no longer exist. */
+  async listLabelsByIds(input: {
+    workspaceId: string
+    ids: string[]
+  }): Promise<IdLabel[]> {
+    return await selectLabelsByIds(emailTopicModel, input)
+  }
+
   async findAnalyticsWorkspaceIdByToken(props: {
     token: string
     tx?: DatabaseClient
@@ -177,19 +190,43 @@ class EmailTopicService {
     ids: string[]
     tx?: DatabaseClient
   }): Promise<{ deletedCount: number }> {
-    const { workspaceId, ids, tx = db } = props
+    const { workspaceId, ids, tx } = props
 
-    const deleted = await tx
-      .delete(emailTopicModel)
-      .where(
-        and(
-          eq(emailTopicModel.workspaceId, workspaceId),
-          inArray(emailTopicModel.id, ids),
-        ),
-      )
-      .returning({ id: emailTopicModel.id })
+    // Detach the tracking rows before the topic row goes, in the lock order the
+    // tracking transaction uses (recipient row, then topic row), so a delete
+    // cannot deadlock with a concurrent open/click. `topicReferenceId` is
+    // snapshotted first: rows created before it existed may not be backfilled
+    // yet, and a later open/click must still record under the original topic,
+    // never collapse into "No Topic". Both statements commit together, so a
+    // failed delete never leaves recipients detached from a topic that remains.
+    const run = async (client: DatabaseClient) => {
+      await client
+        .update(analyticsEmailTopicModel)
+        .set({
+          topicReferenceId: sql`coalesce(${analyticsEmailTopicModel.topicReferenceId}, ${analyticsEmailTopicModel.topicId})`,
+          topicId: null,
+        })
+        .where(
+          and(
+            eq(analyticsEmailTopicModel.workspaceId, workspaceId),
+            inArray(analyticsEmailTopicModel.topicId, ids),
+          ),
+        )
 
-    return { deletedCount: deleted.length }
+      const deleted = await client
+        .delete(emailTopicModel)
+        .where(
+          and(
+            eq(emailTopicModel.workspaceId, workspaceId),
+            inArray(emailTopicModel.id, ids),
+          ),
+        )
+        .returning({ id: emailTopicModel.id })
+
+      return { deletedCount: deleted.length }
+    }
+
+    return tx ? await run(tx) : await db.transaction(run)
   }
 }
 

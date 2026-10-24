@@ -132,6 +132,16 @@ const dateRule = {
   intervalInput: "datetimeInterval",
 } as const satisfies StaticFieldRule
 
+// "Last Delivered": a date plus the explicit "has a value" operator.
+const datePresenceRule = {
+  ...dateRule,
+  enabledOperators: [
+    ...BASE_OPERATORS,
+    operatorTypes.enum.isNotEmpty,
+    ...RANGE_OPERATORS,
+  ],
+} as const satisfies StaticFieldRule
+
 export const staticFieldRules: Record<string, StaticFieldRule> = {
   locale: dropdownRule,
   language: relationSetRule,
@@ -147,14 +157,14 @@ export const staticFieldRules: Record<string, StaticFieldRule> = {
   hasLostOpportunity: dropdownRule,
   appliedJobs: dropdownRule,
   tags: relationSetRule,
-  completedWhatsAppFlows: dropdownRule,
+  completedWhatsAppFlows: relationSetRule,
   messengerList: dropdownRule,
   subscribedToDripCampaign: relationSetRule,
   conversationAssigned: relationSetRule,
   entryPointsLinks: relationSetRule,
-  sentMessage: dropdownRule,
-  keywordsReceived: dropdownRule,
-  executedFlow: dropdownRule,
+  sentMessage: textFreeRule,
+  keywordsReceived: relationSetRule,
+  executedFlow: relationSetRule,
   questionnaireStarted: dropdownRule,
   questionnaireInProgress: dropdownRule,
   questionnaireFinished: dropdownRule,
@@ -166,10 +176,10 @@ export const staticFieldRules: Record<string, StaticFieldRule> = {
   broadcastSeen: relationSetRule,
   broadcastClicked: relationSetRule,
   broadcastFailed: relationSetRule,
-  emailSent: dropdownRule,
-  emailDelivered: dropdownRule,
-  emailOpened: dropdownRule,
-  emailClicked: dropdownRule,
+  emailSent: relationSetRule,
+  emailDelivered: relationSetRule,
+  emailOpened: relationSetRule,
+  emailClicked: relationSetRule,
   boughtItems: dropdownRule,
   shoppingCartContainsItems: dropdownRule,
   currentDayOfWeek: dropdownRule,
@@ -209,7 +219,7 @@ export const staticFieldRules: Record<string, StaticFieldRule> = {
 
   contactCreatedAt: dateRule,
   lastSent: dateRule,
-  lastDelivered: dateRule,
+  lastDelivered: datePresenceRule,
   lastSeen: dateRule,
   lastInteraction: dateRule,
   currentDate: dateRule,
@@ -229,10 +239,7 @@ export const staticFieldRules: Record<string, StaticFieldRule> = {
   shoppingCartTotal: numberRule,
   shoppingCartSubtotal: numberRule,
 
-  executedStep: {
-    enabledOperators: BASE_OPERATORS,
-    singleInput: "numberInterval",
-  },
+  executedStep: relationSetRule,
   currentTime: {
     enabledOperators: [
       ...BASE_OPERATORS,

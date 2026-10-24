@@ -600,6 +600,8 @@
       "title": "Mallmeddelande"
     },
     "receiversCount": "Mottagare: {count}",
+    "receiversCountCapped": "Mottagare: {count}+",
+    "receiversCountUnknown": "Mottagare: ?",
     "receiversLoading": "Mottagare: Läser in...",
     "stats": {
       "clicked": "Klickat",
@@ -986,6 +988,7 @@
   },
   "condition": {
     "unknownValue": "Okänd",
+    "deletedValue": "Borttagen (#{id})",
     "datePlaceholder": "YYYY-MM-DD",
     "datetimeInvalid": "Ange ett datum som YYYY-MM-DD HH:mm eller en variabel",
     "openPost": "Öppna {post}",
@@ -1178,7 +1181,9 @@
       "allAds": "alla annonser"
     },
     "valuePlaceholder": "...",
-    "yes": "Ja"
+    "yes": "Ja",
+    "noTopic": "Inget ämne",
+    "trackingSince": "Spåras sedan {date}. Tidigare aktivitet ingår inte."
   },
   "contacts": {
     "copyLink": "Kopiera länk",

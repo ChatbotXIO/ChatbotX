@@ -62,7 +62,10 @@ import { BroadcastSendLimitFields } from "./components/broadcast-send-limit-fiel
 import { BroadcastTemplateTargets } from "./components/broadcast-template-targets"
 import { getBroadcastExcludedFilterFields } from "./lib/broadcast-filter-fields"
 import type { FlowForTargets } from "./lib/broadcast-flow-targets"
-import { resolveWindowedReceiversCount } from "./lib/broadcast-send-limit"
+import {
+  resolveReceiversCountLabelKey,
+  resolveWindowedReceiversCount,
+} from "./lib/broadcast-send-limit"
 import {
   hasSameTargetReferences,
   resolveAudienceInboxIds,
@@ -457,6 +460,7 @@ function CreateBroadcastChooseFlow(props: CreateBroadcastChooseFlowProps) {
   const router = useRouter()
   const {
     contactInboxesCount: count,
+    contactInboxesCountCapped: countCapped,
     getContactInboxesCount,
     loadingInboxesCount,
   } = useContactStore((state) => state)
@@ -582,13 +586,16 @@ function CreateBroadcastChooseFlow(props: CreateBroadcastChooseFlowProps) {
   // taken — so they are never sent to the (expensive) count route; the
   // unwindowed total above is fetched exactly as before, and clamped to the
   // range here. Typing in the range fields costs zero requests.
-  const windowedReceiversCount = useMemo(
+  const windowedReceivers = useMemo(
     () =>
-      resolveWindowedReceiversCount(count || 0, {
-        audienceRangeStart: watchedAudienceRangeStart,
-        audienceRangeEnd: watchedAudienceRangeEnd,
-      }),
-    [count, watchedAudienceRangeStart, watchedAudienceRangeEnd],
+      resolveWindowedReceiversCount(
+        { total: count || 0, capped: countCapped },
+        {
+          audienceRangeStart: watchedAudienceRangeStart,
+          audienceRangeEnd: watchedAudienceRangeEnd,
+        },
+      ),
+    [count, countCapped, watchedAudienceRangeStart, watchedAudienceRangeEnd],
   )
 
   const excludeFields = useMemo(
@@ -776,7 +783,10 @@ function CreateBroadcastChooseFlow(props: CreateBroadcastChooseFlowProps) {
       <div className="flex items-center justify-between">
         <Button
           className="h-auto px-0 text-gray-500 text-sm"
-          disabled={isReceiversCountLoading || !windowedReceiversCount}
+          disabled={
+            isReceiversCountLoading ||
+            !(windowedReceivers.count || windowedReceivers.capped)
+          }
           onClick={() => setAudiencePreviewOpen(true)}
           type="button"
           variant="link"
@@ -787,8 +797,8 @@ function CreateBroadcastChooseFlow(props: CreateBroadcastChooseFlowProps) {
               {t("broadcasts.receiversLoading")}
             </span>
           ) : (
-            t("broadcasts.receiversCount", {
-              count: windowedReceiversCount,
+            t(resolveReceiversCountLabelKey(windowedReceivers), {
+              count: windowedReceivers.count,
             })
           )}
         </Button>
@@ -819,7 +829,8 @@ function CreateBroadcastChooseFlow(props: CreateBroadcastChooseFlowProps) {
           </Button>
 
           <BroadcastConfirmDialog
-            count={windowedReceiversCount}
+            count={windowedReceivers.count}
+            countCapped={windowedReceivers.capped}
             isReceiversCountLoading={isReceiversCountLoading}
             isSubmitting={formState.isSubmitting}
             isValid={formState.isValid}
@@ -838,7 +849,8 @@ function CreateBroadcastChooseFlow(props: CreateBroadcastChooseFlowProps) {
             onOpenChange={setAudiencePreviewOpen}
             open={audiencePreviewOpen}
             subaction={props.subaction}
-            total={windowedReceiversCount}
+            total={windowedReceivers.count}
+            totalCapped={windowedReceivers.capped}
             workspaceId={workspaceId}
           />
         </div>
