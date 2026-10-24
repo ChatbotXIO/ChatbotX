@@ -230,6 +230,7 @@ export const STEP_PRODUCES_MESSAGE: Record<StepType, boolean> = {
   sendViewCatalog: true,
   whatsappFlow: true,
   sendProducts: true,
+  sendCollection: true,
   whatsappLocation: true,
   sendMessengerTemplateMessage: true,
 
@@ -373,6 +374,7 @@ export const logStepProviderError = (
     contactInbox: Pick<ContactInboxModel, "sourceId">
   },
   error: unknown,
+  httpCode?: string | null,
 ): Promise<void> =>
   logProviderError({
     provider,
@@ -380,4 +382,5 @@ export const logStepProviderError = (
     contactId: props.conversation.contactId,
     sourceId: props.contactInbox.sourceId,
     error,
+    httpCode,
   })

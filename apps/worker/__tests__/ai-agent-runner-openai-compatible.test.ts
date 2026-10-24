@@ -21,9 +21,19 @@ const findAIIntegrationMock = vi.hoisted(() =>
   vi.fn(async () => ({ id: "native-integration" })),
 )
 const findOpenaiCompatibleMock = vi.hoisted(() => vi.fn())
+const workerLoggerMock = vi.hoisted(() => ({
+  debug: vi.fn(),
+  error: vi.fn(),
+  warn: vi.fn(),
+}))
 
 vi.mock("@chatbotx.io/ai", () => ({
-  aiTimeouts: { aiTotal: 30_000, aiStep: 10_000, aiChunk: 5000 },
+  aiTimeouts: {
+    aiTotal: 30_000,
+    aiStep: 10_000,
+    aiFirstChunk: 5000,
+    aiChunk: 5000,
+  },
   helpTexts: {
     fallbackLookup: "I found something, but cannot summarize it yet.",
     fileSearchDescription: "Search files",
@@ -54,6 +64,8 @@ vi.mock("@chatbotx.io/business", () => ({
   },
 }))
 
+vi.mock("../src/lib/logger", () => ({ logger: workerLoggerMock }))
+
 vi.mock("@chatbotx.io/variables", () => ({
   contactVariableService: {
     getAll: getAllVariablesMock,
@@ -63,7 +75,7 @@ vi.mock("@chatbotx.io/variables", () => ({
 
 vi.mock("ai", () => ({
   streamText: vi.fn(async () => ({ textStream: [] })),
-  stepCountIs: vi.fn(() => () => false),
+  isStepCount: vi.fn(() => () => false),
 }))
 
 const { runAIAgentRunner } = await import(
@@ -256,6 +268,89 @@ describe("AI agent runner OpenAI-compatible providers", () => {
       expect.objectContaining({
         provider: "openai",
         modelId: "gpt-5.4-mini",
+      }),
+    )
+  })
+
+  test("logs only a v7 tool-error callback with its execution time", async () => {
+    vi.mocked(streamText).mockImplementationOnce((options) => {
+      options.onToolExecutionEnd?.({
+        toolCall: { toolCallId: "call-1", toolName: "failing_tool" },
+        toolExecutionMs: 42,
+        toolOutput: {
+          error: new Error("expected tool failure"),
+          toolCallId: "call-1",
+          toolName: "failing_tool",
+          type: "tool-error",
+        },
+      })
+      return { textStream: [] }
+    })
+
+    await runAIAgentRunner({
+      aiAgent: makeAIAgent(),
+      conversation: makeConversation(),
+      messages: [] as ModelMessage[],
+    })
+
+    expect(workerLoggerMock.warn).toHaveBeenCalledWith(
+      expect.objectContaining({
+        durationMs: 42,
+        errorMessage: "expected tool failure",
+        toolCallId: "call-1",
+        toolName: "failing_tool",
+      }),
+      "[ai-agent-runner] tool execution failed",
+    )
+  })
+
+  test("counts a v7 tool-error step part exactly once in toolStats", async () => {
+    vi.mocked(streamText).mockImplementationOnce((options) => {
+      options.onToolExecutionEnd?.({
+        toolCall: { toolCallId: "call-1", toolName: "failing_tool" },
+        toolExecutionMs: 42,
+        toolOutput: {
+          error: new Error("expected tool failure"),
+          toolCallId: "call-1",
+          toolName: "failing_tool",
+          type: "tool-error",
+        },
+      } as never)
+      options.onStepEnd?.({
+        content: [{ type: "tool-call" }, { type: "tool-error" }],
+        finishReason: "tool-calls",
+        rawFinishReason: "tool_calls",
+        stepNumber: 0,
+        toolCalls: [{ toolCallId: "call-1", toolName: "failing_tool" }],
+        toolResults: [],
+      } as never)
+      return { textStream: [] } as never
+    })
+
+    const result = await runAIAgentRunner({
+      aiAgent: makeAIAgent(),
+      conversation: makeConversation(),
+      messages: [] as ModelMessage[],
+    })
+
+    expect(result?.toolStats).toMatchObject({
+      steps: 1,
+      toolCallsCount: 1,
+      toolErrorsCount: 1,
+      toolNames: ["failing_tool"],
+    })
+  })
+
+  test("bounds the wait for the first chunk of each step", async () => {
+    await runAIAgentRunner({
+      aiAgent: makeAIAgent(),
+      conversation: makeConversation(),
+      messages: [] as ModelMessage[],
+    })
+
+    expect(streamText).toHaveBeenCalledWith(
+      expect.objectContaining({
+        timeout: expect.objectContaining({ firstChunkMs: 5000 }),
       }),
     )
   })

@@ -73,6 +73,15 @@ type WorkspaceRealtimeContextValue = {
   ) => () => void
   status: WorkspaceRealtimeConnectionStatus
   reconnectCount: number
+  /**
+   * Bumps when the gateway could not replay what this client missed, so state
+   * fed only by realtime events (such as an incoming call's ring or an outbound
+   * call's SDP answer) must be reloaded from the server. It only changes on a
+   * live socket, never while it is down: at once for a bad frame, or after the
+   * socket reopens following a server resync, so a reload cannot race the
+   * events published before reconnect.
+   */
+  resyncCount: number
 }
 
 const WorkspaceRealtimeContext =
@@ -104,7 +113,11 @@ export function WorkspaceRealtimeProvider({
   const [status, setStatus] =
     useState<WorkspaceRealtimeConnectionStatus>("connecting")
   const [reconnectCount, setReconnectCount] = useState(0)
+  const [resyncCount, setResyncCount] = useState(0)
   const hasOpenedOnceRef = useRef(false)
+  // A server resync closes the socket and resets the replay cursor; the reload
+  // signal waits for the reconnect so no event lands in the gap.
+  const isResyncPendingReopenRef = useRef(false)
 
   useEffect(
     () => () => {
@@ -121,6 +134,19 @@ export function WorkspaceRealtimeProvider({
     frameReaderRef.current?.reset()
     await invalidateRealtimeCaches()
   }, [invalidateRealtimeCaches])
+
+  // A bad frame is detected on a live socket, so the reload signal is immediate
+  // and does not wait for the cache refetches: a slow, unrelated query must not
+  // delay recovery of a missed ring until its short deadline passes.
+  const handleFrameResync = useCallback((): void => {
+    setResyncCount((count) => count + 1)
+    handleResync()
+  }, [handleResync])
+
+  const handleSocketResync = useCallback(async (): Promise<void> => {
+    isResyncPendingReopenRef.current = true
+    await handleResync()
+  }, [handleResync])
 
   const processRealtimeFrame = useCallback(
     ({ data, eventType: eventTypeString }: MemberRealtimeEnvelope): void => {
@@ -182,13 +208,14 @@ export function WorkspaceRealtimeProvider({
             "Workspace realtime: further invalid-batch warnings suppressed for this window",
         })
       },
-      onResyncNeeded: handleResync,
+      onResyncNeeded: handleFrameResync,
       schema: realtimeMemberBatchEnvelopeSchema,
     })
   }
   useEffect(() => {
     frameReaderRef.current?.reset()
     hasOpenedOnceRef.current = false
+    isResyncPendingReopenRef.current = false
   }, [])
 
   const getSocketUrl = useCallback(async (): Promise<string> => {
@@ -213,6 +240,10 @@ export function WorkspaceRealtimeProvider({
     const lastSeq = frameReaderRef.current?.getLastSeq()
     if (lastSeq) {
       url.searchParams.set("lastSeq", lastSeq)
+    } else if (hasOpenedOnceRef.current) {
+      // A reconnect with no cursor asks for no replay, so the gateway cannot
+      // tell this client missed anything and will not close it with a resync.
+      isResyncPendingReopenRef.current = true
     }
     return url.toString()
   }, [publicRealtimeUrl, workspaceId])
@@ -253,9 +284,13 @@ export function WorkspaceRealtimeProvider({
         setReconnectCount((count) => count + 1)
       }
       hasOpenedOnceRef.current = true
+      if (isResyncPendingReopenRef.current) {
+        isResyncPendingReopenRef.current = false
+        setResyncCount((count) => count + 1)
+      }
       setStatus("open")
     },
-    onResync: handleResync,
+    onResync: handleSocketResync,
   })
 
   const subscribe = useCallback<WorkspaceRealtimeSubscribe>(
@@ -296,8 +331,8 @@ export function WorkspaceRealtimeProvider({
   )
 
   const value = useMemo<WorkspaceRealtimeContextValue>(
-    () => ({ reconnectCount, status, subscribeHandlers }),
-    [reconnectCount, status, subscribeHandlers],
+    () => ({ reconnectCount, resyncCount, status, subscribeHandlers }),
+    [reconnectCount, resyncCount, status, subscribeHandlers],
   )
 
   return (

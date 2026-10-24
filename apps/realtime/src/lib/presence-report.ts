@@ -11,14 +11,15 @@ import { logger } from "../logger"
  * same shared secret/JWT scheme (signPresenceReportToken) used in reverse for
  * inbound broadcast requests. Best-effort: failures are logged and
  * swallowed, never thrown or retried — the next interval supersedes a lost
- * report.
+ * report. Resolves `true` once the builder accepted the report and `false`
+ * when it failed, so the scheduler can tell a renewed lease from a lapsing one.
  */
 export async function reportWorkspacePresence(
   workspaceId: string,
   userIds: string[],
   builderUrl: string,
   secret: string,
-): Promise<void> {
+): Promise<boolean> {
   try {
     // Bounded here, before hashing/sending, not left for the route to reject —
     // a room bigger than the cap must never turn the whole workspace offline by
@@ -43,10 +44,12 @@ export async function reportWorkspacePresence(
       retry: 0,
       timeout: 5000,
     })
+    return true
   } catch (error) {
     logger.error(
       { err: error, workspaceId },
       "Failed to report workspace presence to builder",
     )
+    return false
   }
 }

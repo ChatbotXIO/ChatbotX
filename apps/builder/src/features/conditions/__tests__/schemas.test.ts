@@ -84,6 +84,11 @@ describe("catalog and call conditions", () => {
   const CATALOG_TYPES = [
     triggerEventTypes.enum.shoppingCartSent,
     triggerEventTypes.enum.userAskedAboutProduct,
+    triggerEventTypes.enum.productOrdered,
+    triggerEventTypes.enum.productAddedToCart,
+    triggerEventTypes.enum.productRemovedFromCart,
+    // Pinned to a category instead of a product, same rules.
+    triggerEventTypes.enum.categoryAddedToCart,
   ] as const
   const CALL_TYPES = [
     triggerEventTypes.enum.incomingCall,
@@ -136,8 +141,19 @@ describe("catalog and call conditions", () => {
     ).toBe(true)
   })
 
-  test("still rejects an ecommerce event no channel can send", () => {
-    expect(conditionSchema.safeParse({ type: "cartAbandoned" }).success).toBe(
+  test.each([
+    triggerEventTypes.enum.newOrder,
+    triggerEventTypes.enum.orderAccepted,
+    triggerEventTypes.enum.orderShipped,
+    triggerEventTypes.enum.orderConcluded,
+    triggerEventTypes.enum.orderCancelled,
+    triggerEventTypes.enum.cartAbandoned,
+  ])("accepts the %s store event, which takes no other field", (type) => {
+    expect(conditionSchema.parse({ type })).toEqual({ type })
+  })
+
+  test("still rejects a condition type nothing emits", () => {
+    expect(conditionSchema.safeParse({ type: "ticketCreated" }).success).toBe(
       false,
     )
   })

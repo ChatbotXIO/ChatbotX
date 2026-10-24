@@ -171,7 +171,13 @@
       "sendGoogleAdsConversion": "Trimite conversie Google Ads",
       "changeGamificationScore": "Modifică punctele de gamificare",
       "sendViewCatalog": "Vezi catalogul",
-      "sendProducts": "Trimite produse"
+      "sendProducts": "Trimite produse",
+      "sendCollection": "Colecție"
+    },
+    "externalRequest": {
+      "errors": {
+        "requestFailed": "Nu s-a putut testa cererea externă. Verifică configurația cererii și încearcă din nou."
+      }
     },
     "splitTraffic": {
       "balanceHint": "Suma totală trebuie să fie egală cu 100%.",
@@ -352,6 +358,43 @@
       "productsSelected": "{count, plural, one {# produs} other {# produse}}",
       "noneSelected": "Încă nu există produse",
       "sendFailed": "Produsele nu au putut fi trimise."
+    },
+    "sendCollection": {
+      "title": "Colecție",
+      "dataType": "Tip de date",
+      "dataTypes": {
+        "products": "Produse"
+      },
+      "collectionType": "Tip de colecție",
+      "collectionTypes": {
+        "automated": {
+          "label": "Automată",
+          "description": "Produsele actuale și viitoare care îndeplinesc condițiile se adaugă automat."
+        },
+        "manual": {
+          "label": "Manuală",
+          "description": "Adaugă produsele unul câte unul."
+        }
+      },
+      "condition": "Condiție",
+      "name": "Nume",
+      "optional": "(Opțional)",
+      "category": "Categorie",
+      "subcategory": "Subcategorie",
+      "vendor": "Furnizor",
+      "all": "Toate",
+      "items": "Produse",
+      "select": "Selectează",
+      "selectPlaceholder": "Selectează 1 sau mai multe produse",
+      "selectAll": "Selectează tot",
+      "deselectAll": "Deselectează tot",
+      "maxProducts": "Până la {count} produse; un produs pe care magazinul nu-l mai afișează e omis.",
+      "automatedHint": "Trimite până la {count} produse potrivite ca carduri care deschid produsul în magazin.",
+      "summaryAll": "Toate produsele magazinului",
+      "summaryAutomated": "Produse: {filters}",
+      "summaryManual": "{count, plural, one {# produs} other {# produse}}",
+      "cancel": "Anulează",
+      "save": "Salvează"
     }
   },
   "folders": {
@@ -3140,6 +3183,10 @@
       "label": "Adresa expeditorului",
       "placeholder": "noreply@exemplu.ro"
     },
+    "fromName": {
+      "label": "Nume expeditor",
+      "placeholder": "ChatbotX"
+    },
     "messageTemplate": {
       "label": "Șablon de mesaj"
     },
@@ -3980,6 +4027,7 @@
         "buttonText": "Text buton",
         "buttonType": "Tip buton",
         "visitWebsite": "Vizitează site-ul web",
+        "openMiniApp": "Deschide Mini App",
         "callPhoneNumber": "Apelează numărul de telefon",
         "postback": "Buton"
       },
@@ -4183,6 +4231,7 @@
     "orContinueWith": "Sau continuă cu",
     "continueWithFacebook": "Continuă cu Facebook",
     "continueWithGoogle": "Continuă cu Google",
+    "continueWithProvider": "Continuă cu {name}",
     "continueWithEmail": "Continuă cu e-mail",
     "continueWithMagicLink": "Continuă cu link magic",
     "dontHaveAnAccount": "Nu ai un cont?",
@@ -4213,11 +4262,15 @@
     "changePasswordTitle": "Schimbă-ți parola",
     "changePasswordDescription": "Setează o parolă nouă înainte de a continua.",
     "passwordChangeSuccess": "Parolă schimbată",
+    "signUpDisabledTitle": "Înregistrarea este dezactivată",
+    "signUpDisabledDescription": "Conturile noi pot fi create doar de un administrator sau printr-un link de invitație.",
     "oauthError": {
       "accountNotLinked": "Există deja un cont cu acest e-mail și nu a putut fi asociat. Autentifică-te la fel ca înainte sau contactează asistența.",
       "unableToLinkAccount": "Nu am putut asocia această autentificare cu contul existent. Autentifică-te în modul în care ai făcut-o înainte sau contactează asistența.",
       "sessionExpired": "Încercarea de autentificare a expirat. Încearcă din nou.",
       "accessDenied": "Autentificarea a fost anulată.",
+      "signUpDisabled": "Acest cont nu există încă, iar înregistrarea este dezactivată. Cere unui administrator să îl creeze pentru tine.",
+      "invalidInvitation": "Această invitație este invalidă sau a expirat.",
       "generic": "Autentificarea a eșuat. Încearcă din nou."
     }
   },
@@ -4250,6 +4303,25 @@
       "unknownFieldTarget": "Un câmp de contact mapat nu mai există.",
       "actionReferenceNotFound": "O acțiune face referire la un flux, o etichetă sau un câmp care nu mai există.",
       "fieldMappingRequired": "Adaugă cel puțin o mapare de câmp."
+    },
+    "form": {
+      "required": "Acest câmp este obligatoriu.",
+      "minLength": "Introdu cel puțin {minimum} caractere.",
+      "maxLength": "Introdu cel mult {maximum} caractere.",
+      "minNumber": "Introdu un număr de cel puțin {minimum}.",
+      "moreThan": "Introdu un număr mai mare decât {minimum}.",
+      "maxNumber": "Introdu un număr de cel mult {maximum}.",
+      "lessThan": "Introdu un număr mai mic decât {maximum}.",
+      "number": "Introdu un număr.",
+      "wholeNumber": "Introdu un număr întreg.",
+      "minItems": "Alege cel puțin {minimum}.",
+      "maxItems": "Alege cel mult {maximum}.",
+      "email": "Introdu o adresă de e-mail validă.",
+      "url": "Introdu un link valid care începe cu https://.",
+      "format": "Această valoare nu are formatul corect.",
+      "option": "Alege una dintre opțiuni.",
+      "invalid": "Această valoare nu este validă.",
+      "checkFields": "Unele câmpuri trebuie corectate. Verifică-le pe cele marcate cu roșu."
     }
   },
   "webchat": {
@@ -4849,7 +4921,8 @@
     "chatbotInvitationDescription1": "Alătură-te lui {chatbotName}",
     "chatbotInvitationDescription2": "{userName} te-a invitat să te alături lui {chatbotName}.",
     "invalidInvitation": "Această invitație este invalidă sau a expirat.",
-    "workspaceUnavailable": "Acest spațiu de lucru nu mai este disponibil."
+    "workspaceUnavailable": "Acest spațiu de lucru nu mai este disponibil.",
+    "signUpToJoin": "Creează un cont pentru a te alătura"
   },
   "inboxes": {
     "markReadOnOutbound": {
@@ -5237,7 +5310,8 @@
       "contactReferredExistingContact": "Contactul a recomandat un contact existent",
       "callRecorded": "Apel înregistrat",
       "callTranscribed": "Apel transcris",
-      "anyProduct": "Orice produs"
+      "anyProduct": "Orice produs",
+      "anyCategory": "Orice categorie"
     },
     "actions": {
       "addTag": "Adaugă etichetă",
@@ -5358,7 +5432,8 @@
       "userPlaceholder": "ID utilizator",
       "keyword": "Cuvânt cheie",
       "keywordPlaceholder": "Acțiune sau detaliu",
-      "allAdmins": "Toți administratorii"
+      "allAdmins": "Toți administratorii",
+      "allWorkspaces": "Toate spațiile de lucru"
     }
   },
   "customFields": {
@@ -6249,6 +6324,8 @@
     }
   },
   "manageSidebar": {
+    "communityGroup": "Comunitate",
+    "enterpriseGroup": "Enterprise",
     "platformGroup": "Platformă",
     "portalCustomDomain": "Domeniu personalizat",
     "portalPaymentProcessor": "Procesator de plăți",
@@ -6382,7 +6459,82 @@
     "title": "Sincronizează catalogul Meta"
   },
   "orders": {
-    "title": "Comenzi"
+    "title": "Comenzi",
+    "empty": "Nicio comandă încă.",
+    "searchPlaceholder": "Caută după nume, telefon, e-mail sau număr de comandă",
+    "orderNumber": "Comanda nr. {number}",
+    "print": "Tipărește",
+    "inbox": "Mesaje primite",
+    "statusUpdated": "Starea comenzii a fost actualizată",
+    "statusUpdateError": "Nu s-a putut actualiza starea comenzii",
+    "updateStatusTitle": "Actualizează starea comenzii",
+    "message": "Mesaj",
+    "messagePlaceholder": "Opțional",
+    "messageDescription": "Trimis clientului în conversația sa.",
+    "cancel": "Anulează",
+    "continue": "Continuă",
+    "delete": "Șterge",
+    "deleted": "Comandă ștearsă",
+    "deleteError": "Nu s-a putut șterge comanda",
+    "deleteTitle": "Ștergi comanda nr. {number}?",
+    "deleteDescription": "Comanda, articolele și istoricul ei sunt eliminate. Stocul pe care îl mai ține este readus.",
+    "columns": {
+      "name": "Nume",
+      "total": "Total",
+      "status": "Stare",
+      "date": "Dată",
+      "rating": "Evaluare",
+      "quantity": "Cantitate",
+      "price": "Preț",
+      "vendor": "Furnizor"
+    },
+    "fields": {
+      "name": "Nume",
+      "email": "E-mail",
+      "phone": "Telefon",
+      "country": "Țară",
+      "state": "Județ",
+      "city": "Oraș",
+      "street": "Stradă",
+      "zip": "Cod poștal",
+      "shippingType": "Livrare",
+      "orderId": "ID comandă",
+      "date": "Dată",
+      "subtotal": "Subtotal",
+      "discount": "Reducere",
+      "deliveryCost": "Cost livrare",
+      "otherTaxes": "Alte taxe",
+      "total": "Total",
+      "paymentMethod": "Metodă de plată",
+      "status": "Stare",
+      "note": "Notă",
+      "cancelReason": "Motivul anulării",
+      "rating": "Evaluare",
+      "ratingComment": "Comentariul clientului",
+      "coupon": "Cupon ({code})"
+    },
+    "statuses": {
+      "pending": "Neprocesată",
+      "accepted": "Acceptată",
+      "shipped": "Expediată",
+      "concluded": "Finalizată",
+      "cancelled": "Anulată"
+    },
+    "transitions": {
+      "accepted": "Acceptă",
+      "shipped": "Expediază",
+      "concluded": "Finalizează",
+      "cancelled": "Anulează"
+    },
+    "paymentMethods": {
+      "cod": "Plata la livrare"
+    },
+    "shippingTypes": {
+      "delivery": "Livrare la client",
+      "pickup": "Ridicare din magazin"
+    },
+    "description": "Comenzi plasate de clienții tăi.",
+    "ratingValue": "{rating}/5 ★"
   },
   "platformAdmin": {
     "helpItems": {
@@ -6407,7 +6559,14 @@
       "supportOff": "Dezactivat",
       "searchPlaceholder": "Căutați după nume, e-mailul proprietarului sau ID",
       "descriptionConsentDisabled": "All workspaces can be opened by platform administrators.",
-      "supportAccessible": "Accessible"
+      "supportAccessible": "Accessible",
+      "createButton": "Create workspace",
+      "createTitle": "Create workspace for an owner",
+      "createDescription": "Creates a workspace for the owner's email, adding any member emails you list. A new email gets a mailed temporary password.",
+      "ownerEmail": "Owner email",
+      "memberEmails": "Member emails",
+      "membersHint": "Every member gets the permissions selected below. New emails get a mailed temporary password.",
+      "createdSummary": "Workspace created for {ownerEmail} — {memberCount} member(s) added, {newAccountCount} new account(s) emailed a temporary password."
     },
     "admins": {
       "title": "Platform administrators",
@@ -6423,6 +6582,19 @@
       "removed": "Platform administrator removed.",
       "addError": "Could not add the platform administrator.",
       "removeError": "Could not remove the platform administrator."
+    },
+    "auditLogs": {
+      "title": "Jurnale de audit ale platformei",
+      "description": "Activitate de audit în toate spațiile de lucru de pe această platformă."
+    },
+    "smtp": {
+      "title": "Setări SMTP",
+      "description": "Transportul de e-mail al platformei. Lăsați necompletat pentru a continua să utilizați variabilele de mediu SMTP_SERVER și SMTP_FROM.",
+      "usingEnv": "Nu există setări SMTP salvate — e-mailul platformei folosește variabila de mediu SMTP_SERVER.",
+      "remove": "Elimină setările SMTP",
+      "errors": {
+        "passwordRequired": "Introduceți parola SMTP."
+      }
     }
   },
   "platformBranding": {
@@ -6508,7 +6680,8 @@
     "columns": {
       "name": "Nume",
       "products": "Produse",
-      "subcategories": "Subcategorii"
+      "subcategories": "Subcategorii",
+      "visible": "Vizibil"
     },
     "create": "Creează categorie",
     "createSub": "Creează subcategorie",
@@ -6519,11 +6692,11 @@
     "deleteError": "Nu s-a putut șterge această categorie.",
     "deleteTitle": "Ștergi „{name}”?",
     "deleted": "Categorie ștearsă.",
-    "edit": "Redenumește categoria",
+    "edit": "Editează",
     "empty": "Nicio categorie încă. Creează una pentru a-ți grupa produsele.",
     "expand": "Afișează subcategoriile",
     "loadError": "Nu s-au putut încărca categoriile de produse.",
-    "name": "Nume categorie",
+    "name": "Nume",
     "namePlaceholder": "de ex. Colecția de vară",
     "noParent": "Niciuna (nivel de bază)",
     "parent": "Categorie părinte",
@@ -6531,7 +6704,19 @@
     "save": "Salvează",
     "saveError": "Nu s-a putut salva această categorie.",
     "title": "Categorii",
-    "updated": "Categorie actualizată."
+    "updated": "Categorie actualizată.",
+    "add": "Adaugă",
+    "dialogTitle": "Categorie",
+    "image": "Imagine",
+    "continue": "Continuă",
+    "subcategories": "Subcategorii",
+    "subcategoriesOf": "Subcategorii din {name}",
+    "emptySub": "Nicio subcategorie încă.",
+    "back": "Înapoi la categorii",
+    "getId": "Obține ID",
+    "idCopied": "ID-ul categoriei {id} a fost copiat",
+    "idCopyError": "Nu s-a putut copia ID-ul",
+    "description": "Grupează-ți produsele în categorii și subcategorii."
   },
   "productImport": {
     "confirm": "Începe importul",
@@ -6678,7 +6863,8 @@
       },
       "variantsDescription": "Adaugă variante dacă acest produs vine în mai multe versiuni, precum dimensiuni sau culori diferite",
       "vendor": {
-        "label": "Furnizor"
+        "label": "Furnizor",
+        "none": "Niciunul"
       }
     },
     "inventoryPolicy": {
@@ -9086,6 +9272,543 @@
       "hours": "Ore",
       "closed": "Închis"
     }
+  },
+  "productVendors": {
+    "title": "Furnizori",
+    "add": "Adaugă",
+    "edit": "Editează",
+    "delete": "Șterge",
+    "actions": "Acțiuni",
+    "save": "Salvează",
+    "cancel": "Anulează",
+    "moreOptions": "Mai multe opțiuni",
+    "empty": "Niciun furnizor încă.",
+    "created": "Furnizor adăugat",
+    "updated": "Furnizor actualizat",
+    "deleted": "Furnizor șters",
+    "saveError": "Nu s-a putut salva furnizorul",
+    "deleteError": "Nu s-a putut șterge furnizorul",
+    "deleteTitle": "Ștergi {name}?",
+    "deleteDescription": "{count, plural, =0 {Niciun produs nu folosește acest furnizor.} one {# produs va rămâne fără furnizor.} other {# produse vor rămâne fără furnizor.}}",
+    "fields": {
+      "name": "Nume",
+      "shortDescription": "Descriere scurtă",
+      "phone": "Telefon",
+      "storeAddress": "Adresa magazinului",
+      "image": "Imagine",
+      "optional": "Opțional",
+      "discountPercent": "Reducere (0-100%)",
+      "minimumOrderValue": "Valoare minimă a comenzii",
+      "openHours": "Program de funcționare",
+      "category": "Categorie",
+      "subcategory": "Subcategorie",
+      "none": "Niciuna"
+    },
+    "columns": {
+      "name": "Nume",
+      "products": "Total produse",
+      "active": "Activ"
+    },
+    "description": "Vânzătorii și mărcile cărora le aparțin produsele tale."
+  },
+  "ecommerceSettings": {
+    "save": "Salvează",
+    "saved": "Setări salvate",
+    "saveError": "Nu s-au putut salva setările",
+    "rank": {
+      "label": "Poziție",
+      "default": "Implicită"
+    },
+    "tabs": {
+      "general": "General",
+      "payments": "Plăți",
+      "shipping": "Livrare",
+      "checkout": "Finalizare comandă"
+    },
+    "general": {
+      "orderingAvailable": {
+        "label": "Comenzile sunt disponibile",
+        "description": "Folosește acest câmp pentru a nu permite clienților să plaseze comenzi fără a modifica programul de funcționare. Programul de funcționare controlează și disponibilitatea ta."
+      },
+      "webshopProductView": {
+        "label": "Afișarea produselor în magazinul web",
+        "description": "Controlează modul în care sunt afișate produsele în magazinul tău web.",
+        "options": {
+          "list": "Listă",
+          "listWithoutImage": "Listă fără imagine",
+          "card": "Card",
+          "cardSquare": "Card cu imagine pătrată",
+          "image": "Imagine",
+          "imageSquare": "Imagine (pătrată)"
+        }
+      },
+      "openHours": {
+        "label": "Program de funcționare",
+        "description": "Intervalele de timp în care clienții pot plasa o comandă."
+      },
+      "searchProducts": {
+        "label": "Căutare produse",
+        "description": "Permite clienților să trimită mesaje pentru a găsi produse."
+      },
+      "facebookPixelId": {
+        "label": "Facebook Pixel",
+        "description": "Urmărește conversiile cu Facebook Pixel și măsoară rezultatele reclamelor tale. Sunt urmărite evenimentele ADD_TO_CART, INITIATE_CHECKOUT, PURCHASE, VIEW_CONTENT"
+      },
+      "abandonedCart": {
+        "label": "Mesaj pentru coș abandonat",
+        "description": "Timpul de așteptare înainte de a trimite un mesaj pentru coș abandonat, după ce utilizatorul părăsește botul tău cu un articol în coș.",
+        "disabled": "Dezactivat",
+        "afterMinutes": "După {count} minute",
+        "afterHours": "{count, plural, one {După # oră} other {După # ore}}"
+      },
+      "productButtons": {
+        "label": "Butoane la produse",
+        "description": "Această setare controlează ce butoane sunt afișate pentru produsele din bot.",
+        "options": {
+          "addToCart": "Adaugă în coș",
+          "share": "Distribuie",
+          "similar": "Similare",
+          "save": "Salvează"
+        }
+      },
+      "productImageSize": {
+        "label": "Dimensiunea imaginii produselor",
+        "description": "Această setare controlează dimensiunea imaginii produselor din bot",
+        "options": {
+          "bigSquare": "Mare (pătrată)",
+          "mediumRectangle": "Medie (dreptunghiulară)"
+        }
+      },
+      "allowRateOrders": {
+        "label": "Permite evaluarea comenzilor",
+        "description": "Permite clienților să evalueze o comandă și să scrie o recenzie dacă nu sunt mulțumiți. Doar administratorii botului pot vedea recenziile"
+      },
+      "notifyOnCartStatusChange": {
+        "label": "Trimite notificare la schimbarea stării coșului",
+        "description": "Clientul va primi notificări ori de câte ori schimbi starea comenzii. Nu poți dezactiva notificarea pentru anularea și finalizarea comenzii."
+      },
+      "abandonedCartFlow": {
+        "label": "Flux pentru coș abandonat",
+        "description": "Fluxul pe care botul îl rulează pentru client când coșul e abandonat atât timp. Folosește '{{shop_token}}' în butoane pentru a deschide coșul. Triggerele pot folosi și evenimentul \"Cart abandoned\".",
+        "none": "Fără flux (doar eveniment de trigger)"
+      }
+    },
+    "payments": {
+      "currencyMismatch": "{count, plural, one {# produs are prețul} other {# produse au prețul}} într-o altă monedă decât {currency}. Comenzile percep prețul în {currency}.",
+      "paymentMethods": {
+        "label": "Metode de plată",
+        "description": "Metodele de plată activate în pagina de finalizare a comenzii. Prima metodă din listă va fi cea selectată în pagina de finalizare.",
+        "options": {
+          "cod": "Plata la livrare"
+        }
+      },
+      "currency": {
+        "label": "Monedă",
+        "description": "Aceasta este moneda în care stabilești prețurile produselor. Clienții vor fi taxați în această monedă."
+      },
+      "currencyPosition": {
+        "label": "Poziția monedei",
+        "description": "Această opțiune îți permite să controlezi poziția monedei.",
+        "options": {
+          "left": "Stânga",
+          "leftSpace": "Stânga cu spațiu",
+          "right": "Dreapta",
+          "rightSpace": "Dreapta cu spațiu"
+        }
+      },
+      "currencySymbol": {
+        "label": "Simbolul monedei",
+        "description": "Simbolul monedei este afișat înaintea prețurilor. Dacă vrei un spațiu între simbol și prețuri, adaugă un spațiu la sfârșitul simbolului."
+      },
+      "serviceFeePercent": {
+        "label": "Alte taxe / taxe de servicii (0 - 100%)",
+        "description": "Alte taxe legate de vânzare."
+      }
+    },
+    "shipping": {
+      "shippingType": {
+        "label": "Tip de livrare",
+        "description": "Această opțiune îți permite să controlezi cum primește clientul comanda.",
+        "options": {
+          "none": "Niciuna",
+          "delivery": "Livrare la client",
+          "pickup": "Ridicare din magazin",
+          "deliveryAndPickup": "Livrare la client, Ridicare din magazin"
+        }
+      },
+      "storeAddress": {
+        "label": "Adresa magazinului",
+        "description": "Această adresă este afișată clientului în pagina de finalizare a comenzii dacă permiți ridicarea din magazin."
+      },
+      "shippingCountries": {
+        "label": "Țări de livrare",
+        "description": "Țările în care livrezi comenzi."
+      },
+      "defaultShippingCountry": {
+        "label": "Țara de livrare implicită",
+        "description": "Țara care va fi selectată implicit în pagina de finalizare a comenzii.",
+        "none": "Niciuna"
+      },
+      "deliveryCost": {
+        "label": "Cost livrare",
+        "description": "Un cost fix pentru livrarea comenzii la adresa clientului."
+      },
+      "defaultCountryNotShipped": "Alege una dintre țările de livrare."
+    },
+    "checkout": {
+      "checkoutMode": {
+        "label": "Finalizare comandă",
+        "description": "Această setare controlează unde își finalizează clienții comenzile. Dacă vrei ca utilizatorul să finalizeze comanda în afara botului, de exemplu pe site-ul tău, Amazon,.. nu folosi pagina noastră implicită de finalizare.",
+        "options": {
+          "default": "Pagina implicită de finalizare",
+          "externalLink": "Pagină externă personalizată de finalizare",
+          "flow": "Flux",
+          "productPage": "Vizitează pagina externă a produsului"
+        }
+      },
+      "checkoutLink": {
+        "label": "Link pagină de finalizare",
+        "description": "Pagina externă unde clienții își finalizează comenzile."
+      },
+      "checkoutFlowId": {
+        "label": "Flux de finalizare",
+        "description": "Fluxul care rulează când un client finalizează comanda.",
+        "placeholder": "Selectează un flux"
+      },
+      "minimumOrderValue": {
+        "label": "Valoare minimă a comenzii",
+        "description": "Valoarea minimă a comenzii pe care o poate plasa un client. Condiția este verificată după aplicarea tuturor reducerilor."
+      },
+      "requiredFields": {
+        "requireName": {
+          "label": "Solicită numele cumpărătorului",
+          "description": "Numele cumpărătorului va fi colectat la finalizarea comenzii."
+        },
+        "requireEmail": {
+          "label": "Solicită adresa de e-mail",
+          "description": "E-mailul cumpărătorului va fi colectat la finalizarea comenzii."
+        },
+        "requirePhone": {
+          "label": "Solicită numărul de telefon",
+          "description": "Telefonul cumpărătorului va fi colectat la finalizarea comenzii."
+        },
+        "requireState": {
+          "label": "Solicită județul/provincia",
+          "description": "Județul cumpărătorului va fi colectat la finalizarea comenzii."
+        },
+        "requireZip": {
+          "label": "Solicită codul poștal",
+          "description": "Codul poștal al cumpărătorului va fi colectat la finalizarea comenzii."
+        }
+      },
+      "orderConfirmationMode": {
+        "label": "Mesaj de confirmare a comenzii",
+        "description": "Ce primește clientul în conversație când plasează comanda. Mesajul implicit afișează detaliile comenzii în limba spațiului de lucru.",
+        "options": {
+          "default": "Mesaj implicit",
+          "flow": "Rulează un flux",
+          "none": "Nu trimite nimic"
+        }
+      },
+      "orderConfirmationFlowId": {
+        "label": "Flux de confirmare a comenzii",
+        "description": "Fluxul trimis clientului în locul mesajului implicit când plasează comanda."
+      }
+    }
+  },
+  "openHours": {
+    "alwaysOpen": "Mereu deschis",
+    "addNew": "Adaugă nou",
+    "dialogTitle": "Program de funcționare",
+    "name": "Nume",
+    "namePlaceholder": "ex. Zile lucrătoare",
+    "day": "Zi",
+    "from": "Deschide",
+    "to": "Închide",
+    "add": "Adaugă interval",
+    "remove": "Elimină",
+    "cancel": "Anulează",
+    "continue": "Continuă",
+    "created": "Program de funcționare creat",
+    "saveError": "Nu s-a putut salva programul de funcționare",
+    "days": {
+      "0": "Duminică",
+      "1": "Luni",
+      "2": "Marți",
+      "3": "Miercuri",
+      "4": "Joi",
+      "5": "Vineri",
+      "6": "Sâmbătă"
+    },
+    "sameTimes": "Ora de deschidere și cea de închidere trebuie să difere."
+  },
+  "webshop": {
+    "metadataTitle": "Magazin",
+    "metadataOrderTitle": "Comanda ta",
+    "invalidLinkTitle": "Acest link nu funcționează",
+    "invalidLinkDescription": "Poate a expirat. Cere magazinului un link nou în chat.",
+    "previewBanner": "Previzualizare: așa văd clienții. Nu se pot plasa comenzi din previzualizare.",
+    "previewOrderingOff": "Previzualizare: comenzile sunt dezactivate",
+    "closed": {
+      "orderingUnavailable": "Magazinul nu primește comenzi acum.",
+      "outsideOpenHours": "Magazinul este închis acum. Poți totuși să te uiți."
+    },
+    "searchPlaceholder": "Caută produse",
+    "categories": "Categorii",
+    "allCategories": "Toate categoriile",
+    "vendors": "Furnizori",
+    "allVendors": "Toți furnizorii",
+    "noProducts": "Nu s-au găsit produse.",
+    "productNotFound": "Acest produs nu mai este disponibil.",
+    "outOfStock": "Stoc epuizat",
+    "addToCart": "Adaugă în coș",
+    "added": "Adăugat în coș",
+    "chooseOptions": "Alege opțiunile",
+    "chooseOption": "Alege {name}",
+    "variantUnavailable": "Această combinație nu este disponibilă.",
+    "buy": "Cumpără",
+    "share": "Distribuie",
+    "linkCopied": "Copiat",
+    "similar": "Similare",
+    "save": "Salvează",
+    "saved": "Salvat",
+    "showImage": "Arată imaginea {number}",
+    "increase": "Mărește cantitatea",
+    "decrease": "Micșorează cantitatea",
+    "remove": "Elimină",
+    "cart": "Coș",
+    "cartEmpty": "Coșul tău este gol.",
+    "continueShopping": "Continuă cumpărăturile",
+    "unavailableItems": "{count, plural, one {# produs nu poate fi comandat acum} other {# produse nu pot fi comandate acum}}",
+    "unavailableNotOrdered": "Nu vor fi incluse în comandă și rămân în coș.",
+    "unavailable": "Nu mai este disponibil",
+    "unavailableHint": "Alege din nou opțiunile",
+    "deletedProduct": "Produs șters",
+    "summary": {
+      "subtotal": "Subtotal",
+      "discount": "Reducere",
+      "delivery": "Livrare",
+      "otherFees": "Alte taxe",
+      "total": "Total",
+      "coupon": "Cupon ({code})",
+      "title": "Sumarul comenzii",
+      "saved": "Economisești {amount}"
+    },
+    "belowMinimum": "Comanda minimă este {amount}.",
+    "checkOut": "Finalizează comanda",
+    "contactDetails": "Datele tale",
+    "optional": "(opțional)",
+    "fields": {
+      "name": "Nume",
+      "email": "E-mail",
+      "phone": "Telefon",
+      "country": "Țară",
+      "state": "Județ",
+      "city": "Oraș",
+      "address1": "Adresă",
+      "address2": "Apartament, clădire etc.",
+      "zip": "Cod poștal",
+      "note": "Notă pentru magazin"
+    },
+    "shipping": {
+      "title": "Livrare",
+      "delivery": "Livrare la adresa mea",
+      "pickup": "Ridicare din magazin",
+      "storeAddress": "Adresa magazinului: {address}"
+    },
+    "payment": {
+      "title": "Plată",
+      "cod": "Plata la livrare"
+    },
+    "placeOrder": "Plasează comanda",
+    "orderPlaced": "Mulțumim! Comanda ta a fost plasată. Îți trimitem noutăți în chat.",
+    "orderTitle": "Comanda #{number}",
+    "orderNotFound": "Comanda nu a fost găsită.",
+    "placedAt": "Plasată pe {date}",
+    "status": {
+      "pending": "Neprocesată",
+      "accepted": "În procesare",
+      "shipped": "Expediată",
+      "concluded": "Finalizată",
+      "cancelled": "Anulată"
+    },
+    "rateTitle": "Evaluează comanda",
+    "rateComment": "Spune-i magazinului ce părere ai (opțional)",
+    "rateSubmit": "Trimite evaluarea",
+    "rateThanks": "Mulțumim pentru evaluare!",
+    "yourRating": "Evaluarea ta",
+    "ratingValue": "{rating} din 5 stele",
+    "previous": "Anterior",
+    "next": "Următor",
+    "pageOf": "Pagina {page} din {pageCount}",
+    "errors": {
+      "generic": "Ceva n-a mers. Încearcă din nou.",
+      "checkFields": "Verifică câmpurile.",
+      "fieldRequired": "{field} este obligatoriu.",
+      "countryUnavailable": "Magazinul nu livrează în această țară.",
+      "invalidLink": "Linkul nu mai funcționează. Cere unul nou magazinului.",
+      "webshopPreviewOnly": "Aceasta este o previzualizare. Se poate comanda doar din linkul unui client.",
+      "rateLimited": "Prea multe încercări. Așteaptă puțin și încearcă din nou.",
+      "orderingUnavailable": "Magazinul nu primește comenzi acum.",
+      "orderBelowMinimum": "Comanda minimă este {minimum}.",
+      "orderBelowVendorMinimum": "Produsele de la {vendorName} trebuie să însumeze cel puțin {minimum}.",
+      "orderOutOfStock": "{productName} nu mai este în stoc.",
+      "orderProductUnavailable": "Unele produse nu mai pot fi comandate. Verifică-ți coșul.",
+      "orderEmpty": "Coșul tău este gol.",
+      "orderShippingTypeUnavailable": "Această opțiune de livrare nu este disponibilă.",
+      "webshopRatingNotAllowed": "Această comandă nu poate fi evaluată.",
+      "webshopCartFull": "Coșul tău poate conține cel mult {maximum} articole diferite.",
+      "notFound": "Acest produs nu mai este disponibil.",
+      "discountCodeNotFound": "Acest cod de reducere nu există.",
+      "discountCodeInactive": "Acest cod nu este activ.",
+      "discountCodeNotStarted": "Acest cod nu este încă valabil.",
+      "discountCodeExpired": "Acest cod a expirat.",
+      "discountCodeUsageLimitReached": "Acest cod s-a epuizat.",
+      "discountCodeAlreadyUsed": "Ai folosit deja acest cod.",
+      "discountCodeNotEligible": "Acest cod nu este disponibil pentru tine.",
+      "discountCodeNotApplicable": "Acest cod nu se aplică produselor din coș.",
+      "discountCodeMinimumAmount": "Codul cere o achiziție de cel puțin {minimum}. Mai adaugă {missing}.",
+      "discountCodeMinimumQuantity": "Codul cere cel puțin {minimum} produse. Mai adaugă {missing}."
+    },
+    "discount": {
+      "label": "Cod de reducere",
+      "placeholder": "Cod de reducere",
+      "apply": "Aplică",
+      "applied": "Cod de reducere aplicat",
+      "automatic": "aplicat automat",
+      "remove": "Elimină codul",
+      "available": "Coduri pe care le poți folosi",
+      "freeShipping": "Livrare gratuită",
+      "bestChoice": "Cea mai bună alegere",
+      "expiresOn": "Expiră pe {date}",
+      "noExpiry": "Fără expirare",
+      "inUse": "Folosit",
+      "saves": "Economisești {amount}",
+      "showMore": "{count, plural, one {Arată încă # cod} other {Arată încă # de coduri}}",
+      "showLess": "Arată mai puțin",
+      "removeShort": "Elimină",
+      "expired": "Expirat",
+      "usedUp": "Epuizat",
+      "notEligible": "Încă nu ești eligibil"
+    },
+    "itemCount": "{count, plural, one {# produs} other {# de produse}}",
+    "relatedProducts": "S-ar putea să-ți placă și"
+  },
+  "webshopLinks": {
+    "preview": "Previzualizare",
+    "getLink": "Obține linkul",
+    "copied": "Link copiat. Pune-l pe un buton al botului: fiecare contact își deschide propriul magazin.",
+    "error": "Linkul nu a putut fi obținut.",
+    "copyError": "Linkul nu a putut fi copiat.",
+    "shopLink": {
+      "label": "Linkul magazinului",
+      "hint": "Lipește acest link într-un buton dintr-un flux, o difuzare sau o secvență. Fiecare contact care îl primește își deschide propriul magazin și poate comanda."
+    },
+    "productLink": {
+      "label": "URL public",
+      "hint": "Copiază și lipește URL-ul în fluxul, difuzarea sau secvența ta. Fiecare contact care îl primește deschide acest produs și poate comanda."
+    }
+  },
+  "discountCodes": {
+    "title": "Cupoane",
+    "description": "Coduri de reducere folosite de clienți la plată sau aplicate automat.",
+    "add": "Adaugă",
+    "edit": "Editează cuponul",
+    "automatic": "Automat",
+    "never": "Niciodată",
+    "searchPlaceholder": "Caută coduri…",
+    "saveError": "Cuponul nu a putut fi salvat.",
+    "created": "Cupon creat",
+    "updated": "Cupon salvat",
+    "deleted": "Cupon șters",
+    "deleteError": "Cuponul nu a putut fi șters.",
+    "deleteTitle": "Ștergi cuponul {code}?",
+    "deleteDescription": "Clienții nu îl mai pot folosi. Comenzile care l-au folosit își păstrează reducerea.",
+    "cancel": "Anulează",
+    "delete": "Șterge",
+    "save": "Salvează",
+    "columns": {
+      "name": "Nume",
+      "discount": "Reducere",
+      "used": "Folosit",
+      "end": "Sfârșit",
+      "active": "Activ"
+    },
+    "discountTypes": {
+      "percentage": "Procent",
+      "fixedAmount": "Sumă fixă",
+      "freeShipping": "Livrare gratuită"
+    },
+    "appliesTo": {
+      "entireOrder": "Întreaga comandă",
+      "category": "O anumită categorie",
+      "products": "Anumite produse"
+    },
+    "minimumTypes": {
+      "none": "Niciuna",
+      "amount": "Sumă minimă de achiziție",
+      "quantity": "Număr minim de produse"
+    },
+    "eligibilities": {
+      "everyone": "Toată lumea",
+      "specificCustomers": "Anumiți clienți"
+    },
+    "form": {
+      "discountCode": "Cod de reducere",
+      "code": "Cod",
+      "generate": "Generează",
+      "autoApply": "Aplică automat acest cupon pe coșuri",
+      "autoApplyHint": "Coșurile îl primesc fără ca clientul să-l scrie. Dintre mai multe cupoane automate câștigă cel cu reducerea cea mai mare.",
+      "typedHint": "Clienții vor introduce acest cod la plată.",
+      "options": "Opțiuni",
+      "discountType": "Tip de reducere",
+      "discountValuePercent": "Valoarea reducerii (%)",
+      "discountValueAmount": "Valoarea reducerii ({currency})",
+      "freeShippingHint": "Elimină costul livrării pentru comenzile livrate clientului.",
+      "appliesTo": "Se aplică la",
+      "category": "Categorie",
+      "products": "Produse",
+      "productsPlaceholder": "Alege produse",
+      "minimumRequirement": "Cerință minimă",
+      "minimumAmount": "Sumă minimă ({currency})",
+      "minimumQuantity": "Număr minim de produse",
+      "usageLimits": "Limite de utilizare",
+      "limitTotal": "Limitează de câte ori poate fi folosită reducerea în total",
+      "usedSoFar": "{count, plural, one {Folosit de # dată până acum} other {Folosit de # ori până acum}}",
+      "oncePerCustomer": "O utilizare per client",
+      "customerEligibility": "Clienți eligibili",
+      "specificCustomersHint": "Doar contactele care corespund filtrului de mai jos la comandă.",
+      "activeDates": "Perioada de valabilitate",
+      "startDate": "Data de început",
+      "endDate": "Data de sfârșit",
+      "isActive": "Activ"
+    },
+    "rules": {
+      "codeCharacters": "Folosește doar litere fără diacritice, cifre, - și _.",
+      "usageBelowUsed": "Acest cod a fost deja folosit de {count} ori; limita nu poate fi mai mică.",
+      "customerConditionRequired": "Adaugă cel puțin o condiție.",
+      "endAfterStart": "Data de sfârșit trebuie să fie după data de început."
+    }
+  },
+  "ecommerceAnalytics": {
+    "title": "Analiză",
+    "lifetime": "Total",
+    "sales": "Vânzări",
+    "orders": "Comenzi",
+    "products": "Produse",
+    "salesByDate": "Vânzări pe dată",
+    "ordersByDate": "Comenzi pe dată",
+    "topProducts": "Produse de top",
+    "topVendors": "Furnizori de top",
+    "columns": {
+      "name": "Nume",
+      "sales": "Vânzări"
+    },
+    "noData": "Nu există date în această perioadă",
+    "refresh": "Reîmprospătează",
+    "change": "{value}%",
+    "noPrevious": "nou",
+    "otherCurrencyOrders": "{count} comenzi în alte monede nu sunt incluse în aceste cifre"
   },
   "responseSla": {
     "label": "SLA de răspuns",

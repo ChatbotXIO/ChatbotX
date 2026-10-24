@@ -7,8 +7,12 @@ import {
   SdkException,
 } from "@chatbotx.io/sdk"
 import { createId } from "@chatbotx.io/utils"
+import type { ImageOptimizeProfile } from "@chatbotx.io/utils/image-optimize"
+import {
+  storeIncomingImage,
+  toStoredMediaFields,
+} from "@chatbotx.io/utils/store-incoming-image"
 import fetch from "cross-fetch"
-import imageSize from "image-size"
 import type { WhatsAppAPI } from "whatsapp-api-js"
 import { logger } from "../../lib/logger"
 import type { WhatsappAuthValue } from "../../schema"
@@ -21,6 +25,7 @@ const fetchMedia = async (
   ctx: Context<WhatsappAuthValue>,
   whatsappClient: WhatsAppAPI,
   mediaId: string,
+  profile: ImageOptimizeProfile,
 ): Promise<ExternalMediaResult> => {
   try {
     const mediaResponse = await whatsappClient.retrieveMedia(mediaId)
@@ -34,32 +39,18 @@ const fetchMedia = async (
         },
       })
       if (response.ok && response.body) {
-        const result: ExternalMediaResult = {
-          originPath: `${getMediaStoragePrefix(ctx)}/${createId()}`,
-          size: Number.parseInt(
-            response.headers.get("content-length") ?? "0",
-            10,
-          ),
-        }
-
-        const bytes = await response.arrayBuffer()
-        const arrayBytes = new Uint8Array(bytes)
-
-        const mimeType = mediaResponse.mime_type
-        if (mimeType.startsWith("image/")) {
-          // Retrieve width / height
-          const dimensions = imageSize(arrayBytes)
-          result.width = dimensions.width
-          result.height = dimensions.height
-        }
-
-        await ctx.uploader?.putObject(result.originPath, Buffer.from(bytes), {
-          ACL: "public-read",
-          ContentLength: result.size,
-          ContentType: mimeType,
+        const stored = await storeIncomingImage({
+          uploader: ctx.uploader,
+          key: `${getMediaStoragePrefix(ctx)}/${createId()}`,
+          bytes: Buffer.from(await response.arrayBuffer()),
+          mimeType: mediaResponse.mime_type,
+          profile,
+          acl: "public-read",
         })
 
-        return result
+        // The message's declared MIME type stays unless the bytes changed format.
+        const { mimeType, ...fields } = toStoredMediaFields(stored)
+        return { ...fields, ...(stored.optimized ? { mimeType } : {}) }
       }
     }
 
@@ -92,8 +83,16 @@ const readMediaReply = async (
   deps: MessageParserDeps,
   media: MediaAttachmentSource,
   fileType: FileType,
+  // Only an `image` message: a `document` keeps the sender's original and a
+  // `sticker` keeps its format.
+  isPhotoMessage = false,
 ): Promise<{ text?: string; attachments: IncomingAttachment[] }> => {
-  const mediaSpecs = await fetchMedia(deps.ctx, deps.whatsappClient, media.id)
+  const mediaSpecs = await fetchMedia(
+    deps.ctx,
+    deps.whatsappClient,
+    media.id,
+    isPhotoMessage ? "media" : "original",
+  )
 
   return {
     ...(media.caption === undefined ? {} : { text: media.caption }),
@@ -103,6 +102,7 @@ const readMediaReply = async (
         sourceId: media.id,
         mimeType: media.mimeType,
         fileType,
+        ...(isPhotoMessage ? { isPhotoMessage } : {}),
         ...mediaSpecs,
       },
     ],
@@ -147,6 +147,7 @@ export const parseImageMessage: WhatsappMessageParser<"image"> = (
       caption: message.image.caption,
     },
     "image",
+    true,
   )
 
 export const parseStickerMessage: WhatsappMessageParser<"sticker"> = (

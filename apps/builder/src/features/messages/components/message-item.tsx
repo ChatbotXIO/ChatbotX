@@ -284,12 +284,14 @@ export const MessageItem = (props: MessageItemProps) => {
       </div>
 
       <div className="flex">
-        {message.messageType === "outgoing" && message.sendError && (
-          <MessageErrorBadge
-            detail={message.sendError}
-            label={t("sendFailed")}
-          />
-        )}
+        {message.sendError &&
+          (message.messageType === "outgoing" ||
+            (guestDisplay && message.messageType === "incoming")) && (
+            <MessageErrorBadge
+              detail={message.sendError}
+              label={t("sendFailed")}
+            />
+          )}
         {/* Meta can terminate an ANSWERED call with no audio (e.g. error
             138021), so this badge isn't gated on the call having been missed. */}
         {whatsappCall?.failureReason && (

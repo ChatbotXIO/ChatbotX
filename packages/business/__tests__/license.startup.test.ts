@@ -134,10 +134,29 @@ describe("assertLicenseAtStartup", () => {
     expect(exitSpy).not.toHaveBeenCalled()
   })
 
-  test("resolves with a warning (no exit) for an expired enterprise license", async () => {
+  test("resolves with a warning (no exit) for a license inside its grace window", async () => {
     setEdition("enterprise")
     process.env.LICENSE_KEY = await signLicense({
       exp: NOW_SECONDS - 2 * DAY_SECONDS,
+    })
+    vi.resetModules()
+    mockPublicKeys()
+    vi.useFakeTimers()
+    vi.setSystemTime(NOW)
+    const exitSpy = vi
+      .spyOn(process, "exit")
+      .mockImplementation(() => undefined as never)
+    const assertLicenseAtStartup = await importAssertLicenseAtStartup()
+
+    await expect(assertLicenseAtStartup()).resolves.toBeUndefined()
+    expect(exitSpy).not.toHaveBeenCalled()
+    vi.useRealTimers()
+  })
+
+  test("resolves with a warning (no exit) for a license past its grace window", async () => {
+    setEdition("enterprise")
+    process.env.LICENSE_KEY = await signLicense({
+      exp: NOW_SECONDS - 9 * DAY_SECONDS,
     })
     vi.resetModules()
     mockPublicKeys()

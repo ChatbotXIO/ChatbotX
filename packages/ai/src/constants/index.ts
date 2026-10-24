@@ -92,6 +92,8 @@ export const aiTimeouts = {
   aiTotal: 120_000,
   aiStep: 60_000,
   aiChunk: 30_000,
+  // Time to the first content chunk of each step; must stay below aiStep.
+  aiFirstChunk: 30_000,
   httpDefault: 30_000,
   mcpList: 30_000,
   mcpCall: 60_000,

@@ -399,6 +399,29 @@ export const workspaceLimitReachedException = () =>
     "workspaceLimitReached",
   )
 
+/** The admin console's "create workspace for an owner" flow refuses a second workspace for an owner who already has a live one — one owner, one owned workspace. */
+export const ownerAlreadyHasWorkspaceException = () =>
+  new ChatbotXException(
+    "This owner already has a workspace.",
+    "ownerAlreadyHasWorkspace",
+    409,
+  )
+
+/** A member email the admin console's create-workspace flow could not resolve to a user in the owner's tenant — only a root-tenant email auto-provisions; a reseller sub-tenant email must already exist. */
+export const adminWorkspaceMemberNotFoundException = (email: string) =>
+  new ChatbotXException(
+    `No user found for "${email}" in this tenant.`,
+    "memberNotFound",
+    404,
+  )
+
+/** The owner's `teamMembers` plan limit has no room left for the owner plus every requested member added in the same batch. */
+export const teamMembersLimitReachedException = () =>
+  new ChatbotXException(
+    "Team member limit reached for this plan",
+    "teamMembersLimit",
+  )
+
 /**
  * `refresh`/`verify` fired against a `Connection` whose status is not one of
  * `ACTIVE_CONNECTION_STATUSES` (`connected`/`degraded`) — matches the FSM's

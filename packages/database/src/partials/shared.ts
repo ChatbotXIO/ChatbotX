@@ -2,6 +2,7 @@ import { createId } from "@chatbotx.io/utils"
 import { sql } from "drizzle-orm"
 import {
   customType,
+  numeric,
   type PgTimestampConfig,
   timestamp,
 } from "drizzle-orm/pg-core"
@@ -43,6 +44,14 @@ export const sharedColumns = {
     .defaultNow()
     .$onUpdate(() => sql`CURRENT_TIMESTAMP`),
 }
+
+/**
+ * A money amount in major units (`12.5` USD). Exact in the database, so
+ * `SUM()` over orders never drifts; read back as a JS number. Every new money
+ * column uses this one helper. `Product.price` predates it and is still a
+ * `double precision`.
+ */
+export const money = () => numeric({ precision: 19, scale: 4, mode: "number" })
 
 export const uploadModes = z.enum(["url", "file"])
 export type UploadMode = z.infer<typeof uploadModes>

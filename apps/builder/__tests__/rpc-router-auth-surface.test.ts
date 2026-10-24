@@ -1,5 +1,5 @@
 import { readdirSync, readFileSync } from "node:fs"
-import { join, relative } from "node:path"
+import { join, relative, sep } from "node:path"
 import { describe, expect, test } from "vitest"
 
 /**
@@ -15,6 +15,10 @@ import { describe, expect, test } from "vitest"
  */
 
 const BUILDER_SRC = join(import.meta.dirname, "..", "src")
+
+/** Path relative to `from`, always "/"-separated (the allowlist is written that way). */
+const posixRelative = (from: string, to: string): string =>
+  relative(from, to).split(sep).join("/")
 
 /** Modules that may hold a raw base, with the reason they are not procedures. */
 const RAW_BASE_ALLOWLIST = new Set([
@@ -74,7 +78,7 @@ describe("/rpc router auth surface", () => {
     const offenders: string[] = []
 
     for (const file of apiModules()) {
-      const relativePath = relative(BUILDER_SRC, file)
+      const relativePath = posixRelative(BUILDER_SRC, file)
       if (RAW_BASE_ALLOWLIST.has(relativePath)) {
         continue
       }
@@ -93,7 +97,7 @@ describe("/rpc router auth surface", () => {
     // Helper modules that define no procedure at all are not a surface.
     const procedureModules = files
       .map((file) => ({
-        path: relative(BUILDER_SRC, file),
+        path: posixRelative(BUILDER_SRC, file),
         source: readFileSync(file, "utf8"),
       }))
       .filter(({ source }) => PROCEDURE_HANDLER.test(source))

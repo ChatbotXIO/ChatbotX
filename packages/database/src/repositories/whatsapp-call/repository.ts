@@ -68,9 +68,10 @@ type WhatsappCallUpsertInput = {
 
 /**
  * Resume-after-refresh only expects a handful of ringing calls; the bound keeps
- * the scan and the follow-up Redis reads cheap.
+ * the scan and the follow-up Redis reads cheap. Exported so a caller can tell a
+ * result that hit the bound (possibly truncated) from one that did not.
  */
-const FIND_RINGING_BY_WORKSPACE_LIMIT = 20
+export const FIND_RINGING_BY_WORKSPACE_LIMIT = 20
 
 /**
  * Fields `attachWacid` moves onto the surviving row when merging, where the

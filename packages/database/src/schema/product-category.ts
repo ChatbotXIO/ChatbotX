@@ -1,5 +1,6 @@
 import {
   type AnyPgColumn,
+  boolean,
   index,
   integer,
   pgTable,
@@ -30,6 +31,9 @@ export const productCategoryModel = pgTable(
       { onDelete: "cascade", onUpdate: "cascade" },
     ),
     name: text().notNull(),
+    imageUrl: text(),
+    /** Off hides the category (and what is filed under it) from customers. */
+    isVisible: boolean().default(true).notNull(),
     rank: integer().default(10).notNull(),
   },
   (table) => [

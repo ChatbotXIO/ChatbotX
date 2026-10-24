@@ -45,6 +45,7 @@ import {
 } from "../../integration/handlers/messenger-template-handler"
 import { logger } from "../../lib/logger"
 import { skipIfBroadcastNotSendable } from "../utils/broadcast-sendable-guard"
+import { applyMiniAppResumeToTemplateParams } from "../utils/messenger-template-mini-app"
 import {
   shouldSuppressRetryableChannelError,
   willSendRetry,
@@ -270,6 +271,24 @@ export async function processMessengerTemplate(
       variables,
       parameterFormat: template.parameterFormat,
     })
+    // Sent only: the stored message keeps the masked params below, so the
+    // resume token never reaches the inbox.
+    const sentParams = flow
+      ? await applyMiniAppResumeToTemplateParams({
+          workspaceId: conversation.workspaceId,
+          contactId: conversation.contactId,
+          conversationId: conversation.id,
+          contactInboxId: contactInbox.id,
+          flowId: flow.id,
+          flowVersionId: flow.versionId,
+          metadata,
+          components:
+            (validated.template.components as MessengerTemplateComponent[]) ||
+            [],
+          params: replacedParams,
+          flowButtons: step?.buttons ?? [],
+        })
+      : replacedParams
 
     const contentAttributes = {
       type: "messenger_template",
@@ -336,7 +355,7 @@ export async function processMessengerTemplate(
         nodeId: step?.nodeId ?? createId(),
         stepType: stepTypes.enum.sendMessengerTemplateMessage,
         buttons: step?.buttons ?? [],
-        template: { ...template, params: replacedParams },
+        template: { ...template, params: sentParams },
       },
       metadata,
       messageId: newMessage.id,

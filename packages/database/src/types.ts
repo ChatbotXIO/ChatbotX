@@ -298,6 +298,19 @@ export type AnalyticsSequenceEventModel =
 export type AnalyticsFlowNodeEventModel =
   typeof schema.analyticsFlowNodeEventModel.$inferSelect
 export type ProductModel = typeof schema.productModel.$inferSelect
+export type VendorModel = typeof schema.vendorModel.$inferSelect
+export type CartModel = typeof schema.cartModel.$inferSelect
+export type DiscountCodeModel = typeof schema.discountCodeModel.$inferSelect
+export type DiscountCodeRedemptionModel =
+  typeof schema.discountCodeRedemptionModel.$inferSelect
+export type EcommerceOpenHoursModel =
+  typeof schema.ecommerceOpenHoursModel.$inferSelect
+export type EcommerceSettingsModel =
+  typeof schema.ecommerceSettingsModel.$inferSelect
+export type OrderModel = typeof schema.orderModel.$inferSelect
+export type OrderItemModel = typeof schema.orderItemModel.$inferSelect
+export type OrderStatusHistoryModel =
+  typeof schema.orderStatusHistoryModel.$inferSelect
 export type ProductCategoryModel =
   typeof schema.productCategoryModel.$inferSelect
 export type IntegrationMetaCatalogModel =

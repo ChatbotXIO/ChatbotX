@@ -13,7 +13,7 @@ import { createRealtimeGateway, type RealtimeGateway } from "../src/gateway"
 import { testGatewayOptions } from "./helpers/gateway-options"
 
 const { reportWorkspacePresenceMock } = vi.hoisted(() => ({
-  reportWorkspacePresenceMock: vi.fn().mockResolvedValue(undefined),
+  reportWorkspacePresenceMock: vi.fn().mockResolvedValue(true),
 }))
 
 vi.mock("../src/lib/presence-report", () => ({

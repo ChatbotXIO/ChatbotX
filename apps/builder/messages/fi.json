@@ -2096,6 +2096,10 @@
       "label": "Lähettäjän osoite",
       "placeholder": "noreply@example.com"
     },
+    "fromName": {
+      "label": "Lähettäjän nimi",
+      "placeholder": "ChatbotX"
+    },
     "messageTemplate": {
       "label": "Viestimalli"
     },
@@ -2656,7 +2660,13 @@
       "sendGoogleAdsConversion": "Lähetä Google Ads -konversio",
       "changeGamificationScore": "Muuta pelillistämisen pisteitä",
       "sendViewCatalog": "Näytä tuotekatalogi",
-      "sendProducts": "Lähetä tuotteita"
+      "sendProducts": "Lähetä tuotteita",
+      "sendCollection": "Kokoelma"
+    },
+    "externalRequest": {
+      "errors": {
+        "requestFailed": "Ulkoista pyyntöä ei voitu testata. Tarkista pyyntömääritys ja yritä uudelleen."
+      }
     },
     "splitTraffic": {
       "balanceHint": "Kokonaissumman on oltava 100 %.",
@@ -2837,6 +2847,43 @@
       "productsSelected": "{count, plural, one {# tuote} other {# tuotetta}}",
       "noneSelected": "Ei vielä tuotteita",
       "sendFailed": "Tuotteita ei voitu lähettää."
+    },
+    "sendCollection": {
+      "title": "Kokoelma",
+      "dataType": "Tietotyyppi",
+      "dataTypes": {
+        "products": "Tuotteet"
+      },
+      "collectionType": "Kokoelman tyyppi",
+      "collectionTypes": {
+        "automated": {
+          "label": "Automaattinen",
+          "description": "Ehtoja vastaavat nykyiset ja tulevat tuotteet lisätään automaattisesti."
+        },
+        "manual": {
+          "label": "Manuaalinen",
+          "description": "Lisää tuotteet yksi kerrallaan."
+        }
+      },
+      "condition": "Ehto",
+      "name": "Nimi",
+      "optional": "(Valinnainen)",
+      "category": "Kategoria",
+      "subcategory": "Alakategoria",
+      "vendor": "Toimittaja",
+      "all": "Kaikki",
+      "items": "Tuotteet",
+      "select": "Valitse",
+      "selectPlaceholder": "Valitse vähintään 1 tuote",
+      "selectAll": "Valitse kaikki",
+      "deselectAll": "Poista valinnat",
+      "maxProducts": "Enintään {count} tuotetta; tuote, jota kauppa ei enää näytä, ohitetaan.",
+      "automatedHint": "Lähettää enintään {count} vastaavaa tuotetta kortteina, jotka avaavat tuotteen verkkokaupassa.",
+      "summaryAll": "Kaikki kaupan tuotteet",
+      "summaryAutomated": "Tuotteet: {filters}",
+      "summaryManual": "{count, plural, one {# tuote} other {# tuotetta}}",
+      "cancel": "Peruuta",
+      "save": "Tallenna"
     }
   },
   "folders": {
@@ -3980,6 +4027,7 @@
         "buttonText": "Painikkeen teksti",
         "buttonType": "Painikkeen tyyppi",
         "visitWebsite": "Avaa verkkosivusto",
+        "openMiniApp": "Avaa minisovellus",
         "callPhoneNumber": "Soita puhelinnumeroon",
         "postback": "Painike"
       },
@@ -4183,6 +4231,7 @@
     "orContinueWith": "Tai jatka käyttäen",
     "continueWithFacebook": "Jatka Facebookilla",
     "continueWithGoogle": "Jatka Googlella",
+    "continueWithProvider": "Jatka palvelulla {name}",
     "continueWithEmail": "Jatka sähköpostilla",
     "continueWithMagicLink": "Jatka taikalinkillä",
     "dontHaveAnAccount": "Eikö sinulla ole tiliä?",
@@ -4213,11 +4262,15 @@
     "changePasswordTitle": "Vaihda salasanasi",
     "changePasswordDescription": "Aseta uusi salasana ennen jatkamista.",
     "passwordChangeSuccess": "Salasana vaihdettu",
+    "signUpDisabledTitle": "Rekisteröityminen on poistettu käytöstä",
+    "signUpDisabledDescription": "Uusia tilejä voi luoda vain järjestelmänvalvoja tai kutsulinkin kautta.",
     "oauthError": {
       "accountNotLinked": "Tällä sähköpostiosoitteella on jo tili, eikä sitä voitu yhdistää. Kirjaudu sisään samalla tavalla kuin aiemmin tai ota yhteyttä tukeen.",
       "unableToLinkAccount": "Tätä kirjautumista ei voitu yhdistää olemassa olevaan tiliin. Kirjaudu samalla tavalla kuin aiemmin tai ota yhteyttä tukeen.",
       "sessionExpired": "Kirjautumisyritys vanheni. Yritä uudelleen.",
       "accessDenied": "Kirjautuminen peruutettiin.",
+      "signUpDisabled": "Tätä tiliä ei vielä ole, ja rekisteröityminen on poistettu käytöstä. Pyydä järjestelmänvalvojaa luomaan se sinulle.",
+      "invalidInvitation": "Tämä kutsu on virheellinen tai vanhentunut.",
       "generic": "Kirjautuminen epäonnistui. Yritä uudelleen."
     }
   },
@@ -4250,6 +4303,25 @@
       "unknownFieldTarget": "Yhdistettyä yhteystiedon kenttää ei ole enää olemassa.",
       "actionReferenceNotFound": "Toiminto viittaa flow'hun, tunnisteeseen tai kenttään, jota ei ole enää olemassa.",
       "fieldMappingRequired": "Lisää vähintään yksi kenttäyhdistäminen."
+    },
+    "form": {
+      "required": "Tämä kenttä on pakollinen.",
+      "minLength": "Kirjoita vähintään {minimum} merkkiä.",
+      "maxLength": "Kirjoita enintään {maximum} merkkiä.",
+      "minNumber": "Anna luku, joka on vähintään {minimum}.",
+      "moreThan": "Anna lukua {minimum} suurempi luku.",
+      "maxNumber": "Anna luku, joka on enintään {maximum}.",
+      "lessThan": "Anna lukua {maximum} pienempi luku.",
+      "number": "Anna luku.",
+      "wholeNumber": "Anna kokonaisluku.",
+      "minItems": "Valitse vähintään {minimum}.",
+      "maxItems": "Valitse enintään {maximum}.",
+      "email": "Anna kelvollinen sähköpostiosoite.",
+      "url": "Anna kelvollinen linkki, joka alkaa https://.",
+      "format": "Arvo ei ole oikeassa muodossa.",
+      "option": "Valitse jokin vaihtoehdoista.",
+      "invalid": "Arvo ei kelpaa.",
+      "checkFields": "Joitakin kenttiä pitää korjata. Tarkista punaisella merkityt."
     }
   },
   "webchat": {
@@ -4849,7 +4921,8 @@
     "chatbotInvitationDescription1": "Liity kohteeseen {chatbotName}",
     "chatbotInvitationDescription2": "{userName} on kutsunut sinut liittymään kohteeseen {chatbotName}.",
     "invalidInvitation": "Tämä kutsu on virheellinen tai vanhentunut.",
-    "workspaceUnavailable": "Tämä työtila ei ole enää käytettävissä."
+    "workspaceUnavailable": "Tämä työtila ei ole enää käytettävissä.",
+    "signUpToJoin": "Luo tili liittyäksesi"
   },
   "inboxes": {
     "markReadOnOutbound": {
@@ -5237,7 +5310,8 @@
       "contactReferredExistingContact": "Yhteystieto suositteli olemassa olevaa yhteystietoa",
       "callRecorded": "Puhelu tallennettu",
       "callTranscribed": "Puhelu litteroitu",
-      "anyProduct": "Mikä tahansa tuote"
+      "anyProduct": "Mikä tahansa tuote",
+      "anyCategory": "Mikä tahansa kategoria"
     },
     "actions": {
       "addTag": "Lisää tunniste",
@@ -5358,7 +5432,8 @@
       "userPlaceholder": "Käyttäjätunnus",
       "keyword": "Avainsana",
       "keywordPlaceholder": "Toiminto tai tiedot",
-      "allAdmins": "Kaikki ylläpitäjät"
+      "allAdmins": "Kaikki ylläpitäjät",
+      "allWorkspaces": "Kaikki työtilat"
     }
   },
   "customFields": {
@@ -6221,7 +6296,14 @@
       "supportOff": "Pois",
       "searchPlaceholder": "Hae nimen, omistajan sähköpostin tai tunnuksen perusteella",
       "descriptionConsentDisabled": "All workspaces can be opened by platform administrators.",
-      "supportAccessible": "Accessible"
+      "supportAccessible": "Accessible",
+      "createButton": "Create workspace",
+      "createTitle": "Create workspace for an owner",
+      "createDescription": "Creates a workspace for the owner's email, adding any member emails you list. A new email gets a mailed temporary password.",
+      "ownerEmail": "Owner email",
+      "memberEmails": "Member emails",
+      "membersHint": "Every member gets the permissions selected below. New emails get a mailed temporary password.",
+      "createdSummary": "Workspace created for {ownerEmail} — {memberCount} member(s) added, {newAccountCount} new account(s) emailed a temporary password."
     },
     "admins": {
       "title": "Platform administrators",
@@ -6237,6 +6319,19 @@
       "removed": "Platform administrator removed.",
       "addError": "Could not add the platform administrator.",
       "removeError": "Could not remove the platform administrator."
+    },
+    "auditLogs": {
+      "title": "Alustan tarkastuslokit",
+      "description": "Tarkastustoiminta kaikissa tämän alustan työtiloissa."
+    },
+    "smtp": {
+      "title": "SMTP-asetukset",
+      "description": "Alustan sähköpostin siirtotapa. Jätä tämä tyhjäksi, jos haluat jatkaa SMTP_SERVER- ja SMTP_FROM-ympäristömuuttujien käyttöä.",
+      "usingEnv": "SMTP-asetuksia ei ole tallennettu — alustan sähköposti käyttää SMTP_SERVER-ympäristömuuttujaa.",
+      "remove": "Poista SMTP-asetukset",
+      "errors": {
+        "passwordRequired": "Anna SMTP-salasana."
+      }
     }
   },
   "platformCredentials": {
@@ -6315,6 +6410,8 @@
     }
   },
   "manageSidebar": {
+    "communityGroup": "Yhteisö",
+    "enterpriseGroup": "Yritys",
     "platformGroup": "Alusta",
     "toolsGroup": "Työkalut",
     "saasGroup": "SaaS",
@@ -6391,7 +6488,82 @@
     "unknown": "Tuntematon"
   },
   "orders": {
-    "title": "Tilaukset"
+    "title": "Tilaukset",
+    "empty": "Ei vielä tilauksia.",
+    "searchPlaceholder": "Hae nimellä, puhelinnumerolla, sähköpostilla tai tilausnumerolla",
+    "orderNumber": "Tilaus #{number}",
+    "print": "Tulosta",
+    "inbox": "Saapuneet",
+    "statusUpdated": "Tilauksen tila päivitetty",
+    "statusUpdateError": "Tilauksen tilaa ei voitu päivittää",
+    "updateStatusTitle": "Päivitä tilauksen tila",
+    "message": "Viesti",
+    "messagePlaceholder": "Valinnainen",
+    "messageDescription": "Lähetetään asiakkaalle hänen keskustelussaan.",
+    "cancel": "Peruuta",
+    "continue": "Jatka",
+    "delete": "Poista",
+    "deleted": "Tilaus poistettu",
+    "deleteError": "Tilausta ei voitu poistaa",
+    "deleteTitle": "Poistetaanko tilaus #{number}?",
+    "deleteDescription": "Tilaus, sen tuotteet ja historia poistetaan. Sen varaama varasto palautetaan.",
+    "columns": {
+      "name": "Nimi",
+      "total": "Yhteensä",
+      "status": "Tila",
+      "date": "Päivämäärä",
+      "rating": "Arvosana",
+      "quantity": "Määrä",
+      "price": "Hinta",
+      "vendor": "Toimittaja"
+    },
+    "fields": {
+      "name": "Nimi",
+      "email": "Sähköposti",
+      "phone": "Puhelin",
+      "country": "Maa",
+      "state": "Osavaltio/maakunta",
+      "city": "Kaupunki",
+      "street": "Katuosoite",
+      "zip": "Postinumero",
+      "shippingType": "Toimitus",
+      "orderId": "Tilaustunnus",
+      "date": "Päivämäärä",
+      "subtotal": "Välisumma",
+      "discount": "Alennus",
+      "deliveryCost": "Toimituskulut",
+      "otherTaxes": "Muut verot",
+      "total": "Yhteensä",
+      "paymentMethod": "Maksutapa",
+      "status": "Tila",
+      "note": "Muistiinpano",
+      "cancelReason": "Peruutuksen syy",
+      "rating": "Arvio",
+      "ratingComment": "Asiakkaan kommentti",
+      "coupon": "Kuponki ({code})"
+    },
+    "statuses": {
+      "pending": "Käsittelemättä",
+      "accepted": "Hyväksytty",
+      "shipped": "Lähetetty",
+      "concluded": "Valmis",
+      "cancelled": "Peruttu"
+    },
+    "transitions": {
+      "accepted": "Hyväksy",
+      "shipped": "Lähetä",
+      "concluded": "Merkitse valmiiksi",
+      "cancelled": "Peruuta"
+    },
+    "paymentMethods": {
+      "cod": "Postiennakko"
+    },
+    "shippingTypes": {
+      "delivery": "Toimitus asiakkaalle",
+      "pickup": "Nouto myymälästä"
+    },
+    "description": "Asiakkaidesi tekemät tilaukset.",
+    "ratingValue": "{rating}/5 ★"
   },
   "products": {
     "title": "Tuotteet",
@@ -6448,7 +6620,8 @@
         "label": "Salli asiakkaiden ostaa tämä tuote, kun se on loppunut varastosta"
       },
       "vendor": {
-        "label": "Toimittaja"
+        "label": "Toimittaja",
+        "none": "Ei mitään"
       },
       "rank": {
         "label": "Sijoitus"
@@ -6581,8 +6754,8 @@
     "loadError": "Tuoteluokkia ei voitu ladata.",
     "all": "Kaikki tuotteet",
     "create": "Luo luokka",
-    "edit": "Nimeä luokka uudelleen",
-    "name": "Luokan nimi",
+    "edit": "Muokkaa",
+    "name": "Nimi",
     "namePlaceholder": "esim. kesämallisto",
     "parent": "Yläluokka",
     "noParent": "Ei mitään (ylätaso)",
@@ -6602,12 +6775,25 @@
     "columns": {
       "name": "Nimi",
       "products": "Tuotteet",
-      "subcategories": "Alaluokat"
+      "subcategories": "Alaluokat",
+      "visible": "Näkyvissä"
     },
     "expand": "Näytä alaluokat",
     "collapse": "Piilota alaluokat",
     "productCount": "{count, plural, =0 {Ei tuotteita} one {# tuote} other {# tuotetta}}",
-    "deleteChildrenWarning": "{count, plural, one {Myös sen # alaluokka poistetaan.} other {Myös sen # alaluokkaa poistetaan.}}"
+    "deleteChildrenWarning": "{count, plural, one {Myös sen # alaluokka poistetaan.} other {Myös sen # alaluokkaa poistetaan.}}",
+    "add": "Lisää",
+    "dialogTitle": "Luokka",
+    "image": "Kuva",
+    "continue": "Jatka",
+    "subcategories": "Alaluokat",
+    "subcategoriesOf": "Luokan {name} alaluokat",
+    "emptySub": "Ei vielä alaluokkia.",
+    "back": "Takaisin luokkiin",
+    "getId": "Hae tunnus",
+    "idCopied": "Luokan tunnus {id} kopioitu",
+    "idCopyError": "Tunnusta ei voitu kopioida",
+    "description": "Ryhmittele tuotteesi kategorioihin ja alakategorioihin."
   },
   "productImport": {
     "title": "Tuo",
@@ -9086,6 +9272,543 @@
       "hours": "Tunnit",
       "closed": "Suljettu"
     }
+  },
+  "productVendors": {
+    "title": "Toimittajat",
+    "add": "Lisää",
+    "edit": "Muokkaa",
+    "delete": "Poista",
+    "actions": "Toiminnot",
+    "save": "Tallenna",
+    "cancel": "Peruuta",
+    "moreOptions": "Lisää asetuksia",
+    "empty": "Ei vielä toimittajia.",
+    "created": "Toimittaja lisätty",
+    "updated": "Toimittaja päivitetty",
+    "deleted": "Toimittaja poistettu",
+    "saveError": "Toimittajaa ei voitu tallentaa",
+    "deleteError": "Toimittajaa ei voitu poistaa",
+    "deleteTitle": "Poistetaanko {name}?",
+    "deleteDescription": "{count, plural, =0 {Mikään tuote ei käytä tätä toimittajaa.} one {# tuote jää ilman toimittajaa.} other {# tuotetta jää ilman toimittajaa.}}",
+    "fields": {
+      "name": "Nimi",
+      "shortDescription": "Lyhyt kuvaus",
+      "phone": "Puhelin",
+      "storeAddress": "Myymälän osoite",
+      "image": "Kuva",
+      "optional": "Valinnainen",
+      "discountPercent": "Alennus (0-100 %)",
+      "minimumOrderValue": "Tilauksen vähimmäisarvo",
+      "openHours": "Aukioloajat",
+      "category": "Luokka",
+      "subcategory": "Alaluokka",
+      "none": "Ei mitään"
+    },
+    "columns": {
+      "name": "Nimi",
+      "products": "Tuotteita yhteensä",
+      "active": "Aktiivinen"
+    },
+    "description": "Myyjät ja brändit, joihin tuotteesi kuuluvat."
+  },
+  "ecommerceSettings": {
+    "save": "Tallenna",
+    "saved": "Asetukset tallennettu",
+    "saveError": "Asetuksia ei voitu tallentaa",
+    "rank": {
+      "label": "Sijoitus",
+      "default": "Oletus"
+    },
+    "tabs": {
+      "general": "Yleiset",
+      "payments": "Maksut",
+      "shipping": "Toimitus",
+      "checkout": "Kassa"
+    },
+    "general": {
+      "orderingAvailable": {
+        "label": "Tilaaminen on mahdollista",
+        "description": "Tällä kentällä voit estää asiakkaita tekemästä tilauksia muuttamatta aukioloaikoja. Aukioloajat myös määrittävät saatavuutesi."
+      },
+      "webshopProductView": {
+        "label": "Verkkokaupan tuotenäkymä",
+        "description": "Määrittää, miten tuotteet näytetään verkkokaupassasi.",
+        "options": {
+          "list": "Lista",
+          "listWithoutImage": "Lista ilman kuvaa",
+          "card": "Kortti",
+          "cardSquare": "Kortti neliönmuotoisella kuvalla",
+          "image": "Kuva",
+          "imageSquare": "Kuva (neliö)"
+        }
+      },
+      "openHours": {
+        "label": "Aukioloajat",
+        "description": "Ajanjaksot, jolloin asiakkaasi voivat tehdä tilauksen."
+      },
+      "searchProducts": {
+        "label": "Hae tuotteita",
+        "description": "Salli asiakkaiden lähettää viestejä tuotteiden löytämiseksi."
+      },
+      "facebookPixelId": {
+        "label": "Facebook Pixel",
+        "description": "Seuraa konversioita FB-pikselillä ja mittaa mainosten tuloksia. Seuraavat tapahtumat seurataan: ADD_TO_CART, INITIATE_CHECKOUT, PURCHASE, VIEW_CONTENT"
+      },
+      "abandonedCart": {
+        "label": "Hylätyn ostoskorin viesti",
+        "description": "Kuinka kauan odotetaan ennen hylätyn ostoskorin viestin lähettämistä, kun käyttäjä poistuu botistasi tuote ostoskorissa.",
+        "disabled": "Pois käytöstä",
+        "afterMinutes": "{count} minuutin kuluttua",
+        "afterHours": "{count, plural, one {# tunnin kuluttua} other {# tunnin kuluttua}}"
+      },
+      "productButtons": {
+        "label": "Tuotteiden painikkeet",
+        "description": "Tämä asetus määrittää, mitkä painikkeet näkyvät tuotteissa botissasi.",
+        "options": {
+          "addToCart": "Lisää ostoskoriin",
+          "share": "Jaa",
+          "similar": "Samankaltaiset",
+          "save": "Tallenna"
+        }
+      },
+      "productImageSize": {
+        "label": "Tuotteiden kuvakoko",
+        "description": "Tämä asetus määrittää tuotekuvien koon botissasi",
+        "options": {
+          "bigSquare": "Suuri (neliö)",
+          "mediumRectangle": "Keskikokoinen (suorakulmio)"
+        }
+      },
+      "allowRateOrders": {
+        "label": "Salli tilausten arvostelu",
+        "description": "Salli asiakkaiden arvostella tilaus ja kirjoittaa arvostelu, jos he eivät ole tyytyväisiä. Vain botin ylläpitäjät näkevät arvostelut"
+      },
+      "notifyOnCartStatusChange": {
+        "label": "Lähetä ilmoitus, kun ostoskorin tila muuttuu",
+        "description": "Asiakas saa ilmoituksen aina, kun muutat tilauksen tilaa. Tilauksen peruutus- ja valmistumisilmoitusta ei voi poistaa käytöstä."
+      },
+      "abandonedCartFlow": {
+        "label": "Hylätyn ostoskorin flow",
+        "description": "Flow, jonka botti käynnistää asiakkaalle, kun ostoskori on ollut näin kauan koskematta. Käytä painikkeissa '{{shop_token}}' avataksesi ostoskorin. Triggerit voivat käyttää myös tapahtumaa \"Cart abandoned\".",
+        "none": "Ei flowta (vain trigger-tapahtuma)"
+      }
+    },
+    "payments": {
+      "currencyMismatch": "{count, plural, one {# tuotteen hinta on} other {# tuotteen hinta on}} annettu muussa valuutassa kuin {currency}. Tilaukset veloittavat hinnan valuutassa {currency}.",
+      "paymentMethods": {
+        "label": "Maksutavat",
+        "description": "Kassasivulla käytössä olevat maksutavat. Listan ensimmäinen maksutapa on valittuna kassasivulla.",
+        "options": {
+          "cod": "Postiennakko"
+        }
+      },
+      "currency": {
+        "label": "Valuutta",
+        "description": "Valuutta, jossa määrität tuotteiden hinnat. Asiakkaita veloitetaan tässä valuutassa."
+      },
+      "currencyPosition": {
+        "label": "Valuutan sijainti",
+        "description": "Tällä asetuksella määrität valuutan sijainnin.",
+        "options": {
+          "left": "Vasemmalla",
+          "leftSpace": "Vasemmalla välilyönnillä",
+          "right": "Oikealla",
+          "rightSpace": "Oikealla välilyönnillä"
+        }
+      },
+      "currencySymbol": {
+        "label": "Valuuttasymboli",
+        "description": "Valuuttasymboli näytetään hintojen edessä. Jos haluat välilyönnin symbolin ja hinnan väliin, lisää välilyönti symbolin loppuun."
+      },
+      "serviceFeePercent": {
+        "label": "Muut maksut / Palvelumaksut (0 - 100 %)",
+        "description": "Myyntiin liittyvät muut maksut."
+      }
+    },
+    "shipping": {
+      "shippingType": {
+        "label": "Toimitustapa",
+        "description": "Tällä asetuksella määrität, miten asiakas saa tilauksensa.",
+        "options": {
+          "none": "Ei mitään",
+          "delivery": "Toimitus asiakkaalle",
+          "pickup": "Nouto myymälästä",
+          "deliveryAndPickup": "Toimitus asiakkaalle, nouto myymälästä"
+        }
+      },
+      "storeAddress": {
+        "label": "Myymälän osoite",
+        "description": "Tämä osoite näytetään asiakkaalle kassasivulla, jos sallit noudon myymälästä."
+      },
+      "shippingCountries": {
+        "label": "Toimitusmaat",
+        "description": "Maat, joihin toimitat tilauksia."
+      },
+      "defaultShippingCountry": {
+        "label": "Oletustoimitusmaa",
+        "description": "Maa, joka valitaan oletuksena kassasivulla.",
+        "none": "Ei mitään"
+      },
+      "deliveryCost": {
+        "label": "Toimituskulut",
+        "description": "Kiinteä hinta tilauksen toimittamisesta asiakkaan osoitteeseen."
+      },
+      "defaultCountryNotShipped": "Valitse jokin toimitusmaista."
+    },
+    "checkout": {
+      "checkoutMode": {
+        "label": "Kassa",
+        "description": "Tämä asetus määrittää, missä asiakkaasi viimeistelevät tilauksensa. Jos haluat käyttäjän viimeistelevän tilauksen botin ulkopuolella, esimerkiksi verkkosivustollasi tai Amazonissa, älä käytä oletuskassasivuamme.",
+        "options": {
+          "default": "Oletuskassasivu",
+          "externalLink": "Mukautettu ulkoinen kassasivu",
+          "flow": "Flow",
+          "productPage": "Siirry ulkoiselle tuotesivulle"
+        }
+      },
+      "checkoutLink": {
+        "label": "Kassasivun linkki",
+        "description": "Ulkoinen sivu, jolla asiakkaat viimeistelevät tilauksensa."
+      },
+      "checkoutFlowId": {
+        "label": "Kassa-flow",
+        "description": "Flow, joka suoritetaan, kun asiakas siirtyy kassalle.",
+        "placeholder": "Valitse flow"
+      },
+      "minimumOrderValue": {
+        "label": "Tilauksen vähimmäisarvo",
+        "description": "Pienin tilauksen arvo, jonka asiakas voi tehdä. Ehto tarkistetaan, kun kaikki alennukset on huomioitu."
+      },
+      "requiredFields": {
+        "requireName": {
+          "label": "Vaadi ostajan nimi",
+          "description": "Ostajan nimi kerätään kassalla."
+        },
+        "requireEmail": {
+          "label": "Vaadi sähköpostiosoite",
+          "description": "Ostajan sähköposti kerätään kassalla."
+        },
+        "requirePhone": {
+          "label": "Vaadi puhelinnumero",
+          "description": "Ostajan puhelinnumero kerätään kassalla."
+        },
+        "requireState": {
+          "label": "Vaadi osavaltio/maakunta",
+          "description": "Ostajan osavaltio tai maakunta kerätään kassalla."
+        },
+        "requireZip": {
+          "label": "Vaadi postinumero",
+          "description": "Ostajan postinumero kerätään kassalla."
+        }
+      },
+      "orderConfirmationMode": {
+        "label": "Tilausvahvistusviesti",
+        "description": "Mitä asiakas saa keskusteluun, kun tilaus on tehty. Oletusviesti näyttää tilauksen tiedot työtilan kielellä.",
+        "options": {
+          "default": "Oletusviesti",
+          "flow": "Suorita flow",
+          "none": "Älä lähetä mitään"
+        }
+      },
+      "orderConfirmationFlowId": {
+        "label": "Tilausvahvistuksen flow",
+        "description": "Flow, joka lähetetään asiakkaalle oletusviestin sijaan, kun tilaus on tehty."
+      }
+    }
+  },
+  "openHours": {
+    "alwaysOpen": "Aina auki",
+    "addNew": "Lisää uusi",
+    "dialogTitle": "Aukioloajat",
+    "name": "Nimi",
+    "namePlaceholder": "esim. Arkipäivät",
+    "day": "Päivä",
+    "from": "Avautuu",
+    "to": "Sulkeutuu",
+    "add": "Lisää ajat",
+    "remove": "Poista",
+    "cancel": "Peruuta",
+    "continue": "Jatka",
+    "created": "Aukioloajat luotu",
+    "saveError": "Aukioloaikoja ei voitu tallentaa",
+    "days": {
+      "0": "Sunnuntai",
+      "1": "Maanantai",
+      "2": "Tiistai",
+      "3": "Keskiviikko",
+      "4": "Torstai",
+      "5": "Perjantai",
+      "6": "Lauantai"
+    },
+    "sameTimes": "Avaamis- ja sulkemisajan on oltava eri."
+  },
+  "webshop": {
+    "metadataTitle": "Kauppa",
+    "metadataOrderTitle": "Tilauksesi",
+    "invalidLinkTitle": "Linkki ei toimi",
+    "invalidLinkDescription": "Se on ehkä vanhentunut. Pyydä kaupalta uusi linkki keskustelussa.",
+    "previewBanner": "Esikatselu: näin asiakkaat näkevät sivun. Esikatselusta ei voi tilata.",
+    "previewOrderingOff": "Esikatselu: tilaaminen ei ole käytössä",
+    "closed": {
+      "orderingUnavailable": "Kauppa ei ota tilauksia vastaan juuri nyt.",
+      "outsideOpenHours": "Kauppa on nyt suljettu. Voit silti selata."
+    },
+    "searchPlaceholder": "Hae tuotteita",
+    "categories": "Kategoriat",
+    "allCategories": "Kaikki kategoriat",
+    "vendors": "Toimittajat",
+    "allVendors": "Kaikki toimittajat",
+    "noProducts": "Tuotteita ei löytynyt.",
+    "productNotFound": "Tuote ei ole enää saatavilla.",
+    "outOfStock": "Loppu varastosta",
+    "addToCart": "Lisää ostoskoriin",
+    "added": "Lisätty ostoskoriin",
+    "chooseOptions": "Valitse vaihtoehdot",
+    "chooseOption": "Valitse {name}",
+    "variantUnavailable": "Tätä yhdistelmää ei ole saatavilla.",
+    "buy": "Osta",
+    "share": "Jaa",
+    "linkCopied": "Kopioitu",
+    "similar": "Samankaltaiset",
+    "save": "Tallenna",
+    "saved": "Tallennettu",
+    "showImage": "Näytä kuva {number}",
+    "increase": "Lisää määrää",
+    "decrease": "Vähennä määrää",
+    "remove": "Poista",
+    "cart": "Ostoskori",
+    "cartEmpty": "Ostoskorisi on tyhjä.",
+    "continueShopping": "Jatka ostoksia",
+    "unavailableItems": "{count, plural, one {# tuotetta ei voi tilata juuri nyt} other {# tuotetta ei voi tilata juuri nyt}}",
+    "unavailableNotOrdered": "Niitä ei tilata, ja ne jäävät ostoskoriin.",
+    "unavailable": "Ei enää saatavilla",
+    "unavailableHint": "Valitse vaihtoehdot uudelleen",
+    "deletedProduct": "Poistettu tuote",
+    "summary": {
+      "subtotal": "Välisumma",
+      "discount": "Alennus",
+      "delivery": "Toimitus",
+      "otherFees": "Muut maksut",
+      "total": "Yhteensä",
+      "coupon": "Kuponki ({code})",
+      "title": "Tilauksen yhteenveto",
+      "saved": "Säästät {amount}"
+    },
+    "belowMinimum": "Vähimmäistilaus on {amount}.",
+    "checkOut": "Kassalle",
+    "contactDetails": "Tietosi",
+    "optional": "(valinnainen)",
+    "fields": {
+      "name": "Nimi",
+      "email": "Sähköposti",
+      "phone": "Puhelin",
+      "country": "Maa",
+      "state": "Maakunta",
+      "city": "Kaupunki",
+      "address1": "Osoite",
+      "address2": "Asunto, rakennus jne.",
+      "zip": "Postinumero",
+      "note": "Viesti kaupalle"
+    },
+    "shipping": {
+      "title": "Toimitus",
+      "delivery": "Toimitus osoitteeseeni",
+      "pickup": "Nouto kaupasta",
+      "storeAddress": "Kaupan osoite: {address}"
+    },
+    "payment": {
+      "title": "Maksu",
+      "cod": "Maksu toimituksen yhteydessä"
+    },
+    "placeOrder": "Tee tilaus",
+    "orderPlaced": "Kiitos! Tilauksesi on vastaanotettu. Lähetämme päivitykset keskusteluun.",
+    "orderTitle": "Tilaus #{number}",
+    "orderNotFound": "Tilausta ei löytynyt.",
+    "placedAt": "Tilattu {date}",
+    "status": {
+      "pending": "Käsittelemättä",
+      "accepted": "Käsittelyssä",
+      "shipped": "Lähetetty",
+      "concluded": "Valmis",
+      "cancelled": "Peruttu"
+    },
+    "rateTitle": "Arvioi tilauksesi",
+    "rateComment": "Kerro kaupalle mielipiteesi (valinnainen)",
+    "rateSubmit": "Lähetä arvio",
+    "rateThanks": "Kiitos arviostasi!",
+    "yourRating": "Arviosi",
+    "ratingValue": "{rating}/5 tähteä",
+    "previous": "Edellinen",
+    "next": "Seuraava",
+    "pageOf": "Sivu {page}/{pageCount}",
+    "errors": {
+      "generic": "Jokin meni vikaan. Yritä uudelleen.",
+      "checkFields": "Tarkista kentät.",
+      "fieldRequired": "{field} on pakollinen.",
+      "countryUnavailable": "Kauppa ei toimita tähän maahan.",
+      "invalidLink": "Linkki ei enää toimi. Pyydä kaupalta uusi.",
+      "webshopPreviewOnly": "Tämä on esikatselu. Tilata voi vain asiakkaan linkistä.",
+      "rateLimited": "Liian monta yritystä. Odota hetki ja yritä uudelleen.",
+      "orderingUnavailable": "Kauppa ei ota tilauksia vastaan juuri nyt.",
+      "orderBelowMinimum": "Vähimmäistilaus on {minimum}.",
+      "orderBelowVendorMinimum": "Toimittajan {vendorName} tuotteiden on oltava yhteensä vähintään {minimum}.",
+      "orderOutOfStock": "{productName} on loppu varastosta.",
+      "orderProductUnavailable": "Joitakin tuotteita ei voi enää tilata. Tarkista ostoskorisi.",
+      "orderEmpty": "Ostoskorisi on tyhjä.",
+      "orderShippingTypeUnavailable": "Tämä toimitustapa ei ole käytettävissä.",
+      "webshopRatingNotAllowed": "Tätä tilausta ei voi arvioida.",
+      "webshopCartFull": "Ostoskorissa voi olla enintään {maximum} eri tuotetta.",
+      "notFound": "Tuote ei ole enää saatavilla.",
+      "discountCodeNotFound": "Alennuskoodia ei ole.",
+      "discountCodeInactive": "Alennuskoodi ei ole käytössä.",
+      "discountCodeNotStarted": "Alennuskoodi ei ole vielä voimassa.",
+      "discountCodeExpired": "Alennuskoodi on vanhentunut.",
+      "discountCodeUsageLimitReached": "Alennuskoodin käyttökerrat on käytetty.",
+      "discountCodeAlreadyUsed": "Olet jo käyttänyt tämän koodin.",
+      "discountCodeNotEligible": "Alennuskoodi ei ole käytettävissäsi.",
+      "discountCodeNotApplicable": "Alennuskoodi ei koske ostoskorisi sisältöä.",
+      "discountCodeMinimumAmount": "Koodi vaatii vähintään {minimum} ostokset. Lisää vielä {missing}.",
+      "discountCodeMinimumQuantity": "Koodi vaatii vähintään {minimum} tuotetta. Lisää vielä {missing}."
+    },
+    "discount": {
+      "label": "Alennuskoodi",
+      "placeholder": "Alennuskoodi",
+      "apply": "Käytä",
+      "applied": "Alennuskoodi käytössä",
+      "automatic": "käytetty automaattisesti",
+      "remove": "Poista alennuskoodi",
+      "available": "Koodit, joita voit käyttää",
+      "freeShipping": "Ilmainen toimitus",
+      "bestChoice": "Paras valinta",
+      "expiresOn": "Voimassa {date} asti",
+      "noExpiry": "Ei vanhene",
+      "inUse": "Käytössä",
+      "saves": "Säästä {amount}",
+      "showMore": "{count, plural, one {Näytä # koodi lisää} other {Näytä # koodia lisää}}",
+      "showLess": "Näytä vähemmän",
+      "removeShort": "Poista",
+      "expired": "Vanhentunut",
+      "usedUp": "Käytetty loppuun",
+      "notEligible": "Et ole vielä oikeutettu"
+    },
+    "itemCount": "{count, plural, one {# tuote} other {# tuotetta}}",
+    "relatedProducts": "Saatat pitää myös näistä"
+  },
+  "webshopLinks": {
+    "preview": "Esikatselu",
+    "getLink": "Hae linkki",
+    "copied": "Linkki kopioitu. Lisää se botin painikkeeseen: jokainen kontakti avaa oman kauppansa.",
+    "error": "Linkkiä ei voitu hakea.",
+    "copyError": "Linkkiä ei voitu kopioida.",
+    "shopLink": {
+      "label": "Kaupan linkki",
+      "hint": "Liitä tämä linkki painikkeeseen kulussa, lähetyksessä tai sekvenssissä. Jokainen sen saava kontakti avaa oman kauppansa ja voi tilata."
+    },
+    "productLink": {
+      "label": "Julkinen URL",
+      "hint": "Kopioi ja liitä URL-osoite kulkuun, lähetykseen tai sekvenssiin. Jokainen sen saava kontakti avaa tämän tuotteen ja voi tilata."
+    }
+  },
+  "discountCodes": {
+    "title": "Kupongit",
+    "description": "Alennuskoodit, joita asiakkaat käyttävät kassalla tai jotka toimivat itsestään.",
+    "add": "Lisää",
+    "edit": "Muokkaa kuponkia",
+    "automatic": "Automaattinen",
+    "never": "Ei koskaan",
+    "searchPlaceholder": "Hae koodeja…",
+    "saveError": "Kuponkia ei voitu tallentaa.",
+    "created": "Kuponki luotu",
+    "updated": "Kuponki tallennettu",
+    "deleted": "Kuponki poistettu",
+    "deleteError": "Kuponkia ei voitu poistaa.",
+    "deleteTitle": "Poistetaanko kuponki {code}?",
+    "deleteDescription": "Asiakkaat eivät voi enää käyttää sitä. Sitä käyttäneet tilaukset säilyttävät alennuksen.",
+    "cancel": "Peruuta",
+    "delete": "Poista",
+    "save": "Tallenna",
+    "columns": {
+      "name": "Nimi",
+      "discount": "Alennus",
+      "used": "Käytetty",
+      "end": "Päättyy",
+      "active": "Aktiivinen"
+    },
+    "discountTypes": {
+      "percentage": "Prosentti",
+      "fixedAmount": "Kiinteä summa",
+      "freeShipping": "Ilmainen toimitus"
+    },
+    "appliesTo": {
+      "entireOrder": "Koko tilaus",
+      "category": "Tietty kategoria",
+      "products": "Tietyt tuotteet"
+    },
+    "minimumTypes": {
+      "none": "Ei mitään",
+      "amount": "Ostosten vähimmäissumma",
+      "quantity": "Tuotteiden vähimmäismäärä"
+    },
+    "eligibilities": {
+      "everyone": "Kaikki",
+      "specificCustomers": "Tietyt asiakkaat"
+    },
+    "form": {
+      "discountCode": "Alennuskoodi",
+      "code": "Koodi",
+      "generate": "Luo",
+      "autoApply": "Käytä tätä kuponkia automaattisesti ostoskoreihin",
+      "autoApplyHint": "Ostoskorit saavat sen ilman että asiakas kirjoittaa sen. Useasta automaattisesta valitaan suurin alennus.",
+      "typedHint": "Asiakkaat syöttävät tämän koodin kassalla.",
+      "options": "Asetukset",
+      "discountType": "Alennuksen tyyppi",
+      "discountValuePercent": "Alennuksen arvo (%)",
+      "discountValueAmount": "Alennuksen arvo ({currency})",
+      "freeShippingHint": "Poistaa toimituskulut asiakkaalle toimitettavista tilauksista.",
+      "appliesTo": "Koskee",
+      "category": "Kategoria",
+      "products": "Tuotteet",
+      "productsPlaceholder": "Valitse tuotteet",
+      "minimumRequirement": "Vähimmäisvaatimus",
+      "minimumAmount": "Vähimmäissumma ({currency})",
+      "minimumQuantity": "Tuotteiden vähimmäismäärä",
+      "usageLimits": "Käyttörajat",
+      "limitTotal": "Rajoita alennuksen käyttökertoja yhteensä",
+      "usedSoFar": "{count, plural, one {Käytetty # kerran} other {Käytetty # kertaa}}",
+      "oncePerCustomer": "Yksi käyttö asiakasta kohden",
+      "customerEligibility": "Ketkä voivat käyttää",
+      "specificCustomersHint": "Vain alla olevaan suodattimeen tilaushetkellä täsmäävät kontaktit.",
+      "activeDates": "Voimassaoloaika",
+      "startDate": "Alkamispäivä",
+      "endDate": "Päättymispäivä",
+      "isActive": "Aktiivinen"
+    },
+    "rules": {
+      "codeCharacters": "Käytä vain aksentittomia kirjaimia, numeroita, - ja _.",
+      "usageBelowUsed": "Koodia on jo käytetty {count} kertaa; raja ei voi olla pienempi.",
+      "customerConditionRequired": "Lisää vähintään yksi ehto.",
+      "endAfterStart": "Päättymispäivän on oltava alkamispäivän jälkeen."
+    }
+  },
+  "ecommerceAnalytics": {
+    "title": "Analytiikka",
+    "lifetime": "Kaikki ajat",
+    "sales": "Myynti",
+    "orders": "Tilaukset",
+    "products": "Tuotteet",
+    "salesByDate": "Myynti päivittäin",
+    "ordersByDate": "Tilaukset päivittäin",
+    "topProducts": "Myydyimmät tuotteet",
+    "topVendors": "Myydyimmät toimittajat",
+    "columns": {
+      "name": "Nimi",
+      "sales": "Myynti"
+    },
+    "noData": "Ei tietoja tällä jaksolla",
+    "refresh": "Päivitä",
+    "change": "{value} %",
+    "noPrevious": "uusi",
+    "otherCurrencyOrders": "{count} muussa valuutassa tehtyä tilausta ei ole mukana näissä luvuissa"
   },
   "responseSla": {
     "label": "Vastaus-SLA",

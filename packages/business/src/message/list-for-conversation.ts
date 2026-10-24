@@ -70,6 +70,25 @@ async function presignAttachments<T extends { id: string; originPath: string }>(
   )
 }
 
+/**
+ * Resolves a message's attachment URLs from data the caller already holds
+ * (no DB read, no download): a stored object gets a presigned URL, a pending
+ * (lazily-ingested) one the signed media proxy URL. Used wherever a message
+ * is handed to a client directly, e.g. the realtime push of a new message.
+ */
+export async function withResolvedAttachmentUrls(
+  message: MessageWithAttachments,
+  context: { channel: string; workspaceId: string },
+): Promise<MessageWithPresignedAttachments> {
+  return {
+    ...message,
+    attachments: await presignAttachments(message.attachments, {
+      ...context,
+      messageCreatedAt: message.createdAt,
+    }),
+  }
+}
+
 const loadContactInboxChannels = async (
   messages: readonly Pick<MessageWithAttachments, "contactInboxId">[],
   workspaceId: string,
@@ -166,14 +185,12 @@ export async function listForConversation(
     input.workspaceId,
   )
   const data = await Promise.all(
-    result.data.map(async (message) => ({
-      ...message,
-      attachments: await presignAttachments(message.attachments, {
+    result.data.map((message) =>
+      withResolvedAttachmentUrls(message, {
         workspaceId: input.workspaceId,
         channel: channelByContactInboxId.get(message.contactInboxId) ?? "",
-        messageCreatedAt: message.createdAt,
       }),
-    })),
+    ),
   )
 
   return { data, nextCursor: result.nextCursor }
@@ -209,14 +226,10 @@ export async function findForContact(input: {
     workspaceId,
   )
 
-  return {
-    ...message,
-    attachments: await presignAttachments(message.attachments, {
-      workspaceId,
-      channel: channelByContactInboxId.get(message.contactInboxId) ?? "",
-      messageCreatedAt: message.createdAt,
-    }),
-  }
+  return await withResolvedAttachmentUrls(message, {
+    workspaceId,
+    channel: channelByContactInboxId.get(message.contactInboxId) ?? "",
+  })
 }
 
 export async function findByIdWithUrls(input: {
@@ -239,12 +252,8 @@ export async function findByIdWithUrls(input: {
     input.workspaceId,
   )
 
-  return {
-    ...message,
-    attachments: await presignAttachments(message.attachments, {
-      workspaceId: input.workspaceId,
-      channel: channelByContactInboxId.get(message.contactInboxId) ?? "",
-      messageCreatedAt: message.createdAt,
-    }),
-  }
+  return await withResolvedAttachmentUrls(message, {
+    workspaceId: input.workspaceId,
+    channel: channelByContactInboxId.get(message.contactInboxId) ?? "",
+  })
 }

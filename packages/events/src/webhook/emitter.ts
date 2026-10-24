@@ -1,7 +1,10 @@
 import type { TriggerEventType } from "@chatbotx.io/database/partials"
 import { webhookQueue } from "@chatbotx.io/worker-config"
 import { BaseEventEmitter } from "../base-emitter"
-import { EMITTED_EVENT_TYPE_SET } from "../event-type-registry"
+import {
+  COMMERCE_EVENT_TYPE_SET,
+  EMITTED_EVENT_TYPE_SET,
+} from "../event-type-registry"
 import { logger } from "../logger"
 import { hasActiveWebhooks } from "./cache"
 import { isWebhookContext } from "./context"
@@ -14,7 +17,8 @@ class WebhookEventEmitterImpl extends BaseEventEmitter {
     workspaceId: string,
     sourceId?: string,
   ): Promise<boolean> {
-    const inWebhookContext = isWebhookContext()
+    const inWebhookContext =
+      isWebhookContext() || COMMERCE_EVENT_TYPE_SET.has(eventType)
 
     if (!inWebhookContext) {
       logger.debug(

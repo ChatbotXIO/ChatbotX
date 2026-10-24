@@ -11,6 +11,7 @@ import { queueNames } from "../../lib/types"
 export const NotificationJobAction = {
   notifyIncomingMessage: "notifyIncomingMessage",
   notifyConversationAssigned: "notifyConversationAssigned",
+  notifyNewOrder: "notifyNewOrder",
 } as const
 
 export type NotificationJobNotifyIncomingMessage = {
@@ -40,9 +41,30 @@ export type NotificationJobNotifyConversationAssigned = {
   }
 }
 
-export type NotificationJobData =
+/**
+ * A new order was placed. Pushed to the members who turned on the "New order"
+ * notification; an order needs no conversation, so it has its own handler.
+ */
+export type NotificationJobNotifyNewOrder = {
+  type: typeof NotificationJobAction.notifyNewOrder
+  data: {
+    workspaceId: string
+    orderId: string
+  }
+}
+
+/** The jobs about a conversation — every one but a new order. */
+export type NotificationJobConversation =
   | NotificationJobNotifyIncomingMessage
   | NotificationJobNotifyConversationAssigned
+
+export type NotificationJobData =
+  | NotificationJobConversation
+  | NotificationJobNotifyNewOrder
+
+/** One push per order, however many times placement is retried. */
+export const getNewOrderNotificationJobId = (orderId: string): string =>
+  `new-order-${orderId}`
 
 export const notificationQueue = isNoRedisEnv()
   ? fakeQueue

@@ -7,6 +7,7 @@ const mocks = vi.hoisted(() => ({
   linkImported: vi.fn(),
   lockCatalogAssignments: vi.fn(),
   resolveCategoryPaths: vi.fn(),
+  resolveVendorNames: vi.fn(),
   transaction: vi.fn(),
   updateProduct: vi.fn(),
 }))
@@ -45,6 +46,12 @@ vi.mock("../src/product-category", () => ({
   },
 }))
 
+vi.mock("../src/vendor/service", () => ({
+  vendorService: {
+    resolveByNames: (...args: unknown[]) => mocks.resolveVendorNames(...args),
+  },
+}))
+
 const { metaCatalogImportService } = await import(
   "../src/meta-catalog/import.service"
 )
@@ -72,6 +79,7 @@ beforeEach(() => {
   mocks.findByImportIdentifiers.mockResolvedValue([])
   mocks.lockCatalogAssignments.mockResolvedValue(undefined)
   mocks.resolveCategoryPaths.mockResolvedValue(new Map())
+  mocks.resolveVendorNames.mockResolvedValue(new Map())
   mocks.createFromImport.mockResolvedValue([])
   mocks.updateProduct.mockResolvedValue({ id: "updated-product" })
   mocks.transaction.mockImplementation(
@@ -133,6 +141,8 @@ describe("metaCatalogImportService", () => {
       ]),
     )
 
+    mocks.resolveVendorNames.mockResolvedValue(new Map([["test2", "vendor-1"]]))
+
     await metaCatalogImportService.importPage({
       workspaceId: "workspace-1",
       integrationMetaCatalogId: "connection-1",
@@ -179,7 +189,7 @@ describe("metaCatalogImportService", () => {
           productUrl: "https://example.com/komi-298",
           shortDescription: "Updated from Meta",
           tags: ["featured", "robot"],
-          vendor: "Test2",
+          vendorId: "vendor-1",
         },
       },
       transactionClient,
@@ -396,7 +406,7 @@ describe("metaCatalogImportService", () => {
           longDescription: null,
           categoryId: null,
           subcategoryId: null,
-          vendor: null,
+          vendorId: null,
         }),
       }),
       transactionClient,

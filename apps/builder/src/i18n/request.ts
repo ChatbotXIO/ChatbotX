@@ -17,8 +17,10 @@ function resolveEnglishFallback(key: string, namespace?: string) {
     )
 }
 
-export default getRequestConfig(async () => {
-  const locale = resolveLocale(await getUserLocale())
+export default getRequestConfig(async ({ locale: explicitLocale }) => {
+  // `getTranslations({ locale })` passes its locale here; a public page such
+  // as the web shop speaks the workspace language, not the viewer's cookie.
+  const locale = resolveLocale(explicitLocale ?? (await getUserLocale()))
   // Without an explicit zone next-intl inherits the server process zone and
   // hands it to the client, so a UTC server formats every date in UTC.
   const timeZone = await getUserTimezone()

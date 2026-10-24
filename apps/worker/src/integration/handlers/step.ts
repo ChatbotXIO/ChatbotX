@@ -561,6 +561,7 @@ export const flowStepHandlers: Record<
   [stepTypes.enum.sendViewCatalog]: sendFlowMessage,
   [stepTypes.enum.whatsappFlow]: sendFlowMessage,
   [stepTypes.enum.sendProducts]: sendFlowMessage,
+  [stepTypes.enum.sendCollection]: sendFlowMessage,
   [stepTypes.enum.whatsappLocation]: sendFlowMessage,
   [stepTypes.enum.setMessengerUserPersistentMenu]:
     setMessengerUserPersistentMenu,

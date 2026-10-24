@@ -1,0 +1,1 @@
+CREATE INDEX CONCURRENTLY IF NOT EXISTS "AuditLog_createdAt_id_idx" ON "AuditLog" ("createdAt" DESC NULLS LAST,"id" DESC NULLS LAST);

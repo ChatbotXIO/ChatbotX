@@ -1,5 +1,6 @@
 import { createId } from "@chatbotx.io/utils"
 import {
+  boolean,
   index,
   integer,
   pgEnum,
@@ -45,6 +46,11 @@ export const attachmentModel = pgTable(
     thumbnailPath: text(),
     originPath: text().notNull(),
     name: text(),
+    // true: the sender attached the image as a file (scan, invoice) — never
+    // re-encode. null/false: a photo. Legacy rows are null and are treated as
+    // photos. Nullable with no default so the column is safe to add on a
+    // compressed hypertable; mirrored in sharding/scripts/init-message-shard.sql.
+    keepOriginal: boolean(),
   },
   (table) => [
     primaryKey({ columns: [table.id, table.createdAt] }),

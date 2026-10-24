@@ -48,9 +48,9 @@ function AuditUserCell({
   )
 }
 
-export function getAuditColumns(
+export function getAuditColumns<TRow extends AuditLogResource>(
   t: TranslationFn,
-): ColumnDef<AuditLogResource>[] {
+): ColumnDef<TRow>[] {
   return [
     {
       accessorKey: "userId",

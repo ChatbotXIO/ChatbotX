@@ -6,6 +6,7 @@ import { useWorkspaceRealtimeEvents } from "@/features/realtime/use-workspace-re
 import { useWorkspaceId } from "@/hooks/routing"
 import { authClient } from "@/lib/auth/auth-client"
 import { outboundCallModeQueryKeys } from "./outbound-call-mode-query-key"
+import { useResyncCallRecovery } from "./use-resync-call-recovery"
 import { useWhatsappVoipCallStore } from "./voip-call-store"
 
 /**
@@ -38,6 +39,7 @@ export function WhatsappCallRealtime() {
   const setOutboundStatus = useWhatsappVoipCallStore(
     (state) => state.setOutboundStatus,
   )
+  useResyncCallRecovery()
 
   const handlers: RealtimeHandlerMap = {
     whatsappCallTransportIncoming: (event) => {

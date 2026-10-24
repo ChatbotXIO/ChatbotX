@@ -36,7 +36,11 @@ import { couponsPublicRouter } from "@/features/coupons/api/public"
 import { customFieldsPublicRouter } from "@/features/custom-fields/api/public"
 import { decisionConnectionsPublicRouter } from "@/features/decision-connections/api/public"
 import { decisionProfilesPublicRouter } from "@/features/decision-profiles/api/public"
+import { discountCodesPublicRouter } from "@/features/discount-codes/api/public"
 import { dynamicImagesPublicRouter } from "@/features/dynamic-images/api/public"
+import { ecommerceAnalyticsPublicRouter } from "@/features/ecommerce-analytics/api/public"
+import { openHoursPublicRouter } from "@/features/ecommerce-open-hours/api/public"
+import { ecommerceSettingsPublicRouter } from "@/features/ecommerce-settings/api/public"
 import { emailTopicsPublicRouter } from "@/features/email-topics/api/public"
 import { errorLogsPublicRouter } from "@/features/error-logs/api/public"
 import { appointmentExternalCalendarsPublicRouter } from "@/features/external-calendars/api/public"
@@ -75,8 +79,10 @@ import { mediaLibraryPublicRouter } from "@/features/media-library/api/public"
 import { messagesPublicRouter } from "@/features/messages/api/public"
 import { miniAppsPublicRouter } from "@/features/mini-apps/api/public"
 import { minigamesPublicRouter } from "@/features/minigames/api/public"
+import { ordersPublicRouter } from "@/features/orders/api/public"
 import { messengerPersonasPublicRouter } from "@/features/personas/api/public"
 import { productCategoriesPublicRouter } from "@/features/product-categories/api/public"
+import { productVendorsPublicRouter } from "@/features/product-vendors/api/public"
 import { productsPublicRouter } from "@/features/products/api/public"
 import { qrCodesPublicRouter } from "@/features/qr-codes/api/public"
 import { questionnairesPublicRouter } from "@/features/questionnaires/api/public"
@@ -93,6 +99,10 @@ import { tokenPublicRouter } from "@/features/token/api/public"
 import { triggersPublicRouter } from "@/features/triggers/api/public"
 import { userPersistentMenusPublicRouter } from "@/features/user-persistent-menus/api/public"
 import { webhooksPublicRouter } from "@/features/webhooks/api/public"
+import {
+  cartsPublicRouter,
+  webshopPublicRouter,
+} from "@/features/webshop/api/public"
 import { whatsappCallsPublicRouter } from "@/features/whatsapp-calls/api/public"
 import { workingHoursPublicRouter } from "@/features/working-hours/api/public"
 import { workspaceMembersPublicRouter } from "@/features/workspace-members/api/public"
@@ -115,6 +125,7 @@ export const publicRouter = {
   broadcasts: broadcastsPublicRouter,
   capabilities: capabilitiesPublicRouter,
   channelPosts: channelPostsPublicRouter,
+  carts: cartsPublicRouter,
   channels: channelsPublicRouter,
   commentAutomations: commentAutomationsPublicRouter,
   connectionProviders: connectionProvidersPublicRouter,
@@ -127,7 +138,10 @@ export const publicRouter = {
   customFields: customFieldsPublicRouter,
   decisionConnections: decisionConnectionsPublicRouter,
   decisionProfiles: decisionProfilesPublicRouter,
+  discountCodes: discountCodesPublicRouter,
   dynamicImages: dynamicImagesPublicRouter,
+  ecommerceAnalytics: ecommerceAnalyticsPublicRouter,
+  ecommerceSettings: ecommerceSettingsPublicRouter,
   emailTopics: emailTopicsPublicRouter,
   errorLogs: errorLogsPublicRouter,
   externalWebhooks: externalWebhooksPublicRouter,
@@ -160,8 +174,11 @@ export const publicRouter = {
   miniApps: miniAppsPublicRouter,
   minigames: minigamesPublicRouter,
   leaderboards: leaderboardsPublicRouter,
+  openHours: openHoursPublicRouter,
+  orders: ordersPublicRouter,
   productCategories: productCategoriesPublicRouter,
   products: productsPublicRouter,
+  productVendors: productVendorsPublicRouter,
   qrCodes: qrCodesPublicRouter,
   questionnaires: questionnairesPublicRouter,
   reflinks: reflinksPublicRouter,
@@ -182,6 +199,7 @@ export const publicRouter = {
   triggers: triggersPublicRouter,
   userPersistentMenus: userPersistentMenusPublicRouter,
   webchats: webchatsPublicRouter,
+  webshop: webshopPublicRouter,
   webhooks: webhooksPublicRouter,
   whatsappCalls: whatsappCallsPublicRouter,
   whatsappFlows: whatsappFlowsPublicRouter,

@@ -50,6 +50,7 @@ import type { SavedReplyResource } from "@/features/saved-replies/schema/resourc
 import { authClient } from "@/lib/auth/auth-client"
 import { useChatStore } from "../../chat/store/chat-store-provider"
 import { createMessageAction } from "../actions/create-message.action"
+import { flattenValidationErrors } from "../lib/validation-errors"
 import { createMessageWithRoutingBypassRequest } from "../schema/mutation"
 import type { MessageResource } from "../schema/resource"
 import { FileUploadPreview } from "./file-upload"
@@ -101,8 +102,20 @@ export const MessageInput = () => {
     replyToMessage,
     setReplyToMessage,
     isPrivateReply,
+    markMessageFailed,
     messages,
   } = useChatStore((state) => state)
+
+  const replyToMessageRef = useRef(replyToMessage)
+  const selectedMediaFilesRef = useRef(selectedMediaFiles)
+
+  useEffect(() => {
+    replyToMessageRef.current = replyToMessage
+  }, [replyToMessage])
+
+  useEffect(() => {
+    selectedMediaFilesRef.current = selectedMediaFiles
+  }, [selectedMediaFiles])
 
   const lastContactComment = useMemo(() => {
     for (let i = messages.length - 1; i >= 0; i--) {
@@ -192,86 +205,32 @@ export const MessageInput = () => {
     },
   )
 
-  const { form, handleSubmitWithAction, resetFormAndAction } =
-    useHookFormAction(
-      createMessageAction.bind(
-        null,
-        conversation?.workspaceId ?? "",
-        conversation?.id ?? "",
-      ),
-      zodResolver(createMessageWithRoutingBypassRequest),
-      {
-        actionProps: {
-          onExecute: ({ input }: { input: unknown }) => {
-            // try to push raw message to store — skipped for a private
-            // reply, since that message belongs to the contact's DM
-            // conversation, not whichever post/comment conversation is
-            // currently open here.
-            if (
-              typeof input === "object" &&
-              input !== null &&
-              "text" in input &&
-              input.text &&
-              !(
-                "isPrivateReply" in input &&
-                (input as { isPrivateReply?: boolean }).isPrivateReply
-              )
-            ) {
-              const typedInput = input as { text: string; clientId: string }
-              const optimisticMessage: MessageResource = {
-                text: typedInput.text,
-                id: createId(),
-                createdAt: new Date(),
-                updatedAt: new Date(),
-                workspaceId: conversation?.workspaceId ?? "",
-                sourceId: null,
-                contactInboxId: "",
-                conversationId: conversation?.id ?? "",
-                contentAttributes: null,
-                messageType: "outgoing",
-                contentType: "text",
-                senderType: "user",
-                senderId: session?.data?.user.id ?? null,
-                clientId: typedInput.clientId,
-                deletedAt: null,
-                type: "message",
-                parentId: null,
-                attributes: null,
-                sendError: null,
-              }
-              appendMessage(optimisticMessage)
-              updateConversationViaMessage(optimisticMessage)
-            }
+  const defaultValues = useMemo(
+    () => ({
+      text: "",
+      files: [],
+      mediaFileIds: undefined,
+      replyToMessageId: undefined,
+      replyToMessageCreatedAt: undefined,
+      isPrivateReply: undefined,
+    }),
+    [],
+  )
 
-            form.reset()
-            setSelectedMediaFiles([])
-            textareaRef.current?.focus()
-          },
-          onSuccess: () => {
-            if (conversation && isConversationActive(conversation)) {
-              disableBot({ ids: [conversation.id] })
-            }
-            setReplyToMessage(null)
-            textareaRef.current?.focus()
-            resetFormAndAction()
-            setSelectedMediaFiles([])
-            form.setValue("clientId", createId())
-          },
-        },
-        formProps: {
-          defaultValues: {
-            text: "",
-            files: [],
-            mediaFileIds: undefined,
-            clientId: createId(),
-            replyToMessageId: undefined,
-            replyToMessageCreatedAt: undefined,
-            isPrivateReply: undefined,
-          },
-        },
-        errorMapProps: {},
+  const { form, action } = useHookFormAction(
+    createMessageAction.bind(
+      null,
+      conversation?.workspaceId ?? "",
+      conversation?.id ?? "",
+    ),
+    zodResolver(createMessageWithRoutingBypassRequest),
+    {
+      formProps: {
+        defaultValues,
       },
-    )
+      errorMapProps: {},
+    },
+  )
 
   // Sync replyToMessage store state → form field and focus input
   useEffect(() => {
@@ -385,7 +344,50 @@ export const MessageInput = () => {
       ? true
       : undefined
 
-  const sendMessage = useCallback(() => {
+  const appendOptimistic = useCallback(
+    (input: {
+      clientId?: string | undefined
+      isPrivateReply?: boolean | undefined
+      text?: string | undefined
+    }): string | undefined => {
+      if (!(input.text && input.clientId) || input.isPrivateReply) {
+        return
+      }
+
+      const optimisticMessage: MessageResource = {
+        text: input.text,
+        id: createId(),
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        workspaceId: conversation?.workspaceId ?? "",
+        sourceId: null,
+        contactInboxId: "",
+        conversationId: conversation?.id ?? "",
+        contentAttributes: null,
+        messageType: "outgoing",
+        contentType: "text",
+        senderType: "user",
+        senderId: session?.data?.user.id ?? null,
+        clientId: input.clientId,
+        deletedAt: null,
+        type: "message",
+        parentId: null,
+        attributes: null,
+        sendError: null,
+      }
+      appendMessage(optimisticMessage)
+      updateConversationViaMessage(optimisticMessage)
+      return optimisticMessage.id
+    },
+    [
+      appendMessage,
+      conversation,
+      session?.data?.user.id,
+      updateConversationViaMessage,
+    ],
+  )
+
+  const sendMessage = useCallback(async () => {
     // Same check as the server, done here so the agent sees which channel
     // refuses the images before anything is sent.
     if (channelType) {
@@ -407,36 +409,109 @@ export const MessageInput = () => {
       }
     }
 
-    if (!replyToMessage && lastContactComment) {
-      form.setValue("replyToMessageId", lastContactComment.id)
-      form.setValue(
-        "replyToMessageCreatedAt",
-        lastContactComment.createdAt ?? undefined,
-      )
+    const submittedFiles = form.getValues("files")
+    const replyTarget = replyToMessage ?? lastContactComment
+    const values = {
+      ...form.getValues(),
+      clientId: createId(),
+      bypassThreadControlLock,
+      replyToMessageId: replyTarget?.id,
+      replyToMessageCreatedAt: replyTarget?.createdAt ?? undefined,
+      isPrivateReply: replyToMessage ? isPrivateReply : undefined,
     }
-    form.setValue("bypassThreadControlLock", bypassThreadControlLock)
-    handleSubmitWithAction()
+    const parsed = createMessageWithRoutingBypassRequest.safeParse(values)
+    if (!parsed.success) {
+      await form.trigger()
+      return
+    }
+
+    const optimisticMessageId = appendOptimistic(parsed.data)
+    form.setValue("text", "")
+    textareaRef.current?.focus()
+
+    try {
+      const result = await action.executeAsync(parsed.data)
+      if (result?.serverError) {
+        markMessageFailed(
+          optimisticMessageId ?? "",
+          parsed.data.clientId,
+          result.serverError,
+        )
+        toast.error(result.serverError)
+        return
+      }
+
+      if (result?.validationErrors) {
+        const validationErrors = flattenValidationErrors(
+          result.validationErrors,
+        )
+        for (const validationError of validationErrors) {
+          form.setError(validationError.path as never, {
+            message: validationError.message,
+          })
+        }
+        const errorMessage =
+          validationErrors[0]?.message ?? t("messages.unknownError")
+        markMessageFailed(
+          optimisticMessageId ?? "",
+          parsed.data.clientId,
+          errorMessage,
+        )
+        toast.error(errorMessage)
+        return
+      }
+
+      if (form.getValues("files") === submittedFiles) {
+        form.setValue("files", [])
+      }
+      if (selectedMediaFilesRef.current === selectedMediaFiles) {
+        form.setValue("mediaFileIds", [])
+        setSelectedMediaFiles([])
+      }
+      if (replyToMessageRef.current === replyToMessage) {
+        setReplyToMessage(null)
+      }
+      if (result?.data && conversation && isConversationActive(conversation)) {
+        disableBot({ ids: [conversation.id] })
+      }
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : t("messages.unknownError")
+      markMessageFailed(
+        optimisticMessageId ?? "",
+        parsed.data.clientId,
+        errorMessage,
+      )
+      toast.error(errorMessage)
+    }
   }, [
-    replyToMessage,
-    lastContactComment,
-    form,
-    handleSubmitWithAction,
+    action,
+    appendOptimistic,
     bypassThreadControlLock,
     channelType,
-    selectedMediaFiles,
-    replyKind,
+    conversation,
+    disableBot,
+    form,
     imageLimitMessage,
+    isPrivateReply,
+    lastContactComment,
+    markMessageFailed,
+    replyToMessage,
+    replyKind,
+    selectedMediaFiles,
+    setReplyToMessage,
+    t,
   ])
 
   // Memoize keyboard handler
   const onKeyDown = useCallback(
-    (e: KeyboardEvent) => {
+    async (e: KeyboardEvent) => {
       if (e.nativeEvent.isComposing || e.key === "Process") {
         return
       }
       if (e.key === "Enter" && e.shiftKey === false) {
         e.preventDefault()
-        sendMessage()
+        await sendMessage()
       }
     },
     [sendMessage],
@@ -590,9 +665,9 @@ export const MessageInput = () => {
         <form
           aria-label="Message input form"
           className="flex w-full flex-col"
-          onSubmit={(e) => {
+          onSubmit={async (e) => {
             e.preventDefault()
-            sendMessage()
+            await sendMessage()
           }}
         >
           {takeOverOnSend && (

@@ -23,6 +23,7 @@ export const ScheduleJobData = {
   cleanupWebhookExecutions: "cleanupWebhookExecutions",
   scanSmartDelay: "scanSmartDelay",
   scanAppointmentReminders: "scanAppointmentReminders",
+  scanAbandonedCarts: "scanAbandonedCarts",
   syncUserQuota: "syncUserQuota",
   reconcileTenants: "reconcileTenants",
   reconcileMac: "reconcileMac",
@@ -198,6 +199,11 @@ export type ScheduleJobScanAppointmentReminders = {
   data: z.infer<typeof scheduleJobScanAppointmentRemindersDataSchema>
 }
 
+export type ScheduleJobScanAbandonedCarts = {
+  type: typeof ScheduleJobData.scanAbandonedCarts
+  data: Record<string, never>
+}
+
 export type ScheduleJobSyncUserQuota = {
   type: typeof ScheduleJobData.syncUserQuota
   data: Record<string, never>
@@ -370,6 +376,7 @@ export type ScheduleJobData =
   | ScheduleJobCleanupWebhookExecutions
   | ScheduleJobScanSmartDelay
   | ScheduleJobScanAppointmentReminders
+  | ScheduleJobScanAbandonedCarts
   | ScheduleJobSyncUserQuota
   | ScheduleJobReconcileTenants
   | ScheduleJobReconcileMac

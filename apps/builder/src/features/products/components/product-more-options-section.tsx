@@ -1,6 +1,5 @@
 "use client"
 
-import { InputField } from "@chatbotx.io/ui/components/form/input-field"
 import { InputNumberField } from "@chatbotx.io/ui/components/form/input-number-field"
 import { SelectField } from "@chatbotx.io/ui/components/form/select-field"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
@@ -174,19 +173,17 @@ export function ProductMoreOptionsSection({
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
-            <div>
-              <InputField
-                label={t("fields.vendor.label")}
-                list="product-vendors"
-                name="vendor"
-                placeholder={t("fields.vendor.label")}
-              />
-              <datalist id="product-vendors">
-                {vendors.map((vendor) => (
-                  <option key={vendor} value={vendor} />
-                ))}
-              </datalist>
-            </div>
+            <SelectField
+              allowClear
+              clearLabel={t("fields.vendor.none")}
+              label={t("fields.vendor.label")}
+              name="vendorId"
+              options={vendors.map((vendor) => ({
+                value: vendor.id,
+                label: vendor.name,
+              }))}
+              placeholder={t("fields.vendor.none")}
+            />
             <InputNumberField
               className="w-full"
               label={t("fields.rank.label")}

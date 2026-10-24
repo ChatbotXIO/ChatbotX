@@ -2302,6 +2302,10 @@
       "label": "Göndərənin ünvanı",
       "placeholder": "noreply@example.com"
     },
+    "fromName": {
+      "label": "Göndərən adı",
+      "placeholder": "ChatbotX"
+    },
     "messageTemplate": {
       "label": "Mesaj şablonu"
     },
@@ -3493,7 +3497,13 @@
       "sendGoogleAdsConversion": "Google Ads konversiyası göndər",
       "changeGamificationScore": "Oyun xallarını dəyiş",
       "sendViewCatalog": "Kataloqa bax",
-      "sendProducts": "Məhsul göndər"
+      "sendProducts": "Məhsul göndər",
+      "sendCollection": "Kolleksiya"
+    },
+    "externalRequest": {
+      "errors": {
+        "requestFailed": "Xarici sorğunu sınaqdan keçirmək mümkün olmadı. Sorğu konfiqurasiyasını yoxlayın və yenidən cəhd edin."
+      }
     },
     "splitTraffic": {
       "balanceHint": "Ümumi cəm 100% olmalıdır.",
@@ -3674,6 +3684,43 @@
       "productsSelected": "{count, plural, one {# məhsul} other {# məhsul}}",
       "noneSelected": "Hələ məhsul yoxdur",
       "sendFailed": "Məhsullar göndərilə bilmədi."
+    },
+    "sendCollection": {
+      "title": "Kolleksiya",
+      "dataType": "Məlumat növü",
+      "dataTypes": {
+        "products": "Məhsullar"
+      },
+      "collectionType": "Kolleksiya növü",
+      "collectionTypes": {
+        "automated": {
+          "label": "Avtomatik",
+          "description": "Şərtlərə uyğun mövcud və gələcək məhsullar avtomatik əlavə olunur."
+        },
+        "manual": {
+          "label": "Əl ilə",
+          "description": "Məhsulları bir-bir əlavə edin."
+        }
+      },
+      "condition": "Şərt",
+      "name": "Ad",
+      "optional": "(İstəyə görə)",
+      "category": "Kateqoriya",
+      "subcategory": "Alt kateqoriya",
+      "vendor": "Satıcı",
+      "all": "Hamısı",
+      "items": "Məhsullar",
+      "select": "Seçin",
+      "selectPlaceholder": "1 və ya daha çox məhsul seçin",
+      "selectAll": "Hamısını seç",
+      "deselectAll": "Seçimi ləğv et",
+      "maxProducts": "Ən çox {count} məhsul; mağazanın göstərmədiyi məhsul ötürülür.",
+      "automatedHint": "Mağazanın göstərdiyi ən çox {count} uyğun məhsulu kart kimi göndərir.",
+      "summaryAll": "Mağazanın göstərdiyi bütün məhsullar",
+      "summaryAutomated": "Məhsullar: {filters}",
+      "summaryManual": "{count, plural, one {# məhsul} other {# məhsul}}",
+      "cancel": "Ləğv et",
+      "save": "Yadda saxla"
     }
   },
   "folders": {
@@ -4662,6 +4709,7 @@
         "buttonText": "Düymə mətni",
         "buttonType": "Düymə növü",
         "visitWebsite": "Veb sayta keç",
+        "openMiniApp": "Mini Tətbiqi aç",
         "callPhoneNumber": "Telefon nömrəsinə zəng et",
         "postback": "Düymə"
       },
@@ -4865,6 +4913,7 @@
     "orContinueWith": "Və ya bununla davam edin",
     "continueWithFacebook": "Facebook ilə davam et",
     "continueWithGoogle": "Google ilə davam et",
+    "continueWithProvider": "{name} ilə davam et",
     "continueWithEmail": "E-poçt ilə davam et",
     "continueWithMagicLink": "Sehrli keçid ilə davam et",
     "dontHaveAnAccount": "Hesabınız yoxdur?",
@@ -4895,11 +4944,15 @@
     "changePasswordTitle": "Parolunu dəyiş",
     "changePasswordDescription": "Davam etməzdən əvvəl yeni parol təyin edin.",
     "passwordChangeSuccess": "Parol dəyişdirildi",
+    "signUpDisabledTitle": "Qeydiyyat deaktiv edilib",
+    "signUpDisabledDescription": "Yeni hesablar yalnız administrator tərəfindən və ya dəvət linki ilə yaradıla bilər.",
     "oauthError": {
       "accountNotLinked": "Bu e-poçtla hesab artıq mövcuddur və əlaqələndirilə bilmədi. Əvvəl necə daxil olmusunuzsa, o üsulla daxil olun və ya dəstəklə əlaqə saxlayın.",
       "unableToLinkAccount": "Bu girişi mövcud hesabla əlaqələndirə bilmədik. Əvvəl necə daxil olmusunuzsa, eyni üsulla daxil olun və ya dəstəklə əlaqə saxlayın.",
       "sessionExpired": "Giriş cəhdinin vaxtı bitdi. Zəhmət olmasa yenidən cəhd edin.",
       "accessDenied": "Giriş ləğv edildi.",
+      "signUpDisabled": "Bu hesab hələ mövcud deyil və qeydiyyat deaktiv edilib. Administratorunuzdan onu sizin üçün yaratmasını istəyin.",
+      "invalidInvitation": "Bu dəvət etibarsızdır və ya müddəti bitib.",
       "generic": "Giriş uğursuz oldu. Zəhmət olmasa yenidən cəhd edin."
     }
   },
@@ -4932,6 +4985,25 @@
       "unknownFieldTarget": "Uyğunlaşdırılmış kontakt sahəsi artıq mövcud deyil.",
       "actionReferenceNotFound": "Əməliyyat artıq mövcud olmayan axına, etiketə və ya sahəyə istinad edir.",
       "fieldMappingRequired": "Ən azı bir sahə uyğunlaşdırması əlavə edin."
+    },
+    "form": {
+      "required": "Bu sahə tələb olunur.",
+      "minLength": "Ən azı {minimum} simvol daxil edin.",
+      "maxLength": "Ən çox {maximum} simvol daxil edin.",
+      "minNumber": "Ən azı {minimum} olan rəqəm daxil edin.",
+      "moreThan": "{minimum}-dən böyük rəqəm daxil edin.",
+      "maxNumber": "Ən çox {maximum} olan rəqəm daxil edin.",
+      "lessThan": "{maximum}-dən kiçik rəqəm daxil edin.",
+      "number": "Rəqəm daxil edin.",
+      "wholeNumber": "Tam ədəd daxil edin.",
+      "minItems": "Ən azı {minimum} seçin.",
+      "maxItems": "Ən çox {maximum} seçin.",
+      "email": "Etibarlı e-poçt ünvanı daxil edin.",
+      "url": "https:// ilə başlayan etibarlı keçid daxil edin.",
+      "format": "Bu dəyər düzgün formatda deyil.",
+      "option": "Seçimlərdən birini seçin.",
+      "invalid": "Bu dəyər etibarlı deyil.",
+      "checkFields": "Bəzi sahələr düzəldilməlidir. Qırmızı ilə işarələnənlərə baxın."
     }
   },
   "webchat": {
@@ -5531,7 +5603,8 @@
     "chatbotInvitationDescription1": "{chatbotName} botuna qoşul",
     "chatbotInvitationDescription2": "{userName} sizi {chatbotName} botuna qoşulmağa dəvət edib.",
     "invalidInvitation": "Bu dəvət etibarsızdır və ya müddəti bitib.",
-    "workspaceUnavailable": "Bu iş sahəsi artıq əlçatan deyil."
+    "workspaceUnavailable": "Bu iş sahəsi artıq əlçatan deyil.",
+    "signUpToJoin": "Qoşulmaq üçün hesab yaradın"
   },
   "inboxes": {
     "markReadOnOutbound": {
@@ -5919,7 +5992,8 @@
       "contactReferredExistingContact": "Kontakt mövcud kontaktı dəvət edib",
       "callRecorded": "Zəng qeydə alınıb",
       "callTranscribed": "Zəng mətnə çevrilib",
-      "anyProduct": "İstənilən məhsul"
+      "anyProduct": "İstənilən məhsul",
+      "anyCategory": "İstənilən kateqoriya"
     },
     "actions": {
       "addTag": "Etiket əlavə et",
@@ -6040,7 +6114,8 @@
       "userPlaceholder": "İstifadəçi ID-si",
       "keyword": "Açar söz",
       "keywordPlaceholder": "Əməliyyat, təfərrüat və ya IP ünvanı",
-      "allAdmins": "Bütün administratorlar"
+      "allAdmins": "Bütün administratorlar",
+      "allWorkspaces": "Bütün iş sahələri"
     }
   },
   "customFields": {
@@ -7090,7 +7165,14 @@
       "supportOff": "Deaktiv",
       "searchPlaceholder": "Ada, sahibin e-poçtuna və ya ID-yə görə axtarış",
       "descriptionConsentDisabled": "All workspaces can be opened by platform administrators.",
-      "supportAccessible": "Accessible"
+      "supportAccessible": "Accessible",
+      "createButton": "Create workspace",
+      "createTitle": "Create workspace for an owner",
+      "createDescription": "Creates a workspace for the owner's email, adding any member emails you list. A new email gets a mailed temporary password.",
+      "ownerEmail": "Owner email",
+      "memberEmails": "Member emails",
+      "membersHint": "Every member gets the permissions selected below. New emails get a mailed temporary password.",
+      "createdSummary": "Workspace created for {ownerEmail} — {memberCount} member(s) added, {newAccountCount} new account(s) emailed a temporary password."
     },
     "admins": {
       "title": "Platform administrators",
@@ -7106,6 +7188,19 @@
       "removed": "Platform administrator removed.",
       "addError": "Could not add the platform administrator.",
       "removeError": "Could not remove the platform administrator."
+    },
+    "auditLogs": {
+      "title": "Platforma audit jurnalları",
+      "description": "Bu platformadakı bütün iş sahələri üzrə audit fəaliyyəti."
+    },
+    "smtp": {
+      "title": "SMTP ayarları",
+      "description": "Platforma e-poçt daşıyıcısı. SMTP_SERVER və SMTP_FROM mühit dəyişənlərindən istifadəni davam etdirmək üçün bunu boş buraxın.",
+      "usingEnv": "SMTP ayarları yadda saxlanmayıb — platforma e-poçtu SMTP_SERVER mühit dəyişənindən istifadə edir.",
+      "remove": "SMTP ayarlarını sil",
+      "errors": {
+        "passwordRequired": "SMTP şifrəsini daxil edin."
+      }
     }
   },
   "platformCredentials": {
@@ -7184,6 +7279,8 @@
     }
   },
   "manageSidebar": {
+    "communityGroup": "İcma",
+    "enterpriseGroup": "Müəssisə",
     "platformGroup": "Platforma",
     "toolsGroup": "Alətlər",
     "saasGroup": "SaaS",
@@ -7360,7 +7457,82 @@
     "unknown": "Naməlum"
   },
   "orders": {
-    "title": "Sifarişlər"
+    "title": "Sifarişlər",
+    "empty": "Hələ sifariş yoxdur.",
+    "searchPlaceholder": "Ad, telefon, e-poçt və ya sifariş nömrəsi ilə axtar",
+    "orderNumber": "Sifariş #{number}",
+    "print": "Çap et",
+    "inbox": "Gələn qutusu",
+    "statusUpdated": "Sifariş statusu yeniləndi",
+    "statusUpdateError": "Sifariş statusunu yeniləmək alınmadı",
+    "updateStatusTitle": "Sifariş statusunu yenilə",
+    "message": "Mesaj",
+    "messagePlaceholder": "İstəyə bağlı",
+    "messageDescription": "Müştəriyə onun söhbətində göndərilir.",
+    "cancel": "Ləğv et",
+    "continue": "Davam et",
+    "delete": "Sil",
+    "deleted": "Sifariş silindi",
+    "deleteError": "Sifarişi silmək alınmadı",
+    "deleteTitle": "Sifariş #{number} silinsin?",
+    "deleteDescription": "Sifariş, onun məhsulları və tarixçəsi silinir. Ayırdığı stok geri qaytarılır.",
+    "columns": {
+      "name": "Ad",
+      "total": "Cəmi",
+      "status": "Status",
+      "date": "Tarix",
+      "rating": "Reytinq",
+      "quantity": "Miqdar",
+      "price": "Qiymət",
+      "vendor": "Təchizatçı"
+    },
+    "fields": {
+      "name": "Ad",
+      "email": "E-poçt",
+      "phone": "Telefon",
+      "country": "Ölkə",
+      "state": "Ştat/Region",
+      "city": "Şəhər",
+      "street": "Küçə",
+      "zip": "Poçt indeksi",
+      "shippingType": "Çatdırılma",
+      "orderId": "Sifariş ID",
+      "date": "Tarix",
+      "subtotal": "Aralıq cəm",
+      "discount": "Endirim",
+      "deliveryCost": "Çatdırılma xərci",
+      "otherTaxes": "Digər vergilər",
+      "total": "Cəmi",
+      "paymentMethod": "Ödəniş üsulu",
+      "status": "Status",
+      "note": "Qeyd",
+      "cancelReason": "Ləğv səbəbi",
+      "rating": "Qiymət",
+      "ratingComment": "Müştəri rəyi",
+      "coupon": "Kupon ({code})"
+    },
+    "statuses": {
+      "pending": "Emal olunmayıb",
+      "accepted": "Qəbul edilib",
+      "shipped": "Göndərilib",
+      "concluded": "Tamamlanıb",
+      "cancelled": "Ləğv edilib"
+    },
+    "transitions": {
+      "accepted": "Qəbul et",
+      "shipped": "Göndər",
+      "concluded": "Tamamla",
+      "cancelled": "Ləğv et"
+    },
+    "paymentMethods": {
+      "cod": "Çatdırılma zamanı ödəniş"
+    },
+    "shippingTypes": {
+      "delivery": "Müştəriyə çatdırılma",
+      "pickup": "Mağazadan təhvil alma"
+    },
+    "description": "Müştərilərinizin verdiyi sifarişlər.",
+    "ratingValue": "{rating}/5 ★"
   },
   "products": {
     "title": "Məhsullar",
@@ -7417,7 +7589,8 @@
         "label": "Məhsul ehtiyatı bitdikdə belə müştərilərə bu məhsulu almağa icazə ver"
       },
       "vendor": {
-        "label": "Satıcı"
+        "label": "Satıcı",
+        "none": "Yoxdur"
       },
       "rank": {
         "label": "Sıralama"
@@ -7550,8 +7723,8 @@
     "loadError": "Məhsul kateqoriyalarını yükləmək mümkün olmadı.",
     "all": "Bütün məhsullar",
     "create": "Kateqoriya yarat",
-    "edit": "Kateqoriyanın adını dəyiş",
-    "name": "Kateqoriya adı",
+    "edit": "Redaktə et",
+    "name": "Ad",
     "namePlaceholder": "Məsələn, yay kolleksiyası",
     "parent": "Üst kateqoriya",
     "noParent": "Yoxdur (üst səviyyə)",
@@ -7571,12 +7744,25 @@
     "columns": {
       "name": "Ad",
       "products": "Məhsullar",
-      "subcategories": "Alt kateqoriyalar"
+      "subcategories": "Alt kateqoriyalar",
+      "visible": "Görünən"
     },
     "expand": "Alt kateqoriyaları göstər",
     "collapse": "Alt kateqoriyaları gizlət",
     "productCount": "{count, plural, =0 {Məhsul yoxdur} one {# məhsul} other {# məhsul}}",
-    "deleteChildrenWarning": "{count, plural, one {Onun # alt kateqoriyası da silinəcək.} other {Onun # alt kateqoriyası da silinəcək.}}"
+    "deleteChildrenWarning": "{count, plural, one {Onun # alt kateqoriyası da silinəcək.} other {Onun # alt kateqoriyası da silinəcək.}}",
+    "add": "Əlavə et",
+    "dialogTitle": "Kateqoriya",
+    "image": "Şəkil",
+    "continue": "Davam et",
+    "subcategories": "Alt kateqoriyalar",
+    "subcategoriesOf": "{name} alt kateqoriyaları",
+    "emptySub": "Hələ alt kateqoriya yoxdur.",
+    "back": "Kateqoriyalara qayıt",
+    "getId": "ID əldə et",
+    "idCopied": "Kateqoriya ID {id} kopyalandı",
+    "idCopyError": "ID-ni kopyalamaq alınmadı",
+    "description": "Məhsullarınızı kateqoriya və alt kateqoriyalara qruplaşdırın."
   },
   "productImport": {
     "title": "İdxal et",
@@ -9086,6 +9272,543 @@
       "hours": "Saatlar",
       "closed": "Bağlı"
     }
+  },
+  "productVendors": {
+    "title": "Təchizatçılar",
+    "add": "Əlavə et",
+    "edit": "Redaktə et",
+    "delete": "Sil",
+    "actions": "Əməliyyatlar",
+    "save": "Yadda saxla",
+    "cancel": "Ləğv et",
+    "moreOptions": "Daha çox seçim",
+    "empty": "Hələ təchizatçı yoxdur.",
+    "created": "Təchizatçı əlavə edildi",
+    "updated": "Təchizatçı yeniləndi",
+    "deleted": "Təchizatçı silindi",
+    "saveError": "Təchizatçını yadda saxlamaq alınmadı",
+    "deleteError": "Təchizatçını silmək alınmadı",
+    "deleteTitle": "{name} silinsin?",
+    "deleteDescription": "{count, plural, =0 {Heç bir məhsul bu təchizatçıdan istifadə etmir.} one {# məhsul təchizatçısız qalacaq.} other {# məhsul təchizatçısız qalacaq.}}",
+    "fields": {
+      "name": "Ad",
+      "shortDescription": "Qısa təsvir",
+      "phone": "Telefon",
+      "storeAddress": "Mağaza ünvanı",
+      "image": "Şəkil",
+      "optional": "İstəyə bağlı",
+      "discountPercent": "Endirim (0-100%)",
+      "minimumOrderValue": "Minimum sifariş məbləği",
+      "openHours": "İş saatları",
+      "category": "Kateqoriya",
+      "subcategory": "Alt kateqoriya",
+      "none": "Yoxdur"
+    },
+    "columns": {
+      "name": "Ad",
+      "products": "Cəmi məhsul",
+      "active": "Aktiv"
+    },
+    "description": "Məhsullarınızın aid olduğu satıcılar və brendlər."
+  },
+  "ecommerceSettings": {
+    "save": "Yadda saxla",
+    "saved": "Ayarlar yadda saxlanıldı",
+    "saveError": "Ayarları yadda saxlamaq alınmadı",
+    "rank": {
+      "label": "Sıra",
+      "default": "Susmaya görə"
+    },
+    "tabs": {
+      "general": "Ümumi",
+      "payments": "Ödənişlər",
+      "shipping": "Çatdırılma",
+      "checkout": "Ödəniş səhifəsi"
+    },
+    "general": {
+      "orderingAvailable": {
+        "label": "Sifariş vermək mümkündür",
+        "description": "İş saatlarını dəyişmədən müştərilərin sifariş verməsinin qarşısını almaq üçün bu sahədən istifadə edin. İş saatları da əlçatanlığınızı idarə edir."
+      },
+      "webshopProductView": {
+        "label": "Veb mağazada məhsul görünüşü",
+        "description": "Məhsulların veb mağazanızda necə göstərildiyini idarə edir.",
+        "options": {
+          "list": "Siyahı",
+          "listWithoutImage": "Şəkilsiz siyahı",
+          "card": "Kart",
+          "cardSquare": "Kvadrat şəkilli kart",
+          "image": "Şəkil",
+          "imageSquare": "Şəkil (kvadrat)"
+        }
+      },
+      "openHours": {
+        "label": "İş saatları",
+        "description": "Müştərilərinizin sifariş verə biləcəyi vaxt aralıqları."
+      },
+      "searchProducts": {
+        "label": "Məhsul axtarışı",
+        "description": "Müştərilərə məhsul tapmaq üçün mesaj göndərməyə icazə verin."
+      },
+      "facebookPixelId": {
+        "label": "Facebook Pixel",
+        "description": "FB pikseli ilə konversiyaları izləyin və reklamlarınızın nəticələrini ölçün. Aşağıdakı hadisələr izlənir: ADD_TO_CART, INITIATE_CHECKOUT, PURCHASE, VIEW_CONTENT"
+      },
+      "abandonedCart": {
+        "label": "Tərk edilmiş səbət mesajı",
+        "description": "İstifadəçi səbətində məhsul olduğu halda botunuzu tərk etdikdən sonra tərk edilmiş səbət mesajı göndərilməzdən əvvəl gözləmə müddəti.",
+        "disabled": "Deaktiv",
+        "afterMinutes": "{count} dəqiqədən sonra",
+        "afterHours": "{count, plural, one {# saatdan sonra} other {# saatdan sonra}}"
+      },
+      "productButtons": {
+        "label": "Məhsullardakı düymələr",
+        "description": "Bu ayar botunuzdakı məhsullar üçün hansı düymələrin göstəriləcəyini idarə edir.",
+        "options": {
+          "addToCart": "Səbətə at",
+          "share": "Paylaş",
+          "similar": "Oxşar",
+          "save": "Yadda saxla"
+        }
+      },
+      "productImageSize": {
+        "label": "Məhsul şəklinin ölçüsü",
+        "description": "Bu ayar botunuzdakı məhsul şəkillərinin ölçüsünü idarə edir",
+        "options": {
+          "bigSquare": "Böyük (kvadrat)",
+          "mediumRectangle": "Orta (düzbucaqlı)"
+        }
+      },
+      "allowRateOrders": {
+        "label": "Sifarişləri qiymətləndirməyə icazə ver",
+        "description": "Müştərilər sifarişdən razı qalmasalar, onu qiymətləndirib rəy yaza bilsinlər. Rəyləri yalnız bot adminləri görə bilər"
+      },
+      "notifyOnCartStatusChange": {
+        "label": "Səbət statusu dəyişəndə bildiriş göndər",
+        "description": "Sifariş statusunu dəyişdikcə müştəri bildiriş alacaq. Sifarişin ləğvi və tamamlanması üçün bildirişi deaktiv edə bilməzsiniz."
+      },
+      "abandonedCartFlow": {
+        "label": "Tərk edilmiş səbət axını",
+        "description": "Səbət bu qədər tərk edildikdə botun müştəri üçün işlətdiyi axın. Səbəti açmaq üçün düymələrdə '{{shop_token}}' istifadə edin. Triggerlər \"Cart abandoned\" hadisəsindən də istifadə edə bilər.",
+        "none": "Axın yoxdur (yalnız trigger hadisəsi)"
+      }
+    },
+    "payments": {
+      "currencyMismatch": "{count, plural, one {# məhsulun qiyməti} other {# məhsulun qiyməti}} {currency} valyutasından fərqli valyutadadır. Sifarişlər qiyməti {currency} ilə hesablayır.",
+      "paymentMethods": {
+        "label": "Ödəniş üsulları",
+        "description": "Ödəniş səhifəsində aktiv olan ödəniş üsulları. Siyahıdakı ilk üsul ödəniş səhifəsində seçilmiş olacaq.",
+        "options": {
+          "cod": "Çatdırılma zamanı ödəniş"
+        }
+      },
+      "currency": {
+        "label": "Valyuta",
+        "description": "Məhsul qiymətlərini təyin etdiyiniz valyutadır. Müştərilərdən bu valyutada ödəniş alınacaq."
+      },
+      "currencyPosition": {
+        "label": "Valyutanın mövqeyi",
+        "description": "Bu seçim valyutanın mövqeyini idarə etməyə imkan verir.",
+        "options": {
+          "left": "Sol",
+          "leftSpace": "Solda boşluqla",
+          "right": "Sağ",
+          "rightSpace": "Sağda boşluqla"
+        }
+      },
+      "currencySymbol": {
+        "label": "Valyuta simvolu",
+        "description": "Valyuta simvolu qiymətlərin qarşısında göstərilir. Simvol ilə qiymət arasında boşluq istəyirsinizsə, simvolun sonuna boşluq əlavə edin."
+      },
+      "serviceFeePercent": {
+        "label": "Digər haqlar / Xidmət haqları (0 - 100%)",
+        "description": "Satışla bağlı digər haqlar."
+      }
+    },
+    "shipping": {
+      "shippingType": {
+        "label": "Çatdırılma növü",
+        "description": "Bu seçim müştərinin sifarişi necə alacağını idarə etməyə imkan verir.",
+        "options": {
+          "none": "Yoxdur",
+          "delivery": "Müştəriyə çatdırılma",
+          "pickup": "Mağazadan təhvil alma",
+          "deliveryAndPickup": "Müştəriyə çatdırılma, mağazadan təhvil alma"
+        }
+      },
+      "storeAddress": {
+        "label": "Mağaza ünvanı",
+        "description": "Mağazadan təhvil almağa icazə versəniz, bu ünvan müştəriyə ödəniş səhifəsində göstərilir."
+      },
+      "shippingCountries": {
+        "label": "Çatdırılma ölkələri",
+        "description": "Sifariş göndərdiyiniz ölkələr."
+      },
+      "defaultShippingCountry": {
+        "label": "Susmaya görə çatdırılma ölkəsi",
+        "description": "Ödəniş səhifəsində susmaya görə seçiləcək ölkə.",
+        "none": "Yoxdur"
+      },
+      "deliveryCost": {
+        "label": "Çatdırılma xərci",
+        "description": "Sifarişi müştərinin ünvanına çatdırmaq üçün sabit qiymət."
+      },
+      "defaultCountryNotShipped": "Çatdırılma ölkələrindən birini seçin."
+    },
+    "checkout": {
+      "checkoutMode": {
+        "label": "Ödəniş səhifəsi",
+        "description": "Bu ayar müştərilərinizin sifarişlərini harada tamamlayacağını idarə edir. İstifadəçinin sifarişi botunuzdan kənarda, məsələn veb saytınızda, Amazon və s. tamamlamasını istəyirsinizsə, standart ödəniş səhifəmizdən istifadə etməyin.",
+        "options": {
+          "default": "Standart ödəniş səhifəsi",
+          "externalLink": "Fərdi xarici ödəniş səhifəsi",
+          "flow": "Flow",
+          "productPage": "Xarici məhsul səhifəsinə keç"
+        }
+      },
+      "checkoutLink": {
+        "label": "Ödəniş səhifəsinin linki",
+        "description": "Müştərilərin sifarişlərini tamamladığı xarici səhifə."
+      },
+      "checkoutFlowId": {
+        "label": "Ödəniş Flow-u",
+        "description": "Müştəri ödənişə keçəndə işləyən flow.",
+        "placeholder": "Flow seçin"
+      },
+      "minimumOrderValue": {
+        "label": "Minimum sifariş məbləği",
+        "description": "Müştərinin verə biləcəyi sifarişin minimum məbləği. Bu şərt bütün endirimlər tətbiq olunduqdan sonra yoxlanılır."
+      },
+      "requiredFields": {
+        "requireName": {
+          "label": "Alıcının adını tələb et",
+          "description": "Alıcının adı ödəniş zamanı toplanacaq."
+        },
+        "requireEmail": {
+          "label": "E-poçt ünvanını tələb et",
+          "description": "Alıcının e-poçtu ödəniş zamanı toplanacaq."
+        },
+        "requirePhone": {
+          "label": "Telefon nömrəsini tələb et",
+          "description": "Alıcının telefonu ödəniş zamanı toplanacaq."
+        },
+        "requireState": {
+          "label": "Ştat/regionu tələb et",
+          "description": "Alıcının ştatı ödəniş zamanı toplanacaq."
+        },
+        "requireZip": {
+          "label": "Poçt indeksini tələb et",
+          "description": "Alıcının poçt indeksi ödəniş zamanı toplanacaq."
+        }
+      },
+      "orderConfirmationMode": {
+        "label": "Sifariş təsdiqi mesajı",
+        "description": "Sifariş veriləndə müştərinin söhbətdə aldığı. Standart mesaj sifariş təfərrüatlarını iş sahəsinin dilində göstərir.",
+        "options": {
+          "default": "Standart mesaj",
+          "flow": "Axın işə sal",
+          "none": "Heç nə göndərmə"
+        }
+      },
+      "orderConfirmationFlowId": {
+        "label": "Sifariş təsdiqi axını",
+        "description": "Sifariş veriləndə standart mesajın əvəzinə müştəriyə göndərilən axın."
+      }
+    }
+  },
+  "openHours": {
+    "alwaysOpen": "Həmişə açıq",
+    "addNew": "Yenisini əlavə et",
+    "dialogTitle": "İş saatları",
+    "name": "Ad",
+    "namePlaceholder": "məs. İş günləri",
+    "day": "Gün",
+    "from": "Açılır",
+    "to": "Bağlanır",
+    "add": "Saat əlavə et",
+    "remove": "Sil",
+    "cancel": "Ləğv et",
+    "continue": "Davam et",
+    "created": "İş saatları yaradıldı",
+    "saveError": "İş saatlarını yadda saxlamaq alınmadı",
+    "days": {
+      "0": "Bazar",
+      "1": "Bazar ertəsi",
+      "2": "Çərşənbə axşamı",
+      "3": "Çərşənbə",
+      "4": "Cümə axşamı",
+      "5": "Cümə",
+      "6": "Şənbə"
+    },
+    "sameTimes": "Açılış və bağlanış vaxtı fərqli olmalıdır."
+  },
+  "webshop": {
+    "metadataTitle": "Mağaza",
+    "metadataOrderTitle": "Sifarişiniz",
+    "invalidLinkTitle": "Bu keçid işləmir",
+    "invalidLinkDescription": "Vaxtı bitmiş ola bilər. Söhbətdə mağazadan yeni keçid istəyin.",
+    "previewBanner": "Önizləmə: müştərilər bunu görür. Önizləmədən sifariş vermək olmur.",
+    "previewOrderingOff": "Önizləmə: sifariş bağlıdır",
+    "closed": {
+      "orderingUnavailable": "Mağaza hazırda sifariş qəbul etmir.",
+      "outsideOpenHours": "Mağaza hazırda bağlıdır. Yenə də baxa bilərsiniz."
+    },
+    "searchPlaceholder": "Məhsul axtar",
+    "categories": "Kateqoriyalar",
+    "allCategories": "Bütün kateqoriyalar",
+    "vendors": "Satıcılar",
+    "allVendors": "Bütün satıcılar",
+    "noProducts": "Məhsul tapılmadı.",
+    "productNotFound": "Bu məhsul artıq mövcud deyil.",
+    "outOfStock": "Stokda yoxdur",
+    "addToCart": "Səbətə əlavə et",
+    "added": "Səbətə əlavə edildi",
+    "chooseOptions": "Seçimləri et",
+    "chooseOption": "{name} seçin",
+    "variantUnavailable": "Bu seçim mövcud deyil.",
+    "buy": "Al",
+    "share": "Paylaş",
+    "linkCopied": "Kopyalandı",
+    "similar": "Oxşar",
+    "save": "Yadda saxla",
+    "saved": "Saxlanıldı",
+    "showImage": "{number} şəklini göstər",
+    "increase": "Miqdarı artır",
+    "decrease": "Miqdarı azalt",
+    "remove": "Sil",
+    "cart": "Səbət",
+    "cartEmpty": "Səbətiniz boşdur.",
+    "continueShopping": "Alış-verişə davam et",
+    "unavailableItems": "{count, plural, one {# məhsulu indi sifariş etmək olmur} other {# məhsulu indi sifariş etmək olmur}}",
+    "unavailableNotOrdered": "Onlar sifarişə daxil edilməyəcək və səbətdə qalacaq.",
+    "unavailable": "Artıq mövcud deyil",
+    "unavailableHint": "Seçimləri yenidən edin",
+    "deletedProduct": "Silinmiş məhsul",
+    "summary": {
+      "subtotal": "Aralıq cəm",
+      "discount": "Endirim",
+      "delivery": "Çatdırılma",
+      "otherFees": "Digər ödənişlər",
+      "total": "Cəmi",
+      "coupon": "Kupon ({code})",
+      "title": "Sifarişin xülasəsi",
+      "saved": "{amount} qənaət edirsiniz"
+    },
+    "belowMinimum": "Minimum sifariş {amount} təşkil edir.",
+    "checkOut": "Sifarişi rəsmiləşdir",
+    "contactDetails": "Məlumatlarınız",
+    "optional": "(istəyə görə)",
+    "fields": {
+      "name": "Ad",
+      "email": "E-poçt",
+      "phone": "Telefon",
+      "country": "Ölkə",
+      "state": "Region / əyalət",
+      "city": "Şəhər",
+      "address1": "Ünvan",
+      "address2": "Mənzil, bina və s.",
+      "zip": "Poçt indeksi",
+      "note": "Mağaza üçün qeyd"
+    },
+    "shipping": {
+      "title": "Çatdırılma",
+      "delivery": "Ünvanıma çatdırılma",
+      "pickup": "Mağazadan götürmək",
+      "storeAddress": "Mağaza ünvanı: {address}"
+    },
+    "payment": {
+      "title": "Ödəniş",
+      "cod": "Çatdırılmada nağd ödəniş"
+    },
+    "placeOrder": "Sifariş ver",
+    "orderPlaced": "Təşəkkür edirik! Sifarişiniz qəbul edildi. Yenilikləri söhbətdə göndərəcəyik.",
+    "orderTitle": "Sifariş #{number}",
+    "orderNotFound": "Bu sifariş tapılmadı.",
+    "placedAt": "{date} tarixində verilib",
+    "status": {
+      "pending": "Emal olunmayıb",
+      "accepted": "Emal olunur",
+      "shipped": "Göndərilib",
+      "concluded": "Tamamlanıb",
+      "cancelled": "Ləğv edilib"
+    },
+    "rateTitle": "Sifarişinizi qiymətləndirin",
+    "rateComment": "Mağazaya fikrinizi yazın (istəyə görə)",
+    "rateSubmit": "Qiyməti göndər",
+    "rateThanks": "Qiymətləndirdiyiniz üçün təşəkkür edirik!",
+    "yourRating": "Qiymətiniz",
+    "ratingValue": "5 ulduzdan {rating}",
+    "previous": "Əvvəlki",
+    "next": "Növbəti",
+    "pageOf": "Səhifə {page}/{pageCount}",
+    "errors": {
+      "generic": "Xəta baş verdi. Yenidən cəhd edin.",
+      "checkFields": "Zəhmət olmasa xanaları yoxlayın.",
+      "fieldRequired": "{field} tələb olunur.",
+      "countryUnavailable": "Mağaza bu ölkəyə çatdırmır.",
+      "invalidLink": "Bu keçid artıq işləmir. Mağazadan yenisini istəyin.",
+      "webshopPreviewOnly": "Bu önizləmədir. Sifariş yalnız müştəri keçidindən verilə bilər.",
+      "rateLimited": "Həddindən çox cəhd. Bir az gözləyib yenidən cəhd edin.",
+      "orderingUnavailable": "Mağaza hazırda sifariş qəbul etmir.",
+      "orderBelowMinimum": "Minimum sifariş {minimum} təşkil edir.",
+      "orderBelowVendorMinimum": "{vendorName} məhsullarının cəmi ən azı {minimum} olmalıdır.",
+      "orderOutOfStock": "{productName} stokda qalmayıb.",
+      "orderProductUnavailable": "Bəzi məhsulları artıq sifariş etmək olmur. Səbətinizi yoxlayın.",
+      "orderEmpty": "Səbətiniz boşdur.",
+      "orderShippingTypeUnavailable": "Bu çatdırılma üsulu mövcud deyil.",
+      "webshopRatingNotAllowed": "Bu sifarişi qiymətləndirmək olmur.",
+      "webshopCartFull": "Səbətinizdə ən çox {maximum} fərqli məhsul ola bilər.",
+      "notFound": "Bu məhsul artıq mövcud deyil.",
+      "discountCodeNotFound": "Bu endirim kodu yoxdur.",
+      "discountCodeInactive": "Bu endirim kodu aktiv deyil.",
+      "discountCodeNotStarted": "Bu endirim kodu hələ qüvvədə deyil.",
+      "discountCodeExpired": "Bu endirim kodunun vaxtı bitib.",
+      "discountCodeUsageLimitReached": "Bu endirim kodunun istifadə limiti bitib.",
+      "discountCodeAlreadyUsed": "Bu endirim kodundan artıq istifadə etmisiniz.",
+      "discountCodeNotEligible": "Bu endirim kodu sizin üçün deyil.",
+      "discountCodeNotApplicable": "Bu endirim kodu səbətinizdəki məhsullara aid deyil.",
+      "discountCodeMinimumAmount": "Bu kod ən azı {minimum} alış tələb edir. Daha {missing} əlavə edin.",
+      "discountCodeMinimumQuantity": "Bu kod ən azı {minimum} məhsul tələb edir. Daha {missing} əlavə edin."
+    },
+    "discount": {
+      "label": "Endirim kodu",
+      "placeholder": "Endirim kodu",
+      "apply": "Tətbiq et",
+      "applied": "Endirim kodu tətbiq olundu",
+      "automatic": "avtomatik tətbiq olunub",
+      "remove": "Endirim kodunu sil",
+      "available": "İstifadə edə biləcəyiniz kodlar",
+      "freeShipping": "Pulsuz çatdırılma",
+      "bestChoice": "Ən yaxşı seçim",
+      "expiresOn": "Bitmə tarixi: {date}",
+      "noExpiry": "Müddətsiz",
+      "inUse": "İstifadədədir",
+      "saves": "{amount} endirim",
+      "showMore": "{count, plural, one {Daha # kod göstər} other {Daha # kod göstər}}",
+      "showLess": "Daha az göstər",
+      "removeShort": "Sil",
+      "expired": "Müddəti bitib",
+      "usedUp": "Tükənib",
+      "notEligible": "Hələ uyğun deyil"
+    },
+    "itemCount": "{count, plural, one {# məhsul} other {# məhsul}}",
+    "relatedProducts": "Bunlar da xoşunuza gələ bilər"
+  },
+  "webshopLinks": {
+    "preview": "Önizləmə",
+    "getLink": "Keçidi al",
+    "copied": "Keçid kopyalandı. Onu bot düyməsinə qoyun: hər kontakt öz mağazasını açacaq.",
+    "error": "Keçidi almaq mümkün olmadı.",
+    "copyError": "Keçidi kopyalamaq mümkün olmadı.",
+    "shopLink": {
+      "label": "Mağaza linki",
+      "hint": "Bu linki axın, yayım və ya ardıcıllıqdakı düyməyə yapışdırın. Onu alan hər kontakt öz mağazasını açır və sifariş verə bilir."
+    },
+    "productLink": {
+      "label": "İctimai URL",
+      "hint": "Linki kopyalayıb axına, yayıma və ya ardıcıllığa yapışdırın. Onu alan hər kontakt bu məhsulu açır və sifariş verə bilir."
+    }
+  },
+  "discountCodes": {
+    "title": "Kuponlar",
+    "description": "Müştərilərin sifarişdə istifadə etdiyi və ya özü tətbiq olunan endirim kodları.",
+    "add": "Əlavə et",
+    "edit": "Kuponu redaktə et",
+    "automatic": "Avtomatik",
+    "never": "Heç vaxt",
+    "searchPlaceholder": "Kod axtar…",
+    "saveError": "Kuponu yadda saxlamaq olmadı.",
+    "created": "Kupon yaradıldı",
+    "updated": "Kupon yadda saxlanıldı",
+    "deleted": "Kupon silindi",
+    "deleteError": "Kuponu silmək olmadı.",
+    "deleteTitle": "{code} kuponu silinsin?",
+    "deleteDescription": "Müştərilər artıq ondan istifadə edə bilməyəcək. Onu istifadə edən sifarişlər endirimi saxlayır.",
+    "cancel": "Ləğv et",
+    "delete": "Sil",
+    "save": "Yadda saxla",
+    "columns": {
+      "name": "Ad",
+      "discount": "Endirim",
+      "used": "İstifadə",
+      "end": "Bitmə",
+      "active": "Aktiv"
+    },
+    "discountTypes": {
+      "percentage": "Faiz",
+      "fixedAmount": "Sabit məbləğ",
+      "freeShipping": "Pulsuz çatdırılma"
+    },
+    "appliesTo": {
+      "entireOrder": "Bütün sifariş",
+      "category": "Müəyyən kateqoriya",
+      "products": "Müəyyən məhsullar"
+    },
+    "minimumTypes": {
+      "none": "Yoxdur",
+      "amount": "Minimum alış məbləği",
+      "quantity": "Minimum məhsul sayı"
+    },
+    "eligibilities": {
+      "everyone": "Hamı",
+      "specificCustomers": "Müəyyən müştərilər"
+    },
+    "form": {
+      "discountCode": "Endirim kodu",
+      "code": "Kod",
+      "generate": "Yarat",
+      "autoApply": "Bu kuponu səbətlərə avtomatik tətbiq et",
+      "autoApplyHint": "Səbətlər müştəri yazmadan alır. Bir neçə avtomatik kupon olduqda ən çox endirim edən qalib gəlir.",
+      "typedHint": "Müştərilər bu endirim kodunu sifarişdə daxil edəcək.",
+      "options": "Seçimlər",
+      "discountType": "Endirim növü",
+      "discountValuePercent": "Endirim dəyəri (%)",
+      "discountValueAmount": "Endirim dəyəri ({currency})",
+      "freeShippingHint": "Müştəriyə çatdırılan sifarişlərdən çatdırılma haqqını çıxır.",
+      "appliesTo": "Tətbiq olunur",
+      "category": "Kateqoriya",
+      "products": "Məhsullar",
+      "productsPlaceholder": "Məhsulları seçin",
+      "minimumRequirement": "Minimum tələb",
+      "minimumAmount": "Minimum məbləğ ({currency})",
+      "minimumQuantity": "Minimum məhsul sayı",
+      "usageLimits": "İstifadə limitləri",
+      "limitTotal": "Bu endirimin ümumi istifadə sayını məhdudlaşdır",
+      "usedSoFar": "{count, plural, one {İndiyədək # dəfə istifadə olunub} other {İndiyədək # dəfə istifadə olunub}}",
+      "oncePerCustomer": "Hər müştəriyə bir istifadə",
+      "customerEligibility": "Müştəri uyğunluğu",
+      "specificCustomersHint": "Yalnız sifariş verərkən aşağıdakı filtrə uyğun kontaktlar.",
+      "activeDates": "Aktiv tarixlər",
+      "startDate": "Başlama tarixi",
+      "endDate": "Bitmə tarixi",
+      "isActive": "Aktiv"
+    },
+    "rules": {
+      "codeCharacters": "Yalnız işarəsiz hərflər, rəqəmlər, - və _ istifadə edin.",
+      "usageBelowUsed": "Bu kod artıq {count} dəfə istifadə olunub; limit daha az ola bilməz.",
+      "customerConditionRequired": "Ən azı bir şərt əlavə edin.",
+      "endAfterStart": "Bitmə tarixi başlama tarixindən sonra olmalıdır."
+    }
+  },
+  "ecommerceAnalytics": {
+    "title": "Analitika",
+    "lifetime": "Ümumi",
+    "sales": "Satışlar",
+    "orders": "Sifarişlər",
+    "products": "Məhsullar",
+    "salesByDate": "Tarixə görə satışlar",
+    "ordersByDate": "Tarixə görə sifarişlər",
+    "topProducts": "Ən çox satılan məhsullar",
+    "topVendors": "Ən yaxşı satıcılar",
+    "columns": {
+      "name": "Ad",
+      "sales": "Satışlar"
+    },
+    "noData": "Bu dövrdə məlumat yoxdur",
+    "refresh": "Yenilə",
+    "change": "{value}%",
+    "noPrevious": "yeni",
+    "otherCurrencyOrders": "Digər valyutalarda olan {count} sifariş bu göstəricilərə daxil edilməyib"
   },
   "responseSla": {
     "label": "Cavab SLA",

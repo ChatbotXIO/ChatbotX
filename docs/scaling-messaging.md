@@ -14,6 +14,7 @@ retention-formula worked example.
 | Sequence scheduler | `REDIS_SEQUENCE_URL` → `REDIS_URL` | `redis:8-alpine` or Valkey 8+ | zset + Redlock coordination across 256 hash buckets. |
 | Cache / distributed lock / MAC bloom filter | `REDIS_CACHE_URL` → `REDIS_URL` | `redis:8-alpine`, or Dragonfly, or Valkey **with** `valkey-bloom` loaded | `packages/redis/src/bloom-filter.ts` issues `BF.RESERVE`/`BF.ADD`. Plain `valkey/valkey` rejects these commands and silently breaks MAC counting. |
 | Event streams (`events:message`, `events:analytics-dashboard`, `events:error-log`, `flow:events`) | `REDIS_QUEUE_URL` → `REDIS_URL` (shares hot) | `redis:8-alpine` or Valkey 8+ until tier-2 | Redis Streams with consumer groups; ceiling is `MAXLEN` retention, not throughput. |
+| Realtime streams + revoke markers | `REDIS_REALTIME_URL` → `REDIS_URL` | `redis:8-alpine` or Valkey 8+ | Streams without consumer groups; capped at five-minute retention, so an eviction-tolerant configuration is acceptable. |
 
 The `sequenceScheduler` BullMQ queue always uses `sequenceConnections`
 (`packages/redis/src/connections/sequence-connection.ts`) — it is never affected by

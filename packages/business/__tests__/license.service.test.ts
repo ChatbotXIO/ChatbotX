@@ -119,7 +119,7 @@ describe("enterprise license verification", () => {
 
   test("surfaces signed claims for an expired license", async () => {
     const token = await signLicense({
-      exp: NOW_SECONDS - 2 * DAY_SECONDS,
+      exp: NOW_SECONDS - 9 * DAY_SECONDS,
     })
 
     const status = await verifyLicenseToken(token, keyMap, { currentDate: NOW })
@@ -129,9 +129,37 @@ describe("enterprise license verification", () => {
       licenseId: "lic_test_123",
       customerName: "Acme Corp",
       keyId: KID,
-      daysRemaining: -2,
+      daysRemaining: -9,
     })
     expect(status.error).toContain("exp")
+  })
+
+  test("resolves to grace state within the 7-day window after expiry", async () => {
+    const token = await signLicense({
+      exp: NOW_SECONDS - 3 * DAY_SECONDS,
+    })
+
+    const status = await verifyLicenseToken(token, keyMap, { currentDate: NOW })
+
+    expect(status).toMatchObject({
+      state: "grace",
+      daysRemaining: -3,
+      features: ["sso", "customBranding"],
+      graceEndsAt: new Date(
+        (NOW_SECONDS + 4 * DAY_SECONDS) * 1000,
+      ).toISOString(),
+    })
+  })
+
+  test("treats exactly 7 days past expiry as expired (boundary)", async () => {
+    const token = await signLicense({
+      exp: NOW_SECONDS - 7 * DAY_SECONDS,
+    })
+
+    const status = await verifyLicenseToken(token, keyMap, { currentDate: NOW })
+
+    expect(status.state).toBe("expired")
+    expect(status.graceEndsAt).toBe(NOW.toISOString())
   })
 
   test("rejects a tampered payload", async () => {
@@ -311,6 +339,52 @@ describe("enterprise license verification", () => {
     expect(await hasFeature("auditLog")).toBe(false)
   })
 
+  test("keeps enterprise entitlements while inside the grace window", async () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(NOW)
+    process.env.LICENSE_KEY = await signLicense({
+      exp: NOW_SECONDS - 3 * DAY_SECONDS,
+    })
+    vi.resetModules()
+    vi.doMock("../src/enterprise/license/public-keys", () => ({
+      LICENSE_ISSUER,
+      LICENSE_PUBLIC_KEYS: keyMap,
+    }))
+    mockLicenseRepository()
+    const { getLicenseStatus, getLimit, hasFeature } = await import(
+      "../src/enterprise/license/service"
+    )
+
+    const status = await getLicenseStatus()
+
+    expect(status.state).toBe("grace")
+    expect(await hasFeature("sso")).toBe(true)
+    expect(await getLimit("maxWorkspaces")).toBe(7)
+  })
+
+  test("drops entitlements once the grace window has elapsed", async () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(NOW)
+    process.env.LICENSE_KEY = await signLicense({
+      exp: NOW_SECONDS - 9 * DAY_SECONDS,
+    })
+    vi.resetModules()
+    vi.doMock("../src/enterprise/license/public-keys", () => ({
+      LICENSE_ISSUER,
+      LICENSE_PUBLIC_KEYS: keyMap,
+    }))
+    mockLicenseRepository()
+    const { getLicenseStatus, getLimit, hasFeature } = await import(
+      "../src/enterprise/license/service"
+    )
+
+    const status = await getLicenseStatus()
+
+    expect(status.state).toBe("expired")
+    expect(await hasFeature("sso")).toBe(false)
+    expect(await getLimit("maxWorkspaces")).toBeUndefined()
+  })
+
   test("prefers a valid stored token over an expired LICENSE_KEY", async () => {
     vi.useFakeTimers()
     vi.setSystemTime(NOW)
@@ -363,7 +437,34 @@ describe("enterprise license verification", () => {
     )
 
     await expect(getLicenseStatus()).resolves.toMatchObject({
-      state: "expired",
+      state: "grace",
+    })
+  })
+
+  test("prefers a grace license over a lapsed one for the same licenseId", async () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(NOW)
+    const envToken = await signLicense({
+      exp: NOW_SECONDS - 9 * DAY_SECONDS,
+      iat: NOW_SECONDS - 60,
+    })
+    const storedToken = await signLicense({
+      exp: NOW_SECONDS - 3 * DAY_SECONDS,
+      iat: NOW_SECONDS - 30,
+    })
+    process.env.LICENSE_KEY = envToken
+    vi.resetModules()
+    vi.doMock("../src/enterprise/license/public-keys", () => ({
+      LICENSE_ISSUER,
+      LICENSE_PUBLIC_KEYS: keyMap,
+    }))
+    mockLicenseRepository(storedToken)
+    const { getLicenseStatus } = await import(
+      "../src/enterprise/license/service"
+    )
+
+    await expect(getLicenseStatus()).resolves.toMatchObject({
+      state: "grace",
     })
   })
 

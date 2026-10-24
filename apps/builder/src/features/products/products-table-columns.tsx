@@ -21,6 +21,7 @@ import {
   useState,
   useTransition,
 } from "react"
+import { WebshopLinkMenuItems } from "@/features/webshop/components/webshop-link-menu-items"
 import { toggleProductActiveAction } from "./actions/toggle-product-active-action"
 import type { ProductResource } from "./schema/resource"
 
@@ -207,6 +208,10 @@ export function getProductColumns({
                   {t("actions.edit")}
                 </Link>
               }
+            />
+            <WebshopLinkMenuItems
+              target={{ productId: row.original.id }}
+              workspaceId={row.original.workspaceId}
             />
             <DropdownMenuItem
               onClick={() => setRowAction({ row, variant: "delete" })}

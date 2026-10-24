@@ -9,7 +9,19 @@
       "passThroughEnv": [
         "BETTER_AUTH_SECRET",
         "BETTER_AUTH_URL",
-        "SUPPORT_ACCESS_REQUIRE_CONSENT"
+        "SUPPORT_ACCESS_REQUIRE_CONSENT",
+        "AUTH_DISABLE_SIGNUP",
+        "AUTH_OAUTH_ENABLED",
+        "AUTH_OAUTH_CLIENT_ID",
+        "AUTH_OAUTH_CLIENT_SECRET",
+        "AUTH_OAUTH_DISCOVERY_URL",
+        "AUTH_OAUTH_AUTH_URL",
+        "AUTH_OAUTH_TOKEN_URL",
+        "AUTH_OAUTH_USERINFO_URL",
+        "AUTH_OAUTH_SCOPES",
+        "AUTH_OAUTH_TRUST_EMAIL",
+        "NEXT_PUBLIC_AUTH_OAUTH_DISPLAY_NAME",
+        "NEXT_PUBLIC_AUTH_OAUTH_LOGO_URL"
       ]
     },
     // No `dependsOn: ["^lint"]`: Biome lints every file independently, so the

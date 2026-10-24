@@ -146,8 +146,9 @@ export type WhatsappVoipPreparingData = {
 }
 
 /**
- * Outbound SDP answer handed from `chat-realtime.tsx` to the hook, kept apart
- * from `call` so an answer for a call no longer held can be dropped.
+ * Outbound SDP answer handed from `WhatsappCallRealtime` (or the post-resync
+ * recovery) to the hook, kept apart from `call` so an answer for a call no
+ * longer held can be dropped.
  */
 export type WhatsappVoipPendingOutboundAnswer = {
   whatsappCallId: string
@@ -169,6 +170,38 @@ export function isCallSlotFree(call: WhatsappVoipCall | null): boolean {
 /** How long a `pendingConversationOpen` request stays valid. */
 export const PENDING_CONVERSATION_OPEN_MAX_AGE_MS = 15_000
 
+/**
+ * How many dismissed offer ids the store remembers. An offer lives for about a
+ * minute, so a small FIFO window is enough to stop a late or replayed
+ * `Incoming` from ringing again, without the memory growing with call volume.
+ */
+const DISMISSED_RING_MEMORY = 50
+
+/**
+ * Appends ids to the dismissed memory, oldest forgotten first. Returns `current`
+ * itself when it already ends with them, so a repeated Ended or Claimed (every
+ * tab receives each one) is not a state change.
+ */
+const rememberDismissedRingIds = (
+  current: readonly string[],
+  dismissedIds: readonly string[],
+): readonly string[] => {
+  const next = [
+    ...current.filter((id) => !dismissedIds.includes(id)),
+    ...dismissedIds,
+  ].slice(-DISMISSED_RING_MEMORY)
+  const isUnchanged =
+    next.length === current.length &&
+    next.every((id, index) => id === current[index])
+  return isUnchanged ? current : next
+}
+
+/** An unparseable deadline is kept: the hook gives it a bounded local expiry. */
+const isOfferExpired = (deadlineAt: string): boolean => {
+  const deadlineMs = new Date(deadlineAt).getTime()
+  return Number.isFinite(deadlineMs) && deadlineMs <= Date.now()
+}
+
 const OUTBOUND_PHASE_BY_BUFFERED_STATUS: Record<
   "ringing" | "accepted",
   WhatsappVoipCallPhase
@@ -185,6 +218,12 @@ type WhatsappVoipCallState = {
   call: WhatsappVoipCall | null
   /** Offers not yet answered, in arrival order. Never overlaps `call`. */
   ringingCalls: WhatsappVoipRingingCall[]
+  /**
+   * Ids of offers that left the basket (ended, claimed, reassigned, answered),
+   * newest last and capped at `DISMISSED_RING_MEMORY`. A late or replayed
+   * `Incoming` for one of them is ignored instead of ringing again.
+   */
+  dismissedRingIds: readonly string[]
   /**
    * A conversation to open while already on the inbox (from the panel's "Go to
    * conversation" or navigate-on-answer) — a plain `router.push` would not re-
@@ -216,6 +255,21 @@ type WhatsappVoipCallState = {
    * when a ringing conversation is reassigned away.
    */
   removeRingingByConversationIds: (conversationIds: readonly string[]) => void
+  /**
+   * Reloads the basket from the server's list of still-ringing offers after
+   * realtime may have missed events. Adds offers the basket lacks and, when the
+   * list is complete, drops entries the server no longer lists, but only those
+   * in `staleCandidateIds` (the ids present before the request started), so an
+   * offer that arrived over realtime while the request was in flight is never
+   * lost. A capped list cannot prove an entry is gone, so it only adds.
+   * `serverCalls` is newest first, as the server returns it.
+   */
+  reconcileRinging: (input: {
+    /** False when the server's candidate query hit its cap: nothing is dropped. */
+    isServerListComplete: boolean
+    serverCalls: readonly WhatsappVoipIncomingData[]
+    staleCandidateIds: ReadonlySet<string>
+  }) => void
   /**
    * Records a conversation to open while on the inbox, stamped with
    * `Date.now()`.
@@ -290,9 +344,40 @@ type WhatsappVoipCallState = {
   ) => void
 }
 
+type DroppedRingingCall = Partial<
+  Pick<WhatsappVoipCallState, "dismissedRingIds" | "ringingCalls">
+>
+
+/**
+ * Takes one offer out of the basket and remembers its id, returning only the
+ * fields that changed, or `null` when nothing did. The id is remembered even
+ * when it is not in the basket: an `Ended` can overtake its `Incoming`.
+ */
+const dropRingingCall = (
+  state: WhatsappVoipCallState,
+  whatsappCallId: string,
+): DroppedRingingCall | null => {
+  const ringingCalls = state.ringingCalls.filter(
+    (ringing) => ringing.whatsappCallId !== whatsappCallId,
+  )
+  const dismissedRingIds = rememberDismissedRingIds(state.dismissedRingIds, [
+    whatsappCallId,
+  ])
+  const isBasketChanged = ringingCalls.length !== state.ringingCalls.length
+  const isDismissalNew = dismissedRingIds !== state.dismissedRingIds
+  if (!(isBasketChanged || isDismissalNew)) {
+    return null
+  }
+  return {
+    ...(isDismissalNew && { dismissedRingIds }),
+    ...(isBasketChanged && { ringingCalls }),
+  }
+}
+
 export const useWhatsappVoipCallStore = create<WhatsappVoipCallState>(
   (set, get) => ({
     call: null,
+    dismissedRingIds: [],
     ringingCalls: [],
     pendingConversationOpen: null,
     pendingOutboundAnswer: null,
@@ -305,7 +390,15 @@ export const useWhatsappVoipCallStore = create<WhatsappVoipCallState>(
         )
         // Already promoted — never re-add it to the basket.
         const alreadyInSlot = state.call?.whatsappCallId === data.whatsappCallId
-        if (alreadyInBasket || alreadyInSlot) {
+        const wasDismissed = state.dismissedRingIds.includes(
+          data.whatsappCallId,
+        )
+        if (
+          alreadyInBasket ||
+          alreadyInSlot ||
+          wasDismissed ||
+          isOfferExpired(data.deadlineAt)
+        ) {
           return state
         }
         return {
@@ -314,46 +407,84 @@ export const useWhatsappVoipCallStore = create<WhatsappVoipCallState>(
       }),
 
     removeRinging: (whatsappCallId) =>
-      set((state) => {
-        const nextRingingCalls = state.ringingCalls.filter(
-          (ringing) => ringing.whatsappCallId !== whatsappCallId,
-        )
-        if (nextRingingCalls.length === state.ringingCalls.length) {
-          return state
-        }
-        return { ringingCalls: nextRingingCalls }
-      }),
+      set((state) => dropRingingCall(state, whatsappCallId) ?? state),
 
     dismissRinging: (whatsappCallId) =>
       set((state) => {
-        const nextRingingCalls = state.ringingCalls.filter(
-          (ringing) => ringing.whatsappCallId !== whatsappCallId,
-        )
         const isSlotRinging =
           state.call?.whatsappCallId === whatsappCallId &&
           state.call.phase === WhatsappVoipCallPhase.incomingRinging
-        if (
-          !isSlotRinging &&
-          nextRingingCalls.length === state.ringingCalls.length
-        ) {
+        const dropped = dropRingingCall(state, whatsappCallId)
+        if (!(dropped || isSlotRinging)) {
           return state
         }
-        return {
-          ringingCalls: nextRingingCalls,
-          ...(isSlotRinging && { call: null }),
-        }
+        return { ...dropped, ...(isSlotRinging && { call: null }) }
       }),
 
     removeRingingByConversationIds: (conversationIds) =>
       set((state) => {
-        const dropIds = new Set(conversationIds)
-        const nextRingingCalls = state.ringingCalls.filter(
-          (ringing) => !dropIds.has(ringing.conversationId),
+        const dropConversationIds = new Set(conversationIds)
+        const dropped = state.ringingCalls.filter((ringing) =>
+          dropConversationIds.has(ringing.conversationId),
         )
-        if (nextRingingCalls.length === state.ringingCalls.length) {
+        if (dropped.length === 0) {
           return state
         }
-        return { ringingCalls: nextRingingCalls }
+        return {
+          dismissedRingIds: rememberDismissedRingIds(
+            state.dismissedRingIds,
+            dropped.map((ringing) => ringing.whatsappCallId),
+          ),
+          ringingCalls: state.ringingCalls.filter(
+            (ringing) => !dropConversationIds.has(ringing.conversationId),
+          ),
+        }
+      }),
+
+    reconcileRinging: ({
+      isServerListComplete,
+      serverCalls,
+      staleCandidateIds,
+    }) =>
+      set((state) => {
+        const serverIds = new Set(
+          serverCalls.map((call) => call.whatsappCallId),
+        )
+        const kept = isServerListComplete
+          ? state.ringingCalls.filter(
+              (ringing) =>
+                serverIds.has(ringing.whatsappCallId) ||
+                !staleCandidateIds.has(ringing.whatsappCallId),
+            )
+          : state.ringingCalls
+        const knownIds = new Set(kept.map((ringing) => ringing.whatsappCallId))
+        // The server lists newest first; the basket keeps arrival order.
+        const missing = [...serverCalls]
+          .reverse()
+          .filter(
+            (call) =>
+              !(
+                knownIds.has(call.whatsappCallId) ||
+                state.call?.whatsappCallId === call.whatsappCallId ||
+                state.dismissedRingIds.includes(call.whatsappCallId) ||
+                isOfferExpired(call.deadlineAt)
+              ),
+          )
+        if (missing.length === 0 && kept.length === state.ringingCalls.length) {
+          return state
+        }
+        // Remember what was dropped: the mount-time resume fetch may still be
+        // in flight with an older list that would otherwise ring it again.
+        const droppedIds = state.ringingCalls
+          .filter((ringing) => !kept.includes(ringing))
+          .map((ringing) => ringing.whatsappCallId)
+        return {
+          dismissedRingIds: rememberDismissedRingIds(
+            state.dismissedRingIds,
+            droppedIds,
+          ),
+          ringingCalls: [...kept, ...missing],
+        }
       }),
 
     setPendingConversationOpen: (conversationId) =>
@@ -386,6 +517,11 @@ export const useWhatsappVoipCallStore = create<WhatsappVoipCallState>(
         const incoming = state.ringingCalls[index]
         promoted = true
         return {
+          // Once consumed, a replayed offer for it must not ring again after
+          // the slot is cleared.
+          dismissedRingIds: rememberDismissedRingIds(state.dismissedRingIds, [
+            whatsappCallId,
+          ]),
           ringingCalls: state.ringingCalls.filter((_, i) => i !== index),
           call: {
             ...incoming,

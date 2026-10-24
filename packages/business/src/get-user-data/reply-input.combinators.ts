@@ -1,5 +1,6 @@
 import type { FileType } from "@chatbotx.io/database/partials"
 import type {
+  ReplyAttachmentRef,
   ReplyInputKind,
   ReplyValidationResult,
   ReplyValidator,
@@ -12,8 +13,11 @@ const PHONE_PATTERN = /^\+?(\d[\d-. ]+)?(\([\d-. ]+\))?[\d-. ]+\d$/
 export function accepted(
   userInput: string,
   kind: ReplyInputKind = "text",
+  attachment?: ReplyAttachmentRef,
 ): ReplyValidationResult {
-  return { ok: true, userInput, kind }
+  return attachment
+    ? { ok: true, userInput, kind, attachment }
+    : { ok: true, userInput, kind }
 }
 
 export function rejected(reason: string): ReplyValidationResult {
@@ -54,7 +58,13 @@ export function fromAttachment(
       return rejected("getUserData: unsupported file type")
     }
 
-    return accepted(file.originPath, "attachment")
+    return accepted(
+      file.originPath,
+      "attachment",
+      file.id && file.messageCreatedAt
+        ? { id: file.id, messageCreatedAt: file.messageCreatedAt }
+        : undefined,
+    )
   }
 }
 

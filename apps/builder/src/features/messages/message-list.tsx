@@ -37,6 +37,8 @@ export function MessageList() {
     loadMoreMessages,
     isLoadMoreMessage,
     hasNextMessagePage,
+    lastPrependedCount,
+    prependSeq,
     activeConversationId,
     setReplyToMessage,
     markMessagesDeleted,
@@ -196,7 +198,7 @@ export function MessageList() {
 
   const [firstItemIndex, setFirstItemIndex] = useState(START_INDEX)
   const prevLengthRef = useRef(0)
-  const prependPendingRef = useRef(false)
+  const pendingPrependSeqRef = useRef<number | null>(null)
   const didAutoSelectCommentRef = useRef(false)
   const virtuosoRef = useRef<VirtuosoHandle>(null)
   const [isAtBottom, setIsAtBottom] = useState(true)
@@ -218,7 +220,7 @@ export function MessageList() {
     setFirstItemIndex(START_INDEX)
     handleAtBottomStateChange(true)
     prevLengthRef.current = 0
-    prependPendingRef.current = false
+    pendingPrependSeqRef.current = null
     didAutoSelectCommentRef.current = false
     if (activeConversationId) {
       loadInitialMessages(workspaceId, INBOX_MESSAGES_PER_PAGE)
@@ -248,16 +250,22 @@ export function MessageList() {
     }
   }, [messages])
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: reacts to list growth only; reading the latest `messages` tail on that change is intended
+  // biome-ignore lint/correctness/useExhaustiveDependencies: reacts to list growth and accepted prepend tokens only
   useEffect(() => {
-    const prevLength = prevLengthRef.current
-    const delta = messages.length - prevLength
-    if (delta > 0 && prependPendingRef.current) {
-      setFirstItemIndex((idx) => idx - delta)
-      prependPendingRef.current = false
-    } else if (
-      delta > 0 &&
-      prevLength > 0 &&
+    const previousLength = prevLengthRef.current
+    const lengthDelta = messages.length - previousLength
+    const isAcceptedPrepend = pendingPrependSeqRef.current === prependSeq
+    const appendedCount = isAcceptedPrepend
+      ? lengthDelta - lastPrependedCount
+      : lengthDelta
+
+    if (isAcceptedPrepend) {
+      setFirstItemIndex((index) => index - lastPrependedCount)
+      pendingPrependSeqRef.current = null
+    }
+    if (
+      appendedCount > 0 &&
+      previousLength > 0 &&
       !isAtBottomRef.current &&
       messages.at(-1)?.messageType === "incoming"
     ) {
@@ -266,13 +274,13 @@ export function MessageList() {
       setHasUnseenIncoming(true)
     }
     prevLengthRef.current = messages.length
-  }, [messages.length])
+  }, [lastPrependedCount, messages.length, prependSeq])
 
   const loadMoreItems = () => {
     if (isLoadMoreMessage || !hasNextMessagePage || messages.length === 0) {
       return
     }
-    prependPendingRef.current = true
+    pendingPrependSeqRef.current = prependSeq + 1
     loadMoreMessages(workspaceId, INBOX_MESSAGES_PER_PAGE)
   }
 

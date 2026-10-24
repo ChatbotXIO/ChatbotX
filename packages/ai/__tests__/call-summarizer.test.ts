@@ -2,12 +2,19 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 import { z } from "zod"
 
 const mocks = vi.hoisted(() => ({
-  generateObject: vi.fn(),
+  generateText: vi.fn(),
+  outputObject: vi.fn((options: { schema: unknown }) => ({
+    kind: "object",
+    ...options,
+  })),
   getAIIntegrationInDB: vi.fn(),
   createAIModelInstance: vi.fn(),
 }))
 
-vi.mock("ai", () => ({ generateObject: mocks.generateObject }))
+vi.mock("ai", () => ({
+  generateText: mocks.generateText,
+  Output: { object: mocks.outputObject },
+}))
 
 vi.mock("../src/server/factory", () => ({
   getAIIntegrationInDB: mocks.getAIIntegrationInDB,
@@ -37,15 +44,18 @@ describe("generateCallSummary", () => {
   })
 
   test("sends a schema OpenAI strict mode accepts: every property is required", async () => {
-    mocks.generateObject.mockResolvedValue({
-      object: { summary: "s", keyPoints: null, actionItems: null },
+    mocks.generateText.mockResolvedValue({
+      output: { summary: "s", keyPoints: null, actionItems: null },
     })
 
     await summarize()
 
-    const { schema } = mocks.generateObject.mock.calls[0]?.[0] as {
+    const { schema } = mocks.outputObject.mock.calls[0]?.[0] as {
       schema: z.ZodType
     }
+    expect(mocks.generateText).toHaveBeenCalledWith(
+      expect.objectContaining({ output: expect.objectContaining({ schema }) }),
+    )
     const jsonSchema = z.toJSONSchema(schema) as {
       properties: Record<string, unknown>
       required?: string[]
@@ -58,16 +68,16 @@ describe("generateCallSummary", () => {
   })
 
   test("drops a field the model returned as null, keeping the stored shape", async () => {
-    mocks.generateObject.mockResolvedValue({
-      object: { summary: "s", keyPoints: null, actionItems: null },
+    mocks.generateText.mockResolvedValue({
+      output: { summary: "s", keyPoints: null, actionItems: null },
     })
 
     await expect(summarize()).resolves.toEqual({ summary: "s" })
   })
 
   test("keeps the lists the model did return", async () => {
-    mocks.generateObject.mockResolvedValue({
-      object: {
+    mocks.generateText.mockResolvedValue({
+      output: {
         summary: "s",
         keyPoints: ["asked about pricing"],
         actionItems: ["send a quote"],
@@ -79,5 +89,16 @@ describe("generateCallSummary", () => {
       keyPoints: ["asked about pricing"],
       actionItems: ["send a quote"],
     })
+  })
+
+  test("rethrows when the response does not match the schema", async () => {
+    const schemaError = new Error("No output generated")
+    mocks.generateText.mockResolvedValue({
+      get output() {
+        throw schemaError
+      },
+    })
+
+    await expect(summarize()).rejects.toBe(schemaError)
   })
 })

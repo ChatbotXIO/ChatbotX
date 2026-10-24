@@ -1,4 +1,5 @@
 import { systemFieldService } from "@chatbotx.io/business/system-field"
+import { ensureContactAvatarMirrored } from "@chatbotx.io/channel-registry/media-hydration"
 import type { Metadata } from "next"
 import { notFound } from "next/navigation"
 import { NextIntlClientProvider } from "next-intl"
@@ -39,6 +40,7 @@ export default async function MePage(props: MePageProps) {
 
   const data = await systemFieldService.getMePrivacyData(
     toMePrivacyParams(input),
+    { ensureAvatarMirrored: ensureContactAvatarMirrored },
   )
   if (!data) {
     return null

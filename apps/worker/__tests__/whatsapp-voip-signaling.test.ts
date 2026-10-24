@@ -150,6 +150,9 @@ beforeEach(() => {
   mocks.rejectCall.mockResolvedValue(undefined)
   mocks.terminateCall.mockResolvedValue(undefined)
   mocks.deleteOutboundAnswer.mockResolvedValue(undefined)
+  // Delivery succeeds by default. `clearAllMocks` keeps implementations, so a
+  // test that rejects the publish must not leak that into the next one.
+  mocks.publishWorkspaceMemberRealtimeEvent.mockResolvedValue(undefined)
   mocks.isCallEnded.mockImplementation(({ status }: { status?: string }) =>
     ["rejected", "completed", "failed"].includes(status ?? ""),
   )
@@ -228,22 +231,28 @@ describe("handleWhatsappVoipSignalingJob: handleConnect", () => {
     )
   })
 
-  test("logs an error when the offer cannot reach any selected agent", async () => {
+  test("fails the job, so BullMQ retries it, when the offer cannot reach any selected agent", async () => {
     mocks.readOffer.mockResolvedValue({ sdp: "v=0...", deadlineAt: 2000 })
     mocks.selectRingTargetsForCall.mockResolvedValue(ringSelection)
     mocks.publishWorkspaceMemberRealtimeEvent.mockRejectedValue(
       new Error("stream down"),
     )
 
-    await handleWhatsappVoipSignalingJob({
-      type: "handleConnect",
-      data: {
-        receivedAt: RECEIVED_AT,
-        wacid: "wacid.ABC",
-        deadlineAt: 2000,
-        phoneNumberId: "phone-1",
-      },
-    })
+    // Resolving here would complete the job with nobody rung: the customer
+    // would hear ringing until the deadline. Rejecting lets the queue retry
+    // while the reservation is still answerable, and finalize the call if the
+    // retries run out.
+    await expect(
+      handleWhatsappVoipSignalingJob({
+        type: "handleConnect",
+        data: {
+          receivedAt: RECEIVED_AT,
+          wacid: "wacid.ABC",
+          deadlineAt: 2000,
+          phoneNumberId: "phone-1",
+        },
+      }),
+    ).rejects.toThrow("unable to publish the offer")
 
     expect(mocks.logger.error).toHaveBeenCalledWith(
       { targetCount: 2, wacid: "wacid.ABC" },
@@ -882,7 +891,7 @@ describe("finalizeExhaustedHandleConnect", () => {
 })
 
 describe("handleWhatsappVoipSignalingJob: handleOutboundAnswer", () => {
-  test("forwards the SDP answer to the initiator, targeted-only, then deletes the stored answer", async () => {
+  test("forwards the SDP answer to the initiator, targeted-only, and keeps the stored answer for the initiator to re-fetch until its TTL expires", async () => {
     mocks.findByAttemptId.mockResolvedValue(outboundCallRow)
     mocks.readOutboundAnswer.mockResolvedValue({ sdp: "v=0...answer" })
     mocks.publishWorkspaceMemberRealtimeEvent.mockResolvedValue(undefined)
@@ -909,10 +918,12 @@ describe("handleWhatsappVoipSignalingJob: handleOutboundAnswer", () => {
         },
       },
     )
-    expect(mocks.deleteOutboundAnswer).toHaveBeenCalledWith("att-1")
+    // A reconnect that cannot be replayed would otherwise lose the answer for
+    // good; the short Redis TTL bounds how long it lingers.
+    expect(mocks.deleteOutboundAnswer).not.toHaveBeenCalled()
   })
 
-  test("no stored answer (already consumed by an earlier delivery): logs and returns without sending", async () => {
+  test("no stored answer (expired or never stored): logs and returns without sending", async () => {
     mocks.findByAttemptId.mockResolvedValue(outboundCallRow)
     mocks.readOutboundAnswer.mockResolvedValue(null)
 

@@ -1,5 +1,9 @@
 import { createHash } from "node:crypto"
 import { assertPublicUrl } from "@chatbotx.io/business"
+import {
+  ensureAttachmentStored,
+  MediaNotReadyError,
+} from "@chatbotx.io/channel-registry/media-hydration"
 import { aiConversationSourceStatuses } from "@chatbotx.io/database/partials"
 import {
   type AiConversationSourceWithAttachment,
@@ -159,8 +163,24 @@ async function processDocumentSource(source: SourceRecord): Promise<void> {
   })
 
   try {
+    // A lazily-ingested document is still a provider URL: store it now, the
+    // extractor reads the object from storage.
+    const stored = await ensureAttachmentStored({
+      attachmentId: attachment.id,
+      workspaceId: source.workspaceId,
+      messageCreatedAt: attachment.messageCreatedAt,
+      originPath: attachment.originPath,
+    })
+    if (!stored) {
+      await sourceRepo.update(source.id, {
+        status: aiConversationSourceStatuses.enum.error,
+        errorMessage: "Attachment unavailable for document source",
+      })
+      return
+    }
+
     const extractedText = await withTimeout(
-      extractTextFromFile(attachment.originPath, attachment.mimeType),
+      extractTextFromFile(stored.originPath, attachment.mimeType),
       PARSE_TIMEOUT_MS,
     )
     const trimmedText = extractedText.slice(0, MAX_DOCUMENT_TEXT_CHARS).trim()
@@ -196,6 +216,11 @@ async function processDocumentSource(source: SourceRecord): Promise<void> {
 
     await enqueueEmbeddingJobs(embeddingRows)
   } catch (error) {
+    // Transient: the attachment is not stored yet. Leave the source
+    // `processing` and let the job retry rather than failing it for good.
+    if (error instanceof MediaNotReadyError) {
+      throw error
+    }
     const normalizedError = normalizeError(error)
     logger.error(
       {

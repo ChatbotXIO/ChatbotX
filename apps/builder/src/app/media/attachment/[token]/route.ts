@@ -62,6 +62,8 @@ export const GET = async (request: NextRequest, context: RouteContext) => {
   const processing = () =>
     NextResponse.redirect(placeholderUrl(request, "processing.svg"), 302)
 
+  // The client's last recovery step: the URL it got first did not load.
+  const isRetry = new URL(request.url).searchParams.get(RETRY_PARAM) === "1"
   const repository = await createMessageRepository()
   const messageCreatedAt =
     resolvedRequest.messageCreatedAt === undefined
@@ -82,6 +84,7 @@ export const GET = async (request: NextRequest, context: RouteContext) => {
     enqueueAttachmentMirror({
       attachmentId: lookup.id,
       messageId: lookup.messageId,
+      messageCreatedAt,
       workspaceId: resolvedRequest.workspaceId,
     })
 
@@ -89,7 +92,7 @@ export const GET = async (request: NextRequest, context: RouteContext) => {
     return unavailable()
   }
   if (!isPendingOriginPath(lookup.originPath)) {
-    if (new URL(request.url).searchParams.get(RETRY_PARAM) === "1") {
+    if (isRetry) {
       try {
         const evicted = await redirectEvicted({
           attachmentId: lookup.id,
@@ -125,6 +128,7 @@ export const GET = async (request: NextRequest, context: RouteContext) => {
       attachmentId: lookup.id,
       workspaceId: resolvedRequest.workspaceId,
       messageCreatedAt,
+      skipStoredUrl: isRetry,
     })
     if (freshMedia) {
       enqueueAttachmentMirror({
@@ -132,6 +136,7 @@ export const GET = async (request: NextRequest, context: RouteContext) => {
         channel: freshMedia.channel,
         integrationId: freshMedia.integrationId,
         messageId: lookup.messageId,
+        messageCreatedAt,
         workspaceId: resolvedRequest.workspaceId,
       })
       return NextResponse.redirect(freshMedia.url, 302)

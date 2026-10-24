@@ -51,6 +51,12 @@ vi.mock("@chatbotx.io/business", () => ({
   verifyUnsubscribeToken: mockVerifyUnsubscribeToken,
 }))
 
+const mockEnsureContactAvatarMirrored = vi.hoisted(() => vi.fn())
+
+vi.mock("@chatbotx.io/channel-registry/media-hydration", () => ({
+  ensureContactAvatarMirrored: mockEnsureContactAvatarMirrored,
+}))
+
 vi.mock("@chatbotx.io/business/system-field", () => ({
   systemFieldService: {
     getMePrivacyData: mockSystemGetMePrivacyData,
@@ -176,13 +182,16 @@ describe("public scheduled-deletion route guards", () => {
       }),
     })
 
-    expect(mockSystemGetMePrivacyData).toHaveBeenCalledWith({
-      workspaceId: "workspace-1",
-      sourceId: "source-1",
-      integrationId: "integration-1",
-      formId: "form-1",
-      hash: "hash-1",
-    })
+    expect(mockSystemGetMePrivacyData).toHaveBeenCalledWith(
+      {
+        workspaceId: "workspace-1",
+        sourceId: "source-1",
+        integrationId: "integration-1",
+        formId: "form-1",
+        hash: "hash-1",
+      },
+      { ensureAvatarMirrored: mockEnsureContactAvatarMirrored },
+    )
   })
 
   test("unsubscribe renders unavailable and skips mutation when the workspace is scheduled for deletion", async () => {

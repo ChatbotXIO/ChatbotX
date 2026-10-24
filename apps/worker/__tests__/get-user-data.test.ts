@@ -21,7 +21,12 @@ const lastMessage: {
     text?: string | null
     contentType: ContentType
     contentAttributes?: Record<string, unknown> | null
-    attachments: { fileType: FileType; originPath: string }[]
+    attachments: {
+      id?: string
+      messageCreatedAt?: Date
+      fileType: FileType
+      originPath: string
+    }[]
   } | null
 } = { current: null }
 const repositoryError: { current: Error | null } = { current: null }
@@ -38,9 +43,23 @@ const contactFindById = vi.fn(
     email: null,
   }),
 )
+// Pass-through by default: a stored key is returned as-is, like the real helper.
+const ensureAttachmentStored = vi.fn(
+  async (input: {
+    originPath?: string
+  }): Promise<{ originPath: string } | null> =>
+    input.originPath === undefined ? null : { originPath: input.originPath },
+)
 const resolveTenantSettings = vi.fn(async () => ({
   storageUrl: "https://cdn.example.com/",
   appUrl: "https://app.example.com",
+}))
+
+class MediaNotReadyErrorStub extends Error {}
+
+vi.mock("@chatbotx.io/channel-registry/media-hydration", () => ({
+  ensureAttachmentStored,
+  MediaNotReadyError: MediaNotReadyErrorStub,
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
@@ -380,6 +399,79 @@ describe("getUserData — validation logic", () => {
       lastMessage.current = makeIncomingMessage({ text: "anything goes" })
       const result = await getUserData(makeProps(ReplyFormat.text))
       expect(result.status).toBe("success")
+    })
+  })
+
+  describe("lazily-ingested attachments", () => {
+    const pendingImage = {
+      id: "att-1",
+      messageCreatedAt: new Date("2026-10-14T01:00:00.000Z"),
+      fileType: "image" as const,
+      originPath: "https://cdn.fbsbx.example/photo.jpg?sig=abc",
+    }
+
+    test("saves the stored object's URL, never the pending provider URL", async () => {
+      ensureAttachmentStored.mockResolvedValue({
+        originPath: "workspace/messenger/ws-1/int-1/2026/10/14/abc.jpg",
+      })
+      lastMessage.current = makeIncomingMessage({
+        text: null,
+        attachments: [pendingImage],
+      })
+
+      const result = await getUserData(makeProps(ReplyFormat.image))
+
+      expect(result.status).toBe("success")
+      expect(ensureAttachmentStored).toHaveBeenCalledWith({
+        attachmentId: "att-1",
+        workspaceId: expect.any(String),
+        messageCreatedAt: pendingImage.messageCreatedAt,
+        originPath: pendingImage.originPath,
+      })
+      expectCustomFieldWrite(
+        "https://cdn.example.com/workspace/messenger/ws-1/int-1/2026/10/14/abc.jpg",
+      )
+      expect(result.result).toBe(
+        "workspace/messenger/ws-1/int-1/2026/10/14/abc.jpg",
+      )
+    })
+
+    test("re-prompts when the attachment is permanently unavailable", async () => {
+      ensureAttachmentStored.mockResolvedValue(null)
+      lastMessage.current = makeIncomingMessage({
+        text: null,
+        attachments: [pendingImage],
+      })
+
+      const result = await getUserData(makeProps(ReplyFormat.image))
+
+      expect(result.status).toBe("retry")
+      expect(contactCustomFieldSetValueByKey).not.toHaveBeenCalled()
+    })
+
+    test("lets the job retry when the attachment is not stored in time", async () => {
+      ensureAttachmentStored.mockRejectedValue(
+        new MediaNotReadyErrorStub("not ready"),
+      )
+      lastMessage.current = makeIncomingMessage({
+        text: null,
+        attachments: [pendingImage],
+      })
+
+      await expect(getUserData(makeProps(ReplyFormat.image))).rejects.toThrow(
+        "not ready",
+      )
+      expect(contactCustomFieldSetValueByKey).not.toHaveBeenCalled()
+      // The challenge survives so the retried job can still accept the answer.
+      expect(conversationConsumeChallenge).not.toHaveBeenCalled()
+    })
+
+    test("does not touch storage for text answers", async () => {
+      lastMessage.current = makeIncomingMessage({ text: "hello" })
+
+      await getUserData(makeProps(ReplyFormat.text))
+
+      expect(ensureAttachmentStored).not.toHaveBeenCalled()
     })
   })
 

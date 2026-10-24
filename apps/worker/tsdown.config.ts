@@ -24,7 +24,9 @@ export default defineConfig({
     skipNodeModulesBundle: false,
     // https://github.com/egoist/tsdown/issues/619
     alwaysBundle: [/(.*)/],
-    neverBundle: ["react"],
+    // sharp is a native addon (libvips): it cannot be bundled, so the release
+    // image installs it next to `dist` (see docker/Dockerfile).
+    neverBundle: ["react", "sharp"],
   },
   clean: true,
   // target: 'node20',

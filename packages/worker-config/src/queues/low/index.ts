@@ -47,7 +47,7 @@ export type LowJobCoexistAttachmentDownload = {
     channel: "messenger" | "whatsapp" | "instagram"
     integrationId: string
     restore?: boolean
-    // Parent message createdAt (epoch ms) — the restore path's shard hint.
+    // Parent message createdAt (epoch ms): routes the sharded lookup.
     messageCreatedAt?: number
   }
 }

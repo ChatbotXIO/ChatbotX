@@ -221,9 +221,14 @@ export const resolveWorkspaceAppUrl = async (args: {
 export const resolveBroadcastSecret = (): string =>
   integrationContextEnv().REALTIME_BROADCAST_SECRET
 
-/** Resolve the validated Redis endpoint used by the realtime stream publisher. */
-export const resolveRealtimeRedisUrl = (): string =>
-  integrationContextEnv().REDIS_URL
+/**
+ * Resolve the validated Redis endpoint used by realtime publishers, preferring
+ * the optional dedicated REDIS_REALTIME_URL.
+ */
+export const resolveRealtimeRedisUrl = (): string => {
+  const environment = integrationContextEnv()
+  return environment.REDIS_REALTIME_URL ?? environment.REDIS_URL
+}
 
 /**
  * Resolve tenant settings for a reseller/owner directly, without a request

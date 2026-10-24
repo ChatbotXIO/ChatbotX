@@ -18,6 +18,11 @@ vi.mock("@chatbotx.io/integration-messenger/apis/upload", () => ({
   resumableUploadImage,
 }))
 
+// Clone never carries a MINI_APP button, so the Mini App ownership check is
+// never reached; mocked only to keep its DB-backed module out of the import.
+vi.mock("@chatbotx.io/business/mini-app", () => ({
+  miniAppService: { findOrFail: vi.fn() },
+}))
 vi.mock("@chatbotx.io/business", () => ({
   assertPublicUrl: (...args: unknown[]) => assertPublicUrl(...args),
   buildContext: vi.fn(),

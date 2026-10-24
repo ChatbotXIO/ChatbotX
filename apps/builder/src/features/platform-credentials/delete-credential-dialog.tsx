@@ -21,6 +21,7 @@ type DeleteCredentialDialogProps = {
   isDeleting: boolean
   disabled?: boolean
   onConfirm: () => void
+  triggerLabel?: string
 }
 
 export function DeleteCredentialDialog({
@@ -28,6 +29,7 @@ export function DeleteCredentialDialog({
   isDeleting,
   disabled,
   onConfirm,
+  triggerLabel,
 }: DeleteCredentialDialogProps) {
   const t = useTranslations()
   const [open, setOpen] = useState(false)
@@ -49,7 +51,7 @@ export function DeleteCredentialDialog({
             type="button"
             variant="destructive"
           >
-            {t("actions.delete")}
+            {triggerLabel ?? t("actions.delete")}
           </Button>
         }
       />

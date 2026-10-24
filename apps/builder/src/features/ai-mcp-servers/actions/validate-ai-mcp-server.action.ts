@@ -1,9 +1,7 @@
 "use server"
 
-import {
-  experimental_createMCPClient,
-  type experimental_MCPClient,
-} from "@ai-sdk/mcp"
+import { createMCPClient, type MCPClient } from "@ai-sdk/mcp"
+import { assertSafeMcpEndpoint } from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { aiMcpServerAuthTypes } from "@chatbotx.io/database/partials"
 import { resolveBotFieldVariableText } from "@chatbotx.io/variables/bot-field-variable-resolver"
@@ -14,6 +12,8 @@ export const validateAIMcpServer = async ({
 }: {
   parsedInput: ValidatePrivateAIMcpServerRequest & { workspaceId: string }
 }) => {
+  await assertSafeMcpEndpoint(parsedInput.url)
+
   const headers: Record<string, string> = {}
   if (parsedInput.auth.type === aiMcpServerAuthTypes.enum.token) {
     const resolution = await resolveBotFieldVariableText({
@@ -34,11 +34,16 @@ export const validateAIMcpServer = async ({
     }
   }
 
-  let httpClient: experimental_MCPClient | null = null
+  let httpClient: MCPClient | null = null
 
   try {
-    httpClient = await experimental_createMCPClient({
-      transport: { type: "http", url: parsedInput.url, headers },
+    httpClient = await createMCPClient({
+      transport: {
+        type: "http",
+        url: parsedInput.url,
+        headers,
+        redirect: "error",
+      },
     })
 
     const tools = await httpClient.tools()

@@ -439,7 +439,7 @@ describe("appointmentScheduling handler", () => {
         model: "mock-model",
         temperature: 0.2,
         maxOutputTokens: 250,
-        system: expect.stringContaining("Vietnamese"),
+        instructions: expect.stringContaining("Vietnamese"),
         messages: [
           expect.objectContaining({
             content: expect.stringContaining("Available: Aug 10, 9:00 AM"),

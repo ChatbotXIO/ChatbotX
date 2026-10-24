@@ -6,6 +6,7 @@ const strings = {
     sentAttachment: "Sent an attachment",
     sentAttachments: (count: number) => `Sent ${count} attachments`,
     assignedConversation: "You were assigned a conversation",
+    newOrder: (number: number) => `New order #${number}`,
   },
   vi: {
     newMessage: "Tin nhắn mới",
@@ -14,6 +15,7 @@ const strings = {
     sentAttachment: "Đã gửi một tệp đính kèm",
     sentAttachments: (count: number) => `Đã gửi ${count} tệp đính kèm`,
     assignedConversation: "Bạn đã được gán một cuộc trò chuyện",
+    newOrder: (number: number) => `Đơn hàng mới #${number}`,
   },
   ar: {
     newMessage: "رسالة جديدة",
@@ -22,6 +24,7 @@ const strings = {
     sentAttachment: "أرسل مرفقًا",
     sentAttachments: (count: number) => `أرسل ${count} مرفقات`,
     assignedConversation: "تم تعيين محادثة لك",
+    newOrder: (number: number) => `طلب جديد #${number}`,
   },
   da: {
     newMessage: "Ny besked",
@@ -30,6 +33,7 @@ const strings = {
     sentAttachment: "Sendte en vedhæftet fil",
     sentAttachments: (count: number) => `Sendte ${count} vedhæftede filer`,
     assignedConversation: "Du blev tildelt en samtale",
+    newOrder: (number: number) => `Ny ordre #${number}`,
   },
   de: {
     newMessage: "Neue Nachricht",
@@ -38,6 +42,7 @@ const strings = {
     sentAttachment: "Hat einen Anhang gesendet",
     sentAttachments: (count: number) => `Hat ${count} Anhänge gesendet`,
     assignedConversation: "Dir wurde eine Unterhaltung zugewiesen",
+    newOrder: (number: number) => `Neue Bestellung #${number}`,
   },
   es: {
     newMessage: "Nuevo mensaje",
@@ -46,6 +51,7 @@ const strings = {
     sentAttachment: "Envió un archivo adjunto",
     sentAttachments: (count: number) => `Envió ${count} archivos adjuntos`,
     assignedConversation: "Se te asignó una conversación",
+    newOrder: (number: number) => `Nuevo pedido #${number}`,
   },
   fi: {
     newMessage: "Uusi viesti",
@@ -54,6 +60,7 @@ const strings = {
     sentAttachment: "Lähetti liitteen",
     sentAttachments: (count: number) => `Lähetti ${count} liitettä`,
     assignedConversation: "Sinulle osoitettiin keskustelu",
+    newOrder: (number: number) => `Uusi tilaus #${number}`,
   },
   fr: {
     newMessage: "Nouveau message",
@@ -62,6 +69,7 @@ const strings = {
     sentAttachment: "A envoyé une pièce jointe",
     sentAttachments: (count: number) => `A envoyé ${count} pièces jointes`,
     assignedConversation: "Une conversation vous a été assignée",
+    newOrder: (number: number) => `Nouvelle commande #${number}`,
   },
   he: {
     newMessage: "הודעה חדשה",
@@ -70,6 +78,7 @@ const strings = {
     sentAttachment: "שלח קובץ מצורף",
     sentAttachments: (count: number) => `שלח ${count} קבצים מצורפים`,
     assignedConversation: "הוקצתה לך שיחה",
+    newOrder: (number: number) => `הזמנה חדשה #${number}`,
   },
   id: {
     newMessage: "Pesan baru",
@@ -78,6 +87,7 @@ const strings = {
     sentAttachment: "Mengirim lampiran",
     sentAttachments: (count: number) => `Mengirim ${count} lampiran`,
     assignedConversation: "Anda ditugaskan sebuah percakapan",
+    newOrder: (number: number) => `Pesanan baru #${number}`,
   },
   it: {
     newMessage: "Nuovo messaggio",
@@ -86,6 +96,7 @@ const strings = {
     sentAttachment: "Ha inviato un allegato",
     sentAttachments: (count: number) => `Ha inviato ${count} allegati`,
     assignedConversation: "Ti è stata assegnata una conversazione",
+    newOrder: (number: number) => `Nuovo ordine #${number}`,
   },
   ja: {
     newMessage: "新しいメッセージ",
@@ -95,6 +106,7 @@ const strings = {
     sentAttachments: (count: number) =>
       `${count}件の添付ファイルを送信しました`,
     assignedConversation: "会話が割り当てられました",
+    newOrder: (number: number) => `新しい注文 #${number}`,
   },
   nl: {
     newMessage: "Nieuw bericht",
@@ -103,6 +115,7 @@ const strings = {
     sentAttachment: "Heeft een bijlage verzonden",
     sentAttachments: (count: number) => `Heeft ${count} bijlagen verzonden`,
     assignedConversation: "Er is een gesprek aan je toegewezen",
+    newOrder: (number: number) => `Nieuwe bestelling #${number}`,
   },
   "pt-BR": {
     newMessage: "Nova mensagem",
@@ -111,6 +124,7 @@ const strings = {
     sentAttachment: "Enviou um anexo",
     sentAttachments: (count: number) => `Enviou ${count} anexos`,
     assignedConversation: "Uma conversa foi atribuída a você",
+    newOrder: (number: number) => `Novo pedido #${number}`,
   },
   "pt-PT": {
     newMessage: "Nova mensagem",
@@ -119,6 +133,7 @@ const strings = {
     sentAttachment: "Enviou um anexo",
     sentAttachments: (count: number) => `Enviou ${count} anexos`,
     assignedConversation: "Foi-lhe atribuída uma conversa",
+    newOrder: (number: number) => `Nova encomenda #${number}`,
   },
   ro: {
     newMessage: "Mesaj nou",
@@ -127,6 +142,7 @@ const strings = {
     sentAttachment: "A trimis un atașament",
     sentAttachments: (count: number) => `A trimis ${count} atașamente`,
     assignedConversation: "Ți-a fost atribuită o conversație",
+    newOrder: (number: number) => `Comandă nouă #${number}`,
   },
   sv: {
     newMessage: "Nytt meddelande",
@@ -135,6 +151,7 @@ const strings = {
     sentAttachment: "Skickade en bilaga",
     sentAttachments: (count: number) => `Skickade ${count} bilagor`,
     assignedConversation: "Du tilldelades en konversation",
+    newOrder: (number: number) => `Ny beställning #${number}`,
   },
   tr: {
     newMessage: "Yeni mesaj",
@@ -143,6 +160,7 @@ const strings = {
     sentAttachment: "Bir ek gönderdi",
     sentAttachments: (count: number) => `${count} ek gönderdi`,
     assignedConversation: "Size bir görüşme atandı",
+    newOrder: (number: number) => `Yeni sipariş #${number}`,
   },
   "zh-CN": {
     newMessage: "新消息",
@@ -151,6 +169,7 @@ const strings = {
     sentAttachment: "发送了一个附件",
     sentAttachments: (count: number) => `发送了 ${count} 个附件`,
     assignedConversation: "已为您分配一个对话",
+    newOrder: (number: number) => `新订单 #${number}`,
   },
   "zh-TW": {
     newMessage: "新訊息",
@@ -159,6 +178,7 @@ const strings = {
     sentAttachment: "傳送了一個附件",
     sentAttachments: (count: number) => `傳送了 ${count} 個附件`,
     assignedConversation: "已為您指派一個對話",
+    newOrder: (number: number) => `新訂單 #${number}`,
   },
 } as const
 

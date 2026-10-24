@@ -2096,6 +2096,10 @@
       "label": "Alamat Pengirim",
       "placeholder": "noreply@example.com"
     },
+    "fromName": {
+      "label": "Nama Pengirim",
+      "placeholder": "ChatbotX"
+    },
     "messageTemplate": {
       "label": "Templat Pesan"
     },
@@ -2656,7 +2660,13 @@
       "sendGoogleAdsConversion": "Kirim konversi Google Ads",
       "changeGamificationScore": "Ubah skor gamifikasi",
       "sendViewCatalog": "Lihat katalog",
-      "sendProducts": "Kirim produk"
+      "sendProducts": "Kirim produk",
+      "sendCollection": "Koleksi"
+    },
+    "externalRequest": {
+      "errors": {
+        "requestFailed": "Tidak dapat menguji permintaan eksternal. Periksa konfigurasi permintaan lalu coba lagi."
+      }
     },
     "splitTraffic": {
       "balanceHint": "Jumlah total harus sama dengan 100%.",
@@ -2837,6 +2847,43 @@
       "productsSelected": "{count, plural, one {# produk} other {# produk}}",
       "noneSelected": "Belum ada produk",
       "sendFailed": "Produk tidak dapat dikirim."
+    },
+    "sendCollection": {
+      "title": "Koleksi",
+      "dataType": "Jenis data",
+      "dataTypes": {
+        "products": "Produk"
+      },
+      "collectionType": "Jenis koleksi",
+      "collectionTypes": {
+        "automated": {
+          "label": "Otomatis",
+          "description": "Item saat ini dan berikutnya yang cocok dengan syarat akan otomatis masuk koleksi."
+        },
+        "manual": {
+          "label": "Manual",
+          "description": "Tambahkan item satu per satu."
+        }
+      },
+      "condition": "Syarat",
+      "name": "Nama",
+      "optional": "(Opsional)",
+      "category": "Kategori",
+      "subcategory": "Subkategori",
+      "vendor": "Vendor",
+      "all": "Semua",
+      "items": "Item",
+      "select": "Pilih",
+      "selectPlaceholder": "Pilih 1 item atau lebih",
+      "selectAll": "Pilih semua",
+      "deselectAll": "Batalkan semua",
+      "maxProducts": "Maksimal {count} produk; produk yang tidak lagi ditampilkan toko akan dilewati.",
+      "automatedHint": "Mengirim maksimal {count} produk yang cocok sebagai kartu yang membuka produk di toko.",
+      "summaryAll": "Semua produk yang ditampilkan toko",
+      "summaryAutomated": "Produk: {filters}",
+      "summaryManual": "{count, plural, one {# produk} other {# produk}}",
+      "cancel": "Batal",
+      "save": "Simpan"
     }
   },
   "folders": {
@@ -3980,6 +4027,7 @@
         "buttonText": "Teks Tombol",
         "buttonType": "Jenis Tombol",
         "visitWebsite": "Kunjungi Situs Web",
+        "openMiniApp": "Buka Mini App",
         "callPhoneNumber": "Hubungi Nomor Telepon",
         "postback": "Tombol"
       },
@@ -4183,6 +4231,7 @@
     "orContinueWith": "Atau lanjutkan dengan",
     "continueWithFacebook": "Lanjutkan dengan Facebook",
     "continueWithGoogle": "Lanjutkan dengan Google",
+    "continueWithProvider": "Lanjutkan dengan {name}",
     "continueWithEmail": "Lanjutkan dengan Email",
     "continueWithMagicLink": "Lanjutkan dengan Magic Link",
     "dontHaveAnAccount": "Belum memiliki akun?",
@@ -4213,11 +4262,15 @@
     "changePasswordTitle": "Ubah kata sandi Anda",
     "changePasswordDescription": "Tetapkan kata sandi baru sebelum melanjutkan.",
     "passwordChangeSuccess": "Kata sandi diubah",
+    "signUpDisabledTitle": "Pendaftaran dinonaktifkan",
+    "signUpDisabledDescription": "Akun baru hanya dapat dibuat oleh administrator atau melalui tautan undangan.",
     "oauthError": {
       "accountNotLinked": "Akun dengan email ini sudah ada dan tidak dapat ditautkan. Masuk dengan cara yang Anda gunakan sebelumnya, atau hubungi dukungan.",
       "unableToLinkAccount": "Kami tidak dapat menautkan login ini ke akun yang sudah ada. Masuklah dengan cara yang Anda gunakan sebelumnya, atau hubungi dukungan.",
       "sessionExpired": "Percobaan login telah kedaluwarsa. Silakan coba lagi.",
       "accessDenied": "Login dibatalkan.",
+      "signUpDisabled": "Akun ini belum ada dan pendaftaran dinonaktifkan. Minta administrator untuk membuatnya bagi Anda.",
+      "invalidInvitation": "Undangan ini tidak valid atau sudah kedaluwarsa.",
       "generic": "Login gagal. Silakan coba lagi."
     }
   },
@@ -4250,6 +4303,25 @@
       "unknownFieldTarget": "Kolom kontak yang dipetakan tidak ada lagi.",
       "actionReferenceNotFound": "Sebuah aksi merujuk ke flow, tag, atau kolom yang tidak ada lagi.",
       "fieldMappingRequired": "Tambahkan setidaknya satu pemetaan kolom."
+    },
+    "form": {
+      "required": "Kolom ini wajib diisi.",
+      "minLength": "Masukkan minimal {minimum} karakter.",
+      "maxLength": "Masukkan maksimal {maximum} karakter.",
+      "minNumber": "Masukkan angka minimal {minimum}.",
+      "moreThan": "Masukkan angka lebih dari {minimum}.",
+      "maxNumber": "Masukkan angka maksimal {maximum}.",
+      "lessThan": "Masukkan angka kurang dari {maximum}.",
+      "number": "Masukkan angka.",
+      "wholeNumber": "Masukkan bilangan bulat.",
+      "minItems": "Pilih minimal {minimum}.",
+      "maxItems": "Pilih maksimal {maximum}.",
+      "email": "Masukkan alamat email yang valid.",
+      "url": "Masukkan tautan valid yang diawali https://.",
+      "format": "Format nilai ini tidak benar.",
+      "option": "Pilih salah satu opsi.",
+      "invalid": "Nilai ini tidak valid.",
+      "checkFields": "Ada kolom yang perlu diperbaiki. Periksa yang ditandai merah."
     }
   },
   "webchat": {
@@ -4849,7 +4921,8 @@
     "chatbotInvitationDescription1": "Bergabung dengan {chatbotName}",
     "chatbotInvitationDescription2": "{userName} mengundang Anda untuk bergabung dengan {chatbotName}.",
     "invalidInvitation": "Undangan ini tidak valid atau telah kedaluwarsa.",
-    "workspaceUnavailable": "Ruang kerja ini tidak lagi tersedia."
+    "workspaceUnavailable": "Ruang kerja ini tidak lagi tersedia.",
+    "signUpToJoin": "Buat akun untuk bergabung"
   },
   "inboxes": {
     "markReadOnOutbound": {
@@ -5237,7 +5310,8 @@
       "contactReferredExistingContact": "Kontak Mereferensikan Kontak yang Sudah Ada",
       "callRecorded": "Panggilan direkam",
       "callTranscribed": "Panggilan ditranskripsi",
-      "anyProduct": "Produk apa pun"
+      "anyProduct": "Produk apa pun",
+      "anyCategory": "Kategori apa pun"
     },
     "actions": {
       "addTag": "Tambahkan Tag",
@@ -5358,7 +5432,8 @@
       "userPlaceholder": "ID Pengguna",
       "keyword": "Kata kunci",
       "keywordPlaceholder": "Tindakan atau detail",
-      "allAdmins": "Semua Admin"
+      "allAdmins": "Semua Admin",
+      "allWorkspaces": "Semua ruang kerja"
     }
   },
   "customFields": {
@@ -6221,7 +6296,14 @@
       "supportOff": "Nonaktif",
       "searchPlaceholder": "Cari berdasarkan nama, email pemilik, atau ID",
       "descriptionConsentDisabled": "All workspaces can be opened by platform administrators.",
-      "supportAccessible": "Accessible"
+      "supportAccessible": "Accessible",
+      "createButton": "Create workspace",
+      "createTitle": "Create workspace for an owner",
+      "createDescription": "Creates a workspace for the owner's email, adding any member emails you list. A new email gets a mailed temporary password.",
+      "ownerEmail": "Owner email",
+      "memberEmails": "Member emails",
+      "membersHint": "Every member gets the permissions selected below. New emails get a mailed temporary password.",
+      "createdSummary": "Workspace created for {ownerEmail} — {memberCount} member(s) added, {newAccountCount} new account(s) emailed a temporary password."
     },
     "admins": {
       "title": "Platform administrators",
@@ -6237,6 +6319,19 @@
       "removed": "Platform administrator removed.",
       "addError": "Could not add the platform administrator.",
       "removeError": "Could not remove the platform administrator."
+    },
+    "auditLogs": {
+      "title": "Log audit platform",
+      "description": "Aktivitas audit di semua ruang kerja pada platform ini."
+    },
+    "smtp": {
+      "title": "Pengaturan SMTP",
+      "description": "Transport email platform. Biarkan kosong untuk tetap menggunakan variabel lingkungan SMTP_SERVER dan SMTP_FROM.",
+      "usingEnv": "Tidak ada pengaturan SMTP yang disimpan — email platform menggunakan variabel lingkungan SMTP_SERVER.",
+      "remove": "Hapus pengaturan SMTP",
+      "errors": {
+        "passwordRequired": "Masukkan kata sandi SMTP."
+      }
     }
   },
   "platformCredentials": {
@@ -6315,6 +6410,8 @@
     }
   },
   "manageSidebar": {
+    "communityGroup": "Komunitas",
+    "enterpriseGroup": "Enterprise",
     "platformGroup": "Platform",
     "toolsGroup": "Alat",
     "saasGroup": "SaaS",
@@ -6391,7 +6488,82 @@
     "unknown": "Tidak diketahui"
   },
   "orders": {
-    "title": "Pesanan"
+    "title": "Pesanan",
+    "empty": "Belum ada pesanan.",
+    "searchPlaceholder": "Cari berdasarkan nama, telepon, email, atau nomor pesanan",
+    "orderNumber": "Pesanan #{number}",
+    "print": "Cetak",
+    "inbox": "Kotak masuk",
+    "statusUpdated": "Status pesanan diperbarui",
+    "statusUpdateError": "Tidak dapat memperbarui status pesanan",
+    "updateStatusTitle": "Perbarui Status Pesanan",
+    "message": "Pesan",
+    "messagePlaceholder": "Opsional",
+    "messageDescription": "Dikirim ke pelanggan di percakapannya.",
+    "cancel": "Batal",
+    "continue": "Lanjutkan",
+    "delete": "Hapus",
+    "deleted": "Pesanan dihapus",
+    "deleteError": "Tidak dapat menghapus pesanan",
+    "deleteTitle": "Hapus pesanan #{number}?",
+    "deleteDescription": "Pesanan, item, dan riwayatnya dihapus. Stok yang masih tertahan dikembalikan.",
+    "columns": {
+      "name": "Nama",
+      "total": "Total",
+      "status": "Status",
+      "date": "Tanggal",
+      "rating": "Penilaian",
+      "quantity": "Jumlah",
+      "price": "Harga",
+      "vendor": "Vendor"
+    },
+    "fields": {
+      "name": "Nama",
+      "email": "Email",
+      "phone": "Telepon",
+      "country": "Negara",
+      "state": "Provinsi",
+      "city": "Kota",
+      "street": "Jalan",
+      "zip": "Kode pos",
+      "shippingType": "Pengiriman",
+      "orderId": "ID pesanan",
+      "date": "Tanggal",
+      "subtotal": "Subtotal",
+      "discount": "Diskon",
+      "deliveryCost": "Biaya pengiriman",
+      "otherTaxes": "Pajak lainnya",
+      "total": "Total",
+      "paymentMethod": "Metode pembayaran",
+      "status": "Status",
+      "note": "Catatan",
+      "cancelReason": "Alasan pembatalan",
+      "rating": "Penilaian",
+      "ratingComment": "Komentar pelanggan",
+      "coupon": "Kupon ({code})"
+    },
+    "statuses": {
+      "pending": "Belum diproses",
+      "accepted": "Diterima",
+      "shipped": "Dikirim",
+      "concluded": "Selesai",
+      "cancelled": "Dibatalkan"
+    },
+    "transitions": {
+      "accepted": "Terima",
+      "shipped": "Kirim",
+      "concluded": "Selesaikan",
+      "cancelled": "Batalkan"
+    },
+    "paymentMethods": {
+      "cod": "Bayar di Tempat"
+    },
+    "shippingTypes": {
+      "delivery": "Antar ke pelanggan",
+      "pickup": "Ambil di toko"
+    },
+    "description": "Pesanan yang dibuat pelanggan Anda.",
+    "ratingValue": "{rating}/5 ★"
   },
   "products": {
     "title": "Produk",
@@ -6448,7 +6620,8 @@
         "label": "Izinkan pelanggan membeli produk ini saat stok habis"
       },
       "vendor": {
-        "label": "Vendor"
+        "label": "Vendor",
+        "none": "Tidak ada"
       },
       "rank": {
         "label": "Peringkat"
@@ -6581,8 +6754,8 @@
     "loadError": "Tidak dapat memuat kategori produk.",
     "all": "Semua produk",
     "create": "Buat kategori",
-    "edit": "Ubah nama kategori",
-    "name": "Nama kategori",
+    "edit": "Ubah",
+    "name": "Nama",
     "namePlaceholder": "mis. Koleksi musim panas",
     "parent": "Kategori induk",
     "noParent": "Tidak ada (tingkat teratas)",
@@ -6602,12 +6775,25 @@
     "columns": {
       "name": "Nama",
       "products": "Produk",
-      "subcategories": "Subkategori"
+      "subcategories": "Subkategori",
+      "visible": "Terlihat"
     },
     "expand": "Tampilkan subkategori",
     "collapse": "Sembunyikan subkategori",
     "productCount": "{count, plural, =0 {Tidak ada produk} one {# produk} other {# produk}}",
-    "deleteChildrenWarning": "{count, plural, one {# subkategorinya juga akan dihapus.} other {# subkategorinya juga akan dihapus.}}"
+    "deleteChildrenWarning": "{count, plural, one {# subkategorinya juga akan dihapus.} other {# subkategorinya juga akan dihapus.}}",
+    "add": "Tambah",
+    "dialogTitle": "Kategori",
+    "image": "Gambar",
+    "continue": "Lanjutkan",
+    "subcategories": "Subkategori",
+    "subcategoriesOf": "Subkategori dari {name}",
+    "emptySub": "Belum ada subkategori.",
+    "back": "Kembali ke kategori",
+    "getId": "Ambil ID",
+    "idCopied": "ID kategori {id} disalin",
+    "idCopyError": "Tidak dapat menyalin ID",
+    "description": "Kelompokkan produk Anda ke dalam kategori dan subkategori."
   },
   "productImport": {
     "title": "Impor",
@@ -9086,6 +9272,543 @@
       "hours": "Jam",
       "closed": "Tutup"
     }
+  },
+  "productVendors": {
+    "title": "Vendor",
+    "add": "Tambah",
+    "edit": "Ubah",
+    "delete": "Hapus",
+    "actions": "Tindakan",
+    "save": "Simpan",
+    "cancel": "Batal",
+    "moreOptions": "Opsi lainnya",
+    "empty": "Belum ada vendor.",
+    "created": "Vendor ditambahkan",
+    "updated": "Vendor diperbarui",
+    "deleted": "Vendor dihapus",
+    "saveError": "Tidak dapat menyimpan vendor",
+    "deleteError": "Tidak dapat menghapus vendor",
+    "deleteTitle": "Hapus {name}?",
+    "deleteDescription": "{count, plural, =0 {Tidak ada produk yang memakai vendor ini.} one {# produk akan tanpa vendor.} other {# produk akan tanpa vendor.}}",
+    "fields": {
+      "name": "Nama",
+      "shortDescription": "Deskripsi singkat",
+      "phone": "Telepon",
+      "storeAddress": "Alamat toko",
+      "image": "Gambar",
+      "optional": "Opsional",
+      "discountPercent": "Diskon (0-100%)",
+      "minimumOrderValue": "Nilai pesanan minimum",
+      "openHours": "Jam buka",
+      "category": "Kategori",
+      "subcategory": "Subkategori",
+      "none": "Tidak ada"
+    },
+    "columns": {
+      "name": "Nama",
+      "products": "Total Produk",
+      "active": "Aktif"
+    },
+    "description": "Penjual dan merek pemilik produk Anda."
+  },
+  "ecommerceSettings": {
+    "save": "Simpan",
+    "saved": "Pengaturan disimpan",
+    "saveError": "Tidak dapat menyimpan pengaturan",
+    "rank": {
+      "label": "Peringkat",
+      "default": "Default"
+    },
+    "tabs": {
+      "general": "Umum",
+      "payments": "Pembayaran",
+      "shipping": "Pengiriman",
+      "checkout": "Checkout"
+    },
+    "general": {
+      "orderingAvailable": {
+        "label": "Pemesanan Tersedia",
+        "description": "Gunakan kolom ini untuk melarang pelanggan membuat pesanan tanpa mengubah jam buka Anda. Jam buka juga menentukan ketersediaan Anda."
+      },
+      "webshopProductView": {
+        "label": "Tampilan produk di toko web",
+        "description": "Atur cara produk ditampilkan di toko web Anda.",
+        "options": {
+          "list": "Daftar",
+          "listWithoutImage": "Daftar Tanpa Gambar",
+          "card": "Kartu",
+          "cardSquare": "Kartu dengan gambar persegi",
+          "image": "Gambar",
+          "imageSquare": "Gambar (persegi)"
+        }
+      },
+      "openHours": {
+        "label": "Jam buka",
+        "description": "Rentang waktu saat pelanggan dapat membuat pesanan."
+      },
+      "searchProducts": {
+        "label": "Cari Produk",
+        "description": "Izinkan pelanggan mengirim pesan untuk mencari produk."
+      },
+      "facebookPixelId": {
+        "label": "Facebook Pixel",
+        "description": "Lacak konversi dengan Pixel Facebook dan ukur hasil iklan Anda. Event berikut dilacak: ADD_TO_CART, INITIATE_CHECKOUT, PURCHASE, VIEW_CONTENT"
+      },
+      "abandonedCart": {
+        "label": "Pesan keranjang terbengkalai",
+        "description": "Lama menunggu sebelum mengirim pesan keranjang terbengkalai setelah pengguna meninggalkan bot Anda dengan item di keranjang.",
+        "disabled": "Nonaktif",
+        "afterMinutes": "Setelah {count} menit",
+        "afterHours": "{count, plural, one {Setelah # jam} other {Setelah # jam}}"
+      },
+      "productButtons": {
+        "label": "Tombol di Produk",
+        "description": "Pengaturan ini mengatur tombol yang ditampilkan untuk produk di dalam bot Anda.",
+        "options": {
+          "addToCart": "Tambah ke Keranjang",
+          "share": "Bagikan",
+          "similar": "Serupa",
+          "save": "Simpan"
+        }
+      },
+      "productImageSize": {
+        "label": "Ukuran gambar Produk",
+        "description": "Pengaturan ini mengatur ukuran gambar produk di dalam bot Anda",
+        "options": {
+          "bigSquare": "Besar (Persegi)",
+          "mediumRectangle": "Sedang (Persegi panjang)"
+        }
+      },
+      "allowRateOrders": {
+        "label": "Izinkan menilai pesanan",
+        "description": "Izinkan pelanggan menilai pesanan dan menulis ulasan jika tidak puas. Hanya admin bot yang dapat melihat ulasan"
+      },
+      "notifyOnCartStatusChange": {
+        "label": "Kirim notifikasi saat status keranjang berubah",
+        "description": "Pelanggan akan menerima notifikasi setiap kali Anda mengubah status pesanan. Notifikasi pembatalan dan penyelesaian pesanan tidak dapat dinonaktifkan."
+      },
+      "abandonedCartFlow": {
+        "label": "Flow keranjang ditinggal",
+        "description": "Flow yang dijalankan bot untuk pelanggan saat keranjang ditinggal selama itu. Gunakan '{{shop_token}}' di tombol untuk membuka keranjang. Trigger juga bisa memakai event \"Cart abandoned\".",
+        "none": "Tanpa flow (hanya event trigger)"
+      }
+    },
+    "payments": {
+      "currencyMismatch": "{count, plural, one {# produk memiliki harga} other {# produk memiliki harga}} dalam mata uang selain {currency}. Pesanan menagih harga dalam {currency}.",
+      "paymentMethods": {
+        "label": "Metode pembayaran",
+        "description": "Metode pembayaran yang aktif di halaman checkout. Metode pertama dalam daftar akan menjadi metode yang dipilih di halaman checkout.",
+        "options": {
+          "cod": "Bayar di Tempat"
+        }
+      },
+      "currency": {
+        "label": "Mata uang",
+        "description": "Mata uang yang Anda gunakan untuk harga produk. Pelanggan akan ditagih dalam mata uang ini."
+      },
+      "currencyPosition": {
+        "label": "Posisi mata uang",
+        "description": "Opsi ini memungkinkan Anda mengatur posisi mata uang.",
+        "options": {
+          "left": "Kiri",
+          "leftSpace": "Kiri dengan spasi",
+          "right": "Kanan",
+          "rightSpace": "Kanan dengan spasi"
+        }
+      },
+      "currencySymbol": {
+        "label": "Simbol mata uang",
+        "description": "Simbol mata uang ditampilkan di depan harga. Jika ingin ada spasi antara simbol dan harga, tambahkan spasi di akhir simbol."
+      },
+      "serviceFeePercent": {
+        "label": "Biaya Lain / Biaya Layanan (0 - 100%)",
+        "description": "Biaya lain yang terkait dengan penjualan."
+      }
+    },
+    "shipping": {
+      "shippingType": {
+        "label": "Jenis pengiriman",
+        "description": "Opsi ini memungkinkan Anda mengatur cara pelanggan menerima pesanannya.",
+        "options": {
+          "none": "Tidak ada",
+          "delivery": "Antar ke pelanggan",
+          "pickup": "Ambil di toko",
+          "deliveryAndPickup": "Antar ke pelanggan, Ambil di toko"
+        }
+      },
+      "storeAddress": {
+        "label": "Alamat toko",
+        "description": "Alamat ini ditampilkan ke pelanggan di halaman checkout jika Anda mengizinkan ambil di toko."
+      },
+      "shippingCountries": {
+        "label": "Negara pengiriman",
+        "description": "Negara tujuan pengiriman pesanan Anda."
+      },
+      "defaultShippingCountry": {
+        "label": "Negara pengiriman default",
+        "description": "Negara yang dipilih secara default di halaman checkout.",
+        "none": "Tidak ada"
+      },
+      "deliveryCost": {
+        "label": "Biaya pengiriman",
+        "description": "Tarif tetap untuk mengantar pesanan ke alamat pelanggan."
+      },
+      "defaultCountryNotShipped": "Pilih salah satu negara pengiriman."
+    },
+    "checkout": {
+      "checkoutMode": {
+        "label": "Checkout",
+        "description": "Pengaturan ini menentukan di mana pelanggan menyelesaikan pesanan. Jika Anda ingin pengguna menyelesaikan pesanan di luar bot, seperti di situs web atau Amazon, jangan gunakan halaman checkout default kami.",
+        "options": {
+          "default": "Halaman checkout default",
+          "externalLink": "Halaman checkout eksternal kustom",
+          "flow": "Flow",
+          "productPage": "Kunjungi halaman produk eksternal"
+        }
+      },
+      "checkoutLink": {
+        "label": "Tautan Halaman Checkout",
+        "description": "Halaman eksternal tempat pelanggan menyelesaikan pesanan."
+      },
+      "checkoutFlowId": {
+        "label": "Flow Checkout",
+        "description": "Flow yang berjalan saat pelanggan checkout.",
+        "placeholder": "Pilih flow"
+      },
+      "minimumOrderValue": {
+        "label": "Nilai pesanan minimum",
+        "description": "Nilai minimum pesanan yang dapat dibuat pelanggan. Syarat ini diperiksa setelah semua diskon diterapkan."
+      },
+      "requiredFields": {
+        "requireName": {
+          "label": "Wajibkan nama pembeli",
+          "description": "Nama pembeli akan dikumpulkan saat checkout."
+        },
+        "requireEmail": {
+          "label": "Wajibkan alamat email",
+          "description": "Email pembeli akan dikumpulkan saat checkout."
+        },
+        "requirePhone": {
+          "label": "Wajibkan nomor telepon",
+          "description": "Telepon pembeli akan dikumpulkan saat checkout."
+        },
+        "requireState": {
+          "label": "Wajibkan provinsi",
+          "description": "Provinsi pembeli akan dikumpulkan saat checkout."
+        },
+        "requireZip": {
+          "label": "Wajibkan kode pos",
+          "description": "Kode pos pembeli akan dikumpulkan saat checkout."
+        }
+      },
+      "orderConfirmationMode": {
+        "label": "Pesan konfirmasi pesanan",
+        "description": "Yang diterima pelanggan di obrolan saat pesanannya dibuat. Pesan bawaan menampilkan detail pesanan dalam bahasa workspace.",
+        "options": {
+          "default": "Pesan bawaan",
+          "flow": "Jalankan flow",
+          "none": "Jangan kirim apa pun"
+        }
+      },
+      "orderConfirmationFlowId": {
+        "label": "Flow konfirmasi pesanan",
+        "description": "Flow yang dikirim ke pelanggan sebagai ganti pesan bawaan saat pesanannya dibuat."
+      }
+    }
+  },
+  "openHours": {
+    "alwaysOpen": "Selalu buka",
+    "addNew": "Tambah Baru",
+    "dialogTitle": "Jam buka",
+    "name": "Nama",
+    "namePlaceholder": "mis. Hari kerja",
+    "day": "Hari",
+    "from": "Buka",
+    "to": "Tutup",
+    "add": "Tambah jam",
+    "remove": "Hapus",
+    "cancel": "Batal",
+    "continue": "Lanjutkan",
+    "created": "Jam buka dibuat",
+    "saveError": "Tidak dapat menyimpan jam buka",
+    "days": {
+      "0": "Minggu",
+      "1": "Senin",
+      "2": "Selasa",
+      "3": "Rabu",
+      "4": "Kamis",
+      "5": "Jumat",
+      "6": "Sabtu"
+    },
+    "sameTimes": "Jam buka dan jam tutup harus berbeda."
+  },
+  "webshop": {
+    "metadataTitle": "Toko",
+    "metadataOrderTitle": "Pesanan Anda",
+    "invalidLinkTitle": "Tautan ini tidak berfungsi",
+    "invalidLinkDescription": "Mungkin sudah kedaluwarsa. Minta tautan baru ke toko lewat chat.",
+    "previewBanner": "Pratinjau: beginilah yang dilihat pelanggan. Pesanan tidak bisa dibuat dari pratinjau.",
+    "previewOrderingOff": "Pratinjau: pemesanan dinonaktifkan",
+    "closed": {
+      "orderingUnavailable": "Toko sedang tidak menerima pesanan.",
+      "outsideOpenHours": "Toko sedang tutup. Anda tetap bisa melihat-lihat."
+    },
+    "searchPlaceholder": "Cari produk",
+    "categories": "Kategori",
+    "allCategories": "Semua kategori",
+    "vendors": "Vendor",
+    "allVendors": "Semua vendor",
+    "noProducts": "Produk tidak ditemukan.",
+    "productNotFound": "Produk ini sudah tidak tersedia.",
+    "outOfStock": "Stok habis",
+    "addToCart": "Tambah ke keranjang",
+    "added": "Ditambahkan ke keranjang",
+    "chooseOptions": "Pilih varian",
+    "chooseOption": "Pilih {name}",
+    "variantUnavailable": "Kombinasi ini tidak tersedia.",
+    "buy": "Beli",
+    "share": "Bagikan",
+    "linkCopied": "Disalin",
+    "similar": "Serupa",
+    "save": "Simpan",
+    "saved": "Tersimpan",
+    "showImage": "Tampilkan gambar {number}",
+    "increase": "Tambah jumlah",
+    "decrease": "Kurangi jumlah",
+    "remove": "Hapus",
+    "cart": "Keranjang",
+    "cartEmpty": "Keranjang Anda kosong.",
+    "continueShopping": "Lanjut belanja",
+    "unavailableItems": "{count, plural, one {# item tidak bisa dipesan sekarang} other {# item tidak bisa dipesan sekarang}}",
+    "unavailableNotOrdered": "Item ini tidak ikut dipesan dan tetap ada di keranjang.",
+    "unavailable": "Sudah tidak tersedia",
+    "unavailableHint": "Pilih ulang variannya",
+    "deletedProduct": "Produk dihapus",
+    "summary": {
+      "subtotal": "Subtotal",
+      "discount": "Diskon",
+      "delivery": "Pengiriman",
+      "otherFees": "Biaya lain",
+      "total": "Total",
+      "coupon": "Kupon ({code})",
+      "title": "Ringkasan pesanan",
+      "saved": "Anda hemat {amount}"
+    },
+    "belowMinimum": "Pesanan minimum {amount}.",
+    "checkOut": "Checkout",
+    "contactDetails": "Data Anda",
+    "optional": "(opsional)",
+    "fields": {
+      "name": "Nama",
+      "email": "Email",
+      "phone": "Telepon",
+      "country": "Negara",
+      "state": "Provinsi",
+      "city": "Kota",
+      "address1": "Alamat",
+      "address2": "Apartemen, gedung, dll.",
+      "zip": "Kode pos",
+      "note": "Catatan untuk toko"
+    },
+    "shipping": {
+      "title": "Pengiriman",
+      "delivery": "Kirim ke alamat saya",
+      "pickup": "Ambil di toko",
+      "storeAddress": "Alamat toko: {address}"
+    },
+    "payment": {
+      "title": "Pembayaran",
+      "cod": "Bayar di tempat (COD)"
+    },
+    "placeOrder": "Buat pesanan",
+    "orderPlaced": "Terima kasih! Pesanan Anda sudah dibuat. Kami akan mengirim kabar lewat chat.",
+    "orderTitle": "Pesanan #{number}",
+    "orderNotFound": "Pesanan ini tidak ditemukan.",
+    "placedAt": "Dibuat pada {date}",
+    "status": {
+      "pending": "Belum diproses",
+      "accepted": "Diproses",
+      "shipped": "Dikirim",
+      "concluded": "Selesai",
+      "cancelled": "Dibatalkan"
+    },
+    "rateTitle": "Beri nilai pesanan Anda",
+    "rateComment": "Sampaikan pendapat Anda ke toko (opsional)",
+    "rateSubmit": "Kirim penilaian",
+    "rateThanks": "Terima kasih atas penilaian Anda!",
+    "yourRating": "Penilaian Anda",
+    "ratingValue": "{rating} dari 5 bintang",
+    "previous": "Sebelumnya",
+    "next": "Berikutnya",
+    "pageOf": "Halaman {page} dari {pageCount}",
+    "errors": {
+      "generic": "Terjadi kesalahan. Silakan coba lagi.",
+      "checkFields": "Periksa kembali isian Anda.",
+      "fieldRequired": "{field} wajib diisi.",
+      "countryUnavailable": "Toko tidak mengirim ke negara ini.",
+      "invalidLink": "Tautan ini sudah tidak berfungsi. Minta yang baru ke toko.",
+      "webshopPreviewOnly": "Ini pratinjau. Pesanan hanya bisa dibuat dari tautan pelanggan.",
+      "rateLimited": "Terlalu banyak percobaan. Tunggu sebentar lalu coba lagi.",
+      "orderingUnavailable": "Toko sedang tidak menerima pesanan.",
+      "orderBelowMinimum": "Pesanan minimum {minimum}.",
+      "orderBelowVendorMinimum": "Total item dari {vendorName} minimal {minimum}.",
+      "orderOutOfStock": "Stok {productName} habis.",
+      "orderProductUnavailable": "Beberapa item sudah tidak bisa dipesan. Periksa keranjang Anda.",
+      "orderEmpty": "Keranjang Anda kosong.",
+      "orderShippingTypeUnavailable": "Opsi pengiriman ini tidak tersedia.",
+      "webshopRatingNotAllowed": "Pesanan ini tidak bisa dinilai.",
+      "webshopCartFull": "Keranjang Anda dapat berisi paling banyak {maximum} item berbeda.",
+      "notFound": "Produk ini sudah tidak tersedia.",
+      "discountCodeNotFound": "Kode diskon ini tidak ada.",
+      "discountCodeInactive": "Kode diskon ini tidak aktif.",
+      "discountCodeNotStarted": "Kode diskon ini belum berlaku.",
+      "discountCodeExpired": "Kode diskon ini sudah kedaluwarsa.",
+      "discountCodeUsageLimitReached": "Kode diskon ini sudah habis kuotanya.",
+      "discountCodeAlreadyUsed": "Anda sudah memakai kode ini.",
+      "discountCodeNotEligible": "Kode diskon ini tidak berlaku untuk Anda.",
+      "discountCodeNotApplicable": "Kode diskon ini tidak berlaku untuk isi keranjang Anda.",
+      "discountCodeMinimumAmount": "Kode ini butuh pembelian minimal {minimum}. Tambah {missing} lagi.",
+      "discountCodeMinimumQuantity": "Kode ini butuh minimal {minimum} item. Tambah {missing} lagi."
+    },
+    "discount": {
+      "label": "Kode diskon",
+      "placeholder": "Kode diskon",
+      "apply": "Pakai",
+      "applied": "Kode diskon dipakai",
+      "automatic": "dipakai otomatis",
+      "remove": "Hapus kode diskon",
+      "available": "Kode yang bisa Anda pakai",
+      "freeShipping": "Gratis ongkir",
+      "bestChoice": "Pilihan terbaik",
+      "expiresOn": "Berlaku s.d. {date}",
+      "noExpiry": "Tanpa batas waktu",
+      "inUse": "Dipakai",
+      "saves": "Hemat {amount}",
+      "showMore": "{count, plural, one {Lihat # kode lagi} other {Lihat # kode lagi}}",
+      "showLess": "Lebih sedikit",
+      "removeShort": "Hapus",
+      "expired": "Kedaluwarsa",
+      "usedUp": "Habis",
+      "notEligible": "Belum memenuhi syarat"
+    },
+    "itemCount": "{count, plural, one {# barang} other {# barang}}",
+    "relatedProducts": "Anda mungkin juga suka"
+  },
+  "webshopLinks": {
+    "preview": "Pratinjau",
+    "getLink": "Dapatkan tautan",
+    "copied": "Tautan disalin. Pasang di tombol bot: setiap kontak membuka tokonya sendiri.",
+    "error": "Tautan tidak bisa diambil.",
+    "copyError": "Tautan tidak bisa disalin.",
+    "shopLink": {
+      "label": "Tautan toko",
+      "hint": "Tempelkan tautan ini ke tombol di flow, siaran, atau urutan. Setiap kontak yang menerimanya membuka tokonya sendiri dan dapat memesan."
+    },
+    "productLink": {
+      "label": "URL Publik",
+      "hint": "Salin dan tempel URL ke flow, siaran, atau urutan Anda. Setiap kontak yang menerimanya membuka produk ini dan dapat memesan."
+    }
+  },
+  "discountCodes": {
+    "title": "Kupon",
+    "description": "Kode diskon yang dipakai pelanggan saat checkout, atau yang berlaku otomatis.",
+    "add": "Tambah",
+    "edit": "Edit kupon",
+    "automatic": "Otomatis",
+    "never": "Tidak pernah",
+    "searchPlaceholder": "Cari kode…",
+    "saveError": "Kupon tidak bisa disimpan.",
+    "created": "Kupon dibuat",
+    "updated": "Kupon disimpan",
+    "deleted": "Kupon dihapus",
+    "deleteError": "Kupon tidak bisa dihapus.",
+    "deleteTitle": "Hapus kupon {code}?",
+    "deleteDescription": "Pelanggan tidak bisa memakainya lagi. Pesanan yang memakainya tetap mendapat diskon.",
+    "cancel": "Batal",
+    "delete": "Hapus",
+    "save": "Simpan",
+    "columns": {
+      "name": "Nama",
+      "discount": "Diskon",
+      "used": "Terpakai",
+      "end": "Berakhir",
+      "active": "Aktif"
+    },
+    "discountTypes": {
+      "percentage": "Persentase",
+      "fixedAmount": "Jumlah tetap",
+      "freeShipping": "Gratis ongkir"
+    },
+    "appliesTo": {
+      "entireOrder": "Seluruh pesanan",
+      "category": "Kategori tertentu",
+      "products": "Produk tertentu"
+    },
+    "minimumTypes": {
+      "none": "Tidak ada",
+      "amount": "Jumlah pembelian minimum",
+      "quantity": "Jumlah item minimum"
+    },
+    "eligibilities": {
+      "everyone": "Semua orang",
+      "specificCustomers": "Pelanggan tertentu"
+    },
+    "form": {
+      "discountCode": "Kode diskon",
+      "code": "Kode",
+      "generate": "Buat",
+      "autoApply": "Terapkan kupon ini otomatis ke keranjang",
+      "autoApplyHint": "Keranjang mendapatkannya tanpa pelanggan mengetik. Jika ada beberapa kupon otomatis, yang diskonnya terbesar dipakai.",
+      "typedHint": "Pelanggan akan memasukkan kode ini saat checkout.",
+      "options": "Opsi",
+      "discountType": "Jenis diskon",
+      "discountValuePercent": "Nilai diskon (%)",
+      "discountValueAmount": "Nilai diskon ({currency})",
+      "freeShippingHint": "Menghapus ongkos kirim untuk pesanan yang dikirim ke pelanggan.",
+      "appliesTo": "Berlaku untuk",
+      "category": "Kategori",
+      "products": "Produk",
+      "productsPlaceholder": "Pilih produk",
+      "minimumRequirement": "Syarat minimum",
+      "minimumAmount": "Jumlah minimum ({currency})",
+      "minimumQuantity": "Jumlah item minimum",
+      "usageLimits": "Batas pemakaian",
+      "limitTotal": "Batasi berapa kali diskon ini bisa dipakai secara total",
+      "usedSoFar": "{count, plural, one {Sudah dipakai # kali} other {Sudah dipakai # kali}}",
+      "oncePerCustomer": "Satu kali pakai per pelanggan",
+      "customerEligibility": "Pelanggan yang berhak",
+      "specificCustomersHint": "Hanya kontak yang cocok dengan filter di bawah saat memesan.",
+      "activeDates": "Tanggal berlaku",
+      "startDate": "Tanggal mulai",
+      "endDate": "Tanggal berakhir",
+      "isActive": "Aktif"
+    },
+    "rules": {
+      "codeCharacters": "Gunakan hanya huruf tanpa aksen, angka, - dan _.",
+      "usageBelowUsed": "Kode ini sudah dipakai {count} kali; batasnya tidak boleh lebih rendah.",
+      "customerConditionRequired": "Tambahkan minimal satu kondisi.",
+      "endAfterStart": "Tanggal berakhir harus setelah tanggal mulai."
+    }
+  },
+  "ecommerceAnalytics": {
+    "title": "Analitik",
+    "lifetime": "Sepanjang waktu",
+    "sales": "Penjualan",
+    "orders": "Pesanan",
+    "products": "Produk",
+    "salesByDate": "Penjualan per tanggal",
+    "ordersByDate": "Pesanan per tanggal",
+    "topProducts": "Produk terlaris",
+    "topVendors": "Vendor terlaris",
+    "columns": {
+      "name": "Nama",
+      "sales": "Penjualan"
+    },
+    "noData": "Tidak ada data pada periode ini",
+    "refresh": "Muat ulang",
+    "change": "{value}%",
+    "noPrevious": "baru",
+    "otherCurrencyOrders": "{count} pesanan dalam mata uang lain tidak termasuk dalam angka ini"
   },
   "responseSla": {
     "label": "SLA respons",

@@ -29,6 +29,7 @@ import {
 } from "./contact-filter-config"
 import { useActivityFiltersEnabled } from "./use-activity-filters-enabled"
 import { useFilterValueLabels } from "./use-filter-value-labels"
+import { useProductFilterOptions } from "./use-product-filter-options"
 import {
   useBroadcastSelectOptions,
   useChannelPostSelectOptions,
@@ -120,6 +121,7 @@ export const useContactFilterConfigs = (
   const { options: couponTopicOptions } = useCouponTopicOptions()
   const { options: leaderboardOptions } = useLeaderboardOptions()
   const filterValueLabels = useFilterValueLabels(conditions)
+  const productOptions = useProductFilterOptions(workspaceId)
 
   const configs = useMemo(
     () =>
@@ -138,6 +140,7 @@ export const useContactFilterConfigs = (
         assigneeOptions,
         couponTopicOptions,
         leaderboardOptions,
+        productOptions,
         botFields,
         includeBotFields,
         surface,
@@ -159,6 +162,7 @@ export const useContactFilterConfigs = (
       assigneeOptions,
       couponTopicOptions,
       leaderboardOptions,
+      productOptions,
       botFields,
       includeBotFields,
       surface,

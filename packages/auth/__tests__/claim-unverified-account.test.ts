@@ -1,5 +1,8 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
+const authEnv = vi.hoisted(() => ({ AUTH_OAUTH_TRUST_EMAIL: false }))
+
+vi.mock("../src/keys", () => ({ env: authEnv }))
 vi.mock("../src/logger", () => ({
   logger: { warn: vi.fn(), info: vi.fn(), error: vi.fn(), debug: vi.fn() },
 }))
@@ -38,6 +41,7 @@ const account = (providerId: string, idToken?: string) =>
   }) as never
 
 beforeEach(() => {
+  authEnv.AUTH_OAUTH_TRUST_EMAIL = false
   vi.clearAllMocks()
   internalAdapter.findUserById.mockResolvedValue({
     id: USER_ID,
@@ -74,6 +78,30 @@ describe("claimUnverifiedAccountBeforeLink", () => {
     ).rejects.toThrow(DID_NOT_ATTEST_ERROR)
     expect(internalAdapter.deleteAccount).not.toHaveBeenCalled()
     expect(deleteMany).not.toHaveBeenCalled()
+  })
+
+  test("OIDC is refused when its id token does not attest the email", async () => {
+    await expect(
+      claimUnverifiedAccountBeforeLink(
+        account("oidc", idTokenWith({ email_verified: false })),
+        context,
+      ),
+    ).rejects.toThrow(DID_NOT_ATTEST_ERROR)
+    expect(internalAdapter.deleteAccount).not.toHaveBeenCalled()
+    expect(deleteMany).not.toHaveBeenCalled()
+  })
+
+  test("OIDC may claim an unverified account when email trust is enabled", async () => {
+    authEnv.AUTH_OAUTH_TRUST_EMAIL = true
+
+    await expect(
+      claimUnverifiedAccountBeforeLink(
+        account("oidc", idTokenWith({ email_verified: false })),
+        context,
+      ),
+    ).resolves.toBeUndefined()
+    expect(internalAdapter.deleteAccount).toHaveBeenCalledTimes(2)
+    expect(deleteMany).toHaveBeenCalledWith(SESSION_DELETE)
   })
 
   test("Facebook into an unverified placeholder claims it", async () => {

@@ -1,15 +1,11 @@
 import type { PlatformAdminList } from "@chatbotx.io/business"
-import { isSuperAdmin, platformAdminService } from "@chatbotx.io/business"
-import { notFound } from "next/navigation"
-import { getCurrentUser } from "@/lib/auth/utils"
+import { platformAdminService } from "@chatbotx.io/business"
+import { assertPlatformSuperAdmin } from "@/lib/auth/assert-platform-super-admin"
 
 export const listPlatformAdmins = async (
   page: number,
 ): Promise<PlatformAdminList> => {
-  const user = await getCurrentUser()
-  if (!(user && (await isSuperAdmin(user)))) {
-    return notFound()
-  }
+  await assertPlatformSuperAdmin()
 
   return await platformAdminService.list({ page, perPage: 50 })
 }

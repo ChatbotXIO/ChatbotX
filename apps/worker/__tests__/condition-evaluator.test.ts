@@ -378,6 +378,68 @@ describe("ConditionEvaluator catalog conditions", () => {
     [triggerEventTypes.enum.userAskedAboutProduct, inquiry],
   ] as const
 
+  describe("store events", () => {
+    const order = {
+      products: [
+        { productId: "product-1", categoryIds: [], quantity: 1 },
+        { productId: null, categoryIds: [], quantity: 1 },
+      ],
+    }
+    const cartItem = {
+      product: {
+        productId: "product-1",
+        variantId: null,
+        name: "Shirt",
+        categoryIds: ["category-1", "sub-1"],
+      },
+      quantity: 1,
+      change: 1,
+    }
+
+    test.each([
+      [triggerEventTypes.enum.productOrdered, order],
+      [triggerEventTypes.enum.productAddedToCart, cartItem],
+      [triggerEventTypes.enum.productRemovedFromCart, cartItem],
+    ] as const)("%s matches its product, and any product when unpinned", async (type, data) => {
+      for (const [sourceId, expected] of [
+        [null, true],
+        ["product-1", true],
+        ["product-2", false],
+      ] as const) {
+        await expect(
+          evaluator.evaluate(buildContext({ type, sourceId }, data)),
+        ).resolves.toBe(expected)
+      }
+    })
+
+    test("categoryAddedToCart matches the product's category or sub-category", async () => {
+      const type = triggerEventTypes.enum.categoryAddedToCart
+      for (const [sourceId, expected] of [
+        [null, true],
+        ["category-1", true],
+        ["sub-1", true],
+        ["category-2", false],
+      ] as const) {
+        await expect(
+          evaluator.evaluate(buildContext({ type, sourceId }, cartItem)),
+        ).resolves.toBe(expected)
+      }
+    })
+
+    test.each([
+      triggerEventTypes.enum.newOrder,
+      triggerEventTypes.enum.orderAccepted,
+      triggerEventTypes.enum.orderShipped,
+      triggerEventTypes.enum.orderConcluded,
+      triggerEventTypes.enum.orderCancelled,
+      triggerEventTypes.enum.cartAbandoned,
+    ])("%s: the event happening is the condition", async (type) => {
+      await expect(
+        evaluator.evaluate(buildContext({ type, sourceId: null }, {})),
+      ).resolves.toBe(true)
+    })
+  })
+
   test.each(
     cases,
   )("%s with no product matches any event", async (type, data) => {

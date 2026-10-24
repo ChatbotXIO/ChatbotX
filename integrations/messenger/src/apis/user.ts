@@ -8,6 +8,7 @@ import type {
 import { normalizeGender, normalizeUtcOffset } from "@chatbotx.io/sdk"
 import { createId } from "@chatbotx.io/utils"
 import { fetchMediaWithLimits } from "@chatbotx.io/utils/media-download"
+import { storeIncomingImage } from "@chatbotx.io/utils/store-incoming-image"
 import { API_URL, DEFAULT_API_VERSION } from "../constants"
 import { parseOriginError, rescue } from "../exception"
 import { facebookGraphClient } from "../lib/http-client"
@@ -229,7 +230,7 @@ const fetchProfileWithPublicFallback = async (props: {
 }
 
 export const getUserProfile: ContactHandlers<MessengerAuthValue>["getProfile"] =
-  ({ data: { sourceId }, ctx }) => {
+  ({ data: { sourceId, includeAvatar = true }, ctx }) => {
     const endpoint = `${API_URL}/${ctx.auth.metadata.version}/${sourceId}`
 
     return rescue(endpoint, async () => {
@@ -247,7 +248,7 @@ export const getUserProfile: ContactHandlers<MessengerAuthValue>["getProfile"] =
         gender: normalizeGender(profile.gender),
       }
 
-      if (pictureUrl) {
+      if (includeAvatar && pictureUrl) {
         try {
           result.avatar = await getContactProfilePicture({
             ctx,
@@ -290,11 +291,14 @@ const getContactProfilePicture = async ({
   if (!media) {
     return
   }
-  const originPath = `public/space/${ctx.storagePrefix}/avatars/${createId()}`
-  await ctx.uploader?.putObject(originPath, Buffer.from(media.bytes), {
-    ACL: "public-read",
-    ContentType: media.mimeType,
+  const stored = await storeIncomingImage({
+    uploader: ctx.uploader,
+    key: `public/space/${ctx.storagePrefix}/avatars/${createId()}`,
+    bytes: Buffer.from(media.bytes),
+    mimeType: media.mimeType,
+    profile: "avatar",
+    acl: "public-read",
   })
 
-  return originPath
+  return stored.originPath
 }

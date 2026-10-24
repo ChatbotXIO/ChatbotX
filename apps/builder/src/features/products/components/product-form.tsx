@@ -25,6 +25,7 @@ import { useTranslations } from "next-intl"
 import type { BaseSyntheticEvent } from "react"
 import { useMemo, useState } from "react"
 import { type UseFormReturn, useWatch } from "react-hook-form"
+import { PublicUrlSection } from "@/components/public-url-section"
 import { PRICE_INPUT_PROPS, PRODUCT_CURRENCIES } from "../constants"
 import type { ProductFormRequest } from "../schema/action"
 import { ProductImagesSection } from "./product-images-section"
@@ -38,6 +39,11 @@ type ProductFormProps = {
   isEdit?: boolean
   /** Only ever set on an existing product that has been synced with Meta. */
   metaCatalogId?: string | null
+  /**
+   * An existing product's shop page for a flow button (`{{shop_token}}`
+   * signed per contact), shown like a Mini App's Public URL.
+   */
+  publicUrl?: string | null
 }
 
 export function ProductForm({
@@ -46,6 +52,7 @@ export function ProductForm({
   handleSubmitWithAction,
   isEdit = false,
   metaCatalogId = null,
+  publicUrl = null,
 }: ProductFormProps) {
   const t = useTranslations()
   const router = useRouter()
@@ -237,7 +244,18 @@ export function ProductForm({
               </CardContent>
             </Card>
           ) : null}
-          <div className="flex items-center justify-end gap-2">
+          {/* Pinned like the Mini App editor's bar: the Public URL and Save
+              stay at the bottom of the screen however long the form is. */}
+          <div className="sticky bottom-0 z-10 -mx-6 flex flex-wrap items-center justify-end gap-3 border-t bg-background px-6 py-3">
+            {publicUrl ? (
+              <div className="min-w-0 flex-1">
+                <PublicUrlSection
+                  hint={t("webshopLinks.productLink.hint")}
+                  label={t("webshopLinks.productLink.label")}
+                  publicUrl={publicUrl}
+                />
+              </div>
+            ) : null}
             <Button
               onClick={() => router.push(`/space/${workspaceId}/products`)}
               type="button"

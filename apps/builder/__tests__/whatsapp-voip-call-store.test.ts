@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, test } from "vitest"
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 import {
   PENDING_CONVERSATION_OPEN_MAX_AGE_MS,
   STICKY_ENDED_STATUSES,
@@ -33,6 +33,19 @@ const seedRingingSlot = (data: WhatsappVoipIncomingData) => {
     )
   }
 }
+
+// The shared fixture's deadline is fixed; pin "now" before it so the
+// expired-offer guard in `enqueueRinging` does not drop it, and clear the
+// remembered dismissals so one test's ended calls cannot silence the next's.
+beforeEach(() => {
+  vi.useFakeTimers({ toFake: ["Date"] })
+  vi.setSystemTime(new Date("2025-12-31T00:00:00.000Z"))
+  useWhatsappVoipCallStore.setState({ dismissedRingIds: [] })
+})
+
+afterEach(() => {
+  vi.useRealTimers()
+})
 
 describe("useWhatsappVoipCallStore", () => {
   beforeEach(() => {
@@ -762,13 +775,18 @@ describe("useWhatsappVoipCallStore — ringing basket", () => {
     )
   })
 
-  test("dismissRinging is a no-op for a call this tab does not hold", () => {
+  test("dismissRinging leaves the slot and basket alone for a call this tab does not hold, but remembers it so an Incoming that arrives later stays silent", () => {
     seedRingingSlot(incomingData)
     const before = useWhatsappVoipCallStore.getState()
 
     useWhatsappVoipCallStore.getState().dismissRinging("call-missing")
 
-    expect(useWhatsappVoipCallStore.getState()).toBe(before)
+    const after = useWhatsappVoipCallStore.getState()
+    expect(after.call).toBe(before.call)
+    // Same reference, not just equal: every open tab receives each
+    // ClaimedElsewhere, and a new array would re-render all basket subscribers.
+    expect(after.ringingCalls).toBe(before.ringingCalls)
+    expect(after.dismissedRingIds).toContain("call-missing")
   })
 
   test("removeRingingByConversationIds drops every entry for the given conversation ids in one update", () => {
@@ -960,5 +978,261 @@ describe("useWhatsappVoipCallStore — ringing basket", () => {
 
       expect(result).toBe("conversation-boundary")
     })
+  })
+})
+
+describe("useWhatsappVoipCallStore ring recovery", () => {
+  const ringing = (
+    id: string,
+    overrides: Partial<WhatsappVoipIncomingData> = {},
+  ) => ({
+    ...incomingData,
+    whatsappCallId: id,
+    wacid: `wacid-${id}`,
+    conversationId: `conversation-${id}`,
+    deadlineAt: new Date(Date.now() + 55_000).toISOString(),
+    ...overrides,
+  })
+  const basketIds = () =>
+    useWhatsappVoipCallStore
+      .getState()
+      .ringingCalls.map((entry) => entry.whatsappCallId)
+
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ["Date"] })
+    vi.setSystemTime(new Date("2026-06-01T00:00:00.000Z"))
+    useWhatsappVoipCallStore.setState({
+      call: null,
+      dismissedRingIds: [],
+      ringingCalls: [],
+      pendingConversationOpen: null,
+    })
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  test("enqueueRinging ignores an offer whose deadline has already passed", () => {
+    useWhatsappVoipCallStore.getState().enqueueRinging(
+      ringing("expired", {
+        deadlineAt: new Date(Date.now() - 1).toISOString(),
+      }),
+    )
+
+    expect(basketIds()).toEqual([])
+  })
+
+  test("enqueueRinging keeps an offer with an unparseable deadline (the hook applies a bounded local expiry)", () => {
+    useWhatsappVoipCallStore
+      .getState()
+      .enqueueRinging(ringing("odd", { deadlineAt: "not-a-date" }))
+
+    expect(basketIds()).toEqual(["odd"])
+  })
+
+  test.each([
+    [
+      "removeRinging",
+      (id: string) => useWhatsappVoipCallStore.getState().removeRinging(id),
+    ],
+    [
+      "dismissRinging",
+      (id: string) => useWhatsappVoipCallStore.getState().dismissRinging(id),
+    ],
+  ])("%s stops a late redelivery of the same offer from ringing again", (_name, dismiss) => {
+    const store = useWhatsappVoipCallStore.getState()
+    store.enqueueRinging(ringing("call-a"))
+
+    dismiss("call-a")
+    useWhatsappVoipCallStore.getState().enqueueRinging(ringing("call-a"))
+
+    expect(basketIds()).toEqual([])
+  })
+
+  test.each([
+    [
+      "removeRinging",
+      (id: string) => useWhatsappVoipCallStore.getState().removeRinging(id),
+    ],
+    [
+      "dismissRinging",
+      (id: string) => useWhatsappVoipCallStore.getState().dismissRinging(id),
+    ],
+  ])("%s writes nothing when the id is already remembered and not in the basket", (_name, dismiss) => {
+    dismiss("call-a")
+    const before = useWhatsappVoipCallStore.getState()
+
+    // Ended and ClaimedElsewhere reach every tab for every call.
+    dismiss("call-a")
+
+    expect(useWhatsappVoipCallStore.getState()).toBe(before)
+  })
+
+  test("removeRingingByConversationIds also remembers the dropped offers", () => {
+    const store = useWhatsappVoipCallStore.getState()
+    store.enqueueRinging(ringing("call-a"))
+
+    store.removeRingingByConversationIds(["conversation-call-a"])
+    useWhatsappVoipCallStore.getState().enqueueRinging(ringing("call-a"))
+
+    expect(basketIds()).toEqual([])
+  })
+
+  test("an offer promoted into the slot cannot ring again after the call is cleared", () => {
+    const store = useWhatsappVoipCallStore.getState()
+    store.enqueueRinging(ringing("call-a"))
+    store.promoteRinging("call-a")
+
+    useWhatsappVoipCallStore.getState().reset()
+    useWhatsappVoipCallStore.getState().enqueueRinging(ringing("call-a"))
+
+    expect(basketIds()).toEqual([])
+  })
+
+  test("remembers only a bounded number of dismissed offers, forgetting the oldest first", () => {
+    for (let index = 0; index < 60; index += 1) {
+      useWhatsappVoipCallStore.getState().removeRinging(`gone-${index}`)
+    }
+
+    const { dismissedRingIds } = useWhatsappVoipCallStore.getState()
+    expect(dismissedRingIds.length).toBeLessThanOrEqual(50)
+    expect(dismissedRingIds).toContain("gone-59")
+    expect(dismissedRingIds).not.toContain("gone-0")
+  })
+
+  test("reconcileRinging adds server offers the basket missed, oldest first", () => {
+    useWhatsappVoipCallStore.getState().reconcileRinging({
+      serverCalls: [ringing("newer"), ringing("older")],
+      isServerListComplete: true,
+      staleCandidateIds: new Set(),
+    })
+
+    expect(basketIds()).toEqual(["older", "newer"])
+  })
+
+  test("reconcileRinging drops a stale entry the server no longer lists", () => {
+    const store = useWhatsappVoipCallStore.getState()
+    store.enqueueRinging(ringing("claimed"))
+    store.enqueueRinging(ringing("still-ringing"))
+
+    store.reconcileRinging({
+      serverCalls: [ringing("still-ringing")],
+      isServerListComplete: true,
+      staleCandidateIds: new Set(["claimed", "still-ringing"]),
+    })
+
+    expect(basketIds()).toEqual(["still-ringing"])
+  })
+
+  test("reconcileRinging keeps every entry when the server list is incomplete, since absence proves nothing", () => {
+    const store = useWhatsappVoipCallStore.getState()
+    store.enqueueRinging(ringing("older-than-the-cap"))
+    store.enqueueRinging(ringing("listed"))
+
+    store.reconcileRinging({
+      isServerListComplete: false,
+      serverCalls: [ringing("listed")],
+      staleCandidateIds: new Set(["older-than-the-cap", "listed"]),
+    })
+
+    expect(basketIds()).toEqual(["older-than-the-cap", "listed"])
+    expect(useWhatsappVoipCallStore.getState().dismissedRingIds).toEqual([])
+  })
+
+  test("reconcileRinging still adds missing offers when the server list is incomplete", () => {
+    useWhatsappVoipCallStore.getState().reconcileRinging({
+      isServerListComplete: false,
+      serverCalls: [ringing("missed")],
+      staleCandidateIds: new Set(),
+    })
+
+    expect(basketIds()).toEqual(["missed"])
+  })
+
+  test("reconcileRinging remembers the entries it drops, so an older resume response cannot ring them again", () => {
+    const store = useWhatsappVoipCallStore.getState()
+    store.enqueueRinging(ringing("claimed-while-offline"))
+
+    store.reconcileRinging({
+      serverCalls: [],
+      isServerListComplete: true,
+      staleCandidateIds: new Set(["claimed-while-offline"]),
+    })
+    // The mount-time resume fetch resolves afterwards with the stale list.
+    useWhatsappVoipCallStore
+      .getState()
+      .enqueueRinging(ringing("claimed-while-offline"))
+
+    expect(basketIds()).toEqual([])
+  })
+
+  test("reconcileRinging keeps an offer that arrived over realtime while the server was being asked", () => {
+    const store = useWhatsappVoipCallStore.getState()
+    store.enqueueRinging(ringing("arrived-during-fetch"))
+
+    store.reconcileRinging({
+      serverCalls: [],
+      isServerListComplete: true,
+      staleCandidateIds: new Set(),
+    })
+
+    expect(basketIds()).toEqual(["arrived-during-fetch"])
+  })
+
+  test("reconcileRinging never re-adds an offer that ended while the server was being asked", () => {
+    const store = useWhatsappVoipCallStore.getState()
+    store.removeRinging("ended-during-fetch")
+
+    useWhatsappVoipCallStore.getState().reconcileRinging({
+      serverCalls: [ringing("ended-during-fetch")],
+      isServerListComplete: true,
+      staleCandidateIds: new Set(),
+    })
+
+    expect(basketIds()).toEqual([])
+  })
+
+  test("reconcileRinging never puts the call in the slot back into the basket", () => {
+    // Fill the slot directly: `promoteRinging` also tombstones the id, which
+    // would let the dismissed-id check hide a missing slot guard.
+    useWhatsappVoipCallStore.setState({
+      call: {
+        ...ringing("in-slot"),
+        transport: "voip",
+        direction: "inbound",
+        phase: WhatsappVoipCallPhase.incomingRinging,
+        isMuted: false,
+        isRecording: false,
+      },
+      dismissedRingIds: [],
+    })
+
+    useWhatsappVoipCallStore.getState().reconcileRinging({
+      serverCalls: [ringing("in-slot")],
+      isServerListComplete: true,
+      staleCandidateIds: new Set(),
+    })
+
+    expect(basketIds()).toEqual([])
+    expect(useWhatsappVoipCallStore.getState().call?.whatsappCallId).toBe(
+      "in-slot",
+    )
+  })
+
+  test("reconcileRinging leaves the active call and the state reference untouched when nothing changes", () => {
+    const store = useWhatsappVoipCallStore.getState()
+    store.enqueueRinging(ringing("a"))
+    const before = useWhatsappVoipCallStore.getState()
+
+    before.reconcileRinging({
+      serverCalls: [ringing("a")],
+      isServerListComplete: true,
+      staleCandidateIds: new Set(["a"]),
+    })
+
+    expect(useWhatsappVoipCallStore.getState().ringingCalls).toBe(
+      before.ringingCalls,
+    )
   })
 })

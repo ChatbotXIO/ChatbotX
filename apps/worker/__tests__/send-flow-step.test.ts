@@ -143,6 +143,10 @@ const {
   }
 })
 
+const { mockResolveCollectionStep } = vi.hoisted(() => ({
+  mockResolveCollectionStep: vi.fn(),
+}))
+
 // ---------------------------------------------------------------------------
 // Module mocks
 // ---------------------------------------------------------------------------
@@ -236,6 +240,7 @@ vi.mock("@chatbotx.io/business", () => ({
     markReadByOutbound: mockMarkReadByOutbound,
   },
   productMessageService: { prepareOutgoing: mockPrepareProductMessage },
+  resolveCollectionStep: mockResolveCollectionStep,
   resolveTenantSettings: mockresolveTenantSettings,
   messageService: {
     create: mockRepositoryCreate,
@@ -2391,5 +2396,155 @@ describe("sendFlowStep — sendProducts", () => {
     expect(mockSendFlowStepToChannel).toHaveBeenCalledWith(
       expect.not.objectContaining({ productMessage: expect.anything() }),
     )
+  })
+})
+
+describe("sendFlowStep — product collection", () => {
+  const collectionStep = {
+    id: "collection-step",
+    nodeId: "node-1",
+    stepType: "sendCollection",
+    dataType: "products",
+    collectionType: "automated",
+    conditions: {
+      name: "",
+      categoryId: null,
+      subcategoryId: null,
+      vendorId: null,
+    },
+    productIds: [],
+  } as unknown as SendFlowStepData["step"]
+
+  const productCard = {
+    id: "card-p1",
+    stepType: "sendCard",
+    title: "Shirt",
+    subtitle: "$15.00 · Acme",
+    image: {
+      id: "img-p1",
+      stepType: "sendImage",
+      mode: "url",
+      url: "https://img.example/p1.jpg",
+      buttons: [],
+    },
+    buttons: [
+      {
+        id: "view-p1",
+        label: "View",
+        buttonType: "openWebsite",
+        beforeStep: {
+          id: "open-p1",
+          stepType: "openWebsite",
+          url: "https://app.example.test/shop/ws-1/products/p1?token=signed",
+          browserSize: 100,
+        },
+        steps: [],
+      },
+    ],
+  }
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockFindConversation.mockResolvedValue(fakeConversation)
+    mockFindContactInbox.mockResolvedValue(fakeContactInbox)
+    mockresolveTenantSettings.mockResolvedValue({
+      storageUrl: "https://storage.example.com",
+      appUrl: "https://app.example.test",
+    })
+    mockResolveContactVariables.mockImplementation(
+      (_contactId: string, step: unknown) => Promise.resolve(step),
+    )
+    mockRepositoryCreate.mockResolvedValue({
+      id: "msg-created",
+      contactInboxId: "ci-1",
+      workspaceId: "ws-1",
+      conversationId: "conv-1",
+      messageType: "outgoing",
+      contentType: "text",
+      senderType: "bot",
+      sourceId: null,
+      text: null,
+      contentAttributes: {},
+      createdAt: new Date("2026-01-01T00:00:00Z"),
+      updatedAt: new Date("2026-01-01T00:00:00Z"),
+    })
+    mockSendFlowStepToChannel.mockResolvedValue({
+      messageIds: ["provider-1"],
+      sentCount: 1,
+    })
+  })
+
+  test("on Messenger: resolved after the variables, stored as a carousel and sent with its cards", async () => {
+    mockResolveCollectionStep.mockImplementation(
+      async ({ step }: { step: object }) => ({ ...step, cards: [productCard] }),
+    )
+
+    await sendFlowStep({
+      ...baseParams,
+      contactInboxId: "ci-1",
+      step: collectionStep,
+    })
+
+    expect(mockResolveCollectionStep).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      contactId: "contact-1",
+      contactInboxId: "ci-1",
+      step: expect.objectContaining({ id: "collection-step" }),
+    })
+    // Product names are store data: the variable pass runs on the authored
+    // step, before the cards exist.
+    const [variablesAt] = mockResolveContactVariables.mock.invocationCallOrder
+    const [collectionAt] = mockResolveCollectionStep.mock.invocationCallOrder
+    expect(variablesAt).toBeLessThan(collectionAt as number)
+
+    expect(mockRepositoryCreate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        contentAttributes: expect.objectContaining({
+          type: "template",
+          payload: expect.objectContaining({
+            templateType: "carousel",
+            cards: [expect.objectContaining({ title: "Shirt" })],
+          }),
+        }),
+      }),
+    )
+    expect(mockSendFlowStepToChannel).toHaveBeenCalledWith(
+      expect.objectContaining({
+        step: expect.objectContaining({
+          stepType: "sendCollection",
+          cards: [expect.objectContaining({ title: "Shirt" })],
+        }),
+      }),
+    )
+  })
+
+  test("a collection that matches no product sends and stores nothing", async () => {
+    mockResolveCollectionStep.mockResolvedValue(null)
+
+    await sendFlowStep({
+      ...baseParams,
+      contactInboxId: "ci-1",
+      step: collectionStep,
+    })
+
+    expect(mockRepositoryCreate).not.toHaveBeenCalled()
+    expect(mockSendFlowStepToChannel).not.toHaveBeenCalled()
+  })
+
+  test("a contact on a channel without collections is skipped before any lookup", async () => {
+    mockFindContactInbox.mockResolvedValue({
+      ...fakeContactInbox,
+      channel: "whatsapp",
+      source: "whatsapp",
+    })
+
+    await sendFlowStep({
+      ...baseParams,
+      contactInboxId: "ci-1",
+      step: collectionStep,
+    })
+
+    expect(mockResolveCollectionStep).not.toHaveBeenCalled()
+    expect(mockSendFlowStepToChannel).not.toHaveBeenCalled()
   })
 })

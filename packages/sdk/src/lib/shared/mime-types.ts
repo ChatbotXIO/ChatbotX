@@ -73,3 +73,33 @@ export const PPT_MIME_TYPES = ["application/vnd.ms-powerpoint"] as const
 export const PPTX_MIME_TYPES = [
   "application/vnd.openxmlformats-officedocument.presentationml.presentation",
 ] as const
+
+/**
+ * MIME type by file extension, for media whose type is only known from its URL
+ * (a lazily-ingested attachment: nothing was downloaded to sniff). Covers what
+ * the chat channels deliver; anything else falls back to a per-kind default.
+ */
+export const EXTENSION_MIME_TYPES: Readonly<Record<string, string>> = {
+  jpg: "image/jpeg",
+  jpeg: "image/jpeg",
+  png: "image/png",
+  webp: "image/webp",
+  gif: "image/gif",
+  heic: "image/heic",
+  mp4: "video/mp4",
+  mov: "video/quicktime",
+  webm: "video/webm",
+  mp3: "audio/mpeg",
+  m4a: "audio/mp4",
+  aac: "audio/aac",
+  ogg: "audio/ogg",
+  wav: "audio/wav",
+  pdf: "application/pdf",
+  doc: "application/msword",
+  docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  xls: "application/vnd.ms-excel",
+  xlsx: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  csv: "text/csv",
+  txt: "text/plain",
+  zip: "application/zip",
+}

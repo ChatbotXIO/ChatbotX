@@ -14,6 +14,7 @@ import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import { toast } from "sonner"
+import { useInvalidateProductFormOptions } from "@/features/products/provider/use-invalidate-product-form-options"
 import { toastActionError } from "@/lib/errors/safe-action-error-handler"
 import { deleteProductCategoryAction } from "../actions/delete-product-category.action"
 
@@ -38,12 +39,14 @@ export function DeleteCategoryDialog({
 }: DeleteCategoryDialogProps) {
   const t = useTranslations("productCategories")
   const router = useRouter()
+  const invalidateProductFormOptions = useInvalidateProductFormOptions()
   const { execute, isPending } = useAction(
     deleteProductCategoryAction.bind(null, workspaceId, category.id),
     {
       onSuccess: () => {
         toast.success(t("deleted"))
         onOpenChange(false)
+        invalidateProductFormOptions()
         router.refresh()
       },
       onError: toastActionError(t("deleteError")),

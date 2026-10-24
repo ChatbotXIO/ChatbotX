@@ -21,6 +21,7 @@ const {
   mockEmitContactCreated,
   mockEmit,
   mockBulkCreate,
+  mockBulkCreateAttachments,
   mockBulkUpdateTracking,
   mockCreateMessageRepository,
   mockBulkImportChannelContacts,
@@ -38,6 +39,7 @@ const {
     mockEmitContactCreated: vi.fn(() => Promise.resolve()),
     mockEmit: vi.fn(() => Promise.resolve()),
     mockBulkCreate,
+    mockBulkCreateAttachments,
     mockBulkUpdateTracking: vi.fn().mockResolvedValue(null),
     mockCreateMessageRepository,
     mockBulkImportChannelContacts: vi.fn(),
@@ -231,6 +233,66 @@ describe("bulkImportHistorical", () => {
     expect(result.skippedContacts).toBe(0)
     expect(result.failedMessages).toBe(0)
     expect(result.contactInboxIds.get("src-1")).toBe("ci-1")
+  })
+
+  it("persists keepOriginal on imported attachments from the photo flag", async () => {
+    stubContactsResolution([
+      {
+        sourceId: "src-1",
+        contactId: "id-1",
+        contactInboxId: "ci-1",
+        conversationId: "conv-1",
+      },
+    ])
+    mockBulkCreateAttachments.mockResolvedValue([])
+    mockCreateMessageRepository.mockResolvedValue({
+      bulkCreate: mockBulkCreate,
+      bulkCreateAttachments: mockBulkCreateAttachments,
+    })
+    mockBulkCreate.mockResolvedValueOnce([{ id: "m-1", sourceId: "m-src-1" }])
+
+    await bulkImportHistorical({
+      inbox,
+      workspaceId,
+      runId: "12345",
+      aiReadsSyncedHistory: false,
+      batch: [
+        {
+          contact: contact("src-1"),
+          messages: [
+            msg("m-src-1", {
+              contentType: "image",
+              attachments: [
+                {
+                  sourceId: "att-photo",
+                  fileType: "image",
+                  mimeType: "image/jpeg",
+                  originPath: "https://cdn.example/photo.jpg",
+                  size: 10,
+                  isPhotoMessage: true,
+                },
+                {
+                  sourceId: "att-scan",
+                  fileType: "image",
+                  mimeType: "image/png",
+                  originPath: "https://cdn.example/scan.png",
+                  size: 10,
+                  isPhotoMessage: false,
+                },
+              ],
+            }),
+          ],
+        },
+      ],
+    })
+
+    const [rows] = mockBulkCreateAttachments.mock.calls[0] as [
+      { sourceId: string; keepOriginal: boolean | null }[],
+    ]
+    expect(rows.map((row) => [row.sourceId, row.keepOriginal])).toEqual([
+      ["att-photo", false],
+      ["att-scan", true],
+    ])
   })
 
   it("passes the resolved batch contacts through to bulkImportChannelContacts", async () => {

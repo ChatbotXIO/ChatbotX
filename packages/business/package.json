@@ -4,6 +4,7 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
+    "./admin-workspace/constants": "./src/admin-workspace/constants.ts",
     "./ads-analytics/date-range": "./src/ads-analytics/date-range.ts",
     "./ads-conversion/channel-fields": "./src/ads-conversion/channel-fields.ts",
     "./ads-conversion/schema": "./src/ads-conversion/schema.ts",
@@ -42,6 +43,7 @@
     "./integration-whatsapp/auth-schema": "./src/integration-whatsapp/auth-schema.ts",
     "./license-startup": "./src/enterprise/license/startup.ts",
     "./javascript-execution": "./src/javascript-execution/index.ts",
+    "./media/optimize-stored-image": "./src/media/optimize-stored-image.ts",
     "./mini-app": "./src/mini-app/index.ts",
     "./meta-conversions/capi-scope-policy": "./src/meta-conversions/capi-scope-policy.ts",
     "./meta-conversions/connection-state": "./src/meta-conversions/connection-state.ts",

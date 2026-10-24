@@ -57,9 +57,12 @@ vi.mock("../src/keys", () => ({
   keys: () => ({ NEXT_PUBLIC_BUILDER_URL: "https://app.example.com" }),
 }))
 
-const { findByIdWithUrls, findForContact, listForConversation } = await import(
-  "../src/message/list-for-conversation"
-)
+const {
+  findByIdWithUrls,
+  findForContact,
+  listForConversation,
+  withResolvedAttachmentUrls,
+} = await import("../src/message/list-for-conversation")
 
 describe("message list-for-conversation", () => {
   beforeEach(() => {
@@ -282,6 +285,33 @@ describe("message list-for-conversation", () => {
         "https://app.example.com/media/attachment/signed-media-token",
       )
       expect(mocks.uploader.getPresignedDownload).not.toHaveBeenCalled()
+    })
+
+    test("resolves a freshly saved message's pending attachment to the proxy URL without any DB read", async () => {
+      const message = {
+        id: "msg-1",
+        contactInboxId: "ci-1",
+        createdAt: new Date("2026-10-14T01:00:00.000Z"),
+        attachments: [
+          { id: "att-1", originPath: "https://graph.example/a.png" },
+          { id: "att-2", originPath: "workspace/messenger/ws-1/x/y.jpg" },
+        ],
+      }
+      mocks.uploader.getPresignedDownload.mockResolvedValue(
+        "https://signed.example/y.jpg",
+      )
+
+      const result = await withResolvedAttachmentUrls(message as never, {
+        channel: "messenger",
+        workspaceId: "ws-1",
+      })
+
+      expect(result.attachments.map((attachment) => attachment.url)).toEqual([
+        "https://app.example.com/media/attachment/signed-media-token",
+        "https://signed.example/y.jpg",
+      ])
+      expect(mocks.createMessageRepository).not.toHaveBeenCalled()
+      expect(mocks.contactInboxService.findManyByIds).not.toHaveBeenCalled()
     })
 
     test("returns null for a permanently failed attachment", async () => {

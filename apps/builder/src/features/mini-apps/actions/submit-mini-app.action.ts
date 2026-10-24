@@ -25,6 +25,7 @@ export const submitMiniAppAction = actionClient
     const contactId = await resolveVisitorContactId({
       token: parsedInput.token,
       workspaceId: miniApp.workspaceId,
+      miniAppId: miniApp.id,
     })
     await assertVisitorNotRateLimited({
       bucket: "mini-app",
@@ -39,9 +40,13 @@ export const submitMiniAppAction = actionClient
       answers: parsedInput.answers,
       sourceTimezone: parsedInput.timezone,
     })
-    if (parsedInput.resume) {
+    // A Messenger template's Mini App link carries its resume token as
+    // `token` (see `resolveVisitorContactId`); a contact token there is
+    // simply not a resume token and is ignored.
+    const resumeToken = parsedInput.resume ?? parsedInput.token
+    if (resumeToken) {
       await resumeFlowAfterMiniAppSubmit({
-        resumeToken: parsedInput.resume,
+        resumeToken,
         miniAppId: miniApp.id,
         workspaceId: miniApp.workspaceId,
         contactId,

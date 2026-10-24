@@ -28,6 +28,7 @@ import { signAppointmentScheduleToken } from "@chatbotx.io/encryption"
 import { signLeaderboardViewToken } from "@chatbotx.io/encryption/leaderboard-view-token"
 import { signMiniAppToken } from "@chatbotx.io/encryption/mini-app-token"
 import { signMinigamePlayToken } from "@chatbotx.io/encryption/minigame-play-token"
+import { signShopToken } from "@chatbotx.io/encryption/shop-token"
 import { signUserHash } from "@chatbotx.io/encryption/user-hash"
 import {
   DATE_FORMAT,
@@ -486,6 +487,15 @@ export const getSystemFieldValue = async (
       return await signMiniAppToken({
         workspaceId: contact.workspaceId,
         contactId: contact.id,
+      })
+    // The conversation is resolved when the order is placed, from the
+    // contact's latest one; the token only has to say who the customer is.
+    case systemFieldTypes.enum.shop_token:
+      return await signShopToken({
+        workspaceId: contact.workspaceId,
+        contactId: contact.id,
+        contactInboxId: contactInbox?.id ?? null,
+        conversationId: null,
       })
     case systemFieldTypes.enum.workspace_id:
       return contact.workspaceId

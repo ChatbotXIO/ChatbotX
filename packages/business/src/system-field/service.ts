@@ -28,7 +28,11 @@ import {
 } from "../contact-inbox/service"
 import { conversationService } from "../conversation/service"
 import { logger } from "../logger"
-import { resolveContactAvatarUrl } from "../media"
+import {
+  type EnsureAvatarMirrored,
+  isStoredObjectPath,
+  resolveContactAvatarUrl,
+} from "../media"
 import { messageService } from "../message/service"
 import { resolveTenantSettings } from "../platform/settings"
 import { tagService } from "../tag/service"
@@ -37,6 +41,16 @@ import { workspaceService } from "../workspace/service"
 
 export type MePrivacyParams = MeLinkParams & {
   hash: string | null | undefined
+}
+
+export type MeAvatarOptions = {
+  /**
+   * Stores (and compresses) a contact's picture that was not downloaded yet,
+   * so the page gets its final URL. Injected by the app: this layer cannot
+   * reach the channels. Without it a pending picture resolves to the media
+   * proxy URL.
+   */
+  ensureAvatarMirrored?: EnsureAvatarMirrored
 }
 
 export type MePrivacyData = {
@@ -158,6 +172,7 @@ class SystemFieldService extends BaseService {
 
   async getMePrivacyData(
     params: MePrivacyParams,
+    options: MeAvatarOptions = {},
   ): Promise<MePrivacyData | null> {
     const context = await this.loadVerifiedMeContext(params)
     if (!context) {
@@ -183,6 +198,7 @@ class SystemFieldService extends BaseService {
             contactInbox: context.contactInbox,
           },
           (key) => toPublicStorageUrl(key, settings.storageUrl),
+          options.ensureAvatarMirrored,
         ),
         email: context.contact.email,
         firstName: context.contact.firstName,
@@ -201,7 +217,10 @@ class SystemFieldService extends BaseService {
     }
   }
 
-  async buildMeExport(params: MePrivacyParams): Promise<MeExportData | null> {
+  async buildMeExport(
+    params: MePrivacyParams,
+    options: MeAvatarOptions = {},
+  ): Promise<MeExportData | null> {
     const context = await this.loadVerifiedMeContext(params)
     if (!context) {
       return null
@@ -237,6 +256,7 @@ class SystemFieldService extends BaseService {
             contactInbox: context.contactInbox,
           },
           (key) => toPublicStorageUrl(key, settings.storageUrl),
+          options.ensureAvatarMirrored,
         ),
       },
       messages,
@@ -260,7 +280,9 @@ class SystemFieldService extends BaseService {
       })
 
     const deleteResults = await Promise.allSettled(
-      attachmentPaths.map((path) => uploader.deleteObject(path)),
+      attachmentPaths
+        .filter(isStoredObjectPath)
+        .map((path) => uploader.deleteObject(path)),
     )
     for (const result of deleteResults) {
       if (result.status === "rejected") {

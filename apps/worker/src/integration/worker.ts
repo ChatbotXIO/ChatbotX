@@ -73,6 +73,7 @@ import {
   updateIncomingComment,
 } from "./handlers/received-message"
 import { runRef } from "./handlers/ref"
+import { replyToInboundCart } from "./handlers/reply-to-inbound-cart"
 import { recordEmailTrackingTransition } from "./handlers/send-email"
 import { handleSendSequenceFlow } from "./handlers/sequence-flow"
 import { captureTemplateFlowResponse } from "./handlers/template-flow-response"
@@ -539,6 +540,10 @@ async function startIntegrationWorker() {
             }
             case IntegrationJobAction.captureTemplateFlowResponse: {
               await captureTemplateFlowResponse(job.data.data)
+              return
+            }
+            case IntegrationJobAction.replyToInboundCart: {
+              await replyToInboundCart(job.data.data)
               return
             }
             case IntegrationJobAction.processLeadgen: {

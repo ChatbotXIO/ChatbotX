@@ -16,6 +16,7 @@ import type {
 import type {
   ChannelAudienceEventJobData,
   CommentAnchor,
+  MessageInboundOrderEntity,
   OutgoingMessage,
 } from "@chatbotx.io/sdk"
 import { type JobsOptions, Queue } from "bullmq"
@@ -79,6 +80,7 @@ export const IntegrationJobAction = {
   processLeadgen: "processLeadgen",
   processStoryReplyAutomation: "processStoryReplyAutomation",
   captureTemplateFlowResponse: "captureTemplateFlowResponse",
+  replyToInboundCart: "replyToInboundCart",
   // Ads-conversion actions (merged from the retired `adsConversion` queue).
   evaluateTemplateSent: "evaluateTemplateSent",
   evaluateConversionTrigger: "evaluateConversionTrigger",
@@ -1057,6 +1059,26 @@ export type IntegrationJobCaptureTemplateFlowResponse = {
 }
 
 /**
+ * A cart a contact sent from a chat catalog: it becomes their shop cart and
+ * the bot answers with a summary and a CHECK OUT button. One job per message
+ * (`getInboundCartReplyJobId`), so a redelivered webhook answers once.
+ */
+export type IntegrationJobReplyToInboundCart = {
+  type: typeof IntegrationJobAction.replyToInboundCart
+  data: {
+    workspaceId: string
+    conversationId: string
+    contactId: string
+    contactInboxId: string
+    messageId: string
+    cart: MessageInboundOrderEntity
+  }
+}
+
+export const getInboundCartReplyJobId = (messageId: string): string =>
+  `inbound-cart-reply-${messageId}`
+
+/**
  * Facebook Lead Ads: a page leadgen webhook. Carries only ids — the handler
  * resolves the page's Messenger inbox + token, fetches the lead's answers, then
  * finds/creates the contact by PSID and applies the matched automation.
@@ -1206,6 +1228,7 @@ export type IntegrationJobData =
   | IntegrationJobProcessLeadgen
   | IntegrationJobProcessStoryReplyAutomation
   | IntegrationJobCaptureTemplateFlowResponse
+  | IntegrationJobReplyToInboundCart
   | AdsConversionJobSendConversionEvent
   | IntegrationJobSendMetaCapiEvent
   | IntegrationJobSendGoogleAdsConversion

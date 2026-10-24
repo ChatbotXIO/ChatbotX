@@ -593,7 +593,8 @@
       "userPlaceholder": "用户 ID",
       "keyword": "关键词",
       "keywordPlaceholder": "操作或详情",
-      "allAdmins": "所有管理员"
+      "allAdmins": "所有管理员",
+      "allWorkspaces": "所有工作区"
     }
   },
   "auth": {
@@ -606,6 +607,7 @@
     "continueWithEmail": "继续使用电子邮件",
     "continueWithFacebook": "继续使用 Facebook",
     "continueWithGoogle": "继续使用 Google",
+    "continueWithProvider": "继续使用 {name}",
     "continueWithMagicLink": "继续使用 Magic Link",
     "didNotReceiveEmail": "没有收到电子邮件？请检查垃圾邮件文件夹。",
     "dontHaveAnAccount": "还没有帐号？",
@@ -630,11 +632,15 @@
     "signUpTitle": "注册 {name}",
     "termsOfService": "服务条款",
     "trySigningInAgain": "您也可以尝试改用其他电子邮件再次登录。",
+    "signUpDisabledTitle": "注册已禁用",
+    "signUpDisabledDescription": "新账户只能由管理员创建或通过邀请链接创建。",
     "oauthError": {
       "accountNotLinked": "使用此邮箱的账户已存在，无法关联。请使用之前的方式登录，或联系支持人员。",
       "unableToLinkAccount": "我们无法将此次登录关联到现有账户。请使用您之前的方式登录，或联系支持人员。",
       "sessionExpired": "登录尝试已过期。请重试。",
       "accessDenied": "登录已取消。",
+      "signUpDisabled": "此账户尚不存在，且注册已禁用。请让管理员为您创建账户。",
+      "invalidInvitation": "此邀请无效或已过期。",
       "generic": "登录失败。请重试。"
     }
   },
@@ -2258,6 +2264,10 @@
       "label": "寄件者地址",
       "placeholder": "noreply@example.com"
     },
+    "fromName": {
+      "label": "发件人姓名",
+      "placeholder": "ChatbotX"
+    },
     "fullName": {
       "label": "全名"
     },
@@ -3542,7 +3552,13 @@
       "sendGoogleAdsConversion": "发送 Google Ads 转化",
       "changeGamificationScore": "更改积分",
       "sendViewCatalog": "查看商品目录",
-      "sendProducts": "发送商品"
+      "sendProducts": "发送商品",
+      "sendCollection": "商品集合"
+    },
+    "externalRequest": {
+      "errors": {
+        "requestFailed": "无法测试外部请求。请检查请求配置后重试。"
+      }
     },
     "additionalSteps": "附加步骤",
     "aiAnalyzeImage": {
@@ -3771,6 +3787,43 @@
       "productsSelected": "{count, plural, one {# 件商品} other {# 件商品}}",
       "noneSelected": "暂无商品",
       "sendFailed": "无法发送商品。"
+    },
+    "sendCollection": {
+      "title": "商品集合",
+      "dataType": "数据类型",
+      "dataTypes": {
+        "products": "商品"
+      },
+      "collectionType": "集合类型",
+      "collectionTypes": {
+        "automated": {
+          "label": "自动",
+          "description": "符合条件的现有及以后新增商品会自动加入此集合。"
+        },
+        "manual": {
+          "label": "手动",
+          "description": "逐个添加商品。"
+        }
+      },
+      "condition": "条件",
+      "name": "名称",
+      "optional": "（选填）",
+      "category": "分类",
+      "subcategory": "子分类",
+      "vendor": "供应商",
+      "all": "全部",
+      "items": "商品",
+      "select": "选择",
+      "selectPlaceholder": "选择 1 个或多个商品",
+      "selectAll": "全选",
+      "deselectAll": "取消全选",
+      "maxProducts": "最多 {count} 个商品；商店不再显示的商品会被跳过。",
+      "automatedHint": "以卡片形式发送最多 {count} 个符合条件的商品，点按即在网店打开。",
+      "summaryAll": "商店展示的所有商品",
+      "summaryAutomated": "商品：{filters}",
+      "summaryManual": "{count, plural, one {# 个商品} other {# 个商品}}",
+      "cancel": "取消",
+      "save": "保存"
     }
   },
   "folders": {
@@ -4417,7 +4470,8 @@
     "chatbotInvitationDescription1": "加入 {chatbotName}",
     "chatbotInvitationDescription2": "{userName} 邀请您加入 {chatbotName}。",
     "invalidInvitation": "此邀请无效或已过期。",
-    "workspaceUnavailable": "此工作区不再可用。"
+    "workspaceUnavailable": "此工作区不再可用。",
+    "signUpToJoin": "创建账户以加入"
   },
   "keywords": {
     "descriptions": {
@@ -4727,6 +4781,8 @@
     "title": "Make.com"
   },
   "manageSidebar": {
+    "communityGroup": "社区",
+    "enterpriseGroup": "企业版",
     "platformGroup": "平台",
     "portalCustomDomain": "自订网域",
     "portalPaymentProcessor": "支付处理器",
@@ -4985,7 +5041,8 @@
         "text": "文本",
         "textAndImage": "文本+图片",
         "trigger": "创建新范本",
-        "visitWebsite": "访问网站"
+        "visitWebsite": "访问网站",
+        "openMiniApp": "打开小程序"
       },
       "params": {
         "postbackPayload": "按钮负载",
@@ -5291,7 +5348,82 @@
     "title": "开放路由器"
   },
   "orders": {
-    "title": "订单"
+    "title": "订单",
+    "empty": "暂无订单。",
+    "searchPlaceholder": "按姓名、电话、邮箱或订单号搜索",
+    "orderNumber": "订单 #{number}",
+    "print": "打印",
+    "inbox": "收件箱",
+    "statusUpdated": "订单状态已更新",
+    "statusUpdateError": "无法更新订单状态",
+    "updateStatusTitle": "更新订单状态",
+    "message": "消息",
+    "messagePlaceholder": "可选",
+    "messageDescription": "将在客户的对话中发送给客户。",
+    "cancel": "取消",
+    "continue": "继续",
+    "delete": "删除",
+    "deleted": "订单已删除",
+    "deleteError": "无法删除订单",
+    "deleteTitle": "删除订单 #{number}？",
+    "deleteDescription": "订单、其商品及历史记录将被移除。其仍占用的库存会退回。",
+    "columns": {
+      "name": "名称",
+      "total": "合计",
+      "status": "状态",
+      "date": "日期",
+      "rating": "评分",
+      "quantity": "数量",
+      "price": "价格",
+      "vendor": "供应商"
+    },
+    "fields": {
+      "name": "姓名",
+      "email": "邮箱",
+      "phone": "电话",
+      "country": "国家/地区",
+      "state": "省/州",
+      "city": "城市",
+      "street": "街道",
+      "zip": "邮政编码",
+      "shippingType": "配送",
+      "orderId": "订单 ID",
+      "date": "日期",
+      "subtotal": "小计",
+      "discount": "折扣",
+      "deliveryCost": "配送费",
+      "otherTaxes": "其他税费",
+      "total": "合计",
+      "paymentMethod": "支付方式",
+      "status": "状态",
+      "note": "备注",
+      "cancelReason": "取消原因",
+      "rating": "评分",
+      "ratingComment": "顾客评论",
+      "coupon": "优惠券（{code}）"
+    },
+    "statuses": {
+      "pending": "未处理",
+      "accepted": "已接受",
+      "shipped": "已发货",
+      "concluded": "已完成",
+      "cancelled": "已取消"
+    },
+    "transitions": {
+      "accepted": "接受",
+      "shipped": "发货",
+      "concluded": "完成",
+      "cancelled": "取消"
+    },
+    "paymentMethods": {
+      "cod": "货到付款"
+    },
+    "shippingTypes": {
+      "delivery": "送货上门",
+      "pickup": "到店自提"
+    },
+    "description": "客户下的订单。",
+    "ratingValue": "{rating}/5 ★"
   },
   "placesNearMe": {
     "description": "寻找您的联系人附近的地点。",
@@ -5320,7 +5452,14 @@
       "supportOff": "已关闭",
       "searchPlaceholder": "按名称、所有者邮箱或 ID 搜索",
       "descriptionConsentDisabled": "All workspaces can be opened by platform administrators.",
-      "supportAccessible": "Accessible"
+      "supportAccessible": "Accessible",
+      "createButton": "Create workspace",
+      "createTitle": "Create workspace for an owner",
+      "createDescription": "Creates a workspace for the owner's email, adding any member emails you list. A new email gets a mailed temporary password.",
+      "ownerEmail": "Owner email",
+      "memberEmails": "Member emails",
+      "membersHint": "Every member gets the permissions selected below. New emails get a mailed temporary password.",
+      "createdSummary": "Workspace created for {ownerEmail} — {memberCount} member(s) added, {newAccountCount} new account(s) emailed a temporary password."
     },
     "admins": {
       "title": "Platform administrators",
@@ -5336,6 +5475,19 @@
       "removed": "Platform administrator removed.",
       "addError": "Could not add the platform administrator.",
       "removeError": "Could not remove the platform administrator."
+    },
+    "auditLogs": {
+      "title": "平台审计日志",
+      "description": "本平台所有工作区的审计活动。"
+    },
+    "smtp": {
+      "title": "SMTP 设置",
+      "description": "平台邮件传输方式。留空则继续使用 SMTP_SERVER 和 SMTP_FROM 环境变量。",
+      "usingEnv": "未保存 SMTP 设置 — 平台邮件使用 SMTP_SERVER 环境变量。",
+      "remove": "移除 SMTP 设置",
+      "errors": {
+        "passwordRequired": "请输入 SMTP 密码。"
+      }
     }
   },
   "platformBranding": {
@@ -5432,7 +5584,8 @@
     "columns": {
       "name": "名称",
       "products": "产品",
-      "subcategories": "子类别"
+      "subcategories": "子类别",
+      "visible": "可见"
     },
     "create": "创建类别",
     "createSub": "创建子类别",
@@ -5443,11 +5596,11 @@
     "deleteError": "无法删除此类别。",
     "deleteTitle": "删除「{name}」？",
     "deleted": "分类已删除。",
-    "edit": "重命名类别",
+    "edit": "编辑",
     "empty": "尚无分类。请创建分类以整理您的商品。",
     "expand": "显示子类别",
     "loadError": "无法加载产品类别。",
-    "name": "分类名称",
+    "name": "名称",
     "namePlaceholder": "例如夏季系列",
     "noParent": "无（顶层）",
     "parent": "父类别",
@@ -5455,7 +5608,19 @@
     "save": "保存",
     "saveError": "无法保存此类别。",
     "title": "分类",
-    "updated": "分类已更新。"
+    "updated": "分类已更新。",
+    "add": "添加",
+    "dialogTitle": "分类",
+    "image": "图片",
+    "continue": "继续",
+    "subcategories": "子分类",
+    "subcategoriesOf": "{name} 的子分类",
+    "emptySub": "暂无子分类。",
+    "back": "返回分类",
+    "getId": "获取 ID",
+    "idCopied": "已复制分类 ID {id}",
+    "idCopyError": "无法复制 ID",
+    "description": "将商品分组到分类和子分类中。"
   },
   "productImport": {
     "confirm": "开始导入",
@@ -5602,7 +5767,8 @@
       },
       "variantsDescription": "添加变体，如果该产品有多个版本，例如不同的尺寸或颜色",
       "vendor": {
-        "label": "供应商"
+        "label": "供应商",
+        "none": "无"
       }
     },
     "inventoryPolicy": {
@@ -6083,7 +6249,8 @@
       "userAskedAboutProduct": "联系人询问了产品",
       "callRecorded": "通话已录音",
       "callTranscribed": "通话已转写",
-      "anyProduct": "任意商品"
+      "anyProduct": "任意商品",
+      "anyCategory": "任意分类"
     },
     "day": "日",
     "hour": "小时",
@@ -6151,6 +6318,25 @@
       "unknownFieldTarget": "已映射的联系人字段已不存在。",
       "actionReferenceNotFound": "某个操作引用了已不存在的流程、标签或字段。",
       "fieldMappingRequired": "请至少添加一个字段映射。"
+    },
+    "form": {
+      "required": "此项为必填项。",
+      "minLength": "请至少输入 {minimum} 个字符。",
+      "maxLength": "最多输入 {maximum} 个字符。",
+      "minNumber": "请输入不小于 {minimum} 的数字。",
+      "moreThan": "请输入大于 {minimum} 的数字。",
+      "maxNumber": "请输入不大于 {maximum} 的数字。",
+      "lessThan": "请输入小于 {maximum} 的数字。",
+      "number": "请输入数字。",
+      "wholeNumber": "请输入整数。",
+      "minItems": "请至少选择 {minimum} 项。",
+      "maxItems": "最多选择 {maximum} 项。",
+      "email": "请输入有效的邮箱地址。",
+      "url": "请输入以 https:// 开头的有效链接。",
+      "format": "该值格式不正确。",
+      "option": "请选择其中一个选项。",
+      "invalid": "该值无效。",
+      "checkFields": "有字段需要修改，请查看标红的字段。"
     }
   },
   "webchat": {
@@ -9086,6 +9272,543 @@
       "hours": "时间",
       "closed": "休息"
     }
+  },
+  "productVendors": {
+    "title": "供应商",
+    "add": "添加",
+    "edit": "编辑",
+    "delete": "删除",
+    "actions": "操作",
+    "save": "保存",
+    "cancel": "取消",
+    "moreOptions": "更多选项",
+    "empty": "暂无供应商。",
+    "created": "供应商已添加",
+    "updated": "供应商已更新",
+    "deleted": "供应商已删除",
+    "saveError": "无法保存供应商",
+    "deleteError": "无法删除供应商",
+    "deleteTitle": "删除 {name}？",
+    "deleteDescription": "{count, plural, =0 {没有商品使用此供应商。} one {有 # 个商品将失去供应商。} other {有 # 个商品将失去供应商。}}",
+    "fields": {
+      "name": "名称",
+      "shortDescription": "简短描述",
+      "phone": "电话",
+      "storeAddress": "店铺地址",
+      "image": "图片",
+      "optional": "可选",
+      "discountPercent": "折扣（0-100%）",
+      "minimumOrderValue": "最低订单金额",
+      "openHours": "营业时间",
+      "category": "分类",
+      "subcategory": "子分类",
+      "none": "无"
+    },
+    "columns": {
+      "name": "名称",
+      "products": "商品总数",
+      "active": "启用"
+    },
+    "description": "商品所属的卖家和品牌。"
+  },
+  "ecommerceSettings": {
+    "save": "保存",
+    "saved": "设置已保存",
+    "saveError": "无法保存设置",
+    "rank": {
+      "label": "排序",
+      "default": "默认"
+    },
+    "tabs": {
+      "general": "常规",
+      "payments": "支付",
+      "shipping": "配送",
+      "checkout": "结账"
+    },
+    "general": {
+      "orderingAvailable": {
+        "label": "可下单",
+        "description": "使用此字段可在不修改营业时间的情况下禁止客户下单。营业时间同样会控制您的可用状态。"
+      },
+      "webshopProductView": {
+        "label": "网店商品视图",
+        "description": "控制商品在网店中的显示方式。",
+        "options": {
+          "list": "列表",
+          "listWithoutImage": "无图列表",
+          "card": "卡片",
+          "cardSquare": "方形图片卡片",
+          "image": "图片",
+          "imageSquare": "图片（方形）"
+        }
+      },
+      "openHours": {
+        "label": "营业时间",
+        "description": "客户可以下单的时间段。"
+      },
+      "searchProducts": {
+        "label": "搜索商品",
+        "description": "允许客户发送消息来查找商品。"
+      },
+      "facebookPixelId": {
+        "label": "Facebook Pixel",
+        "description": "使用 Facebook Pixel 跟踪转化并衡量广告效果。将跟踪以下事件：ADD_TO_CART、INITIATE_CHECKOUT、PURCHASE、VIEW_CONTENT"
+      },
+      "abandonedCart": {
+        "label": "弃购提醒消息",
+        "description": "用户带着购物车中的商品离开机器人后，等待多久再发送弃购提醒消息。",
+        "disabled": "已禁用",
+        "afterMinutes": "{count} 分钟后",
+        "afterHours": "{count, plural, one {# 小时后} other {# 小时后}}"
+      },
+      "productButtons": {
+        "label": "商品按钮",
+        "description": "此设置控制机器人内商品显示哪些按钮。",
+        "options": {
+          "addToCart": "加入购物车",
+          "share": "分享",
+          "similar": "相似商品",
+          "save": "保存"
+        }
+      },
+      "productImageSize": {
+        "label": "商品图片尺寸",
+        "description": "此设置控制机器人内商品图片的尺寸",
+        "options": {
+          "bigSquare": "大（方形）",
+          "mediumRectangle": "中（矩形）"
+        }
+      },
+      "allowRateOrders": {
+        "label": "允许订单评分",
+        "description": "允许客户在对订单不满意时为订单评分并撰写评价。只有机器人管理员可以查看评价"
+      },
+      "notifyOnCartStatusChange": {
+        "label": "购物车状态变更时发送通知",
+        "description": "每当您更改订单状态，客户都会收到通知。订单取消和订单完成的通知无法关闭。"
+      },
+      "abandonedCartFlow": {
+        "label": "弃购流程",
+        "description": "购物车被搁置这么久后，机器人为顾客运行的流程。在按钮中使用 '{{shop_token}}' 可打开购物车。触发器也可使用“Cart abandoned”事件。",
+        "none": "不运行流程（仅触发器事件）"
+      }
+    },
+    "payments": {
+      "currencyMismatch": "{count, plural, one {有 # 个商品} other {有 # 个商品}}的定价币种不是 {currency}。订单将按 {currency} 收取其价格。",
+      "paymentMethods": {
+        "label": "支付方式",
+        "description": "结账页面启用的支付方式。列表中的第一个支付方式将在结账页面默认选中。",
+        "options": {
+          "cod": "货到付款"
+        }
+      },
+      "currency": {
+        "label": "币种",
+        "description": "这是您设置商品价格所用的币种。客户将以该币种付款。"
+      },
+      "currencyPosition": {
+        "label": "货币符号位置",
+        "description": "此选项可控制货币符号的位置。",
+        "options": {
+          "left": "左侧",
+          "leftSpace": "左侧带空格",
+          "right": "右侧",
+          "rightSpace": "右侧带空格"
+        }
+      },
+      "currencySymbol": {
+        "label": "货币符号",
+        "description": "货币符号显示在价格前面。如果希望符号与价格之间有空格，请在符号末尾添加一个空格。"
+      },
+      "serviceFeePercent": {
+        "label": "其他费用 / 服务费（0 - 100%）",
+        "description": "与销售相关的其他费用。"
+      }
+    },
+    "shipping": {
+      "shippingType": {
+        "label": "配送类型",
+        "description": "此选项可控制客户如何收到订单。",
+        "options": {
+          "none": "无",
+          "delivery": "送货上门",
+          "pickup": "到店自提",
+          "deliveryAndPickup": "送货上门、到店自提"
+        }
+      },
+      "storeAddress": {
+        "label": "店铺地址",
+        "description": "如果允许到店自提，此地址将在结账页面显示给客户。"
+      },
+      "shippingCountries": {
+        "label": "配送国家/地区",
+        "description": "您可发货的国家/地区。"
+      },
+      "defaultShippingCountry": {
+        "label": "默认配送国家/地区",
+        "description": "结账页面默认选中的国家/地区。",
+        "none": "无"
+      },
+      "deliveryCost": {
+        "label": "配送费",
+        "description": "将订单送到客户地址的固定费用。"
+      },
+      "defaultCountryNotShipped": "请选择一个配送国家。"
+    },
+    "checkout": {
+      "checkoutMode": {
+        "label": "结账",
+        "description": "此设置控制客户在哪里完成订单。如果希望用户在机器人之外（例如您的网站、Amazon 等）完成订单，请不要使用我们的默认结账页面。",
+        "options": {
+          "default": "默认结账页面",
+          "externalLink": "自定义外部结账页面",
+          "flow": "流程",
+          "productPage": "访问外部商品页面"
+        }
+      },
+      "checkoutLink": {
+        "label": "结账页面链接",
+        "description": "客户完成订单的外部页面。"
+      },
+      "checkoutFlowId": {
+        "label": "结账流程",
+        "description": "客户结账时运行的流程。",
+        "placeholder": "选择流程"
+      },
+      "minimumOrderValue": {
+        "label": "最低订单金额",
+        "description": "客户可下单的最低金额。该条件在应用所有折扣后检查。"
+      },
+      "requiredFields": {
+        "requireName": {
+          "label": "要求买家姓名",
+          "description": "结账时将收集买家姓名。"
+        },
+        "requireEmail": {
+          "label": "要求邮箱地址",
+          "description": "结账时将收集买家邮箱。"
+        },
+        "requirePhone": {
+          "label": "要求电话号码",
+          "description": "结账时将收集买家电话。"
+        },
+        "requireState": {
+          "label": "要求省/州",
+          "description": "结账时将收集买家所在省/州。"
+        },
+        "requireZip": {
+          "label": "要求邮政编码",
+          "description": "结账时将收集买家邮政编码。"
+        }
+      },
+      "orderConfirmationMode": {
+        "label": "订单确认消息",
+        "description": "客户下单后在聊天中收到的内容。默认消息会以工作区语言列出订单详情。",
+        "options": {
+          "default": "默认消息",
+          "flow": "运行流程",
+          "none": "不发送任何内容"
+        }
+      },
+      "orderConfirmationFlowId": {
+        "label": "订单确认流程",
+        "description": "客户下单后，代替默认消息发送给客户的流程。"
+      }
+    }
+  },
+  "openHours": {
+    "alwaysOpen": "全天营业",
+    "addNew": "新增",
+    "dialogTitle": "营业时间",
+    "name": "名称",
+    "namePlaceholder": "例如：工作日",
+    "day": "星期",
+    "from": "开门",
+    "to": "关门",
+    "add": "添加时段",
+    "remove": "移除",
+    "cancel": "取消",
+    "continue": "继续",
+    "created": "营业时间已创建",
+    "saveError": "无法保存营业时间",
+    "days": {
+      "0": "星期日",
+      "1": "星期一",
+      "2": "星期二",
+      "3": "星期三",
+      "4": "星期四",
+      "5": "星期五",
+      "6": "星期六"
+    },
+    "sameTimes": "营业时间和打烊时间不能相同。"
+  },
+  "webshop": {
+    "metadataTitle": "商店",
+    "metadataOrderTitle": "您的订单",
+    "invalidLinkTitle": "此链接无效",
+    "invalidLinkDescription": "链接可能已过期。请在聊天中向商店索取新链接。",
+    "previewBanner": "预览：顾客看到的就是这样。预览中无法下单。",
+    "previewOrderingOff": "预览：无法下单",
+    "closed": {
+      "orderingUnavailable": "商店暂不接单。",
+      "outsideOpenHours": "商店现在不营业，但您仍可浏览。"
+    },
+    "searchPlaceholder": "搜索商品",
+    "categories": "分类",
+    "allCategories": "全部分类",
+    "vendors": "供应商",
+    "allVendors": "全部供应商",
+    "noProducts": "没有找到商品。",
+    "productNotFound": "该商品已下架。",
+    "outOfStock": "缺货",
+    "addToCart": "加入购物车",
+    "added": "已加入购物车",
+    "chooseOptions": "选择规格",
+    "chooseOption": "选择{name}",
+    "variantUnavailable": "该组合暂不可选。",
+    "buy": "购买",
+    "share": "分享",
+    "linkCopied": "已复制",
+    "similar": "相似商品",
+    "save": "收藏",
+    "saved": "已收藏",
+    "showImage": "查看第{number}张图片",
+    "increase": "增加数量",
+    "decrease": "减少数量",
+    "remove": "移除",
+    "cart": "购物车",
+    "cartEmpty": "购物车是空的。",
+    "continueShopping": "继续购物",
+    "unavailableItems": "{count, plural, one {# 件商品暂时无法下单} other {# 件商品暂时无法下单}}",
+    "unavailableNotOrdered": "这些商品不会下单，并会保留在购物车中。",
+    "unavailable": "已不再供应",
+    "unavailableHint": "请重新选择规格",
+    "deletedProduct": "已删除的商品",
+    "summary": {
+      "subtotal": "小计",
+      "discount": "折扣",
+      "delivery": "配送费",
+      "otherFees": "其他费用",
+      "total": "合计",
+      "coupon": "优惠券（{code}）",
+      "title": "订单摘要",
+      "saved": "为你节省 {amount}"
+    },
+    "belowMinimum": "最低订单金额为 {amount}。",
+    "checkOut": "去结算",
+    "contactDetails": "您的信息",
+    "optional": "（选填）",
+    "fields": {
+      "name": "姓名",
+      "email": "邮箱",
+      "phone": "电话",
+      "country": "国家/地区",
+      "state": "省/州",
+      "city": "城市",
+      "address1": "地址",
+      "address2": "公寓、楼栋等",
+      "zip": "邮政编码",
+      "note": "给商店的备注"
+    },
+    "shipping": {
+      "title": "配送方式",
+      "delivery": "送货上门",
+      "pickup": "到店自取",
+      "storeAddress": "门店地址：{address}"
+    },
+    "payment": {
+      "title": "付款方式",
+      "cod": "货到付款"
+    },
+    "placeOrder": "提交订单",
+    "orderPlaced": "谢谢！订单已提交，我们会在聊天中通知您进展。",
+    "orderTitle": "订单 #{number}",
+    "orderNotFound": "未找到该订单。",
+    "placedAt": "下单时间：{date}",
+    "status": {
+      "pending": "未处理",
+      "accepted": "处理中",
+      "shipped": "已发货",
+      "concluded": "已完成",
+      "cancelled": "已取消"
+    },
+    "rateTitle": "评价您的订单",
+    "rateComment": "告诉商店您的想法（选填）",
+    "rateSubmit": "提交评价",
+    "rateThanks": "感谢您的评价！",
+    "yourRating": "您的评价",
+    "ratingValue": "{rating} 星（满分 5 星）",
+    "previous": "上一页",
+    "next": "下一页",
+    "pageOf": "第 {page}/{pageCount} 页",
+    "errors": {
+      "generic": "出错了，请重试。",
+      "checkFields": "请检查填写的内容。",
+      "fieldRequired": "请填写{field}。",
+      "countryUnavailable": "商店不配送到该国家/地区。",
+      "invalidLink": "此链接已失效，请向商店索取新链接。",
+      "webshopPreviewOnly": "这是预览，只能通过发给顾客的链接下单。",
+      "rateLimited": "操作太频繁，请稍后再试。",
+      "orderingUnavailable": "商店暂不接单。",
+      "orderBelowMinimum": "最低订单金额为 {minimum}。",
+      "orderBelowVendorMinimum": "{vendorName} 的商品合计需至少 {minimum}。",
+      "orderOutOfStock": "{productName} 已缺货。",
+      "orderProductUnavailable": "部分商品已无法下单，请检查购物车。",
+      "orderEmpty": "购物车是空的。",
+      "orderShippingTypeUnavailable": "该配送方式不可用。",
+      "webshopRatingNotAllowed": "该订单无法评价。",
+      "webshopCartFull": "购物车最多可放 {maximum} 种不同的商品。",
+      "notFound": "该商品已下架。",
+      "discountCodeNotFound": "该折扣码不存在。",
+      "discountCodeInactive": "该折扣码未启用。",
+      "discountCodeNotStarted": "该折扣码尚未生效。",
+      "discountCodeExpired": "该折扣码已过期。",
+      "discountCodeUsageLimitReached": "该折扣码已用完。",
+      "discountCodeAlreadyUsed": "您已使用过该折扣码。",
+      "discountCodeNotEligible": "该折扣码不适用于您。",
+      "discountCodeNotApplicable": "该折扣码不适用于购物车中的商品。",
+      "discountCodeMinimumAmount": "该折扣码需消费满 {minimum}，还差 {missing}。",
+      "discountCodeMinimumQuantity": "该折扣码需至少 {minimum} 件，还差 {missing} 件。"
+    },
+    "discount": {
+      "label": "折扣码",
+      "placeholder": "输入折扣码",
+      "apply": "使用",
+      "applied": "折扣码已使用",
+      "automatic": "已自动使用",
+      "remove": "移除折扣码",
+      "available": "可用的优惠码",
+      "freeShipping": "免运费",
+      "bestChoice": "最优选择",
+      "expiresOn": "有效期至 {date}",
+      "noExpiry": "长期有效",
+      "inUse": "使用中",
+      "saves": "省 {amount}",
+      "showMore": "{count, plural, one {再显示 # 个优惠码} other {再显示 # 个优惠码}}",
+      "showLess": "收起",
+      "removeShort": "移除",
+      "expired": "已过期",
+      "usedUp": "已领完",
+      "notEligible": "暂不符合条件"
+    },
+    "itemCount": "{count, plural, one {# 件} other {# 件}}",
+    "relatedProducts": "猜你喜欢"
+  },
+  "webshopLinks": {
+    "preview": "预览",
+    "getLink": "获取链接",
+    "copied": "链接已复制。放到机器人按钮上，每位联系人都会打开自己的商店。",
+    "error": "无法获取链接。",
+    "copyError": "无法复制链接。",
+    "shopLink": {
+      "label": "商店链接",
+      "hint": "将此链接粘贴到流程、群发或序列中的按钮里。收到链接的每位联系人都会打开自己的商店并可以下单。"
+    },
+    "productLink": {
+      "label": "公开链接",
+      "hint": "复制该链接并粘贴到流程、群发或序列中。收到链接的每位联系人都会打开此商品并可以下单。"
+    }
+  },
+  "discountCodes": {
+    "title": "优惠券",
+    "description": "顾客结账时使用或自动生效的折扣码。",
+    "add": "添加",
+    "edit": "编辑优惠券",
+    "automatic": "自动",
+    "never": "永不",
+    "searchPlaceholder": "搜索代码…",
+    "saveError": "无法保存优惠券。",
+    "created": "优惠券已创建",
+    "updated": "优惠券已保存",
+    "deleted": "优惠券已删除",
+    "deleteError": "无法删除优惠券。",
+    "deleteTitle": "删除优惠券 {code}？",
+    "deleteDescription": "顾客将无法再使用。已使用该券的订单保留折扣。",
+    "cancel": "取消",
+    "delete": "删除",
+    "save": "保存",
+    "columns": {
+      "name": "名称",
+      "discount": "折扣",
+      "used": "已使用",
+      "end": "结束",
+      "active": "启用"
+    },
+    "discountTypes": {
+      "percentage": "百分比",
+      "fixedAmount": "固定金额",
+      "freeShipping": "免运费"
+    },
+    "appliesTo": {
+      "entireOrder": "整个订单",
+      "category": "指定分类",
+      "products": "指定商品"
+    },
+    "minimumTypes": {
+      "none": "无",
+      "amount": "最低消费金额",
+      "quantity": "最少商品件数"
+    },
+    "eligibilities": {
+      "everyone": "所有人",
+      "specificCustomers": "指定顾客"
+    },
+    "form": {
+      "discountCode": "折扣码",
+      "code": "代码",
+      "generate": "生成",
+      "autoApply": "自动将此优惠券用于购物车",
+      "autoApplyHint": "购物车无需顾客输入即可享受。有多张自动优惠券时，取折扣最大的一张。",
+      "typedHint": "顾客将在结账时输入此折扣码。",
+      "options": "选项",
+      "discountType": "折扣类型",
+      "discountValuePercent": "折扣值（%）",
+      "discountValueAmount": "折扣金额（{currency}）",
+      "freeShippingHint": "免除送货上门订单的运费。",
+      "appliesTo": "适用于",
+      "category": "分类",
+      "products": "商品",
+      "productsPlaceholder": "选择商品",
+      "minimumRequirement": "最低要求",
+      "minimumAmount": "最低金额（{currency}）",
+      "minimumQuantity": "最少件数",
+      "usageLimits": "使用限制",
+      "limitTotal": "限制此折扣的总使用次数",
+      "usedSoFar": "{count, plural, one {已使用 # 次} other {已使用 # 次}}",
+      "oncePerCustomer": "每位顾客限用一次",
+      "customerEligibility": "适用顾客",
+      "specificCustomersHint": "仅限下单时符合下方筛选条件的联系人。",
+      "activeDates": "有效期",
+      "startDate": "开始日期",
+      "endDate": "结束日期",
+      "isActive": "启用"
+    },
+    "rules": {
+      "codeCharacters": "只能使用不带重音的字母、数字、- 和 _。",
+      "usageBelowUsed": "该优惠码已使用 {count} 次，限制不能低于此数。",
+      "customerConditionRequired": "请至少添加一个条件。",
+      "endAfterStart": "结束日期必须晚于开始日期。"
+    }
+  },
+  "ecommerceAnalytics": {
+    "title": "分析",
+    "lifetime": "累计",
+    "sales": "销售额",
+    "orders": "订单",
+    "products": "商品",
+    "salesByDate": "按日期的销售额",
+    "ordersByDate": "按日期的订单",
+    "topProducts": "热销商品",
+    "topVendors": "热销供应商",
+    "columns": {
+      "name": "名称",
+      "sales": "销售额"
+    },
+    "noData": "此期间无数据",
+    "refresh": "刷新",
+    "change": "{value}%",
+    "noPrevious": "新增",
+    "otherCurrencyOrders": "其他币种的 {count} 笔订单未计入这些数据"
   },
   "responseSla": {
     "label": "响应 SLA",

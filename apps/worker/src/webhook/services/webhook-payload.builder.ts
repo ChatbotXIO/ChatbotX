@@ -5,7 +5,11 @@ import {
 } from "@chatbotx.io/business"
 import { triggerEventTypes } from "@chatbotx.io/database/partials"
 import type {
+  CartAbandonedMetadata,
+  CartItemEventMetadata,
+  CommerceEventProduct,
   MatchableEventType,
+  OrderEventMetadata,
   ShoppingCartSentMetadata,
   UserAskedAboutProductMetadata,
 } from "@chatbotx.io/events"
@@ -55,6 +59,16 @@ const EVENT_NAMES = {
   [triggerEventTypes.enum.callTranscribed]: "call_transcribed",
   [triggerEventTypes.enum.shoppingCartSent]: "shopping_cart_sent",
   [triggerEventTypes.enum.userAskedAboutProduct]: "user_asked_about_product",
+  [triggerEventTypes.enum.newOrder]: "new_order",
+  [triggerEventTypes.enum.orderAccepted]: "order_accepted",
+  [triggerEventTypes.enum.orderShipped]: "order_shipped",
+  [triggerEventTypes.enum.orderConcluded]: "order_concluded",
+  [triggerEventTypes.enum.orderCancelled]: "order_cancelled",
+  [triggerEventTypes.enum.productOrdered]: "product_ordered",
+  [triggerEventTypes.enum.productAddedToCart]: "product_added_to_cart",
+  [triggerEventTypes.enum.productRemovedFromCart]: "product_removed_from_cart",
+  [triggerEventTypes.enum.categoryAddedToCart]: "category_added_to_cart",
+  [triggerEventTypes.enum.cartAbandoned]: "cart_abandoned",
 } satisfies Record<MatchableEventType, string>
 
 async function buildTagPayload(
@@ -192,6 +206,73 @@ function buildProductInquiryPayload(
   }
 }
 
+function toCommerceProductPayload(product: CommerceEventProduct) {
+  return {
+    product_id: product.productId,
+    variant_id: product.variantId,
+    name: product.name,
+    category_ids: product.categoryIds,
+  }
+}
+
+// Explicit fields, like the catalog events: never `contactInboxId`.
+function buildOrderPayload(
+  basePayload: WebhookPayloadBase,
+  data: Record<string, unknown>,
+): WebhookPayload {
+  const order = data as OrderEventMetadata
+  return {
+    ...basePayload,
+    order_id: order.orderId,
+    order_number: order.orderNumber,
+    status: order.status,
+    source: order.source,
+    total: order.total,
+    currency: order.currency,
+    discount_code: order.discountCode,
+    channel: order.channel,
+    conversation_id: order.conversationId,
+    products: order.products.map((product) => ({
+      ...toCommerceProductPayload(product),
+      quantity: product.quantity,
+      line_total: product.lineTotal,
+    })),
+  }
+}
+
+function buildCartItemPayload(
+  basePayload: WebhookPayloadBase,
+  data: Record<string, unknown>,
+): WebhookPayload {
+  const event = data as CartItemEventMetadata
+  return {
+    ...basePayload,
+    channel: event.channel,
+    product: toCommerceProductPayload(event.product),
+    quantity: event.quantity,
+    change: event.change,
+  }
+}
+
+function buildCartAbandonedPayload(
+  basePayload: WebhookPayloadBase,
+  data: Record<string, unknown>,
+): WebhookPayload {
+  const cart = data as CartAbandonedMetadata
+  return {
+    ...basePayload,
+    channel: cart.channel,
+    conversation_id: cart.conversationId,
+    item_count: cart.itemCount,
+    total: cart.total,
+    currency: cart.currency,
+    items: cart.items.map((item) => ({
+      ...toCommerceProductPayload(item),
+      quantity: item.quantity,
+    })),
+  }
+}
+
 const PAYLOAD_BUILDERS = {
   [triggerEventTypes.enum.tagApplied]: buildTagPayload,
   [triggerEventTypes.enum.tagRemoved]: buildTagPayload,
@@ -274,6 +355,16 @@ const PAYLOAD_BUILDERS = {
   }),
   [triggerEventTypes.enum.shoppingCartSent]: buildShoppingCartPayload,
   [triggerEventTypes.enum.userAskedAboutProduct]: buildProductInquiryPayload,
+  [triggerEventTypes.enum.newOrder]: buildOrderPayload,
+  [triggerEventTypes.enum.orderAccepted]: buildOrderPayload,
+  [triggerEventTypes.enum.orderShipped]: buildOrderPayload,
+  [triggerEventTypes.enum.orderConcluded]: buildOrderPayload,
+  [triggerEventTypes.enum.orderCancelled]: buildOrderPayload,
+  [triggerEventTypes.enum.productOrdered]: buildOrderPayload,
+  [triggerEventTypes.enum.productAddedToCart]: buildCartItemPayload,
+  [triggerEventTypes.enum.productRemovedFromCart]: buildCartItemPayload,
+  [triggerEventTypes.enum.categoryAddedToCart]: buildCartItemPayload,
+  [triggerEventTypes.enum.cartAbandoned]: buildCartAbandonedPayload,
 } satisfies Record<MatchableEventType, PayloadBuilder>
 
 /**

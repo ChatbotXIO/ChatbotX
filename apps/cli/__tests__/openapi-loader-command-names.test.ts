@@ -367,3 +367,78 @@ describe("pathAndMethodToCommandName — repeating broadcasts", () => {
     expect(existing).not.toContain("broadcasts:occurrences:list")
   })
 })
+
+describe("pathAndMethodToCommandName — ecommerce", () => {
+  // A command whose derived name collides is silently dropped by the CLI, so
+  // every ecommerce operation is pinned here.
+  test("orders, vendors and store settings each get their own command", () => {
+    const names = [
+      pathAndMethodToCommandName("/v1/orders", "GET"),
+      pathAndMethodToCommandName("/v1/orders/{id}", "GET"),
+      pathAndMethodToCommandName("/v1/orders", "POST"),
+      pathAndMethodToCommandName("/v1/orders/{id}/accept", "POST"),
+      pathAndMethodToCommandName("/v1/orders/{id}/ship", "POST"),
+      pathAndMethodToCommandName("/v1/orders/{id}/conclude", "POST"),
+      pathAndMethodToCommandName("/v1/orders/{id}/cancel", "POST"),
+      pathAndMethodToCommandName("/v1/orders/{id}", "DELETE"),
+      pathAndMethodToCommandName("/v1/open-hours", "GET"),
+      pathAndMethodToCommandName("/v1/open-hours", "POST"),
+      pathAndMethodToCommandName("/v1/open-hours/{id}", "PATCH"),
+      pathAndMethodToCommandName("/v1/open-hours/{id}", "DELETE"),
+      pathAndMethodToCommandName(
+        "/v1/product-categories/{id}/visible",
+        "PATCH",
+      ),
+      pathAndMethodToCommandName("/v1/product-vendors", "GET"),
+      pathAndMethodToCommandName("/v1/product-vendors", "POST"),
+      pathAndMethodToCommandName("/v1/product-vendors/{id}", "PATCH"),
+      pathAndMethodToCommandName("/v1/product-vendors/{id}", "DELETE"),
+      pathAndMethodToCommandName("/v1/ecommerce/settings", "GET"),
+      pathAndMethodToCommandName("/v1/ecommerce/settings", "PATCH"),
+      pathAndMethodToCommandName("/v1/webshop/link", "GET"),
+      pathAndMethodToCommandName("/v1/carts/{identifier}", "GET"),
+      pathAndMethodToCommandName("/v1/discount-codes", "GET"),
+      pathAndMethodToCommandName("/v1/discount-codes/{id}", "GET"),
+      pathAndMethodToCommandName("/v1/discount-codes/generate-code", "GET"),
+      pathAndMethodToCommandName("/v1/discount-codes", "POST"),
+      pathAndMethodToCommandName("/v1/discount-codes/{id}", "PATCH"),
+      pathAndMethodToCommandName("/v1/discount-codes/{id}/active", "PATCH"),
+      pathAndMethodToCommandName("/v1/discount-codes/{id}", "DELETE"),
+      pathAndMethodToCommandName("/v1/discount-codes/validate", "POST"),
+      pathAndMethodToCommandName("/v1/ecommerce/analytics", "GET"),
+    ]
+    expect(names).toEqual([
+      "orders:list",
+      "orders:get",
+      "orders:create",
+      "orders:accept",
+      "orders:ship",
+      "orders:conclude",
+      "orders:cancel",
+      "orders:delete",
+      "open-hours:list",
+      "open-hours:create",
+      "open-hours:update",
+      "open-hours:delete",
+      "product-categories:visible:update",
+      "product-vendors:list",
+      "product-vendors:create",
+      "product-vendors:update",
+      "product-vendors:delete",
+      "ecommerce:settings:get",
+      "ecommerce:settings:update",
+      "webshop:link",
+      "carts:get",
+      "discount-codes:list",
+      "discount-codes:get",
+      "discount-codes:generate-code",
+      "discount-codes:create",
+      "discount-codes:update",
+      "discount-codes:active:update",
+      "discount-codes:delete",
+      "discount-codes:validate",
+      "ecommerce:analytics",
+    ])
+    expect(new Set(names)).toHaveLength(names.length)
+  })
+})

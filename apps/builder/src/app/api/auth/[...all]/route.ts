@@ -1,10 +1,16 @@
-import { SOCIAL_PROVIDERS, type SocialProvider } from "@chatbotx.io/auth/server"
+import {
+  isGenericOAuthPath,
+  SOCIAL_PROVIDERS,
+  type SocialProvider,
+  warnIfGenericOAuthUnlicensed,
+} from "@chatbotx.io/auth/server"
 import {
   resolveOAuthStateCallbackURL,
   resolveTenantByDomain,
   resolveTenantFromOAuthState,
   withTenant,
 } from "@chatbotx.io/auth/tenant"
+import { hasEnterpriseFeatures } from "@chatbotx.io/business"
 import { getPublicUrlFromRequest } from "@chatbotx.io/utils"
 import { auth } from "@/lib/auth/auth"
 import { getSocialAuthForTenant } from "@/lib/auth/auth-instances"
@@ -87,6 +93,16 @@ const handle = async (request: Request): Promise<Response> => {
   // Use the public URL (host behind the proxy), not the raw internal request URL,
   // so the relay host comparison matches the registered platform host.
   const url = getPublicUrlFromRequest(request)
+  // genericOAuth is registered from environment at module initialization, while
+  // enterprise entitlement is request-scoped and must guard all plugin routes.
+  if (isGenericOAuthPath(url.pathname)) {
+    const isLicensed = await hasEnterpriseFeatures()
+    warnIfGenericOAuthUnlicensed(isLicensed)
+    if (!isLicensed) {
+      return new Response(null, { status: 404 })
+    }
+  }
+
   const isCallback = url.pathname.includes("/callback/")
   const state = url.searchParams.get("state")
 

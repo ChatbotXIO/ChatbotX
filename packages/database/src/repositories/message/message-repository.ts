@@ -29,6 +29,8 @@ export interface CreateAttachmentInput {
   createdAt?: Date
   fileType: "image" | "video" | "audio" | "gif" | "file"
   height?: number | null
+  // true: never re-encode (image sent as a file). null/undefined: a photo.
+  keepOriginal?: boolean | null
   messageCreatedAt: Date
   messageId: string
   mimeType: string
@@ -189,7 +191,9 @@ export type AttachmentLookupRow = Pick<
   | "sourceId"
   | "originPath"
   | "mimeType"
+  | "size"
   | "createdAt"
+  | "keepOriginal"
 >
 
 export interface UpdateAttachmentParams {
@@ -362,7 +366,11 @@ export interface IMessageRepository {
     contentAttributes: Record<string, unknown> | null
   } | null>
 
-  updateAttachment(params: UpdateAttachmentParams): Promise<void>
+  /**
+   * Returns how many rows were updated: 0 means no row matched, so callers
+   * that just wrote an object for this row must treat it as a failure.
+   */
+  updateAttachment(params: UpdateAttachmentParams): Promise<number>
 
   /**
    * Replaces `contentAttributes` wholesale — it is NOT a merge. Callers hold

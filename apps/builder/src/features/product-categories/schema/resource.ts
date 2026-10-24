@@ -8,6 +8,8 @@ export type ProductCategoryResource = {
   /** Null for a top-level category. */
   parentId: string | null
   name: string
+  imageUrl: string | null
+  isVisible: boolean
   rank: number
   productCount: number
 }

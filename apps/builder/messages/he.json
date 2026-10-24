@@ -486,7 +486,13 @@
       "sendGoogleAdsConversion": "שליחת המרה של Google Ads",
       "changeGamificationScore": "שינוי נקודות משחוק",
       "sendViewCatalog": "הצגת קטלוג",
-      "sendProducts": "שליחת מוצרים"
+      "sendProducts": "שליחת מוצרים",
+      "sendCollection": "אוסף"
+    },
+    "externalRequest": {
+      "errors": {
+        "requestFailed": "לא ניתן לבדוק את הבקשה החיצונית. בדקו את הגדרת הבקשה ונסו שוב."
+      }
     },
     "splitTraffic": {
       "balanceHint": "הסכום הכולל חייב להיות 100%.",
@@ -667,6 +673,43 @@
       "productsSelected": "{count, plural, one {מוצר #} other {# מוצרים}}",
       "noneSelected": "עדיין אין מוצרים",
       "sendFailed": "לא ניתן היה לשלוח את המוצרים."
+    },
+    "sendCollection": {
+      "title": "אוסף",
+      "dataType": "סוג נתונים",
+      "dataTypes": {
+        "products": "מוצרים"
+      },
+      "collectionType": "סוג אוסף",
+      "collectionTypes": {
+        "automated": {
+          "label": "אוטומטי",
+          "description": "פריטים קיימים ועתידיים שתואמים לתנאים יתווספו אוטומטית."
+        },
+        "manual": {
+          "label": "ידני",
+          "description": "הוסיפו פריטים אחד אחד."
+        }
+      },
+      "condition": "תנאי",
+      "name": "שם",
+      "optional": "(אופציונלי)",
+      "category": "קטגוריה",
+      "subcategory": "תת-קטגוריה",
+      "vendor": "ספק",
+      "all": "הכול",
+      "items": "פריטים",
+      "select": "בחירה",
+      "selectPlaceholder": "בחרו פריט אחד או יותר",
+      "selectAll": "בחירת הכול",
+      "deselectAll": "ביטול בחירת הכול",
+      "maxProducts": "עד {count} מוצרים; מוצר שהחנות כבר לא מציגה מדולג.",
+      "automatedHint": "שולח עד {count} מוצרים תואמים ככרטיסים שפותחים את המוצר בחנות.",
+      "summaryAll": "כל המוצרים שהחנות מציגה",
+      "summaryAutomated": "מוצרים: {filters}",
+      "summaryManual": "{count, plural, one {מוצר #} other {# מוצרים}}",
+      "cancel": "ביטול",
+      "save": "שמירה"
     }
   },
   "folders": {
@@ -1784,6 +1827,7 @@
         "buttonText": "טקסט הכפתור",
         "buttonType": "סוג כפתור",
         "visitWebsite": "ביקור באתר",
+        "openMiniApp": "פתיחת מיני אפליקציה",
         "callPhoneNumber": "חיוג למספר טלפון",
         "postback": "כפתור"
       },
@@ -2013,6 +2057,7 @@
     "orContinueWith": "או המשך באמצעות",
     "continueWithFacebook": "המשך באמצעות Facebook",
     "continueWithGoogle": "המשך באמצעות Google",
+    "continueWithProvider": "המשך באמצעות {name}",
     "continueWithEmail": "המשך באמצעות אימייל",
     "continueWithMagicLink": "המשך באמצעות קישור קסם",
     "dontHaveAnAccount": "אין לכם חשבון?",
@@ -2043,11 +2088,15 @@
     "changePasswordTitle": "שינוי הסיסמה",
     "changePasswordDescription": "הגדירו סיסמה חדשה לפני שתמשיכו.",
     "passwordChangeSuccess": "הסיסמה שונתה",
+    "signUpDisabledTitle": "ההרשמה מושבתת",
+    "signUpDisabledDescription": "ניתן ליצור חשבונות חדשים רק על ידי מנהל מערכת או באמצעות קישור הזמנה.",
     "oauthError": {
       "accountNotLinked": "כבר קיים חשבון עם כתובת האימייל הזו ולא ניתן היה לקשר אותו. התחבר באותה דרך שבה התחברת קודם, או פנה לתמיכה.",
       "unableToLinkAccount": "לא הצלחנו לקשר את ההתחברות הזו לחשבון הקיים. התחבר באותה דרך שבה התחברת קודם, או פנה לתמיכה.",
       "sessionExpired": "ניסיון ההתחברות פג תוקף. נסה שוב.",
       "accessDenied": "ההתחברות בוטלה.",
+      "signUpDisabled": "חשבון זה עדיין לא קיים וההרשמה מושבתת. בקש ממנהל מערכת ליצור אותו עבורך.",
+      "invalidInvitation": "הזמנה זו אינה תקפה או שפג תוקפה.",
       "generic": "ההתחברות נכשלה. נסה שוב."
     }
   },
@@ -2080,6 +2129,25 @@
       "unknownFieldTarget": "שדה איש קשר ממופה כבר אינו קיים.",
       "actionReferenceNotFound": "פעולה מפנה לתהליך, תגית או שדה שכבר אינם קיימים.",
       "fieldMappingRequired": "הוסיפו לפחות מיפוי שדה אחד."
+    },
+    "form": {
+      "required": "שדה זה הוא חובה.",
+      "minLength": "הזינו לפחות {minimum} תווים.",
+      "maxLength": "הזינו לכל היותר {maximum} תווים.",
+      "minNumber": "הזינו מספר של {minimum} לפחות.",
+      "moreThan": "הזינו מספר גדול מ-{minimum}.",
+      "maxNumber": "הזינו מספר של {maximum} לכל היותר.",
+      "lessThan": "הזינו מספר קטן מ-{maximum}.",
+      "number": "הזינו מספר.",
+      "wholeNumber": "הזינו מספר שלם.",
+      "minItems": "בחרו לפחות {minimum}.",
+      "maxItems": "בחרו לכל היותר {maximum}.",
+      "email": "הזינו כתובת אימייל תקינה.",
+      "url": "הזינו קישור תקין שמתחיל ב-https://.",
+      "format": "הערך אינו בפורמט הנכון.",
+      "option": "בחרו אחת מהאפשרויות.",
+      "invalid": "הערך אינו תקין.",
+      "checkFields": "יש שדות שצריך לתקן. בדקו את השדות המסומנים באדום."
     }
   },
   "webchat": {
@@ -2679,7 +2747,8 @@
     "chatbotInvitationDescription1": "הצטרפות אל {chatbotName}",
     "chatbotInvitationDescription2": "{userName} הזמין אתכם להצטרף אל {chatbotName}.",
     "invalidInvitation": "הזמנה זו אינה תקינה או שפג תוקפה.",
-    "workspaceUnavailable": "סביבת עבודה זו אינה זמינה עוד."
+    "workspaceUnavailable": "סביבת עבודה זו אינה זמינה עוד.",
+    "signUpToJoin": "צור חשבון כדי להצטרף"
   },
   "inboxes": {
     "markReadOnOutbound": {
@@ -3067,7 +3136,8 @@
       "contactReferredExistingContact": "איש קשר הפנה איש קשר קיים",
       "callRecorded": "השיחה הוקלטה",
       "callTranscribed": "השיחה תומללה",
-      "anyProduct": "כל מוצר"
+      "anyProduct": "כל מוצר",
+      "anyCategory": "כל קטגוריה"
     },
     "actions": {
       "addTag": "הוספת תגית",
@@ -3188,7 +3258,8 @@
       "userPlaceholder": "מזהה משתמש",
       "keyword": "מילת מפתח",
       "keywordPlaceholder": "פעולה או פרטים",
-      "allAdmins": "כל המנהלים"
+      "allAdmins": "כל המנהלים",
+      "allWorkspaces": "כל סביבות העבודה"
     }
   },
   "customFields": {
@@ -4051,7 +4122,14 @@
       "supportOff": "כבוי",
       "searchPlaceholder": "חפש לפי שם, אימייל של הבעלים או מזהה",
       "descriptionConsentDisabled": "All workspaces can be opened by platform administrators.",
-      "supportAccessible": "Accessible"
+      "supportAccessible": "Accessible",
+      "createButton": "Create workspace",
+      "createTitle": "Create workspace for an owner",
+      "createDescription": "Creates a workspace for the owner's email, adding any member emails you list. A new email gets a mailed temporary password.",
+      "ownerEmail": "Owner email",
+      "memberEmails": "Member emails",
+      "membersHint": "Every member gets the permissions selected below. New emails get a mailed temporary password.",
+      "createdSummary": "Workspace created for {ownerEmail} — {memberCount} member(s) added, {newAccountCount} new account(s) emailed a temporary password."
     },
     "admins": {
       "title": "Platform administrators",
@@ -4067,6 +4145,19 @@
       "removed": "Platform administrator removed.",
       "addError": "Could not add the platform administrator.",
       "removeError": "Could not remove the platform administrator."
+    },
+    "auditLogs": {
+      "title": "יומני ביקורת של הפלטפורמה",
+      "description": "פעילות ביקורת בכל סביבות העבודה בפלטפורמה זו."
+    },
+    "smtp": {
+      "title": "הגדרות SMTP",
+      "description": "שירות שליחת הדוא\"ל של הפלטפורמה. השאר ריק כדי להמשיך להשתמש במשתני הסביבה SMTP_SERVER ו-SMTP_FROM.",
+      "usingEnv": "לא נשמרו הגדרות SMTP — דוא\"ל הפלטפורמה משתמש במשתנה הסביבה SMTP_SERVER.",
+      "remove": "הסר הגדרות SMTP",
+      "errors": {
+        "passwordRequired": "הזן את סיסמת ה-SMTP."
+      }
     }
   },
   "platformCredentials": {
@@ -4145,6 +4236,8 @@
     }
   },
   "manageSidebar": {
+    "communityGroup": "קהילה",
+    "enterpriseGroup": "ארגוני",
     "platformGroup": "פלטפורמה",
     "toolsGroup": "כלים",
     "saasGroup": "SaaS",
@@ -4221,7 +4314,82 @@
     "unknown": "לא ידוע"
   },
   "orders": {
-    "title": "הזמנות"
+    "title": "הזמנות",
+    "empty": "אין הזמנות עדיין.",
+    "searchPlaceholder": "חיפוש לפי שם, טלפון, אימייל או מספר הזמנה",
+    "orderNumber": "הזמנה #{number}",
+    "print": "הדפסה",
+    "inbox": "תיבת הודעות",
+    "statusUpdated": "סטטוס ההזמנה עודכן",
+    "statusUpdateError": "לא ניתן לעדכן את סטטוס ההזמנה",
+    "updateStatusTitle": "עדכון סטטוס הזמנה",
+    "message": "הודעה",
+    "messagePlaceholder": "אופציונלי",
+    "messageDescription": "נשלחת ללקוח בשיחה שלו.",
+    "cancel": "ביטול",
+    "continue": "המשך",
+    "delete": "מחיקה",
+    "deleted": "ההזמנה נמחקה",
+    "deleteError": "לא ניתן למחוק את ההזמנה",
+    "deleteTitle": "למחוק את הזמנה #{number}?",
+    "deleteDescription": "ההזמנה, הפריטים שלה וההיסטוריה שלה יימחקו. מלאי שעדיין שמור עבורה יוחזר.",
+    "columns": {
+      "name": "שם",
+      "total": "סה״כ",
+      "status": "סטטוס",
+      "date": "תאריך",
+      "rating": "דירוג",
+      "quantity": "כמות",
+      "price": "מחיר",
+      "vendor": "ספק"
+    },
+    "fields": {
+      "name": "שם",
+      "email": "אימייל",
+      "phone": "טלפון",
+      "country": "מדינה",
+      "state": "מחוז",
+      "city": "עיר",
+      "street": "רחוב",
+      "zip": "מיקוד",
+      "shippingType": "משלוח",
+      "orderId": "מזהה הזמנה",
+      "date": "תאריך",
+      "subtotal": "סכום ביניים",
+      "discount": "הנחה",
+      "deliveryCost": "עלות משלוח",
+      "otherTaxes": "מיסים נוספים",
+      "total": "סה״כ",
+      "paymentMethod": "אמצעי תשלום",
+      "status": "סטטוס",
+      "note": "הערה",
+      "cancelReason": "סיבת הביטול",
+      "rating": "דירוג",
+      "ratingComment": "תגובת הלקוח",
+      "coupon": "קופון ({code})"
+    },
+    "statuses": {
+      "pending": "לא טופלה",
+      "accepted": "אושרה",
+      "shipped": "נשלחה",
+      "concluded": "הושלמה",
+      "cancelled": "בוטלה"
+    },
+    "transitions": {
+      "accepted": "אישור",
+      "shipped": "שליחה",
+      "concluded": "השלמה",
+      "cancelled": "ביטול"
+    },
+    "paymentMethods": {
+      "cod": "תשלום במזומן בעת המסירה"
+    },
+    "shippingTypes": {
+      "delivery": "משלוח ללקוח",
+      "pickup": "איסוף מהחנות"
+    },
+    "description": "הזמנות שביצעו הלקוחות שלך.",
+    "ratingValue": "{rating}/5 ★"
   },
   "products": {
     "title": "מוצרים",
@@ -4278,7 +4446,8 @@
         "label": "אפשר ללקוחות לרכוש מוצר זה כאשר אזל מהמלאי"
       },
       "vendor": {
-        "label": "ספק"
+        "label": "ספק",
+        "none": "ללא"
       },
       "rank": {
         "label": "דירוג"
@@ -4411,8 +4580,8 @@
     "loadError": "לא ניתן לטעון את קטגוריות המוצרים.",
     "all": "כל המוצרים",
     "create": "יצירת קטגוריה",
-    "edit": "שינוי שם קטגוריה",
-    "name": "שם קטגוריה",
+    "edit": "עריכה",
+    "name": "שם",
     "namePlaceholder": "לדוגמה, קולקציית קיץ",
     "parent": "קטגוריית אב",
     "noParent": "ללא (רמה עליונה)",
@@ -4432,12 +4601,25 @@
     "columns": {
       "name": "שם",
       "products": "מוצרים",
-      "subcategories": "קטגוריות משנה"
+      "subcategories": "קטגוריות משנה",
+      "visible": "גלוי"
     },
     "expand": "הצגת קטגוריות משנה",
     "collapse": "הסתרת קטגוריות משנה",
     "productCount": "{count, plural, =0 {אין מוצרים} one {# מוצר} other {# מוצרים}}",
-    "deleteChildrenWarning": "{count, plural, one {גם # קטגוריית המשנה שלה תימחק.} other {גם # קטגוריות המשנה שלה יימחקו.}}"
+    "deleteChildrenWarning": "{count, plural, one {גם # קטגוריית המשנה שלה תימחק.} other {גם # קטגוריות המשנה שלה יימחקו.}}",
+    "add": "הוספה",
+    "dialogTitle": "קטגוריה",
+    "image": "תמונה",
+    "continue": "המשך",
+    "subcategories": "תתי-קטגוריות",
+    "subcategoriesOf": "תתי-קטגוריות של {name}",
+    "emptySub": "אין תתי-קטגוריות עדיין.",
+    "back": "חזרה לקטגוריות",
+    "getId": "קבלת מזהה",
+    "idCopied": "מזהה הקטגוריה {id} הועתק",
+    "idCopyError": "לא ניתן להעתיק את המזהה",
+    "description": "קבץ את המוצרים שלך לקטגוריות ולתת-קטגוריות."
   },
   "productImport": {
     "title": "ייבוא",
@@ -5857,6 +6039,10 @@
     "fromAddress": {
       "label": "כתובת שולח",
       "placeholder": "noreply@example.com"
+    },
+    "fromName": {
+      "label": "שם השולח",
+      "placeholder": "ChatbotX"
     },
     "messageTemplate": {
       "label": "תבנית הודעה"
@@ -9086,6 +9272,543 @@
       "hours": "שעות",
       "closed": "סגור"
     }
+  },
+  "productVendors": {
+    "title": "ספקים",
+    "add": "הוספה",
+    "edit": "עריכה",
+    "delete": "מחיקה",
+    "actions": "פעולות",
+    "save": "שמירה",
+    "cancel": "ביטול",
+    "moreOptions": "אפשרויות נוספות",
+    "empty": "אין ספקים עדיין.",
+    "created": "הספק נוסף",
+    "updated": "הספק עודכן",
+    "deleted": "הספק נמחק",
+    "saveError": "לא ניתן לשמור את הספק",
+    "deleteError": "לא ניתן למחוק את הספק",
+    "deleteTitle": "למחוק את {name}?",
+    "deleteDescription": "{count, plural, =0 {אין מוצרים שמשתמשים בספק הזה.} one {# מוצרים יישארו בלי ספק.} other {# מוצרים יישארו בלי ספק.}}",
+    "fields": {
+      "name": "שם",
+      "shortDescription": "תיאור קצר",
+      "phone": "טלפון",
+      "storeAddress": "כתובת החנות",
+      "image": "תמונה",
+      "optional": "אופציונלי",
+      "discountPercent": "הנחה (0-100%)",
+      "minimumOrderValue": "ערך הזמנה מינימלי",
+      "openHours": "שעות פעילות",
+      "category": "קטגוריה",
+      "subcategory": "תת-קטגוריה",
+      "none": "ללא"
+    },
+    "columns": {
+      "name": "שם",
+      "products": "סה״כ מוצרים",
+      "active": "פעיל"
+    },
+    "description": "המוכרים והמותגים שאליהם שייכים המוצרים שלך."
+  },
+  "ecommerceSettings": {
+    "save": "שמירה",
+    "saved": "ההגדרות נשמרו",
+    "saveError": "לא ניתן לשמור את ההגדרות",
+    "rank": {
+      "label": "דירוג",
+      "default": "ברירת מחדל"
+    },
+    "tabs": {
+      "general": "כללי",
+      "payments": "תשלומים",
+      "shipping": "משלוח",
+      "checkout": "תשלום"
+    },
+    "general": {
+      "orderingAvailable": {
+        "label": "ניתן להזמין",
+        "description": "השתמשו בשדה הזה כדי למנוע מלקוחות לבצע הזמנות בלי לשנות את שעות הפעילות. גם שעות הפעילות קובעות את הזמינות שלכם."
+      },
+      "webshopProductView": {
+        "label": "תצוגת מוצרים בחנות האינטרנט",
+        "description": "שליטה באופן שבו מוצרים מוצגים בחנות האינטרנט שלכם.",
+        "options": {
+          "list": "רשימה",
+          "listWithoutImage": "רשימה בלי תמונה",
+          "card": "כרטיס",
+          "cardSquare": "כרטיס עם תמונה מרובעת",
+          "image": "תמונה",
+          "imageSquare": "תמונה (מרובעת)"
+        }
+      },
+      "openHours": {
+        "label": "שעות פעילות",
+        "description": "טווחי הזמן שבהם הלקוחות יכולים לבצע הזמנה."
+      },
+      "searchProducts": {
+        "label": "חיפוש מוצרים",
+        "description": "אפשרו ללקוחות לשלוח הודעות כדי למצוא מוצרים."
+      },
+      "facebookPixelId": {
+        "label": "Facebook Pixel",
+        "description": "עקבו אחר המרות עם Facebook Pixel ומדדו את תוצאות המודעות שלכם. האירועים הבאים נמדדים: ADD_TO_CART, INITIATE_CHECKOUT, PURCHASE, VIEW_CONTENT"
+      },
+      "abandonedCart": {
+        "label": "הודעה על עגלה נטושה",
+        "description": "משך ההמתנה לפני שליחת הודעה על עגלה נטושה, אחרי שהמשתמש עוזב את הבוט עם פריט בעגלה.",
+        "disabled": "מושבת",
+        "afterMinutes": "אחרי {count} דקות",
+        "afterHours": "{count, plural, one {אחרי # שעות} other {אחרי # שעות}}"
+      },
+      "productButtons": {
+        "label": "כפתורים במוצרים",
+        "description": "ההגדרה הזו קובעת אילו כפתורים מוצגים במוצרים בתוך הבוט שלכם.",
+        "options": {
+          "addToCart": "הוספה לעגלה",
+          "share": "שיתוף",
+          "similar": "דומים",
+          "save": "שמירה"
+        }
+      },
+      "productImageSize": {
+        "label": "גודל תמונת המוצרים",
+        "description": "ההגדרה הזו קובעת את גודל התמונה של מוצרים בתוך הבוט שלכם",
+        "options": {
+          "bigSquare": "גדול (מרובע)",
+          "mediumRectangle": "בינוני (מלבן)"
+        }
+      },
+      "allowRateOrders": {
+        "label": "אפשרו דירוג הזמנות",
+        "description": "אפשרו ללקוחות לדרג הזמנה ולכתוב חוות דעת אם אינם מרוצים. רק מנהלי הבוט יכולים לראות את חוות הדעת"
+      },
+      "notifyOnCartStatusChange": {
+        "label": "שליחת התראה בעת שינוי סטטוס העגלה",
+        "description": "הלקוח יקבל התראה בכל פעם שתשנו את סטטוס ההזמנה. אי אפשר להשבית את ההתראה על ביטול הזמנה ועל השלמתה."
+      },
+      "abandonedCartFlow": {
+        "label": "פלואו לעגלה נטושה",
+        "description": "הפלואו שהבוט מריץ ללקוח כשהעגלה נזנחה למשך זמן זה. השתמשו ב-'{{shop_token}}' בכפתורים כדי לפתוח את העגלה. טריגרים יכולים להשתמש גם באירוע \"Cart abandoned\".",
+        "none": "ללא פלואו (רק אירוע טריגר)"
+      }
+    },
+    "payments": {
+      "currencyMismatch": "המחיר של {count, plural, one {# מוצרים נקבע} other {# מוצרים נקבע}} במטבע שאינו {currency}. הזמנות מחייבות את המחיר שלהן ב-{currency}.",
+      "paymentMethods": {
+        "label": "אמצעי תשלום",
+        "description": "אמצעי התשלום שמופעלים בדף התשלום. אמצעי התשלום הראשון ברשימה יהיה זה שנבחר בדף התשלום.",
+        "options": {
+          "cod": "תשלום במזומן בעת המסירה"
+        }
+      },
+      "currency": {
+        "label": "מטבע",
+        "description": "זה המטבע שבו אתם קובעים את מחירי המוצרים. הלקוחות יחויבו במטבע הזה."
+      },
+      "currencyPosition": {
+        "label": "מיקום המטבע",
+        "description": "האפשרות הזו מאפשרת לשלוט במיקום המטבע.",
+        "options": {
+          "left": "שמאל",
+          "leftSpace": "שמאל עם רווח",
+          "right": "ימין",
+          "rightSpace": "ימין עם רווח"
+        }
+      },
+      "currencySymbol": {
+        "label": "סמל המטבע",
+        "description": "סמל המטבע מוצג לפני המחירים. אם אתם רוצים רווח בין הסמל למחירים, הוסיפו רווח בסוף הסמל."
+      },
+      "serviceFeePercent": {
+        "label": "עמלות נוספות / עמלות שירות (0 - 100%)",
+        "description": "עמלות נוספות הקשורות למכירה."
+      }
+    },
+    "shipping": {
+      "shippingType": {
+        "label": "סוג משלוח",
+        "description": "האפשרות הזו מאפשרת לשלוט באופן שבו הלקוח יקבל את ההזמנה.",
+        "options": {
+          "none": "ללא",
+          "delivery": "משלוח ללקוח",
+          "pickup": "איסוף מהחנות",
+          "deliveryAndPickup": "משלוח ללקוח, איסוף מהחנות"
+        }
+      },
+      "storeAddress": {
+        "label": "כתובת החנות",
+        "description": "הכתובת הזו מוצגת ללקוח בדף התשלום אם אתם מאפשרים איסוף מהחנות."
+      },
+      "shippingCountries": {
+        "label": "מדינות משלוח",
+        "description": "המדינות שאליהן אתם שולחים הזמנות."
+      },
+      "defaultShippingCountry": {
+        "label": "מדינת משלוח ברירת מחדל",
+        "description": "המדינה שתיבחר כברירת מחדל בדף התשלום.",
+        "none": "ללא"
+      },
+      "deliveryCost": {
+        "label": "עלות משלוח",
+        "description": "תעריף קבוע למשלוח ההזמנה לכתובת הלקוח."
+      },
+      "defaultCountryNotShipped": "בחרו אחת ממדינות המשלוח."
+    },
+    "checkout": {
+      "checkoutMode": {
+        "label": "תשלום",
+        "description": "ההגדרה הזו קובעת היכן הלקוחות ישלימו את ההזמנות. אם אתם רוצים שהמשתמש ישלים את ההזמנה מחוץ לבוט, למשל באתר שלכם, ב-Amazon וכו׳, אל תשתמשו בדף התשלום המובנה שלנו.",
+        "options": {
+          "default": "דף תשלום ברירת מחדל",
+          "externalLink": "דף תשלום חיצוני מותאם אישית",
+          "flow": "Flow",
+          "productPage": "מעבר לדף המוצר החיצוני"
+        }
+      },
+      "checkoutLink": {
+        "label": "קישור לדף התשלום",
+        "description": "הדף החיצוני שבו הלקוחות משלימים את ההזמנות."
+      },
+      "checkoutFlowId": {
+        "label": "Flow תשלום",
+        "description": "ה-Flow שרץ כשלקוח עובר לתשלום.",
+        "placeholder": "בחירת Flow"
+      },
+      "minimumOrderValue": {
+        "label": "ערך הזמנה מינימלי",
+        "description": "הערך המינימלי של הזמנה שלקוח יכול לבצע. התנאי נבדק אחרי החלת כל ההנחות."
+      },
+      "requiredFields": {
+        "requireName": {
+          "label": "חובה למלא שם הקונה",
+          "description": "שם הקונה ייאסף במהלך התשלום."
+        },
+        "requireEmail": {
+          "label": "חובה למלא כתובת אימייל",
+          "description": "האימייל של הקונה ייאסף במהלך התשלום."
+        },
+        "requirePhone": {
+          "label": "חובה למלא מספר טלפון",
+          "description": "הטלפון של הקונה ייאסף במהלך התשלום."
+        },
+        "requireState": {
+          "label": "חובה למלא מדינה/מחוז",
+          "description": "המחוז של הקונה ייאסף במהלך התשלום."
+        },
+        "requireZip": {
+          "label": "חובה למלא מיקוד",
+          "description": "המיקוד של הקונה ייאסף במהלך התשלום."
+        }
+      },
+      "orderConfirmationMode": {
+        "label": "הודעת אישור הזמנה",
+        "description": "מה הלקוח מקבל בשיחה כשההזמנה מתבצעת. הודעת ברירת המחדל מציגה את פרטי ההזמנה בשפת סביבת העבודה.",
+        "options": {
+          "default": "הודעת ברירת מחדל",
+          "flow": "הפעלת תהליך",
+          "none": "לא לשלוח כלום"
+        }
+      },
+      "orderConfirmationFlowId": {
+        "label": "תהליך אישור הזמנה",
+        "description": "התהליך שנשלח ללקוח במקום הודעת ברירת המחדל כשההזמנה מתבצעת."
+      }
+    }
+  },
+  "openHours": {
+    "alwaysOpen": "תמיד פתוח",
+    "addNew": "הוספת חדש",
+    "dialogTitle": "שעות פעילות",
+    "name": "שם",
+    "namePlaceholder": "לדוגמה: ימי חול",
+    "day": "יום",
+    "from": "פתיחה",
+    "to": "סגירה",
+    "add": "הוספת שעות",
+    "remove": "הסרה",
+    "cancel": "ביטול",
+    "continue": "המשך",
+    "created": "שעות הפעילות נוצרו",
+    "saveError": "לא ניתן לשמור את שעות הפעילות",
+    "days": {
+      "0": "ראשון",
+      "1": "שני",
+      "2": "שלישי",
+      "3": "רביעי",
+      "4": "חמישי",
+      "5": "שישי",
+      "6": "שבת"
+    },
+    "sameTimes": "שעת הפתיחה ושעת הסגירה חייבות להיות שונות."
+  },
+  "webshop": {
+    "metadataTitle": "חנות",
+    "metadataOrderTitle": "ההזמנה שלך",
+    "invalidLinkTitle": "הקישור הזה לא עובד",
+    "invalidLinkDescription": "ייתכן שתוקפו פג. בקשו מהחנות קישור חדש בצ'אט.",
+    "previewBanner": "תצוגה מקדימה: כך הלקוחות רואים את הדף. לא ניתן להזמין מתצוגה מקדימה.",
+    "previewOrderingOff": "תצוגה מקדימה: לא ניתן להזמין",
+    "closed": {
+      "orderingUnavailable": "החנות לא מקבלת הזמנות כרגע.",
+      "outsideOpenHours": "החנות סגורה כרגע. אפשר עדיין להסתכל."
+    },
+    "searchPlaceholder": "חיפוש מוצרים",
+    "categories": "קטגוריות",
+    "allCategories": "כל הקטגוריות",
+    "vendors": "ספקים",
+    "allVendors": "כל הספקים",
+    "noProducts": "לא נמצאו מוצרים.",
+    "productNotFound": "המוצר הזה כבר לא זמין.",
+    "outOfStock": "אזל מהמלאי",
+    "addToCart": "הוספה לעגלה",
+    "added": "נוסף לעגלה",
+    "chooseOptions": "בחירת אפשרויות",
+    "chooseOption": "בחירת {name}",
+    "variantUnavailable": "השילוב הזה לא זמין.",
+    "buy": "קנייה",
+    "share": "שיתוף",
+    "linkCopied": "הועתק",
+    "similar": "דומים",
+    "save": "שמירה",
+    "saved": "נשמר",
+    "showImage": "הצגת תמונה {number}",
+    "increase": "הגדלת כמות",
+    "decrease": "הקטנת כמות",
+    "remove": "הסרה",
+    "cart": "עגלה",
+    "cartEmpty": "העגלה שלך ריקה.",
+    "continueShopping": "המשך קנייה",
+    "unavailableItems": "{count, plural, one {לא ניתן להזמין כרגע # פריט} other {לא ניתן להזמין כרגע # פריטים}}",
+    "unavailableNotOrdered": "הם לא ייכללו בהזמנה ויישארו בעגלה.",
+    "unavailable": "כבר לא זמין",
+    "unavailableHint": "בחרו שוב את האפשרויות",
+    "deletedProduct": "מוצר שנמחק",
+    "summary": {
+      "subtotal": "סכום ביניים",
+      "discount": "הנחה",
+      "delivery": "משלוח",
+      "otherFees": "עמלות אחרות",
+      "total": "סה\"כ",
+      "coupon": "קופון ({code})",
+      "title": "סיכום הזמנה",
+      "saved": "חסכתם {amount}"
+    },
+    "belowMinimum": "ההזמנה המינימלית היא {amount}.",
+    "checkOut": "לתשלום",
+    "contactDetails": "הפרטים שלך",
+    "optional": "(אופציונלי)",
+    "fields": {
+      "name": "שם",
+      "email": "אימייל",
+      "phone": "טלפון",
+      "country": "מדינה",
+      "state": "מחוז",
+      "city": "עיר",
+      "address1": "כתובת",
+      "address2": "דירה, בניין וכו'",
+      "zip": "מיקוד",
+      "note": "הערה לחנות"
+    },
+    "shipping": {
+      "title": "משלוח",
+      "delivery": "משלוח לכתובת שלי",
+      "pickup": "איסוף מהחנות",
+      "storeAddress": "כתובת החנות: {address}"
+    },
+    "payment": {
+      "title": "תשלום",
+      "cod": "תשלום במזומן בעת המסירה"
+    },
+    "placeOrder": "ביצוע הזמנה",
+    "orderPlaced": "תודה! ההזמנה שלך התקבלה. נשלח לך עדכונים בצ'אט.",
+    "orderTitle": "הזמנה #{number}",
+    "orderNotFound": "ההזמנה לא נמצאה.",
+    "placedAt": "הוזמן ב-{date}",
+    "status": {
+      "pending": "לא טופל",
+      "accepted": "בטיפול",
+      "shipped": "נשלח",
+      "concluded": "הושלם",
+      "cancelled": "בוטל"
+    },
+    "rateTitle": "דרגו את ההזמנה",
+    "rateComment": "ספרו לחנות מה דעתכם (אופציונלי)",
+    "rateSubmit": "שליחת דירוג",
+    "rateThanks": "תודה על הדירוג!",
+    "yourRating": "הדירוג שלך",
+    "ratingValue": "{rating} מתוך 5 כוכבים",
+    "previous": "הקודם",
+    "next": "הבא",
+    "pageOf": "עמוד {page} מתוך {pageCount}",
+    "errors": {
+      "generic": "משהו השתבש. נסו שוב.",
+      "checkFields": "אנא בדקו את השדות.",
+      "fieldRequired": "השדה {field} הוא חובה.",
+      "countryUnavailable": "החנות לא שולחת למדינה הזו.",
+      "invalidLink": "הקישור כבר לא עובד. בקשו מהחנות קישור חדש.",
+      "webshopPreviewOnly": "זו תצוגה מקדימה. אפשר להזמין רק מקישור של לקוח.",
+      "rateLimited": "יותר מדי ניסיונות. המתינו רגע ונסו שוב.",
+      "orderingUnavailable": "החנות לא מקבלת הזמנות כרגע.",
+      "orderBelowMinimum": "ההזמנה המינימלית היא {minimum}.",
+      "orderBelowVendorMinimum": "המוצרים של {vendorName} צריכים להסתכם לפחות ב-{minimum}.",
+      "orderOutOfStock": "{productName} אזל מהמלאי.",
+      "orderProductUnavailable": "חלק מהפריטים כבר לא ניתנים להזמנה. בדקו את העגלה.",
+      "orderEmpty": "העגלה שלך ריקה.",
+      "orderShippingTypeUnavailable": "אפשרות המשלוח הזו לא זמינה.",
+      "webshopRatingNotAllowed": "לא ניתן לדרג את ההזמנה הזו.",
+      "webshopCartFull": "העגלה שלך יכולה להכיל עד {maximum} פריטים שונים.",
+      "notFound": "המוצר הזה כבר לא זמין.",
+      "discountCodeNotFound": "קוד ההנחה לא קיים.",
+      "discountCodeInactive": "קוד ההנחה לא פעיל.",
+      "discountCodeNotStarted": "קוד ההנחה עדיין לא בתוקף.",
+      "discountCodeExpired": "תוקף קוד ההנחה פג.",
+      "discountCodeUsageLimitReached": "קוד ההנחה נוצל עד תום.",
+      "discountCodeAlreadyUsed": "כבר השתמשת בקוד ההנחה הזה.",
+      "discountCodeNotEligible": "קוד ההנחה לא זמין עבורך.",
+      "discountCodeNotApplicable": "קוד ההנחה לא חל על מה שבעגלה.",
+      "discountCodeMinimumAmount": "הקוד דורש קנייה של {minimum} לפחות. הוסיפו עוד {missing}.",
+      "discountCodeMinimumQuantity": "הקוד דורש לפחות {minimum} פריטים. הוסיפו עוד {missing}."
+    },
+    "discount": {
+      "label": "קוד הנחה",
+      "placeholder": "קוד הנחה",
+      "apply": "החלה",
+      "applied": "קוד ההנחה הוחל",
+      "automatic": "הוחל אוטומטית",
+      "remove": "הסרת קוד ההנחה",
+      "available": "קודים שאפשר להשתמש בהם",
+      "freeShipping": "משלוח חינם",
+      "bestChoice": "הבחירה הטובה ביותר",
+      "expiresOn": "בתוקף עד {date}",
+      "noExpiry": "ללא תפוגה",
+      "inUse": "בשימוש",
+      "saves": "חיסכון של {amount}",
+      "showMore": "{count, plural, one {הצגת # קוד נוסף} other {הצגת # קודים נוספים}}",
+      "showLess": "הצגת פחות",
+      "removeShort": "הסרה",
+      "expired": "פג תוקף",
+      "usedUp": "נוצל",
+      "notEligible": "עדיין לא זכאי"
+    },
+    "itemCount": "{count, plural, one {# פריט} other {# פריטים}}",
+    "relatedProducts": "אולי תאהבו גם"
+  },
+  "webshopLinks": {
+    "preview": "תצוגה מקדימה",
+    "getLink": "קבלת קישור",
+    "copied": "הקישור הועתק. שימו אותו על כפתור בבוט: כל איש קשר יפתח את החנות שלו.",
+    "error": "לא ניתן לקבל את הקישור.",
+    "copyError": "לא ניתן להעתיק את הקישור.",
+    "shopLink": {
+      "label": "קישור לחנות",
+      "hint": "הדביקו את הקישור הזה בכפתור בזרימה, בשידור או ברצף. כל איש קשר שמקבל אותו פותח חנות משלו ויכול להזמין."
+    },
+    "productLink": {
+      "label": "קישור ציבורי",
+      "hint": "העתיקו והדביקו את הכתובת בזרימה, בשידור או ברצף. כל איש קשר שמקבל אותה פותח את המוצר הזה ויכול להזמין."
+    }
+  },
+  "discountCodes": {
+    "title": "קופונים",
+    "description": "קודי הנחה שהלקוחות מזינים בתשלום, או שחלים אוטומטית.",
+    "add": "הוספה",
+    "edit": "עריכת קופון",
+    "automatic": "אוטומטי",
+    "never": "אף פעם",
+    "searchPlaceholder": "חיפוש קודים…",
+    "saveError": "לא ניתן לשמור את הקופון.",
+    "created": "הקופון נוצר",
+    "updated": "הקופון נשמר",
+    "deleted": "הקופון נמחק",
+    "deleteError": "לא ניתן למחוק את הקופון.",
+    "deleteTitle": "למחוק את הקופון {code}?",
+    "deleteDescription": "הלקוחות לא יוכלו להשתמש בו יותר. הזמנות שהשתמשו בו שומרות על ההנחה.",
+    "cancel": "ביטול",
+    "delete": "מחיקה",
+    "save": "שמירה",
+    "columns": {
+      "name": "שם",
+      "discount": "הנחה",
+      "used": "בשימוש",
+      "end": "סיום",
+      "active": "פעיל"
+    },
+    "discountTypes": {
+      "percentage": "אחוז",
+      "fixedAmount": "סכום קבוע",
+      "freeShipping": "משלוח חינם"
+    },
+    "appliesTo": {
+      "entireOrder": "כל ההזמנה",
+      "category": "קטגוריה מסוימת",
+      "products": "מוצרים מסוימים"
+    },
+    "minimumTypes": {
+      "none": "ללא",
+      "amount": "סכום קנייה מינימלי",
+      "quantity": "כמות פריטים מינימלית"
+    },
+    "eligibilities": {
+      "everyone": "כולם",
+      "specificCustomers": "לקוחות מסוימים"
+    },
+    "form": {
+      "discountCode": "קוד הנחה",
+      "code": "קוד",
+      "generate": "יצירה",
+      "autoApply": "להחיל את הקופון אוטומטית על עגלות",
+      "autoApplyHint": "העגלות מקבלות אותו בלי שהלקוח יקליד. עם כמה קופונים אוטומטיים, זה עם ההנחה הגדולה ביותר גובר.",
+      "typedHint": "הלקוחות יזינו את קוד ההנחה בתשלום.",
+      "options": "אפשרויות",
+      "discountType": "סוג הנחה",
+      "discountValuePercent": "ערך ההנחה (%)",
+      "discountValueAmount": "ערך ההנחה ({currency})",
+      "freeShippingHint": "מוריד את דמי המשלוח מהזמנות שנשלחות ללקוח.",
+      "appliesTo": "חל על",
+      "category": "קטגוריה",
+      "products": "מוצרים",
+      "productsPlaceholder": "בחירת מוצרים",
+      "minimumRequirement": "דרישת מינימום",
+      "minimumAmount": "סכום מינימלי ({currency})",
+      "minimumQuantity": "מספר פריטים מינימלי",
+      "usageLimits": "מגבלות שימוש",
+      "limitTotal": "הגבלת מספר השימושים הכולל בהנחה",
+      "usedSoFar": "{count, plural, one {נוצל # פעם עד כה} other {נוצל # פעמים עד כה}}",
+      "oncePerCustomer": "שימוש אחד ללקוח",
+      "customerEligibility": "זכאות לקוחות",
+      "specificCustomersHint": "רק אנשי קשר שתואמים את המסנן למטה בזמן ההזמנה.",
+      "activeDates": "תאריכי תוקף",
+      "startDate": "תאריך התחלה",
+      "endDate": "תאריך סיום",
+      "isActive": "פעיל"
+    },
+    "rules": {
+      "codeCharacters": "השתמשו רק באותיות לטיניות ללא סימנים, ספרות, - ו-_.",
+      "usageBelowUsed": "הקוד כבר נוצל {count} פעמים; המגבלה לא יכולה להיות נמוכה יותר.",
+      "customerConditionRequired": "הוסיפו לפחות תנאי אחד.",
+      "endAfterStart": "תאריך הסיום חייב להיות אחרי תאריך ההתחלה."
+    }
+  },
+  "ecommerceAnalytics": {
+    "title": "אנליטיקה",
+    "lifetime": "מאז ומעולם",
+    "sales": "מכירות",
+    "orders": "הזמנות",
+    "products": "מוצרים",
+    "salesByDate": "מכירות לפי תאריך",
+    "ordersByDate": "הזמנות לפי תאריך",
+    "topProducts": "המוצרים המובילים",
+    "topVendors": "הספקים המובילים",
+    "columns": {
+      "name": "שם",
+      "sales": "מכירות"
+    },
+    "noData": "אין נתונים בתקופה זו",
+    "refresh": "רענון",
+    "change": "{value}%",
+    "noPrevious": "חדש",
+    "otherCurrencyOrders": "{count} הזמנות במטבעות אחרים לא נכללות בנתונים אלה"
   },
   "responseSla": {
     "label": "SLA תגובה",

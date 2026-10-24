@@ -217,6 +217,27 @@ describe("systemFieldService privacy message window", () => {
     )
   })
 
+  test("privacy data and export mirror a pending avatar right away when given the mirror", async () => {
+    const ensureAvatarMirrored = vi.fn(async () => ({
+      avatar: "public/space/workspace-1/avatars/mirrored.webp",
+    }))
+
+    const [privacyData, exportData] = await Promise.all([
+      systemFieldService.getMePrivacyData(params, { ensureAvatarMirrored }),
+      systemFieldService.buildMeExport(params, { ensureAvatarMirrored }),
+    ])
+
+    expect(ensureAvatarMirrored).toHaveBeenCalledWith(
+      expect.objectContaining({ workspaceId: "workspace-1" }),
+    )
+    expect(privacyData?.contact.avatarUrl).toBe(
+      "https://files.example.com/public/space/workspace-1/avatars/mirrored.webp",
+    )
+    expect(exportData?.data.profile_pic).toBe(
+      "https://files.example.com/public/space/workspace-1/avatars/mirrored.webp",
+    )
+  })
+
   test("privacy data and export keep a mirrored avatar's public URL unchanged", async () => {
     mocks.contactFindById.mockResolvedValue({
       ...contact,
@@ -306,6 +327,22 @@ describe("systemFieldService privacy message window", () => {
       sinceTime: contactInbox.createdAt,
       workspaceId: payload.workspaceId,
     })
+  })
+
+  test("deleteMeData only deletes stored objects, never a pending or failed attachment reference", async () => {
+    mocks.hardDeleteAllByContactInbox.mockResolvedValue({
+      attachmentPaths: [
+        "messages/a.jpg",
+        "https://scontent.example/pending.jpg?sig=abc",
+        "wa-media:12345",
+        "failed:unresolvable",
+      ],
+    })
+
+    await systemFieldService.deleteMeData(params)
+
+    expect(mocks.deleteObject).toHaveBeenCalledTimes(1)
+    expect(mocks.deleteObject).toHaveBeenCalledWith("messages/a.jpg")
   })
 
   test("deleteMeData deletes all contact inbox messages and attachments from firstInteractionAt", async () => {

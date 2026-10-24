@@ -19,6 +19,7 @@ const mocks = vi.hoisted(() => ({
     logoLightUrl: "https://app.test/logo.svg",
     name: "ChatbotX",
   })),
+  resolvePlatformSmtpTransport: vi.fn(),
   sendAccountCredentials: vi.fn(),
 }))
 
@@ -42,6 +43,9 @@ vi.mock("../src/logger", () => ({
 vi.mock("../src/platform/settings", () => ({
   resolvePlatformSettings: mocks.resolvePlatformSettings,
 }))
+vi.mock("../src/platform/smtp", () => ({
+  resolvePlatformSmtpTransport: mocks.resolvePlatformSmtpTransport,
+}))
 vi.mock("../src/user-quota/service", () => ({
   userQuotaService: { ensureBootstrapPlan: mocks.ensureBootstrapPlan },
 }))
@@ -51,6 +55,7 @@ vi.mock("../src/user/temporary-password", () => ({
 
 beforeEach(() => {
   vi.clearAllMocks()
+  mocks.resolvePlatformSmtpTransport.mockResolvedValue(undefined)
   mocks.sendAccountCredentials.mockResolvedValue(undefined)
 })
 
@@ -99,8 +104,9 @@ describe("platformAdminService.add", () => {
         loginEmail: "new@example.com",
         signInUrl: "https://app.test/auth/sign-in",
       }),
+      undefined,
     )
-    expect(mocks.sendAccountCredentials.mock.calls[0]).toHaveLength(2)
+    expect(mocks.sendAccountCredentials.mock.calls[0]).toHaveLength(3)
     expect(mocks.insertWithCredential).toHaveBeenCalledWith({
       email: "new@example.com",
       hashedPassword: "hashed",

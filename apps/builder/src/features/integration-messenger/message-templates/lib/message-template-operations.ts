@@ -7,6 +7,7 @@ import {
   ChatbotXException,
   toPublicErrorMessage,
 } from "@chatbotx.io/business/errors"
+import { miniAppService } from "@chatbotx.io/business/mini-app"
 import type { IntegrationMessengerModel } from "@chatbotx.io/database/types"
 import { createPageMessageTemplate } from "@chatbotx.io/integration-messenger/apis/message-templates"
 import { resumableUploadImage } from "@chatbotx.io/integration-messenger/apis/upload"
@@ -245,6 +246,7 @@ export async function createMessengerMessageTemplate(props: {
   request: CreateMessengerMessageTemplateRequest
 }): Promise<CreatedMessengerTemplate> {
   const { workspaceId, integrationMessenger, request } = props
+  await assertMiniAppButtonsInWorkspace(workspaceId, request.buttons)
   const auth = integrationMessenger.auth as MessengerAuthValue
   const headerHandle =
     request.headerType === "text_and_image" && request.headerImageUrl
@@ -279,6 +281,25 @@ export async function createMessengerMessageTemplate(props: {
     rejectionReason: resp.rejection_reason,
     specificRejectionReason: resp.specific_rejection_reason,
   }
+}
+
+/**
+ * A Mini App button may only open one of this workspace's Mini Apps: its link
+ * identifies the recipient to that Mini App, so another workspace's would
+ * receive this workspace's contacts. Throws `notFound` otherwise.
+ */
+async function assertMiniAppButtonsInWorkspace(
+  workspaceId: string,
+  buttons: CreateMessengerMessageTemplateRequest["buttons"],
+): Promise<void> {
+  const miniAppIds = new Set(
+    buttons.flatMap((button) =>
+      button.type === "MINI_APP" ? [button.miniAppId] : [],
+    ),
+  )
+  await Promise.all(
+    [...miniAppIds].map((id) => miniAppService.findOrFail({ workspaceId, id })),
+  )
 }
 
 export type CloneTemplateResult = {

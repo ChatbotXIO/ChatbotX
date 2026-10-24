@@ -2096,6 +2096,10 @@
       "label": "送信元アドレス",
       "placeholder": "noreply@example.com"
     },
+    "fromName": {
+      "label": "送信者名",
+      "placeholder": "ChatbotX"
+    },
     "messageTemplate": {
       "label": "メッセージテンプレート"
     },
@@ -2656,7 +2660,13 @@
       "sendGoogleAdsConversion": "Google 広告コンバージョンを送信",
       "changeGamificationScore": "ゲーミフィケーションのスコアを変更",
       "sendViewCatalog": "カタログを見る",
-      "sendProducts": "商品を送信"
+      "sendProducts": "商品を送信",
+      "sendCollection": "コレクション"
+    },
+    "externalRequest": {
+      "errors": {
+        "requestFailed": "外部リクエストをテストできませんでした。リクエストの設定を確認して、もう一度お試しください。"
+      }
     },
     "splitTraffic": {
       "balanceHint": "合計は100%になる必要があります。",
@@ -2837,6 +2847,43 @@
       "productsSelected": "{count, plural, one {# 件の商品} other {# 件の商品}}",
       "noneSelected": "商品はまだありません",
       "sendFailed": "商品を送信できませんでした。"
+    },
+    "sendCollection": {
+      "title": "コレクション",
+      "dataType": "データの種類",
+      "dataTypes": {
+        "products": "商品"
+      },
+      "collectionType": "コレクションの種類",
+      "collectionTypes": {
+        "automated": {
+          "label": "自動",
+          "description": "条件に合う既存および今後の商品が自動で追加されます。"
+        },
+        "manual": {
+          "label": "手動",
+          "description": "商品を1つずつ追加します。"
+        }
+      },
+      "condition": "条件",
+      "name": "名前",
+      "optional": "（任意）",
+      "category": "カテゴリー",
+      "subcategory": "サブカテゴリー",
+      "vendor": "ベンダー",
+      "all": "すべて",
+      "items": "商品",
+      "select": "選択",
+      "selectPlaceholder": "1つ以上の商品を選択",
+      "selectAll": "すべて選択",
+      "deselectAll": "すべて解除",
+      "maxProducts": "最大{count}商品。ショップに表示されなくなった商品はスキップされます。",
+      "automatedHint": "条件に合う最大{count}商品を、ウェブショップで商品を開くカードとして送信します。",
+      "summaryAll": "ショップの全商品",
+      "summaryAutomated": "商品: {filters}",
+      "summaryManual": "{count, plural, one {#商品} other {#商品}}",
+      "cancel": "キャンセル",
+      "save": "保存"
     }
   },
   "folders": {
@@ -3959,6 +4006,7 @@
         "buttonText": "ボタンテキスト",
         "buttonType": "ボタンの種類",
         "visitWebsite": "ウェブサイトを開く",
+        "openMiniApp": "ミニアプリを開く",
         "callPhoneNumber": "電話をかける",
         "postback": "ボタン"
       },
@@ -4162,6 +4210,7 @@
     "orContinueWith": "または次の方法で続行",
     "continueWithFacebook": "Facebookで続行",
     "continueWithGoogle": "Googleで続行",
+    "continueWithProvider": "{name}で続行",
     "continueWithEmail": "メールで続行",
     "continueWithMagicLink": "マジックリンクで続行",
     "dontHaveAnAccount": "アカウントをお持ちでないですか？",
@@ -4192,11 +4241,15 @@
     "changePasswordTitle": "パスワードを変更",
     "changePasswordDescription": "続行する前に新しいパスワードを設定してください。",
     "passwordChangeSuccess": "パスワードを変更しました",
+    "signUpDisabledTitle": "新規登録は無効です",
+    "signUpDisabledDescription": "新しいアカウントは管理者または招待リンクからのみ作成できます。",
     "oauthError": {
       "accountNotLinked": "このメールアドレスのアカウントは既に存在し、連携できませんでした。以前と同じ方法でログインするか、サポートにお問い合わせください。",
       "unableToLinkAccount": "このログインを既存のアカウントに連携できませんでした。以前と同じ方法でログインするか、サポートにお問い合わせください。",
       "sessionExpired": "ログインの試行の有効期限が切れました。もう一度お試しください。",
       "accessDenied": "ログインがキャンセルされました。",
+      "signUpDisabled": "このアカウントはまだ存在せず、新規登録は無効です。管理者に作成を依頼してください。",
+      "invalidInvitation": "この招待は無効か、有効期限が切れています。",
       "generic": "ログインに失敗しました。もう一度お試しください。"
     }
   },
@@ -4229,6 +4282,25 @@
       "unknownFieldTarget": "マッピングされた連絡先フィールドは存在しなくなりました。",
       "actionReferenceNotFound": "アクションが、存在しなくなったフロー、タグ、またはフィールドを参照しています。",
       "fieldMappingRequired": "フィールドマッピングを少なくとも1つ追加してください。"
+    },
+    "form": {
+      "required": "この項目は必須です。",
+      "minLength": "{minimum}文字以上で入力してください。",
+      "maxLength": "{maximum}文字以内で入力してください。",
+      "minNumber": "{minimum}以上の数値を入力してください。",
+      "moreThan": "{minimum}より大きい数値を入力してください。",
+      "maxNumber": "{maximum}以下の数値を入力してください。",
+      "lessThan": "{maximum}未満の数値を入力してください。",
+      "number": "数値を入力してください。",
+      "wholeNumber": "整数を入力してください。",
+      "minItems": "{minimum}件以上選択してください。",
+      "maxItems": "{maximum}件以内で選択してください。",
+      "email": "有効なメールアドレスを入力してください。",
+      "url": "https:// で始まる有効なリンクを入力してください。",
+      "format": "この値の形式が正しくありません。",
+      "option": "選択肢から1つ選んでください。",
+      "invalid": "この値は無効です。",
+      "checkFields": "修正が必要な項目があります。赤く表示された項目を確認してください。"
     }
   },
   "webchat": {
@@ -4828,7 +4900,8 @@
     "chatbotInvitationDescription1": "{chatbotName}に参加",
     "chatbotInvitationDescription2": "{userName}さんから{chatbotName}への招待が届いています。",
     "invalidInvitation": "この招待は無効か、有効期限が切れています。",
-    "workspaceUnavailable": "このワークスペースは利用できなくなりました。"
+    "workspaceUnavailable": "このワークスペースは利用できなくなりました。",
+    "signUpToJoin": "参加するにはアカウントを作成"
   },
   "inboxes": {
     "markReadOnOutbound": {
@@ -5216,7 +5289,8 @@
       "contactReferredExistingContact": "連絡先が既存の連絡先を紹介した",
       "callRecorded": "通話が録音されました",
       "callTranscribed": "通話が文字起こしされました",
-      "anyProduct": "すべての商品"
+      "anyProduct": "すべての商品",
+      "anyCategory": "すべてのカテゴリー"
     },
     "actions": {
       "addTag": "タグを追加",
@@ -5337,7 +5411,8 @@
       "userPlaceholder": "ユーザーID",
       "keyword": "キーワード",
       "keywordPlaceholder": "アクションまたは詳細",
-      "allAdmins": "すべての管理者"
+      "allAdmins": "すべての管理者",
+      "allWorkspaces": "すべてのワークスペース"
     }
   },
   "customFields": {
@@ -6221,7 +6296,14 @@
       "supportOff": "オフ",
       "searchPlaceholder": "名前、オーナーのメール、IDで検索",
       "descriptionConsentDisabled": "All workspaces can be opened by platform administrators.",
-      "supportAccessible": "Accessible"
+      "supportAccessible": "Accessible",
+      "createButton": "Create workspace",
+      "createTitle": "Create workspace for an owner",
+      "createDescription": "Creates a workspace for the owner's email, adding any member emails you list. A new email gets a mailed temporary password.",
+      "ownerEmail": "Owner email",
+      "memberEmails": "Member emails",
+      "membersHint": "Every member gets the permissions selected below. New emails get a mailed temporary password.",
+      "createdSummary": "Workspace created for {ownerEmail} — {memberCount} member(s) added, {newAccountCount} new account(s) emailed a temporary password."
     },
     "admins": {
       "title": "Platform administrators",
@@ -6237,6 +6319,19 @@
       "removed": "Platform administrator removed.",
       "addError": "Could not add the platform administrator.",
       "removeError": "Could not remove the platform administrator."
+    },
+    "auditLogs": {
+      "title": "プラットフォーム監査ログ",
+      "description": "このプラットフォーム上のすべてのワークスペースにわたる監査アクティビティ。"
+    },
+    "smtp": {
+      "title": "SMTP設定",
+      "description": "プラットフォームのメール送信方式です。SMTP_SERVERおよびSMTP_FROM環境変数を引き続き使用する場合は空のままにしてください。",
+      "usingEnv": "SMTP設定は保存されていません。プラットフォームのメールはSMTP_SERVER環境変数を使用します。",
+      "remove": "SMTP設定を削除",
+      "errors": {
+        "passwordRequired": "SMTPパスワードを入力してください。"
+      }
     }
   },
   "platformCredentials": {
@@ -6315,6 +6410,8 @@
     }
   },
   "manageSidebar": {
+    "communityGroup": "コミュニティ",
+    "enterpriseGroup": "エンタープライズ",
     "platformGroup": "プラットフォーム",
     "toolsGroup": "ツール",
     "saasGroup": "SaaS",
@@ -6391,7 +6488,82 @@
     "unknown": "不明"
   },
   "orders": {
-    "title": "注文"
+    "title": "注文",
+    "empty": "注文はまだありません。",
+    "searchPlaceholder": "名前、電話番号、メールアドレス、注文番号で検索",
+    "orderNumber": "注文 #{number}",
+    "print": "印刷",
+    "inbox": "受信トレイ",
+    "statusUpdated": "注文ステータスを更新しました",
+    "statusUpdateError": "注文ステータスを更新できませんでした",
+    "updateStatusTitle": "注文ステータスを更新",
+    "message": "メッセージ",
+    "messagePlaceholder": "任意",
+    "messageDescription": "お客様の会話に送信されます。",
+    "cancel": "キャンセル",
+    "continue": "続行",
+    "delete": "削除",
+    "deleted": "注文を削除しました",
+    "deleteError": "注文を削除できませんでした",
+    "deleteTitle": "注文 #{number} を削除しますか？",
+    "deleteDescription": "注文、その商品、履歴が削除されます。確保されている在庫は元に戻されます。",
+    "columns": {
+      "name": "名前",
+      "total": "合計",
+      "status": "ステータス",
+      "date": "日付",
+      "rating": "評価",
+      "quantity": "数量",
+      "price": "価格",
+      "vendor": "ベンダー"
+    },
+    "fields": {
+      "name": "名前",
+      "email": "メールアドレス",
+      "phone": "電話番号",
+      "country": "国",
+      "state": "都道府県",
+      "city": "市区町村",
+      "street": "番地",
+      "zip": "郵便番号",
+      "shippingType": "配送",
+      "orderId": "注文ID",
+      "date": "日付",
+      "subtotal": "小計",
+      "discount": "割引",
+      "deliveryCost": "配送料",
+      "otherTaxes": "その他の税",
+      "total": "合計",
+      "paymentMethod": "支払い方法",
+      "status": "ステータス",
+      "note": "メモ",
+      "cancelReason": "キャンセル理由",
+      "rating": "評価",
+      "ratingComment": "お客様のコメント",
+      "coupon": "クーポン（{code}）"
+    },
+    "statuses": {
+      "pending": "未処理",
+      "accepted": "承認済み",
+      "shipped": "発送済み",
+      "concluded": "完了",
+      "cancelled": "キャンセル済み"
+    },
+    "transitions": {
+      "accepted": "承認",
+      "shipped": "発送",
+      "concluded": "完了にする",
+      "cancelled": "キャンセル"
+    },
+    "paymentMethods": {
+      "cod": "代金引換"
+    },
+    "shippingTypes": {
+      "delivery": "お客様へ配送",
+      "pickup": "店舗で受け取り"
+    },
+    "description": "顧客からの注文。",
+    "ratingValue": "{rating}/5 ★"
   },
   "products": {
     "title": "商品",
@@ -6448,7 +6620,8 @@
         "label": "在庫切れでもこの商品を購入できるようにする"
       },
       "vendor": {
-        "label": "販売元"
+        "label": "販売元",
+        "none": "なし"
       },
       "rank": {
         "label": "表示順位"
@@ -6581,8 +6754,8 @@
     "loadError": "商品カテゴリーを読み込めませんでした。",
     "all": "すべての商品",
     "create": "カテゴリーを作成",
-    "edit": "カテゴリー名を変更",
-    "name": "カテゴリー名",
+    "edit": "編集",
+    "name": "名前",
     "namePlaceholder": "例：夏のコレクション",
     "parent": "親カテゴリー",
     "noParent": "なし（最上位）",
@@ -6602,12 +6775,25 @@
     "columns": {
       "name": "名前",
       "products": "商品",
-      "subcategories": "サブカテゴリー"
+      "subcategories": "サブカテゴリー",
+      "visible": "表示"
     },
     "expand": "サブカテゴリーを表示",
     "collapse": "サブカテゴリーを非表示",
     "productCount": "{count, plural, =0 {商品なし} one {#件の商品} other {#件の商品}}",
-    "deleteChildrenWarning": "{count, plural, one {#件のサブカテゴリーも削除されます。} other {#件のサブカテゴリーも削除されます。}}"
+    "deleteChildrenWarning": "{count, plural, one {#件のサブカテゴリーも削除されます。} other {#件のサブカテゴリーも削除されます。}}",
+    "add": "追加",
+    "dialogTitle": "カテゴリ",
+    "image": "画像",
+    "continue": "続行",
+    "subcategories": "サブカテゴリ",
+    "subcategoriesOf": "{name} のサブカテゴリ",
+    "emptySub": "サブカテゴリはまだありません。",
+    "back": "カテゴリに戻る",
+    "getId": "IDを取得",
+    "idCopied": "カテゴリID {id} をコピーしました",
+    "idCopyError": "IDをコピーできませんでした",
+    "description": "商品をカテゴリとサブカテゴリに分類します。"
   },
   "productImport": {
     "title": "インポート",
@@ -9086,6 +9272,543 @@
       "hours": "時間",
       "closed": "休業"
     }
+  },
+  "productVendors": {
+    "title": "ベンダー",
+    "add": "追加",
+    "edit": "編集",
+    "delete": "削除",
+    "actions": "操作",
+    "save": "保存",
+    "cancel": "キャンセル",
+    "moreOptions": "その他のオプション",
+    "empty": "ベンダーはまだありません。",
+    "created": "ベンダーを追加しました",
+    "updated": "ベンダーを更新しました",
+    "deleted": "ベンダーを削除しました",
+    "saveError": "ベンダーを保存できませんでした",
+    "deleteError": "ベンダーを削除できませんでした",
+    "deleteTitle": "{name} を削除しますか？",
+    "deleteDescription": "{count, plural, =0 {このベンダーを使用している商品はありません。} one {#件の商品がベンダーなしになります。} other {#件の商品がベンダーなしになります。}}",
+    "fields": {
+      "name": "名前",
+      "shortDescription": "簡単な説明",
+      "phone": "電話番号",
+      "storeAddress": "店舗の住所",
+      "image": "画像",
+      "optional": "任意",
+      "discountPercent": "割引（0〜100%）",
+      "minimumOrderValue": "最低注文金額",
+      "openHours": "営業時間",
+      "category": "カテゴリ",
+      "subcategory": "サブカテゴリ",
+      "none": "なし"
+    },
+    "columns": {
+      "name": "名前",
+      "products": "商品の合計数",
+      "active": "有効"
+    },
+    "description": "商品が属する販売者とブランド。"
+  },
+  "ecommerceSettings": {
+    "save": "保存",
+    "saved": "設定を保存しました",
+    "saveError": "設定を保存できませんでした",
+    "rank": {
+      "label": "ランク",
+      "default": "デフォルト"
+    },
+    "tabs": {
+      "general": "一般",
+      "payments": "支払い",
+      "shipping": "配送",
+      "checkout": "チェックアウト"
+    },
+    "general": {
+      "orderingAvailable": {
+        "label": "注文受付中",
+        "description": "営業時間を変更せずにお客様の注文を停止したい場合に使用します。営業時間も受付状況に影響します。"
+      },
+      "webshopProductView": {
+        "label": "Webショップの商品表示",
+        "description": "Webショップでの商品の表示方法を設定します。",
+        "options": {
+          "list": "リスト",
+          "listWithoutImage": "画像なしリスト",
+          "card": "カード",
+          "cardSquare": "正方形画像のカード",
+          "image": "画像",
+          "imageSquare": "画像（正方形）"
+        }
+      },
+      "openHours": {
+        "label": "営業時間",
+        "description": "お客様が注文できる時間帯です。"
+      },
+      "searchProducts": {
+        "label": "商品を検索",
+        "description": "お客様がメッセージを送って商品を探せるようにします。"
+      },
+      "facebookPixelId": {
+        "label": "Facebook Pixel",
+        "description": "Facebook Pixelでコンバージョンを追跡し、広告の成果を測定します。次のイベントを追跡します：ADD_TO_CART、INITIATE_CHECKOUT、PURCHASE、VIEW_CONTENT"
+      },
+      "abandonedCart": {
+        "label": "カート放棄メッセージ",
+        "description": "ユーザーがカートに商品を入れたままボットを離れてから、カート放棄メッセージを送信するまでの待ち時間です。",
+        "disabled": "無効",
+        "afterMinutes": "{count}分後",
+        "afterHours": "{count, plural, one {#時間後} other {#時間後}}"
+      },
+      "productButtons": {
+        "label": "商品のボタン",
+        "description": "ボットの商品に表示するボタンを設定します。",
+        "options": {
+          "addToCart": "カートに追加",
+          "share": "シェア",
+          "similar": "類似商品",
+          "save": "保存"
+        }
+      },
+      "productImageSize": {
+        "label": "商品の画像サイズ",
+        "description": "ボットの商品画像のサイズを設定します",
+        "options": {
+          "bigSquare": "大（正方形）",
+          "mediumRectangle": "中（長方形）"
+        }
+      },
+      "allowRateOrders": {
+        "label": "注文の評価を許可",
+        "description": "注文に満足できない場合、お客様が注文を評価してレビューを書けるようにします。レビューはボット管理者のみ閲覧できます"
+      },
+      "notifyOnCartStatusChange": {
+        "label": "カートのステータス変更時に通知を送信",
+        "description": "注文ステータスを変更するたびに、お客様に通知が届きます。注文のキャンセルと完了の通知は無効にできません。"
+      },
+      "abandonedCartFlow": {
+        "label": "カゴ落ちフロー",
+        "description": "カートがこの時間放置されたときにボットがお客様に実行するフロー。ボタンに'{{shop_token}}'を使うとカートを開けます。トリガーでも「Cart abandoned」イベントを使えます。",
+        "none": "フローなし（トリガーイベントのみ）"
+      }
+    },
+    "payments": {
+      "currencyMismatch": "{count, plural, one {#件の商品が} other {#件の商品が}}{currency}以外の通貨で価格設定されています。注文では{currency}で価格が請求されます。",
+      "paymentMethods": {
+        "label": "支払い方法",
+        "description": "チェックアウトページで有効にする支払い方法です。リストの最初の支払い方法がチェックアウトページで選択されます。",
+        "options": {
+          "cod": "代金引換"
+        }
+      },
+      "currency": {
+        "label": "通貨",
+        "description": "商品の価格を設定する通貨です。お客様にはこの通貨で請求されます。"
+      },
+      "currencyPosition": {
+        "label": "通貨の位置",
+        "description": "通貨の表示位置を設定します。",
+        "options": {
+          "left": "左",
+          "leftSpace": "左（スペースあり）",
+          "right": "右",
+          "rightSpace": "右（スペースあり）"
+        }
+      },
+      "currencySymbol": {
+        "label": "通貨記号",
+        "description": "通貨記号は価格の前に表示されます。記号と価格の間にスペースを入れたい場合は、記号の末尾にスペースを追加してください。"
+      },
+      "serviceFeePercent": {
+        "label": "その他の手数料／サービス料（0〜100%）",
+        "description": "販売に関するその他の手数料です。"
+      }
+    },
+    "shipping": {
+      "shippingType": {
+        "label": "配送タイプ",
+        "description": "お客様が注文品を受け取る方法を設定します。",
+        "options": {
+          "none": "なし",
+          "delivery": "お客様へ配送",
+          "pickup": "店舗で受け取り",
+          "deliveryAndPickup": "お客様へ配送、店舗で受け取り"
+        }
+      },
+      "storeAddress": {
+        "label": "店舗の住所",
+        "description": "店舗受け取りを許可している場合、チェックアウトページでお客様にこの住所が表示されます。"
+      },
+      "shippingCountries": {
+        "label": "配送先の国",
+        "description": "注文を発送する国です。"
+      },
+      "defaultShippingCountry": {
+        "label": "デフォルトの配送先の国",
+        "description": "チェックアウトページでデフォルトで選択される国です。",
+        "none": "なし"
+      },
+      "deliveryCost": {
+        "label": "配送料",
+        "description": "お客様の住所へ配送する際の定額料金です。"
+      },
+      "defaultCountryNotShipped": "配送先の国から1つ選んでください。"
+    },
+    "checkout": {
+      "checkoutMode": {
+        "label": "チェックアウト",
+        "description": "お客様が注文を完了する場所を設定します。ウェブサイトやAmazonなど、ボットの外で注文を完了させたい場合は、デフォルトのチェックアウトページを使用しないでください。",
+        "options": {
+          "default": "デフォルトのチェックアウトページ",
+          "externalLink": "カスタム外部チェックアウトページ",
+          "flow": "フロー",
+          "productPage": "外部の商品ページを開く"
+        }
+      },
+      "checkoutLink": {
+        "label": "チェックアウトページのリンク",
+        "description": "お客様が注文を完了する外部ページです。"
+      },
+      "checkoutFlowId": {
+        "label": "チェックアウトフロー",
+        "description": "お客様がチェックアウトしたときに実行されるフローです。",
+        "placeholder": "フローを選択"
+      },
+      "minimumOrderValue": {
+        "label": "最低注文金額",
+        "description": "お客様が注文できる最低金額です。この条件はすべての割引を適用した後に確認されます。"
+      },
+      "requiredFields": {
+        "requireName": {
+          "label": "購入者名を必須にする",
+          "description": "チェックアウト時に購入者の名前を収集します。"
+        },
+        "requireEmail": {
+          "label": "メールアドレスを必須にする",
+          "description": "チェックアウト時に購入者のメールアドレスを収集します。"
+        },
+        "requirePhone": {
+          "label": "電話番号を必須にする",
+          "description": "チェックアウト時に購入者の電話番号を収集します。"
+        },
+        "requireState": {
+          "label": "都道府県を必須にする",
+          "description": "チェックアウト時に購入者の都道府県を収集します。"
+        },
+        "requireZip": {
+          "label": "郵便番号を必須にする",
+          "description": "チェックアウト時に購入者の郵便番号を収集します。"
+        }
+      },
+      "orderConfirmationMode": {
+        "label": "注文確認メッセージ",
+        "description": "注文が確定したときにお客様がチャットで受け取る内容です。既定のメッセージはワークスペースの言語で注文内容を表示します。",
+        "options": {
+          "default": "既定のメッセージ",
+          "flow": "フローを実行",
+          "none": "何も送信しない"
+        }
+      },
+      "orderConfirmationFlowId": {
+        "label": "注文確認フロー",
+        "description": "注文が確定したときに、既定のメッセージの代わりにお客様へ送るフローです。"
+      }
+    }
+  },
+  "openHours": {
+    "alwaysOpen": "常時営業",
+    "addNew": "新規追加",
+    "dialogTitle": "営業時間",
+    "name": "名前",
+    "namePlaceholder": "例：平日",
+    "day": "曜日",
+    "from": "開店",
+    "to": "閉店",
+    "add": "時間を追加",
+    "remove": "削除",
+    "cancel": "キャンセル",
+    "continue": "続行",
+    "created": "営業時間を作成しました",
+    "saveError": "営業時間を保存できませんでした",
+    "days": {
+      "0": "日曜日",
+      "1": "月曜日",
+      "2": "火曜日",
+      "3": "水曜日",
+      "4": "木曜日",
+      "5": "金曜日",
+      "6": "土曜日"
+    },
+    "sameTimes": "開店時刻と閉店時刻は異なる必要があります。"
+  },
+  "webshop": {
+    "metadataTitle": "ショップ",
+    "metadataOrderTitle": "ご注文",
+    "invalidLinkTitle": "このリンクは使用できません",
+    "invalidLinkDescription": "有効期限が切れている可能性があります。チャットでショップに新しいリンクを依頼してください。",
+    "previewBanner": "プレビュー: お客様にはこのように表示されます。プレビューからは注文できません。",
+    "previewOrderingOff": "プレビュー：注文できません",
+    "closed": {
+      "orderingUnavailable": "現在、ショップは注文を受け付けていません。",
+      "outsideOpenHours": "現在は営業時間外です。商品の閲覧はできます。"
+    },
+    "searchPlaceholder": "商品を検索",
+    "categories": "カテゴリー",
+    "allCategories": "すべてのカテゴリー",
+    "vendors": "ベンダー",
+    "allVendors": "すべてのベンダー",
+    "noProducts": "商品が見つかりません。",
+    "productNotFound": "この商品は現在取り扱っていません。",
+    "outOfStock": "在庫切れ",
+    "addToCart": "カートに入れる",
+    "added": "カートに追加しました",
+    "chooseOptions": "オプションを選択",
+    "chooseOption": "{name}を選択",
+    "variantUnavailable": "この組み合わせはご利用いただけません。",
+    "buy": "購入",
+    "share": "共有",
+    "linkCopied": "コピーしました",
+    "similar": "類似商品",
+    "save": "保存",
+    "saved": "保存済み",
+    "showImage": "画像{number}を表示",
+    "increase": "数量を増やす",
+    "decrease": "数量を減らす",
+    "remove": "削除",
+    "cart": "カート",
+    "cartEmpty": "カートは空です。",
+    "continueShopping": "買い物を続ける",
+    "unavailableItems": "{count, plural, one {# 点の商品は現在注文できません} other {# 点の商品は現在注文できません}}",
+    "unavailableNotOrdered": "これらは注文に含まれず、カートに残ります。",
+    "unavailable": "現在取り扱いなし",
+    "unavailableHint": "オプションを選び直してください",
+    "deletedProduct": "削除された商品",
+    "summary": {
+      "subtotal": "小計",
+      "discount": "割引",
+      "delivery": "配送料",
+      "otherFees": "その他の手数料",
+      "total": "合計",
+      "coupon": "クーポン（{code}）",
+      "title": "注文内容",
+      "saved": "{amount}お得"
+    },
+    "belowMinimum": "最低注文金額は{amount}です。",
+    "checkOut": "購入手続きへ",
+    "contactDetails": "お客様情報",
+    "optional": "（任意）",
+    "fields": {
+      "name": "お名前",
+      "email": "メールアドレス",
+      "phone": "電話番号",
+      "country": "国",
+      "state": "都道府県",
+      "city": "市区町村",
+      "address1": "住所",
+      "address2": "建物名・部屋番号など",
+      "zip": "郵便番号",
+      "note": "ショップへの備考"
+    },
+    "shipping": {
+      "title": "受け取り方法",
+      "delivery": "住所へ配送",
+      "pickup": "店舗で受け取る",
+      "storeAddress": "店舗住所: {address}"
+    },
+    "payment": {
+      "title": "お支払い",
+      "cod": "代金引換"
+    },
+    "placeOrder": "注文を確定する",
+    "orderPlaced": "ありがとうございます！ご注文を承りました。最新情報はチャットでお知らせします。",
+    "orderTitle": "注文 #{number}",
+    "orderNotFound": "この注文は見つかりません。",
+    "placedAt": "注文日時: {date}",
+    "status": {
+      "pending": "未処理",
+      "accepted": "処理中",
+      "shipped": "発送済み",
+      "concluded": "完了",
+      "cancelled": "キャンセル済み"
+    },
+    "rateTitle": "ご注文を評価する",
+    "rateComment": "ショップへのコメント（任意）",
+    "rateSubmit": "評価を送信",
+    "rateThanks": "評価ありがとうございます！",
+    "yourRating": "あなたの評価",
+    "ratingValue": "5つ星中{rating}",
+    "previous": "前へ",
+    "next": "次へ",
+    "pageOf": "{pageCount}ページ中{page}ページ",
+    "errors": {
+      "generic": "問題が発生しました。もう一度お試しください。",
+      "checkFields": "入力内容をご確認ください。",
+      "fieldRequired": "{field}は必須です。",
+      "countryUnavailable": "この国への配送には対応していません。",
+      "invalidLink": "このリンクは使用できなくなりました。ショップに新しいリンクを依頼してください。",
+      "webshopPreviewOnly": "これはプレビューです。注文はお客様用リンクからのみ可能です。",
+      "rateLimited": "試行回数が多すぎます。しばらくしてからもう一度お試しください。",
+      "orderingUnavailable": "現在、ショップは注文を受け付けていません。",
+      "orderBelowMinimum": "最低注文金額は{minimum}です。",
+      "orderBelowVendorMinimum": "{vendorName}の商品は合計{minimum}以上にしてください。",
+      "orderOutOfStock": "{productName}は在庫切れです。",
+      "orderProductUnavailable": "注文できなくなった商品があります。カートをご確認ください。",
+      "orderEmpty": "カートは空です。",
+      "orderShippingTypeUnavailable": "この受け取り方法はご利用いただけません。",
+      "webshopRatingNotAllowed": "この注文は評価できません。",
+      "webshopCartFull": "カートに入れられる商品は最大 {maximum} 種類までです。",
+      "notFound": "この商品は現在取り扱っていません。",
+      "discountCodeNotFound": "この割引コードは存在しません。",
+      "discountCodeInactive": "この割引コードは無効です。",
+      "discountCodeNotStarted": "この割引コードはまだ使用できません。",
+      "discountCodeExpired": "この割引コードは期限切れです。",
+      "discountCodeUsageLimitReached": "この割引コードは利用上限に達しました。",
+      "discountCodeAlreadyUsed": "この割引コードはすでに使用済みです。",
+      "discountCodeNotEligible": "この割引コードはご利用いただけません。",
+      "discountCodeNotApplicable": "この割引コードはカートの商品に適用できません。",
+      "discountCodeMinimumAmount": "このコードは{minimum}以上の購入が必要です。あと{missing}追加してください。",
+      "discountCodeMinimumQuantity": "このコードは{minimum}点以上必要です。あと{missing}点追加してください。"
+    },
+    "discount": {
+      "label": "割引コード",
+      "placeholder": "割引コード",
+      "apply": "適用",
+      "applied": "割引コードを適用しました",
+      "automatic": "自動適用",
+      "remove": "割引コードを外す",
+      "available": "使えるクーポン",
+      "freeShipping": "送料無料",
+      "bestChoice": "いちばんお得",
+      "expiresOn": "有効期限: {date}",
+      "noExpiry": "期限なし",
+      "inUse": "使用中",
+      "saves": "{amount}割引",
+      "showMore": "{count, plural, one {あと#件を表示} other {あと#件を表示}}",
+      "showLess": "閉じる",
+      "removeShort": "外す",
+      "expired": "期限切れ",
+      "usedUp": "上限に達しました",
+      "notEligible": "対象外"
+    },
+    "itemCount": "{count, plural, one {#点} other {#点}}",
+    "relatedProducts": "こちらもおすすめ"
+  },
+  "webshopLinks": {
+    "preview": "プレビュー",
+    "getLink": "リンクを取得",
+    "copied": "リンクをコピーしました。ボットのボタンに設定すると、連絡先ごとに専用のショップが開きます。",
+    "error": "リンクを取得できませんでした。",
+    "copyError": "リンクをコピーできませんでした。",
+    "shopLink": {
+      "label": "ショップリンク",
+      "hint": "このリンクをフロー、ブロードキャスト、シーケンスのボタンに貼り付けてください。受け取った各連絡先が自分専用のショップを開いて注文できます。"
+    },
+    "productLink": {
+      "label": "公開URL",
+      "hint": "URLをコピーして、フロー、ブロードキャスト、シーケンスに貼り付けてください。受け取った各連絡先がこの商品を開いて注文できます。"
+    }
+  },
+  "discountCodes": {
+    "title": "クーポン",
+    "description": "お客様が購入時に入力する、または自動で適用される割引コード。",
+    "add": "追加",
+    "edit": "クーポンを編集",
+    "automatic": "自動",
+    "never": "期限なし",
+    "searchPlaceholder": "コードを検索…",
+    "saveError": "クーポンを保存できませんでした。",
+    "created": "クーポンを作成しました",
+    "updated": "クーポンを保存しました",
+    "deleted": "クーポンを削除しました",
+    "deleteError": "クーポンを削除できませんでした。",
+    "deleteTitle": "クーポン{code}を削除しますか？",
+    "deleteDescription": "お客様は今後使用できなくなります。使用済みの注文の割引はそのまま残ります。",
+    "cancel": "キャンセル",
+    "delete": "削除",
+    "save": "保存",
+    "columns": {
+      "name": "名前",
+      "discount": "割引",
+      "used": "使用数",
+      "end": "終了",
+      "active": "有効"
+    },
+    "discountTypes": {
+      "percentage": "パーセント",
+      "fixedAmount": "定額",
+      "freeShipping": "送料無料"
+    },
+    "appliesTo": {
+      "entireOrder": "注文全体",
+      "category": "特定のカテゴリー",
+      "products": "特定の商品"
+    },
+    "minimumTypes": {
+      "none": "なし",
+      "amount": "最低購入金額",
+      "quantity": "最低購入点数"
+    },
+    "eligibilities": {
+      "everyone": "全員",
+      "specificCustomers": "特定のお客様"
+    },
+    "form": {
+      "discountCode": "割引コード",
+      "code": "コード",
+      "generate": "自動生成",
+      "autoApply": "このクーポンをカートに自動適用する",
+      "autoApplyHint": "お客様が入力しなくてもカートに適用されます。自動クーポンが複数ある場合は割引額が最大のものが使われます。",
+      "typedHint": "お客様は購入手続きでこのコードを入力します。",
+      "options": "オプション",
+      "discountType": "割引の種類",
+      "discountValuePercent": "割引率（%）",
+      "discountValueAmount": "割引額（{currency}）",
+      "freeShippingHint": "配送する注文の送料を無料にします。",
+      "appliesTo": "適用対象",
+      "category": "カテゴリー",
+      "products": "商品",
+      "productsPlaceholder": "商品を選択",
+      "minimumRequirement": "最低条件",
+      "minimumAmount": "最低金額（{currency}）",
+      "minimumQuantity": "最低点数",
+      "usageLimits": "利用制限",
+      "limitTotal": "この割引の合計利用回数を制限する",
+      "usedSoFar": "{count, plural, one {これまでに#回使用} other {これまでに#回使用}}",
+      "oncePerCustomer": "お客様1人につき1回まで",
+      "customerEligibility": "対象のお客様",
+      "specificCustomersHint": "注文時に下のフィルターに一致する連絡先のみ。",
+      "activeDates": "有効期間",
+      "startDate": "開始日",
+      "endDate": "終了日",
+      "isActive": "有効"
+    },
+    "rules": {
+      "codeCharacters": "アクセントのない英字、数字、- と _ のみ使用できます。",
+      "usageBelowUsed": "このコードはすでに{count}回使用されています。上限をそれより低くはできません。",
+      "customerConditionRequired": "条件を1つ以上追加してください。",
+      "endAfterStart": "終了日は開始日より後にしてください。"
+    }
+  },
+  "ecommerceAnalytics": {
+    "title": "分析",
+    "lifetime": "累計",
+    "sales": "売上",
+    "orders": "注文",
+    "products": "商品",
+    "salesByDate": "日付別売上",
+    "ordersByDate": "日付別注文",
+    "topProducts": "売れ筋商品",
+    "topVendors": "売れ筋ベンダー",
+    "columns": {
+      "name": "名前",
+      "sales": "売上"
+    },
+    "noData": "この期間のデータはありません",
+    "refresh": "更新",
+    "change": "{value}%",
+    "noPrevious": "新規",
+    "otherCurrencyOrders": "他の通貨の注文 {count} 件はこの数値に含まれていません"
   },
   "responseSla": {
     "label": "応答SLA",

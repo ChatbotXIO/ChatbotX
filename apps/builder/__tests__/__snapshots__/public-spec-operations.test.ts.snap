@@ -729,6 +729,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
   },
   {
     "method": "GET",
+    "operationId": "carts.get",
+    "path": "/v1/carts/{identifier}",
+  },
+  {
+    "method": "GET",
     "operationId": "channelIntegrations.list",
     "path": "/v1/channel-integrations",
   },
@@ -1359,6 +1364,46 @@ exports[`public API spec — operation naming guard > operation list (operationI
   },
   {
     "method": "POST",
+    "operationId": "discountCodes.create",
+    "path": "/v1/discount-codes",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "discountCodes.delete",
+    "path": "/v1/discount-codes/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "discountCodes.generateCode",
+    "path": "/v1/discount-codes/generate-code",
+  },
+  {
+    "method": "GET",
+    "operationId": "discountCodes.get",
+    "path": "/v1/discount-codes/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "discountCodes.list",
+    "path": "/v1/discount-codes",
+  },
+  {
+    "method": "PATCH",
+    "operationId": "discountCodes.setActive",
+    "path": "/v1/discount-codes/{id}/active",
+  },
+  {
+    "method": "PATCH",
+    "operationId": "discountCodes.update",
+    "path": "/v1/discount-codes/{id}",
+  },
+  {
+    "method": "POST",
+    "operationId": "discountCodes.validate",
+    "path": "/v1/discount-codes/validate",
+  },
+  {
+    "method": "POST",
     "operationId": "dynamicImages.create",
     "path": "/v1/dynamic-images",
   },
@@ -1386,6 +1431,21 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "method": "PUT",
     "operationId": "dynamicImages.update",
     "path": "/v1/dynamic-images/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "ecommerceAnalytics.get",
+    "path": "/v1/ecommerce/analytics",
+  },
+  {
+    "method": "GET",
+    "operationId": "ecommerceSettings.get",
+    "path": "/v1/ecommerce/settings",
+  },
+  {
+    "method": "PATCH",
+    "operationId": "ecommerceSettings.update",
+    "path": "/v1/ecommerce/settings",
   },
   {
     "method": "POST",
@@ -2379,6 +2439,66 @@ exports[`public API spec — operation naming guard > operation list (operationI
   },
   {
     "method": "POST",
+    "operationId": "openHours.create",
+    "path": "/v1/open-hours",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "openHours.delete",
+    "path": "/v1/open-hours/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "openHours.list",
+    "path": "/v1/open-hours",
+  },
+  {
+    "method": "PATCH",
+    "operationId": "openHours.update",
+    "path": "/v1/open-hours/{id}",
+  },
+  {
+    "method": "POST",
+    "operationId": "orders.accept",
+    "path": "/v1/orders/{id}/accept",
+  },
+  {
+    "method": "POST",
+    "operationId": "orders.cancel",
+    "path": "/v1/orders/{id}/cancel",
+  },
+  {
+    "method": "POST",
+    "operationId": "orders.conclude",
+    "path": "/v1/orders/{id}/conclude",
+  },
+  {
+    "method": "POST",
+    "operationId": "orders.create",
+    "path": "/v1/orders",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "orders.delete",
+    "path": "/v1/orders/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "orders.get",
+    "path": "/v1/orders/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "orders.list",
+    "path": "/v1/orders",
+  },
+  {
+    "method": "POST",
+    "operationId": "orders.ship",
+    "path": "/v1/orders/{id}/ship",
+  },
+  {
+    "method": "POST",
     "operationId": "productCategories.create",
     "path": "/v1/product-categories",
   },
@@ -2391,6 +2511,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "method": "GET",
     "operationId": "productCategories.list",
     "path": "/v1/product-categories",
+  },
+  {
+    "method": "PATCH",
+    "operationId": "productCategories.setVisible",
+    "path": "/v1/product-categories/{id}/visible",
   },
   {
     "method": "PUT",
@@ -2501,6 +2626,26 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "method": "PUT",
     "operationId": "products.update",
     "path": "/v1/products/{id}",
+  },
+  {
+    "method": "POST",
+    "operationId": "productVendors.create",
+    "path": "/v1/product-vendors",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "productVendors.delete",
+    "path": "/v1/product-vendors/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "productVendors.list",
+    "path": "/v1/product-vendors",
+  },
+  {
+    "method": "PATCH",
+    "operationId": "productVendors.update",
+    "path": "/v1/product-vendors/{id}",
   },
   {
     "method": "POST",
@@ -3016,6 +3161,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "method": "PATCH",
     "operationId": "webhooks.updateSettings",
     "path": "/v1/webhooks/{id}/settings",
+  },
+  {
+    "method": "GET",
+    "operationId": "webshop.getLink",
+    "path": "/v1/webshop/link",
   },
   {
     "method": "POST",

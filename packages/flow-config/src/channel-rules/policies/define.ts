@@ -114,6 +114,7 @@ const stepExecutionKinds = {
   whatsappCallButton: "channel",
   whatsappFlow: "channel",
   sendProducts: "channel",
+  sendCollection: "channel",
   whatsappLocation: "channel",
   sendMessengerTemplateMessage: "channel",
   facebookCustomAudience: "worker",
@@ -130,6 +131,7 @@ export const channelDeliverableStepTypes = [
   stepTypes.enum.sendAudio,
   stepTypes.enum.sendCard,
   stepTypes.enum.sendCarousel,
+  stepTypes.enum.sendCollection,
   stepTypes.enum.sendFile,
   stepTypes.enum.sendGif,
   stepTypes.enum.sendImage,
@@ -157,6 +159,7 @@ export type ChannelDeliverableStepType =
  */
 const channelOptInStepTypes: readonly ChannelDeliverableStepType[] = [
   stepTypes.enum.sendProducts,
+  stepTypes.enum.sendCollection,
 ]
 
 export const omnichannelDeliverableStepTypes: readonly ChannelDeliverableStepType[] =
