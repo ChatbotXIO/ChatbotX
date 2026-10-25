@@ -269,6 +269,18 @@ const CONTACT_PROFILE_NAME_CAPABILITIES: Record<
 }
 
 const mockReserveLiveCommentWindow = vi.hoisted(() => vi.fn())
+// The gated Google click lookup has its own suite (google-click-lookup.test.ts);
+// here it is a seam that returns what the lookup persisted.
+const mockPersistNewContactGoogleClick = vi.hoisted(() =>
+  vi.fn(async () => undefined),
+)
+const mockLookupAndPersistGoogleClick = vi.hoisted(() =>
+  vi.fn(async () => undefined),
+)
+vi.mock("../src/integration/handlers/google-click-lookup", () => ({
+  lookupAndPersistGoogleClick: mockLookupAndPersistGoogleClick,
+  persistNewContactGoogleClick: mockPersistNewContactGoogleClick,
+}))
 const mockResolveInboundProducts = vi.hoisted(() => vi.fn())
 const mockEmitShoppingCartSent = vi.hoisted(() => vi.fn())
 const mockEmitUserAskedAboutProduct = vi.hoisted(() => vi.fn())
@@ -3861,6 +3873,173 @@ describe("receiveMessage — existing contact profile refresh (post-save)", () =
         data: expect.objectContaining({ sourceId: "psid-123" }),
       }),
     )
+  })
+
+  describe("Google click lookup (zalo)", () => {
+    const lookedUpReferral = {
+      gclid: "EAIaIQobChMI7P_9z568iAMV1234567890",
+      gbraid: null,
+      googleCampaignId: null,
+      googleAdGroupId: null,
+      googleAdId: null,
+      googleClickReceivedAt: "2026-10-25T00:00:00.000Z",
+    }
+    const zaloInbox = { ...fakeInbox, channel: "zalo" }
+    const zaloMessage = {
+      message: { ...baseIncomingMessage, attachments: [] },
+      contact: { sourceId: "psid-123", firstName: "Test" },
+      postbackAction: null,
+      quickReplyAction: null,
+      ref: null,
+    }
+
+    const useZaloInbox = () =>
+      vi
+        .mocked(
+          integrationService.identifyInboxAndIntegrationAuthFromIdentifier,
+        )
+        .mockResolvedValue({
+          inbox: zaloInbox,
+          integrationRow: fakeIntegrationRow,
+        } as never)
+
+    test("an existing contact's inbound message runs the gated lookup before the message is saved", async () => {
+      useZaloInbox()
+      mockRunChannelHandler.mockResolvedValue(zaloMessage)
+
+      await receiveMessage({ ...baseProps, integrationType: "zalo" })
+
+      expect(mockLookupAndPersistGoogleClick).toHaveBeenCalledWith({
+        inbox: zaloInbox,
+        contactInbox: expect.objectContaining({ id: "ci-1" }),
+        incomingMessage: expect.objectContaining({
+          sourceId: baseIncomingMessage.sourceId,
+        }),
+      })
+      expect(
+        mockLookupAndPersistGoogleClick.mock.invocationCallOrder[0],
+      ).toBeLessThan(mockCreateOrUpdate.mock.invocationCallOrder[0])
+    })
+
+    test("a lookup never changes the message tracking (the click is saved by the lookup itself)", async () => {
+      useZaloInbox()
+      mockRunChannelHandler.mockResolvedValue(zaloMessage)
+
+      await receiveMessage({ ...baseProps, integrationType: "zalo" })
+
+      const [{ tracking }] = mockRecordInboundActivity.mock.calls.at(-1) as [
+        { tracking: Record<string, unknown> },
+      ]
+      expect(tracking).not.toHaveProperty("referral")
+    })
+
+    test("a referral-only delivery (no message) never runs the lookup", async () => {
+      useZaloInbox()
+      mockRunChannelHandler.mockResolvedValue({ ...zaloMessage, message: null })
+
+      await receiveMessage({ ...baseProps, integrationType: "zalo" })
+
+      expect(mockLookupAndPersistGoogleClick).not.toHaveBeenCalled()
+    })
+
+    const newZaloContactInserts = async (profile: Record<string, unknown>) => {
+      useZaloInbox()
+      mockFindContactInbox.mockResolvedValue(undefined)
+      mockWorkspaceFind.mockResolvedValue({ ownerId: "owner-1" })
+      mockRunChannelHandler.mockImplementation(
+        (_domain: string, action: string) =>
+          Promise.resolve(action === "getProfile" ? profile : zaloMessage),
+      )
+      const inserted: Record<string, unknown>[] = []
+      const tx = {
+        insert: () => ({
+          values: (values: Record<string, unknown>) => {
+            inserted.push(values)
+            return { returning: () => Promise.resolve([values]) }
+          },
+        }),
+      }
+      mockCreateNewContactWithMac.mockImplementation(
+        async (input: {
+          create: (tx: unknown) => Promise<{ value: unknown }>
+        }) => ({
+          ok: true,
+          value: (await input.create(tx)).value,
+        }),
+      )
+
+      await receiveMessage({ ...baseProps, integrationType: "zalo" })
+
+      return { contactRow: inserted[0], contactInboxRow: inserted[1] }
+    }
+
+    test("a new contact with a click is an ads contact, and the click is saved after the commit, not in the insert", async () => {
+      const { contactRow, contactInboxRow } = await newZaloContactInserts({
+        firstName: "Zalo Contact",
+        referral: lookedUpReferral,
+      })
+
+      expect(contactInboxRow).toMatchObject({ source: "ads" })
+      expect(contactInboxRow).not.toHaveProperty("referral")
+      expect(contactRow).not.toHaveProperty("referral")
+      expect(mockPersistNewContactGoogleClick).toHaveBeenCalledWith({
+        inbox: zaloInbox,
+        contactInbox: expect.objectContaining({ source: "ads" }),
+        referral: lookedUpReferral,
+      })
+      expect(mockLookupAndPersistGoogleClick).not.toHaveBeenCalled()
+    })
+
+    test("a new contact whose profile call succeeded closes the lookup session", async () => {
+      await newZaloContactInserts({ firstName: "Zalo Contact" })
+
+      expect(mockPersistNewContactGoogleClick).toHaveBeenCalledWith({
+        inbox: zaloInbox,
+        contactInbox: expect.anything(),
+        referral: null,
+      })
+    })
+
+    test("a new contact whose profile call failed leaves the session open", async () => {
+      useZaloInbox()
+      mockFindContactInbox.mockResolvedValue(undefined)
+      mockWorkspaceFind.mockResolvedValue({ ownerId: "owner-1" })
+      mockRunChannelHandler.mockImplementation(
+        (_domain: string, action: string) =>
+          action === "getProfile"
+            ? Promise.reject(new Error("zalo down"))
+            : Promise.resolve(zaloMessage),
+      )
+      mockCreateNewContactWithMac.mockImplementation(
+        async (input: {
+          create: (tx: unknown) => Promise<{ value: unknown }>
+        }) => ({
+          ok: true,
+          value: (
+            await input.create({
+              insert: () => ({
+                values: (values: Record<string, unknown>) => ({
+                  returning: () => Promise.resolve([values]),
+                }),
+              }),
+            })
+          ).value,
+        }),
+      )
+
+      await receiveMessage({ ...baseProps, integrationType: "zalo" })
+
+      expect(mockPersistNewContactGoogleClick).not.toHaveBeenCalled()
+    })
+
+    test("a new contact without a click keeps its resolved source and stores no referral", async () => {
+      const { contactInboxRow } = await newZaloContactInserts({
+        firstName: "Zalo Contact",
+      })
+
+      expect(contactInboxRow.source).not.toBe("ads")
+      expect(contactInboxRow).not.toHaveProperty("referral")
+    })
   })
 
   test("zalo nameless existing contact → getProfile called, display_name applied", async () => {

@@ -1,6 +1,17 @@
 import { type ChannelType, genderTypes } from "@chatbotx.io/database/partials"
 import type { ContactModel } from "@chatbotx.io/database/types"
-import type { IncomingContact } from "@chatbotx.io/sdk"
+import type { IncomingContact, IncomingMessage } from "@chatbotx.io/sdk"
+
+/**
+ * "Real inbound" = not an echo/outgoing send, and not a non-message row (e.g.
+ * an `activity` reaction row). The one definition the worker's profile refresh,
+ * its activity tracking and the Google click lookup share.
+ */
+export const isInboundConversationMessage = (
+  incomingMessage: IncomingMessage,
+): boolean =>
+  incomingMessage.messageType !== "outgoing" &&
+  (incomingMessage.type ?? "message") === "message"
 
 /**
  * Where a contact's profile name can come from, per channel. Exhaustive over

@@ -404,6 +404,14 @@ export type ContactHandlers<IAuth extends AuthValue> = {
         // passes false and the picture is fetched the first time it is needed.
         includeAvatar?: boolean
         includeProfileSnapshot?: boolean
+        /**
+         * Deadline for the channel's profile request (including reading the
+         * response), for best-effort lookups that must not hold the receive
+         * job; no retries when set. Unset = the channel's default client
+         * policy. Avatar download is not covered: callers set `includeAvatar:
+         * false`.
+         */
+        requestTimeoutMs?: number
         sourceId: string
       }
     },

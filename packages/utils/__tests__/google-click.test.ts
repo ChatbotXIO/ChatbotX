@@ -20,8 +20,10 @@ import {
   isRfc3339WithZone,
   parseConversionTime,
   parseGoogleClickRef,
+  resolveGoogleClickCaptureSource,
   stripConsumedRuns,
   toGoogleClickReferral,
+  withoutRepeatedGoogleClick,
 } from "../src/google-click"
 
 const encode = (text: string): string =>
@@ -320,6 +322,77 @@ describe("googleAdsChannels", () => {
   it("is derived from the single channel list", () => {
     expect(googleAdsChannels.options).toEqual([...GOOGLE_ADS_CHANNEL_VALUES])
     expect(googleAdsChannels.safeParse("email").success).toBe(false)
+  })
+})
+
+describe("Google click capture source", () => {
+  it.each([
+    ["whatsapp", "payload"],
+    ["messenger", "payload"],
+    ["zalo", "profileLookup"],
+  ])("resolves %s to %s", (channel, source) => {
+    expect(resolveGoogleClickCaptureSource(channel)).toBe(source)
+  })
+
+  it("resolves a channel that cannot carry a click to null", () => {
+    expect(resolveGoogleClickCaptureSource("telegram")).toBeNull()
+  })
+})
+
+describe("withoutRepeatedGoogleClick", () => {
+  const next = toGoogleClickReferral(
+    { clickIdType: "gclid", clickId: "ABCDEFGHIJ1234567890", campaignId: "1" },
+    RECEIVED_AT,
+  )
+
+  it("returns null when the same gclid is already stored", () => {
+    expect(
+      withoutRepeatedGoogleClick({ gclid: "ABCDEFGHIJ1234567890" }, next),
+    ).toBeNull()
+  })
+
+  it("returns null when the same gbraid is already stored", () => {
+    const gbraid = toGoogleClickReferral(
+      { clickIdType: "gbraid", clickId: "ZYXWVUTSRQ0987654321" },
+      RECEIVED_AT,
+    )
+    expect(
+      withoutRepeatedGoogleClick({ gbraid: "ZYXWVUTSRQ0987654321" }, gbraid),
+    ).toBeNull()
+  })
+
+  it("keeps a different click id", () => {
+    expect(
+      withoutRepeatedGoogleClick({ gclid: "OTHEROTHER1234567890" }, next),
+    ).toBe(next)
+  })
+
+  it("keeps the same id carried by the other click type", () => {
+    expect(
+      withoutRepeatedGoogleClick({ gbraid: "ABCDEFGHIJ1234567890" }, next),
+    ).toBe(next)
+  })
+
+  it.each([
+    ["null", null],
+    ["undefined", undefined],
+    [
+      "a referral without a click",
+      toGoogleClickReferral(
+        { clickIdType: "gclid", clickId: "ABCDEFGHIJ1234567890" },
+        RECEIVED_AT,
+      ),
+    ],
+  ])("returns null when the next referral is %s", (_name, value) => {
+    const withoutClick = value && { ...value, gclid: null, gbraid: null }
+    expect(withoutRepeatedGoogleClick(null, withoutClick)).toBeNull()
+  })
+
+  it.each([
+    ["no stored referral", null],
+    ["a stored referral without a click", { gclid: null, gbraid: null }],
+  ])("keeps the click when there is %s", (_name, existing) => {
+    expect(withoutRepeatedGoogleClick(existing, next)).toBe(next)
   })
 })
 

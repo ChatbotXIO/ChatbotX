@@ -5,20 +5,52 @@ import { z } from "zod"
  *
  * WhatsApp carries them as invisible Variation Selector Supplement characters
  * inside the starter message; Messenger carries them as a structured `ref`
- * (`gclid:<id>,k1:v1`). Pure module — no I/O, safe for any package.
+ * (`gclid:<id>,k1:v1`); Zalo does not put them in the webhook at all, they are
+ * read from the user detail API (`dynamic_param`, same `gclid:<id>` format).
+ * Pure module — no I/O, safe for any package.
  */
 
 /**
  * The ONE list of channels that can carry a Google click. Adding a channel is
- * this value + that channel's capture wiring: call `consumeGoogleClickRef` /
- * `extractInvisibleGoogleClick` in its incoming-message handler and return the
- * result as the message `referral` (with the ref consumed). Everything else
+ * this value + its entry in `GOOGLE_CLICK_CAPTURE_SOURCE_BY_CHANNEL` + that
+ * channel's capture wiring: call `consumeGoogleClickRef` /
+ * `extractInvisibleGoogleClick` in its incoming-message handler (payload
+ * channels) or in its `contact.getProfile` handler (profile-lookup channels)
+ * and return the result as `referral` (with the ref consumed). Everything else
  * (DB column, API filter, labels, gates, persistence, badge, filter) derives
  * from here.
  */
-export const GOOGLE_ADS_CHANNEL_VALUES = ["whatsapp", "messenger"] as const
+export const GOOGLE_ADS_CHANNEL_VALUES = [
+  "whatsapp",
+  "messenger",
+  "zalo",
+] as const
 export const googleAdsChannels = z.enum(GOOGLE_ADS_CHANNEL_VALUES)
 export type GoogleAdsChannel = z.infer<typeof googleAdsChannels>
+
+/**
+ * Where a channel exposes the click: `payload` = inside the incoming webhook
+ * message (parsed by the channel's `receiveMessage`); `profileLookup` = only
+ * through an API call about the contact (read by the channel's
+ * `contact.getProfile`, orchestrated by the worker).
+ */
+export type GoogleClickCaptureSource = "payload" | "profileLookup"
+
+export const GOOGLE_CLICK_CAPTURE_SOURCE_BY_CHANNEL = {
+  whatsapp: "payload",
+  messenger: "payload",
+  zalo: "profileLookup",
+} as const satisfies Record<GoogleAdsChannel, GoogleClickCaptureSource>
+
+/** `null` for a channel that cannot carry a Google click. */
+export const resolveGoogleClickCaptureSource = (
+  channel: string,
+): GoogleClickCaptureSource | null => {
+  const parsed = googleAdsChannels.safeParse(channel)
+  return parsed.success
+    ? GOOGLE_CLICK_CAPTURE_SOURCE_BY_CHANNEL[parsed.data]
+    : null
+}
 
 /** `ContactInbox.referral` keys written for a Google click. */
 export const GOOGLE_CLICK_REFERRAL_KEYS = [
@@ -274,6 +306,42 @@ type GoogleClickCarrier = { gclid?: string | null; gbraid?: string | null }
 export const hasGoogleClick = (
   referral: GoogleClickCarrier | null | undefined,
 ): boolean => Boolean(referral?.gclid || referral?.gbraid)
+
+const readGoogleClick = (
+  referral: GoogleClickCarrier | null | undefined,
+): { clickIdType: GoogleClickIdType; clickId: string } | null => {
+  if (referral?.gclid) {
+    return { clickIdType: "gclid", clickId: referral.gclid }
+  }
+  if (referral?.gbraid) {
+    return { clickIdType: "gbraid", clickId: referral.gbraid }
+  }
+  return null
+}
+
+/**
+ * `next` unless it has no click or is the click already stored on `existing`. A channel whose
+ * click is read by an API lookup (Zalo `dynamic_param` is persistent and
+ * last-wins) returns the same click on every read; storing it again would move
+ * `googleClickReceivedAt` forward and defeat the 6 h / 90 d rules, which count
+ * from the first time the click was seen. Only the currently stored click is
+ * known: `A -> B -> A` is a genuine new click of A.
+ */
+export const withoutRepeatedGoogleClick = <T extends GoogleClickCarrier>(
+  existing: GoogleClickCarrier | null | undefined,
+  next: T | null | undefined,
+): T | null => {
+  const incoming = readGoogleClick(next)
+  if (!(next && incoming)) {
+    return null
+  }
+  const stored = readGoogleClick(existing)
+  const isRepeat =
+    stored !== null &&
+    stored.clickIdType === incoming.clickIdType &&
+    stored.clickId === incoming.clickId
+  return isRepeat ? null : next
+}
 
 /** Counting guidance: leads count "One" per click, purchases "Every". */
 const LEAD_LIKE_CATEGORIES: ReadonlySet<string> = new Set([

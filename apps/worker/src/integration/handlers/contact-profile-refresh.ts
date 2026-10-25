@@ -6,6 +6,7 @@ import {
   hasEmptyProfileName,
   resolveInboundProfileNameSource,
 } from "@chatbotx.io/business"
+import { isInboundConversationMessage } from "@chatbotx.io/business/contact-profile-rules"
 import type { ChannelType } from "@chatbotx.io/database/partials"
 import type { ContactInboxModel, InboxModel } from "@chatbotx.io/database/types"
 import type { IncomingContact, IncomingMessage } from "@chatbotx.io/sdk"
@@ -17,15 +18,6 @@ export type ProfileRefreshCandidate = {
   incomingMessage: IncomingMessage
   contact: ContactProfileName
 }
-
-// "Real inbound" = not an echo/outgoing send, and not a non-message row
-// (e.g. an `activity` reaction row) — owned here so received-message.ts's
-// `getMessageActivityTracking` can import it back and mean the same thing.
-export const isInboundConversationMessage = (
-  incomingMessage: IncomingMessage,
-): boolean =>
-  incomingMessage.messageType !== "outgoing" &&
-  (incomingMessage.type ?? "message") === "message"
 
 /**
  * The channel/message/contact eligibility gate, collapsed to the source the

@@ -143,3 +143,115 @@ describe("Messenger Google click ref", () => {
     expect(result.referral).not.toHaveProperty("gclid")
   })
 })
+
+// Based on Google's Click-to-Message partner samples (Messenger): page id, PSID
+// and timestamp are theirs; the click id is replaced with a valid 10+ char id.
+describe("Messenger Google click partner samples", () => {
+  const PAGE_ID = "1629974200583834"
+  const PSID = "2428783423848061"
+  const GCLID = "EAIaIQobChMIabcdefghij"
+  const GOOGLE_TIMESTAMP = 1_790_914_313_500
+  const RECEIVED_AT = new Date(1_790_914_313_000).toISOString()
+  const googleRef = `gclid:${GCLID},campaignid:123456789,adgroupid:987654321,adid:1122334455`
+
+  const receiveEvent = (messagingEvent: Record<string, unknown>) =>
+    receiveMessage({
+      ctx: { auth: { metadata: { pageId: PAGE_ID } } } as never,
+      data: {
+        integrationType: "messenger",
+        integrationIdentifier: PAGE_ID,
+        payload: {
+          object: "page",
+          entry: [
+            {
+              id: PAGE_ID,
+              time: 1_790_914_314_000,
+              messaging: [messagingEvent],
+            },
+          ],
+        },
+      },
+    })
+
+  const referral = (ref: string) => ({
+    ref,
+    source: "SHORTLINK",
+    type: "OPEN_THREAD",
+  })
+
+  // A: messaging_referrals, existing conversation.
+  const referralEvent = (ref: string) => ({
+    sender: { id: PSID },
+    recipient: { id: PAGE_ID },
+    timestamp: GOOGLE_TIMESTAMP,
+    referral: referral(ref),
+  })
+
+  // B: messaging_postbacks, "Get Started" tap. Google's sample has no `mid`.
+  const googlePostback = (ref: string) => ({
+    sender: { id: PSID },
+    recipient: { id: PAGE_ID },
+    timestamp: GOOGLE_TIMESTAMP,
+    postback: {
+      title: "Get Started",
+      payload: "GET_STARTED_PAYLOAD",
+      referral: referral(ref),
+    },
+  })
+
+  test("sample A: a referral-only event is captured with all four Google ids and no message", async () => {
+    const result = await receiveEvent(referralEvent(googleRef))
+
+    expect(result.message).toBeNull()
+    expect(result.ref).toBeNull()
+    expect(result.referral).toMatchObject({
+      ref: null,
+      gclid: GCLID,
+      gbraid: null,
+      googleCampaignId: "123456789",
+      googleAdGroupId: "987654321",
+      googleAdId: "1122334455",
+      googleClickReceivedAt: RECEIVED_AT,
+    })
+    expect(JSON.stringify(result.referral?.raw)).not.toContain(GCLID)
+  })
+
+  test("sample A on iOS: gbraid replaces gclid", async () => {
+    const result = await receiveEvent(
+      referralEvent(googleRef.replace("gclid:", "gbraid:")),
+    )
+
+    expect(result.referral).toMatchObject({ gclid: null, gbraid: GCLID })
+  })
+
+  test("sample A with a percent-encoded ref (URL-encoded m.me link)", async () => {
+    const result = await receiveEvent(
+      referralEvent(encodeURIComponent(googleRef)),
+    )
+
+    expect(result.ref).toBeNull()
+    expect(result.referral).toMatchObject({
+      gclid: GCLID,
+      googleCampaignId: "123456789",
+    })
+  })
+
+  test("sample B verbatim (no postback.mid) is rejected by the envelope schema", async () => {
+    await expect(receiveEvent(googlePostback(googleRef))).rejects.toThrow()
+  })
+
+  test("sample B with a postback.mid: the Get Started action still fires and the click is captured", async () => {
+    const event = googlePostback(googleRef)
+    const result = await receiveEvent({
+      ...event,
+      postback: { ...event.postback, mid: "m_MESSAGE-ID" },
+    })
+
+    expect(result.postbackAction).toBe("GET_STARTED_PAYLOAD")
+    expect(result.ref).toBeNull()
+    expect(result.referral).toMatchObject({
+      gclid: GCLID,
+      googleClickReceivedAt: RECEIVED_AT,
+    })
+  })
+})

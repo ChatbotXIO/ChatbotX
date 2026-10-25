@@ -4,6 +4,7 @@ import type {
   IncomingCommerceEvent,
   IncomingContact,
   IncomingMessage,
+  MessageReferral,
   ThreadControlReceiveInfo,
 } from "./message"
 
@@ -36,29 +37,6 @@ export const HandleRequestType = {
   webhook: "webhook",
   generateAuthUrl: "generate-auth-url",
 } as const
-
-export type MessageReferral = {
-  ref?: string | null
-  source?: string | null
-  type?: string | null
-  adId?: string | null
-  adTitle?: string | null
-  sourceUrl?: string | null
-  sourcePlatform?: string | null
-  ctwaClid?: string | null
-  postId?: string | null
-  photoUrl?: string | null
-  videoUrl?: string | null
-  productId?: string | null
-  flowId?: string | null
-  gclid?: string | null
-  gbraid?: string | null
-  googleCampaignId?: string | null
-  googleAdGroupId?: string | null
-  googleAdId?: string | null
-  googleClickReceivedAt?: string | null
-  raw?: Record<string, unknown>
-}
 
 export type ReceivedMessageResult = {
   message: IncomingMessage | null

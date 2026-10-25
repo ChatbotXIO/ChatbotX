@@ -106,16 +106,21 @@ describe("selectGoogleAdsBadge (conversation badge)", () => {
 })
 
 describe("googleAdsBadgeLabelKey", () => {
-  test("names the Google pill per channel (GA CCWA / GA CCTM)", () => {
+  test("names the Google pill per channel (GA CCWA / GA CCTM / GA Zalo)", () => {
     expect(googleAdsBadgeLabelKey("whatsapp")).toBe(
       "fields.adReferral.googleAdsWhatsapp",
     )
     expect(googleAdsBadgeLabelKey("messenger")).toBe(
       "fields.adReferral.googleAdsMessenger",
     )
+    expect(googleAdsBadgeLabelKey("zalo")).toBe(
+      "fields.adReferral.googleAdsZalo",
+    )
   })
 
   test("an unknown channel keeps the generic label", () => {
-    expect(googleAdsBadgeLabelKey("zalo")).toBe("fields.adReferral.googleAds")
+    expect(googleAdsBadgeLabelKey("telegram")).toBe(
+      "fields.adReferral.googleAds",
+    )
   })
 })

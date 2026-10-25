@@ -4,9 +4,14 @@ import type { ZaloAuthValue } from "../schema"
 
 const getProfile: ContactHandlers<ZaloAuthValue>["getProfile"] = async ({
   ctx,
-  data: { sourceId },
+  data: { sourceId, includeAvatar, requestTimeoutMs },
 }) => {
-  const profile = await getUserProfile({ ctx, psid: sourceId })
+  const profile = await getUserProfile({
+    ctx,
+    psid: sourceId,
+    includeAvatar,
+    requestTimeoutMs,
+  })
   return profile
 }
 

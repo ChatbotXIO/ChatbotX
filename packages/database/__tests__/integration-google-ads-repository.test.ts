@@ -26,6 +26,29 @@ describe("integrationGoogleAdsRepository", () => {
     expect(wheres[0]).toContain('"workspaceId" = $')
   })
 
+  test.each([
+    ["a row exists", [{ id: "1" }], true],
+    ["no row exists", [], false],
+  ])("existsByWorkspaceId is workspace-scoped and false/true when %s", async (_name, rows, expected) => {
+    const wheres: string[] = []
+    const limit = vi.fn().mockResolvedValue(rows)
+    const where = vi.fn((condition: Condition) => {
+      wheres.push(dialect.sqlToQuery(condition).sql)
+      return { limit }
+    })
+    const tx = {
+      select: vi.fn(() => ({ from: vi.fn(() => ({ where })) })),
+    } as never
+
+    const exists = await integrationGoogleAdsRepository.existsByWorkspaceId(
+      { workspaceId: "ws" },
+      tx,
+    )
+
+    expect(exists).toBe(expected)
+    expect(wheres[0]).toContain('"workspaceId" = $')
+  })
+
   test("updateSetup is workspace-scoped and writes only the given values", async () => {
     let setValues: unknown
     let whereSql = ""

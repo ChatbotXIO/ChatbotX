@@ -1,8 +1,8 @@
 # Google Ads conversion tracking (Click-to-Message)
 
 ChatbotX attributes chatbot conversations back to the **Google ad** that started
-them — Google "Message Ads" (Search / Performance Max) that open a **WhatsApp** or
-**Messenger** chat — and reports downstream outcomes (qualified lead, purchase)
+them — Google "Message Ads" (Search / Performance Max) that open a **WhatsApp**,
+**Messenger** or **Zalo** chat — and reports downstream outcomes (qualified lead, purchase)
 into the advertiser's Google Ads account as **offline click conversions**, so
 Google can optimize against what happens inside the chat.
 
@@ -134,9 +134,9 @@ adding one needs no migration.
 
 ## Capture formats
 
-Exactly one of `gclid`/`gbraid` per click. Both channels use the one-call helpers
+Exactly one of `gclid`/`gbraid` per click. All channels use the one-call helpers
 in `packages/utils/src/google-click.ts` (`consumeGoogleClickRef`,
-`extractInvisibleGoogleClick`), which build the referral with
+`extractInvisibleGoogleClick`; Zalo feeds `dynamic_param` to the former), which build the referral with
 `toGoogleClickReferral`, so the shape is identical.
 
 ### WhatsApp (invisible Unicode in the starter message)
@@ -177,6 +177,64 @@ in `packages/utils/src/google-click.ts` (`consumeGoogleClickRef`,
   verbatim and the ChatbotX ref router never looks it up (no `runRef` job).
 - `googleClickReceivedAt` = the Messenger messaging timestamp.
 - The legacy raw `ref=<gclid>` form (no `gclid:` prefix) is **not** supported.
+- **Where Meta delivers it** (`messaging_referrals` / `messaging_postbacks` reference,
+  m.me links page): an existing thread sends a top-level `messaging.referral`
+  (Google sample A); a new thread sends it nested in `postback.referral` after a
+  Get Started tap (sample B) or in `message.referral` (CTM ads). The handler resolves
+  all three slots in one place, `messaging.referral ?? postback.referral ?? message.referral`.
+- **Verified against Google's two partner samples** (`integrations/messenger/__tests__/google-click-ref.test.ts`):
+  sample A yields no message, `ref = null` and the six keys; `gbraid:` and a
+  percent-encoded `ref` behave the same; `googleClickReceivedAt` is the sample
+  timestamp `1790914313500` in whole seconds.
+- **Two points to confirm with Google.** Sample B has no `postback.mid`, which Meta's
+  reference example includes and `messengerPostbackSchema` requires, so the sample
+  as sent is rejected by the envelope check (pinned by a test); and Meta documents
+  `ref` as alphanumeric plus `-_=` only while Google's format uses `:` and `,`.
+
+### Zalo (profile lookup, not in the webhook)
+
+`integrations/zalo/src/api/user.ts` (`getUserProfile`), orchestrated by
+`apps/worker/src/integration/handlers/google-click-lookup.ts` and the policy in
+`packages/business/src/google-ads/click-lookup.ts`.
+
+- **Carrier (Zalo docs, "Truy xuất chi tiết người dùng", v3.0).**
+  `GET https://openapi.zalo.me/v3.0/oa/user/detail?data={"user_id":"…"}` returns
+  `data.dynamic_param`: the **last** `dynamic_param` the user reached the OA with
+  through its Dynamic URL. The `user_send_text` webhook carries no such field
+  (`app_id`, `sender`, `recipient`, `user_id_by_app`, `event_name`, `message`,
+  `timestamp` only), so the click can only be read by this call. Format:
+  `gclid:<id>` or `gbraid:<id>` (Google omits campaign, ad group and ad ids on Zalo).
+- **Parsing.** The same `consumeGoogleClickRef` as Messenger. A `dynamic_param` that is
+  not a Google click is ignored and never stored. `googleClickReceivedAt` is the time of
+  the lookup: the profile call has no message timestamp.
+- **When it runs** (`GOOGLE_CLICK_CAPTURE_SOURCE_BY_CHANNEL`: `zalo = profileLookup`):
+  - **New contact:** always, inside the profile call the worker already makes while
+    creating the contact. The contact source becomes `ads`, and the click is saved right
+    after the creation commits (not inside the insert, so the dedicated save can be made
+    error-safe). In a workspace with Google Ads the session lookup is
+    then marked done; a failed save leaves it open for the existing-contact lookup.
+  - **Existing contact:** on an inbound message, only when no lookup completed in the
+    last 24 h and the workspace has a Google Ads integration (any readiness). Two Redis
+    markers per contact inbox, each with a TTL (so Redis only holds contacts that wrote
+    recently): `attempt` (5 min, atomic `SET NX`, taken first: it is the backoff and the
+    guard against concurrent jobs, and it limits the Google Ads presence read to one
+    per contact inbox per 5 min) and `done` (24 h, set only after the click was persisted,
+    or when the channel knew no click).
+  - The request has a 5 s deadline and no retries, skips the avatar download, never
+    throws into the receive job, and a Redis error skips the lookup (cost over
+    attribution).
+- **No re-stamping.** Zalo returns the same `dynamic_param` until the user opens another
+  Dynamic URL, so a click equal to the stored one is not written again
+  (`withoutRepeatedGoogleClick`). Otherwise `googleClickReceivedAt` would move forward on
+  every lookup and defeat the 6 h and 90 d rules. `A -> B -> A` counts as a new click of A.
+- **Retries and duplicates.** Zalo re-sends undelivered webhooks (30 s, 5 m, 15 m, 30 m,
+  1 h, header `num_retry`); BullMQ retries too. The markers and the same-click no-op make
+  both idempotent.
+- **Logging.** The click id is never logged by the lookup: a failed save logs only the
+  error type, because the database error text embeds the query parameters.
+- The contact source for a new contact is `ads` when the lookup found a click; an
+  existing contact keeps its source. If the save right after creation fails in a workspace
+  without Google Ads, the contact stays `ads` with no click (nothing retries it there).
 
 ### Contact source
 
@@ -186,8 +244,10 @@ Meta `SHORTLINK` referral, which would otherwise map to `botLink`.
 
 ## Adding a channel
 
-A channel needs **one list value plus its own capture wiring**: no DB migration,
-no builder or i18n edit (event history labels reuse the app-wide inbox label).
+A channel needs **one list value, its capture source and its own capture wiring**: no DB migration,
+the only builder/i18n edit is the badge label in `conversations/utils/ad-badge.ts` plus
+its `fields.adReferral.*` key in every locale file (event history and stats labels reuse
+the app-wide inbox label).
 Everything after capture (persistence on `ContactInbox.referral`, contact source,
 badge, filter, flow step, trigger action, delivery) is channel-agnostic. The
 capture wiring is the part that is specific to each channel:
@@ -198,17 +258,22 @@ capture wiring is the part that is specific to each channel:
 - **Telegram:** the handler does not produce a `referral` today; it must start
   returning one built from the `/start` parameter (64 characters, `[A-Za-z0-9_-]`
   only, so the `gclid:<id>` format needs a new compact encoding first).
-- **Zalo:** the carrier field is unverified (spike not performed); the webhook
-  schema and the message handler must be extended once it is known.
+- **Zalo:** done, as a `profileLookup` channel (see "Zalo" above).
 - **Webchat:** capture belongs in the builder's guest-message path
   (`create-webchat-message.action.ts`), reading `gclid`/`gbraid` from the landing
   URL on the client; the value is browser-supplied, so it needs server-side
   validation and a trust decision.
 
 1. Add the `ChannelType` value to `GOOGLE_ADS_CHANNEL_VALUES` in
-   `packages/utils/src/google-click.ts`. The DB column (`text`), the API filter,
-   the `recordGoogleAdsConversion` gate (`unsupportedChannel` outcome) and the
-   badge all derive from it.
+   `packages/utils/src/google-click.ts` and its entry in
+   `GOOGLE_CLICK_CAPTURE_SOURCE_BY_CHANNEL` (`payload`: the click is in the incoming
+   webhook message; `profileLookup`: it is only readable through the channel's
+   `contact.getProfile`, which then returns it as `referral`, and the worker gates and
+   persists it). The table is `satisfies Record<GoogleAdsChannel, …>`, so forgetting it
+   is a compile error, as is forgetting the badge label in
+   `apps/builder/.../ad-badge.ts` (plus its key in every locale file). The DB column
+   (`text`), the API filter and the `recordGoogleAdsConversion` gate
+   (`unsupportedChannel` outcome) derive from the list.
 2. In that channel's incoming-message handler, call the helper that matches its
    carrier and merge the returned `googleReferral` into the message `referral`
    (`contactInboxService.updateTracking` persists it):
@@ -232,7 +297,7 @@ Channel notes:
 - **Webchat:** there is no click-to-message carrier; the widget must read the
   Google click id from a URL parameter on the host page and pass it on session
   start.
-- **Zalo:** the carrier is unverified (see the Zalo spike below).
+- **Zalo:** `dynamic_param` read through the user detail API (see the Zalo section above).
 
 ## Attribution policy
 
@@ -470,7 +535,7 @@ in ONE `resolveContactVariablesDeep` call and turns the consent into a typed inp
 | Outcome | Flow step `errorMessage` code | Meaning |
 |---------|-------------------------------|---------|
 | `queued` | (success) | Row inserted (or an existing duplicate recovered). |
-| `noClick` | `google_ads_no_click` | Inbox has no `gclid`/`gbraid`, no usable `googleClickReceivedAt`, or is not WhatsApp/Messenger. |
+| `noClick` | `google_ads_no_click` | Inbox has no `gclid`/`gbraid`, no usable `googleClickReceivedAt`, or is not WhatsApp/Messenger/Zalo. |
 | `noAccount` | `google_ads_no_account` | No ready Google Ads account in the workspace. |
 | `unknownConversionAction` | `google_ads_unknown_conversion_action` | Action id not in the synced cache. |
 | `actionDisabled` | `google_ads_action_disabled` | Action status is not `ENABLED`. |
@@ -1280,8 +1345,7 @@ LIMIT 50;
   and `google_ad_purchased`, pre-built templates, a funnel report). None of these
   exist; the integration is Settings → Integrations → Google Ads, a "From Google
   Ads" contact filter, and the flow step / trigger action.
-- **Not implemented from the partner documents:** Zalo click capture (the carrier
-  field is unknown), website-to-message click capture (SOW 5.5.2), a connect or
+- **Not implemented from the partner documents:** website-to-message click capture (SOW 5.5.2), a connect or
   disconnect report for the SOW's notification duties, a retention policy for
   stored click ids, and guidance on conversion categories and Primary / Secondary
   goals.
@@ -1316,8 +1380,17 @@ LIMIT 50;
   conversion; "Always granted" is the workspace's own legal statement. A per-step
   override and the "each new event" identity mode are deferred.
 - **One Google Ads account per workspace**; switching = disconnect + connect.
-- **WhatsApp and Messenger only.** Zalo is unverified (see the spike section);
-  `GOOGLE_ADS_CHANNEL_VALUES` is `whatsapp | messenger`.
+- **WhatsApp, Messenger and Zalo only** (`GOOGLE_ADS_CHANNEL_VALUES`).
+- **Zalo is best effort.** The click is `dynamic_param`, the user's *last* Dynamic URL
+  parameter, so a first message can carry an older click; a lookup lost to a Zalo API
+  or save failure is retried by a later message after its 5 min backoff (a failed save
+  at contact creation sets no backoff and is retried by the next message) (a Redis
+  failure skips the lookup for that message only), and at most
+  one lookup completes per contact per 24 h, so a second ad click inside that window is
+  attributed only by an inbound message after it expires. Zalo does not document the Dynamic URL format, its
+  limits, how long `dynamic_param` persists, whether the API can lag behind the latest
+  click, or the rate limit of the user detail API; those are taken from Google's
+  partner document only.
 - Legacy Messenger raw `ref=<gclid>` (no `gclid:` prefix) is unsupported.
 - **19 non-English/non-Vietnamese locales are machine-translated** and have not
   been reviewed by native speakers: ar, az, da, de, es, fi, fr, he, id, it, ja,
@@ -1342,39 +1415,31 @@ LIMIT 50;
 - Satellite `auth` is plaintext (repo convention); `googleSheets` also deviates
   from the `makeAuthStore` naming convention (harmless, it has no `refreshAuth`).
 
-## Zalo spike (not performed)
+## Zalo verification
 
-**No Zalo Official Account test was run in this implementation.** There was no
-OA and no webhook access available, so there are **no results** and no captured
-fixture. Everything below is the procedure still to be done; nothing in it has
-been observed.
+What was checked against Zalo's official documentation (developers.zalo.me, read
+2026-10-25):
 
-What is known from documents only:
+- `GET /v3.0/oa/user/detail` returns `data.dynamic_param` (see the Zalo capture section).
+- The `user_send_text` webhook has no `dynamic_param`.
+- Zalo retries undelivered webhooks with the same body and a `num_retry` header.
+- `follow.source` is not a carrier for it.
 
-- Google's partner documents describe the Zalo URL as
-  `<oa url>?dynamin_param=gclid:<id>,…` (Google's spelling of the parameter).
-- Zalo's public webhook documentation documents **no field** that carries this
-  parameter: `follow.source` is one of `oa_profile | message_invite |
-  social_plugin`, and `user_send_text` carries only `message.{msg_id, text,
-  attachments}`, the same shape as `integrations/zalo/src/schema/webhook.ts`.
-- Therefore no Zalo capture code exists and `GOOGLE_ADS_CHANNEL_VALUES` excludes Zalo.
+What is **not** in Zalo's documentation and rests on Google's private partner document
+(the `https://zalo.me/<oa_id>?open_type=c&prefill_text=…&dynamic_param=gclid:<id>` URL
+format, the 140 and 100 character limits, mobile hand-off behaviour): treat as unverified
+until a real Click-to-Zalo test.
 
-Manual procedure (≤ 0.5 day, no product code):
+Manual acceptance (needs a dev OA):
 
-1. On a dev OA with **every webhook event enabled**, log the raw webhook bodies.
-2. Open `https://zalo.me/{oa_id}?dynamin_param=gclid:TEST123,campaignid:1`
-   - as a **non-follower**,
-   - as a **follower**,
-   - and via `zalo.me/{custom_url}` (the OA's custom URL).
-3. For each case record the webhook event name(s) and the exact field that
-   carries the value, or the literal word "none".
-4. Save the raw body of each case as a fixture in this document.
-5. If the result is "none", ask Google's CTM contact (`ctm-ads@google.com`).
+1. Open Google's test URL
+   `https://zalo.me/<oa_id>?open_type=c&prefill_text=Hello&dynamic_param=gclid:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz_-`
+   (and the `gbraid:` variant) as a new user and as a returning user.
+2. Send the starter message.
+3. Check `ContactInbox.referral.gclid` (or `gbraid`), the "GA Zalo" badge and the "From
+   Google Ads" filter.
 
-Open question for Google's CTM contact: **how is the Zalo URL built and how is
-the click id supposed to reach the advertiser?** In particular, which webhook
-event and field should carry `dynamin_param`, whether it is delivered at all for
-non-followers, and whether the parameter name is really `dynamin_param`.
-
-Only after a passing spike should Zalo be added: one `GOOGLE_ADS_CHANNEL_VALUES` value
-plus one capture call in `integrations/zalo` (plan D3).
+Questions for Google's CTM contact: the exact Dynamic URL format and limits, how long
+Zalo keeps `dynamic_param`, whether it can lag behind a new click, whether it survives
+the mobile browser-to-app hand-off (Google reports an investigation), and the sample B
+points listed under Messenger.

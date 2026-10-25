@@ -115,6 +115,12 @@ const {
 // Worker-boot infra (mirrors integration-worker-boot.test.ts)
 // ---------------------------------------------------------------------------
 
+// The gated Google click lookup has its own suite (google-click-lookup.test.ts).
+vi.mock("../src/integration/handlers/google-click-lookup", () => ({
+  lookupAndPersistGoogleClick: vi.fn(async () => null),
+  persistNewContactGoogleClick: vi.fn(async () => undefined),
+}))
+
 vi.mock("bullmq", () => {
   class WorkerMock {
     close = vi.fn()
