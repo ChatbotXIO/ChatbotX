@@ -118,10 +118,6 @@ export const workspaceDeletionRecordModel = pgTable(
   },
   (table) => [
     unique("WorkspaceDeletionRecord_workspaceId_key").on(table.workspaceId),
-    index("WorkspaceDeletionRecord_workspaceName_idx").on(table.workspaceName),
     index("WorkspaceDeletionRecord_ownerEmail_idx").on(table.ownerEmail),
-    index("WorkspaceDeletionRecord_deletionRequestedByEmail_idx").on(
-      table.deletionRequestedByEmail,
-    ),
   ],
 )

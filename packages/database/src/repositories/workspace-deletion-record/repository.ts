@@ -7,8 +7,6 @@ import {
   eq,
   ilike,
   or,
-  type SQL,
-  sql,
 } from "../../client"
 import {
   contactModel,
@@ -188,21 +186,20 @@ class WorkspaceDeletionRecordRepository {
     search?: string
     tenantId?: string
   }) {
-    const conditions: SQL[] = [sql`TRUE`]
-    if (input.tenantId) {
-      conditions.push(eq(workspaceDeletionRecordModel.tenantId, input.tenantId))
-    }
-    if (input.search) {
-      const pattern = `%${input.search}%`
-      const searchCondition = or(
-        ilike(workspaceDeletionRecordModel.workspaceName, pattern),
-        ilike(workspaceDeletionRecordModel.ownerEmail, pattern),
-      )
-      if (searchCondition) {
-        conditions.push(searchCondition)
-      }
-    }
-    const where = and(...conditions)
+    const where = and(
+      input.tenantId
+        ? eq(workspaceDeletionRecordModel.tenantId, input.tenantId)
+        : undefined,
+      input.search
+        ? or(
+            ilike(
+              workspaceDeletionRecordModel.workspaceName,
+              `%${input.search}%`,
+            ),
+            ilike(workspaceDeletionRecordModel.ownerEmail, `%${input.search}%`),
+          )
+        : undefined,
+    )
     const [data, total] = await Promise.all([
       db
         .select()

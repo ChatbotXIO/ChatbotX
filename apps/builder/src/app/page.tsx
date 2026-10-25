@@ -88,16 +88,18 @@ export default async function MainPage() {
           user={userInfo}
         />
 
-        <WorkspacesList
-          blocked={cloud && blocked}
-          isAtLimit={atLimit?.workspaces ?? false}
-          ownerWorkspaceIds={ownerWorkspaceIds}
-          reason={blockReason}
-          superAdminWorkspaceIds={superAdminWorkspaceIds}
-          user={userInfo}
-          workspaces={allWorkspaces}
-        />
-        <DeletedWorkspaces ownerId={user.id} />
+        <div className="min-w-0 flex-1 space-y-8">
+          <WorkspacesList
+            blocked={cloud && blocked}
+            isAtLimit={atLimit?.workspaces ?? false}
+            ownerWorkspaceIds={ownerWorkspaceIds}
+            reason={blockReason}
+            superAdminWorkspaceIds={superAdminWorkspaceIds}
+            user={userInfo}
+            workspaces={allWorkspaces}
+          />
+          <DeletedWorkspaces ownerId={user.id} />
+        </div>
       </div>
     </div>
   )

@@ -64,6 +64,8 @@ vi.mock("@chatbotx.io/database/schema", () => ({
       name: z.string(),
       token: z.string().nullable(),
     }),
+  workspaceDeletionRecordDetailsSchema: z.object({}),
+  workspaceDeletionRecordUsageSnapshotSchema: z.object({}),
   workspaceModel: {},
 }))
 
