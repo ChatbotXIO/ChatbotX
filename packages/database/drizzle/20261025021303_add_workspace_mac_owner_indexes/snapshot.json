@@ -1,10 +1,10 @@
 {
+  "id": "b01340e2-fd19-4bb0-a557-79fe40f3a648",
+  "prevIds": [
+    "9cb9d9e1-e1a1-42c4-b7bd-8099d81756c4"
+  ],
   "version": "8",
   "dialect": "postgres",
-  "id": "de2c4ea5-f233-4a1d-8d53-6831fb834d2c",
-  "prevIds": [
-    "60d41c7f-6c73-46dc-9ce5-35859d6955cd"
-  ],
   "ddl": [
     {
       "values": [

@@ -13,11 +13,11 @@ import { sequenceDispatchModel } from "../src/schema/sequence-dispatch"
 
 const NORMAL_MIGRATION_PATH = join(
   import.meta.dirname,
-  "../drizzle/20261024092420_add_purge_fk_indexes/migration.sql",
+  "../drizzle/20261025020838_add_workspace_purge_indexes/migration.sql",
 )
 const PARTITIONED_MIGRATION_PATH = join(
   import.meta.dirname,
-  "../drizzle/20261024091012_add_purge_fk_indexes_partitioned/migration.sql",
+  "../drizzle/20261025020711_add_workspace_purge_partitioned_indexes/migration.sql",
 )
 
 const normalTargets = [

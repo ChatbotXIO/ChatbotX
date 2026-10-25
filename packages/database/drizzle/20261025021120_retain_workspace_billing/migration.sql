@@ -1,3 +1,11 @@
+-- Retain workspace billing evidence past workspace deletion: bot-message usage
+-- and the deletion record get their own tables, and WorkspaceMac stops cascading
+-- from Workspace and is keyed by owner/tenant instead.
+--
+-- Transactional on purpose: nothing here is CONCURRENTLY, so the runner wraps
+-- the file in one transaction and a failure leaves no partial state. The
+-- WorkspaceMac indexes and the FK validation live in the next migration
+-- (add_workspace_mac_owner_indexes) because they cannot run in a transaction.
 CREATE TABLE "WorkspaceBotMessageUsage" (
 	"id" bigint PRIMARY KEY,
 	"createdAt" timestamp(6) with time zone DEFAULT now() NOT NULL,
@@ -43,17 +51,6 @@ WHERE mac."workspaceId" = workspace."id"
 ALTER TABLE "WorkspaceMac" DROP CONSTRAINT IF EXISTS "WorkspaceMac_workspaceId_Workspace_id_fkey";--> statement-breakpoint
 CREATE INDEX "WorkspaceBotMessageUsage_ownerId_periodStart_idx" ON "WorkspaceBotMessageUsage" ("ownerId","periodStart");--> statement-breakpoint
 CREATE INDEX "WorkspaceBotMessageUsage_tenantId_periodStart_idx" ON "WorkspaceBotMessageUsage" ("tenantId","periodStart");--> statement-breakpoint
-CREATE INDEX "WorkspaceDeletionRecord_workspaceName_idx" ON "WorkspaceDeletionRecord" ("workspaceName");--> statement-breakpoint
 CREATE INDEX "WorkspaceDeletionRecord_ownerEmail_idx" ON "WorkspaceDeletionRecord" ("ownerEmail");--> statement-breakpoint
-CREATE INDEX "WorkspaceDeletionRecord_deletionRequestedByEmail_idx" ON "WorkspaceDeletionRecord" ("deletionRequestedByEmail");--> statement-breakpoint
-DO $$ BEGIN
-  IF EXISTS (SELECT 1 FROM pg_index WHERE indexrelid = to_regclass('"WorkspaceMac_ownerId_periodStart_idx"') AND NOT indisvalid) THEN DROP INDEX "WorkspaceMac_ownerId_periodStart_idx"; END IF;
-END $$;--> statement-breakpoint
-CREATE INDEX CONCURRENTLY IF NOT EXISTS "WorkspaceMac_ownerId_periodStart_idx" ON "WorkspaceMac" ("ownerId","periodStart");--> statement-breakpoint
-DO $$ BEGIN
-  IF EXISTS (SELECT 1 FROM pg_index WHERE indexrelid = to_regclass('"WorkspaceMac_tenantId_periodStart_idx"') AND NOT indisvalid) THEN DROP INDEX "WorkspaceMac_tenantId_periodStart_idx"; END IF;
-END $$;--> statement-breakpoint
-CREATE INDEX CONCURRENTLY IF NOT EXISTS "WorkspaceMac_tenantId_periodStart_idx" ON "WorkspaceMac" ("tenantId","periodStart");--> statement-breakpoint
 ALTER TABLE "WorkspaceBotMessageUsage" ADD CONSTRAINT "WorkspaceBotMessageUsage_ownerId_User_id_fkey" FOREIGN KEY ("ownerId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;--> statement-breakpoint
-ALTER TABLE "WorkspaceMac" ADD CONSTRAINT "WorkspaceMac_ownerId_User_id_fkey" FOREIGN KEY ("ownerId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE NOT VALID;--> statement-breakpoint
-ALTER TABLE "WorkspaceMac" VALIDATE CONSTRAINT "WorkspaceMac_ownerId_User_id_fkey";
+ALTER TABLE "WorkspaceMac" ADD CONSTRAINT "WorkspaceMac_ownerId_User_id_fkey" FOREIGN KEY ("ownerId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE NOT VALID;
