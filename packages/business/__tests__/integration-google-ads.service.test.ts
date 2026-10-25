@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const mocks = vi.hoisted(() => ({
   findByWorkspaceId: vi.fn(),
+  existsByWorkspaceId: vi.fn(),
   updateSetup: vi.fn(),
   listConnectedCustomerIds: vi.fn(),
   findByIntegrationId: vi.fn(),
@@ -15,6 +16,7 @@ const mocks = vi.hoisted(() => ({
 vi.mock("@chatbotx.io/database/repositories", () => ({
   integrationGoogleAdsRepository: {
     findByWorkspaceId: mocks.findByWorkspaceId,
+    existsByWorkspaceId: mocks.existsByWorkspaceId,
     updateSetup: mocks.updateSetup,
     listConnectedCustomerIds: mocks.listConnectedCustomerIds,
   },
@@ -100,6 +102,23 @@ describe("IntegrationGoogleAdsService", () => {
     mocks.getConsent.mockResolvedValue({
       status: "absent",
       consent: NOT_PROVIDED,
+    })
+  })
+
+  describe("hasIntegration", () => {
+    test.each([
+      [true, true],
+      [false, false],
+    ])("is %s when the repository reports %s", async (exists, expected) => {
+      mocks.existsByWorkspaceId.mockResolvedValue(exists)
+
+      expect(await integrationGoogleAdsService.hasIntegration("ws-1")).toBe(
+        expected,
+      )
+      expect(mocks.existsByWorkspaceId).toHaveBeenCalledWith({
+        workspaceId: "ws-1",
+      })
+      expect(mocks.findByIntegrationId).not.toHaveBeenCalled()
     })
   })
 

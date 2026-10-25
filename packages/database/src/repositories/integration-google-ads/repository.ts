@@ -28,6 +28,20 @@ export const integrationGoogleAdsRepository = {
     return row ?? null
   },
 
+  /** Presence check only: no credentials are read for a "does this workspace use Google Ads" gate. */
+  async existsByWorkspaceId(
+    input: { workspaceId: string },
+    tx: DatabaseClient = db,
+  ): Promise<boolean> {
+    const [row] = await tx
+      .select({ id: integrationGoogleAdsModel.id })
+      .from(integrationGoogleAdsModel)
+      .where(eq(integrationGoogleAdsModel.workspaceId, input.workspaceId))
+      .limit(1)
+
+    return row !== undefined
+  },
+
   async updateSetup(
     input: { id: string; workspaceId: string; values: GoogleAdsSetupValues },
     tx: DatabaseClient = db,

@@ -4,6 +4,29 @@ import type { ChannelError } from "../channel-error"
 import { guessFileTypeFromMimeType } from "../util"
 import { EXTENSION_MIME_TYPES } from "./mime-types"
 
+export type MessageReferral = {
+  ref?: string | null
+  source?: string | null
+  type?: string | null
+  adId?: string | null
+  adTitle?: string | null
+  sourceUrl?: string | null
+  sourcePlatform?: string | null
+  ctwaClid?: string | null
+  postId?: string | null
+  photoUrl?: string | null
+  videoUrl?: string | null
+  productId?: string | null
+  flowId?: string | null
+  gclid?: string | null
+  gbraid?: string | null
+  googleCampaignId?: string | null
+  googleAdGroupId?: string | null
+  googleAdId?: string | null
+  googleClickReceivedAt?: string | null
+  raw?: Record<string, unknown>
+}
+
 export type IncomingContact = {
   sourceId: string
   sourceConversationId?: string
@@ -48,6 +71,12 @@ export type IncomingContact = {
    * from the contact fields: callers persist it on the channel connection.
    */
   profileSnapshot?: ContactProfileSnapshot | null
+  /**
+   * Attribution the channel resolves by an API lookup instead of from the
+   * webhook (Zalo `dynamic_param`). Persisted on `ContactInbox.referral` by the
+   * worker, never on `Contact`.
+   */
+  referral?: MessageReferral | null
 }
 
 /**

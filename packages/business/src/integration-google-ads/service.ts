@@ -166,6 +166,16 @@ export class IntegrationGoogleAdsService extends BaseService {
     }
   }
 
+  /**
+   * Whether the workspace has connected Google Ads at all (any readiness).
+   * The gate for work that only pays off for Google Ads workspaces.
+   */
+  async hasIntegration(workspaceId: string): Promise<boolean> {
+    return await integrationGoogleAdsRepository.existsByWorkspaceId({
+      workspaceId,
+    })
+  }
+
   /** Credential-free setup view for any workspace member (flow / trigger editors). */
   async getPublicSetup(workspaceId: string): Promise<PublicGoogleAdsSetup> {
     return toPublicGoogleAdsSetup(await this.getSetup(workspaceId))

@@ -2,11 +2,8 @@ import type { Context } from "@chatbotx.io/sdk"
 import { ZALO_API_ENDPOINTS } from "../constants"
 import { handleZaloError } from "../lib/exception"
 import { ZaloHttpClient } from "../lib/http-client"
-import type {
-  ZaloActions,
-  ZaloAuthValue,
-  ZaloUserDetail,
-} from "../schema/definition"
+import type { ZaloActions, ZaloAuthValue } from "../schema/definition"
+import { fetchZaloUserDetail } from "./user"
 
 const client = (accessToken: string): ZaloHttpClient =>
   ZaloHttpClient.createAuthenticatedClient(accessToken)
@@ -85,10 +82,6 @@ export const getUserDetail: ZaloActions["getUserDetail"] = ({
   ctx: Context<ZaloAuthValue>
   userId: string
 }) =>
-  handleZaloError("Get user detail", async () => {
-    const queryData = encodeURIComponent(JSON.stringify({ user_id: userId }))
-    const response = await client(ctx.auth.tokens.accessToken).get<{
-      data: ZaloUserDetail
-    }>(`${ZALO_API_ENDPOINTS.OA.GET_USER_PROFILE}?data=${queryData}`)
-    return response.data
-  })
+  handleZaloError("Get user detail", () =>
+    fetchZaloUserDetail({ accessToken: ctx.auth.tokens.accessToken, userId }),
+  )

@@ -21,7 +21,14 @@ export type ZaloResponseError = {
 export type ZaloUserDetail = {
   user_id: string
   display_name: string
+  avatar?: string
+  user_gender?: number | string
   user_is_follower?: boolean
+  /** The last `dynamic_param` the user reached the OA with (Dynamic URL). */
+  dynamic_param?: string
+  shared_info?: {
+    phone?: string
+  }
   tags_and_notes_info?: {
     notes?: string[]
     tag_names?: string[]

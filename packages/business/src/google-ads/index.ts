@@ -1,3 +1,4 @@
+export * from "./click-lookup"
 export * from "./consent"
 export type { MatchingTemplateResolver } from "./customer-matching"
 export * from "./login-account"

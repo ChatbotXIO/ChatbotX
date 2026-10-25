@@ -41,6 +41,7 @@ export function adBadgeLabelKey(channel: string): string {
 const GOOGLE_ADS_BADGE_LABEL_KEY_BY_CHANNEL = {
   whatsapp: "fields.adReferral.googleAdsWhatsapp",
   messenger: "fields.adReferral.googleAdsMessenger",
+  zalo: "fields.adReferral.googleAdsZalo",
 } as const satisfies Record<GoogleAdsChannel, string>
 const GENERIC_GOOGLE_ADS_BADGE_LABEL_KEY = "fields.adReferral.googleAds"
 

@@ -118,6 +118,21 @@ describe("recordGoogleAdsConversion", () => {
     mocks.isSendJobLive.mockResolvedValue(false)
   })
 
+  test.each([
+    "whatsapp",
+    "messenger",
+    "zalo",
+  ])("queues a conversion for a click captured on %s", async (channel) => {
+    mocks.findGoogleClickAttribution.mockResolvedValue({
+      ...attribution(),
+      channel,
+    })
+
+    const result = await recordGoogleAdsConversion(input())
+
+    expect(result).toEqual({ status: "queued", event: storedEvent() })
+  })
+
   test("queues a new event and enqueues generation 0 with the click-age delay", async () => {
     const result = await recordGoogleAdsConversion(input())
 

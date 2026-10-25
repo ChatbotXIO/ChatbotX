@@ -33,6 +33,7 @@ import {
   finalizeContactProfile,
   normalizeLanguage,
 } from "@chatbotx.io/business/contact-locale"
+import { isInboundConversationMessage } from "@chatbotx.io/business/contact-profile-rules"
 import {
   type ChannelType,
   type CommentAutomationType,
@@ -147,10 +148,13 @@ import {
 } from "./comment-media-attachment"
 import {
   getProfileRefreshSource,
-  isInboundConversationMessage,
   refreshExistingContactProfile,
 } from "./contact-profile-refresh"
 import { resolvePostbackButtonLabel, sanitizeFlowAction } from "./flow-action"
+import {
+  lookupAndPersistGoogleClick,
+  persistNewContactGoogleClick,
+} from "./google-click-lookup"
 import {
   emitStoredCommerceEvent,
   enrichInboundCommerce,
@@ -456,6 +460,15 @@ export const receiveMessage = async (
     throw new SdkException("Unable to resolve contact and conversation")
   }
   const { contactInbox, conversation, contact, isNewContact } = detected
+  // A new contact's click was already read and saved while creating it; an
+  // existing contact's is looked up here (gated, best effort, saved by itself).
+  if (!isNewContact && rawIncomingMessage) {
+    await lookupAndPersistGoogleClick({
+      inbox,
+      contactInbox,
+      incomingMessage: rawIncomingMessage,
+    })
+  }
   const directedIncomingMessage = correctStoryReplyDirectionForNewContact(
     rawIncomingMessage,
     isNewContact,
@@ -2481,14 +2494,21 @@ const createNewContactAndContactInbox = async (props: {
     isBsuidKeyedIncomingContact,
   } = props
 
+  // `referral` belongs on the ContactInbox, never on the Contact row.
+  const { referral: _incomingReferral, ...incomingContactFields } =
+    incomingContact
   let contactData: typeof contactModel.$inferInsert = {
-    ...incomingContact,
+    ...incomingContactFields,
     workspaceId: inbox.workspaceId,
   }
   let profileSnapshot: IncomingContact["profileSnapshot"]
   // The handle only arrives via the on-demand profile lookup (the DM webhook
   // carries none); it belongs on ContactInbox, not on the Contact row.
   let profileSourceUsername: string | undefined
+  // Attribution the channel can only read through this profile call (Zalo
+  // `dynamic_param`): stored on the ContactInbox, never on the Contact.
+  let lookupReferral: MessageReferral | null = null
+  let isProfileLookedUp = false
   if (hasOnDemandProfileApi(inbox.channel as ChannelType)) {
     const integrationType =
       inbox.channel === "instagram" && isInstagramViaFacebook(integrationRow)
@@ -2516,9 +2536,14 @@ const createNewContactAndContactInbox = async (props: {
             },
           },
         )
-        const { profileSnapshot: resolvedProfileSnapshot, ...profile } =
-          userProfile
+        const {
+          profileSnapshot: resolvedProfileSnapshot,
+          referral: resolvedReferral,
+          ...profile
+        } = userProfile
         profileSnapshot = resolvedProfileSnapshot
+        lookupReferral = resolvedReferral ?? null
+        isProfileLookedUp = true
         // The independent profile lookup can fail while the snapshot (which also
         // carries the handle) succeeds, so fall back to it.
         profileSourceUsername =
@@ -2618,7 +2643,11 @@ const createNewContactAndContactInbox = async (props: {
           inboxId: inbox.id,
           contactId: newContact.id,
           originalContactId: newContact.id,
-          source,
+          // A click read by the profile lookup makes this an ad contact, like
+          // the payload channels (`resolveContactSource` runs before the lookup).
+          source: hasGoogleClick(lookupReferral)
+            ? contactSources.enum.ads
+            : source,
           sourceId: incomingContact.sourceId,
           sourceUserId: incomingContact.sourceUserId ?? null,
           sourceParentUserId: incomingContact.sourceParentUserId ?? null,
@@ -2685,6 +2714,16 @@ const createNewContactAndContactInbox = async (props: {
   }
 
   const { newContact, contactInbox, conversation } = result.value
+
+  // The click was read by the profile call above (a failed call leaves the
+  // session open for the existing-contact lookup).
+  if (isProfileLookedUp) {
+    await persistNewContactGoogleClick({
+      inbox,
+      contactInbox,
+      referral: lookupReferral,
+    })
+  }
 
   if (newContact.avatar) {
     // Inserted directly above (not via contactService), so schedule the
