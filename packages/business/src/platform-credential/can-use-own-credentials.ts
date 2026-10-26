@@ -1,0 +1,18 @@
+import { tenantService } from "../enterprise/tenant/service"
+import { userQuotaService } from "../user-quota/service"
+
+/**
+ * Whether an owner may use credentials registered under their own account.
+ * Active tenants retain their white-label capability even when a plan override
+ * disables customAppCredentials; all other users require the effective quota
+ * value so the default-plan overlay participates in the decision.
+ */
+export async function canUseOwnCredentials(ownerId: string): Promise<boolean> {
+  const tenant = await tenantService.findByOwner(ownerId)
+  if (tenant?.status === "active") {
+    return true
+  }
+
+  const quota = await userQuotaService.getForUser(ownerId)
+  return Boolean(quota?.customAppCredentials)
+}

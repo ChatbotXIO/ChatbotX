@@ -73,6 +73,7 @@ interface DefaultPlanSnapshot {
   planName: string
   saasMode: boolean
   ssoSaml: boolean
+  customAppCredentials: boolean
   teamMembersLimit: number | null
   trialDays: number
   whiteLabel: boolean
@@ -280,6 +281,7 @@ class UserQuotaService extends BaseService {
         whiteLabel: false,
         ssoSaml: false,
         saasMode: false,
+        customAppCredentials: false,
         planName: snapshot.planName,
         planStatus: isTrial
           ? planStatuses.enum.trial
@@ -375,6 +377,7 @@ class UserQuotaService extends BaseService {
       whiteLabel: false,
       ssoSaml: false,
       saasMode: false,
+      customAppCredentials: false,
       planName: null,
       planStatus: null,
       selectedTrialPlanId: null,
@@ -402,6 +405,8 @@ class UserQuotaService extends BaseService {
       whiteLabel: base.whiteLabel || snapshot.whiteLabel,
       ssoSaml: base.ssoSaml || snapshot.ssoSaml,
       saasMode: base.saasMode || snapshot.saasMode,
+      customAppCredentials:
+        base.customAppCredentials || snapshot.customAppCredentials,
       planName: base.planName ?? snapshot.planName,
       // Secondary fail-open fallback: normally cloud sign-up stamps a real
       // bootstrap row first. If that stamp failed, or for legacy usage-only rows,

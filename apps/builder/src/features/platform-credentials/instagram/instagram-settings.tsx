@@ -41,14 +41,17 @@ export function InstagramSettings({
   publicConfig,
   isInherited = false,
   callbackOrigin,
+  webhookUrl: webhookUrlOverride,
 }: {
   publicConfig: InstagramCredentialPublic | null
   isInherited?: boolean
   /** Origin to register with Meta. See `MessengerSettings`' equivalent prop. */
   callbackOrigin: string
+  webhookUrl?: string
 }) {
   const { handleCopy } = useClipboard()
-  const webhookUrl = `${callbackOrigin}/integrations/instagram/webhook`
+  const webhookUrl =
+    webhookUrlOverride ?? `${callbackOrigin}/integrations/instagram/webhook`
   const authCallbackUrl = `${callbackOrigin}/integrations/instagram/callback`
 
   return (

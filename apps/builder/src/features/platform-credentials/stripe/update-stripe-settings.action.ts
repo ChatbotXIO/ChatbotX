@@ -1,6 +1,9 @@
 "use server"
 
-import { platformCredentialService } from "@chatbotx.io/business"
+import {
+  canUseOwnCredentials,
+  platformCredentialService,
+} from "@chatbotx.io/business"
 import {
   type StripeCredential,
   type StripeCredentialUpdate,
@@ -21,6 +24,9 @@ export const updateStripeSettingsAction = authActionClient
       ctx: { user: UserModel }
       parsedInput: StripeCredentialUpdate
     }) => {
+      if (isCloud() && !(await canUseOwnCredentials(ctx.user.id))) {
+        throw new Error("Unauthorized")
+      }
       const scopedUserId = isCloud() ? ctx.user.id : undefined
       const config: StripeCredential = {
         publishableKey: parsedInput.publishableKey,

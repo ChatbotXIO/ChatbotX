@@ -54,6 +54,7 @@ export const userQuotaModel = pgTable(
     whiteLabel: boolean().notNull().default(false),
     ssoSaml: boolean().notNull().default(false),
     saasMode: boolean().notNull().default(false),
+    customAppCredentials: boolean().notNull().default(false),
     // Plan identity. Cloud sign-up stamps an initial OSS trial row; the enterprise
     // billing layer (publishEntitlements) remains authoritative and overwrites it.
     // null = free tier / not yet synced.

@@ -12,6 +12,7 @@ vi.mock("@/lib/safe-action", () => {
   return { authActionClient: chain }
 })
 vi.mock("@chatbotx.io/business", () => ({
+  canUseOwnCredentials: vi.fn().mockResolvedValue(true),
   platformCredentialService: { remove: removeSpy, upsert: upsertSpy },
 }))
 vi.mock("@/env", () => ({ isCloud: () => true }))

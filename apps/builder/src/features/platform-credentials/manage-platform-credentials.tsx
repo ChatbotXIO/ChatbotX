@@ -1,4 +1,4 @@
-import { platformCredentialService } from "@chatbotx.io/business"
+import { platformCredentialService, tenantService } from "@chatbotx.io/business"
 import type {
   CredentialPublicByType,
   CredentialType,
@@ -34,6 +34,7 @@ type ManagePlatformCredentialsProps = {
 }
 
 type ResolvedCredential<T extends CredentialType> = {
+  credentialId?: string
   publicConfig: CredentialPublicByType[T] | null
   isInherited: boolean
 }
@@ -55,7 +56,11 @@ async function resolveCard<T extends CredentialType>(
     const publicConfig = await platformCredentialService.findPlatformPublic({
       type,
     })
-    return { publicConfig: publicConfig ?? null, isInherited: false }
+    return {
+      credentialId: undefined,
+      publicConfig: publicConfig ?? null,
+      isInherited: false,
+    }
   }
 
   const resolved = await platformCredentialService.resolvePublicForUser({
@@ -63,9 +68,10 @@ async function resolveCard<T extends CredentialType>(
     type,
   })
   if (resolved?.isInherited) {
-    return { publicConfig: null, isInherited: true }
+    return { credentialId: undefined, publicConfig: null, isInherited: true }
   }
   return {
+    credentialId: resolved?.credentialId,
     publicConfig: resolved?.publicConfig ?? null,
     isInherited: false,
   }
@@ -104,7 +110,11 @@ export async function ManagePlatformCredentials({
     resolveCard(scopedUserId, "make"),
   ])
 
-  const emptyCard = { publicConfig: null, isInherited: false } as const
+  const emptyCard = {
+    credentialId: undefined,
+    publicConfig: null,
+    isInherited: false,
+  } as const
   const whatsapp =
     whatsappResult.status === "fulfilled" ? whatsappResult.value : emptyCard
   const messenger =
@@ -128,19 +138,34 @@ export async function ManagePlatformCredentials({
     tiktokResult.status === "fulfilled" ? tiktokResult.value : emptyCard
   const make = makeResult.status === "fulfilled" ? makeResult.value : emptyCard
 
-  // For a tenant-owned credential (their own app), provider-facing URLs must
-  // use the reseller's active custom domain — falling back to a literal
-  // placeholder when they haven't activated one yet, never the broker (that
-  // would silently mislead them into registering a host they don't control).
-  // Inherited credentials always show the broker, since the platform app is
-  // what's actually registered. See `lib/provider-origin.ts`.
+  // Tenant-owned credentials use the reseller's custom domain. Entitled users
+  // without a tenant use the broker for both callbacks and webhooks; OAuth
+  // callback state already binds the connection to its owner.
   const tenantOrigin = scopedUserId
     ? ((await resolveTenantCustomDomainOrigin(scopedUserId)) ??
       PLACEHOLDER_DOMAIN_ORIGIN)
     : getBrokerOrigin()
   const brokerOrigin = getBrokerOrigin()
+  const tenant = scopedUserId
+    ? await tenantService.findByOwner(scopedUserId)
+    : undefined
+  const hasActiveTenant = tenant?.status === "active"
   const callbackOriginFor = (isInherited: boolean) =>
-    isInherited ? brokerOrigin : tenantOrigin
+    isInherited || !hasActiveTenant ? brokerOrigin : tenantOrigin
+  const webhookUrlFor = <T extends CredentialType>(
+    type: T,
+    credential: ResolvedCredential<T>,
+  ) => {
+    if (
+      scopedUserId &&
+      !hasActiveTenant &&
+      !credential.isInherited &&
+      credential.credentialId
+    ) {
+      return `${brokerOrigin}/integrations/${type}/webhook/c/${credential.credentialId}`
+    }
+    return `${callbackOriginFor(credential.isInherited)}/integrations/${type}/webhook`
+  }
 
   return (
     <CredentialScopeProvider scope={scope}>
@@ -149,16 +174,19 @@ export async function ManagePlatformCredentials({
           callbackOrigin={callbackOriginFor(messenger.isInherited)}
           isInherited={messenger.isInherited}
           publicConfig={messenger.publicConfig}
+          webhookUrl={webhookUrlFor("messenger", messenger)}
         />
         <InstagramSettings
           callbackOrigin={callbackOriginFor(instagram.isInherited)}
           isInherited={instagram.isInherited}
           publicConfig={instagram.publicConfig}
+          webhookUrl={webhookUrlFor("instagram", instagram)}
         />
         <InstagramFacebookSettings
           callbackOrigin={callbackOriginFor(instagramFacebook.isInherited)}
           isInherited={instagramFacebook.isInherited}
           publicConfig={instagramFacebook.publicConfig}
+          webhookUrl={webhookUrlFor("instagramFacebook", instagramFacebook)}
         />
         <ThreadsSettings
           callbackOrigin={callbackOriginFor(threads.isInherited)}
@@ -179,16 +207,19 @@ export async function ManagePlatformCredentials({
           callbackOrigin={callbackOriginFor(whatsapp.isInherited)}
           isInherited={whatsapp.isInherited}
           publicConfig={whatsapp.publicConfig}
+          webhookUrl={webhookUrlFor("whatsapp", whatsapp)}
         />
         <ZaloSettings
           callbackOrigin={callbackOriginFor(zalo.isInherited)}
           isInherited={zalo.isInherited}
           publicConfig={zalo.publicConfig}
+          webhookUrl={webhookUrlFor("zalo", zalo)}
         />
         <TiktokSettings
           callbackOrigin={callbackOriginFor(tiktok.isInherited)}
           isInherited={tiktok.isInherited}
           publicConfig={tiktok.publicConfig}
+          webhookUrl={webhookUrlFor("tiktok", tiktok)}
         />
         <GiphySettings
           isConfigured={giphy.publicConfig !== null}

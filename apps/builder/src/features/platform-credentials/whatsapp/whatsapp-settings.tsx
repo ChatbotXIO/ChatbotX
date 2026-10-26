@@ -43,15 +43,18 @@ export function WhatsappSettings({
   publicConfig,
   isInherited = false,
   callbackOrigin,
+  webhookUrl: webhookUrlOverride,
 }: {
   publicConfig: WhatsappCredentialPublic | null
   isInherited?: boolean
   /** Origin to register with Meta. See `MessengerSettings`' equivalent prop. */
   callbackOrigin: string
+  webhookUrl?: string
 }) {
   const t = useTranslations()
   const { handleCopy } = useClipboard()
-  const webhookUrl = `${callbackOrigin}/integrations/whatsapp/webhook`
+  const webhookUrl =
+    webhookUrlOverride ?? `${callbackOrigin}/integrations/whatsapp/webhook`
   const authCallbackUrl = `${callbackOrigin}/integrations/whatsapp/callback`
 
   return (

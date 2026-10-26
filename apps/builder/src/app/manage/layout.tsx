@@ -1,4 +1,5 @@
 import {
+  canUseOwnCredentials,
   customDomainService,
   tenantService,
   userQuotaService,
@@ -44,7 +45,8 @@ export default async function ManageLayoutPage({
   }
 
   const tenant = await tenantService.findByOwner(user.id)
-  if (tenant?.status !== "active") {
+  const canManageCredentials = await canUseOwnCredentials(user.id)
+  if (!canManageCredentials) {
     return notFound()
   }
 
@@ -53,15 +55,23 @@ export default async function ManageLayoutPage({
     saasMode: quota?.saasMode ?? false,
     whiteLabel: quota?.whiteLabel ?? false,
   }
+  const canManageReseller = tenant?.status === "active"
   // Pricing lives on the reseller's custom domain — only white-label resellers
   // have one, so resolve it only then (mirrors the enterprise portal sidebar).
-  const pricing = flags.whiteLabel
-    ? await resolvePricingState(tenant.id)
-    : undefined
+  const pricing =
+    canManageReseller && flags.whiteLabel
+      ? await resolvePricingState(tenant.id)
+      : undefined
 
   return (
     <ManageLayout
-      sidebar={<PortalManageSidebar flags={flags} pricing={pricing} />}
+      sidebar={
+        <PortalManageSidebar
+          canManageReseller={canManageReseller}
+          flags={flags}
+          pricing={pricing}
+        />
+      }
     >
       {children}
     </ManageLayout>
