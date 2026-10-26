@@ -50,14 +50,3 @@ export const analyticsConversationEventTypes = z.enum([
 export type AnalyticsConversationEventType = z.infer<
   typeof analyticsConversationEventTypes
 >
-
-export const analyticsBroadcastEventTypes = z.enum([
-  "message:sent",
-  "message:delivered",
-  "message:seen",
-  "message:failed",
-  "flow:clicked",
-])
-export type AnalyticsBroadcastEventType = z.infer<
-  typeof analyticsBroadcastEventTypes
->

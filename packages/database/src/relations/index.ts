@@ -11,11 +11,8 @@ import { aiMCPServerRelations } from "./ai-mcp-server"
 import {
   analyticsAgentResponseEventRelations,
   analyticsBotMessageEventRelations,
-  analyticsBroadcastEventRelations,
   analyticsContactEventRelations,
   analyticsConversationEventRelations,
-  analyticsFlowNodeEventRelations,
-  analyticsSequenceEventRelations,
 } from "./analytics"
 import { analyticsEmailTopicRelations } from "./analytics-email-topic"
 import { appointmentRelations } from "./appointment"
@@ -330,9 +327,6 @@ export const relations = {
   ...analyticsContactEventRelations,
   ...analyticsBotMessageEventRelations,
   ...analyticsConversationEventRelations,
-  ...analyticsBroadcastEventRelations,
-  ...analyticsSequenceEventRelations,
-  ...analyticsFlowNodeEventRelations,
   ...productRelations,
   ...ecommerceRelations,
   ...productCategoryRelations,
