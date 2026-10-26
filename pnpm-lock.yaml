@@ -1618,13 +1618,13 @@ importers:
     dependencies:
       '@ai-sdk/openai':
         specifier: ^4.0.96
-        version: 4.0.96(zod@4.6.5)
+        version: 4.0.96(zod@4.6.7)
       '@chatbotx.io/sdk':
         specifier: workspace:*
         version: link:../../packages/sdk
       ai:
         specifier: ^7.0.143
-        version: 7.0.143(zod@4.6.5)
+        version: 7.0.143(zod@4.6.7)
     devDependencies:
       '@chatbotx.io/typescript-config':
         specifier: workspace:*
@@ -2083,6 +2083,9 @@ importers:
       '@types/node':
         specifier: 24.x
         version: 24.13.1
+      drizzle-orm:
+        specifier: 1.0.0-beta.22
+        version: 1.0.0-beta.22(@cloudflare/workers-types@4.20240718.0)(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(pg@8.21.0)(valibot@1.5.0(typescript@5.9.3))(zod@4.6.5)
       tsx:
         specifier: ^4.23.0
         version: 4.23.0
@@ -11515,6 +11518,13 @@ snapshots:
       '@vercel/oidc': 3.2.0
       zod: 4.6.5
 
+  '@ai-sdk/gateway@4.0.116(zod@4.6.7)':
+    dependencies:
+      '@ai-sdk/provider': 4.0.29
+      '@ai-sdk/provider-utils': 5.0.62(zod@4.6.7)
+      '@vercel/oidc': 3.2.0
+      zod: 4.6.7
+
   '@ai-sdk/google@4.0.99(zod@4.6.5)':
     dependencies:
       '@ai-sdk/provider': 4.0.29
@@ -11541,6 +11551,12 @@ snapshots:
       '@ai-sdk/provider-utils': 5.0.62(zod@4.6.5)
       zod: 4.6.5
 
+  '@ai-sdk/openai@4.0.96(zod@4.6.7)':
+    dependencies:
+      '@ai-sdk/provider': 4.0.29
+      '@ai-sdk/provider-utils': 5.0.62(zod@4.6.7)
+      zod: 4.6.7
+
   '@ai-sdk/provider-utils@5.0.62(zod@4.6.5)':
     dependencies:
       '@ai-sdk/provider': 4.0.29
@@ -11549,6 +11565,15 @@ snapshots:
       eventsource-parser: 3.1.1
       undici: 7.29.0
       zod: 4.6.5
+
+  '@ai-sdk/provider-utils@5.0.62(zod@4.6.7)':
+    dependencies:
+      '@ai-sdk/provider': 4.0.29
+      '@standard-schema/spec': 1.1.0
+      '@workflow/serde': 4.1.0
+      eventsource-parser: 3.1.1
+      undici: 7.29.0
+      zod: 4.6.7
 
   '@ai-sdk/provider@4.0.29':
     dependencies:
@@ -14622,12 +14647,11 @@ snapshots:
       '@ai-sdk/provider-utils': 5.0.62(zod@4.6.5)
       zod: 4.6.5
 
-  ai@6.0.197(zod@4.6.7):
+  ai@7.0.143(zod@4.6.7):
     dependencies:
-      '@ai-sdk/gateway': 3.0.125(zod@4.6.7)
-      '@ai-sdk/provider': 3.0.10
-      '@ai-sdk/provider-utils': 4.0.27(zod@4.6.7)
-      '@opentelemetry/api': 1.9.1
+      '@ai-sdk/gateway': 4.0.116(zod@4.6.7)
+      '@ai-sdk/provider': 4.0.29
+      '@ai-sdk/provider-utils': 5.0.62(zod@4.6.7)
       zod: 4.6.7
 
   ajv-formats@3.0.1(ajv@8.20.0):

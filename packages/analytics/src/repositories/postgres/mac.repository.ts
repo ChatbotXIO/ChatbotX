@@ -20,6 +20,7 @@ import {
   workspaceMacModel,
   workspaceModel,
 } from "@chatbotx.io/database/schema"
+import { createId } from "@chatbotx.io/utils"
 import { logger } from "../../lib/logger"
 import {
   type AnalyticsFilter,
@@ -95,11 +96,21 @@ export class MacRepository {
         .select(
           client
             .select({
+              id: sql<string>`${createId()}::bigint`.as("id"),
+              createdAt: sql<Date>`now()`.as("createdAt"),
+              updatedAt: sql<Date>`now()`.as("updatedAt"),
               workspaceId: workspaceModel.id,
               ownerId: workspaceModel.ownerId,
               tenantId: workspaceModel.tenantId,
-              periodStart: sql<Date>`${entry.periodStart}`.as("periodStart"),
-              periodEnd: sql<Date>`${entry.periodEnd}`.as("periodEnd"),
+              periodStart:
+                sql<Date>`${entry.periodStart.toISOString()}::timestamptz`.as(
+                  "periodStart",
+                ),
+              periodEnd:
+                sql<Date>`${entry.periodEnd.toISOString()}::timestamptz`.as(
+                  "periodEnd",
+                ),
+              macCount: sql<number>`0`.as("macCount"),
             })
             .from(workspaceModel)
             .where(eq(workspaceModel.id, entry.workspaceId)),
