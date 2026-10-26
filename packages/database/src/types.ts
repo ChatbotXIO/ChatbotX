@@ -297,12 +297,6 @@ export type AnalyticsBotMessageEventModel =
   typeof schema.analyticsBotMessageEventModel.$inferSelect
 export type AnalyticsConversationEventModel =
   typeof schema.analyticsConversationEventModel.$inferSelect
-export type AnalyticsBroadcastEventModel =
-  typeof schema.analyticsBroadcastEventModel.$inferSelect
-export type AnalyticsSequenceEventModel =
-  typeof schema.analyticsSequenceEventModel.$inferSelect
-export type AnalyticsFlowNodeEventModel =
-  typeof schema.analyticsFlowNodeEventModel.$inferSelect
 export type ProductModel = typeof schema.productModel.$inferSelect
 export type VendorModel = typeof schema.vendorModel.$inferSelect
 export type CartModel = typeof schema.cartModel.$inferSelect

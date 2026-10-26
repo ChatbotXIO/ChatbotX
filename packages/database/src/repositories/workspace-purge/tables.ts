@@ -49,12 +49,9 @@ export const PARTITIONED_WORKSPACE_TABLES = [
 export const WORKSPACE_ANALYTICS_HYPERTABLES = [
   "AnalyticsAgentResponseEvent",
   "AnalyticsBotMessageEvent",
-  "AnalyticsBroadcastEvent",
   "AnalyticsContactEvent",
   "AnalyticsConversationEvent",
-  "AnalyticsFlowNodeEvent",
   "AnalyticsMessageEvent",
-  "AnalyticsSequenceEvent",
 ] as const
 export const NO_FK_WORKSPACE_TABLES = [
   {
