@@ -43,15 +43,18 @@ export function TiktokSettings({
   publicConfig,
   isInherited = false,
   callbackOrigin,
+  webhookUrl: webhookUrlOverride,
 }: {
   publicConfig: TiktokCredentialPublic | null
   isInherited?: boolean
   /** Origin to register with TikTok. See `MessengerSettings`' equivalent prop. */
   callbackOrigin: string
+  webhookUrl?: string
 }) {
   const t = useTranslations()
   const { handleCopy } = useClipboard()
-  const webhookUrl = `${callbackOrigin}/integrations/tiktok/webhook`
+  const webhookUrl =
+    webhookUrlOverride ?? `${callbackOrigin}/integrations/tiktok/webhook`
   const authCallbackUrl = `${callbackOrigin}/integrations/tiktok/callback`
 
   return (

@@ -26,6 +26,8 @@ export const QuotaJobAction = {
   // reseller changes their tenant's default plan. Scopes the backfill to that
   // reseller's sub-accounts instead of every user.
   backfillTenantDefaultPlan: "backfillTenantDefaultPlan",
+  // Set-based synchronization of feature-only quota columns after any plan edit.
+  syncPlanFeatureFlags: "syncPlanFeatureFlags",
 } as const
 
 export type QuotaJobPublishEntitlements = {
@@ -43,10 +45,16 @@ export type QuotaJobBackfillTenantDefaultPlan = {
   data: { tenantId: string }
 }
 
+export type QuotaJobSyncPlanFeatureFlags = {
+  type: typeof QuotaJobAction.syncPlanFeatureFlags
+  data: { planId: string }
+}
+
 export type QuotaJobData =
   | QuotaJobPublishEntitlements
   | QuotaJobBackfillDefaultPlan
   | QuotaJobBackfillTenantDefaultPlan
+  | QuotaJobSyncPlanFeatureFlags
 
 export const quotaQueue = isNoRedisEnv()
   ? fakeQueue

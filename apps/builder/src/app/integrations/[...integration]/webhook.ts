@@ -1,4 +1,5 @@
 import {
+  canUseOwnCredentials,
   connectionStateService,
   customDomainService,
   platformCredentialService,
@@ -66,12 +67,19 @@ const createThreadsErrorResponse = (error: unknown) => {
   }
 }
 
+const notConfigured = () =>
+  new Response(JSON.stringify({ message: "Integration is not configured" }), {
+    status: 404,
+    headers: WEBHOOK_PUBLIC_ERROR_HEADERS,
+  })
+
 export const handleWebhook = async (
   integrationType: string,
   req: NextRequest,
+  credentialId?: string,
 ) => {
   if (integrationType === "threads") {
-    return handleThreadsWebhook(req)
+    return credentialId ? notConfigured() : handleThreadsWebhook(req)
   }
 
   await logWebhookRequestBody(integrationType, req)
@@ -94,7 +102,21 @@ export const handleWebhook = async (
       >
     | undefined
 
-  if (isCloud()) {
+  if (credentialId) {
+    if (!isCloud()) {
+      return notConfigured()
+    }
+    credential = await platformCredentialService.findDecryptedForWebhook({
+      id: credentialId,
+      type,
+    })
+    if (
+      !credential?.userId ||
+      !(await canUseOwnCredentials(credential.userId))
+    ) {
+      return notConfigured()
+    }
+  } else if (isCloud()) {
     const domain = req.headers.get("x-domain") ?? ""
 
     if (isBrokerHost(domain)) {
@@ -113,10 +135,7 @@ export const handleWebhook = async (
           { integrationType, domain },
           "No active custom domain for integration webhook",
         )
-        return new Response(
-          JSON.stringify({ message: "Integration is not configured" }),
-          { status: 404, headers: { "Content-Type": "application/json" } },
-        )
+        return notConfigured()
       }
 
       const tenant = await tenantService.findById(customDomain.tenantId)
@@ -125,10 +144,7 @@ export const handleWebhook = async (
           { integrationType, domain },
           "Tenant disabled for integration webhook",
         )
-        return new Response(
-          JSON.stringify({ message: "Integration is not configured" }),
-          { status: 404, headers: { "Content-Type": "application/json" } },
-        )
+        return notConfigured()
       }
 
       // Tenant's own credential — no fallback to global platform
@@ -144,13 +160,7 @@ export const handleWebhook = async (
 
   if (!credential) {
     logger.debug(`Integration ${integrationType} is not configured`)
-    return new Response(
-      JSON.stringify({ message: "Integration is not configured" }),
-      {
-        status: 404,
-        headers: { "Content-Type": "application/json" },
-      },
-    )
+    return notConfigured()
   }
 
   const integration = integrations[integrationType as IntegrationKey]
@@ -228,15 +238,15 @@ const handleThreadsWebhook = async (req: NextRequest) => {
       clientId: appId,
     })
 
-  if (!credential) {
+  if (
+    !credential ||
+    (credential.userId && !(await canUseOwnCredentials(credential.userId)))
+  ) {
     logger.debug(
       { appId, integrationType: "threads" },
       "No configured Threads credential for webhook appId",
     )
-    return new Response(
-      JSON.stringify({ message: "Integration is not configured" }),
-      { status: 404, headers: { "Content-Type": "application/json" } },
-    )
+    return notConfigured()
   }
 
   const redirectUrl = new URL(

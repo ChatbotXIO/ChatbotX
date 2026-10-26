@@ -4,6 +4,7 @@ import {
   type DatabaseClient,
   db,
   eq,
+  isNotNull,
   isNull,
   sql,
 } from "@chatbotx.io/database/client"
@@ -21,8 +22,8 @@ import { encryptUtils } from "@chatbotx.io/encryption"
 import { withCache } from "@chatbotx.io/redis"
 import type { z } from "zod"
 import { BaseService } from "../base.service"
-import { tenantService } from "../enterprise/tenant/service"
 import { logger } from "../logger"
+import { canUseOwnCredentials } from "./can-use-own-credentials"
 
 type CredentialRow<T extends CredentialType> = Omit<
   PlatformCredentialModel,
@@ -101,6 +102,30 @@ class PlatformCredentialService extends BaseService {
       logger.error({ props, err }, "Failed to decrypt credential")
       return
     }
+  }
+
+  /**
+   * Resolves an explicitly addressed, user-owned credential for an inbound
+   * broker webhook. It intentionally never follows a platform delegation.
+   */
+  async findDecryptedForWebhook<T extends CredentialType>(props: {
+    id: string
+    type: T
+    tx?: DatabaseClient
+  }): Promise<DecryptedCredential<T> | undefined> {
+    const [row] = await (props.tx ?? db)
+      .select()
+      .from(platformCredentialModel)
+      .where(
+        and(
+          eq(platformCredentialModel.id, props.id),
+          eq(platformCredentialModel.type, props.type),
+          isNotNull(platformCredentialModel.userId),
+          eq(platformCredentialModel.usePlatformCredential, false),
+        ),
+      )
+      .limit(1)
+    return row ? this._decrypt(row as CredentialRow<T>) : undefined
   }
 
   async upsertForUser<T extends CredentialType>(props: {
@@ -413,10 +438,10 @@ class PlatformCredentialService extends BaseService {
     /** Rethrow DB/decrypt failures instead of falling back / reporting "no credential". */
     strict?: boolean
   }): Promise<DecryptedCredential<T> | undefined> {
-    const setting = await tenantService.findByOwner(props.ownerId)
+    const canUseOwn = await canUseOwnCredentials(props.ownerId)
     const livemode = props.livemode ?? false
 
-    if (setting?.status === "active") {
+    if (canUseOwn) {
       const own = await this.findDecryptedForUser({
         userId: props.ownerId,
         type: props.type,
@@ -477,12 +502,17 @@ class PlatformCredentialService extends BaseService {
     livemode?: boolean
     tx?: DatabaseClient
   }): Promise<
-    | { publicConfig: CredentialPublicByType[T]; isInherited: boolean }
+    | {
+        credentialId?: string
+        publicConfig: CredentialPublicByType[T]
+        isInherited: boolean
+      }
     | undefined
   > {
     const userRow = await this.findForUser(props)
     if (userRow && !userRow.usePlatformCredential) {
       return {
+        credentialId: userRow.id,
         publicConfig: await this._publicWithDerivedFlags(userRow),
         isInherited: false,
       }

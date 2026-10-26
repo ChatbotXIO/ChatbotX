@@ -1,4 +1,4 @@
-import { isSuperAdmin } from "@chatbotx.io/business"
+import { canUseOwnCredentials, isSuperAdmin } from "@chatbotx.io/business"
 import type { UserModel } from "@chatbotx.io/database/types"
 import { z } from "zod"
 import { isCloud } from "@/env"
@@ -23,6 +23,9 @@ export const resolveCredentialScopedUserId = async (
       throw new Error("Unauthorized")
     }
     return
+  }
+  if (isCloud() && !(await canUseOwnCredentials(user.id))) {
+    throw new Error("Unauthorized")
   }
   return isCloud() ? user.id : undefined
 }

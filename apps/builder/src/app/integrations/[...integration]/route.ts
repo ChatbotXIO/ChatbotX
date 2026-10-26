@@ -23,8 +23,14 @@ const handleRequest = async (
   switch (integrationAction) {
     case HandleRequestType.callback:
       return await handleCallback(integrationType, req)
-    case HandleRequestType.webhook:
-      return await handleWebhook(integrationType, req)
+    case HandleRequestType.webhook: {
+      const credentialId =
+        allParams.integration[2] === "c" ? allParams.integration[3] : undefined
+      if (allParams.integration.length > 2 && !credentialId) {
+        return notFound()
+      }
+      return await handleWebhook(integrationType, req, credentialId)
+    }
     default:
       return notFound()
   }
