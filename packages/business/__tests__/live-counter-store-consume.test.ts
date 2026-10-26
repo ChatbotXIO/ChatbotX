@@ -45,8 +45,10 @@ vi.mock("@chatbotx.io/database/client", () => ({
   inArray: vi.fn((column: unknown, values: unknown) => ({
     inArray: [column, values],
   })),
+  isNull: vi.fn(),
   lte: vi.fn(),
   ne: vi.fn(),
+  or: vi.fn(),
   sql: Object.assign(
     vi.fn(() => ({ sql: true })),
     { raw: vi.fn() },
@@ -414,8 +416,6 @@ describe("userQuotaService.reconcileOwnerPoolUsage", () => {
       "workspaces",
       "2",
       "channels",
-      "0",
-      "mac",
       "0",
     )
   })
