@@ -1,3 +1,4 @@
+import { sql } from "drizzle-orm"
 import {
   index,
   integer,
@@ -72,5 +73,8 @@ export const miniAppUploadModel = pgTable(
       "btree",
       table.submissionId.asc().nullsLast(),
     ),
+    index("MiniAppUpload_contactId_idx")
+      .on(table.contactId)
+      .where(sql`${table.contactId} IS NOT NULL`),
   ],
 )

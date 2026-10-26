@@ -5,7 +5,6 @@ import { beforeEach, expect, test, vi } from "vitest"
 const mockGetCurrentUserAndTargetWorkspace = vi.fn()
 const mockHasWorkspacePermission = vi.fn()
 const mockScheduleDeletion = vi.fn()
-const mockFreezeWorkspaceRuntime = vi.fn()
 
 vi.mock("@/lib/safe-action", () => {
   const chain: Record<string, unknown> = {}
@@ -25,12 +24,13 @@ vi.mock("@/lib/auth/permission-routes", () => ({
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
-  workspaceLifecycleService: {
-    freezeWorkspaceRuntime: mockFreezeWorkspaceRuntime,
-  },
   workspaceService: {
     scheduleDeletion: mockScheduleDeletion,
   },
+}))
+
+vi.mock("next-intl/server", () => ({
+  getTranslations: vi.fn(async () => (key: string) => key),
 }))
 
 const { scheduleWorkspaceDeletionAction } = await import(
@@ -43,19 +43,21 @@ beforeEach(() => {
     targetWorkspaceMember: {
       permissions: { superAdmin: true },
     },
+    user: { id: "user-1" },
   })
   mockHasWorkspacePermission.mockReturnValue(true)
   mockScheduleDeletion.mockResolvedValue(undefined)
-  mockFreezeWorkspaceRuntime.mockResolvedValue(undefined)
 })
 
-test("schedules deletion then freezes the workspace runtime", async () => {
+test("schedules a reversible workspace deletion grace period", async () => {
   await (
     scheduleWorkspaceDeletionAction as (props: unknown) => Promise<unknown>
   )({
     bindArgsParsedInputs: ["workspace-1"],
   })
 
-  expect(mockScheduleDeletion).toHaveBeenCalledWith({ id: "workspace-1" })
-  expect(mockFreezeWorkspaceRuntime).toHaveBeenCalledWith("workspace-1")
+  expect(mockScheduleDeletion).toHaveBeenCalledWith({
+    actorId: "user-1",
+    id: "workspace-1",
+  })
 })

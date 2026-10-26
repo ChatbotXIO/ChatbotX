@@ -3,8 +3,7 @@
   "dialect": "postgres",
   "id": "d086da49-090d-48b5-b61d-4e3c63ab0d70",
   "prevIds": [
-    "31be9278-7dc3-438c-a09e-ccf0461696c1",
-    "e2ba6134-45b2-4db8-a4fb-01901251118c"
+    "20b14807-5c10-4aae-a20e-025c4c6ca9b5"
   ],
   "ddl": [
     {

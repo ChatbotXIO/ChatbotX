@@ -6,6 +6,7 @@ import {
   inArray,
   type Transaction,
 } from "@chatbotx.io/database/client"
+import { sequenceDispatchRepository } from "@chatbotx.io/database/repositories/sequence-dispatch"
 import { sequenceDispatchModel } from "@chatbotx.io/database/schema"
 import { sequenceConnections } from "@chatbotx.io/redis"
 import { SchedulerClient } from "@chatbotx.io/scheduler"
@@ -18,7 +19,7 @@ import { SchedulerClient } from "@chatbotx.io/scheduler"
  */
 
 type DrizzleClient = typeof db | Transaction
-type ScheduledDispatch = { id: string; bucket: number }
+export type ScheduledDispatch = { id: string; bucket: number }
 type PendingDispatch = {
   bucket: number
   contactId: string
@@ -46,6 +47,7 @@ const pendingDispatchColumns = {
   contactId: true,
   stepId: true,
 } as const
+export const WORKSPACE_DISPATCH_CANCEL_BATCH_SIZE = 500
 
 export interface CancelPendingDispatchesParams {
   client?: DatabaseClient | Transaction
@@ -111,19 +113,17 @@ export async function cancelPendingDispatches(
   })
 }
 
-export async function cancelPendingDispatchesForWorkspace(params: {
-  client?: DatabaseClient | Transaction
-  removeFromSchedule?: boolean
+export async function cancelPendingDispatchBatch(params: {
+  client?: DatabaseClient
   workspaceId: string
 }): Promise<ScheduledDispatch[]> {
-  return await cancelPendingDispatchesByWhere({
-    client: params.client,
-    removeFromSchedule: params.removeFromSchedule,
-    where: {
-      status: "pending",
+  return await sequenceDispatchRepository.cancelPendingBatchForWorkspace(
+    {
+      limit: WORKSPACE_DISPATCH_CANCEL_BATCH_SIZE,
       workspaceId: params.workspaceId,
     },
-  })
+    params.client,
+  )
 }
 
 export async function removeDispatchesFromSchedule(

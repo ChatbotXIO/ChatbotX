@@ -17,6 +17,7 @@ const state = {
   stored: null as Record<string, unknown> | null,
   // Every macUsed value the handler persisted, in order.
   persistedMac: [] as number[],
+  liveMacRaises: [] as { periodIso: string; value: number }[],
   // Truthy once reconcileUserSelfUsage ran for a user (the self-count path).
   selfReconciledUsers: [] as string[],
   hsetCalls: [] as unknown[][],
@@ -81,10 +82,16 @@ vi.mock("@chatbotx.io/business", () => ({
             | undefined) ?? null,
       })
     }),
-    persistMacUsed: vi.fn((_userId: string, value: number) => {
+    raiseMacUsed: vi.fn(({ value }: { value: number }) => {
       state.persistedMac.push(value)
       return Promise.resolve()
     }),
+    raiseLiveMac: vi.fn(
+      ({ periodIso, value }: { periodIso: string; value: number }) => {
+        state.liveMacRaises.push({ periodIso, value })
+        return Promise.resolve()
+      },
+    ),
     applyMonthlyBotMessagesReset: vi.fn(async () => undefined),
   },
   // The ghost-id existence filter lives on the service, not a raw `db.select`
@@ -127,9 +134,15 @@ vi.mock("@chatbotx.io/redis", () => ({
   distributedStore: { delete: vi.fn(async () => undefined) },
 }))
 
-const countActiveContactsForOwner = vi.fn(async () => state.ledgerMac)
 vi.mock("@chatbotx.io/analytics", () => ({
-  macRepository: { countActiveContactsForOwner },
+  anchoredPeriod: (_now: Date, periodStart: Date) => ({
+    start: periodStart,
+  }),
+}))
+
+const sumForOwner = vi.fn(async () => state.ledgerMac)
+vi.mock("@chatbotx.io/database/repositories/workspace-mac", () => ({
+  workspaceMacRepository: { sumForOwner },
 }))
 
 vi.mock("../src/lib/logger", () => ({
@@ -151,7 +164,7 @@ const { tenantService, userQuotaService } = (await import(
   userQuotaService: {
     reconcileOwnerPoolUsage: ReturnType<typeof vi.fn>
     reconcileUserSelfUsage: ReturnType<typeof vi.fn>
-    persistMacUsed: ReturnType<typeof vi.fn>
+    raiseMacUsed: ReturnType<typeof vi.fn>
     clearLiveCounters: ReturnType<typeof vi.fn>
   }
 }
@@ -169,7 +182,7 @@ describe("reconcileUser — the non-reseller path delegates the self-count", () 
     state.hmgetResult = [null, null]
     state.ledgerMac = 0
     redisClient.hset.mockClear()
-    countActiveContactsForOwner.mockClear()
+    sumForOwner.mockClear()
   })
 
   // The authoritative COUNT(*) reads, the direct-assignment (never GREATEST)
@@ -200,10 +213,11 @@ describe("reconcileUser — macUsed is derived from the ContactActiveMonthly led
 
   beforeEach(() => {
     state.persistedMac = []
+    state.liveMacRaises = []
     state.selfReconciledUsers = []
     state.hsetCalls = []
     redisClient.hset.mockClear()
-    countActiveContactsForOwner.mockClear()
+    sumForOwner.mockClear()
     state.ledgerMac = 0
   })
 
@@ -220,19 +234,37 @@ describe("reconcileUser — macUsed is derived from the ContactActiveMonthly led
 
     await reconcileUser("user-1")
 
-    expect(countActiveContactsForOwner).toHaveBeenCalledWith(
-      expect.objectContaining({ ownerId: "user-1", cumulative: false }),
-    )
-    // The live counter is re-grounded on the ledger truth.
+    expect(sumForOwner).toHaveBeenCalledWith({
+      ownerId: "user-1",
+      periodStart: new Date(PERIOD),
+      cumulative: false,
+    })
+    expect(state.liveMacRaises).toContainEqual({
+      periodIso: PERIOD,
+      value: 7,
+    })
+    expect(state.persistedMac).toContain(7)
+  })
+
+  test("adopts an unstamped live counter before attempting ledger repair", async () => {
+    state.hmgetResult = ["12", null]
+    state.ledgerMac = 7
+    state.stored = {
+      macUsed: 5,
+      periodStart: new Date(PERIOD),
+      periodEnd: new Date("2026-07-01T00:00:00.000Z"),
+      monthlyBotMessagesPeriodStart: null,
+    }
+
+    await reconcileUser("user-1")
+
+    expect(sumForOwner).not.toHaveBeenCalled()
     expect(state.hsetCalls).toContainEqual([
       "user-quota-live:user-1",
-      "mac",
-      "7",
       "macPeriodStart",
       PERIOD,
     ])
-    // macUsed is persisted to the ledger count (self-heals the drift).
-    expect(state.persistedMac).toContain(7)
+    expect(state.persistedMac).toContain(12)
   })
 
   test("lifetime plan (no periodEnd) keeps the accumulate path, not the ledger", async () => {
@@ -247,9 +279,14 @@ describe("reconcileUser — macUsed is derived from the ContactActiveMonthly led
 
     await reconcileUser("user-1")
 
-    expect(countActiveContactsForOwner).not.toHaveBeenCalled()
-    // No mac drift to persist (live === DB within the stable lifetime period).
-    expect(state.persistedMac).toHaveLength(0)
+    expect(sumForOwner).toHaveBeenCalledWith({
+      ownerId: "user-1",
+      periodStart: null,
+      cumulative: true,
+    })
+    // The service applies GREATEST, so this lower ledger observation cannot
+    // reduce the durable lifetime total.
+    expect(state.persistedMac).toEqual([4])
   })
 })
 

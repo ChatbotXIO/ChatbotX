@@ -172,6 +172,8 @@ import { whatsappSignupSessionRelations } from "./whatsapp-signup-session"
 import { workingHoursRelations } from "./working-hours"
 import { workspaceRelations } from "./workspace"
 import { workspaceApiTokenRelations } from "./workspace-api-token"
+import { workspaceBotMessageUsageRelations } from "./workspace-bot-message-usage"
+import { workspaceDeletionRecordRelations } from "./workspace-deletion-record"
 import { workspaceMemberRelations } from "./workspace-member"
 
 export const relations = {
@@ -195,6 +197,8 @@ export const relations = {
   ...userRelations,
   ...workspaceRelations,
   ...workspaceApiTokenRelations,
+  ...workspaceBotMessageUsageRelations,
+  ...workspaceDeletionRecordRelations,
   ...aiAgentRelations,
   ...aiConversationSourceRelations,
   ...aiFileRelations,

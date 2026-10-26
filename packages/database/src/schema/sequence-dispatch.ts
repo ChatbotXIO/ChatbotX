@@ -137,5 +137,10 @@ export const sequenceDispatchModel = pgTable(
     // Covers the `ContactInbox -> SequenceDispatch` ON DELETE CASCADE check;
     // built per partition + ATTACH (64 HASH partitions).
     index("SequenceDispatch_contactInboxId_idx").on(table.contactInboxId),
+    // Covers the `Sequence -> SequenceDispatch` and
+    // `SequenceStep -> SequenceDispatch` ON DELETE CASCADE checks; both are
+    // built per partition + ATTACH (64 HASH partitions).
+    index("SequenceDispatch_sequenceId_idx").on(table.sequenceId),
+    index("SequenceDispatch_stepId_idx").on(table.stepId),
   ],
 )

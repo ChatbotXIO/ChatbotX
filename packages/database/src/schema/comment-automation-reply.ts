@@ -26,5 +26,6 @@ export const commentAutomationReplyModel = pgTable(
       t.postId,
     ),
     index("CommentAutomationReply_contactId_idx").on(t.contactId),
+    index("CommentAutomationReply_workspaceId_idx").on(t.workspaceId),
   ],
 )

@@ -55,6 +55,8 @@ export const myModel = pgTable(
 - `bigintAsString()` custom type: stores `bigint` in DB, exposes as `string` in app
 - FK pattern: `.references(() => otherModel.id, { onDelete, onUpdate })`
 - Index naming: `TableName_columnName_idx` or `TableName_column_key` for unique
+- Every FK column must lead an index so RI cascade lookups do not scan child tables. `pnpm --filter @chatbotx.io/database test` runs `workspace-purge-coverage.test.ts`, which rejects any newly unindexed FK.
+- A new table with `workspaceId` requires the `workspace-purge` skill. Partitioned-table indexes use the per-partition recipe in `20260924105732_add_contact_inbox_fk_indexes`.
 
 ### Enums
 
@@ -217,8 +219,9 @@ const item = await findOrFail({ table: myModel, where: { id } })
 `Workspace.scheduledDeletionAt` is the repository's soft-delete convention:
 use a nullable timestamp with an index. Scheduling sets it to `now + 24h`,
 cancellation clears it, and the workspace row remains live during the grace
-window. The hourly purge cron then hard-deletes due rows, allowing the normal
-foreign-key cascade to remove children. `UserQuota.channelsTornDownAt` is the
+window. The hourly purge cron drains large children in bounded batches before
+hard-deleting the workspace; read `workspace-purge` before adding a
+workspace-scoped table or teardown step. `UserQuota.channelsTornDownAt` is the
 sibling marker for one-shot trial-expiry channel teardown; it is not a second
 soft-delete state.
 

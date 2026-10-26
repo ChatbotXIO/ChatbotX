@@ -168,6 +168,26 @@ export const sequenceDispatchRepository = {
     return result.rows.length
   },
 
+  async cancelPendingBatchForWorkspace(
+    input: { workspaceId: string; limit: number },
+    tx: DatabaseClient = db,
+  ): Promise<{ id: string; bucket: number }[]> {
+    const result = await tx.execute<{ id: string; bucket: number }>(sql`
+      UPDATE "SequenceDispatch"
+      SET "status" = 'canceled', "updatedAt" = NOW()
+      WHERE ("id", "workspaceId") IN (
+        SELECT "id", "workspaceId"
+        FROM "SequenceDispatch"
+        WHERE "workspaceId" = ${input.workspaceId}
+          AND "status" = 'pending'
+        LIMIT ${input.limit}
+        FOR UPDATE SKIP LOCKED
+      )
+      RETURNING "id", "bucket"
+    `)
+    return result.rows
+  },
+
   /** `step-executor.service.ts` fetchStep. */
   async findStepWithFlow(
     input: { id: string },

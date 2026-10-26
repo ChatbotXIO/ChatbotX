@@ -1,4 +1,4 @@
-import { macRepository } from "@chatbotx.io/analytics"
+import { anchoredPeriod, macRepository } from "@chatbotx.io/analytics"
 import {
   parseLiveCount,
   tenantService,
@@ -8,6 +8,7 @@ import {
   workspaceUsageService,
 } from "@chatbotx.io/business"
 import { isForeignKeyViolationError } from "@chatbotx.io/database/client"
+import { workspaceMacRepository } from "@chatbotx.io/database/repositories/workspace-mac"
 import { cacheConnections } from "@chatbotx.io/redis"
 import { liveKeyFor, USER_QUOTA_LABEL } from "@chatbotx.io/utils"
 import { logger } from "../../lib/logger"
@@ -244,36 +245,29 @@ const reconcileMac = async (
     MAC_PERIOD_FIELD,
   )
 
-  const rolledOver = livePeriod !== null && livePeriod !== dbPeriodIso
+  const _rolledOver = livePeriod !== null && livePeriod !== dbPeriodIso
 
-  // Resetting plan settled in its current period → the `ContactActiveMonthly`
-  // ledger is the durable source of truth (every MAC increment writes a
-  // presence row in the same transaction as the live-counter bump). Re-ground
-  // both the live counter and `macUsed` on the ledger count so a lost Redis
-  // increment self-heals. Excluded — handled by the stamp logic below:
-  //  - period-less owners (no anchor, not MAC-tracked);
-  //  - lifetime plans (accumulate across months, never reset);
-  //  - a just-detected cycle rollover (defer to the private quota-worker's
-  //    reset, then ledger-reconcile on the next run once stamped).
-  if (dbPeriodIso && !isLifetime && !rolledOver) {
-    const ledgerMac = await macRepository.countActiveContactsForOwner({
+  // The retained owner-keyed rollup is durable billing evidence. Its value may
+  // repair a lost increment, but never lowers usage in an active period.
+  if (dbPeriodIso && livePeriod === dbPeriodIso) {
+    const periodStart = isLifetime
+      ? null
+      : anchoredPeriod(new Date(), new Date(dbPeriodIso)).start
+    const ledgerMac = await workspaceMacRepository.sumForOwner({
       ownerId: userId,
-      billingPeriodStart: new Date(dbPeriodIso),
-      cumulative: false,
+      periodStart,
+      cumulative: isLifetime,
     })
-
-    if (liveMacRaw !== String(ledgerMac) || livePeriod !== dbPeriodIso) {
-      await client.hset(
-        liveKey,
-        MAC_FIELD,
-        String(ledgerMac),
-        MAC_PERIOD_FIELD,
-        dbPeriodIso,
-      )
-    }
-    if (ledgerMac !== dbMacUsed) {
-      await userQuotaService.persistMacUsed(userId, ledgerMac)
-    }
+    await userQuotaService.raiseLiveMac({
+      userId,
+      value: ledgerMac,
+      periodIso: dbPeriodIso,
+    })
+    await userQuotaService.raiseMacUsed({
+      userId,
+      value: ledgerMac,
+      periodStart: new Date(dbPeriodIso),
+    })
     return
   }
 
@@ -296,8 +290,12 @@ const reconcileMac = async (
     await client.hset(liveKey, MAC_PERIOD_FIELD, dbPeriodIso)
   }
 
-  if (action.persistMacUsed !== null) {
-    await userQuotaService.persistMacUsed(userId, action.persistMacUsed)
+  if (action.raiseMacUsed !== null && dbPeriodIso) {
+    await userQuotaService.raiseMacUsed({
+      userId,
+      value: action.raiseMacUsed,
+      periodStart: new Date(dbPeriodIso),
+    })
   }
 }
 
@@ -401,8 +399,8 @@ const reconcileMonthlyBotMessages = async (
 
 /** What `reconcileMac` should write, derived purely from the current state. */
 export interface MacReconcileAction {
-  /** Persist this value to `UserQuota.macUsed` (null = no DB write). */
-  persistMacUsed: number | null
+  /** Raise `UserQuota.macUsed` to this value (null = no DB write). */
+  raiseMacUsed: number | null
   /** Overwrite the live `mac` field with this value (null = leave it). */
   setLiveMac: number | null
   /** (Re)stamp the live period field to the DB period. */
@@ -410,9 +408,9 @@ export interface MacReconcileAction {
 }
 
 const NO_OP: MacReconcileAction = {
+  raiseMacUsed: null,
   setLiveMac: null,
   stampPeriod: false,
-  persistMacUsed: null,
 }
 
 /**
@@ -436,7 +434,7 @@ export function resolveMacReconcileAction(
   }
 
   if (livePeriod !== null && livePeriod !== dbPeriodIso) {
-    return { setLiveMac: dbMacUsed, stampPeriod: true, persistMacUsed: null }
+    return { raiseMacUsed: null, setLiveMac: dbMacUsed, stampPeriod: true }
   }
 
   // Fail closed on a corrupt (non-numeric) live field: fall back to the DB value
@@ -444,8 +442,8 @@ export function resolveMacReconcileAction(
   // integer `macUsed` column and corrupt the durable count.
   const liveMac = parseLiveCount(liveMacRaw) ?? dbMacUsed
   return {
+    raiseMacUsed: liveMac === dbMacUsed ? null : liveMac,
     setLiveMac: null,
     stampPeriod: livePeriod === null,
-    persistMacUsed: liveMac === dbMacUsed ? null : liveMac,
   }
 }
