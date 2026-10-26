@@ -53,6 +53,8 @@ const aiFileService = {
   findWithProcessing: vi.fn(),
   create: vi.fn(),
   delete: vi.fn(),
+  listChunks: vi.fn(),
+  reindex: vi.fn(),
 }
 vi.mock("@chatbotx.io/business", () => ({
   aiFileService,
@@ -62,6 +64,13 @@ vi.mock("@chatbotx.io/business", () => ({
 vi.mock("@chatbotx.io/business/errors", () => ({
   BROADCAST_PLAN_LIMIT_CODE: "broadcastPlanLimit",
   notFoundException: (message: string) => new Error(message),
+}))
+
+const searchAIFiles = vi.fn()
+vi.mock("@chatbotx.io/ai/server", () => ({ searchAIFiles }))
+vi.mock("@/features/ai-files/lib/rate-limit", () => ({
+  assertAIFileReindexNotRateLimited: vi.fn(),
+  assertAIFileSearchNotRateLimited: vi.fn(),
 }))
 
 vi.mock("@chatbotx.io/database/schema", () => {
@@ -239,6 +248,67 @@ describe("DELETE /v1/ai-files/{id}", () => {
     expect(aiFileService.delete).toHaveBeenCalledWith({
       workspaceId: "workspace-1",
       id: "file-1",
+    })
+  })
+})
+
+describe("phase-two AI file procedures", () => {
+  test("registers search, chunks, and reindex procedures", () => {
+    expect(findProcedure("POST", "/v1/ai-files/search").route.summary).toBe(
+      "Search AI file chunks",
+    )
+    expect(findProcedure("GET", "/v1/ai-files/{id}/chunks").route.summary).toBe(
+      "List AI file chunks",
+    )
+    expect(
+      findProcedure("POST", "/v1/ai-files/{id}/reindex").route.successStatus,
+    ).toBe(202)
+  })
+
+  test("search delegates to the shared retrieval implementation", async () => {
+    searchAIFiles.mockResolvedValueOnce({ results: [] })
+    const procedure = findProcedure("POST", "/v1/ai-files/search")
+
+    await procedure.handler?.({
+      context: { workspace: { id: "workspace-1" }, resHeaders: new Headers() },
+      input: { query: "hello", fileIds: ["1"] },
+    })
+
+    expect(searchAIFiles).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      query: "hello",
+      fileIds: ["1"],
+    })
+  })
+
+  test("list chunks and reindex use workspace-scoped service methods", async () => {
+    aiFileService.listChunks.mockResolvedValueOnce({
+      data: [],
+      nextCursor: null,
+    })
+    aiFileService.reindex.mockResolvedValueOnce({
+      file: { id: "1" },
+      coalesced: true,
+    })
+
+    await findProcedure("GET", "/v1/ai-files/{id}/chunks").handler?.({
+      context: { workspace: { id: "workspace-1" } },
+      input: { id: "1", limit: 50 },
+    })
+    await findProcedure("POST", "/v1/ai-files/{id}/reindex").handler?.({
+      context: { workspace: { id: "workspace-1" }, resHeaders: new Headers() },
+      input: { id: "1" },
+    })
+
+    expect(aiFileService.listChunks).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      aiFileId: "1",
+      id: "1",
+      limit: 50,
+    })
+    expect(aiFileService.reindex).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      id: "1",
     })
   })
 })

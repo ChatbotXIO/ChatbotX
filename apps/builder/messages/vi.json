@@ -227,9 +227,141 @@
     }
   },
   "aiFiles": {
+    "detail": {
+      "title": "Chi tiết Knowledge",
+      "details": "Chi tiết",
+      "noChunkingInfo": "Chưa có thông tin xử lý."
+    },
+    "chunking": {
+      "title": "Chia đoạn",
+      "strategyLabel": "Chiến lược",
+      "version": "Phiên bản bộ chia",
+      "chunkSize": "Kích thước đoạn",
+      "overlapSize": "Độ chồng lấn",
+      "chunkCount": "Số đoạn",
+      "processedAt": "Xử lý lúc",
+      "outdated": "Nên reindex",
+      "strategy": {
+        "prose": "Văn bản",
+        "tabular": "Bảng",
+        "markdown": "Markdown"
+      },
+      "configDefault": "Tham số chia chunk: mặc định ({chunkSize} ký tự, overlap {overlapSize}).",
+      "configCustom": "Tham số chia chunk: {chunkSize} ký tự, overlap {overlapSize}."
+    },
+    "processingRun": {
+      "title": "Lần xử lý",
+      "noRun": "File này chưa có lần xử lý nào được theo dõi.",
+      "queuedAt": "Xếp hàng lúc",
+      "startedAt": "Bắt đầu lúc",
+      "heartbeatAt": "Tín hiệu gần nhất",
+      "finishedAt": "Kết thúc lúc",
+      "stale": "Quá trình xử lý có vẻ bị kẹt",
+      "failedBadge": "Xử lý thất bại",
+      "successNote": "Đã chia đoạn và xếp hàng tạo embedding. File tìm kiếm được khi trạng thái embedding cũng hoàn tất.",
+      "status": {
+        "queued": "Đang chờ",
+        "processing": "Đang xử lý",
+        "success": "Đã chuẩn bị",
+        "error": "Thất bại"
+      },
+      "error": {
+        "fileTooLarge": "File quá lớn để xử lý.",
+        "tooManyChunks": "File tạo ra quá nhiều đoạn.",
+        "fileUnreadable": "Không đọc được file. Với file CSV, hãy lưu dưới dạng CSV UTF-8 rồi thử lại.",
+        "noExtractableContent": "Không trích xuất được nội dung. Hãy kiểm tra dòng tiêu đề của bảng tính, hoặc file có thể là bản scan/trống.",
+        "noEmbeddingProvider": "Chưa cấu hình nhà cung cấp embedding.",
+        "enqueueFailed": "File đã được lưu nhưng không xếp hàng xử lý được. Hãy bấm Reindex để thử lại.",
+        "unknown": "Xử lý thất bại ngoài dự kiến."
+      }
+    },
+    "reindex": {
+      "action": "Reindex",
+      "confirmTitle": "Reindex file này?",
+      "confirmDescription": "File sẽ được xử lý lại bằng bộ chia đoạn hiện tại.",
+      "downtimeWarning": "Tìm kiếm có thể tạm không có kết quả trong lúc reindex file này.",
+      "queued": "Đã xếp hàng reindex",
+      "alreadyRunning": "File này đang được xử lý.",
+      "rateLimited": "Quá nhiều yêu cầu. Vui lòng thử lại sau ít phút.",
+      "parameters": "Tham số chia chunk",
+      "strategyLabel": "Cách chia",
+      "strategy": {
+        "auto": "Tự động (theo loại file)",
+        "prose": "Văn bản thường"
+      },
+      "chunkSize": "Kích thước chunk (ký tự)",
+      "overlapSize": "Overlap (ký tự)",
+      "overlapDisabledTabular": "Bảng giữ nguyên từng dòng nên không dùng overlap.",
+      "tabularHeaderRow": "Dòng tiêu đề (bảng tính)",
+      "presets": {
+        "small": "Nhỏ",
+        "medium": "Vừa",
+        "large": "Lớn",
+        "custom": "Kích thước chunk tùy chỉnh"
+      },
+      "resetDefaults": "Khôi phục mặc định",
+      "estimate": "Ước tính: khoảng {estimate} chunk (hiện tại {current})",
+      "reembedWarning": "Đổi tham số sẽ embed lại toàn bộ file (khoảng {count} chunk) bằng key của workspace, và file không tìm được cho tới khi xong.",
+      "largeChunkWarning": "Chunk lớn khiến mỗi câu trả lời của agent đọc nhiều chữ hơn và tốn token hơn.",
+      "noChangeNote": "Tham số không đổi: chunk đã embed được giữ nguyên, không embed lại.",
+      "conflict": "File đang được xử lý nên tham số mới chưa được áp dụng. Hãy thử lại khi xử lý xong."
+    },
+    "chunks": {
+      "indexOutdated": "Một số chunk chưa có số thứ tự. Reindex file để đánh số."
+    },
     "description": "Cho phép Agents của bạn truy cập PDF, Docs và nhiều hơn nữa",
     "title": "Knowledge",
-    "noEmbeddingProvider": "Chưa cấu hình nhà cung cấp embedding. Tính năng AI File yêu cầu tích hợp OpenAI hoặc Gemini. DeepSeek và Claude không hỗ trợ mô hình embedding."
+    "noEmbeddingProvider": "Chưa cấu hình nhà cung cấp embedding. Tính năng AI File yêu cầu tích hợp OpenAI hoặc Gemini. DeepSeek và Claude không hỗ trợ mô hình embedding.",
+    "testQuery": {
+      "title": "Thử truy vấn",
+      "description": "Chọn file, đặt câu hỏi và xem chunk nào trả lời. Chỉ mô phỏng khâu tìm kiếm, không tạo câu trả lời của AI.",
+      "open": "Thử truy vấn",
+      "backToKnowledge": "Quay lại Knowledge",
+      "run": "Chạy thử",
+      "files": "File",
+      "filterFiles": "Lọc file theo tên",
+      "selectAllReady": "Chọn tất cả file sẵn sàng",
+      "selectedCount": "Đã chọn {count}/{max}",
+      "fileNotReady": "File này chưa có chunk nào sẵn sàng để tìm kiếm.",
+      "question": "Câu hỏi",
+      "expected": "Đáp án mong đợi (tùy chọn)",
+      "expectedHelp": "Nhập đáp án đúng như trong tài liệu, kể cả dấu. Hệ thống tìm trong mọi chunk của các file đã chọn.",
+      "limit": "Số kết quả",
+      "simulationNote": "Chỉ mô phỏng khâu tìm kiếm; agent có thể diễn đạt câu hỏi khác. Mỗi lần chạy tốn một lần embed bằng key của workspace.",
+      "rateLimited": "Quá nhiều yêu cầu thử. Vui lòng thử lại sau ít phút.",
+      "byFile": "Theo file",
+      "matches": "{count} chunk khớp",
+      "bestRank": "hạng tốt nhất {rank}",
+      "needsReindex": "Cần reindex",
+      "openDetail": "Mở chi tiết",
+      "rank": "#{rank}",
+      "chunkNumber": "chunk #{index}",
+      "chunkUnnumbered": "chunk chưa đánh số",
+      "aiWillSee": "AI sẽ thấy",
+      "belowThreshold": "Dưới ngưỡng",
+      "containsExpected": "Chứa đáp án",
+      "thresholdLine": "Ngưỡng {threshold}",
+      "appliedConfig": "Cấu hình áp dụng",
+      "agentDefaultThreshold": "Ngưỡng mặc định của agent",
+      "timings": "Thời gian tìm kiếm",
+      "scoreNotComparable": "Điểm tương đồng không so sánh trực tiếp được giữa các model embedding.",
+      "answerLocation": "Đáp án nằm ở {file} · {chunk} · hạng {rank}",
+      "splitHint": "Đáp án có thể bị cắt giữa hai chunk. Thử chunk lớn hơn hoặc overlap lớn hơn, hoặc kiểm tra file có được đọc đúng không.",
+      "previousRun": "Lần trước ({time}): đáp án hạng {from} → nay {to}",
+      "previousRunTop": "Lần trước ({time}): {changed}/{total} chunk đầu bảng đã đổi",
+      "verdict": {
+        "inTopResults": "AI sẽ thấy đáp án mong đợi.",
+        "foundButLowRank": "Đáp án có trong tài liệu nhưng xếp quá thấp nên AI không thấy. Thử câu hỏi sát hơn, hoặc reindex với chunk nhỏ hơn.",
+        "notInAnyChunk": "Không chunk nào của các file đã chọn chứa đáp án. Tài liệu có thể bị đọc hoặc chia sai: xem các chunk hoặc reindex với cài đặt khác."
+      },
+      "diagnosis": {
+        "ok": "Đã tìm thấy các chunk phù hợp.",
+        "noReadyChunks": "Chưa có chunk nào sẵn sàng để tìm kiếm. Mở file để xem trạng thái xử lý.",
+        "allBelowThreshold": "Tìm thấy chunk nhưng tất cả đều dưới ngưỡng. Thử hạ ngưỡng thử.",
+        "noMatches": "Không tìm thấy chunk phù hợp.",
+        "agentHasNoFiles": "Agent này chưa có file kiến thức."
+      }
+    }
   },
   "aiFunctions": {
     "description": "Cấu hình các chức năng LLM để làm cho AI agent thông minh hơn",

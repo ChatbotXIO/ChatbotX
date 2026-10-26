@@ -1,65 +1,61 @@
-import { createHash } from "node:crypto"
+import { aiFileService } from "@chatbotx.io/business"
+import {
+  AI_FILE_CHUNKER_VERSIONS,
+  resolveAIFileChunkingConfig,
+} from "@chatbotx.io/database/partials"
 import { createAiFileEmbeddingRepository } from "@chatbotx.io/database/repositories"
+import { createAIFileEmbeddingId } from "@chatbotx.io/database/repositories/ai-file-embedding-id"
 import { distributedLock } from "@chatbotx.io/redis"
 import {
+  AI_FILE_EMBEDDING_PRIORITY,
   AIJobAction,
   aiAgentQueue,
+  buildAIFileEmbeddingJobId,
   type HeavyJobProcessAIFile,
 } from "@chatbotx.io/worker-config"
-import { resolveEmbeddingModel } from "../../ai-agent/lib/embedding-model"
-import { extractTextFromFile } from "../../ai-agent/lib/text-extractor"
+import { normalizeError } from "universal-error-normalizer"
+import {
+  chunkKnowledgeDocument,
+  type KnowledgeDocument,
+} from "../../ai-agent/lib/chunkers"
+import {
+  EmbeddingProviderNotConfiguredError,
+  resolveEmbeddingModel,
+} from "../../ai-agent/lib/embedding-model"
+import {
+  FileFetchError,
+  FileSizeLimitError,
+} from "../../ai-agent/lib/extraction-errors"
+import { extractKnowledgeDocument } from "../../ai-agent/lib/text-extractor"
 import { env } from "../../env"
-
-type TextChunk = { content: string }
-
-const DEFAULT_CHUNK_SIZE = 1000
-const DEFAULT_OVERLAP_SIZE = 200
+import { logger } from "../../lib/logger"
+import { AIFileProcessingError } from "./ai-file-processing-error"
 
 const aiFileEmbeddingRepository = createAiFileEmbeddingRepository()
 
-function splitTextIntoChunks(
-  text: string,
-  chunkSize = DEFAULT_CHUNK_SIZE,
-  overlapSize = DEFAULT_OVERLAP_SIZE,
-): readonly TextChunk[] {
-  const chunks: TextChunk[] = []
-  if (!text || chunkSize <= 0) {
-    return chunks
+/** Characters handed to the chunker; the UI uses it to estimate a chunk count. */
+function measureExtractedChars(document: KnowledgeDocument): number {
+  if (document.kind !== "tabular") {
+    return document.text.length
   }
-
-  let start = 0
-  while (start < text.length) {
-    const end = Math.min(start + chunkSize, text.length)
-    const piece = text.slice(start, end).trim()
-    if (piece.length > 0) {
-      chunks.push({ content: piece })
+  let total = 0
+  for (const sheet of document.sheets) {
+    for (const header of sheet.headers) {
+      total += header.length
     }
-    if (end === text.length) {
-      break
+    for (const row of sheet.rows) {
+      for (const cell of row) {
+        total += cell.length
+      }
     }
-    start = Math.max(0, end - overlapSize)
   }
-  return chunks
-}
-
-function createDeterministicEmbeddingId(input: {
-  aiFileId: string
-  chunkIndex: number
-  content: string
-}): string {
-  const digest = createHash("sha256")
-    .update(JSON.stringify(input))
-    .digest("hex")
-  const id = BigInt(`0x${digest.slice(0, 15)}`)
-  return id === 0n ? "1" : id.toString()
+  return total
 }
 
 export async function processAIFile(
   data: HeavyJobProcessAIFile["data"],
-  chunkSize = DEFAULT_CHUNK_SIZE,
-  overlapSize = DEFAULT_OVERLAP_SIZE,
 ): Promise<void> {
-  const { aiFileId } = data
+  const { aiFileId, runId } = data
 
   await distributedLock.runExclusive({
     key: `ai-file:process:${aiFileId}`,
@@ -68,28 +64,135 @@ export async function processAIFile(
     fn: async () => {
       const aiFile = await aiFileEmbeddingRepository.findFileOrFail(aiFileId)
 
-      await resolveEmbeddingModel(aiFile.workspaceId)
-
-      if (aiFile.size > env.HEAVY_MAX_FILE_BYTES) {
-        throw new Error("AI file is too large to process")
+      if (
+        runId &&
+        !(await aiFileService.markProcessingRunStarted({
+          aiFileId,
+          workspaceId: aiFile.workspaceId,
+          runId,
+        }))
+      ) {
+        logger.info(
+          { aiFileId, workspaceId: aiFile.workspaceId, runId },
+          "AI file processing run superseded, skipping",
+        )
+        return
       }
 
-      const text = await extractTextFromFile(aiFile.path, aiFile.mimeType, {
-        maxBytes: env.HEAVY_MAX_FILE_BYTES,
-        maxTextChars: env.HEAVY_MAX_EXTRACTED_TEXT_CHARS,
+      const ensureRunLease = async (
+        stage: "beforeReconcile" | "beforeEnqueue",
+      ): Promise<boolean> => {
+        if (!runId) {
+          return true
+        }
+        const refreshed = await aiFileService.refreshProcessingRunLease({
+          aiFileId,
+          workspaceId: aiFile.workspaceId,
+          runId,
+        })
+        if (!refreshed) {
+          logger.info(
+            { aiFileId, workspaceId: aiFile.workspaceId, runId, stage },
+            "AI file processing run superseded, skipping",
+          )
+        }
+        return refreshed
+      }
+
+      // Read after the run is confirmed current: the parameters are written in
+      // the same statement that claims the run, so this is the run's own.
+      const config = resolveAIFileChunkingConfig(aiFile.chunkingConfig)
+
+      try {
+        await resolveEmbeddingModel(aiFile.workspaceId)
+      } catch (error) {
+        // Only a missing/unusable provider is permanent. A database or network
+        // error while resolving it is retried and keeps its own cause.
+        if (error instanceof EmbeddingProviderNotConfiguredError) {
+          throw new AIFileProcessingError("noEmbeddingProvider", {
+            cause: error,
+          })
+        }
+        throw error
+      }
+
+      if (aiFile.size > env.HEAVY_MAX_FILE_BYTES) {
+        throw new AIFileProcessingError("fileTooLarge")
+      }
+
+      const document = await extractKnowledgeDocument(
+        aiFile.path,
+        aiFile.mimeType,
+        {
+          sourceName: aiFile.name,
+          maxBytes: env.HEAVY_MAX_FILE_BYTES,
+          maxTextChars: env.HEAVY_MAX_EXTRACTED_TEXT_CHARS,
+          forceProse: config.strategy === "prose",
+          tabularHeaderRow: config.tabularHeaderRow,
+        },
+      ).catch((error: unknown) => {
+        if (error instanceof FileSizeLimitError) {
+          throw new AIFileProcessingError("fileTooLarge", { cause: error })
+        }
+        // Storage errors may be transient: rethrown untouched so BullMQ retries.
+        if (error instanceof FileFetchError) {
+          throw error
+        }
+        throw new AIFileProcessingError("fileUnreadable", { cause: error })
       })
-      const chunks = splitTextIntoChunks(text, chunkSize, overlapSize)
+      if (document.kind === "prose" && document.fallback) {
+        logger.warn(
+          {
+            err: normalizeError(document.fallback.error),
+            aiFileId: aiFile.id,
+            workspaceId: aiFile.workspaceId,
+            mimeType: aiFile.mimeType,
+            reason: document.fallback.reason,
+          },
+          "AI file structured extraction failed, fell back to prose",
+        )
+      }
+      if (document.kind === "tabular" && document.truncated) {
+        logger.warn(
+          {
+            aiFileId: aiFile.id,
+            workspaceId: aiFile.workspaceId,
+            sheetCount: document.sheets.length,
+            rowCount: document.sheets.reduce(
+              (total, sheet) => total + sheet.rows.length,
+              0,
+            ),
+          },
+          "AI file tabular extraction reached its text limit",
+        )
+      }
+      const result = chunkKnowledgeDocument(document, {
+        chunkSize: config.chunkSize,
+        overlapSize: config.overlapSize,
+      })
+      const chunks = result.chunks
 
       if (chunks.length > env.HEAVY_MAX_CHUNKS_PER_FILE) {
-        throw new Error("AI file produced too many chunks")
+        throw new AIFileProcessingError("tooManyChunks")
+      }
+
+      // Reconciling an empty set would delete every existing chunk and still
+      // report success: keep the previous index and fail the run instead.
+      if (chunks.length === 0) {
+        throw new AIFileProcessingError("noExtractableContent")
+      }
+
+      if (!(await ensureRunLease("beforeReconcile"))) {
+        return
       }
 
       const pendingEmbeddings =
         await aiFileEmbeddingRepository.reconcilePendingChunks({
           aiFileId: aiFile.id,
           chunks: chunks.map((chunk, chunkIndex) => ({
+            chunkIndex,
             content: chunk.content,
-            id: createDeterministicEmbeddingId({
+            id: createAIFileEmbeddingId({
               aiFileId: aiFile.id,
               chunkIndex,
               content: chunk.content,
@@ -98,7 +201,32 @@ export async function processAIFile(
           workspaceId: aiFile.workspaceId,
         })
 
+      await aiFileService.markChunked({
+        aiFileId: aiFile.id,
+        workspaceId: aiFile.workspaceId,
+        chunking: {
+          strategy: result.strategy,
+          chunkerVersion: AI_FILE_CHUNKER_VERSIONS[result.strategy],
+          chunkSize: result.chunkSize,
+          overlapSize: result.overlapSize,
+          chunkCount: chunks.length,
+          processedAt: new Date().toISOString(),
+          extractedChars: measureExtractedChars(document),
+        },
+      })
+
       if (pendingEmbeddings.length === 0) {
+        if (runId) {
+          await aiFileService.markProcessingRunSucceeded({
+            aiFileId,
+            workspaceId: aiFile.workspaceId,
+            runId,
+          })
+        }
+        return
+      }
+
+      if (!(await ensureRunLease("beforeEnqueue"))) {
         return
       }
 
@@ -110,10 +238,22 @@ export async function processAIFile(
             data: { aiEmbeddingId: embedding.id },
           },
           opts: {
-            jobId: `ai-file-embedding-${aiFile.id}-${embedding.id}`,
+            jobId: buildAIFileEmbeddingJobId({
+              aiFileId: aiFile.id,
+              embeddingId: embedding.id,
+              runId,
+            }),
+            priority: AI_FILE_EMBEDDING_PRIORITY,
           },
         })),
       )
+      if (runId) {
+        await aiFileService.markProcessingRunSucceeded({
+          aiFileId,
+          workspaceId: aiFile.workspaceId,
+          runId,
+        })
+      }
     },
   })
 }

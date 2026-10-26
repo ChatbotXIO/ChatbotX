@@ -111,7 +111,7 @@ async function resolveUrlSource(
           .catch((error: unknown) => {
             logger.warn(
               {
-                error: normalizeError(error),
+                err: normalizeError(error),
                 workspaceId: input.workspaceId,
                 conversationId: input.conversationId,
               },
@@ -163,7 +163,7 @@ async function resolveUrlSource(
       const normalizedError = normalizeError(error)
       logger.error(
         {
-          error: normalizedError,
+          err: normalizedError,
           sourceId: latestSource.id,
           workspaceId: input.workspaceId,
           conversationId: input.conversationId,
@@ -194,6 +194,7 @@ async function retrieveUrlChunks(
   if (!input.query.trim()) {
     const rows = await embeddingRepo.findManyBySource({
       sourceId: resolvedSource.source.id,
+      workspaceId: resolvedSource.source.workspaceId,
       limit: topK,
     })
 
@@ -221,6 +222,7 @@ async function retrieveUrlChunks(
 
   const rows = await embeddingRepo.vectorSearch({
     sourceId: resolvedSource.source.id,
+    workspaceId: resolvedSource.source.workspaceId,
     queryVector: queryEmbeddingVector,
     topK,
   })

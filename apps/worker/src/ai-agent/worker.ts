@@ -37,6 +37,7 @@ import { processConversationSource } from "./handlers/process-conversation-sourc
 import { processConversationSourceEmbedding } from "./handlers/process-conversation-source-embedding"
 import { processPendingEmbedding } from "./handlers/process-pending-embeddings"
 import { handleSummarizeConversation } from "./handlers/summarize-conversation"
+import { markEmbeddingChunkFailed } from "./lib/mark-embedding-chunk-failed"
 
 async function processAutomatedResponseWithWebhookContext(
   data: AIJobProcessAutomatedResponse["data"],
@@ -196,6 +197,12 @@ async function startAIAgentWorker() {
       },
       "AI Agent job failed",
     )
+
+    await markEmbeddingChunkFailed({
+      job,
+      jobData: parsedJobData.data,
+      workspaceId,
+    })
   })
 
   let isShuttingDown = false

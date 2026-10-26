@@ -1,4 +1,9 @@
-import { index, integer, pgTable, text } from "drizzle-orm/pg-core"
+import { index, integer, jsonb, pgTable, text } from "drizzle-orm/pg-core"
+import type {
+  AIFileChunking,
+  AIFileChunkingConfig,
+  AIFileProcessingRun,
+} from "../partials/ai"
 import { bigintAsString, sharedColumns } from "../partials/shared"
 import { workspaceModel } from "./workspace"
 
@@ -10,6 +15,9 @@ export const aiFileModel = pgTable(
     path: text().notNull(),
     size: integer().notNull(),
     mimeType: text().notNull(),
+    chunking: jsonb().$type<AIFileChunking>(),
+    chunkingConfig: jsonb().$type<AIFileChunkingConfig>(),
+    processingRun: jsonb().$type<AIFileProcessingRun>(),
     workspaceId: bigintAsString()
       .notNull()
       .references(() => workspaceModel.id, {

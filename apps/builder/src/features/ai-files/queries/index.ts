@@ -15,3 +15,10 @@ export async function listAIFiles(
     }),
   }
 }
+
+export async function getAIFile(input: { workspaceId: string; id: string }) {
+  await assertCurrentUserCanAccessChatbot(input.workspaceId)
+  return await aiFileService.findWithProcessing({
+    where: { id: input.id, workspaceId: input.workspaceId },
+  })
+}
