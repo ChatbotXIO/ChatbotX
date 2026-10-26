@@ -25,6 +25,7 @@ export async function handleAIGenerateTextAgent({
   conversation,
   contactInbox,
   step,
+  sentByUserId,
 }: ExecuteStepProps<AIGenerateTextAgentSchema>): Promise<ExecuteStepResult> {
   const controller = new AbortController()
   const timeoutId = setTimeout(() => controller.abort(), aiTimeouts.aiTotal)
@@ -91,6 +92,7 @@ export async function handleAIGenerateTextAgent({
       messages,
       aiAgent,
       summary,
+      sentByUserId,
       ...(preferredModel
         ? { preferredModel }
         : { preferredProvider: preferredProvider?.data }),

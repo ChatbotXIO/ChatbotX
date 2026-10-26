@@ -474,6 +474,45 @@ describe("contactInboxService timestamp helpers", () => {
     })
   })
 
+  test("updateTracking clears the previous ad's headline and body when a NEW ad lacks them", async () => {
+    await contactInboxService.updateTracking({
+      contactInboxId: "contact-inbox-1",
+      contactId: "contact-1",
+      workspaceId: "workspace-1",
+      data: {
+        referral: {
+          adId: "ad-2",
+          adTitle: null,
+          adBody: null,
+          ctwaClid: "clid-2",
+          raw: {},
+        },
+      },
+    })
+
+    const payload = mockDbSet.mock.calls[0][0].referral.values[1] as string
+    expect(JSON.parse(payload)).toEqual({
+      adId: "ad-2",
+      adTitle: null,
+      adBody: null,
+      ctwaClid: "clid-2",
+    })
+  })
+
+  test("updateTracking keeps the stored ad copy when the referral names no ad", async () => {
+    await contactInboxService.updateTracking({
+      contactInboxId: "contact-inbox-1",
+      contactId: "contact-1",
+      workspaceId: "workspace-1",
+      data: {
+        referral: { ref: "launch", adTitle: null, adBody: null, raw: {} },
+      },
+    })
+
+    const payload = mockDbSet.mock.calls[0][0].referral.values[1] as string
+    expect(JSON.parse(payload)).toEqual({ ref: "launch" })
+  })
+
   test("updateTracking still writes a referral made only of Google nulls", async () => {
     await contactInboxService.updateTracking({
       contactInboxId: "contact-inbox-1",

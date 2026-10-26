@@ -204,6 +204,18 @@ export const questionnaireSubmissionModel = pgTable(
     index("QuestionnaireSubmission_currentQuestionId_idx")
       .on(table.currentQuestionId)
       .where(sql`${table.currentQuestionId} IS NOT NULL`),
+    // Latest completed submission of a contact (`{{last_points}}`) without
+    // scanning the workspace's submissions. `nullsFirst()` makes the index
+    // `DESC NULLS FIRST`, the order a plain `ORDER BY "completedAt" DESC` asks
+    // for; a bare `.desc()` renders `DESC NULLS LAST` and would not match it.
+    index(
+      "QuestionnaireSubmission_workspaceId_contactId_completedAt_idx",
+    ).using(
+      "btree",
+      table.workspaceId.asc().nullsLast(),
+      table.contactId.asc().nullsLast(),
+      table.completedAt.desc().nullsFirst(),
+    ),
     uniqueIndex("QuestionnaireSubmission_workspaceId_contactId_active_key")
       .on(table.workspaceId, table.contactId)
       .where(sql`${table.status} = 'inProgress'`),

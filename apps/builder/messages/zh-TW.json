@@ -1563,6 +1563,45 @@
     },
     "miniApp": {
       "label": "小程式"
+    },
+    "adminName": {
+      "label": "傳送管理員名稱"
+    },
+    "adminTeamName": {
+      "label": "傳送管理員所屬團隊"
+    },
+    "bookingId": {
+      "label": "預約ID"
+    },
+    "lastPoints": {
+      "label": "最近問卷分數"
+    },
+    "lastAdHeadline": {
+      "label": "最近廣告標題"
+    },
+    "lastAdBody": {
+      "label": "最近廣告內文"
+    },
+    "lastStoryId": {
+      "label": "最近限時動態ID"
+    },
+    "lastLeadId": {
+      "label": "最近名單ID"
+    },
+    "lastFormId": {
+      "label": "最近表單ID"
+    },
+    "lastFormName": {
+      "label": "最近表單名稱"
+    },
+    "lastAdgroupId": {
+      "label": "最近廣告群組ID"
+    },
+    "lastTextInput": {
+      "label": "最近文字輸入"
+    },
+    "empty": {
+      "label": "空白"
     }
   },
   "messages": {

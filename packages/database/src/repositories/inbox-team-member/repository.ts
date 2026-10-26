@@ -1,4 +1,4 @@
-import { and, type DatabaseClient, db, eq, inArray } from "../../client"
+import { and, asc, type DatabaseClient, db, eq, inArray } from "../../client"
 import { inboxTeamMemberModel, inboxTeamModel } from "../../schema"
 
 /**
@@ -53,6 +53,33 @@ class InboxTeamMemberRepository {
         ),
       )
     return rows.map((row) => row.userId)
+  }
+
+  /**
+   * Names of the workspace's teams a user belongs to. Bounded by that user's
+   * own memberships; the workspace is enforced through the team join.
+   */
+  async listTeamNamesByUserId(props: {
+    workspaceId: string
+    userId: string
+    tx?: DatabaseClient
+  }): Promise<string[]> {
+    const { workspaceId, userId, tx = db } = props
+    const rows = await tx
+      .select({ name: inboxTeamModel.name })
+      .from(inboxTeamMemberModel)
+      .innerJoin(
+        inboxTeamModel,
+        eq(inboxTeamMemberModel.inboxTeamId, inboxTeamModel.id),
+      )
+      .where(
+        and(
+          eq(inboxTeamModel.workspaceId, workspaceId),
+          eq(inboxTeamMemberModel.userId, userId),
+        ),
+      )
+      .orderBy(asc(inboxTeamModel.name))
+    return rows.map((row) => row.name)
   }
 
   /**

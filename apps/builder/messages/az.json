@@ -2645,6 +2645,45 @@
     },
     "miniApp": {
       "label": "Mini Tətbiq"
+    },
+    "adminName": {
+      "label": "Göndərən adminin adı"
+    },
+    "adminTeamName": {
+      "label": "Göndərən adminin komandaları"
+    },
+    "bookingId": {
+      "label": "Rezervasiya ID-si"
+    },
+    "lastPoints": {
+      "label": "Son sorğu balı"
+    },
+    "lastAdHeadline": {
+      "label": "Son reklam başlığı"
+    },
+    "lastAdBody": {
+      "label": "Son reklam mətni"
+    },
+    "lastStoryId": {
+      "label": "Son story ID-si"
+    },
+    "lastLeadId": {
+      "label": "Son lead ID-si"
+    },
+    "lastFormId": {
+      "label": "Son forma ID-si"
+    },
+    "lastFormName": {
+      "label": "Son forma adı"
+    },
+    "lastAdgroupId": {
+      "label": "Son reklam qrupu ID-si"
+    },
+    "lastTextInput": {
+      "label": "Son mətn daxiletməsi"
+    },
+    "empty": {
+      "label": "Boş"
     }
   },
   "metaConversions": {

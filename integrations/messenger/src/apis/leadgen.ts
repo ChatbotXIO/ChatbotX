@@ -43,6 +43,51 @@ export function getLeadgenForms(
   })
 }
 
+type LeadgenFormNamePage = {
+  data?: { id: string; name: string }[]
+  paging?: { cursors?: { after?: string }; next?: string }
+}
+
+const FORM_NAME_PAGE_SIZE = "100"
+const FORM_NAME_MAX_PAGES = 5
+
+/**
+ * Name of one lead form of a page, or `undefined` when the page has no such
+ * form. Reads the documented `leadgen_forms` edge with only `id,name` (the
+ * list call above also pulls every question) and stops after a few pages so a
+ * page with a very long form list cannot turn one lead into an unbounded walk.
+ */
+export function getLeadgenFormName(
+  pageId: string,
+  formId: string,
+  accessToken: string,
+  version: string = DEFAULT_API_VERSION,
+): Promise<string | undefined> {
+  const endpoint = `${version}/${pageId}/leadgen_forms`
+
+  return rescue(endpoint, async () => {
+    let after: string | undefined
+    for (let page = 0; page < FORM_NAME_MAX_PAGES; page++) {
+      const res: LeadgenFormNamePage = await facebookGraphClient.get(endpoint, {
+        searchParams: {
+          fields: "id,name",
+          limit: FORM_NAME_PAGE_SIZE,
+          access_token: accessToken,
+          ...(after ? { after } : {}),
+        },
+      })
+      const form = res.data?.find((candidate) => candidate.id === formId)
+      if (form) {
+        return form.name
+      }
+      after = res.paging?.next ? res.paging.cursors?.after : undefined
+      if (!after) {
+        return
+      }
+    }
+  })
+}
+
 export type LeadFieldDatum = { name: string; values: string[] }
 export type Lead = {
   id: string

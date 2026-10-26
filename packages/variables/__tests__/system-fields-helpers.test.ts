@@ -21,6 +21,7 @@ const mocks = vi.hoisted(() => ({
   getChatHistory: vi.fn(),
   getContactLastInput: vi.fn(),
   getContactLastInputType: vi.fn(),
+  getContactLastTextInput: vi.fn(),
   getQueuedMessages: vi.fn(),
 }))
 
@@ -49,6 +50,7 @@ vi.mock("../src/helpers/queued-messages", () => ({
 vi.mock("../src/helpers/last-input", () => ({
   getContactLastInput: mocks.getContactLastInput,
   getContactLastInputType: mocks.getContactLastInputType,
+  getContactLastTextInput: mocks.getContactLastTextInput,
 }))
 
 vi.mock("../src/helpers/integration-fields", () => ({
@@ -215,6 +217,16 @@ describe("getSystemFieldValue — helper-backed fields", () => {
 
     expect(mocks.getContactLastInput).toHaveBeenCalledWith("contact-1")
     expect(mocks.getContactLastInputType).toHaveBeenCalledWith("contact-1")
+  })
+
+  test("last_text_input calls its own helper", async () => {
+    mocks.getContactLastTextInput.mockResolvedValue("typed text")
+
+    await expect(
+      getSystemFieldValue(context, systemFieldTypes.enum.last_text_input),
+    ).resolves.toBe("typed text")
+
+    expect(mocks.getContactLastTextInput).toHaveBeenCalledWith("contact-1")
   })
 
   test("a null from any helper passes straight through", async () => {

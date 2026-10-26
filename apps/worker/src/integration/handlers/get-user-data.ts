@@ -566,6 +566,7 @@ async function sendMessage(
     metadata: props.metadata,
     isBulkBroadcast: props.isBulkBroadcast,
     ...(props.appointmentId ? { appointmentId: props.appointmentId } : {}),
+    ...(props.sentByUserId ? { sentByUserId: props.sentByUserId } : {}),
     // The prompt is this step's outgoing message, so it carries the run's
     // comment anchor like any other message-producing step (see
     // MESSAGE_PRODUCING_STEP_TYPES). Unspent + `private`: the channel sends it

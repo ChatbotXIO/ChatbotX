@@ -31,6 +31,7 @@ export type HeavyFlowContinuation = {
   nodeId?: string
   nodeVisits?: Record<string, number>
   sendFrom?: "inbox"
+  sentByUserId?: string
   targetId?: string
   targetType?: FlowActionTargetType
   trackingContext?: BotResponseTrackingContext
@@ -174,6 +175,7 @@ const heavyFlowContinuationSchema = z
     metadata: metadataSchema.optional(),
     appointmentId: z.string().min(1).optional(),
     sendFrom: z.literal("inbox").optional(),
+    sentByUserId: z.string().min(1).optional(),
     nodeVisits: z.record(z.string(), z.number().int().nonnegative()).optional(),
     // Must mirror every field of `CommentAnchor`. Zod strips unknown keys, so
     // an omitted field is silently dropped on the way back out of the heavy

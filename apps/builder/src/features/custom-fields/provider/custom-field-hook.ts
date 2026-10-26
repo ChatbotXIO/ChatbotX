@@ -118,6 +118,12 @@ export const reservedCustomFieldIds: {
     labelKey: "fields.lastInput.label",
   },
   {
+    // Latest incoming plain text; unlike `last_input` it never yields a media URL.
+    id: systemFieldTypes.enum.last_text_input,
+    type: "shortText",
+    labelKey: "fields.lastTextInput.label",
+  },
+  {
     id: systemFieldTypes.enum.last_call_recorded,
     type: "shortText",
     labelKey: "fields.lastCallRecorded.label",
@@ -185,11 +191,82 @@ export const reservedCustomFieldIds: {
     channels: ["messenger", "instagram"],
   },
   {
+    // The inbox user who sent the running flow — not the conversation assignee.
+    // Only set on a flow an inbox user started.
+    id: systemFieldTypes.enum.admin_name,
+    type: "shortText",
+    labelKey: "fields.adminName.label",
+  },
+  {
+    id: systemFieldTypes.enum.admin_team_name,
+    type: "shortText",
+    labelKey: "fields.adminTeamName.label",
+  },
+  {
+    id: systemFieldTypes.enum.booking_id,
+    type: "shortText",
+    labelKey: "fields.bookingId.label",
+  },
+  {
+    id: systemFieldTypes.enum.last_points,
+    type: "number",
+    labelKey: "fields.lastPoints.label",
+  },
+  {
+    id: systemFieldTypes.enum.last_ad_headline,
+    type: "shortText",
+    labelKey: "fields.lastAdHeadline.label",
+    channels: ["messenger", "instagram", "whatsapp"],
+  },
+  {
+    // Only WhatsApp Click-to-WhatsApp referrals carry an ad body.
+    id: systemFieldTypes.enum.last_ad_body,
+    type: "shortText",
+    labelKey: "fields.lastAdBody.label",
+    channels: ["whatsapp"],
+  },
+  {
+    id: systemFieldTypes.enum.last_story_id,
+    type: "shortText",
+    labelKey: "fields.lastStoryId.label",
+    channels: ["instagram"],
+  },
+  {
+    id: systemFieldTypes.enum.last_lead_id,
+    type: "shortText",
+    labelKey: "fields.lastLeadId.label",
+    channels: ["messenger"],
+  },
+  {
+    id: systemFieldTypes.enum.last_form_id,
+    type: "shortText",
+    labelKey: "fields.lastFormId.label",
+    channels: ["messenger"],
+  },
+  {
+    id: systemFieldTypes.enum.last_form_name,
+    type: "shortText",
+    labelKey: "fields.lastFormName.label",
+    channels: ["messenger"],
+  },
+  {
+    id: systemFieldTypes.enum.last_adgroup_id,
+    type: "shortText",
+    labelKey: "fields.lastAdgroupId.label",
+    channels: ["messenger"],
+  },
+  {
     // Inviter's name for a contact who joined a leaderboard through a
     // referral link — used in the leaderboard welcome message.
     id: systemFieldTypes.enum.referral_name,
     type: "shortText",
     labelKey: "fields.referralName.label",
+  },
+  {
+    // Always blank: clears a field or leaves a slot empty.
+    id: systemFieldTypes.enum.empty,
+    type: "shortText",
+    labelKey: "fields.empty.label",
   },
 ]
 

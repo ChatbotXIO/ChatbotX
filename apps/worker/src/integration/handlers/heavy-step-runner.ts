@@ -286,6 +286,7 @@ function buildContinuation<T>(props: HeavyStepProps<T>) {
     nodeId: props.targetNodeId,
     nodeVisits: props.nodeVisits,
     sendFrom: props.sendFrom,
+    sentByUserId: props.sentByUserId,
     targetId: props.targetId,
     // Only button and quick-reply targets are queue-level variants. Node and
     // step execution re-enters through nodeId + startFromStepId.

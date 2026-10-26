@@ -3559,6 +3559,45 @@
     },
     "miniApp": {
       "label": "小程序"
+    },
+    "adminName": {
+      "label": "发送管理员姓名"
+    },
+    "adminTeamName": {
+      "label": "发送管理员所属团队"
+    },
+    "bookingId": {
+      "label": "预约ID"
+    },
+    "lastPoints": {
+      "label": "最近问卷得分"
+    },
+    "lastAdHeadline": {
+      "label": "最近广告标题"
+    },
+    "lastAdBody": {
+      "label": "最近广告正文"
+    },
+    "lastStoryId": {
+      "label": "最近快拍ID"
+    },
+    "lastLeadId": {
+      "label": "最近线索ID"
+    },
+    "lastFormId": {
+      "label": "最近表单ID"
+    },
+    "lastFormName": {
+      "label": "最近表单名称"
+    },
+    "lastAdgroupId": {
+      "label": "最近广告组ID"
+    },
+    "lastTextInput": {
+      "label": "最近文本输入"
+    },
+    "empty": {
+      "label": "空"
     }
   },
   "flowAnalytics": {

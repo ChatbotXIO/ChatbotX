@@ -11,7 +11,7 @@ import { sanitizeCapiError } from "./sanitize-capi-error"
 export async function handleSendMetaCapiEventStep(
   props: ExecuteStepProps<SendMetaCapiEventSchema>,
 ): Promise<ExecuteStepResult> {
-  const { contactInbox, conversation, step } = props
+  const { contactInbox, conversation, step, sentByUserId } = props
 
   try {
     const capiChannel = metaCapiEventChannelSchema.safeParse(
@@ -37,7 +37,7 @@ export async function handleSendMetaCapiEventStep(
         currency: step.currency,
         contentIds: step.contentIds,
       },
-      { contactInbox, conversation },
+      { contactInbox, conversation, sentByUserId },
     )
 
     await enqueueCapiEvent(

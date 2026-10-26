@@ -281,6 +281,31 @@ describe("handleCondition", () => {
     })
   })
 
+  test("threads sentByUserId through variable resolution and the matched branch", async () => {
+    const step = makeStep()
+    matchesContactFilter.mockResolvedValueOnce(true)
+
+    await handleCondition({
+      ...makeProps(step, [
+        { sourceHandle: "first-case", target: "first-target" },
+      ]),
+      sentByUserId: "user-1",
+    })
+
+    expect(resolveContactVariablesDeep).toHaveBeenCalledWith(
+      "contact-1",
+      step.cases,
+      expect.objectContaining({ sentByUserId: "user-1" }),
+    )
+    expect(integrationQueueAdd).toHaveBeenCalledWith("sendFlow", {
+      type: "sendFlow",
+      data: expect.objectContaining({
+        sentByUserId: "user-1",
+        nodeId: "first-target",
+      }),
+    })
+  })
+
   test("threads the case timezone into contact filter matching", async () => {
     const step: ConditionStepSchema = {
       id: "condition-step-1",
