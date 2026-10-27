@@ -4063,11 +4063,6 @@
       "stage": "阶段",
       "firstStage": "第一阶段",
       "status": "状态",
-      "statusOptions": {
-        "open": "进行中",
-        "won": "赢单",
-        "lost": "输单"
-      },
       "assigneeMembers": "已分配的管理员",
       "assigneeTeams": "已分配的团队",
       "value": "金额",

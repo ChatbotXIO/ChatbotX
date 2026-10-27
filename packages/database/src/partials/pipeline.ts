@@ -248,6 +248,11 @@ export const pipelineActorKinds = z.enum([
 ])
 export type PipelineActorKind = z.infer<typeof pipelineActorKinds>
 
+/** Actor kinds that are not a person: flows, triggers, API tokens and the system. */
+export const PIPELINE_AUTOMATION_ACTOR_KINDS = pipelineActorKinds.exclude([
+  "user",
+]).options
+
 /** Stable machine name used by `{{pipelines.<reference_name>.*}}` variables. */
 export const PIPELINE_REFERENCE_NAME_PATTERN = /^[a-z][a-z0-9_]{0,63}$/
 export const pipelineReferenceNameSchema = z
@@ -308,6 +313,10 @@ export const PIPELINE_LIMITS = {
   itemValue: 999_999_999_999_999,
   /** Stages one pipeline may hold; also the cap on stage-id arrays in requests. */
   stagesPerPipeline: 200,
+  /** Custom fields one pipeline may hold; also the cap on field values per write. */
+  fieldsPerPipeline: 100,
+  /** Files one item may hold, so reading an item's attachments stays bounded. */
+  attachmentsPerItem: 50,
 } as const
 
 const trimmedLabel = (fallback: string) =>

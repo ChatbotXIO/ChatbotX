@@ -3770,11 +3770,6 @@
       "stage": "Mərhələ",
       "firstStage": "İlk mərhələ",
       "status": "Status",
-      "statusOptions": {
-        "open": "Açıq",
-        "won": "Qazanılıb",
-        "lost": "İtirilib"
-      },
       "assigneeMembers": "Təyin olunmuş administratorlar",
       "assigneeTeams": "Təyin olunmuş komandalar",
       "value": "Dəyər",

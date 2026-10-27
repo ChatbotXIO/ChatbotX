@@ -14,6 +14,7 @@ import {
 import { XIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { type ReactNode, useMemo } from "react"
+import { isPipelineItemEventType } from "@/features/conditions/schema/pipeline-item"
 
 export const BaseEditor = ({
   conditionType,
@@ -29,6 +30,10 @@ export const BaseEditor = ({
   const t = useTranslations()
 
   const conditionLabel = useMemo(() => {
+    // Every pipeline event is labelled the same way; listed once, in its schema.
+    if (isPipelineItemEventType(conditionType)) {
+      return t(`trigger.conditions.${conditionType}`)
+    }
     switch (conditionType) {
       case triggerEventTypes.enum.tagApplied:
         return t("trigger.conditions.tagApplied")
@@ -66,16 +71,6 @@ export const BaseEditor = ({
         return t("trigger.conditions.callRecorded")
       case triggerEventTypes.enum.callTranscribed:
         return t("trigger.conditions.callTranscribed")
-      case triggerEventTypes.enum.pipelineItemCreated:
-        return t("trigger.conditions.pipelineItemCreated")
-      case triggerEventTypes.enum.pipelineItemMovedToStage:
-        return t("trigger.conditions.pipelineItemMovedToStage")
-      case triggerEventTypes.enum.pipelineItemValueChanged:
-        return t("trigger.conditions.pipelineItemValueChanged")
-      case triggerEventTypes.enum.pipelineItemStatusChanged:
-        return t("trigger.conditions.pipelineItemStatusChanged")
-      case triggerEventTypes.enum.pipelineItemPriorityChanged:
-        return t("trigger.conditions.pipelineItemPriorityChanged")
       case triggerEventTypes.enum.subscribedToSequence:
         return t("trigger.conditions.subscribedToSequence")
       case triggerEventTypes.enum.unsubscribedFromSequence:

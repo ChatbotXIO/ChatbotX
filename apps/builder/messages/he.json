@@ -738,11 +738,6 @@
       "stage": "שלב",
       "firstStage": "שלב ראשון",
       "status": "סטטוס",
-      "statusOptions": {
-        "open": "פתוח",
-        "won": "זכייה",
-        "lost": "הפסד"
-      },
       "assigneeMembers": "מנהלים מוקצים",
       "assigneeTeams": "צוותים מוקצים",
       "value": "ערך",

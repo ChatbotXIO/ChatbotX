@@ -1,9 +1,6 @@
 "use client"
 
-import {
-  pipelineItemPriorities,
-  pipelineItemStatuses,
-} from "@chatbotx.io/database/partials"
+import { pipelineItemStatuses } from "@chatbotx.io/database/partials"
 import { ComboboxField } from "@chatbotx.io/ui/components/form/combobox-field"
 import { InputField } from "@chatbotx.io/ui/components/form/input-field"
 import { InputNumberField } from "@chatbotx.io/ui/components/form/input-number-field"
@@ -19,7 +16,7 @@ import { CustomFieldValueInput } from "@/features/custom-fields/components/custo
 import { MediaLibraryTrigger } from "@/features/media-library/components/media-library-trigger"
 import { useContactAssigneeMultiSelectOptions } from "@/features/users/provider/user-hook"
 import { ITEM_VALUE_DECIMALS } from "../../lib/add-item-form"
-import { priorityKeys } from "../../lib/item-noun"
+import { pipelinePriorityOptions } from "../../lib/item-options"
 import { MAX_FIELD_VALUE_LENGTH } from "../../schema/bounds"
 import type { BoardField, BoardPipeline } from "../board/types"
 
@@ -131,10 +128,7 @@ export function AddItemDetailsForm({
           <SelectField
             label={t("item.priority")}
             name="priority"
-            options={pipelineItemPriorities.options.map((option) => ({
-              value: option,
-              label: t(priorityKeys[option]),
-            }))}
+            options={pipelinePriorityOptions(t)}
             required
           />
         ) : null}

@@ -18,7 +18,11 @@ const {
 
 const pipelineService = { list: vi.fn(), get: vi.fn() }
 const pipelineItemService = { move: vi.fn() }
-const pipelineItemQueryService = { getItem: vi.fn(), listItems: vi.fn() }
+const pipelineItemQueryService = {
+  getItem: vi.fn(),
+  getItemView: vi.fn(),
+  listItems: vi.fn(),
+}
 const pipelineStageBulkService = { deleteStage: vi.fn() }
 const pipelineAnalyticsService = { getStats: vi.fn() }
 const contactService = { resolveIdByIdentifier: vi.fn() }
@@ -152,7 +156,8 @@ describe("real router: pipelines public API scope wiring", () => {
   test("moving an item attributes the change to the API token", async () => {
     findWorkspaceByTokenHash.mockResolvedValue(authResult(["pipelines"]))
     pipelineItemService.move.mockResolvedValue({ id: "2" })
-    pipelineItemQueryService.getItem.mockResolvedValue({
+    // Mutations answer with the item card, not the attachment-loading detail.
+    pipelineItemQueryService.getItemView.mockResolvedValue({
       item: {
         id: "2",
         pipelineId: "1",

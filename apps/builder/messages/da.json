@@ -2933,11 +2933,6 @@
       "stage": "Fase",
       "firstStage": "Første fase",
       "status": "Status",
-      "statusOptions": {
-        "open": "Åben",
-        "won": "Vundet",
-        "lost": "Tabt"
-      },
       "assigneeMembers": "Tildelte administratorer",
       "assigneeTeams": "Tildelte teams",
       "value": "Værdi",

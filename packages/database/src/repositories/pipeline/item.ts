@@ -48,12 +48,6 @@ type PipelineStageTotals = {
   totalValue: number
 }
 
-/** Newest first; comments and activity rows share it (`createdAt` contract). */
-export const NEWEST_FIRST_SORT: PipelineItemSort = {
-  key: "createdAt",
-  direction: "desc",
-}
-
 type PipelineBoardStagePage = {
   stageId: string
   items: ItemRow[]
@@ -136,20 +130,33 @@ export const pipelineItemRepository = {
   },
 
   /**
-   * Inserts the item; with an idempotency key a replay returns the row that
-   * already holds the key (`inserted: false`) instead of failing.
+   * Inserts the item, or returns the one an earlier call with the same
+   * idempotency key stored. Only that key's conflict is absorbed: any other
+   * unique violation (the item number) still raises.
    */
   async insertIdempotent(values: PipelineItemInsert, tx: DatabaseClient) {
-    const [row] = await tx
+    const insert = tx
       .insert(pipelineItemModel)
       .values({ id: createId(), ...values })
-      .onConflictDoNothing()
+    if (!values.idempotencyKey) {
+      const [row] = await insert.returning()
+      if (!row) {
+        throw new Error("Failed to insert pipeline item")
+      }
+      return { row, inserted: true as const }
+    }
+    const [row] = await insert
+      .onConflictDoNothing({
+        target: [
+          pipelineItemModel.workspaceId,
+          pipelineItemModel.pipelineId,
+          pipelineItemModel.idempotencyKey,
+        ],
+        where: sql`"idempotencyKey" IS NOT NULL`,
+      })
       .returning()
     if (row) {
       return { row, inserted: true as const }
-    }
-    if (!values.idempotencyKey) {
-      throw new Error("Failed to insert pipeline item")
     }
     const existing = await findByIdempotencyKey(
       {

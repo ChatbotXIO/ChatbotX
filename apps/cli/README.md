@@ -1119,7 +1119,8 @@ chatbotx pipelines stages reorder <id> --stageIds <json>
 chatbotx pipelines stage delete <id> <stageId>          # [--moveItemsToStageId]; >2000 items runs in the background
 chatbotx pipelines fields list <id>                     # Custom fields in display order
 chatbotx pipelines field add <id> --name <name> --referenceName <ref> --type <type>  # [--required]
-chatbotx pipelines items list <id>                      # [--stageId --status --priority --contactId --search --sort --direction --limit --cursor]
+chatbotx pipelines items list <id>                      # [--stageId --status --priority --assigneeMemberId (comma lists) --fieldConditions <json> --contactId --search --sort --direction --limit --cursor]
+chatbotx pipelines stage-totals <id>                    # Item count and value per stage; same filters as items list
 chatbotx pipelines item add <id> --contactId <id> --title <title>  # [--value --priority --stageId --dueDate --idempotencyKey]
 chatbotx pipelines item move <id> <itemId> --stageId <id>
 chatbotx pipelines item transfer <id> <itemId> --destinationPipelineId <id>

@@ -33,6 +33,14 @@ export const pipelineItemEventTypes = [
   triggerEventTypes.enum.pipelineItemPriorityChanged,
 ] as const
 
+export type PipelineItemEventType = (typeof pipelineItemEventTypes)[number]
+
+export const isPipelineItemEventType = (
+  type: string | undefined,
+): type is PipelineItemEventType =>
+  type !== undefined &&
+  (pipelineItemEventTypes as readonly string[]).includes(type)
+
 export const pipelineItemCreated = createPipelineItemCondition(
   triggerEventTypes.enum.pipelineItemCreated,
 )

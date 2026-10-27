@@ -241,6 +241,47 @@ export class PipelineItemQueryService extends BaseService {
     }
   }
 
+  /**
+   * Count and total value of the matching items in every stage, in board
+   * order: the column headers of the board, for API callers.
+   */
+  async listStageTotals(input: {
+    workspaceId: string
+    pipelineId: string
+    scope: PipelineAccessScope
+    filter?: PipelineItemFilter
+  }): Promise<
+    Array<{ stageId: string; name: string; count: number; totalValue: number }>
+  > {
+    const { workspaceId, pipelineId } = input
+    await pipelineService.requireAccess({
+      workspaceId,
+      pipelineId,
+      scope: input.scope,
+      action: "view",
+    })
+    const filter = await this.resolveFieldFilter({
+      workspaceId,
+      pipelineId,
+      filter: scopeSearch(input.filter, input.scope),
+    })
+    const [stages, totals] = await Promise.all([
+      pipelineStageRepository.listByPipeline({ workspaceId, pipelineId }),
+      pipelineItemRepository.listStageTotals({
+        workspaceId,
+        pipelineId,
+        filter,
+      }),
+    ])
+    const totalsByStage = new Map(totals.map((row) => [row.stageId, row]))
+    return stages.map((stage) => ({
+      stageId: stage.id,
+      name: stage.name,
+      count: totalsByStage.get(stage.id)?.count ?? 0,
+      totalValue: totalsByStage.get(stage.id)?.totalValue ?? 0,
+    }))
+  }
+
   /** One keyset page of a board column. */
   async listStagePage(input: {
     workspaceId: string
@@ -283,19 +324,30 @@ export class PipelineItemQueryService extends BaseService {
     }
   > {
     const { workspaceId, itemId } = input
-    const item = await this.requireItemView(input)
-    const [[view], attachments, [conversation]] = await Promise.all([
-      this.toViews(workspaceId, [item], input.scope),
+    const view = await this.getItemView(input)
+    const [attachments, [conversation]] = await Promise.all([
       pipelineItemContentRepository.listAttachments({ workspaceId, itemId }),
       conversationService.findDMByContactIds({
         workspaceId,
-        contactIds: [item.contactId],
+        contactIds: [view.item.contactId],
       }),
     ])
+    return { ...view, attachments, conversationId: conversation?.id ?? null }
+  }
+
+  /** One item as a card (assignees, comment count, contact), without its attachments. */
+  async getItemView(input: {
+    workspaceId: string
+    pipelineId: string
+    itemId: string
+    scope: PipelineAccessScope
+  }): Promise<PipelineItemView> {
+    const item = await this.requireItemView(input)
+    const [view] = await this.toViews(input.workspaceId, [item], input.scope)
     if (!view) {
       throw notFoundException("Item not found")
     }
-    return { ...view, attachments, conversationId: conversation?.id ?? null }
+    return view
   }
 
   /** Newest-first page of comments; follow `nextCursor` for older ones. */

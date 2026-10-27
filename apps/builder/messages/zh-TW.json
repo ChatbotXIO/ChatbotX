@@ -3336,11 +3336,6 @@
       "stage": "階段",
       "firstStage": "第一階段",
       "status": "狀態",
-      "statusOptions": {
-        "open": "進行中",
-        "won": "成交",
-        "lost": "失敗"
-      },
       "assigneeMembers": "已分配的管理員",
       "assigneeTeams": "已分配的團隊",
       "value": "金額",

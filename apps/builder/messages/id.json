@@ -2933,11 +2933,6 @@
       "stage": "Tahap",
       "firstStage": "Tahap pertama",
       "status": "Status",
-      "statusOptions": {
-        "open": "Terbuka",
-        "won": "Menang",
-        "lost": "Kalah"
-      },
       "assigneeMembers": "Admin yang ditugaskan",
       "assigneeTeams": "Tim yang ditugaskan",
       "value": "Nilai",

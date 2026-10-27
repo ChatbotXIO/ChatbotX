@@ -1,4 +1,5 @@
 import { createId } from "@chatbotx.io/utils"
+import { isTemporalCustomFieldType } from "@chatbotx.io/utils/datetime"
 import { addNotesNodeDefaultFn } from "../nodes/add-notes"
 import { conditionNodeDefaultFn } from "../nodes/condition"
 import type { EdgeSchema, FlowVersionSchema } from "../nodes/index"
@@ -49,11 +50,6 @@ import type {
   PipelineStepSpec,
 } from "./spec-schema"
 
-/**
- * Reference data the compiler resolves DSL names against. Populated from the
- * capabilities service — kept as plain `Map`s so the compiler never touches
- * the database directly (this package has no such dependency).
- */
 /** A workspace pipeline with what a `pipeline` spec step references by name. */
 export type FlowAuthoringPipeline = {
   id: string
@@ -63,6 +59,11 @@ export type FlowAuthoringPipeline = {
   fields: ReadonlyArray<{ id: string; name: string; referenceName: string }>
 }
 
+/**
+ * Reference data the compiler resolves DSL names against. Populated from the
+ * capabilities service — kept as plain `Map`s so the compiler never touches
+ * the database directly (this package has no such dependency).
+ */
 export type FlowAuthoringContext = {
   templatesByName: ReadonlyMap<
     string,
@@ -142,8 +143,6 @@ const PIPELINE_RESOLUTION = {
   label: "pipeline",
   hint: "Call pipelines.list and use a pipeline's referenceName (or id).",
 } as const satisfies ResolveByNameOptions
-
-const DUE_DATE_FIELD_TYPES = new Set(["date", "datetime"])
 
 // Matches the WhatsApp template status enum in
 // packages/database/src/partials/integration-whatsapp.ts.
@@ -675,7 +674,7 @@ function resolvePipelineDueDate(
     `${path}.customFieldName`,
     state,
   )
-  if (customField && !DUE_DATE_FIELD_TYPES.has(customField.type)) {
+  if (customField && !isTemporalCustomFieldType(customField.type)) {
     addError(
       state,
       `${path}.customFieldName`,

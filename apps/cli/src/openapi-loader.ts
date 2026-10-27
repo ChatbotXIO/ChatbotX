@@ -215,6 +215,7 @@ const COMMAND_NAME_OVERRIDES: Readonly<Record<string, string>> = {
   "POST /v1/pipelines/{id}/items/{itemId}/move": "pipelines:item:move",
   "POST /v1/pipelines/{id}/items/{itemId}/transfer": "pipelines:item:transfer",
   "GET /v1/pipelines/{id}/stats": "pipelines:stats",
+  "GET /v1/pipelines/{id}/stage-totals": "pipelines:stage-totals",
   // Order status moves are verbs on the order, not sub-resources to "add".
   "POST /v1/orders/{id}/accept": "orders:accept",
   "POST /v1/orders/{id}/ship": "orders:ship",

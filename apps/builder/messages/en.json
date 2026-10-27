@@ -3770,11 +3770,6 @@
       "stage": "Stage",
       "firstStage": "First stage",
       "status": "Status",
-      "statusOptions": {
-        "open": "Open",
-        "won": "Won",
-        "lost": "Lost"
-      },
       "assigneeMembers": "Assigned admins",
       "assigneeTeams": "Assigned teams",
       "value": "Value",

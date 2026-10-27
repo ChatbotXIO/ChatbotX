@@ -10,10 +10,12 @@ import {
 } from "@chatbotx.io/database/client"
 import { pipelineItemActivityModel } from "@chatbotx.io/database/schema"
 import { createId } from "@chatbotx.io/utils"
-import type { PipelineActivityKind } from "../../partials/pipeline"
+import {
+  PIPELINE_AUTOMATION_ACTOR_KINDS,
+  type PipelineActivityKind,
+} from "../../partials/pipeline"
 import { zonedBucketKey } from "../../queries/date-bucket"
-import { NEWEST_FIRST_SORT } from "./item"
-import { clampPageLimit, cursorFor, decodeTimestampCursor } from "./item-cursor"
+import { newestFirstKeyset } from "./item-cursor"
 
 export type PipelineActivityInsert = Omit<
   typeof pipelineItemActivityModel.$inferInsert,
@@ -113,15 +115,17 @@ export const pipelineActivityRepository = {
     },
     tx: DatabaseClient = db,
   ): Promise<PipelineActivityPage> {
-    const limit = clampPageLimit(input.limit)
-    const cursor = input.cursor
-      ? decodeTimestampCursor(input.cursor, NEWEST_FIRST_SORT)
-      : null
-    const { occurredAt, id } = pipelineItemActivityModel
+    const keyset = newestFirstKeyset(
+      {
+        timestamp: pipelineItemActivityModel.occurredAt,
+        id: pipelineItemActivityModel.id,
+      },
+      input,
+    )
     const rows = await tx
       .select({
         activity: pipelineItemActivityModel,
-        occurredAtText: sql<string>`${occurredAt}::text`,
+        timestampText: keyset.timestampText,
       })
       .from(pipelineItemActivityModel)
       .where(
@@ -131,25 +135,18 @@ export const pipelineActivityRepository = {
           input.kinds
             ? inArray(pipelineItemActivityModel.kind, [...input.kinds])
             : undefined,
-          cursor
-            ? sql`(${occurredAt}, ${id}) < (${cursor.sortValue}::timestamptz, ${cursor.id}::bigint)`
-            : undefined,
+          keyset.after,
         ),
       )
-      .orderBy(sql`${occurredAt} desc`, sql`${id} desc`)
-      .limit(limit + 1)
-
-    const page = rows.slice(0, limit)
-    const last = page.at(-1)
+      .orderBy(...keyset.orderBy)
+      .limit(keyset.fetchLimit)
+    const page = keyset.page(rows, (row) => ({
+      sortValue: row.timestampText,
+      id: row.activity.id,
+    }))
     return {
-      items: page.map((row) => row.activity),
-      nextCursor:
-        rows.length > limit && last
-          ? cursorFor(NEWEST_FIRST_SORT, {
-              sortValue: last.occurredAtText,
-              id: last.activity.id,
-            })
-          : null,
+      items: page.rows.map((row) => row.activity),
+      nextCursor: page.nextCursor,
     }
   },
 
@@ -191,7 +188,12 @@ export const pipelineActivityRepository = {
    * the user is deleted) or automation (flows, triggers, tokens, system).
    */
   async totalsByActor(input: PipelineAnalyticsRange, tx: DatabaseClient = db) {
-    const isAutomation = sql<boolean>`(${pipelineItemActivityModel.actorKind} <> 'user')`
+    // Built from a fixed internal list, without bound parameters: the same
+    // expression appears in SELECT and GROUP BY, and Postgres only matches
+    // them when both render identically.
+    const isAutomation = sql<boolean>`(${pipelineItemActivityModel.actorKind} IN (${sql.raw(
+      PIPELINE_AUTOMATION_ACTOR_KINDS.map((kind) => `'${kind}'`).join(", "),
+    )}))`
     return await tx
       .select({
         isAutomation,

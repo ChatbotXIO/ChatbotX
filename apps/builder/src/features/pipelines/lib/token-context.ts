@@ -13,18 +13,26 @@ export const tokenActor = (apiTokenId: string | undefined) =>
     sourceId: apiTokenId ?? null,
   }) as const
 
+/** The workspace and access scope every token-authenticated service call carries. */
+export const tokenWorkspace = (context: TokenCallContext) => ({
+  workspaceId: context.workspace.id,
+  scope: PIPELINE_TOKEN_SCOPE,
+})
+
+/** `tokenWorkspace` plus the token actor, for changes. */
+export const tokenWorkspaceCtx = (context: TokenCallContext) => ({
+  ...tokenWorkspace(context),
+  actor: tokenActor(context.apiToken?.id),
+})
+
 /** Service input shared by every token-authenticated read of `{ id }`'s pipeline. */
 export const tokenScope = (
   context: TokenCallContext,
   input: { id: string },
-) => ({
-  workspaceId: context.workspace.id,
-  pipelineId: input.id,
-  scope: PIPELINE_TOKEN_SCOPE,
-})
+) => ({ ...tokenWorkspace(context), pipelineId: input.id })
 
 /** `tokenScope` plus the token actor, for changes. */
 export const tokenCtx = (context: TokenCallContext, input: { id: string }) => ({
-  ...tokenScope(context, input),
-  actor: tokenActor(context.apiToken?.id),
+  ...tokenWorkspaceCtx(context),
+  pipelineId: input.id,
 })

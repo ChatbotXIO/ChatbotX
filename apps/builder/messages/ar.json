@@ -3088,11 +3088,6 @@
       "stage": "المرحلة",
       "firstStage": "المرحلة الأولى",
       "status": "الحالة",
-      "statusOptions": {
-        "open": "مفتوح",
-        "won": "فاز",
-        "lost": "خسر"
-      },
       "assigneeMembers": "المسؤولون المعيّنون",
       "assigneeTeams": "الفرق المعيّنة",
       "value": "القيمة",

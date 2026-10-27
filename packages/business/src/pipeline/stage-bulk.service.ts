@@ -4,6 +4,7 @@ import {
   acquirePipelineAdvisoryLock,
   pipelineActivityRepository,
   pipelineItemRepository,
+  pipelineReferenceRepository,
   pipelineStageRepository,
 } from "@chatbotx.io/database/repositories"
 import type {
@@ -289,13 +290,18 @@ export class PipelineStageBulkService extends BaseService {
           action: "view",
           tx,
         })
+        // The user who queued the removal may have deleted their account since:
+        // their activity rows then carry no user instead of failing every batch.
+        const actorExists =
+          actor.userId === null ||
+          (await pipelineReferenceRepository.lockUserIfExists(actor.userId, tx))
         const handled = await this.drain({
           tx,
           pipeline,
           stage,
           stages,
           removal,
-          actor,
+          actor: actorExists ? actor : { ...actor, userId: null },
           effects,
           batchLimit: PIPELINE_LIMITS.bulkBatchSize,
           singleBatch: true,

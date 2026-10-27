@@ -1,6 +1,7 @@
 import type { SQL } from "@chatbotx.io/database/client"
 import { sql } from "@chatbotx.io/database/client"
 import { pipelineItemModel } from "@chatbotx.io/database/schema"
+import type { AnyPgColumn } from "drizzle-orm/pg-core"
 import type { PipelineItemSortKey } from "../../partials/pipeline"
 import { isBigintId } from "../../utils"
 
@@ -251,4 +252,50 @@ export function pipelineItemSortValueText(
   sort: PipelineItemSort,
 ): SQL<string | null> {
   return sql<string | null>`${sortSpecs()[sort.key].expression}::text`
+}
+
+/** Newest first; comments and activity rows share it (`createdAt` contract). */
+export const NEWEST_FIRST_SORT: PipelineItemSort = {
+  key: "createdAt",
+  direction: "desc",
+}
+
+/**
+ * One newest-first keyset page over a NOT NULL timestamp (comments,
+ * activity), so every such list follows the same cursor contract: the
+ * timestamp is read as text (microseconds survive) and `id` breaks ties.
+ * The caller runs its own query with `after`, `orderBy` and `fetchLimit`,
+ * selecting `timestampText`, then cuts it with `page`.
+ */
+export function newestFirstKeyset(
+  columns: { timestamp: AnyPgColumn; id: AnyPgColumn },
+  input: { limit: number; cursor?: string },
+) {
+  const limit = clampPageLimit(input.limit)
+  const cursor = input.cursor
+    ? decodeTimestampCursor(input.cursor, NEWEST_FIRST_SORT)
+    : null
+  const { timestamp, id } = columns
+  return {
+    fetchLimit: limit + 1,
+    timestampText: sql<string>`${timestamp}::text`,
+    after: cursor
+      ? sql`(${timestamp}, ${id}) < (${cursor.sortValue}::timestamptz, ${cursor.id}::bigint)`
+      : undefined,
+    orderBy: [sql`${timestamp} desc`, sql`${id} desc`],
+    page<Row>(
+      rows: Row[],
+      keyOf: (row: Row) => { sortValue: string; id: string },
+    ): { rows: Row[]; nextCursor: string | null } {
+      const page = rows.slice(0, limit)
+      const last = page.at(-1)
+      return {
+        rows: page,
+        nextCursor:
+          rows.length > limit && last
+            ? cursorFor(NEWEST_FIRST_SORT, keyOf(last))
+            : null,
+      }
+    },
+  }
 }

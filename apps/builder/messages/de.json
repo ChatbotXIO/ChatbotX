@@ -2933,11 +2933,6 @@
       "stage": "Phase",
       "firstStage": "Erste Phase",
       "status": "Status",
-      "statusOptions": {
-        "open": "Offen",
-        "won": "Gewonnen",
-        "lost": "Verloren"
-      },
       "assigneeMembers": "Zugewiesene Administratoren",
       "assigneeTeams": "Zugewiesene Teams",
       "value": "Wert",

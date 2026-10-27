@@ -16,6 +16,7 @@ import { CustomFieldValueChanged } from "./custom-field-value-changed"
 import { DateTimeBasedTrigger } from "./date-time-based-trigger"
 import { PipelineItemCondition } from "./pipeline-item-condition"
 import { ProductReferenceCondition } from "./product-reference-condition"
+import { isPipelineItemEventType } from "./schema/pipeline-item"
 
 export const ConditionEditor = ({
   parentName,
@@ -41,6 +42,9 @@ export const ConditionEditor = ({
   )
   const form = useFormContext()
 
+  if (isPipelineItemEventType(type)) {
+    return <PipelineItemCondition parentName={parentName} type={type} />
+  }
   switch (type) {
     case triggerEventTypes.enum.tagApplied:
     case triggerEventTypes.enum.tagRemoved: {
@@ -80,12 +84,6 @@ export const ConditionEditor = ({
       return <ProductReferenceCondition parentName={parentName} />
     case triggerEventTypes.enum.categoryAddedToCart:
       return <CategoryReferenceCondition parentName={parentName} />
-    case triggerEventTypes.enum.pipelineItemCreated:
-    case triggerEventTypes.enum.pipelineItemMovedToStage:
-    case triggerEventTypes.enum.pipelineItemValueChanged:
-    case triggerEventTypes.enum.pipelineItemStatusChanged:
-    case triggerEventTypes.enum.pipelineItemPriorityChanged:
-      return <PipelineItemCondition parentName={parentName} type={type} />
     case triggerEventTypes.enum.dateTimeBasedTrigger:
       return <DateTimeBasedTrigger parentName={parentName} />
     case triggerEventTypes.enum.customFieldValueChanged:

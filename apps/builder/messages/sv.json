@@ -4060,11 +4060,6 @@
       "stage": "Fas",
       "firstStage": "Första fasen",
       "status": "Status",
-      "statusOptions": {
-        "open": "Öppen",
-        "won": "Vunnen",
-        "lost": "Förlorad"
-      },
       "assigneeMembers": "Tilldelade administratörer",
       "assigneeTeams": "Tilldelade team",
       "value": "Värde",

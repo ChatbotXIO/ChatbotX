@@ -2933,11 +2933,6 @@
       "stage": "ステージ",
       "firstStage": "最初のステージ",
       "status": "ステータス",
-      "statusOptions": {
-        "open": "オープン",
-        "won": "成約",
-        "lost": "失注"
-      },
       "assigneeMembers": "割り当て済みの管理者",
       "assigneeTeams": "割り当て済みのチーム",
       "value": "金額",

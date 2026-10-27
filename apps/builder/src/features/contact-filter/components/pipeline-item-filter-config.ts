@@ -3,12 +3,12 @@ import {
   type OperatorType,
   operatorTypes,
   type PipelineItemFilterAttribute,
-  type PipelineItemPriority,
-  type PipelineItemStatus,
-  pipelineItemPriorities,
-  pipelineItemStatuses,
 } from "@chatbotx.io/database/partials"
 import type { SelectOption } from "@chatbotx.io/ui/components/form/select-field"
+import {
+  pipelinePriorityOptions,
+  pipelineStatusOptions,
+} from "@/features/pipelines/lib/item-options"
 import type { PipelineOptionsResponse } from "@/features/pipelines/schema/resource"
 import {
   PIPELINE_ITEM_EXISTS_OPERATORS,
@@ -38,37 +38,21 @@ const ATTRIBUTE_LABEL_KEYS = {
   priority: "condition.pipelineItem.attributes.priority",
 } as const satisfies Record<PipelineItemFilterAttribute, string>
 
-const STATUS_LABEL_KEYS = {
-  open: "pipelines.filter.statusLabels.open",
-  won: "pipelines.filter.statusLabels.won",
-  lost: "pipelines.filter.statusLabels.lost",
-} as const satisfies Record<PipelineItemStatus, string>
-
-const PRIORITY_LABEL_KEYS = {
-  low: "pipelines.priority.low",
-  medium: "pipelines.priority.medium",
-  high: "pipelines.priority.high",
-} as const satisfies Record<PipelineItemPriority, string>
-
 const ATTRIBUTES_BY_SCOPE = {
   anyPipeline: ["exists", "status", "priority"],
   onePipeline: ["exists", "status", "stage", "priority"],
 } as const satisfies Record<string, readonly PipelineItemFilterAttribute[]>
 
+/** The shared pipeline options, read through the root translator. */
+const pipelinesKey = (t: Translate) => (key: string) => t(`pipelines.${key}`)
+
 const statusOptions = (
   t: Translate,
   statusLabels?: PipelineOption["statusLabels"],
-): SelectOption[] =>
-  pipelineItemStatuses.options.map((status) => ({
-    value: status,
-    label: statusLabels?.[status] ?? t(STATUS_LABEL_KEYS[status]),
-  }))
+): SelectOption[] => pipelineStatusOptions(pipelinesKey(t), statusLabels)
 
 const priorityOptions = (t: Translate): SelectOption[] =>
-  pipelineItemPriorities.options.map((priority) => ({
-    value: priority,
-    label: t(PRIORITY_LABEL_KEYS[priority]),
-  }))
+  pipelinePriorityOptions(pipelinesKey(t))
 
 const optionsFor = (
   attribute: PipelineItemFilterAttribute,

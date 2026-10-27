@@ -1,10 +1,11 @@
+import { PIPELINE_LIMITS } from "@chatbotx.io/database/partials"
 import {
   pipelineActivityRepository,
   pipelineItemContentRepository,
   pipelineItemRepository,
 } from "@chatbotx.io/database/repositories"
 import type { PipelineItemCommentModel } from "@chatbotx.io/database/types"
-import { notFoundException } from "../errors"
+import { notFoundException, validationException } from "../errors"
 import type { PipelineAccessScope } from "./access"
 import { PipelineItemBaseService } from "./item-base.service"
 import { activityRowFor, realtimeEffect } from "./mutation-engine"
@@ -106,6 +107,19 @@ export class PipelineItemContentService extends PipelineItemBaseService {
       // Re-adding files the item already has changes nothing.
       if (inserted === 0) {
         return
+      }
+      // Counted after the insert, under the item lock, so files already on
+      // the item are not counted twice; over the cap rolls the insert back.
+      if (
+        (await pipelineItemContentRepository.countAttachments(
+          { workspaceId, itemId },
+          tx,
+        )) > PIPELINE_LIMITS.attachmentsPerItem
+      ) {
+        throw validationException(
+          "mediaLibraryFileIds",
+          `An item can have at most ${PIPELINE_LIMITS.attachmentsPerItem} attachments`,
+        )
       }
       await pipelineItemRepository.touch({ workspaceId, id: itemId }, tx)
       await pipelineActivityRepository.insertMany(

@@ -3130,11 +3130,6 @@
       "stage": "Giai đoạn",
       "firstStage": "Giai đoạn đầu tiên",
       "status": "Trạng thái",
-      "statusOptions": {
-        "open": "Đang mở",
-        "won": "Thắng",
-        "lost": "Thua"
-      },
       "assigneeMembers": "Quản trị viên phụ trách",
       "assigneeTeams": "Nhóm phụ trách",
       "value": "Giá trị",

@@ -4,6 +4,7 @@ import type { PipelineMemberModel } from "@chatbotx.io/database/types"
  * Who is asking, as plain data. The app layer resolves it from the session or
  * the workspace token; the business layer never sees a request.
  * - `workspaceToken`: a scoped workspace API token — the token scope is the gate.
+ * - `system`: the workspace's own automation (flow steps), not a caller.
  * - `support`: a platform support session, full access like an owner.
  * - `member`: a workspace member; admins/owners bypass the per-pipeline ACL.
  *   `canViewContactEmailAndPhone` is the member's contact permission: without
@@ -11,6 +12,7 @@ import type { PipelineMemberModel } from "@chatbotx.io/database/types"
  */
 export type PipelineAccessScope =
   | { kind: "workspaceToken" }
+  | { kind: "system" }
   | { kind: "support" }
   | {
       kind: "member"

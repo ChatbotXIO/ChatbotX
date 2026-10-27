@@ -195,6 +195,27 @@ describe("pipelineItem contact condition SQL", () => {
       { attribute: "title", pipelineId: null, operator: "in", value: ["a"] },
       WORKSPACE_ID,
     ],
+    // Inherited object members are not operators.
+    [
+      "an inherited name as the exists operator",
+      {
+        attribute: "exists",
+        pipelineId: null,
+        operator: "constructor",
+        value: "any",
+      },
+      WORKSPACE_ID,
+    ],
+    [
+      "an inherited name as the membership operator",
+      {
+        attribute: "status",
+        pipelineId: null,
+        operator: "toString",
+        value: ["open"],
+      },
+      WORKSPACE_ID,
+    ],
   ])("fails closed for %s", (_label, condition, workspaceId) => {
     const query = render(condition, workspaceId)
     expect(query?.sql).toBe(FALSE_SQL)

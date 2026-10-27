@@ -23,7 +23,7 @@ import {
   toPublicPipeline,
   toPublicStage,
 } from "../lib/map-public"
-import { tokenActor } from "../lib/token-context"
+import { tokenWorkspace, tokenWorkspaceCtx } from "../lib/token-context"
 import {
   createFieldPublicRequest,
   createPipelinePublicRequest,
@@ -85,8 +85,7 @@ const pipelinesCorePublicRouter = {
     .errors(possibleErrorsOnListingResource)
     .handler(async ({ context }) => {
       const entries = await pipelineService.list({
-        workspaceId: context.workspace.id,
-        scope: PIPELINE_TOKEN_SCOPE,
+        ...tokenWorkspace(context),
       })
       return {
         items: entries.map((entry) => ({
@@ -128,11 +127,9 @@ const pipelinesCorePublicRouter = {
     .errors(possibleErrorsOnMutatingPipeline)
     .handler(async ({ context, input }) => {
       const pipeline = await pipelineService.create({
-        workspaceId: context.workspace.id,
+        ...tokenWorkspaceCtx(context),
         type: input.type,
         name: input.name,
-        scope: PIPELINE_TOKEN_SCOPE,
-        actor: tokenActor(context.apiToken?.id),
       })
       return await pipelineDetail(context.workspace.id, pipeline.id)
     }),
@@ -153,10 +150,9 @@ const pipelinesCorePublicRouter = {
       const { id, ...values } = input
       return toPublicPipeline(
         await pipelineService.update({
-          workspaceId: context.workspace.id,
+          ...tokenWorkspace(context),
           id,
           values,
-          scope: PIPELINE_TOKEN_SCOPE,
         }),
       )
     }),
@@ -174,9 +170,8 @@ const pipelinesCorePublicRouter = {
     .errors(possibleErrorsOnMutatingPipeline)
     .handler(async ({ context, input }) => {
       await pipelineService.delete({
-        workspaceId: context.workspace.id,
+        ...tokenWorkspace(context),
         id: input.id,
-        scope: PIPELINE_TOKEN_SCOPE,
       })
     }),
 
@@ -195,10 +190,8 @@ const pipelinesCorePublicRouter = {
     .errors(possibleErrorsOnMutatingPipeline)
     .handler(async ({ context, input }) => {
       const copy = await pipelineService.duplicate({
-        workspaceId: context.workspace.id,
+        ...tokenWorkspaceCtx(context),
         id: input.id,
-        scope: PIPELINE_TOKEN_SCOPE,
-        actor: tokenActor(context.apiToken?.id),
       })
       return await pipelineDetail(context.workspace.id, copy.id)
     }),
@@ -220,11 +213,10 @@ const pipelinesCorePublicRouter = {
       const { id, name, ...values } = input
       return toPublicStage(
         await pipelineStructureService.createStage({
-          workspaceId: context.workspace.id,
+          ...tokenWorkspace(context),
           pipelineId: id,
           name,
           values,
-          scope: PIPELINE_TOKEN_SCOPE,
         }),
       )
     }),
@@ -245,11 +237,10 @@ const pipelinesCorePublicRouter = {
       const { id, stageId, ...values } = input
       return toPublicStage(
         await pipelineStructureService.updateStage({
-          workspaceId: context.workspace.id,
+          ...tokenWorkspace(context),
           pipelineId: id,
           stageId,
           values,
-          scope: PIPELINE_TOKEN_SCOPE,
         }),
       )
     }),
@@ -268,12 +259,10 @@ const pipelinesCorePublicRouter = {
     .errors(possibleErrorsOnMutatingPipeline)
     .handler(async ({ context, input }) => {
       const result = await pipelineStageBulkService.deleteStage({
-        workspaceId: context.workspace.id,
+        ...tokenWorkspaceCtx(context),
         pipelineId: input.id,
         stageId: input.stageId,
         moveItemsToStageId: input.moveItemsToStageId,
-        scope: PIPELINE_TOKEN_SCOPE,
-        actor: tokenActor(context.apiToken?.id),
       })
       return result.queued
         ? { queued: true, jobId: result.jobId }
@@ -294,10 +283,9 @@ const pipelinesCorePublicRouter = {
     .errors(possibleErrorsOnMutatingPipeline)
     .handler(async ({ context, input }) => {
       await pipelineStructureService.reorderStages({
-        workspaceId: context.workspace.id,
+        ...tokenWorkspace(context),
         pipelineId: input.id,
         stageIds: input.stageIds,
-        scope: PIPELINE_TOKEN_SCOPE,
       })
     }),
 
@@ -316,9 +304,8 @@ const pipelinesCorePublicRouter = {
     .handler(async ({ context, input }) => ({
       items: (
         await pipelineService.listFields({
-          workspaceId: context.workspace.id,
+          ...tokenWorkspace(context),
           pipelineId: input.id,
-          scope: PIPELINE_TOKEN_SCOPE,
         })
       ).map(toPublicField),
     })),
@@ -340,10 +327,9 @@ const pipelinesCorePublicRouter = {
       const { id, ...values } = input
       return toPublicField(
         await pipelineStructureService.createField({
-          workspaceId: context.workspace.id,
+          ...tokenWorkspace(context),
           pipelineId: id,
           values,
-          scope: PIPELINE_TOKEN_SCOPE,
         }),
       )
     }),
@@ -364,11 +350,10 @@ const pipelinesCorePublicRouter = {
       const { id, fieldId, ...values } = input
       return toPublicField(
         await pipelineStructureService.updateField({
-          workspaceId: context.workspace.id,
+          ...tokenWorkspace(context),
           pipelineId: id,
           fieldId,
           values,
-          scope: PIPELINE_TOKEN_SCOPE,
         }),
       )
     }),
@@ -387,10 +372,9 @@ const pipelinesCorePublicRouter = {
     .errors(possibleErrorsOnMutatingPipeline)
     .handler(async ({ context, input }) => {
       await pipelineStructureService.deleteField({
-        workspaceId: context.workspace.id,
+        ...tokenWorkspace(context),
         pipelineId: input.id,
         fieldId: input.fieldId,
-        scope: PIPELINE_TOKEN_SCOPE,
       })
     }),
 
@@ -409,9 +393,8 @@ const pipelinesCorePublicRouter = {
     .handler(async ({ context, input }) => ({
       items: (
         await pipelineMemberService.listMembers({
-          workspaceId: context.workspace.id,
+          ...tokenWorkspace(context),
           pipelineId: input.id,
-          scope: PIPELINE_TOKEN_SCOPE,
         })
       ).map(toPublicMember),
     })),
@@ -432,11 +415,10 @@ const pipelinesCorePublicRouter = {
       const { id, workspaceMemberId, ...permissions } = input
       return toPublicMember(
         await pipelineMemberService.setMember({
-          workspaceId: context.workspace.id,
+          ...tokenWorkspace(context),
           pipelineId: id,
           workspaceMemberId,
           permissions,
-          scope: PIPELINE_TOKEN_SCOPE,
         }),
       )
     }),
@@ -455,10 +437,9 @@ const pipelinesCorePublicRouter = {
     .errors(possibleErrorsOnMutatingPipeline)
     .handler(async ({ context, input }) => {
       await pipelineMemberService.removeMember({
-        workspaceId: context.workspace.id,
+        ...tokenWorkspace(context),
         pipelineId: input.id,
         workspaceMemberId: input.workspaceMemberId,
-        scope: PIPELINE_TOKEN_SCOPE,
       })
     }),
 
@@ -477,12 +458,11 @@ const pipelinesCorePublicRouter = {
     .handler(
       async ({ context, input }) =>
         await pipelineAnalyticsService.getStats({
-          workspaceId: context.workspace.id,
+          ...tokenWorkspace(context),
           pipelineId: input.id,
           from: input.from,
           to: input.to,
           timezone: input.timezone,
-          scope: PIPELINE_TOKEN_SCOPE,
         }),
     ),
 
@@ -505,9 +485,8 @@ const pipelinesCorePublicRouter = {
         workspaceId,
       })
       const views = await pipelineItemQueryService.listForContact({
-        workspaceId,
+        ...tokenWorkspace(context),
         contactId,
-        scope: PIPELINE_TOKEN_SCOPE,
       })
       return {
         items: views.map((view) => ({

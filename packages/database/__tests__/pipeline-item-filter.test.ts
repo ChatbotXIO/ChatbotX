@@ -259,6 +259,16 @@ describe("buildPipelineItemWhere", () => {
     expect(where.params).toContain("123")
   })
 
+  test("a zero-padded item number finds the item, compared as a number", () => {
+    const where = render(
+      buildPipelineItemWhere({ workspaceId: "7" }, { search: "#0012" }),
+    )
+
+    expect(where.params).toContain("12")
+    expect(where.sql).toContain('"number" = $')
+    expect(where.sql).not.toContain('"number"::text')
+  })
+
   // A short number is an item-number/title lookup: it must not match every
   // email (e.g. webchat guest identifiers) or phone that contains the digit.
   test.each([

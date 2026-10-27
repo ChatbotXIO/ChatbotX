@@ -10,14 +10,14 @@ import {
 } from "@/lib/orpc/orpc-error-helper"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
 import { PIPELINE_TOKEN_SCOPE } from "../lib/access"
-import { toItemListQuery } from "../lib/list-items-query"
+import { toItemFilter, toItemListQuery } from "../lib/list-items-query"
 import {
   toPublicActivity,
   toPublicAttachment,
   toPublicComment,
   toPublicItem,
 } from "../lib/map-public"
-import { tokenActor, tokenCtx, tokenScope } from "../lib/token-context"
+import { tokenCtx, tokenScope, tokenWorkspaceCtx } from "../lib/token-context"
 import {
   addAttachmentPublicRequest,
   addCommentPublicRequest,
@@ -32,6 +32,8 @@ import {
   moveItemPublicRequest,
   pipelineItemRequest,
   removeAttachmentPublicRequest,
+  stageTotalsPublicRequest,
+  stageTotalsPublicResponse,
   transferItemPublicRequest,
   updateItemPublicRequest,
 } from "../schema/public"
@@ -70,6 +72,25 @@ export const pipelineItemsPublicRouter = {
         nextCursor: page.nextCursor,
       }
     }),
+
+  stageTotals: workspaceTokenAuthAPI
+    .route({
+      method: "GET",
+      path: "/v1/pipelines/{id}/stage-totals",
+      summary: "Get pipeline stage totals",
+      description:
+        "Item count and total value per stage, in board order — the board's column headers. Takes the same filters as `pipelines.listItems`. Get the pipeline id from `pipelines.list`.",
+      tags: TAGS,
+    })
+    .input(stageTotalsPublicRequest)
+    .output(stageTotalsPublicResponse)
+    .errors(possibleErrorsOnFindingResource)
+    .handler(async ({ context, input }) => ({
+      stages: await pipelineItemQueryService.listStageTotals({
+        ...tokenScope(context, input),
+        filter: toItemFilter(input),
+      }),
+    })),
 
   getItem: workspaceTokenAuthAPI
     .route({
@@ -118,14 +139,12 @@ export const pipelineItemsPublicRouter = {
         ...fields
       } = input
       const item = await pipelineItemService.create({
-        workspaceId: context.workspace.id,
+        ...tokenWorkspaceCtx(context),
         pipelineId: id,
         contactId,
         fields: { title, ...fields },
         mediaLibraryFileIds,
         idempotencyKey,
-        scope: PIPELINE_TOKEN_SCOPE,
-        actor: tokenActor(context.apiToken?.id),
       })
       return await readItem(context.workspace.id, id, item.id)
     }),
@@ -145,12 +164,10 @@ export const pipelineItemsPublicRouter = {
     .handler(async ({ context, input }) => {
       const { id, itemId, ...fields } = input
       await pipelineItemService.update({
-        workspaceId: context.workspace.id,
+        ...tokenWorkspaceCtx(context),
         pipelineId: id,
         itemId,
         fields,
-        scope: PIPELINE_TOKEN_SCOPE,
-        actor: tokenActor(context.apiToken?.id),
       })
       return await readItem(context.workspace.id, id, itemId)
     }),
@@ -357,7 +374,7 @@ async function readItem(
   itemId: string,
 ) {
   return toPublicItem(
-    await pipelineItemQueryService.getItem({
+    await pipelineItemQueryService.getItemView({
       workspaceId,
       pipelineId,
       itemId,

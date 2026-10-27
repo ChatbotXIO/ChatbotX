@@ -63,6 +63,7 @@ Every service method takes a `PipelineAccessScope`
 |---|---|---|
 | `workspaceToken` | A workspace API token | Full. The token scope `pipelines` is the gate; per-pipeline member grants do not apply. |
 | `support` | Platform support session | Full, like an owner. |
+| `system` | The workspace's own automation (Pipelines flow steps) | Full; the run is recorded as the actor (`kind: "flow"`). |
 | `member` | A workspace member | `isWorkspaceAdmin` (owner/admin) bypasses the ACL; any other member holds only what their `PipelineMember` row grants. No row means no access. `canViewContactEmailAndPhone` is the member's contact `emailAndPhone` permission. |
 
 Contact email and phone follow the contacts list rule: tokens and support
@@ -571,7 +572,7 @@ Flow templates carry `manifests.pipelines` (keyed by source pipeline id):
 directly or through a stage or custom field, and ships **every stage and field
 of those pipelines** so install can match by name. Install
 (`resolvePipelineManifest` -> `pipelineTemplateService.resolveTemplateEntry`)
-find-or-creates by `referenceName`, matches stages by name and fields by
+find-or-creates by `referenceName`, matches stages by name (each existing stage at most once, so same-named template stages keep separate destinations) and fields by
 `referenceName`, and fills the `pipeline`, `pipelineStage` and `pipelineField`
 id maps; provenance is recorded under the existing `flows` category (no
 template-category enum migration). Unmatched stages/fields are reported as
@@ -602,7 +603,8 @@ Scope **`pipelines`** (`workspaceTokenAuthAPIForScope("pipelines")`), routers
 | listFields / createField / updateField / deleteField | `GET`/`POST /v1/pipelines/{id}/fields`, `PATCH`/`DELETE .../fields/{fieldId}` | |
 | listMembers / setMember / removeMember | `GET .../members`, `PUT`/`DELETE .../members/{workspaceMemberId}` | |
 | getStats | `GET /v1/pipelines/{id}/stats` | |
-| listItems | `GET /v1/pipelines/{id}/items` (filters mirror the board: stage, status, priority, assignee, contact, value, `fieldId`+`fieldOperator`+`fieldValue`/`fieldValueTo`+`timezone`, search, and `<name>From`/`<name>To` ranges for `due`, `created`, `updated`, `lastComment`, `statusChanged`, `stageEntered`, `wonClosed`, `lostClosed`; activity: `activityGroups` (comma-separated groups), `activityActor` (comma-separated workspace user ids from `workspaceMembers.list` `userId`, or `automation`), `activityFrom`/`activityTo`) | yes |
+| listItems | `GET /v1/pipelines/{id}/items` (filters mirror the board: `stageId`, `status`, `priority`, `assigneeMemberId`, `assigneeInboxTeamId` as comma-separated "any of" lists, contact, value, `fieldConditions` (JSON object keyed by field id, AND-ed) and/or one `fieldId`+`fieldOperator`+`fieldValue`/`fieldValueTo`, `timezone`, search, and `<name>From`/`<name>To` ranges for `due`, `created`, `updated`, `lastComment`, `statusChanged`, `stageEntered`, `wonClosed`, `lostClosed`; activity: `activityGroups` (comma-separated groups), `activityActor` (comma-separated workspace user ids from `workspaceMembers.list` `userId`, or `automation`), `activityFrom`/`activityTo`) | yes |
+| stageTotals | `GET /v1/pipelines/{id}/stage-totals` — item count and total value per stage in board order (the board's column headers), with the same filters as `listItems` | no |
 | getItem | `GET /v1/pipelines/{id}/items/{itemId}` | |
 | createItem | `POST /v1/pipelines/{id}/items` (accepts `idempotencyKey`) | yes |
 | updateItem / deleteItem | `PATCH`/`DELETE .../items/{itemId}` | |
@@ -669,6 +671,8 @@ current state:
 | queued stage job batch | 500 rows per transaction |
 | assignees per item | 20 |
 | stages per pipeline (also cap on stage-id arrays) | 200 |
+| custom fields per pipeline (also cap on field values per write) | 100 |
+| attachments per item (checked after the insert, under the item lock) | 50 |
 | open items per contact | `settings.maxOpenItemsPerContact` (1-100, default none) |
 | stage ids in a contact filter condition | 200 |
 

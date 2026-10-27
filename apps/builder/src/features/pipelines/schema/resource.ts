@@ -137,6 +137,14 @@ export const publicPipelineActivityResource = z.object({
   toValue: z.number().nullable(),
   fromPriority: pipelineItemPriorities.nullable(),
   toPriority: pipelineItemPriorities.nullable(),
+  fromDueDate: z
+    .date()
+    .nullable()
+    .describe("Due date before a `dueDateChanged` entry; null when unset."),
+  toDueDate: z
+    .date()
+    .nullable()
+    .describe("Due date after a `dueDateChanged` entry; null when cleared."),
   fromTitle: z.string().nullable(),
   toTitle: z.string().nullable(),
   fromPipelineId: z.string().nullable(),

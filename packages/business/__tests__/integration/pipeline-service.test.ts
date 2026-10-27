@@ -86,6 +86,9 @@ const { pipelineMemberService } = await import(
 const { pipelineStructureService } = await import(
   "../../src/pipeline/pipeline-structure.service"
 )
+const { pipelineTemplateService } = await import(
+  "../../src/pipeline/pipeline-template.service"
+)
 const { pipelineItemQueryService } = await import(
   "../../src/pipeline/item-query.service"
 )
@@ -1458,6 +1461,57 @@ describe.skipIf(!databaseUrl)("pipeline services", () => {
       })
       expect(board.stages.map((s) => s.stage.id)).toEqual([second.id])
       expect(board.stages[0].count).toBe(2001)
+    })
+
+    test("a queued removal still runs when the user who queued it was deleted", async () => {
+      const pipeline = await newPipeline(own)
+      const second = await pipelineStructureService.createStage({
+        workspaceId: own.workspaceId,
+        pipelineId: pipeline.id,
+        scope: token,
+        name: "Second",
+      })
+      const [first] = await stagesOf(own, pipeline.id)
+      await db.execute(sql`
+        INSERT INTO "PipelineItem" ("id","workspaceId","pipelineId","stageId","contactId","number","title","status","priority","fieldValues","stageEnteredAt","updatedAt")
+        SELECT (5000000000000 + g)::bigint, ${own.workspaceId}::bigint, ${pipeline.id}::bigint, ${first.id}::bigint, ${own.contactIds[0]}::bigint, 700000 + g, 'bulk ' || g, 'open', 'low', '{}'::jsonb, now(), now()
+        FROM generate_series(1, 2001) AS g`)
+      const result = await pipelineStageBulkService.deleteStage({
+        workspaceId: own.workspaceId,
+        pipelineId: pipeline.id,
+        stageId: first.id,
+        moveItemsToStageId: second.id,
+        scope: token,
+        actor,
+      })
+
+      // An id no User row has: the account was deleted after queueing.
+      await pipelineStageBulkService.processQueued({
+        workspaceId: own.workspaceId,
+        pipelineId: pipeline.id,
+        stageId: first.id,
+        bulkJobId: (result as { jobId: string }).jobId,
+        moveItemsToStageId: second.id,
+        actorUserId: "999999999999999998",
+        actorKind: "user",
+        actorSourceId: null,
+      })
+
+      const board = await pipelineItemQueryService.listBoard({
+        workspaceId: own.workspaceId,
+        pipelineId: pipeline.id,
+        scope: token,
+      })
+      expect(board.stages.map((entry) => entry.stage.id)).toEqual([second.id])
+      const [moved] = await db
+        .execute<{ actorUserId: string | null }>(sql`
+        SELECT "actorUserId" FROM "PipelineItemActivity"
+        WHERE "workspaceId" = ${own.workspaceId}::bigint
+          AND "pipelineId" = ${pipeline.id}::bigint
+          AND "kind" = 'stageChanged'
+        LIMIT 1`)
+        .then((rows) => rows.rows)
+      expect(moved?.actorUserId).toBeNull()
     })
 
     test("a queued removal keeps the workspace-token actor on every batch", async () => {
@@ -2948,6 +3002,192 @@ describe.skipIf(!databaseUrl)("pipeline services", () => {
       expect((await search(token, "901234567")).items).toHaveLength(1)
       expect((await search(restricted(own), "lead@example")).items).toEqual([])
       expect((await search(restricted(own), "901234567")).items).toEqual([])
+    })
+  })
+
+  describe("templates and structure limits", () => {
+    test("a template with same-named stages keeps one destination per source stage", async () => {
+      const result = await db.transaction((tx) =>
+        pipelineTemplateService.resolveTemplateEntry({
+          tx,
+          workspaceId: own.workspaceId,
+          entry: {
+            name: "Template",
+            referenceName: "tpl_same_names",
+            type: "opportunity",
+            currency: null,
+            settings: {},
+            stages: [
+              {
+                sourceId: "s1",
+                name: "Lead",
+                description: null,
+                textColor: null,
+                backgroundColor: null,
+              },
+              {
+                sourceId: "s2",
+                name: "lead",
+                description: null,
+                textColor: null,
+                backgroundColor: null,
+              },
+              {
+                sourceId: "s3",
+                name: "Won",
+                description: null,
+                textColor: null,
+                backgroundColor: null,
+              },
+            ],
+            fields: [],
+          },
+        }),
+      )
+
+      const destinations = ["s1", "s2", "s3"].map((id) =>
+        result.stageIds.get(id),
+      )
+      expect(new Set(destinations).size).toBe(3)
+      expect(await stagesOf(own, result.pipeline.id)).toHaveLength(3)
+    })
+
+    test("a pipeline holds at most the field count an item write can carry", async () => {
+      const pipeline = await newPipeline(own)
+      await db.execute(sql`
+        INSERT INTO "PipelineField" ("id","workspaceId","pipelineId","name","referenceName","type","required","position","updatedAt")
+        SELECT (6000000000000 + g)::bigint, ${own.workspaceId}::bigint, ${pipeline.id}::bigint, 'f' || g, 'f' || g, 'shortText', false, g, now()
+        FROM generate_series(1, 100) AS g`)
+
+      await expect(
+        pipelineStructureService.createField({
+          workspaceId: own.workspaceId,
+          pipelineId: pipeline.id,
+          scope: token,
+          values: {
+            name: "One too many",
+            referenceName: "extra",
+            type: "shortText",
+            required: false,
+          },
+        }),
+      ).rejects.toMatchObject({ httpStatusCode: 422 })
+    })
+  })
+
+  describe("stage totals", () => {
+    test("counts and sums the matching items of every stage, in board order", async () => {
+      const pipeline = await newPipeline(own)
+      const second = await pipelineStructureService.createStage({
+        workspaceId: own.workspaceId,
+        pipelineId: pipeline.id,
+        scope: token,
+        name: "Second",
+      })
+      await newItem(own, pipeline.id, { fields: { title: "a", value: 10 } })
+      await newItem(own, pipeline.id, {
+        fields: { title: "b", value: 5, priority: "high" },
+      })
+
+      const all = await pipelineItemQueryService.listStageTotals({
+        workspaceId: own.workspaceId,
+        pipelineId: pipeline.id,
+        scope: token,
+      })
+      const high = await pipelineItemQueryService.listStageTotals({
+        workspaceId: own.workspaceId,
+        pipelineId: pipeline.id,
+        scope: token,
+        filter: { priorities: ["high"] },
+      })
+
+      expect(
+        all.map(({ count, totalValue }) => ({ count, totalValue })),
+      ).toEqual([
+        { count: 2, totalValue: 15 },
+        { count: 0, totalValue: 0 },
+      ])
+      expect(all[1]?.stageId).toBe(second.id)
+      expect(high[0]).toMatchObject({ count: 1, totalValue: 5 })
+    })
+  })
+
+  describe("attachment cap", () => {
+    test("adding a file past the per-item cap is a 422 and attaches nothing", async () => {
+      const pipeline = await newPipeline(own)
+      const item = await newItem(own, pipeline.id)
+      await db.execute(sql`
+        INSERT INTO "MediaLibraryFile" ("id","workspaceId","name","path","mimeType","size","updatedAt")
+        SELECT (7000000000000 + g)::bigint, ${own.workspaceId}::bigint, 'f' || g || '.png', 'cap/' || g || '.png', 'image/png', 10, now()
+        FROM generate_series(1, 51) AS g`)
+      await db.execute(sql`
+        INSERT INTO "PipelineItemAttachment" ("id","workspaceId","itemId","mediaLibraryFileId","updatedAt")
+        SELECT (8000000000000 + g)::bigint, ${own.workspaceId}::bigint, ${item.id}::bigint, (7000000000000 + g)::bigint, now()
+        FROM generate_series(1, 50) AS g`)
+
+      await expect(
+        pipelineItemContentService.addAttachments({
+          workspaceId: own.workspaceId,
+          pipelineId: pipeline.id,
+          itemId: item.id,
+          mediaLibraryFileIds: ["7000000000051"],
+          scope: token,
+          actor,
+        }),
+      ).rejects.toMatchObject({ httpStatusCode: 422 })
+      const detail = await pipelineItemQueryService.getItem({
+        workspaceId: own.workspaceId,
+        pipelineId: pipeline.id,
+        itemId: item.id,
+        scope: token,
+      })
+      expect(detail.attachments).toHaveLength(50)
+    })
+  })
+
+  describe("empty patches", () => {
+    test("updating a pipeline, stage or field with nothing to change returns it unchanged", async () => {
+      const pipeline = await newPipeline(own)
+      const [stage] = await stagesOf(own, pipeline.id)
+      const field = await pipelineStructureService.createField({
+        workspaceId: own.workspaceId,
+        pipelineId: pipeline.id,
+        scope: token,
+        values: {
+          name: "Source",
+          referenceName: "source",
+          type: "shortText",
+          required: false,
+        },
+      })
+
+      const samePipeline = await pipelineService.update({
+        workspaceId: own.workspaceId,
+        id: pipeline.id,
+        scope: token,
+        values: {},
+      })
+      const sameStage = await pipelineStructureService.updateStage({
+        workspaceId: own.workspaceId,
+        pipelineId: pipeline.id,
+        stageId: stage.id,
+        scope: token,
+        values: {},
+      })
+      const sameField = await pipelineStructureService.updateField({
+        workspaceId: own.workspaceId,
+        pipelineId: pipeline.id,
+        fieldId: field.id,
+        scope: token,
+        values: {},
+      })
+
+      expect(samePipeline).toMatchObject({
+        id: pipeline.id,
+        name: pipeline.name,
+      })
+      expect(sameStage).toMatchObject({ id: stage.id, name: stage.name })
+      expect(sameField).toMatchObject({ id: field.id, name: "Source" })
     })
   })
 

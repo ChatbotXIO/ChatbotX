@@ -1,4 +1,7 @@
-import { PIPELINE_DATE_RANGE } from "@chatbotx.io/database/partials"
+import {
+  PIPELINE_DATE_RANGE,
+  PIPELINE_LIMITS,
+} from "@chatbotx.io/database/partials"
 import { z } from "zod"
 import { ianaTimezoneSchema } from "@/lib/public-api/iana-timezone"
 
@@ -24,6 +27,6 @@ export const statsRangeFields = {
 /** Longest custom-field value / filter value accepted. */
 export const MAX_FIELD_VALUE_LENGTH = 5000
 /** Custom-field values writable in one request. */
-export const MAX_FIELD_VALUES = 100
+export const MAX_FIELD_VALUES = PIPELINE_LIMITS.fieldsPerPipeline
 /** Custom-field filters accepted in one board filter. */
 export const MAX_FIELD_FILTERS = 20

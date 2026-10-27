@@ -121,6 +121,8 @@ export const toPublicActivity = (
   toValue: activity.toValue,
   fromPriority: activity.fromPriority,
   toPriority: activity.toPriority,
+  fromDueDate: activity.fromDueDate,
+  toDueDate: activity.toDueDate,
   fromTitle: activity.fromTitle,
   toTitle: activity.toTitle,
   fromPipelineId: activity.fromPipelineId,

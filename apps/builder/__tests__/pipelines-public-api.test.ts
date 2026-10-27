@@ -131,6 +131,50 @@ describe("pipelines public request schemas", () => {
     })
   })
 
+  test("listItems takes the board's any-of lists and several field conditions", () => {
+    const { filter } = toItemListQuery(
+      listItemsPublicRequest.parse({
+        id: "1",
+        stageId: "11,12",
+        status: "won,lost",
+        priority: "high",
+        assigneeMemberId: "21,22",
+        assigneeInboxTeamId: "31",
+        fieldConditions: JSON.stringify({
+          "41": { operator: "gt", value: "5" },
+          "42": { operator: "hasValue" },
+        }),
+        fieldId: "43",
+        fieldOperator: "is",
+        fieldValue: "VIP",
+      }),
+    )
+
+    expect(filter).toMatchObject({
+      stageIds: ["11", "12"],
+      statuses: ["won", "lost"],
+      priorities: ["high"],
+      assigneeMemberIds: ["21", "22"],
+      assigneeTeamIds: ["31"],
+    })
+    expect(Object.keys(filter.fieldConditions ?? {}).sort()).toEqual([
+      "41",
+      "42",
+      "43",
+    ])
+  })
+
+  test("listItems rejects malformed field conditions and unknown statuses", () => {
+    expect(
+      listItemsPublicRequest.safeParse({ id: "1", fieldConditions: "{oops" })
+        .success,
+    ).toBe(false)
+    expect(
+      listItemsPublicRequest.safeParse({ id: "1", status: "open,maybe" })
+        .success,
+    ).toBe(false)
+  })
+
   test("fieldValuesTimezone must be a real IANA zone", () => {
     const ok = createItemPublicRequest.safeParse({
       id: "1",

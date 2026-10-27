@@ -34,6 +34,8 @@ export type ContactVariableContext = {
 
 export type PipelineItemsLoader = {
   get: () => Promise<PipelineVariableTarget[]>
+  /** Id of the contact's most recently created or updated item, any pipeline. */
+  lastItemId: () => Promise<string | null>
 }
 
 export type ReplaceVariableProps = ContactVariableContext & {
@@ -48,11 +50,12 @@ export type ReplaceVariableProps = ContactVariableContext & {
    */
   botFieldsMap?: Map<string, BotFieldValue>
   /**
-   * The contact's latest open (else latest) item per pipeline, for
-   * `{{pipelines.<ref>.<attr>}}`. A lazy, memoized loader: the query starts
-   * on the first `get()` and is shared by every later one, so a render that
-   * never reads a pipeline variable never queries (or leaves a rejected,
-   * unawaited promise behind). `contactVariableService.getAll` adds it.
+   * The contact's pipeline items: the latest open (else latest) item per
+   * pipeline for `{{pipelines.<ref>.<attr>}}`, and the last touched item for
+   * `{{last_opportunity_id}}`. Lazy and memoized per read: a query starts on
+   * its first call and is shared by every later one, so a render that never
+   * reads a pipeline variable never queries (or leaves a rejected, unawaited
+   * promise behind). `contactVariableService.getAll` adds it.
    */
   pipelineItems?: PipelineItemsLoader
 }

@@ -15,6 +15,9 @@ import { nextFieldPosition } from "./naming"
 import { PipelineBaseService } from "./pipeline-base.service"
 import { stageColumns } from "./pipeline-structure.service"
 
+/** Stage names match case- and space-insensitively. */
+const stageKey = (name: string) => name.trim().toLowerCase()
+
 /** Template installs: match-or-create a pipeline, its stages and fields. */
 export class PipelineTemplateService extends PipelineBaseService {
   // Template install ----------------------------------------------------------
@@ -81,9 +84,9 @@ export class PipelineTemplateService extends PipelineBaseService {
     )
     const stageIds = new Map<string, string>()
     const unmatchedStages: string[] = []
-    const stageByName = new Map(
-      stages.map((stage) => [stage.name.trim().toLowerCase(), stage]),
-    )
+    // Each existing stage is matched at most once, in board order, so a
+    // template with two stages of one name keeps two destinations.
+    const unclaimedByName = Map.groupBy(stages, (stage) => stageKey(stage.name))
     let stageCount = stages.length
     if (created && entry.stages.length === 0 && stageCount === 0) {
       await pipelineStageRepository.insert(
@@ -97,8 +100,7 @@ export class PipelineTemplateService extends PipelineBaseService {
       )
     }
     for (const source of entry.stages) {
-      const key = source.name.trim().toLowerCase()
-      const existing = stageByName.get(key)
+      const existing = unclaimedByName.get(stageKey(source.name))?.shift()
       if (existing) {
         stageIds.set(source.sourceId, existing.id)
         continue
@@ -123,7 +125,6 @@ export class PipelineTemplateService extends PipelineBaseService {
         tx,
       )
       stageCount += 1
-      stageByName.set(key, row)
       stageIds.set(source.sourceId, row.id)
     }
 
@@ -145,6 +146,10 @@ export class PipelineTemplateService extends PipelineBaseService {
         } else {
           unmatchedFields.push(source.sourceId)
         }
+        continue
+      }
+      if (fieldByReference.size >= PIPELINE_LIMITS.fieldsPerPipeline) {
+        unmatchedFields.push(source.sourceId)
         continue
       }
       const row = await pipelineRepository.insertField(

@@ -1,4 +1,5 @@
 import {
+  loadLastPipelineItemId,
   loadPipelineVariableTargets,
   type PipelineVariableTarget,
 } from "@chatbotx.io/business/pipeline/variable-targets"
@@ -41,16 +42,12 @@ export const parsePipelineVariable = (
 export const isPipelineVariable = (variable: string): boolean =>
   parsePipelineVariable(variable) !== null
 
-/** Memoizes `load`, started by the first `get()` only. */
-export const createPipelineItemsLoader = (
-  load: () => Promise<PipelineVariableTarget[]>,
-): PipelineItemsLoader => {
-  let loading: Promise<PipelineVariableTarget[]> | undefined
-  return {
-    get: () => {
-      loading ??= load()
-      return loading
-    },
+/** Memoizes `load`: started by the first call only, then shared. */
+const memoize = <T>(load: () => Promise<T>): (() => Promise<T>) => {
+  let loading: Promise<T> | undefined
+  return () => {
+    loading ??= load()
+    return loading
   }
 }
 
@@ -58,13 +55,13 @@ export const createPipelineItemsLoader = (
 export const createContactPipelineItemsLoader = (contact: {
   workspaceId: string
   id: string
-}): PipelineItemsLoader =>
-  createPipelineItemsLoader(() =>
-    loadPipelineVariableTargets({
-      workspaceId: contact.workspaceId,
-      contactId: contact.id,
-    }),
-  )
+}): PipelineItemsLoader => {
+  const scope = { workspaceId: contact.workspaceId, contactId: contact.id }
+  return {
+    get: memoize(() => loadPipelineVariableTargets(scope)),
+    lastItemId: memoize(() => loadLastPipelineItemId(scope)),
+  }
+}
 
 const formatTargetValue = (target: PipelineVariableTarget): string =>
   target.value === null

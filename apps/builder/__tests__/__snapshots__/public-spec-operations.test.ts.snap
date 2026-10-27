@@ -2713,6 +2713,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "path": "/v1/pipelines/{id}/members/{workspaceMemberId}",
   },
   {
+    "method": "GET",
+    "operationId": "pipelines.stageTotals",
+    "path": "/v1/pipelines/{id}/stage-totals",
+  },
+  {
     "method": "POST",
     "operationId": "pipelines.transferItem",
     "path": "/v1/pipelines/{id}/items/{itemId}/transfer",

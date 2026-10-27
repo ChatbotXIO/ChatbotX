@@ -7,6 +7,7 @@ import {
   isPipelineFilterNumber,
   PIPELINE_FIELD_COMPARISON_KIND,
   type PipelineFieldComparisonKind,
+  type PipelineFieldConditionInput,
   type PipelineFieldOperator,
 } from "../../partials/pipeline"
 import { escapeLikePattern } from "../../utils"
@@ -31,16 +32,11 @@ const BOOLEAN_STORED_VALUES = ["true", "false"]
 const FALLBACK_TIMEZONE = "UTC"
 
 /**
- * One custom-field condition. `value` is the operand (`between`: lower bound),
- * `valueTo` the upper bound of `between`; either bound may be omitted. Number
- * operands are numeric strings, date operands `YYYY-MM-DD`, boolean operands
- * `true`/`false`.
+ * One custom-field condition (the partials' shape, so validation and SQL
+ * share it). Number operands are numeric strings, date operands
+ * `YYYY-MM-DD`, boolean operands `true`/`false`.
  */
-export type PipelineFieldCondition = {
-  operator: PipelineFieldOperator
-  value?: string
-  valueTo?: string
-}
+export type PipelineFieldCondition = PipelineFieldConditionInput
 
 type FieldConditionContext = {
   /** The stored value as text (`fieldValues ->> id`). */

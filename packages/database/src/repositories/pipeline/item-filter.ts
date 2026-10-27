@@ -22,8 +22,8 @@ import type { CustomFieldType } from "@chatbotx.io/utils/custom-field"
 import type { AnyPgColumn } from "drizzle-orm/pg-core"
 import {
   isSingleValueOperator,
+  PIPELINE_AUTOMATION_ACTOR_KINDS,
   type PipelineActivityKind,
-  type PipelineActorKind,
   type PipelineItemPriority,
   type PipelineItemStatus,
   type PipelineSingleValueOperator,
@@ -37,6 +37,7 @@ import {
 } from "./field-condition"
 
 const NUMERIC_SEARCH_PATTERN = /^#?\d+$/
+const LEADING_ZEROS = /^0+/
 // Same shapes the contacts keyword search uses: email only for an "@" input,
 // phone only for a phone-like input with enough digits. A bare "9" must not
 // match every email or synthetic guest identifier that contains a 9.
@@ -75,14 +76,6 @@ const allOf = (...conditions: Array<SQL | undefined>): SQL =>
   and(...conditions) ?? sql`true`
 
 export type DateRange = { from?: Date; to?: Date }
-
-/** Actor kinds that are not a person: flows, triggers, API tokens and the system. */
-const AUTOMATION_ACTOR_KINDS = [
-  "flow",
-  "trigger",
-  "workspaceToken",
-  "system",
-] as const satisfies readonly PipelineActorKind[]
 
 export type PipelineActivityMatch = {
   kinds?: PipelineActivityKind[]
@@ -232,7 +225,9 @@ const activityActorCondition = (match: PipelineActivityMatch) => {
   }
   if (match.automation) {
     branches.push(
-      inArray(pipelineItemActivityModel.actorKind, [...AUTOMATION_ACTOR_KINDS]),
+      inArray(pipelineItemActivityModel.actorKind, [
+        ...PIPELINE_AUTOMATION_ACTOR_KINDS,
+      ]),
     )
   }
   return branches.length > 0 ? or(...branches) : undefined
@@ -336,14 +331,17 @@ export function buildPipelineItemWhere(
 
   const search = filter.search?.trim()
   if (search) {
-    const numeric = NUMERIC_SEARCH_PATTERN.test(search)
-      ? search.replace("#", "")
-      : null
+    // "#12", "12" and "0012" all mean item 12; compared as a number so the
+    // `(workspaceId, number)` index serves it.
+    const digits = NUMERIC_SEARCH_PATTERN.test(search)
+      ? search.replace("#", "").replace(LEADING_ZEROS, "")
+      : ""
+    const itemNumber = isBigintId(digits) ? digits : null
     conditions.push(
       or(
         ilike(pipelineItemModel.title, likeContains(search)),
-        numeric
-          ? sql`${pipelineItemModel.number}::text = ${numeric}`
+        itemNumber
+          ? sql`${pipelineItemModel.number} = ${itemNumber}::bigint`
           : undefined,
         exists(
           sql`(select 1 from ${contactModel} where ${allOf(

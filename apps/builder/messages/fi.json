@@ -2933,11 +2933,6 @@
       "stage": "Vaihe",
       "firstStage": "Ensimmäinen vaihe",
       "status": "Tila",
-      "statusOptions": {
-        "open": "Avoin",
-        "won": "Voitettu",
-        "lost": "Hävitty"
-      },
       "assigneeMembers": "Määritetyt ylläpitäjät",
       "assigneeTeams": "Määritetyt tiimit",
       "value": "Arvo",

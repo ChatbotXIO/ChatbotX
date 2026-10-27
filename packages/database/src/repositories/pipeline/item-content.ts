@@ -12,15 +12,12 @@ import {
 } from "@chatbotx.io/database/schema"
 import type { PipelineItemCommentModel } from "@chatbotx.io/database/types"
 import { createId } from "@chatbotx.io/utils"
-import { NEWEST_FIRST_SORT } from "./item"
-import { clampPageLimit, cursorFor, decodeTimestampCursor } from "./item-cursor"
+import { newestFirstKeyset } from "./item-cursor"
 
 export type PipelineCommentInsert = Omit<
   typeof pipelineItemCommentModel.$inferInsert,
   "id" | "createdAt" | "updatedAt"
 >
-
-const COMMENT_SORT = NEWEST_FIRST_SORT
 
 export type PipelineItemCommentPage = {
   items: PipelineItemCommentModel[]
@@ -45,40 +42,35 @@ export const pipelineItemContentRepository = {
     },
     tx: DatabaseClient = db,
   ): Promise<PipelineItemCommentPage> {
-    const limit = clampPageLimit(input.limit)
-    const cursor = input.cursor
-      ? decodeTimestampCursor(input.cursor, COMMENT_SORT)
-      : null
-    const { createdAt, id } = pipelineItemCommentModel
+    const keyset = newestFirstKeyset(
+      {
+        timestamp: pipelineItemCommentModel.createdAt,
+        id: pipelineItemCommentModel.id,
+      },
+      input,
+    )
     const rows = await tx
       .select({
         comment: pipelineItemCommentModel,
-        createdAtText: sql<string>`${createdAt}::text`,
+        timestampText: keyset.timestampText,
       })
       .from(pipelineItemCommentModel)
       .where(
         and(
           eq(pipelineItemCommentModel.workspaceId, input.workspaceId),
           eq(pipelineItemCommentModel.itemId, input.itemId),
-          cursor
-            ? sql`(${createdAt}, ${id}) < (${cursor.sortValue}::timestamptz, ${cursor.id}::bigint)`
-            : undefined,
+          keyset.after,
         ),
       )
-      .orderBy(sql`${createdAt} desc`, sql`${id} desc`)
-      .limit(limit + 1)
-
-    const page = rows.slice(0, limit)
-    const last = page.at(-1)
+      .orderBy(...keyset.orderBy)
+      .limit(keyset.fetchLimit)
+    const page = keyset.page(rows, (row) => ({
+      sortValue: row.timestampText,
+      id: row.comment.id,
+    }))
     return {
-      items: page.map((row) => row.comment),
-      nextCursor:
-        rows.length > limit && last
-          ? cursorFor(COMMENT_SORT, {
-              sortValue: last.createdAtText,
-              id: last.comment.id,
-            })
-          : null,
+      items: page.rows.map((row) => row.comment),
+      nextCursor: page.nextCursor,
     }
   },
 
@@ -104,20 +96,36 @@ export const pipelineItemContentRepository = {
       .groupBy(pipelineItemCommentModel.itemId)
   },
 
+  /**
+   * Inserts the comment, or returns the one an earlier call with the same
+   * idempotency key stored. Only that key's conflict is absorbed.
+   */
   async insertCommentIdempotent(
     values: PipelineCommentInsert,
     tx: DatabaseClient,
   ) {
-    const [row] = await tx
+    const insert = tx
       .insert(pipelineItemCommentModel)
       .values({ id: createId(), ...values })
-      .onConflictDoNothing()
+    if (!values.idempotencyKey) {
+      const [row] = await insert.returning()
+      if (!row) {
+        throw new Error("Failed to insert pipeline comment")
+      }
+      return { row, inserted: true as const }
+    }
+    const [row] = await insert
+      .onConflictDoNothing({
+        target: [
+          pipelineItemCommentModel.workspaceId,
+          pipelineItemCommentModel.itemId,
+          pipelineItemCommentModel.idempotencyKey,
+        ],
+        where: sql`"idempotencyKey" IS NOT NULL`,
+      })
       .returning()
     if (row) {
       return { row, inserted: true as const }
-    }
-    if (!values.idempotencyKey) {
-      throw new Error("Failed to insert pipeline comment")
     }
     const existing = await tx.query.pipelineItemCommentModel.findFirst({
       where: {
@@ -179,6 +187,22 @@ export const pipelineItemContentRepository = {
       with: { mediaLibraryFile: true },
       orderBy: { createdAt: "asc" },
     })
+  },
+
+  async countAttachments(
+    input: { workspaceId: string; itemId: string },
+    tx: DatabaseClient,
+  ): Promise<number> {
+    const [row] = await tx
+      .select({ count: sql<number>`count(*)::int` })
+      .from(pipelineItemAttachmentModel)
+      .where(
+        and(
+          eq(pipelineItemAttachmentModel.workspaceId, input.workspaceId),
+          eq(pipelineItemAttachmentModel.itemId, input.itemId),
+        ),
+      )
+    return row?.count ?? 0
   },
 
   async insertAttachments(

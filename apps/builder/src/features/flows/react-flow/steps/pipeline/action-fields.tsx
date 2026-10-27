@@ -9,6 +9,7 @@ import { PlusIcon, Trash2Icon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useFieldArray, useFormContext, useWatch } from "react-hook-form"
 import { PlainTextEditorField } from "@/components/tiptap/plain-text-editor-field"
+import { pipelineStatusOptions } from "@/features/pipelines/lib/item-options"
 import { useAssigneeOptions } from "@/features/pipelines/lib/use-assignee-options"
 import { usePipelineOptions } from "@/features/pipelines/lib/use-pipeline-options"
 import { useWorkspaceId } from "@/hooks/routing"
@@ -42,13 +43,14 @@ const Text = ({
   />
 )
 
-function useStatusOptions() {
-  const t = useTranslations()
-  return [
-    { label: t("flows.pipelineStep.statusOptions.open"), value: "open" },
-    { label: t("flows.pipelineStep.statusOptions.won"), value: "won" },
-    { label: t("flows.pipelineStep.statusOptions.lost"), value: "lost" },
-  ]
+/** Status choices named by the chosen pipeline's own labels ("Resolved" on a ticket board). */
+function useStatusOptions(pipelineId: string) {
+  const t = useTranslations("pipelines")
+  const { pipelines } = usePipelineOptions()
+  const statusLabels = pipelines.find(
+    (pipeline) => pipeline.id === pipelineId,
+  )?.statusLabels
+  return pipelineStatusOptions(t, statusLabels)
 }
 
 function AssigneeFields({ parentName }: { parentName: string }) {
@@ -177,7 +179,7 @@ export function PipelineActionFields({
   pipelineId,
 }: FieldsProps & { action: PipelineStepAction }) {
   const t = useTranslations()
-  const statusOptions = useStatusOptions()
+  const statusOptions = useStatusOptions(pipelineId)
   const { fields: definitions } = usePipelineFields(pipelineId)
   const base = { parentName, pipelineId }
 

@@ -138,6 +138,11 @@ export const pipelineRepository = {
     input: { workspaceId: string; id: string; values: PipelineUpdate },
     tx: DatabaseClient = db,
   ) {
+    // An empty patch changes nothing: answer with the row instead of an
+    // UPDATE with no columns, which drizzle rejects.
+    if (Object.keys(input.values).length === 0) {
+      return await pipelineRepository.findById(input, tx)
+    }
     const [row] = await tx
       .update(pipelineModel)
       .set(input.values)
@@ -249,6 +254,15 @@ export const pipelineRepository = {
     },
     tx: DatabaseClient = db,
   ) {
+    if (Object.keys(input.values).length === 0) {
+      return await tx.query.pipelineFieldModel.findFirst({
+        where: {
+          workspaceId: input.workspaceId,
+          pipelineId: input.pipelineId,
+          id: input.id,
+        },
+      })
+    }
     const [row] = await tx
       .update(pipelineFieldModel)
       .set(input.values)

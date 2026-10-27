@@ -4,12 +4,13 @@ import type {
   PipelineItemSort,
 } from "@chatbotx.io/database/repositories"
 import type { z } from "zod"
-import type { listItemsPublicRequest } from "../schema/public"
+import type {
+  listItemsPublicRequest,
+  stageTotalsPublicRequest,
+} from "../schema/public"
 
+type ItemFilterRequest = z.infer<typeof stageTotalsPublicRequest>
 type ListItemsRequest = z.infer<typeof listItemsPublicRequest>
-
-const optionalList = <T>(value: T | undefined): T[] | undefined =>
-  value === undefined ? undefined : [value]
 
 const rangeOf = (from?: Date, to?: Date) =>
   from || to ? { from, to } : undefined
@@ -26,7 +27,7 @@ const AUTOMATION_ACTOR = "automation"
 
 /** The activity condition of the public query; undefined when none of its parts is set. */
 const activityMatchOf = (
-  input: ListItemsRequest,
+  input: ItemFilterRequest,
 ): PipelineItemFilter["activityMatch"] => {
   const kinds = activityKindsOf(input.activityGroups)
   const actors = input.activityActor ?? []
@@ -44,57 +45,71 @@ const activityMatchOf = (
   }
 }
 
-/** One place that turns the public list query into the repository filter and sort. */
+/** `fieldConditions` plus the single `fieldId`/`fieldOperator` condition, if any. */
+const fieldConditionsOf = (
+  input: ItemFilterRequest,
+): PipelineItemFilter["fieldConditions"] => {
+  const single =
+    input.fieldId !== undefined && input.fieldOperator !== undefined
+      ? {
+          [input.fieldId]: {
+            operator: input.fieldOperator,
+            value: input.fieldValue,
+            valueTo: input.fieldValueTo,
+          },
+        }
+      : undefined
+  return input.fieldConditions || single
+    ? { ...input.fieldConditions, ...single }
+    : undefined
+}
+
+/** One place that turns the public filter query into the repository filter. */
+export function toItemFilter(input: ItemFilterRequest): PipelineItemFilter {
+  const hasValueRange =
+    input.valueMin !== undefined || input.valueMax !== undefined
+  return {
+    stageIds: input.stageId,
+    statuses: input.status,
+    priorities: input.priority,
+    contactId: input.contactId,
+    assigneeMemberIds: input.assigneeMemberId,
+    assigneeTeamIds: input.assigneeInboxTeamId,
+    search: input.search,
+    value:
+      input.valueOperator || hasValueRange
+        ? {
+            operator: input.valueOperator,
+            amount: input.valueAmount,
+            min: input.valueMin,
+            max: input.valueMax,
+          }
+        : undefined,
+    dueDate: rangeOf(input.dueFrom, input.dueTo),
+    createdAt: rangeOf(input.createdFrom, input.createdTo),
+    updatedAt: rangeOf(input.updatedFrom, input.updatedTo),
+    lastCommentAt: rangeOf(input.lastCommentFrom, input.lastCommentTo),
+    statusChangedAt: rangeOf(input.statusChangedFrom, input.statusChangedTo),
+    stageEnteredAt: rangeOf(input.stageEnteredFrom, input.stageEnteredTo),
+    closedAs: closedAsOf(
+      rangeOf(input.wonClosedFrom, input.wonClosedTo),
+      rangeOf(input.lostClosedFrom, input.lostClosedTo),
+    ),
+    activityMatch: activityMatchOf(input),
+    fieldConditions: fieldConditionsOf(input),
+    timezone: input.timezone,
+  }
+}
+
+/** The public list query as the repository filter, sort and page. */
 export function toItemListQuery(input: ListItemsRequest): {
   filter: PipelineItemFilter
   sort: PipelineItemSort
   limit: number
   cursor?: string
 } {
-  const hasValueRange =
-    input.valueMin !== undefined || input.valueMax !== undefined
-  const fieldId = input.fieldId
   return {
-    filter: {
-      stageIds: optionalList(input.stageId),
-      statuses: optionalList(input.status),
-      priorities: optionalList(input.priority),
-      contactId: input.contactId,
-      assigneeMemberIds: optionalList(input.assigneeMemberId),
-      assigneeTeamIds: optionalList(input.assigneeInboxTeamId),
-      search: input.search,
-      value:
-        input.valueOperator || hasValueRange
-          ? {
-              operator: input.valueOperator,
-              amount: input.valueAmount,
-              min: input.valueMin,
-              max: input.valueMax,
-            }
-          : undefined,
-      dueDate: rangeOf(input.dueFrom, input.dueTo),
-      createdAt: rangeOf(input.createdFrom, input.createdTo),
-      updatedAt: rangeOf(input.updatedFrom, input.updatedTo),
-      lastCommentAt: rangeOf(input.lastCommentFrom, input.lastCommentTo),
-      statusChangedAt: rangeOf(input.statusChangedFrom, input.statusChangedTo),
-      stageEnteredAt: rangeOf(input.stageEnteredFrom, input.stageEnteredTo),
-      closedAs: closedAsOf(
-        rangeOf(input.wonClosedFrom, input.wonClosedTo),
-        rangeOf(input.lostClosedFrom, input.lostClosedTo),
-      ),
-      activityMatch: activityMatchOf(input),
-      fieldConditions:
-        fieldId !== undefined && input.fieldOperator !== undefined
-          ? {
-              [fieldId]: {
-                operator: input.fieldOperator,
-                value: input.fieldValue,
-                valueTo: input.fieldValueTo,
-              },
-            }
-          : undefined,
-      timezone: input.timezone,
-    },
+    filter: toItemFilter(input),
     sort: { key: input.sort, direction: input.direction },
     limit: input.limit,
     cursor: input.cursor,

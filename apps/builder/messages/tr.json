@@ -3088,11 +3088,6 @@
       "stage": "Aşama",
       "firstStage": "İlk aşama",
       "status": "Durum",
-      "statusOptions": {
-        "open": "Açık",
-        "won": "Kazanıldı",
-        "lost": "Kaybedildi"
-      },
       "assigneeMembers": "Atanan yöneticiler",
       "assigneeTeams": "Atanan ekipler",
       "value": "Değer",

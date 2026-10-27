@@ -1,10 +1,6 @@
 "use client"
 
-import {
-  pipelineActivityGroups,
-  pipelineItemPriorities,
-  pipelineItemStatuses,
-} from "@chatbotx.io/database/partials"
+import { pipelineActivityGroups } from "@chatbotx.io/database/partials"
 import {
   Accordion,
   AccordionContent,
@@ -27,11 +23,11 @@ import {
   workspaceMemberLabel,
 } from "@/features/users/provider/user-hook"
 import { ACTIVITY_GROUP_LABEL_KEYS } from "../../lib/activity-group-keys"
+import { itemNounKeys } from "../../lib/item-noun"
 import {
-  itemNounKeys,
-  priorityKeys,
-  statusFilterKeys,
-} from "../../lib/item-noun"
+  pipelinePriorityOptions,
+  pipelineStatusOptions,
+} from "../../lib/item-options"
 import { useAssigneeOptions } from "../../lib/use-assignee-options"
 import { hiddenFeatureKeys } from "../../lib/visible-features"
 import { CheckboxField, CheckboxGroup } from "../shared/checkbox-field"
@@ -191,10 +187,7 @@ function FilterSheetBody({
           onToggle={(status) =>
             update({ statuses: toggle(draft.statuses, status) })
           }
-          options={pipelineItemStatuses.options.map((status) => ({
-            value: status,
-            label: statusLabels[status] || t(statusFilterKeys[status]),
-          }))}
+          options={pipelineStatusOptions(t, statusLabels)}
           selected={draft.statuses}
         />
       ),
@@ -209,10 +202,7 @@ function FilterSheetBody({
           onToggle={(priority) =>
             update({ priorities: toggle(draft.priorities, priority) })
           }
-          options={pipelineItemPriorities.options.map((priority) => ({
-            value: priority,
-            label: t(priorityKeys[priority]),
-          }))}
+          options={pipelinePriorityOptions(t)}
           selected={draft.priorities}
         />
       ),

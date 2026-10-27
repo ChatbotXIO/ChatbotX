@@ -2933,11 +2933,6 @@
       "stage": "Fase",
       "firstStage": "Prima fase",
       "status": "Stato",
-      "statusOptions": {
-        "open": "Aperto",
-        "won": "Vinto",
-        "lost": "Perso"
-      },
       "assigneeMembers": "Admin assegnati",
       "assigneeTeams": "Team assegnati",
       "value": "Valore",

@@ -25,6 +25,7 @@ import {
   NO_NUL_MESSAGE,
   statsRangeFields,
 } from "./bounds"
+import { pipelineItemFilterRequest } from "./query"
 import {
   itemId,
   pipelineId,
@@ -358,6 +359,25 @@ const commaSeparated = (value: unknown) => {
   return parts.length > 0 ? parts : undefined
 }
 
+/** A query list given comma-separated (or as an array by MCP clients). */
+const commaList = <T extends z.ZodType>(item: T, max: number) =>
+  z.preprocess(commaSeparated, z.array(item).max(max).optional())
+
+const MAX_ASSIGNEE_FILTER_IDS = 100
+
+/** A JSON object in a query string (or the object itself from MCP clients). */
+const jsonObject = (value: unknown) => {
+  if (typeof value !== "string") {
+    return value
+  }
+  try {
+    return JSON.parse(value)
+  } catch {
+    // Left as the string: the object schema then rejects it with a 422.
+    return value
+  }
+}
+
 const MAX_ACTIVITY_ACTORS = 100
 
 const activityActorSchema = z.union([
@@ -365,113 +385,186 @@ const activityActorSchema = z.union([
   zodBigintIdAsString(),
 ])
 
-export const listItemsPublicRequest = pipelineIdRequest
-  .extend({
-    stageId: zodBigintIdAsString()
-      .optional()
-      .describe("Only items in this stage. Get it from `pipelines.get`."),
-    contactId: zodBigintIdAsString()
-      .optional()
-      .describe("Only this contact's items. Get it from `contacts.list`."),
-    status: pipelineItemStatuses
-      .optional()
-      .describe("Only items with this status."),
-    priority: pipelineItemPriorities
-      .optional()
-      .describe("Only items with this priority."),
-    assigneeMemberId: zodBigintIdAsString()
-      .optional()
-      .describe(
-        "Only items assigned to this workspace member. Get ids from `workspaceMembers.list`.",
-      ),
-    assigneeInboxTeamId: zodBigintIdAsString()
-      .optional()
-      .describe(
-        "Only items assigned to this inbox team. Get ids from `inboxTeams.list`.",
-      ),
-    search: z
-      .string()
-      .trim()
-      .max(200)
-      .refine(hasNoNul, NO_NUL_MESSAGE)
-      .optional()
-      .describe(
-        "Matches the title, item number, or the contact's name/email/phone.",
-      ),
-    valueOperator: pipelineValueOperators
-      .optional()
-      .describe(
-        "How to compare the item value: `eq`, `gt`, `lt` and `ne` use `valueAmount` (`ne` also matches items without a value); `between` uses `valueMin`/`valueMax`. Omit it to filter by `valueMin`/`valueMax` alone.",
-      ),
-    valueAmount: z.coerce
-      .number()
-      .optional()
-      .describe("Amount `valueOperator` `eq`/`gt`/`lt`/`ne` compares against."),
-    valueMin: z.coerce
-      .number()
-      .optional()
-      .describe("Only items worth at least this much."),
-    valueMax: z.coerce
-      .number()
-      .optional()
-      .describe("Only items worth at most this much."),
-    dueFrom: boundedDate().optional().describe("Due at or after this time."),
-    dueTo: boundedDate().optional().describe("Due at or before this time."),
-    createdFrom: boundedDate()
-      .optional()
-      .describe("Created at or after this time."),
-    createdTo: boundedDate()
-      .optional()
-      .describe("Created at or before this time."),
-    ...rangeParams("updated", "last updated"),
-    ...rangeParams("lastComment", "whose latest comment was written"),
-    ...rangeParams("statusChanged", "whose status last changed"),
-    ...rangeParams("stageEntered", "that entered their current stage"),
-    ...rangeParams("wonClosed", "now `won` whose closure happened"),
-    ...rangeParams("lostClosed", "now `lost` whose closure happened"),
-    activityGroups: z
-      .preprocess(
-        commaSeparated,
-        z
-          .array(pipelineActivityGroups)
-          .max(pipelineActivityGroups.options.length)
-          .optional(),
-      )
-      .describe(
-        "Comma-separated kinds of change: only items with an activity entry of one of them. `lifecycle` = created/transferred/deleted, `stage`, `status`, `value`, `priority`, `dueDate`, `details` = title/description/custom fields, `assignees`, `comments`, `attachments`. Combined with `activityActor` and `activityFrom`/`activityTo`, one single entry must satisfy all of them. Only activity recorded in this pipeline counts.",
-      ),
-    activityActor: z
-      .preprocess(
-        commaSeparated,
-        z.array(activityActorSchema).max(MAX_ACTIVITY_ACTORS).optional(),
-      )
-      .describe(
-        "Comma-separated actors: only items with an activity entry done by one of them. Each is a workspace user id (the `userId` of `workspaceMembers.list`, not the member id) or `automation` for flows, triggers, API tokens and the system. Same single-entry rule as `activityGroups`.",
-      ),
-    ...rangeParams("activity", "with an activity entry"),
-    fieldId: zodBigintIdAsString()
-      .optional()
-      .describe(
-        "Custom field id to filter on; pair it with `fieldOperator` and its operands (`fieldValue`, `fieldValueTo`). Get ids from `pipelines.get`.",
-      ),
-    fieldOperator: pipelineFieldOperators
-      .optional()
-      .describe(
-        "How custom field `fieldId` is compared. Allowed per field type — text, long text, email, phone: `is`, `isNot`, `hasValue`, `noValue`, `contains`, `notContains`, `startsWith`, `endsWith`; number, date, datetime: `is`, `isNot`, `hasValue`, `noValue`, `gt`, `lt`, `between`; boolean: `is`, `isNot`, `hasValue`, `noValue`. `hasValue`/`noValue` take no operand. `isNot` and `notContains` only match items that have a value. A date compares its stored day as written; a datetime compares its calendar day in `timezone`. An operator the field's type does not offer is rejected with 422.",
-      ),
-    fieldValue: operandText
-      .optional()
-      .describe(
-        "Operand of `fieldOperator`: text for text fields, a number such as `42.5` for number fields, a day `YYYY-MM-DD` for date and datetime fields, `true` or `false` for boolean fields. For `between` it is the lower bound (omit for an open lower bound).",
-      ),
-    fieldValueTo: operandText
-      .optional()
-      .describe(
-        "Upper bound of `fieldOperator` `between` (same format as `fieldValue`, inclusive; omit for an open upper bound).",
-      ),
-    timezone: statsRangeFields.timezone.describe(
-      "IANA timezone (e.g. `Asia/Ho_Chi_Minh`) whose calendar days datetime custom-field conditions compare in (date fields ignore it). Defaults to the workspace timezone.",
+/** Filters shared by `listItems` and `stageTotals`; lists are comma-separated, "any of". */
+const itemFilterQuery = pipelineIdRequest.extend({
+  stageId: commaList(
+    zodBigintIdAsString(),
+    PIPELINE_LIMITS.stagesPerPipeline,
+  ).describe(
+    "Comma-separated stage ids: items in any of them. Get them from `pipelines.get`.",
+  ),
+  contactId: zodBigintIdAsString()
+    .optional()
+    .describe("Only this contact's items. Get it from `contacts.list`."),
+  status: commaList(
+    pipelineItemStatuses,
+    pipelineItemStatuses.options.length,
+  ).describe("Comma-separated statuses (`open`, `won`, `lost`): any of them."),
+  priority: commaList(
+    pipelineItemPriorities,
+    pipelineItemPriorities.options.length,
+  ).describe(
+    "Comma-separated priorities (`low`, `medium`, `high`): any of them.",
+  ),
+  assigneeMemberId: commaList(
+    zodBigintIdAsString(),
+    MAX_ASSIGNEE_FILTER_IDS,
+  ).describe(
+    "Comma-separated workspace member ids: items assigned to any of them. Get ids from `workspaceMembers.list`.",
+  ),
+  assigneeInboxTeamId: commaList(
+    zodBigintIdAsString(),
+    MAX_ASSIGNEE_FILTER_IDS,
+  ).describe(
+    "Comma-separated inbox team ids: items assigned to any of them. Get ids from `inboxTeams.list`.",
+  ),
+  search: z
+    .string()
+    .trim()
+    .max(200)
+    .refine(hasNoNul, NO_NUL_MESSAGE)
+    .optional()
+    .describe(
+      "Matches the title, item number, or the contact's name/email/phone.",
     ),
+  valueOperator: pipelineValueOperators
+    .optional()
+    .describe(
+      "How to compare the item value: `eq`, `gt`, `lt` and `ne` use `valueAmount` (`ne` also matches items without a value); `between` uses `valueMin`/`valueMax`. Omit it to filter by `valueMin`/`valueMax` alone.",
+    ),
+  valueAmount: z.coerce
+    .number()
+    .optional()
+    .describe("Amount `valueOperator` `eq`/`gt`/`lt`/`ne` compares against."),
+  valueMin: z.coerce
+    .number()
+    .optional()
+    .describe("Only items worth at least this much."),
+  valueMax: z.coerce
+    .number()
+    .optional()
+    .describe("Only items worth at most this much."),
+  dueFrom: boundedDate().optional().describe("Due at or after this time."),
+  dueTo: boundedDate().optional().describe("Due at or before this time."),
+  createdFrom: boundedDate()
+    .optional()
+    .describe("Created at or after this time."),
+  createdTo: boundedDate()
+    .optional()
+    .describe("Created at or before this time."),
+  ...rangeParams("updated", "last updated"),
+  ...rangeParams("lastComment", "whose latest comment was written"),
+  ...rangeParams("statusChanged", "whose status last changed"),
+  ...rangeParams("stageEntered", "that entered their current stage"),
+  ...rangeParams("wonClosed", "now `won` whose closure happened"),
+  ...rangeParams("lostClosed", "now `lost` whose closure happened"),
+  activityGroups: z
+    .preprocess(
+      commaSeparated,
+      z
+        .array(pipelineActivityGroups)
+        .max(pipelineActivityGroups.options.length)
+        .optional(),
+    )
+    .describe(
+      "Comma-separated kinds of change: only items with an activity entry of one of them. `lifecycle` = created/transferred/deleted, `stage`, `status`, `value`, `priority`, `dueDate`, `details` = title/description/custom fields, `assignees`, `comments`, `attachments`. Combined with `activityActor` and `activityFrom`/`activityTo`, one single entry must satisfy all of them. Only activity recorded in this pipeline counts.",
+    ),
+  activityActor: z
+    .preprocess(
+      commaSeparated,
+      z.array(activityActorSchema).max(MAX_ACTIVITY_ACTORS).optional(),
+    )
+    .describe(
+      "Comma-separated actors: only items with an activity entry done by one of them. Each is a workspace user id (the `userId` of `workspaceMembers.list`, not the member id) or `automation` for flows, triggers, API tokens and the system. Same single-entry rule as `activityGroups`.",
+    ),
+  ...rangeParams("activity", "with an activity entry"),
+  fieldConditions: z
+    .preprocess(jsonObject, pipelineItemFilterRequest.shape.fieldConditions)
+    .describe(
+      'Several custom-field conditions, all required (AND): a JSON object keyed by field id, e.g. `{"123":{"operator":"gt","value":"5"},"124":{"operator":"is","value":"VIP"}}`. Operators and operands as for `fieldOperator`. Combined with `fieldId`/`fieldOperator`, which adds one more.',
+    ),
+  fieldId: zodBigintIdAsString()
+    .optional()
+    .describe(
+      "Custom field id to filter on; pair it with `fieldOperator` and its operands (`fieldValue`, `fieldValueTo`). Get ids from `pipelines.get`.",
+    ),
+  fieldOperator: pipelineFieldOperators
+    .optional()
+    .describe(
+      "How custom field `fieldId` is compared. Allowed per field type — text, long text, email, phone: `is`, `isNot`, `hasValue`, `noValue`, `contains`, `notContains`, `startsWith`, `endsWith`; number, date, datetime: `is`, `isNot`, `hasValue`, `noValue`, `gt`, `lt`, `between`; boolean: `is`, `isNot`, `hasValue`, `noValue`. `hasValue`/`noValue` take no operand. `isNot` and `notContains` only match items that have a value. A date compares its stored day as written; a datetime compares its calendar day in `timezone`. An operator the field's type does not offer is rejected with 422.",
+    ),
+  fieldValue: operandText
+    .optional()
+    .describe(
+      "Operand of `fieldOperator`: text for text fields, a number such as `42.5` for number fields, a day `YYYY-MM-DD` for date and datetime fields, `true` or `false` for boolean fields. For `between` it is the lower bound (omit for an open lower bound).",
+    ),
+  fieldValueTo: operandText
+    .optional()
+    .describe(
+      "Upper bound of `fieldOperator` `between` (same format as `fieldValue`, inclusive; omit for an open upper bound).",
+    ),
+  timezone: statsRangeFields.timezone.describe(
+    "IANA timezone (e.g. `Asia/Ho_Chi_Minh`) whose calendar days datetime custom-field conditions compare in (date fields ignore it). Defaults to the workspace timezone.",
+  ),
+})
+
+type ItemFilterQuery = z.infer<typeof itemFilterQuery>
+
+/** Rejects a comparison without its operand instead of silently dropping it. */
+function refineItemFilter(input: ItemFilterQuery, context: z.RefinementCtx) {
+  if (
+    isSingleValueOperator(input.valueOperator) &&
+    input.valueAmount === undefined
+  ) {
+    context.addIssue({
+      code: "custom",
+      path: ["valueAmount"],
+      message: `valueOperator ${input.valueOperator} needs valueAmount`,
+    })
+  }
+  if (
+    input.valueOperator === "between" &&
+    input.valueMin === undefined &&
+    input.valueMax === undefined
+  ) {
+    context.addIssue({
+      code: "custom",
+      path: ["valueMin"],
+      message: "valueOperator between needs valueMin, valueMax or both",
+    })
+  }
+  if (input.fieldOperator === undefined) {
+    return
+  }
+  if (input.fieldId === undefined) {
+    context.addIssue({
+      code: "custom",
+      path: ["fieldId"],
+      message: "fieldOperator needs fieldId",
+    })
+  }
+  // Operand format depends on the field's type, which the service checks (422).
+  const hasValue = input.fieldValue !== undefined && input.fieldValue !== ""
+  const hasValueTo =
+    input.fieldValueTo !== undefined && input.fieldValueTo !== ""
+  const lacksOperand =
+    input.fieldOperator === "between"
+      ? !(hasValue || hasValueTo)
+      : !(
+          hasValue ||
+          PIPELINE_FIELD_PRESENCE_OPERATORS.includes(input.fieldOperator)
+        )
+  if (lacksOperand) {
+    context.addIssue({
+      code: "custom",
+      path: ["fieldValue"],
+      message: `fieldOperator ${input.fieldOperator} needs ${input.fieldOperator === "between" ? "fieldValue or fieldValueTo" : "fieldValue"}`,
+    })
+  }
+}
+
+export const listItemsPublicRequest = itemFilterQuery
+  .extend({
     sort: pipelineItemSortKeys
       .default("createdAt")
       .describe("Sort key. Items without a value for it come last."),
@@ -493,58 +586,23 @@ export const listItemsPublicRequest = pipelineIdRequest
         "`nextCursor` of the previous page. Keep sort and filters unchanged.",
       ),
   })
-  .superRefine((input, context) => {
-    // Reject a comparison without its operand instead of silently dropping it.
-    if (
-      isSingleValueOperator(input.valueOperator) &&
-      input.valueAmount === undefined
-    ) {
-      context.addIssue({
-        code: "custom",
-        path: ["valueAmount"],
-        message: `valueOperator ${input.valueOperator} needs valueAmount`,
-      })
-    }
-    if (
-      input.valueOperator === "between" &&
-      input.valueMin === undefined &&
-      input.valueMax === undefined
-    ) {
-      context.addIssue({
-        code: "custom",
-        path: ["valueMin"],
-        message: "valueOperator between needs valueMin, valueMax or both",
-      })
-    }
-    if (input.fieldOperator === undefined) {
-      return
-    }
-    if (input.fieldId === undefined) {
-      context.addIssue({
-        code: "custom",
-        path: ["fieldId"],
-        message: "fieldOperator needs fieldId",
-      })
-    }
-    // Operand format depends on the field's type, which the service checks (422).
-    const hasValue = input.fieldValue !== undefined && input.fieldValue !== ""
-    const hasValueTo =
-      input.fieldValueTo !== undefined && input.fieldValueTo !== ""
-    const lacksOperand =
-      input.fieldOperator === "between"
-        ? !(hasValue || hasValueTo)
-        : !(
-            hasValue ||
-            PIPELINE_FIELD_PRESENCE_OPERATORS.includes(input.fieldOperator)
-          )
-    if (lacksOperand) {
-      context.addIssue({
-        code: "custom",
-        path: ["fieldValue"],
-        message: `fieldOperator ${input.fieldOperator} needs ${input.fieldOperator === "between" ? "fieldValue or fieldValueTo" : "fieldValue"}`,
-      })
-    }
-  })
+  .superRefine(refineItemFilter)
+
+export const stageTotalsPublicRequest =
+  itemFilterQuery.superRefine(refineItemFilter)
+
+export const stageTotalsPublicResponse = z.object({
+  stages: z.array(
+    z.object({
+      stageId: z.string(),
+      name: z.string(),
+      count: z.number().describe("Items in the stage that match the filters."),
+      totalValue: z
+        .number()
+        .describe("Sum of those items' values, in the pipeline currency."),
+    }),
+  ),
+})
 
 export const listCommentsPublicRequest = pipelineItemRequest.extend({
   cursor: z

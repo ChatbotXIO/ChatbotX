@@ -9,6 +9,7 @@ import {
   contactModel,
   inboxTeamModel,
   mediaLibraryFileModel,
+  userModel,
   workspaceMemberModel,
 } from "@chatbotx.io/database/schema"
 
@@ -18,6 +19,20 @@ import {
  * be attached; the service turns a short result into a 404.
  */
 export const pipelineReferenceRepository = {
+  /**
+   * Whether the user still exists, holding a key-share lock until the
+   * transaction ends so the account cannot be deleted while rows that point
+   * at it are written (activity `actorUserId`).
+   */
+  async lockUserIfExists(userId: string, tx: DatabaseClient) {
+    const [row] = await tx
+      .select({ id: userModel.id })
+      .from(userModel)
+      .where(eq(userModel.id, userId))
+      .for("key share")
+    return row !== undefined
+  },
+
   async listWorkspaceMembers(
     input: { workspaceId: string; ids: string[] },
     tx: DatabaseClient = db,

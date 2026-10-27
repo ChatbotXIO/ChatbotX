@@ -423,11 +423,6 @@
       "stage": "Etapă",
       "firstStage": "Prima etapă",
       "status": "Stare",
-      "statusOptions": {
-        "open": "Deschis",
-        "won": "Câștigat",
-        "lost": "Pierdut"
-      },
       "assigneeMembers": "Administratori atribuiți",
       "assigneeTeams": "Echipe atribuite",
       "value": "Valoare",

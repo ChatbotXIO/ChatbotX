@@ -11,6 +11,7 @@ import type {
   PipelineStepOf,
   PipelineStepSchema,
 } from "@chatbotx.io/flow-config"
+import { isTemporalCustomFieldType } from "@chatbotx.io/utils/datetime"
 import { contactCustomFieldValueService } from "../contact-custom-field/value-service"
 import { customFieldService } from "../custom-field/service"
 import { ChatbotXException, validationException } from "../errors"
@@ -21,10 +22,9 @@ import { pipelineItemContentService } from "./item-content.service"
 import type { PipelineActor } from "./types"
 
 /** Flow steps are system context: the workspace owns the pipeline, not a member. */
-const FLOW_SCOPE: PipelineAccessScope = { kind: "workspaceToken" }
+const FLOW_SCOPE: PipelineAccessScope = { kind: "system" }
 const FALLBACK_TITLE = "Untitled"
 const PIPELINE_MISSING_MESSAGE = "The pipeline does not exist in this workspace"
-const DUE_DATE_FIELD_TYPES = new Set(["date", "datetime"])
 
 type PipelineFlowActionStatus = "success" | "error" | "skip"
 
@@ -163,7 +163,7 @@ async function resolveDueDate(
   const customField = await customFieldService.findBy({
     where: { workspaceId, id: dueDate.customFieldId },
   })
-  if (!(customField && DUE_DATE_FIELD_TYPES.has(customField.type))) {
+  if (!(customField && isTemporalCustomFieldType(customField.type))) {
     if (onMissingField === "noDueDate") {
       logger.warn(
         { workspaceId, customFieldId: dueDate.customFieldId },

@@ -1,9 +1,6 @@
 "use client"
 
-import {
-  pipelineItemPriorities,
-  pipelineItemStatuses,
-} from "@chatbotx.io/database/partials"
+import { pipelineItemStatuses } from "@chatbotx.io/database/partials"
 import { Input } from "@chatbotx.io/ui/components/ui/input"
 import type { CustomFieldType } from "@chatbotx.io/utils/custom-field"
 import { FlagIcon } from "lucide-react"
@@ -13,6 +10,7 @@ import { CustomFieldDraftInput } from "@/features/custom-fields/components/custo
 import { storedDateToDay } from "@/features/custom-fields/lib/field-date"
 import { formatItemValue } from "../../lib/format-item-value"
 import { priorityFlagClass, priorityKeys } from "../../lib/item-noun"
+import { pipelinePriorityOptions } from "../../lib/item-options"
 import type { ItemPatch } from "../../lib/item-patch"
 import type { AssigneeOption } from "../../lib/use-assignee-options"
 import { MAX_FIELD_VALUE_LENGTH } from "../../schema/bounds"
@@ -218,10 +216,9 @@ export function ItemFields({
               <OptionList
                 label={t("item.priority")}
                 onChange={setDraft}
-                options={pipelineItemPriorities.options.map((priority) => ({
-                  value: priority,
-                  label: t(priorityKeys[priority]),
-                  leading: <PriorityFlag priority={priority} />,
+                options={pipelinePriorityOptions(t).map((option) => ({
+                  ...option,
+                  leading: <PriorityFlag priority={option.value} />,
                 }))}
                 value={draft}
               />

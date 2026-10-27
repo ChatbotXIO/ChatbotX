@@ -144,6 +144,14 @@ export class PipelineStructureService extends PipelineBaseService {
       ) {
         throw validationException("referenceName", DUPLICATE_FIELD_REFERENCE)
       }
+      // An item write carries at most this many field values, so more fields
+      // (some required) would make items impossible to create.
+      if (existing.length >= PIPELINE_LIMITS.fieldsPerPipeline) {
+        throw validationException(
+          "name",
+          `A pipeline can have at most ${PIPELINE_LIMITS.fieldsPerPipeline} custom fields`,
+        )
+      }
       return await pipelineRepository.insertField(
         {
           workspaceId,

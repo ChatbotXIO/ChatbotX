@@ -71,7 +71,7 @@ import { getChatHistory } from "./helpers/message"
 import { getQueuedMessages } from "./helpers/queued-messages"
 import { toPublicStorageUrl } from "./helpers/storage-url"
 import { logger } from "./logger"
-import type { ContactVariableContext } from "./schema"
+import type { ContactVariableContext, ReplaceVariableProps } from "./schema"
 
 const LOCALE_SEPARATOR_RE = /[-_]/
 // Exported so javascript-interpolation.ts scans the same placeholder syntax as
@@ -344,26 +344,6 @@ const getAppointment = async (
   return latest ?? null
 }
 
-/** One lookup per variables context, however many tokens read the id. */
-const lastPipelineItemIds = new WeakMap<
-  ContactVariableContext,
-  Promise<string | null>
->()
-
-const getLastPipelineItemId = (
-  context: ContactVariableContext,
-): Promise<string | null> => {
-  let loading = lastPipelineItemIds.get(context)
-  if (!loading) {
-    loading = loadLastPipelineItemId({
-      workspaceId: context.contact.workspaceId,
-      contactId: context.contact.id,
-    })
-    lastPipelineItemIds.set(context, loading)
-  }
-  return loading
-}
-
 const getLastQuestionnairePoints = async (
   context: ContactVariableContext,
 ): Promise<string | null> => {
@@ -405,7 +385,7 @@ const getLatestLeadValue = async (
 }
 
 export const getSystemFieldValue = async (
-  context: ContactVariableContext,
+  context: ContactVariableContext & Pick<ReplaceVariableProps, "pipelineItems">,
   key: SystemFieldType,
 ): Promise<string | null> => {
   const { contact, contactInbox, workspace } = context
@@ -457,7 +437,12 @@ export const getSystemFieldValue = async (
     case systemFieldTypes.enum.last_seen:
       return formatDateTime(contactInbox?.contactLastReadAt, contactTimezone)
     case systemFieldTypes.enum.last_opportunity_id:
-      return await getLastPipelineItemId(context)
+      // The context's loader shares one query per render; without one, read it.
+      return await (context.pipelineItems?.lastItemId() ??
+        loadLastPipelineItemId({
+          workspaceId: contact.workspaceId,
+          contactId: contact.id,
+        }))
     case systemFieldTypes.enum.last_input:
       return await getContactLastInput(contact.id)
     case systemFieldTypes.enum.last_input_type:
