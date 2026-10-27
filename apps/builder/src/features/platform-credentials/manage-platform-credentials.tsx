@@ -10,6 +10,7 @@ import type {
 import { isCloud } from "@/env"
 import { getBrokerOrigin } from "@/lib/oauth-broker"
 import {
+  buildCredentialWebhookUrl,
   PLACEHOLDER_DOMAIN_ORIGIN,
   resolveTenantCustomDomainOrigin,
 } from "@/lib/provider-origin"
@@ -157,13 +158,20 @@ export async function ManagePlatformCredentials({
   const tenantOrigin = customDomainOrigin ?? PLACEHOLDER_DOMAIN_ORIGIN
   const callbackOriginFor = (isInherited: boolean) =>
     isInherited || !hasActiveTenant ? brokerOrigin : tenantOrigin
+  const webhookOriginFor = (isInherited: boolean) =>
+    isInherited || !hasActiveTenant
+      ? brokerOrigin
+      : (customDomainOrigin ?? brokerOrigin)
   const webhookUrlFor = <T extends CredentialType>(
     type: T,
     credential: ResolvedCredential<T>,
   ) =>
-    credential.credentialId && !hasActiveTenant
-      ? `${brokerOrigin}/integrations/${type}/webhook/c/${credential.credentialId}`
-      : `${callbackOriginFor(credential.isInherited)}/integrations/${type}/webhook`
+    buildCredentialWebhookUrl({
+      credentialId: credential.credentialId,
+      hasActiveTenant,
+      origin: webhookOriginFor(credential.isInherited),
+      type,
+    })
 
   return (
     <CredentialScopeProvider scope={scope}>

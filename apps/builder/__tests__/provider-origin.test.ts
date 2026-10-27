@@ -157,6 +157,41 @@ describe("buildProviderCallbackUrl", () => {
   })
 })
 
+describe("buildCredentialWebhookUrl", () => {
+  test("uses a credential-scoped broker URL when the owner has no active tenant", async () => {
+    const { buildCredentialWebhookUrl } = await loadModule()
+
+    expect(
+      buildCredentialWebhookUrl({
+        credentialId: "credential-1",
+        hasActiveTenant: false,
+        origin: BROKER_ORIGIN,
+        type: "tiktok",
+      }),
+    ).toBe(`${BROKER_ORIGIN}/integrations/tiktok/webhook/c/credential-1`)
+  })
+
+  test("uses the plain webhook URL for an active tenant or platform credential", async () => {
+    const { buildCredentialWebhookUrl } = await loadModule()
+
+    expect(
+      buildCredentialWebhookUrl({
+        credentialId: "credential-1",
+        hasActiveTenant: true,
+        origin: "https://chat.acme.com",
+        type: "tiktok",
+      }),
+    ).toBe("https://chat.acme.com/integrations/tiktok/webhook")
+    expect(
+      buildCredentialWebhookUrl({
+        hasActiveTenant: false,
+        origin: BROKER_ORIGIN,
+        type: "tiktok",
+      }),
+    ).toBe(`${BROKER_ORIGIN}/integrations/tiktok/webhook`)
+  })
+})
+
 describe("PLACEHOLDER_DOMAIN_ORIGIN", () => {
   test("is a literal, non-resolvable placeholder for display only", async () => {
     const { PLACEHOLDER_DOMAIN_ORIGIN } = await loadModule()

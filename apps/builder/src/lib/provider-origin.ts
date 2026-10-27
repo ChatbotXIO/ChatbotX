@@ -1,5 +1,6 @@
 import "server-only"
 import { customDomainService, tenantService } from "@chatbotx.io/business"
+import type { CredentialType } from "@chatbotx.io/database/partials"
 import { cache } from "react"
 import { isCloud } from "@/env"
 import { getBrokerOrigin } from "@/lib/oauth-broker"
@@ -46,6 +47,25 @@ export async function resolveTenantProviderOrigin(
   ownerId: string,
 ): Promise<string> {
   return (await resolveTenantCustomDomainOrigin(ownerId)) ?? getBrokerOrigin()
+}
+
+/**
+ * Build the provider webhook URL for a credential. Owners without an active
+ * tenant use the broker's credential-scoped route so inbound signatures are
+ * validated with their credential rather than the platform default.
+ */
+export function buildCredentialWebhookUrl(props: {
+  credentialId?: string
+  hasActiveTenant: boolean
+  origin: string
+  type: CredentialType
+}): string {
+  const { credentialId, hasActiveTenant, origin, type } = props
+  const path =
+    credentialId && !hasActiveTenant
+      ? `/integrations/${type}/webhook/c/${credentialId}`
+      : `/integrations/${type}/webhook`
+  return new URL(path, origin).toString()
 }
 
 /** Display-only placeholder shown when a tenant-owned credential has no active domain yet. */

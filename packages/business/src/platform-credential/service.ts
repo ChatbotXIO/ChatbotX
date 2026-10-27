@@ -136,7 +136,7 @@ class PlatformCredentialService extends BaseService {
     isVerified?: boolean
     verifiedAt?: Date | null
     tx?: DatabaseClient
-  }): Promise<void> {
+  }): Promise<{ id: string }> {
     const {
       userId,
       type,
@@ -151,7 +151,7 @@ class PlatformCredentialService extends BaseService {
     const aad = `user:${userId}:${type}:${livemode}`
     const value = await encryptUtils.encryptObject(config, aad)
 
-    await tx
+    const [credential] = await tx
       .insert(platformCredentialModel)
       .values({
         userId,
@@ -178,8 +178,14 @@ class PlatformCredentialService extends BaseService {
           verifiedAt,
         },
       })
+      .returning({ id: platformCredentialModel.id })
+
+    if (!credential) {
+      throw new Error("Failed to upsert platform credential")
+    }
 
     await this.invalidateCacheTags(`cred:u:${userId}`)
+    return credential
   }
 
   async removeForUser(props: {
@@ -315,13 +321,13 @@ class PlatformCredentialService extends BaseService {
     config: CredentialByType[T]
     livemode?: boolean
     tx?: DatabaseClient
-  }): Promise<void> {
+  }): Promise<{ id: string }> {
     const { type, config, livemode = false, tx = db } = props
     const publicConfig = this._publicConfig(type, config)
     const aad = `platform:${type}:${livemode}`
     const value = await encryptUtils.encryptObject(config, aad)
 
-    await tx
+    const [credential] = await tx
       .insert(platformCredentialModel)
       .values({ type, publicConfig, value, livemode })
       .onConflictDoUpdate({
@@ -332,8 +338,14 @@ class PlatformCredentialService extends BaseService {
         ],
         set: { publicConfig, value },
       })
+      .returning({ id: platformCredentialModel.id })
+
+    if (!credential) {
+      throw new Error("Failed to upsert platform credential")
+    }
 
     await this.invalidateCacheTags(`cred:p:${type}`)
+    return credential
   }
 
   async removePlatform(props: {
@@ -388,7 +400,7 @@ class PlatformCredentialService extends BaseService {
     config: CredentialByType[T]
     livemode?: boolean
     tx?: DatabaseClient
-  }): Promise<void> {
+  }): Promise<{ id: string }> {
     if (props.userId !== undefined) {
       return this.upsertForUser({ ...props, userId: props.userId })
     }

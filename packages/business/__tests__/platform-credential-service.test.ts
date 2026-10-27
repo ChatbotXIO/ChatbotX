@@ -17,7 +17,13 @@ vi.mock("@chatbotx.io/database/client", () => ({
 }))
 vi.mock("@chatbotx.io/database/partials", () => ({
   credentialEncryptedSchema: { parse: vi.fn((value) => value) },
-  credentialPublicSchemas: {},
+  credentialPublicSchemas: {
+    messenger: {
+      parse: vi.fn((config: { clientId: string }) => ({
+        clientId: config.clientId,
+      })),
+    },
+  },
   credentialSchemas: {
     threads: {},
   },
@@ -480,6 +486,25 @@ describe("strict credential lookups", () => {
       }),
     ).rejects.toBe(failure)
     expect(platform).not.toHaveBeenCalled()
+  })
+})
+
+describe("credential upserts", () => {
+  test("returns the user credential ID from the database upsert", async () => {
+    const returning = vi.fn().mockResolvedValue([{ id: "credential-1" }])
+    const onConflictDoUpdate = vi.fn(() => ({ returning }))
+    const values = vi.fn(() => ({ onConflictDoUpdate }))
+    Object.assign(db, { insert: vi.fn(() => ({ values })) })
+    vi.mocked(encryptUtils.encryptObject).mockResolvedValue("encrypted-value")
+
+    await expect(
+      platformCredentialService.upsert({
+        userId: "user-1",
+        type: "messenger",
+        config: { clientId: "client-1", clientSecret: "secret-1" },
+      }),
+    ).resolves.toEqual({ id: "credential-1" })
+    expect(returning).toHaveBeenCalledWith({ id: "id" })
   })
 })
 

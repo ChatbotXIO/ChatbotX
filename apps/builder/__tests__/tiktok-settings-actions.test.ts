@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 const BROKER_ORIGIN = "https://broker.test"
 
 const {
+  findDecryptedForUserSpy,
   removeSpy,
   resolveSpy,
   subscribeSpy,
@@ -11,6 +12,7 @@ const {
   mockFindActiveByTenantId,
   mockFindByOwner,
 } = vi.hoisted(() => ({
+  findDecryptedForUserSpy: vi.fn(),
   removeSpy: vi.fn(),
   resolveSpy: vi.fn(),
   subscribeSpy: vi.fn().mockResolvedValue({ comments: false }),
@@ -26,7 +28,11 @@ vi.mock("@/lib/safe-action", () => {
   return { authActionClient: chain }
 })
 vi.mock("@chatbotx.io/business", () => ({
-  platformCredentialService: { remove: removeSpy, upsert: upsertSpy },
+  platformCredentialService: {
+    findDecryptedForUser: findDecryptedForUserSpy,
+    remove: removeSpy,
+    upsert: upsertSpy,
+  },
   customDomainService: { findActiveByTenantId: mockFindActiveByTenantId },
   tenantService: { findByOwner: mockFindByOwner },
 }))
@@ -59,6 +65,9 @@ describe("TikTok credential actions", () => {
   beforeEach(() => {
     vi.clearAllMocks()
     resolveSpy.mockReturnValue("user-1")
+    findDecryptedForUserSpy.mockResolvedValue(undefined)
+    upsertSpy.mockResolvedValue({ id: "credential-1" })
+    subscribeSpy.mockResolvedValue({ comments: false })
     mockFindByOwner.mockResolvedValue(undefined)
     mockFindActiveByTenantId.mockResolvedValue(undefined)
   })
@@ -118,17 +127,25 @@ describe("TikTok credential actions", () => {
     ).toBe(false)
   })
 
-  test("subscribes the webhook on the broker origin for user scope with no active custom domain", async () => {
+  test("saves an entitled user's credential before subscribing at its broker-scoped webhook URL", async () => {
     await call(updateTiktokSettingAction)({
       ctx: { user: { id: "user-1" } },
       bindArgsParsedInputs: ["user"],
       parsedInput: { clientId: "id", clientSecret: "secret", features },
     })
 
+    expect(upsertSpy).toHaveBeenCalledWith({
+      userId: "user-1",
+      type: "tiktok",
+      config: { clientId: "id", clientSecret: "secret", features },
+    })
     expect(subscribeSpy).toHaveBeenCalledWith(
       { clientId: "id", clientSecret: "secret" },
-      `${BROKER_ORIGIN}/integrations/tiktok/webhook`,
+      `${BROKER_ORIGIN}/integrations/tiktok/webhook/c/credential-1`,
       expect.objectContaining({ features }),
+    )
+    expect(upsertSpy.mock.invocationCallOrder[0]).toBeLessThan(
+      subscribeSpy.mock.invocationCallOrder[0],
     )
   })
 
@@ -164,6 +181,45 @@ describe("TikTok credential actions", () => {
       expect.objectContaining({ features }),
     )
     expect(mockFindByOwner).not.toHaveBeenCalled()
+  })
+
+  test("removes a newly saved credential when its broker-scoped subscription fails", async () => {
+    subscribeSpy.mockRejectedValueOnce(new Error("subscription failed"))
+
+    await expect(
+      call(updateTiktokSettingAction)({
+        ctx: { user: { id: "user-1" } },
+        bindArgsParsedInputs: ["user"],
+        parsedInput: { clientId: "id", clientSecret: "secret" },
+      }),
+    ).rejects.toThrow("subscription failed")
+
+    expect(removeSpy).toHaveBeenCalledWith({
+      userId: "user-1",
+      type: "tiktok",
+    })
+  })
+
+  test("restores an existing credential when its broker-scoped subscription fails", async () => {
+    findDecryptedForUserSpy.mockResolvedValue({
+      config: { clientId: "old-id", clientSecret: "old-secret" },
+    })
+    subscribeSpy.mockRejectedValueOnce(new Error("subscription failed"))
+
+    await expect(
+      call(updateTiktokSettingAction)({
+        ctx: { user: { id: "user-1" } },
+        bindArgsParsedInputs: ["user"],
+        parsedInput: { clientId: "id", clientSecret: "secret" },
+      }),
+    ).rejects.toThrow("subscription failed")
+
+    expect(upsertSpy).toHaveBeenLastCalledWith({
+      userId: "user-1",
+      type: "tiktok",
+      config: { clientId: "old-id", clientSecret: "old-secret" },
+    })
+    expect(removeSpy).not.toHaveBeenCalled()
   })
 
   test.each(["clientId", "clientSecret"])("rejects empty %s", (field) => {
