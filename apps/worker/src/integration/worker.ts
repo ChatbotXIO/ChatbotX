@@ -33,6 +33,7 @@ import { deferOnLockContention } from "../lib/lock-contention-deferral"
 import { logger } from "../lib/logger"
 import { resolveWorkspaceId } from "../lib/resolve-workspace-id"
 import { runJobWithAuditContext } from "../lib/run-job-with-audit-context"
+import { onShutdown, runWorker } from "../lib/shutdown"
 import { integrationService } from "../services/integrations"
 import { mintRandomFlowExecutionKey } from "./flow-execution-key"
 import { handleAdsAutomaticEvent } from "./handlers/ads-automatic-event"
@@ -170,7 +171,7 @@ async function startIntegrationWorker() {
     await ensureBootstrapped()
   } catch (err) {
     logger.error({ err }, "Failed to bootstrap integration worker")
-    process.exit(1)
+    throw err
   }
 
   const processIntegrationJob = async (job: Job<IntegrationJobData>) => {
@@ -722,12 +723,7 @@ async function startIntegrationWorker() {
     }
   })
 
-  let isShuttingDown = false
-  async function shutdown() {
-    if (isShuttingDown) {
-      return
-    }
-    isShuttingDown = true
+  onShutdown("integration", async () => {
     try {
       await worker.close()
       await Promise.all([
@@ -737,20 +733,10 @@ async function startIntegrationWorker() {
         closeIntegrationQueueEvents(),
         closeHeavyQueueEvents(),
       ])
-      // After every close(): drains events published by jobs that finished
-      // during the drain, whose coalesce timers would never fire past exit.
+    } finally {
       await flushAllPendingWorkspaceRealtimeEvents()
-      process.exit(0)
-    } catch (err) {
-      logger.error(err, "[IntegrationWorker] Error during shutdown")
-      process.exit(1)
     }
-  }
-  process.once("SIGINT", shutdown)
-  process.once("SIGTERM", shutdown)
+  })
 }
 
-startIntegrationWorker().catch((err) => {
-  logger.error({ err }, "Failed to start integration worker")
-  process.exit(1)
-})
+runWorker("integration", startIntegrationWorker)

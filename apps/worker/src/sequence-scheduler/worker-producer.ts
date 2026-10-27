@@ -8,6 +8,7 @@ import {
 } from "@chatbotx.io/worker-config"
 import { ensureBootstrapped } from "../lib/bootstrap"
 import { logger } from "../lib/logger"
+import { onShutdown, runWorker } from "../lib/shutdown"
 
 import { getAssignedBuckets } from "./buckets"
 
@@ -315,8 +316,6 @@ export class SchedulerWorker {
 const scheduler = new SchedulerWorker()
 const shouldAutoStart = process.env.NODE_ENV !== "test" && !process.env.VITEST
 
-let isShuttingDown = false
-
 async function startSchedulerWorker() {
   logger.info("Starting scheduler worker")
 
@@ -343,41 +342,6 @@ async function stopSchedulerWorker() {
 }
 
 if (shouldAutoStart) {
-  startSchedulerWorker().catch((error) => {
-    logger.error(error, "Error starting scheduler worker")
-    process.exitCode = 1
-  })
-}
-
-const handleShutdownSignal = async (signal: "SIGINT" | "SIGTERM") => {
-  if (isShuttingDown) {
-    return
-  }
-  isShuttingDown = true
-
-  logger.info({ signal }, "Shutdown signal received")
-
-  try {
-    await stopSchedulerWorker()
-    process.exit(0)
-  } catch (error) {
-    logger.error(error, "Error during scheduler worker shutdown")
-    process.exit(1)
-  }
-}
-
-if (shouldAutoStart) {
-  process.on("SIGINT", () => {
-    handleShutdownSignal("SIGINT").catch((error) => {
-      logger.error(error, "Unhandled SIGINT shutdown error")
-      process.exit(1)
-    })
-  })
-
-  process.on("SIGTERM", () => {
-    handleShutdownSignal("SIGTERM").catch((error) => {
-      logger.error(error, "Unhandled SIGTERM shutdown error")
-      process.exit(1)
-    })
-  })
+  runWorker("sequence-producer", startSchedulerWorker)
+  onShutdown("sequence-producer", stopSchedulerWorker)
 }

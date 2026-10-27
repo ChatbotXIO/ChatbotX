@@ -8,7 +8,17 @@ description: >-
 
 ## Architecture
 
-Workers run as separate Node processes in `apps/worker/`. They consume jobs from **BullMQ** queues backed by Redis.
+Workers consume BullMQ jobs in `apps/worker/`. The image defaults to
+`worker standalone`, which starts core consumers, schedules, and sequence
+workers in one Node process to load the application graph once. `worker core`
+starts only core consumers for local development; `worker all` retains one
+process per entry and bounds each child with `WORKER_MAX_OLD_SPACE_MB`
+(default `256`). Use `worker <name>` to isolate a workload when needed.
+
+Every entry registers its closer with `src/lib/shutdown.ts`; never install a
+per-entry signal handler or call `process.exit()` from an entry. The shared
+coordinator drains all registered workers on `SIGINT`/`SIGTERM`, with
+`WORKER_SHUTDOWN_TIMEOUT_MS` bounding the drain.
 
 **Shared config** lives in `packages/worker-config/` (`@chatbotx.io/worker-config`).
 

@@ -12,6 +12,7 @@ import { isBlockedWorkspace } from "../lib/is-blocked-workspace"
 import { logger } from "../lib/logger"
 import { resolveWorkspaceId } from "../lib/resolve-workspace-id"
 import { runJobWithAuditContext } from "../lib/run-job-with-audit-context"
+import { onShutdown, runWorker } from "../lib/shutdown"
 import { handleBulkTagContacts } from "./handlers/bulk-tag-contacts"
 import { loopableExportContacts } from "./handlers/export-contacts"
 import { exportCoupons } from "./handlers/export-coupons"
@@ -67,7 +68,7 @@ async function startDefaultWorker() {
     logger.info("Default worker bootstrapped successfully")
   } catch (err) {
     logger.error(err, "Failed to bootstrap default worker")
-    process.exit(1)
+    throw err
   }
 
   const worker = new Worker(
@@ -266,30 +267,13 @@ async function startDefaultWorker() {
     logger.error(err, `Job ${job.id} has failed`)
   })
 
-  let isShuttingDown = false
-  async function shutdown() {
-    if (isShuttingDown) {
-      return
-    }
-    isShuttingDown = true
-    let shutdownFailed = false
+  onShutdown("default", async () => {
     try {
       await worker.close()
-    } catch (err) {
-      shutdownFailed = true
-      logger.error(err, "[DefaultWorker] Error closing worker during shutdown")
     } finally {
-      try {
-        await flushAllPendingWorkspaceRealtimeEvents()
-      } catch (err) {
-        shutdownFailed = true
-        logger.error(err, "[DefaultWorker] Error flushing realtime events")
-      }
+      await flushAllPendingWorkspaceRealtimeEvents()
     }
-    process.exit(shutdownFailed ? 1 : 0)
-  }
-  process.once("SIGINT", shutdown)
-  process.once("SIGTERM", shutdown)
+  })
 }
 
-startDefaultWorker()
+runWorker("default", startDefaultWorker)

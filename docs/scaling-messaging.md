@@ -23,6 +23,21 @@ the hot/bulk queue-group split described below.
 Every URL is optional and falls back to `REDIS_URL`, so a fresh clone with no
 role-specific env vars set runs today's single-instance topology unchanged.
 
+## Worker process modes
+
+The worker image defaults to `worker standalone`, which co-locates core queue
+consumers, the schedule worker, and sequence workers in one Node process. This
+loads the shared application graph once and is the appropriate topology for a
+memory-constrained single-node deployment.
+
+Use `worker core` while developing to omit schedules and sequence processing.
+Use `worker <name>` to isolate a workload when CPU, event-loop latency, or
+database-pool contention requires it; `worker heavy` is the usual candidate.
+`worker all` remains available for the legacy one-process-per-worker topology.
+It applies `WORKER_MAX_OLD_SPACE_MB` (default `256`) to each child process; it
+does not cap `standalone` or individually selected workers.
+
+
 **Leaderboard rankings live on the cache role.** `lb:{id}:rank` sorted sets
 (~100 bytes per participant, measured on Redis 8; only for active/paused
 leaderboards) use `REDIS_CACHE_URL`. With no `REDIS_CACHE_URL` they share the

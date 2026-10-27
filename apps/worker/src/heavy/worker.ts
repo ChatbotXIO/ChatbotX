@@ -31,6 +31,7 @@ import { logger } from "../lib/logger"
 import { resolveWorkspaceId } from "../lib/resolve-workspace-id"
 import { runJobWithAuditContext } from "../lib/run-job-with-audit-context"
 import { AIFileProcessingError } from "./handlers/ai-file-processing-error"
+import { onShutdown, runWorker } from "../lib/shutdown"
 import { analyzeImage } from "./handlers/analyze-image"
 import { editImageOutput } from "./handlers/edit-image"
 import {
@@ -202,7 +203,7 @@ async function startHeavyWorker() {
       { err: normalizeError(err) },
       "Failed to bootstrap Heavy worker",
     )
-    process.exit(1)
+    throw err
   }
 
   const worker = new Worker(
@@ -454,29 +455,13 @@ async function startHeavyWorker() {
     logger.warn({ jobId }, "Heavy job stalled")
   })
 
-  let isShuttingDown = false
-  async function shutdown() {
-    if (isShuttingDown) {
-      return
-    }
-    isShuttingDown = true
+  onShutdown("heavy", async () => {
     try {
       await worker.close()
+    } finally {
       await flushAllPendingWorkspaceRealtimeEvents()
-      process.exit(0)
-    } catch (err) {
-      logger.error(
-        { err: normalizeError(err) },
-        "[HeavyWorker] Error during shutdown",
-      )
-      process.exit(1)
     }
-  }
-  process.once("SIGINT", shutdown)
-  process.once("SIGTERM", shutdown)
+  })
 }
 
-startHeavyWorker().catch((err) => {
-  logger.error({ err: normalizeError(err) }, "Failed to start Heavy worker")
-  process.exit(1)
-})
+runWorker("heavy", startHeavyWorker)

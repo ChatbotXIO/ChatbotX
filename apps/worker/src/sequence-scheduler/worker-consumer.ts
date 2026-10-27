@@ -14,6 +14,7 @@ import { ensureBootstrapped } from "../lib/bootstrap"
 import { isBlockedWorkspace } from "../lib/is-blocked-workspace"
 import { logger } from "../lib/logger"
 import { runJobWithAuditContext } from "../lib/run-job-with-audit-context"
+import { onShutdown, runWorker } from "../lib/shutdown"
 import { revertDispatchToPending } from "./revert-dispatch"
 import { MAX_PROCESS } from "./services/constants"
 import { DispatchProcessorService } from "./services/dispatch-processor.service"
@@ -287,8 +288,6 @@ class DispatchConsumer {
 
 const consumer = new DispatchConsumer()
 
-let isShuttingDown = false
-
 async function startDispatchConsumer() {
   logger.info("Starting dispatch consumer")
 
@@ -313,38 +312,5 @@ async function stopDispatchConsumer() {
   }
 }
 
-startDispatchConsumer().catch((error) => {
-  logger.error(error, "Error starting dispatch consumer")
-  process.exitCode = 1
-})
-
-const handleShutdownSignal = async (signal: "SIGINT" | "SIGTERM") => {
-  if (isShuttingDown) {
-    return
-  }
-  isShuttingDown = true
-
-  logger.info({ signal }, "Shutdown signal received")
-
-  try {
-    await stopDispatchConsumer()
-    process.exit(0)
-  } catch (error) {
-    logger.error(error, "Error during dispatch consumer shutdown")
-    process.exit(1)
-  }
-}
-
-process.on("SIGINT", () => {
-  handleShutdownSignal("SIGINT").catch((error) => {
-    logger.error(error, "Unhandled SIGINT shutdown error")
-    process.exit(1)
-  })
-})
-
-process.on("SIGTERM", () => {
-  handleShutdownSignal("SIGTERM").catch((error) => {
-    logger.error(error, "Unhandled SIGTERM shutdown error")
-    process.exit(1)
-  })
-})
+runWorker("sequence-consumer", startDispatchConsumer)
+onShutdown("sequence-consumer", stopDispatchConsumer)

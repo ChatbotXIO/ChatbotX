@@ -12,6 +12,7 @@ import { type Job, Worker } from "bullmq"
 import { env } from "../env"
 import { ensureBootstrapped } from "../lib/bootstrap"
 import { logger } from "../lib/logger"
+import { onShutdown, runWorker } from "../lib/shutdown"
 import { notifyNewOrder } from "./handlers/notify-new-order"
 import { sendPushForNotificationJob } from "./handlers/send-push"
 
@@ -21,7 +22,7 @@ async function startNotificationWorker() {
     logger.info("Notification worker bootstrapped successfully")
   } catch (err) {
     logger.error(err, "Failed to bootstrap notification worker")
-    process.exit(1)
+    throw err
   }
 
   const worker = new Worker(
@@ -48,23 +49,13 @@ async function startNotificationWorker() {
     }
   })
 
-  let isShuttingDown = false
-  async function shutdown() {
-    if (isShuttingDown) {
-      return
-    }
-    isShuttingDown = true
+  onShutdown("notification", async () => {
     try {
       await worker.close()
+    } finally {
       await flushAllPendingWorkspaceRealtimeEvents()
-      process.exit(0)
-    } catch (err) {
-      logger.error(err, "[NotificationWorker] Error during shutdown")
-      process.exit(1)
     }
-  }
-  process.once("SIGINT", shutdown)
-  process.once("SIGTERM", shutdown)
+  })
 }
 
-startNotificationWorker()
+runWorker("notification", startNotificationWorker)

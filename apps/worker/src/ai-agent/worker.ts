@@ -33,6 +33,7 @@ import { isFinalAttempt } from "../lib/job-attempts"
 import { logger } from "../lib/logger"
 import { resolveWorkspaceId } from "../lib/resolve-workspace-id"
 import { runJobWithAuditContext } from "../lib/run-job-with-audit-context"
+import { onShutdown, runWorker } from "../lib/shutdown"
 import { processConversationSource } from "./handlers/process-conversation-source"
 import { processConversationSourceEmbedding } from "./handlers/process-conversation-source-embedding"
 import { processPendingEmbedding } from "./handlers/process-pending-embeddings"
@@ -70,7 +71,7 @@ async function startAIAgentWorker() {
       { err: normalizeError(err) },
       "Failed to bootstrap AI Agent worker",
     )
-    process.exit(1)
+    throw err
   }
 
   const worker = new Worker(
@@ -205,27 +206,14 @@ async function startAIAgentWorker() {
     })
   })
 
-  let isShuttingDown = false
-  async function shutdown() {
-    if (isShuttingDown) {
-      return
-    }
-    isShuttingDown = true
+  onShutdown("ai-agent", async () => {
     try {
       await worker.close()
+    } finally {
       await flushAllPendingWorkspaceRealtimeEvents()
       await Promise.all([closeChatQueueEvents(), closeHeavyQueueEvents()])
-      process.exit(0)
-    } catch (err) {
-      logger.error(
-        { err: normalizeError(err) },
-        "[AIAgentWorker] Error during shutdown",
-      )
-      process.exit(1)
     }
-  }
-  process.once("SIGINT", shutdown)
-  process.once("SIGTERM", shutdown)
+  })
 }
 
-startAIAgentWorker()
+runWorker("ai-agent", startAIAgentWorker)

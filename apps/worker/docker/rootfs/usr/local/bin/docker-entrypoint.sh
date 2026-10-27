@@ -5,9 +5,14 @@ set -eu
 WORKER_DIST_DIR="${WORKER_DIST_DIR:-/app/apps/worker/dist}"
 NODE_BIN="${NODE_BIN:-/usr/local/bin/node}"
 
-# --enable-source-maps resolves production stack traces back to original TypeScript
-# source. Exported so every worker launched below (loop and single-worker exec) inherits it.
+# --enable-source-maps resolves production stack traces back to original
+# TypeScript source for every worker mode.
 export NODE_OPTIONS="${NODE_OPTIONS:-} --enable-source-maps"
+
+# Single-process bundles (see src/core.ts, src/standalone.ts). They live at the
+# dist root, outside the `<dir>/worker*.mjs` glob, so `all` never starts them.
+CORE_SCRIPT="$WORKER_DIST_DIR/core.mjs"
+STANDALONE_SCRIPT="$WORKER_DIST_DIR/standalone.mjs"
 
 # Map a built bundle (dir + file basename without .mjs) to its roster name.
 # Standard:  <dir>/worker.mjs            -> <dir>
@@ -49,7 +54,10 @@ all_worker_names() {
 
 print_usage() {
     names="$(all_worker_names | tr '\n' '|' | sed 's/|$//')"
-    echo "Usage: ${0} worker [all${names:+|}${names}]" >&2
+    echo "Usage: ${0} worker [standalone|core|all${names:+|}${names}]" >&2
+    echo "       standalone: core queues, schedule, and sequence workers (default)" >&2
+    echo "       core:       core queues only (no schedule/sequence)" >&2
+    echo "       all:        every worker, one process each" >&2
     echo "       ${0} {bash|sh}" >&2
 }
 
@@ -70,7 +78,11 @@ run_all_workers() {
   if [ -z "$WORKER_TABLE" ]; then
     echo "No worker bundles found under $WORKER_DIST_DIR" >&2
     exit 4
+
   fi
+  # Bound each legacy all-mode process independently. Consolidated commands
+  # deliberately retain the normal V8 limit for their single shared heap.
+  WORKER_MAX_OLD_SPACE_MB="${WORKER_MAX_OLD_SPACE_MB:-256}"
 
   pids=""
 
@@ -93,7 +105,7 @@ run_all_workers() {
   for worker in $(all_worker_names); do
     script="$(resolve_worker_script "$worker")"
     echo "Starting worker: $worker ($script)"
-    "$NODE_BIN" "$script" &
+    NODE_OPTIONS="$NODE_OPTIONS --max-old-space-size=$WORKER_MAX_OLD_SPACE_MB" "$NODE_BIN" "$script" &
     pids="$pids $!"
   done
 
@@ -130,6 +142,14 @@ case "${1:-}" in
         if [ "$worker" = "all" ]; then
             run_all_workers
             exit 0
+        fi
+        if [ "$worker" = "standalone" ]; then
+            require_script "$STANDALONE_SCRIPT"
+            exec "$NODE_BIN" "$STANDALONE_SCRIPT"
+        fi
+        if [ "$worker" = "core" ]; then
+            require_script "$CORE_SCRIPT"
+            exec "$NODE_BIN" "$CORE_SCRIPT"
         fi
 
         script="$(resolve_worker_script "$worker")" || {

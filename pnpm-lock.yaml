@@ -23,6 +23,9 @@ importers:
       '@chatbotx.io/vitest-config':
         specifier: workspace:*
         version: link:packages/vitest-config
+      '@jridgewell/sourcemap-codec':
+        specifier: ^1.5.5
+        version: 1.5.5
       '@types/node':
         specifier: 24.x
         version: 24.13.1

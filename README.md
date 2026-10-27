@@ -215,6 +215,18 @@ pnpm --filter chatbotx-mcp dev:mcp
 pnpm --filter @chatbotx.io/database db:studio
 ```
 
+### Worker process modes
+
+The worker image defaults to `worker standalone`: core queues, schedule, and
+sequence workers share one Node process so common application code is loaded
+once. Use `worker core` for local development without schedules, or `worker
+<name>` to isolate a workload such as `heavy`.
+
+`worker all` remains available for one process per worker. It caps each child
+heap at `WORKER_MAX_OLD_SPACE_MB=256` by default; raise that value only when
+the host has enough memory for every child. The `standalone` process retains
+the normal V8 heap limit.
+
 ## Services
 
 The default Docker Compose stack includes:

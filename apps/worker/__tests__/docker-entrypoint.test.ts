@@ -1,5 +1,12 @@
 import { execFileSync } from "node:child_process"
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs"
+import {
+  chmodSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs"
 import { tmpdir } from "node:os"
 import { dirname, join, sep } from "node:path"
 import { fileURLToPath } from "node:url"
@@ -39,12 +46,21 @@ function touch(path: string): void {
   writeFileSync(path, "")
 }
 
-function run(...args: string[]): { stdout: string; status: number } {
+function run(
+  args: string[],
+  env: Record<string, string> = {},
+): { stdout: string; status: number } {
   try {
     const stdout = execFileSync("sh", [SCRIPT, ...args], {
       // /bin/echo stub avoids launching node: a resolved `worker <name>` exec
       // simply echoes the script path instead of running it.
-      env: { ...process.env, WORKER_DIST_DIR: distDir, NODE_BIN: "/bin/echo" },
+      env: {
+        ...process.env,
+        NODE_OPTIONS: "",
+        WORKER_DIST_DIR: distDir,
+        NODE_BIN: "/bin/echo",
+        ...env,
+      },
       encoding: "utf8",
       stdio: ["ignore", "pipe", "pipe"],
     })
@@ -65,15 +81,16 @@ beforeEach(() => {
   }
   touch(join(distDir, "sequence-scheduler", "worker-producer.mjs"))
   touch(join(distDir, "sequence-scheduler", "worker-consumer.mjs"))
+  touch(join(distDir, "core.mjs"))
+  touch(join(distDir, "standalone.mjs"))
 })
-
 afterEach(() => {
   rmSync(distDir, { recursive: true, force: true })
 })
 
 describe("docker-entrypoint worker discovery", () => {
   test("resolves a standard worker to its dist bundle", () => {
-    const { stdout, status } = run("worker", "chat")
+    const { stdout, status } = run(["worker", "chat"])
     expect(status).toBe(0)
     expect(posix(stdout.trim())).toBe(
       posix(join(distDir, "chat", "worker.mjs")),
@@ -81,28 +98,28 @@ describe("docker-entrypoint worker discovery", () => {
   })
 
   test("aliases sequence variants to their historical CLI names", () => {
-    expect(posix(run("worker", "sequence-producer").stdout.trim())).toBe(
+    expect(posix(run(["worker", "sequence-producer"]).stdout.trim())).toBe(
       posix(join(distDir, "sequence-scheduler", "worker-producer.mjs")),
     )
-    expect(posix(run("worker", "sequence-consumer").stdout.trim())).toBe(
+    expect(posix(run(["worker", "sequence-consumer"]).stdout.trim())).toBe(
       posix(join(distDir, "sequence-scheduler", "worker-consumer.mjs")),
     )
   })
 
   test("auto-discovers a new worker with no script edit", () => {
-    const { stdout, status } = run("worker", "foo")
+    const { stdout, status } = run(["worker", "foo"])
     expect(status).toBe(0)
     expect(posix(stdout.trim())).toBe(posix(join(distDir, "foo", "worker.mjs")))
   })
 
   test("rejects a worker that was not built (e.g. removed analytics)", () => {
-    const { stdout, status } = run("worker", "analytics")
+    const { stdout, status } = run(["worker", "analytics"])
     expect(status).toBe(3)
     expect(stdout).toContain("Usage:")
   })
 
   test("usage lists discovered workers including events and sequence variants", () => {
-    const { stdout } = run("worker", "badname")
+    const { stdout } = run(["worker", "badname"])
     expect(stdout).toContain("events")
     expect(stdout).toContain("sequence-producer")
     expect(stdout).toContain("sequence-consumer")
@@ -113,8 +130,54 @@ describe("docker-entrypoint worker discovery", () => {
   test("errors when no worker bundles are present", () => {
     rmSync(distDir, { recursive: true, force: true })
     mkdirSync(distDir, { recursive: true })
-    const { stdout, status } = run("worker", "all")
+    const { stdout, status } = run(["worker", "all"])
     expect(status).toBe(4)
     expect(stdout).toContain("No worker bundles found")
+  })
+
+  test("runs standalone and core bundles outside the all-mode roster", () => {
+    expect(posix(run(["worker", "core"]).stdout.trim())).toBe(
+      posix(join(distDir, "core.mjs")),
+    )
+    expect(posix(run(["worker", "standalone"]).stdout.trim())).toBe(
+      posix(join(distDir, "standalone.mjs")),
+    )
+    expect(run(["worker", "badname"]).stdout).not.toContain(
+      `${sep}core${sep}worker`,
+    )
+  })
+
+  test("bounds each all-mode worker heap and honors its override", () => {
+    const fakeNode = join(distDir, "fake-node.sh")
+    writeFileSync(fakeNode, '#!/bin/sh\nprintf "%s\\n" "$NODE_OPTIONS"\n')
+    chmodSync(fakeNode, 0o755)
+
+    expect(run(["worker", "all"], { NODE_BIN: fakeNode }).stdout).toContain(
+      "--max-old-space-size=256",
+    )
+    expect(
+      run(["worker", "all"], {
+        NODE_BIN: fakeNode,
+        WORKER_MAX_OLD_SPACE_MB: "384",
+      }).stdout,
+    ).toContain("--max-old-space-size=384")
+    expect(
+      run(["worker", "standalone"], { NODE_BIN: fakeNode }).stdout,
+    ).not.toContain("--max-old-space-size")
+  })
+
+  test("keeps only core workers out of development cron startup", () => {
+    expect(
+      readFileSync(
+        join(dirname(fileURLToPath(import.meta.url)), "../src/core.ts"),
+        "utf8",
+      ),
+    ).not.toContain('import "./schedule/worker"')
+    expect(
+      readFileSync(
+        join(dirname(fileURLToPath(import.meta.url)), "../src/standalone.ts"),
+        "utf8",
+      ),
+    ).toContain('import "./schedule/worker"')
   })
 })

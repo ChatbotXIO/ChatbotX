@@ -10,6 +10,7 @@ import { type Job, Queue, Worker } from "bullmq"
 import { ensureBootstrapped } from "../lib/bootstrap"
 import { logger } from "../lib/logger"
 import { runJobWithAuditContext } from "../lib/run-job-with-audit-context"
+import { onShutdown, runWorker } from "../lib/shutdown"
 import { startMarketingMessageWorker } from "../marketing-message/consumer"
 import {
   cleanupTriggerExecutions,
@@ -75,7 +76,7 @@ async function startScheduleWorker() {
     logger.info("Analytics bootstrapped successfully")
   } catch (err) {
     logger.error(err, "Failed to bootstrap analytics")
-    process.exit(1)
+    throw err
   }
 
   if (scheduleQueue instanceof Queue) {
@@ -312,26 +313,13 @@ async function startScheduleWorker() {
     }
   })
 
-  let isShuttingDown = false
-  async function shutdown() {
-    if (isShuttingDown) {
-      return
-    }
-    isShuttingDown = true
+  onShutdown("schedule", async () => {
     try {
       await Promise.all([worker.close(), marketingMessageWorker.close()])
+    } finally {
       await flushAllPendingWorkspaceRealtimeEvents()
-      process.exit(0)
-    } catch (err) {
-      logger.error(err, "[ScheduleWorker] Error during shutdown")
-      process.exit(1)
     }
-  }
-  process.once("SIGINT", shutdown)
-  process.once("SIGTERM", shutdown)
+  })
 }
 
-startScheduleWorker().catch((err) => {
-  logger.error("Failed to start schedule worker", err)
-  process.exit(1)
-})
+runWorker("schedule", startScheduleWorker)

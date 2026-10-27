@@ -16,6 +16,7 @@ import { isFinalAttempt } from "../lib/job-attempts"
 import { logger } from "../lib/logger"
 import { resolveWorkspaceId } from "../lib/resolve-workspace-id"
 import { runJobWithAuditContext } from "../lib/run-job-with-audit-context"
+import { onShutdown, runWorker } from "../lib/shutdown"
 import { checkOutboundAutomatedResponse } from "./handlers/outbound-automated-response"
 import { sendChatMessage, sendFlowStep } from "./handlers/send-flow-step"
 import {
@@ -66,7 +67,7 @@ async function startChatWorker() {
     logger.info("Chat worker bootstrapped successfully")
   } catch (err) {
     logger.error(err, "Failed to bootstrap chat worker")
-    process.exit(1)
+    throw err
   }
 
   const worker = new Worker(
@@ -169,32 +170,13 @@ async function startChatWorker() {
     }
   })
 
-  let isShuttingDown = false
-  async function shutdown() {
-    if (isShuttingDown) {
-      return
-    }
-    isShuttingDown = true
-    let shutdownFailed = false
+  onShutdown("chat", async () => {
     try {
       await worker.close()
-    } catch (err) {
-      shutdownFailed = true
-      logger.error(err, "[ChatWorker] Error closing worker during shutdown")
     } finally {
-      try {
-        // After close(): drains events published by jobs that finished during
-        // the close drain, whose coalesce timers would never fire past exit.
-        await flushAllPendingWorkspaceRealtimeEvents()
-      } catch (err) {
-        shutdownFailed = true
-        logger.error(err, "[ChatWorker] Error flushing realtime events")
-      }
+      await flushAllPendingWorkspaceRealtimeEvents()
     }
-    process.exit(shutdownFailed ? 1 : 0)
-  }
-  process.once("SIGINT", shutdown)
-  process.once("SIGTERM", shutdown)
+  })
 }
 
-startChatWorker()
+runWorker("chat", startChatWorker)

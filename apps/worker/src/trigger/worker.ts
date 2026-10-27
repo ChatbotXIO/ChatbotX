@@ -18,6 +18,7 @@ import { isBlockedWorkspace } from "../lib/is-blocked-workspace"
 import { logger } from "../lib/logger"
 import { resolveWorkspaceId } from "../lib/resolve-workspace-id"
 import { runJobWithAuditContext } from "../lib/run-job-with-audit-context"
+import { onShutdown, runWorker } from "../lib/shutdown"
 import { TriggerExecutorService } from "./services/trigger-executor.service"
 import { TriggerMatcherService } from "./services/trigger-matcher.service"
 import type { TriggerEventData } from "./types"
@@ -31,7 +32,7 @@ async function startTriggerWorker() {
     logger.info("Trigger worker bootstrapped successfully")
   } catch (err) {
     logger.error(err, "Failed to bootstrap trigger worker")
-    process.exit(1)
+    throw err
   }
 
   const worker = new Worker(
@@ -117,30 +118,13 @@ async function startTriggerWorker() {
 
   logger.info("Trigger worker started")
 
-  let isShuttingDown = false
-  async function shutdown() {
-    if (isShuttingDown) {
-      return
-    }
-    isShuttingDown = true
-    let shutdownFailed = false
+  onShutdown("trigger", async () => {
     try {
       await worker.close()
-    } catch (err) {
-      shutdownFailed = true
-      logger.error(err, "[TriggerWorker] Error closing worker during shutdown")
     } finally {
-      try {
-        await flushAllPendingWorkspaceRealtimeEvents()
-      } catch (err) {
-        shutdownFailed = true
-        logger.error(err, "[TriggerWorker] Error flushing realtime events")
-      }
+      await flushAllPendingWorkspaceRealtimeEvents()
     }
-    process.exit(shutdownFailed ? 1 : 0)
-  }
-  process.once("SIGINT", shutdown)
-  process.once("SIGTERM", shutdown)
+  })
 }
 
-startTriggerWorker()
+runWorker("trigger", startTriggerWorker)

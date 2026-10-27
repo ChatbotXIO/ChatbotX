@@ -22,6 +22,7 @@ import { processLeaderboardJob } from "../leaderboard/process-job"
 import { ensureBootstrapped } from "../lib/bootstrap"
 import { logger } from "../lib/logger"
 import { runJobWithAuditContext } from "../lib/run-job-with-audit-context"
+import { onShutdown, runWorker } from "../lib/shutdown"
 
 /**
  * Runs one `low` job behind the blocked-owner guard, dispatching on its type.
@@ -104,7 +105,7 @@ async function startLowWorker() {
     await ensureBootstrapped()
   } catch (err) {
     logger.error({ err }, "Failed to bootstrap low worker")
-    process.exit(1)
+    throw err
   }
 
   const worker = new Worker(
@@ -187,30 +188,17 @@ async function startLowWorker() {
     }
   })
 
-  let isShuttingDown = false
-  async function shutdown() {
-    if (isShuttingDown) {
-      return
-    }
-    isShuttingDown = true
+  onShutdown("low", async () => {
     try {
       await Promise.all([
         worker.close(),
         profileSnapshotWorker.close(),
         leaderboardWorker.close(),
       ])
+    } finally {
       await flushAllPendingWorkspaceRealtimeEvents()
-      process.exit(0)
-    } catch (err) {
-      logger.error(err, "[LowWorker] Error during shutdown")
-      process.exit(1)
     }
-  }
-  process.once("SIGINT", shutdown)
-  process.once("SIGTERM", shutdown)
+  })
 }
 
-startLowWorker().catch((err) => {
-  logger.error({ err }, "Failed to start low worker")
-  process.exit(1)
-})
+runWorker("low", startLowWorker)
