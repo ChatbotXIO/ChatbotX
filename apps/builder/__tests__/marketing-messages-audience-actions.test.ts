@@ -28,10 +28,17 @@ const validGrant = {
 vi.mock("@chatbotx.io/business", () => ({
   messengerIntegrationService: { findByPageId },
 }))
+vi.mock(
+  "@chatbotx.io/business/facebook-marketing-message-audience/upload",
+  () => ({
+    facebookMarketingMessageAudienceUploadService: {
+      create: serviceCreate,
+      uploadMore: serviceUploadMore,
+    },
+  }),
+)
 vi.mock("@chatbotx.io/business/facebook-marketing-message-audience", () => ({
   facebookMarketingMessageAudienceService: {
-    create: serviceCreate,
-    uploadMore: serviceUploadMore,
     delete: serviceDelete,
   },
   isAudienceError: (error: unknown) =>
