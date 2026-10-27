@@ -1,6 +1,8 @@
 import { type DatabaseClient, db } from "@chatbotx.io/database/client"
 import { type MessageType, messageTypes } from "@chatbotx.io/database/partials"
 import {
+  type CreateAttachmentInput,
+  type CreateMessageInput,
   createMessageRepository,
   type MessageWithAttachments,
 } from "@chatbotx.io/database/repositories"
@@ -26,6 +28,20 @@ class MessageService extends BaseService {
   findForContact = findForContact
   findByIdWithUrls = findByIdWithUrls
   protected readonly cachePrefix: string = "messages"
+
+  async createIncoming(props: {
+    attachments: Omit<CreateAttachmentInput, "messageId" | "messageCreatedAt">[]
+    message: CreateMessageInput
+    tx?: DatabaseClient
+  }): Promise<MessageWithAttachments> {
+    const { attachments, message, tx } = props
+    const repository = await createMessageRepository(tx)
+    if (attachments.length === 0) {
+      return { ...(await repository.create(message)), attachments: [] }
+    }
+
+    return await repository.createWithAttachments(message, attachments)
+  }
 
   async findByUncached(props: {
     tx?: DatabaseClient

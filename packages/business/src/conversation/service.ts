@@ -1300,24 +1300,50 @@ class ConversationService extends BaseService {
   async recordGuestInboundRead(props: {
     workspaceId: string
     conversationId: string
+    contactInboxId: string
+    contactId: string
     at: Date
     lastActivityAt: Date
+    data: ContactInboxTrackingData
   }): Promise<void> {
-    const { workspaceId, conversationId, at, lastActivityAt } = props
+    const {
+      workspaceId,
+      conversationId,
+      contactInboxId,
+      contactId,
+      at,
+      lastActivityAt,
+      data,
+    } = props
 
-    await db
-      .update(conversationModel)
-      .set({
-        contactLastReadAt: at,
-        contactRepliedAt: lastActivityAt,
-        lastActivityAt,
+    const trackingInvalidation = await db.transaction(async (tx) => {
+      await tx
+        .update(conversationModel)
+        .set({
+          contactLastReadAt: at,
+          contactRepliedAt: lastActivityAt,
+          lastActivityAt,
+        })
+        .where(
+          and(
+            eq(conversationModel.id, conversationId),
+            eq(conversationModel.workspaceId, workspaceId),
+          ),
+        )
+
+      return await contactInboxService.updateTracking({
+        tx,
+        contactInboxId,
+        contactId,
+        workspaceId,
+        data,
       })
-      .where(
-        and(
-          eq(conversationModel.id, conversationId),
-          eq(conversationModel.workspaceId, workspaceId),
-        ),
-      )
+    })
+
+    if (trackingInvalidation) {
+      await contactInboxService.invalidateTracking(trackingInvalidation)
+    }
+
     await this.invalidate({ workspaceId, ids: [conversationId] })
   }
 

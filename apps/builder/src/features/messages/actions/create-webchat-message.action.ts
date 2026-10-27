@@ -5,40 +5,29 @@ import {
   contactInboxService,
   contactService,
   conversationService,
+  createWebchatGuestContact,
   integrationWebchatService,
   isWorkspaceScheduledForDeletion,
-  messageCleanupService,
-  quotaEnforcementService,
+  messageService,
   resolveTenantSettings,
   workspaceService,
 } from "@chatbotx.io/business"
 import { resolveLastUserInputTracking } from "@chatbotx.io/business/contact-inbox"
-import { finalizeContactProfile } from "@chatbotx.io/business/contact-locale"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { getPublicFileUrl } from "@chatbotx.io/business/utils"
 import {
   type ConversationAttributes,
   channelTypes,
-  contactSources,
 } from "@chatbotx.io/database/partials"
-import type { MessageWithAttachments } from "@chatbotx.io/database/repositories"
-import { createMessageRepository } from "@chatbotx.io/database/repositories"
-import {
-  contactInboxModel,
-  contactModel,
-  conversationModel,
-} from "@chatbotx.io/database/schema"
 import type {
   IntegrationWebchatModel,
   WorkspaceModel,
 } from "@chatbotx.io/database/types"
 import { emit } from "@chatbotx.io/event-bus"
-import { emitContactCreated } from "@chatbotx.io/events"
 import { setWebhookExecutionContext } from "@chatbotx.io/events/context"
 import { type UploadedFile, uploadMultipleFiles } from "@chatbotx.io/filesystem"
 import { messageEventTypeSchema } from "@chatbotx.io/flow-config"
 import { RealtimeEventType } from "@chatbotx.io/partysocket-config"
-import { createId } from "@chatbotx.io/utils"
 import {
   ChatJobAction,
   chatQueue,
@@ -46,7 +35,6 @@ import {
   integrationQueue,
 } from "@chatbotx.io/worker-config"
 import { getTranslations } from "next-intl/server"
-import { randomString } from "remeda"
 import { authorizeWebchatGuestRequest } from "@/features/integration-webchat/lib/webchat-access-token"
 import { logger } from "@/lib/log"
 import {
@@ -203,8 +191,6 @@ export async function handleCreateWebchatMessage({
   }
 
   if ("text" in parsedInput && (parsedInput.text || uploadedFiles.length > 0)) {
-    const repository = await createMessageRepository()
-
     const now = new Date()
     const messageInput = {
       text: parsedInput.text ?? null,
@@ -224,10 +210,10 @@ export async function handleCreateWebchatMessage({
       ...file,
     }))
 
-    const message: MessageWithAttachments =
-      attachmentInputs.length > 0
-        ? await repository.createWithAttachments(messageInput, attachmentInputs)
-        : { ...(await repository.create(messageInput)), attachments: [] }
+    const message = await messageService.createIncoming({
+      message: messageInput,
+      attachments: attachmentInputs,
+    })
 
     const newMessage = {
       ...message,
@@ -240,14 +226,10 @@ export async function handleCreateWebchatMessage({
     await conversationService.recordGuestInboundRead({
       workspaceId: conversation.workspaceId,
       conversationId: conversation.id,
-      at: now,
-      lastActivityAt: message.createdAt,
-    })
-
-    await contactInboxService.updateTracking({
       contactInboxId: contactInbox.id,
       contactId: contactInbox.contactId,
-      workspaceId: conversation.workspaceId,
+      at: now,
+      lastActivityAt: message.createdAt,
       data: {
         firstInteractionAt: message.createdAt,
         contactLastReadAt: now,
@@ -272,7 +254,7 @@ export async function handleCreateWebchatMessage({
       )
     } catch (error) {
       logger.warn(
-        { error, contactId: contactInbox.contactId, channel: "webchat" },
+        { err: error, contactId: contactInbox.contactId, channel: "webchat" },
         "Auto-unblock on webchat inbound message failed",
       )
     }
@@ -411,105 +393,26 @@ async function getConversationFromInput(
     }
   }
 
-  // New contact. Resolve the owner (owner-derived, never request-derived) and
-  // gate on MAC — the billing hard limit — atomically with the insert so
-  // concurrent first-message requests cannot both pass the gate and overrun the
-  // limit. MAC is consumed here (not via the async message event) and the
-  // `ContactActiveMonthly` presence row written inside the same transaction so
-  // the later `message:received` event dedups instead of double-counting. The
-  // info-only `contacts` metric is recorded inside `createNewContactWithMac`.
   const ws = workspace
   if (!ws) {
     throw new ChatbotXException("Workspace not found", "notFound", 404)
   }
 
-  const result = await quotaEnforcementService.createNewContactWithMac({
+  const result = await createWebchatGuestContact({
     ownerId: ws.ownerId,
     workspaceId: parsedInput.workspaceId,
-    create: async (tx) => {
-      const finalizedProfile = finalizeContactProfile({
-        locale: parsedInput.locale,
-        timezone: parsedInput.timezone,
-      })
-      const contact = await tx
-        .insert(contactModel)
-        .values({
-          id: createId(),
-          workspaceId: parsedInput.workspaceId,
-          email: parsedInput.guestConversationId,
-          gender: "unknown",
-          firstName: "Guest",
-          lastName: randomString(10),
-          locale: finalizedProfile.locale,
-          timezone: finalizedProfile.timezone,
-        })
-        .returning()
-        .then((rows) => rows[0])
-      if (!contact) {
-        throw new ChatbotXException("Contact not found")
-      }
-
-      const contactInbox = await tx
-        .insert(contactInboxModel)
-        .values({
-          id: createId(),
-          inboxId: integrationWebchat.inboxId,
-          contactId: contact.id,
-          originalContactId: contact.id,
-          source: contactSources.enum.webchat,
-          sourceId,
-          channel: "webchat",
-          language: finalizedProfile.language,
-          webchatParentUrl: parsedInput.parentUrl,
-        })
-        .returning()
-        .then((rows) => rows[0])
-      if (!contactInbox) {
-        throw new ChatbotXException("Contact inbox not found")
-      }
-
-      // A re-created contact keeps its history: cancel any pending message
-      // cleanup recorded when a contact with this inbox identity was deleted.
-      await messageCleanupService.cancelByInboxSource({
-        inboxId: integrationWebchat.inboxId,
-        sourceIds: [contactInbox.sourceId],
-        tx,
-      })
-
-      const conversation = await tx
-        .insert(conversationModel)
-        .values({
-          id: createId(),
-          workspaceId: parsedInput.workspaceId,
-          contactId: contact.id,
-        })
-        .returning()
-        .then((rows) => rows[0])
-      if (!conversation) {
-        throw new ChatbotXException("Conversation not found")
-      }
-
-      return {
-        value: { contact, contactInbox, conversation },
-        contactId: contact.id,
-        contactInboxId: contactInbox.id,
-        inboxId: integrationWebchat.inboxId,
-      }
+    inboxId: integrationWebchat.inboxId,
+    sourceId,
+    profile: {
+      locale: parsedInput.locale,
+      timezone: parsedInput.timezone,
+      webchatParentUrl: parsedInput.parentUrl,
     },
   })
 
   if (!result.ok) {
     throw new ChatbotXException("Contact limit reached", "quotaExceeded", 422)
   }
-
-  await emitContactCreated(
-    parsedInput.workspaceId,
-    result.value.contact.id,
-    result.value.contact.firstName || undefined,
-    result.value.contact.phoneNumber || undefined,
-    result.value.contact.email || undefined,
-    result.value.contactInbox.id,
-  )
 
   return {
     conversation: result.value.conversation,

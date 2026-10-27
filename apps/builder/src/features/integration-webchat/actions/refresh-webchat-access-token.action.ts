@@ -39,10 +39,11 @@ export const handleRefreshWebchatAccessToken = async ({
   const forbidden = (description: string) =>
     new ChatbotXException(description, "forbidden", 403)
 
+  const t = await getTranslations("webchat")
+
   const refreshableToken =
     await verifyRefreshableWebchatAccessToken(parsedInput)
   if (!refreshableToken) {
-    const t = await getTranslations("webchat")
     throw forbidden(t("unauthorizedDomain.description"))
   }
 
@@ -52,7 +53,6 @@ export const handleRefreshWebchatAccessToken = async ({
     webchatId: parsedInput.webchatId,
   })
   if (rateLimit.limited) {
-    const t = await getTranslations("webchat")
     throw new ChatbotXException(
       t("rateLimitExceeded"),
       "rateLimitExceeded",
@@ -70,7 +70,6 @@ export const handleRefreshWebchatAccessToken = async ({
     }),
   ])
 
-  const t = await getTranslations("webchat")
   if (workspace && isWorkspaceScheduledForDeletion(workspace)) {
     throw new ChatbotXException(
       t("workspaceUnavailable"),

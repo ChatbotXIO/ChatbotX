@@ -304,17 +304,24 @@ describe("conversationService.recordGuestInboundRead", () => {
     vi.clearAllMocks()
   })
 
-  test("scopes the guest inbound read update to the workspace and invalidates its conversation", async () => {
+  test("updates guest read and contact-inbox tracking in one transaction, then invalidates both caches", async () => {
     const at = new Date("2026-07-14T00:00:00.000Z")
     const lastActivityAt = new Date("2026-07-14T00:01:00.000Z")
 
     await conversationService.recordGuestInboundRead({
       workspaceId: "ws-1",
       conversationId: "conv-1",
+      contactInboxId: "ci-1",
+      contactId: "contact-1",
       at,
       lastActivityAt,
+      data: {
+        contactLastReadAt: at,
+        firstInteractionAt: lastActivityAt,
+      },
     })
 
+    expect(transaction).toHaveBeenCalledTimes(1)
     expect(set).toHaveBeenCalledWith({
       contactLastReadAt: at,
       contactRepliedAt: lastActivityAt,
@@ -323,6 +330,19 @@ describe("conversationService.recordGuestInboundRead", () => {
     const whereValues = collectSqlValues(where.mock.calls[0][0])
     expect(whereValues).toContain("conv-1")
     expect(whereValues).toContain("ws-1")
+    expect(updateTracking).toHaveBeenCalledWith({
+      tx: expect.objectContaining({ update }),
+      contactInboxId: "ci-1",
+      contactId: "contact-1",
+      workspaceId: "ws-1",
+      data: {
+        contactLastReadAt: at,
+        firstInteractionAt: lastActivityAt,
+      },
+    })
+    expect(invalidateTracking).toHaveBeenCalledWith({
+      cacheTags: ["contacts:contact-1:contact-inboxes"],
+    })
     expect(invalidateCacheByTags).toHaveBeenCalledWith([
       "conversations",
       "conversations:ws-1",

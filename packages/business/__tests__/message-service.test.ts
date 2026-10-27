@@ -2,6 +2,8 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const mocks = vi.hoisted(() => {
   const repo = {
+    create: vi.fn(),
+    createWithAttachments: vi.fn(),
     findById: vi.fn(),
     findLastByConversation: vi.fn(),
     hardDeleteAllByContactInbox: vi.fn(),
@@ -34,9 +36,8 @@ vi.mock("@chatbotx.io/redis", () => ({
   withCache: mocks.withCache,
 }))
 
-// The following are reached only because messageService.createOutgoing is
-// wired in as a class field (module-scope import), not because any test here
-// exercises it — this file only covers the pre-existing read/delete methods.
+// These are reached only because messageService.createOutgoing is wired in as
+// a class field (module-scope import), not because tests here exercise it.
 vi.mock("@chatbotx.io/filesystem", () => ({}))
 vi.mock("@chatbotx.io/partysocket-config", () => ({}))
 vi.mock("@chatbotx.io/worker-config", () => ({}))
@@ -46,9 +47,65 @@ vi.mock("../src/platform/settings", () => ({ resolveTenantSettings: vi.fn() }))
 
 const { messageService } = await import("../src/message/service")
 
+const incomingMessage = {
+  contactInboxId: "contact-inbox-1",
+  contentType: "text" as const,
+  conversationId: "conversation-1",
+  messageType: "incoming" as const,
+  senderId: "contact-1",
+  senderType: "contact" as const,
+  text: "hello",
+  workspaceId: "workspace-1",
+}
+
+const attachment = {
+  conversationId: "conversation-1",
+  fileType: "image" as const,
+  mimeType: "image/png",
+  originPath: "uploads/image.png",
+  workspaceId: "workspace-1",
+}
+
 describe("messageService", () => {
   beforeEach(() => {
     vi.clearAllMocks()
+  })
+
+  test("creates incoming messages without attachments through repository.create", async () => {
+    const createdMessage = { id: "message-1", ...incomingMessage }
+    mocks.repo.create.mockResolvedValue(createdMessage)
+
+    await expect(
+      messageService.createIncoming({
+        attachments: [],
+        message: incomingMessage,
+      }),
+    ).resolves.toEqual({ ...createdMessage, attachments: [] })
+
+    expect(mocks.repo.create).toHaveBeenCalledWith(incomingMessage)
+    expect(mocks.repo.createWithAttachments).not.toHaveBeenCalled()
+  })
+
+  test("creates incoming messages with attachments through repository.createWithAttachments", async () => {
+    const createdMessage = {
+      id: "message-1",
+      ...incomingMessage,
+      attachments: [{ id: "attachment-1", ...attachment }],
+    }
+    mocks.repo.createWithAttachments.mockResolvedValue(createdMessage)
+
+    await expect(
+      messageService.createIncoming({
+        attachments: [attachment],
+        message: incomingMessage,
+      }),
+    ).resolves.toEqual(createdMessage)
+
+    expect(mocks.repo.createWithAttachments).toHaveBeenCalledWith(
+      incomingMessage,
+      [attachment],
+    )
+    expect(mocks.repo.create).not.toHaveBeenCalled()
   })
 
   test("listLastMessages reads through the message repository and returns chronological order", async () => {

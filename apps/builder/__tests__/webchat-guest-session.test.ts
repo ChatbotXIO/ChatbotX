@@ -13,7 +13,6 @@ import {
   isTokenOriginAllowed,
   refreshWebchatAccessToken,
   verifyRefreshableWebchatAccessToken,
-  verifyWebchatAccessToken,
 } from "@/features/integration-webchat/lib/webchat-access-token"
 import { createGuestSessionStore } from "@/features/integration-webchat/providers/store/guest-sesssion-store"
 import {
@@ -435,7 +434,11 @@ describe("webchat access token", () => {
   test("authorizes a token for its signed workspace and webchat claim", async () => {
     const { token } = await createWebchatAccessToken(baseInput)
 
-    const result = await verifyWebchatAccessToken({ ...baseInput, token })
+    const result = await authorizeWebchatGuestRequest({
+      authorizedDomains: ["example.com"],
+      ...baseInput,
+      token,
+    })
 
     expect(result).toEqual({ authorized: true, originHost: "example.com" })
   })
@@ -449,7 +452,10 @@ describe("webchat access token", () => {
       origin: "https://attacker.test",
     }
 
-    const result = await verifyWebchatAccessToken(clientSuppliedOrigin)
+    const result = await authorizeWebchatGuestRequest({
+      authorizedDomains: ["example.com"],
+      ...clientSuppliedOrigin,
+    })
 
     expect(result.authorized).toBe(true)
   })
@@ -457,7 +463,8 @@ describe("webchat access token", () => {
   test("rejects a token whose workspace does not match", async () => {
     const { token } = await createWebchatAccessToken(baseInput)
 
-    const result = await verifyWebchatAccessToken({
+    const result = await authorizeWebchatGuestRequest({
+      authorizedDomains: ["example.com"],
       ...baseInput,
       workspaceId: "workspace-2",
       token,
@@ -470,7 +477,8 @@ describe("webchat access token", () => {
     const { token } = await createWebchatAccessToken(baseInput)
     const [payload] = token.split(".")
 
-    const result = await verifyWebchatAccessToken({
+    const result = await authorizeWebchatGuestRequest({
+      authorizedDomains: ["example.com"],
       ...baseInput,
       token: `${payload}.deadbeef`,
     })
@@ -531,7 +539,8 @@ describe("webchat access token", () => {
     const refreshed = await refreshWebchatAccessToken(claims)
 
     expect(refreshed.token).not.toBe(initial.token)
-    const refreshedVerification = await verifyWebchatAccessToken({
+    const refreshedVerification = await authorizeWebchatGuestRequest({
+      authorizedDomains: ["example.com"],
       token: refreshed.token,
       webchatId: baseInput.webchatId,
       workspaceId: baseInput.workspaceId,
@@ -585,7 +594,8 @@ describe("webchat access token", () => {
 
     expect(refreshed.expiresAt).toBe(sessionStart + 24 * 60 * 60)
     vi.setSystemTime(new Date((sessionStart + 24 * 60 * 60 + 1) * 1000))
-    const verification = await verifyWebchatAccessToken({
+    const verification = await authorizeWebchatGuestRequest({
+      authorizedDomains: ["example.com"],
       token: refreshed.token,
       webchatId: baseInput.webchatId,
       workspaceId: baseInput.workspaceId,

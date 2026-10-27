@@ -1,4 +1,5 @@
 export * from "./contact-info-changes"
+export * from "./create-webchat-guest-contact"
 export * from "./extract-contact"
 export * from "./profile-refresh"
 export * from "./service"

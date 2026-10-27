@@ -4,9 +4,8 @@ import { isOriginAuthorized } from "./authorized-domain"
 
 const TOKEN_TTL_SECONDS = 30 * 60
 const MAX_SESSION_SECONDS = 24 * 60 * 60
-// Background tabs may sleep past their normal expiry. The absolute session
-// cap still bounds every refresh to a single day from the original `iat`.
-const REFRESH_GRACE_SECONDS = MAX_SESSION_SECONDS
+// Refreshes retain the original issued-at claim and cannot extend the session
+// beyond this absolute cap.
 
 type WebchatAccessTokenPayload = {
   exp: number
@@ -15,6 +14,8 @@ type WebchatAccessTokenPayload = {
   webchatId: string
   workspaceId: string
 }
+
+type WebchatAccessTokenClaims = Omit<WebchatAccessTokenPayload, "exp">
 
 type WebchatAccessTokenInput = {
   webchatId: string
@@ -114,7 +115,7 @@ const parseSignedPayload = async ({
 }
 
 const createToken = async (
-  payload: Omit<WebchatAccessTokenPayload, "exp">,
+  payload: WebchatAccessTokenClaims,
 ): Promise<WebchatAccessToken> => {
   const expiresAt = Math.min(
     getCurrentTimestamp() + TOKEN_TTL_SECONDS,
@@ -145,7 +146,7 @@ export const createWebchatAccessToken = async ({
     workspaceId,
   })
 
-export const verifyWebchatAccessToken = async ({
+const verifyWebchatAccessToken = async ({
   token,
   webchatId,
   workspaceId,
@@ -209,31 +210,14 @@ export const verifyRefreshableWebchatAccessToken = async ({
   workspaceId,
 }: WebchatAccessTokenInput & {
   token?: string | null
-}): Promise<Pick<
-  WebchatAccessTokenPayload,
-  "iat" | "originHost" | "webchatId" | "workspaceId"
-> | null> => {
+}): Promise<WebchatAccessTokenClaims | null> => {
   const payload = await parseSignedPayload({ token, webchatId, workspaceId })
-  const now = getCurrentTimestamp()
-  if (
-    !payload ||
-    payload.exp + REFRESH_GRACE_SECONDS < now ||
-    payload.iat + MAX_SESSION_SECONDS < now
-  ) {
+  if (!payload || payload.iat + MAX_SESSION_SECONDS < getCurrentTimestamp()) {
     return null
   }
 
-  return {
-    iat: payload.iat,
-    originHost: payload.originHost,
-    webchatId: payload.webchatId,
-    workspaceId: payload.workspaceId,
-  }
+  const { exp: _exp, ...claims } = payload
+  return claims
 }
 
-export const refreshWebchatAccessToken = async (
-  claims: Pick<
-    WebchatAccessTokenPayload,
-    "iat" | "originHost" | "webchatId" | "workspaceId"
-  >,
-): Promise<WebchatAccessToken> => await createToken(claims)
+export const refreshWebchatAccessToken = createToken
