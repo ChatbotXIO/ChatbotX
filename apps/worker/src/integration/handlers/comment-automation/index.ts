@@ -154,10 +154,9 @@ export async function processCommentAutomation(
   // not enough to tell which Page, post or workspace lost a reply.
   //
   // An `IntegrationNotFoundError` from the lookup below needs nothing extra
-  // here: `runWithOrphanedIntegrationCleanup` (see `integration/job-context.ts`)
-  // already disconnects the orphaned integration and marks the job
-  // unrecoverable, which is a better answer than an error-log row. (Channels in
-  // `isExpectedOrphan` complete the job instead; none has comment automation.)
+  // here: this channel-originated job passes through `skipOrphanedInboundJobs`
+  // in `integration/job-context.ts`, which completes the job and runs the
+  // throttled orphaned-integration cleanup.
   let context: Awaited<ReturnType<typeof loadCommentAutomationContext>>
   try {
     context = await loadCommentAutomationContext({
