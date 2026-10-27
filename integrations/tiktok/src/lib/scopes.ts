@@ -19,6 +19,17 @@ export const TIKTOK_CORE_SCOPES = [
   "message.list.manage",
 ] as const
 
+export const TIKTOK_MESSAGING_SCOPES = [
+  "message.list.read",
+  "message.list.send",
+  "message.list.manage",
+] as const
+
+export const TIKTOK_COMMENTS_ONLY_ENV = "TIKTOK_COMMENTS_ONLY"
+
+export const isTiktokCommentsOnly = (): boolean =>
+  process.env[TIKTOK_COMMENTS_ONLY_ENV]?.trim() === "true"
+
 /**
  * Requested so the profile is richer when granted, but never enforced: nothing
  * in the codebase reads a field behind any of them — `getUserInfo` asks only
@@ -76,7 +87,7 @@ export const TIKTOK_COMMENT_AUTOMATION_SCOPES = [
  * Empty today: `video.list`, the one entry this list ever held, has since been
  * approved and moved into {@link TIKTOK_COMMENT_AUTOMATION_SCOPES}. That one
  * move was the whole switch — the same list drives the authorize request
- * (`TIKTOK_SCOPES` in `../apis/auth`) and the re-authorize warning.
+ * (`tiktokRequestedScopes`) and the re-authorize warning.
  *
  * Kept rather than deleted because it is the hook the authorize-request test
  * asserts against: the next scope the product wants goes here first, stays out
@@ -142,3 +153,24 @@ export const tiktokNeedsReauthorization = (auth: {
     0
   )
 }
+
+export const tiktokRequiredScopes = (): readonly string[] => {
+  if (!isTiktokCommentsOnly()) {
+    return TIKTOK_CORE_SCOPES
+  }
+  const messaging = new Set<string>(TIKTOK_MESSAGING_SCOPES)
+  return [
+    ...TIKTOK_CORE_SCOPES.filter((scope) => !messaging.has(scope)),
+    "comment.list",
+    "comment.list.manage",
+  ]
+}
+
+export const tiktokRequestedScopes = (): string =>
+  [
+    ...new Set([
+      ...tiktokRequiredScopes(),
+      ...TIKTOK_OPTIONAL_PROFILE_SCOPES,
+      ...TIKTOK_COMMENT_AUTOMATION_SCOPES,
+    ]),
+  ].join(",")

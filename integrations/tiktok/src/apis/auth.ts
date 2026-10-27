@@ -1,11 +1,7 @@
 import ky from "ky"
 import { BUSINESS_API_URL } from "../constants"
 import { rescue, TiktokAPIException } from "../exception"
-import {
-  TIKTOK_COMMENT_AUTOMATION_SCOPES,
-  TIKTOK_CORE_SCOPES,
-  TIKTOK_OPTIONAL_PROFILE_SCOPES,
-} from "../lib/scopes"
+import { tiktokRequestedScopes } from "../lib/scopes"
 import type { BusinessApiResponse } from "../schema"
 
 const TIKTOK_AUTH_BASE_URL = "https://www.tiktok.com/v2/auth/authorize/"
@@ -27,11 +23,6 @@ const TIKTOK_REFRESH_URL = `${BUSINESS_API_URL}tt_user/oauth2/refresh_token/`
 // Adding a scope does not upgrade an existing connection: every
 // already-connected account has to re-authorize before the new capability can
 // run for it.
-const TIKTOK_SCOPES = [
-  ...TIKTOK_CORE_SCOPES,
-  ...TIKTOK_OPTIONAL_PROFILE_SCOPES,
-  ...TIKTOK_COMMENT_AUTOMATION_SCOPES,
-].join(",")
 
 export function generateAuthUrl({
   clientId,
@@ -45,7 +36,7 @@ export function generateAuthUrl({
   const params = new URLSearchParams({
     client_key: clientId,
     response_type: "code",
-    scope: TIKTOK_SCOPES,
+    scope: tiktokRequestedScopes(),
     redirect_uri: redirectUrl,
     disable_auto_auth: "1",
     state: Buffer.from(JSON.stringify(stateParams ?? {})).toString("base64url"),

@@ -1,6 +1,7 @@
 import ky from "ky"
 import { BUSINESS_API_URL } from "../constants"
 import { rescue, TiktokAPIException } from "../exception"
+import { isTiktokCommentsOnly } from "../lib/scopes"
 
 type WebhookUpdateResponse = {
   code: number
@@ -96,6 +97,11 @@ export const subscribeTiktokWebhooks = async (
   callbackUrl: string,
   onCommentSubscriptionError?: (error: unknown) => void,
 ): Promise<{ comments: boolean }> => {
+  if (isTiktokCommentsOnly()) {
+    await subscribeWebhook(credentials, callbackUrl, TIKTOK_COMMENT_EVENT_TYPE)
+    return { comments: true }
+  }
+
   await subscribeWebhook(
     credentials,
     callbackUrl,

@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, test, vi } from "vitest"
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 
 const post = vi.fn()
 vi.mock("ky", () => ({ default: { post } }))
@@ -82,5 +82,30 @@ describe("subscribeTiktokWebhooks", () => {
 
     expect(result.comments).toBe(false)
     expect(onError).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe("subscribeTiktokWebhooks in comments-only mode", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs()
+  })
+
+  test("registers only the comment subscription", async () => {
+    vi.stubEnv("TIKTOK_COMMENTS_ONLY", "true")
+    respondWith(0)
+
+    const result = await subscribeTiktokWebhooks(CREDENTIALS, CALLBACK)
+
+    expect(eventTypesSent()).toEqual([TIKTOK_COMMENT_EVENT_TYPE])
+    expect(result.comments).toBe(true)
+  })
+
+  test("propagates a failed comment subscription", async () => {
+    vi.stubEnv("TIKTOK_COMMENTS_ONLY", "true")
+    respondWith(40_001)
+
+    await expect(
+      subscribeTiktokWebhooks(CREDENTIALS, CALLBACK),
+    ).rejects.toThrow()
   })
 })

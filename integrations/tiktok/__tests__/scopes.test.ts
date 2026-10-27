@@ -1,13 +1,17 @@
-import { describe, expect, test } from "vitest"
+import { afterEach, describe, expect, test, vi } from "vitest"
 import { generateAuthUrl } from "../src/apis/auth"
 import {
   findMissingTiktokScopes,
   parseTiktokScopes,
   TIKTOK_COMMENT_AUTOMATION_SCOPES,
   TIKTOK_COMMENT_SCOPES_PENDING_APPROVAL,
+  TIKTOK_COMMENTS_ONLY_ENV,
   TIKTOK_CORE_SCOPES,
+  TIKTOK_MESSAGING_SCOPES,
   TIKTOK_OPTIONAL_PROFILE_SCOPES,
   tiktokNeedsReauthorization,
+  tiktokRequestedScopes,
+  tiktokRequiredScopes,
 } from "../src/lib/scopes"
 
 const buildAuth = (scopes?: string[]) => ({
@@ -191,5 +195,37 @@ describe("tiktokNeedsReauthorization", () => {
 
   test("an empty recorded scope list is flagged", () => {
     expect(tiktokNeedsReauthorization(buildAuth([]))).toBe(true)
+  })
+})
+
+describe("comments-only mode", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs()
+  })
+
+  test("requires the messaging scopes by default", () => {
+    expect(tiktokRequiredScopes()).toEqual(TIKTOK_CORE_SCOPES)
+  })
+
+  test("drops the messaging scopes and requires the comment scopes", () => {
+    vi.stubEnv(TIKTOK_COMMENTS_ONLY_ENV, "true")
+
+    const required = tiktokRequiredScopes()
+    for (const scope of TIKTOK_MESSAGING_SCOPES) {
+      expect(required).not.toContain(scope)
+    }
+    expect(required).toEqual(
+      expect.arrayContaining(["comment.list", "comment.list.manage"]),
+    )
+  })
+
+  test("never requests a messaging scope", () => {
+    vi.stubEnv(TIKTOK_COMMENTS_ONLY_ENV, "true")
+
+    const requested = tiktokRequestedScopes().split(",")
+    for (const scope of TIKTOK_MESSAGING_SCOPES) {
+      expect(requested).not.toContain(scope)
+    }
+    expect(new Set(requested).size).toBe(requested.length)
   })
 })

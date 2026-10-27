@@ -19,18 +19,11 @@ import { isRevokedTokenError } from "./lib/error-mapper"
 import {
   findMissingTiktokScopes,
   parseTiktokScopes,
-  TIKTOK_COMMENT_AUTOMATION_SCOPES,
-  TIKTOK_CORE_SCOPES,
-  TIKTOK_OPTIONAL_PROFILE_SCOPES,
+  tiktokRequestedScopes,
+  tiktokRequiredScopes,
 } from "./lib/scopes"
 import { buildTokenTimestamps } from "./lib/token-utils"
 import type { TiktokActions, TiktokAuthValue, TiktokConfig } from "./schema"
-
-const TIKTOK_SCOPES = [
-  ...TIKTOK_CORE_SCOPES,
-  ...TIKTOK_OPTIONAL_PROFILE_SCOPES,
-  ...TIKTOK_COMMENT_AUTOMATION_SCOPES,
-].join(",")
 
 const config: IntegrationDefinition<
   TiktokConfig,
@@ -57,7 +50,7 @@ const config: IntegrationDefinition<
       const params = new URLSearchParams({
         client_key: config.clientId,
         response_type: "code",
-        scope: TIKTOK_SCOPES,
+        scope: tiktokRequestedScopes(),
         redirect_uri: callbackUrl,
         disable_auto_auth: "1",
         state,
@@ -77,7 +70,7 @@ const config: IntegrationDefinition<
       const grantedScopes = parseTiktokScopes(tokenResponse.scope)
       const missingCoreScopes = findMissingTiktokScopes(
         grantedScopes,
-        TIKTOK_CORE_SCOPES,
+        tiktokRequiredScopes(),
       )
       if (missingCoreScopes.length > 0) {
         throw new TiktokMissingScopesError(missingCoreScopes)
