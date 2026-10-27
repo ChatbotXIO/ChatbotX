@@ -1,9 +1,10 @@
 {
   "version": "8",
   "dialect": "postgres",
-  "id": "e317d7e4-f749-4bcf-b097-8d2aa87d9b12",
+  "id": "2d42815b-7906-4531-984e-ab46fac98078",
   "prevIds": [
-    "edf6de11-00e6-44b1-8ce9-4a886d9a7a65"
+    "180f66f9-9257-40af-bcfe-ac80f03df9e7",
+    "a464bb1f-f81d-4f01-bacd-079959ef0a65"
   ],
   "ddl": [
     {
@@ -141,18 +142,6 @@
         "fallback"
       ],
       "name": "analyticsBotRouteType",
-      "entityType": "enums",
-      "schema": "public"
-    },
-    {
-      "values": [
-        "message:sent",
-        "message:delivered",
-        "message:seen",
-        "message:failed",
-        "flow:clicked"
-      ],
-      "name": "analyticsBroadcastEventType",
       "entityType": "enums",
       "schema": "public"
     },
@@ -472,6 +461,33 @@
         "unknown"
       ],
       "name": "gender",
+      "entityType": "enums",
+      "schema": "public"
+    },
+    {
+      "values": [
+        "flow",
+        "flowNode",
+        "automatedResponse",
+        "whatsappFlow",
+        "emailTopic"
+      ],
+      "name": "contactActivityReferenceType",
+      "entityType": "enums",
+      "schema": "public"
+    },
+    {
+      "values": [
+        "flowExecuted",
+        "flowNodeExecuted",
+        "automatedResponseMatched",
+        "formCompleted",
+        "messageSent",
+        "messageDelivered",
+        "messageOpened",
+        "messageClicked"
+      ],
+      "name": "contactActivityType",
       "entityType": "enums",
       "schema": "public"
     },
@@ -1195,6 +1211,71 @@
     },
     {
       "values": [
+        "created",
+        "stageChanged",
+        "statusChanged",
+        "valueChanged",
+        "priorityChanged",
+        "dueDateChanged",
+        "titleChanged",
+        "descriptionChanged",
+        "fieldValuesChanged",
+        "assigneesChanged",
+        "attachmentAdded",
+        "attachmentRemoved",
+        "commentAdded",
+        "commentDeleted",
+        "transferred",
+        "deleted"
+      ],
+      "name": "pipelineActivityKind",
+      "entityType": "enums",
+      "schema": "public"
+    },
+    {
+      "values": [
+        "user",
+        "workspaceToken",
+        "flow",
+        "trigger",
+        "system"
+      ],
+      "name": "pipelineActorKind",
+      "entityType": "enums",
+      "schema": "public"
+    },
+    {
+      "values": [
+        "low",
+        "medium",
+        "high"
+      ],
+      "name": "pipelineItemPriority",
+      "entityType": "enums",
+      "schema": "public"
+    },
+    {
+      "values": [
+        "open",
+        "won",
+        "lost"
+      ],
+      "name": "pipelineItemStatus",
+      "entityType": "enums",
+      "schema": "public"
+    },
+    {
+      "values": [
+        "opportunity",
+        "ticket",
+        "custom"
+      ],
+      "name": "pipelineType",
+      "entityType": "enums",
+      "schema": "public"
+    },
+    {
+      "values": [
         "dont_track",
         "track"
       ],
@@ -1476,12 +1557,6 @@
     },
     {
       "isRlsEnabled": false,
-      "name": "AnalyticsBroadcastEvent",
-      "entityType": "tables",
-      "schema": "public"
-    },
-    {
-      "isRlsEnabled": false,
       "name": "AnalyticsContactEvent",
       "entityType": "tables",
       "schema": "public"
@@ -1494,19 +1569,7 @@
     },
     {
       "isRlsEnabled": false,
-      "name": "AnalyticsFlowNodeEvent",
-      "entityType": "tables",
-      "schema": "public"
-    },
-    {
-      "isRlsEnabled": false,
       "name": "AnalyticsMessageEvent",
-      "entityType": "tables",
-      "schema": "public"
-    },
-    {
-      "isRlsEnabled": false,
-      "name": "AnalyticsSequenceEvent",
       "entityType": "tables",
       "schema": "public"
     },
@@ -1710,6 +1773,12 @@
     },
     {
       "isRlsEnabled": false,
+      "name": "ContactActivity",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
       "name": "ContactCustomField",
       "entityType": "tables",
       "schema": "public"
@@ -1723,6 +1792,12 @@
     {
       "isRlsEnabled": false,
       "name": "ContactInboxPost",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "ContactKeywordMessage",
       "entityType": "tables",
       "schema": "public"
     },
@@ -1747,6 +1822,12 @@
     {
       "isRlsEnabled": false,
       "name": "ContactOnSmartDelay",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "ContactState",
       "entityType": "tables",
       "schema": "public"
     },
@@ -1915,6 +1996,18 @@
     {
       "isRlsEnabled": false,
       "name": "FacebookMarketingMessage",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "FacebookMarketingMessageAudience",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "FacebookMarketingMessageRecipient",
       "entityType": "tables",
       "schema": "public"
     },
@@ -2382,6 +2475,66 @@
     },
     {
       "isRlsEnabled": false,
+      "name": "PipelineField",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "PipelineItemActivity",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "PipelineItemAssignee",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "PipelineItemAttachment",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "PipelineItemComment",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "PipelineItemCounter",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "PipelineItem",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "PipelineMember",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "Pipeline",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "PipelineStage",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
       "name": "PlatformCredential",
       "entityType": "tables",
       "schema": "public"
@@ -2671,6 +2824,18 @@
     {
       "isRlsEnabled": false,
       "name": "WorkspaceApiToken",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "WorkspaceBotMessageUsage",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "WorkspaceDeletionRecord",
       "entityType": "tables",
       "schema": "public"
     },
@@ -4065,6 +4230,19 @@
       "table": "AIEmbedding"
     },
     {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "chunkIndex",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AIEmbedding"
+    },
+    {
       "type": "bigint",
       "typeSchema": null,
       "notNull": true,
@@ -4177,6 +4355,45 @@
       "generated": null,
       "identity": null,
       "name": "mimeType",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AIFile"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "chunking",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AIFile"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "chunkingConfig",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AIFile"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "processingRun",
       "entityType": "columns",
       "schema": "public",
       "table": "AIFile"
@@ -5417,97 +5634,6 @@
       "table": "AnalyticsBotMessageEvent"
     },
     {
-      "type": "bigint",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "workspaceId",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "AnalyticsBroadcastEvent"
-    },
-    {
-      "type": "bigint",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "broadcastId",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "AnalyticsBroadcastEvent"
-    },
-    {
-      "type": "bigint",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "contactInboxId",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "AnalyticsBroadcastEvent"
-    },
-    {
-      "type": "analyticsBroadcastEventType",
-      "typeSchema": "public",
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "eventType",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "AnalyticsBroadcastEvent"
-    },
-    {
-      "type": "bigint",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "1",
-      "generated": null,
-      "identity": null,
-      "name": "batchId",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "AnalyticsBroadcastEvent"
-    },
-    {
-      "type": "timestamp(6) with time zone",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "occurredAt",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "AnalyticsBroadcastEvent"
-    },
-    {
-      "type": "timestamp(6) with time zone",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "now()",
-      "generated": null,
-      "identity": null,
-      "name": "insertedAt",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "AnalyticsBroadcastEvent"
-    },
-    {
       "type": "text",
       "typeSchema": null,
       "notNull": true,
@@ -5846,123 +5972,6 @@
       "table": "AnalyticsConversationEvent"
     },
     {
-      "type": "bigint",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "workspaceId",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "AnalyticsFlowNodeEvent"
-    },
-    {
-      "type": "bigint",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "flowId",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "AnalyticsFlowNodeEvent"
-    },
-    {
-      "type": "bigint",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "analyticsId",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "AnalyticsFlowNodeEvent"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "nodeId",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "AnalyticsFlowNodeEvent"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "''",
-      "generated": null,
-      "identity": null,
-      "name": "buttonId",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "AnalyticsFlowNodeEvent"
-    },
-    {
-      "type": "bigint",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "contactInboxId",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "AnalyticsFlowNodeEvent"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "eventType",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "AnalyticsFlowNodeEvent"
-    },
-    {
-      "type": "timestamp(6) with time zone",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "occurredAt",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "AnalyticsFlowNodeEvent"
-    },
-    {
-      "type": "timestamp(6) with time zone",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "now()",
-      "generated": null,
-      "identity": null,
-      "name": "insertedAt",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "AnalyticsFlowNodeEvent"
-    },
-    {
       "type": "text",
       "typeSchema": null,
       "notNull": true,
@@ -6139,97 +6148,6 @@
       "default": null,
       "generated": null,
       "identity": null,
-      "name": "workspaceId",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "AnalyticsSequenceEvent"
-    },
-    {
-      "type": "bigint",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "contactInboxId",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "AnalyticsSequenceEvent"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "eventType",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "AnalyticsSequenceEvent"
-    },
-    {
-      "type": "bigint",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "sequenceId",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "AnalyticsSequenceEvent"
-    },
-    {
-      "type": "bigint",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "stepId",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "AnalyticsSequenceEvent"
-    },
-    {
-      "type": "timestamp(6) with time zone",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "occurredAt",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "AnalyticsSequenceEvent"
-    },
-    {
-      "type": "timestamp(6) with time zone",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "now()",
-      "generated": null,
-      "identity": null,
-      "name": "insertedAt",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "AnalyticsSequenceEvent"
-    },
-    {
-      "type": "bigint",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
       "name": "id",
       "entityType": "columns",
       "schema": "public",
@@ -6264,12 +6182,25 @@
     {
       "type": "bigint",
       "typeSchema": null,
-      "notNull": true,
+      "notNull": false,
       "dimensions": 0,
       "default": null,
       "generated": null,
       "identity": null,
       "name": "topicId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AnalyticsEmailTopic"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "topicReferenceId",
       "entityType": "columns",
       "schema": "public",
       "table": "AnalyticsEmailTopic"
@@ -12096,6 +12027,97 @@
       "default": null,
       "generated": null,
       "identity": null,
+      "name": "workspaceId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "ContactActivity"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "contactId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "ContactActivity"
+    },
+    {
+      "type": "contactActivityType",
+      "typeSchema": "public",
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "activityType",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "ContactActivity"
+    },
+    {
+      "type": "contactActivityReferenceType",
+      "typeSchema": "public",
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "referenceType",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "ContactActivity"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "parentReferenceId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "ContactActivity"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "referenceId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "ContactActivity"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "firstOccurredAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "ContactActivity"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
       "name": "id",
       "entityType": "columns",
       "schema": "public",
@@ -12505,6 +12527,19 @@
       "table": "ContactInbox"
     },
     {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "lastStoryId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "ContactInbox"
+    },
+    {
       "type": "integer",
       "typeSchema": null,
       "notNull": true,
@@ -12789,6 +12824,97 @@
       "entityType": "columns",
       "schema": "public",
       "table": "ContactInboxPost"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "workspaceId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "ContactKeywordMessage"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "contactId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "ContactKeywordMessage"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "messageId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "ContactKeywordMessage"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "automatedResponseId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "ContactKeywordMessage"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "text",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "ContactKeywordMessage"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "normalizedText",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "ContactKeywordMessage"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "occurredAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "ContactKeywordMessage"
     },
     {
       "type": "bigint",
@@ -13403,6 +13529,45 @@
       "entityType": "columns",
       "schema": "public",
       "table": "ContactOnSmartDelay"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "workspaceId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "ContactState"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "contactId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "ContactState"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "lastDeliveredAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "ContactState"
     },
     {
       "type": "bigint",
@@ -17461,6 +17626,45 @@
       "table": "FacebookLeadAdsLead"
     },
     {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "formId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "FacebookLeadAdsLead"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "formName",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "FacebookLeadAdsLead"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "adgroupId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "FacebookLeadAdsLead"
+    },
+    {
       "type": "bigint",
       "typeSchema": null,
       "notNull": false,
@@ -17634,6 +17838,32 @@
       "typeSchema": null,
       "notNull": true,
       "dimensions": 0,
+      "default": "'optIn'",
+      "generated": null,
+      "identity": null,
+      "name": "targetType",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "FacebookMarketingMessage"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "audienceId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "FacebookMarketingMessage"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
       "default": null,
       "generated": null,
       "identity": null,
@@ -17654,6 +17884,617 @@
       "entityType": "columns",
       "schema": "public",
       "table": "FacebookMarketingMessage"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "'scheduled'",
+      "generated": null,
+      "identity": null,
+      "name": "status",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "FacebookMarketingMessage"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "statusReason",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "FacebookMarketingMessage"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "statusErrorCode",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "FacebookMarketingMessage"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "statusErrorMessage",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "FacebookMarketingMessage"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "startsAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "FacebookMarketingMessage"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "startedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "FacebookMarketingMessage"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "firstSentAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "FacebookMarketingMessage"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "completedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "FacebookMarketingMessage"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "nextDayAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "FacebookMarketingMessage"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "metaEndsAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "FacebookMarketingMessage"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "timezoneName",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "FacebookMarketingMessage"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "adSetId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "FacebookMarketingMessage"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "tokenCount",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "FacebookMarketingMessage"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "dayTarget",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "FacebookMarketingMessage"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "0",
+      "generated": null,
+      "identity": null,
+      "name": "daySent",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "FacebookMarketingMessage"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "0",
+      "generated": null,
+      "identity": null,
+      "name": "resumeCount",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "FacebookMarketingMessage"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "FacebookMarketingMessageAudience"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "createdAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "FacebookMarketingMessageAudience"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "updatedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "FacebookMarketingMessageAudience"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "workspaceId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "FacebookMarketingMessageAudience"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "customAudienceId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "FacebookMarketingMessageAudience"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "adAccountId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "FacebookMarketingMessageAudience"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "pageId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "FacebookMarketingMessageAudience"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "name",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "FacebookMarketingMessageAudience"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "description",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "FacebookMarketingMessageAudience"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "rowsUploaded",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "FacebookMarketingMessageAudience"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "readyAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "FacebookMarketingMessageAudience"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "facebookUserId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "FacebookMarketingMessageAudience"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "FacebookMarketingMessageRecipient"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "createdAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "FacebookMarketingMessageRecipient"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "updatedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "FacebookMarketingMessageRecipient"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "workspaceId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "FacebookMarketingMessageRecipient"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "campaignRowId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "FacebookMarketingMessageRecipient"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "subscriptionToken",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "FacebookMarketingMessageRecipient"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "psid",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "FacebookMarketingMessageRecipient"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "mid",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "FacebookMarketingMessageRecipient"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "trackingId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "FacebookMarketingMessageRecipient"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "status",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "FacebookMarketingMessageRecipient"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "0",
+      "generated": null,
+      "identity": null,
+      "name": "attempts",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "FacebookMarketingMessageRecipient"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "nextAttemptAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "FacebookMarketingMessageRecipient"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "nextEligibleAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "FacebookMarketingMessageRecipient"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "sentAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "FacebookMarketingMessageRecipient"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "deliveredAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "FacebookMarketingMessageRecipient"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "failedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "FacebookMarketingMessageRecipient"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "errorCode",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "FacebookMarketingMessageRecipient"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "errorMessage",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "FacebookMarketingMessageRecipient"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "errorSource",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "FacebookMarketingMessageRecipient"
     },
     {
       "type": "bigint",
@@ -29938,6 +30779,1462 @@
       "name": "id",
       "entityType": "columns",
       "schema": "public",
+      "table": "PipelineField"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "createdAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PipelineField"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "updatedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PipelineField"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "workspaceId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PipelineField"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "pipelineId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PipelineField"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "name",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PipelineField"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "referenceName",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PipelineField"
+    },
+    {
+      "type": "customFieldType",
+      "typeSchema": "public",
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "type",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PipelineField"
+    },
+    {
+      "type": "boolean",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "false",
+      "generated": null,
+      "identity": null,
+      "name": "required",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PipelineField"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "position",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PipelineField"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PipelineItemActivity"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "workspaceId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PipelineItemActivity"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "pipelineId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PipelineItemActivity"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "itemId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PipelineItemActivity"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "itemNumber",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PipelineItemActivity"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "itemTitle",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PipelineItemActivity"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "contactId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PipelineItemActivity"
+    },
+    {
+      "type": "pipelineActivityKind",
+      "typeSchema": "public",
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "kind",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PipelineItemActivity"
+    },
+    {
+      "type": "pipelineActorKind",
+      "typeSchema": "public",
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "actorKind",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PipelineItemActivity"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "actorUserId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PipelineItemActivity"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "actorSourceId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PipelineItemActivity"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "fromStageId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PipelineItemActivity"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "toStageId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PipelineItemActivity"
+    },
+    {
+      "type": "pipelineItemStatus",
+      "typeSchema": "public",
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "fromStatus",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PipelineItemActivity"
+    },
+    {
+      "type": "pipelineItemStatus",
+      "typeSchema": "public",
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "toStatus",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PipelineItemActivity"
+    },
+    {
+      "type": "numeric(19,4)",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "fromValue",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PipelineItemActivity"
+    },
+    {
+      "type": "numeric(19,4)",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "toValue",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PipelineItemActivity"
+    },
+    {
+      "type": "pipelineItemPriority",
+      "typeSchema": "public",
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "fromPriority",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PipelineItemActivity"
+    },
+    {
+      "type": "pipelineItemPriority",
+      "typeSchema": "public",
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "toPriority",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PipelineItemActivity"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "fromDueDate",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PipelineItemActivity"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "toDueDate",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PipelineItemActivity"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "fromTitle",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PipelineItemActivity"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "toTitle",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PipelineItemActivity"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "fromPipelineId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PipelineItemActivity"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "1",
+      "generated": null,
+      "identity": null,
+      "name": "version",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PipelineItemActivity"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "occurredAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PipelineItemActivity"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PipelineItemAssignee"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "createdAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PipelineItemAssignee"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "updatedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PipelineItemAssignee"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "workspaceId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PipelineItemAssignee"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "itemId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PipelineItemAssignee"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "workspaceMemberId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PipelineItemAssignee"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "inboxTeamId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PipelineItemAssignee"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PipelineItemAttachment"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "createdAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PipelineItemAttachment"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "updatedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PipelineItemAttachment"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "workspaceId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PipelineItemAttachment"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "itemId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PipelineItemAttachment"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "mediaLibraryFileId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PipelineItemAttachment"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PipelineItemComment"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "createdAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PipelineItemComment"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "updatedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PipelineItemComment"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "workspaceId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PipelineItemComment"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "itemId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PipelineItemComment"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "text",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PipelineItemComment"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "createdById",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PipelineItemComment"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "idempotencyKey",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PipelineItemComment"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "workspaceId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PipelineItemCounter"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "0",
+      "generated": null,
+      "identity": null,
+      "name": "lastNumber",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PipelineItemCounter"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PipelineItem"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "createdAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PipelineItem"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "updatedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PipelineItem"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "workspaceId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PipelineItem"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "pipelineId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PipelineItem"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "stageId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PipelineItem"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "contactId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PipelineItem"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "number",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PipelineItem"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "title",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PipelineItem"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "description",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PipelineItem"
+    },
+    {
+      "type": "numeric(19,4)",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "value",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PipelineItem"
+    },
+    {
+      "type": "pipelineItemStatus",
+      "typeSchema": "public",
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "status",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PipelineItem"
+    },
+    {
+      "type": "pipelineItemPriority",
+      "typeSchema": "public",
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "priority",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PipelineItem"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "dueDate",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PipelineItem"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "fieldValues",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PipelineItem"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "createdById",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PipelineItem"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "closedById",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PipelineItem"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "stageEnteredAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PipelineItem"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "statusChangedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PipelineItem"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "closedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PipelineItem"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "lastCommentAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PipelineItem"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "idempotencyKey",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PipelineItem"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PipelineMember"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "createdAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PipelineMember"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "updatedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PipelineMember"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "workspaceId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PipelineMember"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "pipelineId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PipelineMember"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "workspaceMemberId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PipelineMember"
+    },
+    {
+      "type": "boolean",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "false",
+      "generated": null,
+      "identity": null,
+      "name": "canManageSettings",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PipelineMember"
+    },
+    {
+      "type": "boolean",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "true",
+      "generated": null,
+      "identity": null,
+      "name": "canView",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PipelineMember"
+    },
+    {
+      "type": "boolean",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "false",
+      "generated": null,
+      "identity": null,
+      "name": "canEdit",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PipelineMember"
+    },
+    {
+      "type": "boolean",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "false",
+      "generated": null,
+      "identity": null,
+      "name": "canDelete",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PipelineMember"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Pipeline"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "createdAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Pipeline"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "updatedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Pipeline"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "workspaceId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Pipeline"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "name",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Pipeline"
+    },
+    {
+      "type": "pipelineType",
+      "typeSchema": "public",
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "type",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Pipeline"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "referenceName",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Pipeline"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "currency",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Pipeline"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "settings",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Pipeline"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "createdById",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Pipeline"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PipelineStage"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "createdAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PipelineStage"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "updatedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PipelineStage"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "workspaceId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PipelineStage"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "pipelineId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PipelineStage"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "name",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PipelineStage"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "description",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PipelineStage"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "textColor",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PipelineStage"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "backgroundColor",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PipelineStage"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "position",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PipelineStage"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "bulkJobId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PipelineStage"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
       "table": "PlatformCredential"
     },
     {
@@ -36717,6 +39014,32 @@
       "table": "Workspace"
     },
     {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "deletionRequestedById",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Workspace"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "deletionRequestedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Workspace"
+    },
+    {
       "type": "timestamp(6) with time zone",
       "typeSchema": null,
       "notNull": false,
@@ -36948,6 +39271,318 @@
       "name": "id",
       "entityType": "columns",
       "schema": "public",
+      "table": "WorkspaceBotMessageUsage"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "createdAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WorkspaceBotMessageUsage"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "updatedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WorkspaceBotMessageUsage"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "workspaceId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WorkspaceBotMessageUsage"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "ownerId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WorkspaceBotMessageUsage"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "tenantId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WorkspaceBotMessageUsage"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "periodStart",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WorkspaceBotMessageUsage"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "periodEnd",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WorkspaceBotMessageUsage"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "0",
+      "generated": null,
+      "identity": null,
+      "name": "count",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WorkspaceBotMessageUsage"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WorkspaceDeletionRecord"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "createdAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WorkspaceDeletionRecord"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "updatedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WorkspaceDeletionRecord"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "workspaceId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WorkspaceDeletionRecord"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "workspaceName",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WorkspaceDeletionRecord"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "ownerId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WorkspaceDeletionRecord"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "ownerEmail",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WorkspaceDeletionRecord"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "tenantId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WorkspaceDeletionRecord"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "deletionRequestedById",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WorkspaceDeletionRecord"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "deletionRequestedByEmail",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WorkspaceDeletionRecord"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "deletionRequestedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WorkspaceDeletionRecord"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "scheduledDeletionAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WorkspaceDeletionRecord"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "purgedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WorkspaceDeletionRecord"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "usageSnapshot",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WorkspaceDeletionRecord"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "details",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WorkspaceDeletionRecord"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
       "table": "WorkspaceMac"
     },
     {
@@ -36985,6 +39620,32 @@
       "generated": null,
       "identity": null,
       "name": "workspaceId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WorkspaceMac"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "ownerId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WorkspaceMac"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "tenantId",
       "entityType": "columns",
       "schema": "public",
       "table": "WorkspaceMac"
@@ -37575,6 +40236,27 @@
       "nameExplicit": true,
       "columns": [
         {
+          "value": "workspaceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "AIAgent_workspaceId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "AIAgent"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
           "value": "sourceId",
           "isExpression": false,
           "asc": true,
@@ -37668,6 +40350,48 @@
       "method": "btree",
       "concurrently": false,
       "name": "AIConversationEmbedding_conversationId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "AIConversationEmbedding"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "workspaceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "conversationId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "sourceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "status",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "AIConversationEmbedding_lookup_idx",
       "entityType": "indexes",
       "schema": "public",
       "table": "AIConversationEmbedding"
@@ -37811,6 +40535,55 @@
       "entityType": "indexes",
       "schema": "public",
       "table": "AIEmbedding"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "aiFileId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "chunkIndex",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "AIEmbedding_aiFileId_chunkIndex_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "AIEmbedding"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "workspaceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "AIFile_workspaceId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "AIFile"
     },
     {
       "nameExplicit": true,
@@ -38187,48 +40960,6 @@
           "opclass": null
         },
         {
-          "value": "broadcastId",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": null
-        },
-        {
-          "value": "eventType",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": null
-        },
-        {
-          "value": "occurredAt",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": null
-        }
-      ],
-      "isUnique": false,
-      "where": null,
-      "with": "",
-      "method": "btree",
-      "concurrently": false,
-      "name": "AnalyticsBroadcastEvent_workspaceId_broadcastId_eventType_occurredAt_idx",
-      "entityType": "indexes",
-      "schema": "public",
-      "table": "AnalyticsBroadcastEvent"
-    },
-    {
-      "nameExplicit": true,
-      "columns": [
-        {
-          "value": "workspaceId",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": null
-        },
-        {
           "value": "occurredAt",
           "isExpression": false,
           "asc": true,
@@ -38404,111 +41135,6 @@
           "opclass": null
         },
         {
-          "value": "flowId",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": null
-        },
-        {
-          "value": "analyticsId",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": null
-        },
-        {
-          "value": "nodeId",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": null
-        },
-        {
-          "value": "occurredAt",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": null
-        }
-      ],
-      "isUnique": false,
-      "where": null,
-      "with": "",
-      "method": "btree",
-      "concurrently": false,
-      "name": "AnalyticsFlowNodeEvent_workspaceId_flowId_analyticsId_nodeId_occurredAt_idx",
-      "entityType": "indexes",
-      "schema": "public",
-      "table": "AnalyticsFlowNodeEvent"
-    },
-    {
-      "nameExplicit": true,
-      "columns": [
-        {
-          "value": "workspaceId",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": null
-        },
-        {
-          "value": "flowId",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": null
-        },
-        {
-          "value": "analyticsId",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": null
-        },
-        {
-          "value": "nodeId",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": null
-        },
-        {
-          "value": "buttonId",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": null
-        },
-        {
-          "value": "occurredAt",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": null
-        }
-      ],
-      "isUnique": false,
-      "where": null,
-      "with": "",
-      "method": "btree",
-      "concurrently": false,
-      "name": "AnalyticsFlowNodeEvent_workspaceId_flowId_analyticsId_nodeId_buttonId_occurredAt_idx",
-      "entityType": "indexes",
-      "schema": "public",
-      "table": "AnalyticsFlowNodeEvent"
-    },
-    {
-      "nameExplicit": true,
-      "columns": [
-        {
-          "value": "workspaceId",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": null
-        },
-        {
           "value": "occurredAt",
           "isExpression": false,
           "asc": true,
@@ -38642,55 +41268,6 @@
       "nameExplicit": true,
       "columns": [
         {
-          "value": "workspaceId",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": null
-        },
-        {
-          "value": "sequenceId",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": null
-        },
-        {
-          "value": "stepId",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": null
-        },
-        {
-          "value": "eventType",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": null
-        },
-        {
-          "value": "occurredAt",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": null
-        }
-      ],
-      "isUnique": false,
-      "where": null,
-      "with": "",
-      "method": "btree",
-      "concurrently": false,
-      "name": "AnalyticsSequenceEvent_workspaceId_sequenceId_stepId_eventType_occurredAt_idx",
-      "entityType": "indexes",
-      "schema": "public",
-      "table": "AnalyticsSequenceEvent"
-    },
-    {
-      "nameExplicit": true,
-      "columns": [
-        {
           "value": "token",
           "isExpression": false,
           "asc": true,
@@ -38753,6 +41330,69 @@
       "method": "btree",
       "concurrently": false,
       "name": "AnalyticsEmailTopic_workspaceId_topicId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "AnalyticsEmailTopic"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "contactId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": "\"contactId\" IS NOT NULL",
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "AnalyticsEmailTopic_contactId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "AnalyticsEmailTopic"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "conversationId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": "\"conversationId\" IS NOT NULL",
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "AnalyticsEmailTopic_conversationId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "AnalyticsEmailTopic"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "contactInboxId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": "\"contactInboxId\" IS NOT NULL",
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "AnalyticsEmailTopic_contactInboxId_idx",
       "entityType": "indexes",
       "schema": "public",
       "table": "AnalyticsEmailTopic"
@@ -40593,6 +43233,27 @@
       "with": "",
       "method": "btree",
       "concurrently": false,
+      "name": "CommentAutomationReply_workspaceId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "CommentAutomationReply"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "workspaceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
       "name": "ConnectSession_workspaceId_idx",
       "entityType": "indexes",
       "schema": "public",
@@ -40999,6 +43660,62 @@
       "nameExplicit": true,
       "columns": [
         {
+          "value": "workspaceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "activityType",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "referenceType",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "parentReferenceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "referenceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "contactId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "ContactActivity_reference_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "ContactActivity"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
           "value": "contactId",
           "isExpression": false,
           "asc": true,
@@ -41349,6 +44066,61 @@
       "nameExplicit": true,
       "columns": [
         {
+          "value": "normalizedText",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": {
+            "name": "gin_trgm_ops",
+            "default": false
+          }
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "gin",
+      "concurrently": false,
+      "name": "ContactKeywordMessage_text_trgm_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "ContactKeywordMessage"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "workspaceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "normalizedText",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": {
+            "name": "text_pattern_ops",
+            "default": false
+          }
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "ContactKeywordMessage_text_prefix_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "ContactKeywordMessage"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
           "value": "contactId",
           "isExpression": false,
           "asc": true,
@@ -41383,6 +44155,27 @@
       "method": "btree",
       "concurrently": false,
       "name": "idx_contact_on_broadcast_contact_id",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "ContactOnBroadcast"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "conversationId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "ContactOnBroadcast_conversationId_idx",
       "entityType": "indexes",
       "schema": "public",
       "table": "ContactOnBroadcast"
@@ -41813,6 +44606,55 @@
       "entityType": "indexes",
       "schema": "public",
       "table": "ContactOnSmartDelay"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "workspaceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "lastDeliveredAt",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": "\"lastDeliveredAt\" IS NOT NULL",
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "ContactState_lastDeliveredAt_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "ContactState"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "tagId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "ContactToTag_tagId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "ContactToTag"
     },
     {
       "nameExplicit": true,
@@ -43379,6 +46221,55 @@
       "nameExplicit": true,
       "columns": [
         {
+          "value": "contactId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": "\"contactId\" IS NOT NULL",
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "FacebookLeadAdsLead_contactId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "FacebookLeadAdsLead"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "contactId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "createdAt",
+          "isExpression": false,
+          "asc": false,
+          "nullsFirst": true,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "FacebookLeadAdsLead_contactId_createdAt_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "FacebookLeadAdsLead"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
           "value": "workspaceId",
           "isExpression": false,
           "asc": true,
@@ -43392,6 +46283,55 @@
       "method": "btree",
       "concurrently": false,
       "name": "FacebookMarketingMessage_workspaceId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "FacebookMarketingMessage"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "audienceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "FacebookMarketingMessage_audienceId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "FacebookMarketingMessage"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "status",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "startsAt",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "FacebookMarketingMessage_status_startsAt_idx",
       "entityType": "indexes",
       "schema": "public",
       "table": "FacebookMarketingMessage"
@@ -43416,6 +46356,132 @@
       "entityType": "indexes",
       "schema": "public",
       "table": "FacebookMarketingMessage"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "workspaceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "FacebookMarketingMessageAudience_workspaceId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "FacebookMarketingMessageAudience"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "customAudienceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": true,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "FacebookMarketingMessageAudience_customAudienceId_key",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "FacebookMarketingMessageAudience"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "campaignRowId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "subscriptionToken",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": true,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "FacebookMarketingMessageRecipient_campaign_token_key",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "FacebookMarketingMessageRecipient"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "trackingId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "FacebookMarketingMessageRecipient_trackingId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "FacebookMarketingMessageRecipient"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "campaignRowId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "nextAttemptAt",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "id",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": "\"status\" = 'pending'",
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "FacebookMarketingMessageRecipient_due_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "FacebookMarketingMessageRecipient"
     },
     {
       "nameExplicit": true,
@@ -43514,6 +46580,27 @@
       "entityType": "indexes",
       "schema": "public",
       "table": "File"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "workspaceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "Flow_workspaceId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "Flow"
     },
     {
       "nameExplicit": true,
@@ -43668,6 +46755,111 @@
       "entityType": "indexes",
       "schema": "public",
       "table": "FlowRun"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "workspaceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "FlowRun_workspaceId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "FlowRun"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "flowId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "FlowRun_flowId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "FlowRun"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "flowVersionId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "FlowRun_flowVersionId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "FlowRun"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "workspaceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "FlowVersion_workspaceId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "FlowVersion"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "flowId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "FlowVersion_flowId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "FlowVersion"
     },
     {
       "nameExplicit": true,
@@ -44361,6 +47553,55 @@
       "entityType": "indexes",
       "schema": "public",
       "table": "Inbox"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "workspaceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "InboxTeam_workspaceId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "InboxTeam"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "userId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "inboxTeamId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "InboxTeamMember_userId_inboxTeamId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "InboxTeamMember"
     },
     {
       "nameExplicit": true,
@@ -46074,6 +49315,27 @@
       "nameExplicit": true,
       "columns": [
         {
+          "value": "workspaceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "LeaderboardAuditLog_workspaceId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "LeaderboardAuditLog"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
           "value": "leaderboardId",
           "isExpression": false,
           "asc": true,
@@ -46150,6 +49412,48 @@
       "method": "btree",
       "concurrently": false,
       "name": "LeaderboardParticipant_contactId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "LeaderboardParticipant"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "workspaceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "LeaderboardParticipant_workspaceId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "LeaderboardParticipant"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "referrerContactId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": "\"referrerContactId\" IS NOT NULL",
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "LeaderboardParticipant_referrerContactId_idx",
       "entityType": "indexes",
       "schema": "public",
       "table": "LeaderboardParticipant"
@@ -47348,6 +50652,27 @@
       "nameExplicit": true,
       "columns": [
         {
+          "value": "contactId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": "\"contactId\" IS NOT NULL",
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "MiniAppUpload_contactId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "MiniAppUpload"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
           "value": "workspaceId",
           "isExpression": false,
           "asc": true,
@@ -47459,6 +50784,48 @@
       "method": "btree",
       "concurrently": false,
       "name": "MinigameContact_minigameId_contactId_key",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "MinigameContact"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "referrerContactId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": "\"referrerContactId\" IS NOT NULL",
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "MinigameContact_referrerContactId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "MinigameContact"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "contactInboxId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": "\"contactInboxId\" IS NOT NULL",
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "MinigameContact_contactInboxId_idx",
       "entityType": "indexes",
       "schema": "public",
       "table": "MinigameContact"
@@ -47964,6 +51331,1014 @@
       "nameExplicit": true,
       "columns": [
         {
+          "value": "pipelineId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "referenceName",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": true,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "PipelineField_pipelineId_referenceName_key",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "PipelineField"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "workspaceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "PipelineField_workspaceId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "PipelineField"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "workspaceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "pipelineId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "kind",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "occurredAt",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "PipelineItemActivity_pipeline_kind_occurredAt_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "PipelineItemActivity"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "workspaceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "itemId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "\"occurredAt\" DESC",
+          "isExpression": true,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "PipelineItemActivity_item_occurredAt_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "PipelineItemActivity"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "workspaceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "contactId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "PipelineItemActivity_contact_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "PipelineItemActivity"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "pipelineId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "PipelineItemActivity_pipelineId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "PipelineItemActivity"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "actorUserId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": "\"actorUserId\" IS NOT NULL",
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "PipelineItemActivity_actorUserId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "PipelineItemActivity"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "itemId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "workspaceMemberId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": true,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "PipelineItemAssignee_item_member_key",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "PipelineItemAssignee"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "itemId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "inboxTeamId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": true,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "PipelineItemAssignee_item_team_key",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "PipelineItemAssignee"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "workspaceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "workspaceMemberId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "PipelineItemAssignee_member_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "PipelineItemAssignee"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "workspaceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "inboxTeamId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "PipelineItemAssignee_team_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "PipelineItemAssignee"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "workspaceMemberId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": "\"workspaceMemberId\" IS NOT NULL",
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "PipelineItemAssignee_workspaceMemberId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "PipelineItemAssignee"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "inboxTeamId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": "\"inboxTeamId\" IS NOT NULL",
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "PipelineItemAssignee_inboxTeamId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "PipelineItemAssignee"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "itemId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "mediaLibraryFileId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": true,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "PipelineItemAttachment_item_file_key",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "PipelineItemAttachment"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "mediaLibraryFileId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "PipelineItemAttachment_mediaLibraryFileId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "PipelineItemAttachment"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "workspaceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "PipelineItemAttachment_workspaceId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "PipelineItemAttachment"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "itemId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "\"createdAt\" DESC",
+          "isExpression": true,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "PipelineItemComment_item_createdAt_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "PipelineItemComment"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "createdById",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": "\"createdById\" IS NOT NULL",
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "PipelineItemComment_createdById_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "PipelineItemComment"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "workspaceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "itemId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "idempotencyKey",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": true,
+      "where": "\"idempotencyKey\" IS NOT NULL",
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "PipelineItemComment_item_idempotencyKey_key",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "PipelineItemComment"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "workspaceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "number",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": true,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "PipelineItem_workspaceId_number_key",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "PipelineItem"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "workspaceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "pipelineId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "idempotencyKey",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": true,
+      "where": "\"idempotencyKey\" IS NOT NULL",
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "PipelineItem_pipeline_idempotencyKey_key",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "PipelineItem"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "workspaceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "pipelineId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "contactId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "status",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "\"createdAt\" DESC",
+          "isExpression": true,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "PipelineItem_contact_status_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "PipelineItem"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "pipelineId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "stageId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "\"createdAt\" DESC",
+          "isExpression": true,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "\"id\" DESC",
+          "isExpression": true,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "PipelineItem_stage_createdAt_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "PipelineItem"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "pipelineId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "\"createdAt\" DESC",
+          "isExpression": true,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "\"id\" DESC",
+          "isExpression": true,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "PipelineItem_pipeline_createdAt_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "PipelineItem"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "pipelineId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "id",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "PipelineItem_pipeline_id_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "PipelineItem"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "contactId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "PipelineItem_contactId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "PipelineItem"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "stageId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "PipelineItem_stageId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "PipelineItem"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "createdById",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": "\"createdById\" IS NOT NULL",
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "PipelineItem_createdById_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "PipelineItem"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "closedById",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": "\"closedById\" IS NOT NULL",
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "PipelineItem_closedById_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "PipelineItem"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "pipelineId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "workspaceMemberId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": true,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "PipelineMember_pipeline_member_key",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "PipelineMember"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "workspaceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "workspaceMemberId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "PipelineMember_member_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "PipelineMember"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "workspaceMemberId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "PipelineMember_workspaceMemberId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "PipelineMember"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "workspaceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "referenceName",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": true,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "Pipeline_workspaceId_referenceName_key",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "Pipeline"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "workspaceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "name",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": true,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "Pipeline_workspaceId_name_key",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "Pipeline"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "createdById",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": "\"createdById\" IS NOT NULL",
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "Pipeline_createdById_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "Pipeline"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "pipelineId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "position",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "PipelineStage_pipelineId_position_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "PipelineStage"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "workspaceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "PipelineStage_workspaceId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "PipelineStage"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
           "value": "userId",
           "isExpression": false,
           "asc": true,
@@ -48461,6 +52836,104 @@
       "nameExplicit": true,
       "columns": [
         {
+          "value": "contactId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "QuestionnaireSubmission_contactId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "QuestionnaireSubmission"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "conversationId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": "\"conversationId\" IS NOT NULL",
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "QuestionnaireSubmission_conversationId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "QuestionnaireSubmission"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "currentQuestionId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": "\"currentQuestionId\" IS NOT NULL",
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "QuestionnaireSubmission_currentQuestionId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "QuestionnaireSubmission"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "workspaceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "contactId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "completedAt",
+          "isExpression": false,
+          "asc": false,
+          "nullsFirst": true,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "QuestionnaireSubmission_workspaceId_contactId_completedAt_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "QuestionnaireSubmission"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
           "value": "workspaceId",
           "isExpression": false,
           "asc": true,
@@ -48580,6 +53053,27 @@
       "nameExplicit": true,
       "columns": [
         {
+          "value": "workspaceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "SavedReply_workspaceId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "SavedReply"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
           "value": "savedReplyId",
           "isExpression": false,
           "asc": true,
@@ -48614,6 +53108,27 @@
       "method": "btree",
       "concurrently": false,
       "name": "SavedReplyImage_mediaLibraryFileId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "SavedReplyImage"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "workspaceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "SavedReplyImage_workspaceId_idx",
       "entityType": "indexes",
       "schema": "public",
       "table": "SavedReplyImage"
@@ -49020,6 +53535,48 @@
       "method": "btree",
       "concurrently": false,
       "name": "SequenceDispatch_contactInboxId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "SequenceDispatch"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "sequenceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "SequenceDispatch_sequenceId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "SequenceDispatch"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "stepId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "SequenceDispatch_stepId_idx",
       "entityType": "indexes",
       "schema": "public",
       "table": "SequenceDispatch"
@@ -51093,6 +55650,139 @@
       "nameExplicit": true,
       "columns": [
         {
+          "value": "ownerId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "periodStart",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "WorkspaceBotMessageUsage_ownerId_periodStart_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "WorkspaceBotMessageUsage"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "tenantId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "periodStart",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "WorkspaceBotMessageUsage_tenantId_periodStart_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "WorkspaceBotMessageUsage"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "ownerEmail",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "WorkspaceDeletionRecord_ownerEmail_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "WorkspaceDeletionRecord"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "ownerId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "periodStart",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "WorkspaceMac_ownerId_periodStart_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "WorkspaceMac"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "tenantId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "periodStart",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "WorkspaceMac_tenantId_periodStart_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "WorkspaceMac"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
           "value": "workspaceId",
           "isExpression": false,
           "asc": true,
@@ -51673,23 +56363,6 @@
       ],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
-      "name": "AnalyticsBroadcastEvent_workspaceId_Workspace_id_fkey",
-      "entityType": "fks",
-      "schema": "public",
-      "table": "AnalyticsBroadcastEvent"
-    },
-    {
-      "nameExplicit": false,
-      "columns": [
-        "workspaceId"
-      ],
-      "schemaTo": "public",
-      "tableTo": "Workspace",
-      "columnsTo": [
-        "id"
-      ],
-      "onUpdate": "NO ACTION",
-      "onDelete": "CASCADE",
       "name": "AnalyticsContactEvent_workspaceId_Workspace_id_fkey",
       "entityType": "fks",
       "schema": "public",
@@ -51724,44 +56397,10 @@
       ],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
-      "name": "AnalyticsFlowNodeEvent_workspaceId_Workspace_id_fkey",
-      "entityType": "fks",
-      "schema": "public",
-      "table": "AnalyticsFlowNodeEvent"
-    },
-    {
-      "nameExplicit": false,
-      "columns": [
-        "workspaceId"
-      ],
-      "schemaTo": "public",
-      "tableTo": "Workspace",
-      "columnsTo": [
-        "id"
-      ],
-      "onUpdate": "NO ACTION",
-      "onDelete": "CASCADE",
       "name": "AnalyticsMessageEvent_workspaceId_Workspace_id_fkey",
       "entityType": "fks",
       "schema": "public",
       "table": "AnalyticsMessageEvent"
-    },
-    {
-      "nameExplicit": false,
-      "columns": [
-        "workspaceId"
-      ],
-      "schemaTo": "public",
-      "tableTo": "Workspace",
-      "columnsTo": [
-        "id"
-      ],
-      "onUpdate": "NO ACTION",
-      "onDelete": "CASCADE",
-      "name": "AnalyticsSequenceEvent_workspaceId_Workspace_id_fkey",
-      "entityType": "fks",
-      "schema": "public",
-      "table": "AnalyticsSequenceEvent"
     },
     {
       "nameExplicit": false,
@@ -51774,7 +56413,7 @@
         "id"
       ],
       "onUpdate": "CASCADE",
-      "onDelete": "CASCADE",
+      "onDelete": "SET NULL",
       "name": "AnalyticsEmailTopic_topicId_EmailTopic_id_fkey",
       "entityType": "fks",
       "schema": "public",
@@ -54176,6 +58815,74 @@
       "entityType": "fks",
       "schema": "public",
       "table": "FacebookMarketingMessage"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "audienceId"
+      ],
+      "schemaTo": "public",
+      "tableTo": "FacebookMarketingMessageAudience",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "CASCADE",
+      "onDelete": "RESTRICT",
+      "name": "FacebookMarketingMessage_3m4P7t9wgiEX_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "FacebookMarketingMessage"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "workspaceId"
+      ],
+      "schemaTo": "public",
+      "tableTo": "Workspace",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "FacebookMarketingMessageAudience_workspaceId_Workspace_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "FacebookMarketingMessageAudience"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "workspaceId"
+      ],
+      "schemaTo": "public",
+      "tableTo": "Workspace",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "FacebookMarketingMessageRecipient_workspaceId_Workspace_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "FacebookMarketingMessageRecipient"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "campaignRowId"
+      ],
+      "schemaTo": "public",
+      "tableTo": "FacebookMarketingMessage",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "FacebookMarketingMessageRecipient_JpRpjGJ419Rs_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "FacebookMarketingMessageRecipient"
     },
     {
       "nameExplicit": false,
@@ -57172,6 +61879,499 @@
     {
       "nameExplicit": false,
       "columns": [
+        "workspaceId"
+      ],
+      "schemaTo": "public",
+      "tableTo": "Workspace",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "PipelineField_workspaceId_Workspace_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "PipelineField"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "pipelineId"
+      ],
+      "schemaTo": "public",
+      "tableTo": "Pipeline",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "PipelineField_pipelineId_Pipeline_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "PipelineField"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "workspaceId"
+      ],
+      "schemaTo": "public",
+      "tableTo": "Workspace",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "PipelineItemActivity_workspaceId_Workspace_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "PipelineItemActivity"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "pipelineId"
+      ],
+      "schemaTo": "public",
+      "tableTo": "Pipeline",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "PipelineItemActivity_pipelineId_Pipeline_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "PipelineItemActivity"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "actorUserId"
+      ],
+      "schemaTo": "public",
+      "tableTo": "User",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "CASCADE",
+      "onDelete": "SET NULL",
+      "name": "PipelineItemActivity_actorUserId_User_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "PipelineItemActivity"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "workspaceId"
+      ],
+      "schemaTo": "public",
+      "tableTo": "Workspace",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "PipelineItemAssignee_workspaceId_Workspace_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "PipelineItemAssignee"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "itemId"
+      ],
+      "schemaTo": "public",
+      "tableTo": "PipelineItem",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "PipelineItemAssignee_itemId_PipelineItem_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "PipelineItemAssignee"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "workspaceMemberId"
+      ],
+      "schemaTo": "public",
+      "tableTo": "WorkspaceMember",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "PipelineItemAssignee_workspaceMemberId_WorkspaceMember_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "PipelineItemAssignee"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "inboxTeamId"
+      ],
+      "schemaTo": "public",
+      "tableTo": "InboxTeam",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "PipelineItemAssignee_inboxTeamId_InboxTeam_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "PipelineItemAssignee"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "workspaceId"
+      ],
+      "schemaTo": "public",
+      "tableTo": "Workspace",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "PipelineItemAttachment_workspaceId_Workspace_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "PipelineItemAttachment"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "itemId"
+      ],
+      "schemaTo": "public",
+      "tableTo": "PipelineItem",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "PipelineItemAttachment_itemId_PipelineItem_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "PipelineItemAttachment"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "mediaLibraryFileId"
+      ],
+      "schemaTo": "public",
+      "tableTo": "MediaLibraryFile",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "PipelineItemAttachment_BBiTPytjYFfD_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "PipelineItemAttachment"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "workspaceId"
+      ],
+      "schemaTo": "public",
+      "tableTo": "Workspace",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "PipelineItemComment_workspaceId_Workspace_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "PipelineItemComment"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "itemId"
+      ],
+      "schemaTo": "public",
+      "tableTo": "PipelineItem",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "PipelineItemComment_itemId_PipelineItem_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "PipelineItemComment"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "createdById"
+      ],
+      "schemaTo": "public",
+      "tableTo": "User",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "CASCADE",
+      "onDelete": "SET NULL",
+      "name": "PipelineItemComment_createdById_User_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "PipelineItemComment"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "workspaceId"
+      ],
+      "schemaTo": "public",
+      "tableTo": "Workspace",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "PipelineItemCounter_workspaceId_Workspace_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "PipelineItemCounter"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "workspaceId"
+      ],
+      "schemaTo": "public",
+      "tableTo": "Workspace",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "PipelineItem_workspaceId_Workspace_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "PipelineItem"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "pipelineId"
+      ],
+      "schemaTo": "public",
+      "tableTo": "Pipeline",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "PipelineItem_pipelineId_Pipeline_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "PipelineItem"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "stageId"
+      ],
+      "schemaTo": "public",
+      "tableTo": "PipelineStage",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "PipelineItem_stageId_PipelineStage_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "PipelineItem"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "contactId"
+      ],
+      "schemaTo": "public",
+      "tableTo": "Contact",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "PipelineItem_contactId_Contact_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "PipelineItem"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "createdById"
+      ],
+      "schemaTo": "public",
+      "tableTo": "User",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "CASCADE",
+      "onDelete": "SET NULL",
+      "name": "PipelineItem_createdById_User_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "PipelineItem"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "closedById"
+      ],
+      "schemaTo": "public",
+      "tableTo": "User",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "CASCADE",
+      "onDelete": "SET NULL",
+      "name": "PipelineItem_closedById_User_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "PipelineItem"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "workspaceId"
+      ],
+      "schemaTo": "public",
+      "tableTo": "Workspace",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "PipelineMember_workspaceId_Workspace_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "PipelineMember"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "pipelineId"
+      ],
+      "schemaTo": "public",
+      "tableTo": "Pipeline",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "PipelineMember_pipelineId_Pipeline_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "PipelineMember"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "workspaceMemberId"
+      ],
+      "schemaTo": "public",
+      "tableTo": "WorkspaceMember",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "PipelineMember_workspaceMemberId_WorkspaceMember_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "PipelineMember"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "workspaceId"
+      ],
+      "schemaTo": "public",
+      "tableTo": "Workspace",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "Pipeline_workspaceId_Workspace_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "Pipeline"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "createdById"
+      ],
+      "schemaTo": "public",
+      "tableTo": "User",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "CASCADE",
+      "onDelete": "SET NULL",
+      "name": "Pipeline_createdById_User_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "Pipeline"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "workspaceId"
+      ],
+      "schemaTo": "public",
+      "tableTo": "Workspace",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "PipelineStage_workspaceId_Workspace_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "PipelineStage"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "pipelineId"
+      ],
+      "schemaTo": "public",
+      "tableTo": "Pipeline",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "PipelineStage_pipelineId_Pipeline_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "PipelineStage"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
         "userId"
       ],
       "schemaTo": "public",
@@ -58980,16 +64180,33 @@
     {
       "nameExplicit": false,
       "columns": [
-        "workspaceId"
+        "ownerId"
       ],
       "schemaTo": "public",
-      "tableTo": "Workspace",
+      "tableTo": "User",
       "columnsTo": [
         "id"
       ],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
-      "name": "WorkspaceMac_workspaceId_Workspace_id_fkey",
+      "name": "WorkspaceBotMessageUsage_ownerId_User_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "WorkspaceBotMessageUsage"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "ownerId"
+      ],
+      "schemaTo": "public",
+      "tableTo": "User",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "WorkspaceMac_ownerId_User_id_fkey",
       "entityType": "fks",
       "schema": "public",
       "table": "WorkspaceMac"
@@ -59052,20 +64269,6 @@
     },
     {
       "columns": [
-        "broadcastId",
-        "contactInboxId",
-        "batchId",
-        "eventType",
-        "occurredAt"
-      ],
-      "nameExplicit": false,
-      "name": "AnalyticsBroadcastEvent_pkey",
-      "entityType": "pks",
-      "schema": "public",
-      "table": "AnalyticsBroadcastEvent"
-    },
-    {
-      "columns": [
         "occurredAt",
         "eventId"
       ],
@@ -59088,22 +64291,6 @@
     },
     {
       "columns": [
-        "flowId",
-        "analyticsId",
-        "nodeId",
-        "buttonId",
-        "contactInboxId",
-        "eventType",
-        "occurredAt"
-      ],
-      "nameExplicit": false,
-      "name": "AnalyticsFlowNodeEvent_pkey",
-      "entityType": "pks",
-      "schema": "public",
-      "table": "AnalyticsFlowNodeEvent"
-    },
-    {
-      "columns": [
         "occurredAt",
         "eventId"
       ],
@@ -59112,20 +64299,6 @@
       "entityType": "pks",
       "schema": "public",
       "table": "AnalyticsMessageEvent"
-    },
-    {
-      "columns": [
-        "sequenceId",
-        "stepId",
-        "contactInboxId",
-        "eventType",
-        "occurredAt"
-      ],
-      "nameExplicit": false,
-      "name": "AnalyticsSequenceEvent_pkey",
-      "entityType": "pks",
-      "schema": "public",
-      "table": "AnalyticsSequenceEvent"
     },
     {
       "columns": [
@@ -59189,6 +64362,21 @@
     {
       "columns": [
         "workspaceId",
+        "contactId",
+        "activityType",
+        "referenceType",
+        "parentReferenceId",
+        "referenceId"
+      ],
+      "nameExplicit": true,
+      "name": "ContactActivity_pkey",
+      "entityType": "pks",
+      "schema": "public",
+      "table": "ContactActivity"
+    },
+    {
+      "columns": [
+        "workspaceId",
         "contactInboxId",
         "postId"
       ],
@@ -59197,6 +64385,18 @@
       "entityType": "pks",
       "schema": "public",
       "table": "ContactInboxPost"
+    },
+    {
+      "columns": [
+        "workspaceId",
+        "contactId",
+        "messageId"
+      ],
+      "nameExplicit": true,
+      "name": "ContactKeywordMessage_pkey",
+      "entityType": "pks",
+      "schema": "public",
+      "table": "ContactKeywordMessage"
     },
     {
       "columns": [
@@ -59219,6 +64419,17 @@
       "entityType": "pks",
       "schema": "public",
       "table": "ContactOnSequence"
+    },
+    {
+      "columns": [
+        "workspaceId",
+        "contactId"
+      ],
+      "nameExplicit": true,
+      "name": "ContactState_pkey",
+      "entityType": "pks",
+      "schema": "public",
+      "table": "ContactState"
     },
     {
       "columns": [
@@ -59274,6 +64485,17 @@
       "entityType": "pks",
       "schema": "public",
       "table": "Message"
+    },
+    {
+      "columns": [
+        "id",
+        "workspaceId"
+      ],
+      "nameExplicit": true,
+      "name": "PipelineItemActivity_pkey",
+      "entityType": "pks",
+      "schema": "public",
+      "table": "PipelineItemActivity"
     },
     {
       "columns": [
@@ -59995,6 +65217,26 @@
       "name": "FacebookMarketingMessage_pkey",
       "schema": "public",
       "table": "FacebookMarketingMessage",
+      "entityType": "pks"
+    },
+    {
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "name": "FacebookMarketingMessageAudience_pkey",
+      "schema": "public",
+      "table": "FacebookMarketingMessageAudience",
+      "entityType": "pks"
+    },
+    {
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "name": "FacebookMarketingMessageRecipient_pkey",
+      "schema": "public",
+      "table": "FacebookMarketingMessageRecipient",
       "entityType": "pks"
     },
     {
@@ -60732,6 +65974,96 @@
         "id"
       ],
       "nameExplicit": false,
+      "name": "PipelineField_pkey",
+      "schema": "public",
+      "table": "PipelineField",
+      "entityType": "pks"
+    },
+    {
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "name": "PipelineItemAssignee_pkey",
+      "schema": "public",
+      "table": "PipelineItemAssignee",
+      "entityType": "pks"
+    },
+    {
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "name": "PipelineItemAttachment_pkey",
+      "schema": "public",
+      "table": "PipelineItemAttachment",
+      "entityType": "pks"
+    },
+    {
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "name": "PipelineItemComment_pkey",
+      "schema": "public",
+      "table": "PipelineItemComment",
+      "entityType": "pks"
+    },
+    {
+      "columns": [
+        "workspaceId"
+      ],
+      "nameExplicit": false,
+      "name": "PipelineItemCounter_pkey",
+      "schema": "public",
+      "table": "PipelineItemCounter",
+      "entityType": "pks"
+    },
+    {
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "name": "PipelineItem_pkey",
+      "schema": "public",
+      "table": "PipelineItem",
+      "entityType": "pks"
+    },
+    {
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "name": "PipelineMember_pkey",
+      "schema": "public",
+      "table": "PipelineMember",
+      "entityType": "pks"
+    },
+    {
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "name": "Pipeline_pkey",
+      "schema": "public",
+      "table": "Pipeline",
+      "entityType": "pks"
+    },
+    {
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "name": "PipelineStage_pkey",
+      "schema": "public",
+      "table": "PipelineStage",
+      "entityType": "pks"
+    },
+    {
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
       "name": "Credential_pkey",
       "schema": "public",
       "table": "PlatformCredential",
@@ -61192,6 +66524,26 @@
         "id"
       ],
       "nameExplicit": false,
+      "name": "WorkspaceBotMessageUsage_pkey",
+      "schema": "public",
+      "table": "WorkspaceBotMessageUsage",
+      "entityType": "pks"
+    },
+    {
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "name": "WorkspaceDeletionRecord_pkey",
+      "schema": "public",
+      "table": "WorkspaceDeletionRecord",
+      "entityType": "pks"
+    },
+    {
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
       "name": "WorkspaceMac_pkey",
       "schema": "public",
       "table": "WorkspaceMac",
@@ -61289,6 +66641,29 @@
       "entityType": "uniques",
       "schema": "public",
       "table": "WorkspaceApiToken"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        "workspaceId",
+        "periodStart"
+      ],
+      "nullsNotDistinct": false,
+      "name": "WorkspaceBotMessageUsage_workspaceId_periodStart_key",
+      "entityType": "uniques",
+      "schema": "public",
+      "table": "WorkspaceBotMessageUsage"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        "workspaceId"
+      ],
+      "nullsNotDistinct": false,
+      "name": "WorkspaceDeletionRecord_workspaceId_key",
+      "entityType": "uniques",
+      "schema": "public",
+      "table": "WorkspaceDeletionRecord"
     },
     {
       "nameExplicit": true,
@@ -61445,6 +66820,13 @@
       "table": "Connection"
     },
     {
+      "value": "(\"activityType\" = 'flowExecuted' AND \"referenceType\" = 'flow' AND \"parentReferenceId\" = 0) OR (\"activityType\" = 'flowNodeExecuted' AND \"referenceType\" = 'flowNode' AND \"parentReferenceId\" <> 0) OR (\"activityType\" = 'automatedResponseMatched' AND \"referenceType\" = 'automatedResponse' AND \"parentReferenceId\" = 0) OR (\"activityType\" = 'formCompleted' AND \"referenceType\" = 'whatsappFlow' AND \"parentReferenceId\" = 0) OR (\"activityType\" = 'messageSent' AND \"referenceType\" = 'emailTopic' AND \"parentReferenceId\" = 0) OR (\"activityType\" = 'messageDelivered' AND \"referenceType\" = 'emailTopic' AND \"parentReferenceId\" = 0) OR (\"activityType\" = 'messageOpened' AND \"referenceType\" = 'emailTopic' AND \"parentReferenceId\" = 0) OR (\"activityType\" = 'messageClicked' AND \"referenceType\" = 'emailTopic' AND \"parentReferenceId\" = 0)",
+      "name": "ContactActivity_allowed_pair_check",
+      "entityType": "checks",
+      "schema": "public",
+      "table": "ContactActivity"
+    },
+    {
       "value": "\"usedCount\" >= 0 AND (\"usageLimit\" IS NULL OR \"usedCount\" <= \"usageLimit\")",
       "name": "DiscountCode_usedCount_check",
       "entityType": "checks",
@@ -61562,6 +66944,13 @@
       "entityType": "checks",
       "schema": "public",
       "table": "MetaCapiEvent"
+    },
+    {
+      "value": "(\"workspaceMemberId\" IS NULL) <> (\"inboxTeamId\" IS NULL)",
+      "name": "PipelineItemAssignee_one_target_check",
+      "entityType": "checks",
+      "schema": "public",
+      "table": "PipelineItemAssignee"
     },
     {
       "value": "(\"customFieldId\" IS NULL) OR (\"systemFieldKey\" IS NULL)",
