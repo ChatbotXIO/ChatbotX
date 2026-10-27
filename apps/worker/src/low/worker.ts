@@ -20,6 +20,7 @@ import { updateContactAvatar } from "../integration/handlers/contact/update-avat
 import { receiveComment } from "../integration/handlers/received-message"
 import { processLeaderboardJob } from "../leaderboard/process-job"
 import { ensureBootstrapped } from "../lib/bootstrap"
+import { instrumentWorker } from "../lib/job-observability"
 import { logger } from "../lib/logger"
 import { runJobWithAuditContext } from "../lib/run-job-with-audit-context"
 
@@ -28,8 +29,8 @@ import { runJobWithAuditContext } from "../lib/run-job-with-audit-context"
  */
 async function processLowJob(job: Job<LowJobData>) {
   const workspaceId = job.data.data.workspaceId
-  return await withBlockedOwnerGuard(workspaceId, async () => {
-    return await runJobWithAuditContext(
+  await withBlockedOwnerGuard(workspaceId, async () => {
+    await runJobWithAuditContext(
       { workspaceId, source: `low:${job.data.type}` },
       async () => {
         switch (job.data.type) {
@@ -42,7 +43,8 @@ async function processLowJob(job: Job<LowJobData>) {
             return
           }
           case LowJobAction.replayMissedComment: {
-            return await receiveComment(job.data.data)
+            await receiveComment(job.data.data)
+            return
           }
           default: {
             // Exhaustiveness guard — a new LowJobData variant without a
@@ -110,7 +112,7 @@ async function startLowWorker() {
     queueNames.enum.low,
     async (job: Job<LowJobData>) => {
       try {
-        return await processLowJob(job)
+        await processLowJob(job)
       } finally {
         await settleMissedCommentReplay(job)
       }
@@ -127,6 +129,7 @@ async function startLowWorker() {
       logger.error({ err }, `Low job ${job.id} has failed`)
     }
   })
+  instrumentWorker(worker, { queue: queueNames.enum.low })
 
   // Rate-limited provider enrichment (contact relationship snapshots). Its own
   // queue + limiter so the provider rate limit never throttles the shared
@@ -157,6 +160,9 @@ async function startLowWorker() {
       logger.error({ err }, `Profile snapshot job ${job.id} has failed`)
     }
   })
+  instrumentWorker(profileSnapshotWorker, {
+    queue: queueNames.enum.profileSnapshot,
+  })
 
   // Leaderboard scoring: its own queue so a livestream burst never delays the
   // shared `low` jobs, with bounded concurrency so it cannot flood Postgres.
@@ -185,6 +191,7 @@ async function startLowWorker() {
       logger.error({ err }, `Leaderboard job ${job.id} has failed`)
     }
   })
+  instrumentWorker(leaderboardWorker, { queue: queueNames.enum.leaderboard })
 
   let isShuttingDown = false
   async function shutdown() {

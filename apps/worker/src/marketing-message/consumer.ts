@@ -7,6 +7,7 @@ import {
 } from "@chatbotx.io/worker-config"
 import { type Job, Worker } from "bullmq"
 import { env } from "../env"
+import { instrumentWorker } from "../lib/job-observability"
 import { logger } from "../lib/logger"
 import { processMarketingMessageCampaign } from "../schedule/handlers/process-marketing-message-campaign"
 
@@ -38,6 +39,7 @@ export function startMarketingMessageWorker(): Worker<MarketingMessageJobData> {
       logger.error({ err, jobId: job.id }, "Marketing message job failed")
     }
   })
+  instrumentWorker(worker, { queue: queueNames.enum.marketingMessage })
 
   return worker
 }

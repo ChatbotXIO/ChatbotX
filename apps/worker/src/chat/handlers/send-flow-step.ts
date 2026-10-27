@@ -479,7 +479,7 @@ export async function sendFlowStep({
     id: conversationId,
   })
   if (!conversation) {
-    return { skipped: "conversation-not-found" }
+    return
   }
 
   const targetContactInbox = await findTargetContactInbox({
@@ -488,7 +488,7 @@ export async function sendFlowStep({
     contactInboxId,
   })
   if (!targetContactInbox) {
-    return { skipped: "contact-inbox-not-found" }
+    return
   }
   const isBulkOutbound = isBulkOutboundMetadata(metadata, isBulkBroadcast)
 
@@ -532,18 +532,16 @@ export async function sendFlowStep({
       },
       "Skipping flow step unsupported on the resolved channel",
     )
-    return { skipped: "unsupported-step" }
+    return
   }
 
   if (step.stepType === stepTypes.enum.sendWaTemplateMessage) {
     if (targetContactInbox.channel !== channelTypes.enum.whatsapp) {
-      return { skipped: "channel-mismatch" }
+      return
     }
 
-    let createdMessageId: string | undefined
-
     try {
-      const result = await processWhatsappTemplate({
+      await processWhatsappTemplate({
         conversation,
         contactInbox: targetContactInbox,
         template: {
@@ -562,31 +560,24 @@ export async function sendFlowStep({
         metadata,
         isBulkBroadcast,
         sentByUserId,
-        onMessageCreated: (messageId) => {
-          createdMessageId = messageId
-        },
       })
-      return { messageId: result.messageId }
     } catch (error) {
       logger.error(
         error,
         `sendFlowStep WhatsApp template error for conversationId: ${conversationId}`,
       )
-      return createdMessageId
-        ? { messageId: createdMessageId }
-        : { skipped: "template-send-failed" }
     }
+
+    return
   }
 
   if (step.stepType === stepTypes.enum.sendMessengerTemplateMessage) {
     if (targetContactInbox.channel !== channelTypes.enum.messenger) {
-      return { skipped: "channel-mismatch" }
+      return
     }
 
-    let createdMessageId: string | undefined
-
     try {
-      const result = await processMessengerTemplate({
+      await processMessengerTemplate({
         conversation,
         contactInbox: targetContactInbox,
         template: {
@@ -605,20 +596,15 @@ export async function sendFlowStep({
         metadata,
         isBulkBroadcast,
         sentByUserId,
-        onMessageCreated: (messageId) => {
-          createdMessageId = messageId
-        },
       })
-      return { messageId: result.messageId }
     } catch (error) {
       logger.error(
         error,
         `sendFlowStep Messenger template error for conversationId: ${conversationId}`,
       )
-      return createdMessageId
-        ? { messageId: createdMessageId }
-        : { skipped: "template-send-failed" }
     }
+
+    return
   }
   const eventLogData = {
     context: {
@@ -652,7 +638,7 @@ export async function sendFlowStep({
       },
       "Skipping non-deliverable flow step",
     )
-    return { skipped: "non-deliverable-step" }
+    return
   }
 
   // Spintax is on here because only channelDeliverableStepTypes reach this
@@ -689,7 +675,7 @@ export async function sendFlowStep({
       { conversationId, flowId, stepId: step.id },
       "Skipping a product collection that matched no product",
     )
-    return { skipped: "empty-product-collection" }
+    return
   }
 
   if (isBlankTextCarrierStep(resolvedStep as SendFlowStepData)) {
@@ -703,7 +689,7 @@ export async function sendFlowStep({
       },
       "Skipping blank text flow step",
     )
-    return { skipped: "blank-text" }
+    return
   }
 
   const storedContent = resolveStoredStepContent(
@@ -1115,7 +1101,6 @@ export async function sendFlowStep({
         },
       })
     }
-    return { messageId: message.id }
   } catch (error) {
     const parsedError = await parseSdkError(error)
 
@@ -1184,7 +1169,6 @@ export async function sendFlowStep({
         },
       })
     }
-    return message ? { messageId: message.id } : { skipped: "send-failed" }
   }
 }
 

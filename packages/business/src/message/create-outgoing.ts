@@ -16,7 +16,6 @@ import {
   uploadMultipleFiles,
 } from "@chatbotx.io/filesystem"
 import type { SendProductsContent } from "@chatbotx.io/flow-config"
-import { incrementMessage } from "@chatbotx.io/observability"
 import { createId } from "@chatbotx.io/utils"
 import { channelTypes } from "@chatbotx.io/utils/channel"
 import {
@@ -45,6 +44,10 @@ import { resolveTenantSettings } from "../platform/settings"
 import { productMessageService } from "../product-message/service"
 import { getPublicFileUrl } from "../utils"
 import { recordAgentReply } from "../working-hours/agent-reply-metric"
+import {
+  recordMessageMetric,
+  resolveMessageMetricChannel,
+} from "./record-metric"
 
 type CreateOutgoingInput = (
   | { flowId: string; nodeId?: string }
@@ -385,10 +388,10 @@ export const createOutgoing = async (props: {
     attachmentInputs.length > 0
       ? await repository.createWithAttachments(messageInput, attachmentInputs)
       : await repository.create(messageInput)
-  incrementMessage({
-    direction: "out",
-    channel: contactInbox.channel,
-  })
+  recordMessageMetric(
+    messageInput.messageType,
+    resolveMessageMetricChannel(contactInbox.channel),
+  )
 
   await contactInboxService.updateTracking({
     contactInboxId: contactInbox.id,

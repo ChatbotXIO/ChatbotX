@@ -179,7 +179,7 @@ async function startIntegrationWorker() {
       return
     }
 
-    return await runIntegrationJobWithWebhookContext(job.data, () =>
+    await runIntegrationJobWithWebhookContext(job.data, () =>
       runJobWithAuditContext(
         { workspaceId, source: `integration:${job.data.type}` },
         async () => {
@@ -187,7 +187,7 @@ async function startIntegrationWorker() {
             case IntegrationJobAction.incomingMessage: {
               const received = await receiveMessage(job.data.data)
               if (!received) {
-                return { skipped: "message-not-accepted" }
+                return
               }
               const {
                 message,
@@ -201,7 +201,7 @@ async function startIntegrationWorker() {
               } = received
 
               if (!message) {
-                return { skipped: "no-message" }
+                return
               }
 
               const isNotPostbackOrQuickReply = !(
@@ -217,13 +217,13 @@ async function startIntegrationWorker() {
                   message,
                 }))
               ) {
-                return { messageId: message.id }
+                return
               }
 
               // Standby deliveries (another responder owns the thread) are
               // stored only: no story-reply, routing or fallback analytics.
               if (suppressAutomation) {
-                return { messageId: message.id }
+                return
               }
 
               // An image/file message has contentType "text" — only its
@@ -242,7 +242,7 @@ async function startIntegrationWorker() {
                   channelType,
                 }))
               ) {
-                return { messageId: message.id }
+                return
               }
 
               const routing = await resolveIncomingTextRouting({
@@ -312,10 +312,12 @@ async function startIntegrationWorker() {
                   },
                 })
               }
-              return { messageId: message.id }
+              return
             }
-            case IntegrationJobAction.incomingComment:
-              return await receiveComment(job.data.data)
+            case IntegrationJobAction.incomingComment: {
+              await receiveComment(job.data.data)
+              return
+            }
             case IntegrationJobAction.updateIncomingComment: {
               await updateIncomingComment(job.data.data)
               return

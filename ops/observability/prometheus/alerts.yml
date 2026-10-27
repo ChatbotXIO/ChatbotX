@@ -24,7 +24,7 @@ groups:
 
 
       - alert: InboundMessageVolumeDrop
-        expr: sum(rate(chatbotx_messages_total{direction="in"}[10m])) < 0.3 * sum(rate(chatbotx_messages_total{direction="in"}[10m] offset 1w))
+        expr: (sum(rate(chatbotx_messages_total{direction="in"}[10m])) or vector(0)) < 0.3 * (sum(rate(chatbotx_messages_total{direction="in"}[10m] offset 1w)) or vector(0))
         for: 10m
         labels:
           severity: warning

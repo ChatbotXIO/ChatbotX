@@ -54,10 +54,7 @@ const HOURLY_BLOOM_FILTER_CAPACITY = 100_000
 const BLOOM_FILTER_ERROR_RATE = 0.001
 const MAC_LIVE_FIELD = "mac"
 
-const isCanaryContact = (contactId: string): boolean => {
-  const canaryContactId = process.env.CANARY_CONTACT_ID
-  return Boolean(canaryContactId) && contactId === canaryContactId
-}
+const CANARY_CONTACT_ID = process.env.CANARY_CONTACT_ID
 
 type QuotaContext = {
   userId: string
@@ -334,9 +331,11 @@ export class MacTrackingService {
     },
     tx: DatabaseClient = db,
   ): Promise<{ counted: number }> {
-    const contacts = input.contacts.filter(
-      (contact) => !isCanaryContact(contact.contactId),
-    )
+    const contacts = CANARY_CONTACT_ID
+      ? input.contacts.filter(
+          (contact) => contact.contactId !== CANARY_CONTACT_ID,
+        )
+      : input.contacts
     if (contacts.length === 0) {
       return { counted: 0 }
     }
@@ -431,9 +430,9 @@ export class MacTrackingService {
    * logic that lives here.
    */
   async track(events: MacInputEvent[]): Promise<Map<string, number>> {
-    const trackableEvents = events.filter(
-      (event) => !isCanaryContact(event.contactId),
-    )
+    const trackableEvents = CANARY_CONTACT_ID
+      ? events.filter((event) => event.contactId !== CANARY_CONTACT_ID)
+      : events
     if (trackableEvents.length === 0) {
       return new Map()
     }

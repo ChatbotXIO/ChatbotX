@@ -23,7 +23,11 @@ const sentry = vi.hoisted(() => {
 vi.mock("@sentry/node", () => sentry)
 
 import { classifyError } from "../src/classify-error"
-import { incrementMessage } from "../src/metrics"
+import {
+  ensureDefaultMetrics,
+  getMetrics,
+  incrementMessage,
+} from "../src/metrics"
 import { type MetricsServer, startMetricsServer } from "../src/metrics-server"
 import {
   captureException,
@@ -59,6 +63,14 @@ describe("classifyError", () => {
     ).toBe("third_party")
     expect(classifyError({ httpStatusCode: 422 })).toBe("unknown")
   })
+
+  test("follows the error cause chain for nested provider responses", () => {
+    const error = Object.assign(new Error("provider failed"), {
+      cause: { response: { status: 503 } },
+    })
+
+    expect(classifyError(error)).toBe("third_party")
+  })
 })
 
 describe("metrics server", () => {
@@ -78,6 +90,18 @@ describe("metrics server", () => {
       return
     }
     process.env.METRICS_PORT = originalMetricsPort
+  })
+
+  test("collects default metrics lazily", async () => {
+    await expect(getMetrics()).resolves.not.toContain(
+      "chatbotx_process_cpu_user_seconds_total",
+    )
+
+    ensureDefaultMetrics()
+
+    await expect(getMetrics()).resolves.toContain(
+      "chatbotx_process_cpu_user_seconds_total",
+    )
   })
 
   test("does not listen when METRICS_PORT is absent", async () => {

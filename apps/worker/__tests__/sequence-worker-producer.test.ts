@@ -60,20 +60,7 @@ vi.mock("@chatbotx.io/scheduler", () => ({
 }))
 
 vi.mock("@chatbotx.io/worker-config", () => ({
-  getQueueConnection: vi.fn(),
   getSequenceSchedulerQueue: getSequenceSchedulerQueueSpy,
-  queueNames: {
-    enum: {
-      callTranscription: "callTranscription",
-      chat: "chat",
-      integration: "integration",
-      schedule: "schedule",
-      sequenceScheduler: "sequenceScheduler",
-      trigger: "trigger",
-      webhook: "webhook",
-      whatsappVoipSignaling: "whatsappVoipSignaling",
-    },
-  },
 }))
 
 vi.mock("../src/lib/logger", () => ({

@@ -5,6 +5,10 @@ import type {
   MacMessageOutPayload,
 } from "../src/schemas/mac"
 
+vi.hoisted(() => {
+  process.env.CANARY_CONTACT_ID = "canary-contact"
+})
+
 const macRepository = {
   ensureWorkspaceMac: vi.fn(),
   upsertMonthlyPresence: vi.fn(async () => [] as unknown[]),
@@ -770,9 +774,10 @@ describe("MacTrackingService.claimNewActiveContact", () => {
   })
 
   test("excludes the configured canary contact from MAC tracking", async () => {
-    process.env.CANARY_CONTACT_ID = input.contactId
-
-    const result = await newService().claimNewActiveContact(input, {} as never)
+    const result = await newService().claimNewActiveContact(
+      { ...input, contactId: "canary-contact" },
+      {} as never,
+    )
 
     expect(result).toEqual({ counted: false })
     expect(macRepository.ensureWorkspaceMac).not.toHaveBeenCalled()

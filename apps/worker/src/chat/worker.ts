@@ -89,35 +89,41 @@ async function startChatWorker() {
         return
       }
 
-      return await runJobWithAuditContext(
+      await runJobWithAuditContext(
         { workspaceId, source: `chat:${job.data.type}` },
         async () => {
           switch (job.data.type) {
             case ChatJobAction.sendChannelMessage:
-              return await sendMessageToChannel(
+              await sendMessageToChannel(
                 job.data.data,
                 job.attemptsMade,
                 !isFinalAttempt(job),
               )
+              return
             case ChatJobAction.sendFlowMessage:
-              return await sendFlowStep(job.data.data)
+              await sendFlowStep(job.data.data)
+              return
             case ChatJobAction.sendChatMessage:
-              return await sendChatMessage(job.data.data, !isFinalAttempt(job))
+              await sendChatMessage(job.data.data, !isFinalAttempt(job))
+              return
             case ChatJobAction.sendWhatsappTemplateMessage:
-              return await sendWhatsappTemplateMessage(
+              await sendWhatsappTemplateMessage(
                 job.data.data,
                 !isFinalAttempt(job),
               )
+              return
             case ChatJobAction.sendWhatsappTemplateToConversation:
-              return await sendWhatsappTemplateToConversation(
+              await sendWhatsappTemplateToConversation(
                 job.data.data,
                 !isFinalAttempt(job),
               )
+              return
             case ChatJobAction.sendMessengerTemplateMessage:
-              return await sendMessengerTemplateMessage(
+              await sendMessengerTemplateMessage(
                 job.data.data,
                 !isFinalAttempt(job),
               )
+              return
             case ChatJobAction.sendTyping:
               await sendTypingToChannel(job.data.data)
               return

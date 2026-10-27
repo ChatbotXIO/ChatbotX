@@ -1,14 +1,13 @@
 export { classifyError } from "./classify-error"
 export {
   type ErrorClass,
+  ensureDefaultMetrics,
   getMetrics,
   getMetricsContentType,
   incrementJobCompleted,
   incrementJobFailed,
   incrementMessage,
   incrementSideEffectFailed,
-  type MessageDirection,
-  metricsRegistry,
   registerQueueMetricsCollector,
 } from "./metrics"
 export { type MetricsServer, startMetricsServer } from "./metrics-server"

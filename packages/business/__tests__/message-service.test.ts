@@ -24,6 +24,7 @@ const mocks = vi.hoisted(() => {
     },
     repo,
     createMessageRepository: vi.fn().mockResolvedValue(repo),
+    incrementMessage: vi.fn(),
     withCache: vi.fn(
       async (
         _key: string,
@@ -45,6 +46,10 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
 
 vi.mock("@chatbotx.io/redis", () => ({
   withCache: mocks.withCache,
+}))
+
+vi.mock("@chatbotx.io/observability", () => ({
+  incrementMessage: mocks.incrementMessage,
 }))
 
 // The following are reached only because messageService.createOutgoing is
@@ -357,6 +362,36 @@ describe("messageService", () => {
     ).rejects.toThrow("Message not found")
 
     expect(mocks.repo.deleteAttachmentsByMessageId).not.toHaveBeenCalled()
+  })
+
+  test("records a bounded metric after persisting a channel message", async () => {
+    const message = { id: "message-1" }
+    mocks.repo.create.mockResolvedValue(message)
+
+    await expect(
+      messageService.create({
+        messageType: "incoming",
+        metricsChannel: "webchat",
+      } as never),
+    ).resolves.toBe(message)
+
+    expect(mocks.incrementMessage).toHaveBeenCalledWith({
+      channel: "webchat",
+      direction: "in",
+    })
+  })
+  test("skips metrics for an unknown persisted channel", async () => {
+    const message = { id: "message-1" }
+    mocks.repo.create.mockResolvedValue(message)
+
+    await expect(
+      messageService.create({
+        messageType: "incoming",
+        metricsChannel: "legacy-channel",
+      } as never),
+    ).resolves.toBe(message)
+
+    expect(mocks.incrementMessage).not.toHaveBeenCalled()
   })
 
   test("passes messages and attachments unchanged to the combined repository write", async () => {

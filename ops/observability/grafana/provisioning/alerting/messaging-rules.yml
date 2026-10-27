@@ -94,7 +94,7 @@ groups:
             datasourceUid: prometheus
             relativeTimeRange: { from: 600, to: 0 }
             model:
-              expr: sum(rate(chatbotx_messages_total{direction="in"}[10m])) < 0.3 * sum(rate(chatbotx_messages_total{direction="in"}[10m] offset 1w))
+              expr: (sum(rate(chatbotx_messages_total{direction="in"}[10m])) or vector(0)) < bool 0.3 * (sum(rate(chatbotx_messages_total{direction="in"}[10m] offset 1w)) or vector(0))
               format: time_series
               refId: A
           - refId: B

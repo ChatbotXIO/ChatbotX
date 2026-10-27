@@ -1,5 +1,9 @@
 import { timingSafeEqual } from "node:crypto"
-import { getMetrics, getMetricsContentType } from "@chatbotx.io/observability"
+import {
+  ensureDefaultMetrics,
+  getMetrics,
+  getMetricsContentType,
+} from "@chatbotx.io/observability"
 import { NextResponse } from "next/server"
 
 const isAuthorized = (authorization: string | null, token: string): boolean => {
@@ -29,6 +33,8 @@ export async function GET(request: Request): Promise<Response> {
       headers: { "www-authenticate": "Bearer" },
     })
   }
+
+  ensureDefaultMetrics()
 
   return new Response(await getMetrics(), {
     status: 200,

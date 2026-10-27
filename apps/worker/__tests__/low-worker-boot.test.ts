@@ -93,6 +93,10 @@ vi.mock("../src/lib/bootstrap", () => ({
   ensureBootstrapped: workerState.ensureBootstrapped,
 }))
 
+vi.mock("../src/lib/job-observability", () => ({
+  instrumentWorker: vi.fn(),
+}))
+
 vi.mock("../src/lib/logger", () => ({
   logger: { error: vi.fn(), info: vi.fn(), warn: vi.fn() },
 }))
@@ -267,11 +271,7 @@ describe("low worker process boot", () => {
       replay: { automationId: "automation-5" },
     }
 
-    workerState.receiveComment.mockResolvedValueOnce({ messageId: "message-5" })
-
-    await expect(
-      worker?.processor({ data: { type: "replayMissedComment", data } }),
-    ).resolves.toEqual({ messageId: "message-5" })
+    await worker?.processor({ data: { type: "replayMissedComment", data } })
 
     expect(workerState.receiveComment).toHaveBeenCalledWith(data)
     expect(workerState.withBlockedOwnerGuard).toHaveBeenCalledWith(

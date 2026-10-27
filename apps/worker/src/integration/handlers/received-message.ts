@@ -1388,9 +1388,6 @@ const persistMessage = async (
       direction: inbound ? "in" : "out",
       channel: inbox.channel,
     })
-  }
-
-  if (isNew && !isOwnSendEcho) {
     await persistNewMessageSideEffects({ ...props, message })
 
     if (isOutgoingDirectMessageEcho && canMarkReadByEcho && !props.keepUnread) {
@@ -1688,7 +1685,7 @@ async function reserveLiveCommentDelay(props: {
 
 export const receiveComment = async (
   props: IntegrationJobReceiveComment["data"],
-): Promise<{ messageId: string } | { skipped: string }> => {
+): Promise<void> => {
   setWebhookExecutionContext({ source: "webhook" })
 
   const { integrationType, integrationIdentifier, commentData, replay } = props
@@ -1698,7 +1695,7 @@ export const receiveComment = async (
       { commentId: commentData.commentId, integrationIdentifier },
       "receiveComment: skipping self-authored comment",
     )
-    return { skipped: "self-authored-comment" }
+    return
   }
 
   const { inbox, integrationRow } =
@@ -1726,7 +1723,7 @@ export const receiveComment = async (
       { commentId: commentData.commentId, integrationIdentifier },
       "receiveComment: skipping self-authored comment",
     )
-    return { skipped: "self-authored-comment" }
+    return
   }
 
   // `owner` is the ONLY self-authorship signal TikTok has — the
@@ -1995,12 +1992,12 @@ export const receiveComment = async (
       { commentId: commentData.commentId, integrationIdentifier },
       "receiveComment: TikTok commenter identity unresolved, withholding automation",
     )
-    return { messageId: savedComment.id }
+    return
   }
 
   const workspace = await workspaceService.findById({ id: inbox.workspaceId })
   if (!workspaceService.isActiveNow(workspace)) {
-    return { messageId: savedComment.id }
+    return
   }
 
   const automationData: IntegrationJobProcessCommentAutomation["data"] = {
@@ -2030,7 +2027,7 @@ export const receiveComment = async (
         onlyAutomationId: replay.automationId,
       }),
     )
-    return { messageId: savedComment.id }
+    return
   }
 
   const processCommentAutomationJobId = `comment-auto-${commentData.commentId}`
@@ -2068,7 +2065,6 @@ export const receiveComment = async (
       ? { ...jobOptions, attempts: 1 }
       : jobOptions,
   )
-  return { messageId: savedComment.id }
 }
 
 // When a commenter edits their comment, sync the new text to the DB

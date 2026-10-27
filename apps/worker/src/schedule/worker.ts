@@ -1,4 +1,5 @@
 import { flushAllPendingWorkspaceRealtimeEvents } from "@chatbotx.io/business"
+import { startMetricsServer } from "@chatbotx.io/observability"
 import {
   defaultWorkerOptions,
   getQueueConnection,
@@ -10,6 +11,7 @@ import { type Job, Queue, Worker } from "bullmq"
 import { ensureBootstrapped } from "../lib/bootstrap"
 import { instrumentWorker } from "../lib/job-observability"
 import { logger } from "../lib/logger"
+import { registerWorkerQueueMetrics } from "../lib/queue-metrics"
 import { runJobWithAuditContext } from "../lib/run-job-with-audit-context"
 import { startUptimeHeartbeat } from "../lib/uptime-heartbeat"
 import { startMarketingMessageWorker } from "../marketing-message/consumer"
@@ -77,6 +79,13 @@ async function startScheduleWorker() {
   } catch (err) {
     logger.error(err, "Failed to bootstrap analytics")
     process.exit(1)
+  }
+  try {
+    if (await startMetricsServer()) {
+      registerWorkerQueueMetrics()
+    }
+  } catch (err) {
+    logger.error({ err }, "Schedule worker metrics server failed to start")
   }
   startUptimeHeartbeat()
 

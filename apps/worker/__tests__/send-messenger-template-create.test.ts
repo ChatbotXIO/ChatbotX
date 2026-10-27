@@ -412,7 +412,7 @@ describe("processMessengerTemplate", () => {
 
     await expect(
       sendMessengerTemplateMessage(broadcastTemplateJobData),
-    ).resolves.toEqual({ messageId: "msg-created" })
+    ).resolves.toBeUndefined()
 
     expect(mockSendFlowStep).toHaveBeenCalledTimes(1)
     expect(mockEmit).toHaveBeenCalledWith(
@@ -484,7 +484,7 @@ describe("sendMessengerTemplateMessage — stop/resume guard", () => {
 
     const result = await sendMessengerTemplateMessage(broadcastTemplateJobData)
 
-    expect(result).toEqual({ skipped: "broadcast-not-sendable" })
+    expect(result).toBeUndefined()
     expect(mockValidateTemplate).not.toHaveBeenCalled()
     expect(mockSendFlowStep).not.toHaveBeenCalled()
     expect(mockResetContactForResume).toHaveBeenCalledWith({

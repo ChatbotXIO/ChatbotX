@@ -1,5 +1,9 @@
 import { createServer, type Server } from "node:http"
-import { getMetrics, getMetricsContentType } from "./metrics"
+import {
+  ensureDefaultMetrics,
+  getMetrics,
+  getMetricsContentType,
+} from "./metrics"
 
 export type MetricsServer = {
   close: () => Promise<void>
@@ -50,6 +54,8 @@ export const startMetricsServer = async (
   if (port === undefined) {
     return null
   }
+
+  ensureDefaultMetrics()
 
   if (runningServer) {
     return runningServer

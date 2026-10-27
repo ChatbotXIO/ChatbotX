@@ -9,7 +9,6 @@ import {
   type MessageWithAttachments,
 } from "@chatbotx.io/database/repositories"
 import type { MessageModel } from "@chatbotx.io/database/types"
-import { incrementMessage } from "@chatbotx.io/observability"
 import { withCache } from "@chatbotx.io/redis"
 import { BaseService } from "../base.service"
 import { ChatbotXException } from "../errors"
@@ -20,6 +19,10 @@ import {
   listForConversation,
   withResolvedAttachmentUrls,
 } from "./list-for-conversation"
+import {
+  recordMessageMetric,
+  resolveMessageMetricChannel,
+} from "./record-metric"
 
 type FindByProps = {
   conversationId: string
@@ -27,19 +30,6 @@ type FindByProps = {
   workspaceId: string
 }
 
-const recordMessageMetric = (
-  message: Pick<CreateMessageInput, "messageType">,
-  channel: string | undefined,
-): void => {
-  if (!channel || message.messageType === messageTypes.enum.activity) {
-    return
-  }
-  incrementMessage({
-    channel,
-    direction:
-      message.messageType === messageTypes.enum.incoming ? "in" : "out",
-  })
-}
 class MessageService extends BaseService {
   createOutgoing = createOutgoing
   listForConversation = listForConversation
@@ -159,7 +149,10 @@ class MessageService extends BaseService {
     const repo = await createMessageRepository(tx ?? db)
     const created = await repo.create(message)
     if (!tx) {
-      recordMessageMetric(message, metricsChannel)
+      recordMessageMetric(
+        message.messageType,
+        resolveMessageMetricChannel(metricsChannel),
+      )
     }
     return created
   }
@@ -174,7 +167,10 @@ class MessageService extends BaseService {
     const repo = await createMessageRepository(tx ?? db)
     const created = await repo.createWithAttachments(message, attachments)
     if (!tx) {
-      recordMessageMetric(message, metricsChannel)
+      recordMessageMetric(
+        message.messageType,
+        resolveMessageMetricChannel(metricsChannel),
+      )
     }
     return created
   }
@@ -301,18 +297,11 @@ class MessageService extends BaseService {
   }
 
   async createOrUpdate(
-    props: CreateMessageInput & {
-      metricsChannel?: string
-      tx?: DatabaseClient
-    },
+    props: CreateMessageInput & { tx?: DatabaseClient },
   ): Promise<{ isNew: boolean; message: MessageModel }> {
-    const { tx, metricsChannel, ...message } = props
+    const { tx, ...message } = props
     const repo = await createMessageRepository(tx ?? db)
-    const result = await repo.createOrUpdate(message)
-    if (!tx && result.isNew) {
-      recordMessageMetric(message, metricsChannel)
-    }
-    return result
+    return await repo.createOrUpdate(message)
   }
 
   async findBySourceId(props: {
