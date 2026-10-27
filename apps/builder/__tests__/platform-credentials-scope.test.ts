@@ -53,4 +53,15 @@ describe("resolveCredentialScopedUserId", () => {
       resolveCredentialScopedUserId(asUser("user-1"), "user"),
     ).resolves.toBe("user-1")
   })
+
+  test("resolves a user scope for credential cleanup after an entitlement downgrade", async () => {
+    canUseOwnCredentialsSpy.mockResolvedValue(false)
+
+    await expect(
+      resolveCredentialScopedUserId(asUser("user-1"), "user", {
+        allowWithoutEntitlement: true,
+      }),
+    ).resolves.toBe("user-1")
+    expect(canUseOwnCredentialsSpy).not.toHaveBeenCalled()
+  })
 })

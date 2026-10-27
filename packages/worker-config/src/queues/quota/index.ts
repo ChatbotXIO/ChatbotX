@@ -26,7 +26,8 @@ export const QuotaJobAction = {
   // reseller changes their tenant's default plan. Scopes the backfill to that
   // reseller's sub-accounts instead of every user.
   backfillTenantDefaultPlan: "backfillTenantDefaultPlan",
-  // Set-based synchronization of feature-only quota columns after any plan edit.
+  // Cross-repo contract: the enterprise admin produces this after a plan edit
+  // and the private quota-worker synchronizes feature-only quota columns.
   syncPlanFeatureFlags: "syncPlanFeatureFlags",
 } as const
 

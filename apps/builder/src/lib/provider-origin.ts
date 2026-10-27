@@ -65,11 +65,27 @@ export function buildCredentialWebhookUrl(props: {
     credentialId && !hasActiveTenant
       ? `/integrations/${type}/webhook/c/${credentialId}`
       : `/integrations/${type}/webhook`
-  return new URL(path, origin).toString()
+  const normalizedOrigin = origin.endsWith("/") ? origin.slice(0, -1) : origin
+  return `${normalizedOrigin}${path}`
 }
 
 /** Display-only placeholder shown when a tenant-owned credential has no active domain yet. */
 export const PLACEHOLDER_DOMAIN_ORIGIN = "https://<your-domain.com>"
+
+/** Origin displayed to configure a credential's callback and webhook URLs. */
+export const resolveCredentialDisplayOrigin = (props: {
+  brokerOrigin: string
+  customDomainOrigin: string | null | undefined
+  hasActiveTenant: boolean
+  isInherited: boolean
+}): string => {
+  const { brokerOrigin, customDomainOrigin, hasActiveTenant, isInherited } =
+    props
+  if (isInherited || !hasActiveTenant) {
+    return brokerOrigin
+  }
+  return customDomainOrigin ?? PLACEHOLDER_DOMAIN_ORIGIN
+}
 
 /**
  * The origin to use for a given credential: the owning tenant's custom

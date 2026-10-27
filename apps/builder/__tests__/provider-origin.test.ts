@@ -190,6 +190,57 @@ describe("buildCredentialWebhookUrl", () => {
       }),
     ).toBe(`${BROKER_ORIGIN}/integrations/tiktok/webhook`)
   })
+
+  test("preserves the tenant placeholder when no custom domain is active", async () => {
+    const { buildCredentialWebhookUrl, PLACEHOLDER_DOMAIN_ORIGIN } =
+      await loadModule()
+
+    expect(
+      buildCredentialWebhookUrl({
+        credentialId: "credential-1",
+        hasActiveTenant: true,
+        origin: PLACEHOLDER_DOMAIN_ORIGIN,
+        type: "tiktok",
+      }),
+    ).toBe("https://<your-domain.com>/integrations/tiktok/webhook")
+  })
+})
+
+describe("resolveCredentialDisplayOrigin", () => {
+  test("shows a placeholder instead of the broker for an active tenant without a domain", async () => {
+    const { PLACEHOLDER_DOMAIN_ORIGIN, resolveCredentialDisplayOrigin } =
+      await loadModule()
+
+    expect(
+      resolveCredentialDisplayOrigin({
+        brokerOrigin: BROKER_ORIGIN,
+        customDomainOrigin: null,
+        hasActiveTenant: true,
+        isInherited: false,
+      }),
+    ).toBe(PLACEHOLDER_DOMAIN_ORIGIN)
+  })
+
+  test("uses the broker for inherited credentials and users without an active tenant", async () => {
+    const { resolveCredentialDisplayOrigin } = await loadModule()
+
+    expect(
+      resolveCredentialDisplayOrigin({
+        brokerOrigin: BROKER_ORIGIN,
+        customDomainOrigin: "https://chat.acme.com",
+        hasActiveTenant: true,
+        isInherited: true,
+      }),
+    ).toBe(BROKER_ORIGIN)
+    expect(
+      resolveCredentialDisplayOrigin({
+        brokerOrigin: BROKER_ORIGIN,
+        customDomainOrigin: null,
+        hasActiveTenant: false,
+        isInherited: false,
+      }),
+    ).toBe(BROKER_ORIGIN)
+  })
 })
 
 describe("PLACEHOLDER_DOMAIN_ORIGIN", () => {

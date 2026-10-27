@@ -11,7 +11,7 @@ import { isCloud } from "@/env"
 import { getBrokerOrigin } from "@/lib/oauth-broker"
 import {
   buildCredentialWebhookUrl,
-  PLACEHOLDER_DOMAIN_ORIGIN,
+  resolveCredentialDisplayOrigin,
   resolveTenantCustomDomainOrigin,
 } from "@/lib/provider-origin"
 import { GiphySettings } from "./giphy/giphy-settings"
@@ -155,13 +155,13 @@ export async function ManagePlatformCredentials({
       ])
     : [undefined, undefined]
   const hasActiveTenant = tenant?.status === "active"
-  const tenantOrigin = customDomainOrigin ?? PLACEHOLDER_DOMAIN_ORIGIN
-  const callbackOriginFor = (isInherited: boolean) =>
-    isInherited || !hasActiveTenant ? brokerOrigin : tenantOrigin
-  const webhookOriginFor = (isInherited: boolean) =>
-    isInherited || !hasActiveTenant
-      ? brokerOrigin
-      : (customDomainOrigin ?? brokerOrigin)
+  const providerOriginFor = (isInherited: boolean) =>
+    resolveCredentialDisplayOrigin({
+      brokerOrigin,
+      customDomainOrigin,
+      hasActiveTenant,
+      isInherited,
+    })
   const webhookUrlFor = <T extends CredentialType>(
     type: T,
     credential: ResolvedCredential<T>,
@@ -169,7 +169,7 @@ export async function ManagePlatformCredentials({
     buildCredentialWebhookUrl({
       credentialId: credential.credentialId,
       hasActiveTenant,
-      origin: webhookOriginFor(credential.isInherited),
+      origin: providerOriginFor(credential.isInherited),
       type,
     })
 
@@ -177,52 +177,52 @@ export async function ManagePlatformCredentials({
     <CredentialScopeProvider scope={scope}>
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <MessengerSettings
-          callbackOrigin={callbackOriginFor(messenger.isInherited)}
+          callbackOrigin={providerOriginFor(messenger.isInherited)}
           isInherited={messenger.isInherited}
           publicConfig={messenger.publicConfig}
           webhookUrl={webhookUrlFor("messenger", messenger)}
         />
         <InstagramSettings
-          callbackOrigin={callbackOriginFor(instagram.isInherited)}
+          callbackOrigin={providerOriginFor(instagram.isInherited)}
           isInherited={instagram.isInherited}
           publicConfig={instagram.publicConfig}
           webhookUrl={webhookUrlFor("instagram", instagram)}
         />
         <InstagramFacebookSettings
-          callbackOrigin={callbackOriginFor(instagramFacebook.isInherited)}
+          callbackOrigin={providerOriginFor(instagramFacebook.isInherited)}
           isInherited={instagramFacebook.isInherited}
           publicConfig={instagramFacebook.publicConfig}
           webhookUrl={webhookUrlFor("instagramFacebook", instagramFacebook)}
         />
         <ThreadsSettings
-          callbackOrigin={callbackOriginFor(threads.isInherited)}
+          callbackOrigin={providerOriginFor(threads.isInherited)}
           isInherited={threads.isInherited}
           publicConfig={threads.publicConfig}
         />
         <GoogleSettings
-          callbackOrigin={callbackOriginFor(google.isInherited)}
+          callbackOrigin={providerOriginFor(google.isInherited)}
           isInherited={google.isInherited}
           publicConfig={google.publicConfig}
         />
         <GoogleAdsSettings
-          callbackOrigin={callbackOriginFor(googleAds.isInherited)}
+          callbackOrigin={providerOriginFor(googleAds.isInherited)}
           isInherited={googleAds.isInherited}
           publicConfig={googleAds.publicConfig}
         />
         <WhatsappSettings
-          callbackOrigin={callbackOriginFor(whatsapp.isInherited)}
+          callbackOrigin={providerOriginFor(whatsapp.isInherited)}
           isInherited={whatsapp.isInherited}
           publicConfig={whatsapp.publicConfig}
           webhookUrl={webhookUrlFor("whatsapp", whatsapp)}
         />
         <ZaloSettings
-          callbackOrigin={callbackOriginFor(zalo.isInherited)}
+          callbackOrigin={providerOriginFor(zalo.isInherited)}
           isInherited={zalo.isInherited}
           publicConfig={zalo.publicConfig}
           webhookUrl={webhookUrlFor("zalo", zalo)}
         />
         <TiktokSettings
-          callbackOrigin={callbackOriginFor(tiktok.isInherited)}
+          callbackOrigin={providerOriginFor(tiktok.isInherited)}
           isInherited={tiktok.isInherited}
           publicConfig={tiktok.publicConfig}
           webhookUrl={webhookUrlFor("tiktok", tiktok)}

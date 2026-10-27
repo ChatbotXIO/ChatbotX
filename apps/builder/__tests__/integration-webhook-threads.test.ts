@@ -3,10 +3,12 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const threadsFindDecryptedByClientId = vi.fn()
 const threadsHandleRequest = vi.fn()
+const findOwnerUserIdByWorkspaceId = vi.fn()
+const identifyInboxAndIntegrationAuthFromIdentifier = vi.fn()
 const loggerInfo = vi.fn()
 const loggerDebug = vi.fn()
 const loggerError = vi.fn()
-
+const loggerWarn = vi.fn()
 vi.mock("@chatbotx.io/business", () => ({
   customDomainService: { findActiveByDomain: vi.fn() },
   platformCredentialService: {
@@ -15,6 +17,11 @@ vi.mock("@chatbotx.io/business", () => ({
     findDecryptedForUser: vi.fn(),
   },
   tenantService: { findById: vi.fn() },
+  workspaceMemberService: { findOwnerUserIdByWorkspaceId },
+}))
+
+vi.mock("@chatbotx.io/channel-registry/registry", () => ({
+  integrationService: { identifyInboxAndIntegrationAuthFromIdentifier },
 }))
 
 vi.mock("@chatbotx.io/database/client", () => ({
@@ -53,7 +60,12 @@ vi.mock("@/integration", () => ({
 }))
 
 vi.mock("@/lib/log", () => ({
-  logger: { debug: loggerDebug, error: loggerError, info: loggerInfo },
+  logger: {
+    debug: loggerDebug,
+    error: loggerError,
+    info: loggerInfo,
+    warn: loggerWarn,
+  },
 }))
 
 vi.mock("@/lib/oauth-broker", () => ({
@@ -71,6 +83,7 @@ const asNextRequest = (url: string, body?: string) => {
 
 beforeEach(() => {
   vi.clearAllMocks()
+  findOwnerUserIdByWorkspaceId.mockResolvedValue("owner-1")
   threadsFindDecryptedByClientId.mockResolvedValue({
     config: {
       clientId: "app-1",

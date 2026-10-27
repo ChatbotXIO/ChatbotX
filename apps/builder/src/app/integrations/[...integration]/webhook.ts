@@ -1,17 +1,19 @@
 import {
-  canUseOwnCredentials,
   connectionStateService,
   customDomainService,
   platformCredentialService,
   tenantService,
   workspaceMemberService,
 } from "@chatbotx.io/business"
+import { IntegrationNotFoundError } from "@chatbotx.io/channel-registry/errors"
+import { integrationService } from "@chatbotx.io/channel-registry/registry"
+import type { IntegrationType } from "@chatbotx.io/database/partials"
 import { getSafeErrorDetails } from "@chatbotx.io/integration-threads"
 import type {
   TiktokAuthValue,
   TiktokConfig,
 } from "@chatbotx.io/integration-tiktok"
-import { SdkException } from "@chatbotx.io/sdk"
+import { type ContextQueue, SdkException } from "@chatbotx.io/sdk"
 import { integrationQueue } from "@chatbotx.io/worker-config"
 import type { NextRequest } from "next/server"
 import { isCloud } from "@/env"
@@ -26,6 +28,98 @@ type CredentialType = Parameters<
   typeof platformCredentialService.resolveForOwner
 >[0]["type"]
 
+type IntegrationWebhookPayload = {
+  data: {
+    integrationIdentifier: string
+    integrationType: string
+  }
+}
+
+const isIntegrationWebhookPayload = (
+  payload: unknown,
+): payload is Required<IntegrationWebhookPayload> =>
+  typeof payload === "object" &&
+  payload !== null &&
+  "data" in payload &&
+  typeof payload.data === "object" &&
+  payload.data !== null &&
+  "integrationIdentifier" in payload.data &&
+  typeof payload.data.integrationIdentifier === "string" &&
+  "integrationType" in payload.data &&
+  typeof payload.data.integrationType === "string"
+
+const normalizeCredentialScopedWebhookUrl = (
+  url: string,
+  credentialId?: string,
+): string => {
+  if (!credentialId) {
+    return url
+  }
+
+  const webhookUrl = new URL(url)
+  webhookUrl.pathname =
+    webhookUrl.pathname.split("/").slice(0, -2).join("/") || "/"
+  return webhookUrl.toString()
+}
+
+const normalizeCredentialScopedWebhookRequest = (
+  req: NextRequest,
+  credentialId?: string,
+): Request =>
+  credentialId
+    ? new Request(
+        normalizeCredentialScopedWebhookUrl(req.url, credentialId),
+        req,
+      )
+    : req
+
+const createCredentialScopedQueue = (ownerId: string): ContextQueue => ({
+  add: async (name, payload, options) => {
+    if (!isIntegrationWebhookPayload(payload)) {
+      logger.warn(
+        { name, ownerId },
+        "Ignoring credential-scoped webhook job without ownership routing fields",
+      )
+      return
+    }
+
+    const { integrationIdentifier, integrationType } = payload.data
+    try {
+      const { inbox } =
+        await integrationService.identifyInboxAndIntegrationAuthFromIdentifier(
+          integrationType as IntegrationType,
+          integrationIdentifier,
+        )
+      const inboxOwnerId =
+        await workspaceMemberService.findOwnerUserIdByWorkspaceId({
+          workspaceId: inbox.workspaceId,
+        })
+
+      if (inboxOwnerId !== ownerId) {
+        logger.warn(
+          { integrationIdentifier, integrationType, ownerId },
+          "Ignoring credential-scoped webhook for another owner's inbox",
+        )
+        return
+      }
+    } catch (err) {
+      if (!(err instanceof IntegrationNotFoundError)) {
+        throw err
+      }
+      logger.warn(
+        { err, integrationIdentifier, integrationType, ownerId },
+        "Ignoring credential-scoped webhook for an unresolved inbox",
+      )
+      return
+    }
+
+    return await (integrationQueue as unknown as ContextQueue).add(
+      name,
+      payload,
+      options,
+    )
+  },
+})
 const WEBHOOK_PUBLIC_ERROR_HEADERS = {
   "Content-Type": "application/json",
 } as const
@@ -89,9 +183,11 @@ export const handleWebhook = async (
     return handleTelegramWebhook(req)
   }
 
-  // TikTok uses per-account config (not org-level settings)
+  // TikTok uses per-account config (not org-level settings).
+  // A credential-scoped route additionally proves the addressed credential
+  // belongs to the account receiving the event.
   if (integrationType === "tiktok") {
-    return handleTiktokWebhook(req)
+    return handleTiktokWebhook(req, credentialId)
   }
 
   const type = integrationType as CredentialType
@@ -101,6 +197,7 @@ export const handleWebhook = async (
         ReturnType<typeof platformCredentialService.findDecryptedPlatform>
       >
     | undefined
+  let credentialOwnerId: string | undefined
 
   if (credentialId) {
     if (!isCloud()) {
@@ -110,9 +207,8 @@ export const handleWebhook = async (
       id: credentialId,
       type,
     })
-    if (
-      !(credential?.userId && (await canUseOwnCredentials(credential.userId)))
-    ) {
+    credentialOwnerId = credential?.userId ?? undefined
+    if (!credentialOwnerId) {
       return notConfigured()
     }
   } else if (isCloud()) {
@@ -191,8 +287,10 @@ export const handleWebhook = async (
         },
         // biome-ignore lint/suspicious/noExplicitAny: safe pass value
       } as any,
-      req,
-      queue: integrationQueue,
+      req: normalizeCredentialScopedWebhookRequest(req, credentialId),
+      queue: credentialOwnerId
+        ? createCredentialScopedQueue(credentialOwnerId)
+        : integrationQueue,
     })
 
     return new Response(result as BodyInit)
@@ -234,10 +332,7 @@ const handleThreadsWebhook = async (req: NextRequest) => {
       clientId: appId,
     })
 
-  if (
-    !credential ||
-    (credential.userId && !(await canUseOwnCredentials(credential.userId)))
-  ) {
+  if (!credential) {
     logger.debug(
       { appId, integrationType: "threads" },
       "No configured Threads credential for webhook appId",
@@ -262,7 +357,9 @@ const handleThreadsWebhook = async (req: NextRequest) => {
         // biome-ignore lint/suspicious/noExplicitAny: safe pass value
       } as any,
       req,
-      queue: integrationQueue,
+      queue: credential.userId
+        ? createCredentialScopedQueue(credential.userId)
+        : integrationQueue,
     })
 
     return new Response(result as BodyInit)
@@ -338,7 +435,22 @@ const handleTelegramWebhook = async (req: NextRequest) => {
   }
 }
 
-const handleTiktokWebhook = async (req: NextRequest) => {
+const handleTiktokWebhook = async (req: NextRequest, credentialId?: string) => {
+  let credentialOwnerId: string | undefined
+  if (credentialId) {
+    if (!isCloud()) {
+      return notConfigured()
+    }
+    const credential = await platformCredentialService.findDecryptedForWebhook({
+      id: credentialId,
+      type: "tiktok",
+    })
+    credentialOwnerId = credential?.userId ?? undefined
+    if (!credentialOwnerId) {
+      return notConfigured()
+    }
+  }
+
   const integration = integrations.tiktok
   if (!integration?.handleRequest) {
     return new Response(
@@ -363,7 +475,7 @@ const handleTiktokWebhook = async (req: NextRequest) => {
       typeof parsed.user_openid === "string" ? parsed.user_openid : undefined
     eventType = typeof parsed.event === "string" ? parsed.event : undefined
   } catch {
-    // invalid JSON — integration handler will return the error
+    // Invalid JSON — the integration handler returns the detailed error.
   }
 
   if (!userOpenId) {
@@ -382,15 +494,29 @@ const handleTiktokWebhook = async (req: NextRequest) => {
       { status: 404, headers: { "Content-Type": "application/json" } },
     )
   }
-  if (eventType === "authorization.removed") {
-    const ownerId = await workspaceMemberService.findOwnerUserIdByWorkspaceId({
+
+  const workspaceOwnerId =
+    await workspaceMemberService.findOwnerUserIdByWorkspaceId({
       workspaceId: integrationTiktok.workspaceId,
     })
+  if (credentialOwnerId && workspaceOwnerId !== credentialOwnerId) {
+    logger.warn(
+      {
+        credentialOwnerId,
+        openId: userOpenId,
+        workspaceId: integrationTiktok.workspaceId,
+      },
+      "Ignoring credential-scoped TikTok webhook for another owner's inbox",
+    )
+    return notConfigured()
+  }
+
+  if (eventType === "authorization.removed") {
     const connection = await connectionStateService.markUnhealthyByIdentifier({
       provider: "tiktok",
       identifier: userOpenId,
       reason: "token_revoked",
-      ownerId,
+      ownerId: workspaceOwnerId,
       workspaceId: integrationTiktok.workspaceId,
     })
     if (!connection) {
@@ -420,12 +546,15 @@ const handleTiktokWebhook = async (req: NextRequest) => {
 
   const auth = integrationTiktok.auth as TiktokAuthValue
 
-  // Reconstruct request because req.text() already consumed the body
-  const reqWithBody = new Request(req.url, {
-    method: req.method,
-    headers: req.headers,
-    body: bodyText,
-  })
+  // Reconstruct request because req.text() already consumed the body.
+  const reqWithBody = new Request(
+    normalizeCredentialScopedWebhookUrl(req.url, credentialId),
+    {
+      method: req.method,
+      headers: req.headers,
+      body: bodyText,
+    },
+  )
 
   const tiktokConfig: TiktokConfig = {
     clientId: auth.clientId,

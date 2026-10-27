@@ -108,12 +108,10 @@ describe("resolveForOwner", () => {
     expect(platform).toHaveBeenCalledTimes(1)
   })
 
-  test("inactive tenant uses platform without reading own credential", async () => {
-    tenantService.findByOwner.mockResolvedValue({ status: "suspended" })
-    userQuotaService.getForUser.mockResolvedValue({
-      customAppCredentials: false,
-    })
-    const own = vi.spyOn(platformCredentialService, "findDecryptedForUser")
+  test("falls back to platform when an owner delegates to platform credentials", async () => {
+    const own = vi
+      .spyOn(platformCredentialService, "findDecryptedForUser")
+      .mockResolvedValue(undefined)
     const platform = vi
       .spyOn(platformCredentialService, "findDecryptedPlatform")
       .mockResolvedValue(PLATFORM as never)
@@ -124,7 +122,7 @@ describe("resolveForOwner", () => {
     })
 
     expect(result).toBe(PLATFORM)
-    expect(own).not.toHaveBeenCalled()
+    expect(own).toHaveBeenCalledTimes(1)
     expect(platform).toHaveBeenCalledTimes(1)
   })
 
@@ -144,6 +142,25 @@ describe("resolveForOwner", () => {
 
     expect(result).toBe(OWN)
     expect(own).toHaveBeenCalledTimes(1)
+  })
+
+  test("grandfathers an existing own credential after an entitlement downgrade", async () => {
+    const own = vi
+      .spyOn(platformCredentialService, "findDecryptedForUser")
+      .mockResolvedValue(OWN as never)
+    const platform = vi.spyOn(
+      platformCredentialService,
+      "findDecryptedPlatform",
+    )
+
+    const result = await platformCredentialService.resolveForOwner({
+      ownerId: "owner-1",
+      type: "messenger",
+    })
+
+    expect(result).toMatchObject({ id: "own", type: "messenger" })
+    expect(own).toHaveBeenCalledTimes(1)
+    expect(platform).not.toHaveBeenCalled()
   })
 })
 

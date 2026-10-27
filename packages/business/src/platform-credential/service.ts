@@ -23,7 +23,6 @@ import { withCache } from "@chatbotx.io/redis"
 import type { z } from "zod"
 import { BaseService } from "../base.service"
 import { logger } from "../logger"
-import { canUseOwnCredentials } from "./can-use-own-credentials"
 
 type CredentialRow<T extends CredentialType> = Omit<
   PlatformCredentialModel,
@@ -86,12 +85,14 @@ class PlatformCredentialService extends BaseService {
     type: T
     livemode?: boolean
     tx?: DatabaseClient
+    /** Ignore a stored row when its owner selected platform delegation. */
+    requireOwnCredential?: boolean
     /** Rethrow DB/decrypt failures instead of reporting "no credential". */
     strict?: boolean
   }): Promise<DecryptedCredential<T> | undefined> {
     try {
       const row = await this.findForUser(props)
-      if (!row) {
+      if (!row || (props.requireOwnCredential && row.usePlatformCredential)) {
         return
       }
       return this._decrypt(row)
@@ -449,27 +450,23 @@ class PlatformCredentialService extends BaseService {
     /** Rethrow DB/decrypt failures instead of falling back / reporting "no credential". */
     strict?: boolean
   }): Promise<DecryptedCredential<T> | undefined> {
-    const canUseOwn = await canUseOwnCredentials(props.ownerId)
-    const livemode = props.livemode ?? false
-
-    if (canUseOwn) {
-      const own = await this.findDecryptedForUser({
-        userId: props.ownerId,
-        type: props.type,
-        livemode,
-        tx: props.tx,
-        strict: props.strict,
-      })
-      if (own) {
-        return own
-      }
+    const own = await this.findDecryptedForUser({
+      userId: props.ownerId,
+      type: props.type,
+      livemode: props.livemode,
+      tx: props.tx,
+      requireOwnCredential: true,
+      strict: props.strict,
+    })
+    if (own) {
+      return own
     }
 
-    // Reseller has no own credential (or tenant is inactive): fall back to the
-    // platform-global default.
+    // Existing user-owned credentials are grandfathered after an entitlement
+    // downgrade. New writes remain gated at the action boundary.
     return this.findDecryptedPlatform({
       type: props.type,
-      livemode,
+      livemode: props.livemode ?? false,
       tx: props.tx,
       strict: props.strict,
     })
