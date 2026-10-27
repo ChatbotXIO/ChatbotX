@@ -36,7 +36,21 @@ export const useRealtimeSocket = ({
     })
     socket.connect()
 
+    // The reconnect backoff only resets after sustained uptime, so after a
+    // run of short connections the next attempt can be up to 30s away. Coming
+    // back online or to the tab retries at once instead; `reconnectNow` is a
+    // no-op while connected and still honours a server overload retryAfter.
+    const reconnectWhenVisible = (): void => {
+      if (document.visibilityState === "visible") {
+        socket.reconnectNow()
+      }
+    }
+    window.addEventListener("online", socket.reconnectNow)
+    document.addEventListener("visibilitychange", reconnectWhenVisible)
+
     return () => {
+      window.removeEventListener("online", socket.reconnectNow)
+      document.removeEventListener("visibilitychange", reconnectWhenVisible)
       socket.close()
     }
   }, [connectionKey])

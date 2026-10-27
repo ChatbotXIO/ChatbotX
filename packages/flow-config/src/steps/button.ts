@@ -3,6 +3,7 @@ import { z } from "zod"
 import { countMessageCharacters } from "../channel-rules/characters"
 import { actionSteps } from "../shared"
 import { flowValidationCodes } from "../validation-codes"
+import { BUTTON_LABEL_MAX } from "./button-limits"
 import { openMiniAppStepSchema } from "./open-mini-app"
 import { openWebsiteStepSchema } from "./open-website"
 import { startAnotherNodeStepSchema } from "./start-another-node"
@@ -21,7 +22,7 @@ export const buttonTypes = z.enum([
 ])
 export type ButtonType = z.infer<typeof buttonTypes>
 
-export const BUTTON_LABEL_MAX = 20
+export { BUTTON_LABEL_MAX } from "./button-limits"
 
 export const buttonStepSchema = z
   .object({

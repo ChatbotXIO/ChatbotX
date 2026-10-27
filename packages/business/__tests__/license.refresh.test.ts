@@ -1,3 +1,4 @@
+import "@chatbotx.io/vitest-config/setup-msw"
 import {
   HttpResponse,
   http,

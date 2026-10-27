@@ -5,6 +5,7 @@ import {
   type RealtimeStreamRecord,
 } from "@chatbotx.io/realtime-protocol"
 import type { RealtimeServerCounters } from "./lib/realtime-metrics"
+import { endSocket } from "./lib/socket-end"
 import { logger } from "./logger"
 
 export type WorkspaceSocketData = RealtimeMemberClaims & {
@@ -198,7 +199,7 @@ export const createRealtimeDelivery = (
       return
     }
     socketData.closed = true
-    socket.end(REALTIME_CLOSE_CODE.resync, "backpressure-drop")
+    endSocket(socket, REALTIME_CLOSE_CODE.resync, "backpressure-drop")
   }
 
   const sendWithResync = (
@@ -223,7 +224,7 @@ export const createRealtimeDelivery = (
           return
         }
         socketData.closed = true
-        socket.end(REALTIME_CLOSE_CODE.resync, "send-failed")
+        endSocket(socket, REALTIME_CLOSE_CODE.resync, "send-failed")
       } catch {
         // uWS may have invalidated the socket while reporting the send error.
       }
@@ -323,7 +324,7 @@ export const createRealtimeDelivery = (
             continue
           }
           socketData.closed = true
-          socket.end(closeCode, closeReason)
+          endSocket(socket, closeCode, closeReason)
         }
         return
       }
@@ -376,7 +377,7 @@ export const createRealtimeDelivery = (
             continue
           }
           socketData.closed = true
-          socket.end(REALTIME_CLOSE_CODE.overloaded, reason)
+          endSocket(socket, REALTIME_CLOSE_CODE.overloaded, reason)
         }
       }
       for (const sockets of guestSocketsByWorkspace.values()) {
@@ -386,7 +387,7 @@ export const createRealtimeDelivery = (
             continue
           }
           socketData.closed = true
-          socket.end(REALTIME_CLOSE_CODE.overloaded, reason)
+          endSocket(socket, REALTIME_CLOSE_CODE.overloaded, reason)
         }
       }
     },
@@ -495,7 +496,7 @@ export const createRealtimeDelivery = (
           continue
         }
         socketData.closed = true
-        socket.end(REALTIME_CLOSE_CODE.resync, reason)
+        endSocket(socket, REALTIME_CLOSE_CODE.resync, reason)
       }
       for (const socket of guestSocketsByWorkspace.get(workspaceId) ?? []) {
         const socketData = socket.getUserData()
@@ -503,7 +504,7 @@ export const createRealtimeDelivery = (
           continue
         }
         socketData.closed = true
-        socket.end(REALTIME_CLOSE_CODE.resync, reason)
+        endSocket(socket, REALTIME_CLOSE_CODE.resync, reason)
       }
     },
     sendCursor: (socket, seq) => {

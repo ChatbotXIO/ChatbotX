@@ -23,6 +23,8 @@ vi.mock("../src/lib/presence-report", () => ({
 const HTTP_STATUS_LINE_PATTERN = /^HTTP\/1\.1 (\d{3})/
 
 const SECRET = "gateway-test-secret"
+/** Far above a prompt close, far below the ~16s uWS timeout it guards against. */
+const CLOSE_ON_OPEN_MAX_MS = 5000
 
 const signMemberToken = async (
   member: Omit<Parameters<typeof signMemberConnectToken>[0], "issuedAtMs">,
@@ -965,11 +967,16 @@ describe("createRealtimeGateway (live)", () => {
         const closePromise = waitForClose(socket)
 
         await waitForOpen(socket)
+        const openedAt = performance.now()
 
         expect(await closePromise).toEqual({
           code: REALTIME_CLOSE_CODE.resync,
           reason,
         })
+        // An end issued inside the corked upgrade used to leave the TCP
+        // connection open until uWS timed it out (~16s), delaying the
+        // client's reconnect by that much.
+        expect(performance.now() - openedAt).toBeLessThan(CLOSE_ON_OPEN_MAX_MS)
       },
     )
   })

@@ -59,7 +59,7 @@ const selects = (rule: RecurrenceRule, ms: number): boolean => {
   return date.getUTCDate() === target
 }
 
-const oracle = (rule: RecurrenceRule, days = 2500): Date[] => {
+const walkOracle = (rule: RecurrenceRule, days = 2500): Date[] => {
   const start = parseDay(rule.startsOn)
   const out: Date[] = []
   for (let i = 0; i < days; i += 1) {
@@ -80,6 +80,23 @@ const oracle = (rule: RecurrenceRule, days = 2500): Date[] => {
     }
   }
   return out
+}
+
+/**
+ * The oracle is pure, and every test walks the same rules (often the same
+ * uncapped rule twice), so each rule's day-by-day walk runs once per file.
+ * Callers only slice or read the returned runs.
+ */
+const oracleRuns = new Map<string, readonly Date[]>()
+const oracle = (rule: RecurrenceRule): readonly Date[] => {
+  const key = JSON.stringify(rule)
+  const cached = oracleRuns.get(key)
+  if (cached) {
+    return cached
+  }
+  const runs = walkOracle(rule)
+  oracleRuns.set(key, runs)
+  return runs
 }
 
 const base = {

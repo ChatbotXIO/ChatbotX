@@ -145,6 +145,41 @@ describe("RealtimeSocket", () => {
     expect(getUrl).toHaveBeenCalledTimes(3)
   })
 
+  it("keeps backing off when each short-lived connection delivers a message before closing", async () => {
+    // The gateway can send a replay frame and then close the socket with a
+    // resync from the same `open` handler. Receiving that frame must not
+    // count as a healthy connection, or the retry delay never grows.
+    const sockets: FakeWebSocket[] = []
+    const getUrl = vi.fn<() => Promise<string>>().mockResolvedValue("ws://test")
+    new RealtimeSocket({
+      getUrl,
+      minUptimeBeforeResetMs: 60_000,
+      onMessage: vi.fn(),
+      random: () => 1,
+      reconnectBaseDelayMs: 1000,
+      webSocketFactory: () => {
+        const webSocket = new FakeWebSocket()
+        sockets.push(webSocket)
+        return webSocket
+      },
+    }).connect()
+    await vi.runAllTimersAsync()
+    sockets[0]?.open()
+    sockets[0]?.onmessage?.({ data: '{"batch":[],"seq":"0-0"}' })
+    sockets[0]?.close(REALTIME_CLOSE_CODE.resync, "recent-entries-expired")
+
+    await vi.advanceTimersByTimeAsync(1000)
+    expect(getUrl).toHaveBeenCalledTimes(2)
+
+    sockets[1]?.open()
+    sockets[1]?.onmessage?.({ data: '{"batch":[],"seq":"0-0"}' })
+    sockets[1]?.close(REALTIME_CLOSE_CODE.resync, "recent-entries-expired")
+    await vi.advanceTimersByTimeAsync(1999)
+    expect(getUrl).toHaveBeenCalledTimes(2)
+    await vi.advanceTimersByTimeAsync(1)
+    expect(getUrl).toHaveBeenCalledTimes(3)
+  })
+
   it("resets backoff once a connection stays open past the minimum uptime", async () => {
     const sockets: FakeWebSocket[] = []
     const getUrl = vi.fn<() => Promise<string>>().mockResolvedValue("ws://test")

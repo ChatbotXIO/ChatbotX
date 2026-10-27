@@ -28,10 +28,24 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  check-types:
-    name: Types
+  # Type-checking is split across two runners. Every workspace resolves
+  # `@chatbotx.io/*` to raw source, so each `tsc` re-checks the shared
+  # database/business graph itself: the 65 tasks summed ~284s locally, with
+  # builder (48s) and worker (19s) the largest, and one 4-vCPU runner took
+  # ~450s on a full run. builder + worker on one runner and the other 63 on
+  # the second balance roughly evenly; the two filters partition every task.
+  check-types-shard:
+    name: Types (${{ matrix.group }})
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - group: apps
+            filter: --filter=builder --filter=worker
+          - group: packages
+            filter: --filter=!builder --filter=!worker
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
@@ -56,11 +70,40 @@ jobs:
       - name: Set up Turbo cache
         uses: rharkor/caching-for-turbo@v2.5.1
 
-      # 56 independent `tsc --noEmit` runs (no `composite`/`references` in this
-      # repo, so turbo.json declares no `dependsOn` — see the comment there).
+      # `--incremental` (below) leaves a tsbuildinfo next to every tsconfig.
+      # Restoring the newest one from earlier runs lets each `tsc` re-check
+      # only files whose content changed since: a package turbo re-runs only
+      # because a dependency's hash moved (a config or lockfile change makes
+      # every task miss) finishes in a fraction of a cold check — measured on
+      # worker: 16.8s cold, 3.9s with no source change. tsc validates every
+      # file by content hash and ignores a buildinfo from another TS version,
+      # so a stale cache can only cost time, never hide an error.
+      - name: Restore tsbuildinfo
+        uses: actions/cache@v6
+        with:
+          path: |
+            apps/*/*.tsbuildinfo
+            packages/*/*.tsbuildinfo
+            integrations/*/*.tsbuildinfo
+          key: tsbuildinfo-${{ runner.os }}-${{ matrix.group }}-${{ github.sha }}
+          restore-keys: tsbuildinfo-${{ runner.os }}-${{ matrix.group }}-
+
+      # Independent `tsc --noEmit` runs: no type-check task waits for another
+      # (no `composite`/`references` in this repo — see turbo.json).
       # Each is single-threaded, so concurrency can fill all 4 vCPUs.
       - name: Type-check
-        run: pnpm turbo run check-types --concurrency=4
+        run: pnpm turbo run check-types --concurrency=4 ${{ matrix.filter }} -- --incremental
+
+  # One stable "Types" result for branch rules and the PR checks list.
+  check-types:
+    name: Types
+    needs: check-types-shard
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Require every type-check shard to pass
+        run: test "${{ needs.check-types-shard.result }}" = "success"
 
   lint:
     name: Lint
@@ -93,17 +136,34 @@ jobs:
       - name: Lint
         run: pnpm lint
 
-  test:
-    name: Tests
+  # Tests are split into eight shards, each on its own 4-vCPU runner. Import cost,
+  # not test bodies, dominates every suite (business measured `import 2812s`
+  # vs `tests 86s` on CI), and a change to `database` or `business` makes
+  # nearly every workspace affected — run serially, the suites summed past the
+  # 30-minute timeout before builder and database had even started.
+  # `vitest --shard` splits each suite's files evenly, so every shard runs an
+  # eighth of every affected suite. Each shard pays ~1 minute of fixed setup
+  # (checkout, pnpm, install), so past eight shards that overhead dominates.
+  # A suite with fewer files than shards simply finds no files in some shards
+  # (`--passWithNoTests`). Turbo hashes the passthrough args, so each shard
+  # caches separately.
+  test-shard:
+    name: Tests (${{ matrix.shard }}/${{ matrix.total }})
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    strategy:
+      fail-fast: true
+      matrix:
+        shard: [1, 2, 3, 4, 5, 6, 7, 8]
+        total: [8]
     steps:
-      # `turbo run --affected` needs the PR base commit locally. The default
-      # one-commit checkout cannot reliably calculate that diff.
+      # `turbo run --affected` diffs the PR merge commit against its first
+      # parent (see below), so depth 2 (the merge commit plus its parents) is
+      # enough. A full-history clone cost ~30s per shard.
       - name: Checkout repository
         uses: actions/checkout@v7
         with:
-          fetch-depth: 0
+          fetch-depth: 2
 
       - name: Set up pnpm
         uses: pnpm/action-setup@v6.1.0
@@ -136,7 +196,7 @@ jobs:
         run: |
           export TURBO_SCM_BASE="$(git rev-parse HEAD^1)"
           export TURBO_SCM_HEAD="$(git rev-parse HEAD)"
-          pnpm turbo run test --affected --concurrency=2
+          pnpm turbo run test --affected --concurrency=2 -- --shard=${{ matrix.shard }}/${{ matrix.total }}
 
       # Turbo does not parallelize *within* a suite, so wall clock is bounded
       # by the slowest single suite — builder (248 files), which is ~40% of
@@ -153,4 +213,16 @@ jobs:
       # contend with builder's own workers on a 4-vCPU runner.
       - name: Test all workspaces
         if: github.event_name == 'push'
-        run: pnpm turbo run test --concurrency=2
+        run: pnpm turbo run test --concurrency=2 -- --shard=${{ matrix.shard }}/${{ matrix.total }}
+
+  # One stable "Tests" result for branch rules and the PR checks list,
+  # whatever the shard count.
+  test:
+    name: Tests
+    needs: test-shard
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Require every shard to pass
+        run: test "${{ needs.test-shard.result }}" = "success"

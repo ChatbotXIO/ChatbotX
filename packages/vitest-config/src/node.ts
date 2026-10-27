@@ -25,6 +25,29 @@ export const mswSetupFiles: readonly string[] = [
 
 const setupEnvPath = fileURLToPath(new URL("./setup-env.ts", import.meta.url))
 
+/**
+ * External packages pre-bundled for every suite. See `deps.optimizer` below.
+ *
+ * `vi.mock(pkg, importOriginal)` works on these (fixed in vitest 4.1.9). A
+ * plain factory mock of a CommonJS package (`bullmq`) does not: the bundled
+ * module is imported through `default`, which the factory never returns. A
+ * suite that factory-mocks one opts it out in its own config with
+ * `deps.optimizer.ssr.exclude` (apps/worker, packages/worker-config).
+ */
+const OPTIMIZED_DEPENDENCIES: readonly string[] = [
+  "drizzle-orm",
+  "drizzle-orm/pg-core",
+  "drizzle-orm/node-postgres",
+  "drizzle-orm/errors",
+  "drizzle-orm/zod",
+  "zod",
+  "@aws-sdk/client-s3",
+  "ioredis",
+  "bullmq",
+  "date-fns",
+  "date-fns-tz",
+]
+
 /** Workers per suite on CI. See the `resolveWorkerPool` doc comment. */
 const CI_MAX_WORKERS = 4
 
@@ -35,9 +58,9 @@ const CI_MAX_WORKERS = 4
  * suite (builder: 248 files). Task-level concurrency therefore cannot shorten
  * the critical path — only vitest's own workers can.
  *
- * Budget: keep (turbo concurrency x maxWorkers) <= vCPU count so workers never
- * oversubscribe. Tests now own a dedicated 4-vCPU job (see ci.yml), so the
- * whole box goes to one suite at a time: `--concurrency=1` x 4 workers.
+ * Budget: each CI test shard is a 4-vCPU runner running `--concurrency=2`
+ * (see ci.yml), so two suites x 4 workers overlap on purpose: the many small
+ * suites fill the gaps while the large ones keep their workers busy.
  *
  * Measured on builder (248 files, CI env, cold): forks/2w 71.9s (the previous
  * setting), threads/2w 66.6s, threads/3w 47.5s, threads/4w 42.3s — all 248
@@ -111,17 +134,22 @@ const config: ViteUserConfig = defineConfig({
     // hiding — do not disable isolation without first decoupling those tests.
     pool: "threads",
     ...resolveWorkerPool(),
-    // Pre-bundle the external module graph once with esbuild instead of
-    // re-resolving it per test file. Import — not test execution — dominates
-    // this repo's suites (builder measured `import 419.94s` vs `tests
-    // 16.92s`), because every workspace package resolves to raw `src/*.ts`,
-    // so the drizzle/zod/schema graph is re-transformed for each file.
-    // This changes no test-isolation semantics.
+    // Pre-bundle the heaviest external packages once with esbuild, so each
+    // isolated test file loads one prebuilt module per package instead of
+    // walking hundreds of `node_modules` files. Import — not test execution —
+    // dominates this repo's suites. Measured locally with 2 workers:
+    // business 160s -> 53s, builder 385s -> 250s, worker 136s -> 95s.
+    //
+    // Vitest's optimizer has no auto-discovery (`noDiscovery: true`), so an
+    // empty `include` bundles nothing: the list below is what does the work.
+    // List every subpath a test or source file imports (`drizzle-orm/errors`
+    // …) — a subpath left out loads a second copy, and its classes then fail
+    // `instanceof` against the bundled one (`DrizzleQueryError`). jsdom suites
+    // (builder) use the `client` optimizer, node suites `ssr`.
     deps: {
       optimizer: {
-        ssr: {
-          enabled: true,
-        },
+        ssr: { enabled: true, include: [...OPTIMIZED_DEPENDENCIES] },
+        client: { enabled: true, include: [...OPTIMIZED_DEPENDENCIES] },
       },
     },
     // Several suites run at once (turbo) and several files within each (above),
