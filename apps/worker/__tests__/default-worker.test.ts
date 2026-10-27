@@ -27,6 +27,8 @@ const workerState = vi.hoisted(() => ({
   submitMetaCatalogSync: vi.fn(),
   syncWelcomeMessageFlows: vi.fn(),
   deleteWelcomeMessageFlows: vi.fn(),
+  processPipelineStageBulk: vi.fn(),
+  releasePipelineStageBulkClaim: vi.fn(),
   workerClose: vi.fn(async () => undefined),
   workerOn: vi.fn(),
 }))
@@ -77,6 +79,7 @@ vi.mock("@chatbotx.io/worker-config", async (importOriginal) => {
       syncWelcomeMessageFlows: "syncWelcomeMessageFlows",
       deleteWelcomeMessageFlows: "deleteWelcomeMessageFlows",
       retryRealtimeMemberRevoke: "retryRealtimeMemberRevoke",
+      processPipelineStageBulk: "processPipelineStageBulk",
     },
     defaultQueue: {
       add: (...args: unknown[]) => workerState.defaultQueueAdd(...args),
@@ -91,6 +94,11 @@ vi.mock("@chatbotx.io/worker-config", async (importOriginal) => {
     },
   }
 })
+
+vi.mock("../src/default/handlers/pipeline-stage-bulk", () => ({
+  processPipelineStageBulk: workerState.processPipelineStageBulk,
+  releasePipelineStageBulkClaim: workerState.releasePipelineStageBulkClaim,
+}))
 
 vi.mock("../src/lib/is-blocked-workspace", () => ({
   isBlockedWorkspace: (workspaceId: string | undefined) =>
@@ -236,6 +244,8 @@ beforeEach(() => {
   workerState.submitMetaCatalogSync.mockReset()
   workerState.syncWelcomeMessageFlows.mockReset()
   workerState.deleteWelcomeMessageFlows.mockReset()
+  workerState.processPipelineStageBulk.mockReset()
+  workerState.releasePipelineStageBulkClaim.mockReset()
   workerState.resolveWorkspaceId.mockResolvedValue("workspace-1")
   workerState.isBlockedWorkspace.mockResolvedValue(false)
 })
@@ -430,5 +440,38 @@ describe("default worker — welcome message flows", () => {
 
     expect(workerState.syncWelcomeMessageFlows).not.toHaveBeenCalled()
     expect(workerState.deleteWelcomeMessageFlows).not.toHaveBeenCalled()
+  })
+})
+
+describe("pipeline stage bulk jobs", () => {
+  const job: DefaultJobData = {
+    type: "processPipelineStageBulk",
+    data: {
+      workspaceId: "workspace-1",
+      pipelineId: "2",
+      stageId: "3",
+      bulkJobId: "pipeline-stage-bulk-3-1",
+      moveItemsToStageId: null,
+      actorUserId: null,
+    },
+  }
+
+  test("runs the queued stage removal for active workspaces", async () => {
+    await processDefaultJob(job)
+
+    expect(workerState.isBlockedWorkspace).toHaveBeenCalledWith("workspace-1")
+    expect(workerState.processPipelineStageBulk).toHaveBeenCalledWith(job.data)
+    expect(workerState.releasePipelineStageBulkClaim).not.toHaveBeenCalled()
+  })
+
+  test("a blocked owner skips the job and releases its claim on the stage", async () => {
+    workerState.isBlockedWorkspace.mockResolvedValue(true)
+
+    await processDefaultJob(job)
+
+    expect(workerState.processPipelineStageBulk).not.toHaveBeenCalled()
+    expect(workerState.releasePipelineStageBulkClaim).toHaveBeenCalledWith(
+      job.data,
+    )
   })
 })

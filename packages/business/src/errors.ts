@@ -252,6 +252,9 @@ export class BroadcastValidationException extends ChatbotXException {
 export const notFoundException = (message: string) =>
   new ChatbotXException(message, "notFound", 404)
 
+export const conflictException = (message: string, code: string) =>
+  new ChatbotXException(message, code, 409)
+
 /**
  * A field-scoped validation failure raised from inside a service. The
  * caller-facing action maps `error.field` back to a

@@ -51,6 +51,8 @@ export const resolveFilterValueLabelsRequest = z.object({
   keywords: filterValueIdsSchema,
   whatsappFlows: filterValueIdsSchema,
   emailTopics: filterValueIdsSchema,
+  pipelines: filterValueIdsSchema,
+  pipelineStages: filterValueIdsSchema,
 })
 
 const filterValueLabelSchema = z.object({ id: z.string(), name: z.string() })
@@ -68,6 +70,8 @@ export const resolveFilterValueLabelsResponse = z.object({
   keywords: z.array(filterValueLabelSchema),
   whatsappFlows: z.array(filterValueLabelSchema),
   emailTopics: z.array(filterValueLabelSchema),
+  pipelines: z.array(filterValueLabelSchema),
+  pipelineStages: z.array(filterValueLabelSchema),
 })
 
 export type ResolveFilterValueLabelsResponse = z.infer<

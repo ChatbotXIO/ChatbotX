@@ -207,6 +207,19 @@ const botPauseSet = (options: BotPauseOptions) => ({
     : {}),
 })
 
+/** A conversation's current assignee in the `u_<userId>` / `t_<teamId>` form, or null. */
+export const conversationAssigneeId = (conversation: {
+  assignedUserId: string | null
+  assignedInboxTeamId: string | null
+}): string | null => {
+  if (conversation.assignedUserId) {
+    return `u_${conversation.assignedUserId}`
+  }
+  return conversation.assignedInboxTeamId
+    ? `t_${conversation.assignedInboxTeamId}`
+    : null
+}
+
 class ConversationService extends BaseService {
   /**
    * Records a human reply and closes the DM waiting window in one serialized
@@ -1159,17 +1172,28 @@ class ConversationService extends BaseService {
     assignedId: string | null | undefined
     assignedBy?: string
     triggerContext: Omit<TriggerContext, "triggerType">
+    /**
+     * Only reassign conversations whose current assignee (`u_<id>`, `t_<id>`,
+     * or null when unassigned) is in this list; the rest keep theirs.
+     */
+    onlyFromAssignees?: ReadonlyArray<string | null>
+    /** Run inside the caller's transaction; notifications go to `afterCommit`. */
+    tx?: DatabaseClient
+    afterCommit?: (callback: () => Promise<void>) => void
   }): Promise<void> {
-    const { workspaceId, contactIds, assignedId, assignedBy } = props
+    const { workspaceId, contactIds, assignedId, assignedBy, tx } = props
 
     const updatedData = await this.resolveAssignmentTarget(
       workspaceId,
       assignedId,
+      "throw",
+      tx,
     )
 
     const conversations = await this.findManyByContactIds({
       workspaceId,
       contactIds,
+      tx,
     })
     if (conversations.length === 0) {
       return
@@ -1178,6 +1202,9 @@ class ConversationService extends BaseService {
     await this.updateAssignment({
       workspaceId,
       conversations,
+      onlyFromAssignees: props.onlyFromAssignees,
+      tx,
+      afterCommit: props.afterCommit,
       assignedUserId: updatedData.assignedUserId,
       assignedInboxTeamId: updatedData.assignedInboxTeamId,
       assignedBy,
@@ -1298,6 +1325,11 @@ class ConversationService extends BaseService {
     silent?: boolean
     triggerContext: TriggerContext
     tx?: DatabaseClient
+    /**
+     * Only rows whose assignee (checked under the row lock) is in this list
+     * change; see `assignByContactIds`.
+     */
+    onlyFromAssignees?: ReadonlyArray<string | null>
     afterCommit?: (callback: () => Promise<void>) => void
   }): Promise<ConversationModel[]> {
     const {
@@ -1344,20 +1376,31 @@ class ConversationService extends BaseService {
           ),
         )
         .for("update")
-      const updated = await transaction
-        .update(conversationModel)
-        .set({
-          assignedUserId,
-          assignedInboxTeamId,
-          assignedUserAt: sql`CASE WHEN ${assignedUserId}::bigint IS NULL THEN NULL WHEN "assignedUserId" IS DISTINCT FROM ${assignedUserId}::bigint THEN ${assignedAt.toISOString()}::timestamptz ELSE "assignedUserAt" END`,
-        })
-        .where(
-          and(
-            eq(conversationModel.workspaceId, workspaceId),
-            inArray(conversationModel.id, ids),
-          ),
-        )
-        .returning()
+      const { onlyFromAssignees } = props
+      const eligibleIds = onlyFromAssignees
+        ? previous
+            .filter((conversation) =>
+              onlyFromAssignees.includes(conversationAssigneeId(conversation)),
+            )
+            .map((conversation) => conversation.id)
+        : ids
+      const updated =
+        eligibleIds.length === 0
+          ? []
+          : await transaction
+              .update(conversationModel)
+              .set({
+                assignedUserId,
+                assignedInboxTeamId,
+                assignedUserAt: sql`CASE WHEN ${assignedUserId}::bigint IS NULL THEN NULL WHEN "assignedUserId" IS DISTINCT FROM ${assignedUserId}::bigint THEN ${assignedAt.toISOString()}::timestamptz ELSE "assignedUserAt" END`,
+              })
+              .where(
+                and(
+                  eq(conversationModel.workspaceId, workspaceId),
+                  inArray(conversationModel.id, eligibleIds),
+                ),
+              )
+              .returning()
       return {
         previousAssignments: new Map(
           previous.map((conversation) => [conversation.id, conversation]),

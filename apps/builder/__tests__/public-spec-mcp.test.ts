@@ -68,8 +68,11 @@ function isWorkspaceTokenOperation(operation: McpSpecOperation): boolean {
 // `connections.list`/`connections.create`/`connectionProviders.list`/
 // `connectSessions.get`/`connectSessions.connectTargets` joined the default
 // set so an agent can guide a user through connecting a new channel or
-// integration without a `search_tools` round trip.
-const MAX_DEFAULT_VISIBLE_OPERATIONS = 48
+// integration without a `search_tools` round trip. Bumped 48 -> 52 when
+// `pipelines.list`/`pipelines.listItems`/`pipelines.createItem`/
+// `pipelines.moveItem` joined the default set so an agent can drive a CRM
+// board without a `search_tools` round trip.
+const MAX_DEFAULT_VISIBLE_OPERATIONS = 52
 
 const MCP_SERVER_ROOT = join(import.meta.dirname, "..", "..", "mcp-server")
 const MCP_README_PATH = join(MCP_SERVER_ROOT, "README.md")

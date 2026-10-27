@@ -18,6 +18,7 @@ const COUPON_VARIABLE_ID_PREFIX = "coupon:"
 // rather than being half-relabeled into something even more confusing.
 const BOT_FIELD_VARIABLE_TOKEN_REGEX = /(?<!\{)\{\{bot_field:(\d+)\}\}(?!\})/g
 const BOT_FIELD_VARIABLE_ID_PREFIX = "bot_field:"
+const PIPELINE_VARIABLE_ID_PREFIX = "pipelines."
 const TRAILING_DOUBLE_BRACE_REGEX = /\}\}$/
 
 const isCouponMentionId = (id: unknown) =>
@@ -25,6 +26,9 @@ const isCouponMentionId = (id: unknown) =>
 
 const isBotFieldMentionId = (id: unknown) =>
   typeof id === "string" && id.startsWith(BOT_FIELD_VARIABLE_ID_PREFIX)
+
+const isPipelineMentionId = (id: unknown) =>
+  typeof id === "string" && id.startsWith(PIPELINE_VARIABLE_ID_PREFIX)
 
 const escapeHtml = (value: string) =>
   value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
@@ -49,8 +53,10 @@ export const toVariableMentionAttrs = (
 export const renderVariableMentionText: MentionRenderText = ({ node }) =>
   variableText(node.attrs.id)
 
-// Coupon and bot-field mentions carry an OPAQUE id (`coupon:<topicId>`,
-// `bot_field:<id>`) — the chip must display the human label instead; a
+// Coupon, bot-field and pipeline mentions carry an id the author never typed
+// (`coupon:<topicId>`, `bot_field:<id>`, `pipelines.<ref>.<attr>`) — the chip
+// displays the picker label instead (pipelines: `Pipelines › <Pipeline> ›
+// <Attribute>`, with the raw token as the hover title); a
 // custom-field mention's id IS its name, so it displays as-is. Serialization
 // (`renderVariableMentionText` above) always keeps the id-based token.
 export const renderVariableMentionHTML: MentionRenderHTML = ({
@@ -59,9 +65,14 @@ export const renderVariableMentionHTML: MentionRenderHTML = ({
 }) =>
   [
     "span",
-    options.HTMLAttributes,
+    // A pipeline chip shows a readable label; hovering it reveals the token.
+    isPipelineMentionId(node.attrs.id)
+      ? { ...options.HTMLAttributes, title: variableText(node.attrs.id) }
+      : options.HTMLAttributes,
     variableText(
-      isCouponMentionId(node.attrs.id) || isBotFieldMentionId(node.attrs.id)
+      isCouponMentionId(node.attrs.id) ||
+        isBotFieldMentionId(node.attrs.id) ||
+        isPipelineMentionId(node.attrs.id)
         ? (node.attrs.label ?? node.attrs.id)
         : node.attrs.id,
     ),

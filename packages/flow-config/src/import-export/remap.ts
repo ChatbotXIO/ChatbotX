@@ -13,6 +13,7 @@ import {
   PREFIXED_REFERENCE_FIELDS,
   REFERENCE_ARRAY_FIELD_ENTITY_KIND,
   REFERENCE_FIELD_ENTITY_KIND,
+  STRIP_UNRESOLVED_ARRAY_REFERENCE_KINDS,
 } from "./reference-fields"
 
 export type UnresolvedReference = {
@@ -181,10 +182,14 @@ const remapArrayRef = (
   if (!Array.isArray(value)) {
     return value
   }
-  return value.map((item, index) => {
+  const strip = STRIP_UNRESOLVED_ARRAY_REFERENCE_KINDS.has(entityKind)
+  return value.flatMap((item, index) => {
     const itemPath = `${path}[${index}]`
     const result = resolveScalarRef(item, entityKind, itemPath, idMaps, options)
-    return result.resolved ? result.value : item
+    if (result.resolved) {
+      return [result.value]
+    }
+    return strip ? [] : [item]
   })
 }
 

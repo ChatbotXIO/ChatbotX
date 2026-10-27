@@ -37,6 +37,11 @@ const FLOW_INSERT_KINDS = [
   "aiFunction",
   "aiFile",
   "aiMcpServer",
+  "pipeline",
+  "pipelineStage",
+  "pipelineField",
+  "workspaceMember",
+  "inboxTeam",
 ]
 
 // `trigger` cannot be in `FLOW_INSERT_KINDS`: `triggers` inserts *after*

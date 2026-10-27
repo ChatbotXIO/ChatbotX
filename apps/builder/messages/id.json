@@ -817,7 +817,8 @@
       "ctwaConversionTypes": {
         "lead": "Lead",
         "purchase": "Pembelian"
-      }
+      },
+      "pipelineItem": "Item Pipeline"
     },
     "fieldGroups": {
       "opportunity": "Peluang",
@@ -834,7 +835,8 @@
       "botFields": "Kolom Bot",
       "email": "Email",
       "sms": "SMS",
-      "ctwaAds": "Iklan"
+      "ctwaAds": "Iklan",
+      "pipeline": "Pipeline"
     },
     "languages": {
       "ar": "Arab",
@@ -882,7 +884,21 @@
       "allAds": "semua iklan"
     },
     "noTopic": "Tanpa topik",
-    "trackingSince": "Dilacak sejak {date}. Aktivitas sebelumnya tidak disertakan."
+    "trackingSince": "Dilacak sejak {date}. Aktivitas sebelumnya tidak disertakan.",
+    "pipelineItem": {
+      "anyPipeline": "Semua pipeline",
+      "anyStatus": "Semua status",
+      "attributes": {
+        "exists": "Item",
+        "status": "Status item",
+        "stage": "Tahap item",
+        "priority": "Prioritas item"
+      },
+      "operators": {
+        "has": "Memiliki",
+        "hasNo": "Tidak memiliki"
+      }
+    }
   },
   "fields": {
     "optionalHint": "(opsional)",
@@ -2390,7 +2406,8 @@
       "ads": "Iklan",
       "settings": "Pengaturan",
       "miniApps": "Mini Apps",
-      "leaderboards": "Papan peringkat"
+      "leaderboards": "Papan peringkat",
+      "pipelines": "Pipeline"
     },
     "adReferral": {
       "label": "Ads",
@@ -2448,6 +2465,9 @@
     },
     "miniApp": {
       "label": "Mini App"
+    },
+    "lastOpportunityId": {
+      "label": "ID Peluang Terakhir"
     }
   },
   "flows": {
@@ -2623,7 +2643,8 @@
       "changeGamificationScore": "Ubah skor gamifikasi",
       "sendViewCatalog": "Lihat katalog",
       "sendProducts": "Kirim produk",
-      "sendCollection": "Koleksi"
+      "sendCollection": "Koleksi",
+      "pipeline": "Pipeline"
     },
     "externalRequest": {
       "errors": {
@@ -2846,6 +2867,57 @@
       "summaryManual": "{count, plural, one {# produk} other {# produk}}",
       "cancel": "Batal",
       "save": "Simpan"
+    },
+    "pipelineStep": {
+      "action": "Tindakan",
+      "pipeline": "Pipeline",
+      "targetHint": "Bekerja pada item terbuka terbaru milik kontak di pipeline ini. Jalur Lewati dijalankan jika tidak ada.",
+      "noPipelines": "Pipeline tidak ditemukan",
+      "actions": {
+        "addToPipeline": "Tambahkan kontak ke pipeline",
+        "moveToStage": "Pindahkan ke tahap",
+        "changeValue": "Ubah nilai",
+        "assign": "Tugaskan ke admin",
+        "changeStatus": "Ubah status",
+        "changePriority": "Ubah prioritas",
+        "changeDueDate": "Ubah tenggat waktu",
+        "changeTitle": "Ubah judul",
+        "setCustomField": "Setel kolom kustom",
+        "clearCustomField": "Hapus kolom kustom",
+        "changeDescription": "Ubah deskripsi",
+        "removeFromPipeline": "Hapus kontak dari pipeline",
+        "addComment": "Tambahkan komentar",
+        "transfer": "Pindahkan ke pipeline lain"
+      },
+      "title": "Judul",
+      "description": "Deskripsi",
+      "stage": "Tahap",
+      "firstStage": "Tahap pertama",
+      "status": "Status",
+      "statusOptions": {
+        "open": "Terbuka",
+        "won": "Menang",
+        "lost": "Kalah"
+      },
+      "assigneeMembers": "Admin yang ditugaskan",
+      "assigneeTeams": "Tim yang ditugaskan",
+      "value": "Nilai",
+      "priority": "Prioritas",
+      "dueDate": "Tenggat waktu",
+      "dueNone": "Tidak ada",
+      "dueNoneHint": "Item tidak memiliki tenggat waktu.",
+      "dueCustomField": "Dari kolom kustom tanggal",
+      "dueFixed": "Tanggal dan waktu tetap",
+      "dueField": "Kolom kustom tanggal atau tanggal-waktu",
+      "fieldValues": "Kolom kustom",
+      "field": "Kolom",
+      "fieldValue": "Nilai",
+      "fields": "Kolom",
+      "addField": "Tambahkan nilai kolom",
+      "removeHint": "Menghapus item terbuka terbaru milik kontak di pipeline ini.",
+      "comment": "Komentar",
+      "destinationPipeline": "Pipeline tujuan",
+      "destinationStage": "Tahap tujuan"
     }
   },
   "folders": {
@@ -5433,11 +5505,11 @@
       "incomingCall": "Panggilan Masuk",
       "missedAudioCall": "Panggilan Audio Tak Terjawab",
       "callEnded": "Panggilan Berakhir",
-      "ticketCreated": "Tiket Dibuat",
-      "ticketMovedToStage": "Tiket Dipindahkan ke Tahap",
-      "ticketValueChanged": "Nilai Tiket Diubah",
-      "ticketStatusChanged": "Status Tiket Diubah",
-      "ticketPriorityChanged": "Prioritas Tiket Diubah",
+      "pipelineItemCreated": "Tiket Dibuat",
+      "pipelineItemMovedToStage": "Tiket Dipindahkan ke Tahap",
+      "pipelineItemValueChanged": "Nilai Tiket Diubah",
+      "pipelineItemStatusChanged": "Status Tiket Diubah",
+      "pipelineItemPriorityChanged": "Prioritas Tiket Diubah",
       "subscribedToSequence": "Berlangganan Urutan",
       "unsubscribedFromSequence": "Berhenti Berlangganan Urutan",
       "shoppingCartSent": "Kontak Mengirim Keranjang Belanja",
@@ -5457,7 +5529,9 @@
       "callRecorded": "Panggilan direkam",
       "callTranscribed": "Panggilan ditranskripsi",
       "anyProduct": "Produk apa pun",
-      "anyCategory": "Kategori apa pun"
+      "anyCategory": "Kategori apa pun",
+      "anyPipeline": "Semua pipeline",
+      "anyStage": "Semua tahap"
     },
     "actions": {
       "addTag": "Tambahkan Tag",
@@ -5506,7 +5580,13 @@
     "countCapped": "{count}+ kontak",
     "exportAllNotice": "Semua kontak yang cocok dengan filter saat ini akan diekspor.",
     "exportTakingLong": "Ekspor memerlukan waktu lebih lama dari perkiraan",
-    "exportTakingLongDescription": "Ekspor masih diproses. Anda dapat menutup dialog ini dan memeriksanya kembali dalam beberapa menit dari riwayat ekspor."
+    "exportTakingLongDescription": "Ekspor masih diproses. Anda dapat menutup dialog ini dan memeriksanya kembali dalam beberapa menit dari riwayat ekspor.",
+    "search": {
+      "placeholder": "Cari (nama, email, telepon, ID kontak)",
+      "searching": "Mencari…",
+      "error": "Tidak dapat mencari kontak",
+      "empty": "Kontak tidak ditemukan"
+    }
   },
   "contactScan": {
     "menu": {
@@ -9979,5 +10059,401 @@
     "metHelp": "Persentase balasan ber-SLA yang memenuhinya.",
     "eligibleCount": "{count} balasan memiliki SLA",
     "enable": "Aktifkan SLA respons"
+  },
+  "pipelines": {
+    "title": "Pipeline",
+    "retry": "Coba lagi",
+    "save": "Simpan",
+    "saveFailed": "Tidak dapat menyimpan perubahan Anda. Silakan coba lagi.",
+    "list": {
+      "name": "Nama",
+      "type": "Tipe",
+      "items": "Item",
+      "add": "Tambah pipeline",
+      "empty": "Belum ada pipeline",
+      "emptyHint": "Buat pipeline untuk melacak deal, tiket, atau proses apa pun sebagai kartu di papan.",
+      "error": "Tidak dapat memuat pipeline",
+      "contacts": "Kontak",
+      "addShort": "Tambah",
+      "description": "Lacak peluang, tiket, atau proses apa pun sebagai kartu yang bergerak melalui tahapan."
+    },
+    "types": {
+      "opportunity": {
+        "label": "Pusat Peluang",
+        "description": "Lacak deal penjualan melalui setiap tahap. Tahap pertama: Lead."
+      },
+      "ticket": {
+        "label": "Pusat Dukungan",
+        "description": "Tangani permintaan dukungan. Tahap pertama: Masalah Baru."
+      },
+      "custom": {
+        "label": "Papan kustom",
+        "description": "Bangun proses Anda sendiri. Tahap pertama: Penerimaan."
+      }
+    },
+    "noun": {
+      "opportunity": {
+        "one": "Peluang",
+        "many": "Peluang",
+        "add": "Tambah Peluang"
+      },
+      "ticket": {
+        "one": "Tiket",
+        "many": "Tiket",
+        "add": "Tambah Tiket"
+      },
+      "card": {
+        "one": "Kartu",
+        "many": "Kartu",
+        "add": "Tambah Kartu"
+      }
+    },
+    "create": {
+      "title": "Pipeline baru",
+      "description": "Pilih kegunaan papan, lalu beri nama.",
+      "type": "Jenis",
+      "name": "Nama pipeline",
+      "namePlaceholder": "mis. Penjualan",
+      "submit": "Buat pipeline",
+      "success": "Pipeline dibuat"
+    },
+    "menu": {
+      "open": "Tindakan pipeline",
+      "rename": "Ubah nama",
+      "duplicate": "Duplikat",
+      "delete": "Hapus"
+    },
+    "rename": {
+      "title": "Ubah nama pipeline",
+      "submit": "Ubah nama",
+      "success": "Nama pipeline diubah"
+    },
+    "duplicate": {
+      "success": "Pipeline diduplikasi"
+    },
+    "delete": {
+      "title": "Hapus pipeline",
+      "description": "{name} beserta semua tahap dan itemnya akan dihapus. Tindakan ini tidak dapat dibatalkan.",
+      "success": "Pipeline dihapus"
+    },
+    "board": {
+      "title": "Papan",
+      "count": "{count, plural, one {# item} other {# item}}",
+      "total": "Total {value}",
+      "search": "Cari berdasarkan judul, nomor, atau kontak",
+      "sort": "Urutkan",
+      "filter": "Filter",
+      "analytics": "Analitik",
+      "settings": "Pengaturan",
+      "emptyStage": "Seret dan lepas kartu ke sini untuk memindahkannya ke tahap ini.",
+      "loadMore": "Muat lebih banyak",
+      "loadMoreFailed": "Tidak dapat memuat item lainnya",
+      "error": "Tidak dapat memuat papan",
+      "processing": "Memproses tahap ini…",
+      "moveFailed": "Tidak dapat memindahkan kartu",
+      "sortOptions": {
+        "createdAtDesc": "Tanggal dibuat (Baru ke Lama)",
+        "createdAtAsc": "Tanggal dibuat (Lama ke Baru)",
+        "updatedAtDesc": "Tanggal pembaruan (Baru ke Lama)",
+        "valueDesc": "Nilai peluang (Tinggi ke Rendah)",
+        "valueAsc": "Nilai peluang (Rendah ke Tinggi)",
+        "dueDateAsc": "Tanggal jatuh tempo (Terdekat ke Terjauh)",
+        "dueDateDesc": "Tanggal jatuh tempo (Terjauh ke Terdekat)",
+        "priorityDesc": "Prioritas (Tinggi ke Rendah)",
+        "priorityAsc": "Prioritas (Rendah ke Tinggi)",
+        "updatedAtAsc": "Tanggal pembaruan (Lama ke Baru)"
+      },
+      "searchAction": "Cari",
+      "closeSearch": "Tutup pencarian",
+      "cardMenu": "Tindakan kartu",
+      "moveTo": "Pindahkan ke",
+      "unknownContact": "Kontak tidak dikenal",
+      "staleError": "Papan tidak dapat dimuat ulang. Data yang tampil mungkin sudah usang."
+    },
+    "stage": {
+      "add": "Tambah tahap",
+      "name": "Nama tahap",
+      "namePlaceholder": "Nama tahap",
+      "menu": "Tindakan tahap",
+      "edit": "Edit tahap",
+      "delete": "Hapus tahap",
+      "deleteTitle": "Hapus tahap",
+      "deleteDescription": "{name} dan semua item di dalamnya akan dihapus. Tindakan ini tidak dapat dibatalkan.",
+      "moveItemsTo": "Pindahkan item ke",
+      "deleteItemsToo": "Hapus itemnya juga",
+      "description": "Deskripsi",
+      "textColor": "Warna teks",
+      "backgroundColor": "Warna latar belakang",
+      "saved": "Tahap disimpan",
+      "deleted": "Tahap dihapus",
+      "queued": "Tahap sedang dikosongkan di latar belakang.",
+      "resetColor": "Default",
+      "deleteMoveDescription": "{name} akan dihapus. Itemnya akan dipindahkan ke {target}.",
+      "rename": "Ubah nama",
+      "settings": "Pengaturan",
+      "general": "Umum",
+      "color": "Warna",
+      "cancel": "Batal"
+    },
+    "priority": {
+      "low": "Rendah",
+      "medium": "Sedang",
+      "high": "Tinggi"
+    },
+    "item": {
+      "loading": "Memuat…",
+      "error": "Tidak dapat memuat item ini",
+      "title": "Judul",
+      "status": "Status",
+      "stage": "Tahap",
+      "priority": "Prioritas",
+      "value": "Nilai",
+      "dueDate": "Tenggat waktu",
+      "assignees": "Admin yang ditugaskan",
+      "description": "Deskripsi",
+      "attachments": "Lampiran",
+      "attach": "Lampirkan file",
+      "noAttachments": "Tidak ada lampiran",
+      "removeAttachment": "Hapus lampiran",
+      "removeAttachmentDescription": "File dilepas dari item ini tetapi tetap ada di pustaka media.",
+      "comments": "Komentar",
+      "addComment": "Tambahkan komentar",
+      "commentPlaceholder": "Tulis komentar…",
+      "noComments": "Belum ada komentar",
+      "deleteComment": "Hapus komentar",
+      "deleteCommentDescription": "Komentar ini akan dihapus. Tindakan ini tidak dapat dibatalkan.",
+      "activity": "Aktivitas",
+      "noActivity": "Belum ada aktivitas",
+      "transfer": "Pindahkan ke pipeline",
+      "transferTitle": "Pindahkan ke pipeline lain",
+      "transferDescription": "Item mempertahankan nomor dan tanggal pembuatannya. Kolom kustom ikut dipindahkan jika pipeline lain memiliki kolom dengan nama referensi dan tipe yang sama.",
+      "destinationPipeline": "Pipeline tujuan",
+      "destinationStage": "Tahap tujuan",
+      "firstStage": "Tahap pertama",
+      "choose": "Pilih…",
+      "transferred": "Item dipindahkan",
+      "delete": "Hapus",
+      "deleteDescription": "Satu item akan dihapus. Tindakan ini tidak dapat dibatalkan.",
+      "deleted": "Item dihapus",
+      "number": "Nomor",
+      "createdBy": "Dibuat oleh",
+      "createdByValue": "{name} pada {date}",
+      "inbox": "Inbox",
+      "moreActions": "Tindakan lainnya",
+      "noDescription": "Tidak ada deskripsi",
+      "yes": "Ya",
+      "no": "Tidak",
+      "assigneesMembers": "Agen",
+      "assigneesTeams": "Tim inbox",
+      "assigneesSearch": "Cari admin atau tim…",
+      "assigneesEmpty": "Tidak ada hasil",
+      "assigneesPlaceholder": "Pilih admin atau tim",
+      "olderComments": "Tampilkan komentar lama",
+      "olderActivity": "Tampilkan aktivitas lama",
+      "activityFilter": "Filter",
+      "activityFilterCount": "{count, plural, one {# filter} other {# filter}}",
+      "activityFilterClear": "Tampilkan semua",
+      "noFilteredActivity": "Tidak ada aktivitas yang cocok dengan filter ini.",
+      "activityGroup": {
+        "lifecycle": "Dibuat & dipindahkan",
+        "stage": "Tahap",
+        "status": "Status",
+        "value": "Nilai",
+        "priority": "Prioritas",
+        "dueDate": "Tenggat",
+        "details": "Judul, deskripsi & kolom",
+        "assignees": "Penanggung jawab",
+        "comments": "Komentar",
+        "attachments": "Lampiran"
+      }
+    },
+    "activity": {
+      "created": "Dibuat",
+      "stageChanged": "Dipindahkan ke tahap lain",
+      "statusChanged": "Status diubah",
+      "valueChanged": "Nilai diubah",
+      "priorityChanged": "Prioritas diubah",
+      "dueDateChanged": "Tenggat waktu diubah",
+      "titleChanged": "Judul diubah",
+      "descriptionChanged": "Deskripsi diubah",
+      "fieldValuesChanged": "Kolom kustom diubah",
+      "assigneesChanged": "Penerima tugas diubah",
+      "attachmentAdded": "Lampiran ditambahkan",
+      "attachmentRemoved": "Lampiran dihapus",
+      "commentAdded": "Komentar ditambahkan",
+      "commentDeleted": "Komentar dihapus",
+      "transferred": "Dipindahkan dari pipeline lain",
+      "deleted": "Dihapus"
+    },
+    "activityActor": {
+      "flow": "Alur",
+      "trigger": "Pemicu",
+      "workspaceToken": "API",
+      "system": "Sistem",
+      "formerMember": "Mantan anggota"
+    },
+    "add": {
+      "changeContact": "Pilih kontak lain",
+      "success": "Dibuat",
+      "stepContact": "Pilih kontak",
+      "stepDetails": "Detail {noun}",
+      "contact": "Kontak",
+      "addNewContact": "Tambah Baru"
+    },
+    "filter": {
+      "title": "Filter",
+      "status": "Status",
+      "statusLabels": {
+        "open": "Terbuka",
+        "won": "Menang",
+        "lost": "Kalah"
+      },
+      "priority": "Prioritas",
+      "assignee": "Admin yang ditugaskan",
+      "value": "Nilai {noun}",
+      "min": "Min",
+      "max": "Maks",
+      "dueDate": "Tenggat waktu",
+      "createdAt": "Tanggal dibuat",
+      "from": "Dari",
+      "to": "Sampai",
+      "clear": "Hapus filter",
+      "apply": "Terapkan",
+      "back": "Kembali",
+      "updatedAt": "Tanggal diperbarui",
+      "resolvedOn": "{noun} diselesaikan pada",
+      "statusChangedOn": "Status diubah pada",
+      "stageChangedOn": "Tahap diubah pada",
+      "lastCommentOn": "Komentar terakhir pada",
+      "customFields": "Kolom kustom",
+      "any": "Apa saja",
+      "yes": "Ya",
+      "no": "Tidak",
+      "notResolvedOn": "{noun} belum diselesaikan pada",
+      "equal": "Sama dengan",
+      "different": "Berbeda dari",
+      "reset": "Atur ulang",
+      "presets": {
+        "thisWeek": "Minggu ini",
+        "lastWeek": "Minggu lalu",
+        "last14": "14 hari terakhir",
+        "thisYear": "Tahun ini",
+        "lastYear": "Tahun lalu",
+        "tomorrow": "Besok",
+        "next7": "Dalam 7 hari",
+        "next14": "Dalam 14 hari",
+        "next30": "Dalam 30 hari",
+        "allTime": "Sepanjang waktu"
+      },
+      "pickDate": "Pilih tanggal",
+      "activity": "Aktivitas",
+      "activityKinds": "Jenis perubahan",
+      "activityActors": "Dilakukan oleh",
+      "activityWhen": "Kapan",
+      "activityAutomation": "Otomatisasi"
+    },
+    "analytics": {
+      "title": "Analitik",
+      "loading": "Memuat statistik…",
+      "error": "Tidak dapat memuat statistik",
+      "created": "Dibuat",
+      "won": "Menang",
+      "wonValue": "Nilai menang",
+      "lost": "Kalah",
+      "lostValue": "Nilai kalah",
+      "admin": "Admin",
+      "automation": "Otomatisasi",
+      "back": "Kembali",
+      "admins": "Admin",
+      "chart": {
+        "created": "Baru per hari",
+        "won": "Menang per hari",
+        "lost": "Kalah per hari",
+        "wonValue": "Nilai menang per hari",
+        "lostValue": "Nilai kalah per hari"
+      },
+      "pie": {
+        "created": "Dibuat per admin",
+        "won": "Dimenangkan per admin",
+        "lost": "Kalah per admin",
+        "other": "Lainnya",
+        "empty": "Tidak ada data"
+      }
+    },
+    "settings": {
+      "title": "Pengaturan pipeline",
+      "general": "Umum",
+      "fields": "Kolom kustom",
+      "display": "Tampilan",
+      "permissions": "Izin",
+      "saved": "Pengaturan disimpan",
+      "referenceName": "Nama referensi",
+      "referenceNameHint": "Digunakan dalam variabel pipelines.reference_name.stage_name. Mengubahnya akan merusak pesan yang memakai nama lama.",
+      "referenceNameFormat": "Gunakan huruf kecil, angka, dan garis bawah, diawali huruf (mis. close_date).",
+      "assignContact": "Tugaskan kontak ke admin saat item ditugaskan",
+      "limit": "Batasi item terbuka per kontak",
+      "statusLabels": "Label status",
+      "status": {
+        "open": "Terbuka",
+        "won": "Menang",
+        "lost": "Kalah"
+      },
+      "features": "Fitur yang terlihat",
+      "cardElements": "Elemen kartu",
+      "card": {
+        "contactPhone": "Telepon kontak",
+        "contactEmail": "Email kontak",
+        "createdAt": "Tanggal dibuat",
+        "updatedAt": "Tanggal diperbarui",
+        "assignees": "Admin yang ditugaskan",
+        "comments": "Komentar",
+        "cardId": "Nomor item",
+        "priority": "Prioritas",
+        "value": "Nilai",
+        "dueDate": "Tenggat waktu"
+      },
+      "noFields": "Belum ada kolom kustom",
+      "fieldName": "Nama kolom",
+      "fieldReference": "Nama referensi",
+      "fieldType": "Tipe kolom",
+      "required": "Wajib diisi",
+      "requiredShort": "wajib",
+      "addField": "Tambah kolom",
+      "fieldAdded": "Kolom ditambahkan",
+      "deleteField": "Hapus kolom",
+      "permissionsHint": "Pemilik dan admin ruang kerja selalu memiliki akses penuh. Berikan anggota lain izin yang boleh mereka lakukan di pipeline ini.",
+      "revoke": "Cabut",
+      "permission": {
+        "view": "Lihat",
+        "edit": "Edit",
+        "delete": "Hapus",
+        "settings": "Pengaturan"
+      },
+      "noMembers": "Tidak ada anggota lain untuk dikonfigurasi",
+      "confirmDeleteField": "Hapus kolom ini beserta semua nilainya di setiap item?",
+      "adminPermissions": "Izin admin",
+      "cardVisibleElements": "Elemen kartu yang terlihat"
+    },
+    "panel": {
+      "empty": "Tidak ada item pipeline untuk kontak ini",
+      "error": "Tidak dapat memuat item pipeline",
+      "choosePipeline": "Pilih pipeline",
+      "add": "Tambah Baru"
+    },
+    "variables": {
+      "group": "Pipeline",
+      "attributes": {
+        "name": "Nama item",
+        "stageName": "Tahap",
+        "status": "Status",
+        "priority": "Prioritas",
+        "value": "Nilai",
+        "assignedAdmins": "Admin yang ditugaskan",
+        "createdDate": "Tanggal dibuat",
+        "dueDate": "Tenggat waktu",
+        "updatedDate": "Tanggal diperbarui",
+        "id": "ID item"
+      }
+    }
   }
 }

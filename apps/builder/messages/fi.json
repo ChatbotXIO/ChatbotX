@@ -817,7 +817,8 @@
       "ctwaConversionTypes": {
         "lead": "Liidi",
         "purchase": "Ostotapahtuma"
-      }
+      },
+      "pipelineItem": "Pipeline-kohde"
     },
     "fieldGroups": {
       "opportunity": "Myyntimahdollisuus",
@@ -834,7 +835,8 @@
       "botFields": "Bottikentät",
       "email": "Sähköposti",
       "sms": "SMS",
-      "ctwaAds": "Mainokset"
+      "ctwaAds": "Mainokset",
+      "pipeline": "Pipelinet"
     },
     "languages": {
       "ar": "Arabia",
@@ -882,7 +884,21 @@
       "allAds": "kaikki mainokset"
     },
     "noTopic": "Ei aihetta",
-    "trackingSince": "Seurattu {date} alkaen. Aiempi toiminta ei sisälly."
+    "trackingSince": "Seurattu {date} alkaen. Aiempi toiminta ei sisälly.",
+    "pipelineItem": {
+      "anyPipeline": "Mikä tahansa pipeline",
+      "anyStatus": "Mikä tahansa tila",
+      "attributes": {
+        "exists": "Kohteet",
+        "status": "Kohteen tila",
+        "stage": "Kohteen vaihe",
+        "priority": "Kohteen prioriteetti"
+      },
+      "operators": {
+        "has": "On",
+        "hasNo": "Ei ole"
+      }
+    }
   },
   "fields": {
     "optionalHint": "(valinnainen)",
@@ -2390,7 +2406,8 @@
       "ads": "Mainokset",
       "settings": "Asetukset",
       "miniApps": "Mini Apps",
-      "leaderboards": "Tulostaulukot"
+      "leaderboards": "Tulostaulukot",
+      "pipelines": "Myyntiputket"
     },
     "adReferral": {
       "label": "Ads",
@@ -2448,6 +2465,9 @@
     },
     "miniApp": {
       "label": "Minisovellus"
+    },
+    "lastOpportunityId": {
+      "label": "Viimeisin myyntimahdollisuuden tunnus"
     }
   },
   "flows": {
@@ -2623,7 +2643,8 @@
       "changeGamificationScore": "Muuta pelillistämisen pisteitä",
       "sendViewCatalog": "Näytä tuotekatalogi",
       "sendProducts": "Lähetä tuotteita",
-      "sendCollection": "Kokoelma"
+      "sendCollection": "Kokoelma",
+      "pipeline": "Pipelinet"
     },
     "externalRequest": {
       "errors": {
@@ -2846,6 +2867,57 @@
       "summaryManual": "{count, plural, one {# tuote} other {# tuotetta}}",
       "cancel": "Peruuta",
       "save": "Tallenna"
+    },
+    "pipelineStep": {
+      "action": "Toiminto",
+      "pipeline": "Pipeline",
+      "targetHint": "Toimii yhteystiedon viimeisimpään avoimeen kohteeseen tässä pipelinessä. Ohita-polku suoritetaan, jos sellaista ei ole.",
+      "noPipelines": "Pipelineja ei löytynyt",
+      "actions": {
+        "addToPipeline": "Lisää yhteystieto pipelineen",
+        "moveToStage": "Siirrä vaiheeseen",
+        "changeValue": "Muuta arvoa",
+        "assign": "Määritä ylläpitäjille",
+        "changeStatus": "Muuta tilaa",
+        "changePriority": "Muuta prioriteettia",
+        "changeDueDate": "Muuta eräpäivää",
+        "changeTitle": "Muuta otsikkoa",
+        "setCustomField": "Aseta mukautettu kenttä",
+        "clearCustomField": "Tyhjennä mukautetut kentät",
+        "changeDescription": "Muuta kuvausta",
+        "removeFromPipeline": "Poista yhteystieto pipelinestä",
+        "addComment": "Lisää kommentti",
+        "transfer": "Siirrä toiseen pipelineen"
+      },
+      "title": "Otsikko",
+      "description": "Kuvaus",
+      "stage": "Vaihe",
+      "firstStage": "Ensimmäinen vaihe",
+      "status": "Tila",
+      "statusOptions": {
+        "open": "Avoin",
+        "won": "Voitettu",
+        "lost": "Hävitty"
+      },
+      "assigneeMembers": "Määritetyt ylläpitäjät",
+      "assigneeTeams": "Määritetyt tiimit",
+      "value": "Arvo",
+      "priority": "Prioriteetti",
+      "dueDate": "Eräpäivä",
+      "dueNone": "Ei mitään",
+      "dueNoneHint": "Kohteella ei ole eräpäivää.",
+      "dueCustomField": "Päivämäärän mukautetusta kentästä",
+      "dueFixed": "Kiinteä päivämäärä ja aika",
+      "dueField": "Päivämäärä- tai päivämäärä ja aika -mukautettu kenttä",
+      "fieldValues": "Mukautetut kentät",
+      "field": "Kenttä",
+      "fieldValue": "Arvo",
+      "fields": "Kentät",
+      "addField": "Lisää kentän arvo",
+      "removeHint": "Poistaa yhteystiedon viimeisimmän avoimen kohteen tässä pipelinessä.",
+      "comment": "Kommentti",
+      "destinationPipeline": "Kohdepipeline",
+      "destinationStage": "Kohdevaihe"
     }
   },
   "folders": {
@@ -5433,11 +5505,11 @@
       "incomingCall": "Saapuva puhelu",
       "missedAudioCall": "Vastaamaton äänipuhelu",
       "callEnded": "Puhelu päättyi",
-      "ticketCreated": "Tiketti luotu",
-      "ticketMovedToStage": "Tiketti siirretty vaiheeseen",
-      "ticketValueChanged": "Tiketin arvo muuttui",
-      "ticketStatusChanged": "Tiketin tila muuttui",
-      "ticketPriorityChanged": "Tiketin prioriteetti muuttui",
+      "pipelineItemCreated": "Tiketti luotu",
+      "pipelineItemMovedToStage": "Tiketti siirretty vaiheeseen",
+      "pipelineItemValueChanged": "Tiketin arvo muuttui",
+      "pipelineItemStatusChanged": "Tiketin tila muuttui",
+      "pipelineItemPriorityChanged": "Tiketin prioriteetti muuttui",
       "subscribedToSequence": "Liitetty sekvenssiin",
       "unsubscribedFromSequence": "Poistettu sekvenssistä",
       "shoppingCartSent": "Yhteystieto lähetti ostoskorin",
@@ -5457,7 +5529,9 @@
       "callRecorded": "Puhelu tallennettu",
       "callTranscribed": "Puhelu litteroitu",
       "anyProduct": "Mikä tahansa tuote",
-      "anyCategory": "Mikä tahansa kategoria"
+      "anyCategory": "Mikä tahansa kategoria",
+      "anyPipeline": "Mikä tahansa pipeline",
+      "anyStage": "Mikä tahansa vaihe"
     },
     "actions": {
       "addTag": "Lisää tunniste",
@@ -5506,7 +5580,13 @@
     "countCapped": "{count}+ yhteystietoa",
     "exportAllNotice": "Kaikki nykyistä suodatinta vastaavat yhteystiedot viedään.",
     "exportTakingLong": "Vienti kestää odotettua kauemmin",
-    "exportTakingLongDescription": "Vientiä käsitellään edelleen. Voit sulkea tämän valintaikkunan ja tarkistaa tilanteen muutaman minuutin kuluttua vientihistoriasta."
+    "exportTakingLongDescription": "Vientiä käsitellään edelleen. Voit sulkea tämän valintaikkunan ja tarkistaa tilanteen muutaman minuutin kuluttua vientihistoriasta.",
+    "search": {
+      "placeholder": "Hae (nimi, sähköposti, puhelin, yhteystiedon tunnus)",
+      "searching": "Haetaan…",
+      "error": "Yhteystietojen haku epäonnistui",
+      "empty": "Yhteystietoja ei löytynyt"
+    }
   },
   "contactScan": {
     "menu": {
@@ -9979,5 +10059,401 @@
     "metHelp": "SLA:n täyttäneiden vastausten osuus SLA:lla olevista.",
     "eligibleCount": "{count} vastauksella oli SLA",
     "enable": "Ota vastaus-SLA käyttöön"
+  },
+  "pipelines": {
+    "title": "Pipelinet",
+    "retry": "Yritä uudelleen",
+    "save": "Tallenna",
+    "saveFailed": "Muutosten tallentaminen epäonnistui. Yritä uudelleen.",
+    "list": {
+      "name": "Nimi",
+      "type": "Tyyppi",
+      "items": "Kohteet",
+      "add": "Lisää pipeline",
+      "empty": "Ei vielä pipelineja",
+      "emptyHint": "Luo pipeline seurataksesi kauppoja, tikettejä tai mitä tahansa prosessia kortteina taululla.",
+      "error": "Pipelinejen lataaminen epäonnistui",
+      "contacts": "Yhteystiedot",
+      "addShort": "Lisää",
+      "description": "Seuraa kauppoja, tikettejä tai mitä tahansa prosessia vaiheiden läpi liikkuvina kortteina."
+    },
+    "types": {
+      "opportunity": {
+        "label": "Myyntimahdollisuuksien keskus",
+        "description": "Seuraa myyntikauppoja vaiheiden läpi. Ensimmäinen vaihe: Liidi."
+      },
+      "ticket": {
+        "label": "Tukikeskus",
+        "description": "Käsittele tukipyyntöjä. Ensimmäinen vaihe: Uusi ongelma."
+      },
+      "custom": {
+        "label": "Oma taulu",
+        "description": "Rakenna oma prosessisi. Ensimmäinen vaihe: Vastaanotto."
+      }
+    },
+    "noun": {
+      "opportunity": {
+        "one": "Myyntimahdollisuus",
+        "many": "Myyntimahdollisuudet",
+        "add": "Lisää myyntimahdollisuus"
+      },
+      "ticket": {
+        "one": "Tiketti",
+        "many": "Tiketit",
+        "add": "Lisää tiketti"
+      },
+      "card": {
+        "one": "Kortti",
+        "many": "Kortit",
+        "add": "Lisää kortti"
+      }
+    },
+    "create": {
+      "title": "Uusi pipeline",
+      "description": "Valitse, mihin taulua käytetään, ja anna sille nimi.",
+      "type": "Tyyppi",
+      "name": "Pipelinen nimi",
+      "namePlaceholder": "esim. Myynti",
+      "submit": "Luo pipeline",
+      "success": "Pipeline luotu"
+    },
+    "menu": {
+      "open": "Pipelinen toiminnot",
+      "rename": "Nimeä uudelleen",
+      "duplicate": "Monista",
+      "delete": "Poista"
+    },
+    "rename": {
+      "title": "Nimeä pipeline uudelleen",
+      "submit": "Nimeä uudelleen",
+      "success": "Pipeline nimetty uudelleen"
+    },
+    "duplicate": {
+      "success": "Pipeline monistettu"
+    },
+    "delete": {
+      "title": "Poista pipeline",
+      "description": "{name} ja kaikki sen vaiheet ja kohteet poistetaan. Tätä ei voi perua.",
+      "success": "Pipeline poistettu"
+    },
+    "board": {
+      "title": "Taulu",
+      "count": "{count, plural, one {# kohde} other {# kohdetta}}",
+      "total": "Yhteensä {value}",
+      "search": "Hae otsikolla, numerolla tai yhteystiedolla",
+      "sort": "Lajittele",
+      "filter": "Suodata",
+      "analytics": "Analytiikka",
+      "settings": "Asetukset",
+      "emptyStage": "Vedä ja pudota kortti tähän siirtääksesi sen tähän vaiheeseen.",
+      "loadMore": "Lataa lisää",
+      "loadMoreFailed": "Lisää kohteita ei voitu ladata",
+      "error": "Taulun lataaminen epäonnistui",
+      "processing": "Käsitellään tätä vaihetta…",
+      "moveFailed": "Kortin siirtäminen epäonnistui",
+      "sortOptions": {
+        "createdAtDesc": "Luontipäivä (Uusimmasta Vanhimpaan)",
+        "createdAtAsc": "Luontipäivä (Vanhimmasta Uusimpaan)",
+        "updatedAtDesc": "Päivityspäivä (Uusimmasta Vanhimpaan)",
+        "valueDesc": "Myyntimahdollisuuden arvo (Korkeasta Matalaan)",
+        "valueAsc": "Myyntimahdollisuuden arvo (Matalasta Korkeaan)",
+        "dueDateAsc": "Eräpäivä (Aikaisimmasta Myöhäisimpään)",
+        "dueDateDesc": "Eräpäivä (Myöhäisimmästä Aikaisimpaan)",
+        "priorityDesc": "Prioriteetti (Korkeasta Matalaan)",
+        "priorityAsc": "Prioriteetti (Matalasta Korkeaan)",
+        "updatedAtAsc": "Päivityspäivä (Vanhimmasta Uusimpaan)"
+      },
+      "searchAction": "Hae",
+      "closeSearch": "Sulje haku",
+      "cardMenu": "Kortin toiminnot",
+      "moveTo": "Siirrä kohteeseen",
+      "unknownContact": "Tuntematon yhteystieto",
+      "staleError": "Taulua ei voitu päivittää. Näkymä voi olla vanhentunut."
+    },
+    "stage": {
+      "add": "Lisää vaihe",
+      "name": "Vaiheen nimi",
+      "namePlaceholder": "Vaiheen nimi",
+      "menu": "Vaiheen toiminnot",
+      "edit": "Muokkaa vaihetta",
+      "delete": "Poista vaihe",
+      "deleteTitle": "Poista vaihe",
+      "deleteDescription": "{name} ja kaikki sen kohteet poistetaan. Tätä toimintoa ei voi perua.",
+      "moveItemsTo": "Siirrä kohteet vaiheeseen",
+      "deleteItemsToo": "Poista myös kohteet",
+      "description": "Kuvaus",
+      "textColor": "Tekstin väri",
+      "backgroundColor": "Taustaväri",
+      "saved": "Vaihe tallennettu",
+      "deleted": "Vaihe poistettu",
+      "queued": "Vaihetta tyhjennetään taustalla.",
+      "resetColor": "Oletus",
+      "deleteMoveDescription": "{name} poistetaan. Sen kohteet siirretään vaiheeseen {target}.",
+      "rename": "Nimeä uudelleen",
+      "settings": "Asetukset",
+      "general": "Yleiset",
+      "color": "Väri",
+      "cancel": "Peruuta"
+    },
+    "priority": {
+      "low": "Matala",
+      "medium": "Keskitaso",
+      "high": "Korkea"
+    },
+    "item": {
+      "loading": "Ladataan…",
+      "error": "Kohteen lataaminen epäonnistui",
+      "title": "Otsikko",
+      "status": "Tila",
+      "stage": "Vaihe",
+      "priority": "Prioriteetti",
+      "value": "Arvo",
+      "dueDate": "Eräpäivä",
+      "assignees": "Määritetyt ylläpitäjät",
+      "description": "Kuvaus",
+      "attachments": "Liitteet",
+      "attach": "Liitä tiedostoja",
+      "noAttachments": "Ei liitteitä",
+      "removeAttachment": "Poista liite",
+      "removeAttachmentDescription": "Tiedosto poistetaan tästä kohteesta, mutta se säilyy mediakirjastossa.",
+      "comments": "Kommentit",
+      "addComment": "Lisää kommentti",
+      "commentPlaceholder": "Kirjoita kommentti…",
+      "noComments": "Ei vielä kommentteja",
+      "deleteComment": "Poista kommentti",
+      "deleteCommentDescription": "Tämä kommentti poistetaan. Toimintoa ei voi kumota.",
+      "activity": "Toiminta",
+      "noActivity": "Ei vielä toimintaa",
+      "transfer": "Siirrä pipelineen",
+      "transferTitle": "Siirrä toiseen pipelineen",
+      "transferDescription": "Kohde säilyttää numeronsa ja luontipäivänsä. Mukautetut kentät siirtyvät mukana, jos toisessa pipelinessä on samanniminen ja -tyyppinen viitekenttä.",
+      "destinationPipeline": "Kohdepipeline",
+      "destinationStage": "Kohdevaihe",
+      "firstStage": "Ensimmäinen vaihe",
+      "choose": "Valitse…",
+      "transferred": "Kohde siirretty",
+      "delete": "Poista",
+      "deleteDescription": "Yksi kohde poistetaan. Tätä ei voi perua.",
+      "deleted": "Kohde poistettu",
+      "number": "Numero",
+      "createdBy": "Luonut",
+      "createdByValue": "{name}, {date}",
+      "inbox": "Saapuneet",
+      "moreActions": "Lisää toimintoja",
+      "noDescription": "Ei kuvausta",
+      "yes": "Kyllä",
+      "no": "Ei",
+      "assigneesMembers": "Edustajat",
+      "assigneesTeams": "Saapuneiden tiimit",
+      "assigneesSearch": "Hae ylläpitäjiä tai tiimejä…",
+      "assigneesEmpty": "Ei tuloksia",
+      "assigneesPlaceholder": "Valitse ylläpitäjiä tai tiimejä",
+      "olderComments": "Näytä vanhemmat kommentit",
+      "olderActivity": "Näytä vanhempi toiminta",
+      "activityFilter": "Suodata",
+      "activityFilterCount": "{count, plural, one {# suodatin} other {# suodatinta}}",
+      "activityFilterClear": "Näytä kaikki",
+      "noFilteredActivity": "Mikään toiminta ei vastaa tätä suodatinta.",
+      "activityGroup": {
+        "lifecycle": "Luotu ja siirretty",
+        "stage": "Vaihe",
+        "status": "Tila",
+        "value": "Arvo",
+        "priority": "Prioriteetti",
+        "dueDate": "Eräpäivä",
+        "details": "Otsikko, kuvaus ja kentät",
+        "assignees": "Vastuuhenkilöt",
+        "comments": "Kommentit",
+        "attachments": "Liitteet"
+      }
+    },
+    "activity": {
+      "created": "Luotu",
+      "stageChanged": "Siirretty toiseen vaiheeseen",
+      "statusChanged": "Tila muutettu",
+      "valueChanged": "Arvo muutettu",
+      "priorityChanged": "Prioriteetti muutettu",
+      "dueDateChanged": "Eräpäivä muutettu",
+      "titleChanged": "Otsikko muutettu",
+      "descriptionChanged": "Kuvaus muutettu",
+      "fieldValuesChanged": "Mukautetut kentät muutettu",
+      "assigneesChanged": "Vastuuhenkilöt muutettu",
+      "attachmentAdded": "Liite lisätty",
+      "attachmentRemoved": "Liite poistettu",
+      "commentAdded": "Kommentti lisätty",
+      "commentDeleted": "Kommentti poistettu",
+      "transferred": "Siirretty toisesta pipelinestä",
+      "deleted": "Poistettu"
+    },
+    "activityActor": {
+      "flow": "Työnkulku",
+      "trigger": "Laukaisin",
+      "workspaceToken": "API",
+      "system": "Järjestelmä",
+      "formerMember": "Entinen jäsen"
+    },
+    "add": {
+      "changeContact": "Valitse toinen yhteystieto",
+      "success": "Luotu",
+      "stepContact": "Valitse yhteystieto",
+      "stepDetails": "{noun}: tiedot",
+      "contact": "Yhteystieto",
+      "addNewContact": "Lisää uusi"
+    },
+    "filter": {
+      "title": "Suodata",
+      "status": "Tila",
+      "statusLabels": {
+        "open": "Avoin",
+        "won": "Voitettu",
+        "lost": "Hävitty"
+      },
+      "priority": "Prioriteetti",
+      "assignee": "Määritetyt ylläpitäjät",
+      "value": "{noun}: arvo",
+      "min": "Min",
+      "max": "Maks",
+      "dueDate": "Eräpäivä",
+      "createdAt": "Luontipäivä",
+      "from": "Alkaen",
+      "to": "Asti",
+      "clear": "Tyhjennä suodattimet",
+      "apply": "Käytä",
+      "back": "Takaisin",
+      "updatedAt": "Päivityspäivä",
+      "resolvedOn": "{noun} ratkaistu",
+      "statusChangedOn": "Tila muutettu",
+      "stageChangedOn": "Vaihe muutettu",
+      "lastCommentOn": "Viimeisin kommentti",
+      "customFields": "Mukautetut kentät",
+      "any": "Mikä tahansa",
+      "yes": "Kyllä",
+      "no": "Ei",
+      "notResolvedOn": "{noun} ei ratkaistu",
+      "equal": "Yhtä suuri kuin",
+      "different": "Eri kuin",
+      "reset": "Nollaa",
+      "presets": {
+        "thisWeek": "Tämä viikko",
+        "lastWeek": "Viime viikko",
+        "last14": "Viimeiset 14 päivää",
+        "thisYear": "Tämä vuosi",
+        "lastYear": "Viime vuosi",
+        "tomorrow": "Huomenna",
+        "next7": "7 päivän kuluttua",
+        "next14": "14 päivän kuluttua",
+        "next30": "30 päivän kuluttua",
+        "allTime": "Koko ajalta"
+      },
+      "pickDate": "Valitse päivämäärä",
+      "activity": "Toiminta",
+      "activityKinds": "Muutoksen tyyppi",
+      "activityActors": "Tekijä",
+      "activityWhen": "Milloin",
+      "activityAutomation": "Automaatio"
+    },
+    "analytics": {
+      "title": "Analytiikka",
+      "loading": "Ladataan tilastoja…",
+      "error": "Tilastojen lataaminen epäonnistui",
+      "created": "Luodut",
+      "won": "Voitetut",
+      "wonValue": "Voitettu arvo",
+      "lost": "Hävityt",
+      "lostValue": "Hävitty arvo",
+      "admin": "Ylläpitäjä",
+      "automation": "Automaatio",
+      "back": "Takaisin",
+      "admins": "Ylläpitäjät",
+      "chart": {
+        "created": "Uudet päivässä",
+        "won": "Voitetut päivässä",
+        "lost": "Hävityt päivässä",
+        "wonValue": "Voitettu arvo päivässä",
+        "lostValue": "Hävitty arvo päivässä"
+      },
+      "pie": {
+        "created": "Luodut ylläpitäjittäin",
+        "won": "Voitetut ylläpitäjittäin",
+        "lost": "Hävityt ylläpitäjittäin",
+        "other": "Muut",
+        "empty": "Ei tietoja"
+      }
+    },
+    "settings": {
+      "title": "Pipelinen asetukset",
+      "general": "Yleiset",
+      "fields": "Mukautetut kentät",
+      "display": "Näyttö",
+      "permissions": "Oikeudet",
+      "saved": "Asetukset tallennettu",
+      "referenceName": "Viitenimi",
+      "referenceNameHint": "Käytetään muuttujissa pipelines.reference_name.stage_name. Sen muuttaminen rikkoo viestit, jotka käyttävät vanhaa nimeä.",
+      "referenceNameFormat": "Käytä pieniä kirjaimia, numeroita ja alaviivoja, ja aloita kirjaimella (esim. close_date).",
+      "assignContact": "Määritä yhteystieto ylläpitäjälle, kun kohde määritetään",
+      "limit": "Rajoita avoimia kohteita yhteystietoa kohden",
+      "statusLabels": "Tilatunnisteet",
+      "status": {
+        "open": "Avoin",
+        "won": "Voitettu",
+        "lost": "Hävitty"
+      },
+      "features": "Näkyvät ominaisuudet",
+      "cardElements": "Kortin elementit",
+      "card": {
+        "contactPhone": "Yhteystiedon puhelin",
+        "contactEmail": "Yhteystiedon sähköposti",
+        "createdAt": "Luontipäivä",
+        "updatedAt": "Päivityspäivä",
+        "assignees": "Määritetyt ylläpitäjät",
+        "comments": "Kommentit",
+        "cardId": "Kohteen numero",
+        "priority": "Prioriteetti",
+        "value": "Arvo",
+        "dueDate": "Eräpäivä"
+      },
+      "noFields": "Ei vielä mukautettuja kenttiä",
+      "fieldName": "Kentän nimi",
+      "fieldReference": "Viitenimi",
+      "fieldType": "Kentän tyyppi",
+      "required": "Pakollinen",
+      "requiredShort": "pakollinen",
+      "addField": "Lisää kenttä",
+      "fieldAdded": "Kenttä lisätty",
+      "deleteField": "Poista kenttä",
+      "permissionsHint": "Työtilan omistajilla ja ylläpitäjillä on aina täydet oikeudet. Anna muille jäsenille oikeudet, joita he saavat käyttää tässä pipelinessä.",
+      "revoke": "Peruuta oikeus",
+      "permission": {
+        "view": "Näytä",
+        "edit": "Muokkaa",
+        "delete": "Poista",
+        "settings": "Asetukset"
+      },
+      "noMembers": "Ei muita määritettäviä jäseniä",
+      "confirmDeleteField": "Poistetaanko tämä kenttä ja kaikki sen arvot kaikista kohteista?",
+      "adminPermissions": "Ylläpitäjän oikeudet",
+      "cardVisibleElements": "Kortin näkyvät elementit"
+    },
+    "panel": {
+      "empty": "Tällä yhteystiedolla ei ole pipeline-kohteita",
+      "error": "Pipeline-kohteiden lataaminen epäonnistui",
+      "choosePipeline": "Valitse pipeline",
+      "add": "Lisää uusi"
+    },
+    "variables": {
+      "group": "Pipelinet",
+      "attributes": {
+        "name": "Kohteen nimi",
+        "stageName": "Vaihe",
+        "status": "Tila",
+        "priority": "Prioriteetti",
+        "value": "Arvo",
+        "assignedAdmins": "Määritetyt ylläpitäjät",
+        "createdDate": "Luontipäivä",
+        "dueDate": "Eräpäivä",
+        "updatedDate": "Päivityspäivä",
+        "id": "Kohteen tunnus"
+      }
+    }
   }
 }

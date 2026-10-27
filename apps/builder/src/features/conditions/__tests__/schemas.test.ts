@@ -153,7 +153,7 @@ describe("catalog and call conditions", () => {
   })
 
   test("still rejects a condition type nothing emits", () => {
-    expect(conditionSchema.safeParse({ type: "ticketCreated" }).success).toBe(
+    expect(conditionSchema.safeParse({ type: "bogusEvent" }).success).toBe(
       false,
     )
   })
@@ -179,5 +179,42 @@ describe("catalog and call conditions", () => {
       { type: "userAskedAboutProduct", sourceId: null },
       { type: "incomingCall" },
     ])
+  })
+})
+
+describe("conditionSchema pipeline item conditions", () => {
+  test.each([
+    triggerEventTypes.enum.pipelineItemCreated,
+    triggerEventTypes.enum.pipelineItemValueChanged,
+    triggerEventTypes.enum.pipelineItemStatusChanged,
+    triggerEventTypes.enum.pipelineItemPriorityChanged,
+  ])("%s accepts no pipeline (any) or a pinned pipeline id", (type) => {
+    expect(conditionSchema.parse({ type })).toEqual({
+      type,
+      sourceId: null,
+    })
+    expect(conditionSchema.parse({ type, sourceId: "42" })).toEqual({
+      type,
+      sourceId: "42",
+    })
+  })
+
+  test("moved-to-stage accepts an optional destination stage", () => {
+    const parsed = conditionSchema.parse({
+      type: triggerEventTypes.enum.pipelineItemMovedToStage,
+      sourceId: "42",
+      value: { stageId: "7" },
+    })
+
+    expect(parsed).toMatchObject({ sourceId: "42", value: { stageId: "7" } })
+  })
+
+  test("rejects a non numeric pipeline id", () => {
+    expect(
+      conditionSchema.safeParse({
+        type: triggerEventTypes.enum.pipelineItemCreated,
+        sourceId: "abc",
+      }).success,
+    ).toBe(false)
   })
 })

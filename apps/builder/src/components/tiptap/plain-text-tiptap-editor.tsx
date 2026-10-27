@@ -82,6 +82,7 @@ type PlainTextTiptapEditorProps = {
   showEmojiPicker?: boolean
   channels?: ChannelType[]
   includeCouponVariables?: boolean
+  includePipelineVariables?: boolean
   includeRawCustomFieldVariables?: boolean
   includeBotFieldVariables?: boolean
   onChange?: (content: string) => void
@@ -105,6 +106,7 @@ export const PlainTextTiptapEditor = ({
   className,
   channels,
   includeCouponVariables = false,
+  includePipelineVariables = false,
   includeRawCustomFieldVariables = false,
   includeBotFieldVariables = false,
   placeholder = "Type a message...",
@@ -122,6 +124,7 @@ export const PlainTextTiptapEditor = ({
     botFieldsOnly,
     channels,
     includeCouponVariables,
+    includePipelineVariables,
     includeRawCustomFieldVariables,
     includeBotFieldVariables,
   })

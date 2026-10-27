@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest"
 import {
   EVENT_DELIVERY,
+  pipelineItemChangedSchema,
   RealtimeEventType,
   realtimeBatchEnvelopeSchema,
   realtimeCallTransportEndedSchema,
@@ -10,6 +11,7 @@ import {
   realtimeEventEnvelopeSchema,
   realtimeGuestBatchEnvelopeSchema,
   realtimeMemberBatchEnvelopeSchema,
+  realtimeWorkspaceEventEnvelopeSchema,
   routeForAssignment,
   routeForConversation,
   whatsappCallClaimedElsewhereSchema,
@@ -276,5 +278,33 @@ describe("call payload schemas", () => {
         whatsappCallId: "whatsapp-call-1",
       }),
     ).toMatchObject({ status: "ringing" })
+  })
+})
+
+describe("pipelineItemChanged event", () => {
+  test("is a workspace-broadcast event that needs no route", () => {
+    const parsed = realtimeWorkspaceEventEnvelopeSchema.safeParse({
+      eventType: RealtimeEventType.pipelineItemChanged,
+      data: { pipelineId: "1", change: "bulk" },
+    })
+
+    expect(parsed.success).toBe(true)
+    expect(EVENT_DELIVERY[RealtimeEventType.pipelineItemChanged]).toBe(
+      "workspace",
+    )
+  })
+
+  test("accepts only the documented change kinds and ids", () => {
+    expect(
+      pipelineItemChangedSchema.safeParse({ pipelineId: "1", change: "moved" })
+        .success,
+    ).toBe(true)
+    expect(
+      pipelineItemChangedSchema.safeParse({ pipelineId: "1", change: "x" })
+        .success,
+    ).toBe(false)
+    expect(
+      pipelineItemChangedSchema.safeParse({ change: "moved" }).success,
+    ).toBe(false)
   })
 })

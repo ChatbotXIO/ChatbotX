@@ -5,6 +5,8 @@ import { emailTopicService } from "../email-topic/service"
 import { inboxTeamService } from "../enterprise/inbox-team/service"
 import { flowService } from "../flow/service"
 import { inboxService } from "../inbox/service"
+import type { PipelineAccessScope } from "../pipeline/access"
+import { pipelineService } from "../pipeline/service"
 import { reflinkService } from "../reflink/service"
 import type { IdLabel } from "../select-labels-by-ids"
 import { sequenceService } from "../sequence/service"
@@ -29,14 +31,18 @@ export type FilterValueLabelTypes = {
   keywords: string[]
   whatsappFlows: string[]
   emailTopics: string[]
+  pipelines: string[]
+  /** Stage ids of the pipelines a `pipelineItem` stage condition references. */
+  pipelineStages: string[]
 }
 
 export type FilterValueLabels = Record<keyof FilterValueLabelTypes, IdLabel[]>
 
-type LabelResolver = (input: {
-  workspaceId: string
-  ids: string[]
-}) => Promise<IdLabel[]>
+type LabelResolver = (
+  input: { workspaceId: string; ids: string[] },
+  /** Pipeline names are per-pipeline ACL data, unlike every other label. */
+  pipelineScope: PipelineAccessScope,
+) => Promise<IdLabel[]>
 
 // One resolver per filter value type. Each is a primary-key lookup scoped to
 // the workspace, so cost depends on the number of ids asked for, never on how
@@ -59,6 +65,10 @@ const labelResolvers: Record<keyof FilterValueLabelTypes, LabelResolver> = {
   keywords: (input) => automatedResponseService.listKeywordLabelsByIds(input),
   whatsappFlows: (input) => whatsappFlowService.listLabelsByIds(input),
   emailTopics: (input) => emailTopicService.listLabelsByIds(input),
+  pipelines: (input, scope) =>
+    pipelineService.listLabelsByIds({ ...input, scope }),
+  pipelineStages: (input, scope) =>
+    pipelineService.listStageLabelsByIds({ ...input, scope }),
 }
 
 const labelTypes = Object.keys(
@@ -72,16 +82,21 @@ const labelTypes = Object.keys(
 export const resolveContactFilterValueLabels = async (input: {
   workspaceId: string
   ids: Partial<FilterValueLabelTypes>
+  /** Pipelines (and their stages) the caller cannot view come back unnamed. */
+  pipelineScope: PipelineAccessScope
 }): Promise<FilterValueLabels> => {
   const resolved = await Promise.all(
     labelTypes.map(
       async (type) =>
         [
           type,
-          await labelResolvers[type]({
-            workspaceId: input.workspaceId,
-            ids: [...new Set(input.ids[type] ?? [])],
-          }),
+          await labelResolvers[type](
+            {
+              workspaceId: input.workspaceId,
+              ids: [...new Set(input.ids[type] ?? [])],
+            },
+            input.pipelineScope,
+          ),
         ] as const,
     ),
   )

@@ -184,6 +184,7 @@ export const runFlowImport = async (row: ImportRow): Promise<void> => {
       customFields: parsed.data.customFields,
       botFields: parsed.data.botFields,
       folderId: parsedMeta.data.folderId,
+      sourceWorkspaceId: parsed.data.source.workspaceId,
     })
     createdCustomFieldIds = result.createdCustomFieldIds
     createdBotFieldIds = result.createdBotFieldIds

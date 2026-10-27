@@ -2579,6 +2579,166 @@ exports[`public API spec — operation naming guard > operation list (operationI
   },
   {
     "method": "POST",
+    "operationId": "pipelines.addAttachment",
+    "path": "/v1/pipelines/{id}/items/{itemId}/attachments",
+  },
+  {
+    "method": "POST",
+    "operationId": "pipelines.addComment",
+    "path": "/v1/pipelines/{id}/items/{itemId}/comments",
+  },
+  {
+    "method": "POST",
+    "operationId": "pipelines.create",
+    "path": "/v1/pipelines",
+  },
+  {
+    "method": "POST",
+    "operationId": "pipelines.createField",
+    "path": "/v1/pipelines/{id}/fields",
+  },
+  {
+    "method": "POST",
+    "operationId": "pipelines.createItem",
+    "path": "/v1/pipelines/{id}/items",
+  },
+  {
+    "method": "POST",
+    "operationId": "pipelines.createStage",
+    "path": "/v1/pipelines/{id}/stages",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "pipelines.delete",
+    "path": "/v1/pipelines/{id}",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "pipelines.deleteComment",
+    "path": "/v1/pipelines/{id}/items/{itemId}/comments/{commentId}",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "pipelines.deleteField",
+    "path": "/v1/pipelines/{id}/fields/{fieldId}",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "pipelines.deleteItem",
+    "path": "/v1/pipelines/{id}/items/{itemId}",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "pipelines.deleteStage",
+    "path": "/v1/pipelines/{id}/stages/{stageId}",
+  },
+  {
+    "method": "POST",
+    "operationId": "pipelines.duplicate",
+    "path": "/v1/pipelines/{id}/duplicate",
+  },
+  {
+    "method": "GET",
+    "operationId": "pipelines.get",
+    "path": "/v1/pipelines/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "pipelines.getItem",
+    "path": "/v1/pipelines/{id}/items/{itemId}",
+  },
+  {
+    "method": "GET",
+    "operationId": "pipelines.getStats",
+    "path": "/v1/pipelines/{id}/stats",
+  },
+  {
+    "method": "GET",
+    "operationId": "pipelines.list",
+    "path": "/v1/pipelines",
+  },
+  {
+    "method": "GET",
+    "operationId": "pipelines.listActivity",
+    "path": "/v1/pipelines/{id}/items/{itemId}/activity",
+  },
+  {
+    "method": "GET",
+    "operationId": "pipelines.listComments",
+    "path": "/v1/pipelines/{id}/items/{itemId}/comments",
+  },
+  {
+    "method": "GET",
+    "operationId": "pipelines.listContactItems",
+    "path": "/v1/contacts/{identifier}/pipeline-items",
+  },
+  {
+    "method": "GET",
+    "operationId": "pipelines.listFields",
+    "path": "/v1/pipelines/{id}/fields",
+  },
+  {
+    "method": "GET",
+    "operationId": "pipelines.listItems",
+    "path": "/v1/pipelines/{id}/items",
+  },
+  {
+    "method": "GET",
+    "operationId": "pipelines.listMembers",
+    "path": "/v1/pipelines/{id}/members",
+  },
+  {
+    "method": "POST",
+    "operationId": "pipelines.moveItem",
+    "path": "/v1/pipelines/{id}/items/{itemId}/move",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "pipelines.removeAttachment",
+    "path": "/v1/pipelines/{id}/items/{itemId}/attachments/{mediaLibraryFileId}",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "pipelines.removeMember",
+    "path": "/v1/pipelines/{id}/members/{workspaceMemberId}",
+  },
+  {
+    "method": "POST",
+    "operationId": "pipelines.reorderStages",
+    "path": "/v1/pipelines/{id}/stages/reorder",
+  },
+  {
+    "method": "PUT",
+    "operationId": "pipelines.setMember",
+    "path": "/v1/pipelines/{id}/members/{workspaceMemberId}",
+  },
+  {
+    "method": "POST",
+    "operationId": "pipelines.transferItem",
+    "path": "/v1/pipelines/{id}/items/{itemId}/transfer",
+  },
+  {
+    "method": "PATCH",
+    "operationId": "pipelines.update",
+    "path": "/v1/pipelines/{id}",
+  },
+  {
+    "method": "PATCH",
+    "operationId": "pipelines.updateField",
+    "path": "/v1/pipelines/{id}/fields/{fieldId}",
+  },
+  {
+    "method": "PATCH",
+    "operationId": "pipelines.updateItem",
+    "path": "/v1/pipelines/{id}/items/{itemId}",
+  },
+  {
+    "method": "PATCH",
+    "operationId": "pipelines.updateStage",
+    "path": "/v1/pipelines/{id}/stages/{stageId}",
+  },
+  {
+    "method": "POST",
     "operationId": "productCategories.create",
     "path": "/v1/product-categories",
   },

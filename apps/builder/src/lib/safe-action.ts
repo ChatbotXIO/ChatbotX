@@ -165,6 +165,7 @@ export const workspaceActionClientAllowExpired = authActionClient.use(
           ctx: {
             workspaceId: workspace.id,
             workspace,
+            workspaceMember: member,
             workspaceMemberPermissions: member.permissions,
             isSupportSession,
           },

@@ -34,6 +34,7 @@ type TiptapEditorProps = {
   enableEmoji?: boolean
   channels?: ChannelType[]
   includeCouponVariables?: boolean
+  includePipelineVariables?: boolean
   includeRawCustomFieldVariables?: boolean
   includeBotFieldVariables?: boolean
   onChange?: (content: string) => void
@@ -50,6 +51,7 @@ export const TiptapEditor = ({
   onChange,
   channels,
   includeCouponVariables = false,
+  includePipelineVariables = false,
   includeRawCustomFieldVariables = false,
   includeBotFieldVariables = false,
   placeholder = "Type a message...",
@@ -63,6 +65,7 @@ export const TiptapEditor = ({
   const promptVariableOptions = usePromptVariableOptions({
     channels,
     includeCouponVariables,
+    includePipelineVariables,
     includeRawCustomFieldVariables,
     includeBotFieldVariables,
   })

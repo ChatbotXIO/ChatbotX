@@ -137,6 +137,7 @@ import { miniAppRelations } from "./mini-app"
 import { minigameRelations } from "./minigame"
 import { minigameContactRelations } from "./minigame-contact"
 import { minigamePlayRelations } from "./minigame-play"
+import { pipelineRelations } from "./pipeline"
 import { productRelations } from "./product"
 import { productCategoryRelations } from "./product-category"
 import { questionnaireRelations } from "./questionnaire"
@@ -348,4 +349,5 @@ export const relations = {
   ...leaderboardAuditLogRelations,
   ...workingHoursRelations,
   ...analyticsAgentResponseEventRelations,
+  ...pipelineRelations,
 }

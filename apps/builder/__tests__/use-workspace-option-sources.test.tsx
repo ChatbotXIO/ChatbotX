@@ -132,6 +132,10 @@ vi.mock(
   () => ({ useProductFilterOptions: () => [] }),
 )
 
+vi.mock("@/features/pipelines/lib/use-pipeline-options", () => ({
+  usePipelineOptions: () => ({ pipelines: [], isLoading: false }),
+}))
+
 vi.mock("@/hooks/routing", () => ({
   useWorkspaceId: () => "workspace-id",
 }))

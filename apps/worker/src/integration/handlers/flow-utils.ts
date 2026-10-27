@@ -138,6 +138,7 @@ export const STEP_PRODUCES_MESSAGE: Record<StepType, boolean> = {
   setUpCoupon: false,
   markCouponUsed: false,
   changeGamificationScore: false,
+  pipeline: false,
   condition: false,
   evaluateDecision: false,
 

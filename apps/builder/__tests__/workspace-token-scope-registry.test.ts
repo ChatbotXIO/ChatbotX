@@ -23,13 +23,13 @@ describe("workspaceApiTokenScopes", () => {
       expect(workspaceApiTokenScopes.options).toContain(scope)
     }
     expect(workspaceApiTokenScopes.options).not.toContain("connections")
-    expect(workspaceApiTokenScopes.options).toHaveLength(15)
+    expect(workspaceApiTokenScopes.options).toHaveLength(16)
   })
 })
 
 describe("orderedWorkspaceApiTokenScopes", () => {
-  test("has 15 entries with unique, contiguous orders", () => {
-    expect(orderedWorkspaceApiTokenScopes).toHaveLength(15)
+  test("has 16 entries with unique, contiguous orders", () => {
+    expect(orderedWorkspaceApiTokenScopes).toHaveLength(16)
 
     const orders = orderedWorkspaceApiTokenScopes
       .map((scope) => workspaceApiTokenScopeRegistry[scope].order)

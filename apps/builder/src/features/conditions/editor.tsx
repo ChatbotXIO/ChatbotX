@@ -14,6 +14,7 @@ import { useTagSelectOptions } from "@/features/tags/provider/tag-hook"
 import { CategoryReferenceCondition } from "./category-reference-condition"
 import { CustomFieldValueChanged } from "./custom-field-value-changed"
 import { DateTimeBasedTrigger } from "./date-time-based-trigger"
+import { PipelineItemCondition } from "./pipeline-item-condition"
 import { ProductReferenceCondition } from "./product-reference-condition"
 
 export const ConditionEditor = ({
@@ -79,6 +80,12 @@ export const ConditionEditor = ({
       return <ProductReferenceCondition parentName={parentName} />
     case triggerEventTypes.enum.categoryAddedToCart:
       return <CategoryReferenceCondition parentName={parentName} />
+    case triggerEventTypes.enum.pipelineItemCreated:
+    case triggerEventTypes.enum.pipelineItemMovedToStage:
+    case triggerEventTypes.enum.pipelineItemValueChanged:
+    case triggerEventTypes.enum.pipelineItemStatusChanged:
+    case triggerEventTypes.enum.pipelineItemPriorityChanged:
+      return <PipelineItemCondition parentName={parentName} type={type} />
     case triggerEventTypes.enum.dateTimeBasedTrigger:
       return <DateTimeBasedTrigger parentName={parentName} />
     case triggerEventTypes.enum.customFieldValueChanged:

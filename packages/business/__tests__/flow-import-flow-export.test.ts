@@ -107,6 +107,56 @@ describe("flowService.importFlowExport", () => {
     vi.clearAllMocks()
   })
 
+  test.each([
+    [
+      "same workspace keeps member and team ids",
+      "ws-1",
+      ["customField", "botField"],
+    ],
+    [
+      "another workspace strips them",
+      "ws-other",
+      ["customField", "botField", "workspaceMember", "inboxTeam"],
+    ],
+    [
+      "an unknown source strips them",
+      undefined,
+      ["customField", "botField", "workspaceMember", "inboxTeam"],
+    ],
+  ])("pipeline assignees: %s", async (_name, sourceWorkspaceId, kinds) => {
+    mockDbTransaction.mockImplementation(async (callback) =>
+      callback(transaction),
+    )
+    mockResolveByNameAndType.mockResolvedValue({
+      idMap: new Map(),
+      createdIds: [],
+    })
+    mockBotFieldResolveByNameAndType.mockResolvedValue({
+      idMap: new Map(),
+      createdIds: [],
+    })
+    mockRemapFlowGraphReferences.mockReturnValue({ nodes: [], edges: [] })
+    mockCreateId
+      .mockReturnValueOnce("new-flow-id")
+      .mockReturnValueOnce("draft-version-id")
+      .mockReturnValueOnce("analytics-id")
+
+    await flowService.importFlowExport({
+      workspaceId: "ws-1",
+      sourceWorkspaceId,
+      name: "Flow",
+      active: true,
+      enableInInbox: true,
+      startNodeId: "1",
+      nodes: [] as never,
+      edges: [] as never,
+      customFields: {},
+      botFields: {},
+    })
+
+    expect(mockRemapFlowGraphReferences.mock.calls[0][2]).toEqual({ kinds })
+  })
+
   test("resolves the manifest, remaps references, and inserts the flow in one transaction", async () => {
     mockDbTransaction.mockImplementation(async (callback) =>
       callback(transaction),
@@ -156,7 +206,7 @@ describe("flowService.importFlowExport", () => {
         customField: new Map([["source-42", "target-42"]]),
         botField: new Map(),
       },
-      { kinds: ["customField", "botField"] },
+      { kinds: ["customField", "botField", "workspaceMember", "inboxTeam"] },
     )
     expect(result).toEqual({
       flowId: "new-flow-id",
@@ -218,7 +268,7 @@ describe("flowService.importFlowExport", () => {
         customField: new Map(),
         botField: new Map([["source-7", "target-bot-7"]]),
       },
-      { kinds: ["customField", "botField"] },
+      { kinds: ["customField", "botField", "workspaceMember", "inboxTeam"] },
     )
     expect(result.createdBotFieldIds).toEqual(["target-bot-7"])
   })

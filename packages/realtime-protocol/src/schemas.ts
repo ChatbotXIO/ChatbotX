@@ -19,6 +19,7 @@ export const RealtimeEventType = {
   whatsappCallOutboundStatus: "whatsappCallOutboundStatus",
   whatsappCallPermissionUpdated: "whatsappCallPermissionUpdated",
   contactInboxThreadControlUpdated: "contactInboxThreadControlUpdated",
+  pipelineItemChanged: "pipelineItemChanged",
 } as const
 
 type RealtimeEventTypeValue =
@@ -45,6 +46,7 @@ export const EVENT_DELIVERY = {
   [RealtimeEventType.whatsappCallOutboundStatus]: "targeted",
   [RealtimeEventType.whatsappCallPermissionUpdated]: "conversation",
   [RealtimeEventType.contactInboxThreadControlUpdated]: "workspace",
+  [RealtimeEventType.pipelineItemChanged]: "workspace",
 } as const satisfies Record<RealtimeEventTypeValue, RealtimeEventDelivery>
 
 const guestRealtimeEventTypes = new Set<RealtimeEventTypeValue>([
@@ -500,6 +502,25 @@ export type RealtimeEventContactInboxThreadControlUpdated = {
   data: ContactInboxThreadControlUpdatedData
 }
 
+/**
+ * A pipeline board changed. Carries ids only (never item content), so the
+ * client refetches through its authorised read instead of trusting the event.
+ * `itemId` is omitted for a bulk change that touched many items.
+ */
+export const pipelineItemChangedSchema = z.object({
+  pipelineId: z.string(),
+  itemId: z.string().optional(),
+  /** The item's contact, so per-contact views (inbox panel) refetch only for it. */
+  contactId: z.string().optional(),
+  change: z.enum(["created", "updated", "moved", "deleted", "bulk"]),
+})
+export type PipelineItemChangedData = z.infer<typeof pipelineItemChangedSchema>
+
+export type RealtimeEventPipelineItemChanged = {
+  eventType: typeof RealtimeEventType.pipelineItemChanged
+  data: PipelineItemChangedData
+}
+
 type AllRealtimeEventData =
   | RealtimeEventCreateMessage
   | RealtimeEventMessageDeleted
@@ -518,6 +539,7 @@ type AllRealtimeEventData =
   | RealtimeEventWhatsappCallOutboundStatus
   | RealtimeEventWhatsappCallPermissionUpdated
   | RealtimeEventContactInboxThreadControlUpdated
+  | RealtimeEventPipelineItemChanged
 
 type RealtimeConversationScopedEventData = Extract<
   AllRealtimeEventData,

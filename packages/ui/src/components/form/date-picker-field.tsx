@@ -87,7 +87,7 @@ export function DatePickerField<T extends FieldValues>(
 export function DateTimePickerField<T extends FieldValues>(
   props: Omit<
     DateTimePickerFieldProps<T>,
-    "locale" | "weekStartsOn" | "showWeekNumber" | "showOutsideDays"
+    "weekStartsOn" | "showWeekNumber" | "showOutsideDays"
   >,
 ) {
   const {

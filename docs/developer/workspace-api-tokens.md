@@ -213,17 +213,25 @@ The full endpoint-to-scope mapping is generated, not hand-maintained here —
 see `/api/spec.json` (built from `apps/builder/src/routers/public.ts`) for
 the authoritative, current list, and
 `apps/builder/__tests__/*-public-scope.test.ts` for the tests that enforce
-each feature's scope assignment at compile/test time. The 19
+each feature's scope assignment at compile/test time. The 20
 `*-public-scope.test.ts` files are: `ads`, `analytics`, `appointments`,
 `automation`, `broadcasts`, `channels-and-integrations`, `channels`,
 `contacts`, `conversations`, `coupons`, `ecommerce` (orders, product vendors,
 store settings), `email-topics`, `error-logs`, `integrations`, `media`,
-`minigames`, `product-categories`, `products` and `sequences`.
+`minigames`, `pipelines`, `product-categories`, `products` and `sequences`.
 
 What follows are the scope-assignment decisions and gotchas that aren't
 derivable from the code or those tests — read before adding or reassigning
 an endpoint's scope.
 
+- **Pipelines** — scope `pipelines`. A workspace token is governed by its
+  scope, not by per-pipeline member grants (those only limit signed-in
+  members), so a `pipelines` token can read and manage every pipeline,
+  including `setMember`. Attachments reference media-library files:
+  uploading one (`mediaLibrary.createUploadUrl` → `mediaLibrary.createFile`)
+  needs the `media` scope as well. `GET /v1/contacts/{identifier}/pipeline-items`
+  lives under the contacts path but is a `pipelines` operation. Changes made
+  through a token are attributed to the token (`actorKind: workspaceToken`).
 - **Contacts** — Contacts' public surface is split by concern across
   submodules — some in `features/contacts/api/public/` (`crud.ts`,
   `tags.ts`, `custom-fields.ts`, `bulk.ts`, `export.ts`,

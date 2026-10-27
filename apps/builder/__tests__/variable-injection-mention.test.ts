@@ -64,6 +64,36 @@ describe("variable injection mention", () => {
     expect(html).toEqual(["span", { "data-type": "mention" }, "{{Coupon 1}}"])
   })
 
+  it("renders a pipeline mention with the picker label, serializing the id token", () => {
+    const attrs = toVariableMentionAttrs({
+      group: "Pipelines",
+      label: "Pipelines › Sales › Stage name",
+      value: "pipelines.sales.stage_name",
+    })
+    const node = nodeWithAttrs(attrs)
+
+    const html = renderVariableMentionHTML({
+      options: { HTMLAttributes: { "data-type": "mention" } },
+      node,
+      suggestion: null,
+    } as unknown as Parameters<typeof renderVariableMentionHTML>[0])
+
+    // The label names the pipeline group; hovering reveals the real token.
+    expect(html).toEqual([
+      "span",
+      {
+        "data-type": "mention",
+        title: "{{pipelines.sales.stage_name}}",
+      },
+      "{{Pipelines › Sales › Stage name}}",
+    ])
+    expect(
+      renderVariableMentionText({
+        node,
+      } as unknown as Parameters<typeof renderVariableMentionText>[0]),
+    ).toBe("{{pipelines.sales.stage_name}}")
+  })
+
   it("renders mention html with the raw id for non-coupon variables", () => {
     const html = renderVariableMentionHTML({
       options: { HTMLAttributes: { "data-type": "mention" } },

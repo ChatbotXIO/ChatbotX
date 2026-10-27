@@ -106,6 +106,7 @@ const stepExecutionKinds = {
   klaviyoSyncProfile: "worker",
   subscribeSequence: "worker",
   changeGamificationScore: "worker",
+  pipeline: "worker",
   unsubscribeSequence: "worker",
   email: "worker",
   sendViewCatalog: "channel",

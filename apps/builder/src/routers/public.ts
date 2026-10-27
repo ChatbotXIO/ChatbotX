@@ -82,6 +82,7 @@ import { miniAppsPublicRouter } from "@/features/mini-apps/api/public"
 import { minigamesPublicRouter } from "@/features/minigames/api/public"
 import { ordersPublicRouter } from "@/features/orders/api/public"
 import { messengerPersonasPublicRouter } from "@/features/personas/api/public"
+import { pipelinesPublicRouter } from "@/features/pipelines/api/public"
 import { productCategoriesPublicRouter } from "@/features/product-categories/api/public"
 import { productVendorsPublicRouter } from "@/features/product-vendors/api/public"
 import { productsPublicRouter } from "@/features/products/api/public"
@@ -176,6 +177,7 @@ export const publicRouter = {
   miniApps: miniAppsPublicRouter,
   minigames: minigamesPublicRouter,
   leaderboards: leaderboardsPublicRouter,
+  pipelines: pipelinesPublicRouter,
   openHours: openHoursPublicRouter,
   orders: ordersPublicRouter,
   productCategories: productCategoriesPublicRouter,

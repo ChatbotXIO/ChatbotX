@@ -69,6 +69,11 @@ import {
   getLeaderboardScoreValueInputConfig,
 } from "./leaderboard-score-filter-config"
 import {
+  getDefaultPipelineItemValue,
+  getPipelineItemConditionOptions,
+  pipelineItemConfigName,
+} from "./pipeline-item-filter-config"
+import {
   getDefaultStaticFieldValue,
   getStaticFieldConditionOptions,
   getStaticFieldValueInputConfig,
@@ -141,6 +146,17 @@ export const buildConditionDraft = (
     return shouldOmitValue ? draft : { ...draft, value: values.value }
   }
 
+  if (config?.pipelineItem) {
+    // `exists` uses isEmpty/isNotEmpty but still carries the status to look for.
+    return {
+      field: "pipelineItem" as const,
+      attribute: config.pipelineItem.attribute,
+      pipelineId: config.pipelineItem.pipelineId,
+      operator,
+      value: values.value,
+    }
+  }
+
   if (config?.leaderboardId) {
     return {
       field: "leaderboardScore" as const,
@@ -170,6 +186,9 @@ const resolveDraftFieldName = (condition: ContactFilterCondition): string => {
   }
   if (condition.field === "leaderboardScore" && "leaderboardId" in condition) {
     return `leaderboardScore:${condition.leaderboardId}`
+  }
+  if (condition.field === "pipelineItem" && "attribute" in condition) {
+    return pipelineItemConfigName(condition)
   }
   return condition.field
 }
@@ -210,6 +229,9 @@ export const getConditionOptionsForConfig = (
   if (config.leaderboardId) {
     return getLeaderboardScoreConditionOptions(conditionOptions)
   }
+  if (config.pipelineItem) {
+    return getPipelineItemConditionOptions(config, conditionOptions)
+  }
   return getStaticFieldConditionOptions(config, conditionOptions)
 }
 
@@ -225,6 +247,9 @@ export const getDefaultConditionValue = (
   }
   if (config?.leaderboardId) {
     return ""
+  }
+  if (config?.pipelineItem) {
+    return getDefaultPipelineItemValue(config)
   }
   return getDefaultStaticFieldValue(config, operator)
 }
@@ -652,7 +677,12 @@ export const ContactFilterConditionDialog = ({
     if (!activeConfig) {
       return { valueType: null, valueOptions: [] }
     }
-    if (watchOperator && OPERATORS_WITHOUT_VALUE.includes(watchOperator)) {
+    // Pipeline conditions always carry a value, even `isEmpty`/`isNotEmpty`.
+    if (
+      !activeConfig.pipelineItem &&
+      watchOperator &&
+      OPERATORS_WITHOUT_VALUE.includes(watchOperator)
+    ) {
       return { valueType: null, valueOptions: [] }
     }
     return {
@@ -720,6 +750,10 @@ export const ContactFilterConditionDialog = ({
   const triggerOperatorChange = useCallback(
     (nextOperator?: string) => {
       const currentValue = getValues("value")
+      if (activeConfig?.pipelineItem) {
+        // Every operator of an attribute takes the same value shape.
+        return
+      }
       if (nextOperator && OPERATORS_WITHOUT_VALUE.includes(nextOperator)) {
         setValue("value", "")
         return

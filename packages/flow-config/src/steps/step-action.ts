@@ -42,6 +42,7 @@ export const stepTypes = z.enum([
   "setUpCoupon",
   "markCouponUsed",
   "changeGamificationScore",
+  "pipeline",
   "condition",
   "evaluateDecision",
 

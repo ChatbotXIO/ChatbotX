@@ -1,5 +1,8 @@
 import {
   type ContactInfoType,
+  type PipelineActorKind,
+  type PipelineItemPriority,
+  type PipelineItemStatus,
   type TriggerEventType,
   triggerEventTypes,
 } from "@chatbotx.io/database/partials"
@@ -9,7 +12,10 @@ import type {
 } from "@chatbotx.io/sdk"
 import { withContactInboxMetadata } from "./contact-inbox-context"
 import type { DecisionFlowOrigin } from "./decision-flow-lineage"
-import type { OrderStatusEventType } from "./event-type-registry"
+import type {
+  OrderStatusEventType,
+  PipelineEventType,
+} from "./event-type-registry"
 
 /** Channel-neutral voice-call event metadata carried to triggers/webhooks. */
 export type CallEventMetadata = { callId: string }
@@ -71,6 +77,37 @@ export type OrderEventMetadata = {
   products: Array<
     CommerceEventProduct & { quantity: number; lineTotal: number }
   >
+}
+
+/**
+ * A pipeline item event, also the outbound webhook JSON. `sourceId` is the
+ * pipeline id so a trigger can be pinned to one pipeline.
+ */
+export type PipelineItemEventMetadata = {
+  sourceId: string
+  pipelineId: string
+  pipelineName: string
+  pipelineReferenceName: string
+  itemId: string
+  itemNumber: number
+  title: string
+  contactId: string
+  stageId: string
+  stageName: string
+  status: PipelineItemStatus
+  statusLabel: string
+  priority: PipelineItemPriority
+  value: number | null
+  currency: string
+  dueDate: string | null
+  actorKind: PipelineActorKind
+  actorUserId: string | null
+  fromStageId?: string
+  fromStageName?: string
+  fromPipelineId?: string
+  previousStatus?: PipelineItemStatus
+  previousValue?: number | null
+  previousPriority?: PipelineItemPriority
 }
 
 /** A product added to or taken out of the web shop cart. */
@@ -461,6 +498,20 @@ export abstract class BaseEventEmitter {
     workspaceId: string,
     contactId: string,
     metadata: OrderEventMetadata,
+    contactInboxId?: string,
+  ): Promise<void> {
+    await this.emit(eventType, {
+      workspaceId,
+      contactId,
+      metadata: withContactInboxMetadata(metadata, contactInboxId),
+    })
+  }
+
+  async pipelineItem(
+    eventType: PipelineEventType,
+    workspaceId: string,
+    contactId: string,
+    metadata: PipelineItemEventMetadata,
     contactInboxId?: string,
   ): Promise<void> {
     await this.emit(eventType, {

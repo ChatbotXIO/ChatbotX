@@ -12,6 +12,7 @@ import {
   normalizeStoredTimezone,
   offsetFromStoredTimezone,
 } from "@chatbotx.io/business/contact-locale"
+import { loadLastPipelineItemId } from "@chatbotx.io/business/pipeline/variable-targets"
 import { resolveGenderLabel } from "@chatbotx.io/business/system-field"
 import { isWorkspaceScheduledForDeletion } from "@chatbotx.io/business/workspace-lifecycle/predicates"
 import { ensureContactAvatarMirrored } from "@chatbotx.io/channel-registry/media-hydration"
@@ -180,7 +181,7 @@ export const getContactTimezone = ({
   workspace?.timezone ??
   DEFAULT_FILTER_TIMEZONE
 
-const formatDate = (
+export const formatDate = (
   date: Date | string | null | undefined,
   timezone: string | null,
 ): string | null => {
@@ -332,6 +333,26 @@ const getAppointment = async (
   return latest ?? null
 }
 
+/** One lookup per variables context, however many tokens read the id. */
+const lastPipelineItemIds = new WeakMap<
+  ContactVariableContext,
+  Promise<string | null>
+>()
+
+const getLastPipelineItemId = (
+  context: ContactVariableContext,
+): Promise<string | null> => {
+  let loading = lastPipelineItemIds.get(context)
+  if (!loading) {
+    loading = loadLastPipelineItemId({
+      workspaceId: context.contact.workspaceId,
+      contactId: context.contact.id,
+    })
+    lastPipelineItemIds.set(context, loading)
+  }
+  return loading
+}
+
 export const getSystemFieldValue = async (
   context: ContactVariableContext,
   key: SystemFieldType,
@@ -384,6 +405,8 @@ export const getSystemFieldValue = async (
       return formatDate(contactInbox?.createdAt, contactTimezone)
     case systemFieldTypes.enum.last_seen:
       return formatDateTime(contactInbox?.contactLastReadAt, contactTimezone)
+    case systemFieldTypes.enum.last_opportunity_id:
+      return await getLastPipelineItemId(context)
     case systemFieldTypes.enum.last_input:
       return await getContactLastInput(contact.id)
     case systemFieldTypes.enum.last_input_type:

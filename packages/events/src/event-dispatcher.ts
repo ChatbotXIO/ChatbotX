@@ -9,11 +9,15 @@ import type {
   CartItemEventMetadata,
   IncomingCallMetadata,
   OrderEventMetadata,
+  PipelineItemEventMetadata,
   ShoppingCartSentMetadata,
   UserAskedAboutProductMetadata,
 } from "./base-emitter"
 import type { DecisionFlowOrigin } from "./decision-flow-lineage"
-import type { OrderStatusEventType } from "./event-type-registry"
+import type {
+  OrderStatusEventType,
+  PipelineEventType,
+} from "./event-type-registry"
 import { logger } from "./logger"
 import { TriggerEventEmitter } from "./trigger/emitter"
 import { WebhookEventEmitter } from "./webhook/emitter"
@@ -345,6 +349,23 @@ export const emitOrderStatus = async (
 ) =>
   await emitToAllEmitters(
     "orderStatus",
+    eventType,
+    workspaceId,
+    contactId,
+    metadata,
+    contactInboxId,
+  )
+
+/** One of a pipeline item's events (created, moved, value/status/priority changed). */
+export const emitPipelineItemEvent = async (
+  eventType: PipelineEventType,
+  workspaceId: string,
+  contactId: string,
+  metadata: PipelineItemEventMetadata,
+  contactInboxId?: string,
+) =>
+  await emitToAllEmitters(
+    "pipelineItem",
     eventType,
     workspaceId,
     contactId,

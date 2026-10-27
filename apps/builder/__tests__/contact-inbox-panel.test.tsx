@@ -129,6 +129,11 @@ vi.mock("@/features/contact-notes/contact-notes-manage", () => ({
   ContactNotesManage: () => null,
 }))
 
+vi.mock(
+  "@/features/pipelines/components/inbox/contact-pipelines-section",
+  () => ({ ContactPipelinesSection: () => null }),
+)
+
 vi.mock("@/features/contacts/components/contact-appointments-list", () => ({
   ContactAppointmentsList: () => null,
 }))

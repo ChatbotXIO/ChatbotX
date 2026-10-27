@@ -17,6 +17,7 @@ import {
   collectFolderAncestry,
   collectProductCategoryAncestry,
 } from "./adapters/manifests/collect-hierarchies"
+import { collectPipelineManifest } from "./adapters/manifests/collect-pipelines"
 import { templateAdapterRegistry } from "./adapters/registry"
 
 const MAX_PAYLOAD_RESOURCES = 200
@@ -336,6 +337,11 @@ export const buildTemplateSnapshot = async (
         : Promise.resolve([]),
     ])
 
+  const pipelineManifest = await collectPipelineManifest(
+    workspaceId,
+    (resultsByCategory.flows?.entries ?? []) as unknown as TemplateFlowEntry[],
+  )
+
   const payload: TemplateExport = {
     formatVersion: TEMPLATE_EXPORT_FORMAT_VERSION,
     exportedAt: new Date().toISOString(),
@@ -345,6 +351,7 @@ export const buildTemplateSnapshot = async (
       tags: buildTagManifestEntries(tagRows),
       productCategories: productCategoryManifest,
       folders: folderManifest,
+      pipelines: pipelineManifest,
     },
     resources: {
       // `flows` alone has a strict entry shape (`TemplateFlowEntry`) rather

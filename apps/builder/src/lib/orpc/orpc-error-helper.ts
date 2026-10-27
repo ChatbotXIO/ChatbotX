@@ -1181,3 +1181,28 @@ export const possibleErrorsOnTransitioningOrder = {
     status: 409,
   },
 } satisfies ErrorMap
+
+/**
+ * Pipeline writes can fail with three 409s of their own. oRPC matches a thrown
+ * error to its declaration by code and exact status, so they are declared here
+ * rather than folded into `businessError`. The body-level idempotency conflict
+ * has its own code: `idempotencyKeyReused` already means a reused
+ * `Idempotency-Key` header (422).
+ */
+export const possibleErrorsOnMutatingPipeline = {
+  notFound,
+  businessError,
+  stageBusy: {
+    message: "The stage is being processed in the background",
+    status: 409,
+  },
+  pipelineItemLimitReached: {
+    message: "The contact already has the maximum number of open items",
+    status: 409,
+  },
+  pipelineItemIdempotencyKeyConflict: {
+    message: "This idempotency key was already used for another contact",
+    status: 409,
+  },
+  ...possibleIdempotencyErrors,
+} satisfies ErrorMap

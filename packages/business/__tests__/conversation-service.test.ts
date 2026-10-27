@@ -167,7 +167,9 @@ vi.mock("@chatbotx.io/analytics", () => ({
   macAnalyticsService: {},
 }))
 
-const { conversationService } = await import("../src/conversation/service")
+const { conversationAssigneeId, conversationService } = await import(
+  "../src/conversation/service"
+)
 const { humanReplyWindowSet, reopenIfUnansweredSince } = await import(
   "../src/conversation/human-reply-window"
 )
@@ -1093,5 +1095,93 @@ describe("conversationService.updateAssignment", () => {
         assignedUserIds: ["user-before"],
       },
     })
+  })
+})
+
+describe("conversationService.assignByContactIds onlyFromAssignees", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  test("passes the allowed assignees to the locked update", async () => {
+    findByWorkspaceIdAndUserId.mockResolvedValue({ id: "user-new" })
+    vi.spyOn(conversationService, "findManyByContactIds").mockResolvedValue([
+      { id: "conv-1", contactId: "c-1" },
+    ] as never)
+    const updateAssignment = vi
+      .spyOn(conversationService, "updateAssignment")
+      .mockResolvedValue([])
+
+    await conversationService.assignByContactIds({
+      workspaceId: "ws-1",
+      contactIds: ["c-1"],
+      assignedId: "u_user-new",
+      triggerContext: { triggerSource: "pipeline" },
+      onlyFromAssignees: [null, "u_user-old"],
+    })
+
+    expect(updateAssignment).toHaveBeenCalledWith(
+      expect.objectContaining({
+        conversations: [{ id: "conv-1", contactId: "c-1" }],
+        onlyFromAssignees: [null, "u_user-old"],
+      }),
+    )
+    updateAssignment.mockRestore()
+  })
+
+  test("the locked update skips rows someone else took meanwhile", async () => {
+    // Under the row lock the conversation turns out to be with another agent.
+    selectForUpdate.mockResolvedValue([
+      { id: "conv-1", assignedUserId: "user-other", assignedInboxTeamId: null },
+    ])
+
+    const updated = await conversationService.updateAssignment({
+      workspaceId: "ws-1",
+      conversations: [{ id: "conv-1", contactId: "c-1" }],
+      assignedUserId: "user-new",
+      assignedInboxTeamId: null,
+      onlyFromAssignees: [null, "u_user-old"],
+      triggerContext: { triggerType: "conversation_assigned" },
+    })
+
+    expect(update).not.toHaveBeenCalled()
+    expect(updated).toEqual([])
+    expect(queueWorkspaceRealtimeEvent).not.toHaveBeenCalled()
+  })
+
+  test("the locked update changes a row still with an allowed assignee", async () => {
+    selectForUpdate.mockResolvedValue([
+      { id: "conv-1", assignedUserId: "user-old", assignedInboxTeamId: null },
+    ])
+    returning.mockResolvedValue([{ id: "conv-1", contactId: "c-1" }])
+
+    await conversationService.updateAssignment({
+      workspaceId: "ws-1",
+      conversations: [{ id: "conv-1", contactId: "c-1" }],
+      assignedUserId: "user-new",
+      assignedInboxTeamId: null,
+      onlyFromAssignees: [null, "u_user-old"],
+      triggerContext: { triggerType: "conversation_assigned" },
+    })
+
+    expect(update).toHaveBeenCalledTimes(1)
+  })
+
+  test("conversationAssigneeId prefers the user, then the team, else null", () => {
+    expect(
+      conversationAssigneeId({ assignedUserId: "u", assignedInboxTeamId: "t" }),
+    ).toBe("u_u")
+    expect(
+      conversationAssigneeId({
+        assignedUserId: null,
+        assignedInboxTeamId: "t",
+      }),
+    ).toBe("t_t")
+    expect(
+      conversationAssigneeId({
+        assignedUserId: null,
+        assignedInboxTeamId: null,
+      }),
+    ).toBeNull()
   })
 })

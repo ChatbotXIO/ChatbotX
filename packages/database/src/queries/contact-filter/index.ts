@@ -18,7 +18,7 @@ import {
   questionnaireModel,
   questionnaireSubmissionModel,
 } from "../../schema"
-import { escapeLikePattern, likeContains } from "../../utils"
+import { escapeLikePattern, isBigintId, likeContains } from "../../utils"
 import { buildBotFieldWhere } from "./bot-field-predicates"
 import { buildCommentedOnPostWhere } from "./commented-on-post"
 import {
@@ -45,6 +45,7 @@ import {
 import { buildCustomFieldWhere } from "./custom-field-predicates"
 import { contactInboxExists, existsWhere, joinTableExists } from "./exists"
 import { buildLeaderboardScoreWhere } from "./leaderboard-score"
+import { buildPipelineItemConditionWhere } from "./pipeline-item"
 import {
   buildBooleanColumn,
   buildBooleanFromTimestamp,
@@ -323,6 +324,8 @@ export const buildSmartKeywordWhere = (
   if (PURE_DIGITS_KEYWORD_PATTERN.test(trimmedKeyword)) {
     return {
       OR: [
+        // A pasted contact id matches exactly; longer digit runs cannot be ids.
+        ...(isBigintId(trimmedKeyword) ? [{ id: trimmedKeyword }] : []),
         { firstName: { ilike: likeKeyword } },
         { lastName: { ilike: likeKeyword } },
         ...(includeEmailAndPhone
@@ -730,6 +733,9 @@ function buildConditionWhere(
         operator,
         value,
       )
+
+    case "pipelineItem":
+      return buildPipelineItemConditionWhere(condition, context.workspaceId)
 
     case "conversationAssigned":
       return buildConversationAssignedWhere(operator, value)

@@ -7,6 +7,7 @@ import {
   formatCtwaRetargetChipLabel,
   formatFilterConditionValue,
 } from "./contact-filter-config"
+import { pipelineItemConfigName } from "./pipeline-item-filter-config"
 import { useContactFilterConfigs } from "./use-contact-filter-configs"
 
 type ContactFilterSummaryProps = {
@@ -81,6 +82,7 @@ function ContactFilterSummaryList({
           const isBotField = condition.field === "botField"
           const isCouponTopic = condition.field === "couponTopic"
           const isLeaderboardScore = condition.field === "leaderboardScore"
+          const isPipelineItem = condition.field === "pipelineItem"
           const fieldConfig = configs.find((config) => {
             if (isCustomField && "customFieldId" in condition) {
               return (
@@ -97,6 +99,9 @@ function ContactFilterSummaryList({
               return (
                 String(config.leaderboardId) === String(condition.leaderboardId)
               )
+            }
+            if (isPipelineItem && "attribute" in condition) {
+              return config.name === pipelineItemConfigName(condition)
             }
             return config.name === condition.field
           })
@@ -115,10 +120,15 @@ function ContactFilterSummaryList({
               if (isLeaderboardScore) {
                 return t("condition.fields.leaderboardScore")
               }
+              if (isPipelineItem) {
+                return t("condition.fields.pipelineItem")
+              }
               return t(`condition.fields.${condition.field}`)
             })()
           const conditionOperator =
-            operatorLabelByValue.get(condition.operator) ?? condition.operator
+            fieldConfig?.operatorLabels?.[condition.operator] ??
+            operatorLabelByValue.get(condition.operator) ??
+            condition.operator
           const valueDisplay = formatFilterConditionValue(
             "value" in condition ? condition.value : undefined,
             fieldConfig,
@@ -129,6 +139,8 @@ function ContactFilterSummaryList({
             "customFieldId" in condition ? condition.customFieldId : "",
             "botFieldId" in condition ? condition.botFieldId : "",
             "topicId" in condition ? condition.topicId : "",
+            "attribute" in condition ? condition.attribute : "",
+            "pipelineId" in condition ? condition.pipelineId : "",
             condition.operator,
             valueDisplay,
           ].join(":")

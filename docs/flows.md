@@ -112,6 +112,7 @@ here, so it cannot drift from the schema.
 | `wait` | No | Pauses for a duration before continuing. |
 | `branch` | **Yes** | Contact-filter-style `cases` (`when`/`match`/`then`) plus an `otherwise`. Terminal within its own step list — nothing may follow a `branch` at the same level; continue inside `cases[].then` / `otherwise` instead. |
 | `action` | No | A workspace side-effect: `addTags`, `removeTags`, `setCustomField`, `assignConversation`, `archiveConversation`. |
+| `pipeline` | No | A Pipelines (CRM kanban) action for the contact, one of the 14 `action`s of the Pipelines flow step (`addToPipeline`, `moveToStage`, `changeValue`, `assign`, `changeStatus`, `changePriority`, `changeDueDate`, `changeTitle`, `setCustomField`, `clearCustomField`, `changeDescription`, `removeFromPipeline`, `addComment`, `transfer`). References are by name, never id: `pipeline` is a pipeline `referenceName` (an id also works), `stage`/`destinationStage` a stage name in that pipeline, `field`/`fields`/`fieldValues[].field` pipeline custom field `referenceName`s (all from `pipelines.get`), `dueDate` is `{ mode: "none" }`, `{ mode: "fixed", at }` or `{ mode: "customField", customFieldName }` (a contact date/datetime custom field). Assignees are workspace member ids (`workspaceMembers.list`) and inbox team ids (`inboxTeams.list`). Each action's required fields are validated with spec paths (e.g. `steps[1].stage`), and fields an action does not use are rejected. Success continues to the next step; optional `onError` / `onSkip` step lists run when the action fails or the contact has no open item (skip). `onSkip` is rejected for `addToPipeline`, which never skips. Unknown pipeline/stage/field names fail with `unknownPipeline` / `unknownPipelineStage` / `unknownPipelineField` (or `ambiguousPipelineStage` when two stages share a name) and candidate names. See `docs/pipelines.md`. |
 | `startFlow` | No | Starts another flow (by `flowName`); this flow keeps running afterward. |
 | `addNote` | No | Adds an internal note to the conversation. |
 | `goto` | **Yes** | Routes to an already-defined step's `id` instead of continuing linearly. See constraints below. |
@@ -238,9 +239,9 @@ list endpoint instead (`tags.list`, `customFields.list`, `flows.list`, ...) —
 
 **This cap does not apply to what the flow-spec compiler itself sees.** The DSL
 compiler's `FlowAuthoringContext` (`templatesByName`/`customFieldsByName`/
-`flowsByName`, built by
+`flowsByName`/`pipelinesByReferenceName`, built by
 [`getFlowAuthoringContext`](../packages/business/src/capabilities/service.ts))
-fetches templates, custom fields, and flows **unbounded** — independent of, and via
+fetches templates, custom fields, and flows **unbounded** (and every pipeline with its stages and fields in three batched queries, uncached) — independent of, and via
 different loaders than, the public `capabilities.get` response. This means: a
 `flows.publish`/`flows.updateDraft`/`flows.validate` call with a spec that
 references (by name) the 250th flow, template, or custom field in a workspace with

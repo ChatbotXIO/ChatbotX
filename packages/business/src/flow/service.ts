@@ -689,6 +689,8 @@ class FlowService extends BaseService {
     customFields: Record<string, FlowExportCustomField>
     botFields: Record<string, FlowExportBotField>
     folderId?: string | null
+    /** Workspace the export came from; same-workspace imports keep member/team ids. */
+    sourceWorkspaceId?: string
   }): Promise<{
     flowId: string
     createdCustomFieldIds: string[]
@@ -714,7 +716,14 @@ class FlowService extends BaseService {
       const remapped = remapFlowGraphReferences(
         { nodes: input.nodes, edges: input.edges },
         { customField: customFieldIdMap, botField: botFieldIdMap },
-        { kinds: ["customField", "botField"] },
+        {
+          // Pipeline assignees are workspace-specific: stripped when the export
+          // came from another workspace, kept when it is the same one.
+          kinds:
+            input.sourceWorkspaceId === input.workspaceId
+              ? ["customField", "botField"]
+              : ["customField", "botField", "workspaceMember", "inboxTeam"],
+        },
       )
 
       const requestedFolderId =

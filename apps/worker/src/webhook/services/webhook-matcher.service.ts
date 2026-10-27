@@ -2,6 +2,7 @@ import { webhookService, workspaceService } from "@chatbotx.io/business"
 import type { TriggerEventType } from "@chatbotx.io/database/partials"
 import type { WorkspaceModel } from "@chatbotx.io/database/types"
 import {
+  conditionListensToSource,
   isMatchableEventType,
   matchableConditionTypesFor,
   SCANNER_VERIFIED_EVENT_TYPES,
@@ -62,7 +63,11 @@ export class WebhookMatcherService {
       webhook.conditions.some(
         (c) =>
           hasConditionType(conditionTypes, c.type) &&
-          (sourceId ? c.sourceId === sourceId : true),
+          conditionListensToSource({
+            eventType,
+            conditionSourceId: c.sourceId,
+            eventSourceId: sourceId,
+          }),
       ),
     )
 

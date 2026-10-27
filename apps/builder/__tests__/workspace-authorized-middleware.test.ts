@@ -158,6 +158,7 @@ describe("workspaceAuthorizedMidddleware", () => {
         context: {
           workspace: membership.workspace,
           workspaceMember: membership,
+          isSupportSession: false,
         },
       }),
     )

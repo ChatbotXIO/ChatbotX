@@ -39,6 +39,7 @@ import {
   SaveOffIcon,
   SheetIcon,
   ShuffleIcon,
+  SquareKanbanIcon,
   StarIcon,
   StarOffIcon,
   TagIcon,
@@ -571,6 +572,11 @@ export const performActionMenus = (t: TranslationFn): MenuItem[] => [
         label: t("flows.actions.changeGamificationScore"),
         icon: TrophyIcon,
         stepType: stepTypes.enum.changeGamificationScore,
+      },
+      {
+        label: t("flows.actions.pipeline"),
+        icon: SquareKanbanIcon,
+        stepType: stepTypes.enum.pipeline,
       },
       {
         label: t("flows.actions.getDataFromJson"),

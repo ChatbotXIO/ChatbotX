@@ -859,7 +859,8 @@
       "ctwaConversionTypes": {
         "lead": "Khách hàng tiềm năng",
         "purchase": "Mua hàng"
-      }
+      },
+      "pipelineItem": "Mục pipeline"
     },
     "fieldGroups": {
       "opportunity": "Cơ hội",
@@ -876,7 +877,8 @@
       "botFields": "Trường bot",
       "email": "Email",
       "sms": "SMS",
-      "ctwaAds": "Quảng cáo"
+      "ctwaAds": "Quảng cáo",
+      "pipeline": "Pipeline"
     },
     "languages": {
       "ar": "Tiếng Ả Rập",
@@ -924,7 +926,21 @@
       "allAds": "tất cả quảng cáo"
     },
     "noTopic": "Không có chủ đề",
-    "trackingSince": "Được theo dõi từ {date}. Hoạt động trước đó không được tính."
+    "trackingSince": "Được theo dõi từ {date}. Hoạt động trước đó không được tính.",
+    "pipelineItem": {
+      "anyPipeline": "Mọi pipeline",
+      "anyStatus": "Mọi trạng thái",
+      "attributes": {
+        "exists": "Mục",
+        "status": "Trạng thái mục",
+        "stage": "Giai đoạn mục",
+        "priority": "Mức ưu tiên mục"
+      },
+      "operators": {
+        "has": "Có",
+        "hasNo": "Không có"
+      }
+    }
   },
   "channels": {
     "title": "Kênh",
@@ -2587,7 +2603,8 @@
       "ads": "Quảng cáo",
       "settings": "Cài đặt",
       "miniApps": "Mini Apps",
-      "leaderboards": "Bảng xếp hạng"
+      "leaderboards": "Bảng xếp hạng",
+      "pipelines": "Pipeline"
     },
     "adReferral": {
       "label": "Ads",
@@ -2645,6 +2662,9 @@
     },
     "miniApp": {
       "label": "Mini App"
+    },
+    "lastOpportunityId": {
+      "label": "ID cơ hội gần nhất"
     }
   },
   "flows": {
@@ -2820,7 +2840,8 @@
       "changeGamificationScore": "Thay đổi điểm xếp hạng",
       "sendViewCatalog": "Xem danh mục",
       "sendProducts": "Gửi sản phẩm",
-      "sendCollection": "Bộ sưu tập sản phẩm"
+      "sendCollection": "Bộ sưu tập sản phẩm",
+      "pipeline": "Quản lý Pipeline"
     },
     "externalRequest": {
       "errors": {
@@ -3043,6 +3064,57 @@
       "summaryManual": "{count, plural, one {# sản phẩm} other {# sản phẩm}}",
       "cancel": "Hủy",
       "save": "Lưu"
+    },
+    "pipelineStep": {
+      "action": "Hành động",
+      "pipeline": "Pipeline",
+      "targetHint": "Thao tác trên mục đang mở mới nhất của liên hệ trong pipeline này. Nhánh Bỏ qua chạy khi không có mục nào.",
+      "noPipelines": "Không tìm thấy pipeline",
+      "actions": {
+        "addToPipeline": "Thêm liên hệ vào pipeline",
+        "moveToStage": "Chuyển sang giai đoạn",
+        "changeValue": "Đổi giá trị",
+        "assign": "Giao cho quản trị viên",
+        "changeStatus": "Đổi trạng thái",
+        "changePriority": "Đổi mức ưu tiên",
+        "changeDueDate": "Đổi hạn chót",
+        "changeTitle": "Đổi tiêu đề",
+        "setCustomField": "Đặt trường tùy chỉnh",
+        "clearCustomField": "Xóa trường tùy chỉnh",
+        "changeDescription": "Đổi mô tả",
+        "removeFromPipeline": "Xóa liên hệ khỏi pipeline",
+        "addComment": "Thêm bình luận",
+        "transfer": "Chuyển sang pipeline khác"
+      },
+      "title": "Tiêu đề",
+      "description": "Mô tả",
+      "stage": "Giai đoạn",
+      "firstStage": "Giai đoạn đầu tiên",
+      "status": "Trạng thái",
+      "statusOptions": {
+        "open": "Đang mở",
+        "won": "Thắng",
+        "lost": "Thua"
+      },
+      "assigneeMembers": "Quản trị viên phụ trách",
+      "assigneeTeams": "Nhóm phụ trách",
+      "value": "Giá trị",
+      "priority": "Mức ưu tiên",
+      "dueDate": "Hạn chót",
+      "dueNone": "Không có",
+      "dueNoneHint": "Mục không có hạn chót.",
+      "dueCustomField": "Từ trường tùy chỉnh kiểu ngày",
+      "dueFixed": "Ngày giờ cố định",
+      "dueField": "Trường tùy chỉnh kiểu ngày hoặc ngày giờ",
+      "fieldValues": "Trường tùy chỉnh",
+      "field": "Trường",
+      "fieldValue": "Giá trị",
+      "fields": "Các trường",
+      "addField": "Thêm giá trị trường",
+      "removeHint": "Xóa mục đang mở mới nhất của liên hệ trong pipeline này.",
+      "comment": "Bình luận",
+      "destinationPipeline": "Pipeline đích",
+      "destinationStage": "Giai đoạn đích"
     }
   },
   "folders": {
@@ -5142,11 +5214,11 @@
       "incomingCall": "Cuộc gọi đến",
       "missedAudioCall": "Cuộc gọi âm thanh nhỡ",
       "callEnded": "Cuộc gọi kết thúc",
-      "ticketCreated": "Phiếu được tạo",
-      "ticketMovedToStage": "Phiếu được chuyển giai đoạn",
-      "ticketValueChanged": "Giá trị phiếu thay đổi",
-      "ticketStatusChanged": "Trạng thái phiếu thay đổi",
-      "ticketPriorityChanged": "Ưu tiên phiếu thay đổi",
+      "pipelineItemCreated": "Phiếu được tạo",
+      "pipelineItemMovedToStage": "Phiếu được chuyển giai đoạn",
+      "pipelineItemValueChanged": "Giá trị phiếu thay đổi",
+      "pipelineItemStatusChanged": "Trạng thái phiếu thay đổi",
+      "pipelineItemPriorityChanged": "Ưu tiên phiếu thay đổi",
       "subscribedToSequence": "Đăng ký chuỗi",
       "unsubscribedFromSequence": "Hủy đăng ký chuỗi",
       "shoppingCartSent": "Liên hệ gửi giỏ hàng",
@@ -5166,7 +5238,9 @@
       "callRecorded": "Cuộc gọi đã ghi âm",
       "callTranscribed": "Cuộc gọi đã chuyển văn bản",
       "anyProduct": "Bất kỳ sản phẩm nào",
-      "anyCategory": "Mọi danh mục"
+      "anyCategory": "Mọi danh mục",
+      "anyPipeline": "Mọi pipeline",
+      "anyStage": "Mọi giai đoạn"
     },
     "actions": {
       "addTag": "Thêm thẻ",
@@ -5211,7 +5285,13 @@
     "linkCopied": "Đã sao chép liên kết vào clipboard",
     "countExact": "{count} liên hệ",
     "countCapped": "{count}+ liên hệ",
-    "exportAllNotice": "Tất cả liên hệ khớp với bộ lọc hiện tại sẽ được xuất."
+    "exportAllNotice": "Tất cả liên hệ khớp với bộ lọc hiện tại sẽ được xuất.",
+    "search": {
+      "placeholder": "Tìm (tên, email, số điện thoại, ID liên hệ)",
+      "searching": "Đang tìm…",
+      "error": "Không thể tìm liên hệ",
+      "empty": "Không tìm thấy liên hệ"
+    }
   },
   "contactScan": {
     "menu": {
@@ -9979,5 +10059,401 @@
     "metHelp": "Tỷ lệ phản hồi đạt SLA trong số phản hồi có SLA.",
     "eligibleCount": "{count} phản hồi có SLA",
     "enable": "Bật SLA phản hồi"
+  },
+  "pipelines": {
+    "title": "Pipelines",
+    "retry": "Thử lại",
+    "save": "Lưu",
+    "saveFailed": "Không thể lưu thay đổi. Vui lòng thử lại.",
+    "list": {
+      "name": "Tên",
+      "type": "Loại",
+      "items": "Số mục",
+      "add": "Thêm pipeline",
+      "empty": "Chưa có pipeline nào",
+      "emptyHint": "Tạo pipeline để theo dõi deal, ticket hoặc bất kỳ quy trình nào dưới dạng thẻ trên bảng.",
+      "error": "Không thể tải danh sách pipeline",
+      "contacts": "Liên hệ",
+      "addShort": "Thêm",
+      "description": "Theo dõi cơ hội, ticket hoặc bất kỳ quy trình nào dưới dạng thẻ di chuyển qua các giai đoạn."
+    },
+    "types": {
+      "opportunity": {
+        "label": "Trung tâm cơ hội",
+        "description": "Theo dõi deal bán hàng qua các giai đoạn. Giai đoạn đầu: Lead."
+      },
+      "ticket": {
+        "label": "Trung tâm hỗ trợ",
+        "description": "Xử lý yêu cầu hỗ trợ. Giai đoạn đầu: New Issue."
+      },
+      "custom": {
+        "label": "Bảng tuỳ chỉnh",
+        "description": "Tự xây quy trình của bạn. Giai đoạn đầu: Intake."
+      }
+    },
+    "noun": {
+      "opportunity": {
+        "one": "Cơ hội",
+        "many": "Cơ hội",
+        "add": "Thêm cơ hội"
+      },
+      "ticket": {
+        "one": "Ticket",
+        "many": "Ticket",
+        "add": "Thêm ticket"
+      },
+      "card": {
+        "one": "Thẻ",
+        "many": "Thẻ",
+        "add": "Thêm thẻ"
+      }
+    },
+    "create": {
+      "title": "Pipeline mới",
+      "description": "Chọn mục đích của bảng rồi đặt tên.",
+      "type": "Loại",
+      "name": "Tên pipeline",
+      "namePlaceholder": "VD: Bán hàng",
+      "submit": "Tạo pipeline",
+      "success": "Đã tạo pipeline"
+    },
+    "menu": {
+      "open": "Thao tác pipeline",
+      "rename": "Đổi tên",
+      "duplicate": "Nhân bản",
+      "delete": "Xoá"
+    },
+    "rename": {
+      "title": "Đổi tên pipeline",
+      "submit": "Đổi tên",
+      "success": "Đã đổi tên pipeline"
+    },
+    "duplicate": {
+      "success": "Đã nhân bản pipeline"
+    },
+    "delete": {
+      "title": "Xoá pipeline",
+      "description": "{name} cùng toàn bộ giai đoạn và mục sẽ bị xoá. Không thể hoàn tác.",
+      "success": "Đã xoá pipeline"
+    },
+    "board": {
+      "title": "Bảng",
+      "count": "{count, plural, one {# mục} other {# mục}}",
+      "total": "Tổng {value}",
+      "search": "Tìm theo tiêu đề, số hoặc liên hệ",
+      "sort": "Sắp xếp",
+      "filter": "Lọc",
+      "analytics": "Thống kê",
+      "settings": "Cài đặt",
+      "emptyStage": "Kéo thả thẻ vào đây để chuyển sang giai đoạn này.",
+      "loadMore": "Tải thêm",
+      "loadMoreFailed": "Không thể tải thêm mục",
+      "error": "Không thể tải bảng",
+      "processing": "Đang xử lý giai đoạn này…",
+      "moveFailed": "Không thể chuyển thẻ",
+      "sortOptions": {
+        "createdAtDesc": "Ngày tạo (Mới đến Cũ)",
+        "createdAtAsc": "Ngày tạo (Cũ đến Mới)",
+        "updatedAtDesc": "Ngày cập nhật (Mới đến Cũ)",
+        "valueDesc": "Giá trị cơ hội (Cao đến Thấp)",
+        "valueAsc": "Giá trị cơ hội (Thấp đến Cao)",
+        "dueDateAsc": "Ngày hết hạn (Sớm nhất đến Muộn nhất)",
+        "dueDateDesc": "Ngày hết hạn (Muộn nhất đến Sớm nhất)",
+        "priorityDesc": "Mức ưu tiên (Cao đến Thấp)",
+        "priorityAsc": "Mức ưu tiên (Thấp đến Cao)",
+        "updatedAtAsc": "Ngày cập nhật (Cũ đến Mới)"
+      },
+      "searchAction": "Tìm kiếm",
+      "closeSearch": "Đóng tìm kiếm",
+      "cardMenu": "Thao tác với thẻ",
+      "moveTo": "Chuyển đến",
+      "unknownContact": "Liên hệ không rõ",
+      "staleError": "Không tải lại được board. Dữ liệu đang hiển thị có thể đã cũ."
+    },
+    "stage": {
+      "add": "Thêm giai đoạn",
+      "name": "Tên giai đoạn",
+      "namePlaceholder": "Tên giai đoạn",
+      "menu": "Thao tác giai đoạn",
+      "edit": "Sửa giai đoạn",
+      "delete": "Xoá giai đoạn",
+      "deleteTitle": "Xoá giai đoạn",
+      "deleteDescription": "{name} và mọi mục trong đó sẽ bị xoá. Không thể hoàn tác.",
+      "moveItemsTo": "Chuyển các mục sang",
+      "deleteItemsToo": "Xoá luôn các mục",
+      "description": "Mô tả",
+      "textColor": "Màu chữ",
+      "backgroundColor": "Màu nền",
+      "saved": "Đã lưu giai đoạn",
+      "deleted": "Đã xoá giai đoạn",
+      "queued": "Giai đoạn đang được dọn dẹp ở nền.",
+      "resetColor": "Mặc định",
+      "deleteMoveDescription": "{name} sẽ bị xoá. Các mục trong đó được chuyển sang {target}.",
+      "rename": "Đổi tên",
+      "settings": "Cài đặt",
+      "general": "Chung",
+      "color": "Màu sắc",
+      "cancel": "Huỷ"
+    },
+    "priority": {
+      "low": "Thấp",
+      "medium": "Trung bình",
+      "high": "Cao"
+    },
+    "item": {
+      "loading": "Đang tải…",
+      "error": "Không thể tải mục này",
+      "title": "Tiêu đề",
+      "status": "Trạng thái",
+      "stage": "Giai đoạn",
+      "priority": "Ưu tiên",
+      "value": "Giá trị",
+      "dueDate": "Hạn",
+      "assignees": "Admin phụ trách",
+      "description": "Mô tả",
+      "attachments": "Tệp đính kèm",
+      "attach": "Đính kèm tệp",
+      "noAttachments": "Chưa có tệp đính kèm",
+      "removeAttachment": "Gỡ tệp đính kèm",
+      "removeAttachmentDescription": "Tệp sẽ được gỡ khỏi mục này nhưng vẫn còn trong thư viện media.",
+      "comments": "Bình luận",
+      "addComment": "Thêm bình luận",
+      "commentPlaceholder": "Viết bình luận…",
+      "noComments": "Chưa có bình luận",
+      "deleteComment": "Xoá bình luận",
+      "deleteCommentDescription": "Bình luận này sẽ bị xoá và không thể khôi phục.",
+      "activity": "Hoạt động",
+      "noActivity": "Chưa có hoạt động",
+      "transfer": "Chuyển sang pipeline khác",
+      "transferTitle": "Chuyển sang pipeline khác",
+      "transferDescription": "Mục giữ nguyên số và ngày tạo. Trường tuỳ chỉnh được giữ lại khi pipeline kia có trường cùng tên tham chiếu và cùng kiểu.",
+      "destinationPipeline": "Pipeline đích",
+      "destinationStage": "Giai đoạn đích",
+      "firstStage": "Giai đoạn đầu",
+      "choose": "Chọn…",
+      "transferred": "Đã chuyển mục",
+      "delete": "Xoá",
+      "deleteDescription": "Một mục sẽ bị xoá. Không thể hoàn tác.",
+      "deleted": "Đã xoá mục",
+      "number": "Số",
+      "createdBy": "Tạo bởi",
+      "createdByValue": "{name} vào {date}",
+      "inbox": "Hộp thư",
+      "moreActions": "Thao tác khác",
+      "noDescription": "Chưa có mô tả",
+      "yes": "Có",
+      "no": "Không",
+      "assigneesMembers": "Nhân viên",
+      "assigneesTeams": "Nhóm hộp thư",
+      "assigneesSearch": "Tìm quản trị viên hoặc nhóm…",
+      "assigneesEmpty": "Không có kết quả",
+      "assigneesPlaceholder": "Chọn quản trị viên hoặc nhóm",
+      "olderComments": "Xem bình luận cũ hơn",
+      "olderActivity": "Xem hoạt động cũ hơn",
+      "activityFilter": "Lọc",
+      "activityFilterCount": "{count, plural, one {# bộ lọc} other {# bộ lọc}}",
+      "activityFilterClear": "Hiện tất cả",
+      "noFilteredActivity": "Không có hoạt động nào khớp bộ lọc.",
+      "activityGroup": {
+        "lifecycle": "Tạo & chuyển pipeline",
+        "stage": "Giai đoạn",
+        "status": "Trạng thái",
+        "value": "Giá trị",
+        "priority": "Mức ưu tiên",
+        "dueDate": "Hạn chót",
+        "details": "Tiêu đề, mô tả & trường",
+        "assignees": "Người phụ trách",
+        "comments": "Bình luận",
+        "attachments": "Tệp đính kèm"
+      }
+    },
+    "activity": {
+      "created": "Đã tạo",
+      "stageChanged": "Chuyển sang giai đoạn khác",
+      "statusChanged": "Đổi trạng thái",
+      "valueChanged": "Đổi giá trị",
+      "priorityChanged": "Đổi mức ưu tiên",
+      "dueDateChanged": "Đổi hạn",
+      "titleChanged": "Đổi tiêu đề",
+      "descriptionChanged": "Đổi mô tả",
+      "fieldValuesChanged": "Đổi trường tuỳ chỉnh",
+      "assigneesChanged": "Đổi người phụ trách",
+      "attachmentAdded": "Thêm tệp đính kèm",
+      "attachmentRemoved": "Gỡ tệp đính kèm",
+      "commentAdded": "Thêm bình luận",
+      "commentDeleted": "Xoá bình luận",
+      "transferred": "Chuyển từ pipeline khác",
+      "deleted": "Đã xoá"
+    },
+    "activityActor": {
+      "flow": "Luồng",
+      "trigger": "Trigger",
+      "workspaceToken": "API",
+      "system": "Hệ thống",
+      "formerMember": "Thành viên cũ"
+    },
+    "add": {
+      "changeContact": "Chọn liên hệ khác",
+      "success": "Đã tạo",
+      "stepContact": "Chọn liên hệ",
+      "stepDetails": "Chi tiết {noun}",
+      "contact": "Liên hệ",
+      "addNewContact": "Thêm mới"
+    },
+    "filter": {
+      "title": "Lọc",
+      "status": "Trạng thái",
+      "statusLabels": {
+        "open": "Đang mở",
+        "won": "Thắng",
+        "lost": "Thua"
+      },
+      "priority": "Ưu tiên",
+      "assignee": "Admin phụ trách",
+      "value": "Giá trị {noun}",
+      "min": "Tối thiểu",
+      "max": "Tối đa",
+      "dueDate": "Hạn",
+      "createdAt": "Ngày tạo",
+      "from": "Từ",
+      "to": "Đến",
+      "clear": "Xoá bộ lọc",
+      "apply": "Áp dụng",
+      "back": "Quay lại",
+      "updatedAt": "Ngày cập nhật",
+      "resolvedOn": "{noun} được giải quyết vào",
+      "statusChangedOn": "Trạng thái thay đổi vào",
+      "stageChangedOn": "Giai đoạn thay đổi vào",
+      "lastCommentOn": "Bình luận cuối vào",
+      "customFields": "Trường tuỳ chỉnh",
+      "any": "Bất kỳ",
+      "yes": "Có",
+      "no": "Không",
+      "notResolvedOn": "{noun} chưa được giải quyết vào",
+      "equal": "Bằng",
+      "different": "Khác",
+      "reset": "Đặt lại",
+      "presets": {
+        "thisWeek": "Tuần này",
+        "lastWeek": "Tuần trước",
+        "last14": "14 ngày qua",
+        "thisYear": "Năm nay",
+        "lastYear": "Năm ngoái",
+        "tomorrow": "Ngày mai",
+        "next7": "Trong 7 ngày tới",
+        "next14": "Trong 14 ngày tới",
+        "next30": "Trong 30 ngày tới",
+        "allTime": "Mọi lúc"
+      },
+      "pickDate": "Chọn ngày",
+      "activity": "Hoạt động",
+      "activityKinds": "Loại thay đổi",
+      "activityActors": "Thực hiện bởi",
+      "activityWhen": "Khi nào",
+      "activityAutomation": "Tự động hóa"
+    },
+    "analytics": {
+      "title": "Thống kê",
+      "loading": "Đang tải thống kê…",
+      "error": "Không thể tải thống kê",
+      "created": "Đã tạo",
+      "won": "Thắng",
+      "wonValue": "Giá trị thắng",
+      "lost": "Thua",
+      "lostValue": "Giá trị thua",
+      "admin": "Admin",
+      "automation": "Tự động hoá",
+      "back": "Quay lại",
+      "admins": "Quản trị viên",
+      "chart": {
+        "created": "Mới theo ngày",
+        "won": "Thắng theo ngày",
+        "lost": "Thua theo ngày",
+        "wonValue": "Giá trị thắng theo ngày",
+        "lostValue": "Giá trị thua theo ngày"
+      },
+      "pie": {
+        "created": "Tạo mới theo admin",
+        "won": "Thắng theo admin",
+        "lost": "Thua theo admin",
+        "other": "Khác",
+        "empty": "Không có dữ liệu"
+      }
+    },
+    "settings": {
+      "title": "Cài đặt pipeline",
+      "general": "Chung",
+      "fields": "Trường tuỳ chỉnh",
+      "display": "Hiển thị",
+      "permissions": "Phân quyền",
+      "saved": "Đã lưu cài đặt",
+      "referenceName": "Tên tham chiếu",
+      "referenceNameHint": "Dùng trong các biến pipelines.reference_name.stage_name. Đổi tên sẽ làm hỏng các tin nhắn đang dùng tên cũ.",
+      "referenceNameFormat": "Chỉ dùng chữ thường, số và dấu gạch dưới, bắt đầu bằng chữ cái (VD: close_date).",
+      "assignContact": "Gán liên hệ cho admin khi mục được giao",
+      "limit": "Giới hạn số mục đang mở trên mỗi liên hệ",
+      "statusLabels": "Nhãn trạng thái",
+      "status": {
+        "open": "Đang mở",
+        "won": "Thắng",
+        "lost": "Thua"
+      },
+      "features": "Tính năng hiển thị",
+      "cardElements": "Thành phần trên thẻ",
+      "card": {
+        "contactPhone": "SĐT liên hệ",
+        "contactEmail": "Email liên hệ",
+        "createdAt": "Ngày tạo",
+        "updatedAt": "Ngày cập nhật",
+        "assignees": "Admin phụ trách",
+        "comments": "Bình luận",
+        "cardId": "Số mục",
+        "priority": "Ưu tiên",
+        "value": "Giá trị",
+        "dueDate": "Hạn"
+      },
+      "noFields": "Chưa có trường tuỳ chỉnh",
+      "fieldName": "Tên trường",
+      "fieldReference": "Tên tham chiếu",
+      "fieldType": "Kiểu trường",
+      "required": "Bắt buộc",
+      "requiredShort": "bắt buộc",
+      "addField": "Thêm trường",
+      "fieldAdded": "Đã thêm trường",
+      "deleteField": "Xoá trường",
+      "permissionsHint": "Chủ sở hữu và admin workspace luôn có toàn quyền. Cấp cho các thành viên khác những gì họ được làm trong pipeline này.",
+      "revoke": "Thu hồi",
+      "permission": {
+        "view": "Xem",
+        "edit": "Sửa",
+        "delete": "Xoá",
+        "settings": "Cài đặt"
+      },
+      "noMembers": "Không có thành viên nào khác để cấu hình",
+      "confirmDeleteField": "Xóa trường này và mọi giá trị của nó trên các mục?",
+      "adminPermissions": "Quyền của quản trị viên",
+      "cardVisibleElements": "Thành phần hiển thị trên thẻ"
+    },
+    "panel": {
+      "empty": "Liên hệ này chưa có mục pipeline",
+      "error": "Không thể tải các mục pipeline",
+      "choosePipeline": "Chọn pipeline",
+      "add": "Thêm mới"
+    },
+    "variables": {
+      "group": "Pipeline",
+      "attributes": {
+        "name": "Tên mục",
+        "stageName": "Giai đoạn",
+        "status": "Trạng thái",
+        "priority": "Ưu tiên",
+        "value": "Giá trị",
+        "assignedAdmins": "Admin phụ trách",
+        "createdDate": "Ngày tạo",
+        "dueDate": "Hạn",
+        "updatedDate": "Ngày cập nhật",
+        "id": "ID mục"
+      }
+    }
   }
 }

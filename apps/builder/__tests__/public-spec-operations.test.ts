@@ -855,6 +855,8 @@ describe("public API spec — error response coverage", () => {
   // silently limited to the default) by the same dropped-DELETE-body bug
   // this change fixes. `miniApps.delete` (`deleteWhatsappFlows`, defaulted
   // to false) opts into also removing the Mini App's Flows on Meta.
+  // `pipelines.deleteStage` (`moveItemsToStageId`, optional) moves the stage's
+  // items to another stage before deleting it instead of deleting them.
   test("DELETE operations with a request body are exactly the reviewed set", () => {
     const deletesWithBody = operations
       .filter((op) => op.method === "DELETE" && op.bodySchema)
@@ -869,6 +871,7 @@ describe("public API spec — error response coverage", () => {
       "keywords.delete",
       "messages.delete",
       "miniApps.delete",
+      "pipelines.deleteStage",
     ])
   })
 })

@@ -66,16 +66,16 @@ export const BaseEditor = ({
         return t("trigger.conditions.callRecorded")
       case triggerEventTypes.enum.callTranscribed:
         return t("trigger.conditions.callTranscribed")
-      case triggerEventTypes.enum.ticketCreated:
-        return t("trigger.conditions.ticketCreated")
-      case triggerEventTypes.enum.ticketMovedToStage:
-        return t("trigger.conditions.ticketMovedToStage")
-      case triggerEventTypes.enum.ticketValueChanged:
-        return t("trigger.conditions.ticketValueChanged")
-      case triggerEventTypes.enum.ticketStatusChanged:
-        return t("trigger.conditions.ticketStatusChanged")
-      case triggerEventTypes.enum.ticketPriorityChanged:
-        return t("trigger.conditions.ticketPriorityChanged")
+      case triggerEventTypes.enum.pipelineItemCreated:
+        return t("trigger.conditions.pipelineItemCreated")
+      case triggerEventTypes.enum.pipelineItemMovedToStage:
+        return t("trigger.conditions.pipelineItemMovedToStage")
+      case triggerEventTypes.enum.pipelineItemValueChanged:
+        return t("trigger.conditions.pipelineItemValueChanged")
+      case triggerEventTypes.enum.pipelineItemStatusChanged:
+        return t("trigger.conditions.pipelineItemStatusChanged")
+      case triggerEventTypes.enum.pipelineItemPriorityChanged:
+        return t("trigger.conditions.pipelineItemPriorityChanged")
       case triggerEventTypes.enum.subscribedToSequence:
         return t("trigger.conditions.subscribedToSequence")
       case triggerEventTypes.enum.unsubscribedFromSequence:

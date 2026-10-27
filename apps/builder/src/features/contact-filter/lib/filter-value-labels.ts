@@ -67,6 +67,9 @@ const optionSourceByField = new Map(
 export type FilterValueCondition = {
   field: string
   value?: string | string[]
+  /** `pipelineItem` conditions only. */
+  attribute?: string
+  pipelineId?: string | null
 }
 
 export type FilterValueIds = Partial<Record<FilterValueLabelType, string[]>>
@@ -89,7 +92,24 @@ export const collectFilterValueIds = (
 ): FilterValueIds | undefined => {
   const ids: Record<string, Set<string>> = {}
 
+  const addId = (type: FilterValueLabelType, id: string) => {
+    if (isFilterValueId(id)) {
+      ids[type] = (ids[type] ?? new Set()).add(id)
+    }
+  }
+
   for (const condition of conditions) {
+    if (condition.field === "pipelineItem") {
+      if (condition.pipelineId) {
+        addId("pipelines", condition.pipelineId)
+      }
+      if (condition.attribute === "stage") {
+        for (const stageId of toValueList(condition.value)) {
+          addId("pipelineStages", stageId)
+        }
+      }
+      continue
+    }
     const source =
       FILTER_VALUE_LABEL_SOURCES[
         optionSourceByField.get(condition.field) ?? "none"

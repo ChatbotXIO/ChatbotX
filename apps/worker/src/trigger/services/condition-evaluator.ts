@@ -4,6 +4,7 @@ import {
 } from "@chatbotx.io/business"
 import {
   type OperatorType,
+  pipelineConditionValueSchema,
   type TriggerEventType,
   triggerEventTypes,
 } from "@chatbotx.io/database/partials"
@@ -11,6 +12,7 @@ import type { WorkspaceModel } from "@chatbotx.io/database/types"
 import type {
   CartItemEventMetadata,
   OrderEventMetadata,
+  PipelineItemEventMetadata,
   ShoppingCartSentMetadata,
   UserAskedAboutProductMetadata,
 } from "@chatbotx.io/events"
@@ -119,6 +121,19 @@ export class ConditionEvaluator {
       case triggerEventTypes.enum.cartAbandoned:
         return true
 
+      // Pipeline item events: `sourceId` pins one pipeline (null = any), and a
+      // moved-to-stage condition may pin its destination stage in `value`.
+      case triggerEventTypes.enum.pipelineItemCreated:
+      case triggerEventTypes.enum.pipelineItemMovedToStage:
+      case triggerEventTypes.enum.pipelineItemValueChanged:
+      case triggerEventTypes.enum.pipelineItemStatusChanged:
+      case triggerEventTypes.enum.pipelineItemPriorityChanged:
+        return this.evaluatePipelineItem(
+          sourceId,
+          value,
+          eventData.eventData as Partial<PipelineItemEventMetadata>,
+        )
+
       case triggerEventTypes.enum.shoppingCartSent:
       case triggerEventTypes.enum.userAskedAboutProduct:
       case triggerEventTypes.enum.productOrdered:
@@ -162,6 +177,20 @@ export class ConditionEvaluator {
     const referencedProductIds =
       referencedProductIdsByEventType[type]?.(eventData) ?? []
     return referencedProductIds.includes(pinnedProductId)
+  }
+
+  private evaluatePipelineItem(
+    pinnedPipelineId: string | null,
+    value: unknown,
+    eventData: Partial<PipelineItemEventMetadata>,
+  ): boolean {
+    if (pinnedPipelineId && pinnedPipelineId !== eventData.pipelineId) {
+      return false
+    }
+    // Only a moved-to-stage condition stores `value.stageId`; for the other
+    // pipeline events `value` is empty, so no stage is pinned.
+    const pinned = pipelineConditionValueSchema.safeParse(value)
+    return !pinned.success || pinned.data.stageId === eventData.stageId
   }
 
   /** Conditions pinned to a source (tag id, contact info type, …) match only that exact source. */

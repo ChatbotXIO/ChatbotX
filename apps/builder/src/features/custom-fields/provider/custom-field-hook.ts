@@ -118,6 +118,11 @@ export const reservedCustomFieldIds: {
     labelKey: "fields.lastInput.label",
   },
   {
+    id: systemFieldTypes.enum.last_opportunity_id,
+    type: "shortText",
+    labelKey: "fields.lastOpportunityId.label",
+  },
+  {
     id: systemFieldTypes.enum.last_call_recorded,
     type: "shortText",
     labelKey: "fields.lastCallRecorded.label",

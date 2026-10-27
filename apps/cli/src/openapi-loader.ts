@@ -209,6 +209,12 @@ const COMMAND_NAME_OVERRIDES: Readonly<Record<string, string>> = {
   "GET /v1/mini-apps/{id}/whatsapp-preview": "mini-apps:whatsapp-preview",
   "GET /v1/conversations/{conversationId}/messages/{messageId}/flow-response":
     "conversations:flow-response:get",
+  // Pipeline actions are verbs on the pipeline or item, not sub-resources to "add".
+  "POST /v1/pipelines/{id}/duplicate": "pipelines:duplicate",
+  "POST /v1/pipelines/{id}/stages/reorder": "pipelines:stages:reorder",
+  "POST /v1/pipelines/{id}/items/{itemId}/move": "pipelines:item:move",
+  "POST /v1/pipelines/{id}/items/{itemId}/transfer": "pipelines:item:transfer",
+  "GET /v1/pipelines/{id}/stats": "pipelines:stats",
   // Order status moves are verbs on the order, not sub-resources to "add".
   "POST /v1/orders/{id}/accept": "orders:accept",
   "POST /v1/orders/{id}/ship": "orders:ship",

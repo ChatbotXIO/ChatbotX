@@ -26,6 +26,7 @@ export type TiptapEditorFieldProps = {
   enableEmoji?: boolean
   channels?: ChannelType[]
   includeCouponVariables?: boolean
+  includePipelineVariables?: boolean
   includeRawCustomFieldVariables?: boolean
   includeBotFieldVariables?: boolean
   description?: string
@@ -44,6 +45,7 @@ export const TiptapEditorField = ({
   placeholder,
   channels,
   includeCouponVariables = false,
+  includePipelineVariables = false,
   includeRawCustomFieldVariables = false,
   includeBotFieldVariables = false,
   showEmojiPicker = true,
@@ -83,6 +85,7 @@ export const TiptapEditorField = ({
               enableEmoji={enableEmoji}
               includeBotFieldVariables={includeBotFieldVariables}
               includeCouponVariables={includeCouponVariables}
+              includePipelineVariables={includePipelineVariables}
               includeRawCustomFieldVariables={includeRawCustomFieldVariables}
               initValue={initValue}
               onChange={field.onChange}

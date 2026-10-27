@@ -699,7 +699,8 @@ const DateTimePicker = React.forwardRef<Partial<DateTimePickerRef>, DateTimePick
     const [month, setMonth] = React.useState<Date>(value ?? defaultPopupValue);
     const buttonRef = useRef<HTMLButtonElement>(null);
     const [displayDate, setDisplayDate] = React.useState<Date | undefined>(value ?? undefined);
-    onMonthChange ||= onChange;
+    // Browsing months only moves the calendar; the value changes when a day
+    // (or a time) is picked. Callers that want month changes pass onMonthChange.
 
     /**
      * Makes sure display date updates when value change on
@@ -809,10 +810,12 @@ const DateTimePicker = React.forwardRef<Partial<DateTimePickerRef>, DateTimePick
             month={month}
             onSelect={(newDate) => {
               if (newDate) {
+                // Keep the selected value's time, not the browsed month's.
+                const timeSource = displayDate ?? month;
                 newDate.setHours(
-                  month?.getHours() ?? 0,
-                  month?.getMinutes() ?? 0,
-                  month?.getSeconds() ?? 0,
+                  timeSource?.getHours() ?? 0,
+                  timeSource?.getMinutes() ?? 0,
+                  timeSource?.getSeconds() ?? 0,
                 );
                 onSelect(newDate);
               }
@@ -832,7 +835,8 @@ const DateTimePicker = React.forwardRef<Partial<DateTimePickerRef>, DateTimePick
                     setMonth(value);
                   }
                 }}
-                date={month}
+                // The time applies to the selected day; browsing months must not move it.
+                date={displayDate ?? month}
                 hourCycle={hourCycle}
                 granularity={granularity}
               />

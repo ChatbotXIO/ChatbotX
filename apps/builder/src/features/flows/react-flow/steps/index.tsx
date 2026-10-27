@@ -55,6 +55,7 @@ import { openMiniAppStep } from "./open-mini-app"
 import { openWebsiteStep } from "./open-website"
 import { optInEmailStep } from "./opt-in-email"
 import { optOutEmailStep } from "./opt-out-email"
+import { pipelineStep } from "./pipeline"
 import { questionnairesStep } from "./questionnaires"
 import { removeContactTagStep } from "./remove-contact-tag"
 import sendAudioStep from "./send-audio"
@@ -183,6 +184,7 @@ export const allSteps: Record<StepType, StepDefinition<any> | undefined> = {
   [stepTypes.enum.setUpCoupon]: setUpCouponStep,
   [stepTypes.enum.markCouponUsed]: markCouponUsedStep,
   [stepTypes.enum.changeGamificationScore]: changeGamificationScoreStep,
+  [stepTypes.enum.pipeline]: pipelineStep,
   [stepTypes.enum.condition]: conditionStep,
   [stepTypes.enum.addNotes]: addNotesStep,
   [stepTypes.enum.waitUserReply]: undefined,

@@ -1,4 +1,7 @@
-import { triggerEventTypes } from "@chatbotx.io/database/partials"
+import {
+  type TriggerEventType,
+  triggerEventTypes,
+} from "@chatbotx.io/database/partials"
 import type { WorkspaceModel } from "@chatbotx.io/database/types"
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 import type { ConditionEvaluationContext } from "../src/trigger/types"
@@ -346,7 +349,7 @@ describe("ConditionEvaluator WhatsApp call conditions", () => {
   test("a condition the screen does not offer still does not match", async () => {
     await expect(
       evaluator.evaluate(
-        buildContext({ type: triggerEventTypes.enum.ticketCreated }),
+        buildContext({ type: "bogusEvent" as TriggerEventType }),
       ),
     ).resolves.toBe(false)
   })
@@ -485,5 +488,58 @@ describe("ConditionEvaluator catalog conditions", () => {
     await expect(
       evaluator.evaluate(buildContext({ type, sourceId: "product-1" }, {})),
     ).resolves.toBe(false)
+  })
+})
+
+describe("ConditionEvaluator pipeline item conditions", () => {
+  const evaluator = new ConditionEvaluator()
+  const metadata = { pipelineId: "p-1", stageId: "s-2" }
+
+  test.each([
+    triggerEventTypes.enum.pipelineItemCreated,
+    triggerEventTypes.enum.pipelineItemMovedToStage,
+    triggerEventTypes.enum.pipelineItemValueChanged,
+    triggerEventTypes.enum.pipelineItemStatusChanged,
+    triggerEventTypes.enum.pipelineItemPriorityChanged,
+  ])("%s without a pinned pipeline matches any pipeline", async (type) => {
+    await expect(
+      evaluator.evaluate(buildContext({ type }, metadata)),
+    ).resolves.toBe(true)
+  })
+
+  test("a pinned pipeline matches only that pipeline", async () => {
+    const type = triggerEventTypes.enum.pipelineItemCreated
+
+    await expect(
+      evaluator.evaluate(buildContext({ type, sourceId: "p-1" }, metadata)),
+    ).resolves.toBe(true)
+    await expect(
+      evaluator.evaluate(buildContext({ type, sourceId: "p-9" }, metadata)),
+    ).resolves.toBe(false)
+  })
+
+  test("a moved-to-stage condition pinned to a stage matches only that destination", async () => {
+    const type = triggerEventTypes.enum.pipelineItemMovedToStage
+
+    await expect(
+      evaluator.evaluate(
+        buildContext({ type, value: { stageId: "s-2" } }, metadata),
+      ),
+    ).resolves.toBe(true)
+    await expect(
+      evaluator.evaluate(
+        buildContext({ type, value: { stageId: "s-3" } }, metadata),
+      ),
+    ).resolves.toBe(false)
+  })
+
+  test("a null or empty stage filter matches any destination", async () => {
+    const type = triggerEventTypes.enum.pipelineItemMovedToStage
+
+    await expect(
+      evaluator.evaluate(
+        buildContext({ type, value: { stageId: null } }, metadata),
+      ),
+    ).resolves.toBe(true)
   })
 })

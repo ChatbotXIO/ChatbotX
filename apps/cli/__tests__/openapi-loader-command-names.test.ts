@@ -442,3 +442,95 @@ describe("pathAndMethodToCommandName — ecommerce", () => {
     expect(new Set(names)).toHaveLength(names.length)
   })
 })
+
+describe("pathAndMethodToCommandName — pipeline actions", () => {
+  test.each([
+    ["POST", "/v1/pipelines/{id}/duplicate", "pipelines:duplicate"],
+    ["POST", "/v1/pipelines/{id}/stages/reorder", "pipelines:stages:reorder"],
+    ["POST", "/v1/pipelines/{id}/items/{itemId}/move", "pipelines:item:move"],
+    [
+      "POST",
+      "/v1/pipelines/{id}/items/{itemId}/transfer",
+      "pipelines:item:transfer",
+    ],
+    ["GET", "/v1/pipelines/{id}/stats", "pipelines:stats"],
+  ])("%s %s is %s", (method, path, expected) => {
+    expect(pathAndMethodToCommandName(path, method)).toBe(expected)
+  })
+
+  test("creating an item and a stage keep their own commands", () => {
+    expect(pathAndMethodToCommandName("/v1/pipelines/{id}/items", "POST")).toBe(
+      "pipelines:item:add",
+    )
+    expect(
+      pathAndMethodToCommandName("/v1/pipelines/{id}/stages", "POST"),
+    ).toBe("pipelines:stage:add")
+  })
+})
+
+describe("pathAndMethodToCommandName — every pipelines operation", () => {
+  // Mirrors each `.route()` in apps/builder/src/features/pipelines/api/public*.ts.
+  // A derived name shared by two operations silently drops one CLI command.
+  const pipelineRoutes: [string, string][] = [
+    ["GET", "/v1/pipelines"],
+    ["GET", "/v1/pipelines/{id}"],
+    ["POST", "/v1/pipelines"],
+    ["PATCH", "/v1/pipelines/{id}"],
+    ["DELETE", "/v1/pipelines/{id}"],
+    ["POST", "/v1/pipelines/{id}/duplicate"],
+    ["POST", "/v1/pipelines/{id}/stages"],
+    ["PATCH", "/v1/pipelines/{id}/stages/{stageId}"],
+    ["DELETE", "/v1/pipelines/{id}/stages/{stageId}"],
+    ["POST", "/v1/pipelines/{id}/stages/reorder"],
+    ["GET", "/v1/pipelines/{id}/fields"],
+    ["POST", "/v1/pipelines/{id}/fields"],
+    ["PATCH", "/v1/pipelines/{id}/fields/{fieldId}"],
+    ["DELETE", "/v1/pipelines/{id}/fields/{fieldId}"],
+    ["GET", "/v1/pipelines/{id}/members"],
+    ["PUT", "/v1/pipelines/{id}/members/{workspaceMemberId}"],
+    ["DELETE", "/v1/pipelines/{id}/members/{workspaceMemberId}"],
+    ["GET", "/v1/pipelines/{id}/stats"],
+    ["GET", "/v1/contacts/{identifier}/pipeline-items"],
+    ["GET", "/v1/pipelines/{id}/items"],
+    ["GET", "/v1/pipelines/{id}/items/{itemId}"],
+    ["POST", "/v1/pipelines/{id}/items"],
+    ["PATCH", "/v1/pipelines/{id}/items/{itemId}"],
+    ["POST", "/v1/pipelines/{id}/items/{itemId}/move"],
+    ["POST", "/v1/pipelines/{id}/items/{itemId}/transfer"],
+    ["DELETE", "/v1/pipelines/{id}/items/{itemId}"],
+    ["GET", "/v1/pipelines/{id}/items/{itemId}/comments"],
+    ["POST", "/v1/pipelines/{id}/items/{itemId}/comments"],
+    ["DELETE", "/v1/pipelines/{id}/items/{itemId}/comments/{commentId}"],
+    ["POST", "/v1/pipelines/{id}/items/{itemId}/attachments"],
+    [
+      "DELETE",
+      "/v1/pipelines/{id}/items/{itemId}/attachments/{mediaLibraryFileId}",
+    ],
+    ["GET", "/v1/pipelines/{id}/items/{itemId}/activity"],
+  ]
+
+  test("no two pipelines operations derive the same command name", () => {
+    const names = pipelineRoutes.map(([method, path]) =>
+      pathAndMethodToCommandName(path, method),
+    )
+
+    expect(new Set(names)).toHaveLength(names.length)
+    for (const name of names) {
+      expect(name).not.toBe("")
+    }
+  })
+
+  test("pipelines names do not collide with the contacts commands", () => {
+    const contactNames = [
+      pathAndMethodToCommandName("/v1/contacts", "GET"),
+      pathAndMethodToCommandName("/v1/contacts/{identifier}", "GET"),
+    ]
+    const pipelineNames = pipelineRoutes.map(([method, path]) =>
+      pathAndMethodToCommandName(path, method),
+    )
+
+    for (const name of contactNames) {
+      expect(pipelineNames).not.toContain(name)
+    }
+  })
+})

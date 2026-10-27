@@ -52,6 +52,13 @@ export const REFERENCE_FIELD_ENTITY_KIND: Record<string, string> = {
   // install has no Mini App adapter, and the worker drops a button whose Mini
   // App is not in the sending workspace.
   miniAppId: "miniApp",
+  // Pipeline flow step (steps/pipeline.ts). The template pipelines manifest
+  // fills all three maps; unresolved ids only warn.
+  pipelineId: "pipeline",
+  destinationPipelineId: "pipeline",
+  stageId: "pipelineStage",
+  destinationStageId: "pipelineStage",
+  pipelineFieldId: "pipelineField",
 }
 
 // `flowId` shows up both as a cross-flow jump target (steps/start-external-flow.ts,
@@ -74,7 +81,20 @@ export const REFERENCE_ARRAY_FIELD_ENTITY_KIND: Record<string, string> = {
   tagIds: "tag",
   addonProductIds: "product",
   productIds: "product",
+  pipelineFieldIds: "pipelineField",
+  // Pipelines step assignees. Members and teams never travel between
+  // workspaces, so these kinds have no id map: they are reported and stripped.
+  assigneeMemberIds: "workspaceMember",
+  assigneeInboxTeamIds: "inboxTeam",
 }
+
+/**
+ * Array reference kinds whose unresolved elements are removed (and reported)
+ * instead of left in place: a foreign id there is not a stale picker but a
+ * value that makes the owning step fail on every run.
+ */
+export const STRIP_UNRESOLVED_ARRAY_REFERENCE_KINDS: ReadonlySet<string> =
+  new Set(["workspaceMember", "inboxTeam"])
 
 /**
  * Discriminated-union reference fields: the key itself carries no kind

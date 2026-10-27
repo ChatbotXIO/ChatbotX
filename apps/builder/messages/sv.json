@@ -1010,7 +1010,8 @@
       "systemFields": "Systemfält",
       "systemTime": "Systemtid",
       "topicCoupon": "Kupongämne",
-      "leaderboard": "Gamificationpoäng"
+      "leaderboard": "Gamificationpoäng",
+      "pipeline": "Pipelines"
     },
     "fields": {
       "appliedJobs": "Sökta jobb",
@@ -1128,7 +1129,8 @@
       "unread": "Oläst",
       "unreplied": "Obesvarat",
       "verifiedAccountOnInstagram": "Verifierat konto på Instagram",
-      "votedOnPoll": "Röstat i omröstningen"
+      "votedOnPoll": "Röstat i omröstningen",
+      "pipelineItem": "Pipeline-objekt"
     },
     "languages": {
       "ar": "Arabiska",
@@ -1183,7 +1185,21 @@
     "valuePlaceholder": "...",
     "yes": "Ja",
     "noTopic": "Inget ämne",
-    "trackingSince": "Spåras sedan {date}. Tidigare aktivitet ingår inte."
+    "trackingSince": "Spåras sedan {date}. Tidigare aktivitet ingår inte.",
+    "pipelineItem": {
+      "anyPipeline": "Valfri pipeline",
+      "anyStatus": "Valfri status",
+      "attributes": {
+        "exists": "Objekt",
+        "status": "Objektstatus",
+        "stage": "Objektfas",
+        "priority": "Objektprioritet"
+      },
+      "operators": {
+        "has": "Har",
+        "hasNo": "Har inget"
+      }
+    }
   },
   "contacts": {
     "copyLink": "Kopiera länk",
@@ -1199,7 +1215,13 @@
     "exportTakingLong": "Exporten tar längre tid än väntat",
     "exportTakingLongDescription": "Exporten bearbetas fortfarande. Du kan stänga den här dialogrutan och kontrollera exporthistoriken igen om några minuter.",
     "linkCopied": "Länken har kopierats till urklipp",
-    "title": "Kontakter"
+    "title": "Kontakter",
+    "search": {
+      "placeholder": "Sök (namn, e-post, telefon, kontakt-ID)",
+      "searching": "Söker…",
+      "error": "Det gick inte att söka efter kontakter",
+      "empty": "Inga kontakter hittades"
+    }
   },
   "contactScan": {
     "menu": {
@@ -3498,7 +3520,8 @@
       "ads": "Annonser",
       "settings": "Inställningar",
       "miniApps": "Mini Apps",
-      "leaderboards": "Topplistor"
+      "leaderboards": "Topplistor",
+      "pipelines": "Pipelines"
     },
     "adReferral": {
       "label": "Ads",
@@ -3556,6 +3579,9 @@
     },
     "miniApp": {
       "label": "Miniapp"
+    },
+    "lastOpportunityId": {
+      "label": "Senaste affärsmöjlighets-ID"
     }
   },
   "flowAnalytics": {
@@ -3696,7 +3722,8 @@
       "changeGamificationScore": "Ändra gamificationpoäng",
       "sendViewCatalog": "Visa katalog",
       "sendProducts": "Skicka produkter",
-      "sendCollection": "Kollektion"
+      "sendCollection": "Kollektion",
+      "pipeline": "Pipelines"
     },
     "externalRequest": {
       "errors": {
@@ -3967,6 +3994,57 @@
       "summaryManual": "{count, plural, one {# produkt} other {# produkter}}",
       "cancel": "Avbryt",
       "save": "Spara"
+    },
+    "pipelineStep": {
+      "action": "Åtgärd",
+      "pipeline": "Pipeline",
+      "targetHint": "Åtgärdar kontaktens senaste öppna objekt i den här pipelinen. Hoppa över-vägen körs när det inte finns något.",
+      "noPipelines": "Inga pipelines hittades",
+      "actions": {
+        "addToPipeline": "Lägg till kontakt i pipeline",
+        "moveToStage": "Flytta till en fas",
+        "changeValue": "Ändra värde",
+        "assign": "Tilldela till administratörer",
+        "changeStatus": "Ändra status",
+        "changePriority": "Ändra prioritet",
+        "changeDueDate": "Ändra förfallodatum",
+        "changeTitle": "Ändra titel",
+        "setCustomField": "Ange anpassat fält",
+        "clearCustomField": "Rensa anpassade fält",
+        "changeDescription": "Ändra beskrivning",
+        "removeFromPipeline": "Ta bort kontakt från pipeline",
+        "addComment": "Lägg till kommentar",
+        "transfer": "Överför till en annan pipeline"
+      },
+      "title": "Titel",
+      "description": "Beskrivning",
+      "stage": "Fas",
+      "firstStage": "Första fasen",
+      "status": "Status",
+      "statusOptions": {
+        "open": "Öppen",
+        "won": "Vunnen",
+        "lost": "Förlorad"
+      },
+      "assigneeMembers": "Tilldelade administratörer",
+      "assigneeTeams": "Tilldelade team",
+      "value": "Värde",
+      "priority": "Prioritet",
+      "dueDate": "Förfallodatum",
+      "dueNone": "Ingen",
+      "dueNoneHint": "Objektet har inget förfallodatum.",
+      "dueCustomField": "Från ett anpassat datumfält",
+      "dueFixed": "Fast datum och tid",
+      "dueField": "Anpassat fält för datum eller datum och tid",
+      "fieldValues": "Anpassade fält",
+      "field": "Fält",
+      "fieldValue": "Värde",
+      "fields": "Fält",
+      "addField": "Lägg till fältvärde",
+      "removeHint": "Raderar kontaktens senaste öppna objekt i den här pipelinen.",
+      "comment": "Kommentar",
+      "destinationPipeline": "Målpipeline",
+      "destinationStage": "Målfas"
     }
   },
   "folders": {
@@ -6390,17 +6468,19 @@
       "subscribedToSequence": "Har registrerats i en sekvens",
       "tagApplied": "Tagg har lagts till",
       "tagRemoved": "Tagg har tagits bort",
-      "ticketCreated": "Ärende har skapats",
-      "ticketMovedToStage": "Ärende har flyttats till ett steg",
-      "ticketPriorityChanged": "Ärendets prioritet har ändrats",
-      "ticketStatusChanged": "Ärendets status har ändrats",
-      "ticketValueChanged": "Ärendets värde har ändrats",
+      "pipelineItemCreated": "Ärende har skapats",
+      "pipelineItemMovedToStage": "Ärende har flyttats till ett steg",
+      "pipelineItemPriorityChanged": "Ärendets prioritet har ändrats",
+      "pipelineItemStatusChanged": "Ärendets status har ändrats",
+      "pipelineItemValueChanged": "Ärendets värde har ändrats",
       "unsubscribedFromSequence": "Har avregistrerats från en sekvens",
       "userAskedAboutProduct": "Kontakt frågade om en produkt",
       "callRecorded": "Samtal inspelat",
       "callTranscribed": "Samtal transkriberat",
       "anyProduct": "Valfri produkt",
-      "anyCategory": "Valfri kategori"
+      "anyCategory": "Valfri kategori",
+      "anyPipeline": "Valfri pipeline",
+      "anyStage": "Valfri fas"
     },
     "day": "Dag",
     "hour": "Timme",
@@ -9979,5 +10059,401 @@
     "metHelp": "Andel svar med SLA som höll den.",
     "eligibleCount": "{count} svar hade SLA",
     "enable": "Aktivera svars-SLA"
+  },
+  "pipelines": {
+    "title": "Pipelines",
+    "retry": "Försök igen",
+    "save": "Spara",
+    "saveFailed": "Det gick inte att spara dina ändringar. Försök igen.",
+    "list": {
+      "name": "Namn",
+      "type": "Typ",
+      "items": "Objekt",
+      "add": "Lägg till pipeline",
+      "empty": "Inga pipelines än",
+      "emptyHint": "Skapa en pipeline för att följa affärer, ärenden eller valfri process som kort på en tavla.",
+      "error": "Det gick inte att läsa in pipelines",
+      "contacts": "Kontakter",
+      "addShort": "Lägg till",
+      "description": "Följ affärer, ärenden eller vilken process som helst som kort som flyttas genom steg."
+    },
+    "types": {
+      "opportunity": {
+        "label": "Affärsmöjligheter",
+        "description": "Följ säljaffärer genom faserna. Första fasen: Lead."
+      },
+      "ticket": {
+        "label": "Supportcenter",
+        "description": "Hantera supportförfrågningar. Första fasen: Nytt ärende."
+      },
+      "custom": {
+        "label": "Egen tavla",
+        "description": "Bygg din egen process. Första fasen: Intag."
+      }
+    },
+    "noun": {
+      "opportunity": {
+        "one": "Affärsmöjlighet",
+        "many": "Affärsmöjligheter",
+        "add": "Lägg till affärsmöjlighet"
+      },
+      "ticket": {
+        "one": "Ärende",
+        "many": "Ärenden",
+        "add": "Lägg till ärende"
+      },
+      "card": {
+        "one": "Kort",
+        "many": "Kort",
+        "add": "Lägg till kort"
+      }
+    },
+    "create": {
+      "title": "Ny pipeline",
+      "description": "Välj vad tavlan ska användas till och ge den sedan ett namn.",
+      "type": "Typ",
+      "name": "Pipelinenamn",
+      "namePlaceholder": "t.ex. Försäljning",
+      "submit": "Skapa pipeline",
+      "success": "Pipelinen har skapats"
+    },
+    "menu": {
+      "open": "Pipelineåtgärder",
+      "rename": "Byt namn",
+      "duplicate": "Duplicera",
+      "delete": "Ta bort"
+    },
+    "rename": {
+      "title": "Byt namn på pipeline",
+      "submit": "Byt namn",
+      "success": "Pipelinen har bytt namn"
+    },
+    "duplicate": {
+      "success": "Pipelinen har duplicerats"
+    },
+    "delete": {
+      "title": "Ta bort pipeline",
+      "description": "{name} och alla dess faser och objekt kommer att tas bort. Detta kan inte ångras.",
+      "success": "Pipelinen har tagits bort"
+    },
+    "board": {
+      "title": "Tavla",
+      "count": "{count, plural, one {# objekt} other {# objekt}}",
+      "total": "Totalt {value}",
+      "search": "Sök efter titel, nummer eller kontakt",
+      "sort": "Sortera",
+      "filter": "Filtrera",
+      "analytics": "Analys",
+      "settings": "Inställningar",
+      "emptyStage": "Dra och släpp ett kort här för att flytta det till den här fasen.",
+      "loadMore": "Visa fler",
+      "loadMoreFailed": "Det gick inte att läsa in fler objekt",
+      "error": "Det gick inte att läsa in tavlan",
+      "processing": "Bearbetar den här fasen…",
+      "moveFailed": "Det gick inte att flytta kortet",
+      "sortOptions": {
+        "createdAtDesc": "Skapandedatum (Ny till Gammal)",
+        "createdAtAsc": "Skapandedatum (Gammal till Ny)",
+        "updatedAtDesc": "Uppdateringsdatum (Ny till Gammal)",
+        "valueDesc": "Affärsmöjlighetens värde (Hög till Låg)",
+        "valueAsc": "Affärsmöjlighetens värde (Låg till Hög)",
+        "dueDateAsc": "Förfallodatum (Tidigast till Senast)",
+        "dueDateDesc": "Förfallodatum (Senast till Tidigast)",
+        "priorityDesc": "Prioritet (Hög till Låg)",
+        "priorityAsc": "Prioritet (Låg till Hög)",
+        "updatedAtAsc": "Uppdateringsdatum (Gammal till Ny)"
+      },
+      "searchAction": "Sök",
+      "closeSearch": "Stäng sökning",
+      "cardMenu": "Kortåtgärder",
+      "moveTo": "Flytta till",
+      "unknownContact": "Okänd kontakt",
+      "staleError": "Tavlan kunde inte uppdateras. Det du ser kan vara inaktuellt."
+    },
+    "stage": {
+      "add": "Lägg till fas",
+      "name": "Fasnamn",
+      "namePlaceholder": "Fasnamn",
+      "menu": "Fasåtgärder",
+      "edit": "Redigera fas",
+      "delete": "Ta bort fas",
+      "deleteTitle": "Ta bort fas",
+      "deleteDescription": "{name} och alla objekt i den kommer att tas bort. Åtgärden kan inte ångras.",
+      "moveItemsTo": "Flytta objekt till",
+      "deleteItemsToo": "Ta bort objekten också",
+      "description": "Beskrivning",
+      "textColor": "Textfärg",
+      "backgroundColor": "Bakgrundsfärg",
+      "saved": "Fasen har sparats",
+      "deleted": "Fasen har tagits bort",
+      "queued": "Fasen töms i bakgrunden.",
+      "resetColor": "Standard",
+      "deleteMoveDescription": "{name} kommer att tas bort. Dess objekt flyttas till {target}.",
+      "rename": "Byt namn",
+      "settings": "Inställningar",
+      "general": "Allmänt",
+      "color": "Färg",
+      "cancel": "Avbryt"
+    },
+    "priority": {
+      "low": "Låg",
+      "medium": "Medel",
+      "high": "Hög"
+    },
+    "item": {
+      "loading": "Läser in…",
+      "error": "Det gick inte att läsa in objektet",
+      "title": "Titel",
+      "status": "Status",
+      "stage": "Fas",
+      "priority": "Prioritet",
+      "value": "Värde",
+      "dueDate": "Förfallodatum",
+      "assignees": "Tilldelade administratörer",
+      "description": "Beskrivning",
+      "attachments": "Bilagor",
+      "attach": "Bifoga filer",
+      "noAttachments": "Inga bilagor",
+      "removeAttachment": "Ta bort bilaga",
+      "removeAttachmentDescription": "Filen tas bort från objektet men finns kvar i mediebiblioteket.",
+      "comments": "Kommentarer",
+      "addComment": "Lägg till kommentar",
+      "commentPlaceholder": "Skriv en kommentar…",
+      "noComments": "Inga kommentarer än",
+      "deleteComment": "Ta bort kommentar",
+      "deleteCommentDescription": "Den här kommentaren tas bort. Det går inte att ångra.",
+      "activity": "Aktivitet",
+      "noActivity": "Ingen aktivitet än",
+      "transfer": "Överför till pipeline",
+      "transferTitle": "Överför till en annan pipeline",
+      "transferDescription": "Objektet behåller sitt nummer och skapandedatum. Anpassade fält följer med när den andra pipelinen har ett fält med samma referensnamn och typ.",
+      "destinationPipeline": "Målpipeline",
+      "destinationStage": "Målfas",
+      "firstStage": "Första fasen",
+      "choose": "Välj…",
+      "transferred": "Objektet har överförts",
+      "delete": "Ta bort",
+      "deleteDescription": "Ett objekt kommer att tas bort. Detta kan inte ångras.",
+      "deleted": "Objektet har tagits bort",
+      "number": "Nummer",
+      "createdBy": "Skapad av",
+      "createdByValue": "{name} den {date}",
+      "inbox": "Inkorg",
+      "moreActions": "Fler åtgärder",
+      "noDescription": "Ingen beskrivning",
+      "yes": "Ja",
+      "no": "Nej",
+      "assigneesMembers": "Agenter",
+      "assigneesTeams": "Inkorgsteam",
+      "assigneesSearch": "Sök administratörer eller team…",
+      "assigneesEmpty": "Inga resultat",
+      "assigneesPlaceholder": "Välj administratörer eller team",
+      "olderComments": "Visa äldre kommentarer",
+      "olderActivity": "Visa äldre aktivitet",
+      "activityFilter": "Filtrera",
+      "activityFilterCount": "{count, plural, one {# filter} other {# filter}}",
+      "activityFilterClear": "Visa alla",
+      "noFilteredActivity": "Ingen aktivitet matchar det här filtret.",
+      "activityGroup": {
+        "lifecycle": "Skapad och överförd",
+        "stage": "Steg",
+        "status": "Status",
+        "value": "Värde",
+        "priority": "Prioritet",
+        "dueDate": "Förfallodatum",
+        "details": "Titel, beskrivning och fält",
+        "assignees": "Ansvariga",
+        "comments": "Kommentarer",
+        "attachments": "Bilagor"
+      }
+    },
+    "activity": {
+      "created": "Skapad",
+      "stageChanged": "Flyttad till en annan fas",
+      "statusChanged": "Status ändrad",
+      "valueChanged": "Värde ändrat",
+      "priorityChanged": "Prioritet ändrad",
+      "dueDateChanged": "Förfallodatum ändrat",
+      "titleChanged": "Titel ändrad",
+      "descriptionChanged": "Beskrivning ändrad",
+      "fieldValuesChanged": "Anpassade fält ändrade",
+      "assigneesChanged": "Tilldelade ändrade",
+      "attachmentAdded": "Bilaga tillagd",
+      "attachmentRemoved": "Bilaga borttagen",
+      "commentAdded": "Kommentar tillagd",
+      "commentDeleted": "Kommentar borttagen",
+      "transferred": "Överförd från en annan pipeline",
+      "deleted": "Borttagen"
+    },
+    "activityActor": {
+      "flow": "Flöde",
+      "trigger": "Utlösare",
+      "workspaceToken": "API",
+      "system": "System",
+      "formerMember": "Tidigare medlem"
+    },
+    "add": {
+      "changeContact": "Välj en annan kontakt",
+      "success": "Skapad",
+      "stepContact": "Välj en kontakt",
+      "stepDetails": "Uppgifter om {noun}",
+      "contact": "Kontakt",
+      "addNewContact": "Lägg till ny"
+    },
+    "filter": {
+      "title": "Filtrera",
+      "status": "Status",
+      "statusLabels": {
+        "open": "Öppen",
+        "won": "Vunnen",
+        "lost": "Förlorad"
+      },
+      "priority": "Prioritet",
+      "assignee": "Tilldelade administratörer",
+      "value": "Värde för {noun}",
+      "min": "Min",
+      "max": "Max",
+      "dueDate": "Förfallodatum",
+      "createdAt": "Skapad den",
+      "from": "Från",
+      "to": "Till",
+      "clear": "Rensa filter",
+      "apply": "Tillämpa",
+      "back": "Tillbaka",
+      "updatedAt": "Uppdaterad den",
+      "resolvedOn": "{noun} avslutad den",
+      "statusChangedOn": "Status ändrad den",
+      "stageChangedOn": "Fas ändrad den",
+      "lastCommentOn": "Senaste kommentar den",
+      "customFields": "Anpassade fält",
+      "any": "Valfri",
+      "yes": "Ja",
+      "no": "Nej",
+      "notResolvedOn": "{noun} inte avslutad den",
+      "equal": "Lika med",
+      "different": "Skilt från",
+      "reset": "Återställ",
+      "presets": {
+        "thisWeek": "Denna vecka",
+        "lastWeek": "Förra veckan",
+        "last14": "Senaste 14 dagarna",
+        "thisYear": "Detta år",
+        "lastYear": "Förra året",
+        "tomorrow": "Imorgon",
+        "next7": "Om 7 dagar",
+        "next14": "Om 14 dagar",
+        "next30": "Om 30 dagar",
+        "allTime": "All tid"
+      },
+      "pickDate": "Välj ett datum",
+      "activity": "Aktivitet",
+      "activityKinds": "Typ av ändring",
+      "activityActors": "Utfört av",
+      "activityWhen": "När",
+      "activityAutomation": "Automatisering"
+    },
+    "analytics": {
+      "title": "Analys",
+      "loading": "Läser in statistik…",
+      "error": "Det gick inte att läsa in statistik",
+      "created": "Skapade",
+      "won": "Vunna",
+      "wonValue": "Vunnet värde",
+      "lost": "Förlorade",
+      "lostValue": "Förlorat värde",
+      "admin": "Admin",
+      "automation": "Automatisering",
+      "back": "Tillbaka",
+      "admins": "Administratörer",
+      "chart": {
+        "created": "Nya per dag",
+        "won": "Vunna per dag",
+        "lost": "Förlorade per dag",
+        "wonValue": "Vunnet värde per dag",
+        "lostValue": "Förlorat värde per dag"
+      },
+      "pie": {
+        "created": "Skapade per admin",
+        "won": "Vunna per admin",
+        "lost": "Förlorade per admin",
+        "other": "Övriga",
+        "empty": "Inga data"
+      }
+    },
+    "settings": {
+      "title": "Pipelineinställningar",
+      "general": "Allmänt",
+      "fields": "Anpassade fält",
+      "display": "Visning",
+      "permissions": "Behörigheter",
+      "saved": "Inställningarna har sparats",
+      "referenceName": "Referensnamn",
+      "referenceNameHint": "Används i variablerna pipelines.reference_name.stage_name. Om du ändrar det slutar meddelanden som använder det gamla namnet att fungera.",
+      "referenceNameFormat": "Använd små bokstäver, siffror och understreck, och börja med en bokstav (t.ex. close_date).",
+      "assignContact": "Tilldela kontakten till en administratör när ett objekt tilldelas",
+      "limit": "Begränsa öppna objekt per kontakt",
+      "statusLabels": "Statusetiketter",
+      "status": {
+        "open": "Öppen",
+        "won": "Vunnen",
+        "lost": "Förlorad"
+      },
+      "features": "Synliga funktioner",
+      "cardElements": "Kortelement",
+      "card": {
+        "contactPhone": "Kontaktens telefon",
+        "contactEmail": "Kontaktens e-post",
+        "createdAt": "Skapad den",
+        "updatedAt": "Uppdaterad den",
+        "assignees": "Tilldelade administratörer",
+        "comments": "Kommentarer",
+        "cardId": "Objektnummer",
+        "priority": "Prioritet",
+        "value": "Värde",
+        "dueDate": "Förfallodatum"
+      },
+      "noFields": "Inga anpassade fält än",
+      "fieldName": "Fältnamn",
+      "fieldReference": "Referensnamn",
+      "fieldType": "Fälttyp",
+      "required": "Obligatoriskt",
+      "requiredShort": "obligatoriskt",
+      "addField": "Lägg till fält",
+      "fieldAdded": "Fältet har lagts till",
+      "deleteField": "Ta bort fält",
+      "permissionsHint": "Arbetsytans ägare och administratörer har alltid full åtkomst. Ge andra medlemmar rätt att göra saker i den här pipelinen.",
+      "revoke": "Återkalla",
+      "permission": {
+        "view": "Visa",
+        "edit": "Redigera",
+        "delete": "Ta bort",
+        "settings": "Inställningar"
+      },
+      "noMembers": "Inga andra medlemmar att konfigurera",
+      "confirmDeleteField": "Ta bort det här fältet och alla dess värden på varje objekt?",
+      "adminPermissions": "Administratörsbehörigheter",
+      "cardVisibleElements": "Synliga kortelement"
+    },
+    "panel": {
+      "empty": "Inga pipelineobjekt för den här kontakten",
+      "error": "Det gick inte att läsa in pipelineobjekt",
+      "choosePipeline": "Välj en pipeline",
+      "add": "Lägg till ny"
+    },
+    "variables": {
+      "group": "Pipelines",
+      "attributes": {
+        "name": "Objektnamn",
+        "stageName": "Fas",
+        "status": "Status",
+        "priority": "Prioritet",
+        "value": "Värde",
+        "assignedAdmins": "Tilldelade administratörer",
+        "createdDate": "Skapad",
+        "dueDate": "Förfallodatum",
+        "updatedDate": "Uppdaterad",
+        "id": "Objekt-ID"
+      }
+    }
   }
 }

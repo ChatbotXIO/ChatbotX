@@ -44,6 +44,7 @@ import { markEmailVerifiedStepSchema } from "./steps/mark-email-verified"
 import { moosendCreateContactSchema } from "./steps/moosend-create-contact"
 import { optInEmailStepSchema } from "./steps/opt-in-email"
 import { optOutEmailStepSchema } from "./steps/opt-out-email"
+import { pipelineStepSchema } from "./steps/pipeline"
 import { questionnairesStepSchema } from "./steps/questionnaires"
 import { removeContactTagStepSchema } from "./steps/remove-contact-tag"
 import { sendGoogleAdsConversionSchema } from "./steps/send-google-ads-conversion"
@@ -99,6 +100,7 @@ const contactSteps = [
   setUpCouponStepSchema,
   markCouponUsedStepSchema,
   changeGamificationScoreStepSchema,
+  pipelineStepSchema,
 ]
 
 const broadcastSteps = [

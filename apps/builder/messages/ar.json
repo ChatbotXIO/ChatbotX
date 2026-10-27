@@ -817,7 +817,8 @@
       "ctwaConversionTypes": {
         "lead": "عميل محتمل",
         "purchase": "شراء"
-      }
+      },
+      "pipelineItem": "عنصر في خط سير العمل"
     },
     "fieldGroups": {
       "opportunity": "الفرصة",
@@ -834,7 +835,8 @@
       "botFields": "حقول البوت",
       "email": "البريد الإلكتروني",
       "sms": "الرسائل النصية",
-      "ctwaAds": "الإعلانات"
+      "ctwaAds": "الإعلانات",
+      "pipeline": "خطوط سير العمل"
     },
     "languages": {
       "ar": "العربية",
@@ -882,7 +884,21 @@
       "allAds": "جميع الإعلانات"
     },
     "noTopic": "بدون موضوع",
-    "trackingSince": "يتم التتبع منذ {date}. لا يتم تضمين النشاط السابق."
+    "trackingSince": "يتم التتبع منذ {date}. لا يتم تضمين النشاط السابق.",
+    "pipelineItem": {
+      "anyPipeline": "أي خط سير عمل",
+      "anyStatus": "أي حالة",
+      "attributes": {
+        "exists": "العناصر",
+        "status": "حالة العنصر",
+        "stage": "مرحلة العنصر",
+        "priority": "أولوية العنصر"
+      },
+      "operators": {
+        "has": "لديه",
+        "hasNo": "ليس لديه"
+      }
+    }
   },
   "channels": {
     "title": "القنوات",
@@ -2545,7 +2561,8 @@
       "ads": "الإعلانات",
       "settings": "الإعدادات",
       "miniApps": "Mini Apps",
-      "leaderboards": "لوحات المتصدرين"
+      "leaderboards": "لوحات المتصدرين",
+      "pipelines": "خطوط سير العمل"
     },
     "adReferral": {
       "label": "Ads",
@@ -2603,6 +2620,9 @@
     },
     "miniApp": {
       "label": "التطبيق المصغر"
+    },
+    "lastOpportunityId": {
+      "label": "معرّف آخر فرصة"
     }
   },
   "flows": {
@@ -2778,7 +2798,8 @@
       "changeGamificationScore": "تغيير نقاط التحدي",
       "sendViewCatalog": "عرض الكتالوج",
       "sendProducts": "إرسال المنتجات",
-      "sendCollection": "مجموعة"
+      "sendCollection": "مجموعة",
+      "pipeline": "خطوط سير العمل"
     },
     "externalRequest": {
       "errors": {
@@ -3001,6 +3022,57 @@
       "summaryManual": "{count, plural, one {# منتج} other {# منتجات}}",
       "cancel": "إلغاء",
       "save": "حفظ"
+    },
+    "pipelineStep": {
+      "action": "الإجراء",
+      "pipeline": "خط سير العمل",
+      "targetHint": "يعمل على أحدث عنصر مفتوح لجهة الاتصال في خط سير العمل هذا. يُنفَّذ مسار التخطي عند عدم وجود عنصر.",
+      "noPipelines": "لا توجد خطوط سير عمل",
+      "actions": {
+        "addToPipeline": "إضافة جهة الاتصال إلى خط سير العمل",
+        "moveToStage": "نقل إلى مرحلة",
+        "changeValue": "تغيير القيمة",
+        "assign": "تعيين للمسؤولين",
+        "changeStatus": "تغيير الحالة",
+        "changePriority": "تغيير الأولوية",
+        "changeDueDate": "تغيير تاريخ الاستحقاق",
+        "changeTitle": "تغيير العنوان",
+        "setCustomField": "تعيين حقل مخصص",
+        "clearCustomField": "مسح الحقول المخصصة",
+        "changeDescription": "تغيير الوصف",
+        "removeFromPipeline": "إزالة جهة الاتصال من خط سير العمل",
+        "addComment": "إضافة تعليق",
+        "transfer": "نقل إلى خط سير عمل آخر"
+      },
+      "title": "العنوان",
+      "description": "الوصف",
+      "stage": "المرحلة",
+      "firstStage": "المرحلة الأولى",
+      "status": "الحالة",
+      "statusOptions": {
+        "open": "مفتوح",
+        "won": "فاز",
+        "lost": "خسر"
+      },
+      "assigneeMembers": "المسؤولون المعيّنون",
+      "assigneeTeams": "الفرق المعيّنة",
+      "value": "القيمة",
+      "priority": "الأولوية",
+      "dueDate": "تاريخ الاستحقاق",
+      "dueNone": "بدون",
+      "dueNoneHint": "لا يوجد تاريخ استحقاق للعنصر.",
+      "dueCustomField": "من حقل مخصص للتاريخ",
+      "dueFixed": "تاريخ ووقت ثابتان",
+      "dueField": "حقل مخصص للتاريخ أو التاريخ والوقت",
+      "fieldValues": "الحقول المخصصة",
+      "field": "الحقل",
+      "fieldValue": "القيمة",
+      "fields": "الحقول",
+      "addField": "إضافة قيمة حقل",
+      "removeHint": "يحذف أحدث عنصر مفتوح لجهة الاتصال في خط سير العمل هذا.",
+      "comment": "التعليق",
+      "destinationPipeline": "خط سير العمل الوجهة",
+      "destinationStage": "المرحلة الوجهة"
     }
   },
   "folders": {
@@ -5433,11 +5505,11 @@
       "incomingCall": "مكالمة واردة",
       "missedAudioCall": "مكالمة صوتية فائتة",
       "callEnded": "انتهت المكالمة",
-      "ticketCreated": "تم إنشاء تذكرة",
-      "ticketMovedToStage": "تم نقل التذكرة إلى مرحلة",
-      "ticketValueChanged": "تم تغيير قيمة التذكرة",
-      "ticketStatusChanged": "تم تغيير حالة التذكرة",
-      "ticketPriorityChanged": "تم تغيير أولوية التذكرة",
+      "pipelineItemCreated": "تم إنشاء تذكرة",
+      "pipelineItemMovedToStage": "تم نقل التذكرة إلى مرحلة",
+      "pipelineItemValueChanged": "تم تغيير قيمة التذكرة",
+      "pipelineItemStatusChanged": "تم تغيير حالة التذكرة",
+      "pipelineItemPriorityChanged": "تم تغيير أولوية التذكرة",
       "subscribedToSequence": "تم الاشتراك في تسلسل",
       "unsubscribedFromSequence": "تم إلغاء الاشتراك في تسلسل",
       "shoppingCartSent": "جهة الاتصال أرسلت سلة التسوق",
@@ -5457,7 +5529,9 @@
       "callRecorded": "تم تسجيل المكالمة",
       "callTranscribed": "تم تفريغ المكالمة",
       "anyProduct": "أي منتج",
-      "anyCategory": "أي فئة"
+      "anyCategory": "أي فئة",
+      "anyPipeline": "أي خط سير عمل",
+      "anyStage": "أي مرحلة"
     },
     "actions": {
       "addTag": "إضافة وسم",
@@ -5506,7 +5580,13 @@
     "countCapped": "أكثر من {count} جهة اتصال",
     "exportAllNotice": "سيتم تصدير جميع جهات الاتصال المطابقة لعامل التصفية الحالي.",
     "exportTakingLong": "يستغرق التصدير وقتًا أطول من المتوقع",
-    "exportTakingLongDescription": "لا تزال عملية التصدير جارية. يمكنك إغلاق مربع الحوار هذا والتحقق مرة أخرى بعد بضع دقائق من سجل التصدير."
+    "exportTakingLongDescription": "لا تزال عملية التصدير جارية. يمكنك إغلاق مربع الحوار هذا والتحقق مرة أخرى بعد بضع دقائق من سجل التصدير.",
+    "search": {
+      "placeholder": "بحث (الاسم، البريد الإلكتروني، الهاتف، معرّف جهة الاتصال)",
+      "searching": "جارٍ البحث…",
+      "error": "تعذّر البحث في جهات الاتصال",
+      "empty": "لم يتم العثور على جهات اتصال"
+    }
   },
   "contactScan": {
     "menu": {
@@ -9979,5 +10059,401 @@
     "metHelp": "نسبة الردود الملتزمة بين الردود التي لها اتفاقية.",
     "eligibleCount": "{count} ردًّا لها اتفاقية",
     "enable": "تفعيل اتفاقية مستوى الخدمة للرد"
+  },
+  "pipelines": {
+    "title": "خطوط سير العمل",
+    "retry": "حاول مرة أخرى",
+    "save": "حفظ",
+    "saveFailed": "تعذّر حفظ التغييرات. يرجى المحاولة مرة أخرى.",
+    "list": {
+      "name": "الاسم",
+      "type": "النوع",
+      "items": "العناصر",
+      "add": "إضافة خط سير عمل",
+      "empty": "لا توجد خطوط سير عمل بعد",
+      "emptyHint": "أنشئ خط سير عمل لتتبّع الصفقات أو التذاكر أو أي عملية على شكل بطاقات في لوحة.",
+      "error": "تعذّر تحميل خطوط سير العمل",
+      "contacts": "جهات الاتصال",
+      "addShort": "إضافة",
+      "description": "تتبّع الصفقات أو التذاكر أو أي عملية كبطاقات تنتقل عبر المراحل."
+    },
+    "types": {
+      "opportunity": {
+        "label": "مركز الفرص",
+        "description": "تتبّع صفقات المبيعات عبر المراحل. المرحلة الأولى: عميل محتمل."
+      },
+      "ticket": {
+        "label": "مركز الدعم",
+        "description": "تعامل مع طلبات الدعم. المرحلة الأولى: مشكلة جديدة."
+      },
+      "custom": {
+        "label": "لوحة مخصصة",
+        "description": "أنشئ عمليتك الخاصة. المرحلة الأولى: الاستلام."
+      }
+    },
+    "noun": {
+      "opportunity": {
+        "one": "فرصة",
+        "many": "فرص",
+        "add": "إضافة فرصة"
+      },
+      "ticket": {
+        "one": "تذكرة",
+        "many": "تذاكر",
+        "add": "إضافة تذكرة"
+      },
+      "card": {
+        "one": "بطاقة",
+        "many": "بطاقات",
+        "add": "إضافة بطاقة"
+      }
+    },
+    "create": {
+      "title": "خط سير عمل جديد",
+      "description": "اختر الغرض من اللوحة ثم سمّها.",
+      "type": "النوع",
+      "name": "اسم خط سير العمل",
+      "namePlaceholder": "مثال: المبيعات",
+      "submit": "إنشاء خط سير العمل",
+      "success": "تم إنشاء خط سير العمل"
+    },
+    "menu": {
+      "open": "إجراءات خط سير العمل",
+      "rename": "إعادة تسمية",
+      "duplicate": "تكرار",
+      "delete": "حذف"
+    },
+    "rename": {
+      "title": "إعادة تسمية خط سير العمل",
+      "submit": "إعادة تسمية",
+      "success": "تمت إعادة تسمية خط سير العمل"
+    },
+    "duplicate": {
+      "success": "تم تكرار خط سير العمل"
+    },
+    "delete": {
+      "title": "حذف خط سير العمل",
+      "description": "سيتم حذف {name} وجميع مراحله وعناصره. لا يمكن التراجع عن هذا الإجراء.",
+      "success": "تم حذف خط سير العمل"
+    },
+    "board": {
+      "title": "اللوحة",
+      "count": "{count, plural, one {# عنصر} other {# عنصر}}",
+      "total": "الإجمالي {value}",
+      "search": "بحث بالعنوان أو الرقم أو جهة الاتصال",
+      "sort": "ترتيب",
+      "filter": "تصفية",
+      "analytics": "التحليلات",
+      "settings": "الإعدادات",
+      "emptyStage": "اسحب بطاقة وأفلتها هنا لنقلها إلى هذه المرحلة.",
+      "loadMore": "تحميل المزيد",
+      "loadMoreFailed": "تعذّر تحميل المزيد من العناصر",
+      "error": "تعذّر تحميل اللوحة",
+      "processing": "جارٍ معالجة هذه المرحلة…",
+      "moveFailed": "تعذّر نقل البطاقة",
+      "sortOptions": {
+        "createdAtDesc": "تاريخ الإنشاء (من الأحدث إلى الأقدم)",
+        "createdAtAsc": "تاريخ الإنشاء (من الأقدم إلى الأحدث)",
+        "updatedAtDesc": "تاريخ التحديث (من الأحدث إلى الأقدم)",
+        "valueDesc": "قيمة الفرصة (من الأعلى إلى الأدنى)",
+        "valueAsc": "قيمة الفرصة (من الأدنى إلى الأعلى)",
+        "dueDateAsc": "تاريخ الاستحقاق (من الأقرب إلى الأبعد)",
+        "dueDateDesc": "تاريخ الاستحقاق (من الأبعد إلى الأقرب)",
+        "priorityDesc": "الأولوية (من الأعلى إلى الأدنى)",
+        "priorityAsc": "الأولوية (من الأدنى إلى الأعلى)",
+        "updatedAtAsc": "تاريخ التحديث (من الأقدم إلى الأحدث)"
+      },
+      "searchAction": "بحث",
+      "closeSearch": "إغلاق البحث",
+      "cardMenu": "إجراءات البطاقة",
+      "moveTo": "نقل إلى",
+      "unknownContact": "جهة اتصال غير معروفة",
+      "staleError": "تعذّر تحديث اللوحة. قد تكون البيانات المعروضة قديمة."
+    },
+    "stage": {
+      "add": "إضافة مرحلة",
+      "name": "اسم المرحلة",
+      "namePlaceholder": "اسم المرحلة",
+      "menu": "إجراءات المرحلة",
+      "edit": "تعديل المرحلة",
+      "delete": "حذف المرحلة",
+      "deleteTitle": "حذف المرحلة",
+      "deleteDescription": "سيتم حذف {name} وجميع العناصر فيها. لا يمكن التراجع عن هذا الإجراء.",
+      "moveItemsTo": "نقل العناصر إلى",
+      "deleteItemsToo": "حذف العناصر أيضًا",
+      "description": "الوصف",
+      "textColor": "لون النص",
+      "backgroundColor": "لون الخلفية",
+      "saved": "تم حفظ المرحلة",
+      "deleted": "تم حذف المرحلة",
+      "queued": "يجري إفراغ المرحلة في الخلفية.",
+      "resetColor": "افتراضي",
+      "deleteMoveDescription": "سيتم حذف {name}. ستُنقل عناصرها إلى {target}.",
+      "rename": "إعادة تسمية",
+      "settings": "الإعدادات",
+      "general": "عام",
+      "color": "اللون",
+      "cancel": "إلغاء"
+    },
+    "priority": {
+      "low": "منخفضة",
+      "medium": "متوسطة",
+      "high": "عالية"
+    },
+    "item": {
+      "loading": "جارٍ التحميل…",
+      "error": "تعذّر تحميل هذا العنصر",
+      "title": "العنوان",
+      "status": "الحالة",
+      "stage": "المرحلة",
+      "priority": "الأولوية",
+      "value": "القيمة",
+      "dueDate": "تاريخ الاستحقاق",
+      "assignees": "المسؤولون المعيّنون",
+      "description": "الوصف",
+      "attachments": "المرفقات",
+      "attach": "إرفاق ملفات",
+      "noAttachments": "لا توجد مرفقات",
+      "removeAttachment": "إزالة المرفق",
+      "removeAttachmentDescription": "ستتم إزالة الملف من هذا العنصر لكنه يبقى في مكتبة الوسائط.",
+      "comments": "التعليقات",
+      "addComment": "إضافة تعليق",
+      "commentPlaceholder": "اكتب تعليقًا…",
+      "noComments": "لا توجد تعليقات بعد",
+      "deleteComment": "حذف التعليق",
+      "deleteCommentDescription": "سيتم حذف هذا التعليق. لا يمكن التراجع عن ذلك.",
+      "activity": "النشاط",
+      "noActivity": "لا يوجد نشاط بعد",
+      "transfer": "نقل إلى خط سير عمل",
+      "transferTitle": "نقل إلى خط سير عمل آخر",
+      "transferDescription": "يحتفظ العنصر برقمه وتاريخ إنشائه. تنتقل الحقول المخصصة عندما يحتوي خط سير العمل الآخر على حقل بنفس الاسم المرجعي والنوع.",
+      "destinationPipeline": "خط سير العمل الوجهة",
+      "destinationStage": "المرحلة الوجهة",
+      "firstStage": "المرحلة الأولى",
+      "choose": "اختر…",
+      "transferred": "تم نقل العنصر",
+      "delete": "حذف",
+      "deleteDescription": "سيتم حذف عنصر واحد. لا يمكن التراجع عن هذا الإجراء.",
+      "deleted": "تم حذف العنصر",
+      "number": "الرقم",
+      "createdBy": "أنشأه",
+      "createdByValue": "{name} في {date}",
+      "inbox": "صندوق الوارد",
+      "moreActions": "المزيد من الإجراءات",
+      "noDescription": "لا يوجد وصف",
+      "yes": "نعم",
+      "no": "لا",
+      "assigneesMembers": "الوكلاء",
+      "assigneesTeams": "فرق صندوق الوارد",
+      "assigneesSearch": "ابحث عن مسؤولين أو فرق…",
+      "assigneesEmpty": "لا توجد نتائج",
+      "assigneesPlaceholder": "اختر مسؤولين أو فرقًا",
+      "olderComments": "عرض التعليقات الأقدم",
+      "olderActivity": "عرض النشاط الأقدم",
+      "activityFilter": "تصفية",
+      "activityFilterCount": "{count, plural, one {# مرشح} other {# مرشحات}}",
+      "activityFilterClear": "عرض الكل",
+      "noFilteredActivity": "لا يوجد نشاط يطابق هذا المرشح.",
+      "activityGroup": {
+        "lifecycle": "الإنشاء والنقل",
+        "stage": "المرحلة",
+        "status": "الحالة",
+        "value": "القيمة",
+        "priority": "الأولوية",
+        "dueDate": "تاريخ الاستحقاق",
+        "details": "العنوان والوصف والحقول",
+        "assignees": "المكلفون",
+        "comments": "التعليقات",
+        "attachments": "المرفقات"
+      }
+    },
+    "activity": {
+      "created": "تم الإنشاء",
+      "stageChanged": "نُقل إلى مرحلة أخرى",
+      "statusChanged": "تغيّرت الحالة",
+      "valueChanged": "تغيّرت القيمة",
+      "priorityChanged": "تغيّرت الأولوية",
+      "dueDateChanged": "تغيّر تاريخ الاستحقاق",
+      "titleChanged": "تغيّر العنوان",
+      "descriptionChanged": "تغيّر الوصف",
+      "fieldValuesChanged": "تغيّرت الحقول المخصصة",
+      "assigneesChanged": "تغيّر المعيّنون",
+      "attachmentAdded": "أُضيف مرفق",
+      "attachmentRemoved": "أُزيل مرفق",
+      "commentAdded": "أُضيف تعليق",
+      "commentDeleted": "حُذف تعليق",
+      "transferred": "نُقل من خط سير عمل آخر",
+      "deleted": "تم الحذف"
+    },
+    "activityActor": {
+      "flow": "مسار التدفق",
+      "trigger": "المشغّل",
+      "workspaceToken": "API",
+      "system": "النظام",
+      "formerMember": "عضو سابق"
+    },
+    "add": {
+      "changeContact": "اختر جهة اتصال أخرى",
+      "success": "تم الإنشاء",
+      "stepContact": "اختر جهة اتصال",
+      "stepDetails": "تفاصيل {noun}",
+      "contact": "جهة الاتصال",
+      "addNewContact": "إضافة جديد"
+    },
+    "filter": {
+      "title": "تصفية",
+      "status": "الحالة",
+      "statusLabels": {
+        "open": "مفتوح",
+        "won": "فاز",
+        "lost": "خسر"
+      },
+      "priority": "الأولوية",
+      "assignee": "المسؤولون المعيّنون",
+      "value": "قيمة {noun}",
+      "min": "الحد الأدنى",
+      "max": "الحد الأقصى",
+      "dueDate": "تاريخ الاستحقاق",
+      "createdAt": "تاريخ الإنشاء",
+      "from": "من",
+      "to": "إلى",
+      "clear": "مسح عوامل التصفية",
+      "apply": "تطبيق",
+      "back": "رجوع",
+      "updatedAt": "تاريخ التحديث",
+      "resolvedOn": "تاريخ حسم {noun}",
+      "statusChangedOn": "تاريخ تغيير الحالة",
+      "stageChangedOn": "تاريخ تغيير المرحلة",
+      "lastCommentOn": "تاريخ آخر تعليق",
+      "customFields": "الحقول المخصصة",
+      "any": "أي",
+      "yes": "نعم",
+      "no": "لا",
+      "notResolvedOn": "{noun} لم يُحسم في",
+      "equal": "يساوي",
+      "different": "مختلف",
+      "reset": "إعادة تعيين",
+      "presets": {
+        "thisWeek": "هذا الأسبوع",
+        "lastWeek": "الأسبوع الماضي",
+        "last14": "آخر 14 يومًا",
+        "thisYear": "هذه السنة",
+        "lastYear": "السنة الماضية",
+        "tomorrow": "غدًا",
+        "next7": "خلال 7 أيام",
+        "next14": "خلال 14 يومًا",
+        "next30": "خلال 30 يومًا",
+        "allTime": "كل الأوقات"
+      },
+      "pickDate": "اختر تاريخًا",
+      "activity": "النشاط",
+      "activityKinds": "نوع التغيير",
+      "activityActors": "تم بواسطة",
+      "activityWhen": "متى",
+      "activityAutomation": "الأتمتة"
+    },
+    "analytics": {
+      "title": "التحليلات",
+      "loading": "جارٍ تحميل الإحصاءات…",
+      "error": "تعذّر تحميل الإحصاءات",
+      "created": "تم الإنشاء",
+      "won": "فاز",
+      "wonValue": "قيمة الفوز",
+      "lost": "خسر",
+      "lostValue": "قيمة الخسارة",
+      "admin": "مسؤول",
+      "automation": "الأتمتة",
+      "back": "رجوع",
+      "admins": "المسؤولون",
+      "chart": {
+        "created": "الجديد يوميًا",
+        "won": "الفوز يوميًا",
+        "lost": "الخسارة يوميًا",
+        "wonValue": "قيمة الفوز يوميًا",
+        "lostValue": "قيمة الخسارة يوميًا"
+      },
+      "pie": {
+        "created": "المُنشأة حسب المسؤول",
+        "won": "الفائزة حسب المسؤول",
+        "lost": "الخاسرة حسب المسؤول",
+        "other": "أخرى",
+        "empty": "لا توجد بيانات"
+      }
+    },
+    "settings": {
+      "title": "إعدادات خط سير العمل",
+      "general": "عام",
+      "fields": "الحقول المخصصة",
+      "display": "العرض",
+      "permissions": "الأذونات",
+      "saved": "تم حفظ الإعدادات",
+      "referenceName": "الاسم المرجعي",
+      "referenceNameHint": "يُستخدم في متغيرات pipelines.reference_name.stage_name. تغييره يعطّل الرسائل التي تستخدم الاسم القديم.",
+      "referenceNameFormat": "استخدم أحرفًا صغيرة وأرقامًا وشرطات سفلية، على أن يبدأ بحرف (مثل close_date).",
+      "assignContact": "تعيين جهة الاتصال لمسؤول عند تعيين عنصر",
+      "limit": "تحديد عدد العناصر المفتوحة لكل جهة اتصال",
+      "statusLabels": "تسميات الحالة",
+      "status": {
+        "open": "مفتوح",
+        "won": "فاز",
+        "lost": "خسر"
+      },
+      "features": "الميزات المرئية",
+      "cardElements": "عناصر البطاقة",
+      "card": {
+        "contactPhone": "هاتف جهة الاتصال",
+        "contactEmail": "البريد الإلكتروني لجهة الاتصال",
+        "createdAt": "تاريخ الإنشاء",
+        "updatedAt": "تاريخ التحديث",
+        "assignees": "المسؤولون المعيّنون",
+        "comments": "التعليقات",
+        "cardId": "رقم العنصر",
+        "priority": "الأولوية",
+        "value": "القيمة",
+        "dueDate": "تاريخ الاستحقاق"
+      },
+      "noFields": "لا توجد حقول مخصصة بعد",
+      "fieldName": "اسم الحقل",
+      "fieldReference": "الاسم المرجعي",
+      "fieldType": "نوع الحقل",
+      "required": "مطلوب",
+      "requiredShort": "مطلوب",
+      "addField": "إضافة حقل",
+      "fieldAdded": "تمت إضافة الحقل",
+      "deleteField": "حذف الحقل",
+      "permissionsHint": "يتمتع مالكو مساحة العمل ومسؤولوها دائمًا بوصول كامل. امنح الأعضاء الآخرين ما يُسمح لهم بفعله في خط سير العمل هذا.",
+      "revoke": "سحب",
+      "permission": {
+        "view": "عرض",
+        "edit": "تعديل",
+        "delete": "حذف",
+        "settings": "الإعدادات"
+      },
+      "noMembers": "لا يوجد أعضاء آخرون لإعدادهم",
+      "confirmDeleteField": "هل تريد حذف هذا الحقل وجميع قيمه في كل عنصر؟",
+      "adminPermissions": "أذونات المسؤولين",
+      "cardVisibleElements": "العناصر المرئية في البطاقة"
+    },
+    "panel": {
+      "empty": "لا توجد عناصر في خطوط سير العمل لجهة الاتصال هذه",
+      "error": "تعذّر تحميل عناصر خط سير العمل",
+      "choosePipeline": "اختر خط سير عمل",
+      "add": "إضافة جديد"
+    },
+    "variables": {
+      "group": "خطوط سير العمل",
+      "attributes": {
+        "name": "اسم العنصر",
+        "stageName": "المرحلة",
+        "status": "الحالة",
+        "priority": "الأولوية",
+        "value": "القيمة",
+        "assignedAdmins": "المسؤولون المعيّنون",
+        "createdDate": "تاريخ الإنشاء",
+        "dueDate": "تاريخ الاستحقاق",
+        "updatedDate": "تاريخ التحديث",
+        "id": "معرّف العنصر"
+      }
+    }
   }
 }

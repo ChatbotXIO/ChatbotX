@@ -1505,7 +1505,8 @@
       "ads": "Annunci",
       "settings": "Impostazioni",
       "miniApps": "Mini Apps",
-      "leaderboards": "Classifiche"
+      "leaderboards": "Classifiche",
+      "pipelines": "Pipeline"
     },
     "adReferral": {
       "label": "Ads",
@@ -1563,6 +1564,9 @@
     },
     "miniApp": {
       "label": "Mini App"
+    },
+    "lastOpportunityId": {
+      "label": "ID ultima opportunità"
     }
   },
   "actions": {
@@ -2383,7 +2387,8 @@
       "ctwaConversionTypes": {
         "lead": "Lead",
         "purchase": "Acquisto"
-      }
+      },
+      "pipelineItem": "Elemento della pipeline"
     },
     "fieldGroups": {
       "opportunity": "Opportunità",
@@ -2400,7 +2405,8 @@
       "botFields": "Campi del bot",
       "email": "E-mail",
       "sms": "SMS",
-      "ctwaAds": "Inserzioni"
+      "ctwaAds": "Inserzioni",
+      "pipeline": "Pipeline"
     },
     "languages": {
       "ar": "Arabo",
@@ -2448,7 +2454,21 @@
       "allAds": "tutte le inserzioni"
     },
     "noTopic": "Nessun argomento",
-    "trackingSince": "Monitorato dal {date}. L'attività precedente non è inclusa."
+    "trackingSince": "Monitorato dal {date}. L'attività precedente non è inclusa.",
+    "pipelineItem": {
+      "anyPipeline": "Qualsiasi pipeline",
+      "anyStatus": "Qualsiasi stato",
+      "attributes": {
+        "exists": "Elementi",
+        "status": "Stato dell’elemento",
+        "stage": "Fase dell’elemento",
+        "priority": "Priorità dell’elemento"
+      },
+      "operators": {
+        "has": "Ha",
+        "hasNo": "Non ha"
+      }
+    }
   },
   "flows": {
     "export": {
@@ -2623,7 +2643,8 @@
       "changeGamificationScore": "Modifica i punti di gamification",
       "sendViewCatalog": "Vedi catalogo",
       "sendProducts": "Invia prodotti",
-      "sendCollection": "Collezione"
+      "sendCollection": "Collezione",
+      "pipeline": "Pipeline"
     },
     "externalRequest": {
       "errors": {
@@ -2846,6 +2867,57 @@
       "summaryManual": "{count, plural, one {# prodotto} other {# prodotti}}",
       "cancel": "Annulla",
       "save": "Salva"
+    },
+    "pipelineStep": {
+      "action": "Azione",
+      "pipeline": "Pipeline",
+      "targetHint": "Agisce sull’ultimo elemento aperto del contatto in questa pipeline. Il percorso Salta viene eseguito se non ce ne sono.",
+      "noPipelines": "Nessuna pipeline trovata",
+      "actions": {
+        "addToPipeline": "Aggiungi il contatto alla pipeline",
+        "moveToStage": "Sposta in una fase",
+        "changeValue": "Modifica il valore",
+        "assign": "Assegna agli admin",
+        "changeStatus": "Modifica lo stato",
+        "changePriority": "Modifica la priorità",
+        "changeDueDate": "Modifica la scadenza",
+        "changeTitle": "Modifica il titolo",
+        "setCustomField": "Imposta un campo personalizzato",
+        "clearCustomField": "Svuota i campi personalizzati",
+        "changeDescription": "Modifica la descrizione",
+        "removeFromPipeline": "Rimuovi il contatto dalla pipeline",
+        "addComment": "Aggiungi un commento",
+        "transfer": "Trasferisci a un’altra pipeline"
+      },
+      "title": "Titolo",
+      "description": "Descrizione",
+      "stage": "Fase",
+      "firstStage": "Prima fase",
+      "status": "Stato",
+      "statusOptions": {
+        "open": "Aperto",
+        "won": "Vinto",
+        "lost": "Perso"
+      },
+      "assigneeMembers": "Admin assegnati",
+      "assigneeTeams": "Team assegnati",
+      "value": "Valore",
+      "priority": "Priorità",
+      "dueDate": "Scadenza",
+      "dueNone": "Nessuna",
+      "dueNoneHint": "L’elemento non ha una scadenza.",
+      "dueCustomField": "Da un campo personalizzato di tipo data",
+      "dueFixed": "Data e ora fisse",
+      "dueField": "Campo personalizzato di tipo data o data e ora",
+      "fieldValues": "Campi personalizzati",
+      "field": "Campo",
+      "fieldValue": "Valore",
+      "fields": "Campi",
+      "addField": "Aggiungi valore del campo",
+      "removeHint": "Elimina l’ultimo elemento aperto del contatto in questa pipeline.",
+      "comment": "Commento",
+      "destinationPipeline": "Pipeline di destinazione",
+      "destinationStage": "Fase di destinazione"
     }
   },
   "folders": {
@@ -5433,11 +5505,11 @@
       "incomingCall": "Chiamata in arrivo",
       "missedAudioCall": "Chiamata audio persa",
       "callEnded": "Chiamata terminata",
-      "ticketCreated": "Ticket creato",
-      "ticketMovedToStage": "Ticket spostato in una fase",
-      "ticketValueChanged": "Valore del ticket modificato",
-      "ticketStatusChanged": "Stato del ticket modificato",
-      "ticketPriorityChanged": "Priorità del ticket modificata",
+      "pipelineItemCreated": "Ticket creato",
+      "pipelineItemMovedToStage": "Ticket spostato in una fase",
+      "pipelineItemValueChanged": "Valore del ticket modificato",
+      "pipelineItemStatusChanged": "Stato del ticket modificato",
+      "pipelineItemPriorityChanged": "Priorità del ticket modificata",
       "subscribedToSequence": "Iscritto alla sequenza",
       "unsubscribedFromSequence": "Disiscritto dalla sequenza",
       "shoppingCartSent": "Il contatto ha inviato un carrello",
@@ -5457,7 +5529,9 @@
       "callRecorded": "Chiamata registrata",
       "callTranscribed": "Chiamata trascritta",
       "anyProduct": "Qualsiasi prodotto",
-      "anyCategory": "Qualsiasi categoria"
+      "anyCategory": "Qualsiasi categoria",
+      "anyPipeline": "Qualsiasi pipeline",
+      "anyStage": "Qualsiasi fase"
     },
     "actions": {
       "addTag": "Aggiungi tag",
@@ -5506,7 +5580,13 @@
     "countCapped": "{count}+ contatti",
     "exportAllNotice": "Verranno esportati tutti i contatti che corrispondono al filtro corrente.",
     "exportTakingLong": "L'esportazione sta richiedendo più tempo del previsto",
-    "exportTakingLongDescription": "L'esportazione è ancora in corso. Puoi chiudere questa finestra e ricontrollare tra qualche minuto nella cronologia delle esportazioni."
+    "exportTakingLongDescription": "L'esportazione è ancora in corso. Puoi chiudere questa finestra e ricontrollare tra qualche minuto nella cronologia delle esportazioni.",
+    "search": {
+      "placeholder": "Cerca (nome, email, telefono, ID contatto)",
+      "searching": "Ricerca in corso…",
+      "error": "Impossibile cercare i contatti",
+      "empty": "Nessun contatto trovato"
+    }
   },
   "contactScan": {
     "menu": {
@@ -9979,5 +10059,401 @@
     "metHelp": "Quota di risposte con SLA che lo hanno rispettato.",
     "eligibleCount": "{count} risposte avevano uno SLA",
     "enable": "Attiva SLA di risposta"
+  },
+  "pipelines": {
+    "title": "Pipeline",
+    "retry": "Riprova",
+    "save": "Salva",
+    "saveFailed": "Impossibile salvare le modifiche. Riprova.",
+    "list": {
+      "name": "Nome",
+      "type": "Tipo",
+      "items": "Elementi",
+      "add": "Aggiungi pipeline",
+      "empty": "Ancora nessuna pipeline",
+      "emptyHint": "Crea una pipeline per seguire trattative, ticket o qualsiasi processo come schede su una bacheca.",
+      "error": "Impossibile caricare le pipeline",
+      "contacts": "Contatti",
+      "addShort": "Aggiungi",
+      "description": "Monitora trattative, ticket o qualsiasi processo come schede che avanzano tra le fasi."
+    },
+    "types": {
+      "opportunity": {
+        "label": "Centro opportunità",
+        "description": "Segui le trattative di vendita fase per fase. Prima fase: Lead."
+      },
+      "ticket": {
+        "label": "Centro assistenza",
+        "description": "Gestisci le richieste di assistenza. Prima fase: Nuova richiesta."
+      },
+      "custom": {
+        "label": "Bacheca personalizzata",
+        "description": "Crea il tuo processo. Prima fase: Ricezione."
+      }
+    },
+    "noun": {
+      "opportunity": {
+        "one": "Opportunità",
+        "many": "Opportunità",
+        "add": "Aggiungi opportunità"
+      },
+      "ticket": {
+        "one": "Ticket",
+        "many": "Ticket",
+        "add": "Aggiungi ticket"
+      },
+      "card": {
+        "one": "Scheda",
+        "many": "Schede",
+        "add": "Aggiungi scheda"
+      }
+    },
+    "create": {
+      "title": "Nuova pipeline",
+      "description": "Scegli a cosa serve la bacheca, poi dalle un nome.",
+      "type": "Tipo",
+      "name": "Nome della pipeline",
+      "namePlaceholder": "es. Vendite",
+      "submit": "Crea pipeline",
+      "success": "Pipeline creata"
+    },
+    "menu": {
+      "open": "Azioni della pipeline",
+      "rename": "Rinomina",
+      "duplicate": "Duplica",
+      "delete": "Elimina"
+    },
+    "rename": {
+      "title": "Rinomina pipeline",
+      "submit": "Rinomina",
+      "success": "Pipeline rinominata"
+    },
+    "duplicate": {
+      "success": "Pipeline duplicata"
+    },
+    "delete": {
+      "title": "Elimina pipeline",
+      "description": "{name} e tutte le sue fasi e i suoi elementi verranno eliminati. L’operazione non può essere annullata.",
+      "success": "Pipeline eliminata"
+    },
+    "board": {
+      "title": "Bacheca",
+      "count": "{count, plural, one {# elemento} other {# elementi}}",
+      "total": "Totale {value}",
+      "search": "Cerca per titolo, numero o contatto",
+      "sort": "Ordina",
+      "filter": "Filtra",
+      "analytics": "Analisi",
+      "settings": "Impostazioni",
+      "emptyStage": "Trascina e rilascia qui una scheda per spostarla in questa fase.",
+      "loadMore": "Carica altri",
+      "loadMoreFailed": "Impossibile caricare altri elementi",
+      "error": "Impossibile caricare la bacheca",
+      "processing": "Elaborazione di questa fase…",
+      "moveFailed": "Impossibile spostare la scheda",
+      "sortOptions": {
+        "createdAtDesc": "Data di creazione (Recente a Meno recente)",
+        "createdAtAsc": "Data di creazione (Meno recente a Recente)",
+        "updatedAtDesc": "Data di aggiornamento (Recente a Meno recente)",
+        "valueDesc": "Valore dell'opportunità (Alta a Bassa)",
+        "valueAsc": "Valore dell'opportunità (Bassa ad Alta)",
+        "dueDateAsc": "Data di scadenza (Più vicina a Più lontana)",
+        "dueDateDesc": "Data di scadenza (Più lontana a Più vicina)",
+        "priorityDesc": "Priorità (Alta a Bassa)",
+        "priorityAsc": "Priorità (Bassa ad Alta)",
+        "updatedAtAsc": "Data di aggiornamento (Meno recente a Recente)"
+      },
+      "searchAction": "Cerca",
+      "closeSearch": "Chiudi la ricerca",
+      "cardMenu": "Azioni della scheda",
+      "moveTo": "Sposta in",
+      "unknownContact": "Contatto sconosciuto",
+      "staleError": "Impossibile aggiornare la bacheca. Ciò che vedi potrebbe non essere aggiornato."
+    },
+    "stage": {
+      "add": "Aggiungi fase",
+      "name": "Nome della fase",
+      "namePlaceholder": "Nome della fase",
+      "menu": "Azioni della fase",
+      "edit": "Modifica fase",
+      "delete": "Elimina fase",
+      "deleteTitle": "Elimina fase",
+      "deleteDescription": "{name} e tutti i suoi elementi verranno eliminati. L’azione non può essere annullata.",
+      "moveItemsTo": "Sposta gli elementi in",
+      "deleteItemsToo": "Elimina anche gli elementi",
+      "description": "Descrizione",
+      "textColor": "Colore del testo",
+      "backgroundColor": "Colore di sfondo",
+      "saved": "Fase salvata",
+      "deleted": "Fase eliminata",
+      "queued": "La fase viene svuotata in background.",
+      "resetColor": "Predefinito",
+      "deleteMoveDescription": "{name} verrà eliminata. I suoi elementi passeranno a {target}.",
+      "rename": "Rinomina",
+      "settings": "Impostazioni",
+      "general": "Generali",
+      "color": "Colore",
+      "cancel": "Annulla"
+    },
+    "priority": {
+      "low": "Bassa",
+      "medium": "Media",
+      "high": "Alta"
+    },
+    "item": {
+      "loading": "Caricamento…",
+      "error": "Impossibile caricare questo elemento",
+      "title": "Titolo",
+      "status": "Stato",
+      "stage": "Fase",
+      "priority": "Priorità",
+      "value": "Valore",
+      "dueDate": "Scadenza",
+      "assignees": "Admin assegnati",
+      "description": "Descrizione",
+      "attachments": "Allegati",
+      "attach": "Allega file",
+      "noAttachments": "Nessun allegato",
+      "removeAttachment": "Rimuovi allegato",
+      "removeAttachmentDescription": "Il file viene rimosso da questo elemento ma resta nella libreria multimediale.",
+      "comments": "Commenti",
+      "addComment": "Aggiungi commento",
+      "commentPlaceholder": "Scrivi un commento…",
+      "noComments": "Ancora nessun commento",
+      "deleteComment": "Elimina commento",
+      "deleteCommentDescription": "Questo commento verrà eliminato. L'operazione non può essere annullata.",
+      "activity": "Attività",
+      "noActivity": "Ancora nessuna attività",
+      "transfer": "Trasferisci alla pipeline",
+      "transferTitle": "Trasferisci a un’altra pipeline",
+      "transferDescription": "L’elemento mantiene il suo numero e la data di creazione. I campi personalizzati vengono mantenuti se l’altra pipeline ha un campo con lo stesso nome di riferimento e lo stesso tipo.",
+      "destinationPipeline": "Pipeline di destinazione",
+      "destinationStage": "Fase di destinazione",
+      "firstStage": "Prima fase",
+      "choose": "Scegli…",
+      "transferred": "Elemento trasferito",
+      "delete": "Elimina",
+      "deleteDescription": "Verrà eliminato un elemento. L’operazione non può essere annullata.",
+      "deleted": "Elemento eliminato",
+      "number": "Numero",
+      "createdBy": "Creato da",
+      "createdByValue": "{name} il {date}",
+      "inbox": "Inbox",
+      "moreActions": "Altre azioni",
+      "noDescription": "Nessuna descrizione",
+      "yes": "Sì",
+      "no": "No",
+      "assigneesMembers": "Agenti",
+      "assigneesTeams": "Team dell’inbox",
+      "assigneesSearch": "Cerca admin o team…",
+      "assigneesEmpty": "Nessun risultato",
+      "assigneesPlaceholder": "Seleziona admin o team",
+      "olderComments": "Mostra commenti meno recenti",
+      "olderActivity": "Mostra attività precedenti",
+      "activityFilter": "Filtra",
+      "activityFilterCount": "{count, plural, one {# filtro} other {# filtri}}",
+      "activityFilterClear": "Mostra tutto",
+      "noFilteredActivity": "Nessuna attività corrisponde a questo filtro.",
+      "activityGroup": {
+        "lifecycle": "Creazione e trasferimento",
+        "stage": "Fase",
+        "status": "Stato",
+        "value": "Valore",
+        "priority": "Priorità",
+        "dueDate": "Scadenza",
+        "details": "Titolo, descrizione e campi",
+        "assignees": "Assegnatari",
+        "comments": "Commenti",
+        "attachments": "Allegati"
+      }
+    },
+    "activity": {
+      "created": "Creato",
+      "stageChanged": "Spostato in un’altra fase",
+      "statusChanged": "Stato modificato",
+      "valueChanged": "Valore modificato",
+      "priorityChanged": "Priorità modificata",
+      "dueDateChanged": "Scadenza modificata",
+      "titleChanged": "Titolo modificato",
+      "descriptionChanged": "Descrizione modificata",
+      "fieldValuesChanged": "Campi personalizzati modificati",
+      "assigneesChanged": "Assegnatari modificati",
+      "attachmentAdded": "Allegato aggiunto",
+      "attachmentRemoved": "Allegato rimosso",
+      "commentAdded": "Commento aggiunto",
+      "commentDeleted": "Commento eliminato",
+      "transferred": "Trasferito da un’altra pipeline",
+      "deleted": "Eliminato"
+    },
+    "activityActor": {
+      "flow": "Flusso",
+      "trigger": "Trigger",
+      "workspaceToken": "API",
+      "system": "Sistema",
+      "formerMember": "Ex membro"
+    },
+    "add": {
+      "changeContact": "Scegli un altro contatto",
+      "success": "Creato",
+      "stepContact": "Seleziona un contatto",
+      "stepDetails": "Dettagli di {noun}",
+      "contact": "Contatto",
+      "addNewContact": "Aggiungi nuovo"
+    },
+    "filter": {
+      "title": "Filtra",
+      "status": "Stato",
+      "statusLabels": {
+        "open": "Aperto",
+        "won": "Vinto",
+        "lost": "Perso"
+      },
+      "priority": "Priorità",
+      "assignee": "Admin assegnati",
+      "value": "Valore di {noun}",
+      "min": "Min",
+      "max": "Max",
+      "dueDate": "Scadenza",
+      "createdAt": "Data di creazione",
+      "from": "Da",
+      "to": "A",
+      "clear": "Cancella filtri",
+      "apply": "Applica",
+      "back": "Indietro",
+      "updatedAt": "Data di aggiornamento",
+      "resolvedOn": "{noun}: risolto il",
+      "statusChangedOn": "Stato modificato il",
+      "stageChangedOn": "Fase modificata il",
+      "lastCommentOn": "Ultimo commento il",
+      "customFields": "Campi personalizzati",
+      "any": "Qualsiasi",
+      "yes": "Sì",
+      "no": "No",
+      "notResolvedOn": "{noun}: non risolto il",
+      "equal": "Uguale a",
+      "different": "Diverso da",
+      "reset": "Reimposta",
+      "presets": {
+        "thisWeek": "Questa settimana",
+        "lastWeek": "Settimana scorsa",
+        "last14": "Ultimi 14 giorni",
+        "thisYear": "Quest'anno",
+        "lastYear": "Anno scorso",
+        "tomorrow": "Domani",
+        "next7": "Tra 7 giorni",
+        "next14": "Tra 14 giorni",
+        "next30": "Tra 30 giorni",
+        "allTime": "Sempre"
+      },
+      "pickDate": "Scegli una data",
+      "activity": "Attività",
+      "activityKinds": "Tipo di modifica",
+      "activityActors": "Eseguito da",
+      "activityWhen": "Quando",
+      "activityAutomation": "Automazione"
+    },
+    "analytics": {
+      "title": "Analisi",
+      "loading": "Caricamento statistiche…",
+      "error": "Impossibile caricare le statistiche",
+      "created": "Creati",
+      "won": "Vinti",
+      "wonValue": "Valore vinto",
+      "lost": "Persi",
+      "lostValue": "Valore perso",
+      "admin": "Admin",
+      "automation": "Automazione",
+      "back": "Indietro",
+      "admins": "Admin",
+      "chart": {
+        "created": "Nuovi al giorno",
+        "won": "Vinti al giorno",
+        "lost": "Persi al giorno",
+        "wonValue": "Valore vinto al giorno",
+        "lostValue": "Valore perso al giorno"
+      },
+      "pie": {
+        "created": "Creati per admin",
+        "won": "Vinti per admin",
+        "lost": "Persi per admin",
+        "other": "Altro",
+        "empty": "Nessun dato"
+      }
+    },
+    "settings": {
+      "title": "Impostazioni della pipeline",
+      "general": "Generali",
+      "fields": "Campi personalizzati",
+      "display": "Visualizzazione",
+      "permissions": "Autorizzazioni",
+      "saved": "Impostazioni salvate",
+      "referenceName": "Nome di riferimento",
+      "referenceNameHint": "Usato nelle variabili pipelines.reference_name.stage_name. Modificarlo interrompe i messaggi che usano il vecchio nome.",
+      "referenceNameFormat": "Usa lettere minuscole, numeri e trattini bassi, iniziando con una lettera (es. close_date).",
+      "assignContact": "Assegna il contatto a un admin quando viene assegnato un elemento",
+      "limit": "Limita gli elementi aperti per contatto",
+      "statusLabels": "Etichette di stato",
+      "status": {
+        "open": "Aperto",
+        "won": "Vinto",
+        "lost": "Perso"
+      },
+      "features": "Funzionalità visibili",
+      "cardElements": "Elementi della scheda",
+      "card": {
+        "contactPhone": "Telefono del contatto",
+        "contactEmail": "Email del contatto",
+        "createdAt": "Data di creazione",
+        "updatedAt": "Data di aggiornamento",
+        "assignees": "Admin assegnati",
+        "comments": "Commenti",
+        "cardId": "Numero dell’elemento",
+        "priority": "Priorità",
+        "value": "Valore",
+        "dueDate": "Scadenza"
+      },
+      "noFields": "Ancora nessun campo personalizzato",
+      "fieldName": "Nome del campo",
+      "fieldReference": "Nome di riferimento",
+      "fieldType": "Tipo di campo",
+      "required": "Obbligatorio",
+      "requiredShort": "obbligatorio",
+      "addField": "Aggiungi campo",
+      "fieldAdded": "Campo aggiunto",
+      "deleteField": "Elimina campo",
+      "permissionsHint": "Proprietari e admin del workspace hanno sempre accesso completo. Concedi agli altri membri ciò che possono fare in questa pipeline.",
+      "revoke": "Revoca",
+      "permission": {
+        "view": "Visualizza",
+        "edit": "Modifica",
+        "delete": "Elimina",
+        "settings": "Impostazioni"
+      },
+      "noMembers": "Nessun altro membro da configurare",
+      "confirmDeleteField": "Eliminare questo campo e tutti i suoi valori in ogni elemento?",
+      "adminPermissions": "Autorizzazioni admin",
+      "cardVisibleElements": "Elementi visibili della scheda"
+    },
+    "panel": {
+      "empty": "Nessun elemento della pipeline per questo contatto",
+      "error": "Impossibile caricare gli elementi della pipeline",
+      "choosePipeline": "Scegli una pipeline",
+      "add": "Aggiungi nuovo"
+    },
+    "variables": {
+      "group": "Pipeline",
+      "attributes": {
+        "name": "Nome elemento",
+        "stageName": "Fase",
+        "status": "Stato",
+        "priority": "Priorità",
+        "value": "Valore",
+        "assignedAdmins": "Admin assegnati",
+        "createdDate": "Data di creazione",
+        "dueDate": "Scadenza",
+        "updatedDate": "Data di aggiornamento",
+        "id": "ID elemento"
+      }
+    }
   }
 }
