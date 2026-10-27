@@ -35,13 +35,25 @@
     // dependencies' source itself and consumes nothing a prior task emitted —
     // the edge transmitted no data and only serialized 56 tasks 13 deep.
     //
-    // Only the two workspaces whose tsconfig sets `incremental: true`
-    // (apps/builder, packages/ui — both extend typescript-config/nextjs.json)
+    // Locally only apps/builder and packages/ui set `incremental: true` and
     // emit a tsbuildinfo, so `outputs` is declared in their own turbo.json
-    // rather than here: a root-level key makes turbo warn "no output files
-    // found" for the other 56 check-types tasks.
-    "check-types": {},
+    // (a root-level key makes turbo warn "no output files found" elsewhere).
+    // CI passes `--incremental` to every task and caches the files itself.
+    // `transit` is a no-op (no workspace defines the script) that chains to
+    // every workspace dependency. `check-types` and `test` depend on it so
+    // their hash covers the source of the internal packages they import:
+    // without it, a change to packages/business or packages/realtime-protocol
+    // left builder's and worker's cached results valid, and CI replayed them
+    // instead of re-running. Unlike `^check-types`/`^test`, the edge adds no
+    // ordering between real tasks — transit tasks finish instantly.
+    "transit": {
+      "dependsOn": ["^transit"]
+    },
+    "check-types": {
+      "dependsOn": ["transit"]
+    },
     "test": {
+      "dependsOn": ["transit"],
       "inputs": [
         "$TURBO_DEFAULT$",
         ".env*",

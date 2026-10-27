@@ -1,3 +1,4 @@
+import "@chatbotx.io/vitest-config/setup-msw"
 import type { CustomFieldType } from "@chatbotx.io/database/partials"
 import { MAX_CODE_LENGTH as FLOW_CONFIG_MAX_CODE_LENGTH } from "@chatbotx.io/flow-config"
 import { MAX_CODE_LENGTH as SANDBOX_MAX_CODE_LENGTH } from "@chatbotx.io/javascript-sandbox"

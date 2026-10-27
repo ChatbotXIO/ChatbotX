@@ -1,4 +1,4 @@
-import { BUTTON_LABEL_MAX } from "@chatbotx.io/flow-config"
+import { BUTTON_LABEL_MAX } from "@chatbotx.io/flow-config/button-limits"
 import { zodBigintAsString, zodUrlWithVariables } from "@chatbotx.io/utils"
 import { z } from "zod"
 import { uploadModes } from "./shared"
