@@ -6,13 +6,8 @@ import {
   cleanupOrphanedIntegrationOnce,
   handleOrphanedIntegration,
   IntegrationNotFoundError,
-  isExpectedOrphan,
 } from "../services/orphaned-integration-cleanup"
 import { isChannelOriginatedJob } from "./channel-origin"
-
-function stringifyError(error: unknown): string {
-  return error instanceof Error ? error.message : String(error)
-}
 
 export async function runWithOrphanedIntegrationCleanup<T>(
   callback: () => Promise<T>,
@@ -24,26 +19,16 @@ export async function runWithOrphanedIntegrationCleanup<T>(
       throw error
     }
 
-    try {
-      await handleOrphanedIntegration(error)
-    } catch (cleanupError) {
-      logger.warn(
-        {
-          channel: error.channel,
-          identifier: error.identifier,
-          err: stringifyError(cleanupError),
-        },
-        "Orphaned integration cleanup threw before marking job unrecoverable",
-      )
-    }
+    await handleOrphanedIntegration(error)
     throw new UnrecoverableError(error.message)
   }
 }
 
 /**
- * Inbound events for integrations that have been disconnected complete instead
- * of filling the failed set. Only channel-originated jobs take this path:
- * internal jobs still fail loudly through `runWithOrphanedIntegrationCleanup`.
+ * Inbound events for integrations that have been disconnected complete after
+ * throttled orphaned-integration cleanup instead of filling the failed set.
+ * Only channel-originated jobs take this path: internal jobs still fail loudly
+ * through `runWithOrphanedIntegrationCleanup`.
  */
 async function skipOrphanedInboundJobs<T>(
   callback: () => Promise<T>,
@@ -55,20 +40,7 @@ async function skipOrphanedInboundJobs<T>(
       throw error
     }
 
-    if (!isExpectedOrphan(error)) {
-      try {
-        await cleanupOrphanedIntegrationOnce(error)
-      } catch (cleanupError) {
-        logger.warn(
-          {
-            channel: error.channel,
-            identifier: error.identifier,
-            err: stringifyError(cleanupError),
-          },
-          "Orphaned integration cleanup threw while skipping inbound job",
-        )
-      }
-    }
+    await cleanupOrphanedIntegrationOnce(error)
 
     logger.info(
       { channel: error.channel, identifier: error.identifier },

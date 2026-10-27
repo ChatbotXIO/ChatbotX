@@ -42,22 +42,7 @@ const {
   cleanupOrphanedIntegrationOnce,
   handleOrphanedIntegration,
   IntegrationNotFoundError,
-  isExpectedOrphan,
 } = await import("../src/services/orphaned-integration-cleanup")
-
-describe("isExpectedOrphan", () => {
-  test("treats a missing Zalo OA as expected traffic", () => {
-    expect(isExpectedOrphan(new IntegrationNotFoundError("zalo", "oa-1"))).toBe(
-      true,
-    )
-  })
-
-  test("treats channels with a cleanup strategy as real orphans", () => {
-    expect(
-      isExpectedOrphan(new IntegrationNotFoundError("messenger", "page-1")),
-    ).toBe(false)
-  })
-})
 
 describe("handleOrphanedIntegration", () => {
   beforeEach(() => {
@@ -100,6 +85,18 @@ describe("handleOrphanedIntegration", () => {
     expect(mocks.loggerInfo).toHaveBeenCalled()
   })
 
+  test("skips Threads as an unsupported channel", async () => {
+    await handleOrphanedIntegration(
+      new IntegrationNotFoundError("threads", "thread-1"),
+    )
+
+    expect(mocks.resolvePlatformAppAccessToken).not.toHaveBeenCalled()
+    expect(mocks.loggerInfo).toHaveBeenCalledWith(
+      { channel: "threads", identifier: "thread-1" },
+      "Skipping orphaned integration cleanup for unsupported channel",
+    )
+  })
+
   test("skips messenger cleanup when an Instagram sibling still exists", async () => {
     mocks.instagramIntegrationExistsByPageId.mockResolvedValue(true)
 
@@ -128,7 +125,7 @@ describe("handleOrphanedIntegration", () => {
     )
   })
 
-  test("swallows sibling lookup failures and logs only a string error", async () => {
+  test("swallows sibling lookup failures and logs the error object", async () => {
     mocks.instagramIntegrationExistsByPageId.mockRejectedValue(
       new Error("database unavailable"),
     )
@@ -144,13 +141,13 @@ describe("handleOrphanedIntegration", () => {
       expect.objectContaining({
         channel: "messenger",
         identifier: "page-1",
-        err: "database unavailable",
+        err: expect.any(Error),
       }),
       expect.any(String),
     )
   })
 
-  test("swallows credential lookup failures and logs only a string error", async () => {
+  test("swallows credential lookup failures and logs the error object", async () => {
     mocks.resolvePlatformAppAccessToken.mockRejectedValue(
       new Error("decrypt failed"),
     )
@@ -166,13 +163,13 @@ describe("handleOrphanedIntegration", () => {
       expect.objectContaining({
         channel: "instagram",
         identifier: "ig-1",
-        err: "decrypt failed",
+        err: expect.any(Error),
       }),
       expect.any(String),
     )
   })
 
-  test("swallows unsubscribe failures and logs only a string error", async () => {
+  test("swallows unsubscribe failures and logs the error object", async () => {
     mocks.unsubscribeMessenger.mockRejectedValue(new Error("graph failed"))
 
     await expect(
@@ -183,7 +180,7 @@ describe("handleOrphanedIntegration", () => {
 
     expect(mocks.loggerWarn).toHaveBeenCalledWith(
       expect.objectContaining({
-        err: "graph failed",
+        err: expect.any(Error),
       }),
       expect.any(String),
     )
@@ -224,6 +221,17 @@ describe("cleanupOrphanedIntegrationOnce", () => {
     expect(mocks.unsubscribeMessenger).not.toHaveBeenCalled()
   })
 
+  test.each([
+    ["zalo", "oa-1"],
+    ["whatsapp", "phone-number-1"],
+  ] as const)("skips Redis for strategy-less %s channels", async (channel, identifier) => {
+    await cleanupOrphanedIntegrationOnce(
+      new IntegrationNotFoundError(channel, identifier),
+    )
+
+    expect(mocks.redisSet).not.toHaveBeenCalled()
+  })
+
   test("logs and skips cleanup when Redis fails", async () => {
     mocks.redisSet.mockRejectedValue(new Error("redis unavailable"))
 
@@ -238,9 +246,9 @@ describe("cleanupOrphanedIntegrationOnce", () => {
       expect.objectContaining({
         channel: "messenger",
         identifier: "page-1",
-        err: "redis unavailable",
+        err: expect.any(Error),
       }),
-      expect.any(String),
+      "Orphaned integration cleanup throttle failed; skipping cleanup",
     )
   })
 })
