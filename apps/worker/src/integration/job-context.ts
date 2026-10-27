@@ -3,6 +3,7 @@ import type { IntegrationJobData } from "@chatbotx.io/worker-config"
 import { UnrecoverableError } from "bullmq"
 import { logger } from "../lib/logger"
 import {
+  cleanupOrphanedIntegrationOnce,
   handleOrphanedIntegration,
   IntegrationNotFoundError,
   isExpectedOrphan,
@@ -40,22 +41,35 @@ export async function runWithOrphanedIntegrationCleanup<T>(
 }
 
 /**
- * An inbound event for a channel that keeps delivering after disconnect (see
- * `isExpectedOrphan`) completes the job instead of filling the failed set.
- * Only for channel-originated jobs: internal jobs that lose their integration
- * still fail loudly through `runWithOrphanedIntegrationCleanup`.
+ * Inbound events for integrations that have been disconnected complete instead
+ * of filling the failed set. Only channel-originated jobs take this path:
+ * internal jobs still fail loudly through `runWithOrphanedIntegrationCleanup`.
  */
-async function skipExpectedOrphans<T>(
+async function skipOrphanedInboundJobs<T>(
   callback: () => Promise<T>,
 ): Promise<T | undefined> {
   try {
     return await callback()
   } catch (error) {
-    if (
-      !(error instanceof IntegrationNotFoundError && isExpectedOrphan(error))
-    ) {
+    if (!(error instanceof IntegrationNotFoundError)) {
       throw error
     }
+
+    if (!isExpectedOrphan(error)) {
+      try {
+        await cleanupOrphanedIntegrationOnce(error)
+      } catch (cleanupError) {
+        logger.warn(
+          {
+            channel: error.channel,
+            identifier: error.identifier,
+            err: stringifyError(cleanupError),
+          },
+          "Orphaned integration cleanup threw while skipping inbound job",
+        )
+      }
+    }
+
     logger.info(
       { channel: error.channel, identifier: error.identifier },
       "Integration not found for inbound event; skipping job",
@@ -75,7 +89,7 @@ export async function runIntegrationJobWithWebhookContext<T>(
 
   return await runWithWebhookExecutionContext(webhookExecutionContext, () =>
     runWithOrphanedIntegrationCleanup(() =>
-      isChannelOriginated ? skipExpectedOrphans(callback) : callback(),
+      isChannelOriginated ? skipOrphanedInboundJobs(callback) : callback(),
     ),
   )
 }

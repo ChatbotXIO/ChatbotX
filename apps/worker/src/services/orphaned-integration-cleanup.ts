@@ -10,6 +10,7 @@ import {
 } from "@chatbotx.io/database/partials"
 import { unsubscribePageFromInstagramWebhook } from "@chatbotx.io/integration-instagram"
 import { unsubscribePageFromAppWebhook } from "@chatbotx.io/integration-messenger/apis/page"
+import { getRedisConnection } from "@chatbotx.io/worker-config"
 import { logger } from "../lib/logger"
 
 /**
@@ -76,12 +77,47 @@ const EXPECTED_ORPHAN_CHANNELS: ReadonlySet<IntegrationType> = new Set([
   integrationTypes.enum.zalo,
 ])
 
+const ORPHAN_CLEANUP_THROTTLE_SECONDS = 3600
+
 export function isExpectedOrphan(error: IntegrationNotFoundError): boolean {
   return EXPECTED_ORPHAN_CHANNELS.has(error.channel)
 }
 
 function toErrorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error)
+}
+
+/**
+ * Throttles best-effort orphaned integration cleanup so repeated webhooks do
+ * not repeatedly call the platform API. Redis failures intentionally preserve
+ * the inbound job's successful completion.
+ */
+export async function cleanupOrphanedIntegrationOnce(
+  error: IntegrationNotFoundError,
+): Promise<void> {
+  const { channel, identifier } = error
+
+  try {
+    const cleanupKey = `orphan-integration-cleanup:${channel}:${identifier}`
+    const lockAcquired = await getRedisConnection("hot").set(
+      cleanupKey,
+      "1",
+      "EX",
+      ORPHAN_CLEANUP_THROTTLE_SECONDS,
+      "NX",
+    )
+
+    if (!lockAcquired) {
+      return
+    }
+
+    await handleOrphanedIntegration(error)
+  } catch (cleanupError) {
+    logger.warn(
+      { channel, identifier, err: toErrorMessage(cleanupError) },
+      "Failed to schedule orphaned integration cleanup",
+    )
+  }
 }
 
 /**
