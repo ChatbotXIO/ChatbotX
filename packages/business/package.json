@@ -32,6 +32,7 @@
     "./error-log": "./src/error-log/index.ts",
     "./error-log-columns": "./src/error-log/columns.ts",
     "./facebook-marketing-message-audience": "./src/facebook-marketing-message-audience/index.ts",
+    "./facebook-marketing-message-audience/upload": "./src/facebook-marketing-message-audience/upload.service.ts",
     "./get-user-data": "./src/get-user-data/index.ts",
     "./import": "./src/import/index.ts",
     "./inbox/connect-outcome": "./src/inbox/connect-outcome.ts",
