@@ -476,7 +476,6 @@ class SmartDelayService extends BaseService {
           ]),
         ),
       )
-      .orderBy(contactOnSmartDelayModel.triggerAt)
       .limit(limit)
       .for("update", { skipLocked: true })
 

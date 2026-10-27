@@ -11,6 +11,7 @@ import { ExpiredBanner } from "@/components/expired-banner"
 import { WorkspaceDeletionPendingToast } from "@/components/workspace-deletion-pending-toast"
 import { isCloud } from "@/env"
 import { AccountRail } from "@/features/workspaces/components/account-rail"
+import { DeletedWorkspaces } from "@/features/workspaces/components/deleted-workspaces"
 import WorkspacesList from "@/features/workspaces/components/workspaces-list"
 import { hasWorkspacePermission } from "@/lib/auth/permission-routes"
 import { enforcePasswordCurrent } from "@/lib/auth/require-password-current"
@@ -87,15 +88,18 @@ export default async function MainPage() {
           user={userInfo}
         />
 
-        <WorkspacesList
-          blocked={cloud && blocked}
-          isAtLimit={atLimit?.workspaces ?? false}
-          ownerWorkspaceIds={ownerWorkspaceIds}
-          reason={blockReason}
-          superAdminWorkspaceIds={superAdminWorkspaceIds}
-          user={userInfo}
-          workspaces={allWorkspaces}
-        />
+        <div className="min-w-0 flex-1 space-y-8">
+          <WorkspacesList
+            blocked={cloud && blocked}
+            isAtLimit={atLimit?.workspaces ?? false}
+            ownerWorkspaceIds={ownerWorkspaceIds}
+            reason={blockReason}
+            superAdminWorkspaceIds={superAdminWorkspaceIds}
+            user={userInfo}
+            workspaces={allWorkspaces}
+          />
+          <DeletedWorkspaces ownerId={user.id} />
+        </div>
       </div>
     </div>
   )

@@ -44,6 +44,7 @@ export type ExecuteMultipleStepsProps = {
   isBulkBroadcast?: boolean
   quickReplies?: ButtonStepProps[]
   sendFrom?: "inbox"
+  sentByUserId?: string
   nodeVisits?: NodeVisits
   triggerMessageId?: string
   triggerMessageCreatedAt?: Date
@@ -304,6 +305,7 @@ export async function sendFlow(
           isBulkBroadcast: props.isBulkBroadcast,
           appointmentId: props.appointmentId,
           sendFrom: props.sendFrom,
+          sentByUserId: props.sentByUserId,
           nodeVisits: props.nodeVisits,
           triggerMessageId: props.triggerMessageId,
           triggerMessageCreatedAt: props.triggerMessageCreatedAt,

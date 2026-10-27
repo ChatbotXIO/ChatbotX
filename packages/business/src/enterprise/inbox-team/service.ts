@@ -76,6 +76,14 @@ class InboxTeamService extends BaseService {
     return inboxTeamMemberRepository.listTeamIdsByUserId(props)
   }
 
+  /** Names of the workspace's teams a member belongs to, ordered by name. */
+  listTeamNamesByUserId(props: {
+    workspaceId: string
+    userId: string
+  }): Promise<string[]> {
+    return inboxTeamMemberRepository.listTeamNamesByUserId(props)
+  }
+
   // ─── Reads (NOT cached — write-path guard) ───────────────────────────────
   async findByIdOrFail(props: {
     workspaceId: string

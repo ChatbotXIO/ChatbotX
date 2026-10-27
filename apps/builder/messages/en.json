@@ -2665,6 +2665,45 @@
     },
     "lastOpportunityId": {
       "label": "Last Opportunity ID"
+    },
+    "adminName": {
+      "label": "Sending Admin Name"
+    },
+    "adminTeamName": {
+      "label": "Sending Admin Teams"
+    },
+    "bookingId": {
+      "label": "Booking ID"
+    },
+    "lastPoints": {
+      "label": "Last Questionnaire Points"
+    },
+    "lastAdHeadline": {
+      "label": "Last Ad Headline"
+    },
+    "lastAdBody": {
+      "label": "Last Ad Body"
+    },
+    "lastStoryId": {
+      "label": "Last Story ID"
+    },
+    "lastLeadId": {
+      "label": "Last Lead ID"
+    },
+    "lastFormId": {
+      "label": "Last Form ID"
+    },
+    "lastFormName": {
+      "label": "Last Form Name"
+    },
+    "lastAdgroupId": {
+      "label": "Last Ad Group ID"
+    },
+    "lastTextInput": {
+      "label": "Last Text Input"
+    },
+    "empty": {
+      "label": "Empty"
     }
   },
   "metaConversions": {
@@ -7392,6 +7431,23 @@
       "searchPlaceholder": "Search by name, owner email or ID",
       "descriptionConsentDisabled": "All workspaces can be opened by platform administrators.",
       "supportAccessible": "Accessible",
+      "periodStart": "Period start",
+      "periodEnd": "Period end",
+      "requestedBy": "Requested by",
+      "workspaceId": "Workspace ID",
+      "language": "Language",
+      "planSnapshot": "Plan at deletion",
+      "ownerQuota": "Owner quota",
+      "usagePeriods": "Usage periods",
+      "deletedTitle": "Deleted workspaces",
+      "deletedDescription": "Purge evidence for deleted workspaces.",
+      "purgedAt": "Purged at",
+      "deletionRequestedAt": "Deletion requested at",
+      "scheduledDeletionAt": "Scheduled deletion at",
+      "evidence": "Evidence",
+      "usage": "Usage snapshot",
+      "members": "Members",
+      "notAvailable": "Not available",
       "createButton": "Create workspace",
       "createTitle": "Create workspace for an owner",
       "createDescription": "Creates a workspace for the owner's email, adding any member emails you list. A new email gets a mailed temporary password.",

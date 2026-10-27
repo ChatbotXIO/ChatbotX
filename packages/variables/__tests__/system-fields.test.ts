@@ -27,6 +27,9 @@ const {
   mockMessengerGetPostDetails,
   mockAppointmentFindBy,
   mockAppointmentFindLatestForContact,
+  mockQuestionnaireFindLatestCompleted,
+  mockLeadAdsFindLatestByContact,
+  mockListTeamNamesByUserId,
   mockResolveDefaultTokenPlaintext,
   mockResolveContactAvatarUrl,
   mockEnsureContactAvatarMirrored,
@@ -55,6 +58,9 @@ const {
   mockMessengerGetPostDetails: vi.fn(),
   mockAppointmentFindBy: vi.fn(),
   mockAppointmentFindLatestForContact: vi.fn(),
+  mockQuestionnaireFindLatestCompleted: vi.fn(),
+  mockLeadAdsFindLatestByContact: vi.fn(),
+  mockListTeamNamesByUserId: vi.fn(),
   mockResolveDefaultTokenPlaintext: vi.fn(),
   mockEnsureContactAvatarMirrored: vi.fn(),
   mockResolveContactAvatarUrl: vi.fn(
@@ -117,11 +123,20 @@ vi.mock("@chatbotx.io/business", () => ({
     findBy: mockConversationFindBy,
     findDMByContact: mockFindDMByContact,
   },
+  facebookLeadAdsLeadService: {
+    findLatestByContact: mockLeadAdsFindLatestByContact,
+  },
   inboxService: {
     findWithIntegrationsById: mockFindWithIntegrationsById,
   },
+  inboxTeamService: {
+    listTeamNamesByUserId: mockListTeamNamesByUserId,
+  },
   messageService: {
     findById: mockMessageFindById,
+  },
+  questionnaireSubmissionService: {
+    findLatestCompletedForContact: mockQuestionnaireFindLatestCompleted,
   },
   resolveWorkspaceAppUrl: mockResolveWorkspaceAppUrl,
   resolveTenantSettings: mockResolveTenantSettings,
@@ -235,6 +250,7 @@ const createContext = (overrides?: {
   contactInbox?: ContactInboxModel | null
   conversation?: ConversationModel | null
   appointmentId?: string
+  sentByUserId?: string
   workspace?: WorkspaceModel | null
 }) => ({
   contact: overrides?.contact ?? contact,
@@ -247,6 +263,7 @@ const createContext = (overrides?: {
       ? overrides.conversation
       : conversation,
   appointmentId: overrides?.appointmentId,
+  sentByUserId: overrides?.sentByUserId,
   workspace:
     overrides && "workspace" in overrides ? overrides.workspace : workspace,
 })
@@ -715,6 +732,7 @@ describe("getSystemFieldValue", () => {
     const trackingInbox = {
       ...contactInbox,
       lastBtnTitle: "Choose plan",
+      lastStoryId: "story-42",
       consecutiveFailedReply: 2,
       lastOutboundMessageAt: new Date("2026-01-04T03:04:05.000Z"),
       lastInputFailure: "Invalid email",
@@ -722,6 +740,7 @@ describe("getSystemFieldValue", () => {
         ref: "launch",
         adId: "ad-123",
         adTitle: "Launch ad",
+        adBody: "Launch offer",
         ctwaClid: "ctwa-1",
         sourceUrl: "https://example.com/ad",
         sourcePlatform: "facebook",
@@ -732,6 +751,25 @@ describe("getSystemFieldValue", () => {
       getSystemFieldValue(
         createContext({ contactInbox: trackingInbox }),
         systemFieldTypes.enum.last_btn_title,
+      ),
+    ).resolves.toBe("Choose plan")
+    await expect(
+      getSystemFieldValue(
+        createContext({ contactInbox: trackingInbox }),
+        systemFieldTypes.enum.last_story_id,
+      ),
+    ).resolves.toBe("story-42")
+    await expect(
+      getSystemFieldValue(
+        createContext({ contactInbox: null }),
+        systemFieldTypes.enum.last_story_id,
+      ),
+    ).resolves.toBeNull()
+    // Chatrace's spelling of last_btn_title, kept so imported flows resolve.
+    await expect(
+      getSystemFieldValue(
+        createContext({ contactInbox: trackingInbox }),
+        systemFieldTypes.enum.last_btt_title,
       ),
     ).resolves.toBe("Choose plan")
     await expect(
@@ -752,6 +790,18 @@ describe("getSystemFieldValue", () => {
         systemFieldTypes.enum.last_ad,
       ),
     ).resolves.toBe("ad-123")
+    await expect(
+      getSystemFieldValue(
+        createContext({ contactInbox: trackingInbox }),
+        systemFieldTypes.enum.last_ad_headline,
+      ),
+    ).resolves.toBe("Launch ad")
+    await expect(
+      getSystemFieldValue(
+        createContext({ contactInbox: trackingInbox }),
+        systemFieldTypes.enum.last_ad_body,
+      ),
+    ).resolves.toBe("Launch offer")
     await expect(
       getSystemFieldValue(
         createContext({ contactInbox: trackingInbox }),
@@ -788,6 +838,18 @@ describe("getSystemFieldValue", () => {
       getSystemFieldValue(
         createContext({ contactInbox: blankReferralInbox }),
         systemFieldTypes.enum.last_ad,
+      ),
+    ).resolves.toBeNull()
+    await expect(
+      getSystemFieldValue(
+        createContext({ contactInbox: blankReferralInbox }),
+        systemFieldTypes.enum.last_ad_headline,
+      ),
+    ).resolves.toBeNull()
+    await expect(
+      getSystemFieldValue(
+        createContext({ contactInbox: blankReferralInbox }),
+        systemFieldTypes.enum.last_ad_body,
       ),
     ).resolves.toBeNull()
     await expect(
@@ -1764,6 +1826,15 @@ describe("getSystemFieldValue — workspace and account fields", () => {
     })
   })
 
+  // Chatrace's spelling of {{api_key}} ("Account API Key"); same value.
+  test("page_api_key resolves the same default token as api_key", async () => {
+    mockResolveDefaultTokenPlaintext.mockResolvedValue("cbx_ws_plaintext")
+
+    await expect(
+      getSystemFieldValue(createContext(), systemFieldTypes.enum.page_api_key),
+    ).resolves.toBe("cbx_ws_plaintext")
+  })
+
   test("api_key resolves null when the workspace is scheduled for deletion", async () => {
     mockResolveDefaultTokenPlaintext.mockResolvedValue("cbx_ws_plaintext")
     const context = createContext({
@@ -1887,6 +1958,9 @@ describe("getSystemFieldValue — appointment fields", () => {
     await expect(
       getSystemFieldValue(context, systemFieldTypes.enum.booking_date),
     ).resolves.toBe("2026-01-02 10:04:05")
+    await expect(
+      getSystemFieldValue(context, systemFieldTypes.enum.booking_id),
+    ).resolves.toBe("appointment-1")
 
     expect(mockAppointmentFindBy).toHaveBeenCalledWith({
       workspaceId: "workspace-1",
@@ -1912,6 +1986,9 @@ describe("getSystemFieldValue — appointment fields", () => {
     await expect(
       getSystemFieldValue(context, systemFieldTypes.enum.booking_date),
     ).resolves.toBe("2026-01-02 10:04:05")
+    await expect(
+      getSystemFieldValue(context, systemFieldTypes.enum.booking_id),
+    ).resolves.toBe("appointment-2")
 
     expect(mockAppointmentFindBy).not.toHaveBeenCalled()
     expect(mockAppointmentFindLatestForContact).toHaveBeenCalledWith({
@@ -1920,9 +1997,27 @@ describe("getSystemFieldValue — appointment fields", () => {
     })
   })
 
+  test("booking_id resolves null when the explicit appointment belongs to another contact", async () => {
+    mockAppointmentFindBy.mockResolvedValue({
+      id: "appointment-9",
+      workspaceId: "workspace-1",
+      contactId: "someone-else",
+    })
+
+    await expect(
+      getSystemFieldValue(
+        createContext({ appointmentId: "appointment-9" }),
+        systemFieldTypes.enum.booking_id,
+      ),
+    ).resolves.toBeNull()
+  })
+
   test("booking_link resolves null without any appointment for the contact", async () => {
     mockAppointmentFindLatestForContact.mockResolvedValue(null)
 
+    await expect(
+      getSystemFieldValue(createContext(), systemFieldTypes.enum.booking_id),
+    ).resolves.toBeNull()
     await expect(
       getSystemFieldValue(createContext(), systemFieldTypes.enum.booking_link),
     ).resolves.toBeNull()
@@ -1982,6 +2077,210 @@ describe("getSystemFieldValue — appointment fields", () => {
     ).resolves.toBe("Discovery Call")
 
     expect(mockAppointmentFindLatestForContact).not.toHaveBeenCalled()
+  })
+})
+
+describe("getSystemFieldValue — questionnaire fields", () => {
+  beforeEach(() => {
+    cache.clear()
+    vi.clearAllMocks()
+  })
+
+  test("last_points resolves the points of the contact's latest completed submission", async () => {
+    mockQuestionnaireFindLatestCompleted.mockResolvedValue({
+      id: "submission-1",
+      totalPoints: 7,
+    })
+
+    await expect(
+      getSystemFieldValue(createContext(), systemFieldTypes.enum.last_points),
+    ).resolves.toBe("7")
+
+    expect(mockQuestionnaireFindLatestCompleted).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      contactId: "contact-1",
+    })
+  })
+
+  test("last_points keeps a legitimate zero score", async () => {
+    mockQuestionnaireFindLatestCompleted.mockResolvedValue({
+      id: "submission-1",
+      totalPoints: 0,
+    })
+
+    await expect(
+      getSystemFieldValue(createContext(), systemFieldTypes.enum.last_points),
+    ).resolves.toBe("0")
+  })
+
+  // Observed in Chatrace: a contact who never filled a questionnaire renders 0.
+  test("last_points resolves 0 when the contact has no completed scored submission", async () => {
+    mockQuestionnaireFindLatestCompleted.mockResolvedValue(undefined)
+
+    await expect(
+      getSystemFieldValue(createContext(), systemFieldTypes.enum.last_points),
+    ).resolves.toBe("0")
+  })
+})
+
+describe("getSystemFieldValue — empty", () => {
+  // `{{empty}}` is how a flow clears a field or leaves a template slot blank;
+  // Chatrace renders it as an empty string.
+  test("empty resolves to an empty string", async () => {
+    await expect(
+      getSystemFieldValue(createContext(), systemFieldTypes.enum.empty),
+    ).resolves.toBe("")
+  })
+
+  test("empty resolves to an empty string even without a contact inbox", async () => {
+    await expect(
+      getSystemFieldValue(
+        createContext({ contactInbox: null }),
+        systemFieldTypes.enum.empty,
+      ),
+    ).resolves.toBe("")
+  })
+})
+
+describe("getSystemFieldValue — inbox sender fields", () => {
+  beforeEach(() => {
+    cache.clear()
+    vi.clearAllMocks()
+    mockFindMemberWithUserByWorkspaceIdAndUserId.mockResolvedValue({
+      userId: "user-7",
+      user: { id: "user-7", name: "Grace", email: "grace@example.com" },
+    })
+    mockListTeamNamesByUserId.mockResolvedValue(["Sales", "Support"])
+  })
+
+  test("admin_name resolves the member who sent the flow from the inbox", async () => {
+    await expect(
+      getSystemFieldValue(
+        createContext({ sentByUserId: "user-7" }),
+        systemFieldTypes.enum.admin_name,
+      ),
+    ).resolves.toBe("Grace")
+
+    expect(mockFindMemberWithUserByWorkspaceIdAndUserId).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      userId: "user-7",
+    })
+  })
+
+  test("admin_team_name joins the names of all the sender's teams", async () => {
+    await expect(
+      getSystemFieldValue(
+        createContext({ sentByUserId: "user-7" }),
+        systemFieldTypes.enum.admin_team_name,
+      ),
+    ).resolves.toBe("Sales, Support")
+
+    expect(mockListTeamNamesByUserId).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      userId: "user-7",
+    })
+  })
+
+  test("both resolve null without a sender and do not query", async () => {
+    await expect(
+      getSystemFieldValue(createContext(), systemFieldTypes.enum.admin_name),
+    ).resolves.toBeNull()
+    await expect(
+      getSystemFieldValue(
+        createContext(),
+        systemFieldTypes.enum.admin_team_name,
+      ),
+    ).resolves.toBeNull()
+
+    expect(mockFindMemberWithUserByWorkspaceIdAndUserId).not.toHaveBeenCalled()
+    expect(mockListTeamNamesByUserId).not.toHaveBeenCalled()
+  })
+
+  test("admin_name resolves null when the sender is no longer a workspace member", async () => {
+    mockFindMemberWithUserByWorkspaceIdAndUserId.mockResolvedValue(undefined)
+
+    await expect(
+      getSystemFieldValue(
+        createContext({ sentByUserId: "user-7" }),
+        systemFieldTypes.enum.admin_name,
+      ),
+    ).resolves.toBeNull()
+  })
+
+  test("admin_team_name resolves null when the sender belongs to no team", async () => {
+    mockListTeamNamesByUserId.mockResolvedValue([])
+
+    await expect(
+      getSystemFieldValue(
+        createContext({ sentByUserId: "user-7" }),
+        systemFieldTypes.enum.admin_team_name,
+      ),
+    ).resolves.toBeNull()
+  })
+})
+
+describe("getSystemFieldValue — lead ads fields", () => {
+  const latestLead = {
+    leadgenId: "lead-9",
+    formId: "form-3",
+    formName: "Summer promo",
+    adgroupId: "adgroup-5",
+  }
+
+  beforeEach(() => {
+    cache.clear()
+    vi.clearAllMocks()
+  })
+
+  test.each([
+    [systemFieldTypes.enum.last_lead_id, "lead-9"],
+    [systemFieldTypes.enum.last_form_id, "form-3"],
+    [systemFieldTypes.enum.last_form_name, "Summer promo"],
+    [systemFieldTypes.enum.last_adgroup_id, "adgroup-5"],
+  ] as const)("%s resolves from the contact's latest lead", async (key, expected) => {
+    mockLeadAdsFindLatestByContact.mockResolvedValue(latestLead)
+
+    await expect(getSystemFieldValue(createContext(), key)).resolves.toBe(
+      expected,
+    )
+
+    expect(mockLeadAdsFindLatestByContact).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      contactId: "contact-1",
+    })
+  })
+
+  test.each([
+    systemFieldTypes.enum.last_lead_id,
+    systemFieldTypes.enum.last_form_id,
+    systemFieldTypes.enum.last_form_name,
+    systemFieldTypes.enum.last_adgroup_id,
+  ] as const)("%s resolves null when the contact has no lead", async (key) => {
+    mockLeadAdsFindLatestByContact.mockResolvedValue(undefined)
+
+    await expect(getSystemFieldValue(createContext(), key)).resolves.toBeNull()
+  })
+
+  test("a lead without a stored form name or adgroup resolves those to null", async () => {
+    mockLeadAdsFindLatestByContact.mockResolvedValue({
+      leadgenId: "lead-9",
+      formId: "form-3",
+      formName: null,
+      adgroupId: null,
+    })
+
+    await expect(
+      getSystemFieldValue(
+        createContext(),
+        systemFieldTypes.enum.last_form_name,
+      ),
+    ).resolves.toBeNull()
+    await expect(
+      getSystemFieldValue(
+        createContext(),
+        systemFieldTypes.enum.last_adgroup_id,
+      ),
+    ).resolves.toBeNull()
   })
 })
 

@@ -2,7 +2,9 @@ import {
   appointmentService,
   buildAppointmentUrl,
   conversationService,
+  facebookLeadAdsLeadService,
   messageService,
+  questionnaireSubmissionService,
   resolveContactAvatarUrl,
   resolveTenantSettings,
   workspaceApiTokenService,
@@ -39,9 +41,11 @@ import {
 import { VARIABLE_PLACEHOLDER_SOURCE } from "@chatbotx.io/utils/variables"
 import {
   getAssignedTeamName,
+  listSenderTeamNames,
   resolveAssigneeEmail,
   resolveAssigneeId,
   resolveAssigneeName,
+  resolveSenderName,
 } from "./helpers/assigned"
 import {
   findPrimaryContactChannel,
@@ -60,6 +64,7 @@ import {
 import {
   getContactLastInput,
   getContactLastInputType,
+  getContactLastTextInput,
 } from "./helpers/last-input"
 import { getLeaderboardReferrerName } from "./helpers/leaderboard"
 import { getChatHistory } from "./helpers/message"
@@ -249,7 +254,13 @@ const getContactLocationValue = (
 
 const getReferralValue = (
   contactInbox: ContactVariableContext["contactInbox"],
-  key: "adId" | "adTitle" | "ctwaClid" | "sourceUrl" | "sourcePlatform",
+  key:
+    | "adId"
+    | "adTitle"
+    | "adBody"
+    | "ctwaClid"
+    | "sourceUrl"
+    | "sourcePlatform",
 ): string | null => {
   const value = contactInbox?.referral?.[key]
   return typeof value === "string" && value.length > 0 ? value : null
@@ -353,6 +364,46 @@ const getLastPipelineItemId = (
   return loading
 }
 
+const getLastQuestionnairePoints = async (
+  context: ContactVariableContext,
+): Promise<string | null> => {
+  const submission =
+    await questionnaireSubmissionService.findLatestCompletedForContact({
+      workspaceId: context.contact.workspaceId,
+      contactId: context.contact.id,
+    })
+
+  // A contact who never completed a scored questionnaire has 0 points (the
+  // value Chatrace renders), not an empty substitution.
+  return String(submission?.totalPoints ?? 0)
+}
+
+const getFlowSenderValue = async (
+  context: ContactVariableContext,
+  resolve: (props: {
+    workspaceId: string
+    userId: string
+  }) => Promise<string | null>,
+): Promise<string | null> =>
+  context.sentByUserId
+    ? await resolve({
+        workspaceId: context.contact.workspaceId,
+        userId: context.sentByUserId,
+      })
+    : null
+
+const getLatestLeadValue = async (
+  context: ContactVariableContext,
+  key: "leadgenId" | "formId" | "formName" | "adgroupId",
+): Promise<string | null> => {
+  const lead = await facebookLeadAdsLeadService.findLatestByContact({
+    workspaceId: context.contact.workspaceId,
+    contactId: context.contact.id,
+  })
+
+  return lead?.[key] ?? null
+}
+
 export const getSystemFieldValue = async (
   context: ContactVariableContext,
   key: SystemFieldType,
@@ -411,6 +462,8 @@ export const getSystemFieldValue = async (
       return await getContactLastInput(contact.id)
     case systemFieldTypes.enum.last_input_type:
       return await getContactLastInputType(contact.id)
+    case systemFieldTypes.enum.last_text_input:
+      return await getContactLastTextInput(contact.id)
     case systemFieldTypes.enum.last_call_recorded:
       return await getContactLastCallRecording(contact.id)
     case systemFieldTypes.enum.last_call_transcript:
@@ -548,10 +601,20 @@ export const getSystemFieldValue = async (
       return await resolveAssigneeName(contact.id, contact.workspaceId)
     case systemFieldTypes.enum.team_name:
       return await getAssignedTeamName(contact.id)
+    case systemFieldTypes.enum.admin_name:
+      return await getFlowSenderValue(context, resolveSenderName)
+    case systemFieldTypes.enum.admin_team_name:
+      return await getFlowSenderValue(context, listSenderTeamNames)
     // No upstream tracking yet — intentionally null
     case systemFieldTypes.enum.last_order:
       return null
+    // Always an empty string, for a template slot that must stay blank.
+    case systemFieldTypes.enum.empty:
+      return ""
+    // `last_btt_title` is Chatrace's spelling of `last_btn_title`; the alias
+    // lets flows imported from Chatrace resolve it.
     case systemFieldTypes.enum.last_btn_title:
+    case systemFieldTypes.enum.last_btt_title:
       return contactInbox?.lastBtnTitle ?? null
     case systemFieldTypes.enum.consecutive_failed_reply:
       return contactInbox
@@ -570,7 +633,9 @@ export const getSystemFieldValue = async (
     // that predates this model gets its default token lazily minted (or its
     // legacy plaintext migrated forward from the deprecated
     // Workspace.token) on first resolve.
+    // `page_api_key` is Chatrace's spelling of `api_key`.
     case systemFieldTypes.enum.api_key:
+    case systemFieldTypes.enum.page_api_key:
       if (workspace && isWorkspaceScheduledForDeletion(workspace)) {
         return null
       }
@@ -596,6 +661,12 @@ export const getSystemFieldValue = async (
       return getReferralValue(contactInbox, "sourceUrl")
     case systemFieldTypes.enum.last_ad_source_platform:
       return getReferralValue(contactInbox, "sourcePlatform")
+    // Meta's `ad_title` and WhatsApp's `headline` both land in `adTitle`.
+    case systemFieldTypes.enum.last_ad_headline:
+      return getReferralValue(contactInbox, "adTitle")
+    // Only WhatsApp Click-to-WhatsApp referrals carry an ad body.
+    case systemFieldTypes.enum.last_ad_body:
+      return getReferralValue(contactInbox, "adBody")
     case systemFieldTypes.enum.last_fb_comment:
       return (await getLastUserComment(context))?.text ?? null
     case systemFieldTypes.enum.last_post_id: {
@@ -604,6 +675,8 @@ export const getSystemFieldValue = async (
     }
     case systemFieldTypes.enum.last_comment_id:
       return (await getLastUserComment(context))?.sourceId ?? null
+    case systemFieldTypes.enum.last_story_id:
+      return contactInbox?.lastStoryId ?? null
     case systemFieldTypes.enum.total_new_tagged:
       return getContactTagCount(contact, "totalNewTagged")
     case systemFieldTypes.enum.total_tagged:
@@ -625,6 +698,8 @@ export const getSystemFieldValue = async (
       return await getFlowStepValue(context, "lastStep")
     case systemFieldTypes.enum.current_step:
       return await getFlowStepValue(context, "currentStep")
+    case systemFieldTypes.enum.booking_id:
+      return (await getAppointment(context))?.id ?? null
     case systemFieldTypes.enum.booking_calendar:
       return (await getAppointment(context))?.calendar.name ?? null
     case systemFieldTypes.enum.booking_date: {
@@ -636,6 +711,16 @@ export const getSystemFieldValue = async (
     }
     case systemFieldTypes.enum.last_input_failure:
       return contactInbox?.lastInputFailure ?? null
+    case systemFieldTypes.enum.last_points:
+      return await getLastQuestionnairePoints(context)
+    case systemFieldTypes.enum.last_lead_id:
+      return await getLatestLeadValue(context, "leadgenId")
+    case systemFieldTypes.enum.last_form_id:
+      return await getLatestLeadValue(context, "formId")
+    case systemFieldTypes.enum.last_form_name:
+      return await getLatestLeadValue(context, "formName")
+    case systemFieldTypes.enum.last_adgroup_id:
+      return await getLatestLeadValue(context, "adgroupId")
     case systemFieldTypes.enum.booking_link: {
       const appointment = await getAppointment(context)
       if (!appointment) {

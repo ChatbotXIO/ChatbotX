@@ -37,5 +37,14 @@ export const flowRunModel = pgTable(
       "btree",
       table.conversationId.asc().nullsLast(),
     ),
+    index("FlowRun_workspaceId_idx").using(
+      "btree",
+      table.workspaceId.asc().nullsLast(),
+    ),
+    index("FlowRun_flowId_idx").using("btree", table.flowId.asc().nullsLast()),
+    index("FlowRun_flowVersionId_idx").using(
+      "btree",
+      table.flowVersionId.asc().nullsLast(),
+    ),
   ],
 )

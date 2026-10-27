@@ -160,6 +160,19 @@ describe("handleAIGenerateTextAgent OpenAI-compatible provider", () => {
     })
   })
 
+  test("hands the inbox sender of the running flow to the AI agent runner", async () => {
+    await handleAIGenerateTextAgent({
+      conversation: makeConversation(),
+      contactInbox: makeContactInbox(),
+      step: makeStep(),
+      sentByUserId: "user-1",
+    } as Parameters<typeof handleAIGenerateTextAgent>[0])
+
+    expect(runAIAgentRunnerMock).toHaveBeenCalledWith(
+      expect.objectContaining({ sentByUserId: "user-1" }),
+    )
+  })
+
   test("returns a clear error when OpenAI-compatible integration cannot respond", async () => {
     runAIAgentRunnerMock.mockResolvedValueOnce(null)
 

@@ -1567,6 +1567,45 @@
     },
     "lastOpportunityId": {
       "label": "最近商機 ID"
+    },
+    "adminName": {
+      "label": "傳送管理員名稱"
+    },
+    "adminTeamName": {
+      "label": "傳送管理員所屬團隊"
+    },
+    "bookingId": {
+      "label": "預約ID"
+    },
+    "lastPoints": {
+      "label": "最近問卷分數"
+    },
+    "lastAdHeadline": {
+      "label": "最近廣告標題"
+    },
+    "lastAdBody": {
+      "label": "最近廣告內文"
+    },
+    "lastStoryId": {
+      "label": "最近限時動態ID"
+    },
+    "lastLeadId": {
+      "label": "最近名單ID"
+    },
+    "lastFormId": {
+      "label": "最近表單ID"
+    },
+    "lastFormName": {
+      "label": "最近表單名稱"
+    },
+    "lastAdgroupId": {
+      "label": "最近廣告群組ID"
+    },
+    "lastTextInput": {
+      "label": "最近文字輸入"
+    },
+    "empty": {
+      "label": "空白"
     }
   },
   "messages": {
@@ -6569,6 +6608,23 @@
       "searchPlaceholder": "依名稱、擁有者電子郵件或 ID 搜尋",
       "descriptionConsentDisabled": "All workspaces can be opened by platform administrators.",
       "supportAccessible": "Accessible",
+      "periodStart": "Period start",
+      "periodEnd": "Period end",
+      "requestedBy": "Requested by",
+      "workspaceId": "Workspace ID",
+      "language": "Language",
+      "planSnapshot": "Plan at deletion",
+      "ownerQuota": "Owner quota",
+      "usagePeriods": "Usage periods",
+      "deletedTitle": "Deleted workspaces",
+      "deletedDescription": "Purge evidence for deleted workspaces.",
+      "purgedAt": "Purged at",
+      "deletionRequestedAt": "Deletion requested at",
+      "scheduledDeletionAt": "Scheduled deletion at",
+      "evidence": "Evidence",
+      "usage": "Usage snapshot",
+      "members": "Members",
+      "notAvailable": "Not available",
       "createButton": "Create workspace",
       "createTitle": "Create workspace for an owner",
       "createDescription": "Creates a workspace for the owner's email, adding any member emails you list. A new email gets a mailed temporary password.",

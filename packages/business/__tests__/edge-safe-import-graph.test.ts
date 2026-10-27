@@ -192,15 +192,14 @@ describe("@chatbotx.io/business barrel stays Edge-Runtime safe", () => {
     expect(report).toBe("")
   })
 
-  test("freezeWorkspaceRuntime keeps cancelling dispatches through a crypto-free module", () => {
-    // Guards the fix's intent, not just its absence of symptoms: the freeze path
-    // must still reach the real cancel + Redis-removal helpers.
+  test("freezeWorkspaceRuntime cancels batches through a crypto-free module", () => {
+    // The database batch commits before Redis scheduler removal.
     const service = readFileSync(
       join(BUSINESS_SRC, "workspace-lifecycle/service.ts"),
       "utf8",
     )
 
-    expect(service).toContain("cancelPendingDispatchesForWorkspace")
+    expect(service).toContain("cancelPendingDispatchBatch")
     expect(service).toContain("removeDispatchesFromSchedule")
     expect(service).not.toMatch(SCHEDULER_BARREL_IMPORT)
   })

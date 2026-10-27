@@ -399,6 +399,24 @@ describe("processWhatsappTemplate", () => {
     )
   })
 
+  test("builds the variable context with the inbox sender of the running flow", async () => {
+    await processWhatsappTemplate({
+      conversation: fakeConversation,
+      contactInbox: fakeContactInbox,
+      template: {
+        id: "tmpl-wa-1",
+        name: "wa-template",
+        language: "en",
+        params: { body: [{ type: "text", text: "{{admin_name}}" }] },
+      } as unknown as ProcessWhatsappTemplateParams["template"],
+      sentByUserId: "user-1",
+    })
+
+    expect(mockContactVariables).toHaveBeenCalledWith(
+      expect.objectContaining({ sentByUserId: "user-1" }),
+    )
+  })
+
   test("sends the variable-resolved params to the channel, not the raw template params", async () => {
     // Regression: replaceWhatsappTemplateVariables resolved the params but the
     // channel send received the raw `template`, so WhatsApp received literal

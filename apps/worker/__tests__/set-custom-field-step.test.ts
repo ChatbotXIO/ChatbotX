@@ -127,6 +127,17 @@ describe("setContactCustomField", () => {
     })
   })
 
+  test("resolves {{variables}} with the inbox sender of the running flow", async () => {
+    await setContactCustomField({
+      ...props({ inputFieldId: "42", value: "{{admin_name}}" }),
+      sentByUserId: "user-1",
+    } as Parameters<typeof setContactCustomField>[0])
+
+    expect(getAllVariables).toHaveBeenCalledWith(
+      expect.objectContaining({ contactId: "c-1", sentByUserId: "user-1" }),
+    )
+  })
+
   test("forwards the step's operation so bot-field appends/increments route correctly", async () => {
     await setContactCustomField(
       props({ inputFieldId: "bot_field:9", value: "1", operation: "O04" }),

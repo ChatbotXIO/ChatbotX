@@ -172,6 +172,9 @@ class FacebookLeadAdsLeadService extends BaseService {
   async claim(props: {
     automationId: string
     leadgenId: string
+    formId: string
+    formName?: string | null
+    adgroupId?: string | null
   }): Promise<{ id: string } | null> {
     const [row] = await db
       .insert(facebookLeadAdsLeadModel)
@@ -179,6 +182,9 @@ class FacebookLeadAdsLeadService extends BaseService {
         id: createId(),
         automationId: props.automationId,
         leadgenId: props.leadgenId,
+        formId: props.formId,
+        formName: props.formName ?? null,
+        adgroupId: props.adgroupId ?? null,
       })
       .onConflictDoNothing()
       .returning({ id: facebookLeadAdsLeadModel.id })
@@ -201,6 +207,34 @@ class FacebookLeadAdsLeadService extends BaseService {
       .update(facebookLeadAdsLeadModel)
       .set({ contactId: props.contactId })
       .where(eq(facebookLeadAdsLeadModel.id, props.id))
+  }
+
+  async setFormName(props: { id: string; formName: string }) {
+    await db
+      .update(facebookLeadAdsLeadModel)
+      .set({ formName: props.formName })
+      .where(eq(facebookLeadAdsLeadModel.id, props.id))
+  }
+
+  /**
+   * The contact's newest lead, scoped to the workspace through its automation.
+   * Backs the `{{last_lead_id}}`-style variables: one indexed `LIMIT 1` read
+   * (FacebookLeadAdsLead_contactId_createdAt_idx).
+   */
+  async findLatestByContact(props: { workspaceId: string; contactId: string }) {
+    return await db.query.facebookLeadAdsLeadModel.findFirst({
+      where: {
+        contactId: props.contactId,
+        automation: { workspaceId: props.workspaceId },
+      },
+      orderBy: { createdAt: "desc" },
+      columns: {
+        leadgenId: true,
+        formId: true,
+        formName: true,
+        adgroupId: true,
+      },
+    })
   }
 }
 

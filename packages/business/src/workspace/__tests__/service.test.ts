@@ -6,6 +6,7 @@ const mocks = vi.hoisted(() => ({
   workspaceInsert: vi.fn(),
   workspaceInsertValues: vi.fn(),
   workspaceDelete: vi.fn(),
+  workspaceUpdate: vi.fn(),
   workspaceQuotaRelease: vi.fn(),
   tryConsume: vi.fn(),
   createMember: vi.fn(),
@@ -32,9 +33,19 @@ vi.mock("../../workspace-usage/service", () => ({
   },
 }))
 
+vi.mock("../../workspace-deletion-record/service", () => ({
+  workspaceDeletionRecordService: {
+    markPurged: vi.fn(async () => undefined),
+    recordForWorkspace: vi.fn(async () => undefined),
+  },
+}))
+
 vi.mock("@chatbotx.io/database/client", () => ({
   db: {
-    query: { userModel: { findFirst: vi.fn(async () => undefined) } },
+    query: {
+      userModel: { findFirst: vi.fn(async () => undefined) },
+      workspaceModel: { findFirst: vi.fn(async () => undefined) },
+    },
     insert: mocks.workspaceInsert,
     delete: mocks.workspaceDelete,
     transaction: mocks.dbTransaction,
@@ -67,7 +78,7 @@ vi.mock("@chatbotx.io/database/client", () => ({
   inArray: vi.fn(),
   and: vi.fn(),
   isNull: vi.fn(),
-  sql: vi.fn(),
+  sql: Object.assign(vi.fn(), { raw: vi.fn(() => "") }),
 }))
 
 vi.mock("@chatbotx.io/database/partials", async (importOriginal) => {
@@ -81,6 +92,7 @@ vi.mock("@chatbotx.io/database/partials", async (importOriginal) => {
 
 vi.mock("@chatbotx.io/database/schema", () => ({
   ROOT_TENANT_ID: "1",
+  workspaceDeletionRecordModel: { workspaceId: {} },
   workspaceMemberModel: {},
   workspaceModel: {},
 }))
@@ -124,7 +136,7 @@ vi.mock("../../quota-enforcement/service", () => ({
 vi.mock("../../user-quota/service", () => ({
   userQuotaService: {
     getForUser: mocks.getForUser,
-    reconcileOwnerPoolUsage: vi.fn(async () => undefined),
+    reconcileOwnerAfterTeardown: vi.fn(async () => undefined),
   },
 }))
 
@@ -138,6 +150,23 @@ vi.mock("../../workspace-lifecycle/service", () => ({
     })),
     purgeWorkspaceHeavyData: mocks.purgeWorkspaceHeavyData,
   },
+}))
+
+vi.mock("../../workspace-lifecycle/purge-batch", () => ({
+  withPurgeTimeouts: vi.fn(
+    async ({
+      fn,
+    }: {
+      fn: (tx: {
+        delete: typeof mocks.workspaceDelete
+        update: typeof mocks.workspaceUpdate
+      }) => Promise<unknown>
+    }) =>
+      await fn({
+        delete: mocks.workspaceDelete,
+        update: mocks.workspaceUpdate,
+      }),
+  ),
 }))
 
 vi.mock("../../connection/state-service", () => ({
@@ -216,7 +245,12 @@ beforeEach(() => {
     }),
   })
   mocks.workspaceDelete.mockReturnValue({
-    where: vi.fn().mockResolvedValue(undefined),
+    where: vi.fn(() => ({
+      returning: vi.fn().mockResolvedValue([{ id: "workspace-1" }]),
+    })),
+  })
+  mocks.workspaceUpdate.mockReturnValue({
+    set: vi.fn(() => ({ where: vi.fn().mockResolvedValue(undefined) })),
   })
 })
 
@@ -390,9 +424,9 @@ describe("WorkspaceService.purgeDueScheduled", () => {
       workspaceService.purgeDueScheduled({ chunkSize: 1, maxChunks: 1 }),
     ).resolves.toBe(1)
 
-    expect(mocks.purgeWorkspaceHeavyData).toHaveBeenCalledWith({
-      workspaceId: "w1",
-    })
+    expect(mocks.purgeWorkspaceHeavyData).toHaveBeenCalledWith(
+      expect.objectContaining({ workspaceId: "w1" }),
+    )
     expect(tx.update).not.toHaveBeenCalled()
   })
 
@@ -433,7 +467,9 @@ describe("WorkspaceService.purgeDueScheduled", () => {
     })
     const deleteError = new Error("Failed query", { cause: pgCause })
     mocks.workspaceDelete.mockReturnValueOnce({
-      where: vi.fn().mockRejectedValue(deleteError),
+      where: vi.fn(() => ({
+        returning: vi.fn().mockRejectedValue(deleteError),
+      })),
     })
 
     await expect(

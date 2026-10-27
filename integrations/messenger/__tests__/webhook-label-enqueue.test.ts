@@ -150,3 +150,86 @@ describe("webhookHandler inbox_labels enqueue", () => {
     expect(queue.add).not.toHaveBeenCalled()
   })
 })
+
+describe("webhookHandler leadgen enqueue", () => {
+  let queue: { add: ReturnType<typeof vi.fn> }
+
+  beforeEach(() => {
+    queue = { add: vi.fn().mockResolvedValue(undefined) }
+  })
+
+  it("enqueues processLeadgen with the form and adgroup ids from the webhook", async () => {
+    const body = buildBody({
+      pageId: "page-42",
+      changes: [
+        {
+          field: "leadgen",
+          value: {
+            leadgen_id: "lead-1",
+            page_id: "page-42",
+            form_id: "form-1",
+            adgroup_id: "adgroup-1",
+            ad_id: "ad-1",
+            created_time: 1_440_120_384,
+          },
+        },
+      ],
+    })
+
+    await webhookHandler(makeProps(body, sign(body), queue))
+
+    expect(queue.add).toHaveBeenCalledExactlyOnceWith("processLeadgen", {
+      type: "processLeadgen",
+      data: {
+        integrationType: "messenger",
+        integrationIdentifier: "page-42",
+        leadgenId: "lead-1",
+        formId: "form-1",
+        adgroupId: "adgroup-1",
+      },
+    })
+  })
+
+  it("falls back to the ad id when the webhook carries no adgroup id", async () => {
+    const body = buildBody({
+      changes: [
+        {
+          field: "leadgen",
+          value: {
+            leadgen_id: "lead-3",
+            page_id: "page-1",
+            form_id: "form-3",
+            ad_id: "ad-9",
+          },
+        },
+      ],
+    })
+
+    await webhookHandler(makeProps(body, sign(body), queue))
+
+    const [, job] = queue.add.mock.calls[0] as [
+      string,
+      { data: Record<string, unknown> },
+    ]
+    expect(job.data.adgroupId).toBe("ad-9")
+  })
+
+  it("omits the adgroup id when the webhook does not carry one", async () => {
+    const body = buildBody({
+      changes: [
+        {
+          field: "leadgen",
+          value: { leadgen_id: "lead-2", page_id: "page-1", form_id: "form-2" },
+        },
+      ],
+    })
+
+    await webhookHandler(makeProps(body, sign(body), queue))
+
+    const [, job] = queue.add.mock.calls[0] as [
+      string,
+      { data: Record<string, unknown> },
+    ]
+    expect(job.data.adgroupId).toBeUndefined()
+  })
+})

@@ -109,6 +109,17 @@ describe("sendFlowMessage", () => {
     })
   })
 
+  test("forwards the inbox sender to the flow step job", async () => {
+    await sendFlowMessage({ ...makeProps(), sentByUserId: "user-1" })
+
+    expect(mocks.chatQueueAdd).toHaveBeenCalledWith(
+      "sendFlowMessage",
+      expect.objectContaining({
+        data: expect.objectContaining({ sentByUserId: "user-1" }),
+      }),
+    )
+  })
+
   test("propagates bulk broadcast state to the flow step", async () => {
     await sendFlowMessage({
       ...makeProps(),

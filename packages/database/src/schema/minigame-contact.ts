@@ -1,3 +1,4 @@
+import { sql } from "drizzle-orm"
 import {
   index,
   integer,
@@ -93,5 +94,11 @@ export const minigameContactModel = pgTable(
       table.minigameId.asc().nullsLast(),
       table.contactId.asc().nullsLast(),
     ),
+    index("MinigameContact_referrerContactId_idx")
+      .on(table.referrerContactId)
+      .where(sql`${table.referrerContactId} IS NOT NULL`),
+    index("MinigameContact_contactInboxId_idx")
+      .on(table.contactInboxId)
+      .where(sql`${table.contactInboxId} IS NOT NULL`),
   ],
 )

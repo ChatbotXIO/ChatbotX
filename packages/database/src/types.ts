@@ -297,12 +297,6 @@ export type AnalyticsBotMessageEventModel =
   typeof schema.analyticsBotMessageEventModel.$inferSelect
 export type AnalyticsConversationEventModel =
   typeof schema.analyticsConversationEventModel.$inferSelect
-export type AnalyticsBroadcastEventModel =
-  typeof schema.analyticsBroadcastEventModel.$inferSelect
-export type AnalyticsSequenceEventModel =
-  typeof schema.analyticsSequenceEventModel.$inferSelect
-export type AnalyticsFlowNodeEventModel =
-  typeof schema.analyticsFlowNodeEventModel.$inferSelect
 export type ProductModel = typeof schema.productModel.$inferSelect
 export type VendorModel = typeof schema.vendorModel.$inferSelect
 export type CartModel = typeof schema.cartModel.$inferSelect
@@ -337,6 +331,10 @@ export type QuestionnaireSubmissionModel =
 export type QuestionnaireAnswerModel =
   typeof schema.questionnaireAnswerModel.$inferSelect
 export type WorkspaceMacModel = typeof schema.workspaceMacModel.$inferSelect
+export type WorkspaceBotMessageUsageModel =
+  typeof schema.workspaceBotMessageUsageModel.$inferSelect
+export type WorkspaceDeletionRecordModel =
+  typeof schema.workspaceDeletionRecordModel.$inferSelect
 export type ContactActiveHourlyModel =
   typeof schema.contactActiveHourlyModel.$inferSelect
 export type AutomationThrottleModel =

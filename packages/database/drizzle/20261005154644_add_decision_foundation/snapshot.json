@@ -3,8 +3,7 @@
   "dialect": "postgres",
   "id": "20b14807-5c10-4aae-a20e-025c4c6ca9b5",
   "prevIds": [
-    "85c1b547-6888-45be-970f-d271ec07f0ad",
-    "b842ea20-1be6-4ae9-9b04-58e92c04b451"
+    "e2ba6134-45b2-4db8-a4fb-01901251118c"
   ],
   "ddl": [
     {
@@ -13127,8 +13126,8 @@
       "schema": "public",
       "table": "DecisionProfile"
     },
-  {
-    "type": "jsonb",
+    {
+      "type": "jsonb",
       "typeSchema": null,
       "notNull": true,
       "dimensions": 0,
@@ -13138,21 +13137,21 @@
       "name": "contract",
       "entityType": "columns",
       "schema": "public",
-    "table": "DecisionProfile"
-  },
-  {
-    "type": "jsonb",
-    "typeSchema": null,
-    "notNull": false,
-    "dimensions": 0,
-    "default": null,
-    "generated": null,
-    "identity": null,
-    "name": "thresholdConfig",
-    "entityType": "columns",
-    "schema": "public",
-    "table": "DecisionProfile"
-  },
+      "table": "DecisionProfile"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "thresholdConfig",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "DecisionProfile"
+    },
     {
       "type": "bigint",
       "typeSchema": null,
@@ -30173,11 +30172,11 @@
       "schema": "public",
       "table": "ShardTimeRange"
     },
-  {
-    "nameExplicit": true,
-    "columns": [
-      {
-        "value": "workspaceId",
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "workspaceId",
           "isExpression": false,
           "asc": true,
           "nullsFirst": false,
@@ -35057,30 +35056,30 @@
       "concurrently": false,
       "name": "DecisionProfile_workspaceId_idx",
       "entityType": "indexes",
-    "schema": "public",
-    "table": "DecisionProfile"
-  },
-  {
-    "nameExplicit": true,
-    "columns": [
-      {
-        "value": "connectionId",
-        "isExpression": false,
-        "asc": true,
-        "nullsFirst": false,
-        "opclass": null
-      }
-    ],
-    "isUnique": false,
-    "where": null,
-    "with": "",
-    "method": "btree",
-    "concurrently": false,
-    "name": "DecisionProfile_connectionId_idx",
-    "entityType": "indexes",
-    "schema": "public",
-    "table": "DecisionProfile"
-  },
+      "schema": "public",
+      "table": "DecisionProfile"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "connectionId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "DecisionProfile_connectionId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "DecisionProfile"
+    },
     {
       "nameExplicit": true,
       "columns": [

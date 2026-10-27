@@ -35,9 +35,13 @@ function OwnerCell({
 }: {
   row: ListAdminWorkspacesResponse["data"][number]
 }) {
+  const t = useTranslations()
+
   return (
     <div className="flex flex-col">
-      <span className="font-medium">{row.ownerName ?? "—"}</span>
+      <span className="font-medium">
+        {row.ownerName ?? t("platformAdmin.workspaces.notAvailable")}
+      </span>
       <span className="text-muted-foreground text-xs">{row.ownerEmail}</span>
     </div>
   )
@@ -94,7 +98,8 @@ export function AdminWorkspacesTable({
             title={t("platformAdmin.workspaces.tenant")}
           />
         ),
-        cell: ({ row }) => row.original.tenantName ?? "—",
+        cell: ({ row }) =>
+          row.original.tenantName ?? t("platformAdmin.workspaces.notAvailable"),
         enableSorting: false,
       },
       {

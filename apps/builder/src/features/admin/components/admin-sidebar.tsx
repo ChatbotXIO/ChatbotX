@@ -57,6 +57,11 @@ export function AdminSidebar({
       icon: Building2Icon,
     },
     {
+      title: t("platformAdmin.workspaces.deletedTitle"),
+      url: "/admin/workspaces/deleted",
+      icon: Building2Icon,
+    },
+    {
       title: t("channels.title"),
       url: "/admin/platform-channels",
       icon: RadioTowerIcon,

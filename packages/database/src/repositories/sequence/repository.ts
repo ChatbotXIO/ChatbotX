@@ -1,4 +1,10 @@
-import { type DatabaseClient, db, eq, relationsFilterToSQL } from "../../client"
+import {
+  type DatabaseClient,
+  db,
+  eq,
+  relationsFilterToSQL,
+  sql,
+} from "../../client"
 import { rootFolderId } from "../../partials"
 import {
   contactsOnSequenceModel,
@@ -102,5 +108,30 @@ export const sequenceRepository = {
         },
       },
     })
+  },
+
+  async completeActiveEnrollmentBatch(
+    input: { workspaceId: string; limit: number },
+    tx: DatabaseClient,
+  ): Promise<number> {
+    const result = await tx.execute(sql`
+      UPDATE "ContactOnSequence"
+      SET
+        "status" = 'completed',
+        "completedAt" = NOW(),
+        "nextRunAt" = NULL,
+        "nextStepId" = NULL,
+        "updatedAt" = NOW()
+      WHERE "id" IN (
+        SELECT "id"
+        FROM "ContactOnSequence"
+        WHERE "workspaceId" = ${input.workspaceId}
+          AND "status" = 'active'
+        LIMIT ${input.limit}
+        FOR UPDATE SKIP LOCKED
+      )
+      RETURNING "id"
+    `)
+    return result.rowCount ?? 0
   },
 }

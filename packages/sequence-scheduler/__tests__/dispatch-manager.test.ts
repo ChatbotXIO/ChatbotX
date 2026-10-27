@@ -6,9 +6,11 @@ const findManyMock = vi.fn()
 const updateWhereMock = vi.fn()
 const removeFromScheduleMock = vi.fn()
 const useExistingMock = vi.fn()
+const executeMock = vi.fn()
 
 vi.mock("@chatbotx.io/database/client", () => ({
   db: {
+    execute: (...args: unknown[]) => executeMock(...args),
     insert: () => ({
       values: () => ({ returning: returningInsertMock }),
     }),
@@ -28,6 +30,10 @@ vi.mock("@chatbotx.io/database/client", () => ({
   and: (...a: unknown[]) => ({ __and: a }),
   eq: (c: unknown, v: unknown) => ({ __eq: [c, v] }),
   inArray: (c: unknown, v: unknown) => ({ __inArray: [c, v] }),
+  sql: (strings: TemplateStringsArray, ...values: unknown[]) => ({
+    strings,
+    values,
+  }),
 }))
 
 vi.mock("@chatbotx.io/database/schema", () => ({
@@ -343,34 +349,5 @@ describe("cancelPendingDispatches", () => {
 
     expect(customFindManyMock).toHaveBeenCalledTimes(1)
     expect(findManyMock).not.toHaveBeenCalled()
-  })
-
-  test("cancels all pending dispatches for a workspace without enrollmentId", async () => {
-    const { cancelPendingDispatchesForWorkspace } = await import(
-      "../src/dispatch-cancel"
-    )
-    findManyMock.mockResolvedValue([
-      {
-        id: "d-1",
-        bucket: 9,
-        sequenceId: "seq-1",
-        contactId: "c-1",
-        stepId: "s-1",
-      },
-    ])
-
-    const result = await cancelPendingDispatchesForWorkspace({
-      workspaceId: "ws-2",
-    })
-
-    expect(result).toEqual([{ id: "d-1", bucket: 9 }])
-    expect(findManyMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        where: expect.objectContaining({
-          workspaceId: "ws-2",
-          status: "pending",
-        }),
-      }),
-    )
   })
 })

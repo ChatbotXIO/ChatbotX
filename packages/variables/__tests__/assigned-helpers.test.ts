@@ -1,14 +1,21 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
-const { mockConversationFindBy, mockFindMemberWithUserByWorkspaceIdAndUserId } =
-  vi.hoisted(() => ({
-    mockConversationFindBy: vi.fn(),
-    mockFindMemberWithUserByWorkspaceIdAndUserId: vi.fn(),
-  }))
+const {
+  mockConversationFindBy,
+  mockFindMemberWithUserByWorkspaceIdAndUserId,
+  mockListTeamNamesByUserId,
+} = vi.hoisted(() => ({
+  mockConversationFindBy: vi.fn(),
+  mockFindMemberWithUserByWorkspaceIdAndUserId: vi.fn(),
+  mockListTeamNamesByUserId: vi.fn(),
+}))
 
 vi.mock("@chatbotx.io/business", () => ({
   conversationService: {
     findBy: mockConversationFindBy,
+  },
+  inboxTeamService: {
+    listTeamNamesByUserId: mockListTeamNamesByUserId,
   },
   workspaceMemberService: {
     findWithUserByWorkspaceIdAndUserId:
@@ -26,8 +33,13 @@ vi.mock("@chatbotx.io/database/client", () => ({
   },
 }))
 
-const { resolveAssigneeEmail, resolveAssigneeId, resolveAssigneeName } =
-  await import("../src/helpers/assigned")
+const {
+  listSenderTeamNames,
+  resolveAssigneeEmail,
+  resolveAssigneeId,
+  resolveAssigneeName,
+  resolveSenderName,
+} = await import("../src/helpers/assigned")
 
 describe("assigned field helpers", () => {
   beforeEach(() => {
@@ -95,5 +107,61 @@ describe("assigned field helpers", () => {
     await expect(
       resolveAssigneeEmail("contact-1", "workspace-1"),
     ).resolves.toBe("ada@example.com")
+  })
+})
+
+describe("sender field helpers", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  test("resolveSenderName reads the sender's name through the workspace membership", async () => {
+    mockFindMemberWithUserByWorkspaceIdAndUserId.mockResolvedValue({
+      userId: "user-2",
+      user: { id: "user-2", name: "Grace", email: "grace@example.com" },
+    })
+
+    await expect(
+      resolveSenderName({ workspaceId: "workspace-1", userId: "user-2" }),
+    ).resolves.toBe("Grace")
+    expect(mockFindMemberWithUserByWorkspaceIdAndUserId).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      userId: "user-2",
+    })
+  })
+
+  test("resolveSenderName is null for a user who is not a workspace member or has no name", async () => {
+    mockFindMemberWithUserByWorkspaceIdAndUserId.mockResolvedValue(undefined)
+    await expect(
+      resolveSenderName({ workspaceId: "workspace-1", userId: "user-2" }),
+    ).resolves.toBeNull()
+
+    mockFindMemberWithUserByWorkspaceIdAndUserId.mockResolvedValue({
+      userId: "user-2",
+      user: { id: "user-2", name: null, email: "grace@example.com" },
+    })
+    await expect(
+      resolveSenderName({ workspaceId: "workspace-1", userId: "user-2" }),
+    ).resolves.toBeNull()
+  })
+
+  test("listSenderTeamNames joins the team names of the sender in the workspace", async () => {
+    mockListTeamNamesByUserId.mockResolvedValue(["Sales", "Support"])
+
+    await expect(
+      listSenderTeamNames({ workspaceId: "workspace-1", userId: "user-2" }),
+    ).resolves.toBe("Sales, Support")
+    expect(mockListTeamNamesByUserId).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      userId: "user-2",
+    })
+  })
+
+  test("listSenderTeamNames is null when the sender is in no team", async () => {
+    mockListTeamNamesByUserId.mockResolvedValue([])
+
+    await expect(
+      listSenderTeamNames({ workspaceId: "workspace-1", userId: "user-2" }),
+    ).resolves.toBeNull()
   })
 })

@@ -2623,6 +2623,45 @@
     },
     "lastOpportunityId": {
       "label": "ID de la última oportunidad"
+    },
+    "adminName": {
+      "label": "Nombre del admin que envía"
+    },
+    "adminTeamName": {
+      "label": "Equipos del admin que envía"
+    },
+    "bookingId": {
+      "label": "ID de reserva"
+    },
+    "lastPoints": {
+      "label": "Últimos puntos del cuestionario"
+    },
+    "lastAdHeadline": {
+      "label": "Último titular del anuncio"
+    },
+    "lastAdBody": {
+      "label": "Último texto del anuncio"
+    },
+    "lastStoryId": {
+      "label": "Último ID de historia"
+    },
+    "lastLeadId": {
+      "label": "Último ID de lead"
+    },
+    "lastFormId": {
+      "label": "Último ID de formulario"
+    },
+    "lastFormName": {
+      "label": "Último nombre de formulario"
+    },
+    "lastAdgroupId": {
+      "label": "Último ID de grupo de anuncios"
+    },
+    "lastTextInput": {
+      "label": "Última entrada de texto"
+    },
+    "empty": {
+      "label": "Vacío"
     }
   },
   "flows": {
@@ -6523,6 +6562,23 @@
       "searchPlaceholder": "Buscar por nombre, correo del propietario o ID",
       "descriptionConsentDisabled": "All workspaces can be opened by platform administrators.",
       "supportAccessible": "Accessible",
+      "periodStart": "Period start",
+      "periodEnd": "Period end",
+      "requestedBy": "Requested by",
+      "workspaceId": "Workspace ID",
+      "language": "Language",
+      "planSnapshot": "Plan at deletion",
+      "ownerQuota": "Owner quota",
+      "usagePeriods": "Usage periods",
+      "deletedTitle": "Deleted workspaces",
+      "deletedDescription": "Purge evidence for deleted workspaces.",
+      "purgedAt": "Purged at",
+      "deletionRequestedAt": "Deletion requested at",
+      "scheduledDeletionAt": "Scheduled deletion at",
+      "evidence": "Evidence",
+      "usage": "Usage snapshot",
+      "members": "Members",
+      "notAvailable": "Not available",
       "createButton": "Create workspace",
       "createTitle": "Create workspace for an owner",
       "createDescription": "Creates a workspace for the owner's email, adding any member emails you list. A new email gets a mailed temporary password.",

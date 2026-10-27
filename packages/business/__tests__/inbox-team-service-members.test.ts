@@ -11,6 +11,7 @@ const mocks = vi.hoisted(() => ({
   teamMemberFindMany: vi.fn(),
   userFindMany: vi.fn(),
   listUserIdsByTeamId: vi.fn(),
+  listTeamNamesByUserId: vi.fn(),
   listUserIdsByTeamIds: vi.fn(),
   invalidateCacheByTags: vi.fn(),
   dispatchAuditRecord: vi.fn().mockResolvedValue(undefined),
@@ -76,6 +77,7 @@ vi.mock("@chatbotx.io/redis", () => ({
 vi.mock("@chatbotx.io/database/repositories", () => ({
   inboxTeamMemberRepository: {
     listUserIdsByTeamId: mocks.listUserIdsByTeamId,
+    listTeamNamesByUserId: mocks.listTeamNamesByUserId,
     listUserIdsByTeamIds: mocks.listUserIdsByTeamIds,
   },
 }))
@@ -269,6 +271,26 @@ describe("InboxTeamService.listUserIdsByTeamId", () => {
     })
     expect(mocks.listUserIdsByTeamId).toHaveBeenCalledTimes(1)
     expect(result).toBe(userIds)
+  })
+})
+
+// Pure delegation too: the sender variables read it per flow step, and the
+// repository query is already bounded by the user's own team memberships.
+describe("InboxTeamService.listTeamNamesByUserId", () => {
+  test("delegates straight to the repository and returns its result unchanged", async () => {
+    const names = ["Sales", "Support"]
+    mocks.listTeamNamesByUserId.mockResolvedValue(names)
+
+    const result = await inboxTeamService.listTeamNamesByUserId({
+      workspaceId: WORKSPACE_ID,
+      userId: "user-1",
+    })
+
+    expect(mocks.listTeamNamesByUserId).toHaveBeenCalledExactlyOnceWith({
+      workspaceId: WORKSPACE_ID,
+      userId: "user-1",
+    })
+    expect(result).toBe(names)
   })
 })
 

@@ -210,6 +210,23 @@ describe("handleSendGoogleAdsConversionStep", () => {
     )
   })
 
+  test("resolves {{variable}} templates with the inbox sender of the running flow", async () => {
+    mocks.getAll.mockResolvedValue(variableContext("49.90"))
+
+    await handleSendGoogleAdsConversionStep({
+      ...props("whatsapp", {
+        ...baseStep,
+        value: "{{amount}}",
+        currency: "USD",
+      }),
+      sentByUserId: "user-1",
+    } as Parameters<typeof handleSendGoogleAdsConversionStep>[0])
+
+    expect(mocks.getAll).toHaveBeenCalledWith(
+      expect.objectContaining({ sentByUserId: "user-1" }),
+    )
+  })
+
   test.each([
     ["noClick", "google_ads_no_click"],
     ["noAccount", "google_ads_no_account"],

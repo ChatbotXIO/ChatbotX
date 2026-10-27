@@ -1,6 +1,5 @@
 import {
   and,
-  count,
   countDistinct,
   type DatabaseClient,
   db,
@@ -21,8 +20,8 @@ import {
   workspaceMacModel,
   workspaceModel,
 } from "@chatbotx.io/database/schema"
+import { createId } from "@chatbotx.io/utils"
 import { logger } from "../../lib/logger"
-import { anchoredPeriod } from "../../lib/mac-period"
 import {
   type AnalyticsFilter,
   normalizeAnalyticsFilters,
@@ -94,18 +93,39 @@ export class MacRepository {
     for (const entry of entries) {
       const [row] = await client
         .insert(workspaceMacModel)
-        .values({
-          workspaceId: entry.workspaceId,
-          periodStart: entry.periodStart,
-          periodEnd: entry.periodEnd,
-        })
+        .select(
+          client
+            .select({
+              id: sql<string>`${createId()}::bigint`.as("id"),
+              createdAt: sql<Date>`now()`.as("createdAt"),
+              updatedAt: sql<Date>`now()`.as("updatedAt"),
+              workspaceId: workspaceModel.id,
+              ownerId: workspaceModel.ownerId,
+              tenantId: workspaceModel.tenantId,
+              periodStart:
+                sql<Date>`${entry.periodStart.toISOString()}::timestamptz`.as(
+                  "periodStart",
+                ),
+              periodEnd:
+                sql<Date>`${entry.periodEnd.toISOString()}::timestamptz`.as(
+                  "periodEnd",
+                ),
+              macCount: sql<number>`0`.as("macCount"),
+            })
+            .from(workspaceModel)
+            .where(eq(workspaceModel.id, entry.workspaceId)),
+        )
         .onConflictDoUpdate({
           target: [
             workspaceMacModel.workspaceId,
             workspaceMacModel.periodStart,
             workspaceMacModel.periodEnd,
           ],
-          set: { updatedAt: sql`now()` },
+          set: {
+            ownerId: sql`COALESCE(${workspaceMacModel.ownerId}, EXCLUDED."ownerId")`,
+            tenantId: sql`COALESCE(${workspaceMacModel.tenantId}, EXCLUDED."tenantId")`,
+            updatedAt: sql`now()`,
+          },
         })
         .returning({
           id: workspaceMacModel.id,
@@ -294,51 +314,6 @@ export class MacRepository {
     return new Map(rows.map((row) => [row.workspaceId, Number(row.macCount)]))
   }
 
-  /**
-   * The owner's monthly-active-contacts count, read from the durable
-   * `ContactActiveMonthly` ledger across every workspace they own. This is the
-   * authoritative source for `UserQuota.macUsed`: every MAC increment (webchat,
-   * worker, import, message tracking) writes a presence row in the same
-   * transaction as the live-counter bump, so the ledger never under-counts.
-   *
-   *  - `cumulative: false` (resetting plans) counts only the period containing
-   *    now, anchored to `billingPeriodStart` — the standard "this month" MAC.
-   *  - `cumulative: true` (lifetime plans, which never reset) counts every
-   *    period, matching the live counter that lifetime plans accumulate.
-   *
-   * Returns 0 when there is no billing anchor (period-less owners are not
-   * MAC-tracked).
-   */
-  async countActiveContactsForOwner(
-    input: {
-      ownerId: string
-      billingPeriodStart: Date | null
-      cumulative: boolean
-    },
-    client: DatabaseClient = db,
-  ): Promise<number> {
-    const conditions = [eq(workspaceModel.ownerId, input.ownerId)]
-
-    if (!input.cumulative) {
-      if (!input.billingPeriodStart) {
-        return 0
-      }
-      const { start } = anchoredPeriod(new Date(), input.billingPeriodStart)
-      conditions.push(eq(contactActiveMonthlyModel.periodStart, start))
-    }
-
-    const [row] = await client
-      .select({ value: count() })
-      .from(contactActiveMonthlyModel)
-      .innerJoin(
-        workspaceModel,
-        eq(contactActiveMonthlyModel.workspaceId, workspaceModel.id),
-      )
-      .where(and(...conditions))
-
-    return row ? Number(row.value) : 0
-  }
-
   async countActiveContactsByWorkspace(
     input: { workspaceId: string; from: Date; to: Date } & AnalyticsFilter,
     client: DatabaseClient = db,
@@ -375,36 +350,6 @@ export class MacRepository {
       )
 
     return row ? Number(row.value) : 0
-  }
-
-  async reconcilePeriod(
-    input: { workspaceId: string; periodStart: string },
-    client: DatabaseClient = db,
-  ): Promise<void> {
-    const periodStart = new Date(input.periodStart)
-
-    const activeContactCount = client
-      .select({ count: sql<number>`count(*)::int` })
-      .from(contactActiveMonthlyModel)
-      .where(
-        and(
-          eq(contactActiveMonthlyModel.workspaceId, input.workspaceId),
-          eq(contactActiveMonthlyModel.periodStart, periodStart),
-        ),
-      )
-
-    await client
-      .update(workspaceMacModel)
-      .set({
-        macCount: sql<number>`(${activeContactCount})`,
-        updatedAt: sql`now()`,
-      })
-      .where(
-        and(
-          eq(workspaceMacModel.workspaceId, input.workspaceId),
-          eq(workspaceMacModel.periodStart, periodStart),
-        ),
-      )
   }
 
   /**

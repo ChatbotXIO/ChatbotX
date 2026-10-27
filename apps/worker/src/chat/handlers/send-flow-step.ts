@@ -471,6 +471,7 @@ export async function sendFlowStep({
   richResponse,
   quickReplies,
   sendFrom,
+  sentByUserId,
   commentAnchor,
   appointmentId,
 }: ChatJobSendFlowStep["data"]) {
@@ -558,6 +559,7 @@ export async function sendFlowStep({
         trackingContext,
         metadata,
         isBulkBroadcast,
+        sentByUserId,
       })
     } catch (error) {
       logger.error(
@@ -593,6 +595,7 @@ export async function sendFlowStep({
         trackingContext,
         metadata,
         isBulkBroadcast,
+        sentByUserId,
       })
     } catch (error) {
       logger.error(
@@ -650,6 +653,7 @@ export async function sendFlowStep({
       contactInbox: targetContactInbox,
       conversation,
       ...(appointmentId ? { appointmentId } : {}),
+      ...(sentByUserId ? { sentByUserId } : {}),
     },
     { spintax: true },
   )

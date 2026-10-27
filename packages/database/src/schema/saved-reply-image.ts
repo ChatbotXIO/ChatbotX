@@ -43,6 +43,10 @@ export const savedReplyImageModel = pgTable(
       "btree",
       table.mediaLibraryFileId.asc().nullsLast(),
     ),
+    index("SavedReplyImage_workspaceId_idx").using(
+      "btree",
+      table.workspaceId.asc().nullsLast(),
+    ),
     uniqueIndex("SavedReplyImage_savedReplyId_mediaLibraryFileId_key").on(
       table.savedReplyId,
       table.mediaLibraryFileId,

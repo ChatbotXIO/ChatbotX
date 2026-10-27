@@ -111,6 +111,8 @@ export type ChatJobSendFlowStep = {
     }
     quickReplies?: ButtonStepProps[]
     sendFrom?: "inbox"
+    /** See `IntegrationJobRunFlowNode["data"]["sentByUserId"]`. */
+    sentByUserId?: string
     /** See {@link CommentAnchor}. */
     commentAnchor?: CommentAnchor
   }

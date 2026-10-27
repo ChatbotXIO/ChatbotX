@@ -2468,6 +2468,45 @@
     },
     "lastOpportunityId": {
       "label": "ID på seneste mulighed"
+    },
+    "adminName": {
+      "label": "Navn på afsendende admin"
+    },
+    "adminTeamName": {
+      "label": "Teams for afsendende admin"
+    },
+    "bookingId": {
+      "label": "Booking-ID"
+    },
+    "lastPoints": {
+      "label": "Seneste spørgeskemapoint"
+    },
+    "lastAdHeadline": {
+      "label": "Seneste annonceoverskrift"
+    },
+    "lastAdBody": {
+      "label": "Seneste annoncetekst"
+    },
+    "lastStoryId": {
+      "label": "Seneste story-ID"
+    },
+    "lastLeadId": {
+      "label": "Seneste lead-ID"
+    },
+    "lastFormId": {
+      "label": "Seneste formular-ID"
+    },
+    "lastFormName": {
+      "label": "Seneste formularnavn"
+    },
+    "lastAdgroupId": {
+      "label": "Seneste annoncegruppe-ID"
+    },
+    "lastTextInput": {
+      "label": "Seneste tekstinput"
+    },
+    "empty": {
+      "label": "Tom"
     }
   },
   "flows": {
@@ -6523,6 +6562,23 @@
       "searchPlaceholder": "Søg efter navn, ejerens e-mail eller id",
       "descriptionConsentDisabled": "All workspaces can be opened by platform administrators.",
       "supportAccessible": "Accessible",
+      "periodStart": "Period start",
+      "periodEnd": "Period end",
+      "requestedBy": "Requested by",
+      "workspaceId": "Workspace ID",
+      "language": "Language",
+      "planSnapshot": "Plan at deletion",
+      "ownerQuota": "Owner quota",
+      "usagePeriods": "Usage periods",
+      "deletedTitle": "Deleted workspaces",
+      "deletedDescription": "Purge evidence for deleted workspaces.",
+      "purgedAt": "Purged at",
+      "deletionRequestedAt": "Deletion requested at",
+      "scheduledDeletionAt": "Scheduled deletion at",
+      "evidence": "Evidence",
+      "usage": "Usage snapshot",
+      "members": "Members",
+      "notAvailable": "Not available",
       "createButton": "Create workspace",
       "createTitle": "Create workspace for an owner",
       "createDescription": "Creates a workspace for the owner's email, adding any member emails you list. A new email gets a mailed temporary password.",

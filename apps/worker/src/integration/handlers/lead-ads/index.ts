@@ -15,6 +15,7 @@ import {
 } from "@chatbotx.io/database/partials"
 import {
   getLead,
+  getLeadgenFormName,
   type LeadFieldDatum,
 } from "@chatbotx.io/integration-messenger/apis/leadgen"
 import type { MessengerAuthValue } from "@chatbotx.io/integration-messenger/schema"
@@ -46,6 +47,40 @@ const extractPsidFromInboxUrl = (inboxUrl: string): string | undefined => {
     const last = segments.at(-1)
     return last && PSID_RE.test(last) ? last : undefined
   } catch {
+    return
+  }
+}
+
+/**
+ * An all-forms automation has no form name of its own, so read it from the
+ * page's forms. Best-effort: a failed lookup leaves the name empty rather than
+ * failing a lead that was otherwise processed.
+ */
+async function resolveFormName(props: {
+  pageId: string
+  formId: string
+  accessToken: string
+  version: string
+}): Promise<string | undefined> {
+  try {
+    const formName = await getLeadgenFormName(
+      props.pageId,
+      props.formId,
+      props.accessToken,
+      props.version,
+    )
+    if (!formName) {
+      logger.info(
+        { formId: props.formId },
+        "processLeadgen: form not found among the page's forms",
+      )
+    }
+    return formName
+  } catch (err) {
+    logger.warn(
+      { err, formId: props.formId },
+      "processLeadgen: failed to resolve form name",
+    )
     return
   }
 }
@@ -103,7 +138,13 @@ export async function processLeadgen(
   data: IntegrationJobProcessLeadgen["data"],
   job: Job,
 ): Promise<void> {
-  const { integrationType, integrationIdentifier, leadgenId, formId } = data
+  const {
+    integrationType,
+    integrationIdentifier,
+    leadgenId,
+    formId,
+    adgroupId,
+  } = data
 
   const { inbox, integrationRow } =
     await integrationService.identifyInboxAndIntegrationAuthFromIdentifier(
@@ -124,6 +165,9 @@ export async function processLeadgen(
   const claim = await facebookLeadAdsLeadService.claim({
     automationId: automation.id,
     leadgenId,
+    formId,
+    formName: automation.formName,
+    adgroupId,
   })
   if (!claim) {
     return
@@ -178,6 +222,21 @@ export async function processLeadgen(
     })
 
     leadContactId = contact.id
+
+    if (!automation.formName) {
+      const formName = await resolveFormName({
+        pageId: integrationIdentifier,
+        formId,
+        accessToken: auth.tokens.accessToken,
+        version: auth.metadata.version,
+      })
+      if (formName) {
+        await facebookLeadAdsLeadService.setFormName({
+          id: claim.id,
+          formName,
+        })
+      }
+    }
 
     // Specific-form automations carry an explicit mapping; the "all forms"
     // automation auto-maps recognized standard fields.

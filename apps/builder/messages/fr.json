@@ -2468,6 +2468,45 @@
     },
     "lastOpportunityId": {
       "label": "Dernier ID d’opportunité"
+    },
+    "adminName": {
+      "label": "Nom de l'admin expéditeur"
+    },
+    "adminTeamName": {
+      "label": "Équipes de l'admin expéditeur"
+    },
+    "bookingId": {
+      "label": "ID de réservation"
+    },
+    "lastPoints": {
+      "label": "Derniers points du questionnaire"
+    },
+    "lastAdHeadline": {
+      "label": "Dernier titre de l'annonce"
+    },
+    "lastAdBody": {
+      "label": "Dernier texte de l'annonce"
+    },
+    "lastStoryId": {
+      "label": "Dernier ID de story"
+    },
+    "lastLeadId": {
+      "label": "Dernier ID de lead"
+    },
+    "lastFormId": {
+      "label": "Dernier ID de formulaire"
+    },
+    "lastFormName": {
+      "label": "Dernier nom de formulaire"
+    },
+    "lastAdgroupId": {
+      "label": "Dernier ID de groupe d'annonces"
+    },
+    "lastTextInput": {
+      "label": "Dernière saisie de texte"
+    },
+    "empty": {
+      "label": "Vide"
     }
   },
   "flows": {
@@ -6523,6 +6562,23 @@
       "searchPlaceholder": "Rechercher par nom, e-mail du propriétaire ou ID",
       "descriptionConsentDisabled": "All workspaces can be opened by platform administrators.",
       "supportAccessible": "Accessible",
+      "periodStart": "Period start",
+      "periodEnd": "Period end",
+      "requestedBy": "Requested by",
+      "workspaceId": "Workspace ID",
+      "language": "Language",
+      "planSnapshot": "Plan at deletion",
+      "ownerQuota": "Owner quota",
+      "usagePeriods": "Usage periods",
+      "deletedTitle": "Deleted workspaces",
+      "deletedDescription": "Purge evidence for deleted workspaces.",
+      "purgedAt": "Purged at",
+      "deletionRequestedAt": "Deletion requested at",
+      "scheduledDeletionAt": "Scheduled deletion at",
+      "evidence": "Evidence",
+      "usage": "Usage snapshot",
+      "members": "Members",
+      "notAvailable": "Not available",
       "createButton": "Create workspace",
       "createTitle": "Create workspace for an owner",
       "createDescription": "Creates a workspace for the owner's email, adding any member emails you list. A new email gets a mailed temporary password.",

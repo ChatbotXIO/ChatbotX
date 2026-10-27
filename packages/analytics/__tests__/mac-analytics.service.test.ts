@@ -3,7 +3,6 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 const macRepository = {
   getActiveContactCountByWorkspaceId: vi.fn(async () => ({ macCount: 0 })),
   countActiveContactsByWorkspace: vi.fn(async () => 0),
-  reconcilePeriod: vi.fn(async () => undefined),
 }
 vi.mock("../src/repositories/postgres/mac.repository", () => ({
   macRepository,
@@ -15,12 +14,6 @@ const distributedStore = {
 }
 vi.mock("@chatbotx.io/redis", () => ({ distributedStore }))
 
-const txClient = { tx: true }
-const db = {
-  transaction: vi.fn(async (cb: (tx: unknown) => unknown) => cb(txClient)),
-}
-vi.mock("@chatbotx.io/database/client", () => ({ db }))
-
 const logger = { warn: vi.fn(), error: vi.fn(), info: vi.fn() }
 vi.mock("../src/lib/logger", () => ({ logger }))
 
@@ -31,18 +24,15 @@ const { MacAnalyticsService } = await import(
 beforeEach(() => {
   distributedStore.getNumber.mockClear()
   distributedStore.setNumberIfNotExists.mockClear()
-  db.transaction.mockClear()
   logger.error.mockClear()
   macRepository.getActiveContactCountByWorkspaceId.mockClear()
   macRepository.countActiveContactsByWorkspace.mockClear()
-  macRepository.reconcilePeriod.mockClear()
   distributedStore.getNumber.mockResolvedValue(null)
   distributedStore.setNumberIfNotExists.mockResolvedValue(undefined)
   macRepository.getActiveContactCountByWorkspaceId.mockResolvedValue({
     macCount: 0,
   })
   macRepository.countActiveContactsByWorkspace.mockResolvedValue(0)
-  macRepository.reconcilePeriod.mockResolvedValue(undefined)
 })
 
 describe("MacAnalyticsService.getActiveContactCountByWorkspaceId", () => {
@@ -132,15 +122,5 @@ describe("MacAnalyticsService — repository delegation", () => {
       input,
     )
     expect(distributedStore.getNumber).not.toHaveBeenCalled()
-  })
-
-  test("reconcilePeriod runs the repository call inside a transaction", async () => {
-    const input = {
-      workspaceId: "ws-1",
-      periodStart: "2026-05-01T00:00:00.000Z",
-    }
-    await new MacAnalyticsService().reconcilePeriod(input)
-    expect(db.transaction).toHaveBeenCalledTimes(1)
-    expect(macRepository.reconcilePeriod).toHaveBeenCalledWith(input, txClient)
   })
 })

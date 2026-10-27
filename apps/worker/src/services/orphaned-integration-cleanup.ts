@@ -10,6 +10,7 @@ import {
 } from "@chatbotx.io/database/partials"
 import { unsubscribePageFromInstagramWebhook } from "@chatbotx.io/integration-instagram"
 import { unsubscribePageFromAppWebhook } from "@chatbotx.io/integration-messenger/apis/page"
+import { getRedisConnection } from "@chatbotx.io/worker-config"
 import { logger } from "../lib/logger"
 
 /**
@@ -28,7 +29,9 @@ type OrphanUnsubscribe = (props: {
 /**
  * How to revoke a still-live Meta webhook subscription for a channel whose
  * integration row is gone. Only channels whose subscription can be dropped with
- * the platform app access token get a strategy; every other channel is skipped.
+ * the platform app access token get a strategy; channels without one (for
+ * example Zalo, whose per-app subscription cannot be revoked per OA) are
+ * skipped.
  */
 type OrphanCleanupStrategy = {
   /** Platform credential whose app access token authorizes the unsubscribe. */
@@ -59,35 +62,51 @@ const ORPHAN_CLEANUP_STRATEGIES: Partial<
         accessToken: appAccessToken,
       }),
   },
-  [integrationTypes.enum.threads]: {
-    credentialType: integrationTypes.enum.threads,
-    unsubscribe: async () => {
-      // Threads Phase 1: no outbound unsubscribe API wired yet.
-    },
-  },
 }
+
+const ORPHAN_CLEANUP_KEY_PREFIX = "orphan-integration-cleanup"
+const ORPHAN_CLEANUP_THROTTLE_SECONDS = 3600
 
 /**
- * Channels that keep delivering webhooks after a disconnect because the
- * subscription is per-app and cannot be revoked per account (Zalo OAs). A
- * missing integration there is expected traffic, not an orphan to clean up.
+ * Throttles best-effort orphaned integration cleanup so repeated webhooks do
+ * not repeatedly call the platform API. Redis failures intentionally preserve
+ * the inbound job's successful completion.
  */
-const EXPECTED_ORPHAN_CHANNELS: ReadonlySet<IntegrationType> = new Set([
-  integrationTypes.enum.zalo,
-])
+export async function cleanupOrphanedIntegrationOnce(
+  error: IntegrationNotFoundError,
+): Promise<void> {
+  const { channel, identifier } = error
 
-export function isExpectedOrphan(error: IntegrationNotFoundError): boolean {
-  return EXPECTED_ORPHAN_CHANNELS.has(error.channel)
-}
+  if (!ORPHAN_CLEANUP_STRATEGIES[channel]) {
+    return
+  }
 
-function toErrorMessage(error: unknown): string {
-  return error instanceof Error ? error.message : String(error)
+  try {
+    const cleanupKey = `${ORPHAN_CLEANUP_KEY_PREFIX}:${channel}:${identifier}`
+    const isFirstInWindow = await getRedisConnection("hot").set(
+      cleanupKey,
+      "1",
+      "EX",
+      ORPHAN_CLEANUP_THROTTLE_SECONDS,
+      "NX",
+    )
+
+    if (!isFirstInWindow) {
+      return
+    }
+
+    await handleOrphanedIntegration(error)
+  } catch (cleanupError) {
+    logger.warn(
+      { channel, identifier, err: cleanupError },
+      "Orphaned integration cleanup throttle failed; skipping cleanup",
+    )
+  }
 }
 
 /**
  * Best-effort cleanup for a webhook that keeps arriving after its integration
- * row was deleted. Never throws: the caller marks the job unrecoverable
- * regardless of what happens here.
+ * row was deleted. Never throws; callers may run it inline.
  */
 export async function handleOrphanedIntegration(
   error: IntegrationNotFoundError,
@@ -132,7 +151,7 @@ export async function handleOrphanedIntegration(
     )
   } catch (cleanupError) {
     logger.warn(
-      { channel, identifier, err: toErrorMessage(cleanupError) },
+      { channel, identifier, err: cleanupError },
       "Orphaned integration cleanup failed",
     )
   }

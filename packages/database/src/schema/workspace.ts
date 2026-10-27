@@ -51,6 +51,8 @@ export const workspaceModel = pgTable(
     endTime: text(),
     logo: text(),
     scheduledDeletionAt: timestamp(timestampConfig),
+    deletionRequestedById: bigintAsString(),
+    deletionRequestedAt: timestamp(timestampConfig),
     purgeStartedAt: timestamp(timestampConfig),
     // Owner opt-in for platform support access. Non-null and in the future
     // means the owner has consented to the super admin opening this

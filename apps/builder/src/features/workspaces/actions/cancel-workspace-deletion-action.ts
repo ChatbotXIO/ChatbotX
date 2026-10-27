@@ -19,20 +19,17 @@ export const cancelWorkspaceDeletionAction = workspaceActionClientAllowExpired
     }: {
       bindArgsParsedInputs: WorkspaceIdRequestParams
     }) => {
+      const t = await getTranslations()
       const currentUserAndTargetWorkspace =
         await getCurrentUserAndTargetWorkspace(workspaceId)
       if (!currentUserAndTargetWorkspace) {
-        throw new ChatbotXException(
-          "You are not authorized to restore this workspace",
-        )
+        throw new ChatbotXException(t("errors.superAdminRequired"))
       }
 
       const { permissions } =
         currentUserAndTargetWorkspace.targetWorkspaceMember
       if (!hasWorkspacePermission(permissions, "superAdmin")) {
-        throw new ChatbotXException(
-          "You need to be a super admin to restore this workspace",
-        )
+        throw new ChatbotXException(t("errors.superAdminRequired"))
       }
 
       try {
@@ -44,7 +41,6 @@ export const cancelWorkspaceDeletionAction = workspaceActionClientAllowExpired
           err instanceof ChatbotXException &&
           err.code === "workspaceDeletionStarted"
         ) {
-          const t = await getTranslations()
           throw new ChatbotXException(
             t("workspace.deletion.alreadyStarted"),
             err.code,

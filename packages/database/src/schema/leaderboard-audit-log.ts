@@ -68,5 +68,9 @@ export const leaderboardAuditLogModel = pgTable(
       table.leaderboardId.asc().nullsLast(),
       table.createdAt.desc().nullsFirst(),
     ),
+    index("LeaderboardAuditLog_workspaceId_idx").using(
+      "btree",
+      table.workspaceId.asc().nullsLast(),
+    ),
   ],
 )

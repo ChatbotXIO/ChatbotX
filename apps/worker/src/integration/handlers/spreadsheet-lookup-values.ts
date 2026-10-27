@@ -31,6 +31,7 @@ export const resolveSpreadsheetLookup = async (
     contactId: props.conversation.contactId,
     contactInbox: props.contactInbox,
     conversation: props.conversation,
+    sentByUserId: props.sentByUserId,
   })
 
   const conditions = await Promise.all(

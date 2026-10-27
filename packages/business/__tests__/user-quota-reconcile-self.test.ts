@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 
 // ---------------------------------------------------------------------------
 // userQuotaService — the non-reseller self-reconcile surface moved from
-// sync-user-quota.ts: reconcileUserSelfUsage, persistMacUsed,
+// sync-user-quota.ts: reconcileUserSelfUsage, raiseMacUsed,
 // applyMonthlyBotMessagesReset. AGENTS.md invariants 11/12: counts are
 // assigned directly (never GREATEST); onConflictDoUpdate upserts must never
 // become plain inserts. Mirrors the mock scaffolding in
@@ -15,8 +15,12 @@ const {
   countDistinctTeamMembersForOwner,
   findFirstUserQuota,
   hset,
+  eval: redisEval,
+  tenantFindById,
+  tenantFindByOwner,
   userQuotaModel,
   countResults,
+  sumForTenant,
 } = vi.hoisted(() => {
   const userQuotaModel = {
     userId: "userId-column",
@@ -58,8 +62,12 @@ const {
       monthlyBotMessagesPeriodStart: new Date("2026-01-01T00:00:00Z"),
     })),
     hset: vi.fn(async () => undefined),
+    eval: vi.fn(async () => 1),
+    tenantFindById: vi.fn(async () => undefined),
+    tenantFindByOwner: vi.fn(async () => undefined),
     userQuotaModel,
     countResults,
+    sumForTenant: vi.fn(async () => 0),
   }
 })
 
@@ -67,7 +75,9 @@ vi.mock("@chatbotx.io/database/client", () => ({
   db: {
     insert: dbInsert,
     select: dbSelect,
-    query: { userQuotaModel: { findFirst: findFirstUserQuota } },
+    query: {
+      userQuotaModel: { findFirst: findFirstUserQuota },
+    },
   },
   and: (...args: unknown[]) => ({ and: args }),
   count: vi.fn(() => "count()"),
@@ -97,15 +107,20 @@ vi.mock("@chatbotx.io/database/schema", () => ({
     status: "connection.status",
   },
   contactModel: { workspaceId: "contact.workspaceId" },
+  tenantModel: { ownerId: "tenant.ownerId" },
   userQuotaModel,
   workspaceMacModel: {},
   workspaceMemberModel: {},
-  workspaceModel: { id: "workspace.id", ownerId: "workspace.ownerId" },
+  workspaceModel: {
+    id: "workspace.id",
+    ownerId: "workspace.ownerId",
+    tenantId: "workspace.tenantId",
+  },
 }))
 
 vi.mock("@chatbotx.io/redis", () => ({
   cacheConnections: {
-    useExisting: vi.fn(async () => ({ hset })),
+    useExisting: vi.fn(async () => ({ eval: redisEval, hset })),
   },
   distributedStore: {
     get: vi.fn(async () => null),
@@ -117,23 +132,119 @@ vi.mock("@chatbotx.io/redis", () => ({
 
 vi.mock("../src/keys", () => ({ isCloud: vi.fn(() => true) }))
 vi.mock("../src/logger", () => ({ logger: { warn: vi.fn(), error: vi.fn() } }))
+vi.mock("@chatbotx.io/database/repositories/tenant", () => ({
+  tenantRepository: {
+    findById: tenantFindById,
+    findByOwner: tenantFindByOwner,
+  },
+}))
+
+vi.mock("@chatbotx.io/database/repositories/workspace-mac", () => ({
+  workspaceMacRepository: { sumForTenant },
+}))
 
 const { userQuotaService } = await import("../src/user-quota/service")
 
 beforeEach(() => {
   vi.clearAllMocks()
-  countResults.length = 0
-  countDistinctTeamMembersForOwner.mockResolvedValue(2)
   findFirstUserQuota.mockResolvedValue({
     macUsed: 10,
     periodStart: new Date("2026-01-01T00:00:00Z"),
     periodEnd: new Date("2026-02-01T00:00:00Z"),
     monthlyBotMessagesPeriodStart: new Date("2026-01-01T00:00:00Z"),
   })
+  tenantFindById.mockResolvedValue(undefined)
+  tenantFindByOwner.mockResolvedValue(undefined)
+  sumForTenant.mockResolvedValue(0)
   vi.spyOn(
     userQuotaService,
     "countDistinctTeamMembersForOwner",
   ).mockImplementation(countDistinctTeamMembersForOwner)
+})
+describe("reconcileOwnerAfterTeardown", () => {
+  test("reconciles a root owner against only the owner's self usage", async () => {
+    const selfUsage = vi
+      .spyOn(userQuotaService, "reconcileUserSelfUsage")
+      .mockResolvedValue({
+        channelsUsed: 0,
+        contactsUsed: 0,
+        macUsed: 0,
+        teamMembersUsed: 0,
+        workspacesUsed: 0,
+      })
+    tenantFindByOwner.mockResolvedValueOnce(undefined)
+    const ownerPool = vi.spyOn(userQuotaService, "reconcileOwnerPoolUsage")
+
+    await userQuotaService.reconcileOwnerAfterTeardown("owner-1")
+
+    expect(selfUsage).toHaveBeenCalledWith("owner-1")
+    expect(ownerPool).not.toHaveBeenCalled()
+  })
+
+  test("reconciles an active reseller owner against the tenant pool", async () => {
+    const selfUsage = vi.spyOn(userQuotaService, "reconcileUserSelfUsage")
+    const ownerPool = vi
+      .spyOn(userQuotaService, "reconcileOwnerPoolUsage")
+      .mockResolvedValue(undefined)
+    tenantFindByOwner.mockResolvedValueOnce({
+      id: "tenant-1",
+      ownerId: "owner-1",
+      status: "active",
+    })
+
+    await userQuotaService.reconcileOwnerAfterTeardown("owner-1")
+
+    expect(ownerPool).toHaveBeenCalledWith("owner-1", "tenant-1")
+    expect(selfUsage).toHaveBeenCalledWith("owner-1")
+  })
+
+  test("uses the reseller tenant rather than the root tenant for root-owned workspaces", async () => {
+    const ownerPool = vi
+      .spyOn(userQuotaService, "reconcileOwnerPoolUsage")
+      .mockResolvedValue(undefined)
+    tenantFindByOwner.mockResolvedValueOnce({
+      id: "reseller-tenant",
+      ownerId: "reseller-owner",
+      status: "active",
+    })
+
+    await userQuotaService.reconcileOwnerAfterTeardown("reseller-owner", "1")
+
+    expect(ownerPool).toHaveBeenCalledWith("reseller-owner", "reseller-tenant")
+  })
+})
+
+describe("reconcileOwnerPoolUsage", () => {
+  test("does not restore MAC after a quota rollover races the reconcile", async () => {
+    await userQuotaService.reconcileOwnerPoolUsage("owner-1", "tenant-1")
+
+    const builder = dbInsert.mock.results.at(-1)?.value
+    const conflict = builder?.onConflictDoUpdate.mock.calls[0]?.[0] as {
+      set: { macUsed: { sql: string } }
+    }
+    expect(conflict.set.macUsed.sql).toContain("WHEN ? IS NOT DISTINCT FROM ?")
+    expect(conflict.set.macUsed.sql).toContain("ELSE ?")
+  })
+
+  test("delegates a period-mismatched live MAC raise to the atomic Redis guard", async () => {
+    redisEval.mockResolvedValueOnce(0)
+
+    await userQuotaService.raiseLiveMac({
+      userId: "owner-1",
+      value: 17,
+      periodIso: "2026-02-01T00:00:00.000Z",
+    })
+
+    expect(redisEval).toHaveBeenCalledWith(
+      expect.any(String),
+      1,
+      expect.any(String),
+      "macPeriodStart",
+      "2026-02-01T00:00:00.000Z",
+      "mac",
+      "17",
+    )
+  })
 })
 
 describe("reconcileUserSelfUsage", () => {
@@ -270,21 +381,28 @@ describe("reconcileUserSelfUsage", () => {
   })
 })
 
-describe("persistMacUsed", () => {
-  test("upserts macUsed to the given absolute value via onConflictDoUpdate", async () => {
-    await userQuotaService.persistMacUsed("user-1", 42)
+describe("raiseMacUsed", () => {
+  test("upserts a period-pinned monotonic MAC value", async () => {
+    const periodStart = new Date("2026-01-01T00:00:00Z")
+    await userQuotaService.raiseMacUsed({
+      userId: "user-1",
+      value: 42,
+      periodStart,
+    })
 
     const call = dbInsert.mock.results.at(-1)?.value as {
       values: ReturnType<typeof vi.fn>
       onConflictDoUpdate: ReturnType<typeof vi.fn>
     }
     expect(call.values).toHaveBeenCalledWith(
-      expect.objectContaining({ userId: "user-1", macUsed: 42 }),
+      expect.objectContaining({
+        macUsed: 42,
+        periodStart,
+        userId: "user-1",
+      }),
     )
     expect(call.onConflictDoUpdate).toHaveBeenCalledWith(
-      expect.objectContaining({
-        set: expect.objectContaining({ macUsed: 42 }),
-      }),
+      expect.objectContaining({ setWhere: expect.anything() }),
     )
   })
 })
