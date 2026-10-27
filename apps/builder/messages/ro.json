@@ -5570,7 +5570,9 @@
       "anyProduct": "Orice produs",
       "anyCategory": "Orice categorie",
       "anyPipeline": "Orice pipeline",
-      "anyStage": "Orice etapă"
+      "anyStage": "Orice etapă",
+      "unavailablePipeline": "Pipeline șters sau indisponibil",
+      "unavailableStage": "Etapă ștearsă sau indisponibilă"
     },
     "actions": {
       "addTag": "Adaugă etichetă",

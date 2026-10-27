@@ -56,9 +56,37 @@ export const pipelineActivityRepository = {
       .limit(input.limit)
     const rows = await tx
       .delete(pipelineItemActivityModel)
-      .where(inArray(pipelineItemActivityModel.id, batch))
+      .where(
+        and(
+          // The partition key, so the delete touches one partition.
+          eq(pipelineItemActivityModel.workspaceId, input.workspaceId),
+          inArray(pipelineItemActivityModel.id, batch),
+        ),
+      )
       .returning({ id: pipelineItemActivityModel.id })
     return rows.length
+  },
+
+  /**
+   * Clears the item titles kept in a deleted contact's history: they often
+   * hold the contact's name. Counts, values and dates stay for analytics.
+   */
+  async scrubContactTitles(
+    input: { workspaceId: string; contactIds: string[] },
+    tx: DatabaseClient = db,
+  ) {
+    if (input.contactIds.length === 0) {
+      return
+    }
+    await tx
+      .update(pipelineItemActivityModel)
+      .set({ itemTitle: "", fromTitle: null, toTitle: null })
+      .where(
+        and(
+          eq(pipelineItemActivityModel.workspaceId, input.workspaceId),
+          inArray(pipelineItemActivityModel.contactId, input.contactIds),
+        ),
+      )
   },
 
   async insertMany(rows: PipelineActivityInsert[], tx: DatabaseClient = db) {
@@ -158,10 +186,15 @@ export const pipelineActivityRepository = {
       )
   },
 
-  /** Same transitions grouped by who caused them (user id or null). */
+  /**
+   * Same transitions grouped by who caused them: a user (whose id is null once
+   * the user is deleted) or automation (flows, triggers, tokens, system).
+   */
   async totalsByActor(input: PipelineAnalyticsRange, tx: DatabaseClient = db) {
+    const isAutomation = sql<boolean>`(${pipelineItemActivityModel.actorKind} <> 'user')`
     return await tx
       .select({
+        isAutomation,
         actorUserId: pipelineItemActivityModel.actorUserId,
         kind: pipelineItemActivityModel.kind,
         toStatus: pipelineItemActivityModel.toStatus,
@@ -171,6 +204,7 @@ export const pipelineActivityRepository = {
       .from(pipelineItemActivityModel)
       .where(analyticsWhere(input))
       .groupBy(
+        isAutomation,
         pipelineItemActivityModel.actorUserId,
         pipelineItemActivityModel.kind,
         pipelineItemActivityModel.toStatus,

@@ -5570,7 +5570,9 @@
       "anyProduct": "Mikä tahansa tuote",
       "anyCategory": "Mikä tahansa kategoria",
       "anyPipeline": "Mikä tahansa pipeline",
-      "anyStage": "Mikä tahansa vaihe"
+      "anyStage": "Mikä tahansa vaihe",
+      "unavailablePipeline": "Poistettu tai ei käytettävissä oleva putki",
+      "unavailableStage": "Poistettu tai ei käytettävissä oleva vaihe"
     },
     "actions": {
       "addTag": "Lisää tunniste",

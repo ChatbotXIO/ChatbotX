@@ -5570,7 +5570,9 @@
       "anyProduct": "Elk product",
       "anyCategory": "Elke categorie",
       "anyPipeline": "Elke pipeline",
-      "anyStage": "Elke fase"
+      "anyStage": "Elke fase",
+      "unavailablePipeline": "Verwijderde of niet-beschikbare pipeline",
+      "unavailableStage": "Verwijderde of niet-beschikbare fase"
     },
     "actions": {
       "addTag": "Tag toevoegen",

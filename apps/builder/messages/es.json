@@ -5570,7 +5570,9 @@
       "anyProduct": "Cualquier producto",
       "anyCategory": "Cualquier categoría",
       "anyPipeline": "Cualquier pipeline",
-      "anyStage": "Cualquier etapa"
+      "anyStage": "Cualquier etapa",
+      "unavailablePipeline": "Pipeline eliminado o no disponible",
+      "unavailableStage": "Etapa eliminada o no disponible"
     },
     "actions": {
       "addTag": "Añadir Etiqueta",

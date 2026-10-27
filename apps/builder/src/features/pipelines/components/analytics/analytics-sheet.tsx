@@ -161,9 +161,9 @@ export function AnalyticsSheet({
   ) satisfies ChartConfig
 
   const adminRows = useMemo<AdminRow[]>(() => {
-    const byUser = new Map(
-      (stats.data?.byActor ?? []).map((row) => [row.actorUserId, row]),
-    )
+    const byActor = stats.data?.byActor ?? []
+    const userRows = byActor.filter((row) => row.actorKind === "user")
+    const byUser = new Map(userRows.map((row) => [row.actorUserId, row]))
     const zero = { created: 0, won: 0, wonValue: 0, lost: 0, lostValue: 0 }
     const memberRows = members.flatMap((member) =>
       member.user?.id
@@ -171,28 +171,31 @@ export function AnalyticsSheet({
             {
               ...zero,
               ...byUser.get(member.user.id),
-              userId: member.user.id,
+              key: `user:${member.user.id}`,
               name: member.user.name ?? "--",
             },
           ]
         : [],
     )
-    const knownIds = new Set(memberRows.map((row) => row.userId))
-    // Actors who left the workspace still carry history; keep their rows.
-    const strayRows = (stats.data?.byActor ?? [])
-      .filter((row) => row.actorUserId && !knownIds.has(row.actorUserId))
+    const memberUserIds = new Set(
+      members.flatMap((member) => (member.user?.id ? [member.user.id] : [])),
+    )
+    // People who left the workspace (or whose account was deleted) keep their
+    // history, labelled like the item history does.
+    const formerRows = userRows
+      .filter((row) => !(row.actorUserId && memberUserIds.has(row.actorUserId)))
       .map((row) => ({
         ...row,
-        userId: row.actorUserId,
-        name: "--",
+        key: row.actorUserId ? `user:${row.actorUserId}` : "formerMember",
+        name: t("activityActor.formerMember"),
       }))
     return [
       ...memberRows,
-      ...strayRows,
+      ...formerRows,
       {
         ...zero,
-        ...byUser.get(null),
-        userId: null,
+        ...byActor.find((row) => row.actorKind === "automation"),
+        key: "automation",
         name: t("analytics.automation"),
       },
     ]

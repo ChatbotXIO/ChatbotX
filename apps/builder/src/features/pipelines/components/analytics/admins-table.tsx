@@ -14,8 +14,8 @@ import { useTranslations } from "next-intl"
 import { useMemo, useState } from "react"
 
 export type AdminRow = {
-  /** Null is the grouped "Automation" actor. */
-  userId: string | null
+  /** Row identity: `user:<id>`, `formerMember` or `automation`. */
+  key: string
   name: string
   created: number
   won: number
@@ -114,7 +114,7 @@ export function AdminsTable({ rows, itemsLabel, money }: AdminsTableProps) {
         </TableHeader>
         <TableBody>
           {sorted.map((row) => (
-            <TableRow key={row.userId ?? "automation"}>
+            <TableRow key={row.key}>
               <TableCell className="font-medium">{row.name}</TableCell>
               <TableCell className="text-right">{row.created}</TableCell>
               <TableCell className="text-right">{row.won}</TableCell>

@@ -28,7 +28,7 @@ Ten tables (migration `20261025155532_pipelines`):
 | `PipelineItemAssignee` | Workspace members and inbox teams assigned to an item (one unique index per kind). |
 | `PipelineItemComment` | Comments; optional `idempotencyKey`. |
 | `PipelineItemAttachment` | Links an item to a media-library file (unique per item and file). |
-| `PipelineItemActivity` | Append-only history (see Analytics). No foreign key on `itemId`/`contactId`, so rows outlive the item and contact; the pipeline delete is the only cascade. Bodies of descriptions, fields and comments are never stored. |
+| `PipelineItemActivity` | Append-only history (see Analytics), partitioned `HASH("workspaceId")` x 32 (primary key `(id, workspaceId)`; every read and delete filters by `workspaceId`, so it prunes to one partition). No foreign key on `itemId`/`contactId`, so rows outlive the item and contact; the pipeline delete is the only cascade. Bodies of descriptions, fields and comments are never stored, and a deleted contact's item titles are cleared (see "When referenced data is deleted"). |
 | `PipelineField` | Per-pipeline custom field (`referenceName` unique per pipeline, `type`, `required`, `position`). |
 | `PipelineMember` | Per-pipeline ACL row: `canView`, `canEdit`, `canDelete`, `canManageSettings`. |
 
@@ -237,6 +237,24 @@ that stage is busy.
   migration runner applies plain `CREATE INDEX` like its siblings (no
   `CONCURRENTLY`), which briefly blocks writes to the table while it builds.
 
+## When referenced data is deleted
+
+| Deleted | What happens |
+|---|---|
+| Contact | Its items, assignees, comments and attachments cascade (contact delete is hard and chunked). History rows stay for analytics, with `itemTitle`/`fromTitle`/`toTitle` cleared in the same transaction (`scrubContactTitles`, index `PipelineItemActivity_contact_idx`), since titles often hold the contact's name. Counts heal within the cache TTL; open boards on their next refetch. |
+| Workspace member | `PipelineMember` and `PipelineItemAssignee` rows cascade; flows that name the member skip it. |
+| User account | `createdById` / `closedById` / comment author / `actorUserId` are set null: the drawer shows only dates, history and analytics show "Former member". |
+| Inbox team, media file | Assignee / attachment rows cascade. |
+| Pipeline field, stage | See the flow step rules ("Deleted references"); board filters drop deleted fields. |
+| Pipeline | Its flow steps route to `error`; trigger and webhook conditions pinned to it stop matching and their editor shows "Deleted or unavailable pipeline/stage" instead of "any" (a stage is only cleared when the user picks another pipeline). |
+| Any of them, mid-write | A row deleted between the existence check and the insert fails the foreign key (23503); `mutate` turns it into a 404 instead of a 500 and a job retry. |
+
+Contact filters (`pipelineItem`) are evaluated as SQL only, so a deleted
+pipeline or stage never fails a segment or broadcast: positive operators match
+nothing, and the negative ones (`isEmpty`, `notIn`) match every contact, which
+is the literal meaning ("has no item in it"). The filter chip names such a
+pipeline "Deleted or unavailable pipeline".
+
 ## Reads: keyset cursors and sort contract
 
 The board reads each stage with a first page (`perStageLimit`, default 50)
@@ -438,6 +456,15 @@ the client refetches through its authorised read.
   `error`; missing target -> `skip`; success -> `success`. Unexpected failures
   (database down) propagate so the job retries. The reason is logged, never
   shown to the contact. Actor: `{kind: "flow", sourceId: flowId}`.
+- **Deleted references.** A flow keeps working after something it names is
+  deleted (`liveReferences` in `flow-actions.ts`, logged as a warning):
+  `addToPipeline` still adds the item, leaving out deleted admins, teams and
+  fields and using the first stage when its stage is gone; `assign` keeps the
+  remaining assignees and errors only when none is left; `clearCustomField`
+  skips deleted fields. A due date read from a deleted (or no longer date)
+  contact field adds the item without a due date, while `changeDueDate` errors
+  instead of clearing the item's date. A deleted pipeline, or the stage of
+  `moveToStage` / `transfer`, still routes to `error`.
 - **Dedup keys.** Only the actions that add something are deduplicated:
   `addToPipeline` and `addComment` get `idempotencyKey =
   "<flowExecutionKey>:<stepId>"`; a retried "set" is already idempotent. Without
@@ -616,8 +643,11 @@ current state:
   and re-closing counts twice and a later value edit never rewrites history.
 - Days are bucketed in the requested timezone (`enumerateDateKeys` fills empty
   days); the response has `current`, the equal-length `previous` period, the
-  percent `change` per metric, `daily` and `byActor` (non-user actors are
-  grouped under `actorUserId: null`).
+  percent `change` per metric, `daily` and `byActor`. Each `byActor` row has
+  `actorKind`: `automation` groups flows, triggers, tokens and system changes
+  (`actorUserId: null`); `user` rows carry the user id, which is null for a
+  user whose account was deleted. The UI shows such rows, and members who left
+  the workspace, as "Former member", like the item history does.
 - Money is summed at four decimals and rounded to remove float drift.
 - The UI draws the three created/won/lost-by-admin pies from `byActor` alone
   (`lib/admin-pie-model.ts`): the five most active actors take the categorical
@@ -646,8 +676,11 @@ Colors must match `#rrggbb`, currency `^[A-Z]{3}$`.
 
 ## Operations
 
-- **Migration.** Apply `20261025155532_pipelines` only with explicit approval
-  (AGENTS.md). Deploy order: migrate, then worker + builder.
+- **Migration.** One migration, `*_pipelines`, apply only with explicit
+  approval (AGENTS.md). It first drops the pipeline tables and enums
+  `IF EXISTS`, so a database that ran this branch's earlier pipeline migrations
+  is rebuilt cleanly (their pipeline data is lost); on production every drop is
+  a no-op. Deploy order: migrate, then worker + builder.
 - **Stuck stage.** A stage with `bulkJobId` set and no live job is reclaimable
   one minute after the claim: repeat the delete. A live job answers
   `409 stageBusy`; inspect the `default` queue for `processPipelineStageBulk`
@@ -655,8 +688,11 @@ Colors must match `#rrggbb`, currency `^[A-Z]{3}$`.
 - **Effects are best-effort.** A missing trigger/webhook/realtime event after a
   successful write shows up as `Pipeline post-commit effect failed` in the
   logs (`effectKind`); there is no replay.
-- **Workspace purge** cascades pipelines, stages, items and their children
-  through the foreign keys; activity rows go with their pipeline.
+- **Workspace purge** drains `PipelineItemActivity` in batches as a
+  partitioned table (`PARTITIONED_WORKSPACE_TABLES`), so the final workspace
+  delete never cascades the whole history in one statement; items and their
+  children go with the batched contact drain, the rest through the foreign
+  keys.
 - Realtime consumers refetch on `pipelineItemChanged`; a lost push heals on the
   next refetch or the 30 s query stale time.
 

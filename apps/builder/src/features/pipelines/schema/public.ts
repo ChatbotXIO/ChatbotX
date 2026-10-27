@@ -676,11 +676,16 @@ export const pipelineStatsPublicResponse = z.object({
   daily: z.array(statsTotals.extend({ day: z.string() })),
   byActor: z.array(
     statsTotals.extend({
+      actorKind: z
+        .enum(["user", "automation"])
+        .describe(
+          "`automation` groups flows, triggers, API tokens and system changes.",
+        ),
       actorUserId: z
         .string()
         .nullable()
         .describe(
-          "Null groups flows, triggers, API tokens and system changes.",
+          "The user. Null for automation, or for a user that was deleted.",
         ),
     }),
   ),

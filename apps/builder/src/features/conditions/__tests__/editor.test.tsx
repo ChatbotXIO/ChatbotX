@@ -16,7 +16,8 @@ vi.mock("@chatbotx.io/ui/components/form/input-field", () => ({
 }))
 
 // Both field mocks render a native <select> tagged with the component name so
-// tests can assert which field a condition type uses.
+// tests can assert which field a condition type uses. Like the real pickers, a
+// user's choice also reaches `triggerValueChange`.
 const { createFieldMock } = vi.hoisted(() => ({
   createFieldMock: async (component: "select" | "combobox") => {
     const { useFormContext } = await import("react-hook-form")
@@ -24,14 +25,26 @@ const { createFieldMock } = vi.hoisted(() => ({
     return ({
       name,
       options,
+      triggerValueChange,
     }: {
       name: string
       options: { label: string; value: string }[]
+      triggerValueChange?: (value: string) => void
     }) => {
       const form = useFormContext()
+      const registered = form.register(name)
 
       return (
-        <select data-component={component} {...form.register(name)} name={name}>
+        <select
+          data-component={component}
+          {...registered}
+          name={name}
+          onChange={(event) => {
+            // react-hook-form stores the value synchronously; validation is async.
+            registered.onChange(event)
+            triggerValueChange?.(event.target.value)
+          }}
+        >
           {options.map((option) => (
             <option key={option.value} value={option.value}>
               {option.label}
@@ -406,7 +419,7 @@ describe("ConditionEditor", () => {
     })
   })
 
-  test("clears a saved stage that is absent from its loaded pipeline", async () => {
+  test("keeps a saved stage that is absent from its loaded pipeline (deleted), not widening it", async () => {
     const onSubmit = vi.fn()
     function Harness() {
       const form = useForm({
@@ -435,7 +448,7 @@ describe("ConditionEditor", () => {
     })
     await vi.waitFor(() => {
       expect(onSubmit).toHaveBeenCalledWith({
-        conditions: [{ sourceId: "11", value: { stageId: "" } }],
+        conditions: [{ sourceId: "11", value: { stageId: "31" } }],
       })
     })
   })

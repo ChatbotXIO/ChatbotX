@@ -6252,7 +6252,9 @@
       "anyProduct": "Any product",
       "anyCategory": "Any category",
       "anyPipeline": "Any pipeline",
-      "anyStage": "Any stage"
+      "anyStage": "Any stage",
+      "unavailablePipeline": "Deleted or unavailable pipeline",
+      "unavailableStage": "Deleted or unavailable stage"
     },
     "actions": {
       "addTag": "Add Tag",

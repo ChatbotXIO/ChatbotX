@@ -21,7 +21,9 @@ export type PipelineStatsTotals = {
 export type PipelineStatsDay = PipelineStatsTotals & { day: string }
 
 export type PipelineStatsActor = PipelineStatsTotals & {
-  /** Null groups every non-user actor (flows, triggers, tokens, system). */
+  /** `automation` groups every non-user actor (flows, triggers, tokens, system). */
+  actorKind: "user" | "automation"
+  /** The user; null for automation, or for a user that was deleted since. */
   actorUserId: string | null
 }
 
@@ -158,18 +160,25 @@ export class PipelineAnalyticsService extends BaseService {
   }
 
   private groupByActor(
-    rows: Array<Transition & { actorUserId: string | null }>,
+    rows: Array<
+      Transition & { isAutomation: boolean; actorUserId: string | null }
+    >,
   ): PipelineStatsActor[] {
-    const byActor = new Map<string | null, PipelineStatsTotals>()
+    const byActor = new Map<string, PipelineStatsActor>()
     for (const row of rows) {
-      const bucket = byActor.get(row.actorUserId) ?? emptyTotals()
+      const actorKind = row.isAutomation ? "automation" : "user"
+      // A deleted user's rows (null id) stay "user", never "automation".
+      const actorUserId = row.isAutomation ? null : row.actorUserId
+      const key = `${actorKind}:${actorUserId ?? ""}`
+      const bucket = byActor.get(key) ?? {
+        actorKind,
+        actorUserId,
+        ...emptyTotals(),
+      }
       addTransition(bucket, row)
-      byActor.set(row.actorUserId, bucket)
+      byActor.set(key, bucket)
     }
-    return [...byActor.entries()].map(([actorUserId, totals]) => ({
-      actorUserId,
-      ...totals,
-    }))
+    return [...byActor.values()]
   }
 }
 

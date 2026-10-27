@@ -22,6 +22,7 @@ import {
 import {
   contactInboxRepository,
   contactRepository,
+  pipelineActivityRepository,
 } from "@chatbotx.io/database/repositories"
 import {
   contactInboxModel,
@@ -833,6 +834,14 @@ class ContactService extends BaseService {
             contactModel.id,
             chunk.map((c) => c.id),
           ),
+        )
+        // Pipeline history outlives the contact (it has no FK) for analytics;
+        // only the item titles that may name the contact are cleared. After
+        // the delete: its item cascade waited for any writer holding an item
+        // lock, so history that writer added is cleared too.
+        await pipelineActivityRepository.scrubContactTitles(
+          { workspaceId, contactIds: chunk.map((contact) => contact.id) },
+          tx,
         )
       })
     }

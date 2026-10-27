@@ -35,6 +35,13 @@ export const PARTITIONED_WORKSPACE_TABLES = [
     table: "SequenceDispatch",
   },
   {
+    // Append-only pipeline history with no contact FK: drained here so the
+    // final workspace delete does not cascade millions of rows at once.
+    primaryKey: ["id", "workspaceId"],
+    selector: "workspace",
+    table: "PipelineItemActivity",
+  },
+  {
     primaryKey: ["workspaceId", "hourBucket", "contactInboxId"],
     selector: "workspace",
     table: "ContactActiveHourly",

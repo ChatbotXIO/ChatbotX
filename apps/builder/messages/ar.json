@@ -5570,7 +5570,9 @@
       "anyProduct": "أي منتج",
       "anyCategory": "أي فئة",
       "anyPipeline": "أي خط سير عمل",
-      "anyStage": "أي مرحلة"
+      "anyStage": "أي مرحلة",
+      "unavailablePipeline": "مسار محذوف أو غير متاح",
+      "unavailableStage": "مرحلة محذوفة أو غير متاحة"
     },
     "actions": {
       "addTag": "إضافة وسم",

@@ -3375,7 +3375,9 @@
       "anyProduct": "כל מוצר",
       "anyCategory": "כל קטגוריה",
       "anyPipeline": "כל הפייפליינים",
-      "anyStage": "כל השלבים"
+      "anyStage": "כל השלבים",
+      "unavailablePipeline": "צינור שנמחק או אינו זמין",
+      "unavailableStage": "שלב שנמחק או אינו זמין"
     },
     "actions": {
       "addTag": "הוספת תגית",

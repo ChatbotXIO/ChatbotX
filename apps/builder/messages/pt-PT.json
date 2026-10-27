@@ -5566,7 +5566,9 @@
       "anyProduct": "Qualquer produto",
       "anyCategory": "Qualquer categoria",
       "anyPipeline": "Qualquer funil",
-      "anyStage": "Qualquer fase"
+      "anyStage": "Qualquer fase",
+      "unavailablePipeline": "Pipeline eliminado ou indisponível",
+      "unavailableStage": "Etapa eliminada ou indisponível"
     },
     "actions": {
       "addTag": "Adicionar etiqueta",

@@ -6536,7 +6536,9 @@
       "anyProduct": "Valfri produkt",
       "anyCategory": "Valfri kategori",
       "anyPipeline": "Valfri pipeline",
-      "anyStage": "Valfri fas"
+      "anyStage": "Valfri fas",
+      "unavailablePipeline": "Borttagen eller otillgänglig pipeline",
+      "unavailableStage": "Borttaget eller otillgängligt steg"
     },
     "day": "Dag",
     "hour": "Timme",

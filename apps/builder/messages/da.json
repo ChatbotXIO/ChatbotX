@@ -5570,7 +5570,9 @@
       "anyProduct": "Alle produkter",
       "anyCategory": "Enhver kategori",
       "anyPipeline": "Alle pipelines",
-      "anyStage": "Alle faser"
+      "anyStage": "Alle faser",
+      "unavailablePipeline": "Slettet eller utilgængelig pipeline",
+      "unavailableStage": "Slettet eller utilgængelig fase"
     },
     "actions": {
       "addTag": "Tilføj tag",

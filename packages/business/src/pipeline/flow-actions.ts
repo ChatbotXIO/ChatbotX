@@ -1,5 +1,9 @@
 import { PIPELINE_LIMITS } from "@chatbotx.io/database/partials"
-import { pipelineRepository } from "@chatbotx.io/database/repositories"
+import {
+  pipelineReferenceRepository,
+  pipelineRepository,
+  pipelineStageRepository,
+} from "@chatbotx.io/database/repositories"
 import { isBigintId } from "@chatbotx.io/database/utils"
 import type {
   PipelineStepAction,
@@ -10,6 +14,7 @@ import type {
 import { contactCustomFieldValueService } from "../contact-custom-field/value-service"
 import { customFieldService } from "../custom-field/service"
 import { ChatbotXException, validationException } from "../errors"
+import { logger } from "../logger"
 import type { PipelineAccessScope } from "./access"
 import { pipelineItemService } from "./item.service"
 import { pipelineItemContentService } from "./item-content.service"
@@ -128,9 +133,17 @@ const parseValue = (raw: string): number => {
   return parsed
 }
 
+/**
+ * How a due date read from a contact custom field treats a field that was
+ * deleted (or no longer holds dates): adding an item still adds it without a
+ * due date, while "Change due date" fails instead of clearing the date.
+ */
+type MissingDueDateField = "noDueDate" | "error"
+
 async function resolveDueDate(
   dueDate: PipelineStepDueDate,
   env: ActionEnv,
+  onMissingField: MissingDueDateField,
 ): Promise<Date | null> {
   if (dueDate.mode === "none") {
     return null
@@ -151,6 +164,13 @@ async function resolveDueDate(
     where: { workspaceId, id: dueDate.customFieldId },
   })
   if (!(customField && DUE_DATE_FIELD_TYPES.has(customField.type))) {
+    if (onMissingField === "noDueDate") {
+      logger.warn(
+        { workspaceId, customFieldId: dueDate.customFieldId },
+        "Pipeline step due date field no longer exists; adding without a due date",
+      )
+      return null
+    }
     throw validationException(
       "dueDate",
       "The due date field must be an existing date or datetime custom field",
@@ -190,6 +210,79 @@ async function interpolateFieldValues(
 const interpolateText = async (env: ActionEnv, text: string, max: number) =>
   (await env.ctx.interpolate(text)).trim().slice(0, max)
 
+/** Ids of the step that still exist; deleted ones are dropped. */
+type LiveReferences = {
+  memberIds: string[]
+  teamIds: string[]
+  fieldIds: ReadonlySet<string>
+  stageId: string | undefined
+}
+
+/**
+ * The admins, teams, pipeline fields and stage a step names that still exist.
+ * A flow keeps running after one of them is deleted: the missing ones are
+ * dropped (and logged) instead of sending every run to the error branch.
+ * Only the lookups the step needs are made.
+ */
+async function liveReferences(
+  env: ActionEnv,
+  refs: {
+    memberIds?: string[]
+    teamIds?: string[]
+    fieldIds?: string[]
+    stageId?: string
+  },
+): Promise<LiveReferences> {
+  const { workspaceId } = env.ctx
+  const { pipelineId } = env
+  const [members, teamIds, fields, stages] = await Promise.all([
+    pipelineReferenceRepository.listWorkspaceMembers({
+      workspaceId,
+      ids: refs.memberIds ?? [],
+    }),
+    pipelineReferenceRepository.listInboxTeamIds({
+      workspaceId,
+      ids: refs.teamIds ?? [],
+    }),
+    refs.fieldIds?.length
+      ? pipelineRepository.listFields({ workspaceId, pipelineId })
+      : [],
+    refs.stageId
+      ? pipelineStageRepository.listByPipeline({ workspaceId, pipelineId })
+      : [],
+  ])
+  const memberIdSet = new Set(members.map((member) => member.id))
+  const teamIdSet = new Set(teamIds)
+  const fieldIdSet = new Set(fields.map((field) => field.id))
+  const live: LiveReferences = {
+    memberIds: (refs.memberIds ?? []).filter((id) => memberIdSet.has(id)),
+    teamIds: (refs.teamIds ?? []).filter((id) => teamIdSet.has(id)),
+    fieldIds: new Set((refs.fieldIds ?? []).filter((id) => fieldIdSet.has(id))),
+    stageId: stages.some((stage) => stage.id === refs.stageId)
+      ? refs.stageId
+      : undefined,
+  }
+  const dropped = {
+    memberIds: (refs.memberIds ?? []).filter((id) => !memberIdSet.has(id)),
+    teamIds: (refs.teamIds ?? []).filter((id) => !teamIdSet.has(id)),
+    fieldIds: (refs.fieldIds ?? []).filter((id) => !fieldIdSet.has(id)),
+    stageId: refs.stageId && !live.stageId ? refs.stageId : undefined,
+  }
+  if (
+    dropped.memberIds.length +
+      dropped.teamIds.length +
+      dropped.fieldIds.length >
+      0 ||
+    dropped.stageId
+  ) {
+    logger.warn(
+      { workspaceId, pipelineId, flowId: env.ctx.flowId, dropped },
+      "Pipeline step names deleted references; they were skipped",
+    )
+  }
+  return live
+}
+
 const assertIdShape = (id: string, field: string) => {
   if (!isBigintId(id)) {
     throw validationException(field, "The id is not valid")
@@ -224,6 +317,16 @@ export const PIPELINE_FLOW_ACTION_HANDLERS: {
     if (stageId) {
       assertIdShape(stageId, "stageId")
     }
+    // A deleted stage falls back to the first one; deleted admins, teams and
+    // fields are left out, so the item is still created.
+    const live = await liveReferences(env, {
+      memberIds: step.assigneeMemberIds,
+      teamIds: step.assigneeInboxTeamIds,
+      fieldIds: step.fieldValues
+        .map((entry) => entry.pipelineFieldId)
+        .filter(Boolean),
+      stageId,
+    })
     const title = await interpolateText(env, step.title, PIPELINE_LIMITS.title)
     const description = await interpolateText(
       env,
@@ -238,11 +341,16 @@ export const PIPELINE_FLOW_ACTION_HANDLERS: {
         title: title || FALLBACK_TITLE,
         description: description || null,
         status: step.status,
-        stageId,
-        dueDate: await resolveDueDate(step.dueDate, env),
-        assigneeMemberIds: step.assigneeMemberIds,
-        assigneeInboxTeamIds: step.assigneeInboxTeamIds,
-        fieldValues: await interpolateFieldValues(step.fieldValues, env),
+        stageId: live.stageId,
+        dueDate: await resolveDueDate(step.dueDate, env, "noDueDate"),
+        assigneeMemberIds: live.memberIds,
+        assigneeInboxTeamIds: live.teamIds,
+        fieldValues: await interpolateFieldValues(
+          step.fieldValues.filter(({ pipelineFieldId }) =>
+            live.fieldIds.has(pipelineFieldId),
+          ),
+          env,
+        ),
       },
       idempotencyKey: env.idempotencyKey,
       scope: FLOW_SCOPE,
@@ -275,9 +383,19 @@ export const PIPELINE_FLOW_ACTION_HANDLERS: {
     }
     assertIdsShape(step.assigneeMemberIds, "assigneeMemberIds")
     assertIdsShape(step.assigneeInboxTeamIds, "assigneeInboxTeamIds")
+    const live = await liveReferences(env, {
+      memberIds: step.assigneeMemberIds,
+      teamIds: step.assigneeInboxTeamIds,
+    })
+    if (live.memberIds.length === 0 && live.teamIds.length === 0) {
+      throw validationException(
+        "assigneeMemberIds",
+        "None of the step's assignees exist any more",
+      )
+    }
     await updateTarget(env, target, {
-      assigneeMemberIds: step.assigneeMemberIds,
-      assigneeInboxTeamIds: step.assigneeInboxTeamIds,
+      assigneeMemberIds: live.memberIds,
+      assigneeInboxTeamIds: live.teamIds,
     })
   }),
 
@@ -291,7 +409,7 @@ export const PIPELINE_FLOW_ACTION_HANDLERS: {
 
   changeDueDate: onTarget(async (step, env, target) => {
     await updateTarget(env, target, {
-      dueDate: await resolveDueDate(step.dueDate, env),
+      dueDate: await resolveDueDate(step.dueDate, env, "error"),
     })
   }),
 
@@ -320,8 +438,13 @@ export const PIPELINE_FLOW_ACTION_HANDLERS: {
       throw validationException("pipelineFieldIds", "Choose at least one field")
     }
     assertIdsShape(ids, "pipelineFieldIds")
+    // A deleted field has no value left to clear.
+    const { fieldIds } = await liveReferences(env, { fieldIds: ids })
+    if (fieldIds.size === 0) {
+      return
+    }
     await updateTarget(env, target, {
-      fieldValues: Object.fromEntries(ids.map((id) => [id, null])),
+      fieldValues: Object.fromEntries([...fieldIds].map((id) => [id, null])),
     })
   }),
 

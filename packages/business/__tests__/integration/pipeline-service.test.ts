@@ -2109,6 +2109,37 @@ describe.skipIf(!databaseUrl)("pipeline services", () => {
       expect(stats.current).toMatchObject({ created: 1, won: 1, wonValue: 250 })
     })
 
+    test("a deleted user's changes stay a user row, apart from automation", async () => {
+      const pipeline = await newPipeline(own)
+      const flowActor = { kind: "flow", userId: null, sourceId: "f-1" } as const
+      // `actor` is a user whose account no longer exists (userId null).
+      await newItem(own, pipeline.id)
+      await newItem(own, pipeline.id, { actor: flowActor })
+      const today = new Date().toISOString().slice(0, 10)
+
+      const stats = await pipelineAnalyticsService.getStats({
+        workspaceId: own.workspaceId,
+        pipelineId: pipeline.id,
+        from: today,
+        to: today,
+        timezone: "UTC",
+        scope: token,
+      })
+
+      expect(
+        stats.byActor
+          .map(({ actorKind, actorUserId, created }) => ({
+            actorKind,
+            actorUserId,
+            created,
+          }))
+          .sort((a, b) => a.actorKind.localeCompare(b.actorKind)),
+      ).toEqual([
+        { actorKind: "automation", actorUserId: null, created: 1 },
+        { actorKind: "user", actorUserId: null, created: 1 },
+      ])
+    })
+
     test("an enqueue failure gives the stage back instead of leaving it busy", async () => {
       const pipeline = await newPipeline(own)
       const second = await pipelineStructureService.createStage({

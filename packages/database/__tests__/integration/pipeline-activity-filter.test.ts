@@ -21,6 +21,7 @@ import {
 import { relations } from "../../src/relations"
 import {
   type PipelineActivityMatch,
+  pipelineActivityRepository,
   pipelineItemRepository,
   pipelineRepository,
   pipelineStageRepository,
@@ -320,5 +321,47 @@ describe.skipIf(!databaseUrl)("pipeline activity filter SQL", () => {
     expect(byKind.items.map((item) => item.title)).not.toContain(
       "Other pipeline only",
     )
+  })
+
+  test("a deleted contact's titles are cleared from history; other contacts and counts stay", async () => {
+    const db = database()
+    const otherContactId = "987654321"
+    const row = (forContact: string, title: string) => ({
+      workspaceId,
+      pipelineId,
+      itemId: "1",
+      itemNumber: 1,
+      itemTitle: title,
+      contactId: forContact,
+      kind: "titleChanged" as const,
+      actorKind: "user" as const,
+      fromTitle: `${title} before`,
+      toTitle: title,
+      occurredAt: day("2026-05-01"),
+    })
+    await db
+      .insert(schema.pipelineItemActivityModel)
+      .values([row(contactId, "Ada Lovelace"), row(otherContactId, "Kept")])
+
+    await pipelineActivityRepository.scrubContactTitles(
+      { workspaceId, contactIds: [contactId] },
+      db,
+    )
+
+    const rows = await db
+      .select({
+        contactId: schema.pipelineItemActivityModel.contactId,
+        itemTitle: schema.pipelineItemActivityModel.itemTitle,
+        fromTitle: schema.pipelineItemActivityModel.fromTitle,
+        toTitle: schema.pipelineItemActivityModel.toTitle,
+      })
+      .from(schema.pipelineItemActivityModel)
+      .where(eq(schema.pipelineItemActivityModel.kind, "titleChanged"))
+    const byContact = Map.groupBy(rows, (entry) => entry.contactId)
+
+    expect(byContact.get(contactId)).toEqual([
+      { contactId, itemTitle: "", fromTitle: null, toTitle: null },
+    ])
+    expect(byContact.get(otherContactId)?.[0]?.toTitle).toBe("Kept")
   })
 })

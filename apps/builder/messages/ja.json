@@ -5549,7 +5549,9 @@
       "anyProduct": "すべての商品",
       "anyCategory": "すべてのカテゴリー",
       "anyPipeline": "すべてのパイプライン",
-      "anyStage": "すべてのステージ"
+      "anyStage": "すべてのステージ",
+      "unavailablePipeline": "削除済みまたは利用できないパイプライン",
+      "unavailableStage": "削除済みまたは利用できないステージ"
     },
     "actions": {
       "addTag": "タグを追加",

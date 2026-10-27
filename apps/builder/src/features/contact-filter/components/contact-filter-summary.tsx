@@ -121,7 +121,10 @@ function ContactFilterSummaryList({
                 return t("condition.fields.leaderboardScore")
               }
               if (isPipelineItem) {
-                return t("condition.fields.pipelineItem")
+                // No config matched: its pipeline was deleted or is not visible.
+                return "pipelineId" in condition && condition.pipelineId
+                  ? `${t("condition.fields.pipelineItem")} · ${t("trigger.conditions.unavailablePipeline")}`
+                  : t("condition.fields.pipelineItem")
               }
               return t(`condition.fields.${condition.field}`)
             })()

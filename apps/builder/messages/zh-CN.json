@@ -6536,7 +6536,9 @@
       "anyProduct": "任意商品",
       "anyCategory": "任意分类",
       "anyPipeline": "任意管道",
-      "anyStage": "任意阶段"
+      "anyStage": "任意阶段",
+      "unavailablePipeline": "已删除或不可用的管道",
+      "unavailableStage": "已删除或不可用的阶段"
     },
     "day": "日",
     "hour": "小时",

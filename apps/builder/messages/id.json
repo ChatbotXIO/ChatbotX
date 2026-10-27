@@ -5570,7 +5570,9 @@
       "anyProduct": "Produk apa pun",
       "anyCategory": "Kategori apa pun",
       "anyPipeline": "Semua pipeline",
-      "anyStage": "Semua tahap"
+      "anyStage": "Semua tahap",
+      "unavailablePipeline": "Pipeline dihapus atau tidak tersedia",
+      "unavailableStage": "Tahap dihapus atau tidak tersedia"
     },
     "actions": {
       "addTag": "Tambahkan Tag",

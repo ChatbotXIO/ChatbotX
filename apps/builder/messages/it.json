@@ -5570,7 +5570,9 @@
       "anyProduct": "Qualsiasi prodotto",
       "anyCategory": "Qualsiasi categoria",
       "anyPipeline": "Qualsiasi pipeline",
-      "anyStage": "Qualsiasi fase"
+      "anyStage": "Qualsiasi fase",
+      "unavailablePipeline": "Pipeline eliminata o non disponibile",
+      "unavailableStage": "Fase eliminata o non disponibile"
     },
     "actions": {
       "addTag": "Aggiungi tag",

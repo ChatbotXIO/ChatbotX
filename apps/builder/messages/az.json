@@ -6252,7 +6252,9 @@
       "anyProduct": "İstənilən məhsul",
       "anyCategory": "İstənilən kateqoriya",
       "anyPipeline": "İstənilən satış xətti",
-      "anyStage": "İstənilən mərhələ"
+      "anyStage": "İstənilən mərhələ",
+      "unavailablePipeline": "Silinmiş və ya əlçatmaz pipeline",
+      "unavailableStage": "Silinmiş və ya əlçatmaz mərhələ"
     },
     "actions": {
       "addTag": "Etiket əlavə et",

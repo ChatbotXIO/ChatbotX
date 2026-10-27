@@ -5616,7 +5616,9 @@
       "anyProduct": "任何商品",
       "anyCategory": "任意分類",
       "anyPipeline": "任何管道",
-      "anyStage": "任何階段"
+      "anyStage": "任何階段",
+      "unavailablePipeline": "已刪除或無法使用的管道",
+      "unavailableStage": "已刪除或無法使用的階段"
     },
     "actions": {
       "addTag": "新增標籤",

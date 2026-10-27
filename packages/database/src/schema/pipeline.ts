@@ -1,3 +1,4 @@
+import { createId } from "@chatbotx.io/utils"
 import { sql } from "drizzle-orm"
 import {
   bigint,
@@ -8,6 +9,7 @@ import {
   jsonb,
   pgEnum,
   pgTable,
+  primaryKey,
   text,
   timestamp,
   uniqueIndex,
@@ -101,6 +103,9 @@ export const pipelineModel = pgTable(
       table.workspaceId,
       table.name,
     ),
+    index("Pipeline_createdById_idx")
+      .on(table.createdById)
+      .where(sql`${table.createdById} IS NOT NULL`),
   ],
 )
 
@@ -125,6 +130,7 @@ export const pipelineStageModel = pgTable(
       table.pipelineId,
       table.position,
     ),
+    index("PipelineStage_workspaceId_idx").on(table.workspaceId),
   ],
 )
 
@@ -304,6 +310,7 @@ export const pipelineItemAttachmentModel = pgTable(
     index("PipelineItemAttachment_mediaLibraryFileId_idx").on(
       table.mediaLibraryFileId,
     ),
+    index("PipelineItemAttachment_workspaceId_idx").on(table.workspaceId),
   ],
 )
 
@@ -311,11 +318,15 @@ export const pipelineItemAttachmentModel = pgTable(
  * Append-only history. `itemId`/`contactId` carry no FK so rows survive item
  * and contact deletion; analytics are per pipeline, so deleting the pipeline
  * is the only cascade. Description/field/comment bodies are never stored.
+ * The migration partitions it `HASH("workspaceId")` x 32 (drizzle cannot
+ * declare partitions), so the primary key carries `workspaceId`.
  */
 export const pipelineItemActivityModel = pgTable(
   "PipelineItemActivity",
   {
-    id: sharedColumns.id,
+    id: bigintAsString()
+      .$defaultFn(() => createId())
+      .notNull(),
     workspaceId: workspaceIdColumn(),
     pipelineId: bigintAsString()
       .notNull()
@@ -347,6 +358,10 @@ export const pipelineItemActivityModel = pgTable(
     occurredAt: timestamp(timestampConfig).notNull(),
   },
   (table) => [
+    primaryKey({
+      columns: [table.id, table.workspaceId],
+      name: "PipelineItemActivity_pkey",
+    }),
     index("PipelineItemActivity_pipeline_kind_occurredAt_idx").on(
       table.workspaceId,
       table.pipelineId,
@@ -357,6 +372,11 @@ export const pipelineItemActivityModel = pgTable(
       table.workspaceId,
       table.itemId,
       sql`${table.occurredAt} DESC`,
+    ),
+    // A deleted contact's rows, so its titles can be scrubbed.
+    index("PipelineItemActivity_contact_idx").on(
+      table.workspaceId,
+      table.contactId,
     ),
     // Leading FK columns: pipeline cascade and user delete.
     index("PipelineItemActivity_pipelineId_idx").on(table.pipelineId),
@@ -385,6 +405,7 @@ export const pipelineFieldModel = pgTable(
       table.pipelineId,
       table.referenceName,
     ),
+    index("PipelineField_workspaceId_idx").on(table.workspaceId),
   ],
 )
 
@@ -413,5 +434,7 @@ export const pipelineMemberModel = pgTable(
       table.workspaceId,
       table.workspaceMemberId,
     ),
+    // Leads with the FK column, so a member's removal cascade does not scan.
+    index("PipelineMember_workspaceMemberId_idx").on(table.workspaceMemberId),
   ],
 )

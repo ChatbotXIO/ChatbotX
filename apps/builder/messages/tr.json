@@ -5570,7 +5570,9 @@
       "anyProduct": "Herhangi bir ürün",
       "anyCategory": "Herhangi bir kategori",
       "anyPipeline": "Herhangi bir işlem hattı",
-      "anyStage": "Herhangi bir aşama"
+      "anyStage": "Herhangi bir aşama",
+      "unavailablePipeline": "Silinmiş veya kullanılamayan pipeline",
+      "unavailableStage": "Silinmiş veya kullanılamayan aşama"
     },
     "actions": {
       "addTag": "Etiket Ekle",

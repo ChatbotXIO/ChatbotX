@@ -12,6 +12,10 @@ const mocks = vi.hoisted(() => ({
   findPipeline: vi.fn(),
   findCustomField: vi.fn(),
   findFieldValue: vi.fn(),
+  liveMemberIds: vi.fn(),
+  liveTeamIds: vi.fn(),
+  listFields: vi.fn(),
+  listStages: vi.fn(),
 }))
 
 vi.mock("../src/pipeline/item.service", () => ({
@@ -27,7 +31,15 @@ vi.mock("../src/pipeline/item-content.service", () => ({
   pipelineItemContentService: { addComment: mocks.addComment },
 }))
 vi.mock("@chatbotx.io/database/repositories", () => ({
-  pipelineRepository: { findById: mocks.findPipeline },
+  pipelineRepository: {
+    findById: mocks.findPipeline,
+    listFields: mocks.listFields,
+  },
+  pipelineReferenceRepository: {
+    listWorkspaceMembers: mocks.liveMemberIds,
+    listInboxTeamIds: mocks.liveTeamIds,
+  },
+  pipelineStageRepository: { listByPipeline: mocks.listStages },
 }))
 vi.mock("../src/custom-field/service", () => ({
   customFieldService: { findBy: mocks.findCustomField },
@@ -65,6 +77,15 @@ beforeEach(() => {
   vi.clearAllMocks()
   mocks.findPipeline.mockResolvedValue({ id: "101" })
   mocks.resolveTarget.mockResolvedValue({ id: "item-1" })
+  // Every referenced admin, team, field and stage exists unless a test deletes one.
+  mocks.liveMemberIds.mockImplementation(async ({ ids }: { ids: string[] }) =>
+    ids.map((id) => ({ id, userId: `u-${id}` })),
+  )
+  mocks.liveTeamIds.mockImplementation(
+    async ({ ids }: { ids: string[] }) => ids,
+  )
+  mocks.listFields.mockResolvedValue([{ id: "301" }, { id: "302" }])
+  mocks.listStages.mockResolvedValue([{ id: "201" }])
 })
 
 describe("runPipelineFlowAction", () => {
@@ -584,5 +605,105 @@ describe("runPipelineFlowAction", () => {
       ).status,
     ).toBe("error")
     expect(mocks.transfer).toHaveBeenCalledTimes(2)
+  })
+
+  describe("references deleted after the flow was built", () => {
+    test("addToPipeline still creates the item, without the deleted stage, admins, teams and fields", async () => {
+      mocks.liveMemberIds.mockResolvedValue([{ id: "401", userId: "u" }])
+      mocks.liveTeamIds.mockResolvedValue([])
+      mocks.listFields.mockResolvedValue([{ id: "301" }])
+      mocks.listStages.mockResolvedValue([{ id: "999" }])
+
+      const result = await runPipelineFlowAction(
+        step("addToPipeline", {
+          title: "Deal",
+          stageId: "201",
+          assigneeMemberIds: ["401", "402"],
+          assigneeInboxTeamIds: ["501"],
+          fieldValues: [
+            { pipelineFieldId: "301", value: "kept" },
+            { pipelineFieldId: "302", value: "gone" },
+          ],
+        }),
+        ctx(),
+      )
+
+      expect(result.status).toBe("success")
+      expect(mocks.create.mock.calls[0][0].fields).toMatchObject({
+        stageId: undefined,
+        assigneeMemberIds: ["401"],
+        assigneeInboxTeamIds: [],
+        fieldValues: { "301": "kept" },
+      })
+    })
+
+    test("addToPipeline adds the item without a due date when the due date field was deleted", async () => {
+      mocks.findCustomField.mockResolvedValue(null)
+
+      const result = await runPipelineFlowAction(
+        step("addToPipeline", {
+          title: "Deal",
+          dueDate: { mode: "customField", customFieldId: "601" },
+        }),
+        ctx(),
+      )
+
+      expect(result.status).toBe("success")
+      expect(mocks.create.mock.calls[0][0].fields.dueDate).toBeNull()
+    })
+
+    test("changeDueDate errors instead of clearing the date when its field was deleted", async () => {
+      mocks.findCustomField.mockResolvedValue(null)
+
+      const result = await runPipelineFlowAction(
+        step("changeDueDate", {
+          dueDate: { mode: "customField", customFieldId: "601" },
+        }),
+        ctx(),
+      )
+
+      expect(result.status).toBe("error")
+      expect(mocks.update).not.toHaveBeenCalled()
+    })
+
+    test("assign keeps the remaining assignees and errors only when none is left", async () => {
+      mocks.liveMemberIds.mockResolvedValue([{ id: "401", userId: "u" }])
+
+      const kept = await runPipelineFlowAction(
+        step("assign", { assigneeMemberIds: ["401", "402"] }),
+        ctx(),
+      )
+      expect(kept.status).toBe("success")
+      expect(mocks.update.mock.calls[0][0].fields).toMatchObject({
+        assigneeMemberIds: ["401"],
+      })
+
+      mocks.liveMemberIds.mockResolvedValue([])
+      const none = await runPipelineFlowAction(
+        step("assign", { assigneeMemberIds: ["402"] }),
+        ctx(),
+      )
+      expect(none.status).toBe("error")
+    })
+
+    test("clearCustomField skips deleted fields and is a no-op when all are gone", async () => {
+      mocks.listFields.mockResolvedValue([{ id: "301" }])
+      await runPipelineFlowAction(
+        step("clearCustomField", { pipelineFieldIds: ["301", "302"] }),
+        ctx(),
+      )
+      expect(mocks.update.mock.calls[0][0].fields).toEqual({
+        fieldValues: { "301": null },
+      })
+
+      mocks.update.mockClear()
+      mocks.listFields.mockResolvedValue([])
+      const result = await runPipelineFlowAction(
+        step("clearCustomField", { pipelineFieldIds: ["302"] }),
+        ctx(),
+      )
+      expect(result.status).toBe("success")
+      expect(mocks.update).not.toHaveBeenCalled()
+    })
   })
 })

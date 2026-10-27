@@ -317,7 +317,7 @@ describe.skipIf(!realDatabaseUrl())("pipeline automation", () => {
       expect(item.dueDate?.toISOString()).toBe("2031-05-06T00:00:00.000Z")
     })
 
-    test("a blank contact field yields no due date; a non-date field is an error", async () => {
+    test("a blank or non-date contact field adds the item without a due date; changing to one is an error", async () => {
       const pipeline = await newPipeline()
       const [dateField] = await db
         .insert(customFieldModel)
@@ -339,11 +339,24 @@ describe.skipIf(!realDatabaseUrl())("pipeline automation", () => {
         }),
       )
 
+      const changeToWrongType = await run(
+        stepFor("changeDueDate", pipeline.id, {
+          dueDate: { mode: "customField", customFieldId: textField.id },
+        }),
+      )
+
       expect(blank.status).toBe("success")
-      expect(wrongType.status).toBe("error")
+      // Adding still adds the item; only its due date is left empty.
+      expect(wrongType.status).toBe("success")
+      expect((await itemsOf(pipeline.id)).map((item) => item.dueDate)).toEqual([
+        null,
+        null,
+      ])
+      // Changing the due date fails instead of clearing it.
+      expect(changeToWrongType.status).toBe("error")
     })
 
-    test("a foreign pipeline, stage or field id is an error and creates nothing", async () => {
+    test("a foreign pipeline is an error; foreign stage, field and admin ids are never used", async () => {
       const pipeline = await newPipeline()
       const foreign = await pipelineService.create({
         workspaceId: other.workspaceId,
@@ -388,14 +401,40 @@ describe.skipIf(!realDatabaseUrl())("pipeline automation", () => {
         ),
       ])
 
+      // Another workspace's ids resolve like deleted ones: the step still adds
+      // the item, and none of them reaches it.
       expect(results.map((r) => r.status)).toEqual([
         "error",
-        "error",
-        "error",
-        "error",
+        "success",
+        "success",
+        "success",
       ])
-      expect(await itemsOf(pipeline.id)).toHaveLength(0)
-      expect(mocks.emitPipelineItemEvent).not.toHaveBeenCalled()
+      const items = await itemsOf(pipeline.id)
+      const ownStageIds = (
+        await pipelineService.get({
+          workspaceId: own.workspaceId,
+          id: pipeline.id,
+          scope: token,
+        })
+      ).stages.map((stage) => stage.id)
+      expect(items).toHaveLength(3)
+      for (const item of items) {
+        expect(ownStageIds).toContain(item.stageId)
+        expect(item.fieldValues).not.toHaveProperty(foreignField.id)
+      }
+      const views = await Promise.all(
+        items.map((item) =>
+          pipelineItemQueryService.getItem({
+            workspaceId: own.workspaceId,
+            pipelineId: pipeline.id,
+            itemId: item.id,
+            scope: token,
+          }),
+        ),
+      )
+      for (const view of views) {
+        expect(view.assignees.workspaceMemberIds).not.toContain(other.memberId)
+      }
     })
 
     test("the per-contact open-item limit routes to error", async () => {

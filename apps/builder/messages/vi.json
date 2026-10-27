@@ -5279,7 +5279,9 @@
       "anyProduct": "Bất kỳ sản phẩm nào",
       "anyCategory": "Mọi danh mục",
       "anyPipeline": "Mọi pipeline",
-      "anyStage": "Mọi giai đoạn"
+      "anyStage": "Mọi giai đoạn",
+      "unavailablePipeline": "Pipeline đã xoá hoặc không khả dụng",
+      "unavailableStage": "Giai đoạn đã xoá hoặc không khả dụng"
     },
     "actions": {
       "addTag": "Thêm thẻ",

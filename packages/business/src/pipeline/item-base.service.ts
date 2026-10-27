@@ -1,4 +1,8 @@
-import { type DatabaseClient, db } from "@chatbotx.io/database/client"
+import {
+  type DatabaseClient,
+  db,
+  isForeignKeyViolationError,
+} from "@chatbotx.io/database/client"
 import {
   pipelineItemRepository,
   pipelineReferenceRepository,
@@ -39,9 +43,18 @@ export class PipelineItemBaseService extends BaseService {
     work: (context: MutationContext) => Promise<T>,
   ): Promise<T> {
     const effects: PipelineEffect[] = []
-    const result = await db.transaction(
-      async (tx) => await work({ tx, effects }),
-    )
+    const result = await db
+      .transaction(async (tx) => await work({ tx, effects }))
+      .catch((error: unknown) => {
+        // A contact, admin, team or file checked a moment ago was deleted
+        // before the write: a 404 like the check itself, not a 500 and retry.
+        if (isForeignKeyViolationError(error)) {
+          throw notFoundException(
+            "A record this change refers to no longer exists",
+          )
+        }
+        throw error
+      })
     await dispatchPipelineEffects(effects)
     return result
   }
