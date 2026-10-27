@@ -360,6 +360,7 @@ const CONTACT_PROFILE_NAME_CAPABILITIES: Record<
 
 vi.mock("@chatbotx.io/business", () => ({
   appointmentService: { cancelAppointmentByToken: vi.fn() },
+  flushAllPendingWorkspaceRealtimeEvents: vi.fn(),
   // Pass-through: the real resolver signs proxy URLs for the realtime payload.
   messageService: {
     withResolvedAttachmentUrls: vi.fn(async (message: unknown) => message),
@@ -577,7 +578,13 @@ vi.mock("@chatbotx.io/worker-config", () => ({
 }))
 
 vi.mock("../src/lib/logger", () => ({
-  logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
+  logger: {
+    debug: vi.fn(),
+    error: vi.fn(),
+    fatal: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+  },
 }))
 
 vi.mock("../src/lib/db", () => ({

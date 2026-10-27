@@ -1,4 +1,3 @@
-import { flushAllPendingWorkspaceRealtimeEvents } from "@chatbotx.io/business"
 import {
   defaultWorkerOptions,
   getQueueConnection,
@@ -313,13 +312,9 @@ async function startScheduleWorker() {
     }
   })
 
-  onShutdown("schedule", async () => {
-    try {
-      await Promise.all([worker.close(), marketingMessageWorker.close()])
-    } finally {
-      await flushAllPendingWorkspaceRealtimeEvents()
-    }
-  })
+  onShutdown("schedule", () =>
+    Promise.all([worker.close(), marketingMessageWorker.close()]),
+  )
 }
 
 runWorker("schedule", startScheduleWorker)

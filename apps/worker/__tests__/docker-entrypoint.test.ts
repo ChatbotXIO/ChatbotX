@@ -166,6 +166,25 @@ describe("docker-entrypoint worker discovery", () => {
     ).not.toContain("--max-old-space-size")
   })
 
+  test("sets the shared pool default for consolidated worker modes", () => {
+    const fakeNode = join(distDir, "fake-node.sh")
+    writeFileSync(fakeNode, '#!/bin/sh\nprintf "%s\\n" "$DATABASE_POOL_MAX"\n')
+    chmodSync(fakeNode, 0o755)
+
+    expect(
+      run(["worker", "standalone"], {
+        DATABASE_POOL_MAX: "",
+        NODE_BIN: fakeNode,
+      }).stdout.trim(),
+    ).toBe("40")
+    expect(
+      run(["worker", "standalone"], {
+        DATABASE_POOL_MAX: "72",
+        NODE_BIN: fakeNode,
+      }).stdout.trim(),
+    ).toBe("72")
+  })
+
   test("keeps only core workers out of development cron startup", () => {
     expect(
       readFileSync(

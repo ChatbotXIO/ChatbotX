@@ -10,7 +10,16 @@ import {
 import type * as ShutdownModule from "../src/lib/shutdown"
 
 const { loggerMock } = vi.hoisted(() => ({
-  loggerMock: { info: vi.fn(), error: vi.fn(), fatal: vi.fn() },
+  loggerMock: {
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+    fatal: vi.fn(),
+  },
+}))
+
+vi.mock("@chatbotx.io/business", () => ({
+  flushAllPendingWorkspaceRealtimeEvents: vi.fn(),
 }))
 
 vi.mock("../src/lib/logger", () => ({ logger: loggerMock }))
@@ -74,6 +83,76 @@ describe("worker shutdown coordinator", () => {
       "Error during worker shutdown",
     )
     expect(exitSpy).toHaveBeenCalledWith(1)
+  })
+
+  test("runs finalizers only after every worker closer settles", async () => {
+    const events: string[] = []
+    const { promise: chatClosed, resolve: releaseChatClose } =
+      Promise.withResolvers<void>()
+    const flushRealtime = vi.fn(() => {
+      events.push("realtime:flushed")
+    })
+
+    shutdown.onShutdown("chat", async () => {
+      events.push("chat:closing")
+      await chatClosed
+      events.push("chat:closed")
+    })
+    shutdown.onShutdown("low", () => {
+      events.push("low:closed")
+    })
+    shutdown.onShutdownFinalize("realtime", flushRealtime)
+
+    const shutdownPromise = shutdown.requestShutdown("SIGTERM")
+    await vi.waitFor(() => expect(events).toContain("chat:closing"))
+    expect(flushRealtime).not.toHaveBeenCalled()
+
+    releaseChatClose()
+    await shutdownPromise
+
+    expect(events).toEqual([
+      "chat:closing",
+      "low:closed",
+      "chat:closed",
+      "realtime:flushed",
+    ])
+  })
+
+  test("keeps the first finalizer registered for a name", async () => {
+    const firstFinalizer = vi.fn()
+    const duplicateFinalizer = vi.fn()
+    shutdown.onShutdown("chat", vi.fn().mockResolvedValue(undefined))
+    shutdown.onShutdownFinalize("realtime", firstFinalizer)
+    shutdown.onShutdownFinalize("realtime", duplicateFinalizer)
+
+    await shutdown.requestShutdown("SIGTERM")
+
+    expect(firstFinalizer).toHaveBeenCalledOnce()
+    expect(duplicateFinalizer).not.toHaveBeenCalled()
+  })
+
+  test("ignores and logs closers registered after shutdown begins", async () => {
+    const { promise: chatClosed, resolve: releaseChatClose } =
+      Promise.withResolvers<void>()
+    const lateClose = vi.fn()
+    shutdown.onShutdown("chat", () => chatClosed)
+
+    const shutdownPromise = shutdown.requestShutdown("SIGTERM")
+    await vi.waitFor(() =>
+      expect(loggerMock.info).toHaveBeenCalledWith(
+        expect.anything(),
+        "Shutting down",
+      ),
+    )
+    shutdown.onShutdown("late", lateClose)
+    releaseChatClose()
+    await shutdownPromise
+
+    expect(lateClose).not.toHaveBeenCalled()
+    expect(loggerMock.warn).toHaveBeenCalledWith(
+      { worker: "late" },
+      "Ignoring worker shutdown closer registered after shutdown began",
+    )
   })
 
   test("exits 1 and names the stuck workers when draining exceeds the deadline", async () => {

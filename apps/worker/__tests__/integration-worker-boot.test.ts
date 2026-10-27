@@ -101,6 +101,7 @@ vi.mock("@chatbotx.io/automated-response", () => ({
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
+  flushAllPendingWorkspaceRealtimeEvents: vi.fn(),
   buildContext: vi.fn(),
   conversationService: { ensureActive: vi.fn() },
   withBlockedOwnerGuard: vi.fn(
@@ -134,7 +135,7 @@ vi.mock("../src/lib/is-blocked-workspace", () => ({
 }))
 
 vi.mock("../src/lib/logger", () => ({
-  logger: { error: vi.fn(), info: vi.fn(), warn: vi.fn() },
+  logger: { error: vi.fn(), fatal: vi.fn(), info: vi.fn(), warn: vi.fn() },
 }))
 
 vi.mock("../src/lib/resolve-workspace-id", () => ({

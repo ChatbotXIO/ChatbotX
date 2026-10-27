@@ -1,6 +1,5 @@
 import {
   commentAutomationService,
-  flushAllPendingWorkspaceRealtimeEvents,
   withBlockedOwnerGuard,
 } from "@chatbotx.io/business"
 import {
@@ -188,17 +187,13 @@ async function startLowWorker() {
     }
   })
 
-  onShutdown("low", async () => {
-    try {
-      await Promise.all([
-        worker.close(),
-        profileSnapshotWorker.close(),
-        leaderboardWorker.close(),
-      ])
-    } finally {
-      await flushAllPendingWorkspaceRealtimeEvents()
-    }
-  })
+  onShutdown("low", () =>
+    Promise.all([
+      worker.close(),
+      profileSnapshotWorker.close(),
+      leaderboardWorker.close(),
+    ]),
+  )
 }
 
 runWorker("low", startLowWorker)

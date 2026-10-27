@@ -1,5 +1,3 @@
-import { flushAllPendingWorkspaceRealtimeEvents } from "@chatbotx.io/business"
-
 import { sequenceDispatchRepository } from "@chatbotx.io/database/repositories"
 import { sequenceConnections } from "@chatbotx.io/redis"
 import { SchedulerClient } from "@chatbotx.io/scheduler"
@@ -304,11 +302,5 @@ function stopReconcileWorker() {
 
 if (shouldAutoStart) {
   runWorker("sequence-scheduler", startReconcileWorker)
-  onShutdown("sequence-scheduler", async () => {
-    try {
-      stopReconcileWorker()
-    } finally {
-      await flushAllPendingWorkspaceRealtimeEvents()
-    }
-  })
+  onShutdown("sequence-scheduler", stopReconcileWorker)
 }

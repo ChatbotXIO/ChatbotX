@@ -37,6 +37,13 @@ database-pool contention requires it; `worker heavy` is the usual candidate.
 It applies `WORKER_MAX_OLD_SPACE_MB` (default `256`) to each child process; it
 does not cap `standalone` or individually selected workers.
 
+### Database pool sizing
+
+`DATABASE_POOL_MAX` controls PostgreSQL connections per process and defaults to
+`10`. The worker Docker entrypoint defaults it to `40` for the consolidated
+`worker standalone` and `worker core` modes; an explicit value wins. Size
+PostgreSQL for the sum across every builder, worker, realtime, MCP, and
+individually isolated worker process, staying below its connection limit.
 
 **Leaderboard rankings live on the cache role.** `lb:{id}:rank` sorted sets
 (~100 bytes per participant, measured on Redis 8; only for active/paused

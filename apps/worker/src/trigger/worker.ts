@@ -1,4 +1,3 @@
-import { flushAllPendingWorkspaceRealtimeEvents } from "@chatbotx.io/business"
 import {
   decisionFlowOriginSchema,
   extractContactInboxId,
@@ -118,13 +117,7 @@ async function startTriggerWorker() {
 
   logger.info("Trigger worker started")
 
-  onShutdown("trigger", async () => {
-    try {
-      await worker.close()
-    } finally {
-      await flushAllPendingWorkspaceRealtimeEvents()
-    }
-  })
+  onShutdown("trigger", () => worker.close())
 }
 
 runWorker("trigger", startTriggerWorker)

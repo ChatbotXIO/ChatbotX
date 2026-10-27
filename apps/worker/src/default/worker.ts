@@ -1,4 +1,3 @@
-import { flushAllPendingWorkspaceRealtimeEvents } from "@chatbotx.io/business"
 import {
   DefaultJobAction,
   type DefaultJobData,
@@ -267,13 +266,7 @@ async function startDefaultWorker() {
     logger.error(err, `Job ${job.id} has failed`)
   })
 
-  onShutdown("default", async () => {
-    try {
-      await worker.close()
-    } finally {
-      await flushAllPendingWorkspaceRealtimeEvents()
-    }
-  })
+  onShutdown("default", () => worker.close())
 }
 
 runWorker("default", startDefaultWorker)

@@ -1,7 +1,4 @@
-import {
-  aiFileService,
-  flushAllPendingWorkspaceRealtimeEvents,
-} from "@chatbotx.io/business"
+import { aiFileService } from "@chatbotx.io/business"
 import { optimizeStoredImage } from "@chatbotx.io/business/media/optimize-stored-image"
 import {
   defaultWorkerOptions,
@@ -30,8 +27,8 @@ import { isBlockedWorkspace } from "../lib/is-blocked-workspace"
 import { logger } from "../lib/logger"
 import { resolveWorkspaceId } from "../lib/resolve-workspace-id"
 import { runJobWithAuditContext } from "../lib/run-job-with-audit-context"
-import { AIFileProcessingError } from "./handlers/ai-file-processing-error"
 import { onShutdown, runWorker } from "../lib/shutdown"
+import { AIFileProcessingError } from "./handlers/ai-file-processing-error"
 import { analyzeImage } from "./handlers/analyze-image"
 import { editImageOutput } from "./handlers/edit-image"
 import {
@@ -455,13 +452,7 @@ async function startHeavyWorker() {
     logger.warn({ jobId }, "Heavy job stalled")
   })
 
-  onShutdown("heavy", async () => {
-    try {
-      await worker.close()
-    } finally {
-      await flushAllPendingWorkspaceRealtimeEvents()
-    }
-  })
+  onShutdown("heavy", () => worker.close())
 }
 
 runWorker("heavy", startHeavyWorker)

@@ -1,8 +1,10 @@
+import { flushAllPendingWorkspaceRealtimeEvents } from "@chatbotx.io/business"
 import { normalizeError } from "universal-error-normalizer"
 import { env } from "../env"
 import { logger } from "./logger"
 
 type Closer = () => Promise<unknown> | unknown
+type NamedCloser = [name: string, close: Closer]
 
 // One process-wide coordinator for every worker entry in the process. Each
 // entry used to install its own SIGINT/SIGTERM handler that called
@@ -10,30 +12,38 @@ type Closer = () => Promise<unknown> | unknown
 // but cuts off the others when several entries share a process
 // (`src/core.ts`, `src/standalone.ts`).
 const closers = new Map<string, Closer>()
+const finalizers = new Map<string, Closer>()
 let isInstalled = false
 let isShuttingDown = false
 
-async function closeAll(pending: Set<string>): Promise<boolean> {
+onShutdownFinalize(
+  "workspace-realtime-events",
+  flushAllPendingWorkspaceRealtimeEvents,
+)
+
+async function closeAll(
+  entries: NamedCloser[],
+  pending?: Set<string>,
+): Promise<boolean> {
   const results = await Promise.allSettled(
-    [...closers].map(async ([name, close]) => {
+    entries.map(async ([name, close]) => {
       try {
         await close()
       } finally {
-        pending.delete(name)
+        pending?.delete(name)
       }
     }),
   )
-  const names = [...closers.keys()]
   let hasFailure = false
-  results.forEach((result, index) => {
+  for (const [index, result] of results.entries()) {
     if (result.status === "rejected") {
       hasFailure = true
       logger.error(
-        { err: normalizeError(result.reason), worker: names[index] },
+        { err: normalizeError(result.reason), worker: entries[index][0] },
         "Error during worker shutdown",
       )
     }
-  })
+  }
   return hasFailure
 }
 
@@ -54,7 +64,9 @@ export async function requestShutdown(
   }
   isShuttingDown = true
 
-  const pending = new Set(closers.keys())
+  const workerClosers = [...closers]
+  const shutdownFinalizers = [...finalizers]
+  const pending = new Set(workerClosers.map(([name]) => name))
   const timeoutMs = env.WORKER_SHUTDOWN_TIMEOUT_MS
   logger.info({ reason, workers: [...pending] }, "Shutting down")
 
@@ -68,9 +80,10 @@ export async function requestShutdown(
   // Never the reason the process stays alive; the drain itself decides that.
   deadline.unref()
 
-  const hasFailure = await closeAll(pending)
+  const workerCloseFailed = await closeAll(workerClosers, pending)
+  const finalizerFailed = await closeAll(shutdownFinalizers)
   clearTimeout(deadline)
-  process.exit(hasFailure ? 1 : exitCode)
+  process.exit(workerCloseFailed || finalizerFailed ? 1 : exitCode)
 }
 
 function installProcessHandlers(): void {
@@ -88,12 +101,27 @@ function installProcessHandlers(): void {
 }
 
 export function onShutdown(name: string, close: Closer): void {
+  if (isShuttingDown) {
+    logger.warn(
+      { worker: name },
+      "Ignoring worker shutdown closer registered after shutdown began",
+    )
+    return
+  }
+
   closers.set(name, close)
   if (isInstalled) {
     return
   }
   isInstalled = true
   installProcessHandlers()
+}
+
+export function onShutdownFinalize(name: string, close: Closer): void {
+  if (finalizers.has(name)) {
+    return
+  }
+  finalizers.set(name, close)
 }
 
 /**

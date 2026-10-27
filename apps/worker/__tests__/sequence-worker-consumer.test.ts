@@ -46,6 +46,10 @@ vi.mock("@chatbotx.io/business/audit", () => ({
     auditStorage.run(actor, fn),
 }))
 
+vi.mock("@chatbotx.io/business", () => ({
+  flushAllPendingWorkspaceRealtimeEvents: vi.fn(),
+}))
+
 vi.mock("@chatbotx.io/flow-config", () => ({
   SEQUENCE_SCHEDULE_PAYLOAD_TYPE: "sequenceSchedule",
 }))
@@ -105,6 +109,7 @@ vi.mock("../src/lib/logger", () => ({
   logger: {
     debug: loggerDebugSpy,
     error: loggerErrorSpy,
+    fatal: vi.fn(),
     info: vi.fn(),
     warn: loggerWarnSpy,
   },

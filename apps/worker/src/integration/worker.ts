@@ -2,7 +2,6 @@ import { createHash } from "node:crypto"
 import { automatedResponseService } from "@chatbotx.io/automated-response"
 import {
   conversationService,
-  flushAllPendingWorkspaceRealtimeEvents,
   withBlockedOwnerGuard,
 } from "@chatbotx.io/business"
 import { channelTypes } from "@chatbotx.io/database/partials"
@@ -33,7 +32,7 @@ import { deferOnLockContention } from "../lib/lock-contention-deferral"
 import { logger } from "../lib/logger"
 import { resolveWorkspaceId } from "../lib/resolve-workspace-id"
 import { runJobWithAuditContext } from "../lib/run-job-with-audit-context"
-import { onShutdown, runWorker } from "../lib/shutdown"
+import { onShutdown, onShutdownFinalize, runWorker } from "../lib/shutdown"
 import { integrationService } from "../services/integrations"
 import { mintRandomFlowExecutionKey } from "./flow-execution-key"
 import { handleAdsAutomaticEvent } from "./handlers/ads-automatic-event"
@@ -723,20 +722,16 @@ async function startIntegrationWorker() {
     }
   })
 
-  onShutdown("integration", async () => {
-    try {
-      await worker.close()
-      await Promise.all([
-        callTranscriptionWorker.close(),
-        whatsappVoipSignalingWorker.close(),
-        closeChatQueueEvents(),
-        closeIntegrationQueueEvents(),
-        closeHeavyQueueEvents(),
-      ])
-    } finally {
-      await flushAllPendingWorkspaceRealtimeEvents()
-    }
-  })
+  onShutdown("integration", () =>
+    Promise.all([
+      worker.close(),
+      callTranscriptionWorker.close(),
+      whatsappVoipSignalingWorker.close(),
+    ]),
+  )
+  onShutdownFinalize("chat-queue-events", closeChatQueueEvents)
+  onShutdownFinalize("heavy-queue-events", closeHeavyQueueEvents)
+  onShutdownFinalize("integration-queue-events", closeIntegrationQueueEvents)
 }
 
 runWorker("integration", startIntegrationWorker)

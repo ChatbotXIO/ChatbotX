@@ -1,4 +1,3 @@
-import { flushAllPendingWorkspaceRealtimeEvents } from "@chatbotx.io/business"
 import { startWorker, stopWorker } from "@chatbotx.io/event-bus/worker"
 import { ensureBootstrapped } from "../lib/bootstrap"
 import { logger } from "../lib/logger"
@@ -27,10 +26,4 @@ async function startEventWorker() {
 
 runWorker("events", startEventWorker)
 
-onShutdown("events", async () => {
-  try {
-    await stopWorker()
-  } finally {
-    await flushAllPendingWorkspaceRealtimeEvents()
-  }
-})
+onShutdown("events", stopWorker)

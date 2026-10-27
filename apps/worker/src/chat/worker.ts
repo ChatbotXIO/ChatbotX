@@ -1,4 +1,3 @@
-import { flushAllPendingWorkspaceRealtimeEvents } from "@chatbotx.io/business"
 import { SdkException } from "@chatbotx.io/sdk"
 import {
   ChatJobAction,
@@ -170,13 +169,7 @@ async function startChatWorker() {
     }
   })
 
-  onShutdown("chat", async () => {
-    try {
-      await worker.close()
-    } finally {
-      await flushAllPendingWorkspaceRealtimeEvents()
-    }
-  })
+  onShutdown("chat", () => worker.close())
 }
 
 runWorker("chat", startChatWorker)

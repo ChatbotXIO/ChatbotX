@@ -1,5 +1,3 @@
-import { flushAllPendingWorkspaceRealtimeEvents } from "@chatbotx.io/business"
-
 import {
   defaultWorkerOptions,
   getQueueConnection,
@@ -62,13 +60,7 @@ async function startWebhookWorker() {
     }
   })
 
-  onShutdown("webhook", async () => {
-    try {
-      await worker.close()
-    } finally {
-      await flushAllPendingWorkspaceRealtimeEvents()
-    }
-  })
+  onShutdown("webhook", () => worker.close())
 }
 
 runWorker("webhook", startWebhookWorker)

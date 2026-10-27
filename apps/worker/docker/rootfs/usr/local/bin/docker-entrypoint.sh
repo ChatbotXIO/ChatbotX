@@ -78,7 +78,6 @@ run_all_workers() {
   if [ -z "$WORKER_TABLE" ]; then
     echo "No worker bundles found under $WORKER_DIST_DIR" >&2
     exit 4
-
   fi
   # Bound each legacy all-mode process independently. Consolidated commands
   # deliberately retain the normal V8 limit for their single shared heap.
@@ -144,10 +143,12 @@ case "${1:-}" in
             exit 0
         fi
         if [ "$worker" = "standalone" ]; then
+            export DATABASE_POOL_MAX="${DATABASE_POOL_MAX:-40}"
             require_script "$STANDALONE_SCRIPT"
             exec "$NODE_BIN" "$STANDALONE_SCRIPT"
         fi
         if [ "$worker" = "core" ]; then
+            export DATABASE_POOL_MAX="${DATABASE_POOL_MAX:-40}"
             require_script "$CORE_SCRIPT"
             exec "$NODE_BIN" "$CORE_SCRIPT"
         fi

@@ -34,6 +34,10 @@ const {
   withLockSpy: vi.fn(),
 }))
 
+vi.mock("@chatbotx.io/business", () => ({
+  flushAllPendingWorkspaceRealtimeEvents: vi.fn(),
+}))
+
 vi.mock("@chatbotx.io/database/repositories", () => ({
   sequenceDispatchRepository: {
     listPendingWorkspaceIds: findPendingWorkspaceIdsSpy,
@@ -67,6 +71,7 @@ vi.mock("../src/lib/logger", () => ({
   logger: {
     debug: vi.fn(),
     error: loggerErrorSpy,
+    fatal: vi.fn(),
   },
 }))
 

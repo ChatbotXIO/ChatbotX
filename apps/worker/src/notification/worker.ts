@@ -1,7 +1,4 @@
-import {
-  flushAllPendingWorkspaceRealtimeEvents,
-  withBlockedOwnerGuard,
-} from "@chatbotx.io/business"
+import { withBlockedOwnerGuard } from "@chatbotx.io/business"
 import {
   defaultWorkerOptions,
   getQueueConnection,
@@ -49,13 +46,7 @@ async function startNotificationWorker() {
     }
   })
 
-  onShutdown("notification", async () => {
-    try {
-      await worker.close()
-    } finally {
-      await flushAllPendingWorkspaceRealtimeEvents()
-    }
-  })
+  onShutdown("notification", () => worker.close())
 }
 
 runWorker("notification", startNotificationWorker)

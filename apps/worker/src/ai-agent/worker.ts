@@ -1,4 +1,3 @@
-import { flushAllPendingWorkspaceRealtimeEvents } from "@chatbotx.io/business"
 import { runWithWebhookExecutionContext } from "@chatbotx.io/events/context"
 import {
   AIJobAction,
@@ -33,7 +32,7 @@ import { isFinalAttempt } from "../lib/job-attempts"
 import { logger } from "../lib/logger"
 import { resolveWorkspaceId } from "../lib/resolve-workspace-id"
 import { runJobWithAuditContext } from "../lib/run-job-with-audit-context"
-import { onShutdown, runWorker } from "../lib/shutdown"
+import { onShutdown, onShutdownFinalize, runWorker } from "../lib/shutdown"
 import { processConversationSource } from "./handlers/process-conversation-source"
 import { processConversationSourceEmbedding } from "./handlers/process-conversation-source-embedding"
 import { processPendingEmbedding } from "./handlers/process-pending-embeddings"
@@ -206,14 +205,9 @@ async function startAIAgentWorker() {
     })
   })
 
-  onShutdown("ai-agent", async () => {
-    try {
-      await worker.close()
-    } finally {
-      await flushAllPendingWorkspaceRealtimeEvents()
-      await Promise.all([closeChatQueueEvents(), closeHeavyQueueEvents()])
-    }
-  })
+  onShutdown("ai-agent", () => worker.close())
+  onShutdownFinalize("chat-queue-events", closeChatQueueEvents)
+  onShutdownFinalize("heavy-queue-events", closeHeavyQueueEvents)
 }
 
 runWorker("ai-agent", startAIAgentWorker)

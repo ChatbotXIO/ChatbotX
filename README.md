@@ -227,6 +227,12 @@ heap at `WORKER_MAX_OLD_SPACE_MB=256` by default; raise that value only when
 the host has enough memory for every child. The `standalone` process retains
 the normal V8 heap limit.
 
+### Database pool sizing
+
+`DATABASE_POOL_MAX` defaults to `10` connections per process. In the worker
+Docker image, consolidated `worker standalone` and `worker core` modes default
+to `40`; set the variable explicitly to override that value.
+
 ## Services
 
 The default Docker Compose stack includes:
