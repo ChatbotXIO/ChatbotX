@@ -61,10 +61,7 @@ async function resolveCard<T extends CredentialType>(
     const publicConfig = await platformCredentialService.findPlatformPublic({
       type,
     })
-    return {
-      publicConfig: publicConfig ?? null,
-      isInherited: false,
-    }
+    return { publicConfig: publicConfig ?? null, isInherited: false }
   }
 
   const resolved = await platformCredentialService.resolvePublicForUser({
@@ -118,10 +115,7 @@ export async function ManagePlatformCredentials({
     hasPlatformStripeWebhook({ userId: scopedUserId }),
   ])
 
-  const emptyCard = {
-    publicConfig: null,
-    isInherited: false,
-  } as const
+  const emptyCard = { publicConfig: null, isInherited: false } as const
   const whatsapp =
     whatsappResult.status === "fulfilled" ? whatsappResult.value : emptyCard
   const messenger =

@@ -1,5 +1,8 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
-import { canUseOwnCredentials } from "../src/platform-credential/can-use-own-credentials"
+import {
+  canUseOwnCredentials,
+  hasOwnCredentialAccess,
+} from "../src/platform-credential/can-use-own-credentials"
 
 const { tenantService, userQuotaService } = vi.hoisted(() => ({
   tenantService: { findByOwner: vi.fn() },
@@ -41,5 +44,36 @@ describe("canUseOwnCredentials", () => {
     })
 
     await expect(canUseOwnCredentials("user-1")).resolves.toBe(false)
+  })
+})
+
+describe("hasOwnCredentialAccess", () => {
+  test.each([
+    {
+      expected: true,
+      name: "allows an active tenant",
+      quota: undefined,
+      tenant: { status: "active" },
+    },
+    {
+      expected: true,
+      name: "allows a quota flag",
+      quota: { customAppCredentials: true },
+      tenant: undefined,
+    },
+    {
+      expected: false,
+      name: "denies a suspended tenant without a quota flag",
+      quota: { customAppCredentials: false },
+      tenant: { status: "suspended" },
+    },
+    {
+      expected: false,
+      name: "denies missing tenant and quota records",
+      quota: undefined,
+      tenant: null,
+    },
+  ])("$name", ({ expected, quota, tenant }) => {
+    expect(hasOwnCredentialAccess(tenant, quota)).toBe(expected)
   })
 })

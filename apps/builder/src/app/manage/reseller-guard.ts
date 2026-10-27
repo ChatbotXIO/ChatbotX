@@ -1,5 +1,5 @@
 import {
-  canUseOwnCredentials,
+  hasOwnCredentialAccess,
   tenantService,
   userQuotaService,
 } from "@chatbotx.io/business"
@@ -19,16 +19,15 @@ export const getManageAccess = cache(async () => {
     }
   }
 
-  const [tenant, canManageCredentials, quota] = await Promise.all([
+  const [tenant, quota] = await Promise.all([
     tenantService.findByOwner(user.id),
-    canUseOwnCredentials(user.id),
     userQuotaService.getForUser(user.id),
   ])
   return {
     user,
     tenant,
     quota,
-    canManageCredentials,
+    canManageCredentials: hasOwnCredentialAccess(tenant, quota),
     canManageReseller: tenant?.status === "active",
   }
 })

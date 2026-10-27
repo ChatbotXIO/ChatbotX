@@ -1,14 +1,18 @@
+import { db, eq, isNotNull } from "@chatbotx.io/database/client"
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 
 const tenantService = { findByOwner: vi.fn() }
 vi.mock("../src/enterprise/tenant/service", () => ({ tenantService }))
+
+const userQuotaService = { getForUser: vi.fn() }
+vi.mock("../src/user-quota/service", () => ({ userQuotaService }))
 
 vi.mock("@chatbotx.io/database/client", () => ({
   asc: vi.fn((value) => value),
   db: {},
   and: vi.fn(),
   eq: vi.fn(),
-  isNull: vi.fn(),
+  isNotNull: vi.fn(),
   sql: vi.fn((_strings: TemplateStringsArray, ...values: unknown[]) => values),
 }))
 vi.mock("@chatbotx.io/database/partials", () => ({
@@ -51,6 +55,7 @@ const PLATFORM = {
 
 beforeEach(() => {
   tenantService.findByOwner.mockReset()
+  userQuotaService.getForUser.mockReset()
 })
 
 afterEach(() => {
@@ -99,6 +104,9 @@ describe("resolveForOwner", () => {
 
   test("inactive tenant uses platform without reading own credential", async () => {
     tenantService.findByOwner.mockResolvedValue({ status: "suspended" })
+    userQuotaService.getForUser.mockResolvedValue({
+      customAppCredentials: false,
+    })
     const own = vi.spyOn(platformCredentialService, "findDecryptedForUser")
     const platform = vi
       .spyOn(platformCredentialService, "findDecryptedPlatform")
@@ -112,6 +120,77 @@ describe("resolveForOwner", () => {
     expect(result).toBe(PLATFORM)
     expect(own).not.toHaveBeenCalled()
     expect(platform).toHaveBeenCalledTimes(1)
+  })
+
+  test("entitled user without a tenant returns their own credential", async () => {
+    tenantService.findByOwner.mockResolvedValue(undefined)
+    userQuotaService.getForUser.mockResolvedValue({
+      customAppCredentials: true,
+    })
+    const own = vi
+      .spyOn(platformCredentialService, "findDecryptedForUser")
+      .mockResolvedValue(OWN as never)
+
+    const result = await platformCredentialService.resolveForOwner({
+      ownerId: "owner-1",
+      type: "messenger",
+    })
+
+    expect(result).toBe(OWN)
+    expect(own).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe("findDecryptedForWebhook", () => {
+  test("decrypts the matching user-owned credential and returns undefined when none exists", async () => {
+    vi.mocked(encryptUtils.decryptObject).mockResolvedValue({
+      clientId: "client-1",
+      clientSecret: "secret-1",
+      verifyToken: "verify-1",
+      version: "v1.0",
+    })
+    const row = {
+      createdAt: new Date("2026-08-12T00:00:00Z"),
+      id: "credential-1",
+      publicConfig: { clientId: "client-1" },
+      type: "messenger",
+      updatedAt: new Date("2026-08-12T00:00:00Z"),
+      userId: "user-1",
+      value: { encrypted: true },
+    }
+    const limit = vi.fn().mockResolvedValueOnce([row]).mockResolvedValueOnce([])
+    const where = vi.fn(() => ({ limit }))
+    const from = vi.fn(() => ({ where }))
+    Object.assign(db, { select: vi.fn(() => ({ from })) })
+
+    await expect(
+      platformCredentialService.findDecryptedForWebhook({
+        id: "credential-1",
+        type: "messenger",
+      }),
+    ).resolves.toEqual({
+      config: {
+        clientId: "client-1",
+        clientSecret: "secret-1",
+        verifyToken: "verify-1",
+        version: "v1.0",
+      },
+      createdAt: row.createdAt,
+      id: row.id,
+      publicConfig: row.publicConfig,
+      type: row.type,
+      updatedAt: row.updatedAt,
+      userId: row.userId,
+    })
+    await expect(
+      platformCredentialService.findDecryptedForWebhook({
+        id: "missing-credential",
+        type: "messenger",
+      }),
+    ).resolves.toBeUndefined()
+
+    expect(isNotNull).toHaveBeenCalledWith("userId")
+    expect(eq).toHaveBeenCalledWith("usePlatformCredential", false)
   })
 })
 
@@ -161,6 +240,7 @@ describe("resolvePublicForUser", () => {
     })
 
     expect(result).toEqual({
+      credentialId: OWN.id,
       publicConfig: OWN.publicConfig,
       isInherited: false,
     })
