@@ -1,27 +1,34 @@
 import { Buffer } from "node:buffer"
 import { hmacSha256Hex, timingSafeStringEqual } from "@chatbotx.io/utils/crypto"
-import { getHostFromOrigin } from "./authorized-domain"
+import { isOriginAuthorized } from "./authorized-domain"
 
 const TOKEN_TTL_SECONDS = 30 * 60
+const MAX_SESSION_SECONDS = 24 * 60 * 60
+// Background tabs may sleep past their normal expiry. The absolute session
+// cap still bounds every refresh to a single day from the original `iat`.
+const REFRESH_GRACE_SECONDS = MAX_SESSION_SECONDS
 
 type WebchatAccessTokenPayload = {
   exp: number
-  // Normalized host (not the raw origin/referer string) so mint-time and
-  // verify-time values — both raw referer strings, potentially with a path
-  // — compare equal regardless of shape — see getHostFromOrigin.
+  iat: number
   originHost: string | null
   webchatId: string
   workspaceId: string
 }
 
 type WebchatAccessTokenInput = {
-  origin?: string | null
   webchatId: string
   workspaceId: string
 }
 
 type WebchatAccessTokenVerification = {
   authorized: boolean
+  originHost: string | null
+}
+
+type WebchatAccessToken = {
+  expiresAt: number
+  token: string
 }
 
 const base64UrlEncode = (value: string) =>
@@ -29,6 +36,8 @@ const base64UrlEncode = (value: string) =>
 
 const base64UrlDecode = (value: string) =>
   Buffer.from(value, "base64url").toString("utf8")
+
+const getCurrentTimestamp = () => Math.floor(Date.now() / 1000)
 
 const signPayload = (payload: string) => {
   const secret = process.env.BETTER_AUTH_SECRET
@@ -38,89 +47,192 @@ const signPayload = (payload: string) => {
   return hmacSha256Hex(secret, payload)
 }
 
-export const createWebchatAccessToken = async ({
-  workspaceId,
-  webchatId,
-  origin,
-}: WebchatAccessTokenInput) => {
-  const payload: WebchatAccessTokenPayload = {
-    exp: Math.floor(Date.now() / 1000) + TOKEN_TTL_SECONDS,
-    originHost: getHostFromOrigin(origin),
-    webchatId,
-    workspaceId,
+const isWebchatAccessTokenPayload = (
+  payload: unknown,
+): payload is WebchatAccessTokenPayload => {
+  if (
+    !payload ||
+    typeof payload !== "object" ||
+    !("exp" in payload) ||
+    !("iat" in payload) ||
+    !("originHost" in payload) ||
+    !("webchatId" in payload) ||
+    !("workspaceId" in payload)
+  ) {
+    return false
   }
-  const encodedPayload = base64UrlEncode(JSON.stringify(payload))
-  const signature = await signPayload(encodedPayload)
-  return `${encodedPayload}.${signature}`
+
+  const { exp, iat, originHost, webchatId, workspaceId } = payload
+  return (
+    typeof exp === "number" &&
+    Number.isSafeInteger(exp) &&
+    typeof iat === "number" &&
+    Number.isSafeInteger(iat) &&
+    (originHost === null ||
+      (typeof originHost === "string" && originHost.length > 0)) &&
+    typeof webchatId === "string" &&
+    webchatId.length > 0 &&
+    typeof workspaceId === "string" &&
+    workspaceId.length > 0
+  )
 }
 
-export const verifyWebchatAccessToken = async ({
+const parseSignedPayload = async ({
   token,
-  workspaceId,
   webchatId,
-  origin,
+  workspaceId,
 }: WebchatAccessTokenInput & {
   token?: string | null
-}): Promise<WebchatAccessTokenVerification> => {
-  const unauthorized: WebchatAccessTokenVerification = { authorized: false }
-
+}): Promise<WebchatAccessTokenPayload | null> => {
   if (!token) {
-    return unauthorized
+    return null
   }
 
-  const [encodedPayload, signature] = token.split(".")
-  if (!(encodedPayload && signature)) {
-    return unauthorized
+  const [encodedPayload, signature, extra] = token.split(".")
+  if (!(encodedPayload && signature) || extra) {
+    return null
   }
 
   const expectedSignature = await signPayload(encodedPayload)
   if (!timingSafeStringEqual(signature, expectedSignature)) {
-    return unauthorized
+    return null
   }
 
   try {
-    const payload = JSON.parse(
-      base64UrlDecode(encodedPayload),
-    ) as WebchatAccessTokenPayload
-    // Bind-on-first-use: the token always carries the host it was minted
-    // for (captured from the referer at page-load time), and every caller
-    // must present a matching host to use it — this holds regardless of
-    // whether the webchat has an admin-configured authorizedDomains
-    // allowlist. Compare normalized hosts (not raw strings) since the
-    // verify-time value is the same referer string echoed back by the
-    // client (frozen at first render — see GuestSessionState.embeddingOrigin)
-    // but may still differ in shape from the mint-time referer header (e.g.
-    // trailing path segments) even for the same site.
-    //
-    // Threat model: the `origin` passed in here at verify time is
-    // client-supplied (a request body/query field), not read from a
-    // server-trusted header, and the mint-time `referer` can itself be
-    // forged by a direct (non-browser) caller. So this check stops a
-    // *passive* leaked/replayed token from being reused from a genuinely
-    // different origin (that origin's own embeddingOrigin won't
-    // match the host baked into someone else's token) — it does NOT stop an
-    // *active* attacker who controls both the mint request's Referer and the
-    // verify request's origin field and can simply keep them consistent.
-    // The admin-configured authorizedDomains allowlist has the same
-    // limitation (also checked against the client-supplied origin). Treat
-    // both as defense-in-depth, not a substitute for origin verification
-    // from a trusted transport-layer signal.
-    //
-    // The token is session-scoped only (workspace/webchat/origin/exp) and
-    // is not bound to a specific guestConversationId: the iframe embed has
-    // no way to round-trip the client's persisted id back to the server
-    // (it lives in the iframe's own localStorage, unreachable from
-    // plugin.js), so a returning visitor's page reload always mints a
-    // fresh token while the client still presents its old persisted id.
-    // Binding the token to an id would reject that legitimate case.
-    const authorized =
-      payload.workspaceId === workspaceId &&
-      payload.webchatId === webchatId &&
-      payload.originHost === getHostFromOrigin(origin) &&
-      payload.exp >= Math.floor(Date.now() / 1000)
-
-    return { authorized }
+    const payload: unknown = JSON.parse(base64UrlDecode(encodedPayload))
+    if (
+      !isWebchatAccessTokenPayload(payload) ||
+      payload.workspaceId !== workspaceId ||
+      payload.webchatId !== webchatId
+    ) {
+      return null
+    }
+    return payload
   } catch {
-    return unauthorized
+    return null
   }
+}
+
+const createToken = async (
+  payload: Omit<WebchatAccessTokenPayload, "exp">,
+): Promise<WebchatAccessToken> => {
+  const expiresAt = Math.min(
+    getCurrentTimestamp() + TOKEN_TTL_SECONDS,
+    payload.iat + MAX_SESSION_SECONDS,
+  )
+  const encodedPayload = base64UrlEncode(
+    JSON.stringify({ ...payload, exp: expiresAt }),
+  )
+  const signature = await signPayload(encodedPayload)
+
+  return {
+    expiresAt,
+    token: `${encodedPayload}.${signature}`,
+  }
+}
+
+export const createWebchatAccessToken = async ({
+  originHost,
+  webchatId,
+  workspaceId,
+}: WebchatAccessTokenInput & {
+  originHost: string | null
+}): Promise<WebchatAccessToken> =>
+  createToken({
+    iat: getCurrentTimestamp(),
+    originHost,
+    webchatId,
+    workspaceId,
+  })
+
+export const verifyWebchatAccessToken = async ({
+  token,
+  webchatId,
+  workspaceId,
+}: WebchatAccessTokenInput & {
+  token?: string | null
+}): Promise<WebchatAccessTokenVerification> => {
+  const payload = await parseSignedPayload({ token, webchatId, workspaceId })
+  if (
+    !payload ||
+    payload.exp < getCurrentTimestamp() ||
+    payload.iat + MAX_SESSION_SECONDS < getCurrentTimestamp()
+  ) {
+    return { authorized: false, originHost: null }
+  }
+
+  // The claim is derived from the Referer at page minting time, signed, and
+  // re-checked against the current allowlist. Guest requests never send an
+  // origin to compare, so removing a domain immediately revokes its tokens.
+  return { authorized: true, originHost: payload.originHost }
+}
+
+export const authorizeWebchatGuestRequest = async ({
+  authorizedDomains,
+  token,
+  webchatId,
+  workspaceId,
+}: WebchatAccessTokenInput & {
+  authorizedDomains: string[]
+  token?: string | null
+}): Promise<WebchatAccessTokenVerification> => {
+  const verification = await verifyWebchatAccessToken({
+    token,
+    webchatId,
+    workspaceId,
+  })
+  if (!verification.authorized) {
+    return verification
+  }
+
+  return {
+    ...verification,
+    authorized:
+      authorizedDomains.length === 0 ||
+      isOriginAuthorized(verification.originHost, authorizedDomains),
+  }
+}
+
+export const verifyRefreshableWebchatAccessToken = async ({
+  token,
+  webchatId,
+  workspaceId,
+}: WebchatAccessTokenInput & {
+  token?: string | null
+}): Promise<Pick<WebchatAccessTokenPayload, "iat" | "originHost"> | null> => {
+  const payload = await parseSignedPayload({ token, webchatId, workspaceId })
+  const now = getCurrentTimestamp()
+  if (
+    !payload ||
+    payload.exp + REFRESH_GRACE_SECONDS < now ||
+    payload.iat + MAX_SESSION_SECONDS < now
+  ) {
+    return null
+  }
+
+  return { iat: payload.iat, originHost: payload.originHost }
+}
+
+export const refreshWebchatAccessToken = async ({
+  token,
+  webchatId,
+  workspaceId,
+}: WebchatAccessTokenInput & {
+  token?: string | null
+}): Promise<(WebchatAccessToken & { originHost: string | null }) | null> => {
+  const payload = await verifyRefreshableWebchatAccessToken({
+    token,
+    webchatId,
+    workspaceId,
+  })
+  if (!payload) {
+    return null
+  }
+
+  const refreshed = await createToken({
+    ...payload,
+    webchatId,
+    workspaceId,
+  })
+  return { ...refreshed, originHost: payload.originHost }
 }

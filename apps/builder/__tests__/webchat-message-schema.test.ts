@@ -45,6 +45,15 @@ describe("createWebchatMessageRequest — guestConversationId", () => {
 
     expect(result.success).toBe(false)
   })
+
+  test("strips the legacy parentOrigin field from cached clients", () => {
+    const result = createWebchatMessageRequest.parse({
+      ...baseInput(createGuestConversationId(WORKSPACE_ID)),
+      parentOrigin: "https://example.com/private-path?token=secret",
+    })
+
+    expect(result).not.toHaveProperty("parentOrigin")
+  })
 })
 
 describe("listGuestMessagesRequest — guestConversationId", () => {
@@ -56,5 +65,16 @@ describe("listGuestMessagesRequest — guestConversationId", () => {
     })
 
     expect(result.success).toBe(true)
+  })
+
+  test("strips the legacy parentOrigin field from cached history requests", () => {
+    const result = listGuestMessagesRequest.parse({
+      workspaceId: WORKSPACE_ID,
+      webchatId: WEBCHAT_ID,
+      guestConversationId: createGuestConversationId(WORKSPACE_ID),
+      parentOrigin: "https://example.com/private-path?token=secret",
+    })
+
+    expect(result).not.toHaveProperty("parentOrigin")
   })
 })

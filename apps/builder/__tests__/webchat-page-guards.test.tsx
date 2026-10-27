@@ -4,12 +4,17 @@ import { isValidElement } from "react"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const {
+  mockCreateWebchatAccessToken,
   mockFindFirst,
   mockGetDomainFromHeader,
   mockHeaders,
   mockIsCommunity,
   mockWorkspaceFind,
 } = vi.hoisted(() => ({
+  mockCreateWebchatAccessToken: vi.fn().mockResolvedValue({
+    expiresAt: 1_800_000_000,
+    token: "access-token",
+  }),
   mockFindFirst: vi.fn(),
   mockGetDomainFromHeader: vi.fn(),
   mockHeaders: vi.fn(),
@@ -73,7 +78,7 @@ vi.mock("@/features/integration-webchat/lib/guest-conversation-id", () => ({
 }))
 
 vi.mock("@/features/integration-webchat/lib/webchat-access-token", () => ({
-  createWebchatAccessToken: vi.fn().mockResolvedValue("access-token"),
+  createWebchatAccessToken: mockCreateWebchatAccessToken,
 }))
 
 vi.mock(
@@ -112,9 +117,17 @@ const searchParams = {
   webchatId: "2",
 }
 
-const setReferer = (referer: string | null) => {
+const setReferer = (
+  referer: string | null,
+  secFetchDest: string | null = "document",
+) => {
   mockHeaders.mockResolvedValue({
-    get: vi.fn((name: string) => (name === "referer" ? referer : null)),
+    get: vi.fn((name: string) => {
+      if (name === "referer") {
+        return referer
+      }
+      return name === "sec-fetch-dest" ? secFetchDest : null
+    }),
   })
 }
 
@@ -140,8 +153,33 @@ describe("WebchatPage", () => {
     )
   })
 
+  test("mints a null claim for a top-level open with an external referer", async () => {
+    setReferer("https://external.example/landing", "document")
+
+    await WebchatPage({
+      searchParams: Promise.resolve(searchParams),
+    })
+
+    expect(mockCreateWebchatAccessToken).toHaveBeenCalledWith({
+      originHost: null,
+      webchatId: "2",
+      workspaceId: "1",
+    })
+  })
+
+  test("rejects an iframe with no referer even when authorizedDomains is configured", async () => {
+    setReferer(null, "iframe")
+
+    const element = await WebchatPage({
+      searchParams: Promise.resolve(searchParams),
+    })
+
+    const rendered = JSON.stringify(element)
+    expect(rendered).toContain("Webchat unavailable")
+  })
+
   test("renders the chat for a first-party referer matching the app host", async () => {
-    setReferer("https://app.chatbotx.io/some/path")
+    setReferer("https://app.chatbotx.io/some/path", "iframe")
 
     const element = await WebchatPage({
       searchParams: Promise.resolve(searchParams),
@@ -150,36 +188,29 @@ describe("WebchatPage", () => {
     expect((element as { type: { name: string } }).type.name).toBe(
       "GuestSessionStoreProvider",
     )
+    expect(mockCreateWebchatAccessToken).toHaveBeenCalledWith({
+      originHost: null,
+      webchatId: "2",
+      workspaceId: "1",
+    })
   })
 
-  test("threads the referer as embeddingOrigin into the store and drops parentOrigin from WebchatWrapper", async () => {
-    setReferer("https://allowed.example/page")
+  test("mints an allowlisted iframe token with its normalized host only", async () => {
+    setReferer("https://allowed.example/page?campaign=spring", "iframe")
 
-    const element = await WebchatPage({
+    await WebchatPage({
       searchParams: Promise.resolve(searchParams),
     })
 
-    const providerProps = (
-      element as { props: { embeddingOrigin?: string | null } }
-    ).props
-    expect(providerProps.embeddingOrigin).toBe("https://allowed.example/page")
-
-    const children = (element as { props: { children: unknown } }).props
-      .children
-    const wrapperElement = (
-      Array.isArray(children) ? children : [children]
-    ).find(
-      (child) =>
-        Boolean(child) &&
-        (child as { type?: { name?: string } }).type?.name === "WebchatWrapper",
-    ) as { props: Record<string, unknown> } | undefined
-
-    expect(wrapperElement).toBeDefined()
-    expect(wrapperElement?.props).not.toHaveProperty("parentOrigin")
+    expect(mockCreateWebchatAccessToken).toHaveBeenCalledWith({
+      originHost: "allowed.example",
+      webchatId: "2",
+      workspaceId: "1",
+    })
   })
 
   test("shows the unauthorized-domain message for a third-party referer not in authorizedDomains", async () => {
-    setReferer("https://attacker.test")
+    setReferer("https://attacker.test", "iframe")
 
     const element = await WebchatPage({
       searchParams: Promise.resolve(searchParams),
@@ -195,7 +226,7 @@ describe("WebchatPage", () => {
 
   test("shows the unauthorized-domain message for a third-party referer when authorizedDomains is empty (fail closed)", async () => {
     mockFindFirst.mockResolvedValue({ ...targetWebchat, authorizedDomains: [] })
-    setReferer("https://anyone.example")
+    setReferer("https://anyone.example", "iframe")
 
     const element = await WebchatPage({
       searchParams: Promise.resolve(searchParams),
@@ -227,7 +258,7 @@ describe("WebchatPage", () => {
     mockWorkspaceFind.mockResolvedValue({
       scheduledDeletionAt: new Date("2026-01-01T00:00:00Z"),
     })
-    setReferer("https://attacker.test")
+    setReferer("https://attacker.test", "iframe")
 
     const element = await WebchatPage({
       searchParams: Promise.resolve(searchParams),

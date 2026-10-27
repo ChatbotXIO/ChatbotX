@@ -88,7 +88,7 @@ const {
       .mockResolvedValue({ limited: false, retryAfter: 10 }),
     mockVerifyWebchatAccessToken: vi.fn().mockResolvedValue({
       authorized: true,
-      guestConversationId: "workspace-1:guest-1",
+      originHost: null,
     }),
     mockRepositoryCreate,
     mockWorkspaceFind: vi.fn().mockResolvedValue({ ownerId: "owner-1" }),
@@ -154,30 +154,7 @@ vi.mock("@/lib/rate-limit/guest-rate-limit", () => ({
 }))
 
 vi.mock("@/features/integration-webchat/lib/webchat-access-token", () => ({
-  verifyWebchatAccessToken: mockVerifyWebchatAccessToken,
-}))
-
-const PROTOCOL_PREFIX_REGEX = /^https?:\/\//
-const HOST_DELIMITER_REGEX = /[/:?#]/
-
-vi.mock("@/features/integration-webchat/lib/authorized-domain", () => ({
-  isOriginAuthorized: (
-    origin: string | null | undefined,
-    authorizedDomains: string[],
-  ) => {
-    if (!origin) {
-      return true
-    }
-    if (authorizedDomains.length === 0) {
-      return false
-    }
-    const host = origin
-      .replace(PROTOCOL_PREFIX_REGEX, "")
-      .split(HOST_DELIMITER_REGEX)[0]
-    return authorizedDomains.some(
-      (domain) => host === domain || host?.endsWith(`.${domain}`),
-    )
-  },
+  authorizeWebchatGuestRequest: mockVerifyWebchatAccessToken,
 }))
 
 vi.mock("next-intl/server", () => ({
@@ -483,10 +460,10 @@ describe("handleCreateWebchatMessage", () => {
     expect(mockAutomatedResponseEnqueue).not.toHaveBeenCalled()
   })
 
-  test("rejects unauthorized webchat origins before resolving conversations", async () => {
-    mockFindOrFail.mockResolvedValue({
-      inboxId: "inbox-1",
-      authorizedDomains: ["example.com"],
+  test("rejects an unauthorized webchat request before resolving conversations", async () => {
+    mockVerifyWebchatAccessToken.mockResolvedValue({
+      authorized: false,
+      originHost: null,
     })
 
     await expect(
@@ -496,7 +473,6 @@ describe("handleCreateWebchatMessage", () => {
           workspaceId: "ws-1",
           webchatId: "webchat-1",
           guestConversationId: "guest-1",
-          parentOrigin: "https://attacker.test",
         },
       }),
     ).rejects.toMatchObject({

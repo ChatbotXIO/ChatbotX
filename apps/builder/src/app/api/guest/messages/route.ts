@@ -6,8 +6,7 @@ import {
 } from "@chatbotx.io/business"
 import { type NextRequest, NextResponse } from "next/server"
 import { getTranslations } from "next-intl/server"
-import { isOriginAuthorized } from "@/features/integration-webchat/lib/authorized-domain"
-import { verifyWebchatAccessToken } from "@/features/integration-webchat/lib/webchat-access-token"
+import { authorizeWebchatGuestRequest } from "@/features/integration-webchat/lib/webchat-access-token"
 import { findIntegrationWebchat } from "@/features/integration-webchat/queries"
 import { handleCreateWebchatMessage } from "@/features/messages/actions/create-webchat-message.action"
 import { listMessages } from "@/features/messages/queries"
@@ -111,18 +110,12 @@ export async function GET(req: NextRequest) {
     })
 
     const bearerToken = getBearerToken(req)
-    // Bind-on-first-use: always require a token bound to the presented
-    // origin, then layer the optional domain allowlist on top.
-    const { authorized: tokenAuthorized } = await verifyWebchatAccessToken({
+    const { authorized } = await authorizeWebchatGuestRequest({
+      authorizedDomains: webchat.authorizedDomains,
       token: data.accessToken ?? bearerToken,
-      origin: data.parentOrigin,
       workspaceId: data.workspaceId,
       webchatId: data.webchatId,
     })
-    const authorized =
-      tokenAuthorized &&
-      (webchat.authorizedDomains.length === 0 ||
-        isOriginAuthorized(data.parentOrigin, webchat.authorizedDomains))
     const headers = corsHeaders(requestOrigin, authorized)
     if (!authorized) {
       return await forbiddenResponse(headers)
@@ -173,18 +166,12 @@ export async function POST(req: NextRequest) {
       workspaceId: parsedInput.workspaceId,
     })
     const bearerToken = getBearerToken(req)
-    // Bind-on-first-use: always require a token bound to the presented
-    // origin, then layer the optional domain allowlist on top.
-    const { authorized: tokenAuthorized } = await verifyWebchatAccessToken({
+    const { authorized } = await authorizeWebchatGuestRequest({
+      authorizedDomains: webchat.authorizedDomains,
       token: parsedInput.accessToken ?? bearerToken,
-      origin: parsedInput.parentOrigin,
       workspaceId: parsedInput.workspaceId,
       webchatId: parsedInput.webchatId,
     })
-    const authorized =
-      tokenAuthorized &&
-      (webchat.authorizedDomains.length === 0 ||
-        isOriginAuthorized(parsedInput.parentOrigin, webchat.authorizedDomains))
     const headers = corsHeaders(requestOrigin, authorized)
     if (!authorized) {
       return await forbiddenResponse(headers)

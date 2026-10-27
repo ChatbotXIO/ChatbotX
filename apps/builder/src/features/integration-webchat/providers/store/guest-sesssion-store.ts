@@ -23,13 +23,7 @@ export type GuestSessionState = {
   guestConversationId: string | null
   isNewGuestSession: boolean
   accessToken: string | null
-  /**
-   * The embedding origin the `accessToken` was minted for (raw referer
-   * string, or null for a direct/non-embedded open). Frozen at store
-   * creation — see guest-session-provider.tsx — so it always matches the
-   * held token's host, unlike a value re-resolved on every render/request.
-   */
-  embeddingOrigin: string | null
+  accessTokenExpiresAt: number | null
   /**
    * Resolved workspace logo URL, already gated server-side on
    * `config.showLogo` (undefined when the flag is off or no logo is set).
@@ -52,6 +46,10 @@ export type GuestSessionState = {
 export type GuestSessionActions = {
   setGuestUser: (user: UserResource) => void
   initGuestSession: (serverGuestConversationId: string) => void
+  refreshAccessToken: (
+    accessToken: string,
+    accessTokenExpiresAt: number,
+  ) => void
 
   // messages
   appendMessage: (message: Partial<MessageResource>) => MessageResource
@@ -72,15 +70,15 @@ export type GuestSessionStore = GuestSessionState & GuestSessionActions
 export const createGuestSessionStore = (
   props: WebchatClientConfig,
   accessToken: string | null = null,
+  accessTokenExpiresAt: number | null = null,
   workspaceLogoUrl?: string,
-  embeddingOrigin: string | null = null,
 ) => {
   return createStore<GuestSessionStore>((set, get) => ({
     // default state
     guestConversationId: null,
     isNewGuestSession: false,
     accessToken,
-    embeddingOrigin,
+    accessTokenExpiresAt,
     workspaceLogoUrl,
     user: null,
     config: props,
@@ -124,6 +122,10 @@ export const createGuestSessionStore = (
       set({ user })
     },
 
+    refreshAccessToken: (accessToken, accessTokenExpiresAt) => {
+      set({ accessToken, accessTokenExpiresAt })
+    },
+
     loadMoreMessages: async (guestConversationId: string, perPage: number) => {
       const {
         isLoadMoreMessage,
@@ -132,7 +134,6 @@ export const createGuestSessionStore = (
         messages,
         config,
         accessToken,
-        embeddingOrigin,
       } = get()
 
       if (isLoadMoreMessage || !hasNextMessagePage) {
@@ -149,9 +150,6 @@ export const createGuestSessionStore = (
           workspaceId: config.workspaceId,
           webchatId: config.id,
         })
-        if (embeddingOrigin) {
-          params.set("parentOrigin", embeddingOrigin)
-        }
 
         const { data, nextCursor } = await ky
           .get<ListMessagesResponse>(
@@ -208,13 +206,7 @@ export const createGuestSessionStore = (
     },
 
     sendPostback: async (button: MessageButtonTemplate) => {
-      const {
-        appendMessage,
-        config,
-        guestConversationId,
-        accessToken,
-        embeddingOrigin,
-      } = get()
+      const { appendMessage, config, guestConversationId, accessToken } = get()
 
       const newMessage = appendMessage({
         text: button.label,
@@ -234,7 +226,6 @@ export const createGuestSessionStore = (
               webchatId: config.id,
               ...getWebchatProfileFields(),
               accessToken: accessToken ?? undefined,
-              parentOrigin: embeddingOrigin ?? undefined,
             } as CreateWebchatMessageRequest,
             headers: accessToken
               ? { Authorization: `Bearer ${accessToken}` }

@@ -122,7 +122,6 @@ export const createWebchatMessageRequest = z
       locale: z.string().max(35).optional(),
       timezone: z.string().max(64).optional(),
       accessToken: z.string().optional(),
-      parentOrigin: z.string().optional(),
     }),
   )
 export type CreateWebchatMessageRequest = z.infer<

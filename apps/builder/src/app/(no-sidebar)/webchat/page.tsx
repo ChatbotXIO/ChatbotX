@@ -35,16 +35,20 @@ type WebchatPageProps = {
 
 export const dynamic = "force-dynamic"
 
-function isFirstPartyRequest(
-  refererOrigin: string | null,
-  appHost: string,
-): boolean {
-  if (!refererOrigin) {
-    return true
-  }
+const resolveEmbedContext = (requestHeaders: Headers, appHost: string) => {
+  const originHost = getHostFromOrigin(requestHeaders.get("referer"))
+  const destination = requestHeaders.get("sec-fetch-dest")
+  const isIframeNavigation = destination === "frame" || destination === "iframe"
+  const isFirstParty = originHost === appHost.toLowerCase()
 
-  const refererHost = getHostFromOrigin(refererOrigin)
-  return !!refererHost && !!appHost && refererHost === appHost.toLowerCase()
+  // Safari before 16.4 omits Sec-Fetch headers. Preserve the legacy referer
+  // heuristic there; modern iframe navigations fail closed without a referer.
+  return {
+    isDirectOpen: destination
+      ? !isIframeNavigation || isFirstParty
+      : !originHost || isFirstParty,
+    originHost,
+  }
 }
 
 export default async function WebchatPage(props: WebchatPageProps) {
@@ -55,8 +59,6 @@ export default async function WebchatPage(props: WebchatPageProps) {
       workspaceId: zodBigintAsString(),
       webchatId: zodBigintAsString(),
       ref: z.string().optional(),
-      domain: z.string().optional(),
-      parentOrigin: z.string().optional(),
       guestConversationId: z.string().optional(),
       accessToken: z.string().optional(),
     })
@@ -93,15 +95,15 @@ export default async function WebchatPage(props: WebchatPageProps) {
   }
 
   const requestHeaders = await headers()
-  const embeddingOrigin = requestHeaders.get("referer")
   const appHost = await getDomainFromHeader()
-  const isDirectOpen = isFirstPartyRequest(embeddingOrigin, appHost)
-  if (
-    !(
-      isDirectOpen ||
-      isOriginAuthorized(embeddingOrigin, targetWebchat.authorizedDomains)
-    )
-  ) {
+  const { isDirectOpen, originHost } = resolveEmbedContext(
+    requestHeaders,
+    appHost,
+  )
+  const isAuthorizedEmbed =
+    Boolean(originHost) &&
+    isOriginAuthorized(originHost, targetWebchat.authorizedDomains)
+  if (!(isDirectOpen || isAuthorizedEmbed)) {
     const t = await getTranslations("webchat.unauthorizedDomain")
 
     return (
@@ -122,12 +124,8 @@ export default async function WebchatPage(props: WebchatPageProps) {
     data.guestConversationId ??
     createGuestConversationId(targetWebchat.workspaceId)
 
-  // The RSC refresh after the guest-init action changes the referer to the
-  // iframe's own URL, so this re-mints a token bound to the app host that
-  // GuestSessionStoreProvider discards — both accessToken and
-  // embeddingOrigin below are frozen client-side at first render.
   const accessToken = await createWebchatAccessToken({
-    origin: embeddingOrigin,
+    originHost: isDirectOpen ? null : originHost,
     webchatId: targetWebchat.id,
     workspaceId: targetWebchat.workspaceId,
   })
@@ -155,9 +153,9 @@ export default async function WebchatPage(props: WebchatPageProps) {
 
   return (
     <GuestSessionStoreProvider
-      accessToken={accessToken}
+      accessToken={accessToken.token}
+      accessTokenExpiresAt={accessToken.expiresAt}
       config={config}
-      embeddingOrigin={embeddingOrigin}
       serverGuestConversationId={guestConversationId}
       workspaceLogoUrl={workspaceLogoUrl}
     >

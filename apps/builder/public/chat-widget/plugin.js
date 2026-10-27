@@ -49,12 +49,10 @@
       if (config.brandColor) {
         url.searchParams.set("brandColor", config.brandColor)
       }
-      url.searchParams.set("domain", window.location.hostname)
       const parentUrl = getParentPageUrl(config)
       if (parentUrl) {
         url.searchParams.set("parentUrl", parentUrl)
       }
-      url.searchParams.set("parentOrigin", window.location.origin)
 
       csmChatWidget.floatButton = `<button type="button" class="ahc-btn"><img src="${iconUrl}" alt="Chat"></button>`
       csmChatWidget.floatHtml = `<div class="ahc-iframe-container"><iframe id="ahc-iframe" src="${url.toString()}"></iframe></div>`

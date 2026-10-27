@@ -45,6 +45,5 @@ export const listGuestMessagesRequest = z.object({
   cursor: z.string().optional(),
   guestConversationId: zodGuestConversationId(),
   accessToken: z.string().optional(),
-  parentOrigin: z.string().optional(),
 })
 export type ListGuestMessagesRequest = z.infer<typeof listGuestMessagesRequest>

@@ -21,12 +21,11 @@ type WebchatMessageInputProps = {
   workspaceId: string
   webchatId: string
   referral?: string | undefined
-  accessToken?: string | null
 }
 
 export const WebchatMessageInput = (props: WebchatMessageInputProps) => {
-  const { workspaceId, webchatId, referral = "", accessToken } = props
-  const { sendMessage, guestConversationId, appendMessage, embeddingOrigin } =
+  const { workspaceId, webchatId, referral = "" } = props
+  const { sendMessage, guestConversationId, appendMessage, accessToken } =
     useGuestSessionStore((state) => state)
 
   const textareaRef = useRef<HTMLTextAreaElement>(null)
@@ -40,16 +39,8 @@ export const WebchatMessageInput = (props: WebchatMessageInputProps) => {
       ref: referral,
       ...getWebchatProfileFields(),
       accessToken: accessToken ?? undefined,
-      parentOrigin: embeddingOrigin ?? undefined,
     }),
-    [
-      workspaceId,
-      webchatId,
-      guestConversationId,
-      referral,
-      embeddingOrigin,
-      accessToken,
-    ],
+    [workspaceId, webchatId, guestConversationId, referral, accessToken],
   )
 
   const {
@@ -107,6 +98,10 @@ export const WebchatMessageInput = (props: WebchatMessageInputProps) => {
       setValue("text", "")
     }
   }, [files, setValue])
+
+  useEffect(() => {
+    setValue("accessToken", accessToken ?? undefined)
+  }, [accessToken, setValue])
 
   const onSelectEmoji = (emoji: string) => {
     if (files.length > 0) {
@@ -178,7 +173,6 @@ export const WebchatMessageInput = (props: WebchatMessageInputProps) => {
           <div className="flex w-full items-center ps-2.5">
             <div className="flex-1">
               <WebchatMessageMenu
-                accessToken={accessToken}
                 webchatId={webchatId}
                 workspaceId={workspaceId}
               />

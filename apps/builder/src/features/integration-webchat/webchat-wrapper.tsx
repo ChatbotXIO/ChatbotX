@@ -10,9 +10,7 @@ import { WebchatMessageList } from "./webchat-message-list"
 import { WebchatRealtime } from "./webchat-realtime"
 
 export const WebchatWrapper = ({ referral }: { referral?: string }) => {
-  const { guestConversationId, accessToken, config } = useGuestSessionStore(
-    (state) => state,
-  )
+  const { guestConversationId, config } = useGuestSessionStore((state) => state)
 
   const brandColorStyle = {
     "--primary": config.brandColor,
@@ -25,14 +23,12 @@ export const WebchatWrapper = ({ referral }: { referral?: string }) => {
       <WebchatMessageList />
       {!config.hideMessageInput && (
         <WebchatMessageInput
-          accessToken={accessToken}
           referral={referral}
           webchatId={config.id}
           workspaceId={config.workspaceId}
         />
       )}
       <WebchatRef
-        accessToken={accessToken}
         guestConversationId={guestConversationId ?? ""}
         webchatId={config.id}
         workspaceId={config.workspaceId}

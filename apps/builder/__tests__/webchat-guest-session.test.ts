@@ -1,12 +1,16 @@
 // @vitest-environment node
 
+import { Buffer } from "node:buffer"
 import type { IntegrationWebchatModel } from "@chatbotx.io/database/types"
 import type { MessageButtonTemplate } from "@chatbotx.io/sdk"
+import { hmacSha256Hex } from "@chatbotx.io/utils/crypto"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 import { isOriginAuthorized } from "@/features/integration-webchat/lib/authorized-domain"
 import { createGuestConversationId } from "@/features/integration-webchat/lib/guest-conversation-id"
 import {
+  authorizeWebchatGuestRequest,
   createWebchatAccessToken,
+  refreshWebchatAccessToken,
   verifyWebchatAccessToken,
 } from "@/features/integration-webchat/lib/webchat-access-token"
 import { createGuestSessionStore } from "@/features/integration-webchat/providers/store/guest-sesssion-store"
@@ -78,6 +82,23 @@ const createWebchatConfig = (
 
 const GUEST_ID_UUID_PATTERN =
   /^workspace-1:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
+const getSignedTokenPayload = (token: string) => {
+  const [encodedPayload] = token.split(".")
+  const payload: unknown = JSON.parse(
+    Buffer.from(encodedPayload, "base64url").toString("utf8"),
+  )
+  if (
+    !payload ||
+    typeof payload !== "object" ||
+    !("exp" in payload) ||
+    !("iat" in payload)
+  ) {
+    throw new Error("Expected a signed webchat access-token payload")
+  }
+
+  return payload
+}
 
 describe("webchat guest session helpers", () => {
   beforeEach(() => {
@@ -214,7 +235,7 @@ describe("webchat guest session store", () => {
   })
 })
 
-describe("webchat guest session store — embeddingOrigin freeze", () => {
+describe("webchat guest session store requests", () => {
   const postbackButton: MessageButtonTemplate = {
     id: "btn-1",
     label: "Yes",
@@ -228,38 +249,12 @@ describe("webchat guest session store — embeddingOrigin freeze", () => {
     vi.stubGlobal("localStorage", createLocalStorageMock())
   })
 
-  test("threads the frozen embeddingOrigin into sendPostback and loadMoreMessages requests", async () => {
-    const store = createGuestSessionStore(
-      createWebchatConfig(),
-      "token-1",
-      undefined,
-      "https://www.example.com",
-    )
-
-    await store.getState().sendPostback(postbackButton)
-    await store.getState().sendPostback(postbackButton)
-
-    expect(mockKy.post).toHaveBeenCalledTimes(2)
-    for (const [, options] of mockKy.post.mock.calls) {
-      expect(options?.json?.parentOrigin).toBe("https://www.example.com")
-    }
-
-    await store.getState().loadMoreMessages("guest-1", 20)
-    const [url] = mockKy.get.mock.calls.at(-1) ?? []
-    expect(url).toContain("parentOrigin=https%3A%2F%2Fwww.example.com")
-  })
-
-  test("omits parentOrigin from every request when minted with no referrer (no-referrer policy)", async () => {
-    const store = createGuestSessionStore(
-      createWebchatConfig(),
-      "token-1",
-      undefined,
-      null,
-    )
+  test("does not send parentOrigin in postback or load-more requests", async () => {
+    const store = createGuestSessionStore(createWebchatConfig(), "token-1")
 
     await store.getState().sendPostback(postbackButton)
     const [, postOptions] = mockKy.post.mock.calls[0]
-    expect(postOptions?.json?.parentOrigin).toBeUndefined()
+    expect(postOptions?.json).not.toHaveProperty("parentOrigin")
 
     await store.getState().loadMoreMessages("guest-1", 20)
     const [url] = mockKy.get.mock.calls[0]
@@ -426,32 +421,39 @@ describe("webchat access token", () => {
   const baseInput = {
     workspaceId: "workspace-1",
     webchatId: "webchat-1",
-    origin: "https://example.com",
+    originHost: "example.com",
   }
 
   beforeEach(() => {
     process.env.BETTER_AUTH_SECRET = "test-better-auth-secret"
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date("2026-01-01T00:00:00Z"))
   })
 
-  test("authorizes a token minted for the same workspace/webchat/origin", async () => {
-    const token = await createWebchatAccessToken(baseInput)
+  test("authorizes a token for its signed workspace and webchat claim", async () => {
+    const { token } = await createWebchatAccessToken(baseInput)
 
     const result = await verifyWebchatAccessToken({ ...baseInput, token })
+
+    expect(result).toEqual({ authorized: true, originHost: "example.com" })
+  })
+
+  test("ignores a client-supplied origin when verifying a signed claim", async () => {
+    const { token } = await createWebchatAccessToken(baseInput)
+    const clientSuppliedOrigin = {
+      token,
+      workspaceId: baseInput.workspaceId,
+      webchatId: baseInput.webchatId,
+      origin: "https://attacker.test",
+    }
+
+    const result = await verifyWebchatAccessToken(clientSuppliedOrigin)
 
     expect(result.authorized).toBe(true)
   })
 
-  test("rejects a missing token", async () => {
-    const result = await verifyWebchatAccessToken({
-      ...baseInput,
-      token: null,
-    })
-
-    expect(result.authorized).toBe(false)
-  })
-
   test("rejects a token whose workspace does not match", async () => {
-    const token = await createWebchatAccessToken(baseInput)
+    const { token } = await createWebchatAccessToken(baseInput)
 
     const result = await verifyWebchatAccessToken({
       ...baseInput,
@@ -462,8 +464,8 @@ describe("webchat access token", () => {
     expect(result.authorized).toBe(false)
   })
 
-  test("rejects a tampered signature and does not leak the external id", async () => {
-    const token = await createWebchatAccessToken(baseInput)
+  test("rejects a tampered signature and does not leak the claimed host", async () => {
+    const { token } = await createWebchatAccessToken(baseInput)
     const [payload] = token.split(".")
 
     const result = await verifyWebchatAccessToken({
@@ -471,120 +473,101 @@ describe("webchat access token", () => {
       token: `${payload}.deadbeef`,
     })
 
+    expect(result).toEqual({ authorized: false, originHost: null })
+  })
+
+  test("rejects a token after its signed host is removed from the allowlist", async () => {
+    const { token } = await createWebchatAccessToken(baseInput)
+
+    const result = await authorizeWebchatGuestRequest({
+      authorizedDomains: ["other.example"],
+      token,
+      webchatId: baseInput.webchatId,
+      workspaceId: baseInput.workspaceId,
+    })
+
     expect(result.authorized).toBe(false)
   })
 
-  test("rejects a token presented from a different origin (bind-on-first-use)", async () => {
-    const token = await createWebchatAccessToken(baseInput)
-
-    const result = await verifyWebchatAccessToken({
+  test("accepts a null signed host for a direct open", async () => {
+    const { token } = await createWebchatAccessToken({
       ...baseInput,
-      origin: "https://attacker.test",
-      token,
+      originHost: null,
     })
 
-    expect(result.authorized).toBe(false)
+    const result = await authorizeWebchatGuestRequest({
+      authorizedDomains: ["example.com"],
+      token,
+      webchatId: baseInput.webchatId,
+      workspaceId: baseInput.workspaceId,
+    })
+
+    expect(result).toEqual({ authorized: true, originHost: null })
   })
 
-  test("returning visitor: a freshly minted token stays valid even though the client presents a different persisted guestConversationId", async () => {
-    // Regression for CRITICAL-1: the iframe can't round-trip the client's
-    // persisted guestConversationId back to the server (it lives in the
-    // iframe's own localStorage), so every page load mints a brand-new
-    // token. The token must not be bound to any particular id — only to
-    // workspace/webchat/origin — or a legitimate returning visitor would be
-    // rejected on their second load.
-    const freshToken = await createWebchatAccessToken(baseInput)
+  test("refreshes within the grace window while preserving the session start and host", async () => {
+    const initial = await createWebchatAccessToken(baseInput)
+    vi.setSystemTime(new Date((initial.expiresAt + 60) * 1000))
 
-    const result = await verifyWebchatAccessToken({
-      ...baseInput,
-      token: freshToken,
+    const refreshed = await refreshWebchatAccessToken({
+      token: initial.token,
+      webchatId: baseInput.webchatId,
+      workspaceId: baseInput.workspaceId,
     })
 
-    expect(result.authorized).toBe(true)
+    expect(refreshed?.originHost).toBe("example.com")
+    expect(refreshed?.token).not.toBe(initial.token)
+    expect(getSignedTokenPayload(refreshed?.token ?? "").iat).toBe(
+      getSignedTokenPayload(initial.token).iat,
+    )
   })
 
-  test("matches a bare origin against a referer-shaped origin used at mint time", async () => {
-    // Mint-time origin comes from the `referer` header (may include a path);
-    // verify-time origin comes from `window.location.origin` (bare). Both
-    // should normalize to the same host.
-    const token = await createWebchatAccessToken({
-      ...baseInput,
-      origin: "https://example.com/pricing?ref=ad",
+  test("rejects a refresh after the maximum session lifetime", async () => {
+    const now = Math.floor(Date.now() / 1000)
+    const encodedPayload = Buffer.from(
+      JSON.stringify({
+        exp: now + 60,
+        iat: now - 24 * 60 * 60 - 1,
+        originHost: "example.com",
+        webchatId: baseInput.webchatId,
+        workspaceId: baseInput.workspaceId,
+      }),
+      "utf8",
+    ).toString("base64url")
+    const signature = await hmacSha256Hex(
+      process.env.BETTER_AUTH_SECRET ?? "",
+      encodedPayload,
+    )
+
+    const refreshed = await refreshWebchatAccessToken({
+      token: `${encodedPayload}.${signature}`,
+      webchatId: baseInput.webchatId,
+      workspaceId: baseInput.workspaceId,
     })
 
-    const result = await verifyWebchatAccessToken({
-      ...baseInput,
-      origin: "https://example.com",
-      token,
-    })
-
-    expect(result.authorized).toBe(true)
+    expect(refreshed).toBeNull()
   })
 
-  test("matches a subdomain-consistent origin the same way on mint and verify", async () => {
-    const token = await createWebchatAccessToken({
-      ...baseInput,
-      origin: "https://widget.example.com",
+  test("does not authorize a refreshed token past the original session cap", async () => {
+    const sessionStart = Math.floor(Date.now() / 1000)
+    const initial = await createWebchatAccessToken(baseInput)
+    vi.setSystemTime(new Date((sessionStart + 24 * 60 * 60 - 1) * 1000))
+
+    const refreshed = await refreshWebchatAccessToken({
+      token: initial.token,
+      webchatId: baseInput.webchatId,
+      workspaceId: baseInput.workspaceId,
     })
 
-    const result = await verifyWebchatAccessToken({
-      ...baseInput,
-      origin: "https://widget.example.com/some/path",
-      token,
+    expect(refreshed?.expiresAt).toBe(sessionStart + 24 * 60 * 60)
+    vi.setSystemTime(new Date((sessionStart + 24 * 60 * 60 + 1) * 1000))
+    const verification = await verifyWebchatAccessToken({
+      token: refreshed?.token,
+      webchatId: baseInput.webchatId,
+      workspaceId: baseInput.workspaceId,
     })
 
-    expect(result.authorized).toBe(true)
-  })
-
-  test("treats a null origin at mint and verify as consistent (direct, non-embedded access)", async () => {
-    const token = await createWebchatAccessToken({
-      ...baseInput,
-      origin: null,
-    })
-
-    const result = await verifyWebchatAccessToken({
-      ...baseInput,
-      origin: null,
-      token,
-    })
-
-    expect(result.authorized).toBe(true)
-  })
-
-  test("authorizes a no-referrer session where the client's embeddingOrigin is null and it presents no origin field at all", async () => {
-    // Regression: under `Referrer-Policy: no-referrer` embeddingOrigin is
-    // frozen to null in the store (see the "no-referrer policy" store
-    // tests above), so sendPostback/loadMoreMessages omit `parentOrigin`
-    // entirely rather than sending it as an explicit null. Verify must
-    // treat that omission (`origin: undefined`) the same as the mint-time
-    // null, not as a mismatch.
-    const token = await createWebchatAccessToken({
-      ...baseInput,
-      origin: null,
-    })
-
-    const result = await verifyWebchatAccessToken({
-      ...baseInput,
-      origin: undefined,
-      token,
-    })
-
-    expect(result.authorized).toBe(true)
-  })
-
-  test("rejects when minted with no origin but presented with one", async () => {
-    const token = await createWebchatAccessToken({
-      ...baseInput,
-      origin: null,
-    })
-
-    const result = await verifyWebchatAccessToken({
-      ...baseInput,
-      origin: "https://example.com",
-      token,
-    })
-
-    expect(result.authorized).toBe(false)
+    expect(verification.authorized).toBe(false)
   })
 })
 

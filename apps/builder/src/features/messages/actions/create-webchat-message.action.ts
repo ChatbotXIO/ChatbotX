@@ -46,8 +46,7 @@ import {
 import { headers } from "next/headers"
 import { getTranslations } from "next-intl/server"
 import { randomString } from "remeda"
-import { isOriginAuthorized } from "@/features/integration-webchat/lib/authorized-domain"
-import { verifyWebchatAccessToken } from "@/features/integration-webchat/lib/webchat-access-token"
+import { authorizeWebchatGuestRequest } from "@/features/integration-webchat/lib/webchat-access-token"
 import { logger } from "@/lib/log"
 import {
   checkGuestRateLimit,
@@ -99,30 +98,14 @@ export async function handleCreateWebchatMessage({
     message: "Channel not found",
   })
 
-  // Bind-on-first-use: always require a token whose signed origin claim
-  // matches the origin the caller is presenting now, regardless of whether
-  // authorizedDomains is configured. This closes the "no auth at all when no
-  // allowlist is set" gap while still layering the (optional) domain
-  // allowlist check on top when the workspace has configured one.
-  const { authorized } = await verifyWebchatAccessToken({
+  const { authorized } = await authorizeWebchatGuestRequest({
+    authorizedDomains: integrationWebchat.authorizedDomains,
     token: parsedInput.accessToken,
     workspaceId: parsedInput.workspaceId,
     webchatId: parsedInput.webchatId,
-    origin: parsedInput.parentOrigin,
   })
 
   if (!authorized) {
-    const t = await getTranslations("webchat.unauthorizedDomain")
-    throw new ChatbotXException(t("description"), "forbidden", 403)
-  }
-
-  if (
-    integrationWebchat.authorizedDomains.length > 0 &&
-    !isOriginAuthorized(
-      parsedInput.parentOrigin,
-      integrationWebchat.authorizedDomains,
-    )
-  ) {
     const t = await getTranslations("webchat.unauthorizedDomain")
     throw new ChatbotXException(t("description"), "forbidden", 403)
   }
