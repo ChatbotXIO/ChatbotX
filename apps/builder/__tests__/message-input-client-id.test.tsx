@@ -5,6 +5,25 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 import { WebchatMessageInput } from "@/features/integration-webchat/webchat-message-input"
 import { MessageInput } from "@/features/messages/components/message-input"
 
+const TOUCH_DEVICE_MEDIA_QUERY = "(hover: none) and (pointer: coarse)"
+const defaultMatchMedia = window.matchMedia
+let isTouchDevice = false
+
+const createMediaQueryList = (
+  media: string,
+  matches: boolean,
+): MediaQueryList =>
+  ({
+    addEventListener: () => undefined,
+    addListener: () => undefined,
+    dispatchEvent: () => true,
+    matches,
+    media,
+    onchange: null,
+    removeEventListener: () => undefined,
+    removeListener: () => undefined,
+  }) as MediaQueryList
+
 const ids = vi.hoisted(() => ({ next: 1 }))
 const disableBotExecute = vi.hoisted(() => vi.fn())
 const toast = vi.hoisted(() => ({ error: vi.fn() }))
@@ -282,6 +301,12 @@ describe("message composers", () => {
 
   beforeEach(() => {
     Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true })
+    isTouchDevice = false
+    window.matchMedia = (media) =>
+      createMediaQueryList(
+        media,
+        isTouchDevice && media === TOUCH_DEVICE_MEDIA_QUERY,
+      )
     action.executeAsync.mockClear()
     action.resolveRequests.length = 0
     disableBotExecute.mockClear()
@@ -304,6 +329,7 @@ describe("message composers", () => {
   afterEach(() => {
     act(() => root.unmount())
     container.remove()
+    window.matchMedia = defaultMatchMedia
   })
 
   test("submits every rapid inbox message independently", async () => {
@@ -318,6 +344,55 @@ describe("message composers", () => {
     )
 
     await expectRapidSubmissions()
+  })
+
+  test("submits an inbox message when Enter is pressed on a desktop keyboard", async () => {
+    act(() => root.render(<MessageInput />))
+    const textarea = container.querySelector("textarea")
+    if (!textarea) {
+      throw new Error("Message composer did not render a textarea")
+    }
+
+    expect(textarea.getAttribute("enterkeyhint")).toBe("send")
+
+    await act(async () => {
+      setTextareaValue(textarea, "desktop")
+      textarea.dispatchEvent(
+        new KeyboardEvent("keydown", {
+          bubbles: true,
+          cancelable: true,
+          key: "Enter",
+        }),
+      )
+      await Promise.resolve()
+    })
+
+    expect(action.executeAsync).toHaveBeenCalledTimes(1)
+  })
+
+  test("does not submit an inbox message when Enter is pressed on a touch device", async () => {
+    isTouchDevice = true
+    act(() => root.render(<MessageInput />))
+    const textarea = container.querySelector("textarea")
+    if (!textarea) {
+      throw new Error("Message composer did not render a textarea")
+    }
+
+    expect(textarea.getAttribute("enterkeyhint")).toBe("enter")
+
+    await act(async () => {
+      setTextareaValue(textarea, "touch")
+      textarea.dispatchEvent(
+        new KeyboardEvent("keydown", {
+          bubbles: true,
+          cancelable: true,
+          key: "Enter",
+        }),
+      )
+      await Promise.resolve()
+    })
+
+    expect(action.executeAsync).not.toHaveBeenCalled()
   })
 
   test("marks an optimistic inbox message failed and keeps its reply target on a server error", async () => {
