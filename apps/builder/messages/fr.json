@@ -5700,6 +5700,8 @@
       "orderShipped": "Commande expédiée",
       "orderConcluded": "Commande terminée",
       "orderCancelled": "Commande annulée",
+      "orderPaid": "Commande payée",
+      "orderRefunded": "Commande remboursée",
       "categoryAddedToCart": "Catégorie ajoutée au panier",
       "productAddedToCart": "Produit ajouté au panier",
       "productRemovedFromCart": "Produit retiré du panier",
@@ -6944,7 +6946,9 @@
       "rating": "Note",
       "quantity": "Quantité",
       "price": "Prix",
-      "vendor": "Fournisseur"
+      "vendor": "Fournisseur",
+      "orderStatus": "Statut de la commande",
+      "payment": "Paiement"
     },
     "fields": {
       "name": "Nom",
@@ -6969,7 +6973,9 @@
       "cancelReason": "Motif d'annulation",
       "rating": "Évaluation",
       "ratingComment": "Commentaire du client",
-      "coupon": "Coupon ({code})"
+      "coupon": "Coupon ({code})",
+      "paymentStatus": "Statut du paiement",
+      "payments": "Paiements en ligne"
     },
     "statuses": {
       "pending": "Non traitée",
@@ -6985,14 +6991,38 @@
       "cancelled": "Annuler"
     },
     "paymentMethods": {
-      "cod": "Paiement à la livraison"
+      "cod": "Paiement à la livraison",
+      "stripe": "Carte",
+      "paypal": "PayPal"
     },
     "shippingTypes": {
       "delivery": "Livraison au client",
       "pickup": "Retrait en magasin"
     },
     "description": "Commandes passées par vos clients.",
-    "ratingValue": "{rating}/5 ★"
+    "ratingValue": "{rating}/5 ★",
+    "paymentStatuses": {
+      "unpaid": "Non payée",
+      "paid": "Payée",
+      "refunded": "Remboursée"
+    },
+    "attemptStatuses": {
+      "open": "En attente",
+      "paid": "Payée",
+      "expired": "Expirée",
+      "refunded": "Remboursée"
+    },
+    "testPayment": "test",
+    "awaitingPaymentHint": "En attente du paiement en ligne du client. La commande pourra être acceptée une fois payée.",
+    "refundWarning": "{amount} seront remboursés au client.",
+    "paymentStates": {
+      "paid": "Payé",
+      "refunded": "Remboursé",
+      "awaitingPayment": "En attente de paiement",
+      "payOnDelivery": "Paiement à la livraison",
+      "notPaid": "Non payé"
+    },
+    "paymentUntil": "jusqu'à {time}"
   },
   "products": {
     "title": "Produits",
@@ -9844,8 +9874,11 @@
         "label": "Modes de paiement",
         "description": "Les modes de paiement activés sur la page de paiement. Le premier mode de la liste sera sélectionné par défaut sur la page de paiement.",
         "options": {
-          "cod": "Paiement à la livraison"
-        }
+          "cod": "Paiement à la livraison",
+          "stripe": "Carte",
+          "paypal": "PayPal"
+        },
+        "connectHint": "Pour proposer {provider}, connectez-le dans <link>Paramètres → Intégrations</link>."
       },
       "currency": {
         "label": "Devise",
@@ -10063,7 +10096,19 @@
     },
     "payment": {
       "title": "Paiement",
-      "cod": "Paiement à la livraison"
+      "cod": "Paiement à la livraison",
+      "stripe": "Carte",
+      "paypal": "PayPal",
+      "paid": "Payée",
+      "refunded": "Remboursée",
+      "awaiting": "En attente de votre paiement",
+      "payBefore": "Payez avant {time}, sinon la commande sera annulée.",
+      "payNow": "Payer maintenant",
+      "onlineHint": "Vous paierez sur la page suivante. Votre commande est réservée pendant 30 minutes.",
+      "continueToPayment": "Continuer vers le paiement",
+      "notYet": "Nous n'avons pas encore reçu votre paiement. Si vous venez de payer, patientez un instant et actualisez cette page.",
+      "leftPaymentPage": "Vous avez quitté la page de paiement. Vous pouvez encore payer ci-dessous.",
+      "paidThanks": "Paiement reçu. Merci pour votre commande !"
     },
     "placeOrder": "Passer la commande",
     "orderPlaced": "Merci ! Votre commande est passée. Nous vous tiendrons informé dans le chat.",
@@ -10113,7 +10158,14 @@
       "discountCodeNotEligible": "Ce code ne vous est pas destiné.",
       "discountCodeNotApplicable": "Ce code ne s'applique pas au contenu de votre panier.",
       "discountCodeMinimumAmount": "Ce code nécessite un achat d'au moins {minimum}. Ajoutez {missing}.",
-      "discountCodeMinimumQuantity": "Ce code nécessite au moins {minimum} articles. Ajoutez-en {missing}."
+      "discountCodeMinimumQuantity": "Ce code nécessite au moins {minimum} articles. Ajoutez-en {missing}.",
+      "paymentMethodUnavailable": "Ce mode de paiement n'est pas disponible.",
+      "paymentProviderNotConnected": "Ce mode de paiement n'est pas disponible.",
+      "paymentProviderUnavailable": "Le service de paiement ne répond pas. Veuillez réessayer dans un instant.",
+      "paymentProviderRejected": "Le paiement n'a pas pu être lancé. Veuillez choisir un autre mode de paiement.",
+      "paymentProviderCredentialsRejected": "Le paiement n'a pas pu être lancé. Veuillez choisir un autre mode de paiement.",
+      "paymentAmountUnsupported": "Cette commande ne peut pas être payée en ligne. Veuillez choisir un autre mode de paiement.",
+      "orderPaymentNotOpen": "Cette commande ne peut plus être payée en ligne."
     },
     "discount": {
       "label": "Code de réduction",
@@ -10274,6 +10326,52 @@
     "metHelp": "Part des réponses avec SLA qui l'ont respecté.",
     "eligibleCount": "{count} réponses avaient un SLA",
     "enable": "Activer le SLA de réponse"
+  },
+  "stripe": {
+    "title": "Stripe",
+    "setting": {
+      "label": "Stripe",
+      "description": "Acceptez les paiements par carte dans votre boutique en ligne avec votre propre compte Stripe. L'argent est versé directement sur votre compte Stripe.",
+      "notConfigured": "Stripe n'est pas encore configuré sur cette plateforme. Demandez à l'administrateur de la plateforme d'ajouter les paramètres Stripe Connect."
+    },
+    "testMode": "Mode test",
+    "liveMode": "Production",
+    "chargesDisabled": "Votre compte Stripe ne peut pas encore accepter de paiements. Terminez sa configuration dans votre tableau de bord Stripe.",
+    "outcome": {
+      "expired": "Le lien de connexion Stripe a expiré. Veuillez réessayer.",
+      "access_denied": "La connexion n'a pas été autorisée sur Stripe.",
+      "stripeAccountAlreadyConnected": "Ce compte Stripe est déjà connecté à un autre espace de travail.",
+      "stripePlatformNotConfigured": "Stripe n'est pas encore configuré sur cette plateforme.",
+      "superAdminRequired": "Seul un administrateur de l'espace de travail peut connecter Stripe.",
+      "signInRequired": "Veuillez vous connecter et réessayer.",
+      "paymentProviderCredentialsRejected": "Stripe a refusé la connexion. Veuillez réessayer.",
+      "startedByAnotherUser": "Seule la personne qui a cliqué sur Connecter peut terminer. Veuillez cliquer à nouveau sur Connecter.",
+      "paymentProviderInUse": "Des commandes en cours ont encore besoin de ce compte Stripe. Terminez-les ou annulez-les d'abord."
+    },
+    "platform": {
+      "connectClientId": "Connect client ID",
+      "connectClientIdHint": "Depuis Stripe Dashboard → Settings → Connect → Onboarding options → OAuth (commence par ca_). Les boutiques y connectent leur propre compte Stripe.",
+      "redirectUri": "Redirect URI",
+      "webhookReady": "Les boutiques peuvent connecter Stripe, et leurs paiements sont confirmés automatiquement.",
+      "webhookMissing": "Le webhook de paiement est manquant. Enregistrez à nouveau ces paramètres pour le créer.",
+      "connectMissing": "Ajoutez le Connect client ID pour que les boutiques puissent connecter leur compte Stripe."
+    }
+  },
+  "paypal": {
+    "title": "PayPal",
+    "setting": {
+      "label": "PayPal",
+      "description": "Acceptez les paiements PayPal dans votre boutique en ligne avec votre propre compte PayPal."
+    },
+    "sandbox": "Sandbox",
+    "liveMode": "Production",
+    "fields": {
+      "clientId": "Client ID",
+      "clientSecret": "Secret"
+    },
+    "dialog": {
+      "description": "Créez une application REST dans <link>PayPal Developer → Apps & Credentials</link> et collez son Client ID et son Secret. Le mode production ou sandbox est détecté à partir des clés."
+    }
   },
   "pipelines": {
     "title": "Pipelines",

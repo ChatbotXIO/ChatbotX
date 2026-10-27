@@ -27,6 +27,7 @@ export const ScheduleJobData = {
   scanSmartDelay: "scanSmartDelay",
   scanAppointmentReminders: "scanAppointmentReminders",
   scanAbandonedCarts: "scanAbandonedCarts",
+  expireUnpaidOrders: "expireUnpaidOrders",
   syncUserQuota: "syncUserQuota",
   reconcileTenants: "reconcileTenants",
   reconcileMac: "reconcileMac",
@@ -204,6 +205,12 @@ export type ScheduleJobScanAppointmentReminders = {
 
 export type ScheduleJobScanAbandonedCarts = {
   type: typeof ScheduleJobData.scanAbandonedCarts
+  data: Record<string, never>
+}
+
+/** Every minute: cancels online orders whose payment never came in time. */
+export type ScheduleJobExpireUnpaidOrders = {
+  type: typeof ScheduleJobData.expireUnpaidOrders
   data: Record<string, never>
 }
 
@@ -398,6 +405,7 @@ export type ScheduleJobData =
   | ScheduleJobScanSmartDelay
   | ScheduleJobScanAppointmentReminders
   | ScheduleJobScanAbandonedCarts
+  | ScheduleJobExpireUnpaidOrders
   | ScheduleJobSyncUserQuota
   | ScheduleJobReconcileTenants
   | ScheduleJobReconcileMac

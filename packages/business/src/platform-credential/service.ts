@@ -561,6 +561,33 @@ class PlatformCredentialService extends BaseService {
     }
   }
 
+  /**
+   * One credential by id, decrypted — for a resource that remembers which
+   * credential it was made with (a Stripe Connect store, a webhook URL).
+   * Undefined when it is gone or of another type.
+   */
+  async findDecryptedById<T extends CredentialType>(props: {
+    id: string
+    type: T
+    tx?: DatabaseClient
+  }): Promise<DecryptedCredential<T> | undefined> {
+    const { tx = db } = props
+    const [row] = await tx
+      .select()
+      .from(platformCredentialModel)
+      .where(
+        and(
+          eq(platformCredentialModel.id, props.id),
+          eq(platformCredentialModel.type, props.type),
+        ),
+      )
+      .limit(1)
+    if (!row) {
+      return
+    }
+    return await this._decrypt(row as CredentialRow<T>)
+  }
+
   private async _decrypt<T extends CredentialType>(
     row: CredentialRow<T>,
   ): Promise<DecryptedCredential<T>> {

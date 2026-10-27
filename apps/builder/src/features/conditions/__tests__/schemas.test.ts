@@ -147,6 +147,8 @@ describe("catalog and call conditions", () => {
     triggerEventTypes.enum.orderShipped,
     triggerEventTypes.enum.orderConcluded,
     triggerEventTypes.enum.orderCancelled,
+    triggerEventTypes.enum.orderPaid,
+    triggerEventTypes.enum.orderRefunded,
     triggerEventTypes.enum.cartAbandoned,
   ])("accepts the %s store event, which takes no other field", (type) => {
     expect(conditionSchema.parse({ type })).toEqual({ type })

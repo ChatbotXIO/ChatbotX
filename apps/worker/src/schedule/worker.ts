@@ -25,6 +25,7 @@ import { dispatchProfileSnapshots } from "./handlers/dispatch-profile-snapshots"
 import { enqueueBroadcast } from "./handlers/enqueue-broadcast"
 import { enqueueMarketingMessages } from "./handlers/enqueue-marketing-messages"
 import { enqueueRecurringBroadcasts } from "./handlers/enqueue-recurring-broadcasts"
+import { expireUnpaidOrders } from "./handlers/expire-unpaid-orders"
 import { finalizeBroadcasts } from "./handlers/finalize-broadcasts"
 import { finalizeMarketingMessages } from "./handlers/finalize-marketing-messages"
 import {
@@ -164,6 +165,10 @@ async function startScheduleWorker() {
 
             case ScheduleJobData.scanAbandonedCarts:
               await scanAbandonedCarts()
+              return
+
+            case ScheduleJobData.expireUnpaidOrders:
+              await expireUnpaidOrders()
               return
 
             case ScheduleJobData.syncUserQuota:

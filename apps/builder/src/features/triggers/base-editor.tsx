@@ -91,6 +91,10 @@ export const BaseEditor = ({
         return t("trigger.conditions.orderConcluded")
       case triggerEventTypes.enum.orderCancelled:
         return t("trigger.conditions.orderCancelled")
+      case triggerEventTypes.enum.orderPaid:
+        return t("trigger.conditions.orderPaid")
+      case triggerEventTypes.enum.orderRefunded:
+        return t("trigger.conditions.orderRefunded")
       case triggerEventTypes.enum.categoryAddedToCart:
         return t("trigger.conditions.categoryAddedToCart")
       case triggerEventTypes.enum.productAddedToCart:

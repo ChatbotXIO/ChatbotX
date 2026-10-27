@@ -1,5 +1,7 @@
 import {
+  onlinePaymentProviders,
   orderActorTypes,
+  orderPaymentStatuses,
   orderShippingAddressSchema,
   orderSources,
   orderStatuses,
@@ -16,8 +18,19 @@ export const publicOrderResource = z.object({
   number: z.number().describe("Order number, counted per workspace."),
   status: orderStatuses,
   source: orderSources,
-  paymentMethod: paymentMethods,
-  paymentStatus: paymentStatuses,
+  paymentMethod: paymentMethods.describe(
+    "`cod` cash on delivery, `stripe` card or `paypal`, paid online.",
+  ),
+  paymentStatus: paymentStatuses.describe(
+    "`unpaid`, `paid`, or `refunded` once an online payment went back.",
+  ),
+  paymentExpiresAt: z
+    .date()
+    .nullable()
+    .describe(
+      "An online order still unpaid is cancelled at this time. Null for cash on delivery and once paid.",
+    ),
+  paidAt: z.date().nullable(),
   currency: z.string().describe("ISO 4217 code all amounts are in."),
   subtotal: z.number().describe("Sum of the lines before discounts and tax."),
   discountTotal: z.number(),
@@ -95,9 +108,35 @@ export const publicOrderHistoryResource = z.object({
   createdAt: z.date(),
 })
 
+export const publicOrderPaymentResource = z.object({
+  id: z.string(),
+  provider: onlinePaymentProviders,
+  status: orderPaymentStatuses.describe(
+    "`open` the page can still be paid, `paid`, `expired`, or `refunded`.",
+  ),
+  amount: z.number(),
+  currency: z.string(),
+  livemode: z.boolean().describe("False for a test or sandbox payment."),
+  providerReference: z
+    .string()
+    .describe("The Stripe Checkout Session or PayPal order id."),
+  transactionId: z
+    .string()
+    .nullable()
+    .describe("The Stripe payment intent or PayPal capture id, once paid."),
+  refundId: z.string().nullable(),
+  expiresAt: z.date(),
+  paidAt: z.date().nullable(),
+  refundedAt: z.date().nullable(),
+  createdAt: z.date(),
+})
+
 export const publicOrderDetailResource = publicOrderResource.extend({
   items: z.array(publicOrderItemResource),
   history: z.array(publicOrderHistoryResource),
+  payments: z
+    .array(publicOrderPaymentResource)
+    .describe("Each attempt to pay the order online, newest first."),
 })
 export type OrderDetailResource = z.infer<typeof publicOrderDetailResource>
 
@@ -151,6 +190,11 @@ export const listOrdersPublicResponse = z.object({
 })
 
 export const createOrderPublicRequest = z.object({
+  paymentMethod: paymentMethods
+    .optional()
+    .describe(
+      "How the customer pays; `cod` (cash on delivery) by default. `stripe` and `paypal` must be enabled in `ecommerceSettings` (`payments.paymentMethods`) and need a `contact`: the order then waits for its payment — get the page to pay on with `orders.getPaymentLink` and send it to the customer.",
+    ),
   contact: publicContactIdentifier
     .optional()
     .describe(
@@ -212,6 +256,15 @@ export const createOrderPublicRequest = z.object({
     .describe(
       "A discount code to apply (`discountCodes.list`); one that cannot be used refuses the order. Check it first with `discountCodes.validate`.",
     ),
+})
+
+export const orderPaymentLinkResponse = z.object({
+  url: z
+    .string()
+    .describe("The Stripe or PayPal page the customer pays the order on."),
+  expiresAt: z
+    .date()
+    .describe("The order is cancelled if it is not paid by then."),
 })
 
 export const orderIdRequest = z.object({

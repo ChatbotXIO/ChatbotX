@@ -435,6 +435,8 @@ describe("ConditionEvaluator catalog conditions", () => {
       triggerEventTypes.enum.orderShipped,
       triggerEventTypes.enum.orderConcluded,
       triggerEventTypes.enum.orderCancelled,
+      triggerEventTypes.enum.orderPaid,
+      triggerEventTypes.enum.orderRefunded,
       triggerEventTypes.enum.cartAbandoned,
     ])("%s: the event happening is the condition", async (type) => {
       await expect(

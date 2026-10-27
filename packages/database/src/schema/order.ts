@@ -1,3 +1,4 @@
+import { sql } from "drizzle-orm"
 import {
   bigint,
   index,
@@ -100,6 +101,12 @@ export const orderModel = pgTable(
     status: orderStatus().default("pending").notNull(),
     paymentMethod: paymentMethod().default("cod").notNull(),
     paymentStatus: paymentStatus().default("unpaid").notNull(),
+    /**
+     * When an online order still unpaid is cancelled. Null for cash on
+     * delivery.
+     */
+    paymentExpiresAt: timestamp(timestampConfig),
+    paidAt: timestamp(timestampConfig),
     /** ISO 4217, copied from the store settings (or the cart) when placed. */
     currency: text().notNull(),
     subtotal: money().notNull(),
@@ -147,6 +154,12 @@ export const orderModel = pgTable(
     index("Order_inboxId_idx").on(table.inboxId),
     index("Order_conversationId_idx").on(table.conversationId),
     index("Order_discountCodeId_idx").on(table.discountCodeId),
+    // The scan that cancels online orders whose payment never came.
+    index("Order_paymentExpiresAt_idx")
+      .on(table.paymentExpiresAt)
+      .where(
+        sql`${table.status} = 'pending' AND ${table.paymentStatus} = 'unpaid' AND ${table.paymentExpiresAt} IS NOT NULL`,
+      ),
   ],
 )
 

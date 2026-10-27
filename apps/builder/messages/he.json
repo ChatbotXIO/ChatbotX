@@ -3491,6 +3491,8 @@
       "orderShipped": "ההזמנה נשלחה",
       "orderConcluded": "ההזמנה הושלמה",
       "orderCancelled": "ההזמנה בוטלה",
+      "orderPaid": "ההזמנה שולמה",
+      "orderRefunded": "ההזמנה הוחזרה",
       "categoryAddedToCart": "קטגוריה נוספה לעגלה",
       "productAddedToCart": "מוצר נוסף לעגלה",
       "productRemovedFromCart": "מוצר הוסר מהעגלה",
@@ -4735,7 +4737,9 @@
       "rating": "דירוג",
       "quantity": "כמות",
       "price": "מחיר",
-      "vendor": "ספק"
+      "vendor": "ספק",
+      "orderStatus": "סטטוס הזמנה",
+      "payment": "תשלום"
     },
     "fields": {
       "name": "שם",
@@ -4760,7 +4764,9 @@
       "cancelReason": "סיבת הביטול",
       "rating": "דירוג",
       "ratingComment": "תגובת הלקוח",
-      "coupon": "קופון ({code})"
+      "coupon": "קופון ({code})",
+      "paymentStatus": "סטטוס תשלום",
+      "payments": "תשלומים מקוונים"
     },
     "statuses": {
       "pending": "לא טופלה",
@@ -4776,14 +4782,38 @@
       "cancelled": "ביטול"
     },
     "paymentMethods": {
-      "cod": "תשלום במזומן בעת המסירה"
+      "cod": "תשלום במזומן בעת המסירה",
+      "stripe": "כרטיס",
+      "paypal": "PayPal"
     },
     "shippingTypes": {
       "delivery": "משלוח ללקוח",
       "pickup": "איסוף מהחנות"
     },
     "description": "הזמנות שביצעו הלקוחות שלך.",
-    "ratingValue": "{rating}/5 ★"
+    "ratingValue": "{rating}/5 ★",
+    "paymentStatuses": {
+      "unpaid": "לא שולם",
+      "paid": "שולם",
+      "refunded": "הוחזר"
+    },
+    "attemptStatuses": {
+      "open": "ממתין",
+      "paid": "שולם",
+      "expired": "פג תוקף",
+      "refunded": "הוחזר"
+    },
+    "testPayment": "בדיקה",
+    "awaitingPaymentHint": "ממתין לתשלום המקוון של הלקוח. ניתן לאשר את ההזמנה לאחר התשלום.",
+    "refundWarning": "{amount} יוחזרו ללקוח.",
+    "paymentStates": {
+      "paid": "שולם",
+      "refunded": "הוחזר",
+      "awaitingPayment": "ממתין לתשלום",
+      "payOnDelivery": "תשלום במסירה",
+      "notPaid": "לא שולם"
+    },
+    "paymentUntil": "עד {time}"
   },
   "products": {
     "title": "מוצרים",
@@ -9844,8 +9874,11 @@
         "label": "אמצעי תשלום",
         "description": "אמצעי התשלום שמופעלים בדף התשלום. אמצעי התשלום הראשון ברשימה יהיה זה שנבחר בדף התשלום.",
         "options": {
-          "cod": "תשלום במזומן בעת המסירה"
-        }
+          "cod": "תשלום במזומן בעת המסירה",
+          "stripe": "כרטיס",
+          "paypal": "PayPal"
+        },
+        "connectHint": "כדי להציע {provider}, חבר אותו ב-<link>הגדרות → שילובים</link>."
       },
       "currency": {
         "label": "מטבע",
@@ -10063,7 +10096,19 @@
     },
     "payment": {
       "title": "תשלום",
-      "cod": "תשלום במזומן בעת המסירה"
+      "cod": "תשלום במזומן בעת המסירה",
+      "stripe": "כרטיס",
+      "paypal": "PayPal",
+      "paid": "שולם",
+      "refunded": "הוחזר",
+      "awaiting": "ממתין לתשלום שלך",
+      "payBefore": "שלם לפני {time}, אחרת ההזמנה תבוטל.",
+      "payNow": "שלם עכשיו",
+      "onlineHint": "התשלום יתבצע בעמוד הבא. ההזמנה שלך נשמרת למשך 30 דקות.",
+      "continueToPayment": "המשך לתשלום",
+      "notYet": "עדיין לא קיבלנו את התשלום שלך. אם שילמת הרגע, המתן רגע ורענן את העמוד.",
+      "leftPaymentPage": "יצאת מעמוד התשלום. עדיין אפשר לשלם למטה.",
+      "paidThanks": "התשלום התקבל. תודה על ההזמנה!"
     },
     "placeOrder": "ביצוע הזמנה",
     "orderPlaced": "תודה! ההזמנה שלך התקבלה. נשלח לך עדכונים בצ'אט.",
@@ -10113,7 +10158,14 @@
       "discountCodeNotEligible": "קוד ההנחה לא זמין עבורך.",
       "discountCodeNotApplicable": "קוד ההנחה לא חל על מה שבעגלה.",
       "discountCodeMinimumAmount": "הקוד דורש קנייה של {minimum} לפחות. הוסיפו עוד {missing}.",
-      "discountCodeMinimumQuantity": "הקוד דורש לפחות {minimum} פריטים. הוסיפו עוד {missing}."
+      "discountCodeMinimumQuantity": "הקוד דורש לפחות {minimum} פריטים. הוסיפו עוד {missing}.",
+      "paymentMethodUnavailable": "אמצעי תשלום זה אינו זמין.",
+      "paymentProviderNotConnected": "אמצעי תשלום זה אינו זמין.",
+      "paymentProviderUnavailable": "שירות התשלום אינו מגיב. נסה שוב בעוד רגע.",
+      "paymentProviderRejected": "לא ניתן היה להתחיל את התשלום. בחר אמצעי תשלום אחר.",
+      "paymentProviderCredentialsRejected": "לא ניתן היה להתחיל את התשלום. בחר אמצעי תשלום אחר.",
+      "paymentAmountUnsupported": "לא ניתן לשלם על הזמנה זו באינטרנט. בחר אמצעי תשלום אחר.",
+      "orderPaymentNotOpen": "לא ניתן יותר לשלם על הזמנה זו באינטרנט."
     },
     "discount": {
       "label": "קוד הנחה",
@@ -10274,6 +10326,52 @@
     "metHelp": "שיעור התגובות עם SLA שעמדו בו.",
     "eligibleCount": "ל-{count} תגובות היה SLA",
     "enable": "הפעלת SLA תגובה"
+  },
+  "stripe": {
+    "title": "Stripe",
+    "setting": {
+      "label": "Stripe",
+      "description": "קבל תשלומים בכרטיס אשראי בחנות האינטרנט שלך באמצעות חשבון ה-Stripe שלך. הכסף עובר ישירות לחשבון ה-Stripe שלך.",
+      "notConfigured": "Stripe עדיין לא מוגדר בפלטפורמה הזו. בקש ממנהל הפלטפורמה להוסיף את הגדרות Stripe Connect."
+    },
+    "testMode": "מצב בדיקה",
+    "liveMode": "חי",
+    "chargesDisabled": "חשבון ה-Stripe שלך עדיין לא יכול לקבל תשלומים. סיים את ההגדרה בלוח הבקרה של Stripe.",
+    "outcome": {
+      "expired": "קישור החיבור ל-Stripe פג תוקף. נסה שוב.",
+      "access_denied": "החיבור לא אושר ב-Stripe.",
+      "stripeAccountAlreadyConnected": "חשבון Stripe זה כבר מחובר לסביבת עבודה אחרת.",
+      "stripePlatformNotConfigured": "Stripe עדיין לא מוגדר בפלטפורמה הזו.",
+      "superAdminRequired": "רק מנהל סביבת עבודה יכול לחבר את Stripe.",
+      "signInRequired": "התחבר ונסה שוב.",
+      "paymentProviderCredentialsRejected": "Stripe דחה את החיבור. נסה שוב.",
+      "startedByAnotherUser": "רק מי שלחץ על התחברות יכול להשלים זאת. אנא לחץ שוב על התחברות.",
+      "paymentProviderInUse": "הזמנות פתוחות עדיין צריכות את חשבון Stripe הזה. השלם או בטל אותן קודם."
+    },
+    "platform": {
+      "connectClientId": "Connect client ID",
+      "connectClientIdHint": "מתוך Stripe Dashboard → Settings → Connect → Onboarding options → OAuth (מתחיל ב-ca_). חנויות מחברות דרכו את חשבון ה-Stripe שלהן.",
+      "redirectUri": "Redirect URI",
+      "webhookReady": "חנויות יכולות לחבר את Stripe, והתשלומים שלהן מאושרים אוטומטית.",
+      "webhookMissing": "ה-webhook של התשלומים חסר. שמור שוב את ההגדרות האלה כדי ליצור אותו.",
+      "connectMissing": "הוסף את Connect client ID כדי שחנויות יוכלו לחבר את חשבון ה-Stripe שלהן."
+    }
+  },
+  "paypal": {
+    "title": "PayPal",
+    "setting": {
+      "label": "PayPal",
+      "description": "קבל תשלומי PayPal בחנות האינטרנט שלך באמצעות חשבון ה-PayPal שלך."
+    },
+    "sandbox": "Sandbox",
+    "liveMode": "חי",
+    "fields": {
+      "clientId": "Client ID",
+      "clientSecret": "Secret"
+    },
+    "dialog": {
+      "description": "צור אפליקציית REST ב-<link>PayPal Developer → Apps & Credentials</link> והדבק את ה-Client ID וה-Secret שלה. מצב חי או Sandbox מזוהה לפי המפתחות."
+    }
   },
   "pipelines": {
     "title": "פייפליינים",

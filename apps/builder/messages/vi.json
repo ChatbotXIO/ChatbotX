@@ -5409,6 +5409,8 @@
       "orderShipped": "Đơn hàng đã giao",
       "orderConcluded": "Đơn hàng hoàn tất",
       "orderCancelled": "Đơn hàng bị hủy",
+      "orderPaid": "Đơn hàng đã thanh toán",
+      "orderRefunded": "Đơn hàng đã hoàn tiền",
       "categoryAddedToCart": "Danh mục thêm vào giỏ",
       "productAddedToCart": "Sản phẩm thêm vào giỏ",
       "productRemovedFromCart": "Sản phẩm xóa khỏi giỏ",
@@ -7273,7 +7275,9 @@
       "rating": "Đánh giá",
       "quantity": "Số lượng",
       "price": "Giá",
-      "vendor": "Nhà cung cấp"
+      "vendor": "Nhà cung cấp",
+      "orderStatus": "Trạng thái đơn",
+      "payment": "Thanh toán"
     },
     "fields": {
       "name": "Tên",
@@ -7298,7 +7302,9 @@
       "cancelReason": "Lý do hủy",
       "rating": "Đánh giá",
       "ratingComment": "Nhận xét của khách",
-      "coupon": "Mã giảm giá ({code})"
+      "coupon": "Mã giảm giá ({code})",
+      "paymentStatus": "Trạng thái thanh toán",
+      "payments": "Thanh toán online"
     },
     "statuses": {
       "pending": "Chưa xử lý",
@@ -7314,14 +7320,38 @@
       "cancelled": "Hủy đơn"
     },
     "paymentMethods": {
-      "cod": "Thanh toán khi nhận hàng"
+      "cod": "Thanh toán khi nhận hàng",
+      "stripe": "Thẻ (Stripe)",
+      "paypal": "PayPal"
     },
     "shippingTypes": {
       "delivery": "Giao tận nơi",
       "pickup": "Nhận tại cửa hàng"
     },
     "description": "Đơn hàng khách đã đặt.",
-    "ratingValue": "{rating}/5 ★"
+    "ratingValue": "{rating}/5 ★",
+    "paymentStatuses": {
+      "unpaid": "Chưa thanh toán",
+      "paid": "Đã thanh toán",
+      "refunded": "Đã hoàn tiền"
+    },
+    "attemptStatuses": {
+      "open": "Đang chờ",
+      "paid": "Đã thanh toán",
+      "expired": "Hết hạn",
+      "refunded": "Đã hoàn tiền"
+    },
+    "testPayment": "thử",
+    "awaitingPaymentHint": "Đang chờ khách thanh toán online. Chỉ nhận đơn được sau khi khách đã trả.",
+    "refundWarning": "Hệ thống sẽ hoàn lại {amount} cho khách.",
+    "paymentStates": {
+      "paid": "Đã thanh toán",
+      "refunded": "Đã hoàn tiền",
+      "awaitingPayment": "Chờ thanh toán",
+      "payOnDelivery": "Thu khi giao hàng",
+      "notPaid": "Chưa thanh toán"
+    },
+    "paymentUntil": "đến {time}"
   },
   "products": {
     "title": "Sản phẩm",
@@ -9844,8 +9874,11 @@
         "label": "Phương thức thanh toán",
         "description": "Các phương thức thanh toán bật trên trang đặt hàng. Phương thức đầu tiên trong danh sách sẽ được chọn sẵn ở trang đặt hàng.",
         "options": {
-          "cod": "Thanh toán khi nhận hàng"
-        }
+          "cod": "Thanh toán khi nhận hàng",
+          "stripe": "Thẻ (Stripe)",
+          "paypal": "PayPal"
+        },
+        "connectHint": "Để nhận {provider}, hãy kết nối trong <link>Cài đặt → Tích hợp</link>."
       },
       "currency": {
         "label": "Đơn vị tiền",
@@ -10063,7 +10096,19 @@
     },
     "payment": {
       "title": "Thanh toán",
-      "cod": "Thanh toán khi nhận hàng"
+      "cod": "Thanh toán khi nhận hàng",
+      "stripe": "Thẻ",
+      "paypal": "PayPal",
+      "paid": "Đã thanh toán",
+      "refunded": "Đã hoàn tiền",
+      "awaiting": "Đang chờ bạn thanh toán",
+      "payBefore": "Hãy thanh toán trước {time}, nếu không đơn hàng sẽ bị hủy.",
+      "payNow": "Thanh toán ngay",
+      "onlineHint": "Bạn sẽ thanh toán ở trang tiếp theo. Đơn hàng được giữ trong 30 phút.",
+      "continueToPayment": "Tiếp tục thanh toán",
+      "notYet": "Chúng tôi chưa nhận được thanh toán của bạn. Nếu bạn vừa trả, hãy chờ một chút rồi tải lại trang.",
+      "leftPaymentPage": "Bạn đã rời trang thanh toán. Bạn vẫn có thể thanh toán bên dưới.",
+      "paidThanks": "Đã nhận thanh toán. Cảm ơn bạn đã đặt hàng!"
     },
     "placeOrder": "Đặt hàng",
     "orderPlaced": "Cảm ơn bạn! Đơn hàng đã được đặt. Cửa hàng sẽ báo tình trạng đơn qua tin nhắn.",
@@ -10113,7 +10158,14 @@
       "discountCodeNotEligible": "Mã này không dành cho bạn.",
       "discountCodeNotApplicable": "Mã này không áp dụng cho món trong giỏ.",
       "discountCodeMinimumAmount": "Mã này cần mua tối thiểu {minimum}. Mua thêm {missing} nữa nhé.",
-      "discountCodeMinimumQuantity": "Mã này cần tối thiểu {minimum} món. Thêm {missing} món nữa nhé."
+      "discountCodeMinimumQuantity": "Mã này cần tối thiểu {minimum} món. Thêm {missing} món nữa nhé.",
+      "paymentMethodUnavailable": "Cách thanh toán này hiện không dùng được.",
+      "paymentProviderNotConnected": "Cách thanh toán này hiện không dùng được.",
+      "paymentProviderUnavailable": "Dịch vụ thanh toán đang không phản hồi. Vui lòng thử lại sau ít phút.",
+      "paymentProviderRejected": "Không mở được trang thanh toán. Vui lòng chọn cách thanh toán khác.",
+      "paymentProviderCredentialsRejected": "Không mở được trang thanh toán. Vui lòng chọn cách thanh toán khác.",
+      "paymentAmountUnsupported": "Đơn hàng này không thanh toán online được. Vui lòng chọn cách thanh toán khác.",
+      "orderPaymentNotOpen": "Đơn hàng này không còn thanh toán online được nữa."
     },
     "discount": {
       "label": "Mã giảm giá",
@@ -10274,6 +10326,52 @@
     "metHelp": "Tỷ lệ phản hồi đạt SLA trong số phản hồi có SLA.",
     "eligibleCount": "{count} phản hồi có SLA",
     "enable": "Bật SLA phản hồi"
+  },
+  "stripe": {
+    "title": "Stripe",
+    "setting": {
+      "label": "Stripe",
+      "description": "Nhận thanh toán bằng thẻ trên web shop bằng tài khoản Stripe của chính bạn. Tiền vào thẳng tài khoản Stripe của bạn.",
+      "notConfigured": "Nền tảng chưa cài đặt Stripe. Hãy nhờ quản trị viên nền tảng thêm cấu hình Stripe Connect."
+    },
+    "testMode": "Chế độ thử",
+    "liveMode": "Thật",
+    "chargesDisabled": "Tài khoản Stripe của bạn chưa nhận được tiền. Hãy hoàn tất cài đặt trong trang quản trị Stripe.",
+    "outcome": {
+      "expired": "Link kết nối Stripe đã hết hạn. Vui lòng thử lại.",
+      "access_denied": "Bạn chưa cho phép kết nối trên Stripe.",
+      "stripeAccountAlreadyConnected": "Tài khoản Stripe này đã được kết nối với một workspace khác.",
+      "stripePlatformNotConfigured": "Nền tảng chưa cài đặt Stripe.",
+      "superAdminRequired": "Chỉ quản trị viên workspace mới kết nối được Stripe.",
+      "signInRequired": "Vui lòng đăng nhập rồi thử lại.",
+      "paymentProviderCredentialsRejected": "Stripe từ chối kết nối. Vui lòng thử lại.",
+      "startedByAnotherUser": "Chỉ người đã bấm Kết nối mới hoàn tất được. Vui lòng bấm Kết nối lại.",
+      "paymentProviderInUse": "Vẫn còn đơn hàng đang cần tài khoản Stripe này. Hãy hoàn tất hoặc hủy các đơn đó trước."
+    },
+    "platform": {
+      "connectClientId": "Connect client ID",
+      "connectClientIdHint": "Lấy trong Stripe Dashboard → Settings → Connect → Onboarding options → OAuth (bắt đầu bằng ca_). Các cửa hàng kết nối tài khoản Stripe của mình qua mã này.",
+      "redirectUri": "Redirect URI",
+      "webhookReady": "Cửa hàng đã kết nối được Stripe, và thanh toán được tự xác nhận.",
+      "webhookMissing": "Chưa có webhook thanh toán. Hãy lưu lại cấu hình này để tạo.",
+      "connectMissing": "Thêm Connect client ID để các cửa hàng kết nối được tài khoản Stripe."
+    }
+  },
+  "paypal": {
+    "title": "PayPal",
+    "setting": {
+      "label": "PayPal",
+      "description": "Nhận thanh toán PayPal trên web shop bằng tài khoản PayPal của chính bạn."
+    },
+    "sandbox": "Sandbox",
+    "liveMode": "Thật",
+    "fields": {
+      "clientId": "Client ID",
+      "clientSecret": "Secret"
+    },
+    "dialog": {
+      "description": "Tạo một REST app trong <link>PayPal Developer → Apps & Credentials</link> rồi dán Client ID và Secret của app đó. Hệ thống tự nhận ra khóa thật hay khóa Sandbox."
+    }
   },
   "pipelines": {
     "title": "Pipelines",

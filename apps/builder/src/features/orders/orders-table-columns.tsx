@@ -14,6 +14,7 @@ import type { ColumnDef, Row } from "@tanstack/react-table"
 import { EyeIcon, MoreHorizontalIcon, StarIcon, Trash2Icon } from "lucide-react"
 import Link from "next/link"
 import type { useTranslations } from "next-intl"
+import { OrderPaymentBadge } from "./components/order-payment-badge"
 import { OrderStatusBadge } from "./components/order-status-badge"
 import { formatOrderMoney, type StoreCurrencyFormat } from "./lib/order-money"
 import type { OrderListItem } from "./schema/resource"
@@ -109,12 +110,24 @@ export function getOrderColumns({
       enableSorting: false,
     },
     {
+      id: "payment",
+      accessorKey: "paymentStatus",
+      header: ({ column }) => (
+        <DataTableColumnHeader
+          column={column}
+          title={t("orders.columns.payment")}
+        />
+      ),
+      cell: ({ row }) => <OrderPaymentBadge order={row.original} />,
+      enableSorting: false,
+    },
+    {
       id: "status",
       accessorKey: "status",
       header: ({ column }) => (
         <DataTableColumnHeader
           column={column}
-          title={t("orders.columns.status")}
+          title={t("orders.columns.orderStatus")}
         />
       ),
       cell: ({ row }) => <OrderStatusBadge status={row.original.status} />,

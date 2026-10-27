@@ -2598,6 +2598,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "path": "/v1/orders/{id}",
   },
   {
+    "method": "POST",
+    "operationId": "orders.getPaymentLink",
+    "path": "/v1/orders/{id}/payment-link",
+  },
+  {
     "method": "GET",
     "operationId": "orders.list",
     "path": "/v1/orders",
@@ -2606,6 +2611,21 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "method": "POST",
     "operationId": "orders.ship",
     "path": "/v1/orders/{id}/ship",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "paymentProviders.disconnect",
+    "path": "/v1/payment-providers/{provider}",
+  },
+  {
+    "method": "GET",
+    "operationId": "paymentProviders.getConnectLink",
+    "path": "/v1/payment-providers/{provider}/connect-link",
+  },
+  {
+    "method": "GET",
+    "operationId": "paymentProviders.list",
+    "path": "/v1/payment-providers",
   },
   {
     "method": "POST",

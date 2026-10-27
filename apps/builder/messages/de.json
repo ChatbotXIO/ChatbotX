@@ -5700,6 +5700,8 @@
       "orderShipped": "Bestellung versandt",
       "orderConcluded": "Bestellung abgeschlossen",
       "orderCancelled": "Bestellung storniert",
+      "orderPaid": "Bestellung bezahlt",
+      "orderRefunded": "Bestellung erstattet",
       "categoryAddedToCart": "Kategorie zum Warenkorb hinzugefügt",
       "productAddedToCart": "Produkt zum Warenkorb hinzugefügt",
       "productRemovedFromCart": "Produkt aus Warenkorb entfernt",
@@ -6944,7 +6946,9 @@
       "rating": "Bewertung",
       "quantity": "Menge",
       "price": "Preis",
-      "vendor": "Anbieter"
+      "vendor": "Anbieter",
+      "orderStatus": "Bestellstatus",
+      "payment": "Zahlung"
     },
     "fields": {
       "name": "Name",
@@ -6969,7 +6973,9 @@
       "cancelReason": "Stornierungsgrund",
       "rating": "Bewertung",
       "ratingComment": "Kundenkommentar",
-      "coupon": "Gutschein ({code})"
+      "coupon": "Gutschein ({code})",
+      "paymentStatus": "Zahlungsstatus",
+      "payments": "Online-Zahlungen"
     },
     "statuses": {
       "pending": "Nicht bearbeitet",
@@ -6985,14 +6991,38 @@
       "cancelled": "Stornieren"
     },
     "paymentMethods": {
-      "cod": "Nachnahme"
+      "cod": "Nachnahme",
+      "stripe": "Karte",
+      "paypal": "PayPal"
     },
     "shippingTypes": {
       "delivery": "Lieferung an den Kunden",
       "pickup": "Abholung im Geschäft"
     },
     "description": "Von deinen Kunden aufgegebene Bestellungen.",
-    "ratingValue": "{rating}/5 ★"
+    "ratingValue": "{rating}/5 ★",
+    "paymentStatuses": {
+      "unpaid": "Unbezahlt",
+      "paid": "Bezahlt",
+      "refunded": "Erstattet"
+    },
+    "attemptStatuses": {
+      "open": "Wartet",
+      "paid": "Bezahlt",
+      "expired": "Abgelaufen",
+      "refunded": "Erstattet"
+    },
+    "testPayment": "Test",
+    "awaitingPaymentHint": "Wartet auf die Online-Zahlung des Kunden. Die Bestellung kann angenommen werden, sobald sie bezahlt ist.",
+    "refundWarning": "{amount} werden dem Kunden erstattet.",
+    "paymentStates": {
+      "paid": "Bezahlt",
+      "refunded": "Erstattet",
+      "awaitingPayment": "Wartet auf Zahlung",
+      "payOnDelivery": "Zahlung bei Lieferung",
+      "notPaid": "Nicht bezahlt"
+    },
+    "paymentUntil": "bis {time}"
   },
   "products": {
     "title": "Produkte",
@@ -9844,8 +9874,11 @@
         "label": "Zahlungsarten",
         "description": "Die Zahlungsarten, die auf der Kassenseite aktiviert sind. Die erste Zahlungsart in der Liste ist auf der Kassenseite vorausgewählt.",
         "options": {
-          "cod": "Nachnahme"
-        }
+          "cod": "Nachnahme",
+          "stripe": "Karte",
+          "paypal": "PayPal"
+        },
+        "connectHint": "Um {provider} anzubieten, verbinde es unter <link>Einstellungen → Integrationen</link>."
       },
       "currency": {
         "label": "Währung",
@@ -10063,7 +10096,19 @@
     },
     "payment": {
       "title": "Zahlung",
-      "cod": "Barzahlung bei Lieferung"
+      "cod": "Barzahlung bei Lieferung",
+      "stripe": "Karte",
+      "paypal": "PayPal",
+      "paid": "Bezahlt",
+      "refunded": "Erstattet",
+      "awaiting": "Wartet auf deine Zahlung",
+      "payBefore": "Zahle vor {time}, sonst wird die Bestellung storniert.",
+      "payNow": "Jetzt bezahlen",
+      "onlineHint": "Du bezahlst auf der nächsten Seite. Deine Bestellung wird 30 Minuten lang reserviert.",
+      "continueToPayment": "Weiter zur Zahlung",
+      "notYet": "Deine Zahlung ist noch nicht bei uns eingegangen. Wenn du gerade bezahlt hast, warte einen Moment und lade diese Seite neu.",
+      "leftPaymentPage": "Du hast die Zahlungsseite verlassen. Du kannst unten noch bezahlen.",
+      "paidThanks": "Zahlung erhalten. Danke für deine Bestellung!"
     },
     "placeOrder": "Bestellung aufgeben",
     "orderPlaced": "Danke! Deine Bestellung ist eingegangen. Neuigkeiten bekommst du im Chat.",
@@ -10113,7 +10158,14 @@
       "discountCodeNotEligible": "Dieser Rabattcode gilt nicht für dich.",
       "discountCodeNotApplicable": "Dieser Rabattcode gilt nicht für deinen Warenkorb.",
       "discountCodeMinimumAmount": "Dieser Code braucht einen Einkauf von mindestens {minimum}. Noch {missing}.",
-      "discountCodeMinimumQuantity": "Dieser Code braucht mindestens {minimum} Artikel. Noch {missing}."
+      "discountCodeMinimumQuantity": "Dieser Code braucht mindestens {minimum} Artikel. Noch {missing}.",
+      "paymentMethodUnavailable": "Diese Zahlungsmethode ist nicht verfügbar.",
+      "paymentProviderNotConnected": "Diese Zahlungsmethode ist nicht verfügbar.",
+      "paymentProviderUnavailable": "Der Zahlungsdienst antwortet nicht. Bitte versuche es gleich noch einmal.",
+      "paymentProviderRejected": "Die Zahlung konnte nicht gestartet werden. Bitte wähle eine andere Zahlungsmethode.",
+      "paymentProviderCredentialsRejected": "Die Zahlung konnte nicht gestartet werden. Bitte wähle eine andere Zahlungsmethode.",
+      "paymentAmountUnsupported": "Diese Bestellung kann nicht online bezahlt werden. Bitte wähle eine andere Zahlungsmethode.",
+      "orderPaymentNotOpen": "Diese Bestellung kann nicht mehr online bezahlt werden."
     },
     "discount": {
       "label": "Rabattcode",
@@ -10274,6 +10326,52 @@
     "metHelp": "Anteil der Antworten mit SLA, die sie einhielten.",
     "eligibleCount": "{count} Antworten hatten eine SLA",
     "enable": "Antwort-SLA aktivieren"
+  },
+  "stripe": {
+    "title": "Stripe",
+    "setting": {
+      "label": "Stripe",
+      "description": "Nimm Kartenzahlungen in deinem Webshop mit deinem eigenen Stripe-Konto entgegen. Das Geld geht direkt auf dein Stripe-Konto.",
+      "notConfigured": "Stripe ist auf dieser Plattform noch nicht eingerichtet. Bitte den Plattform-Admin, die Stripe-Connect-Einstellungen hinzuzufügen."
+    },
+    "testMode": "Testmodus",
+    "liveMode": "Live",
+    "chargesDisabled": "Dein Stripe-Konto kann noch keine Zahlungen annehmen. Schließe die Einrichtung in deinem Stripe-Dashboard ab.",
+    "outcome": {
+      "expired": "Der Stripe-Verbindungslink ist abgelaufen. Bitte versuche es erneut.",
+      "access_denied": "Die Verbindung wurde bei Stripe nicht erlaubt.",
+      "stripeAccountAlreadyConnected": "Dieses Stripe-Konto ist bereits mit einem anderen Workspace verbunden.",
+      "stripePlatformNotConfigured": "Stripe ist auf dieser Plattform noch nicht eingerichtet.",
+      "superAdminRequired": "Nur ein Workspace-Admin kann Stripe verbinden.",
+      "signInRequired": "Bitte melde dich an und versuche es erneut.",
+      "paymentProviderCredentialsRejected": "Stripe hat die Verbindung abgelehnt. Bitte versuche es erneut.",
+      "startedByAnotherUser": "Nur die Person, die auf Verbinden geklickt hat, kann den Vorgang abschließen. Bitte klicke erneut auf Verbinden.",
+      "paymentProviderInUse": "Offene Bestellungen brauchen dieses Stripe-Konto noch. Schließe sie zuerst ab oder storniere sie."
+    },
+    "platform": {
+      "connectClientId": "Connect client ID",
+      "connectClientIdHint": "Aus dem Stripe Dashboard → Settings → Connect → Onboarding options → OAuth (beginnt mit ca_). Shops verbinden darüber ihr eigenes Stripe-Konto.",
+      "redirectUri": "Redirect URI",
+      "webhookReady": "Shops können Stripe verbinden, und ihre Zahlungen werden automatisch bestätigt.",
+      "webhookMissing": "Der Zahlungs-Webhook fehlt. Speichere diese Einstellungen erneut, um ihn zu erstellen.",
+      "connectMissing": "Füge die Connect client ID hinzu, damit Shops ihr Stripe-Konto verbinden können."
+    }
+  },
+  "paypal": {
+    "title": "PayPal",
+    "setting": {
+      "label": "PayPal",
+      "description": "Nimm PayPal-Zahlungen in deinem Webshop mit deinem eigenen PayPal-Konto entgegen."
+    },
+    "sandbox": "Sandbox",
+    "liveMode": "Live",
+    "fields": {
+      "clientId": "Client ID",
+      "clientSecret": "Secret"
+    },
+    "dialog": {
+      "description": "Erstelle eine REST-App unter <link>PayPal Developer → Apps & Credentials</link> und füge deren Client ID und Secret ein. Live oder Sandbox wird anhand der Schlüssel erkannt."
+    }
   },
   "pipelines": {
     "title": "Pipelines",

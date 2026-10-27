@@ -1,15 +1,15 @@
 "use server"
 
-import { platformCredentialService } from "@chatbotx.io/business"
-
-import { isCloud } from "@/env"
+import { removePlatformStripe } from "@chatbotx.io/business"
 import { authActionClient } from "@/lib/safe-action"
+import { credentialScopeSchema } from "../scope"
+import { resolveStripeCredentialScope } from "./scope"
 
-export const deleteStripeSettingsAction = authActionClient.action(
-  async ({ ctx }) => {
-    await platformCredentialService.remove({
-      userId: isCloud() ? ctx.user.id : undefined,
-      type: "stripe",
+/** Removes the Stripe settings and their Connect webhook. */
+export const deleteStripeSettingsAction = authActionClient
+  .bindArgsSchemas([credentialScopeSchema])
+  .action(async ({ ctx, bindArgsParsedInputs: [scope] }) => {
+    await removePlatformStripe({
+      userId: await resolveStripeCredentialScope(ctx.user, scope),
     })
-  },
-)
+  })

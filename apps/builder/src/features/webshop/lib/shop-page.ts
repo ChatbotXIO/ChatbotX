@@ -16,6 +16,14 @@ export const getParam = (
   value: string | string[] | undefined,
 ): string | undefined => (Array.isArray(value) ? value[0] : value)
 
+/**
+ * The signed shop token of a page's URL. A payment provider sends the
+ * customer back with `shopToken`: PayPal appends its own `token` (its order
+ * id) to the return URL, which must never be read as ours.
+ */
+export const getShopToken = (searchParams: SearchParams): string | undefined =>
+  getParam(searchParams.shopToken) ?? getParam(searchParams.token)
+
 // Only bigint ids reach the database lookup.
 const ID_PATTERN = /^\d{1,20}$/
 
@@ -43,10 +51,7 @@ export async function loadShopPage<Params extends Record<string, string>>(
     props.params,
     props.searchParams,
   ])
-  const loaded = await loadShop(
-    params.workspaceId,
-    getParam(searchParams.token),
-  )
+  const loaded = await loadShop(params.workspaceId, getShopToken(searchParams))
   if (!loaded) {
     return null
   }
@@ -73,10 +78,7 @@ export async function getShopPageTranslations<
     props.params,
     props.searchParams,
   ])
-  const loaded = await loadShop(
-    params.workspaceId,
-    getParam(searchParams.token),
-  )
+  const loaded = await loadShop(params.workspaceId, getShopToken(searchParams))
   return await getShopTranslations(loaded?.shop)
 }
 

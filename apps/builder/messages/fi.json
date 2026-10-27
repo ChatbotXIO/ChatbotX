@@ -5700,6 +5700,8 @@
       "orderShipped": "Tilaus lähetetty",
       "orderConcluded": "Tilaus valmistunut",
       "orderCancelled": "Tilaus peruutettu",
+      "orderPaid": "Tilaus maksettu",
+      "orderRefunded": "Tilaus hyvitetty",
       "categoryAddedToCart": "Luokka lisätty ostoskoriin",
       "productAddedToCart": "Tuote lisätty ostoskoriin",
       "productRemovedFromCart": "Tuote poistettu ostoskorista",
@@ -6944,7 +6946,9 @@
       "rating": "Arvosana",
       "quantity": "Määrä",
       "price": "Hinta",
-      "vendor": "Toimittaja"
+      "vendor": "Toimittaja",
+      "orderStatus": "Tilauksen tila",
+      "payment": "Maksu"
     },
     "fields": {
       "name": "Nimi",
@@ -6969,7 +6973,9 @@
       "cancelReason": "Peruutuksen syy",
       "rating": "Arvio",
       "ratingComment": "Asiakkaan kommentti",
-      "coupon": "Kuponki ({code})"
+      "coupon": "Kuponki ({code})",
+      "paymentStatus": "Maksun tila",
+      "payments": "Verkkomaksut"
     },
     "statuses": {
       "pending": "Käsittelemättä",
@@ -6985,14 +6991,38 @@
       "cancelled": "Peruuta"
     },
     "paymentMethods": {
-      "cod": "Postiennakko"
+      "cod": "Postiennakko",
+      "stripe": "Kortti",
+      "paypal": "PayPal"
     },
     "shippingTypes": {
       "delivery": "Toimitus asiakkaalle",
       "pickup": "Nouto myymälästä"
     },
     "description": "Asiakkaidesi tekemät tilaukset.",
-    "ratingValue": "{rating}/5 ★"
+    "ratingValue": "{rating}/5 ★",
+    "paymentStatuses": {
+      "unpaid": "Maksamatta",
+      "paid": "Maksettu",
+      "refunded": "Hyvitetty"
+    },
+    "attemptStatuses": {
+      "open": "Odottaa",
+      "paid": "Maksettu",
+      "expired": "Vanhentunut",
+      "refunded": "Hyvitetty"
+    },
+    "testPayment": "testi",
+    "awaitingPaymentHint": "Odotetaan asiakkaan verkkomaksua. Tilauksen voi hyväksyä, kun se on maksettu.",
+    "refundWarning": "{amount} hyvitetään asiakkaalle.",
+    "paymentStates": {
+      "paid": "Maksettu",
+      "refunded": "Hyvitetty",
+      "awaitingPayment": "Odottaa maksua",
+      "payOnDelivery": "Maksu toimituksen yhteydessä",
+      "notPaid": "Ei maksettu"
+    },
+    "paymentUntil": "klo {time} asti"
   },
   "products": {
     "title": "Tuotteet",
@@ -9844,8 +9874,11 @@
         "label": "Maksutavat",
         "description": "Kassasivulla käytössä olevat maksutavat. Listan ensimmäinen maksutapa on valittuna kassasivulla.",
         "options": {
-          "cod": "Postiennakko"
-        }
+          "cod": "Postiennakko",
+          "stripe": "Kortti",
+          "paypal": "PayPal"
+        },
+        "connectHint": "Jos haluat tarjota {provider}-maksutavan, yhdistä se kohdassa <link>Asetukset → Integraatiot</link>."
       },
       "currency": {
         "label": "Valuutta",
@@ -10063,7 +10096,19 @@
     },
     "payment": {
       "title": "Maksu",
-      "cod": "Maksu toimituksen yhteydessä"
+      "cod": "Maksu toimituksen yhteydessä",
+      "stripe": "Kortti",
+      "paypal": "PayPal",
+      "paid": "Maksettu",
+      "refunded": "Hyvitetty",
+      "awaiting": "Odotetaan maksuasi",
+      "payBefore": "Maksa ennen kello {time}, tai tilaus peruutetaan.",
+      "payNow": "Maksa nyt",
+      "onlineHint": "Maksat seuraavalla sivulla. Tilauksesi on varattu 30 minuutiksi.",
+      "continueToPayment": "Jatka maksamiseen",
+      "notYet": "Emme ole vielä vastaanottaneet maksuasi. Jos juuri maksoit, odota hetki ja päivitä sivu.",
+      "leftPaymentPage": "Poistuit maksusivulta. Voit yhä maksaa alla.",
+      "paidThanks": "Maksu vastaanotettu. Kiitos tilauksestasi!"
     },
     "placeOrder": "Tee tilaus",
     "orderPlaced": "Kiitos! Tilauksesi on vastaanotettu. Lähetämme päivitykset keskusteluun.",
@@ -10113,7 +10158,14 @@
       "discountCodeNotEligible": "Alennuskoodi ei ole käytettävissäsi.",
       "discountCodeNotApplicable": "Alennuskoodi ei koske ostoskorisi sisältöä.",
       "discountCodeMinimumAmount": "Koodi vaatii vähintään {minimum} ostokset. Lisää vielä {missing}.",
-      "discountCodeMinimumQuantity": "Koodi vaatii vähintään {minimum} tuotetta. Lisää vielä {missing}."
+      "discountCodeMinimumQuantity": "Koodi vaatii vähintään {minimum} tuotetta. Lisää vielä {missing}.",
+      "paymentMethodUnavailable": "Tämä maksutapa ei ole käytettävissä.",
+      "paymentProviderNotConnected": "Tämä maksutapa ei ole käytettävissä.",
+      "paymentProviderUnavailable": "Maksupalvelu ei vastaa. Yritä hetken kuluttua uudelleen.",
+      "paymentProviderRejected": "Maksua ei voitu aloittaa. Valitse toinen maksutapa.",
+      "paymentProviderCredentialsRejected": "Maksua ei voitu aloittaa. Valitse toinen maksutapa.",
+      "paymentAmountUnsupported": "Tätä tilausta ei voi maksaa verkossa. Valitse toinen maksutapa.",
+      "orderPaymentNotOpen": "Tätä tilausta ei voi enää maksaa verkossa."
     },
     "discount": {
       "label": "Alennuskoodi",
@@ -10274,6 +10326,52 @@
     "metHelp": "SLA:n täyttäneiden vastausten osuus SLA:lla olevista.",
     "eligibleCount": "{count} vastauksella oli SLA",
     "enable": "Ota vastaus-SLA käyttöön"
+  },
+  "stripe": {
+    "title": "Stripe",
+    "setting": {
+      "label": "Stripe",
+      "description": "Vastaanota korttimaksuja verkkokaupassasi omalla Stripe-tililläsi. Rahat menevät suoraan Stripe-tilillesi.",
+      "notConfigured": "Stripeä ei ole vielä otettu käyttöön tällä alustalla. Pyydä alustan ylläpitäjää lisäämään Stripe Connect -asetukset."
+    },
+    "testMode": "Testitila",
+    "liveMode": "Live",
+    "chargesDisabled": "Stripe-tilisi ei voi vielä vastaanottaa maksuja. Viimeistele asetukset Stripe-hallintapaneelissa.",
+    "outcome": {
+      "expired": "Stripe-yhteyslinkki on vanhentunut. Yritä uudelleen.",
+      "access_denied": "Yhteyttä ei sallittu Stripessä.",
+      "stripeAccountAlreadyConnected": "Tämä Stripe-tili on jo yhdistetty toiseen työtilaan.",
+      "stripePlatformNotConfigured": "Stripeä ei ole vielä otettu käyttöön tällä alustalla.",
+      "superAdminRequired": "Vain työtilan ylläpitäjä voi yhdistää Stripen.",
+      "signInRequired": "Kirjaudu sisään ja yritä uudelleen.",
+      "paymentProviderCredentialsRejected": "Stripe hylkäsi yhteyden. Yritä uudelleen.",
+      "startedByAnotherUser": "Vain Yhdistä-painiketta painanut henkilö voi viimeistellä tämän. Paina Yhdistä uudelleen.",
+      "paymentProviderInUse": "Avoimet tilaukset tarvitsevat vielä tätä Stripe-tiliä. Viimeistele tai peruuta ne ensin."
+    },
+    "platform": {
+      "connectClientId": "Connect client ID",
+      "connectClientIdHint": "Kohdasta Stripe Dashboard → Settings → Connect → Onboarding options → OAuth (alkaa merkeillä ca_). Kaupat yhdistävät sen kautta oman Stripe-tilinsä.",
+      "redirectUri": "Redirect URI",
+      "webhookReady": "Kaupat voivat yhdistää Stripen, ja niiden maksut vahvistetaan automaattisesti.",
+      "webhookMissing": "Maksujen webhook puuttuu. Tallenna nämä asetukset uudelleen luodaksesi sen.",
+      "connectMissing": "Lisää Connect client ID, jotta kaupat voivat yhdistää Stripe-tilinsä."
+    }
+  },
+  "paypal": {
+    "title": "PayPal",
+    "setting": {
+      "label": "PayPal",
+      "description": "Vastaanota PayPal-maksuja verkkokaupassasi omalla PayPal-tililläsi."
+    },
+    "sandbox": "Sandbox",
+    "liveMode": "Live",
+    "fields": {
+      "clientId": "Client ID",
+      "clientSecret": "Secret"
+    },
+    "dialog": {
+      "description": "Luo REST-sovellus kohdassa <link>PayPal Developer → Apps & Credentials</link> ja liitä sen Client ID ja Secret. Live- tai sandbox-tila tunnistetaan avaimista."
+    }
   },
   "pipelines": {
     "title": "Pipelinet",

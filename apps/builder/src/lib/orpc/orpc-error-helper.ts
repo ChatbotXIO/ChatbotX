@@ -1115,6 +1115,14 @@ export const possibleErrorsOnUpdatingEcommerceSettings = {
     message: "This setting needs a Pro plan",
     status: 403,
   },
+  paymentProviderNotConnected: {
+    message: "Connect this payment provider in Settings → Integrations first",
+    status: 400,
+  },
+  paymentCurrencyUnsupported: {
+    message: "The payment provider does not take payments in this currency",
+    status: 400,
+  },
 } satisfies ErrorMap
 
 /**
@@ -1205,14 +1213,107 @@ export const possibleErrorsOnPlacingOrder = {
     message: "The store does not offer this shipping type",
     status: 400,
   },
+  paymentMethodUnavailable: {
+    message: "The store does not take this payment method",
+    status: 400,
+  },
+  orderPaymentContactRequired: {
+    message: "An order paid online needs a contact",
+    status: 400,
+  },
+} satisfies ErrorMap
+
+/**
+ * A store's Stripe or PayPal refusing or not answering — see
+ * `packages/business/src/payment-provider/errors.ts`. `data.provider` says
+ * which, `data.providerCode` the provider's own code.
+ */
+const paymentProviderErrors = {
+  paymentProviderNotConnected: {
+    message: "Connect this payment provider in Settings → Integrations first",
+    status: 400,
+  },
+  paymentProviderCredentialsRejected: {
+    message: "The payment provider refused the credentials",
+    status: 400,
+  },
+  paymentProviderRejected: {
+    message: "The payment provider refused the request",
+    status: 400,
+  },
+  paymentProviderUnavailable: {
+    message: "The payment provider is not answering; try again shortly",
+    status: 503,
+  },
+  paymentAmountUnsupported: {
+    message: "The payment provider cannot charge this amount exactly",
+    status: 400,
+  },
+} satisfies ErrorMap
+
+/** Connecting or disconnecting a store's Stripe or PayPal. */
+export const possibleErrorsOnConnectingPaymentProvider = {
+  ...possibleErrorsOnMutatingResource,
+  ...paymentProviderErrors,
+  stripePlatformNotConfigured: {
+    message: "Stripe Connect is not set up on this platform",
+    status: 400,
+  },
+  stripeAccountAlreadyConnected: {
+    message: "This Stripe account is connected to another workspace",
+    status: 409,
+  },
+  paymentProviderInUse: {
+    message:
+      "Open orders still need this payment account; complete or cancel them first",
+    status: 409,
+  },
 } satisfies ErrorMap
 
 /** Accept/ship/conclude/cancel: a move the order's status does not allow. */
 export const possibleErrorsOnTransitioningOrder = {
   ...possibleErrorsOnMutatingResource,
+  ...paymentProviderErrors,
   orderInvalidStatusTransition: {
     message: "The order's current status does not allow this change",
     status: 409,
+  },
+  orderAwaitingPayment: {
+    message: "The order is waiting for its online payment",
+    status: 409,
+  },
+  orderRefundFailed: {
+    message:
+      "The payment could not be refunded, so the order was not cancelled",
+    status: 502,
+  },
+  orderPaymentProcessing: {
+    message: "A payment for this order is still being processed",
+    status: 409,
+  },
+} satisfies ErrorMap
+
+/** Deleting an order: a paid online order is cancelled (refunded) instead. */
+export const possibleErrorsOnDeletingOrder = {
+  ...possibleErrorsOnDeletingResource,
+  ...paymentProviderErrors,
+  orderPaidOnline: {
+    message: "The order was paid online; cancel it to refund the payment",
+    status: 409,
+  },
+} satisfies ErrorMap
+
+/** Opening the provider's page for an order still waiting for its payment. */
+export const possibleErrorsOnStartingOrderPayment = {
+  ...possibleErrorsOnMutatingResource,
+  ...paymentProviderErrors,
+  orderPaymentNotOpen: {
+    message: "This order cannot be paid online now",
+    status: 409,
+  },
+  orderPaymentContactRequired: {
+    message: "An order paid online needs a contact",
+    status: 400,
   },
 } satisfies ErrorMap
 

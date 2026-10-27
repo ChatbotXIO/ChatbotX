@@ -8,11 +8,10 @@ import {
   signShopPreviewToken,
   signShopToken,
 } from "@chatbotx.io/encryption/shop-token"
+import { joinAppUrl } from "@chatbotx.io/utils/web-url"
 import { notFoundException } from "../errors"
-import { resolveTenantSettings } from "../platform/settings"
+import { resolveWorkspaceAppUrl } from "../platform/settings"
 import { vendorService } from "../vendor/service"
-
-const TRAILING_SLASHES = /\/+$/
 
 /** The shop page a link opens. */
 export type WebshopLinkTarget = {
@@ -48,7 +47,6 @@ export const buildWebshopUrl = (
     token: string
   },
 ): string => {
-  const base = input.appUrl.replace(TRAILING_SLASHES, "")
   const page = pagePath(input)
   const path = `/shop/${encodeURIComponent(input.workspaceId)}${page}`
   const query = [
@@ -62,7 +60,7 @@ export const buildWebshopUrl = (
       ? [`products=${input.productIds.map(encodeURIComponent).join(",")}`]
       : []),
   ].join("&")
-  return `${base}${path}?${query}`
+  return joinAppUrl(input.appUrl, `${path}?${query}`)
 }
 
 /**
@@ -108,7 +106,7 @@ export const createWebshopLink = async (
   ) {
     throw notFoundException("Product does not exist.")
   }
-  const { appUrl } = await resolveTenantSettings({
+  const appUrl = await resolveWorkspaceAppUrl({
     workspaceId: input.workspaceId,
   })
   const preview = !input.contactId

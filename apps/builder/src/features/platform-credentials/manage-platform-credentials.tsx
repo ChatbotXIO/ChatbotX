@@ -1,4 +1,7 @@
-import { platformCredentialService } from "@chatbotx.io/business"
+import {
+  hasPlatformStripeWebhook,
+  platformCredentialService,
+} from "@chatbotx.io/business"
 import type {
   CredentialPublicByType,
   CredentialType,
@@ -18,6 +21,7 @@ import { MakeSettings } from "./make/make-settings"
 import { MessengerSettings } from "./messenger/messenger-settings"
 import { CredentialScopeProvider } from "./provider/credential-scope-context"
 import type { CredentialScope } from "./scope"
+import { StripeSettings } from "./stripe/stripe-settings"
 import { ThreadsSettings } from "./threads/threads-settings"
 import { TiktokSettings } from "./tiktok/tiktok-settings"
 import { WhatsappSettings } from "./whatsapp/whatsapp-settings"
@@ -90,6 +94,8 @@ export async function ManagePlatformCredentials({
     giphyResult,
     tiktokResult,
     makeResult,
+    stripeResult,
+    stripeWebhookResult,
   ] = await Promise.allSettled([
     resolveCard(scopedUserId, "whatsapp"),
     resolveCard(scopedUserId, "messenger"),
@@ -102,6 +108,8 @@ export async function ManagePlatformCredentials({
     resolveCard(scopedUserId, "giphy"),
     resolveCard(scopedUserId, "tiktok"),
     resolveCard(scopedUserId, "make"),
+    resolveCard(scopedUserId, "stripe"),
+    hasPlatformStripeWebhook({ userId: scopedUserId }),
   ])
 
   const emptyCard = { publicConfig: null, isInherited: false } as const
@@ -127,6 +135,10 @@ export async function ManagePlatformCredentials({
   const tiktok =
     tiktokResult.status === "fulfilled" ? tiktokResult.value : emptyCard
   const make = makeResult.status === "fulfilled" ? makeResult.value : emptyCard
+  const stripe =
+    stripeResult.status === "fulfilled" ? stripeResult.value : emptyCard
+  const hasStripeWebhook =
+    stripeWebhookResult.status === "fulfilled" && stripeWebhookResult.value
 
   // For a tenant-owned credential (their own app), provider-facing URLs must
   // use the reseller's active custom domain — falling back to a literal
@@ -197,6 +209,12 @@ export async function ManagePlatformCredentials({
         <MakeSettings
           isInherited={make.isInherited}
           publicConfig={make.publicConfig}
+        />
+        <StripeSettings
+          callbackOrigin={callbackOriginFor(stripe.isInherited)}
+          hasConnectWebhook={hasStripeWebhook}
+          isInherited={stripe.isInherited}
+          publicConfig={stripe.publicConfig}
         />
       </div>
     </CredentialScopeProvider>

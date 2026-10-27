@@ -9,17 +9,25 @@ import {
   type EcommerceShippingSettings,
   ecommerceProFeatures,
   ecommerceSettingsSchema,
+  isOnlinePaymentMethod,
+  type PaymentMethod,
 } from "@chatbotx.io/database/partials"
 import {
   type EcommerceSettingsValues,
   ecommerceSettingsRepository,
+  paymentProviderRepository,
 } from "@chatbotx.io/database/repositories"
 import type { EcommerceSettingsModel } from "@chatbotx.io/database/types"
+import { isPaypalCurrency } from "@chatbotx.io/payments"
 import { withCache } from "@chatbotx.io/redis"
 import { BaseService } from "../base.service"
 import { ecommerceOpenHoursService } from "../ecommerce-open-hours/service"
 import { ChatbotXException, validationException } from "../errors"
 import { flowService } from "../flow/service"
+import {
+  paymentCurrencyUnsupportedException,
+  paymentProviderNotConnectedException,
+} from "../payment-provider/errors"
 
 export type EcommerceSettingsPatch = {
   general?: Partial<EcommerceGeneralSettings>
@@ -181,6 +189,9 @@ class EcommerceSettingsService extends BaseService {
         checkout: { ...current.checkout, ...definedOnly(patch.checkout) },
       })
       await this.assertCoherent(workspaceId, next, patch)
+      if (Object.keys(definedOnly(patch.payments)).length > 0) {
+        await this.assertPaymentMethodsUsable(workspaceId, next, tx)
+      }
       await ecommerceSettingsRepository.upsert(
         { workspaceId, values: toValues(next) },
         tx,
@@ -191,6 +202,82 @@ class EcommerceSettingsService extends BaseService {
     await this.invalidateCacheTags(this.cacheTag(workspaceId))
     await this.audit("update", "updated ecommerce settings")
     return merged
+  }
+
+  /**
+   * Stops offering a payment method — its provider was disconnected. Cash on
+   * delivery comes back when nothing else is left, since a store always takes
+   * some payment. Inside the caller's transaction.
+   */
+  async dropPaymentMethod(
+    input: { workspaceId: string; method: PaymentMethod },
+    tx: DatabaseClient,
+  ): Promise<void> {
+    const row = await ecommerceSettingsRepository.findForUpdate(
+      input.workspaceId,
+      tx,
+    )
+    if (!row?.paymentMethods.includes(input.method)) {
+      return
+    }
+    const current = toSettings(row)
+    const remaining = current.payments.paymentMethods.filter(
+      (method) => method !== input.method,
+    )
+    await ecommerceSettingsRepository.upsert(
+      {
+        workspaceId: input.workspaceId,
+        values: toValues({
+          ...current,
+          payments: {
+            ...current.payments,
+            paymentMethods: remaining.length > 0 ? remaining : ["cod"],
+          },
+        }),
+      },
+      tx,
+    )
+  }
+
+  /** Drops the cached settings after a write made outside `update`. */
+  async invalidate(workspaceId: string): Promise<void> {
+    await this.invalidateCacheTags(this.cacheTag(workspaceId))
+  }
+
+  /**
+   * Stripe and PayPal can only be offered once connected, and PayPal only in
+   * a currency it takes — checked whenever the payments group is saved, so a
+   * currency change cannot slip past an enabled PayPal either.
+   */
+  private async assertPaymentMethodsUsable(
+    workspaceId: string,
+    settings: EcommerceSettings,
+    tx: DatabaseClient,
+  ) {
+    const online = settings.payments.paymentMethods.filter(
+      isOnlinePaymentMethod,
+    )
+    if (online.length === 0) {
+      return
+    }
+    const connected = new Set(
+      (await paymentProviderRepository.listByWorkspace(workspaceId, tx)).map(
+        (row) => row.provider,
+      ),
+    )
+    const missing = online.find((provider) => !connected.has(provider))
+    if (missing) {
+      throw paymentProviderNotConnectedException(missing)
+    }
+    if (
+      online.includes("paypal") &&
+      !isPaypalCurrency(settings.payments.currency)
+    ) {
+      throw paymentCurrencyUnsupportedException(
+        "paypal",
+        settings.payments.currency,
+      )
+    }
   }
 
   private async assertProFeaturesAllowed(

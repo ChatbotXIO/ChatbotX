@@ -5700,6 +5700,8 @@
       "orderShipped": "Pesanan Dikirim",
       "orderConcluded": "Pesanan Diselesaikan",
       "orderCancelled": "Pesanan Dibatalkan",
+      "orderPaid": "Pesanan Dibayar",
+      "orderRefunded": "Pesanan Dikembalikan Dananya",
       "categoryAddedToCart": "Kategori Ditambahkan ke Keranjang",
       "productAddedToCart": "Produk Ditambahkan ke Keranjang",
       "productRemovedFromCart": "Produk Dihapus dari Keranjang",
@@ -6944,7 +6946,9 @@
       "rating": "Penilaian",
       "quantity": "Jumlah",
       "price": "Harga",
-      "vendor": "Vendor"
+      "vendor": "Vendor",
+      "orderStatus": "Status pesanan",
+      "payment": "Pembayaran"
     },
     "fields": {
       "name": "Nama",
@@ -6969,7 +6973,9 @@
       "cancelReason": "Alasan pembatalan",
       "rating": "Penilaian",
       "ratingComment": "Komentar pelanggan",
-      "coupon": "Kupon ({code})"
+      "coupon": "Kupon ({code})",
+      "paymentStatus": "Status pembayaran",
+      "payments": "Pembayaran online"
     },
     "statuses": {
       "pending": "Belum diproses",
@@ -6985,14 +6991,38 @@
       "cancelled": "Batalkan"
     },
     "paymentMethods": {
-      "cod": "Bayar di Tempat"
+      "cod": "Bayar di Tempat",
+      "stripe": "Kartu",
+      "paypal": "PayPal"
     },
     "shippingTypes": {
       "delivery": "Antar ke pelanggan",
       "pickup": "Ambil di toko"
     },
     "description": "Pesanan yang dibuat pelanggan Anda.",
-    "ratingValue": "{rating}/5 ★"
+    "ratingValue": "{rating}/5 ★",
+    "paymentStatuses": {
+      "unpaid": "Belum dibayar",
+      "paid": "Dibayar",
+      "refunded": "Dikembalikan dananya"
+    },
+    "attemptStatuses": {
+      "open": "Menunggu",
+      "paid": "Dibayar",
+      "expired": "Kedaluwarsa",
+      "refunded": "Dikembalikan dananya"
+    },
+    "testPayment": "uji coba",
+    "awaitingPaymentHint": "Menunggu pembayaran online dari pelanggan. Pesanan dapat diterima setelah dibayar.",
+    "refundWarning": "{amount} akan dikembalikan ke pelanggan.",
+    "paymentStates": {
+      "paid": "Lunas",
+      "refunded": "Dikembalikan",
+      "awaitingPayment": "Menunggu pembayaran",
+      "payOnDelivery": "Bayar di tempat",
+      "notPaid": "Belum dibayar"
+    },
+    "paymentUntil": "hingga {time}"
   },
   "products": {
     "title": "Produk",
@@ -9844,8 +9874,11 @@
         "label": "Metode pembayaran",
         "description": "Metode pembayaran yang aktif di halaman checkout. Metode pertama dalam daftar akan menjadi metode yang dipilih di halaman checkout.",
         "options": {
-          "cod": "Bayar di Tempat"
-        }
+          "cod": "Bayar di Tempat",
+          "stripe": "Kartu",
+          "paypal": "PayPal"
+        },
+        "connectHint": "Untuk menawarkan {provider}, hubungkan di <link>Pengaturan → Integrasi</link>."
       },
       "currency": {
         "label": "Mata uang",
@@ -10063,7 +10096,19 @@
     },
     "payment": {
       "title": "Pembayaran",
-      "cod": "Bayar di tempat (COD)"
+      "cod": "Bayar di tempat (COD)",
+      "stripe": "Kartu",
+      "paypal": "PayPal",
+      "paid": "Dibayar",
+      "refunded": "Dikembalikan dananya",
+      "awaiting": "Menunggu pembayaran Anda",
+      "payBefore": "Bayar sebelum {time}, atau pesanan akan dibatalkan.",
+      "payNow": "Bayar sekarang",
+      "onlineHint": "Anda akan membayar di halaman berikutnya. Pesanan Anda ditahan selama 30 menit.",
+      "continueToPayment": "Lanjut ke pembayaran",
+      "notYet": "Kami belum menerima pembayaran Anda. Jika baru saja membayar, tunggu sebentar dan muat ulang halaman ini.",
+      "leftPaymentPage": "Anda meninggalkan halaman pembayaran. Anda masih bisa membayar di bawah.",
+      "paidThanks": "Pembayaran diterima. Terima kasih atas pesanan Anda!"
     },
     "placeOrder": "Buat pesanan",
     "orderPlaced": "Terima kasih! Pesanan Anda sudah dibuat. Kami akan mengirim kabar lewat chat.",
@@ -10113,7 +10158,14 @@
       "discountCodeNotEligible": "Kode diskon ini tidak berlaku untuk Anda.",
       "discountCodeNotApplicable": "Kode diskon ini tidak berlaku untuk isi keranjang Anda.",
       "discountCodeMinimumAmount": "Kode ini butuh pembelian minimal {minimum}. Tambah {missing} lagi.",
-      "discountCodeMinimumQuantity": "Kode ini butuh minimal {minimum} item. Tambah {missing} lagi."
+      "discountCodeMinimumQuantity": "Kode ini butuh minimal {minimum} item. Tambah {missing} lagi.",
+      "paymentMethodUnavailable": "Metode pembayaran ini tidak tersedia.",
+      "paymentProviderNotConnected": "Metode pembayaran ini tidak tersedia.",
+      "paymentProviderUnavailable": "Layanan pembayaran tidak merespons. Silakan coba lagi sebentar lagi.",
+      "paymentProviderRejected": "Pembayaran tidak dapat dimulai. Silakan pilih metode pembayaran lain.",
+      "paymentProviderCredentialsRejected": "Pembayaran tidak dapat dimulai. Silakan pilih metode pembayaran lain.",
+      "paymentAmountUnsupported": "Pesanan ini tidak dapat dibayar secara online. Silakan pilih metode pembayaran lain.",
+      "orderPaymentNotOpen": "Pesanan ini tidak dapat lagi dibayar secara online."
     },
     "discount": {
       "label": "Kode diskon",
@@ -10274,6 +10326,52 @@
     "metHelp": "Persentase balasan ber-SLA yang memenuhinya.",
     "eligibleCount": "{count} balasan memiliki SLA",
     "enable": "Aktifkan SLA respons"
+  },
+  "stripe": {
+    "title": "Stripe",
+    "setting": {
+      "label": "Stripe",
+      "description": "Terima pembayaran kartu di toko web Anda dengan akun Stripe Anda sendiri. Uang langsung masuk ke akun Stripe Anda.",
+      "notConfigured": "Stripe belum diatur di platform ini. Minta admin platform untuk menambahkan pengaturan Stripe Connect."
+    },
+    "testMode": "Mode uji coba",
+    "liveMode": "Live",
+    "chargesDisabled": "Akun Stripe Anda belum dapat menerima pembayaran. Selesaikan pengaturannya di dashboard Stripe Anda.",
+    "outcome": {
+      "expired": "Tautan koneksi Stripe telah kedaluwarsa. Silakan coba lagi.",
+      "access_denied": "Koneksi tidak diizinkan di Stripe.",
+      "stripeAccountAlreadyConnected": "Akun Stripe ini sudah terhubung ke workspace lain.",
+      "stripePlatformNotConfigured": "Stripe belum diatur di platform ini.",
+      "superAdminRequired": "Hanya admin workspace yang dapat menghubungkan Stripe.",
+      "signInRequired": "Silakan masuk lalu coba lagi.",
+      "paymentProviderCredentialsRejected": "Stripe menolak koneksi. Silakan coba lagi.",
+      "startedByAnotherUser": "Hanya orang yang menekan Hubungkan yang dapat menyelesaikannya. Silakan tekan Hubungkan lagi.",
+      "paymentProviderInUse": "Masih ada pesanan terbuka yang memerlukan akun Stripe ini. Selesaikan atau batalkan dulu."
+    },
+    "platform": {
+      "connectClientId": "Connect client ID",
+      "connectClientIdHint": "Dari Stripe Dashboard → Settings → Connect → Onboarding options → OAuth (diawali ca_). Toko menghubungkan akun Stripe mereka sendiri melalui ini.",
+      "redirectUri": "Redirect URI",
+      "webhookReady": "Toko dapat menghubungkan Stripe, dan pembayaran mereka dikonfirmasi secara otomatis.",
+      "webhookMissing": "Webhook pembayaran tidak ada. Simpan pengaturan ini lagi untuk membuatnya.",
+      "connectMissing": "Tambahkan Connect client ID agar toko dapat menghubungkan akun Stripe mereka."
+    }
+  },
+  "paypal": {
+    "title": "PayPal",
+    "setting": {
+      "label": "PayPal",
+      "description": "Terima pembayaran PayPal di toko web Anda dengan akun PayPal Anda sendiri."
+    },
+    "sandbox": "Sandbox",
+    "liveMode": "Live",
+    "fields": {
+      "clientId": "Client ID",
+      "clientSecret": "Secret"
+    },
+    "dialog": {
+      "description": "Buat aplikasi REST di <link>PayPal Developer → Apps & Credentials</link> lalu tempel Client ID dan Secret-nya. Mode live atau sandbox dideteksi dari kuncinya."
+    }
   },
   "pipelines": {
     "title": "Pipeline",

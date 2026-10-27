@@ -1,5 +1,6 @@
 "use client"
 
+import { isOnlinePaymentMethod } from "@chatbotx.io/database/partials"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import { Card, CardContent } from "@chatbotx.io/ui/components/ui/card"
 import {
@@ -17,6 +18,7 @@ import { type ReactNode, useEffect, useState } from "react"
 import { createPortal } from "react-dom"
 import { formatOrderMoney, type StoreCurrencyFormat } from "../lib/order-money"
 import type { OrderDetailResource } from "../schema/public"
+import { OrderPaymentBadge } from "./order-payment-badge"
 import { OrderStatusActions } from "./order-status-actions"
 
 type OrderDetailProps = {
@@ -57,7 +59,17 @@ export function OrderDetail({ workspaceId, order, store }: OrderDetailProps) {
       </div>
 
       <OrderStatusActions
+        awaitingPayment={
+          isOnlinePaymentMethod(order.paymentMethod) &&
+          order.paymentStatus === "unpaid"
+        }
         orderId={order.id}
+        refundAmount={
+          isOnlinePaymentMethod(order.paymentMethod) &&
+          order.paymentStatus === "paid"
+            ? formatOrderMoney(order.total, order.currency, store)
+            : null
+        }
         status={order.status}
         workspaceId={workspaceId}
       />
@@ -192,7 +204,18 @@ function OrderSummary({
             value={t(`paymentMethods.${order.paymentMethod}`)}
           />
           <Field
-            label={t("fields.status")}
+            label={t("fields.paymentStatus")}
+            value={
+              printing ? (
+                t(`paymentStatuses.${order.paymentStatus}`)
+              ) : (
+                <OrderPaymentBadge order={order} showMethod={false} />
+              )
+            }
+          />
+          {printing ? null : <OrderPayments payments={order.payments} />}
+          <Field
+            label={t("columns.orderStatus")}
             value={t(`statuses.${order.status}`)}
           />
           {order.note ? (
@@ -286,5 +309,66 @@ function OrderSummary({
         </CardContent>
       </Card>
     </>
+  )
+}
+
+/** The provider's dashboard page for a payment, on the store's own account. */
+const paymentDashboardUrl = (
+  payment: OrderDetailResource["payments"][number],
+) => {
+  if (!payment.transactionId) {
+    return null
+  }
+  if (payment.provider === "stripe") {
+    return `https://dashboard.stripe.com/${payment.livemode ? "" : "test/"}payments/${encodeURIComponent(payment.transactionId)}`
+  }
+  return `https://www.${payment.livemode ? "" : "sandbox."}paypal.com/activity/payment/${encodeURIComponent(payment.transactionId)}`
+}
+
+/** Each attempt to pay the order online, with its transaction. */
+function OrderPayments({
+  payments,
+}: {
+  payments: OrderDetailResource["payments"]
+}) {
+  const t = useTranslations("orders")
+  const attempts = payments.filter(
+    (payment) => payment.status !== "expired" || payment.transactionId,
+  )
+  if (attempts.length === 0) {
+    return null
+  }
+  return (
+    <div className="space-y-1">
+      <p className="text-muted-foreground">{t("fields.payments")}:</p>
+      <ul className="space-y-1">
+        {attempts.map((payment) => {
+          const url = paymentDashboardUrl(payment)
+          return (
+            <li className="flex flex-wrap items-center gap-2" key={payment.id}>
+              <span>{t(`paymentMethods.${payment.provider}`)}</span>
+              <span className="text-muted-foreground">
+                {t(`attemptStatuses.${payment.status}`)}
+              </span>
+              {payment.livemode ? null : (
+                <span className="text-muted-foreground text-xs">
+                  ({t("testPayment")})
+                </span>
+              )}
+              {url && payment.transactionId ? (
+                <Link
+                  className="font-mono text-xs underline"
+                  href={url}
+                  rel="noreferrer"
+                  target="_blank"
+                >
+                  {payment.transactionId}
+                </Link>
+              ) : null}
+            </li>
+          )
+        })}
+      </ul>
+    </div>
   )
 }

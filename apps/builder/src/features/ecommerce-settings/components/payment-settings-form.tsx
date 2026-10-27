@@ -3,6 +3,8 @@
 import {
   currencyPositions,
   type EcommercePaymentSettings,
+  isOnlinePaymentMethod,
+  type OnlinePaymentProvider,
   paymentMethods,
 } from "@chatbotx.io/database/partials"
 import { InputField } from "@chatbotx.io/ui/components/form/input-field"
@@ -11,6 +13,7 @@ import { MultiSelectField } from "@chatbotx.io/ui/components/form/multi-select-f
 import { SelectField } from "@chatbotx.io/ui/components/form/select-field"
 import { Form } from "@chatbotx.io/ui/components/ui/form"
 import { TriangleAlertIcon } from "lucide-react"
+import Link from "next/link"
 import { useTranslations } from "next-intl"
 import { useForm } from "react-hook-form"
 import { PERCENT_INPUT_PROPS } from "@/features/products/constants"
@@ -37,9 +40,12 @@ const toRequest = (values: PaymentFormValues) => ({
 export function PaymentSettingsForm({
   workspaceId,
   settings,
+  connectedProviders,
 }: {
   workspaceId: string
   settings: EcommerceSettingsPublicResource
+  /** Stripe / PayPal connected in Settings → Integrations. */
+  connectedProviders: OnlinePaymentProvider[]
 }) {
   const t = useTranslations("ecommerceSettings.payments")
   const { execute, isPending } = useSettingsSave(workspaceId)
@@ -78,11 +84,37 @@ export function PaymentSettingsForm({
         >
           <MultiSelectField
             name="paymentMethods"
-            options={paymentMethods.options.map((method) => ({
-              value: method,
-              label: t(`paymentMethods.options.${method}`),
-            }))}
+            options={paymentMethods.options
+              // An online method can be offered once its provider is
+              // connected; one still selected stays, so it can be removed.
+              .filter(
+                (method) =>
+                  !isOnlinePaymentMethod(method) ||
+                  connectedProviders.includes(method) ||
+                  settings.payments.paymentMethods.includes(method),
+              )
+              .map((method) => ({
+                value: method,
+                label: t(`paymentMethods.options.${method}`),
+              }))}
           />
+          {(["stripe", "paypal"] as const)
+            .filter((provider) => !connectedProviders.includes(provider))
+            .map((provider) => (
+              <p className="text-muted-foreground text-sm" key={provider}>
+                {t.rich("paymentMethods.connectHint", {
+                  provider: t(`paymentMethods.options.${provider}`),
+                  link: (chunks) => (
+                    <Link
+                      className="underline"
+                      href={`/space/${workspaceId}/settings/integrations/${provider}`}
+                    >
+                      {chunks}
+                    </Link>
+                  ),
+                })}
+              </p>
+            ))}
         </SettingRow>
         <SettingRow
           description={t("currency.description")}

@@ -215,6 +215,8 @@ export function AddCondition({
               triggerEventTypes.enum.orderShipped,
               triggerEventTypes.enum.orderConcluded,
               triggerEventTypes.enum.orderCancelled,
+              triggerEventTypes.enum.orderPaid,
+              triggerEventTypes.enum.orderRefunded,
             ] as const
           ).map((type) => ({
             label: t(`trigger.conditions.${type}`),

@@ -1,9 +1,11 @@
 import { type DatabaseClient, db } from "@chatbotx.io/database/client"
-import type {
-  CartLine,
-  EcommerceSettings,
-  OrderShippingAddress,
-  ShippingType,
+import {
+  type CartLine,
+  type EcommerceSettings,
+  isAwaitingOnlinePayment,
+  type OrderShippingAddress,
+  type PaymentMethod,
+  type ShippingType,
 } from "@chatbotx.io/database/partials"
 import {
   cartRepository,
@@ -43,7 +45,8 @@ import {
   productCategoryIds,
   splitOrderableItems,
 } from "../order/service"
-import { resolveTenantSettings } from "../platform/settings"
+import { orderPaymentService } from "../order-payment/service"
+import { resolveWorkspaceAppUrl } from "../platform/settings"
 import { productService } from "../product/service"
 import { productCategoryService } from "../product-category/service"
 import { vendorService } from "../vendor/service"
@@ -66,6 +69,8 @@ export type WebshopShopper = {
 }
 
 export type WebshopCheckoutForm = {
+  /** Cash on delivery when left out. */
+  paymentMethod?: PaymentMethod | null
   customerName?: string | null
   customerEmail?: string | null
   customerPhone?: string | null
@@ -592,9 +597,9 @@ class WebshopService extends BaseService {
     if (cart.lines.length === 0) {
       return null
     }
-    const [language, { appUrl }] = await Promise.all([
+    const [language, appUrl] = await Promise.all([
       resolveCustomerMessageLanguage(input),
-      resolveTenantSettings({ workspaceId: input.workspaceId }),
+      resolveWorkspaceAppUrl({ workspaceId: input.workspaceId }),
     ])
     const externalCheckout =
       settings.checkout.checkoutMode === "externalLink"
@@ -674,10 +679,15 @@ class WebshopService extends BaseService {
   }
 
   /**
-   * Places the cart as a cash-on-delivery order for the shopper. The store's
-   * rules are checked first (open, required fields, country); prices, stock
-   * and minimums are `orderService.place`'s. The cart is emptied in the same
-   * transaction, so a refused order keeps it.
+   * Places the cart as an order for the shopper, paid the way they chose.
+   * The store's rules are checked first (open, required fields, country);
+   * prices, stock and minimums are `orderService.place`'s. The cart is
+   * emptied in the same transaction, so a refused order keeps it.
+   *
+   * Paid online, the order is placed first (holding its stock) and the
+   * provider's page opened for it: `paymentUrl` is where the customer goes
+   * next. A page that cannot be opened cancels the order and puts its items
+   * back in the cart, so the customer can pick another way to pay.
    */
   async checkout(input: {
     shopper: WebshopShopper
@@ -752,6 +762,7 @@ class WebshopService extends BaseService {
       note: form.note?.trim() || null,
       discountCode: cart?.discountCode,
       autoApplyDiscount: true,
+      paymentMethod: form.paymentMethod ?? "cod",
       onPlaced: async (_order, tx) => {
         // Only what was ordered leaves the cart: an item added in another
         // tab while this order was placed stays. A double-submitted checkout
@@ -765,51 +776,98 @@ class WebshopService extends BaseService {
         await this.keepCartLines(shopper, left, tx)
       },
     })
-    await this.startCheckoutFlow(settings, order)
-    return order
+    if (!isAwaitingOnlinePayment(order)) {
+      return { order, paymentUrl: null }
+    }
+    try {
+      const { url } = await orderPaymentService.startCheckout({
+        workspaceId: shopper.workspaceId,
+        orderId: order.id,
+      })
+      return { order, paymentUrl: url }
+    } catch (error) {
+      await this.undoUnpayableOrder({
+        shopper,
+        orderId: order.id,
+        lines,
+        discountCode: cart?.discountCode ?? null,
+      })
+      throw error
+    }
   }
 
   /**
-   * "Start a flow" checkout: once the order is placed, the chosen flow runs
-   * in the customer's conversation. A customer without one (the link was
-   * opened outside a chat) just gets the order.
+   * The provider's page could not be opened for an order just placed: the
+   * order is cancelled (its stock and code given back) and its items return
+   * to the cart, so nothing was lost and the customer can try again.
    */
-  private async startCheckoutFlow(
-    settings: EcommerceSettings,
-    order: {
-      id: string
-      conversationId: string | null
-      contactInboxId: string | null
-    },
-  ) {
-    const flowId = settings.checkout.checkoutFlowId
-    if (
-      settings.checkout.checkoutMode !== "flow" ||
-      !flowId ||
-      !order.conversationId ||
-      !order.contactInboxId
-    ) {
-      return
-    }
-    await integrationQueue
-      .add(
-        IntegrationJobAction.sendFlow,
-        {
-          type: IntegrationJobAction.sendFlow,
-          data: {
-            conversationId: order.conversationId,
-            contactInboxId: order.contactInboxId,
-            flowId,
+  private async undoUnpayableOrder(input: {
+    shopper: WebshopShopper
+    orderId: string
+    lines: Array<{
+      productId: string
+      variantId?: string | null
+      quantity: number
+    }>
+    discountCode: string | null
+  }) {
+    const { shopper } = input
+    try {
+      await orderService.cancel({
+        workspaceId: shopper.workspaceId,
+        orderId: input.orderId,
+        actor: { type: "system" },
+        message: null,
+      })
+      await db.transaction(async (tx) => {
+        const locked = await cartRepository.lockOrCreate(
+          {
+            workspaceId: shopper.workspaceId,
+            contactId: shopper.contactId,
+            contactInboxId: shopper.contactInboxId,
           },
-        },
-        { jobId: `webshop-checkout-flow-${order.id}` },
+          tx,
+        )
+        const restored = input.lines.reduce(
+          (current, line) =>
+            changeLine(
+              current,
+              {
+                productId: line.productId,
+                variantId: line.variantId ?? null,
+                quantity: line.quantity,
+              },
+              "add",
+            ),
+          locked?.items ?? [],
+        )
+        await cartRepository.upsert(
+          {
+            workspaceId: shopper.workspaceId,
+            contactId: shopper.contactId,
+            contactInboxId: shopper.contactInboxId,
+            items: restored,
+          },
+          tx,
+        )
+        if (input.discountCode) {
+          await cartRepository.setDiscountCode(
+            {
+              workspaceId: shopper.workspaceId,
+              contactId: shopper.contactId,
+              contactInboxId: shopper.contactInboxId,
+              discountCode: input.discountCode,
+            },
+            tx,
+          )
+        }
+      })
+    } catch (err) {
+      logger.error(
+        { err, orderId: input.orderId, workspaceId: shopper.workspaceId },
+        "[webshop] could not undo an order whose payment could not start",
       )
-      .catch((err: unknown) =>
-        logger.warn(
-          { err, orderId: order.id },
-          "[webshop] could not start the checkout flow",
-        ),
-      )
+    }
   }
 
   /** One of the shopper's own orders — another customer's is a 404. */
@@ -823,6 +881,36 @@ class WebshopService extends BaseService {
       throw notFoundException("Order does not exist.")
     }
     return order
+  }
+
+  /**
+   * The provider's page for one of the shopper's own orders still waiting for
+   * its online payment (the order page's Pay button).
+   */
+  async payCustomerOrder(input: {
+    workspaceId: string
+    contactId: string
+    orderId: string
+  }) {
+    await this.getCustomerOrder(input)
+    return await orderPaymentService.startCheckout(input)
+  }
+
+  /**
+   * The shopper came back from the provider's page: the payment is read back
+   * so the order shows paid at once, then the order as it stands now.
+   */
+  async refreshCustomerOrderPayment(input: {
+    workspaceId: string
+    contactId: string
+    orderId: string
+  }) {
+    const order = await this.getCustomerOrder(input)
+    if (!isAwaitingOnlinePayment(order)) {
+      return order
+    }
+    await orderPaymentService.syncOrder(input)
+    return await this.getCustomerOrder(input)
   }
 
   /** A customer rates their completed order, when the store allows it. */

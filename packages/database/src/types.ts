@@ -307,6 +307,9 @@ export type DiscountCodeRedemptionModel =
   typeof schema.discountCodeRedemptionModel.$inferSelect
 export type EcommerceOpenHoursModel =
   typeof schema.ecommerceOpenHoursModel.$inferSelect
+export type EcommercePaymentProviderModel =
+  typeof schema.ecommercePaymentProviderModel.$inferSelect
+export type OrderPaymentModel = typeof schema.orderPaymentModel.$inferSelect
 export type EcommerceSettingsModel =
   typeof schema.ecommerceSettingsModel.$inferSelect
 export type OrderModel = typeof schema.orderModel.$inferSelect

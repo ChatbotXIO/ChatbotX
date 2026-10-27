@@ -32,6 +32,8 @@ export const EMITTED_EVENT_TYPES = [
   triggerEventTypes.enum.orderShipped,
   triggerEventTypes.enum.orderConcluded,
   triggerEventTypes.enum.orderCancelled,
+  triggerEventTypes.enum.orderPaid,
+  triggerEventTypes.enum.orderRefunded,
   triggerEventTypes.enum.productOrdered,
   triggerEventTypes.enum.productAddedToCart,
   triggerEventTypes.enum.productRemovedFromCart,
@@ -51,6 +53,8 @@ export const ORDER_STATUS_EVENT_TYPES = [
   triggerEventTypes.enum.orderShipped,
   triggerEventTypes.enum.orderConcluded,
   triggerEventTypes.enum.orderCancelled,
+  triggerEventTypes.enum.orderPaid,
+  triggerEventTypes.enum.orderRefunded,
 ] as const
 export type OrderStatusEventType = (typeof ORDER_STATUS_EVENT_TYPES)[number]
 

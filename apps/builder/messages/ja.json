@@ -5679,6 +5679,8 @@
       "orderShipped": "注文が発送された",
       "orderConcluded": "注文が完了した",
       "orderCancelled": "注文がキャンセルされた",
+      "orderPaid": "注文が支払われた",
+      "orderRefunded": "注文が返金された",
       "categoryAddedToCart": "カテゴリーがカートに追加された",
       "productAddedToCart": "商品がカートに追加された",
       "productRemovedFromCart": "商品がカートから削除された",
@@ -6944,7 +6946,9 @@
       "rating": "評価",
       "quantity": "数量",
       "price": "価格",
-      "vendor": "ベンダー"
+      "vendor": "ベンダー",
+      "orderStatus": "注文ステータス",
+      "payment": "支払い"
     },
     "fields": {
       "name": "名前",
@@ -6969,7 +6973,9 @@
       "cancelReason": "キャンセル理由",
       "rating": "評価",
       "ratingComment": "お客様のコメント",
-      "coupon": "クーポン（{code}）"
+      "coupon": "クーポン（{code}）",
+      "paymentStatus": "支払いステータス",
+      "payments": "オンライン決済"
     },
     "statuses": {
       "pending": "未処理",
@@ -6985,14 +6991,38 @@
       "cancelled": "キャンセル"
     },
     "paymentMethods": {
-      "cod": "代金引換"
+      "cod": "代金引換",
+      "stripe": "カード",
+      "paypal": "PayPal"
     },
     "shippingTypes": {
       "delivery": "お客様へ配送",
       "pickup": "店舗で受け取り"
     },
     "description": "顧客からの注文。",
-    "ratingValue": "{rating}/5 ★"
+    "ratingValue": "{rating}/5 ★",
+    "paymentStatuses": {
+      "unpaid": "未払い",
+      "paid": "支払い済み",
+      "refunded": "返金済み"
+    },
+    "attemptStatuses": {
+      "open": "待機中",
+      "paid": "支払い済み",
+      "expired": "期限切れ",
+      "refunded": "返金済み"
+    },
+    "testPayment": "テスト",
+    "awaitingPaymentHint": "お客様のオンライン決済を待っています。支払い完了後に注文を承認できます。",
+    "refundWarning": "{amount} がお客様に返金されます。",
+    "paymentStates": {
+      "paid": "支払い済み",
+      "refunded": "返金済み",
+      "awaitingPayment": "支払い待ち",
+      "payOnDelivery": "代金引換",
+      "notPaid": "未払い"
+    },
+    "paymentUntil": "{time} まで"
   },
   "products": {
     "title": "商品",
@@ -9844,8 +9874,11 @@
         "label": "支払い方法",
         "description": "チェックアウトページで有効にする支払い方法です。リストの最初の支払い方法がチェックアウトページで選択されます。",
         "options": {
-          "cod": "代金引換"
-        }
+          "cod": "代金引換",
+          "stripe": "カード",
+          "paypal": "PayPal"
+        },
+        "connectHint": "{provider} を利用するには、<link>設定 → 連携</link> で接続してください。"
       },
       "currency": {
         "label": "通貨",
@@ -10063,7 +10096,19 @@
     },
     "payment": {
       "title": "お支払い",
-      "cod": "代金引換"
+      "cod": "代金引換",
+      "stripe": "カード",
+      "paypal": "PayPal",
+      "paid": "支払い済み",
+      "refunded": "返金済み",
+      "awaiting": "お支払いをお待ちしています",
+      "payBefore": "{time} までにお支払いください。過ぎると注文はキャンセルされます。",
+      "payNow": "今すぐ支払う",
+      "onlineHint": "次のページでお支払いいただきます。ご注文は 30 分間確保されます。",
+      "continueToPayment": "支払いに進む",
+      "notYet": "まだお支払いを確認できていません。今お支払いされた場合は、しばらく待ってからこのページを更新してください。",
+      "leftPaymentPage": "支払いページから離れました。下からまだお支払いいただけます。",
+      "paidThanks": "お支払いを受け付けました。ご注文ありがとうございます!"
     },
     "placeOrder": "注文を確定する",
     "orderPlaced": "ありがとうございます！ご注文を承りました。最新情報はチャットでお知らせします。",
@@ -10113,7 +10158,14 @@
       "discountCodeNotEligible": "この割引コードはご利用いただけません。",
       "discountCodeNotApplicable": "この割引コードはカートの商品に適用できません。",
       "discountCodeMinimumAmount": "このコードは{minimum}以上の購入が必要です。あと{missing}追加してください。",
-      "discountCodeMinimumQuantity": "このコードは{minimum}点以上必要です。あと{missing}点追加してください。"
+      "discountCodeMinimumQuantity": "このコードは{minimum}点以上必要です。あと{missing}点追加してください。",
+      "paymentMethodUnavailable": "この支払い方法はご利用いただけません。",
+      "paymentProviderNotConnected": "この支払い方法はご利用いただけません。",
+      "paymentProviderUnavailable": "決済サービスから応答がありません。しばらくしてからもう一度お試しください。",
+      "paymentProviderRejected": "お支払いを開始できませんでした。別の支払い方法をお選びください。",
+      "paymentProviderCredentialsRejected": "お支払いを開始できませんでした。別の支払い方法をお選びください。",
+      "paymentAmountUnsupported": "この注文はオンラインで支払えません。別の支払い方法をお選びください。",
+      "orderPaymentNotOpen": "この注文はオンラインで支払えなくなりました。"
     },
     "discount": {
       "label": "割引コード",
@@ -10274,6 +10326,52 @@
     "metHelp": "SLAのある返信のうち達成した割合。",
     "eligibleCount": "{count} 件の返信にSLAがありました",
     "enable": "応答SLAを有効にする"
+  },
+  "stripe": {
+    "title": "Stripe",
+    "setting": {
+      "label": "Stripe",
+      "description": "ご自身の Stripe アカウントで、ウェブショップのカード決済を受け付けます。代金は直接あなたの Stripe アカウントに入金されます。",
+      "notConfigured": "このプラットフォームでは Stripe がまだ設定されていません。プラットフォーム管理者に Stripe Connect の設定を追加するよう依頼してください。"
+    },
+    "testMode": "テストモード",
+    "liveMode": "本番",
+    "chargesDisabled": "お使いの Stripe アカウントはまだ決済を受け付けられません。Stripe ダッシュボードで設定を完了してください。",
+    "outcome": {
+      "expired": "Stripe の接続リンクの有効期限が切れました。もう一度お試しください。",
+      "access_denied": "Stripe で接続が許可されませんでした。",
+      "stripeAccountAlreadyConnected": "この Stripe アカウントは既に別のワークスペースに接続されています。",
+      "stripePlatformNotConfigured": "このプラットフォームでは Stripe がまだ設定されていません。",
+      "superAdminRequired": "Stripe を接続できるのはワークスペース管理者のみです。",
+      "signInRequired": "サインインしてもう一度お試しください。",
+      "paymentProviderCredentialsRejected": "Stripe が接続を拒否しました。もう一度お試しください。",
+      "startedByAnotherUser": "接続を押した本人のみが完了できます。もう一度「接続」を押してください。",
+      "paymentProviderInUse": "この Stripe アカウントを必要とする未完了の注文があります。先に完了するかキャンセルしてください。"
+    },
+    "platform": {
+      "connectClientId": "Connect client ID",
+      "connectClientIdHint": "Stripe Dashboard → Settings → Connect → Onboarding options → OAuth から取得します(ca_ で始まります)。ストアはこれを使って自分の Stripe アカウントを接続します。",
+      "redirectUri": "Redirect URI",
+      "webhookReady": "ストアは Stripe を接続でき、決済は自動的に確認されます。",
+      "webhookMissing": "決済用 Webhook がありません。この設定をもう一度保存すると作成されます。",
+      "connectMissing": "ストアが Stripe アカウントを接続できるように、Connect client ID を追加してください。"
+    }
+  },
+  "paypal": {
+    "title": "PayPal",
+    "setting": {
+      "label": "PayPal",
+      "description": "ご自身の PayPal アカウントで、ウェブショップの PayPal 決済を受け付けます。"
+    },
+    "sandbox": "Sandbox",
+    "liveMode": "本番",
+    "fields": {
+      "clientId": "Client ID",
+      "clientSecret": "Secret"
+    },
+    "dialog": {
+      "description": "<link>PayPal Developer → Apps & Credentials</link> で REST アプリを作成し、その Client ID と Secret を貼り付けてください。本番かサンドボックスかはキーから自動判別されます。"
+    }
   },
   "pipelines": {
     "title": "パイプライン",

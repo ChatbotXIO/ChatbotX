@@ -1,37 +1,32 @@
 "use server"
 
-import { platformCredentialService } from "@chatbotx.io/business"
-import {
-  type StripeCredential,
-  type StripeCredentialUpdate,
-  stripeCredentialUpdateSchema,
-} from "@chatbotx.io/database/partials"
-import type { UserModel } from "@chatbotx.io/database/types"
-
-import { isCloud } from "@/env"
+import { savePlatformStripe } from "@chatbotx.io/business"
+import { stripeCredentialUpdateSchema } from "@chatbotx.io/database/partials"
+import { resolveProviderOriginForCredential } from "@/lib/provider-origin"
 import { authActionClient } from "@/lib/safe-action"
+import { credentialScopeSchema } from "../scope"
+import { resolveStripeCredentialScope } from "./scope"
 
+/**
+ * Saves the Stripe settings stores connect their account through. The
+ * platform's Connect webhook is created on the account (`savePlatformStripe`),
+ * so web shop payments are confirmed. The webhook
+ * lives on the same origin as the Connect redirect URI: the reseller's own
+ * domain for their own Stripe app, the broker otherwise.
+ */
 export const updateStripeSettingsAction = authActionClient
+  .bindArgsSchemas([credentialScopeSchema])
   .inputSchema(stripeCredentialUpdateSchema)
-  .action(
-    async ({
-      ctx,
-      parsedInput,
-    }: {
-      ctx: { user: UserModel }
-      parsedInput: StripeCredentialUpdate
-    }) => {
-      const scopedUserId = isCloud() ? ctx.user.id : undefined
-      const config: StripeCredential = {
-        publishableKey: parsedInput.publishableKey,
-        verifyToken: parsedInput.verifyToken,
-        secretKey: parsedInput.secretKey,
-      }
-
-      await platformCredentialService.upsert({
-        userId: scopedUserId,
-        type: "stripe",
-        config,
-      })
-    },
-  )
+  .action(async ({ ctx, bindArgsParsedInputs: [scope], parsedInput }) => {
+    const userId = await resolveStripeCredentialScope(ctx.user, scope)
+    await savePlatformStripe({
+      userId,
+      publishableKey: parsedInput.publishableKey,
+      verifyToken: parsedInput.verifyToken,
+      secretKey: parsedInput.secretKey,
+      connectClientId: parsedInput.connectClientId,
+      webhookOrigin: await resolveProviderOriginForCredential({
+        userId: userId ?? null,
+      }),
+    })
+  })

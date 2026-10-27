@@ -41,6 +41,10 @@ type OrderStatusActionsProps = {
   workspaceId: string
   orderId: string
   status: OrderStatus
+  /** An online order whose money has not come in: it cannot be accepted yet. */
+  awaitingPayment: boolean
+  /** What cancelling refunds (formatted), when the order was paid online. */
+  refundAmount: string | null
 }
 
 /**
@@ -51,13 +55,18 @@ export function OrderStatusActions({
   workspaceId,
   orderId,
   status,
+  awaitingPayment,
+  refundAmount,
 }: OrderStatusActionsProps) {
   const t = useTranslations("orders")
   const router = useRouter()
   const [target, setTarget] = useState<TargetStatus | null>(null)
   const [message, setMessage] = useState("")
   const allowed = ORDER_STATUS_TRANSITIONS[status] as readonly OrderStatus[]
-  const targets = ACTION_ORDER.filter((next) => allowed.includes(next))
+  const targets = ACTION_ORDER.filter(
+    (next) =>
+      allowed.includes(next) && !(awaitingPayment && next === "accepted"),
+  )
 
   const callbacks = {
     onSuccess: () => {
@@ -93,6 +102,11 @@ export function OrderStatusActions({
 
   return (
     <div className="flex flex-wrap items-center justify-center gap-3 print:hidden">
+      {awaitingPayment ? (
+        <p className="w-full text-center text-muted-foreground text-sm">
+          {t("awaitingPaymentHint")}
+        </p>
+      ) : null}
       {targets.map((next) => (
         <Button
           disabled={isPending}
@@ -128,6 +142,11 @@ export function OrderStatusActions({
             <p className="text-muted-foreground text-xs">
               {t("messageDescription")}
             </p>
+            {target === "cancelled" && refundAmount ? (
+              <p className="rounded-md border border-amber-300 bg-amber-50 p-3 text-amber-900 text-sm dark:border-amber-700 dark:bg-amber-950 dark:text-amber-200">
+                {t("refundWarning", { amount: refundAmount })}
+              </p>
+            ) : null}
           </div>
           <DialogFooter>
             <DialogClose

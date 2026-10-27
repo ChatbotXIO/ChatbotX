@@ -5795,7 +5795,9 @@
       "rating": "Betyg",
       "quantity": "Antal",
       "price": "Pris",
-      "vendor": "Leverantör"
+      "vendor": "Leverantör",
+      "orderStatus": "Orderstatus",
+      "payment": "Betalning"
     },
     "fields": {
       "name": "Namn",
@@ -5820,7 +5822,9 @@
       "cancelReason": "Orsak till avbokning",
       "rating": "Betyg",
       "ratingComment": "Kundens kommentar",
-      "coupon": "Rabattkod ({code})"
+      "coupon": "Rabattkod ({code})",
+      "paymentStatus": "Betalningsstatus",
+      "payments": "Onlinebetalningar"
     },
     "statuses": {
       "pending": "Ej behandlad",
@@ -5836,14 +5840,38 @@
       "cancelled": "Avbryt"
     },
     "paymentMethods": {
-      "cod": "Postförskott"
+      "cod": "Postförskott",
+      "stripe": "Kort",
+      "paypal": "PayPal"
     },
     "shippingTypes": {
       "delivery": "Leverans till kunden",
       "pickup": "Avhämtning i butiken"
     },
     "description": "Beställningar från dina kunder.",
-    "ratingValue": "{rating}/5 ★"
+    "ratingValue": "{rating}/5 ★",
+    "paymentStatuses": {
+      "unpaid": "Obetald",
+      "paid": "Betald",
+      "refunded": "Återbetald"
+    },
+    "attemptStatuses": {
+      "open": "Väntar",
+      "paid": "Betald",
+      "expired": "Utgången",
+      "refunded": "Återbetald"
+    },
+    "testPayment": "test",
+    "awaitingPaymentHint": "Väntar på kundens onlinebetalning. Ordern kan godkännas när den är betald.",
+    "refundWarning": "{amount} kommer att återbetalas till kunden.",
+    "paymentStates": {
+      "paid": "Betald",
+      "refunded": "Återbetald",
+      "awaitingPayment": "Väntar på betalning",
+      "payOnDelivery": "Betalning vid leverans",
+      "notPaid": "Ej betald"
+    },
+    "paymentUntil": "till {time}"
   },
   "placesNearMe": {
     "description": "Hitta platser nära dina kontakter.",
@@ -6673,6 +6701,8 @@
       "newOrder": "Ny beställning",
       "orderAccepted": "Beställning har godkänts",
       "orderCancelled": "Beställning har avbrutits",
+      "orderPaid": "Beställning har betalats",
+      "orderRefunded": "Beställning har återbetalats",
       "orderConcluded": "Beställning har slutförts",
       "orderShipped": "Beställning har skickats",
       "productAddedToCart": "Produkt har lagts till i kundvagnen",
@@ -9844,8 +9874,11 @@
         "label": "Betalningsmetoder",
         "description": "Betalningsmetoderna som är aktiverade på kassasidan. Den första metoden i listan blir förvald på kassasidan.",
         "options": {
-          "cod": "Postförskott"
-        }
+          "cod": "Postförskott",
+          "stripe": "Kort",
+          "paypal": "PayPal"
+        },
+        "connectHint": "För att erbjuda {provider}, anslut det under <link>Inställningar → Integrationer</link>."
       },
       "currency": {
         "label": "Valuta",
@@ -10063,7 +10096,19 @@
     },
     "payment": {
       "title": "Betalning",
-      "cod": "Betala vid leverans"
+      "cod": "Betala vid leverans",
+      "stripe": "Kort",
+      "paypal": "PayPal",
+      "paid": "Betald",
+      "refunded": "Återbetald",
+      "awaiting": "Väntar på din betalning",
+      "payBefore": "Betala före {time}, annars avbryts ordern.",
+      "payNow": "Betala nu",
+      "onlineHint": "Du betalar på nästa sida. Din order reserveras i 30 minuter.",
+      "continueToPayment": "Fortsätt till betalning",
+      "notYet": "Vi har inte tagit emot din betalning ännu. Om du precis har betalat, vänta en stund och uppdatera sidan.",
+      "leftPaymentPage": "Du lämnade betalningssidan. Du kan fortfarande betala nedan.",
+      "paidThanks": "Betalningen mottagen. Tack för din order!"
     },
     "placeOrder": "Lägg beställning",
     "orderPlaced": "Tack! Din beställning är lagd. Vi skickar uppdateringar i chatten.",
@@ -10113,7 +10158,14 @@
       "discountCodeNotEligible": "Rabattkoden gäller inte för dig.",
       "discountCodeNotApplicable": "Rabattkoden gäller inte för varukorgen.",
       "discountCodeMinimumAmount": "Koden kräver köp för minst {minimum}. Lägg till {missing} till.",
-      "discountCodeMinimumQuantity": "Koden kräver minst {minimum} varor. Lägg till {missing} till."
+      "discountCodeMinimumQuantity": "Koden kräver minst {minimum} varor. Lägg till {missing} till.",
+      "paymentMethodUnavailable": "Den här betalningsmetoden är inte tillgänglig.",
+      "paymentProviderNotConnected": "Den här betalningsmetoden är inte tillgänglig.",
+      "paymentProviderUnavailable": "Betalningstjänsten svarar inte. Försök igen om en stund.",
+      "paymentProviderRejected": "Betalningen kunde inte startas. Välj en annan betalningsmetod.",
+      "paymentProviderCredentialsRejected": "Betalningen kunde inte startas. Välj en annan betalningsmetod.",
+      "paymentAmountUnsupported": "Den här ordern kan inte betalas online. Välj en annan betalningsmetod.",
+      "orderPaymentNotOpen": "Den här ordern kan inte längre betalas online."
     },
     "discount": {
       "label": "Rabattkod",
@@ -10274,6 +10326,52 @@
     "metHelp": "Andel svar med SLA som höll den.",
     "eligibleCount": "{count} svar hade SLA",
     "enable": "Aktivera svars-SLA"
+  },
+  "stripe": {
+    "title": "Stripe",
+    "setting": {
+      "label": "Stripe",
+      "description": "Ta emot kortbetalningar i din webbutik med ditt eget Stripe-konto. Pengarna går direkt till ditt Stripe-konto.",
+      "notConfigured": "Stripe är inte konfigurerat på den här plattformen ännu. Be plattformens administratör lägga till Stripe Connect-inställningarna."
+    },
+    "testMode": "Testläge",
+    "liveMode": "Live",
+    "chargesDisabled": "Ditt Stripe-konto kan inte ta emot betalningar ännu. Slutför konfigurationen i din Stripe-instrumentpanel.",
+    "outcome": {
+      "expired": "Stripe-anslutningslänken har gått ut. Försök igen.",
+      "access_denied": "Anslutningen tilläts inte på Stripe.",
+      "stripeAccountAlreadyConnected": "Det här Stripe-kontot är redan anslutet till en annan arbetsyta.",
+      "stripePlatformNotConfigured": "Stripe är inte konfigurerat på den här plattformen ännu.",
+      "superAdminRequired": "Bara en arbetsyteadministratör kan ansluta Stripe.",
+      "signInRequired": "Logga in och försök igen.",
+      "paymentProviderCredentialsRejected": "Stripe nekade anslutningen. Försök igen.",
+      "startedByAnotherUser": "Bara den som klickade på Anslut kan slutföra det. Klicka på Anslut igen.",
+      "paymentProviderInUse": "Öppna beställningar behöver fortfarande det här Stripe-kontot. Slutför eller avbryt dem först."
+    },
+    "platform": {
+      "connectClientId": "Connect client ID",
+      "connectClientIdHint": "Från Stripe Dashboard → Settings → Connect → Onboarding options → OAuth (börjar med ca_). Butiker ansluter sitt eget Stripe-konto via den.",
+      "redirectUri": "Redirect URI",
+      "webhookReady": "Butiker kan ansluta Stripe, och deras betalningar bekräftas automatiskt.",
+      "webhookMissing": "Betalningswebhooken saknas. Spara de här inställningarna igen för att skapa den.",
+      "connectMissing": "Lägg till Connect client ID så att butiker kan ansluta sitt Stripe-konto."
+    }
+  },
+  "paypal": {
+    "title": "PayPal",
+    "setting": {
+      "label": "PayPal",
+      "description": "Ta emot PayPal-betalningar i din webbutik med ditt eget PayPal-konto."
+    },
+    "sandbox": "Sandbox",
+    "liveMode": "Live",
+    "fields": {
+      "clientId": "Client ID",
+      "clientSecret": "Secret"
+    },
+    "dialog": {
+      "description": "Skapa en REST-app i <link>PayPal Developer → Apps & Credentials</link> och klistra in dess Client ID och Secret. Live eller sandbox identifieras från nycklarna."
+    }
   },
   "pipelines": {
     "title": "Pipelines",

@@ -2,10 +2,14 @@ import { type DatabaseClient, db } from "@chatbotx.io/database/client"
 import {
   type EcommerceSettings,
   getOrderStatusesAllowedBefore,
+  isAwaitingOnlinePayment,
+  isOnlinePaymentMethod,
   type OrderActorType,
   type OrderShippingAddress,
   type OrderSource,
   type OrderStatus,
+  PAYMENT_EXPIRY_MINUTES,
+  type PaymentMethod,
   SHIPPING_TYPES_BY_MODE,
   type ShippingType,
 } from "@chatbotx.io/database/partials"
@@ -51,18 +55,25 @@ import { ecommerceSettingsService } from "../ecommerce-settings/service"
 import { ChatbotXException, notFoundException } from "../errors"
 import { logger } from "../logger"
 import { messageService } from "../message/service"
+import {
+  assertDeletableWithPayments,
+  settlePaymentsForCancel,
+} from "../order-payment/settle"
+import { paymentMethodUnavailableException } from "../payment-provider/errors"
 import { workspaceService } from "../workspace/service"
 import {
   buildOrderConfirmationText,
   buildOrderStatusText,
 } from "./customer-messages"
 import {
+  orderAwaitingPaymentException,
   orderBelowMinimumException,
   orderBelowVendorMinimumException,
   orderEmptyException,
   orderInvalidStatusTransitionException,
   orderingUnavailableException,
   orderOutOfStockException,
+  orderPaymentContactRequiredException,
   orderProductUnavailableException,
   orderShippingTypeUnavailableException,
 } from "./errors"
@@ -113,6 +124,12 @@ export type PlaceOrderInput = {
    * (the web shop does; an API order only gets the code it names).
    */
   autoApplyDiscount?: boolean
+  /**
+   * How the customer pays; cash on delivery when left out. Stripe and PayPal
+   * must be offered by the store, and the order waits for its payment
+   * (`paymentExpiresAt`) before anything about it is announced.
+   */
+  paymentMethod?: PaymentMethod
   /**
    * Runs inside the order's transaction once the order is written — the web
    * shop empties the cart here, so a failed order never loses it.
@@ -447,6 +464,57 @@ const goodsAfterDiscounts = (
     currency,
   )
 
+/**
+ * How a new order is paid and where its payment stands when it is placed.
+ * Cash on delivery stays open to a member or an API caller typing an order
+ * in, as before; the web shop, and every online method, need the store to
+ * offer the method. An online order waits `PAYMENT_EXPIRY_MINUTES` for its
+ * money — one that costs nothing has nothing to wait for.
+ */
+const resolvePayment = (input: {
+  method: PaymentMethod | undefined
+  source: OrderSource
+  settings: EcommerceSettings
+  hasContact: boolean
+  total: number
+  now: Date
+}) => {
+  const paymentMethod = input.method ?? "cod"
+  const online = isOnlinePaymentMethod(paymentMethod)
+  const offered = input.settings.payments.paymentMethods.includes(paymentMethod)
+  if (!offered && (online || input.source === "webshop")) {
+    throw paymentMethodUnavailableException(paymentMethod)
+  }
+  if (!online) {
+    return {
+      paymentMethod,
+      paymentStatus: "unpaid" as const,
+      paymentExpiresAt: null,
+      paidAt: null,
+    }
+  }
+  // The provider sends the customer back to their own order page.
+  if (!input.hasContact) {
+    throw orderPaymentContactRequiredException()
+  }
+  if (input.total <= 0) {
+    return {
+      paymentMethod,
+      paymentStatus: "paid" as const,
+      paymentExpiresAt: null,
+      paidAt: input.now,
+    }
+  }
+  return {
+    paymentMethod,
+    paymentStatus: "unpaid" as const,
+    paymentExpiresAt: new Date(
+      input.now.getTime() + PAYMENT_EXPIRY_MINUTES * 60_000,
+    ),
+    paidAt: null,
+  }
+}
+
 /** Stock each product loses, summed over its lines. */
 const quantitiesByProduct = (
   lines: Array<{ stockProductId: string | null; quantity: number }>,
@@ -543,6 +611,14 @@ class OrderService extends BaseService {
         }
         assertVendorMinimums(lines, products, currency)
       }
+      const payment = resolvePayment({
+        method: input.paymentMethod,
+        source: input.source,
+        settings,
+        hasContact: Boolean(contact?.contactId),
+        total: totals.total,
+        now: new Date(),
+      })
 
       const stockTakenByProduct = await this.takeStock({
         workspaceId: input.workspaceId,
@@ -566,6 +642,7 @@ class OrderService extends BaseService {
           conversationId: contact?.conversationId ?? null,
           channel: contact?.channel ?? null,
           source: input.source,
+          ...payment,
           currency,
           ...totals,
           discountCodeId: discount?.discountCode.id ?? null,
@@ -831,12 +908,16 @@ class OrderService extends BaseService {
     to: Exclude<OrderStatus, "pending">
     actor: OrderActor
     message?: string | null
+    /** The expiry scan's cancel: the online payment never came. */
+    reason?: "paymentExpired"
   }) {
     const { workspaceId, orderId, to } = input
     const message = input.message?.trim() || null
+    const paymentExpired = input.reason === "paymentExpired"
     const result = await db.transaction(async (tx) => {
       // Locked, so a concurrent move or delete cannot slip in between this
-      // read and the update — the history's `from` is the real one.
+      // read and the update — the history's `from` is the real one. A
+      // payment landing at the same time waits for this lock too.
       const current = await orderRepository.findForUpdate(
         { workspaceId, orderId },
         tx,
@@ -844,14 +925,32 @@ class OrderService extends BaseService {
       if (!current) {
         throw notFoundException("Order does not exist.")
       }
+      // Refused before any money moves: a refund for a move that cannot
+      // happen would be one too many.
+      if (!getOrderStatusesAllowedBefore(to).includes(current.status)) {
+        throw orderInvalidStatusTransitionException(current.status, to)
+      }
+      if (to === "accepted" && isAwaitingOnlinePayment(current)) {
+        throw orderAwaitingPaymentException()
+      }
       const values: OrderUpdateValues = {
         [STATUS_TIMESTAMP_COLUMNS[to]]: new Date(),
       }
       if (to === "concluded" && current.paymentMethod === "cod") {
         values.paymentStatus = "paid"
       }
+      let refunded = false
       if (to === "cancelled") {
-        values.cancelReason = message
+        // No money may stay with the store for a cancelled order: a paid
+        // attempt is refunded, an open one closed. A refund that fails
+        // throws, and the order stays as it was.
+        ;({ refunded } = await settlePaymentsForCancel(current, tx))
+        if (refunded) {
+          values.paymentStatus = "refunded"
+        }
+        values.paymentExpiresAt = null
+        values.cancelReason =
+          message ?? (paymentExpired ? "Payment not received in time." : null)
       }
 
       const updated = await orderRepository.transitionStatus(
@@ -890,10 +989,10 @@ class OrderService extends BaseService {
         },
         tx,
       )
-      return { order: updated, from: current.status }
+      return { order: updated, from: current.status, refunded }
     })
 
-    await this.afterStatusChange({ ...result, message })
+    await this.afterStatusChange({ ...result, message, paymentExpired })
     return await this.getDetail({ workspaceId, orderId })
   }
 
@@ -924,6 +1023,9 @@ class OrderService extends BaseService {
       if (!current) {
         throw notFoundException("Order does not exist.")
       }
+      // A paid online order is cancelled (and refunded), never deleted with
+      // the money kept; an unpaid one's payment pages are closed first.
+      await assertDeletableWithPayments(current, tx)
       // The code before the products, as when placing an order.
       await discountCodeService.release(input, tx)
       if (STOCK_HOLDING_STATUSES.includes(current.status)) {
@@ -936,47 +1038,62 @@ class OrderService extends BaseService {
 
   /**
    * The one place an order's side effects hang off — placed (`from` null) or
-   * moved. A placed order confirms itself to the customer and pushes to the
-   * members who want new orders; a move tells the customer the new status
-   * when the store sends those, or always for a cancel or a completion, with
-   * the member's message riding along.
+   * moved. A placed order is announced (`announcePlaced`) at once, unless it
+   * waits for an online payment: then it is announced when the money comes
+   * in. A move tells the customer the new status when the store sends those,
+   * or always for a cancel or a completion, with the member's message riding
+   * along.
    */
   private async afterStatusChange(input: {
     order: OrderModel
     from: OrderStatus | null
     message?: string | null
+    /** The move refunded the order's online payment. */
+    refunded?: boolean
+    paymentExpired?: boolean
   }) {
     const { order } = input
     await this.invalidateCacheTags(`orders:${order.workspaceId}`)
 
     if (input.from === null) {
-      await notificationQueue
-        .add(
-          NotificationJobAction.notifyNewOrder,
-          {
-            type: NotificationJobAction.notifyNewOrder,
-            data: { workspaceId: order.workspaceId, orderId: order.id },
-          },
-          { jobId: getNewOrderNotificationJobId(order.id) },
-        )
-        .catch((err: unknown) =>
-          logger.warn(
-            { err, orderId: order.id },
-            "[order] could not queue the new-order notification",
-          ),
-        )
+      if (!isAwaitingOnlinePayment(order)) {
+        await this.announcePlaced(order)
+      }
+      return
     }
 
     if (!order.contactId) {
       return
     }
-    await this.announceOrderEvents(order, input.from)
+    // An online order whose money never came was never announced: its cancel
+    // fires nothing — only the customer who left the payment page is told
+    // why it is gone when its time ran out.
+    if (isOnlinePaymentMethod(order.paymentMethod) && !order.paidAt) {
+      if (input.paymentExpired) {
+        try {
+          const language = await resolveCustomerMessageLanguage(order)
+          await this.messageCustomer(
+            order,
+            buildOrderStatusText(
+              { status: order.status, paymentExpired: true },
+              { language },
+            ),
+          )
+        } catch (err) {
+          logger.warn(
+            { err, orderId: order.id },
+            "[order] could not tell the customer the payment expired",
+          )
+        }
+      }
+      return
+    }
+    await this.announceOrderEvents(order, ORDER_STATUS_EVENTS[order.status])
+    if (input.refunded) {
+      await this.announceOrderEvents(order, "orderRefunded")
+    }
     try {
       const settings = await ecommerceSettingsService.get(order.workspaceId)
-      if (input.from === null) {
-        await this.confirmToCustomer(order, settings)
-        return
-      }
       const language = await resolveCustomerMessageLanguage(order)
       const alwaysNotified =
         order.status === "cancelled" || order.status === "concluded"
@@ -988,7 +1105,12 @@ class OrderService extends BaseService {
         await this.messageCustomer(
           order,
           buildOrderStatusText(
-            { status: order.status, message: input.message },
+            {
+              status: order.status,
+              message: input.message,
+              refunded: input.refunded,
+              paymentExpired: input.paymentExpired,
+            },
             { language },
           ),
         )
@@ -999,6 +1121,102 @@ class OrderService extends BaseService {
         "[order] could not tell the customer about the order",
       )
     }
+  }
+
+  /**
+   * Everything a new order sets off, once: the push to the members who want
+   * new orders, the `newOrder` / `productOrdered` events, the confirmation to
+   * the customer and the web shop's checkout flow. A cash order runs it when
+   * placed; an online one when its payment comes in (`markPaid`), so nobody
+   * hears about an order that was never paid. Every part is keyed by the
+   * order, so running it again sends nothing twice.
+   */
+  async announcePlaced(order: OrderModel) {
+    await notificationQueue
+      .add(
+        NotificationJobAction.notifyNewOrder,
+        {
+          type: NotificationJobAction.notifyNewOrder,
+          data: { workspaceId: order.workspaceId, orderId: order.id },
+        },
+        { jobId: getNewOrderNotificationJobId(order.id) },
+      )
+      .catch((err: unknown) =>
+        logger.warn(
+          { err, orderId: order.id },
+          "[order] could not queue the new-order notification",
+        ),
+      )
+
+    if (!order.contactId) {
+      return
+    }
+    await this.announceOrderEvents(order, "newOrder", {
+      productOrdered: true,
+    })
+    try {
+      const settings = await ecommerceSettingsService.get(order.workspaceId)
+      await this.confirmToCustomer(order, settings)
+      await this.startCheckoutFlow(order, settings)
+    } catch (err) {
+      logger.warn(
+        { err, orderId: order.id },
+        "[order] could not tell the customer about the order",
+      )
+    }
+  }
+
+  /**
+   * An online order's payment came in (`orderPaymentService.markPaid`): the
+   * `orderPaid` event, then the order is announced as placed.
+   */
+  async afterPaid(order: OrderModel) {
+    await this.invalidateCacheTags(`orders:${order.workspaceId}`)
+    if (order.contactId) {
+      await this.announceOrderEvents(order, "orderPaid")
+    }
+    await this.announcePlaced(order)
+  }
+
+  /**
+   * "Start a flow" checkout: once a web shop order is placed (paid, when
+   * paid online), the chosen flow runs in the customer's conversation. A
+   * customer without one (the link was opened outside a chat) just gets the
+   * order.
+   */
+  private async startCheckoutFlow(
+    order: OrderModel,
+    settings: EcommerceSettings,
+  ) {
+    const flowId = settings.checkout.checkoutFlowId
+    if (
+      order.source !== "webshop" ||
+      settings.checkout.checkoutMode !== "flow" ||
+      !flowId ||
+      !order.conversationId ||
+      !order.contactInboxId
+    ) {
+      return
+    }
+    await integrationQueue
+      .add(
+        IntegrationJobAction.sendFlow,
+        {
+          type: IntegrationJobAction.sendFlow,
+          data: {
+            conversationId: order.conversationId,
+            contactInboxId: order.contactInboxId,
+            flowId,
+          },
+        },
+        { jobId: `webshop-checkout-flow-${order.id}` },
+      )
+      .catch((err: unknown) =>
+        logger.warn(
+          { err, orderId: order.id },
+          "[order] could not start the checkout flow",
+        ),
+      )
   }
 
   /**
@@ -1072,13 +1290,14 @@ class OrderService extends BaseService {
   }
 
   /**
-   * The trigger and webhook events of a placed or moved order: its status
-   * event, and `productOrdered` once when it is placed. Best effort: the
-   * order already stands.
+   * One trigger and webhook event of an order (its status, `orderPaid`,
+   * `orderRefunded`), and `productOrdered` once when it is placed. Best
+   * effort: the order already stands.
    */
   private async announceOrderEvents(
     order: OrderModel,
-    from: OrderStatus | null,
+    event: OrderStatusEventType,
+    options?: { productOrdered?: boolean },
   ) {
     if (!order.contactId) {
       return
@@ -1128,13 +1347,13 @@ class OrderService extends BaseService {
       }
       const contactInboxId = order.contactInboxId ?? undefined
       await emitOrderStatus(
-        from === null ? "newOrder" : ORDER_STATUS_EVENTS[order.status],
+        event,
         order.workspaceId,
         order.contactId,
         metadata,
         contactInboxId,
       )
-      if (from === null) {
+      if (options?.productOrdered) {
         await emitProductOrdered(
           order.workspaceId,
           order.contactId,

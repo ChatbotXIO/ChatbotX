@@ -163,6 +163,10 @@ export const orderConcluded = createSimpleCondition(
 export const orderCancelled = createSimpleCondition(
   triggerEventTypes.enum.orderCancelled,
 )
+export const orderPaid = createSimpleCondition(triggerEventTypes.enum.orderPaid)
+export const orderRefunded = createSimpleCondition(
+  triggerEventTypes.enum.orderRefunded,
+)
 export const cartAbandoned = createSimpleCondition(
   triggerEventTypes.enum.cartAbandoned,
 )

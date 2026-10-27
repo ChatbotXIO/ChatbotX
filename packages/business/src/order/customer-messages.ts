@@ -2,6 +2,8 @@ import type {
   EcommerceSettings,
   OrderShippingAddress,
   OrderStatus,
+  PaymentMethod,
+  PaymentStatus,
 } from "@chatbotx.io/database/partials"
 import { formatMoney } from "@chatbotx.io/utils/money"
 import {
@@ -51,8 +53,37 @@ export type CustomerOrderSummary = {
   customerPhone: string | null
   shippingType: "delivery" | "pickup" | null
   shippingAddress: OrderShippingAddress | null
+  paymentMethod: PaymentMethod
+  paymentStatus: PaymentStatus
   createdAt: Date
   items: Array<{ name: string; variantLabel: string | null; quantity: number }>
+}
+
+/** How the customer pays, as the store's messages name it. */
+export const paymentMethodLabel = (
+  method: PaymentMethod,
+  language: CustomerMessageLanguage,
+): string => {
+  const strings = STRINGS[language]
+  switch (method) {
+    case "stripe":
+      return strings.card
+    case "paypal":
+      return "PayPal"
+    default:
+      return strings.cod
+  }
+}
+
+/** "Card (Paid)" once an online payment came in; the method alone otherwise. */
+const paymentLine = (
+  order: Pick<CustomerOrderSummary, "paymentMethod" | "paymentStatus">,
+  language: CustomerMessageLanguage,
+) => {
+  const label = paymentMethodLabel(order.paymentMethod, language)
+  return order.paymentStatus === "paid"
+    ? `${label} (${STRINGS[language].paid})`
+    : label
 }
 
 type MessageContext = {
@@ -133,7 +164,7 @@ export const buildOrderConfirmationText = (
     "",
     `${strings.date}: ${formatDate(order.createdAt, context)}`,
     "",
-    `${strings.payment}: ${strings.cod}`,
+    `${strings.payment}: ${paymentLine(order, context.language)}`,
     "",
     `${strings.total}: ${money(order.total, order, context)}`,
     `${strings.subtotal}: ${money(order.subtotal, order, context)}`,
@@ -164,7 +195,14 @@ export const buildOrderConfirmationText = (
  * dialog rides along in the same text.
  */
 export const buildOrderStatusText = (
-  input: { status: OrderStatus; message?: string | null },
+  input: {
+    status: OrderStatus
+    message?: string | null
+    /** The online payment went back to the customer with this move. */
+    refunded?: boolean
+    /** The order was cancelled because its online payment never came. */
+    paymentExpired?: boolean
+  },
   context: Pick<MessageContext, "language">,
 ): string => {
   const strings = STRINGS[context.language]
@@ -172,6 +210,8 @@ export const buildOrderStatusText = (
     strings.statusUpdated,
     "",
     `${strings.status}: ${strings.statuses[input.status]}`,
+    ...(input.paymentExpired ? ["", strings.paymentExpired] : []),
+    ...(input.refunded ? ["", strings.refunded] : []),
     ...(input.message ? ["", input.message] : []),
   ].join("\n")
 }

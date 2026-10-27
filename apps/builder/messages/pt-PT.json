@@ -5696,6 +5696,8 @@
       "orderShipped": "Encomenda enviada",
       "orderConcluded": "Encomenda concluída",
       "orderCancelled": "Encomenda cancelada",
+      "orderPaid": "Encomenda paga",
+      "orderRefunded": "Encomenda reembolsada",
       "categoryAddedToCart": "Categoria adicionada ao carrinho",
       "productAddedToCart": "Produto adicionado ao carrinho",
       "productRemovedFromCart": "Produto removido do carrinho",
@@ -6944,7 +6946,9 @@
       "rating": "Avaliação",
       "quantity": "Quantidade",
       "price": "Preço",
-      "vendor": "Fornecedor"
+      "vendor": "Fornecedor",
+      "orderStatus": "Estado da encomenda",
+      "payment": "Pagamento"
     },
     "fields": {
       "name": "Nome",
@@ -6969,7 +6973,9 @@
       "cancelReason": "Motivo do cancelamento",
       "rating": "Avaliação",
       "ratingComment": "Comentário do cliente",
-      "coupon": "Cupão ({code})"
+      "coupon": "Cupão ({code})",
+      "paymentStatus": "Estado do pagamento",
+      "payments": "Pagamentos online"
     },
     "statuses": {
       "pending": "Não processada",
@@ -6985,14 +6991,38 @@
       "cancelled": "Cancelar"
     },
     "paymentMethods": {
-      "cod": "Pagamento na entrega"
+      "cod": "Pagamento na entrega",
+      "stripe": "Cartão",
+      "paypal": "PayPal"
     },
     "shippingTypes": {
       "delivery": "Entregar ao cliente",
       "pickup": "Levantamento na loja"
     },
     "description": "Encomendas feitas pelos seus clientes.",
-    "ratingValue": "{rating}/5 ★"
+    "ratingValue": "{rating}/5 ★",
+    "paymentStatuses": {
+      "unpaid": "Por pagar",
+      "paid": "Pago",
+      "refunded": "Reembolsado"
+    },
+    "attemptStatuses": {
+      "open": "Em espera",
+      "paid": "Pago",
+      "expired": "Expirado",
+      "refunded": "Reembolsado"
+    },
+    "testPayment": "teste",
+    "awaitingPaymentHint": "A aguardar o pagamento online do cliente. A encomenda poderá ser aceite depois de paga.",
+    "refundWarning": "{amount} serão reembolsados ao cliente.",
+    "paymentStates": {
+      "paid": "Pago",
+      "refunded": "Reembolsado",
+      "awaitingPayment": "A aguardar pagamento",
+      "payOnDelivery": "Pagamento na entrega",
+      "notPaid": "Não pago"
+    },
+    "paymentUntil": "até às {time}"
   },
   "products": {
     "title": "Produtos",
@@ -9844,8 +9874,11 @@
         "label": "Métodos de pagamento",
         "description": "Os métodos de pagamento ativados na página de checkout. O primeiro método da lista será o selecionado na página de checkout.",
         "options": {
-          "cod": "Pagamento na entrega"
-        }
+          "cod": "Pagamento na entrega",
+          "stripe": "Cartão",
+          "paypal": "PayPal"
+        },
+        "connectHint": "Para oferecer {provider}, ligue-o em <link>Definições → Integrações</link>."
       },
       "currency": {
         "label": "Moeda",
@@ -10063,7 +10096,19 @@
     },
     "payment": {
       "title": "Pagamento",
-      "cod": "Pagamento na entrega"
+      "cod": "Pagamento na entrega",
+      "stripe": "Cartão",
+      "paypal": "PayPal",
+      "paid": "Pago",
+      "refunded": "Reembolsado",
+      "awaiting": "A aguardar o seu pagamento",
+      "payBefore": "Pague antes de {time}, ou a encomenda será cancelada.",
+      "payNow": "Pagar agora",
+      "onlineHint": "Irá pagar na página seguinte. A sua encomenda fica reservada durante 30 minutos.",
+      "continueToPayment": "Continuar para o pagamento",
+      "notYet": "Ainda não recebemos o seu pagamento. Se acabou de pagar, aguarde um momento e atualize esta página.",
+      "leftPaymentPage": "Saiu da página de pagamento. Ainda pode pagar abaixo.",
+      "paidThanks": "Pagamento recebido. Obrigado pela sua encomenda!"
     },
     "placeOrder": "Fazer encomenda",
     "orderPlaced": "Obrigado! A sua encomenda foi feita. Enviaremos novidades no chat.",
@@ -10113,7 +10158,14 @@
       "discountCodeNotEligible": "Este código não está disponível para si.",
       "discountCodeNotApplicable": "Este código não se aplica ao seu carrinho.",
       "discountCodeMinimumAmount": "Este código exige compra mínima de {minimum}. Adicione mais {missing}.",
-      "discountCodeMinimumQuantity": "Este código exige pelo menos {minimum} artigos. Adicione mais {missing}."
+      "discountCodeMinimumQuantity": "Este código exige pelo menos {minimum} artigos. Adicione mais {missing}.",
+      "paymentMethodUnavailable": "Este método de pagamento não está disponível.",
+      "paymentProviderNotConnected": "Este método de pagamento não está disponível.",
+      "paymentProviderUnavailable": "O serviço de pagamento não responde. Tente novamente dentro de instantes.",
+      "paymentProviderRejected": "Não foi possível iniciar o pagamento. Escolha outro método de pagamento.",
+      "paymentProviderCredentialsRejected": "Não foi possível iniciar o pagamento. Escolha outro método de pagamento.",
+      "paymentAmountUnsupported": "Esta encomenda não pode ser paga online. Escolha outro método de pagamento.",
+      "orderPaymentNotOpen": "Esta encomenda já não pode ser paga online."
     },
     "discount": {
       "label": "Código de desconto",
@@ -10274,6 +10326,52 @@
     "metHelp": "Parte das respostas com SLA que o cumpriram.",
     "eligibleCount": "{count} respostas tinham SLA",
     "enable": "Ativar SLA de resposta"
+  },
+  "stripe": {
+    "title": "Stripe",
+    "setting": {
+      "label": "Stripe",
+      "description": "Receba pagamentos com cartão na sua loja online com a sua própria conta Stripe. O dinheiro vai diretamente para a sua conta Stripe.",
+      "notConfigured": "O Stripe ainda não está configurado nesta plataforma. Peça ao administrador da plataforma para adicionar as definições do Stripe Connect."
+    },
+    "testMode": "Modo de teste",
+    "liveMode": "Ao vivo",
+    "chargesDisabled": "A sua conta Stripe ainda não pode receber pagamentos. Conclua a configuração no painel do Stripe.",
+    "outcome": {
+      "expired": "O link de ligação ao Stripe expirou. Tente novamente.",
+      "access_denied": "A ligação não foi permitida no Stripe.",
+      "stripeAccountAlreadyConnected": "Esta conta Stripe já está ligada a outro espaço de trabalho.",
+      "stripePlatformNotConfigured": "O Stripe ainda não está configurado nesta plataforma.",
+      "superAdminRequired": "Apenas um administrador do espaço de trabalho pode ligar o Stripe.",
+      "signInRequired": "Inicie sessão e tente novamente.",
+      "paymentProviderCredentialsRejected": "O Stripe recusou a ligação. Tente novamente.",
+      "startedByAnotherUser": "Só quem clicou em Ligar pode concluir. Clique novamente em Ligar.",
+      "paymentProviderInUse": "Há encomendas em aberto que ainda precisam desta conta Stripe. Conclua-as ou cancele-as primeiro."
+    },
+    "platform": {
+      "connectClientId": "Connect client ID",
+      "connectClientIdHint": "Em Stripe Dashboard → Settings → Connect → Onboarding options → OAuth (começa por ca_). As lojas ligam a sua própria conta Stripe através dele.",
+      "redirectUri": "Redirect URI",
+      "webhookReady": "As lojas podem ligar o Stripe e os seus pagamentos são confirmados automaticamente.",
+      "webhookMissing": "O webhook de pagamentos não existe. Guarde novamente estas definições para o criar.",
+      "connectMissing": "Adicione o Connect client ID para que as lojas possam ligar a sua conta Stripe."
+    }
+  },
+  "paypal": {
+    "title": "PayPal",
+    "setting": {
+      "label": "PayPal",
+      "description": "Receba pagamentos PayPal na sua loja online com a sua própria conta PayPal."
+    },
+    "sandbox": "Sandbox",
+    "liveMode": "Ao vivo",
+    "fields": {
+      "clientId": "Client ID",
+      "clientSecret": "Secret"
+    },
+    "dialog": {
+      "description": "Crie uma aplicação REST em <link>PayPal Developer → Apps & Credentials</link> e cole o Client ID e o Secret. O modo ao vivo ou sandbox é detetado a partir das chaves."
+    }
   },
   "pipelines": {
     "title": "Funis",

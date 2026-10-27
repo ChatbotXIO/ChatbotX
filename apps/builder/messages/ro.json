@@ -5700,6 +5700,8 @@
       "orderShipped": "Comandă expediată",
       "orderConcluded": "Comandă finalizată",
       "orderCancelled": "Comandă anulată",
+      "orderPaid": "Comandă plătită",
+      "orderRefunded": "Comandă rambursată",
       "categoryAddedToCart": "Categorie adăugată în coș",
       "productAddedToCart": "Produs adăugat în coș",
       "productRemovedFromCart": "Produs eliminat din coș",
@@ -6910,7 +6912,9 @@
       "rating": "Evaluare",
       "quantity": "Cantitate",
       "price": "Preț",
-      "vendor": "Furnizor"
+      "vendor": "Furnizor",
+      "orderStatus": "Starea comenzii",
+      "payment": "Plată"
     },
     "fields": {
       "name": "Nume",
@@ -6935,7 +6939,9 @@
       "cancelReason": "Motivul anulării",
       "rating": "Evaluare",
       "ratingComment": "Comentariul clientului",
-      "coupon": "Cupon ({code})"
+      "coupon": "Cupon ({code})",
+      "paymentStatus": "Starea plății",
+      "payments": "Plăți online"
     },
     "statuses": {
       "pending": "Neprocesată",
@@ -6951,14 +6957,38 @@
       "cancelled": "Anulează"
     },
     "paymentMethods": {
-      "cod": "Plata la livrare"
+      "cod": "Plata la livrare",
+      "stripe": "Card",
+      "paypal": "PayPal"
     },
     "shippingTypes": {
       "delivery": "Livrare la client",
       "pickup": "Ridicare din magazin"
     },
     "description": "Comenzi plasate de clienții tăi.",
-    "ratingValue": "{rating}/5 ★"
+    "ratingValue": "{rating}/5 ★",
+    "paymentStatuses": {
+      "unpaid": "Neplătită",
+      "paid": "Plătită",
+      "refunded": "Rambursată"
+    },
+    "attemptStatuses": {
+      "open": "În așteptare",
+      "paid": "Plătită",
+      "expired": "Expirată",
+      "refunded": "Rambursată"
+    },
+    "testPayment": "test",
+    "awaitingPaymentHint": "Se așteaptă plata online a clientului. Comanda poate fi acceptată după ce este plătită.",
+    "refundWarning": "{amount} vor fi rambursați clientului.",
+    "paymentStates": {
+      "paid": "Plătit",
+      "refunded": "Rambursat",
+      "awaitingPayment": "Se așteaptă plata",
+      "payOnDelivery": "Plata la livrare",
+      "notPaid": "Neplătit"
+    },
+    "paymentUntil": "până la {time}"
   },
   "platformAdmin": {
     "helpItems": {
@@ -9844,8 +9874,11 @@
         "label": "Metode de plată",
         "description": "Metodele de plată activate în pagina de finalizare a comenzii. Prima metodă din listă va fi cea selectată în pagina de finalizare.",
         "options": {
-          "cod": "Plata la livrare"
-        }
+          "cod": "Plata la livrare",
+          "stripe": "Card",
+          "paypal": "PayPal"
+        },
+        "connectHint": "Pentru a oferi {provider}, conectează-l în <link>Setări → Integrări</link>."
       },
       "currency": {
         "label": "Monedă",
@@ -10063,7 +10096,19 @@
     },
     "payment": {
       "title": "Plată",
-      "cod": "Plata la livrare"
+      "cod": "Plata la livrare",
+      "stripe": "Card",
+      "paypal": "PayPal",
+      "paid": "Plătită",
+      "refunded": "Rambursată",
+      "awaiting": "Se așteaptă plata ta",
+      "payBefore": "Plătește înainte de {time}, altfel comanda va fi anulată.",
+      "payNow": "Plătește acum",
+      "onlineHint": "Vei plăti pe pagina următoare. Comanda ta este rezervată timp de 30 de minute.",
+      "continueToPayment": "Continuă spre plată",
+      "notYet": "Nu am primit încă plata ta. Dacă tocmai ai plătit, așteaptă un moment și reîncarcă pagina.",
+      "leftPaymentPage": "Ai părăsit pagina de plată. Încă poți plăti mai jos.",
+      "paidThanks": "Plată primită. Mulțumim pentru comandă!"
     },
     "placeOrder": "Plasează comanda",
     "orderPlaced": "Mulțumim! Comanda ta a fost plasată. Îți trimitem noutăți în chat.",
@@ -10113,7 +10158,14 @@
       "discountCodeNotEligible": "Acest cod nu este disponibil pentru tine.",
       "discountCodeNotApplicable": "Acest cod nu se aplică produselor din coș.",
       "discountCodeMinimumAmount": "Codul cere o achiziție de cel puțin {minimum}. Mai adaugă {missing}.",
-      "discountCodeMinimumQuantity": "Codul cere cel puțin {minimum} produse. Mai adaugă {missing}."
+      "discountCodeMinimumQuantity": "Codul cere cel puțin {minimum} produse. Mai adaugă {missing}.",
+      "paymentMethodUnavailable": "Această metodă de plată nu este disponibilă.",
+      "paymentProviderNotConnected": "Această metodă de plată nu este disponibilă.",
+      "paymentProviderUnavailable": "Serviciul de plată nu răspunde. Încearcă din nou peste un moment.",
+      "paymentProviderRejected": "Plata nu a putut fi inițiată. Alege altă metodă de plată.",
+      "paymentProviderCredentialsRejected": "Plata nu a putut fi inițiată. Alege altă metodă de plată.",
+      "paymentAmountUnsupported": "Această comandă nu poate fi plătită online. Alege altă metodă de plată.",
+      "orderPaymentNotOpen": "Această comandă nu mai poate fi plătită online."
     },
     "discount": {
       "label": "Cod de reducere",
@@ -10274,6 +10326,52 @@
     "metHelp": "Ponderea răspunsurilor cu SLA care l-au respectat.",
     "eligibleCount": "{count} răspunsuri aveau SLA",
     "enable": "Activează SLA de răspuns"
+  },
+  "stripe": {
+    "title": "Stripe",
+    "setting": {
+      "label": "Stripe",
+      "description": "Primește plăți cu cardul în magazinul tău web folosind propriul cont Stripe. Banii ajung direct în contul tău Stripe.",
+      "notConfigured": "Stripe nu este încă configurat pe această platformă. Cere administratorului platformei să adauge setările Stripe Connect."
+    },
+    "testMode": "Mod test",
+    "liveMode": "Live",
+    "chargesDisabled": "Contul tău Stripe nu poate încă primi plăți. Termină configurarea în tabloul de bord Stripe.",
+    "outcome": {
+      "expired": "Linkul de conectare Stripe a expirat. Încearcă din nou.",
+      "access_denied": "Conexiunea nu a fost permisă în Stripe.",
+      "stripeAccountAlreadyConnected": "Acest cont Stripe este deja conectat la un alt spațiu de lucru.",
+      "stripePlatformNotConfigured": "Stripe nu este încă configurat pe această platformă.",
+      "superAdminRequired": "Doar un administrator al spațiului de lucru poate conecta Stripe.",
+      "signInRequired": "Autentifică-te și încearcă din nou.",
+      "paymentProviderCredentialsRejected": "Stripe a refuzat conexiunea. Încearcă din nou.",
+      "startedByAnotherUser": "Doar persoana care a apăsat Conectează poate finaliza. Apasă din nou Conectează.",
+      "paymentProviderInUse": "Comenzile deschise încă au nevoie de acest cont Stripe. Finalizează-le sau anulează-le mai întâi."
+    },
+    "platform": {
+      "connectClientId": "Connect client ID",
+      "connectClientIdHint": "Din Stripe Dashboard → Settings → Connect → Onboarding options → OAuth (începe cu ca_). Magazinele își conectează propriul cont Stripe prin el.",
+      "redirectUri": "Redirect URI",
+      "webhookReady": "Magazinele pot conecta Stripe, iar plățile lor sunt confirmate automat.",
+      "webhookMissing": "Webhook-ul de plată lipsește. Salvează din nou aceste setări pentru a-l crea.",
+      "connectMissing": "Adaugă Connect client ID pentru ca magazinele să-și poată conecta contul Stripe."
+    }
+  },
+  "paypal": {
+    "title": "PayPal",
+    "setting": {
+      "label": "PayPal",
+      "description": "Primește plăți PayPal în magazinul tău web folosind propriul cont PayPal."
+    },
+    "sandbox": "Sandbox",
+    "liveMode": "Live",
+    "fields": {
+      "clientId": "Client ID",
+      "clientSecret": "Secret"
+    },
+    "dialog": {
+      "description": "Creează o aplicație REST în <link>PayPal Developer → Apps & Credentials</link> și lipește Client ID și Secret. Modul live sau sandbox este detectat din chei."
+    }
   },
   "pipelines": {
     "title": "Pipeline-uri",

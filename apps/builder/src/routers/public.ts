@@ -81,6 +81,7 @@ import { messagesPublicRouter } from "@/features/messages/api/public"
 import { miniAppsPublicRouter } from "@/features/mini-apps/api/public"
 import { minigamesPublicRouter } from "@/features/minigames/api/public"
 import { ordersPublicRouter } from "@/features/orders/api/public"
+import { paymentProvidersPublicRouter } from "@/features/payment-providers/api/public"
 import { messengerPersonasPublicRouter } from "@/features/personas/api/public"
 import { pipelinesPublicRouter } from "@/features/pipelines/api/public"
 import { productCategoriesPublicRouter } from "@/features/product-categories/api/public"
@@ -180,6 +181,7 @@ export const publicRouter = {
   pipelines: pipelinesPublicRouter,
   openHours: openHoursPublicRouter,
   orders: ordersPublicRouter,
+  paymentProviders: paymentProvidersPublicRouter,
   productCategories: productCategoriesPublicRouter,
   products: productsPublicRouter,
   productVendors: productVendorsPublicRouter,
