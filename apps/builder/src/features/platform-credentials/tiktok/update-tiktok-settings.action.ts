@@ -1,16 +1,17 @@
 "use server"
 
-import { platformCredentialService, tenantService } from "@chatbotx.io/business"
+import { platformCredentialService } from "@chatbotx.io/business"
 import {
   type TiktokCredential,
   tiktokCredentialUpdateSchema,
 } from "@chatbotx.io/database/partials"
 import { subscribeTiktokWebhooks } from "@chatbotx.io/integration-tiktok"
+import { createId } from "@chatbotx.io/utils"
 import { logger } from "@/lib/log"
 import { getBrokerOrigin } from "@/lib/oauth-broker"
 import {
   buildCredentialWebhookUrl,
-  resolveTenantCustomDomainOrigin,
+  resolveCredentialOwnerOrigin,
 } from "@/lib/provider-origin"
 import { authActionClient } from "@/lib/safe-action"
 import { credentialScopeSchema, resolveCredentialScopedUserId } from "../scope"
@@ -26,16 +27,22 @@ export const updateTiktokSettingAction = authActionClient
       features: parsedInput.features,
     }
 
-    const tenant = scopedUserId
-      ? await tenantService.findByOwner(scopedUserId)
-      : undefined
-    const hasActiveTenant = tenant?.status === "active"
-    const customDomainOrigin = scopedUserId
-      ? await resolveTenantCustomDomainOrigin(scopedUserId)
-      : null
+    const { customDomainOrigin, hasActiveTenant } = scopedUserId
+      ? await resolveCredentialOwnerOrigin(scopedUserId)
+      : { customDomainOrigin: null, hasActiveTenant: false }
     const webhookOrigin = customDomainOrigin ?? getBrokerOrigin()
+    const credentialId =
+      scopedUserId && !hasActiveTenant
+        ? ((
+            await platformCredentialService.findForUser({
+              userId: scopedUserId,
+              type: "tiktok",
+            })
+          )?.id ?? createId())
+        : undefined
     const upsertCredential = () =>
       platformCredentialService.upsert({
+        ...(credentialId ? { id: credentialId } : {}),
         userId: scopedUserId,
         type: "tiktok",
         config,
@@ -71,34 +78,6 @@ export const updateTiktokSettingAction = authActionClient
       }
     }
 
-    if (scopedUserId && !hasActiveTenant) {
-      const previousCredential =
-        await platformCredentialService.findDecryptedForUser({
-          userId: scopedUserId,
-          type: "tiktok",
-          strict: true,
-        })
-      const credential = await upsertCredential()
-      try {
-        await subscribe(credential.id)
-      } catch (error) {
-        if (previousCredential) {
-          await platformCredentialService.upsert({
-            userId: scopedUserId,
-            type: "tiktok",
-            config: previousCredential.config,
-          })
-        } else {
-          await platformCredentialService.remove({
-            userId: scopedUserId,
-            type: "tiktok",
-          })
-        }
-        throw error
-      }
-      return
-    }
-
-    await subscribe()
+    await subscribe(credentialId)
     await upsertCredential()
   })

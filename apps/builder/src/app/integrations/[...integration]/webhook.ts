@@ -96,57 +96,87 @@ const normalizeCredentialScopedWebhookRequest = (
       )
     : req
 
-const createCredentialScopedQueue = (ownerId: string): ContextQueue => ({
-  add: async (name, payload, options) => {
-    const routing = getCredentialScopedIntegrationRouting(payload)
-    if (!routing) {
-      logger.error(
-        { name, ownerId },
-        "Ignoring credential-scoped webhook job without ownership routing fields",
-      )
-      return
+const createCredentialScopedQueue = (ownerId: string): ContextQueue => {
+  const ownerChecks = new Map<string, Promise<boolean>>()
+
+  const belongsToOwner = (
+    routing: CredentialScopedIntegrationRouting,
+  ): Promise<boolean> => {
+    const { integrationIdentifier, integrationType } = routing
+    const key = `${integrationType}:${integrationIdentifier}`
+    const existingCheck = ownerChecks.get(key)
+    if (existingCheck) {
+      return existingCheck
     }
 
-    const { integrationIdentifier, integrationType } = routing
-    try {
-      const { inbox } =
-        await integrationService.identifyInboxAndIntegrationAuthFromIdentifier(
-          integrationType as IntegrationType,
-          integrationIdentifier,
-        )
-      const inboxOwnerId =
-        await workspaceMemberService.findOwnerUserIdByWorkspaceId({
-          workspaceId: inbox.workspaceId,
-        })
+    const check = (async () => {
+      try {
+        const { inbox } =
+          await integrationService.identifyInboxAndIntegrationAuthFromIdentifier(
+            integrationType as IntegrationType,
+            integrationIdentifier,
+          )
+        const inboxOwnerId =
+          await workspaceMemberService.findOwnerUserIdByWorkspaceId({
+            workspaceId: inbox.workspaceId,
+          })
 
-      if (inboxOwnerId !== ownerId) {
+        if (inboxOwnerId === ownerId) {
+          return true
+        }
+
         logger.warn(
           { integrationIdentifier, integrationType, ownerId },
           "Ignoring credential-scoped webhook for another owner's inbox",
         )
+        return false
+      } catch (err) {
+        if (!(err instanceof IntegrationNotFoundError)) {
+          throw err
+        }
+        logger.warn(
+          { err, integrationIdentifier, integrationType, ownerId },
+          "Ignoring credential-scoped webhook for an unresolved inbox",
+        )
+        return false
+      }
+    })()
+    ownerChecks.set(key, check)
+    return check
+  }
+
+  return {
+    add: async (name, payload, options) => {
+      const routing = getCredentialScopedIntegrationRouting(payload)
+      if (!routing) {
+        logger.error(
+          { name, ownerId },
+          "Ignoring credential-scoped webhook job without ownership routing fields",
+        )
         return
       }
-    } catch (err) {
-      if (!(err instanceof IntegrationNotFoundError)) {
-        throw err
-      }
-      logger.warn(
-        { err, integrationIdentifier, integrationType, ownerId },
-        "Ignoring credential-scoped webhook for an unresolved inbox",
-      )
-      return
-    }
 
-    return await (integrationQueue as unknown as ContextQueue).add(
-      name,
-      payload,
-      options,
-    )
-  },
-})
+      if (!(await belongsToOwner(routing))) {
+        return
+      }
+
+      return await (integrationQueue as unknown as ContextQueue).add(
+        name,
+        payload,
+        options,
+      )
+    },
+  }
+}
 const WEBHOOK_PUBLIC_ERROR_HEADERS = {
   "Content-Type": "application/json",
 } as const
+
+const jsonError = (message: string, status: number) =>
+  new Response(JSON.stringify({ message }), {
+    status,
+    headers: WEBHOOK_PUBLIC_ERROR_HEADERS,
+  })
 
 const THREADS_BAD_REQUEST_MESSAGES = new Set([
   "Empty webhook payload",
@@ -185,11 +215,7 @@ const createThreadsErrorResponse = (error: unknown) => {
   }
 }
 
-const notConfigured = () =>
-  new Response(JSON.stringify({ message: "Integration is not configured" }), {
-    status: 404,
-    headers: WEBHOOK_PUBLIC_ERROR_HEADERS,
-  })
+const notConfigured = () => jsonError("Integration is not configured", 404)
 
 export const handleWebhook = async (
   integrationType: string,
@@ -283,14 +309,9 @@ export const handleWebhook = async (
   }
 
   const integration = integrations[integrationType as IntegrationKey]
+
   if (!integration?.handleRequest) {
-    return new Response(
-      JSON.stringify({ message: "Method is not implemented" }),
-      {
-        status: 400,
-        headers: { "Content-Type": "application/json" },
-      },
-    )
+    return jsonError("Method is not implemented", 400)
   }
 
   const redirectUrl = new URL(
@@ -329,10 +350,7 @@ export const handleWebhook = async (
     // SdkException still defaults its httpStatusCode to 400, so this is a
     // no-op for exceptions that never set one.
     const status = e instanceof SdkException ? e.httpStatusCode : 400
-    return new Response(JSON.stringify({ message }), {
-      status,
-      headers: { "Content-Type": "application/json" },
-    })
+    return jsonError(message, status)
   }
 }
 
@@ -345,10 +363,7 @@ const handleThreadsWebhook = async (req: NextRequest) => {
 
   const integration = integrations.threads
   if (!integration?.handleRequest) {
-    return new Response(
-      JSON.stringify({ message: "Method is not implemented" }),
-      { status: 400, headers: { "Content-Type": "application/json" } },
-    )
+    return jsonError("Method is not implemented", 400)
   }
 
   const credential =
@@ -395,36 +410,24 @@ const handleThreadsWebhook = async (req: NextRequest) => {
       },
       "Threads handleRequest failed",
     )
-    return new Response(JSON.stringify({ message: publicMessage }), {
-      status,
-      headers: WEBHOOK_PUBLIC_ERROR_HEADERS,
-    })
+    return jsonError(publicMessage, status)
   }
 }
 
 const handleTelegramWebhook = async (req: NextRequest) => {
   const botId = req.nextUrl.searchParams.get("botId")
   if (!botId) {
-    return new Response(
-      JSON.stringify({ message: "Missing botId query param" }),
-      { status: 400, headers: { "Content-Type": "application/json" } },
-    )
+    return jsonError("Missing botId query param", 400)
   }
 
   const integration = integrations.telegram
   if (!integration?.handleRequest) {
-    return new Response(
-      JSON.stringify({ message: "Method is not implemented" }),
-      { status: 400, headers: { "Content-Type": "application/json" } },
-    )
+    return jsonError("Method is not implemented", 400)
   }
 
   const integrationTelegram = await findIntegrationTelegramByBotId({ botId })
   if (!integrationTelegram) {
-    return new Response(JSON.stringify({ message: "Bot not found" }), {
-      status: 404,
-      headers: { "Content-Type": "application/json" },
-    })
+    return jsonError("Bot not found", 404)
   }
 
   const auth = integrationTelegram.auth as {
@@ -450,10 +453,7 @@ const handleTelegramWebhook = async (req: NextRequest) => {
       { err: e, integrationType: "telegram" },
       "Telegram handleRequest failed",
     )
-    return new Response(JSON.stringify({ message }), {
-      status: 400,
-      headers: { "Content-Type": "application/json" },
-    })
+    return jsonError(message, 400)
   }
 }
 
@@ -474,19 +474,15 @@ const handleTiktokWebhook = async (req: NextRequest, credentialId?: string) => {
   }
 
   const integration = integrations.tiktok
+
   if (!integration?.handleRequest) {
-    return new Response(
-      JSON.stringify({ message: "Method is not implemented" }),
-      { status: 400, headers: { "Content-Type": "application/json" } },
-    )
+    return jsonError("Method is not implemented", 400)
   }
 
   const bodyText = await req.text()
+
   if (!bodyText) {
-    return new Response(JSON.stringify({ message: "Empty webhook payload" }), {
-      status: 400,
-      headers: { "Content-Type": "application/json" },
-    })
+    return jsonError("Empty webhook payload", 400)
   }
 
   let userOpenId: string | undefined
@@ -501,26 +497,22 @@ const handleTiktokWebhook = async (req: NextRequest, credentialId?: string) => {
   }
 
   if (!userOpenId) {
-    return new Response(
-      JSON.stringify({ message: "Missing user_openid in payload" }),
-      { status: 400, headers: { "Content-Type": "application/json" } },
-    )
+    return jsonError("Missing user_openid in payload", 400)
   }
 
   const integrationTiktok = await findIntegrationTiktokByOpenId({
     openId: userOpenId,
   })
   if (!integrationTiktok) {
-    return new Response(
-      JSON.stringify({ message: "TikTok account not found" }),
-      { status: 404, headers: { "Content-Type": "application/json" } },
-    )
+    return jsonError("TikTok account not found", 404)
   }
 
   const workspaceOwnerId =
-    await workspaceMemberService.findOwnerUserIdByWorkspaceId({
-      workspaceId: integrationTiktok.workspaceId,
-    })
+    credentialOwnerId || eventType === "authorization.removed"
+      ? await workspaceMemberService.findOwnerUserIdByWorkspaceId({
+          workspaceId: integrationTiktok.workspaceId,
+        })
+      : undefined
   if (credentialOwnerId && workspaceOwnerId !== credentialOwnerId) {
     logger.warn(
       {
@@ -538,7 +530,7 @@ const handleTiktokWebhook = async (req: NextRequest, credentialId?: string) => {
       provider: "tiktok",
       identifier: userOpenId,
       reason: "token_revoked",
-      ownerId: workspaceOwnerId,
+      ownerId: workspaceOwnerId as string,
       workspaceId: integrationTiktok.workspaceId,
     })
     if (!connection) {
@@ -599,9 +591,6 @@ const handleTiktokWebhook = async (req: NextRequest, credentialId?: string) => {
       { err: e, integrationType: "tiktok" },
       "TikTok handleRequest failed",
     )
-    return new Response(JSON.stringify({ message }), {
-      status: 400,
-      headers: { "Content-Type": "application/json" },
-    })
+    return jsonError(message, 400)
   }
 }

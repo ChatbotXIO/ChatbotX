@@ -164,6 +164,29 @@ describe("resolveForOwner", () => {
   })
 })
 
+describe("upsertForUser", () => {
+  test("persists a caller-provided credential id", async () => {
+    vi.mocked(encryptUtils.encryptObject).mockResolvedValue({
+      encrypted: true,
+    } as never)
+    const returning = vi.fn().mockResolvedValue([{ id: "credential-1" }])
+    const onConflictDoUpdate = vi.fn(() => ({ returning }))
+    const values = vi.fn(() => ({ onConflictDoUpdate }))
+    Object.assign(db, { insert: vi.fn(() => ({ values })) })
+
+    await platformCredentialService.upsertForUser({
+      id: "credential-1",
+      userId: "user-1",
+      type: "messenger",
+      config: { clientId: "client-1" },
+    })
+
+    expect(values).toHaveBeenCalledWith(
+      expect.objectContaining({ id: "credential-1" }),
+    )
+  })
+})
+
 describe("findDecryptedForWebhook", () => {
   test("decrypts the matching user-owned credential and returns undefined when none exists", async () => {
     vi.mocked(encryptUtils.decryptObject).mockResolvedValue({

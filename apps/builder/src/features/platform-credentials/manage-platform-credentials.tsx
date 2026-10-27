@@ -1,7 +1,6 @@
 import {
   hasPlatformStripeWebhook,
   platformCredentialService,
-  tenantService,
 } from "@chatbotx.io/business"
 import type {
   CredentialPublicByType,
@@ -12,7 +11,7 @@ import { getBrokerOrigin } from "@/lib/oauth-broker"
 import {
   buildCredentialWebhookUrl,
   resolveCredentialDisplayOrigin,
-  resolveTenantCustomDomainOrigin,
+  resolveCredentialOwnerOrigin,
 } from "@/lib/provider-origin"
 import { GiphySettings } from "./giphy/giphy-settings"
 import { GoogleSettings } from "./google/google-settings"
@@ -148,13 +147,9 @@ export async function ManagePlatformCredentials({
   // without an active tenant use the broker for callbacks and credential-scoped
   // webhooks; OAuth callback state already binds the connection to its owner.
   const brokerOrigin = getBrokerOrigin()
-  const [customDomainOrigin, tenant] = scopedUserId
-    ? await Promise.all([
-        resolveTenantCustomDomainOrigin(scopedUserId),
-        tenantService.findByOwner(scopedUserId),
-      ])
-    : [undefined, undefined]
-  const hasActiveTenant = tenant?.status === "active"
+  const { customDomainOrigin, hasActiveTenant } = scopedUserId
+    ? await resolveCredentialOwnerOrigin(scopedUserId)
+    : { customDomainOrigin: undefined, hasActiveTenant: false }
   const providerOriginFor = (isInherited: boolean) =>
     resolveCredentialDisplayOrigin({
       brokerOrigin,

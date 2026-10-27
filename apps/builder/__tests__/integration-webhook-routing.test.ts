@@ -9,7 +9,6 @@ const tiktokHandleRequest = vi.fn()
 const markUnhealthyByIdentifier = vi.fn()
 const markLegacyInboxUnhealthy = vi.fn()
 const findOwnerUserIdByWorkspaceId = vi.fn()
-const canUseOwnCredentials = vi.fn()
 const findDecryptedForWebhook = vi.fn()
 const identifyInboxAndIntegrationAuthFromIdentifier = vi.fn()
 const integrationQueueAdd = vi.fn()
@@ -17,7 +16,6 @@ const messengerHandleRequest = vi.fn()
 const isCloud = vi.fn(() => false)
 
 vi.mock("@chatbotx.io/business", () => ({
-  canUseOwnCredentials,
   connectionStateService: {
     markUnhealthyByIdentifier,
     markLegacyInboxUnhealthy,
@@ -177,7 +175,6 @@ describe("credential-scoped webhook routing", () => {
       config: { clientId: "client-1", clientSecret: "secret-1" },
       userId: "owner-1",
     })
-    canUseOwnCredentials.mockResolvedValue(false)
 
     const response = await handleWebhook(
       "messenger",
@@ -231,6 +228,41 @@ describe("credential-scoped webhook routing", () => {
     ).resolves.toMatchObject({ status: 200 })
 
     expect(integrationQueueAdd).not.toHaveBeenCalled()
+  })
+
+  test("validates a repeated credential-scoped inbox identifier once", async () => {
+    isCloud.mockReturnValue(true)
+    findDecryptedForWebhook.mockResolvedValue({
+      config: { clientId: "client-1", clientSecret: "secret-1" },
+      userId: "owner-1",
+    })
+    messengerHandleRequest.mockImplementationOnce(async ({ queue }) => {
+      const payload = {
+        type: "incomingMessage",
+        data: {
+          integrationIdentifier: "page-1",
+          integrationType: "messenger",
+          payload: {},
+        },
+      }
+      await queue.add("incomingMessage", payload)
+      await queue.add("incomingMessage", payload)
+      return "ok"
+    })
+
+    await expect(
+      handleWebhook(
+        "messenger",
+        asNextRequest(
+          "http://localhost/integrations/messenger/webhook/c/credential-1",
+        ),
+        "credential-1",
+      ),
+    ).resolves.toMatchObject({ status: 200 })
+
+    expect(identifyInboxAndIntegrationAuthFromIdentifier).toHaveBeenCalledOnce()
+    expect(findOwnerUserIdByWorkspaceId).toHaveBeenCalledOnce()
+    expect(integrationQueueAdd).toHaveBeenCalledTimes(2)
   })
 
   test("404s for a credential-scoped Threads webhook", async () => {
@@ -296,6 +328,30 @@ describe("tiktok webhook routing", () => {
 
     expect(response.status).toBe(404)
     expect(tiktokHandleRequest).not.toHaveBeenCalled()
+  })
+
+  test("does not resolve the workspace owner for a non-revocation event", async () => {
+    findIntegrationTiktokByOpenId.mockResolvedValue({
+      auth: {
+        clientId: "id",
+        clientSecret: "secret",
+        redirectUrl: "https://x",
+      },
+      inboxId: "inbox-1",
+      openId: "open-1",
+      workspaceId: "workspace-1",
+    })
+
+    const response = await handleWebhook(
+      "tiktok",
+      asNextRequest(
+        "http://localhost/integrations/tiktok",
+        JSON.stringify({ event: "im_receive_msg", user_openid: "open-1" }),
+      ),
+    )
+
+    expect(response.status).toBe(200)
+    expect(findOwnerUserIdByWorkspaceId).not.toHaveBeenCalled()
   })
 
   test("routes authorization.removed to connectionStateService.markUnhealthyByIdentifier with the resolved workspace owner (regression: previously 500'd with no ownerId)", async () => {

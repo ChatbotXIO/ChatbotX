@@ -82,6 +82,19 @@ describe("resolveTenantCustomDomainOrigin", () => {
   })
 })
 
+test("resolves an owner's tenant state and custom domain together", async () => {
+  mockFindByOwner.mockResolvedValue({ id: "t1", status: "active" })
+  mockFindActiveByTenantId.mockResolvedValue({ domain: "chat.acme.com" })
+  const { resolveCredentialOwnerOrigin } = await loadModule()
+
+  await expect(resolveCredentialOwnerOrigin("owner-1")).resolves.toEqual({
+    customDomainOrigin: "https://chat.acme.com",
+    hasActiveTenant: true,
+  })
+  expect(mockFindByOwner).toHaveBeenCalledOnce()
+  expect(mockFindActiveByTenantId).toHaveBeenCalledOnce()
+})
+
 describe("resolveTenantProviderOrigin", () => {
   test("falls back to the broker origin when there is no active custom domain", async () => {
     mockFindByOwner.mockResolvedValue(undefined)

@@ -21,5 +21,5 @@ export async function canUseOwnCredentials(ownerId: string): Promise<boolean> {
   }
 
   const quota = await userQuotaService.getForUser(ownerId)
-  return Boolean(quota?.customAppCredentials)
+  return hasOwnCredentialAccess(tenant, quota)
 }

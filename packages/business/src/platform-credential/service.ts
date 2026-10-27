@@ -129,6 +129,7 @@ class PlatformCredentialService extends BaseService {
   }
 
   async upsertForUser<T extends CredentialType>(props: {
+    id?: string
     userId: string
     type: T
     config: CredentialByType[T]
@@ -139,6 +140,7 @@ class PlatformCredentialService extends BaseService {
     tx?: DatabaseClient
   }): Promise<{ id: string }> {
     const {
+      id,
       userId,
       type,
       config,
@@ -155,6 +157,7 @@ class PlatformCredentialService extends BaseService {
     const [credential] = await tx
       .insert(platformCredentialModel)
       .values({
+        ...(id ? { id } : {}),
         userId,
         type,
         publicConfig,
@@ -396,6 +399,7 @@ class PlatformCredentialService extends BaseService {
   }
 
   upsert<T extends CredentialType>(props: {
+    id?: string
     userId: string | undefined
     type: T
     config: CredentialByType[T]
