@@ -166,7 +166,7 @@ describe("TikTok credential actions", () => {
     )
   })
 
-  test("saves an active tenant credential without subscribing the broker URL when no custom domain is active", async () => {
+  test("subscribes an active tenant without a custom domain at the broker URL", async () => {
     mockFindByOwner.mockResolvedValue({ id: "t1", status: "active" })
 
     await call(updateTiktokSettingAction)({
@@ -180,7 +180,11 @@ describe("TikTok credential actions", () => {
       type: "tiktok",
       config: { clientId: "id", clientSecret: "secret" },
     })
-    expect(subscribeSpy).not.toHaveBeenCalled()
+    expect(subscribeSpy).toHaveBeenCalledWith(
+      { clientId: "id", clientSecret: "secret" },
+      `${BROKER_ORIGIN}/integrations/tiktok/webhook`,
+      expect.any(Function),
+    )
   })
 
   test("subscribes the webhook on the broker origin for platform scope, ignoring any tenant domain", async () => {

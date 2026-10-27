@@ -33,14 +33,6 @@ export const updateTiktokSettingAction = authActionClient
     const customDomainOrigin = scopedUserId
       ? await resolveTenantCustomDomainOrigin(scopedUserId)
       : null
-    if (scopedUserId && hasActiveTenant && !customDomainOrigin) {
-      await platformCredentialService.upsert({
-        userId: scopedUserId,
-        type: "tiktok",
-        config,
-      })
-      return
-    }
     const webhookOrigin = customDomainOrigin ?? getBrokerOrigin()
     const upsertCredential = () =>
       platformCredentialService.upsert({

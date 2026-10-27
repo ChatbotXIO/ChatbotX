@@ -28,25 +28,48 @@ type CredentialType = Parameters<
   typeof platformCredentialService.resolveForOwner
 >[0]["type"]
 
-type IntegrationWebhookPayload = {
-  data: {
-    integrationIdentifier: string
-    integrationType: string
-  }
+type CredentialScopedIntegrationRouting = {
+  integrationIdentifier: string
+  integrationType: string
 }
 
-const isIntegrationWebhookPayload = (
+const getCredentialScopedIntegrationRouting = (
   payload: unknown,
-): payload is Required<IntegrationWebhookPayload> =>
-  typeof payload === "object" &&
-  payload !== null &&
-  "data" in payload &&
-  typeof payload.data === "object" &&
-  payload.data !== null &&
-  "integrationIdentifier" in payload.data &&
-  typeof payload.data.integrationIdentifier === "string" &&
-  "integrationType" in payload.data &&
-  typeof payload.data.integrationType === "string"
+): CredentialScopedIntegrationRouting | null => {
+  if (
+    typeof payload !== "object" ||
+    payload === null ||
+    !("data" in payload) ||
+    typeof payload.data !== "object" ||
+    payload.data === null
+  ) {
+    return null
+  }
+
+  if (
+    "integrationIdentifier" in payload.data &&
+    typeof payload.data.integrationIdentifier === "string" &&
+    "integrationType" in payload.data &&
+    typeof payload.data.integrationType === "string"
+  ) {
+    return {
+      integrationIdentifier: payload.data.integrationIdentifier,
+      integrationType: payload.data.integrationType,
+    }
+  }
+
+  if (
+    "phoneNumberId" in payload.data &&
+    typeof payload.data.phoneNumberId === "string"
+  ) {
+    return {
+      integrationIdentifier: payload.data.phoneNumberId,
+      integrationType: "whatsapp",
+    }
+  }
+
+  return null
+}
 
 const normalizeCredentialScopedWebhookUrl = (
   url: string,
@@ -75,15 +98,16 @@ const normalizeCredentialScopedWebhookRequest = (
 
 const createCredentialScopedQueue = (ownerId: string): ContextQueue => ({
   add: async (name, payload, options) => {
-    if (!isIntegrationWebhookPayload(payload)) {
-      logger.warn(
+    const routing = getCredentialScopedIntegrationRouting(payload)
+    if (!routing) {
+      logger.error(
         { name, ownerId },
         "Ignoring credential-scoped webhook job without ownership routing fields",
       )
       return
     }
 
-    const { integrationIdentifier, integrationType } = payload.data
+    const { integrationIdentifier, integrationType } = routing
     try {
       const { inbox } =
         await integrationService.identifyInboxAndIntegrationAuthFromIdentifier(
@@ -357,9 +381,7 @@ const handleThreadsWebhook = async (req: NextRequest) => {
         // biome-ignore lint/suspicious/noExplicitAny: safe pass value
       } as any,
       req,
-      queue: credential.userId
-        ? createCredentialScopedQueue(credential.userId)
-        : integrationQueue,
+      queue: integrationQueue,
     })
 
     return new Response(result as BodyInit)
@@ -367,7 +389,7 @@ const handleThreadsWebhook = async (req: NextRequest) => {
     const { publicMessage, safeError, status } = createThreadsErrorResponse(e)
     logger.error(
       {
-        error: safeError,
+        err: safeError,
         integrationType: "threads",
         status,
       },

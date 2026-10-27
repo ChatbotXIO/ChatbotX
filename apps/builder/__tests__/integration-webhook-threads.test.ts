@@ -5,6 +5,7 @@ const threadsFindDecryptedByClientId = vi.fn()
 const threadsHandleRequest = vi.fn()
 const findOwnerUserIdByWorkspaceId = vi.fn()
 const identifyInboxAndIntegrationAuthFromIdentifier = vi.fn()
+const integrationQueueAdd = vi.fn()
 const loggerInfo = vi.fn()
 const loggerDebug = vi.fn()
 const loggerError = vi.fn()
@@ -38,7 +39,7 @@ vi.mock("@chatbotx.io/database/schema", () => ({
 }))
 
 vi.mock("@chatbotx.io/worker-config", () => ({
-  integrationQueue: {},
+  integrationQueue: { add: integrationQueueAdd },
 }))
 
 vi.mock("@/env", () => ({
@@ -146,6 +147,45 @@ describe("threads webhook routing", () => {
     )
   })
 
+  test("enqueues reseller sub-account events with the shared credential queue", async () => {
+    threadsFindDecryptedByClientId.mockResolvedValueOnce({
+      config: {
+        clientId: "app-1",
+        clientSecret: "secret-1",
+        verifyToken: "verify-1",
+        version: "v1.0",
+      },
+      userId: "reseller-1",
+    })
+    findOwnerUserIdByWorkspaceId.mockResolvedValueOnce("sub-account-1")
+    threadsHandleRequest.mockImplementationOnce(async ({ queue }) => {
+      await queue.add("incomingComment", {
+        type: "incomingComment",
+        data: {
+          integrationIdentifier: "threads-account-1",
+          integrationType: "threads",
+          payload: {},
+        },
+      })
+      return "ok"
+    })
+
+    await expect(handleWebhook("threads", request())).resolves.toMatchObject({
+      status: 200,
+    })
+
+    expect(integrationQueueAdd).toHaveBeenCalledWith(
+      "incomingComment",
+      expect.objectContaining({
+        data: expect.objectContaining({
+          integrationIdentifier: "threads-account-1",
+          integrationType: "threads",
+        }),
+      }),
+    )
+    expect(findOwnerUserIdByWorkspaceId).not.toHaveBeenCalled()
+  })
+
   test("sanitizes secrets in logs and returns a generic client-facing error", async () => {
     threadsHandleRequest.mockRejectedValueOnce(
       new Error(
@@ -162,7 +202,7 @@ describe("threads webhook routing", () => {
     const [payload] = loggerError.mock.calls[0] ?? []
     expect(loggerError).toHaveBeenCalledWith(
       expect.objectContaining({
-        error: expect.objectContaining({
+        err: expect.objectContaining({
           message: expect.stringContaining("[REDACTED]"),
         }),
         integrationType: "threads",
@@ -187,7 +227,7 @@ describe("threads webhook routing", () => {
     })
     expect(loggerError).toHaveBeenCalledWith(
       expect.objectContaining({
-        error: expect.objectContaining({
+        err: expect.objectContaining({
           message: "Invalid webhook signature",
         }),
         integrationType: "threads",

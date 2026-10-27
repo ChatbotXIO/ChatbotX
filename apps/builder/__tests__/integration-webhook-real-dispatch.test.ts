@@ -3,12 +3,16 @@
 import { createHmac } from "node:crypto"
 import type * as MessengerIntegration from "@chatbotx.io/integration-messenger"
 import type * as TiktokIntegration from "@chatbotx.io/integration-tiktok"
+import type * as WhatsappIntegration from "@chatbotx.io/integration-whatsapp"
 import { beforeEach, describe, expect, test, vi } from "vitest"
+
+const COEXIST_JOB_ID = /^wa-coexist-phone-1-/
 
 const findDecryptedForWebhook = vi.fn()
 const findIntegrationTiktokByOpenId = vi.fn()
 const findOwnerUserIdByWorkspaceId = vi.fn()
 const integrationQueueAdd = vi.fn()
+const identifyInboxAndIntegrationAuthFromIdentifier = vi.fn()
 const isCloud = vi.fn(() => true)
 
 vi.mock("@chatbotx.io/business", () => ({
@@ -28,7 +32,7 @@ vi.mock("@chatbotx.io/business", () => ({
 
 vi.mock("@chatbotx.io/channel-registry/registry", () => ({
   integrationService: {
-    identifyInboxAndIntegrationAuthFromIdentifier: vi.fn(),
+    identifyInboxAndIntegrationAuthFromIdentifier,
   },
 }))
 
@@ -51,12 +55,15 @@ vi.mock("@/lib/webhook-log", () => ({
   logWebhookRequestBody: vi.fn().mockResolvedValue(undefined),
 }))
 vi.mock("@/integration", async () => {
-  const [messenger, tiktok] = await Promise.all([
+  const [messenger, tiktok, whatsapp] = await Promise.all([
     vi.importActual<typeof MessengerIntegration>(
       "@chatbotx.io/integration-messenger",
     ),
     vi.importActual<typeof TiktokIntegration>(
       "@chatbotx.io/integration-tiktok",
+    ),
+    vi.importActual<typeof WhatsappIntegration>(
+      "@chatbotx.io/integration-whatsapp",
     ),
   ])
 
@@ -64,6 +71,7 @@ vi.mock("@/integration", async () => {
     integrations: {
       messenger: messenger.integration,
       tiktok: tiktok.integration,
+      whatsapp: whatsapp.integration,
     },
   }
 })
@@ -85,6 +93,9 @@ describe("credential-scoped webhook real dispatch", () => {
     vi.clearAllMocks()
     isCloud.mockReturnValue(true)
     findOwnerUserIdByWorkspaceId.mockResolvedValue("owner-1")
+    identifyInboxAndIntegrationAuthFromIdentifier.mockResolvedValue({
+      inbox: { workspaceId: "workspace-1" },
+    })
   })
 
   test("echoes Meta's verification challenge through the real Messenger dispatcher", async () => {
@@ -159,6 +170,66 @@ describe("credential-scoped webhook real dispatch", () => {
         }),
       }),
       undefined,
+    )
+  })
+  test("dispatches coexistence payloads through the credential-scoped WhatsApp route", async () => {
+    const clientSecret = "whatsapp-secret"
+    const body = JSON.stringify({
+      entry: [
+        {
+          changes: [
+            {
+              field: "smb_message_echoes",
+              value: {
+                message_echoes: [{ id: "wamid.echo-1" }],
+                metadata: { phone_number_id: "phone-1" },
+              },
+            },
+          ],
+        },
+      ],
+      object: "whatsapp_business_account",
+    })
+    const signature = createHmac("sha256", clientSecret)
+      .update(body)
+      .digest("hex")
+
+    findDecryptedForWebhook.mockResolvedValue({
+      config: {
+        clientId: "whatsapp-app",
+        clientSecret,
+        verifyToken: "verify-token",
+      },
+      userId: "owner-1",
+    })
+
+    const response = await handleWebhook(
+      "whatsapp",
+      asNextRequest(
+        "https://broker.test/integrations/whatsapp/webhook/c/credential-1",
+        body,
+        { "X-Hub-Signature-256": `sha256=${signature}` },
+      ),
+      "credential-1",
+    )
+
+    expect(response.status).toBe(200)
+    await expect(response.text()).resolves.toBe("ok")
+    expect(identifyInboxAndIntegrationAuthFromIdentifier).toHaveBeenCalledWith(
+      "whatsapp",
+      "phone-1",
+    )
+    expect(integrationQueueAdd).toHaveBeenCalledWith(
+      "coexistWhatsappBuffer",
+      expect.objectContaining({
+        data: expect.objectContaining({
+          phoneNumberId: "phone-1",
+        }),
+        type: "coexistWhatsappBuffer",
+      }),
+      expect.objectContaining({
+        jobId: expect.stringMatching(COEXIST_JOB_ID),
+      }),
     )
   })
 })
