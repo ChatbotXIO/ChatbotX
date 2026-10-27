@@ -21,8 +21,10 @@ import { customFieldService } from "../custom-field/service"
 import { toPublicErrorMessage } from "../errors"
 import { folderService } from "../folder"
 import { logger } from "../logger"
+import { pipelineService } from "../pipeline/service"
 import { resolveCustomFieldManifest } from "./adapters/manifests/custom-fields"
 import { resolveFolderManifest } from "./adapters/manifests/folders"
+import { resolvePipelineManifest } from "./adapters/manifests/pipelines"
 import { resolveProductCategoryManifest } from "./adapters/manifests/product-categories"
 import { resolveTagManifest } from "./adapters/manifests/tags"
 import {
@@ -329,6 +331,7 @@ const runInstall = async (
     ctx,
     input.payload.manifests.productCategories,
   )
+  await resolvePipelineManifest(ctx, input.payload.manifests.pipelines)
   await flushTracked(tx, input.installationId, input.workspaceId, tracked)
 
   const patchTasks: PatchTask[] = []
@@ -380,6 +383,7 @@ const invalidateAfterCommit = async (workspaceId: string): Promise<void> => {
     automatedResponseService.invalidateCache(workspaceId),
     updateTriggerCache(workspaceId),
     aiAgentService.invalidate({ workspaceId }),
+    pipelineService.invalidateList(workspaceId),
   ])
 }
 

@@ -172,7 +172,8 @@
       "changeGamificationScore": "Modifică punctele de gamificare",
       "sendViewCatalog": "Vezi catalogul",
       "sendProducts": "Trimite produse",
-      "sendCollection": "Colecție"
+      "sendCollection": "Colecție",
+      "pipeline": "Pipeline-uri"
     },
     "externalRequest": {
       "errors": {
@@ -395,6 +396,52 @@
       "summaryManual": "{count, plural, one {# produs} other {# produse}}",
       "cancel": "Anulează",
       "save": "Salvează"
+    },
+    "pipelineStep": {
+      "action": "Acțiune",
+      "pipeline": "Pipeline",
+      "targetHint": "Acționează asupra celui mai recent element deschis al contactului din acest pipeline. Calea Omite se execută când nu există niciunul.",
+      "noPipelines": "Nu s-a găsit niciun pipeline",
+      "actions": {
+        "addToPipeline": "Adaugă contactul în pipeline",
+        "moveToStage": "Mută într-o etapă",
+        "changeValue": "Schimbă valoarea",
+        "assign": "Atribuie administratorilor",
+        "changeStatus": "Schimbă starea",
+        "changePriority": "Schimbă prioritatea",
+        "changeDueDate": "Schimbă termenul limită",
+        "changeTitle": "Schimbă titlul",
+        "setCustomField": "Setează câmp personalizat",
+        "clearCustomField": "Șterge câmpurile personalizate",
+        "changeDescription": "Schimbă descrierea",
+        "removeFromPipeline": "Elimină contactul din pipeline",
+        "addComment": "Adaugă comentariu",
+        "transfer": "Transferă în alt pipeline"
+      },
+      "title": "Titlu",
+      "description": "Descriere",
+      "stage": "Etapă",
+      "firstStage": "Prima etapă",
+      "status": "Stare",
+      "assigneeMembers": "Administratori atribuiți",
+      "assigneeTeams": "Echipe atribuite",
+      "value": "Valoare",
+      "priority": "Prioritate",
+      "dueDate": "Termen limită",
+      "dueNone": "Niciunul",
+      "dueNoneHint": "Elementul nu are termen limită.",
+      "dueCustomField": "Dintr-un câmp personalizat de tip dată",
+      "dueFixed": "Dată și oră fixe",
+      "dueField": "Câmp personalizat de tip dată sau dată și oră",
+      "fieldValues": "Câmpuri personalizate",
+      "field": "Câmp",
+      "fieldValue": "Valoare",
+      "fields": "Câmpuri",
+      "addField": "Adaugă valoare de câmp",
+      "removeHint": "Șterge cel mai recent element deschis al contactului din acest pipeline.",
+      "comment": "Comentariu",
+      "destinationPipeline": "Pipeline de destinație",
+      "destinationStage": "Etapă de destinație"
     }
   },
   "folders": {
@@ -2220,7 +2267,8 @@
       "ctwaConversionTypes": {
         "lead": "Lead",
         "purchase": "Achiziție"
-      }
+      },
+      "pipelineItem": "Element din pipeline"
     },
     "fieldGroups": {
       "opportunity": "Oportunitate",
@@ -2237,7 +2285,8 @@
       "botFields": "Câmpurile botului",
       "email": "E-mail",
       "sms": "SMS",
-      "ctwaAds": "Anunțuri"
+      "ctwaAds": "Anunțuri",
+      "pipeline": "Pipeline-uri"
     },
     "languages": {
       "ar": "Arabă",
@@ -2285,7 +2334,21 @@
       "allAds": "toate anunțurile"
     },
     "noTopic": "Fără subiect",
-    "trackingSince": "Urmărit din {date}. Activitatea anterioară nu este inclusă."
+    "trackingSince": "Urmărit din {date}. Activitatea anterioară nu este inclusă.",
+    "pipelineItem": {
+      "anyPipeline": "Orice pipeline",
+      "anyStatus": "Orice stare",
+      "attributes": {
+        "exists": "Elemente",
+        "status": "Starea elementului",
+        "stage": "Etapa elementului",
+        "priority": "Prioritatea elementului"
+      },
+      "operators": {
+        "has": "Are",
+        "hasNo": "Nu are"
+      }
+    }
   },
   "fields": {
     "optionalHint": "(opțional)",
@@ -3793,7 +3856,8 @@
       "ads": "Reclame",
       "settings": "Setări",
       "miniApps": "Mini Apps",
-      "leaderboards": "Clasamente"
+      "leaderboards": "Clasamente",
+      "pipelines": "Canale de vânzări"
     },
     "adReferral": {
       "label": "Ads",
@@ -3851,6 +3915,9 @@
     },
     "miniApp": {
       "label": "Mini App"
+    },
+    "lastOpportunityId": {
+      "label": "ID-ul ultimei oportunități"
     },
     "adminName": {
       "label": "Numele adminului care trimite"
@@ -5604,11 +5671,11 @@
       "incomingCall": "Apel primit",
       "missedAudioCall": "Apel audio pierdut",
       "callEnded": "Apel încheiat",
-      "ticketCreated": "Tichet creat",
-      "ticketMovedToStage": "Tichet mutat în etapă",
-      "ticketValueChanged": "Valoare tichet schimbată",
-      "ticketStatusChanged": "Status tichet schimbat",
-      "ticketPriorityChanged": "Prioritate tichet schimbată",
+      "pipelineItemCreated": "Tichet creat",
+      "pipelineItemMovedToStage": "Tichet mutat în etapă",
+      "pipelineItemValueChanged": "Valoare tichet schimbată",
+      "pipelineItemStatusChanged": "Status tichet schimbat",
+      "pipelineItemPriorityChanged": "Prioritate tichet schimbată",
       "subscribedToSequence": "Abonat la secvență",
       "unsubscribedFromSequence": "Dezabonat de la secvență",
       "shoppingCartSent": "Contactul a trimis coșul de cumpărături",
@@ -5628,7 +5695,11 @@
       "callRecorded": "Apel înregistrat",
       "callTranscribed": "Apel transcris",
       "anyProduct": "Orice produs",
-      "anyCategory": "Orice categorie"
+      "anyCategory": "Orice categorie",
+      "anyPipeline": "Orice pipeline",
+      "anyStage": "Orice etapă",
+      "unavailablePipeline": "Pipeline șters sau indisponibil",
+      "unavailableStage": "Etapă ștearsă sau indisponibilă"
     },
     "actions": {
       "addTag": "Adaugă etichetă",
@@ -5677,7 +5748,13 @@
     "countCapped": "{count}+ contacte",
     "exportAllNotice": "Toate contactele care corespund filtrului curent vor fi exportate.",
     "exportTakingLong": "Exportul durează mai mult decât era de așteptat",
-    "exportTakingLongDescription": "Exportul este încă în curs de procesare. Poți închide acest dialog și poți reveni peste câteva minute din istoricul exporturilor."
+    "exportTakingLongDescription": "Exportul este încă în curs de procesare. Poți închide acest dialog și poți reveni peste câteva minute din istoricul exporturilor.",
+    "search": {
+      "placeholder": "Caută (nume, e-mail, telefon, ID contact)",
+      "searching": "Se caută…",
+      "error": "Nu s-au putut căuta contactele",
+      "empty": "Niciun contact găsit"
+    }
   },
   "contactScan": {
     "menu": {
@@ -10167,5 +10244,401 @@
     "metHelp": "Ponderea răspunsurilor cu SLA care l-au respectat.",
     "eligibleCount": "{count} răspunsuri aveau SLA",
     "enable": "Activează SLA de răspuns"
+  },
+  "pipelines": {
+    "title": "Pipeline-uri",
+    "retry": "Încearcă din nou",
+    "save": "Salvează",
+    "saveFailed": "Nu am putut salva modificările. Încearcă din nou.",
+    "list": {
+      "name": "Nume",
+      "type": "Tip",
+      "items": "Elemente",
+      "add": "Adaugă pipeline",
+      "empty": "Niciun pipeline încă",
+      "emptyHint": "Creează un pipeline pentru a urmări tranzacții, tichete sau orice proces sub formă de carduri pe o tablă.",
+      "error": "Nu s-au putut încărca pipeline-urile",
+      "contacts": "Contacte",
+      "addShort": "Adaugă",
+      "description": "Urmăriți oportunități, tichete sau orice proces sub formă de carduri care trec prin etape."
+    },
+    "types": {
+      "opportunity": {
+        "label": "Centrul de oportunități",
+        "description": "Urmărește tranzacțiile de vânzare pe etape. Prima etapă: Lead."
+      },
+      "ticket": {
+        "label": "Centrul de suport",
+        "description": "Gestionează solicitările de suport. Prima etapă: Problemă nouă."
+      },
+      "custom": {
+        "label": "Tablă personalizată",
+        "description": "Construiește-ți propriul proces. Prima etapă: Preluare."
+      }
+    },
+    "noun": {
+      "opportunity": {
+        "one": "Oportunitate",
+        "many": "Oportunități",
+        "add": "Adaugă oportunitate"
+      },
+      "ticket": {
+        "one": "Tichet",
+        "many": "Tichete",
+        "add": "Adaugă tichet"
+      },
+      "card": {
+        "one": "Card",
+        "many": "Carduri",
+        "add": "Adaugă card"
+      }
+    },
+    "create": {
+      "title": "Pipeline nou",
+      "description": "Alege pentru ce folosești tabla, apoi dă-i un nume.",
+      "type": "Tip",
+      "name": "Numele pipeline-ului",
+      "namePlaceholder": "ex. Vânzări",
+      "submit": "Creează pipeline-ul",
+      "success": "Pipeline creat"
+    },
+    "menu": {
+      "open": "Acțiuni pipeline",
+      "rename": "Redenumește",
+      "duplicate": "Duplică",
+      "delete": "Șterge"
+    },
+    "rename": {
+      "title": "Redenumește pipeline-ul",
+      "submit": "Redenumește",
+      "success": "Pipeline redenumit"
+    },
+    "duplicate": {
+      "success": "Pipeline duplicat"
+    },
+    "delete": {
+      "title": "Șterge pipeline-ul",
+      "description": "{name}, împreună cu toate etapele și elementele sale, va fi șters. Această acțiune nu poate fi anulată.",
+      "success": "Pipeline șters"
+    },
+    "board": {
+      "title": "Tablă",
+      "count": "{count, plural, one {# element} other {# elemente}}",
+      "total": "Total {value}",
+      "search": "Caută după titlu, număr sau contact",
+      "sort": "Sortează",
+      "filter": "Filtrează",
+      "analytics": "Analize",
+      "settings": "Setări",
+      "emptyStage": "Trage și plasează aici un card pentru a-l muta în această etapă.",
+      "loadMore": "Încarcă mai multe",
+      "loadMoreFailed": "Nu s-au putut încărca mai multe elemente",
+      "error": "Nu s-a putut încărca tabla",
+      "processing": "Se procesează această etapă…",
+      "moveFailed": "Nu s-a putut muta cardul",
+      "sortOptions": {
+        "createdAtDesc": "Data creării (Nou la Vechi)",
+        "createdAtAsc": "Data creării (Vechi la Nou)",
+        "updatedAtDesc": "Data actualizării (Nou la Vechi)",
+        "valueDesc": "Valoarea oportunității (Mare la Mic)",
+        "valueAsc": "Valoarea oportunității (Mic la Mare)",
+        "dueDateAsc": "Data scadentă (Cea mai apropiată la Cea mai îndepărtată)",
+        "dueDateDesc": "Data scadentă (Cea mai îndepărtată la Cea mai apropiată)",
+        "priorityDesc": "Prioritate (Mare la Mic)",
+        "priorityAsc": "Prioritate (Mic la Mare)",
+        "updatedAtAsc": "Data actualizării (Vechi la Nou)"
+      },
+      "searchAction": "Caută",
+      "closeSearch": "Închide căutarea",
+      "cardMenu": "Acțiuni card",
+      "moveTo": "Mută în",
+      "unknownContact": "Contact necunoscut",
+      "staleError": "Tabla nu a putut fi reîmprospătată. Ce vedeți poate fi învechit."
+    },
+    "stage": {
+      "add": "Adaugă etapă",
+      "name": "Numele etapei",
+      "namePlaceholder": "Numele etapei",
+      "menu": "Acțiuni etapă",
+      "edit": "Editează etapa",
+      "delete": "Șterge etapa",
+      "deleteTitle": "Șterge etapa",
+      "deleteDescription": "{name} și toate elementele din ea vor fi șterse. Această acțiune nu poate fi anulată.",
+      "moveItemsTo": "Mută elementele în",
+      "deleteItemsToo": "Șterge și elementele",
+      "description": "Descriere",
+      "textColor": "Culoarea textului",
+      "backgroundColor": "Culoarea de fundal",
+      "saved": "Etapă salvată",
+      "deleted": "Etapă ștearsă",
+      "queued": "Etapa este golită în fundal.",
+      "resetColor": "Implicit",
+      "deleteMoveDescription": "{name} va fi ștearsă. Elementele ei se mută în {target}.",
+      "rename": "Redenumește",
+      "settings": "Setări",
+      "general": "General",
+      "color": "Culoare",
+      "cancel": "Anulează"
+    },
+    "priority": {
+      "low": "Scăzută",
+      "medium": "Medie",
+      "high": "Ridicată"
+    },
+    "item": {
+      "loading": "Se încarcă…",
+      "error": "Nu s-a putut încărca acest element",
+      "title": "Titlu",
+      "status": "Stare",
+      "stage": "Etapă",
+      "priority": "Prioritate",
+      "value": "Valoare",
+      "dueDate": "Termen limită",
+      "assignees": "Administratori atribuiți",
+      "description": "Descriere",
+      "attachments": "Atașamente",
+      "attach": "Atașează fișiere",
+      "noAttachments": "Niciun atașament",
+      "removeAttachment": "Elimină atașamentul",
+      "removeAttachmentDescription": "Fișierul este eliminat din acest element, dar rămâne în biblioteca media.",
+      "comments": "Comentarii",
+      "addComment": "Adaugă comentariu",
+      "commentPlaceholder": "Scrie un comentariu…",
+      "noComments": "Niciun comentariu încă",
+      "deleteComment": "Șterge comentariul",
+      "deleteCommentDescription": "Acest comentariu va fi șters. Acțiunea nu poate fi anulată.",
+      "activity": "Activitate",
+      "noActivity": "Nicio activitate încă",
+      "transfer": "Transferă în pipeline",
+      "transferTitle": "Transferă în alt pipeline",
+      "transferDescription": "Elementul își păstrează numărul și data creării. Câmpurile personalizate se transferă dacă celălalt pipeline are un câmp cu același nume de referință și același tip.",
+      "destinationPipeline": "Pipeline de destinație",
+      "destinationStage": "Etapă de destinație",
+      "firstStage": "Prima etapă",
+      "choose": "Alege…",
+      "transferred": "Element transferat",
+      "delete": "Șterge",
+      "deleteDescription": "Un element va fi șters. Această acțiune nu poate fi anulată.",
+      "deleted": "Element șters",
+      "number": "Număr",
+      "createdBy": "Creat de",
+      "createdByValue": "{name} la {date}",
+      "inbox": "Căsuță de mesaje",
+      "moreActions": "Mai multe acțiuni",
+      "noDescription": "Fără descriere",
+      "yes": "Da",
+      "no": "Nu",
+      "assigneesMembers": "Agenți",
+      "assigneesTeams": "Echipe din căsuța de mesaje",
+      "assigneesSearch": "Caută administratori sau echipe…",
+      "assigneesEmpty": "Niciun rezultat",
+      "assigneesPlaceholder": "Selectează administratori sau echipe",
+      "olderComments": "Afișează comentariile mai vechi",
+      "olderActivity": "Afișează activitatea mai veche",
+      "activityFilter": "Filtrează",
+      "activityFilterCount": "{count, plural, one {# filtru} other {# filtre}}",
+      "activityFilterClear": "Afișează tot",
+      "noFilteredActivity": "Nicio activitate nu corespunde acestui filtru.",
+      "activityGroup": {
+        "lifecycle": "Creare și transfer",
+        "stage": "Etapă",
+        "status": "Stare",
+        "value": "Valoare",
+        "priority": "Prioritate",
+        "dueDate": "Termen",
+        "details": "Titlu, descriere și câmpuri",
+        "assignees": "Responsabili",
+        "comments": "Comentarii",
+        "attachments": "Atașamente"
+      }
+    },
+    "activity": {
+      "created": "Creat",
+      "stageChanged": "Mutat în altă etapă",
+      "statusChanged": "Stare schimbată",
+      "valueChanged": "Valoare schimbată",
+      "priorityChanged": "Prioritate schimbată",
+      "dueDateChanged": "Termen limită schimbat",
+      "titleChanged": "Titlu schimbat",
+      "descriptionChanged": "Descriere schimbată",
+      "fieldValuesChanged": "Câmpuri personalizate schimbate",
+      "assigneesChanged": "Responsabili schimbați",
+      "attachmentAdded": "Atașament adăugat",
+      "attachmentRemoved": "Atașament eliminat",
+      "commentAdded": "Comentariu adăugat",
+      "commentDeleted": "Comentariu șters",
+      "transferred": "Transferat din alt pipeline",
+      "deleted": "Șters"
+    },
+    "activityActor": {
+      "flow": "Flux",
+      "trigger": "Declanșator",
+      "workspaceToken": "API",
+      "system": "Sistem",
+      "formerMember": "Fost membru"
+    },
+    "add": {
+      "changeContact": "Alege alt contact",
+      "success": "Creat",
+      "stepContact": "Selectează un contact",
+      "stepDetails": "Detalii {noun}",
+      "contact": "Contact",
+      "addNewContact": "Adaugă nou"
+    },
+    "filter": {
+      "title": "Filtrează",
+      "status": "Stare",
+      "statusLabels": {
+        "open": "Deschis",
+        "won": "Câștigat",
+        "lost": "Pierdut"
+      },
+      "priority": "Prioritate",
+      "assignee": "Administratori atribuiți",
+      "value": "Valoarea {noun}",
+      "min": "Min.",
+      "max": "Max.",
+      "dueDate": "Termen limită",
+      "createdAt": "Data creării",
+      "from": "De la",
+      "to": "Până la",
+      "clear": "Șterge filtrele",
+      "apply": "Aplică",
+      "back": "Înapoi",
+      "updatedAt": "Data actualizării",
+      "resolvedOn": "{noun} rezolvat la",
+      "statusChangedOn": "Stare schimbată la",
+      "stageChangedOn": "Etapă schimbată la",
+      "lastCommentOn": "Ultimul comentariu la",
+      "customFields": "Câmpuri personalizate",
+      "any": "Oricare",
+      "yes": "Da",
+      "no": "Nu",
+      "notResolvedOn": "{noun} nerezolvat la",
+      "equal": "Egal cu",
+      "different": "Diferit de",
+      "reset": "Resetează",
+      "presets": {
+        "thisWeek": "Săptămâna aceasta",
+        "lastWeek": "Săptămâna trecută",
+        "last14": "Ultimele 14 zile",
+        "thisYear": "Anul acesta",
+        "lastYear": "Anul trecut",
+        "tomorrow": "Mâine",
+        "next7": "În 7 zile",
+        "next14": "În 14 zile",
+        "next30": "În 30 zile",
+        "allTime": "Tot timpul"
+      },
+      "pickDate": "Alege o dată",
+      "activity": "Activitate",
+      "activityKinds": "Tipul modificării",
+      "activityActors": "Efectuat de",
+      "activityWhen": "Când",
+      "activityAutomation": "Automatizare"
+    },
+    "analytics": {
+      "title": "Analize",
+      "loading": "Se încarcă statisticile…",
+      "error": "Nu s-au putut încărca statisticile",
+      "created": "Create",
+      "won": "Câștigate",
+      "wonValue": "Valoare câștigată",
+      "lost": "Pierdute",
+      "lostValue": "Valoare pierdută",
+      "admin": "Administrator",
+      "automation": "Automatizare",
+      "back": "Înapoi",
+      "admins": "Administratori",
+      "chart": {
+        "created": "Noi pe zi",
+        "won": "Câștigate pe zi",
+        "lost": "Pierdute pe zi",
+        "wonValue": "Valoare câștigată pe zi",
+        "lostValue": "Valoare pierdută pe zi"
+      },
+      "pie": {
+        "created": "Create pe admin",
+        "won": "Câștigate pe admin",
+        "lost": "Pierdute pe admin",
+        "other": "Altele",
+        "empty": "Nu există date"
+      }
+    },
+    "settings": {
+      "title": "Setările pipeline-ului",
+      "general": "General",
+      "fields": "Câmpuri personalizate",
+      "display": "Afișare",
+      "permissions": "Permisiuni",
+      "saved": "Setări salvate",
+      "referenceName": "Nume de referință",
+      "referenceNameHint": "Folosit în variabilele pipelines.reference_name.stage_name. Schimbarea lui strică mesajele care folosesc numele vechi.",
+      "referenceNameFormat": "Folosește litere mici, cifre și liniuțe de subliniere, începând cu o literă (ex. close_date).",
+      "assignContact": "Atribuie contactul unui administrator când un element este atribuit",
+      "limit": "Limitează elementele deschise per contact",
+      "statusLabels": "Etichete de stare",
+      "status": {
+        "open": "Deschis",
+        "won": "Câștigat",
+        "lost": "Pierdut"
+      },
+      "features": "Funcții vizibile",
+      "cardElements": "Elemente ale cardului",
+      "card": {
+        "contactPhone": "Telefon contact",
+        "contactEmail": "E-mail contact",
+        "createdAt": "Data creării",
+        "updatedAt": "Data actualizării",
+        "assignees": "Administratori atribuiți",
+        "comments": "Comentarii",
+        "cardId": "Număr element",
+        "priority": "Prioritate",
+        "value": "Valoare",
+        "dueDate": "Termen limită"
+      },
+      "noFields": "Niciun câmp personalizat încă",
+      "fieldName": "Numele câmpului",
+      "fieldReference": "Nume de referință",
+      "fieldType": "Tipul câmpului",
+      "required": "Obligatoriu",
+      "requiredShort": "obligatoriu",
+      "addField": "Adaugă câmp",
+      "fieldAdded": "Câmp adăugat",
+      "deleteField": "Șterge câmpul",
+      "permissionsHint": "Proprietarii și administratorii workspace-ului au mereu acces complet. Acordă celorlalți membri ce pot face în acest pipeline.",
+      "revoke": "Revocă",
+      "permission": {
+        "view": "Vizualizare",
+        "edit": "Editare",
+        "delete": "Ștergere",
+        "settings": "Setări"
+      },
+      "noMembers": "Niciun alt membru de configurat",
+      "confirmDeleteField": "Ștergi acest câmp și toate valorile lui din fiecare element?",
+      "adminPermissions": "Permisiuni de administrator",
+      "cardVisibleElements": "Elemente vizibile ale cardului"
+    },
+    "panel": {
+      "empty": "Niciun element de pipeline pentru acest contact",
+      "error": "Nu s-au putut încărca elementele din pipeline",
+      "choosePipeline": "Alege un pipeline",
+      "add": "Adaugă nou"
+    },
+    "variables": {
+      "group": "Pipeline-uri",
+      "attributes": {
+        "name": "Numele elementului",
+        "stageName": "Etapă",
+        "status": "Stare",
+        "priority": "Prioritate",
+        "value": "Valoare",
+        "assignedAdmins": "Administratori atribuiți",
+        "createdDate": "Data creării",
+        "dueDate": "Termen limită",
+        "updatedDate": "Data actualizării",
+        "id": "ID element"
+      }
+    }
   }
 }

@@ -1,3 +1,4 @@
+import type { PipelineVariableTarget } from "@chatbotx.io/business/pipeline/variable-targets"
 import type { CustomFieldType } from "@chatbotx.io/database/partials"
 import type {
   ContactInboxModel,
@@ -31,6 +32,12 @@ export type ContactVariableContext = {
   workspace: WorkspaceModel | null
 }
 
+export type PipelineItemsLoader = {
+  get: () => Promise<PipelineVariableTarget[]>
+  /** Id of the contact's most recently created or updated item, any pipeline. */
+  lastItemId: () => Promise<string | null>
+}
+
 export type ReplaceVariableProps = ContactVariableContext & {
   customFieldsMap: Map<string, ContactCustomFieldValue>
   /**
@@ -42,4 +49,13 @@ export type ReplaceVariableProps = ContactVariableContext & {
    * `contactVariableService.getAll` always populates it in production.
    */
   botFieldsMap?: Map<string, BotFieldValue>
+  /**
+   * The contact's pipeline items: the latest open (else latest) item per
+   * pipeline for `{{pipelines.<ref>.<attr>}}`, and the last touched item for
+   * `{{last_opportunity_id}}`. Lazy and memoized per read: a query starts on
+   * its first call and is shared by every later one, so a render that never
+   * reads a pipeline variable never queries (or leaves a rejected, unawaited
+   * promise behind). `contactVariableService.getAll` adds it.
+   */
+  pipelineItems?: PipelineItemsLoader
 }

@@ -45,7 +45,7 @@ Use `search_tools` when the task needs something outside the default set (e.g. d
 
 ## Available tools
 
-Tool names are derived from the OpenAPI `operationId` converted to `snake_case` (e.g. `tags.list` → `tags_list`). The current default set has 48 tools:
+Tool names are derived from the OpenAPI `operationId` converted to `snake_case` (e.g. `tags.list` → `tags_list`). The current default set has 52 tools:
 
 ### Capabilities
 
@@ -153,6 +153,15 @@ For `connections_create` with `provider: "api"`, the response includes a one-tim
 |---|---|
 | `mini_apps_list` | List Mini Apps |
 | `mini_apps_create` | Create Mini App |
+
+### Pipelines
+
+| Tool | Description |
+|---|---|
+| `pipelines_list` | List pipelines |
+| `pipelines_list_items` | List pipeline items |
+| `pipelines_create_item` | Create pipeline item |
+| `pipelines_move_item` | Move item to stage |
 
 ### Sequences
 

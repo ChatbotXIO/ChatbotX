@@ -210,6 +210,7 @@ chatbotx contacts block <identifier>
 chatbotx contacts unblock <identifier>
 chatbotx contacts filter-fields                      # Field/operator reference for --contactFilter
                                                      # [--surface flowCondition] also lists flow-only fields (isWithinWorkingHours)
+                                                     # `pipelineItems` = pipelines + stages and the shapes of `pipelineItem` conditions
 
 # Discover IDs accepted by contactFilter.commentedOnPost
 chatbotx channel-posts list                           # [--limit --search --cursor]
@@ -1100,6 +1101,38 @@ chatbotx minigames bulk-delete --ids <ids>
 chatbotx minigames enabled update <id> --enabled <enabled>
 chatbotx minigames plays list <id> --contactId <contactId>   # Contact's play records
 chatbotx minigames players list <id>                    # Contacts who played, with counts/prizes
+```
+
+---
+
+### `pipelines` (scope `pipelines`)
+
+CRM kanban boards: pipelines hold ordered stages, custom fields and items (one per contact deal, ticket or card).
+
+```bash
+chatbotx pipelines list                                 # Pipelines with item counts
+chatbotx pipelines get <id>                             # Stages (left to right) and custom fields
+chatbotx pipelines create --type <opportunity|ticket|custom> --name <name>
+chatbotx pipelines update <id>                          # [--name --referenceName --currency --settings <json>]
+chatbotx pipelines duplicate <id>                       # Structure only, no items
+chatbotx pipelines delete <id>                          # With all its stages and items
+chatbotx pipelines stage add <id> --name <name>         # [--description --textColor --backgroundColor]
+chatbotx pipelines stages update <id> <stageId>         # [--name --description --textColor --backgroundColor]
+chatbotx pipelines stages reorder <id> --stageIds <json>
+chatbotx pipelines stage delete <id> <stageId>          # [--moveItemsToStageId]; >2000 items runs in the background
+chatbotx pipelines fields list <id>                     # Custom fields in display order
+chatbotx pipelines field add <id> --name <name> --referenceName <ref> --type <type>  # [--required]
+chatbotx pipelines items list <id>                      # [--stageId --status --priority --assigneeMemberId (comma lists) --fieldConditions <json> --contactId --search --sort --direction --limit --cursor]
+chatbotx pipelines stage-totals <id>                    # Item count and value per stage; same filters as items list
+chatbotx pipelines item add <id> --contactId <id> --title <title>  # [--value --priority --stageId --dueDate --idempotencyKey]
+chatbotx pipelines item move <id> <itemId> --stageId <id>
+chatbotx pipelines item transfer <id> <itemId> --destinationPipelineId <id>
+chatbotx pipelines comments list <id> <itemId>          # Newest first, 100 per page [--cursor]
+chatbotx pipelines comment add <id> <itemId> --text <text>
+chatbotx pipelines attachment add <id> <itemId> --mediaLibraryFileId <id>  # One file per call; upload with mediaLibrary first (needs `media` + `pipelines` scopes)
+chatbotx pipelines attachment delete <id> <itemId> <mediaLibraryFileId>  # Detaches only; the file stays in the media library
+chatbotx pipelines stats <id> --from <YYYY-MM-DD> --to <YYYY-MM-DD>  # [--timezone]
+chatbotx contacts pipeline-items list <identifier>      # A contact's items across pipelines
 ```
 
 ---

@@ -13,6 +13,8 @@ const resolvers = vi.hoisted(() => ({
   keywords: vi.fn(),
   whatsappFlows: vi.fn(),
   emailTopics: vi.fn(),
+  pipelines: vi.fn(),
+  pipelineStages: vi.fn(),
   listKeywordOptions: vi.fn(),
   listWhatsappFlows: vi.fn(),
   listEmailTopics: vi.fn(),
@@ -57,6 +59,12 @@ vi.mock("../src/whatsapp-flow/service", () => ({
     listLabelsByIds: resolvers.whatsappFlows,
   },
 }))
+vi.mock("../src/pipeline/service", () => ({
+  pipelineService: {
+    listLabelsByIds: resolvers.pipelines,
+    listStageLabelsByIds: resolvers.pipelineStages,
+  },
+}))
 vi.mock("../src/email-topic/service", () => ({
   emailTopicService: {
     list: resolvers.listEmailTopics,
@@ -66,6 +74,13 @@ vi.mock("../src/email-topic/service", () => ({
 
 const { listContactActivityValueOptions, resolveContactFilterValueLabels } =
   await import("../src/contact/filter-value-labels")
+
+const MEMBER_SCOPE = {
+  kind: "member",
+  workspaceMemberId: "m1",
+  isWorkspaceAdmin: false,
+  canViewContactEmailAndPhone: true,
+} as const
 
 describe("resolveContactFilterValueLabels", () => {
   beforeEach(() => {
@@ -83,6 +98,8 @@ describe("resolveContactFilterValueLabels", () => {
       resolvers.keywords,
       resolvers.whatsappFlows,
       resolvers.emailTopics,
+      resolvers.pipelines,
+      resolvers.pipelineStages,
     ]) {
       resolver.mockResolvedValue([])
     }
@@ -96,6 +113,7 @@ describe("resolveContactFilterValueLabels", () => {
 
     const labels = await resolveContactFilterValueLabels({
       workspaceId: "ws-1",
+      pipelineScope: MEMBER_SCOPE,
       ids: { tags: ["t1"], members: ["u1"], inboxTeams: ["team1"] },
     })
 
@@ -118,6 +136,7 @@ describe("resolveContactFilterValueLabels", () => {
   test("returns an empty list for every type that was not asked for", async () => {
     const labels = await resolveContactFilterValueLabels({
       workspaceId: "ws-1",
+      pipelineScope: MEMBER_SCOPE,
       ids: {},
     })
 
@@ -134,6 +153,8 @@ describe("resolveContactFilterValueLabels", () => {
       keywords: [],
       whatsappFlows: [],
       emailTopics: [],
+      pipelines: [],
+      pipelineStages: [],
     })
     expect(resolvers.sequences).toHaveBeenCalledWith({
       workspaceId: "ws-1",
@@ -141,9 +162,35 @@ describe("resolveContactFilterValueLabels", () => {
     })
   })
 
+  test("routes pipeline and stage ids to their own resolvers", async () => {
+    resolvers.pipelines.mockResolvedValue([{ id: "p1", name: "Sales" }])
+    resolvers.pipelineStages.mockResolvedValue([{ id: "s1", name: "Lead" }])
+
+    const labels = await resolveContactFilterValueLabels({
+      workspaceId: "ws-1",
+      pipelineScope: MEMBER_SCOPE,
+      ids: { pipelines: ["p1", "p1"], pipelineStages: ["s1", "s-deleted"] },
+    })
+
+    // Pipeline names are ACL data: the caller's scope reaches both lookups.
+    expect(resolvers.pipelines).toHaveBeenCalledWith({
+      scope: MEMBER_SCOPE,
+      workspaceId: "ws-1",
+      ids: ["p1"],
+    })
+    expect(resolvers.pipelineStages).toHaveBeenCalledWith({
+      scope: MEMBER_SCOPE,
+      workspaceId: "ws-1",
+      ids: ["s1", "s-deleted"],
+    })
+    expect(labels.pipelines).toEqual([{ id: "p1", name: "Sales" }])
+    expect(labels.pipelineStages).toEqual([{ id: "s1", name: "Lead" }])
+  })
+
   test("de-duplicates ids before looking them up", async () => {
     await resolveContactFilterValueLabels({
       workspaceId: "ws-1",
+      pipelineScope: MEMBER_SCOPE,
       ids: { sequences: ["s1", "s1", "s2"] },
     })
 
@@ -158,6 +205,7 @@ describe("resolveContactFilterValueLabels", () => {
 
     const labels = await resolveContactFilterValueLabels({
       workspaceId: "ws-1",
+      pipelineScope: MEMBER_SCOPE,
       ids: { broadcasts: ["b1", "b-deleted"] },
     })
 
@@ -192,6 +240,8 @@ describe("resolveContactFilterValueLabels for activity-backed fields", () => {
       resolvers.keywords,
       resolvers.whatsappFlows,
       resolvers.emailTopics,
+      resolvers.pipelines,
+      resolvers.pipelineStages,
     ]) {
       resolver.mockResolvedValue([])
     }
@@ -204,6 +254,7 @@ describe("resolveContactFilterValueLabels for activity-backed fields", () => {
 
     const labels = await resolveContactFilterValueLabels({
       workspaceId: "ws-1",
+      pipelineScope: MEMBER_SCOPE,
       ids: {
         flows: ["7"],
         flowNodes: ["7:9", "7:9"],

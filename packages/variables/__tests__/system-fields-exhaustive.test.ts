@@ -105,6 +105,11 @@ vi.mock("@chatbotx.io/business", () => ({
   },
 }))
 
+vi.mock("@chatbotx.io/business/pipeline/variable-targets", () => ({
+  loadLastPipelineItemId: vi.fn().mockResolvedValue("pipeline-item-1"),
+  loadPipelineVariableTargets: vi.fn().mockResolvedValue([]),
+}))
+
 vi.mock("@chatbotx.io/business/system-field", () => ({
   resolveGenderLabel: vi.fn().mockReturnValue("Anh"),
 }))

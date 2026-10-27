@@ -5,6 +5,7 @@ export type {
   CartItemEventMetadata,
   CommerceEventProduct,
   OrderEventMetadata,
+  PipelineItemEventMetadata,
   ShoppingCartSentMetadata,
   UserAskedAboutProductMetadata,
 } from "./base-emitter"

@@ -1339,7 +1339,8 @@
       "systemFields": "系统字段",
       "systemTime": "系统时间",
       "topicCoupon": "主题优惠券",
-      "leaderboard": "积分"
+      "leaderboard": "积分",
+      "pipeline": "管道"
     },
     "fields": {
       "appliedJobs": "申请的职位",
@@ -1457,7 +1458,8 @@
       "unread": "未读",
       "unreplied": "未回复",
       "verifiedAccountOnInstagram": "Instagram 已验证帐号",
-      "votedOnPoll": "已投票"
+      "votedOnPoll": "已投票",
+      "pipelineItem": "管道项目"
     },
     "languages": {
       "ar": "阿拉伯语",
@@ -1503,7 +1505,21 @@
     "valuePlaceholder": "...",
     "yes": "是",
     "noTopic": "无主题",
-    "trackingSince": "自 {date} 起记录。此前的活动不包含在内。"
+    "trackingSince": "自 {date} 起记录。此前的活动不包含在内。",
+    "pipelineItem": {
+      "anyPipeline": "任意管道",
+      "anyStatus": "任意状态",
+      "attributes": {
+        "exists": "项目",
+        "status": "项目状态",
+        "stage": "项目阶段",
+        "priority": "项目优先级"
+      },
+      "operators": {
+        "has": "有",
+        "hasNo": "没有"
+      }
+    }
   },
   "contacts": {
     "copyLink": "拷贝链接",
@@ -1519,7 +1535,13 @@
     "exportTakingLong": "导出花费的时间比预期长",
     "exportTakingLongDescription": "导出仍在处理中。您可以关闭此对话框，并在几分钟后返回查看导出历史记录。",
     "linkCopied": "链接已拷贝到剪贴板",
-    "title": "联系人"
+    "title": "联系人",
+    "search": {
+      "placeholder": "搜索（姓名、电子邮件、电话、联系人 ID）",
+      "searching": "正在搜索…",
+      "error": "无法搜索联系人",
+      "empty": "未找到联系人"
+    }
   },
   "contactScan": {
     "menu": {
@@ -3633,7 +3655,8 @@
       "ads": "广告",
       "settings": "设置",
       "miniApps": "迷你应用",
-      "leaderboards": "排行榜"
+      "leaderboards": "排行榜",
+      "pipelines": "管道"
     },
     "adReferral": {
       "label": "Ads",
@@ -3691,6 +3714,9 @@
     },
     "miniApp": {
       "label": "小程序"
+    },
+    "lastOpportunityId": {
+      "label": "最近商机 ID"
     },
     "adminName": {
       "label": "发送管理员姓名"
@@ -3870,7 +3896,8 @@
       "changeGamificationScore": "更改积分",
       "sendViewCatalog": "查看商品目录",
       "sendProducts": "发送商品",
-      "sendCollection": "商品集合"
+      "sendCollection": "商品集合",
+      "pipeline": "管道"
     },
     "externalRequest": {
       "errors": {
@@ -4141,6 +4168,52 @@
       "summaryManual": "{count, plural, one {# 个商品} other {# 个商品}}",
       "cancel": "取消",
       "save": "保存"
+    },
+    "pipelineStep": {
+      "action": "操作",
+      "pipeline": "管道",
+      "targetHint": "对联系人在此管道中最近的未结项目执行操作。若没有，则走“跳过”路径。",
+      "noPipelines": "未找到管道",
+      "actions": {
+        "addToPipeline": "将联系人添加到管道",
+        "moveToStage": "移至某个阶段",
+        "changeValue": "更改金额",
+        "assign": "分配给管理员",
+        "changeStatus": "更改状态",
+        "changePriority": "更改优先级",
+        "changeDueDate": "更改截止日期",
+        "changeTitle": "更改标题",
+        "setCustomField": "设置自定义字段",
+        "clearCustomField": "清除自定义字段",
+        "changeDescription": "更改描述",
+        "removeFromPipeline": "将联系人从管道中移除",
+        "addComment": "添加评论",
+        "transfer": "转移到其他管道"
+      },
+      "title": "标题",
+      "description": "描述",
+      "stage": "阶段",
+      "firstStage": "第一阶段",
+      "status": "状态",
+      "assigneeMembers": "已分配的管理员",
+      "assigneeTeams": "已分配的团队",
+      "value": "金额",
+      "priority": "优先级",
+      "dueDate": "截止日期",
+      "dueNone": "无",
+      "dueNoneHint": "该项目没有截止日期。",
+      "dueCustomField": "来自日期自定义字段",
+      "dueFixed": "固定日期和时间",
+      "dueField": "日期或日期时间自定义字段",
+      "fieldValues": "自定义字段",
+      "field": "字段",
+      "fieldValue": "值",
+      "fields": "字段",
+      "addField": "添加字段值",
+      "removeHint": "删除联系人在此管道中最近的未结项目。",
+      "comment": "评论",
+      "destinationPipeline": "目标管道",
+      "destinationStage": "目标阶段"
     }
   },
   "folders": {
@@ -6578,17 +6651,21 @@
       "subscribedToSequence": "订阅串行",
       "tagApplied": "标签已应用",
       "tagRemoved": "标签已删除",
-      "ticketCreated": "工单已创建",
-      "ticketMovedToStage": "门票已移至舞台",
-      "ticketPriorityChanged": "票证优先权已更改",
-      "ticketStatusChanged": "票证状态已更改",
-      "ticketValueChanged": "票价已更改",
+      "pipelineItemCreated": "工单已创建",
+      "pipelineItemMovedToStage": "门票已移至舞台",
+      "pipelineItemPriorityChanged": "票证优先权已更改",
+      "pipelineItemStatusChanged": "票证状态已更改",
+      "pipelineItemValueChanged": "票价已更改",
       "unsubscribedFromSequence": "取消订阅串行",
       "userAskedAboutProduct": "联系人询问了产品",
       "callRecorded": "通话已录音",
       "callTranscribed": "通话已转写",
       "anyProduct": "任意商品",
-      "anyCategory": "任意分类"
+      "anyCategory": "任意分类",
+      "anyPipeline": "任意管道",
+      "anyStage": "任意阶段",
+      "unavailablePipeline": "已删除或不可用的管道",
+      "unavailableStage": "已删除或不可用的阶段"
     },
     "day": "日",
     "hour": "小时",
@@ -10167,5 +10244,401 @@
     "metHelp": "设有 SLA 的回复中达标的占比。",
     "eligibleCount": "{count} 条回复设有 SLA",
     "enable": "启用响应 SLA"
+  },
+  "pipelines": {
+    "title": "管道",
+    "retry": "重试",
+    "save": "保存",
+    "saveFailed": "无法保存您的更改。请重试。",
+    "list": {
+      "name": "名称",
+      "type": "类型",
+      "items": "项目",
+      "add": "添加管道",
+      "empty": "还没有管道",
+      "emptyHint": "创建一个管道，以看板卡片的形式跟踪交易、工单或任何流程。",
+      "error": "无法加载管道",
+      "contacts": "联系人",
+      "addShort": "添加",
+      "description": "以在各阶段间移动的卡片跟踪商机、工单或任何流程。"
+    },
+    "types": {
+      "opportunity": {
+        "label": "商机中心",
+        "description": "按阶段跟踪销售交易。第一阶段：线索。"
+      },
+      "ticket": {
+        "label": "支持中心",
+        "description": "处理支持请求。第一阶段：新问题。"
+      },
+      "custom": {
+        "label": "自定义看板",
+        "description": "构建您自己的流程。第一阶段：接收。"
+      }
+    },
+    "noun": {
+      "opportunity": {
+        "one": "商机",
+        "many": "商机",
+        "add": "添加商机"
+      },
+      "ticket": {
+        "one": "工单",
+        "many": "工单",
+        "add": "添加工单"
+      },
+      "card": {
+        "one": "卡片",
+        "many": "卡片",
+        "add": "添加卡片"
+      }
+    },
+    "create": {
+      "title": "新建管道",
+      "description": "选择看板的用途，然后为其命名。",
+      "type": "类型",
+      "name": "管道名称",
+      "namePlaceholder": "例如：销售",
+      "submit": "创建管道",
+      "success": "管道已创建"
+    },
+    "menu": {
+      "open": "管道操作",
+      "rename": "重命名",
+      "duplicate": "复制",
+      "delete": "删除"
+    },
+    "rename": {
+      "title": "重命名管道",
+      "submit": "重命名",
+      "success": "管道已重命名"
+    },
+    "duplicate": {
+      "success": "管道已复制"
+    },
+    "delete": {
+      "title": "删除管道",
+      "description": "{name} 及其所有阶段和项目将被删除。此操作无法撤销。",
+      "success": "管道已删除"
+    },
+    "board": {
+      "title": "看板",
+      "count": "{count, plural, one {# 个项目} other {# 个项目}}",
+      "total": "总计 {value}",
+      "search": "按标题、编号或联系人搜索",
+      "sort": "排序",
+      "filter": "筛选",
+      "analytics": "分析",
+      "settings": "设置",
+      "emptyStage": "将卡片拖放到此处，即可移至此阶段。",
+      "loadMore": "加载更多",
+      "loadMoreFailed": "无法加载更多项目",
+      "error": "无法加载看板",
+      "processing": "正在处理此阶段…",
+      "moveFailed": "无法移动卡片",
+      "sortOptions": {
+        "createdAtDesc": "创建日期 (从新到旧)",
+        "createdAtAsc": "创建日期 (从旧到新)",
+        "updatedAtDesc": "更新日期 (从新到旧)",
+        "valueDesc": "商机金额 (从高到低)",
+        "valueAsc": "商机金额 (从低到高)",
+        "dueDateAsc": "截止日期 (从近到远)",
+        "dueDateDesc": "截止日期 (从远到近)",
+        "priorityDesc": "优先级 (从高到低)",
+        "priorityAsc": "优先级 (从低到高)",
+        "updatedAtAsc": "更新日期 (从旧到新)"
+      },
+      "searchAction": "搜索",
+      "closeSearch": "关闭搜索",
+      "cardMenu": "卡片操作",
+      "moveTo": "移至",
+      "unknownContact": "未知联系人",
+      "staleError": "无法刷新看板。当前显示的内容可能已过时。"
+    },
+    "stage": {
+      "add": "添加阶段",
+      "name": "阶段名称",
+      "namePlaceholder": "阶段名称",
+      "menu": "阶段操作",
+      "edit": "编辑阶段",
+      "delete": "删除阶段",
+      "deleteTitle": "删除阶段",
+      "deleteDescription": "{name} 及其上的所有项目将被删除。此操作无法撤销。",
+      "moveItemsTo": "将项目移至",
+      "deleteItemsToo": "同时删除项目",
+      "description": "描述",
+      "textColor": "文字颜色",
+      "backgroundColor": "背景颜色",
+      "saved": "阶段已保存",
+      "deleted": "阶段已删除",
+      "queued": "该阶段正在后台清理。",
+      "resetColor": "默认",
+      "deleteMoveDescription": "{name} 将被删除。其项目将移至 {target}。",
+      "rename": "重命名",
+      "settings": "设置",
+      "general": "常规",
+      "color": "颜色",
+      "cancel": "取消"
+    },
+    "priority": {
+      "low": "低",
+      "medium": "中",
+      "high": "高"
+    },
+    "item": {
+      "loading": "正在加载…",
+      "error": "无法加载此项目",
+      "title": "标题",
+      "status": "状态",
+      "stage": "阶段",
+      "priority": "优先级",
+      "value": "金额",
+      "dueDate": "截止日期",
+      "assignees": "已分配的管理员",
+      "description": "描述",
+      "attachments": "附件",
+      "attach": "附加文件",
+      "noAttachments": "没有附件",
+      "removeAttachment": "移除附件",
+      "removeAttachmentDescription": "文件将从此项目中移除，但仍保留在媒体库中。",
+      "comments": "评论",
+      "addComment": "添加评论",
+      "commentPlaceholder": "写下评论…",
+      "noComments": "还没有评论",
+      "deleteComment": "删除评论",
+      "deleteCommentDescription": "此评论将被删除，且无法撤销。",
+      "activity": "动态",
+      "noActivity": "还没有动态",
+      "transfer": "转移到管道",
+      "transferTitle": "转移到其他管道",
+      "transferDescription": "项目保留其编号和创建日期。当另一个管道中有同名引用且类型相同的字段时，自定义字段会一并转移。",
+      "destinationPipeline": "目标管道",
+      "destinationStage": "目标阶段",
+      "firstStage": "第一阶段",
+      "choose": "请选择…",
+      "transferred": "项目已转移",
+      "delete": "删除",
+      "deleteDescription": "将删除一个项目。此操作无法撤销。",
+      "deleted": "项目已删除",
+      "number": "编号",
+      "createdBy": "创建者",
+      "createdByValue": "{name}，{date}",
+      "inbox": "收件箱",
+      "moreActions": "更多操作",
+      "noDescription": "无描述",
+      "yes": "是",
+      "no": "否",
+      "assigneesMembers": "客服",
+      "assigneesTeams": "收件箱团队",
+      "assigneesSearch": "搜索管理员或团队…",
+      "assigneesEmpty": "无结果",
+      "assigneesPlaceholder": "选择管理员或团队",
+      "olderComments": "显示更早的评论",
+      "olderActivity": "查看更早的动态",
+      "activityFilter": "筛选",
+      "activityFilterCount": "{count, plural, one {# 个筛选条件} other {# 个筛选条件}}",
+      "activityFilterClear": "显示全部",
+      "noFilteredActivity": "没有符合此筛选条件的活动。",
+      "activityGroup": {
+        "lifecycle": "创建与转移",
+        "stage": "阶段",
+        "status": "状态",
+        "value": "金额",
+        "priority": "优先级",
+        "dueDate": "截止日期",
+        "details": "标题、描述和字段",
+        "assignees": "负责人",
+        "comments": "评论",
+        "attachments": "附件"
+      }
+    },
+    "activity": {
+      "created": "已创建",
+      "stageChanged": "已移至其他阶段",
+      "statusChanged": "状态已更改",
+      "valueChanged": "金额已更改",
+      "priorityChanged": "优先级已更改",
+      "dueDateChanged": "截止日期已更改",
+      "titleChanged": "标题已更改",
+      "descriptionChanged": "描述已更改",
+      "fieldValuesChanged": "自定义字段已更改",
+      "assigneesChanged": "负责人已更改",
+      "attachmentAdded": "已添加附件",
+      "attachmentRemoved": "已移除附件",
+      "commentAdded": "已添加评论",
+      "commentDeleted": "已删除评论",
+      "transferred": "从其他管道转入",
+      "deleted": "已删除"
+    },
+    "activityActor": {
+      "flow": "流程",
+      "trigger": "触发器",
+      "workspaceToken": "API",
+      "system": "系统",
+      "formerMember": "前成员"
+    },
+    "add": {
+      "changeContact": "选择其他联系人",
+      "success": "已创建",
+      "stepContact": "选择联系人",
+      "stepDetails": "{noun}详情",
+      "contact": "联系人",
+      "addNewContact": "新增"
+    },
+    "filter": {
+      "title": "筛选",
+      "status": "状态",
+      "statusLabels": {
+        "open": "进行中",
+        "won": "赢单",
+        "lost": "输单"
+      },
+      "priority": "优先级",
+      "assignee": "已分配的管理员",
+      "value": "{noun}金额",
+      "min": "最小值",
+      "max": "最大值",
+      "dueDate": "截止日期",
+      "createdAt": "创建日期",
+      "from": "从",
+      "to": "至",
+      "clear": "清除筛选",
+      "apply": "应用",
+      "back": "返回",
+      "updatedAt": "更新日期",
+      "resolvedOn": "{noun}解决日期",
+      "statusChangedOn": "状态更改日期",
+      "stageChangedOn": "阶段更改日期",
+      "lastCommentOn": "最近评论日期",
+      "customFields": "自定义字段",
+      "any": "任意",
+      "yes": "是",
+      "no": "否",
+      "notResolvedOn": "{noun}未解决日期",
+      "equal": "等于",
+      "different": "不等于",
+      "reset": "重置",
+      "presets": {
+        "thisWeek": "本周",
+        "lastWeek": "上周",
+        "last14": "最近 14 天",
+        "thisYear": "今年",
+        "lastYear": "去年",
+        "tomorrow": "明天",
+        "next7": "7 天内",
+        "next14": "14 天内",
+        "next30": "30 天内",
+        "allTime": "全部时间"
+      },
+      "pickDate": "选择日期",
+      "activity": "活动",
+      "activityKinds": "变更类型",
+      "activityActors": "操作人",
+      "activityWhen": "时间",
+      "activityAutomation": "自动化"
+    },
+    "analytics": {
+      "title": "分析",
+      "loading": "正在加载统计数据…",
+      "error": "无法加载统计数据",
+      "created": "已创建",
+      "won": "赢单",
+      "wonValue": "赢单金额",
+      "lost": "输单",
+      "lostValue": "输单金额",
+      "admin": "管理员",
+      "automation": "自动化",
+      "back": "返回",
+      "admins": "管理员",
+      "chart": {
+        "created": "每日新增",
+        "won": "每日赢单",
+        "lost": "每日输单",
+        "wonValue": "每日赢单金额",
+        "lostValue": "每日输单金额"
+      },
+      "pie": {
+        "created": "按管理员统计的新建",
+        "won": "按管理员统计的赢单",
+        "lost": "按管理员统计的输单",
+        "other": "其他",
+        "empty": "暂无数据"
+      }
+    },
+    "settings": {
+      "title": "管道设置",
+      "general": "常规",
+      "fields": "自定义字段",
+      "display": "显示",
+      "permissions": "权限",
+      "saved": "设置已保存",
+      "referenceName": "引用名称",
+      "referenceNameHint": "用于 pipelines.reference_name.stage_name 变量。更改后，使用旧名称的消息将失效。",
+      "referenceNameFormat": "仅可使用小写字母、数字和下划线，并以字母开头（例如 close_date）。",
+      "assignContact": "分配项目时，同时将联系人分配给管理员",
+      "limit": "限制每位联系人的未结项目数",
+      "statusLabels": "状态标签",
+      "status": {
+        "open": "进行中",
+        "won": "赢单",
+        "lost": "输单"
+      },
+      "features": "可见功能",
+      "cardElements": "卡片元素",
+      "card": {
+        "contactPhone": "联系人电话",
+        "contactEmail": "联系人电子邮件",
+        "createdAt": "创建日期",
+        "updatedAt": "更新日期",
+        "assignees": "已分配的管理员",
+        "comments": "评论",
+        "cardId": "项目编号",
+        "priority": "优先级",
+        "value": "金额",
+        "dueDate": "截止日期"
+      },
+      "noFields": "还没有自定义字段",
+      "fieldName": "字段名称",
+      "fieldReference": "引用名称",
+      "fieldType": "字段类型",
+      "required": "必填",
+      "requiredShort": "必填",
+      "addField": "添加字段",
+      "fieldAdded": "字段已添加",
+      "deleteField": "删除字段",
+      "permissionsHint": "工作区所有者和管理员始终拥有完全访问权限。请授予其他成员在此管道中可执行的操作。",
+      "revoke": "撤销",
+      "permission": {
+        "view": "查看",
+        "edit": "编辑",
+        "delete": "删除",
+        "settings": "设置"
+      },
+      "noMembers": "没有其他可配置的成员",
+      "confirmDeleteField": "删除此字段及其在所有项目上的值？",
+      "adminPermissions": "管理员权限",
+      "cardVisibleElements": "卡片可见元素"
+    },
+    "panel": {
+      "empty": "此联系人没有管道项目",
+      "error": "无法加载管道项目",
+      "choosePipeline": "选择管道",
+      "add": "新增"
+    },
+    "variables": {
+      "group": "管道",
+      "attributes": {
+        "name": "项目名称",
+        "stageName": "阶段",
+        "status": "状态",
+        "priority": "优先级",
+        "value": "金额",
+        "assignedAdmins": "已分配的管理员",
+        "createdDate": "创建日期",
+        "dueDate": "截止日期",
+        "updatedDate": "更新日期",
+        "id": "项目 ID"
+      }
+    }
   }
 }

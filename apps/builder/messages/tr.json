@@ -949,7 +949,8 @@
       "ctwaConversionTypes": {
         "lead": "Potansiyel Müşteri",
         "purchase": "Satın Alma"
-      }
+      },
+      "pipelineItem": "İşlem hattı öğesi"
     },
     "fieldGroups": {
       "opportunity": "Fırsat",
@@ -966,7 +967,8 @@
       "botFields": "Bot Alanları",
       "email": "E-posta",
       "sms": "SMS",
-      "ctwaAds": "Reklamlar"
+      "ctwaAds": "Reklamlar",
+      "pipeline": "İşlem Hatları"
     },
     "languages": {
       "ar": "Arapça",
@@ -1014,7 +1016,21 @@
       "allAds": "tüm reklamlar"
     },
     "noTopic": "Konusuz",
-    "trackingSince": "{date} tarihinden beri izleniyor. Önceki etkinlik dahil değildir."
+    "trackingSince": "{date} tarihinden beri izleniyor. Önceki etkinlik dahil değildir.",
+    "pipelineItem": {
+      "anyPipeline": "Herhangi bir işlem hattı",
+      "anyStatus": "Herhangi bir durum",
+      "attributes": {
+        "exists": "Öğeler",
+        "status": "Öğe durumu",
+        "stage": "Öğe aşaması",
+        "priority": "Öğe önceliği"
+      },
+      "operators": {
+        "has": "Var",
+        "hasNo": "Yok"
+      }
+    }
   },
   "channels": {
     "title": "Kanallar",
@@ -2677,7 +2693,8 @@
       "ads": "Reklamlar",
       "settings": "Ayarlar",
       "miniApps": "Mini Apps",
-      "leaderboards": "Liderlik tabloları"
+      "leaderboards": "Liderlik tabloları",
+      "pipelines": "İşlem Hatları"
     },
     "adReferral": {
       "label": "Ads",
@@ -2735,6 +2752,9 @@
     },
     "miniApp": {
       "label": "Mini Uygulama"
+    },
+    "lastOpportunityId": {
+      "label": "Son Fırsat Kimliği"
     },
     "adminName": {
       "label": "Gönderen yönetici adı"
@@ -2949,7 +2969,8 @@
       "changeGamificationScore": "Oyunlaştırma puanlarını değiştir",
       "sendViewCatalog": "Kataloğu görüntüle",
       "sendProducts": "Ürün gönder",
-      "sendCollection": "Koleksiyon"
+      "sendCollection": "Koleksiyon",
+      "pipeline": "İşlem Hatları"
     },
     "externalRequest": {
       "errors": {
@@ -3172,6 +3193,52 @@
       "summaryManual": "{count, plural, one {# ürün} other {# ürün}}",
       "cancel": "İptal",
       "save": "Kaydet"
+    },
+    "pipelineStep": {
+      "action": "Eylem",
+      "pipeline": "İşlem hattı",
+      "targetHint": "Kişinin bu işlem hattındaki en son açık öğesi üzerinde işlem yapar. Hiç yoksa Atla yolu çalışır.",
+      "noPipelines": "İşlem hattı bulunamadı",
+      "actions": {
+        "addToPipeline": "Kişiyi işlem hattına ekle",
+        "moveToStage": "Bir aşamaya taşı",
+        "changeValue": "Değeri değiştir",
+        "assign": "Yöneticilere ata",
+        "changeStatus": "Durumu değiştir",
+        "changePriority": "Önceliği değiştir",
+        "changeDueDate": "Son tarihi değiştir",
+        "changeTitle": "Başlığı değiştir",
+        "setCustomField": "Özel alan ayarla",
+        "clearCustomField": "Özel alanları temizle",
+        "changeDescription": "Açıklamayı değiştir",
+        "removeFromPipeline": "Kişiyi işlem hattından kaldır",
+        "addComment": "Yorum ekle",
+        "transfer": "Başka bir işlem hattına aktar"
+      },
+      "title": "Başlık",
+      "description": "Açıklama",
+      "stage": "Aşama",
+      "firstStage": "İlk aşama",
+      "status": "Durum",
+      "assigneeMembers": "Atanan yöneticiler",
+      "assigneeTeams": "Atanan ekipler",
+      "value": "Değer",
+      "priority": "Öncelik",
+      "dueDate": "Son tarih",
+      "dueNone": "Yok",
+      "dueNoneHint": "Öğenin son tarihi yok.",
+      "dueCustomField": "Tarih özel alanından",
+      "dueFixed": "Sabit tarih ve saat",
+      "dueField": "Tarih veya tarih-saat özel alanı",
+      "fieldValues": "Özel alanlar",
+      "field": "Alan",
+      "fieldValue": "Değer",
+      "fields": "Alanlar",
+      "addField": "Alan değeri ekle",
+      "removeHint": "Kişinin bu işlem hattındaki en son açık öğesini siler.",
+      "comment": "Yorum",
+      "destinationPipeline": "Hedef işlem hattı",
+      "destinationStage": "Hedef aşama"
     }
   },
   "folders": {
@@ -5604,11 +5671,11 @@
       "incomingCall": "Gelen Arama",
       "missedAudioCall": "Cevapsız Sesli Arama",
       "callEnded": "Arama Sona Erdi",
-      "ticketCreated": "Talep Oluşturuldu",
-      "ticketMovedToStage": "Talep Aşamaya Taşındı",
-      "ticketValueChanged": "Talep Değeri Değiştirildi",
-      "ticketStatusChanged": "Talep Durumu Değiştirildi",
-      "ticketPriorityChanged": "Talep Önceliği Değiştirildi",
+      "pipelineItemCreated": "Talep Oluşturuldu",
+      "pipelineItemMovedToStage": "Talep Aşamaya Taşındı",
+      "pipelineItemValueChanged": "Talep Değeri Değiştirildi",
+      "pipelineItemStatusChanged": "Talep Durumu Değiştirildi",
+      "pipelineItemPriorityChanged": "Talep Önceliği Değiştirildi",
       "subscribedToSequence": "Sıraya Abone Olundu",
       "unsubscribedFromSequence": "Sıra Aboneliğinden Çıkıldı",
       "shoppingCartSent": "Kişi Alışveriş Sepeti Gönderdi",
@@ -5628,7 +5695,11 @@
       "callRecorded": "Arama kaydedildi",
       "callTranscribed": "Arama yazıya döküldü",
       "anyProduct": "Herhangi bir ürün",
-      "anyCategory": "Herhangi bir kategori"
+      "anyCategory": "Herhangi bir kategori",
+      "anyPipeline": "Herhangi bir işlem hattı",
+      "anyStage": "Herhangi bir aşama",
+      "unavailablePipeline": "Silinmiş veya kullanılamayan pipeline",
+      "unavailableStage": "Silinmiş veya kullanılamayan aşama"
     },
     "actions": {
       "addTag": "Etiket Ekle",
@@ -5677,7 +5748,13 @@
     "countCapped": "{count}+ kişi",
     "exportAllNotice": "Geçerli filtreyle eşleşen tüm kişiler dışa aktarılacaktır.",
     "exportTakingLong": "Dışa aktarma beklenenden uzun sürüyor",
-    "exportTakingLongDescription": "Dışa aktarma hâlâ işleniyor. Bu iletişim kutusunu kapatıp birkaç dakika sonra dışa aktarma geçmişinden tekrar kontrol edebilirsiniz."
+    "exportTakingLongDescription": "Dışa aktarma hâlâ işleniyor. Bu iletişim kutusunu kapatıp birkaç dakika sonra dışa aktarma geçmişinden tekrar kontrol edebilirsiniz.",
+    "search": {
+      "placeholder": "Ara (ad, e-posta, telefon, kişi kimliği)",
+      "searching": "Aranıyor…",
+      "error": "Kişiler aranamadı",
+      "empty": "Kişi bulunamadı"
+    }
   },
   "contactScan": {
     "menu": {
@@ -10167,5 +10244,401 @@
     "metHelp": "SLA'sı olan yanıtlardan SLA'yı karşılayanların oranı.",
     "eligibleCount": "{count} yanıtın SLA'sı vardı",
     "enable": "Yanıt SLA'sını etkinleştir"
+  },
+  "pipelines": {
+    "title": "İşlem Hatları",
+    "retry": "Tekrar dene",
+    "save": "Kaydet",
+    "saveFailed": "Değişiklikleriniz kaydedilemedi. Lütfen tekrar deneyin.",
+    "list": {
+      "name": "Ad",
+      "type": "Tür",
+      "items": "Öğeler",
+      "add": "İşlem hattı ekle",
+      "empty": "Henüz işlem hattı yok",
+      "emptyHint": "Anlaşmaları, destek taleplerini veya herhangi bir süreci pano üzerinde kartlar olarak takip etmek için bir işlem hattı oluşturun.",
+      "error": "İşlem hatları yüklenemedi",
+      "contacts": "Kişiler",
+      "addShort": "Ekle",
+      "description": "Fırsatları, talepleri veya herhangi bir süreci aşamalar arasında ilerleyen kartlar olarak takip edin."
+    },
+    "types": {
+      "opportunity": {
+        "label": "Fırsat Merkezi",
+        "description": "Satış anlaşmalarını aşamalar boyunca takip edin. İlk aşama: Potansiyel müşteri."
+      },
+      "ticket": {
+        "label": "Destek Merkezi",
+        "description": "Destek taleplerini yönetin. İlk aşama: Yeni Sorun."
+      },
+      "custom": {
+        "label": "Özel pano",
+        "description": "Kendi sürecinizi oluşturun. İlk aşama: Alım."
+      }
+    },
+    "noun": {
+      "opportunity": {
+        "one": "Fırsat",
+        "many": "Fırsatlar",
+        "add": "Fırsat ekle"
+      },
+      "ticket": {
+        "one": "Talep",
+        "many": "Talepler",
+        "add": "Talep ekle"
+      },
+      "card": {
+        "one": "Kart",
+        "many": "Kartlar",
+        "add": "Kart ekle"
+      }
+    },
+    "create": {
+      "title": "Yeni işlem hattı",
+      "description": "Panonun ne için kullanılacağını seçin, ardından adlandırın.",
+      "type": "Tür",
+      "name": "İşlem hattı adı",
+      "namePlaceholder": "örn. Satış",
+      "submit": "İşlem hattı oluştur",
+      "success": "İşlem hattı oluşturuldu"
+    },
+    "menu": {
+      "open": "İşlem hattı işlemleri",
+      "rename": "Yeniden adlandır",
+      "duplicate": "Çoğalt",
+      "delete": "Sil"
+    },
+    "rename": {
+      "title": "İşlem hattını yeniden adlandır",
+      "submit": "Yeniden adlandır",
+      "success": "İşlem hattı yeniden adlandırıldı"
+    },
+    "duplicate": {
+      "success": "İşlem hattı çoğaltıldı"
+    },
+    "delete": {
+      "title": "İşlem hattını sil",
+      "description": "{name} ve tüm aşamaları ile öğeleri silinecek. Bu işlem geri alınamaz.",
+      "success": "İşlem hattı silindi"
+    },
+    "board": {
+      "title": "Pano",
+      "count": "{count, plural, one {# öğe} other {# öğe}}",
+      "total": "Toplam {value}",
+      "search": "Başlığa, numaraya veya kişiye göre ara",
+      "sort": "Sırala",
+      "filter": "Filtrele",
+      "analytics": "Analiz",
+      "settings": "Ayarlar",
+      "emptyStage": "Bir kartı bu aşamaya taşımak için buraya sürükleyip bırakın.",
+      "loadMore": "Daha fazla yükle",
+      "loadMoreFailed": "Daha fazla öğe yüklenemedi",
+      "error": "Pano yüklenemedi",
+      "processing": "Bu aşama işleniyor…",
+      "moveFailed": "Kart taşınamadı",
+      "sortOptions": {
+        "createdAtDesc": "Oluşturulma tarihi (Yeniden Eskiye)",
+        "createdAtAsc": "Oluşturulma tarihi (Eskiden Yeniye)",
+        "updatedAtDesc": "Güncellenme tarihi (Yeniden Eskiye)",
+        "valueDesc": "Fırsat değeri (Yüksekten Düşüğe)",
+        "valueAsc": "Fırsat değeri (Düşükten Yükseğe)",
+        "dueDateAsc": "Bitiş tarihi (En yakından En uzağa)",
+        "dueDateDesc": "Bitiş tarihi (En uzaktan En yakına)",
+        "priorityDesc": "Öncelik (Yüksekten Düşüğe)",
+        "priorityAsc": "Öncelik (Düşükten Yükseğe)",
+        "updatedAtAsc": "Güncellenme tarihi (Eskiden Yeniye)"
+      },
+      "searchAction": "Ara",
+      "closeSearch": "Aramayı kapat",
+      "cardMenu": "Kart işlemleri",
+      "moveTo": "Şuraya taşı",
+      "unknownContact": "Bilinmeyen kişi",
+      "staleError": "Pano yenilenemedi. Gördükleriniz güncel olmayabilir."
+    },
+    "stage": {
+      "add": "Aşama ekle",
+      "name": "Aşama adı",
+      "namePlaceholder": "Aşama adı",
+      "menu": "Aşama işlemleri",
+      "edit": "Aşamayı düzenle",
+      "delete": "Aşamayı sil",
+      "deleteTitle": "Aşamayı sil",
+      "deleteDescription": "{name} ve üzerindeki tüm öğeler silinecek. Bu işlem geri alınamaz.",
+      "moveItemsTo": "Öğeleri şuraya taşı",
+      "deleteItemsToo": "Öğeleri de sil",
+      "description": "Açıklama",
+      "textColor": "Metin rengi",
+      "backgroundColor": "Arka plan rengi",
+      "saved": "Aşama kaydedildi",
+      "deleted": "Aşama silindi",
+      "queued": "Aşama arka planda temizleniyor.",
+      "resetColor": "Varsayılan",
+      "deleteMoveDescription": "{name} silinecek. Öğeleri {target} aşamasına taşınacak.",
+      "rename": "Yeniden adlandır",
+      "settings": "Ayarlar",
+      "general": "Genel",
+      "color": "Renk",
+      "cancel": "İptal"
+    },
+    "priority": {
+      "low": "Düşük",
+      "medium": "Orta",
+      "high": "Yüksek"
+    },
+    "item": {
+      "loading": "Yükleniyor…",
+      "error": "Bu öğe yüklenemedi",
+      "title": "Başlık",
+      "status": "Durum",
+      "stage": "Aşama",
+      "priority": "Öncelik",
+      "value": "Değer",
+      "dueDate": "Son tarih",
+      "assignees": "Atanan yöneticiler",
+      "description": "Açıklama",
+      "attachments": "Ekler",
+      "attach": "Dosya ekle",
+      "noAttachments": "Ek yok",
+      "removeAttachment": "Eki kaldır",
+      "removeAttachmentDescription": "Dosya bu öğeden kaldırılır ancak medya kitaplığında kalır.",
+      "comments": "Yorumlar",
+      "addComment": "Yorum ekle",
+      "commentPlaceholder": "Bir yorum yazın…",
+      "noComments": "Henüz yorum yok",
+      "deleteComment": "Yorumu sil",
+      "deleteCommentDescription": "Bu yorum silinecek. Bu işlem geri alınamaz.",
+      "activity": "Etkinlik",
+      "noActivity": "Henüz etkinlik yok",
+      "transfer": "İşlem hattına aktar",
+      "transferTitle": "Başka bir işlem hattına aktar",
+      "transferDescription": "Öğe numarasını ve oluşturulma tarihini korur. Diğer işlem hattında aynı referans adına ve türe sahip bir alan varsa özel alanlar da aktarılır.",
+      "destinationPipeline": "Hedef işlem hattı",
+      "destinationStage": "Hedef aşama",
+      "firstStage": "İlk aşama",
+      "choose": "Seçin…",
+      "transferred": "Öğe aktarıldı",
+      "delete": "Sil",
+      "deleteDescription": "Bir öğe silinecek. Bu işlem geri alınamaz.",
+      "deleted": "Öğe silindi",
+      "number": "Numara",
+      "createdBy": "Oluşturan",
+      "createdByValue": "{name}, {date}",
+      "inbox": "Gelen kutusu",
+      "moreActions": "Diğer işlemler",
+      "noDescription": "Açıklama yok",
+      "yes": "Evet",
+      "no": "Hayır",
+      "assigneesMembers": "Temsilciler",
+      "assigneesTeams": "Gelen kutusu ekipleri",
+      "assigneesSearch": "Yönetici veya ekip ara…",
+      "assigneesEmpty": "Sonuç yok",
+      "assigneesPlaceholder": "Yönetici veya ekip seçin",
+      "olderComments": "Eski yorumları göster",
+      "olderActivity": "Daha eski etkinlikleri göster",
+      "activityFilter": "Filtrele",
+      "activityFilterCount": "{count, plural, one {# filtre} other {# filtre}}",
+      "activityFilterClear": "Tümünü göster",
+      "noFilteredActivity": "Bu filtreyle eşleşen etkinlik yok.",
+      "activityGroup": {
+        "lifecycle": "Oluşturma ve aktarma",
+        "stage": "Aşama",
+        "status": "Durum",
+        "value": "Değer",
+        "priority": "Öncelik",
+        "dueDate": "Son tarih",
+        "details": "Başlık, açıklama ve alanlar",
+        "assignees": "Atananlar",
+        "comments": "Yorumlar",
+        "attachments": "Ekler"
+      }
+    },
+    "activity": {
+      "created": "Oluşturuldu",
+      "stageChanged": "Başka bir aşamaya taşındı",
+      "statusChanged": "Durum değişti",
+      "valueChanged": "Değer değişti",
+      "priorityChanged": "Öncelik değişti",
+      "dueDateChanged": "Son tarih değişti",
+      "titleChanged": "Başlık değişti",
+      "descriptionChanged": "Açıklama değişti",
+      "fieldValuesChanged": "Özel alanlar değişti",
+      "assigneesChanged": "Atananlar değişti",
+      "attachmentAdded": "Ek eklendi",
+      "attachmentRemoved": "Ek kaldırıldı",
+      "commentAdded": "Yorum eklendi",
+      "commentDeleted": "Yorum silindi",
+      "transferred": "Başka bir işlem hattından aktarıldı",
+      "deleted": "Silindi"
+    },
+    "activityActor": {
+      "flow": "Akış",
+      "trigger": "Tetikleyici",
+      "workspaceToken": "API",
+      "system": "Sistem",
+      "formerMember": "Eski üye"
+    },
+    "add": {
+      "changeContact": "Başka bir kişi seçin",
+      "success": "Oluşturuldu",
+      "stepContact": "Bir kişi seçin",
+      "stepDetails": "{noun} ayrıntıları",
+      "contact": "Kişi",
+      "addNewContact": "Yeni ekle"
+    },
+    "filter": {
+      "title": "Filtrele",
+      "status": "Durum",
+      "statusLabels": {
+        "open": "Açık",
+        "won": "Kazanıldı",
+        "lost": "Kaybedildi"
+      },
+      "priority": "Öncelik",
+      "assignee": "Atanan yöneticiler",
+      "value": "{noun} değeri",
+      "min": "Min",
+      "max": "Maks",
+      "dueDate": "Son tarih",
+      "createdAt": "Oluşturulma tarihi",
+      "from": "Başlangıç",
+      "to": "Bitiş",
+      "clear": "Filtreleri temizle",
+      "apply": "Uygula",
+      "back": "Geri",
+      "updatedAt": "Güncellenme tarihi",
+      "resolvedOn": "{noun} çözümlenme tarihi",
+      "statusChangedOn": "Durum değişikliği tarihi",
+      "stageChangedOn": "Aşama değişikliği tarihi",
+      "lastCommentOn": "Son yorum tarihi",
+      "customFields": "Özel alanlar",
+      "any": "Herhangi biri",
+      "yes": "Evet",
+      "no": "Hayır",
+      "notResolvedOn": "{noun} çözümlenmeme tarihi",
+      "equal": "Eşittir",
+      "different": "Farklıdır",
+      "reset": "Sıfırla",
+      "presets": {
+        "thisWeek": "Bu hafta",
+        "lastWeek": "Geçen hafta",
+        "last14": "Son 14 gün",
+        "thisYear": "Bu yıl",
+        "lastYear": "Geçen yıl",
+        "tomorrow": "Yarın",
+        "next7": "7 gün içinde",
+        "next14": "14 gün içinde",
+        "next30": "30 gün içinde",
+        "allTime": "Tüm zamanlar"
+      },
+      "pickDate": "Bir tarih seçin",
+      "activity": "Etkinlik",
+      "activityKinds": "Değişiklik türü",
+      "activityActors": "Yapan",
+      "activityWhen": "Ne zaman",
+      "activityAutomation": "Otomasyon"
+    },
+    "analytics": {
+      "title": "Analiz",
+      "loading": "İstatistikler yükleniyor…",
+      "error": "İstatistikler yüklenemedi",
+      "created": "Oluşturulan",
+      "won": "Kazanılan",
+      "wonValue": "Kazanılan değer",
+      "lost": "Kaybedilen",
+      "lostValue": "Kaybedilen değer",
+      "admin": "Yönetici",
+      "automation": "Otomasyon",
+      "back": "Geri",
+      "admins": "Yöneticiler",
+      "chart": {
+        "created": "Günlük yeni",
+        "won": "Günlük kazanılan",
+        "lost": "Günlük kaybedilen",
+        "wonValue": "Günlük kazanılan değer",
+        "lostValue": "Günlük kaybedilen değer"
+      },
+      "pie": {
+        "created": "Yöneticiye göre oluşturulan",
+        "won": "Yöneticiye göre kazanılan",
+        "lost": "Yöneticiye göre kaybedilen",
+        "other": "Diğer",
+        "empty": "Veri yok"
+      }
+    },
+    "settings": {
+      "title": "İşlem hattı ayarları",
+      "general": "Genel",
+      "fields": "Özel alanlar",
+      "display": "Görünüm",
+      "permissions": "İzinler",
+      "saved": "Ayarlar kaydedildi",
+      "referenceName": "Referans adı",
+      "referenceNameHint": "pipelines.reference_name.stage_name değişkenlerinde kullanılır. Değiştirmek, eski adı kullanan mesajları bozar.",
+      "referenceNameFormat": "Küçük harf, rakam ve alt çizgi kullanın, harfle başlayın (örn. close_date).",
+      "assignContact": "Bir öğe atandığında kişiyi bir yöneticiye ata",
+      "limit": "Kişi başına açık öğe sayısını sınırla",
+      "statusLabels": "Durum etiketleri",
+      "status": {
+        "open": "Açık",
+        "won": "Kazanıldı",
+        "lost": "Kaybedildi"
+      },
+      "features": "Görünür özellikler",
+      "cardElements": "Kart öğeleri",
+      "card": {
+        "contactPhone": "Kişi telefonu",
+        "contactEmail": "Kişi e-postası",
+        "createdAt": "Oluşturulma tarihi",
+        "updatedAt": "Güncellenme tarihi",
+        "assignees": "Atanan yöneticiler",
+        "comments": "Yorumlar",
+        "cardId": "Öğe numarası",
+        "priority": "Öncelik",
+        "value": "Değer",
+        "dueDate": "Son tarih"
+      },
+      "noFields": "Henüz özel alan yok",
+      "fieldName": "Alan adı",
+      "fieldReference": "Referans adı",
+      "fieldType": "Alan türü",
+      "required": "Zorunlu",
+      "requiredShort": "zorunlu",
+      "addField": "Alan ekle",
+      "fieldAdded": "Alan eklendi",
+      "deleteField": "Alanı sil",
+      "permissionsHint": "Çalışma alanı sahipleri ve yöneticileri her zaman tam erişime sahiptir. Diğer üyelere bu işlem hattında neler yapabileceklerini belirleyin.",
+      "revoke": "İptal et",
+      "permission": {
+        "view": "Görüntüle",
+        "edit": "Düzenle",
+        "delete": "Sil",
+        "settings": "Ayarlar"
+      },
+      "noMembers": "Yapılandırılacak başka üye yok",
+      "confirmDeleteField": "Bu alan ve tüm öğelerdeki değerleri silinsin mi?",
+      "adminPermissions": "Yönetici izinleri",
+      "cardVisibleElements": "Kartta görünen öğeler"
+    },
+    "panel": {
+      "empty": "Bu kişi için işlem hattı öğesi yok",
+      "error": "İşlem hattı öğeleri yüklenemedi",
+      "choosePipeline": "Bir işlem hattı seçin",
+      "add": "Yeni ekle"
+    },
+    "variables": {
+      "group": "İşlem Hatları",
+      "attributes": {
+        "name": "Öğe adı",
+        "stageName": "Aşama",
+        "status": "Durum",
+        "priority": "Öncelik",
+        "value": "Değer",
+        "assignedAdmins": "Atanan yöneticiler",
+        "createdDate": "Oluşturulma tarihi",
+        "dueDate": "Son tarih",
+        "updatedDate": "Güncellenme tarihi",
+        "id": "Öğe kimliği"
+      }
+    }
   }
 }

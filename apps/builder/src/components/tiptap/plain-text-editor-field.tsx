@@ -26,6 +26,7 @@ export type PlainTextEditorFieldProps = {
   showEmojiPicker?: boolean
   channels?: ChannelType[]
   includeCouponVariables?: boolean
+  includePipelineVariables?: boolean
   includeRawCustomFieldVariables?: boolean
   includeBotFieldVariables?: boolean
   description?: string
@@ -44,6 +45,7 @@ export const PlainTextEditorField = ({
   placeholder,
   channels,
   includeCouponVariables = false,
+  includePipelineVariables = false,
   includeRawCustomFieldVariables = false,
   includeBotFieldVariables = false,
   showEmojiPicker = true,
@@ -82,6 +84,7 @@ export const PlainTextEditorField = ({
               className={editorClassName}
               includeBotFieldVariables={includeBotFieldVariables}
               includeCouponVariables={includeCouponVariables}
+              includePipelineVariables={includePipelineVariables}
               includeRawCustomFieldVariables={includeRawCustomFieldVariables}
               initValue={initValue}
               inline={inline}

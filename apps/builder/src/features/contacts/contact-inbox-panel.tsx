@@ -11,6 +11,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { Loader2Icon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { ContactPipelinesSection } from "@/features/pipelines/components/inbox/contact-pipelines-section"
 import { orpc } from "@/lib/orpc/query"
 import { useChatStore } from "../chat/store/chat-store-provider"
 import { ContactNotesManage } from "../contact-notes/contact-notes-manage"
@@ -24,6 +25,7 @@ import { ContactThreadControlSection } from "./components/contact-thread-control
 import UpdateContactTagField from "./components/update-contact-tag-field"
 import { ContactDetail } from "./contact-detail"
 import { useAutoRefreshContactProfile } from "./hooks/use-auto-refresh-contact-profile"
+import { contactDisplayName } from "./lib/contact-display-name"
 import type { GetContactResponse } from "./schema/query"
 
 type AccordionModule = {
@@ -209,6 +211,20 @@ export const ContactInboxPanel = ({
               )
             }}
             tags={contactData.tags}
+            workspaceId={workspaceId}
+          />
+        ),
+      },
+      {
+        keyName: t("fields.pipelines.label"),
+        content: (
+          <ContactPipelinesSection
+            contactId={contactData.id}
+            contactName={
+              contactDisplayName(contactData) ??
+              t("pipelines.board.unknownContact")
+            }
+            key={contactData.id}
             workspaceId={workspaceId}
           />
         ),

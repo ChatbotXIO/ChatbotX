@@ -98,6 +98,7 @@ const WhatsappFlowStepEditor = ({
         <TiptapEditorField
           includeBotFieldVariables
           includeCouponVariables
+          includePipelineVariables
           name={`${parentName}.text`}
         />
       </div>

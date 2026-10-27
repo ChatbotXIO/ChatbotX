@@ -118,6 +118,11 @@ export const reservedCustomFieldIds: {
     labelKey: "fields.lastInput.label",
   },
   {
+    id: systemFieldTypes.enum.last_opportunity_id,
+    type: "shortText",
+    labelKey: "fields.lastOpportunityId.label",
+  },
+  {
     // Latest incoming plain text; unlike `last_input` it never yields a media URL.
     id: systemFieldTypes.enum.last_text_input,
     type: "shortText",

@@ -1505,7 +1505,8 @@
       "ads": "廣告",
       "settings": "設定",
       "miniApps": "迷你應用程式",
-      "leaderboards": "排行榜"
+      "leaderboards": "排行榜",
+      "pipelines": "管道"
     },
     "adReferral": {
       "label": "Ads",
@@ -1563,6 +1564,9 @@
     },
     "miniApp": {
       "label": "小程式"
+    },
+    "lastOpportunityId": {
+      "label": "最近商機 ID"
     },
     "adminName": {
       "label": "傳送管理員名稱"
@@ -2802,7 +2806,8 @@
       "ctwaConversionTypes": {
         "lead": "名單",
         "purchase": "購買"
-      }
+      },
+      "pipelineItem": "管道項目"
     },
     "fieldGroups": {
       "opportunity": "機會",
@@ -2819,7 +2824,8 @@
       "botFields": "機器人欄位",
       "email": "電子郵件",
       "sms": "簡訊",
-      "ctwaAds": "廣告"
+      "ctwaAds": "廣告",
+      "pipeline": "管道"
     },
     "languages": {
       "ar": "阿拉伯語",
@@ -2867,7 +2873,21 @@
       "allAds": "所有廣告"
     },
     "noTopic": "無主題",
-    "trackingSince": "自 {date} 起記錄。先前的活動不包含在內。"
+    "trackingSince": "自 {date} 起記錄。先前的活動不包含在內。",
+    "pipelineItem": {
+      "anyPipeline": "任何管道",
+      "anyStatus": "任何狀態",
+      "attributes": {
+        "exists": "項目",
+        "status": "項目狀態",
+        "stage": "項目階段",
+        "priority": "項目優先順序"
+      },
+      "operators": {
+        "has": "有",
+        "hasNo": "沒有"
+      }
+    }
   },
   "channels": {
     "title": "頻道",
@@ -3197,7 +3217,8 @@
       "changeGamificationScore": "變更積分",
       "sendViewCatalog": "查看商品目錄",
       "sendProducts": "傳送商品",
-      "sendCollection": "商品集合"
+      "sendCollection": "商品集合",
+      "pipeline": "管道"
     },
     "externalRequest": {
       "errors": {
@@ -3420,6 +3441,52 @@
       "summaryManual": "{count, plural, one {# 個商品} other {# 個商品}}",
       "cancel": "取消",
       "save": "儲存"
+    },
+    "pipelineStep": {
+      "action": "操作",
+      "pipeline": "管道",
+      "targetHint": "對聯絡人在此管道中最新的進行中項目執行操作。若沒有符合的項目，則執行「跳過」路徑。",
+      "noPipelines": "找不到管道",
+      "actions": {
+        "addToPipeline": "將聯絡人新增至管道",
+        "moveToStage": "移至指定階段",
+        "changeValue": "變更金額",
+        "assign": "指派給管理員",
+        "changeStatus": "變更狀態",
+        "changePriority": "變更優先順序",
+        "changeDueDate": "變更到期日",
+        "changeTitle": "變更標題",
+        "setCustomField": "設定自訂欄位",
+        "clearCustomField": "清除自訂欄位",
+        "changeDescription": "變更描述",
+        "removeFromPipeline": "將聯絡人從管道移除",
+        "addComment": "新增留言",
+        "transfer": "轉移至其他管道"
+      },
+      "title": "標題",
+      "description": "描述",
+      "stage": "階段",
+      "firstStage": "第一階段",
+      "status": "狀態",
+      "assigneeMembers": "已分配的管理員",
+      "assigneeTeams": "已分配的團隊",
+      "value": "金額",
+      "priority": "優先順序",
+      "dueDate": "到期日",
+      "dueNone": "無",
+      "dueNoneHint": "此項目沒有到期日。",
+      "dueCustomField": "取自日期自訂欄位",
+      "dueFixed": "固定日期與時間",
+      "dueField": "日期或日期時間自訂欄位",
+      "fieldValues": "自訂欄位",
+      "field": "欄位",
+      "fieldValue": "值",
+      "fields": "欄位",
+      "addField": "新增欄位值",
+      "removeHint": "刪除聯絡人在此管道中最新的進行中項目。",
+      "comment": "留言",
+      "destinationPipeline": "目標管道",
+      "destinationStage": "目標階段"
     }
   },
   "folders": {
@@ -5650,11 +5717,11 @@
       "incomingCall": "來電",
       "missedAudioCall": "錯過的音訊通話",
       "callEnded": "通話結束",
-      "ticketCreated": "工單已建立",
-      "ticketMovedToStage": "門票已移至舞台",
-      "ticketValueChanged": "票價已更改",
-      "ticketStatusChanged": "票證狀態已更改",
-      "ticketPriorityChanged": "票證優先權已更改",
+      "pipelineItemCreated": "管道項目已建立",
+      "pipelineItemMovedToStage": "管道項目已移至階段",
+      "pipelineItemValueChanged": "管道項目金額已變更",
+      "pipelineItemStatusChanged": "管道項目狀態已變更",
+      "pipelineItemPriorityChanged": "管道項目優先順序已變更",
       "subscribedToSequence": "訂閱序列",
       "unsubscribedFromSequence": "取消訂閱序列",
       "shoppingCartSent": "聯絡人傳送了購物車",
@@ -5674,7 +5741,11 @@
       "callRecorded": "通話已錄音",
       "callTranscribed": "通話已轉寫",
       "anyProduct": "任何商品",
-      "anyCategory": "任意分類"
+      "anyCategory": "任意分類",
+      "anyPipeline": "任何管道",
+      "anyStage": "任何階段",
+      "unavailablePipeline": "已刪除或無法使用的管道",
+      "unavailableStage": "已刪除或無法使用的階段"
     },
     "actions": {
       "addTag": "新增標籤",
@@ -5723,7 +5794,13 @@
     "countCapped": "{count}+ 聯絡人",
     "exportAllNotice": "與目前過濾器相符的所有聯絡人都會被匯出。",
     "exportTakingLong": "匯出花費的時間比預期長",
-    "exportTakingLongDescription": "匯出仍在處理中。您可以關閉此對話框，並在幾分鐘後返回檢視匯出歷史記錄。"
+    "exportTakingLongDescription": "匯出仍在處理中。您可以關閉此對話框，並在幾分鐘後返回檢視匯出歷史記錄。",
+    "search": {
+      "placeholder": "搜尋（姓名、電子郵件、電話、聯絡人 ID）",
+      "searching": "搜尋中…",
+      "error": "無法搜尋聯絡人",
+      "empty": "找不到聯絡人"
+    }
   },
   "contactScan": {
     "menu": {
@@ -10167,5 +10244,401 @@
     "metHelp": "設有 SLA 的回覆中達標的占比。",
     "eligibleCount": "{count} 則回覆設有 SLA",
     "enable": "啟用回應 SLA"
+  },
+  "pipelines": {
+    "title": "管道",
+    "retry": "再試一次",
+    "save": "儲存",
+    "saveFailed": "無法儲存您的變更。請再試一次。",
+    "list": {
+      "name": "名稱",
+      "type": "類型",
+      "items": "項目",
+      "add": "新增管道",
+      "empty": "尚無管道",
+      "emptyHint": "建立管道，以看板上的卡片追蹤商機、工單或任何流程。",
+      "error": "無法載入管道",
+      "contacts": "聯絡人",
+      "addShort": "新增",
+      "description": "透過在各階段間移動的卡片，追蹤商機、工單或任何流程。"
+    },
+    "types": {
+      "opportunity": {
+        "label": "商機中心",
+        "description": "依階段追蹤銷售商機。第一階段：潛在客戶。"
+      },
+      "ticket": {
+        "label": "客服中心",
+        "description": "處理客服請求。第一階段：新問題。"
+      },
+      "custom": {
+        "label": "自訂看板",
+        "description": "建立自己的流程。第一階段：受理。"
+      }
+    },
+    "noun": {
+      "opportunity": {
+        "one": "商機",
+        "many": "商機",
+        "add": "新增商機"
+      },
+      "ticket": {
+        "one": "工單",
+        "many": "工單",
+        "add": "新增工單"
+      },
+      "card": {
+        "one": "卡片",
+        "many": "卡片",
+        "add": "新增卡片"
+      }
+    },
+    "create": {
+      "title": "新增管道",
+      "description": "選擇看板用途，再為其命名。",
+      "type": "類型",
+      "name": "管道名稱",
+      "namePlaceholder": "例如：銷售",
+      "submit": "建立管道",
+      "success": "管道已建立"
+    },
+    "menu": {
+      "open": "管道操作",
+      "rename": "重新命名",
+      "duplicate": "複製",
+      "delete": "刪除"
+    },
+    "rename": {
+      "title": "重新命名管道",
+      "submit": "重新命名",
+      "success": "管道已重新命名"
+    },
+    "duplicate": {
+      "success": "管道已複製"
+    },
+    "delete": {
+      "title": "刪除管道",
+      "description": "將刪除 {name} 及其所有階段與項目。此操作無法復原。",
+      "success": "管道已刪除"
+    },
+    "board": {
+      "title": "看板",
+      "count": "{count, plural, one {# 個項目} other {# 個項目}}",
+      "total": "總計 {value}",
+      "search": "依標題、編號或聯絡人搜尋",
+      "sort": "排序",
+      "filter": "篩選",
+      "analytics": "分析",
+      "settings": "設定",
+      "emptyStage": "將卡片拖放至此處，即可移至此階段。",
+      "loadMore": "載入更多",
+      "loadMoreFailed": "無法載入更多項目",
+      "error": "無法載入看板",
+      "processing": "正在處理此階段…",
+      "moveFailed": "無法移動卡片",
+      "sortOptions": {
+        "createdAtDesc": "建立日期（由新到舊）",
+        "createdAtAsc": "建立日期（由舊到新）",
+        "updatedAtDesc": "更新日期（由新到舊）",
+        "valueDesc": "商機金額（由高到低）",
+        "valueAsc": "商機金額（由低到高）",
+        "dueDateAsc": "到期日（由近到遠）",
+        "dueDateDesc": "到期日（由遠到近）",
+        "priorityDesc": "優先順序（由高到低）",
+        "priorityAsc": "優先順序（由低到高）",
+        "updatedAtAsc": "更新日期（由舊到新）"
+      },
+      "searchAction": "搜尋",
+      "closeSearch": "關閉搜尋",
+      "cardMenu": "卡片操作",
+      "moveTo": "移至",
+      "unknownContact": "未知聯絡人",
+      "staleError": "無法重新整理看板。目前顯示的內容可能不是最新資料。"
+    },
+    "stage": {
+      "add": "新增階段",
+      "name": "階段名稱",
+      "namePlaceholder": "階段名稱",
+      "menu": "階段操作",
+      "edit": "編輯階段",
+      "delete": "刪除階段",
+      "deleteTitle": "刪除階段",
+      "deleteDescription": "將刪除 {name} 及此階段中的所有項目。此操作無法復原。",
+      "moveItemsTo": "將項目移至",
+      "deleteItemsToo": "同時刪除項目",
+      "description": "描述",
+      "textColor": "文字顏色",
+      "backgroundColor": "背景顏色",
+      "saved": "階段已儲存",
+      "deleted": "階段已刪除",
+      "queued": "正在背景清空此階段。",
+      "resetColor": "預設",
+      "deleteMoveDescription": "將刪除 {name}，其中的項目將移至 {target}。",
+      "rename": "重新命名",
+      "settings": "設定",
+      "general": "一般",
+      "color": "顏色",
+      "cancel": "取消"
+    },
+    "priority": {
+      "low": "低",
+      "medium": "中",
+      "high": "高"
+    },
+    "item": {
+      "loading": "載入中…",
+      "error": "無法載入此項目",
+      "title": "標題",
+      "status": "狀態",
+      "stage": "階段",
+      "priority": "優先順序",
+      "value": "金額",
+      "dueDate": "到期日",
+      "assignees": "已分配的管理員",
+      "description": "描述",
+      "attachments": "附件",
+      "attach": "附加檔案",
+      "noAttachments": "沒有附件",
+      "removeAttachment": "移除附件",
+      "removeAttachmentDescription": "檔案將從此項目移除，但仍保留在媒體庫中。",
+      "comments": "留言",
+      "addComment": "新增留言",
+      "commentPlaceholder": "撰寫留言…",
+      "noComments": "尚無留言",
+      "deleteComment": "刪除留言",
+      "deleteCommentDescription": "此留言將被刪除，且無法復原。",
+      "activity": "活動紀錄",
+      "noActivity": "尚無活動紀錄",
+      "transfer": "轉移至管道",
+      "transferTitle": "轉移至其他管道",
+      "transferDescription": "項目會保留原有編號與建立日期。若目標管道有參照名稱及類型相同的欄位，自訂欄位資料也會一併轉移。",
+      "destinationPipeline": "目標管道",
+      "destinationStage": "目標階段",
+      "firstStage": "第一階段",
+      "choose": "選擇…",
+      "transferred": "項目已轉移",
+      "delete": "刪除",
+      "deleteDescription": "將刪除一個項目。此操作無法復原。",
+      "deleted": "項目已刪除",
+      "number": "編號",
+      "createdBy": "建立者",
+      "createdByValue": "{name} 於 {date}",
+      "inbox": "收件匣",
+      "moreActions": "更多操作",
+      "noDescription": "沒有描述",
+      "yes": "是",
+      "no": "否",
+      "assigneesMembers": "客服人員",
+      "assigneesTeams": "收件匣團隊",
+      "assigneesSearch": "搜尋管理員或團隊…",
+      "assigneesEmpty": "沒有結果",
+      "assigneesPlaceholder": "選擇管理員或團隊",
+      "olderComments": "顯示較早的留言",
+      "olderActivity": "查看更早的動態",
+      "activityFilter": "篩選",
+      "activityFilterCount": "{count, plural, one {# 個篩選條件} other {# 個篩選條件}}",
+      "activityFilterClear": "顯示全部",
+      "noFilteredActivity": "沒有符合此篩選條件的活動。",
+      "activityGroup": {
+        "lifecycle": "建立與轉移",
+        "stage": "階段",
+        "status": "狀態",
+        "value": "金額",
+        "priority": "優先順序",
+        "dueDate": "截止日期",
+        "details": "標題、描述和欄位",
+        "assignees": "負責人",
+        "comments": "留言",
+        "attachments": "附件"
+      }
+    },
+    "activity": {
+      "created": "已建立",
+      "stageChanged": "已移至其他階段",
+      "statusChanged": "狀態已變更",
+      "valueChanged": "金額已變更",
+      "priorityChanged": "優先順序已變更",
+      "dueDateChanged": "到期日已變更",
+      "titleChanged": "標題已變更",
+      "descriptionChanged": "描述已變更",
+      "fieldValuesChanged": "自訂欄位已變更",
+      "assigneesChanged": "指派對象已變更",
+      "attachmentAdded": "已新增附件",
+      "attachmentRemoved": "已移除附件",
+      "commentAdded": "已新增留言",
+      "commentDeleted": "已刪除留言",
+      "transferred": "已從其他管道轉入",
+      "deleted": "已刪除"
+    },
+    "activityActor": {
+      "flow": "流程",
+      "trigger": "觸發器",
+      "workspaceToken": "API",
+      "system": "系統",
+      "formerMember": "前成員"
+    },
+    "add": {
+      "changeContact": "選擇其他聯絡人",
+      "success": "已建立",
+      "stepContact": "選擇聯絡人",
+      "stepDetails": "{noun}詳細資料",
+      "contact": "聯絡人",
+      "addNewContact": "新增"
+    },
+    "filter": {
+      "title": "篩選",
+      "status": "狀態",
+      "statusLabels": {
+        "open": "進行中",
+        "won": "成交",
+        "lost": "失敗"
+      },
+      "priority": "優先順序",
+      "assignee": "已分配的管理員",
+      "value": "{noun}金額",
+      "min": "最小值",
+      "max": "最大值",
+      "dueDate": "到期日",
+      "createdAt": "建立日期",
+      "from": "從",
+      "to": "至",
+      "clear": "清除篩選條件",
+      "apply": "套用",
+      "back": "返回",
+      "updatedAt": "更新日期",
+      "resolvedOn": "{noun}結案日期",
+      "statusChangedOn": "狀態變更日期",
+      "stageChangedOn": "階段變更日期",
+      "lastCommentOn": "最近留言日期",
+      "customFields": "自訂欄位",
+      "any": "不限",
+      "yes": "是",
+      "no": "否",
+      "notResolvedOn": "{noun}未於指定日期結案",
+      "equal": "等於",
+      "different": "不等於",
+      "reset": "重設",
+      "presets": {
+        "thisWeek": "本週",
+        "lastWeek": "上週",
+        "last14": "最近 14 天",
+        "thisYear": "今年",
+        "lastYear": "去年",
+        "tomorrow": "明天",
+        "next7": "7 天內",
+        "next14": "14 天內",
+        "next30": "30 天內",
+        "allTime": "全部時間"
+      },
+      "pickDate": "選擇日期",
+      "activity": "活動",
+      "activityKinds": "變更類型",
+      "activityActors": "操作人",
+      "activityWhen": "時間",
+      "activityAutomation": "自動化"
+    },
+    "analytics": {
+      "title": "分析",
+      "loading": "正在載入統計資料…",
+      "error": "無法載入統計資料",
+      "created": "已建立",
+      "won": "成交",
+      "wonValue": "成交金額",
+      "lost": "失敗",
+      "lostValue": "失敗金額",
+      "admin": "管理員",
+      "automation": "自動化",
+      "back": "返回",
+      "admins": "管理員",
+      "chart": {
+        "created": "每日新增數",
+        "won": "每日成交數",
+        "lost": "每日失敗數",
+        "wonValue": "每日成交金額",
+        "lostValue": "每日失敗金額"
+      },
+      "pie": {
+        "created": "各管理員建立數",
+        "won": "各管理員成交數",
+        "lost": "各管理員失敗數",
+        "other": "其他",
+        "empty": "沒有資料"
+      }
+    },
+    "settings": {
+      "title": "管道設定",
+      "general": "一般",
+      "fields": "自訂欄位",
+      "display": "顯示",
+      "permissions": "權限",
+      "saved": "設定已儲存",
+      "referenceName": "參照名稱",
+      "referenceNameHint": "用於 pipelines.reference_name.stage_name 變數。變更後，使用舊名稱的訊息將無法正常運作。",
+      "referenceNameFormat": "僅可使用小寫字母、數字和底線，並以字母開頭（例如 close_date）。",
+      "assignContact": "指派項目時，同時將聯絡人指派給管理員",
+      "limit": "限制每位聯絡人的進行中項目數",
+      "statusLabels": "狀態標籤",
+      "status": {
+        "open": "進行中",
+        "won": "成交",
+        "lost": "失敗"
+      },
+      "features": "顯示的功能",
+      "cardElements": "卡片元素",
+      "card": {
+        "contactPhone": "聯絡人電話",
+        "contactEmail": "聯絡人電子郵件",
+        "createdAt": "建立日期",
+        "updatedAt": "更新日期",
+        "assignees": "已分配的管理員",
+        "comments": "留言",
+        "cardId": "項目編號",
+        "priority": "優先順序",
+        "value": "金額",
+        "dueDate": "到期日"
+      },
+      "noFields": "尚無自訂欄位",
+      "fieldName": "欄位名稱",
+      "fieldReference": "參照名稱",
+      "fieldType": "欄位類型",
+      "required": "必填",
+      "requiredShort": "必填",
+      "addField": "新增欄位",
+      "fieldAdded": "欄位已新增",
+      "deleteField": "刪除欄位",
+      "permissionsHint": "工作區擁有者與管理員一律擁有完整存取權限。請設定其他成員在此管道中可執行的操作。",
+      "revoke": "撤銷",
+      "permission": {
+        "view": "檢視",
+        "edit": "編輯",
+        "delete": "刪除",
+        "settings": "設定"
+      },
+      "noMembers": "沒有其他成員可供設定",
+      "confirmDeleteField": "確定要刪除此欄位及所有項目中的對應欄位值嗎？",
+      "adminPermissions": "管理員權限",
+      "cardVisibleElements": "卡片上顯示的元素"
+    },
+    "panel": {
+      "empty": "此聯絡人沒有管道項目",
+      "error": "無法載入管道項目",
+      "choosePipeline": "選擇管道",
+      "add": "新增"
+    },
+    "variables": {
+      "group": "管道",
+      "attributes": {
+        "name": "項目名稱",
+        "stageName": "階段",
+        "status": "狀態",
+        "priority": "優先順序",
+        "value": "金額",
+        "assignedAdmins": "已分配的管理員",
+        "createdDate": "建立日期",
+        "dueDate": "到期日",
+        "updatedDate": "更新日期",
+        "id": "項目 ID"
+      }
+    }
   }
 }

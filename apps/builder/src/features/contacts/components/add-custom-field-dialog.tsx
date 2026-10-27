@@ -2,9 +2,6 @@
 
 import type { CustomFieldType } from "@chatbotx.io/database/partials"
 import { FieldOperationType } from "@chatbotx.io/flow-config"
-import { DateTimePickerField } from "@chatbotx.io/ui/components/form/date-picker-field"
-import { InputField } from "@chatbotx.io/ui/components/form/input-field"
-import { TextareaField } from "@chatbotx.io/ui/components/form/textarea-field"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
   Dialog,
@@ -18,7 +15,6 @@ import {
 } from "@chatbotx.io/ui/components/ui/dialog"
 import { Form } from "@chatbotx.io/ui/components/ui/form"
 import { Label } from "@chatbotx.io/ui/components/ui/label"
-import { resolveTemporalCustomFieldSaveFormat } from "@chatbotx.io/utils/datetime"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { Loader2Icon } from "lucide-react"
@@ -26,6 +22,7 @@ import { useTranslations } from "next-intl"
 import { type ReactElement, useMemo, useState } from "react"
 import { useFormContext, useWatch } from "react-hook-form"
 import { toast } from "sonner"
+import { CustomFieldValueInput } from "@/features/custom-fields/components/custom-field-value-input"
 import {
   CustomFieldOperationSelect,
   CustomFieldSelect,
@@ -198,37 +195,14 @@ export const SetCustomField = ({
       <div className="flex flex-col gap-2">
         <Label>{t("fields.value.label")}</Label>
 
-        {selectedCustomFieldType === "longText" && (
-          <TextareaField name={getFieldName("value")} required />
-        )}
-
-        {selectedCustomFieldType === "shortText" && (
-          <InputField name={getFieldName("value")} required />
-        )}
-
-        {selectedCustomFieldType === "number" && (
-          <InputField name={getFieldName("value")} type="number" />
-        )}
-
-        {selectedCustomFieldType === "date" && (
-          <DateTimePickerField
-            dateTimeFormat="yyyy-MM-dd"
-            granularity="day"
+        {selectedCustomFieldType && (
+          <CustomFieldValueInput
             name={getFieldName("value")}
-            required
-            saveFormat={resolveTemporalCustomFieldSaveFormat(
-              selectedCustomFieldType,
-            )}
-          />
-        )}
-
-        {selectedCustomFieldType === "datetime" && (
-          <DateTimePickerField
-            name={getFieldName("value")}
-            required
-            saveFormat={resolveTemporalCustomFieldSaveFormat(
-              selectedCustomFieldType,
-            )}
+            required={
+              selectedCustomFieldType !== "number" &&
+              selectedCustomFieldType !== "boolean"
+            }
+            type={selectedCustomFieldType}
           />
         )}
       </div>

@@ -87,6 +87,22 @@ discovery and labels; a new reference type is one enum value plus one row.
   server (`contactFilterAPI.listActivityValueOptionsAPI`, one bounded page, no
   client cache); selected values are named by id through the value-label lookup.
 
+## Pipeline item filter (`pipelineItem`)
+
+Dynamic condition `{ field: "pipelineItem", attribute, pipelineId, operator, value }`,
+a discriminated union on `attribute` (`schema/pipeline-item-filter.ts`):
+`exists` (`isNotEmpty|isEmpty`, value `any|open|won|lost`), `status` and
+`priority` (`in|notIn`, non-empty list), `stage` (`in|notIn`, stage ids, needs a
+`pipelineId`; `null` = any pipeline for the others). SQL is
+`queries/contact-filter/pipeline-item.ts`: a workspace-scoped correlated
+`EXISTS` over `PipelineItem`, and `NOT EXISTS` for `isEmpty`/`notIn`, so a
+contact with no matching item satisfies the negatives. Malformed saved values
+fail closed (`FALSE`). The UI offers one `FieldConfig` per attribute for "any
+pipeline" and per pipeline (`pipeline-item-filter-config.ts`, name
+`pipelineItem:<attribute>:<pipelineId|any>`); ids are named through the
+`pipelines` / `pipelineStages` value-label lookups; discovery reports them in
+`contacts.listFilterFields` → `pipelineItems`.
+
 ## Adding a new filter field
 
 1. **Enum** — add the field key to `contactFilterFields` in

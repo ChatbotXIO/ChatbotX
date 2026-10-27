@@ -72,6 +72,7 @@ import {
 } from "./messenger-user-menu"
 import { handleSendMetaCapiEventStep } from "./meta-conversions/send-meta-capi-event-step-handler"
 import { addOrUpdateMoosendContact } from "./moosend-handler"
+import { handlePipelineStep } from "./pipeline"
 import { questionnaires } from "./questionnaires"
 import { sendEmail } from "./send-email"
 import { addSendGridContact } from "./sendgrid-handler"
@@ -550,6 +551,7 @@ export const flowStepHandlers: Record<
   [stepTypes.enum.waitUserReply]: undefined,
   [stepTypes.enum.subscribeSequence]: addContactSequence,
   [stepTypes.enum.changeGamificationScore]: changeGamificationScore,
+  [stepTypes.enum.pipeline]: handlePipelineStep,
   [stepTypes.enum.unsubscribeSequence]: removeContactSequence,
   [stepTypes.enum.sendQuickReply]: sendFlowMessage,
   [stepTypes.enum.email]: sendEmail,

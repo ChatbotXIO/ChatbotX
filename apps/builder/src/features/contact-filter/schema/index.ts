@@ -32,6 +32,10 @@ import {
 } from "./leaderboard-score-filter"
 import { multiSelectOperators } from "./multi-select-filter"
 import { numberOperators } from "./number"
+import {
+  type PipelineItemCondition,
+  pipelineItemConditionSchema,
+} from "./pipeline-item-filter"
 import { selectOperators } from "./select-filter"
 import { textOperators } from "./text-filter"
 
@@ -72,6 +76,13 @@ export {
   leaderboardScoreConditionSchema,
 } from "./leaderboard-score-filter"
 
+export {
+  PIPELINE_ITEM_EXISTS_OPERATORS,
+  PIPELINE_ITEM_MEMBERSHIP_OPERATORS,
+  type PipelineItemCondition,
+  pipelineItemConditionSchema,
+} from "./pipeline-item-filter"
+
 export const mappingConditions: Record<FormFieldType, OperatorType[]> = {
   [formFieldTypes.enum.multiSelect]: multiSelectOperators,
   [formFieldTypes.enum.select]: selectOperators,
@@ -87,6 +98,7 @@ export type ContactFilterCondition =
   | BotFieldCondition
   | CouponTopicCondition
   | LeaderboardScoreCondition
+  | PipelineItemCondition
   | CtwaRetargetCondition
 
 const dynamicConditionSchemas = [
@@ -94,6 +106,7 @@ const dynamicConditionSchemas = [
   botFieldConditionSchema,
   couponTopicConditionSchema,
   leaderboardScoreConditionSchema,
+  pipelineItemConditionSchema,
   ctwaRetargetConditionSchema,
 ] as const
 
@@ -119,7 +132,7 @@ const buildConditionSchema = (
 const CRITERIA_OPERATOR_DESCRIPTION =
   "How conditions combine: `and` = contact must match all, `or` = any."
 const CRITERIA_CONDITIONS_DESCRIPTION =
-  "Conditions to combine. Each has `field`, `operator` and usually `value`; dynamic fields use `field: customField|botField|couponTopic|leaderboardScore` with their id. See `contacts.listFilterFields`."
+  "Conditions to combine. Each has `field`, `operator` and usually `value`; dynamic fields use `field: customField|botField|couponTopic|leaderboardScore|pipelineItem` with their id (`pipelineItem` also takes `attribute` and `pipelineId`). See `contacts.listFilterFields`."
 const CRITERIA_TIMEZONE_DESCRIPTION =
   "IANA timezone (e.g. `Asia/Ho_Chi_Minh`) used to interpret date/datetime values without an offset. Defaults to UTC."
 

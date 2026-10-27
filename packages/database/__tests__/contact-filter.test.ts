@@ -4136,14 +4136,36 @@ describe("buildSmartKeywordWhere", () => {
     expect(query.sql.toLowerCase()).toContain('"contact"."email" ilike')
     expect(query.sql.toLowerCase()).toContain('"contact"."phonenumber" ilike')
     expect(query.sql).toContain('"ContactInbox"."sourceId" =')
+    expect(query.sql).toContain('"Contact"."id" =')
     expect(query.params).toEqual([
       "ws-1",
+      "12345",
       "%12345%",
       "%12345%",
       "%12345%",
       "%12345%",
       "12345",
     ])
+  })
+
+  test("a pasted contact id matches that contact exactly", () => {
+    const query = renderContactWhere({
+      workspaceId: "ws-1",
+      ...buildSmartKeywordWhere(" 11753941635047880 "),
+    })
+
+    expect(query.sql).toContain('"Contact"."id" =')
+    expect(query.params[1]).toBe("11753941635047880")
+  })
+
+  test("digit runs too long for a bigint never compare against the id", () => {
+    const query = renderContactWhere({
+      workspaceId: "ws-1",
+      ...buildSmartKeywordWhere("99999999999999999999"),
+    })
+
+    expect(query.sql).not.toContain('"Contact"."id" =')
+    expect(query.sql.toLowerCase()).toContain('"contact"."firstname" ilike')
   })
 
   test("searches plain text by names and exact sourceId only", () => {

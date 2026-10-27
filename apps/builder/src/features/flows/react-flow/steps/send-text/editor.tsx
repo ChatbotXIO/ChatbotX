@@ -34,6 +34,7 @@ const SendTextStepEditor = (props: SendTextStepEditorProps) => {
         <TiptapEditorField
           includeBotFieldVariables
           includeCouponVariables
+          includePipelineVariables
           maxLength={limits.text}
           name={`${parentName}.text`}
         />

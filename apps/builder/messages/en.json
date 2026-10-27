@@ -991,7 +991,8 @@
       "ctwaConversionTypes": {
         "lead": "Lead",
         "purchase": "Purchase"
-      }
+      },
+      "pipelineItem": "Pipeline item"
     },
     "fieldGroups": {
       "opportunity": "Opportunity",
@@ -1008,7 +1009,8 @@
       "botFields": "Bot Fields",
       "email": "Email",
       "sms": "SMS",
-      "ctwaAds": "Ads"
+      "ctwaAds": "Ads",
+      "pipeline": "Pipelines"
     },
     "languages": {
       "ar": "Arabic",
@@ -1056,7 +1058,21 @@
       "allAds": "all ads"
     },
     "noTopic": "No Topic",
-    "trackingSince": "Tracked since {date}. Earlier activity is not included."
+    "trackingSince": "Tracked since {date}. Earlier activity is not included.",
+    "pipelineItem": {
+      "anyPipeline": "Any pipeline",
+      "anyStatus": "Any status",
+      "attributes": {
+        "exists": "Items",
+        "status": "Item status",
+        "stage": "Item stage",
+        "priority": "Item priority"
+      },
+      "operators": {
+        "has": "Has",
+        "hasNo": "Has no"
+      }
+    }
   },
   "channels": {
     "title": "Channels",
@@ -2719,7 +2735,8 @@
       "ads": "Ads",
       "settings": "Settings",
       "miniApps": "Mini Apps",
-      "leaderboards": "Leaderboards"
+      "leaderboards": "Leaderboards",
+      "pipelines": "Pipelines"
     },
     "adReferral": {
       "label": "Ads",
@@ -2777,6 +2794,9 @@
     },
     "miniApp": {
       "label": "Mini App"
+    },
+    "lastOpportunityId": {
+      "label": "Last Opportunity ID"
     },
     "adminName": {
       "label": "Sending Admin Name"
@@ -3631,7 +3651,8 @@
       "changeGamificationScore": "Change gamification scores",
       "sendViewCatalog": "View catalog",
       "sendProducts": "Send Products",
-      "sendCollection": "Collection"
+      "sendCollection": "Collection",
+      "pipeline": "Pipelines"
     },
     "externalRequest": {
       "errors": {
@@ -3854,6 +3875,52 @@
       "summaryManual": "{count, plural, one {# product} other {# products}}",
       "cancel": "Cancel",
       "save": "Save"
+    },
+    "pipelineStep": {
+      "action": "Action",
+      "pipeline": "Pipeline",
+      "targetHint": "Acts on the contact's latest open item in this pipeline. The Skip path runs when there is none.",
+      "noPipelines": "No pipelines found",
+      "actions": {
+        "addToPipeline": "Add contact to pipeline",
+        "moveToStage": "Move to a stage",
+        "changeValue": "Change value",
+        "assign": "Assign to admins",
+        "changeStatus": "Change status",
+        "changePriority": "Change priority",
+        "changeDueDate": "Change due date",
+        "changeTitle": "Change title",
+        "setCustomField": "Set custom field",
+        "clearCustomField": "Clear custom fields",
+        "changeDescription": "Change description",
+        "removeFromPipeline": "Remove contact from pipeline",
+        "addComment": "Add comment",
+        "transfer": "Transfer to another pipeline"
+      },
+      "title": "Title",
+      "description": "Description",
+      "stage": "Stage",
+      "firstStage": "First stage",
+      "status": "Status",
+      "assigneeMembers": "Assigned admins",
+      "assigneeTeams": "Assigned teams",
+      "value": "Value",
+      "priority": "Priority",
+      "dueDate": "Due date",
+      "dueNone": "None",
+      "dueNoneHint": "The item has no due date.",
+      "dueCustomField": "From a date custom field",
+      "dueFixed": "Fixed date and time",
+      "dueField": "Date or datetime custom field",
+      "fieldValues": "Custom fields",
+      "field": "Field",
+      "fieldValue": "Value",
+      "fields": "Fields",
+      "addField": "Add field value",
+      "removeHint": "Deletes the contact's latest open item in this pipeline.",
+      "comment": "Comment",
+      "destinationPipeline": "Destination pipeline",
+      "destinationStage": "Destination stage"
     }
   },
   "folders": {
@@ -6286,11 +6353,11 @@
       "incomingCall": "Incoming Call",
       "missedAudioCall": "Missed Audio Call",
       "callEnded": "Call Ended",
-      "ticketCreated": "Ticket Created",
-      "ticketMovedToStage": "Ticket Moved To Stage",
-      "ticketValueChanged": "Ticket Value Changed",
-      "ticketStatusChanged": "Ticket Status Changed",
-      "ticketPriorityChanged": "Ticket Priority Changed",
+      "pipelineItemCreated": "Pipeline Item Created",
+      "pipelineItemMovedToStage": "Pipeline Item Moved To Stage",
+      "pipelineItemValueChanged": "Pipeline Item Value Changed",
+      "pipelineItemStatusChanged": "Pipeline Item Status Changed",
+      "pipelineItemPriorityChanged": "Pipeline Item Priority Changed",
       "subscribedToSequence": "Subscribed To Sequence",
       "unsubscribedFromSequence": "Unsubscribed From Sequence",
       "shoppingCartSent": "Contact Sent Shopping Cart",
@@ -6310,7 +6377,11 @@
       "callRecorded": "Call Recorded",
       "callTranscribed": "Call Transcribed",
       "anyProduct": "Any product",
-      "anyCategory": "Any category"
+      "anyCategory": "Any category",
+      "anyPipeline": "Any pipeline",
+      "anyStage": "Any stage",
+      "unavailablePipeline": "Deleted or unavailable pipeline",
+      "unavailableStage": "Deleted or unavailable stage"
     },
     "actions": {
       "addTag": "Add Tag",
@@ -6359,7 +6430,13 @@
     "countCapped": "{count}+ contacts",
     "exportAllNotice": "All contacts matching the current filter will be exported.",
     "exportTakingLong": "Export is taking longer than expected",
-    "exportTakingLongDescription": "The export is still processing. You can close this dialog and check back in a few minutes from the export history."
+    "exportTakingLongDescription": "The export is still processing. You can close this dialog and check back in a few minutes from the export history.",
+    "search": {
+      "placeholder": "Search (name, email, phone, contact id)",
+      "searching": "Searching…",
+      "error": "Could not search contacts",
+      "empty": "No contacts found"
+    }
   },
   "contactScan": {
     "menu": {
@@ -10167,5 +10244,401 @@
     "metHelp": "Share of replies with an SLA that met it.",
     "eligibleCount": "{count} replies had an SLA",
     "enable": "Enable response SLA"
+  },
+  "pipelines": {
+    "title": "Pipelines",
+    "retry": "Try again",
+    "save": "Save",
+    "saveFailed": "Could not save your changes. Please try again.",
+    "list": {
+      "name": "Name",
+      "type": "Type",
+      "items": "Items",
+      "add": "Add pipeline",
+      "empty": "No pipelines yet",
+      "emptyHint": "Create a pipeline to track deals, tickets or any process as cards on a board.",
+      "error": "Could not load pipelines",
+      "contacts": "Contacts",
+      "addShort": "Add",
+      "description": "Track deals, tickets or any process as cards moving through stages."
+    },
+    "types": {
+      "opportunity": {
+        "label": "Opportunities Center",
+        "description": "Track sales deals through stages. First stage: Lead."
+      },
+      "ticket": {
+        "label": "Support Center",
+        "description": "Handle support requests. First stage: New Issue."
+      },
+      "custom": {
+        "label": "Custom board",
+        "description": "Build your own process. First stage: Intake."
+      }
+    },
+    "noun": {
+      "opportunity": {
+        "one": "Opportunity",
+        "many": "Opportunities",
+        "add": "Add Opportunity"
+      },
+      "ticket": {
+        "one": "Ticket",
+        "many": "Tickets",
+        "add": "Add Ticket"
+      },
+      "card": {
+        "one": "Card",
+        "many": "Cards",
+        "add": "Add Card"
+      }
+    },
+    "create": {
+      "title": "New pipeline",
+      "description": "Choose what the board is for, then name it.",
+      "type": "Type",
+      "name": "Pipeline name",
+      "namePlaceholder": "e.g. Sales",
+      "submit": "Create pipeline",
+      "success": "Pipeline created"
+    },
+    "menu": {
+      "open": "Pipeline actions",
+      "rename": "Rename",
+      "duplicate": "Duplicate",
+      "delete": "Delete"
+    },
+    "rename": {
+      "title": "Rename pipeline",
+      "submit": "Rename",
+      "success": "Pipeline renamed"
+    },
+    "duplicate": {
+      "success": "Pipeline duplicated"
+    },
+    "delete": {
+      "title": "Delete pipeline",
+      "description": "{name} and all its stages and items will be deleted. This can't be undone.",
+      "success": "Pipeline deleted"
+    },
+    "board": {
+      "title": "Board",
+      "count": "{count, plural, one {# item} other {# items}}",
+      "total": "Total {value}",
+      "search": "Search by title, number or contact",
+      "sort": "Sort",
+      "filter": "Filter",
+      "analytics": "Analytics",
+      "settings": "Settings",
+      "emptyStage": "Drag and drop a card here to move it to this stage.",
+      "loadMore": "Load more",
+      "loadMoreFailed": "Could not load more items",
+      "error": "Could not load the board",
+      "processing": "Processing this stage…",
+      "moveFailed": "Could not move the card",
+      "sortOptions": {
+        "createdAtDesc": "Date created (New to Old)",
+        "createdAtAsc": "Date created (Old to New)",
+        "updatedAtDesc": "Update date (New to Old)",
+        "valueDesc": "Opportunity value (High to Low)",
+        "valueAsc": "Opportunity value (Low to High)",
+        "dueDateAsc": "Due date (Soonest to Latest)",
+        "dueDateDesc": "Due date (Latest to Soonest)",
+        "priorityDesc": "Priority (High to Low)",
+        "priorityAsc": "Priority (Low to High)",
+        "updatedAtAsc": "Update date (Old to New)"
+      },
+      "searchAction": "Search",
+      "closeSearch": "Close search",
+      "cardMenu": "Card actions",
+      "moveTo": "Move to",
+      "unknownContact": "Unknown contact",
+      "staleError": "Could not refresh the board. What you see may be out of date."
+    },
+    "stage": {
+      "add": "Add stage",
+      "name": "Stage name",
+      "namePlaceholder": "Stage name",
+      "menu": "Stage actions",
+      "edit": "Edit stage",
+      "delete": "Delete stage",
+      "deleteTitle": "Delete stage",
+      "deleteDescription": "{name} and all items on it will be deleted. This action can't be undone.",
+      "moveItemsTo": "Move items to",
+      "deleteItemsToo": "Delete the items too",
+      "description": "Description",
+      "textColor": "Text color",
+      "backgroundColor": "Background color",
+      "saved": "Stage saved",
+      "deleted": "Stage deleted",
+      "queued": "The stage is being cleared in the background.",
+      "resetColor": "Default",
+      "deleteMoveDescription": "{name} will be deleted. Its items move to {target}.",
+      "rename": "Rename",
+      "settings": "Settings",
+      "general": "General",
+      "color": "Color",
+      "cancel": "Cancel"
+    },
+    "priority": {
+      "low": "Low",
+      "medium": "Medium",
+      "high": "High"
+    },
+    "item": {
+      "loading": "Loading…",
+      "error": "Could not load this item",
+      "title": "Title",
+      "status": "Status",
+      "stage": "Stage",
+      "priority": "Priority",
+      "value": "Value",
+      "dueDate": "Due date",
+      "assignees": "Assigned admins",
+      "description": "Description",
+      "attachments": "Attachments",
+      "attach": "Attach files",
+      "noAttachments": "No attachments",
+      "removeAttachment": "Remove attachment",
+      "removeAttachmentDescription": "The file is removed from this item but stays in the media library.",
+      "comments": "Comments",
+      "addComment": "Add comment",
+      "commentPlaceholder": "Write a comment…",
+      "noComments": "No comments yet",
+      "deleteComment": "Delete comment",
+      "deleteCommentDescription": "This comment will be deleted. This can't be undone.",
+      "activity": "Activity",
+      "noActivity": "No activity yet",
+      "transfer": "Transfer to pipeline",
+      "transferTitle": "Transfer to another pipeline",
+      "transferDescription": "The item keeps its number and creation date. Custom fields carry over when the other pipeline has a field with the same reference name and type.",
+      "destinationPipeline": "Destination pipeline",
+      "destinationStage": "Destination stage",
+      "firstStage": "First stage",
+      "choose": "Choose…",
+      "transferred": "Item transferred",
+      "delete": "Delete",
+      "deleteDescription": "One item will be deleted. This can't be undone.",
+      "deleted": "Item deleted",
+      "number": "Number",
+      "createdBy": "Created by",
+      "createdByValue": "{name} on {date}",
+      "inbox": "Inbox",
+      "moreActions": "More actions",
+      "noDescription": "No description",
+      "yes": "Yes",
+      "no": "No",
+      "assigneesMembers": "Agents",
+      "assigneesTeams": "Inbox teams",
+      "assigneesSearch": "Search admins or teams…",
+      "assigneesEmpty": "No results",
+      "assigneesPlaceholder": "Select admins or teams",
+      "olderComments": "Show older comments",
+      "olderActivity": "Show older activity",
+      "activityFilter": "Filter",
+      "activityFilterCount": "{count, plural, one {# filter} other {# filters}}",
+      "activityFilterClear": "Show all",
+      "noFilteredActivity": "No activity matches this filter.",
+      "activityGroup": {
+        "lifecycle": "Created & transferred",
+        "stage": "Stage",
+        "status": "Status",
+        "value": "Value",
+        "priority": "Priority",
+        "dueDate": "Due date",
+        "details": "Title, description & fields",
+        "assignees": "Assignees",
+        "comments": "Comments",
+        "attachments": "Attachments"
+      }
+    },
+    "activity": {
+      "created": "Created",
+      "stageChanged": "Moved to another stage",
+      "statusChanged": "Status changed",
+      "valueChanged": "Value changed",
+      "priorityChanged": "Priority changed",
+      "dueDateChanged": "Due date changed",
+      "titleChanged": "Title changed",
+      "descriptionChanged": "Description changed",
+      "fieldValuesChanged": "Custom fields changed",
+      "assigneesChanged": "Assignees changed",
+      "attachmentAdded": "Attachment added",
+      "attachmentRemoved": "Attachment removed",
+      "commentAdded": "Comment added",
+      "commentDeleted": "Comment deleted",
+      "transferred": "Transferred from another pipeline",
+      "deleted": "Deleted"
+    },
+    "activityActor": {
+      "flow": "Flow",
+      "trigger": "Trigger",
+      "workspaceToken": "API",
+      "system": "System",
+      "formerMember": "Former member"
+    },
+    "add": {
+      "changeContact": "Choose another contact",
+      "success": "Created",
+      "stepContact": "Select a contact",
+      "stepDetails": "{noun} details",
+      "contact": "Contact",
+      "addNewContact": "Add New"
+    },
+    "filter": {
+      "title": "Filter",
+      "status": "Status",
+      "statusLabels": {
+        "open": "Open",
+        "won": "Won",
+        "lost": "Lost"
+      },
+      "priority": "Priority",
+      "assignee": "Assigned admins",
+      "value": "{noun} value",
+      "min": "Min",
+      "max": "Max",
+      "dueDate": "Due date",
+      "createdAt": "Date created",
+      "from": "From",
+      "to": "To",
+      "clear": "Clear filters",
+      "apply": "Apply",
+      "back": "Back",
+      "updatedAt": "Date updated",
+      "resolvedOn": "{noun} resolved on",
+      "statusChangedOn": "Status changed on",
+      "stageChangedOn": "Stage changed on",
+      "lastCommentOn": "Last comment on",
+      "customFields": "Custom fields",
+      "any": "Any",
+      "yes": "Yes",
+      "no": "No",
+      "notResolvedOn": "{noun} not resolved on",
+      "equal": "Equal",
+      "different": "Different",
+      "reset": "Reset",
+      "presets": {
+        "thisWeek": "This week",
+        "lastWeek": "Last week",
+        "last14": "Last 14 days",
+        "thisYear": "This year",
+        "lastYear": "Last year",
+        "tomorrow": "Tomorrow",
+        "next7": "In 7 days",
+        "next14": "In 14 days",
+        "next30": "In 30 days",
+        "allTime": "All time"
+      },
+      "pickDate": "Pick a date",
+      "activity": "Activity",
+      "activityKinds": "Type of change",
+      "activityActors": "Done by",
+      "activityWhen": "When",
+      "activityAutomation": "Automation"
+    },
+    "analytics": {
+      "title": "Analytics",
+      "loading": "Loading statistics…",
+      "error": "Could not load statistics",
+      "created": "Created",
+      "won": "Won",
+      "wonValue": "Won value",
+      "lost": "Lost",
+      "lostValue": "Lost value",
+      "admin": "Admin",
+      "automation": "Automation",
+      "back": "Back",
+      "admins": "Admins",
+      "chart": {
+        "created": "New per day",
+        "won": "Won per day",
+        "lost": "Lost per day",
+        "wonValue": "Won value per day",
+        "lostValue": "Lost value per day"
+      },
+      "pie": {
+        "created": "Created by admin",
+        "won": "Won by admin",
+        "lost": "Lost by admin",
+        "other": "Other",
+        "empty": "No data"
+      }
+    },
+    "settings": {
+      "title": "Pipeline settings",
+      "general": "General",
+      "fields": "Custom fields",
+      "display": "Display",
+      "permissions": "Permissions",
+      "saved": "Settings saved",
+      "referenceName": "Reference name",
+      "referenceNameHint": "Used in the pipelines.reference_name.stage_name variables. Changing it breaks messages that use the old name.",
+      "referenceNameFormat": "Use lowercase letters, numbers and underscores, starting with a letter (e.g. close_date).",
+      "assignContact": "Assign the contact to an admin when an item is assigned",
+      "limit": "Limit open items per contact",
+      "statusLabels": "Status labels",
+      "status": {
+        "open": "Open",
+        "won": "Won",
+        "lost": "Lost"
+      },
+      "features": "Visible features",
+      "cardElements": "Card elements",
+      "card": {
+        "contactPhone": "Contact phone",
+        "contactEmail": "Contact email",
+        "createdAt": "Date created",
+        "updatedAt": "Date updated",
+        "assignees": "Assigned admins",
+        "comments": "Comments",
+        "cardId": "Item number",
+        "priority": "Priority",
+        "value": "Value",
+        "dueDate": "Due date"
+      },
+      "noFields": "No custom fields yet",
+      "fieldName": "Field name",
+      "fieldReference": "Reference name",
+      "fieldType": "Field type",
+      "required": "Required",
+      "requiredShort": "required",
+      "addField": "Add field",
+      "fieldAdded": "Field added",
+      "deleteField": "Delete field",
+      "permissionsHint": "Workspace owners and admins always have full access. Grant other members what they may do in this pipeline.",
+      "revoke": "Revoke",
+      "permission": {
+        "view": "View",
+        "edit": "Edit",
+        "delete": "Delete",
+        "settings": "Settings"
+      },
+      "noMembers": "No other members to configure",
+      "confirmDeleteField": "Delete this field and all its values on every item?",
+      "adminPermissions": "Admin permissions",
+      "cardVisibleElements": "Card visible elements"
+    },
+    "panel": {
+      "empty": "No pipeline items for this contact",
+      "error": "Could not load pipeline items",
+      "choosePipeline": "Choose a pipeline",
+      "add": "Add New"
+    },
+    "variables": {
+      "group": "Pipelines",
+      "attributes": {
+        "name": "Item name",
+        "stageName": "Stage",
+        "status": "Status",
+        "priority": "Priority",
+        "value": "Value",
+        "assignedAdmins": "Assigned admins",
+        "createdDate": "Created date",
+        "dueDate": "Due date",
+        "updatedDate": "Updated date",
+        "id": "Item ID"
+      }
+    }
   }
 }

@@ -10,6 +10,7 @@ import type {
   CommerceEventProduct,
   MatchableEventType,
   OrderEventMetadata,
+  PipelineItemEventMetadata,
   ShoppingCartSentMetadata,
   UserAskedAboutProductMetadata,
 } from "@chatbotx.io/events"
@@ -69,6 +70,15 @@ const EVENT_NAMES = {
   [triggerEventTypes.enum.productRemovedFromCart]: "product_removed_from_cart",
   [triggerEventTypes.enum.categoryAddedToCart]: "category_added_to_cart",
   [triggerEventTypes.enum.cartAbandoned]: "cart_abandoned",
+  [triggerEventTypes.enum.pipelineItemCreated]: "pipeline_item_created",
+  [triggerEventTypes.enum.pipelineItemMovedToStage]:
+    "pipeline_item_moved_to_stage",
+  [triggerEventTypes.enum.pipelineItemValueChanged]:
+    "pipeline_item_value_changed",
+  [triggerEventTypes.enum.pipelineItemStatusChanged]:
+    "pipeline_item_status_changed",
+  [triggerEventTypes.enum.pipelineItemPriorityChanged]:
+    "pipeline_item_priority_changed",
 } satisfies Record<MatchableEventType, string>
 
 async function buildTagPayload(
@@ -240,6 +250,52 @@ function buildOrderPayload(
   }
 }
 
+const omitUndefined = (
+  record: Record<string, unknown>,
+): Record<string, unknown> =>
+  Object.fromEntries(
+    Object.entries(record).filter(([, value]) => value !== undefined),
+  )
+
+// Explicit fields, like the order events: never `contactInboxId`, and the
+// previous* keys appear only on the event that changed that attribute.
+function buildPipelineItemPayload(
+  basePayload: WebhookPayloadBase,
+  data: Record<string, unknown>,
+): WebhookPayload {
+  const item = data as PipelineItemEventMetadata
+  return {
+    ...basePayload,
+    pipeline_id: item.pipelineId,
+    pipeline_name: item.pipelineName,
+    pipeline_reference_name: item.pipelineReferenceName,
+    item_id: item.itemId,
+    item_number: item.itemNumber,
+    title: item.title,
+    stage_id: item.stageId,
+    stage_name: item.stageName,
+    status: item.status,
+    status_label: item.statusLabel,
+    priority: item.priority,
+    value: item.value,
+    currency: item.currency,
+    due_date: item.dueDate,
+    actor_kind: item.actorKind,
+    actor_user_id: item.actorUserId,
+    ...omitUndefined({
+      from_stage_id: item.fromStageId,
+      from_stage_name:
+        item.fromStageId === undefined
+          ? undefined
+          : (item.fromStageName ?? null),
+      from_pipeline_id: item.fromPipelineId,
+      previous_status: item.previousStatus,
+      previous_value: item.previousValue,
+      previous_priority: item.previousPriority,
+    }),
+  }
+}
+
 function buildCartItemPayload(
   basePayload: WebhookPayloadBase,
   data: Record<string, unknown>,
@@ -365,6 +421,12 @@ const PAYLOAD_BUILDERS = {
   [triggerEventTypes.enum.productRemovedFromCart]: buildCartItemPayload,
   [triggerEventTypes.enum.categoryAddedToCart]: buildCartItemPayload,
   [triggerEventTypes.enum.cartAbandoned]: buildCartAbandonedPayload,
+  [triggerEventTypes.enum.pipelineItemCreated]: buildPipelineItemPayload,
+  [triggerEventTypes.enum.pipelineItemMovedToStage]: buildPipelineItemPayload,
+  [triggerEventTypes.enum.pipelineItemValueChanged]: buildPipelineItemPayload,
+  [triggerEventTypes.enum.pipelineItemStatusChanged]: buildPipelineItemPayload,
+  [triggerEventTypes.enum.pipelineItemPriorityChanged]:
+    buildPipelineItemPayload,
 } satisfies Record<MatchableEventType, PayloadBuilder>
 
 /**

@@ -5,7 +5,7 @@ import { Label } from "@chatbotx.io/ui/components/ui/label"
 import { Textarea } from "@chatbotx.io/ui/components/ui/textarea"
 import { useTranslations } from "next-intl"
 import { useState } from "react"
-import { ConfirmDialog } from "../confirm-dialog"
+import { ConfirmDialog } from "@/components/confirm-dialog"
 
 /** Whether the adjust form can be confirmed: a non-zero whole delta and a reason. */
 export function canSubmitAdjustment(delta: string, reason: string) {

@@ -1,8 +1,13 @@
-import { zodBigintAsString } from "@chatbotx.io/utils"
+import { zodBigintAsString, zodBigintIdAsString } from "@chatbotx.io/utils"
 import { channelTypes } from "@chatbotx.io/utils/channel"
 import { z } from "zod"
 import { countMessageCharacters } from "../channel-rules/characters"
 import { BUTTON_LABEL_MAX } from "../steps/button"
+import {
+  PIPELINE_STEP_LIMITS,
+  pipelineActionCanSkip,
+  pipelineStepActions,
+} from "../steps/pipeline"
 import { sendProductsDisplays } from "../steps/send-products"
 import { sendViewCatalogStepSchema } from "../steps/send-view-catalog"
 import { waitStepDelayUnits } from "../steps/wait"
@@ -11,6 +16,36 @@ import { flowValidationCodes } from "../validation-codes"
 const MAX_SPEC_BUTTONS = 3
 const MAX_SPEC_TEXT_LENGTH = 1000
 const MAX_FLOW_NAME_LENGTH = 255
+
+/** Due date source of a `pipeline` spec step; the custom field is referenced by name. */
+export type PipelineSpecDueDate =
+  | { mode: "none" }
+  | { mode: "fixed"; at: string }
+  | { mode: "customField"; customFieldName: string }
+
+export type PipelineStepSpec = {
+  type: "pipeline"
+  id?: string
+  action: z.infer<typeof pipelineStepActions>
+  pipeline: string
+  title?: string
+  description?: string
+  status?: "open" | "won" | "lost"
+  priority?: "low" | "medium" | "high"
+  stage?: string
+  assigneeMemberIds?: string[]
+  assigneeInboxTeamIds?: string[]
+  dueDate?: PipelineSpecDueDate
+  fieldValues?: Array<{ field: string; value: string }>
+  value?: string
+  field?: string
+  fields?: string[]
+  text?: string
+  destinationPipeline?: string
+  destinationStage?: string
+  onError?: FlowStepSpec[]
+  onSkip?: FlowStepSpec[]
+}
 
 /**
  * The agent-facing flow DSL. A small, deliberately curated subset of the
@@ -84,6 +119,7 @@ export type FlowStepSpec =
       value?: string
       assigneeId?: string
     }
+  | PipelineStepSpec
   | { type: "startFlow"; id?: string; flowName: string }
   | { type: "addNote"; id?: string; note: string }
   | { type: "goto"; targetId: string }
@@ -399,6 +435,280 @@ const actionStepSpecSchema = z
     "Performs a workspace side-effect: tag, custom field, or conversation action.",
   )
 
+/** Spec fields each pipeline action accepts (besides type/id/action/pipeline/onError/onSkip). */
+const PIPELINE_ACTION_FIELDS = {
+  addToPipeline: {
+    required: [],
+    optional: [
+      "title",
+      "description",
+      "status",
+      "stage",
+      "assigneeMemberIds",
+      "assigneeInboxTeamIds",
+      "dueDate",
+      "fieldValues",
+    ],
+  },
+  moveToStage: { required: ["stage"], optional: [] },
+  changeValue: { required: ["value"], optional: [] },
+  assign: {
+    required: [],
+    optional: ["assigneeMemberIds", "assigneeInboxTeamIds"],
+    // The runtime rejects an assign with nobody to assign (flow-actions.ts).
+    requireOneOf: ["assigneeMemberIds", "assigneeInboxTeamIds"],
+  },
+  changeStatus: { required: ["status"], optional: [] },
+  changePriority: { required: ["priority"], optional: [] },
+  changeDueDate: { required: ["dueDate"], optional: [] },
+  changeTitle: { required: ["title"], optional: [] },
+  setCustomField: { required: ["field", "value"], optional: [] },
+  clearCustomField: { required: ["fields"], optional: [] },
+  changeDescription: { required: ["description"], optional: [] },
+  removeFromPipeline: { required: [], optional: [] },
+  addComment: { required: ["text"], optional: [] },
+  transfer: {
+    required: ["destinationPipeline"],
+    optional: ["destinationStage"],
+  },
+} as const satisfies Record<
+  z.infer<typeof pipelineStepActions>,
+  {
+    required: readonly string[]
+    optional: readonly string[]
+    /** At least one of these must be present and non-empty. */
+    requireOneOf?: readonly string[]
+  }
+>
+
+const PIPELINE_ACTION_SPECIFIC_FIELDS = [
+  "title",
+  "description",
+  "status",
+  "priority",
+  "stage",
+  "assigneeMemberIds",
+  "assigneeInboxTeamIds",
+  "dueDate",
+  "fieldValues",
+  "value",
+  "field",
+  "fields",
+  "text",
+  "destinationPipeline",
+  "destinationStage",
+] as const
+
+const pipelineDueDateSpecSchema = z
+  .discriminatedUnion("mode", [
+    z.object({ mode: z.literal("none").describe("No due date.") }),
+    z.object({
+      mode: z.literal("fixed").describe("A fixed instant."),
+      at: z.iso.datetime({ offset: true }).describe("Fixed ISO-8601 instant."),
+    }),
+    z.object({
+      mode: z
+        .literal("customField")
+        .describe("Read from a contact date custom field."),
+      customFieldName: z
+        .string()
+        .trim()
+        .min(1)
+        .describe(
+          "Name of a contact custom field of type date or datetime (see `contacts.listCustomFields`); a blank value clears the due date.",
+        ),
+    }),
+  ])
+  .describe(
+    'Due date: `{ mode: "none" }` leaves/clears it, `{ mode: "fixed", at }` sets an instant, `{ mode: "customField", customFieldName }` reads it from a contact date custom field.',
+  )
+
+const pipelineMemberIdsSpec = zodBigintIdAsString()
+  .array()
+  .max(PIPELINE_STEP_LIMITS.assignees)
+
+const pipelineStepSpecSchema = z
+  .object({
+    type: stepTypeLiteral("pipeline"),
+    id: stepIdField,
+    action: pipelineStepActions.describe(
+      "Which pipeline action to run. Every action except `addToPipeline` acts on the contact's most recently created OPEN item in `pipeline`; with no open item the step takes the `onSkip` path.",
+    ),
+    pipeline: z
+      .string()
+      .trim()
+      .min(1)
+      .describe(
+        "The pipeline, by `referenceName` (or id). Get both from `pipelines.list` / `pipelines.get`.",
+      ),
+    title: z
+      .string()
+      .max(PIPELINE_STEP_LIMITS.title)
+      .optional()
+      .describe(
+        "Item title; accepts {{variables}}. `addToPipeline` (default `{{full_name}}`), `changeTitle` (required).",
+      ),
+    description: z
+      .string()
+      .max(PIPELINE_STEP_LIMITS.description)
+      .optional()
+      .describe(
+        "Item description. `addToPipeline` (optional), `changeDescription` (required; empty clears it).",
+      ),
+    status: z
+      .enum(["open", "won", "lost"])
+      .optional()
+      .describe(
+        "Item status. `addToPipeline` (default open), `changeStatus` (required).",
+      ),
+    priority: z
+      .enum(["low", "medium", "high"])
+      .optional()
+      .describe("Item priority. Required for `changePriority`."),
+    stage: z
+      .string()
+      .trim()
+      .min(1)
+      .optional()
+      .describe(
+        "Stage NAME within `pipeline` (from `pipelines.get`). Required for `moveToStage`; optional for `addToPipeline` (default: the first stage). Rejected as ambiguous when two stages share the name.",
+      ),
+    assigneeMemberIds: pipelineMemberIdsSpec
+      .optional()
+      .describe(
+        "Workspace member ids to assign (from `workspaceMembers.list`). `addToPipeline`, `assign` (replaces the assignees).",
+      ),
+    assigneeInboxTeamIds: pipelineMemberIdsSpec
+      .optional()
+      .describe(
+        "Inbox team ids to assign (from `inboxTeams.list`). `addToPipeline`, `assign` (replaces the teams).",
+      ),
+    dueDate: pipelineDueDateSpecSchema
+      .optional()
+      .describe(
+        "Due date. `changeDueDate` (required), `addToPipeline` (default none).",
+      ),
+    fieldValues: z
+      .array(
+        z.object({
+          field: z
+            .string()
+            .trim()
+            .min(1)
+            .describe("Pipeline custom field `referenceName`."),
+          value: z.string().describe("Value; accepts {{variables}}."),
+        }),
+      )
+      .max(PIPELINE_STEP_LIMITS.maxFieldIds)
+      .optional()
+      .describe(
+        "Pipeline custom field values set on the new item (`addToPipeline`).",
+      ),
+    value: z
+      .string()
+      .optional()
+      .describe(
+        "`changeValue`: opportunity value, a number >= 0 ({{variables}} allowed). `setCustomField`: the field value.",
+      ),
+    field: z
+      .string()
+      .trim()
+      .min(1)
+      .optional()
+      .describe(
+        "Pipeline custom field `referenceName` (from `pipelines.get`). Required for `setCustomField`.",
+      ),
+    fields: z
+      .array(z.string().trim().min(1))
+      .max(PIPELINE_STEP_LIMITS.maxFieldIds)
+      .optional()
+      .describe(
+        "Pipeline custom field `referenceName`s to clear. Required (non-empty) for `clearCustomField`.",
+      ),
+    text: z
+      .string()
+      .max(PIPELINE_STEP_LIMITS.comment)
+      .optional()
+      .describe(
+        "Comment text; accepts {{variables}}. Required for `addComment`.",
+      ),
+    destinationPipeline: z
+      .string()
+      .trim()
+      .min(1)
+      .optional()
+      .describe(
+        "Target pipeline, by `referenceName` (or id). Required for `transfer`.",
+      ),
+    destinationStage: z
+      .string()
+      .trim()
+      .min(1)
+      .optional()
+      .describe(
+        "Stage NAME in `destinationPipeline`. Optional for `transfer` (default: its first stage).",
+      ),
+    onError: z
+      .array(z.lazy(() => flowStepSpecSchema))
+      .optional()
+      .describe(
+        "Steps to run when the action fails (invalid input, unknown pipeline/stage, conflict). Omitted: the flow continues to the next step.",
+      ),
+    onSkip: z
+      .array(z.lazy(() => flowStepSpecSchema))
+      .optional()
+      .describe(
+        "Steps to run when the contact has no open item in `pipeline`. Not allowed for `addToPipeline`, which never skips.",
+      ),
+  })
+  .superRefine((data, ctx) => {
+    const rules = PIPELINE_ACTION_FIELDS[data.action]
+    const allowed = new Set<string>([...rules.required, ...rules.optional])
+    for (const key of PIPELINE_ACTION_SPECIFIC_FIELDS) {
+      if (data[key] !== undefined && !allowed.has(key)) {
+        ctx.addIssue({
+          code: "custom",
+          message: `action "${data.action}" does not accept ${key}`,
+          path: [key],
+        })
+      }
+    }
+    for (const key of rules.required) {
+      const value = (data as Record<string, unknown>)[key]
+      const isEmptyList = Array.isArray(value) && value.length === 0
+      if (value === undefined || isEmptyList) {
+        ctx.addIssue({
+          code: "custom",
+          message: `action "${data.action}" requires ${key}${isEmptyList ? " to be non-empty" : ""}`,
+          path: [key],
+        })
+      }
+    }
+    const oneOf: readonly string[] =
+      "requireOneOf" in rules ? rules.requireOneOf : []
+    const hasValue = (key: string) => {
+      const value = (data as Record<string, unknown>)[key]
+      return Array.isArray(value) ? value.length > 0 : value !== undefined
+    }
+    if (oneOf.length > 0 && !oneOf.some(hasValue)) {
+      ctx.addIssue({
+        code: "custom",
+        message: `action "${data.action}" requires at least one of ${oneOf.join(", ")}`,
+        path: [oneOf[0] ?? "action"],
+      })
+    }
+    if (data.onSkip !== undefined && !pipelineActionCanSkip(data.action)) {
+      ctx.addIssue({
+        code: "custom",
+        message: `action "${data.action}" never skips, so onSkip would never run`,
+        path: ["onSkip"],
+      })
+    }
+  })
+  .describe(
+    "Runs a Pipelines (CRM kanban) action for the contact: addToPipeline, moveToStage, changeValue, assign, changeStatus, changePriority, changeDueDate, changeTitle, setCustomField, clearCustomField, changeDescription, removeFromPipeline, addComment or transfer. Pipelines, stages and fields are referenced by name/referenceName (see `pipelines.list` / `pipelines.get`). Success continues to the next step; `onError` / `onSkip` hold the steps for those outcomes.",
+  )
+
 const startFlowStepSpecSchema = z
   .object({
     type: stepTypeLiteral("startFlow"),
@@ -456,6 +766,7 @@ const flowStepSpecOptions = [
   waitStepSpecSchema,
   branchStepSpecSchema,
   actionStepSpecSchema,
+  pipelineStepSpecSchema,
   startFlowStepSpecSchema,
   addNoteStepSpecSchema,
   gotoStepSpecSchema,
@@ -464,7 +775,7 @@ const flowStepSpecOptions = [
 const flowStepSpecSchema: z.ZodType<FlowStepSpec> = z
   .discriminatedUnion("type", flowStepSpecOptions)
   .describe(
-    "One flow step. The `type` field selects the step kind: send, sendTemplate, sendProducts, sendViewCatalog, wait, branch, action, startFlow, addNote or goto.",
+    "One flow step. The `type` field selects the step kind: send, sendTemplate, sendProducts, sendViewCatalog, wait, branch, action, pipeline, startFlow, addNote or goto.",
   )
 
 export type FlowSpecStepType = { type: string; description: string }

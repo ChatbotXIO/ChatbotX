@@ -45,13 +45,20 @@ const userIdPlaceholderKey = (channel: ChannelType) => {
   }
 }
 
+/** The contact a successful create hands back to its caller. */
+export type CreatedContact = {
+  id: string
+  fullName?: string | null
+  avatar?: string | null
+}
+
 export function CreateContactForm({
   workspaceId,
   onSubmmited,
   onCancelled,
 }: {
   workspaceId: string
-  onSubmmited?: () => void
+  onSubmmited?: (contact: CreatedContact) => void
   onCancelled?: () => void
 }) {
   const t = useTranslations()
@@ -89,14 +96,14 @@ export function CreateContactForm({
       zodResolver(createContactRequest),
       {
         actionProps: {
-          onSuccess: () => {
+          onSuccess: ({ data }) => {
             resetFormAndAction()
             toast.success(
               t("messages.createdSuccess", {
                 feature: t("fields.contact.label"),
               }),
             )
-            onSubmmited?.()
+            onSubmmited?.(data)
           },
           onError: ({ error }) => {
             if (error.serverError) {

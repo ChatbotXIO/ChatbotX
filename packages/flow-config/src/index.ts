@@ -3,6 +3,7 @@ export {
   type CompiledFlow,
   compileFlowSpec,
   type FlowAuthoringContext,
+  type FlowAuthoringPipeline,
 } from "./authoring/compile"
 export {
   type FlowAuthoringError,
@@ -26,6 +27,8 @@ export {
   type FlowStepSpec,
   flowSpecSchema,
   flowSpecStepTypes,
+  type PipelineSpecDueDate,
+  type PipelineStepSpec,
 } from "./authoring/spec-schema"
 export * from "./channel-rules/channel-step-refinement"
 export * from "./channel-rules/channel-validator"
@@ -128,6 +131,7 @@ export * from "./steps/open-mini-app"
 export * from "./steps/open-website"
 export * from "./steps/opt-in-email"
 export * from "./steps/opt-out-email"
+export * from "./steps/pipeline"
 export * from "./steps/questionnaires"
 export * from "./steps/quick-reply-settings"
 export * from "./steps/remove-contact-tag"

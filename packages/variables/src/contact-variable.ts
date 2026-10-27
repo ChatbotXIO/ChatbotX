@@ -17,6 +17,11 @@ import {
 import { loadBotFields } from "./bot-field-variable-resolver"
 import { isCouponVariable, resolveCouponVariable } from "./coupon-variable"
 import { logger } from "./logger"
+import {
+  createContactPipelineItemsLoader,
+  isPipelineVariable,
+  resolvePipelineVariable,
+} from "./pipeline-variable"
 import type { ContactCustomFieldValue, ReplaceVariableProps } from "./schema"
 import {
   extractVariables,
@@ -100,11 +105,18 @@ const couponResolver: VariableResolver = {
     await resolveCouponVariable(context, variable),
 }
 
+const pipelineResolver: VariableResolver = {
+  matches: (variable) => isPipelineVariable(variable),
+  resolve: async (variable, context, timezone) =>
+    await resolvePipelineVariable(context, variable, timezone),
+}
+
 const variableResolvers = [
   systemFieldResolver,
   rawCustomFieldResolver,
   botFieldResolver,
   customFieldResolver,
+  pipelineResolver,
   couponResolver,
 ] as const satisfies readonly VariableResolver[]
 
@@ -205,6 +217,7 @@ export const contactVariableService = {
       customFieldsMap,
       botFieldsMap,
       workspace,
+      pipelineItems: createContactPipelineItemsLoader(contact),
     }
   },
 
@@ -214,16 +227,17 @@ export const contactVariableService = {
     /** Escapes each resolved value before it is put into `text`. */
     escapeValue?: (value: string) => string
   }): Promise<string> => {
-    const { variables: context, text, escapeValue } = props
+    const { variables, text, escapeValue } = props
     // Temporal custom fields render in the contact's timezone, falling back to
     // the workspace timezone (then UTC) — an outgoing message should read in the
     // recipient's local time when we know it. See getContactTimezone.
-    const renderTimezone = getContactTimezone(context)
+    const renderTimezone = getContactTimezone(variables)
 
     try {
       const mapping: Record<string, string> = {}
-      const variables = extractVariables(text)
-      for (const variable of variables) {
+      const names = extractVariables(text)
+      const context = variables
+      for (const variable of names) {
         const resolver = variableResolvers.find((candidate) =>
           candidate.matches(variable, context),
         )

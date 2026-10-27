@@ -949,7 +949,8 @@
       "ctwaConversionTypes": {
         "lead": "Cliente potencial",
         "purchase": "Compra"
-      }
+      },
+      "pipelineItem": "Elemento del pipeline"
     },
     "fieldGroups": {
       "opportunity": "Oportunidad",
@@ -966,7 +967,8 @@
       "botFields": "Campos del bot",
       "email": "Correo",
       "sms": "SMS",
-      "ctwaAds": "Anuncios"
+      "ctwaAds": "Anuncios",
+      "pipeline": "Pipelines"
     },
     "languages": {
       "ar": "Árabe",
@@ -1014,7 +1016,21 @@
       "allAds": "todos los anuncios"
     },
     "noTopic": "Sin tema",
-    "trackingSince": "Registrado desde {date}. No incluye la actividad anterior."
+    "trackingSince": "Registrado desde {date}. No incluye la actividad anterior.",
+    "pipelineItem": {
+      "anyPipeline": "Cualquier pipeline",
+      "anyStatus": "Cualquier estado",
+      "attributes": {
+        "exists": "Elementos",
+        "status": "Estado del elemento",
+        "stage": "Etapa del elemento",
+        "priority": "Prioridad del elemento"
+      },
+      "operators": {
+        "has": "Tiene",
+        "hasNo": "No tiene"
+      }
+    }
   },
   "channels": {
     "title": "Canales",
@@ -2677,7 +2693,8 @@
       "ads": "Anuncios",
       "settings": "Ajustes",
       "miniApps": "Mini Apps",
-      "leaderboards": "Clasificaciones"
+      "leaderboards": "Clasificaciones",
+      "pipelines": "Canalizaciones"
     },
     "adReferral": {
       "label": "Ads",
@@ -2735,6 +2752,9 @@
     },
     "miniApp": {
       "label": "Mini App"
+    },
+    "lastOpportunityId": {
+      "label": "ID de la última oportunidad"
     },
     "adminName": {
       "label": "Nombre del admin que envía"
@@ -2949,7 +2969,8 @@
       "changeGamificationScore": "Cambiar puntos de gamificación",
       "sendViewCatalog": "Ver catálogo",
       "sendProducts": "Enviar productos",
-      "sendCollection": "Colección"
+      "sendCollection": "Colección",
+      "pipeline": "Pipelines"
     },
     "externalRequest": {
       "errors": {
@@ -3172,6 +3193,52 @@
       "summaryManual": "{count, plural, one {# producto} other {# productos}}",
       "cancel": "Cancelar",
       "save": "Guardar"
+    },
+    "pipelineStep": {
+      "action": "Acción",
+      "pipeline": "Pipeline",
+      "targetHint": "Actúa sobre el último elemento abierto del contacto en este pipeline. Se ejecuta la ruta Omitir si no hay ninguno.",
+      "noPipelines": "No se encontraron pipelines",
+      "actions": {
+        "addToPipeline": "Añadir contacto al pipeline",
+        "moveToStage": "Mover a una etapa",
+        "changeValue": "Cambiar valor",
+        "assign": "Asignar a administradores",
+        "changeStatus": "Cambiar estado",
+        "changePriority": "Cambiar prioridad",
+        "changeDueDate": "Cambiar fecha de vencimiento",
+        "changeTitle": "Cambiar título",
+        "setCustomField": "Establecer campo personalizado",
+        "clearCustomField": "Borrar campos personalizados",
+        "changeDescription": "Cambiar descripción",
+        "removeFromPipeline": "Quitar contacto del pipeline",
+        "addComment": "Añadir comentario",
+        "transfer": "Transferir a otro pipeline"
+      },
+      "title": "Título",
+      "description": "Descripción",
+      "stage": "Etapa",
+      "firstStage": "Primera etapa",
+      "status": "Estado",
+      "assigneeMembers": "Administradores asignados",
+      "assigneeTeams": "Equipos asignados",
+      "value": "Valor",
+      "priority": "Prioridad",
+      "dueDate": "Fecha de vencimiento",
+      "dueNone": "Ninguna",
+      "dueNoneHint": "El elemento no tiene fecha de vencimiento.",
+      "dueCustomField": "Desde un campo personalizado de fecha",
+      "dueFixed": "Fecha y hora fijas",
+      "dueField": "Campo personalizado de fecha o de fecha y hora",
+      "fieldValues": "Campos personalizados",
+      "field": "Campo",
+      "fieldValue": "Valor",
+      "fields": "Campos",
+      "addField": "Añadir valor de campo",
+      "removeHint": "Elimina el último elemento abierto del contacto en este pipeline.",
+      "comment": "Comentario",
+      "destinationPipeline": "Pipeline de destino",
+      "destinationStage": "Etapa de destino"
     }
   },
   "folders": {
@@ -5604,11 +5671,11 @@
       "incomingCall": "Llamada entrante",
       "missedAudioCall": "Llamada de voz perdida",
       "callEnded": "Llamada finalizada",
-      "ticketCreated": "Ticket Creado",
-      "ticketMovedToStage": "Ticket movido de etapa",
-      "ticketValueChanged": "Valor del ticket modificado",
-      "ticketStatusChanged": "Estado del ticket modificado",
-      "ticketPriorityChanged": "Prioridad del ticket modificada",
+      "pipelineItemCreated": "Ticket Creado",
+      "pipelineItemMovedToStage": "Ticket movido de etapa",
+      "pipelineItemValueChanged": "Valor del ticket modificado",
+      "pipelineItemStatusChanged": "Estado del ticket modificado",
+      "pipelineItemPriorityChanged": "Prioridad del ticket modificada",
       "subscribedToSequence": "Suscrito a una secuencia",
       "unsubscribedFromSequence": "Baja de una secuencia",
       "shoppingCartSent": "El contacto envió un carrito",
@@ -5628,7 +5695,11 @@
       "callRecorded": "Llamada grabada",
       "callTranscribed": "Llamada transcrita",
       "anyProduct": "Cualquier producto",
-      "anyCategory": "Cualquier categoría"
+      "anyCategory": "Cualquier categoría",
+      "anyPipeline": "Cualquier pipeline",
+      "anyStage": "Cualquier etapa",
+      "unavailablePipeline": "Pipeline eliminado o no disponible",
+      "unavailableStage": "Etapa eliminada o no disponible"
     },
     "actions": {
       "addTag": "Añadir Etiqueta",
@@ -5677,7 +5748,13 @@
     "countCapped": "{count}+ contactoos",
     "exportAllNotice": "Todos contactoos matching el current filter se be exported.",
     "exportTakingLong": "Export es taking longer than expected",
-    "exportTakingLongDescription": "The export es still processing. tú puede Cerrar este dialog y check back en un few minutos desde el export history."
+    "exportTakingLongDescription": "The export es still processing. tú puede Cerrar este dialog y check back en un few minutos desde el export history.",
+    "search": {
+      "placeholder": "Buscar (nombre, correo, teléfono, ID de contacto)",
+      "searching": "Buscando…",
+      "error": "No se pudo buscar contactos",
+      "empty": "No se encontraron contactos"
+    }
   },
   "contactScan": {
     "menu": {
@@ -10167,5 +10244,401 @@
     "metHelp": "Proporción de respuestas con SLA que lo cumplieron.",
     "eligibleCount": "{count} respuestas tenían SLA",
     "enable": "Activar SLA de respuesta"
+  },
+  "pipelines": {
+    "title": "Pipelines",
+    "retry": "Reintentar",
+    "save": "Guardar",
+    "saveFailed": "No se pudieron guardar tus cambios. Inténtalo de nuevo.",
+    "list": {
+      "name": "Nombre",
+      "type": "Tipo",
+      "items": "Elementos",
+      "add": "Añadir pipeline",
+      "empty": "Aún no hay pipelines",
+      "emptyHint": "Crea un pipeline para seguir negocios, tickets o cualquier proceso como tarjetas en un tablero.",
+      "error": "No se pudieron cargar los pipelines",
+      "contacts": "Contactos",
+      "addShort": "Añadir",
+      "description": "Sigue oportunidades, tickets o cualquier proceso como tarjetas que avanzan por etapas."
+    },
+    "types": {
+      "opportunity": {
+        "label": "Centro de oportunidades",
+        "description": "Sigue los negocios de venta por etapas. Primera etapa: Lead."
+      },
+      "ticket": {
+        "label": "Centro de soporte",
+        "description": "Gestiona solicitudes de soporte. Primera etapa: Nueva incidencia."
+      },
+      "custom": {
+        "label": "Tablero personalizado",
+        "description": "Crea tu propio proceso. Primera etapa: Entrada."
+      }
+    },
+    "noun": {
+      "opportunity": {
+        "one": "Oportunidad",
+        "many": "Oportunidades",
+        "add": "Añadir oportunidad"
+      },
+      "ticket": {
+        "one": "Ticket",
+        "many": "Tickets",
+        "add": "Añadir ticket"
+      },
+      "card": {
+        "one": "Tarjeta",
+        "many": "Tarjetas",
+        "add": "Añadir tarjeta"
+      }
+    },
+    "create": {
+      "title": "Nuevo pipeline",
+      "description": "Elige para qué sirve el tablero y ponle un nombre.",
+      "type": "Tipo",
+      "name": "Nombre del pipeline",
+      "namePlaceholder": "p. ej., Ventas",
+      "submit": "Crear pipeline",
+      "success": "Pipeline creado"
+    },
+    "menu": {
+      "open": "Acciones del pipeline",
+      "rename": "Renombrar",
+      "duplicate": "Duplicar",
+      "delete": "Eliminar"
+    },
+    "rename": {
+      "title": "Renombrar pipeline",
+      "submit": "Renombrar",
+      "success": "Pipeline renombrado"
+    },
+    "duplicate": {
+      "success": "Pipeline duplicado"
+    },
+    "delete": {
+      "title": "Eliminar pipeline",
+      "description": "Se eliminarán {name} y todas sus etapas y elementos. Esta acción no se puede deshacer.",
+      "success": "Pipeline eliminado"
+    },
+    "board": {
+      "title": "Tablero",
+      "count": "{count, plural, one {# elemento} other {# elementos}}",
+      "total": "Total {value}",
+      "search": "Buscar por título, número o contacto",
+      "sort": "Ordenar",
+      "filter": "Filtrar",
+      "analytics": "Analíticas",
+      "settings": "Ajustes",
+      "emptyStage": "Arrastra y suelta una tarjeta aquí para moverla a esta etapa.",
+      "loadMore": "Cargar más",
+      "loadMoreFailed": "No se pudieron cargar más elementos",
+      "error": "No se pudo cargar el tablero",
+      "processing": "Procesando esta etapa…",
+      "moveFailed": "No se pudo mover la tarjeta",
+      "sortOptions": {
+        "createdAtDesc": "Fecha de creación (Reciente a Antiguo)",
+        "createdAtAsc": "Fecha de creación (Antiguo a Reciente)",
+        "updatedAtDesc": "Fecha de actualización (Reciente a Antiguo)",
+        "valueDesc": "Valor de la oportunidad (Mayor a Menor)",
+        "valueAsc": "Valor de la oportunidad (Menor a Mayor)",
+        "dueDateAsc": "Fecha de vencimiento (Más próxima a Más lejana)",
+        "dueDateDesc": "Fecha de vencimiento (Más lejana a Más próxima)",
+        "priorityDesc": "Prioridad (Mayor a Menor)",
+        "priorityAsc": "Prioridad (Menor a Mayor)",
+        "updatedAtAsc": "Fecha de actualización (Antiguo a Reciente)"
+      },
+      "searchAction": "Buscar",
+      "closeSearch": "Cerrar búsqueda",
+      "cardMenu": "Acciones de la tarjeta",
+      "moveTo": "Mover a",
+      "unknownContact": "Contacto desconocido",
+      "staleError": "No se pudo actualizar el tablero. Lo que ves puede estar desactualizado."
+    },
+    "stage": {
+      "add": "Añadir etapa",
+      "name": "Nombre de la etapa",
+      "namePlaceholder": "Nombre de la etapa",
+      "menu": "Acciones de la etapa",
+      "edit": "Editar etapa",
+      "delete": "Eliminar etapa",
+      "deleteTitle": "Eliminar etapa",
+      "deleteDescription": "Se eliminarán {name} y todos los elementos que contiene. Esta acción no se puede deshacer.",
+      "moveItemsTo": "Mover elementos a",
+      "deleteItemsToo": "Eliminar también los elementos",
+      "description": "Descripción",
+      "textColor": "Color del texto",
+      "backgroundColor": "Color de fondo",
+      "saved": "Etapa guardada",
+      "deleted": "Etapa eliminada",
+      "queued": "La etapa se está vaciando en segundo plano.",
+      "resetColor": "Predeterminado",
+      "deleteMoveDescription": "Se eliminará {name}. Sus elementos se moverán a {target}.",
+      "rename": "Renombrar",
+      "settings": "Ajustes",
+      "general": "General",
+      "color": "Color",
+      "cancel": "Cancelar"
+    },
+    "priority": {
+      "low": "Baja",
+      "medium": "Media",
+      "high": "Alta"
+    },
+    "item": {
+      "loading": "Cargando…",
+      "error": "No se pudo cargar este elemento",
+      "title": "Título",
+      "status": "Estado",
+      "stage": "Etapa",
+      "priority": "Prioridad",
+      "value": "Valor",
+      "dueDate": "Fecha de vencimiento",
+      "assignees": "Administradores asignados",
+      "description": "Descripción",
+      "attachments": "Archivos adjuntos",
+      "attach": "Adjuntar archivos",
+      "noAttachments": "Sin archivos adjuntos",
+      "removeAttachment": "Quitar archivo adjunto",
+      "removeAttachmentDescription": "El archivo se quita de este elemento, pero sigue en la biblioteca de medios.",
+      "comments": "Comentarios",
+      "addComment": "Añadir comentario",
+      "commentPlaceholder": "Escribe un comentario…",
+      "noComments": "Aún no hay comentarios",
+      "deleteComment": "Eliminar comentario",
+      "deleteCommentDescription": "Este comentario se eliminará. No se puede deshacer.",
+      "activity": "Actividad",
+      "noActivity": "Aún no hay actividad",
+      "transfer": "Transferir al pipeline",
+      "transferTitle": "Transferir a otro pipeline",
+      "transferDescription": "El elemento conserva su número y fecha de creación. Los campos personalizados se mantienen cuando el otro pipeline tiene un campo con el mismo nombre de referencia y tipo.",
+      "destinationPipeline": "Pipeline de destino",
+      "destinationStage": "Etapa de destino",
+      "firstStage": "Primera etapa",
+      "choose": "Elegir…",
+      "transferred": "Elemento transferido",
+      "delete": "Eliminar",
+      "deleteDescription": "Se eliminará un elemento. Esta acción no se puede deshacer.",
+      "deleted": "Elemento eliminado",
+      "number": "Número",
+      "createdBy": "Creado por",
+      "createdByValue": "{name} el {date}",
+      "inbox": "Bandeja de entrada",
+      "moreActions": "Más acciones",
+      "noDescription": "Sin descripción",
+      "yes": "Sí",
+      "no": "No",
+      "assigneesMembers": "Agentes",
+      "assigneesTeams": "Equipos de la bandeja",
+      "assigneesSearch": "Buscar administradores o equipos…",
+      "assigneesEmpty": "Sin resultados",
+      "assigneesPlaceholder": "Selecciona administradores o equipos",
+      "olderComments": "Ver comentarios anteriores",
+      "olderActivity": "Ver actividad anterior",
+      "activityFilter": "Filtrar",
+      "activityFilterCount": "{count, plural, one {# filtro} other {# filtros}}",
+      "activityFilterClear": "Mostrar todo",
+      "noFilteredActivity": "Ninguna actividad coincide con este filtro.",
+      "activityGroup": {
+        "lifecycle": "Creación y transferencia",
+        "stage": "Etapa",
+        "status": "Estado",
+        "value": "Valor",
+        "priority": "Prioridad",
+        "dueDate": "Fecha de vencimiento",
+        "details": "Título, descripción y campos",
+        "assignees": "Responsables",
+        "comments": "Comentarios",
+        "attachments": "Adjuntos"
+      }
+    },
+    "activity": {
+      "created": "Creado",
+      "stageChanged": "Movido a otra etapa",
+      "statusChanged": "Estado cambiado",
+      "valueChanged": "Valor cambiado",
+      "priorityChanged": "Prioridad cambiada",
+      "dueDateChanged": "Fecha de vencimiento cambiada",
+      "titleChanged": "Título cambiado",
+      "descriptionChanged": "Descripción cambiada",
+      "fieldValuesChanged": "Campos personalizados cambiados",
+      "assigneesChanged": "Asignados cambiados",
+      "attachmentAdded": "Archivo adjunto añadido",
+      "attachmentRemoved": "Archivo adjunto quitado",
+      "commentAdded": "Comentario añadido",
+      "commentDeleted": "Comentario eliminado",
+      "transferred": "Transferido desde otro pipeline",
+      "deleted": "Eliminado"
+    },
+    "activityActor": {
+      "flow": "Flujo",
+      "trigger": "Disparador",
+      "workspaceToken": "API",
+      "system": "Sistema",
+      "formerMember": "Exmiembro"
+    },
+    "add": {
+      "changeContact": "Elegir otro contacto",
+      "success": "Creado",
+      "stepContact": "Selecciona un contacto",
+      "stepDetails": "Detalles de {noun}",
+      "contact": "Contacto",
+      "addNewContact": "Añadir nuevo"
+    },
+    "filter": {
+      "title": "Filtrar",
+      "status": "Estado",
+      "statusLabels": {
+        "open": "Abierto",
+        "won": "Ganado",
+        "lost": "Perdido"
+      },
+      "priority": "Prioridad",
+      "assignee": "Administradores asignados",
+      "value": "Valor de {noun}",
+      "min": "Mín.",
+      "max": "Máx.",
+      "dueDate": "Fecha de vencimiento",
+      "createdAt": "Fecha de creación",
+      "from": "Desde",
+      "to": "Hasta",
+      "clear": "Borrar filtros",
+      "apply": "Aplicar",
+      "back": "Atrás",
+      "updatedAt": "Fecha de actualización",
+      "resolvedOn": "{noun} resuelto el",
+      "statusChangedOn": "Estado cambiado el",
+      "stageChangedOn": "Etapa cambiada el",
+      "lastCommentOn": "Último comentario el",
+      "customFields": "Campos personalizados",
+      "any": "Cualquiera",
+      "yes": "Sí",
+      "no": "No",
+      "notResolvedOn": "{noun} no resuelto el",
+      "equal": "Igual a",
+      "different": "Distinto de",
+      "reset": "Restablecer",
+      "presets": {
+        "thisWeek": "Esta semana",
+        "lastWeek": "Semana pasada",
+        "last14": "Últimos 14 días",
+        "thisYear": "Este año",
+        "lastYear": "Año pasado",
+        "tomorrow": "Mañana",
+        "next7": "En 7 días",
+        "next14": "En 14 días",
+        "next30": "En 30 días",
+        "allTime": "Todo el tiempo"
+      },
+      "pickDate": "Elegir una fecha",
+      "activity": "Actividad",
+      "activityKinds": "Tipo de cambio",
+      "activityActors": "Hecho por",
+      "activityWhen": "Cuándo",
+      "activityAutomation": "Automatización"
+    },
+    "analytics": {
+      "title": "Analíticas",
+      "loading": "Cargando estadísticas…",
+      "error": "No se pudieron cargar las estadísticas",
+      "created": "Creados",
+      "won": "Ganados",
+      "wonValue": "Valor ganado",
+      "lost": "Perdidos",
+      "lostValue": "Valor perdido",
+      "admin": "Administrador",
+      "automation": "Automatización",
+      "back": "Atrás",
+      "admins": "Administradores",
+      "chart": {
+        "created": "Nuevos por día",
+        "won": "Ganados por día",
+        "lost": "Perdidos por día",
+        "wonValue": "Valor ganado por día",
+        "lostValue": "Valor perdido por día"
+      },
+      "pie": {
+        "created": "Creadas por admin",
+        "won": "Ganadas por admin",
+        "lost": "Perdidas por admin",
+        "other": "Otros",
+        "empty": "Sin datos"
+      }
+    },
+    "settings": {
+      "title": "Ajustes del pipeline",
+      "general": "General",
+      "fields": "Campos personalizados",
+      "display": "Visualización",
+      "permissions": "Permisos",
+      "saved": "Ajustes guardados",
+      "referenceName": "Nombre de referencia",
+      "referenceNameHint": "Se usa en las variables pipelines.reference_name.stage_name. Cambiarlo rompe los mensajes que usan el nombre anterior.",
+      "referenceNameFormat": "Usa minúsculas, números y guiones bajos, empezando por una letra (p. ej., close_date).",
+      "assignContact": "Asignar el contacto a un administrador cuando se asigne un elemento",
+      "limit": "Limitar elementos abiertos por contacto",
+      "statusLabels": "Etiquetas de estado",
+      "status": {
+        "open": "Abierto",
+        "won": "Ganado",
+        "lost": "Perdido"
+      },
+      "features": "Funciones visibles",
+      "cardElements": "Elementos de la tarjeta",
+      "card": {
+        "contactPhone": "Teléfono del contacto",
+        "contactEmail": "Correo del contacto",
+        "createdAt": "Fecha de creación",
+        "updatedAt": "Fecha de actualización",
+        "assignees": "Administradores asignados",
+        "comments": "Comentarios",
+        "cardId": "Número del elemento",
+        "priority": "Prioridad",
+        "value": "Valor",
+        "dueDate": "Fecha de vencimiento"
+      },
+      "noFields": "Aún no hay campos personalizados",
+      "fieldName": "Nombre del campo",
+      "fieldReference": "Nombre de referencia",
+      "fieldType": "Tipo de campo",
+      "required": "Obligatorio",
+      "requiredShort": "obligatorio",
+      "addField": "Añadir campo",
+      "fieldAdded": "Campo añadido",
+      "deleteField": "Eliminar campo",
+      "permissionsHint": "Los propietarios y administradores del espacio de trabajo siempre tienen acceso total. Concede al resto de miembros lo que pueden hacer en este pipeline.",
+      "revoke": "Revocar",
+      "permission": {
+        "view": "Ver",
+        "edit": "Editar",
+        "delete": "Eliminar",
+        "settings": "Ajustes"
+      },
+      "noMembers": "No hay otros miembros que configurar",
+      "confirmDeleteField": "¿Eliminar este campo y todos sus valores en cada elemento?",
+      "adminPermissions": "Permisos de administrador",
+      "cardVisibleElements": "Elementos visibles de la tarjeta"
+    },
+    "panel": {
+      "empty": "No hay elementos de pipeline para este contacto",
+      "error": "No se pudieron cargar los elementos del pipeline",
+      "choosePipeline": "Elige un pipeline",
+      "add": "Añadir nuevo"
+    },
+    "variables": {
+      "group": "Pipelines",
+      "attributes": {
+        "name": "Nombre del elemento",
+        "stageName": "Etapa",
+        "status": "Estado",
+        "priority": "Prioridad",
+        "value": "Valor",
+        "assignedAdmins": "Administradores asignados",
+        "createdDate": "Fecha de creación",
+        "dueDate": "Fecha de vencimiento",
+        "updatedDate": "Fecha de actualización",
+        "id": "ID del elemento"
+      }
+    }
   }
 }

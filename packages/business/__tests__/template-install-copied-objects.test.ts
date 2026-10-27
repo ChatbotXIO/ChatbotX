@@ -51,6 +51,12 @@ vi.mock("../src/template/adapters/manifests/folders", () => ({
 vi.mock("../src/template/adapters/manifests/product-categories", () => ({
   resolveProductCategoryManifest: vi.fn(),
 }))
+vi.mock("../src/pipeline/service", () => ({
+  pipelineService: { invalidateList: vi.fn() },
+}))
+vi.mock("../src/template/adapters/manifests/pipelines", () => ({
+  resolvePipelineManifest: vi.fn(),
+}))
 vi.mock("../src/template/adapters/manifests/tags", () => ({
   resolveTagManifest: vi.fn(),
 }))

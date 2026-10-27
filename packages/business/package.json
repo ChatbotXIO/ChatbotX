@@ -49,6 +49,8 @@
     "./meta-conversions/capi-scope-policy": "./src/meta-conversions/capi-scope-policy.ts",
     "./meta-conversions/connection-state": "./src/meta-conversions/connection-state.ts",
     "./leaderboard": "./src/leaderboard/index.ts",
+    "./pipeline": "./src/pipeline/index.ts",
+    "./pipeline/variable-targets": "./src/pipeline/variable-targets.ts",
     "./minigame": "./src/minigame/index.ts",
     "./open-link": "./src/open-link/index.ts",
     "./smart-delay": "./src/smart-delay/index.ts",

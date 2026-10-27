@@ -2323,7 +2323,8 @@
       "ads": "Advertenties",
       "settings": "Instellingen",
       "miniApps": "Mini Apps",
-      "leaderboards": "Ranglijsten"
+      "leaderboards": "Ranglijsten",
+      "pipelines": "Pijplijnen"
     },
     "adReferral": {
       "label": "Ads",
@@ -2381,6 +2382,9 @@
     },
     "miniApp": {
       "label": "Mini-app"
+    },
+    "lastOpportunityId": {
+      "label": "Laatste verkoopkans-ID"
     },
     "adminName": {
       "label": "Naam van verzendende admin"
@@ -2554,7 +2558,8 @@
       "ctwaConversionTypes": {
         "lead": "Lead",
         "purchase": "Aankoop"
-      }
+      },
+      "pipelineItem": "Pipeline-item"
     },
     "fieldGroups": {
       "opportunity": "Verkoopkans",
@@ -2571,7 +2576,8 @@
       "botFields": "Botvelden",
       "email": "E-mail",
       "sms": "Sms",
-      "ctwaAds": "Advertenties"
+      "ctwaAds": "Advertenties",
+      "pipeline": "Pipelines"
     },
     "languages": {
       "ar": "Arabisch",
@@ -2619,7 +2625,21 @@
       "allAds": "alle advertenties"
     },
     "noTopic": "Geen onderwerp",
-    "trackingSince": "Bijgehouden sinds {date}. Eerdere activiteit is niet inbegrepen."
+    "trackingSince": "Bijgehouden sinds {date}. Eerdere activiteit is niet inbegrepen.",
+    "pipelineItem": {
+      "anyPipeline": "Elke pipeline",
+      "anyStatus": "Elke status",
+      "attributes": {
+        "exists": "Items",
+        "status": "Itemstatus",
+        "stage": "Itemfase",
+        "priority": "Itemprioriteit"
+      },
+      "operators": {
+        "has": "Heeft",
+        "hasNo": "Heeft geen"
+      }
+    }
   },
   "flows": {
     "export": {
@@ -2794,7 +2814,8 @@
       "changeGamificationScore": "Gamificationpunten wijzigen",
       "sendViewCatalog": "Catalogus bekijken",
       "sendProducts": "Producten verzenden",
-      "sendCollection": "Collectie"
+      "sendCollection": "Collectie",
+      "pipeline": "Pipelines"
     },
     "externalRequest": {
       "errors": {
@@ -3017,6 +3038,52 @@
       "summaryManual": "{count, plural, one {# product} other {# producten}}",
       "cancel": "Annuleren",
       "save": "Opslaan"
+    },
+    "pipelineStep": {
+      "action": "Actie",
+      "pipeline": "Pipeline",
+      "targetHint": "Werkt op het laatste open item van het contact in deze pipeline. Het pad Overslaan wordt uitgevoerd als er geen is.",
+      "noPipelines": "Geen pipelines gevonden",
+      "actions": {
+        "addToPipeline": "Contact aan pipeline toevoegen",
+        "moveToStage": "Naar een fase verplaatsen",
+        "changeValue": "Waarde wijzigen",
+        "assign": "Aan beheerders toewijzen",
+        "changeStatus": "Status wijzigen",
+        "changePriority": "Prioriteit wijzigen",
+        "changeDueDate": "Vervaldatum wijzigen",
+        "changeTitle": "Titel wijzigen",
+        "setCustomField": "Aangepast veld instellen",
+        "clearCustomField": "Aangepaste velden wissen",
+        "changeDescription": "Beschrijving wijzigen",
+        "removeFromPipeline": "Contact uit pipeline verwijderen",
+        "addComment": "Opmerking toevoegen",
+        "transfer": "Naar een andere pipeline overdragen"
+      },
+      "title": "Titel",
+      "description": "Beschrijving",
+      "stage": "Fase",
+      "firstStage": "Eerste fase",
+      "status": "Status",
+      "assigneeMembers": "Toegewezen beheerders",
+      "assigneeTeams": "Toegewezen teams",
+      "value": "Waarde",
+      "priority": "Prioriteit",
+      "dueDate": "Vervaldatum",
+      "dueNone": "Geen",
+      "dueNoneHint": "Het item heeft geen vervaldatum.",
+      "dueCustomField": "Uit een aangepast datumveld",
+      "dueFixed": "Vaste datum en tijd",
+      "dueField": "Aangepast veld met datum of datum en tijd",
+      "fieldValues": "Aangepaste velden",
+      "field": "Veld",
+      "fieldValue": "Waarde",
+      "fields": "Velden",
+      "addField": "Veldwaarde toevoegen",
+      "removeHint": "Verwijdert het laatste open item van het contact in deze pipeline.",
+      "comment": "Opmerking",
+      "destinationPipeline": "Doelpipeline",
+      "destinationStage": "Doelfase"
     }
   },
   "folders": {
@@ -5604,11 +5671,11 @@
       "incomingCall": "Inkomende oproep",
       "missedAudioCall": "Gemiste audio-oproep",
       "callEnded": "Oproep beëindigd",
-      "ticketCreated": "Ticket aangemaakt",
-      "ticketMovedToStage": "Ticket naar fase verplaatst",
-      "ticketValueChanged": "Ticketwaarde gewijzigd",
-      "ticketStatusChanged": "Ticketstatus gewijzigd",
-      "ticketPriorityChanged": "Ticketprioriteit gewijzigd",
+      "pipelineItemCreated": "Ticket aangemaakt",
+      "pipelineItemMovedToStage": "Ticket naar fase verplaatst",
+      "pipelineItemValueChanged": "Ticketwaarde gewijzigd",
+      "pipelineItemStatusChanged": "Ticketstatus gewijzigd",
+      "pipelineItemPriorityChanged": "Ticketprioriteit gewijzigd",
       "subscribedToSequence": "Ingeschreven voor reeks",
       "unsubscribedFromSequence": "Uitgeschreven uit reeks",
       "shoppingCartSent": "Contact heeft winkelwagen verzonden",
@@ -5628,7 +5695,11 @@
       "callRecorded": "Oproep opgenomen",
       "callTranscribed": "Oproep getranscribeerd",
       "anyProduct": "Elk product",
-      "anyCategory": "Elke categorie"
+      "anyCategory": "Elke categorie",
+      "anyPipeline": "Elke pipeline",
+      "anyStage": "Elke fase",
+      "unavailablePipeline": "Verwijderde of niet-beschikbare pipeline",
+      "unavailableStage": "Verwijderde of niet-beschikbare fase"
     },
     "actions": {
       "addTag": "Tag toevoegen",
@@ -5677,7 +5748,13 @@
     "countCapped": "{count}+ contacten",
     "exportAllNotice": "Alle contacten die overeenkomen met het huidige filter worden geëxporteerd.",
     "exportTakingLong": "Het exporteren duurt langer dan verwacht",
-    "exportTakingLongDescription": "De export wordt nog verwerkt. Je kunt dit dialoogvenster sluiten en over enkele minuten de exportgeschiedenis bekijken."
+    "exportTakingLongDescription": "De export wordt nog verwerkt. Je kunt dit dialoogvenster sluiten en over enkele minuten de exportgeschiedenis bekijken.",
+    "search": {
+      "placeholder": "Zoeken (naam, e-mail, telefoon, contact-ID)",
+      "searching": "Zoeken…",
+      "error": "Contacten zoeken is mislukt",
+      "empty": "Geen contacten gevonden"
+    }
   },
   "contactScan": {
     "menu": {
@@ -10167,5 +10244,401 @@
     "metHelp": "Aandeel reacties met SLA dat die haalde.",
     "eligibleCount": "{count} reacties hadden een SLA",
     "enable": "Reactie-SLA inschakelen"
+  },
+  "pipelines": {
+    "title": "Pipelines",
+    "retry": "Opnieuw proberen",
+    "save": "Opslaan",
+    "saveFailed": "Je wijzigingen konden niet worden opgeslagen. Probeer het opnieuw.",
+    "list": {
+      "name": "Naam",
+      "type": "Type",
+      "items": "Items",
+      "add": "Pipeline toevoegen",
+      "empty": "Nog geen pipelines",
+      "emptyHint": "Maak een pipeline om deals, tickets of een ander proces bij te houden als kaarten op een bord.",
+      "error": "Pipelines laden is mislukt",
+      "contacts": "Contacten",
+      "addShort": "Toevoegen",
+      "description": "Volg deals, tickets of elk proces als kaarten die door fasen bewegen."
+    },
+    "types": {
+      "opportunity": {
+        "label": "Verkoopkansencentrum",
+        "description": "Volg verkoopdeals per fase. Eerste fase: Lead."
+      },
+      "ticket": {
+        "label": "Supportcentrum",
+        "description": "Behandel supportverzoeken. Eerste fase: Nieuw probleem."
+      },
+      "custom": {
+        "label": "Eigen bord",
+        "description": "Bouw je eigen proces. Eerste fase: Intake."
+      }
+    },
+    "noun": {
+      "opportunity": {
+        "one": "Verkoopkans",
+        "many": "Verkoopkansen",
+        "add": "Verkoopkans toevoegen"
+      },
+      "ticket": {
+        "one": "Ticket",
+        "many": "Tickets",
+        "add": "Ticket toevoegen"
+      },
+      "card": {
+        "one": "Kaart",
+        "many": "Kaarten",
+        "add": "Kaart toevoegen"
+      }
+    },
+    "create": {
+      "title": "Nieuwe pipeline",
+      "description": "Kies waarvoor het bord dient en geef het een naam.",
+      "type": "Type",
+      "name": "Pipelinenaam",
+      "namePlaceholder": "bijv. Verkoop",
+      "submit": "Pipeline maken",
+      "success": "Pipeline gemaakt"
+    },
+    "menu": {
+      "open": "Pipeline-acties",
+      "rename": "Hernoemen",
+      "duplicate": "Dupliceren",
+      "delete": "Verwijderen"
+    },
+    "rename": {
+      "title": "Pipeline hernoemen",
+      "submit": "Hernoemen",
+      "success": "Pipeline hernoemd"
+    },
+    "duplicate": {
+      "success": "Pipeline gedupliceerd"
+    },
+    "delete": {
+      "title": "Pipeline verwijderen",
+      "description": "{name} en alle bijbehorende fases en items worden verwijderd. Dit kan niet ongedaan worden gemaakt.",
+      "success": "Pipeline verwijderd"
+    },
+    "board": {
+      "title": "Bord",
+      "count": "{count, plural, one {# item} other {# items}}",
+      "total": "Totaal {value}",
+      "search": "Zoeken op titel, nummer of contact",
+      "sort": "Sorteren",
+      "filter": "Filteren",
+      "analytics": "Analyses",
+      "settings": "Instellingen",
+      "emptyStage": "Sleep een kaart hierheen om deze naar deze fase te verplaatsen.",
+      "loadMore": "Meer laden",
+      "loadMoreFailed": "Meer items laden is mislukt",
+      "error": "Het bord laden is mislukt",
+      "processing": "Deze fase wordt verwerkt…",
+      "moveFailed": "De kaart verplaatsen is mislukt",
+      "sortOptions": {
+        "createdAtDesc": "Aanmaakdatum (Nieuw naar Oud)",
+        "createdAtAsc": "Aanmaakdatum (Oud naar Nieuw)",
+        "updatedAtDesc": "Bijwerkdatum (Nieuw naar Oud)",
+        "valueDesc": "Waarde van de kans (Hoog naar Laag)",
+        "valueAsc": "Waarde van de kans (Laag naar Hoog)",
+        "dueDateAsc": "Vervaldatum (Vroegste naar Laatste)",
+        "dueDateDesc": "Vervaldatum (Laatste naar Vroegste)",
+        "priorityDesc": "Prioriteit (Hoog naar Laag)",
+        "priorityAsc": "Prioriteit (Laag naar Hoog)",
+        "updatedAtAsc": "Bijwerkdatum (Oud naar Nieuw)"
+      },
+      "searchAction": "Zoeken",
+      "closeSearch": "Zoeken sluiten",
+      "cardMenu": "Kaartacties",
+      "moveTo": "Verplaatsen naar",
+      "unknownContact": "Onbekend contact",
+      "staleError": "Het bord kon niet worden vernieuwd. Wat je ziet is mogelijk verouderd."
+    },
+    "stage": {
+      "add": "Fase toevoegen",
+      "name": "Fasenaam",
+      "namePlaceholder": "Fasenaam",
+      "menu": "Faseacties",
+      "edit": "Fase bewerken",
+      "delete": "Fase verwijderen",
+      "deleteTitle": "Fase verwijderen",
+      "deleteDescription": "{name} en alle items erin worden verwijderd. Deze actie kan niet ongedaan worden gemaakt.",
+      "moveItemsTo": "Items verplaatsen naar",
+      "deleteItemsToo": "Items ook verwijderen",
+      "description": "Beschrijving",
+      "textColor": "Tekstkleur",
+      "backgroundColor": "Achtergrondkleur",
+      "saved": "Fase opgeslagen",
+      "deleted": "Fase verwijderd",
+      "queued": "De fase wordt op de achtergrond leeggemaakt.",
+      "resetColor": "Standaard",
+      "deleteMoveDescription": "{name} wordt verwijderd. De items worden verplaatst naar {target}.",
+      "rename": "Hernoemen",
+      "settings": "Instellingen",
+      "general": "Algemeen",
+      "color": "Kleur",
+      "cancel": "Annuleren"
+    },
+    "priority": {
+      "low": "Laag",
+      "medium": "Gemiddeld",
+      "high": "Hoog"
+    },
+    "item": {
+      "loading": "Laden…",
+      "error": "Dit item laden is mislukt",
+      "title": "Titel",
+      "status": "Status",
+      "stage": "Fase",
+      "priority": "Prioriteit",
+      "value": "Waarde",
+      "dueDate": "Vervaldatum",
+      "assignees": "Toegewezen beheerders",
+      "description": "Beschrijving",
+      "attachments": "Bijlagen",
+      "attach": "Bestanden bijvoegen",
+      "noAttachments": "Geen bijlagen",
+      "removeAttachment": "Bijlage verwijderen",
+      "removeAttachmentDescription": "Het bestand wordt van dit item verwijderd, maar blijft in de mediabibliotheek.",
+      "comments": "Opmerkingen",
+      "addComment": "Opmerking toevoegen",
+      "commentPlaceholder": "Schrijf een opmerking…",
+      "noComments": "Nog geen opmerkingen",
+      "deleteComment": "Opmerking verwijderen",
+      "deleteCommentDescription": "Deze opmerking wordt verwijderd. Dit kan niet ongedaan worden gemaakt.",
+      "activity": "Activiteit",
+      "noActivity": "Nog geen activiteit",
+      "transfer": "Overdragen aan pipeline",
+      "transferTitle": "Naar een andere pipeline overdragen",
+      "transferDescription": "Het item behoudt zijn nummer en aanmaakdatum. Aangepaste velden worden meegenomen als de andere pipeline een veld met dezelfde referentienaam en hetzelfde type heeft.",
+      "destinationPipeline": "Doelpipeline",
+      "destinationStage": "Doelfase",
+      "firstStage": "Eerste fase",
+      "choose": "Kies…",
+      "transferred": "Item overgedragen",
+      "delete": "Verwijderen",
+      "deleteDescription": "Eén item wordt verwijderd. Dit kan niet ongedaan worden gemaakt.",
+      "deleted": "Item verwijderd",
+      "number": "Nummer",
+      "createdBy": "Gemaakt door",
+      "createdByValue": "{name} op {date}",
+      "inbox": "Inbox",
+      "moreActions": "Meer acties",
+      "noDescription": "Geen beschrijving",
+      "yes": "Ja",
+      "no": "Nee",
+      "assigneesMembers": "Medewerkers",
+      "assigneesTeams": "Inboxteams",
+      "assigneesSearch": "Zoek beheerders of teams…",
+      "assigneesEmpty": "Geen resultaten",
+      "assigneesPlaceholder": "Selecteer beheerders of teams",
+      "olderComments": "Oudere reacties tonen",
+      "olderActivity": "Oudere activiteit tonen",
+      "activityFilter": "Filteren",
+      "activityFilterCount": "{count, plural, one {# filter} other {# filters}}",
+      "activityFilterClear": "Alles tonen",
+      "noFilteredActivity": "Geen activiteit komt overeen met dit filter.",
+      "activityGroup": {
+        "lifecycle": "Aangemaakt & overgezet",
+        "stage": "Fase",
+        "status": "Status",
+        "value": "Waarde",
+        "priority": "Prioriteit",
+        "dueDate": "Vervaldatum",
+        "details": "Titel, beschrijving & velden",
+        "assignees": "Toegewezenen",
+        "comments": "Opmerkingen",
+        "attachments": "Bijlagen"
+      }
+    },
+    "activity": {
+      "created": "Gemaakt",
+      "stageChanged": "Naar een andere fase verplaatst",
+      "statusChanged": "Status gewijzigd",
+      "valueChanged": "Waarde gewijzigd",
+      "priorityChanged": "Prioriteit gewijzigd",
+      "dueDateChanged": "Vervaldatum gewijzigd",
+      "titleChanged": "Titel gewijzigd",
+      "descriptionChanged": "Beschrijving gewijzigd",
+      "fieldValuesChanged": "Aangepaste velden gewijzigd",
+      "assigneesChanged": "Toegewezen personen gewijzigd",
+      "attachmentAdded": "Bijlage toegevoegd",
+      "attachmentRemoved": "Bijlage verwijderd",
+      "commentAdded": "Opmerking toegevoegd",
+      "commentDeleted": "Opmerking verwijderd",
+      "transferred": "Overgedragen vanuit een andere pipeline",
+      "deleted": "Verwijderd"
+    },
+    "activityActor": {
+      "flow": "Flow",
+      "trigger": "Trigger",
+      "workspaceToken": "API",
+      "system": "Systeem",
+      "formerMember": "Voormalig lid"
+    },
+    "add": {
+      "changeContact": "Kies een ander contact",
+      "success": "Gemaakt",
+      "stepContact": "Selecteer een contact",
+      "stepDetails": "Details van {noun}",
+      "contact": "Contact",
+      "addNewContact": "Nieuw toevoegen"
+    },
+    "filter": {
+      "title": "Filteren",
+      "status": "Status",
+      "statusLabels": {
+        "open": "Open",
+        "won": "Gewonnen",
+        "lost": "Verloren"
+      },
+      "priority": "Prioriteit",
+      "assignee": "Toegewezen beheerders",
+      "value": "Waarde van {noun}",
+      "min": "Min",
+      "max": "Max",
+      "dueDate": "Vervaldatum",
+      "createdAt": "Aanmaakdatum",
+      "from": "Van",
+      "to": "Tot",
+      "clear": "Filters wissen",
+      "apply": "Toepassen",
+      "back": "Terug",
+      "updatedAt": "Wijzigingsdatum",
+      "resolvedOn": "{noun} opgelost op",
+      "statusChangedOn": "Status gewijzigd op",
+      "stageChangedOn": "Fase gewijzigd op",
+      "lastCommentOn": "Laatste opmerking op",
+      "customFields": "Aangepaste velden",
+      "any": "Alle",
+      "yes": "Ja",
+      "no": "Nee",
+      "notResolvedOn": "{noun} niet opgelost op",
+      "equal": "Gelijk aan",
+      "different": "Anders dan",
+      "reset": "Resetten",
+      "presets": {
+        "thisWeek": "Deze week",
+        "lastWeek": "Vorige week",
+        "last14": "Laatste 14 dagen",
+        "thisYear": "Dit jaar",
+        "lastYear": "Vorig jaar",
+        "tomorrow": "Morgen",
+        "next7": "Over 7 dagen",
+        "next14": "Over 14 dagen",
+        "next30": "Over 30 dagen",
+        "allTime": "Altijd"
+      },
+      "pickDate": "Kies een datum",
+      "activity": "Activiteit",
+      "activityKinds": "Type wijziging",
+      "activityActors": "Uitgevoerd door",
+      "activityWhen": "Wanneer",
+      "activityAutomation": "Automatisering"
+    },
+    "analytics": {
+      "title": "Analyses",
+      "loading": "Statistieken laden…",
+      "error": "Statistieken laden is mislukt",
+      "created": "Gemaakt",
+      "won": "Gewonnen",
+      "wonValue": "Gewonnen waarde",
+      "lost": "Verloren",
+      "lostValue": "Verloren waarde",
+      "admin": "Beheerder",
+      "automation": "Automatisering",
+      "back": "Terug",
+      "admins": "Beheerders",
+      "chart": {
+        "created": "Nieuw per dag",
+        "won": "Gewonnen per dag",
+        "lost": "Verloren per dag",
+        "wonValue": "Gewonnen waarde per dag",
+        "lostValue": "Verloren waarde per dag"
+      },
+      "pie": {
+        "created": "Aangemaakt per admin",
+        "won": "Gewonnen per admin",
+        "lost": "Verloren per admin",
+        "other": "Overig",
+        "empty": "Geen gegevens"
+      }
+    },
+    "settings": {
+      "title": "Pipeline-instellingen",
+      "general": "Algemeen",
+      "fields": "Aangepaste velden",
+      "display": "Weergave",
+      "permissions": "Machtigingen",
+      "saved": "Instellingen opgeslagen",
+      "referenceName": "Referentienaam",
+      "referenceNameHint": "Gebruikt in de variabelen pipelines.reference_name.stage_name. Wijzigen breekt berichten die de oude naam gebruiken.",
+      "referenceNameFormat": "Gebruik kleine letters, cijfers en underscores, beginnend met een letter (bijv. close_date).",
+      "assignContact": "Wijs het contact aan een beheerder toe wanneer een item wordt toegewezen",
+      "limit": "Open items per contact beperken",
+      "statusLabels": "Statuslabels",
+      "status": {
+        "open": "Open",
+        "won": "Gewonnen",
+        "lost": "Verloren"
+      },
+      "features": "Zichtbare functies",
+      "cardElements": "Kaartelementen",
+      "card": {
+        "contactPhone": "Telefoon van contact",
+        "contactEmail": "E-mail van contact",
+        "createdAt": "Aanmaakdatum",
+        "updatedAt": "Wijzigingsdatum",
+        "assignees": "Toegewezen beheerders",
+        "comments": "Opmerkingen",
+        "cardId": "Itemnummer",
+        "priority": "Prioriteit",
+        "value": "Waarde",
+        "dueDate": "Vervaldatum"
+      },
+      "noFields": "Nog geen aangepaste velden",
+      "fieldName": "Veldnaam",
+      "fieldReference": "Referentienaam",
+      "fieldType": "Veldtype",
+      "required": "Verplicht",
+      "requiredShort": "verplicht",
+      "addField": "Veld toevoegen",
+      "fieldAdded": "Veld toegevoegd",
+      "deleteField": "Veld verwijderen",
+      "permissionsHint": "Workspace-eigenaren en beheerders hebben altijd volledige toegang. Geef andere leden rechten voor wat ze in deze pipeline mogen doen.",
+      "revoke": "Intrekken",
+      "permission": {
+        "view": "Bekijken",
+        "edit": "Bewerken",
+        "delete": "Verwijderen",
+        "settings": "Instellingen"
+      },
+      "noMembers": "Geen andere leden om te configureren",
+      "confirmDeleteField": "Dit veld en alle waarden ervan in elk item verwijderen?",
+      "adminPermissions": "Beheerdersmachtigingen",
+      "cardVisibleElements": "Zichtbare kaartelementen"
+    },
+    "panel": {
+      "empty": "Geen pipeline-items voor dit contact",
+      "error": "Pipeline-items laden is mislukt",
+      "choosePipeline": "Kies een pipeline",
+      "add": "Nieuw toevoegen"
+    },
+    "variables": {
+      "group": "Pipelines",
+      "attributes": {
+        "name": "Itemnaam",
+        "stageName": "Fase",
+        "status": "Status",
+        "priority": "Prioriteit",
+        "value": "Waarde",
+        "assignedAdmins": "Toegewezen beheerders",
+        "createdDate": "Aanmaakdatum",
+        "dueDate": "Vervaldatum",
+        "updatedDate": "Wijzigingsdatum",
+        "id": "Item-ID"
+      }
+    }
   }
 }

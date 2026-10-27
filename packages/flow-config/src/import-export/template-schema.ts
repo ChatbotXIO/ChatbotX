@@ -53,6 +53,45 @@ export type TemplateFolderManifestEntry = z.infer<
   typeof templateFolderManifestEntrySchema
 >
 
+/**
+ * Pipelines referenced by exported flows. Matched in the target workspace by
+ * `referenceName` (stages by name, fields by `referenceName`); anything
+ * missing is created. Stage/field `sourceId`s feed `idMaps.pipelineStage` /
+ * `idMaps.pipelineField`.
+ */
+export const templatePipelineManifestEntrySchema = z.object({
+  name: z.string().trim().min(1),
+  referenceName: z.string().trim().min(1),
+  type: z.enum(["opportunity", "ticket", "custom"]),
+  currency: z.string().nullable().default(null),
+  settings: z.record(z.string(), z.unknown()).default({}),
+  stages: z
+    .array(
+      z.object({
+        sourceId: z.string(),
+        name: z.string().trim().min(1),
+        description: z.string().nullable().default(null),
+        textColor: z.string().nullable().default(null),
+        backgroundColor: z.string().nullable().default(null),
+      }),
+    )
+    .default([]),
+  fields: z
+    .array(
+      z.object({
+        sourceId: z.string(),
+        name: z.string().trim().min(1),
+        referenceName: z.string().trim().min(1),
+        type: customFieldTypes,
+        required: z.boolean().default(false),
+      }),
+    )
+    .default([]),
+})
+export type TemplatePipelineManifestEntry = z.infer<
+  typeof templatePipelineManifestEntrySchema
+>
+
 export const templateManifestsSchema = z.object({
   customFields: z
     .record(z.string(), templateCustomFieldManifestEntrySchema)
@@ -62,6 +101,9 @@ export const templateManifestsSchema = z.object({
     .record(z.string(), templateProductCategoryManifestEntrySchema)
     .default({}),
   folders: z.record(z.string(), templateFolderManifestEntrySchema).default({}),
+  pipelines: z
+    .record(z.string(), templatePipelineManifestEntrySchema)
+    .default({}),
 })
 export type TemplateManifests = z.infer<typeof templateManifestsSchema>
 

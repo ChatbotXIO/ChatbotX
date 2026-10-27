@@ -1,4 +1,5 @@
 import { createId } from "@chatbotx.io/utils"
+import { isTemporalCustomFieldType } from "@chatbotx.io/utils/datetime"
 import { addNotesNodeDefaultFn } from "../nodes/add-notes"
 import { conditionNodeDefaultFn } from "../nodes/condition"
 import type { EdgeSchema, FlowVersionSchema } from "../nodes/index"
@@ -20,6 +21,12 @@ import {
   conditionCaseDefaultFn,
   conditionStepDefaultFn,
 } from "../steps/condition"
+import {
+  type PipelineStepDueDate,
+  type PipelineStepSchema,
+  pipelineActionCanSkip,
+  pipelineStepDefaultFn,
+} from "../steps/pipeline"
 import { removeContactTagStepDefaultFn } from "../steps/remove-contact-tag"
 import { sendFileStepDefaultFn } from "../steps/send-file"
 import { sendImageStepDefaultFn } from "../steps/send-image"
@@ -36,7 +43,21 @@ import { waitStepDefaultFn } from "../steps/wait"
 import type { FlowAuthoringError, FlowAuthoringErrorCode } from "./errors"
 import { closestNames, FlowAuthoringException } from "./errors"
 import { type LayoutPosition, layoutNodes } from "./layout"
-import type { FlowSpec, FlowStepSpec } from "./spec-schema"
+import type {
+  FlowSpec,
+  FlowStepSpec,
+  PipelineSpecDueDate,
+  PipelineStepSpec,
+} from "./spec-schema"
+
+/** A workspace pipeline with what a `pipeline` spec step references by name. */
+export type FlowAuthoringPipeline = {
+  id: string
+  name: string
+  referenceName: string
+  stages: ReadonlyArray<{ id: string; name: string }>
+  fields: ReadonlyArray<{ id: string; name: string; referenceName: string }>
+}
 
 /**
  * Reference data the compiler resolves DSL names against. Populated from the
@@ -50,6 +71,8 @@ export type FlowAuthoringContext = {
   >
   customFieldsByName: ReadonlyMap<string, { id: string; type: string }>
   flowsByName: ReadonlyMap<string, { id: string }>
+  /** Keyed by pipeline `referenceName`. Absent means the workspace has none. */
+  pipelinesByReferenceName?: ReadonlyMap<string, FlowAuthoringPipeline>
 }
 
 export type CompiledFlow = {
@@ -69,6 +92,7 @@ const ENDS_STEP_LIST: Record<FlowStepSpec["type"], boolean> = {
   wait: false,
   branch: true,
   action: false,
+  pipeline: false,
   startFlow: false,
   addNote: false,
   goto: true,
@@ -112,6 +136,12 @@ const CUSTOM_FIELD_NAME_RESOLUTION = {
   code: "unknownCustomField",
   label: "custom field",
   hint: "Call contacts.listFilterFields and pick a custom field name from the results.",
+} as const satisfies ResolveByNameOptions
+
+const PIPELINE_RESOLUTION = {
+  code: "unknownPipeline",
+  label: "pipeline",
+  hint: "Call pipelines.list and use a pipeline's referenceName (or id).",
 } as const satisfies ResolveByNameOptions
 
 // Matches the WhatsApp template status enum in
@@ -171,6 +201,13 @@ function childChains(step: FlowStepSpec): ChildChain[] {
         ...(step.otherwise
           ? [{ steps: step.otherwise, pathSuffix: ".otherwise" }]
           : []),
+      ]
+    case "pipeline":
+      return [
+        ...(step.onError
+          ? [{ steps: step.onError, pathSuffix: ".onError" }]
+          : []),
+        ...(step.onSkip ? [{ steps: step.onSkip, pathSuffix: ".onSkip" }] : []),
       ]
     case "sendTemplate":
     case "sendProducts":
@@ -534,6 +571,306 @@ function compileActionStep(
   )
 }
 
+/** Resolves a pipeline by `referenceName`, falling back to its id. */
+function resolvePipeline(
+  reference: string,
+  path: string,
+  state: CompileState,
+): FlowAuthoringPipeline | null {
+  const pipelines = state.ctx.pipelinesByReferenceName ?? new Map()
+  const byReference = pipelines.get(reference)
+  if (byReference) {
+    return byReference
+  }
+  for (const pipeline of pipelines.values()) {
+    if (pipeline.id === reference) {
+      return pipeline
+    }
+  }
+  return resolveByName(state, pipelines, reference, path, PIPELINE_RESOLUTION)
+}
+
+function resolvePipelineStage(
+  pipeline: FlowAuthoringPipeline,
+  name: string,
+  path: string,
+  state: CompileState,
+): string | null {
+  const matches = pipeline.stages.filter((stage) => stage.name === name)
+  if (matches.length === 1) {
+    return matches[0].id
+  }
+  if (matches.length > 1) {
+    addError(
+      state,
+      path,
+      "ambiguousPipelineStage",
+      `Pipeline "${pipeline.referenceName}" has ${matches.length} stages named "${name}".`,
+      { hint: "Rename one of the stages, or pass the stage id instead." },
+    )
+    return null
+  }
+  const byId = pipeline.stages.find((stage) => stage.id === name)
+  if (byId) {
+    return byId.id
+  }
+  addError(
+    state,
+    path,
+    "unknownPipelineStage",
+    `Pipeline "${pipeline.referenceName}" has no stage named "${name}".`,
+    {
+      hint: "Call pipelines.get and pick a stage name from the pipeline.",
+      candidates: closestNames(
+        name,
+        pipeline.stages.map((stage) => stage.name),
+      ),
+    },
+  )
+  return null
+}
+
+function resolvePipelineField(
+  pipeline: FlowAuthoringPipeline,
+  reference: string,
+  path: string,
+  state: CompileState,
+): string | null {
+  const field = pipeline.fields.find(
+    (item) => item.referenceName === reference || item.id === reference,
+  )
+  if (field) {
+    return field.id
+  }
+  addError(
+    state,
+    path,
+    "unknownPipelineField",
+    `Pipeline "${pipeline.referenceName}" has no custom field with referenceName "${reference}".`,
+    {
+      hint: "Call pipelines.get and use a field's referenceName.",
+      candidates: closestNames(
+        reference,
+        pipeline.fields.map((item) => item.referenceName),
+      ),
+    },
+  )
+  return null
+}
+
+function resolvePipelineDueDate(
+  dueDate: PipelineSpecDueDate | undefined,
+  path: string,
+  state: CompileState,
+): PipelineStepDueDate {
+  if (!dueDate || dueDate.mode === "none") {
+    return { mode: "none" }
+  }
+  if (dueDate.mode === "fixed") {
+    return dueDate
+  }
+  const customField = resolveCustomField(
+    dueDate.customFieldName,
+    `${path}.customFieldName`,
+    state,
+  )
+  if (customField && !isTemporalCustomFieldType(customField.type)) {
+    addError(
+      state,
+      `${path}.customFieldName`,
+      "invalidSpec",
+      `Custom field "${dueDate.customFieldName}" is of type ${customField.type}; a due date field must be date or datetime.`,
+    )
+  }
+  return { mode: "customField", customFieldId: customField?.id ?? "" }
+}
+
+/** Builds the compiled step for one action; reference misses are recorded on `state`. */
+function buildPipelineStep(
+  step: PipelineStepSpec,
+  pipeline: FlowAuthoringPipeline,
+  stepPath: string,
+  state: CompileState,
+): PipelineStepSchema {
+  const base = pipelineStepDefaultFn(step.action, { pipelineId: pipeline.id })
+  const stage = (
+    name: string | undefined,
+    target: FlowAuthoringPipeline,
+    key: string,
+  ) =>
+    name === undefined
+      ? undefined
+      : (resolvePipelineStage(target, name, `${stepPath}.${key}`, state) ?? "")
+  switch (base.action) {
+    case "addToPipeline":
+      return {
+        ...base,
+        title: step.title ?? base.title,
+        description: step.description ?? "",
+        assigneeMemberIds: step.assigneeMemberIds ?? [],
+        assigneeInboxTeamIds: step.assigneeInboxTeamIds ?? [],
+        status: step.status ?? "open",
+        stageId: stage(step.stage, pipeline, "stage"),
+        dueDate: resolvePipelineDueDate(
+          step.dueDate,
+          `${stepPath}.dueDate`,
+          state,
+        ),
+        fieldValues: (step.fieldValues ?? []).map((item, index) => ({
+          pipelineFieldId:
+            resolvePipelineField(
+              pipeline,
+              item.field,
+              `${stepPath}.fieldValues[${index}].field`,
+              state,
+            ) ?? "",
+          value: item.value,
+        })),
+      }
+    case "moveToStage":
+      return { ...base, stageId: stage(step.stage, pipeline, "stage") ?? "" }
+    case "changeValue":
+      return { ...base, value: step.value ?? "" }
+    case "assign":
+      return {
+        ...base,
+        assigneeMemberIds: step.assigneeMemberIds ?? [],
+        assigneeInboxTeamIds: step.assigneeInboxTeamIds ?? [],
+      }
+    case "changeStatus":
+      return { ...base, status: step.status ?? base.status }
+    case "changePriority":
+      return { ...base, priority: step.priority ?? base.priority }
+    case "changeDueDate":
+      return {
+        ...base,
+        dueDate: resolvePipelineDueDate(
+          step.dueDate,
+          `${stepPath}.dueDate`,
+          state,
+        ),
+      }
+    case "changeTitle":
+      return { ...base, title: step.title ?? "" }
+    case "setCustomField":
+      return {
+        ...base,
+        pipelineFieldId:
+          resolvePipelineField(
+            pipeline,
+            step.field ?? "",
+            `${stepPath}.field`,
+            state,
+          ) ?? "",
+        value: step.value ?? "",
+      }
+    case "clearCustomField":
+      return {
+        ...base,
+        pipelineFieldIds: (step.fields ?? []).map(
+          (reference, index) =>
+            resolvePipelineField(
+              pipeline,
+              reference,
+              `${stepPath}.fields[${index}]`,
+              state,
+            ) ?? "",
+        ),
+      }
+    case "changeDescription":
+      return { ...base, description: step.description ?? "" }
+    case "removeFromPipeline":
+      return base
+    case "addComment":
+      return { ...base, text: step.text ?? "" }
+    case "transfer": {
+      const destination = resolvePipeline(
+        step.destinationPipeline ?? "",
+        `${stepPath}.destinationPipeline`,
+        state,
+      )
+      // The runtime refuses a transfer into the same pipeline (and the editor
+      // never offers it), however the two are written (name vs id).
+      if (destination && destination.id === pipeline.id) {
+        addError(
+          state,
+          `${stepPath}.destinationPipeline`,
+          "invalidStep",
+          'transfer needs a destination pipeline different from "pipeline".',
+          { hint: "Pick another pipeline from pipelines.list." },
+        )
+      }
+      return {
+        ...base,
+        destinationPipelineId: destination?.id ?? "",
+        destinationStageId: destination
+          ? stage(step.destinationStage, destination, "destinationStage")
+          : undefined,
+      }
+    }
+    default: {
+      const _exhaustive: never = base
+      throw new Error(`Unhandled pipeline action: ${String(_exhaustive)}`)
+    }
+  }
+}
+
+function compilePipelineStep(
+  step: PipelineStepSpec,
+  stepPath: string,
+  state: CompileState,
+): string | null {
+  const pipeline = resolvePipeline(step.pipeline, `${stepPath}.pipeline`, state)
+  const nodeId = createId()
+  const insertAt = state.nodes.length
+  // Before compiling onError/onSkip: they can `goto` back to this step.
+  preregisterStepId(state, step.id, nodeId)
+
+  if (step.onSkip && !pipelineActionCanSkip(step.action)) {
+    addError(
+      state,
+      `${stepPath}.onSkip`,
+      "invalidStep",
+      `action "${step.action}" never skips, so onSkip would never run.`,
+    )
+  }
+
+  const pipelineStep = pipeline
+    ? buildPipelineStep(step, pipeline, stepPath, state)
+    : null
+  // Chains compile (and report their own errors) even when the pipeline
+  // failed to resolve, so one run surfaces every problem.
+  const outcomeChains = [
+    { steps: step.onError, suffix: "onError", stateType: "error" },
+    { steps: step.onSkip, suffix: "onSkip", stateType: "skip" },
+  ] as const
+  for (const { steps, suffix, stateType } of outcomeChains) {
+    if (!steps || steps.length === 0) {
+      continue
+    }
+    const entryNodeId = compileChain(steps, `${stepPath}.${suffix}`, state)
+    const handle = pipelineStep?.states.find(
+      (item) => item.stateType === stateType,
+    )
+    if (entryNodeId && handle) {
+      addHandleEdge(state, nodeId, handle.id, entryNodeId)
+    }
+  }
+  if (!pipelineStep) {
+    return null
+  }
+
+  return registerNode(
+    state,
+    step.id,
+    withSteps(performActionNodeDefaultFn({ nodeProps: { id: nodeId } }), [
+      pipelineStep,
+    ]),
+    stepPath,
+    { insertAt },
+  )
+}
+
 function compileStartFlowStep(
   step: Extract<FlowStepSpec, { type: "startFlow" }>,
   stepPath: string,
@@ -732,6 +1069,8 @@ function compileStep(
       return compileBranchStep(step, stepPath, state)
     case "action":
       return compileActionStep(step, stepPath, state)
+    case "pipeline":
+      return compilePipelineStep(step, stepPath, state)
     case "startFlow":
       return compileStartFlowStep(step, stepPath, state)
     case "addNote":

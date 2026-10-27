@@ -23,7 +23,6 @@ import { getMimeTypeFromFile } from "@chatbotx.io/ui/lib/file-types"
 import { cn } from "@chatbotx.io/ui/lib/utils"
 import {
   ChevronLeftIcon,
-  FileIcon,
   FolderIcon,
   HeartIcon,
   Loader,
@@ -32,8 +31,6 @@ import {
   SearchIcon,
   TimerIcon,
   Trash2Icon,
-  VideoIcon,
-  Volume2Icon,
 } from "lucide-react"
 import Image from "next/image"
 import { useTranslations } from "next-intl"
@@ -55,6 +52,7 @@ import { recordMediaLibraryFileAccessAction } from "../actions/record-access.act
 import { renameMediaLibraryFolderAction } from "../actions/rename-folder.action"
 import { toggleMediaLibraryFavouriteAction } from "../actions/toggle-favourite.action"
 import type { ListFilesResponse, ListFoldersResponse } from "../schema"
+import { FileTypeIcon } from "./file-type-icon"
 
 type MediaFile = ListFilesResponse["data"][number]
 type MediaFolder = ListFoldersResponse["data"][number]
@@ -101,16 +99,6 @@ export type MediaLibraryDialogProps = Omit<
   onFolderDeleted?: (folderId: string) => void
   onFilesMoved?: (fileIds: string[], folderId: string | null) => void
   onOpenChange?: (open: boolean) => void
-}
-
-function FileTypeIcon({ mimeType }: { mimeType: string }) {
-  if (mimeType.startsWith("video/")) {
-    return <VideoIcon className="size-10 text-muted-foreground" />
-  }
-  if (mimeType.startsWith("audio/")) {
-    return <Volume2Icon className="size-10 text-muted-foreground" />
-  }
-  return <FileIcon className="size-10 text-muted-foreground" />
 }
 
 function FilePreview({

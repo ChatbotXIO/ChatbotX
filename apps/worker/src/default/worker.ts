@@ -21,6 +21,10 @@ import { checkMetaCatalogSync } from "./handlers/meta-catalog/check"
 import { importMetaCatalogProducts } from "./handlers/meta-catalog/import-products"
 import { submitMetaCatalogSync } from "./handlers/meta-catalog/submit"
 import {
+  processPipelineStageBulk,
+  releasePipelineStageBulkClaim,
+} from "./handlers/pipeline-stage-bulk"
+import {
   processInboundWebhookRequest,
   skipBlockedInboundWebhookRequest,
 } from "./handlers/process-inbound-webhook-request"
@@ -199,6 +203,21 @@ async function startDefaultWorker() {
           const { type, data } = job.data
           await runGuardedDefaultJob(data, { source: `default:${type}` }, () =>
             deleteWelcomeMessageFlows(data),
+          )
+          return
+        }
+        case DefaultJobAction.processPipelineStageBulk: {
+          const { type, data } = job.data
+          await runGuardedDefaultJob(
+            data,
+            {
+              source: `default:${type}`,
+              requestedUserId: data.actorUserId ?? undefined,
+            },
+            () => processPipelineStageBulk(data),
+            // A blocked owner skips the job; the stage must not stay claimed
+            // (hidden from writers) forever.
+            () => releasePipelineStageBulkClaim(data),
           )
           return
         }

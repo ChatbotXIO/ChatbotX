@@ -345,3 +345,16 @@ export type MediaLibraryFileModel =
   typeof schema.mediaLibraryFileModel.$inferSelect
 export type SavedReplyImageModel =
   typeof schema.savedReplyImageModel.$inferSelect
+export type PipelineModel = typeof schema.pipelineModel.$inferSelect
+export type PipelineStageModel = typeof schema.pipelineStageModel.$inferSelect
+export type PipelineItemModel = typeof schema.pipelineItemModel.$inferSelect
+export type PipelineItemAssigneeModel =
+  typeof schema.pipelineItemAssigneeModel.$inferSelect
+export type PipelineItemCommentModel =
+  typeof schema.pipelineItemCommentModel.$inferSelect
+export type PipelineItemAttachmentModel =
+  typeof schema.pipelineItemAttachmentModel.$inferSelect
+export type PipelineItemActivityModel =
+  typeof schema.pipelineItemActivityModel.$inferSelect
+export type PipelineFieldModel = typeof schema.pipelineFieldModel.$inferSelect
+export type PipelineMemberModel = typeof schema.pipelineMemberModel.$inferSelect

@@ -3,6 +3,7 @@ import {
   customFieldService,
   tagService,
 } from "@chatbotx.io/business"
+import { pipelineService } from "@chatbotx.io/business/pipeline"
 import {
   CONTACT_ACTIVITY_FILTERS,
   CONTACT_ACTIVITY_TRACKED_FIELDS,
@@ -16,11 +17,16 @@ import {
   convertCustomFieldTypeToConditionType,
   isFieldOnSurface,
 } from "@/features/contact-filter/schema"
+import { PIPELINE_ITEM_ATTRIBUTE_DESCRIPTORS } from "@/features/contact-filter/schema/pipeline-item-filter"
 import type {
   ContactFilterFieldPublicResource,
   ListContactFilterFieldsPublicResponse,
 } from "@/features/contact-filter/schema/public"
 import { enabledOperatorsForStaticField } from "@/features/contact-filter/schema/static-field-filter"
+import { PIPELINE_TOKEN_SCOPE } from "@/features/pipelines/lib/access"
+
+const EMPTY_PIPELINE_ITEMS: ListContactFilterFieldsPublicResponse["pipelineItems"] =
+  { pipelines: [], attributes: [] }
 
 const TRACKED_FIELDS: ReadonlySet<string> = new Set(
   CONTACT_ACTIVITY_TRACKED_FIELDS,
@@ -65,10 +71,17 @@ export async function listContactFilterFieldsForAPI(props: {
 }): Promise<ListContactFilterFieldsPublicResponse> {
   const { workspaceId, surface = "contacts" } = props
 
-  const [customFields, botFields, tags] = await Promise.all([
+  const [customFields, botFields, tags, pipelines] = await Promise.all([
     customFieldService.list({ workspaceId }).then((result) => result.data),
     botFieldService.list({ workspaceId }).then((result) => result.data),
     tagService.listActive({ workspaceId }),
+    // Flow conditions offer no pipeline-item filter, so skip the lookup.
+    surface === "flowCondition"
+      ? []
+      : pipelineService.listWithStages({
+          workspaceId,
+          scope: PIPELINE_TOKEN_SCOPE,
+        }),
   ])
 
   const toFilterField = (field: {
@@ -103,5 +116,26 @@ export async function listContactFilterFieldsForAPI(props: {
     customFields: customFields.map(toFilterField),
     botFields: botFields.map(toFilterField),
     tags,
+    // The flow Condition step cannot store `pipelineItem` conditions.
+    pipelineItems:
+      surface === "flowCondition"
+        ? EMPTY_PIPELINE_ITEMS
+        : {
+            pipelines: pipelines.map(({ pipeline, stages }) => ({
+              id: pipeline.id,
+              name: pipeline.name,
+              stages: stages.map((stage) => ({
+                id: stage.id,
+                name: stage.name,
+              })),
+            })),
+            attributes: PIPELINE_ITEM_ATTRIBUTE_DESCRIPTORS.map(
+              (descriptor) => ({
+                ...descriptor,
+                operators: [...descriptor.operators],
+                values: [...descriptor.values],
+              }),
+            ),
+          },
   }
 }

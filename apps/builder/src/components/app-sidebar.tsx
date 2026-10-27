@@ -18,6 +18,7 @@ import {
   PhoneCallIcon,
   RadioIcon,
   SlidersHorizontalIcon,
+  SquareKanbanIcon,
   UsersIcon,
   WebhookIcon,
   WorkflowIcon,
@@ -100,6 +101,12 @@ export function AppSidebar({
         url: `/space/${workspaceId}/inbox`,
         icon: MessageCircleMoreIcon,
         permission: PERMISSION_NAV.contacts,
+      },
+      {
+        title: t("fields.pipelines.label"),
+        url: `/space/${workspaceId}/pipelines`,
+        icon: SquareKanbanIcon,
+        permission: PERMISSION_NAV.pipelines,
       },
       {
         title: t("fields.flows.label"),

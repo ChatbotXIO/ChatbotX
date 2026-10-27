@@ -949,7 +949,8 @@
       "ctwaConversionTypes": {
         "lead": "Lead",
         "purchase": "Compra"
-      }
+      },
+      "pipelineItem": "Item do funil"
     },
     "fieldGroups": {
       "opportunity": "Oportunidade",
@@ -966,7 +967,8 @@
       "botFields": "Campos do bot",
       "email": "E-mail",
       "sms": "SMS",
-      "ctwaAds": "Anúncios"
+      "ctwaAds": "Anúncios",
+      "pipeline": "Funis"
     },
     "languages": {
       "ar": "Árabe",
@@ -1014,7 +1016,21 @@
       "allAds": "todos os anúncios"
     },
     "noTopic": "Sem tópico",
-    "trackingSince": "Registrado desde {date}. A atividade anterior não está incluída."
+    "trackingSince": "Registrado desde {date}. A atividade anterior não está incluída.",
+    "pipelineItem": {
+      "anyPipeline": "Qualquer funil",
+      "anyStatus": "Qualquer status",
+      "attributes": {
+        "exists": "Itens",
+        "status": "Status do item",
+        "stage": "Etapa do item",
+        "priority": "Prioridade do item"
+      },
+      "operators": {
+        "has": "Tem",
+        "hasNo": "Não tem"
+      }
+    }
   },
   "fields": {
     "optionalHint": "(opcional)",
@@ -2522,7 +2538,8 @@
       "ads": "Anúncios",
       "settings": "Configurações",
       "miniApps": "Mini Apps",
-      "leaderboards": "Rankings"
+      "leaderboards": "Rankings",
+      "pipelines": "Funis"
     },
     "adReferral": {
       "label": "Ads",
@@ -2580,6 +2597,9 @@
     },
     "miniApp": {
       "label": "Mini App"
+    },
+    "lastOpportunityId": {
+      "label": "ID da última oportunidade"
     },
     "adminName": {
       "label": "Nome do admin remetente"
@@ -2794,7 +2814,8 @@
       "changeGamificationScore": "Alterar pontos de gamificação",
       "sendViewCatalog": "Ver catálogo",
       "sendProducts": "Enviar produtos",
-      "sendCollection": "Coleção"
+      "sendCollection": "Coleção",
+      "pipeline": "Funis"
     },
     "externalRequest": {
       "errors": {
@@ -3017,6 +3038,52 @@
       "summaryManual": "{count, plural, one {# produto} other {# produtos}}",
       "cancel": "Cancelar",
       "save": "Salvar"
+    },
+    "pipelineStep": {
+      "action": "Ação",
+      "pipeline": "Funil",
+      "targetHint": "Atua no item aberto mais recente do contato neste funil. O caminho Ignorar é executado quando não há nenhum.",
+      "noPipelines": "Nenhum funil encontrado",
+      "actions": {
+        "addToPipeline": "Adicionar contato ao funil",
+        "moveToStage": "Mover para uma etapa",
+        "changeValue": "Alterar valor",
+        "assign": "Atribuir a administradores",
+        "changeStatus": "Alterar status",
+        "changePriority": "Alterar prioridade",
+        "changeDueDate": "Alterar prazo",
+        "changeTitle": "Alterar título",
+        "setCustomField": "Definir campo personalizado",
+        "clearCustomField": "Limpar campos personalizados",
+        "changeDescription": "Alterar descrição",
+        "removeFromPipeline": "Remover contato do funil",
+        "addComment": "Adicionar comentário",
+        "transfer": "Transferir para outro funil"
+      },
+      "title": "Título",
+      "description": "Descrição",
+      "stage": "Etapa",
+      "firstStage": "Primeira etapa",
+      "status": "Status",
+      "assigneeMembers": "Administradores atribuídos",
+      "assigneeTeams": "Equipes atribuídas",
+      "value": "Valor",
+      "priority": "Prioridade",
+      "dueDate": "Prazo",
+      "dueNone": "Nenhum",
+      "dueNoneHint": "O item não tem prazo.",
+      "dueCustomField": "De um campo personalizado de data",
+      "dueFixed": "Data e hora fixas",
+      "dueField": "Campo personalizado de data ou data e hora",
+      "fieldValues": "Campos personalizados",
+      "field": "Campo",
+      "fieldValue": "Valor",
+      "fields": "Campos",
+      "addField": "Adicionar valor de campo",
+      "removeHint": "Exclui o item aberto mais recente do contato neste funil.",
+      "comment": "Comentário",
+      "destinationPipeline": "Funil de destino",
+      "destinationStage": "Etapa de destino"
     }
   },
   "folders": {
@@ -5239,11 +5306,11 @@
       "incomingCall": "Chamada recebida",
       "missedAudioCall": "Chamada de áudio perdida",
       "callEnded": "Chamada encerrada",
-      "ticketCreated": "Ticket criado",
-      "ticketMovedToStage": "Ticket movido para a etapa",
-      "ticketValueChanged": "Valor do ticket alterado",
-      "ticketStatusChanged": "Status do ticket alterado",
-      "ticketPriorityChanged": "Prioridade do ticket alterada",
+      "pipelineItemCreated": "Ticket criado",
+      "pipelineItemMovedToStage": "Ticket movido para a etapa",
+      "pipelineItemValueChanged": "Valor do ticket alterado",
+      "pipelineItemStatusChanged": "Status do ticket alterado",
+      "pipelineItemPriorityChanged": "Prioridade do ticket alterada",
       "subscribedToSequence": "Inscrito na sequência",
       "unsubscribedFromSequence": "Inscrição na sequência cancelada",
       "shoppingCartSent": "Contato enviou carrinho de compras",
@@ -5263,7 +5330,11 @@
       "callRecorded": "Chamada gravada",
       "callTranscribed": "Chamada transcrita",
       "anyProduct": "Qualquer produto",
-      "anyCategory": "Qualquer categoria"
+      "anyCategory": "Qualquer categoria",
+      "anyPipeline": "Qualquer funil",
+      "anyStage": "Qualquer etapa",
+      "unavailablePipeline": "Pipeline excluído ou indisponível",
+      "unavailableStage": "Etapa excluída ou indisponível"
     },
     "actions": {
       "addTag": "Adicionar tag",
@@ -5312,7 +5383,13 @@
     "countCapped": "{count}+ contatos",
     "exportAllNotice": "Todos os contatos que correspondem ao filtro atual serão exportados.",
     "exportTakingLong": "A exportação está demorando mais do que o esperado",
-    "exportTakingLongDescription": "A exportação ainda está sendo processada. Você pode fechar esta caixa de diálogo e verificar novamente em alguns minutos no histórico de exportações."
+    "exportTakingLongDescription": "A exportação ainda está sendo processada. Você pode fechar esta caixa de diálogo e verificar novamente em alguns minutos no histórico de exportações.",
+    "search": {
+      "placeholder": "Pesquisar (nome, e-mail, telefone, ID do contato)",
+      "searching": "Pesquisando…",
+      "error": "Não foi possível pesquisar contatos",
+      "empty": "Nenhum contato encontrado"
+    }
   },
   "contactScan": {
     "menu": {
@@ -10167,5 +10244,401 @@
     "metHelp": "Parcela das respostas com SLA que o cumpriram.",
     "eligibleCount": "{count} respostas tinham SLA",
     "enable": "Ativar SLA de resposta"
+  },
+  "pipelines": {
+    "title": "Funis",
+    "retry": "Tentar novamente",
+    "save": "Salvar",
+    "saveFailed": "Não foi possível salvar as alterações. Tente novamente.",
+    "list": {
+      "name": "Nome",
+      "type": "Tipo",
+      "items": "Itens",
+      "add": "Adicionar funil",
+      "empty": "Nenhum funil ainda",
+      "emptyHint": "Crie um funil para acompanhar negócios, tickets ou qualquer processo como cartões em um quadro.",
+      "error": "Não foi possível carregar os funis",
+      "contacts": "Contatos",
+      "addShort": "Adicionar",
+      "description": "Acompanhe oportunidades, tickets ou qualquer processo como cartões que avançam pelas etapas."
+    },
+    "types": {
+      "opportunity": {
+        "label": "Central de Oportunidades",
+        "description": "Acompanhe negócios de vendas por etapas. Primeira etapa: Lead."
+      },
+      "ticket": {
+        "label": "Central de Suporte",
+        "description": "Gerencie solicitações de suporte. Primeira etapa: Novo problema."
+      },
+      "custom": {
+        "label": "Quadro personalizado",
+        "description": "Crie seu próprio processo. Primeira etapa: Entrada."
+      }
+    },
+    "noun": {
+      "opportunity": {
+        "one": "Oportunidade",
+        "many": "Oportunidades",
+        "add": "Adicionar oportunidade"
+      },
+      "ticket": {
+        "one": "Ticket",
+        "many": "Tickets",
+        "add": "Adicionar ticket"
+      },
+      "card": {
+        "one": "Cartão",
+        "many": "Cartões",
+        "add": "Adicionar cartão"
+      }
+    },
+    "create": {
+      "title": "Novo funil",
+      "description": "Escolha para que serve o quadro e dê um nome a ele.",
+      "type": "Tipo",
+      "name": "Nome do funil",
+      "namePlaceholder": "ex.: Vendas",
+      "submit": "Criar funil",
+      "success": "Funil criado"
+    },
+    "menu": {
+      "open": "Ações do funil",
+      "rename": "Renomear",
+      "duplicate": "Duplicar",
+      "delete": "Excluir"
+    },
+    "rename": {
+      "title": "Renomear funil",
+      "submit": "Renomear",
+      "success": "Funil renomeado"
+    },
+    "duplicate": {
+      "success": "Funil duplicado"
+    },
+    "delete": {
+      "title": "Excluir funil",
+      "description": "{name} e todas as suas etapas e itens serão excluídos. Esta ação não pode ser desfeita.",
+      "success": "Funil excluído"
+    },
+    "board": {
+      "title": "Quadro",
+      "count": "{count, plural, one {# item} other {# itens}}",
+      "total": "Total {value}",
+      "search": "Pesquisar por título, número ou contato",
+      "sort": "Ordenar",
+      "filter": "Filtrar",
+      "analytics": "Análises",
+      "settings": "Configurações",
+      "emptyStage": "Arraste e solte um cartão aqui para movê-lo para esta etapa.",
+      "loadMore": "Carregar mais",
+      "loadMoreFailed": "Não foi possível carregar mais itens",
+      "error": "Não foi possível carregar o quadro",
+      "processing": "Processando esta etapa…",
+      "moveFailed": "Não foi possível mover o cartão",
+      "sortOptions": {
+        "createdAtDesc": "Data de criação (Novo para Antigo)",
+        "createdAtAsc": "Data de criação (Antigo para Novo)",
+        "updatedAtDesc": "Data de atualização (Novo para Antigo)",
+        "valueDesc": "Valor da oportunidade (Maior para Menor)",
+        "valueAsc": "Valor da oportunidade (Menor para Maior)",
+        "dueDateAsc": "Data de vencimento (Mais próxima para Mais distante)",
+        "dueDateDesc": "Data de vencimento (Mais distante para Mais próxima)",
+        "priorityDesc": "Prioridade (Maior para Menor)",
+        "priorityAsc": "Prioridade (Menor para Maior)",
+        "updatedAtAsc": "Data de atualização (Antigo para Novo)"
+      },
+      "searchAction": "Pesquisar",
+      "closeSearch": "Fechar pesquisa",
+      "cardMenu": "Ações do cartão",
+      "moveTo": "Mover para",
+      "unknownContact": "Contato desconhecido",
+      "staleError": "Não foi possível atualizar o quadro. O que você vê pode estar desatualizado."
+    },
+    "stage": {
+      "add": "Adicionar etapa",
+      "name": "Nome da etapa",
+      "namePlaceholder": "Nome da etapa",
+      "menu": "Ações da etapa",
+      "edit": "Editar etapa",
+      "delete": "Excluir etapa",
+      "deleteTitle": "Excluir etapa",
+      "deleteDescription": "{name} e todos os itens nela serão excluídos. Esta ação não pode ser desfeita.",
+      "moveItemsTo": "Mover itens para",
+      "deleteItemsToo": "Excluir os itens também",
+      "description": "Descrição",
+      "textColor": "Cor do texto",
+      "backgroundColor": "Cor de fundo",
+      "saved": "Etapa salva",
+      "deleted": "Etapa excluída",
+      "queued": "A etapa está sendo esvaziada em segundo plano.",
+      "resetColor": "Padrão",
+      "deleteMoveDescription": "{name} será excluída. Seus itens serão movidos para {target}.",
+      "rename": "Renomear",
+      "settings": "Configurações",
+      "general": "Geral",
+      "color": "Cor",
+      "cancel": "Cancelar"
+    },
+    "priority": {
+      "low": "Baixa",
+      "medium": "Média",
+      "high": "Alta"
+    },
+    "item": {
+      "loading": "Carregando…",
+      "error": "Não foi possível carregar este item",
+      "title": "Título",
+      "status": "Status",
+      "stage": "Etapa",
+      "priority": "Prioridade",
+      "value": "Valor",
+      "dueDate": "Prazo",
+      "assignees": "Administradores atribuídos",
+      "description": "Descrição",
+      "attachments": "Anexos",
+      "attach": "Anexar arquivos",
+      "noAttachments": "Nenhum anexo",
+      "removeAttachment": "Remover anexo",
+      "removeAttachmentDescription": "O arquivo é removido deste item, mas permanece na biblioteca de mídia.",
+      "comments": "Comentários",
+      "addComment": "Adicionar comentário",
+      "commentPlaceholder": "Escreva um comentário…",
+      "noComments": "Nenhum comentário ainda",
+      "deleteComment": "Excluir comentário",
+      "deleteCommentDescription": "Este comentário será excluído. Não é possível desfazer.",
+      "activity": "Atividade",
+      "noActivity": "Nenhuma atividade ainda",
+      "transfer": "Transferir para funil",
+      "transferTitle": "Transferir para outro funil",
+      "transferDescription": "O item mantém seu número e data de criação. Os campos personalizados são transferidos quando o outro funil tem um campo com o mesmo nome de referência e tipo.",
+      "destinationPipeline": "Funil de destino",
+      "destinationStage": "Etapa de destino",
+      "firstStage": "Primeira etapa",
+      "choose": "Escolher…",
+      "transferred": "Item transferido",
+      "delete": "Excluir",
+      "deleteDescription": "Um item será excluído. Esta ação não pode ser desfeita.",
+      "deleted": "Item excluído",
+      "number": "Número",
+      "createdBy": "Criado por",
+      "createdByValue": "{name} em {date}",
+      "inbox": "Caixa de entrada",
+      "moreActions": "Mais ações",
+      "noDescription": "Sem descrição",
+      "yes": "Sim",
+      "no": "Não",
+      "assigneesMembers": "Agentes",
+      "assigneesTeams": "Equipes da caixa de entrada",
+      "assigneesSearch": "Pesquisar administradores ou equipes…",
+      "assigneesEmpty": "Nenhum resultado",
+      "assigneesPlaceholder": "Selecione administradores ou equipes",
+      "olderComments": "Mostrar comentários anteriores",
+      "olderActivity": "Ver atividade anterior",
+      "activityFilter": "Filtrar",
+      "activityFilterCount": "{count, plural, one {# filtro} other {# filtros}}",
+      "activityFilterClear": "Mostrar tudo",
+      "noFilteredActivity": "Nenhuma atividade corresponde a este filtro.",
+      "activityGroup": {
+        "lifecycle": "Criação e transferência",
+        "stage": "Etapa",
+        "status": "Status",
+        "value": "Valor",
+        "priority": "Prioridade",
+        "dueDate": "Data de vencimento",
+        "details": "Título, descrição e campos",
+        "assignees": "Responsáveis",
+        "comments": "Comentários",
+        "attachments": "Anexos"
+      }
+    },
+    "activity": {
+      "created": "Criado",
+      "stageChanged": "Movido para outra etapa",
+      "statusChanged": "Status alterado",
+      "valueChanged": "Valor alterado",
+      "priorityChanged": "Prioridade alterada",
+      "dueDateChanged": "Prazo alterado",
+      "titleChanged": "Título alterado",
+      "descriptionChanged": "Descrição alterada",
+      "fieldValuesChanged": "Campos personalizados alterados",
+      "assigneesChanged": "Responsáveis alterados",
+      "attachmentAdded": "Anexo adicionado",
+      "attachmentRemoved": "Anexo removido",
+      "commentAdded": "Comentário adicionado",
+      "commentDeleted": "Comentário excluído",
+      "transferred": "Transferido de outro funil",
+      "deleted": "Excluído"
+    },
+    "activityActor": {
+      "flow": "Fluxo",
+      "trigger": "Gatilho",
+      "workspaceToken": "API",
+      "system": "Sistema",
+      "formerMember": "Ex-membro"
+    },
+    "add": {
+      "changeContact": "Escolher outro contato",
+      "success": "Criado",
+      "stepContact": "Selecione um contato",
+      "stepDetails": "Detalhes de {noun}",
+      "contact": "Contato",
+      "addNewContact": "Adicionar novo"
+    },
+    "filter": {
+      "title": "Filtrar",
+      "status": "Status",
+      "statusLabels": {
+        "open": "Aberto",
+        "won": "Ganho",
+        "lost": "Perdido"
+      },
+      "priority": "Prioridade",
+      "assignee": "Administradores atribuídos",
+      "value": "Valor de {noun}",
+      "min": "Mín.",
+      "max": "Máx.",
+      "dueDate": "Prazo",
+      "createdAt": "Data de criação",
+      "from": "De",
+      "to": "Até",
+      "clear": "Limpar filtros",
+      "apply": "Aplicar",
+      "back": "Voltar",
+      "updatedAt": "Data de atualização",
+      "resolvedOn": "{noun} resolvido em",
+      "statusChangedOn": "Status alterado em",
+      "stageChangedOn": "Etapa alterada em",
+      "lastCommentOn": "Último comentário em",
+      "customFields": "Campos personalizados",
+      "any": "Qualquer",
+      "yes": "Sim",
+      "no": "Não",
+      "notResolvedOn": "{noun} não resolvido em",
+      "equal": "Igual a",
+      "different": "Diferente de",
+      "reset": "Redefinir",
+      "presets": {
+        "thisWeek": "Esta semana",
+        "lastWeek": "Semana passada",
+        "last14": "Últimos 14 dias",
+        "thisYear": "Este ano",
+        "lastYear": "Ano passado",
+        "tomorrow": "Amanhã",
+        "next7": "Em 7 dias",
+        "next14": "Em 14 dias",
+        "next30": "Em 30 dias",
+        "allTime": "Todo o período"
+      },
+      "pickDate": "Escolha uma data",
+      "activity": "Atividade",
+      "activityKinds": "Tipo de alteração",
+      "activityActors": "Feito por",
+      "activityWhen": "Quando",
+      "activityAutomation": "Automação"
+    },
+    "analytics": {
+      "title": "Análises",
+      "loading": "Carregando estatísticas…",
+      "error": "Não foi possível carregar as estatísticas",
+      "created": "Criados",
+      "won": "Ganhos",
+      "wonValue": "Valor ganho",
+      "lost": "Perdidos",
+      "lostValue": "Valor perdido",
+      "admin": "Administrador",
+      "automation": "Automação",
+      "back": "Voltar",
+      "admins": "Administradores",
+      "chart": {
+        "created": "Novos por dia",
+        "won": "Ganhos por dia",
+        "lost": "Perdidos por dia",
+        "wonValue": "Valor ganho por dia",
+        "lostValue": "Valor perdido por dia"
+      },
+      "pie": {
+        "created": "Criados por admin",
+        "won": "Ganhos por admin",
+        "lost": "Perdidos por admin",
+        "other": "Outros",
+        "empty": "Sem dados"
+      }
+    },
+    "settings": {
+      "title": "Configurações do funil",
+      "general": "Geral",
+      "fields": "Campos personalizados",
+      "display": "Exibição",
+      "permissions": "Permissões",
+      "saved": "Configurações salvas",
+      "referenceName": "Nome de referência",
+      "referenceNameHint": "Usado nas variáveis pipelines.reference_name.stage_name. Alterá-lo quebra mensagens que usam o nome antigo.",
+      "referenceNameFormat": "Use letras minúsculas, números e sublinhados, começando com uma letra (ex.: close_date).",
+      "assignContact": "Atribuir o contato a um administrador quando um item for atribuído",
+      "limit": "Limitar itens abertos por contato",
+      "statusLabels": "Rótulos de status",
+      "status": {
+        "open": "Aberto",
+        "won": "Ganho",
+        "lost": "Perdido"
+      },
+      "features": "Recursos visíveis",
+      "cardElements": "Elementos do cartão",
+      "card": {
+        "contactPhone": "Telefone do contato",
+        "contactEmail": "E-mail do contato",
+        "createdAt": "Data de criação",
+        "updatedAt": "Data de atualização",
+        "assignees": "Administradores atribuídos",
+        "comments": "Comentários",
+        "cardId": "Número do item",
+        "priority": "Prioridade",
+        "value": "Valor",
+        "dueDate": "Prazo"
+      },
+      "noFields": "Nenhum campo personalizado ainda",
+      "fieldName": "Nome do campo",
+      "fieldReference": "Nome de referência",
+      "fieldType": "Tipo de campo",
+      "required": "Obrigatório",
+      "requiredShort": "obrigatório",
+      "addField": "Adicionar campo",
+      "fieldAdded": "Campo adicionado",
+      "deleteField": "Excluir campo",
+      "permissionsHint": "Proprietários e administradores do workspace sempre têm acesso total. Conceda aos outros membros o que eles podem fazer neste funil.",
+      "revoke": "Revogar",
+      "permission": {
+        "view": "Ver",
+        "edit": "Editar",
+        "delete": "Excluir",
+        "settings": "Configurações"
+      },
+      "noMembers": "Nenhum outro membro para configurar",
+      "confirmDeleteField": "Excluir este campo e todos os seus valores em todos os itens?",
+      "adminPermissions": "Permissões de administrador",
+      "cardVisibleElements": "Elementos visíveis do cartão"
+    },
+    "panel": {
+      "empty": "Nenhum item de funil para este contato",
+      "error": "Não foi possível carregar os itens do funil",
+      "choosePipeline": "Escolha um funil",
+      "add": "Adicionar novo"
+    },
+    "variables": {
+      "group": "Funis",
+      "attributes": {
+        "name": "Nome do item",
+        "stageName": "Etapa",
+        "status": "Status",
+        "priority": "Prioridade",
+        "value": "Valor",
+        "assignedAdmins": "Administradores atribuídos",
+        "createdDate": "Data de criação",
+        "dueDate": "Prazo",
+        "updatedDate": "Data de atualização",
+        "id": "ID do item"
+      }
+    }
   }
 }

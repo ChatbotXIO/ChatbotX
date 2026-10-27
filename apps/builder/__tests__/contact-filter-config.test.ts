@@ -883,6 +883,8 @@ describe("contact filter field config helpers", () => {
           keywords: [],
           whatsappFlows: [],
           emailTopics: [],
+          pipelines: [],
+          pipelineStages: [],
         },
       })
       const byName = (name: string) =>

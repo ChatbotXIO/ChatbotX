@@ -991,7 +991,8 @@
       "ctwaConversionTypes": {
         "lead": "Potensial müştəri",
         "purchase": "Alış"
-      }
+      },
+      "pipelineItem": "Satış xəttindəki element"
     },
     "fieldGroups": {
       "opportunity": "Satış imkanı",
@@ -1008,7 +1009,8 @@
       "botFields": "Bot sahələri",
       "email": "E-poçt",
       "sms": "SMS",
-      "ctwaAds": "Reklamlar"
+      "ctwaAds": "Reklamlar",
+      "pipeline": "Satış xətləri"
     },
     "languages": {
       "ar": "Ərəb dili",
@@ -1056,7 +1058,21 @@
       "allAds": "Bütün reklamlar"
     },
     "noTopic": "Mövzusuz",
-    "trackingSince": "{date} tarixindən izlənir. Əvvəlki fəaliyyət daxil deyil."
+    "trackingSince": "{date} tarixindən izlənir. Əvvəlki fəaliyyət daxil deyil.",
+    "pipelineItem": {
+      "anyPipeline": "İstənilən satış xətti",
+      "anyStatus": "İstənilən status",
+      "attributes": {
+        "exists": "Elementlər",
+        "status": "Elementin statusu",
+        "stage": "Elementin mərhələsi",
+        "priority": "Elementin prioriteti"
+      },
+      "operators": {
+        "has": "Var",
+        "hasNo": "Yoxdur"
+      }
+    }
   },
   "channels": {
     "title": "Kanallar",
@@ -2719,7 +2735,8 @@
       "ads": "Reklamlar",
       "settings": "Parametrlər",
       "miniApps": "Mini Apps",
-      "leaderboards": "Liderlər lövhələri"
+      "leaderboards": "Liderlər lövhələri",
+      "pipelines": "Satış mərhələləri"
     },
     "adReferral": {
       "label": "Reklamlar",
@@ -2777,6 +2794,9 @@
     },
     "miniApp": {
       "label": "Mini Tətbiq"
+    },
+    "lastOpportunityId": {
+      "label": "Son imkanın ID-si"
     },
     "adminName": {
       "label": "Göndərən adminin adı"
@@ -3631,7 +3651,8 @@
       "changeGamificationScore": "Oyun xallarını dəyiş",
       "sendViewCatalog": "Kataloqa bax",
       "sendProducts": "Məhsul göndər",
-      "sendCollection": "Kolleksiya"
+      "sendCollection": "Kolleksiya",
+      "pipeline": "Satış xətləri"
     },
     "externalRequest": {
       "errors": {
@@ -3854,6 +3875,52 @@
       "summaryManual": "{count, plural, one {# məhsul} other {# məhsul}}",
       "cancel": "Ləğv et",
       "save": "Yadda saxla"
+    },
+    "pipelineStep": {
+      "action": "Əməliyyat",
+      "pipeline": "Satış xətti",
+      "targetHint": "Kontaktın bu satış xəttindəki ən son açıq elementi üzərində işləyir. Element olmadıqda \"Keç\" yolu icra olunur.",
+      "noPipelines": "Satış xətti tapılmadı",
+      "actions": {
+        "addToPipeline": "Kontaktı satış xəttinə əlavə et",
+        "moveToStage": "Mərhələyə köçür",
+        "changeValue": "Dəyəri dəyiş",
+        "assign": "Administratorlara təyin et",
+        "changeStatus": "Statusu dəyiş",
+        "changePriority": "Prioriteti dəyiş",
+        "changeDueDate": "Son tarixi dəyiş",
+        "changeTitle": "Başlığı dəyiş",
+        "setCustomField": "Fərdi sahə təyin et",
+        "clearCustomField": "Fərdi sahələri təmizlə",
+        "changeDescription": "Təsviri dəyiş",
+        "removeFromPipeline": "Kontaktı satış xəttindən çıxar",
+        "addComment": "Şərh əlavə et",
+        "transfer": "Başqa satış xəttinə köçür"
+      },
+      "title": "Başlıq",
+      "description": "Təsvir",
+      "stage": "Mərhələ",
+      "firstStage": "İlk mərhələ",
+      "status": "Status",
+      "assigneeMembers": "Təyin olunmuş administratorlar",
+      "assigneeTeams": "Təyin olunmuş komandalar",
+      "value": "Dəyər",
+      "priority": "Prioritet",
+      "dueDate": "Son tarix",
+      "dueNone": "Yoxdur",
+      "dueNoneHint": "Elementin son tarixi yoxdur.",
+      "dueCustomField": "Tarix tipli fərdi sahədən",
+      "dueFixed": "Sabit tarix və vaxt",
+      "dueField": "Tarix və ya tarix-vaxt tipli fərdi sahə",
+      "fieldValues": "Fərdi sahələr",
+      "field": "Sahə",
+      "fieldValue": "Dəyər",
+      "fields": "Sahələr",
+      "addField": "Sahə dəyəri əlavə et",
+      "removeHint": "Kontaktın bu satış xəttindəki ən son açıq elementini silir.",
+      "comment": "Şərh",
+      "destinationPipeline": "Təyinat satış xətti",
+      "destinationStage": "Təyinat mərhələsi"
     }
   },
   "folders": {
@@ -6286,11 +6353,11 @@
       "incomingCall": "Gələn zəng",
       "missedAudioCall": "Buraxılmış səsli zəng",
       "callEnded": "Zəng bitib",
-      "ticketCreated": "Müraciət yaradılıb",
-      "ticketMovedToStage": "Müraciət mərhələyə köçürülüb",
-      "ticketValueChanged": "Müraciətin dəyəri dəyişib",
-      "ticketStatusChanged": "Müraciətin vəziyyəti dəyişib",
-      "ticketPriorityChanged": "Müraciətin prioriteti dəyişib",
+      "pipelineItemCreated": "Müraciət yaradılıb",
+      "pipelineItemMovedToStage": "Müraciət mərhələyə köçürülüb",
+      "pipelineItemValueChanged": "Müraciətin dəyəri dəyişib",
+      "pipelineItemStatusChanged": "Müraciətin vəziyyəti dəyişib",
+      "pipelineItemPriorityChanged": "Müraciətin prioriteti dəyişib",
       "subscribedToSequence": "Ardıcıllığa abunə olub",
       "unsubscribedFromSequence": "Ardıcıllıq abunəliyindən çıxıb",
       "shoppingCartSent": "Kontakt alış-veriş səbətini göndərdi",
@@ -6310,7 +6377,11 @@
       "callRecorded": "Zəng qeydə alınıb",
       "callTranscribed": "Zəng mətnə çevrilib",
       "anyProduct": "İstənilən məhsul",
-      "anyCategory": "İstənilən kateqoriya"
+      "anyCategory": "İstənilən kateqoriya",
+      "anyPipeline": "İstənilən satış xətti",
+      "anyStage": "İstənilən mərhələ",
+      "unavailablePipeline": "Silinmiş və ya əlçatmaz pipeline",
+      "unavailableStage": "Silinmiş və ya əlçatmaz mərhələ"
     },
     "actions": {
       "addTag": "Etiket əlavə et",
@@ -6359,7 +6430,13 @@
     "countCapped": "{count}+ kontakt",
     "exportAllNotice": "Cari süzgəcə uyğun bütün kontaktlar ixrac ediləcək.",
     "exportTakingLong": "İxrac gözləniləndən uzun çəkir",
-    "exportTakingLongDescription": "İxrac hələ davam edir. Bu pəncərəni bağlayıb bir neçə dəqiqədən sonra ixrac tarixçəsindən yenidən yoxlaya bilərsiniz."
+    "exportTakingLongDescription": "İxrac hələ davam edir. Bu pəncərəni bağlayıb bir neçə dəqiqədən sonra ixrac tarixçəsindən yenidən yoxlaya bilərsiniz.",
+    "search": {
+      "placeholder": "Axtar (ad, e-poçt, telefon, kontakt ID-si)",
+      "searching": "Axtarılır…",
+      "error": "Kontaktları axtarmaq mümkün olmadı",
+      "empty": "Kontakt tapılmadı"
+    }
   },
   "contactScan": {
     "menu": {
@@ -10167,5 +10244,401 @@
     "metHelp": "SLA-sı olan cavablar arasında SLA-ya uyğun olanların payı.",
     "eligibleCount": "{count} cavabın SLA-sı var",
     "enable": "Cavab SLA-nı aktiv et"
+  },
+  "pipelines": {
+    "title": "Satış xətləri",
+    "retry": "Yenidən cəhd et",
+    "save": "Yadda saxla",
+    "saveFailed": "Dəyişiklikləri yadda saxlamaq mümkün olmadı. Yenidən cəhd edin.",
+    "list": {
+      "name": "Ad",
+      "type": "Növ",
+      "items": "Elementlər",
+      "add": "Satış xətti əlavə et",
+      "empty": "Hələ satış xətti yoxdur",
+      "emptyHint": "Sövdələşmələri, biletləri və ya istənilən prosesi lövhədə kartlar şəklində izləmək üçün satış xətti yaradın.",
+      "error": "Satış xətlərini yükləmək mümkün olmadı",
+      "contacts": "Kontaktlar",
+      "addShort": "Əlavə et",
+      "description": "Sövdələşmələri, biletləri və ya istənilən prosesi mərhələlər üzrə hərəkət edən kartlar kimi izləyin."
+    },
+    "types": {
+      "opportunity": {
+        "label": "İmkanlar mərkəzi",
+        "description": "Satış sövdələşmələrini mərhələlər üzrə izləyin. İlk mərhələ: Potensial müştəri."
+      },
+      "ticket": {
+        "label": "Dəstək mərkəzi",
+        "description": "Dəstək sorğularını idarə edin. İlk mərhələ: Yeni problem."
+      },
+      "custom": {
+        "label": "Fərdi lövhə",
+        "description": "Öz prosesinizi qurun. İlk mərhələ: Qəbul."
+      }
+    },
+    "noun": {
+      "opportunity": {
+        "one": "İmkan",
+        "many": "İmkanlar",
+        "add": "İmkan əlavə et"
+      },
+      "ticket": {
+        "one": "Bilet",
+        "many": "Biletlər",
+        "add": "Bilet əlavə et"
+      },
+      "card": {
+        "one": "Kart",
+        "many": "Kartlar",
+        "add": "Kart əlavə et"
+      }
+    },
+    "create": {
+      "title": "Yeni satış xətti",
+      "description": "Lövhənin nə üçün olduğunu seçin, sonra ad verin.",
+      "type": "Növ",
+      "name": "Satış xəttinin adı",
+      "namePlaceholder": "məs. Satış",
+      "submit": "Satış xətti yarat",
+      "success": "Satış xətti yaradıldı"
+    },
+    "menu": {
+      "open": "Satış xətti əməliyyatları",
+      "rename": "Adını dəyiş",
+      "duplicate": "Surətini yarat",
+      "delete": "Sil"
+    },
+    "rename": {
+      "title": "Satış xəttinin adını dəyiş",
+      "submit": "Adını dəyiş",
+      "success": "Satış xəttinin adı dəyişdirildi"
+    },
+    "duplicate": {
+      "success": "Satış xəttinin surəti yaradıldı"
+    },
+    "delete": {
+      "title": "Satış xəttini sil",
+      "description": "{name} və onun bütün mərhələləri və elementləri silinəcək. Bu əməliyyatı geri qaytarmaq olmaz.",
+      "success": "Satış xətti silindi"
+    },
+    "board": {
+      "title": "Lövhə",
+      "count": "{count, plural, one {# element} other {# element}}",
+      "total": "Cəmi {value}",
+      "search": "Başlıq, nömrə və ya kontakt üzrə axtar",
+      "sort": "Sırala",
+      "filter": "Süzgəc",
+      "analytics": "Analitika",
+      "settings": "Parametrlər",
+      "emptyStage": "Kartı bu mərhələyə keçirmək üçün buraya sürüşdürüb buraxın.",
+      "loadMore": "Daha çox yüklə",
+      "loadMoreFailed": "Daha çox element yükləmək mümkün olmadı",
+      "error": "Lövhəni yükləmək mümkün olmadı",
+      "processing": "Bu mərhələ emal olunur…",
+      "moveFailed": "Kartı köçürmək mümkün olmadı",
+      "sortOptions": {
+        "createdAtDesc": "Yaradılma tarixi (Yenidən Köhnəyə)",
+        "createdAtAsc": "Yaradılma tarixi (Köhnədən Yeniyə)",
+        "updatedAtDesc": "Yenilənmə tarixi (Yenidən Köhnəyə)",
+        "valueDesc": "İmkan dəyəri (Yüksəkdən Aşağıya)",
+        "valueAsc": "İmkan dəyəri (Aşağıdan Yüksəyə)",
+        "dueDateAsc": "Son tarix (Ən yaxından Ən uzağa)",
+        "dueDateDesc": "Son tarix (Ən uzaqdan Ən yaxına)",
+        "priorityDesc": "Prioritet (Yüksəkdən Aşağıya)",
+        "priorityAsc": "Prioritet (Aşağıdan Yüksəyə)",
+        "updatedAtAsc": "Yenilənmə tarixi (Köhnədən Yeniyə)"
+      },
+      "searchAction": "Axtar",
+      "closeSearch": "Axtarışı bağla",
+      "cardMenu": "Kart əməliyyatları",
+      "moveTo": "Köçür",
+      "unknownContact": "Naməlum əlaqə",
+      "staleError": "Lövhəni yeniləmək mümkün olmadı. Gördüyünüz məlumat köhnə ola bilər."
+    },
+    "stage": {
+      "add": "Mərhələ əlavə et",
+      "name": "Mərhələnin adı",
+      "namePlaceholder": "Mərhələnin adı",
+      "menu": "Mərhələ əməliyyatları",
+      "edit": "Mərhələni redaktə et",
+      "delete": "Mərhələni sil",
+      "deleteTitle": "Mərhələni sil",
+      "deleteDescription": "{name} və üzərindəki bütün elementlər silinəcək. Bu əməliyyatı geri qaytarmaq olmaz.",
+      "moveItemsTo": "Elementləri köçür",
+      "deleteItemsToo": "Elementləri də sil",
+      "description": "Təsvir",
+      "textColor": "Mətn rəngi",
+      "backgroundColor": "Fon rəngi",
+      "saved": "Mərhələ yadda saxlanıldı",
+      "deleted": "Mərhələ silindi",
+      "queued": "Mərhələ arxa planda təmizlənir.",
+      "resetColor": "Standart",
+      "deleteMoveDescription": "{name} silinəcək. Onun elementləri {target} mərhələsinə köçürüləcək.",
+      "rename": "Adını dəyiş",
+      "settings": "Parametrlər",
+      "general": "Ümumi",
+      "color": "Rəng",
+      "cancel": "Ləğv et"
+    },
+    "priority": {
+      "low": "Aşağı",
+      "medium": "Orta",
+      "high": "Yüksək"
+    },
+    "item": {
+      "loading": "Yüklənir…",
+      "error": "Bu elementi yükləmək mümkün olmadı",
+      "title": "Başlıq",
+      "status": "Status",
+      "stage": "Mərhələ",
+      "priority": "Prioritet",
+      "value": "Dəyər",
+      "dueDate": "Son tarix",
+      "assignees": "Təyin olunmuş administratorlar",
+      "description": "Təsvir",
+      "attachments": "Qoşmalar",
+      "attach": "Fayl əlavə et",
+      "noAttachments": "Qoşma yoxdur",
+      "removeAttachment": "Qoşmanı sil",
+      "removeAttachmentDescription": "Fayl bu elementdən çıxarılacaq, lakin media kitabxanasında qalacaq.",
+      "comments": "Şərhlər",
+      "addComment": "Şərh əlavə et",
+      "commentPlaceholder": "Şərh yazın…",
+      "noComments": "Hələ şərh yoxdur",
+      "deleteComment": "Şərhi sil",
+      "deleteCommentDescription": "Bu şərh silinəcək. Bunu geri qaytarmaq olmaz.",
+      "activity": "Fəaliyyət",
+      "noActivity": "Hələ fəaliyyət yoxdur",
+      "transfer": "Satış xəttinə köçür",
+      "transferTitle": "Başqa satış xəttinə köçür",
+      "transferDescription": "Element nömrəsini və yaradılma tarixini saxlayır. Digər satış xəttində eyni istinad adlı və tipli sahə olduqda fərdi sahələr köçürülür.",
+      "destinationPipeline": "Təyinat satış xətti",
+      "destinationStage": "Təyinat mərhələsi",
+      "firstStage": "İlk mərhələ",
+      "choose": "Seçin…",
+      "transferred": "Element köçürüldü",
+      "delete": "Sil",
+      "deleteDescription": "Bir element silinəcək. Bu əməliyyatı geri qaytarmaq olmaz.",
+      "deleted": "Element silindi",
+      "number": "Nömrə",
+      "createdBy": "Yaradan",
+      "createdByValue": "{name}, {date}",
+      "inbox": "Gələnlər qutusu",
+      "moreActions": "Digər əməliyyatlar",
+      "noDescription": "Təsvir yoxdur",
+      "yes": "Bəli",
+      "no": "Xeyr",
+      "assigneesMembers": "Agentlər",
+      "assigneesTeams": "Gələnlər qutusu komandaları",
+      "assigneesSearch": "Administrator və ya komanda axtarın…",
+      "assigneesEmpty": "Nəticə yoxdur",
+      "assigneesPlaceholder": "Administrator və ya komanda seçin",
+      "olderComments": "Köhnə şərhləri göstər",
+      "olderActivity": "Köhnə fəaliyyətləri göstər",
+      "activityFilter": "Filtr",
+      "activityFilterCount": "{count, plural, one {# filtr} other {# filtr}}",
+      "activityFilterClear": "Hamısını göstər",
+      "noFilteredActivity": "Bu filtrə uyğun fəaliyyət yoxdur.",
+      "activityGroup": {
+        "lifecycle": "Yaradılma və köçürmə",
+        "stage": "Mərhələ",
+        "status": "Status",
+        "value": "Dəyər",
+        "priority": "Prioritet",
+        "dueDate": "Son tarix",
+        "details": "Başlıq, təsvir və sahələr",
+        "assignees": "Təyin edilənlər",
+        "comments": "Şərhlər",
+        "attachments": "Əlavələr"
+      }
+    },
+    "activity": {
+      "created": "Yaradıldı",
+      "stageChanged": "Başqa mərhələyə köçürüldü",
+      "statusChanged": "Status dəyişdi",
+      "valueChanged": "Dəyər dəyişdi",
+      "priorityChanged": "Prioritet dəyişdi",
+      "dueDateChanged": "Son tarix dəyişdi",
+      "titleChanged": "Başlıq dəyişdi",
+      "descriptionChanged": "Təsvir dəyişdi",
+      "fieldValuesChanged": "Fərdi sahələr dəyişdi",
+      "assigneesChanged": "Təyin olunanlar dəyişdi",
+      "attachmentAdded": "Qoşma əlavə edildi",
+      "attachmentRemoved": "Qoşma silindi",
+      "commentAdded": "Şərh əlavə edildi",
+      "commentDeleted": "Şərh silindi",
+      "transferred": "Başqa satış xəttindən köçürüldü",
+      "deleted": "Silindi"
+    },
+    "activityActor": {
+      "flow": "Axın",
+      "trigger": "Tətikləyici",
+      "workspaceToken": "API",
+      "system": "Sistem",
+      "formerMember": "Keçmiş üzv"
+    },
+    "add": {
+      "changeContact": "Başqa kontakt seçin",
+      "success": "Yaradıldı",
+      "stepContact": "Kontakt seçin",
+      "stepDetails": "{noun} təfərrüatları",
+      "contact": "Kontakt",
+      "addNewContact": "Yenisini əlavə et"
+    },
+    "filter": {
+      "title": "Süzgəc",
+      "status": "Status",
+      "statusLabels": {
+        "open": "Açıq",
+        "won": "Qazanılıb",
+        "lost": "İtirilib"
+      },
+      "priority": "Prioritet",
+      "assignee": "Təyin olunmuş administratorlar",
+      "value": "{noun} dəyəri",
+      "min": "Min",
+      "max": "Maks",
+      "dueDate": "Son tarix",
+      "createdAt": "Yaradılma tarixi",
+      "from": "Başlanğıc",
+      "to": "Son",
+      "clear": "Süzgəcləri təmizlə",
+      "apply": "Tətbiq et",
+      "back": "Geri",
+      "updatedAt": "Yenilənmə tarixi",
+      "resolvedOn": "{noun} həll edilib",
+      "statusChangedOn": "Statusun dəyişmə tarixi",
+      "stageChangedOn": "Mərhələnin dəyişmə tarixi",
+      "lastCommentOn": "Son şərh tarixi",
+      "customFields": "Fərdi sahələr",
+      "any": "İstənilən",
+      "yes": "Bəli",
+      "no": "Xeyr",
+      "notResolvedOn": "{noun} həll edilməyib",
+      "equal": "Bərabərdir",
+      "different": "Fərqlidir",
+      "reset": "Sıfırla",
+      "presets": {
+        "thisWeek": "Bu həftə",
+        "lastWeek": "Keçən həftə",
+        "last14": "Son 14 gün",
+        "thisYear": "Bu il",
+        "lastYear": "Keçən il",
+        "tomorrow": "Sabah",
+        "next7": "7 gün ərzində",
+        "next14": "14 gün ərzində",
+        "next30": "30 gün ərzində",
+        "allTime": "Bütün vaxt"
+      },
+      "pickDate": "Tarix seçin",
+      "activity": "Fəaliyyət",
+      "activityKinds": "Dəyişiklik növü",
+      "activityActors": "Edən",
+      "activityWhen": "Nə vaxt",
+      "activityAutomation": "Avtomatlaşdırma"
+    },
+    "analytics": {
+      "title": "Analitika",
+      "loading": "Statistika yüklənir…",
+      "error": "Statistikanı yükləmək mümkün olmadı",
+      "created": "Yaradıldı",
+      "won": "Qazanılıb",
+      "wonValue": "Qazanılan dəyər",
+      "lost": "İtirilib",
+      "lostValue": "İtirilən dəyər",
+      "admin": "Administrator",
+      "automation": "Avtomatlaşdırma",
+      "back": "Geri",
+      "admins": "Administratorlar",
+      "chart": {
+        "created": "Gündəlik yeni",
+        "won": "Gündəlik qazanılan",
+        "lost": "Gündəlik itirilən",
+        "wonValue": "Gündəlik qazanılan dəyər",
+        "lostValue": "Gündəlik itirilən dəyər"
+      },
+      "pie": {
+        "created": "Admin üzrə yaradılan",
+        "won": "Admin üzrə qazanılan",
+        "lost": "Admin üzrə itirilən",
+        "other": "Digər",
+        "empty": "Məlumat yoxdur"
+      }
+    },
+    "settings": {
+      "title": "Satış xəttinin parametrləri",
+      "general": "Ümumi",
+      "fields": "Fərdi sahələr",
+      "display": "Görünüş",
+      "permissions": "İcazələr",
+      "saved": "Parametrlər yadda saxlanıldı",
+      "referenceName": "İstinad adı",
+      "referenceNameHint": "pipelines.reference_name.stage_name dəyişənlərində istifadə olunur. Dəyişdirdikdə köhnə addan istifadə edən mesajlar pozulur.",
+      "referenceNameFormat": "Kiçik hərflər, rəqəmlər və alt xətt istifadə edin, hərflə başlayın (məs. close_date).",
+      "assignContact": "Element təyin ediləndə kontaktı da administratora təyin et",
+      "limit": "Kontakt üzrə açıq elementlərə limit qoy",
+      "statusLabels": "Status etiketləri",
+      "status": {
+        "open": "Açıq",
+        "won": "Qazanılıb",
+        "lost": "İtirilib"
+      },
+      "features": "Görünən xüsusiyyətlər",
+      "cardElements": "Kart elementləri",
+      "card": {
+        "contactPhone": "Kontaktın telefonu",
+        "contactEmail": "Kontaktın e-poçtu",
+        "createdAt": "Yaradılma tarixi",
+        "updatedAt": "Yenilənmə tarixi",
+        "assignees": "Təyin olunmuş administratorlar",
+        "comments": "Şərhlər",
+        "cardId": "Element nömrəsi",
+        "priority": "Prioritet",
+        "value": "Dəyər",
+        "dueDate": "Son tarix"
+      },
+      "noFields": "Hələ fərdi sahə yoxdur",
+      "fieldName": "Sahənin adı",
+      "fieldReference": "İstinad adı",
+      "fieldType": "Sahənin növü",
+      "required": "Məcburi",
+      "requiredShort": "məcburi",
+      "addField": "Sahə əlavə et",
+      "fieldAdded": "Sahə əlavə edildi",
+      "deleteField": "Sahəni sil",
+      "permissionsHint": "İş sahəsinin sahibləri və administratorları həmişə tam girişə malikdir. Digər üzvlərə bu satış xəttində nələr edə biləcəklərini verin.",
+      "revoke": "Geri al",
+      "permission": {
+        "view": "Bax",
+        "edit": "Redaktə et",
+        "delete": "Sil",
+        "settings": "Parametrlər"
+      },
+      "noMembers": "Konfiqurasiya ediləcək başqa üzv yoxdur",
+      "confirmDeleteField": "Bu sahə və onun bütün elementlərdəki dəyərləri silinsin?",
+      "adminPermissions": "Administrator icazələri",
+      "cardVisibleElements": "Kartda görünən elementlər"
+    },
+    "panel": {
+      "empty": "Bu kontakt üçün satış xətti elementi yoxdur",
+      "error": "Satış xətti elementlərini yükləmək mümkün olmadı",
+      "choosePipeline": "Satış xətti seçin",
+      "add": "Yenisini əlavə et"
+    },
+    "variables": {
+      "group": "Satış xətləri",
+      "attributes": {
+        "name": "Elementin adı",
+        "stageName": "Mərhələ",
+        "status": "Status",
+        "priority": "Prioritet",
+        "value": "Dəyər",
+        "assignedAdmins": "Təyin olunmuş administratorlar",
+        "createdDate": "Yaradılma tarixi",
+        "dueDate": "Son tarix",
+        "updatedDate": "Yenilənmə tarixi",
+        "id": "Elementin ID-si"
+      }
+    }
   }
 }

@@ -14,6 +14,7 @@ import {
   normalizeStoredTimezone,
   offsetFromStoredTimezone,
 } from "@chatbotx.io/business/contact-locale"
+import { loadLastPipelineItemId } from "@chatbotx.io/business/pipeline/variable-targets"
 import { resolveGenderLabel } from "@chatbotx.io/business/system-field"
 import { isWorkspaceScheduledForDeletion } from "@chatbotx.io/business/workspace-lifecycle/predicates"
 import { ensureContactAvatarMirrored } from "@chatbotx.io/channel-registry/media-hydration"
@@ -70,7 +71,7 @@ import { getChatHistory } from "./helpers/message"
 import { getQueuedMessages } from "./helpers/queued-messages"
 import { toPublicStorageUrl } from "./helpers/storage-url"
 import { logger } from "./logger"
-import type { ContactVariableContext } from "./schema"
+import type { ContactVariableContext, ReplaceVariableProps } from "./schema"
 
 const LOCALE_SEPARATOR_RE = /[-_]/
 // Exported so javascript-interpolation.ts scans the same placeholder syntax as
@@ -185,7 +186,7 @@ export const getContactTimezone = ({
   workspace?.timezone ??
   DEFAULT_FILTER_TIMEZONE
 
-const formatDate = (
+export const formatDate = (
   date: Date | string | null | undefined,
   timezone: string | null,
 ): string | null => {
@@ -384,7 +385,7 @@ const getLatestLeadValue = async (
 }
 
 export const getSystemFieldValue = async (
-  context: ContactVariableContext,
+  context: ContactVariableContext & Pick<ReplaceVariableProps, "pipelineItems">,
   key: SystemFieldType,
 ): Promise<string | null> => {
   const { contact, contactInbox, workspace } = context
@@ -435,6 +436,13 @@ export const getSystemFieldValue = async (
       return formatDate(contactInbox?.createdAt, contactTimezone)
     case systemFieldTypes.enum.last_seen:
       return formatDateTime(contactInbox?.contactLastReadAt, contactTimezone)
+    case systemFieldTypes.enum.last_opportunity_id:
+      // The context's loader shares one query per render; without one, read it.
+      return await (context.pipelineItems?.lastItemId() ??
+        loadLastPipelineItemId({
+          workspaceId: contact.workspaceId,
+          contactId: contact.id,
+        }))
     case systemFieldTypes.enum.last_input:
       return await getContactLastInput(contact.id)
     case systemFieldTypes.enum.last_input_type:

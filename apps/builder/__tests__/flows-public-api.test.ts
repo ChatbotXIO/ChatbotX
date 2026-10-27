@@ -623,6 +623,83 @@ describe("POST /v1/flows/validate", () => {
     expect(flowVersionService.updateDraftByFlowId).not.toHaveBeenCalled()
   })
 
+  test("compiles a pipeline step through publishFlowSchema using the authoring context", async () => {
+    getFlowAuthoringContext.mockResolvedValueOnce({
+      templatesByName: new Map(),
+      customFieldsByName: new Map(),
+      flowsByName: new Map(),
+      pipelinesByReferenceName: new Map([
+        [
+          "sales",
+          {
+            id: "5001",
+            name: "Sales",
+            referenceName: "sales",
+            stages: [{ id: "5101", name: "Won" }],
+            fields: [],
+          },
+        ],
+      ]),
+    } as never)
+
+    const result = await procedure.handler?.({
+      context: { workspace: { id: "workspace-1" } },
+      input: {
+        spec: {
+          formatVersion: 1,
+          name: "Pipeline flow",
+          steps: [
+            {
+              type: "pipeline",
+              action: "moveToStage",
+              pipeline: "sales",
+              stage: "Won",
+              onSkip: [{ type: "send", text: "No deal yet" }],
+            },
+          ],
+        },
+      },
+    })
+
+    expect(result.nodes[0].type).toBe("performAction")
+    expect(result.nodes[0].data.details.steps[0]).toMatchObject({
+      stepType: "pipeline",
+      pipelineId: "5001",
+      stageId: "5101",
+    })
+    expect(result.edges).toHaveLength(1)
+  })
+
+  test("reports an unknown pipeline with its spec path", async () => {
+    let caught: unknown
+    try {
+      await procedure.handler?.({
+        context: { workspace: { id: "workspace-1" } },
+        input: {
+          spec: {
+            formatVersion: 1,
+            name: "Pipeline flow",
+            steps: [
+              {
+                type: "pipeline",
+                action: "removeFromPipeline",
+                pipeline: "missing",
+              },
+            ],
+          },
+        },
+      })
+    } catch (error) {
+      caught = error
+    }
+
+    expect(caught).toBeInstanceOf(FlowAuthoringException)
+    expect((caught as FlowAuthoringException).errors[0]).toMatchObject({
+      path: "steps[0].pipeline",
+      code: "unknownPipeline",
+    })
+  })
+
   test("throws FlowAuthoringException for an unknown template name", async () => {
     let caught: unknown
     try {

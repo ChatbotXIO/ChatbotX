@@ -949,7 +949,8 @@
       "ctwaConversionTypes": {
         "lead": "リード",
         "purchase": "購入"
-      }
+      },
+      "pipelineItem": "パイプラインのアイテム"
     },
     "fieldGroups": {
       "opportunity": "商談",
@@ -966,7 +967,8 @@
       "botFields": "ボットフィールド",
       "email": "メール",
       "sms": "SMS",
-      "ctwaAds": "広告"
+      "ctwaAds": "広告",
+      "pipeline": "パイプライン"
     },
     "languages": {
       "ar": "アラビア語",
@@ -1014,7 +1016,21 @@
       "allAds": "すべての広告"
     },
     "noTopic": "トピックなし",
-    "trackingSince": "{date} から記録されています。それ以前のアクティビティは含まれません。"
+    "trackingSince": "{date} から記録されています。それ以前のアクティビティは含まれません。",
+    "pipelineItem": {
+      "anyPipeline": "すべてのパイプライン",
+      "anyStatus": "すべてのステータス",
+      "attributes": {
+        "exists": "アイテム",
+        "status": "アイテムのステータス",
+        "stage": "アイテムのステージ",
+        "priority": "アイテムの優先度"
+      },
+      "operators": {
+        "has": "あり",
+        "hasNo": "なし"
+      }
+    }
   },
   "fields": {
     "optionalHint": "(任意)",
@@ -2522,7 +2538,8 @@
       "ads": "広告",
       "settings": "設定",
       "miniApps": "ミニアプリ",
-      "leaderboards": "ランキング"
+      "leaderboards": "ランキング",
+      "pipelines": "パイプライン"
     },
     "adReferral": {
       "label": "Ads",
@@ -2580,6 +2597,9 @@
     },
     "miniApp": {
       "label": "ミニアプリ"
+    },
+    "lastOpportunityId": {
+      "label": "最新の商談ID"
     },
     "adminName": {
       "label": "送信した管理者名"
@@ -2794,7 +2814,8 @@
       "changeGamificationScore": "ゲーミフィケーションのスコアを変更",
       "sendViewCatalog": "カタログを見る",
       "sendProducts": "商品を送信",
-      "sendCollection": "コレクション"
+      "sendCollection": "コレクション",
+      "pipeline": "パイプライン"
     },
     "externalRequest": {
       "errors": {
@@ -3017,6 +3038,52 @@
       "summaryManual": "{count, plural, one {#商品} other {#商品}}",
       "cancel": "キャンセル",
       "save": "保存"
+    },
+    "pipelineStep": {
+      "action": "アクション",
+      "pipeline": "パイプライン",
+      "targetHint": "このパイプラインにあるコンタクトの最新のオープン中アイテムが対象です。該当するものがない場合は「スキップ」パスが実行されます。",
+      "noPipelines": "パイプラインが見つかりません",
+      "actions": {
+        "addToPipeline": "コンタクトをパイプラインに追加",
+        "moveToStage": "ステージに移動",
+        "changeValue": "金額を変更",
+        "assign": "管理者に割り当て",
+        "changeStatus": "ステータスを変更",
+        "changePriority": "優先度を変更",
+        "changeDueDate": "期限を変更",
+        "changeTitle": "タイトルを変更",
+        "setCustomField": "カスタムフィールドを設定",
+        "clearCustomField": "カスタムフィールドをクリア",
+        "changeDescription": "説明を変更",
+        "removeFromPipeline": "コンタクトをパイプラインから削除",
+        "addComment": "コメントを追加",
+        "transfer": "別のパイプラインに移管"
+      },
+      "title": "タイトル",
+      "description": "説明",
+      "stage": "ステージ",
+      "firstStage": "最初のステージ",
+      "status": "ステータス",
+      "assigneeMembers": "割り当て済みの管理者",
+      "assigneeTeams": "割り当て済みのチーム",
+      "value": "金額",
+      "priority": "優先度",
+      "dueDate": "期限",
+      "dueNone": "なし",
+      "dueNoneHint": "このアイテムには期限がありません。",
+      "dueCustomField": "日付のカスタムフィールドから設定",
+      "dueFixed": "固定の日時",
+      "dueField": "日付または日時のカスタムフィールド",
+      "fieldValues": "カスタムフィールド",
+      "field": "フィールド",
+      "fieldValue": "値",
+      "fields": "フィールド",
+      "addField": "フィールド値を追加",
+      "removeHint": "このパイプラインにあるコンタクトの最新のオープン中アイテムを削除します。",
+      "comment": "コメント",
+      "destinationPipeline": "移管先のパイプライン",
+      "destinationStage": "移管先のステージ"
     }
   },
   "folders": {
@@ -5583,11 +5650,11 @@
       "incomingCall": "着信",
       "missedAudioCall": "不在着信",
       "callEnded": "通話が終了した",
-      "ticketCreated": "チケットが作成された",
-      "ticketMovedToStage": "チケットがステージに移動された",
-      "ticketValueChanged": "チケットの値が変更された",
-      "ticketStatusChanged": "チケットのステータスが変更された",
-      "ticketPriorityChanged": "チケットの優先度が変更された",
+      "pipelineItemCreated": "チケットが作成された",
+      "pipelineItemMovedToStage": "チケットがステージに移動された",
+      "pipelineItemValueChanged": "チケットの値が変更された",
+      "pipelineItemStatusChanged": "チケットのステータスが変更された",
+      "pipelineItemPriorityChanged": "チケットの優先度が変更された",
       "subscribedToSequence": "シーケンスに登録された",
       "unsubscribedFromSequence": "シーケンスから登録解除された",
       "shoppingCartSent": "連絡先がショッピングカートを送信",
@@ -5607,7 +5674,11 @@
       "callRecorded": "通話が録音されました",
       "callTranscribed": "通話が文字起こしされました",
       "anyProduct": "すべての商品",
-      "anyCategory": "すべてのカテゴリー"
+      "anyCategory": "すべてのカテゴリー",
+      "anyPipeline": "すべてのパイプライン",
+      "anyStage": "すべてのステージ",
+      "unavailablePipeline": "削除済みまたは利用できないパイプライン",
+      "unavailableStage": "削除済みまたは利用できないステージ"
     },
     "actions": {
       "addTag": "タグを追加",
@@ -5656,7 +5727,13 @@
     "countCapped": "{count}件以上の連絡先",
     "exportAllNotice": "現在のフィルターに一致するすべての連絡先がエクスポートされます。",
     "exportTakingLong": "エクスポートに予想以上の時間がかかっています",
-    "exportTakingLongDescription": "エクスポートは引き続き処理中です。このダイアログを閉じ、数分後にエクスポート履歴から確認できます。"
+    "exportTakingLongDescription": "エクスポートは引き続き処理中です。このダイアログを閉じ、数分後にエクスポート履歴から確認できます。",
+    "search": {
+      "placeholder": "検索（名前、メール、電話番号、コンタクトID）",
+      "searching": "検索中…",
+      "error": "コンタクトを検索できませんでした",
+      "empty": "コンタクトが見つかりません"
+    }
   },
   "contactScan": {
     "menu": {
@@ -10167,5 +10244,401 @@
     "metHelp": "SLAのある返信のうち達成した割合。",
     "eligibleCount": "{count} 件の返信にSLAがありました",
     "enable": "応答SLAを有効にする"
+  },
+  "pipelines": {
+    "title": "パイプライン",
+    "retry": "再試行",
+    "save": "保存",
+    "saveFailed": "変更を保存できませんでした。もう一度お試しください。",
+    "list": {
+      "name": "名前",
+      "type": "タイプ",
+      "items": "アイテム",
+      "add": "パイプラインを追加",
+      "empty": "パイプラインはまだありません",
+      "emptyHint": "パイプラインを作成して、商談やチケットなどあらゆるプロセスをボード上のカードで管理しましょう。",
+      "error": "パイプラインを読み込めませんでした",
+      "contacts": "コンタクト",
+      "addShort": "追加",
+      "description": "商談・チケット・任意のプロセスを、ステージ間を移動するカードとして管理します。"
+    },
+    "types": {
+      "opportunity": {
+        "label": "商談センター",
+        "description": "営業案件をステージごとに管理します。最初のステージ：リード。"
+      },
+      "ticket": {
+        "label": "サポートセンター",
+        "description": "サポートリクエストに対応します。最初のステージ：新規課題。"
+      },
+      "custom": {
+        "label": "カスタムボード",
+        "description": "独自のプロセスを構築します。最初のステージ：受付。"
+      }
+    },
+    "noun": {
+      "opportunity": {
+        "one": "商談",
+        "many": "商談",
+        "add": "商談を追加"
+      },
+      "ticket": {
+        "one": "チケット",
+        "many": "チケット",
+        "add": "チケットを追加"
+      },
+      "card": {
+        "one": "カード",
+        "many": "カード",
+        "add": "カードを追加"
+      }
+    },
+    "create": {
+      "title": "新しいパイプライン",
+      "description": "ボードの用途を選び、名前を付けてください。",
+      "type": "種類",
+      "name": "パイプライン名",
+      "namePlaceholder": "例: 営業",
+      "submit": "パイプラインを作成",
+      "success": "パイプラインを作成しました"
+    },
+    "menu": {
+      "open": "パイプラインの操作",
+      "rename": "名前を変更",
+      "duplicate": "複製",
+      "delete": "削除"
+    },
+    "rename": {
+      "title": "パイプライン名を変更",
+      "submit": "名前を変更",
+      "success": "パイプライン名を変更しました"
+    },
+    "duplicate": {
+      "success": "パイプラインを複製しました"
+    },
+    "delete": {
+      "title": "パイプラインを削除",
+      "description": "{name} と、そのすべてのステージおよびアイテムが削除されます。この操作は元に戻せません。",
+      "success": "パイプラインを削除しました"
+    },
+    "board": {
+      "title": "ボード",
+      "count": "{count, plural, one {# 件} other {# 件}}",
+      "total": "合計 {value}",
+      "search": "タイトル、番号、コンタクトで検索",
+      "sort": "並べ替え",
+      "filter": "フィルター",
+      "analytics": "分析",
+      "settings": "設定",
+      "emptyStage": "カードをここにドラッグ＆ドロップすると、このステージに移動します。",
+      "loadMore": "さらに読み込む",
+      "loadMoreFailed": "アイテムをさらに読み込めませんでした",
+      "error": "ボードを読み込めませんでした",
+      "processing": "このステージを処理中…",
+      "moveFailed": "カードを移動できませんでした",
+      "sortOptions": {
+        "createdAtDesc": "作成日 (新しい順)",
+        "createdAtAsc": "作成日 (古い順)",
+        "updatedAtDesc": "更新日 (新しい順)",
+        "valueDesc": "商談金額 (高い順)",
+        "valueAsc": "商談金額 (低い順)",
+        "dueDateAsc": "期限日 (近い順)",
+        "dueDateDesc": "期限日 (遠い順)",
+        "priorityDesc": "優先度 (高い順)",
+        "priorityAsc": "優先度 (低い順)",
+        "updatedAtAsc": "更新日 (古い順)"
+      },
+      "searchAction": "検索",
+      "closeSearch": "検索を閉じる",
+      "cardMenu": "カードの操作",
+      "moveTo": "移動先",
+      "unknownContact": "不明な連絡先",
+      "staleError": "ボードを更新できませんでした。表示内容が古い可能性があります。"
+    },
+    "stage": {
+      "add": "ステージを追加",
+      "name": "ステージ名",
+      "namePlaceholder": "ステージ名",
+      "menu": "ステージの操作",
+      "edit": "ステージを編集",
+      "delete": "ステージを削除",
+      "deleteTitle": "ステージを削除",
+      "deleteDescription": "{name} と、そのステージ内のすべてのアイテムが削除されます。この操作は元に戻せません。",
+      "moveItemsTo": "アイテムの移動先",
+      "deleteItemsToo": "アイテムも削除する",
+      "description": "説明",
+      "textColor": "文字色",
+      "backgroundColor": "背景色",
+      "saved": "ステージを保存しました",
+      "deleted": "ステージを削除しました",
+      "queued": "ステージをバックグラウンドで空にしています。",
+      "resetColor": "デフォルト",
+      "deleteMoveDescription": "{name} は削除されます。そのアイテムは {target} に移動します。",
+      "rename": "名前を変更",
+      "settings": "設定",
+      "general": "一般",
+      "color": "色",
+      "cancel": "キャンセル"
+    },
+    "priority": {
+      "low": "低",
+      "medium": "中",
+      "high": "高"
+    },
+    "item": {
+      "loading": "読み込み中…",
+      "error": "このアイテムを読み込めませんでした",
+      "title": "タイトル",
+      "status": "ステータス",
+      "stage": "ステージ",
+      "priority": "優先度",
+      "value": "金額",
+      "dueDate": "期限",
+      "assignees": "割り当て済みの管理者",
+      "description": "説明",
+      "attachments": "添付ファイル",
+      "attach": "ファイルを添付",
+      "noAttachments": "添付ファイルはありません",
+      "removeAttachment": "添付ファイルを削除",
+      "removeAttachmentDescription": "ファイルはこの項目から外されますが、メディアライブラリには残ります。",
+      "comments": "コメント",
+      "addComment": "コメントを追加",
+      "commentPlaceholder": "コメントを入力…",
+      "noComments": "コメントはまだありません",
+      "deleteComment": "コメントを削除",
+      "deleteCommentDescription": "このコメントは削除されます。元に戻すことはできません。",
+      "activity": "アクティビティ",
+      "noActivity": "アクティビティはまだありません",
+      "transfer": "パイプラインに移管",
+      "transferTitle": "別のパイプラインに移管",
+      "transferDescription": "アイテムの番号と作成日は引き継がれます。移管先のパイプラインに同じ参照名とタイプのフィールドがある場合、カスタムフィールドも引き継がれます。",
+      "destinationPipeline": "移管先のパイプライン",
+      "destinationStage": "移管先のステージ",
+      "firstStage": "最初のステージ",
+      "choose": "選択…",
+      "transferred": "アイテムを移管しました",
+      "delete": "削除",
+      "deleteDescription": "1件のアイテムが削除されます。この操作は元に戻せません。",
+      "deleted": "アイテムを削除しました",
+      "number": "番号",
+      "createdBy": "作成者",
+      "createdByValue": "{name}（{date}）",
+      "inbox": "受信トレイ",
+      "moreActions": "その他の操作",
+      "noDescription": "説明なし",
+      "yes": "はい",
+      "no": "いいえ",
+      "assigneesMembers": "エージェント",
+      "assigneesTeams": "受信トレイのチーム",
+      "assigneesSearch": "管理者またはチームを検索…",
+      "assigneesEmpty": "結果なし",
+      "assigneesPlaceholder": "管理者またはチームを選択",
+      "olderComments": "以前のコメントを表示",
+      "olderActivity": "以前のアクティビティを表示",
+      "activityFilter": "絞り込み",
+      "activityFilterCount": "{count, plural, one {#件のフィルター} other {#件のフィルター}}",
+      "activityFilterClear": "すべて表示",
+      "noFilteredActivity": "このフィルターに一致するアクティビティはありません。",
+      "activityGroup": {
+        "lifecycle": "作成・移動",
+        "stage": "ステージ",
+        "status": "ステータス",
+        "value": "金額",
+        "priority": "優先度",
+        "dueDate": "期限",
+        "details": "タイトル・説明・フィールド",
+        "assignees": "担当者",
+        "comments": "コメント",
+        "attachments": "添付ファイル"
+      }
+    },
+    "activity": {
+      "created": "作成",
+      "stageChanged": "別のステージに移動",
+      "statusChanged": "ステータスを変更",
+      "valueChanged": "金額を変更",
+      "priorityChanged": "優先度を変更",
+      "dueDateChanged": "期限を変更",
+      "titleChanged": "タイトルを変更",
+      "descriptionChanged": "説明を変更",
+      "fieldValuesChanged": "カスタムフィールドを変更",
+      "assigneesChanged": "担当者を変更",
+      "attachmentAdded": "添付ファイルを追加",
+      "attachmentRemoved": "添付ファイルを削除",
+      "commentAdded": "コメントを追加",
+      "commentDeleted": "コメントを削除",
+      "transferred": "別のパイプラインから移管",
+      "deleted": "削除"
+    },
+    "activityActor": {
+      "flow": "フロー",
+      "trigger": "トリガー",
+      "workspaceToken": "API",
+      "system": "システム",
+      "formerMember": "元メンバー"
+    },
+    "add": {
+      "changeContact": "別のコンタクトを選択",
+      "success": "作成しました",
+      "stepContact": "コンタクトを選択",
+      "stepDetails": "{noun}の詳細",
+      "contact": "コンタクト",
+      "addNewContact": "新規追加"
+    },
+    "filter": {
+      "title": "フィルター",
+      "status": "ステータス",
+      "statusLabels": {
+        "open": "オープン",
+        "won": "成約",
+        "lost": "失注"
+      },
+      "priority": "優先度",
+      "assignee": "割り当て済みの管理者",
+      "value": "{noun}の金額",
+      "min": "最小",
+      "max": "最大",
+      "dueDate": "期限",
+      "createdAt": "作成日",
+      "from": "開始",
+      "to": "終了",
+      "clear": "フィルターをクリア",
+      "apply": "適用",
+      "back": "戻る",
+      "updatedAt": "更新日",
+      "resolvedOn": "{noun}の解決日",
+      "statusChangedOn": "ステータス変更日",
+      "stageChangedOn": "ステージ変更日",
+      "lastCommentOn": "最終コメント日",
+      "customFields": "カスタムフィールド",
+      "any": "すべて",
+      "yes": "はい",
+      "no": "いいえ",
+      "notResolvedOn": "{noun}の未解決日",
+      "equal": "等しい",
+      "different": "等しくない",
+      "reset": "リセット",
+      "presets": {
+        "thisWeek": "今週",
+        "lastWeek": "先週",
+        "last14": "過去14日間",
+        "thisYear": "今年",
+        "lastYear": "昨年",
+        "tomorrow": "明日",
+        "next7": "7日以内",
+        "next14": "14日以内",
+        "next30": "30日以内",
+        "allTime": "全期間"
+      },
+      "pickDate": "日付を選択",
+      "activity": "アクティビティ",
+      "activityKinds": "変更の種類",
+      "activityActors": "実行者",
+      "activityWhen": "日時",
+      "activityAutomation": "自動化"
+    },
+    "analytics": {
+      "title": "分析",
+      "loading": "統計を読み込み中…",
+      "error": "統計を読み込めませんでした",
+      "created": "作成",
+      "won": "成約",
+      "wonValue": "成約金額",
+      "lost": "失注",
+      "lostValue": "失注金額",
+      "admin": "管理者",
+      "automation": "自動化",
+      "back": "戻る",
+      "admins": "管理者",
+      "chart": {
+        "created": "日別の新規",
+        "won": "日別の成約",
+        "lost": "日別の失注",
+        "wonValue": "日別の成約金額",
+        "lostValue": "日別の失注金額"
+      },
+      "pie": {
+        "created": "管理者別の作成数",
+        "won": "管理者別の成約数",
+        "lost": "管理者別の失注数",
+        "other": "その他",
+        "empty": "データなし"
+      }
+    },
+    "settings": {
+      "title": "パイプライン設定",
+      "general": "一般",
+      "fields": "カスタムフィールド",
+      "display": "表示",
+      "permissions": "権限",
+      "saved": "設定を保存しました",
+      "referenceName": "参照名",
+      "referenceNameHint": "pipelines.reference_name.stage_name 変数で使用されます。変更すると、旧名称を使っているメッセージが動作しなくなります。",
+      "referenceNameFormat": "小文字の英字・数字・アンダースコアのみ、英字で始めてください（例: close_date）。",
+      "assignContact": "アイテムの割り当て時にコンタクトも管理者に割り当てる",
+      "limit": "コンタクトごとのオープン中アイテム数を制限",
+      "statusLabels": "ステータスのラベル",
+      "status": {
+        "open": "オープン",
+        "won": "成約",
+        "lost": "失注"
+      },
+      "features": "表示する機能",
+      "cardElements": "カードの要素",
+      "card": {
+        "contactPhone": "コンタクトの電話番号",
+        "contactEmail": "コンタクトのメール",
+        "createdAt": "作成日",
+        "updatedAt": "更新日",
+        "assignees": "割り当て済みの管理者",
+        "comments": "コメント",
+        "cardId": "アイテム番号",
+        "priority": "優先度",
+        "value": "金額",
+        "dueDate": "期限"
+      },
+      "noFields": "カスタムフィールドはまだありません",
+      "fieldName": "フィールド名",
+      "fieldReference": "参照名",
+      "fieldType": "フィールドタイプ",
+      "required": "必須",
+      "requiredShort": "必須",
+      "addField": "フィールドを追加",
+      "fieldAdded": "フィールドを追加しました",
+      "deleteField": "フィールドを削除",
+      "permissionsHint": "ワークスペースのオーナーと管理者は常にフルアクセスできます。その他のメンバーには、このパイプラインで許可する操作を付与してください。",
+      "revoke": "取り消し",
+      "permission": {
+        "view": "表示",
+        "edit": "編集",
+        "delete": "削除",
+        "settings": "設定"
+      },
+      "noMembers": "設定できる他のメンバーはいません",
+      "confirmDeleteField": "このフィールドと、すべてのアイテムにあるその値を削除しますか？",
+      "adminPermissions": "管理者の権限",
+      "cardVisibleElements": "カードに表示する要素"
+    },
+    "panel": {
+      "empty": "このコンタクトのパイプラインアイテムはありません",
+      "error": "パイプラインアイテムを読み込めませんでした",
+      "choosePipeline": "パイプラインを選択",
+      "add": "新規追加"
+    },
+    "variables": {
+      "group": "パイプライン",
+      "attributes": {
+        "name": "アイテム名",
+        "stageName": "ステージ",
+        "status": "ステータス",
+        "priority": "優先度",
+        "value": "金額",
+        "assignedAdmins": "割り当て済みの管理者",
+        "createdDate": "作成日",
+        "dueDate": "期限",
+        "updatedDate": "更新日",
+        "id": "アイテムID"
+      }
+    }
   }
 }

@@ -361,6 +361,7 @@ describe("flowSpecStepTypes", () => {
         "addNote",
         "branch",
         "goto",
+        "pipeline",
         "send",
         "sendProducts",
         "sendTemplate",

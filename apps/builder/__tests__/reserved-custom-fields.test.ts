@@ -20,6 +20,7 @@ const expectedReservedSystemFieldIds = [
   systemFieldTypes.enum.workspace_id,
   systemFieldTypes.enum.page_user_name,
   systemFieldTypes.enum.last_input,
+  systemFieldTypes.enum.last_opportunity_id,
   systemFieldTypes.enum.last_text_input,
   systemFieldTypes.enum.last_call_recorded,
   systemFieldTypes.enum.last_call_transcript,

@@ -115,6 +115,7 @@ describe("flow message coupon variables", () => {
     expect(tiptapEditorFieldMock).toHaveBeenCalledWith({
       includeBotFieldVariables: true,
       includeCouponVariables: true,
+      includePipelineVariables: true,
       // No `beforeStep.channel` on the harness form, so the counter falls back
       // to the omnichannel budget.
       maxLength: resolveSendTextLengthLimits({ channel: "omnichannel" }).text,
@@ -128,6 +129,7 @@ describe("flow message coupon variables", () => {
     expect(tiptapEditorFieldMock).toHaveBeenCalledWith({
       includeBotFieldVariables: true,
       includeCouponVariables: true,
+      includePipelineVariables: true,
       name: "step.text",
     })
   })

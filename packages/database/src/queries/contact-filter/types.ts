@@ -18,6 +18,10 @@ export type ContactFilterConditionInput = {
   topicId?: string
   /** Present for "Gamification scores" conditions (`field === "leaderboardScore"`). */
   leaderboardId?: string
+  /** Present for `field === "pipelineItem"` conditions: exists | status | stage | priority. */
+  attribute?: string
+  /** Present for `field === "pipelineItem"` conditions; `null` = any pipeline. */
+  pipelineId?: string | null
   /** Present for `field === "ctwaRetarget"` conditions. */
   segment?: string
   /** Present for `field === "ctwaRetarget"` conditions. */

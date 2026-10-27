@@ -619,7 +619,8 @@
       "changeGamificationScore": "שינוי נקודות משחוק",
       "sendViewCatalog": "הצגת קטלוג",
       "sendProducts": "שליחת מוצרים",
-      "sendCollection": "אוסף"
+      "sendCollection": "אוסף",
+      "pipeline": "פייפליינים"
     },
     "externalRequest": {
       "errors": {
@@ -842,6 +843,52 @@
       "summaryManual": "{count, plural, one {מוצר #} other {# מוצרים}}",
       "cancel": "ביטול",
       "save": "שמירה"
+    },
+    "pipelineStep": {
+      "action": "פעולה",
+      "pipeline": "פייפליין",
+      "targetHint": "פועל על הפריט הפתוח האחרון של איש הקשר בפייפליין זה. נתיב הדילוג מופעל כשאין פריט כזה.",
+      "noPipelines": "לא נמצאו פייפליינים",
+      "actions": {
+        "addToPipeline": "הוספת איש קשר לפייפליין",
+        "moveToStage": "העברה לשלב",
+        "changeValue": "שינוי ערך",
+        "assign": "הקצאה למנהלים",
+        "changeStatus": "שינוי סטטוס",
+        "changePriority": "שינוי עדיפות",
+        "changeDueDate": "שינוי תאריך יעד",
+        "changeTitle": "שינוי כותרת",
+        "setCustomField": "הגדרת שדה מותאם אישית",
+        "clearCustomField": "ניקוי שדות מותאמים אישית",
+        "changeDescription": "שינוי תיאור",
+        "removeFromPipeline": "הסרת איש קשר מהפייפליין",
+        "addComment": "הוספת תגובה",
+        "transfer": "העברה לפייפליין אחר"
+      },
+      "title": "כותרת",
+      "description": "תיאור",
+      "stage": "שלב",
+      "firstStage": "שלב ראשון",
+      "status": "סטטוס",
+      "assigneeMembers": "מנהלים מוקצים",
+      "assigneeTeams": "צוותים מוקצים",
+      "value": "ערך",
+      "priority": "עדיפות",
+      "dueDate": "תאריך יעד",
+      "dueNone": "ללא",
+      "dueNoneHint": "לפריט אין תאריך יעד.",
+      "dueCustomField": "משדה מותאם אישית מסוג תאריך",
+      "dueFixed": "תאריך ושעה קבועים",
+      "dueField": "שדה מותאם אישית מסוג תאריך או תאריך ושעה",
+      "fieldValues": "שדות מותאמים אישית",
+      "field": "שדה",
+      "fieldValue": "ערך",
+      "fields": "שדות",
+      "addField": "הוספת ערך שדה",
+      "removeHint": "מוחק את הפריט הפתוח האחרון של איש הקשר בפייפליין זה.",
+      "comment": "תגובה",
+      "destinationPipeline": "פייפליין יעד",
+      "destinationStage": "שלב יעד"
     }
   },
   "folders": {
@@ -3429,11 +3476,11 @@
       "incomingCall": "שיחה נכנסת",
       "missedAudioCall": "שיחה קולית שלא נענתה",
       "callEnded": "השיחה הסתיימה",
-      "ticketCreated": "כרטיס נוצר",
-      "ticketMovedToStage": "כרטיס הועבר לשלב",
-      "ticketValueChanged": "ערך הכרטיס השתנה",
-      "ticketStatusChanged": "מצב הכרטיס השתנה",
-      "ticketPriorityChanged": "עדיפות הכרטיס השתנתה",
+      "pipelineItemCreated": "כרטיס נוצר",
+      "pipelineItemMovedToStage": "כרטיס הועבר לשלב",
+      "pipelineItemValueChanged": "ערך הכרטיס השתנה",
+      "pipelineItemStatusChanged": "מצב הכרטיס השתנה",
+      "pipelineItemPriorityChanged": "עדיפות הכרטיס השתנתה",
       "subscribedToSequence": "נרשם לרצף",
       "unsubscribedFromSequence": "ביטל הרשמה לרצף",
       "shoppingCartSent": "איש הקשר שלח עגלת קניות",
@@ -3453,7 +3500,11 @@
       "callRecorded": "השיחה הוקלטה",
       "callTranscribed": "השיחה תומללה",
       "anyProduct": "כל מוצר",
-      "anyCategory": "כל קטגוריה"
+      "anyCategory": "כל קטגוריה",
+      "anyPipeline": "כל הפייפליינים",
+      "anyStage": "כל השלבים",
+      "unavailablePipeline": "צינור שנמחק או אינו זמין",
+      "unavailableStage": "שלב שנמחק או אינו זמין"
     },
     "actions": {
       "addTag": "הוספת תגית",
@@ -3502,7 +3553,13 @@
     "countCapped": "{count}+ אנשי קשר",
     "exportAllNotice": "כל אנשי הקשר שתואמים למסנן הנוכחי ייוצאו.",
     "exportTakingLong": "הייצוא נמשך זמן רב מהצפוי",
-    "exportTakingLongDescription": "הייצוא עדיין בעיבוד. ניתן לסגור חלון זה ולבדוק שוב בעוד מספר דקות בהיסטוריית הייצוא."
+    "exportTakingLongDescription": "הייצוא עדיין בעיבוד. ניתן לסגור חלון זה ולבדוק שוב בעוד מספר דקות בהיסטוריית הייצוא.",
+    "search": {
+      "placeholder": "חיפוש (שם, אימייל, טלפון, מזהה איש קשר)",
+      "searching": "מחפש…",
+      "error": "לא ניתן לחפש אנשי קשר",
+      "empty": "לא נמצאו אנשי קשר"
+    }
   },
   "contactScan": {
     "menu": {
@@ -6671,7 +6728,8 @@
       "ads": "מודעות",
       "settings": "הגדרות",
       "miniApps": "Mini Apps",
-      "leaderboards": "טבלאות מובילים"
+      "leaderboards": "טבלאות מובילים",
+      "pipelines": "צינורות עבודה"
     },
     "adReferral": {
       "label": "Ads",
@@ -6729,6 +6787,9 @@
     },
     "miniApp": {
       "label": "מיני אפליקציה"
+    },
+    "lastOpportunityId": {
+      "label": "מזהה ההזדמנות האחרונה"
     },
     "adminName": {
       "label": "שם המנהל השולח"
@@ -7255,7 +7316,8 @@
       "ctwaConversionTypes": {
         "lead": "ליד",
         "purchase": "רכישה"
-      }
+      },
+      "pipelineItem": "פריט בפייפליין"
     },
     "fieldGroups": {
       "opportunity": "הזדמנות",
@@ -7272,7 +7334,8 @@
       "botFields": "שדות בוט",
       "email": "דוא\"ל",
       "sms": "SMS",
-      "ctwaAds": "מודעות"
+      "ctwaAds": "מודעות",
+      "pipeline": "פייפליינים"
     },
     "languages": {
       "ar": "ערבית",
@@ -7320,7 +7383,21 @@
       "allAds": "כל המודעות"
     },
     "noTopic": "ללא נושא",
-    "trackingSince": "במעקב מאז {date}. פעילות קודמת אינה נכללת."
+    "trackingSince": "במעקב מאז {date}. פעילות קודמת אינה נכללת.",
+    "pipelineItem": {
+      "anyPipeline": "כל הפייפליינים",
+      "anyStatus": "כל הסטטוסים",
+      "attributes": {
+        "exists": "פריטים",
+        "status": "סטטוס הפריט",
+        "stage": "שלב הפריט",
+        "priority": "עדיפות הפריט"
+      },
+      "operators": {
+        "has": "יש",
+        "hasNo": "אין"
+      }
+    }
   },
   "bookingWebview": {
     "metadataTitle": "קביעת פגישה",
@@ -10167,5 +10244,401 @@
     "metHelp": "שיעור התגובות עם SLA שעמדו בו.",
     "eligibleCount": "ל-{count} תגובות היה SLA",
     "enable": "הפעלת SLA תגובה"
+  },
+  "pipelines": {
+    "title": "פייפליינים",
+    "retry": "נסו שוב",
+    "save": "שמירה",
+    "saveFailed": "לא ניתן היה לשמור את השינויים. נסו שוב.",
+    "list": {
+      "name": "שם",
+      "type": "סוג",
+      "items": "פריטים",
+      "add": "הוספת פייפליין",
+      "empty": "אין עדיין פייפליינים",
+      "emptyHint": "צרו פייפליין כדי לעקוב אחר עסקאות, פניות או כל תהליך אחר ככרטיסים בלוח.",
+      "error": "לא ניתן לטעון את הפייפליינים",
+      "contacts": "אנשי קשר",
+      "addShort": "הוספה",
+      "description": "עקבו אחר עסקאות, פניות או כל תהליך ככרטיסים שעוברים בין שלבים."
+    },
+    "types": {
+      "opportunity": {
+        "label": "מרכז הזדמנויות",
+        "description": "עקבו אחר עסקאות מכירה לאורך השלבים. שלב ראשון: ליד."
+      },
+      "ticket": {
+        "label": "מרכז תמיכה",
+        "description": "טפלו בפניות תמיכה. שלב ראשון: בעיה חדשה."
+      },
+      "custom": {
+        "label": "לוח מותאם אישית",
+        "description": "בנו תהליך משלכם. שלב ראשון: קליטה."
+      }
+    },
+    "noun": {
+      "opportunity": {
+        "one": "הזדמנות",
+        "many": "הזדמנויות",
+        "add": "הוספת הזדמנות"
+      },
+      "ticket": {
+        "one": "פנייה",
+        "many": "פניות",
+        "add": "הוספת פנייה"
+      },
+      "card": {
+        "one": "כרטיס",
+        "many": "כרטיסים",
+        "add": "הוספת כרטיס"
+      }
+    },
+    "create": {
+      "title": "פייפליין חדש",
+      "description": "בחרו למה הלוח מיועד, ואז תנו לו שם.",
+      "type": "סוג",
+      "name": "שם הפייפליין",
+      "namePlaceholder": "לדוגמה: מכירות",
+      "submit": "יצירת פייפליין",
+      "success": "הפייפליין נוצר"
+    },
+    "menu": {
+      "open": "פעולות פייפליין",
+      "rename": "שינוי שם",
+      "duplicate": "שכפול",
+      "delete": "מחיקה"
+    },
+    "rename": {
+      "title": "שינוי שם הפייפליין",
+      "submit": "שינוי שם",
+      "success": "שם הפייפליין שונה"
+    },
+    "duplicate": {
+      "success": "הפייפליין שוכפל"
+    },
+    "delete": {
+      "title": "מחיקת פייפליין",
+      "description": "{name} וכל השלבים והפריטים שלו יימחקו. לא ניתן לבטל פעולה זו.",
+      "success": "הפייפליין נמחק"
+    },
+    "board": {
+      "title": "לוח",
+      "count": "{count, plural, one {פריט #} other {# פריטים}}",
+      "total": "סך הכול {value}",
+      "search": "חיפוש לפי כותרת, מספר או איש קשר",
+      "sort": "מיון",
+      "filter": "סינון",
+      "analytics": "ניתוח נתונים",
+      "settings": "הגדרות",
+      "emptyStage": "גררו ושחררו כאן כרטיס כדי להעביר אותו לשלב זה.",
+      "loadMore": "טעינת עוד",
+      "loadMoreFailed": "לא ניתן לטעון פריטים נוספים",
+      "error": "לא ניתן לטעון את הלוח",
+      "processing": "מעבד את השלב…",
+      "moveFailed": "לא ניתן להעביר את הכרטיס",
+      "sortOptions": {
+        "createdAtDesc": "תאריך יצירה (מחדש לישן)",
+        "createdAtAsc": "תאריך יצירה (מישן לחדש)",
+        "updatedAtDesc": "תאריך עדכון (מחדש לישן)",
+        "valueDesc": "ערך ההזדמנות (מגבוה לנמוך)",
+        "valueAsc": "ערך ההזדמנות (מנמוך לגבוה)",
+        "dueDateAsc": "תאריך יעד (מהקרוב לרחוק)",
+        "dueDateDesc": "תאריך יעד (מהרחוק לקרוב)",
+        "priorityDesc": "עדיפות (מגבוה לנמוך)",
+        "priorityAsc": "עדיפות (מנמוך לגבוה)",
+        "updatedAtAsc": "תאריך עדכון (מישן לחדש)"
+      },
+      "searchAction": "חיפוש",
+      "closeSearch": "סגירת החיפוש",
+      "cardMenu": "פעולות כרטיס",
+      "moveTo": "העברה אל",
+      "unknownContact": "איש קשר לא ידוע",
+      "staleError": "לא ניתן לרענן את הלוח. ייתכן שהמידע המוצג אינו עדכני."
+    },
+    "stage": {
+      "add": "הוספת שלב",
+      "name": "שם השלב",
+      "namePlaceholder": "שם השלב",
+      "menu": "פעולות שלב",
+      "edit": "עריכת שלב",
+      "delete": "מחיקת שלב",
+      "deleteTitle": "מחיקת שלב",
+      "deleteDescription": "{name} וכל הפריטים בו יימחקו. לא ניתן לבטל פעולה זו.",
+      "moveItemsTo": "העברת הפריטים אל",
+      "deleteItemsToo": "מחיקת הפריטים גם כן",
+      "description": "תיאור",
+      "textColor": "צבע טקסט",
+      "backgroundColor": "צבע רקע",
+      "saved": "השלב נשמר",
+      "deleted": "השלב נמחק",
+      "queued": "השלב מתרוקן ברקע.",
+      "resetColor": "ברירת מחדל",
+      "deleteMoveDescription": "{name} יימחק. הפריטים שלו יועברו אל {target}.",
+      "rename": "שינוי שם",
+      "settings": "הגדרות",
+      "general": "כללי",
+      "color": "צבע",
+      "cancel": "ביטול"
+    },
+    "priority": {
+      "low": "נמוכה",
+      "medium": "בינונית",
+      "high": "גבוהה"
+    },
+    "item": {
+      "loading": "טוען…",
+      "error": "לא ניתן לטעון פריט זה",
+      "title": "כותרת",
+      "status": "סטטוס",
+      "stage": "שלב",
+      "priority": "עדיפות",
+      "value": "ערך",
+      "dueDate": "תאריך יעד",
+      "assignees": "מנהלים מוקצים",
+      "description": "תיאור",
+      "attachments": "קבצים מצורפים",
+      "attach": "צירוף קבצים",
+      "noAttachments": "אין קבצים מצורפים",
+      "removeAttachment": "הסרת קובץ מצורף",
+      "removeAttachmentDescription": "הקובץ יוסר מפריט זה אך יישאר בספריית המדיה.",
+      "comments": "תגובות",
+      "addComment": "הוספת תגובה",
+      "commentPlaceholder": "כתבו תגובה…",
+      "noComments": "אין עדיין תגובות",
+      "deleteComment": "מחיקת תגובה",
+      "deleteCommentDescription": "התגובה תימחק. לא ניתן לבטל פעולה זו.",
+      "activity": "פעילות",
+      "noActivity": "אין עדיין פעילות",
+      "transfer": "העברה לפייפליין",
+      "transferTitle": "העברה לפייפליין אחר",
+      "transferDescription": "הפריט שומר על המספר ועל תאריך היצירה שלו. שדות מותאמים אישית מועברים כאשר בפייפליין השני יש שדה עם אותו שם הפניה ואותו סוג.",
+      "destinationPipeline": "פייפליין יעד",
+      "destinationStage": "שלב יעד",
+      "firstStage": "שלב ראשון",
+      "choose": "בחירה…",
+      "transferred": "הפריט הועבר",
+      "delete": "מחיקה",
+      "deleteDescription": "פריט אחד יימחק. לא ניתן לבטל פעולה זו.",
+      "deleted": "הפריט נמחק",
+      "number": "מספר",
+      "createdBy": "נוצר על ידי",
+      "createdByValue": "{name} ב-{date}",
+      "inbox": "תיבת הודעות",
+      "moreActions": "פעולות נוספות",
+      "noDescription": "אין תיאור",
+      "yes": "כן",
+      "no": "לא",
+      "assigneesMembers": "נציגים",
+      "assigneesTeams": "צוותי תיבת הודעות",
+      "assigneesSearch": "חיפוש מנהלים או צוותים…",
+      "assigneesEmpty": "אין תוצאות",
+      "assigneesPlaceholder": "בחירת מנהלים או צוותים",
+      "olderComments": "הצג תגובות ישנות יותר",
+      "olderActivity": "הצגת פעילות ישנה יותר",
+      "activityFilter": "סינון",
+      "activityFilterCount": "{count, plural, one {# מסנן} other {# מסננים}}",
+      "activityFilterClear": "הצג הכול",
+      "noFilteredActivity": "אין פעילות שתואמת למסנן הזה.",
+      "activityGroup": {
+        "lifecycle": "יצירה והעברה",
+        "stage": "שלב",
+        "status": "סטטוס",
+        "value": "ערך",
+        "priority": "עדיפות",
+        "dueDate": "תאריך יעד",
+        "details": "כותרת, תיאור ושדות",
+        "assignees": "אחראים",
+        "comments": "תגובות",
+        "attachments": "קבצים מצורפים"
+      }
+    },
+    "activity": {
+      "created": "נוצר",
+      "stageChanged": "הועבר לשלב אחר",
+      "statusChanged": "הסטטוס שונה",
+      "valueChanged": "הערך שונה",
+      "priorityChanged": "העדיפות שונתה",
+      "dueDateChanged": "תאריך היעד שונה",
+      "titleChanged": "הכותרת שונתה",
+      "descriptionChanged": "התיאור שונה",
+      "fieldValuesChanged": "השדות המותאמים אישית שונו",
+      "assigneesChanged": "המוקצים שונו",
+      "attachmentAdded": "נוסף קובץ מצורף",
+      "attachmentRemoved": "הוסר קובץ מצורף",
+      "commentAdded": "נוספה תגובה",
+      "commentDeleted": "התגובה נמחקה",
+      "transferred": "הועבר מפייפליין אחר",
+      "deleted": "נמחק"
+    },
+    "activityActor": {
+      "flow": "תהליך",
+      "trigger": "טריגר",
+      "workspaceToken": "API",
+      "system": "מערכת",
+      "formerMember": "חבר לשעבר"
+    },
+    "add": {
+      "changeContact": "בחירת איש קשר אחר",
+      "success": "נוצר",
+      "stepContact": "בחירת איש קשר",
+      "stepDetails": "פרטי {noun}",
+      "contact": "איש קשר",
+      "addNewContact": "הוספת חדש"
+    },
+    "filter": {
+      "title": "סינון",
+      "status": "סטטוס",
+      "statusLabels": {
+        "open": "פתוח",
+        "won": "זכייה",
+        "lost": "הפסד"
+      },
+      "priority": "עדיפות",
+      "assignee": "מנהלים מוקצים",
+      "value": "ערך {noun}",
+      "min": "מינימום",
+      "max": "מקסימום",
+      "dueDate": "תאריך יעד",
+      "createdAt": "תאריך יצירה",
+      "from": "מתאריך",
+      "to": "עד תאריך",
+      "clear": "ניקוי מסננים",
+      "apply": "החלה",
+      "back": "חזרה",
+      "updatedAt": "תאריך עדכון",
+      "resolvedOn": "תאריך סגירת {noun}",
+      "statusChangedOn": "תאריך שינוי הסטטוס",
+      "stageChangedOn": "תאריך שינוי השלב",
+      "lastCommentOn": "תאריך התגובה האחרונה",
+      "customFields": "שדות מותאמים אישית",
+      "any": "הכול",
+      "yes": "כן",
+      "no": "לא",
+      "notResolvedOn": "{noun} שלא נסגר בתאריך",
+      "equal": "שווה ל",
+      "different": "שונה מ",
+      "reset": "איפוס",
+      "presets": {
+        "thisWeek": "השבוע",
+        "lastWeek": "שבוע שעבר",
+        "last14": "14 הימים האחרונים",
+        "thisYear": "השנה",
+        "lastYear": "שנה שעברה",
+        "tomorrow": "מחר",
+        "next7": "בעוד 7 ימים",
+        "next14": "בעוד 14 ימים",
+        "next30": "בעוד 30 ימים",
+        "allTime": "כל הזמנים"
+      },
+      "pickDate": "בחר תאריך",
+      "activity": "פעילות",
+      "activityKinds": "סוג השינוי",
+      "activityActors": "בוצע על ידי",
+      "activityWhen": "מתי",
+      "activityAutomation": "אוטומציה"
+    },
+    "analytics": {
+      "title": "ניתוח נתונים",
+      "loading": "טוען סטטיסטיקות…",
+      "error": "לא ניתן לטעון את הסטטיסטיקות",
+      "created": "נוצרו",
+      "won": "זכיות",
+      "wonValue": "ערך הזכיות",
+      "lost": "הפסדים",
+      "lostValue": "ערך ההפסדים",
+      "admin": "מנהל",
+      "automation": "אוטומציה",
+      "back": "חזרה",
+      "admins": "מנהלים",
+      "chart": {
+        "created": "חדשים ליום",
+        "won": "זכיות ליום",
+        "lost": "הפסדים ליום",
+        "wonValue": "ערך זכיות ליום",
+        "lostValue": "ערך הפסדים ליום"
+      },
+      "pie": {
+        "created": "נוצרו לפי מנהל",
+        "won": "נוצחו לפי מנהל",
+        "lost": "אבדו לפי מנהל",
+        "other": "אחר",
+        "empty": "אין נתונים"
+      }
+    },
+    "settings": {
+      "title": "הגדרות הפייפליין",
+      "general": "כללי",
+      "fields": "שדות מותאמים אישית",
+      "display": "תצוגה",
+      "permissions": "הרשאות",
+      "saved": "ההגדרות נשמרו",
+      "referenceName": "שם הפניה",
+      "referenceNameHint": "משמש במשתנים pipelines.reference_name.stage_name. שינויו ישבש הודעות שמשתמשות בשם הישן.",
+      "referenceNameFormat": "השתמשו באותיות לטיניות קטנות, ספרות וקו תחתון, החל באות (למשל close_date).",
+      "assignContact": "הקצאת איש הקשר למנהל כאשר פריט מוקצה",
+      "limit": "הגבלת מספר הפריטים הפתוחים לכל איש קשר",
+      "statusLabels": "תוויות סטטוס",
+      "status": {
+        "open": "פתוח",
+        "won": "זכייה",
+        "lost": "הפסד"
+      },
+      "features": "תכונות גלויות",
+      "cardElements": "רכיבי הכרטיס",
+      "card": {
+        "contactPhone": "טלפון איש הקשר",
+        "contactEmail": "אימייל איש הקשר",
+        "createdAt": "תאריך יצירה",
+        "updatedAt": "תאריך עדכון",
+        "assignees": "מנהלים מוקצים",
+        "comments": "תגובות",
+        "cardId": "מספר הפריט",
+        "priority": "עדיפות",
+        "value": "ערך",
+        "dueDate": "תאריך יעד"
+      },
+      "noFields": "אין עדיין שדות מותאמים אישית",
+      "fieldName": "שם השדה",
+      "fieldReference": "שם הפניה",
+      "fieldType": "סוג השדה",
+      "required": "שדה חובה",
+      "requiredShort": "חובה",
+      "addField": "הוספת שדה",
+      "fieldAdded": "השדה נוסף",
+      "deleteField": "מחיקת שדה",
+      "permissionsHint": "לבעלים ולמנהלים של סביבת העבודה יש תמיד גישה מלאה. הקצו לחברים האחרים את ההרשאות שלהם בפייפליין זה.",
+      "revoke": "ביטול הרשאה",
+      "permission": {
+        "view": "צפייה",
+        "edit": "עריכה",
+        "delete": "מחיקה",
+        "settings": "הגדרות"
+      },
+      "noMembers": "אין חברים נוספים להגדרה",
+      "confirmDeleteField": "למחוק את השדה הזה ואת כל ערכיו בכל הפריטים?",
+      "adminPermissions": "הרשאות מנהל",
+      "cardVisibleElements": "רכיבים גלויים בכרטיס"
+    },
+    "panel": {
+      "empty": "אין פריטי פייפליין עבור איש קשר זה",
+      "error": "לא ניתן לטעון את פריטי הפייפליין",
+      "choosePipeline": "בחירת פייפליין",
+      "add": "הוספת חדש"
+    },
+    "variables": {
+      "group": "פייפליינים",
+      "attributes": {
+        "name": "שם הפריט",
+        "stageName": "שלב",
+        "status": "סטטוס",
+        "priority": "עדיפות",
+        "value": "ערך",
+        "assignedAdmins": "מנהלים מוקצים",
+        "createdDate": "תאריך יצירה",
+        "dueDate": "תאריך יעד",
+        "updatedDate": "תאריך עדכון",
+        "id": "מזהה הפריט"
+      }
+    }
   }
 }

@@ -949,7 +949,8 @@
       "ctwaConversionTypes": {
         "lead": "Lead",
         "purchase": "Køb"
-      }
+      },
+      "pipelineItem": "Pipeline-element"
     },
     "fieldGroups": {
       "opportunity": "Salgsmulighed",
@@ -966,7 +967,8 @@
       "botFields": "Bot Felter",
       "email": "E-mail",
       "sms": "SMS",
-      "ctwaAds": "Annoncer"
+      "ctwaAds": "Annoncer",
+      "pipeline": "Pipelines"
     },
     "languages": {
       "ar": "Arabisk",
@@ -1014,7 +1016,21 @@
       "allAds": "alle annoncer"
     },
     "noTopic": "Intet emne",
-    "trackingSince": "Registreret siden {date}. Tidligere aktivitet er ikke medregnet."
+    "trackingSince": "Registreret siden {date}. Tidligere aktivitet er ikke medregnet.",
+    "pipelineItem": {
+      "anyPipeline": "Alle pipelines",
+      "anyStatus": "Alle statusser",
+      "attributes": {
+        "exists": "Elementer",
+        "status": "Elementstatus",
+        "stage": "Elementfase",
+        "priority": "Elementprioritet"
+      },
+      "operators": {
+        "has": "Har",
+        "hasNo": "Har ingen"
+      }
+    }
   },
   "fields": {
     "optionalHint": "(valgfri)",
@@ -2522,7 +2538,8 @@
       "ads": "Annoncer",
       "settings": "Indstillinger",
       "miniApps": "Mini Apps",
-      "leaderboards": "Ranglister"
+      "leaderboards": "Ranglister",
+      "pipelines": "Pipelines"
     },
     "adReferral": {
       "label": "Ads",
@@ -2580,6 +2597,9 @@
     },
     "miniApp": {
       "label": "Mini App"
+    },
+    "lastOpportunityId": {
+      "label": "ID på seneste mulighed"
     },
     "adminName": {
       "label": "Navn på afsendende admin"
@@ -2794,7 +2814,8 @@
       "changeGamificationScore": "Skift gamification-point",
       "sendViewCatalog": "Se katalog",
       "sendProducts": "Send produkter",
-      "sendCollection": "Kollektion"
+      "sendCollection": "Kollektion",
+      "pipeline": "Pipelines"
     },
     "externalRequest": {
       "errors": {
@@ -3017,6 +3038,52 @@
       "summaryManual": "{count, plural, one {# produkt} other {# produkter}}",
       "cancel": "Annuller",
       "save": "Gem"
+    },
+    "pipelineStep": {
+      "action": "Handling",
+      "pipeline": "Pipeline",
+      "targetHint": "Handler på kontaktens seneste åbne element i denne pipeline. Spring over-stien køres, hvis der ikke er nogen.",
+      "noPipelines": "Ingen pipelines fundet",
+      "actions": {
+        "addToPipeline": "Tilføj kontakt til pipeline",
+        "moveToStage": "Flyt til en fase",
+        "changeValue": "Ændr værdi",
+        "assign": "Tildel til administratorer",
+        "changeStatus": "Ændr status",
+        "changePriority": "Ændr prioritet",
+        "changeDueDate": "Ændr forfaldsdato",
+        "changeTitle": "Ændr titel",
+        "setCustomField": "Angiv brugerdefineret felt",
+        "clearCustomField": "Ryd brugerdefinerede felter",
+        "changeDescription": "Ændr beskrivelse",
+        "removeFromPipeline": "Fjern kontakt fra pipeline",
+        "addComment": "Tilføj kommentar",
+        "transfer": "Overfør til en anden pipeline"
+      },
+      "title": "Titel",
+      "description": "Beskrivelse",
+      "stage": "Fase",
+      "firstStage": "Første fase",
+      "status": "Status",
+      "assigneeMembers": "Tildelte administratorer",
+      "assigneeTeams": "Tildelte teams",
+      "value": "Værdi",
+      "priority": "Prioritet",
+      "dueDate": "Forfaldsdato",
+      "dueNone": "Ingen",
+      "dueNoneHint": "Elementet har ingen forfaldsdato.",
+      "dueCustomField": "Fra et brugerdefineret datofelt",
+      "dueFixed": "Fast dato og tidspunkt",
+      "dueField": "Brugerdefineret dato- eller datetime-felt",
+      "fieldValues": "Brugerdefinerede felter",
+      "field": "Felt",
+      "fieldValue": "Værdi",
+      "fields": "Felter",
+      "addField": "Tilføj feltværdi",
+      "removeHint": "Sletter kontaktens seneste åbne element i denne pipeline.",
+      "comment": "Kommentar",
+      "destinationPipeline": "Destinationspipeline",
+      "destinationStage": "Destinationsfase"
     }
   },
   "folders": {
@@ -5604,11 +5671,11 @@
       "incomingCall": "Incoming Call",
       "missedAudioCall": "Missed Lyd Call",
       "callEnded": "Call Ended",
-      "ticketCreated": "Ticket Oprettet",
-      "ticketMovedToStage": "Ticket Moved Til Stage",
-      "ticketValueChanged": "Ticket Værdi Changed",
-      "ticketStatusChanged": "Ticket Status Changed",
-      "ticketPriorityChanged": "Ticket Priority Changed",
+      "pipelineItemCreated": "Ticket Oprettet",
+      "pipelineItemMovedToStage": "Ticket Moved Til Stage",
+      "pipelineItemValueChanged": "Ticket Værdi Changed",
+      "pipelineItemStatusChanged": "Ticket Status Changed",
+      "pipelineItemPriorityChanged": "Ticket Priority Changed",
       "subscribedToSequence": "Subscribed Til Sekvens",
       "unsubscribedFromSequence": "Unsubscribed Fra Sekvens",
       "shoppingCartSent": "Kontakt sendte indkøbskurv",
@@ -5628,7 +5695,11 @@
       "callRecorded": "Opkald optaget",
       "callTranscribed": "Opkald transskriberet",
       "anyProduct": "Alle produkter",
-      "anyCategory": "Enhver kategori"
+      "anyCategory": "Enhver kategori",
+      "anyPipeline": "Alle pipelines",
+      "anyStage": "Alle faser",
+      "unavailablePipeline": "Slettet eller utilgængelig pipeline",
+      "unavailableStage": "Slettet eller utilgængelig fase"
     },
     "actions": {
       "addTag": "Tilføj tag",
@@ -5677,7 +5748,13 @@
     "countCapped": "{count}+ kontakter",
     "exportAllNotice": "Alle kontakter matching den current filter vil være exported.",
     "exportTakingLong": "Eksportér er taking longer than expected",
-    "exportTakingLongDescription": "Den eksportér er still processing. Du kan close denne dialog og check tilbage i a few minutter fra den eksportér historik."
+    "exportTakingLongDescription": "Den eksportér er still processing. Du kan close denne dialog og check tilbage i a few minutter fra den eksportér historik.",
+    "search": {
+      "placeholder": "Søg (navn, e-mail, telefon, kontakt-id)",
+      "searching": "Søger…",
+      "error": "Kunne ikke søge efter kontakter",
+      "empty": "Ingen kontakter fundet"
+    }
   },
   "contactScan": {
     "menu": {
@@ -10167,5 +10244,401 @@
     "metHelp": "Andel af svar med SLA der overholdt den.",
     "eligibleCount": "{count} svar havde en SLA",
     "enable": "Aktivér svar-SLA"
+  },
+  "pipelines": {
+    "title": "Pipelines",
+    "retry": "Prøv igen",
+    "save": "Gem",
+    "saveFailed": "Dine ændringer kunne ikke gemmes. Prøv igen.",
+    "list": {
+      "name": "Navn",
+      "type": "Type",
+      "items": "Elementer",
+      "add": "Tilføj pipeline",
+      "empty": "Ingen pipelines endnu",
+      "emptyHint": "Opret en pipeline for at følge salg, tickets eller en hvilken som helst proces som kort på en tavle.",
+      "error": "Kunne ikke indlæse pipelines",
+      "contacts": "Kontakter",
+      "addShort": "Tilføj",
+      "description": "Følg handler, sager eller enhver proces som kort, der flytter sig gennem faser."
+    },
+    "types": {
+      "opportunity": {
+        "label": "Salgsmuligheder",
+        "description": "Følg salgsaftaler gennem faser. Første fase: Lead."
+      },
+      "ticket": {
+        "label": "Supportcenter",
+        "description": "Håndter supportanmodninger. Første fase: Ny sag."
+      },
+      "custom": {
+        "label": "Brugerdefineret tavle",
+        "description": "Byg din egen proces. Første fase: Modtagelse."
+      }
+    },
+    "noun": {
+      "opportunity": {
+        "one": "Salgsmulighed",
+        "many": "Salgsmuligheder",
+        "add": "Tilføj salgsmulighed"
+      },
+      "ticket": {
+        "one": "Ticket",
+        "many": "Tickets",
+        "add": "Tilføj ticket"
+      },
+      "card": {
+        "one": "Kort",
+        "many": "Kort",
+        "add": "Tilføj kort"
+      }
+    },
+    "create": {
+      "title": "Ny pipeline",
+      "description": "Vælg, hvad tavlen skal bruges til, og giv den et navn.",
+      "type": "Type",
+      "name": "Pipelinenavn",
+      "namePlaceholder": "f.eks. Salg",
+      "submit": "Opret pipeline",
+      "success": "Pipeline oprettet"
+    },
+    "menu": {
+      "open": "Pipelinehandlinger",
+      "rename": "Omdøb",
+      "duplicate": "Dupliker",
+      "delete": "Slet"
+    },
+    "rename": {
+      "title": "Omdøb pipeline",
+      "submit": "Omdøb",
+      "success": "Pipeline omdøbt"
+    },
+    "duplicate": {
+      "success": "Pipeline duplikeret"
+    },
+    "delete": {
+      "title": "Slet pipeline",
+      "description": "{name} og alle dens faser og elementer bliver slettet. Dette kan ikke fortrydes.",
+      "success": "Pipeline slettet"
+    },
+    "board": {
+      "title": "Tavle",
+      "count": "{count, plural, one {# element} other {# elementer}}",
+      "total": "I alt {value}",
+      "search": "Søg efter titel, nummer eller kontakt",
+      "sort": "Sortér",
+      "filter": "Filtrér",
+      "analytics": "Analyse",
+      "settings": "Indstillinger",
+      "emptyStage": "Træk og slip et kort her for at flytte det til denne fase.",
+      "loadMore": "Indlæs flere",
+      "loadMoreFailed": "Kunne ikke indlæse flere elementer",
+      "error": "Kunne ikke indlæse tavlen",
+      "processing": "Behandler denne fase…",
+      "moveFailed": "Kunne ikke flytte kortet",
+      "sortOptions": {
+        "createdAtDesc": "Oprettelsesdato (Ny til Gammel)",
+        "createdAtAsc": "Oprettelsesdato (Gammel til Ny)",
+        "updatedAtDesc": "Opdateringsdato (Ny til Gammel)",
+        "valueDesc": "Mulighedens værdi (Høj til Lav)",
+        "valueAsc": "Mulighedens værdi (Lav til Høj)",
+        "dueDateAsc": "Forfaldsdato (Tidligst til Senest)",
+        "dueDateDesc": "Forfaldsdato (Senest til Tidligst)",
+        "priorityDesc": "Prioritet (Høj til Lav)",
+        "priorityAsc": "Prioritet (Lav til Høj)",
+        "updatedAtAsc": "Opdateringsdato (Gammel til Ny)"
+      },
+      "searchAction": "Søg",
+      "closeSearch": "Luk søgning",
+      "cardMenu": "Korthandlinger",
+      "moveTo": "Flyt til",
+      "unknownContact": "Ukendt kontakt",
+      "staleError": "Tavlen kunne ikke opdateres. Det, du ser, kan være forældet."
+    },
+    "stage": {
+      "add": "Tilføj fase",
+      "name": "Fasenavn",
+      "namePlaceholder": "Fasenavn",
+      "menu": "Fasehandlinger",
+      "edit": "Rediger fase",
+      "delete": "Slet fase",
+      "deleteTitle": "Slet fase",
+      "deleteDescription": "{name} og alle elementer i den bliver slettet. Denne handling kan ikke fortrydes.",
+      "moveItemsTo": "Flyt elementer til",
+      "deleteItemsToo": "Slet også elementerne",
+      "description": "Beskrivelse",
+      "textColor": "Tekstfarve",
+      "backgroundColor": "Baggrundsfarve",
+      "saved": "Fase gemt",
+      "deleted": "Fase slettet",
+      "queued": "Fasen ryddes i baggrunden.",
+      "resetColor": "Standard",
+      "deleteMoveDescription": "{name} bliver slettet. Dens elementer flyttes til {target}.",
+      "rename": "Omdøb",
+      "settings": "Indstillinger",
+      "general": "Generelt",
+      "color": "Farve",
+      "cancel": "Annuller"
+    },
+    "priority": {
+      "low": "Lav",
+      "medium": "Mellem",
+      "high": "Høj"
+    },
+    "item": {
+      "loading": "Indlæser…",
+      "error": "Kunne ikke indlæse dette element",
+      "title": "Titel",
+      "status": "Status",
+      "stage": "Fase",
+      "priority": "Prioritet",
+      "value": "Værdi",
+      "dueDate": "Forfaldsdato",
+      "assignees": "Tildelte administratorer",
+      "description": "Beskrivelse",
+      "attachments": "Vedhæftede filer",
+      "attach": "Vedhæft filer",
+      "noAttachments": "Ingen vedhæftede filer",
+      "removeAttachment": "Fjern vedhæftet fil",
+      "removeAttachmentDescription": "Filen fjernes fra dette element, men bliver i mediebiblioteket.",
+      "comments": "Kommentarer",
+      "addComment": "Tilføj kommentar",
+      "commentPlaceholder": "Skriv en kommentar…",
+      "noComments": "Ingen kommentarer endnu",
+      "deleteComment": "Slet kommentar",
+      "deleteCommentDescription": "Denne kommentar slettes. Det kan ikke fortrydes.",
+      "activity": "Aktivitet",
+      "noActivity": "Ingen aktivitet endnu",
+      "transfer": "Overfør til pipeline",
+      "transferTitle": "Overfør til en anden pipeline",
+      "transferDescription": "Elementet beholder sit nummer og oprettelsesdato. Brugerdefinerede felter overføres, hvis den anden pipeline har et felt med samme referencenavn og type.",
+      "destinationPipeline": "Destinationspipeline",
+      "destinationStage": "Destinationsfase",
+      "firstStage": "Første fase",
+      "choose": "Vælg…",
+      "transferred": "Element overført",
+      "delete": "Slet",
+      "deleteDescription": "Et element bliver slettet. Dette kan ikke fortrydes.",
+      "deleted": "Element slettet",
+      "number": "Nummer",
+      "createdBy": "Oprettet af",
+      "createdByValue": "{name} den {date}",
+      "inbox": "Indbakke",
+      "moreActions": "Flere handlinger",
+      "noDescription": "Ingen beskrivelse",
+      "yes": "Ja",
+      "no": "Nej",
+      "assigneesMembers": "Agenter",
+      "assigneesTeams": "Indbakke-teams",
+      "assigneesSearch": "Søg efter administratorer eller teams…",
+      "assigneesEmpty": "Ingen resultater",
+      "assigneesPlaceholder": "Vælg administratorer eller teams",
+      "olderComments": "Vis ældre kommentarer",
+      "olderActivity": "Vis ældre aktivitet",
+      "activityFilter": "Filtrer",
+      "activityFilterCount": "{count, plural, one {# filter} other {# filtre}}",
+      "activityFilterClear": "Vis alle",
+      "noFilteredActivity": "Ingen aktivitet matcher dette filter.",
+      "activityGroup": {
+        "lifecycle": "Oprettet og overført",
+        "stage": "Fase",
+        "status": "Status",
+        "value": "Værdi",
+        "priority": "Prioritet",
+        "dueDate": "Forfaldsdato",
+        "details": "Titel, beskrivelse og felter",
+        "assignees": "Ansvarlige",
+        "comments": "Kommentarer",
+        "attachments": "Vedhæftninger"
+      }
+    },
+    "activity": {
+      "created": "Oprettet",
+      "stageChanged": "Flyttet til en anden fase",
+      "statusChanged": "Status ændret",
+      "valueChanged": "Værdi ændret",
+      "priorityChanged": "Prioritet ændret",
+      "dueDateChanged": "Forfaldsdato ændret",
+      "titleChanged": "Titel ændret",
+      "descriptionChanged": "Beskrivelse ændret",
+      "fieldValuesChanged": "Brugerdefinerede felter ændret",
+      "assigneesChanged": "Tildelte ændret",
+      "attachmentAdded": "Vedhæftet fil tilføjet",
+      "attachmentRemoved": "Vedhæftet fil fjernet",
+      "commentAdded": "Kommentar tilføjet",
+      "commentDeleted": "Kommentar slettet",
+      "transferred": "Overført fra en anden pipeline",
+      "deleted": "Slettet"
+    },
+    "activityActor": {
+      "flow": "Flow",
+      "trigger": "Trigger",
+      "workspaceToken": "API",
+      "system": "System",
+      "formerMember": "Tidligere medlem"
+    },
+    "add": {
+      "changeContact": "Vælg en anden kontakt",
+      "success": "Oprettet",
+      "stepContact": "Vælg en kontakt",
+      "stepDetails": "Detaljer for {noun}",
+      "contact": "Kontakt",
+      "addNewContact": "Tilføj ny"
+    },
+    "filter": {
+      "title": "Filter",
+      "status": "Status",
+      "statusLabels": {
+        "open": "Åben",
+        "won": "Vundet",
+        "lost": "Tabt"
+      },
+      "priority": "Prioritet",
+      "assignee": "Tildelte administratorer",
+      "value": "Værdi af {noun}",
+      "min": "Min",
+      "max": "Maks",
+      "dueDate": "Forfaldsdato",
+      "createdAt": "Oprettelsesdato",
+      "from": "Fra",
+      "to": "Til",
+      "clear": "Ryd filtre",
+      "apply": "Anvend",
+      "back": "Tilbage",
+      "updatedAt": "Opdateringsdato",
+      "resolvedOn": "{noun} afsluttet den",
+      "statusChangedOn": "Status ændret den",
+      "stageChangedOn": "Fase ændret den",
+      "lastCommentOn": "Seneste kommentar den",
+      "customFields": "Brugerdefinerede felter",
+      "any": "Alle",
+      "yes": "Ja",
+      "no": "Nej",
+      "notResolvedOn": "{noun} ikke afsluttet den",
+      "equal": "Lig med",
+      "different": "Forskellig fra",
+      "reset": "Nulstil",
+      "presets": {
+        "thisWeek": "Denne uge",
+        "lastWeek": "Sidste uge",
+        "last14": "Seneste 14 dage",
+        "thisYear": "I år",
+        "lastYear": "Sidste år",
+        "tomorrow": "I morgen",
+        "next7": "Om 7 dage",
+        "next14": "Om 14 dage",
+        "next30": "Om 30 dage",
+        "allTime": "Alle tider"
+      },
+      "pickDate": "Vælg en dato",
+      "activity": "Aktivitet",
+      "activityKinds": "Type ændring",
+      "activityActors": "Udført af",
+      "activityWhen": "Hvornår",
+      "activityAutomation": "Automatisering"
+    },
+    "analytics": {
+      "title": "Analyse",
+      "loading": "Indlæser statistik…",
+      "error": "Kunne ikke indlæse statistik",
+      "created": "Oprettet",
+      "won": "Vundet",
+      "wonValue": "Vundet værdi",
+      "lost": "Tabt",
+      "lostValue": "Tabt værdi",
+      "admin": "Administrator",
+      "automation": "Automatisering",
+      "back": "Tilbage",
+      "admins": "Administratorer",
+      "chart": {
+        "created": "Nye pr. dag",
+        "won": "Vundet pr. dag",
+        "lost": "Tabt pr. dag",
+        "wonValue": "Vundet værdi pr. dag",
+        "lostValue": "Tabt værdi pr. dag"
+      },
+      "pie": {
+        "created": "Oprettet pr. admin",
+        "won": "Vundet pr. admin",
+        "lost": "Tabt pr. admin",
+        "other": "Andre",
+        "empty": "Ingen data"
+      }
+    },
+    "settings": {
+      "title": "Pipelineindstillinger",
+      "general": "Generelt",
+      "fields": "Brugerdefinerede felter",
+      "display": "Visning",
+      "permissions": "Tilladelser",
+      "saved": "Indstillinger gemt",
+      "referenceName": "Referencenavn",
+      "referenceNameHint": "Bruges i variablerne pipelines.reference_name.stage_name. Hvis du ændrer det, holder beskeder med det gamle navn op med at virke.",
+      "referenceNameFormat": "Brug små bogstaver, tal og understreger, og start med et bogstav (f.eks. close_date).",
+      "assignContact": "Tildel kontakten til en administrator, når et element tildeles",
+      "limit": "Begræns åbne elementer pr. kontakt",
+      "statusLabels": "Statusetiketter",
+      "status": {
+        "open": "Åben",
+        "won": "Vundet",
+        "lost": "Tabt"
+      },
+      "features": "Synlige funktioner",
+      "cardElements": "Kortelementer",
+      "card": {
+        "contactPhone": "Kontaktens telefon",
+        "contactEmail": "Kontaktens e-mail",
+        "createdAt": "Oprettelsesdato",
+        "updatedAt": "Opdateringsdato",
+        "assignees": "Tildelte administratorer",
+        "comments": "Kommentarer",
+        "cardId": "Elementnummer",
+        "priority": "Prioritet",
+        "value": "Værdi",
+        "dueDate": "Forfaldsdato"
+      },
+      "noFields": "Ingen brugerdefinerede felter endnu",
+      "fieldName": "Feltnavn",
+      "fieldReference": "Referencenavn",
+      "fieldType": "Felttype",
+      "required": "Påkrævet",
+      "requiredShort": "påkrævet",
+      "addField": "Tilføj felt",
+      "fieldAdded": "Felt tilføjet",
+      "deleteField": "Slet felt",
+      "permissionsHint": "Workspace-ejere og administratorer har altid fuld adgang. Giv andre medlemmer tilladelse til det, de må i denne pipeline.",
+      "revoke": "Tilbagekald",
+      "permission": {
+        "view": "Vis",
+        "edit": "Rediger",
+        "delete": "Slet",
+        "settings": "Indstillinger"
+      },
+      "noMembers": "Ingen andre medlemmer at konfigurere",
+      "confirmDeleteField": "Vil du slette dette felt og alle dets værdier på alle elementer?",
+      "adminPermissions": "Administratortilladelser",
+      "cardVisibleElements": "Synlige kortelementer"
+    },
+    "panel": {
+      "empty": "Ingen pipeline-elementer for denne kontakt",
+      "error": "Kunne ikke indlæse pipeline-elementer",
+      "choosePipeline": "Vælg en pipeline",
+      "add": "Tilføj ny"
+    },
+    "variables": {
+      "group": "Pipelines",
+      "attributes": {
+        "name": "Elementnavn",
+        "stageName": "Fase",
+        "status": "Status",
+        "priority": "Prioritet",
+        "value": "Værdi",
+        "assignedAdmins": "Tildelte administratorer",
+        "createdDate": "Oprettelsesdato",
+        "dueDate": "Forfaldsdato",
+        "updatedDate": "Opdateringsdato",
+        "id": "Element-ID"
+      }
+    }
   }
 }

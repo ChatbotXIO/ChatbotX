@@ -21,13 +21,13 @@ import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import { useState } from "react"
 import { toast } from "sonner"
+import { ConfirmDialog } from "@/components/confirm-dialog"
 import {
   adjustParticipantScoreAction,
   resetParticipantScoreAction,
   setParticipantBannedAction,
 } from "../../actions/participant.action"
 import { useInvalidateLeaderboards } from "../../lib/use-invalidate-leaderboards"
-import { ConfirmDialog } from "../confirm-dialog"
 import { AdjustScoreDialog } from "./adjust-score-dialog"
 import { ParticipantHistoryDialog } from "./participant-history-dialog"
 

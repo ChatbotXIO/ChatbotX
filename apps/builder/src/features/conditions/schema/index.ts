@@ -3,6 +3,13 @@ import { contactInfoUpdated } from "./contact-info-updated"
 import { customFieldValueChanged } from "./custom-field-value-changed"
 import { dateTimeBasedTrigger } from "./date-time-based-trigger"
 import {
+  pipelineItemCreated,
+  pipelineItemMovedToStage,
+  pipelineItemPriorityChanged,
+  pipelineItemStatusChanged,
+  pipelineItemValueChanged,
+} from "./pipeline-item"
+import {
   archived,
   callEnded,
   callRecorded,
@@ -71,6 +78,11 @@ export const allConditions = {
   productRemovedFromCart,
   categoryAddedToCart,
   cartAbandoned,
+  pipelineItemCreated,
+  pipelineItemMovedToStage,
+  pipelineItemValueChanged,
+  pipelineItemStatusChanged,
+  pipelineItemPriorityChanged,
 }
 
 export const conditionSchema = z.union(Object.values(allConditions))

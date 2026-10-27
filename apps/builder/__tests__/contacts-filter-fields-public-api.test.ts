@@ -122,9 +122,11 @@ describe("POST /v1/contacts/filter-value-labels", () => {
       input: { tags: ["1"] },
     })
 
+    // A workspace token sees every pipeline, so pipeline labels are not narrowed.
     expect(resolveLabels).toHaveBeenCalledWith({
       workspaceId: "workspace-1",
       ids: { tags: ["1"] },
+      pipelineScope: { kind: "workspaceToken" },
     })
   })
 })

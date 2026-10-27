@@ -25,6 +25,8 @@ const resolved = (
   keywords: [],
   whatsappFlows: [],
   emailTopics: [],
+  pipelines: [],
+  pipelineStages: [],
   ...overrides,
 })
 

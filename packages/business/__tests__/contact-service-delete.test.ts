@@ -1,5 +1,6 @@
 import { macAnalyticsService } from "@chatbotx.io/analytics"
 import { db } from "@chatbotx.io/database/client"
+import { pipelineActivityRepository } from "@chatbotx.io/database/repositories"
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 import { contactService } from "../src/contact"
 import { contactActivityService } from "../src/contact-activity/service"
@@ -49,6 +50,10 @@ describe("contactService.delete", () => {
   beforeEach(() => {
     vi.spyOn(contactInboxPostService, "deleteForContacts").mockResolvedValue(0)
     vi.spyOn(contactActivityService, "deleteForContacts").mockResolvedValue(0)
+    vi.spyOn(
+      pipelineActivityRepository,
+      "scrubContactTitles",
+    ).mockResolvedValue()
   })
 
   afterEach(() => {
@@ -81,6 +86,12 @@ describe("contactService.delete", () => {
         return Promise.resolve(0)
       },
     )
+    const scrub = vi
+      .spyOn(pipelineActivityRepository, "scrubContactTitles")
+      .mockImplementation(() => {
+        callOrder.push("pipeline")
+        return Promise.resolve()
+      })
     const invalidate = vi
       .spyOn(contactService, "invalidate")
       .mockResolvedValue()
@@ -111,15 +122,23 @@ describe("contactService.delete", () => {
       "activity",
       "record",
       "delete",
+      "pipeline",
       "post",
       "activity",
       "record",
       "delete",
+      "pipeline",
       "post",
       "activity",
       "record",
       "delete",
+      "pipeline",
     ])
+    // Each chunk clears the pipeline history titles of exactly its contacts.
+    expect(scrub.mock.calls[2]?.[0]).toEqual({
+      workspaceId: "ws-1",
+      contactIds: contacts.slice(100).map((c) => c.id),
+    })
 
     const chunkSizes = record.mock.calls.map(([props]) => props.entries.length)
     expect(chunkSizes).toEqual([50, 50, 20])
@@ -238,6 +257,10 @@ describe("contactService.delete — quota release", () => {
   beforeEach(() => {
     vi.spyOn(contactInboxPostService, "deleteForContacts").mockResolvedValue(0)
     vi.spyOn(contactActivityService, "deleteForContacts").mockResolvedValue(0)
+    vi.spyOn(
+      pipelineActivityRepository,
+      "scrubContactTitles",
+    ).mockResolvedValue()
   })
 
   afterEach(() => {
