@@ -1,0 +1,37 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    bullboard_url: ${BULL_BOARD_URL}
+
+rule_files:
+  - /etc/prometheus/alerts.yml
+
+scrape_configs:
+  - job_name: chatbotx-builder
+    metrics_path: /api/metrics
+    authorization:
+      type: Bearer
+      credentials_file: /run/secrets/metrics-token
+    static_configs:
+      - targets: ["host.docker.internal:3123"]
+
+  # `worker all` assigns METRICS_PORT + index to each worker process. Keep this
+  # list aligned with `all_worker_names` in the worker image entrypoint.
+  - job_name: chatbotx-worker
+    static_configs:
+      - targets:
+          - host.docker.internal:9464
+          - host.docker.internal:9465
+          - host.docker.internal:9466
+          - host.docker.internal:9467
+          - host.docker.internal:9468
+          - host.docker.internal:9469
+          - host.docker.internal:9470
+          - host.docker.internal:9471
+          - host.docker.internal:9472
+          - host.docker.internal:9473
+          - host.docker.internal:9474
+          - host.docker.internal:9475
+          - host.docker.internal:9476
+          - host.docker.internal:9477

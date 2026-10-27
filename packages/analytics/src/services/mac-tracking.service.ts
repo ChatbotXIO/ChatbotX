@@ -54,6 +54,11 @@ const HOURLY_BLOOM_FILTER_CAPACITY = 100_000
 const BLOOM_FILTER_ERROR_RATE = 0.001
 const MAC_LIVE_FIELD = "mac"
 
+const isCanaryContact = (contactId: string): boolean => {
+  const canaryContactId = process.env.CANARY_CONTACT_ID
+  return Boolean(canaryContactId) && contactId === canaryContactId
+}
+
 type QuotaContext = {
   userId: string
   periodStart: Date
@@ -329,7 +334,10 @@ export class MacTrackingService {
     },
     tx: DatabaseClient = db,
   ): Promise<{ counted: number }> {
-    if (input.contacts.length === 0) {
+    const contacts = input.contacts.filter(
+      (contact) => !isCanaryContact(contact.contactId),
+    )
+    if (contacts.length === 0) {
       return { counted: 0 }
     }
 
@@ -351,7 +359,7 @@ export class MacTrackingService {
       DEFAULT_TIMEZONE,
     )
     const deltas = await macRepository.upsertMonthlyPresence(
-      input.contacts.map((contact) => ({
+      contacts.map((contact) => ({
         workspaceId: input.workspaceId,
         contactId: contact.contactId,
         contactInboxId: contact.contactInboxId,
@@ -367,7 +375,7 @@ export class MacTrackingService {
     )
 
     await macRepository.upsertHourlyPresence(
-      input.contacts.map((contact) => ({
+      contacts.map((contact) => ({
         workspaceId: input.workspaceId,
         contactId: contact.contactId,
         contactInboxId: contact.contactInboxId,
@@ -423,11 +431,14 @@ export class MacTrackingService {
    * logic that lives here.
    */
   async track(events: MacInputEvent[]): Promise<Map<string, number>> {
-    if (events.length === 0) {
+    const trackableEvents = events.filter(
+      (event) => !isCanaryContact(event.contactId),
+    )
+    if (trackableEvents.length === 0) {
       return new Map()
     }
 
-    const deduped = await this.filterDuplicateSources(events)
+    const deduped = await this.filterDuplicateSources(trackableEvents)
     if (deduped.length === 0) {
       return new Map()
     }

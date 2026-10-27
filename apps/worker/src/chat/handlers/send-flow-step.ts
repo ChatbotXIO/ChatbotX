@@ -479,7 +479,7 @@ export async function sendFlowStep({
     id: conversationId,
   })
   if (!conversation) {
-    return
+    return { skipped: "conversation-not-found" }
   }
 
   const targetContactInbox = await findTargetContactInbox({
@@ -488,7 +488,7 @@ export async function sendFlowStep({
     contactInboxId,
   })
   if (!targetContactInbox) {
-    return
+    return { skipped: "contact-inbox-not-found" }
   }
   const isBulkOutbound = isBulkOutboundMetadata(metadata, isBulkBroadcast)
 
@@ -532,16 +532,18 @@ export async function sendFlowStep({
       },
       "Skipping flow step unsupported on the resolved channel",
     )
-    return
+    return { skipped: "unsupported-step" }
   }
 
   if (step.stepType === stepTypes.enum.sendWaTemplateMessage) {
     if (targetContactInbox.channel !== channelTypes.enum.whatsapp) {
-      return
+      return { skipped: "channel-mismatch" }
     }
 
+    let createdMessageId: string | undefined
+
     try {
-      await processWhatsappTemplate({
+      const result = await processWhatsappTemplate({
         conversation,
         contactInbox: targetContactInbox,
         template: {
@@ -560,24 +562,31 @@ export async function sendFlowStep({
         metadata,
         isBulkBroadcast,
         sentByUserId,
+        onMessageCreated: (messageId) => {
+          createdMessageId = messageId
+        },
       })
+      return { messageId: result.messageId }
     } catch (error) {
       logger.error(
         error,
         `sendFlowStep WhatsApp template error for conversationId: ${conversationId}`,
       )
+      return createdMessageId
+        ? { messageId: createdMessageId }
+        : { skipped: "template-send-failed" }
     }
-
-    return
   }
 
   if (step.stepType === stepTypes.enum.sendMessengerTemplateMessage) {
     if (targetContactInbox.channel !== channelTypes.enum.messenger) {
-      return
+      return { skipped: "channel-mismatch" }
     }
 
+    let createdMessageId: string | undefined
+
     try {
-      await processMessengerTemplate({
+      const result = await processMessengerTemplate({
         conversation,
         contactInbox: targetContactInbox,
         template: {
@@ -596,17 +605,21 @@ export async function sendFlowStep({
         metadata,
         isBulkBroadcast,
         sentByUserId,
+        onMessageCreated: (messageId) => {
+          createdMessageId = messageId
+        },
       })
+      return { messageId: result.messageId }
     } catch (error) {
       logger.error(
         error,
         `sendFlowStep Messenger template error for conversationId: ${conversationId}`,
       )
+      return createdMessageId
+        ? { messageId: createdMessageId }
+        : { skipped: "template-send-failed" }
     }
-
-    return
   }
-
   const eventLogData = {
     context: {
       workspaceId: conversation.workspaceId,
@@ -639,7 +652,7 @@ export async function sendFlowStep({
       },
       "Skipping non-deliverable flow step",
     )
-    return
+    return { skipped: "non-deliverable-step" }
   }
 
   // Spintax is on here because only channelDeliverableStepTypes reach this
@@ -676,7 +689,7 @@ export async function sendFlowStep({
       { conversationId, flowId, stepId: step.id },
       "Skipping a product collection that matched no product",
     )
-    return
+    return { skipped: "empty-product-collection" }
   }
 
   if (isBlankTextCarrierStep(resolvedStep as SendFlowStepData)) {
@@ -690,7 +703,7 @@ export async function sendFlowStep({
       },
       "Skipping blank text flow step",
     )
-    return
+    return { skipped: "blank-text" }
   }
 
   const storedContent = resolveStoredStepContent(
@@ -924,8 +937,12 @@ export async function sendFlowStep({
       ? await messageService.createWithAttachments({
           message: messageInput,
           attachments: attachmentInputs,
+          metricsChannel: targetContactInbox.channel,
         })
-      : await messageService.create(messageInput)
+      : await messageService.create({
+          ...messageInput,
+          metricsChannel: targetContactInbox.channel,
+        })
 
     message = await resolveMessageAttachmentUrls(message, {
       workspaceId: conversation.workspaceId,
@@ -1098,6 +1115,7 @@ export async function sendFlowStep({
         },
       })
     }
+    return { messageId: message.id }
   } catch (error) {
     const parsedError = await parseSdkError(error)
 
@@ -1166,6 +1184,7 @@ export async function sendFlowStep({
         },
       })
     }
+    return message ? { messageId: message.id } : { skipped: "send-failed" }
   }
 }
 
@@ -1268,8 +1287,12 @@ export const sendChatMessage = async (
       ? await messageService.createWithAttachments({
           message: messageInput,
           attachments: [attachmentInput],
+          metricsChannel: contactInbox.channel,
         })
-      : await messageService.create(messageInput)
+      : await messageService.create({
+          ...messageInput,
+          metricsChannel: contactInbox.channel,
+        })
 
     const message = await resolveMessageAttachmentUrls(persistedMessage, {
       workspaceId: conversation.workspaceId,

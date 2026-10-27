@@ -13,6 +13,7 @@ import { ensureBootstrapped } from "../lib/bootstrap"
 import { isBlockedWorkspace } from "../lib/is-blocked-workspace"
 import { isBotMessageQuotaReached } from "../lib/is-bot-message-quota-reached"
 import { isFinalAttempt } from "../lib/job-attempts"
+import { instrumentWorker } from "../lib/job-observability"
 import { logger } from "../lib/logger"
 import { resolveWorkspaceId } from "../lib/resolve-workspace-id"
 import { runJobWithAuditContext } from "../lib/run-job-with-audit-context"
@@ -88,41 +89,35 @@ async function startChatWorker() {
         return
       }
 
-      await runJobWithAuditContext(
+      return await runJobWithAuditContext(
         { workspaceId, source: `chat:${job.data.type}` },
         async () => {
           switch (job.data.type) {
             case ChatJobAction.sendChannelMessage:
-              await sendMessageToChannel(
+              return await sendMessageToChannel(
                 job.data.data,
                 job.attemptsMade,
                 !isFinalAttempt(job),
               )
-              return
             case ChatJobAction.sendFlowMessage:
-              await sendFlowStep(job.data.data)
-              return
+              return await sendFlowStep(job.data.data)
             case ChatJobAction.sendChatMessage:
-              await sendChatMessage(job.data.data, !isFinalAttempt(job))
-              return
+              return await sendChatMessage(job.data.data, !isFinalAttempt(job))
             case ChatJobAction.sendWhatsappTemplateMessage:
-              await sendWhatsappTemplateMessage(
+              return await sendWhatsappTemplateMessage(
                 job.data.data,
                 !isFinalAttempt(job),
               )
-              return
             case ChatJobAction.sendWhatsappTemplateToConversation:
-              await sendWhatsappTemplateToConversation(
+              return await sendWhatsappTemplateToConversation(
                 job.data.data,
                 !isFinalAttempt(job),
               )
-              return
             case ChatJobAction.sendMessengerTemplateMessage:
-              await sendMessengerTemplateMessage(
+              return await sendMessengerTemplateMessage(
                 job.data.data,
                 !isFinalAttempt(job),
               )
-              return
             case ChatJobAction.sendTyping:
               await sendTypingToChannel(job.data.data)
               return
@@ -168,6 +163,7 @@ async function startChatWorker() {
       logger.error(err, `Job ${job.id} has failed`)
     }
   })
+  instrumentWorker(worker, { queue: queueNames.enum.chat })
 
   let isShuttingDown = false
   async function shutdown() {

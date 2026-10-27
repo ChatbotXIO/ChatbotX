@@ -1,0 +1,9 @@
+apiVersion: 1
+
+providers:
+  - name: ChatbotX
+    orgId: 1
+    folder: ChatbotX
+    type: file
+    options:
+      path: /var/lib/grafana/dashboards

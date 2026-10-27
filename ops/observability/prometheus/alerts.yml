@@ -1,0 +1,62 @@
+groups:
+  - name: chatbotx-messaging
+    rules:
+      - alert: MessagingCodeBug
+        expr: increase(chatbotx_jobs_failed_total{error_class="code_bug",queue=~"integration|chat|webhook"}[1m]) > 0
+        for: 0s
+        labels:
+          severity: critical
+        annotations:
+          summary: Deterministic code failure in a messaging queue
+          runbook: docs/observability.md#messagingcodebug
+          bullboard: '{{ if $externalLabels.bullboard_url }}{{ $externalLabels.bullboard_url }}/queue/{{ $labels.queue }}?status=failed{{ end }}'
+
+
+      - alert: WorkerJobFailureRate
+        expr: sum by (queue) (rate(chatbotx_jobs_failed_total[5m])) / (sum by (queue) (rate(chatbotx_jobs_completed_total[5m])) + sum by (queue) (rate(chatbotx_jobs_failed_total[5m]))) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: Worker job failure rate exceeds 10%
+          runbook: docs/observability.md#workerjobfailurerate
+          bullboard: '{{ if $externalLabels.bullboard_url }}{{ $externalLabels.bullboard_url }}/queue/{{ $labels.queue }}?status=failed{{ end }}'
+
+
+      - alert: InboundMessageVolumeDrop
+        expr: sum(rate(chatbotx_messages_total{direction="in"}[10m])) < 0.3 * sum(rate(chatbotx_messages_total{direction="in"}[10m] offset 1w))
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: Inbound message volume is below 30% of last week
+          runbook: docs/observability.md#inboundmessagevolumedrop
+
+      - alert: MessagingQueueBacklog
+        expr: max by (queue) (chatbotx_queue_oldest_waiting_seconds{queue=~"integration|chat"}) > 120
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: A messaging queue has waited longer than two minutes
+          runbook: docs/observability.md#messagingqueuebacklog
+          bullboard: '{{ if $externalLabels.bullboard_url }}{{ $externalLabels.bullboard_url }}/queue/{{ $labels.queue }}?status=failed{{ end }}'
+
+
+      - alert: WorkerDown
+        expr: up{job="chatbotx-worker"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: A worker metrics endpoint cannot be scraped
+          runbook: docs/observability.md#workerdown
+
+      - alert: MacClaimSideEffectFailed
+        expr: increase(chatbotx_side_effect_failed_total{name="mac_claim"}[5m]) > 0
+        for: 0s
+        labels:
+          severity: warning
+        annotations:
+          summary: MAC tracking failed after a contact was created
+          runbook: docs/observability.md#macclaimsideeffectfailed

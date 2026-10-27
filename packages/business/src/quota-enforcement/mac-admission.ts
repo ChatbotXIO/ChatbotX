@@ -6,6 +6,12 @@ import {
   type Transaction,
 } from "@chatbotx.io/database/client"
 import type { UserQuotaModel } from "@chatbotx.io/database/types"
+import {
+  captureException,
+  classifyError,
+  incrementSideEffectFailed,
+} from "@chatbotx.io/observability"
+import { logger } from "../logger"
 import type { MacAdmissionStrategy } from "./keys"
 
 /**
@@ -77,19 +83,41 @@ export const runNewContactTransaction = <T>(
     await setLocalStatementTimeout(tx, MAC_CREATE_STATEMENT_TIMEOUT)
     const created = await args.create(tx)
     let counted = false
-    if (args.periodStart) {
-      const claim = await macTrackingService.claimNewActiveContact(
-        {
-          workspaceId: args.workspaceId,
-          contactId: created.contactId,
-          contactInboxId: created.contactInboxId,
-          inboxId: created.inboxId,
-          periodStart: args.periodStart,
-          occurredAt: args.occurredAt,
-        },
-        tx,
-      )
-      counted = claim.counted
+    const periodStart = args.periodStart
+    if (periodStart) {
+      try {
+        const claim = await tx.transaction(
+          async (claimTx) =>
+            await macTrackingService.claimNewActiveContact(
+              {
+                workspaceId: args.workspaceId,
+                contactId: created.contactId,
+                contactInboxId: created.contactInboxId,
+                inboxId: created.inboxId,
+                periodStart,
+                occurredAt: args.occurredAt,
+              },
+              claimTx,
+            ),
+        )
+        counted = claim.counted
+      } catch (error) {
+        const errorClass = classifyError(error)
+        logger.error(
+          {
+            err: error,
+            workspaceId: args.workspaceId,
+            contactId: created.contactId,
+          },
+          "MAC claim failed after contact creation; allowing messaging to continue",
+        )
+        incrementSideEffectFailed("mac_claim")
+        captureException({
+          error,
+          errorClass,
+          tags: { side_effect: "mac_claim" },
+        })
+      }
     }
     return { value: created.value, counted }
   })

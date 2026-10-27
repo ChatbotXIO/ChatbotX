@@ -1,0 +1,39 @@
+apiVersion: 1
+
+contactPoints:
+  - orgId: 1
+    name: Telegram critical alerts
+    receivers:
+      - uid: telegram-critical
+        type: telegram
+        settings:
+          bottoken: $ALERT_TELEGRAM_BOT_TOKEN
+          chatid: $ALERT_TELEGRAM_CHAT_ID
+          disable_web_page_preview: true
+          message: '{{ range .Alerts }}{{ .Annotations.summary }}{{ with .Annotations.bullboard }}{{ "\n" }}{{ . }}{{ end }}{{ end }}'
+
+  - orgId: 1
+    name: Discord critical alerts
+    receivers:
+      - uid: discord-critical
+        type: discord
+        settings:
+          url: $ALERT_DISCORD_WEBHOOK_URL
+          message: '{{ range .Alerts }}{{ .Annotations.summary }}{{ with .Annotations.bullboard }}{{ "\n" }}{{ . }}{{ end }}{{ end }}'
+
+
+policies:
+  - orgId: 1
+    receiver: Telegram critical alerts
+    group_by: [alertname, queue]
+    group_wait: 0s
+    group_interval: 1m
+    repeat_interval: 10m
+    routes:
+      - receiver: Discord critical alerts
+        object_matchers:
+          - [severity, =, critical]
+        continue: true
+      - receiver: Telegram critical alerts
+        object_matchers:
+          - [severity, =, critical]

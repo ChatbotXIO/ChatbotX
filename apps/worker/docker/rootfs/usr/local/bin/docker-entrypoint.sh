@@ -90,10 +90,18 @@ run_all_workers() {
     require_script "$script"
   done
 
+  metrics_worker_index=0
   for worker in $(all_worker_names); do
     script="$(resolve_worker_script "$worker")"
-    echo "Starting worker: $worker ($script)"
-    "$NODE_BIN" "$script" &
+    if [ -n "${METRICS_PORT:-}" ]; then
+      worker_metrics_port=$((METRICS_PORT + metrics_worker_index))
+      echo "Starting worker: $worker ($script, metrics :$worker_metrics_port)"
+      METRICS_PORT="$worker_metrics_port" "$NODE_BIN" "$script" &
+      metrics_worker_index=$((metrics_worker_index + 1))
+    else
+      echo "Starting worker: $worker ($script)"
+      "$NODE_BIN" "$script" &
+    fi
     pids="$pids $!"
   done
 

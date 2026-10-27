@@ -1,0 +1,79 @@
+name: chatbotx-observability
+
+services:
+  prometheus:
+    image: prom/prometheus:v3.10.0
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --enable-feature=expand-external-labels
+    ports:
+      - "9090:9090"
+    environment:
+      BULL_BOARD_URL: ${BULL_BOARD_URL:-}
+
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./prometheus/alerts.yml:/etc/prometheus/alerts.yml:ro
+      - ./secrets/metrics-token:/run/secrets/metrics-token:ro
+      - prometheus-data:/prometheus
+
+  grafana:
+    image: grafana/grafana:12.3.1
+    ports:
+      - "3001:3000"
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-change-me}
+      ALERT_TELEGRAM_BOT_TOKEN: ${ALERT_TELEGRAM_BOT_TOKEN:-}
+      ALERT_TELEGRAM_CHAT_ID: ${ALERT_TELEGRAM_CHAT_ID:-}
+      ALERT_DISCORD_WEBHOOK_URL: ${ALERT_DISCORD_WEBHOOK_URL:-}
+      BULL_BOARD_URL: ${BULL_BOARD_URL:-}
+
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana-data:/var/lib/grafana
+    depends_on:
+      - prometheus
+
+  glitchtip-postgres:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_DB: glitchtip
+      POSTGRES_USER: glitchtip
+      POSTGRES_PASSWORD: ${GLITCHTIP_POSTGRES_PASSWORD:-change-me}
+    volumes:
+      - glitchtip-postgres-data:/var/lib/postgresql/data
+
+  glitchtip-redis:
+    image: redis:8-alpine
+    volumes:
+      - glitchtip-redis-data:/data
+
+  glitchtip:
+    image: glitchtip/glitchtip:latest
+    command: ./bin/run-uwsgi.sh
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql://glitchtip:${GLITCHTIP_POSTGRES_PASSWORD:-change-me}@glitchtip-postgres:5432/glitchtip
+      REDIS_URL: redis://glitchtip-redis:6379/0
+      SECRET_KEY: ${GLITCHTIP_SECRET_KEY:?set GLITCHTIP_SECRET_KEY}
+      PORT: 8000
+    depends_on:
+      - glitchtip-postgres
+      - glitchtip-redis
+
+  uptime-kuma:
+    image: louislam/uptime-kuma:2
+    ports:
+      - "3002:3001"
+    volumes:
+      - uptime-kuma-data:/app/data
+
+volumes:
+  prometheus-data:
+  grafana-data:
+  glitchtip-postgres-data:
+  glitchtip-redis-data:
+  uptime-kuma-data:

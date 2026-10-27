@@ -8,8 +8,10 @@ import {
 } from "@chatbotx.io/worker-config"
 import { type Job, Queue, Worker } from "bullmq"
 import { ensureBootstrapped } from "../lib/bootstrap"
+import { instrumentWorker } from "../lib/job-observability"
 import { logger } from "../lib/logger"
 import { runJobWithAuditContext } from "../lib/run-job-with-audit-context"
+import { startUptimeHeartbeat } from "../lib/uptime-heartbeat"
 import { startMarketingMessageWorker } from "../marketing-message/consumer"
 import {
   cleanupTriggerExecutions,
@@ -76,6 +78,7 @@ async function startScheduleWorker() {
     logger.error(err, "Failed to bootstrap analytics")
     process.exit(1)
   }
+  startUptimeHeartbeat()
 
   if (scheduleQueue instanceof Queue) {
     registerSchedules()
@@ -306,6 +309,7 @@ async function startScheduleWorker() {
       logger.error(err, `Job ${job.id} has failed`)
     }
   })
+  instrumentWorker(worker, { queue: queueNames.enum.schedule })
 
   let isShuttingDown = false
   async function shutdown() {

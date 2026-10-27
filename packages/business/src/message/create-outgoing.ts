@@ -16,6 +16,7 @@ import {
   uploadMultipleFiles,
 } from "@chatbotx.io/filesystem"
 import type { SendProductsContent } from "@chatbotx.io/flow-config"
+import { incrementMessage } from "@chatbotx.io/observability"
 import { createId } from "@chatbotx.io/utils"
 import { channelTypes } from "@chatbotx.io/utils/channel"
 import {
@@ -384,6 +385,10 @@ export const createOutgoing = async (props: {
     attachmentInputs.length > 0
       ? await repository.createWithAttachments(messageInput, attachmentInputs)
       : await repository.create(messageInput)
+  incrementMessage({
+    direction: "out",
+    channel: contactInbox.channel,
+  })
 
   await contactInboxService.updateTracking({
     contactInboxId: contactInbox.id,

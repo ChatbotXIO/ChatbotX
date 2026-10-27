@@ -267,7 +267,11 @@ describe("low worker process boot", () => {
       replay: { automationId: "automation-5" },
     }
 
-    await worker?.processor({ data: { type: "replayMissedComment", data } })
+    workerState.receiveComment.mockResolvedValueOnce({ messageId: "message-5" })
+
+    await expect(
+      worker?.processor({ data: { type: "replayMissedComment", data } }),
+    ).resolves.toEqual({ messageId: "message-5" })
 
     expect(workerState.receiveComment).toHaveBeenCalledWith(data)
     expect(workerState.withBlockedOwnerGuard).toHaveBeenCalledWith(

@@ -77,6 +77,7 @@ import type { MessengerAuthValue } from "@chatbotx.io/integration-messenger"
 import type { ThreadsAuthValue } from "@chatbotx.io/integration-threads"
 import type { TiktokAuthValue } from "@chatbotx.io/integration-tiktok"
 import { toLogSafeError } from "@chatbotx.io/logger"
+import { incrementMessage } from "@chatbotx.io/observability"
 import {
   RealtimeEventType,
   routeForConversation,
@@ -1383,6 +1384,13 @@ const persistMessage = async (
   }
 
   if (isNew && !isOwnSendEcho) {
+    incrementMessage({
+      direction: inbound ? "in" : "out",
+      channel: inbox.channel,
+    })
+  }
+
+  if (isNew && !isOwnSendEcho) {
     await persistNewMessageSideEffects({ ...props, message })
 
     if (isOutgoingDirectMessageEcho && canMarkReadByEcho && !props.keepUnread) {
@@ -1680,7 +1688,7 @@ async function reserveLiveCommentDelay(props: {
 
 export const receiveComment = async (
   props: IntegrationJobReceiveComment["data"],
-): Promise<void> => {
+): Promise<{ messageId: string } | { skipped: string }> => {
   setWebhookExecutionContext({ source: "webhook" })
 
   const { integrationType, integrationIdentifier, commentData, replay } = props
@@ -1690,7 +1698,7 @@ export const receiveComment = async (
       { commentId: commentData.commentId, integrationIdentifier },
       "receiveComment: skipping self-authored comment",
     )
-    return
+    return { skipped: "self-authored-comment" }
   }
 
   const { inbox, integrationRow } =
@@ -1718,7 +1726,7 @@ export const receiveComment = async (
       { commentId: commentData.commentId, integrationIdentifier },
       "receiveComment: skipping self-authored comment",
     )
-    return
+    return { skipped: "self-authored-comment" }
   }
 
   // `owner` is the ONLY self-authorship signal TikTok has — the
@@ -1987,12 +1995,12 @@ export const receiveComment = async (
       { commentId: commentData.commentId, integrationIdentifier },
       "receiveComment: TikTok commenter identity unresolved, withholding automation",
     )
-    return
+    return { messageId: savedComment.id }
   }
 
   const workspace = await workspaceService.findById({ id: inbox.workspaceId })
   if (!workspaceService.isActiveNow(workspace)) {
-    return
+    return { messageId: savedComment.id }
   }
 
   const automationData: IntegrationJobProcessCommentAutomation["data"] = {
@@ -2022,7 +2030,7 @@ export const receiveComment = async (
         onlyAutomationId: replay.automationId,
       }),
     )
-    return
+    return { messageId: savedComment.id }
   }
 
   const processCommentAutomationJobId = `comment-auto-${commentData.commentId}`
@@ -2060,6 +2068,7 @@ export const receiveComment = async (
       ? { ...jobOptions, attempts: 1 }
       : jobOptions,
   )
+  return { messageId: savedComment.id }
 }
 
 // When a commenter edits their comment, sync the new text to the DB

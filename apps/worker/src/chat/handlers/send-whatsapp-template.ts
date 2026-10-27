@@ -101,6 +101,8 @@ export interface ProcessWhatsappTemplateParams {
   humanSender?: { adminId: string }
   isBulkBroadcast?: boolean
   metadata?: MetadataPayload
+  onMessageCreated?: (messageId: string) => void
+
   /** The inbox user who sent the running flow, for `{{admin_name}}` in the params. */
   sentByUserId?: string
   step?: SendWaTemplateMessageStepSchema
@@ -197,6 +199,7 @@ export async function processWhatsappTemplate(
     willRetryOnThrow = false,
     humanSender,
     sentByUserId,
+    onMessageCreated,
   } = params
   const isBulkOutbound = isBulkOutboundMetadata(
     metadata,
@@ -311,12 +314,14 @@ export async function processWhatsappTemplate(
       text: `Template: ${template.name}`,
       contentAttributes,
       createdAt: new Date(),
+      metricsChannel: contactInbox.channel,
     })
 
     if (!newMessage) {
       throw new Error("Failed to insert message record")
     }
     const createdMessage = newMessage
+    onMessageCreated?.(createdMessage.id)
 
     const trackingInvalidation =
       await conversationService.recordOutboundMessageActivity({
@@ -468,7 +473,7 @@ export async function processWhatsappTemplate(
 export async function sendWhatsappTemplateMessage(
   data: ChatJobSendWhatsappTemplateMessage["data"],
   willRetryOnThrow = false,
-): Promise<ProcessWhatsappTemplateResult | undefined> {
+): Promise<{ messageId: string } | { skipped: string }> {
   const {
     conversation,
     templateId,
@@ -485,7 +490,7 @@ export async function sendWhatsappTemplateMessage(
       handler: "sendWhatsappTemplateMessage",
     })
   ) {
-    return
+    return { skipped: "broadcast-not-sendable" }
   }
 
   const eventLogData = {
@@ -505,6 +510,7 @@ export async function sendWhatsappTemplateMessage(
     nodeId: "",
     metadata,
   }
+  let createdMessageId: string | undefined
 
   try {
     const validated = await validateWhatsappTemplate(
@@ -549,9 +555,12 @@ export async function sendWhatsappTemplateMessage(
       broadcastId,
       isBulkBroadcast: broadcastId !== undefined,
       metadata,
+      onMessageCreated: (messageId) => {
+        createdMessageId = messageId
+      },
     })
 
-    return result
+    return { messageId: result.messageId }
   } catch (error) {
     logger.error(
       {
@@ -563,7 +572,9 @@ export async function sendWhatsappTemplateMessage(
       "Error sending WhatsApp template message for broadcast",
     )
     if (shouldSuppressRetryableChannelError(error, contactInbox.channel)) {
-      return
+      return createdMessageId
+        ? { messageId: createdMessageId }
+        : { skipped: "channel-error-suppressed" }
     }
     throw error
   }
@@ -579,7 +590,7 @@ export async function sendWhatsappTemplateMessage(
 export async function sendWhatsappTemplateToConversation(
   data: ChatJobSendWhatsappTemplateToConversation["data"],
   willRetryOnThrow = false,
-): Promise<ProcessWhatsappTemplateResult | undefined> {
+): Promise<{ messageId: string } | { skipped: string }> {
   const {
     conversation,
     contactInbox,
@@ -589,6 +600,7 @@ export async function sendWhatsappTemplateToConversation(
     initiatedBy,
     adminId,
   } = data
+  let createdMessageId: string | undefined
 
   try {
     const validated = await validateWhatsappTemplate(
@@ -606,7 +618,7 @@ export async function sendWhatsappTemplateToConversation(
       templateData ??
       extractTemplateParams((template.components as TemplateComponent[]) || [])
 
-    return await processWhatsappTemplate({
+    const result = await processWhatsappTemplate({
       conversation,
       contactInbox,
       willRetryOnThrow,
@@ -618,14 +630,20 @@ export async function sendWhatsappTemplateToConversation(
       },
       metadata,
       humanSender: initiatedBy === "user" && adminId ? { adminId } : undefined,
+      onMessageCreated: (messageId) => {
+        createdMessageId = messageId
+      },
     })
+    return { messageId: result.messageId }
   } catch (error) {
     logger.error(
       { err: error, conversationId: conversation.id, templateId },
       "Error sending WhatsApp template message to conversation",
     )
     if (shouldSuppressRetryableChannelError(error, contactInbox.channel)) {
-      return
+      return createdMessageId
+        ? { messageId: createdMessageId }
+        : { skipped: "channel-error-suppressed" }
     }
     throw error
   }

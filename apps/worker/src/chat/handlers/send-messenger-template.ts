@@ -68,6 +68,8 @@ export interface ProcessMessengerTemplateParams {
   }
   isBulkBroadcast?: boolean
   metadata?: MetadataPayload
+  onMessageCreated?: (messageId: string) => void
+
   /** The inbox user who sent the running flow, for `{{admin_name}}` in the params. */
   sentByUserId?: string
   step?: SendMessengerTemplateMessageStepSchema
@@ -204,6 +206,7 @@ export async function processMessengerTemplate(
     isBulkBroadcast,
     willRetryOnThrow = false,
     sentByUserId,
+    onMessageCreated,
   } = params
   const isBulkOutbound = isBulkOutboundMetadata(
     metadata,
@@ -319,8 +322,10 @@ export async function processMessengerTemplate(
       sourceId: null,
       text: `Template: ${template.name}`,
       contentAttributes,
+      metricsChannel: contactInbox.channel,
     })
     const createdMessage = newMessage
+    onMessageCreated?.(createdMessage.id)
 
     const trackingInvalidation =
       await conversationService.recordOutboundMessageActivity({
@@ -459,7 +464,7 @@ export async function processMessengerTemplate(
 export async function sendMessengerTemplateMessage(
   data: ChatJobSendMessengerTemplateMessage["data"],
   willRetryOnThrow = false,
-): Promise<ProcessMessengerTemplateResult | undefined> {
+): Promise<{ messageId: string } | { skipped: string }> {
   const {
     conversation,
     templateId,
@@ -477,7 +482,7 @@ export async function sendMessengerTemplateMessage(
       handler: "sendMessengerTemplateMessage",
     })
   ) {
-    return
+    return { skipped: "broadcast-not-sendable" }
   }
 
   const eventLogData = {
@@ -497,6 +502,7 @@ export async function sendMessengerTemplateMessage(
     nodeId: "",
     metadata,
   }
+  let createdMessageId: string | undefined
 
   try {
     const validated = await validateMessengerTemplate(
@@ -595,9 +601,12 @@ export async function sendMessengerTemplateMessage(
           buttons: stepButtons,
         },
       }),
+      onMessageCreated: (messageId) => {
+        createdMessageId = messageId
+      },
     })
 
-    return result
+    return { messageId: result.messageId }
   } catch (error) {
     logger.error(
       {
@@ -609,7 +618,9 @@ export async function sendMessengerTemplateMessage(
       "Error sending Messenger template message for broadcast",
     )
     if (shouldSuppressRetryableChannelError(error, contactInbox.channel)) {
-      return
+      return createdMessageId
+        ? { messageId: createdMessageId }
+        : { skipped: "channel-error-suppressed" }
     }
     throw error
   }

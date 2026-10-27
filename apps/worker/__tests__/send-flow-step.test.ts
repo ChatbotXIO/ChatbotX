@@ -498,11 +498,28 @@ describe("sendFlowStep", () => {
     mockMarkReadByOutbound.mockResolvedValue(true)
   })
 
-  test("returns early when conversation not found — repository not called", async () => {
+  test("returns the persisted message id", async () => {
+    await expect(sendFlowStep(baseParams)).resolves.toEqual({
+      messageId: "msg-created",
+    })
+  })
+
+  test("returns the persisted message id when channel delivery fails", async () => {
+    mockSendFlowStepToChannel.mockRejectedValueOnce(
+      new Error("provider unavailable"),
+    )
+
+    await expect(sendFlowStep(baseParams)).resolves.toEqual({
+      messageId: "msg-created",
+    })
+  })
+
+  test("returns a skip reason when the conversation is missing", async () => {
     mockFindConversation.mockResolvedValue(null)
 
-    await sendFlowStep(baseParams)
-
+    await expect(sendFlowStep(baseParams)).resolves.toEqual({
+      skipped: "conversation-not-found",
+    })
     expect(mockCreateMessageRepository).not.toHaveBeenCalled()
   })
 

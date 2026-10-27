@@ -26,10 +26,10 @@ import { runJobWithAuditContext } from "../lib/run-job-with-audit-context"
 /**
  * Runs one `low` job behind the blocked-owner guard, dispatching on its type.
  */
-async function processLowJob(job: Job<LowJobData>): Promise<void> {
+async function processLowJob(job: Job<LowJobData>) {
   const workspaceId = job.data.data.workspaceId
-  await withBlockedOwnerGuard(workspaceId, async () => {
-    await runJobWithAuditContext(
+  return await withBlockedOwnerGuard(workspaceId, async () => {
+    return await runJobWithAuditContext(
       { workspaceId, source: `low:${job.data.type}` },
       async () => {
         switch (job.data.type) {
@@ -42,8 +42,7 @@ async function processLowJob(job: Job<LowJobData>): Promise<void> {
             return
           }
           case LowJobAction.replayMissedComment: {
-            await receiveComment(job.data.data)
-            return
+            return await receiveComment(job.data.data)
           }
           default: {
             // Exhaustiveness guard — a new LowJobData variant without a
@@ -111,7 +110,7 @@ async function startLowWorker() {
     queueNames.enum.low,
     async (job: Job<LowJobData>) => {
       try {
-        await processLowJob(job)
+        return await processLowJob(job)
       } finally {
         await settleMissedCommentReplay(job)
       }
