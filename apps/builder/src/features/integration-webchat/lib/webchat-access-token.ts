@@ -167,6 +167,15 @@ export const verifyWebchatAccessToken = async ({
   return { authorized: true, originHost: payload.originHost }
 }
 
+// Direct-open tokens have no origin host and are intentionally allowed by a
+// non-empty allowlist, matching the page's direct-open authorization rule.
+export const isTokenOriginAllowed = (
+  originHost: string | null,
+  authorizedDomains: string[],
+) =>
+  authorizedDomains.length === 0 ||
+  isOriginAuthorized(originHost, authorizedDomains)
+
 export const authorizeWebchatGuestRequest = async ({
   authorizedDomains,
   token,
@@ -187,9 +196,10 @@ export const authorizeWebchatGuestRequest = async ({
 
   return {
     ...verification,
-    authorized:
-      authorizedDomains.length === 0 ||
-      isOriginAuthorized(verification.originHost, authorizedDomains),
+    authorized: isTokenOriginAllowed(
+      verification.originHost,
+      authorizedDomains,
+    ),
   }
 }
 
@@ -199,7 +209,10 @@ export const verifyRefreshableWebchatAccessToken = async ({
   workspaceId,
 }: WebchatAccessTokenInput & {
   token?: string | null
-}): Promise<Pick<WebchatAccessTokenPayload, "iat" | "originHost"> | null> => {
+}): Promise<Pick<
+  WebchatAccessTokenPayload,
+  "iat" | "originHost" | "webchatId" | "workspaceId"
+> | null> => {
   const payload = await parseSignedPayload({ token, webchatId, workspaceId })
   const now = getCurrentTimestamp()
   if (
@@ -210,29 +223,17 @@ export const verifyRefreshableWebchatAccessToken = async ({
     return null
   }
 
-  return { iat: payload.iat, originHost: payload.originHost }
-}
-
-export const refreshWebchatAccessToken = async ({
-  token,
-  webchatId,
-  workspaceId,
-}: WebchatAccessTokenInput & {
-  token?: string | null
-}): Promise<(WebchatAccessToken & { originHost: string | null }) | null> => {
-  const payload = await verifyRefreshableWebchatAccessToken({
-    token,
-    webchatId,
-    workspaceId,
-  })
-  if (!payload) {
-    return null
+  return {
+    iat: payload.iat,
+    originHost: payload.originHost,
+    webchatId: payload.webchatId,
+    workspaceId: payload.workspaceId,
   }
-
-  const refreshed = await createToken({
-    ...payload,
-    webchatId,
-    workspaceId,
-  })
-  return { ...refreshed, originHost: payload.originHost }
 }
+
+export const refreshWebchatAccessToken = async (
+  claims: Pick<
+    WebchatAccessTokenPayload,
+    "iat" | "originHost" | "webchatId" | "workspaceId"
+  >,
+): Promise<WebchatAccessToken> => await createToken(claims)

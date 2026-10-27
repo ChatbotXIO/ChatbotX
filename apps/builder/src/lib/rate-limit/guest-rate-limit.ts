@@ -1,4 +1,5 @@
 import { distributedStore } from "@chatbotx.io/redis"
+import { headers } from "next/headers"
 import { logger } from "@/lib/log"
 
 const WINDOW_SECONDS = 10
@@ -123,6 +124,14 @@ export const checkGuestRateLimit = async ({
     }
 
     return { limited: false, retryAfter }
+  }
+}
+
+export const getGuestRequestHeaders = async () => {
+  try {
+    return await headers()
+  } catch {
+    return new Headers()
   }
 }
 

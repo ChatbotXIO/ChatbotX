@@ -14,11 +14,11 @@ const {
   mockConversationEnsureActive,
   mockConversationFindBy,
   mockCreateMessageRepository,
+  mockConversationRecordGuestInboundRead,
   mockCreateNewContactWithMac,
-  mockDbUpdate,
   mockEmit,
+  mockFindWebchat,
   mockEmitContactCreated,
-  mockFindOrFail,
   mockIntegrationQueueAdd,
   mockQuotaIncrement,
   mockCheckGuestRateLimit,
@@ -26,15 +26,7 @@ const {
   mockRepositoryCreate,
   mockWorkspaceFind,
   tx,
-  updateBuilder,
 } = vi.hoisted(() => {
-  const updateBuilder = {
-    set: vi.fn(),
-    where: vi.fn(),
-  }
-  updateBuilder.set.mockReturnValue(updateBuilder)
-  updateBuilder.where.mockResolvedValue(undefined)
-
   const insertBuilder = {
     values: vi.fn(),
     returning: vi.fn(),
@@ -77,10 +69,12 @@ const {
         return { ok: true, value: created.value }
       },
     ),
-    mockDbUpdate: vi.fn().mockReturnValue(updateBuilder),
+    mockConversationRecordGuestInboundRead: vi
+      .fn()
+      .mockResolvedValue(undefined),
     mockEmit: vi.fn(),
     mockEmitContactCreated: vi.fn().mockResolvedValue(undefined),
-    mockFindOrFail: vi.fn(),
+    mockFindWebchat: vi.fn(),
     mockIntegrationQueueAdd: vi.fn().mockResolvedValue(undefined),
     mockQuotaIncrement: vi.fn().mockResolvedValue(undefined),
     mockCheckGuestRateLimit: vi
@@ -93,7 +87,6 @@ const {
     mockRepositoryCreate,
     mockWorkspaceFind: vi.fn().mockResolvedValue({ ownerId: "owner-1" }),
     tx,
-    updateBuilder,
   }
 })
 
@@ -119,6 +112,9 @@ vi.mock("@chatbotx.io/business", () => ({
       | null
       | undefined,
   ) => Boolean(workspace?.scheduledDeletionAt),
+  integrationWebchatService: {
+    findByIdForWorkspace: mockFindWebchat,
+  },
   contactInboxService: {
     findLatestBySource: mockContactInboxFindLatest,
     updateTracking: mockContactInboxUpdateTracking,
@@ -130,6 +126,7 @@ vi.mock("@chatbotx.io/business", () => ({
   conversationService: {
     ensureActive: mockConversationEnsureActive,
     findBy: mockConversationFindBy,
+    recordGuestInboundRead: mockConversationRecordGuestInboundRead,
   },
   quotaEnforcementService: {
     increment: mockQuotaIncrement,
@@ -151,6 +148,7 @@ vi.mock("@/lib/log", () => ({
 vi.mock("@/lib/rate-limit/guest-rate-limit", () => ({
   checkGuestRateLimit: mockCheckGuestRateLimit,
   getGuestClientIp: vi.fn(() => "192.0.2.1"),
+  getGuestRequestHeaders: vi.fn(() => new Headers()),
 }))
 
 vi.mock("@/features/integration-webchat/lib/webchat-access-token", () => ({
@@ -189,11 +187,9 @@ vi.mock("@chatbotx.io/business/utils", () => ({
 }))
 
 vi.mock("@chatbotx.io/database/client", () => ({
-  db: {
-    update: mockDbUpdate,
-  },
-  eq: vi.fn((col: unknown, val: unknown) => ({ __eq: [col, val] })),
-  findOrFail: mockFindOrFail,
+  db: { update: vi.fn() },
+  eq: vi.fn((column: unknown, value: unknown) => ({ column, value })),
+  findOrFail: vi.fn(),
   sql: vi.fn((strings: TemplateStringsArray, ...values: unknown[]) => ({
     strings,
     values,
@@ -211,7 +207,6 @@ vi.mock("@chatbotx.io/database/schema", () => ({
   },
   contactModel: { id: "contactId" },
   conversationModel: { id: "conversationId" },
-  integrationWebchatModel: { id: "integrationWebchatId" },
 }))
 
 vi.mock("@chatbotx.io/event-bus", () => ({
@@ -283,10 +278,7 @@ const contact = {
 
 const resetCommonMocks = () => {
   vi.clearAllMocks()
-  updateBuilder.set.mockReturnValue(updateBuilder)
-  updateBuilder.where.mockResolvedValue(undefined)
-  mockDbUpdate.mockReturnValue(updateBuilder)
-  mockFindOrFail.mockResolvedValue({
+  mockFindWebchat.mockResolvedValue({
     inboxId: "inbox-1",
     authorizedDomains: [],
     persistentMenus: [],
@@ -330,7 +322,7 @@ describe("handleCreateWebchatMessage", () => {
     mockContactInboxFindLatest.mockResolvedValue(contactInbox)
   })
 
-  test("updates conversation read and activity timestamps from the created webchat message", async () => {
+  test("records guest inbound read and activity timestamps after creating a webchat message", async () => {
     await handleCreateWebchatMessage({
       parsedInput: {
         text: "hello",
@@ -343,10 +335,11 @@ describe("handleCreateWebchatMessage", () => {
     const messageInput = mockRepositoryCreate.mock.calls[0]?.[0] as {
       createdAt: Date
     }
-    expect(updateBuilder.set).toHaveBeenNthCalledWith(1, {
-      contactLastReadAt: messageInput.createdAt,
+    expect(mockConversationRecordGuestInboundRead).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      conversationId: "conv-1",
+      at: messageInput.createdAt,
       lastActivityAt: messageInput.createdAt,
-      contactRepliedAt: messageInput.createdAt,
     })
   })
 
@@ -515,7 +508,7 @@ describe("handleCreateWebchatMessage — flowId", () => {
   })
 
   test("rejects a flowId that is not configured as a persistent menu flow (flow injection / IDOR)", async () => {
-    mockFindOrFail.mockResolvedValue({
+    mockFindWebchat.mockResolvedValue({
       inboxId: "inbox-1",
       authorizedDomains: [],
       persistentMenus: [
@@ -541,7 +534,7 @@ describe("handleCreateWebchatMessage — flowId", () => {
   })
 
   test("enqueues a flowId that matches a configured persistent menu flow", async () => {
-    mockFindOrFail.mockResolvedValue({
+    mockFindWebchat.mockResolvedValue({
       inboxId: "inbox-1",
       authorizedDomains: [],
       persistentMenus: [
@@ -625,7 +618,7 @@ describe("handleCreateWebchatMessage — MAC quota", () => {
 
   test("does not requeue the welcome flow for a returning visitor", async () => {
     mockContactInboxFindLatest.mockResolvedValue(contactInbox)
-    mockFindOrFail.mockResolvedValue({
+    mockFindWebchat.mockResolvedValue({
       inboxId: "inbox-1",
       authorizedDomains: [],
       welcomeFlowId: "flow-1",
@@ -662,7 +655,7 @@ describe("handleCreateWebchatMessage — MAC quota", () => {
 
   test("emits contact creation and queues the configured welcome flow for a new contact", async () => {
     mockContactInboxFindLatest.mockResolvedValue(undefined)
-    mockFindOrFail.mockResolvedValue({
+    mockFindWebchat.mockResolvedValue({
       inboxId: "inbox-1",
       authorizedDomains: [],
       welcomeFlowId: "flow-1",

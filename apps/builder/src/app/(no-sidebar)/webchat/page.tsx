@@ -67,19 +67,19 @@ export default async function WebchatPage(props: WebchatPageProps) {
     return notFound()
   }
 
-  const targetWebchat =
-    await integrationWebchatService.findByIdForWorkspaceOrNull({
+  const [targetWebchat, workspace] = await Promise.all([
+    integrationWebchatService.findByIdForWorkspaceOrNull({
       id: data.webchatId,
       workspaceId: data.workspaceId,
-    })
+    }),
+    workspaceService.find({
+      where: { id: data.workspaceId },
+    }),
+  ])
 
   if (!targetWebchat) {
     return notFound()
   }
-
-  const workspace = await workspaceService.find({
-    where: { id: data.workspaceId },
-  })
   if (workspace && isWorkspaceScheduledForDeletion(workspace)) {
     const t = await getTranslations("webchat")
 

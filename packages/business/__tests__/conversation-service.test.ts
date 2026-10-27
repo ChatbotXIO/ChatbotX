@@ -299,6 +299,38 @@ describe("conversationService.bulkAdvanceActivityAndAiContextMarker", () => {
   })
 })
 
+describe("conversationService.recordGuestInboundRead", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  test("scopes the guest inbound read update to the workspace and invalidates its conversation", async () => {
+    const at = new Date("2026-07-14T00:00:00.000Z")
+    const lastActivityAt = new Date("2026-07-14T00:01:00.000Z")
+
+    await conversationService.recordGuestInboundRead({
+      workspaceId: "ws-1",
+      conversationId: "conv-1",
+      at,
+      lastActivityAt,
+    })
+
+    expect(set).toHaveBeenCalledWith({
+      contactLastReadAt: at,
+      contactRepliedAt: lastActivityAt,
+      lastActivityAt,
+    })
+    const whereValues = collectSqlValues(where.mock.calls[0][0])
+    expect(whereValues).toContain("conv-1")
+    expect(whereValues).toContain("ws-1")
+    expect(invalidateCacheByTags).toHaveBeenCalledWith([
+      "conversations",
+      "conversations:ws-1",
+      "conversations:conv-1",
+    ])
+  })
+})
+
 describe("conversationService.markReadByContact", () => {
   beforeEach(() => {
     vi.clearAllMocks()

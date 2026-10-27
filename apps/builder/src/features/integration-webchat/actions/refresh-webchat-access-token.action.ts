@@ -7,16 +7,16 @@ import {
 } from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { zodBigintAsString } from "@chatbotx.io/utils"
-import { headers } from "next/headers"
 import { getTranslations } from "next-intl/server"
 import { z } from "zod"
 import {
   checkGuestRateLimit,
   getGuestClientIp,
+  getGuestRequestHeaders,
 } from "@/lib/rate-limit/guest-rate-limit"
 import { actionClient } from "@/lib/safe-action"
-import { isOriginAuthorized } from "../lib/authorized-domain"
 import {
+  isTokenOriginAllowed,
   refreshWebchatAccessToken,
   verifyRefreshableWebchatAccessToken,
 } from "../lib/webchat-access-token"
@@ -27,14 +27,6 @@ const refreshWebchatAccessTokenRequest = z.object({
   workspaceId: zodBigintAsString(),
 })
 
-const getRequestHeaders = async () => {
-  try {
-    return await headers()
-  } catch {
-    return new Headers()
-  }
-}
-
 type RefreshWebchatAccessTokenRequest = z.infer<
   typeof refreshWebchatAccessTokenRequest
 >
@@ -44,57 +36,23 @@ export const handleRefreshWebchatAccessToken = async ({
 }: {
   parsedInput: RefreshWebchatAccessTokenRequest
 }) => {
-  const t = await getTranslations("webchat")
+  const forbidden = (description: string) =>
+    new ChatbotXException(description, "forbidden", 403)
+
   const refreshableToken =
     await verifyRefreshableWebchatAccessToken(parsedInput)
   if (!refreshableToken) {
-    throw new ChatbotXException(
-      t("unauthorizedDomain.description"),
-      "forbidden",
-      403,
-    )
+    const t = await getTranslations("webchat")
+    throw forbidden(t("unauthorizedDomain.description"))
   }
 
-  const workspace = await workspaceService.find({
-    where: { id: parsedInput.workspaceId },
-  })
-  if (workspace && isWorkspaceScheduledForDeletion(workspace)) {
-    throw new ChatbotXException(
-      t("workspaceUnavailable"),
-      "workspaceScheduledDeletion",
-      403,
-    )
-  }
-
-  const webchat = await integrationWebchatService.findByIdForWorkspaceOrNull({
-    id: parsedInput.webchatId,
-    workspaceId: parsedInput.workspaceId,
-  })
-  if (!webchat) {
-    throw new ChatbotXException(
-      t("unauthorizedDomain.description"),
-      "forbidden",
-      403,
-    )
-  }
-
-  if (
-    webchat.authorizedDomains.length > 0 &&
-    !isOriginAuthorized(refreshableToken.originHost, webchat.authorizedDomains)
-  ) {
-    throw new ChatbotXException(
-      t("unauthorizedDomain.description"),
-      "forbidden",
-      403,
-    )
-  }
-
-  const requestHeaders = await getRequestHeaders()
+  const requestHeaders = await getGuestRequestHeaders()
   const rateLimit = await checkGuestRateLimit({
     clientIp: getGuestClientIp(requestHeaders),
-    webchatId: webchat.id,
+    webchatId: parsedInput.webchatId,
   })
   if (rateLimit.limited) {
+    const t = await getTranslations("webchat")
     throw new ChatbotXException(
       t("rateLimitExceeded"),
       "rateLimitExceeded",
@@ -102,15 +60,37 @@ export const handleRefreshWebchatAccessToken = async ({
     )
   }
 
-  const refreshedToken = await refreshWebchatAccessToken(parsedInput)
-  if (!refreshedToken) {
+  const [workspace, webchat] = await Promise.all([
+    workspaceService.find({
+      where: { id: parsedInput.workspaceId },
+    }),
+    integrationWebchatService.findByIdForWorkspaceOrNull({
+      id: parsedInput.webchatId,
+      workspaceId: parsedInput.workspaceId,
+    }),
+  ])
+
+  const t = await getTranslations("webchat")
+  if (workspace && isWorkspaceScheduledForDeletion(workspace)) {
     throw new ChatbotXException(
-      t("unauthorizedDomain.description"),
-      "forbidden",
+      t("workspaceUnavailable"),
+      "workspaceScheduledDeletion",
       403,
     )
   }
+  if (!webchat) {
+    throw forbidden(t("unauthorizedDomain.description"))
+  }
+  if (
+    !isTokenOriginAllowed(
+      refreshableToken.originHost,
+      webchat.authorizedDomains,
+    )
+  ) {
+    throw forbidden(t("unauthorizedDomain.description"))
+  }
 
+  const refreshedToken = await refreshWebchatAccessToken(refreshableToken)
   return {
     accessToken: refreshedToken.token,
     accessTokenExpiresAt: refreshedToken.expiresAt,

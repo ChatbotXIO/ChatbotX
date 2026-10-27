@@ -16,6 +16,9 @@ import {
 } from "./guest-sesssion-store"
 import type { WebchatClientConfig } from "./lib/webchat-client-config"
 
+const REFRESH_MARGIN_MS = 5 * 60 * 1000
+const REFRESH_RETRY_DELAY_MS = 30 * 1000
+
 export type GuestSessionStoreApi = ReturnType<typeof createGuestSessionStore>
 
 export const GuestSessionStoreContext = createContext<
@@ -56,8 +59,6 @@ export const GuestSessionStoreProvider = ({
   }, [serverGuestConversationId])
 
   useEffect(() => {
-    const refreshMarginMilliseconds = 5 * 60 * 1000
-    const retryDelayMilliseconds = 30 * 1000
     let hasRetried = false
     let isRefreshing = false
     let refreshTimer: ReturnType<typeof setTimeout> | undefined
@@ -71,12 +72,11 @@ export const GuestSessionStoreProvider = ({
 
       const delay = Math.max(
         0,
-        session.accessTokenExpiresAt * 1000 -
-          Date.now() -
-          refreshMarginMilliseconds,
+        session.accessTokenExpiresAt * 1000 - Date.now() - REFRESH_MARGIN_MS,
       )
       refreshTimer = setTimeout(() => {
-        refresh().catch(() => undefined)
+        // biome-ignore lint/complexity/noVoid: refresh handles every rejection.
+        void refresh()
       }, delay)
     }
 
@@ -85,7 +85,7 @@ export const GuestSessionStoreProvider = ({
       if (
         hasRetried ||
         !expiresAt ||
-        expiresAt * 1000 + refreshMarginMilliseconds <= Date.now()
+        expiresAt * 1000 + REFRESH_MARGIN_MS <= Date.now()
       ) {
         return
       }
@@ -93,8 +93,9 @@ export const GuestSessionStoreProvider = ({
       hasRetried = true
       clearTimeout(refreshTimer)
       refreshTimer = setTimeout(() => {
-        refresh().catch(() => undefined)
-      }, retryDelayMilliseconds)
+        // biome-ignore lint/complexity/noVoid: refresh handles every rejection.
+        void refresh()
+      }, REFRESH_RETRY_DELAY_MS)
     }
 
     const refresh = async () => {
@@ -136,11 +137,9 @@ export const GuestSessionStoreProvider = ({
 
     const handleVisibilityChange = () => {
       const expiresAt = storeRef.current?.getState().accessTokenExpiresAt
-      if (
-        expiresAt &&
-        Date.now() >= expiresAt * 1000 - refreshMarginMilliseconds
-      ) {
-        refresh().catch(() => undefined)
+      if (expiresAt && Date.now() >= expiresAt * 1000 - REFRESH_MARGIN_MS) {
+        // biome-ignore lint/complexity/noVoid: refresh handles every rejection.
+        void refresh()
       }
     }
 

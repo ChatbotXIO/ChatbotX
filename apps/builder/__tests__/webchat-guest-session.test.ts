@@ -10,7 +10,9 @@ import { createGuestConversationId } from "@/features/integration-webchat/lib/gu
 import {
   authorizeWebchatGuestRequest,
   createWebchatAccessToken,
+  isTokenOriginAllowed,
   refreshWebchatAccessToken,
+  verifyRefreshableWebchatAccessToken,
   verifyWebchatAccessToken,
 } from "@/features/integration-webchat/lib/webchat-access-token"
 import { createGuestSessionStore } from "@/features/integration-webchat/providers/store/guest-sesssion-store"
@@ -505,19 +507,37 @@ describe("webchat access token", () => {
     expect(result).toEqual({ authorized: true, originHost: null })
   })
 
-  test("refreshes within the grace window while preserving the session start and host", async () => {
+  test("allows empty lists, direct opens, and listed origins only", () => {
+    expect(isTokenOriginAllowed("unlisted.example", [])).toBe(true)
+    expect(isTokenOriginAllowed(null, ["example.com"])).toBe(true)
+    expect(isTokenOriginAllowed("example.com", ["example.com"])).toBe(true)
+    expect(isTokenOriginAllowed("unlisted.example", ["example.com"])).toBe(
+      false,
+    )
+  })
+
+  test("refreshes verified claims while preserving the session start and host", async () => {
     const initial = await createWebchatAccessToken(baseInput)
     vi.setSystemTime(new Date((initial.expiresAt + 60) * 1000))
-
-    const refreshed = await refreshWebchatAccessToken({
+    const claims = await verifyRefreshableWebchatAccessToken({
       token: initial.token,
       webchatId: baseInput.webchatId,
       workspaceId: baseInput.workspaceId,
     })
 
-    expect(refreshed?.originHost).toBe("example.com")
-    expect(refreshed?.token).not.toBe(initial.token)
-    expect(getSignedTokenPayload(refreshed?.token ?? "").iat).toBe(
+    if (!claims) {
+      throw new Error("Expected a refreshable webchat token")
+    }
+    const refreshed = await refreshWebchatAccessToken(claims)
+
+    expect(refreshed.token).not.toBe(initial.token)
+    const refreshedVerification = await verifyWebchatAccessToken({
+      token: refreshed.token,
+      webchatId: baseInput.webchatId,
+      workspaceId: baseInput.workspaceId,
+    })
+    expect(refreshedVerification.originHost).toBe("example.com")
+    expect(getSignedTokenPayload(refreshed.token).iat).toBe(
       getSignedTokenPayload(initial.token).iat,
     )
   })
@@ -539,30 +559,34 @@ describe("webchat access token", () => {
       encodedPayload,
     )
 
-    const refreshed = await refreshWebchatAccessToken({
-      token: `${encodedPayload}.${signature}`,
-      webchatId: baseInput.webchatId,
-      workspaceId: baseInput.workspaceId,
-    })
-
-    expect(refreshed).toBeNull()
+    await expect(
+      verifyRefreshableWebchatAccessToken({
+        token: `${encodedPayload}.${signature}`,
+        webchatId: baseInput.webchatId,
+        workspaceId: baseInput.workspaceId,
+      }),
+    ).resolves.toBeNull()
   })
 
   test("does not authorize a refreshed token past the original session cap", async () => {
     const sessionStart = Math.floor(Date.now() / 1000)
     const initial = await createWebchatAccessToken(baseInput)
     vi.setSystemTime(new Date((sessionStart + 24 * 60 * 60 - 1) * 1000))
-
-    const refreshed = await refreshWebchatAccessToken({
+    const claims = await verifyRefreshableWebchatAccessToken({
       token: initial.token,
       webchatId: baseInput.webchatId,
       workspaceId: baseInput.workspaceId,
     })
 
-    expect(refreshed?.expiresAt).toBe(sessionStart + 24 * 60 * 60)
+    if (!claims) {
+      throw new Error("Expected a refreshable webchat token")
+    }
+    const refreshed = await refreshWebchatAccessToken(claims)
+
+    expect(refreshed.expiresAt).toBe(sessionStart + 24 * 60 * 60)
     vi.setSystemTime(new Date((sessionStart + 24 * 60 * 60 + 1) * 1000))
     const verification = await verifyWebchatAccessToken({
-      token: refreshed?.token,
+      token: refreshed.token,
       webchatId: baseInput.webchatId,
       workspaceId: baseInput.workspaceId,
     })

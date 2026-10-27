@@ -48,23 +48,17 @@ vi.mock("@chatbotx.io/business/errors", () => ({
   },
 }))
 
-vi.mock("@/features/integration-webchat/lib/authorized-domain", () => ({
-  isOriginAuthorized: (originHost: string | null, domains: string[]) =>
-    originHost !== null && domains.includes(originHost),
-}))
-
 vi.mock("@/features/integration-webchat/lib/webchat-access-token", () => ({
   refreshWebchatAccessToken: mockRefreshWebchatAccessToken,
   verifyRefreshableWebchatAccessToken: mockVerifyRefreshableToken,
+  isTokenOriginAllowed: (originHost: string | null, domains: string[]) =>
+    domains.length === 0 || originHost === null || domains.includes(originHost),
 }))
 
 vi.mock("@/lib/rate-limit/guest-rate-limit", () => ({
   checkGuestRateLimit: mockCheckGuestRateLimit,
   getGuestClientIp: () => "192.0.2.1",
-}))
-
-vi.mock("next/headers", () => ({
-  headers: () => new Headers(),
+  getGuestRequestHeaders: () => new Headers(),
 }))
 
 vi.mock("next-intl/server", () => ({
@@ -90,12 +84,13 @@ describe("handleRefreshWebchatAccessToken", () => {
     })
     mockRefreshWebchatAccessToken.mockResolvedValue({
       expiresAt: 1_800_000_000,
-      originHost: "example.com",
       token: "refreshed-token",
     })
     mockVerifyRefreshableToken.mockResolvedValue({
       iat: 1_700_000_000,
       originHost: "example.com",
+      webchatId: input.webchatId,
+      workspaceId: input.workspaceId,
     })
     mockWorkspaceFind.mockResolvedValue({ scheduledDeletionAt: null })
   })
@@ -113,6 +108,22 @@ describe("handleRefreshWebchatAccessToken", () => {
     expect(mockRefreshWebchatAccessToken).not.toHaveBeenCalled()
   })
 
+  test("refreshes from the verified claims", async () => {
+    await expect(
+      handleRefreshWebchatAccessToken({ parsedInput: input }),
+    ).resolves.toEqual({
+      accessToken: "refreshed-token",
+      accessTokenExpiresAt: 1_800_000_000,
+    })
+
+    expect(mockRefreshWebchatAccessToken).toHaveBeenCalledWith({
+      iat: 1_700_000_000,
+      originHost: "example.com",
+      webchatId: input.webchatId,
+      workspaceId: input.workspaceId,
+    })
+  })
+
   test("rejects a refresh for a workspace scheduled for deletion", async () => {
     mockWorkspaceFind.mockResolvedValue({ scheduledDeletionAt: new Date() })
 
@@ -123,7 +134,7 @@ describe("handleRefreshWebchatAccessToken", () => {
       httpStatusCode: 403,
     })
 
-    expect(mockFindWebchat).not.toHaveBeenCalled()
+    expect(mockRefreshWebchatAccessToken).not.toHaveBeenCalled()
   })
 
   test("rejects a refresh when the guest rate limit is exhausted", async () => {
@@ -137,5 +148,7 @@ describe("handleRefreshWebchatAccessToken", () => {
     })
 
     expect(mockRefreshWebchatAccessToken).not.toHaveBeenCalled()
+    expect(mockWorkspaceFind).not.toHaveBeenCalled()
+    expect(mockFindWebchat).not.toHaveBeenCalled()
   })
 })

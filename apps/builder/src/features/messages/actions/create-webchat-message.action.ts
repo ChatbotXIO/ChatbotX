@@ -5,6 +5,7 @@ import {
   contactInboxService,
   contactService,
   conversationService,
+  integrationWebchatService,
   isWorkspaceScheduledForDeletion,
   messageCleanupService,
   quotaEnforcementService,
@@ -15,7 +16,6 @@ import { resolveLastUserInputTracking } from "@chatbotx.io/business/contact-inbo
 import { finalizeContactProfile } from "@chatbotx.io/business/contact-locale"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { getPublicFileUrl } from "@chatbotx.io/business/utils"
-import { db, eq, findOrFail } from "@chatbotx.io/database/client"
 import {
   type ConversationAttributes,
   channelTypes,
@@ -27,9 +27,11 @@ import {
   contactInboxModel,
   contactModel,
   conversationModel,
-  integrationWebchatModel,
 } from "@chatbotx.io/database/schema"
-import type { WorkspaceModel } from "@chatbotx.io/database/types"
+import type {
+  IntegrationWebchatModel,
+  WorkspaceModel,
+} from "@chatbotx.io/database/types"
 import { emit } from "@chatbotx.io/event-bus"
 import { emitContactCreated } from "@chatbotx.io/events"
 import { setWebhookExecutionContext } from "@chatbotx.io/events/context"
@@ -43,7 +45,6 @@ import {
   IntegrationJobAction,
   integrationQueue,
 } from "@chatbotx.io/worker-config"
-import { headers } from "next/headers"
 import { getTranslations } from "next-intl/server"
 import { randomString } from "remeda"
 import { authorizeWebchatGuestRequest } from "@/features/integration-webchat/lib/webchat-access-token"
@@ -51,6 +52,7 @@ import { logger } from "@/lib/log"
 import {
   checkGuestRateLimit,
   getGuestClientIp,
+  getGuestRequestHeaders,
 } from "@/lib/rate-limit/guest-rate-limit"
 import { actionClient } from "@/lib/safe-action"
 import {
@@ -62,14 +64,6 @@ export const createWebchatMessageAction = actionClient
   .inputSchema(createWebchatMessageRequest)
   .action(handleCreateWebchatMessage)
 
-async function getRequestHeaders() {
-  try {
-    return await headers()
-  } catch {
-    return new Headers()
-  }
-}
-
 export async function handleCreateWebchatMessage({
   parsedInput,
 }: {
@@ -77,9 +71,15 @@ export async function handleCreateWebchatMessage({
 }) {
   setWebhookExecutionContext({ source: "webhook" })
 
-  const workspace = await workspaceService.find({
-    where: { id: parsedInput.workspaceId },
-  })
+  const [workspace, integrationWebchat] = await Promise.all([
+    workspaceService.find({
+      where: { id: parsedInput.workspaceId },
+    }),
+    integrationWebchatService.findByIdForWorkspace({
+      id: parsedInput.webchatId,
+      workspaceId: parsedInput.workspaceId,
+    }),
+  ])
   if (workspace && isWorkspaceScheduledForDeletion(workspace)) {
     const t = await getTranslations("webchat")
     throw new ChatbotXException(
@@ -88,15 +88,6 @@ export async function handleCreateWebchatMessage({
       403,
     )
   }
-
-  const integrationWebchat = await findOrFail({
-    table: integrationWebchatModel,
-    where: {
-      workspaceId: parsedInput.workspaceId,
-      id: parsedInput.webchatId,
-    },
-    message: "Channel not found",
-  })
 
   const { authorized } = await authorizeWebchatGuestRequest({
     authorizedDomains: integrationWebchat.authorizedDomains,
@@ -110,7 +101,7 @@ export async function handleCreateWebchatMessage({
     throw new ChatbotXException(t("description"), "forbidden", 403)
   }
 
-  const requestHeaders = await getRequestHeaders()
+  const requestHeaders = await getGuestRequestHeaders()
   const rateLimit = await checkGuestRateLimit({
     clientIp: getGuestClientIp(requestHeaders),
     guestConversationId: parsedInput.guestConversationId,
@@ -246,14 +237,12 @@ export async function handleCreateWebchatMessage({
       })),
     }
 
-    await db
-      .update(conversationModel)
-      .set({
-        contactLastReadAt: now,
-        lastActivityAt: message.createdAt,
-        contactRepliedAt: message.createdAt,
-      })
-      .where(eq(conversationModel.id, conversation.id))
+    await conversationService.recordGuestInboundRead({
+      workspaceId: conversation.workspaceId,
+      conversationId: conversation.id,
+      at: now,
+      lastActivityAt: message.createdAt,
+    })
 
     await contactInboxService.updateTracking({
       contactInboxId: contactInbox.id,
@@ -384,7 +373,7 @@ export async function handleCreateWebchatMessage({
 
 async function getConversationFromInput(
   parsedInput: CreateWebchatMessageRequest,
-  integrationWebchat: typeof integrationWebchatModel.$inferSelect,
+  integrationWebchat: IntegrationWebchatModel,
   workspace: WorkspaceModel | undefined,
 ) {
   const sourceId = parsedInput.guestConversationId

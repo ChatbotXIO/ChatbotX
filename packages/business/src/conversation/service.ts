@@ -1297,6 +1297,30 @@ class ConversationService extends BaseService {
     }
   }
 
+  async recordGuestInboundRead(props: {
+    workspaceId: string
+    conversationId: string
+    at: Date
+    lastActivityAt: Date
+  }): Promise<void> {
+    const { workspaceId, conversationId, at, lastActivityAt } = props
+
+    await db
+      .update(conversationModel)
+      .set({
+        contactLastReadAt: at,
+        contactRepliedAt: lastActivityAt,
+        lastActivityAt,
+      })
+      .where(
+        and(
+          eq(conversationModel.id, conversationId),
+          eq(conversationModel.workspaceId, workspaceId),
+        ),
+      )
+    await this.invalidate({ workspaceId, ids: [conversationId] })
+  }
+
   // ─── Bot state helpers ───────────────────────────────────────────────────
 
   async disableBotState(props: {
