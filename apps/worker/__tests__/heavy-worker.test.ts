@@ -1,5 +1,6 @@
 import { getAuditActor } from "@chatbotx.io/business/audit"
 import { beforeAll, beforeEach, describe, expect, test, vi } from "vitest"
+import { AIFileProcessingError } from "../src/heavy/handlers/ai-file-processing-error"
 
 const mocks = vi.hoisted(() => ({
   detectConversationAndContactInbox: vi.fn(),
@@ -22,6 +23,7 @@ const mocks = vi.hoisted(() => ({
       }) => Promise<unknown>),
   resolveWorkspaceId: vi.fn(),
   analyzeImage: vi.fn(),
+  markProcessingRunFailed: vi.fn(),
   recordHeavyAIStepProviderError: vi.fn(),
   loggerError: vi.fn(),
   speechToTextOutput: vi.fn(),
@@ -29,6 +31,23 @@ const mocks = vi.hoisted(() => ({
   textToSpeechOutput: vi.fn(),
   workerQueueName: undefined as string | undefined,
   workerOptions: undefined as Record<string, unknown> | undefined,
+  workerFailedHandler: undefined as
+    | undefined
+    | ((
+        job: {
+          attemptsMade: number
+          data: unknown
+          id?: string
+          name?: string
+          opts: { attempts?: number }
+        },
+        error: Error,
+      ) => Promise<void>),
+}))
+
+vi.mock("@chatbotx.io/business", () => ({
+  aiFileService: { markProcessingRunFailed: mocks.markProcessingRunFailed },
+  flushAllPendingWorkspaceRealtimeEvents: vi.fn(),
 }))
 
 vi.mock("@chatbotx.io/worker-config", async (importOriginal) => {
@@ -59,8 +78,11 @@ vi.mock("bullmq", async (importOriginal) => {
         mocks.workerOptions = options
       }
 
-      on() {
-        // Worker event registration is not exercised by this unit test.
+      on(event: string, handler: unknown) {
+        if (event === "failed") {
+          mocks.workerFailedHandler =
+            handler as typeof mocks.workerFailedHandler
+        }
       }
 
       close() {
@@ -223,6 +245,111 @@ describe("heavy worker", () => {
     })
 
     expect(mocks.processAIFile).not.toHaveBeenCalled()
+  })
+
+  test("marks a final AI file processing attempt as failed", async () => {
+    await mocks.workerFailedHandler?.(
+      {
+        id: "job-1",
+        name: "processAIFile",
+        attemptsMade: 3,
+        opts: { attempts: 3 },
+        data: {
+          type: "processAIFile",
+          data: { aiFileId: "file-1", runId: "run-1" },
+        },
+      },
+      new Error("unreadable"),
+    )
+
+    expect(mocks.markProcessingRunFailed).toHaveBeenCalledWith({
+      aiFileId: "file-1",
+      workspaceId: "workspace-1",
+      runId: "run-1",
+      code: "unknown",
+    })
+  })
+
+  describe("AI file processing failures", () => {
+    const failAIFileJob = (
+      error: Error,
+      overrides: { attemptsMade?: number; runId?: string | null } = {},
+    ) =>
+      mocks.workerFailedHandler?.(
+        {
+          id: "job-1",
+          name: "processAIFile",
+          attemptsMade: overrides.attemptsMade ?? 3,
+          opts: { attempts: 3 },
+          data: {
+            type: "processAIFile",
+            data: {
+              aiFileId: "file-1",
+              ...(overrides.runId === null
+                ? {}
+                : { runId: overrides.runId ?? "run-1" }),
+            },
+          },
+        },
+        error,
+      )
+
+    test("records the code of an AIFileProcessingError", async () => {
+      await failAIFileJob(new AIFileProcessingError("fileUnreadable"))
+
+      expect(mocks.markProcessingRunFailed).toHaveBeenCalledWith(
+        expect.objectContaining({ code: "fileUnreadable" }),
+      )
+    })
+
+    test("records an unrecoverable error on its first attempt", async () => {
+      await failAIFileJob(new AIFileProcessingError("noEmbeddingProvider"), {
+        attemptsMade: 1,
+      })
+
+      expect(mocks.markProcessingRunFailed).toHaveBeenCalledWith(
+        expect.objectContaining({
+          code: "noEmbeddingProvider",
+          runId: "run-1",
+        }),
+      )
+    })
+
+    test("does not record a run before the final attempt", async () => {
+      await failAIFileJob(new Error("transient"), { attemptsMade: 2 })
+
+      expect(mocks.markProcessingRunFailed).not.toHaveBeenCalled()
+    })
+
+    test("does not record a legacy job without a run id", async () => {
+      await failAIFileJob(new Error("unreadable"), { runId: null })
+
+      expect(mocks.markProcessingRunFailed).not.toHaveBeenCalled()
+    })
+
+    test("logs instead of recording when the workspace cannot be resolved", async () => {
+      mocks.resolveWorkspaceId.mockRejectedValueOnce(new Error("gone"))
+
+      await failAIFileJob(new Error("unreadable"))
+
+      expect(mocks.markProcessingRunFailed).not.toHaveBeenCalled()
+      expect(mocks.loggerError).toHaveBeenCalledWith(
+        expect.objectContaining({ aiFileId: "file-1", runId: "run-1" }),
+        "Cannot mark AI file processing run failed without a workspace",
+      )
+    })
+
+    test("only logs when recording the failure throws", async () => {
+      mocks.markProcessingRunFailed.mockRejectedValueOnce(new Error("db down"))
+
+      await expect(
+        failAIFileJob(new Error("unreadable")),
+      ).resolves.toBeUndefined()
+      expect(mocks.loggerError).toHaveBeenCalledWith(
+        expect.objectContaining({ err: expect.anything(), runId: "run-1" }),
+        "Failed to mark AI file processing run failed",
+      )
+    })
   })
 
   test("hydrates media-step jobs from ID-only payloads", async () => {

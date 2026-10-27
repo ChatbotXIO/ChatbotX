@@ -20,6 +20,23 @@ const PARTITIONED_MIGRATION_PATH = join(
   "../drizzle/20261025020711_add_workspace_purge_partitioned_indexes/migration.sql",
 )
 
+// A purge index that a later migration replaced with a wider index. The
+// replacement must keep the FK columns as its leading prefix and be built
+// before the original is dropped, so the FK is never left unindexed.
+const supersededIndexes: Record<
+  string,
+  { columns: readonly string[]; index: string; migration: string }
+> = {
+  AIEmbedding_aiFileId_idx: {
+    columns: ["aiFileId", "chunkIndex"],
+    index: "AIEmbedding_aiFileId_chunkIndex_idx",
+    migration: join(
+      import.meta.dirname,
+      "../drizzle/20261026060700_add_ai_embedding_chunk_index_idx/migration.sql",
+    ),
+  },
+}
+
 const normalTargets = [
   {
     columns: ["workspaceId", "conversationId", "sourceId", "status"],
@@ -126,7 +143,22 @@ describe("workspace purge FK indexes", () => {
     index,
     model,
   }) => {
-    expect(indexColumns(model, index)).toEqual(columns)
+    const replacement = supersededIndexes[index]
+    const actual = indexColumns(model, replacement?.index ?? index)
+    expect(actual?.slice(0, columns.length)).toEqual(columns)
+    expect(actual).toEqual(replacement?.columns ?? columns)
+  })
+
+  test.each(
+    Object.entries(supersededIndexes),
+  )("%s is replaced before it is dropped", (original, replacement) => {
+    const sql = readFileSync(replacement.migration, "utf8")
+    const create = sql.indexOf(
+      `CREATE INDEX CONCURRENTLY IF NOT EXISTS "${replacement.index}"`,
+    )
+    const drop = sql.indexOf(`DROP INDEX CONCURRENTLY IF EXISTS "${original}"`)
+    expect(create).toBeGreaterThanOrEqual(0)
+    expect(drop).toBeGreaterThan(create)
   })
 
   test.each(

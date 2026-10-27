@@ -58,10 +58,12 @@ export class ConversationEmbeddingRepository {
   findManyBySource(params: {
     limit: number
     sourceId: string
+    workspaceId: string
   }): Promise<AiConversationEmbeddingModel[]> {
     return this.client.query.aiConversationEmbeddingModel.findMany({
       where: {
         sourceId: params.sourceId,
+        workspaceId: params.workspaceId,
         status: aiEmbeddingStatuses.enum.success,
       },
       orderBy: { chunkIndex: "asc" },
@@ -73,6 +75,7 @@ export class ConversationEmbeddingRepository {
     queryVector: string
     sourceId: string
     topK: number
+    workspaceId: string
   }): Promise<VectorSearchRow[]> {
     const result = await this.client.execute(sql`
       SELECT
@@ -82,6 +85,7 @@ export class ConversationEmbeddingRepository {
         1 - ("embedding" <=> ${params.queryVector}::vector) as similarity
       FROM "AIConversationEmbedding"
       WHERE "sourceId" = ${params.sourceId}
+        AND "workspaceId" = ${params.workspaceId}
         AND "status" = ${aiEmbeddingStatuses.enum.success}::"aiConversationEmbeddingStatus"
         AND "embedding" IS NOT NULL
       ORDER BY "embedding" <=> ${params.queryVector}::vector

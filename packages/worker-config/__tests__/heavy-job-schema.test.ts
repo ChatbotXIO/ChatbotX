@@ -26,6 +26,10 @@ describe("heavyJobDataSchema", () => {
       data: { aiFileId: "ai-file-1" },
     },
     {
+      type: HeavyJobAction.processAIFile,
+      data: { aiFileId: "ai-file-1", runId: "run-1" },
+    },
+    {
       type: HeavyJobAction.aiEditImage,
       data: {
         ...stepBaseData,

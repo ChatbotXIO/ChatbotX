@@ -1,3 +1,4 @@
+import { isUtf8 } from "node:buffer"
 import type { Readable } from "node:stream"
 import { TextDecoder } from "node:util"
 import { uploader } from "@chatbotx.io/filesystem"
@@ -25,8 +26,10 @@ import { extractRawText } from "mammoth"
 import { lookup } from "mime-types"
 import pdfParse from "pdf-parse-new"
 import removeMd from "remove-markdown"
-import { read, utils } from "xlsx"
+import { read, utils, type WorkSheet } from "xlsx"
 import { logger } from "../../lib/logger"
+import type { KnowledgeDocument, TabularSheet } from "./chunkers/types"
+import { FileFetchError, FileSizeLimitError } from "./extraction-errors"
 
 const MAX_EXTRACTABLE_PAGES = 200
 const MAX_EXTRACTED_TEXT_CHARS = 5_000_000
@@ -51,6 +54,11 @@ const decodeUtf8NonFatal = (buffer: Buffer): string =>
 
 const normalizeMimeType = (mimeType: string): string =>
   mimeType.toLowerCase().split(";")[0]?.trim() || ""
+
+type ExtractionOptions = {
+  maxBytes?: number
+  maxTextChars?: number
+}
 
 const isMimeType = (
   mimeType: string,
@@ -82,23 +90,36 @@ async function streamToBuffer(
   stream: AsyncIterable<Uint8Array> | Readable,
   options?: { maxBytes?: number },
 ): Promise<Buffer> {
-  const readable =
+  const sizeLimitMessage =
     options?.maxBytes == null
+      ? undefined
+      : `File exceeds ${options.maxBytes} byte limit`
+  const readable =
+    options?.maxBytes == null || sizeLimitMessage === undefined
       ? stream
       : createByteLimitedStream(stream as Readable, {
           maxBytes: options.maxBytes,
-          errorMessage: `File exceeds ${options.maxBytes} byte limit`,
+          errorMessage: sizeLimitMessage,
         })
   const chunks: Buffer[] = []
-  for await (const part of readable as AsyncIterable<Uint8Array>) {
-    chunks.push(Buffer.from(part))
+  try {
+    for await (const part of readable as AsyncIterable<Uint8Array>) {
+      chunks.push(Buffer.from(part))
+    }
+  } catch (error) {
+    if (error instanceof Error && error.message === sizeLimitMessage) {
+      throw new FileSizeLimitError(sizeLimitMessage, { cause: error })
+    }
+    throw error
   }
   return Buffer.concat(chunks)
 }
 
 export async function extractTextFromPdf(buffer: Buffer): Promise<string> {
   try {
-    const parser = await pdfParse(buffer)
+    // pdf-parse defaults to info verbosity, which floods logs with font-hinting
+    // notices ("TT: CALL empty stack") that do not affect text extraction.
+    const parser = await pdfParse(buffer, { verbosityLevel: 0 })
     // pdf-parse can return NUL and other control characters. PostgreSQL text
     // values reject NUL bytes, so normalize before the text is chunked and
     // persisted as AIEmbedding content.
@@ -448,16 +469,12 @@ function extractTextFromXml(buffer: Buffer): string {
   }
 }
 
-export async function extractTextFromFile(
+async function loadFileForExtraction(
   remotePath: string,
   mimeType: string,
-  options?: {
-    maxBytes?: number
-    maxTextChars?: number
-  },
-): Promise<string> {
+  options?: ExtractionOptions,
+): Promise<{ buffer: Buffer; mimeType: string; maxTextChars: number }> {
   const normalizedMimeType = normalizeMimeType(mimeType || "")
-
   let finalMimeType = normalizedMimeType
   if (!finalMimeType) {
     const extension = remotePath.split(".").pop()?.toLowerCase()
@@ -469,68 +486,308 @@ export async function extractTextFromFile(
     }
   }
 
-  const { stream: fileStream } = await uploader.getObjectStream(remotePath)
-  const buffer = await streamToBuffer(fileStream, {
-    maxBytes: options?.maxBytes,
-  })
-  const maxTextChars = options?.maxTextChars ?? MAX_EXTRACTED_TEXT_CHARS
+  let buffer: Buffer
+  try {
+    const { stream: fileStream } = await uploader.getObjectStream(remotePath)
+    buffer = await streamToBuffer(fileStream, { maxBytes: options?.maxBytes })
+  } catch (error) {
+    if (error instanceof FileSizeLimitError) {
+      throw error
+    }
+    throw new FileFetchError("Failed to read the file from storage", {
+      cause: error,
+    })
+  }
+  return {
+    buffer,
+    mimeType: finalMimeType,
+    maxTextChars: options?.maxTextChars ?? MAX_EXTRACTED_TEXT_CHARS,
+  }
+}
 
-  if (isMimeType(finalMimeType, PDF_MIME_TYPES)) {
+async function extractTextFromBuffer(
+  buffer: Buffer,
+  mimeType: string,
+  maxTextChars: number,
+): Promise<string> {
+  if (isMimeType(mimeType, PDF_MIME_TYPES)) {
     return (await extractTextFromPdf(buffer)).slice(0, maxTextChars)
   }
 
-  if (isMimeType(finalMimeType, DOCX_MIME_TYPES)) {
+  if (isMimeType(mimeType, DOCX_MIME_TYPES)) {
     return (await extractTextFromDocx(buffer)).slice(0, maxTextChars)
   }
 
-  if (isMimeType(finalMimeType, SPREADSHEET_MIME_TYPES)) {
+  if (isMimeType(mimeType, SPREADSHEET_MIME_TYPES)) {
     return extractTextFromXlsx(buffer).slice(0, maxTextChars)
   }
 
-  if (isMimeType(finalMimeType, CSV_MIME_TYPES)) {
+  if (isMimeType(mimeType, CSV_MIME_TYPES)) {
     return extractTextFromCsv(buffer).slice(0, maxTextChars)
   }
 
-  if (isMimeType(finalMimeType, HTML_MIME_TYPES)) {
+  if (isMimeType(mimeType, HTML_MIME_TYPES)) {
     return (await extractTextFromHtml(buffer)).slice(0, maxTextChars)
   }
 
-  if (isMimeType(finalMimeType, MARKDOWN_MIME_TYPES)) {
+  if (isMimeType(mimeType, MARKDOWN_MIME_TYPES)) {
     return (await extractTextFromMarkdown(buffer)).slice(0, maxTextChars)
   }
 
-  if (isMimeType(finalMimeType, RTF_MIME_TYPES)) {
+  if (isMimeType(mimeType, RTF_MIME_TYPES)) {
     return extractTextFromRtf(buffer).slice(0, maxTextChars)
   }
 
-  if (isMimeType(finalMimeType, XML_MIME_TYPES)) {
+  if (isMimeType(mimeType, XML_MIME_TYPES)) {
     return extractTextFromXml(buffer).slice(0, maxTextChars)
   }
 
-  if (isMimeType(finalMimeType, EMAIL_MIME_TYPES)) {
+  if (isMimeType(mimeType, EMAIL_MIME_TYPES)) {
     return (await extractTextFromEmail(buffer)).slice(0, maxTextChars)
   }
 
-  if (isMimeType(finalMimeType, VTT_MIME_TYPES)) {
+  if (isMimeType(mimeType, VTT_MIME_TYPES)) {
     return normalizeWhitespace(decodeUtf8(buffer)).slice(0, maxTextChars)
   }
 
-  if (isMimeType(finalMimeType, PROPERTIES_MIME_TYPES)) {
+  if (isMimeType(mimeType, PROPERTIES_MIME_TYPES)) {
     return normalizeWhitespace(decodeUtf8(buffer)).slice(0, maxTextChars)
   }
 
-  if (isMimeType(finalMimeType, PPTX_MIME_TYPES)) {
+  if (isMimeType(mimeType, PPTX_MIME_TYPES)) {
     return (await extractTextFromPptx(buffer)).slice(0, maxTextChars)
   }
 
-  if (isMimeType(finalMimeType, PPT_MIME_TYPES)) {
+  if (isMimeType(mimeType, PPT_MIME_TYPES)) {
     return extractTextFromPpt(buffer).slice(0, maxTextChars)
   }
 
-  if (isMimeType(finalMimeType, EPUB_MIME_TYPES)) {
+  if (isMimeType(mimeType, EPUB_MIME_TYPES)) {
     return (await extractTextFromEpub(buffer)).slice(0, maxTextChars)
   }
 
-  // default: treat as utf-8 text stream
   return normalizeWhitespace(decodeUtf8(buffer)).slice(0, maxTextChars)
+}
+
+// SheetJS prints a General-format integer of 12+ digits in scientific notation
+// ("1.23457E+11"), which drops digits of ids and tax codes stored as numbers.
+const LARGE_INTEGER_MIN = 1e11
+
+/**
+ * Gives such cells the plain "0" format so `raw: false` prints every digit.
+ * Cells with an explicit format (dates, percentages, "#,##0", ...) keep their
+ * displayed text; that needs the workbook to be read with `cellNF: true`.
+ */
+function expandLargeIntegerCells(sheet: WorkSheet): void {
+  for (const address in sheet) {
+    if (address.startsWith("!")) {
+      continue
+    }
+    const cell = sheet[address]
+    if (
+      cell?.t === "n" &&
+      typeof cell.v === "number" &&
+      Number.isInteger(cell.v) &&
+      Math.abs(cell.v) >= LARGE_INTEGER_MIN &&
+      (cell.z === undefined || cell.z === "General")
+    ) {
+      cell.z = "0"
+      cell.w = undefined
+    }
+  }
+}
+
+function tabularSheetsFromWorkbook(input: {
+  sourceName: string
+  workbook: ReturnType<typeof read>
+  maxTextChars: number
+  /** 1-based row holding the column names; rows above it are dropped. */
+  headerRowNumber?: number
+}): { sheets: TabularSheet[]; truncated: boolean } {
+  const sheets: TabularSheet[] = []
+  let remaining = input.maxTextChars
+  let truncated = false
+  let exhausted = false
+
+  const consume = (value: string): string => {
+    if (!value) {
+      return ""
+    }
+    if (remaining <= 0) {
+      truncated = true
+      exhausted = true
+      return ""
+    }
+    const result = value.slice(0, remaining)
+    remaining -= result.length
+    if (result.length < value.length) {
+      truncated = true
+      exhausted = true
+    }
+    return result
+  }
+
+  for (const workbookSheetName of input.workbook.SheetNames) {
+    if (exhausted) {
+      break
+    }
+    const sheet = input.workbook.Sheets[workbookSheetName]
+    if (!sheet) {
+      continue
+    }
+    expandLargeIntegerCells(sheet)
+    const matrix = utils.sheet_to_json<string[]>(sheet, {
+      header: 1,
+      defval: "",
+      raw: false,
+    })
+    const [headerRow = [], ...dataRows] =
+      input.headerRowNumber && input.headerRowNumber > 1
+        ? matrix.slice(input.headerRowNumber - 1)
+        : matrix
+    if (dataRows.length === 0) {
+      continue
+    }
+    // A loop, not Math.max(...rows): spreading ~125k+ rows overflows the stack.
+    let columnCount = headerRow.length
+    for (const row of dataRows) {
+      columnCount = Math.max(columnCount, row.length)
+    }
+    const headers: string[] = []
+    for (let index = 0; index < columnCount; index++) {
+      const normalizedHeader = normalizeWhitespace(
+        String(headerRow[index] ?? ""),
+      )
+      const source = normalizedHeader || `Column ${index + 1}`
+      headers.push(consume(source))
+      if (exhausted) {
+        break
+      }
+    }
+    if (exhausted) {
+      break
+    }
+
+    const rows: string[][] = []
+    for (const sourceRow of dataRows) {
+      const row: string[] = []
+      for (let index = 0; index < columnCount; index++) {
+        const source = normalizeWhitespace(String(sourceRow[index] ?? ""))
+        row.push(consume(source))
+        if (exhausted) {
+          break
+        }
+      }
+      if (row.some(Boolean)) {
+        rows.push(row)
+      }
+      if (exhausted) {
+        break
+      }
+    }
+    if (rows.length > 0) {
+      sheets.push({
+        name: workbookSheetName || input.sourceName,
+        headers,
+        rows,
+      })
+    }
+  }
+
+  return { sheets, truncated }
+}
+
+export async function extractKnowledgeDocument(
+  remotePath: string,
+  mimeType: string,
+  options: ExtractionOptions & {
+    sourceName: string
+    /** Skip table/heading extraction and read the file as plain text. */
+    forceProse?: boolean
+    /** 1-based spreadsheet row that holds the column names. */
+    tabularHeaderRow?: number
+  },
+): Promise<KnowledgeDocument> {
+  const loaded = await loadFileForExtraction(remotePath, mimeType, options)
+
+  // A legacy-encoded CSV (e.g. Excel's Windows-1252 "CSV") would decode with
+  // U+FFFD in place of every accented letter and be embedded that way without
+  // any error. Reject it so the user re-saves it as CSV UTF-8. Only this
+  // knowledge path is strict: `extractTextFromFile` keeps its lenient decode.
+  if (isMimeType(loaded.mimeType, CSV_MIME_TYPES) && !isUtf8(loaded.buffer)) {
+    throw new Error("CSV file is not valid UTF-8")
+  }
+
+  if (
+    !options.forceProse &&
+    (isMimeType(loaded.mimeType, SPREADSHEET_MIME_TYPES) ||
+      isMimeType(loaded.mimeType, CSV_MIME_TYPES))
+  ) {
+    // CSV cells are already text: `raw: true` stops SheetJS from re-parsing
+    // them as dates/numbers, which `raw: false` would then reformat
+    // (e.g. "2024-01-15" -> "1/15/24").
+    const workbook = isMimeType(loaded.mimeType, CSV_MIME_TYPES)
+      ? read(decodeUtf8(loaded.buffer), { type: "string", raw: true })
+      : read(loaded.buffer, { type: "buffer", cellNF: true })
+    try {
+      const structured = tabularSheetsFromWorkbook({
+        sourceName: options.sourceName,
+        workbook,
+        maxTextChars: loaded.maxTextChars,
+        headerRowNumber: options.tabularHeaderRow,
+      })
+      return {
+        kind: "tabular",
+        sheets: isMimeType(loaded.mimeType, CSV_MIME_TYPES)
+          ? structured.sheets.map((sheet) => ({
+              ...sheet,
+              name: options.sourceName,
+            }))
+          : structured.sheets,
+        truncated: structured.truncated,
+      }
+    } catch (error) {
+      return {
+        kind: "prose",
+        text: await extractTextFromBuffer(
+          loaded.buffer,
+          loaded.mimeType,
+          loaded.maxTextChars,
+        ),
+        fallback: { reason: "tabularParseFailed", error },
+      }
+    }
+  }
+
+  if (!options.forceProse && isMimeType(loaded.mimeType, MARKDOWN_MIME_TYPES)) {
+    return {
+      kind: "markdown",
+      text: normalizeWhitespace(decodeUtf8(loaded.buffer)).slice(
+        0,
+        loaded.maxTextChars,
+      ),
+    }
+  }
+
+  return {
+    kind: "prose",
+    text: await extractTextFromBuffer(
+      loaded.buffer,
+      loaded.mimeType,
+      loaded.maxTextChars,
+    ),
+  }
+}
+
+export async function extractTextFromFile(
+  remotePath: string,
+  mimeType: string,
+  options?: ExtractionOptions,
+): Promise<string> {
+  const loaded = await loadFileForExtraction(remotePath, mimeType, options)
+  return await extractTextFromBuffer(
+    loaded.buffer,
+    loaded.mimeType,
+    loaded.maxTextChars,
+  )
 }

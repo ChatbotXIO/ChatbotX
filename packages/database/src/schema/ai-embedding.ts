@@ -1,4 +1,11 @@
-import { index, pgEnum, pgTable, text, vector } from "drizzle-orm/pg-core"
+import {
+  index,
+  integer,
+  pgEnum,
+  pgTable,
+  text,
+  vector,
+} from "drizzle-orm/pg-core"
 import { aiEmbeddingStatuses } from "../partials"
 import { bigintAsString, sharedColumns } from "../partials/shared"
 import { aiFileModel } from "./ai-file"
@@ -16,6 +23,9 @@ export const aiEmbeddingModel = pgTable(
     content: text().notNull(),
     embedding: vector("embedding", { dimensions: 1536 }),
     status: aiEmbeddingStatus().default("pending").notNull(),
+    // Position of the chunk in the document (0-based). NULL = row written
+    // before positions were stored; reindexing the file fills it in.
+    chunkIndex: integer(),
     workspaceId: bigintAsString()
       .notNull()
       .references(() => workspaceModel.id, {
@@ -34,9 +44,10 @@ export const aiEmbeddingModel = pgTable(
       "btree",
       table.workspaceId.asc().nullsLast(),
     ),
-    index("AIEmbedding_aiFileId_idx").using(
+    index("AIEmbedding_aiFileId_chunkIndex_idx").using(
       "btree",
       table.aiFileId.asc().nullsLast(),
+      table.chunkIndex.asc().nullsLast(),
     ),
   ],
 )

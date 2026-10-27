@@ -58,4 +58,21 @@ describe("processPendingEmbedding", () => {
       "processPendingEmbedding item failed for embeddingId: embedding-1",
     )
   })
+
+  test("does nothing for a duplicate job whose chunk is already embedded", async () => {
+    mocks.findOrFail.mockResolvedValue({
+      content: "knowledge chunk",
+      id: "embedding-1",
+      status: "success",
+      workspaceId: "workspace-1",
+    })
+
+    await expect(
+      processPendingEmbedding({ aiEmbeddingId: "embedding-1" }),
+    ).resolves.toBeUndefined()
+
+    expect(mocks.resolveEmbeddingModel).not.toHaveBeenCalled()
+    expect(mocks.embed).not.toHaveBeenCalled()
+    expect(mocks.update).not.toHaveBeenCalled()
+  })
 })

@@ -1175,3 +1175,33 @@ describe("public API spec — catalog and call conditions", () => {
     expect(schema).toContain("products.list")
   })
 })
+
+describe("public API spec — AI file processing runs", () => {
+  test.each([
+    "aiFiles.get",
+    "aiFiles.create",
+    "aiFiles.reindex",
+  ])("%s documents the full processing run shape", (operationId) => {
+    const schema = JSON.stringify(responseSchemasByOperationId[operationId])
+
+    for (const field of [
+      "processingRun",
+      "chunkingOutdated",
+      "chunkingConfig",
+      "indexOutdated",
+      "heartbeatAt",
+      "stale",
+      '"queued"',
+      '"enqueueFailed"',
+      '"fileUnreadable"',
+    ]) {
+      expect(schema).toContain(field)
+    }
+  })
+
+  test("reindex documents coalescing", () => {
+    expect(
+      JSON.stringify(responseSchemasByOperationId["aiFiles.reindex"]),
+    ).toContain("coalesced")
+  })
+})

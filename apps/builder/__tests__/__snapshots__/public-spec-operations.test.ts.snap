@@ -213,6 +213,21 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "path": "/v1/ai-files",
   },
   {
+    "method": "GET",
+    "operationId": "aiFiles.listChunks",
+    "path": "/v1/ai-files/{id}/chunks",
+  },
+  {
+    "method": "POST",
+    "operationId": "aiFiles.reindex",
+    "path": "/v1/ai-files/{id}/reindex",
+  },
+  {
+    "method": "POST",
+    "operationId": "aiFiles.search",
+    "path": "/v1/ai-files/search",
+  },
+  {
     "method": "POST",
     "operationId": "aiFunctions.create",
     "path": "/v1/ai-functions",
