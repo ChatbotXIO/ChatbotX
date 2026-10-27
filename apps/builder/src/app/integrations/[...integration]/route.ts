@@ -24,12 +24,18 @@ const handleRequest = async (
     case HandleRequestType.callback:
       return await handleCallback(integrationType, req)
     case HandleRequestType.webhook: {
-      const credentialId =
-        allParams.integration[2] === "c" ? allParams.integration[3] : undefined
-      if (allParams.integration.length > 2 && !credentialId) {
+      const [, , marker, credentialId, ...rest] = allParams.integration
+      if (
+        rest.length > 0 ||
+        (marker !== undefined && (marker !== "c" || !credentialId))
+      ) {
         return notFound()
       }
-      return await handleWebhook(integrationType, req, credentialId)
+      return await handleWebhook(
+        integrationType,
+        req,
+        marker === "c" ? credentialId : undefined,
+      )
     }
     default:
       return notFound()

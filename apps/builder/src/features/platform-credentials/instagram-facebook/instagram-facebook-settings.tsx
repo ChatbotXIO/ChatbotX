@@ -42,18 +42,16 @@ export function InstagramFacebookSettings({
   publicConfig,
   isInherited = false,
   callbackOrigin,
-  webhookUrl: webhookUrlOverride,
+  webhookUrl,
 }: {
   publicConfig: InstagramFacebookCredentialPublic | null
   isInherited?: boolean
   /** Origin to register with Meta. See `MessengerSettings`' equivalent prop. */
   callbackOrigin: string
-  webhookUrl?: string
+  webhookUrl: string
 }) {
   const t = useTranslations()
   const { handleCopy } = useClipboard()
-  const webhookUrl =
-    webhookUrlOverride ?? `${callbackOrigin}/integrations/instagramFacebook/webhook`
   const authCallbackUrl = `${callbackOrigin}/integrations/instagram-facebook/callback`
 
   return (

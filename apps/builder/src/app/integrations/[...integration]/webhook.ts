@@ -111,8 +111,7 @@ export const handleWebhook = async (
       type,
     })
     if (
-      !credential?.userId ||
-      !(await canUseOwnCredentials(credential.userId))
+      !(credential?.userId && (await canUseOwnCredentials(credential.userId)))
     ) {
       return notConfigured()
     }
@@ -219,10 +218,7 @@ const handleThreadsWebhook = async (req: NextRequest) => {
   const appId = req.nextUrl.searchParams.get("appId")?.trim()
 
   if (!appId) {
-    return new Response(
-      JSON.stringify({ message: "Integration is not configured" }),
-      { status: 404, headers: { "Content-Type": "application/json" } },
-    )
+    return notConfigured()
   }
 
   const integration = integrations.threads

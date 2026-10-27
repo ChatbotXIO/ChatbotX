@@ -111,9 +111,8 @@ class PlatformCredentialService extends BaseService {
   async findDecryptedForWebhook<T extends CredentialType>(props: {
     id: string
     type: T
-    tx?: DatabaseClient
   }): Promise<DecryptedCredential<T> | undefined> {
-    const [row] = await (props.tx ?? db)
+    const [row] = await db
       .select()
       .from(platformCredentialModel)
       .where(

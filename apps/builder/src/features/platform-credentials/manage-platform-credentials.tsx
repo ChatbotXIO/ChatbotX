@@ -62,7 +62,6 @@ async function resolveCard<T extends CredentialType>(
       type,
     })
     return {
-      credentialId: undefined,
       publicConfig: publicConfig ?? null,
       isInherited: false,
     }
@@ -73,7 +72,7 @@ async function resolveCard<T extends CredentialType>(
     type,
   })
   if (resolved?.isInherited) {
-    return { credentialId: undefined, publicConfig: null, isInherited: true }
+    return { publicConfig: null, isInherited: true }
   }
   return {
     credentialId: resolved?.credentialId,
@@ -120,7 +119,6 @@ export async function ManagePlatformCredentials({
   ])
 
   const emptyCard = {
-    credentialId: undefined,
     publicConfig: null,
     isInherited: false,
   } as const
@@ -152,33 +150,26 @@ export async function ManagePlatformCredentials({
     stripeWebhookResult.status === "fulfilled" && stripeWebhookResult.value
 
   // Tenant-owned credentials use the reseller's custom domain. Entitled users
-  // without a tenant use the broker for both callbacks and webhooks; OAuth
-  // callback state already binds the connection to its owner.
-  const tenantOrigin = scopedUserId
-    ? ((await resolveTenantCustomDomainOrigin(scopedUserId)) ??
-      PLACEHOLDER_DOMAIN_ORIGIN)
-    : getBrokerOrigin()
+  // without an active tenant use the broker for callbacks and credential-scoped
+  // webhooks; OAuth callback state already binds the connection to its owner.
   const brokerOrigin = getBrokerOrigin()
-  const tenant = scopedUserId
-    ? await tenantService.findByOwner(scopedUserId)
-    : undefined
+  const [customDomainOrigin, tenant] = scopedUserId
+    ? await Promise.all([
+        resolveTenantCustomDomainOrigin(scopedUserId),
+        tenantService.findByOwner(scopedUserId),
+      ])
+    : [undefined, undefined]
   const hasActiveTenant = tenant?.status === "active"
+  const tenantOrigin = customDomainOrigin ?? PLACEHOLDER_DOMAIN_ORIGIN
   const callbackOriginFor = (isInherited: boolean) =>
     isInherited || !hasActiveTenant ? brokerOrigin : tenantOrigin
   const webhookUrlFor = <T extends CredentialType>(
     type: T,
     credential: ResolvedCredential<T>,
-  ) => {
-    if (
-      scopedUserId &&
-      !hasActiveTenant &&
-      !credential.isInherited &&
-      credential.credentialId
-    ) {
-      return `${brokerOrigin}/integrations/${type}/webhook/c/${credential.credentialId}`
-    }
-    return `${callbackOriginFor(credential.isInherited)}/integrations/${type}/webhook`
-  }
+  ) =>
+    credential.credentialId && !hasActiveTenant
+      ? `${brokerOrigin}/integrations/${type}/webhook/c/${credential.credentialId}`
+      : `${callbackOriginFor(credential.isInherited)}/integrations/${type}/webhook`
 
   return (
     <CredentialScopeProvider scope={scope}>

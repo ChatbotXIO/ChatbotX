@@ -41,7 +41,7 @@ export function MessengerSettings({
   publicConfig,
   isInherited = false,
   callbackOrigin,
-  webhookUrl: webhookUrlOverride,
+  webhookUrl,
 }: {
   publicConfig: MessengerCredentialPublic | null
   isInherited?: boolean
@@ -52,12 +52,10 @@ export function MessengerSettings({
    * `lib/provider-origin.ts`.
    */
   callbackOrigin: string
-  webhookUrl?: string
+  webhookUrl: string
 }) {
   const t = useTranslations()
   const { handleCopy } = useClipboard()
-  const webhookUrl =
-    webhookUrlOverride ?? `${callbackOrigin}/integrations/messenger/webhook`
   const authCallbackUrl = `${callbackOrigin}/integrations/messenger/callback`
 
   return (

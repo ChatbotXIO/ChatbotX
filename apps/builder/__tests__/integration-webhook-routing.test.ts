@@ -9,8 +9,13 @@ const tiktokHandleRequest = vi.fn()
 const markUnhealthyByIdentifier = vi.fn()
 const markLegacyInboxUnhealthy = vi.fn()
 const findOwnerUserIdByWorkspaceId = vi.fn()
+const canUseOwnCredentials = vi.fn()
+const findDecryptedForWebhook = vi.fn()
+const messengerHandleRequest = vi.fn()
+const isCloud = vi.fn(() => false)
 
 vi.mock("@chatbotx.io/business", () => ({
+  canUseOwnCredentials,
   connectionStateService: {
     markUnhealthyByIdentifier,
     markLegacyInboxUnhealthy,
@@ -19,6 +24,7 @@ vi.mock("@chatbotx.io/business", () => ({
   customDomainService: { findActiveByDomain: vi.fn() },
   platformCredentialService: {
     findDecryptedForUser: vi.fn(),
+    findDecryptedForWebhook,
     findDecryptedPlatform: vi.fn(),
   },
   tenantService: { findById: vi.fn() },
@@ -28,9 +34,7 @@ vi.mock("@chatbotx.io/worker-config", () => ({
   integrationQueue: {},
 }))
 
-vi.mock("@/env", () => ({
-  isCloud: vi.fn(() => false),
-}))
+vi.mock("@/env", () => ({ isCloud }))
 
 vi.mock("@/features/integration-telegram/queries", () => ({
   findIntegrationTelegramByBotId,
@@ -42,6 +46,7 @@ vi.mock("@/features/integration-tiktok/queries", () => ({
 
 vi.mock("@/integration", () => ({
   integrations: {
+    messenger: { name: "messenger", handleRequest: messengerHandleRequest },
     telegram: { name: "telegram", handleRequest: telegramHandleRequest },
     tiktok: { name: "tiktok", handleRequest: tiktokHandleRequest },
   },
@@ -55,12 +60,21 @@ vi.mock("@/lib/oauth-broker", () => ({
   isBrokerHost: () => false,
 }))
 
+vi.mock("next/navigation", () => ({
+  notFound: () => new Response(null, { status: 404 }),
+}))
+
+vi.mock("../src/app/integrations/[...integration]/callback", () => ({
+  handleCallback: vi.fn(),
+}))
+
 // Dynamic import: loads the module under test only after every `vi.mock`
 // above has registered, matching the convention used by the sibling
 // freeze/webhook-log tests in this directory.
-const { handleWebhook } = await import(
-  "../src/app/integrations/[...integration]/webhook"
-)
+const [{ GET }, { handleWebhook }] = await Promise.all([
+  import("../src/app/integrations/[...integration]/route"),
+  import("../src/app/integrations/[...integration]/webhook"),
+])
 
 const asNextRequest = (url: string, body?: string) => {
   const request = new Request(url, body ? { method: "POST", body } : undefined)
@@ -69,6 +83,8 @@ const asNextRequest = (url: string, body?: string) => {
 
 beforeEach(() => {
   vi.clearAllMocks()
+  isCloud.mockReturnValue(false)
+  messengerHandleRequest.mockResolvedValue("ok")
   telegramHandleRequest.mockResolvedValue("ok")
   tiktokHandleRequest.mockResolvedValue("ok")
   findOwnerUserIdByWorkspaceId.mockResolvedValue("owner-1")
@@ -130,6 +146,88 @@ describe("telegram webhook routing", () => {
         webhookSecretToken: "expected-token",
       }),
     )
+  })
+})
+
+describe("credential-scoped webhook routing", () => {
+  test("404s for a credential-scoped webhook on a non-cloud install", async () => {
+    const response = await handleWebhook(
+      "messenger",
+      asNextRequest("http://localhost/integrations/messenger/webhook"),
+      "credential-1",
+    )
+
+    expect(response.status).toBe(404)
+    expect(findDecryptedForWebhook).not.toHaveBeenCalled()
+    expect(messengerHandleRequest).not.toHaveBeenCalled()
+  })
+
+  test("404s when the credential owner lost the entitlement", async () => {
+    isCloud.mockReturnValue(true)
+    findDecryptedForWebhook.mockResolvedValue({
+      config: { clientId: "client-1", clientSecret: "secret-1" },
+      userId: "owner-1",
+    })
+    canUseOwnCredentials.mockResolvedValue(false)
+
+    const response = await handleWebhook(
+      "messenger",
+      asNextRequest("http://localhost/integrations/messenger/webhook"),
+      "credential-1",
+    )
+
+    expect(response.status).toBe(404)
+    expect(messengerHandleRequest).not.toHaveBeenCalled()
+  })
+
+  test("routes an entitled credential-scoped webhook with its config", async () => {
+    isCloud.mockReturnValue(true)
+    findDecryptedForWebhook.mockResolvedValue({
+      config: { clientId: "client-1", clientSecret: "secret-1" },
+      userId: "owner-1",
+    })
+    canUseOwnCredentials.mockResolvedValue(true)
+
+    const response = await handleWebhook(
+      "messenger",
+      asNextRequest("http://localhost/integrations/messenger/webhook"),
+      "credential-1",
+    )
+
+    expect(response.status).toBe(200)
+    expect(messengerHandleRequest).toHaveBeenCalledWith(
+      expect.objectContaining({
+        config: expect.objectContaining({
+          clientId: "client-1",
+          clientSecret: "secret-1",
+        }),
+      }),
+    )
+  })
+
+  test("404s for a credential-scoped Threads webhook", async () => {
+    const response = await handleWebhook(
+      "threads",
+      asNextRequest("http://localhost/integrations/threads/webhook"),
+      "credential-1",
+    )
+
+    expect(response.status).toBe(404)
+  })
+
+  test("404s for a credential-scoped webhook with extra path segments", async () => {
+    const response = await GET(
+      asNextRequest(
+        "http://localhost/integrations/messenger/webhook/c/credential-1/extra",
+      ),
+      {
+        params: Promise.resolve({
+          integration: ["messenger", "webhook", "c", "credential-1", "extra"],
+        }),
+      },
+    )
+
+    expect(response.status).toBe(404)
   })
 })
 

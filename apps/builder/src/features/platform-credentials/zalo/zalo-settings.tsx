@@ -41,18 +41,16 @@ export function ZaloSettings({
   publicConfig,
   isInherited = false,
   callbackOrigin,
-  webhookUrl: webhookUrlOverride,
+  webhookUrl,
 }: {
   publicConfig: ZaloCredentialPublic | null
   isInherited?: boolean
   /** Origin to register with Zalo. See `MessengerSettings`' equivalent prop. */
   callbackOrigin: string
-  webhookUrl?: string
+  webhookUrl: string
 }) {
   const t = useTranslations()
   const { handleCopy } = useClipboard()
-  const webhookUrl =
-    webhookUrlOverride ?? `${callbackOrigin}/integrations/zalo/webhook`
   const authCallbackUrl = `${callbackOrigin}/integrations/zalo/callback`
 
   return (
