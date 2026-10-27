@@ -209,6 +209,16 @@ export const possibleErrorsOnMutatingResource = {
   ...possibleIdempotencyErrors,
 } satisfies ErrorMap
 
+/** Reindex with parameters while a processing run is already active. */
+export const possibleErrorsOnReindexingResource = {
+  ...possibleErrorsOnMutatingResource,
+  conflict: {
+    message:
+      "File is being processed; parameters were not applied. Retry when processingRun finishes.",
+    status: 409,
+  },
+} satisfies ErrorMap
+
 const decisionValidationErrors = {
   invalidDecisionContract: {
     message: "The AI Router decision contract is invalid",
@@ -464,6 +474,15 @@ export const possibleErrorsOnSendingCapiTestEvent = {
 /** Cursor-paged list: a cursor that does not decode is a 400. */
 export const possibleErrorsOnListingWithCursor = {
   ...possibleErrorsOnListingResource,
+  invalidCursor: {
+    message: "The cursor is invalid. Start again without a cursor.",
+    status: 400,
+  },
+} satisfies ErrorMap
+
+/** Cursor-paged children of one resource: the parent can also be absent. */
+export const possibleErrorsOnFindingWithCursor = {
+  ...possibleErrorsOnFindingResource,
   invalidCursor: {
     message: "The cursor is invalid. Start again without a cursor.",
     status: 400,

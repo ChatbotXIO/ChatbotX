@@ -1,1 +1,4 @@
-export { resolveEmbeddingModel } from "@chatbotx.io/ai/server"
+export {
+  EmbeddingProviderNotConfiguredError,
+  resolveEmbeddingModel,
+} from "@chatbotx.io/ai/server"

@@ -16,6 +16,11 @@ export async function processPendingEmbedding(
     },
     message: "AI embedding not found",
   })
+  // A reindex that starts while chunks are still pending enqueues them again;
+  // the duplicate job has nothing left to do.
+  if (aiEmbedding.status === aiEmbeddingStatuses.enum.success) {
+    return
+  }
   if (aiEmbedding.status !== "pending" && aiEmbedding.status !== "processing") {
     throw new Error("AI embedding is processing or already processed")
   }

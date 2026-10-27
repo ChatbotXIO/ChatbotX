@@ -161,8 +161,29 @@ export function getHeavyJobCompletionWaitTimeoutMs(
 
 const heavyJobProcessAIFileSchema = z.object({
   type: z.literal(HeavyJobAction.processAIFile),
-  data: z.object({ aiFileId: z.string().min(1) }),
+  data: z.object({
+    aiFileId: z.string().min(1),
+    runId: z.string().min(1).optional(),
+  }),
 })
+
+/** Job ids are retained by BullMQ, so a reindex run must never reuse one. */
+export function buildAIFileReindexJobId(
+  aiFileId: string,
+  runId: string,
+): string {
+  return `heavy-ai-file-${aiFileId}-reindex-${runId}`
+}
+
+/** Keep old ids stable; a reindex adds its run to avoid retained-job dedupe. */
+export function buildAIFileEmbeddingJobId(input: {
+  aiFileId: string
+  embeddingId: string
+  runId?: string
+}): string {
+  const base = `ai-file-embedding-${input.aiFileId}-${input.embeddingId}`
+  return input.runId ? `${base}-r${input.runId}` : base
+}
 
 const heavyFlowContinuationSchema = z
   .object({

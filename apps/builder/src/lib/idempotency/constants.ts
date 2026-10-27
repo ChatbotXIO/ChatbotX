@@ -1,3 +1,5 @@
+import { AI_FILES_SEARCH_TOKEN_PATH } from "@/features/ai-files/lib/api-paths"
+
 export const IDEMPOTENCY_KEY_HEADER = "Idempotency-Key"
 export const IDEMPOTENT_REPLAYED_HEADER = "Idempotent-Replayed"
 export const MAX_IDEMPOTENCY_KEY_LENGTH = 255
@@ -9,6 +11,8 @@ export const IDEMPOTENCY_RETENTION_HOURS = 24
  * hand back stale rows after the data changed.
  */
 export const IDEMPOTENCY_EXEMPT_READ_PATHS: ReadonlySet<string> = new Set([
+  // Search reflects the current index; replaying a cached result would be stale.
+  AI_FILES_SEARCH_TOKEN_PATH,
   "/v1/broadcasts/audience/preview",
   // Next run times depend on the current time, so a replayed response would go stale.
   "/v1/broadcasts/preview-recurrence",

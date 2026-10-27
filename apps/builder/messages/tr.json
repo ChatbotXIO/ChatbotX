@@ -185,9 +185,141 @@
     "name": "Temsilciler"
   },
   "aiFiles": {
+    "detail": {
+      "title": "Knowledge details",
+      "details": "Details",
+      "noChunkingInfo": "No processing information is available yet."
+    },
+    "chunking": {
+      "title": "Chunking",
+      "strategyLabel": "Strategy",
+      "version": "Chunker version",
+      "chunkSize": "Chunk size",
+      "overlapSize": "Overlap size",
+      "chunkCount": "Chunks",
+      "processedAt": "Processed at",
+      "outdated": "Reindex recommended",
+      "strategy": {
+        "prose": "Prose",
+        "tabular": "Tabular",
+        "markdown": "Markdown"
+      },
+      "configDefault": "Chunking parameters: defaults ({chunkSize} characters, overlap {overlapSize}).",
+      "configCustom": "Chunking parameters: {chunkSize} characters, overlap {overlapSize}."
+    },
+    "processingRun": {
+      "title": "Processing run",
+      "noRun": "No processing run has been tracked for this file yet.",
+      "queuedAt": "Queued at",
+      "startedAt": "Started at",
+      "heartbeatAt": "Last heartbeat",
+      "finishedAt": "Finished at",
+      "stale": "Processing appears stalled",
+      "failedBadge": "Processing failed",
+      "successNote": "Chunking and embedding enqueueing completed. The file is searchable when embedding status is also complete.",
+      "status": {
+        "queued": "Queued",
+        "processing": "Processing",
+        "success": "Prepared",
+        "error": "Failed"
+      },
+      "error": {
+        "fileTooLarge": "The file is too large to process.",
+        "tooManyChunks": "The file produced too many chunks.",
+        "fileUnreadable": "The file could not be read. For CSV files, save as CSV UTF-8 and try again.",
+        "noExtractableContent": "No content could be extracted. Check the spreadsheet header row, or the file may be a scan or empty.",
+        "noEmbeddingProvider": "No embedding provider is configured.",
+        "enqueueFailed": "The file was saved but processing could not be queued. Reindex it to try again.",
+        "unknown": "Processing failed unexpectedly."
+      }
+    },
+    "reindex": {
+      "action": "Reindex",
+      "confirmTitle": "Reindex this file?",
+      "confirmDescription": "The file will be processed with the current chunker.",
+      "downtimeWarning": "Search may be temporarily unavailable while this file is reindexed.",
+      "queued": "Reindex queued",
+      "alreadyRunning": "Processing is already running for this file.",
+      "rateLimited": "Too many requests. Try again shortly.",
+      "parameters": "Chunking parameters",
+      "strategyLabel": "How to split",
+      "strategy": {
+        "auto": "Automatic (by file type)",
+        "prose": "Plain text"
+      },
+      "chunkSize": "Chunk size (characters)",
+      "overlapSize": "Overlap (characters)",
+      "overlapDisabledTabular": "Spreadsheets keep each row whole, so overlap is not used.",
+      "tabularHeaderRow": "Header row (spreadsheets)",
+      "presets": {
+        "small": "Small",
+        "medium": "Medium",
+        "large": "Large",
+        "custom": "Custom chunk size"
+      },
+      "resetDefaults": "Restore defaults",
+      "estimate": "Estimate: about {estimate} chunks (currently {current})",
+      "reembedWarning": "Changing parameters re-embeds the whole file (about {count} chunks) with your workspace key, and the file cannot be searched until it finishes.",
+      "largeChunkWarning": "Larger chunks make every agent answer read more text and cost more tokens.",
+      "noChangeNote": "Parameters are unchanged: chunks that are already embedded are kept and not embedded again.",
+      "conflict": "This file is being processed, so the new parameters were not applied. Try again when processing finishes."
+    },
+    "chunks": {
+      "indexOutdated": "Some chunks have no position yet. Reindex the file to number them."
+    },
     "description": "Temsilcilerinize PDF'lere, Belgelere ve Daha Fazlasına Erişim Verin",
     "title": "Bilgi",
-    "noEmbeddingProvider": "Yapılandırılmış bir gömme sağlayıcısı yok. Yapay zekâ dosya gömmeleri OpenAI veya Gemini entegrasyonu gerektirir. DeepSeek ve Claude gömme modellerini desteklemez."
+    "noEmbeddingProvider": "Yapılandırılmış bir gömme sağlayıcısı yok. Yapay zekâ dosya gömmeleri OpenAI veya Gemini entegrasyonu gerektirir. DeepSeek ve Claude gömme modellerini desteklemez.",
+    "testQuery": {
+      "title": "Test query",
+      "description": "Pick files, ask a question and see which chunk answers it. Only the retrieval step is simulated; no AI answer is generated.",
+      "open": "Test query",
+      "backToKnowledge": "Back to Knowledge",
+      "run": "Run test",
+      "files": "Files",
+      "filterFiles": "Filter files by name",
+      "selectAllReady": "Select all ready files",
+      "selectedCount": "{count}/{max} selected",
+      "fileNotReady": "This file has no chunks ready for search yet.",
+      "question": "Question",
+      "expected": "Expected answer (optional)",
+      "expectedHelp": "Type the answer exactly as it appears in the document, accents included. It is matched against every chunk of the selected files.",
+      "limit": "Result limit",
+      "simulationNote": "This simulates retrieval only; an agent may phrase a question differently. Each run uses one embedding from your workspace key.",
+      "rateLimited": "Too many test requests. Try again shortly.",
+      "byFile": "By file",
+      "matches": "{count} matching chunks",
+      "bestRank": "best rank {rank}",
+      "needsReindex": "Needs reindex",
+      "openDetail": "Open details",
+      "rank": "#{rank}",
+      "chunkNumber": "chunk #{index}",
+      "chunkUnnumbered": "chunk not numbered",
+      "aiWillSee": "AI will see",
+      "belowThreshold": "Below threshold",
+      "containsExpected": "Contains the answer",
+      "thresholdLine": "Threshold {threshold}",
+      "appliedConfig": "Applied configuration",
+      "agentDefaultThreshold": "Agent default threshold",
+      "timings": "Search time",
+      "scoreNotComparable": "Similarity scores are not directly comparable across embedding models.",
+      "answerLocation": "Answer is in {file} · {chunk} · rank {rank}",
+      "splitHint": "The answer may be split between two chunks. Try a larger chunk size or overlap, or check the file was read correctly.",
+      "previousRun": "Previous run ({time}): answer rank {from} → now {to}",
+      "previousRunTop": "Previous run ({time}): {changed} of {total} top chunks changed",
+      "verdict": {
+        "inTopResults": "The AI will see the expected answer.",
+        "foundButLowRank": "The answer is in the documents but ranks too low for the AI to see it. Try a closer question, or reindex with smaller chunks.",
+        "notInAnyChunk": "No chunk of the selected files contains the answer. The document may be read or split wrongly: view the chunks or reindex with other settings."
+      },
+      "diagnosis": {
+        "ok": "Matching chunks found.",
+        "noReadyChunks": "No chunks are ready for search yet. Open the file to check its processing status.",
+        "allBelowThreshold": "Chunks were found but all are below the threshold. Try a lower trial threshold.",
+        "noMatches": "No matching chunks were found.",
+        "agentHasNoFiles": "This agent has no knowledge files."
+      }
+    }
   },
   "aiFunctions": {
     "description": "Yapay zekâ temsilcinizi daha akıllı hâle getirmek için LLM işlevlerini yapılandırın",

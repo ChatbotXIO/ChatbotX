@@ -14,6 +14,8 @@
     "ai-agents/update.action:updateAIAgentAction": "covered:ai-agents",
     "ai-files/create-ai-file.action:createAIFileAction": "covered:ai-files",
     "ai-files/delete-ai-file.action:deleteAIFileAction": "covered:ai-files",
+    "ai-files/reindex-ai-file.action:reindexAIFileAction": "covered:ai-files",
+    "ai-files/search-ai-files.action:searchAIFilesAction": "covered:ai-files",
     "ai-functions/create-ai-function.action:createAIFunctionAction": "covered:ai-functions",
     "ai-functions/delete-ai-function.action:deleteAIFunctionAction": "covered:ai-functions",
     "ai-functions/update-ai-function.action:updateAIFunctionAction": "covered:ai-functions",

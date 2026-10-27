@@ -15,12 +15,16 @@ export function AIFilesCreate({ onSuccess }: { onSuccess?: () => void }) {
   const { execute, isPending } = useAction(
     createAIFileAction.bind(null, workspaceId),
     {
-      onSuccess: () => {
-        toast.success(
-          t("messages.createdSuccess", {
-            feature: t("fields.aiFile.label"),
-          }),
-        )
+      onSuccess: ({ data }) => {
+        if (data?.processingRunError === "enqueueFailed") {
+          toast.warning(t("aiFiles.processingRun.error.enqueueFailed"))
+        } else {
+          toast.success(
+            t("messages.createdSuccess", {
+              feature: t("fields.aiFile.label"),
+            }),
+          )
+        }
         onSuccess?.()
       },
       onError: ({ error }) => {

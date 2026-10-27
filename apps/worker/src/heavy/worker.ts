@@ -1,4 +1,7 @@
-import { flushAllPendingWorkspaceRealtimeEvents } from "@chatbotx.io/business"
+import {
+  aiFileService,
+  flushAllPendingWorkspaceRealtimeEvents,
+} from "@chatbotx.io/business"
 import { optimizeStoredImage } from "@chatbotx.io/business/media/optimize-stored-image"
 import {
   defaultWorkerOptions,
@@ -12,7 +15,7 @@ import {
   integrationQueue,
   queueNames,
 } from "@chatbotx.io/worker-config"
-import { type Job, Worker } from "bullmq"
+import { type Job, UnrecoverableError, Worker } from "bullmq"
 import { normalizeError } from "universal-error-normalizer"
 import { env } from "../env"
 import {
@@ -27,6 +30,7 @@ import { isBlockedWorkspace } from "../lib/is-blocked-workspace"
 import { logger } from "../lib/logger"
 import { resolveWorkspaceId } from "../lib/resolve-workspace-id"
 import { runJobWithAuditContext } from "../lib/run-job-with-audit-context"
+import { AIFileProcessingError } from "./handlers/ai-file-processing-error"
 import { analyzeImage } from "./handlers/analyze-image"
 import { editImageOutput } from "./handlers/edit-image"
 import {
@@ -388,6 +392,38 @@ async function startHeavyWorker() {
       },
       "Heavy job failed",
     )
+    if (
+      parsedJobData.success &&
+      parsedJobData.data.type === HeavyJobAction.processAIFile &&
+      parsedJobData.data.data.runId &&
+      // An unrecoverable error fails the job on its first attempt, so the
+      // attempts count alone would leave the run in `processing`.
+      (err instanceof UnrecoverableError ||
+        job.attemptsMade >= (job.opts.attempts ?? 1))
+    ) {
+      const { aiFileId, runId } = parsedJobData.data.data
+      if (workspaceId) {
+        try {
+          await aiFileService.markProcessingRunFailed({
+            aiFileId,
+            workspaceId,
+            runId,
+            code: err instanceof AIFileProcessingError ? err.code : "unknown",
+          })
+        } catch (markError) {
+          logger.error(
+            { err: normalizeError(markError), aiFileId, workspaceId, runId },
+            "Failed to mark AI file processing run failed",
+          )
+        }
+      } else {
+        // The run expires after AI_FILE_PROCESSING_RUN_STALE_MS instead.
+        logger.error(
+          { err: workspaceResolutionError, aiFileId, runId },
+          "Cannot mark AI file processing run failed without a workspace",
+        )
+      }
+    }
     if (
       parsedJobData.success &&
       isHeavyFlowStep(parsedJobData.data) &&

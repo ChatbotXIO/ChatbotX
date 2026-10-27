@@ -568,6 +568,9 @@ chatbotx ai-files list                               # List AI knowledge-base fi
 chatbotx ai-files get <id>
 chatbotx ai-files create --name <name>               # [--file --url] (exactly one required)
 chatbotx ai-files delete <id>
+chatbotx ai-files search --query <text>             # [--agentId | --fileIds <json>] (exactly one) [--limit --similarityThreshold --expectedText]; full token
+chatbotx ai-files chunks list <id>                  # [--limit --cursor --fromChunkIndex]; document order; repeat with nextCursor until null
+chatbotx ai-files reindex <id>                      # [--chunkingConfig <json>] full token; 409 if a run is active and parameters are sent; poll `ai-files get` until processingRun is success/error
 ```
 
 ---

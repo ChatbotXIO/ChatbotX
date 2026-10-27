@@ -229,6 +229,34 @@ describe("pathAndMethodToCommandName — bot field reset", () => {
   })
 })
 
+describe("pathAndMethodToCommandName — AI file tools", () => {
+  test("search, chunk listing and reindex get distinct, readable commands", () => {
+    expect(pathAndMethodToCommandName("/v1/ai-files/search", "POST")).toBe(
+      "ai-files:search",
+    )
+    expect(pathAndMethodToCommandName("/v1/ai-files/{id}/chunks", "GET")).toBe(
+      "ai-files:chunks:list",
+    )
+    expect(
+      pathAndMethodToCommandName("/v1/ai-files/{id}/reindex", "POST"),
+    ).toBe("ai-files:reindex")
+  })
+
+  test("do not collide with the existing ai-files commands", () => {
+    const names = [
+      ["/v1/ai-files", "GET"],
+      ["/v1/ai-files", "POST"],
+      ["/v1/ai-files/{id}", "GET"],
+      ["/v1/ai-files/{id}", "DELETE"],
+      ["/v1/ai-files/search", "POST"],
+      ["/v1/ai-files/{id}/chunks", "GET"],
+      ["/v1/ai-files/{id}/reindex", "POST"],
+    ].map(([path, method]) => pathAndMethodToCommandName(path, method))
+
+    expect(new Set(names).size).toBe(names.length)
+  })
+})
+
 describe("pathAndMethodToCommandName — response SLA singleton", () => {
   test("reads, replaces and deletes the one policy without colliding", () => {
     expect(pathAndMethodToCommandName("/v1/response-sla", "get")).toBe(

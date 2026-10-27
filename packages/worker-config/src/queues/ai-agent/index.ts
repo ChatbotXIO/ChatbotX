@@ -11,6 +11,16 @@ import { queueNames } from "../../lib/types"
 export const AI_FILES_DEFAULT_CHUNK_SIZE = 1000
 export const AI_FILES_DEFAULT_OVERLAP_SIZE = 200
 
+/**
+ * BullMQ priority for the per-chunk embedding jobs of an AI file. Every chunk
+ * is its own job on the shared `aiAgent` queue, so a file with thousands of
+ * chunks would otherwise hold live conversation replies behind it. Jobs
+ * without a priority run first. Same band as `BROADCAST_SEND_PRIORITY` and
+ * ahead of `MISSED_COMMENT_REPLAY_PRIORITY`: knowledge a user just uploaded is
+ * wanted sooner than catch-up replays.
+ */
+export const AI_FILE_EMBEDDING_PRIORITY = 5
+
 export const AIJobAction = {
   processAIFile: "processAIFile",
   processPendingEmbedding: "processPendingEmbedding",

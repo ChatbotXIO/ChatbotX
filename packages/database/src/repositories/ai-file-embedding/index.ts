@@ -9,6 +9,8 @@ export function createAiFileEmbeddingRepository(
 }
 
 export {
+  type AiFileChunkCursor,
+  type AiFileChunkRow,
   type AiFileEmbeddingChunk,
   AiFileEmbeddingRepository,
   type PendingAiFileEmbedding,
