@@ -105,6 +105,31 @@ describe("sendPrivateReply handler", () => {
   const send = (message: unknown) =>
     sendPrivateReply({ ctx, data: { message } } as never)
 
+  // A comments-only connection (EEA, Swiss or UK account) holds no messaging
+  // scope; the refusal must say so instead of surfacing TikTok's own error.
+  test("refuses before calling TikTok when the connection cannot message", async () => {
+    await expect(
+      sendPrivateReply({
+        ctx: {
+          auth: {
+            tokens: { accessToken: "token" },
+            metadata: {
+              openId: BUSINESS_ID,
+              scopes: ["user.info.basic", "comment.list"],
+            },
+          },
+        },
+        data: {
+          message: {
+            text: "thanks!",
+            contentAttributes: { replyToCommentId: COMMENT_ID },
+          },
+        },
+      } as never),
+    ).rejects.toMatchObject({ category: "permission_denied" })
+    expect(post).not.toHaveBeenCalled()
+  })
+
   test("sends the comment-anchored DM and returns the message id", async () => {
     post.mockResolvedValueOnce({
       code: 0,

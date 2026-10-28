@@ -1,6 +1,8 @@
 import ky from "ky"
 import { BUSINESS_API_URL } from "../constants"
 import { rescue, TiktokAPIException } from "../exception"
+import { resolveTiktokFeatures } from "../lib/scopes"
+import type { TiktokChannelFeatures } from "../schema"
 
 type WebhookUpdateResponse = {
   code: number
@@ -76,41 +78,53 @@ export const subscribeWebhook = (
   })
 
 /**
- * Registers every subscription the channel needs, in one call from the
- * credential-save path.
+ * Registers every subscription the credential's features need, in one call
+ * from the credential-save path. A feature that is off is not subscribed.
  *
- * The two kinds are deliberately NOT equal in weight. `DIRECT_MESSAGE` stays
- * fatal: without it the inbox receives nothing and saving a credential that
- * cannot work would be worse than refusing. The comment subscription is
- * best-effort — a rejected `event_type` must not stop an admin saving their
- * TikTok settings, which is exactly the risk that kept the value unset for so
- * long. Comments simply keep not arriving, the same as today, and the reason
- * is in the log instead of in a failed form submission.
+ * The two kinds are deliberately NOT equal in weight while both are on.
+ * `DIRECT_MESSAGE` stays fatal: without it the inbox receives nothing and
+ * saving a credential that cannot work would be worse than refusing. The
+ * comment subscription is best-effort — a rejected `event_type` must not stop
+ * an admin saving their TikTok settings, which is exactly the risk that kept
+ * the value unset for so long. Comments simply keep not arriving, and the
+ * reason is in the log instead of in a failed form submission.
  *
- * Returns whether the comment subscription is in place so the caller can say
- * so; a skipped one (no `event_type` known yet) reports `false` without
- * spending a request.
+ * With messaging off, comments are the only thing the credential is for, so a
+ * rejected `COMMENT` subscription fails the save just as `DIRECT_MESSAGE` does
+ * otherwise.
+ *
+ * Returns which subscriptions are in place so the caller can say so.
  */
 export const subscribeTiktokWebhooks = async (
   credentials: { clientId: string; clientSecret: string },
   callbackUrl: string,
-  onCommentSubscriptionError?: (error: unknown) => void,
-): Promise<{ comments: boolean }> => {
+  options: {
+    features?: Partial<TiktokChannelFeatures>
+    onCommentSubscriptionError?: (error: unknown) => void
+  } = {},
+): Promise<{ messaging: boolean; comments: boolean }> => {
+  const { messaging, comments } = resolveTiktokFeatures(options.features)
+
+  if (!messaging) {
+    await subscribeWebhook(credentials, callbackUrl, TIKTOK_COMMENT_EVENT_TYPE)
+    return { messaging: false, comments: true }
+  }
+
   await subscribeWebhook(
     credentials,
     callbackUrl,
     TIKTOK_DIRECT_MESSAGE_EVENT_TYPE,
   )
 
-  if (!TIKTOK_COMMENT_EVENT_TYPE) {
-    return { comments: false }
+  if (!comments) {
+    return { messaging: true, comments: false }
   }
 
   try {
     await subscribeWebhook(credentials, callbackUrl, TIKTOK_COMMENT_EVENT_TYPE)
-    return { comments: true }
+    return { messaging: true, comments: true }
   } catch (error) {
-    onCommentSubscriptionError?.(error)
-    return { comments: false }
+    options.onCommentSubscriptionError?.(error)
+    return { messaging: true, comments: false }
   }
 }

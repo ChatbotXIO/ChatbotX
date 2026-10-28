@@ -70,9 +70,18 @@ const { tiktokIntegrationService } = await import(
   "../src/integration-tiktok/service"
 )
 
+const NO_MESSAGING_PERMISSION_MESSAGE = /no messaging permission/
+
+const SCOPES = [
+  "message.list.read",
+  "message.list.send",
+  "message.list.manage",
+  "video.list",
+]
+
 const auth = {
   tokens: { accessToken: "token-1" },
-  metadata: { openId: "open-1", scopes: ["video.list"] },
+  metadata: { openId: "open-1", scopes: SCOPES },
 }
 
 beforeEach(() => {
@@ -102,7 +111,7 @@ describe("tiktokIntegrationService.setCommentToMessage", () => {
       expect.objectContaining({
         auth: expect.objectContaining({
           metadata: expect.objectContaining({
-            scopes: ["video.list"],
+            scopes: SCOPES,
             commentToMessage: expect.objectContaining({ status: "ENABLE" }),
           }),
         }),
@@ -128,6 +137,27 @@ describe("tiktokIntegrationService.setCommentToMessage", () => {
     ).rejects.toThrow("Account is not eligible")
     expect(mocks.update).not.toHaveBeenCalled()
     expect(mocks.auditRecord).not.toHaveBeenCalled()
+  })
+
+  // A comments-only connection (EEA, Swiss or UK account) holds no messaging
+  // scope; Comment-to-Message is a DM feature, so the refusal must name that.
+  test("refuses a connection without messaging scopes before calling TikTok", async () => {
+    mocks.findOrFail.mockResolvedValueOnce({
+      id: "tt-1",
+      auth: {
+        ...auth,
+        metadata: { openId: "open-1", scopes: ["comment.list"] },
+      },
+    })
+
+    await expect(
+      tiktokIntegrationService.setCommentToMessage({
+        workspaceId: "ws-1",
+        id: "tt-1",
+        enabled: true,
+      }),
+    ).rejects.toThrow(NO_MESSAGING_PERMISSION_MESSAGE)
+    expect(mocks.updateTiktokDirectReplyStatus).not.toHaveBeenCalled()
   })
 })
 

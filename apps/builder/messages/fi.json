@@ -2354,7 +2354,13 @@
       "commentToMessage": "Comment-to-Message",
       "commentToMessageDescription": "Lets this account answer high-intent comments with a direct message. Required for TikTok comment automations that use a private reply.",
       "commentToMessageEligibility": "Only available to Business Accounts registered in Vietnam, Indonesia or Thailand, owned by someone over 18, that are registered businesses or have run Messaging Ads, with messaging permissions set to \"Requests\".",
-      "commentToMessageUnknown": "Not checked with TikTok yet — refresh to read the current setting."
+      "commentToMessageUnknown": "Not checked with TikTok yet — refresh to read the current setting.",
+      "features": "Ominaisuudet",
+      "featureMessaging": "Viestit",
+      "featureMessagingDescription": "Vastaanota ja lähetä yksityisviestejä. TikTok ei tarjoa viestejä ETA-alueella, Sveitsissä tai Isossa-Britanniassa rekisteröidyille tileille — poista se käytöstä niille.",
+      "featureComments": "Kommentit",
+      "featureCommentsDescription": "Vastaanota kommentteja kommenttiautomaatiota varten: julkinen vastaus, tykkäys ja piilotus.",
+      "featuresReconnectHint": "Muutokset koskevat tästä lähtien yhdistettäviä tilejä. Yhdistä nykyiset tilit uudelleen päivittääksesi niiden käyttöoikeudet."
     },
     "drip": {
       "label": "Tiputus"

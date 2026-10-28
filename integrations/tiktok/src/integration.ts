@@ -8,7 +8,7 @@ import {
 } from "@chatbotx.io/sdk"
 import { exchangeCodeForToken, refreshAccessToken } from "./apis/auth"
 import { getUserInfo } from "./apis/user"
-import { TiktokAPIException, TiktokMissingScopesError } from "./exception"
+import { TiktokAPIException } from "./exception"
 import { callbackHandler } from "./handlers/callback"
 import { commentHandlers } from "./handlers/comment"
 import { contactHandlers } from "./handlers/contact"
@@ -17,20 +17,12 @@ import { messageHandlers } from "./handlers/message"
 import { webhookHandler } from "./handlers/webhook"
 import { isRevokedTokenError } from "./lib/error-mapper"
 import {
-  findMissingTiktokScopes,
+  assertTiktokGrant,
   parseTiktokScopes,
-  TIKTOK_COMMENT_AUTOMATION_SCOPES,
-  TIKTOK_CORE_SCOPES,
-  TIKTOK_OPTIONAL_PROFILE_SCOPES,
+  tiktokRequestedScopes,
 } from "./lib/scopes"
 import { buildTokenTimestamps } from "./lib/token-utils"
 import type { TiktokActions, TiktokAuthValue, TiktokConfig } from "./schema"
-
-const TIKTOK_SCOPES = [
-  ...TIKTOK_CORE_SCOPES,
-  ...TIKTOK_OPTIONAL_PROFILE_SCOPES,
-  ...TIKTOK_COMMENT_AUTOMATION_SCOPES,
-].join(",")
 
 const config: IntegrationDefinition<
   TiktokConfig,
@@ -57,7 +49,7 @@ const config: IntegrationDefinition<
       const params = new URLSearchParams({
         client_key: config.clientId,
         response_type: "code",
-        scope: TIKTOK_SCOPES,
+        scope: tiktokRequestedScopes(config.features),
         redirect_uri: callbackUrl,
         disable_auto_auth: "1",
         state,
@@ -74,14 +66,7 @@ const config: IntegrationDefinition<
         },
         code,
       )
-      const grantedScopes = parseTiktokScopes(tokenResponse.scope)
-      const missingCoreScopes = findMissingTiktokScopes(
-        grantedScopes,
-        TIKTOK_CORE_SCOPES,
-      )
-      if (missingCoreScopes.length > 0) {
-        throw new TiktokMissingScopesError(missingCoreScopes)
-      }
+      const grant = assertTiktokGrant(tokenResponse.scope, config.features)
 
       const userInfo = await getUserInfo({
         accessToken: tokenResponse.access_token,
@@ -102,7 +87,8 @@ const config: IntegrationDefinition<
           openId: tokenResponse.open_id,
           username: userInfo.username,
           displayName: userInfo.display_name,
-          scopes: grantedScopes,
+          scopes: grant.scopes,
+          features: grant.features,
         },
       ) satisfies TiktokAuthValue
     },

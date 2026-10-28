@@ -1,11 +1,13 @@
 "use client"
 
 import {
+  TIKTOK_DEFAULT_CHANNEL_FEATURES,
   type TiktokCredentialPublic,
   type TiktokCredentialUpdate,
   tiktokCredentialUpdateSchema,
 } from "@chatbotx.io/database/partials"
 import { InputField } from "@chatbotx.io/ui/components/form/input-field"
+import { SwitchField } from "@chatbotx.io/ui/components/form/switch-field"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
   Card,
@@ -81,6 +83,8 @@ export function TiktokSettings({
                 </Button>
               </div>
             </div>
+
+            <TiktokFeaturesSummary features={publicConfig.features} />
 
             <div className="flex flex-col gap-2">
               <div className="font-bold">
@@ -206,10 +210,19 @@ export function EditTiktokSettingsForm({
           defaultValues: {
             clientId: publicConfig?.clientId ?? "",
             clientSecret: "",
+            features: publicConfig?.features ?? TIKTOK_DEFAULT_CHANNEL_FEATURES,
           } satisfies TiktokCredentialUpdate,
         },
       },
     )
+
+  // At least one feature must stay on, so the last one on cannot be switched
+  // off — a credential serving neither would connect accounts that receive
+  // nothing.
+  const [messagingEnabled, commentsEnabled] = form.watch([
+    "features.messaging",
+    "features.comments",
+  ])
 
   return (
     <Form {...form}>
@@ -226,6 +239,27 @@ export function EditTiktokSettingsForm({
           required
           type="password"
         />
+
+        <div className="flex flex-col gap-3">
+          <div className="font-medium text-sm">
+            {t("fields.tiktok.features")}
+          </div>
+          <SwitchField
+            description={t("fields.tiktok.featureMessagingDescription")}
+            disabled={!commentsEnabled}
+            label={t("fields.tiktok.featureMessaging")}
+            name="features.messaging"
+          />
+          <SwitchField
+            description={t("fields.tiktok.featureCommentsDescription")}
+            disabled={!messagingEnabled}
+            label={t("fields.tiktok.featureComments")}
+            name="features.comments"
+          />
+          <p className="text-muted-foreground text-sm">
+            {t("fields.tiktok.featuresReconnectHint")}
+          </p>
+        </div>
 
         <div className="flex items-center justify-between gap-2">
           {publicConfig !== null && (
@@ -264,5 +298,24 @@ export function EditTiktokSettingsForm({
         </div>
       </form>
     </Form>
+  )
+}
+
+function TiktokFeaturesSummary({
+  features = TIKTOK_DEFAULT_CHANNEL_FEATURES,
+}: {
+  features?: TiktokCredentialPublic["features"]
+}) {
+  const t = useTranslations()
+  const enabledLabels = [
+    features.messaging && t("fields.tiktok.featureMessaging"),
+    features.comments && t("fields.tiktok.featureComments"),
+  ].filter(Boolean)
+
+  return (
+    <div className="flex flex-col">
+      <div className="font-bold">{t("fields.tiktok.features")}:</div>
+      <span>{enabledLabels.join(", ")}</span>
+    </div>
   )
 }

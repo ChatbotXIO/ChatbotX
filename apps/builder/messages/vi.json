@@ -2554,7 +2554,13 @@
       "commentToMessage": "Comment-to-Message",
       "commentToMessageDescription": "Cho phép tài khoản này trả lời bình luận có ý định mua cao bằng tin nhắn riêng. Bắt buộc với automation bình luận TikTok dùng trả lời riêng.",
       "commentToMessageEligibility": "Chỉ áp dụng cho Business Account đăng ký tại Việt Nam, Indonesia hoặc Thái Lan, chủ tài khoản trên 18 tuổi, đã đăng ký kinh doanh hoặc đã chạy Messaging Ads, và đặt quyền nhắn tin thành \"Requests\".",
-      "commentToMessageUnknown": "Chưa kiểm tra với TikTok — bấm làm mới để đọc trạng thái hiện tại."
+      "commentToMessageUnknown": "Chưa kiểm tra với TikTok — bấm làm mới để đọc trạng thái hiện tại.",
+      "features": "Tính năng",
+      "featureMessaging": "Tin nhắn",
+      "featureMessagingDescription": "Nhận và gửi tin nhắn trực tiếp. TikTok không hỗ trợ nhắn tin cho tài khoản đăng ký tại EEA, Thụy Sĩ hoặc Vương quốc Anh — hãy tắt mục này cho các tài khoản đó.",
+      "featureComments": "Bình luận",
+      "featureCommentsDescription": "Nhận bình luận cho tự động hóa bình luận: trả lời công khai, thích và ẩn.",
+      "featuresReconnectHint": "Thay đổi áp dụng cho các tài khoản kết nối từ bây giờ. Hãy kết nối lại các tài khoản hiện có để cập nhật quyền."
     },
     "drip": {
       "label": "Drip"

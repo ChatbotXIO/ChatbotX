@@ -78,9 +78,52 @@ describe("subscribeTiktokWebhooks", () => {
     respondWith(0, 40_001)
     const onError = vi.fn()
 
-    const result = await subscribeTiktokWebhooks(CREDENTIALS, CALLBACK, onError)
+    const result = await subscribeTiktokWebhooks(CREDENTIALS, CALLBACK, {
+      onCommentSubscriptionError: onError,
+    })
 
-    expect(result.comments).toBe(false)
+    expect(result).toEqual({ messaging: true, comments: false })
     expect(onError).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe("subscribeTiktokWebhooks with features switched off", () => {
+  // An EEA, Swiss or UK account can never receive DMs, and a rejected
+  // `DIRECT_MESSAGE` used to fail the save — the whole reason the switch exists.
+  test("registers only the comment subscription with messaging off", async () => {
+    respondWith(0)
+
+    const result = await subscribeTiktokWebhooks(CREDENTIALS, CALLBACK, {
+      features: { messaging: false, comments: true },
+    })
+
+    expect(eventTypesSent()).toEqual([TIKTOK_COMMENT_EVENT_TYPE])
+    expect(result).toEqual({ messaging: false, comments: true })
+  })
+
+  // Comments are all a comments-only credential is for, so a rejected comment
+  // subscription is a failed save, not a log line.
+  test("propagates a failed comment subscription with messaging off", async () => {
+    respondWith(40_001)
+    const onError = vi.fn()
+
+    await expect(
+      subscribeTiktokWebhooks(CREDENTIALS, CALLBACK, {
+        features: { messaging: false, comments: true },
+        onCommentSubscriptionError: onError,
+      }),
+    ).rejects.toThrow()
+    expect(onError).not.toHaveBeenCalled()
+  })
+
+  test("registers only the direct-message subscription with comments off", async () => {
+    respondWith(0)
+
+    const result = await subscribeTiktokWebhooks(CREDENTIALS, CALLBACK, {
+      features: { messaging: true, comments: false },
+    })
+
+    expect(eventTypesSent()).toEqual([TIKTOK_DIRECT_MESSAGE_EVENT_TYPE])
+    expect(result).toEqual({ messaging: true, comments: false })
   })
 })

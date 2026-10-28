@@ -33,6 +33,9 @@ export async function generateTiktokRedirectUri(
 
   return generateAuthUrl({
     clientId: credential.publicConfig.clientId,
+    // Decides which scopes the consent screen asks for — the callback checks
+    // the grant against the same features, read from the full credential.
+    features: credential.publicConfig.features,
     redirectUrl,
     stateParams: {
       workspaceId,

@@ -10,6 +10,7 @@ import {
   type TiktokAuthValue,
   type TiktokDirectReplyStatus,
   tiktokCanListVideos,
+  tiktokCanMessage,
   updateTiktokDirectReplyStatus,
 } from "@chatbotx.io/integration-tiktok"
 import type { AuthValue } from "@chatbotx.io/sdk"
@@ -131,6 +132,9 @@ class TiktokIntegrationService extends BaseService {
    * owner over 18; a Registered Business Account or one that has run Messaging
    * Ads; messaging permissions set to "Requests". So it is surfaced verbatim
    * rather than replaced with a generic failure.
+   *
+   * A comments-only connection holds no messaging scope, so it is refused
+   * before the call, with a reason TikTok's own answer would not give.
    */
   async setCommentToMessage(props: {
     workspaceId: string
@@ -141,6 +145,12 @@ class TiktokIntegrationService extends BaseService {
     const integration = await this.findById({ id, workspaceId })
     const auth = integration.auth as TiktokAuthValue
     const status: TiktokDirectReplyStatus = enabled ? "ENABLE" : "DISABLE"
+
+    if (!tiktokCanMessage(auth)) {
+      throw new ChatbotXException(
+        "This TikTok connection has no messaging permission, so Comment-to-Message cannot be used. TikTok Business Messaging is not available to accounts registered in the EEA, Switzerland or the UK.",
+      )
+    }
 
     try {
       await updateTiktokDirectReplyStatus(
