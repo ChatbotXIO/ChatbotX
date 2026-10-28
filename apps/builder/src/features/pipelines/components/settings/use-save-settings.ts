@@ -12,7 +12,7 @@ import type { buildPipelineUpdate, PermissionChange } from "./settings-draft"
 
 export type SettingsPipeline = Pick<
   BoardPipeline,
-  "id" | "name" | "referenceName" | "currency" | "settings"
+  "id" | "name" | "referenceName" | "currencyOverride" | "settings"
 >
 
 type ActionResult =

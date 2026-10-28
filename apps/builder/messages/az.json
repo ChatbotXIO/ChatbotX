@@ -2051,6 +2051,7 @@
       "label": "Kliklənib(%)"
     },
     "targetCountry": {
+      "currencyHint": "Həmçinin öz valyutası olmayan satış xətlərinin susmaya görə valyutasını müəyyən edir.",
       "description": "Kontaktlarınızın əksəriyyətinin yaşadığı ölkə.",
       "label": "Hədəf ölkə"
     },
@@ -10581,6 +10582,10 @@
       "referenceName": "İstinad adı",
       "referenceNameHint": "pipelines.reference_name.stage_name dəyişənlərində istifadə olunur. Dəyişdirdikdə köhnə addan istifadə edən mesajlar pozulur.",
       "referenceNameFormat": "Kiçik hərflər, rəqəmlər və alt xətt istifadə edin, hərflə başlayın (məs. close_date).",
+      "currency": "Valyuta",
+      "currencyFollowCountry": "İş sahəsinin ölkəsi · {country} · {currency}",
+      "currencyFollowNoCountry": "İş sahəsinin ölkəsi təyin edilməyib · {currency}",
+      "currencyHint": "İş sahəsinin «Hədəf ölkə» seçiminə (Parametrlər → Ümumi) uyğun olur və o dəyişəndə yenilənir. Ölkə təyin edilməyibsə, USD istifadə olunur. Dəyərlər heç vaxt çevrilmir.",
       "assignContact": "Element təyin ediləndə kontaktı da administratora təyin et",
       "limit": "Kontakt üzrə açıq elementlərə limit qoy",
       "statusLabels": "Status etiketləri",

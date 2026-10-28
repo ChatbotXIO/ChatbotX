@@ -40,7 +40,7 @@ const countryCodes = new Set(allCountryCodes)
 const timezoneCodes = new Set(allTimezoneCodes)
 
 const targetCountryDescription =
-  'ISO 3166-1 alpha-2 code of the country most contacts live in, or "unknown"; the default country for phone numbers without one.'
+  'ISO 3166-1 alpha-2 code of the country most contacts live in, or "unknown"; the default country for phone numbers without one. It also sets the default currency of every pipeline that has no currency of its own (see `pipelines.update`).'
 const languageDescription =
   "Workspace language, one of the builder's locales: the language of text the platform writes for contacts (data-request and date-picker pages, gender and salutation labels), push notifications and import templates."
 const timezoneDescription =

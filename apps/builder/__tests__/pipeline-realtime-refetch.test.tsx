@@ -2,6 +2,7 @@ import { QueryClientProvider } from "@tanstack/react-query"
 import { act } from "react"
 import { createRoot } from "react-dom/client"
 import { describe, expect, test, vi } from "vitest"
+import { concernsContact } from "@/features/pipelines/lib/contact-panel-refresh"
 import { usePipelineRealtimeRefetch } from "@/features/pipelines/lib/use-pipeline-realtime-refetch"
 import { orpc } from "@/lib/orpc/query"
 import { makeQueryClient } from "./query-test-utils"
@@ -70,6 +71,24 @@ describe("usePipelineRealtimeRefetch", () => {
     })
     expect(invalidatedKeys()).not.toContain(detailKey)
     unmount()
+  })
+
+  // What a workspace currency change publishes for each pipeline without an
+  // override: an update with a pipeline id and neither an item nor a contact.
+  test("a currency change event refetches the board and the pipeline reads", () => {
+    const { invalidatedKeys, unmount } = mount()
+
+    realtime.handler?.({ data: { pipelineId: "p1", change: "updated" } })
+
+    expect(invalidatedKeys()).toContain(boardKey)
+    expect(invalidatedKeys()).toContain(detailKey)
+    unmount()
+  })
+
+  test("the inbox panel of any contact also reacts to an event without a contact", () => {
+    expect(concernsContact({}, "contact-1")).toBe(true)
+    expect(concernsContact({ contactId: "contact-1" }, "contact-1")).toBe(true)
+    expect(concernsContact({ contactId: "contact-2" }, "contact-1")).toBe(false)
   })
 
   test("an event of another pipeline refetches nothing", () => {

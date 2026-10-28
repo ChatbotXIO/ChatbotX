@@ -224,7 +224,7 @@ export function PipelineBoard({
     )
   }
 
-  const { pipeline, stages: columns, fields } = board.data
+  const { pipeline, stages: columns, fields, workspaceDefault } = board.data
   const { permissions } = detail.data
   const totalCount = columns.reduce((sum, column) => sum + column.count, 0)
   const totalValue = columns.reduce((sum, column) => sum + column.totalValue, 0)
@@ -375,6 +375,7 @@ export function PipelineBoard({
           onOpenChange={(open) => setPanel(open ? "settings" : null)}
           open={panel === "settings"}
           pipeline={pipeline}
+          workspaceDefault={workspaceDefault}
           workspaceId={workspaceId}
         />
       ) : null}

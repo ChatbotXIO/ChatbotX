@@ -1845,6 +1845,7 @@
       "label": "クリック済み（%）"
     },
     "targetCountry": {
+      "currencyHint": "独自の通貨を持たないパイプラインの既定の通貨にもなります。",
       "description": "連絡先の大半が居住している国です。",
       "label": "対象国"
     },
@@ -10581,6 +10582,10 @@
       "referenceName": "参照名",
       "referenceNameHint": "pipelines.reference_name.stage_name 変数で使用されます。変更すると、旧名称を使っているメッセージが動作しなくなります。",
       "referenceNameFormat": "小文字の英字・数字・アンダースコアのみ、英字で始めてください（例: close_date）。",
+      "currency": "通貨",
+      "currencyFollowCountry": "ワークスペースの国 · {country} · {currency}",
+      "currencyFollowNoCountry": "ワークスペースの国が未設定 · {currency}",
+      "currencyHint": "ワークスペースの対象国（設定 → 一般）に従い、変更されると自動で更新されます。国が未設定の場合は USD を使います。金額が換算されることはありません。",
       "assignContact": "アイテムの割り当て時にコンタクトも管理者に割り当てる",
       "limit": "コンタクトごとのオープン中アイテム数を制限",
       "statusLabels": "ステータスのラベル",

@@ -161,6 +161,66 @@ describe.skipIf(!databaseUrl)("pipeline repositories", () => {
     await cleanup(other)
   })
 
+  test("stores a pipeline with no currency override", async () => {
+    const db = database()
+    const row = await pipelineRepository.insert(
+      {
+        workspaceId: own.workspaceId,
+        name: "Follows workspace",
+        type: "opportunity",
+        referenceName: "follows-workspace",
+        currency: null,
+        settings: pipelineSettingsSchema.parse({}),
+      },
+      db,
+    )
+    expect(row.currency).toBeNull()
+  })
+
+  test("lists only the pipelines that follow the workspace currency, in keyset pages", async () => {
+    const db = database()
+    const insertPipeline = async (
+      fixture: Fixture,
+      name: string,
+      currency: string | null,
+    ) =>
+      await pipelineRepository.insert(
+        {
+          workspaceId: fixture.workspaceId,
+          name,
+          type: "opportunity",
+          referenceName: name,
+          currency,
+          settings: pipelineSettingsSchema.parse({}),
+        },
+        db,
+      )
+    const first = await insertPipeline(own, "follows-1", null)
+    await insertPipeline(own, "overrides", "USD")
+    const second = await insertPipeline(own, "follows-2", null)
+    await insertPipeline(other, "other-follows", null)
+
+    const pageOne = await pipelineRepository.listFollowingCurrencyIds(
+      { workspaceId: own.workspaceId, afterId: null, limit: 1 },
+      db,
+    )
+    const pageTwo = await pipelineRepository.listFollowingCurrencyIds(
+      { workspaceId: own.workspaceId, afterId: pageOne[0], limit: 1 },
+      db,
+    )
+    const pageThree = await pipelineRepository.listFollowingCurrencyIds(
+      { workspaceId: own.workspaceId, afterId: pageTwo[0], limit: 1 },
+      db,
+    )
+
+    // The fixture's own pipeline has an override, so only the two inserted here.
+    expect([...pageOne, ...pageTwo].sort()).toEqual(
+      [first.id, second.id].sort(),
+    )
+    expect(pageOne[0] < pageTwo[0]).toBe(true)
+    expect(pageThree).toEqual([])
+  })
+
   test("hands out consecutive item numbers per workspace under concurrency", async () => {
     const db = database()
 

@@ -1113,7 +1113,7 @@ CRM kanban boards: pipelines hold ordered stages, custom fields and items (one p
 chatbotx pipelines list                                 # Pipelines with item counts
 chatbotx pipelines get <id>                             # Stages (left to right) and custom fields
 chatbotx pipelines create --type <opportunity|ticket|custom> --name <name>
-chatbotx pipelines update <id>                          # [--name --referenceName --currency --settings <json>]
+chatbotx pipelines update <id>                          # [--name --referenceName --currency <code|null> --settings <json>]; follows the workspace default currency until `--currency` sets its own, `null` follows it again
 chatbotx pipelines duplicate <id>                       # Structure only, no items
 chatbotx pipelines delete <id>                          # With all its stages and items
 chatbotx pipelines stage add <id> --name <name>         # [--description --textColor --backgroundColor]

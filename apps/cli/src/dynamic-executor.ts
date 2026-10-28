@@ -25,6 +25,20 @@ function buildQueryString(params: Record<string, CliParamValue>): string {
 
 const NO_BODY_METHODS = new Set(["GET", "HEAD"])
 
+type BodyPropertySchema = {
+  type?: string | string[]
+  nullable?: boolean
+  anyOf?: BodyPropertySchema[]
+  oneOf?: BodyPropertySchema[]
+}
+
+/** Whether the property takes a JSON `null` (nullable, a null union member or a type list with null). */
+const acceptsNull = (schema: BodyPropertySchema | undefined): boolean =>
+  schema?.nullable === true ||
+  schema?.type === "null" ||
+  (Array.isArray(schema?.type) && schema.type.includes("null")) ||
+  [...(schema?.anyOf ?? []), ...(schema?.oneOf ?? [])].some(acceptsNull)
+
 export async function executeDynamicCommand(
   tool: DynamicTool,
   params: Record<string, CliParamValue>,
@@ -53,9 +67,16 @@ export async function executeDynamicCommand(
     const value = params[key]
     if (typeof value === "string") {
       const propSchema = tool.inputSchema.properties[key] as
-        | { type?: string }
+        | BodyPropertySchema
         | undefined
-      if (propSchema?.type === "array" || propSchema?.type === "object") {
+      // Flags are always text, so `--currency null` is how a CLI user sends a
+      // JSON null (e.g. "clear it") to a property that accepts one.
+      if (value === "null" && acceptsNull(propSchema)) {
+        body[key] = null
+      } else if (
+        propSchema?.type === "array" ||
+        propSchema?.type === "object"
+      ) {
         try {
           body[key] = JSON.parse(value)
         } catch {

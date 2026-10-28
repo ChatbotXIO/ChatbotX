@@ -812,6 +812,7 @@
       "label": "點擊次數(%)"
     },
     "targetCountry": {
+      "currencyHint": "同時設定沒有自有貨幣的管道的預設貨幣。",
       "description": "您的大多數聯絡人居住的國家。",
       "label": "目標國家/地區"
     },
@@ -10581,6 +10582,10 @@
       "referenceName": "參照名稱",
       "referenceNameHint": "用於 pipelines.reference_name.stage_name 變數。變更後，使用舊名稱的訊息將無法正常運作。",
       "referenceNameFormat": "僅可使用小寫字母、數字和底線，並以字母開頭（例如 close_date）。",
+      "currency": "貨幣",
+      "currencyFollowCountry": "工作區所在國家 · {country} · {currency}",
+      "currencyFollowNoCountry": "工作區未設定國家 · {currency}",
+      "currencyHint": "跟隨工作區的目標國家（設定 → 一般），國家變更時自動更新。未設定國家時使用 USD。金額不會被換算。",
       "assignContact": "指派項目時，同時將聯絡人指派給管理員",
       "limit": "限制每位聯絡人的進行中項目數",
       "statusLabels": "狀態標籤",

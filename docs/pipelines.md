@@ -21,7 +21,7 @@ Ten tables (migration `20261025155532_pipelines`):
 
 | Table | Role |
 |---|---|
-| `Pipeline` | Name, `type`, stable `referenceName`, `currency`, `settings` jsonb. Unique per workspace on `referenceName` and on `name`. |
+| `Pipeline` | Name, `type`, stable `referenceName`, `currency` (nullable override, see [Currency](#currency)), `settings` jsonb. Unique per workspace on `referenceName` and on `name`. |
 | `PipelineStage` | Ordered by `position`; colors, description. `bulkJobId` is set while a queued stage job owns the stage. |
 | `PipelineItemCounter` | One row per workspace holding `lastNumber`; mirrors `EcommerceOrderCounter`. |
 | `PipelineItem` | The card: `number` (unique per workspace), title, plain-text description, `value` (`numeric(19,4)`; writes are rounded half away from zero to four decimals with `roundToMoneyScale` before the diff, so repeating an over-precise amount is a no-op, not a new `valueChanged`), `status`, `priority`, `dueDate`, `fieldValues` jsonb (`Record<PipelineField id, string>`), `stageEnteredAt`, `statusChangedAt`, current-closure `closedAt`, `lastCommentAt`, `idempotencyKey`. |
@@ -53,6 +53,51 @@ Rules worth knowing:
   Updates go through `pipelineSettingsPatchSchema` and `mergePipelineSettings`,
   which merges key by key so an untouched group is never reset.
 - Deleting a contact cascades its items (FK); activity rows stay.
+
+## Currency
+
+`Pipeline.currency` is a **nullable override**: `null` means the pipeline follows
+the workspace. The currency every reader sees (boards, API, events, variables)
+is the **effective currency**, `override ?? workspace default`, where the
+workspace default (`resolveWorkspaceDefault`, `pipeline/currency.ts`) is the
+primary currency of `Workspace.targetCountry` (`primaryCurrencyForCountry`,
+`@chatbotx.io/utils/country-currency`), or `USD` when the country is `null`,
+`"unknown"` or has no currency. The store currency is not consulted: a
+workspace without a store must not show one.
+
+Changing the currency never converts a value.
+
+- **Responses.** `currency` stays the effective string (backward compatible);
+  `currencyOverride` is the stored value or `null`. One mapper
+  (`withEffectiveCurrency` / `withEffectiveCurrencies`) serves every read, with
+  at most one workspace read per request and none when every row has an
+  override. The authoring catalog and access-check rows stay raw.
+- **Writes.** Create stores `null`. `pipelines.update` takes a 3-letter code to
+  set an override, or `currency: null` to follow the workspace again.
+  Duplicate copies the override (including `null`).
+- **Existing rows.** Pipelines created before this existed keep their stored
+  value (copied from the store currency at creation) as an explicit override, so no board changes unit on deploy. To follow
+  the country, switch the pipeline to "Follow workspace" or send
+  `currency: null`.
+- **Events and webhooks.** The currency is resolved once per operation (item
+  create, update, move; a transfer uses the destination pipeline; a stage
+  removal once per batch) and captured when the event is emitted, so a queued
+  webhook delivers the currency it was emitted with.
+- **Open boards.** When `Workspace.targetCountry` is written,
+  `notifyCurrencyFollowers` publishes the structure-changed realtime event for
+  each pipeline without an override (200 per keyset page), so every open board
+  and inbox panel refetches. It notifies on every write rather than on a
+  detected change: a before/after comparison races with a concurrent save, and
+  a refetch is cheap.
+- **Templates.** Export writes the raw override; a `null` follows the workspace
+  that installs it. Install keeps a valid code as an override and stores
+  `null` for anything else.
+- **Accepted staleness.** The workspace row is cached with `withCache`. A read that overlaps a save can repopulate the old value until
+  the next save or the 24 h TTL (`packages/redis/src/cache-utils.ts`). This is
+  the same guarantee every workspace setting has, and currency is display-only.
+- **Deploy.** Apply the migration (a nullable drop, safe for old code), then
+  replace builder and worker together: an old instance cannot read a `null`
+  currency. Rolling back to an old version is unsafe once `null` rows exist.
 
 ## Access scope and ACL
 
@@ -434,7 +479,8 @@ the inbox panel refetches every pipeline query on screen for its contact's
 items, a pipeline-wide change, or an event without `contactId` (older
 publishers).
 Pipeline settings updates and deletes also emit one, so open boards pick up a
-new currency, status labels or visible features. It carries no item data:
+new currency, status labels or visible features. A write of the workspace
+target country emits one per pipeline that follows the workspace currency (see [Currency](#currency)). It carries no item data:
 the client refetches through its authorised read.
 
 ## Flow step ("Pipelines")
@@ -547,7 +593,7 @@ Semantics:
 
 `{{pipelines.<reference_name>.<attr>}}` (`PIPELINE_VARIABLE_ATTRIBUTES`):
 `name` (item title), `stage_name`, `status` (the pipeline's label, e.g.
-"Resolved"), `priority`, `value` (formatted with the pipeline currency),
+"Resolved"), `priority`, `value` (formatted with the pipeline's effective currency),
 `assigned_admins` (names joined with `, `), `created_date`, `due_date`,
 `updated_date` (formatted in the contact's timezone), `id`.
 

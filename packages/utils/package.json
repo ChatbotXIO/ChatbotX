@@ -12,6 +12,7 @@
   "dependencies": {
     "@chatbotx.io/logger": "workspace:*",
     "@t3-oss/env-core": "^0.13.11",
+    "countries-list": "^3.3.0",
     "date-fns": "^4.4.0",
     "date-fns-tz": "^3.2.0",
     "sharp": "0.35.5",
@@ -25,6 +26,7 @@
     "./connection": "./src/connection.ts",
     "./contact-filter-value-format": "./src/contact-filter-value-format.ts",
     "./conversation": "./src/conversation.ts",
+    "./country-currency": "./src/country-currency.ts",
     "./crypto": "./src/crypto.ts",
     "./custom-field": "./src/custom-field.ts",
     "./datetime": "./src/datetime.ts",

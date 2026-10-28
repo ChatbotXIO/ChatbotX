@@ -1845,6 +1845,7 @@
       "label": "Clicked(%)"
     },
     "targetCountry": {
+      "currencyHint": "Angiver også standardvalutaen for pipelines uden egen valuta.",
       "description": "Den land where most af din kontakter live.",
       "label": "Target Land"
     },
@@ -10581,6 +10582,10 @@
       "referenceName": "Referencenavn",
       "referenceNameHint": "Bruges i variablerne pipelines.reference_name.stage_name. Hvis du ændrer det, holder beskeder med det gamle navn op med at virke.",
       "referenceNameFormat": "Brug små bogstaver, tal og understreger, og start med et bogstav (f.eks. close_date).",
+      "currency": "Valuta",
+      "currencyFollowCountry": "Arbejdsområdets land · {country} · {currency}",
+      "currencyFollowNoCountry": "Intet land for arbejdsområdet · {currency}",
+      "currencyHint": "Følger arbejdsområdets målland (Indstillinger → Generelt) og opdateres, når det ændres. Er der intet land, bruges USD. Værdier omregnes aldrig.",
       "assignContact": "Tildel kontakten til en administrator, når et element tildeles",
       "limit": "Begræns åbne elementer pr. kontakt",
       "statusLabels": "Statusetiketter",

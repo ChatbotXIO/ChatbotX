@@ -1845,6 +1845,7 @@
       "label": "Angeklickt (%)"
     },
     "targetCountry": {
+      "currencyHint": "Legt außerdem die Standardwährung für Pipelines ohne eigene Währung fest.",
       "description": "Das Land, in dem die meisten Ihrer Kontakte leben.",
       "label": "Zielland"
     },
@@ -10581,6 +10582,10 @@
       "referenceName": "Referenzname",
       "referenceNameHint": "Wird in den Variablen pipelines.reference_name.stage_name verwendet. Eine Änderung beschädigt Nachrichten, die den alten Namen verwenden.",
       "referenceNameFormat": "Nur Kleinbuchstaben, Ziffern und Unterstriche, beginnend mit einem Buchstaben (z. B. close_date).",
+      "currency": "Währung",
+      "currencyFollowCountry": "Land des Workspace · {country} · {currency}",
+      "currencyFollowNoCountry": "Kein Land für den Workspace · {currency}",
+      "currencyHint": "Folgt dem Zielland des Workspace (Einstellungen → Allgemein) und aktualisiert sich bei Änderungen. Ist kein Land festgelegt, gilt USD. Werte werden nie umgerechnet.",
       "assignContact": "Kontakt einem Administrator zuweisen, wenn ein Eintrag zugewiesen wird",
       "limit": "Offene Einträge pro Kontakt begrenzen",
       "statusLabels": "Status-Bezeichnungen",

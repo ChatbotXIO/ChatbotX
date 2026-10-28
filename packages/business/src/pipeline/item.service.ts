@@ -15,7 +15,6 @@ import {
 } from "@chatbotx.io/database/repositories"
 import type {
   PipelineItemModel,
-  PipelineModel,
   PipelineStageModel,
 } from "@chatbotx.io/database/types"
 import {
@@ -24,6 +23,7 @@ import {
   validationException,
 } from "../errors"
 import type { PipelineAccessScope } from "./access"
+import { type PipelineWithCurrency, withEffectiveCurrency } from "./currency"
 import {
   applyAssignees,
   assertAssigneesExist,
@@ -105,12 +105,15 @@ export class PipelineItemService extends PipelineItemBaseService {
   // Create --------------------------------------------------------------------
 
   async create(input: CreatePipelineItemInput): Promise<PipelineItemModel> {
-    const pipeline = await pipelineService.requireAccess({
-      workspaceId: input.workspaceId,
-      pipelineId: input.pipelineId,
-      scope: input.scope,
-      action: "edit",
-    })
+    const pipeline = await withEffectiveCurrency(
+      input.workspaceId,
+      await pipelineService.requireAccess({
+        workspaceId: input.workspaceId,
+        pipelineId: input.pipelineId,
+        scope: input.scope,
+        action: "edit",
+      }),
+    )
     return await this.mutate((context) =>
       this.createInTransaction(input, pipeline, context),
     )
@@ -118,7 +121,7 @@ export class PipelineItemService extends PipelineItemBaseService {
 
   private async createInTransaction(
     input: CreatePipelineItemInput,
-    pipeline: PipelineModel,
+    pipeline: PipelineWithCurrency,
     { tx, effects }: MutationContext,
   ): Promise<PipelineItemModel> {
     const { workspaceId, pipelineId, contactId, actor } = input
@@ -245,12 +248,15 @@ export class PipelineItemService extends PipelineItemBaseService {
   // Update / move -------------------------------------------------------------
 
   async update(input: UpdatePipelineItemInput): Promise<PipelineItemModel> {
-    const pipeline = await pipelineService.requireAccess({
-      workspaceId: input.workspaceId,
-      pipelineId: input.pipelineId,
-      scope: input.scope,
-      action: "edit",
-    })
+    const pipeline = await withEffectiveCurrency(
+      input.workspaceId,
+      await pipelineService.requireAccess({
+        workspaceId: input.workspaceId,
+        pipelineId: input.pipelineId,
+        scope: input.scope,
+        action: "edit",
+      }),
+    )
     return await this.mutate((context) =>
       this.updateInTransaction(input, pipeline, context),
     )
@@ -258,7 +264,7 @@ export class PipelineItemService extends PipelineItemBaseService {
 
   private async updateInTransaction(
     input: UpdatePipelineItemInput,
-    pipeline: PipelineModel,
+    pipeline: PipelineWithCurrency,
     { tx, effects }: MutationContext,
   ): Promise<PipelineItemModel> {
     const { workspaceId, pipelineId, itemId, fields, actor } = input
@@ -505,12 +511,16 @@ export class PipelineItemService extends PipelineItemBaseService {
       scope: input.scope,
       action: "edit",
     })
-    const destination = await pipelineService.requireAccess({
-      workspaceId: input.workspaceId,
-      pipelineId: input.destinationPipelineId,
-      scope: input.scope,
-      action: "edit",
-    })
+    // The event carries the destination's currency: the item now lives there.
+    const destination = await withEffectiveCurrency(
+      input.workspaceId,
+      await pipelineService.requireAccess({
+        workspaceId: input.workspaceId,
+        pipelineId: input.destinationPipelineId,
+        scope: input.scope,
+        action: "edit",
+      }),
+    )
     const transferred = await this.mutate((context) =>
       this.transferInTransaction(input, destination, context),
     )
@@ -529,7 +539,7 @@ export class PipelineItemService extends PipelineItemBaseService {
       destinationStageId?: string
       actor: PipelineActor
     },
-    destination: PipelineModel,
+    destination: PipelineWithCurrency,
     { tx, effects }: MutationContext,
   ): Promise<PipelineItemModel> {
     const { workspaceId, pipelineId, itemId, actor } = input

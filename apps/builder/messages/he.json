@@ -6035,6 +6035,7 @@
       "label": "נלחץ (%)"
     },
     "targetCountry": {
+      "currencyHint": "קובע גם את מטבע ברירת המחדל של פייפליינים שאין להם מטבע משלהם.",
       "description": "המדינה שבה מתגוררים רוב אנשי הקשר שלכם.",
       "label": "מדינת יעד"
     },
@@ -10581,6 +10582,10 @@
       "referenceName": "שם הפניה",
       "referenceNameHint": "משמש במשתנים pipelines.reference_name.stage_name. שינויו ישבש הודעות שמשתמשות בשם הישן.",
       "referenceNameFormat": "השתמשו באותיות לטיניות קטנות, ספרות וקו תחתון, החל באות (למשל close_date).",
+      "currency": "מטבע",
+      "currencyFollowCountry": "מדינת סביבת העבודה · {country} · {currency}",
+      "currencyFollowNoCountry": "לא הוגדרה מדינה לסביבת העבודה · {currency}",
+      "currencyHint": "עוקב אחר מדינת היעד של סביבת העבודה (הגדרות ← כללי) ומתעדכן כשהיא משתנה. אם לא הוגדרה מדינה, נעשה שימוש ב-USD. ערכים אינם מומרים לעולם.",
       "assignContact": "הקצאת איש הקשר למנהל כאשר פריט מוקצה",
       "limit": "הגבלת מספר הפריטים הפתוחים לכל איש קשר",
       "statusLabels": "תוויות סטטוס",

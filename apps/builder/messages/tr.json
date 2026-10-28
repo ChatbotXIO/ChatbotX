@@ -2000,6 +2000,7 @@
       "label": "Tıklandı (%)"
     },
     "targetCountry": {
+      "currencyHint": "Kendi para birimi olmayan işlem hatlarının varsayılan para birimini de belirler.",
       "description": "Kişilerinizin çoğunun yaşadığı ülke.",
       "label": "Hedef Ülke"
     },
@@ -10581,6 +10582,10 @@
       "referenceName": "Referans adı",
       "referenceNameHint": "pipelines.reference_name.stage_name değişkenlerinde kullanılır. Değiştirmek, eski adı kullanan mesajları bozar.",
       "referenceNameFormat": "Küçük harf, rakam ve alt çizgi kullanın, harfle başlayın (örn. close_date).",
+      "currency": "Para birimi",
+      "currencyFollowCountry": "Çalışma alanının ülkesi · {country} · {currency}",
+      "currencyFollowNoCountry": "Çalışma alanı ülkesi yok · {currency}",
+      "currencyHint": "Çalışma alanının Hedef Ülkesini (Ayarlar → Genel) izler ve o değiştiğinde güncellenir. Ülke ayarlanmamışsa USD kullanılır. Değerler asla dönüştürülmez.",
       "assignContact": "Bir öğe atandığında kişiyi bir yöneticiye ata",
       "limit": "Kişi başına açık öğe sayısını sınırla",
       "statusLabels": "Durum etiketleri",

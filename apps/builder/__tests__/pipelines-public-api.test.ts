@@ -6,6 +6,7 @@ import {
 } from "@chatbotx.io/database/partials"
 import { describe, expect, test } from "vitest"
 import { toItemListQuery } from "../src/features/pipelines/lib/list-items-query"
+import { toPublicPipeline } from "../src/features/pipelines/lib/map-public"
 import {
   createItemPublicRequest,
   deleteStagePublicRequest,
@@ -15,6 +16,7 @@ import {
   updatePipelinePublicRequest,
 } from "../src/features/pipelines/schema/public"
 import { pipelineItemFilterRequest } from "../src/features/pipelines/schema/query"
+import { publicPipelineResource } from "../src/features/pipelines/schema/resource"
 
 describe("pipelines public request schemas", () => {
   test("a settings patch keeps only what the caller sent", () => {
@@ -24,6 +26,58 @@ describe("pipelines public request schemas", () => {
     })
 
     expect(parsed.settings).toEqual({ assignContactOnAssign: true })
+  })
+
+  test("update takes a currency code, null to follow the workspace, or nothing", () => {
+    const parse = (body: object) =>
+      updatePipelinePublicRequest.parse({ id: "1", ...body }).currency
+
+    expect(parse({ currency: "VND" })).toBe("VND")
+    expect(parse({ currency: null })).toBeNull()
+    expect(parse({})).toBeUndefined()
+  })
+
+  test.each([
+    ["vnd"],
+    ["VN"],
+    ["VNDD"],
+    [""],
+  ])("update rejects the malformed currency %j", (currency) => {
+    expect(
+      updatePipelinePublicRequest.safeParse({ id: "1", currency }).success,
+    ).toBe(false)
+  })
+
+  test("a pipeline resource carries the effective currency and the override", () => {
+    const base = {
+      id: "1",
+      name: "Sales",
+      type: "opportunity" as const,
+      referenceName: "sales",
+      settings: pipelineSettingsSchema.parse({}),
+      createdAt: new Date("2026-01-01T00:00:00.000Z"),
+      updatedAt: new Date("2026-01-02T00:00:00.000Z"),
+    }
+
+    const following = toPublicPipeline({
+      ...base,
+      currency: "VND",
+      currencyOverride: null,
+    } as Parameters<typeof toPublicPipeline>[0])
+    const overridden = toPublicPipeline({
+      ...base,
+      currency: "USD",
+      currencyOverride: "USD",
+    } as Parameters<typeof toPublicPipeline>[0])
+
+    expect(publicPipelineResource.parse(following)).toMatchObject({
+      currency: "VND",
+      currencyOverride: null,
+    })
+    expect(publicPipelineResource.parse(overridden)).toMatchObject({
+      currency: "USD",
+      currencyOverride: "USD",
+    })
   })
 
   test("merging a one-group patch leaves every other stored setting alone", () => {

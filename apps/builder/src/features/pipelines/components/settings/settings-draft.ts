@@ -9,6 +9,8 @@ import type { SettingsPipeline } from "./use-save-settings"
 /** Everything the settings sheet edits before one Save. */
 export type SettingsDraft = {
   referenceName: string
+  /** ISO 4217 override; "" follows the workspace. Changing it converts nothing. */
+  currency: string
   /** The limit checkbox and its raw number input (kept while unchecked). */
   limit: { enabled: boolean; value: string }
   assignContactOnAssign: boolean
@@ -42,6 +44,7 @@ export function draftFromPipeline(pipeline: SettingsPipeline): SettingsDraft {
   const { settings } = pipeline
   return {
     referenceName: pipeline.referenceName,
+    currency: pipeline.currencyOverride ?? "",
     limit:
       settings.maxOpenItemsPerContact === null
         ? { enabled: false, value: "" }
@@ -75,7 +78,12 @@ const sameValue = <T>(a: T, b: T) =>
 export function buildPipelineUpdate(
   base: SettingsDraft,
   draft: SettingsDraft,
-): { referenceName?: string; settings?: PipelineSettingsPatch } | null {
+): {
+  referenceName?: string
+  /** `null` follows the workspace again. */
+  currency?: string | null
+  settings?: PipelineSettingsPatch
+} | null {
   const changed = <K extends keyof SettingsDraft>(key: K) =>
     !sameValue(draft[key], base[key])
   const limit = parseLimit(draft.limit)
@@ -94,6 +102,7 @@ export function buildPipelineUpdate(
   }
   const update = {
     ...(changed("referenceName") ? { referenceName: draft.referenceName } : {}),
+    ...(changed("currency") ? { currency: draft.currency || null } : {}),
     ...(Object.keys(settings).length > 0 ? { settings } : {}),
   }
   return Object.keys(update).length > 0 ? update : null
@@ -112,6 +121,7 @@ export function rebaseDraft(
     sameValue(draft[key], previousBase[key]) ? nextBase[key] : draft[key]
   return {
     referenceName: pick("referenceName"),
+    currency: pick("currency"),
     limit: pick("limit"),
     assignContactOnAssign: pick("assignContactOnAssign"),
     visibleFeatures: pick("visibleFeatures"),

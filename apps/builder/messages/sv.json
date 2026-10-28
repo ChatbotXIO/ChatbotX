@@ -3372,6 +3372,7 @@
       "label": "Taggar"
     },
     "targetCountry": {
+      "currencyHint": "Anger också standardvalutan för pipelines utan egen valuta.",
       "description": "Landet där de flesta av dina kontakter bor.",
       "label": "Målland"
     },
@@ -10581,6 +10582,10 @@
       "referenceName": "Referensnamn",
       "referenceNameHint": "Används i variablerna pipelines.reference_name.stage_name. Om du ändrar det slutar meddelanden som använder det gamla namnet att fungera.",
       "referenceNameFormat": "Använd små bokstäver, siffror och understreck, och börja med en bokstav (t.ex. close_date).",
+      "currency": "Valuta",
+      "currencyFollowCountry": "Arbetsytans land · {country} · {currency}",
+      "currencyFollowNoCountry": "Inget land för arbetsytan · {currency}",
+      "currencyHint": "Följer arbetsytans målland (Inställningar → Allmänt) och uppdateras när det ändras. Om inget land är angivet används USD. Värden räknas aldrig om.",
       "assignContact": "Tilldela kontakten till en administratör när ett objekt tilldelas",
       "limit": "Begränsa öppna objekt per kontakt",
       "statusLabels": "Statusetiketter",

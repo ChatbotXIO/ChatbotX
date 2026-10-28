@@ -232,7 +232,8 @@ describe.skipIf(!databaseUrl)("pipeline services", () => {
       const stages = await stagesOf(own, ticket.id)
       expect(stages.map((stage) => stage.name)).toEqual(["New Issue"])
       expect(ticket.settings.statusLabels.won).toBe("Resolved")
-      expect(ticket.currency).toBe("VND")
+      // No override and no workspace country: USD, never the store currency.
+      expect(ticket.currency).toBe("USD")
     })
 
     test("suffixes a duplicate name and reference name instead of failing", async () => {
@@ -3242,6 +3243,365 @@ describe.skipIf(!databaseUrl)("pipeline services", () => {
       expect(
         activity.items.filter((row) => row.kind === "valueChanged"),
       ).toHaveLength(1)
+    })
+  })
+
+  describe("currency", () => {
+    const setTargetCountry = async (targetCountry: string | null) => {
+      await db
+        .update(workspaceModel)
+        .set({ targetCountry })
+        .where(eq(workspaceModel.id, own.workspaceId))
+    }
+
+    const currencyOf = async (pipelineId: string) =>
+      (
+        await pipelineService.get({
+          workspaceId: own.workspaceId,
+          id: pipelineId,
+          scope: token,
+        })
+      ).pipeline
+
+    test("a new pipeline stores no override and follows the target country", async () => {
+      await setTargetCountry("JP")
+      const created = await newPipeline(own)
+
+      expect(created.currencyOverride).toBeNull()
+      expect(created.currency).toBe("JPY")
+      const stored = await db.query.pipelineModel.findFirst({
+        where: { id: created.id },
+        columns: { currency: true },
+      })
+      expect(stored?.currency).toBeNull()
+    })
+
+    test("without a country the default is USD, not the store currency", async () => {
+      expect((await newPipeline(own)).currency).toBe("USD")
+    })
+
+    test("changing the country changes every following pipeline, not an override", async () => {
+      await setTargetCountry("JP")
+      const following = await newPipeline(own, "Follows")
+      const overridden = await newPipeline(own, "Overridden")
+      await pipelineService.update({
+        workspaceId: own.workspaceId,
+        id: overridden.id,
+        values: { currency: "USD" },
+        scope: token,
+      })
+
+      await setTargetCountry("VN")
+
+      expect((await currencyOf(following.id)).currency).toBe("VND")
+      expect((await currencyOf(overridden.id)).currency).toBe("USD")
+      const listed = await pipelineService.list({
+        workspaceId: own.workspaceId,
+        scope: token,
+      })
+      expect(
+        Object.fromEntries(
+          listed.map(({ pipeline }) => [pipeline.name, pipeline.currency]),
+        ),
+      ).toEqual({ Follows: "VND", Overridden: "USD" })
+    })
+
+    test("null resets an override to follow the workspace", async () => {
+      await setTargetCountry("JP")
+      const pipeline = await newPipeline(own)
+      const overridden = await pipelineService.update({
+        workspaceId: own.workspaceId,
+        id: pipeline.id,
+        values: { currency: "USD" },
+        scope: token,
+      })
+      expect(overridden).toMatchObject({
+        currency: "USD",
+        currencyOverride: "USD",
+      })
+
+      const reset = await pipelineService.update({
+        workspaceId: own.workspaceId,
+        id: pipeline.id,
+        values: { currency: null },
+        scope: token,
+      })
+
+      expect(reset).toMatchObject({ currency: "JPY", currencyOverride: null })
+    })
+
+    test("a duplicate keeps the source's override, or follows like it", async () => {
+      await setTargetCountry("JP")
+      const following = await newPipeline(own, "Source follows")
+      const overridden = await newPipeline(own, "Source overridden")
+      await pipelineService.update({
+        workspaceId: own.workspaceId,
+        id: overridden.id,
+        values: { currency: "USD" },
+        scope: token,
+      })
+
+      const followingCopy = await pipelineService.duplicate({
+        workspaceId: own.workspaceId,
+        id: following.id,
+        scope: token,
+        actor,
+      })
+      const overriddenCopy = await pipelineService.duplicate({
+        workspaceId: own.workspaceId,
+        id: overridden.id,
+        scope: token,
+        actor,
+      })
+
+      expect(followingCopy).toMatchObject({
+        currency: "JPY",
+        currencyOverride: null,
+      })
+      expect(overriddenCopy).toMatchObject({
+        currency: "USD",
+        currencyOverride: "USD",
+      })
+    })
+
+    test("the board says which country and currency following means", async () => {
+      await setTargetCountry("JP")
+      const pipeline = await newPipeline(own)
+      await pipelineService.update({
+        workspaceId: own.workspaceId,
+        id: pipeline.id,
+        values: { currency: "USD" },
+        scope: token,
+      })
+
+      const detail = await pipelineService.get({
+        workspaceId: own.workspaceId,
+        id: pipeline.id,
+        scope: token,
+      })
+      const board = await pipelineItemQueryService.listBoard({
+        workspaceId: own.workspaceId,
+        pipelineId: pipeline.id,
+        scope: token,
+      })
+
+      // The pipeline overrides, yet the choice still shows what it would follow.
+      expect(board.workspaceDefault).toEqual({ currency: "JPY", country: "JP" })
+      expect(board.pipeline.currency).toBe("USD")
+      expect(detail.pipeline.currency).toBe("USD")
+    })
+
+    test("without a country the default is USD and names no country", async () => {
+      const pipeline = await newPipeline(own)
+
+      const board = await pipelineItemQueryService.listBoard({
+        workspaceId: own.workspaceId,
+        pipelineId: pipeline.id,
+        scope: token,
+      })
+
+      expect(board.workspaceDefault).toEqual({ currency: "USD", country: null })
+    })
+
+    test("board and contact panel carry the effective currency", async () => {
+      await setTargetCountry("JP")
+      const pipeline = await newPipeline(own)
+      await newItem(own, pipeline.id)
+
+      const board = await pipelineItemQueryService.listBoard({
+        workspaceId: own.workspaceId,
+        pipelineId: pipeline.id,
+        scope: token,
+      })
+      const forContact = await pipelineItemQueryService.listForContact({
+        workspaceId: own.workspaceId,
+        contactId: own.contactIds[0],
+        scope: token,
+      })
+
+      expect(board.pipeline).toMatchObject({
+        currency: "JPY",
+        currencyOverride: null,
+      })
+      expect(forContact[0].pipeline).toMatchObject({
+        currency: "JPY",
+        currencyOverride: null,
+      })
+    })
+
+    test("create, update and move events all carry the effective currency", async () => {
+      await setTargetCountry("JP")
+      const pipeline = await newPipeline(own)
+      const stage = await pipelineStructureService.createStage({
+        workspaceId: own.workspaceId,
+        pipelineId: pipeline.id,
+        scope: token,
+        name: "Won",
+      })
+
+      const item = await newItem(own, pipeline.id)
+      await pipelineItemService.update({
+        workspaceId: own.workspaceId,
+        pipelineId: pipeline.id,
+        itemId: item.id,
+        fields: {
+          value: 5,
+          status: "won",
+          priority: "high",
+          stageId: stage.id,
+        },
+        scope: token,
+        actor,
+      })
+
+      const currencies = mocks.emitPipelineItemEvent.mock.calls.map(
+        ([, , , metadata]) => metadata.currency,
+      )
+      expect(currencies.length).toBeGreaterThan(1)
+      expect(new Set(currencies)).toEqual(new Set(["JPY"]))
+    })
+
+    test("a transfer event carries the destination's currency", async () => {
+      await setTargetCountry("JP")
+      const source = await newPipeline(own, "Currency src")
+      const destination = await newPipeline(own, "Currency dst")
+      await pipelineService.update({
+        workspaceId: own.workspaceId,
+        id: destination.id,
+        values: { currency: "USD" },
+        scope: token,
+      })
+      const item = await newItem(own, source.id)
+      mocks.emitPipelineItemEvent.mockClear()
+
+      await pipelineItemService.transfer({
+        workspaceId: own.workspaceId,
+        pipelineId: source.id,
+        itemId: item.id,
+        destinationPipelineId: destination.id,
+        scope: token,
+        actor,
+      })
+
+      expect(mocks.emitPipelineItemEvent).toHaveBeenCalledWith(
+        "pipelineItemMovedToStage",
+        own.workspaceId,
+        own.contactIds[0],
+        expect.objectContaining({ currency: "USD" }),
+      )
+    })
+
+    test("a stage removal that moves items emits the effective currency", async () => {
+      await setTargetCountry("JP")
+      const pipeline = await newPipeline(own)
+      const [first] = await stagesOf(own, pipeline.id)
+      const target = await pipelineStructureService.createStage({
+        workspaceId: own.workspaceId,
+        pipelineId: pipeline.id,
+        scope: token,
+        name: "Target",
+      })
+      await newItem(own, pipeline.id)
+      mocks.emitPipelineItemEvent.mockClear()
+
+      await pipelineStageBulkService.deleteStage({
+        workspaceId: own.workspaceId,
+        pipelineId: pipeline.id,
+        stageId: first.id,
+        moveItemsToStageId: target.id,
+        scope: token,
+        actor,
+      })
+
+      expect(mocks.emitPipelineItemEvent).toHaveBeenCalledWith(
+        "pipelineItemMovedToStage",
+        own.workspaceId,
+        own.contactIds[0],
+        expect.objectContaining({ currency: "JPY" }),
+      )
+    })
+
+    test("a queued stage removal emits the effective currency for every batch", async () => {
+      await setTargetCountry("JP")
+      const pipeline = await newPipeline(own)
+      const target = await pipelineStructureService.createStage({
+        workspaceId: own.workspaceId,
+        pipelineId: pipeline.id,
+        scope: token,
+        name: "Target",
+      })
+      const [first] = await stagesOf(own, pipeline.id)
+      await db.execute(sql`
+        INSERT INTO "PipelineItem" ("id","workspaceId","pipelineId","stageId","contactId","number","title","status","priority","fieldValues","stageEnteredAt","updatedAt")
+        SELECT (1000000000000 + g)::bigint, ${own.workspaceId}::bigint, ${pipeline.id}::bigint, ${first.id}::bigint, ${own.contactIds[0]}::bigint, g, 'bulk ' || g, 'lost', 'low', '{}'::jsonb, now(), now()
+        FROM generate_series(1, 2001) AS g`)
+      const result = await pipelineStageBulkService.deleteStage({
+        workspaceId: own.workspaceId,
+        pipelineId: pipeline.id,
+        stageId: first.id,
+        moveItemsToStageId: target.id,
+        scope: token,
+        actor,
+      })
+      expect(result).toMatchObject({ queued: true })
+      mocks.emitPipelineItemEvent.mockClear()
+
+      await pipelineStageBulkService.processQueued({
+        workspaceId: own.workspaceId,
+        pipelineId: pipeline.id,
+        stageId: first.id,
+        bulkJobId: (result as { jobId: string }).jobId,
+        moveItemsToStageId: target.id,
+        actorUserId: null,
+        actorKind: "user",
+        actorSourceId: null,
+      })
+
+      const currencies = mocks.emitPipelineItemEvent.mock.calls.map(
+        ([, , , metadata]) => metadata.currency,
+      )
+      expect(currencies.length).toBeGreaterThan(0)
+      expect(new Set(currencies)).toEqual(new Set(["JPY"]))
+    })
+
+    test("a queued webhook payload keeps the currency it was emitted with", async () => {
+      await setTargetCountry("JP")
+      const pipeline = await newPipeline(own)
+      await newItem(own, pipeline.id)
+      await setTargetCountry("VN")
+
+      const emitted = mocks.emitPipelineItemEvent.mock.calls.find(
+        ([type]) => type === "pipelineItemCreated",
+      )
+      expect(emitted?.[3]).toMatchObject({ currency: "JPY" })
+    })
+
+    test("a template entry keeps a valid code as an override and follows otherwise", async () => {
+      await setTargetCountry("JP")
+      const install = (referenceName: string, currency: string | null) =>
+        db.transaction((tx) =>
+          pipelineTemplateService.resolveTemplateEntry({
+            tx,
+            workspaceId: own.workspaceId,
+            entry: {
+              name: referenceName,
+              referenceName,
+              type: "opportunity",
+              currency,
+              settings: {},
+              stages: [],
+              fields: [],
+            },
+          }),
+        )
+
+      const kept = await install("tpl_kept", "USD")
+      const followed = await install("tpl_followed", null)
+      const malformed = await install("tpl_malformed", "usd")
+
+      expect(kept.pipeline.currency).toBe("USD")
+      expect(followed.pipeline.currency).toBeNull()
+      expect(malformed.pipeline.currency).toBeNull()
     })
   })
 })

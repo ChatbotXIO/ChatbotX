@@ -35,6 +35,7 @@ import {
 } from "../errors"
 import { isCommunity } from "../keys"
 import { logger } from "../logger"
+import { notifyCurrencyFollowers } from "../pipeline/currency-refresh"
 import { quotaEnforcementService } from "../quota-enforcement/service"
 import { userQuotaService } from "../user-quota/service"
 import { workspaceDeletionRecordService } from "../workspace-deletion-record/service"
@@ -238,7 +239,15 @@ class WorkspaceService extends BaseService {
     if (Object.keys(picked).length === 0) {
       return await this.findById({ id: props.id })
     }
-    return await this.update({ id: props.id, data: picked })
+    const updated = await this.update({ id: props.id, data: picked })
+    if (props.data.targetCountry !== undefined) {
+      // Pipelines without a currency override show the country's currency.
+      // Notified on every write of the country, not only on a change: comparing
+      // with a value read before the write races with a concurrent save (the
+      // later one would see no change and skip), and a refetch is cheap.
+      await notifyCurrencyFollowers(props.id)
+    }
+    return updated
   }
 
   async update(props: {

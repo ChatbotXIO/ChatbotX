@@ -1845,6 +1845,7 @@
       "label": "Diklik(%)"
     },
     "targetCountry": {
+      "currencyHint": "Juga menentukan mata uang default pipeline yang tidak memiliki mata uang sendiri.",
       "description": "Negara tempat sebagian besar kontak Anda tinggal.",
       "label": "Negara Target"
     },
@@ -10581,6 +10582,10 @@
       "referenceName": "Nama referensi",
       "referenceNameHint": "Digunakan dalam variabel pipelines.reference_name.stage_name. Mengubahnya akan merusak pesan yang memakai nama lama.",
       "referenceNameFormat": "Gunakan huruf kecil, angka, dan garis bawah, diawali huruf (mis. close_date).",
+      "currency": "Mata uang",
+      "currencyFollowCountry": "Negara ruang kerja · {country} · {currency}",
+      "currencyFollowNoCountry": "Ruang kerja belum punya negara · {currency}",
+      "currencyHint": "Mengikuti Negara Target ruang kerja (Pengaturan → Umum) dan diperbarui saat negara berubah. Jika negara belum diatur, USD yang dipakai. Nilai tidak pernah dikonversi.",
       "assignContact": "Tugaskan kontak ke admin saat item ditugaskan",
       "limit": "Batasi item terbuka per kontak",
       "statusLabels": "Label status",

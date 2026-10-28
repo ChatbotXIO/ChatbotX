@@ -7,10 +7,7 @@ import {
   pipelineReferenceRepository,
   pipelineStageRepository,
 } from "@chatbotx.io/database/repositories"
-import type {
-  PipelineModel,
-  PipelineStageModel,
-} from "@chatbotx.io/database/types"
+import type { PipelineStageModel } from "@chatbotx.io/database/types"
 import { DefaultJobAction, defaultQueue } from "@chatbotx.io/worker-config"
 import { BaseService } from "../base.service"
 import {
@@ -25,6 +22,12 @@ import {
   type PipelineAction,
   permitsPipelineAction,
 } from "./access"
+import {
+  applyEffectiveCurrency,
+  type PipelineWithCurrency,
+  resolveWorkspaceCurrency,
+  withEffectiveCurrency,
+} from "./currency"
 import {
   activityRowFor,
   dispatchPipelineEffects,
@@ -98,13 +101,15 @@ export class PipelineStageBulkService extends BaseService {
     actor: PipelineActor
   }): Promise<DeleteStageResult> {
     const { workspaceId, pipelineId, stageId } = input
-    const { pipeline, permissions } =
-      await pipelineService.requireAccessWithPermissions({
-        workspaceId,
-        pipelineId,
-        scope: input.scope,
-        action: "manageSettings",
-      })
+    const access = await pipelineService.requireAccessWithPermissions({
+      workspaceId,
+      pipelineId,
+      scope: input.scope,
+      action: "manageSettings",
+    })
+    const { permissions } = access
+    // Resolved once, before the drain: every event of the run carries it.
+    const pipeline = await withEffectiveCurrency(workspaceId, access.pipeline)
     const mode = removalMode(input.moveItemsToStageId)
 
     const prepared = await db.transaction(async (tx) => {
@@ -248,6 +253,9 @@ export class PipelineStageBulkService extends BaseService {
 
     for (;;) {
       const effects: PipelineEffect[] = []
+      // Once per batch, before the transaction: resolving inside it would take
+      // a second pool connection while the structure lock is held.
+      const workspaceCurrency = await resolveWorkspaceCurrency(workspaceId)
       const batch = await db.transaction(async (tx): Promise<BatchOutcome> => {
         // Serialise with structure edits for this batch only; the lock is not
         // held across batches so other edits are not starved.
@@ -283,13 +291,14 @@ export class PipelineStageBulkService extends BaseService {
           )
           return { kind: "aborted" }
         }
-        const pipeline = await pipelineService.requireAccess({
+        const row = await pipelineService.requireAccess({
           workspaceId,
           pipelineId,
           scope: { kind: "support" },
           action: "view",
           tx,
         })
+        const pipeline = applyEffectiveCurrency(row, workspaceCurrency)
         // The user who queued the removal may have deleted their account since:
         // their activity rows then carry no user instead of failing every batch.
         const actorExists =
@@ -458,7 +467,7 @@ export class PipelineStageBulkService extends BaseService {
   /** Processes the stage's items; returns how many rows it handled. */
   private async drain(input: {
     tx: DatabaseClient
-    pipeline: PipelineModel
+    pipeline: PipelineWithCurrency
     stage: PipelineStageModel
     stages: PipelineStageModel[]
     removal: ResolvedRemoval

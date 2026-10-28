@@ -11,10 +11,10 @@ import { MultiSelectField } from "@chatbotx.io/ui/components/form/multi-select-f
 import { SelectField } from "@chatbotx.io/ui/components/form/select-field"
 import { Form } from "@chatbotx.io/ui/components/ui/form"
 import { TriangleAlertIcon } from "lucide-react"
-import { useLocale, useTranslations } from "next-intl"
-import { useMemo } from "react"
+import { useTranslations } from "next-intl"
 import { useForm } from "react-hook-form"
 import { PERCENT_INPUT_PROPS } from "@/features/products/constants"
+import { useCurrencyOptions } from "@/hooks/use-currency-options"
 import { useInvalidFormToast } from "@/lib/validation/use-request-resolver"
 import type { EcommerceSettingsPublicResource } from "../schema/public"
 import { SettingRow, SettingsSaveBar } from "./setting-row"
@@ -23,18 +23,6 @@ import { useSettingsSave } from "./use-settings-save"
 
 type PaymentFormValues = Omit<EcommercePaymentSettings, "currencySymbol"> & {
   currencySymbol: string
-}
-
-/** Every ISO 4217 currency the runtime knows, by its name ("Vietnamese Dong"). */
-const useCurrencyOptions = (current: string) => {
-  const locale = useLocale()
-  return useMemo(() => {
-    const names = new Intl.DisplayNames([locale], { type: "currency" })
-    const codes = new Set([current, ...Intl.supportedValuesOf("currency")])
-    return [...codes]
-      .map((code) => ({ value: code, label: names.of(code) ?? code }))
-      .sort((a, b) => a.label.localeCompare(b.label, locale))
-  }, [current, locale])
 }
 
 const toRequest = (values: PaymentFormValues) => ({

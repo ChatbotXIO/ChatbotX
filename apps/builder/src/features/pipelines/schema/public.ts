@@ -91,8 +91,11 @@ export const updatePipelinePublicRequest = pipelineIdRequest.extend({
   currency: z
     .string()
     .regex(PIPELINE_LIMITS.currencyPattern, "Use a 3-letter ISO 4217 code")
+    .nullable()
     .optional()
-    .describe("ISO 4217 currency code item values are in, e.g. `USD`."),
+    .describe(
+      "ISO 4217 currency code item values are in, e.g. `USD`. Null makes the pipeline follow the workspace default again (the currency of the workspace target country from `workspaces.update`, else USD).",
+    ),
   settings: pipelineSettingsPatchSchema
     .optional()
     .describe(

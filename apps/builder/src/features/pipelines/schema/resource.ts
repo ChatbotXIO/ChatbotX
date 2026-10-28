@@ -30,7 +30,17 @@ export const publicPipelineResource = z.object({
   referenceName: z
     .string()
     .describe("Stable machine name used by `{{pipelines.<referenceName>.*}}`."),
-  currency: z.string().describe("ISO 4217 code item values are in."),
+  currency: z
+    .string()
+    .describe(
+      "ISO 4217 code item values are in: the pipeline's own `currencyOverride`, else the workspace default (the currency of its target country, else USD).",
+    ),
+  currencyOverride: z
+    .string()
+    .nullable()
+    .describe(
+      "The currency set on this pipeline, or null when it follows the workspace default. Set it with `pipelines.update`; send `currency: null` there to follow the workspace again.",
+    ),
   settings: pipelineSettingsSchema,
   createdAt: z.date(),
   updatedAt: z.date(),

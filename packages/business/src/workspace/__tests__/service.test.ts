@@ -191,6 +191,10 @@ vi.mock("../../audit/dispatcher", () => ({
   dispatchAuditRecord: mocks.dispatchAuditRecord,
 }))
 
+vi.mock("../../pipeline/currency-refresh", () => ({
+  notifyCurrencyFollowers: vi.fn(async () => undefined),
+}))
+
 vi.mock("../../workspace-member/service", () => ({
   workspaceMemberCacheTag: vi.fn((userId: string) => `member:${userId}`),
   workspaceMemberService: {
