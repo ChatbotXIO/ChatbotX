@@ -146,7 +146,11 @@ describe("tiktokIntegrationService.setCommentToMessage", () => {
       id: "tt-1",
       auth: {
         ...auth,
-        metadata: { openId: "open-1", scopes: ["comment.list"] },
+        metadata: {
+          openId: "open-1",
+          scopes: ["comment.list"],
+          features: { messaging: false, comments: true },
+        },
       },
     })
 

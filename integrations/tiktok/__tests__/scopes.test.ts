@@ -258,20 +258,44 @@ describe("channel features", () => {
 })
 
 describe("tiktokCanMessage", () => {
-  test("a grant with every messaging scope can message", () => {
-    expect(tiktokCanMessage(buildAuth([...TIKTOK_CORE_SCOPES]))).toBe(true)
-  })
+  const withFeatures = (
+    scopes: string[] | undefined,
+    features?: { messaging: boolean; comments: boolean },
+  ) => {
+    const auth = buildAuth(scopes)
+    return { metadata: { ...auth.metadata, features } }
+  }
 
-  test("a comments-only grant cannot", () => {
+  test("a connection made with messaging on can message", () => {
     expect(
       tiktokCanMessage(
-        buildAuth([...TIKTOK_IDENTITY_SCOPES, ...TIKTOK_COMMENT_CORE_SCOPES]),
+        withFeatures([...TIKTOK_CORE_SCOPES], {
+          messaging: true,
+          comments: true,
+        }),
+      ),
+    ).toBe(true)
+  })
+
+  test("a connection made with messaging off cannot", () => {
+    expect(
+      tiktokCanMessage(
+        withFeatures(
+          [...TIKTOK_IDENTITY_SCOPES, ...TIKTOK_COMMENT_CORE_SCOPES],
+          { messaging: false, comments: true },
+        ),
       ),
     ).toBe(false)
   })
 
-  // Messaging was required to connect at all before scopes were recorded.
-  test("a connection with no recorded scopes counts as able", () => {
+  // Messaging was required to connect at all before features existed.
+  test("a connection made before features existed counts as able", () => {
     expect(tiktokCanMessage(buildAuth())).toBe(true)
+  })
+
+  // Both refresh paths re-stamp `scopes` from TikTok's refresh response; an
+  // empty answer there must not cut off a working DM connection.
+  test("an empty re-stamped scope list does not revoke messaging", () => {
+    expect(tiktokCanMessage(buildAuth([]))).toBe(true)
   })
 })

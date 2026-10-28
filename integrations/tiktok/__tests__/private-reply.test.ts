@@ -116,6 +116,7 @@ describe("sendPrivateReply handler", () => {
             metadata: {
               openId: BUSINESS_ID,
               scopes: ["user.info.basic", "comment.list"],
+              features: { messaging: false, comments: true },
             },
           },
         },

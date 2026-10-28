@@ -248,16 +248,13 @@ export const assertTiktokGrant = (
  * Whether this connection may send DMs — the private reply to a comment
  * included, which TikTok delivers as a message.
  *
- * Read from the granted set, like {@link tiktokCanListVideos}. A connection
- * made before scopes were recorded carries none, and counts as able: the
- * messaging scopes were required to connect at all back then.
+ * Read from the features stamped at connect, NOT from `metadata.scopes`: both
+ * token-refresh paths re-stamp the scope list from TikTok's refresh response,
+ * so an empty or partial answer there would silently turn a working DM
+ * connection into a refused one. A connection with messaging on cannot lack
+ * the messaging scopes — the connect refuses that grant — and one made before
+ * features existed was connected with messaging required.
  */
 export const tiktokCanMessage = (auth: {
   metadata?: TiktokAuthValue["metadata"] | undefined
-}): boolean => {
-  const granted = auth.metadata?.scopes
-  if (!granted) {
-    return true
-  }
-  return findMissingTiktokScopes(granted, TIKTOK_MESSAGING_SCOPES).length === 0
-}
+}): boolean => auth.metadata?.features?.messaging !== false
