@@ -1145,13 +1145,36 @@ chatbotx contacts pipeline-items list <identifier>      # A contact's items acro
 ```bash
 chatbotx orders list                                    # [--status --source --contactId --from --to --keyword --page --perPage]
 chatbotx orders get <id>                                # Lines, totals and status history
-chatbotx orders create --items <json>                   # COD order from product ids [--contact --customerName --customerPhone --shippingAddress --note]
-chatbotx orders accept <id>                             # pending → accepted [--message, sent to the customer]
+chatbotx orders create --items <json>                   # From product ids [--paymentMethod cod|stripe|paypal --contact --customerName --customerPhone --shippingAddress --note]
+chatbotx orders payment-link add <id>                   # Stripe/PayPal page to pay a pending online order; send `url` to the customer
+chatbotx orders accept <id>                             # pending → accepted; an online order only once paid [--message, sent to the customer]
 chatbotx orders ship <id>                               # accepted → shipped [--message]
 chatbotx orders conclude <id>                           # → completed; COD becomes paid [--message]
-chatbotx orders cancel <id>                             # [--message as the reason] puts stock back
-chatbotx orders delete <id>                             # Puts stock back unless completed/cancelled
+chatbotx orders cancel <id>                             # [--message as the reason] puts stock back; refunds an online payment first
+chatbotx orders delete <id>                             # Puts stock back unless completed/cancelled; an open order paid online must be cancelled instead
 ```
+
+An order paid online (`--paymentMethod stripe|paypal`, needs `--contact`) waits
+30 minutes for its payment and is cancelled if none comes; nothing about it is
+announced until it is paid.
+
+---
+
+### `payment-providers`
+
+```bash
+chatbotx payment-providers list                         # Connected Stripe / PayPal accounts (never a key) and whether Stripe Connect is available
+chatbotx payment-providers connect-link list <provider> # Settings → Integrations page where a super admin connects stripe|paypal
+chatbotx payment-providers delete <provider>            # Disconnect stripe|paypal and stop offering it at checkout (refused while open orders need it)
+```
+
+Connecting decides which account receives the store's money, so it is never
+done with a workspace token: give the `connect-link` URL to a super admin of
+the workspace, who connects in the browser.
+
+Offer a connected provider at checkout with `chatbotx ecommerce settings update
+--payments '{"paymentMethods":["cod","stripe"]}'`. PayPal does not take every
+currency (not VND).
 
 ---
 

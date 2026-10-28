@@ -430,6 +430,12 @@ class WorkspaceService extends BaseService {
     chunkSize?: number
     maxChunks?: number
     integrations?: WorkspaceTeardownIntegrations
+    /**
+     * Lets go of a purged workspace's payment providers (the store's Stripe
+     * account, its PayPal webhook) before their rows go with the cascade.
+     * Passed in by the worker, so this module never loads the payments graph.
+     */
+    teardownPaymentProviders?: (workspaceId: string) => Promise<void>
   }): Promise<number> {
     const chunkSize = props?.chunkSize ?? 500
     const maxChunks = props?.maxChunks ?? 20
@@ -503,6 +509,7 @@ class WorkspaceService extends BaseService {
             workspace,
             props?.integrations,
             deadlineAt,
+            props?.teardownPaymentProviders,
           ),
       )
       const deleted = teardownResults.filter(isNonNull)
@@ -579,6 +586,7 @@ class WorkspaceService extends BaseService {
     workspace: DueWorkspace,
     integrations: WorkspaceTeardownIntegrations | undefined,
     deadlineAt: number,
+    teardownPaymentProviders?: (workspaceId: string) => Promise<void>,
   ): Promise<DueWorkspace | null> {
     try {
       if (Date.now() >= deadlineAt) {
@@ -604,6 +612,14 @@ class WorkspaceService extends BaseService {
             "workspace-purge: failed to disconnect workspace integrations",
           )
         })
+      // The store's Stripe account and PayPal webhook, before their rows go
+      // with the workspace's cascade.
+      await teardownPaymentProviders?.(fencedWorkspace.id).catch((err) => {
+        logger.error(
+          { err, workspaceId: fencedWorkspace.id },
+          "workspace-purge: failed to disconnect payment providers",
+        )
+      })
 
       const { pendingReleases } =
         await workspaceLifecycleService.disconnectWorkspaceChannels({

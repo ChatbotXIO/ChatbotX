@@ -91,6 +91,13 @@ function withReserveTimeWindow(client: Redis): ReserveTimeWindowClient {
   return client as ReserveTimeWindowClient
 }
 
+// GET then DEL as one step (GETDEL needs Redis 6.2; this runs anywhere).
+const TAKE_LUA = `
+local value = redis.call('GET', KEYS[1])
+if value then redis.call('DEL', KEYS[1]) end
+return value
+`
+
 export const distributedStoreFactory = (
   getRedisClient: () => Promise<Redis>,
 ) => ({
@@ -113,6 +120,23 @@ export const distributedStoreFactory = (
       return null
     }
 
+    try {
+      return JSON.parse(value) as T
+    } catch {
+      return null
+    }
+  },
+
+  /**
+   * Reads a value and deletes it in one atomic step, so of two callers at
+   * once only one gets it — a single-use token (an OAuth `state`).
+   */
+  async take<T>(key: string): Promise<T | null> {
+    const redisClient = await getRedisClient()
+    const value = (await redisClient.eval(TAKE_LUA, 1, key)) as string | null
+    if (!value) {
+      return null
+    }
     try {
       return JSON.parse(value) as T
     } catch {

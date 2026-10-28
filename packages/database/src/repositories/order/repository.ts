@@ -4,6 +4,7 @@ import {
   db,
   eq,
   inArray,
+  ne,
   relationsFilterToSQL,
 } from "@chatbotx.io/database/client"
 import type { OrderSource, OrderStatus } from "@chatbotx.io/database/partials"
@@ -119,8 +120,37 @@ export const orderRepository = {
           orderBy: { createdAt: "asc", id: "asc" },
           with: { actorUser: { columns: { id: true, name: true } } },
         },
+        payments: { orderBy: { createdAt: "desc", id: "desc" } },
       },
     })
+  },
+
+  /**
+   * Marks an online order paid, only while it is still unpaid and not
+   * cancelled: of two payments landing at once only one wins, and a payment
+   * for a cancelled order changes nothing (it is refunded instead).
+   */
+  async markPaid(
+    input: { workspaceId: string; orderId: string; paidAt: Date },
+    tx: DatabaseClient = db,
+  ) {
+    const [row] = await tx
+      .update(orderModel)
+      .set({
+        paymentStatus: "paid",
+        paidAt: input.paidAt,
+        paymentExpiresAt: null,
+      })
+      .where(
+        and(
+          eq(orderModel.id, input.orderId),
+          eq(orderModel.workspaceId, input.workspaceId),
+          eq(orderModel.paymentStatus, "unpaid"),
+          ne(orderModel.status, "cancelled"),
+        ),
+      )
+      .returning()
+    return row
   },
 
   async find(

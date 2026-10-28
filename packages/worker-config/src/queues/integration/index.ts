@@ -82,6 +82,7 @@ export const IntegrationJobAction = {
   processStoryReplyAutomation: "processStoryReplyAutomation",
   captureTemplateFlowResponse: "captureTemplateFlowResponse",
   replyToInboundCart: "replyToInboundCart",
+  confirmOrderPayment: "confirmOrderPayment",
   // Ads-conversion actions (merged from the retired `adsConversion` queue).
   evaluateTemplateSent: "evaluateTemplateSent",
   evaluateConversionTrigger: "evaluateConversionTrigger",
@@ -1080,6 +1081,32 @@ export const getInboundCartReplyJobId = (messageId: string): string =>
   `inbound-cart-reply-${messageId}`
 
 /**
+ * A signed Stripe or PayPal webhook about one web shop payment attempt. The
+ * job asks the provider again and settles the order; one job per provider
+ * event (`getOrderPaymentEventJobId`), so a redelivered webhook runs once.
+ */
+export type IntegrationJobConfirmOrderPayment = {
+  type: typeof IntegrationJobAction.confirmOrderPayment
+  data: {
+    provider: "stripe" | "paypal"
+    workspaceId: string
+    /** The Checkout Session (Stripe) or order (PayPal) id. */
+    reference: string
+    /** What ChatbotX put on the attempt; null for one it did not create. */
+    metadata: {
+      workspaceId: string
+      orderId: string
+      orderPaymentId: string
+    } | null
+  }
+}
+
+export const getOrderPaymentEventJobId = (
+  provider: string,
+  eventId: string,
+): string => `order-payment-event-${provider}-${eventId}`
+
+/**
  * Facebook Lead Ads: a page leadgen webhook. Carries only ids — the handler
  * resolves the page's Messenger inbox + token, fetches the lead's answers, then
  * finds/creates the contact by PSID and applies the matched automation.
@@ -1239,6 +1266,7 @@ export type IntegrationJobData =
   | IntegrationJobProcessStoryReplyAutomation
   | IntegrationJobCaptureTemplateFlowResponse
   | IntegrationJobReplyToInboundCart
+  | IntegrationJobConfirmOrderPayment
   | AdsConversionJobSendConversionEvent
   | IntegrationJobSendMetaCapiEvent
   | IntegrationJobSendGoogleAdsConversion

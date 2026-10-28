@@ -18,6 +18,8 @@ Catalog sync and product messages are covered in
 | `OrderStatusHistory` | Every status an order went through, and who moved it (`user`, `apiToken`, `system`, `contact`). |
 | `DiscountCode` | A discount code ("Coupons" in the UI), unique per workspace ignoring case (`DiscountCode_workspaceId_code_key` on `lower(code)`). Not the older `Coupon` pools (`/v1/coupons`), which take nothing off an order. `productIds` has no database default. |
 | `DiscountCodeRedemption` | One use of a code: at most one per order (`DiscountCodeRedemption_orderId_key`). Removed, with `usedCount` given back, when the order is cancelled or deleted. |
+| `EcommercePaymentProvider` | The store's own Stripe or PayPal account, one per provider per workspace. Stripe keeps only the connected account (`externalAccountId`, `acct_…`) and the platform Stripe credential it was connected through (`platformCredentialId`); one account belongs to one workspace per platform credential. PayPal keeps its Client ID, Secret and webhook id in `secret`, encrypted with AAD `ecommerce-payment:<workspaceId>:paypal`. |
+| `OrderPayment` | One attempt to pay an order online — a Stripe Checkout Session or a PayPal order (`providerReference`, unique per provider). `status` `open` → `paid` / `expired` / `refunded`; `transactionId` (payment intent / capture id) is what a refund uses. Deleted with its order. |
 | `Cart` | One web shop cart per contact (`Cart_workspaceId_contactId_key`): `items` (`productId`, `variantId`, `quantity`) as the customer left them, never prices. `lastActivityAt` is for the abandoned-cart reminder (later phase). `items` has no database default; every write sets it. `discountCode` is the code the customer typed. |
 
 `Product.vendor` (free text) was replaced by `Product.vendorId`. The migration
@@ -61,6 +63,8 @@ page all read it.
   two concurrent moves only one lands; the other gets
   `orderInvalidStatusTransition` (409).
 - Completing a cash-on-delivery order marks it `paid`.
+- An order paid online is accepted only once paid (`orderAwaitingPayment`),
+  and cancelling it refunds the payment first — see "Online payments".
 - Cancelling puts the stock back. Deleting an order that is not completed or
   cancelled puts its stock back too.
 - Every move takes an optional `message`: it is kept on the order's history
@@ -68,7 +72,9 @@ page all read it.
   the customer.
 - Every side effect of a placed or moved order hangs off
   `orderService.afterStatusChange` (order triggers are added there later):
-  - **Placed:** what `checkout.orderConfirmationMode` says — `default` the
+  - **Placed** (for an order paid online: once paid, `orderService.afterPaid`
+    — `announcePlaced` runs then, after the `orderPaid` event): what
+    `checkout.orderConfirmationMode` says — `default` the
     built-in confirmation (number, buyer details, address or "pickup in the
     store" + store address, date in the workspace timezone, cash on delivery,
     totals, items; spec image 34), `flow` the store's
@@ -110,6 +116,132 @@ failure rolls back everything, including the number.
   on `EcommerceOrderCounter`, inside the order transaction. The row lock
   serializes numbering per workspace only; `Order_workspaceId_number_key` is
   the backstop.
+
+## Online payments (Stripe, PayPal)
+
+The store takes card payments through Stripe and PayPal payments, with its
+**own** accounts: the money goes straight to the store. Connected in
+**Settings → Integrations** (rows after Make), offered per store in the
+payment settings (`payments.paymentMethods`: `cod`, `stripe`, `paypal`).
+Provider calls live in `packages/payments` (`@chatbotx.io/payments`, no DB);
+the rules in `packages/business/src/payment-provider` and `order-payment`.
+
+### Connecting
+
+- **Stripe — Stripe Connect OAuth.** The platform (or a reseller) saves its
+  Stripe settings with a Connect client id (`ca_…`, Platform credentials →
+  Stripe; only a super admin writes the platform-wide ones). Saving creates
+  the platform's **Connect webhook** (`connect: true`) at
+  `/api/payments/stripe/webhook/<platformCredentialId>`; the card shows the
+  Redirect URI to add under Stripe → Connect → Onboarding options → OAuth
+  (`/integrations/stripe/callback`, on the broker host or the reseller's own
+  domain). A store's **Connect** opens `connect.stripe.com/oauth/authorize`
+  (`scope=read_write`); its `state` is a random key kept 15 minutes in Redis
+  and **taken once, atomically** by the callback, so the code is exchanged at
+  most once (Stripe revokes the connection on a second use). The callback
+  first relays to the host the connect started on, then requires the very
+  member who pressed Connect (the state names them — a callback URL someone
+  approved with their own Stripe account and passed on is refused), still a
+  workspace super admin, exchanges the code with the platform secret key and
+  keeps only `stripe_user_id` (the deprecated access token is not stored).
+  Every later call uses the platform key with `Stripe-Account: acct_…`.
+  `account.application.deauthorized` (the store disconnected from Stripe)
+  removes the connection.
+- **PayPal — Client ID and Secret** in a dialog. They are tried on live, then
+  sandbox, so the store never says which; a webhook is created on the app
+  (`/api/payments/paypal/<workspaceId>/webhook`, `WEBHOOK_URL_ALREADY_EXISTS`
+  reuses it) and the keys are stored encrypted. Read back only as a masked
+  Client ID.
+- **Disconnecting** (best effort on the provider side) deletes the connection
+  and drops the method from `paymentMethods` in one transaction (cash on
+  delivery comes back if nothing is left). Disconnecting, or connecting
+  another Stripe account / PayPal app, is refused (`paymentProviderInUse`)
+  while open orders still need the account — waiting for their money, or paid
+  and still open (cancelling them refunds through it): an attempt can only be
+  read, closed or refunded through the account it was made on. The platform's
+  Stripe settings likewise refuse a key of another Stripe account, or being
+  removed, while stores are connected through them
+  (`stripePlatformAccountInUse`). A late `account.application.deauthorized`
+  (older than the connection) is ignored.
+- **Connecting is UI only**, by a workspace super admin: it decides which
+  account receives the store's money, which a workspace token must never do.
+- Settings refuse an online method that is not connected
+  (`paymentProviderNotConnected`) and PayPal in a currency it does not take
+  (`paymentCurrencyUnsupported` — `PAYPAL_SUPPORTED_CURRENCIES`, not VND),
+  checked whenever the payments group is saved.
+
+### Paying
+
+1. `orderService.place` with `paymentMethod` `stripe`/`paypal` (it must be
+   offered and the order needs a contact) writes the order `pending` /
+   `unpaid` with `paymentExpiresAt` = now + 30 minutes (`PAYMENT_EXPIRY_MINUTES`).
+   Stock and the discount code are taken as for any order, but **nothing is
+   announced**: no confirmation, push, `newOrder` / `productOrdered`, checkout
+   flow or Pixel `Purchase` until the money comes in. An order that costs
+   nothing is paid at once.
+2. `orderPaymentService.startCheckout` (the web shop checkout, the order
+   page's **Pay now**, `orders.getPaymentLink`) opens the provider's page
+   under the order's row lock, or offers an open one again. One line for
+   exactly the order total, in the provider's minor units: an amount that
+   cannot be charged exactly (e.g. `12.345 USD`, `1.234 KWD`, decimals in
+   HUF on PayPal) is refused, never rounded. Stripe Checkout takes cards only
+   (wallets included) and lives at least 30 minutes; PayPal is an Orders v2
+   `CAPTURE` order paid on its `payer-action` link. Idempotency keys:
+   `order-payment-<id>`, `refund-<id>`; each PayPal capture try gets its own
+   key (an order is captured once at most, and a declined try must not replay
+   for the next funding source). The return URL is the
+   customer's order page with a fresh shop token and `payment=return`.
+   A page that cannot be opened at checkout cancels the order and puts its
+   items back in the cart.
+3. Money is settled by one path, `syncAttempt`, from the return page (so the
+   order shows paid at once), the webhook job (`confirmOrderPayment`, job id
+   per provider event) and the expiry scan. Under the order's lock, then the
+   attempt's, the provider is **asked again** (the event itself is not
+   trusted); PayPal is captured only while the order still waits for its
+   money. Paid is checked to the smallest unit and currency: a match marks the
+   order `paid` (`orderRepository.markPaid`, guarded `unpaid` and not
+   cancelled) and runs `afterPaid`; money that does not match, or arrives for
+   an order cancelled or already paid by another page, is **refunded** —
+   never kept. A refund that fails throws and the job retries with the same
+   key; the scan below catches whatever the retries left. Money for an order
+   that was deleted is only logged: the order may have been delivered first.
+4. `expireUnpaidOrders` (every minute, distributed lock) takes overdue orders:
+   a payment that came in keeps the order; one still settling is looked at
+   again in an hour; otherwise the order is cancelled (`reason:
+   paymentExpired`, the customer is told) — the Stripe page closed first,
+   PayPal simply never captured. A page found paid as the cancel closes it
+   (the customer paid right at the deadline) stops the cancel
+   (`LatePaymentArrivedError`): the order is read again and kept, marked
+   paid, never refunded. A provider that does not answer, or a blocked owner,
+   moves the deadline on so others are not held up. The same minute, open
+   attempts 15 minutes past their page's end are read once more
+   (`settleStaleAttempt`): closed ones are marked expired, money for an order
+   no longer waiting for it is refunded. One that cannot be settled yet is
+   only touched (`updatedAt`) and looked at again 15 minutes later —
+   `expiresAt` always stays the page's real end, which is what
+   `startCheckout` reads before offering a page again.
+
+### Refunds and deletes
+
+- Cancelling (member, API, expiry) runs `settlePaymentsForCancel` inside the
+  order's transaction: first every open page is closed (one paid meanwhile
+  joins the refunds; one still settling refuses the cancel), then each refund
+  is made and **recorded at once outside the transaction**, so a later
+  failure that rolls the cancel back never loses a refund already made. A
+  failed refund refuses the cancel (`orderRefundFailed`); otherwise the order
+  has `paymentStatus: refunded`, the `orderRefunded` event fires and the
+  customer's status message says so.
+- An online order whose money never came was never announced, so its cancel
+  fires no event and sends nothing — except, when its time ran out, a line
+  telling the customer why the order is gone.
+- An open order paid online cannot be deleted (`orderPaidOnline`): cancel it.
+- A purged workspace lets go of its payment providers first
+  (`paymentProviderService.teardownForPurge`, passed to `purgeDueScheduled` by
+  the worker's `purgeWorkspaces`, best effort): the Stripe account
+  is deauthorized from the platform's Connect app and the PayPal webhook is
+  deleted, before the rows go with the cascade.
+- The expiry cancel stores `PAYMENT_EXPIRED_CANCEL_REASON` (English, for the
+  API); the builder shows it translated (`orders.paymentExpiredCancelReason`).
 
 ## Discount codes ("Coupons")
 
@@ -305,7 +437,8 @@ a member accepting it in the app, an API call) — `COMMERCE_EVENT_TYPES` in
 
 | Event | Fired by | Condition |
 |-------|----------|-----------|
-| `newOrder`, `orderAccepted`, `orderShipped`, `orderConcluded`, `orderCancelled` | `orderService.afterStatusChange`, once per status | none |
+| `newOrder`, `orderAccepted`, `orderShipped`, `orderConcluded`, `orderCancelled` | `orderService.afterStatusChange`, once per status (`newOrder` of an online order once paid) | none |
+| `orderPaid`, `orderRefunded` | `orderService.afterPaid`; a cancel that refunded the payment | none |
 | `productOrdered` | the same, once when the order is placed | optional product (any of the order's) |
 | `productAddedToCart`, `productRemovedFromCart` | a web shop cart change (`webshopService`) | optional product |
 | `categoryAddedToCart` | with `productAddedToCart`, for a product with a category | optional category; its sub-categories count |
@@ -407,8 +540,10 @@ that method is the one place a plan check goes.
 
 | Operation | Route |
 |-----------|-------|
-| `orders.list` / `get` / `create` / `delete` | `GET /v1/orders`, `GET`/`DELETE /v1/orders/{id}`, `POST /v1/orders` (optional `discountCode`) |
-| `orders.accept` / `ship` / `conclude` / `cancel` | `POST /v1/orders/{id}/<verb>` (optional `message`) |
+| `orders.list` / `get` / `create` / `delete` | `GET /v1/orders`, `GET`/`DELETE /v1/orders/{id}`, `POST /v1/orders` (optional `discountCode`, `paymentMethod`) |
+| `orders.accept` / `ship` / `conclude` / `cancel` | `POST /v1/orders/{id}/<verb>` (optional `message`); cancel refunds an online payment |
+| `orders.getPaymentLink` | `POST /v1/orders/{id}/payment-link`: the Stripe/PayPal page to pay a pending online order (`url`, `expiresAt`) |
+| `paymentProviders.list` / `getConnectLink` / `disconnect` | `GET /v1/payment-providers`, `GET /v1/payment-providers/{provider}/connect-link` (the Settings → Integrations page a super admin connects on — connecting is never done with a workspace token, since it decides which account receives the money), `DELETE /v1/payment-providers/{provider}` |
 | `openHours.list` / `create` / `update` / `delete` | `/v1/open-hours[/{id}]` (`update` is `PATCH`) |
 | `products.list` / `listSendable` / `get` / `create` / `update` / `delete` | `/v1/products[/{id}]` (`update` is `PUT`), `GET /v1/products/sendable` |
 | `products.setActive` / `deleteMany` | `PATCH /v1/products/{id}/active`, `POST /v1/products/bulk-delete` |
@@ -430,6 +565,12 @@ The builder's server actions call the same service methods. The web shop's
 own page actions (cart, checkout, rating) are end-customer actions signed by
 the shop token, exempt from the public API rule; agents read the result
 through `carts.get` and `orders.*`.
+
+Known limits: a PayPal capture left `PENDING` (e.g. the store must accept
+the currency by hand) keeps its order waiting and refuses a cancel until
+PayPal settles it; a Stripe refund that fails later (`refund.failed`) is not
+followed; sandbox PayPal keys and Stripe test connections take test money —
+the settings and the order page mark them, nothing else stops them.
 
 ## Not built yet
 

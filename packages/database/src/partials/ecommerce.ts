@@ -18,14 +18,52 @@ export const orderSources = z.enum(["webshop", "api", "manual"])
 export type OrderSource = z.infer<typeof orderSources>
 
 /**
- * Cash on delivery only for now. A new method is a value here plus whatever
- * provider handles it; nothing else keys on the list.
+ * `cod` is cash on delivery; `stripe` and `paypal` are paid online on the
+ * provider's own page, with the store's own connected account.
  */
-export const paymentMethods = z.enum(["cod"])
+export const paymentMethods = z.enum(["cod", "stripe", "paypal"])
 export type PaymentMethod = z.infer<typeof paymentMethods>
+
+/** The payment methods paid online, each through its own provider. */
+export const onlinePaymentProviders = z.enum(["stripe", "paypal"])
+export type OnlinePaymentProvider = z.infer<typeof onlinePaymentProviders>
+
+export const isOnlinePaymentMethod = (
+  method: PaymentMethod,
+): method is OnlinePaymentProvider =>
+  (onlinePaymentProviders.options as readonly string[]).includes(method)
+
+/** An online order whose money has not come in yet. */
+export const isAwaitingOnlinePayment = (order: {
+  paymentMethod: PaymentMethod
+  paymentStatus: string
+}) =>
+  isOnlinePaymentMethod(order.paymentMethod) && order.paymentStatus === "unpaid"
+
+/** How long an online order waits for its payment before it is cancelled. */
+export const PAYMENT_EXPIRY_MINUTES = 30
+
+/**
+ * The cancel reason the expiry scan stores. Kept in English for the public
+ * API; the builder shows it translated (`orders.paymentExpiredCancelReason`).
+ */
+export const PAYMENT_EXPIRED_CANCEL_REASON = "Payment not received in time."
 
 export const paymentStatuses = z.enum(["unpaid", "paid", "refunded"])
 export type PaymentStatus = z.infer<typeof paymentStatuses>
+
+/**
+ * One attempt to pay an order online: `open` while the provider's page can
+ * still take the money, `paid` once it did, `expired` when it can no longer,
+ * `refunded` once the money went back.
+ */
+export const orderPaymentStatuses = z.enum([
+  "open",
+  "paid",
+  "expired",
+  "refunded",
+])
+export type OrderPaymentStatus = z.infer<typeof orderPaymentStatuses>
 
 /** How one order reaches the customer. */
 export const shippingTypes = z.enum(["delivery", "pickup"])
@@ -294,7 +332,9 @@ export const ecommercePaymentSettingsSchema = z.object({
   paymentMethods: z
     .array(paymentMethods)
     .min(1)
-    .describe("Payment methods offered at checkout."),
+    .describe(
+      "Payment methods offered at checkout: `cod` (cash on delivery), `stripe` (card) and `paypal`. Stripe and PayPal must be connected first (`paymentProviders.list`); PayPal only takes some currencies (not VND).",
+    ),
   currency: storeCurrencyCodeSchema.describe(
     "ISO 4217 code every order is charged in, e.g. `VND`.",
   ),

@@ -3,6 +3,7 @@ import { ChatbotXException } from "../../errors"
 
 const mocks = vi.hoisted(() => ({
   businessLoggerError: vi.fn(),
+  teardownPaymentProviders: vi.fn(async () => undefined),
   workspaceInsert: vi.fn(),
   workspaceInsertValues: vi.fn(),
   workspaceDelete: vi.fn(),
@@ -425,12 +426,19 @@ describe("WorkspaceService.purgeDueScheduled", () => {
     )
 
     await expect(
-      workspaceService.purgeDueScheduled({ chunkSize: 1, maxChunks: 1 }),
+      workspaceService.purgeDueScheduled({
+        chunkSize: 1,
+        maxChunks: 1,
+        teardownPaymentProviders: mocks.teardownPaymentProviders,
+      }),
     ).resolves.toBe(1)
 
     expect(mocks.purgeWorkspaceHeavyData).toHaveBeenCalledWith(
       expect.objectContaining({ workspaceId: "w1" }),
     )
+    // The store's Stripe account is let go and its PayPal webhook removed
+    // before their rows go with the cascade.
+    expect(mocks.teardownPaymentProviders).toHaveBeenCalledWith("w1")
     expect(tx.update).not.toHaveBeenCalled()
   })
 

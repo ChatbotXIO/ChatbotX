@@ -48,6 +48,7 @@ import { coexistWhatsappBuffer } from "./handlers/coexist/whatsapp-buffer"
 import { coexistWhatsappFlush } from "./handlers/coexist/whatsapp-flush"
 import { processCommentAutomation } from "./handlers/comment-automation"
 import { runDeferredCommentPrivateReply } from "./handlers/comment-automation/deferred-private-reply"
+import { confirmOrderPayment } from "./handlers/confirm-order-payment"
 import { updateContactAvatar } from "./handlers/contact/update-avatar"
 import { runContactScan } from "./handlers/contact-scan/engine"
 import { agentMarkAsRead, contactMarkAsRead } from "./handlers/conversation"
@@ -545,6 +546,10 @@ async function startIntegrationWorker() {
             }
             case IntegrationJobAction.replyToInboundCart: {
               await replyToInboundCart(job.data.data)
+              return
+            }
+            case IntegrationJobAction.confirmOrderPayment: {
+              await confirmOrderPayment(job.data.data)
               return
             }
             case IntegrationJobAction.processLeadgen: {

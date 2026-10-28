@@ -54,6 +54,8 @@ export const triggerEventTypes = z.enum([
   "orderShipped",
   "orderConcluded",
   "orderCancelled",
+  "orderPaid",
+  "orderRefunded",
   "categoryAddedToCart",
   "productAddedToCart",
   "productRemovedFromCart",

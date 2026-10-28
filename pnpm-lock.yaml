@@ -2323,6 +2323,9 @@ importers:
       '@chatbotx.io/mini-app':
         specifier: workspace:*
         version: link:../mini-app
+      '@chatbotx.io/payments':
+        specifier: workspace:*
+        version: link:../payments
       '@chatbotx.io/realtime-protocol':
         specifier: workspace:*
         version: link:../realtime-protocol
@@ -3086,6 +3089,28 @@ importers:
       typescript:
         specifier: ^5
         version: 5.9.3
+
+  packages/payments:
+    dependencies:
+      stripe:
+        specifier: ^22.1.0
+        version: 22.2.0(@types/node@24.13.1)
+    devDependencies:
+      '@chatbotx.io/typescript-config':
+        specifier: workspace:*
+        version: link:../typescript-config
+      '@chatbotx.io/vitest-config':
+        specifier: workspace:*
+        version: link:../vitest-config
+      '@types/node':
+        specifier: 24.x
+        version: 24.13.1
+      typescript:
+        specifier: ^5
+        version: 5.9.3
+      vitest:
+        specifier: ^4.1.0
+        version: 4.1.12(@opentelemetry/api@1.9.1)(@types/node@24.13.1)(@vitest/coverage-v8@4.1.12)(jsdom@25.0.1)(msw@2.14.6(@types/node@24.13.1)(typescript@5.9.3))(vite@7.3.5(@types/node@24.13.1)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.23.0)(yaml@2.9.0))
 
   packages/realtime-protocol:
     dependencies:

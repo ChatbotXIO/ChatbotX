@@ -17,7 +17,7 @@ vi.mock("../../ecommerce-settings/service", () => ({
   },
 }))
 vi.mock("../../platform/settings", () => ({
-  resolveTenantSettings: async () => ({ appUrl: "https://app.example" }),
+  resolveWorkspaceAppUrl: async () => "https://app.example",
 }))
 vi.mock("@chatbotx.io/encryption/shop-token", () => ({
   signShopToken: async (input: { contactId: string }) =>

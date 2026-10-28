@@ -6382,6 +6382,8 @@
       "orderShipped": "Sifariş yola salınıb",
       "orderConcluded": "Sifariş tamamlanıb",
       "orderCancelled": "Sifariş ləğv edilib",
+      "orderPaid": "Sifariş ödənilib",
+      "orderRefunded": "Sifariş üzrə geri ödəniş edilib",
       "categoryAddedToCart": "Kateqoriya səbətə əlavə edilib",
       "productAddedToCart": "Məhsul səbətə əlavə edilib",
       "productRemovedFromCart": "Məhsul səbətdən çıxarılıb",
@@ -7913,7 +7915,9 @@
       "rating": "Reytinq",
       "quantity": "Miqdar",
       "price": "Qiymət",
-      "vendor": "Təchizatçı"
+      "vendor": "Təchizatçı",
+      "orderStatus": "Sifarişin statusu",
+      "payment": "Ödəniş"
     },
     "fields": {
       "name": "Ad",
@@ -7938,7 +7942,9 @@
       "cancelReason": "Ləğv səbəbi",
       "rating": "Qiymət",
       "ratingComment": "Müştəri rəyi",
-      "coupon": "Kupon ({code})"
+      "coupon": "Kupon ({code})",
+      "paymentStatus": "Ödəniş statusu",
+      "payments": "Onlayn ödənişlər"
     },
     "statuses": {
       "pending": "Emal olunmayıb",
@@ -7954,14 +7960,39 @@
       "cancelled": "Ləğv et"
     },
     "paymentMethods": {
-      "cod": "Çatdırılma zamanı ödəniş"
+      "cod": "Çatdırılma zamanı ödəniş",
+      "stripe": "Kart",
+      "paypal": "PayPal"
     },
     "shippingTypes": {
       "delivery": "Müştəriyə çatdırılma",
       "pickup": "Mağazadan təhvil alma"
     },
     "description": "Müştərilərinizin verdiyi sifarişlər.",
-    "ratingValue": "{rating}/5 ★"
+    "ratingValue": "{rating}/5 ★",
+    "paymentStatuses": {
+      "unpaid": "Ödənilməyib",
+      "paid": "Ödənilib",
+      "refunded": "Geri qaytarılıb"
+    },
+    "attemptStatuses": {
+      "open": "Gözləyir",
+      "paid": "Ödənilib",
+      "expired": "Vaxtı bitib",
+      "refunded": "Geri qaytarılıb"
+    },
+    "testPayment": "test",
+    "awaitingPaymentHint": "Müştərinin onlayn ödənişi gözlənilir. Sifariş ödənildikdən sonra qəbul edilə bilər.",
+    "refundWarning": "{amount} məbləği müştəriyə geri qaytarılacaq.",
+    "paymentStates": {
+      "paid": "Ödənilib",
+      "refunded": "Geri qaytarılıb",
+      "awaitingPayment": "Ödəniş gözlənilir",
+      "payOnDelivery": "Çatdırılmada ödəniş",
+      "notPaid": "Ödənilməyib"
+    },
+    "paymentUntil": "{time} qədər",
+    "paymentExpiredCancelReason": "Ödəniş vaxtında alınmadı."
   },
   "products": {
     "title": "Məhsullar",
@@ -9844,8 +9875,11 @@
         "label": "Ödəniş üsulları",
         "description": "Ödəniş səhifəsində aktiv olan ödəniş üsulları. Siyahıdakı ilk üsul ödəniş səhifəsində seçilmiş olacaq.",
         "options": {
-          "cod": "Çatdırılma zamanı ödəniş"
-        }
+          "cod": "Çatdırılma zamanı ödəniş",
+          "stripe": "Kart",
+          "paypal": "PayPal"
+        },
+        "connectHint": "{provider} təklif etmək üçün onu <link>Parametrlər → İnteqrasiyalar</link> bölməsində qoşun."
       },
       "currency": {
         "label": "Valyuta",
@@ -10063,7 +10097,19 @@
     },
     "payment": {
       "title": "Ödəniş",
-      "cod": "Çatdırılmada nağd ödəniş"
+      "cod": "Çatdırılmada nağd ödəniş",
+      "stripe": "Kart",
+      "paypal": "PayPal",
+      "paid": "Ödənilib",
+      "refunded": "Geri qaytarılıb",
+      "awaiting": "Ödənişiniz gözlənilir",
+      "payBefore": "{time} vaxtınadək ödəyin, əks halda sifariş ləğv olunacaq.",
+      "payNow": "İndi ödə",
+      "onlineHint": "Növbəti səhifədə ödəniş edəcəksiniz. Sifarişiniz 30 dəqiqə saxlanılır.",
+      "continueToPayment": "Ödənişə davam et",
+      "notYet": "Ödənişiniz hələ bizə çatmayıb. Təzəcə ödəmisinizsə, bir az gözləyin və səhifəni yeniləyin.",
+      "leftPaymentPage": "Ödəniş səhifəsindən çıxdınız. Aşağıda hələ də ödəyə bilərsiniz.",
+      "paidThanks": "Ödəniş qəbul edildi. Sifarişiniz üçün təşəkkür edirik!"
     },
     "placeOrder": "Sifariş ver",
     "orderPlaced": "Təşəkkür edirik! Sifarişiniz qəbul edildi. Yenilikləri söhbətdə göndərəcəyik.",
@@ -10113,7 +10159,14 @@
       "discountCodeNotEligible": "Bu endirim kodu sizin üçün deyil.",
       "discountCodeNotApplicable": "Bu endirim kodu səbətinizdəki məhsullara aid deyil.",
       "discountCodeMinimumAmount": "Bu kod ən azı {minimum} alış tələb edir. Daha {missing} əlavə edin.",
-      "discountCodeMinimumQuantity": "Bu kod ən azı {minimum} məhsul tələb edir. Daha {missing} əlavə edin."
+      "discountCodeMinimumQuantity": "Bu kod ən azı {minimum} məhsul tələb edir. Daha {missing} əlavə edin.",
+      "paymentMethodUnavailable": "Bu ödəniş üsulu mövcud deyil.",
+      "paymentProviderNotConnected": "Bu ödəniş üsulu mövcud deyil.",
+      "paymentProviderUnavailable": "Ödəniş xidməti cavab vermir. Bir azdan yenidən cəhd edin.",
+      "paymentProviderRejected": "Ödənişi başlatmaq mümkün olmadı. Başqa ödəniş üsulu seçin.",
+      "paymentProviderCredentialsRejected": "Ödənişi başlatmaq mümkün olmadı. Başqa ödəniş üsulu seçin.",
+      "paymentAmountUnsupported": "Bu sifarişi onlayn ödəmək mümkün deyil. Başqa ödəniş üsulu seçin.",
+      "orderPaymentNotOpen": "Bu sifarişi artıq onlayn ödəmək mümkün deyil."
     },
     "discount": {
       "label": "Endirim kodu",
@@ -10274,6 +10327,52 @@
     "metHelp": "SLA-sı olan cavablar arasında SLA-ya uyğun olanların payı.",
     "eligibleCount": "{count} cavabın SLA-sı var",
     "enable": "Cavab SLA-nı aktiv et"
+  },
+  "stripe": {
+    "title": "Stripe",
+    "setting": {
+      "label": "Stripe",
+      "description": "Veb mağazanızda öz Stripe hesabınızla kart ödənişlərini qəbul edin. Pul birbaşa Stripe hesabınıza köçürülür.",
+      "notConfigured": "Stripe bu platformada hələ qurulmayıb. Platforma administratorundan Stripe Connect parametrlərini əlavə etməsini xahiş edin."
+    },
+    "testMode": "Test rejimi",
+    "liveMode": "Canlı",
+    "chargesDisabled": "Stripe hesabınız hələ ödəniş qəbul edə bilmir. Qurulumu Stripe panelində tamamlayın.",
+    "outcome": {
+      "expired": "Stripe bağlantı linkinin vaxtı bitib. Yenidən cəhd edin.",
+      "access_denied": "Bağlantıya Stripe-da icazə verilmədi.",
+      "stripeAccountAlreadyConnected": "Bu Stripe hesabı artıq başqa iş sahəsinə qoşulub.",
+      "stripePlatformNotConfigured": "Stripe bu platformada hələ qurulmayıb.",
+      "superAdminRequired": "Stripe-ı yalnız iş sahəsinin administratoru qoşa bilər.",
+      "signInRequired": "Daxil olun və yenidən cəhd edin.",
+      "paymentProviderCredentialsRejected": "Stripe bağlantını rədd etdi. Yenidən cəhd edin.",
+      "startedByAnotherUser": "Yalnız Qoşul düyməsini basan şəxs bunu tamamlaya bilər. Zəhmət olmasa yenidən Qoşul düyməsini basın.",
+      "paymentProviderInUse": "Açıq sifarişlərin hələ bu Stripe hesabına ehtiyacı var. Əvvəlcə onları tamamlayın və ya ləğv edin."
+    },
+    "platform": {
+      "connectClientId": "Connect client ID",
+      "connectClientIdHint": "Stripe Dashboard → Settings → Connect → Onboarding options → OAuth bölməsindən (ca_ ilə başlayır). Mağazalar öz Stripe hesablarını bunun vasitəsilə qoşur.",
+      "redirectUri": "Redirect URI",
+      "webhookReady": "Mağazalar Stripe-ı qoşa bilər və ödənişləri avtomatik təsdiqlənir.",
+      "webhookMissing": "Ödəniş vebhuku (webhook) yoxdur. Onu yaratmaq üçün bu parametrləri yenidən saxlayın.",
+      "connectMissing": "Mağazaların Stripe hesabını qoşa bilməsi üçün Connect client ID əlavə edin."
+    }
+  },
+  "paypal": {
+    "title": "PayPal",
+    "setting": {
+      "label": "PayPal",
+      "description": "Veb mağazanızda öz PayPal hesabınızla PayPal ödənişlərini qəbul edin."
+    },
+    "sandbox": "Sandbox",
+    "liveMode": "Canlı",
+    "fields": {
+      "clientId": "Client ID",
+      "clientSecret": "Secret"
+    },
+    "dialog": {
+      "description": "<link>PayPal Developer → Apps & Credentials</link> bölməsində REST tətbiqi yaradın və onun Client ID və Secret dəyərlərini yapışdırın. Canlı və ya sandbox rejimi açarlardan müəyyən edilir."
+    }
   },
   "pipelines": {
     "title": "Satış xətləri",

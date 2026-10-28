@@ -10,6 +10,7 @@ const mocks = vi.hoisted(() => ({
   openHoursExists: vi.fn(),
   invalidate: vi.fn(),
   audit: vi.fn(),
+  listProviders: vi.fn(),
 }))
 
 vi.mock("@chatbotx.io/database/client", () => ({
@@ -29,6 +30,9 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
     findForUpdate: (...args: unknown[]) => mocks.findForUpdate(...args),
     insertIfMissing: (...args: unknown[]) => mocks.insertIfMissing(...args),
     upsert: (...args: unknown[]) => mocks.upsert(...args),
+  },
+  paymentProviderRepository: {
+    listByWorkspace: (...args: unknown[]) => mocks.listProviders(...args),
   },
 }))
 
@@ -55,6 +59,7 @@ beforeEach(() => {
   mocks.findForUpdate.mockResolvedValue(undefined)
   mocks.upsert.mockResolvedValue({})
   mocks.flowExists.mockResolvedValue(true)
+  mocks.listProviders.mockResolvedValue([])
 })
 
 const flattenSettings = (
@@ -261,5 +266,69 @@ describe("ecommerceSettingsService", () => {
     expect(mocks.upsert).toHaveBeenCalledWith(expect.anything(), {
       name: "tx",
     })
+  })
+})
+
+describe("ecommerceSettingsService — online payment methods", () => {
+  test("Stripe or PayPal can only be offered once connected", async () => {
+    await expect(
+      ecommerceSettingsService.update({
+        workspaceId: "ws1",
+        patch: { payments: { paymentMethods: ["cod", "stripe"] } },
+      }),
+    ).rejects.toMatchObject({
+      code: "paymentProviderNotConnected",
+      data: { provider: "stripe" },
+    })
+    expect(mocks.upsert).not.toHaveBeenCalled()
+
+    mocks.listProviders.mockResolvedValue([{ provider: "stripe" }])
+    await ecommerceSettingsService.update({
+      workspaceId: "ws1",
+      patch: { payments: { paymentMethods: ["cod", "stripe"] } },
+    })
+    expect(mocks.upsert).toHaveBeenCalled()
+  })
+
+  test("PayPal is refused in a currency it does not take, whichever field changes", async () => {
+    mocks.listProviders.mockResolvedValue([{ provider: "paypal" }])
+    await expect(
+      ecommerceSettingsService.update({
+        workspaceId: "ws1",
+        patch: { payments: { paymentMethods: ["paypal"], currency: "VND" } },
+      }),
+    ).rejects.toMatchObject({
+      code: "paymentCurrencyUnsupported",
+      data: { provider: "paypal", currency: "VND" },
+    })
+
+    mocks.findForUpdate.mockResolvedValue({
+      ...flattenSettings(ECOMMERCE_SETTINGS_DEFAULTS),
+      paymentMethods: ["paypal"],
+    })
+    await expect(
+      ecommerceSettingsService.update({
+        workspaceId: "ws1",
+        patch: { payments: { currency: "VND" } },
+      }),
+    ).rejects.toMatchObject({ code: "paymentCurrencyUnsupported" })
+  })
+
+  test("dropping a disconnected provider brings cash on delivery back when nothing is left", async () => {
+    mocks.findForUpdate.mockResolvedValue({
+      ...flattenSettings(ECOMMERCE_SETTINGS_DEFAULTS),
+      paymentMethods: ["stripe"],
+    })
+    await ecommerceSettingsService.dropPaymentMethod(
+      { workspaceId: "ws1", method: "stripe" },
+      { name: "tx" } as never,
+    )
+    expect(mocks.upsert).toHaveBeenCalledWith(
+      {
+        workspaceId: "ws1",
+        values: expect.objectContaining({ paymentMethods: ["cod"] }),
+      },
+      { name: "tx" },
+    )
   })
 })

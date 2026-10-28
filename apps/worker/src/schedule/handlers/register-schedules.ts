@@ -51,6 +51,20 @@ export const registerSchedules = async () => {
   )
 
   await scheduleQueue.upsertJobScheduler(
+    ScheduleJobData.expireUnpaidOrders,
+    {
+      pattern: "* * * * *",
+    },
+    {
+      name: ScheduleJobData.expireUnpaidOrders,
+      data: {
+        type: ScheduleJobData.expireUnpaidOrders,
+        data: {},
+      },
+    },
+  )
+
+  await scheduleQueue.upsertJobScheduler(
     ScheduleJobData.dispatchProfileSnapshots,
     {
       pattern: "* * * * *",

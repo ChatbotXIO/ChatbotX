@@ -5700,6 +5700,8 @@
       "orderShipped": "Order Shipped",
       "orderConcluded": "Order Concluded",
       "orderCancelled": "Order Annulleret",
+      "orderPaid": "Order Betalt",
+      "orderRefunded": "Order Refunderet",
       "categoryAddedToCart": "Kategori Added Til Cart",
       "productAddedToCart": "Product Added Til Cart",
       "productRemovedFromCart": "Product Removed Fra Cart",
@@ -6944,7 +6946,9 @@
       "rating": "Vurdering",
       "quantity": "Antal",
       "price": "Pris",
-      "vendor": "Leverandør"
+      "vendor": "Leverandør",
+      "orderStatus": "Ordrestatus",
+      "payment": "Betaling"
     },
     "fields": {
       "name": "Navn",
@@ -6969,7 +6973,9 @@
       "cancelReason": "Årsag til annullering",
       "rating": "Bedømmelse",
       "ratingComment": "Kundens kommentar",
-      "coupon": "Rabatkode ({code})"
+      "coupon": "Rabatkode ({code})",
+      "paymentStatus": "Betalingsstatus",
+      "payments": "Onlinebetalinger"
     },
     "statuses": {
       "pending": "Ikke behandlet",
@@ -6985,14 +6991,39 @@
       "cancelled": "Annuller"
     },
     "paymentMethods": {
-      "cod": "Efterkrav"
+      "cod": "Efterkrav",
+      "stripe": "Kort",
+      "paypal": "PayPal"
     },
     "shippingTypes": {
       "delivery": "Levering til kunden",
       "pickup": "Afhentning i butikken"
     },
     "description": "Ordrer afgivet af dine kunder.",
-    "ratingValue": "{rating}/5 ★"
+    "ratingValue": "{rating}/5 ★",
+    "paymentStatuses": {
+      "unpaid": "Ubetalt",
+      "paid": "Betalt",
+      "refunded": "Refunderet"
+    },
+    "attemptStatuses": {
+      "open": "Venter",
+      "paid": "Betalt",
+      "expired": "Udløbet",
+      "refunded": "Refunderet"
+    },
+    "testPayment": "test",
+    "awaitingPaymentHint": "Venter på kundens onlinebetaling. Ordren kan accepteres, når den er betalt.",
+    "refundWarning": "{amount} bliver refunderet til kunden.",
+    "paymentStates": {
+      "paid": "Betalt",
+      "refunded": "Refunderet",
+      "awaitingPayment": "Venter på betaling",
+      "payOnDelivery": "Betaling ved levering",
+      "notPaid": "Ikke betalt"
+    },
+    "paymentUntil": "indtil {time}",
+    "paymentExpiredCancelReason": "Betalingen blev ikke modtaget i tide."
   },
   "products": {
     "title": "Produkter",
@@ -9844,8 +9875,11 @@
         "label": "Betalingsmetoder",
         "description": "De betalingsmetoder, der er aktiveret på betalingssiden. Den første betalingsmetode på listen er valgt på betalingssiden.",
         "options": {
-          "cod": "Efterkrav"
-        }
+          "cod": "Efterkrav",
+          "stripe": "Kort",
+          "paypal": "PayPal"
+        },
+        "connectHint": "For at tilbyde {provider} skal du forbinde det under <link>Indstillinger → Integrationer</link>."
       },
       "currency": {
         "label": "Valuta",
@@ -10063,7 +10097,19 @@
     },
     "payment": {
       "title": "Betaling",
-      "cod": "Betaling ved levering"
+      "cod": "Betaling ved levering",
+      "stripe": "Kort",
+      "paypal": "PayPal",
+      "paid": "Betalt",
+      "refunded": "Refunderet",
+      "awaiting": "Venter på din betaling",
+      "payBefore": "Betal inden {time}, ellers annulleres ordren.",
+      "payNow": "Betal nu",
+      "onlineHint": "Du betaler på næste side. Din ordre reserveres i 30 minutter.",
+      "continueToPayment": "Fortsæt til betaling",
+      "notYet": "Vi har endnu ikke modtaget din betaling. Hvis du lige har betalt, så vent et øjeblik, og opdater siden.",
+      "leftPaymentPage": "Du forlod betalingssiden. Du kan stadig betale nedenfor.",
+      "paidThanks": "Betaling modtaget. Tak for din ordre!"
     },
     "placeOrder": "Afgiv bestilling",
     "orderPlaced": "Tak! Din bestilling er afgivet. Vi sender dig opdateringer i chatten.",
@@ -10113,7 +10159,14 @@
       "discountCodeNotEligible": "Rabatkoden gælder ikke for dig.",
       "discountCodeNotApplicable": "Rabatkoden gælder ikke for indholdet af din kurv.",
       "discountCodeMinimumAmount": "Rabatkoden kræver køb for mindst {minimum}. Tilføj {missing} mere.",
-      "discountCodeMinimumQuantity": "Rabatkoden kræver mindst {minimum} varer. Tilføj {missing} mere."
+      "discountCodeMinimumQuantity": "Rabatkoden kræver mindst {minimum} varer. Tilføj {missing} mere.",
+      "paymentMethodUnavailable": "Denne betalingsmetode er ikke tilgængelig.",
+      "paymentProviderNotConnected": "Denne betalingsmetode er ikke tilgængelig.",
+      "paymentProviderUnavailable": "Betalingstjenesten svarer ikke. Prøv igen om et øjeblik.",
+      "paymentProviderRejected": "Betalingen kunne ikke startes. Vælg en anden betalingsmetode.",
+      "paymentProviderCredentialsRejected": "Betalingen kunne ikke startes. Vælg en anden betalingsmetode.",
+      "paymentAmountUnsupported": "Denne ordre kan ikke betales online. Vælg en anden betalingsmetode.",
+      "orderPaymentNotOpen": "Denne ordre kan ikke længere betales online."
     },
     "discount": {
       "label": "Rabatkode",
@@ -10274,6 +10327,52 @@
     "metHelp": "Andel af svar med SLA der overholdt den.",
     "eligibleCount": "{count} svar havde en SLA",
     "enable": "Aktivér svar-SLA"
+  },
+  "stripe": {
+    "title": "Stripe",
+    "setting": {
+      "label": "Stripe",
+      "description": "Modtag kortbetalinger i din webshop med din egen Stripe-konto. Pengene går direkte til din Stripe-konto.",
+      "notConfigured": "Stripe er ikke sat op på denne platform endnu. Bed platformens administrator om at tilføje Stripe Connect-indstillingerne."
+    },
+    "testMode": "Testtilstand",
+    "liveMode": "Live",
+    "chargesDisabled": "Din Stripe-konto kan ikke modtage betalinger endnu. Gør opsætningen færdig i dit Stripe-dashboard.",
+    "outcome": {
+      "expired": "Linket til Stripe-forbindelsen er udløbet. Prøv igen.",
+      "access_denied": "Forbindelsen blev ikke tilladt på Stripe.",
+      "stripeAccountAlreadyConnected": "Denne Stripe-konto er allerede forbundet til et andet workspace.",
+      "stripePlatformNotConfigured": "Stripe er ikke sat op på denne platform endnu.",
+      "superAdminRequired": "Kun en workspace-administrator kan forbinde Stripe.",
+      "signInRequired": "Log ind, og prøv igen.",
+      "paymentProviderCredentialsRejected": "Stripe afviste forbindelsen. Prøv igen.",
+      "startedByAnotherUser": "Kun den person, der trykkede på Forbind, kan fuldføre det. Tryk på Forbind igen.",
+      "paymentProviderInUse": "Åbne ordrer har stadig brug for denne Stripe-konto. Fuldfør eller annuller dem først."
+    },
+    "platform": {
+      "connectClientId": "Connect client ID",
+      "connectClientIdHint": "Fra Stripe Dashboard → Settings → Connect → Onboarding options → OAuth (starter med ca_). Butikker forbinder deres egen Stripe-konto via den.",
+      "redirectUri": "Redirect URI",
+      "webhookReady": "Butikker kan forbinde Stripe, og deres betalinger bekræftes automatisk.",
+      "webhookMissing": "Betalings-webhooken mangler. Gem disse indstillinger igen for at oprette den.",
+      "connectMissing": "Tilføj Connect client ID, så butikker kan forbinde deres Stripe-konto."
+    }
+  },
+  "paypal": {
+    "title": "PayPal",
+    "setting": {
+      "label": "PayPal",
+      "description": "Modtag PayPal-betalinger i din webshop med din egen PayPal-konto."
+    },
+    "sandbox": "Sandbox",
+    "liveMode": "Live",
+    "fields": {
+      "clientId": "Client ID",
+      "clientSecret": "Secret"
+    },
+    "dialog": {
+      "description": "Opret en REST-app i <link>PayPal Developer → Apps & Credentials</link>, og indsæt dens Client ID og Secret. Live eller sandbox registreres ud fra nøglerne."
+    }
   },
   "pipelines": {
     "title": "Pipelines",

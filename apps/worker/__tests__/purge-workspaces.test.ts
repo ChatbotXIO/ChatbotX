@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const purgeDueScheduled = vi.fn()
+const teardownForPurge = vi.fn()
 const runExclusive = vi.fn(async ({ fn }: { fn: () => Promise<unknown> }) =>
   fn(),
 )
@@ -10,6 +11,7 @@ const warn = vi.fn()
 
 vi.mock("@chatbotx.io/business", () => ({
   workspaceService: { purgeDueScheduled },
+  paymentProviderService: { teardownForPurge },
 }))
 vi.mock("@chatbotx.io/redis", async (importOriginal) => {
   const actual = await importOriginal()
@@ -64,7 +66,17 @@ describe("purgeWorkspaces", () => {
     )
     expect(purgeDueScheduled).toHaveBeenCalledWith({
       integrations: ["integration"],
+      teardownPaymentProviders: expect.any(Function),
     })
+  })
+
+  test("lets go of each purged workspace's payment providers", async () => {
+    await purgeWorkspaces()
+    const [{ teardownPaymentProviders }] = purgeDueScheduled.mock.calls[0] as [
+      { teardownPaymentProviders: (workspaceId: string) => Promise<void> },
+    ]
+    await teardownPaymentProviders("w1")
+    expect(teardownForPurge).toHaveBeenCalledWith("w1")
   })
 
   test("logs only when workspaces were deleted", async () => {

@@ -1,4 +1,8 @@
-import { ecommerceOpenHoursService, flowService } from "@chatbotx.io/business"
+import {
+  ecommerceOpenHoursService,
+  flowService,
+  paymentProviderService,
+} from "@chatbotx.io/business"
 import { notFound } from "next/navigation"
 import { CheckoutSettingsForm } from "@/features/ecommerce-settings/components/checkout-settings-form"
 import { EcommerceSettingsSidebar } from "@/features/ecommerce-settings/components/ecommerce-settings-sidebar"
@@ -38,7 +42,13 @@ export default async function EcommerceSettingsSectionPage({
           />
         ) : null}
         {section === "payments" ? (
-          <PaymentSettingsForm settings={settings} workspaceId={workspaceId} />
+          <PaymentSettingsForm
+            connectedProviders={(
+              await paymentProviderService.list(workspaceId)
+            ).map((connection) => connection.provider)}
+            settings={settings}
+            workspaceId={workspaceId}
+          />
         ) : null}
         {section === "shipping" ? (
           <ShippingSettingsForm settings={settings} workspaceId={workspaceId} />

@@ -5700,6 +5700,8 @@
       "orderShipped": "تم شحن الطلب",
       "orderConcluded": "تم إكمال الطلب",
       "orderCancelled": "تم إلغاء الطلب",
+      "orderPaid": "تم دفع الطلب",
+      "orderRefunded": "تم استرداد مبلغ الطلب",
       "categoryAddedToCart": "تمت إضافة فئة إلى السلة",
       "productAddedToCart": "تمت إضافة منتج إلى السلة",
       "productRemovedFromCart": "تمت إزالة منتج من السلة",
@@ -6555,7 +6557,9 @@
       "rating": "التقييم",
       "quantity": "الكمية",
       "price": "السعر",
-      "vendor": "المورّد"
+      "vendor": "المورّد",
+      "orderStatus": "حالة الطلب",
+      "payment": "الدفع"
     },
     "fields": {
       "name": "الاسم",
@@ -6580,7 +6584,9 @@
       "cancelReason": "سبب الإلغاء",
       "rating": "التقييم",
       "ratingComment": "تعليق العميل",
-      "coupon": "القسيمة ({code})"
+      "coupon": "القسيمة ({code})",
+      "paymentStatus": "حالة الدفع",
+      "payments": "المدفوعات عبر الإنترنت"
     },
     "statuses": {
       "pending": "لم تتم المعالجة",
@@ -6596,14 +6602,39 @@
       "cancelled": "إلغاء"
     },
     "paymentMethods": {
-      "cod": "الدفع عند الاستلام"
+      "cod": "الدفع عند الاستلام",
+      "stripe": "بطاقة",
+      "paypal": "PayPal"
     },
     "shippingTypes": {
       "delivery": "التوصيل إلى العميل",
       "pickup": "الاستلام من المتجر"
     },
     "description": "الطلبات التي قدّمها عملاؤك.",
-    "ratingValue": "{rating}/5 ★"
+    "ratingValue": "{rating}/5 ★",
+    "paymentStatuses": {
+      "unpaid": "غير مدفوع",
+      "paid": "مدفوع",
+      "refunded": "تم الاسترداد"
+    },
+    "attemptStatuses": {
+      "open": "في الانتظار",
+      "paid": "مدفوع",
+      "expired": "منتهي الصلاحية",
+      "refunded": "تم الاسترداد"
+    },
+    "testPayment": "اختبار",
+    "awaitingPaymentHint": "في انتظار الدفع عبر الإنترنت من العميل. يمكن قبول الطلب بعد دفعه.",
+    "refundWarning": "سيتم استرداد {amount} للعميل.",
+    "paymentStates": {
+      "paid": "مدفوع",
+      "refunded": "مسترد",
+      "awaitingPayment": "بانتظار الدفع",
+      "payOnDelivery": "الدفع عند الاستلام",
+      "notPaid": "غير مدفوع"
+    },
+    "paymentUntil": "حتى {time}",
+    "paymentExpiredCancelReason": "لم يتم استلام الدفع في الوقت المحدد."
   },
   "products": {
     "title": "المنتجات",
@@ -9844,8 +9875,11 @@
         "label": "طرق الدفع",
         "description": "طرق الدفع المفعّلة في صفحة إتمام الشراء. ستكون أول طريقة في القائمة هي المحددة في صفحة إتمام الشراء.",
         "options": {
-          "cod": "الدفع عند الاستلام"
-        }
+          "cod": "الدفع عند الاستلام",
+          "stripe": "بطاقة",
+          "paypal": "PayPal"
+        },
+        "connectHint": "لتقديم {provider}، قم بربطه في <link>الإعدادات → التكاملات</link>."
       },
       "currency": {
         "label": "العملة",
@@ -10063,7 +10097,19 @@
     },
     "payment": {
       "title": "الدفع",
-      "cod": "الدفع عند الاستلام"
+      "cod": "الدفع عند الاستلام",
+      "stripe": "بطاقة",
+      "paypal": "PayPal",
+      "paid": "مدفوع",
+      "refunded": "تم الاسترداد",
+      "awaiting": "في انتظار دفعتك",
+      "payBefore": "ادفع قبل {time}، وإلا سيتم إلغاء الطلب.",
+      "payNow": "ادفع الآن",
+      "onlineHint": "ستدفع في الصفحة التالية. يتم حجز طلبك لمدة 30 دقيقة.",
+      "continueToPayment": "المتابعة إلى الدفع",
+      "notYet": "لم نستلم دفعتك بعد. إذا كنت قد دفعت للتو، فانتظر قليلًا ثم حدّث هذه الصفحة.",
+      "leftPaymentPage": "لقد غادرت صفحة الدفع. لا يزال بإمكانك الدفع أدناه.",
+      "paidThanks": "تم استلام الدفعة. شكرًا لطلبك!"
     },
     "placeOrder": "تأكيد الطلب",
     "orderPlaced": "شكرًا لك! تم تقديم طلبك. سنرسل لك التحديثات في المحادثة.",
@@ -10113,7 +10159,14 @@
       "discountCodeNotEligible": "رمز الخصم هذا غير متاح لك.",
       "discountCodeNotApplicable": "رمز الخصم هذا لا ينطبق على محتويات سلتك.",
       "discountCodeMinimumAmount": "يتطلب رمز الخصم هذا شراءً بقيمة {minimum} على الأقل. أضف {missing}.",
-      "discountCodeMinimumQuantity": "يتطلب رمز الخصم هذا {minimum} منتجات على الأقل. أضف {missing}."
+      "discountCodeMinimumQuantity": "يتطلب رمز الخصم هذا {minimum} منتجات على الأقل. أضف {missing}.",
+      "paymentMethodUnavailable": "طريقة الدفع هذه غير متاحة.",
+      "paymentProviderNotConnected": "طريقة الدفع هذه غير متاحة.",
+      "paymentProviderUnavailable": "خدمة الدفع لا تستجيب. يرجى المحاولة مرة أخرى بعد قليل.",
+      "paymentProviderRejected": "تعذر بدء الدفع. يرجى اختيار طريقة دفع أخرى.",
+      "paymentProviderCredentialsRejected": "تعذر بدء الدفع. يرجى اختيار طريقة دفع أخرى.",
+      "paymentAmountUnsupported": "لا يمكن دفع هذا الطلب عبر الإنترنت. يرجى اختيار طريقة دفع أخرى.",
+      "orderPaymentNotOpen": "لم يعد بالإمكان دفع هذا الطلب عبر الإنترنت."
     },
     "discount": {
       "label": "رمز الخصم",
@@ -10274,6 +10327,52 @@
     "metHelp": "نسبة الردود الملتزمة بين الردود التي لها اتفاقية.",
     "eligibleCount": "{count} ردًّا لها اتفاقية",
     "enable": "تفعيل اتفاقية مستوى الخدمة للرد"
+  },
+  "stripe": {
+    "title": "Stripe",
+    "setting": {
+      "label": "Stripe",
+      "description": "استقبل مدفوعات البطاقات في متجرك الإلكتروني عبر حسابك الخاص في Stripe. تذهب الأموال مباشرة إلى حسابك في Stripe.",
+      "notConfigured": "لم يتم إعداد Stripe على هذه المنصة بعد. اطلب من مسؤول المنصة إضافة إعدادات Stripe Connect."
+    },
+    "testMode": "وضع الاختبار",
+    "liveMode": "مباشر",
+    "chargesDisabled": "لا يمكن لحسابك في Stripe استقبال المدفوعات بعد. أكمل إعداده من لوحة تحكم Stripe.",
+    "outcome": {
+      "expired": "انتهت صلاحية رابط الاتصال بـ Stripe. يرجى المحاولة مرة أخرى.",
+      "access_denied": "لم يتم السماح بالاتصال على Stripe.",
+      "stripeAccountAlreadyConnected": "حساب Stripe هذا متصل بالفعل بمساحة عمل أخرى.",
+      "stripePlatformNotConfigured": "لم يتم إعداد Stripe على هذه المنصة بعد.",
+      "superAdminRequired": "يمكن لمسؤول مساحة العمل فقط ربط Stripe.",
+      "signInRequired": "يرجى تسجيل الدخول والمحاولة مرة أخرى.",
+      "paymentProviderCredentialsRejected": "رفض Stripe الاتصال. يرجى المحاولة مرة أخرى.",
+      "startedByAnotherUser": "يمكن فقط للشخص الذي ضغط على اتصال إكمال العملية. يرجى الضغط على اتصال مرة أخرى.",
+      "paymentProviderInUse": "لا تزال هناك طلبات مفتوحة تحتاج إلى حساب Stripe هذا. أكمِلها أو ألغِها أولًا."
+    },
+    "platform": {
+      "connectClientId": "Connect client ID",
+      "connectClientIdHint": "من Stripe Dashboard → Settings → Connect → Onboarding options → OAuth (يبدأ بـ ca_). تربط المتاجر حساباتها في Stripe من خلاله.",
+      "redirectUri": "Redirect URI",
+      "webhookReady": "يمكن للمتاجر ربط Stripe، ويتم تأكيد مدفوعاتها تلقائيًا.",
+      "webhookMissing": "خطاف الويب (webhook) الخاص بالدفع مفقود. احفظ هذه الإعدادات مرة أخرى لإنشائه.",
+      "connectMissing": "أضف Connect client ID حتى تتمكن المتاجر من ربط حساباتها في Stripe."
+    }
+  },
+  "paypal": {
+    "title": "PayPal",
+    "setting": {
+      "label": "PayPal",
+      "description": "استقبل مدفوعات PayPal في متجرك الإلكتروني عبر حسابك الخاص في PayPal."
+    },
+    "sandbox": "Sandbox",
+    "liveMode": "مباشر",
+    "fields": {
+      "clientId": "Client ID",
+      "clientSecret": "Secret"
+    },
+    "dialog": {
+      "description": "أنشئ تطبيق REST في <link>PayPal Developer → Apps & Credentials</link> والصق Client ID و Secret الخاصين به. يتم اكتشاف الوضع المباشر أو Sandbox من المفاتيح."
+    }
   },
   "pipelines": {
     "title": "خطوط سير العمل",

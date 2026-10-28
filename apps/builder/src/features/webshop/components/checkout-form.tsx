@@ -1,6 +1,8 @@
 "use client"
 
 import {
+  isOnlinePaymentMethod,
+  type PaymentMethod,
   SHIPPING_TYPES_BY_MODE,
   type ShippingType,
 } from "@chatbotx.io/database/partials"
@@ -22,7 +24,7 @@ import { Textarea } from "@chatbotx.io/ui/components/ui/textarea"
 import { cn } from "@chatbotx.io/ui/lib/utils"
 import {
   BanknoteIcon,
-  CircleCheckIcon,
+  CreditCardIcon,
   Loader2Icon,
   type LucideIcon,
   StoreIcon,
@@ -102,6 +104,12 @@ const SHIPPING_ICON: Record<ShippingType, LucideIcon> = {
   pickup: StoreIcon,
 }
 
+const PAYMENT_ICON: Record<PaymentMethod, LucideIcon> = {
+  cod: BanknoteIcon,
+  stripe: CreditCardIcon,
+  paypal: WalletIcon,
+}
+
 /** Taller, rounder fields, easier to tap in a phone's in-app browser. */
 const INPUT_CLASS = "h-11 rounded-xl bg-background"
 
@@ -143,6 +151,13 @@ export function CheckoutForm({
   )
 
   const shippingTypes = SHIPPING_TYPES_BY_MODE[shop.shipping.mode]
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(
+    shop.paymentMethods[0] ?? "cod",
+  )
+  const paysOnline = isOnlinePaymentMethod(paymentMethod)
+  // Set once the provider's page opens, so the button stays busy until the
+  // browser has left.
+  const [redirecting, setRedirecting] = useState(false)
   const shippingType: ShippingType | null = cart.shippingType
   const delivering = shippingType === "delivery"
 
@@ -175,6 +190,7 @@ export function CheckoutForm({
     const result = await executeAsync({
       workspaceId: context.workspaceId,
       token: context.token,
+      paymentMethod,
       customerName: values.customerName,
       customerEmail: values.customerEmail.trim(),
       customerPhone: values.customerPhone,
@@ -196,6 +212,13 @@ export function CheckoutForm({
     const response = result?.data
     if (!response?.ok) {
       toast.error(checkoutErrorMessage(response, result?.validationErrors))
+      return
+    }
+    // Paid online: the provider's page comes first; the order page reports
+    // the purchase once the payment came in.
+    if (response.data.paymentUrl) {
+      setRedirecting(true)
+      window.location.assign(response.data.paymentUrl)
       return
     }
     trackPixel("Purchase", {
@@ -428,11 +451,42 @@ export function CheckoutForm({
       ) : null}
 
       <FormSection icon={WalletIcon} title={t("payment.title")}>
-        <div className="flex items-center gap-3 rounded-xl border border-primary bg-primary/5 p-3.5 text-sm">
-          <BanknoteIcon className="size-5 text-primary" />
-          <span className="flex-1">{t("payment.cod")}</span>
-          <CircleCheckIcon className="size-5 text-primary" />
-        </div>
+        <RadioGroup
+          className="gap-2"
+          onValueChange={(value) => setPaymentMethod(value as PaymentMethod)}
+          value={paymentMethod}
+        >
+          {shop.paymentMethods.map((method) => {
+            const Icon = PAYMENT_ICON[method]
+            return (
+              <Label
+                className={cn(
+                  "flex cursor-pointer items-center gap-3 rounded-xl border p-3.5 font-normal transition-colors hover:bg-muted/50",
+                  paymentMethod === method &&
+                    "border-primary bg-primary/5 hover:bg-primary/5",
+                )}
+                htmlFor={`${id}-payment-${method}`}
+                key={method}
+              >
+                <RadioGroupItem id={`${id}-payment-${method}`} value={method} />
+                <Icon
+                  className={cn(
+                    "size-5",
+                    paymentMethod === method
+                      ? "text-primary"
+                      : "text-muted-foreground",
+                  )}
+                />
+                {t(`payment.${method}`)}
+              </Label>
+            )
+          })}
+        </RadioGroup>
+        {paysOnline ? (
+          <p className="text-muted-foreground text-sm">
+            {t("payment.onlineHint")}
+          </p>
+        ) : null}
         <Field
           htmlFor={field("note")}
           label={t("fields.note")}
@@ -456,13 +510,15 @@ export function CheckoutForm({
       >
         <Button
           className="h-12 min-w-36 rounded-full px-6 shadow-md active:scale-95"
-          disabled={isPending || context.preview}
+          disabled={isPending || redirecting || context.preview}
           form={formId}
           size="lg"
           type="submit"
         >
-          {isPending ? <Loader2Icon className="animate-spin" /> : null}
-          {t("placeOrder")}
+          {isPending || redirecting ? (
+            <Loader2Icon className="animate-spin" />
+          ) : null}
+          {paysOnline ? t("payment.continueToPayment") : t("placeOrder")}
         </Button>
       </CheckoutBar>
     </form>

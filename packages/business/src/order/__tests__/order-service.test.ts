@@ -33,6 +33,15 @@ const mocks = vi.hoisted(() => ({
   releaseDiscount: vi.fn(),
   emitOrderStatus: vi.fn(),
   emitProductOrdered: vi.fn(),
+  settleForCancel: vi.fn(),
+  assertDeletable: vi.fn(),
+}))
+
+vi.mock("../../order-payment/settle", () => ({
+  settlePaymentsForCancel: (...args: unknown[]) =>
+    mocks.settleForCancel(...args),
+  assertDeletableWithPayments: (...args: unknown[]) =>
+    mocks.assertDeletable(...args),
 }))
 
 vi.mock("@chatbotx.io/events", () => ({
@@ -196,6 +205,8 @@ const placeInput = (overrides: Record<string, unknown> = {}) => ({
 
 beforeEach(() => {
   vi.clearAllMocks()
+  mocks.settleForCancel.mockResolvedValue({ refunded: false })
+  mocks.assertDeletable.mockResolvedValue(undefined)
   mocks.transaction.mockImplementation(
     async (callback: (client: typeof tx) => unknown) => await callback(tx),
   )
@@ -748,7 +759,7 @@ describe("orderService — customer message and delete", () => {
   })
 
   test("sends the status in the workspace language, whatever the contact's", async () => {
-    mocks.findOrder.mockResolvedValue(order)
+    mocks.findOrder.mockResolvedValue({ ...order, status: "accepted" })
     mocks.transitionStatus.mockResolvedValue({ ...order, status: "concluded" })
     mocks.findContact.mockResolvedValue({ id: "c1", locale: "en_US" })
     mocks.findWorkspace.mockResolvedValue({
@@ -1279,5 +1290,316 @@ describe("orderService — trigger events", () => {
   test("an order without a contact emits nothing", async () => {
     await orderService.place(placeInput())
     expect(mocks.emitOrderStatus).not.toHaveBeenCalled()
+  })
+})
+
+describe("orderService — online payment", () => {
+  const onlineSettings = () =>
+    settings({ payments: { paymentMethods: ["cod", "stripe"] } })
+  const withContact = () => {
+    mocks.resolveContactInboxForSend.mockResolvedValue({
+      conversation: {
+        id: "conv1",
+        contactInboxes: [{ id: "ci1", inboxId: "i1", channel: "messenger" }],
+      },
+      contactInbox: { id: "ci1", inboxId: "i1", channel: "messenger" },
+    })
+    return { contact: { contactId: "c1" } }
+  }
+
+  test("an online order waits for its money: unpaid, a 30-minute deadline, nothing announced", async () => {
+    mocks.getFresh.mockResolvedValue(onlineSettings())
+    const before = Date.now()
+    await orderService.place(
+      placeInput({ paymentMethod: "stripe", ...withContact() }),
+    )
+
+    const [values] = mocks.insertOrder.mock.calls[0] as [
+      { paymentMethod: string; paymentStatus: string; paymentExpiresAt: Date },
+    ]
+    expect(values).toMatchObject({
+      paymentMethod: "stripe",
+      paymentStatus: "unpaid",
+      paidAt: null,
+    })
+    expect(values.paymentExpiresAt.getTime()).toBeGreaterThanOrEqual(
+      before + 30 * 60_000,
+    )
+    expect(values.paymentExpiresAt.getTime()).toBeLessThanOrEqual(
+      Date.now() + 30 * 60_000,
+    )
+    expect(mocks.queueAdd).not.toHaveBeenCalled()
+    expect(mocks.emitOrderStatus).not.toHaveBeenCalled()
+    expect(mocks.createOutgoing).not.toHaveBeenCalled()
+  })
+
+  test("a method the store does not offer refuses the order before any stock moves", async () => {
+    await expect(
+      orderService.place(
+        placeInput({ paymentMethod: "paypal", ...withContact() }),
+      ),
+    ).rejects.toMatchObject({ code: "paymentMethodUnavailable" })
+    expect(mocks.lockForStock).not.toHaveBeenCalled()
+    expect(mocks.insertOrder).not.toHaveBeenCalled()
+  })
+
+  test("an online order needs a contact to send the payment back to", async () => {
+    mocks.getFresh.mockResolvedValue(onlineSettings())
+    await expect(
+      orderService.place(placeInput({ paymentMethod: "stripe" })),
+    ).rejects.toMatchObject({ code: "orderPaymentContactRequired" })
+  })
+
+  test("cash on delivery typed in through the API still works when the store lists only online methods", async () => {
+    mocks.getFresh.mockResolvedValue(
+      settings({ payments: { paymentMethods: ["stripe"] } }),
+    )
+    await orderService.place(placeInput())
+    expect(mocks.insertOrder).toHaveBeenCalledWith(
+      expect.objectContaining({ paymentMethod: "cod", paymentExpiresAt: null }),
+      tx,
+    )
+  })
+
+  test("an online order cannot be accepted before it is paid, and no money moves", async () => {
+    mocks.findOrder.mockResolvedValue({
+      id: "o1",
+      workspaceId: "ws1",
+      status: "pending",
+      paymentMethod: "stripe",
+      paymentStatus: "unpaid",
+    })
+    await expect(
+      orderService.accept({
+        workspaceId: "ws1",
+        orderId: "o1",
+        actor: { type: "user", userId: "u1" },
+      }),
+    ).rejects.toMatchObject({ code: "orderAwaitingPayment" })
+    expect(mocks.transitionStatus).not.toHaveBeenCalled()
+  })
+
+  test("cancelling a paid online order refunds it and says so", async () => {
+    const current = {
+      id: "o1",
+      workspaceId: "ws1",
+      status: "accepted",
+      paymentMethod: "stripe",
+      paymentStatus: "paid",
+      paidAt: new Date("2026-10-25T08:00:00Z"),
+      contactId: "c1",
+      contactInboxId: "ci1",
+      inboxId: "i1",
+    }
+    mocks.findOrder.mockResolvedValue(current)
+    mocks.settleForCancel.mockResolvedValue({ refunded: true })
+    mocks.transitionStatus.mockImplementation(
+      async (input: { values: object }) => ({
+        ...current,
+        ...input.values,
+        status: "cancelled",
+      }),
+    )
+    mocks.listItems.mockResolvedValue([])
+    mocks.lockForStock.mockResolvedValue([])
+    mocks.findDetail.mockResolvedValue({ ...current, items: [] })
+    mocks.findWorkspace.mockResolvedValue({ id: "ws1", language: "en" })
+    mocks.resolveContactInboxForSend.mockResolvedValue({
+      conversation: { id: "conv1" },
+      contactInbox: { id: "ci1" },
+    })
+
+    await orderService.cancel({
+      workspaceId: "ws1",
+      orderId: "o1",
+      actor: { type: "user", userId: "u1" },
+    })
+
+    // A member's cancel refunds a payment that lands meanwhile; only the
+    // expiry scan keeps it.
+    expect(mocks.settleForCancel).toHaveBeenCalledWith(current, tx, {
+      keepLatePayment: false,
+    })
+    expect(mocks.transitionStatus).toHaveBeenCalledWith(
+      expect.objectContaining({
+        to: "cancelled",
+        values: expect.objectContaining({
+          paymentStatus: "refunded",
+          paymentExpiresAt: null,
+        }),
+      }),
+      tx,
+    )
+    expect(mocks.emitOrderStatus).toHaveBeenCalledWith(
+      "orderRefunded",
+      "ws1",
+      "c1",
+      expect.anything(),
+      "ci1",
+    )
+    expect(mocks.createOutgoing).toHaveBeenCalledWith(
+      expect.objectContaining({
+        input: {
+          text: expect.stringContaining("Your payment has been refunded."),
+        },
+      }),
+    )
+  })
+
+  test("a refund that fails leaves the order as it was", async () => {
+    mocks.findOrder.mockResolvedValue({
+      id: "o1",
+      workspaceId: "ws1",
+      status: "pending",
+      paymentMethod: "stripe",
+      paymentStatus: "paid",
+    })
+    mocks.settleForCancel.mockRejectedValue(
+      Object.assign(new Error("refund failed"), { code: "orderRefundFailed" }),
+    )
+    await expect(
+      orderService.cancel({
+        workspaceId: "ws1",
+        orderId: "o1",
+        actor: { type: "user", userId: "u1" },
+      }),
+    ).rejects.toMatchObject({ code: "orderRefundFailed" })
+    expect(mocks.transitionStatus).not.toHaveBeenCalled()
+    expect(mocks.releaseDiscount).not.toHaveBeenCalled()
+  })
+
+  test("a move the status does not allow never touches the money", async () => {
+    mocks.findOrder.mockResolvedValue({
+      id: "o1",
+      workspaceId: "ws1",
+      status: "concluded",
+      paymentMethod: "stripe",
+      paymentStatus: "paid",
+    })
+    await expect(
+      orderService.cancel({
+        workspaceId: "ws1",
+        orderId: "o1",
+        actor: { type: "user", userId: "u1" },
+      }),
+    ).rejects.toMatchObject({ code: "orderInvalidStatusTransition" })
+    expect(mocks.settleForCancel).not.toHaveBeenCalled()
+  })
+
+  test("once paid, the order is announced: orderPaid, newOrder, the push and the checkout flow", async () => {
+    mocks.getSettings.mockResolvedValue(
+      settings({
+        checkout: {
+          checkoutMode: "flow",
+          checkoutFlowId: "f1",
+          orderConfirmationMode: "none",
+        },
+      }),
+    )
+    mocks.findDetail.mockResolvedValue({ id: "o1", items: [] })
+    await orderService.afterPaid({
+      id: "o1",
+      workspaceId: "ws1",
+      source: "webshop",
+      status: "pending",
+      paymentMethod: "stripe",
+      paymentStatus: "paid",
+      contactId: "c1",
+      contactInboxId: "ci1",
+      conversationId: "conv1",
+    } as never)
+
+    expect(mocks.emitOrderStatus.mock.calls.map(([event]) => event)).toEqual([
+      "orderPaid",
+      "newOrder",
+    ])
+    expect(mocks.emitProductOrdered).toHaveBeenCalledTimes(1)
+    expect(mocks.queueAdd).toHaveBeenCalledWith(
+      "notifyNewOrder",
+      expect.anything(),
+      { jobId: "new-order-o1" },
+    )
+    expect(mocks.integrationQueueAdd).toHaveBeenCalledWith(
+      "sendFlow",
+      {
+        type: "sendFlow",
+        data: { conversationId: "conv1", contactInboxId: "ci1", flowId: "f1" },
+      },
+      { jobId: "webshop-checkout-flow-o1" },
+    )
+  })
+})
+
+describe("orderService — an online order never paid", () => {
+  const unpaid = {
+    id: "o1",
+    workspaceId: "ws1",
+    status: "pending",
+    paymentMethod: "stripe",
+    paymentStatus: "unpaid",
+    paidAt: null,
+    contactId: "c1",
+    contactInboxId: "ci1",
+    inboxId: "i1",
+  }
+
+  beforeEach(() => {
+    mocks.findOrder.mockResolvedValue(unpaid)
+    mocks.transitionStatus.mockImplementation(
+      async (input: { values: object }) => ({
+        ...unpaid,
+        ...input.values,
+        status: "cancelled",
+      }),
+    )
+    mocks.listItems.mockResolvedValue([])
+    mocks.lockForStock.mockResolvedValue([])
+    mocks.findWorkspace.mockResolvedValue({ id: "ws1", language: "en" })
+    mocks.resolveContactInboxForSend.mockResolvedValue({
+      conversation: { id: "conv1" },
+      contactInbox: { id: "ci1" },
+    })
+  })
+
+  test("cancelling it fires nothing: it was never announced", async () => {
+    await orderService.cancel({
+      workspaceId: "ws1",
+      orderId: "o1",
+      actor: { type: "system" },
+    })
+    expect(mocks.emitOrderStatus).not.toHaveBeenCalled()
+    expect(mocks.createOutgoing).not.toHaveBeenCalled()
+  })
+
+  test("its time running out tells the customer why it is gone", async () => {
+    await orderService.transition({
+      workspaceId: "ws1",
+      orderId: "o1",
+      to: "cancelled",
+      actor: { type: "system" },
+      reason: "paymentExpired",
+    })
+    // A page paid at the deadline keeps the order instead of being refunded.
+    expect(mocks.settleForCancel).toHaveBeenCalledWith(expect.anything(), tx, {
+      keepLatePayment: true,
+    })
+    expect(mocks.emitOrderStatus).not.toHaveBeenCalled()
+    expect(mocks.createOutgoing).toHaveBeenCalledWith(
+      expect.objectContaining({
+        input: {
+          text: expect.stringContaining(
+            "We did not receive your payment in time",
+          ),
+        },
+      }),
+    )
+    expect(mocks.transitionStatus).toHaveBeenCalledWith(
+      expect.objectContaining({
+        values: expect.objectContaining({
+          cancelReason: "Payment not received in time.",
+        }),
+      }),
+      tx,
+    )
   })
 })

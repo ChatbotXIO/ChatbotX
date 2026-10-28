@@ -5746,6 +5746,8 @@
       "orderShipped": "訂單已出貨",
       "orderConcluded": "訂單已完成",
       "orderCancelled": "訂單已取消",
+      "orderPaid": "訂單已付款",
+      "orderRefunded": "訂單已退款",
       "categoryAddedToCart": "分類加入購物車",
       "productAddedToCart": "產品已加入購物車",
       "productRemovedFromCart": "產品已從購物車中刪除",
@@ -6990,7 +6992,9 @@
       "rating": "評分",
       "quantity": "數量",
       "price": "價格",
-      "vendor": "供應商"
+      "vendor": "供應商",
+      "orderStatus": "訂單狀態",
+      "payment": "付款"
     },
     "fields": {
       "name": "姓名",
@@ -7015,7 +7019,9 @@
       "cancelReason": "取消原因",
       "rating": "評分",
       "ratingComment": "顧客評論",
-      "coupon": "優惠券（{code}）"
+      "coupon": "優惠券（{code}）",
+      "paymentStatus": "付款狀態",
+      "payments": "線上付款"
     },
     "statuses": {
       "pending": "未處理",
@@ -7031,14 +7037,39 @@
       "cancelled": "取消"
     },
     "paymentMethods": {
-      "cod": "貨到付款"
+      "cod": "貨到付款",
+      "stripe": "信用卡",
+      "paypal": "PayPal"
     },
     "shippingTypes": {
       "delivery": "送貨到府",
       "pickup": "到店自取"
     },
     "description": "客戶下的訂單。",
-    "ratingValue": "{rating}/5 ★"
+    "ratingValue": "{rating}/5 ★",
+    "paymentStatuses": {
+      "unpaid": "未付款",
+      "paid": "已付款",
+      "refunded": "已退款"
+    },
+    "attemptStatuses": {
+      "open": "等待中",
+      "paid": "已付款",
+      "expired": "已過期",
+      "refunded": "已退款"
+    },
+    "testPayment": "測試",
+    "awaitingPaymentHint": "正在等待客戶線上付款。付款後即可接受訂單。",
+    "refundWarning": "{amount} 將退還給客戶。",
+    "paymentStates": {
+      "paid": "已付款",
+      "refunded": "已退款",
+      "awaitingPayment": "等待付款",
+      "payOnDelivery": "貨到付款",
+      "notPaid": "未付款"
+    },
+    "paymentUntil": "截至 {time}",
+    "paymentExpiredCancelReason": "未在期限內收到付款。"
   },
   "products": {
     "title": "產品",
@@ -9844,8 +9875,11 @@
         "label": "付款方式",
         "description": "結帳頁面啟用的付款方式。清單中的第一個付款方式將在結帳頁面預設選取。",
         "options": {
-          "cod": "貨到付款"
-        }
+          "cod": "貨到付款",
+          "stripe": "信用卡",
+          "paypal": "PayPal"
+        },
+        "connectHint": "若要提供 {provider},請在 <link>設定 → 整合</link> 中連接它。"
       },
       "currency": {
         "label": "幣別",
@@ -10063,7 +10097,19 @@
     },
     "payment": {
       "title": "付款方式",
-      "cod": "貨到付款"
+      "cod": "貨到付款",
+      "stripe": "信用卡",
+      "paypal": "PayPal",
+      "paid": "已付款",
+      "refunded": "已退款",
+      "awaiting": "等待您付款",
+      "payBefore": "請在 {time} 前付款,否則訂單將被取消。",
+      "payNow": "立即付款",
+      "onlineHint": "您將在下一頁付款。您的訂單將保留 30 分鐘。",
+      "continueToPayment": "繼續付款",
+      "notYet": "我們尚未收到您的付款。如果您剛剛付款,請稍候片刻並重新整理此頁面。",
+      "leftPaymentPage": "您已離開付款頁面。您仍可在下方付款。",
+      "paidThanks": "已收到付款。感謝您的訂單!"
     },
     "placeOrder": "送出訂單",
     "orderPlaced": "謝謝！訂單已送出，我們會在聊天中通知您進度。",
@@ -10113,7 +10159,14 @@
       "discountCodeNotEligible": "該折扣碼不適用於您。",
       "discountCodeNotApplicable": "該折扣碼不適用於購物車中的商品。",
       "discountCodeMinimumAmount": "該折扣碼需消費滿 {minimum}，還差 {missing}。",
-      "discountCodeMinimumQuantity": "該折扣碼需至少 {minimum} 件，還差 {missing} 件。"
+      "discountCodeMinimumQuantity": "該折扣碼需至少 {minimum} 件，還差 {missing} 件。",
+      "paymentMethodUnavailable": "此付款方式無法使用。",
+      "paymentProviderNotConnected": "此付款方式無法使用。",
+      "paymentProviderUnavailable": "付款服務沒有回應。請稍後再試。",
+      "paymentProviderRejected": "無法啟動付款。請選擇其他付款方式。",
+      "paymentProviderCredentialsRejected": "無法啟動付款。請選擇其他付款方式。",
+      "paymentAmountUnsupported": "此訂單無法線上付款。請選擇其他付款方式。",
+      "orderPaymentNotOpen": "此訂單已無法線上付款。"
     },
     "discount": {
       "label": "折扣碼",
@@ -10274,6 +10327,52 @@
     "metHelp": "設有 SLA 的回覆中達標的占比。",
     "eligibleCount": "{count} 則回覆設有 SLA",
     "enable": "啟用回應 SLA"
+  },
+  "stripe": {
+    "title": "Stripe",
+    "setting": {
+      "label": "Stripe",
+      "description": "使用您自己的 Stripe 帳戶在網路商店接收信用卡付款。款項會直接進入您的 Stripe 帳戶。",
+      "notConfigured": "此平台尚未設定 Stripe。請聯絡平台管理員新增 Stripe Connect 設定。"
+    },
+    "testMode": "測試模式",
+    "liveMode": "正式",
+    "chargesDisabled": "您的 Stripe 帳戶目前無法收款。請在 Stripe 控制台中完成設定。",
+    "outcome": {
+      "expired": "Stripe 連線連結已過期。請重試。",
+      "access_denied": "Stripe 上未允許此連線。",
+      "stripeAccountAlreadyConnected": "此 Stripe 帳戶已連接到另一個工作區。",
+      "stripePlatformNotConfigured": "此平台尚未設定 Stripe。",
+      "superAdminRequired": "只有工作區管理員才能連接 Stripe。",
+      "signInRequired": "請登入後重試。",
+      "paymentProviderCredentialsRejected": "Stripe 拒絕了此連線。請重試。",
+      "startedByAnotherUser": "只有點擊「連接」的人才能完成。請重新點擊「連接」。",
+      "paymentProviderInUse": "仍有未完成的訂單需要此 Stripe 帳戶。請先完成或取消這些訂單。"
+    },
+    "platform": {
+      "connectClientId": "Connect client ID",
+      "connectClientIdHint": "來自 Stripe Dashboard → Settings → Connect → Onboarding options → OAuth(以 ca_ 開頭)。商店透過它連接各自的 Stripe 帳戶。",
+      "redirectUri": "Redirect URI",
+      "webhookReady": "商店可以連接 Stripe,其付款會自動確認。",
+      "webhookMissing": "缺少付款 Webhook。請再次儲存這些設定以建立它。",
+      "connectMissing": "請新增 Connect client ID,以便商店連接其 Stripe 帳戶。"
+    }
+  },
+  "paypal": {
+    "title": "PayPal",
+    "setting": {
+      "label": "PayPal",
+      "description": "使用您自己的 PayPal 帳戶在網路商店接收 PayPal 付款。"
+    },
+    "sandbox": "Sandbox",
+    "liveMode": "正式",
+    "fields": {
+      "clientId": "Client ID",
+      "clientSecret": "Secret"
+    },
+    "dialog": {
+      "description": "在 <link>PayPal Developer → Apps & Credentials</link> 中建立 REST 應用程式,並貼上其 Client ID 和 Secret。系統會根據金鑰自動辨識正式或沙盒環境。"
+    }
   },
   "pipelines": {
     "title": "管道",

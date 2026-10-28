@@ -118,6 +118,8 @@ export class ConditionEvaluator {
       case triggerEventTypes.enum.orderShipped:
       case triggerEventTypes.enum.orderConcluded:
       case triggerEventTypes.enum.orderCancelled:
+      case triggerEventTypes.enum.orderPaid:
+      case triggerEventTypes.enum.orderRefunded:
       case triggerEventTypes.enum.cartAbandoned:
         return true
 

@@ -176,6 +176,16 @@ custom domain:
 | WhatsApp webhook | `{origin}/integrations/whatsapp/webhook` |
 | TikTok webhook | `{origin}/integrations/tiktok/webhook` |
 | Threads webhook | `{origin}/integrations/threads/webhook` |
+| Stripe Connect (web shop payments) | `{origin}/integrations/stripe/callback` — the Connect webhook `{origin}/api/payments/stripe/webhook/{credentialId}` is created automatically when the Stripe settings are saved |
+
+Web shop payments follow the same split. A store's PayPal webhook is created on
+connect at the **workspace's** own domain (`resolveWorkspaceAppUrl`: the
+reseller's active custom domain, else the builder URL), and the shop links and the
+Stripe/PayPal return pages a customer lands on use that domain too. A Connect or
+PayPal webhook keeps the URL it was created with: after a reseller's domain changes,
+save the Stripe settings again (the endpoint is replaced, new before old) or
+reconnect PayPal. Missed events in between are not lost money — the order page and
+the every-minute sweep ask the provider directly.
 
 (The WhatsApp manual-connect flow registers a per-integration variant,
 `{origin}/integrations/whatsapp/webhook/{integrationId}`, sent to Meta as

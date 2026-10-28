@@ -13,6 +13,7 @@ import {
   applyDiscountCodeRequest,
   changeCartRequest,
   checkoutRequest,
+  payOrderRequest,
   rateOrderRequest,
   removeDiscountCodeRequest,
 } from "../schema/action"
@@ -59,16 +60,37 @@ export const changeCartAction = actionClient
       ),
   )
 
-/** Places the cart as a cash-on-delivery order; returns the order to open. */
+/**
+ * Places the cart as an order; returns the order to open, or — paid online —
+ * the provider's page to go to first (`paymentUrl`).
+ */
 export const checkoutAction = actionClient.inputSchema(checkoutRequest).action(
   async ({ parsedInput }) =>
     await runShopAction(parsedInput, async (shopper) => {
       const { workspaceId: _workspaceId, token: _token, ...form } = parsedInput
-      const order = await webshopService.checkout({
+      const { order, paymentUrl } = await webshopService.checkout({
         shopper,
         form: { ...form, customerEmail: form.customerEmail || null },
       })
-      return { orderId: order.id, total: order.total, currency: order.currency }
+      return {
+        orderId: order.id,
+        total: order.total,
+        currency: order.currency,
+        paymentUrl,
+      }
+    }),
+)
+
+/** The provider's page for the shopper's own order still waiting for its payment. */
+export const payOrderAction = actionClient.inputSchema(payOrderRequest).action(
+  async ({ parsedInput }) =>
+    await runShopAction(parsedInput, async (shopper) => {
+      const { url } = await webshopService.payCustomerOrder({
+        workspaceId: shopper.workspaceId,
+        contactId: shopper.contactId,
+        orderId: parsedInput.orderId,
+      })
+      return { paymentUrl: url }
     }),
 )
 

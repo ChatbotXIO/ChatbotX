@@ -19,3 +19,9 @@ export const toSafeWebUrl = (value: string | null | undefined) => {
     return null
   }
 }
+
+const TRAILING_SLASHES = /\/+$/
+
+/** `path` (starting with `/`) on the app's origin, however many slashes the configured URL ends with. */
+export const joinAppUrl = (appUrl: string, path: string) =>
+  `${appUrl.replace(TRAILING_SLASHES, "")}${path}`

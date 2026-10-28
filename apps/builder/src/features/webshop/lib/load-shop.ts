@@ -30,6 +30,8 @@ const toShopView = (storefront: Storefront) => {
     productImageSize: settings.general.productImageSize,
     productButtons: settings.general.productButtons,
     allowRateOrders: settings.general.allowRateOrders,
+    // Only connected providers are ever offered (disconnecting drops them).
+    paymentMethods: settings.payments.paymentMethods,
     facebookPixelId: settings.general.facebookPixelId,
     checkout: {
       mode: settings.checkout.checkoutMode,

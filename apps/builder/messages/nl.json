@@ -5700,6 +5700,8 @@
       "orderShipped": "Bestelling verzonden",
       "orderConcluded": "Bestelling afgerond",
       "orderCancelled": "Bestelling geannuleerd",
+      "orderPaid": "Bestelling betaald",
+      "orderRefunded": "Bestelling terugbetaald",
       "categoryAddedToCart": "Categorie aan winkelwagen toegevoegd",
       "productAddedToCart": "Product aan winkelwagen toegevoegd",
       "productRemovedFromCart": "Product uit winkelwagen verwijderd",
@@ -6944,7 +6946,9 @@
       "rating": "Beoordeling",
       "quantity": "Aantal",
       "price": "Prijs",
-      "vendor": "Leverancier"
+      "vendor": "Leverancier",
+      "orderStatus": "Bestelstatus",
+      "payment": "Betaling"
     },
     "fields": {
       "name": "Naam",
@@ -6969,7 +6973,9 @@
       "cancelReason": "Reden van annulering",
       "rating": "Beoordeling",
       "ratingComment": "Opmerking van de klant",
-      "coupon": "Kortingscode ({code})"
+      "coupon": "Kortingscode ({code})",
+      "paymentStatus": "Betalingsstatus",
+      "payments": "Online betalingen"
     },
     "statuses": {
       "pending": "Niet verwerkt",
@@ -6985,14 +6991,39 @@
       "cancelled": "Annuleren"
     },
     "paymentMethods": {
-      "cod": "Rembours"
+      "cod": "Rembours",
+      "stripe": "Kaart",
+      "paypal": "PayPal"
     },
     "shippingTypes": {
       "delivery": "Bezorgen bij de klant",
       "pickup": "Afhalen in de winkel"
     },
     "description": "Bestellingen geplaatst door je klanten.",
-    "ratingValue": "{rating}/5 ★"
+    "ratingValue": "{rating}/5 ★",
+    "paymentStatuses": {
+      "unpaid": "Onbetaald",
+      "paid": "Betaald",
+      "refunded": "Terugbetaald"
+    },
+    "attemptStatuses": {
+      "open": "Wacht",
+      "paid": "Betaald",
+      "expired": "Verlopen",
+      "refunded": "Terugbetaald"
+    },
+    "testPayment": "test",
+    "awaitingPaymentHint": "Wacht op de online betaling van de klant. De bestelling kan worden geaccepteerd zodra deze is betaald.",
+    "refundWarning": "{amount} wordt terugbetaald aan de klant.",
+    "paymentStates": {
+      "paid": "Betaald",
+      "refunded": "Terugbetaald",
+      "awaitingPayment": "Wacht op betaling",
+      "payOnDelivery": "Betalen bij levering",
+      "notPaid": "Niet betaald"
+    },
+    "paymentUntil": "tot {time}",
+    "paymentExpiredCancelReason": "Betaling niet op tijd ontvangen."
   },
   "products": {
     "title": "Producten",
@@ -9844,8 +9875,11 @@
         "label": "Betaalmethoden",
         "description": "De betaalmethoden die op de afrekenpagina zijn ingeschakeld. De eerste betaalmethode in de lijst is de geselecteerde betaalmethode op de afrekenpagina.",
         "options": {
-          "cod": "Rembours"
-        }
+          "cod": "Rembours",
+          "stripe": "Kaart",
+          "paypal": "PayPal"
+        },
+        "connectHint": "Om {provider} aan te bieden, verbind je het in <link>Instellingen → Integraties</link>."
       },
       "currency": {
         "label": "Valuta",
@@ -10063,7 +10097,19 @@
     },
     "payment": {
       "title": "Betaling",
-      "cod": "Betalen bij levering"
+      "cod": "Betalen bij levering",
+      "stripe": "Kaart",
+      "paypal": "PayPal",
+      "paid": "Betaald",
+      "refunded": "Terugbetaald",
+      "awaiting": "Wacht op je betaling",
+      "payBefore": "Betaal vóór {time}, anders wordt de bestelling geannuleerd.",
+      "payNow": "Nu betalen",
+      "onlineHint": "Je betaalt op de volgende pagina. Je bestelling wordt 30 minuten vastgehouden.",
+      "continueToPayment": "Doorgaan naar betaling",
+      "notYet": "We hebben je betaling nog niet ontvangen. Als je net hebt betaald, wacht even en vernieuw deze pagina.",
+      "leftPaymentPage": "Je hebt de betaalpagina verlaten. Je kunt hieronder nog steeds betalen.",
+      "paidThanks": "Betaling ontvangen. Bedankt voor je bestelling!"
     },
     "placeOrder": "Bestelling plaatsen",
     "orderPlaced": "Bedankt! Je bestelling is geplaatst. We houden je op de hoogte in de chat.",
@@ -10113,7 +10159,14 @@
       "discountCodeNotEligible": "Deze kortingscode is niet voor jou.",
       "discountCodeNotApplicable": "Deze kortingscode geldt niet voor je winkelwagen.",
       "discountCodeMinimumAmount": "Deze code vraagt een aankoop van minstens {minimum}. Nog {missing}.",
-      "discountCodeMinimumQuantity": "Deze code vraagt minstens {minimum} artikelen. Nog {missing}."
+      "discountCodeMinimumQuantity": "Deze code vraagt minstens {minimum} artikelen. Nog {missing}.",
+      "paymentMethodUnavailable": "Deze betaalmethode is niet beschikbaar.",
+      "paymentProviderNotConnected": "Deze betaalmethode is niet beschikbaar.",
+      "paymentProviderUnavailable": "De betaaldienst reageert niet. Probeer het zo meteen opnieuw.",
+      "paymentProviderRejected": "De betaling kon niet worden gestart. Kies een andere betaalmethode.",
+      "paymentProviderCredentialsRejected": "De betaling kon niet worden gestart. Kies een andere betaalmethode.",
+      "paymentAmountUnsupported": "Deze bestelling kan niet online worden betaald. Kies een andere betaalmethode.",
+      "orderPaymentNotOpen": "Deze bestelling kan niet meer online worden betaald."
     },
     "discount": {
       "label": "Kortingscode",
@@ -10274,6 +10327,52 @@
     "metHelp": "Aandeel reacties met SLA dat die haalde.",
     "eligibleCount": "{count} reacties hadden een SLA",
     "enable": "Reactie-SLA inschakelen"
+  },
+  "stripe": {
+    "title": "Stripe",
+    "setting": {
+      "label": "Stripe",
+      "description": "Ontvang kaartbetalingen in je webshop met je eigen Stripe-account. Het geld gaat rechtstreeks naar je Stripe-account.",
+      "notConfigured": "Stripe is nog niet ingesteld op dit platform. Vraag de platformbeheerder om de Stripe Connect-instellingen toe te voegen."
+    },
+    "testMode": "Testmodus",
+    "liveMode": "Live",
+    "chargesDisabled": "Je Stripe-account kan nog geen betalingen ontvangen. Rond de configuratie af in je Stripe-dashboard.",
+    "outcome": {
+      "expired": "De Stripe-verbindingslink is verlopen. Probeer het opnieuw.",
+      "access_denied": "De verbinding is niet toegestaan op Stripe.",
+      "stripeAccountAlreadyConnected": "Dit Stripe-account is al verbonden met een andere workspace.",
+      "stripePlatformNotConfigured": "Stripe is nog niet ingesteld op dit platform.",
+      "superAdminRequired": "Alleen een workspace-beheerder kan Stripe verbinden.",
+      "signInRequired": "Log in en probeer het opnieuw.",
+      "paymentProviderCredentialsRejected": "Stripe heeft de verbinding geweigerd. Probeer het opnieuw.",
+      "startedByAnotherUser": "Alleen degene die op Verbinden klikte, kan dit afronden. Klik nogmaals op Verbinden.",
+      "paymentProviderInUse": "Openstaande bestellingen hebben dit Stripe-account nog nodig. Rond ze eerst af of annuleer ze."
+    },
+    "platform": {
+      "connectClientId": "Connect client ID",
+      "connectClientIdHint": "Uit Stripe Dashboard → Settings → Connect → Onboarding options → OAuth (begint met ca_). Winkels verbinden hiermee hun eigen Stripe-account.",
+      "redirectUri": "Redirect URI",
+      "webhookReady": "Winkels kunnen Stripe verbinden en hun betalingen worden automatisch bevestigd.",
+      "webhookMissing": "De betalingswebhook ontbreekt. Sla deze instellingen opnieuw op om hem aan te maken.",
+      "connectMissing": "Voeg de Connect client ID toe zodat winkels hun Stripe-account kunnen verbinden."
+    }
+  },
+  "paypal": {
+    "title": "PayPal",
+    "setting": {
+      "label": "PayPal",
+      "description": "Ontvang PayPal-betalingen in je webshop met je eigen PayPal-account."
+    },
+    "sandbox": "Sandbox",
+    "liveMode": "Live",
+    "fields": {
+      "clientId": "Client ID",
+      "clientSecret": "Secret"
+    },
+    "dialog": {
+      "description": "Maak een REST-app aan in <link>PayPal Developer → Apps & Credentials</link> en plak de Client ID en Secret. Live of sandbox wordt herkend aan de sleutels."
+    }
   },
   "pipelines": {
     "title": "Pipelines",

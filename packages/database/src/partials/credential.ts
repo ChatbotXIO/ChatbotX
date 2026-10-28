@@ -186,7 +186,16 @@ export const stripeCredentialSchema = z.object({
   publishableKey: z.string(),
   verifyToken: z.string(),
   secretKey: z.string(),
+  /** The Connect OAuth app (`ca_…`) stores connect their own account with. */
   connectClientId: z.string().optional(),
+  /**
+   * The Connect webhook created on save (`connect: true`), which receives the
+   * events of every connected store. Secret: never in the public config.
+   */
+  connectWebhookEndpointId: z.string().optional(),
+  connectWebhookSecret: z.string().optional(),
+  /** The Stripe account the key belongs to, so a key of another is caught. */
+  platformAccountId: z.string().optional(),
 })
 export type StripeCredential = z.infer<typeof stripeCredentialSchema>
 
@@ -441,6 +450,14 @@ export const stripeCredentialUpdateSchema = z.object({
   publishableKey: z.string().trim().min(1),
   verifyToken: z.string().trim().min(1),
   secretKey: z.string().trim().min(1),
+  /**
+   * Stripe Connect's OAuth client id; stores connect their account with it.
+   * Required: web shop payments are all this credential is for.
+   */
+  connectClientId: z
+    .string()
+    .trim()
+    .regex(/^ca_[A-Za-z0-9]+$/),
 })
 export type StripeCredentialUpdate = z.infer<
   typeof stripeCredentialUpdateSchema

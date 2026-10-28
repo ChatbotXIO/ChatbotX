@@ -113,6 +113,24 @@ export const ecommerceRelations = defineRelationsPart(schema, (r) => ({
       from: r.orderModel.id,
       to: r.orderStatusHistoryModel.orderId,
     }),
+    payments: r.many.orderPaymentModel({
+      from: r.orderModel.id,
+      to: r.orderPaymentModel.orderId,
+    }),
+  },
+  orderPaymentModel: {
+    order: r.one.orderModel({
+      from: r.orderPaymentModel.orderId,
+      to: r.orderModel.id,
+      optional: false,
+    }),
+  },
+  ecommercePaymentProviderModel: {
+    workspace: r.one.workspaceModel({
+      from: r.ecommercePaymentProviderModel.workspaceId,
+      to: r.workspaceModel.id,
+      optional: false,
+    }),
   },
   orderItemModel: {
     order: r.one.orderModel({
