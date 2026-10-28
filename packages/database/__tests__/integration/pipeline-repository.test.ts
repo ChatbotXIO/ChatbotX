@@ -177,7 +177,7 @@ describe.skipIf(!databaseUrl)("pipeline repositories", () => {
     expect(row.currency).toBeNull()
   })
 
-  test("lists only the pipelines that follow the workspace currency, in keyset pages", async () => {
+  test("pages every pipeline id of the workspace, whatever its currency, in id order", async () => {
     const db = database()
     const insertPipeline = async (
       fixture: Fixture,
@@ -195,30 +195,30 @@ describe.skipIf(!databaseUrl)("pipeline repositories", () => {
         },
         db,
       )
-    const first = await insertPipeline(own, "follows-1", null)
-    await insertPipeline(own, "overrides", "USD")
-    const second = await insertPipeline(own, "follows-2", null)
-    await insertPipeline(other, "other-follows", null)
-
-    const pageOne = await pipelineRepository.listFollowingCurrencyIds(
-      { workspaceId: own.workspaceId, afterId: null, limit: 1 },
-      db,
-    )
-    const pageTwo = await pipelineRepository.listFollowingCurrencyIds(
-      { workspaceId: own.workspaceId, afterId: pageOne[0], limit: 1 },
-      db,
-    )
-    const pageThree = await pipelineRepository.listFollowingCurrencyIds(
-      { workspaceId: own.workspaceId, afterId: pageTwo[0], limit: 1 },
-      db,
+    const follows = await insertPipeline(own, "follows", null)
+    const overrides = await insertPipeline(own, "overrides", "USD")
+    await insertPipeline(other, "other_workspace", null)
+    const expected = [own.pipelineId, follows.id, overrides.id].sort((a, b) =>
+      Number(BigInt(a) - BigInt(b)),
     )
 
-    // The fixture's own pipeline has an override, so only the two inserted here.
-    expect([...pageOne, ...pageTwo].sort()).toEqual(
-      [first.id, second.id].sort(),
-    )
-    expect(pageOne[0] < pageTwo[0]).toBe(true)
-    expect(pageThree).toEqual([])
+    const pages: string[][] = []
+    let afterId: string | null = null
+    for (;;) {
+      const page = await pipelineRepository.listIdsPage(
+        { workspaceId: own.workspaceId, afterId, limit: 2 },
+        db,
+      )
+      pages.push(page)
+      if (page.length < 2) {
+        break
+      }
+      afterId = page.at(-1) ?? null
+    }
+
+    // Two pages of two at most, never the other workspace's pipeline.
+    expect(pages.flat()).toEqual(expected)
+    expect(pages.map((page) => page.length)).toEqual([2, 1])
   })
 
   test("hands out consecutive item numbers per workspace under concurrency", async () => {

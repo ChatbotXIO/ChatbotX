@@ -192,7 +192,7 @@ vi.mock("../../audit/dispatcher", () => ({
 }))
 
 vi.mock("../../pipeline/currency-refresh", () => ({
-  notifyCurrencyFollowers: vi.fn(async () => undefined),
+  notifyWorkspaceCurrencyChange: vi.fn(async () => undefined),
 }))
 
 vi.mock("../../workspace-member/service", () => ({

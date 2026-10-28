@@ -122,8 +122,10 @@ vi.mock("../src/logger", () => ({ logger }))
 const dispatchAuditRecord = vi.fn()
 vi.mock("../src/audit/dispatcher", () => ({ dispatchAuditRecord }))
 
-const notifyCurrencyFollowers = vi.fn(async () => undefined)
-vi.mock("../src/pipeline/currency-refresh", () => ({ notifyCurrencyFollowers }))
+const notifyWorkspaceCurrencyChange = vi.fn(async () => undefined)
+vi.mock("../src/pipeline/currency-refresh", () => ({
+  notifyWorkspaceCurrencyChange,
+}))
 
 const { workspaceService } = await import("../src/workspace/service")
 const { compensateWorkspaceQuotaConsumption } = await import(
@@ -159,7 +161,7 @@ beforeEach(() => {
   anchoredPeriod.mockClear()
   logger.error.mockClear()
   dispatchAuditRecord.mockClear()
-  notifyCurrencyFollowers.mockClear()
+  notifyWorkspaceCurrencyChange.mockClear()
   transaction.mockClear()
   workspaceUsageService.rollbackLiveIncrement.mockClear()
   returningUpdatedWorkspace
@@ -777,14 +779,14 @@ describe("workspaceService.updateSettings", () => {
     expect(result).toMatchObject({ id: "ws-1" })
   })
 
-  test("writing the target country tells pipelines that follow the workspace currency", async () => {
+  test("writing the target country tells every pipeline to refresh", async () => {
     await workspaceService.updateSettings({
       id: "ws-1",
       data: { targetCountry: "VN" },
     })
 
-    expect(notifyCurrencyFollowers).toHaveBeenCalledTimes(1)
-    expect(notifyCurrencyFollowers).toHaveBeenCalledWith("ws-1")
+    expect(notifyWorkspaceCurrencyChange).toHaveBeenCalledTimes(1)
+    expect(notifyWorkspaceCurrencyChange).toHaveBeenCalledWith("ws-1")
   })
 
   test("every write of the country notifies, so a concurrent save cannot skip it", async () => {
@@ -799,7 +801,7 @@ describe("workspaceService.updateSettings", () => {
       data: { targetCountry: "VN" },
     })
 
-    expect(notifyCurrencyFollowers).toHaveBeenCalledTimes(2)
+    expect(notifyWorkspaceCurrencyChange).toHaveBeenCalledTimes(2)
   })
 
   test("a save that leaves the country out notifies nobody", async () => {
@@ -808,7 +810,7 @@ describe("workspaceService.updateSettings", () => {
       data: { capiLimitedDataUse: true },
     })
 
-    expect(notifyCurrencyFollowers).not.toHaveBeenCalled()
+    expect(notifyWorkspaceCurrencyChange).not.toHaveBeenCalled()
   })
 
   test("a failed write notifies nobody", async () => {
@@ -821,7 +823,7 @@ describe("workspaceService.updateSettings", () => {
       }),
     ).rejects.toThrow()
 
-    expect(notifyCurrencyFollowers).not.toHaveBeenCalled()
+    expect(notifyWorkspaceCurrencyChange).not.toHaveBeenCalled()
   })
 
   test("a field left out is not written (undefined is skipped)", async () => {

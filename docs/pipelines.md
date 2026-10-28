@@ -84,9 +84,10 @@ Changing the currency never converts a value.
   removal once per batch) and captured when the event is emitted, so a queued
   webhook delivers the currency it was emitted with.
 - **Open boards.** When `Workspace.targetCountry` is written,
-  `notifyCurrencyFollowers` publishes the structure-changed realtime event for
-  each pipeline without an override (200 per keyset page), so every open board
-  and inbox panel refetches. It notifies on every write rather than on a
+  `notifyWorkspaceCurrencyChange` publishes the structure-changed realtime event for
+  every pipeline of the workspace (200 per keyset page), so every open board and
+  inbox panel refetches: those that follow show the new unit, and every settings
+  sheet shows what "follow the workspace" now resolves to. It notifies on every write rather than on a
   detected change: a before/after comparison races with a concurrent save, and
   a refetch is cheap.
 - **Templates.** Export writes the raw override; a `null` follows the workspace
@@ -480,7 +481,7 @@ items, a pipeline-wide change, or an event without `contactId` (older
 publishers).
 Pipeline settings updates and deletes also emit one, so open boards pick up a
 new currency, status labels or visible features. A write of the workspace
-target country emits one per pipeline that follows the workspace currency (see [Currency](#currency)). It carries no item data:
+target country emits one per pipeline of the workspace (see [Currency](#currency)). It carries no item data:
 the client refetches through its authorised read.
 
 ## Flow step ("Pipelines")

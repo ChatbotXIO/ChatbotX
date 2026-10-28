@@ -4,7 +4,7 @@ import { db } from "@chatbotx.io/database/client"
 import { describe, expect, test, vi } from "vitest"
 
 const mocks = vi.hoisted(() => ({
-  listFollowingCurrencyIds: vi.fn(),
+  listIdsPage: vi.fn(),
 }))
 
 vi.mock("@chatbotx.io/redis", async (importOriginal) => ({
@@ -19,7 +19,7 @@ vi.mock("@chatbotx.io/database/repositories", async (importOriginal) => {
     ...actual,
     pipelineRepository: {
       ...actual.pipelineRepository,
-      listFollowingCurrencyIds: mocks.listFollowingCurrencyIds,
+      listIdsPage: mocks.listIdsPage,
     },
   }
 })
@@ -49,14 +49,14 @@ describe("currency-refresh import order", () => {
         }),
       }),
     } as never)
-    mocks.listFollowingCurrencyIds.mockResolvedValue([])
+    mocks.listIdsPage.mockResolvedValue([])
 
     await workspaceService.updateSettings({
       id: "ws-1",
       data: { targetCountry: "VN" },
     })
 
-    expect(mocks.listFollowingCurrencyIds).toHaveBeenCalledWith({
+    expect(mocks.listIdsPage).toHaveBeenCalledWith({
       workspaceId: "ws-1",
       afterId: null,
       limit: 200,

@@ -88,18 +88,14 @@ export const pipelineRepository = {
     })
   },
 
-  /**
-   * Ids of the pipelines that follow the workspace currency (no override), in
-   * id order after `afterId`: keyset pages for a workspace-wide notification.
-   */
-  async listFollowingCurrencyIds(
+  /** The workspace's pipeline ids in id order after `afterId`: keyset pages for a workspace-wide notification. */
+  async listIdsPage(
     input: { workspaceId: string; afterId: string | null; limit: number },
     tx: DatabaseClient = db,
   ): Promise<string[]> {
     const rows = await tx.query.pipelineModel.findMany({
       where: {
         workspaceId: input.workspaceId,
-        currency: { isNull: true },
         ...(input.afterId ? { id: { gt: input.afterId } } : {}),
       },
       columns: { id: true },
