@@ -4,6 +4,7 @@ import type { ChannelType } from "@chatbotx.io/database/partials"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import { Form } from "@chatbotx.io/ui/components/ui/form"
 import { Textarea } from "@chatbotx.io/ui/components/ui/textarea"
+import { useIsTouchDevice } from "@chatbotx.io/ui/hooks/use-touch-device"
 import { createId } from "@chatbotx.io/utils"
 import { channelTypes } from "@chatbotx.io/utils/channel"
 import {
@@ -48,6 +49,7 @@ import type { ListFilesResponse } from "@/features/media-library/schema"
 import { QuickRepliesPopover } from "@/features/saved-replies/quick-replies-popover"
 import type { SavedReplyResource } from "@/features/saved-replies/schema/resource"
 import { authClient } from "@/lib/auth/auth-client"
+import { shouldSendOnEnter } from "@/lib/keyboard/should-send-on-enter"
 import { useChatStore } from "../../chat/store/chat-store-provider"
 import { createMessageAction } from "../actions/create-message.action"
 import { flattenValidationErrors } from "../lib/validation-errors"
@@ -87,6 +89,7 @@ export const MessageInput = () => {
   const t = useTranslations()
   const session = authClient.useSession()
 
+  const isTouchDevice = useIsTouchDevice()
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const fileUploadRef = useRef<HTMLInputElement>(null)
   const [selectedMediaFiles, setSelectedMediaFiles] = useState<
@@ -506,15 +509,14 @@ export const MessageInput = () => {
   // Memoize keyboard handler
   const onKeyDown = useCallback(
     async (e: KeyboardEvent) => {
-      if (e.nativeEvent.isComposing || e.key === "Process") {
+      if (!shouldSendOnEnter(e, isTouchDevice)) {
         return
       }
-      if (e.key === "Enter" && e.shiftKey === false) {
-        e.preventDefault()
-        await sendMessage()
-      }
+
+      e.preventDefault()
+      await sendMessage()
     },
-    [sendMessage],
+    [isTouchDevice, sendMessage],
   )
 
   const isInstagramPostComment =
@@ -717,6 +719,7 @@ export const MessageInput = () => {
                     aria-label={t("actions.typeMessage")}
                     autoComplete="off"
                     className="h-16 resize-none border-0 px-1.5 py-1 shadow-none focus:ring-0 focus-visible:ring-0 dark:bg-neutral-900"
+                    enterKeyHint={isTouchDevice ? "enter" : "send"}
                     placeholder={t("actions.messagePlaceholder")}
                     {...field}
                     onKeyDown={onKeyDown}
