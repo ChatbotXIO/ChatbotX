@@ -460,11 +460,13 @@ export const tiktokCredentialUpdateSchema = z.object({
   clientId: z.string().trim().min(1),
   clientSecret: z.string().trim().min(1),
   // A credential serving neither half would connect accounts that receive
-  // nothing at all.
-  features: tiktokChannelFeaturesSchema.refine(
-    (features) => features.messaging || features.comments,
-    { path: ["messaging"] },
-  ),
+  // nothing at all. Omitted means both on, the same as a stored credential
+  // without features.
+  features: tiktokChannelFeaturesSchema
+    .refine((features) => features.messaging || features.comments, {
+      path: ["messaging"],
+    })
+    .default(TIKTOK_DEFAULT_CHANNEL_FEATURES),
 })
 export type TiktokCredentialUpdate = z.infer<
   typeof tiktokCredentialUpdateSchema
