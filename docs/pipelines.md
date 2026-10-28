@@ -67,6 +67,12 @@ workspace without a store must not show one.
 
 Changing the currency never converts a value.
 
+The rules with no I/O (`workspaceCurrencyDefault`, `applyEffectiveCurrency`)
+live in `pipeline/currency-rules.ts`; `pipeline/currency.ts` adds the cached
+workspace read. Variable rendering reads `Workspace.targetCountry` in its own
+query and applies the rules directly, so it never loads the pipeline or
+workspace services.
+
 - **Responses.** `currency` stays the effective string (backward compatible);
   `currencyOverride` is the stored value or `null`. One mapper
   (`withEffectiveCurrency` / `withEffectiveCurrencies`) serves every read, with
