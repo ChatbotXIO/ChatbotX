@@ -229,14 +229,36 @@ export type PaddleCredentialPublic = z.infer<
   typeof paddleCredentialPublicSchema
 >
 
+/**
+ * Which halves of the TikTok channel a credential serves. Absent on credentials
+ * saved before the switches existed — read as both on. Messaging off is what
+ * an app for EEA, Swiss or UK accounts needs: TikTok never grants those
+ * accounts `message.list.*`, so asking for them blocks the connect outright.
+ */
+export const tiktokChannelFeaturesSchema = z.object({
+  messaging: z.boolean(),
+  comments: z.boolean(),
+})
+export type TiktokChannelFeaturesValue = z.infer<
+  typeof tiktokChannelFeaturesSchema
+>
+
+/** What a credential without stored features behaves as. */
+export const TIKTOK_DEFAULT_CHANNEL_FEATURES: TiktokChannelFeaturesValue = {
+  messaging: true,
+  comments: true,
+}
+
 export const tiktokCredentialSchema = z.object({
   clientId: z.string(),
   clientSecret: z.string(),
+  features: tiktokChannelFeaturesSchema.optional(),
 })
 export type TiktokCredential = z.infer<typeof tiktokCredentialSchema>
 
 export const tiktokCredentialPublicSchema = tiktokCredentialSchema.pick({
   clientId: true,
+  features: true,
 })
 export type TiktokCredentialPublic = z.infer<
   typeof tiktokCredentialPublicSchema
@@ -437,6 +459,14 @@ export type SmtpCredentialUpdate = z.infer<typeof smtpCredentialUpdateSchema>
 export const tiktokCredentialUpdateSchema = z.object({
   clientId: z.string().trim().min(1),
   clientSecret: z.string().trim().min(1),
+  // A credential serving neither half would connect accounts that receive
+  // nothing at all. Omitted means both on, the same as a stored credential
+  // without features.
+  features: tiktokChannelFeaturesSchema
+    .refine((features) => features.messaging || features.comments, {
+      path: ["messaging"],
+    })
+    .default(TIKTOK_DEFAULT_CHANNEL_FEATURES),
 })
 export type TiktokCredentialUpdate = z.infer<
   typeof tiktokCredentialUpdateSchema

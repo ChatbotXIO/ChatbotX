@@ -1,12 +1,8 @@
 import ky from "ky"
 import { BUSINESS_API_URL } from "../constants"
 import { rescue, TiktokAPIException } from "../exception"
-import {
-  TIKTOK_COMMENT_AUTOMATION_SCOPES,
-  TIKTOK_CORE_SCOPES,
-  TIKTOK_OPTIONAL_PROFILE_SCOPES,
-} from "../lib/scopes"
-import type { BusinessApiResponse } from "../schema"
+import { tiktokRequestedScopes } from "../lib/scopes"
+import type { BusinessApiResponse, TiktokChannelFeatures } from "../schema"
 
 const TIKTOK_AUTH_BASE_URL = "https://www.tiktok.com/v2/auth/authorize/"
 // Business API OAuth — required for Business Messaging API tokens
@@ -14,38 +10,35 @@ const TIKTOK_AUTH_BASE_URL = "https://www.tiktok.com/v2/auth/authorize/"
 const TIKTOK_TOKEN_URL = `${BUSINESS_API_URL}tt_user/oauth2/token/`
 const TIKTOK_REFRESH_URL = `${BUSINESS_API_URL}tt_user/oauth2/refresh_token/`
 
-// The authorize request asks for every scope the app is approved for; the
-// three lists differ only in what a MISSING grant costs. Core is refused at
-// the callback, comment-automation scopes raise the re-authorize warning, and
-// the optional profile scopes cost nothing — see `../lib/scopes`, which owns
-// all three plus the ones still awaiting approval.
+// The authorize request asks for every scope the app is approved for that the
+// credential's features use; the lists differ only in what a MISSING grant
+// costs. Required ones are refused at the callback, comment-automation scopes
+// raise the re-authorize warning, and the optional profile scopes cost nothing
+// — see `tiktokRequestedScopes` in `../lib/scopes`, which owns all of them
+// plus the ones still awaiting approval.
 //
-// Never add a scope here before the app carries it: TikTok refuses the WHOLE
+// Never add a scope there before the app carries it: TikTok refuses the WHOLE
 // authorize request over one unapproved scope, which takes the channel down
 // for DM-only workspaces too.
 //
 // Adding a scope does not upgrade an existing connection: every
 // already-connected account has to re-authorize before the new capability can
 // run for it.
-const TIKTOK_SCOPES = [
-  ...TIKTOK_CORE_SCOPES,
-  ...TIKTOK_OPTIONAL_PROFILE_SCOPES,
-  ...TIKTOK_COMMENT_AUTOMATION_SCOPES,
-].join(",")
-
 export function generateAuthUrl({
   clientId,
   redirectUrl,
   stateParams,
+  features,
 }: {
   clientId: string
   redirectUrl: string
   stateParams?: Record<string, unknown>
+  features?: Partial<TiktokChannelFeatures>
 }): string {
   const params = new URLSearchParams({
     client_key: clientId,
     response_type: "code",
-    scope: TIKTOK_SCOPES,
+    scope: tiktokRequestedScopes(features),
     redirect_uri: redirectUrl,
     disable_auto_auth: "1",
     state: Buffer.from(JSON.stringify(stateParams ?? {})).toString("base64url"),

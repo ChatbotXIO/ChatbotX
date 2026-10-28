@@ -725,6 +725,19 @@ fails the comment is processed immediately.
   step after the first. The window is 48 hours, not Meta's 7 —
   `PRIVATE_REPLY_WINDOW_MS_BY_CHANNEL` is per channel and both the caller's gate and
   `executePrivateReply`'s defence-in-depth check must be passed the same `channelType`.
+- **TikTok accounts in the EEA, Switzerland and the UK get comments only.** TikTok's
+  Business Messaging API is not offered there, so those accounts can never grant
+  `message.list.*`. The TikTok app credential (the TikTok card in
+  `manage-platform-credentials.tsx`, platform or reseller scope) carries two switches, **Messaging** and **Comments** (`TiktokCredential.features`,
+  absent = both on, at least one required). With Messaging off: the authorize request
+  asks for no messaging scope (`tiktokRequestedScopes`), the connect requires
+  `comment.list` + `comment.list.manage` instead (`tiktokRequiredScopes`, checked by
+  `assertTiktokGrant` on BOTH connect paths — `exchangeCode` and `callbackHandler`), and
+  saving subscribes only the `COMMENT` webhook, whose failure then fails the save.
+  Public reply, like and hide work; DMs, the private reply and Comment-to-Message do not,
+  and the latter two refuse early via `tiktokCanMessage` (read from the granted scopes).
+  The features in force at connect time are stamped on `auth.metadata.features`; changing
+  the switches affects only accounts connected afterwards — existing ones must reconnect.
 - **A channel whose public reply is not idempotent must never retry the automation job.**
   `SINGLE_ATTEMPT_COMMENT_AUTOMATION_CHANNELS` (`received-message.ts`) caps `threads` and
   `tiktok` at `attempts: 1`: Threads' `replyToComment` opens a fresh media container per

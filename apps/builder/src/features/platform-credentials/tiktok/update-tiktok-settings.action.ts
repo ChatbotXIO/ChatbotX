@@ -20,6 +20,7 @@ export const updateTiktokSettingAction = authActionClient
     const config: TiktokCredential = {
       clientId: parsedInput.clientId,
       clientSecret: parsedInput.clientSecret,
+      features: parsedInput.features,
     }
 
     // The webhook must be registered on the same host TikTok's push actually
@@ -30,19 +31,23 @@ export const updateTiktokSettingAction = authActionClient
       : getBrokerOrigin()
 
     // TikTok scopes a subscription to a single `event_type`, so DMs and
-    // comments are two registrations against the same URL. Only the DM one is
-    // allowed to fail the save — see `subscribeTiktokWebhooks`.
-    const { comments } = await subscribeTiktokWebhooks(
+    // comments are two registrations against the same URL, each made only when
+    // its feature is on. With both on, only the DM one may fail the save; with
+    // messaging off, the comment one may — see `subscribeTiktokWebhooks`.
+    const { messaging, comments } = await subscribeTiktokWebhooks(
       { clientId: config.clientId, clientSecret: config.clientSecret },
       new URL("/integrations/tiktok/webhook", webhookOrigin).toString(),
-      (error) =>
-        logger.error(
-          { err: error, userId: scopedUserId },
-          "TikTok comment webhook subscription failed; comments will not arrive",
-        ),
+      {
+        features: config.features,
+        onCommentSubscriptionError: (error) =>
+          logger.error(
+            { err: error, userId: scopedUserId },
+            "TikTok comment webhook subscription failed; comments will not arrive",
+          ),
+      },
     )
 
-    if (!comments) {
+    if (messaging && !comments && parsedInput.features.comments) {
       logger.warn(
         { userId: scopedUserId },
         "TikTok comment webhook is not subscribed; only direct messages will arrive",

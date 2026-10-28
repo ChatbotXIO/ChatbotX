@@ -2560,7 +2560,13 @@
       "commentToMessage": "Şərhdən mesaja",
       "commentToMessageDescription": "Bu hesaba yüksək maraq ifadə edən şərhlərə birbaşa mesajla cavab verməyə imkan verir. Şəxsi cavab göndərən TikTok şərh avtomatlaşdırmaları üçün tələb olunur.",
       "commentToMessageEligibility": "Yalnız Vyetnam, İndoneziya və ya Taylandda qeydiyyatdan keçmiş, sahibi 18 yaşdan yuxarı olan, qeydiyyatdan keçmiş müəssisəyə məxsus və ya mesajlaşma reklamları yayımlamış, mesajlaşma icazələri isə \"Sorğular\" olaraq təyin edilmiş biznes hesabları üçün əlçatandır.",
-      "commentToMessageUnknown": "Hələ TikTok vasitəsilə yoxlanılmayıb — cari parametri öyrənmək üçün yeniləyin."
+      "commentToMessageUnknown": "Hələ TikTok vasitəsilə yoxlanılmayıb — cari parametri öyrənmək üçün yeniləyin.",
+      "features": "Funksiyalar",
+      "featureMessaging": "Mesajlaşma",
+      "featureMessagingDescription": "Birbaşa mesajları qəbul edin və göndərin. TikTok AİZ, İsveçrə və ya Böyük Britaniyada qeydiyyatdan keçmiş hesablara mesajlaşma təklif etmir — həmin hesablar üçün onu söndürün.",
+      "featureComments": "Şərhlər",
+      "featureCommentsDescription": "Şərh avtomatlaşdırması üçün şərhləri qəbul edin: açıq cavab, bəyənmə və gizlətmə.",
+      "featuresReconnectHint": "Dəyişikliklər bundan sonra qoşulan hesablara tətbiq olunur. İcazələrini yeniləmək üçün mövcud hesabları yenidən qoşun."
     },
     "drip": {
       "label": "Drip"

@@ -54,6 +54,7 @@ const { updateTiktokSettingAction } = await import(
   "../src/features/platform-credentials/tiktok/update-tiktok-settings.action"
 )
 const call = (action: unknown) => action as (args: any) => Promise<unknown>
+const features = { messaging: true, comments: true }
 describe("TikTok credential actions", () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -65,27 +66,69 @@ describe("TikTok credential actions", () => {
     await call(updateTiktokSettingAction)({
       ctx: { user: { id: "user-1" } },
       bindArgsParsedInputs: ["user"],
-      parsedInput: { clientId: "id", clientSecret: "secret" },
+      parsedInput: { clientId: "id", clientSecret: "secret", features },
     })
     expect(upsertSpy).toHaveBeenCalledWith({
       userId: "user-1",
       type: "tiktok",
-      config: { clientId: "id", clientSecret: "secret" },
+      config: { clientId: "id", clientSecret: "secret", features },
     })
     expect(subscribeSpy).toHaveBeenCalled()
+  })
+
+  // What an app for EEA, Swiss or UK accounts saves: the switch has to reach
+  // both the stored credential and the webhook subscription.
+  test("stores and subscribes with messaging off", async () => {
+    const commentsOnly = { messaging: false, comments: true }
+    subscribeSpy.mockResolvedValueOnce({ messaging: false, comments: true })
+
+    await call(updateTiktokSettingAction)({
+      ctx: { user: { id: "user-1" } },
+      bindArgsParsedInputs: ["user"],
+      parsedInput: {
+        clientId: "id",
+        clientSecret: "secret",
+        features: commentsOnly,
+      },
+    })
+
+    expect(subscribeSpy).toHaveBeenCalledWith(
+      { clientId: "id", clientSecret: "secret" },
+      `${BROKER_ORIGIN}/integrations/tiktok/webhook`,
+      expect.objectContaining({ features: commentsOnly }),
+    )
+    expect(upsertSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        config: {
+          clientId: "id",
+          clientSecret: "secret",
+          features: commentsOnly,
+        },
+      }),
+    )
+  })
+
+  test("rejects a credential with both features off", () => {
+    expect(
+      tiktokCredentialUpdateSchema.safeParse({
+        clientId: "id",
+        clientSecret: "secret",
+        features: { messaging: false, comments: false },
+      }).success,
+    ).toBe(false)
   })
 
   test("subscribes the webhook on the broker origin for user scope with no active custom domain", async () => {
     await call(updateTiktokSettingAction)({
       ctx: { user: { id: "user-1" } },
       bindArgsParsedInputs: ["user"],
-      parsedInput: { clientId: "id", clientSecret: "secret" },
+      parsedInput: { clientId: "id", clientSecret: "secret", features },
     })
 
     expect(subscribeSpy).toHaveBeenCalledWith(
       { clientId: "id", clientSecret: "secret" },
       `${BROKER_ORIGIN}/integrations/tiktok/webhook`,
-      expect.any(Function),
+      expect.objectContaining({ features }),
     )
   })
 
@@ -96,13 +139,13 @@ describe("TikTok credential actions", () => {
     await call(updateTiktokSettingAction)({
       ctx: { user: { id: "user-1" } },
       bindArgsParsedInputs: ["user"],
-      parsedInput: { clientId: "id", clientSecret: "secret" },
+      parsedInput: { clientId: "id", clientSecret: "secret", features },
     })
 
     expect(subscribeSpy).toHaveBeenCalledWith(
       { clientId: "id", clientSecret: "secret" },
       "https://chat.acme.com/integrations/tiktok/webhook",
-      expect.any(Function),
+      expect.objectContaining({ features }),
     )
   })
 
@@ -112,13 +155,13 @@ describe("TikTok credential actions", () => {
     await call(updateTiktokSettingAction)({
       ctx: { user: { id: "admin-1" } },
       bindArgsParsedInputs: ["platform"],
-      parsedInput: { clientId: "id", clientSecret: "secret" },
+      parsedInput: { clientId: "id", clientSecret: "secret", features },
     })
 
     expect(subscribeSpy).toHaveBeenCalledWith(
       { clientId: "id", clientSecret: "secret" },
       `${BROKER_ORIGIN}/integrations/tiktok/webhook`,
-      expect.any(Function),
+      expect.objectContaining({ features }),
     )
     expect(mockFindByOwner).not.toHaveBeenCalled()
   })
@@ -128,6 +171,7 @@ describe("TikTok credential actions", () => {
       tiktokCredentialUpdateSchema.safeParse({
         clientId: "id",
         clientSecret: "secret",
+        features,
         [field]: "",
       }).success,
     ).toBe(false)

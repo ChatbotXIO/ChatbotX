@@ -3433,7 +3433,13 @@
       "commentToMessage": "Comment-to-Message",
       "commentToMessageDescription": "Lets this account answer high-intent comments with a direct message. Required for TikTok comment automations that use a private reply.",
       "commentToMessageEligibility": "Only available to Business Accounts registered in Vietnam, Indonesia or Thailand, owned by someone over 18, that are registered businesses or have run Messaging Ads, with messaging permissions set to \"Requests\".",
-      "commentToMessageUnknown": "Not checked with TikTok yet — refresh to read the current setting."
+      "commentToMessageUnknown": "Not checked with TikTok yet — refresh to read the current setting.",
+      "features": "功能",
+      "featureMessaging": "消息",
+      "featureMessagingDescription": "接收和发送私信。TikTok 不向在欧洲经济区、瑞士或英国注册的账号提供消息功能——请为这些账号关闭此项。",
+      "featureComments": "评论",
+      "featureCommentsDescription": "接收评论用于评论自动化：公开回复、点赞和隐藏。",
+      "featuresReconnectHint": "更改适用于今后连接的账号。请重新连接现有账号以更新其权限。"
     },
     "timezone": {
       "description": "联系人将套用此时区。",

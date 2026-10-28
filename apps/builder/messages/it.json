@@ -1321,7 +1321,13 @@
       "commentToMessage": "Comment-to-Message",
       "commentToMessageDescription": "Lets this account answer high-intent comments with a direct message. Required for TikTok comment automations that use a private reply.",
       "commentToMessageEligibility": "Only available to Business Accounts registered in Vietnam, Indonesia or Thailand, owned by someone over 18, that are registered businesses or have run Messaging Ads, with messaging permissions set to \"Requests\".",
-      "commentToMessageUnknown": "Not checked with TikTok yet — refresh to read the current setting."
+      "commentToMessageUnknown": "Not checked with TikTok yet — refresh to read the current setting.",
+      "features": "Funzionalità",
+      "featureMessaging": "Messaggi",
+      "featureMessagingDescription": "Ricevi e invia messaggi diretti. TikTok non offre la messaggistica agli account registrati nel SEE, in Svizzera o nel Regno Unito: disattivala per questi account.",
+      "featureComments": "Commenti",
+      "featureCommentsDescription": "Ricevi i commenti per l'automazione dei commenti: risposta pubblica, mi piace e nascondi.",
+      "featuresReconnectHint": "Le modifiche si applicano agli account collegati da ora in poi. Ricollega gli account esistenti per aggiornarne le autorizzazioni."
     },
     "drip": {
       "label": "Drip"

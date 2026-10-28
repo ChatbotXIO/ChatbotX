@@ -1321,7 +1321,13 @@
       "commentToMessage": "Comment-to-Message",
       "commentToMessageDescription": "Lets this account answer high-intent comments with a direct message. Required for TikTok comment automations that use a private reply.",
       "commentToMessageEligibility": "Only available to Business Accounts registered in Vietnam, Indonesia or Thailand, owned by someone over 18, that are registered businesses or have run Messaging Ads, with messaging permissions set to \"Requests\".",
-      "commentToMessageUnknown": "Not checked with TikTok yet — refresh to read the current setting."
+      "commentToMessageUnknown": "Not checked with TikTok yet — refresh to read the current setting.",
+      "features": "功能",
+      "featureMessaging": "訊息",
+      "featureMessagingDescription": "接收和傳送私人訊息。TikTok 不向在歐洲經濟區、瑞士或英國註冊的帳號提供訊息功能——請為這些帳號關閉此項。",
+      "featureComments": "留言",
+      "featureCommentsDescription": "接收留言用於留言自動化：公開回覆、按讚和隱藏。",
+      "featuresReconnectHint": "變更適用於今後連結的帳號。請重新連結現有帳號以更新其權限。"
     },
     "drip": {
       "label": "Drip"

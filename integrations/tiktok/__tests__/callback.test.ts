@@ -3,7 +3,9 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 import { TiktokMissingScopesError } from "../src/exception"
 import {
   TIKTOK_COMMENT_AUTOMATION_SCOPES,
+  TIKTOK_COMMENT_CORE_SCOPES,
   TIKTOK_CORE_SCOPES,
+  TIKTOK_IDENTITY_SCOPES,
 } from "../src/lib/scopes"
 import type { TiktokConfig } from "../src/schema"
 
@@ -21,7 +23,10 @@ const config = {
   redirectUrl: "https://example.com/integrations/tiktok/callback",
 } as TiktokConfig
 
-const run = (grantedScopes: readonly string[]) => {
+const run = (
+  grantedScopes: readonly string[],
+  features?: TiktokConfig["features"],
+) => {
   exchangeCodeForToken.mockResolvedValue({
     access_token: "access-token",
     refresh_token: "refresh-token",
@@ -33,7 +38,7 @@ const run = (grantedScopes: readonly string[]) => {
 
   return callbackHandler({
     req: new Request("https://example.com/callback?code=auth-code"),
-    config,
+    config: { ...config, features },
   } as HandleRequestProps<TiktokConfig>)
 }
 
@@ -92,6 +97,33 @@ describe("callbackHandler scope enforcement", () => {
       TiktokMissingScopesError,
     )
 
+    expect(getUserInfo).not.toHaveBeenCalled()
+  })
+})
+
+// This is the second connect path (`handleRequest` → callback), next to the
+// connection engine's `exchangeCode`. Both must honour the credential's
+// features, or a comments-only credential is refused on one of them.
+describe("callbackHandler with messaging off", () => {
+  const commentsOnly = { messaging: false, comments: true }
+
+  test("accepts an EEA-style grant with no messaging scope", async () => {
+    const auth = await run(
+      [...TIKTOK_IDENTITY_SCOPES, ...TIKTOK_COMMENT_CORE_SCOPES],
+      commentsOnly,
+    )
+
+    expect(auth.metadata.features).toEqual(commentsOnly)
+    expect(auth.metadata.scopes).toEqual([
+      ...TIKTOK_IDENTITY_SCOPES,
+      ...TIKTOK_COMMENT_CORE_SCOPES,
+    ])
+  })
+
+  test("refuses a grant missing a comment scope, naming it", async () => {
+    await expect(
+      run([...TIKTOK_IDENTITY_SCOPES, "comment.list"], commentsOnly),
+    ).rejects.toMatchObject({ missingScopes: ["comment.list.manage"] })
     expect(getUserInfo).not.toHaveBeenCalled()
   })
 })
