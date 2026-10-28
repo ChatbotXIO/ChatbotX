@@ -11,20 +11,24 @@ import {
 /**
  * The pool `max` is read out of the source rather than imported: importing
  * `@chatbotx.io/database/client` constructs a real `pg.Pool` and validates
- * `DATABASE_URL` at module load, which a unit test must not do. Reading the
- * literal keeps the assertion honest — if someone lowers the pool, this test
- * fails instead of silently going stale.
+ * `DATABASE_URL` at module load, which a unit test must not do. `max` is
+ * sourced from `DATABASE_POOL_MAX` (see `packages/database/src/keys.ts`),
+ * so read its zod default instead of a numeric literal in `client.ts` —
+ * if someone lowers the default, this test fails instead of silently going
+ * stale.
  */
-const POOL_MAX_REGEX = /max:\s*(\d+)/
+const POOL_MAX_DEFAULT_REGEX = /DATABASE_POOL_MAX:.*\.default\((\d+)\)/
 
 function poolMax(): number {
-  const client = readFileSync(
-    join(process.cwd(), "../../packages/database/src/client.ts"),
+  const keys = readFileSync(
+    join(process.cwd(), "../../packages/database/src/keys.ts"),
     "utf8",
   )
-  const match = client.match(POOL_MAX_REGEX)
+  const match = keys.match(POOL_MAX_DEFAULT_REGEX)
   if (!match?.[1]) {
-    throw new Error("Could not read the pool `max` from packages/database")
+    throw new Error(
+      "Could not read the DATABASE_POOL_MAX default from packages/database",
+    )
   }
   return Number(match[1])
 }
