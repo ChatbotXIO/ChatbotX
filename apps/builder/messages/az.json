@@ -1223,19 +1223,7 @@
     "list": {
       "title": "İş sahələrinin siyahısı"
     },
-    "defaultName": "{name} iş sahəsi",
-    "connectAgent": {
-      "title": "AI agentinizi qoşun",
-      "description": "API açarı yaradın və ChatbotX-i Claude Code, Cursor və ya istənilən MCP klientinə əlavə edin. Açar yalnız bir dəfə göstərilir.",
-      "generate": "MCP açarı yarat",
-      "generating": "Yaradılır…",
-      "claudeCode": "Claude Code",
-      "mcpJson": "Cursor / Claude Desktop",
-      "cli": "ChatbotX CLI",
-      "copy": "Kopyala",
-      "error": "Açar yaradıla bilmədi. Yenidən cəhd edin.",
-      "revokeHint": "Bu açarı Parametrlər → İnteqrasiyalar → Workspace token bölməsində ləğv edə bilərsiniz."
-    }
+    "defaultName": "{name} iş sahəsi"
   },
   "workspaceToken": {
     "title": "İş sahəsi tokeni"

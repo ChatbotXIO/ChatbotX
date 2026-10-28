@@ -4121,19 +4121,7 @@
     "list": {
       "title": "Arbejdsområder Liste"
     },
-    "defaultName": "{name}s arbejdsområde",
-    "connectAgent": {
-      "title": "Tilslut din AI-agent",
-      "description": "Opret en API-nøgle, og føj ChatbotX til Claude Code, Cursor eller en anden MCP-klient. Nøglen vises kun én gang.",
-      "generate": "Opret MCP-nøgle",
-      "generating": "Opretter…",
-      "claudeCode": "Claude Code",
-      "mcpJson": "Cursor / Claude Desktop",
-      "cli": "ChatbotX CLI",
-      "copy": "Kopiér",
-      "error": "Nøglen kunne ikke oprettes. Prøv igen.",
-      "revokeHint": "Du kan tilbagekalde denne nøgle under Indstillinger → Integrationer → Workspace token."
-    }
+    "defaultName": "{name}s arbejdsområde"
   },
   "workspaceToken": {
     "title": "Arbejdsområde token"

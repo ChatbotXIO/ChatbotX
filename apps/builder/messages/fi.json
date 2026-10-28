@@ -4121,19 +4121,7 @@
     "list": {
       "title": "Työtilaluettelo"
     },
-    "defaultName": "Työtila: {name}",
-    "connectAgent": {
-      "title": "Yhdistä tekoälyagenttisi",
-      "description": "Luo API-avain ja lisää ChatbotX Claude Codeen, Cursoriin tai mihin tahansa MCP-asiakkaaseen. Avain näytetään vain kerran.",
-      "generate": "Luo MCP-avain",
-      "generating": "Luodaan…",
-      "claudeCode": "Claude Code",
-      "mcpJson": "Cursor / Claude Desktop",
-      "cli": "ChatbotX CLI",
-      "copy": "Kopioi",
-      "error": "Avaimen luominen epäonnistui. Yritä uudelleen.",
-      "revokeHint": "Voit mitätöidä tämän avaimen kohdassa Asetukset → Integraatiot → Workspace token."
-    }
+    "defaultName": "Työtila: {name}"
   },
   "workspaceToken": {
     "title": "Työtilan tunnus"

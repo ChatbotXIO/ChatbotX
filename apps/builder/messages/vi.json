@@ -1223,19 +1223,7 @@
     "list": {
       "title": "Danh sách workspace"
     },
-    "defaultName": "Workspace của {name}",
-    "connectAgent": {
-      "title": "Kết nối AI agent của bạn",
-      "description": "Tạo API key và thêm ChatbotX vào Claude Code, Cursor hoặc bất kỳ MCP client nào. Key chỉ hiển thị một lần.",
-      "generate": "Tạo MCP key",
-      "generating": "Đang tạo…",
-      "claudeCode": "Claude Code",
-      "mcpJson": "Cursor / Claude Desktop",
-      "cli": "ChatbotX CLI",
-      "copy": "Sao chép",
-      "error": "Không thể tạo key. Vui lòng thử lại.",
-      "revokeHint": "Bạn có thể thu hồi key này tại Cài đặt → Tích hợp → Workspace token."
-    }
+    "defaultName": "Workspace của {name}"
   },
   "workspaceToken": {
     "title": "Token workspace"

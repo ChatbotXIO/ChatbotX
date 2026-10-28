@@ -1181,19 +1181,7 @@
     "list": {
       "title": "Espacio de trabajos List"
     },
-    "defaultName": "Espacio de trabajo de {name}",
-    "connectAgent": {
-      "title": "Conecta tu agente de IA",
-      "description": "Genera una clave de API y añade ChatbotX a Claude Code, Cursor o cualquier cliente MCP. La clave se muestra una sola vez.",
-      "generate": "Generar clave MCP",
-      "generating": "Generando…",
-      "claudeCode": "Claude Code",
-      "mcpJson": "Cursor / Claude Desktop",
-      "cli": "ChatbotX CLI",
-      "copy": "Copiar",
-      "error": "No se pudo generar la clave. Inténtalo de nuevo.",
-      "revokeHint": "Puedes revocar esta clave en Ajustes → Integraciones → Workspace token."
-    }
+    "defaultName": "Espacio de trabajo de {name}"
   },
   "workspaceToken": {
     "title": "Espacio de trabajo token"

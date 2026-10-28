@@ -7415,19 +7415,7 @@
     "list": {
       "title": "Lista över arbetsytor"
     },
-    "defaultName": "{name}s arbetsyta",
-    "connectAgent": {
-      "title": "Anslut din AI-agent",
-      "description": "Skapa en API-nyckel och lägg till ChatbotX i Claude Code, Cursor eller valfri MCP-klient. Nyckeln visas bara en gång.",
-      "generate": "Skapa MCP-nyckel",
-      "generating": "Skapar…",
-      "claudeCode": "Claude Code",
-      "mcpJson": "Cursor / Claude Desktop",
-      "cli": "ChatbotX CLI",
-      "copy": "Kopiera",
-      "error": "Det gick inte att skapa nyckeln. Försök igen.",
-      "revokeHint": "Du kan återkalla nyckeln under Inställningar → Integrationer → Workspace token."
-    }
+    "defaultName": "{name}s arbetsyta"
   },
   "zalo": {
     "duplicated": "Det här Zalo OA-kontot är redan anslutet till en annan arbetsyta.",

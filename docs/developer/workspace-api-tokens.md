@@ -783,19 +783,13 @@ can reach it.
 - Delete invalidates the token cache tag; a Redis failure there is logged and
   bounded by the 300s TTL.
 
-### Default workspace and the "Connect your AI agent" card
+### Default workspace
 
 A user with no workspace membership gets a default workspace when they open
 `/` (`ensureFirstWorkspace` → `workspaceService.ensureFirstForOwner`, locked
-per owner), so MCP setup does not wait on connecting a channel. Invited users
+per owner), so setup does not wait on connecting a channel. Invited users
 are not given an extra one. When a plan limit blocks creation, `/` falls back
 to the workspace list.
-
-The card on the contacts dashboard (super admins only) calls
-`createMcpTokenAction`: an ordinary token named `MCP` with `full` permission
-and all scopes, returned once. Nothing is minted at signup, and the default
-`{{api_key}}` token is never shown in the snippets. Hosted snippets need
-`NEXT_PUBLIC_MCP_SERVER_URL`; without it only the CLI snippet is shown.
 
 ## Channel API tokens (integration-api)
 

@@ -4100,19 +4100,7 @@
     "list": {
       "title": "ワークスペース一覧"
     },
-    "defaultName": "{name}のワークスペース",
-    "connectAgent": {
-      "title": "AIエージェントを接続",
-      "description": "APIキーを生成して、Claude Code、Cursor、その他のMCPクライアントにChatbotXを追加します。キーは一度だけ表示されます。",
-      "generate": "MCPキーを生成",
-      "generating": "生成中…",
-      "claudeCode": "Claude Code",
-      "mcpJson": "Cursor / Claude Desktop",
-      "cli": "ChatbotX CLI",
-      "copy": "コピー",
-      "error": "キーを生成できませんでした。もう一度お試しください。",
-      "revokeHint": "このキーは「設定 → 連携 → Workspace token」で無効化できます。"
-    }
+    "defaultName": "{name}のワークスペース"
   },
   "workspaceToken": {
     "title": "ワークスペーストークン"
