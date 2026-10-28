@@ -1630,6 +1630,7 @@
       "label": "Geklikt (%)"
     },
     "targetCountry": {
+      "currencyHint": "Bepaalt ook de standaardvaluta van pipelines zonder eigen valuta.",
       "description": "Het land waar de meeste van je contacten wonen.",
       "label": "Doelland"
     },
@@ -10581,6 +10582,10 @@
       "referenceName": "Referentienaam",
       "referenceNameHint": "Gebruikt in de variabelen pipelines.reference_name.stage_name. Wijzigen breekt berichten die de oude naam gebruiken.",
       "referenceNameFormat": "Gebruik kleine letters, cijfers en underscores, beginnend met een letter (bijv. close_date).",
+      "currency": "Valuta",
+      "currencyFollowCountry": "Land van de werkruimte · {country} · {currency}",
+      "currencyFollowNoCountry": "Geen land voor de werkruimte · {currency}",
+      "currencyHint": "Volgt het doelland van de werkruimte (Instellingen → Algemeen) en past zich aan als dat verandert. Is er geen land ingesteld, dan geldt USD. Waarden worden nooit omgerekend.",
       "assignContact": "Wijs het contact aan een beheerder toe wanneer een item wordt toegewezen",
       "limit": "Open items per contact beperken",
       "statusLabels": "Statuslabels",

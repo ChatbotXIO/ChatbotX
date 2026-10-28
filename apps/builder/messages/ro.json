@@ -3163,6 +3163,7 @@
       "label": "Accesate(%)"
     },
     "targetCountry": {
+      "currencyHint": "Stabilește și moneda implicită a pipeline-urilor care nu au una proprie.",
       "description": "Țara în care locuiesc majoritatea contactelor dvs.",
       "label": "Țara vizată"
     },
@@ -10581,6 +10582,10 @@
       "referenceName": "Nume de referință",
       "referenceNameHint": "Folosit în variabilele pipelines.reference_name.stage_name. Schimbarea lui strică mesajele care folosesc numele vechi.",
       "referenceNameFormat": "Folosește litere mici, cifre și liniuțe de subliniere, începând cu o literă (ex. close_date).",
+      "currency": "Monedă",
+      "currencyFollowCountry": "Țara spațiului de lucru · {country} · {currency}",
+      "currencyFollowNoCountry": "Spațiul de lucru nu are țară · {currency}",
+      "currencyHint": "Urmează țara-țintă a spațiului de lucru (Setări → General) și se actualizează când aceasta se schimbă. Dacă nu e setată nicio țară, se folosește USD. Valorile nu sunt niciodată convertite.",
       "assignContact": "Atribuie contactul unui administrator când un element este atribuit",
       "limit": "Limitează elementele deschise per contact",
       "statusLabels": "Etichete de stare",

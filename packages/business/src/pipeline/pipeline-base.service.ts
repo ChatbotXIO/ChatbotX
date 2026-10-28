@@ -12,7 +12,6 @@ import {
 } from "@chatbotx.io/database/repositories"
 import type { PipelineModel } from "@chatbotx.io/database/types"
 import { BaseService } from "../base.service"
-import { ecommerceSettingsService } from "../ecommerce-settings/service"
 import {
   ChatbotXException,
   notFoundException,
@@ -27,8 +26,6 @@ import {
 } from "./access"
 import { dispatchPipelineEffects, realtimeEffect } from "./mutation-engine"
 import { allocateUniqueName } from "./naming"
-
-const DEFAULT_CURRENCY = "USD"
 
 export type PipelineAccessInput = {
   workspaceId: string
@@ -166,11 +163,6 @@ export class PipelineBaseService extends BaseService {
   }
 
   // Naming and defaults -------------------------------------------------------
-
-  protected async defaultCurrency(workspaceId: string): Promise<string> {
-    const settings = await ecommerceSettingsService.get(workspaceId)
-    return settings.payments.currency || DEFAULT_CURRENCY
-  }
 
   protected defaultSettingsFor(type: PipelineType) {
     return pipelineSettingsSchema.parse({

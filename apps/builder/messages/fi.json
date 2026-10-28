@@ -1845,6 +1845,7 @@
       "label": "Napsautettu (%)"
     },
     "targetCountry": {
+      "currencyHint": "Määrittää myös niiden pipelinejen oletusvaluutan, joilla ei ole omaa valuuttaa.",
       "description": "Maa, jossa suurin osa yhteystiedoistasi asuu.",
       "label": "Kohdemaa"
     },
@@ -10581,6 +10582,10 @@
       "referenceName": "Viitenimi",
       "referenceNameHint": "Käytetään muuttujissa pipelines.reference_name.stage_name. Sen muuttaminen rikkoo viestit, jotka käyttävät vanhaa nimeä.",
       "referenceNameFormat": "Käytä pieniä kirjaimia, numeroita ja alaviivoja, ja aloita kirjaimella (esim. close_date).",
+      "currency": "Valuutta",
+      "currencyFollowCountry": "Työtilan maa · {country} · {currency}",
+      "currencyFollowNoCountry": "Työtilalla ei ole maata · {currency}",
+      "currencyHint": "Seuraa työtilan kohdemaata (Asetukset → Yleiset) ja päivittyy, kun se muuttuu. Jos maata ei ole asetettu, käytetään USD:tä. Arvoja ei koskaan muunneta.",
       "assignContact": "Määritä yhteystieto ylläpitäjälle, kun kohde määritetään",
       "limit": "Rajoita avoimia kohteita yhteystietoa kohden",
       "statusLabels": "Tilatunnisteet",

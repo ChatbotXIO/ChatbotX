@@ -867,10 +867,23 @@ describe.skipIf(!realDatabaseUrl())("pipeline automation", () => {
         status: "open",
         priority: "medium",
         value: 300,
+        // No override and no country: USD.
+        currency: "USD",
       })
       expect(sales?.assignedAdmins).toEqual(["Support"])
       const support = targets.find((t) => t.referenceName === "support")
       expect(support).toMatchObject({ name: "lone", status: "won" })
+      await db
+        .update(workspaceModel)
+        .set({ targetCountry: "JP" })
+        .where(eq(workspaceModel.id, own.workspaceId))
+      const followed = await loadPipelineVariableTargets({
+        workspaceId: own.workspaceId,
+        contactId: own.contactIds[0],
+      })
+      expect(followed.map((target) => target.currency)).toEqual(
+        followed.map(() => "JPY"),
+      )
       expect(targets.some((t) => t.referenceName === "unknown")).toBe(false)
       const lastId = await loadLastPipelineItemId({
         workspaceId: own.workspaceId,

@@ -88,6 +88,23 @@ export const pipelineRepository = {
     })
   },
 
+  /** The workspace's pipeline ids in id order after `afterId`: keyset pages for a workspace-wide notification. */
+  async listIdsPage(
+    input: { workspaceId: string; afterId: string | null; limit: number },
+    tx: DatabaseClient = db,
+  ): Promise<string[]> {
+    const rows = await tx.query.pipelineModel.findMany({
+      where: {
+        workspaceId: input.workspaceId,
+        ...(input.afterId ? { id: { gt: input.afterId } } : {}),
+      },
+      columns: { id: true },
+      orderBy: { id: "asc" },
+      limit: input.limit,
+    })
+    return rows.map((row) => row.id)
+  },
+
   /** Item count per pipeline of the workspace; pipelines without items are absent. */
   async countItemsByPipeline(workspaceId: string, tx: DatabaseClient = db) {
     const rows = await tx

@@ -1845,6 +1845,7 @@
       "label": "Cliqués (%)"
     },
     "targetCountry": {
+      "currencyHint": "Définit aussi la devise par défaut des pipelines qui n'ont pas la leur.",
       "description": "Pays dans lequel vivent la plupart de vos contacts.",
       "label": "Pays cible"
     },
@@ -10581,6 +10582,10 @@
       "referenceName": "Nom de référence",
       "referenceNameHint": "Utilisé dans les variables pipelines.reference_name.stage_name. Le modifier casse les messages qui utilisent l’ancien nom.",
       "referenceNameFormat": "Utilisez des minuscules, des chiffres et des tirets bas, en commençant par une lettre (ex. close_date).",
+      "currency": "Devise",
+      "currencyFollowCountry": "Pays de l'espace de travail · {country} · {currency}",
+      "currencyFollowNoCountry": "Aucun pays pour l'espace de travail · {currency}",
+      "currencyHint": "Suit le pays cible de l'espace de travail (Paramètres → Général) et se met à jour quand il change. Sans pays défini, l'USD est utilisé. Les valeurs ne sont jamais converties.",
       "assignContact": "Assigner le contact à un admin lorsqu’un élément est assigné",
       "limit": "Limiter le nombre d’éléments ouverts par contact",
       "statusLabels": "Libellés de statut",

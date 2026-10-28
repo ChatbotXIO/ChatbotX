@@ -32,6 +32,8 @@ export type BoardPipeline = {
   name: string
   referenceName: string
   currency: string
+  /** The pipeline's own currency; null while it follows the workspace default. */
+  currencyOverride: string | null
   type: PipelineType
   settings: PipelineSettings
 }

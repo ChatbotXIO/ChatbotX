@@ -20,7 +20,6 @@ import type {
   PipelineFieldModel,
   PipelineItemActivityModel,
   PipelineItemModel,
-  PipelineModel,
   PipelineStageModel,
 } from "@chatbotx.io/database/types"
 import type { CustomFieldType } from "@chatbotx.io/utils/custom-field"
@@ -30,6 +29,12 @@ import { conversationService } from "../conversation/service"
 import { notFoundException, validationException } from "../errors"
 import { workspaceService } from "../workspace/service"
 import { canViewContactEmailAndPhone, type PipelineAccessScope } from "./access"
+import {
+  applyEffectiveCurrency,
+  type PipelineWithCurrency,
+  resolveWorkspaceDefault,
+  type WorkspaceCurrencyDefault,
+} from "./currency"
 import { assertFieldCondition } from "./field-filter"
 import { emptyAssignees, groupAssignees } from "./item-assignees"
 import { pipelineService } from "./service"
@@ -183,9 +188,11 @@ export class PipelineItemQueryService extends BaseService {
     sort?: PipelineItemSort
     perStageLimit?: number
   }): Promise<{
-    pipeline: PipelineModel
+    pipeline: PipelineWithCurrency
     fields: PipelineFieldModel[]
     stages: PipelineBoardStage[]
+    /** What "follow the workspace" means right now, for the currency choice. */
+    workspaceDefault: WorkspaceCurrencyDefault
   }> {
     const { workspaceId, pipelineId } = input
     const pipeline = await pipelineService.requireAccess({
@@ -205,7 +212,7 @@ export class PipelineItemQueryService extends BaseService {
       filter: scopeSearch(input.filter, input.scope),
       fields,
     })
-    const [stages, firstPages, totals] = await Promise.all([
+    const [stages, firstPages, totals, workspaceDefault] = await Promise.all([
       pipelineStageRepository.listByPipeline({ workspaceId, pipelineId }),
       pipelineItemRepository.listBoardFirstPage({
         workspaceId,
@@ -219,6 +226,7 @@ export class PipelineItemQueryService extends BaseService {
         pipelineId,
         filter,
       }),
+      resolveWorkspaceDefault(workspaceId),
     ])
     const views = await this.toViews(
       workspaceId,
@@ -229,8 +237,9 @@ export class PipelineItemQueryService extends BaseService {
     const pageByStage = new Map(firstPages.map((page) => [page.stageId, page]))
     const totalsByStage = new Map(totals.map((row) => [row.stageId, row]))
     return {
-      pipeline,
+      pipeline: applyEffectiveCurrency(pipeline, workspaceDefault.currency),
       fields,
+      workspaceDefault,
       stages: stages.map((stage) => ({
         stage,
         count: totalsByStage.get(stage.id)?.count ?? 0,
@@ -408,7 +417,7 @@ export class PipelineItemQueryService extends BaseService {
     workspaceId: string
     contactId: string
     scope: PipelineAccessScope
-  }): Promise<Array<PipelineItemView & { pipeline: PipelineModel }>> {
+  }): Promise<Array<PipelineItemView & { pipeline: PipelineWithCurrency }>> {
     const { workspaceId, scope } = input
     const visible = await pipelineService.listViewable({ workspaceId, scope })
     const pipelines = new Map(
@@ -448,7 +457,7 @@ export class PipelineItemQueryService extends BaseService {
     ]
     const [stages, viewable] = await Promise.all([
       pipelineStageRepository.listNamesByIds({ workspaceId, ids: stageIds }),
-      pipelineService.listViewable({ workspaceId, scope }),
+      pipelineService.listViewableRows({ workspaceId, scope }),
     ])
     const pipelineNames = new Map(viewable.map((row) => [row.id, row.name]))
     const stageNames = new Map(

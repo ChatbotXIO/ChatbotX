@@ -16,6 +16,7 @@ import { toast } from "sonner"
 import { SettingRow } from "@/components/setting-row"
 import type { WorkspaceResource } from "@/features/workspaces/schema/resource"
 import { useFlowSelectOptions } from "../flows/provider/flow-hook"
+import { useInvalidatePipelines } from "../pipelines/lib/use-invalidate-pipelines"
 import { updateWorkspaceAdvancedAction } from "./actions/update-workspace-action"
 import {
   allCountryOptions,
@@ -46,6 +47,8 @@ export function UpdateWorkspaceAdvancedForm({
 }) {
   const t = useTranslations()
   const flowOptions = useFlowSelectOptions()
+  // Pipelines without a currency of their own show the target country's.
+  const invalidatePipelines = useInvalidatePipelines()
   const defaultReplyFrequencyOptions = defaultReplyFrequencies.options.map(
     (frequency) => ({
       value: frequency,
@@ -59,6 +62,7 @@ export function UpdateWorkspaceAdvancedForm({
     {
       actionProps: {
         onSuccess: () => {
+          invalidatePipelines()
           toast.success(
             t("messages.updatedSuccess", {
               feature: t("fields.workspace.label"),
@@ -130,7 +134,12 @@ export function UpdateWorkspaceAdvancedForm({
             </SettingRow>
 
             <SettingRow
-              description={t("fields.targetCountry.description")}
+              description={
+                <>
+                  <p>{t("fields.targetCountry.description")}</p>
+                  <p>{t("fields.targetCountry.currencyHint")}</p>
+                </>
+              }
               label={t("fields.targetCountry.label")}
             >
               <ComboboxField

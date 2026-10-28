@@ -88,7 +88,8 @@ export const pipelineModel = pgTable(
     name: text().notNull(),
     type: pipelineTypeEnum().notNull(),
     referenceName: text().notNull(),
-    currency: text().notNull(),
+    // The override only: null follows the workspace (see pipeline/currency.ts).
+    currency: text(),
     // No `.default()`: drizzle-kit drops jsonb defaults, so callers always
     // write the full parsed value (see AGENTS.md on jsonb defaults).
     settings: jsonb().$type<PipelineSettings>().notNull(),

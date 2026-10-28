@@ -1,5 +1,9 @@
 export * from "./access"
 export * from "./analytics.service"
+export type {
+  PipelineWithCurrency,
+  WorkspaceCurrencyDefault,
+} from "./currency"
 export * from "./flow-actions"
 export * from "./item.service"
 export * from "./item-content.service"

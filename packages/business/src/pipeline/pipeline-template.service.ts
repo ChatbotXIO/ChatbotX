@@ -47,10 +47,11 @@ export class PipelineTemplateService extends PipelineBaseService {
         tx,
       )
       const parsedSettings = pipelineSettingsSchema.safeParse(entry.settings)
+      // A valid code is the override; anything else follows the workspace.
       const currency =
         entry.currency && PIPELINE_LIMITS.currencyPattern.test(entry.currency)
           ? entry.currency
-          : await this.defaultCurrency(workspaceId)
+          : null
       pipeline = await pipelineRepository.insert(
         {
           workspaceId,

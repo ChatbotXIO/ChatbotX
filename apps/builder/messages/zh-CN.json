@@ -3375,6 +3375,7 @@
       "label": "标签"
     },
     "targetCountry": {
+      "currencyHint": "同时设置没有自有货币的管道的默认货币。",
       "description": "您的大多数联系人居住的国家。",
       "label": "目标国家/地区"
     },
@@ -10581,6 +10582,10 @@
       "referenceName": "引用名称",
       "referenceNameHint": "用于 pipelines.reference_name.stage_name 变量。更改后，使用旧名称的消息将失效。",
       "referenceNameFormat": "仅可使用小写字母、数字和下划线，并以字母开头（例如 close_date）。",
+      "currency": "货币",
+      "currencyFollowCountry": "工作区所在国家 · {country} · {currency}",
+      "currencyFollowNoCountry": "工作区未设置国家 · {currency}",
+      "currencyHint": "跟随工作区的目标国家（设置 → 常规），国家变更时自动更新。未设置国家时使用 USD。金额不会被换算。",
       "assignContact": "分配项目时，同时将联系人分配给管理员",
       "limit": "限制每位联系人的未结项目数",
       "statusLabels": "状态标签",

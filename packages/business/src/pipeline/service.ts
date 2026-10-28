@@ -28,6 +28,13 @@ import {
   type PipelinePermissions,
   resolvePipelinePermissions,
 } from "./access"
+import {
+  applyEffectiveCurrency,
+  type PipelineWithCurrency,
+  resolveWorkspaceCurrency,
+  withEffectiveCurrencies,
+  withEffectiveCurrency,
+} from "./currency"
 import { pipelineCountsCacheTag } from "./mutation-engine"
 import { PipelineBaseService } from "./pipeline-base.service"
 import { membersForCopy } from "./pipeline-member.service"
@@ -41,7 +48,7 @@ export type {
 const LIST_CACHE_TTL_SECONDS = 60
 
 export type PipelineListEntry = {
-  pipeline: PipelineModel
+  pipeline: PipelineWithCurrency
   itemsCount: number
 }
 
@@ -65,7 +72,8 @@ type UpdatePipelineInput = {
   values: {
     name?: string
     referenceName?: string
-    currency?: string
+    /** `null` follows the workspace again. */
+    currency?: string | null
     /** Merged key by key over the stored settings; omitted groups and keys keep their stored values. */
     settings?: PipelineSettingsPatch
   }
@@ -85,6 +93,17 @@ export class PipelineService extends PipelineBaseService {
 
   /** Pipelines the scope can view, without counting their items. */
   async listViewable(input: {
+    workspaceId: string
+    scope: PipelineAccessScope
+  }): Promise<PipelineWithCurrency[]> {
+    return await withEffectiveCurrencies(
+      input.workspaceId,
+      await this.listViewableRows(input),
+    )
+  }
+
+  /** The viewable rows as stored, for callers that never read `currency`. */
+  async listViewableRows(input: {
     workspaceId: string
     scope: PipelineAccessScope
   }): Promise<PipelineModel[]> {
@@ -124,9 +143,13 @@ export class PipelineService extends PipelineBaseService {
       counts.map((row) => [row.pipelineId, row.itemsCount]),
     )
     const permissions = await this.viewPermissions(input, pipelines)
-    return pipelines.flatMap((pipeline) => {
+    const viewable = pipelines.filter(
+      (pipeline) => permissions.get(pipeline.id)?.canView,
+    )
+    const mapped = await withEffectiveCurrencies(workspaceId, viewable)
+    return mapped.flatMap((pipeline) => {
       const granted = permissions.get(pipeline.id)
-      return granted?.canView
+      return granted
         ? [
             {
               pipeline,
@@ -177,7 +200,7 @@ export class PipelineService extends PipelineBaseService {
     id: string
     scope: PipelineAccessScope
   }): Promise<{
-    pipeline: PipelineModel
+    pipeline: PipelineWithCurrency
     stages: PipelineStageModel[]
     fields: PipelineFieldModel[]
     permissions: PipelinePermissions
@@ -188,7 +211,7 @@ export class PipelineService extends PipelineBaseService {
       scope: input.scope,
       action: "view",
     })
-    const [stages, fields] = await Promise.all([
+    const [stages, fields, workspaceCurrency] = await Promise.all([
       pipelineStageRepository.listByPipeline({
         workspaceId: input.workspaceId,
         pipelineId: pipeline.id,
@@ -197,8 +220,14 @@ export class PipelineService extends PipelineBaseService {
         workspaceId: input.workspaceId,
         pipelineId: pipeline.id,
       }),
+      resolveWorkspaceCurrency(input.workspaceId),
     ])
-    return { pipeline, stages, fields, permissions }
+    return {
+      pipeline: applyEffectiveCurrency(pipeline, workspaceCurrency),
+      stages,
+      fields,
+      permissions,
+    }
   }
 
   /** A pipeline's custom fields in display order (requires view access). */
@@ -224,7 +253,7 @@ export class PipelineService extends PipelineBaseService {
     workspaceId: string
     scope: PipelineAccessScope
   }): Promise<
-    Array<{ pipeline: PipelineModel; stages: PipelineStageModel[] }>
+    Array<{ pipeline: PipelineWithCurrency; stages: PipelineStageModel[] }>
   > {
     // No item counts here: only the cached rows and the ACL are needed.
     const pipelines = await this.listViewable(input)
@@ -312,15 +341,14 @@ export class PipelineService extends PipelineBaseService {
     workspaceId: string,
     scope: PipelineAccessScope,
   ): Promise<Set<string>> {
-    const pipelines = await this.listViewable({ workspaceId, scope })
+    const pipelines = await this.listViewableRows({ workspaceId, scope })
     return new Set(pipelines.map((pipeline) => pipeline.id))
   }
 
   // Pipeline mutations --------------------------------------------------------
 
-  async create(input: CreatePipelineInput): Promise<PipelineModel> {
+  async create(input: CreatePipelineInput): Promise<PipelineWithCurrency> {
     const { workspaceId, type, scope, actor } = input
-    const currency = await this.defaultCurrency(workspaceId)
 
     const created = await db.transaction(async (tx) => {
       await acquirePipelineAdvisoryLock(tx, this.namingLockKey(workspaceId))
@@ -334,7 +362,8 @@ export class PipelineService extends PipelineBaseService {
           name,
           type,
           referenceName,
-          currency,
+          // No override: a new pipeline follows the workspace.
+          currency: null,
           settings: this.defaultSettingsFor(type),
           createdById: actor.userId,
         },
@@ -372,10 +401,10 @@ export class PipelineService extends PipelineBaseService {
 
     await this.invalidateList(workspaceId)
     await this.audit("create", `created pipeline ${created.id}`)
-    return created
+    return await withEffectiveCurrency(workspaceId, created)
   }
 
-  async update(input: UpdatePipelineInput): Promise<PipelineModel> {
+  async update(input: UpdatePipelineInput): Promise<PipelineWithCurrency> {
     const { workspaceId, id, values } = input
     await this.requireAccess({
       workspaceId,
@@ -436,7 +465,7 @@ export class PipelineService extends PipelineBaseService {
     // in every session, not only the one that saved it.
     await this.afterStructureChange(workspaceId, id)
     await this.audit("update", `updated pipeline ${id}`)
-    return updated
+    return await withEffectiveCurrency(workspaceId, updated)
   }
 
   async delete(input: {
@@ -535,7 +564,7 @@ export class PipelineService extends PipelineBaseService {
     id: string
     scope: PipelineAccessScope
     actor: PipelineActor
-  }): Promise<PipelineModel> {
+  }): Promise<PipelineWithCurrency> {
     const { workspaceId, scope } = input
     const source = await this.requireAccess({
       workspaceId,
@@ -614,7 +643,7 @@ export class PipelineService extends PipelineBaseService {
 
     await this.invalidateList(workspaceId)
     await this.audit("create", `duplicated pipeline ${source.id}`)
-    return copy
+    return await withEffectiveCurrency(workspaceId, copy)
   }
 }
 

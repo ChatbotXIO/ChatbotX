@@ -1845,6 +1845,7 @@
       "label": "Clicado (%)"
     },
     "targetCountry": {
+      "currencyHint": "Também define a moeda predefinida dos funis que não têm uma própria.",
       "description": "O país onde vive a maioria dos seus contactos.",
       "label": "País de destino"
     },
@@ -10581,6 +10582,10 @@
       "referenceName": "Nome de referência",
       "referenceNameHint": "Usado nas variáveis pipelines.reference_name.stage_name. Alterá-lo quebra as mensagens que usam o nome antigo.",
       "referenceNameFormat": "Use letras minúsculas, números e sublinhados, começando por uma letra (ex.: close_date).",
+      "currency": "Moeda",
+      "currencyFollowCountry": "País do workspace · {country} · {currency}",
+      "currencyFollowNoCountry": "Workspace sem país · {currency}",
+      "currencyHint": "Segue o País-alvo do workspace (Definições → Geral) e atualiza-se quando este muda. Sem país definido, usa-se USD. Os valores nunca são convertidos.",
       "assignContact": "Atribuir o contacto a um administrador quando um item for atribuído",
       "limit": "Limitar itens abertos por contacto",
       "statusLabels": "Etiquetas de estado",

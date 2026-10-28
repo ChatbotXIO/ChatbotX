@@ -2014,6 +2014,7 @@
       "label": "Đã click(%)"
     },
     "targetCountry": {
+      "currencyHint": "Đồng thời đặt đơn vị tiền tệ mặc định cho các pipeline chưa có đơn vị riêng.",
       "description": "Quốc gia nơi hầu hết liên hệ của bạn sinh sống.",
       "label": "Quốc gia mục tiêu"
     },
@@ -10581,6 +10582,10 @@
       "referenceName": "Tên tham chiếu",
       "referenceNameHint": "Dùng trong các biến pipelines.reference_name.stage_name. Đổi tên sẽ làm hỏng các tin nhắn đang dùng tên cũ.",
       "referenceNameFormat": "Chỉ dùng chữ thường, số và dấu gạch dưới, bắt đầu bằng chữ cái (VD: close_date).",
+      "currency": "Tiền tệ",
+      "currencyFollowCountry": "Quốc gia workspace · {country} · {currency}",
+      "currencyFollowNoCountry": "Chưa đặt quốc gia workspace · {currency}",
+      "currencyHint": "Theo Quốc gia mục tiêu của workspace (Cài đặt → Chung) và tự cập nhật khi quốc gia đổi. Nếu chưa đặt quốc gia, dùng USD. Giá trị không bao giờ bị quy đổi.",
       "assignContact": "Gán liên hệ cho admin khi mục được giao",
       "limit": "Giới hạn số mục đang mở trên mỗi liên hệ",
       "statusLabels": "Nhãn trạng thái",

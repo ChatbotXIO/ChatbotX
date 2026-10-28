@@ -15,6 +15,7 @@ import {
   pipelineStageModel,
   userModel,
   workspaceMemberModel,
+  workspaceModel,
 } from "@chatbotx.io/database/schema"
 import type { PgTable } from "drizzle-orm/pg-core"
 
@@ -45,8 +46,9 @@ const assigneeNames = (itemId: SQL, workspaceId: string) => {
 export const pipelineVariableTargetRepository = {
   /**
    * One row per pipeline the contact has items in: its most recently created
-   * open item, else its most recently created item. Item, pipeline, stage and
-   * assignee names come back in this single query.
+   * open item, else its most recently created item. Item, pipeline, stage,
+   * assignee names and the workspace target country (which a pipeline without
+   * a currency follows) come back in this single query.
    */
   async listForContact(
     input: { workspaceId: string; contactId: string },
@@ -69,6 +71,7 @@ export const pipelineVariableTargetRepository = {
         currency: pipelineModel.currency,
         settings: pipelineModel.settings,
         stageName: pipelineStageModel.name,
+        targetCountry: workspaceModel.targetCountry,
       })
       .from(pipelineItemModel)
       .innerJoin(
@@ -81,6 +84,10 @@ export const pipelineVariableTargetRepository = {
       .innerJoin(
         pipelineStageModel,
         eq(pipelineStageModel.id, pipelineItemModel.stageId),
+      )
+      .innerJoin(
+        workspaceModel,
+        eq(workspaceModel.id, pipelineItemModel.workspaceId),
       )
       .where(
         and(
@@ -110,6 +117,7 @@ export const pipelineVariableTargetRepository = {
         currency: winners.currency,
         settings: winners.settings,
         stageName: winners.stageName,
+        targetCountry: winners.targetCountry,
         assignees: assigneeNames(
           sql`${sql.identifier("winners")}.${sql.identifier("item_id")}`,
           input.workspaceId,

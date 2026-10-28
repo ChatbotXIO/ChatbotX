@@ -161,6 +161,66 @@ describe.skipIf(!databaseUrl)("pipeline repositories", () => {
     await cleanup(other)
   })
 
+  test("stores a pipeline with no currency override", async () => {
+    const db = database()
+    const row = await pipelineRepository.insert(
+      {
+        workspaceId: own.workspaceId,
+        name: "Follows workspace",
+        type: "opportunity",
+        referenceName: "follows-workspace",
+        currency: null,
+        settings: pipelineSettingsSchema.parse({}),
+      },
+      db,
+    )
+    expect(row.currency).toBeNull()
+  })
+
+  test("pages every pipeline id of the workspace, whatever its currency, in id order", async () => {
+    const db = database()
+    const insertPipeline = async (
+      fixture: Fixture,
+      name: string,
+      currency: string | null,
+    ) =>
+      await pipelineRepository.insert(
+        {
+          workspaceId: fixture.workspaceId,
+          name,
+          type: "opportunity",
+          referenceName: name,
+          currency,
+          settings: pipelineSettingsSchema.parse({}),
+        },
+        db,
+      )
+    const follows = await insertPipeline(own, "follows", null)
+    const overrides = await insertPipeline(own, "overrides", "USD")
+    await insertPipeline(other, "other_workspace", null)
+    const expected = [own.pipelineId, follows.id, overrides.id].sort((a, b) =>
+      Number(BigInt(a) - BigInt(b)),
+    )
+
+    const pages: string[][] = []
+    let afterId: string | null = null
+    for (;;) {
+      const page = await pipelineRepository.listIdsPage(
+        { workspaceId: own.workspaceId, afterId, limit: 2 },
+        db,
+      )
+      pages.push(page)
+      if (page.length < 2) {
+        break
+      }
+      afterId = page.at(-1) ?? null
+    }
+
+    // Two pages of two at most, never the other workspace's pipeline.
+    expect(pages.flat()).toEqual(expected)
+    expect(pages.map((page) => page.length)).toEqual([2, 1])
+  })
+
   test("hands out consecutive item numbers per workspace under concurrency", async () => {
     const db = database()
 

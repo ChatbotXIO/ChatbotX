@@ -1,5 +1,6 @@
 "use client"
 
+import type { WorkspaceCurrencyDefault } from "@chatbotx.io/business/pipeline"
 import type { PipelineSettings } from "@chatbotx.io/database/partials"
 import {
   Accordion,
@@ -45,6 +46,8 @@ type SettingsSheetProps = {
   open: boolean
   onOpenChange: (open: boolean) => void
   pipeline: SettingsPipeline
+  /** What a pipeline without its own currency follows today. */
+  workspaceDefault: WorkspaceCurrencyDefault
   fields: BoardField[]
   /** What the caller may grant other members (mirrors the server's rule). */
   grantLimits: GrantLimits
@@ -113,6 +116,7 @@ export function SettingsSheet({
   open,
   onOpenChange,
   pipeline,
+  workspaceDefault,
   fields,
   grantLimits,
 }: SettingsSheetProps) {
@@ -141,6 +145,7 @@ export function SettingsSheet({
           onClose={() => onOpenChange(false)}
           pipeline={pipeline}
           saver={saver}
+          workspaceDefault={workspaceDefault}
           workspaceId={workspaceId}
         />
       </SheetContent>
@@ -155,6 +160,7 @@ export function SettingsSheet({
 function SettingsForm({
   workspaceId,
   pipeline,
+  workspaceDefault,
   fields,
   onClose,
   saver,
@@ -274,6 +280,7 @@ function SettingsForm({
           draft={draft}
           errors={errors}
           onChange={change}
+          workspaceDefault={workspaceDefault}
         />
       ),
     },

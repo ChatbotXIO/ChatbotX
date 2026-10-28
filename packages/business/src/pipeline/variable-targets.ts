@@ -1,6 +1,10 @@
 import { pipelineSettingsSchema } from "@chatbotx.io/database/partials"
 import { pipelineVariableTargetRepository } from "@chatbotx.io/database/repositories"
 import type { PipelineItemModel } from "@chatbotx.io/database/types"
+import {
+  applyEffectiveCurrency,
+  workspaceCurrencyDefault,
+} from "./currency-rules"
 
 /** The item a `{{pipelines.<ref>.<attr>}}` variable reads, one per pipeline. */
 export type PipelineVariableTarget = {
@@ -32,6 +36,11 @@ export async function loadPipelineVariableTargets(input: {
   contactId: string
 }): Promise<PipelineVariableTarget[]> {
   const rows = await pipelineVariableTargetRepository.listForContact(input)
+  // The target country comes back with the rows, so the effective currency
+  // needs no service or extra read; every row is the same workspace.
+  const workspaceCurrency = workspaceCurrencyDefault(
+    rows[0]?.targetCountry ?? null,
+  ).currency
   return rows.map((row) => ({
     id: row.itemId,
     referenceName: row.referenceName,
@@ -43,7 +52,7 @@ export async function loadPipelineVariableTargets(input: {
     ],
     priority: row.priority,
     value: row.value,
-    currency: row.currency,
+    currency: applyEffectiveCurrency(row, workspaceCurrency).currency,
     assignedAdmins: (row.assignees ?? []).filter(
       (name): name is string => typeof name === "string" && name !== "",
     ),

@@ -1,9 +1,15 @@
 "use client"
 
+import type { WorkspaceCurrencyDefault } from "@chatbotx.io/business/pipeline"
 import { PIPELINE_REFERENCE_NAME_MAX } from "@chatbotx.io/database/partials"
 import { Input } from "@chatbotx.io/ui/components/ui/input"
-import { useTranslations } from "next-intl"
+import { useLocale, useTranslations } from "next-intl"
+import {
+  useCurrencyLabel,
+  useCurrencyOptions,
+} from "@/hooks/use-currency-options"
 import { CheckboxField } from "../shared/checkbox-field"
+import { OptionSelect } from "../shared/option-select"
 import type { SettingsDraft } from "./settings-draft"
 
 type GeneralTabProps = {
@@ -11,6 +17,8 @@ type GeneralTabProps = {
   onChange: (patch: Partial<SettingsDraft>) => void
   errors: { referenceName: boolean; limit: boolean }
   disabled: boolean
+  /** What the "follow" choice resolves to today. */
+  workspaceDefault: WorkspaceCurrencyDefault
 }
 
 export function GeneralTab({
@@ -18,8 +26,23 @@ export function GeneralTab({
   onChange,
   errors,
   disabled,
+  workspaceDefault,
 }: GeneralTabProps) {
   const t = useTranslations("pipelines")
+  const locale = useLocale()
+  const currencyLabel = useCurrencyLabel()
+  const currencyOptions = useCurrencyOptions(draft.currency)
+  const currency = currencyLabel(workspaceDefault.currency)
+  // Says which country and currency "follow" means, so the choice is not blind.
+  const followLabel = workspaceDefault.country
+    ? t("settings.currencyFollowCountry", {
+        country:
+          new Intl.DisplayNames([locale], { type: "region" }).of(
+            workspaceDefault.country,
+          ) ?? workspaceDefault.country,
+        currency,
+      })
+    : t("settings.currencyFollowNoCountry", { currency })
 
   return (
     <div className="grid gap-5 py-4 text-sm">
@@ -46,6 +69,21 @@ export function GeneralTab({
         ) : null}
         <span className="text-muted-foreground text-xs">
           {t("settings.referenceNameHint")}
+        </span>
+      </label>
+
+      <label className="grid gap-1.5" htmlFor="settings-currency">
+        {t("settings.currency")}
+        <OptionSelect
+          disabled={disabled}
+          emptyLabel={followLabel}
+          id="settings-currency"
+          onValueChange={(currency) => onChange({ currency })}
+          options={currencyOptions}
+          value={draft.currency}
+        />
+        <span className="text-muted-foreground text-xs">
+          {t("settings.currencyHint")}
         </span>
       </label>
 

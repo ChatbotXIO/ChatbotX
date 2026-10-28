@@ -140,7 +140,7 @@ const pipelinesCorePublicRouter = {
       path: "/v1/pipelines/{id}",
       summary: "Update pipeline",
       description:
-        "Rename, change the reference name or currency, or change settings (status labels, visible card elements, open-item limit per contact, auto-assign contact).",
+        "Rename, change the reference name or currency, or change settings (status labels, visible card elements, open-item limit per contact, auto-assign contact). A pipeline follows the workspace default currency unless it has its own: send `currency` to set one, or `currency: null` to follow the workspace again.",
       tags: TAGS,
     })
     .input(updatePipelinePublicRequest)

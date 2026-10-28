@@ -84,4 +84,62 @@ describe("executeDynamicCommand", () => {
     const init = fetchMock.mock.calls[0]?.[1] as RequestInit
     expect(init.body).toBeUndefined()
   })
+
+  describe("the literal `null` flag value", () => {
+    const patchTool = (property: Record<string, unknown>): DynamicTool => ({
+      ...tool,
+      bodyParamNames: ["currency"],
+      commandName: "pipelines-update",
+      inputSchema: { properties: { currency: property }, type: "object" },
+      method: "PATCH",
+      pathParamNames: ["id"],
+      pathTemplate: "/v1/pipelines/{id}",
+    })
+
+    const sentBody = async (
+      property: Record<string, unknown>,
+      value: string,
+    ) => {
+      const fetchMock = vi.fn().mockResolvedValue(successfulResponse)
+      globalThis.fetch = fetchMock as unknown as typeof fetch
+      await executeDynamicCommand(
+        patchTool(property),
+        { id: "1", currency: value },
+        { apiKey: "api-key", apiUrl: "https://api.example.com" },
+      )
+      return (fetchMock.mock.calls[0]?.[1] as RequestInit).body
+    }
+
+    test.each([
+      [
+        "a null union member",
+        { anyOf: [{ type: "string" }, { type: "null" }] },
+      ],
+      [
+        "a oneOf null member",
+        { oneOf: [{ type: "string" }, { type: "null" }] },
+      ],
+      ["a nullable flag", { type: "string", nullable: true }],
+      ["a type list with null", { type: ["string", "null"] }],
+    ])("is sent as JSON null when the property takes %s", async (_name, property) => {
+      expect(await sentBody(property, "null")).toBe(
+        JSON.stringify({ currency: null }),
+      )
+    })
+
+    test('stays the text "null" when the property does not take null', async () => {
+      expect(await sentBody({ type: "string" }, "null")).toBe(
+        JSON.stringify({ currency: "null" }),
+      )
+    })
+
+    test("any other value is still sent as text", async () => {
+      expect(
+        await sentBody(
+          { anyOf: [{ type: "string" }, { type: "null" }] },
+          "VND",
+        ),
+      ).toBe(JSON.stringify({ currency: "VND" }))
+    })
+  })
 })

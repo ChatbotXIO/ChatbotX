@@ -6,7 +6,6 @@ import {
 } from "@chatbotx.io/database/repositories"
 import type {
   PipelineItemModel,
-  PipelineModel,
   PipelineStageModel,
 } from "@chatbotx.io/database/types"
 import {
@@ -22,6 +21,7 @@ import { invalidateCacheByTags } from "@chatbotx.io/redis"
 import { conversationService } from "../conversation/service"
 import { logger } from "../logger"
 import { queueWorkspaceRealtimeEvent } from "../platform/realtime-broadcast"
+import type { PipelineWithCurrency } from "./currency"
 import { sameStringRecord } from "./equality"
 import { currentAssignees, primaryFromSets } from "./item-assignees"
 import type { PipelineActor, PipelineItemSnapshot } from "./types"
@@ -214,7 +214,8 @@ export type PipelineEffect =
     }
 
 export type PipelineEventSubject = {
-  pipeline: PipelineModel
+  /** Carries the effective currency, captured when the event is emitted. */
+  pipeline: PipelineWithCurrency
   stage: PipelineStageModel
   item: PipelineItemModel
   actor: PipelineActor

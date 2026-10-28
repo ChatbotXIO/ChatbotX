@@ -1,12 +1,12 @@
 import type {
   PipelineActivityView,
   PipelineItemView,
+  PipelineWithCurrency,
 } from "@chatbotx.io/business/pipeline"
 import type {
   PipelineFieldModel,
   PipelineItemCommentModel,
   PipelineMemberModel,
-  PipelineModel,
   PipelineStageModel,
 } from "@chatbotx.io/database/types"
 import type { z } from "zod"
@@ -30,12 +30,15 @@ type PublicComment = z.infer<typeof publicPipelineCommentResource>
 type PublicActivity = z.infer<typeof publicPipelineActivityResource>
 type PublicAttachment = z.infer<typeof publicPipelineAttachmentResource>
 
-export const toPublicPipeline = (pipeline: PipelineModel): PublicPipeline => ({
+export const toPublicPipeline = (
+  pipeline: PipelineWithCurrency,
+): PublicPipeline => ({
   id: pipeline.id,
   name: pipeline.name,
   type: pipeline.type,
   referenceName: pipeline.referenceName,
   currency: pipeline.currency,
+  currencyOverride: pipeline.currencyOverride,
   settings: pipeline.settings,
   createdAt: pipeline.createdAt,
   updatedAt: pipeline.updatedAt,

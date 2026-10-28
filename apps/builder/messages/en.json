@@ -2051,6 +2051,7 @@
       "label": "Clicked(%)"
     },
     "targetCountry": {
+      "currencyHint": "Also sets the default currency of pipelines that have none of their own.",
       "description": "The country where most of your contacts live.",
       "label": "Target Country"
     },
@@ -10581,6 +10582,10 @@
       "referenceName": "Reference name",
       "referenceNameHint": "Used in the pipelines.reference_name.stage_name variables. Changing it breaks messages that use the old name.",
       "referenceNameFormat": "Use lowercase letters, numbers and underscores, starting with a letter (e.g. close_date).",
+      "currency": "Currency",
+      "currencyFollowCountry": "Workspace country · {country} · {currency}",
+      "currencyFollowNoCountry": "No workspace country · {currency}",
+      "currencyHint": "Follows the workspace's Target Country (Settings → General) and updates when it changes. With no country set, USD is used. Values are never converted.",
       "assignContact": "Assign the contact to an admin when an item is assigned",
       "limit": "Limit open items per contact",
       "statusLabels": "Status labels",

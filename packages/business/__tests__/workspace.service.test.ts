@@ -122,6 +122,11 @@ vi.mock("../src/logger", () => ({ logger }))
 const dispatchAuditRecord = vi.fn()
 vi.mock("../src/audit/dispatcher", () => ({ dispatchAuditRecord }))
 
+const notifyWorkspaceCurrencyChange = vi.fn(async () => undefined)
+vi.mock("../src/pipeline/currency-refresh", () => ({
+  notifyWorkspaceCurrencyChange,
+}))
+
 const { workspaceService } = await import("../src/workspace/service")
 const { compensateWorkspaceQuotaConsumption } = await import(
   "../src/workspace/quota-consumption"
@@ -156,6 +161,7 @@ beforeEach(() => {
   anchoredPeriod.mockClear()
   logger.error.mockClear()
   dispatchAuditRecord.mockClear()
+  notifyWorkspaceCurrencyChange.mockClear()
   transaction.mockClear()
   workspaceUsageService.rollbackLiveIncrement.mockClear()
   returningUpdatedWorkspace
@@ -771,6 +777,53 @@ describe("workspaceService.updateSettings", () => {
 
     expect(setUpdate).not.toHaveBeenCalled()
     expect(result).toMatchObject({ id: "ws-1" })
+  })
+
+  test("writing the target country tells every pipeline to refresh", async () => {
+    await workspaceService.updateSettings({
+      id: "ws-1",
+      data: { targetCountry: "VN" },
+    })
+
+    expect(notifyWorkspaceCurrencyChange).toHaveBeenCalledTimes(1)
+    expect(notifyWorkspaceCurrencyChange).toHaveBeenCalledWith("ws-1")
+  })
+
+  test("every write of the country notifies, so a concurrent save cannot skip it", async () => {
+    // Two saves back to back (VN -> JP, then JP -> VN) each notify: a change
+    // check against a stale read would have skipped the second one.
+    await workspaceService.updateSettings({
+      id: "ws-1",
+      data: { targetCountry: "JP" },
+    })
+    await workspaceService.updateSettings({
+      id: "ws-1",
+      data: { targetCountry: "VN" },
+    })
+
+    expect(notifyWorkspaceCurrencyChange).toHaveBeenCalledTimes(2)
+  })
+
+  test("a save that leaves the country out notifies nobody", async () => {
+    await workspaceService.updateSettings({
+      id: "ws-1",
+      data: { capiLimitedDataUse: true },
+    })
+
+    expect(notifyWorkspaceCurrencyChange).not.toHaveBeenCalled()
+  })
+
+  test("a failed write notifies nobody", async () => {
+    returningUpdatedWorkspace.mockResolvedValueOnce([])
+
+    await expect(
+      workspaceService.updateSettings({
+        id: "ws-1",
+        data: { targetCountry: "VN" },
+      }),
+    ).rejects.toThrow()
+
+    expect(notifyWorkspaceCurrencyChange).not.toHaveBeenCalled()
   })
 
   test("a field left out is not written (undefined is skipped)", async () => {

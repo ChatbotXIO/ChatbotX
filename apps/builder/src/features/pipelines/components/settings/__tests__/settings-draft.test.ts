@@ -14,7 +14,7 @@ const pipeline: SettingsPipeline = {
   id: "9",
   name: "Sales",
   referenceName: "sales",
-  currency: "USD",
+  currencyOverride: "USD",
   settings: pipelineSettingsSchema.parse({ maxOpenItemsPerContact: 3 }),
 }
 
@@ -54,6 +54,39 @@ describe("buildPipelineUpdate", () => {
       settings: { assignContactOnAssign: true, maxOpenItemsPerContact: null },
     })
   })
+
+  test("a changed currency is sent as a top-level field", () => {
+    expect(
+      buildPipelineUpdate(base, {
+        ...draftFromPipeline(pipeline),
+        currency: "VND",
+      }),
+    ).toEqual({ currency: "VND" })
+  })
+
+  test("a pipeline without an override starts on the follow choice", () => {
+    const following = draftFromPipeline({ ...pipeline, currencyOverride: null })
+
+    expect(following.currency).toBe("")
+    expect(buildPipelineUpdate(following, { ...following })).toBe(null)
+  })
+
+  test("picking an override from the follow choice sends the code", () => {
+    const following = draftFromPipeline({ ...pipeline, currencyOverride: null })
+
+    expect(
+      buildPipelineUpdate(following, { ...following, currency: "JPY" }),
+    ).toEqual({ currency: "JPY" })
+  })
+
+  test("going back to the follow choice sends null", () => {
+    expect(
+      buildPipelineUpdate(base, {
+        ...draftFromPipeline(pipeline),
+        currency: "",
+      }),
+    ).toEqual({ currency: null })
+  })
 })
 
 describe("rebaseDraft", () => {
@@ -81,6 +114,15 @@ describe("rebaseDraft", () => {
   test("a refetch alone never becomes a change to save", () => {
     const rebased = rebaseDraft(base, base, next)
     expect(buildPipelineUpdate(next, rebased)).toBe(null)
+  })
+
+  test("a pending currency edit survives a refetch of other settings", () => {
+    const draft = { ...base, currency: "" }
+
+    const rebased = rebaseDraft(draft, base, next)
+
+    expect(rebased.currency).toBe("")
+    expect(buildPipelineUpdate(next, rebased)).toEqual({ currency: null })
   })
 
   test("only the user's edit is sent after a refetch", () => {
