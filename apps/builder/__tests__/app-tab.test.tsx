@@ -17,6 +17,7 @@ vi.mock("next/link", () => ({
       {children}
     </a>
   ),
+  useLinkStatus: () => ({ pending: false }),
 }))
 
 const { AppTab } = await import("@/components/app-tab")

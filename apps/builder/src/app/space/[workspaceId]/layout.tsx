@@ -20,6 +20,10 @@ import { notFound } from "next/navigation"
 import { AppSidebar } from "@/components/app-sidebar"
 import { ExpiredBanner } from "@/components/expired-banner"
 import type { QuotaSummary } from "@/components/nav-usage"
+import {
+  NavigationPendingBoundary,
+  NavigationPendingProvider,
+} from "@/components/navigation-pending"
 import { RefreshOnNavigation } from "@/components/refresh-on-navigation"
 import { ScheduledDeletionBanner } from "@/components/scheduled-deletion-banner"
 import { SupportAccessBanner } from "@/components/support-access-banner"
@@ -156,70 +160,74 @@ export default async function WorkspaceLayout({
     // grows with its content instead: the inbox composer ends up below the fold
     // on a short viewport. Scoping it to `:has()` keeps every ordinary page
     // scrolling the body exactly as before.
-    <SidebarProvider
-      className="has-data-full-bleed:h-svh"
-      defaultOpen={defaultOpen}
-    >
-      <AppSidebar
-        allWorkspaces={allWorkspaces}
-        callHistoryNavVisible={realtimeGates.callHistoryNavVisible}
-        isPlatformAdmin={platformAdmin}
-        isSuperAdmin={superAdmin}
-        permissions={targetWorkspaceMember.permissions}
-        quota={quotaSummary}
-        scheduledForDeletion={scheduledForDeletion}
-        workspaceId={workspaceId}
-      />
-      <SidebarInset>
-        {/*
+    <NavigationPendingProvider>
+      <SidebarProvider
+        className="has-data-full-bleed:h-svh"
+        defaultOpen={defaultOpen}
+      >
+        <AppSidebar
+          allWorkspaces={allWorkspaces}
+          callHistoryNavVisible={realtimeGates.callHistoryNavVisible}
+          isPlatformAdmin={platformAdmin}
+          isSuperAdmin={superAdmin}
+          permissions={targetWorkspaceMember.permissions}
+          quota={quotaSummary}
+          scheduledForDeletion={scheduledForDeletion}
+          workspaceId={workspaceId}
+        />
+        <SidebarInset>
+          {/*
           `min-h-0` lets this column shrink to the capped shell above instead of
           being floored at its content height — without it the cap is inert and
           a full-bleed page still overflows.
         */}
-        <main className="flex min-h-0 min-w-0 flex-1 flex-col gap-4 p-4 md:p-6">
-          <WorkspaceDeletionTabSync
-            scheduledForDeletion={scheduledForDeletion}
-            workspaceId={workspaceId}
-          />
-          <ScheduledDeletionBanner scheduled={scheduledForDeletion} />
-          {isSupportSession && (
-            <SupportAccessBanner
-              consentRequired={consentRequired}
-              supportAccessUntil={targetWorkspace.supportAccessUntil}
-            />
-          )}
-          {!scheduledForDeletion && (
-            <RefreshOnNavigation workspaceId={workspaceId} />
-          )}
-          <ExpiredBanner blocked={cloud && blocked} reason={blockReason} />
-          <TokenRefreshErrorDialog
-            errors={tokenRefreshErrors}
-            workspaceId={workspaceId}
-          />
-          <AnalyticsApiProvider>
-            <CouponTopicStoreProvider
-              autoInitialize={false}
+          <main className="flex min-h-0 min-w-0 flex-1 flex-col gap-4 p-4 md:p-6">
+            <WorkspaceDeletionTabSync
+              scheduledForDeletion={scheduledForDeletion}
               workspaceId={workspaceId}
-            >
-              <WorkspaceRealtimeShell
-                callHistoryEnabled={realtimeGates.callHistoryEnabled}
-                callingEnabled={realtimeGates.callingEnabled}
-                realtimeEnabled={realtimeGates.realtimeEnabled}
+            />
+            <ScheduledDeletionBanner scheduled={scheduledForDeletion} />
+            {isSupportSession && (
+              <SupportAccessBanner
+                consentRequired={consentRequired}
+                supportAccessUntil={targetWorkspace.supportAccessUntil}
+              />
+            )}
+            {!scheduledForDeletion && (
+              <RefreshOnNavigation workspaceId={workspaceId} />
+            )}
+            <ExpiredBanner blocked={cloud && blocked} reason={blockReason} />
+            <TokenRefreshErrorDialog
+              errors={tokenRefreshErrors}
+              workspaceId={workspaceId}
+            />
+            <AnalyticsApiProvider>
+              <CouponTopicStoreProvider
+                autoInitialize={false}
+                workspaceId={workspaceId}
               >
-                {children}
-              </WorkspaceRealtimeShell>
-            </CouponTopicStoreProvider>
-          </AnalyticsApiProvider>
-        </main>
-        <SidebarTrigger className="absolute -inset-s-2 top-3 z-10 hidden border md:inline-flex" />
-        {/*
+                <WorkspaceRealtimeShell
+                  callHistoryEnabled={realtimeGates.callHistoryEnabled}
+                  callingEnabled={realtimeGates.callingEnabled}
+                  realtimeEnabled={realtimeGates.realtimeEnabled}
+                >
+                  <NavigationPendingBoundary>
+                    {children}
+                  </NavigationPendingBoundary>
+                </WorkspaceRealtimeShell>
+              </CouponTopicStoreProvider>
+            </AnalyticsApiProvider>
+          </main>
+          <SidebarTrigger className="absolute -inset-s-2 top-3 z-10 hidden border md:inline-flex" />
+          {/*
           Below `md` the sidebar collapses into a Sheet and `SidebarTrigger`
           above is hidden, so this handle is the only way in on a phone. It
           floats on the screen edge rather than sitting in a top bar: the
           viewport belongs to the page content.
         */}
-        <SidebarMobileHandle />
-      </SidebarInset>
-    </SidebarProvider>
+          <SidebarMobileHandle />
+        </SidebarInset>
+      </SidebarProvider>
+    </NavigationPendingProvider>
   )
 }
