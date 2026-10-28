@@ -5,6 +5,7 @@ import type { AdsEligibleChannelType } from "@chatbotx.io/utils/channel"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useTranslations } from "next-intl"
+import { LinkPendingSpinner } from "@/components/navigation-pending"
 import { useWorkspaceId } from "@/hooks/routing"
 
 type AnalyticsNavLink = {
@@ -53,9 +54,12 @@ export function AnalyticsNav({
   return (
     // Below `md` the dashboard stacks, so the rail becomes a scrollable strip
     // above the charts instead of eating 224px of a phone's width.
+    // `data-local-navigation-pending`: a spinner on the clicked entry replaces
+    // the page skeleton, so the inbox cards and this rail stay in place.
     <nav
       aria-label={t("fields.analytics.label")}
       className="w-full md:w-56 md:shrink-0"
+      data-local-navigation-pending=""
     >
       <ul className="scrollbar-hide flex flex-row gap-1 overflow-x-auto md:flex-col md:overflow-visible">
         {links.map((link) => {
@@ -65,7 +69,7 @@ export function AnalyticsNav({
             <li className="shrink-0" key={link.segment}>
               <Link
                 className={cn(
-                  "block whitespace-nowrap rounded-md px-3 py-2 text-sm transition-colors",
+                  "flex items-center justify-between gap-2 whitespace-nowrap rounded-md px-3 py-2 text-sm transition-colors",
                   isActive
                     ? "bg-accent font-medium text-accent-foreground"
                     : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
@@ -73,6 +77,7 @@ export function AnalyticsNav({
                 href={href}
               >
                 {link.label}
+                <LinkPendingSpinner />
               </Link>
             </li>
           )

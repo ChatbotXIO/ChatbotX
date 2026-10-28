@@ -1,5 +1,6 @@
 "use client"
 
+import { Loader2Icon } from "lucide-react"
 // Internal Next export (no public path): the context `useRouter()` reads from.
 import {
   AppRouterContext,
@@ -190,6 +191,19 @@ export function LinkPendingReporter({
   }, [pending, href, setPendingHref])
 
   return null
+}
+
+/**
+ * Rendered inside a `<Link>` of an in-page navigation list (marked with
+ * `data-local-navigation-pending`): a spinner on that link while its route
+ * loads, so the list stays usable instead of being covered by a skeleton.
+ */
+export function LinkPendingSpinner() {
+  const { pending } = useLinkStatus()
+
+  return pending ? (
+    <Loader2Icon className="size-4 shrink-0 animate-spin text-muted-foreground" />
+  ) : null
 }
 
 /**
