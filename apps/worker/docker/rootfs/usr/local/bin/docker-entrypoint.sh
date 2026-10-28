@@ -79,9 +79,8 @@ run_all_workers() {
     echo "No worker bundles found under $WORKER_DIST_DIR" >&2
     exit 4
   fi
-  # Bound each legacy all-mode process independently. Consolidated commands
-  # deliberately retain the normal V8 limit for their single shared heap.
-  WORKER_MAX_OLD_SPACE_MB="${WORKER_MAX_OLD_SPACE_MB:-256}"
+  # Bound each legacy all-mode process independently only when an operator
+  # explicitly configures a heap cap. Consolidated commands retain V8's default.
 
   pids=""
 
@@ -104,7 +103,11 @@ run_all_workers() {
   for worker in $(all_worker_names); do
     script="$(resolve_worker_script "$worker")"
     echo "Starting worker: $worker ($script)"
-    NODE_OPTIONS="$NODE_OPTIONS --max-old-space-size=$WORKER_MAX_OLD_SPACE_MB" "$NODE_BIN" "$script" &
+    if [ -n "${WORKER_MAX_OLD_SPACE_MB:-}" ]; then
+      NODE_OPTIONS="$NODE_OPTIONS --max-old-space-size=$WORKER_MAX_OLD_SPACE_MB" "$NODE_BIN" "$script" &
+    else
+      "$NODE_BIN" "$script" &
+    fi
     pids="$pids $!"
   done
 
@@ -144,11 +147,15 @@ case "${1:-}" in
         fi
         if [ "$worker" = "standalone" ]; then
             export DATABASE_POOL_MAX="${DATABASE_POOL_MAX:-40}"
+            export SHARD_POOL_MAX="${SHARD_POOL_MAX:-40}"
+            export WORKER_SHUTDOWN_TIMEOUT_MS="${WORKER_SHUTDOWN_TIMEOUT_MS:-8000}"
             require_script "$STANDALONE_SCRIPT"
             exec "$NODE_BIN" "$STANDALONE_SCRIPT"
         fi
         if [ "$worker" = "core" ]; then
             export DATABASE_POOL_MAX="${DATABASE_POOL_MAX:-40}"
+            export SHARD_POOL_MAX="${SHARD_POOL_MAX:-40}"
+            export WORKER_SHUTDOWN_TIMEOUT_MS="${WORKER_SHUTDOWN_TIMEOUT_MS:-8000}"
             require_script "$CORE_SCRIPT"
             exec "$NODE_BIN" "$CORE_SCRIPT"
         fi

@@ -9,7 +9,10 @@ import {
 } from "vitest"
 import type * as ShutdownModule from "../src/lib/shutdown"
 
-const { loggerMock } = vi.hoisted(() => ({
+const { envMock, loggerMock } = vi.hoisted(() => ({
+  envMock: {
+    WORKER_SHUTDOWN_TIMEOUT_MS: undefined as number | undefined,
+  },
   loggerMock: {
     info: vi.fn(),
     warn: vi.fn(),
@@ -23,7 +26,7 @@ vi.mock("@chatbotx.io/business", () => ({
 }))
 
 vi.mock("../src/lib/logger", () => ({ logger: loggerMock }))
-vi.mock("../src/env", () => ({ env: { WORKER_SHUTDOWN_TIMEOUT_MS: 1000 } }))
+vi.mock("../src/env", () => ({ env: envMock }))
 
 type Shutdown = typeof ShutdownModule
 
@@ -34,6 +37,7 @@ describe("worker shutdown coordinator", () => {
 
   beforeEach(async () => {
     vi.resetModules()
+    envMock.WORKER_SHUTDOWN_TIMEOUT_MS = undefined
     vi.clearAllMocks()
     listeners = new Map()
     const register = (
@@ -155,8 +159,18 @@ describe("worker shutdown coordinator", () => {
     )
   })
 
+  test("does not arm a shutdown deadline when timeout is unset", async () => {
+    const setTimeoutSpy = vi.spyOn(globalThis, "setTimeout")
+    shutdown.onShutdown("chat", vi.fn().mockResolvedValue(undefined))
+
+    await shutdown.requestShutdown("SIGTERM")
+
+    expect(setTimeoutSpy).not.toHaveBeenCalled()
+  })
+
   test("exits 1 and names the stuck workers when draining exceeds the deadline", async () => {
     vi.useFakeTimers()
+    envMock.WORKER_SHUTDOWN_TIMEOUT_MS = 1000
     shutdown.onShutdown("heavy", () => new Promise(() => undefined))
     shutdown.onShutdown("low", vi.fn().mockResolvedValue(undefined))
 

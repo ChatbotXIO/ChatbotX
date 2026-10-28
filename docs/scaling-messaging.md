@@ -34,16 +34,22 @@ Use `worker core` while developing to omit schedules and sequence processing.
 Use `worker <name>` to isolate a workload when CPU, event-loop latency, or
 database-pool contention requires it; `worker heavy` is the usual candidate.
 `worker all` remains available for the legacy one-process-per-worker topology.
-It applies `WORKER_MAX_OLD_SPACE_MB` (default `256`) to each child process; it
-does not cap `standalone` or individually selected workers.
+Set `WORKER_MAX_OLD_SPACE_MB` to cap each child process; it has no default and
+does not cap `standalone` or individually selected workers. Consolidated modes
+default `WORKER_SHUTDOWN_TIMEOUT_MS` to 8 seconds. Other modes drain until the
+orchestrator stops them unless that variable is set; keep any configured
+deadline below the orchestrator stop grace period.
 
 ### Database pool sizing
 
-`DATABASE_POOL_MAX` controls PostgreSQL connections per process and defaults to
-`10`. The worker Docker entrypoint defaults it to `40` for the consolidated
-`worker standalone` and `worker core` modes; an explicit value wins. Size
-PostgreSQL for the sum across every builder, worker, realtime, MCP, and
-individually isolated worker process, staying below its connection limit.
+`DATABASE_POOL_MAX` and `SHARD_POOL_MAX` control PostgreSQL connections per
+process and default to `10`. The worker Docker entrypoint defaults both to `40`
+for the consolidated `worker standalone` and `worker core` modes; an explicit
+value wins. Those processes share each pool across every worker concurrency:
+raise the pool limits or lower `*_WORKER_CONCURRENCY` — especially trigger
+(`100`), webhook (`50`), and low (`30`) — while keeping total connections across
+builder, worker, realtime, MCP, and isolated worker processes below PostgreSQL
+`max_connections`.
 
 **Leaderboard rankings live on the cache role.** `lb:{id}:rank` sorted sets
 (~100 bytes per participant, measured on Redis 8; only for active/paused

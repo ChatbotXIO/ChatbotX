@@ -2,6 +2,8 @@ import { findSourceMap } from "node:module"
 import { dirname, resolve } from "node:path"
 import { fileURLToPath } from "node:url"
 
+import { setErrStackMapper } from "./index"
+
 // `    at fn (/path/file.js:1:2)` or `    at /path/file.js:1:2`
 const FRAME_PATTERN = /^(\s+at (?:.*? \()?)(.+?):(\d+):(\d+)(\)?)$/
 
@@ -53,4 +55,8 @@ export function sourceMapStack(stack: string): string {
     // Never let a malformed map turn one error log into a second failure.
     return stack
   }
+}
+
+export function installSourceMappedStacks(): void {
+  setErrStackMapper(sourceMapStack)
 }

@@ -9,7 +9,9 @@ vi.mock("node:module", async (importOriginal) => ({
   findSourceMap: findSourceMapMock,
 }))
 
-const { sourceMapStack } = await import("../src/source-mapped-stack")
+const { installSourceMappedStacks, sourceMapStack } = await import(
+  "@chatbotx.io/logger/source-mapped-stack"
+)
 
 const CHUNK = "/app/.next/server/chunks/_1lca1wn._.js"
 
@@ -101,5 +103,27 @@ describe("sourceMapStack", () => {
     const stack = `Error: boom\n    at run (${CHUNK}:10:5)`
 
     expect(sourceMapStack(stack)).toBe(stack)
+  })
+
+  test("installs source mapping for err serialization", async () => {
+    enableSourceMaps(true)
+    findSourceMapMock.mockReturnValue(
+      fakeSourceMap({
+        "9:4": {
+          source: "file:///app/apps/builder/src/instrumentation.ts",
+          line: 12,
+          column: 3,
+        },
+      }),
+    )
+    installSourceMappedStacks()
+    const { redactErrSerializer } = await import("../src")
+    const error = new Error("boom")
+    error.stack = `Error: boom\n    at register (${CHUNK}:10:5)`
+    const serialized = redactErrSerializer(error) as { stack: string }
+
+    expect(serialized.stack).toBe(
+      "Error: boom\n    at register (/app/apps/builder/src/instrumentation.ts:13:4)",
+    )
   })
 })

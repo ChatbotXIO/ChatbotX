@@ -1,5 +1,9 @@
 import { describe, expect, test } from "vitest"
-import { redactErrSerializer, scrubLogArgs } from "../src/index"
+import {
+  redactErrSerializer,
+  scrubLogArgs,
+  setErrStackMapper,
+} from "../src/index"
 
 const TOKEN = "EAABsecret1234567890"
 const REFRESH_URL = `https://graph.instagram.com/refresh_access_token?grant_type=ig_refresh_token&access_token=${TOKEN}`
@@ -43,6 +47,18 @@ describe("redactErrSerializer", () => {
     }) as { message: string }
 
     expect(JSON.stringify(result)).not.toContain(TOKEN)
+  })
+
+  test("maps stacks only after a mapper is registered", () => {
+    const error = new Error("boom")
+    const unmapped = redactErrSerializer(error) as { stack: string }
+
+    expect(unmapped.stack).toBe(error.stack)
+
+    setErrStackMapper((stack) => `mapped:${stack}`)
+    const mapped = redactErrSerializer(error) as { stack: string }
+
+    expect(mapped.stack).toBe(`mapped:${unmapped.stack}`)
   })
 })
 

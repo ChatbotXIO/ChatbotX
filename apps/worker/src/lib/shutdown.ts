@@ -49,11 +49,11 @@ async function closeAll(
 
 /**
  * Drains every registered worker, then exits with `exitCode` (1 if any close
- * failed). `worker.close()` waits for active jobs, and co-located queues now
- * wait on the slowest one, so a deadline bounds the drain: past it the process
- * exits 1 and logs which workers were still busy — their jobs go stalled and
- * BullMQ retries them, the same outcome as the orchestrator's SIGKILL but with
- * a log line. Keep WORKER_SHUTDOWN_TIMEOUT_MS below the stop grace period.
+ * failed). `worker.close()` waits for active jobs. An optional deadline bounds
+ * the drain: past it the process exits 1 and logs which workers were still
+ * busy — their jobs go stalled and BullMQ retries them, the same outcome as the
+ * orchestrator's SIGKILL but with a log line. Keep
+ * WORKER_SHUTDOWN_TIMEOUT_MS below the stop grace period.
  */
 export async function requestShutdown(
   reason: string,
@@ -70,15 +70,18 @@ export async function requestShutdown(
   const timeoutMs = env.WORKER_SHUTDOWN_TIMEOUT_MS
   logger.info({ reason, workers: [...pending] }, "Shutting down")
 
-  const deadline = setTimeout(() => {
-    logger.error(
-      { reason, pending: [...pending], timeoutMs },
-      "Shutdown timed out with workers still draining",
-    )
-    process.exit(1)
-  }, timeoutMs)
-  // Never the reason the process stays alive; the drain itself decides that.
-  deadline.unref()
+  let deadline: ReturnType<typeof setTimeout> | undefined
+  if (timeoutMs !== undefined) {
+    deadline = setTimeout(() => {
+      logger.error(
+        { reason, pending: [...pending], timeoutMs },
+        "Shutdown timed out with workers still draining",
+      )
+      process.exit(1)
+    }, timeoutMs)
+    // Never the reason the process stays alive; the drain itself decides that.
+    deadline.unref()
+  }
 
   const workerCloseFailed = await closeAll(workerClosers, pending)
   const finalizerFailed = await closeAll(shutdownFinalizers)

@@ -147,13 +147,13 @@ describe("docker-entrypoint worker discovery", () => {
     )
   })
 
-  test("bounds each all-mode worker heap and honors its override", () => {
+  test("caps all-mode worker heaps only when configured", () => {
     const fakeNode = join(distDir, "fake-node.sh")
     writeFileSync(fakeNode, '#!/bin/sh\nprintf "%s\\n" "$NODE_OPTIONS"\n')
     chmodSync(fakeNode, 0o755)
 
-    expect(run(["worker", "all"], { NODE_BIN: fakeNode }).stdout).toContain(
-      "--max-old-space-size=256",
+    expect(run(["worker", "all"], { NODE_BIN: fakeNode }).stdout).not.toContain(
+      "--max-old-space-size",
     )
     expect(
       run(["worker", "all"], {
@@ -166,23 +166,36 @@ describe("docker-entrypoint worker discovery", () => {
     ).not.toContain("--max-old-space-size")
   })
 
-  test("sets the shared pool default for consolidated worker modes", () => {
+  test("sets shared pool and shutdown defaults for consolidated worker modes", () => {
     const fakeNode = join(distDir, "fake-node.sh")
-    writeFileSync(fakeNode, '#!/bin/sh\nprintf "%s\\n" "$DATABASE_POOL_MAX"\n')
+    writeFileSync(
+      fakeNode,
+      '#!/bin/sh\nprintf "%s|%s|%s\\n" "$DATABASE_POOL_MAX" "$SHARD_POOL_MAX" "$WORKER_SHUTDOWN_TIMEOUT_MS"\n',
+    )
     chmodSync(fakeNode, 0o755)
 
+    const emptyLimits = {
+      DATABASE_POOL_MAX: "",
+      SHARD_POOL_MAX: "",
+      WORKER_SHUTDOWN_TIMEOUT_MS: "",
+      NODE_BIN: fakeNode,
+    }
+
+    expect(run(["worker", "standalone"], emptyLimits).stdout.trim()).toBe(
+      "40|40|8000",
+    )
+    expect(run(["worker", "core"], emptyLimits).stdout.trim()).toBe(
+      "40|40|8000",
+    )
+    expect(run(["worker", "chat"], emptyLimits).stdout.trim()).toBe("||")
     expect(
       run(["worker", "standalone"], {
-        DATABASE_POOL_MAX: "",
-        NODE_BIN: fakeNode,
-      }).stdout.trim(),
-    ).toBe("40")
-    expect(
-      run(["worker", "standalone"], {
+        ...emptyLimits,
         DATABASE_POOL_MAX: "72",
-        NODE_BIN: fakeNode,
+        SHARD_POOL_MAX: "80",
+        WORKER_SHUTDOWN_TIMEOUT_MS: "12000",
       }).stdout.trim(),
-    ).toBe("72")
+    ).toBe("72|80|12000")
   })
 
   test("keeps only core workers out of development cron startup", () => {
