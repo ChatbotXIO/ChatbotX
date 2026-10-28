@@ -110,7 +110,12 @@ vi.mock("../src/lib/is-blocked-workspace", () => ({
   isBlockedWorkspace: mocks.isBlockedWorkspace,
 }))
 vi.mock("../src/lib/logger", () => ({
-  logger: { error: mocks.loggerError, info: vi.fn(), warn: vi.fn() },
+  logger: {
+    error: mocks.loggerError,
+    fatal: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+  },
 }))
 vi.mock("../src/lib/resolve-workspace-id", () => ({
   resolveWorkspaceId: mocks.resolveWorkspaceId,
