@@ -436,6 +436,33 @@ describe("orderPaymentService.expireOrder", () => {
     })
   })
 
+  test("a page paid just as it is closed keeps the order, marked paid, instead of a refund", async () => {
+    const { LatePaymentArrivedError } = await import("../settle")
+    // Open when read, paid by the time the cancel closes the page.
+    mocks.gateway.getCheckoutStatus
+      .mockResolvedValueOnce({ state: "open" })
+      .mockResolvedValueOnce(paid())
+    mocks.transition.mockRejectedValueOnce(new LatePaymentArrivedError())
+    await expect(
+      orderPaymentService.expireOrder({ workspaceId: "ws1", orderId: "o1" }),
+    ).resolves.toBe("paid")
+    expect(mocks.afterPaid).toHaveBeenCalled()
+    expect(mocks.gateway.refund).not.toHaveBeenCalled()
+  })
+
+  test("a page paid at the deadline that cannot be recorded yet is tried again soon", async () => {
+    const { LatePaymentArrivedError } = await import("../settle")
+    mocks.gateway.getCheckoutStatus
+      .mockResolvedValueOnce({ state: "open" })
+      .mockRejectedValueOnce(new Error("timeout"))
+    mocks.transition.mockRejectedValueOnce(new LatePaymentArrivedError())
+    await expect(
+      orderPaymentService.expireOrder({ workspaceId: "ws1", orderId: "o1" }),
+    ).resolves.toBe("retryLater")
+    expect(mocks.postponeExpiry).toHaveBeenCalled()
+    expect(mocks.gateway.refund).not.toHaveBeenCalled()
+  })
+
   test("a payment still settling is looked at again later", async () => {
     mocks.gateway.getCheckoutStatus.mockResolvedValue({ state: "processing" })
     await expect(
@@ -484,15 +511,17 @@ describe("orderPaymentService.settleStaleAttempt", () => {
     })
   })
 
-  test("one still settling is moved behind the others", async () => {
+  test("one still settling is moved behind the others, keeping its page's real end", async () => {
     mocks.gateway.getCheckoutStatus.mockResolvedValue({ state: "processing" })
     await orderPaymentService.settleStaleAttempt(stale() as never)
 
+    // Only touched: `expiresAt` must stay the page's end, or startCheckout
+    // would offer a page the provider already closed.
     expect(mocks.updateAttempt).toHaveBeenCalledWith({
       workspaceId: "ws1",
       id: "pay1",
       from: ["open"],
-      values: { expiresAt: expect.any(Date) },
+      values: {},
     })
   })
 })

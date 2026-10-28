@@ -7068,7 +7068,8 @@
       "payOnDelivery": "貨到付款",
       "notPaid": "未付款"
     },
-    "paymentUntil": "截至 {time}"
+    "paymentUntil": "截至 {time}",
+    "paymentExpiredCancelReason": "未在期限內收到付款。"
   },
   "products": {
     "title": "產品",

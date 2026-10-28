@@ -1415,7 +1415,11 @@ describe("orderService — online payment", () => {
       actor: { type: "user", userId: "u1" },
     })
 
-    expect(mocks.settleForCancel).toHaveBeenCalledWith(current, tx)
+    // A member's cancel refunds a payment that lands meanwhile; only the
+    // expiry scan keeps it.
+    expect(mocks.settleForCancel).toHaveBeenCalledWith(current, tx, {
+      keepLatePayment: false,
+    })
     expect(mocks.transitionStatus).toHaveBeenCalledWith(
       expect.objectContaining({
         to: "cancelled",
@@ -1574,6 +1578,10 @@ describe("orderService — an online order never paid", () => {
       to: "cancelled",
       actor: { type: "system" },
       reason: "paymentExpired",
+    })
+    // A page paid at the deadline keeps the order instead of being refunded.
+    expect(mocks.settleForCancel).toHaveBeenCalledWith(expect.anything(), tx, {
+      keepLatePayment: true,
     })
     expect(mocks.emitOrderStatus).not.toHaveBeenCalled()
     expect(mocks.createOutgoing).toHaveBeenCalledWith(

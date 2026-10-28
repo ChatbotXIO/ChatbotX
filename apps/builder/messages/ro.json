@@ -6988,7 +6988,8 @@
       "payOnDelivery": "Plata la livrare",
       "notPaid": "Neplătit"
     },
-    "paymentUntil": "până la {time}"
+    "paymentUntil": "până la {time}",
+    "paymentExpiredCancelReason": "Plata nu a fost primită la timp."
   },
   "platformAdmin": {
     "helpItems": {

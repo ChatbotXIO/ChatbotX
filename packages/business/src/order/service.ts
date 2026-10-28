@@ -8,6 +8,7 @@ import {
   type OrderShippingAddress,
   type OrderSource,
   type OrderStatus,
+  PAYMENT_EXPIRED_CANCEL_REASON,
   PAYMENT_EXPIRY_MINUTES,
   type PaymentMethod,
   SHIPPING_TYPES_BY_MODE,
@@ -943,14 +944,18 @@ class OrderService extends BaseService {
       if (to === "cancelled") {
         // No money may stay with the store for a cancelled order: a paid
         // attempt is refunded, an open one closed. A refund that fails
-        // throws, and the order stays as it was.
-        ;({ refunded } = await settlePaymentsForCancel(current, tx))
+        // throws, and the order stays as it was. The expiry scan's cancel
+        // stops instead when a page turns out paid: that customer paid in
+        // time, so the order is kept.
+        ;({ refunded } = await settlePaymentsForCancel(current, tx, {
+          keepLatePayment: paymentExpired,
+        }))
         if (refunded) {
           values.paymentStatus = "refunded"
         }
         values.paymentExpiresAt = null
         values.cancelReason =
-          message ?? (paymentExpired ? "Payment not received in time." : null)
+          message ?? (paymentExpired ? PAYMENT_EXPIRED_CANCEL_REASON : null)
       }
 
       const updated = await orderRepository.transitionStatus(

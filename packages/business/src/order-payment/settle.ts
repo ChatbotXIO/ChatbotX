@@ -104,11 +104,25 @@ const loadGatewayUnlessDisconnected = async (
 }
 
 /**
+ * Thrown by an expiry cancel when a page turns out paid as it is closed: the
+ * customer paid in time, so the order is kept (and marked paid) instead of
+ * being cancelled and refunded.
+ */
+export class LatePaymentArrivedError extends Error {
+  constructor() {
+    super("A payment arrived as the order expired.")
+    this.name = "LatePaymentArrivedError"
+  }
+}
+
+/**
  * Inside the transaction that cancels `order` (its row locked): no money may
  * stay with the store. In two passes, so a provider that fails cannot leave
  * money refunded but unrecorded:
  * 1. every open page is closed at the provider — one the customer paid
- *    meanwhile joins the refunds; one still settling refuses the cancel;
+ *    meanwhile joins the refunds (or, for the expiry scan's cancel, stops it
+ *    with `LatePaymentArrivedError`: that customer paid in time); one still
+ *    settling refuses the cancel;
  * 2. the refunds, each recorded at once outside the transaction (`db`), so
  *    a refund made before a later failure rolls the cancel back stays known
  *    and is not made again.
@@ -117,6 +131,7 @@ const loadGatewayUnlessDisconnected = async (
 export const settlePaymentsForCancel = async (
   order: OrderModel,
   tx: DatabaseClient,
+  options: { keepLatePayment?: boolean } = {},
 ): Promise<{ refunded: boolean }> => {
   if (!isOnlinePaymentMethod(order.paymentMethod)) {
     return { refunded: false }
@@ -160,6 +175,9 @@ export const settlePaymentsForCancel = async (
       gateway.expireCheckout(attempt.providerReference),
     )
     if (status.state === "paid") {
+      if (options.keepLatePayment && order.paymentStatus !== "paid") {
+        throw new LatePaymentArrivedError()
+      }
       refunds.push({ payment: attempt, transactionId: status.transactionId })
     } else if (status.state === "processing") {
       throw orderPaymentProcessingException()

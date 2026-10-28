@@ -43,6 +43,12 @@ export const isAwaitingOnlinePayment = (order: {
 /** How long an online order waits for its payment before it is cancelled. */
 export const PAYMENT_EXPIRY_MINUTES = 30
 
+/**
+ * The cancel reason the expiry scan stores. Kept in English for the public
+ * API; the builder shows it translated (`orders.paymentExpiredCancelReason`).
+ */
+export const PAYMENT_EXPIRED_CANCEL_REASON = "Payment not received in time."
+
 export const paymentStatuses = z.enum(["unpaid", "paid", "refunded"])
 export type PaymentStatus = z.infer<typeof paymentStatuses>
 

@@ -1,6 +1,9 @@
 "use client"
 
-import { isOnlinePaymentMethod } from "@chatbotx.io/database/partials"
+import {
+  isOnlinePaymentMethod,
+  PAYMENT_EXPIRED_CANCEL_REASON,
+} from "@chatbotx.io/database/partials"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import { Card, CardContent } from "@chatbotx.io/ui/components/ui/card"
 import {
@@ -224,7 +227,11 @@ function OrderSummary({
           {order.cancelReason ? (
             <Field
               label={t("fields.cancelReason")}
-              value={order.cancelReason}
+              value={
+                order.cancelReason === PAYMENT_EXPIRED_CANCEL_REASON
+                  ? t("paymentExpiredCancelReason")
+                  : order.cancelReason
+              }
             />
           ) : null}
           {order.rating ? (

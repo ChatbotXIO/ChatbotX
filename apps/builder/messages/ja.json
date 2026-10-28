@@ -7022,7 +7022,8 @@
       "payOnDelivery": "代金引換",
       "notPaid": "未払い"
     },
-    "paymentUntil": "{time} まで"
+    "paymentUntil": "{time} まで",
+    "paymentExpiredCancelReason": "期限内に支払いが確認できませんでした。"
   },
   "products": {
     "title": "商品",

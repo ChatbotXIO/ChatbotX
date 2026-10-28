@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 const mocks = vi.hoisted(() => ({
   transaction: vi.fn(),
   find: vi.fn(),
+  listByWorkspace: vi.fn(),
   findByExternalAccount: vi.fn(),
   upsert: vi.fn(),
   delete: vi.fn(),
@@ -37,7 +38,7 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
       mocks.findByExternalAccount(...args),
     upsert: (...args: unknown[]) => mocks.upsert(...args),
     delete: (...args: unknown[]) => mocks.delete(...args),
-    listByWorkspace: vi.fn(),
+    listByWorkspace: (...args: unknown[]) => mocks.listByWorkspace(...args),
   },
   orderPaymentRepository: {
     countOrdersNeedingProvider: (...args: unknown[]) =>
@@ -306,6 +307,52 @@ describe("paymentProviderService — PayPal", () => {
       }),
     )
     expect(JSON.stringify(connected)).not.toContain("shh")
+  })
+})
+
+describe("paymentProviderService.teardownForPurge", () => {
+  test("lets go of the store's Stripe account and removes its PayPal webhook, without the order guard", async () => {
+    mocks.countOrdersNeedingProvider.mockResolvedValue(3)
+    mocks.listByWorkspace.mockResolvedValue([
+      {
+        workspaceId: "ws1",
+        provider: "stripe",
+        externalAccountId: "acct_1",
+        platformCredentialId: "cred1",
+      },
+      { workspaceId: "ws1", provider: "paypal", secret: { v: 1 } },
+    ])
+    mocks.decryptObject.mockResolvedValue({
+      clientId: "client",
+      clientSecret: "secret",
+      livemode: false,
+      webhookId: "WH1",
+    })
+    await paymentProviderService.teardownForPurge("ws1")
+    expect(mocks.deauthorizeStripe).toHaveBeenCalledWith({
+      platformSecretKey: "sk_test_platform",
+      clientId: "ca_1",
+      accountId: "acct_1",
+    })
+    expect(mocks.disconnectPaypal).toHaveBeenCalledWith(
+      expect.objectContaining({ webhookId: "WH1" }),
+    )
+    expect(mocks.countOrdersNeedingProvider).not.toHaveBeenCalled()
+  })
+
+  test("a provider that fails never stops the purge", async () => {
+    mocks.listByWorkspace.mockResolvedValue([
+      {
+        workspaceId: "ws1",
+        provider: "stripe",
+        externalAccountId: "acct_1",
+        platformCredentialId: "cred1",
+      },
+    ])
+    mocks.deauthorizeStripe.mockRejectedValue(new Error("stripe down"))
+    await expect(
+      paymentProviderService.teardownForPurge("ws1"),
+    ).resolves.toBeUndefined()
   })
 })
 

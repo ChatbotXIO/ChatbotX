@@ -7991,7 +7991,8 @@
       "payOnDelivery": "Pay on delivery",
       "notPaid": "Not paid"
     },
-    "paymentUntil": "until {time}"
+    "paymentUntil": "until {time}",
+    "paymentExpiredCancelReason": "Payment not received in time."
   },
   "products": {
     "title": "Products",

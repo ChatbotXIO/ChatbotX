@@ -1,4 +1,4 @@
-import { workspaceService } from "@chatbotx.io/business"
+import { paymentProviderService, workspaceService } from "@chatbotx.io/business"
 import { getChildLogger } from "@chatbotx.io/logger"
 import {
   distributedLock,
@@ -28,6 +28,8 @@ export async function purgeWorkspaces(): Promise<void> {
       fn: async () => {
         const deleted = await workspaceService.purgeDueScheduled({
           integrations: allIntegrations,
+          teardownPaymentProviders: (workspaceId) =>
+            paymentProviderService.teardownForPurge(workspaceId),
         })
 
         if (deleted > 0) {

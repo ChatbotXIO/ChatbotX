@@ -5871,7 +5871,8 @@
       "payOnDelivery": "Betalning vid leverans",
       "notPaid": "Ej betald"
     },
-    "paymentUntil": "till {time}"
+    "paymentUntil": "till {time}",
+    "paymentExpiredCancelReason": "Betalningen togs inte emot i tid."
   },
   "placesNearMe": {
     "description": "Hitta platser nära dina kontakter.",

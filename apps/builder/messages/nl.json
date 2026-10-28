@@ -7022,7 +7022,8 @@
       "payOnDelivery": "Betalen bij levering",
       "notPaid": "Niet betaald"
     },
-    "paymentUntil": "tot {time}"
+    "paymentUntil": "tot {time}",
+    "paymentExpiredCancelReason": "Betaling niet op tijd ontvangen."
   },
   "products": {
     "title": "Producten",

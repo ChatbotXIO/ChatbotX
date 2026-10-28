@@ -209,11 +209,17 @@ the rules in `packages/business/src/payment-provider` and `order-payment`.
    a payment that came in keeps the order; one still settling is looked at
    again in an hour; otherwise the order is cancelled (`reason:
    paymentExpired`, the customer is told) — the Stripe page closed first,
-   PayPal simply never captured. A provider that does not answer, or a
-   blocked owner, moves the deadline on so others are not held up. The same
-   minute, open attempts 15 minutes past their page's end are read once more
+   PayPal simply never captured. A page found paid as the cancel closes it
+   (the customer paid right at the deadline) stops the cancel
+   (`LatePaymentArrivedError`): the order is read again and kept, marked
+   paid, never refunded. A provider that does not answer, or a blocked owner,
+   moves the deadline on so others are not held up. The same minute, open
+   attempts 15 minutes past their page's end are read once more
    (`settleStaleAttempt`): closed ones are marked expired, money for an order
-   no longer waiting for it is refunded.
+   no longer waiting for it is refunded. One that cannot be settled yet is
+   only touched (`updatedAt`) and looked at again 15 minutes later —
+   `expiresAt` always stays the page's real end, which is what
+   `startCheckout` reads before offering a page again.
 
 ### Refunds and deletes
 
@@ -229,6 +235,13 @@ the rules in `packages/business/src/payment-provider` and `order-payment`.
   fires no event and sends nothing — except, when its time ran out, a line
   telling the customer why the order is gone.
 - An open order paid online cannot be deleted (`orderPaidOnline`): cancel it.
+- A purged workspace lets go of its payment providers first
+  (`paymentProviderService.teardownForPurge`, passed to `purgeDueScheduled` by
+  the worker's `purgeWorkspaces`, best effort): the Stripe account
+  is deauthorized from the platform's Connect app and the PayPal webhook is
+  deleted, before the rows go with the cascade.
+- The expiry cancel stores `PAYMENT_EXPIRED_CANCEL_REASON` (English, for the
+  API); the builder shows it translated (`orders.paymentExpiredCancelReason`).
 
 ## Discount codes ("Coupons")
 

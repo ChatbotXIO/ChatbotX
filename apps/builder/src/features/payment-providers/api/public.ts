@@ -1,6 +1,6 @@
 import {
   paymentProviderService,
-  resolveTenantSettings,
+  resolveWorkspaceAppUrl,
 } from "@chatbotx.io/business"
 import { joinAppUrl } from "@chatbotx.io/utils/web-url"
 import {
@@ -49,7 +49,9 @@ export const paymentProvidersPublicRouter = {
     .output(paymentProviderConnectLinkResponse)
     .errors(possibleErrorsOnFindingResource)
     .handler(async ({ context, input }) => {
-      const { appUrl } = await resolveTenantSettings({
+      // The workspace's own domain (a reseller's active custom domain), where
+      // the store owner's session lives.
+      const appUrl = await resolveWorkspaceAppUrl({
         workspaceId: context.workspace.id,
       })
       return {

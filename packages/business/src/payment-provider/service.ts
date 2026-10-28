@@ -425,6 +425,23 @@ class PaymentProviderService extends BaseService {
   }
 
   /**
+   * A workspace being purged: the platform lets go of the store's Stripe
+   * account and its PayPal app stops calling back, best effort. No order
+   * guard — the orders go with the workspace. The rows themselves are left
+   * to the workspace's cascade.
+   */
+  async teardownForPurge(workspaceId: string): Promise<void> {
+    const rows = await paymentProviderRepository.listByWorkspace(workspaceId)
+    for (const row of rows) {
+      if (row.provider === "stripe") {
+        await this.deauthorizeQuietly(row)
+      } else {
+        await this.removePaypalWebhookQuietly(row)
+      }
+    }
+  }
+
+  /**
    * The store disconnected the platform from its Stripe dashboard. An event
    * older than the connection (the store reconnected since, or Stripe
    * delivered it late) leaves the new connection alone.

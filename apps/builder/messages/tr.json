@@ -7022,7 +7022,8 @@
       "payOnDelivery": "Kapıda ödeme",
       "notPaid": "Ödenmedi"
     },
-    "paymentUntil": "{time} saatine kadar"
+    "paymentUntil": "{time} saatine kadar",
+    "paymentExpiredCancelReason": "Ödeme zamanında alınmadı."
   },
   "products": {
     "title": "Ürünler",

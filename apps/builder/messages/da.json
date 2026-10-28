@@ -7022,7 +7022,8 @@
       "payOnDelivery": "Betaling ved levering",
       "notPaid": "Ikke betalt"
     },
-    "paymentUntil": "indtil {time}"
+    "paymentUntil": "indtil {time}",
+    "paymentExpiredCancelReason": "Betalingen blev ikke modtaget i tide."
   },
   "products": {
     "title": "Produkter",

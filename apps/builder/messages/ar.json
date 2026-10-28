@@ -6633,7 +6633,8 @@
       "payOnDelivery": "الدفع عند الاستلام",
       "notPaid": "غير مدفوع"
     },
-    "paymentUntil": "حتى {time}"
+    "paymentUntil": "حتى {time}",
+    "paymentExpiredCancelReason": "لم يتم استلام الدفع في الوقت المحدد."
   },
   "products": {
     "title": "المنتجات",

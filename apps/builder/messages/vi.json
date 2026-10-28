@@ -7351,7 +7351,8 @@
       "payOnDelivery": "Thu khi giao hàng",
       "notPaid": "Chưa thanh toán"
     },
-    "paymentUntil": "đến {time}"
+    "paymentUntil": "đến {time}",
+    "paymentExpiredCancelReason": "Không nhận được thanh toán kịp thời hạn."
   },
   "products": {
     "title": "Sản phẩm",

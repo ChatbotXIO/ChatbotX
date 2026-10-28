@@ -5871,7 +5871,8 @@
       "payOnDelivery": "货到付款",
       "notPaid": "未付款"
     },
-    "paymentUntil": "截至 {time}"
+    "paymentUntil": "截至 {time}",
+    "paymentExpiredCancelReason": "未在规定时间内收到付款。"
   },
   "placesNearMe": {
     "description": "寻找您的联系人附近的地点。",

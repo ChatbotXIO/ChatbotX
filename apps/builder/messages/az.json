@@ -7991,7 +7991,8 @@
       "payOnDelivery": "Çatdırılmada ödəniş",
       "notPaid": "Ödənilməyib"
     },
-    "paymentUntil": "{time} qədər"
+    "paymentUntil": "{time} qədər",
+    "paymentExpiredCancelReason": "Ödəniş vaxtında alınmadı."
   },
   "products": {
     "title": "Məhsullar",

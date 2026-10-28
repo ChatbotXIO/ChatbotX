@@ -33,7 +33,7 @@ import {
 import { paymentProviderService } from "../payment-provider/service"
 import { resolveWorkspaceAppUrl } from "../platform/settings"
 import { workspaceService } from "../workspace/service"
-import { refundAttempt } from "./settle"
+import { LatePaymentArrivedError, refundAttempt } from "./settle"
 
 /** Stripe closes a Checkout Session no sooner than 30 minutes after it opens. */
 const MIN_PROVIDER_PAGE_MS = 31 * 60_000
@@ -278,7 +278,7 @@ class OrderPaymentService extends BaseService {
   async settleStaleAttempt(attempt: OrderPaymentModel): Promise<void> {
     const outcome = await this.syncAttemptUnlessDisconnected(attempt)
     if (outcome?.kind === "none" && outcome.state === "processing") {
-      await this.postponeStaleAttempt(attempt, PROCESSING_RECHECK_MS)
+      await this.postponeStaleAttempt(attempt)
     } else if (
       !outcome ||
       (outcome.kind === "none" && outcome.state === "open")
@@ -292,16 +292,18 @@ class OrderPaymentService extends BaseService {
     }
   }
 
-  /** Moves an attempt behind the others in the sweep (a blocked owner, still settling, a provider that failed). */
-  async postponeStaleAttempt(
-    attempt: OrderPaymentModel,
-    delayMs = PROCESSING_RECHECK_MS,
-  ): Promise<void> {
+  /**
+   * Moves an attempt behind the others in the sweep (a blocked owner, still
+   * settling, a provider that failed): only touched, so the sweep looks at it
+   * again `STALE_ATTEMPT_GRACE_MS` later. Its `expiresAt` stays the page's
+   * real end, which `startCheckout` relies on to never offer a dead page.
+   */
+  async postponeStaleAttempt(attempt: OrderPaymentModel): Promise<void> {
     await orderPaymentRepository.updateStatus({
       workspaceId: attempt.workspaceId,
       id: attempt.id,
       from: ["open"],
-      values: { expiresAt: new Date(Date.now() + delayMs) },
+      values: {},
     })
   }
 
@@ -360,6 +362,12 @@ class OrderPaymentService extends BaseService {
       })
       return "cancelled"
     } catch (error) {
+      if (error instanceof LatePaymentArrivedError) {
+        // Paid as its page was being closed: read again, so the order is
+        // marked paid now (or, if the amount is wrong, refunded and the
+        // next scan cancels it).
+        return await this.settleLatePayment(input, now)
+      }
       if (
         error instanceof ChatbotXException &&
         error.code === "orderInvalidStatusTransition"
@@ -376,6 +384,34 @@ class OrderPaymentService extends BaseService {
       })
       return "retryLater"
     }
+  }
+
+  /** An expiry cancel found a page paid as it closed: that payment keeps the order. */
+  private async settleLatePayment(
+    input: { workspaceId: string; orderId: string },
+    now: Date,
+  ): Promise<ExpireOutcome> {
+    try {
+      const open = (await orderPaymentRepository.listByOrder(input)).filter(
+        (attempt) => attempt.status === "open",
+      )
+      for (const attempt of open) {
+        const outcome = await this.syncAttemptUnlessDisconnected(attempt)
+        if (outcome?.kind === "paid") {
+          return "paid"
+        }
+      }
+    } catch (error) {
+      logger.warn(
+        { err: error, orderId: input.orderId },
+        "[payments] could not record a payment that arrived at the deadline; trying again later",
+      )
+    }
+    await orderPaymentDueRepository.postponeExpiry({
+      ...input,
+      until: new Date(now.getTime() + RETRY_LATER_MS),
+    })
+    return "retryLater"
   }
 
   /**

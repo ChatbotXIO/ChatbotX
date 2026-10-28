@@ -7022,7 +7022,8 @@
       "payOnDelivery": "Maksu toimituksen yhteydessä",
       "notPaid": "Ei maksettu"
     },
-    "paymentUntil": "klo {time} asti"
+    "paymentUntil": "klo {time} asti",
+    "paymentExpiredCancelReason": "Maksua ei saatu ajoissa."
   },
   "products": {
     "title": "Tuotteet",

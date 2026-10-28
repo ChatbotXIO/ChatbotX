@@ -41,9 +41,11 @@ vi.mock("../../logger", () => ({
 }))
 
 const { ChatbotXException } = await import("../../errors")
-const { assertDeletableWithPayments, settlePaymentsForCancel } = await import(
-  "../settle"
-)
+const {
+  assertDeletableWithPayments,
+  LatePaymentArrivedError,
+  settlePaymentsForCancel,
+} = await import("../settle")
 
 const tx = { name: "tx" } as never
 
@@ -126,6 +128,20 @@ describe("settlePaymentsForCancel", () => {
     await expect(settlePaymentsForCancel(order(), tx)).resolves.toEqual({
       refunded: true,
     })
+    expect(mocks.gateway.refund).not.toHaveBeenCalled()
+  })
+
+  test("the expiry cancel stops when a page turns out paid: that customer paid in time", async () => {
+    mocks.listAttempts.mockResolvedValue([attempt()])
+    mocks.gateway.expireCheckout.mockResolvedValue({
+      state: "paid",
+      transactionId: "pi_late",
+      amountMinor: 10_000,
+      currency: "USD",
+    })
+    await expect(
+      settlePaymentsForCancel(order(), tx, { keepLatePayment: true }),
+    ).rejects.toBeInstanceOf(LatePaymentArrivedError)
     expect(mocks.gateway.refund).not.toHaveBeenCalled()
   })
 

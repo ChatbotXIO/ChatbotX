@@ -153,7 +153,8 @@ export const orderPaymentRepository = {
   /**
    * Open attempts past their page's end: whatever they came to (closed, or
    * money that must go back) is settled by the sweep, even when no webhook
-   * or retry is left to do it.
+   * or retry is left to do it. One touched since `before` (postponed by the
+   * sweep) waits its turn; `expiresAt` itself stays the page's real end.
    */
   async listStale(input: { before: Date; limit: number }, tx = db) {
     return await tx
@@ -163,6 +164,7 @@ export const orderPaymentRepository = {
         and(
           eq(orderPaymentModel.status, "open"),
           lt(orderPaymentModel.expiresAt, input.before),
+          lt(orderPaymentModel.updatedAt, input.before),
         ),
       )
       .orderBy(orderPaymentModel.expiresAt)

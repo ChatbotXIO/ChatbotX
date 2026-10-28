@@ -7022,7 +7022,8 @@
       "payOnDelivery": "Pago contra entrega",
       "notPaid": "No pagado"
     },
-    "paymentUntil": "hasta las {time}"
+    "paymentUntil": "hasta las {time}",
+    "paymentExpiredCancelReason": "No se recibió el pago a tiempo."
   },
   "products": {
     "title": "Productos",

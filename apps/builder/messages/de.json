@@ -7022,7 +7022,8 @@
       "payOnDelivery": "Zahlung bei Lieferung",
       "notPaid": "Nicht bezahlt"
     },
-    "paymentUntil": "bis {time}"
+    "paymentUntil": "bis {time}",
+    "paymentExpiredCancelReason": "Zahlung nicht rechtzeitig eingegangen."
   },
   "products": {
     "title": "Produkte",

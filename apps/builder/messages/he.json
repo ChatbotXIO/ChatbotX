@@ -4813,7 +4813,8 @@
       "payOnDelivery": "תשלום במסירה",
       "notPaid": "לא שולם"
     },
-    "paymentUntil": "עד {time}"
+    "paymentUntil": "עד {time}",
+    "paymentExpiredCancelReason": "התשלום לא התקבל בזמן."
   },
   "products": {
     "title": "מוצרים",

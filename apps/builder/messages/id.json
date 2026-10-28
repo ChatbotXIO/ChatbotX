@@ -7022,7 +7022,8 @@
       "payOnDelivery": "Bayar di tempat",
       "notPaid": "Belum dibayar"
     },
-    "paymentUntil": "hingga {time}"
+    "paymentUntil": "hingga {time}",
+    "paymentExpiredCancelReason": "Pembayaran tidak diterima tepat waktu."
   },
   "products": {
     "title": "Produk",
