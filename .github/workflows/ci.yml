@@ -68,7 +68,7 @@ jobs:
       # Turbo remote cache backed by the GitHub Actions cache (zero infra).
       # Sets TURBO_API/TURBO_TOKEN/TURBO_TEAM for the steps below.
       - name: Set up Turbo cache
-        uses: rharkor/caching-for-turbo@v2.5.1
+        uses: rharkor/caching-for-turbo@v2.5.2
 
       # `--incremental` (below) leaves a tsbuildinfo next to every tsconfig.
       # Restoring the newest one from earlier runs lets each `tsc` re-check
@@ -126,7 +126,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Set up Turbo cache
-        uses: rharkor/caching-for-turbo@v2.5.1
+        uses: rharkor/caching-for-turbo@v2.5.2
 
       # Root `pnpm lint` runs cheapest-first: check:agent-instructions, then
       # `turbo run lint` (apps/builder's i18n key-parity check plus 57
@@ -178,7 +178,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Set up Turbo cache
-        uses: rharkor/caching-for-turbo@v2.5.1
+        uses: rharkor/caching-for-turbo@v2.5.2
 
       # PRs run only suites whose workspace or dependency graph is affected.
       # Explicit SHAs avoid Turbo choosing an ambiguous base ref. Pushes to

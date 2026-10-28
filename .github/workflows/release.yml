@@ -57,7 +57,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Set up Turbo cache
-        uses: rharkor/caching-for-turbo@v2.5.1
+        uses: rharkor/caching-for-turbo@v2.5.2
 
       # `pnpm lint` covers everything, cheapest-first: check:agent-instructions,
       # `turbo run lint` for apps/builder's i18n check, then repo-wide Biome
