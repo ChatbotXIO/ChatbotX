@@ -19,6 +19,8 @@ export async function register() {
     const { bootstrapPlatformAdminAtStartup } = await import(
       "@chatbotx.io/business/platform-admin/startup"
     )
+    const { initErrorTracking } = await import("@chatbotx.io/observability")
+    initErrorTracking({ service: "builder" })
     await assertLicenseAtStartup()
     await bootstrapPlatformAdminAtStartup()
   }

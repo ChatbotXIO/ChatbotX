@@ -47,6 +47,14 @@ error surfacing without throwing, and invalidation triggering a refetch.
 - New channel integration → webhook receive parse + outgoing send mapping.
 - Public handler and private action converge on one service method → assert both call sites resolve to the same method call, with only the caller's scope differing. See `apps/builder/__tests__/contacts-crud-public-api.test.ts` (public, unscoped) alongside `apps/builder/__tests__/contacts-permissions.test.ts` (private, scoped) — both exercise `contactService.list`/`count`, never a parallel implementation.
 
+## Messaging hot paths
+
+For changes under `packages/analytics/src/repositories/**`, `packages/business/src/quota-enforcement/**`, `apps/worker/src/integration/handlers/received-message.ts`, or `apps/worker/src/chat/**`:
+
+- Treat contact/message persistence as delivery-critical. A non-critical analytics, billing, advertising, or activity side effect inside its transaction must be moved after commit/event delivery or isolated in a nested transaction/savepoint that degrades safely.
+- For `INSERT … SELECT`, enumerate every non-null target column in the target list and select a value for each one; add explicit casts where source and target types differ. Never approve a string-only SQL mock as proof that the query is executable.
+- Add a behavior test for the failure boundary: the primary message/contact transaction commits when the non-critical side effect throws, while the failure is observable.
+
 ## Stop condition
 
 A change is verified only when lint + the touched packages' `check-types` + the affected tests all pass, with coverage at/above threshold (not skipped). If you cannot run a gate, say which and why — do not report "verified" on an unrun gate.

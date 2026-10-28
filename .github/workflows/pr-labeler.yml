@@ -2,10 +2,11 @@ name: PR Labeler
 
 on:
   pull_request_target:
-    types: [opened, edited, reopened]
+    types: [opened, edited, reopened, synchronize]
 
 permissions:
   pull-requests: write
+  issues: write
 
 concurrency:
   group: pr-labeler-${{ github.event.pull_request.number }}
@@ -34,24 +35,61 @@ jobs:
             ];
 
             const title = context.payload.pull_request && context.payload.pull_request.title;
-            if (!title) {
-              console.log('No pull_request title in payload; skipping.');
-              return;
+            const match = title ? TYPE_MAP.find(({ re }) => re.test(title)) : undefined;
+            const labels = match ? [...match.labels] : [];
+
+            const files = await github.paginate(github.rest.pulls.listFiles, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.payload.pull_request.number,
+              per_page: 100,
+            });
+            const hotPathPatterns = [
+              /^packages\/analytics\/src\/repositories\//,
+              /^packages\/business\/src\/quota-enforcement\//,
+              /^apps\/worker\/src\/integration\/handlers\/received-message\.ts$/,
+              /^apps\/worker\/src\/chat\//,
+            ];
+            if (files.some(({ filename }) => hotPathPatterns.some((pattern) => pattern.test(filename)))) {
+              const hotPathLabel = 'hot-path:messaging';
+              try {
+                await github.rest.issues.getLabel({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  name: hotPathLabel,
+                });
+              } catch (error) {
+                if (error.status !== 404) {
+                  throw error;
+                }
+                try {
+                  await github.rest.issues.createLabel({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    name: hotPathLabel,
+                    color: 'B60205',
+                    description: 'Changes messaging delivery hot paths',
+                  });
+                } catch (createError) {
+                  if (createError.status !== 422) {
+                    throw createError;
+                  }
+                }
+              }
+              labels.push(hotPathLabel);
             }
-            const match = TYPE_MAP.find(({ re }) => re.test(title));
-            if (!match) {
-              console.log(`No conventional commit prefix found in: "${title}"`);
+
+            if (labels.length === 0) {
+              console.log(`No labels to apply to: ${title ?? '<missing title>'}`);
               return;
             }
 
-            // Labels are bootstrapped once in the repo (see git history for
-            // pr-labeler.yml) rather than created here on every run — that
-            // dropped the `issues: write` scope this job used to need.
             await github.rest.issues.addLabels({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: context.payload.pull_request.number,
-              labels: match.labels,
+              labels: [...new Set(labels)],
             });
 
-            console.log(`Applied labels [${match.labels.join(', ')}] to PR #${context.payload.pull_request.number}`);
+            console.log(`Applied labels [${[...new Set(labels)].join(', ')}] to PR #${context.payload.pull_request.number}`);
+

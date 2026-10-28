@@ -13,6 +13,7 @@
   "license": "ISC",
   "dependencies": {
     "@chatbotx.io/logger": "workspace:*",
+    "@chatbotx.io/observability": "workspace:*",
     "@chatbotx.io/realtime-protocol": "workspace:*",
     "@chatbotx.io/redis": "workspace:*",
     "@t3-oss/env-core": "^0.13.11",

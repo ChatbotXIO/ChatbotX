@@ -1,0 +1,5 @@
+# Messaging delivery and quota accounting require domain-owner review.
+/packages/analytics/src/repositories/ @dinhhoabk95 @sung17
+/packages/business/src/quota-enforcement/ @dinhhoabk95 @sung17
+/apps/worker/src/integration/handlers/received-message.ts @dinhhoabk95 @sung17
+/apps/worker/src/chat/ @dinhhoabk95 @sung17

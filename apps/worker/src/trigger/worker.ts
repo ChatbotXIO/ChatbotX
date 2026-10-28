@@ -15,6 +15,7 @@ import {
 import { type Job, Worker } from "bullmq"
 import { ensureBootstrapped } from "../lib/bootstrap"
 import { isBlockedWorkspace } from "../lib/is-blocked-workspace"
+import { instrumentWorker } from "../lib/job-observability"
 import { logger } from "../lib/logger"
 import { resolveWorkspaceId } from "../lib/resolve-workspace-id"
 import { runJobWithAuditContext } from "../lib/run-job-with-audit-context"
@@ -114,6 +115,7 @@ async function startTriggerWorker() {
   worker.on("completed", (job) => {
     logger.info(`Trigger job ${job.id} completed successfully`)
   })
+  instrumentWorker(worker, { queue: queueNames.enum.trigger })
 
   logger.info("Trigger worker started")
 

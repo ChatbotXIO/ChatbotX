@@ -20,13 +20,14 @@ import { updateContactAvatar } from "../integration/handlers/contact/update-avat
 import { receiveComment } from "../integration/handlers/received-message"
 import { processLeaderboardJob } from "../leaderboard/process-job"
 import { ensureBootstrapped } from "../lib/bootstrap"
+import { instrumentWorker } from "../lib/job-observability"
 import { logger } from "../lib/logger"
 import { runJobWithAuditContext } from "../lib/run-job-with-audit-context"
 
 /**
  * Runs one `low` job behind the blocked-owner guard, dispatching on its type.
  */
-async function processLowJob(job: Job<LowJobData>): Promise<void> {
+async function processLowJob(job: Job<LowJobData>) {
   const workspaceId = job.data.data.workspaceId
   await withBlockedOwnerGuard(workspaceId, async () => {
     await runJobWithAuditContext(
@@ -128,6 +129,7 @@ async function startLowWorker() {
       logger.error({ err }, `Low job ${job.id} has failed`)
     }
   })
+  instrumentWorker(worker, { queue: queueNames.enum.low })
 
   // Rate-limited provider enrichment (contact relationship snapshots). Its own
   // queue + limiter so the provider rate limit never throttles the shared
@@ -158,6 +160,9 @@ async function startLowWorker() {
       logger.error({ err }, `Profile snapshot job ${job.id} has failed`)
     }
   })
+  instrumentWorker(profileSnapshotWorker, {
+    queue: queueNames.enum.profileSnapshot,
+  })
 
   // Leaderboard scoring: its own queue so a livestream burst never delays the
   // shared `low` jobs, with bounded concurrency so it cannot flood Postgres.
@@ -186,6 +191,7 @@ async function startLowWorker() {
       logger.error({ err }, `Leaderboard job ${job.id} has failed`)
     }
   })
+  instrumentWorker(leaderboardWorker, { queue: queueNames.enum.leaderboard })
 
   let isShuttingDown = false
   async function shutdown() {

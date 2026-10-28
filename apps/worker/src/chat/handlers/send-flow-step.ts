@@ -606,7 +606,6 @@ export async function sendFlowStep({
 
     return
   }
-
   const eventLogData = {
     context: {
       workspaceId: conversation.workspaceId,
@@ -924,8 +923,12 @@ export async function sendFlowStep({
       ? await messageService.createWithAttachments({
           message: messageInput,
           attachments: attachmentInputs,
+          metricsChannel: targetContactInbox.channel,
         })
-      : await messageService.create(messageInput)
+      : await messageService.create({
+          ...messageInput,
+          metricsChannel: targetContactInbox.channel,
+        })
 
     message = await resolveMessageAttachmentUrls(message, {
       workspaceId: conversation.workspaceId,
@@ -1268,8 +1271,12 @@ export const sendChatMessage = async (
       ? await messageService.createWithAttachments({
           message: messageInput,
           attachments: [attachmentInput],
+          metricsChannel: contactInbox.channel,
         })
-      : await messageService.create(messageInput)
+      : await messageService.create({
+          ...messageInput,
+          metricsChannel: contactInbox.channel,
+        })
 
     const message = await resolveMessageAttachmentUrls(persistedMessage, {
       workspaceId: conversation.workspaceId,

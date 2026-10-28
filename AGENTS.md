@@ -224,6 +224,7 @@ See **`.agents/rules/git.md`** for the full canonical rules (commit format, bran
 - Enterprise licensing (offline Ed25519 license keys): `docs/licensing.md`
 - Platform support access (super admin opening any workspace): `docs/support-access.md`
 - Leaderboards (ranking campaigns: scoring sources, Postgres/Redis split, partitioned score history, ops): `docs/leaderboard.md`
+- Observability (Prometheus/Grafana/GlitchTip/Uptime Kuma, alerts, metrics, runbook): `docs/observability.md`
 - Automatic Customer Scan (contact import by scanning channel conversation history; shares the `CoexistSyncRun` table via a `type` discriminator): `docs/contact-scan.md`
 - Ecommerce orders, vendors, store settings and web shop (order lifecycle, money/currency rules, order numbering, stock locking, vendor rules, open-hours schedules, shop token and `/shop` pages, cart and checkout, discount codes, store trigger/webhook events, abandoned carts, product collections, product search by message, sales analytics, purchase contact filters, WhatsApp cart → CHECK OUT, order notifications, public API): `docs/ecommerce.md`
 - Product messages (`sendProducts` flow step: sendable products, per-channel display rules, WhatsApp catalog payloads, adding a channel): `docs/product-messages.md`

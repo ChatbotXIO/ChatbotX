@@ -12,6 +12,7 @@ import {
 import { Worker } from "bullmq"
 import { ensureBootstrapped } from "../lib/bootstrap"
 import { isBlockedWorkspace } from "../lib/is-blocked-workspace"
+import { instrumentWorker } from "../lib/job-observability"
 import { logger } from "../lib/logger"
 import { runJobWithAuditContext } from "../lib/run-job-with-audit-context"
 import { revertDispatchToPending } from "./revert-dispatch"
@@ -112,6 +113,9 @@ class DispatchConsumer {
         { err: error, jobId: job?.id },
         "Sequence scheduler job failed",
       )
+    })
+    instrumentWorker(this.consumer, {
+      queue: queueNames.enum.sequenceScheduler,
     })
     try {
       await this.consumer.waitUntilReady()

@@ -44,6 +44,10 @@ import { resolveTenantSettings } from "../platform/settings"
 import { productMessageService } from "../product-message/service"
 import { getPublicFileUrl } from "../utils"
 import { recordAgentReply } from "../working-hours/agent-reply-metric"
+import {
+  recordMessageMetric,
+  resolveMessageMetricChannel,
+} from "./record-metric"
 
 type CreateOutgoingInput = (
   | { flowId: string; nodeId?: string }
@@ -384,6 +388,10 @@ export const createOutgoing = async (props: {
     attachmentInputs.length > 0
       ? await repository.createWithAttachments(messageInput, attachmentInputs)
       : await repository.create(messageInput)
+  recordMessageMetric(
+    messageInput.messageType,
+    resolveMessageMetricChannel(contactInbox.channel),
+  )
 
   await contactInboxService.updateTracking({
     contactInboxId: contactInbox.id,

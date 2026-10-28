@@ -19,6 +19,10 @@ import {
   listForConversation,
   withResolvedAttachmentUrls,
 } from "./list-for-conversation"
+import {
+  recordMessageMetric,
+  resolveMessageMetricChannel,
+} from "./record-metric"
 
 type FindByProps = {
   conversationId: string
@@ -136,21 +140,39 @@ class MessageService extends BaseService {
   }
 
   async create(
-    props: CreateMessageInput & { tx?: DatabaseClient },
+    props: CreateMessageInput & {
+      metricsChannel?: string
+      tx?: DatabaseClient
+    },
   ): Promise<MessageModel> {
-    const { tx = db, ...message } = props
-    const repo = await createMessageRepository(tx)
-    return await repo.create(message)
+    const { tx, metricsChannel, ...message } = props
+    const repo = await createMessageRepository(tx ?? db)
+    const created = await repo.create(message)
+    if (!tx) {
+      recordMessageMetric(
+        message.messageType,
+        resolveMessageMetricChannel(metricsChannel),
+      )
+    }
+    return created
   }
 
   async createWithAttachments(props: {
     attachments: Omit<CreateAttachmentInput, "messageCreatedAt" | "messageId">[]
     message: CreateMessageInput
+    metricsChannel?: string
     tx?: DatabaseClient
   }): Promise<MessageWithAttachments> {
-    const { tx = db, message, attachments } = props
-    const repo = await createMessageRepository(tx)
-    return await repo.createWithAttachments(message, attachments)
+    const { tx, message, attachments, metricsChannel } = props
+    const repo = await createMessageRepository(tx ?? db)
+    const created = await repo.createWithAttachments(message, attachments)
+    if (!tx) {
+      recordMessageMetric(
+        message.messageType,
+        resolveMessageMetricChannel(metricsChannel),
+      )
+    }
+    return created
   }
 
   async delete(
@@ -277,8 +299,8 @@ class MessageService extends BaseService {
   async createOrUpdate(
     props: CreateMessageInput & { tx?: DatabaseClient },
   ): Promise<{ isNew: boolean; message: MessageModel }> {
-    const { tx = db, ...message } = props
-    const repo = await createMessageRepository(tx)
+    const { tx, ...message } = props
+    const repo = await createMessageRepository(tx ?? db)
     return await repo.createOrUpdate(message)
   }
 

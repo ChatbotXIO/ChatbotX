@@ -13,6 +13,7 @@ import { ensureBootstrapped } from "../lib/bootstrap"
 import { isBlockedWorkspace } from "../lib/is-blocked-workspace"
 import { isBotMessageQuotaReached } from "../lib/is-bot-message-quota-reached"
 import { isFinalAttempt } from "../lib/job-attempts"
+import { instrumentWorker } from "../lib/job-observability"
 import { logger } from "../lib/logger"
 import { resolveWorkspaceId } from "../lib/resolve-workspace-id"
 import { runJobWithAuditContext } from "../lib/run-job-with-audit-context"
@@ -168,6 +169,7 @@ async function startChatWorker() {
       logger.error(err, `Job ${job.id} has failed`)
     }
   })
+  instrumentWorker(worker, { queue: queueNames.enum.chat })
 
   let isShuttingDown = false
   async function shutdown() {

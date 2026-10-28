@@ -241,9 +241,16 @@ export async function handleCreateWebchatMessage({
       attachmentInputs.length > 0
         ? await messageService.createWithAttachments({
             message: messageInput,
+            metricsChannel: "webchat",
             attachments: attachmentInputs,
           })
-        : { ...(await messageService.create(messageInput)), attachments: [] }
+        : {
+            ...(await messageService.create({
+              ...messageInput,
+              metricsChannel: "webchat",
+            })),
+            attachments: [],
+          }
 
     const newMessage = {
       ...message,

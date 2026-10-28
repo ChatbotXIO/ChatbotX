@@ -21,7 +21,14 @@ vi.mock("../src/logger", () => ({ logger }))
 
 const { dbTransaction, fakeTx, findFirstUser, setLocalStatementTimeout } =
   vi.hoisted(() => {
-    const fakeTransaction = { __tx: true }
+    const fakeTransaction = {
+      __tx: true,
+      transaction: vi.fn(),
+    }
+    fakeTransaction.transaction.mockImplementation(
+      async (fn: (tx: unknown) => Promise<unknown>) =>
+        await fn(fakeTransaction),
+    )
     return {
       fakeTx: fakeTransaction,
       findFirstUser: vi.fn(async () => ({ tenantId: "1" }) as unknown),
@@ -54,6 +61,12 @@ vi.mock("@chatbotx.io/analytics", () => ({
   },
   macTrackingService,
 }))
+const observability = vi.hoisted(() => ({
+  captureException: vi.fn(),
+  classifyError: vi.fn(() => "unknown"),
+  incrementSideEffectFailed: vi.fn(),
+}))
+vi.mock("@chatbotx.io/observability", () => observability)
 
 const workspaceUsageService = vi.hoisted(() => ({
   increment: vi.fn(async () => undefined),
@@ -87,6 +100,7 @@ const userQuotaService = vi.hoisted(() => ({
 }))
 vi.mock("../src/user-quota/service", () => ({ userQuotaService }))
 
+import { runNewContactTransaction } from "../src/quota-enforcement/mac-admission"
 import { quotaEnforcementService } from "../src/quota-enforcement/service"
 
 const ROOT_USER = "root-user"
@@ -146,6 +160,9 @@ beforeEach(() => {
   macTrackingService.claimNewActiveContact.mockResolvedValue({ counted: true })
   macTrackingService.incrementWorkspaceMacCache.mockResolvedValue(undefined)
   workspaceUsageService.increment.mockResolvedValue(undefined)
+  fakeTx.transaction.mockImplementation(
+    async (fn: (tx: unknown) => Promise<unknown>) => await fn(fakeTx),
+  )
 })
 
 describe("quotaEnforcementService.createNewContactWithMac atomic", () => {
@@ -474,6 +491,38 @@ describe("quotaEnforcementService.createNewContactWithMac atomic", () => {
     expect(userQuotaService.getForUser).toHaveBeenCalledTimes(1)
     expect(userQuotaService.getForUser).toHaveBeenCalledWith(RESELLER)
     expect(userQuotaService.admit).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe("runNewContactTransaction side-effect isolation", () => {
+  test("commits the contact and reports a failed MAC claim", async () => {
+    const macError = new Error("workspace MAC insert failed")
+    macTrackingService.claimNewActiveContact.mockRejectedValueOnce(macError)
+
+    const result = await runNewContactTransaction({
+      workspaceId: "ws-1",
+      occurredAt: new Date("2026-10-01T00:00:00Z"),
+      periodStart,
+      create: makeCreate(),
+    })
+
+    expect(result).toEqual({ value: created.value, counted: false })
+    expect(observability.incrementSideEffectFailed).toHaveBeenCalledWith(
+      "mac_claim",
+    )
+    expect(observability.captureException).toHaveBeenCalledWith({
+      error: macError,
+      errorClass: "unknown",
+      tags: { side_effect: "mac_claim" },
+    })
+    expect(logger.error).toHaveBeenCalledWith(
+      {
+        err: macError,
+        workspaceId: "ws-1",
+        contactId: created.contactId,
+      },
+      "MAC claim failed after contact creation; allowing messaging to continue",
+    )
   })
 })
 

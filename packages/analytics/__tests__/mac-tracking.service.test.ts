@@ -5,6 +5,10 @@ import type {
   MacMessageOutPayload,
 } from "../src/schemas/mac"
 
+vi.hoisted(() => {
+  process.env.CANARY_CONTACT_ID = "canary-contact"
+})
+
 const macRepository = {
   ensureWorkspaceMac: vi.fn(),
   upsertMonthlyPresence: vi.fn(async () => [] as unknown[]),
@@ -156,6 +160,7 @@ beforeEach(() => {
   cacheClient.hincrby.mockResolvedValue(1)
   db.query.userQuotaModel.findFirst.mockResolvedValue({ macUsed: 0 })
   distributedStore.getAll.mockResolvedValue({})
+  delete process.env.CANARY_CONTACT_ID
   bloomFilter.addMany.mockImplementation(async (_k, items) =>
     items.map(() => true),
   )
@@ -766,6 +771,17 @@ describe("MacTrackingService.claimNewActiveContact", () => {
     expect(result).toEqual({ counted: false })
     expect(macRepository.upsertMonthlyPresence).not.toHaveBeenCalled()
     expect(macRepository.upsertHourlyPresence).not.toHaveBeenCalled()
+  })
+
+  test("excludes the configured canary contact from MAC tracking", async () => {
+    const result = await newService().claimNewActiveContact(
+      { ...input, contactId: "canary-contact" },
+      {} as never,
+    )
+
+    expect(result).toEqual({ counted: false })
+    expect(macRepository.ensureWorkspaceMac).not.toHaveBeenCalled()
+    expect(macRepository.upsertMonthlyPresence).not.toHaveBeenCalled()
   })
 })
 

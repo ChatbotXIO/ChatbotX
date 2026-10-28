@@ -84,6 +84,7 @@
     "@chatbotx.io/javascript-sandbox": "workspace:*",
     "@chatbotx.io/logger": "workspace:*",
     "@chatbotx.io/mail": "workspace:*",
+    "@chatbotx.io/observability": "workspace:*",
     "@chatbotx.io/mini-app": "workspace:*",
     "@chatbotx.io/realtime-protocol": "workspace:*",
     "@chatbotx.io/redis": "workspace:*",

@@ -29,6 +29,7 @@ import { env } from "../env"
 import { ensureBootstrapped } from "../lib/bootstrap"
 import { isBlockedWorkspace } from "../lib/is-blocked-workspace"
 import { hasExhaustedAttempts } from "../lib/job-attempts"
+import { instrumentWorker } from "../lib/job-observability"
 import { deferOnLockContention } from "../lib/lock-contention-deferral"
 import { logger } from "../lib/logger"
 import { resolveWorkspaceId } from "../lib/resolve-workspace-id"
@@ -178,7 +179,7 @@ async function startIntegrationWorker() {
       return
     }
 
-    return await runIntegrationJobWithWebhookContext(job.data, () =>
+    await runIntegrationJobWithWebhookContext(job.data, () =>
       runJobWithAuditContext(
         { workspaceId, source: `integration:${job.data.type}` },
         async () => {
@@ -623,6 +624,7 @@ async function startIntegrationWorker() {
       logger.error({ err }, `Job ${job.id} has failed`)
     }
   })
+  instrumentWorker(worker, { queue: queueNames.enum.integration })
 
   // Dedicated, rate-limited consumer for call transcription: a second Worker
   // instance in this process, on its own queue, so its limiter bounds
@@ -651,6 +653,9 @@ async function startIntegrationWorker() {
     if (job) {
       logger.error({ err }, `Call transcription job ${job.id} has failed`)
     }
+  })
+  instrumentWorker(callTranscriptionWorker, {
+    queue: queueNames.enum.callTranscription,
   })
 
   // Dedicated consumer for WhatsApp Business Calling VoIP-mode signaling: a
@@ -715,6 +720,9 @@ async function startIntegrationWorker() {
         )
       })
     }
+  })
+  instrumentWorker(whatsappVoipSignalingWorker, {
+    queue: queueNames.enum.whatsappVoipSignaling,
   })
 
   let isShuttingDown = false

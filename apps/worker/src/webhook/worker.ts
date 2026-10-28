@@ -11,6 +11,7 @@ import { type Job, Worker } from "bullmq"
 import { env } from "../env"
 import { ensureBootstrapped } from "../lib/bootstrap"
 import { isBlockedWorkspace } from "../lib/is-blocked-workspace"
+import { instrumentWorker } from "../lib/job-observability"
 import { logger } from "../lib/logger"
 import { runJobWithAuditContext } from "../lib/run-job-with-audit-context"
 import { WebhookMatcherService } from "./services/webhook-matcher.service"
@@ -60,6 +61,7 @@ async function startWebhookWorker() {
       logger.error(err, `Webhook job ${job.id} has failed`)
     }
   })
+  instrumentWorker(worker, { queue: queueNames.enum.webhook })
 
   let isShuttingDown = false
   async function shutdown() {

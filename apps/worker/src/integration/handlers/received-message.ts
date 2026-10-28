@@ -77,6 +77,7 @@ import type { MessengerAuthValue } from "@chatbotx.io/integration-messenger"
 import type { ThreadsAuthValue } from "@chatbotx.io/integration-threads"
 import type { TiktokAuthValue } from "@chatbotx.io/integration-tiktok"
 import { toLogSafeError } from "@chatbotx.io/logger"
+import { incrementMessage } from "@chatbotx.io/observability"
 import {
   RealtimeEventType,
   routeForConversation,
@@ -1383,6 +1384,10 @@ const persistMessage = async (
   }
 
   if (isNew && !isOwnSendEcho) {
+    incrementMessage({
+      direction: inbound ? "in" : "out",
+      channel: inbox.channel,
+    })
     await persistNewMessageSideEffects({ ...props, message })
 
     if (isOutgoingDirectMessageEcho && canMarkReadByEcho && !props.keepUnread) {

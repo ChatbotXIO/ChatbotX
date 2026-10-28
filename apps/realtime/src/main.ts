@@ -1,3 +1,7 @@
+import {
+  initErrorTracking,
+  startMetricsServer,
+} from "@chatbotx.io/observability"
 import { createRedisConnection } from "@chatbotx.io/redis"
 import { createRealtimeGateway } from "./gateway"
 import { resolveRealtimeGatewayConfig } from "./gateway-config"
@@ -5,6 +9,13 @@ import { logger } from "./logger"
 import { createShutdownHandler } from "./shutdown"
 
 const main = async (): Promise<void> => {
+  initErrorTracking({ service: "realtime" })
+  try {
+    await startMetricsServer()
+  } catch (error) {
+    logger.error({ err: error }, "Realtime metrics server failed to start")
+  }
+
   const { host, port, redisUrl, ...gatewayConfig } =
     resolveRealtimeGatewayConfig()
   const gateway = createRealtimeGateway({

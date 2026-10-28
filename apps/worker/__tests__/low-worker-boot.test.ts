@@ -93,6 +93,10 @@ vi.mock("../src/lib/bootstrap", () => ({
   ensureBootstrapped: workerState.ensureBootstrapped,
 }))
 
+vi.mock("../src/lib/job-observability", () => ({
+  instrumentWorker: vi.fn(),
+}))
+
 vi.mock("../src/lib/logger", () => ({
   logger: { error: vi.fn(), info: vi.fn(), warn: vi.fn() },
 }))
