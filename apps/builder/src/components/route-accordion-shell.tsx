@@ -9,6 +9,7 @@ import {
 import Link from "next/link"
 import { useSelectedLayoutSegment } from "next/navigation"
 import type { ReactNode } from "react"
+import { LinkPendingSpinner } from "@/components/navigation-pending"
 
 type RouteAccordionItem = {
   /** Route segment under `basePath` — also the accordion value. */
@@ -42,23 +43,27 @@ export function RouteAccordionShell({
   const activeSegment = useSelectedLayoutSegment()
 
   return (
-    <Accordion className="w-full" value={activeSegment ? [activeSegment] : []}>
+    // The list stays on screen while a row's route loads, so the pending state
+    // is a spinner on that row rather than the workspace-wide page skeleton.
+    <Accordion
+      className="w-full"
+      data-local-navigation-pending=""
+      value={activeSegment ? [activeSegment] : []}
+    >
       {items.map((item) => {
         const isActive = item.value === activeSegment
+        const href = isActive ? basePath : `${basePath}/${item.value}`
         return (
           <AccordionItem key={item.value} value={item.value}>
             <AccordionTrigger
               className="rounded-none px-4 transition-all hover:bg-muted hover:no-underline data-[panel-open]:bg-muted"
               nativeButton={false}
-              render={
-                <Link
-                  href={isActive ? basePath : `${basePath}/${item.value}`}
-                  prefetch={false}
-                  scroll={false}
-                />
-              }
+              render={<Link href={href} prefetch={false} scroll={false} />}
             >
-              {item.label}
+              <span className="flex items-center gap-2">
+                {item.label}
+                <LinkPendingSpinner />
+              </span>
             </AccordionTrigger>
             <AccordionContent className="p-4">
               {isActive ? children : null}
