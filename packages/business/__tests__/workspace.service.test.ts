@@ -14,6 +14,7 @@ const setUpdate = vi.fn(() => ({ where: whereUpdate }))
 const update = vi.fn(() => ({ set: setUpdate }))
 
 const findFirstUser = vi.fn(async () => ({ tenantId: "1" }))
+const findActiveByOwnerRepo = vi.fn()
 const findFirstWorkspace = vi.fn(async () => ({ name: "Old Name" }))
 const findFirstFlow = vi.fn(async () => ({ id: "11" }))
 const countWorkspaces = vi.fn(async () => 0)
@@ -49,7 +50,7 @@ vi.mock("@chatbotx.io/database/schema", () => ({
 // schema, conflicting with the narrow mock above).
 vi.mock("@chatbotx.io/database/repositories", () => ({}))
 vi.mock("@chatbotx.io/database/repositories/workspace", () => ({
-  workspaceRepository: {},
+  workspaceRepository: { findActiveByOwner: findActiveByOwnerRepo },
 }))
 
 const tenantService = { findByOwner: vi.fn(async () => undefined as unknown) }
@@ -644,26 +645,20 @@ describe("WorkspaceService.create — community workspace limit", () => {
 })
 
 describe("WorkspaceService.findActiveByOwner", () => {
-  test("excludes a workspace mid soft-delete and orders deterministically by id", async () => {
-    findFirstWorkspace.mockResolvedValueOnce({ id: "ws-1" })
+  test("delegates to the repository with the caller's transaction", async () => {
+    const tx = {} as never
+    findActiveByOwnerRepo.mockResolvedValueOnce({ id: "ws-1" })
 
     const result = await workspaceService.findActiveByOwner({
       ownerId: "owner-1",
+      tx,
     })
 
     expect(result).toEqual({ id: "ws-1" })
-    expect(findFirstWorkspace).toHaveBeenCalledWith({
-      where: { ownerId: "owner-1", scheduledDeletionAt: { isNull: true } },
-      orderBy: { id: "asc" },
-    })
-  })
-
-  test("returns undefined when the owner's only workspace is scheduled for deletion", async () => {
-    findFirstWorkspace.mockResolvedValueOnce(undefined)
-
-    await expect(
-      workspaceService.findActiveByOwner({ ownerId: "owner-1" }),
-    ).resolves.toBeUndefined()
+    expect(findActiveByOwnerRepo).toHaveBeenCalledWith(
+      { ownerId: "owner-1" },
+      tx,
+    )
   })
 })
 

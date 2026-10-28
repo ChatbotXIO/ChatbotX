@@ -2,18 +2,20 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const mocks = vi.hoisted(() => ({
   lockFirstWorkspace: vi.fn(async () => undefined),
-  findFirst: vi.fn(),
+  findActiveByOwner: vi.fn(),
   transaction: vi.fn(),
 }))
 
 vi.mock("@chatbotx.io/database/client", () => ({
   db: {
     transaction: mocks.transaction,
-    query: { workspaceModel: { findFirst: mocks.findFirst } },
   },
 }))
 vi.mock("@chatbotx.io/database/repositories/workspace", () => ({
-  workspaceRepository: { lockFirstWorkspace: mocks.lockFirstWorkspace },
+  workspaceRepository: {
+    lockFirstWorkspace: mocks.lockFirstWorkspace,
+    findActiveByOwner: mocks.findActiveByOwner,
+  },
 }))
 
 const { workspaceService } = await import("../src/workspace/service")
@@ -22,9 +24,7 @@ const OWNER_ID = "owner-1"
 const existingWorkspace = { id: "ws-existing" }
 const createdWorkspace = { id: "ws-created" }
 
-const callerTx = {
-  query: { workspaceModel: { findFirst: mocks.findFirst } },
-}
+const callerTx = {}
 
 describe("workspaceService.ensureFirstForOwner", () => {
   let create: ReturnType<typeof vi.spyOn>
@@ -39,7 +39,7 @@ describe("workspaceService.ensureFirstForOwner", () => {
   })
 
   test("returns the existing workspace without creating one", async () => {
-    mocks.findFirst.mockResolvedValue(existingWorkspace)
+    mocks.findActiveByOwner.mockResolvedValue(existingWorkspace)
 
     const result = await workspaceService.ensureFirstForOwner({
       ownerId: OWNER_ID,
@@ -51,7 +51,7 @@ describe("workspaceService.ensureFirstForOwner", () => {
   })
 
   test("creates a workspace when the owner has none", async () => {
-    mocks.findFirst.mockResolvedValue(undefined)
+    mocks.findActiveByOwner.mockResolvedValue(undefined)
 
     const result = await workspaceService.ensureFirstForOwner({
       ownerId: OWNER_ID,
@@ -68,7 +68,7 @@ describe("workspaceService.ensureFirstForOwner", () => {
   })
 
   test("takes the lock on the caller's transaction and passes it to create", async () => {
-    mocks.findFirst.mockResolvedValue(undefined)
+    mocks.findActiveByOwner.mockResolvedValue(undefined)
 
     await workspaceService.ensureFirstForOwner({
       ownerId: OWNER_ID,
@@ -87,7 +87,7 @@ describe("workspaceService.ensureFirstForOwner", () => {
   })
 
   test("opens its own transaction and lets create own its tx when none is given", async () => {
-    mocks.findFirst.mockResolvedValue(undefined)
+    mocks.findActiveByOwner.mockResolvedValue(undefined)
 
     await workspaceService.ensureFirstForOwner({
       ownerId: OWNER_ID,

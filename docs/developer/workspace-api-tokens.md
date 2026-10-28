@@ -783,14 +783,6 @@ can reach it.
 - Delete invalidates the token cache tag; a Redis failure there is logged and
   bounded by the 300s TTL.
 
-### Default workspace
-
-A user with no workspace membership gets a default workspace when they open
-`/` (`ensureFirstWorkspace` → `workspaceService.ensureFirstForOwner`, locked
-per owner), so setup does not wait on connecting a channel. Invited users
-are not given an extra one. When a plan limit blocks creation, `/` falls back
-to the workspace list.
-
 ## Channel API tokens (integration-api)
 
 API-channel credentials (`cbx_api_<random>` tokens and signing secrets) share

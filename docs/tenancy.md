@@ -207,6 +207,14 @@ reached on its own tenant's domain; they can differ if a workspace is opened on
 another host. It lives under `google-ads/` today; move it to a shared location
 before reusing it for another provider.
 
+## Default workspace
+
+A user with no workspace membership gets a default workspace when they open
+`/` (`ensureFirstWorkspace` → `workspaceService.ensureFirstForOwner`, locked
+per owner), so setup does not wait on connecting a channel. Invited users
+are not given an extra one. When a plan limit blocks creation, `/` falls back
+to the workspace list.
+
 ## Branding
 
 `resolveTenantSettings` / `resolveTenantSettingsByDomain`

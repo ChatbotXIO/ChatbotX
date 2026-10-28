@@ -81,51 +81,45 @@ function createChannelErrorPathFor(error: unknown): string | null {
   return null
 }
 
-type FirstWorkspaceResult =
-  | { workspace: WorkspaceModel }
-  | { errorPath: string }
-
 interface FirstWorkspaceOptions {
   name?: string
   quotaConsumption?: WorkspaceQuotaConsumption
   tx?: DatabaseClient
 }
 
-async function resolveFirstWorkspace(
+async function callEnsure(
   userId: string,
   {
     tx,
     quotaConsumption,
     name = DEFAULT_WORKSPACE_NAME,
   }: FirstWorkspaceOptions,
-): Promise<FirstWorkspaceResult> {
-  try {
-    const workspace = await workspaceService.ensureFirstForOwner({
-      ownerId: userId,
-      name,
-      tx,
-      quotaConsumption,
-    })
-    return { workspace }
-  } catch (error) {
-    const errorPath = createChannelErrorPathFor(error)
-    if (!errorPath) {
-      throw error
-    }
-    return { errorPath }
-  }
+): Promise<WorkspaceModel> {
+  return await workspaceService.ensureFirstForOwner({
+    ownerId: userId,
+    name,
+    tx,
+    quotaConsumption,
+  })
 }
 
 /**
  * Same as `createFirstWorkspace` but for callers that cannot redirect (the
- * `/` page): a known plan-limit failure yields `null` instead.
+ * `/` page): any known create failure (workspace limit, trial expired, MAC
+ * limit) yields `null` instead. Unknown errors keep propagating.
  */
 export async function ensureFirstWorkspace(
   userId: string,
   options: Pick<FirstWorkspaceOptions, "name"> = {},
 ): Promise<WorkspaceModel | null> {
-  const result = await resolveFirstWorkspace(userId, options)
-  return "workspace" in result ? result.workspace : null
+  try {
+    return await callEnsure(userId, options)
+  } catch (error) {
+    if (createChannelErrorPathFor(error)) {
+      return null
+    }
+    throw error
+  }
 }
 
 /**
@@ -154,9 +148,13 @@ export async function createFirstWorkspace(
   tx?: DatabaseClient,
   quotaConsumption?: WorkspaceQuotaConsumption,
 ) {
-  const result = await resolveFirstWorkspace(userId, { tx, quotaConsumption })
-  if ("workspace" in result) {
-    return result.workspace
+  try {
+    return await callEnsure(userId, { tx, quotaConsumption })
+  } catch (error) {
+    const errorPath = createChannelErrorPathFor(error)
+    if (!errorPath) {
+      throw error
+    }
+    return redirect(errorPath)
   }
-  return redirect(result.errorPath)
 }

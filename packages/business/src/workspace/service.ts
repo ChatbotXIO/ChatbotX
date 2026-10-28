@@ -138,23 +138,14 @@ class WorkspaceService extends BaseService {
     )
   }
 
-  /**
-   * The live workspace a user already owns — excludes a row mid soft-delete
-   * (`scheduledDeletionAt` set) so `ensureFirstForOwner`'s idempotency
-   * check never hands back a workspace that's about to be purged, and
-   * orders by `id` (time-ordered) so a concurrent caller resolving "the"
-   * first workspace agrees deterministically even if the owner somehow
-   * ends up with more than one live row.
-   */
   async findActiveByOwner(props: {
     ownerId: string
     tx?: DatabaseClient
   }): Promise<WorkspaceModel | undefined> {
-    const { ownerId, tx = db } = props
-    return await tx.query.workspaceModel.findFirst({
-      where: { ownerId, scheduledDeletionAt: { isNull: true } },
-      orderBy: { id: "asc" },
-    })
+    return await workspaceRepository.findActiveByOwner(
+      { ownerId: props.ownerId },
+      props.tx,
+    )
   }
 
   /**
@@ -175,7 +166,10 @@ class WorkspaceService extends BaseService {
     const { ownerId, name, tx, quotaConsumption } = props
     const run = async (lockTx: DatabaseClient): Promise<WorkspaceModel> => {
       await workspaceRepository.lockFirstWorkspace({ ownerId }, lockTx)
-      const existing = await this.findActiveByOwner({ ownerId, tx: lockTx })
+      const existing = await workspaceRepository.findActiveByOwner(
+        { ownerId },
+        lockTx,
+      )
       if (existing) {
         return existing
       }
