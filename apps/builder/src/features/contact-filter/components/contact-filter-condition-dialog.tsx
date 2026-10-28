@@ -2,9 +2,9 @@
 
 import {
   CONTACT_ACTIVITY_TRACKED_FIELDS,
-  CONTACT_ACTIVITY_TRACKING_STARTED_AT,
   type ContactActivityValueSource,
   type FormFieldType,
+  getContactActivityTrackingStartedAt,
   isContactActivityValueSource,
   type PostTrackingChannel,
   supportsPostTracking,
@@ -870,7 +870,7 @@ export const ContactFilterConditionDialog = ({
               <p className="text-muted-foreground text-xs">
                 {t("condition.trackingSince", {
                   date: format.dateTime(
-                    new Date(CONTACT_ACTIVITY_TRACKING_STARTED_AT),
+                    new Date(getContactActivityTrackingStartedAt(watchField)),
                     { dateStyle: "medium" },
                   ),
                 })}

@@ -184,9 +184,19 @@ vi.mock("@chatbotx.io/redis", () => ({
   withCache: vi.fn((_key: string, fn: () => unknown) => fn()),
 }))
 
+const { mockRecordAdTouches, mockLoggerError } = vi.hoisted(() => ({
+  mockRecordAdTouches: vi.fn(),
+  mockLoggerError: vi.fn(),
+}))
+
+vi.mock("../src/contact-referral-event/service", () => ({
+  contactReferralEventService: { recordAdTouches: mockRecordAdTouches },
+}))
+
 vi.mock("../src/logger", () => ({
   logger: {
     warn: mockLoggerWarn,
+    error: mockLoggerError,
   },
 }))
 
@@ -440,6 +450,165 @@ describe("contactInboxService timestamp helpers", () => {
           }),
         ],
       },
+    })
+  })
+
+  describe("updateTracking ad touch log", () => {
+    const referral = { adId: "ad-1", source: "ADS" }
+    const referralOccurrence = {
+      occurredAt: new Date("2026-10-20T08:00:00Z"),
+      eventKey: "mid-1",
+    }
+    const baseInput = {
+      contactInboxId: "contact-inbox-1",
+      contactId: "contact-1",
+      workspaceId: "workspace-1",
+    }
+    const touchInput = {
+      workspaceId: "workspace-1",
+      contactId: "contact-1",
+      contactInboxId: "contact-inbox-1",
+      channel: "messenger",
+      referral,
+      occurrence: referralOccurrence,
+    }
+
+    /** A transaction whose nested transaction (a savepoint) runs on itself. */
+    const createTx = () => {
+      const tx = { update: mockDbUpdate, transaction: vi.fn() }
+      tx.transaction.mockImplementation(
+        async (run: (client: unknown) => unknown) => await run(tx),
+      )
+      return tx
+    }
+
+    beforeEach(() => {
+      mockDbReturning.mockResolvedValue([
+        { id: "contact-inbox-1", channel: "messenger" },
+      ])
+      mockRecordAdTouches.mockReset()
+    })
+
+    test("logs the referral as an ad touch in a savepoint of the caller's transaction", async () => {
+      const tx = createTx()
+
+      await contactInboxService.updateTracking({
+        ...baseInput,
+        tx: tx as never,
+        data: { referral },
+        referralOccurrence,
+      })
+
+      expect(tx.transaction).toHaveBeenCalledTimes(1)
+      expect(mockRecordAdTouches).toHaveBeenCalledWith(touchInput, tx)
+    })
+
+    test("only moves the snapshot when the caller gives no occurrence", async () => {
+      await contactInboxService.updateTracking({
+        ...baseInput,
+        data: { referral },
+      })
+
+      expect(mockRecordAdTouches).not.toHaveBeenCalled()
+    })
+
+    test("logs nothing when the contact inbox was not updated", async () => {
+      mockDbReturning.mockResolvedValue([])
+
+      await contactInboxService.updateTracking({
+        ...baseInput,
+        tx: createTx() as never,
+        data: { referral },
+        referralOccurrence,
+      })
+
+      expect(mockRecordAdTouches).not.toHaveBeenCalled()
+    })
+
+    test("a failed touch write does not fail the update of the message that carries it", async () => {
+      mockRecordAdTouches.mockRejectedValueOnce(
+        new Error("insert failed for gclid-SECRET-0001234567"),
+      )
+
+      await expect(
+        contactInboxService.updateTracking({
+          ...baseInput,
+          tx: createTx() as never,
+          data: { referral },
+          referralOccurrence,
+        }),
+      ).resolves.not.toBeNull()
+
+      expect(mockLoggerError).toHaveBeenCalledWith(
+        {
+          errName: "Error",
+          workspaceId: "workspace-1",
+          contactInboxId: "contact-inbox-1",
+        },
+        "updateTracking: could not record the ad touch",
+      )
+      // The error text embeds the query parameters, which include the click id.
+      expect(JSON.stringify(mockLoggerError.mock.calls)).not.toContain(
+        "gclid-SECRET",
+      )
+    })
+
+    test("without a caller transaction a failed touch is contained too, so the update still lands", async () => {
+      mockRecordAdTouches.mockRejectedValueOnce(new Error("db down"))
+      mockDbTransaction.mockImplementationOnce(
+        async (run: (client: unknown) => unknown) => await run(createTx()),
+      )
+
+      await expect(
+        contactInboxService.updateTracking({
+          ...baseInput,
+          data: { referral },
+          referralOccurrence,
+        }),
+      ).resolves.not.toBeNull()
+    })
+
+    describe("updateTrackingAtomic", () => {
+      beforeEach(() => {
+        mockInvalidateCacheByTags.mockClear()
+        mockLoggerError.mockClear()
+      })
+
+      test("commits the snapshot and the touch together, then invalidates", async () => {
+        const tx = createTx()
+        mockDbTransaction.mockImplementationOnce(
+          async (run: (client: unknown) => unknown) => await run(tx),
+        )
+
+        await contactInboxService.updateTrackingAtomic({
+          ...baseInput,
+          data: { referral },
+          referralOccurrence,
+        })
+
+        expect(mockDbTransaction).toHaveBeenCalledTimes(1)
+        expect(mockRecordAdTouches).toHaveBeenCalledWith(touchInput, tx)
+        expect(mockInvalidateCacheByTags).toHaveBeenCalledTimes(1)
+      })
+
+      test("a failed touch rolls the snapshot back so a later attempt can record it", async () => {
+        const tx = createTx()
+        mockDbTransaction.mockImplementationOnce(
+          async (run: (client: unknown) => unknown) => await run(tx),
+        )
+        mockRecordAdTouches.mockRejectedValueOnce(new Error("db down"))
+
+        await expect(
+          contactInboxService.updateTrackingAtomic({
+            ...baseInput,
+            data: { referral },
+            referralOccurrence,
+          }),
+        ).rejects.toThrow("db down")
+
+        expect(mockInvalidateCacheByTags).not.toHaveBeenCalled()
+        expect(mockLoggerError).not.toHaveBeenCalled()
+      })
     })
   })
 

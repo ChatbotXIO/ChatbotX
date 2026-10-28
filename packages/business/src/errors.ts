@@ -221,6 +221,17 @@ export const countTimeoutException = () =>
     503,
   )
 
+/**
+ * A report ran past its statement timeout. The caller can narrow the date
+ * range or the channel and try again.
+ */
+export const reportTimeoutException = () =>
+  new ChatbotXException(
+    "The report took too long. Narrow the date range or the channel.",
+    "reportTimeout",
+    503,
+  )
+
 /** The request field a broadcast validation failure points at. */
 export type BroadcastValidationField =
   | "channel"

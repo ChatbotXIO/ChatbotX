@@ -2423,6 +2423,8 @@ class ConversationService extends BaseService {
      * the DM waiting window without emitting a response event.
      */
     isExternalHumanEcho?: boolean
+    /** Id of the message carrying `tracking.referral`; keys the ad touch it logs. */
+    referralEventKey?: string
   }): Promise<ContactInboxTrackingInvalidation | null> {
     const {
       workspaceId,
@@ -2431,6 +2433,7 @@ class ConversationService extends BaseService {
       contactId,
       tracking,
       contactLocation,
+      referralEventKey,
       at,
       contactLastReadAt,
       contactRepliedAt,
@@ -2449,6 +2452,9 @@ class ConversationService extends BaseService {
         contactId,
         workspaceId,
         data: tracking,
+        referralOccurrence: referralEventKey
+          ? { occurredAt: at, eventKey: referralEventKey }
+          : undefined,
       })
 
       if (contactLocation) {

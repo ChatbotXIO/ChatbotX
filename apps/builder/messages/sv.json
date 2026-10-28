@@ -1163,6 +1163,7 @@
       "contactCreatedAt": "Kontakten skapades",
       "fromCtwaAd": "Från annons",
       "fromGoogleAd": "Från Google Ads",
+      "clickedAd": "Klickade på annons",
       "ctwaConversion": "Annonskonvertering",
       "contactCreatedDate": "Datum då kontakten skapades",
       "contactCreatedDateMinutesAgo": "Datum då kontakten skapades (minuter sedan)",
@@ -1408,6 +1409,22 @@
       },
       "empty": "No scans have been run yet."
     }
+  },
+  "contactAdReferrals": {
+    "title": "Annonshistorik",
+    "empty": "Inga annonsklick har registrerats för den här kontakten ännu."
+  },
+  "adsReferralStats": {
+    "title": "Kontakter per annons",
+    "description": "Kontakter som varje annons nått och konverteringar som tillskrivs dess klick. Klick räknas sedan spårningen startade.",
+    "ad": "Annons",
+    "contacts": "Kontakter",
+    "firstTouch": "Första kontakt",
+    "leads": "Leads",
+    "purchases": "Köp",
+    "revenue": "Intäkter",
+    "empty": "Inga annonsklick under perioden.",
+    "timeout": "Rapporten tog för lång tid. Välj ett kortare datumintervall."
   },
   "coupons": {
     "actions": {
@@ -2789,6 +2806,12 @@
     },
     "lastAd": {
       "label": "Senaste annons"
+    },
+    "adIds": {
+      "label": "Alla annons-ID:n"
+    },
+    "adId": {
+      "label": "Första annons-ID"
     },
     "lastAdSourcePlatform": {
       "label": "Plattform för senaste annonskälla"

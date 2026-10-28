@@ -29,6 +29,7 @@ import {
   timestampConfig,
 } from "../partials/shared"
 import { contactInboxModel } from "./contact-inbox"
+import { contactReferralEventModel } from "./contact-referral-event"
 import { integrationGoogleAdsModel } from "./integration-google-ads"
 import { workspaceModel } from "./workspace"
 
@@ -72,6 +73,13 @@ export const googleAdsConversionEventModel = pgTable(
       onDelete: "set null",
       onUpdate: "cascade",
     }),
+    // The ad touch (click) this conversion was credited to. The click id
+    // snapshot below stays authoritative for delivery. NULL for rows recorded
+    // before touches were logged.
+    referralEventId: bigintAsString().references(
+      () => contactReferralEventModel.id,
+      { onDelete: "set null", onUpdate: "cascade" },
+    ),
     // Account snapshot taken at insert; delivery skips when the live account differs.
     customerId: text().notNull(),
     loginCustomerId: text(),
@@ -134,6 +142,9 @@ export const googleAdsConversionEventModel = pgTable(
       "btree",
       table.contactInboxId.asc().nullsLast(),
     ),
+    index("GoogleAdsConversionEvent_referralEventId_idx")
+      .using("btree", table.referralEventId.asc().nullsLast())
+      .where(sql`${table.referralEventId} IS NOT NULL`),
     index("GoogleAdsConversionEvent_status_nextProcessingCheckAt_idx").using(
       "btree",
       table.status.asc().nullsLast(),

@@ -27,6 +27,7 @@ const resolved = (
   emailTopics: [],
   pipelines: [],
   pipelineStages: [],
+  ads: [],
   ...overrides,
 })
 
@@ -179,6 +180,7 @@ describe("collectFilterValueIds for activity-backed fields", () => {
         { field: "keywordsReceived", value: ["4"] },
         { field: "completedWhatsAppFlows", value: ["5"] },
         { field: "emailOpened", value: ["12"] },
+        { field: "clickedAd", value: ["120"] },
       ]),
     ).toEqual({
       flows: ["7", "8"],
@@ -186,7 +188,16 @@ describe("collectFilterValueIds for activity-backed fields", () => {
       keywords: ["4"],
       whatsappFlows: ["5"],
       emailTopics: ["12"],
+      ads: ["120"],
     })
+  })
+
+  test("looks up a clicked ad by its numeric id only", () => {
+    expect(
+      collectFilterValueIds([
+        { field: "clickedAd", value: ["120", "not-an-id"] },
+      ]),
+    ).toEqual({ ads: ["120"] })
   })
 
   test("never looks up the fixed No Topic value or a malformed node reference", () => {
@@ -250,5 +261,17 @@ describe("resolveFilterValueLabelsRequest for activity-backed fields", () => {
         ),
       }).success,
     ).toBe(false)
+  })
+})
+
+describe("buildFilterValueLabels for clicked ads", () => {
+  test("names the chosen ads from the looked-up labels", () => {
+    expect(
+      buildFilterValueLabels(
+        "ads",
+        resolved({ ads: [{ id: "120", name: "Summer sale (120)" }] }),
+        undefined,
+      ),
+    ).toEqual([{ value: "120", label: "Summer sale (120)" }])
   })
 })

@@ -1393,6 +1393,7 @@
       "followsBusinessOnInstagram": "关注 Instagram 上的商家",
       "fromCtwaAd": "来自广告",
       "fromGoogleAd": "来自 Google Ads",
+      "clickedAd": "点击过广告",
       "fullName": "全名",
       "gender": "性别",
       "hasContactInfo": "电话和电子邮件",
@@ -1596,6 +1597,22 @@
       },
       "empty": "No scans have been run yet."
     }
+  },
+  "contactAdReferrals": {
+    "title": "广告历史",
+    "empty": "尚未记录此联系人的广告点击。"
+  },
+  "adsReferralStats": {
+    "title": "按广告统计联系人",
+    "description": "每个广告触达的联系人，以及归因于其点击的转化。统计自开始追踪以来的点击。",
+    "ad": "广告",
+    "contacts": "联系人",
+    "firstTouch": "首次接触",
+    "leads": "潜在客户",
+    "purchases": "购买",
+    "revenue": "收入",
+    "empty": "此时段内没有广告点击。",
+    "timeout": "此报表耗时过长。请选择更短的日期范围。"
   },
   "coupons": {
     "actions": {
@@ -2798,6 +2815,12 @@
     },
     "lastAd": {
       "label": "最后一个广告"
+    },
+    "adIds": {
+      "label": "全部广告ID"
+    },
+    "adId": {
+      "label": "首个广告ID"
     },
     "lastAdSourcePlatform": {
       "label": "最后一个广告来源平台"

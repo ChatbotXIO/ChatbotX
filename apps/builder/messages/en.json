@@ -976,6 +976,7 @@
       "contactCreatedAt": "Contact created at",
       "fromCtwaAd": "From ads",
       "fromGoogleAd": "From Google Ads",
+      "clickedAd": "Clicked ad",
       "ctwaConversion": "Ad conversion",
       "lastUserInputTypes": {
         "text": "Text",
@@ -2605,6 +2606,12 @@
     },
     "lastAd": {
       "label": "Last Ad"
+    },
+    "adIds": {
+      "label": "All Ad IDs"
+    },
+    "adId": {
+      "label": "First Ad ID"
     },
     "lastAdSourcePlatform": {
       "label": "Last Ad Source Platform"
@@ -8075,6 +8082,22 @@
     "title": "TikTok",
     "description": "Connect your TikTok account to reply to direct messages.",
     "refreshToken": "Refresh Token"
+  },
+  "contactAdReferrals": {
+    "title": "Ads history",
+    "empty": "No ad clicks recorded for this contact yet."
+  },
+  "adsReferralStats": {
+    "title": "Contacts by ad",
+    "description": "Contacts each ad reached and the conversions credited to its clicks. Counts clicks since tracking began.",
+    "ad": "Ad",
+    "contacts": "Contacts",
+    "firstTouch": "First touch",
+    "leads": "Leads",
+    "purchases": "Purchases",
+    "revenue": "Revenue",
+    "empty": "No ad clicks in this period.",
+    "timeout": "This report took too long. Choose a shorter date range."
   },
   "coupons": {
     "title": "Coupons",

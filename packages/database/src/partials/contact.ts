@@ -125,6 +125,8 @@ export const systemFieldTypes = z.enum([
 
   "last_ad",
   "last_ctwa",
+  "ad_ids",
+  "ad_id",
   "last_ad_source_url",
   "last_ad_source_platform",
   "last_ad_headline",
@@ -182,6 +184,8 @@ export const onDemandSystemFieldTypes: readonly SystemFieldType[] = [
   systemFieldTypes.enum.last_form_id,
   systemFieldTypes.enum.last_form_name,
   systemFieldTypes.enum.last_adgroup_id,
+  systemFieldTypes.enum.ad_ids,
+  systemFieldTypes.enum.ad_id,
   systemFieldTypes.enum.admin_name,
   systemFieldTypes.enum.admin_team_name,
   systemFieldTypes.enum.last_text_input,
@@ -322,6 +326,7 @@ export const contactFilterFields = z.enum([
   "language",
   "fromCtwaAd",
   "fromGoogleAd",
+  "clickedAd",
   "ctwaConversion",
   "ctwaRetarget",
 ])

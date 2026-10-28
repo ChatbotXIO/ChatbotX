@@ -53,6 +53,7 @@ export const resolveFilterValueLabelsRequest = z.object({
   emailTopics: filterValueIdsSchema,
   pipelines: filterValueIdsSchema,
   pipelineStages: filterValueIdsSchema,
+  ads: filterValueIdsSchema,
 })
 
 const filterValueLabelSchema = z.object({ id: z.string(), name: z.string() })
@@ -72,6 +73,7 @@ export const resolveFilterValueLabelsResponse = z.object({
   emailTopics: z.array(filterValueLabelSchema),
   pipelines: z.array(filterValueLabelSchema),
   pipelineStages: z.array(filterValueLabelSchema),
+  ads: z.array(filterValueLabelSchema),
 })
 
 export type ResolveFilterValueLabelsResponse = z.infer<

@@ -934,6 +934,7 @@
       "contactCreatedAt": "Kontak dibuat pada",
       "fromCtwaAd": "Dari iklan",
       "fromGoogleAd": "Dari Google Ads",
+      "clickedAd": "Mengeklik iklan",
       "ctwaConversion": "Konversi iklan",
       "lastUserInputTypes": {
         "text": "Teks",
@@ -2399,6 +2400,12 @@
     },
     "lastAd": {
       "label": "Iklan Terakhir"
+    },
+    "adIds": {
+      "label": "Semua ID Iklan"
+    },
+    "adId": {
+      "label": "ID Iklan Pertama"
     },
     "lastAdSourcePlatform": {
       "label": "Platform Sumber Iklan Terakhir"
@@ -7106,6 +7113,22 @@
     "title": "TikTok",
     "description": "Hubungkan akun TikTok Anda untuk membalas pesan langsung.",
     "refreshToken": "Token Penyegaran"
+  },
+  "contactAdReferrals": {
+    "title": "Riwayat iklan",
+    "empty": "Belum ada klik iklan yang tercatat untuk kontak ini."
+  },
+  "adsReferralStats": {
+    "title": "Kontak per iklan",
+    "description": "Kontak yang dijangkau tiap iklan dan konversi yang dikaitkan dengan kliknya. Klik dihitung sejak pelacakan dimulai.",
+    "ad": "Iklan",
+    "contacts": "Kontak",
+    "firstTouch": "Sentuhan pertama",
+    "leads": "Prospek",
+    "purchases": "Pembelian",
+    "revenue": "Pendapatan",
+    "empty": "Tidak ada klik iklan pada periode ini.",
+    "timeout": "Laporan ini terlalu lama. Pilih rentang tanggal yang lebih singkat."
   },
   "coupons": {
     "title": "Kupon",

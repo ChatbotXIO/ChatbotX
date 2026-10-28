@@ -166,6 +166,24 @@ describe("listContactFilterFieldsForAPI", () => {
       })
     })
 
+    test("clicked ad points an agent at the ads it can pick, and starts later than the store", async () => {
+      const result = await list()
+      const valueSource = find(result, "clickedAd")?.valueSource
+
+      expect(valueSource).toMatchObject({
+        operation: "ads.listReferralAds",
+        scope: "ads",
+        fixedValues: [],
+        valueFormat: "id",
+      })
+      // Ad clicks were not recorded from the day the activity store was.
+      expect(Date.parse(valueSource?.trackingStartedAt ?? "")).toBeGreaterThan(
+        Date.parse(
+          find(result, "executedFlow")?.valueSource?.trackingStartedAt ?? "",
+        ),
+      )
+    })
+
     test("free-form tracked fields carry only their format and baseline", async () => {
       const result = await list()
 
@@ -189,6 +207,7 @@ describe("listContactFilterFieldsForAPI", () => {
         "executedStep",
         "keywordsReceived",
         "completedWhatsAppFlows",
+        "clickedAd",
         "emailSent",
         "emailDelivered",
         "emailOpened",

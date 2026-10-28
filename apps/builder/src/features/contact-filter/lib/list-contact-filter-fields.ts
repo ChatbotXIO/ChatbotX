@@ -8,6 +8,7 @@ import {
   CONTACT_ACTIVITY_FILTERS,
   CONTACT_ACTIVITY_TRACKED_FIELDS,
   CONTACT_ACTIVITY_TRACKING_STARTED_AT,
+  getContactActivityTrackingStartedAt,
   isContactActivityFilterField,
 } from "@chatbotx.io/database/partials"
 import { isContactActivityFiltersEnabled } from "@chatbotx.io/database/queries/contact-filter"
@@ -46,7 +47,7 @@ const valueSourceForField = (
       scope: config.valueSourceScope,
       fixedValues: [...config.fixedValues],
       valueFormat: config.valueFormat,
-      trackingStartedAt: CONTACT_ACTIVITY_TRACKING_STARTED_AT,
+      trackingStartedAt: getContactActivityTrackingStartedAt(field),
     }
   }
   return {

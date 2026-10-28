@@ -7,7 +7,7 @@ const mocks = vi.hoisted(() => ({
   hasIntegration: vi.fn(),
   claimGoogleClickLookup: vi.fn(),
   markGoogleClickLookupDone: vi.fn(),
-  updateTracking: vi.fn(),
+  updateTrackingAtomic: vi.fn(),
   runChannelHandler: vi.fn(),
   resolveContext: vi.fn(),
   warn: vi.fn(),
@@ -19,7 +19,7 @@ vi.mock("@chatbotx.io/business", () => ({
   claimGoogleClickLookup: mocks.claimGoogleClickLookup,
   markGoogleClickLookupDone: mocks.markGoogleClickLookupDone,
   integrationGoogleAdsService: { hasIntegration: mocks.hasIntegration },
-  contactInboxService: { updateTracking: mocks.updateTracking },
+  contactInboxService: { updateTrackingAtomic: mocks.updateTrackingAtomic },
 }))
 vi.mock("../src/services/integrations", () => ({
   resolveIntegrationContextFromContactInbox: mocks.resolveContext,
@@ -67,12 +67,14 @@ const expectedTracking = {
   contactId: "contact-1",
   workspaceId: "ws-1",
   data: { referral: lookedUp },
+  // The click id keys the touch; a profile lookup has no carrying event.
+  referralOccurrence: { occurredAt: expect.any(Date) },
 }
 
 describe("lookupAndPersistGoogleClick", () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    mocks.updateTracking.mockReset()
+    mocks.updateTrackingAtomic.mockReset()
     mocks.isGoogleClickLookupCandidate.mockReturnValue(true)
     mocks.hasIntegration.mockResolvedValue(true)
     mocks.claimGoogleClickLookup.mockResolvedValue(true)
@@ -102,7 +104,7 @@ describe("lookupAndPersistGoogleClick", () => {
         },
       },
     )
-    expect(mocks.updateTracking).toHaveBeenCalledWith(expectedTracking)
+    expect(mocks.updateTrackingAtomic).toHaveBeenCalledWith(expectedTracking)
     expect(mocks.markGoogleClickLookupDone).toHaveBeenCalledWith("ci-1")
   })
 
@@ -125,7 +127,7 @@ describe("lookupAndPersistGoogleClick", () => {
     await run()
 
     expect(mocks.runChannelHandler).not.toHaveBeenCalled()
-    expect(mocks.updateTracking).not.toHaveBeenCalled()
+    expect(mocks.updateTrackingAtomic).not.toHaveBeenCalled()
     expect(mocks.markGoogleClickLookupDone).not.toHaveBeenCalled()
   })
 
@@ -140,14 +142,14 @@ describe("lookupAndPersistGoogleClick", () => {
   test("does not re-store the click already on the contact inbox, and marks the session done", async () => {
     await run({ gclid: GCLID })
 
-    expect(mocks.updateTracking).not.toHaveBeenCalled()
+    expect(mocks.updateTrackingAtomic).not.toHaveBeenCalled()
     expect(mocks.markGoogleClickLookupDone).toHaveBeenCalledWith("ci-1")
   })
 
   test("stores a different click than the one on file", async () => {
     await run({ gclid: "OTHEROTHER1234567890" })
 
-    expect(mocks.updateTracking).toHaveBeenCalledTimes(1)
+    expect(mocks.updateTrackingAtomic).toHaveBeenCalledTimes(1)
   })
 
   test("marks the session done when the channel knows no click", async () => {
@@ -155,7 +157,7 @@ describe("lookupAndPersistGoogleClick", () => {
 
     await run()
 
-    expect(mocks.updateTracking).not.toHaveBeenCalled()
+    expect(mocks.updateTrackingAtomic).not.toHaveBeenCalled()
     expect(mocks.markGoogleClickLookupDone).toHaveBeenCalledWith("ci-1")
   })
 
@@ -198,7 +200,7 @@ describe("lookupAndPersistGoogleClick", () => {
   })
 
   test("a failed save leaves the session open and logs only the error type, never its text", async () => {
-    mocks.updateTracking.mockRejectedValue(
+    mocks.updateTrackingAtomic.mockRejectedValue(
       new Error(`Failed query: update ... params: {"gclid":"${GCLID}"}`),
     )
 
@@ -218,7 +220,7 @@ describe("persistNewContactGoogleClick", () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
-    mocks.updateTracking.mockReset()
+    mocks.updateTrackingAtomic.mockReset()
     mocks.hasIntegration.mockResolvedValue(true)
   })
 
@@ -229,7 +231,7 @@ describe("persistNewContactGoogleClick", () => {
       referral: lookedUp,
     })
 
-    expect(mocks.updateTracking).toHaveBeenCalledWith(expectedTracking)
+    expect(mocks.updateTrackingAtomic).toHaveBeenCalledWith(expectedTracking)
     expect(mocks.markGoogleClickLookupDone).toHaveBeenCalledWith("ci-1")
   })
 
@@ -240,12 +242,12 @@ describe("persistNewContactGoogleClick", () => {
       referral: null,
     })
 
-    expect(mocks.updateTracking).not.toHaveBeenCalled()
+    expect(mocks.updateTrackingAtomic).not.toHaveBeenCalled()
     expect(mocks.markGoogleClickLookupDone).toHaveBeenCalledWith("ci-1")
   })
 
   test("a failed save leaves the session open and never logs the click id", async () => {
-    mocks.updateTracking.mockRejectedValue(
+    mocks.updateTrackingAtomic.mockRejectedValue(
       new Error(`Failed query: params: {"gclid":"${GCLID}"}`),
     )
 
@@ -268,7 +270,7 @@ describe("persistNewContactGoogleClick", () => {
       referral: lookedUp,
     })
 
-    expect(mocks.updateTracking).toHaveBeenCalledTimes(1)
+    expect(mocks.updateTrackingAtomic).toHaveBeenCalledTimes(1)
     expect(mocks.markGoogleClickLookupDone).not.toHaveBeenCalled()
   })
 
@@ -279,7 +281,7 @@ describe("persistNewContactGoogleClick", () => {
       referral: lookedUp,
     })
 
-    expect(mocks.updateTracking).not.toHaveBeenCalled()
+    expect(mocks.updateTrackingAtomic).not.toHaveBeenCalled()
     expect(mocks.hasIntegration).not.toHaveBeenCalled()
   })
 

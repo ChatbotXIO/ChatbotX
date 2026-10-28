@@ -224,6 +224,19 @@ export const reservedCustomFieldIds: {
     channels: ["messenger", "instagram", "whatsapp"],
   },
   {
+    // Read from the contact's ad touch log (all inboxes), not the last referral.
+    id: systemFieldTypes.enum.ad_ids,
+    type: "shortText",
+    labelKey: "fields.adIds.label",
+    channels: ["messenger", "instagram", "whatsapp", "zalo"],
+  },
+  {
+    id: systemFieldTypes.enum.ad_id,
+    type: "shortText",
+    labelKey: "fields.adId.label",
+    channels: ["messenger", "instagram", "whatsapp", "zalo"],
+  },
+  {
     // Only WhatsApp Click-to-WhatsApp referrals carry an ad body.
     id: systemFieldTypes.enum.last_ad_body,
     type: "shortText",

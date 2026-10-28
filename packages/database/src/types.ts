@@ -20,6 +20,8 @@ export type GoogleAdsSettingsModel =
 export type IntegrationGoogleAdsModel =
   typeof schema.integrationGoogleAdsModel.$inferSelect
 export type MetaCapiEventModel = typeof schema.metaCapiEventModel.$inferSelect
+export type ContactReferralEventModel =
+  typeof schema.contactReferralEventModel.$inferSelect
 export type FieldModel = typeof schema.customFieldModel.$inferSelect
 export type AutomatedResponseModel =
   typeof schema.automatedResponseModel.$inferSelect

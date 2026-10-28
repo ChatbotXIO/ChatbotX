@@ -267,6 +267,38 @@ export const listChannelAdAccountsPublicRequestParams = z.object({
   ),
 })
 
+export const listReferralAdsPublicRequest = z.object({
+  search: z
+    .string()
+    .trim()
+    .max(100)
+    .optional()
+    .describe("Match the ad id or its headline (case-insensitive)."),
+  limit: z.coerce
+    .number()
+    .int()
+    .min(1)
+    .max(100)
+    .default(50)
+    .describe("Maximum number of ads to return."),
+})
+
+export const listReferralAdsPublicResponse = z.object({
+  data: z.array(
+    z.object({
+      id: z
+        .string()
+        .describe(
+          "Ad id. Use it as a value of a `clickedAd` contact filter condition.",
+        ),
+      title: z
+        .string()
+        .nullable()
+        .describe("The ad's latest headline, when the channel carried one."),
+    }),
+  ),
+})
+
 export const listChannelAdAccountsPublicRequest = z.object({
   integrationId: zodBigintAsString()
     .optional()

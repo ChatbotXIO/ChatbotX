@@ -211,6 +211,7 @@ chatbotx contacts unblock <identifier>
 chatbotx contacts filter-fields                      # Field/operator reference for --contactFilter
                                                      # [--surface flowCondition] also lists flow-only fields (isWithinWorkingHours)
                                                      # `pipelineItems` = pipelines + stages and the shapes of `pipelineItem` conditions
+chatbotx contacts ad-referrals <identifier>           # Ads the contact came from [--perPage --cursor]
 
 # Discover IDs accepted by contactFilter.commentedOnPost
 chatbotx channel-posts list                           # [--limit --search --cursor]
@@ -534,6 +535,8 @@ chatbotx ads funnel                                  # Get ad conversion funnel
 chatbotx ads funnel-timeseries                       # Get daily ad conversion funnel
 chatbotx ads capi-delivery                           # Get Conversions API delivery status
 chatbotx ads conversions-export                      # Export conversion rows [--allChannels]
+chatbotx ads referral-ads                            # List ads contacts recently came from [--search --limit]
+chatbotx ads referral-stats                          # Contacts and conversions per ad [--from --to --tz --channel --limit]
 chatbotx ads ad-accounts list <channel>               # List channel ad accounts
 chatbotx ads analytics-overview                      # Get ad analytics overview
 chatbotx ads analytics-timeseries                    # Get daily ad analytics

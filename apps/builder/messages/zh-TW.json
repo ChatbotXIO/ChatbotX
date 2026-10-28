@@ -1367,6 +1367,12 @@
     "lastAd": {
       "label": "最後一個廣告"
     },
+    "adIds": {
+      "label": "所有廣告ID"
+    },
+    "adId": {
+      "label": "首個廣告ID"
+    },
     "lastAdSourcePlatform": {
       "label": "最後一個廣告來源平台"
     },
@@ -2798,6 +2804,7 @@
       "contactCreatedAt": "聯絡人建立時間",
       "fromCtwaAd": "來自廣告",
       "fromGoogleAd": "來自 Google Ads",
+      "clickedAd": "點擊過廣告",
       "ctwaConversion": "廣告轉換",
       "lastUserInputTypes": {
         "text": "文字",
@@ -7152,6 +7159,22 @@
     "title": "TikTok",
     "description": "連接您的 TikTok 帳號用於回覆私訊。",
     "refreshToken": "刷新權杖"
+  },
+  "contactAdReferrals": {
+    "title": "廣告歷史",
+    "empty": "尚未記錄此聯絡人的廣告點擊。"
+  },
+  "adsReferralStats": {
+    "title": "依廣告統計聯絡人",
+    "description": "每個廣告觸及的聯絡人，以及歸因於其點擊的轉換。統計自開始追蹤以來的點擊。",
+    "ad": "廣告",
+    "contacts": "聯絡人",
+    "firstTouch": "首次接觸",
+    "leads": "潛在客戶",
+    "purchases": "購買",
+    "revenue": "營收",
+    "empty": "此時段內沒有廣告點擊。",
+    "timeout": "此報表耗時過長。請選擇較短的日期範圍。"
   },
   "coupons": {
     "title": "優惠券",

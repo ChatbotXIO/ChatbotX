@@ -44,6 +44,7 @@ import { contactNoteRelations } from "./contact-note"
 import { contactsOnBroadcastsRelations } from "./contact-on-broadcast"
 import { contactsOnSequenceRelations } from "./contact-on-sequence"
 import { contactOnSmartDelayRelations } from "./contact-on-smart-delay"
+import { contactReferralEventRelations } from "./contact-referral-event"
 import { contactsToTagsRelations } from "./contact-to-tag"
 import { contactToTagChannelRelations } from "./contact-to-tag-channel"
 import { conversationRelations } from "./conversation"
@@ -187,6 +188,7 @@ export const relations = {
   ...channelPostRelations,
   ...contactRelations,
   ...contactInboxPostRelations,
+  ...contactReferralEventRelations,
   ...tagRelations,
   ...templateRelations,
   ...templateInstallationRelations,

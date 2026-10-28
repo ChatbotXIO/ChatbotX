@@ -39,6 +39,8 @@ describe("Instagram receiveMessage", () => {
 
     expect(result.ref).toBe("ad-ref")
     expect(result.referralSource).toBe("ADS")
+    // The provider time keys a referral-only delivery when its webhook is retried.
+    expect(result.occurredAt).toEqual(new Date(1))
   })
 
   test("derives the ad platform from source_url when source_platform is absent", async () => {

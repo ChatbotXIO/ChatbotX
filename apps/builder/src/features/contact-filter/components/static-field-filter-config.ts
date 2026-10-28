@@ -158,6 +158,7 @@ export const staticFieldRules: Record<string, StaticFieldRule> = {
   appliedJobs: dropdownRule,
   tags: relationSetRule,
   completedWhatsAppFlows: relationSetRule,
+  clickedAd: relationSetRule,
   messengerList: dropdownRule,
   subscribedToDripCampaign: relationSetRule,
   conversationAssigned: relationSetRule,

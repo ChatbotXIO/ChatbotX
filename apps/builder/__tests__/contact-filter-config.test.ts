@@ -585,6 +585,7 @@ describe("contact filter field config helpers", () => {
             label: "condition.fields.fromGoogleAd",
             value: "fromGoogleAd",
           },
+          { label: "condition.fields.clickedAd", value: "clickedAd" },
           {
             label: "condition.fields.ctwaConversion",
             value: "ctwaConversion",
@@ -885,6 +886,7 @@ describe("contact filter field config helpers", () => {
           emailTopics: [],
           pipelines: [],
           pipelineStages: [],
+          ads: [],
         },
       })
       const byName = (name: string) =>

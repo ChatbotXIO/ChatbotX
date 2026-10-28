@@ -186,6 +186,21 @@ export const possibleErrorsOnCounting = {
 } satisfies ErrorMap
 
 /**
+ * A report that outruns its statement timeout answers 503 `reportTimeout`
+ * (`reportTimeoutException` in `@chatbotx.io/business`); the caller retries
+ * with a shorter date range or a narrower channel.
+ */
+const reportTimeout = {
+  message: "The report took too long",
+  status: 503,
+} as const
+
+export const possibleErrorsOnReporting = {
+  businessError,
+  reportTimeout,
+} satisfies ErrorMap
+
+/**
  * Per-router sets carry only what varies by operation shape. The auth,
  * rate-limit, and both validation codes come from `commonApiErrors`, attached
  * once to the public stacks in `@/orpc` — never re-declare them here.

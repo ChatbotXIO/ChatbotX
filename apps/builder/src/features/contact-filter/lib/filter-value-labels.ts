@@ -44,6 +44,7 @@ const FILTER_VALUE_LABEL_SOURCES: Partial<
   },
   keywords: { lookups: [{ type: "keywords" }] },
   whatsappFlows: { lookups: [{ type: "whatsappFlows" }] },
+  ads: { lookups: [{ type: "ads" }] },
   emailTopics: {
     lookups: [{ type: "emailTopics" }],
     fixedValues: [NO_TOPIC_FIXED_VALUE],

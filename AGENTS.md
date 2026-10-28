@@ -216,7 +216,7 @@ See **`.agents/rules/git.md`** for the full canonical rules (commit format, bran
 - Request flow diagrams: `docs/request-workflow.md`
 - White-label tenancy model: `docs/tenancy.md`
 - Workspace API tokens (hashing, scopes, `{{api_key}}` default token): `docs/developer/workspace-api-tokens.md`
-- Ads conversion tracking (CTWA/CTM/CTID, rules vs Trigger actions, CAPI): `docs/ads-conversion-tracking.md`
+- Ads conversion tracking (CTWA/CTM/CTID, rules vs Trigger actions, CAPI, per-click ad touch history): `docs/ads-conversion-tracking.md`
 - Google Ads Click-to-Message conversion tracking (gclid/gbraid capture, Connection-engine OAuth, Data Manager API delivery, dedup, state machine, statistics dashboard, read-only public API, ops runbook): `docs/google-ads-conversion-tracking.md`
 - Google Ads conversion options for admins (dedup mode, conversion time, consent, legacy differences): `docs/google-ads-conversion-options-admin-guide.md`
 - Comment automation (all channels): `docs/comment-automation.md` (skill: `.agents/skills/comment-automation/`)
@@ -231,7 +231,7 @@ See **`.agents/rules/git.md`** for the full canonical rules (commit format, bran
 - Inbound Webhooks (external systems POST JSON to a tokenised URL → find/create a contact on a chosen inbox, map payload values, run trigger actions; outbox/claim/lease processing, per-channel inbox identifiers, request log, public API): `docs/inbound-webhooks.md`
 - Working Hours (agent schedules, waiting-window state machine, response time and first response time within working hours, `agent:replied` analytics pipeline, public API): `docs/working-hours.md`
 - Messenger welcome message flows (publish/rename/delete sync of a flow's starting step to Meta Click-to-Messenger welcome flows, ad-locked behavior, table/jobs/lock): `docs/messenger-welcome-message-flows.md`
-- Contact activity store (channel-agnostic activity tables, ten activity-backed contact filters, since-tracking semantics, bounded counts, kill switches, ops runbook): `docs/contact-activity.md`
+- Contact activity store (channel-agnostic activity tables, eleven activity-backed contact filters, since-tracking semantics, bounded counts, kill switches, ops runbook): `docs/contact-activity.md`
 - Pipelines (CRM kanban boards: data model, access scope/ACL, mutation engine and post-commit effects, locking order, queued stage deletion, keyset cursors, caching policy, pipelineItem* events/webhooks/realtime, Pipelines flow step, `pipelineItem` contact filter, `{{pipelines.*}}` variables, templates, public API/CLI/MCP, analytics, limits): `docs/pipelines.md`
 
 When unsure, search the codebase for an existing feature that resembles the request and mirror its structure, imports, and error-handling style.

@@ -2,6 +2,7 @@ import {
   adsAnalyticsService,
   adsConversionService,
   adsRetargetService,
+  contactReferralEventService,
   getCachedCustomAudiences,
   resolveChannelAdAccountSources,
 } from "@chatbotx.io/business"
@@ -13,6 +14,7 @@ import {
   possibleErrorsOnFindingResource,
   possibleErrorsOnListingResource,
   possibleErrorsOnMutatingResource,
+  possibleErrorsOnReporting,
 } from "@/lib/orpc/orpc-error-helper"
 import { paginateInMemory } from "@/lib/public-api/list"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
@@ -37,11 +39,17 @@ import {
   listChannelAdAccountsPublicResponse,
   listCustomAudiencesPublicRequest,
   listCustomAudiencesPublicResponse,
+  listReferralAdsPublicRequest,
+  listReferralAdsPublicResponse,
   startRetargetAudienceSyncPublicRequest,
   startRetargetAudienceSyncPublicResponse,
   toggleAdsConversionRulePublicRequest,
   updateAdsConversionRulePublicRequest,
 } from "../schema/public"
+import {
+  referralStatsRequest,
+  referralStatsResponse,
+} from "../schema/referral-stats"
 
 const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("ads")
 
@@ -415,7 +423,51 @@ const adsAnalyticsPublicRouter = {
     ),
 }
 
+const adsReferralPublicRouter = {
+  referralStats: workspaceTokenAuthAPI
+    .route({
+      method: "GET",
+      path: "/v1/ads/referral-stats",
+      summary: "Get contacts and conversions per ad",
+      description:
+        "Reports, for each ad contacts came from in a date range, how many contacts it reached (`anyTouchContacts`), how many came to you first through it (`firstTouchContacts`) and the lead/purchase conversions credited to its clicks. Ad ids match the `clickedAd` filter values (see `ads.listReferralAds`). Only clicks from when ad tracking began are counted, and conversions recorded before that are not linked to an ad. Narrow the range or `channel` if the request times out.",
+      tags: ["Ads"],
+    })
+    .input(referralStatsRequest)
+    .output(referralStatsResponse)
+    .errors(possibleErrorsOnReporting)
+    .handler(async ({ context, input }) => ({
+      data: await contactReferralEventService.getAdStats({
+        ...input,
+        workspaceId: context.workspace.id,
+      }),
+    })),
+
+  listReferralAds: workspaceTokenAuthAPI
+    .route({
+      method: "GET",
+      path: "/v1/ads/referral-ads",
+      summary: "List ads contacts recently came from",
+      description:
+        "Lists the ads (Click-to-WhatsApp, Click-to-Messenger/Instagram and Google Ads clicks) the workspace's contacts most recently came from, newest first, with each ad's latest headline. Only recent ad activity is searched, so an older ad does not appear here; its id is still a valid `clickedAd` value. Use the returned `id` values in a `clickedAd` condition of a `contactFilter` (see `contacts.listFilterFields`, which also reports from when clicks are recorded: earlier clicks are not known).",
+      tags: ["Ads"],
+    })
+    .input(listReferralAdsPublicRequest)
+    .output(listReferralAdsPublicResponse)
+    .errors(possibleErrorsOnListingResource)
+    .handler(async ({ context, input }) => ({
+      data: (
+        await contactReferralEventService.listRecentAds({
+          workspaceId: context.workspace.id,
+          search: input.search || undefined,
+          limit: input.limit,
+        })
+      ).map((ad) => ({ id: ad.adId, title: ad.title })),
+    })),
+}
+
 export const adsPublicRouter = {
+  ...adsReferralPublicRouter,
   ...adsConversionRulesPublicRouter,
   ...adsAnalyticsPublicRouter,
   ...adsCampaignPublicRouter,

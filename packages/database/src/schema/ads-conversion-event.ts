@@ -22,6 +22,7 @@ import {
   adsConversionEventType,
 } from "./ads-conversion-rule"
 import { contactInboxModel } from "./contact-inbox"
+import { contactReferralEventModel } from "./contact-referral-event"
 import { integrationInstagramModel } from "./integration-instagram"
 import { integrationMessengerModel } from "./integration-messenger"
 import { integrationWhatsappModel } from "./integration-whatsapp"
@@ -110,6 +111,13 @@ export const adsConversionEventModel = pgTable(
       onDelete: "set null",
       onUpdate: "cascade",
     }),
+    // The ad touch this conversion was credited to. Attribution itself still
+    // reads the `adId`/`ctwaClid` snapshots above; this only links the touch
+    // for reporting. NULL for rows recorded before touches were logged.
+    referralEventId: bigintAsString().references(
+      () => contactReferralEventModel.id,
+      { onDelete: "set null", onUpdate: "cascade" },
+    ),
     currency: text(),
     value: numeric(),
     // Richer Purchase data (plan #4) — both optional/Purchase-only; NULL for
@@ -190,6 +198,9 @@ export const adsConversionEventModel = pgTable(
       "btree",
       table.contactInboxId.asc().nullsLast(),
     ),
+    index("AdsConversionEvent_referralEventId_idx")
+      .using("btree", table.referralEventId.asc().nullsLast())
+      .where(sql`${table.referralEventId} IS NOT NULL`),
     index("AdsConversionEvent_workspaceId_occurredAt_idx").using(
       "btree",
       table.workspaceId.asc().nullsLast(),

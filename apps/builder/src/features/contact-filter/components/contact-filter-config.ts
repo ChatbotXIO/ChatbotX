@@ -293,6 +293,7 @@ const resolveContactFilterOptions = (
     // topics carry the one fixed choice that is not a topic row.
     case "keywords":
     case "whatsappFlows":
+    case "ads":
       return
     case "emailTopics":
       return [
@@ -394,7 +395,7 @@ const CONTACT_FILTER_GROUP_FIELDS = {
     "emailOpened",
     "emailClicked",
   ],
-  ctwaAds: ["fromCtwaAd", "fromGoogleAd", "ctwaConversion"],
+  ctwaAds: ["fromCtwaAd", "fromGoogleAd", "clickedAd", "ctwaConversion"],
   systemTime: [
     "isWithinWorkingHours",
     "currentDate",
