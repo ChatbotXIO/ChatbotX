@@ -13,6 +13,7 @@ import {
   type WorkspaceMemberPermissions,
   workspaceMemberRoles,
 } from "@chatbotx.io/database/partials"
+import { workspaceRepository } from "@chatbotx.io/database/repositories/workspace"
 import {
   ROOT_TENANT_ID,
   workspaceMemberModel,
@@ -137,23 +138,49 @@ class WorkspaceService extends BaseService {
     )
   }
 
-  /**
-   * The live workspace a user already owns — excludes a row mid soft-delete
-   * (`scheduledDeletionAt` set) so `createFirstWorkspace`'s idempotency
-   * check never hands back a workspace that's about to be purged, and
-   * orders by `id` (time-ordered) so a concurrent caller resolving "the"
-   * first workspace agrees deterministically even if the owner somehow
-   * ends up with more than one live row.
-   */
   async findActiveByOwner(props: {
     ownerId: string
     tx?: DatabaseClient
   }): Promise<WorkspaceModel | undefined> {
-    const { ownerId, tx = db } = props
-    return await tx.query.workspaceModel.findFirst({
-      where: { ownerId, scheduledDeletionAt: { isNull: true } },
-      orderBy: { id: "asc" },
-    })
+    return await workspaceRepository.findActiveByOwner(
+      { ownerId: props.ownerId },
+      props.tx,
+    )
+  }
+
+  /**
+   * The owner's live workspace, created when they have none. Serialized per
+   * owner with a transaction-scoped advisory lock so two tabs opening `/` at
+   * once cannot both create one. A Redis lock would not fence a caller-owned
+   * `tx` (its writes are invisible to the other caller until commit), so the
+   * lock rides the transaction that stays open until `create` commits.
+   * `create` gets the caller's own `tx` (possibly undefined) so the no-tx path
+   * keeps its own transaction, audit and quota semantics.
+   */
+  async ensureFirstForOwner(props: {
+    ownerId: string
+    name: string
+    tx?: DatabaseClient
+    quotaConsumption?: WorkspaceQuotaConsumption
+  }): Promise<WorkspaceModel> {
+    const { ownerId, name, tx, quotaConsumption } = props
+    const run = async (lockTx: DatabaseClient): Promise<WorkspaceModel> => {
+      await workspaceRepository.lockFirstWorkspace({ ownerId }, lockTx)
+      const existing = await workspaceRepository.findActiveByOwner(
+        { ownerId },
+        lockTx,
+      )
+      if (existing) {
+        return existing
+      }
+      return await this.create({
+        data: { name, ownerId },
+        createdBy: ownerId,
+        tx,
+        quotaConsumption,
+      })
+    }
+    return tx ? await run(tx) : await db.transaction(run)
   }
 
   // Auth gate — membership must take effect immediately on removal, so this

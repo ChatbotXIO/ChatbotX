@@ -4120,7 +4120,8 @@
   "workspaces": {
     "list": {
       "title": "Arbejdsområder Liste"
-    }
+    },
+    "defaultName": "{name}s arbejdsområde"
   },
   "workspaceToken": {
     "title": "Arbejdsområde token"

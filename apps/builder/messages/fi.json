@@ -4120,7 +4120,8 @@
   "workspaces": {
     "list": {
       "title": "Työtilaluettelo"
-    }
+    },
+    "defaultName": "Työtila: {name}"
   },
   "workspaceToken": {
     "title": "Työtilan tunnus"

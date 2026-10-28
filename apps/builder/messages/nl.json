@@ -4120,7 +4120,8 @@
   "workspaces": {
     "list": {
       "title": "Lijst met workspaces"
-    }
+    },
+    "defaultName": "Werkruimte van {name}"
   },
   "workspaceToken": {
     "title": "Workspacetoken"

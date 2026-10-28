@@ -4120,7 +4120,8 @@
   "workspaces": {
     "list": {
       "title": "Elenco delle aree di lavoro"
-    }
+    },
+    "defaultName": "Spazio di lavoro di {name}"
   },
   "workspaceToken": {
     "title": "Token dell'area di lavoro"

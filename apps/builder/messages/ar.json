@@ -1180,7 +1180,8 @@
   "workspaces": {
     "list": {
       "title": "قائمة مساحات العمل"
-    }
+    },
+    "defaultName": "مساحة عمل {name}"
   },
   "workspaceToken": {
     "title": "رمز مساحة العمل"

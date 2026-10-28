@@ -3050,7 +3050,8 @@
   "workspaces": {
     "list": {
       "title": "工作區清單"
-    }
+    },
+    "defaultName": "{name}的工作區"
   },
   "workspaceToken": {
     "title": "工作區代幣"

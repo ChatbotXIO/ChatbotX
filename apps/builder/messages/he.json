@@ -1911,7 +1911,8 @@
   "workspaces": {
     "list": {
       "title": "רשימת סביבות עבודה"
-    }
+    },
+    "defaultName": "סביבת העבודה של {name}"
   },
   "workspaceToken": {
     "title": "אסימון סביבת עבודה"

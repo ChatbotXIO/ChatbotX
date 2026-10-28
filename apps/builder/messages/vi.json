@@ -1222,7 +1222,8 @@
   "workspaces": {
     "list": {
       "title": "Danh sách workspace"
-    }
+    },
+    "defaultName": "Workspace của {name}"
   },
   "workspaceToken": {
     "title": "Token workspace"

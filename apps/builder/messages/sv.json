@@ -7445,7 +7445,8 @@
   "workspaces": {
     "list": {
       "title": "Lista över arbetsytor"
-    }
+    },
+    "defaultName": "{name}s arbetsyta"
   },
   "zalo": {
     "duplicated": "Det här Zalo OA-kontot är redan anslutet till en annan arbetsyta.",

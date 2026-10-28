@@ -1180,7 +1180,8 @@
   "workspaces": {
     "list": {
       "title": "Çalışma Alanları Listesi"
-    }
+    },
+    "defaultName": "{name} çalışma alanı"
   },
   "workspaceToken": {
     "title": "Çalışma alanı token'ı"

@@ -1222,7 +1222,8 @@
   "workspaces": {
     "list": {
       "title": "İş sahələrinin siyahısı"
-    }
+    },
+    "defaultName": "{name} iş sahəsi"
   },
   "workspaceToken": {
     "title": "İş sahəsi tokeni"

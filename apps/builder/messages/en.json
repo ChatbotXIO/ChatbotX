@@ -1222,7 +1222,8 @@
   "workspaces": {
     "list": {
       "title": "Workspaces List"
-    }
+    },
+    "defaultName": "{name}'s workspace"
   },
   "workspaceToken": {
     "title": "Workspace token"

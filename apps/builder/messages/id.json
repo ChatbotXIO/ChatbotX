@@ -4120,7 +4120,8 @@
   "workspaces": {
     "list": {
       "title": "Daftar Ruang Kerja"
-    }
+    },
+    "defaultName": "Workspace milik {name}"
   },
   "workspaceToken": {
     "title": "Token ruang kerja"

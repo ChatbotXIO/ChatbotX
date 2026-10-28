@@ -4099,7 +4099,8 @@
   "workspaces": {
     "list": {
       "title": "ワークスペース一覧"
-    }
+    },
+    "defaultName": "{name}のワークスペース"
   },
   "workspaceToken": {
     "title": "ワークスペーストークン"

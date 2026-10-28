@@ -4120,7 +4120,8 @@
   "workspaces": {
     "list": {
       "title": "Lista de espaços de trabalho"
-    }
+    },
+    "defaultName": "Workspace de {name}"
   },
   "workspaceToken": {
     "title": "Token do espaço de trabalho"

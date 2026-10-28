@@ -1180,7 +1180,8 @@
   "workspaces": {
     "list": {
       "title": "Espacio de trabajos List"
-    }
+    },
+    "defaultName": "Espacio de trabajo de {name}"
   },
   "workspaceToken": {
     "title": "Espacio de trabajo token"

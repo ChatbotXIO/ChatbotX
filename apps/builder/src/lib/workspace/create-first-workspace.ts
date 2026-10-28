@@ -4,8 +4,11 @@ import {
 } from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import type { DatabaseClient } from "@chatbotx.io/database/client"
+import type { WorkspaceModel } from "@chatbotx.io/database/types"
 import { redirect } from "next/navigation"
 import type { MessageKey } from "@/features/channel-connect/lib/message-key"
+
+const DEFAULT_WORKSPACE_NAME = "New Workspace"
 
 /** Query param `/channels/create` reads to explain why a channel connect could not start. */
 const CREATE_CHANNEL_ERROR_PARAM = "error"
@@ -78,6 +81,47 @@ function createChannelErrorPathFor(error: unknown): string | null {
   return null
 }
 
+interface FirstWorkspaceOptions {
+  name?: string
+  quotaConsumption?: WorkspaceQuotaConsumption
+  tx?: DatabaseClient
+}
+
+async function callEnsure(
+  userId: string,
+  {
+    tx,
+    quotaConsumption,
+    name = DEFAULT_WORKSPACE_NAME,
+  }: FirstWorkspaceOptions,
+): Promise<WorkspaceModel> {
+  return await workspaceService.ensureFirstForOwner({
+    ownerId: userId,
+    name,
+    tx,
+    quotaConsumption,
+  })
+}
+
+/**
+ * Same as `createFirstWorkspace` but for callers that cannot redirect (the
+ * `/` page): any known create failure (workspace limit, trial expired, MAC
+ * limit) yields `null` instead. Unknown errors keep propagating.
+ */
+export async function ensureFirstWorkspace(
+  userId: string,
+  options: Pick<FirstWorkspaceOptions, "name"> = {},
+): Promise<WorkspaceModel | null> {
+  try {
+    return await callEnsure(userId, options)
+  } catch (error) {
+    if (createChannelErrorPathFor(error)) {
+      return null
+    }
+    throw error
+  }
+}
+
 /**
  * First-channel path: the user has no workspace yet, so one is created before
  * the channel connects. Shared by the legacy JSON-state OAuth callback
@@ -88,17 +132,9 @@ function createChannelErrorPathFor(error: unknown): string | null {
  * failure into a redirect back to `/channels/create` with a translated
  * message, never a bare 500.
  *
- * Idempotent on `ownerId` (regression I7): this runs from a plain GET route
- * reached by a redirect, not a POST — a browser back-button retry, a
- * double-navigation, or a replayed request must reuse the user's existing
- * workspace instead of minting a second "New Workspace" every time. Without
- * this check, `workspaceService.create` has no such guard (it isn't meant
- * to — callers that deliberately want an ADDITIONAL workspace, e.g.
- * Settings → "New workspace", must still be able to create one), so the
- * idempotency has to live here, at the "this is the user's FIRST workspace"
- * call site specifically. `findActiveByOwner` excludes a workspace mid
- * soft-delete, so a user who deleted their only workspace gets a fresh one
- * instead of being handed back the one that's about to be purged.
+ * Idempotent on `ownerId` (regression I7): a GET route reached by a redirect
+ * can be replayed, so `workspaceService.ensureFirstForOwner` reuses the user's
+ * live workspace instead of minting a second one.
  *
  * Accepts an optional `tx`: `startChannelConnect`'s plain OAuth-start
  * path (no `beforeStart` hook) passes `connectionService.startSession`'s
@@ -112,20 +148,8 @@ export async function createFirstWorkspace(
   tx?: DatabaseClient,
   quotaConsumption?: WorkspaceQuotaConsumption,
 ) {
-  const existing = await workspaceService.findActiveByOwner({
-    ownerId: userId,
-    tx,
-  })
-  if (existing) {
-    return existing
-  }
   try {
-    return await workspaceService.create({
-      data: { name: "New Workspace", ownerId: userId },
-      createdBy: userId,
-      tx,
-      quotaConsumption,
-    })
+    return await callEnsure(userId, { tx, quotaConsumption })
   } catch (error) {
     const errorPath = createChannelErrorPathFor(error)
     if (!errorPath) {

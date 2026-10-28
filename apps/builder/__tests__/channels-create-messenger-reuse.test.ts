@@ -33,7 +33,10 @@ const {
   mockStartSession: vi.fn(),
   mockTryReuseFacebookSsoToken: vi.fn(),
   mockUpdateReturnUrl: vi.fn(),
-  mockWorkspaceCreate: vi.fn(async () => ({ id: "ws-new", ownerId: "user-1" })),
+  mockWorkspaceCreate: vi.fn(async (_args?: unknown) => ({
+    id: "ws-new",
+    ownerId: "user-1",
+  })),
 }))
 
 vi.mock("next/navigation", () => ({
@@ -69,6 +72,17 @@ vi.mock("@chatbotx.io/business", () => ({
     findById: mockFindWorkspaceById,
     findActiveByOwner: vi.fn(async () => undefined),
     create: mockWorkspaceCreate,
+    // Mirrors the real service for an owner with no live workspace.
+    ensureFirstForOwner: (props: {
+      ownerId: string
+      name: string
+      tx?: unknown
+    }) =>
+      mockWorkspaceCreate({
+        data: { name: props.name, ownerId: props.ownerId },
+        createdBy: props.ownerId,
+        tx: props.tx,
+      }),
   },
 }))
 
