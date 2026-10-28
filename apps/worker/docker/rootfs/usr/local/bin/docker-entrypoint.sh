@@ -79,9 +79,6 @@ run_all_workers() {
     echo "No worker bundles found under $WORKER_DIST_DIR" >&2
     exit 4
   fi
-  # Bound each legacy all-mode process independently only when an operator
-  # explicitly configures a heap cap. Consolidated commands retain V8's default.
-
   pids=""
 
   handle_shutdown() {
@@ -103,6 +100,8 @@ run_all_workers() {
   for worker in $(all_worker_names); do
     script="$(resolve_worker_script "$worker")"
     echo "Starting worker: $worker ($script)"
+    # Bound each legacy all-mode process independently only when an operator
+    # explicitly configures a heap cap. Consolidated commands retain V8's default.
     if [ -n "${WORKER_MAX_OLD_SPACE_MB:-}" ]; then
       NODE_OPTIONS="$NODE_OPTIONS --max-old-space-size=$WORKER_MAX_OLD_SPACE_MB" "$NODE_BIN" "$script" &
     else
@@ -133,6 +132,15 @@ run_all_workers() {
   done
 }
 
+# Consolidated single-process modes share one set of env defaults.
+run_consolidated() {
+  export DATABASE_POOL_MAX="${DATABASE_POOL_MAX:-40}"
+  export SHARD_POOL_MAX="${SHARD_POOL_MAX:-40}"
+  export WORKER_SHUTDOWN_TIMEOUT_MS="${WORKER_SHUTDOWN_TIMEOUT_MS:-8000}"
+  require_script "$1"
+  exec "$NODE_BIN" "$1"
+}
+
 case "${1:-}" in
     "worker")
         if [ "$#" -gt 2 ]; then
@@ -145,20 +153,10 @@ case "${1:-}" in
             run_all_workers
             exit 0
         fi
-        if [ "$worker" = "standalone" ]; then
-            export DATABASE_POOL_MAX="${DATABASE_POOL_MAX:-40}"
-            export SHARD_POOL_MAX="${SHARD_POOL_MAX:-40}"
-            export WORKER_SHUTDOWN_TIMEOUT_MS="${WORKER_SHUTDOWN_TIMEOUT_MS:-8000}"
-            require_script "$STANDALONE_SCRIPT"
-            exec "$NODE_BIN" "$STANDALONE_SCRIPT"
-        fi
-        if [ "$worker" = "core" ]; then
-            export DATABASE_POOL_MAX="${DATABASE_POOL_MAX:-40}"
-            export SHARD_POOL_MAX="${SHARD_POOL_MAX:-40}"
-            export WORKER_SHUTDOWN_TIMEOUT_MS="${WORKER_SHUTDOWN_TIMEOUT_MS:-8000}"
-            require_script "$CORE_SCRIPT"
-            exec "$NODE_BIN" "$CORE_SCRIPT"
-        fi
+        case "$worker" in
+            standalone) run_consolidated "$STANDALONE_SCRIPT" ;;
+            core) run_consolidated "$CORE_SCRIPT" ;;
+        esac
 
         script="$(resolve_worker_script "$worker")" || {
           print_usage

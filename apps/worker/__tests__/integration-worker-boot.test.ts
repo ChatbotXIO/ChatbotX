@@ -60,7 +60,7 @@ vi.mock("@chatbotx.io/worker-config", () => ({
     processStoryMentionAutomation: "processStoryMentionAutomation",
   },
   aiAgentQueue: { add: workerState.aiAgentQueueAdd },
-  closeIntegrationQueueEvents: vi.fn(async () => undefined),
+  closeAllQueueEvents: vi.fn(async () => undefined),
   defaultWorkerOptions: {
     concurrency: 5,
     removeOnComplete: { count: 1000 },

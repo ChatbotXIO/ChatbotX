@@ -3,7 +3,6 @@ import { beforeAll, beforeEach, describe, expect, test, vi } from "vitest"
 
 const mocks = vi.hoisted(() => ({
   closeChatQueueEvents: vi.fn(),
-  closeHeavyQueueEvents: vi.fn(),
   ensureBootstrapped: vi.fn(async () => undefined),
   handleOrphanedIntegration: vi.fn(),
   heavyQueueAdd: vi.fn(),
@@ -30,7 +29,6 @@ vi.mock("@chatbotx.io/worker-config", async (importOriginal) => {
     await importOriginal<typeof import("@chatbotx.io/worker-config")>()
   return {
     ...actual,
-    closeHeavyQueueEvents: mocks.closeHeavyQueueEvents,
     defaultWorkerOptions: {},
     getHeavyJobOptions: () => ({}),
     getRedisConnection: vi.fn(),
@@ -41,10 +39,21 @@ vi.mock("@chatbotx.io/worker-config", async (importOriginal) => {
   }
 })
 
-vi.mock("bullmq", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("bullmq")>()
+// Plain stubs: `bullmq` is excluded from dep pre-bundling (vitest.config.ts), so
+// `importOriginal("bullmq")` cannot resolve it.
+vi.mock("bullmq", () => {
+  class Queue {}
+  class QueueEvents {}
+  class UnrecoverableError extends Error {
+    constructor(message?: string) {
+      super(message)
+      this.name = "UnrecoverableError"
+    }
+  }
   return {
-    ...actual,
+    Queue,
+    QueueEvents,
+    UnrecoverableError,
     Worker: class Worker {
       constructor(
         _queue: string,
@@ -81,7 +90,13 @@ vi.mock("../src/lib/is-blocked-workspace", () => ({
   isBlockedWorkspace: mocks.isBlockedWorkspace,
 }))
 vi.mock("../src/lib/logger", () => ({
-  logger: { error: vi.fn(), fatal: vi.fn(), info: vi.fn(), warn: vi.fn() },
+  logger: {
+    debug: vi.fn(),
+    error: vi.fn(),
+    fatal: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+  },
 }))
 vi.mock("../src/lib/resolve-workspace-id", () => ({
   resolveWorkspaceId: mocks.resolveWorkspaceId,

@@ -11,6 +11,7 @@ const state = vi.hoisted(() => ({
   onShutdown: vi.fn(),
   requestShutdown: vi.fn(),
   loggerError: vi.fn(),
+  isShutdownRequested: vi.fn(() => false),
 }))
 
 vi.mock("bullmq", () => ({
@@ -43,6 +44,7 @@ vi.mock("../src/lib/logger", () => ({
 }))
 
 vi.mock("../src/lib/shutdown", () => ({
+  isShutdownRequested: state.isShutdownRequested,
   onShutdown: state.onShutdown,
   requestShutdown: state.requestShutdown,
 }))
@@ -54,6 +56,7 @@ describe("createQueueWorker", () => {
     state.captured.length = 0
     state.listeners.clear()
     vi.clearAllMocks()
+    state.isShutdownRequested.mockReturnValue(false)
   })
 
   test("merges the queue connection and defaults, with caller options winning", () => {
@@ -88,7 +91,7 @@ describe("createQueueWorker", () => {
     )
   })
 
-  test("a custom onFailed replaces the default logger", () => {
+  test("a custom onFailed replaces the default logger", async () => {
     const onFailed = vi.fn()
     createQueueWorker("chat" as never, vi.fn(), { onFailed })
 
@@ -97,9 +100,44 @@ describe("createQueueWorker", () => {
       new Error("boom") as never,
     )
 
+    await Promise.resolve()
+
     expect(onFailed).toHaveBeenCalledOnce()
     expect(state.loggerError).not.toHaveBeenCalled()
     expect(state.captured[0]?.options).not.toHaveProperty("onFailed")
+  })
+
+  test("a rejecting onFailed is logged and never becomes an unhandled rejection", async () => {
+    const unhandled = vi.fn()
+    process.on("unhandledRejection", unhandled)
+    try {
+      const onFailed = vi.fn(() => Promise.reject(new Error("db down")))
+      createQueueWorker("heavy" as never, vi.fn(), { onFailed })
+
+      state.listeners.get("failed")?.(
+        { id: "9" } as never,
+        new Error("boom") as never,
+      )
+      await new Promise((resolve) => setTimeout(resolve, 0))
+
+      expect(state.loggerError).toHaveBeenCalledWith(
+        expect.objectContaining({ queue: "heavy", jobId: "9" }),
+        "Failed-job handler threw",
+      )
+      expect(unhandled).not.toHaveBeenCalled()
+    } finally {
+      process.off("unhandledRejection", unhandled)
+    }
+  })
+
+  test("does not construct a worker once shutdown has begun", () => {
+    state.isShutdownRequested.mockReturnValue(true)
+
+    expect(() => createQueueWorker("chat" as never, vi.fn())).toThrow(
+      "shutdown already requested",
+    )
+    expect(state.captured).toHaveLength(0)
+    expect(state.onShutdown).not.toHaveBeenCalled()
   })
 
   test("registers a closer named after the queue that closes the worker", async () => {

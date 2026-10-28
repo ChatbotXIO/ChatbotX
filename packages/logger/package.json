@@ -13,8 +13,7 @@
     "pino": "^10.3.1"
   },
   "exports": {
-    ".": "./src/index.ts",
-    "./source-mapped-stack": "./src/source-mapped-stack.ts"
+    ".": "./src/index.ts"
   },
   "scripts": {
     "check-types": "tsc --noEmit",

@@ -92,7 +92,7 @@ function startTriggerWorker() {
   )
 
   worker.on("completed", (job) => {
-    logger.info(`Trigger job ${job.id} completed successfully`)
+    logger.debug(`Trigger job ${job.id} completed successfully`)
   })
 
   logger.info("Trigger worker started")

@@ -38,7 +38,10 @@ vi.mock("@chatbotx.io/worker-config", () => ({
   defaultWorkerOptions: { concurrency: 5 },
   getQueueConnection: vi.fn(() => ({})),
 }))
-vi.mock("../src/lib/shutdown", () => ({ onShutdown: vi.fn() }))
+vi.mock("../src/lib/shutdown", () => ({
+  isShutdownRequested: () => false,
+  onShutdown: vi.fn(),
+}))
 vi.mock("../src/env", () => ({
   env: { MARKETING_MESSAGE_WORKER_CONCURRENCY: 7 },
 }))

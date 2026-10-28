@@ -1,12 +1,6 @@
 import pino, { type Logger } from "pino"
 import { redactSecrets, scrubSecretsInString } from "./redact"
 
-let errStackMapper: ((stack: string) => string) | undefined
-
-export const setErrStackMapper = (mapper: (stack: string) => string): void => {
-  errStackMapper = mapper
-}
-
 // Re-export the reusable log-safety helpers so a single import from
 // `@chatbotx.io/logger` covers safe diagnostic logging end to end:
 // `logDiagnostic` (level promotion) + `redactSecrets` / `capText` (safe payload).
@@ -28,19 +22,8 @@ export {
  * error logs pay this cost; a plain, already-sanitized object (e.g. from
  * `toLogSafeError`) is scrubbed as-is.
  */
-export const redactErrSerializer = (err: unknown): unknown => {
-  const serialized = err instanceof Error ? pino.stdSerializers.err(err) : err
-  const withMappedStack =
-    serialized &&
-    typeof serialized === "object" &&
-    "stack" in serialized &&
-    typeof serialized.stack === "string" &&
-    errStackMapper
-      ? { ...serialized, stack: errStackMapper(serialized.stack) }
-      : serialized
-
-  return redactSecrets(withMappedStack)
-}
+export const redactErrSerializer = (err: unknown): unknown =>
+  redactSecrets(err instanceof Error ? pino.stdSerializers.err(err) : err)
 
 const deriveErrorMessage = (value: unknown): string | undefined => {
   if (value instanceof Error) {

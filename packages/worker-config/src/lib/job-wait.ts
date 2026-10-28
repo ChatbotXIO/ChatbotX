@@ -60,10 +60,6 @@ export function getQueueEvents(queue: QueueName): QueueEvents {
   return queueEvents
 }
 
-export function getHeavyQueueEvents(): QueueEvents {
-  return getQueueEvents(queueNames.enum.heavy)
-}
-
 export async function closeAllQueueEvents(): Promise<void> {
   const open = [...queueEventsByName.values()]
   queueEventsByName.clear()

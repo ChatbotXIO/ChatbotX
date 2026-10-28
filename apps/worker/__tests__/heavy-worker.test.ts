@@ -63,10 +63,21 @@ vi.mock("@chatbotx.io/worker-config", async (importOriginal) => {
   }
 })
 
-vi.mock("bullmq", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("bullmq")>()
+// Plain stubs: `bullmq` is excluded from dep pre-bundling (vitest.config.ts), so
+// `importOriginal("bullmq")` cannot resolve it.
+vi.mock("bullmq", () => {
+  class Queue {}
+  class QueueEvents {}
+  class UnrecoverableError extends Error {
+    constructor(message?: string) {
+      super(message)
+      this.name = "UnrecoverableError"
+    }
+  }
   return {
-    ...actual,
+    Queue,
+    QueueEvents,
+    UnrecoverableError,
     Worker: class Worker {
       constructor(
         queue: string,
@@ -111,6 +122,7 @@ vi.mock("../src/lib/is-blocked-workspace", () => ({
 }))
 vi.mock("../src/lib/logger", () => ({
   logger: {
+    debug: vi.fn(),
     error: mocks.loggerError,
     fatal: vi.fn(),
     info: vi.fn(),

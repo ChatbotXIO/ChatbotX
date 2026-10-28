@@ -107,6 +107,10 @@ function installProcessHandlers(): void {
   })
 }
 
+export function isShutdownRequested(): boolean {
+  return isShuttingDown
+}
+
 export function onShutdown(name: string, close: Closer): void {
   if (isShuttingDown) {
     logger.warn(
