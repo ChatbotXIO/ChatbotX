@@ -40,6 +40,14 @@ default `WORKER_SHUTDOWN_TIMEOUT_MS` to 8 seconds. Other modes drain until the
 orchestrator stops them unless that variable is set; keep any configured
 deadline below the orchestrator stop grace period.
 
+Set the orchestrator stop grace period to at least
+`WORKER_SHUTDOWN_TIMEOUT_MS` + 2 seconds; about 30 seconds is a sensible value
+for consolidated mode. A job still running at the deadline is not lost: the
+integration and heavy workers hold a 60 second job lock (renewed every 30
+seconds while the process is alive) with a 30 second stalled check, so BullMQ
+retries an abandoned job within about a minute instead of waiting out the
+longest possible job.
+
 ### Database pool sizing
 
 `DATABASE_POOL_MAX` and `SHARD_POOL_MAX` control PostgreSQL connections per

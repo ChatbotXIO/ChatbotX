@@ -1,7 +1,7 @@
 import type { Job } from "bullmq"
 import { QueueEvents } from "bullmq"
 import { getQueueConnection } from "./connection"
-import { queueNames } from "./types"
+import { type QueueName, queueNames } from "./types"
 
 // Bounds the wait so a stalled/backlogged integration worker can never block
 // the caller indefinitely — an unbounded wait would leak a QueueEvents
@@ -42,43 +42,32 @@ export class JobCompletionStateUnknownError extends Error {
   }
 }
 
-let integrationQueueEvents: QueueEvents | null = null
-let heavyQueueEvents: QueueEvents | null = null
+// One QueueEvents per queue per process. Every instance subscribes to the
+// queue's whole event stream, so they are shared and closed together on
+// shutdown.
+const queueEventsByName = new Map<QueueName, QueueEvents>()
 
-function getIntegrationQueueEvents(): QueueEvents {
-  if (integrationQueueEvents) {
-    return integrationQueueEvents
+export function getQueueEvents(queue: QueueName): QueueEvents {
+  const existing = queueEventsByName.get(queue)
+  if (existing) {
+    return existing
   }
 
-  integrationQueueEvents = new QueueEvents(queueNames.enum.integration, {
-    connection: getQueueConnection(queueNames.enum.integration).duplicate(),
+  const queueEvents = new QueueEvents(queue, {
+    connection: getQueueConnection(queue).duplicate(),
   })
-  return integrationQueueEvents
-}
-
-export async function closeIntegrationQueueEvents(): Promise<void> {
-  if (integrationQueueEvents) {
-    await integrationQueueEvents.close()
-    integrationQueueEvents = null
-  }
+  queueEventsByName.set(queue, queueEvents)
+  return queueEvents
 }
 
 export function getHeavyQueueEvents(): QueueEvents {
-  if (heavyQueueEvents) {
-    return heavyQueueEvents
-  }
-
-  heavyQueueEvents = new QueueEvents(queueNames.enum.heavy, {
-    connection: getQueueConnection(queueNames.enum.heavy).duplicate(),
-  })
-  return heavyQueueEvents
+  return getQueueEvents(queueNames.enum.heavy)
 }
 
-export async function closeHeavyQueueEvents(): Promise<void> {
-  if (heavyQueueEvents) {
-    await heavyQueueEvents.close()
-    heavyQueueEvents = null
-  }
+export async function closeAllQueueEvents(): Promise<void> {
+  const open = [...queueEventsByName.values()]
+  queueEventsByName.clear()
+  await Promise.all(open.map((queueEvents) => queueEvents.close()))
 }
 
 /**
@@ -156,7 +145,7 @@ export async function waitForIntegrationJobCompletion(
 
   try {
     await job.waitUntilFinished(
-      getIntegrationQueueEvents(),
+      getQueueEvents(queueNames.enum.integration),
       INTEGRATION_JOB_WAIT_TIMEOUT_MS,
     )
   } catch {

@@ -1,31 +1,20 @@
 import {
-  defaultWorkerOptions,
-  getQueueConnection,
   queueNames,
   WebhookJobAction,
   type WebhookJobData,
 } from "@chatbotx.io/worker-config"
-import { type Job, Worker } from "bullmq"
+import type { Job } from "bullmq"
 import { env } from "../env"
-import { ensureBootstrapped } from "../lib/bootstrap"
+import { createQueueWorker } from "../lib/create-queue-worker"
 import { isBlockedWorkspace } from "../lib/is-blocked-workspace"
-import { logger } from "../lib/logger"
 import { runJobWithAuditContext } from "../lib/run-job-with-audit-context"
-import { onShutdown, runWorker } from "../lib/shutdown"
+import { runWorker } from "../lib/shutdown"
 import { WebhookMatcherService } from "./services/webhook-matcher.service"
 
 const webhookMatcher = new WebhookMatcherService()
 
-async function startWebhookWorker() {
-  try {
-    await ensureBootstrapped()
-    logger.info("Webhook worker bootstrapped successfully")
-  } catch (err) {
-    logger.error(err, "Failed to bootstrap webhook worker")
-    throw err
-  }
-
-  const worker = new Worker(
+function startWebhookWorker() {
+  createQueueWorker(
     queueNames.enum.webhook,
     async (job: Job<WebhookJobData>) => {
       const { workspaceId } = job.data.data
@@ -47,20 +36,8 @@ async function startWebhookWorker() {
         },
       )
     },
-    {
-      connection: getQueueConnection(queueNames.enum.webhook),
-      ...defaultWorkerOptions,
-      concurrency: env.WEBHOOK_WORKER_CONCURRENCY,
-    },
+    { concurrency: env.WEBHOOK_WORKER_CONCURRENCY },
   )
-
-  worker.on("failed", (job, err) => {
-    if (job) {
-      logger.error(err, `Webhook job ${job.id} has failed`)
-    }
-  })
-
-  onShutdown("webhook", () => worker.close())
 }
 
 runWorker("webhook", startWebhookWorker)

@@ -63,6 +63,7 @@ vi.mock("@chatbotx.io/worker-config", () => ({
       leaderboard: "leaderboard",
     },
   },
+  closeAllQueueEvents: vi.fn(async () => undefined),
   defaultWorkerOptions: { concurrency: 5, removeOnComplete: { count: 1000 } },
   getRedisConnection: vi.fn(() => ({})),
   getQueueConnection: vi.fn(() => ({})),

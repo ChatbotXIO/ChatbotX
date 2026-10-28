@@ -111,6 +111,7 @@ vi.mock("../src/lib/resolve-workspace-id", () => ({
 
 vi.mock("../src/lib/logger", () => ({
   logger: {
+    debug: vi.fn(),
     error: (...args: unknown[]) => workerState.loggerError(...args),
     info: (...args: unknown[]) => workerState.loggerInfo(...args),
     warn: (...args: unknown[]) => workerState.loggerWarn(...args),

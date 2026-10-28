@@ -5,19 +5,17 @@ import {
 import { runWithWebhookExecutionContext } from "@chatbotx.io/events/context"
 import { SdkException } from "@chatbotx.io/sdk"
 import {
-  defaultWorkerOptions,
-  getQueueConnection,
   queueNames,
   TriggerJobAction,
   type TriggerJobData,
 } from "@chatbotx.io/worker-config"
-import { type Job, Worker } from "bullmq"
-import { ensureBootstrapped } from "../lib/bootstrap"
+import type { Job } from "bullmq"
+import { createQueueWorker } from "../lib/create-queue-worker"
 import { isBlockedWorkspace } from "../lib/is-blocked-workspace"
 import { logger } from "../lib/logger"
 import { resolveWorkspaceId } from "../lib/resolve-workspace-id"
 import { runJobWithAuditContext } from "../lib/run-job-with-audit-context"
-import { onShutdown, runWorker } from "../lib/shutdown"
+import { runWorker } from "../lib/shutdown"
 import { TriggerExecutorService } from "./services/trigger-executor.service"
 import { TriggerMatcherService } from "./services/trigger-matcher.service"
 import type { TriggerEventData } from "./types"
@@ -25,16 +23,8 @@ import type { TriggerEventData } from "./types"
 const triggerMatcher = new TriggerMatcherService()
 const triggerExecutor = new TriggerExecutorService()
 
-async function startTriggerWorker() {
-  try {
-    await ensureBootstrapped()
-    logger.info("Trigger worker bootstrapped successfully")
-  } catch (err) {
-    logger.error(err, "Failed to bootstrap trigger worker")
-    throw err
-  }
-
-  const worker = new Worker(
+function startTriggerWorker() {
+  const worker = createQueueWorker(
     queueNames.enum.trigger,
     async (job: Job<TriggerJobData>) => {
       const workspaceId = await resolveWorkspaceId(job.data.data)
@@ -98,26 +88,14 @@ async function startTriggerWorker() {
         },
       )
     },
-    {
-      connection: getQueueConnection(queueNames.enum.trigger),
-      ...defaultWorkerOptions,
-      concurrency: 100,
-    },
+    { concurrency: 100 },
   )
-
-  worker.on("failed", (job, err) => {
-    if (job) {
-      logger.error(err, `Trigger job ${job.id} has failed`)
-    }
-  })
 
   worker.on("completed", (job) => {
     logger.info(`Trigger job ${job.id} completed successfully`)
   })
 
   logger.info("Trigger worker started")
-
-  onShutdown("trigger", () => worker.close())
 }
 
 runWorker("trigger", startTriggerWorker)

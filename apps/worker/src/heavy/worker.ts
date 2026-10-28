@@ -1,8 +1,6 @@
 import { aiFileService } from "@chatbotx.io/business"
 import { optimizeStoredImage } from "@chatbotx.io/business/media/optimize-stored-image"
 import {
-  defaultWorkerOptions,
-  getQueueConnection,
   type HeavyFlowContinuation,
   HeavyJobAction,
   type HeavyJobData,
@@ -12,7 +10,7 @@ import {
   integrationQueue,
   queueNames,
 } from "@chatbotx.io/worker-config"
-import { type Job, UnrecoverableError, Worker } from "bullmq"
+import { type Job, UnrecoverableError } from "bullmq"
 import { normalizeError } from "universal-error-normalizer"
 import { env } from "../env"
 import {
@@ -20,14 +18,14 @@ import {
   failHeavyStep,
   shouldRunHeavyStep,
 } from "../integration/handlers/heavy-step-runner"
-import { ensureBootstrapped } from "../lib/bootstrap"
+import { createQueueWorker } from "../lib/create-queue-worker"
 import { detectConversationAndContactInbox } from "../lib/db"
 import { recordHeavyMetric } from "../lib/heavy-metrics"
 import { isBlockedWorkspace } from "../lib/is-blocked-workspace"
 import { logger } from "../lib/logger"
 import { resolveWorkspaceId } from "../lib/resolve-workspace-id"
 import { runJobWithAuditContext } from "../lib/run-job-with-audit-context"
-import { onShutdown, runWorker } from "../lib/shutdown"
+import { runWorker } from "../lib/shutdown"
 import { AIFileProcessingError } from "./handlers/ai-file-processing-error"
 import { analyzeImage } from "./handlers/analyze-image"
 import { editImageOutput } from "./handlers/edit-image"
@@ -191,22 +189,105 @@ async function runHeavyStep(jobData: HeavyStepJobData, job: Job<HeavyJobData>) {
   }
 }
 
-async function startHeavyWorker() {
-  try {
-    await ensureBootstrapped()
-    logger.info("Heavy worker bootstrapped successfully")
-  } catch (err) {
+async function handleHeavyJobFailed(
+  job: Job<HeavyJobData> | undefined,
+  err: Error,
+): Promise<void> {
+  if (!job) {
     logger.error(
       { err: normalizeError(err) },
-      "Failed to bootstrap Heavy worker",
+      "Heavy job failed without job context",
     )
-    throw err
+    return
   }
 
-  const worker = new Worker(
+  const parsedJobData = heavyJobDataSchema.safeParse(job.data)
+  let workspaceId: string | undefined
+  let workspaceResolutionError: ReturnType<typeof normalizeError> | undefined
+  if (parsedJobData.success) {
+    try {
+      workspaceId = await resolveWorkspaceId(parsedJobData.data.data)
+    } catch (resolutionError) {
+      workspaceResolutionError = normalizeError(resolutionError)
+    }
+  }
+
+  logger.error(
+    {
+      err: normalizeError(err),
+      jobId: job.id,
+      jobName: job.name,
+      jobType: parsedJobData.success ? parsedJobData.data.type : undefined,
+      workspaceId,
+      workspaceResolutionError,
+    },
+    "Heavy job failed",
+  )
+  if (
+    parsedJobData.success &&
+    parsedJobData.data.type === HeavyJobAction.processAIFile &&
+    parsedJobData.data.data.runId &&
+    // An unrecoverable error fails the job on its first attempt, so the
+    // attempts count alone would leave the run in `processing`.
+    (err instanceof UnrecoverableError ||
+      job.attemptsMade >= (job.opts.attempts ?? 1))
+  ) {
+    const { aiFileId, runId } = parsedJobData.data.data
+    if (workspaceId) {
+      try {
+        await aiFileService.markProcessingRunFailed({
+          aiFileId,
+          workspaceId,
+          runId,
+          code: err instanceof AIFileProcessingError ? err.code : "unknown",
+        })
+      } catch (markError) {
+        logger.error(
+          { err: normalizeError(markError), aiFileId, workspaceId, runId },
+          "Failed to mark AI file processing run failed",
+        )
+      }
+    } else {
+      // The run expires after AI_FILE_PROCESSING_RUN_STALE_MS instead.
+      logger.error(
+        { err: workspaceResolutionError, aiFileId, runId },
+        "Cannot mark AI file processing run failed without a workspace",
+      )
+    }
+  }
+  if (
+    parsedJobData.success &&
+    isHeavyFlowStep(parsedJobData.data) &&
+    parsedJobData.data.data.outcomeKey &&
+    parsedJobData.data.data.continuation &&
+    job.attemptsMade >= (job.opts.attempts ?? 1)
+  ) {
+    await failHeavyStep(parsedJobData.data.data.outcomeKey, err)
+    await resumeHeavyFlow({
+      contactInboxId: parsedJobData.data.data.contactInboxId,
+      continuation: parsedJobData.data.data.continuation,
+      conversationId: parsedJobData.data.data.conversationId,
+      jobId: job.id,
+      outcomeKey: parsedJobData.data.data.outcomeKey,
+      stepId: parsedJobData.data.data.step.id,
+    })
+  }
+  recordHeavyMetric({
+    action: parsedJobData.success ? parsedJobData.data.type : undefined,
+    attempts: job.attemptsMade,
+    event: "failed",
+    outcome: isRetryableHeavyError(err) ? "retryable_failed" : "failed",
+  })
+}
+
+function startHeavyWorker() {
+  const worker = createQueueWorker(
     queueNames.enum.heavy,
     async (job: Job<HeavyJobData>) => {
-      logger.info(job.data, `Heavy worker received job: ${job.id}`)
+      logger.debug(
+        { jobId: job.id, type: job.data.type },
+        "Heavy worker received job",
+      )
 
       const jobData = heavyJobDataSchema.parse(job.data)
       const startedAt = performance.now()
@@ -344,115 +425,23 @@ async function startHeavyWorker() {
       return result
     },
     {
-      connection: getQueueConnection(queueNames.enum.heavy),
-      ...defaultWorkerOptions,
       concurrency: env.HEAVY_WORKER_CONCURRENCY,
-      // AI provider calls are allowed to run for HEAVY_JOB_WAIT_TIMEOUT_MS;
-      // keep the BullMQ lock alive for the whole budget plus a small handoff
-      // margin so a slow provider cannot be redelivered while still running.
-      lockDuration: Math.max(
-        env.HEAVY_JOB_WAIT_TIMEOUT_MS + 60_000,
-        5 * 60_000,
-      ),
-      stalledInterval: 60_000,
+      // BullMQ renews the lock every lockDuration / 2 while the process is
+      // alive, so a long provider call keeps its lock. The lock only has to
+      // outlast a blocked event loop; a short one lets a job whose process
+      // died be retried within about a minute instead of waiting out the
+      // longest job.
+      lockDuration: 60_000,
+      stalledInterval: 30_000,
       maxStalledCount: 1,
+      onFailed: handleHeavyJobFailed,
     },
   )
-
-  worker.on("failed", async (job, err) => {
-    if (!job) {
-      logger.error(
-        { err: normalizeError(err) },
-        "Heavy job failed without job context",
-      )
-      return
-    }
-
-    const parsedJobData = heavyJobDataSchema.safeParse(job.data)
-    let workspaceId: string | undefined
-    let workspaceResolutionError: ReturnType<typeof normalizeError> | undefined
-    if (parsedJobData.success) {
-      try {
-        workspaceId = await resolveWorkspaceId(parsedJobData.data.data)
-      } catch (resolutionError) {
-        workspaceResolutionError = normalizeError(resolutionError)
-      }
-    }
-
-    logger.error(
-      {
-        err: normalizeError(err),
-        jobId: job.id,
-        jobName: job.name,
-        jobType: parsedJobData.success ? parsedJobData.data.type : undefined,
-        workspaceId,
-        workspaceResolutionError,
-      },
-      "Heavy job failed",
-    )
-    if (
-      parsedJobData.success &&
-      parsedJobData.data.type === HeavyJobAction.processAIFile &&
-      parsedJobData.data.data.runId &&
-      // An unrecoverable error fails the job on its first attempt, so the
-      // attempts count alone would leave the run in `processing`.
-      (err instanceof UnrecoverableError ||
-        job.attemptsMade >= (job.opts.attempts ?? 1))
-    ) {
-      const { aiFileId, runId } = parsedJobData.data.data
-      if (workspaceId) {
-        try {
-          await aiFileService.markProcessingRunFailed({
-            aiFileId,
-            workspaceId,
-            runId,
-            code: err instanceof AIFileProcessingError ? err.code : "unknown",
-          })
-        } catch (markError) {
-          logger.error(
-            { err: normalizeError(markError), aiFileId, workspaceId, runId },
-            "Failed to mark AI file processing run failed",
-          )
-        }
-      } else {
-        // The run expires after AI_FILE_PROCESSING_RUN_STALE_MS instead.
-        logger.error(
-          { err: workspaceResolutionError, aiFileId, runId },
-          "Cannot mark AI file processing run failed without a workspace",
-        )
-      }
-    }
-    if (
-      parsedJobData.success &&
-      isHeavyFlowStep(parsedJobData.data) &&
-      parsedJobData.data.data.outcomeKey &&
-      parsedJobData.data.data.continuation &&
-      job.attemptsMade >= (job.opts.attempts ?? 1)
-    ) {
-      await failHeavyStep(parsedJobData.data.data.outcomeKey, err)
-      await resumeHeavyFlow({
-        contactInboxId: parsedJobData.data.data.contactInboxId,
-        continuation: parsedJobData.data.data.continuation,
-        conversationId: parsedJobData.data.data.conversationId,
-        jobId: job.id,
-        outcomeKey: parsedJobData.data.data.outcomeKey,
-        stepId: parsedJobData.data.data.step.id,
-      })
-    }
-    recordHeavyMetric({
-      action: parsedJobData.success ? parsedJobData.data.type : undefined,
-      attempts: job.attemptsMade,
-      event: "failed",
-      outcome: isRetryableHeavyError(err) ? "retryable_failed" : "failed",
-    })
-  })
 
   worker.on("stalled", (jobId) => {
     recordHeavyMetric({ event: "stalled", outcome: "retryable_failed" })
     logger.warn({ jobId }, "Heavy job stalled")
   })
-
-  onShutdown("heavy", () => worker.close())
 }
 
 runWorker("heavy", startHeavyWorker)

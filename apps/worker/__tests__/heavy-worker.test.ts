@@ -5,7 +5,7 @@ import { AIFileProcessingError } from "../src/heavy/handlers/ai-file-processing-
 const mocks = vi.hoisted(() => ({
   detectConversationAndContactInbox: vi.fn(),
   editImageOutput: vi.fn(),
-  ensureBootstrapped: vi.fn(),
+  ensureBootstrapped: vi.fn(async () => undefined),
   extractFallbackTextSnippets: vi.fn(),
   completeHeavyStep: vi.fn(),
   failHeavyStep: vi.fn(),
@@ -213,9 +213,9 @@ describe("heavy worker", () => {
     expect(mocks.workerOptions?.concurrency).toBe(1)
   })
 
-  test("keeps the BullMQ lock longer than the configured heavy-job wait", () => {
-    expect(mocks.workerOptions?.lockDuration).toBe(5 * 60_000)
-    expect(mocks.workerOptions?.stalledInterval).toBe(60_000)
+  test("keeps a short renewable BullMQ lock so a dead process is retried within a minute", () => {
+    expect(mocks.workerOptions?.lockDuration).toBe(60_000)
+    expect(mocks.workerOptions?.stalledInterval).toBe(30_000)
     expect(mocks.workerOptions?.maxStalledCount).toBe(1)
   })
 

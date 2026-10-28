@@ -170,7 +170,7 @@ describe("SchedulerWorker lifecycle", () => {
 
     expect(useExistingSpy).toHaveBeenCalledOnce()
     expect(getSequenceSchedulerQueueSpy).toHaveBeenCalledOnce()
-    worker.stop()
+    await worker.stop()
   })
 
   test("fails startup when the sequence scheduler queue is unavailable", async () => {
@@ -209,6 +209,32 @@ describe("SchedulerWorker lifecycle", () => {
     expect([...timers.keys()].sort()).toEqual([0, 1, 2])
     expect(timers.size).toBe(3)
     worker.stop()
+  })
+
+  test("stop waits for a running tick to finish publishing its claimed dispatches", async () => {
+    runClaimedLock()
+    getDueSpy.mockResolvedValueOnce(["d1"]).mockResolvedValueOnce([])
+    findPendingWorkspaceIdsSpy.mockResolvedValue([
+      { id: "d1", workspaceId: "ws-1" },
+    ])
+    const { promise: published, resolve: finishPublish } =
+      Promise.withResolvers<[]>()
+    queueAddBulkSpy.mockReturnValue(published)
+    const worker = new SchedulerWorker({ buckets: [0], tickIntervalMs: 60_000 })
+
+    await worker.start()
+    await vi.waitFor(() => expect(queueAddBulkSpy).toHaveBeenCalledOnce())
+
+    let isStopped = false
+    const stopping = worker.stop().then(() => {
+      isStopped = true
+    })
+    await new Promise((resolve) => setTimeout(resolve, 10))
+    expect(isStopped).toBe(false)
+
+    finishPublish([])
+    await stopping
+    expect(isStopped).toBe(true)
   })
 
   test("does not schedule another bucket tick after stop", async () => {

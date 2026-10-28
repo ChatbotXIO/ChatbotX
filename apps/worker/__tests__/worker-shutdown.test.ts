@@ -9,7 +9,8 @@ import {
 } from "vitest"
 import type * as ShutdownModule from "../src/lib/shutdown"
 
-const { envMock, loggerMock } = vi.hoisted(() => ({
+const { bootstrapMock, envMock, loggerMock } = vi.hoisted(() => ({
+  bootstrapMock: vi.fn(async () => undefined),
   envMock: {
     WORKER_SHUTDOWN_TIMEOUT_MS: undefined as number | undefined,
   },
@@ -25,6 +26,12 @@ vi.mock("@chatbotx.io/business", () => ({
   flushAllPendingWorkspaceRealtimeEvents: vi.fn(),
 }))
 
+vi.mock("@chatbotx.io/worker-config", () => ({
+  closeAllQueueEvents: vi.fn(),
+}))
+vi.mock("../src/lib/bootstrap", () => ({
+  ensureBootstrapped: bootstrapMock,
+}))
 vi.mock("../src/lib/logger", () => ({ logger: loggerMock }))
 vi.mock("../src/env", () => ({ env: envMock }))
 
@@ -209,6 +216,37 @@ describe("worker shutdown coordinator", () => {
       "Failed to start worker",
     )
     expect(closeChat).toHaveBeenCalledOnce()
+  })
+
+  test("runWorker bootstraps before starting the worker", async () => {
+    const order: string[] = []
+    bootstrapMock.mockImplementationOnce(() => {
+      order.push("bootstrap")
+      return Promise.resolve(undefined)
+    })
+    const start = vi.fn(() => {
+      order.push("start")
+      return Promise.resolve()
+    })
+
+    shutdown.runWorker("chat", start)
+    await vi.waitFor(() => expect(start).toHaveBeenCalledOnce())
+
+    expect(order).toEqual(["bootstrap", "start"])
+  })
+
+  test("a bootstrap failure skips start and exits 1", async () => {
+    bootstrapMock.mockRejectedValueOnce(new Error("license invalid"))
+    const start = vi.fn()
+
+    shutdown.runWorker("chat", start)
+    await vi.waitFor(() => expect(exitSpy).toHaveBeenCalledWith(1))
+
+    expect(start).not.toHaveBeenCalled()
+    expect(loggerMock.error).toHaveBeenCalledWith(
+      expect.objectContaining({ worker: "chat" }),
+      "Failed to start worker",
+    )
   })
 
   test("installs signal and crash handlers once and routes crashes to exit 1", async () => {

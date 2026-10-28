@@ -2,20 +2,18 @@ import { SdkException } from "@chatbotx.io/sdk"
 import {
   ChatJobAction,
   type ChatJobData,
-  defaultWorkerOptions,
-  getQueueConnection,
   queueNames,
 } from "@chatbotx.io/worker-config"
-import { type Job, Worker } from "bullmq"
+import type { Job } from "bullmq"
 import { env } from "../env"
-import { ensureBootstrapped } from "../lib/bootstrap"
+import { createQueueWorker } from "../lib/create-queue-worker"
 import { isBlockedWorkspace } from "../lib/is-blocked-workspace"
 import { isBotMessageQuotaReached } from "../lib/is-bot-message-quota-reached"
 import { isFinalAttempt } from "../lib/job-attempts"
 import { logger } from "../lib/logger"
 import { resolveWorkspaceId } from "../lib/resolve-workspace-id"
 import { runJobWithAuditContext } from "../lib/run-job-with-audit-context"
-import { onShutdown, runWorker } from "../lib/shutdown"
+import { runWorker } from "../lib/shutdown"
 import { checkOutboundAutomatedResponse } from "./handlers/outbound-automated-response"
 import { sendChatMessage, sendFlowStep } from "./handlers/send-flow-step"
 import {
@@ -60,16 +58,8 @@ function isBotSendJob(data: ChatJobData): boolean {
   )
 }
 
-async function startChatWorker() {
-  try {
-    await ensureBootstrapped()
-    logger.info("Chat worker bootstrapped successfully")
-  } catch (err) {
-    logger.error(err, "Failed to bootstrap chat worker")
-    throw err
-  }
-
-  const worker = new Worker(
+function startChatWorker() {
+  createQueueWorker(
     queueNames.enum.chat,
     async (job: Job<ChatJobData>) => {
       const workspaceId = await resolveWorkspaceId(job.data.data)
@@ -156,20 +146,8 @@ async function startChatWorker() {
         },
       )
     },
-    {
-      connection: getQueueConnection(queueNames.enum.chat),
-      ...defaultWorkerOptions,
-      concurrency: env.CHAT_WORKER_CONCURRENCY,
-    },
+    { concurrency: env.CHAT_WORKER_CONCURRENCY },
   )
-
-  worker.on("failed", (job, err) => {
-    if (job) {
-      logger.error(err, `Job ${job.id} has failed`)
-    }
-  })
-
-  onShutdown("chat", () => worker.close())
 }
 
 runWorker("chat", startChatWorker)

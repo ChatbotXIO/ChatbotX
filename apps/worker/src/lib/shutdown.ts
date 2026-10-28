@@ -1,6 +1,8 @@
 import { flushAllPendingWorkspaceRealtimeEvents } from "@chatbotx.io/business"
+import { closeAllQueueEvents } from "@chatbotx.io/worker-config"
 import { normalizeError } from "universal-error-normalizer"
 import { env } from "../env"
+import { ensureBootstrapped } from "./bootstrap"
 import { logger } from "./logger"
 
 type Closer = () => Promise<unknown> | unknown
@@ -20,6 +22,8 @@ onShutdownFinalize(
   "workspace-realtime-events",
   flushAllPendingWorkspaceRealtimeEvents,
 )
+// Shared by every consumer that waits on a job (chat/integration/heavy).
+onShutdownFinalize("queue-events", () => closeAllQueueEvents())
 
 async function closeAll(
   entries: NamedCloser[],
@@ -128,16 +132,20 @@ export function onShutdownFinalize(name: string, close: Closer): void {
 }
 
 /**
- * Starts a worker entry. A startup failure drains the workers already running
- * in this process and exits 1 so the container restarts, instead of leaving a
- * dangling rejection (or a half-started process that looks healthy).
+ * Starts a worker entry once the process is bootstrapped (memoized, so
+ * co-located entries share one run). A bootstrap or startup failure drains the
+ * workers already running in this process and exits 1 so the container
+ * restarts, instead of leaving a dangling rejection (or a half-started process
+ * that looks healthy).
  */
-export function runWorker(name: string, start: () => Promise<unknown>): void {
-  start().catch((error: unknown) => {
-    logger.error(
-      { err: normalizeError(error), worker: name },
-      "Failed to start worker",
-    )
-    requestShutdown(`${name} failed to start`, 1)
-  })
+export function runWorker(name: string, start: () => unknown): void {
+  ensureBootstrapped()
+    .then(start)
+    .catch((error: unknown) => {
+      logger.error(
+        { err: normalizeError(error), worker: name },
+        "Failed to start worker",
+      )
+      requestShutdown(`${name} failed to start`, 1)
+    })
 }

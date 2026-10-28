@@ -4,7 +4,7 @@ import { beforeAll, beforeEach, describe, expect, test, vi } from "vitest"
 const mocks = vi.hoisted(() => ({
   closeChatQueueEvents: vi.fn(),
   closeHeavyQueueEvents: vi.fn(),
-  ensureBootstrapped: vi.fn(),
+  ensureBootstrapped: vi.fn(async () => undefined),
   handleOrphanedIntegration: vi.fn(),
   heavyQueueAdd: vi.fn(),
   isBlockedWorkspace: vi.fn(),

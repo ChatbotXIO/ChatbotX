@@ -6,7 +6,6 @@ import {
   type SequenceSchedulerJobData,
   type SequenceSchedulerQueue,
 } from "@chatbotx.io/worker-config"
-import { ensureBootstrapped } from "../lib/bootstrap"
 import { logger } from "../lib/logger"
 import { onShutdown, runWorker } from "../lib/shutdown"
 
@@ -36,6 +35,10 @@ export class SchedulerWorker {
   private _queue: SequenceSchedulerQueue | null = null
   private running = false
   private readonly timers = new Map<number, NodeJS.Timeout>()
+  // Ticks still running. stop() waits for them: a tick removes dispatches from
+  // the ZSET before publishing them, so exiting mid-tick loses them until the
+  // hourly reconcile.
+  private readonly runningTicks = new Set<Promise<void>>()
 
   private get scheduler(): SchedulerClient {
     if (!this._scheduler) {
@@ -115,12 +118,17 @@ export class SchedulerWorker {
       }
 
       if (this.running) {
-        const timer = setTimeout(tick, this.config.tickIntervalMs)
+        const timer = setTimeout(run, this.config.tickIntervalMs)
         this.timers.set(bucket, timer)
       }
     }
 
-    tick()
+    const run = () => {
+      const running = tick().finally(() => this.runningTicks.delete(running))
+      this.runningTicks.add(running)
+    }
+
+    run()
   }
 
   async processBucket(bucket: number) {
@@ -297,7 +305,7 @@ export class SchedulerWorker {
     await this.queue.addBulk(jobs)
   }
 
-  stop() {
+  async stop() {
     if (!this.running) {
       return
     }
@@ -309,6 +317,8 @@ export class SchedulerWorker {
     }
     this.timers.clear()
 
+    await Promise.allSettled([...this.runningTicks])
+
     this._queue = null
   }
 }
@@ -319,29 +329,11 @@ const shouldAutoStart = process.env.NODE_ENV !== "test" && !process.env.VITEST
 async function startSchedulerWorker() {
   logger.info("Starting scheduler worker")
 
-  try {
-    await ensureBootstrapped()
-    await scheduler.start()
-    logger.info("Scheduler worker fully operational")
-  } catch (error) {
-    logger.error(error, "Error starting scheduler worker")
-    throw error
-  }
-}
-
-async function stopSchedulerWorker() {
-  logger.info("Stopping scheduler worker")
-
-  try {
-    await scheduler.stop()
-    logger.info("Scheduler worker stopped")
-  } catch (error) {
-    logger.error(error, "Error stopping scheduler worker")
-    throw error
-  }
+  await scheduler.start()
+  logger.info("Scheduler worker fully operational")
 }
 
 if (shouldAutoStart) {
   runWorker("sequence-producer", startSchedulerWorker)
-  onShutdown("sequence-producer", stopSchedulerWorker)
+  onShutdown("sequence-producer", () => scheduler.stop())
 }

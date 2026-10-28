@@ -104,10 +104,10 @@ export const env = createEnv({
       .min(1)
       .max(10_000)
       .default(5000),
-    // Bounds each chat-job wait (awaitChatJob). Capped below the integration
-    // worker lockDuration (10 min) so a wait can never outlive the job lock —
-    // otherwise BullMQ would treat the job as stalled and reprocess it (double
-    // send). Validated so a bad value can't become NaN (= wait forever).
+    // Bounds each chat-job wait (awaitChatJob). The integration job lock is
+    // renewed while the process is alive, so this is a backlog bound rather
+    // than a lock bound. Validated so a bad value can't become NaN (= wait
+    // forever).
     CHAT_JOB_WAIT_TIMEOUT_MS: z.coerce
       .number()
       .int()

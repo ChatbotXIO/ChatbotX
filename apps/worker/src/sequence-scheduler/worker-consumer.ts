@@ -10,7 +10,6 @@ import {
   type SequenceSchedulerJobData,
 } from "@chatbotx.io/worker-config"
 import { Worker } from "bullmq"
-import { ensureBootstrapped } from "../lib/bootstrap"
 import { isBlockedWorkspace } from "../lib/is-blocked-workspace"
 import { logger } from "../lib/logger"
 import { runJobWithAuditContext } from "../lib/run-job-with-audit-context"
@@ -108,6 +107,11 @@ class DispatchConsumer {
         removeOnFail: { count: 0 },
       },
     )
+    // Unhandled, a Redis error would crash the process and every co-located
+    // queue with it.
+    this.consumer.on("error", (err) => {
+      logger.error({ err }, "Sequence scheduler worker error")
+    })
     this.consumer.on("failed", (job, error) => {
       logger.error(
         { err: error, jobId: job?.id },
@@ -291,26 +295,8 @@ const consumer = new DispatchConsumer()
 async function startDispatchConsumer() {
   logger.info("Starting dispatch consumer")
 
-  try {
-    await ensureBootstrapped()
-    await consumer.start()
-  } catch (error) {
-    logger.error(error, "Error starting dispatch consumer")
-    throw error
-  }
-}
-
-async function stopDispatchConsumer() {
-  logger.info("Stopping dispatch consumer")
-
-  try {
-    await consumer.stop()
-    logger.info("Dispatch consumer stopped")
-  } catch (error) {
-    logger.error(error, "Error stopping dispatch consumer")
-    throw error
-  }
+  await consumer.start()
 }
 
 runWorker("sequence-consumer", startDispatchConsumer)
-onShutdown("sequence-consumer", stopDispatchConsumer)
+onShutdown("sequence-consumer", () => consumer.stop())

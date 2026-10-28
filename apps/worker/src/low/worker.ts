@@ -3,25 +3,23 @@ import {
   withBlockedOwnerGuard,
 } from "@chatbotx.io/business"
 import {
-  defaultWorkerOptions,
-  getQueueConnection,
   type LeaderboardJobData,
   LowJobAction,
   type LowJobData,
   type ProfileSnapshotJobData,
   queueNames,
 } from "@chatbotx.io/worker-config"
-import { type Job, Worker } from "bullmq"
+import type { Job } from "bullmq"
 import { env } from "../env"
 import { captureContactProfileSnapshot } from "../integration/handlers/capture-contact-profile-snapshot"
 import { coexistAttachmentDownload } from "../integration/handlers/coexist/attachment-download"
 import { updateContactAvatar } from "../integration/handlers/contact/update-avatar"
 import { receiveComment } from "../integration/handlers/received-message"
 import { processLeaderboardJob } from "../leaderboard/process-job"
-import { ensureBootstrapped } from "../lib/bootstrap"
+import { createQueueWorker } from "../lib/create-queue-worker"
 import { logger } from "../lib/logger"
 import { runJobWithAuditContext } from "../lib/run-job-with-audit-context"
-import { onShutdown, runWorker } from "../lib/shutdown"
+import { runWorker } from "../lib/shutdown"
 
 /**
  * Runs one `low` job behind the blocked-owner guard, dispatching on its type.
@@ -99,15 +97,8 @@ async function settleMissedCommentReplay(job: Job<LowJobData>): Promise<void> {
  * (contact relationship snapshots) — non-urgent provider enrichment that must
  * not occupy the integration process.
  */
-async function startLowWorker() {
-  try {
-    await ensureBootstrapped()
-  } catch (err) {
-    logger.error({ err }, "Failed to bootstrap low worker")
-    throw err
-  }
-
-  const worker = new Worker(
+function startLowWorker() {
+  createQueueWorker(
     queueNames.enum.low,
     async (job: Job<LowJobData>) => {
       try {
@@ -116,24 +107,14 @@ async function startLowWorker() {
         await settleMissedCommentReplay(job)
       }
     },
-    {
-      connection: getQueueConnection(queueNames.enum.low),
-      ...defaultWorkerOptions,
-      concurrency: env.LOW_WORKER_CONCURRENCY,
-    },
+    { concurrency: env.LOW_WORKER_CONCURRENCY },
   )
-
-  worker.on("failed", (job, err) => {
-    if (job) {
-      logger.error({ err }, `Low job ${job.id} has failed`)
-    }
-  })
 
   // Rate-limited provider enrichment (contact relationship snapshots). Its own
   // queue + limiter so the provider rate limit never throttles the shared
   // `low` jobs above; it runs here, off the latency-sensitive integration
   // process.
-  const profileSnapshotWorker = new Worker(
+  createQueueWorker(
     queueNames.enum.profileSnapshot,
     async (job: Job<ProfileSnapshotJobData>) => {
       const workspaceId = job.data.data.workspaceId
@@ -147,21 +128,14 @@ async function startLowWorker() {
       })
     },
     {
-      connection: getQueueConnection(queueNames.enum.profileSnapshot),
       concurrency: 1,
       limiter: { max: env.PROFILE_SNAPSHOT_JOBS_PER_SECOND, duration: 1000 },
     },
   )
 
-  profileSnapshotWorker.on("failed", (job, err) => {
-    if (job) {
-      logger.error({ err }, `Profile snapshot job ${job.id} has failed`)
-    }
-  })
-
   // Leaderboard scoring: its own queue so a livestream burst never delays the
   // shared `low` jobs, with bounded concurrency so it cannot flood Postgres.
-  const leaderboardWorker = new Worker(
+  createQueueWorker(
     queueNames.enum.leaderboard,
     async (job: Job<LeaderboardJobData>) => {
       const workspaceId = job.data.data.workspaceId
@@ -174,25 +148,7 @@ async function startLowWorker() {
         )
       })
     },
-    {
-      connection: getQueueConnection(queueNames.enum.leaderboard),
-      ...defaultWorkerOptions,
-      concurrency: env.LEADERBOARD_WORKER_CONCURRENCY,
-    },
-  )
-
-  leaderboardWorker.on("failed", (job, err) => {
-    if (job) {
-      logger.error({ err }, `Leaderboard job ${job.id} has failed`)
-    }
-  })
-
-  onShutdown("low", () =>
-    Promise.all([
-      worker.close(),
-      profileSnapshotWorker.close(),
-      leaderboardWorker.close(),
-    ]),
+    { concurrency: env.LEADERBOARD_WORKER_CONCURRENCY },
   )
 }
 

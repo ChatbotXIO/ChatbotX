@@ -1,15 +1,13 @@
 import {
-  defaultWorkerOptions,
-  getQueueConnection,
   queueNames,
   ScheduleJobData,
   scheduleQueue,
 } from "@chatbotx.io/worker-config"
-import { type Job, Queue, Worker } from "bullmq"
-import { ensureBootstrapped } from "../lib/bootstrap"
+import { type Job, Queue } from "bullmq"
+import { createQueueWorker } from "../lib/create-queue-worker"
 import { logger } from "../lib/logger"
 import { runJobWithAuditContext } from "../lib/run-job-with-audit-context"
-import { onShutdown, runWorker } from "../lib/shutdown"
+import { runWorker } from "../lib/shutdown"
 import { startMarketingMessageWorker } from "../marketing-message/consumer"
 import {
   cleanupTriggerExecutions,
@@ -69,15 +67,7 @@ import { syncUserQuota } from "./handlers/sync-user-quota"
 import { teardownExpiredTrial } from "./handlers/teardown-expired-trial"
 import { unsubscribeExpiredTrials } from "./handlers/unsubscribe-expired-trials"
 
-async function startScheduleWorker() {
-  try {
-    await ensureBootstrapped()
-    logger.info("Analytics bootstrapped successfully")
-  } catch (err) {
-    logger.error(err, "Failed to bootstrap analytics")
-    throw err
-  }
-
+function startScheduleWorker() {
   if (scheduleQueue instanceof Queue) {
     registerSchedules()
       .then(() => {
@@ -90,9 +80,9 @@ async function startScheduleWorker() {
 
   // Hosted in the schedule process (its crons are the only producers) but on
   // its own queue and concurrency, so Meta sends never starve schedule jobs.
-  const marketingMessageWorker = startMarketingMessageWorker()
+  startMarketingMessageWorker()
 
-  const worker = new Worker(
+  createQueueWorker(
     queueNames.enum.schedule,
     async (job: Job<ScheduleJobData>) =>
       runJobWithAuditContext(
@@ -300,20 +290,6 @@ async function startScheduleWorker() {
           }
         },
       ),
-    {
-      connection: getQueueConnection(queueNames.enum.schedule),
-      ...defaultWorkerOptions,
-    },
-  )
-
-  worker.on("failed", (job, err) => {
-    if (job) {
-      logger.error(err, `Job ${job.id} has failed`)
-    }
-  })
-
-  onShutdown("schedule", () =>
-    Promise.all([worker.close(), marketingMessageWorker.close()]),
   )
 }
 

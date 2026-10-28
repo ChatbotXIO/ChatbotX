@@ -98,7 +98,7 @@ vi.mock("bullmq", () => ({
 }))
 
 vi.mock("../src/lib/bootstrap", () => ({
-  ensureBootstrapped: vi.fn(),
+  ensureBootstrapped: vi.fn(async () => undefined),
 }))
 
 vi.mock("../src/lib/is-blocked-workspace", () => ({

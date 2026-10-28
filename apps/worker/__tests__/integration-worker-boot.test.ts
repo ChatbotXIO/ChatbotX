@@ -302,11 +302,12 @@ describe("integration worker process boot", () => {
     ).not.toContain("profileSnapshot")
   })
 
-  test("keeps the env-tunable concurrency and long coexist lock on the integration worker", () => {
+  test("keeps the env-tunable concurrency and a short renewable lock on the integration worker", () => {
     const [integrationWorker] = workerState.capturedWorkers
 
     expect(integrationWorker?.options.concurrency).toBe(10)
-    expect(integrationWorker?.options.lockDuration).toBe(10 * 60 * 1000)
+    expect(integrationWorker?.options.lockDuration).toBe(60_000)
+    expect(integrationWorker?.options.stalledInterval).toBe(30_000)
   })
 
   test("the callTranscription worker carries the CALL_TRANSCRIBE_PER_MIN limiter", () => {
