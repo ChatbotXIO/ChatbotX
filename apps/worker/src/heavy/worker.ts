@@ -426,13 +426,14 @@ function startHeavyWorker() {
     },
     {
       concurrency: env.HEAVY_WORKER_CONCURRENCY,
-      // BullMQ renews the lock every lockDuration / 2 while the process is
-      // alive, so a long provider call keeps its lock. The lock only has to
-      // outlast a blocked event loop; a short one lets a job whose process
-      // died be retried within about a minute instead of waiting out the
-      // longest job.
-      lockDuration: 60_000,
-      stalledInterval: 30_000,
+      // AI provider calls are allowed to run for HEAVY_JOB_WAIT_TIMEOUT_MS;
+      // keep the BullMQ lock alive for the whole budget plus a small handoff
+      // margin so a slow provider cannot be redelivered while still running.
+      lockDuration: Math.max(
+        env.HEAVY_JOB_WAIT_TIMEOUT_MS + 60_000,
+        5 * 60_000,
+      ),
+      stalledInterval: 60_000,
       maxStalledCount: 1,
       onFailed: handleHeavyJobFailed,
     },

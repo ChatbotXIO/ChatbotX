@@ -13,7 +13,7 @@ import { Worker } from "bullmq"
 import { isBlockedWorkspace } from "../lib/is-blocked-workspace"
 import { logger } from "../lib/logger"
 import { runJobWithAuditContext } from "../lib/run-job-with-audit-context"
-import { onShutdown, runWorker } from "../lib/shutdown"
+import { isShutdownRequested, onShutdown, runWorker } from "../lib/shutdown"
 import { revertDispatchToPending } from "./revert-dispatch"
 import { MAX_PROCESS } from "./services/constants"
 import { DispatchProcessorService } from "./services/dispatch-processor.service"
@@ -68,6 +68,14 @@ class DispatchConsumer {
     }
 
     const redisClient = await sequenceConnections.useExisting()
+    // Shutdown may have drained the registered closers while Redis was
+    // connecting; a Worker created now would never be closed.
+    if (isShutdownRequested()) {
+      logger.warn(
+        "Shutdown requested during startup; not starting dispatch consumer",
+      )
+      return
+    }
     this._scheduler = new SchedulerClient(redisClient)
 
     this.running = true

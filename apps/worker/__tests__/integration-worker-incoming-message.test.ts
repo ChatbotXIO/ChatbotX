@@ -160,10 +160,6 @@ vi.mock("../src/integration/routing", async (importOriginal) => ({
   resolveIncomingTextRouting: mockResolveIncomingTextRouting,
 }))
 
-vi.mock("../src/integration/utils/message", () => ({
-  closeChatQueueEvents: vi.fn().mockResolvedValue(undefined),
-}))
-
 // Every OTHER handler module worker.ts wires into its switch — none of them
 // are exercised by the `incomingMessage` case, stubbed only so the module
 // graph resolves.

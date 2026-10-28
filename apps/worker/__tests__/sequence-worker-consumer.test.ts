@@ -172,6 +172,27 @@ beforeEach(() => {
 })
 
 describe("sequence scheduler consumer", () => {
+  test("does not create a Worker when shutdown began while Redis connected", async () => {
+    vi.doMock("../src/lib/shutdown", () => ({
+      isShutdownRequested: () => true,
+      onShutdown: vi.fn(),
+      runWorker: (_name: string, start: () => unknown) => start(),
+    }))
+
+    await import("../src/sequence-scheduler/worker-consumer")
+    await vi.waitFor(() => {
+      expect(useExistingSpy).toHaveBeenCalled()
+    })
+    await vi.waitFor(() => {
+      expect(loggerWarnSpy).toHaveBeenCalledWith(
+        expect.stringContaining("Shutdown requested"),
+      )
+    })
+
+    expect(workerCreatedSpy).not.toHaveBeenCalled()
+    vi.doUnmock("../src/lib/shutdown")
+  })
+
   test("processes the legacy wrapper payload during the one-release cutover", async () => {
     await startConsumer()
 

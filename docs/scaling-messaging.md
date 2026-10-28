@@ -43,17 +43,27 @@ deadline below the orchestrator stop grace period.
 Set the orchestrator stop grace period to at least
 `WORKER_SHUTDOWN_TIMEOUT_MS` + 2 seconds; about 30 seconds is a sensible value
 for consolidated mode. A job still running at the deadline is not lost: the
-integration and heavy workers hold a 60 second job lock (renewed every 30
-seconds while the process is alive) with a 30 second stalled check, so BullMQ
-retries an abandoned job within about a minute instead of waiting out the
-longest possible job.
+integration and heavy workers keep their long job locks (10 minutes for
+integration, at least 5 minutes for heavy), so BullMQ redelivers an abandoned
+job once its lock expires. The locks stay long because `standalone` shares one
+event loop, so a job must not be redelivered while it is still running.
+A fatal error (`uncaughtException`/`unhandledRejection`) drains for at most 30
+seconds when `WORKER_SHUTDOWN_TIMEOUT_MS` is unset.
 
 ### Database pool sizing
 
 `DATABASE_POOL_MAX` and `SHARD_POOL_MAX` control PostgreSQL connections per
-process and default to `10`. The worker Docker entrypoint defaults both to `40`
-for the consolidated `worker standalone` and `worker core` modes; an explicit
-value wins. Those processes share each pool across every worker concurrency:
+process and default to `10`. The worker Docker entrypoint defaults
+`DATABASE_POOL_MAX` to `80` and `SHARD_POOL_MAX` to `40` for the consolidated
+`worker standalone` and `worker core` modes; an explicit value wins. Size
+replicas so that
+
+```text
+replicas × (DATABASE_POOL_MAX + shards × SHARD_POOL_MAX) ≤ max_connections
+```
+
+Those processes share each pool across about 350 concurrent job slots in total
+(trigger `100`, sequence `100`, webhook `50`, …):
 raise the pool limits or lower `*_WORKER_CONCURRENCY` — especially trigger
 (`100`), webhook (`50`), and low (`30`) — while keeping total connections across
 builder, worker, realtime, MCP, and isolated worker processes below PostgreSQL

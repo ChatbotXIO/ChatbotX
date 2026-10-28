@@ -5,6 +5,10 @@ import { env } from "../env"
 import { ensureBootstrapped } from "./bootstrap"
 import { logger } from "./logger"
 
+// A fatal error (uncaughtException/unhandledRejection) leaves the process in an
+// unknown state, so its drain must not hang forever when no deadline is set.
+const FATAL_SHUTDOWN_TIMEOUT_MS = 30_000
+
 type Closer = () => Promise<unknown> | unknown
 type NamedCloser = [name: string, close: Closer]
 
@@ -71,7 +75,11 @@ export async function requestShutdown(
   const workerClosers = [...closers]
   const shutdownFinalizers = [...finalizers]
   const pending = new Set(workerClosers.map(([name]) => name))
-  const timeoutMs = env.WORKER_SHUTDOWN_TIMEOUT_MS
+  const timeoutMs =
+    env.WORKER_SHUTDOWN_TIMEOUT_MS ??
+    (exitCode === 0 ? undefined : FATAL_SHUTDOWN_TIMEOUT_MS)
+  // If the event loop empties on its own, don't exit 0 after a fatal error.
+  process.exitCode = exitCode
   logger.info({ reason, workers: [...pending] }, "Shutting down")
 
   let deadline: ReturnType<typeof setTimeout> | undefined

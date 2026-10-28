@@ -134,7 +134,7 @@ run_all_workers() {
 
 # Consolidated single-process modes share one set of env defaults.
 run_consolidated() {
-  export DATABASE_POOL_MAX="${DATABASE_POOL_MAX:-40}"
+  export DATABASE_POOL_MAX="${DATABASE_POOL_MAX:-80}"
   export SHARD_POOL_MAX="${SHARD_POOL_MAX:-40}"
   export WORKER_SHUTDOWN_TIMEOUT_MS="${WORKER_SHUTDOWN_TIMEOUT_MS:-8000}"
   require_script "$1"

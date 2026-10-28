@@ -226,8 +226,8 @@ describe("heavy worker", () => {
   })
 
   test("keeps a short renewable BullMQ lock so a dead process is retried within a minute", () => {
-    expect(mocks.workerOptions?.lockDuration).toBe(60_000)
-    expect(mocks.workerOptions?.stalledInterval).toBe(30_000)
+    expect(mocks.workerOptions?.lockDuration).toBe(300_000)
+    expect(mocks.workerOptions?.stalledInterval).toBe(60_000)
     expect(mocks.workerOptions?.maxStalledCount).toBe(1)
   })
 

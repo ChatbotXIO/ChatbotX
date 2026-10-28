@@ -71,12 +71,21 @@ function main() {
 
   let bytesBefore = 0
   let bytesAfter = 0
+  let mapCount = 0
   for (const path of walkMaps(dir)) {
     const raw = readFileSync(path, "utf8")
     const pruned = JSON.stringify(pruneMap(JSON.parse(raw)))
     bytesBefore += raw.length
     bytesAfter += pruned.length
     writeFileSync(path, pruned)
+    mapCount += 1
+  }
+
+  // A build that stopped emitting maps would otherwise "succeed" and ship
+  // unmapped stack traces.
+  if (mapCount === 0) {
+    console.error(`prune-sourcemaps: no .map files found in ${dir}`)
+    process.exit(1)
   }
 
   const mb = (bytes) => `${Math.round(bytes / 1024 / 1024)}MB`

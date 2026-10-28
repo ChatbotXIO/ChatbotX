@@ -67,15 +67,10 @@ import { syncUserQuota } from "./handlers/sync-user-quota"
 import { teardownExpiredTrial } from "./handlers/teardown-expired-trial"
 import { unsubscribeExpiredTrials } from "./handlers/unsubscribe-expired-trials"
 
-function startScheduleWorker() {
+async function startScheduleWorker() {
   if (scheduleQueue instanceof Queue) {
-    registerSchedules()
-      .then(() => {
-        logger.info("Schedules registered")
-      })
-      .catch((err) => {
-        logger.error(err, "Error registering schedules")
-      })
+    await registerSchedules()
+    logger.info("Schedules registered")
   }
 
   // Hosted in the schedule process (its crons are the only producers) but on

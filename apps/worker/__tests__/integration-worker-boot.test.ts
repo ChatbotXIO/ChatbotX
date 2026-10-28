@@ -274,9 +274,6 @@ vi.mock("../src/integration/routing", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../src/integration/routing")>()),
   resolveIncomingTextRouting: vi.fn(),
 }))
-vi.mock("../src/integration/utils/message", () => ({
-  closeChatQueueEvents: vi.fn(async () => undefined),
-}))
 
 // Importing the worker module boots it exactly once (ESM module cache) —
 // the three `new Worker(...)` calls happen as a side effect of this import,
@@ -306,8 +303,8 @@ describe("integration worker process boot", () => {
     const [integrationWorker] = workerState.capturedWorkers
 
     expect(integrationWorker?.options.concurrency).toBe(10)
-    expect(integrationWorker?.options.lockDuration).toBe(60_000)
-    expect(integrationWorker?.options.stalledInterval).toBe(30_000)
+    expect(integrationWorker?.options.lockDuration).toBe(600_000)
+    expect(integrationWorker?.options.stalledInterval).toBe(600_000)
   })
 
   test("the callTranscription worker carries the CALL_TRANSCRIBE_PER_MIN limiter", () => {

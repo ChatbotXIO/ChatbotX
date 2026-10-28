@@ -10,6 +10,8 @@ import {
   AIJobAction,
   aiAgentQueue,
   type CallTranscriptionJobData,
+  getHeavyJobCompletionWaitTimeoutMs,
+  HeavyJobAction,
   IntegrationJobAction,
   type IntegrationJobData,
   integrationQueue,
@@ -95,12 +97,20 @@ import { runIntegrationJobWithWebhookContext } from "./job-context"
 import { resolveIncomingTextRouting } from "./routing"
 import { dispatchStoryAutomation } from "./story-automation-dispatch"
 
-// BullMQ renews a job lock every lockDuration / 2 while the process is alive,
-// so the lock only has to outlast a blocked event loop, not the longest job.
-// Keeping it short means a job whose process died (deploy, OOM) is retried
-// within about a minute rather than after the longest job could have run.
-const integrationWorkerLockDurationMs = 60_000
-const integrationWorkerStalledIntervalMs = 30_000
+// Coexist historical sync chunks are bounded to ~4 min via self-continuation
+// (see coexist-messenger-sync / coexist-whatsapp-flush). Lock sized as:
+// 4 min active + 4 min Graph 5xx retry tail + 2 min bulk INSERT tail.
+// Heavy flow steps also wait for every configured provider retry and
+// backoff; their full budget must fit within the parent job lock. The event
+// loop is shared in `standalone`, so the lock must not be shortened to rely on
+// timely renewal.
+const integrationWorkerLockDuration = Math.max(
+  10 * 60 * 1000,
+  getHeavyJobCompletionWaitTimeoutMs(
+    HeavyJobAction.aiGenerateImage,
+    env.HEAVY_JOB_WAIT_TIMEOUT_MS,
+  ) + 60_000,
+)
 
 function normalizeToId(value: string | { id: string }): string {
   return typeof value === "string" ? value : value.id
@@ -636,8 +646,8 @@ function startIntegrationWorker() {
       // Override the shared default (5). I/O-bound webhook handling tolerates
       // more parallelism; env-tunable via INTEGRATION_WORKER_CONCURRENCY.
       concurrency: env.INTEGRATION_WORKER_CONCURRENCY,
-      lockDuration: integrationWorkerLockDurationMs,
-      stalledInterval: integrationWorkerStalledIntervalMs,
+      lockDuration: integrationWorkerLockDuration,
+      stalledInterval: integrationWorkerLockDuration,
       maxStalledCount: 1,
     },
   )

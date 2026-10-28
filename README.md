@@ -231,7 +231,10 @@ the normal V8 heap limit.
 
 `DATABASE_POOL_MAX` defaults to `10` connections per process. In the worker
 Docker image, consolidated `worker standalone` and `worker core` modes default
-to `40`; set the variable explicitly to override that value.
+to `80` (`SHARD_POOL_MAX` to `40`); set the variables explicitly to override.
+Keep `replicas × (DATABASE_POOL_MAX + shards × SHARD_POOL_MAX)` at or below
+PostgreSQL `max_connections`. The consolidated process runs about 350
+concurrent job slots (trigger 100, sequence 100, webhook 50, …) over these pools.
 
 ## Services
 

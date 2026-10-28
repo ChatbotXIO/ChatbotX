@@ -65,6 +65,15 @@ describe("prune-sourcemaps", () => {
     })
   })
 
+  test("fails when the directory contains no source maps", () => {
+    withTemporaryDirectory((directory) => {
+      const result = spawnSync(process.execPath, [SCRIPT, directory])
+
+      expect(result.status).toBe(1)
+      expect(result.stderr.toString()).toContain("no .map files found")
+    })
+  })
+
   test("rejects the removed copy-to mode", () => {
     withTemporaryDirectory((directory) => {
       const copyTarget = join(directory, "copy-target")

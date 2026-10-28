@@ -64,6 +64,8 @@ describe("worker shutdown coordinator", () => {
   })
 
   afterEach(() => {
+    // requestShutdown sets process.exitCode; don't leak it into the test run.
+    process.exitCode = undefined
     vi.useRealTimers()
     vi.restoreAllMocks()
   })
@@ -189,6 +191,28 @@ describe("worker shutdown coordinator", () => {
       "Shutdown timed out with workers still draining",
     )
     expect(exitSpy).toHaveBeenCalledWith(1)
+  })
+
+  test("bounds a fatal-error drain at 30s even without a configured timeout", async () => {
+    vi.useFakeTimers()
+    shutdown.onShutdown("heavy", () => new Promise(() => undefined))
+
+    shutdown.requestShutdown("uncaughtException", 1)
+    await vi.advanceTimersByTimeAsync(29_999)
+    expect(exitSpy).not.toHaveBeenCalled()
+    await vi.advanceTimersByTimeAsync(1)
+
+    expect(exitSpy).toHaveBeenCalledWith(1)
+  })
+
+  test("never arms a deadline for a graceful SIGTERM drain", async () => {
+    vi.useFakeTimers()
+    shutdown.onShutdown("heavy", () => new Promise(() => undefined))
+
+    shutdown.requestShutdown("SIGTERM")
+    await vi.advanceTimersByTimeAsync(10 * 60_000)
+
+    expect(exitSpy).not.toHaveBeenCalled()
   })
 
   test("ignores a second shutdown request while one is in progress", async () => {

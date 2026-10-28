@@ -15,7 +15,8 @@ import { logger } from "../../lib/logger"
 // Bound every chat-job wait. A stalled or backlogged chat worker used to leave
 // job.waitUntilFinished() pending forever, and each pending wait keeps a
 // QueueEvents listener plus its captured closures alive — the slow leak that
-// OOM-crashed the integration worker. Validated and capped in env.ts.
+// OOM-crashed the integration worker. Validated + capped below the integration
+// worker lockDuration in env.ts.
 const CHAT_JOB_WAIT_TIMEOUT_MS = env.CHAT_JOB_WAIT_TIMEOUT_MS
 
 type SendMessageOptions = {

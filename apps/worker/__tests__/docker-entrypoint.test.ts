@@ -182,10 +182,10 @@ describe("docker-entrypoint worker discovery", () => {
     }
 
     expect(run(["worker", "standalone"], emptyLimits).stdout.trim()).toBe(
-      "40|40|8000",
+      "80|40|8000",
     )
     expect(run(["worker", "core"], emptyLimits).stdout.trim()).toBe(
-      "40|40|8000",
+      "80|40|8000",
     )
     expect(run(["worker", "chat"], emptyLimits).stdout.trim()).toBe("||")
     expect(

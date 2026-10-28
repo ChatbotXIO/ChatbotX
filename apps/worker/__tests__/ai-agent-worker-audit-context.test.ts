@@ -2,7 +2,6 @@ import { getAuditActor } from "@chatbotx.io/business/audit"
 import { beforeAll, beforeEach, describe, expect, test, vi } from "vitest"
 
 const mocks = vi.hoisted(() => ({
-  closeChatQueueEvents: vi.fn(),
   ensureBootstrapped: vi.fn(async () => undefined),
   handleOrphanedIntegration: vi.fn(),
   heavyQueueAdd: vi.fn(),
@@ -113,9 +112,6 @@ vi.mock("../src/integration/handlers/comment-automation/ai-reply", () => ({
 vi.mock("../src/integration/handlers/story-reply-automation", () => ({
   processStoryReplyAutomation: mocks.processStoryReplyAutomation,
   processStoryMentionAutomation: mocks.processStoryMentionAutomation,
-}))
-vi.mock("../src/integration/utils/message", () => ({
-  closeChatQueueEvents: mocks.closeChatQueueEvents,
 }))
 vi.mock("../src/services/orphaned-integration-cleanup", () => ({
   handleOrphanedIntegration: mocks.handleOrphanedIntegration,
