@@ -88,6 +88,7 @@ type SelectedMediaFile = Pick<
 export const MessageInput = () => {
   const t = useTranslations()
   const session = authClient.useSession()
+
   const isTouchDevice = useIsTouchDevice()
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const fileUploadRef = useRef<HTMLInputElement>(null)

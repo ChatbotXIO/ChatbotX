@@ -1,3 +1,4 @@
+import { TOUCH_DEVICE_MEDIA_QUERY } from "@chatbotx.io/ui/hooks/use-touch-device"
 import { act, cloneElement, forwardRef } from "react"
 import { createRoot, type Root } from "react-dom/client"
 import { useForm } from "react-hook-form"
@@ -5,7 +6,6 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 import { WebchatMessageInput } from "@/features/integration-webchat/webchat-message-input"
 import { MessageInput } from "@/features/messages/components/message-input"
 
-const TOUCH_DEVICE_MEDIA_QUERY = "(hover: none) and (pointer: coarse)"
 const defaultMatchMedia = window.matchMedia
 let isTouchDevice = false
 
@@ -211,6 +211,13 @@ const setTextareaValue = (textarea: HTMLTextAreaElement, value: string) => {
   textarea.dispatchEvent(new Event("input", { bubbles: true }))
 }
 
+const createEnterKeyDownEvent = (): KeyboardEvent =>
+  new KeyboardEvent("keydown", {
+    bubbles: true,
+    cancelable: true,
+    key: "Enter",
+  })
+
 describe("message composers", () => {
   let container: HTMLDivElement
   let root: Root
@@ -355,19 +362,15 @@ describe("message composers", () => {
 
     expect(textarea.getAttribute("enterkeyhint")).toBe("send")
 
+    const event = createEnterKeyDownEvent()
     await act(async () => {
       setTextareaValue(textarea, "desktop")
-      textarea.dispatchEvent(
-        new KeyboardEvent("keydown", {
-          bubbles: true,
-          cancelable: true,
-          key: "Enter",
-        }),
-      )
+      textarea.dispatchEvent(event)
       await Promise.resolve()
     })
 
     expect(action.executeAsync).toHaveBeenCalledTimes(1)
+    expect(event.defaultPrevented).toBe(true)
   })
 
   test("does not submit an inbox message when Enter is pressed on a touch device", async () => {
@@ -380,19 +383,60 @@ describe("message composers", () => {
 
     expect(textarea.getAttribute("enterkeyhint")).toBe("enter")
 
+    const event = createEnterKeyDownEvent()
     await act(async () => {
       setTextareaValue(textarea, "touch")
-      textarea.dispatchEvent(
-        new KeyboardEvent("keydown", {
-          bubbles: true,
-          cancelable: true,
-          key: "Enter",
-        }),
-      )
+      textarea.dispatchEvent(event)
       await Promise.resolve()
     })
 
     expect(action.executeAsync).not.toHaveBeenCalled()
+    expect(event.defaultPrevented).toBe(false)
+  })
+
+  test("submits a webchat message when Enter is pressed on a desktop keyboard", async () => {
+    act(() =>
+      root.render(<WebchatMessageInput webchatId="1" workspaceId="1" />),
+    )
+    const textarea = container.querySelector("textarea")
+    if (!textarea) {
+      throw new Error("Message composer did not render a textarea")
+    }
+
+    expect(textarea.getAttribute("enterkeyhint")).toBe("send")
+
+    const event = createEnterKeyDownEvent()
+    await act(async () => {
+      setTextareaValue(textarea, "desktop")
+      textarea.dispatchEvent(event)
+      await Promise.resolve()
+    })
+
+    expect(action.executeAsync).toHaveBeenCalledTimes(1)
+    expect(event.defaultPrevented).toBe(true)
+  })
+
+  test("does not submit a webchat message when Enter is pressed on a touch device", async () => {
+    isTouchDevice = true
+    act(() =>
+      root.render(<WebchatMessageInput webchatId="1" workspaceId="1" />),
+    )
+    const textarea = container.querySelector("textarea")
+    if (!textarea) {
+      throw new Error("Message composer did not render a textarea")
+    }
+
+    expect(textarea.getAttribute("enterkeyhint")).toBe("enter")
+
+    const event = createEnterKeyDownEvent()
+    await act(async () => {
+      setTextareaValue(textarea, "touch")
+      textarea.dispatchEvent(event)
+      await Promise.resolve()
+    })
+
+    expect(action.executeAsync).not.toHaveBeenCalled()
+    expect(event.defaultPrevented).toBe(false)
   })
 
   test("marks an optimistic inbox message failed and keeps its reply target on a server error", async () => {

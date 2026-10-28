@@ -4,13 +4,10 @@ export function shouldSendOnEnter(
   },
   isTouchDevice: boolean,
 ): boolean {
-  if (event.nativeEvent.isComposing || event.key === "Process") {
-    return false
-  }
-
-  if (event.key !== "Enter" || event.shiftKey || isTouchDevice) {
-    return false
-  }
-
-  return true
+  return (
+    event.key === "Enter" &&
+    !event.nativeEvent.isComposing &&
+    !event.shiftKey &&
+    !isTouchDevice
+  )
 }

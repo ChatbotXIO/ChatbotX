@@ -1,21 +1,18 @@
 import * as React from "react"
 
-const TOUCH_DEVICE_MEDIA_QUERY = "(hover: none) and (pointer: coarse)"
+export const TOUCH_DEVICE_MEDIA_QUERY = "(hover: none) and (pointer: coarse)"
+
+const subscribe = (listener: () => void) => {
+  const mediaQueryList = window.matchMedia(TOUCH_DEVICE_MEDIA_QUERY)
+  mediaQueryList.addEventListener("change", listener)
+
+  return () => mediaQueryList.removeEventListener("change", listener)
+}
 
 export function useIsTouchDevice(): boolean {
-  const [isTouchDevice, setIsTouchDevice] = React.useState(false)
-
-  React.useEffect(() => {
-    const mediaQueryList = window.matchMedia(TOUCH_DEVICE_MEDIA_QUERY)
-    const handleChange = () => {
-      setIsTouchDevice(mediaQueryList.matches)
-    }
-
-    mediaQueryList.addEventListener("change", handleChange)
-    handleChange()
-
-    return () => mediaQueryList.removeEventListener("change", handleChange)
-  }, [])
-
-  return isTouchDevice
+  return React.useSyncExternalStore(
+    subscribe,
+    () => window.matchMedia(TOUCH_DEVICE_MEDIA_QUERY).matches,
+    () => false,
+  )
 }
