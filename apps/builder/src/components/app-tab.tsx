@@ -7,6 +7,9 @@ import {
   TooltipTrigger,
 } from "@chatbotx.io/ui/components/ui/tooltip"
 import Link from "next/link"
+import { useState } from "react"
+import { LinkPendingReporter } from "@/components/navigation-pending"
+import { TabContentSkeleton } from "@/components/workspace-skeletons"
 
 type AppTabProps = {
   tabs: {
@@ -37,45 +40,60 @@ function getTabClassName(tab: AppTabProps["tabs"][number]) {
 }
 
 export function AppTab({ tabs }: AppTabProps) {
+  // Tracked here rather than in the workspace-wide boundary so a tab switch
+  // keeps this strip on screen and only swaps the content below it.
+  const [pendingHref, setPendingHref] = useState<string | null>(null)
+
   return (
-    <Card className="py-0">
-      {/*
+    <>
+      {/* `data-local-navigation-pending`: this strip shows its own pending UI, so the workspace-wide skeleton ignores its links. */}
+      <Card className="py-0" data-local-navigation-pending="">
+        {/*
         Several surfaces render 5-6 tabs, which cannot fit a phone. Scrolling
         the strip keeps every tab reachable without pushing the page itself
         into horizontal overflow. The scrollbar is hidden because the strip
         sits directly under a card edge, where a persistent bar reads as a
         rendering artefact; touch scrolling needs no visible track.
       */}
-      <CardContent className="scrollbar-hide flex flex-nowrap items-center gap-4 overflow-x-auto px-4 md:gap-8 md:px-8">
-        {tabs.map((tab) =>
-          tab.disabled ? (
-            <Tooltip key={tab.href}>
-              <TooltipTrigger
-                render={
-                  <span
-                    aria-disabled="true"
-                    className={getTabClassName(tab)}
-                    title={tab.disabledTooltip}
-                  >
-                    {tab.label}
-                  </span>
-                }
-              />
-              {tab.disabledTooltip ? (
-                <TooltipContent>{tab.disabledTooltip}</TooltipContent>
-              ) : null}
-            </Tooltip>
-          ) : (
-            <Link
-              className={getTabClassName(tab)}
-              href={tab.href}
-              key={tab.href}
-            >
-              {tab.label}
-            </Link>
-          ),
-        )}
-      </CardContent>
-    </Card>
+        <CardContent className="scrollbar-hide flex flex-nowrap items-center gap-4 overflow-x-auto px-4 md:gap-8 md:px-8">
+          {tabs.map((tab) =>
+            tab.disabled ? (
+              <Tooltip key={tab.href}>
+                <TooltipTrigger
+                  render={
+                    <span
+                      aria-disabled="true"
+                      className={getTabClassName(tab)}
+                      title={tab.disabledTooltip}
+                    >
+                      {tab.label}
+                    </span>
+                  }
+                />
+                {tab.disabledTooltip ? (
+                  <TooltipContent>{tab.disabledTooltip}</TooltipContent>
+                ) : null}
+              </Tooltip>
+            ) : (
+              <Link
+                className={getTabClassName(tab)}
+                href={tab.href}
+                key={tab.href}
+              >
+                {tab.label}
+                {/* Re-clicking the open tab keeps the URL, so nothing should be covered. */}
+                {!tab.isActive && (
+                  <LinkPendingReporter
+                    href={tab.href}
+                    setPendingHref={setPendingHref}
+                  />
+                )}
+              </Link>
+            ),
+          )}
+        </CardContent>
+      </Card>
+      {pendingHref && <TabContentSkeleton />}
+    </>
   )
 }
