@@ -2252,6 +2252,7 @@
       "contactCreatedAt": "Contact creat la",
       "fromCtwaAd": "Din anunț",
       "fromGoogleAd": "Din Google Ads",
+      "clickedAd": "A dat clic pe reclamă",
       "ctwaConversion": "Conversie anunț",
       "lastUserInputTypes": {
         "text": "Text",
@@ -3716,6 +3717,12 @@
     },
     "lastAd": {
       "label": "Ultima reclamă"
+    },
+    "adIds": {
+      "label": "Toate ID-urile reclamelor"
+    },
+    "adId": {
+      "label": "ID-ul primei reclame"
     },
     "lastAdSourcePlatform": {
       "label": "Platforma sursă a ultimei reclame"
@@ -6084,6 +6091,22 @@
     "dialogDescriptions": {
       "flowStep": "Alege cum programează întâlniri acest pas al fluxului."
     }
+  },
+  "contactAdReferrals": {
+    "title": "Istoric reclame",
+    "empty": "Nu a fost înregistrat încă niciun clic pe reclame pentru acest contact."
+  },
+  "adsReferralStats": {
+    "title": "Contacte după reclamă",
+    "description": "Contactele la care a ajuns fiecare reclamă și conversiile atribuite clicurilor sale. Clicurile se numără de la începutul urmăririi.",
+    "ad": "Reclamă",
+    "contacts": "Contacte",
+    "firstTouch": "Prima atingere",
+    "leads": "Lead-uri",
+    "purchases": "Achiziții",
+    "revenue": "Venituri",
+    "empty": "Niciun clic pe reclame în această perioadă.",
+    "timeout": "Acest raport a durat prea mult. Alege un interval de date mai scurt."
   },
   "coupons": {
     "actions": {

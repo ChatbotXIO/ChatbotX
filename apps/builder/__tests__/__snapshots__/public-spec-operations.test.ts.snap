@@ -124,6 +124,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
   },
   {
     "method": "GET",
+    "operationId": "ads.listReferralAds",
+    "path": "/v1/ads/referral-ads",
+  },
+  {
+    "method": "GET",
     "operationId": "ads.listRules",
     "path": "/v1/ads/conversion-rules",
   },
@@ -136,6 +141,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "method": "POST",
     "operationId": "ads.publishCampaign",
     "path": "/v1/ads/campaigns/{id}/publish",
+  },
+  {
+    "method": "GET",
+    "operationId": "ads.referralStats",
+    "path": "/v1/ads/referral-stats",
   },
   {
     "method": "POST",
@@ -1001,6 +1011,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "method": "GET",
     "operationId": "contacts.list",
     "path": "/v1/contacts",
+  },
+  {
+    "method": "GET",
+    "operationId": "contacts.listAdReferrals",
+    "path": "/v1/contacts/{identifier}/ad-referrals",
   },
   {
     "method": "GET",

@@ -57,6 +57,7 @@
     "./errors": "./src/errors.ts",
     "./keys": "./src/keys.ts",
     "./partials": "./src/partials/index.ts",
+    "./statement-timeout": "./src/statement-timeout.ts",
     "./queries": "./src/queries/index.ts",
     "./queries/contact-filter": "./src/queries/contact-filter/index.ts",
     "./queries/contact-filter/permission": "./src/queries/contact-filter/permission.ts",

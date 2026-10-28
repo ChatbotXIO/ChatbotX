@@ -976,6 +976,7 @@
       "contactCreatedAt": "Ngày tạo liên hệ",
       "fromCtwaAd": "Đến từ quảng cáo",
       "fromGoogleAd": "Đến từ Google Ads",
+      "clickedAd": "Đã click quảng cáo",
       "ctwaConversion": "Chuyển đổi quảng cáo",
       "lastUserInputTypes": {
         "text": "Văn bản",
@@ -2601,6 +2602,12 @@
     },
     "lastAd": {
       "label": "Quảng cáo cuối"
+    },
+    "adIds": {
+      "label": "Tất cả ID quảng cáo"
+    },
+    "adId": {
+      "label": "ID quảng cáo đầu tiên"
     },
     "lastAdSourcePlatform": {
       "label": "Nền tảng nguồn quảng cáo cuối"
@@ -7434,6 +7441,22 @@
     "title": "TikTok",
     "description": "Kết nối tài khoản TikTok để trả lời tin nhắn trực tiếp.",
     "refreshToken": "Làm mới Token"
+  },
+  "contactAdReferrals": {
+    "title": "Lịch sử quảng cáo",
+    "empty": "Chưa ghi nhận lượt click quảng cáo nào của liên hệ này."
+  },
+  "adsReferralStats": {
+    "title": "Liên hệ theo quảng cáo",
+    "description": "Số liên hệ mà mỗi quảng cáo tiếp cận và các chuyển đổi được ghi cho lượt click của nó. Chỉ tính các lượt click từ khi bắt đầu theo dõi.",
+    "ad": "Quảng cáo",
+    "contacts": "Liên hệ",
+    "firstTouch": "Chạm đầu tiên",
+    "leads": "Khách tiềm năng",
+    "purchases": "Đơn mua",
+    "revenue": "Doanh thu",
+    "empty": "Không có lượt click quảng cáo trong giai đoạn này.",
+    "timeout": "Báo cáo này mất quá nhiều thời gian. Hãy chọn khoảng ngày ngắn hơn."
   },
   "coupons": {
     "title": "Coupon",

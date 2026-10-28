@@ -934,6 +934,7 @@
       "contactCreatedAt": "連絡先の作成日時",
       "fromCtwaAd": "広告経由",
       "fromGoogleAd": "Google 広告経由",
+      "clickedAd": "広告をクリック",
       "ctwaConversion": "広告コンバージョン",
       "lastUserInputTypes": {
         "text": "テキスト",
@@ -2398,6 +2399,12 @@
     },
     "lastAd": {
       "label": "最後の広告"
+    },
+    "adIds": {
+      "label": "すべての広告ID"
+    },
+    "adId": {
+      "label": "最初の広告ID"
     },
     "lastAdSourcePlatform": {
       "label": "最後の広告ソースプラットフォーム"
@@ -7105,6 +7112,22 @@
     "title": "TikTok",
     "description": "TikTokアカウントを接続してダイレクトメッセージに返信します。",
     "refreshToken": "更新トークン"
+  },
+  "contactAdReferrals": {
+    "title": "広告の履歴",
+    "empty": "このコンタクトの広告クリックはまだ記録されていません。"
+  },
+  "adsReferralStats": {
+    "title": "広告別のコンタクト",
+    "description": "各広告が獲得したコンタクトと、そのクリックに帰属するコンバージョン。トラッキング開始以降のクリックを集計します。",
+    "ad": "広告",
+    "contacts": "コンタクト",
+    "firstTouch": "初回接触",
+    "leads": "リード",
+    "purchases": "購入",
+    "revenue": "売上",
+    "empty": "この期間の広告クリックはありません。",
+    "timeout": "このレポートは時間がかかりすぎました。より短い期間を選択してください。"
   },
   "coupons": {
     "title": "クーポン",

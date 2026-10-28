@@ -12,7 +12,6 @@ import type {
   ConnectionStatus,
   ConnectSessionErrorCode,
 } from "@chatbotx.io/utils/connection"
-import { allInboxConfigs } from "@/features/inboxes/provider/inbox-hook"
 import type { GoogleAdsEventResource } from "../schema/events"
 
 /**
@@ -50,12 +49,9 @@ export const failureStageLabelKey = {
   timeout: "googleAds.events.stage.timeout",
 } as const satisfies Record<GoogleAdsFailureStage, string>
 
-/**
- * Channel names reuse the app-wide inbox label (brand names, not translated),
- * so a new Google Ads channel needs no Google-specific key.
- */
-export const channelLabel = (channel: string): string =>
-  allInboxConfigs[channel as keyof typeof allInboxConfigs]?.label ?? channel
+// Channel names reuse the app-wide inbox label (brand names, not translated),
+// so a new Google Ads channel needs no Google-specific key.
+export { channelLabel } from "@/features/inboxes/lib/channel-label"
 
 export const clickIdTypeLabelKey = {
   gclid: "googleAds.validate.clickIdTypes.gclid",

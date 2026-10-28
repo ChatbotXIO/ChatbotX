@@ -934,6 +934,7 @@
       "contactCreatedAt": "Kontakt oprettet den",
       "fromCtwaAd": "Fra annonce",
       "fromGoogleAd": "Fra Google Ads",
+      "clickedAd": "Klikkede på annonce",
       "ctwaConversion": "Annoncekonvertering",
       "lastUserInputTypes": {
         "text": "Tekst",
@@ -2398,6 +2399,12 @@
     },
     "lastAd": {
       "label": "Seneste Ad"
+    },
+    "adIds": {
+      "label": "Alle annonce-ID'er"
+    },
+    "adId": {
+      "label": "Første annonce-ID"
     },
     "lastAdSourcePlatform": {
       "label": "Seneste Ad Kilde Platform"
@@ -7105,6 +7112,22 @@
     "title": "TikTok",
     "description": "Forbind din TikTok konto til svar til direkte beskeder.",
     "refreshToken": "Refresh Token"
+  },
+  "contactAdReferrals": {
+    "title": "Annoncehistorik",
+    "empty": "Der er endnu ikke registreret annonceklik for denne kontakt."
+  },
+  "adsReferralStats": {
+    "title": "Kontakter pr. annonce",
+    "description": "Kontakter, som hver annonce har nået, og de konverteringer, der tilskrives dens klik. Klik tælles, siden sporingen begyndte.",
+    "ad": "Annonce",
+    "contacts": "Kontakter",
+    "firstTouch": "Første berøring",
+    "leads": "Leads",
+    "purchases": "Køb",
+    "revenue": "Omsætning",
+    "empty": "Ingen annonceklik i denne periode.",
+    "timeout": "Rapporten tog for lang tid. Vælg et kortere datointerval."
   },
   "coupons": {
     "title": "Kuponer",

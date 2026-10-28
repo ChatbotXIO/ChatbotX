@@ -972,6 +972,47 @@ describe("receiveMessage — message repository branch", () => {
       )
     })
 
+    test("keys a referral-only ad touch by the provider's own delivery time", async () => {
+      const occurredAt = new Date("2026-10-20T08:00:00.000Z")
+      mockRunChannelHandler.mockResolvedValue({
+        message: null,
+        contact: { sourceId: "psid-123" },
+        postbackAction: null,
+        quickReplyAction: null,
+        ref: null,
+        referral: googleReferral,
+        occurredAt,
+      })
+
+      await receiveMessage(baseProps)
+
+      expect(mockUpdateTracking).toHaveBeenCalledWith(
+        expect.objectContaining({
+          referralOccurrence: {
+            occurredAt,
+            eventKey: String(occurredAt.getTime()),
+          },
+        }),
+      )
+    })
+
+    test("logs no ad touch for a referral-only delivery without a provider time", async () => {
+      mockRunChannelHandler.mockResolvedValue({
+        message: null,
+        contact: { sourceId: "psid-123" },
+        postbackAction: null,
+        quickReplyAction: null,
+        ref: null,
+        referral: googleReferral,
+      })
+
+      await receiveMessage(baseProps)
+
+      expect(mockUpdateTracking).toHaveBeenCalledWith(
+        expect.objectContaining({ referralOccurrence: undefined }),
+      )
+    })
+
     test("does not enqueue runRef when ref is null for a Google referral", async () => {
       mockRunChannelHandler.mockResolvedValue({
         message: { ...baseIncomingMessage, attachments: [] },
@@ -1274,6 +1315,7 @@ describe("receiveMessage — message repository branch", () => {
         lastUserInputType: "text",
       },
       contactLocation: null,
+      referralEventKey: fakeCreatedMessage.sourceId,
       at: fakeCreatedMessage.createdAt,
       contactRepliedAt: fakeCreatedMessage.createdAt,
     })
@@ -1367,6 +1409,7 @@ describe("receiveMessage — message repository branch", () => {
         lastMessageAt: fakeCreatedMessage.createdAt,
       },
       contactLocation: null,
+      referralEventKey: fakeCreatedMessage.sourceId,
       at: fakeCreatedMessage.createdAt,
       // Native-app echo closes the waiting window as an external human reply.
       isExternalHumanEcho: true,
@@ -3247,6 +3290,7 @@ describe("receiveMessage — new contact MAC gate", () => {
         lastBtnTitle: "Choose plan",
       },
       contactLocation: { latitude: 10.75, longitude: 106.66 },
+      referralEventKey: fakeCreatedMessage.sourceId,
       at: fakeCreatedMessage.createdAt,
       contactRepliedAt: fakeCreatedMessage.createdAt,
     })
@@ -4904,6 +4948,7 @@ describe("contact source taxonomy", () => {
         lastCommentMessageAt: fakeCreatedMessage.createdAt,
       },
       contactLocation: undefined,
+      referralEventKey: fakeCreatedMessage.sourceId,
       at: fakeCreatedMessage.createdAt,
       contactRepliedAt: fakeCreatedMessage.createdAt,
     })

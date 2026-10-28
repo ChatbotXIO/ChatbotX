@@ -223,6 +223,7 @@ const getMessageEntity = async (
     ref,
     referralSource,
     referral,
+    occurredAt: new Date(messaging.timestamp),
     buttonTitle,
     contact,
   }

@@ -262,6 +262,34 @@ describe("activity fields in the picker", () => {
     }
     expect(options("keywordsReceived")).toBeUndefined()
     expect(options("completedWhatsAppFlows")).toBeUndefined()
+    expect(options("clickedAd")).toBeUndefined()
+  })
+
+  test("clicked ad is a server-searched ads field that names a chosen ad", () => {
+    const configs = build({
+      filterValueLabels: {
+        tags: [],
+        sequences: [],
+        broadcasts: [],
+        reflinks: [],
+        inboxes: [],
+        members: [],
+        inboxTeams: [],
+        flows: [],
+        flowNodes: [],
+        keywords: [],
+        whatsappFlows: [],
+        emailTopics: [],
+        ads: [{ id: "120", name: "Summer sale (120)" }],
+      },
+    })
+    const config = configs.find((item) => item.name === "clickedAd")
+
+    expect(config?.optionSource).toBe("ads")
+    expect(config?.group).toBe("ctwaAds")
+    expect(config?.valueLabels).toEqual([
+      { label: "Summer sale (120)", value: "120" },
+    ])
   })
 
   test("names a chosen No Topic value instead of flagging it deleted", () => {
@@ -279,6 +307,7 @@ describe("activity fields in the picker", () => {
         keywords: [],
         whatsappFlows: [],
         emailTopics: [{ id: "12", name: "Newsletter" }],
+        ads: [],
       },
     })
     const labels = configs.find(

@@ -2,6 +2,7 @@ import { notFoundException } from "@chatbotx.io/business/errors"
 import { withWorkspaceIdSchema } from "@/features/workspaces/schema/resource"
 import { workspaceAuthorizedMidddleware } from "@/middlewares/auth"
 import { authorizedAPI } from "@/orpc"
+import { listContactAdReferrals } from "../lib/list-contact-ad-referrals"
 import {
   buildContactPermissionScope,
   requireContactPermissionScope,
@@ -15,6 +16,10 @@ import {
 } from "../queries/list-contact-inboxes.queries"
 import { countContacts, listContacts } from "../queries/list-contacts.queries"
 import { getExportFileRequest, getExportFileResponse } from "../schema/action"
+import {
+  listContactAdReferralsRequest,
+  listContactAdReferralsResponse,
+} from "../schema/ad-referral"
 import {
   countContactsRequest,
   countContactsResponse,
@@ -48,6 +53,32 @@ export const contactsAuthenticatedAPI = {
       }
 
       return await getContact({ workspaceId, contactId }, scope)
+    }),
+
+  listContactAdReferralsAuthenticatedAPI: authorizedAPI
+    .route({
+      method: "GET",
+      path: "/workspaces/{workspaceId}/contacts/{contactId}/ad-referrals",
+      summary: "List the ads a contact came from",
+      tags: ["Contacts"],
+    })
+    .input(listContactAdReferralsRequest.and(getContactRequest))
+    .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
+    .output(listContactAdReferralsResponse)
+    .handler(async ({ input, context }) => {
+      const scope = requireContactPermissionScopeForMember({
+        permissions: context.workspaceMember.permissions,
+        userId: context.user.id,
+      })
+      return await listContactAdReferrals({
+        workspaceId: input.workspaceId,
+        contactId: input.contactId,
+        perPage: input.perPage,
+        cursor: input.cursor,
+        accessScope: {
+          restrictToAssignedUserId: scope.restrictToAssignedUserId,
+        },
+      })
     }),
 
   listContactsByPOSTAuthenticatedAPI: authorizedAPI

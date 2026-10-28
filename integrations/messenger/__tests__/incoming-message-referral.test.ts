@@ -39,6 +39,8 @@ describe("Messenger receiveMessage", () => {
 
     expect(result.ref).toBe("bot-link")
     expect(result.referralSource).toBe("SHORTLINK")
+    // The provider time keys a referral-only delivery when its webhook is retried.
+    expect(result.occurredAt).toBeInstanceOf(Date)
   })
 
   test("derives the ad platform from source_url when source_platform is absent", async () => {

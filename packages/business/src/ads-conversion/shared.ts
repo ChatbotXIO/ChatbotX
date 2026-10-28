@@ -11,6 +11,7 @@ import {
   enqueueIntegrationJob,
   IntegrationJobAction,
 } from "@chatbotx.io/worker-config"
+import { contactReferralEventService } from "../contact-referral-event/service"
 
 /**
  * Shared plumbing used by `service.ts` (rule-based evaluators). Kept in its
@@ -65,6 +66,33 @@ export async function enqueueSendConversionEvent(
 }
 
 /**
+ * The one place a Meta conversion row is linked to the ad touch it was
+ * credited to, so every insert path (rules, templateSent, automatic events)
+ * resolves it the same way. Attribution itself is unchanged.
+ */
+export async function withMetaAttributedTouch<
+  T extends Parameters<
+    typeof adsConversionEventRepository.insertIgnoreDuplicate
+  >[0],
+>(
+  values: T,
+  tx?: DatabaseClient,
+): Promise<T & { referralEventId: string | null }> {
+  const referralEventId =
+    await contactReferralEventService.findAttributedTouchId(
+      {
+        workspaceId: values.workspaceId,
+        contactInboxId: values.contactInboxId,
+        provider: "meta",
+        clickId: values.ctwaClid,
+        adId: values.adId,
+      },
+      tx,
+    )
+  return { ...values, referralEventId }
+}
+
+/**
  * Shared find-or-create + re-enqueue-if-still-pending control flow used by
  * every conversion-trigger insert path (rule evaluators and templateSent
  * evaluators): `evaluateConversionTriggerRule`/`evaluateAdReferralTriggerRule`
@@ -83,7 +111,7 @@ export async function insertConversionEventOrRecover(
   tx?: DatabaseClient,
 ): Promise<AdsConversionEventModel | null> {
   const inserted = await adsConversionEventRepository.insertIgnoreDuplicate(
-    insertValues,
+    await withMetaAttributedTouch(insertValues, tx),
     tx,
   )
 

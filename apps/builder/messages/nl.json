@@ -2184,6 +2184,12 @@
     "lastAd": {
       "label": "Laatste advertentie"
     },
+    "adIds": {
+      "label": "Alle advertentie-ID's"
+    },
+    "adId": {
+      "label": "Eerste advertentie-ID"
+    },
     "lastAdSourcePlatform": {
       "label": "Bronplatform van laatste advertentie"
     },
@@ -2549,6 +2555,7 @@
       "contactCreatedAt": "Contact aangemaakt op",
       "fromCtwaAd": "Van advertentie",
       "fromGoogleAd": "Van Google Ads",
+      "clickedAd": "Op advertentie geklikt",
       "ctwaConversion": "Advertentieconversie",
       "lastUserInputTypes": {
         "text": "Tekst",
@@ -7105,6 +7112,22 @@
     "title": "TikTok",
     "description": "Koppel je TikTok-account om privéberichten te beantwoorden.",
     "refreshToken": "Vernieuwingstoken"
+  },
+  "contactAdReferrals": {
+    "title": "Advertentiegeschiedenis",
+    "empty": "Voor dit contact zijn nog geen advertentieklikken geregistreerd."
+  },
+  "adsReferralStats": {
+    "title": "Contacten per advertentie",
+    "description": "Contacten die elke advertentie bereikte en de conversies die aan de klikken worden toegeschreven. Klikken worden geteld sinds het begin van de tracking.",
+    "ad": "Advertentie",
+    "contacts": "Contacten",
+    "firstTouch": "Eerste aanraking",
+    "leads": "Leads",
+    "purchases": "Aankopen",
+    "revenue": "Omzet",
+    "empty": "Geen advertentieklikken in deze periode.",
+    "timeout": "Dit rapport duurde te lang. Kies een kortere periode."
   },
   "coupons": {
     "title": "Coupons",

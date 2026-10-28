@@ -120,6 +120,7 @@ const STATIC_OPERATOR_RULES: Record<string, readonly OperatorType[]> = {
   executedStep: SET_OPERATORS,
   keywordsReceived: SET_OPERATORS,
   completedWhatsAppFlows: SET_OPERATORS,
+  clickedAd: SET_OPERATORS,
   emailSent: SET_OPERATORS,
   emailDelivered: SET_OPERATORS,
   emailOpened: SET_OPERATORS,

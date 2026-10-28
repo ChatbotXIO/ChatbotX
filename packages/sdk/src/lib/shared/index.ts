@@ -47,6 +47,12 @@ export type ReceivedMessageResult = {
   ref: string | null
   referralSource?: string | null
   referral?: MessageReferral | null
+  /**
+   * The provider's own time for this delivery. Set by channels that can deliver
+   * a referral on its own (no message); it makes that referral idempotent when
+   * the webhook is retried.
+   */
+  occurredAt?: Date | null
   buttonTitle?: string | null
   /**
    * Origin of an outgoing echo, when the channel can tell. Unset or null

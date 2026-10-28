@@ -62,14 +62,11 @@ import { formatCustomFieldDisplayValue } from "../custom-fields/lib/format-custo
 import { customFieldIconsMap } from "../custom-fields/provider/custom-field-hook"
 import { EditContactField } from "./edit-contact-field"
 import { resolveSourceIdentity } from "./lib/channel-identity"
+import { toHttpUrl } from "./lib/http-url"
 import { ResetContactCustomFieldsDialog } from "./reset-contact-custom-fields-dialog"
 import type { GetContactResponse } from "./schema/query"
 import type { ContactEditableField } from "./schema/resource"
 import { useAvatarUrl } from "./utils"
-
-// Guards the ad source URL to navigable http(s) so a non-URL / `javascript:`
-// referral value never becomes an anchor href.
-const HTTP_URL_RE = /^https?:\/\//
 
 const READ_ONLY_VALUE_CLASS =
   "inline-flex h-8 flex-1 items-center justify-start truncate rounded-md px-3 text-[12px]"
@@ -572,10 +569,7 @@ export const ContactDetail = ({
         const rawAdSourceUrl = conversation.contactInboxes.find(
           (contactInbox) => contactInbox.adReferral?.sourceUrl,
         )?.adReferral?.sourceUrl
-        const adSourceUrl =
-          rawAdSourceUrl && HTTP_URL_RE.test(rawAdSourceUrl)
-            ? rawAdSourceUrl
-            : null
+        const adSourceUrl = toHttpUrl(rawAdSourceUrl)
         const tmpContactFields: ContactEditableField[] = [
           {
             key: "contactId",

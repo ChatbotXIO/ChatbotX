@@ -11,6 +11,7 @@ const {
   mockGetCapiDeliveryData,
   mockGetAdsAnalyticsTimeseries,
   mockAdsAnalyticsView,
+  mockAdsReferralStats,
   mockResolveGoogleAdsDashboardEntry,
   mockAnalyticsNav,
 } = vi.hoisted(() => ({
@@ -63,6 +64,9 @@ const {
   })),
   mockGetAdsAnalyticsTimeseries: vi.fn(async () => []),
   mockAdsAnalyticsView: vi.fn(() => null),
+  mockAdsReferralStats: vi.fn(
+    (_props: { range: { from: string; to: string } }) => null,
+  ),
 }))
 
 vi.mock("@/lib/auth/require-workspace-permission", () => ({
@@ -112,9 +116,15 @@ vi.mock("@/features/ads/components/ads-analytics-view", () => ({
   AdsAnalyticsView: mockAdsAnalyticsView,
 }))
 
+vi.mock("@/features/ads/components/ads-referral-stats", () => ({
+  AdsReferralStats: mockAdsReferralStats,
+}))
+
 const { default: AdsChannelAnalyticsPage } = await import(
   "../src/app/space/[workspaceId]/dashboard/ads/[channel]/page"
 )
+
+const DATE_KEY_RE = /^\d{4}-\d{2}-\d{2}$/
 
 describe("Ads dashboard [channel] page", () => {
   beforeEach(() => {
@@ -134,6 +144,48 @@ describe("Ads dashboard [channel] page", () => {
       oauthCallbackUrl: "https://example.com/oauth",
       messengerIntegrations: [{ id: "msg-1", name: "My Page" }],
       instagramIntegrations: [{ id: "ig-1", name: "My IG" }],
+    })
+  })
+
+  describe("per-ad referral stats", () => {
+    const render = async (searchParams: Record<string, string>) => {
+      renderToStaticMarkup(
+        await AdsChannelAnalyticsPage({
+          params: Promise.resolve({
+            workspaceId: "ws-1",
+            channel: "messenger",
+          }),
+          searchParams: Promise.resolve(searchParams),
+        }),
+      )
+    }
+
+    test("is scoped to the channel and the URL's range in the viewer's timezone", async () => {
+      await render({ from: "2026-10-01", to: "2026-10-07", tz: "UTC" })
+
+      expect(mockAdsReferralStats).toHaveBeenCalledWith(
+        expect.objectContaining({
+          channel: "messenger",
+          workspaceId: "ws-1",
+          range: { from: "2026-10-01", to: "2026-10-07", tz: "UTC" },
+        }),
+        undefined,
+      )
+    })
+
+    test("gets the same fallback days as the dashboard when the URL range is malformed", async () => {
+      await render({ from: "2026-13-45", to: "nonsense", tz: "UTC" })
+
+      const range = mockAdsReferralStats.mock.calls[0]?.[0].range
+      expect(range.from).toMatch(DATE_KEY_RE)
+      expect(range.to).toMatch(DATE_KEY_RE)
+      expect(range.from <= range.to).toBe(true)
+    })
+
+    test("is hidden while a single account is selected, since it counts the whole channel", async () => {
+      await render({ channelAccount: "msg-1" })
+
+      expect(mockAdsReferralStats).not.toHaveBeenCalled()
     })
   })
 

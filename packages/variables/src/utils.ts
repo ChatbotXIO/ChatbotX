@@ -49,7 +49,9 @@ import {
 } from "./helpers/assigned"
 import {
   findPrimaryContactChannel,
+  getFirstContactAdId,
   getLatestContactNoteString,
+  listContactAdIdsString,
   listContactNotesString,
   listContactTagsString,
 } from "./helpers/contact"
@@ -642,6 +644,12 @@ export const getSystemFieldValue = async (
       return getReferralValue(contactInbox, "adId")
     case systemFieldTypes.enum.last_ctwa:
       return getReferralValue(contactInbox, "ctwaClid")
+    // Unlike `last_ad`, these read the contact's ad touch log, so they span
+    // every inbox and every ad the contact came from, not just the latest.
+    case systemFieldTypes.enum.ad_ids:
+      return await listContactAdIdsString(contact.id, contact.workspaceId)
+    case systemFieldTypes.enum.ad_id:
+      return await getFirstContactAdId(contact.id, contact.workspaceId)
     case systemFieldTypes.enum.last_ad_source_url:
       return getReferralValue(contactInbox, "sourceUrl")
     case systemFieldTypes.enum.last_ad_source_platform:

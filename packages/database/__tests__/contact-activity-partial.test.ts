@@ -14,16 +14,33 @@ import {
 } from "../src/partials/contact-activity"
 
 const DRIZZLE_DIR = join(import.meta.dirname, "../drizzle")
+const MIGRATION_FOLDER_PATTERN = /^\d/
+const ACTIVITY_ENUM_PATTERN = /contactActivity(Reference)?Type/
 
-const readCheckConstraintMigration = (): string => {
-  const folder = readdirSync(DRIZZLE_DIR).find((name) =>
-    name.endsWith("_contact_activity_store"),
-  )
-  if (!folder) {
-    throw new Error("contact_activity_store migration folder is missing")
-  }
-  return readFileSync(join(DRIZZLE_DIR, folder, "migration.sql"), "utf8")
-}
+const readMigrationsSql = (): string[] =>
+  readdirSync(DRIZZLE_DIR)
+    .filter((name) => MIGRATION_FOLDER_PATTERN.test(name))
+    .sort()
+    .map((name) =>
+      readFileSync(join(DRIZZLE_DIR, name, "migration.sql"), "utf8"),
+    )
+
+/** The newest statement that defines the pair CHECK (a migration may replace it). */
+const readLatestPairCheck = (): string | undefined =>
+  readMigrationsSql()
+    .flatMap((sql) => sql.split("\n"))
+    .filter(
+      (line) =>
+        line.includes("ContactActivity_allowed_pair_check") &&
+        line.includes("CHECK"),
+    )
+    .at(-1)
+
+/** The enums are created once and extended by later `ADD VALUE` migrations. */
+const readActivityEnumMigrations = (): string =>
+  readMigrationsSql()
+    .filter((sql) => ACTIVITY_ENUM_PATTERN.test(sql))
+    .join("\n")
 
 describe("contact activity registry", () => {
   test("every filter field is a real contact filter field", () => {
@@ -102,10 +119,7 @@ describe("contact activity registry", () => {
 
 describe("contact activity migration CHECK parity", () => {
   test("lists exactly the registry's allowed pairs", () => {
-    const sql = readCheckConstraintMigration()
-    const check = sql
-      .split("\n")
-      .find((line) => line.includes("ContactActivity_allowed_pair_check"))
+    const check = readLatestPairCheck()
     expect(check).toBeDefined()
 
     const clauses = check?.match(/\("activityType" = '[^)]+\)/g) ?? []
@@ -119,7 +133,7 @@ describe("contact activity migration CHECK parity", () => {
   })
 
   test("creates the enums from the registry values", () => {
-    const sql = readCheckConstraintMigration()
+    const sql = readActivityEnumMigrations()
     for (const value of contactActivityTypes.options) {
       expect(sql).toContain(`'${value}'`)
     }

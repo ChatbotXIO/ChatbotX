@@ -20,6 +20,7 @@ import UpdateContactSequenceField, {
 } from "../contact-sequences/update-contact-sequence-field"
 import { useThreadControl } from "../conversations/hooks/use-thread-control"
 import type { TagResource } from "../tags/schema/resource"
+import { ContactAdReferralsList } from "./components/contact-ad-referrals-list"
 import { ContactAppointmentsList } from "./components/contact-appointments-list"
 import { ContactThreadControlSection } from "./components/contact-thread-control-section"
 import UpdateContactTagField from "./components/update-contact-tag-field"
@@ -184,6 +185,15 @@ export const ContactInboxPanel = ({
         keyName: t("coupons.title"),
         content: (
           <ContactCouponsSection
+            contactId={contactData.id}
+            workspaceId={workspaceId}
+          />
+        ),
+      },
+      {
+        keyName: t("contactAdReferrals.title"),
+        content: (
+          <ContactAdReferralsList
             contactId={contactData.id}
             workspaceId={workspaceId}
           />

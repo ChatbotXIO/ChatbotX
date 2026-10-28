@@ -1366,6 +1366,12 @@
     "lastAd": {
       "label": "Ultima inserzione"
     },
+    "adIds": {
+      "label": "Tutti gli ID annuncio"
+    },
+    "adId": {
+      "label": "ID del primo annuncio"
+    },
     "lastAdSourcePlatform": {
       "label": "Piattaforma di origine dell'ultima inserzione"
     },
@@ -2549,6 +2555,7 @@
       "contactCreatedAt": "Contatto creato il",
       "fromCtwaAd": "Da un'inserzione",
       "fromGoogleAd": "Da Google Ads",
+      "clickedAd": "Ha cliccato sull'annuncio",
       "ctwaConversion": "Conversione inserzione",
       "lastUserInputTypes": {
         "text": "Testo",
@@ -7105,6 +7112,22 @@
     "title": "TikTok",
     "description": "Collega il tuo account TikTok per rispondere ai messaggi diretti.",
     "refreshToken": "Token di aggiornamento"
+  },
+  "contactAdReferrals": {
+    "title": "Cronologia annunci",
+    "empty": "Nessun clic su annunci registrato per questo contatto."
+  },
+  "adsReferralStats": {
+    "title": "Contatti per annuncio",
+    "description": "Contatti raggiunti da ogni annuncio e conversioni attribuite ai suoi clic. Si contano i clic dall'inizio del tracciamento.",
+    "ad": "Annuncio",
+    "contacts": "Contatti",
+    "firstTouch": "Primo contatto",
+    "leads": "Lead",
+    "purchases": "Acquisti",
+    "revenue": "Ricavi",
+    "empty": "Nessun clic su annunci in questo periodo.",
+    "timeout": "Questo report ha impiegato troppo tempo. Scegli un intervallo di date più breve."
   },
   "coupons": {
     "title": "Coupon",

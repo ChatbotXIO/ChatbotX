@@ -934,6 +934,7 @@
       "contactCreatedAt": "Kişinin oluşturulma zamanı",
       "fromCtwaAd": "Reklamdan",
       "fromGoogleAd": "Google Ads'ten",
+      "clickedAd": "Reklama tıkladı",
       "ctwaConversion": "Reklam dönüşümü",
       "lastUserInputTypes": {
         "text": "Metin",
@@ -2553,6 +2554,12 @@
     },
     "lastAd": {
       "label": "Son Reklam"
+    },
+    "adIds": {
+      "label": "Tüm Reklam Kimlikleri"
+    },
+    "adId": {
+      "label": "İlk Reklam Kimliği"
     },
     "lastAdSourcePlatform": {
       "label": "Son Reklam Kaynağı Platformu"
@@ -7105,6 +7112,22 @@
     "title": "TikTok",
     "description": "Doğrudan mesajlara yanıt vermek için TikTok hesabınızı bağlayın.",
     "refreshToken": "Yenileme Belirteci"
+  },
+  "contactAdReferrals": {
+    "title": "Reklam geçmişi",
+    "empty": "Bu kişi için henüz reklam tıklaması kaydedilmedi."
+  },
+  "adsReferralStats": {
+    "title": "Reklama göre kişiler",
+    "description": "Her reklamın ulaştığı kişiler ve tıklamalarına atfedilen dönüşümler. Tıklamalar izlemenin başladığı andan itibaren sayılır.",
+    "ad": "Reklam",
+    "contacts": "Kişiler",
+    "firstTouch": "İlk temas",
+    "leads": "Potansiyel müşteriler",
+    "purchases": "Satın almalar",
+    "revenue": "Gelir",
+    "empty": "Bu dönemde reklam tıklaması yok.",
+    "timeout": "Bu rapor çok uzun sürdü. Daha kısa bir tarih aralığı seçin."
   },
   "coupons": {
     "title": "Kuponlar",

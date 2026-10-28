@@ -132,6 +132,8 @@ vi.mock("../src/helpers/contact", () => ({
   findPrimaryContactChannel: vi.fn().mockResolvedValue("messenger"),
   listContactNotesString: vi.fn().mockResolvedValue("note"),
   getLatestContactNoteString: vi.fn().mockResolvedValue("note"),
+  listContactAdIdsString: vi.fn().mockResolvedValue("ad-1, ad-2"),
+  getFirstContactAdId: vi.fn().mockResolvedValue("ad-1"),
 }))
 
 vi.mock("../src/helpers/leaderboard", () => ({

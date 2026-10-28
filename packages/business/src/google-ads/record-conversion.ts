@@ -21,6 +21,7 @@ import {
   isExternalAttributionAction,
   isOnePerClickAction,
 } from "@chatbotx.io/utils/google-click"
+import { contactReferralEventService } from "../contact-referral-event/service"
 import { integrationGoogleAdsService } from "../integration-google-ads/service"
 import {
   type GoogleAdsConsentInput,
@@ -378,11 +379,19 @@ const buildOptions = (r: Resolved): GoogleAdsEventOptions => {
   }
 }
 
-const insertEvent = (r: Resolved, transactionId: string) =>
-  googleAdsConversionEventRepository.insertIgnoreDuplicate({
+const insertEvent = async (r: Resolved, transactionId: string) => {
+  const referralEventId =
+    await contactReferralEventService.findAttributedTouchId({
+      workspaceId: r.input.workspaceId,
+      contactInboxId: r.input.contactInboxId,
+      provider: "google",
+      clickId: r.click.clickId,
+    })
+  return googleAdsConversionEventRepository.insertIgnoreDuplicate({
     workspaceId: r.input.workspaceId,
     integrationGoogleAdsId: r.setup.integration.id,
     contactInboxId: r.input.contactInboxId,
+    referralEventId,
     customerId: r.setup.integration.customerId,
     loginCustomerId: r.setup.integration.loginCustomerId,
     conversionCustomerId: r.conversionCustomerId,
@@ -409,6 +418,7 @@ const insertEvent = (r: Resolved, transactionId: string) =>
     attempt: 0,
     processingAttempts: 0,
   })
+}
 
 const persistAndEnqueue = async (
   r: Resolved,

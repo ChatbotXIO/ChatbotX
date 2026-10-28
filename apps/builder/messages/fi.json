@@ -934,6 +934,7 @@
       "contactCreatedAt": "Yhteystieto luotu",
       "fromCtwaAd": "Mainoksesta",
       "fromGoogleAd": "Google Adsista",
+      "clickedAd": "Klikannut mainosta",
       "ctwaConversion": "Mainoksen konversio",
       "lastUserInputTypes": {
         "text": "Teksti",
@@ -2398,6 +2399,12 @@
     },
     "lastAd": {
       "label": "Viimeisin mainos"
+    },
+    "adIds": {
+      "label": "Kaikki mainostunnukset"
+    },
+    "adId": {
+      "label": "Ensimmäinen mainostunnus"
     },
     "lastAdSourcePlatform": {
       "label": "Viimeisimmän mainoksen lähdealusta"
@@ -7105,6 +7112,22 @@
     "title": "TikTok",
     "description": "Yhdistä TikTok-tilisi vastataksesi yksityisviesteihin.",
     "refreshToken": "Päivitä tunnus"
+  },
+  "contactAdReferrals": {
+    "title": "Mainoshistoria",
+    "empty": "Tälle yhteystiedolle ei ole vielä kirjattu mainosklikkauksia."
+  },
+  "adsReferralStats": {
+    "title": "Yhteystiedot mainoksittain",
+    "description": "Yhteystiedot, jotka kukin mainos tavoitti, ja sen klikkauksille hyvitetyt konversiot. Klikkaukset lasketaan seurannan alusta.",
+    "ad": "Mainos",
+    "contacts": "Yhteystiedot",
+    "firstTouch": "Ensikosketus",
+    "leads": "Liidit",
+    "purchases": "Ostot",
+    "revenue": "Tulot",
+    "empty": "Ei mainosklikkauksia tällä jaksolla.",
+    "timeout": "Raportti kesti liian kauan. Valitse lyhyempi aikaväli."
   },
   "coupons": {
     "title": "Kupongit",

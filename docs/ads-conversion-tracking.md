@@ -14,6 +14,45 @@ against real chatbot outcomes.
 | Rule | `AdsConversionRule` (`packages/database/src/schema/ads-conversion-rule.ts`) | Workspace-configured "when X happens on this integration, record a lead/purchase" — trigger kinds `templateSent`/`tagApplied`/`keywordMatched`/`contactReplied`. Configured on a deliberately hidden page (`/dashboard/ads/conversion-events`, not linked from navigation). |
 | Event | `AdsConversionEvent` (`packages/database/src/schema/ads-conversion-event.ts`) | One row per recorded conversion. `source` is `automatic` (Meta's own webhook-reported event, WhatsApp only), `rule` (an `AdsConversionRule` fired), or `trigger` (a Trigger automation action fired — see below). `eventType` is `lead` or `purchase`; `capiStatus` tracks CAPI delivery (`pending`/`sent`/`failed`/`skipped_no_scope`/`skipped_region`). |
 
+## Ad touch history
+
+`ContactInbox.referral` is a mutable snapshot of the **last** ad a contact came from;
+a newer ad replaces it. Every ad click is also appended to `ContactReferralEvent`
+(`packages/database/src/schema/contact-referral-event.ts`), one immutable row per
+touch, so a contact who clicked ad 1 and, days later, ad 2 keeps both.
+
+| Concept | Where | Notes |
+|---------|-------|-------|
+| Writer | `contactReferralEventService.recordAdTouches` (`packages/business/src/contact-referral-event/`) | Called from `contactInboxService.updateTracking` whenever a referral is persisted. Every channel that persists a referral (WhatsApp, Messenger, Instagram, Zalo's Google click) is covered by that one hook. The log is secondary: inside a caller's transaction (the inbound message path) the write runs in a savepoint and a failure is logged without failing the message, because a retry would find the message stored and skip its automation. The Zalo profile lookup uses `contactInboxService.updateTrackingAtomic`: its snapshot and the touch commit together, so a failed touch leaves the snapshot unchanged and a later lookup retries (a click already in the snapshot is not offered again). |
+| Dedup | `dedupKey`, unique per `(workspaceId, contactInboxId, dedupKey)` | A click id when the touch has one (`ctwa:`, `gclid:`, `gbraid:`), otherwise `ad:<adId>:<message id or provider timestamp>`, so a webhook retry is a no-op but a second click of the same ad is a new touch. A Zalo profile lookup returns the same gclid on every read, so its click id alone is the key. |
+| What counts | `toAdTouches` (`ad-touch.ts`) | The same paid-ad test as attribution (`resolveAdReferral`: `ctwaClid`, or `adId` with `source: "ADS"`) plus a Google click. An organic referral (ig.me shortlink, ref link) is skipped. A touch can have no `adId` (a Zalo Google click); it is kept, never given an invented id. |
+| Time | `occurredAt` | The carrying message's time (or the webhook's own timestamp for a referral-only delivery). For a Google click that is when the message arrived, not when the user clicked. |
+| Conversion link | `AdsConversionEvent.referralEventId`, `GoogleAdsConversionEvent.referralEventId` | Names the touch a conversion is credited to: the touch of the click it carries, or, for a Messenger/Instagram ad with no click id, the latest touch of that same ad. Attribution itself is unchanged; the `adId`/`ctwaClid`/click-id snapshots stay authoritative, and a contact whose ad predates the log has a null link. |
+| Reads | `contacts.listAdReferrals`, `ads.referralStats`, `ads.listReferralAds`, the `{{ad_ids}}` / `{{ad_id}}` system fields, the "Clicked ad" filter | See below. |
+
+There is no backfill: history starts when the writer ships.
+
+- **Contact profile**: `contacts.listAdReferrals` (`GET /v1/contacts/{identifier}/ad-referrals`,
+  scope `contacts`) lists a contact's touches newest first, cursor-paginated, and never
+  returns click ids. The inbox contact panel shows it as the "Ads history" section.
+- **Per-ad report**: `ads.referralStats` (`GET /v1/ads/referral-stats`, scope `ads`),
+  also shown under the Ads dashboard. Per ad over a date range: contacts reached
+  (`anyTouchContacts`), contacts whose first ad **in the range** it was
+  (`firstTouchContacts`), and the lead/purchase conversions credited to its clicks
+  (Meta conversions linked to a touch; Google conversions are not counted, though they are linked too). It scans
+  every touch in the range, so the range is capped like every Ads report (366 days)
+  and the query runs under a 15 s statement timeout, answering 503 `reportTimeout`.
+- **System fields**: `{{ad_ids}}` is the contact's distinct ad ids, oldest first (at most
+  50), across all its inboxes; `{{ad_id}}` is the first one. Both are null for a contact
+  that never came from an ad, and unlike `{{last_ad}}` they do not read the current inbox's
+  referral. A workspace custom field with the same name is shadowed by the system field; it stays reachable as `{{raw:ad_id}}` / `{{raw:ad_ids}}`.
+- **Filter**: "Clicked ad" (`clickedAd`) reuses the contact activity store; see
+  `docs/contact-activity.md#clicked-ad`. Ad ids to pick come from `ads.listReferralAds`, which
+  looks only at the workspace's newest 2000 touches.
+- **Purge**: `ContactReferralEvent` cascades from `ContactInbox` and `Workspace` and is
+  drained in bounded batches before the final cascade (it sits after the conversion
+  tables it is the parent of).
+
 ## How conversions get produced
 
 Two independent producers write the same `AdsConversionEvent` table:

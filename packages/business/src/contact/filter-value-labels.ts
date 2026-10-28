@@ -1,6 +1,10 @@
 import type { ContactActivityValueSource } from "@chatbotx.io/database/partials"
 import { automatedResponseService } from "../automated-response/service"
 import { broadcastService } from "../broadcast/service"
+import {
+  contactReferralEventService,
+  formatAdLabel,
+} from "../contact-referral-event/service"
 import { emailTopicService } from "../email-topic/service"
 import { inboxTeamService } from "../enterprise/inbox-team/service"
 import { flowService } from "../flow/service"
@@ -34,6 +38,8 @@ export type FilterValueLabelTypes = {
   pipelines: string[]
   /** Stage ids of the pipelines a `pipelineItem` stage condition references. */
   pipelineStages: string[]
+  /** Ad ids from a "Clicked ad" condition; the label is the ad's headline. */
+  ads: string[]
 }
 
 export type FilterValueLabels = Record<keyof FilterValueLabelTypes, IdLabel[]>
@@ -69,6 +75,7 @@ const labelResolvers: Record<keyof FilterValueLabelTypes, LabelResolver> = {
     pipelineService.listLabelsByIds({ ...input, scope }),
   pipelineStages: (input, scope) =>
     pipelineService.listStageLabelsByIds({ ...input, scope }),
+  ads: (input) => contactReferralEventService.listLabelsByIds(input),
 }
 
 const labelTypes = Object.keys(
@@ -143,11 +150,19 @@ const activityValueOptionLoaders: Record<
     })
     return data.map((topic) => ({ value: topic.id, label: topic.name }))
   },
+  ads: async ({ workspaceId, search }) =>
+    (
+      await contactReferralEventService.listRecentAds({
+        workspaceId,
+        search,
+        limit: ACTIVITY_VALUE_OPTIONS_LIMIT,
+      })
+    ).map((ad) => ({ value: ad.adId, label: formatAdLabel(ad) })),
 }
 
 /**
  * Searchable values for the activity-backed contact filters whose entity has
- * no cheap full list (keyword rules, WhatsApp Flows, email topics). Bounded to
+ * no cheap full list (keyword rules, WhatsApp Flows, email topics, ads). Bounded to
  * one page; selected values are named separately by id (`labelResolvers`).
  */
 export const listContactActivityValueOptions = async (input: {

@@ -40,6 +40,8 @@ const expectedReservedSystemFieldIds = [
   systemFieldTypes.enum.booking_id,
   systemFieldTypes.enum.last_points,
   systemFieldTypes.enum.last_ad_headline,
+  systemFieldTypes.enum.ad_ids,
+  systemFieldTypes.enum.ad_id,
   systemFieldTypes.enum.last_ad_body,
   systemFieldTypes.enum.last_story_id,
   systemFieldTypes.enum.last_lead_id,
@@ -92,6 +94,16 @@ describe("reservedCustomFieldIds", () => {
     ])
     // Only WhatsApp Click-to-WhatsApp referrals carry an ad body.
     expect(channelsOf(systemFieldTypes.enum.last_ad_body)).toEqual(["whatsapp"])
+    // Every channel that records an ad touch (Zalo through a Google click).
+    expect(channelsOf(systemFieldTypes.enum.ad_ids)).toEqual([
+      "messenger",
+      "instagram",
+      "whatsapp",
+      "zalo",
+    ])
+    expect(channelsOf(systemFieldTypes.enum.ad_id)).toEqual(
+      channelsOf(systemFieldTypes.enum.ad_ids),
+    )
     expect(channelsOf(systemFieldTypes.enum.last_ad_headline)).toEqual([
       "messenger",
       "instagram",

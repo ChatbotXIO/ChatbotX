@@ -761,6 +761,33 @@ describe("conversationService.recordInboundActivity contactRepliedAt", () => {
     expect(collectSqlParams(setArg.contactRepliedAt)).toContainEqual(at)
   })
 
+  test("keys the referral's ad touch by the carrying message and its time", async () => {
+    const at = new Date("2026-09-24T10:00:00.000Z")
+
+    await conversationService.recordInboundActivity({
+      ...baseProps,
+      at,
+      referralEventKey: "mid-1",
+    })
+
+    expect(updateTracking).toHaveBeenCalledWith(
+      expect.objectContaining({
+        referralOccurrence: { occurredAt: at, eventKey: "mid-1" },
+      }),
+    )
+  })
+
+  test("sends no ad touch occurrence without a message key", async () => {
+    await conversationService.recordInboundActivity({
+      ...baseProps,
+      at: new Date("2026-09-24T10:00:00.000Z"),
+    })
+
+    expect(updateTracking).toHaveBeenCalledWith(
+      expect.objectContaining({ referralOccurrence: undefined }),
+    )
+  })
+
   test("advances lastActivityAt without touching contactRepliedAt when omitted", async () => {
     const at = new Date("2026-09-24T10:00:00.000Z")
 

@@ -11,6 +11,8 @@ export const HEAVY_WORKSPACE_TABLES = [
   "MetaCapiEvent",
   "AdsConversionEvent",
   "GoogleAdsConversionEvent",
+  // Parent of the two conversion tables (SET NULL), so it drains after them.
+  "ContactReferralEvent",
   "LeaderboardAuditLog",
   "LeaderboardParticipant",
   "AIConversationEmbedding",

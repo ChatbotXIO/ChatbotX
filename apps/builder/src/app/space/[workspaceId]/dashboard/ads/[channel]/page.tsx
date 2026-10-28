@@ -11,9 +11,13 @@ import { notFound } from "next/navigation"
 import type { SearchParams } from "nuqs/server"
 import { Suspense } from "react"
 import { AdsAnalyticsView } from "@/features/ads/components/ads-analytics-view"
+import { AdsReferralStats } from "@/features/ads/components/ads-referral-stats"
 import { resolveChannelIntegrations } from "@/features/ads/lib/resolve-channel-integrations"
 import { getAdsSwitcherData } from "@/features/ads/queries/switcher"
-import { adsAnalyticsSearchParamsCache } from "@/features/ads/schema/analytics"
+import {
+  adsAnalyticsSearchParamsCache,
+  parseAnalyticsDateRange,
+} from "@/features/ads/schema/analytics"
 import { AnalyticsNav } from "@/features/analytics/components/analytics-nav"
 import { resolveAdsDashboardChannels } from "@/features/analytics/lib/ads-dashboard-channels"
 import { resolveGoogleAdsDashboardEntry } from "@/features/analytics/lib/google-ads-dashboard-entry"
@@ -43,6 +47,9 @@ export default async function AdsChannelAnalyticsPage(props: {
 
   const search = adsAnalyticsSearchParamsCache.parse(await props.searchParams)
   const range = { ...search, channel }
+  // The same validated, capped days the rest of the dashboard falls back to
+  // when the URL carries a malformed or oversized range.
+  const resolvedRange = parseAnalyticsDateRange(search)
   // Guarded by `resolveGuardedWorkspaceId(..., "superAdmin")` above, so
   // isSuperAdmin is always true here.
   const [switcherData, adsChannels, showGoogleAds] = await Promise.all([
@@ -116,6 +123,19 @@ export default async function AdsChannelAnalyticsPage(props: {
             workspaceId={workspaceId}
           />
         </Suspense>
+        {/* Counts every account of the channel, so it would contradict a
+            single-account view; shown only for "All accounts". */}
+        {selectedChannelIntegration ? null : (
+          <AdsReferralStats
+            channel={channel}
+            range={{
+              from: resolvedRange.from,
+              to: resolvedRange.to,
+              tz: resolvedRange.timezone,
+            }}
+            workspaceId={workspaceId}
+          />
+        )}
       </div>
     </div>
   )

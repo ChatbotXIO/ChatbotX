@@ -18,6 +18,8 @@ const resolvers = vi.hoisted(() => ({
   listKeywordOptions: vi.fn(),
   listWhatsappFlows: vi.fn(),
   listEmailTopics: vi.fn(),
+  ads: vi.fn(),
+  listRecentAds: vi.fn(),
 }))
 
 vi.mock("../src/tag/service", () => ({
@@ -72,6 +74,15 @@ vi.mock("../src/email-topic/service", () => ({
   },
 }))
 
+vi.mock("../src/contact-referral-event/service", () => ({
+  contactReferralEventService: {
+    listLabelsByIds: resolvers.ads,
+    listRecentAds: resolvers.listRecentAds,
+  },
+  formatAdLabel: (ad: { adId: string; title: string | null }) =>
+    ad.title ? `${ad.title} (${ad.adId})` : ad.adId,
+}))
+
 const { listContactActivityValueOptions, resolveContactFilterValueLabels } =
   await import("../src/contact/filter-value-labels")
 
@@ -100,6 +111,7 @@ describe("resolveContactFilterValueLabels", () => {
       resolvers.emailTopics,
       resolvers.pipelines,
       resolvers.pipelineStages,
+      resolvers.ads,
     ]) {
       resolver.mockResolvedValue([])
     }
@@ -155,6 +167,7 @@ describe("resolveContactFilterValueLabels", () => {
       emailTopics: [],
       pipelines: [],
       pipelineStages: [],
+      ads: [],
     })
     expect(resolvers.sequences).toHaveBeenCalledWith({
       workspaceId: "ws-1",
@@ -242,6 +255,7 @@ describe("resolveContactFilterValueLabels for activity-backed fields", () => {
       resolvers.emailTopics,
       resolvers.pipelines,
       resolvers.pipelineStages,
+      resolvers.ads,
     ]) {
       resolver.mockResolvedValue([])
     }
@@ -261,6 +275,7 @@ describe("resolveContactFilterValueLabels for activity-backed fields", () => {
         keywords: ["4"],
         whatsappFlows: ["5"],
         emailTopics: ["12"],
+        ads: ["120"],
       },
     })
 
@@ -283,6 +298,10 @@ describe("resolveContactFilterValueLabels for activity-backed fields", () => {
     expect(resolvers.emailTopics).toHaveBeenCalledWith({
       workspaceId: "ws-1",
       ids: ["12"],
+    })
+    expect(resolvers.ads).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      ids: ["120"],
     })
     expect(labels.flowNodes).toEqual([{ id: "7:9", name: "Flow A · Welcome" }])
   })
@@ -364,6 +383,29 @@ describe("listContactActivityValueOptions", () => {
       perPage: 50,
     })
     expect(options).toEqual([{ value: "12", label: "Newsletter" }])
+  })
+
+  test("ads: the recent ads of the workspace, labelled with their headline", async () => {
+    resolvers.listRecentAds.mockResolvedValue([
+      { adId: "120", title: "Summer sale" },
+      { adId: "121", title: null },
+    ])
+
+    const options = await listContactActivityValueOptions({
+      workspaceId: "ws-1",
+      source: "ads",
+      search: " summer ",
+    })
+
+    expect(resolvers.listRecentAds).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      search: "summer",
+      limit: 50,
+    })
+    expect(options).toEqual([
+      { value: "120", label: "Summer sale (120)" },
+      { value: "121", label: "121" },
+    ])
   })
 
   test("a failing lookup rejects instead of looking like an empty list", async () => {

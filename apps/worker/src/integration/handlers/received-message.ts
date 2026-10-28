@@ -861,6 +861,13 @@ export const receiveMessage = async (
       contactId: contactInbox.contactId,
       workspaceId: inbox.workspaceId,
       data: { referral: parsedMessage.referral },
+      // Without the provider's time the touch cannot be keyed idempotently.
+      referralOccurrence: parsedMessage.occurredAt
+        ? {
+            occurredAt: parsedMessage.occurredAt,
+            eventKey: String(parsedMessage.occurredAt.getTime()),
+          }
+        : undefined,
     })
   }
 
@@ -1523,6 +1530,7 @@ const persistNewMessageSideEffects = async (props: {
       ...contactInboxTracking,
     },
     contactLocation,
+    referralEventKey: message.sourceId ?? message.id,
     at: message.createdAt,
     // Contact-authored (DM or comment) — drives the inbox unread rule.
     // Outgoing echoes (agent replies from the native app) must not count.
