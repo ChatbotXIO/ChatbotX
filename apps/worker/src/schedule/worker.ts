@@ -69,8 +69,14 @@ import { unsubscribeExpiredTrials } from "./handlers/unsubscribe-expired-trials"
 
 async function startScheduleWorker() {
   if (scheduleQueue instanceof Queue) {
-    await registerSchedules()
-    logger.info("Schedules registered")
+    // A registration failure must not take the shared process down: the
+    // consumers below still serve already-registered schedules.
+    try {
+      await registerSchedules()
+      logger.info("Schedules registered")
+    } catch (err) {
+      logger.error({ err }, "Error registering schedules")
+    }
   }
 
   // Hosted in the schedule process (its crons are the only producers) but on

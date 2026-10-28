@@ -148,12 +148,28 @@ export function onShutdownFinalize(name: string, close: Closer): void {
  * co-located entries share one run). A bootstrap or startup failure drains the
  * workers already running in this process and exits 1 so the container
  * restarts, instead of leaving a dangling rejection (or a half-started process
- * that looks healthy).
+ * that looks healthy). An entry whose bootstrap finishes after shutdown began
+ * is skipped: its closer already ran, so anything it started would leak.
  */
 export function runWorker(name: string, start: () => unknown): void {
   ensureBootstrapped()
-    .then(start)
+    .then(() => {
+      if (isShuttingDown) {
+        logger.warn({ worker: name }, "Worker start skipped: shutting down")
+        return
+      }
+      return start()
+    })
     .catch((error: unknown) => {
+      // A start racing a shutdown fails by design (e.g. createQueueWorker
+      // refuses new workers); that is not a startup failure.
+      if (isShuttingDown) {
+        logger.warn(
+          { err: normalizeError(error), worker: name },
+          "Worker start aborted by shutdown",
+        )
+        return
+      }
       logger.error(
         { err: normalizeError(error), worker: name },
         "Failed to start worker",

@@ -80,3 +80,25 @@ test("a startWorker rejection takes the failed-to-start path", async () => {
   })
   exit.mockRestore()
 })
+
+test("stops consumers a shutdown missed because it began mid-startup", async () => {
+  const exit = vi
+    .spyOn(process, "exit")
+    .mockImplementation((() => undefined) as never)
+  const { promise: started, resolve: finishStart } =
+    Promise.withResolvers<void>()
+  state.startWorker.mockReturnValueOnce(started)
+  state.stopWorker.mockClear()
+  vi.resetModules()
+
+  await import("../src/events/worker")
+  await vi.waitFor(() => expect(state.startWorker).toHaveBeenCalled())
+
+  // The closer stops the partial set; modules started after it still consume.
+  process.emit("SIGTERM")
+  await vi.waitFor(() => expect(state.stopWorker).toHaveBeenCalledOnce())
+  finishStart()
+
+  await vi.waitFor(() => expect(state.stopWorker).toHaveBeenCalledTimes(2))
+  exit.mockRestore()
+})

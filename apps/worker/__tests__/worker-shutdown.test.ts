@@ -273,6 +273,46 @@ describe("worker shutdown coordinator", () => {
     )
   })
 
+  test("skips start when shutdown began while bootstrap was pending", async () => {
+    const { promise: bootstrapped, resolve: finishBootstrap } =
+      Promise.withResolvers<undefined>()
+    bootstrapMock.mockReturnValueOnce(bootstrapped)
+    const start = vi.fn()
+
+    shutdown.runWorker("chat", start)
+    await shutdown.requestShutdown("SIGTERM")
+    finishBootstrap(undefined)
+
+    await vi.waitFor(() =>
+      expect(loggerMock.warn).toHaveBeenCalledWith(
+        { worker: "chat" },
+        "Worker start skipped: shutting down",
+      ),
+    )
+    expect(start).not.toHaveBeenCalled()
+    expect(exitSpy).toHaveBeenCalledExactlyOnceWith(0)
+  })
+
+  test("a start that fails because shutdown began is not a startup failure", async () => {
+    const { promise: started, reject: failStart } = Promise.withResolvers()
+    shutdown.runWorker("schedule", () => started)
+    await vi.waitFor(() => expect(bootstrapMock).toHaveBeenCalledOnce())
+
+    await shutdown.requestShutdown("SIGTERM")
+    failStart(
+      new Error("Cannot start schedule worker: shutdown already requested"),
+    )
+
+    await vi.waitFor(() =>
+      expect(loggerMock.warn).toHaveBeenCalledWith(
+        expect.objectContaining({ worker: "schedule" }),
+        "Worker start aborted by shutdown",
+      ),
+    )
+    expect(loggerMock.error).not.toHaveBeenCalled()
+    expect(exitSpy).toHaveBeenCalledExactlyOnceWith(0)
+  })
+
   test("installs signal and crash handlers once and routes crashes to exit 1", async () => {
     shutdown.onShutdown("chat", vi.fn().mockResolvedValue(undefined))
     shutdown.onShutdown("low", vi.fn().mockResolvedValue(undefined))

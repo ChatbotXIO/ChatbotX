@@ -223,8 +223,8 @@ once. Use `worker core` for local development without schedules, or `worker
 <name>` to isolate a workload such as `heavy`.
 
 `worker all` remains available for one process per worker. It caps each child
-heap at `WORKER_MAX_OLD_SPACE_MB=256` by default; raise that value only when
-the host has enough memory for every child. The `standalone` process retains
+heap at `WORKER_MAX_OLD_SPACE_MB` only when it is set (there is no default);
+size it so the host has enough memory for every child. The `standalone` process retains
 the normal V8 heap limit.
 
 ### Database pool sizing

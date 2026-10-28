@@ -10,6 +10,7 @@ const {
   getScheduleKeySpy,
   getSequenceSchedulerQueueSpy,
   getRetryKeySpy,
+  isShutdownRequestedSpy,
   loggerErrorSpy,
   queueAddBulkSpy,
   removeFromRetrySpy,
@@ -26,6 +27,7 @@ const {
   getScheduleKeySpy: vi.fn((bucket: number) => `schedule:${bucket}`),
   getSequenceSchedulerQueueSpy: vi.fn(),
   getRetryKeySpy: vi.fn((bucket: number) => `retry:${bucket}`),
+  isShutdownRequestedSpy: vi.fn(() => false),
   loggerErrorSpy: vi.fn(),
   queueAddBulkSpy: vi.fn(),
   removeFromRetrySpy: vi.fn(),
@@ -72,7 +74,14 @@ vi.mock("../src/lib/logger", () => ({
     debug: vi.fn(),
     error: loggerErrorSpy,
     fatal: vi.fn(),
+    warn: vi.fn(),
   },
+}))
+
+vi.mock("../src/lib/shutdown", () => ({
+  isShutdownRequested: isShutdownRequestedSpy,
+  onShutdown: vi.fn(),
+  runWorker: vi.fn(),
 }))
 
 import { getAssignedBuckets } from "../src/sequence-scheduler/buckets"
@@ -148,6 +157,7 @@ beforeEach(() => {
   findPendingWorkspaceIdsSpy.mockResolvedValue([])
   getDueSpy.mockResolvedValue([])
   getRetryCountSpy.mockResolvedValue(0)
+  isShutdownRequestedSpy.mockReturnValue(false)
   getScheduleCountSpy.mockResolvedValue(0)
   getSequenceSchedulerQueueSpy.mockResolvedValue({ addBulk: queueAddBulkSpy })
   queueAddBulkSpy.mockResolvedValue([])
@@ -180,6 +190,18 @@ describe("SchedulerWorker lifecycle", () => {
     await expect(worker.start()).rejects.toThrow(
       "Sequence scheduler queue is unavailable",
     )
+  })
+
+  test("starts no bucket tick when shutdown began while Redis was connecting", async () => {
+    isShutdownRequestedSpy.mockReturnValue(true)
+    const worker = new SchedulerWorker({ buckets: [0, 1], tickIntervalMs: 5 })
+
+    await worker.start()
+
+    const internals = worker as unknown as SchedulerWorkerInternals
+    expect(internals.running).toBe(false)
+    expect(internals.timers.size).toBe(0)
+    expect(getDueSpy).not.toHaveBeenCalled()
   })
 
   test("clears bucket timers exactly once when stopped", async () => {

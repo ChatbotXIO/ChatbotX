@@ -7,7 +7,7 @@ import {
   type SequenceSchedulerQueue,
 } from "@chatbotx.io/worker-config"
 import { logger } from "../lib/logger"
-import { onShutdown, runWorker } from "../lib/shutdown"
+import { isShutdownRequested, onShutdown, runWorker } from "../lib/shutdown"
 
 import { getAssignedBuckets } from "./buckets"
 
@@ -95,6 +95,14 @@ export class SchedulerWorker {
     const queue = await getSequenceSchedulerQueue()
     if (!queue) {
       throw new Error("Sequence scheduler queue is unavailable")
+    }
+    // Shutdown may have run stop() while Redis was connecting; it returned
+    // early (not running yet), so ticks started now would never be awaited.
+    if (isShutdownRequested()) {
+      logger.warn(
+        "Shutdown requested during startup; not starting scheduler worker",
+      )
+      return
     }
     this._queue = queue
 

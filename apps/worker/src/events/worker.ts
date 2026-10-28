@@ -1,5 +1,5 @@
 import { startWorker, stopWorker } from "@chatbotx.io/event-bus/worker"
-import { onShutdown, runWorker } from "../lib/shutdown"
+import { isShutdownRequested, onShutdown, runWorker } from "../lib/shutdown"
 import { analyticsDashboardEvents } from "./analytics"
 import errorLogEventListener from "./error-log"
 import flowEventListener from "./flow"
@@ -12,6 +12,11 @@ async function startEventWorker() {
     analyticsDashboardEvents,
     errorLogEventListener,
   ])
+
+  // A shutdown that began mid-startup ran `stopWorker` on a partial set.
+  if (isShutdownRequested()) {
+    await stopWorker()
+  }
 }
 
 runWorker("events", startEventWorker)
