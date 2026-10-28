@@ -6,7 +6,8 @@ import {
   userQuotaService,
 } from "@chatbotx.io/business"
 import { ROOT_TENANT_ID } from "@chatbotx.io/database/schema"
-import { notFound } from "next/navigation"
+import { notFound, redirect } from "next/navigation"
+import { getTranslations } from "next-intl/server"
 import { ExpiredBanner } from "@/components/expired-banner"
 import { WorkspaceDeletionPendingToast } from "@/components/workspace-deletion-pending-toast"
 import { isCloud } from "@/env"
@@ -22,6 +23,7 @@ import {
   resolveBlockReason,
   resolveTrialEndsAt,
 } from "@/lib/quota-metrics"
+import { ensureFirstWorkspace } from "@/lib/workspace/create-first-workspace"
 
 export default async function MainPage() {
   const userAndWorkspaces = await getCurrentUserAndAllLinkedWorkspaces()
@@ -34,6 +36,20 @@ export default async function MainPage() {
   // Reseller-provisioned accounts must set their own password before anything
   // else. Enforced in every protected layout/page, not just here.
   enforcePasswordCurrent(user)
+
+  // A user with no membership at all (not invited anywhere) gets a default
+  // workspace so MCP/CLI setup does not wait on connecting a channel. Invited
+  // users keep the list. A plan-limit failure yields null: fall through to the
+  // list rather than redirecting in a loop.
+  if (allWorkspaceMembers.length === 0) {
+    const t = await getTranslations("workspaces")
+    const workspace = await ensureFirstWorkspace(user.id, {
+      name: t("defaultName", { name: user.name ?? user.email }),
+    })
+    if (workspace) {
+      redirect(`/space/${workspace.id}/dashboard`)
+    }
+  }
 
   // Plan + usage limits only apply to the hosted cloud edition. Self-hosted
   // community/enterprise installs use every feature freely — no quota gating.

@@ -4120,6 +4120,19 @@
   "workspaces": {
     "list": {
       "title": "Lijst met workspaces"
+    },
+    "defaultName": "Werkruimte van {name}",
+    "connectAgent": {
+      "title": "Verbind je AI-agent",
+      "description": "Genereer een API-sleutel en voeg ChatbotX toe aan Claude Code, Cursor of een andere MCP-client. De sleutel wordt maar één keer getoond.",
+      "generate": "MCP-sleutel genereren",
+      "generating": "Genereren…",
+      "claudeCode": "Claude Code",
+      "mcpJson": "Cursor / Claude Desktop",
+      "cli": "ChatbotX CLI",
+      "copy": "Kopiëren",
+      "error": "De sleutel kon niet worden gegenereerd. Probeer het opnieuw.",
+      "revokeHint": "Je kunt deze sleutel intrekken via Instellingen → Integraties → Workspace token."
     }
   },
   "workspaceToken": {

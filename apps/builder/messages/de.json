@@ -4120,6 +4120,19 @@
   "workspaces": {
     "list": {
       "title": "Liste der Arbeitsbereiche"
+    },
+    "defaultName": "Arbeitsbereich von {name}",
+    "connectAgent": {
+      "title": "Verbinde deinen KI-Agenten",
+      "description": "Erstelle einen API-Schlüssel und füge ChatbotX zu Claude Code, Cursor oder einem anderen MCP-Client hinzu. Der Schlüssel wird nur einmal angezeigt.",
+      "generate": "MCP-Schlüssel erstellen",
+      "generating": "Wird erstellt…",
+      "claudeCode": "Claude Code",
+      "mcpJson": "Cursor / Claude Desktop",
+      "cli": "ChatbotX CLI",
+      "copy": "Kopieren",
+      "error": "Der Schlüssel konnte nicht erstellt werden. Versuche es erneut.",
+      "revokeHint": "Du kannst diesen Schlüssel unter Einstellungen → Integrationen → Workspace token widerrufen."
     }
   },
   "workspaceToken": {

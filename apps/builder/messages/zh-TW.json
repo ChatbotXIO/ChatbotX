@@ -3050,6 +3050,19 @@
   "workspaces": {
     "list": {
       "title": "工作區清單"
+    },
+    "defaultName": "{name}的工作區",
+    "connectAgent": {
+      "title": "連接你的 AI 代理",
+      "description": "產生 API 金鑰，並將 ChatbotX 新增到 Claude Code、Cursor 或任何 MCP 用戶端。金鑰只會顯示一次。",
+      "generate": "產生 MCP 金鑰",
+      "generating": "產生中…",
+      "claudeCode": "Claude Code",
+      "mcpJson": "Cursor / Claude Desktop",
+      "cli": "ChatbotX CLI",
+      "copy": "複製",
+      "error": "無法產生金鑰，請重試。",
+      "revokeHint": "你可以在「設定 → 整合 → Workspace token」中撤銷此金鑰。"
     }
   },
   "workspaceToken": {

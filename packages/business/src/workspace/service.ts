@@ -156,6 +156,36 @@ class WorkspaceService extends BaseService {
     })
   }
 
+  /**
+   * The owner's live workspace, created when they have none. Serialized per
+   * owner so two tabs opening `/` at once cannot both create one (the
+   * find-then-create is not atomic outside the community lock).
+   */
+  async ensureFirstForOwner(props: {
+    ownerId: string
+    name: string
+    tx?: DatabaseClient
+    quotaConsumption?: WorkspaceQuotaConsumption
+  }): Promise<WorkspaceModel> {
+    const { ownerId, name, tx, quotaConsumption } = props
+    return await distributedLock.runExclusive({
+      key: `first-workspace:${ownerId}`,
+      timeoutInSeconds: WORKSPACE_LIMIT_LOCK_TIMEOUT_SECONDS,
+      fn: async (): Promise<WorkspaceModel> => {
+        const existing = await this.findActiveByOwner({ ownerId, tx })
+        if (existing) {
+          return existing
+        }
+        return await this.create({
+          data: { name, ownerId },
+          createdBy: ownerId,
+          tx,
+          quotaConsumption,
+        })
+      },
+    })
+  }
+
   // Auth gate — membership must take effect immediately on removal, so this
   // intentionally skips withCache (unlike find() above), matching
   // WorkspaceMemberService.findMembership. Used to fetch the workspace for a

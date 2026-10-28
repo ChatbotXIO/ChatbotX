@@ -1180,6 +1180,19 @@
   "workspaces": {
     "list": {
       "title": "قائمة مساحات العمل"
+    },
+    "defaultName": "مساحة عمل {name}",
+    "connectAgent": {
+      "title": "اربط وكيل الذكاء الاصطناعي الخاص بك",
+      "description": "أنشئ مفتاح API وأضف ChatbotX إلى Claude Code أو Cursor أو أي عميل MCP. يظهر المفتاح مرة واحدة فقط.",
+      "generate": "إنشاء مفتاح MCP",
+      "generating": "جارٍ الإنشاء…",
+      "claudeCode": "Claude Code",
+      "mcpJson": "Cursor / Claude Desktop",
+      "cli": "ChatbotX CLI",
+      "copy": "نسخ",
+      "error": "تعذّر إنشاء المفتاح. حاول مرة أخرى.",
+      "revokeHint": "يمكنك إلغاء هذا المفتاح من الإعدادات ← التكاملات ← Workspace token."
     }
   },
   "workspaceToken": {

@@ -7414,6 +7414,19 @@
   "workspaces": {
     "list": {
       "title": "工作区清单"
+    },
+    "defaultName": "{name}的工作区",
+    "connectAgent": {
+      "title": "连接你的 AI 智能体",
+      "description": "生成 API 密钥，并将 ChatbotX 添加到 Claude Code、Cursor 或任何 MCP 客户端。密钥仅显示一次。",
+      "generate": "生成 MCP 密钥",
+      "generating": "生成中…",
+      "claudeCode": "Claude Code",
+      "mcpJson": "Cursor / Claude Desktop",
+      "cli": "ChatbotX CLI",
+      "copy": "复制",
+      "error": "无法生成密钥，请重试。",
+      "revokeHint": "你可以在“设置 → 集成 → Workspace token”中撤销此密钥。"
     }
   },
   "zalo": {

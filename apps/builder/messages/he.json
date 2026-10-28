@@ -1911,6 +1911,19 @@
   "workspaces": {
     "list": {
       "title": "רשימת סביבות עבודה"
+    },
+    "defaultName": "סביבת העבודה של {name}",
+    "connectAgent": {
+      "title": "חבר את סוכן ה-AI שלך",
+      "description": "צור מפתח API והוסף את ChatbotX ל-Claude Code, ל-Cursor או לכל לקוח MCP. המפתח מוצג פעם אחת בלבד.",
+      "generate": "צור מפתח MCP",
+      "generating": "יוצר…",
+      "claudeCode": "Claude Code",
+      "mcpJson": "Cursor / Claude Desktop",
+      "cli": "ChatbotX CLI",
+      "copy": "העתק",
+      "error": "לא ניתן היה ליצור את המפתח. נסה שוב.",
+      "revokeHint": "אפשר לבטל מפתח זה בהגדרות ← אינטגרציות ← Workspace token."
     }
   },
   "workspaceToken": {

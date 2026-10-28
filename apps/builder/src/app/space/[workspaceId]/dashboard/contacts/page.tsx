@@ -2,10 +2,12 @@ import { ContactsDashboard } from "@chatbotx.io/analytics-nextjs/components/cont
 import { inboxService } from "@chatbotx.io/business"
 import { getIdFromParams } from "@chatbotx.io/utils"
 import { notFound } from "next/navigation"
+import { env } from "@/env"
 import { AnalyticsChannelFilter } from "@/features/analytics/components/analytics-channel-filter"
 import { AnalyticsNav } from "@/features/analytics/components/analytics-nav"
 import { resolveAdsDashboardChannels } from "@/features/analytics/lib/ads-dashboard-channels"
 import { resolveGoogleAdsDashboardEntry } from "@/features/analytics/lib/google-ads-dashboard-entry"
+import { ConnectAgentCard } from "@/features/workspaces/components/connect-agent-card"
 import { hasWorkspacePermission } from "@/lib/auth/permission-routes"
 import { getCurrentUserAndTargetWorkspace } from "@/lib/auth/utils"
 
@@ -45,13 +47,26 @@ export default async function ContactsAnalyticsPage({
   ])
 
   return (
-    <ContactsDashboard
-      channelFilter={<AnalyticsChannelFilter options={filterInboxes} />}
-      defaultSearchParams={{ workspaceId, timezone }}
-      nav={
-        <AnalyticsNav adsChannels={adsChannels} showGoogleAds={showGoogleAds} />
-      }
-      workspaceCreatedAt={targetWorkspace.createdAt}
-    />
+    <>
+      {isSuperAdmin ? (
+        <div className="px-4 pt-4">
+          <ConnectAgentCard
+            mcpServerUrl={env.NEXT_PUBLIC_MCP_SERVER_URL ?? null}
+            workspaceId={workspaceId}
+          />
+        </div>
+      ) : null}
+      <ContactsDashboard
+        channelFilter={<AnalyticsChannelFilter options={filterInboxes} />}
+        defaultSearchParams={{ workspaceId, timezone }}
+        nav={
+          <AnalyticsNav
+            adsChannels={adsChannels}
+            showGoogleAds={showGoogleAds}
+          />
+        }
+        workspaceCreatedAt={targetWorkspace.createdAt}
+      />
+    </>
   )
 }

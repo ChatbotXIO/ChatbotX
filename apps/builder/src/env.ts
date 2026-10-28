@@ -31,6 +31,8 @@ export const env = createEnv({
     // relay back to the originating domain. Optional — falls back to
     // NEXT_PUBLIC_BUILDER_URL via getBrokerUrl().
     NEXT_PUBLIC_BROKER_URL: z.url().optional(),
+    // Hosted MCP server origin (apps/mcp-server). Optional — the "Connect your AI agent" card hides the hosted snippets when unset.
+    NEXT_PUBLIC_MCP_SERVER_URL: z.url().optional(),
     NEXT_PUBLIC_EDITION: editionRule,
     NEXT_PUBLIC_INTERNAL_STORAGE_URL: z
       .url()
@@ -54,6 +56,7 @@ export const env = createEnv({
     NEXT_PUBLIC_BUILDER_URL:
       clientEnv("NEXT_PUBLIC_BUILDER_URL") || "http://localhost:3123",
     NEXT_PUBLIC_BROKER_URL: clientEnv("NEXT_PUBLIC_BROKER_URL"),
+    NEXT_PUBLIC_MCP_SERVER_URL: clientEnv("NEXT_PUBLIC_MCP_SERVER_URL"),
     NEXT_PUBLIC_INTERNAL_STORAGE_URL:
       clientEnv("NEXT_PUBLIC_INTERNAL_STORAGE_URL") ||
       "http://localhost:9000/chatbotx/",

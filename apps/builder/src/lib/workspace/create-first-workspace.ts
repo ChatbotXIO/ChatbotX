@@ -4,8 +4,11 @@ import {
 } from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import type { DatabaseClient } from "@chatbotx.io/database/client"
+import type { WorkspaceModel } from "@chatbotx.io/database/types"
 import { redirect } from "next/navigation"
 import type { MessageKey } from "@/features/channel-connect/lib/message-key"
+
+const DEFAULT_WORKSPACE_NAME = "New Workspace"
 
 /** Query param `/channels/create` reads to explain why a channel connect could not start. */
 const CREATE_CHANNEL_ERROR_PARAM = "error"
@@ -107,30 +110,61 @@ function createChannelErrorPathFor(error: unknown): string | null {
  * back together — a connect attempt that fails before ever reaching the
  * provider never leaves an empty orphan workspace behind.
  */
-export async function createFirstWorkspace(
+type FirstWorkspaceResult =
+  | { workspace: WorkspaceModel }
+  | { errorPath: string }
+
+interface FirstWorkspaceOptions {
+  name?: string
+  quotaConsumption?: WorkspaceQuotaConsumption
+  tx?: DatabaseClient
+}
+
+async function resolveFirstWorkspace(
   userId: string,
-  tx?: DatabaseClient,
-  quotaConsumption?: WorkspaceQuotaConsumption,
-) {
-  const existing = await workspaceService.findActiveByOwner({
-    ownerId: userId,
+  {
     tx,
-  })
-  if (existing) {
-    return existing
-  }
+    quotaConsumption,
+    name = DEFAULT_WORKSPACE_NAME,
+  }: FirstWorkspaceOptions,
+): Promise<FirstWorkspaceResult> {
   try {
-    return await workspaceService.create({
-      data: { name: "New Workspace", ownerId: userId },
-      createdBy: userId,
+    const workspace = await workspaceService.ensureFirstForOwner({
+      ownerId: userId,
+      name,
       tx,
       quotaConsumption,
     })
+    return { workspace }
   } catch (error) {
     const errorPath = createChannelErrorPathFor(error)
     if (!errorPath) {
       throw error
     }
-    return redirect(errorPath)
+    return { errorPath }
   }
+}
+
+/**
+ * Same as `createFirstWorkspace` but for callers that cannot redirect (the
+ * `/` page): a known plan-limit failure yields `null` instead.
+ */
+export async function ensureFirstWorkspace(
+  userId: string,
+  options: FirstWorkspaceOptions = {},
+): Promise<WorkspaceModel | null> {
+  const result = await resolveFirstWorkspace(userId, options)
+  return "workspace" in result ? result.workspace : null
+}
+
+export async function createFirstWorkspace(
+  userId: string,
+  tx?: DatabaseClient,
+  quotaConsumption?: WorkspaceQuotaConsumption,
+) {
+  const result = await resolveFirstWorkspace(userId, { tx, quotaConsumption })
+  if ("workspace" in result) {
+    return result.workspace
+  }
+  return redirect(result.errorPath)
 }

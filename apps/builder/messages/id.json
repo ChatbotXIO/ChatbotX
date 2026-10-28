@@ -4120,6 +4120,19 @@
   "workspaces": {
     "list": {
       "title": "Daftar Ruang Kerja"
+    },
+    "defaultName": "Workspace milik {name}",
+    "connectAgent": {
+      "title": "Hubungkan agen AI Anda",
+      "description": "Buat kunci API dan tambahkan ChatbotX ke Claude Code, Cursor, atau klien MCP apa pun. Kunci hanya ditampilkan sekali.",
+      "generate": "Buat kunci MCP",
+      "generating": "Membuat…",
+      "claudeCode": "Claude Code",
+      "mcpJson": "Cursor / Claude Desktop",
+      "cli": "ChatbotX CLI",
+      "copy": "Salin",
+      "error": "Gagal membuat kunci. Coba lagi.",
+      "revokeHint": "Anda dapat mencabut kunci ini di Pengaturan → Integrasi → Workspace token."
     }
   },
   "workspaceToken": {

@@ -1180,6 +1180,19 @@
   "workspaces": {
     "list": {
       "title": "Çalışma Alanları Listesi"
+    },
+    "defaultName": "{name} çalışma alanı",
+    "connectAgent": {
+      "title": "Yapay zekâ ajanınızı bağlayın",
+      "description": "Bir API anahtarı oluşturun ve ChatbotX'i Claude Code, Cursor veya herhangi bir MCP istemcisine ekleyin. Anahtar yalnızca bir kez gösterilir.",
+      "generate": "MCP anahtarı oluştur",
+      "generating": "Oluşturuluyor…",
+      "claudeCode": "Claude Code",
+      "mcpJson": "Cursor / Claude Desktop",
+      "cli": "ChatbotX CLI",
+      "copy": "Kopyala",
+      "error": "Anahtar oluşturulamadı. Tekrar deneyin.",
+      "revokeHint": "Bu anahtarı Ayarlar → Entegrasyonlar → Workspace token bölümünden iptal edebilirsiniz."
     }
   },
   "workspaceToken": {

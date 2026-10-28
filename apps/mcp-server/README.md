@@ -248,6 +248,10 @@ claude mcp add chatbotx \
 
 ### Option C — ChatGPT.com (remote SSE)
 
+### Quickstart from the builder
+
+In a workspace, super admins can open the **Connect your AI agent** card on the contacts dashboard and click **Generate MCP key**. It returns a ready-to-paste `claude mcp add chatbotx -t sse "<server>/sse?workspace_token=…"` command, a JSON config for Cursor / Claude Desktop, and a CLI line. The key is shown once and can be revoked under Settings → Integrations → Workspace token. The hosted snippets appear when the builder sets `NEXT_PUBLIC_MCP_SERVER_URL` to this server's origin.
+
 ChatGPT.com connects via SSE. The server must be publicly reachable. Because ChatGPT does not support custom request headers, pass the workspace token directly in the URL:
 
 1. Start the server with `CHATBOTX_MCP_TRANSPORT=sse` (or `both`).

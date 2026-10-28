@@ -1222,6 +1222,19 @@
   "workspaces": {
     "list": {
       "title": "Workspaces List"
+    },
+    "defaultName": "{name}'s workspace",
+    "connectAgent": {
+      "title": "Connect your AI agent",
+      "description": "Generate an API key and add ChatbotX to Claude Code, Cursor or any MCP client. The key is shown once.",
+      "generate": "Generate MCP key",
+      "generating": "Generating…",
+      "claudeCode": "Claude Code",
+      "mcpJson": "Cursor / Claude Desktop",
+      "cli": "ChatbotX CLI",
+      "copy": "Copy",
+      "error": "Could not generate the key. Try again.",
+      "revokeHint": "You can revoke this key in Settings → Integrations → Workspace token."
     }
   },
   "workspaceToken": {

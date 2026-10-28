@@ -4120,6 +4120,19 @@
   "workspaces": {
     "list": {
       "title": "Lista spațiilor de lucru"
+    },
+    "defaultName": "Spațiul de lucru al lui {name}",
+    "connectAgent": {
+      "title": "Conectează-ți agentul AI",
+      "description": "Generează o cheie API și adaugă ChatbotX în Claude Code, Cursor sau orice client MCP. Cheia este afișată o singură dată.",
+      "generate": "Generează cheie MCP",
+      "generating": "Se generează…",
+      "claudeCode": "Claude Code",
+      "mcpJson": "Cursor / Claude Desktop",
+      "cli": "ChatbotX CLI",
+      "copy": "Copiază",
+      "error": "Cheia nu a putut fi generată. Încearcă din nou.",
+      "revokeHint": "Poți revoca această cheie din Setări → Integrări → Workspace token."
     }
   },
   "workspaceToken": {
