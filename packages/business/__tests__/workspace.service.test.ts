@@ -48,6 +48,9 @@ vi.mock("@chatbotx.io/database/schema", () => ({
 // in `contactRepository`'s real contact-filter query graph (needs the real
 // schema, conflicting with the narrow mock above).
 vi.mock("@chatbotx.io/database/repositories", () => ({}))
+vi.mock("@chatbotx.io/database/repositories/workspace", () => ({
+  workspaceRepository: {},
+}))
 
 const tenantService = { findByOwner: vi.fn(async () => undefined as unknown) }
 vi.mock("../src/enterprise/tenant/service", () => ({ tenantService }))

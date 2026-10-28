@@ -92,6 +92,20 @@ describe("MainPage default workspace", () => {
     })
   })
 
+  test("names the workspace after the email when the user name is empty", async () => {
+    mocks.getCurrentUserAndAllLinkedWorkspaces.mockResolvedValue({
+      user: { ...user, name: "" },
+      allWorkspaces: [],
+      allWorkspaceMembers: [],
+    })
+    mocks.ensureFirstWorkspace.mockResolvedValue({ id: "ws-new" })
+
+    await expect(MainPage()).rejects.toThrow("redirect:/space/ws-new/dashboard")
+    expect(mocks.ensureFirstWorkspace).toHaveBeenCalledWith("user-1", {
+      name: "defaultName:ann@example.com",
+    })
+  })
+
   test("falls back to the list instead of redirecting when the plan blocks creation", async () => {
     linked([])
     mocks.ensureFirstWorkspace.mockResolvedValue(null)

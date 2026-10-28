@@ -66,8 +66,10 @@ describe("ConnectAgentCard", () => {
     )
     expect(snippets).toHaveLength(3)
     expect(snippets[0]).toBe(
-      'claude mcp add chatbotx -t sse "https://mcp.example.com/sse?workspace_token=cbx_ws_abc"',
+      'claude mcp add chatbotx -t sse -H "x-workspace-token: cbx_ws_abc" "https://mcp.example.com/sse"',
     )
+    expect(snippets[1]).toContain('"x-workspace-token": "cbx_ws_abc"')
+    expect(snippets[1]).not.toContain("?workspace_token=")
     expect(snippets[2]).toContain("CHATBOTX_API_KEY=cbx_ws_abc")
   })
 

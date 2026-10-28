@@ -44,7 +44,7 @@ export default async function MainPage() {
   if (allWorkspaceMembers.length === 0) {
     const t = await getTranslations("workspaces")
     const workspace = await ensureFirstWorkspace(user.id, {
-      name: t("defaultName", { name: user.name ?? user.email }),
+      name: t("defaultName", { name: user.name || user.email }),
     })
     if (workspace) {
       redirect(`/space/${workspace.id}/dashboard`)

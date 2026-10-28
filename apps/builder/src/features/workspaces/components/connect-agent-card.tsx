@@ -10,6 +10,7 @@ import { useClipboard } from "@/hooks/use-clipboard"
 import { createMcpTokenAction } from "../actions/create-mcp-token-action"
 
 const TRAILING_SLASH = /\/$/
+const TOKEN_HEADER = "x-workspace-token"
 
 interface ConnectAgentCardProps {
   /** Hosted MCP origin; `null` hides the hosted snippets (self-hosted without one). */
@@ -35,15 +36,23 @@ function buildSnippets(params: {
   if (!mcpServerUrl) {
     return [cli]
   }
-  const url = `${mcpServerUrl.replace(TRAILING_SLASH, "")}/sse?workspace_token=${token}`
+  const url = `${mcpServerUrl.replace(TRAILING_SLASH, "")}/sse`
   return [
     {
       label: labels.claudeCode,
-      code: `claude mcp add chatbotx -t sse "${url}"`,
+      code: `claude mcp add chatbotx -t sse -H "${TOKEN_HEADER}: ${token}" "${url}"`,
     },
     {
       label: labels.mcpJson,
-      code: JSON.stringify({ mcpServers: { chatbotx: { url } } }, null, 2),
+      code: JSON.stringify(
+        {
+          mcpServers: {
+            chatbotx: { type: "sse", url, headers: { [TOKEN_HEADER]: token } },
+          },
+        },
+        null,
+        2,
+      ),
     },
     cli,
   ]

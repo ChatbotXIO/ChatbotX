@@ -22,4 +22,18 @@ export const workspaceRepository = {
 
     return result.rows[0]?.purgeStartedAt === null
   },
+  /**
+   * Serializes "find or create the owner's first workspace" per owner for the
+   * life of `tx`. Transaction-scoped, so the lock releases on commit/rollback
+   * and also fences a caller-owned transaction a Redis lock could not.
+   */
+  async lockFirstWorkspace(
+    input: { ownerId: string },
+    tx: DatabaseClient,
+  ): Promise<void> {
+    const lockKey = `first-workspace:${input.ownerId}`
+    await tx.execute(
+      sql`select pg_advisory_xact_lock(hashtextextended(${lockKey}, 0))`,
+    )
+  },
 }

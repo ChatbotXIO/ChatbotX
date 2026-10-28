@@ -1,10 +1,8 @@
 "use server"
 
-import { workspaceApiTokenService } from "@chatbotx.io/business"
-import { generateWorkspaceToken } from "@chatbotx.io/business/workspace-api-token/credentials"
 import { workspaceIdrequestParams } from "@/features/common/schema"
 import { workspaceActionClient } from "@/lib/safe-action"
-import { requireWorkspaceTokenSuperAdmin } from "../lib/require-workspace-token-super-admin"
+import { mintWorkspaceToken } from "../lib/mint-workspace-token"
 
 const MCP_TOKEN_NAME = "MCP"
 
@@ -15,19 +13,11 @@ const MCP_TOKEN_NAME = "MCP"
  */
 export const createMcpTokenAction = workspaceActionClient
   .bindArgsSchemas(workspaceIdrequestParams)
-  .action(async ({ bindArgsParsedInputs: [workspaceId] }) => {
-    await requireWorkspaceTokenSuperAdmin(workspaceId)
-
-    const { token, tokenHash, tokenPrefix } = await generateWorkspaceToken()
-
-    await workspaceApiTokenService.createToken({
-      workspaceId,
-      name: MCP_TOKEN_NAME,
-      permission: "full",
-      tokenHash,
-      tokenPrefix,
-      scopes: null,
-    })
-
-    return { token }
-  })
+  .action(
+    async ({ bindArgsParsedInputs: [workspaceId] }) =>
+      await mintWorkspaceToken(workspaceId, {
+        name: MCP_TOKEN_NAME,
+        permission: "full",
+        scopes: null,
+      }),
+  )

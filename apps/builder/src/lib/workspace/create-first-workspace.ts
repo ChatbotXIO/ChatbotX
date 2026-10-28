@@ -81,35 +81,6 @@ function createChannelErrorPathFor(error: unknown): string | null {
   return null
 }
 
-/**
- * First-channel path: the user has no workspace yet, so one is created before
- * the channel connects. Shared by the legacy JSON-state OAuth callback
- * (`app/integrations/[...integration]/callback.ts`) and
- * `startChannelConnect` (`features/channel-connect/lib/start-channel-
- * connect.ts`, itself shared by the Instagram, Instagram-via-Facebook, and
- * Messenger connect-start routes) so every caller turns a plan-limit
- * failure into a redirect back to `/channels/create` with a translated
- * message, never a bare 500.
- *
- * Idempotent on `ownerId` (regression I7): this runs from a plain GET route
- * reached by a redirect, not a POST — a browser back-button retry, a
- * double-navigation, or a replayed request must reuse the user's existing
- * workspace instead of minting a second "New Workspace" every time. Without
- * this check, `workspaceService.create` has no such guard (it isn't meant
- * to — callers that deliberately want an ADDITIONAL workspace, e.g.
- * Settings → "New workspace", must still be able to create one), so the
- * idempotency has to live here, at the "this is the user's FIRST workspace"
- * call site specifically. `findActiveByOwner` excludes a workspace mid
- * soft-delete, so a user who deleted their only workspace gets a fresh one
- * instead of being handed back the one that's about to be purged.
- *
- * Accepts an optional `tx`: `startChannelConnect`'s plain OAuth-start
- * path (no `beforeStart` hook) passes `connectionService.startSession`'s
- * own transaction through here instead of resolving a workspace up front,
- * so this insert and the `ConnectSession` it's starting commit or roll
- * back together — a connect attempt that fails before ever reaching the
- * provider never leaves an empty orphan workspace behind.
- */
 type FirstWorkspaceResult =
   | { workspace: WorkspaceModel }
   | { errorPath: string }
@@ -151,12 +122,33 @@ async function resolveFirstWorkspace(
  */
 export async function ensureFirstWorkspace(
   userId: string,
-  options: FirstWorkspaceOptions = {},
+  options: Pick<FirstWorkspaceOptions, "name"> = {},
 ): Promise<WorkspaceModel | null> {
   const result = await resolveFirstWorkspace(userId, options)
   return "workspace" in result ? result.workspace : null
 }
 
+/**
+ * First-channel path: the user has no workspace yet, so one is created before
+ * the channel connects. Shared by the legacy JSON-state OAuth callback
+ * (`app/integrations/[...integration]/callback.ts`) and
+ * `startChannelConnect` (`features/channel-connect/lib/start-channel-
+ * connect.ts`, itself shared by the Instagram, Instagram-via-Facebook, and
+ * Messenger connect-start routes) so every caller turns a plan-limit
+ * failure into a redirect back to `/channels/create` with a translated
+ * message, never a bare 500.
+ *
+ * Idempotent on `ownerId` (regression I7): a GET route reached by a redirect
+ * can be replayed, so `workspaceService.ensureFirstForOwner` reuses the user's
+ * live workspace instead of minting a second one.
+ *
+ * Accepts an optional `tx`: `startChannelConnect`'s plain OAuth-start
+ * path (no `beforeStart` hook) passes `connectionService.startSession`'s
+ * own transaction through here instead of resolving a workspace up front,
+ * so this insert and the `ConnectSession` it's starting commit or roll
+ * back together — a connect attempt that fails before ever reaching the
+ * provider never leaves an empty orphan workspace behind.
+ */
 export async function createFirstWorkspace(
   userId: string,
   tx?: DatabaseClient,
