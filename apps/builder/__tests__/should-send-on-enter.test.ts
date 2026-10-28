@@ -3,10 +3,21 @@ import { shouldSendOnEnter } from "@/lib/keyboard/should-send-on-enter"
 
 const createKeyboardEvent = (
   key: string,
-  options: { isComposing?: boolean; shiftKey?: boolean } = {},
+  options: {
+    ctrlKey?: boolean
+    isComposing?: boolean
+    keyCode?: number
+    metaKey?: boolean
+    shiftKey?: boolean
+  } = {},
 ) => ({
+  ctrlKey: options.ctrlKey ?? false,
   key,
-  nativeEvent: { isComposing: options.isComposing ?? false },
+  metaKey: options.metaKey ?? false,
+  nativeEvent: {
+    isComposing: options.isComposing ?? false,
+    keyCode: options.keyCode ?? 13,
+  },
   shiftKey: options.shiftKey ?? false,
 })
 
@@ -26,6 +37,33 @@ describe("shouldSendOnEnter", () => {
 
   test("keeps Enter as a newline on touch devices", () => {
     expect(shouldSendOnEnter(createKeyboardEvent("Enter"), true)).toBe(false)
+  })
+
+  test("sends Cmd+Enter on touch devices", () => {
+    expect(
+      shouldSendOnEnter(createKeyboardEvent("Enter", { metaKey: true }), true),
+    ).toBe(true)
+  })
+
+  test("sends Ctrl+Enter on touch devices", () => {
+    expect(
+      shouldSendOnEnter(createKeyboardEvent("Enter", { ctrlKey: true }), true),
+    ).toBe(true)
+  })
+
+  test("keeps Shift+Cmd+Enter as a newline", () => {
+    expect(
+      shouldSendOnEnter(
+        createKeyboardEvent("Enter", { metaKey: true, shiftKey: true }),
+        true,
+      ),
+    ).toBe(false)
+  })
+
+  test("does not send Safari's IME-confirming Enter event", () => {
+    expect(
+      shouldSendOnEnter(createKeyboardEvent("Enter", { keyCode: 229 }), false),
+    ).toBe(false)
   })
 
   test("does not send while an IME is composing", () => {

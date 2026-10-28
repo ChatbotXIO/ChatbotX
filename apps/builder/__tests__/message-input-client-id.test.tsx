@@ -211,11 +211,14 @@ const setTextareaValue = (textarea: HTMLTextAreaElement, value: string) => {
   textarea.dispatchEvent(new Event("input", { bubbles: true }))
 }
 
-const createEnterKeyDownEvent = (): KeyboardEvent =>
+const createEnterKeyDownEvent = (
+  options: { metaKey?: boolean } = {},
+): KeyboardEvent =>
   new KeyboardEvent("keydown", {
     bubbles: true,
     cancelable: true,
     key: "Enter",
+    metaKey: options.metaKey ?? false,
   })
 
 describe("message composers", () => {
@@ -392,6 +395,25 @@ describe("message composers", () => {
 
     expect(action.executeAsync).not.toHaveBeenCalled()
     expect(event.defaultPrevented).toBe(false)
+  })
+
+  test("submits an inbox message when Cmd+Enter is pressed on a touch device", async () => {
+    isTouchDevice = true
+    act(() => root.render(<MessageInput />))
+    const textarea = container.querySelector("textarea")
+    if (!textarea) {
+      throw new Error("Message composer did not render a textarea")
+    }
+
+    const event = createEnterKeyDownEvent({ metaKey: true })
+    await act(async () => {
+      setTextareaValue(textarea, "touch shortcut")
+      textarea.dispatchEvent(event)
+      await Promise.resolve()
+    })
+
+    expect(action.executeAsync).toHaveBeenCalledTimes(1)
+    expect(event.defaultPrevented).toBe(true)
   })
 
   test("submits a webchat message when Enter is pressed on a desktop keyboard", async () => {
