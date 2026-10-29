@@ -27,6 +27,7 @@
     "./contact-filter-value-format": "./src/contact-filter-value-format.ts",
     "./conversation": "./src/conversation.ts",
     "./country-currency": "./src/country-currency.ts",
+    "./coordinates": "./src/coordinates.ts",
     "./crypto": "./src/crypto.ts",
     "./custom-field": "./src/custom-field.ts",
     "./datetime": "./src/datetime.ts",

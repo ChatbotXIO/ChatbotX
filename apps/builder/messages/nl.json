@@ -2337,7 +2337,8 @@
       "settings": "Instellingen",
       "miniApps": "Mini Apps",
       "leaderboards": "Ranglijsten",
-      "pipelines": "Pijplijnen"
+      "pipelines": "Pijplijnen",
+      "places": "Plaatsen"
     },
     "adReferral": {
       "label": "Ads",
@@ -2829,7 +2830,9 @@
       "sendViewCatalog": "Catalogus bekijken",
       "sendProducts": "Producten verzenden",
       "sendCollection": "Collectie",
-      "pipeline": "Pipelines"
+      "pipeline": "Pipelines",
+      "moreOptions": "Meer opties",
+      "findPlacesNearMe": "Plaatsen bij mij in de buurt zoeken"
     },
     "externalRequest": {
       "errors": {
@@ -3098,6 +3101,12 @@
       "comment": "Opmerking",
       "destinationPipeline": "Doelpipeline",
       "destinationStage": "Doelfase"
+    },
+    "findPlacesNearMe": {
+      "category": "Locatiecategorie",
+      "allLocations": "Alle locaties",
+      "whatsappOnly": "Alleen verzonden naar WhatsApp-contacten.",
+      "noLocationSource": "Voeg vóór deze actie een stap Gebruikersgegevens ophalen toe met antwoordformaat Locatie. Zonder die stap wordt deze actie overgeslagen."
     }
   },
   "folders": {
@@ -6022,7 +6031,45 @@
   },
   "placesNearMe": {
     "title": "Plaatsen in de buurt",
-    "description": "Vind plaatsen in de buurt van je contacten."
+    "description": "Laat je klanten eenvoudig je bedrijfslocaties bij hen in de buurt vinden.",
+    "tabs": {
+      "locations": "Locaties",
+      "categories": "Categorieën"
+    },
+    "categories": {
+      "columns": {
+        "locations": "Locaties"
+      },
+      "add": "Categorie toevoegen",
+      "edit": "Categorie bewerken",
+      "empty": "Nog geen categorieën.",
+      "created": "Categorie toegevoegd",
+      "updated": "Categorie bijgewerkt",
+      "deleted": "Categorie verwijderd",
+      "saveError": "Categorie kon niet worden opgeslagen",
+      "deleteError": "Categorie kon niet worden verwijderd",
+      "deleteTitle": "{name} verwijderen?",
+      "deleteDescription": "{count, plural, =0 {Geen locaties gebruiken deze categorie.} one {# locatie wordt ongecategoriseerd.} other {# locaties worden ongecategoriseerd.}}"
+    },
+    "locations": {
+      "columns": {
+        "coordinates": "Coördinaten"
+      },
+      "preview": "Voorbeeld",
+      "add": "Locatie toevoegen",
+      "edit": "Locatie bewerken",
+      "empty": "Nog geen locaties.",
+      "created": "Locatie toegevoegd",
+      "updated": "Locatie bijgewerkt",
+      "deleted": "Locatie verwijderd",
+      "saveError": "Locatie kon niet worden opgeslagen",
+      "deleteError": "Locatie kon niet worden verwijderd",
+      "deleteTitle": "{name} verwijderen?",
+      "deleteDescription": "Deze locatie wordt permanent verwijderd.",
+      "noCategory": "Geen categorie",
+      "latitude": "Breedtegraad",
+      "longitude": "Lengtegraad"
+    }
   },
   "questionnaires": {
     "title": "Vragenlijsten",

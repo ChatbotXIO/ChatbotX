@@ -70,6 +70,11 @@ export const router = {
       default: m.pipelinesAPI,
     })),
   ),
+  placesNearMeAPI: lazy(() =>
+    import("@/features/places-near-me/api").then((m) => ({
+      default: m.placesNearMeAPI,
+    })),
+  ),
   leaderboardsAPI: lazy(() =>
     import("@/features/leaderboards/api").then((m) => ({
       default: m.leaderboardsAPI,

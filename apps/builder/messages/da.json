@@ -2553,7 +2553,8 @@
       "settings": "Indstillinger",
       "miniApps": "Mini Apps",
       "leaderboards": "Ranglister",
-      "pipelines": "Pipelines"
+      "pipelines": "Pipelines",
+      "places": "Steder"
     },
     "adReferral": {
       "label": "Ads",
@@ -2829,7 +2830,9 @@
       "sendViewCatalog": "Se katalog",
       "sendProducts": "Send produkter",
       "sendCollection": "Kollektion",
-      "pipeline": "Pipelines"
+      "pipeline": "Pipelines",
+      "moreOptions": "Flere muligheder",
+      "findPlacesNearMe": "Find steder i nærheden"
     },
     "externalRequest": {
       "errors": {
@@ -3098,6 +3101,12 @@
       "comment": "Kommentar",
       "destinationPipeline": "Destinationspipeline",
       "destinationStage": "Destinationsfase"
+    },
+    "findPlacesNearMe": {
+      "category": "Lokationskategori",
+      "allLocations": "Alle lokationer",
+      "whatsappOnly": "Sendes kun til WhatsApp-kontakter.",
+      "noLocationSource": "Tilføj et Hent brugerdata-trin med svarformatet Lokation før denne handling. Uden det springes handlingen over."
     }
   },
   "folders": {
@@ -6022,7 +6031,45 @@
   },
   "placesNearMe": {
     "title": "Steder Near Me",
-    "description": "Find steder near din kontakter."
+    "description": "Lad dine kunder nemt finde dine forretningslokationer i nærheden af dem.",
+    "tabs": {
+      "locations": "Lokationer",
+      "categories": "Kategorier"
+    },
+    "categories": {
+      "columns": {
+        "locations": "Lokationer"
+      },
+      "add": "Tilføj kategori",
+      "edit": "Rediger kategori",
+      "empty": "Ingen kategorier endnu.",
+      "created": "Kategori tilføjet",
+      "updated": "Kategori opdateret",
+      "deleted": "Kategori slettet",
+      "saveError": "Kategorien kunne ikke gemmes",
+      "deleteError": "Kategorien kunne ikke slettes",
+      "deleteTitle": "Slet {name}?",
+      "deleteDescription": "{count, plural, =0 {Ingen lokationer bruger denne kategori.} one {# lokation bliver ukategoriseret.} other {# lokationer bliver ukategoriseret.}}"
+    },
+    "locations": {
+      "columns": {
+        "coordinates": "Koordinater"
+      },
+      "preview": "Forhåndsvisning",
+      "add": "Tilføj lokation",
+      "edit": "Rediger lokation",
+      "empty": "Ingen lokationer endnu.",
+      "created": "Lokation tilføjet",
+      "updated": "Lokation opdateret",
+      "deleted": "Lokation slettet",
+      "saveError": "Lokationen kunne ikke gemmes",
+      "deleteError": "Lokationen kunne ikke slettes",
+      "deleteTitle": "Slet {name}?",
+      "deleteDescription": "Denne lokation slettes permanent.",
+      "noCategory": "Ingen kategori",
+      "latitude": "Breddegrad",
+      "longitude": "Længdegrad"
+    }
   },
   "questionnaires": {
     "title": "Spørgeskemaer",

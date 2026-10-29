@@ -305,6 +305,8 @@ export type AnalyticsConversationEventModel =
   typeof schema.analyticsConversationEventModel.$inferSelect
 export type ProductModel = typeof schema.productModel.$inferSelect
 export type VendorModel = typeof schema.vendorModel.$inferSelect
+export type PlaceCategoryModel = typeof schema.placeCategoryModel.$inferSelect
+export type PlaceLocationModel = typeof schema.placeLocationModel.$inferSelect
 export type CartModel = typeof schema.cartModel.$inferSelect
 export type DiscountCodeModel = typeof schema.discountCodeModel.$inferSelect
 export type DiscountCodeRedemptionModel =

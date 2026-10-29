@@ -2751,7 +2751,8 @@
       "settings": "Settings",
       "miniApps": "Mini Apps",
       "leaderboards": "Leaderboards",
-      "pipelines": "Pipelines"
+      "pipelines": "Pipelines",
+      "places": "Places"
     },
     "adReferral": {
       "label": "Ads",
@@ -3667,7 +3668,9 @@
       "sendViewCatalog": "View catalog",
       "sendProducts": "Send Products",
       "sendCollection": "Collection",
-      "pipeline": "Pipelines"
+      "pipeline": "Pipelines",
+      "moreOptions": "More options",
+      "findPlacesNearMe": "Find places near me"
     },
     "externalRequest": {
       "errors": {
@@ -3936,6 +3939,12 @@
       "comment": "Comment",
       "destinationPipeline": "Destination pipeline",
       "destinationStage": "Destination stage"
+    },
+    "findPlacesNearMe": {
+      "category": "Location category",
+      "allLocations": "All locations",
+      "whatsappOnly": "Only sent to WhatsApp contacts.",
+      "noLocationSource": "Add a Get User Data step with reply format Location before this action. Without it, this action is skipped."
     }
   },
   "folders": {
@@ -6747,7 +6756,45 @@
   },
   "placesNearMe": {
     "title": "Places Near Me",
-    "description": "Find places near your contacts."
+    "description": "Let your customers easily find your business locations near them.",
+    "tabs": {
+      "locations": "Locations",
+      "categories": "Categories"
+    },
+    "categories": {
+      "columns": {
+        "locations": "Locations"
+      },
+      "add": "Add category",
+      "edit": "Edit category",
+      "empty": "No categories yet.",
+      "created": "Category added",
+      "updated": "Category updated",
+      "deleted": "Category deleted",
+      "saveError": "Could not save the category",
+      "deleteError": "Could not delete the category",
+      "deleteTitle": "Delete {name}?",
+      "deleteDescription": "{count, plural, =0 {No locations use this category.} one {# location will become uncategorized.} other {# locations will become uncategorized.}}"
+    },
+    "locations": {
+      "columns": {
+        "coordinates": "Coordinates"
+      },
+      "preview": "Preview",
+      "add": "Add location",
+      "edit": "Edit location",
+      "empty": "No locations yet.",
+      "created": "Location added",
+      "updated": "Location updated",
+      "deleted": "Location deleted",
+      "saveError": "Could not save the location",
+      "deleteError": "Could not delete the location",
+      "deleteTitle": "Delete {name}?",
+      "deleteDescription": "This location will be permanently deleted.",
+      "noCategory": "No category",
+      "latitude": "Latitude",
+      "longitude": "Longitude"
+    }
   },
   "questionnaires": {
     "title": "Questionnaires",

@@ -1519,7 +1519,8 @@
       "settings": "Impostazioni",
       "miniApps": "Mini Apps",
       "leaderboards": "Classifiche",
-      "pipelines": "Pipeline"
+      "pipelines": "Pipeline",
+      "places": "Luoghi"
     },
     "adReferral": {
       "label": "Ads",
@@ -2829,7 +2830,9 @@
       "sendViewCatalog": "Vedi catalogo",
       "sendProducts": "Invia prodotti",
       "sendCollection": "Collezione",
-      "pipeline": "Pipeline"
+      "pipeline": "Pipeline",
+      "moreOptions": "Altre opzioni",
+      "findPlacesNearMe": "Trova luoghi vicino a me"
     },
     "externalRequest": {
       "errors": {
@@ -3098,6 +3101,12 @@
       "comment": "Commento",
       "destinationPipeline": "Pipeline di destinazione",
       "destinationStage": "Fase di destinazione"
+    },
+    "findPlacesNearMe": {
+      "category": "Categoria della sede",
+      "allLocations": "Tutte le sedi",
+      "whatsappOnly": "Inviato solo ai contatti WhatsApp.",
+      "noLocationSource": "Aggiungi un passaggio Ottieni dati utente con formato di risposta Posizione prima di questa azione. Senza di esso, l'azione viene saltata."
     }
   },
   "folders": {
@@ -6022,7 +6031,45 @@
   },
   "placesNearMe": {
     "title": "Luoghi nelle vicinanze",
-    "description": "Trova luoghi vicini ai tuoi contatti."
+    "description": "Permetti ai tuoi clienti di trovare facilmente le sedi della tua attività vicino a loro.",
+    "tabs": {
+      "locations": "Sedi",
+      "categories": "Categorie"
+    },
+    "categories": {
+      "columns": {
+        "locations": "Sedi"
+      },
+      "add": "Aggiungi categoria",
+      "edit": "Modifica categoria",
+      "empty": "Nessuna categoria ancora.",
+      "created": "Categoria aggiunta",
+      "updated": "Categoria aggiornata",
+      "deleted": "Categoria eliminata",
+      "saveError": "Impossibile salvare la categoria",
+      "deleteError": "Impossibile eliminare la categoria",
+      "deleteTitle": "Eliminare {name}?",
+      "deleteDescription": "{count, plural, =0 {Nessuna sede usa questa categoria.} one {# sede resterà senza categoria.} other {# sedi resteranno senza categoria.}}"
+    },
+    "locations": {
+      "columns": {
+        "coordinates": "Coordinate"
+      },
+      "preview": "Anteprima",
+      "add": "Aggiungi posizione",
+      "edit": "Modifica posizione",
+      "empty": "Nessuna posizione ancora.",
+      "created": "Posizione aggiunta",
+      "updated": "Posizione aggiornata",
+      "deleted": "Posizione eliminata",
+      "saveError": "Impossibile salvare la posizione",
+      "deleteError": "Impossibile eliminare la posizione",
+      "deleteTitle": "Eliminare {name}?",
+      "deleteDescription": "Questa posizione verrà eliminata definitivamente.",
+      "noCategory": "Nessuna categoria",
+      "latitude": "Latitudine",
+      "longitude": "Longitudine"
+    }
   },
   "questionnaires": {
     "title": "Questionari",

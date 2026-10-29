@@ -2709,7 +2709,8 @@
       "settings": "الإعدادات",
       "miniApps": "Mini Apps",
       "leaderboards": "لوحات المتصدرين",
-      "pipelines": "خطوط سير العمل"
+      "pipelines": "خطوط سير العمل",
+      "places": "الأماكن"
     },
     "adReferral": {
       "label": "Ads",
@@ -2985,7 +2986,9 @@
       "sendViewCatalog": "عرض الكتالوج",
       "sendProducts": "إرسال المنتجات",
       "sendCollection": "مجموعة",
-      "pipeline": "خطوط سير العمل"
+      "pipeline": "خطوط سير العمل",
+      "moreOptions": "خيارات إضافية",
+      "findPlacesNearMe": "البحث عن أماكن بالقرب مني"
     },
     "externalRequest": {
       "errors": {
@@ -3254,6 +3257,12 @@
       "comment": "التعليق",
       "destinationPipeline": "خط سير العمل الوجهة",
       "destinationStage": "المرحلة الوجهة"
+    },
+    "findPlacesNearMe": {
+      "category": "فئة الموقع",
+      "allLocations": "كل المواقع",
+      "whatsappOnly": "يُرسل فقط إلى جهات اتصال WhatsApp.",
+      "noLocationSource": "أضف خطوة الحصول على بيانات المستخدم بتنسيق رد الموقع قبل هذا الإجراء. بدونها، يتم تخطي هذا الإجراء."
     }
   },
   "folders": {
@@ -6022,7 +6031,45 @@
   },
   "placesNearMe": {
     "title": "أماكن قريبة مني",
-    "description": "اعثر على أماكن قريبة من جهات اتصالك."
+    "description": "دع عملاءك يعثرون بسهولة على مواقع نشاطك التجاري القريبة منهم.",
+    "tabs": {
+      "locations": "المواقع",
+      "categories": "الفئات"
+    },
+    "categories": {
+      "columns": {
+        "locations": "المواقع"
+      },
+      "add": "إضافة فئة",
+      "edit": "تعديل الفئة",
+      "empty": "لا توجد فئات بعد.",
+      "created": "تمت إضافة الفئة",
+      "updated": "تم تحديث الفئة",
+      "deleted": "تم حذف الفئة",
+      "saveError": "تعذر حفظ الفئة",
+      "deleteError": "تعذر حذف الفئة",
+      "deleteTitle": "حذف {name}؟",
+      "deleteDescription": "{count, plural, =0 {لا توجد مواقع مخصصة لهذه الفئة.} one {سيصبح # موقع بدون فئة.} other {سيصبح # مواقع بدون فئة.}}"
+    },
+    "locations": {
+      "columns": {
+        "coordinates": "الإحداثيات"
+      },
+      "preview": "معاينة",
+      "add": "إضافة موقع",
+      "edit": "تعديل الموقع",
+      "empty": "لا توجد مواقع بعد.",
+      "created": "تمت إضافة الموقع",
+      "updated": "تم تحديث الموقع",
+      "deleted": "تم حذف الموقع",
+      "saveError": "تعذّر حفظ الموقع",
+      "deleteError": "تعذّر حذف الموقع",
+      "deleteTitle": "حذف {name}؟",
+      "deleteDescription": "سيتم حذف هذا الموقع نهائيًا.",
+      "noCategory": "بدون فئة",
+      "latitude": "خط العرض",
+      "longitude": "خط الطول"
+    }
   },
   "questionnaires": {
     "title": "الاستبيانات",

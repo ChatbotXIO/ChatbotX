@@ -2709,7 +2709,8 @@
       "settings": "Ayarlar",
       "miniApps": "Mini Apps",
       "leaderboards": "Liderlik tabloları",
-      "pipelines": "İşlem Hatları"
+      "pipelines": "İşlem Hatları",
+      "places": "Yerler"
     },
     "adReferral": {
       "label": "Ads",
@@ -2985,7 +2986,9 @@
       "sendViewCatalog": "Kataloğu görüntüle",
       "sendProducts": "Ürün gönder",
       "sendCollection": "Koleksiyon",
-      "pipeline": "İşlem Hatları"
+      "pipeline": "İşlem Hatları",
+      "moreOptions": "Daha fazla seçenek",
+      "findPlacesNearMe": "Yakınımdaki yerleri bul"
     },
     "externalRequest": {
       "errors": {
@@ -3254,6 +3257,12 @@
       "comment": "Yorum",
       "destinationPipeline": "Hedef işlem hattı",
       "destinationStage": "Hedef aşama"
+    },
+    "findPlacesNearMe": {
+      "category": "Konum kategorisi",
+      "allLocations": "Tüm konumlar",
+      "whatsappOnly": "Yalnızca WhatsApp kişilerine gönderilir.",
+      "noLocationSource": "Bu işlemden önce yanıt biçimi Konum olan bir Kullanıcı Verisi Al adımı ekleyin. Bu adım olmadan işlem atlanır."
     }
   },
   "folders": {
@@ -6022,7 +6031,45 @@
   },
   "placesNearMe": {
     "title": "Yakınımdaki Yerler",
-    "description": "Kişilerinize yakın yerleri bulun."
+    "description": "Müşterilerinizin yakınlarındaki işletme konumlarınızı kolayca bulmasını sağlayın.",
+    "tabs": {
+      "locations": "Konumlar",
+      "categories": "Kategoriler"
+    },
+    "categories": {
+      "columns": {
+        "locations": "Konumlar"
+      },
+      "add": "Kategori ekle",
+      "edit": "Kategoriyi düzenle",
+      "empty": "Henüz kategori yok.",
+      "created": "Kategori eklendi",
+      "updated": "Kategori güncellendi",
+      "deleted": "Kategori silindi",
+      "saveError": "Kategori kaydedilemedi",
+      "deleteError": "Kategori silinemedi",
+      "deleteTitle": "{name} silinsin mi?",
+      "deleteDescription": "{count, plural, =0 {Bu kategoriyi kullanan konum yok.} one {# konum kategorisiz olacak.} other {# konum kategorisiz olacak.}}"
+    },
+    "locations": {
+      "columns": {
+        "coordinates": "Koordinatlar"
+      },
+      "preview": "Önizleme",
+      "add": "Konum ekle",
+      "edit": "Konumu düzenle",
+      "empty": "Henüz konum yok.",
+      "created": "Konum eklendi",
+      "updated": "Konum güncellendi",
+      "deleted": "Konum silindi",
+      "saveError": "Konum kaydedilemedi",
+      "deleteError": "Konum silinemedi",
+      "deleteTitle": "{name} silinsin mi?",
+      "deleteDescription": "Bu konum kalıcı olarak silinecek.",
+      "noCategory": "Kategori yok",
+      "latitude": "Enlem",
+      "longitude": "Boylam"
+    }
   },
   "questionnaires": {
     "title": "Anketler",

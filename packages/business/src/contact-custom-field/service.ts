@@ -14,6 +14,7 @@ import {
 import {
   FieldOperationType,
   FieldReferenceKind,
+  isBotFieldReference,
   parseFieldReference,
 } from "@chatbotx.io/flow-config"
 import { createId, isNumericId } from "@chatbotx.io/utils"
@@ -857,6 +858,42 @@ class ContactCustomFieldService extends BaseService {
       fillEmptyTemporalWithNow,
       contactInboxId,
     })
+  }
+
+  /**
+   * The contact's values for flow field references (id or legacy name,
+   * resolved like `setValueByKey`), newest write first. Bot-field tokens and
+   * keys that match no field are ignored.
+   */
+  async listValuesByKeys(input: {
+    workspaceId: string
+    contactId: string
+    keys: string[]
+  }): Promise<{ key: string; value: string; updatedAt: Date }[]> {
+    const keys = [...new Set(input.keys)].filter(
+      (key) => key && !isBotFieldReference(key),
+    )
+    if (keys.length === 0) {
+      return []
+    }
+
+    const rows = await contactCustomFieldRepository.listValuesByFieldKeys({
+      workspaceId: input.workspaceId,
+      contactId: input.contactId,
+      ids: keys.filter((key) => isNumericId(key)),
+      names: keys,
+    })
+
+    const values: { key: string; value: string; updatedAt: Date }[] = []
+    for (const key of keys) {
+      const row =
+        rows.find((candidate) => candidate.customFieldId === key) ??
+        rows.find((candidate) => candidate.name === key)
+      if (row) {
+        values.push({ key, value: row.value, updatedAt: row.updatedAt })
+      }
+    }
+    return values.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime())
   }
 
   async deleteByKey(input: DeleteByKeyInput): Promise<void> {

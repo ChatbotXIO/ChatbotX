@@ -3696,7 +3696,8 @@
       "settings": "Inställningar",
       "miniApps": "Mini Apps",
       "leaderboards": "Topplistor",
-      "pipelines": "Pipelines"
+      "pipelines": "Pipelines",
+      "places": "Platser"
     },
     "adReferral": {
       "label": "Ads",
@@ -3937,7 +3938,9 @@
       "sendViewCatalog": "Visa katalog",
       "sendProducts": "Skicka produkter",
       "sendCollection": "Kollektion",
-      "pipeline": "Pipelines"
+      "pipeline": "Pipelines",
+      "moreOptions": "Fler alternativ",
+      "findPlacesNearMe": "Hitta platser nära mig"
     },
     "externalRequest": {
       "errors": {
@@ -4254,6 +4257,12 @@
       "comment": "Kommentar",
       "destinationPipeline": "Målpipeline",
       "destinationStage": "Målfas"
+    },
+    "findPlacesNearMe": {
+      "category": "Platskategori",
+      "allLocations": "Alla platser",
+      "whatsappOnly": "Skickas endast till WhatsApp-kontakter.",
+      "noLocationSource": "Lägg till ett steg Hämta användardata med svarsformatet Plats före den här åtgärden. Utan det hoppas åtgärden över."
     }
   },
   "folders": {
@@ -5887,8 +5896,46 @@
     "paymentExpiredCancelReason": "Betalningen togs inte emot i tid."
   },
   "placesNearMe": {
-    "description": "Hitta platser nära dina kontakter.",
-    "title": "Platser nära mig"
+    "description": "Låt dina kunder enkelt hitta dina verksamhetsplatser nära dem.",
+    "title": "Platser nära mig",
+    "tabs": {
+      "locations": "Platser",
+      "categories": "Kategorier"
+    },
+    "categories": {
+      "columns": {
+        "locations": "Platser"
+      },
+      "add": "Lägg till kategori",
+      "edit": "Redigera kategori",
+      "empty": "Inga kategorier ännu.",
+      "created": "Kategori tillagd",
+      "updated": "Kategori uppdaterad",
+      "deleted": "Kategori borttagen",
+      "saveError": "Kategorin kunde inte sparas",
+      "deleteError": "Kategorin kunde inte tas bort",
+      "deleteTitle": "Ta bort {name}?",
+      "deleteDescription": "{count, plural, =0 {Inga platser använder den här kategorin.} one {# plats blir okategoriserad.} other {# platser blir okategoriserade.}}"
+    },
+    "locations": {
+      "columns": {
+        "coordinates": "Koordinater"
+      },
+      "preview": "Förhandsgranska",
+      "add": "Lägg till plats",
+      "edit": "Redigera plats",
+      "empty": "Inga platser ännu.",
+      "created": "Plats tillagd",
+      "updated": "Plats uppdaterad",
+      "deleted": "Plats borttagen",
+      "saveError": "Det gick inte att spara platsen",
+      "deleteError": "Det gick inte att ta bort platsen",
+      "deleteTitle": "Ta bort {name}?",
+      "deleteDescription": "Den här platsen raderas permanent.",
+      "noCategory": "Ingen kategori",
+      "latitude": "Latitud",
+      "longitude": "Longitud"
+    }
   },
   "platformAdmin": {
     "helpItems": {

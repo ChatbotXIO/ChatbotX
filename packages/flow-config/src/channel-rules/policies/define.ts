@@ -76,6 +76,7 @@ const stepExecutionKinds = {
   getDataFromJson: "worker",
   formatDate: "worker",
   generateCode: "worker",
+  findPlacesNearMe: "worker",
   countCharacters: "worker",
   performAction: "worker",
   callApi: "worker",

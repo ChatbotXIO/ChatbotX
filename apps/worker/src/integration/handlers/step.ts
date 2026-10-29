@@ -46,6 +46,7 @@ import { subscribeDripSubscriber } from "./drip-handler"
 import { evaluateDecision } from "./evaluate-decision"
 import { handleAIExtractData } from "./extract-data/index"
 import { handleFacebookCustomAudience } from "./facebook-custom-audience-handler"
+import { findPlacesNearMe } from "./find-places-near-me"
 import {
   type ExecuteStepProps,
   enqueueFlowStepMessage,
@@ -571,4 +572,6 @@ export const flowStepHandlers: Record<
   [stepTypes.enum.disableMessengerComposer]: disableMessengerComposer,
   [stepTypes.enum.setMessengerPersona]: setMessengerPersona,
   [stepTypes.enum.updateMessengerContactData]: updateMessengerContactData,
+  [stepTypes.enum.findPlacesNearMe]: (props) =>
+    findPlacesNearMe(props, sendFlowMessage),
 }

@@ -147,6 +147,9 @@ export const stepTypes = z.enum([
   "disableMessengerComposer",
   "setMessengerPersona",
   "updateMessengerContactData",
+
+  // More options
+  "findPlacesNearMe",
 ])
 
 export type StepType = z.infer<typeof stepTypes>

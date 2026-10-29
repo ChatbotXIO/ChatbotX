@@ -2751,7 +2751,8 @@
       "settings": "Parametrlər",
       "miniApps": "Mini Apps",
       "leaderboards": "Liderlər lövhələri",
-      "pipelines": "Satış mərhələləri"
+      "pipelines": "Satış mərhələləri",
+      "places": "Yerlər"
     },
     "adReferral": {
       "label": "Reklamlar",
@@ -3667,7 +3668,9 @@
       "sendViewCatalog": "Kataloqa bax",
       "sendProducts": "Məhsul göndər",
       "sendCollection": "Kolleksiya",
-      "pipeline": "Satış xətləri"
+      "pipeline": "Satış xətləri",
+      "moreOptions": "Daha çox seçim",
+      "findPlacesNearMe": "Yaxınlığımdakı yerləri tap"
     },
     "externalRequest": {
       "errors": {
@@ -3936,6 +3939,12 @@
       "comment": "Şərh",
       "destinationPipeline": "Təyinat satış xətti",
       "destinationStage": "Təyinat mərhələsi"
+    },
+    "findPlacesNearMe": {
+      "category": "Məkan kateqoriyası",
+      "allLocations": "Bütün məkanlar",
+      "whatsappOnly": "Yalnız WhatsApp kontaktlarına göndərilir.",
+      "noLocationSource": "Bu əməliyyatdan əvvəl cavab formatı Məkan olan İstifadəçi Məlumatını Al addımı əlavə edin. Onsuz bu əməliyyat ötürülür."
     }
   },
   "folders": {
@@ -6747,7 +6756,45 @@
   },
   "placesNearMe": {
     "title": "Yaxınlığımdakı məkanlar",
-    "description": "Kontaktlarınızın yaxınlığındakı məkanları tapın."
+    "description": "Müştərilərinizə yaxınlıqdakı biznes məkanlarınızı asanlıqla tapmağa imkan verin.",
+    "tabs": {
+      "locations": "Məkanlar",
+      "categories": "Kateqoriyalar"
+    },
+    "categories": {
+      "columns": {
+        "locations": "Məkanlar"
+      },
+      "add": "Kateqoriya əlavə et",
+      "edit": "Kateqoriyanı redaktə et",
+      "empty": "Hələ kateqoriya yoxdur.",
+      "created": "Kateqoriya əlavə edildi",
+      "updated": "Kateqoriya yeniləndi",
+      "deleted": "Kateqoriya silindi",
+      "saveError": "Kateqoriyanı saxlamaq mümkün olmadı",
+      "deleteError": "Kateqoriyanı silmək mümkün olmadı",
+      "deleteTitle": "{name} silinsin?",
+      "deleteDescription": "{count, plural, =0 {Bu kateqoriyadan istifadə edən məkan yoxdur.} one {# məkan kateqoriyasız olacaq.} other {# məkan kateqoriyasız olacaq.}}"
+    },
+    "locations": {
+      "columns": {
+        "coordinates": "Koordinatlar"
+      },
+      "preview": "Önizləmə",
+      "add": "Məkan əlavə et",
+      "edit": "Məkanı redaktə et",
+      "empty": "Hələ məkan yoxdur.",
+      "created": "Məkan əlavə edildi",
+      "updated": "Məkan yeniləndi",
+      "deleted": "Məkan silindi",
+      "saveError": "Məkanı saxlamaq mümkün olmadı",
+      "deleteError": "Məkanı silmək mümkün olmadı",
+      "deleteTitle": "{name} silinsin?",
+      "deleteDescription": "Bu məkan həmişəlik silinəcək.",
+      "noCategory": "Kateqoriya yoxdur",
+      "latitude": "Enlik",
+      "longitude": "Uzunluq"
+    }
   },
   "questionnaires": {
     "title": "Anketlər",

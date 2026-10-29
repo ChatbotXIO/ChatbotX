@@ -2751,7 +2751,8 @@
       "settings": "Cài đặt",
       "miniApps": "Mini Apps",
       "leaderboards": "Bảng xếp hạng",
-      "pipelines": "Pipeline"
+      "pipelines": "Pipeline",
+      "places": "Địa điểm"
     },
     "adReferral": {
       "label": "Ads",
@@ -3027,7 +3028,9 @@
       "sendViewCatalog": "Xem danh mục",
       "sendProducts": "Gửi sản phẩm",
       "sendCollection": "Bộ sưu tập sản phẩm",
-      "pipeline": "Quản lý Pipeline"
+      "pipeline": "Quản lý Pipeline",
+      "moreOptions": "Tùy chọn khác",
+      "findPlacesNearMe": "Tìm địa điểm gần tôi"
     },
     "externalRequest": {
       "errors": {
@@ -3296,6 +3299,12 @@
       "comment": "Bình luận",
       "destinationPipeline": "Pipeline đích",
       "destinationStage": "Giai đoạn đích"
+    },
+    "findPlacesNearMe": {
+      "category": "Danh mục địa điểm",
+      "allLocations": "Tất cả địa điểm",
+      "whatsappOnly": "Chỉ gửi cho liên hệ WhatsApp.",
+      "noLocationSource": "Thêm bước Lấy dữ liệu người dùng với định dạng trả lời Vị trí trước hành động này. Nếu không có, hành động này sẽ bị bỏ qua."
     }
   },
   "folders": {
@@ -6103,7 +6112,45 @@
   },
   "placesNearMe": {
     "title": "Địa điểm gần tôi",
-    "description": "Tìm địa điểm gần các liên hệ của bạn."
+    "description": "Giúp khách hàng dễ dàng tìm thấy các địa điểm kinh doanh của bạn gần họ.",
+    "tabs": {
+      "locations": "Địa điểm",
+      "categories": "Danh mục"
+    },
+    "categories": {
+      "columns": {
+        "locations": "Địa điểm"
+      },
+      "add": "Thêm danh mục",
+      "edit": "Sửa danh mục",
+      "empty": "Chưa có danh mục nào.",
+      "created": "Đã thêm danh mục",
+      "updated": "Đã cập nhật danh mục",
+      "deleted": "Đã xóa danh mục",
+      "saveError": "Không thể lưu danh mục",
+      "deleteError": "Không thể xóa danh mục",
+      "deleteTitle": "Xóa {name}?",
+      "deleteDescription": "{count, plural, =0 {Không có địa điểm nào sử dụng danh mục này.} one {# địa điểm sẽ trở thành chưa phân loại.} other {# địa điểm sẽ trở thành chưa phân loại.}}"
+    },
+    "locations": {
+      "columns": {
+        "coordinates": "Tọa độ"
+      },
+      "preview": "Xem trước",
+      "add": "Thêm địa điểm",
+      "edit": "Sửa địa điểm",
+      "empty": "Chưa có địa điểm nào.",
+      "created": "Đã thêm địa điểm",
+      "updated": "Đã cập nhật địa điểm",
+      "deleted": "Đã xóa địa điểm",
+      "saveError": "Không thể lưu địa điểm",
+      "deleteError": "Không thể xóa địa điểm",
+      "deleteTitle": "Xóa {name}?",
+      "deleteDescription": "Địa điểm này sẽ bị xóa vĩnh viễn.",
+      "noCategory": "Không có danh mục",
+      "latitude": "Vĩ độ",
+      "longitude": "Kinh độ"
+    }
   },
   "questionnaires": {
     "title": "Bảng câu hỏi",

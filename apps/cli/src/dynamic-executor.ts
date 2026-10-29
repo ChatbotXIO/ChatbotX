@@ -23,6 +23,25 @@ function buildQueryString(params: Record<string, CliParamValue>): string {
   return qs ? `?${qs}` : ""
 }
 
+/**
+ * Every CLI flag arrives as a string; a `number`/`integer` body property must
+ * go out as a JSON number or the API rejects it. Full precision is kept.
+ */
+function parseNumberFlag(
+  key: string,
+  value: string,
+  type: "number" | "integer",
+): number {
+  const parsed = value.trim() === "" ? Number.NaN : Number(value)
+  if (!Number.isFinite(parsed)) {
+    throw new Error(`--${key} must be a number, got "${value}"`)
+  }
+  if (type === "integer" && !Number.isInteger(parsed)) {
+    throw new Error(`--${key} must be an integer, got "${value}"`)
+  }
+  return parsed
+}
+
 const NO_BODY_METHODS = new Set(["GET", "HEAD"])
 
 type BodyPropertySchema = {
@@ -82,6 +101,11 @@ export async function executeDynamicCommand(
         } catch {
           body[key] = value
         }
+      } else if (
+        propSchema?.type === "number" ||
+        propSchema?.type === "integer"
+      ) {
+        body[key] = parseNumberFlag(key, value, propSchema.type)
       } else {
         body[key] = value
       }

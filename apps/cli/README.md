@@ -935,6 +935,28 @@ chatbotx instagram-channels delete <id>                # Disconnect the account 
 
 ---
 
+### `place-categories` / `place-locations` (scope `places`)
+
+Places Near Me: business locations customers can find near them. Categories group locations; a lower `rank` is higher priority.
+
+```bash
+chatbotx place-categories list                        # includes locationCount per category
+chatbotx place-categories get <id>
+chatbotx place-categories create --name <name>        # [--rank <n>] (integer >= 1, default 10)
+chatbotx place-categories update <id>                 # Partial (PATCH) [--name --rank]
+chatbotx place-categories delete <id>                 # returns uncategorizedLocationCount
+
+chatbotx place-locations list                         # [--name --page --perPage]
+chatbotx place-locations get <id>
+chatbotx place-locations create --name <name> --latitude <lat> --longitude <long>  # [--categoryId <id>]
+chatbotx place-locations update <id>                  # Partial (PATCH) [--name --latitude --longitude --categoryId]; categoryId null clears it
+chatbotx place-locations delete <id>
+```
+
+Latitude is -90..90 and longitude -180..180 (numbers). Get `categoryId` from `place-categories list`.
+
+---
+
 ### `magic-links`
 
 ```bash

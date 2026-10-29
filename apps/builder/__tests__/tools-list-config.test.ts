@@ -210,3 +210,19 @@ describe("TOOLS_CONFIG — leaderboards entry", () => {
     expect(entry && "permission" in entry).toBe(false)
   })
 })
+
+describe("TOOLS_CONFIG — places-near-me entry", () => {
+  const entry = TOOLS_CONFIG.find((config) => config.id === "places-near-me")
+
+  test("links to the places-near-me page", () => {
+    expect(entry).toBeDefined()
+    expect(
+      (entry as { getLink?: (id: string) => string }).getLink?.("42"),
+    ).toBe("/space/42/places-near-me")
+  })
+
+  test("has no permission", () => {
+    expect(entry).toBeDefined()
+    expect("permission" in (entry as object)).toBe(false)
+  })
+})

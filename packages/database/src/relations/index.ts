@@ -139,6 +139,7 @@ import { oauthAccessTokenRelations } from "./oauth-access-token"
 import { oauthApplicationRelations } from "./oauth-application"
 import { oauthConsentRelations } from "./oauth-consent"
 import { pipelineRelations } from "./pipeline"
+import { placeNearMeRelations } from "./place-near-me"
 import { productRelations } from "./product"
 import { productCategoryRelations } from "./product-category"
 import { questionnaireRelations } from "./questionnaire"
@@ -350,6 +351,7 @@ export const relations = {
   ...minigameRelations,
   ...minigameContactRelations,
   ...minigamePlayRelations,
+  ...placeNearMeRelations,
   ...leaderboardRelations,
   ...leaderboardParticipantRelations,
   ...leaderboardAuditLogRelations,

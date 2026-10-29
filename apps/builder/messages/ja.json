@@ -2553,7 +2553,8 @@
       "settings": "設定",
       "miniApps": "ミニアプリ",
       "leaderboards": "ランキング",
-      "pipelines": "パイプライン"
+      "pipelines": "パイプライン",
+      "places": "場所"
     },
     "adReferral": {
       "label": "Ads",
@@ -2829,7 +2830,9 @@
       "sendViewCatalog": "カタログを見る",
       "sendProducts": "商品を送信",
       "sendCollection": "コレクション",
-      "pipeline": "パイプライン"
+      "pipeline": "パイプライン",
+      "moreOptions": "その他のオプション",
+      "findPlacesNearMe": "近くの場所を探す"
     },
     "externalRequest": {
       "errors": {
@@ -3098,6 +3101,12 @@
       "comment": "コメント",
       "destinationPipeline": "移管先のパイプライン",
       "destinationStage": "移管先のステージ"
+    },
+    "findPlacesNearMe": {
+      "category": "ロケーションカテゴリ",
+      "allLocations": "すべてのロケーション",
+      "whatsappOnly": "WhatsApp の連絡先にのみ送信されます。",
+      "noLocationSource": "このアクションの前に、返信形式が「位置情報」のユーザーデータ取得ステップを追加してください。ない場合、このアクションはスキップされます。"
     }
   },
   "folders": {
@@ -6001,7 +6010,45 @@
   },
   "placesNearMe": {
     "title": "近くの場所",
-    "description": "連絡先の近くにある場所を検索します。"
+    "description": "お客様が近くのお店や拠点を簡単に見つけられるようにします。",
+    "tabs": {
+      "locations": "ロケーション",
+      "categories": "カテゴリ"
+    },
+    "categories": {
+      "columns": {
+        "locations": "場所"
+      },
+      "add": "カテゴリを追加",
+      "edit": "カテゴリを編集",
+      "empty": "カテゴリはまだありません。",
+      "created": "カテゴリを追加しました",
+      "updated": "カテゴリを更新しました",
+      "deleted": "カテゴリを削除しました",
+      "saveError": "カテゴリを保存できませんでした",
+      "deleteError": "カテゴリを削除できませんでした",
+      "deleteTitle": "{name}を削除しますか?",
+      "deleteDescription": "{count, plural, =0 {この分類を使用している場所はありません。} one {# 件の場所が未分類になります。} other {# 件の場所が未分類になります。}}"
+    },
+    "locations": {
+      "columns": {
+        "coordinates": "座標"
+      },
+      "preview": "プレビュー",
+      "add": "場所を追加",
+      "edit": "場所を編集",
+      "empty": "場所がまだありません。",
+      "created": "場所を追加しました",
+      "updated": "場所を更新しました",
+      "deleted": "場所を削除しました",
+      "saveError": "場所を保存できませんでした",
+      "deleteError": "場所を削除できませんでした",
+      "deleteTitle": "{name}を削除しますか？",
+      "deleteDescription": "この場所は完全に削除されます。",
+      "noCategory": "カテゴリなし",
+      "latitude": "緯度",
+      "longitude": "経度"
+    }
   },
   "questionnaires": {
     "title": "アンケート",

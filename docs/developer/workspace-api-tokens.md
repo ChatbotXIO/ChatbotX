@@ -776,6 +776,10 @@ Two invariants specific to this scope:
 Existing scoped tokens do not gain the new scope; only `null`-scoped tokens
 can reach it.
 
+The `places` scope covers the Places Near Me endpoints (place categories and
+locations). Tokens with an explicit scope list must be edited to add it;
+tokens with `scopes: null` get it automatically.
+
 ## Token management
 
 - Creating and revoking tokens requires the caller to be a workspace

@@ -36,6 +36,7 @@ import { evaluateDecisionStep } from "./evaluate-decision"
 import { executeJavascriptStep } from "./execute-javascript"
 import { externalRequestStep } from "./external-request"
 import { facebookCustomAudienceStep } from "./facebook-custom-audience"
+import { findPlacesNearMeStep } from "./find-places-near-me"
 import { followConversationStep } from "./follow-conversation"
 import { followUpStep } from "./follow-up"
 import { formatDateStep } from "./format-date"
@@ -161,6 +162,7 @@ export const allSteps: Record<StepType, StepDefinition<any> | undefined> = {
   [stepTypes.enum.getDataFromJson]: getDataFromJsonStep,
   [stepTypes.enum.formatDate]: formatDateStep,
   [stepTypes.enum.generateCode]: generateCodeStep,
+  [stepTypes.enum.findPlacesNearMe]: findPlacesNearMeStep,
   [stepTypes.enum.countCharacters]: countCharactersStep,
   [stepTypes.enum.splitTraffic]: splitTrafficStep,
   [stepTypes.enum.startExternalFlow]: sendExternalFlowStep,
