@@ -12,11 +12,20 @@ name: CI
 # total CPU) and makes wall clock the slowest phase instead of their sum. It
 # also lets each pick its own concurrency: tsc is single-threaded and CPU-bound,
 # while vitest parallelizes internally and must stay within the vCPU budget.
+#
+# `workflow_call` lets release.yml run this exact gate (same shards, same
+# concurrency, same turbo passthrough args, so the same cache keys) before it
+# publishes an image for a tag or a manual dispatch. It used to run its own
+# single-runner `turbo run check-types test`, which put every tsc and every
+# 4-worker vitest suite on the same 4 vCPUs at turbo's default concurrency of
+# 10: CPU-heavy suites ran 5-8x slower than here and timed out only at release
+# time (v1.17.0, 2026-10-29). Keep the quality gate defined once, here.
 
 on:
   pull_request:
   push:
     branches: [main]
+  workflow_call:
 
 # Read-only: these jobs only check out, install, and run local scripts —
 # none of them need to write contents, packages, or PR/issue state.
@@ -211,8 +220,12 @@ jobs:
       # 170s, =2 123s, =4 101s (on a 12-core box, so CI compresses these) —
       # =1 serializes 55 small suites to help only builder, while =4 would
       # contend with builder's own workers on a 4-vCPU runner.
+      #
+      # `github.event_name` is the caller's event when this workflow is
+      # reused, so a release tag push and a `workflow_dispatch` both land
+      # here and run the complete suite.
       - name: Test all workspaces
-        if: github.event_name == 'push'
+        if: github.event_name != 'pull_request'
         run: pnpm turbo run test --concurrency=2 -- --shard=${{ matrix.shard }}/${{ matrix.total }}
 
   # One stable "Tests" result for branch rules and the PR checks list,

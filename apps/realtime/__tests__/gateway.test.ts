@@ -208,6 +208,14 @@ const startUpgrade = (port: number, path: string): Promise<net.Socket> => {
   return promise
 }
 
+/**
+ * `vi.waitFor` defaults to 1000ms, sized for in-memory state. These tests poll
+ * a live uWS server over real HTTP and sockets, and on a loaded CI runner a
+ * round trip plus the gateway's own scheduling can exceed that. Still far
+ * below the 30s test timeout, so a real hang fails promptly.
+ */
+const IO_WAIT = { timeout: 5000 } as const
+
 const waitForOpen = (socket: WebSocket): Promise<void> => {
   const { promise, resolve, reject } = Promise.withResolvers<void>()
   socket.onopen = () => resolve()
@@ -388,8 +396,8 @@ describe("createRealtimeGateway (live)", () => {
       await expect(requestHttp(port, "/ready")).resolves.toEqual({
         statusCode: 200,
       })
-    })
-    await vi.waitFor(() => expect(reconnect).toBeDefined())
+    }, IO_WAIT)
+    await vi.waitFor(() => expect(reconnect).toBeDefined(), IO_WAIT)
     reconnect?.()
 
     await expect(requestHttp(port, "/ready")).resolves.toEqual({
@@ -399,7 +407,7 @@ describe("createRealtimeGateway (live)", () => {
       await expect(requestHttp(port, "/ready")).resolves.toEqual({
         statusCode: 200,
       })
-    })
+    }, IO_WAIT)
     expect(reader.call).toHaveBeenCalledWith("PING")
   })
 
@@ -432,17 +440,17 @@ describe("createRealtimeGateway (live)", () => {
       await expect(requestHttp(port, "/ready")).resolves.toEqual({
         statusCode: 503,
       })
-    })
+    }, IO_WAIT)
     await vi.waitFor(
       () => expect(replacementReader.call).toHaveBeenCalledWith("PING"),
-      { timeout: 2000 },
+      IO_WAIT,
     )
     resolveIdleProbe("PONG")
     await vi.waitFor(async () => {
       await expect(requestHttp(port, "/ready")).resolves.toEqual({
         statusCode: 200,
       })
-    })
+    }, IO_WAIT)
   })
 
   test("returns 503 when guest activation cannot read Redis", async () => {
@@ -1499,10 +1507,12 @@ describe("createRealtimeGateway (live)", () => {
       await waitForOpen(socket)
       const previousPresenceReportCount =
         reportWorkspacePresenceMock.mock.calls.length
-      await vi.waitFor(() =>
-        expect(reportWorkspacePresenceMock.mock.calls.length).toBeGreaterThan(
-          previousPresenceReportCount,
-        ),
+      await vi.waitFor(
+        () =>
+          expect(reportWorkspacePresenceMock.mock.calls.length).toBeGreaterThan(
+            previousPresenceReportCount,
+          ),
+        IO_WAIT,
       )
       reportWorkspacePresenceMock.mockClear()
 

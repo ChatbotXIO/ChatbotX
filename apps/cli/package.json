@@ -40,6 +40,7 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@chatbotx.io/vitest-config": "workspace:*",
     "@types/node": "~24.12.2",
     "@types/yargs": "^17.0.35",
     "tsdown": "0.22.3",

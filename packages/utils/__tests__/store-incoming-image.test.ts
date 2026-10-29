@@ -1,7 +1,11 @@
 import sharp from "sharp"
-import { afterEach, describe, expect, it, vi } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { getImageOptimizationSettings } from "../src/image-optimize-settings"
 import { storeIncomingImage } from "../src/store-incoming-image"
+
+// Real libvips encodes on a shared CI runner; see image-optimize.test.ts for
+// why the file takes a longer timeout and a generous encode deadline.
+const ENCODE_TEST_TIMEOUT_MS = 120_000
 
 const {
   inline: {
@@ -37,7 +41,10 @@ const createUploader = () => {
   return { uploader: { putObject }, putObject }
 }
 
-describe("storeIncomingImage", () => {
+describe("storeIncomingImage", { timeout: ENCODE_TEST_TIMEOUT_MS }, () => {
+  beforeEach(() => {
+    vi.stubEnv("STORED_IMAGE_ENCODE_TIMEOUT_SECONDS", "60")
+  })
   afterEach(() => {
     vi.unstubAllEnvs()
   })
