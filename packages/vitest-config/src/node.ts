@@ -62,6 +62,12 @@ const CI_MAX_WORKERS = 4
  * (see ci.yml), so two suites x 4 workers overlap on purpose: the many small
  * suites fill the gaps while the large ones keep their workers busy.
  *
+ * That `--concurrency=2` is the other half of the budget and belongs with
+ * these 4 workers: every CI turbo invocation lives in ci.yml, and release.yml
+ * reuses ci.yml rather than running turbo itself. A bare `turbo run test`
+ * on a 4-vCPU runner schedules 10 suites x 4 threads and CPU-bound suites hit
+ * the 30s timeout — see the `check` job in release.yml for the incident.
+ *
  * Measured on builder (248 files, CI env, cold): forks/2w 71.9s (the previous
  * setting), threads/2w 66.6s, threads/3w 47.5s, threads/4w 42.3s — all 248
  * files green. Set `VITEST_MAX_WORKERS` to experiment without editing this

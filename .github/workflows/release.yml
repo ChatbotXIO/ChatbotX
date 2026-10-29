@@ -33,42 +33,24 @@ jobs:
   # duplicated ci.yml's build-buildability signal for no benefit once ci.yml
   # covers it. So this job only needs to re-run for events ci.yml does not
   # cover: a version tag or a manual dispatch.
+  #
+  # The gate is ci.yml itself, reused: two type-check shards, lint, and eight
+  # test shards on their own 4-vCPU runners, with the same `--concurrency=2`
+  # and `--shard=N/8` passthrough args — so turbo's cache keys match the run
+  # that already validated this commit on main and most tasks replay from
+  # cache. Until 2026-10-29 this job ran `pnpm turbo run check-types test` on
+  # ONE runner: 66 packages' tsc and 4-worker vitest suites at turbo's default
+  # concurrency of 10 on 4 vCPUs, a load profile no PR ever exercised. CPU-
+  # bound suites ran 5-8x slower than on ci.yml and only timing-sensitive
+  # tests failed (v1.17.0: a 30ms presence coalesce window, then a 30s test
+  # timeout in packages/utils image encoding). Do not reintroduce a bespoke
+  # single-runner gate here.
   check:
-    name: Type-check, lint, test
+    name: Quality gate
     if: github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/v')
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
+    uses: ./.github/workflows/ci.yml
     permissions:
       contents: read
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v7
-
-      - name: Set up pnpm
-        uses: pnpm/action-setup@v6.1.0
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v7
-        with:
-          node-version: 24
-          cache: pnpm
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Set up Turbo cache
-        uses: rharkor/caching-for-turbo@v2.5.2
-
-      # `pnpm lint` covers everything, cheapest-first: check:agent-instructions,
-      # `turbo run lint` for apps/builder's i18n check, then repo-wide Biome
-      # last (slowest). Type-check and test are separate turbo tasks with no
-      # lint overlap, so they run standalone here instead of double-running
-      # lint via a combined `turbo run check-types lint test`.
-      - name: Lint
-        run: pnpm lint
-
-      - name: Type-check and test
-        run: pnpm turbo run check-types test
 
   prepare-metadata:
     runs-on: ubuntu-latest

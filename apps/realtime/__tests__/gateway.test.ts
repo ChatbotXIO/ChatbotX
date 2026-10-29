@@ -208,6 +208,17 @@ const startUpgrade = (port: number, path: string): Promise<net.Socket> => {
   return promise
 }
 
+/**
+ * `vi.waitFor` defaults to 1000ms, sized for in-memory state. These tests poll
+ * a live uWS server over real HTTP and sockets, and on a loaded CI runner a
+ * round trip plus the gateway's own scheduling can exceed that. Still far
+ * below the 30s test timeout, so a real hang fails promptly.
+ */
+const IO_WAIT = { timeout: 5000 } as const
+
+const waitForIo = <T>(callback: () => T | Promise<T>): Promise<T> =>
+  vi.waitFor(callback, IO_WAIT)
+
 const waitForOpen = (socket: WebSocket): Promise<void> => {
   const { promise, resolve, reject } = Promise.withResolvers<void>()
   socket.onopen = () => resolve()
@@ -384,18 +395,18 @@ describe("createRealtimeGateway (live)", () => {
       statusCode: 503,
     })
     resolveInitialProbe("PONG")
-    await vi.waitFor(async () => {
+    await waitForIo(async () => {
       await expect(requestHttp(port, "/ready")).resolves.toEqual({
         statusCode: 200,
       })
     })
-    await vi.waitFor(() => expect(reconnect).toBeDefined())
+    await waitForIo(() => expect(reconnect).toBeDefined())
     reconnect?.()
 
     await expect(requestHttp(port, "/ready")).resolves.toEqual({
       statusCode: 503,
     })
-    await vi.waitFor(async () => {
+    await waitForIo(async () => {
       await expect(requestHttp(port, "/ready")).resolves.toEqual({
         statusCode: 200,
       })
@@ -428,17 +439,16 @@ describe("createRealtimeGateway (live)", () => {
     )
     const port = await gateway.listen("127.0.0.1", 0)
 
-    await vi.waitFor(async () => {
+    await waitForIo(async () => {
       await expect(requestHttp(port, "/ready")).resolves.toEqual({
         statusCode: 503,
       })
     })
-    await vi.waitFor(
-      () => expect(replacementReader.call).toHaveBeenCalledWith("PING"),
-      { timeout: 2000 },
+    await waitForIo(() =>
+      expect(replacementReader.call).toHaveBeenCalledWith("PING"),
     )
     resolveIdleProbe("PONG")
-    await vi.waitFor(async () => {
+    await waitForIo(async () => {
       await expect(requestHttp(port, "/ready")).resolves.toEqual({
         statusCode: 200,
       })
@@ -1499,7 +1509,7 @@ describe("createRealtimeGateway (live)", () => {
       await waitForOpen(socket)
       const previousPresenceReportCount =
         reportWorkspacePresenceMock.mock.calls.length
-      await vi.waitFor(() =>
+      await waitForIo(() =>
         expect(reportWorkspacePresenceMock.mock.calls.length).toBeGreaterThan(
           previousPresenceReportCount,
         ),

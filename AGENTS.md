@@ -42,8 +42,8 @@ pnpm dev              # turbo dev — all dev tasks the repo wires up
 pnpm build            # turbo build
 pnpm lint             # check:agent-instructions → turbo run lint → ultracite check
 pnpm fix              # ultracite fix --unsafe
-pnpm test             # turbo run test (vitest, --passWithNoTests per workspace)
-pnpm test:coverage    # turbo run test -- --coverage
+pnpm test             # turbo run test --concurrency=50% (vitest, --passWithNoTests per workspace)
+pnpm test:coverage    # turbo run test --concurrency=50% -- --coverage
 pnpm sync:agent-instructions   # regenerate the .devin/ + .github/ invariant mirrors
 pnpm check:circular   # madge circular deps
 pnpm check:unused     # knip

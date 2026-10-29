@@ -1,8 +1,12 @@
 import { crc32 } from "node:zlib"
 import sharp from "sharp"
-import { afterEach, describe, expect, it, vi } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { optimizeImageForStorage } from "../src/image-optimize"
 import { getImageOptimizationSettings } from "../src/image-optimize-settings"
+import {
+  ENCODE_TEST_TIMEOUT_MS,
+  stubGenerousEncodeTimeout,
+} from "./encode-test-env"
 
 // A noisy photo-like image: flat fills compress too well to exercise the
 // "only keep the re-encode when it is meaningfully smaller" rule.
@@ -20,7 +24,8 @@ const noisyImage = async (width: number, height: number, channels: 3 | 4) => {
   return sharp(raw, { raw: { width, height, channels } })
 }
 
-describe("optimizeImageForStorage", () => {
+describe("optimizeImageForStorage", { timeout: ENCODE_TEST_TIMEOUT_MS }, () => {
+  beforeEach(stubGenerousEncodeTimeout)
   afterEach(() => {
     vi.unstubAllEnvs()
   })
@@ -44,7 +49,9 @@ describe("optimizeImageForStorage", () => {
   })
 
   it("keeps channel media as JPEG and caps its longest side", async () => {
-    const input = await (await noisyImage(2400, 1200, 3))
+    // Over the 1600px cap by a modest margin: noise generation and the q98
+    // encode scale with the pixel count, and 2.9MP sources took 8s on CI.
+    const input = await (await noisyImage(1800, 900, 3))
       .jpeg({ quality: 98 })
       .toBuffer()
 
@@ -279,7 +286,7 @@ describe("optimizeImageForStorage", () => {
 
   it("uses the configured media size cap", async () => {
     vi.stubEnv("STORED_IMAGE_MEDIA_MAX_DIMENSION", "800")
-    const input = await (await noisyImage(2400, 1200, 3))
+    const input = await (await noisyImage(1800, 900, 3))
       .jpeg({ quality: 98 })
       .toBuffer()
 
@@ -343,7 +350,10 @@ describe("optimizeImageForStorage", () => {
   })
 })
 
-describe("optimizeImageForStorage with a misconfigured environment", () => {
+describe("optimizeImageForStorage with a misconfigured environment", {
+  timeout: ENCODE_TEST_TIMEOUT_MS,
+}, () => {
+  beforeEach(stubGenerousEncodeTimeout)
   afterEach(() => {
     vi.unstubAllEnvs()
   })

@@ -12,19 +12,30 @@ name: CI
 # total CPU) and makes wall clock the slowest phase instead of their sum. It
 # also lets each pick its own concurrency: tsc is single-threaded and CPU-bound,
 # while vitest parallelizes internally and must stay within the vCPU budget.
+#
+# `workflow_call` lets release.yml run this exact gate (same shards, same
+# concurrency, same turbo passthrough args, so the same cache keys) before it
+# publishes an image for a tag or a manual dispatch. Keep the quality gate
+# defined once, here — release.yml's `check` job explains why its own
+# single-runner gate was retired.
 
 on:
   pull_request:
   push:
     branches: [main]
+  workflow_call:
 
 # Read-only: these jobs only check out, install, and run local scripts —
 # none of them need to write contents, packages, or PR/issue state.
 permissions:
   contents: read
 
+# Inside a called workflow the `github` context is the caller's, so a
+# release.yml `workflow_dispatch` on main would otherwise share the group of
+# the push-to-main run and cancel it. `github.workflow` is the caller's name
+# there ("Build and Push Docker Images"), which keeps the two apart.
 concurrency:
-  group: ci-${{ github.ref }}
+  group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -69,6 +80,12 @@ jobs:
       # Sets TURBO_API/TURBO_TOKEN/TURBO_TEAM for the steps below.
       - name: Set up Turbo cache
         uses: rharkor/caching-for-turbo@v2.5.2
+        with:
+          # The default fixed port (41230) collides with whatever else is
+          # bound on a shared runner (EADDRINUSE on PR #1584, Tests 2/8). 0
+          # lets the cache server pick a free ephemeral port; the action
+          # exports TURBO_API from the port it actually bound.
+          server-port: 0
 
       # `--incremental` (below) leaves a tsbuildinfo next to every tsconfig.
       # Restoring the newest one from earlier runs lets each `tsc` re-check
@@ -127,6 +144,12 @@ jobs:
 
       - name: Set up Turbo cache
         uses: rharkor/caching-for-turbo@v2.5.2
+        with:
+          # The default fixed port (41230) collides with whatever else is
+          # bound on a shared runner (EADDRINUSE on PR #1584, Tests 2/8). 0
+          # lets the cache server pick a free ephemeral port; the action
+          # exports TURBO_API from the port it actually bound.
+          server-port: 0
 
       # Root `pnpm lint` runs cheapest-first: check:agent-instructions, then
       # `turbo run lint` (apps/builder's i18n key-parity check plus 57
@@ -179,6 +202,12 @@ jobs:
 
       - name: Set up Turbo cache
         uses: rharkor/caching-for-turbo@v2.5.2
+        with:
+          # The default fixed port (41230) collides with whatever else is
+          # bound on a shared runner (EADDRINUSE on PR #1584, Tests 2/8). 0
+          # lets the cache server pick a free ephemeral port; the action
+          # exports TURBO_API from the port it actually bound.
+          server-port: 0
 
       # PRs run only suites whose workspace or dependency graph is affected.
       # Explicit SHAs avoid Turbo choosing an ambiguous base ref. Pushes to
@@ -211,8 +240,12 @@ jobs:
       # 170s, =2 123s, =4 101s (on a 12-core box, so CI compresses these) —
       # =1 serializes 55 small suites to help only builder, while =4 would
       # contend with builder's own workers on a 4-vCPU runner.
+      #
+      # `github.event_name` is the caller's event when this workflow is
+      # reused, so a release tag push and a `workflow_dispatch` both land
+      # here and run the complete suite.
       - name: Test all workspaces
-        if: github.event_name == 'push'
+        if: github.event_name != 'pull_request'
         run: pnpm turbo run test --concurrency=2 -- --shard=${{ matrix.shard }}/${{ matrix.total }}
 
   # One stable "Tests" result for branch rules and the PR checks list,
