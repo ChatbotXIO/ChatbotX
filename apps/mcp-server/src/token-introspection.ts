@@ -1,7 +1,9 @@
+import { getChildLogger } from "@chatbotx.io/logger"
 import { z } from "zod"
 import { env } from "./env"
 import { fetchWithTimeout } from "./http"
 
+const logger = getChildLogger("mcp-server")
 const tokenIntrospectionSchema = z.object({
   workspaceId: z.string(),
   permission: z.enum(["read_only", "full"]),
@@ -109,9 +111,9 @@ export const introspectToken = async (
     }
     const parsed = tokenIntrospectionSchema.safeParse(await response.json())
     if (!parsed.success) {
-      console.error(
-        "MCP token introspection returned a malformed response:",
-        parsed.error,
+      logger.error(
+        { err: parsed.error },
+        "MCP token introspection returned a malformed response",
       )
       return cacheResult(
         cacheKey,
@@ -125,7 +127,7 @@ export const introspectToken = async (
       env.CHATBOTX_SPEC_TTL_MS,
     )
   } catch (error) {
-    console.error("MCP token introspection failed:", error)
+    logger.error({ err: error }, "MCP token introspection failed")
     return cacheResult(
       cacheKey,
       { status: "unavailable" },

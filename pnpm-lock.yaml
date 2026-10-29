@@ -605,6 +605,9 @@ importers:
 
   apps/mcp-server:
     dependencies:
+      '@chatbotx.io/logger':
+        specifier: workspace:*
+        version: link:../../packages/logger
       '@modelcontextprotocol/sdk':
         specifier: ^1.32.0
         version: 1.32.0(zod@4.6.5)
