@@ -25,6 +25,12 @@ describe("isPublicRoute", () => {
     expect(isPublicRoute("/well-known")).toBe(false)
   })
 
+  test("/mcp is public so the MCP server can run its OAuth challenge", () => {
+    expect(isPublicRoute("/mcp")).toBe(true)
+    expect(isPublicRoute("/mcp/messages")).toBe(true)
+    expect(isPublicRoute("/mcp-client")).toBe(false)
+  })
+
   test("/go is public so a contact can tap a flow button without a session", () => {
     expect(isPublicRoute("/go/ws-1")).toBe(true)
     expect(isPublicRoute("/goals")).toBe(false)

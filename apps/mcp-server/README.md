@@ -11,12 +11,12 @@ On startup the server fetches `{CHATBOTX_API_URL}/public-spec.json` and register
 
 ## OAuth 2.1
 
-Remote MCP clients should authenticate through OAuth 2.1. Connect with
-`https://<host>/messages?workspace_id=<id>` for Streamable HTTP or
-`https://<host>/sse?workspace_id=<id>` for legacy SSE. `workspace_id` is
-required only when the account belongs to more than one workspace. The
-authorization server shows consent before issuing PKCE-bound access and refresh
-tokens; only workspace owners and `superAdmin` members can authorize.
+Remote MCP clients should authenticate through OAuth 2.1. The production endpoints are
+`https://app.chatbotx.io/mcp/messages?workspace_id=<id>` for Streamable HTTP and
+`https://app.chatbotx.io/mcp/sse?workspace_id=<id>` for legacy SSE. The `workspace_id`
+selects the target workspace; only workspace owners and `superAdmin` members can authorize.
+The builder settings block **Settings → Integrations → ChatbotX MCP** provides the exact
+connection URL and lets each user revoke their OAuth grants.
 
 Legacy workspace tokens remain supported for stdio and existing connections.
 ### Default tools vs. the full API
@@ -194,11 +194,41 @@ Everything else — deletes, less-common resources (coupons, products, webhooks,
 ## Prerequisites
 
 - Node.js >= 24
-- A ChatbotX workspace token (`Settings → Developer → API Keys`)
+- A workspace token only for the stdio and workspace-token connection options.
 
 ## Quick start
 
-### Option A — stdio (recommended for local use)
+### Option A — OAuth (recommended, remote)
+
+Use the builder-hosted MCP endpoint. The client opens a browser for sign-in and consent;
+no workspace token belongs in the client configuration.
+
+**Claude Code:**
+```bash
+claude mcp add chatbotx -t http -s user \
+  "https://app.chatbotx.io/mcp/messages?workspace_id=<workspace-id>"
+```
+
+**Claude Desktop / Cursor:**
+```json
+{
+  "mcpServers": {
+    "chatbotx": {
+      "type": "http",
+      "url": "https://app.chatbotx.io/mcp/messages?workspace_id=<workspace-id>"
+    }
+  }
+}
+```
+
+**ChatGPT:** add `https://app.chatbotx.io/mcp/sse?workspace_id=<workspace-id>`
+as a custom connector. ChatGPT completes OAuth in the browser.
+
+The load balancer must forward `/mcp/*` to the MCP server **without stripping the
+`/mcp` prefix**. The builder serves protected-resource discovery under
+`/.well-known/oauth-protected-resource/mcp/*`.
+
+### Option B — stdio (workspace token, local use)
 
 Claude spawns the server process on demand. No server needs to be running. The workspace token is supplied via `CHATBOTX_API_KEY`.
 
@@ -233,7 +263,7 @@ claude mcp add chatbotx \
 
 Running from a local checkout instead (e.g. `node /path/to/dist/index.mjs`) works the same way — swap `command`/`args` accordingly.
 
-### Option B — SSE (for shared / remote access)
+### Option C — SSE (workspace token, shared / remote access)
 
 Run the server once and multiple clients connect via URL. Pass the workspace token in the request header.
 
@@ -264,7 +294,7 @@ claude mcp add chatbotx \
 }
 ```
 
-### Option C — ChatGPT.com (remote SSE)
+### Option D — ChatGPT.com (workspace-token SSE)
 
 ChatGPT.com connects via SSE. The server must be publicly reachable. Because ChatGPT does not support custom request headers, pass the workspace token directly in the URL:
 
@@ -296,8 +326,8 @@ cp .env.example .env
 
 | Variable | Description | Default | Required |
 |---|---|---|---|
-| `CHATBOTX_API_KEY` | Workspace token (stdio) | — | Yes (stdio) |
-| `CHATBOTX_API_URL` | ChatbotX API origin, including `/api` (e.g. `https://app.chatbotx.io/api`) | `https://app.chatbotx.io` | Yes |
+| `CHATBOTX_API_KEY` | Workspace token for stdio only; leave empty on shared HTTP deployments | — | Yes (stdio) |
+| `CHATBOTX_API_URL` | ChatbotX API origin, including `/api` (e.g. `https://app.chatbotx.io/api`) | `https://app.chatbotx.io/api` | Yes |
 | `CHATBOTX_ALLOW_SELF_SIGNED_CERT` | Disable TLS verification (`true`/`false`) | — | No |
 | `CHATBOTX_SPEC_TTL_MS` | How long the fetched OpenAPI spec/tool list and a token's introspected scopes are trusted before a background re-fetch | `300000` | No |
 | `CHATBOTX_HTTP_TIMEOUT_MS` | Maximum duration for each OpenAPI, token introspection, or tool-call HTTP request | `30000` | No |
@@ -311,7 +341,7 @@ cp .env.example .env
 | `CHATBOTX_MCP_SERVER_INSTRUCTIONS` | Instructions sent to AI clients on connect (helps ChatGPT know when to call tools) | built-in default | No |
 | `CHATBOTX_MCP_OAUTH_ENABLED` | Enable OAuth 2.1 protected-resource metadata and bearer challenges | `true` | No |
 | `CHATBOTX_MCP_OAUTH_ISSUER` | Authorization server issuer URL | derived from `CHATBOTX_API_URL` | No |
-| `CHATBOTX_MCP_PUBLIC_URL` | Canonical public URL of this MCP server. Set this in production so protected-resource metadata never derives a proxy/internal host from request headers. | derived from request headers | No |
+| `CHATBOTX_MCP_PUBLIC_URL` | Canonical public origin; required in production so metadata advertises the TLS endpoint | derived from request headers | Yes (production) |
 
 ## Scripts
 

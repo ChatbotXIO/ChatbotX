@@ -11,3 +11,16 @@ The public API accepts OAuth tokens only in `Authorization: Bearer`. Only worksp
 Set `CHATBOTX_MCP_PUBLIC_URL` in production. Otherwise the advertised protected-resource URL is derived from request headers, which may expose an internal host behind an incorrectly configured proxy.
 
 OAuth uses the deployment's canonical builder URL. Reseller custom domains are intentionally outside this flow; reseller sub-accounts continue to use workspace API tokens.
+
+## Production topology
+
+The load balancer MUST forward `/mcp/*` to the MCP container without stripping
+the `/mcp` prefix. The builder serves RFC 9728 discovery at
+`/.well-known/oauth-protected-resource/mcp/*`, while the MCP container serves
+`/mcp/messages` and `/mcp/sse`. Set `CHATBOTX_MCP_PUBLIC_URL` to the public
+origin in production so bearer challenges advertise HTTPS rather than an
+internal or HTTP proxy URL.
+
+Users can copy the current workspace URL and revoke their account-level OAuth
+grants in **Settings → Integrations → ChatbotX MCP**. Revoking a client applies
+to every workspace the user administers.

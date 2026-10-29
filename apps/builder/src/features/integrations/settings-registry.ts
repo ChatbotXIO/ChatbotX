@@ -5,7 +5,7 @@ import {
   SiPaypal,
   SiStripe,
 } from "@icons-pack/react-simple-icons"
-import { BotIcon, CodeIcon, MailIcon, TableIcon } from "lucide-react"
+import { BotIcon, CodeIcon, MailIcon, PlugIcon, TableIcon } from "lucide-react"
 import type { ComponentType } from "react"
 
 /**
@@ -37,6 +37,7 @@ export const INTEGRATION_SETTINGS_REGISTRY: readonly IntegrationSettingsEntry[] 
       titleKey: "workspaceToken.title",
       icon: CodeIcon,
     },
+    { slug: "chatbotx-mcp", titleKey: "chatbotxMcp.title", icon: PlugIcon },
     { slug: "openai", titleKey: "openai.title", icon: BotIcon },
     { slug: "gemini", titleKey: "gemini.title", icon: BotIcon },
     { slug: "claude", titleKey: "claude.title", icon: BotIcon },

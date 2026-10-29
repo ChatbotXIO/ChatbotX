@@ -1,6 +1,8 @@
+import { db } from "@chatbotx.io/database/client"
 import {
   oauthAccessTokenRepository,
   oauthApplicationRepository,
+  oauthConsentRepository,
 } from "@chatbotx.io/database/repositories"
 import type {
   OAuthApplicationModel,
@@ -9,6 +11,7 @@ import type {
 } from "@chatbotx.io/database/types"
 import { BaseService } from "../base.service"
 import { ChatbotXException } from "../errors"
+import { logger } from "../logger"
 import { userService } from "../user/service"
 import { isWorkspaceScheduledForDeletion } from "../workspace-lifecycle/predicates"
 import { isWorkspaceAdminMember } from "../workspace-member/predicates"
@@ -30,6 +33,20 @@ export type McpOAuthResolution =
       kind: "workspaceSelectionRequired"
       workspaces: { id: string; name: string }[]
     }
+
+export type McpOAuthGrant = {
+  clientId: string
+  clientName: string
+  clientIcon: string | null
+  scopes: string[]
+  firstAuthorizedAt: Date
+  lastRefreshedAt: Date
+  accessTokenExpiresAt: Date
+  refreshTokenExpiresAt: Date
+  tokenCount: number
+}
+
+type GroupedMcpOAuthGrant = McpOAuthGrant & { scopeSet: Set<string> }
 
 export class McpOAuthService extends BaseService {
   async resolvePrincipal(props: {
@@ -114,6 +131,74 @@ export class McpOAuthService extends BaseService {
         accessTokenId: token.id,
       },
     }
+  }
+
+  async listGrantsForUser(props: { userId: string }): Promise<McpOAuthGrant[]> {
+    const tokens = await oauthAccessTokenRepository.listActiveByUser(
+      props.userId,
+      new Date(),
+    )
+    const grants = new Map<string, GroupedMcpOAuthGrant>()
+
+    for (const token of tokens) {
+      const existingGrant = grants.get(token.clientId)
+      if (!existingGrant) {
+        grants.set(token.clientId, {
+          clientId: token.clientId,
+          clientName: token.client.name,
+          clientIcon: token.client.icon,
+          scopes: [],
+          scopeSet: new Set(token.scopes.split(" ").filter(Boolean)),
+          firstAuthorizedAt: token.createdAt,
+          lastRefreshedAt: token.createdAt,
+          accessTokenExpiresAt: token.accessTokenExpiresAt,
+          refreshTokenExpiresAt: token.refreshTokenExpiresAt,
+          tokenCount: 1,
+        })
+        continue
+      }
+
+      for (const scope of token.scopes.split(" ").filter(Boolean)) {
+        existingGrant.scopeSet.add(scope)
+      }
+      existingGrant.firstAuthorizedAt =
+        existingGrant.firstAuthorizedAt < token.createdAt
+          ? existingGrant.firstAuthorizedAt
+          : token.createdAt
+      existingGrant.lastRefreshedAt =
+        existingGrant.lastRefreshedAt > token.createdAt
+          ? existingGrant.lastRefreshedAt
+          : token.createdAt
+      existingGrant.accessTokenExpiresAt =
+        existingGrant.accessTokenExpiresAt > token.accessTokenExpiresAt
+          ? existingGrant.accessTokenExpiresAt
+          : token.accessTokenExpiresAt
+      existingGrant.refreshTokenExpiresAt =
+        existingGrant.refreshTokenExpiresAt > token.refreshTokenExpiresAt
+          ? existingGrant.refreshTokenExpiresAt
+          : token.refreshTokenExpiresAt
+      existingGrant.tokenCount += 1
+    }
+
+    return Array.from(grants.values(), ({ scopeSet, ...grant }) => ({
+      ...grant,
+      scopes: Array.from(scopeSet),
+    }))
+  }
+
+  async revokeGrant(props: {
+    userId: string
+    clientId: string
+  }): Promise<boolean> {
+    const deleted = await db.transaction(async (tx) => {
+      const deletedTokens =
+        await oauthAccessTokenRepository.deleteByUserAndClient(props, tx)
+      await oauthConsentRepository.deleteByUserAndClient(props, tx)
+      return deletedTokens
+    })
+
+    logger.info({ ...props, deleted }, "Revoked MCP OAuth grant")
+    return deleted > 0
   }
 
   async purgeExpiredTokens(now = new Date()): Promise<number> {

@@ -325,6 +325,7 @@
     "magic-links/delete-magic-links.action:deleteMagicLinksAction": "covered:magic-links",
     "magic-links/update-magic-link.action:updateMagicLinkAction": "covered:magic-links",
     "magic-links/update-magic-link.action:updateMagicLink": "covered:magic-links",
+    "mcp-oauth/revoke-mcp-oauth-grant.action:revokeMcpOAuthGrantAction": "private:personal OAuth credential management, exempt under invariant 23; grants are user-scoped and apply across workspaces",
     "media-library/create-file.action:createMediaLibraryFileAction": "covered:media-library",
     "media-library/create-folder.action:createMediaLibraryFolderAction": "covered:media-library",
     "media-library/delete-file.action:deleteMediaLibraryFileAction": "covered:media-library",

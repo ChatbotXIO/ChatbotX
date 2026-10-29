@@ -88,6 +88,10 @@ const nextConfig: NextConfig = {
         ...alwaysRewrites,
         { source: "/ws/:path*", destination: `${realtimeProxyUrl}/:path*` },
         {
+          source: "/mcp/:path*",
+          destination: `${env.MCP_PROXY_URL}/:path*`,
+        },
+        {
           source: "/storage/:path*",
           destination: `${s3Endpoint}/${s3Bucket}/:path*`,
         },
