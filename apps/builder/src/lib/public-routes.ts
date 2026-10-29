@@ -28,6 +28,7 @@ export const PUBLIC_ROUTES = [
   // page's HTML, which it cannot tell from a failed call.
   "/rpc",
   "/ws",
+  "/mcp",
   "/storage",
   "/checkout",
   "/unsubscribe",

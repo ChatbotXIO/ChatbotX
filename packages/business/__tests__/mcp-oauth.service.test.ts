@@ -2,23 +2,38 @@ import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const mocks = vi.hoisted(() => ({
+  deleteByUserAndClient: vi.fn(),
+  deleteConsentByUserAndClient: vi.fn(),
   deleteExpired: vi.fn(),
   findByAccessToken: vi.fn(),
   findByClientId: vi.fn(),
   findByIdOrFail: vi.fn(),
   findMembership: vi.fn(),
+  listGivenByUser: vi.fn(),
   listByUserId: vi.fn(),
   resolveWorkspaceAccess: vi.fn(),
+  transaction: vi.fn(),
+  logInfo: vi.fn(),
   invalidateCacheByTags: vi.fn(),
   dispatchAuditRecord: vi.fn(),
 }))
 
 vi.mock("@chatbotx.io/database/repositories", () => ({
   oauthAccessTokenRepository: {
+    deleteByUserAndClient: mocks.deleteByUserAndClient,
     deleteExpired: mocks.deleteExpired,
     findByAccessToken: mocks.findByAccessToken,
+    listGivenByUser: mocks.listGivenByUser,
   },
   oauthApplicationRepository: { findByClientId: mocks.findByClientId },
+  oauthConsentRepository: {
+    deleteByUserAndClient: mocks.deleteConsentByUserAndClient,
+    listGivenByUser: mocks.listGivenByUser,
+  },
+}))
+
+vi.mock("@chatbotx.io/database/client", () => ({
+  db: { transaction: mocks.transaction },
 }))
 
 vi.mock("../src/user/service", () => ({
@@ -38,6 +53,9 @@ vi.mock("@chatbotx.io/redis", () => ({
 }))
 vi.mock("../src/audit/dispatcher", () => ({
   dispatchAuditRecord: mocks.dispatchAuditRecord,
+}))
+vi.mock("../src/logger", () => ({
+  logger: { info: mocks.logInfo },
 }))
 
 const { mcpOAuthService } = await import("../src/mcp-oauth/service")
@@ -313,5 +331,117 @@ describe("mcpOAuthService.findClient", () => {
       mcpOAuthService.findClient({ clientId: "client-1" }),
     ).resolves.toBe(application)
     expect(mocks.findByClientId).toHaveBeenCalledWith("client-1")
+  })
+})
+
+describe("mcpOAuthService.listGrantsForUser", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  test("lists a consent without a live token", async () => {
+    const firstAuthorizedAt = new Date("2026-10-01T00:00:00.000Z")
+    mocks.listGivenByUser.mockResolvedValue([
+      {
+        activeUntil: null,
+        clientIcon: "https://example.com/icon.svg",
+        clientId: "claude",
+        clientName: "Claude",
+        firstAuthorizedAt,
+        lastRefreshedAt: null,
+        scopes: "openid profile",
+      },
+    ])
+
+    await expect(
+      mcpOAuthService.listGrantsForUser({ userId: "user-1" }),
+    ).resolves.toEqual([
+      {
+        activeUntil: null,
+        clientIcon: "https://example.com/icon.svg",
+        clientId: "claude",
+        clientName: "Claude",
+        firstAuthorizedAt,
+        lastRefreshedAt: null,
+        scopes: ["openid", "profile"],
+      },
+    ])
+    expect(mocks.listGivenByUser).toHaveBeenCalledWith(
+      "user-1",
+      expect.any(Date),
+    )
+  })
+
+  test("keeps separate client grants and omits empty scopes", async () => {
+    mocks.listGivenByUser.mockResolvedValue([
+      {
+        activeUntil: new Date("2026-11-01T00:00:00.000Z"),
+        clientIcon: null,
+        clientId: "claude",
+        clientName: "Claude",
+        firstAuthorizedAt: new Date("2026-10-01T00:00:00.000Z"),
+        lastRefreshedAt: new Date("2026-10-02T00:00:00.000Z"),
+        scopes: "openid profile",
+      },
+      {
+        activeUntil: null,
+        clientIcon: null,
+        clientId: "cursor",
+        clientName: "Cursor",
+        firstAuthorizedAt: new Date("2026-10-03T00:00:00.000Z"),
+        lastRefreshedAt: null,
+        scopes: "",
+      },
+    ])
+
+    await expect(
+      mcpOAuthService.listGrantsForUser({ userId: "user-1" }),
+    ).resolves.toEqual([
+      expect.objectContaining({
+        clientId: "claude",
+        scopes: ["openid", "profile"],
+      }),
+      expect.objectContaining({ clientId: "cursor", scopes: [] }),
+    ])
+  })
+})
+
+describe("mcpOAuthService.revokeGrant", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mocks.transaction.mockImplementation(async (callback) => await callback({}))
+  })
+
+  test("returns true when revoking a consent without token rows", async () => {
+    mocks.deleteByUserAndClient.mockResolvedValue(0)
+    mocks.deleteConsentByUserAndClient.mockResolvedValue(1)
+
+    await expect(
+      mcpOAuthService.revokeGrant({ clientId: "claude", userId: "user-1" }),
+    ).resolves.toBe(true)
+    expect(mocks.logInfo).toHaveBeenCalledWith(
+      { clientId: "claude", deleted: 1, userId: "user-1" },
+      "Revoked MCP OAuth grant",
+    )
+  })
+
+  test("returns false and does not log when no grant rows exist", async () => {
+    mocks.deleteByUserAndClient.mockResolvedValue(0)
+    mocks.deleteConsentByUserAndClient.mockResolvedValue(0)
+
+    await expect(
+      mcpOAuthService.revokeGrant({ clientId: "foreign", userId: "user-1" }),
+    ).resolves.toBe(false)
+    expect(mocks.logInfo).not.toHaveBeenCalled()
+  })
+
+  test("propagates a consent deletion failure without logging", async () => {
+    mocks.deleteByUserAndClient.mockResolvedValue(0)
+    mocks.deleteConsentByUserAndClient.mockRejectedValue(new Error("database"))
+
+    await expect(
+      mcpOAuthService.revokeGrant({ clientId: "claude", userId: "user-1" }),
+    ).rejects.toThrow("database")
+    expect(mocks.logInfo).not.toHaveBeenCalled()
   })
 })

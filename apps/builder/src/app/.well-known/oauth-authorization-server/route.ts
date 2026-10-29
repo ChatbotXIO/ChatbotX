@@ -1,6 +1,5 @@
 import { env } from "@/env"
-
-const oauthScopes = ["openid", "profile", "email", "offline_access"]
+import { mcpOAuthScopes } from "@/features/mcp-oauth/lib/mcp-oauth"
 
 // Better Auth's oAuthDiscoveryMetadata advertises /mcp/jwks and /mcp/userinfo,
 // but the MCP plugin does not serve either endpoint.
@@ -21,7 +20,7 @@ export const GET = () =>
         "client_secret_post",
         "none",
       ],
-      scopes_supported: oauthScopes,
+      scopes_supported: mcpOAuthScopes,
     },
     {
       headers: {

@@ -1,6 +1,8 @@
+import { db } from "@chatbotx.io/database/client"
 import {
   oauthAccessTokenRepository,
   oauthApplicationRepository,
+  oauthConsentRepository,
 } from "@chatbotx.io/database/repositories"
 import type {
   OAuthApplicationModel,
@@ -9,6 +11,7 @@ import type {
 } from "@chatbotx.io/database/types"
 import { BaseService } from "../base.service"
 import { ChatbotXException } from "../errors"
+import { logger } from "../logger"
 import { userService } from "../user/service"
 import { isWorkspaceScheduledForDeletion } from "../workspace-lifecycle/predicates"
 import { isWorkspaceAdminMember } from "../workspace-member/predicates"
@@ -30,6 +33,16 @@ export type McpOAuthResolution =
       kind: "workspaceSelectionRequired"
       workspaces: { id: string; name: string }[]
     }
+
+export type McpOAuthGrant = {
+  clientId: string
+  clientName: string
+  clientIcon: string | null
+  scopes: string[]
+  firstAuthorizedAt: Date
+  lastRefreshedAt: Date | null
+  activeUntil: Date | null
+}
 
 export class McpOAuthService extends BaseService {
   async resolvePrincipal(props: {
@@ -114,6 +127,41 @@ export class McpOAuthService extends BaseService {
         accessTokenId: token.id,
       },
     }
+  }
+
+  async listGrantsForUser(props: { userId: string }): Promise<McpOAuthGrant[]> {
+    const grants = await oauthConsentRepository.listGivenByUser(
+      props.userId,
+      new Date(),
+    )
+
+    return grants.map((grant) => ({
+      activeUntil: grant.activeUntil,
+      clientIcon: grant.clientIcon,
+      clientId: grant.clientId,
+      clientName: grant.clientName,
+      firstAuthorizedAt: grant.firstAuthorizedAt,
+      lastRefreshedAt: grant.lastRefreshedAt,
+      scopes: Array.from(new Set(grant.scopes.split(" ").filter(Boolean))),
+    }))
+  }
+
+  async revokeGrant(props: {
+    userId: string
+    clientId: string
+  }): Promise<boolean> {
+    const deleted = await db.transaction(async (tx) => {
+      const deletedTokens =
+        await oauthAccessTokenRepository.deleteByUserAndClient(props, tx)
+      const deletedConsents =
+        await oauthConsentRepository.deleteByUserAndClient(props, tx)
+      return deletedTokens + deletedConsents
+    })
+
+    if (deleted > 0) {
+      logger.info({ ...props, deleted }, "Revoked MCP OAuth grant")
+    }
+    return deleted > 0
   }
 
   async purgeExpiredTokens(now = new Date()): Promise<number> {
