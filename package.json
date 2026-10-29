@@ -8,9 +8,9 @@
     "lint": "pnpm check:agent-instructions && turbo run lint && ultracite check",
     "sync:agent-instructions": "node scripts/sync-agent-instructions.mjs --write",
     "check:agent-instructions": "node scripts/sync-agent-instructions.mjs --check && node scripts/check-skills.mjs",
-    "test": "turbo run test --concurrency=2",
+    "test": "turbo run test --concurrency=50%",
     "test:watch": "vitest",
-    "test:coverage": "turbo run test --concurrency=2 -- --coverage",
+    "test:coverage": "turbo run test --concurrency=50% -- --coverage",
     "clean": "pnpm store prune && pnpm dlx rimraf --glob '**/{node_modules,.next,.turbo}'",
     "check:circular": "pnpm dlx madge --circular --extensions ts,tsx --exclude generated {apps/**/src,packages/**/src}",
     "check:unused": "knip"

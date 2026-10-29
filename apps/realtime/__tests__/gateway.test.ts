@@ -216,6 +216,9 @@ const startUpgrade = (port: number, path: string): Promise<net.Socket> => {
  */
 const IO_WAIT = { timeout: 5000 } as const
 
+const waitForIo = <T>(callback: () => T | Promise<T>): Promise<T> =>
+  vi.waitFor(callback, IO_WAIT)
+
 const waitForOpen = (socket: WebSocket): Promise<void> => {
   const { promise, resolve, reject } = Promise.withResolvers<void>()
   socket.onopen = () => resolve()
@@ -392,22 +395,22 @@ describe("createRealtimeGateway (live)", () => {
       statusCode: 503,
     })
     resolveInitialProbe("PONG")
-    await vi.waitFor(async () => {
+    await waitForIo(async () => {
       await expect(requestHttp(port, "/ready")).resolves.toEqual({
         statusCode: 200,
       })
-    }, IO_WAIT)
-    await vi.waitFor(() => expect(reconnect).toBeDefined(), IO_WAIT)
+    })
+    await waitForIo(() => expect(reconnect).toBeDefined())
     reconnect?.()
 
     await expect(requestHttp(port, "/ready")).resolves.toEqual({
       statusCode: 503,
     })
-    await vi.waitFor(async () => {
+    await waitForIo(async () => {
       await expect(requestHttp(port, "/ready")).resolves.toEqual({
         statusCode: 200,
       })
-    }, IO_WAIT)
+    })
     expect(reader.call).toHaveBeenCalledWith("PING")
   })
 
@@ -436,21 +439,20 @@ describe("createRealtimeGateway (live)", () => {
     )
     const port = await gateway.listen("127.0.0.1", 0)
 
-    await vi.waitFor(async () => {
+    await waitForIo(async () => {
       await expect(requestHttp(port, "/ready")).resolves.toEqual({
         statusCode: 503,
       })
-    }, IO_WAIT)
-    await vi.waitFor(
-      () => expect(replacementReader.call).toHaveBeenCalledWith("PING"),
-      IO_WAIT,
+    })
+    await waitForIo(() =>
+      expect(replacementReader.call).toHaveBeenCalledWith("PING"),
     )
     resolveIdleProbe("PONG")
-    await vi.waitFor(async () => {
+    await waitForIo(async () => {
       await expect(requestHttp(port, "/ready")).resolves.toEqual({
         statusCode: 200,
       })
-    }, IO_WAIT)
+    })
   })
 
   test("returns 503 when guest activation cannot read Redis", async () => {
@@ -1507,12 +1509,10 @@ describe("createRealtimeGateway (live)", () => {
       await waitForOpen(socket)
       const previousPresenceReportCount =
         reportWorkspacePresenceMock.mock.calls.length
-      await vi.waitFor(
-        () =>
-          expect(reportWorkspacePresenceMock.mock.calls.length).toBeGreaterThan(
-            previousPresenceReportCount,
-          ),
-        IO_WAIT,
+      await waitForIo(() =>
+        expect(reportWorkspacePresenceMock.mock.calls.length).toBeGreaterThan(
+          previousPresenceReportCount,
+        ),
       )
       reportWorkspacePresenceMock.mockClear()
 

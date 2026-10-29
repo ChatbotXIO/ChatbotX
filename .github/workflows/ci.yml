@@ -15,11 +15,9 @@ name: CI
 #
 # `workflow_call` lets release.yml run this exact gate (same shards, same
 # concurrency, same turbo passthrough args, so the same cache keys) before it
-# publishes an image for a tag or a manual dispatch. It used to run its own
-# single-runner `turbo run check-types test`, which put every tsc and every
-# 4-worker vitest suite on the same 4 vCPUs at turbo's default concurrency of
-# 10: CPU-heavy suites ran 5-8x slower than here and timed out only at release
-# time (v1.17.0, 2026-10-29). Keep the quality gate defined once, here.
+# publishes an image for a tag or a manual dispatch. Keep the quality gate
+# defined once, here — release.yml's `check` job explains why its own
+# single-runner gate was retired.
 
 on:
   pull_request:
@@ -32,8 +30,12 @@ on:
 permissions:
   contents: read
 
+# Inside a called workflow the `github` context is the caller's, so a
+# release.yml `workflow_dispatch` on main would otherwise share the group of
+# the push-to-main run and cancel it. `github.workflow` is the caller's name
+# there ("Build and Push Docker Images"), which keeps the two apart.
 concurrency:
-  group: ci-${{ github.ref }}
+  group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:

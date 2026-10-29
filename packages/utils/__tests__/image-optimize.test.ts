@@ -3,19 +3,10 @@ import sharp from "sharp"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { optimizeImageForStorage } from "../src/image-optimize"
 import { getImageOptimizationSettings } from "../src/image-optimize-settings"
-
-// Real libvips encodes on a CI runner shared with other suites: a single
-// encode measured 7s under load (2026-10-29), against vitest's 30s default.
-const ENCODE_TEST_TIMEOUT_MS = 120_000
-
-// The production encode gives up after `STORED_IMAGE_ENCODE_TIMEOUT_SECONDS`
-// (2s by default) and keeps the source. On a starved runner that is exactly
-// the path these tests take by accident, failing an `optimized: true`
-// assertion instead of the test timing out. The policy's own test below
-// still checks the default; here the encode is given the schema maximum.
-const stubGenerousEncodeTimeout = () => {
-  vi.stubEnv("STORED_IMAGE_ENCODE_TIMEOUT_SECONDS", "60")
-}
+import {
+  ENCODE_TEST_TIMEOUT_MS,
+  stubGenerousEncodeTimeout,
+} from "./encode-test-env"
 
 // A noisy photo-like image: flat fills compress too well to exercise the
 // "only keep the re-encode when it is meaningfully smaller" rule.
