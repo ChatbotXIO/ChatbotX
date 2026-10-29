@@ -1,21 +1,19 @@
-import { flushAllPendingWorkspaceRealtimeEvents } from "@chatbotx.io/business"
 import { SdkException } from "@chatbotx.io/sdk"
 import {
   ChatJobAction,
   type ChatJobData,
-  defaultWorkerOptions,
-  getQueueConnection,
   queueNames,
 } from "@chatbotx.io/worker-config"
-import { type Job, Worker } from "bullmq"
+import type { Job } from "bullmq"
 import { env } from "../env"
-import { ensureBootstrapped } from "../lib/bootstrap"
+import { createQueueWorker } from "../lib/create-queue-worker"
 import { isBlockedWorkspace } from "../lib/is-blocked-workspace"
 import { isBotMessageQuotaReached } from "../lib/is-bot-message-quota-reached"
 import { isFinalAttempt } from "../lib/job-attempts"
 import { logger } from "../lib/logger"
 import { resolveWorkspaceId } from "../lib/resolve-workspace-id"
 import { runJobWithAuditContext } from "../lib/run-job-with-audit-context"
+import { runWorker } from "../lib/shutdown"
 import { checkOutboundAutomatedResponse } from "./handlers/outbound-automated-response"
 import { sendChatMessage, sendFlowStep } from "./handlers/send-flow-step"
 import {
@@ -60,16 +58,8 @@ function isBotSendJob(data: ChatJobData): boolean {
   )
 }
 
-async function startChatWorker() {
-  try {
-    await ensureBootstrapped()
-    logger.info("Chat worker bootstrapped successfully")
-  } catch (err) {
-    logger.error(err, "Failed to bootstrap chat worker")
-    process.exit(1)
-  }
-
-  const worker = new Worker(
+function startChatWorker() {
+  createQueueWorker(
     queueNames.enum.chat,
     async (job: Job<ChatJobData>) => {
       const workspaceId = await resolveWorkspaceId(job.data.data)
@@ -156,45 +146,8 @@ async function startChatWorker() {
         },
       )
     },
-    {
-      connection: getQueueConnection(queueNames.enum.chat),
-      ...defaultWorkerOptions,
-      concurrency: env.CHAT_WORKER_CONCURRENCY,
-    },
+    { concurrency: env.CHAT_WORKER_CONCURRENCY },
   )
-
-  worker.on("failed", (job, err) => {
-    if (job) {
-      logger.error(err, `Job ${job.id} has failed`)
-    }
-  })
-
-  let isShuttingDown = false
-  async function shutdown() {
-    if (isShuttingDown) {
-      return
-    }
-    isShuttingDown = true
-    let shutdownFailed = false
-    try {
-      await worker.close()
-    } catch (err) {
-      shutdownFailed = true
-      logger.error(err, "[ChatWorker] Error closing worker during shutdown")
-    } finally {
-      try {
-        // After close(): drains events published by jobs that finished during
-        // the close drain, whose coalesce timers would never fire past exit.
-        await flushAllPendingWorkspaceRealtimeEvents()
-      } catch (err) {
-        shutdownFailed = true
-        logger.error(err, "[ChatWorker] Error flushing realtime events")
-      }
-    }
-    process.exit(shutdownFailed ? 1 : 0)
-  }
-  process.once("SIGINT", shutdown)
-  process.once("SIGTERM", shutdown)
 }
 
-startChatWorker()
+runWorker("chat", startChatWorker)

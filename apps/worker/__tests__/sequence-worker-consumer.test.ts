@@ -46,6 +46,10 @@ vi.mock("@chatbotx.io/business/audit", () => ({
     auditStorage.run(actor, fn),
 }))
 
+vi.mock("@chatbotx.io/business", () => ({
+  flushAllPendingWorkspaceRealtimeEvents: vi.fn(),
+}))
+
 vi.mock("@chatbotx.io/flow-config", () => ({
   SEQUENCE_SCHEDULE_PAYLOAD_TYPE: "sequenceSchedule",
 }))
@@ -94,7 +98,7 @@ vi.mock("bullmq", () => ({
 }))
 
 vi.mock("../src/lib/bootstrap", () => ({
-  ensureBootstrapped: vi.fn(),
+  ensureBootstrapped: vi.fn(async () => undefined),
 }))
 
 vi.mock("../src/lib/is-blocked-workspace", () => ({
@@ -105,6 +109,7 @@ vi.mock("../src/lib/logger", () => ({
   logger: {
     debug: loggerDebugSpy,
     error: loggerErrorSpy,
+    fatal: vi.fn(),
     info: vi.fn(),
     warn: loggerWarnSpy,
   },
@@ -167,6 +172,27 @@ beforeEach(() => {
 })
 
 describe("sequence scheduler consumer", () => {
+  test("does not create a Worker when shutdown began while Redis connected", async () => {
+    vi.doMock("../src/lib/shutdown", () => ({
+      isShutdownRequested: () => true,
+      onShutdown: vi.fn(),
+      runWorker: (_name: string, start: () => unknown) => start(),
+    }))
+
+    await import("../src/sequence-scheduler/worker-consumer")
+    await vi.waitFor(() => {
+      expect(useExistingSpy).toHaveBeenCalled()
+    })
+    await vi.waitFor(() => {
+      expect(loggerWarnSpy).toHaveBeenCalledWith(
+        expect.stringContaining("Shutdown requested"),
+      )
+    })
+
+    expect(workerCreatedSpy).not.toHaveBeenCalled()
+    vi.doUnmock("../src/lib/shutdown")
+  })
+
   test("processes the legacy wrapper payload during the one-release cutover", async () => {
     await startConsumer()
 

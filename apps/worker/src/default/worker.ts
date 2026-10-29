@@ -1,17 +1,15 @@
-import { flushAllPendingWorkspaceRealtimeEvents } from "@chatbotx.io/business"
 import {
   DefaultJobAction,
   type DefaultJobData,
-  defaultWorkerOptions,
-  getQueueConnection,
   queueNames,
 } from "@chatbotx.io/worker-config"
-import { type Job, Worker } from "bullmq"
-import { ensureBootstrapped } from "../lib/bootstrap"
+import type { Job } from "bullmq"
+import { createQueueWorker } from "../lib/create-queue-worker"
 import { isBlockedWorkspace } from "../lib/is-blocked-workspace"
 import { logger } from "../lib/logger"
 import { resolveWorkspaceId } from "../lib/resolve-workspace-id"
 import { runJobWithAuditContext } from "../lib/run-job-with-audit-context"
+import { runWorker } from "../lib/shutdown"
 import { handleBulkTagContacts } from "./handlers/bulk-tag-contacts"
 import { loopableExportContacts } from "./handlers/export-contacts"
 import { exportCoupons } from "./handlers/export-coupons"
@@ -61,19 +59,14 @@ async function runGuardedDefaultJob<T>(
   return runJobWithAuditContext({ workspaceId, ...auditParams }, handler)
 }
 
-async function startDefaultWorker() {
-  try {
-    await ensureBootstrapped()
-    logger.info("Default worker bootstrapped successfully")
-  } catch (err) {
-    logger.error(err, "Failed to bootstrap default worker")
-    process.exit(1)
-  }
-
-  const worker = new Worker(
+function startDefaultWorker() {
+  createQueueWorker(
     queueNames.enum.default,
     async (job: Job<DefaultJobData>) => {
-      logger.info(job.data, `Worker received job: ${job.id}`)
+      logger.debug(
+        { jobId: job.id, type: job.data.type },
+        "Worker received job",
+      )
 
       switch (job.data.type) {
         case DefaultJobAction.sendAuditLog:
@@ -248,48 +241,20 @@ async function startDefaultWorker() {
       }
     },
     {
-      connection: getQueueConnection(queueNames.enum.default),
-      ...defaultWorkerOptions,
+      onFailed: (job, err) => {
+        if (!job) {
+          return
+        }
+        // Logged only. This used to write an `ErrorLog` row for every failed job,
+        // but `ErrorLog` records third-party API failures and most default-queue
+        // jobs (exportContacts, runImport, installTemplate, …) never call one. The
+        // six jobs that do call a third party log explicitly in their own handlers,
+        // where the provider is actually knowable — `syncTag` alone hits both
+        // Messenger and Zalo, which no single catch-all label could attribute.
+        logger.error({ err, jobId: job.id }, "Job has failed")
+      },
     },
   )
-
-  worker.on("failed", (job, err) => {
-    if (!job) {
-      return
-    }
-    // Logged only. This used to write an `ErrorLog` row for every failed job,
-    // but `ErrorLog` records third-party API failures and most default-queue
-    // jobs (exportContacts, runImport, installTemplate, …) never call one. The
-    // six jobs that do call a third party log explicitly in their own handlers,
-    // where the provider is actually knowable — `syncTag` alone hits both
-    // Messenger and Zalo, which no single catch-all label could attribute.
-    logger.error(err, `Job ${job.id} has failed`)
-  })
-
-  let isShuttingDown = false
-  async function shutdown() {
-    if (isShuttingDown) {
-      return
-    }
-    isShuttingDown = true
-    let shutdownFailed = false
-    try {
-      await worker.close()
-    } catch (err) {
-      shutdownFailed = true
-      logger.error(err, "[DefaultWorker] Error closing worker during shutdown")
-    } finally {
-      try {
-        await flushAllPendingWorkspaceRealtimeEvents()
-      } catch (err) {
-        shutdownFailed = true
-        logger.error(err, "[DefaultWorker] Error flushing realtime events")
-      }
-    }
-    process.exit(shutdownFailed ? 1 : 0)
-  }
-  process.once("SIGINT", shutdown)
-  process.once("SIGTERM", shutdown)
 }
 
-startDefaultWorker()
+runWorker("default", startDefaultWorker)

@@ -9,6 +9,15 @@ export const env = createEnv({
   server: {
     NEXT_PUBLIC_EDITION: editionRule,
     QUOTA_SYNC_INTERVAL_SECONDS: z.coerce.number().int().min(10).default(60),
+    // Optional upper bound for draining every worker in the process on SIGTERM
+    // (lib/shutdown). Consolidated Docker modes default below the 10s stop
+    // timeout; for other modes, set this with the orchestrator grace period.
+    WORKER_SHUTDOWN_TIMEOUT_MS: z.coerce
+      .number()
+      .int()
+      .min(1000)
+      .max(600_000)
+      .optional(),
     WEBHOOK_WORKER_CONCURRENCY: z.coerce
       .number()
       .int()

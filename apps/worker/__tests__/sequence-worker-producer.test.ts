@@ -10,6 +10,7 @@ const {
   getScheduleKeySpy,
   getSequenceSchedulerQueueSpy,
   getRetryKeySpy,
+  isShutdownRequestedSpy,
   loggerErrorSpy,
   queueAddBulkSpy,
   removeFromRetrySpy,
@@ -26,12 +27,17 @@ const {
   getScheduleKeySpy: vi.fn((bucket: number) => `schedule:${bucket}`),
   getSequenceSchedulerQueueSpy: vi.fn(),
   getRetryKeySpy: vi.fn((bucket: number) => `retry:${bucket}`),
+  isShutdownRequestedSpy: vi.fn(() => false),
   loggerErrorSpy: vi.fn(),
   queueAddBulkSpy: vi.fn(),
   removeFromRetrySpy: vi.fn(),
   removeFromScheduleSpy: vi.fn(),
   useExistingSpy: vi.fn(),
   withLockSpy: vi.fn(),
+}))
+
+vi.mock("@chatbotx.io/business", () => ({
+  flushAllPendingWorkspaceRealtimeEvents: vi.fn(),
 }))
 
 vi.mock("@chatbotx.io/database/repositories", () => ({
@@ -67,7 +73,15 @@ vi.mock("../src/lib/logger", () => ({
   logger: {
     debug: vi.fn(),
     error: loggerErrorSpy,
+    fatal: vi.fn(),
+    warn: vi.fn(),
   },
+}))
+
+vi.mock("../src/lib/shutdown", () => ({
+  isShutdownRequested: isShutdownRequestedSpy,
+  onShutdown: vi.fn(),
+  runWorker: vi.fn(),
 }))
 
 import { getAssignedBuckets } from "../src/sequence-scheduler/buckets"
@@ -143,6 +157,7 @@ beforeEach(() => {
   findPendingWorkspaceIdsSpy.mockResolvedValue([])
   getDueSpy.mockResolvedValue([])
   getRetryCountSpy.mockResolvedValue(0)
+  isShutdownRequestedSpy.mockReturnValue(false)
   getScheduleCountSpy.mockResolvedValue(0)
   getSequenceSchedulerQueueSpy.mockResolvedValue({ addBulk: queueAddBulkSpy })
   queueAddBulkSpy.mockResolvedValue([])
@@ -165,7 +180,7 @@ describe("SchedulerWorker lifecycle", () => {
 
     expect(useExistingSpy).toHaveBeenCalledOnce()
     expect(getSequenceSchedulerQueueSpy).toHaveBeenCalledOnce()
-    worker.stop()
+    await worker.stop()
   })
 
   test("fails startup when the sequence scheduler queue is unavailable", async () => {
@@ -175,6 +190,18 @@ describe("SchedulerWorker lifecycle", () => {
     await expect(worker.start()).rejects.toThrow(
       "Sequence scheduler queue is unavailable",
     )
+  })
+
+  test("starts no bucket tick when shutdown began while Redis was connecting", async () => {
+    isShutdownRequestedSpy.mockReturnValue(true)
+    const worker = new SchedulerWorker({ buckets: [0, 1], tickIntervalMs: 5 })
+
+    await worker.start()
+
+    const internals = worker as unknown as SchedulerWorkerInternals
+    expect(internals.running).toBe(false)
+    expect(internals.timers.size).toBe(0)
+    expect(getDueSpy).not.toHaveBeenCalled()
   })
 
   test("clears bucket timers exactly once when stopped", async () => {
@@ -204,6 +231,32 @@ describe("SchedulerWorker lifecycle", () => {
     expect([...timers.keys()].sort()).toEqual([0, 1, 2])
     expect(timers.size).toBe(3)
     worker.stop()
+  })
+
+  test("stop waits for a running tick to finish publishing its claimed dispatches", async () => {
+    runClaimedLock()
+    getDueSpy.mockResolvedValueOnce(["d1"]).mockResolvedValueOnce([])
+    findPendingWorkspaceIdsSpy.mockResolvedValue([
+      { id: "d1", workspaceId: "ws-1" },
+    ])
+    const { promise: published, resolve: finishPublish } =
+      Promise.withResolvers<[]>()
+    queueAddBulkSpy.mockReturnValue(published)
+    const worker = new SchedulerWorker({ buckets: [0], tickIntervalMs: 60_000 })
+
+    await worker.start()
+    await vi.waitFor(() => expect(queueAddBulkSpy).toHaveBeenCalledOnce())
+
+    let isStopped = false
+    const stopping = worker.stop().then(() => {
+      isStopped = true
+    })
+    await new Promise((resolve) => setTimeout(resolve, 10))
+    expect(isStopped).toBe(false)
+
+    finishPublish([])
+    await stopping
+    expect(isStopped).toBe(true)
   })
 
   test("does not schedule another bucket tick after stop", async () => {

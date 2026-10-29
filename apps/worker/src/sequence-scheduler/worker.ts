@@ -1,10 +1,8 @@
-import { flushAllPendingWorkspaceRealtimeEvents } from "@chatbotx.io/business"
-
 import { sequenceDispatchRepository } from "@chatbotx.io/database/repositories"
 import { sequenceConnections } from "@chatbotx.io/redis"
 import { SchedulerClient } from "@chatbotx.io/scheduler"
-import { ensureBootstrapped } from "../lib/bootstrap"
 import { logger } from "../lib/logger"
+import { onShutdown, runWorker } from "../lib/shutdown"
 import { getAssignedBuckets } from "./buckets"
 
 const BOOTSTRAP_WINDOW_HOURS = 24
@@ -33,6 +31,7 @@ export class ReconcileJob {
   private lastRetentionRun: Date | null = null
   private _scheduler: SchedulerClient | null = null
   private readonly options: ReconcileJobOptions
+  private readonly runningJobs = new Set<Promise<unknown>>()
 
   private get scheduler(): SchedulerClient {
     if (!this._scheduler) {
@@ -65,21 +64,27 @@ export class ReconcileJob {
     await this.reconcile()
 
     this.intervalId = setInterval(() => {
-      this.reconcile().catch((error) => {
-        logger.error(error, "Error in reconcile job")
-      })
+      this.track(
+        this.reconcile().catch((err) => {
+          logger.error({ err }, "Error in reconcile job")
+        }),
+      )
     }, this.options.intervalMs)
 
     this.cleanupIntervalId = setInterval(() => {
-      this.cleanupOrphans().catch((error) => {
-        logger.error(error, "Error in cleanup job")
-      })
+      this.track(
+        this.cleanupOrphans().catch((err) => {
+          logger.error({ err }, "Error in cleanup job")
+        }),
+      )
     }, this.options.cleanupIntervalMs)
 
     this.retentionIntervalId = setInterval(() => {
-      this.deleteTerminalDispatches().catch((err) => {
-        logger.error({ err }, "Error in sequence dispatch retention job")
-      })
+      this.track(
+        this.deleteTerminalDispatches().catch((err) => {
+          logger.error({ err }, "Error in sequence dispatch retention job")
+        }),
+      )
     }, this.options.retentionIntervalMs)
 
     this.running = true
@@ -134,7 +139,12 @@ export class ReconcileJob {
     }
   }
 
-  stop() {
+  private track(job: Promise<unknown>): void {
+    const tracked = job.finally(() => this.runningJobs.delete(tracked))
+    this.runningJobs.add(tracked)
+  }
+
+  async stop() {
     if (!this.running) {
       return
     }
@@ -155,6 +165,8 @@ export class ReconcileJob {
       clearInterval(this.retentionIntervalId)
       this.retentionIntervalId = null
     }
+
+    await Promise.allSettled([...this.runningJobs])
   }
 
   async cleanupOrphans() {
@@ -288,58 +300,11 @@ const reconcile = new ReconcileJob({
 })
 const shouldAutoStart = process.env.NODE_ENV !== "test" && !process.env.VITEST
 
-let isShuttingDown = false
-
 async function startReconcileWorker() {
-  await ensureBootstrapped()
   await reconcile.start()
 }
 
-function stopReconcileWorker() {
-  try {
-    reconcile.stop()
-  } catch (error) {
-    logger.error(error, "Error stopping reconcile worker")
-  }
-}
-
 if (shouldAutoStart) {
-  startReconcileWorker().catch((error) => {
-    logger.error(error, "Error starting reconcile worker")
-    process.exitCode = 1
-  })
-}
-
-const handleShutdownSignal = async (
-  signal: "SIGINT" | "SIGTERM",
-): Promise<void> => {
-  if (isShuttingDown) {
-    return
-  }
-  isShuttingDown = true
-
-  logger.info({ signal }, "Shutdown signal received")
-
-  try {
-    stopReconcileWorker()
-    await flushAllPendingWorkspaceRealtimeEvents()
-    process.exit(0)
-  } catch (error) {
-    logger.error({ err: error }, "Error during reconcile worker shutdown")
-    process.exit(1)
-  }
-}
-
-if (shouldAutoStart) {
-  process.on("SIGINT", () => {
-    handleShutdownSignal("SIGINT").catch((error) => {
-      logger.error({ err: error }, "Unhandled reconcile worker shutdown error")
-    })
-  })
-
-  process.on("SIGTERM", () => {
-    handleShutdownSignal("SIGTERM").catch((error) => {
-      logger.error({ err: error }, "Unhandled reconcile worker shutdown error")
-    })
-  })
+  runWorker("sequence-scheduler", startReconcileWorker)
+  onShutdown("sequence-scheduler", () => reconcile.stop())
 }

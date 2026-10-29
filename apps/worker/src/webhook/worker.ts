@@ -1,32 +1,20 @@
-import { flushAllPendingWorkspaceRealtimeEvents } from "@chatbotx.io/business"
-
 import {
-  defaultWorkerOptions,
-  getQueueConnection,
   queueNames,
   WebhookJobAction,
   type WebhookJobData,
 } from "@chatbotx.io/worker-config"
-import { type Job, Worker } from "bullmq"
+import type { Job } from "bullmq"
 import { env } from "../env"
-import { ensureBootstrapped } from "../lib/bootstrap"
+import { createQueueWorker } from "../lib/create-queue-worker"
 import { isBlockedWorkspace } from "../lib/is-blocked-workspace"
-import { logger } from "../lib/logger"
 import { runJobWithAuditContext } from "../lib/run-job-with-audit-context"
+import { runWorker } from "../lib/shutdown"
 import { WebhookMatcherService } from "./services/webhook-matcher.service"
 
 const webhookMatcher = new WebhookMatcherService()
 
-async function startWebhookWorker() {
-  try {
-    await ensureBootstrapped()
-    logger.info("Webhook worker bootstrapped successfully")
-  } catch (err) {
-    logger.error(err, "Failed to bootstrap webhook worker")
-    process.exit(1)
-  }
-
-  const worker = new Worker(
+function startWebhookWorker() {
+  createQueueWorker(
     queueNames.enum.webhook,
     async (job: Job<WebhookJobData>) => {
       const { workspaceId } = job.data.data
@@ -48,36 +36,8 @@ async function startWebhookWorker() {
         },
       )
     },
-    {
-      connection: getQueueConnection(queueNames.enum.webhook),
-      ...defaultWorkerOptions,
-      concurrency: env.WEBHOOK_WORKER_CONCURRENCY,
-    },
+    { concurrency: env.WEBHOOK_WORKER_CONCURRENCY },
   )
-
-  worker.on("failed", (job, err) => {
-    if (job) {
-      logger.error(err, `Webhook job ${job.id} has failed`)
-    }
-  })
-
-  let isShuttingDown = false
-  async function shutdown() {
-    if (isShuttingDown) {
-      return
-    }
-    isShuttingDown = true
-    try {
-      await worker.close()
-      await flushAllPendingWorkspaceRealtimeEvents()
-      process.exit(0)
-    } catch (err) {
-      logger.error(err, "[WebhookWorker] Error during shutdown")
-      process.exit(1)
-    }
-  }
-  process.once("SIGINT", shutdown)
-  process.once("SIGTERM", shutdown)
 }
 
-startWebhookWorker()
+runWorker("webhook", startWebhookWorker)

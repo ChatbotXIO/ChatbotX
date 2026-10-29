@@ -5,7 +5,7 @@ import { AIFileProcessingError } from "../src/heavy/handlers/ai-file-processing-
 const mocks = vi.hoisted(() => ({
   detectConversationAndContactInbox: vi.fn(),
   editImageOutput: vi.fn(),
-  ensureBootstrapped: vi.fn(),
+  ensureBootstrapped: vi.fn(async () => undefined),
   extractFallbackTextSnippets: vi.fn(),
   completeHeavyStep: vi.fn(),
   failHeavyStep: vi.fn(),
@@ -63,10 +63,21 @@ vi.mock("@chatbotx.io/worker-config", async (importOriginal) => {
   }
 })
 
-vi.mock("bullmq", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("bullmq")>()
+// Plain stubs: `bullmq` is excluded from dep pre-bundling (vitest.config.ts), so
+// `importOriginal("bullmq")` cannot resolve it.
+vi.mock("bullmq", () => {
+  class Queue {}
+  class QueueEvents {}
+  class UnrecoverableError extends Error {
+    constructor(message?: string) {
+      super(message)
+      this.name = "UnrecoverableError"
+    }
+  }
   return {
-    ...actual,
+    Queue,
+    QueueEvents,
+    UnrecoverableError,
     Worker: class Worker {
       constructor(
         queue: string,
@@ -110,7 +121,13 @@ vi.mock("../src/lib/is-blocked-workspace", () => ({
   isBlockedWorkspace: mocks.isBlockedWorkspace,
 }))
 vi.mock("../src/lib/logger", () => ({
-  logger: { error: mocks.loggerError, info: vi.fn(), warn: vi.fn() },
+  logger: {
+    debug: vi.fn(),
+    error: mocks.loggerError,
+    fatal: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+  },
 }))
 vi.mock("../src/lib/resolve-workspace-id", () => ({
   resolveWorkspaceId: mocks.resolveWorkspaceId,
@@ -208,8 +225,8 @@ describe("heavy worker", () => {
     expect(mocks.workerOptions?.concurrency).toBe(1)
   })
 
-  test("keeps the BullMQ lock longer than the configured heavy-job wait", () => {
-    expect(mocks.workerOptions?.lockDuration).toBe(5 * 60_000)
+  test("keeps a short renewable BullMQ lock so a dead process is retried within a minute", () => {
+    expect(mocks.workerOptions?.lockDuration).toBe(300_000)
     expect(mocks.workerOptions?.stalledInterval).toBe(60_000)
     expect(mocks.workerOptions?.maxStalledCount).toBe(1)
   })

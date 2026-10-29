@@ -6,10 +6,9 @@ import {
   type BotResponseTrackingContext,
   ChatJobAction,
   chatQueue,
-  getQueueConnection,
+  getQueueEvents,
   queueNames,
 } from "@chatbotx.io/worker-config"
-import { QueueEvents } from "bullmq"
 import { env } from "../../env"
 import { logger } from "../../lib/logger"
 
@@ -19,26 +18,6 @@ import { logger } from "../../lib/logger"
 // OOM-crashed the integration worker. Validated + capped below the integration
 // worker lockDuration in env.ts.
 const CHAT_JOB_WAIT_TIMEOUT_MS = env.CHAT_JOB_WAIT_TIMEOUT_MS
-
-let chatQueueEvents: QueueEvents | null = null
-
-function getChatQueueEvents(): QueueEvents {
-  if (chatQueueEvents) {
-    return chatQueueEvents
-  }
-
-  chatQueueEvents = new QueueEvents(queueNames.enum.chat, {
-    connection: getQueueConnection(queueNames.enum.chat).duplicate(),
-  })
-  return chatQueueEvents
-}
-
-export async function closeChatQueueEvents(): Promise<void> {
-  if (chatQueueEvents) {
-    await chatQueueEvents.close()
-    chatQueueEvents = null
-  }
-}
 
 type SendMessageOptions = {
   forceUrl?: boolean
@@ -109,7 +88,10 @@ async function awaitChatJob(
   }
 
   try {
-    await job.waitUntilFinished(getChatQueueEvents(), CHAT_JOB_WAIT_TIMEOUT_MS)
+    await job.waitUntilFinished(
+      getQueueEvents(queueNames.enum.chat),
+      CHAT_JOB_WAIT_TIMEOUT_MS,
+    )
   } catch (err) {
     // A stalled chat worker surfaces here as a burst of these timeouts — the
     // real backlog signal. Swallowed so the flow still advances in order.

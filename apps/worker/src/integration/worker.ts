@@ -2,7 +2,6 @@ import { createHash } from "node:crypto"
 import { automatedResponseService } from "@chatbotx.io/automated-response"
 import {
   conversationService,
-  flushAllPendingWorkspaceRealtimeEvents,
   withBlockedOwnerGuard,
 } from "@chatbotx.io/business"
 import { channelTypes } from "@chatbotx.io/database/partials"
@@ -11,11 +10,7 @@ import {
   AIJobAction,
   aiAgentQueue,
   type CallTranscriptionJobData,
-  closeHeavyQueueEvents,
-  closeIntegrationQueueEvents,
-  defaultWorkerOptions,
   getHeavyJobCompletionWaitTimeoutMs,
-  getQueueConnection,
   HeavyJobAction,
   IntegrationJobAction,
   type IntegrationJobData,
@@ -24,15 +19,16 @@ import {
   WhatsappVoipSignalingJobAction,
   type WhatsappVoipSignalingJobData,
 } from "@chatbotx.io/worker-config"
-import { type Job, Worker } from "bullmq"
+import type { Job } from "bullmq"
 import { env } from "../env"
-import { ensureBootstrapped } from "../lib/bootstrap"
+import { createQueueWorker } from "../lib/create-queue-worker"
 import { isBlockedWorkspace } from "../lib/is-blocked-workspace"
 import { hasExhaustedAttempts } from "../lib/job-attempts"
 import { deferOnLockContention } from "../lib/lock-contention-deferral"
 import { logger } from "../lib/logger"
 import { resolveWorkspaceId } from "../lib/resolve-workspace-id"
 import { runJobWithAuditContext } from "../lib/run-job-with-audit-context"
+import { runWorker } from "../lib/shutdown"
 import { integrationService } from "../services/integrations"
 import { mintRandomFlowExecutionKey } from "./flow-execution-key"
 import { handleAdsAutomaticEvent } from "./handlers/ads-automatic-event"
@@ -100,8 +96,14 @@ import {
 import { runIntegrationJobWithWebhookContext } from "./job-context"
 import { resolveIncomingTextRouting } from "./routing"
 import { dispatchStoryAutomation } from "./story-automation-dispatch"
-import { closeChatQueueEvents } from "./utils/message"
 
+// Coexist historical sync chunks are bounded to ~4 min via self-continuation
+// (see coexist-messenger-sync / coexist-whatsapp-flush). Lock sized as:
+// 4 min active + 4 min Graph 5xx retry tail + 2 min bulk INSERT tail.
+// Heavy flow steps also wait for every configured provider retry and
+// backoff; their full budget must fit within the parent job lock. The event
+// loop is shared in `standalone`, so the lock must not be shortened to rely on
+// timely renewal.
 const integrationWorkerLockDuration = Math.max(
   10 * 60 * 1000,
   getHeavyJobCompletionWaitTimeoutMs(
@@ -165,14 +167,48 @@ async function resolveVoipSignalingWorkspaceId(
   }
 }
 
-async function startIntegrationWorker() {
-  try {
-    await ensureBootstrapped()
-  } catch (err) {
-    logger.error({ err }, "Failed to bootstrap integration worker")
-    process.exit(1)
+function handleVoipSignalingFailed(
+  job: Job<WhatsappVoipSignalingJobData> | undefined,
+  err: Error,
+): void {
+  if (!job) {
+    return
   }
+  // Retries here are routine, not incidents: handleConnect throws
+  // VoipCallRowNotReadyError until the separate whatsappCallEvent job creates
+  // the call row, and this queue's retry window exists precisely to outlast
+  // that lag. Logging every attempt at ERROR made a healthy race read as a
+  // dropped call. Only an exhausted job actually lost the offer.
+  const attempts = job.opts.attempts ?? 1
+  if (!hasExhaustedAttempts(job)) {
+    logger.warn(
+      { err, attempt: job.attemptsMade, attempts },
+      `Whatsapp VoIP signaling job ${job.id} attempt failed; retrying`,
+    )
+    return
+  }
+  logger.error(
+    { err, attempts },
+    `Whatsapp VoIP signaling job ${job.id} has failed`,
+  )
+  // Safety net: a handleConnect job that exhausted every attempt
+  // (removeOnFail deletes it from Redis right after this) must not silently
+  // strand the call at ringing — finalize it here instead of leaving it
+  // entirely to the 5-minute stale-call sweep. This listener isn't awaited by
+  // BullMQ, so the call is fire-and-forget; .catch is belt-and-suspenders
+  // since finalizeExhaustedHandleConnect already logs its own failures and
+  // never rejects.
+  if (job.data.type === WhatsappVoipSignalingJobAction.handleConnect) {
+    finalizeExhaustedHandleConnect(job.data.data).catch((finalizeErr) => {
+      logger.error(
+        { err: finalizeErr, wacid: job.data.data.wacid },
+        "Whatsapp VoIP signaling: finalizeExhaustedHandleConnect rejected unexpectedly",
+      )
+    })
+  }
+}
 
+function startIntegrationWorker() {
   const processIntegrationJob = async (job: Job<IntegrationJobData>) => {
     const workspaceId = await resolveWorkspaceId(job.data.data)
     if (await isBlockedWorkspace(workspaceId)) {
@@ -602,37 +638,24 @@ async function startIntegrationWorker() {
   // A job that lost a distributed-lock race (e.g. the per-owner MAC lock when
   // many new contacts arrive at once) is deferred, not failed: failing it
   // burns one of only two attempts and drops the inbound message.
-  const worker = new Worker(
+  createQueueWorker(
     queueNames.enum.integration,
     (job: Job<IntegrationJobData>, token) =>
       deferOnLockContention(job, token, () => processIntegrationJob(job)),
     {
-      connection: getQueueConnection(queueNames.enum.integration),
-      ...defaultWorkerOptions,
       // Override the shared default (5). I/O-bound webhook handling tolerates
       // more parallelism; env-tunable via INTEGRATION_WORKER_CONCURRENCY.
       concurrency: env.INTEGRATION_WORKER_CONCURRENCY,
-      // Coexist historical sync chunks are bounded to ~4 min via self-continuation
-      // (see coexist-messenger-sync / coexist-whatsapp-flush). Lock sized as:
-      // 4 min active + 4 min Graph 5xx retry tail + 2 min bulk INSERT tail.
-      // Heavy flow steps also wait for every configured provider retry and
-      // backoff; their full budget must fit within the parent job lock.
       lockDuration: integrationWorkerLockDuration,
       stalledInterval: integrationWorkerLockDuration,
       maxStalledCount: 1,
     },
   )
 
-  worker.on("failed", (job, err) => {
-    if (job) {
-      logger.error({ err }, `Job ${job.id} has failed`)
-    }
-  })
-
   // Dedicated, rate-limited consumer for call transcription: a second Worker
   // instance in this process, on its own queue, so its limiter bounds
   // transcription throughput independent of the shared integration queue.
-  const callTranscriptionWorker = new Worker(
+  createQueueWorker(
     queueNames.enum.callTranscription,
     async (job: Job<CallTranscriptionJobData>) => {
       const workspaceId = job.data.data.workspaceId
@@ -646,17 +669,10 @@ async function startIntegrationWorker() {
       })
     },
     {
-      connection: getQueueConnection(queueNames.enum.callTranscription),
       concurrency: 1,
       limiter: { max: env.CALL_TRANSCRIBE_PER_MIN, duration: 60_000 },
     },
   )
-
-  callTranscriptionWorker.on("failed", (job, err) => {
-    if (job) {
-      logger.error({ err }, `Call transcription job ${job.id} has failed`)
-    }
-  })
 
   // Dedicated consumer for WhatsApp Business Calling VoIP-mode signaling: a
   // third Worker instance on its own queue, since the shared integration
@@ -664,7 +680,7 @@ async function startIntegrationWorker() {
   // resolveWorkspaceId's generic resolvers don't know about phoneNumberId, so
   // the workspace is resolved directly here for the frozen-workspace guard; the
   // handler resolves the integration again for its own purposes.
-  const whatsappVoipSignalingWorker = new Worker<WhatsappVoipSignalingJobData>(
+  createQueueWorker<WhatsappVoipSignalingJobData>(
     queueNames.enum.whatsappVoipSignaling,
     async (job: Job<WhatsappVoipSignalingJobData>) => {
       const workspaceId = await resolveVoipSignalingWorkspaceId(job.data)
@@ -679,78 +695,10 @@ async function startIntegrationWorker() {
       })
     },
     {
-      connection: getQueueConnection(queueNames.enum.whatsappVoipSignaling),
       concurrency: 10,
+      onFailed: handleVoipSignalingFailed,
     },
   )
-
-  whatsappVoipSignalingWorker.on("failed", (job, err) => {
-    if (!job) {
-      return
-    }
-    // Retries here are routine, not incidents: handleConnect throws
-    // VoipCallRowNotReadyError until the separate whatsappCallEvent job creates
-    // the call row, and this queue's retry window exists precisely to outlast
-    // that lag. Logging every attempt at ERROR made a healthy race read as a
-    // dropped call. Only an exhausted job actually lost the offer.
-    const attempts = job.opts.attempts ?? 1
-    if (!hasExhaustedAttempts(job)) {
-      logger.warn(
-        { err, attempt: job.attemptsMade, attempts },
-        `Whatsapp VoIP signaling job ${job.id} attempt failed; retrying`,
-      )
-      return
-    }
-    logger.error(
-      { err, attempts },
-      `Whatsapp VoIP signaling job ${job.id} has failed`,
-    )
-    // Safety net: a handleConnect job that exhausted every attempt
-    // (removeOnFail deletes it from Redis right after this) must not silently
-    // strand the call at ringing — finalize it here instead of leaving it
-    // entirely to the 5-minute stale-call sweep. This listener isn't awaited by
-    // BullMQ, so the call is fire-and-forget; .catch is belt-and-suspenders
-    // since finalizeExhaustedHandleConnect already logs its own failures and
-    // never rejects.
-    if (job.data.type === WhatsappVoipSignalingJobAction.handleConnect) {
-      finalizeExhaustedHandleConnect(job.data.data).catch((finalizeErr) => {
-        logger.error(
-          { err: finalizeErr, wacid: job.data.data.wacid },
-          "Whatsapp VoIP signaling: finalizeExhaustedHandleConnect rejected unexpectedly",
-        )
-      })
-    }
-  })
-
-  let isShuttingDown = false
-  async function shutdown() {
-    if (isShuttingDown) {
-      return
-    }
-    isShuttingDown = true
-    try {
-      await worker.close()
-      await Promise.all([
-        callTranscriptionWorker.close(),
-        whatsappVoipSignalingWorker.close(),
-        closeChatQueueEvents(),
-        closeIntegrationQueueEvents(),
-        closeHeavyQueueEvents(),
-      ])
-      // After every close(): drains events published by jobs that finished
-      // during the drain, whose coalesce timers would never fire past exit.
-      await flushAllPendingWorkspaceRealtimeEvents()
-      process.exit(0)
-    } catch (err) {
-      logger.error(err, "[IntegrationWorker] Error during shutdown")
-      process.exit(1)
-    }
-  }
-  process.once("SIGINT", shutdown)
-  process.once("SIGTERM", shutdown)
 }
 
-startIntegrationWorker().catch((err) => {
-  logger.error({ err }, "Failed to start integration worker")
-  process.exit(1)
-})
+runWorker("integration", startIntegrationWorker)

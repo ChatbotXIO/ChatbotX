@@ -23,7 +23,8 @@ vi.mock("@chatbotx.io/worker-config", () => ({
   HeavyJobAction: { extractTextFromFile: "extractTextFromFile" },
   getHeavyJobOptions: () => ({}),
   getHeavyJobCompletionWaitTimeoutMs: () => 1000,
-  getHeavyQueueEvents: () => ({}),
+  getQueueEvents: () => ({}),
+  queueNames: { enum: { heavy: "heavy" } },
   heavyExtractTextFromFileResultSchema: { parse: (value: unknown) => value },
   heavyQueue: { add: mocks.heavyAdd },
   waitForJobCompletionWithRetries: vi.fn(async () => ({

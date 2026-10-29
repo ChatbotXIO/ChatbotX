@@ -60,7 +60,7 @@ vi.mock("@chatbotx.io/worker-config", () => ({
     processStoryMentionAutomation: "processStoryMentionAutomation",
   },
   aiAgentQueue: { add: workerState.aiAgentQueueAdd },
-  closeIntegrationQueueEvents: vi.fn(async () => undefined),
+  closeAllQueueEvents: vi.fn(async () => undefined),
   defaultWorkerOptions: {
     concurrency: 5,
     removeOnComplete: { count: 1000 },
@@ -101,6 +101,7 @@ vi.mock("@chatbotx.io/automated-response", () => ({
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
+  flushAllPendingWorkspaceRealtimeEvents: vi.fn(),
   buildContext: vi.fn(),
   conversationService: { ensureActive: vi.fn() },
   withBlockedOwnerGuard: vi.fn(
@@ -134,7 +135,7 @@ vi.mock("../src/lib/is-blocked-workspace", () => ({
 }))
 
 vi.mock("../src/lib/logger", () => ({
-  logger: { error: vi.fn(), info: vi.fn(), warn: vi.fn() },
+  logger: { error: vi.fn(), fatal: vi.fn(), info: vi.fn(), warn: vi.fn() },
 }))
 
 vi.mock("../src/lib/resolve-workspace-id", () => ({
@@ -273,9 +274,6 @@ vi.mock("../src/integration/routing", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../src/integration/routing")>()),
   resolveIncomingTextRouting: vi.fn(),
 }))
-vi.mock("../src/integration/utils/message", () => ({
-  closeChatQueueEvents: vi.fn(async () => undefined),
-}))
 
 // Importing the worker module boots it exactly once (ESM module cache) —
 // the three `new Worker(...)` calls happen as a side effect of this import,
@@ -301,11 +299,12 @@ describe("integration worker process boot", () => {
     ).not.toContain("profileSnapshot")
   })
 
-  test("keeps the env-tunable concurrency and long coexist lock on the integration worker", () => {
+  test("keeps the env-tunable concurrency and a short renewable lock on the integration worker", () => {
     const [integrationWorker] = workerState.capturedWorkers
 
     expect(integrationWorker?.options.concurrency).toBe(10)
-    expect(integrationWorker?.options.lockDuration).toBe(10 * 60 * 1000)
+    expect(integrationWorker?.options.lockDuration).toBe(600_000)
+    expect(integrationWorker?.options.stalledInterval).toBe(600_000)
   })
 
   test("the callTranscription worker carries the CALL_TRANSCRIBE_PER_MIN limiter", () => {

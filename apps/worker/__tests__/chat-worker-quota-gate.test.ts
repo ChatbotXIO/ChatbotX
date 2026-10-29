@@ -2,7 +2,7 @@ import { getAuditActor } from "@chatbotx.io/business/audit"
 import { beforeAll, beforeEach, describe, expect, test, vi } from "vitest"
 
 const mocks = vi.hoisted(() => ({
-  ensureBootstrapped: vi.fn(),
+  ensureBootstrapped: vi.fn(async () => undefined),
   isBlockedWorkspace: vi.fn(),
   isBotMessageQuotaReached: vi.fn(),
   processJob: undefined as undefined | ((job: unknown) => Promise<void>),

@@ -5,9 +5,14 @@ set -eu
 WORKER_DIST_DIR="${WORKER_DIST_DIR:-/app/apps/worker/dist}"
 NODE_BIN="${NODE_BIN:-/usr/local/bin/node}"
 
-# --enable-source-maps resolves production stack traces back to original TypeScript
-# source. Exported so every worker launched below (loop and single-worker exec) inherits it.
+# --enable-source-maps resolves production stack traces back to original
+# TypeScript source for every worker mode.
 export NODE_OPTIONS="${NODE_OPTIONS:-} --enable-source-maps"
+
+# Single-process bundles (see src/core.ts, src/standalone.ts). They live at the
+# dist root, outside the `<dir>/worker*.mjs` glob, so `all` never starts them.
+CORE_SCRIPT="$WORKER_DIST_DIR/core.mjs"
+STANDALONE_SCRIPT="$WORKER_DIST_DIR/standalone.mjs"
 
 # Map a built bundle (dir + file basename without .mjs) to its roster name.
 # Standard:  <dir>/worker.mjs            -> <dir>
@@ -49,7 +54,10 @@ all_worker_names() {
 
 print_usage() {
     names="$(all_worker_names | tr '\n' '|' | sed 's/|$//')"
-    echo "Usage: ${0} worker [all${names:+|}${names}]" >&2
+    echo "Usage: ${0} worker [standalone|core|all${names:+|}${names}]" >&2
+    echo "       standalone: core queues, schedule, and sequence workers (default)" >&2
+    echo "       core:       core queues only (no schedule/sequence)" >&2
+    echo "       all:        every worker, one process each" >&2
     echo "       ${0} {bash|sh}" >&2
 }
 
@@ -71,7 +79,6 @@ run_all_workers() {
     echo "No worker bundles found under $WORKER_DIST_DIR" >&2
     exit 4
   fi
-
   pids=""
 
   handle_shutdown() {
@@ -93,7 +100,13 @@ run_all_workers() {
   for worker in $(all_worker_names); do
     script="$(resolve_worker_script "$worker")"
     echo "Starting worker: $worker ($script)"
-    "$NODE_BIN" "$script" &
+    # Bound each legacy all-mode process independently only when an operator
+    # explicitly configures a heap cap. Consolidated commands retain V8's default.
+    if [ -n "${WORKER_MAX_OLD_SPACE_MB:-}" ]; then
+      NODE_OPTIONS="$NODE_OPTIONS --max-old-space-size=$WORKER_MAX_OLD_SPACE_MB" "$NODE_BIN" "$script" &
+    else
+      "$NODE_BIN" "$script" &
+    fi
     pids="$pids $!"
   done
 
@@ -119,6 +132,15 @@ run_all_workers() {
   done
 }
 
+# Consolidated single-process modes share one set of env defaults.
+run_consolidated() {
+  export DATABASE_POOL_MAX="${DATABASE_POOL_MAX:-80}"
+  export SHARD_POOL_MAX="${SHARD_POOL_MAX:-40}"
+  export WORKER_SHUTDOWN_TIMEOUT_MS="${WORKER_SHUTDOWN_TIMEOUT_MS:-8000}"
+  require_script "$1"
+  exec "$NODE_BIN" "$1"
+}
+
 case "${1:-}" in
     "worker")
         if [ "$#" -gt 2 ]; then
@@ -131,6 +153,10 @@ case "${1:-}" in
             run_all_workers
             exit 0
         fi
+        case "$worker" in
+            standalone) run_consolidated "$STANDALONE_SCRIPT" ;;
+            core) run_consolidated "$CORE_SCRIPT" ;;
+        esac
 
         script="$(resolve_worker_script "$worker")" || {
           print_usage

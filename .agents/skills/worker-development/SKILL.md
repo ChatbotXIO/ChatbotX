@@ -8,7 +8,19 @@ description: >-
 
 ## Architecture
 
-Workers run as separate Node processes in `apps/worker/`. They consume jobs from **BullMQ** queues backed by Redis.
+Workers consume BullMQ jobs in `apps/worker/`. The image defaults to
+`worker standalone`, which starts core consumers, schedules, and sequence
+workers in one Node process to load the application graph once. `worker core`
+starts only core consumers for local development; `worker all` retains one
+process per entry and applies `WORKER_MAX_OLD_SPACE_MB` only when explicitly
+set. Consolidated and individually selected workers retain V8's normal heap
+limit. Use `worker <name>` to isolate a workload when needed.
+
+Every entry registers its closer with `src/lib/shutdown.ts`; never install a
+per-entry signal handler or call `process.exit()` from an entry. The shared
+coordinator drains all registered workers on `SIGINT`/`SIGTERM`; `worker
+standalone` and `worker core` default `WORKER_SHUTDOWN_TIMEOUT_MS` to 8 seconds,
+while other modes drain until complete unless that variable is set.
 
 **Shared config** lives in `packages/worker-config/` (`@chatbotx.io/worker-config`).
 
@@ -26,14 +38,16 @@ Workers run as separate Node processes in `apps/worker/`. They consume jobs from
 | schedule | (cron) | `src/schedule/worker.ts` |
 | sequence-scheduler | `sequenceScheduler` | `src/sequence-scheduler/worker*.ts` |
 | notification | `notification` | `src/notification/worker.ts` |
+| low | `low` | `src/low/worker.ts` |
+| marketing-message | `marketingMessage` | `src/marketing-message/worker.ts` |
 | events | event-bus (not BullMQ) | `src/events/worker.ts` — `startWorker([...listeners])` from `@chatbotx.io/event-bus/worker` |
 
 `queueNames` (`packages/worker-config/src/lib/types.ts:3`) also declares `broadcast` and
 `quota`, which have queues but no dedicated worker entry — their jobs are consumed by the
 workers above. Some queues get their own `Worker` (own concurrency) hosted inside an existing
-process: `profileSnapshot` and `leaderboard` in `src/low/worker.ts`, and `marketingMessage`
-(FB Marketing Messages campaign steps, enqueued by the schedule crons) in
-`src/schedule/worker.ts` via `src/marketing-message/consumer.ts`. Check `apps/worker/tsdown.config.ts` for the authoritative entry list.
+process: `profileSnapshot` and `leaderboard` in `src/low/worker.ts`. Marketing Messages
+campaign steps have their own `marketingMessage` worker, while schedule crons enqueue them.
+Check `apps/worker/tsdown.config.ts` for the authoritative entry list.
 
 The `heavy` queue/worker is a **workload-class** queue, not a domain queue:
 use it for bounded but RAM/CPU/I/O/model-heavy jobs that should not occupy
@@ -106,10 +120,14 @@ export * from "./queues/<name>"
 ## Creating a New Worker
 
 **Copy `apps/worker/src/notification/worker.ts`** — it is the smallest complete example and
-already shows the shape you need: `ensureBootstrapped()`, `new Worker(queueNames.enum.<queue>,
-…)`, a `withBlockedOwnerGuard(workspaceId, …)`-wrapped processor, `{ connection:
-getRedisConnection(), ...defaultWorkerOptions, concurrency: env.<X>_WORKER_CONCURRENCY }`, and
-`failed` / `completed` listeners.
+already shows the shape you need: a `start` function that calls
+`createQueueWorker(queueNames.enum.<queue>, processor, { concurrency: env.<X>_WORKER_CONCURRENCY,
+onFailed? })` with a `withBlockedOwnerGuard(workspaceId, …)`-wrapped processor, then
+`runWorker("<name>", start)` at module bottom. `createQueueWorker`
+(`apps/worker/src/lib/create-queue-worker.ts`) supplies the connection, `defaultWorkerOptions`, the
+`error`/`failed` listeners and shutdown draining — do not hand-roll `new Worker(…)`,
+`ensureBootstrapped()` or `failed` listeners. `runWorker` (`apps/worker/src/lib/shutdown.ts`)
+bootstraps and routes start failures into the shared shutdown.
 
 Create `apps/worker/src/<domain>/worker.ts` from it and change four things:
 
@@ -123,7 +141,16 @@ Create `apps/worker/src/<domain>/worker.ts` from it and change four things:
 it (repo invariant 15) — a template without it is the single most common mistake here. See
 "Blocked-owner guard" below for which jobs are exempt.
 
-### Register Build Entry
+### Register the Worker (three places)
+
+A worker that is not imported by an entry point never runs under the image default
+`worker standalone`. Do all three:
+
+1. Import it in `apps/worker/src/core.ts` (or `apps/worker/src/standalone.ts` for cron/sequence-like workers).
+2. Add the tsdown entry below.
+3. Add it to the existing-workers table in this skill.
+
+#### tsdown entry
 
 Add to `apps/worker/tsdown.config.ts`:
 

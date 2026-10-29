@@ -11,7 +11,7 @@ vi.mock("@chatbotx.io/worker-config", async (importOriginal) => {
     await importOriginal<typeof import("@chatbotx.io/worker-config")>()
   return {
     ...actual,
-    getHeavyQueueEvents: vi.fn(() => ({})),
+    getQueueEvents: vi.fn(() => ({})),
     heavyQueue: { add: mocks.heavyQueueAdd },
   }
 })

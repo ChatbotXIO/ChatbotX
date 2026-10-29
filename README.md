@@ -215,6 +215,27 @@ pnpm --filter chatbotx-mcp dev:mcp
 pnpm --filter @chatbotx.io/database db:studio
 ```
 
+### Worker process modes
+
+The worker image defaults to `worker standalone`: core queues, schedule, and
+sequence workers share one Node process so common application code is loaded
+once. Use `worker core` for local development without schedules, or `worker
+<name>` to isolate a workload such as `heavy`.
+
+`worker all` remains available for one process per worker. It caps each child
+heap at `WORKER_MAX_OLD_SPACE_MB` only when it is set (there is no default);
+size it so the host has enough memory for every child. The `standalone` process retains
+the normal V8 heap limit.
+
+### Database pool sizing
+
+`DATABASE_POOL_MAX` defaults to `10` connections per process. In the worker
+Docker image, consolidated `worker standalone` and `worker core` modes default
+to `80` (`SHARD_POOL_MAX` to `40`); set the variables explicitly to override.
+Keep `replicas × (DATABASE_POOL_MAX + shards × SHARD_POOL_MAX)` at or below
+PostgreSQL `max_connections`. The consolidated process runs about 350
+concurrent job slots (trigger 100, sequence 100, webhook 50, …) over these pools.
+
 ## Services
 
 The default Docker Compose stack includes:

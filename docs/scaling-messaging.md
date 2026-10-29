@@ -23,6 +23,52 @@ the hot/bulk queue-group split described below.
 Every URL is optional and falls back to `REDIS_URL`, so a fresh clone with no
 role-specific env vars set runs today's single-instance topology unchanged.
 
+## Worker process modes
+
+The worker image defaults to `worker standalone`, which co-locates core queue
+consumers, the schedule worker, and sequence workers in one Node process. This
+loads the shared application graph once and is the appropriate topology for a
+memory-constrained single-node deployment.
+
+Use `worker core` while developing to omit schedules and sequence processing.
+Use `worker <name>` to isolate a workload when CPU, event-loop latency, or
+database-pool contention requires it; `worker heavy` is the usual candidate.
+`worker all` remains available for the legacy one-process-per-worker topology.
+Set `WORKER_MAX_OLD_SPACE_MB` to cap each child process; it has no default and
+does not cap `standalone` or individually selected workers. Consolidated modes
+default `WORKER_SHUTDOWN_TIMEOUT_MS` to 8 seconds. Other modes drain until the
+orchestrator stops them unless that variable is set; keep any configured
+deadline below the orchestrator stop grace period.
+
+Set the orchestrator stop grace period to at least
+`WORKER_SHUTDOWN_TIMEOUT_MS` + 2 seconds; about 30 seconds is a sensible value
+for consolidated mode. A job still running at the deadline is not lost: the
+integration and heavy workers keep their long job locks (10 minutes for
+integration, at least 5 minutes for heavy), so BullMQ redelivers an abandoned
+job once its lock expires. The locks stay long because `standalone` shares one
+event loop, so a job must not be redelivered while it is still running.
+A fatal error (`uncaughtException`/`unhandledRejection`) drains for at most 30
+seconds when `WORKER_SHUTDOWN_TIMEOUT_MS` is unset.
+
+### Database pool sizing
+
+`DATABASE_POOL_MAX` and `SHARD_POOL_MAX` control PostgreSQL connections per
+process and default to `10`. The worker Docker entrypoint defaults
+`DATABASE_POOL_MAX` to `80` and `SHARD_POOL_MAX` to `40` for the consolidated
+`worker standalone` and `worker core` modes; an explicit value wins. Size
+replicas so that
+
+```text
+replicas × (DATABASE_POOL_MAX + shards × SHARD_POOL_MAX) ≤ max_connections
+```
+
+Those processes share each pool across about 350 concurrent job slots in total
+(trigger `100`, sequence `100`, webhook `50`, …):
+raise the pool limits or lower `*_WORKER_CONCURRENCY` — especially trigger
+(`100`), webhook (`50`), and low (`30`) — while keeping total connections across
+builder, worker, realtime, MCP, and isolated worker processes below PostgreSQL
+`max_connections`.
+
 **Leaderboard rankings live on the cache role.** `lb:{id}:rank` sorted sets
 (~100 bytes per participant, measured on Redis 8; only for active/paused
 leaderboards) use `REDIS_CACHE_URL`. With no `REDIS_CACHE_URL` they share the

@@ -1,16 +1,13 @@
-import { flushAllPendingWorkspaceRealtimeEvents } from "@chatbotx.io/business"
 import {
-  defaultWorkerOptions,
-  getQueueConnection,
   queueNames,
   ScheduleJobData,
   scheduleQueue,
 } from "@chatbotx.io/worker-config"
-import { type Job, Queue, Worker } from "bullmq"
-import { ensureBootstrapped } from "../lib/bootstrap"
+import { type Job, Queue } from "bullmq"
+import { createQueueWorker } from "../lib/create-queue-worker"
 import { logger } from "../lib/logger"
 import { runJobWithAuditContext } from "../lib/run-job-with-audit-context"
-import { startMarketingMessageWorker } from "../marketing-message/consumer"
+import { runWorker } from "../lib/shutdown"
 import {
   cleanupTriggerExecutions,
   scanDateTimeTriggers,
@@ -70,29 +67,18 @@ import { teardownExpiredTrial } from "./handlers/teardown-expired-trial"
 import { unsubscribeExpiredTrials } from "./handlers/unsubscribe-expired-trials"
 
 async function startScheduleWorker() {
-  try {
-    await ensureBootstrapped()
-    logger.info("Analytics bootstrapped successfully")
-  } catch (err) {
-    logger.error(err, "Failed to bootstrap analytics")
-    process.exit(1)
-  }
-
   if (scheduleQueue instanceof Queue) {
-    registerSchedules()
-      .then(() => {
-        logger.info("Schedules registered")
-      })
-      .catch((err) => {
-        logger.error(err, "Error registering schedules")
-      })
+    // A registration failure must not take the shared process down: the
+    // consumers below still serve already-registered schedules.
+    try {
+      await registerSchedules()
+      logger.info("Schedules registered")
+    } catch (err) {
+      logger.error({ err }, "Error registering schedules")
+    }
   }
 
-  // Hosted in the schedule process (its crons are the only producers) but on
-  // its own queue and concurrency, so Meta sends never starve schedule jobs.
-  const marketingMessageWorker = startMarketingMessageWorker()
-
-  const worker = new Worker(
+  createQueueWorker(
     queueNames.enum.schedule,
     async (job: Job<ScheduleJobData>) =>
       runJobWithAuditContext(
@@ -300,38 +286,7 @@ async function startScheduleWorker() {
           }
         },
       ),
-    {
-      connection: getQueueConnection(queueNames.enum.schedule),
-      ...defaultWorkerOptions,
-    },
   )
-
-  worker.on("failed", (job, err) => {
-    if (job) {
-      logger.error(err, `Job ${job.id} has failed`)
-    }
-  })
-
-  let isShuttingDown = false
-  async function shutdown() {
-    if (isShuttingDown) {
-      return
-    }
-    isShuttingDown = true
-    try {
-      await Promise.all([worker.close(), marketingMessageWorker.close()])
-      await flushAllPendingWorkspaceRealtimeEvents()
-      process.exit(0)
-    } catch (err) {
-      logger.error(err, "[ScheduleWorker] Error during shutdown")
-      process.exit(1)
-    }
-  }
-  process.once("SIGINT", shutdown)
-  process.once("SIGTERM", shutdown)
 }
 
-startScheduleWorker().catch((err) => {
-  logger.error("Failed to start schedule worker", err)
-  process.exit(1)
-})
+runWorker("schedule", startScheduleWorker)

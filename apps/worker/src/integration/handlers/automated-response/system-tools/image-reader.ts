@@ -13,10 +13,11 @@ import type { AttachmentModel } from "@chatbotx.io/database/types"
 import {
   getHeavyJobCompletionWaitTimeoutMs,
   getHeavyJobOptions,
-  getHeavyQueueEvents,
+  getQueueEvents,
   HeavyJobAction,
   heavyAnalyzeImageResultSchema,
   heavyQueue,
+  queueNames,
   waitForJobCompletionWithRetries,
 } from "@chatbotx.io/worker-config"
 import { normalizeError } from "universal-error-normalizer"
@@ -183,7 +184,7 @@ export function createImageReaderExecutor(options: {
       const rawResult = await waitForJobCompletionWithRetries(
         job,
         heavyQueue,
-        getHeavyQueueEvents(),
+        getQueueEvents(queueNames.enum.heavy),
         getHeavyJobCompletionWaitTimeoutMs(
           HeavyJobAction.analyzeImage,
           env.HEAVY_JOB_WAIT_TIMEOUT_MS,
