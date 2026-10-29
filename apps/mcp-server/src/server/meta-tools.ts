@@ -11,7 +11,6 @@ import {
   jsonResult,
   type RequestCredentials,
   type ToolCallResult,
-  type ToolExecutionOptions,
 } from "./execute-tool"
 import { expandSearchQuery, looksNonEnglish } from "./search/normalize"
 import { distinctResourceGroups, rankTools } from "./search/rank"
@@ -202,7 +201,6 @@ function unknownToolMessage(name: string): string {
 export async function handleCallTool(
   args: Record<string, unknown>,
   credentials: RequestCredentials,
-  options: ToolExecutionOptions,
 ): Promise<ToolCallResult> {
   const name = args.name
   if (typeof name !== "string" || name.trim().length === 0) {
@@ -227,5 +225,5 @@ export async function handleCallTool(
 
   const toolArguments = (suppliedArguments ?? {}) as Record<string, unknown>
 
-  return await executeTool(tool, toolArguments, credentials, options)
+  return await executeTool(tool, toolArguments, credentials)
 }

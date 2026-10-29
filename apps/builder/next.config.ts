@@ -89,7 +89,7 @@ const nextConfig: NextConfig = {
         { source: "/ws/:path*", destination: `${realtimeProxyUrl}/:path*` },
         {
           source: "/mcp/:path*",
-          destination: `${env.MCP_PROXY_URL}/mcp/:path*`,
+          destination: `${env.MCP_PROXY_URL}/:path*`,
         },
         {
           source: "/storage/:path*",
