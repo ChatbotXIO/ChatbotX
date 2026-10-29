@@ -8,7 +8,10 @@ import type {
   WorkspaceModel,
 } from "@chatbotx.io/database/types"
 import { BaseService } from "../base.service"
+import { ChatbotXException } from "../errors"
 import { userService } from "../user/service"
+import { isWorkspaceScheduledForDeletion } from "../workspace-lifecycle/predicates"
+import { isWorkspaceAdminMember } from "../workspace-member/predicates"
 import { workspaceMemberService } from "../workspace-member/service"
 import { resolveWorkspaceAccess } from "../workspace-support-access/resolve-access"
 
@@ -33,20 +36,40 @@ export class McpOAuthService extends BaseService {
     accessToken: string
     workspaceId?: string
   }): Promise<McpOAuthResolution> {
-    const accessToken = await oauthAccessTokenRepository.findByAccessToken(
+    const token = await oauthAccessTokenRepository.findByAccessToken(
       props.accessToken,
     )
+    const now = new Date()
     if (
-      !accessToken?.userId ||
-      accessToken.accessTokenExpiresAt <= new Date()
+      !token?.userId ||
+      token.accessTokenExpiresAt <= now ||
+      token.client.disabled
     ) {
       return { kind: "invalidToken" }
     }
 
-    const user = await userService.findByIdOrFail(accessToken.userId)
-    const members = await workspaceMemberService.listByUserId({
-      userId: user.id,
-    })
+    let user: Pick<UserModel, "id" | "email">
+    try {
+      user = await userService.findByIdOrFail(token.userId)
+    } catch (error) {
+      if (error instanceof ChatbotXException && error.code === "notFound") {
+        return { kind: "invalidToken" }
+      }
+      throw error
+    }
+
+    /**
+     * OAuth credentials map to a full workspace token, so only workspace
+     * admins may authorize them. The cached member list is selection-only;
+     * the uncached membership below gates access immediately after removal.
+     * Support sessions are rejected because their synthetic membership must
+     * never mint durable third-party access.
+     */
+    const members = (
+      await workspaceMemberService.listByUserId({
+        userId: user.id,
+      })
+    ).filter((member) => !isWorkspaceScheduledForDeletion(member.workspace))
     const workspaceId =
       props.workspaceId ??
       (members.length === 1 ? members[0]?.workspaceId : undefined)
@@ -65,12 +88,20 @@ export class McpOAuthService extends BaseService {
       }
     }
 
+    const realMember = await workspaceMemberService.findMembership({
+      workspaceId,
+      userId: user.id,
+    })
     const access = await resolveWorkspaceAccess({
-      realMember: members.find((member) => member.workspaceId === workspaceId),
+      realMember,
       workspaceId,
       user,
     })
-    if (!access?.member.permissions.superAdmin) {
+    if (
+      !access ||
+      access.isSupportSession ||
+      !isWorkspaceAdminMember(access.member)
+    ) {
       return { kind: "forbidden" }
     }
 
@@ -79,10 +110,14 @@ export class McpOAuthService extends BaseService {
       principal: {
         workspace: access.workspace,
         user,
-        clientId: accessToken.clientId,
-        accessTokenId: accessToken.id,
+        clientId: token.clientId,
+        accessTokenId: token.id,
       },
     }
+  }
+
+  async purgeExpiredTokens(now = new Date()): Promise<number> {
+    return await oauthAccessTokenRepository.deleteExpired(now)
   }
 
   async findClient(props: {

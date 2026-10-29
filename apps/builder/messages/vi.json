@@ -10795,6 +10795,6 @@
     "signedInAs": "Đã đăng nhập với",
     "approve": "Chấp nhận",
     "deny": "Từ chối",
-    "denied": "Ủy quyền đã bị từ chối."
+    "failed": "Không thể hoàn tất việc ủy quyền. Vui lòng thử lại."
   }
 }

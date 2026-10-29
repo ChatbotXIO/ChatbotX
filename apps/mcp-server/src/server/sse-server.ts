@@ -9,7 +9,12 @@ import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js"
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js"
 import { isInitializeRequest } from "@modelcontextprotocol/sdk/types.js"
 import { env } from "../env"
-import { buildProtectedResourceMetadata, buildWwwAuthenticate } from "../oauth"
+import { resolveHeaderValue } from "../http-headers"
+import {
+  buildProtectedResourceMetadata,
+  buildWwwAuthenticate,
+  protectedResourcePrefix,
+} from "../oauth"
 import { introspectToken } from "../token-introspection"
 import type { CreateMcpServerOptions } from "./create-mcp-server"
 
@@ -59,24 +64,7 @@ const resolveSession = (sessionId: string): ResolvedSession | undefined => {
 
 const apiTokenHeaderNames = ["x-workspace-token", "x-chatbo-token"] as const
 
-export const resolveHeaderValue = (
-  value: string | string[] | undefined,
-): string => {
-  if (typeof value === "string") {
-    return value.trim()
-  }
-
-  if (Array.isArray(value)) {
-    for (const item of value) {
-      const trimmed = item.trim()
-      if (trimmed.length > 0) {
-        return trimmed
-      }
-    }
-  }
-
-  return ""
-}
+export { resolveHeaderValue } from "../http-headers"
 
 export const getApiTokenFromRequest = (
   req: IncomingMessage,
@@ -197,6 +185,9 @@ const authorizeRequest = async (
     writeJsonRpcError(res, 400, result.message)
     return false
   }
+
+  // `unavailable` fails open here and in tools/list filtering; the actual
+  // API call still enforces the token before any workspace data is accessed.
   return true
 }
 
@@ -412,7 +403,6 @@ export const createRequestListener =
     try {
       enableCors(res)
       const url = new URL(req.url ?? "", "http://localhost")
-      const protectedResourcePrefix = "/.well-known/oauth-protected-resource"
       if (
         env.CHATBOTX_MCP_OAUTH_ENABLED === "true" &&
         (url.pathname === protectedResourcePrefix ||

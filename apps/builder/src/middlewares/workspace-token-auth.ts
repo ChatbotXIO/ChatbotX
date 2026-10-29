@@ -121,14 +121,21 @@ export const workspaceTokenAuthMidddleware = base.middleware(
           scopes: auth.apiToken.scopes,
           isDefault: auth.apiToken.isDefault,
         },
+        // API-token calls are attributed to the workspace owner because an
+        // opaque token has no individual user identity to audit.
         audit: {
           userId: auth.workspace.ownerId,
           source: `api-token:${auth.apiToken.id}`,
         },
       }
     } else {
+      if (!bearerToken) {
+        throw invalidTokenError()
+      }
+
+      // OAuth calls retain the real user identity and OAuth client source.
       const oauth = await mcpOAuthService.resolvePrincipal({
-        accessToken: token,
+        accessToken: bearerToken,
         workspaceId: requestedWorkspaceId,
       })
 

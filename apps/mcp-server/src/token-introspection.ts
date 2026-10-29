@@ -13,6 +13,10 @@ export type IntrospectionResult =
   | { status: "ok"; data: TokenIntrospection }
   | { status: "unauthorized" }
   | { status: "configError"; message: string }
+  /**
+   * Fails open for tools/list filtering and the listener gate; real API calls
+   * still authorize the credential before accessing workspace data.
+   */
   | { status: "unavailable" }
 
 const NEGATIVE_CACHE_TTL_MS = 30_000
@@ -77,12 +81,22 @@ export const introspectToken = async (
     }
     if (response.status === 400) {
       const body = await response.text()
+      let message = body || "Workspace selection is required"
+      try {
+        const parsed = JSON.parse(body) as {
+          json?: { message?: unknown }
+          message?: unknown
+        }
+        const envelopeMessage = parsed.json?.message ?? parsed.message
+        if (typeof envelopeMessage === "string") {
+          message = envelopeMessage
+        }
+      } catch {
+        // Preserve a non-JSON error body verbatim for the MCP client.
+      }
       return cacheResult(
         cacheKey,
-        {
-          status: "configError",
-          message: body || "Workspace selection is required",
-        },
+        { status: "configError", message },
         NEGATIVE_CACHE_TTL_MS,
       )
     }
@@ -95,6 +109,10 @@ export const introspectToken = async (
     }
     const parsed = tokenIntrospectionSchema.safeParse(await response.json())
     if (!parsed.success) {
+      console.error(
+        "MCP token introspection returned a malformed response:",
+        parsed.error,
+      )
       return cacheResult(
         cacheKey,
         { status: "unavailable" },
@@ -106,7 +124,8 @@ export const introspectToken = async (
       { status: "ok", data: parsed.data },
       env.CHATBOTX_SPEC_TTL_MS,
     )
-  } catch {
+  } catch (error) {
+    console.error("MCP token introspection failed:", error)
     return cacheResult(
       cacheKey,
       { status: "unavailable" },

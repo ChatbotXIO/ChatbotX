@@ -10795,6 +10795,6 @@
     "signedInAs": "Signed in as",
     "approve": "Approve",
     "deny": "Deny",
-    "denied": "Authorization was denied."
+    "failed": "Authorization could not be completed. Please try again."
   }
 }

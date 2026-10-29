@@ -88,6 +88,24 @@ describe("introspectToken", () => {
     })
   })
 
+  test("extracts the message from an oRPC 400 error envelope", async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 400,
+      text: async () =>
+        JSON.stringify({
+          message: "Choose a workspace before continuing",
+        }),
+    }) as unknown as typeof fetch
+
+    const { introspectToken } = await import("../src/token-introspection")
+
+    await expect(introspectToken("token-multi-workspace")).resolves.toEqual({
+      status: "configError",
+      message: "Choose a workspace before continuing",
+    })
+  })
+
   test("returns unavailable on a 403 response instead of failing hard", async () => {
     globalThis.fetch = vi.fn().mockResolvedValue({
       ok: false,

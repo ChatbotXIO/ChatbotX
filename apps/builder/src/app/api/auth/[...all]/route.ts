@@ -20,6 +20,26 @@ import { resolveRelayTarget } from "@/lib/oauth-referer"
 import { assertApiNotRateLimited } from "@/lib/rate-limit/api-rate-limit"
 import { getGuestClientIp } from "@/lib/rate-limit/guest-rate-limit"
 
+const MCP_CORS_HEADERS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
+  "Access-Control-Allow-Headers":
+    "Content-Type, Authorization, mcp-protocol-version",
+} as const
+
+const retryAfterPattern = /Retry after (\d+)s\./
+
+const withMcpCors = (pathname: string, response: Response): Response => {
+  if (!pathname.includes("/api/auth/mcp/")) {
+    return response
+  }
+
+  for (const [key, value] of Object.entries(MCP_CORS_HEADERS)) {
+    response.headers.set(key, value)
+  }
+  return response
+}
+
 /**
  * Run the better-auth pipeline inside the tenant bound to the request's branded
  * domain, so end-customer sign-in / sign-up / reset / verification resolve users
@@ -125,9 +145,17 @@ const handle = async (request: Request): Promise<Response> => {
         error instanceof ChatbotXException &&
         error.code === "tooManyRequests"
       ) {
-        return Response.json(
-          { error: error.message },
-          { status: error.httpStatusCode ?? 429 },
+        const retryAfter = error.message.match(retryAfterPattern)?.[1]
+        const headers = new Headers()
+        if (retryAfter) {
+          headers.set("Retry-After", retryAfter)
+        }
+        return withMcpCors(
+          url.pathname,
+          Response.json(
+            { error: error.message },
+            { headers, status: error.httpStatusCode ?? 429 },
+          ),
         )
       }
       throw error
@@ -163,7 +191,10 @@ const handle = async (request: Request): Promise<Response> => {
     // Re-home a baseURL-resolved verification redirect onto the branded host
     // the user is on (magic-link/verify, verify-email, reset-password).
     const response = await instance.handler(request)
-    return rewriteAuthRedirectToPublicHost(request, response)
+    return withMcpCors(
+      url.pathname,
+      await rewriteAuthRedirectToPublicHost(request, response),
+    )
   })
 }
 
@@ -178,11 +209,6 @@ export const OPTIONS = (request: Request) => {
 
   return new Response(null, {
     status: 204,
-    headers: {
-      "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
-      "Access-Control-Allow-Headers":
-        "Content-Type, Authorization, mcp-protocol-version",
-    },
+    headers: MCP_CORS_HEADERS,
   })
 }

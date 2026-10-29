@@ -94,6 +94,10 @@ export const commonApiErrors = {
     message: "You do not have permission to perform this action",
     status: 403,
   },
+  WORKSPACE_SELECTION_REQUIRED: {
+    message: "Workspace selection is required",
+    status: 400,
+  },
   trialExpired: {
     message: DENIAL_MESSAGES.trialExpired,
     status: 403,

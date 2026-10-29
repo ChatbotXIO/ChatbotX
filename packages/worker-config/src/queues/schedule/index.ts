@@ -46,6 +46,7 @@ export const ScheduleJobData = {
   clearExpiredSupportAccess: "clearExpiredSupportAccess",
   googleAdsHousekeeping: "googleAdsHousekeeping",
   googleAdsSyncSetups: "googleAdsSyncSetups",
+  purgeExpiredOAuthTokens: "purgeExpiredOAuthTokens",
   purgeBroadcasts: "purgeBroadcasts",
   purgeAutomationThrottle: "purgeAutomationThrottle",
   purgeErrorLogs: "purgeErrorLogs",
@@ -309,6 +310,11 @@ export type ScheduleJobDispatchProfileSnapshots = {
   data: Record<string, never>
 }
 
+export type ScheduleJobPurgeExpiredOAuthTokens = {
+  type: typeof ScheduleJobData.purgeExpiredOAuthTokens
+  data: Record<string, never>
+}
+
 export type ScheduleJobPurgeBroadcasts = {
   type: typeof ScheduleJobData.purgeBroadcasts
   data: Record<string, never>
@@ -432,6 +438,7 @@ export type ScheduleJobData =
   | ScheduleJobGoogleAdsHousekeeping
   | ScheduleJobGoogleAdsSyncSetups
   | ScheduleJobDispatchProfileSnapshots
+  | ScheduleJobPurgeExpiredOAuthTokens
   | ScheduleJobPurgeBroadcasts
   | ScheduleJobPurgeAutomationThrottle
   | ScheduleJobPurgeErrorLogs

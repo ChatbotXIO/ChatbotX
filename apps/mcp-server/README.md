@@ -304,7 +304,7 @@ cp .env.example .env
 | `CHATBOTX_MCP_SERVER_INSTRUCTIONS` | Instructions sent to AI clients on connect (helps ChatGPT know when to call tools) | built-in default | No |
 | `CHATBOTX_MCP_OAUTH_ENABLED` | Enable OAuth 2.1 protected-resource metadata and bearer challenges | `true` | No |
 | `CHATBOTX_MCP_OAUTH_ISSUER` | Authorization server issuer URL | derived from `CHATBOTX_API_URL` | No |
-| `CHATBOTX_MCP_PUBLIC_URL` | Canonical public URL of this MCP server | derived from request headers | No |
+| `CHATBOTX_MCP_PUBLIC_URL` | Canonical public URL of this MCP server. Set this in production so protected-resource metadata never derives a proxy/internal host from request headers. | derived from request headers | No |
 
 ## Scripts
 

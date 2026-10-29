@@ -555,6 +555,22 @@ export const registerSchedules = async () => {
     },
   )
 
+  // Better Auth retains every refreshed OAuth token row, so daily retention
+  // prevents active MCP connections from growing the table unboundedly.
+  await scheduleQueue.upsertJobScheduler(
+    ScheduleJobData.purgeExpiredOAuthTokens,
+    {
+      pattern: "0 4 * * *",
+    },
+    {
+      name: ScheduleJobData.purgeExpiredOAuthTokens,
+      data: {
+        type: ScheduleJobData.purgeExpiredOAuthTokens,
+        data: {},
+      },
+    },
+  )
+
   // Deliberately NOT in CLOUD_ONLY_SCHEDULERS — recipient-row retention
   // applies to every edition.
   await scheduleQueue.upsertJobScheduler(

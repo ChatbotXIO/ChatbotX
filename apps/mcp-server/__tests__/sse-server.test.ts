@@ -368,3 +368,153 @@ describe("createRequestListener", () => {
     }
   })
 })
+
+describe("createRequestListener OAuth gate", () => {
+  const originalEnv = { ...process.env }
+
+  beforeEach(() => {
+    vi.resetModules()
+    process.env = {
+      ...originalEnv,
+      CHATBOTX_API_KEY: "",
+      CHATBOTX_MCP_OAUTH_ENABLED: "true",
+    }
+  })
+
+  afterEach(() => {
+    process.env = { ...originalEnv }
+  })
+
+  test("challenges a request without a token with protected-resource metadata", async () => {
+    const { createRequestListener } = await import("../src/server/sse-server")
+    const requestServer = await startRequestServer(
+      createRequestListener(vi.fn() as never),
+    )
+
+    try {
+      const response = await fetch(`${requestServer.url}/sse`)
+
+      expect(response.status).toBe(401)
+      expect(response.headers.get("www-authenticate")).toContain(
+        'resource_metadata="',
+      )
+    } finally {
+      await requestServer.close()
+    }
+  })
+
+  test("challenges an unauthorized token as invalid", async () => {
+    const introspectToken = vi
+      .fn()
+      .mockResolvedValue({ status: "unauthorized" })
+    vi.doMock("../src/token-introspection", () => ({ introspectToken }))
+    const { createRequestListener } = await import("../src/server/sse-server")
+    const requestServer = await startRequestServer(
+      createRequestListener(vi.fn() as never),
+    )
+
+    try {
+      const response = await fetch(`${requestServer.url}/messages`, {
+        headers: { Authorization: "Bearer invalid-token" },
+        method: "POST",
+      })
+
+      expect(response.status).toBe(401)
+      expect(response.headers.get("www-authenticate")).toContain(
+        'error="invalid_token"',
+      )
+      expect(introspectToken).toHaveBeenCalledWith("invalid-token", undefined)
+    } finally {
+      await requestServer.close()
+    }
+  })
+
+  test("returns the introspection configuration error", async () => {
+    const introspectToken = vi.fn().mockResolvedValue({
+      status: "configError",
+      message: "Choose a workspace",
+    })
+    vi.doMock("../src/token-introspection", () => ({ introspectToken }))
+    const { createRequestListener } = await import("../src/server/sse-server")
+    const requestServer = await startRequestServer(
+      createRequestListener(vi.fn() as never),
+    )
+
+    try {
+      const response = await fetch(`${requestServer.url}/messages`, {
+        headers: { Authorization: "Bearer multi-workspace-token" },
+        method: "POST",
+      })
+
+      expect(response.status).toBe(400)
+      await expect(response.json()).resolves.toMatchObject({
+        error: { message: "Choose a workspace" },
+      })
+    } finally {
+      await requestServer.close()
+    }
+  })
+
+  test("allows an unavailable introspection response to reach the request handler", async () => {
+    const introspectToken = vi.fn().mockResolvedValue({ status: "unavailable" })
+    vi.doMock("../src/token-introspection", () => ({ introspectToken }))
+    const { createRequestListener } = await import("../src/server/sse-server")
+    const requestServer = await startRequestServer(
+      createRequestListener(vi.fn() as never),
+    )
+
+    try {
+      const response = await fetch(`${requestServer.url}/messages`, {
+        body: "{not json",
+        headers: { Authorization: "Bearer token" },
+        method: "POST",
+      })
+
+      expect(response.status).toBe(400)
+      await expect(response.text()).resolves.toBe("Invalid JSON body")
+    } finally {
+      await requestServer.close()
+    }
+  })
+
+  test("serves OAuth protected-resource metadata without authentication", async () => {
+    const { createRequestListener } = await import("../src/server/sse-server")
+    const requestServer = await startRequestServer(
+      createRequestListener(vi.fn() as never),
+    )
+
+    try {
+      const response = await fetch(
+        `${requestServer.url}/.well-known/oauth-protected-resource/sse`,
+      )
+
+      expect(response.status).toBe(200)
+      await expect(response.json()).resolves.toMatchObject({
+        resource: `${requestServer.url}/sse`,
+        bearer_methods_supported: ["header"],
+      })
+    } finally {
+      await requestServer.close()
+    }
+  })
+
+  test("bypasses the OAuth gate for OPTIONS", async () => {
+    const introspectToken = vi.fn()
+    vi.doMock("../src/token-introspection", () => ({ introspectToken }))
+    const { createRequestListener } = await import("../src/server/sse-server")
+    const requestServer = await startRequestServer(
+      createRequestListener(vi.fn() as never),
+    )
+
+    try {
+      const response = await fetch(`${requestServer.url}/messages`, {
+        method: "OPTIONS",
+      })
+
+      expect(response.status).toBe(204)
+      expect(introspectToken).not.toHaveBeenCalled()
+    } finally {
+      await requestServer.close()
+    }
+  })
+})

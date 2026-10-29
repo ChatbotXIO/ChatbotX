@@ -1,12 +1,13 @@
 import type { IncomingMessage } from "node:http"
 import { env } from "./env"
+import { resolveHeaderValue } from "./http-headers"
 
 const oauthScopes = ["openid", "profile", "email", "offline_access"]
-const protectedResourcePath = "/.well-known/oauth-protected-resource"
+export const protectedResourcePrefix = "/.well-known/oauth-protected-resource"
 const apiPathSuffixPattern = /\/api\/?$/
 const trailingSlashPattern = /\/$/
 
-export const resolveIssuer = () =>
+const resolveIssuer = () =>
   (
     env.CHATBOTX_MCP_OAUTH_ISSUER ??
     env.CHATBOTX_API_URL.replace(apiPathSuffixPattern, "")
@@ -19,7 +20,10 @@ export const resolveResourceUrl = (
   const publicUrl = env.CHATBOTX_MCP_PUBLIC_URL
   const protocol =
     resolveHeaderValue(req.headers["x-forwarded-proto"]) || "http"
-  const host = resolveHeaderValue(req.headers.host) || "localhost"
+  const host =
+    resolveHeaderValue(req.headers["x-forwarded-host"]) ||
+    resolveHeaderValue(req.headers.host) ||
+    "localhost"
   const origin = publicUrl ? new URL(publicUrl).origin : `${protocol}://${host}`
   return new URL(pathSuffix, origin).toString()
 }
@@ -41,7 +45,7 @@ export const buildWwwAuthenticate = (
 ) => {
   const metadataUrl = resolveResourceUrl(
     req,
-    `${protectedResourcePath}${pathSuffix}`,
+    `${protectedResourcePrefix}${pathSuffix}`,
   )
   const attributes = [`resource_metadata="${metadataUrl}"`]
   if (error) {
@@ -51,11 +55,4 @@ export const buildWwwAuthenticate = (
     )
   }
   return `Bearer ${attributes.join(", ")}`
-}
-
-const resolveHeaderValue = (value: string | string[] | undefined) => {
-  if (typeof value === "string") {
-    return value.trim()
-  }
-  return value?.find((item) => item.trim().length > 0)?.trim() ?? ""
 }

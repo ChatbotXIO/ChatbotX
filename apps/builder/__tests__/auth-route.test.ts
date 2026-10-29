@@ -1,5 +1,6 @@
 // @vitest-environment node
 
+import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 import { GET, POST } from "@/app/api/auth/[...all]/route"
 
@@ -16,6 +17,8 @@ const {
   mockResolveTenantFromOAuthState,
   socialHandler,
   warnIfGenericOAuthUnlicensed,
+  assertApiNotRateLimited,
+  getGuestClientIp,
 } = vi.hoisted(() => ({
   defaultHandler: vi.fn(() => new Response("default")),
   hasEnterpriseFeatures: vi.fn(),
@@ -26,6 +29,8 @@ const {
   mockResolveTenantFromOAuthState: vi.fn(),
   socialHandler: vi.fn(() => new Response("social")),
   warnIfGenericOAuthUnlicensed: vi.fn(),
+  assertApiNotRateLimited: vi.fn(),
+  getGuestClientIp: vi.fn(() => "203.0.113.9"),
 }))
 
 // `isGenericOAuthPath`'s real logic is covered directly in
@@ -78,9 +83,21 @@ vi.mock("@/lib/auth-redirect", () => ({
     response,
 }))
 
+vi.mock("@/lib/rate-limit/api-rate-limit", () => ({
+  assertApiNotRateLimited,
+}))
+vi.mock("@/lib/rate-limit/guest-rate-limit", () => ({
+  getGuestClientIp,
+}))
+
+async function loadRoute() {
+  return await import("@/app/api/auth/[...all]/route")
+}
+
 beforeEach(() => {
   vi.clearAllMocks()
   hasEnterpriseFeatures.mockResolvedValue(true)
+  assertApiNotRateLimited.mockResolvedValue(undefined)
   mockGetSocialAuthForTenant.mockResolvedValue({ handler: socialHandler })
   mockResolveTenantByDomain.mockResolvedValue("1")
 })
@@ -181,5 +198,51 @@ describe("auth route — generic OAuth enterprise gate (real isGenericOAuthPath 
 
     expect(response.status).not.toBe(404)
     expect(defaultHandler).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe("auth route — MCP browser responses", () => {
+  test("adds CORS headers to the MCP token response", async () => {
+    mockResolveTenantByDomain.mockResolvedValue("1")
+    const { POST } = await loadRoute()
+
+    const response = await POST(
+      new Request(`https://${PLATFORM_HOST}/api/auth/mcp/token`, {
+        method: "POST",
+      }),
+    )
+
+    expect(response.headers.get("access-control-allow-origin")).toBe("*")
+    expect(response.headers.get("access-control-allow-methods")).toBe(
+      "GET,POST,OPTIONS",
+    )
+    expect(response.headers.get("access-control-allow-headers")).toBe(
+      "Content-Type, Authorization, mcp-protocol-version",
+    )
+  })
+
+  test("adds CORS and Retry-After to a rate-limited client registration", async () => {
+    mockResolveTenantByDomain.mockResolvedValue("1")
+    assertApiNotRateLimited.mockRejectedValue(
+      new ChatbotXException(
+        "Too many requests. Retry after 7s.",
+        "tooManyRequests",
+        429,
+      ),
+    )
+    const { POST } = await loadRoute()
+
+    const response = await POST(
+      new Request(`https://${PLATFORM_HOST}/api/auth/mcp/register`, {
+        method: "POST",
+      }),
+    )
+
+    expect(response.status).toBe(429)
+    expect(response.headers.get("access-control-allow-origin")).toBe("*")
+    expect(response.headers.get("retry-after")).toBe("7")
+    await expect(response.json()).resolves.toEqual({
+      error: "Too many requests. Retry after 7s.",
+    })
   })
 })

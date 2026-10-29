@@ -10,7 +10,7 @@ import {
 } from "@chatbotx.io/ui/components/ui/card"
 import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
-import { useState } from "react"
+import { toast } from "sonner"
 import { submitOAuthConsentAction } from "./actions/consent.action"
 
 type OAuthConsentFormProps = {
@@ -27,19 +27,20 @@ export const OAuthConsentForm = ({
   userEmail,
 }: OAuthConsentFormProps) => {
   const t = useTranslations("oauthConsent")
-  const [isDenied, setIsDenied] = useState(false)
   const { execute, isPending } = useAction(submitOAuthConsentAction, {
     onSuccess: ({ data }) => {
-      if (data?.redirectURI) {
-        window.location.assign(data.redirectURI)
+      if (!data?.redirectURI) {
+        toast.error(t("failed"))
         return
       }
-      setIsDenied(true)
+      window.location.assign(data.redirectURI)
+    },
+    onError: ({ error }) => {
+      toast.error(error.serverError ?? t("failed"))
     },
   })
 
   const handleConsent = (accept: boolean) => {
-    setIsDenied(false)
     execute({ accept, consentCode })
   }
 
@@ -67,11 +68,6 @@ export const OAuthConsentForm = ({
               ))}
             </ul>
           </section>
-          {isDenied ? (
-            <p className="text-destructive text-sm" role="alert">
-              {t("denied")}
-            </p>
-          ) : null}
           <div className="flex justify-end gap-3">
             <Button
               disabled={isPending}

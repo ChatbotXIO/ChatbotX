@@ -10795,6 +10795,6 @@
     "signedInAs": "Signed in as",
     "approve": "Approve",
     "deny": "Deny",
-    "denied": "Authorization was denied."
+    "failed": "Otorisasi tidak dapat diselesaikan. Silakan coba lagi."
   }
 }

@@ -11,6 +11,7 @@ const {
   isAtLimit,
   assertApiNotRateLimited,
   resolvePrincipal,
+  withAuditContext,
 } = vi.hoisted(() => ({
   findWorkspaceByTokenHash: vi.fn(),
   isWorkspaceScheduledForDeletion: vi.fn().mockReturnValue(false),
@@ -19,6 +20,12 @@ const {
   isAtLimit: vi.fn().mockResolvedValue(false),
   assertApiNotRateLimited: vi.fn().mockResolvedValue(undefined),
   resolvePrincipal: vi.fn().mockResolvedValue({ kind: "invalidToken" }),
+  withAuditContext: vi.fn(
+    async (
+      _context: Record<string, unknown>,
+      callback: () => Promise<unknown>,
+    ) => await callback(),
+  ),
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
@@ -28,6 +35,8 @@ vi.mock("@chatbotx.io/business", () => ({
   userQuotaService: { getAccessState },
   quotaEnforcementService: { isAtLimit },
 }))
+
+vi.mock("@chatbotx.io/business/audit", () => ({ withAuditContext }))
 
 vi.mock("@/lib/log", () => ({
   logger: { warn: loggerWarn, error: vi.fn() },
@@ -78,12 +87,23 @@ const authResult = (permission: "full" | "read_only" = "full") => ({
   apiToken: { id: "token-1", permission },
 })
 
+const oauthPrincipal = {
+  workspace: { id: "ws-oauth", ownerId: "owner-oauth" },
+  user: { id: "user-oauth", email: "oauth@example.com" },
+  clientId: "client-oauth",
+  accessTokenId: "access-token-id",
+}
+
 beforeEach(() => {
   vi.clearAllMocks()
   isWorkspaceScheduledForDeletion.mockReturnValue(false)
   getAccessState.mockResolvedValue({ blocked: false })
   isAtLimit.mockResolvedValue(false)
   assertApiNotRateLimited.mockResolvedValue(undefined)
+  resolvePrincipal.mockResolvedValue({ kind: "invalidToken" })
+  withAuditContext.mockImplementation(
+    async (_context, callback) => await callback(),
+  )
 })
 
 describe("workspaceTokenAuthMidddleware", () => {
@@ -308,5 +328,102 @@ describe("workspaceTokenAuthMidddleware", () => {
         apiCredentialId: "api-token:token-1",
       },
     })
+  })
+
+  test("authenticates an OAuth principal with user attribution and forwards x-workspace-id", async () => {
+    findWorkspaceByTokenHash.mockResolvedValue(undefined)
+    resolvePrincipal.mockResolvedValue({
+      kind: "principal",
+      principal: oauthPrincipal,
+    })
+    const headers = new Headers({
+      Authorization: "Bearer oauth-token",
+      "User-Agent": "MCP Inspector",
+      "x-workspace-id": "ws-oauth",
+    })
+
+    await callMiddleware(headers, "GET")
+
+    expect(resolvePrincipal).toHaveBeenCalledWith({
+      accessToken: "oauth-token",
+      workspaceId: "ws-oauth",
+    })
+    expect(next).toHaveBeenCalledWith({
+      context: {
+        workspace: oauthPrincipal.workspace,
+        apiToken: {
+          id: "oauth:access-token-id",
+          workspaceId: "ws-oauth",
+          permission: "full",
+          scopes: null,
+          isDefault: false,
+        },
+      },
+    })
+    expect(withAuditContext).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userId: "user-oauth",
+        workspaceId: "ws-oauth",
+        source: "mcp-oauth:client-oauth",
+        userAgent: "MCP Inspector",
+      }),
+      expect.any(Function),
+    )
+  })
+
+  test("maps a forbidden OAuth principal to 403", async () => {
+    findWorkspaceByTokenHash.mockResolvedValue(undefined)
+    resolvePrincipal.mockResolvedValue({ kind: "forbidden" })
+
+    await expect(
+      callMiddleware(
+        new Headers({ Authorization: "Bearer oauth-token" }),
+        "GET",
+      ),
+    ).rejects.toMatchObject({ code: "FORBIDDEN", status: 403 })
+  })
+
+  test("maps OAuth workspace selection to a documented 400", async () => {
+    findWorkspaceByTokenHash.mockResolvedValue(undefined)
+    resolvePrincipal.mockResolvedValue({
+      kind: "workspaceSelectionRequired",
+      workspaces: [{ id: "ws-1", name: "Alpha" }],
+    })
+
+    await expect(
+      callMiddleware(
+        new Headers({ Authorization: "Bearer oauth-token" }),
+        "GET",
+      ),
+    ).rejects.toMatchObject({
+      code: "WORKSPACE_SELECTION_REQUIRED",
+      status: 400,
+      message: expect.stringContaining("ws-1 (Alpha)"),
+    })
+  })
+
+  test("maps an invalid OAuth token to 401", async () => {
+    findWorkspaceByTokenHash.mockResolvedValue(undefined)
+    resolvePrincipal.mockResolvedValue({ kind: "invalidToken" })
+
+    await expect(
+      callMiddleware(
+        new Headers({ Authorization: "Bearer oauth-token" }),
+        "GET",
+      ),
+    ).rejects.toMatchObject({ code: "INVALID_CHATBOT_TOKEN", status: 401 })
+  })
+
+  test("never sends a query-string workspace token to OAuth resolution", async () => {
+    findWorkspaceByTokenHash.mockResolvedValue(undefined)
+
+    await expect(
+      callMiddleware(
+        new Headers(),
+        "GET",
+        "https://example.com/api/v1/tags?token=legacy-workspace-token",
+      ),
+    ).rejects.toMatchObject({ code: "INVALID_CHATBOT_TOKEN", status: 401 })
+    expect(resolvePrincipal).not.toHaveBeenCalled()
   })
 })
