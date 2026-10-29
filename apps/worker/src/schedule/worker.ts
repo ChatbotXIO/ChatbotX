@@ -46,6 +46,7 @@ import { purgeErrorLogs } from "./handlers/purge-error-logs"
 import { purgeExpiredCallRecordings } from "./handlers/purge-expired-call-recordings"
 import { purgeExpiredConnectSessions } from "./handlers/purge-expired-connect-sessions"
 import { purgeExpiredContactExports } from "./handlers/purge-expired-contact-exports"
+import { purgeExpiredOAuthTokens } from "./handlers/purge-expired-oauth-tokens"
 import { purgeInboundWebhookRequests } from "./handlers/purge-inbound-webhook-requests"
 import { purgeWhatsappSignupSessions } from "./handlers/purge-whatsapp-signup-sessions"
 import { purgeWorkspaces } from "./handlers/purge-workspaces"
@@ -228,6 +229,10 @@ async function startScheduleWorker() {
 
             case ScheduleJobData.dispatchProfileSnapshots:
               await dispatchProfileSnapshots()
+              return
+
+            case ScheduleJobData.purgeExpiredOAuthTokens:
+              await purgeExpiredOAuthTokens()
               return
 
             case ScheduleJobData.purgeBroadcasts:

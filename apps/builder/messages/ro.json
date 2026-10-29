@@ -10787,5 +10787,14 @@
         "id": "ID element"
       }
     }
+  },
+  "oauthConsent": {
+    "title": "Authorize {clientName}",
+    "description": "This application is requesting access to your workspace.",
+    "permissionsTitle": "Requested permissions",
+    "signedInAs": "Signed in as",
+    "approve": "Approve",
+    "deny": "Deny",
+    "failed": "Autorizarea nu a putut fi finalizată. Încercați din nou."
   }
 }

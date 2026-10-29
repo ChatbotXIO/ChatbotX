@@ -29,6 +29,7 @@ export type ApiRateLimitScope =
   | "invitation-start-rate-limit"
   | "ai-file-search-rate-limit"
   | "ai-file-reindex-rate-limit"
+  | "mcp-client-registration"
 
 type ApiRateLimitInput = {
   scope: ApiRateLimitScope

@@ -21,6 +21,7 @@ export const PUBLIC_ROUTES = [
   "/invitations",
   "/auth",
   "/api",
+  "/.well-known",
   // Like "/api": the RPC handler runs the full router, where every procedure
   // carries its own auth middleware and answers an unauthenticated call with
   // a 401. Redirecting here instead would hand the typed client the sign-in

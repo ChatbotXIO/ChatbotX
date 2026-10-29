@@ -40,7 +40,20 @@ describe("resolveHeaderValue", () => {
 })
 
 describe("getApiTokenFromRequest — priority order", () => {
-  test("?workspace_token= wins over everything else", async () => {
+  test("Authorization: Bearer wins over everything else", async () => {
+    const { getApiTokenFromRequest } = await import("../src/server/sse-server")
+    const req = fakeRequest({
+      url: "/sse?workspace_token=from-query&token=ignored",
+      headers: {
+        authorization: "Bearer from-bearer",
+        "x-workspace-token": "ignored-header",
+        "x-chatbo-token": "ignored-header-2",
+      },
+    })
+    expect(getApiTokenFromRequest(req)).toBe("from-bearer")
+  })
+
+  test("?workspace_token= wins when no Authorization header is present", async () => {
     const { getApiTokenFromRequest } = await import("../src/server/sse-server")
     const req = fakeRequest({
       url: "/sse?workspace_token=from-query&token=ignored",
@@ -83,7 +96,35 @@ describe("getApiTokenFromRequest — priority order", () => {
   })
 })
 
-describe("makeApiKeyState / updateApiKeyStateFromRequest", () => {
+describe("getWorkspaceIdFromRequest", () => {
+  test("?workspace_id= wins over the x-workspace-id header", async () => {
+    const { getWorkspaceIdFromRequest } = await import(
+      "../src/server/sse-server"
+    )
+    const req = fakeRequest({
+      url: "/sse?workspace_id=from-query",
+      headers: { "x-workspace-id": "from-header" },
+    })
+    expect(getWorkspaceIdFromRequest(req)).toBe("from-query")
+  })
+
+  test("falls back to the x-workspace-id header", async () => {
+    const { getWorkspaceIdFromRequest } = await import(
+      "../src/server/sse-server"
+    )
+    const req = fakeRequest({ headers: { "x-workspace-id": "from-header" } })
+    expect(getWorkspaceIdFromRequest(req)).toBe("from-header")
+  })
+
+  test("returns undefined when neither is present", async () => {
+    const { getWorkspaceIdFromRequest } = await import(
+      "../src/server/sse-server"
+    )
+    expect(getWorkspaceIdFromRequest(fakeRequest({}))).toBeUndefined()
+  })
+})
+
+describe("makeCredentialState / updateCredentialStateFromRequest", () => {
   const originalEnv = { ...process.env }
 
   beforeEach(() => {
@@ -96,45 +137,51 @@ describe("makeApiKeyState / updateApiKeyStateFromRequest", () => {
   })
 
   test("falls back to CHATBOTX_API_KEY when the connect request carries no token", async () => {
-    const { makeApiKeyState } = await import("../src/server/sse-server")
-    const state = makeApiKeyState(fakeRequest({}))
-    expect(state.current).toBe("env-default-token")
+    const { makeCredentialState } = await import("../src/server/sse-server")
+    const state = makeCredentialState(fakeRequest({}))
+    expect(state.token).toBe("env-default-token")
   })
 
   test("seeds state from the connect request's token when present", async () => {
-    const { makeApiKeyState } = await import("../src/server/sse-server")
-    const state = makeApiKeyState(
+    const { makeCredentialState } = await import("../src/server/sse-server")
+    const state = makeCredentialState(
       fakeRequest({ url: "/sse?workspace_token=connect-token" }),
     )
-    expect(state.current).toBe("connect-token")
+    expect(state.token).toBe("connect-token")
+  })
+
+  test("seeds the workspace id from the connect request when present", async () => {
+    const { makeCredentialState } = await import("../src/server/sse-server")
+    const state = makeCredentialState(
+      fakeRequest({ url: "/sse?workspace_id=ws-1" }),
+    )
+    expect(state.workspaceId).toBe("ws-1")
   })
 
   test("a later request carrying a token overwrites the session's current token", async () => {
-    const { makeApiKeyState, updateApiKeyStateFromRequest } = await import(
-      "../src/server/sse-server"
-    )
-    const state = makeApiKeyState(
+    const { makeCredentialState, updateCredentialStateFromRequest } =
+      await import("../src/server/sse-server")
+    const state = makeCredentialState(
       fakeRequest({ url: "/sse?workspace_token=token-a" }),
     )
-    expect(state.current).toBe("token-a")
+    expect(state.token).toBe("token-a")
 
-    updateApiKeyStateFromRequest(
+    updateCredentialStateFromRequest(
       state,
       fakeRequest({ headers: { "x-workspace-token": "token-b" } }),
     )
-    expect(state.current).toBe("token-b")
+    expect(state.token).toBe("token-b")
   })
 
   test("a later request carrying no token leaves the current token untouched", async () => {
-    const { makeApiKeyState, updateApiKeyStateFromRequest } = await import(
-      "../src/server/sse-server"
-    )
-    const state = makeApiKeyState(
+    const { makeCredentialState, updateCredentialStateFromRequest } =
+      await import("../src/server/sse-server")
+    const state = makeCredentialState(
       fakeRequest({ url: "/sse?workspace_token=token-a" }),
     )
 
-    updateApiKeyStateFromRequest(state, fakeRequest({}))
-    expect(state.current).toBe("token-a")
+    updateCredentialStateFromRequest(state, fakeRequest({}))
+    expect(state.token).toBe("token-a")
   })
 })
 
@@ -186,6 +233,17 @@ const sendChunkedRequest = async (
 }
 
 describe("createRequestListener", () => {
+  const originalEnv = { ...process.env }
+
+  beforeEach(() => {
+    vi.resetModules()
+    process.env.CHATBOTX_MCP_OAUTH_ENABLED = "false"
+  })
+
+  afterEach(() => {
+    process.env = { ...originalEnv }
+  })
+
   test("rejects an oversized content-length before creating an MCP server", async () => {
     const { createRequestListener } = await import("../src/server/sse-server")
     const createMcpServer = vi.fn()
@@ -306,6 +364,156 @@ describe("createRequestListener", () => {
       expect(errorSpy).toHaveBeenCalledTimes(1)
     } finally {
       errorSpy.mockRestore()
+      await requestServer.close()
+    }
+  })
+})
+
+describe("createRequestListener OAuth gate", () => {
+  const originalEnv = { ...process.env }
+
+  beforeEach(() => {
+    vi.resetModules()
+    process.env = {
+      ...originalEnv,
+      CHATBOTX_API_KEY: "",
+      CHATBOTX_MCP_OAUTH_ENABLED: "true",
+    }
+  })
+
+  afterEach(() => {
+    process.env = { ...originalEnv }
+  })
+
+  test("challenges a request without a token with protected-resource metadata", async () => {
+    const { createRequestListener } = await import("../src/server/sse-server")
+    const requestServer = await startRequestServer(
+      createRequestListener(vi.fn() as never),
+    )
+
+    try {
+      const response = await fetch(`${requestServer.url}/sse`)
+
+      expect(response.status).toBe(401)
+      expect(response.headers.get("www-authenticate")).toContain(
+        'resource_metadata="',
+      )
+    } finally {
+      await requestServer.close()
+    }
+  })
+
+  test("challenges an unauthorized token as invalid", async () => {
+    const introspectToken = vi
+      .fn()
+      .mockResolvedValue({ status: "unauthorized" })
+    vi.doMock("../src/token-introspection", () => ({ introspectToken }))
+    const { createRequestListener } = await import("../src/server/sse-server")
+    const requestServer = await startRequestServer(
+      createRequestListener(vi.fn() as never),
+    )
+
+    try {
+      const response = await fetch(`${requestServer.url}/messages`, {
+        headers: { Authorization: "Bearer invalid-token" },
+        method: "POST",
+      })
+
+      expect(response.status).toBe(401)
+      expect(response.headers.get("www-authenticate")).toContain(
+        'error="invalid_token"',
+      )
+      expect(introspectToken).toHaveBeenCalledWith("invalid-token", undefined)
+    } finally {
+      await requestServer.close()
+    }
+  })
+
+  test("returns the introspection configuration error", async () => {
+    const introspectToken = vi.fn().mockResolvedValue({
+      status: "configError",
+      message: "Choose a workspace",
+    })
+    vi.doMock("../src/token-introspection", () => ({ introspectToken }))
+    const { createRequestListener } = await import("../src/server/sse-server")
+    const requestServer = await startRequestServer(
+      createRequestListener(vi.fn() as never),
+    )
+
+    try {
+      const response = await fetch(`${requestServer.url}/messages`, {
+        headers: { Authorization: "Bearer multi-workspace-token" },
+        method: "POST",
+      })
+
+      expect(response.status).toBe(400)
+      await expect(response.json()).resolves.toMatchObject({
+        error: { message: "Choose a workspace" },
+      })
+    } finally {
+      await requestServer.close()
+    }
+  })
+
+  test("allows an unavailable introspection response to reach the request handler", async () => {
+    const introspectToken = vi.fn().mockResolvedValue({ status: "unavailable" })
+    vi.doMock("../src/token-introspection", () => ({ introspectToken }))
+    const { createRequestListener } = await import("../src/server/sse-server")
+    const requestServer = await startRequestServer(
+      createRequestListener(vi.fn() as never),
+    )
+
+    try {
+      const response = await fetch(`${requestServer.url}/messages`, {
+        body: "{not json",
+        headers: { Authorization: "Bearer token" },
+        method: "POST",
+      })
+
+      expect(response.status).toBe(400)
+      await expect(response.text()).resolves.toBe("Invalid JSON body")
+    } finally {
+      await requestServer.close()
+    }
+  })
+
+  test("serves OAuth protected-resource metadata without authentication", async () => {
+    const { createRequestListener } = await import("../src/server/sse-server")
+    const requestServer = await startRequestServer(
+      createRequestListener(vi.fn() as never),
+    )
+
+    try {
+      const response = await fetch(
+        `${requestServer.url}/.well-known/oauth-protected-resource/sse`,
+      )
+
+      expect(response.status).toBe(200)
+      await expect(response.json()).resolves.toMatchObject({
+        resource: `${requestServer.url}/sse`,
+        bearer_methods_supported: ["header"],
+      })
+    } finally {
+      await requestServer.close()
+    }
+  })
+
+  test("bypasses the OAuth gate for OPTIONS", async () => {
+    const introspectToken = vi.fn()
+    vi.doMock("../src/token-introspection", () => ({ introspectToken }))
+    const { createRequestListener } = await import("../src/server/sse-server")
+    const requestServer = await startRequestServer(
+      createRequestListener(vi.fn() as never),
+    )
+
+    try {
+      const response = await fetch(`${requestServer.url}/messages`, {
+        method: "OPTIONS",
+      })
+
+      expect(response.status).toBe(204)
+      expect(introspectToken).not.toHaveBeenCalled()
+    } finally {
       await requestServer.close()
     }
   })

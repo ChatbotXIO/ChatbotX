@@ -32,6 +32,7 @@ vi.mock("@chatbotx.io/worker-config", async (importOriginal) => {
       purgeCoexistStaging: "purgeCoexistStaging",
       purgeWhatsappSignupSessions: "purgeWhatsappSignupSessions",
       purgeWorkspaces: "purgeWorkspaces",
+      purgeExpiredOAuthTokens: "purgeExpiredOAuthTokens",
       purgeAutomationThrottle: "purgeAutomationThrottle",
       refreshChannelTokens: "refreshChannelTokens",
       unsubscribeExpiredTrials: "unsubscribeExpiredTrials",
@@ -109,6 +110,9 @@ vi.mock("../src/schedule/handlers/purge-whatsapp-signup-sessions", () => ({
 }))
 vi.mock("../src/schedule/handlers/purge-workspaces", () => ({
   purgeWorkspaces: vi.fn(),
+}))
+vi.mock("../src/schedule/handlers/purge-expired-oauth-tokens", () => ({
+  purgeExpiredOAuthTokens: vi.fn(),
 }))
 vi.mock("../src/schedule/handlers/reconcile-broadcasts", () => ({
   reconcileBroadcasts: vi.fn(),

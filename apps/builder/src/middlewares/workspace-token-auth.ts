@@ -1,10 +1,15 @@
 import {
   isWorkspaceScheduledForDeletion,
+  mcpOAuthService,
   workspaceApiTokenService,
 } from "@chatbotx.io/business"
 import { withAuditContext } from "@chatbotx.io/business/audit"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { hashToken } from "@chatbotx.io/business/workspace-api-token/credentials"
+import type {
+  WorkspaceApiTokenModel,
+  WorkspaceModel,
+} from "@chatbotx.io/database/types"
 import { ORPCError } from "@orpc/server"
 import { logger } from "@/lib/log"
 import { assertApiNotRateLimited } from "@/lib/rate-limit/api-rate-limit"
@@ -60,6 +65,8 @@ export const workspaceTokenAuthMidddleware = base.middleware(
     const url = context.url ? new URL(context.url) : null
     const apiKeyToken = url?.searchParams.get("token") ?? null
     const token = bearerToken ?? apiKeyToken
+    const requestedWorkspaceId =
+      context.headers.get("x-workspace-id")?.trim() || undefined
     if (!token) {
       throw invalidTokenError()
     }
@@ -76,9 +83,9 @@ export const workspaceTokenAuthMidddleware = base.middleware(
     await assertPreAuthNotRateLimited(context.headers, context.resHeaders)
 
     const tokenHash = await hashToken(token)
-    let auth: Awaited<
-      ReturnType<typeof workspaceApiTokenService.findWorkspaceByTokenHash>
-    >
+    let auth:
+      | { workspace: WorkspaceModel; apiToken: WorkspaceApiTokenModel }
+      | undefined
     try {
       auth = await workspaceApiTokenService.findWorkspaceByTokenHash({
         tokenHash,
@@ -97,10 +104,75 @@ export const workspaceTokenAuthMidddleware = base.middleware(
       }
       throw error
     }
-    if (!auth) {
-      throw invalidTokenError()
+
+    let resolved: {
+      workspace: WorkspaceModel
+      apiToken: RequestApiToken
+      audit: { userId: string; source: string }
     }
-    const { workspace, apiToken } = auth
+
+    if (auth) {
+      resolved = {
+        workspace: auth.workspace,
+        apiToken: {
+          id: auth.apiToken.id,
+          workspaceId: auth.apiToken.workspaceId,
+          permission: auth.apiToken.permission,
+          scopes: auth.apiToken.scopes,
+          isDefault: auth.apiToken.isDefault,
+        },
+        // API-token calls are attributed to the workspace owner because an
+        // opaque token has no individual user identity to audit.
+        audit: {
+          userId: auth.workspace.ownerId,
+          source: `api-token:${auth.apiToken.id}`,
+        },
+      }
+    } else {
+      if (!bearerToken) {
+        throw invalidTokenError()
+      }
+
+      // OAuth calls retain the real user identity and OAuth client source.
+      const oauth = await mcpOAuthService.resolvePrincipal({
+        accessToken: bearerToken,
+        workspaceId: requestedWorkspaceId,
+      })
+
+      if (oauth.kind === "invalidToken") {
+        throw invalidTokenError()
+      }
+      if (oauth.kind === "forbidden") {
+        throw new ORPCError("FORBIDDEN", {
+          message: "Account has no access to this workspace",
+        })
+      }
+      if (oauth.kind === "workspaceSelectionRequired") {
+        const workspaces = oauth.workspaces
+          .map((workspace) => `${workspace.id} (${workspace.name})`)
+          .join(", ")
+        throw new ORPCError("WORKSPACE_SELECTION_REQUIRED", {
+          status: 400,
+          message: `This account has access to ${oauth.workspaces.length} workspaces. Select one by adding ?workspace_id=<id> to the MCP server URL (or sending the x-workspace-id header). Available: ${workspaces}`,
+        })
+      }
+
+      resolved = {
+        workspace: oauth.principal.workspace,
+        apiToken: {
+          id: `oauth:${oauth.principal.accessTokenId}`,
+          workspaceId: oauth.principal.workspace.id,
+          permission: "full",
+          scopes: null,
+          isDefault: false,
+        },
+        audit: {
+          userId: oauth.principal.user.id,
+          source: `mcp-oauth:${oauth.principal.clientId}`,
+        },
+      }
+    }
+    const { workspace, apiToken } = resolved
 
     await assertNotRateLimited(workspace.id, context.resHeaders)
 
@@ -135,33 +207,22 @@ export const workspaceTokenAuthMidddleware = base.middleware(
       ownerId: workspace.ownerId,
     })
 
-    const requestApiToken: RequestApiToken = {
-      id: apiToken.id,
-      workspaceId: apiToken.workspaceId,
-      permission: apiToken.permission,
-      scopes: apiToken.scopes,
-      isDefault: apiToken.isDefault,
-    }
-
-    // There is no synthetic token user, and `AuditService.record` hard-
-    // requires both userId and workspaceId — so the workspace owner is the
-    // only truthful principal to attribute a token-driven change to.
-    // `source` carries the token id so it stays distinguishable from the
-    // owner's own UI actions in the audit trail.
     return await withAuditContext(
       {
-        userId: workspace.ownerId,
+        userId: resolved.audit.userId,
         workspaceId: workspace.id,
         ipAddress: getGuestClientIp(context.headers),
         userAgent: context.headers.get("user-agent") ?? undefined,
-        source: `api-token:${requestApiToken.id}`,
+        source: resolved.audit.source,
       },
       () =>
         next({
           context: {
             workspace,
-            apiToken: requestApiToken,
-            apiCredentialId: `api-token:${requestApiToken.id}`,
+            apiToken,
+            apiCredentialId: auth
+              ? `api-token:${apiToken.id}`
+              : resolved.audit.source,
           },
         }),
     )

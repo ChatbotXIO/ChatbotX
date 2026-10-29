@@ -10787,5 +10787,14 @@
         "id": "מזהה הפריט"
       }
     }
+  },
+  "oauthConsent": {
+    "title": "Authorize {clientName}",
+    "description": "This application is requesting access to your workspace.",
+    "permissionsTitle": "Requested permissions",
+    "signedInAs": "Signed in as",
+    "approve": "Approve",
+    "deny": "Deny",
+    "failed": "לא ניתן היה להשלים את ההרשאה. נסה שוב."
   }
 }

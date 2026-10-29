@@ -10787,5 +10787,14 @@
         "id": "アイテムID"
       }
     }
+  },
+  "oauthConsent": {
+    "title": "Authorize {clientName}",
+    "description": "This application is requesting access to your workspace.",
+    "permissionsTitle": "Requested permissions",
+    "signedInAs": "Signed in as",
+    "approve": "Approve",
+    "deny": "Deny",
+    "failed": "認可を完了できませんでした。もう一度お試しください。"
   }
 }

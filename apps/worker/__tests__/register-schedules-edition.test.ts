@@ -42,6 +42,7 @@ vi.mock("@chatbotx.io/worker-config", () => ({
     purgeWhatsappSignupSessions: "purgeWhatsappSignupSessions",
     purgeExpiredConnectSessions: "purgeExpiredConnectSessions",
     purgeWorkspaces: "purgeWorkspaces",
+    purgeExpiredOAuthTokens: "purgeExpiredOAuthTokens",
     purgeBroadcasts: "purgeBroadcasts",
     purgeAutomationThrottle: "purgeAutomationThrottle",
     refreshChannelTokens: "refreshChannelTokens",
@@ -135,6 +136,7 @@ describe("registerSchedules — edition gating", () => {
 
     const names = upsertedNames()
     expect(names).toContain("purgeWorkspaces")
+    expect(names).toContain("purgeExpiredOAuthTokens")
     expect(names).toContain("purgeBroadcasts")
     expect(names).toContain("maintainMacPartitions")
     expect(names).toContain("maintainLeaderboardPartitions")

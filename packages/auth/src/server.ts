@@ -9,6 +9,9 @@ import {
 import { db } from "@chatbotx.io/database/client"
 import {
   accountModel,
+  oauthAccessTokenModel,
+  oauthApplicationModel,
+  oauthConsentModel,
   ROOT_TENANT_ID,
   sessionModel,
   userModel,
@@ -36,6 +39,7 @@ import {
   bearer,
   genericOAuth,
   magicLink,
+  mcp,
   oneTimeToken,
 } from "better-auth/plugins"
 import { PHASE_PRODUCTION_BUILD } from "next/constants"
@@ -558,6 +562,9 @@ export function createAuth(config: AuthConfig) {
           verification: verificationModel,
           session: sessionModel,
           account: accountModel,
+          oauthApplication: oauthApplicationModel,
+          oauthAccessToken: oauthAccessTokenModel,
+          oauthConsent: oauthConsentModel,
         },
       }),
     ),
@@ -847,6 +854,17 @@ export function createAuth(config: AuthConfig) {
             }),
           ] as const)
         : ([] as const)),
+      mcp({
+        loginPage: "/oauth/sign-in",
+        oidcConfig: {
+          loginPage: "/oauth/sign-in",
+          consentPage: "/oauth/consent",
+          requirePKCE: true,
+          allowPlainCodeChallengeMethod: false,
+          accessTokenExpiresIn: 3600,
+          refreshTokenExpiresIn: 2_592_000,
+        },
+      }),
       // Relays better-auth's Set-Cookie into the Next.js response. Required so a
       // server-side `auth.api.changePassword` (with `revokeOtherSessions`) rotates
       // the caller's session cookie instead of silently logging them out. Must be

@@ -8,6 +8,17 @@ Published skill/agent distribution docs live in the separate `chatbotx-agent` pa
 
 On startup the server fetches `{CHATBOTX_API_URL}/public-spec.json` and registers one MCP tool per API operation the spec marks `x-mcp.visibility: "default"`. `CHATBOTX_API_URL` is the origin **including** the `/api` path prefix (e.g. `https://app.chatbotx.io/api`). Adding a new default-visible API endpoint in ChatbotX automatically makes it available as a tool — the spec is re-fetched in the background whenever it's older than `CHATBOTX_SPEC_TTL_MS` (default 5 minutes), so a new/changed operation shows up on the next `tools/list` call without a server restart.
 
+
+## OAuth 2.1
+
+Remote MCP clients should authenticate through OAuth 2.1. Connect with
+`https://<host>/messages?workspace_id=<id>` for Streamable HTTP or
+`https://<host>/sse?workspace_id=<id>` for legacy SSE. `workspace_id` is
+required only when the account belongs to more than one workspace. The
+authorization server shows consent before issuing PKCE-bound access and refresh
+tokens; only workspace owners and `superAdmin` members can authorize.
+
+Legacy workspace tokens remain supported for stdio and existing connections.
 ### Default tools vs. the full API
 
 ChatbotX's public API has ~350 operations. Listing all of them as MCP tools overwhelms an agent's context and its ability to pick the right one, so `tools/list` returns only a curated default set (see below) plus two meta-tools:
@@ -265,7 +276,7 @@ ChatGPT.com connects via SSE. The server must be publicly reachable. Because Cha
 
 | Transport | Priority |
 |-----------|----------|
-| SSE / Streamable HTTP | `?workspace_token=` or `?token=` query param → `x-workspace-token` / `x-chatbo-token` header → `CHATBOTX_API_KEY` env |
+| SSE / Streamable HTTP | `Authorization: Bearer` (OAuth access token or workspace token) → `?workspace_token=` or `?token=` query param → `x-workspace-token` / `x-chatbo-token` header → `CHATBOTX_API_KEY` env |
 | stdio | `CHATBOTX_API_KEY` env |
 
 ## Configuration
@@ -291,6 +302,9 @@ cp .env.example .env
 | `CHATBOTX_MCP_CORS_ORIGIN` | CORS origin allowed to call the SSE/HTTP endpoints | `*` | No |
 | `CHATBOTX_MCP_SERVER_NAME` | Display name sent to AI clients | package name | No |
 | `CHATBOTX_MCP_SERVER_INSTRUCTIONS` | Instructions sent to AI clients on connect (helps ChatGPT know when to call tools) | built-in default | No |
+| `CHATBOTX_MCP_OAUTH_ENABLED` | Enable OAuth 2.1 protected-resource metadata and bearer challenges | `true` | No |
+| `CHATBOTX_MCP_OAUTH_ISSUER` | Authorization server issuer URL | derived from `CHATBOTX_API_URL` | No |
+| `CHATBOTX_MCP_PUBLIC_URL` | Canonical public URL of this MCP server. Set this in production so protected-resource metadata never derives a proxy/internal host from request headers. | derived from request headers | No |
 
 ## Scripts
 

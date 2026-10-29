@@ -48,6 +48,7 @@
     "eval:search": "tsx evals/search-audit.ts"
   },
   "dependencies": {
+    "@chatbotx.io/logger": "workspace:*",
     "@modelcontextprotocol/sdk": "^1.32.0",
     "@t3-oss/env-core": "^0.13.11",
     "dotenv": "^17.4.2",

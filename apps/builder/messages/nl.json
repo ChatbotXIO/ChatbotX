@@ -10787,5 +10787,14 @@
         "id": "Item-ID"
       }
     }
+  },
+  "oauthConsent": {
+    "title": "Authorize {clientName}",
+    "description": "This application is requesting access to your workspace.",
+    "permissionsTitle": "Requested permissions",
+    "signedInAs": "Signed in as",
+    "approve": "Approve",
+    "deny": "Deny",
+    "failed": "De autorisatie kon niet worden voltooid. Probeer het opnieuw."
   }
 }

@@ -121,6 +121,7 @@ export * from "./invitation"
 // stays private.
 export { isCloud } from "./keys"
 export * from "./magic-link"
+export * from "./mcp-oauth"
 export * from "./media"
 export * from "./media-library"
 export * from "./media-library-file"

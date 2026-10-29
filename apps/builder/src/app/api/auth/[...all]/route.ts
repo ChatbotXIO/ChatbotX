@@ -11,11 +11,34 @@ import {
   withTenant,
 } from "@chatbotx.io/auth/tenant"
 import { hasEnterpriseFeatures } from "@chatbotx.io/business"
+import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { getPublicUrlFromRequest } from "@chatbotx.io/utils"
 import { auth } from "@/lib/auth/auth"
 import { getSocialAuthForTenant } from "@/lib/auth/auth-instances"
 import { rewriteAuthRedirectToPublicHost } from "@/lib/auth-redirect"
 import { resolveRelayTarget } from "@/lib/oauth-referer"
+import { assertApiNotRateLimited } from "@/lib/rate-limit/api-rate-limit"
+import { getGuestClientIp } from "@/lib/rate-limit/guest-rate-limit"
+
+const MCP_CORS_HEADERS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
+  "Access-Control-Allow-Headers":
+    "Content-Type, Authorization, mcp-protocol-version",
+} as const
+
+const retryAfterPattern = /Retry after (\d+)s\./
+
+const withMcpCors = (pathname: string, response: Response): Response => {
+  if (!pathname.includes("/api/auth/mcp/")) {
+    return response
+  }
+
+  for (const [key, value] of Object.entries(MCP_CORS_HEADERS)) {
+    response.headers.set(key, value)
+  }
+  return response
+}
 
 /**
  * Run the better-auth pipeline inside the tenant bound to the request's branded
@@ -110,6 +133,34 @@ const handle = async (request: Request): Promise<Response> => {
     ? await resolveTenantFromOAuthState(state)
     : await resolveTenantByDomain(request.headers.get("x-domain"))
 
+  if (url.pathname.endsWith("/mcp/register")) {
+    try {
+      await assertApiNotRateLimited({
+        scope: "mcp-client-registration",
+        key: getGuestClientIp(request.headers),
+        limit: 20,
+      })
+    } catch (error) {
+      if (
+        error instanceof ChatbotXException &&
+        error.code === "tooManyRequests"
+      ) {
+        const retryAfter = error.message.match(retryAfterPattern)?.[1]
+        const headers = new Headers()
+        if (retryAfter) {
+          headers.set("Retry-After", retryAfter)
+        }
+        return withMcpCors(
+          url.pathname,
+          Response.json(
+            { error: error.message },
+            { headers, status: error.httpStatusCode ?? 429 },
+          ),
+        )
+      }
+      throw error
+    }
+  }
   return withTenant(tenantId, async () => {
     // White-label relay: when the social flow started on a branded custom domain
     // (or the builder URL) but the provider redirected to the fixed broker
@@ -140,9 +191,24 @@ const handle = async (request: Request): Promise<Response> => {
     // Re-home a baseURL-resolved verification redirect onto the branded host
     // the user is on (magic-link/verify, verify-email, reset-password).
     const response = await instance.handler(request)
-    return rewriteAuthRedirectToPublicHost(request, response)
+    return withMcpCors(
+      url.pathname,
+      await rewriteAuthRedirectToPublicHost(request, response),
+    )
   })
 }
 
 export const GET = handle
 export const POST = handle
+
+export const OPTIONS = (request: Request) => {
+  const pathname = new URL(request.url).pathname
+  if (!pathname.includes("/api/auth/mcp/")) {
+    return new Response(null, { status: 405 })
+  }
+
+  return new Response(null, {
+    status: 204,
+    headers: MCP_CORS_HEADERS,
+  })
+}

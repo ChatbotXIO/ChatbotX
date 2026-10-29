@@ -10787,5 +10787,14 @@
         "id": "Eintrags-ID"
       }
     }
+  },
+  "oauthConsent": {
+    "title": "Authorize {clientName}",
+    "description": "This application is requesting access to your workspace.",
+    "permissionsTitle": "Requested permissions",
+    "signedInAs": "Signed in as",
+    "approve": "Approve",
+    "deny": "Deny",
+    "failed": "Die Autorisierung konnte nicht abgeschlossen werden. Bitte versuchen Sie es erneut."
   }
 }

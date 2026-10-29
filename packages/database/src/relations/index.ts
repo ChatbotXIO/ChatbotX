@@ -135,6 +135,9 @@ import { miniAppRelations } from "./mini-app"
 import { minigameRelations } from "./minigame"
 import { minigameContactRelations } from "./minigame-contact"
 import { minigamePlayRelations } from "./minigame-play"
+import { oauthAccessTokenRelations } from "./oauth-access-token"
+import { oauthApplicationRelations } from "./oauth-application"
+import { oauthConsentRelations } from "./oauth-consent"
 import { pipelineRelations } from "./pipeline"
 import { productRelations } from "./product"
 import { productCategoryRelations } from "./product-category"
@@ -262,6 +265,9 @@ export const relations = {
   ...commentAutomationReplyRelations,
   ...auditLogRelations,
   ...sessionRelations,
+  ...oauthAccessTokenRelations,
+  ...oauthApplicationRelations,
+  ...oauthConsentRelations,
   ...spreadsheetRelations,
   ...whatsappCallRelations,
   ...whatsappCallPermissionRelations,
