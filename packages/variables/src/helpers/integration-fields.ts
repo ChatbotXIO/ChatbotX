@@ -31,7 +31,7 @@ import {
   type MessengerAuthValue,
 } from "@chatbotx.io/integration-messenger"
 import { toLogSafeError } from "@chatbotx.io/logger"
-import { withCache } from "@chatbotx.io/redis"
+import { invalidateCacheKeys, withCache } from "@chatbotx.io/redis"
 import type { ContactProfileSnapshot } from "@chatbotx.io/sdk"
 import { logger } from "../logger"
 
@@ -83,6 +83,9 @@ const getStoredProfileSnapshot = (
     : snapshot
 }
 
+const profileSnapshotCacheKey = (contactInboxId: string): string =>
+  `profile-snapshot:${contactInboxId}`
+
 /**
  * Live profile snapshot through the channel's own `getProfileSnapshot` handler
  * (the registry picks the right integration, e.g. Instagram vs
@@ -98,7 +101,7 @@ const resolveLiveProfileSnapshot = (props: {
 }): Promise<ContactProfileSnapshot | null> => {
   const { contactInbox, integrationId, workspaceId } = props
   return withCache(
-    `profile-snapshot:${contactInbox.id}`,
+    profileSnapshotCacheKey(contactInbox.id),
     async () => {
       let snapshot: ContactProfileSnapshot
       try {
@@ -145,6 +148,49 @@ const resolveLiveProfileSnapshot = (props: {
         : [],
     },
   )
+}
+
+/**
+ * Forces a fresh profile fetch for a contact inbox, skipping the cached
+ * snapshot, and writes it through to the columns the contact filter reads.
+ * Used where a stale value changes routing (a flow Condition re-checking
+ * "follows business" after the contact followed). Never throws: on a failed
+ * fetch the stored columns stay as they are.
+ */
+export const refreshContactProfileSnapshot = async (props: {
+  contactInbox: ContactInboxModel
+  workspaceId: string
+}): Promise<void> => {
+  const { contactInbox, workspaceId } = props
+  const channel = contactInbox.channel as ChannelType
+  if (!supportsProfileSnapshot(channel)) {
+    return
+  }
+
+  try {
+    const inbox = await inboxService.findWithIntegrationsById({
+      id: contactInbox.inboxId,
+    })
+    // Best-effort: on a Redis failure withCache also falls back to the source.
+    await invalidateCacheKeys(profileSnapshotCacheKey(contactInbox.id)).catch(
+      (err: unknown) => {
+        logger.debug(
+          { err, contactInboxId: contactInbox.id },
+          "Profile snapshot cache invalidation failed",
+        )
+      },
+    )
+    await resolveLiveProfileSnapshot({
+      contactInbox,
+      integrationId: inbox ? getChannelIntegrationId(inbox, channel) : null,
+      workspaceId,
+    })
+  } catch (err) {
+    logger.warn(
+      { err: toLogSafeError(err), contactInboxId: contactInbox.id },
+      "Contact profile snapshot refresh failed",
+    )
+  }
 }
 
 type ProfileSnapshotFieldKey = Extract<
