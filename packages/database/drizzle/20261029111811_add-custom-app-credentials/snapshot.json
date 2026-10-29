@@ -1,10 +1,10 @@
 {
   "version": "8",
   "dialect": "postgres",
-  "id": "2d42815b-7906-4531-984e-ab46fac98078",
+  "id": "3a7146c5-4546-4adb-9740-ac0e4fddfdfb",
   "prevIds": [
-    "180f66f9-9257-40af-bcfe-ac80f03df9e7",
-    "a464bb1f-f81d-4f01-bacd-079959ef0a65"
+    "da79a4d8-8f03-43cc-8dea-8ac55f7e6831",
+    "f1205fae-cdf8-44f2-805f-3eaf47919630"
   ],
   "ddl": [
     {
@@ -470,7 +470,8 @@
         "flowNode",
         "automatedResponse",
         "whatsappFlow",
-        "emailTopic"
+        "emailTopic",
+        "ad"
       ],
       "name": "contactActivityReferenceType",
       "entityType": "enums",
@@ -485,7 +486,8 @@
         "messageSent",
         "messageDelivered",
         "messageOpened",
-        "messageClicked"
+        "messageClicked",
+        "adClicked"
       ],
       "name": "contactActivityType",
       "entityType": "enums",
@@ -663,6 +665,26 @@
         "freeShipping"
       ],
       "name": "discountType",
+      "entityType": "enums",
+      "schema": "public"
+    },
+    {
+      "values": [
+        "stripe",
+        "paypal"
+      ],
+      "name": "onlinePaymentProvider",
+      "entityType": "enums",
+      "schema": "public"
+    },
+    {
+      "values": [
+        "open",
+        "paid",
+        "expired",
+        "refunded"
+      ],
+      "name": "orderPaymentStatus",
       "entityType": "enums",
       "schema": "public"
     },
@@ -1184,7 +1206,9 @@
     },
     {
       "values": [
-        "cod"
+        "cod",
+        "stripe",
+        "paypal"
       ],
       "name": "paymentMethod",
       "entityType": "enums",
@@ -1827,6 +1851,12 @@
     },
     {
       "isRlsEnabled": false,
+      "name": "ContactReferralEvent",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
       "name": "ContactState",
       "entityType": "tables",
       "schema": "public"
@@ -1900,6 +1930,18 @@
     {
       "isRlsEnabled": false,
       "name": "EcommerceOpenHours",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "EcommercePaymentProvider",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "OrderPayment",
       "entityType": "tables",
       "schema": "public"
     },
@@ -2446,6 +2488,24 @@
     {
       "isRlsEnabled": false,
       "name": "MinigamePlay",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "OAuthAccessToken",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "OAuthApplication",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "OAuthConsent",
       "entityType": "tables",
       "schema": "public"
     },
@@ -3302,6 +3362,19 @@
       "generated": null,
       "identity": null,
       "name": "contactInboxId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AdsConversionEvent"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "referralEventId",
       "entityType": "columns",
       "schema": "public",
       "table": "AdsConversionEvent"
@@ -13538,6 +13611,266 @@
       "default": null,
       "generated": null,
       "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "ContactReferralEvent"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "createdAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "ContactReferralEvent"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "updatedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "ContactReferralEvent"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "workspaceId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "ContactReferralEvent"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "contactId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "ContactReferralEvent"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "contactInboxId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "ContactReferralEvent"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "channel",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "ContactReferralEvent"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "type",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "ContactReferralEvent"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "provider",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "ContactReferralEvent"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "occurredAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "ContactReferralEvent"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "adId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "ContactReferralEvent"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "campaignId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "ContactReferralEvent"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "adGroupId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "ContactReferralEvent"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "clickIdType",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "ContactReferralEvent"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "clickId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "ContactReferralEvent"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "ref",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "ContactReferralEvent"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "source",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "ContactReferralEvent"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "sourceUrl",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "ContactReferralEvent"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "metadata",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "ContactReferralEvent"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "dedupKey",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "ContactReferralEvent"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
       "name": "workspaceId",
       "entityType": "columns",
       "schema": "public",
@@ -15258,6 +15591,370 @@
       "entityType": "columns",
       "schema": "public",
       "table": "EcommerceOpenHours"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "EcommercePaymentProvider"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "createdAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "EcommercePaymentProvider"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "updatedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "EcommercePaymentProvider"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "workspaceId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "EcommercePaymentProvider"
+    },
+    {
+      "type": "onlinePaymentProvider",
+      "typeSchema": "public",
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "provider",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "EcommercePaymentProvider"
+    },
+    {
+      "type": "boolean",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "livemode",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "EcommercePaymentProvider"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "accountLabel",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "EcommercePaymentProvider"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "externalAccountId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "EcommercePaymentProvider"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "platformCredentialId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "EcommercePaymentProvider"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "secret",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "EcommercePaymentProvider"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "webhookEndpointId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "EcommercePaymentProvider"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OrderPayment"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "createdAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OrderPayment"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "updatedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OrderPayment"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "orderId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OrderPayment"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "workspaceId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OrderPayment"
+    },
+    {
+      "type": "onlinePaymentProvider",
+      "typeSchema": "public",
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "provider",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OrderPayment"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "providerReference",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OrderPayment"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "transactionId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OrderPayment"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "refundId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OrderPayment"
+    },
+    {
+      "type": "numeric(19,4)",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "amount",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OrderPayment"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "currency",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OrderPayment"
+    },
+    {
+      "type": "orderPaymentStatus",
+      "typeSchema": "public",
+      "notNull": true,
+      "dimensions": 0,
+      "default": "'open'",
+      "generated": null,
+      "identity": null,
+      "name": "status",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OrderPayment"
+    },
+    {
+      "type": "boolean",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "livemode",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OrderPayment"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "checkoutUrl",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OrderPayment"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "expiresAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OrderPayment"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "paidAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OrderPayment"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "refundedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OrderPayment"
     },
     {
       "type": "bigint",
@@ -19610,6 +20307,19 @@
       "generated": null,
       "identity": null,
       "name": "contactInboxId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "GoogleAdsConversionEvent"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "referralEventId",
       "entityType": "columns",
       "schema": "public",
       "table": "GoogleAdsConversionEvent"
@@ -29752,6 +30462,383 @@
       "name": "id",
       "entityType": "columns",
       "schema": "public",
+      "table": "OAuthAccessToken"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "createdAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OAuthAccessToken"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "updatedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OAuthAccessToken"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "accessToken",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OAuthAccessToken"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "refreshToken",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OAuthAccessToken"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "accessTokenExpiresAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OAuthAccessToken"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "refreshTokenExpiresAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OAuthAccessToken"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "clientId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OAuthAccessToken"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "userId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OAuthAccessToken"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "scopes",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OAuthAccessToken"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OAuthApplication"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "createdAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OAuthApplication"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "updatedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OAuthApplication"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "name",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OAuthApplication"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "icon",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OAuthApplication"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "metadata",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OAuthApplication"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "clientId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OAuthApplication"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "clientSecret",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OAuthApplication"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "redirectUrls",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OAuthApplication"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "type",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OAuthApplication"
+    },
+    {
+      "type": "boolean",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "false",
+      "generated": null,
+      "identity": null,
+      "name": "disabled",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OAuthApplication"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "userId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OAuthApplication"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OAuthConsent"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "createdAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OAuthConsent"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "updatedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OAuthConsent"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "clientId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OAuthConsent"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "userId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OAuthConsent"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "scopes",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OAuthConsent"
+    },
+    {
+      "type": "boolean",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "consentGiven",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OAuthConsent"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
       "table": "DiscountCodeRedemption"
     },
     {
@@ -30335,6 +31422,32 @@
       "generated": null,
       "identity": null,
       "name": "paymentStatus",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Order"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "paymentExpiresAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Order"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "paidAt",
       "entityType": "columns",
       "schema": "public",
       "table": "Order"
@@ -32045,7 +33158,7 @@
     {
       "type": "text",
       "typeSchema": null,
-      "notNull": true,
+      "notNull": false,
       "dimensions": 0,
       "default": null,
       "generated": null,
@@ -40138,6 +41251,27 @@
       "nameExplicit": true,
       "columns": [
         {
+          "value": "referralEventId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": "\"referralEventId\" IS NOT NULL",
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "AdsConversionEvent_referralEventId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "AdsConversionEvent"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
           "value": "workspaceId",
           "isExpression": false,
           "asc": true,
@@ -44618,6 +45752,132 @@
           "opclass": null
         },
         {
+          "value": "contactInboxId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "dedupKey",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": true,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "ContactReferralEvent_workspaceId_contactInboxId_dedupKey_key",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "ContactReferralEvent"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "contactInboxId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "ContactReferralEvent_contactInboxId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "ContactReferralEvent"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "workspaceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "contactId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "occurredAt",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "ContactReferralEvent_workspaceId_contactId_occurredAt_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "ContactReferralEvent"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "workspaceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "type",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "occurredAt",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": "\"adId\" IS NOT NULL",
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "ContactReferralEvent_workspaceId_type_occurredAt_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "ContactReferralEvent"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "workspaceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
           "value": "lastDeliveredAt",
           "isExpression": false,
           "asc": true,
@@ -45544,6 +46804,174 @@
       "entityType": "indexes",
       "schema": "public",
       "table": "EcommerceOpenHours"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "workspaceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "provider",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": true,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "EcommercePaymentProvider_workspaceId_provider_key",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "EcommercePaymentProvider"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "platformCredentialId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "externalAccountId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": true,
+      "where": "\"externalAccountId\" IS NOT NULL",
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "EcommercePaymentProvider_platformCredentialId_account_key",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "EcommercePaymentProvider"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "externalAccountId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "EcommercePaymentProvider_externalAccountId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "EcommercePaymentProvider"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "provider",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "providerReference",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": true,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "OrderPayment_provider_providerReference_key",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "OrderPayment"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "orderId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "OrderPayment_orderId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "OrderPayment"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "workspaceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "OrderPayment_workspaceId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "OrderPayment"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "expiresAt",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": "\"status\" = 'open'",
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "OrderPayment_open_expiresAt_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "OrderPayment"
     },
     {
       "nameExplicit": true,
@@ -46585,6 +48013,27 @@
       "nameExplicit": true,
       "columns": [
         {
+          "value": "createdAt",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": "\"contextType\" = 'export'",
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "File_export_createdAt_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "File"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
           "value": "workspaceId",
           "isExpression": false,
           "asc": true,
@@ -47004,6 +48453,27 @@
       "method": "btree",
       "concurrently": false,
       "name": "GoogleAdsConversionEvent_contactInboxId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "GoogleAdsConversionEvent"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "referralEventId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": "\"referralEventId\" IS NOT NULL",
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "GoogleAdsConversionEvent_referralEventId_idx",
       "entityType": "indexes",
       "schema": "public",
       "table": "GoogleAdsConversionEvent"
@@ -50883,6 +52353,174 @@
       "nameExplicit": true,
       "columns": [
         {
+          "value": "accessToken",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": true,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "OAuthAccessToken_accessToken_key",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "OAuthAccessToken"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "refreshToken",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": true,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "OAuthAccessToken_refreshToken_key",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "OAuthAccessToken"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "clientId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "OAuthAccessToken_clientId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "OAuthAccessToken"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "userId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "OAuthAccessToken_userId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "OAuthAccessToken"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "clientId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": true,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "OAuthApplication_clientId_key",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "OAuthApplication"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "userId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "OAuthApplication_userId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "OAuthApplication"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "clientId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "OAuthConsent_clientId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "OAuthConsent"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "userId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "OAuthConsent_userId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "OAuthConsent"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
           "value": "orderId",
           "isExpression": false,
           "asc": true,
@@ -51253,6 +52891,27 @@
       "method": "btree",
       "concurrently": false,
       "name": "Order_discountCodeId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "Order"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "paymentExpiresAt",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": "\"status\" = 'pending' AND \"paymentStatus\" = 'unpaid' AND \"paymentExpiresAt\" IS NOT NULL",
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "Order_paymentExpiresAt_idx",
       "entityType": "indexes",
       "schema": "public",
       "table": "Order"
@@ -55912,6 +57571,23 @@
     {
       "nameExplicit": false,
       "columns": [
+        "referralEventId"
+      ],
+      "schemaTo": "public",
+      "tableTo": "ContactReferralEvent",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "CASCADE",
+      "onDelete": "SET NULL",
+      "name": "AdsConversionEvent_referralEventId_ContactReferralEvent_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "AdsConversionEvent"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
         "workspaceId"
       ],
       "schemaTo": "public",
@@ -57969,6 +59645,40 @@
     {
       "nameExplicit": false,
       "columns": [
+        "workspaceId"
+      ],
+      "schemaTo": "public",
+      "tableTo": "Workspace",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "ContactReferralEvent_workspaceId_Workspace_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "ContactReferralEvent"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "contactInboxId"
+      ],
+      "schemaTo": "public",
+      "tableTo": "ContactInbox",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "ContactReferralEvent_contactInboxId_ContactInbox_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "ContactReferralEvent"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
         "contactId"
       ],
       "schemaTo": "public",
@@ -58424,6 +60134,74 @@
       "entityType": "fks",
       "schema": "public",
       "table": "EcommerceOpenHours"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "workspaceId"
+      ],
+      "schemaTo": "public",
+      "tableTo": "Workspace",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "EcommercePaymentProvider_workspaceId_Workspace_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "EcommercePaymentProvider"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "platformCredentialId"
+      ],
+      "schemaTo": "public",
+      "tableTo": "PlatformCredential",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "CASCADE",
+      "onDelete": "SET NULL",
+      "name": "EcommercePaymentProvider_eOJU9fhqr8NU_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "EcommercePaymentProvider"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "orderId"
+      ],
+      "schemaTo": "public",
+      "tableTo": "Order",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "OrderPayment_orderId_Order_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "OrderPayment"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "workspaceId"
+      ],
+      "schemaTo": "public",
+      "tableTo": "Workspace",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "OrderPayment_workspaceId_Workspace_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "OrderPayment"
     },
     {
       "nameExplicit": false,
@@ -59152,6 +60930,23 @@
       "onUpdate": "CASCADE",
       "onDelete": "SET NULL",
       "name": "GoogleAdsConversionEvent_contactInboxId_ContactInbox_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "GoogleAdsConversionEvent"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "referralEventId"
+      ],
+      "schemaTo": "public",
+      "tableTo": "ContactReferralEvent",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "CASCADE",
+      "onDelete": "SET NULL",
+      "name": "GoogleAdsConversionEvent_0EWR38dBZsuA_fkey",
       "entityType": "fks",
       "schema": "public",
       "table": "GoogleAdsConversionEvent"
@@ -61552,6 +63347,91 @@
       "entityType": "fks",
       "schema": "public",
       "table": "MinigamePlay"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "clientId"
+      ],
+      "schemaTo": "public",
+      "tableTo": "OAuthApplication",
+      "columnsTo": [
+        "clientId"
+      ],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "OAuthAccessToken_clientId_OAuthApplication_clientId_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "OAuthAccessToken"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "userId"
+      ],
+      "schemaTo": "public",
+      "tableTo": "User",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "OAuthAccessToken_userId_User_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "OAuthAccessToken"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "userId"
+      ],
+      "schemaTo": "public",
+      "tableTo": "User",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "OAuthApplication_userId_User_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "OAuthApplication"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "clientId"
+      ],
+      "schemaTo": "public",
+      "tableTo": "OAuthApplication",
+      "columnsTo": [
+        "clientId"
+      ],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "OAuthConsent_clientId_OAuthApplication_clientId_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "OAuthConsent"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "userId"
+      ],
+      "schemaTo": "public",
+      "tableTo": "User",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "OAuthConsent_userId_User_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "OAuthConsent"
     },
     {
       "nameExplicit": false,
@@ -64964,6 +66844,16 @@
         "id"
       ],
       "nameExplicit": false,
+      "name": "ContactReferralEvent_pkey",
+      "schema": "public",
+      "table": "ContactReferralEvent",
+      "entityType": "pks"
+    },
+    {
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
       "name": "Conversation_pkey",
       "schema": "public",
       "table": "Conversation",
@@ -65057,6 +66947,26 @@
       "name": "EcommerceOpenHours_pkey",
       "schema": "public",
       "table": "EcommerceOpenHours",
+      "entityType": "pks"
+    },
+    {
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "name": "EcommercePaymentProvider_pkey",
+      "schema": "public",
+      "table": "EcommercePaymentProvider",
+      "entityType": "pks"
+    },
+    {
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "name": "OrderPayment_pkey",
+      "schema": "public",
+      "table": "OrderPayment",
       "entityType": "pks"
     },
     {
@@ -65927,6 +67837,36 @@
       "name": "MinigamePlay_pkey",
       "schema": "public",
       "table": "MinigamePlay",
+      "entityType": "pks"
+    },
+    {
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "name": "OAuthAccessToken_pkey",
+      "schema": "public",
+      "table": "OAuthAccessToken",
+      "entityType": "pks"
+    },
+    {
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "name": "OAuthApplication_pkey",
+      "schema": "public",
+      "table": "OAuthApplication",
+      "entityType": "pks"
+    },
+    {
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "name": "OAuthConsent_pkey",
+      "schema": "public",
+      "table": "OAuthConsent",
       "entityType": "pks"
     },
     {
@@ -66820,11 +68760,39 @@
       "table": "Connection"
     },
     {
-      "value": "(\"activityType\" = 'flowExecuted' AND \"referenceType\" = 'flow' AND \"parentReferenceId\" = 0) OR (\"activityType\" = 'flowNodeExecuted' AND \"referenceType\" = 'flowNode' AND \"parentReferenceId\" <> 0) OR (\"activityType\" = 'automatedResponseMatched' AND \"referenceType\" = 'automatedResponse' AND \"parentReferenceId\" = 0) OR (\"activityType\" = 'formCompleted' AND \"referenceType\" = 'whatsappFlow' AND \"parentReferenceId\" = 0) OR (\"activityType\" = 'messageSent' AND \"referenceType\" = 'emailTopic' AND \"parentReferenceId\" = 0) OR (\"activityType\" = 'messageDelivered' AND \"referenceType\" = 'emailTopic' AND \"parentReferenceId\" = 0) OR (\"activityType\" = 'messageOpened' AND \"referenceType\" = 'emailTopic' AND \"parentReferenceId\" = 0) OR (\"activityType\" = 'messageClicked' AND \"referenceType\" = 'emailTopic' AND \"parentReferenceId\" = 0)",
+      "value": "(\"activityType\" = 'flowExecuted' AND \"referenceType\" = 'flow' AND \"parentReferenceId\" = 0) OR (\"activityType\" = 'flowNodeExecuted' AND \"referenceType\" = 'flowNode' AND \"parentReferenceId\" <> 0) OR (\"activityType\" = 'automatedResponseMatched' AND \"referenceType\" = 'automatedResponse' AND \"parentReferenceId\" = 0) OR (\"activityType\" = 'formCompleted' AND \"referenceType\" = 'whatsappFlow' AND \"parentReferenceId\" = 0) OR (\"activityType\" = 'messageSent' AND \"referenceType\" = 'emailTopic' AND \"parentReferenceId\" = 0) OR (\"activityType\" = 'messageDelivered' AND \"referenceType\" = 'emailTopic' AND \"parentReferenceId\" = 0) OR (\"activityType\" = 'messageOpened' AND \"referenceType\" = 'emailTopic' AND \"parentReferenceId\" = 0) OR (\"activityType\" = 'messageClicked' AND \"referenceType\" = 'emailTopic' AND \"parentReferenceId\" = 0) OR (\"activityType\" = 'adClicked' AND \"referenceType\" = 'ad' AND \"parentReferenceId\" = 0)",
       "name": "ContactActivity_allowed_pair_check",
       "entityType": "checks",
       "schema": "public",
       "table": "ContactActivity"
+    },
+    {
+      "value": "\"type\" IN ('ad', 'refLink', 'shortLink', 'qr')",
+      "name": "ContactReferralEvent_type_check",
+      "entityType": "checks",
+      "schema": "public",
+      "table": "ContactReferralEvent"
+    },
+    {
+      "value": "\"provider\" IS NULL OR \"provider\" IN ('meta', 'google')",
+      "name": "ContactReferralEvent_provider_check",
+      "entityType": "checks",
+      "schema": "public",
+      "table": "ContactReferralEvent"
+    },
+    {
+      "value": "\"clickIdType\" IS NULL OR \"clickIdType\" IN ('ctwa', 'gclid', 'gbraid')",
+      "name": "ContactReferralEvent_clickIdType_check",
+      "entityType": "checks",
+      "schema": "public",
+      "table": "ContactReferralEvent"
+    },
+    {
+      "value": "(\"clickId\" IS NULL) = (\"clickIdType\" IS NULL)",
+      "name": "ContactReferralEvent_clickId_check",
+      "entityType": "checks",
+      "schema": "public",
+      "table": "ContactReferralEvent"
     },
     {
       "value": "\"usedCount\" >= 0 AND (\"usageLimit\" IS NULL OR \"usedCount\" <= \"usageLimit\")",

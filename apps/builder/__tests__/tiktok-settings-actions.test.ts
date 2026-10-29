@@ -86,11 +86,16 @@ describe("TikTok credential actions", () => {
       parsedInput: { clientId: "id", clientSecret: "secret", features },
     })
     expect(upsertSpy).toHaveBeenCalledWith({
+      id: "generated-credential-id",
       userId: "user-1",
       type: "tiktok",
       config: { clientId: "id", clientSecret: "secret", features },
     })
-    expect(subscribeSpy).toHaveBeenCalled()
+    expect(subscribeSpy).toHaveBeenCalledWith(
+      { clientId: "id", clientSecret: "secret" },
+      `${BROKER_ORIGIN}/integrations/tiktok/webhook/c/generated-credential-id`,
+      expect.objectContaining({ features }),
+    )
   })
 
   // What an app for EEA, Swiss or UK accounts saves: the switch has to reach
@@ -111,11 +116,12 @@ describe("TikTok credential actions", () => {
 
     expect(subscribeSpy).toHaveBeenCalledWith(
       { clientId: "id", clientSecret: "secret" },
-      `${BROKER_ORIGIN}/integrations/tiktok/webhook`,
+      `${BROKER_ORIGIN}/integrations/tiktok/webhook/c/generated-credential-id`,
       expect.objectContaining({ features: commentsOnly }),
     )
     expect(upsertSpy).toHaveBeenCalledWith(
       expect.objectContaining({
+        id: "generated-credential-id",
         config: {
           clientId: "id",
           clientSecret: "secret",
@@ -145,7 +151,7 @@ describe("TikTok credential actions", () => {
     expect(subscribeSpy).toHaveBeenCalledWith(
       { clientId: "id", clientSecret: "secret" },
       `${BROKER_ORIGIN}/integrations/tiktok/webhook/c/generated-credential-id`,
-      expect.any(Function),
+      expect.objectContaining({ features }),
     )
     expect(upsertSpy).toHaveBeenCalledWith({
       id: "generated-credential-id",
@@ -181,18 +187,18 @@ describe("TikTok credential actions", () => {
     await call(updateTiktokSettingAction)({
       ctx: { user: { id: "user-1" } },
       bindArgsParsedInputs: ["user"],
-      parsedInput: { clientId: "id", clientSecret: "secret" },
+      parsedInput: { clientId: "id", clientSecret: "secret", features },
     })
 
     expect(upsertSpy).toHaveBeenCalledWith({
       userId: "user-1",
       type: "tiktok",
-      config: { clientId: "id", clientSecret: "secret" },
+      config: { clientId: "id", clientSecret: "secret", features },
     })
     expect(subscribeSpy).toHaveBeenCalledWith(
       { clientId: "id", clientSecret: "secret" },
       `${BROKER_ORIGIN}/integrations/tiktok/webhook`,
-      expect.any(Function),
+      expect.objectContaining({ features }),
     )
   })
 
@@ -220,7 +226,7 @@ describe("TikTok credential actions", () => {
       call(updateTiktokSettingAction)({
         ctx: { user: { id: "user-1" } },
         bindArgsParsedInputs: ["user"],
-        parsedInput: { clientId: "id", clientSecret: "secret" },
+        parsedInput: { clientId: "id", clientSecret: "secret", features },
       }),
     ).rejects.toThrow("subscription failed")
 
@@ -234,19 +240,19 @@ describe("TikTok credential actions", () => {
     await call(updateTiktokSettingAction)({
       ctx: { user: { id: "user-1" } },
       bindArgsParsedInputs: ["user"],
-      parsedInput: { clientId: "id", clientSecret: "secret" },
+      parsedInput: { clientId: "id", clientSecret: "secret", features },
     })
 
     expect(subscribeSpy).toHaveBeenCalledWith(
       { clientId: "id", clientSecret: "secret" },
       `${BROKER_ORIGIN}/integrations/tiktok/webhook/c/existing-credential-id`,
-      expect.any(Function),
+      expect.objectContaining({ features }),
     )
     expect(upsertSpy).toHaveBeenCalledWith({
       id: "existing-credential-id",
       userId: "user-1",
       type: "tiktok",
-      config: { clientId: "id", clientSecret: "secret" },
+      config: { clientId: "id", clientSecret: "secret", features },
     })
   })
 

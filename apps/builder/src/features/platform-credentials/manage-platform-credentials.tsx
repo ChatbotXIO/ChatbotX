@@ -231,7 +231,7 @@ export async function ManagePlatformCredentials({
           publicConfig={make.publicConfig}
         />
         <StripeSettings
-          callbackOrigin={callbackOriginFor(stripe.isInherited)}
+          callbackOrigin={providerOriginFor(stripe.isInherited)}
           hasConnectWebhook={hasStripeWebhook}
           isInherited={stripe.isInherited}
           publicConfig={stripe.publicConfig}
