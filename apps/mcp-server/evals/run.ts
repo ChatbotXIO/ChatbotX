@@ -31,8 +31,12 @@ import {
 } from "./grade"
 import {
   assertComparableManifests,
+  confirmationRequired,
   type EvalManifest,
+  getAggregateUsage,
+  getFinalStepUsage,
   validateCaseCoverage,
+  withConfirmationArgument,
 } from "./run-contract"
 import { createSandbox, fixtureOperationIds, type HttpTrace } from "./sandbox"
 
@@ -279,38 +283,6 @@ const decodeMcp = (result: unknown): unknown => {
   }
 }
 
-const confirmationRequired = (result: unknown): boolean => {
-  const decoded = decodeMcp(result)
-  return (
-    typeof decoded === "object" &&
-    decoded !== null &&
-    "code" in decoded &&
-    decoded.code === "CONFIRMATION_REQUIRED"
-  )
-}
-
-export const withConfirmationArgument = (
-  toolName: string,
-  args: Record<string, unknown>,
-): Record<string, unknown> => {
-  if (toolName !== "call_tool") {
-    return { ...args, _confirm: true }
-  }
-
-  const nestedArgs = args.arguments
-  if (
-    typeof nestedArgs !== "object" ||
-    nestedArgs === null ||
-    Array.isArray(nestedArgs)
-  ) {
-    return args
-  }
-  return {
-    ...args,
-    arguments: { ...nestedArgs, _confirm: true },
-  }
-}
-
 type McpClientHandle = {
   client: Client
   close: () => Promise<void>
@@ -400,6 +372,7 @@ const buildTools = (
             arguments: argumentsObject,
           })
           if (confirmationRequired(rawResult)) {
+            trace.confirmationRequired = true
             rawResult = await client.callTool({
               name: mcpTool.name,
               arguments: withConfirmationArgument(
@@ -429,13 +402,6 @@ const unknownToolCount = (calls: ModelToolCall[]): number =>
       typeof call.result === "string" &&
       call.result.startsWith("Unknown tool"),
   ).length
-
-export const getFinalStepUsage = async (result: {
-  finalStep: { usage: unknown } | PromiseLike<{ usage: unknown }>
-}): Promise<unknown> => (await result.finalStep).usage
-
-export const getAggregateUsage = (result: { usage: unknown }): unknown =>
-  result.usage
 
 const evaluateCase = async (props: {
   evalCase: EvalCase
@@ -766,11 +732,9 @@ const main = async (): Promise<void> => {
   }
 }
 
-if (process.argv[1]?.endsWith("run.ts")) {
-  main().catch((error) => {
-    const message =
-      error instanceof Error ? (error.stack ?? error.message) : String(error)
-    process.stderr.write(`${message}\n`)
-    process.exitCode = 1
-  })
-}
+main().catch((error) => {
+  const message =
+    error instanceof Error ? (error.stack ?? error.message) : String(error)
+  process.stderr.write(`${message}\n`)
+  process.exitCode = 1
+})

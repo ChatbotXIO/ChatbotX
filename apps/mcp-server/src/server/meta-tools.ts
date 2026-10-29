@@ -202,7 +202,7 @@ function unknownToolMessage(name: string): string {
 export async function handleCallTool(
   args: Record<string, unknown>,
   credentials: RequestCredentials,
-  options?: ToolExecutionOptions,
+  options: ToolExecutionOptions,
 ): Promise<ToolCallResult> {
   const name = args.name
   if (typeof name !== "string" || name.trim().length === 0) {

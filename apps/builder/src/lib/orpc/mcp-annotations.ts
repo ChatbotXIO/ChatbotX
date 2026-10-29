@@ -13,7 +13,7 @@ export type McpHitlPolicy =
   | "confirm_destructive"
   | "confirm_outbound"
 
-export type McpVisibility = "default" | "hidden"
+type McpVisibility = "default" | "hidden"
 
 export type McpRouteMeta = {
   /** Absent ⇒ treated as `"hidden"` by the mcp-server loader. */
@@ -31,11 +31,12 @@ export type McpRouteMeta = {
   destructiveHint?: boolean
   idempotentHint?: boolean
   /**
-   * Human-in-the-loop guard for MCP and CLI clients. Write operations default
-   * to a confirmation policy in the generated public spec; `"none"` is an
-   * explicit backend-only exemption for a non-mutating POST.
+   * Human-in-the-loop guard consumed by the MCP server. Write operations
+   * default to a confirmation policy in the generated public spec; `"none"`
+   * is an explicit backend-only exemption for a non-mutating POST.
    */
   hitlPolicy?: McpHitlPolicy
+  scope?: string | string[]
 }
 
 /**
@@ -45,9 +46,14 @@ export type McpRouteMeta = {
  * augmentation (this repo's lint forbids `namespace`, the mechanism TS
  * declaration merging needs for a third-party namespaced interface).
  */
-export type OperationObjectWithMcp = OpenAPI.OperationObject & {
-  "x-mcp"?: McpRouteMeta & { scope?: string | string[] }
+export type PublicSpecOperation = {
+  operationId?: string
+  responses?: unknown
+  "x-mcp"?: McpRouteMeta
 }
+
+export type OperationObjectWithMcp = OpenAPI.OperationObject &
+  PublicSpecOperation
 
 /**
  * Route-level opt-in used as `.route({ spec: mcpSpec({ visibility: "default" }) })`.

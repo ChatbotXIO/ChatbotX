@@ -21,6 +21,7 @@ import {
   type RequestCredentials,
   type ToolExecutionOptions,
 } from "./execute-tool"
+import { HITL_ELICITATION_TIMEOUT_MS } from "./hitl-gate"
 import {
   handleCallTool,
   handleGetGuide,
@@ -61,7 +62,10 @@ export const createMcpServer = (
     elicitationClient: {
       supportsFormElicitation: () =>
         Boolean(mcpServer.server.getClientCapabilities()?.elicitation?.form),
-      elicitInput: async (props) => await mcpServer.server.elicitInput(props),
+      elicitInput: async (props) =>
+        await mcpServer.server.elicitInput(props, {
+          timeout: HITL_ELICITATION_TIMEOUT_MS,
+        }),
     },
   }
 
@@ -78,7 +82,7 @@ export const createMcpServer = (
         contents: [
           {
             mimeType: "text/markdown",
-            text: getGuide(name).content,
+            text: guide.content,
             uri: uri.href,
           },
         ],

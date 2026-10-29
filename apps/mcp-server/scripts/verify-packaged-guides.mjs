@@ -1,13 +1,17 @@
-import { existsSync, readFileSync } from "node:fs"
+import { existsSync, readdirSync, readFileSync } from "node:fs"
 
-const overviewGuide = new URL("../dist/guides/overview.md", import.meta.url)
+const sourceDirectory = new URL("../src/guides/", import.meta.url)
+const outputDirectory = new URL("../dist/guides/", import.meta.url)
+const guideFiles = readdirSync(sourceDirectory).filter((fileName) =>
+  fileName.endsWith(".md"),
+)
 
-if (!existsSync(overviewGuide)) {
-  throw new Error("Packaged MCP guides are missing from dist/guides.")
-}
-
-if (
-  !readFileSync(overviewGuide, "utf8").startsWith("# ChatbotX MCP overview")
-) {
-  throw new Error("Packaged MCP overview guide is invalid.")
+for (const fileName of guideFiles) {
+  const guide = new URL(fileName, outputDirectory)
+  if (!existsSync(guide)) {
+    throw new Error(`Packaged MCP guide is missing: ${fileName}`)
+  }
+  if (!readFileSync(guide, "utf8").startsWith("# ")) {
+    throw new Error(`Packaged MCP guide is invalid: ${fileName}`)
+  }
 }

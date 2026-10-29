@@ -40,9 +40,9 @@ Use `search_tools` when the task needs something outside the default set (e.g. d
 
 ### Human approval
 
-Every write operation carries an `x-mcp.hitlPolicy` from the public OpenAPI spec. The server requests MCP form elicitation when the client supports it. Otherwise it returns `CONFIRMATION_REQUIRED` with the policy, proposed arguments, and any readable current state; show that response to the user, then repeat the same call with `_confirm: true` only after explicit approval. `_confirm` is a compatibility guardrail, not an authorization boundary.
+Every operation carries an `x-mcp.hitlPolicy` from the public OpenAPI spec; reads use `none`. The server requests MCP form elicitation when the client supports it, with a 10-minute approval window. Otherwise it returns `CONFIRMATION_REQUIRED` with the policy, proposed arguments, and current state when available; show that response to the user, then repeat the same call with `_confirm: true` only after explicit approval. `_confirm` is a compatibility guardrail, not an authorization boundary.
 
-Writes that are read-only computations declare `hitlPolicy: "none"` in the backend. Destructive writes also carry the MCP `destructiveHint` annotation. A 403 or 404 while loading current state is omitted from the confirmation preview and never blocks confirmation.
+Writes that are read-only computations declare `hitlPolicy: "none"` in the backend. Destructive writes also carry the MCP `destructiveHint` annotation. When a current-state read fails for any reason, `currentState` is omitted and `currentStateUnavailable` explains why; the failed read never blocks confirmation.
 
 ### Scope-based filtering
 
@@ -277,7 +277,7 @@ ChatGPT.com connects via SSE. The server must be publicly reachable. Because Cha
    ```bash
    claude mcp add chatbotx -t sse -s user "https://your-mcp-server.com/sse?workspace_token=<your-token>"
    ```
-3. Set `CHATBOTX_MCP_SERVER_INSTRUCTIONS` so ChatGPT uses tools instead of its training data (see `.env.example` for the recommended value).
+3. Set `CHATBOTX_MCP_SERVER_INSTRUCTIONS` so ChatGPT uses tools instead of its training data. Leave it unset unless replacing the full built-in workflow, including OAuth checkpoints.
 
 ## Token resolution order
 

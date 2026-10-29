@@ -1,14 +1,12 @@
 import { describe, expect, test } from "vitest"
 import { type EvalCase, materializeCases } from "../evals/cases"
 import {
-  getAggregateUsage,
-  getFinalStepUsage,
-  withConfirmationArgument,
-} from "../evals/run"
-import {
   assertComparableManifests,
   type EvalManifest,
+  getAggregateUsage,
+  getFinalStepUsage,
   validateCaseCoverage,
+  withConfirmationArgument,
 } from "../evals/run-contract"
 import { fixtureOperationIds } from "../evals/sandbox"
 

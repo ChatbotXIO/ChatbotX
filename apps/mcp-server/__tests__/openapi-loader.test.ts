@@ -1,5 +1,17 @@
-import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
-import { isWorkspaceTokenOperation, toSnakeCase } from "../src/openapi-loader"
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  expectTypeOf,
+  test,
+  vi,
+} from "vitest"
+import {
+  type DynamicTool,
+  isWorkspaceTokenOperation,
+  toSnakeCase,
+} from "../src/openapi-loader"
 
 describe("toSnakeCase", () => {
   test.each([
@@ -611,6 +623,35 @@ describe("x-mcp visibility, scope, and annotations", () => {
 
     expect(tool?.hitlPolicy).toBe("none")
     expect(tool?.inputSchema.properties).not.toHaveProperty("_confirm")
+  })
+
+  test("defaults an unannotated POST to confirmation and leaves GET unmodified", async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      headers: { get: () => null },
+      json: async () => ({
+        servers: [{ url: "https://api.example.com" }],
+        paths: {
+          "/v1/tags": { get: { operationId: "tags.list" } },
+          "/v1/tags/{id}": { post: { operationId: "tags.update" } },
+        },
+      }),
+    }) as unknown as typeof fetch
+    const { loadOpenApiSpec } = await import("../src/openapi-loader")
+    const tools = await loadOpenApiSpec()
+    const getTool = tools.find((tool) => tool.name === "tags_list")
+    const postTool = tools.find((tool) => tool.name === "tags_update")
+
+    expect(getTool?.hitlPolicy).toBe("none")
+    expect(getTool?.inputSchema.properties).not.toHaveProperty("_confirm")
+    expect(postTool?.hitlPolicy).toBe("confirm_diff")
+    expect(postTool?.inputSchema.properties).toHaveProperty("_confirm")
+  })
+
+  test("keeps the loader policy union aligned with the generated spec", () => {
+    expectTypeOf<DynamicTool["hitlPolicy"]>().toEqualTypeOf<
+      "none" | "confirm_diff" | "confirm_destructive" | "confirm_outbound"
+    >()
   })
 })
 

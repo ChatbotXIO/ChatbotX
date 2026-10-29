@@ -2,15 +2,12 @@ import { existsSync, readFileSync } from "node:fs"
 import { dirname, join } from "node:path"
 import { fileURLToPath } from "node:url"
 
-export const resolveGuideDirectory = (moduleUrl: string): string => {
-  const moduleDirectory = dirname(fileURLToPath(moduleUrl))
-  const sourceGuideDirectory = join(moduleDirectory, "overview.md")
-  return existsSync(sourceGuideDirectory)
+const guideDirectory = (() => {
+  const moduleDirectory = dirname(fileURLToPath(import.meta.url))
+  return existsSync(join(moduleDirectory, "overview.md"))
     ? moduleDirectory
     : join(moduleDirectory, "guides")
-}
-
-const guideDirectory = resolveGuideDirectory(import.meta.url)
+})()
 
 const guideDefinitions = {
   overview: {
@@ -45,15 +42,29 @@ export type Guide = {
 
 export const guideNames = Object.keys(guideDefinitions) as GuideName[]
 
+const loadGuide = (name: GuideName): Guide => {
+  const definition = guideDefinitions[name]
+  const path = join(guideDirectory, definition.fileName)
+  try {
+    return {
+      content: readFileSync(path, "utf8"),
+      description: definition.description,
+      name,
+      uri: `chatbotx://guides/${name}`,
+    }
+  } catch (error) {
+    const reason = error instanceof Error ? error.message : String(error)
+    throw new Error(`Failed to load MCP guide at ${path}: ${reason}`, {
+      cause: error,
+    })
+  }
+}
+
+const guides = Object.freeze(
+  Object.fromEntries(guideNames.map((name) => [name, loadGuide(name)])),
+) as Readonly<Record<GuideName, Guide>>
+
 export const isGuideName = (name: string): name is GuideName =>
   Object.hasOwn(guideDefinitions, name)
 
-export const getGuide = (name: GuideName): Guide => {
-  const definition = guideDefinitions[name]
-  return {
-    content: readFileSync(join(guideDirectory, definition.fileName), "utf8"),
-    description: definition.description,
-    name,
-    uri: `chatbotx://guides/${name}`,
-  }
-}
+export const getGuide = (name: GuideName): Guide => guides[name]

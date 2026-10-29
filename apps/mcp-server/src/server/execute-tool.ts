@@ -11,6 +11,7 @@ const LOCAL_PHONE_PATTERN = /^0\d{8,}$/u
 const NUMERIC_ID_PATTERN = /^\d+$/u
 const MAX_BARE_ID_LENGTH = 10
 const PREFIXED_IDENTIFIER_PATTERN = /^(id|email|phone):/u
+const TRAILING_COLON_PATTERN = /:$/u
 
 /**
  * Contact-facing tools accept a prefixed identifier (`id:123`,
@@ -173,6 +174,8 @@ export type ToolCallResult = {
   isError?: boolean
 }
 
+const successfulResponseContentTypes = new WeakMap<ToolCallResult, string>()
+
 export const errorResult = (text: string): ToolCallResult => ({
   content: [{ text, type: "text" }],
   isError: true,
@@ -183,19 +186,71 @@ export const jsonResult = (value: unknown): ToolCallResult => ({
 })
 
 const findCurrentStateTool = (tool: DynamicTool): DynamicTool | undefined => {
+  const getToolsByPath = new Map(
+    getCachedTools()
+      .filter((candidate) => candidate.method === "GET")
+      .map((candidate) => [candidate.pathTemplate, candidate]),
+  )
   const pathSegments = tool.pathTemplate.split("/")
   for (
     let segmentCount = pathSegments.length;
     segmentCount > 1;
     segmentCount -= 1
   ) {
-    const candidatePath = pathSegments.slice(0, segmentCount).join("/")
-    const candidate = getCachedTools().find(
-      (item) => item.method === "GET" && item.pathTemplate === candidatePath,
+    const candidate = getToolsByPath.get(
+      pathSegments.slice(0, segmentCount).join("/"),
     )
-    if (candidate) {
+    if (
+      candidate &&
+      candidate.pathParamNames.length > 0 &&
+      candidate.pathParamNames.every((name) =>
+        tool.pathParamNames.includes(name),
+      )
+    ) {
       return candidate
     }
+  }
+}
+
+const firstLine = (value: string): string =>
+  value.split("\n")[0]?.replace(TRAILING_COLON_PATTERN, "") ?? "unknown failure"
+
+const getCurrentState = async (props: {
+  args: Record<string, unknown>
+  credentials: RequestCredentials
+  tool: DynamicTool
+}): Promise<{ state: unknown } | { unavailable: string }> => {
+  const stateTool = findCurrentStateTool(props.tool)
+  if (!stateTool) {
+    return { unavailable: "no read operation" }
+  }
+
+  const stateArgs = Object.fromEntries(
+    stateTool.pathParamNames.map((name) => [name, props.args[name]]),
+  )
+  const stateResult = await executeTool(
+    stateTool,
+    stateArgs,
+    props.credentials,
+    {},
+  )
+  if (stateResult.isError) {
+    return {
+      unavailable: firstLine(stateResult.content[0]?.text ?? "unknown failure"),
+    }
+  }
+  if (
+    !successfulResponseContentTypes
+      .get(stateResult)
+      ?.includes("application/json")
+  ) {
+    return { unavailable: "non-JSON body" }
+  }
+
+  try {
+    return { state: JSON.parse(stateResult.content[0]?.text ?? "") }
+  } catch {
+    return { unavailable: "non-JSON body" }
   }
 }
 
@@ -222,31 +277,16 @@ export async function executeTool(
     const hitlGate = await enforceHitlGate({
       args,
       elicitationClient: options.elicitationClient,
-      getCurrentState: async () => {
-        const currentStateTool = findCurrentStateTool(tool)
-        if (!currentStateTool) {
-          return
-        }
-
-        const currentStateResult = await executeTool(
-          currentStateTool,
+      getCurrentState: async () =>
+        await getCurrentState({
           args,
           credentials,
-          options,
-        )
-        if (currentStateResult.isError) {
-          return
-        }
-        try {
-          return JSON.parse(currentStateResult.content[0]?.text ?? "null")
-        } catch {
-          return
-        }
-      },
+          tool,
+        }),
       tool,
     })
-    if (hitlGate.result) {
-      return hitlGate.result
+    if (hitlGate.failure) {
+      return errorResult(JSON.stringify(hitlGate.failure, null, 2))
     }
     args = hitlGate.args
   } catch (error) {
@@ -311,7 +351,9 @@ export async function executeTool(
       )
     }
 
-    return jsonResult(result)
+    const toolResult = jsonResult(result)
+    successfulResponseContentTypes.set(toolResult, contentType)
+    return toolResult
   } catch (error) {
     if (error instanceof Error && error.name === "TimeoutError") {
       return errorResult(error.message)

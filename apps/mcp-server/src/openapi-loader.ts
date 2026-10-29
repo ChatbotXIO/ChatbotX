@@ -1,4 +1,5 @@
 import { env } from "./env"
+import type { GuideName } from "./guides"
 import { fetchWithTimeout } from "./http"
 import type { TokenIntrospection } from "./token-introspection"
 
@@ -7,12 +8,11 @@ interface OpenAPISpec {
   servers?: Array<{ url: string }>
 }
 
-export type McpHitlPolicy =
+type McpHitlPolicy =
   | "none"
   | "confirm_diff"
   | "confirm_destructive"
   | "confirm_outbound"
-
 interface McpOperationMeta {
   alwaysVisible?: boolean
   destructiveHint?: boolean
@@ -176,12 +176,8 @@ const resolveHitlPolicy = (
 ): McpHitlPolicy =>
   meta?.hitlPolicy ?? (annotations.readOnlyHint ? "none" : "confirm_diff")
 
-type GuideName =
-  | "flows-and-automation"
-  | "inbox-and-handover"
-  | "contacts-and-pipelines"
-
-const GUIDE_BY_TAG: Partial<Record<string, GuideName>> = {
+type TaggedGuideName = Exclude<GuideName, "overview">
+const GUIDE_BY_TAG: Partial<Record<string, TaggedGuideName>> = {
   Broadcasts: "flows-and-automation",
   Contacts: "contacts-and-pipelines",
   Conversations: "inbox-and-handover",
@@ -218,7 +214,7 @@ function buildToolDescription(
   }
   const guideName = operation.tags
     ?.map((tag) => GUIDE_BY_TAG[tag])
-    .find((candidate): candidate is GuideName => candidate !== undefined)
+    .find((candidate): candidate is TaggedGuideName => candidate !== undefined)
   if (guideName) {
     requirements.push(
       `For the operational procedure, call get_guide with name "${guideName}".`,

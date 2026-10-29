@@ -427,4 +427,228 @@ describe("executeTool", () => {
       code: "CONFIRMATION_DECLINED",
     })
   })
+
+  test("reports the elicitation cancellation action without dispatching", async () => {
+    const fetchMock = vi.fn()
+    globalThis.fetch = fetchMock as unknown as typeof fetch
+
+    const result = await executeTool(
+      {
+        ...tool,
+        annotations: {
+          destructiveHint: true,
+          idempotentHint: false,
+          readOnlyHint: false,
+        },
+        hitlPolicy: "confirm_destructive",
+        method: "DELETE",
+        name: "tags_delete",
+      },
+      {},
+      { token: "api-key" },
+      {
+        elicitationClient: {
+          elicitInput: async () => ({ action: "cancel" }),
+          supportsFormElicitation: () => true,
+        },
+      },
+    )
+
+    expect(fetchMock).not.toHaveBeenCalled()
+    expect(JSON.parse(result.content[0]?.text ?? "{}")).toMatchObject({
+      action: "cancel",
+      code: "CONFIRMATION_DECLINED",
+    })
+  })
+
+  test("reports elicitation failures without dispatching", async () => {
+    const fetchMock = vi.fn()
+    globalThis.fetch = fetchMock as unknown as typeof fetch
+
+    const result = await executeTool(
+      {
+        ...tool,
+        annotations: {
+          destructiveHint: false,
+          idempotentHint: false,
+          readOnlyHint: false,
+        },
+        hitlPolicy: "confirm_diff",
+        method: "POST",
+        name: "tags_create",
+      },
+      { name: "VIP" },
+      { token: "api-key" },
+      {
+        elicitationClient: {
+          elicitInput: () => Promise.reject(new Error("Request timed out")),
+          supportsFormElicitation: () => true,
+        },
+      },
+    )
+
+    expect(fetchMock).not.toHaveBeenCalled()
+    expect(result.content[0]?.text).toBe(
+      "Confirmation failed: Request timed out",
+    )
+  })
+
+  test("elicits even when a form-capable client supplies _confirm", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(successfulResponse)
+    const elicitInput = vi.fn().mockResolvedValue({ action: "accept" })
+    globalThis.fetch = fetchMock as unknown as typeof fetch
+
+    await executeTool(
+      {
+        ...tool,
+        annotations: {
+          destructiveHint: false,
+          idempotentHint: false,
+          readOnlyHint: false,
+        },
+        bodyParamNames: ["name"],
+        hitlPolicy: "confirm_diff",
+        method: "POST",
+        name: "tags_create",
+        pathTemplate: "/v1/tags",
+      },
+      { _confirm: true, name: "VIP" },
+      { token: "api-key" },
+      {
+        elicitationClient: {
+          elicitInput,
+          supportsFormElicitation: () => true,
+        },
+      },
+    )
+
+    expect(elicitInput).toHaveBeenCalledOnce()
+    expect(fetchMock).toHaveBeenCalledWith(
+      "https://api.example.com/v1/tags",
+      expect.objectContaining({ body: JSON.stringify({ name: "VIP" }) }),
+    )
+  })
+
+  test("removes _confirm from read-only query arguments", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(successfulResponse)
+    globalThis.fetch = fetchMock as unknown as typeof fetch
+
+    await executeTool(
+      { ...tool, queryParamNames: ["page"] },
+      { _confirm: true, page: 2 },
+      { token: "api-key" },
+    )
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "https://api.example.com/v1/contacts?page=2",
+      expect.anything(),
+    )
+  })
+
+  test("uses only matching path parameters for current state and reports unavailable reads", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce({
+        headers: { get: () => null },
+        json: async () => ({
+          servers: [{ url: "https://api.example.com" }],
+          paths: {
+            "/v1/tags/{id}": {
+              get: { operationId: "tags.get", summary: "Get tag" },
+            },
+          },
+        }),
+        ok: true,
+      })
+      .mockResolvedValueOnce({
+        headers: { get: () => "application/json" },
+        json: async () => ({ id: "tag-1", name: "VIP" }),
+        ok: true,
+      })
+    globalThis.fetch = fetchMock as unknown as typeof fetch
+
+    const { loadOpenApiSpec } = await import("../src/openapi-loader")
+    await loadOpenApiSpec()
+    const deleteTool: DynamicTool = {
+      ...tool,
+      annotations: {
+        destructiveHint: true,
+        idempotentHint: true,
+        readOnlyHint: false,
+      },
+      hitlPolicy: "confirm_destructive",
+      method: "DELETE",
+      name: "tags_delete",
+      pathParamNames: ["id"],
+      pathTemplate: "/v1/tags/{id}",
+      queryParamNames: ["search"],
+    }
+
+    const stateResult = await executeTool(
+      deleteTool,
+      { id: "tag-1", search: "should-not-forward" },
+      { token: "api-key" },
+    )
+
+    expect(fetchMock).toHaveBeenLastCalledWith(
+      "https://api.example.com/v1/tags/tag-1",
+      expect.objectContaining({ method: "GET" }),
+    )
+    expect(JSON.parse(stateResult.content[0]?.text ?? "{}")).toMatchObject({
+      currentState: { id: "tag-1", name: "VIP" },
+    })
+
+    fetchMock.mockClear()
+    const createResult = await executeTool(
+      {
+        ...tool,
+        annotations: {
+          destructiveHint: false,
+          idempotentHint: false,
+          readOnlyHint: false,
+        },
+        hitlPolicy: "confirm_diff",
+        method: "POST",
+        name: "tags_create",
+        pathTemplate: "/v1/tags",
+      },
+      {},
+      { token: "api-key" },
+    )
+    expect(fetchMock).not.toHaveBeenCalled()
+    expect(JSON.parse(createResult.content[0]?.text ?? "{}")).toMatchObject({
+      currentStateUnavailable: "no read operation",
+    })
+
+    fetchMock.mockResolvedValueOnce({
+      headers: { get: () => "application/json" },
+      json: async () => ({ error: "Forbidden" }),
+      ok: false,
+      status: 403,
+    })
+    const unavailableResult = await executeTool(
+      deleteTool,
+      { id: "tag-1" },
+      { token: "api-key" },
+    )
+    expect(
+      JSON.parse(unavailableResult.content[0]?.text ?? "{}"),
+    ).toMatchObject({
+      currentStateUnavailable: "Error 403",
+    })
+
+    fetchMock.mockResolvedValueOnce({
+      headers: { get: () => "text/plain" },
+      ok: true,
+      text: async () => "not JSON",
+    })
+    const nonJsonResult = await executeTool(
+      deleteTool,
+      { id: "tag-1" },
+      { token: "api-key" },
+    )
+    expect(JSON.parse(nonJsonResult.content[0]?.text ?? "{}")).toMatchObject({
+      currentStateUnavailable: "non-JSON body",
+    })
+  })
 })

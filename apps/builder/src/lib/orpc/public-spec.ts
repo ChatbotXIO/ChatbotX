@@ -5,7 +5,7 @@ import {
   IDEMPOTENT_REPLAYED_HEADER,
   MAX_IDEMPOTENCY_KEY_LENGTH,
 } from "../idempotency/constants"
-import type { McpHitlPolicy, McpRouteMeta } from "./mcp-annotations"
+import type { McpHitlPolicy, OperationObjectWithMcp } from "./mcp-annotations"
 
 type PublicSpecDocument = Awaited<
   ReturnType<InstanceType<typeof OpenAPIGenerator>["generate"]>
@@ -47,37 +47,32 @@ const CHANNEL_API_TOKEN_SECURITY: Record<string, string[]>[] = [
 // hook — only a document-level default via `specGenerateOptions.security`).
 const CHANNEL_API_TOKEN_PATH_PREFIX = "/v1/channels/api/"
 
-const IDEMPOTENT_METHODS = new Set(["post", "put", "patch", "delete"])
-
-const READ_ONLY_METHODS: Record<string, true> = { get: true, head: true }
-const HITL_HTTP_METHODS: Record<string, true> = {
-  get: true,
-  head: true,
-  post: true,
-  put: true,
-  patch: true,
-  delete: true,
-}
+const IDEMPOTENT_METHODS: ReadonlySet<string> = new Set([
+  "post",
+  "put",
+  "patch",
+  "delete",
+])
+const READ_ONLY_METHODS: ReadonlySet<string> = new Set(["get", "head"])
+const HITL_HTTP_METHODS: ReadonlySet<string> = new Set([
+  "get",
+  "head",
+  "post",
+  "put",
+  "patch",
+  "delete",
+])
 
 const OUTBOUND_OPERATION_PATTERNS = [
   /^messages_create$/u,
-  /(?:^|_)(?:send|schedule|resend|resume|book|block|import)(?:_|$)/u,
-  /_issue_/u,
-  /_trigger_/u,
-  /_bulk_/u,
-  /_push_/u,
+  /(?:^|_)(?:send|schedule|resend|book|issue|trigger|push|publish|subscribe)(?:_|$)/u,
+  /_resume$/u,
   /_thread_control$/u,
   /_enable_bot$/u,
 ] as const
 
 const DESTRUCTIVE_OPERATION_PATTERN =
-  /(?:^|_)(?:delete|remove|reset|stop|cancel)(?:_|$)/u
-
-type OpenApiOperation = {
-  operationId?: string
-  responses?: unknown
-  "x-mcp"?: McpRouteMeta & { scope?: string | string[] }
-}
+  /(?:^|_)(?:delete|remove|reset|stop|cancel|clear|disconnect|archive|block|purge|revoke|unsubscribe)(?:_|$)/u
 
 const normalizeOperationId = (operationId: string): string =>
   operationId
@@ -85,12 +80,12 @@ const normalizeOperationId = (operationId: string): string =>
     .replace(/[.-]/gu, "_")
     .toLowerCase()
 
-const inferHitlPolicy = (
+export const inferHitlPolicy = (
   method: string,
   operationId: string | undefined,
   readOnlyHint: boolean | undefined,
 ): McpHitlPolicy => {
-  if (READ_ONLY_METHODS[method] || readOnlyHint) {
+  if (READ_ONLY_METHODS.has(method) || readOnlyHint) {
     return "none"
   }
 
@@ -98,14 +93,17 @@ const inferHitlPolicy = (
     ? normalizeOperationId(operationId)
     : ""
   if (
+    method === "delete" ||
+    DESTRUCTIVE_OPERATION_PATTERN.test(normalizedOperationId)
+  ) {
+    return "confirm_destructive"
+  }
+  if (
     OUTBOUND_OPERATION_PATTERNS.some((pattern) =>
       pattern.test(normalizedOperationId),
     )
   ) {
     return "confirm_outbound"
-  }
-  if (DESTRUCTIVE_OPERATION_PATTERN.test(normalizedOperationId)) {
-    return "confirm_destructive"
   }
   return "confirm_diff"
 }
@@ -129,6 +127,30 @@ export function publicSpecGenerateOptions(title: string) {
   }
 }
 
+const forEachOperation = (
+  spec: PublicSpecDocument,
+  callback: (
+    path: string,
+    method: string,
+    operation: OperationObjectWithMcp,
+  ) => void,
+): void => {
+  for (const [path, pathItem] of Object.entries(spec.paths ?? {})) {
+    if (!pathItem) {
+      continue
+    }
+    for (const [method, operation] of Object.entries(pathItem)) {
+      if (
+        operation &&
+        typeof operation === "object" &&
+        "responses" in operation
+      ) {
+        callback(path, method, operation as OperationObjectWithMcp)
+      }
+    }
+  }
+}
+
 /**
  * Overrides `security` to the channel-token scheme for every
  * `/v1/channels/api/*` operation in a generated spec, so the document is
@@ -137,26 +159,11 @@ export function publicSpecGenerateOptions(title: string) {
  * workspace-token schemes).
  */
 export function withChannelApiTokenSecurity(spec: PublicSpecDocument) {
-  if (!spec.paths) {
-    return spec
-  }
-
-  for (const [path, pathItem] of Object.entries(spec.paths)) {
-    if (!(pathItem && path.startsWith(CHANNEL_API_TOKEN_PATH_PREFIX))) {
-      continue
+  forEachOperation(spec, (path, _, operation) => {
+    if (path.startsWith(CHANNEL_API_TOKEN_PATH_PREFIX)) {
+      operation.security = CHANNEL_API_TOKEN_SECURITY
     }
-
-    for (const operation of Object.values(pathItem)) {
-      if (
-        operation &&
-        typeof operation === "object" &&
-        "responses" in operation
-      ) {
-        ;(operation as { security?: unknown }).security =
-          CHANNEL_API_TOKEN_SECURITY
-      }
-    }
-  }
+  })
 
   return spec
 }
@@ -167,48 +174,24 @@ export function withChannelApiTokenSecurity(spec: PublicSpecDocument) {
  * never silently becomes unguarded when a new public procedure is added.
  */
 export function withMcpHitlPolicy(spec: PublicSpecDocument) {
-  if (!spec.paths) {
-    return spec
-  }
-
-  for (const pathItem of Object.values(spec.paths)) {
-    if (!pathItem) {
-      continue
+  forEachOperation(spec, (_, method, operation) => {
+    if (!HITL_HTTP_METHODS.has(method)) {
+      return
     }
 
-    for (const [method, operation] of Object.entries(pathItem)) {
-      if (!HITL_HTTP_METHODS[method]) {
-        continue
-      }
-      if (
-        !(
-          operation &&
-          typeof operation === "object" &&
-          "responses" in operation
-        )
-      ) {
-        continue
-      }
-
-      const operationWithMcp = operation as OpenApiOperation
-      const existing = operationWithMcp["x-mcp"]
-      const hitlPolicy =
-        existing?.hitlPolicy ??
-        inferHitlPolicy(
-          method,
-          operationWithMcp.operationId,
-          existing?.readOnlyHint,
-        )
-      operationWithMcp["x-mcp"] = {
-        ...existing,
-        ...(hitlPolicy === "confirm_destructive" &&
-        existing?.destructiveHint === undefined
-          ? { destructiveHint: true }
-          : {}),
-        hitlPolicy,
-      }
+    const existing = operation["x-mcp"]
+    const hitlPolicy =
+      existing?.hitlPolicy ??
+      inferHitlPolicy(method, operation.operationId, existing?.readOnlyHint)
+    operation["x-mcp"] = {
+      ...existing,
+      ...(hitlPolicy === "confirm_destructive" &&
+      existing?.destructiveHint === undefined
+        ? { destructiveHint: true }
+        : {}),
+      hitlPolicy,
     }
-  }
+  })
 
   return spec
 }
@@ -218,40 +201,23 @@ export function withMcpHitlPolicy(spec: PublicSpecDocument) {
  * method-aware operation hook, so this runs after the document is generated.
  */
 export function withIdempotencyKeyHeader(spec: PublicSpecDocument) {
-  if (!spec.paths) {
-    return spec
-  }
-
-  for (const pathItem of Object.values(spec.paths)) {
-    if (!pathItem) {
-      continue
+  forEachOperation(spec, (_, method, operation) => {
+    if (!IDEMPOTENT_METHODS.has(method)) {
+      return
     }
 
-    for (const [method, operation] of Object.entries(pathItem)) {
-      if (!IDEMPOTENT_METHODS.has(method)) {
-        continue
-      }
-      if (!(operation && typeof operation === "object")) {
-        continue
-      }
-
-      const operationWithParameters = operation as { parameters?: unknown[] }
-      const parameters = operationWithParameters.parameters ?? []
-      const hasIdempotencyKey = parameters.some(
-        (parameter) =>
-          parameter !== null &&
-          typeof parameter === "object" &&
-          "name" in parameter &&
-          parameter.name === IDEMPOTENCY_KEY_PARAMETER.name,
-      )
-      if (!hasIdempotencyKey) {
-        operationWithParameters.parameters = [
-          ...parameters,
-          IDEMPOTENCY_KEY_PARAMETER,
-        ]
-      }
+    const parameters = operation.parameters ?? []
+    const hasIdempotencyKey = parameters.some(
+      (parameter) =>
+        parameter !== null &&
+        typeof parameter === "object" &&
+        "name" in parameter &&
+        parameter.name === IDEMPOTENCY_KEY_PARAMETER.name,
+    )
+    if (!hasIdempotencyKey) {
+      operation.parameters = [...parameters, IDEMPOTENCY_KEY_PARAMETER]
     }
-  }
+  })
 
   return spec
 }

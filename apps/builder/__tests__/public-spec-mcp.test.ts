@@ -6,7 +6,12 @@ import { join } from "node:path"
 import { OpenAPIGenerator } from "@orpc/openapi"
 import { ZodToJsonSchemaConverter } from "@orpc/zod/zod4"
 import { beforeAll, describe, expect, test, vi } from "vitest"
-import { WORKSPACE_TOKEN_SECURITY_SCHEMES } from "@/lib/orpc/public-spec"
+import {
+  inferHitlPolicy,
+  WORKSPACE_TOKEN_SECURITY_SCHEMES,
+  withIdempotencyKeyHeader,
+  withMcpHitlPolicy,
+} from "@/lib/orpc/public-spec"
 
 // Same side-effect-free import stubs as public-spec-operations.test.ts —
 // `@/routers/public` transitively boots the real db client and better-auth
@@ -166,6 +171,31 @@ beforeAll(async () => {
   operations.sort((a, b) => a.operationId.localeCompare(b.operationId))
 }, 120_000)
 
+describe("inferHitlPolicy", () => {
+  test.each([
+    ["post", "contacts.unblock", "confirm_diff"],
+    ["post", "broadcasts.unschedule", "confirm_diff"],
+    ["post", "flows.publish", "confirm_outbound"],
+    ["post", "contacts.bulkDelete", "confirm_destructive"],
+    ["post", "contacts.bulkAddTags", "confirm_diff"],
+    ["post", "contacts.import", "confirm_diff"],
+    ["post", "messengerChannels.updateHandoverResumeFlow", "confirm_diff"],
+    ["post", "broadcasts.resume", "confirm_outbound"],
+    ["post", "connections.disconnect", "confirm_destructive"],
+    ["post", "contacts.clearCustomFields", "confirm_destructive"],
+    ["post", "conversations.archive", "confirm_destructive"],
+    ["post", "conversations.unarchive", "confirm_diff"],
+    ["post", "contacts.bulkSubscribeSequences", "confirm_outbound"],
+  ] as const)("%s %s -> %s", (method, operationId, expected) => {
+    expect(inferHitlPolicy(method, operationId, undefined)).toBe(expected)
+  })
+
+  test("keeps reads and read-only writes unguarded", () => {
+    expect(inferHitlPolicy("get", "contacts.delete", undefined)).toBe("none")
+    expect(inferHitlPolicy("post", "files.search", true)).toBe("none")
+  })
+})
+
 describe("x-mcp.scope coverage", () => {
   test("every workspace-token operation carries x-mcp.scope", () => {
     const missingScope = operations
@@ -182,11 +212,15 @@ describe("x-mcp HITL policy coverage", () => {
     const unguardedWrites = operations
       .filter(isWorkspaceTokenOperation)
       .filter((operation) => !["GET", "HEAD"].includes(operation.method))
-      .filter((operation) => operation["x-mcp"]?.readOnlyHint !== true)
       .filter(
         (operation) =>
           !operation["x-mcp"]?.hitlPolicy ||
           operation["x-mcp"]?.hitlPolicy === "none",
+      )
+      .filter(
+        (operation) =>
+          operation["x-mcp"]?.hitlPolicy !== "none" ||
+          !HITL_NONE_WRITE_ALLOWLIST[operation.operationId],
       )
       .map((operation) => operation.operationId)
 
@@ -224,6 +258,112 @@ describe("x-mcp outbound policy", () => {
     )
 
     expect(operation?.["x-mcp"]?.hitlPolicy).toBe("confirm_outbound")
+  })
+
+  test("pins the complete outbound operation set", () => {
+    const outboundOperationIds = operations
+      .filter(
+        (operation) => operation["x-mcp"]?.hitlPolicy === "confirm_outbound",
+      )
+      .map((operation) => operation.operationId)
+      .sort()
+
+    expect(outboundOperationIds).toEqual([
+      "ads.publishCampaign",
+      "appointments.book",
+      "broadcasts.resend",
+      "broadcasts.resume",
+      "broadcasts.schedule",
+      "channels.sendMessage",
+      "contacts.bulkSubscribeSequences",
+      "contacts.sendFlow",
+      "contacts.sendMessage",
+      "contacts.subscribeSequences",
+      "contacts.triggerAutoReply",
+      "conversations.enableBot",
+      "conversations.threadControl",
+      "coupons.issueCoupon",
+      "facebookMarketingMessages.campaigns.resume",
+      "facebookMarketingMessages.campaigns.send",
+      "flows.publish",
+      "instagramChannels.sendCapiTestEvent",
+      "leaderboards.publish",
+      "leaderboards.triggerRewards",
+      "messages.create",
+      "messages.sendWhatsappTemplate",
+      "messengerChannels.sendCapiTestEvent",
+      "miniApps.publishWhatsapp",
+      "miniApps.publishWhatsappDraft",
+      "miniApps.pushWhatsappDraft",
+      "whatsappChannels.sendCapiTestEvent",
+    ])
+  })
+})
+
+describe("x-mcp policy classifications", () => {
+  test("marks every DELETE operation as destructive", () => {
+    const nonDestructiveDeletes = operations
+      .filter(isWorkspaceTokenOperation)
+      .filter((operation) => operation.method === "DELETE")
+      .filter(
+        (operation) => operation["x-mcp"]?.hitlPolicy !== "confirm_destructive",
+      )
+      .map((operation) => operation.operationId)
+
+    expect(nonDestructiveDeletes).toEqual([])
+  })
+
+  test.each([
+    ["flows.publish", "confirm_outbound"],
+    ["contacts.bulkDelete", "confirm_destructive"],
+    ["contacts.bulkAddTags", "confirm_diff"],
+    ["contacts.import", "confirm_diff"],
+    ["connections.disconnect", "confirm_destructive"],
+    ["contacts.clearCustomFields", "confirm_destructive"],
+    ["conversations.archive", "confirm_destructive"],
+    ["contacts.bulkSubscribeSequences", "confirm_outbound"],
+  ] as const)("classifies %s as %s in the generated spec", (operationId, policy) => {
+    expect(
+      operations.find((operation) => operation.operationId === operationId)?.[
+        "x-mcp"
+      ]?.hitlPolicy,
+    ).toBe(policy)
+  })
+
+  test("preserves explicit hints and idempotency parameters across reruns", () => {
+    const spec = {
+      paths: {
+        "/v1/example": {
+          post: {
+            operationId: "example.remove",
+            responses: {},
+            "x-mcp": { destructiveHint: false, hitlPolicy: "confirm_diff" },
+          },
+        },
+      },
+    }
+
+    withMcpHitlPolicy(spec as never)
+    withIdempotencyKeyHeader(spec as never)
+    withIdempotencyKeyHeader(spec as never)
+
+    const operation = spec.paths["/v1/example"]
+      .post as (typeof spec.paths)["/v1/example"]["post"] & {
+      parameters?: unknown[]
+    }
+    expect(operation["x-mcp"]).toMatchObject({
+      destructiveHint: false,
+      hitlPolicy: "confirm_diff",
+    })
+    expect(operation.parameters).toHaveLength(1)
+  })
+
+  test("does not advertise aiFiles.search to read-only tokens", () => {
+    expect(
+      operations.find(
+        (operation) => operation.operationId === "aiFiles.search",
+      )?.["x-mcp"]?.readOnlyHint,
+    ).toBeUndefined()
   })
 })
 
