@@ -5771,6 +5771,19 @@
       "searching": "Se caută…",
       "error": "Nu s-au putut căuta contactele",
       "empty": "Niciun contact găsit"
+    },
+    "exportHistory": {
+      "title": "Istoric exporturi",
+      "description": "Exporturile de contacte din ultimele {days} zile. După aceea, fișierele sunt șterse.",
+      "empty": "Încă nu există exporturi.",
+      "requestedBy": "De {name}",
+      "deletesOn": "Se șterge pe {date}",
+      "rows": "{count, plural, one {# contact} other {# de contacte}}",
+      "status": {
+        "pending": "Se procesează",
+        "uploaded": "Gata",
+        "failed": "Eșuat"
+      }
     }
   },
   "contactScan": {

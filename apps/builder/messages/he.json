@@ -3562,6 +3562,19 @@
       "searching": "מחפש…",
       "error": "לא ניתן לחפש אנשי קשר",
       "empty": "לא נמצאו אנשי קשר"
+    },
+    "exportHistory": {
+      "title": "היסטוריית ייצוא",
+      "description": "ייצואי אנשי קשר מ-{days} הימים האחרונים. לאחר מכן הקבצים נמחקים.",
+      "empty": "אין ייצואים עדיין.",
+      "requestedBy": "על ידי {name}",
+      "deletesOn": "יימחק ב-{date}",
+      "rows": "{count, plural, one {# איש קשר} other {# אנשי קשר}}",
+      "status": {
+        "pending": "בעיבוד",
+        "uploaded": "מוכן",
+        "failed": "נכשל"
+      }
     }
   },
   "contactScan": {

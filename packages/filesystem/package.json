@@ -24,7 +24,8 @@
   },
   "exports": {
     ".": "./src/index.ts",
-    "./node-upload": "./src/lib/node-upload.ts"
+    "./node-upload": "./src/lib/node-upload.ts",
+    "./upload-writer": "./src/lib/upload-writer.ts"
   },
   "scripts": {
     "check-types": "tsc --noEmit",

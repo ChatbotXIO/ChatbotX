@@ -4,6 +4,7 @@ const mocks = vi.hoisted(() => ({
   insertIgnoreDuplicate: vi.fn(),
   findLatestAdTouchId: vi.fn(),
   listRecentAds: vi.fn(),
+  listAdIdsByContacts: vi.fn(),
   recordActivity: vi.fn(),
   aggregateAdTouchStats: vi.fn(),
   aggregateMetaLinkedConversions: vi.fn(),
@@ -26,6 +27,7 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
     insertIgnoreDuplicate: mocks.insertIgnoreDuplicate,
     findLatestAdTouchId: mocks.findLatestAdTouchId,
     listRecentAds: mocks.listRecentAds,
+    listAdIdsByContacts: mocks.listAdIdsByContacts,
     aggregateAdTouchStats: mocks.aggregateAdTouchStats,
     aggregateMetaLinkedConversions: mocks.aggregateMetaLinkedConversions,
   },
@@ -35,6 +37,7 @@ vi.mock("../src/contact-activity", () => ({
   contactActivityService: { record: mocks.recordActivity },
 }))
 
+import { CONTACT_AD_IDS_LIMIT } from "@chatbotx.io/database/partials"
 import { contactReferralEventService } from "../src/contact-referral-event"
 
 const identity = {
@@ -370,5 +373,51 @@ describe("contactReferralEventService.getAdStats", () => {
     await expect(contactReferralEventService.getAdStats(input)).rejects.toThrow(
       "db down",
     )
+  })
+})
+
+describe("contactReferralEventService.listAdIdsByContacts", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  test("asks for a page of contacts in one call, capped at the shared per-contact limit, under a statement timeout", async () => {
+    const lists = new Map([["1", ["1001", "1002"]]])
+    mocks.listAdIdsByContacts.mockResolvedValueOnce(lists)
+
+    await expect(
+      contactReferralEventService.listAdIdsByContacts({
+        workspaceId: "ws-1",
+        contactIds: ["1", "2"],
+      }),
+    ).resolves.toBe(lists)
+
+    expect(mocks.listAdIdsByContacts).toHaveBeenCalledTimes(1)
+    expect(mocks.listAdIdsByContacts).toHaveBeenCalledWith(
+      {
+        workspaceId: "ws-1",
+        contactIds: ["1", "2"],
+        limitPerContact: CONTACT_AD_IDS_LIMIT,
+      },
+      { marker: "tx" },
+    )
+    // The timeout is set on the same transaction the query runs in.
+    expect(mocks.setLocalStatementTimeout).toHaveBeenCalledWith(
+      { marker: "tx" },
+      "15s",
+    )
+  })
+
+  test("lets a failed or timed out query fail the caller instead of returning a partial page", async () => {
+    mocks.listAdIdsByContacts.mockRejectedValueOnce(
+      new Error("statement timeout"),
+    )
+
+    await expect(
+      contactReferralEventService.listAdIdsByContacts({
+        workspaceId: "ws-1",
+        contactIds: ["1"],
+      }),
+    ).rejects.toThrow("statement timeout")
   })
 })

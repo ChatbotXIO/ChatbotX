@@ -6453,6 +6453,19 @@
       "searching": "Axtarılır…",
       "error": "Kontaktları axtarmaq mümkün olmadı",
       "empty": "Kontakt tapılmadı"
+    },
+    "exportHistory": {
+      "title": "İxrac tarixçəsi",
+      "description": "Son {days} gündəki kontakt ixracları. Bundan sonra fayllar silinir.",
+      "empty": "Hələ ixrac yoxdur.",
+      "requestedBy": "{name} tərəfindən",
+      "deletesOn": "{date} tarixində silinir",
+      "rows": "{count, plural, one {# kontakt} other {# kontakt}}",
+      "status": {
+        "pending": "Emal olunur",
+        "uploaded": "Hazırdır",
+        "failed": "Uğursuz oldu"
+      }
     }
   },
   "contactScan": {

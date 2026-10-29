@@ -1,1 +1,5 @@
-export { contactExportService } from "./service"
+export {
+  type ContactExportCursor,
+  type ContactExportFileSummary,
+  contactExportService,
+} from "./service"

@@ -56,6 +56,7 @@ export const ScheduleJobData = {
   refreshLicense: "refreshLicense",
   unsubscribeExpiredTrials: "unsubscribeExpiredTrials",
   teardownExpiredTrial: "teardownExpiredTrial",
+  purgeExpiredContactExports: "purgeExpiredContactExports",
   // WhatsApp calling.
   purgeExpiredCallRecordings: "purgeExpiredCallRecordings",
   sweepStaleWhatsappCalls: "sweepStaleWhatsappCalls",
@@ -360,6 +361,12 @@ export type ScheduleJobTeardownExpiredTrial = {
   data: { userId: string }
 }
 
+/** Daily retention sweep: deletes contact exports past their retention (file, then row). */
+export type ScheduleJobPurgeExpiredContactExports = {
+  type: typeof ScheduleJobData.purgeExpiredContactExports
+  data: Record<string, never>
+}
+
 /** Daily retention sweep: deletes expired call recordings' S3 objects and clears the columns. */
 export type ScheduleJobPurgeExpiredCallRecordings = {
   type: typeof ScheduleJobData.purgeExpiredCallRecordings
@@ -435,6 +442,7 @@ export type ScheduleJobData =
   | ScheduleJobRefreshLicense
   | ScheduleJobUnsubscribeExpiredTrials
   | ScheduleJobTeardownExpiredTrial
+  | ScheduleJobPurgeExpiredContactExports
   | ScheduleJobPurgeExpiredCallRecordings
   | ScheduleJobSweepStaleWhatsappCalls
 

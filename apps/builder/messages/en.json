@@ -6453,6 +6453,19 @@
       "searching": "Searching…",
       "error": "Could not search contacts",
       "empty": "No contacts found"
+    },
+    "exportHistory": {
+      "title": "Export history",
+      "description": "Contact exports from the last {days} days. Files are deleted after that.",
+      "empty": "No exports yet.",
+      "requestedBy": "By {name}",
+      "deletesOn": "Deleted on {date}",
+      "rows": "{count, plural, one {# contact} other {# contacts}}",
+      "status": {
+        "pending": "Processing",
+        "uploaded": "Ready",
+        "failed": "Failed"
+      }
     }
   },
   "contactScan": {

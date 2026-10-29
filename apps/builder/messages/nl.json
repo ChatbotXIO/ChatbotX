@@ -5771,6 +5771,19 @@
       "searching": "Zoeken…",
       "error": "Contacten zoeken is mislukt",
       "empty": "Geen contacten gevonden"
+    },
+    "exportHistory": {
+      "title": "Exportgeschiedenis",
+      "description": "Contactexports van de afgelopen {days} dagen. Daarna worden de bestanden verwijderd.",
+      "empty": "Nog geen exports.",
+      "requestedBy": "Door {name}",
+      "deletesOn": "Wordt verwijderd op {date}",
+      "rows": "{count, plural, one {# contact} other {# contacten}}",
+      "status": {
+        "pending": "Bezig",
+        "uploaded": "Klaar",
+        "failed": "Mislukt"
+      }
     }
   },
   "contactScan": {

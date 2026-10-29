@@ -1,4 +1,9 @@
-import { channelTypes, genderTypes } from "@chatbotx.io/database/partials"
+import {
+  CONTACT_AD_IDS_LIMIT,
+  channelTypes,
+  fileStatuses,
+  genderTypes,
+} from "@chatbotx.io/database/partials"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 import { contactFilterCriteriaSchema } from "@/features/contact-filter/schema"
@@ -114,7 +119,7 @@ export const exportContactsRequest = z
       .array(z.string().regex(EXPORT_FIELD_KEY, EXPORT_FIELD_KEY_MESSAGE))
       .min(1)
       .describe(
-        "CSV columns, each prefixed by kind: `sys:<column>` for a contact column (firstName, lastName, fullName, email, phoneNumber, gender, source, lastReadAt, blockedAt, contactId = platform id, sourceUserId = WhatsApp BSUID), `cus:<customFieldId>` for a custom field, `tag:<tagId>` for a tag (yes/no column). A key without a prefix is rejected.",
+        `CSV columns, each prefixed by kind: \`sys:<column>\` for a contact column (firstName, lastName, fullName, email, phoneNumber, gender, source, lastReadAt, blockedAt, contactId = platform id, sourceUserId = WhatsApp BSUID, adIds = every ad id the contact came from, oldest first, at most ${CONTACT_AD_IDS_LIMIT}), \`cus:<customFieldId>\` for a custom field, \`tag:<tagId>\` for a tag (yes/no column). A key without a prefix is rejected.`,
       ),
     contactIds: z
       .array(zodBigintAsString())
@@ -155,7 +160,7 @@ export const getExportFileRequest = z.object({
 export type GetExportFileRequest = z.infer<typeof getExportFileRequest>
 
 export const getExportFileResponse = z.object({
-  status: z.enum(["pending", "uploaded", "failed"]),
+  status: fileStatuses,
   fileName: z.string(),
   downloadUrl: z.string().nullable(),
   totalRecords: z.number().nullable(),

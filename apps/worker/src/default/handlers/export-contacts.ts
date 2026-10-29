@@ -1,5 +1,5 @@
-import type { PassThrough } from "node:stream"
 import {
+  contactReferralEventService,
   customFieldService,
   tagService,
   workspaceService,
@@ -15,12 +15,14 @@ import {
   pruneEmailPhoneFilterConditions,
 } from "@chatbotx.io/database/queries"
 import {
+  type ContactExportRelations,
+  type ContactExportRow,
   contactRepository,
   fileRepository,
 } from "@chatbotx.io/database/repositories"
-import type { contactCustomFieldModel } from "@chatbotx.io/database/schema"
 import { chunkById } from "@chatbotx.io/database/utils"
 import { createUpload } from "@chatbotx.io/filesystem/node-upload"
+import { toUploadWriter } from "@chatbotx.io/filesystem/upload-writer"
 import { SOURCE_USER_ID_EXPORT_HEADER } from "@chatbotx.io/imports/modules/contacts"
 import { formatCustomFieldValueInTimeZone } from "@chatbotx.io/utils/datetime"
 import {
@@ -47,6 +49,11 @@ const contactIdField = "contactId"
 // see `resolveSourceUserId`). Not a column on the Contact row.
 const sourceUserIdField = "sourceUserId"
 
+// Virtual contact column listing every ad the contact came from (the same list
+// as the `{{ad_ids}}` system field). It lives in the ContactReferralEvent log,
+// not on the Contact row, so it is loaded per page and only when selected.
+const adIdsField = "adIds"
+
 // Human-readable headers for built-in contact columns.
 const headerNames: Record<string, string> = {
   contactId: "Contact ID",
@@ -60,6 +67,7 @@ const headerNames: Record<string, string> = {
   lastReadAt: "Last Read At",
   blockedAt: "Blocked At",
   sourceUserId: SOURCE_USER_ID_EXPORT_HEADER,
+  adIds: "Ad IDs",
 }
 
 export type SelectedField =
@@ -74,9 +82,11 @@ export type SelectedField =
 
 type ContactRow = {
   [key: string]: unknown
-  contactCustomFields?: (typeof contactCustomFieldModel.$inferSelect)[]
-  tags?: { id: string }[]
-  contactInboxes?: { sourceId: string; sourceUserId: string | null }[]
+  contactCustomFields?: ContactExportRow["contactCustomFields"]
+  tags?: ContactExportRow["tags"]
+  contactInboxes?: ContactExportRow["contactInboxes"]
+  /** Set by `withAdIds` when the Ad IDs column is selected. */
+  adIds?: string[]
 }
 
 // ── CSV serialization ─────────────────────────────────────────────────────────
@@ -126,6 +136,9 @@ const renderCell = (
     }
     if (field.value === sourceUserIdField) {
       return renderIdentityCell(resolveSourceUserId(contact))
+    }
+    if (field.value === adIdsField) {
+      return renderIdentityCell(contact.adIds?.join(", "))
     }
     const rawValue = contact[field.value]
     if (rawValue instanceof Date) {
@@ -342,14 +355,29 @@ export const buildSelectedFields = async (
 
 // ── Streaming helpers ─────────────────────────────────────────────────────────
 
-/**
- * Writes one chunk and resolves once the consumer has handled it, which applies
- * natural backpressure so the producer never outruns the upload.
- */
-const writeToStream = (stream: PassThrough, chunk: string): Promise<void> =>
-  new Promise((resolve, reject) => {
-    stream.write(chunk, (error) => (error ? reject(error) : resolve()))
-  })
+/** Only the relations the selected columns render are loaded per page. */
+export const resolveExportRelations = (
+  selectedFields: SelectedField[],
+): ContactExportRelations => {
+  const valuesOf = (type: SelectedField["type"]) =>
+    selectedFields
+      .filter((field) => field.type === type)
+      .map((field) => field.value)
+  const contactColumns = new Set(valuesOf("contact"))
+
+  let contactInboxes: ContactExportRelations["contactInboxes"] = "none"
+  if (contactColumns.has(sourceUserIdField)) {
+    contactInboxes = "all"
+  } else if (contactColumns.has(contactIdField)) {
+    contactInboxes = "earliest"
+  }
+
+  return {
+    customFieldIds: valuesOf("custom"),
+    tagIds: valuesOf("tag"),
+    contactInboxes,
+  }
+}
 
 /**
  * Fetches one page of contacts for the export, keyset-paginated on the bigint
@@ -358,13 +386,31 @@ const writeToStream = (stream: PassThrough, chunk: string): Promise<void> =>
 const fetchContactPage = (
   baseWhere: Record<string, unknown>,
   lastId: string | null,
-  options: { includeSourceUserId: boolean },
+  relations: ContactExportRelations,
 ) =>
   contactRepository.listForExportPage({
     where: lastId ? { AND: [baseWhere, { id: { gt: lastId } }] } : baseWhere,
     limit: loopableItemsCount,
-    includeSourceUserId: options.includeSourceUserId,
+    relations,
   })
+
+/**
+ * Adds each contact's ad ids to a page: one query per page, not one per
+ * contact.
+ */
+const withAdIds = async <Row extends { id: string }>(
+  page: Row[],
+  workspaceId: string,
+): Promise<(Row & { adIds: string[] })[]> => {
+  const adIdsByContact = await contactReferralEventService.listAdIdsByContacts({
+    workspaceId,
+    contactIds: page.map((contact) => contact.id),
+  })
+  return page.map((contact) => ({
+    ...contact,
+    adIds: adIdsByContact.get(contact.id) ?? [],
+  }))
+}
 
 /** Updates the export's File row, scoped to its workspace. */
 const updateExportFile = (
@@ -377,10 +423,13 @@ const updateExportFile = (
     values,
   })
 
-// H-3: Cap exports to avoid a single job monopolising a worker slot for hours
-// on large workspaces. Users who need more should use filtered exports or
-// contact the team for a bulk extraction.
-const MAX_EXPORT_ROWS = 500_000
+// H-3: Memory stays flat at one page whatever the size, so this cap only bounds
+// how long one job holds a default-queue slot (a full export runs for hours,
+// and a worker restart reruns it from the start). Narrow beyond it with filters.
+const MAX_EXPORT_ROWS = 10_000_000
+
+/** Progress is persisted at most this often; final counts are always written. */
+const PROGRESS_INTERVAL_MS = 5000
 
 // ── Handler ───────────────────────────────────────────────────────────────────
 
@@ -415,36 +464,43 @@ const loopableExportContactsInner = async (data: ExportData) => {
     normalizeStoredTimezone(workspace?.timezone) ?? "UTC"
   const baseWhere = buildBaseWhere(data)
 
-  const { stream, done } = createUpload(outputPath, {
-    contentType: "text/csv; charset=utf-8",
-  })
+  const relations = resolveExportRelations(selectedFields)
+  const includeAdIds = selectedFields.some(
+    (field) => field.type === "contact" && field.value === adIdsField,
+  )
+  const upload = toUploadWriter(
+    createUpload(outputPath, { contentType: "text/csv; charset=utf-8" }),
+  )
 
   let totalBytes = 0
   let totalRecords = 0
+  let progressSavedAt = Date.now()
 
   try {
     const headerLine = buildHeaderLine(selectedFields)
-    await writeToStream(stream, headerLine)
+    await upload.write(headerLine)
     totalBytes += Buffer.byteLength(headerLine)
-
-    const includeSourceUserId = selectedFields.some(
-      (field) => field.type === "contact" && field.value === sourceUserIdField,
-    )
 
     let hitRowCap = false
     await chunkById(
-      (lastId) => fetchContactPage(baseWhere, lastId, { includeSourceUserId }),
+      async (lastId) => {
+        const page = await fetchContactPage(baseWhere, lastId, relations)
+        return includeAdIds ? await withAdIds(page, workspaceId) : page
+      },
       {
         chunkSize: loopableItemsCount,
         callback: async (page): Promise<boolean | undefined> => {
           const chunk = buildCsvChunk(page, selectedFields, workspaceTimezone)
-          await writeToStream(stream, chunk)
+          await upload.write(chunk)
           totalBytes += Buffer.byteLength(chunk)
           totalRecords += page.length
 
-          // Persist progress after each chunk so the File row reflects how many
-          // records have been written so far.
-          await updateExportFile(fileIds, { meta: { totalRecords } })
+          // Progress for the export dialog, throttled: a large export has
+          // thousands of pages.
+          if (Date.now() - progressSavedAt >= PROGRESS_INTERVAL_MS) {
+            await updateExportFile(fileIds, { meta: { totalRecords } })
+            progressSavedAt = Date.now()
+          }
 
           if (totalRecords >= MAX_EXPORT_ROWS) {
             hitRowCap = true
@@ -456,9 +512,9 @@ const loopableExportContactsInner = async (data: ExportData) => {
       },
     )
 
+    await upload.finish()
+
     if (hitRowCap) {
-      stream.end()
-      await done
       await updateExportFile(fileIds, {
         status: fileStatuses.enum.failed,
         meta: { totalRecords },
@@ -467,9 +523,6 @@ const loopableExportContactsInner = async (data: ExportData) => {
         `Export exceeded the ${MAX_EXPORT_ROWS.toLocaleString()}-row limit. Use filters to narrow the export.`,
       )
     }
-
-    stream.end()
-    await done
 
     // No contact matched the filter — surface it as a failed export rather
     // than handing the user an empty file.
@@ -492,11 +545,7 @@ const loopableExportContactsInner = async (data: ExportData) => {
       })
     }
   } catch (error) {
-    // Destroy the source stream and wait for the multipart upload to settle so
-    // lib-storage aborts the partial upload (default leavePartsOnError=false)
-    // instead of leaving orphaned S3 parts behind.
-    stream.destroy()
-    await done.catch(() => undefined)
+    await upload.abort()
     await updateExportFile(fileIds, { status: fileStatuses.enum.failed })
     throw error
   }

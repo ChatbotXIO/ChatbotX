@@ -45,6 +45,7 @@ import { purgeCommentAutomationEvents } from "./handlers/purge-comment-automatio
 import { purgeErrorLogs } from "./handlers/purge-error-logs"
 import { purgeExpiredCallRecordings } from "./handlers/purge-expired-call-recordings"
 import { purgeExpiredConnectSessions } from "./handlers/purge-expired-connect-sessions"
+import { purgeExpiredContactExports } from "./handlers/purge-expired-contact-exports"
 import { purgeInboundWebhookRequests } from "./handlers/purge-inbound-webhook-requests"
 import { purgeWhatsappSignupSessions } from "./handlers/purge-whatsapp-signup-sessions"
 import { purgeWorkspaces } from "./handlers/purge-workspaces"
@@ -259,6 +260,11 @@ async function startScheduleWorker() {
 
             case ScheduleJobData.purgeExpiredCallRecordings:
               await purgeExpiredCallRecordings()
+              return
+
+            // Not workspace-scoped: one sweep over every workspace's exports.
+            case ScheduleJobData.purgeExpiredContactExports:
+              await purgeExpiredContactExports()
               return
 
             case ScheduleJobData.sweepStaleWhatsappCalls:

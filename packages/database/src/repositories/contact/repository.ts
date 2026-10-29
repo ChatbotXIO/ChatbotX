@@ -12,7 +12,25 @@ import {
 import { buildContactFilterMatchSQL } from "../../queries"
 import type { ContactFilterCriteriaInput } from "../../queries/contact-filter/types"
 import { contactModel } from "../../schema"
+import type { ContactCustomFieldModel, ContactModel } from "../../types"
 import { buildContactListWhere, resolveContactOrderBy } from "./list-where"
+
+/** What a contact-export page loads besides the contact row itself. */
+export type ContactExportRelations = {
+  customFieldIds: string[]
+  tagIds: string[]
+  contactInboxes: "none" | "earliest" | "all"
+}
+
+/** A contact-export row; a relation is absent when no column needs it. */
+export type ContactExportRow = ContactModel & {
+  contactCustomFields?: Pick<
+    ContactCustomFieldModel,
+    "customFieldId" | "value"
+  >[]
+  tags?: { id: string }[]
+  contactInboxes?: { sourceId: string; sourceUserId: string | null }[]
+}
 
 type ContactListInput = {
   where: Record<string, unknown>
@@ -287,33 +305,41 @@ export const contactRepository = {
   },
   /**
    * Contact-export keyset page (`apps/worker/src/default/handlers/export-
-   * contacts.ts`). The `with` literal lives here so Drizzle keeps type
-   * inference for the relational query; the handler keeps `chunkById` and its
-   * own `fetchContactPage` wrapper around this call.
+   * contacts.ts`). Loads only what the selected columns render: each relation
+   * is skipped when no column needs it, and narrowed to the selected custom
+   * fields and tags otherwise. `where` is untouched, so a filter on a tag or a
+   * custom field still matches whatever columns are exported.
    */
   async listForExportPage(
     input: {
       where: Record<string, unknown>
       limit: number
-      includeSourceUserId: boolean
+      relations: ContactExportRelations
     },
     tx: DatabaseClient = db,
-  ) {
+  ): Promise<ContactExportRow[]> {
+    const { customFieldIds, tagIds, contactInboxes } = input.relations
     return await tx.query.contactModel.findMany({
       where: input.where,
       with: {
-        contactCustomFields: true,
-        tags: true,
-        // The Contact Id column only needs the earliest row's sourceId. The
-        // WhatsApp User ID column must scan every inbox connection for the
-        // row that actually carries a sourceUserId, so the earliest-row
-        // limit is lifted ONLY when that column is selected — ordinary
-        // exports keep the single-row load.
-        contactInboxes: {
-          columns: { sourceId: true, sourceUserId: true },
-          orderBy: { id: "asc" },
-          ...(input.includeSourceUserId ? {} : { limit: 1 }),
-        },
+        ...(customFieldIds.length > 0 && {
+          contactCustomFields: {
+            columns: { customFieldId: true, value: true },
+            where: { customFieldId: { in: customFieldIds } },
+          },
+        }),
+        ...(tagIds.length > 0 && {
+          tags: { columns: { id: true }, where: { id: { in: tagIds } } },
+        }),
+        // The Contact Id column needs only the earliest row's sourceId; the
+        // WhatsApp User ID column scans every row for one with a sourceUserId.
+        ...(contactInboxes !== "none" && {
+          contactInboxes: {
+            columns: { sourceId: true, sourceUserId: true },
+            orderBy: { id: "asc" },
+            ...(contactInboxes === "earliest" && { limit: 1 }),
+          },
+        }),
       },
       limit: input.limit,
       orderBy: { id: "asc" },

@@ -5750,6 +5750,19 @@
       "searching": "検索中…",
       "error": "コンタクトを検索できませんでした",
       "empty": "コンタクトが見つかりません"
+    },
+    "exportHistory": {
+      "title": "エクスポート履歴",
+      "description": "過去{days}日間の連絡先エクスポートです。その後ファイルは削除されます。",
+      "empty": "エクスポートはまだありません。",
+      "requestedBy": "{name}が作成",
+      "deletesOn": "{date}に削除",
+      "rows": "{count, plural, one {#件の連絡先} other {#件の連絡先}}",
+      "status": {
+        "pending": "処理中",
+        "uploaded": "準備完了",
+        "failed": "失敗"
+      }
     }
   },
   "contactScan": {

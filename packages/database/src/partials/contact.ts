@@ -53,6 +53,12 @@ export const supportsPostTracking = (
 export const genderTypes = z.enum(["male", "female", "unknown"])
 export type GenderType = z.infer<typeof genderTypes>
 
+/**
+ * Bounds the ad ids listed per contact (`{{ad_ids}}`, the contact export): a
+ * contact can click far more ads than a message or a CSV cell needs.
+ */
+export const CONTACT_AD_IDS_LIMIT = 50
+
 export const systemFieldTypes = z.enum([
   "first_name",
   "last_name",

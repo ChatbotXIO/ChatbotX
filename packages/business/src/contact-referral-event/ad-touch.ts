@@ -54,7 +54,8 @@ const buildMetaAdTouch: AdTouchBuilder = (referral, occurrence) => {
   return {
     provider: "meta",
     occurredAt: occurrence.occurredAt,
-    adId: referral.adId ?? null,
+    // A provider can send an empty string; that is not an ad id.
+    adId: referral.adId || null,
     clickIdType: ctwaClid ? "ctwa" : null,
     clickId: ctwaClid,
     ref: referral.ref ?? null,
@@ -86,7 +87,7 @@ const buildGoogleAdTouch: AdTouchBuilder = (referral, occurrence) => {
     occurredAt: referral.googleClickReceivedAt
       ? new Date(referral.googleClickReceivedAt)
       : occurrence.occurredAt,
-    adId: referral.googleAdId ?? null,
+    adId: referral.googleAdId || null,
     campaignId: referral.googleCampaignId ?? null,
     adGroupId: referral.googleAdGroupId ?? null,
     clickIdType: click.clickIdType,

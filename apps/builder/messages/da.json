@@ -5771,6 +5771,19 @@
       "searching": "Søger…",
       "error": "Kunne ikke søge efter kontakter",
       "empty": "Ingen kontakter fundet"
+    },
+    "exportHistory": {
+      "title": "Eksporthistorik",
+      "description": "Kontakteksporter fra de seneste {days} dage. Filerne slettes derefter.",
+      "empty": "Ingen eksporter endnu.",
+      "requestedBy": "Af {name}",
+      "deletesOn": "Slettes {date}",
+      "rows": "{count, plural, one {# kontakt} other {# kontakter}}",
+      "status": {
+        "pending": "Behandles",
+        "uploaded": "Klar",
+        "failed": "Mislykkedes"
+      }
     }
   },
   "contactScan": {

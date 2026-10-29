@@ -5817,6 +5817,19 @@
       "searching": "搜尋中…",
       "error": "無法搜尋聯絡人",
       "empty": "找不到聯絡人"
+    },
+    "exportHistory": {
+      "title": "匯出紀錄",
+      "description": "最近 {days} 天的聯絡人匯出。之後檔案將被刪除。",
+      "empty": "尚無匯出。",
+      "requestedBy": "由 {name} 匯出",
+      "deletesOn": "將於 {date} 刪除",
+      "rows": "{count, plural, one {# 位聯絡人} other {# 位聯絡人}}",
+      "status": {
+        "pending": "處理中",
+        "uploaded": "已就緒",
+        "failed": "失敗"
+      }
     }
   },
   "contactScan": {

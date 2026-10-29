@@ -46,6 +46,10 @@ There is no backfill: history starts when the writer ships.
   50), across all its inboxes; `{{ad_id}}` is the first one. Both are null for a contact
   that never came from an ad, and unlike `{{last_ad}}` they do not read the current inbox's
   referral. A workspace custom field with the same name is shadowed by the system field; it stays reachable as `{{raw:ad_id}}` / `{{raw:ad_ids}}`.
+- **Contact export**: the optional `sys:adIds` column (header "Ad IDs", off by default
+  in the dialog) writes the same list as `{{ad_ids}}`, joined with `, `. The worker
+  loads it only when the column is selected, with one query per export page
+  (`loopableItemsCount` contacts), not one per contact.
 - **Filter**: "Clicked ad" (`clickedAd`) reuses the contact activity store; see
   `docs/contact-activity.md#clicked-ad`. Ad ids to pick come from `ads.listReferralAds`, which
   looks only at the workspace's newest 2000 touches.

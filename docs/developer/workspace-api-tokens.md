@@ -810,7 +810,8 @@ approved as UI-only.
   builder), never the stored key.
 - `contacts.export` `fields` need a kind prefix: `sys:<column>` (firstName,
   lastName, fullName, email, phoneNumber, gender, source, lastReadAt,
-  blockedAt, contactId, sourceUserId = WhatsApp BSUID), `cus:<customFieldId>`,
+  blockedAt, contactId, sourceUserId = WhatsApp BSUID, adIds = every ad id the
+  contact came from, oldest first, at most `CONTACT_AD_IDS_LIMIT` = 50), `cus:<customFieldId>`,
   `tag:<tagId>`. A key without a prefix is rejected (422).
 - `POST /v1/contacts/filter-value-labels` is a pure read (id lists too large
   for a query string) that names the tag ids a `contactFilter` references; it is

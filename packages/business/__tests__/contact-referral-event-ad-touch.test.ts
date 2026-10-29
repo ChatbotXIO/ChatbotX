@@ -62,6 +62,19 @@ describe("toAdTouches", () => {
     ).toBe(first[0]?.dedupKey)
   })
 
+  test("stores an empty ad id from a provider as no ad id, so it never reaches a list or a report", () => {
+    const [meta] = toAdTouches({ adId: "", source: "ADS" }, occurrence)
+    const [ctwa] = toAdTouches({ ctwaClid: "ctwa-1", adId: "" }, occurrence)
+    const [google] = toAdTouches(
+      { gclid: "gclid-1234567890", googleAdId: "" },
+      occurrence,
+    )
+
+    expect(meta?.adId).toBeNull()
+    expect(ctwa?.adId).toBeNull()
+    expect(google?.adId).toBeNull()
+  })
+
   test("cannot record a Meta click without a click id when the carrying event is unknown", () => {
     expect(
       toAdTouches(
