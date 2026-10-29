@@ -1394,19 +1394,27 @@ describe("createRealtimeGateway (live)", () => {
 
   // These cover a criticality-9 test gap (PR #1349 round-4 review): nothing
   // previously exercised the gateway's local presence orchestration
-  // (dedupe, last-close, coalescing, periodic re-report) end-to-end. Each
-  // opens a real uWS server + real sockets and waits out the (fixed, not
-  // configurable per-test) 1s coalesce window — like this file's other
-  // live-integration tests, that's a genuine real-clock wait.
+  // (dedupe, last-close, coalescing, periodic re-report) end-to-end. The
+  // coalescing case controls its debounce callback; the expiry case uses a
+  // short real-clock delay against a real uWS server and real sockets.
   const PRESENCE_TEST_TIMEOUT_MS = 45_000
 
   test(
     "presence: dedupes two tabs of the same user and coalesces a second user's connect into one report",
     async () => {
-      // A short, test-only `presenceReportCoalesceMs` (instead of the real
-      // 1000ms default) keeps this real-socket test fast and avoids the
-      // resource-exhaustion flakiness a 1100ms real-clock wait hit when run
-      // after many other real-socket "live" tests earlier in this file.
+      const pendingPresenceReports = new Map<symbol, () => void>()
+      const presenceTimerScheduler = {
+        clear: (timer: NodeJS.Timeout | undefined) => {
+          if (timer !== undefined) {
+            pendingPresenceReports.delete(timer as unknown as symbol)
+          }
+        },
+        schedule: (callback: () => void): NodeJS.Timeout => {
+          const timer = Symbol("presence-report")
+          pendingPresenceReports.set(timer, callback)
+          return timer as never
+        },
+      }
       gateway = createRealtimeGateway(
         testGatewayOptions({
           maxConnections: 10,
@@ -1414,6 +1422,7 @@ describe("createRealtimeGateway (live)", () => {
           redis: createFakeRedis() as never,
           secret: SECRET,
         }),
+        { presenceTimerScheduler },
       )
       const port = await gateway.listen("127.0.0.1", 0)
       const tokenA = await signMemberToken(
@@ -1426,16 +1435,25 @@ describe("createRealtimeGateway (live)", () => {
       )
       const url = `ws://127.0.0.1:${port}/rt/workspaces/ws-presence-1?token=${tokenA}`
 
-      const firstTab = new WebSocket(url)
-      await waitForOpen(firstTab)
-      const secondTab = new WebSocket(url)
-      await waitForOpen(secondTab)
-      const otherUser = new WebSocket(
-        `ws://127.0.0.1:${port}/rt/workspaces/ws-presence-1?token=${tokenB}`,
-      )
-      await waitForOpen(otherUser)
+      // Start every connection in the same event-loop turn. Awaiting each open
+      // serially can let the first 30ms coalesce timer fire before user-b is
+      // even connected, which tests two batches rather than one.
+      const [firstTab, secondTab, otherUser] = [
+        new WebSocket(url),
+        new WebSocket(url),
+        new WebSocket(
+          `ws://127.0.0.1:${port}/rt/workspaces/ws-presence-1?token=${tokenB}`,
+        ),
+      ]
+      await Promise.all([
+        waitForOpen(firstTab),
+        waitForOpen(secondTab),
+        waitForOpen(otherUser),
+      ])
 
-      await delay(150) // past the 30ms presence-report coalesce window
+      expect(pendingPresenceReports).toHaveLength(1)
+      const [reportPresence] = pendingPresenceReports.values()
+      reportPresence?.()
 
       const callsForWorkspace = reportWorkspacePresenceMock.mock.calls.filter(
         ([workspaceId]) => workspaceId === "ws-presence-1",
