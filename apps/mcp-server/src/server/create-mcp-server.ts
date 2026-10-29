@@ -14,11 +14,15 @@ import {
   refreshOpenApiSpecIfStale,
 } from "../openapi-loader"
 import { introspectToken } from "../token-introspection"
-import { errorResult, executeTool } from "./execute-tool"
+import {
+  errorResult,
+  executeTool,
+  type RequestCredentials,
+} from "./execute-tool"
 import { handleCallTool, handleSearchTools, META_TOOLS } from "./meta-tools"
 
 export type CreateMcpServerOptions = {
-  getApiKey?: () => string
+  getCredentials?: () => RequestCredentials | undefined
 }
 
 type InputSchema = {
@@ -28,8 +32,8 @@ type InputSchema = {
   [key: string]: unknown
 }
 
-const NO_API_KEY_MESSAGE =
-  "No workspace token configured. Set CHATBOTX_API_KEY in the server environment or pass the token via the ?workspace_token= URL query parameter."
+const NO_CREDENTIAL_MESSAGE =
+  "No credential. Authorize this MCP server with OAuth, or set CHATBOTX_API_KEY / pass ?workspace_token=."
 
 export const createMcpServer = (
   options?: CreateMcpServerOptions,
@@ -42,7 +46,9 @@ export const createMcpServer = (
     { instructions: env.CHATBOTX_MCP_SERVER_INSTRUCTIONS },
   )
 
-  const getApiKey = (): string => options?.getApiKey?.() || env.CHATBOTX_API_KEY
+  const getCredentials = (): RequestCredentials | undefined =>
+    options?.getCredentials?.() ??
+    (env.CHATBOTX_API_KEY ? { token: env.CHATBOTX_API_KEY } : undefined)
 
   // Bypass McpServer's high-level tool API to support raw JSON Schema from
   // the OpenAPI spec. We register handlers on the underlying low-level server.
@@ -50,14 +56,18 @@ export const createMcpServer = (
 
   mcpServer.server.setRequestHandler(ListToolsRequestSchema, async () => {
     await refreshOpenApiSpecIfStale()
-    const apiKey = getApiKey()
-    const introspection = apiKey ? await introspectToken(apiKey) : null
+    const credentials = getCredentials()
+    const introspection = credentials
+      ? await introspectToken(credentials.token, credentials.workspaceId)
+      : null
     // `META_TOOLS` come first: they are the fixed discovery path into the
     // ~300 operations `getVisibleTools()` excludes.
     return {
       tools: [
         ...META_TOOLS,
-        ...getVisibleTools(introspection).map((tool) => ({
+        ...getVisibleTools(
+          introspection?.status === "ok" ? introspection.data : null,
+        ).map((tool) => ({
           name: tool.name,
           description: tool.description,
           inputSchema: tool.inputSchema as InputSchema,
@@ -77,13 +87,13 @@ export const createMcpServer = (
       return handleSearchTools(toolArgs)
     }
 
-    const apiKey = getApiKey()
-    if (!apiKey) {
-      return errorResult(NO_API_KEY_MESSAGE)
+    const credentials = getCredentials()
+    if (!credentials) {
+      return errorResult(NO_CREDENTIAL_MESSAGE)
     }
 
     if (name === "call_tool") {
-      return await handleCallTool(toolArgs, apiKey)
+      return await handleCallTool(toolArgs, credentials)
     }
 
     const tool = getToolByName(name)
@@ -91,7 +101,7 @@ export const createMcpServer = (
       return errorResult(`Unknown tool: ${name}`)
     }
 
-    return await executeTool(tool, toolArgs, apiKey)
+    return await executeTool(tool, toolArgs, credentials)
   })
 
   return mcpServer

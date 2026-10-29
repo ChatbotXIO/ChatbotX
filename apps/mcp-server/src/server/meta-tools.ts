@@ -8,6 +8,7 @@ import {
   errorResult,
   executeTool,
   jsonResult,
+  type RequestCredentials,
   type ToolCallResult,
 } from "./execute-tool"
 import { expandSearchQuery, looksNonEnglish } from "./search/normalize"
@@ -173,7 +174,7 @@ function unknownToolMessage(name: string): string {
  */
 export async function handleCallTool(
   args: Record<string, unknown>,
-  apiKey: string,
+  credentials: RequestCredentials,
 ): Promise<ToolCallResult> {
   const name = args.name
   if (typeof name !== "string" || name.trim().length === 0) {
@@ -196,9 +197,7 @@ export async function handleCallTool(
     return errorResult("call_tool 'arguments' must be a JSON object.")
   }
 
-  return await executeTool(
-    tool,
-    (suppliedArguments ?? {}) as Record<string, unknown>,
-    apiKey,
-  )
+  const toolArguments = (suppliedArguments ?? {}) as Record<string, unknown>
+
+  return await executeTool(tool, toolArguments, credentials)
 }

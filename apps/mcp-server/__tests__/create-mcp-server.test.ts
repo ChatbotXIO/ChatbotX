@@ -109,7 +109,9 @@ describe("createMcpServer", () => {
     globalThis.fetch = fetchMock as unknown as typeof fetch
 
     const { createMcpServer } = await import("../src/server/create-mcp-server")
-    const server = createMcpServer({ getApiKey: () => "api-key" })
+    const server = createMcpServer({
+      getCredentials: () => ({ token: "api-key" }),
+    })
 
     const listHandler = getRequestHandler(server, "tools/list")
     const result = (await listHandler(
@@ -148,7 +150,9 @@ describe("createMcpServer", () => {
     globalThis.fetch = fetchMock as unknown as typeof fetch
 
     const { createMcpServer } = await import("../src/server/create-mcp-server")
-    const server = createMcpServer({ getApiKey: () => "api-key" })
+    const server = createMcpServer({
+      getCredentials: () => ({ token: "api-key" }),
+    })
 
     // Warm the spec cache and confirm the tool is genuinely absent from
     // tools/list before reaching it through call_tool.
@@ -191,7 +195,7 @@ describe("createMcpServer", () => {
     await loadOpenApiSpec()
 
     const { createMcpServer } = await import("../src/server/create-mcp-server")
-    const server = createMcpServer({ getApiKey: () => "" })
+    const server = createMcpServer({ getCredentials: () => undefined })
     const callHandler = getRequestHandler(server, "tools/call")
 
     const regularToolResult = (await callHandler(
@@ -200,7 +204,7 @@ describe("createMcpServer", () => {
     )) as CallToolResult
     expect(regularToolResult.isError).toBe(true)
     expect(regularToolResult.content[0]?.text).toContain(
-      "No workspace token configured",
+      "No credential. Authorize this MCP server with OAuth",
     )
 
     const callToolResult = (await callHandler(
@@ -210,9 +214,8 @@ describe("createMcpServer", () => {
       },
       {},
     )) as CallToolResult
-    expect(callToolResult.isError).toBe(true)
     expect(callToolResult.content[0]?.text).toContain(
-      "No workspace token configured",
+      "No credential. Authorize this MCP server with OAuth",
     )
 
     const searchToolsResult = (await callHandler(
@@ -233,7 +236,9 @@ describe("createMcpServer", () => {
     await loadOpenApiSpec()
 
     const { createMcpServer } = await import("../src/server/create-mcp-server")
-    const server = createMcpServer({ getApiKey: () => "api-key" })
+    const server = createMcpServer({
+      getCredentials: () => ({ token: "api-key" }),
+    })
     const callHandler = getRequestHandler(server, "tools/call")
 
     const result = (await callHandler(

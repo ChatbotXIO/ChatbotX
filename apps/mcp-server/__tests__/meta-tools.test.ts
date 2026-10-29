@@ -312,7 +312,7 @@ describe("handleCallTool", () => {
 
   test("rejects a missing name", async () => {
     const { handleCallTool } = await import("../src/server/meta-tools")
-    const result = await handleCallTool({}, "api-key")
+    const result = await handleCallTool({}, { token: "api-key" })
     expect(result.isError).toBe(true)
   })
 
@@ -324,7 +324,10 @@ describe("handleCallTool", () => {
     await loadOpenApiSpec()
     const { handleCallTool } = await import("../src/server/meta-tools")
 
-    const result = await handleCallTool({ name: "does_not_exist" }, "api-key")
+    const result = await handleCallTool(
+      { name: "does_not_exist" },
+      { token: "api-key" },
+    )
     expect(result.isError).toBe(true)
     expect(result.content[0]?.text).toContain("Unknown tool")
   })
@@ -354,7 +357,7 @@ describe("handleCallTool", () => {
 
     const result = await handleCallTool(
       { name: "minigames_list", arguments: {} },
-      "api-key",
+      { token: "api-key" },
     )
     expect(result.isError).toBeUndefined()
   })
@@ -373,7 +376,7 @@ describe("handleCallTool", () => {
     const { handleCallTool } = await import("../src/server/meta-tools")
     const result = await handleCallTool(
       { arguments: [], name: "tags_list" },
-      "api-key",
+      { token: "api-key" },
     )
 
     expect(result).toEqual({

@@ -10787,5 +10787,14 @@
         "id": "ID mục"
       }
     }
+,
+  "oauthConsent": {
+    "title": "Ủy quyền cho {clientName}",
+    "description": "Ứng dụng này đang yêu cầu quyền truy cập vào không gian làm việc của bạn.",
+    "permissionsTitle": "Quyền được yêu cầu",
+    "signedInAs": "Đã đăng nhập với",
+    "approve": "Chấp nhận",
+    "deny": "Từ chối",
+    "denied": "Ủy quyền đã bị từ chối."
   }
 }

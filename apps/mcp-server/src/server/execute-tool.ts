@@ -158,6 +158,11 @@ const buildQueryString = (params: URLSearchParams): string => {
   return queryString ? `?${queryString}` : ""
 }
 
+export type RequestCredentials = {
+  token: string
+  workspaceId?: string
+}
+
 export type ToolCallResult = {
   content: Array<{ type: "text"; text: string }>
   isError?: boolean
@@ -181,7 +186,7 @@ export const jsonResult = (value: unknown): ToolCallResult => ({
 export async function executeTool(
   tool: DynamicTool,
   rawArgs: Record<string, unknown>,
-  apiKey: string,
+  credentials: RequestCredentials,
 ): Promise<ToolCallResult> {
   const preparedArguments = prepareToolArguments(tool, rawArgs)
   const preflightError = preflightArgumentError(tool, preparedArguments)
@@ -221,8 +226,11 @@ export async function executeTool(
       {
         body: sendBody ? JSON.stringify(body) : undefined,
         headers: {
-          Authorization: `Bearer ${apiKey}`,
+          Authorization: `Bearer ${credentials.token}`,
           "Content-Type": "application/json",
+          ...(credentials.workspaceId
+            ? { "x-workspace-id": credentials.workspaceId }
+            : {}),
         },
         method: tool.method,
       },

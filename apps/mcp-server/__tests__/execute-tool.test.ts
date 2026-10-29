@@ -39,7 +39,7 @@ describe("executeTool", () => {
     const fetchMock = vi.fn().mockResolvedValue(successfulResponse)
     globalThis.fetch = fetchMock as unknown as typeof fetch
 
-    await executeTool(tool, {}, "api-key")
+    await executeTool(tool, {}, { token: "api-key" })
 
     expect(fetchMock.mock.calls[0]?.[1]).toMatchObject({
       signal: expect.any(AbortSignal),
@@ -53,7 +53,7 @@ describe("executeTool", () => {
         new DOMException("Timed out", "TimeoutError"),
       ) as unknown as typeof fetch
 
-    const result = await executeTool(tool, {}, "api-key")
+    const result = await executeTool(tool, {}, { token: "api-key" })
 
     expect(result).toEqual({
       content: [{ text: "Request timed out after 30000ms", type: "text" }],
@@ -72,7 +72,7 @@ describe("executeTool", () => {
         include: ["tags", "flows"],
         page: 2,
       },
-      "api-key",
+      { token: "api-key" },
     )
 
     const requestedUrl = new URL(String(fetchMock.mock.calls[0]?.[0]))
@@ -105,7 +105,7 @@ describe("executeTool", () => {
     await executeTool(
       deleteTool,
       { identifier: "id:1", tagIds: ["1"] },
-      "api-key",
+      { token: "api-key" },
     )
 
     const init = fetchMock.mock.calls[0]?.[1] as RequestInit
@@ -117,7 +117,7 @@ describe("executeTool", () => {
     const fetchMock = vi.fn().mockResolvedValue(successfulResponse)
     globalThis.fetch = fetchMock as unknown as typeof fetch
 
-    await executeTool(tool, { page: 2 }, "api-key")
+    await executeTool(tool, { page: 2 }, { token: "api-key" })
 
     const init = fetchMock.mock.calls[0]?.[1] as RequestInit
     expect(init.body).toBeUndefined()

@@ -4,6 +4,9 @@ This document is for developers adding or changing workspace-token (public
 API) surfaces. Workspace API tokens are bearer credentials, so their storage,
 lookup, and scoping rules are security boundaries.
 
+
+For MCP OAuth 2.1 access-token behavior and workspace selection, see
+[MCP OAuth 2.1](../mcp-oauth.md).
 ## Token model
 
 Tokens live in the `WorkspaceApiToken` table

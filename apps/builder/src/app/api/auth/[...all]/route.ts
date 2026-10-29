@@ -11,11 +11,14 @@ import {
   withTenant,
 } from "@chatbotx.io/auth/tenant"
 import { hasEnterpriseFeatures } from "@chatbotx.io/business"
+import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { getPublicUrlFromRequest } from "@chatbotx.io/utils"
 import { auth } from "@/lib/auth/auth"
 import { getSocialAuthForTenant } from "@/lib/auth/auth-instances"
 import { rewriteAuthRedirectToPublicHost } from "@/lib/auth-redirect"
 import { resolveRelayTarget } from "@/lib/oauth-referer"
+import { assertApiNotRateLimited } from "@/lib/rate-limit/api-rate-limit"
+import { getGuestClientIp } from "@/lib/rate-limit/guest-rate-limit"
 
 /**
  * Run the better-auth pipeline inside the tenant bound to the request's branded
@@ -110,6 +113,26 @@ const handle = async (request: Request): Promise<Response> => {
     ? await resolveTenantFromOAuthState(state)
     : await resolveTenantByDomain(request.headers.get("x-domain"))
 
+  if (url.pathname.endsWith("/mcp/register")) {
+    try {
+      await assertApiNotRateLimited({
+        scope: "mcp-client-registration",
+        key: getGuestClientIp(request.headers),
+        limit: 20,
+      })
+    } catch (error) {
+      if (
+        error instanceof ChatbotXException &&
+        error.code === "tooManyRequests"
+      ) {
+        return Response.json(
+          { error: error.message },
+          { status: error.httpStatusCode ?? 429 },
+        )
+      }
+      throw error
+    }
+  }
   return withTenant(tenantId, async () => {
     // White-label relay: when the social flow started on a branded custom domain
     // (or the builder URL) but the provider redirected to the fixed broker
@@ -146,3 +169,20 @@ const handle = async (request: Request): Promise<Response> => {
 
 export const GET = handle
 export const POST = handle
+
+export const OPTIONS = (request: Request) => {
+  const pathname = new URL(request.url).pathname
+  if (!pathname.includes("/api/auth/mcp/")) {
+    return new Response(null, { status: 405 })
+  }
+
+  return new Response(null, {
+    status: 204,
+    headers: {
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
+      "Access-Control-Allow-Headers":
+        "Content-Type, Authorization, mcp-protocol-version",
+    },
+  })
+}

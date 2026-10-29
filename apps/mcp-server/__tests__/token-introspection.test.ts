@@ -16,6 +16,7 @@ describe("introspectToken", () => {
   test("fetches GET /v1/token with the token as a bearer credential", async () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
+      status: 200,
       json: async () => ({
         workspaceId: "workspace-1",
         permission: "full",
@@ -28,47 +29,106 @@ describe("introspectToken", () => {
     const result = await introspectToken("token-abc")
 
     expect(result).toEqual({
-      workspaceId: "workspace-1",
-      permission: "full",
-      scopes: ["contacts"],
+      status: "ok",
+      data: {
+        workspaceId: "workspace-1",
+        permission: "full",
+        scopes: ["contacts"],
+      },
     })
     const [url, init] = fetchMock.mock.calls[0]
     expect(String(url)).toContain("/v1/token")
-    expect(init?.headers).toMatchObject({ Authorization: "Bearer token-abc" })
+    expect(init?.headers.get("Authorization")).toBe("Bearer token-abc")
   })
 
-  test("returns null on a non-2xx response instead of throwing", async () => {
+  test("sends x-workspace-id when a workspace id is supplied", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        workspaceId: "workspace-1",
+        permission: "full",
+        scopes: null,
+      }),
+    })
+    globalThis.fetch = fetchMock as unknown as typeof fetch
+
+    const { introspectToken } = await import("../src/token-introspection")
+    await introspectToken("token-abc", "workspace-1")
+
+    const [, init] = fetchMock.mock.calls[0]
+    expect(init?.headers.get("x-workspace-id")).toBe("workspace-1")
+  })
+
+  test("returns unauthorized on a 401 response", async () => {
     globalThis.fetch = vi.fn().mockResolvedValue({
       ok: false,
+      status: 401,
       json: async () => ({}),
     }) as unknown as typeof fetch
 
     const { introspectToken } = await import("../src/token-introspection")
-    await expect(introspectToken("token-bad")).resolves.toBeNull()
+    await expect(introspectToken("token-bad")).resolves.toEqual({
+      status: "unauthorized",
+    })
   })
 
-  test("returns null when the response body doesn't match the expected shape", async () => {
+  test("returns configError on a 400 response", async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 400,
+      text: async () => "Select a workspace",
+    }) as unknown as typeof fetch
+
+    const { introspectToken } = await import("../src/token-introspection")
+    const result = await introspectToken("token-multi-workspace")
+    expect(result).toEqual({
+      status: "configError",
+      message: "Select a workspace",
+    })
+  })
+
+  test("returns unavailable on a 403 response instead of failing hard", async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 403,
+      json: async () => ({}),
+    }) as unknown as typeof fetch
+
+    const { introspectToken } = await import("../src/token-introspection")
+    await expect(introspectToken("scoped-token")).resolves.toEqual({
+      status: "unavailable",
+    })
+  })
+
+  test("returns unavailable when the response body doesn't match the expected shape", async () => {
     globalThis.fetch = vi.fn().mockResolvedValue({
       ok: true,
+      status: 200,
       json: async () => ({ permission: "not-a-real-permission" }),
     }) as unknown as typeof fetch
 
     const { introspectToken } = await import("../src/token-introspection")
-    await expect(introspectToken("token-malformed")).resolves.toBeNull()
+    await expect(introspectToken("token-malformed")).resolves.toEqual({
+      status: "unavailable",
+    })
   })
 
-  test("returns null when the fetch itself rejects", async () => {
+  test("returns unavailable when the fetch itself rejects", async () => {
     globalThis.fetch = vi
       .fn()
       .mockRejectedValue(new Error("network down")) as unknown as typeof fetch
 
     const { introspectToken } = await import("../src/token-introspection")
-    await expect(introspectToken("token-x")).resolves.toBeNull()
+    await expect(introspectToken("token-x")).resolves.toEqual({
+      status: "unavailable",
+    })
   })
 
-  test("caches a successful result by the raw token value within the TTL", async () => {
+  test("caches a successful result by the token/workspace pair within the TTL", async () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
+      status: 200,
       json: async () => ({
         workspaceId: "workspace-1",
         permission: "full",
@@ -84,9 +144,29 @@ describe("introspectToken", () => {
     expect(fetchMock).toHaveBeenCalledTimes(1)
   })
 
+  test("different workspace ids for the same token get independent cache entries", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        workspaceId: "workspace-1",
+        permission: "full",
+        scopes: null,
+      }),
+    })
+    globalThis.fetch = fetchMock as unknown as typeof fetch
+
+    const { introspectToken } = await import("../src/token-introspection")
+    await introspectToken("token-shared", "ws-a")
+    await introspectToken("token-shared", "ws-b")
+
+    expect(fetchMock).toHaveBeenCalledTimes(2)
+  })
+
   test("different token values get independent cache entries", async () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
+      status: 200,
       json: async () => ({
         workspaceId: "workspace-1",
         permission: "full",
@@ -106,6 +186,7 @@ describe("introspectToken", () => {
     vi.useFakeTimers()
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
+      status: 200,
       json: async () => ({
         workspaceId: "workspace-1",
         permission: "full",
@@ -125,7 +206,7 @@ describe("introspectToken", () => {
 
   test("caches a failed introspection for 30 seconds", async () => {
     vi.useFakeTimers()
-    const fetchMock = vi.fn().mockResolvedValue({ ok: false })
+    const fetchMock = vi.fn().mockResolvedValue({ ok: false, status: 500 })
     globalThis.fetch = fetchMock as unknown as typeof fetch
 
     const { introspectToken } = await import("../src/token-introspection")
@@ -138,7 +219,7 @@ describe("introspectToken", () => {
 
   test("re-fetches a failed introspection after 30 seconds", async () => {
     vi.useFakeTimers()
-    const fetchMock = vi.fn().mockResolvedValue({ ok: false })
+    const fetchMock = vi.fn().mockResolvedValue({ ok: false, status: 500 })
     globalThis.fetch = fetchMock as unknown as typeof fetch
 
     const { introspectToken } = await import("../src/token-introspection")
@@ -148,10 +229,12 @@ describe("introspectToken", () => {
 
     expect(fetchMock).toHaveBeenCalledTimes(2)
   })
+
   test("evicts expired cache entries once a subsequent lookup inserts a new one", async () => {
     vi.useFakeTimers()
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
+      status: 200,
       json: async () => ({
         workspaceId: "workspace-1",
         permission: "full",
@@ -168,6 +251,6 @@ describe("introspectToken", () => {
     const deleteSpy = vi.spyOn(Map.prototype, "delete")
     await introspectToken("token-new")
 
-    expect(deleteSpy).toHaveBeenCalledWith("token-old")
+    expect(deleteSpy).toHaveBeenCalledWith("token-old\u0000")
   })
 })
