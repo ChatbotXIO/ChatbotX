@@ -6,6 +6,10 @@ import {
   ChevronsRight,
 } from "lucide-react"
 
+import {
+  type DataTablePaginationLabels,
+  useDataTableLabels,
+} from "@chatbotx.io/ui/components/data-table/data-table-labels"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
   Select,
@@ -22,23 +26,15 @@ interface DataTablePaginationProps<TData> extends React.ComponentProps<"div"> {
   labels?: DataTablePaginationLabels
 }
 
-export type DataTablePaginationLabels = {
-  selectedRows?: (selected: number, total: number) => string
-  rowsPerPage?: string
-  pageOf?: (page: number, pageCount: number) => string
-  firstPage?: string
-  previousPage?: string
-  nextPage?: string
-  lastPage?: string
-}
 
 export function DataTablePagination<TData>({
   table,
   pageSizeOptions = [10, 20, 30, 40, 50],
-  labels,
+  labels: labelOverrides,
   className,
   ...props
 }: DataTablePaginationProps<TData>) {
+  const labels = useDataTableLabels(labelOverrides)
   const selectedRows = table.getFilteredSelectedRowModel().rows.length
   const totalRows = table.getFilteredRowModel().rows.length
   const page = table.getState().pagination.pageIndex + 1
@@ -53,13 +49,13 @@ export function DataTablePagination<TData>({
       {...props}
     >
       <div className="flex-1 whitespace-nowrap text-muted-foreground text-sm">
-        {labels?.selectedRows?.(selectedRows, totalRows) ??
+        {labels.selectedRows?.(selectedRows, totalRows) ??
           `${selectedRows} of ${totalRows} row(s) selected.`}
       </div>
       <div className="flex flex-col-reverse items-center gap-4 sm:flex-row sm:gap-6 lg:gap-8">
         <div className="flex items-center space-x-2">
           <p className="whitespace-nowrap font-medium text-sm">
-            {labels?.rowsPerPage ?? "Rows per page"}
+            {labels.rowsPerPage ?? "Rows per page"}
           </p>
           <Select
             value={`${table.getState().pagination.pageSize}`}
@@ -80,11 +76,11 @@ export function DataTablePagination<TData>({
           </Select>
         </div>
         <div className="flex items-center justify-center font-medium text-sm">
-          {labels?.pageOf?.(page, pageCount) ?? `Page ${page} of ${pageCount}`}
+          {labels.pageOf?.(page, pageCount) ?? `Page ${page} of ${pageCount}`}
         </div>
         <div className="flex items-center space-x-2">
           <Button
-            aria-label={labels?.firstPage ?? "Go to first page"}
+            aria-label={labels.firstPage ?? "Go to first page"}
             variant="outline"
             size="icon"
             className="hidden size-8 lg:flex"
@@ -94,7 +90,7 @@ export function DataTablePagination<TData>({
             <ChevronsLeft className="rtl:rotate-180" />
           </Button>
           <Button
-            aria-label={labels?.previousPage ?? "Go to previous page"}
+            aria-label={labels.previousPage ?? "Go to previous page"}
             variant="outline"
             size="icon"
             className="size-8"
@@ -104,7 +100,7 @@ export function DataTablePagination<TData>({
             <ChevronLeft className="rtl:rotate-180" />
           </Button>
           <Button
-            aria-label={labels?.nextPage ?? "Go to next page"}
+            aria-label={labels.nextPage ?? "Go to next page"}
             variant="outline"
             size="icon"
             className="size-8"
@@ -114,7 +110,7 @@ export function DataTablePagination<TData>({
             <ChevronRight className="rtl:rotate-180" />
           </Button>
           <Button
-            aria-label={labels?.lastPage ?? "Go to last page"}
+            aria-label={labels.lastPage ?? "Go to last page"}
             variant="outline"
             size="icon"
             className="hidden size-8 lg:flex"
@@ -128,3 +124,5 @@ export function DataTablePagination<TData>({
     </div>
   )
 }
+
+export type { DataTablePaginationLabels }

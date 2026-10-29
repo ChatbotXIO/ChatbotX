@@ -2302,6 +2302,13 @@
     "bot": {
       "label": "机器人"
     },
+    "botCategory": {
+      "options": {
+        "all": "全部",
+        "human": "真人客服",
+        "bot": "机器人"
+      }
+    },
     "botField": {
       "label": "机器人字段"
     },

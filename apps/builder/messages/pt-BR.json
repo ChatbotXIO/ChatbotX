@@ -1230,6 +1230,13 @@
     "bot": {
       "label": "Bot"
     },
+    "botCategory": {
+      "options": {
+        "all": "Todas",
+        "human": "Pessoa",
+        "bot": "Bot"
+      }
+    },
     "botResponse": {
       "label": "Resposta do bot"
     },

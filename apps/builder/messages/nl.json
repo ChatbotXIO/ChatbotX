@@ -1014,6 +1014,13 @@
     "bot": {
       "label": "Bot"
     },
+    "botCategory": {
+      "options": {
+        "all": "Alle",
+        "human": "Mens",
+        "bot": "Bot"
+      }
+    },
     "botResponse": {
       "label": "Botantwoord"
     },

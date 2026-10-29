@@ -1230,6 +1230,13 @@
     "bot": {
       "label": "Bot"
     },
+    "botCategory": {
+      "options": {
+        "all": "Semua",
+        "human": "Manusia",
+        "bot": "Bot"
+      }
+    },
     "botResponse": {
       "label": "Bot Response"
     },

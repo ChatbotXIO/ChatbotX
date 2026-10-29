@@ -5480,6 +5480,13 @@
     "bot": {
       "label": "בוט"
     },
+    "botCategory": {
+      "options": {
+        "all": "הכל",
+        "human": "אדם",
+        "bot": "בוט"
+      }
+    },
     "botResponse": {
       "label": "תגובת בוט"
     },
