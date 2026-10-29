@@ -19,6 +19,7 @@ describe("isPublicRoute", () => {
   test("inbound webhook deliveries (/api/hooks/<token>) need no session", () => {
     // The sender is an external system; the token in the path is the credential.
     expect(isPublicRoute("/api/hooks/iwh_abc")).toBe(true)
+  })
   test("/.well-known exposes OAuth discovery without opening /well-known", () => {
     expect(isPublicRoute("/.well-known/oauth-authorization-server")).toBe(true)
     expect(isPublicRoute("/well-known")).toBe(false)

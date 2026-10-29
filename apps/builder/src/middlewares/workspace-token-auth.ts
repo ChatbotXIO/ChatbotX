@@ -220,7 +220,9 @@ export const workspaceTokenAuthMidddleware = base.middleware(
           context: {
             workspace,
             apiToken,
-            apiCredentialId: `api-token:${apiToken.id}`,
+            apiCredentialId: auth
+              ? `api-token:${apiToken.id}`
+              : resolved.audit.source,
           },
         }),
     )

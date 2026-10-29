@@ -10787,7 +10787,7 @@
         "id": "ID item"
       }
     }
-,
+  },
   "oauthConsent": {
     "title": "Authorize {clientName}",
     "description": "This application is requesting access to your workspace.",

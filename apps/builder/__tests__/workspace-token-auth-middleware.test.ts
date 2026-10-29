@@ -358,6 +358,7 @@ describe("workspaceTokenAuthMidddleware", () => {
           scopes: null,
           isDefault: false,
         },
+        apiCredentialId: "mcp-oauth:client-oauth",
       },
     })
     expect(withAuditContext).toHaveBeenCalledWith(

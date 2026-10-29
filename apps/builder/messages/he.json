@@ -10787,7 +10787,7 @@
         "id": "מזהה הפריט"
       }
     }
-,
+  },
   "oauthConsent": {
     "title": "Authorize {clientName}",
     "description": "This application is requesting access to your workspace.",
