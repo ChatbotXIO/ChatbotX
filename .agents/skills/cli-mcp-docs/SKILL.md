@@ -13,6 +13,13 @@ itself is the human-facing documentation that describes that surface. Skipping
 this after a public API change is how the docs quietly drift from what
 `chatbotx --help` / `tools/list` actually returns.
 
+## 0. Regenerate the committed spec
+
+`/api/public-spec.json` serves `apps/builder/src/generated/public-spec.base.json`,
+not a live walk of `publicRouter`. After any public API change run
+`pnpm --filter builder gen:public-spec` and commit the file; a new branch in
+`routers/public.ts` must be `lazy(..., { prefix: "/v1/<x>" })`.
+
 ## 1. Confirm the operation is live and named right
 
 Before touching any doc, verify the new/changed operation in the generated
