@@ -10,10 +10,12 @@ import type { ExecuteStepProps } from "../src/integration/handlers/flow-utils"
 const {
   integrationQueueAdd,
   matchesContactFilter,
+  refreshContactProfileSnapshot,
   resolveContactVariablesDeep,
 } = vi.hoisted(() => ({
   integrationQueueAdd: vi.fn(async () => undefined),
   matchesContactFilter: vi.fn(),
+  refreshContactProfileSnapshot: vi.fn(async () => undefined),
   resolveContactVariablesDeep: vi.fn(async (_contactId, cases) => cases),
 }))
 
@@ -26,6 +28,7 @@ vi.mock("@chatbotx.io/events/context", () => ({
 }))
 
 vi.mock("@chatbotx.io/variables", () => ({
+  refreshContactProfileSnapshot,
   resolveContactVariablesDeep,
 }))
 
@@ -341,5 +344,61 @@ describe("handleCondition", () => {
         timezone: "Asia/Ho_Chi_Minh",
       },
     })
+  })
+  test("refreshes the profile snapshot before matching an Instagram profile field", async () => {
+    const step: ConditionStepSchema = {
+      id: "condition-step-1",
+      stepType: "condition",
+      otherwiseId: "otherwise-handle",
+      cases: [
+        {
+          id: "first-case",
+          operator: "and",
+          conditions: [
+            {
+              field: "followsBusinessOnInstagram",
+              operator: "eq",
+              value: "true",
+            },
+          ],
+        },
+        {
+          id: "second-case",
+          operator: "and",
+          conditions: [
+            { field: "followerCountOnInstagram", operator: "gt", value: "10" },
+          ],
+        },
+      ],
+    }
+    matchesContactFilter.mockResolvedValue(false)
+
+    await handleCondition(
+      makeProps(step, [
+        { sourceHandle: "otherwise-handle", target: "otherwise-target" },
+      ] as EdgeSchema[]),
+    )
+
+    expect(refreshContactProfileSnapshot).toHaveBeenCalledTimes(1)
+    expect(refreshContactProfileSnapshot).toHaveBeenCalledWith({
+      contactInbox,
+      workspaceId: "workspace-1",
+    })
+    const [refreshOrder] =
+      refreshContactProfileSnapshot.mock.invocationCallOrder
+    const [firstMatchOrder] = matchesContactFilter.mock.invocationCallOrder
+    expect(refreshOrder).toBeLessThan(firstMatchOrder as number)
+  })
+
+  test("does not refresh the profile snapshot when no case reads it", async () => {
+    matchesContactFilter.mockResolvedValue(false)
+
+    await handleCondition(
+      makeProps(makeStep(), [
+        { sourceHandle: "otherwise-handle", target: "otherwise-target" },
+      ] as EdgeSchema[]),
+    )
+
+    expect(refreshContactProfileSnapshot).not.toHaveBeenCalled()
   })
 })
