@@ -38,14 +38,16 @@ while other modes drain until complete unless that variable is set.
 | schedule | (cron) | `src/schedule/worker.ts` |
 | sequence-scheduler | `sequenceScheduler` | `src/sequence-scheduler/worker*.ts` |
 | notification | `notification` | `src/notification/worker.ts` |
+| low | `low` | `src/low/worker.ts` |
+| marketing-message | `marketingMessage` | `src/marketing-message/worker.ts` |
 | events | event-bus (not BullMQ) | `src/events/worker.ts` — `startWorker([...listeners])` from `@chatbotx.io/event-bus/worker` |
 
 `queueNames` (`packages/worker-config/src/lib/types.ts:3`) also declares `broadcast` and
 `quota`, which have queues but no dedicated worker entry — their jobs are consumed by the
 workers above. Some queues get their own `Worker` (own concurrency) hosted inside an existing
-process: `profileSnapshot` and `leaderboard` in `src/low/worker.ts`, and `marketingMessage`
-(FB Marketing Messages campaign steps, enqueued by the schedule crons) in
-`src/schedule/worker.ts` via `src/marketing-message/consumer.ts`. Check `apps/worker/tsdown.config.ts` for the authoritative entry list.
+process: `profileSnapshot` and `leaderboard` in `src/low/worker.ts`. Marketing Messages
+campaign steps have their own `marketingMessage` worker, while schedule crons enqueue them.
+Check `apps/worker/tsdown.config.ts` for the authoritative entry list.
 
 The `heavy` queue/worker is a **workload-class** queue, not a domain queue:
 use it for bounded but RAM/CPU/I/O/model-heavy jobs that should not occupy

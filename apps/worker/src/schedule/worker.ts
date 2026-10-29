@@ -8,7 +8,6 @@ import { createQueueWorker } from "../lib/create-queue-worker"
 import { logger } from "../lib/logger"
 import { runJobWithAuditContext } from "../lib/run-job-with-audit-context"
 import { runWorker } from "../lib/shutdown"
-import { startMarketingMessageWorker } from "../marketing-message/consumer"
 import {
   cleanupTriggerExecutions,
   scanDateTimeTriggers,
@@ -78,10 +77,6 @@ async function startScheduleWorker() {
       logger.error({ err }, "Error registering schedules")
     }
   }
-
-  // Hosted in the schedule process (its crons are the only producers) but on
-  // its own queue and concurrency, so Meta sends never starve schedule jobs.
-  startMarketingMessageWorker()
 
   createQueueWorker(
     queueNames.enum.schedule,

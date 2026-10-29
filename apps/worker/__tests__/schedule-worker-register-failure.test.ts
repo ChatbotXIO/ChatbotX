@@ -5,7 +5,6 @@ const state = vi.hoisted(() => ({
   loggerError: vi.fn(),
   registerSchedules: vi.fn(),
   requestShutdown: vi.fn(),
-  startMarketingMessageWorker: vi.fn(),
 }))
 
 vi.mock("bullmq", () => {
@@ -42,15 +41,11 @@ vi.mock("../src/lib/shutdown", () => ({
   },
 }))
 
-vi.mock("../src/marketing-message/consumer", () => ({
-  startMarketingMessageWorker: state.startMarketingMessageWorker,
-}))
-
 vi.mock("../src/schedule/handlers/register-schedules", () => ({
   registerSchedules: state.registerSchedules,
 }))
 
-test("a registerSchedules rejection still starts both workers without shutting down", async () => {
+test("a registerSchedules rejection still starts the schedule worker without shutting down", async () => {
   state.registerSchedules.mockRejectedValue(new Error("redis unavailable"))
 
   await import("../src/schedule/worker")
@@ -58,7 +53,6 @@ test("a registerSchedules rejection still starts both workers without shutting d
   await vi.waitFor(() => {
     expect(state.createQueueWorker).toHaveBeenCalledOnce()
   })
-  expect(state.startMarketingMessageWorker).toHaveBeenCalledOnce()
   expect(state.loggerError).toHaveBeenCalledWith(
     expect.objectContaining({ err: expect.any(Error) }),
     "Error registering schedules",
