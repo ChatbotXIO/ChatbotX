@@ -40,7 +40,7 @@ Use `search_tools` when the task needs something outside the default set (e.g. d
 
 ### Human approval
 
-Every operation carries an `x-mcp.hitlPolicy` from the public OpenAPI spec; reads use `none`. The server requests MCP form elicitation when the client supports it, with a 10-minute approval window. Otherwise it returns `CONFIRMATION_REQUIRED` with the policy, proposed arguments, and current state when available; show that response to the user, then repeat the same call with `_confirm: true` only after explicit approval. `_confirm` is a compatibility guardrail, not an authorization boundary.
+Every operation carries an `x-mcp.hitlPolicy` from the public OpenAPI spec; reads use `none`. Mutating operations return `CONFIRMATION_REQUIRED` with the policy, proposed arguments, and current state when available; show that response to the user, then repeat the same call with `_confirm: true` only after explicit approval. `_confirm` is a compatibility guardrail, not an authorization boundary.
 
 Writes that are read-only computations declare `hitlPolicy: "none"` in the backend. Destructive writes also carry the MCP `destructiveHint` annotation. When a current-state read fails for any reason, `currentState` is omitted and `currentStateUnavailable` explains why; the failed read never blocks confirmation.
 
@@ -425,7 +425,7 @@ src/
 ├── test-tools.ts           # Dev utility — prints loaded tools
 └── server/
     ├── create-mcp-server.ts   # MCP server factory, resources, tools/list + tools/call
-    ├── hitl-gate.ts           # Form elicitation and compatibility confirmation gate
+    ├── hitl-gate.ts           # Two-step confirmation gate for mutations
     ├── meta-tools.ts          # search_tools / call_tool / get_guide definitions
     ├── execute-tool.ts        # Shared HTTP dispatch, confirmation, argument normalization
     ├── search/                # search_tools ranking: normalization and IDF scoring

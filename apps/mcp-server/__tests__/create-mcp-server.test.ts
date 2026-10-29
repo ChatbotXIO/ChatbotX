@@ -302,7 +302,7 @@ describe("createMcpServer", () => {
     )
   })
 
-  test("uses the ten-minute elicitation timeout for form-capable clients", async () => {
+  test("returns confirmation fallback without eliciting from a form-capable client", async () => {
     const fetchMock = vi
       .fn()
       .mockResolvedValueOnce(
@@ -325,21 +325,30 @@ describe("createMcpServer", () => {
     vi.spyOn(server.server, "getClientCapabilities").mockReturnValue({
       elicitation: { form: {} },
     } as never)
-    const elicitInput = vi
-      .spyOn(server.server, "elicitInput")
-      .mockResolvedValue({ action: "accept" } as never)
+    const elicitInput = vi.spyOn(server.server, "elicitInput")
     const callHandler = getRequestHandler(server, "tools/call")
 
-    await callHandler(
+    const confirmation = (await callHandler(
       {
         method: "tools/call",
         params: { arguments: {}, name: "tags_create" },
       },
       {},
-    )
+    )) as CallToolResult
+    const created = (await callHandler(
+      {
+        method: "tools/call",
+        params: { arguments: { _confirm: true }, name: "tags_create" },
+      },
+      {},
+    )) as CallToolResult
 
-    expect(elicitInput).toHaveBeenCalledWith(expect.any(Object), {
-      timeout: 10 * 60_000,
+    expect(JSON.parse(confirmation.content[0]?.text ?? "{}")).toMatchObject({
+      code: "CONFIRMATION_REQUIRED",
+      policy: "confirm_diff",
+      tool: "tags_create",
     })
+    expect(created.isError).toBeUndefined()
+    expect(elicitInput).not.toHaveBeenCalled()
   })
 })

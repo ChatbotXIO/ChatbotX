@@ -1,7 +1,7 @@
 import { env } from "../env"
 import { fetchWithTimeout } from "../http"
 import { type DynamicTool, getCachedTools } from "../openapi-loader"
-import { type ElicitationClient, enforceHitlGate } from "./hitl-gate"
+import { enforceHitlGate } from "./hitl-gate"
 
 const NO_BODY_METHODS = new Set(["GET", "HEAD"])
 
@@ -165,10 +165,6 @@ export type RequestCredentials = {
   workspaceId?: string
 }
 
-export type ToolExecutionOptions = {
-  elicitationClient?: ElicitationClient
-}
-
 export type ToolCallResult = {
   content: Array<{ type: "text"; text: string }>
   isError?: boolean
@@ -228,12 +224,7 @@ const getCurrentState = async (props: {
   const stateArgs = Object.fromEntries(
     stateTool.pathParamNames.map((name) => [name, props.args[name]]),
   )
-  const stateResult = await executeTool(
-    stateTool,
-    stateArgs,
-    props.credentials,
-    {},
-  )
+  const stateResult = await executeTool(stateTool, stateArgs, props.credentials)
   if (stateResult.isError) {
     return {
       unavailable: firstLine(stateResult.content[0]?.text ?? "unknown failure"),
@@ -264,7 +255,6 @@ export async function executeTool(
   tool: DynamicTool,
   rawArgs: Record<string, unknown>,
   credentials: RequestCredentials,
-  options: ToolExecutionOptions = {},
 ): Promise<ToolCallResult> {
   const preparedArguments = prepareToolArguments(tool, rawArgs)
   const preflightError = preflightArgumentError(tool, preparedArguments)
@@ -276,7 +266,6 @@ export async function executeTool(
   try {
     const hitlGate = await enforceHitlGate({
       args,
-      elicitationClient: options.elicitationClient,
       getCurrentState: async () =>
         await getCurrentState({
           args,

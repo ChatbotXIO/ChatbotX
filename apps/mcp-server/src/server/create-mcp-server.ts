@@ -19,9 +19,7 @@ import {
   errorResult,
   executeTool,
   type RequestCredentials,
-  type ToolExecutionOptions,
 } from "./execute-tool"
-import { HITL_ELICITATION_TIMEOUT_MS } from "./hitl-gate"
 import {
   handleCallTool,
   handleGetGuide,
@@ -57,17 +55,6 @@ export const createMcpServer = (
   const getCredentials = (): RequestCredentials | undefined =>
     options?.getCredentials?.() ??
     (env.CHATBOTX_API_KEY ? { token: env.CHATBOTX_API_KEY } : undefined)
-
-  const executionOptions: ToolExecutionOptions = {
-    elicitationClient: {
-      supportsFormElicitation: () =>
-        Boolean(mcpServer.server.getClientCapabilities()?.elicitation?.form),
-      elicitInput: async (props) =>
-        await mcpServer.server.elicitInput(props, {
-          timeout: HITL_ELICITATION_TIMEOUT_MS,
-        }),
-    },
-  }
 
   for (const name of guideNames) {
     const guide = getGuide(name)
@@ -137,15 +124,14 @@ export const createMcpServer = (
     }
 
     if (name === "call_tool") {
-      return await handleCallTool(toolArgs, credentials, executionOptions)
+      return await handleCallTool(toolArgs, credentials)
     }
-
     const tool = getToolByName(name)
     if (!tool) {
       return errorResult(`Unknown tool: ${name}`)
     }
 
-    return await executeTool(tool, toolArgs, credentials, executionOptions)
+    return await executeTool(tool, toolArgs, credentials)
   })
 
   return mcpServer
