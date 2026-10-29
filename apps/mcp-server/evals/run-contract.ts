@@ -34,6 +34,75 @@ const requiredComparisonFields: Array<keyof EvalManifest> = [
 const sameJson = (left: unknown, right: unknown): boolean =>
   JSON.stringify(left) === JSON.stringify(right)
 
+const decodeMcp = (result: unknown): unknown => {
+  if (
+    !result ||
+    typeof result !== "object" ||
+    !("content" in result) ||
+    !Array.isArray(result.content)
+  ) {
+    return result
+  }
+
+  const text = result.content
+    .flatMap((item) => {
+      if (
+        item &&
+        typeof item === "object" &&
+        "text" in item &&
+        typeof item.text === "string"
+      ) {
+        return [item.text]
+      }
+      return []
+    })
+    .join("\n")
+  try {
+    return JSON.parse(text)
+  } catch {
+    return text
+  }
+}
+
+export const confirmationRequired = (result: unknown): boolean => {
+  const decoded = decodeMcp(result)
+  return (
+    typeof decoded === "object" &&
+    decoded !== null &&
+    "code" in decoded &&
+    decoded.code === "CONFIRMATION_REQUIRED"
+  )
+}
+
+export const withConfirmationArgument = (
+  toolName: string,
+  args: Record<string, unknown>,
+): Record<string, unknown> => {
+  if (toolName !== "call_tool") {
+    return { ...args, _confirm: true }
+  }
+
+  const nestedArgs = args.arguments
+  if (
+    typeof nestedArgs !== "object" ||
+    nestedArgs === null ||
+    Array.isArray(nestedArgs)
+  ) {
+    return args
+  }
+  return {
+    ...args,
+    arguments: { ...nestedArgs, _confirm: true },
+  }
+}
+
+export const getFinalStepUsage = async (result: {
+  finalStep: { usage: unknown } | PromiseLike<{ usage: unknown }>
+}): Promise<unknown> => (await result.finalStep).usage
+
+export const getAggregateUsage = (result: { usage: unknown }): unknown =>
+  result.usage
+
 export const assertComparableManifests = (
   baseline: EvalManifest,
   candidate: EvalManifest,

@@ -1,4 +1,5 @@
 import { broadcastRecurrenceService } from "@chatbotx.io/business"
+import { mcpSpec } from "@/lib/orpc/mcp-annotations"
 import {
   possibleErrorsOnFindingResource,
   possibleErrorsOnMutatingResource,
@@ -31,6 +32,7 @@ export const broadcastsRecurrencePublicRouter = {
       summary: "Preview repeat rule",
       description:
         "Returns the next run times of a repeat rule without creating anything, so you can check a schedule before `broadcasts.create` or `broadcasts.schedule`. Days 29-31 run on the last day of shorter months; a time that does not exist on a daylight-saving day moves forward, an ambiguous one takes the earlier instant.",
+      spec: mcpSpec({ hitlPolicy: "none", readOnlyHint: true }),
       tags: ["Broadcasts"],
     })
     .input(previewRecurrencePublicRequest)

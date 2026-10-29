@@ -5,6 +5,7 @@ import {
   IDEMPOTENT_REPLAYED_HEADER,
   MAX_IDEMPOTENCY_KEY_LENGTH,
 } from "../idempotency/constants"
+import type { McpHitlPolicy, OperationObjectWithMcp } from "./mcp-annotations"
 
 type PublicSpecDocument = Awaited<
   ReturnType<InstanceType<typeof OpenAPIGenerator>["generate"]>
@@ -46,7 +47,66 @@ const CHANNEL_API_TOKEN_SECURITY: Record<string, string[]>[] = [
 // hook — only a document-level default via `specGenerateOptions.security`).
 const CHANNEL_API_TOKEN_PATH_PREFIX = "/v1/channels/api/"
 
-const IDEMPOTENT_METHODS = new Set(["post", "put", "patch", "delete"])
+const IDEMPOTENT_METHODS: ReadonlySet<string> = new Set([
+  "post",
+  "put",
+  "patch",
+  "delete",
+])
+const READ_ONLY_METHODS: ReadonlySet<string> = new Set(["get", "head"])
+const HITL_HTTP_METHODS: ReadonlySet<string> = new Set([
+  "get",
+  "head",
+  "post",
+  "put",
+  "patch",
+  "delete",
+])
+
+const OUTBOUND_OPERATION_PATTERNS = [
+  /^messages_create$/u,
+  /(?:^|_)(?:send|schedule|resend|book|issue|trigger|push|publish|subscribe)(?:_|$)/u,
+  /_resume$/u,
+  /_thread_control$/u,
+  /_enable_bot$/u,
+] as const
+
+const DESTRUCTIVE_OPERATION_PATTERN =
+  /(?:^|_)(?:delete|remove|reset|stop|cancel|clear|disconnect|archive|block|purge|revoke|unsubscribe)(?:_|$)/u
+
+const normalizeOperationId = (operationId: string): string =>
+  operationId
+    .replace(/([a-z\d])([A-Z])/gu, "$1_$2")
+    .replace(/[.-]/gu, "_")
+    .toLowerCase()
+
+export const inferHitlPolicy = (
+  method: string,
+  operationId: string | undefined,
+  readOnlyHint: boolean | undefined,
+): McpHitlPolicy => {
+  if (READ_ONLY_METHODS.has(method) || readOnlyHint) {
+    return "none"
+  }
+
+  const normalizedOperationId = operationId
+    ? normalizeOperationId(operationId)
+    : ""
+  if (
+    method === "delete" ||
+    DESTRUCTIVE_OPERATION_PATTERN.test(normalizedOperationId)
+  ) {
+    return "confirm_destructive"
+  }
+  if (
+    OUTBOUND_OPERATION_PATTERNS.some((pattern) =>
+      pattern.test(normalizedOperationId),
+    )
+  ) {
+    return "confirm_outbound"
+  }
+  return "confirm_diff"
+}
 
 const IDEMPOTENCY_KEY_PARAMETER = {
   name: IDEMPOTENCY_KEY_HEADER,
@@ -67,6 +127,30 @@ export function publicSpecGenerateOptions(title: string) {
   }
 }
 
+const forEachOperation = (
+  spec: PublicSpecDocument,
+  callback: (
+    path: string,
+    method: string,
+    operation: OperationObjectWithMcp,
+  ) => void,
+): void => {
+  for (const [path, pathItem] of Object.entries(spec.paths ?? {})) {
+    if (!pathItem) {
+      continue
+    }
+    for (const [method, operation] of Object.entries(pathItem)) {
+      if (
+        operation &&
+        typeof operation === "object" &&
+        "responses" in operation
+      ) {
+        callback(path, method, operation as OperationObjectWithMcp)
+      }
+    }
+  }
+}
+
 /**
  * Overrides `security` to the channel-token scheme for every
  * `/v1/channels/api/*` operation in a generated spec, so the document is
@@ -75,26 +159,39 @@ export function publicSpecGenerateOptions(title: string) {
  * workspace-token schemes).
  */
 export function withChannelApiTokenSecurity(spec: PublicSpecDocument) {
-  if (!spec.paths) {
-    return spec
-  }
+  forEachOperation(spec, (path, _, operation) => {
+    if (path.startsWith(CHANNEL_API_TOKEN_PATH_PREFIX)) {
+      operation.security = CHANNEL_API_TOKEN_SECURITY
+    }
+  })
 
-  for (const [path, pathItem] of Object.entries(spec.paths)) {
-    if (!(pathItem && path.startsWith(CHANNEL_API_TOKEN_PATH_PREFIX))) {
-      continue
+  return spec
+}
+
+/**
+ * Stamps every public operation with the MCP human-in-the-loop policy. A route
+ * may explicitly override the inferred policy through `mcpSpec`, but a write
+ * never silently becomes unguarded when a new public procedure is added.
+ */
+export function withMcpHitlPolicy(spec: PublicSpecDocument) {
+  forEachOperation(spec, (_, method, operation) => {
+    if (!HITL_HTTP_METHODS.has(method)) {
+      return
     }
 
-    for (const operation of Object.values(pathItem)) {
-      if (
-        operation &&
-        typeof operation === "object" &&
-        "responses" in operation
-      ) {
-        ;(operation as { security?: unknown }).security =
-          CHANNEL_API_TOKEN_SECURITY
-      }
+    const existing = operation["x-mcp"]
+    const hitlPolicy =
+      existing?.hitlPolicy ??
+      inferHitlPolicy(method, operation.operationId, existing?.readOnlyHint)
+    operation["x-mcp"] = {
+      ...existing,
+      ...(hitlPolicy === "confirm_destructive" &&
+      existing?.destructiveHint === undefined
+        ? { destructiveHint: true }
+        : {}),
+      hitlPolicy,
     }
-  }
+  })
 
   return spec
 }
@@ -104,40 +201,23 @@ export function withChannelApiTokenSecurity(spec: PublicSpecDocument) {
  * method-aware operation hook, so this runs after the document is generated.
  */
 export function withIdempotencyKeyHeader(spec: PublicSpecDocument) {
-  if (!spec.paths) {
-    return spec
-  }
-
-  for (const pathItem of Object.values(spec.paths)) {
-    if (!pathItem) {
-      continue
+  forEachOperation(spec, (_, method, operation) => {
+    if (!IDEMPOTENT_METHODS.has(method)) {
+      return
     }
 
-    for (const [method, operation] of Object.entries(pathItem)) {
-      if (!IDEMPOTENT_METHODS.has(method)) {
-        continue
-      }
-      if (!(operation && typeof operation === "object")) {
-        continue
-      }
-
-      const operationWithParameters = operation as { parameters?: unknown[] }
-      const parameters = operationWithParameters.parameters ?? []
-      const hasIdempotencyKey = parameters.some(
-        (parameter) =>
-          parameter !== null &&
-          typeof parameter === "object" &&
-          "name" in parameter &&
-          parameter.name === IDEMPOTENCY_KEY_PARAMETER.name,
-      )
-      if (!hasIdempotencyKey) {
-        operationWithParameters.parameters = [
-          ...parameters,
-          IDEMPOTENCY_KEY_PARAMETER,
-        ]
-      }
+    const parameters = operation.parameters ?? []
+    const hasIdempotencyKey = parameters.some(
+      (parameter) =>
+        parameter !== null &&
+        typeof parameter === "object" &&
+        "name" in parameter &&
+        parameter.name === IDEMPOTENCY_KEY_PARAMETER.name,
+    )
+    if (!hasIdempotencyKey) {
+      operation.parameters = [...parameters, IDEMPOTENCY_KEY_PARAMETER]
     }
-  }
+  })
 
   return spec
 }

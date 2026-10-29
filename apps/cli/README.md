@@ -4,6 +4,8 @@ CLI for interacting with the ChatbotX API.
 
 Commands are automatically generated from the ChatbotX public API spec — no manual update needed when new APIs are added.
 
+CLI writes execute directly; MCP-only human approval (`x-mcp.hitlPolicy` and `_confirm`) does not gate CLI commands.
+
 ---
 
 ## Installation

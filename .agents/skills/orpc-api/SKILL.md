@@ -367,6 +367,9 @@ import { mcpSpec } from "@/lib/orpc/mcp-annotations"
   loader's HTTP-method-based inference (GET ⇒ read-only/idempotent, DELETE ⇒
   destructive/idempotent, everything else ⇒ none) when an operation doesn't
   fit that default.
+- `hitlPolicy` is inferred from the HTTP method and operation id for every
+  operation. Set `hitlPolicy: "none"` on a non-mutating POST; add
+  `readOnlyHint: true` only when a `read_only` token may call it.
 
 **`include`/`withCount` convention for list endpoints**: a public list
 endpoint whose row shape has optional relations or an expensive count query

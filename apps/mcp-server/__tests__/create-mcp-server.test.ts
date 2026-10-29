@@ -1,5 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 
+const MARKDOWN_HEADING_PATTERN = /^# /u
+
 // Same convention as openapi-loader.test.ts / meta-tools.test.ts:
 // `getCachedTools()`/`introspectToken()`'s caches are module-level state, so
 // each test needs a fresh module instance (`vi.resetModules()`) and its own
@@ -125,6 +127,7 @@ describe("createMcpServer", () => {
     expect(result.tools.map((tool: { name: string }) => tool.name)).toEqual([
       "search_tools",
       "call_tool",
+      "get_guide",
       "tags_list",
     ])
   })
@@ -177,7 +180,7 @@ describe("createMcpServer", () => {
     expect(result.isError).toBeUndefined()
   })
 
-  test("missing API key blocks a regular tool and call_tool, but not search_tools", async () => {
+  test("missing API key blocks regular tools but leaves search and guides available", async () => {
     const fetchMock = vi.fn().mockResolvedValueOnce(
       specResponse({
         "/v1/tags": {
@@ -226,6 +229,16 @@ describe("createMcpServer", () => {
       {},
     )) as CallToolResult
     expect(searchToolsResult.isError).toBeUndefined()
+
+    const guideResult = (await callHandler(
+      {
+        method: "tools/call",
+        params: { name: "get_guide", arguments: { name: "overview" } },
+      },
+      {},
+    )) as CallToolResult
+    expect(guideResult.isError).toBeUndefined()
+    expect(guideResult.content[0]?.text).toContain("# ChatbotX MCP overview")
   })
 
   test("'toString' is not treated as a meta-tool name", async () => {
@@ -248,5 +261,85 @@ describe("createMcpServer", () => {
 
     expect(result.isError).toBe(true)
     expect(result.content[0]?.text).toBe("Unknown tool: toString")
+  })
+
+  test("registers four markdown guide resources", async () => {
+    const { createMcpServer } = await import("../src/server/create-mcp-server")
+    const server = createMcpServer()
+    const listHandler = getRequestHandler(server, "resources/list")
+    const listResult = (await listHandler(
+      { method: "resources/list" },
+      {},
+    )) as {
+      resources: Array<{ mimeType: string; uri: string }>
+    }
+
+    expect(listResult.resources).toHaveLength(4)
+    expect(listResult.resources).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          mimeType: "text/markdown",
+          uri: "chatbotx://guides/overview",
+        }),
+      ]),
+    )
+
+    const readHandler = getRequestHandler(server, "resources/read")
+    const readResult = (await readHandler(
+      {
+        method: "resources/read",
+        params: { uri: "chatbotx://guides/overview" },
+      },
+      {},
+    )) as {
+      contents: Array<{ mimeType: string; text: string }>
+    }
+    expect(readResult.contents[0]).toEqual(
+      expect.objectContaining({
+        mimeType: "text/markdown",
+        text: expect.stringMatching(MARKDOWN_HEADING_PATTERN),
+      }),
+    )
+  })
+
+  test("uses the ten-minute elicitation timeout for form-capable clients", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        specResponse({
+          "/v1/tags": {
+            post: { operationId: "tags.create", summary: "Create tag" },
+          },
+        }),
+      )
+      .mockResolvedValueOnce(jsonExecuteResponse({ id: "tag-1" }))
+    globalThis.fetch = fetchMock as unknown as typeof fetch
+
+    const { loadOpenApiSpec } = await import("../src/openapi-loader")
+    await loadOpenApiSpec()
+
+    const { createMcpServer } = await import("../src/server/create-mcp-server")
+    const server = createMcpServer({
+      getCredentials: () => ({ token: "api-key" }),
+    })
+    vi.spyOn(server.server, "getClientCapabilities").mockReturnValue({
+      elicitation: { form: {} },
+    } as never)
+    const elicitInput = vi
+      .spyOn(server.server, "elicitInput")
+      .mockResolvedValue({ action: "accept" } as never)
+    const callHandler = getRequestHandler(server, "tools/call")
+
+    await callHandler(
+      {
+        method: "tools/call",
+        params: { arguments: {}, name: "tags_create" },
+      },
+      {},
+    )
+
+    expect(elicitInput).toHaveBeenCalledWith(expect.any(Object), {
+      timeout: 10 * 60_000,
+    })
   })
 })

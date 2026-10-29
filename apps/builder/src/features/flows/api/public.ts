@@ -313,7 +313,11 @@ export const flowsPublicRouter = {
       description:
         "Compiles a flow-spec DSL object (see `GET /v1/schemas/flow-spec`) and validates the result exactly like `flows.publish` would, without persisting anything. On success, returns the compiled node/edge graph. On failure, returns a 422 with structured errors (`path`/`code`/`message`/`hint`/`candidates`) — fix and retry before calling `flows.publish`.",
       tags: ["Flows"],
-      spec: mcpSpec({ visibility: "default" }),
+      spec: mcpSpec({
+        hitlPolicy: "none",
+        readOnlyHint: true,
+        visibility: "default",
+      }),
     })
     .input(flowSpecRequest)
     .output(publishFlowSchema)

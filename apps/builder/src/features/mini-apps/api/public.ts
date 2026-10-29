@@ -102,7 +102,7 @@ export const miniAppsPublicRouter = {
       description:
         "Checks a WhatsApp Flow JSON against Meta's rules (character limits, one Footer per screen, navigation targets, If/Switch nesting, ...) without saving it. Fix every `error` before `miniApps.publishWhatsapp`.",
       tags,
-      spec: mcpSpec({ readOnlyHint: true }),
+      spec: mcpSpec({ hitlPolicy: "none", readOnlyHint: true }),
     })
     .input(validateMiniAppPublicRequest)
     .output(miniAppValidationPublicResponse)
@@ -239,7 +239,7 @@ export const miniAppsPublicRouter = {
       description:
         "Returns only the Mini App's WhatsApp Flow JSON 7.3 — what the dashboard's Copy JSON copies — ready to paste into WhatsApp Manager, the Flows Playground or Meta's Flows API. Custom fields (`{{first_name}}`) are kept as written, and WhatsApp would show them literally: `miniApps.get` flags each one with a `contact_variable_whatsapp` warning. Use `miniApps.get` for validation issues and publications.",
       tags,
-      spec: mcpSpec({ readOnlyHint: true }),
+      spec: mcpSpec({ hitlPolicy: "none", readOnlyHint: true }),
     })
     .input(miniAppIdPublicRequest)
     .output(miniAppFlowJsonPublicResponse)
@@ -327,7 +327,7 @@ export const miniAppsPublicRouter = {
       description:
         "Returns Meta's temporary web preview link of the Mini App's Flow on one WhatsApp number (draft or published). The Mini App must have been pushed there with `miniApps.pushWhatsappDraft` or `miniApps.publishWhatsapp`.",
       tags,
-      spec: mcpSpec({ readOnlyHint: true }),
+      spec: mcpSpec({ hitlPolicy: "none", readOnlyHint: true }),
     })
     .input(miniAppWhatsappPublicRequest)
     .output(miniAppWhatsappPreviewPublicResponse)

@@ -20,7 +20,12 @@ spec:
 
 ```bash
 pnpm --filter builder test -- public-spec-operations.test.ts public-spec-mcp.test.ts
+
 ```
+
+For MCP safety changes, remember that gated tools expose a `_confirm` input,
+`get_guide` is the third meta tool, and `apps/mcp-server/src/guides/*.md` is a
+public documentation surface.
 
 Check:
 - `operationId` is what you expect — it becomes the MCP tool name

@@ -31,8 +31,12 @@ import {
 } from "./grade"
 import {
   assertComparableManifests,
+  confirmationRequired,
   type EvalManifest,
+  getAggregateUsage,
+  getFinalStepUsage,
   validateCaseCoverage,
+  withConfirmationArgument,
 } from "./run-contract"
 import { createSandbox, fixtureOperationIds, type HttpTrace } from "./sandbox"
 
@@ -363,10 +367,20 @@ const buildTools = (
             name: mcpTool.name,
           }
           traces.push(trace)
-          const rawResult = await client.callTool({
+          let rawResult = await client.callTool({
             name: mcpTool.name,
             arguments: argumentsObject,
           })
+          if (confirmationRequired(rawResult)) {
+            trace.confirmationRequired = true
+            rawResult = await client.callTool({
+              name: mcpTool.name,
+              arguments: withConfirmationArgument(
+                mcpTool.name,
+                argumentsObject,
+              ),
+            })
+          }
           trace.isError = rawResult.isError === true
           trace.result = decodeMcp(rawResult)
           return trace.result
@@ -388,13 +402,6 @@ const unknownToolCount = (calls: ModelToolCall[]): number =>
       typeof call.result === "string" &&
       call.result.startsWith("Unknown tool"),
   ).length
-
-export const getFinalStepUsage = async (result: {
-  finalStep: { usage: unknown } | PromiseLike<{ usage: unknown }>
-}): Promise<unknown> => (await result.finalStep).usage
-
-export const getAggregateUsage = (result: { usage: unknown }): unknown =>
-  result.usage
 
 const evaluateCase = async (props: {
   evalCase: EvalCase

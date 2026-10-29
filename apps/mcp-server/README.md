@@ -21,12 +21,13 @@ tokens; only workspace owners and `superAdmin` members can authorize.
 Legacy workspace tokens remain supported for stdio and existing connections.
 ### Default tools vs. the full API
 
-ChatbotX's public API has ~350 operations. Listing all of them as MCP tools overwhelms an agent's context and its ability to pick the right one, so `tools/list` returns only a curated default set (see below) plus two meta-tools:
+ChatbotX's public API has ~350 operations. Listing all of them as MCP tools overwhelms an agent's context and its ability to pick the right one, so `tools/list` returns only a curated default set (see below) plus three meta-tools:
 
 | Tool | Description |
 |---|---|
 | `search_tools` | Search the full API for a tool not in the default set. Returns `{ matches, hint? }`, where each match has its name, description, and input schema. |
 | `call_tool` | Execute any tool by name, including ones `search_tools` found but `tools/list` doesn't show. |
+| `get_guide` | Read an operational safety guide when a workflow involves approvals, flows, inbox handover, contacts, or pipelines. |
 
 Use `search_tools` when the task needs something outside the default set (e.g. deleting a resource, managing AI agents, coupons, products) — then invoke it with `call_tool`.
 
@@ -36,6 +37,12 @@ Use `search_tools` when the task needs something outside the default set (e.g. d
 - **Unknown-tool suggestions**: an unrecognized `name` returns the closest matching tool names instead of a bare error, so a model can self-correct without another `search_tools` round trip.
 - **Pre-flight argument check**: a `call_tool` invocation missing a field the selected tool's `inputSchema` marks `required` is rejected immediately with the missing field names, instead of waiting for the real API's 422. A common wrapper mistake (nesting every field under `body`/`params`/`input` instead of passing them at the top level) is called out explicitly.
 - **Contact identifier auto-prefix**: a bare email, `+`-prefixed or local `0`-prefixed phone number, or numeric id passed as `identifier` to a contact tool is automatically prefixed (`email:`/`phone:`/`id:`) before the request is sent, matching what the API actually requires.
+
+### Human approval
+
+Every operation carries an `x-mcp.hitlPolicy` from the public OpenAPI spec; reads use `none`. The server requests MCP form elicitation when the client supports it, with a 10-minute approval window. Otherwise it returns `CONFIRMATION_REQUIRED` with the policy, proposed arguments, and current state when available; show that response to the user, then repeat the same call with `_confirm: true` only after explicit approval. `_confirm` is a compatibility guardrail, not an authorization boundary.
+
+Writes that are read-only computations declare `hitlPolicy: "none"` in the backend. Destructive writes also carry the MCP `destructiveHint` annotation. When a current-state read fails for any reason, `currentState` is omitted and `currentStateUnavailable` explains why; the failed read never blocks confirmation.
 
 ### Scope-based filtering
 
@@ -270,7 +277,7 @@ ChatGPT.com connects via SSE. The server must be publicly reachable. Because Cha
    ```bash
    claude mcp add chatbotx -t sse -s user "https://your-mcp-server.com/sse?workspace_token=<your-token>"
    ```
-3. Set `CHATBOTX_MCP_SERVER_INSTRUCTIONS` so ChatGPT uses tools instead of its training data (see `.env.example` for the recommended value).
+3. Set `CHATBOTX_MCP_SERVER_INSTRUCTIONS` so ChatGPT uses tools instead of its training data. Leave it unset unless replacing the full built-in workflow, including OAuth checkpoints.
 
 ## Token resolution order
 
@@ -380,19 +387,18 @@ Evaluation output is written under `evals/out/` (gitignored) unless `--out` poin
 src/
 ├── index.ts                # Entry point — loads spec, starts transport(s)
 ├── env.ts                  # Environment variable schema
+├── guides/                 # Packaged markdown operational guides
 ├── http.ts                 # Timed fetch helper for OpenAPI, token, and tool requests
 ├── openapi-loader.ts       # Fetches OpenAPI spec → DynamicTool list, x-mcp
-│                           # visibility/scope parsing, scope-filtered getVisibleTools()
+│                           # visibility/scope/HITL parsing, scope-filtered getVisibleTools()
 ├── token-introspection.ts  # GET /v1/token → cached {permission, scopes} per token
 ├── test-tools.ts           # Dev utility — prints loaded tools
 └── server/
-    ├── create-mcp-server.ts   # MCP server factory, tools/list + tools/call handlers
-    ├── meta-tools.ts          # search_tools / call_tool definitions, name resolution,
-    │                          # unknown-tool suggestions, pre-flight argument checks
-    ├── execute-tool.ts        # Shared HTTP dispatch for a DynamicTool call + argument
-    │                          # normalization (contact identifier auto-prefix)
-    ├── search/                # search_tools ranking: normalization and
-    │                          # IDF-weighted scoring
+    ├── create-mcp-server.ts   # MCP server factory, resources, tools/list + tools/call
+    ├── hitl-gate.ts           # Form elicitation and compatibility confirmation gate
+    ├── meta-tools.ts          # search_tools / call_tool / get_guide definitions
+    ├── execute-tool.ts        # Shared HTTP dispatch, confirmation, argument normalization
+    ├── search/                # search_tools ranking: normalization and IDF scoring
     ├── sse-server.ts          # SSE / Streamable HTTP transport
     └── stdio-server.ts        # stdio transport
 

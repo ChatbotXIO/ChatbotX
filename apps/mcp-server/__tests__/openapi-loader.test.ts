@@ -1,5 +1,17 @@
-import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
-import { isWorkspaceTokenOperation, toSnakeCase } from "../src/openapi-loader"
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  expectTypeOf,
+  test,
+  vi,
+} from "vitest"
+import {
+  type DynamicTool,
+  isWorkspaceTokenOperation,
+  toSnakeCase,
+} from "../src/openapi-loader"
 
 describe("toSnakeCase", () => {
   test.each([
@@ -279,6 +291,11 @@ describe("loadOpenApiSpec", () => {
     expect(tool?.bodyParamNames).toEqual(["content", "contactId"])
     expect(tool?.inputSchema).toEqual({
       properties: {
+        _confirm: {
+          description:
+            "Set to true only after the user has reviewed the proposed action and explicitly confirmed it.",
+          type: "boolean",
+        },
         contactId: { type: "string" },
         content: { type: "string" },
       },
@@ -328,6 +345,11 @@ describe("loadOpenApiSpec", () => {
     expect(tool?.bodyParamNames).toEqual(["text", "templateId"])
     expect(tool?.inputSchema).toEqual({
       properties: {
+        _confirm: {
+          description:
+            "Set to true only after the user has reviewed the proposed action and explicitly confirmed it.",
+          type: "boolean",
+        },
         templateId: { type: "string" },
         text: { type: "string" },
       },
@@ -522,6 +544,20 @@ describe("x-mcp visibility, scope, and annotations", () => {
     expect(tool?.scope).toBe("contacts")
   })
 
+  test("points public Teams tools to their operational guide", async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue(
+      specWithOperation({
+        tags: ["Teams"],
+      }),
+    ) as unknown as typeof fetch
+    const { loadOpenApiSpec } = await import("../src/openapi-loader")
+    const [tool] = await loadOpenApiSpec()
+
+    expect(tool?.description).toContain(
+      'get_guide with name "inbox-and-handover"',
+    )
+  })
+
   test("annotations default from the HTTP method when x-mcp doesn't override them", async () => {
     globalThis.fetch = vi
       .fn()
@@ -564,6 +600,58 @@ describe("x-mcp visibility, scope, and annotations", () => {
       destructiveHint: true,
       idempotentHint: true,
     })
+  })
+
+  test("uses an explicit readOnlyHint as a legacy no-confirm fallback", async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      headers: { get: () => null },
+      json: async () => ({
+        servers: [{ url: "https://api.example.com" }],
+        paths: {
+          "/v1/flows/validate": {
+            post: {
+              operationId: "flows.validate",
+              "x-mcp": { readOnlyHint: true },
+            },
+          },
+        },
+      }),
+    }) as unknown as typeof fetch
+    const { loadOpenApiSpec } = await import("../src/openapi-loader")
+    const [tool] = await loadOpenApiSpec()
+
+    expect(tool?.hitlPolicy).toBe("none")
+    expect(tool?.inputSchema.properties).not.toHaveProperty("_confirm")
+  })
+
+  test("defaults an unannotated POST to confirmation and leaves GET unmodified", async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      headers: { get: () => null },
+      json: async () => ({
+        servers: [{ url: "https://api.example.com" }],
+        paths: {
+          "/v1/tags": { get: { operationId: "tags.list" } },
+          "/v1/tags/{id}": { post: { operationId: "tags.update" } },
+        },
+      }),
+    }) as unknown as typeof fetch
+    const { loadOpenApiSpec } = await import("../src/openapi-loader")
+    const tools = await loadOpenApiSpec()
+    const getTool = tools.find((tool) => tool.name === "tags_list")
+    const postTool = tools.find((tool) => tool.name === "tags_update")
+
+    expect(getTool?.hitlPolicy).toBe("none")
+    expect(getTool?.inputSchema.properties).not.toHaveProperty("_confirm")
+    expect(postTool?.hitlPolicy).toBe("confirm_diff")
+    expect(postTool?.inputSchema.properties).toHaveProperty("_confirm")
+  })
+
+  test("keeps the loader policy union aligned with the generated spec", () => {
+    expectTypeOf<DynamicTool["hitlPolicy"]>().toEqualTypeOf<
+      "none" | "confirm_diff" | "confirm_destructive" | "confirm_outbound"
+    >()
   })
 })
 

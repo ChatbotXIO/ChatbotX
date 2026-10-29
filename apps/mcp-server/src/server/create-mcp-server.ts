@@ -8,6 +8,7 @@ import {
   version as packageVersion,
 } from "../../package.json"
 import { env } from "../env"
+import { getGuide, guideNames } from "../guides"
 import {
   getToolByName,
   getVisibleTools,
@@ -18,8 +19,15 @@ import {
   errorResult,
   executeTool,
   type RequestCredentials,
+  type ToolExecutionOptions,
 } from "./execute-tool"
-import { handleCallTool, handleSearchTools, META_TOOLS } from "./meta-tools"
+import { HITL_ELICITATION_TIMEOUT_MS } from "./hitl-gate"
+import {
+  handleCallTool,
+  handleGetGuide,
+  handleSearchTools,
+  META_TOOLS,
+} from "./meta-tools"
 
 export type CreateMcpServerOptions = {
   getCredentials?: () => RequestCredentials | undefined
@@ -49,6 +57,38 @@ export const createMcpServer = (
   const getCredentials = (): RequestCredentials | undefined =>
     options?.getCredentials?.() ??
     (env.CHATBOTX_API_KEY ? { token: env.CHATBOTX_API_KEY } : undefined)
+
+  const executionOptions: ToolExecutionOptions = {
+    elicitationClient: {
+      supportsFormElicitation: () =>
+        Boolean(mcpServer.server.getClientCapabilities()?.elicitation?.form),
+      elicitInput: async (props) =>
+        await mcpServer.server.elicitInput(props, {
+          timeout: HITL_ELICITATION_TIMEOUT_MS,
+        }),
+    },
+  }
+
+  for (const name of guideNames) {
+    const guide = getGuide(name)
+    mcpServer.registerResource(
+      `guide-${name}`,
+      guide.uri,
+      {
+        description: guide.description,
+        mimeType: "text/markdown",
+      },
+      async (uri) => ({
+        contents: [
+          {
+            mimeType: "text/markdown",
+            text: guide.content,
+            uri: uri.href,
+          },
+        ],
+      }),
+    )
+  }
 
   // Bypass McpServer's high-level tool API to support raw JSON Schema from
   // the OpenAPI spec. We register handlers on the underlying low-level server.
@@ -88,12 +128,16 @@ export const createMcpServer = (
     }
 
     const credentials = getCredentials()
+    if (name === "get_guide") {
+      return handleGetGuide(toolArgs)
+    }
+
     if (!credentials) {
       return errorResult(NO_CREDENTIAL_MESSAGE)
     }
 
     if (name === "call_tool") {
-      return await handleCallTool(toolArgs, credentials)
+      return await handleCallTool(toolArgs, credentials, executionOptions)
     }
 
     const tool = getToolByName(name)
@@ -101,7 +145,7 @@ export const createMcpServer = (
       return errorResult(`Unknown tool: ${name}`)
     }
 
-    return await executeTool(tool, toolArgs, credentials)
+    return await executeTool(tool, toolArgs, credentials, executionOptions)
   })
 
   return mcpServer

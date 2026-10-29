@@ -37,7 +37,7 @@
     "access": "public"
   },
   "scripts": {
-    "build": "tsdown",
+    "build": "tsdown && node scripts/verify-packaged-guides.mjs",
     "check-types": "tsc --noEmit",
     "dev:mcp": "dotenv -e ../../.env -e .env -- tsx --watch src/index.ts",
     "prepublishOnly": "node --input-type=commonjs -e \"const v=require('./package.json').version; if (v === '0.0.0-dev') { console.error('chatbotx-mcp: version is the 0.0.0-dev placeholder — publish via .github/workflows/publish-chatbotx-mcp.yml'); process.exit(1) }\"",
