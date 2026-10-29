@@ -80,6 +80,12 @@ jobs:
       # Sets TURBO_API/TURBO_TOKEN/TURBO_TEAM for the steps below.
       - name: Set up Turbo cache
         uses: rharkor/caching-for-turbo@v2.5.2
+        with:
+          # The default fixed port (41230) collides with whatever else is
+          # bound on a shared runner (EADDRINUSE on PR #1584, Tests 2/8). 0
+          # lets the cache server pick a free ephemeral port; the action
+          # exports TURBO_API from the port it actually bound.
+          server-port: 0
 
       # `--incremental` (below) leaves a tsbuildinfo next to every tsconfig.
       # Restoring the newest one from earlier runs lets each `tsc` re-check
@@ -138,6 +144,12 @@ jobs:
 
       - name: Set up Turbo cache
         uses: rharkor/caching-for-turbo@v2.5.2
+        with:
+          # The default fixed port (41230) collides with whatever else is
+          # bound on a shared runner (EADDRINUSE on PR #1584, Tests 2/8). 0
+          # lets the cache server pick a free ephemeral port; the action
+          # exports TURBO_API from the port it actually bound.
+          server-port: 0
 
       # Root `pnpm lint` runs cheapest-first: check:agent-instructions, then
       # `turbo run lint` (apps/builder's i18n key-parity check plus 57
@@ -190,6 +202,12 @@ jobs:
 
       - name: Set up Turbo cache
         uses: rharkor/caching-for-turbo@v2.5.2
+        with:
+          # The default fixed port (41230) collides with whatever else is
+          # bound on a shared runner (EADDRINUSE on PR #1584, Tests 2/8). 0
+          # lets the cache server pick a free ephemeral port; the action
+          # exports TURBO_API from the port it actually bound.
+          server-port: 0
 
       # PRs run only suites whose workspace or dependency graph is affected.
       # Explicit SHAs avoid Turbo choosing an ambiguous base ref. Pushes to
