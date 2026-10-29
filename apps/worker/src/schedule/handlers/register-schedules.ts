@@ -655,6 +655,21 @@ export const registerSchedules = async () => {
     )
   }
 
+  // Contact exports hold email and phone numbers, so they are not kept forever.
+  await scheduleQueue.upsertJobScheduler(
+    ScheduleJobData.purgeExpiredContactExports,
+    {
+      pattern: "30 4 * * *",
+    },
+    {
+      name: ScheduleJobData.purgeExpiredContactExports,
+      data: {
+        type: ScheduleJobData.purgeExpiredContactExports,
+        data: {},
+      },
+    },
+  )
+
   // WhatsApp calling.
   await scheduleQueue.upsertJobScheduler(
     ScheduleJobData.purgeExpiredCallRecordings,

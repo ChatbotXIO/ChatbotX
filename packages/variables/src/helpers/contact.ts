@@ -4,9 +4,7 @@ import {
   contactReferralEventService,
   tagService,
 } from "@chatbotx.io/business"
-
-/** Bounds `{{ad_ids}}`: a contact can click far more ads than a message needs. */
-export const CONTACT_AD_IDS_LIMIT = 50
+import { CONTACT_AD_IDS_LIMIT } from "@chatbotx.io/database/partials"
 
 export const listContactTagsString = async (
   contactId: string,

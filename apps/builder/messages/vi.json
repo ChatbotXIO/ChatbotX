@@ -5476,6 +5476,19 @@
       "searching": "Đang tìm…",
       "error": "Không thể tìm liên hệ",
       "empty": "Không tìm thấy liên hệ"
+    },
+    "exportHistory": {
+      "title": "Lịch sử xuất file",
+      "description": "Các file xuất liên hệ trong {days} ngày gần nhất. Sau đó file sẽ bị xoá.",
+      "empty": "Chưa có file xuất nào.",
+      "requestedBy": "Bởi {name}",
+      "deletesOn": "Xoá vào {date}",
+      "rows": "{count, plural, one {# liên hệ} other {# liên hệ}}",
+      "status": {
+        "pending": "Đang xử lý",
+        "uploaded": "Sẵn sàng",
+        "failed": "Thất bại"
+      }
     }
   },
   "contactScan": {

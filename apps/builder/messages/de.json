@@ -5771,6 +5771,19 @@
       "searching": "Suche läuft…",
       "error": "Kontakte konnten nicht durchsucht werden",
       "empty": "Keine Kontakte gefunden"
+    },
+    "exportHistory": {
+      "title": "Exportverlauf",
+      "description": "Kontaktexporte der letzten {days} Tage. Danach werden die Dateien gelöscht.",
+      "empty": "Noch keine Exporte.",
+      "requestedBy": "Von {name}",
+      "deletesOn": "Wird am {date} gelöscht",
+      "rows": "{count, plural, one {# Kontakt} other {# Kontakte}}",
+      "status": {
+        "pending": "Wird verarbeitet",
+        "uploaded": "Bereit",
+        "failed": "Fehlgeschlagen"
+      }
     }
   },
   "contactScan": {

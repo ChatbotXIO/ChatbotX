@@ -1,3 +1,4 @@
+import { sql } from "drizzle-orm"
 import {
   index,
   jsonb,
@@ -7,7 +8,7 @@ import {
   timestamp,
   uniqueIndex,
 } from "drizzle-orm/pg-core"
-import { fileContextTypes, fileStatuses } from "../partials"
+import { type FileStatus, fileContextTypes, fileStatuses } from "../partials"
 import {
   bigintAsString,
   sharedColumns,
@@ -27,7 +28,7 @@ export const fileContextType = pgEnum(
 
 export const fileStatus = pgEnum(
   "fileStatus",
-  fileStatuses.options as [string, ...string[]],
+  fileStatuses.options as [FileStatus, ...FileStatus[]],
 )
 
 export const fileModel = pgTable(
@@ -64,5 +65,10 @@ export const fileModel = pgTable(
       table.workspaceId.asc().nullsLast(),
       table.subType.asc().nullsLast(),
     ),
+    // The daily export retention sweep reads only export rows by age; the
+    // table also holds every generic upload, so it is never scanned whole.
+    index("File_export_createdAt_idx")
+      .on(table.createdAt)
+      .where(sql`${table.contextType} = 'export'`),
   ],
 )

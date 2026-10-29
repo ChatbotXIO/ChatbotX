@@ -422,6 +422,24 @@ describe("buildCsvChunk", () => {
     expect(result).toBe('"psid-1","user.937292738"\n')
   })
 
+  test("renders the Ad IDs column as a comma-separated list, empty when the contact has none", () => {
+    // Arrange
+    const fields: SelectedField[] = [
+      { type: "contact", value: "adIds", header: "Ad IDs" },
+    ]
+    const contacts = [
+      { id: "1", adIds: ["1001", "1002", "1004"] },
+      { id: "2", adIds: [] },
+      { id: "3" },
+    ]
+
+    // Act
+    const result = buildCsvChunk(contacts, fields)
+
+    // Assert — same `, ` join as the {{ad_ids}} system field; "" when none
+    expect(result).toBe('"1001, 1002, 1004"\n""\n""\n')
+  })
+
   test("renders an empty string for WhatsApp User ID when no contactInbox carries one", () => {
     // Arrange
     const fields: SelectedField[] = [

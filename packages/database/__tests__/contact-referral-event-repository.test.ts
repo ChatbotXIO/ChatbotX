@@ -11,6 +11,11 @@ import { contactReferralEventModel } from "../src/schema"
 const dialect = new PgDialect()
 const render = (clause: SQL) => dialect.sqlToQuery(clause)
 
+const createExecuteTx = (rows: unknown[]) => {
+  const execute = vi.fn().mockResolvedValue({ rows })
+  return { tx: { execute } as unknown as DatabaseClient, execute }
+}
+
 const createSelectTx = <T>(rows: T[]) => {
   const limit = vi.fn().mockResolvedValue(rows)
   const orderBy = vi.fn().mockReturnValue({ limit })
@@ -28,10 +33,10 @@ const createSelectTx = <T>(rows: T[]) => {
 }
 
 describe("contactReferralEventRepository.listAdIdsByContact", () => {
-  test("scopes to the workspace and contact, ad touches with an ad id, and bounds the result", async () => {
-    const { tx, where, groupBy, limit } = createSelectTx([
-      { adId: "ad-1" },
-      { adId: "ad-2" },
+  test("is the batched query for one contact, so {{ad_ids}} and the export share one implementation", async () => {
+    const { tx, execute } = createExecuteTx([
+      { contactId: "c-1", adId: "ad-1" },
+      { contactId: "c-1", adId: "ad-2" },
     ])
 
     await expect(
@@ -41,43 +46,20 @@ describe("contactReferralEventRepository.listAdIdsByContact", () => {
       ),
     ).resolves.toEqual(["ad-1", "ad-2"])
 
-    const { sql, params } = render(where.mock.calls[0]?.[0] as SQL)
-    expect(sql).toContain('"workspaceId" = $')
-    expect(sql).toContain('"contactId" = $')
-    expect(sql).toContain('"type" = $')
-    expect(sql).toContain('"adId" is not null')
-    expect(params).toContain("c-1")
-    expect(params.slice(0, 2)).toEqual(["ws-1", "ad"])
-    expect(groupBy).toHaveBeenCalledTimes(1)
-    expect(limit).toHaveBeenCalledWith(50)
+    expect(execute).toHaveBeenCalledTimes(1)
+    const { params } = render(execute.mock.calls[0]?.[0] as SQL)
+    expect(params).toEqual(["ws-1", "ad", "", "c-1", 50])
   })
 
-  test("orders the distinct ads by their first touch, then by ad id", async () => {
-    const { tx, orderBy } = createSelectTx([{ adId: "ad-1" }])
-
-    await contactReferralEventRepository.listAdIdsByContact(
-      { workspaceId: "ws-1", contactId: "c-1", limit: 50 },
-      tx,
-    )
-
-    const ordering = (orderBy.mock.calls[0] as SQL[]).map(
-      (clause) => render(clause).sql,
-    )
-    expect(ordering).toEqual([
-      'min("ContactReferralEvent"."occurredAt") asc',
-      '"ContactReferralEvent"."adId" asc',
-    ])
-  })
-
-  test("drops a null ad id the database should never return", async () => {
-    const { tx } = createSelectTx([{ adId: null }, { adId: "ad-1" }])
+  test("is empty for a contact with no ad touch", async () => {
+    const { tx } = createExecuteTx([])
 
     await expect(
       contactReferralEventRepository.listAdIdsByContact(
-        { workspaceId: "ws-1", contactId: "c-1", limit: 5 },
+        { workspaceId: "ws-1", contactId: "c-1", limit: 1 },
         tx,
       ),
-    ).resolves.toEqual(["ad-1"])
+    ).resolves.toEqual([])
   })
 })
 
@@ -382,10 +364,6 @@ describe("contactReferralEventRepository.listAdTouchesByContact", () => {
 })
 
 describe("contactReferralEventRepository ad reports", () => {
-  const createExecuteTx = (rows: unknown[]) => {
-    const execute = vi.fn().mockResolvedValue({ rows })
-    return { tx: { execute } as unknown as DatabaseClient, execute }
-  }
   const since = new Date("2026-10-01T00:00:00.000Z")
   const until = new Date("2026-10-31T00:00:00.000Z")
 
@@ -414,7 +392,11 @@ describe("contactReferralEventRepository ad reports", () => {
     ])
 
     const { sql, params } = render(execute.mock.calls[0]?.[0] as SQL)
-    expect(sql).toContain('"workspaceId" = $1::bigint')
+    // The same ad-touch scope as every other read: an empty ad id never
+    // becomes a nameless row in the report.
+    expect(sql).toContain('"ContactReferralEvent"."workspaceId" = $1')
+    expect(sql).toContain('"ContactReferralEvent"."adId" is not null')
+    expect(sql).toContain('"ContactReferralEvent"."adId" <> $3')
     expect(sql).toContain('"occurredAt" >= $')
     // `until` is the last millisecond of the final day, so it is inclusive.
     expect(sql).toContain('"occurredAt" <= $')
@@ -424,6 +406,8 @@ describe("contactReferralEventRepository ad reports", () => {
     expect(sql).not.toContain('"channel"')
     expect(params).toEqual([
       "ws-1",
+      "ad",
+      "",
       since.toISOString(),
       until.toISOString(),
       50,
@@ -476,5 +460,71 @@ describe("contactReferralEventRepository ad reports", () => {
     )
     expect(sql).toContain("ANY(ARRAY[")
     expect(params).toEqual(expect.arrayContaining(["ws-1", "120", "121"]))
+  })
+})
+
+describe("contactReferralEventRepository.listAdIdsByContacts", () => {
+  test("answers an empty page without a query", async () => {
+    const { tx, execute } = createExecuteTx([])
+
+    await expect(
+      contactReferralEventRepository.listAdIdsByContacts(
+        { workspaceId: "ws-1", contactIds: [], limitPerContact: 50 },
+        tx,
+      ),
+    ).resolves.toEqual(new Map())
+    expect(execute).not.toHaveBeenCalled()
+  })
+
+  test("lists a whole page in one query, capped per contact and scoped to ad touches", async () => {
+    const { tx, execute } = createExecuteTx([
+      { contactId: "1", adId: "1001" },
+      { contactId: "1", adId: "1002" },
+      { contactId: "2", adId: "1001" },
+    ])
+
+    const result = await contactReferralEventRepository.listAdIdsByContacts(
+      { workspaceId: "ws-1", contactIds: ["1", "2", "3"], limitPerContact: 50 },
+      tx,
+    )
+
+    // Grouped per contact, in the order the query returned them (oldest first);
+    // a contact without a touch (3) has no entry.
+    expect(result).toEqual(
+      new Map([
+        ["1", ["1001", "1002"]],
+        ["2", ["1001"]],
+      ]),
+    )
+    expect(execute).toHaveBeenCalledTimes(1)
+
+    const { sql, params } = render(execute.mock.calls[0]?.[0] as SQL)
+    // The ad-touch scope is the one every other read in this repository uses.
+    expect(sql).toContain('"ContactReferralEvent"."workspaceId" = $1')
+    expect(sql).toContain('"ContactReferralEvent"."type" = $2')
+    expect(sql).toContain('"ContactReferralEvent"."adId" is not null')
+    // An empty ad id is dropped before the cap, so it never takes a slot.
+    expect(sql).toContain('"ContactReferralEvent"."adId" <> $3')
+    expect(sql).toContain('PARTITION BY "contactId"')
+    expect(sql).toContain('ORDER BY MIN("occurredAt"), "adId"')
+    expect(sql).toContain('"position" <= $')
+    expect(params).toEqual(["ws-1", "ad", "", "1", "2", "3", 50])
+  })
+
+  test("never interpolates ids into the SQL text", async () => {
+    const { tx, execute } = createExecuteTx([])
+
+    await contactReferralEventRepository.listAdIdsByContacts(
+      {
+        workspaceId: "ws-1",
+        contactIds: ["1); DROP TABLE x;--"],
+        limitPerContact: 5,
+      },
+      tx,
+    )
+
+    const { sql, params } = render(execute.mock.calls[0]?.[0] as SQL)
+    expect(sql).not.toContain("DROP TABLE")
+    expect(params).toContain("1); DROP TABLE x;--")
   })
 })

@@ -1,7 +1,6 @@
 import {
   type AnyColumn,
   and,
-  asc,
   type DatabaseClient,
   db,
   desc,
@@ -11,7 +10,7 @@ import {
   isNotNull,
   lt,
   max,
-  min,
+  ne,
   or,
   sql,
 } from "../../client"
@@ -81,12 +80,17 @@ export type ContactReferralEventCreateValues = Omit<
   "id"
 >
 
-/** Every ad touch of a workspace; `withAdId` drops touches without an ad id. */
+/**
+ * Every ad touch of a workspace; `withAdId` drops touches without an ad id. An
+ * empty string is not an ad id: a provider can send one, and it must never be
+ * listed or take a slot in a capped list.
+ */
 const adTouchScope = (workspaceId: string, { withAdId = false } = {}) =>
   and(
     eq(contactReferralEventModel.workspaceId, workspaceId),
     eq(contactReferralEventModel.type, "ad"),
     withAdId ? isNotNull(contactReferralEventModel.adId) : undefined,
+    withAdId ? ne(contactReferralEventModel.adId, "") : undefined,
   )
 
 /**
@@ -104,6 +108,58 @@ const pinnedTouchFilter = (input: {
     return eq(contactReferralEventModel.clickId, input.clickId)
   }
   return input.adId ? eq(contactReferralEventModel.adId, input.adId) : undefined
+}
+
+/**
+ * The distinct ad ids of many contacts in one query (an export page, or one
+ * contact), each capped at `limitPerContact`, oldest touch first. A contact with
+ * no ad touch has no entry. Rides the (workspaceId, contactId, occurredAt)
+ * index, so a page costs one index range scan per contact, not one query per
+ * contact. The only implementation of this list, so `{{ad_ids}}` and the
+ * contact export cannot drift apart.
+ */
+const listAdIdsByContacts = async (
+  input: {
+    workspaceId: string
+    contactIds: string[]
+    limitPerContact: number
+  },
+  tx: DatabaseClient = db,
+): Promise<Map<string, string[]>> => {
+  const adIdsByContact = new Map<string, string[]>()
+  if (input.contactIds.length === 0) {
+    return adIdsByContact
+  }
+
+  const result = await tx.execute<{ contactId: string; adId: string }>(sql`
+    SELECT "contactId", "adId"
+    FROM (
+      SELECT "contactId", "adId",
+        row_number() OVER (
+          PARTITION BY "contactId"
+          ORDER BY MIN("occurredAt"), "adId"
+        ) AS "position"
+      FROM ${contactReferralEventModel}
+      WHERE ${adTouchScope(input.workspaceId, { withAdId: true })}
+        AND "contactId" = ANY(ARRAY[${sql.join(
+          input.contactIds.map((id) => sql`${id}`),
+          sql`, `,
+        )}]::bigint[])
+      GROUP BY "contactId", "adId"
+    ) ranked
+    WHERE "position" <= ${input.limitPerContact}
+    ORDER BY "contactId", "position"
+  `)
+
+  for (const { contactId, adId } of result.rows) {
+    const adIds = adIdsByContact.get(contactId)
+    if (adIds) {
+      adIds.push(adId)
+    } else {
+      adIdsByContact.set(contactId, [adId])
+    }
+  }
+  return adIdsByContact
 }
 
 export const contactReferralEventRepository = {
@@ -292,9 +348,7 @@ export const contactReferralEventRepository = {
         SELECT "contactId", "adId", "occurredAt", "id",
           "metadata"->>'adTitle' AS "title"
         FROM ${contactReferralEventModel}
-        WHERE "workspaceId" = ${input.workspaceId}::bigint
-          AND "type" = 'ad'
-          AND "adId" IS NOT NULL
+        WHERE ${adTouchScope(input.workspaceId, { withAdId: true })}
           AND "occurredAt" >= ${input.since.toISOString()}::timestamptz
           AND "occurredAt" <= ${input.until.toISOString()}::timestamptz
           ${channelFilter}
@@ -368,22 +422,16 @@ export const contactReferralEventRepository = {
     input: { workspaceId: string; contactId: string; limit: number },
     tx: DatabaseClient = db,
   ): Promise<string[]> {
-    const rows = await tx
-      .select({ adId: contactReferralEventModel.adId })
-      .from(contactReferralEventModel)
-      .where(
-        and(
-          adTouchScope(input.workspaceId, { withAdId: true }),
-          eq(contactReferralEventModel.contactId, input.contactId),
-        ),
-      )
-      .groupBy(contactReferralEventModel.adId)
-      .orderBy(
-        asc(min(contactReferralEventModel.occurredAt)),
-        asc(contactReferralEventModel.adId),
-      )
-      .limit(input.limit)
-
-    return rows.flatMap(({ adId }) => (adId ? [adId] : []))
+    const adIdsByContact = await listAdIdsByContacts(
+      {
+        workspaceId: input.workspaceId,
+        contactIds: [input.contactId],
+        limitPerContact: input.limit,
+      },
+      tx,
+    )
+    return adIdsByContact.get(input.contactId) ?? []
   },
+
+  listAdIdsByContacts,
 }

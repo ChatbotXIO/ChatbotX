@@ -5771,6 +5771,19 @@
       "searching": "Recherche…",
       "error": "Impossible de rechercher les contacts",
       "empty": "Aucun contact trouvé"
+    },
+    "exportHistory": {
+      "title": "Historique des exports",
+      "description": "Exports de contacts des {days} derniers jours. Les fichiers sont ensuite supprimés.",
+      "empty": "Aucun export pour le moment.",
+      "requestedBy": "Par {name}",
+      "deletesOn": "Supprimé le {date}",
+      "rows": "{count, plural, one {# contact} other {# contacts}}",
+      "status": {
+        "pending": "En cours",
+        "uploaded": "Prêt",
+        "failed": "Échec"
+      }
     }
   },
   "contactScan": {

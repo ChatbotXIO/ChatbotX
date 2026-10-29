@@ -27,3 +27,9 @@ export const exportSubTypes = z.enum([
   "leaderboardParticipants",
 ])
 export type ExportSubType = z.infer<typeof exportSubTypes>
+
+/**
+ * How long a contact export is kept. The CSV can hold email and phone numbers,
+ * so it is not kept forever; the daily sweep deletes the file and its row.
+ */
+export const CONTACT_EXPORT_RETENTION_DAYS = 7

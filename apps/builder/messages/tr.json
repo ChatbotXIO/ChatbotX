@@ -5771,6 +5771,19 @@
       "searching": "Aranıyor…",
       "error": "Kişiler aranamadı",
       "empty": "Kişi bulunamadı"
+    },
+    "exportHistory": {
+      "title": "Dışa aktarma geçmişi",
+      "description": "Son {days} gündeki kişi dışa aktarımları. Sonrasında dosyalar silinir.",
+      "empty": "Henüz dışa aktarma yok.",
+      "requestedBy": "{name} tarafından",
+      "deletesOn": "{date} tarihinde silinir",
+      "rows": "{count, plural, one {# kişi} other {# kişi}}",
+      "status": {
+        "pending": "İşleniyor",
+        "uploaded": "Hazır",
+        "failed": "Başarısız"
+      }
     }
   },
   "contactScan": {

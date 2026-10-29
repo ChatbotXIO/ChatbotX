@@ -1,15 +1,17 @@
+import { contactExportService } from "@chatbotx.io/business"
 import { notFoundException } from "@chatbotx.io/business/errors"
 import { withWorkspaceIdSchema } from "@/features/workspaces/schema/resource"
 import { workspaceAuthorizedMidddleware } from "@/middlewares/auth"
 import { authorizedAPI } from "@/orpc"
 import { listContactAdReferrals } from "../lib/list-contact-ad-referrals"
+import { listContactExportFiles } from "../lib/list-contact-export-files"
 import {
   buildContactPermissionScope,
+  exportFileOwnerFilter,
   requireContactPermissionScope,
   requireContactPermissionScopeForMember,
 } from "../permissions"
 import { getContact } from "../queries/get-contact.query"
-import { getExportFile } from "../queries/get-export-file.query"
 import {
   countContactInboxes,
   listAudienceInboxesPreview,
@@ -20,6 +22,10 @@ import {
   listContactAdReferralsRequest,
   listContactAdReferralsResponse,
 } from "../schema/ad-referral"
+import {
+  listContactExportFilesRequest,
+  listContactExportFilesResponse,
+} from "../schema/export-file"
 import {
   countContactsRequest,
   countContactsResponse,
@@ -157,8 +163,31 @@ export const contactsAuthenticatedAPI = {
     .input(getExportFileRequest)
     .output(getExportFileResponse)
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
-    .handler(async ({ input }) => {
+    .handler(async ({ input, context }) => {
       await requireContactPermissionScope(input.workspaceId)
-      return await getExportFile(input)
+      return await contactExportService.getFile({
+        ...input,
+        userId: exportFileOwnerFilter(context),
+      })
+    }),
+
+  listExportFilesAuthenticatedAPI: authorizedAPI
+    .route({
+      method: "GET",
+      path: "/workspaces/{workspaceId}/contacts/export-files",
+      summary: "List contact exports",
+      tags: ["Contacts"],
+    })
+    .input(listContactExportFilesRequest.and(withWorkspaceIdSchema))
+    .output(listContactExportFilesResponse)
+    .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
+    .handler(async ({ input, context }) => {
+      await requireContactPermissionScope(input.workspaceId)
+      return await listContactExportFiles({
+        workspaceId: input.workspaceId,
+        userId: exportFileOwnerFilter(context),
+        perPage: input.perPage,
+        cursor: input.cursor,
+      })
     }),
 }

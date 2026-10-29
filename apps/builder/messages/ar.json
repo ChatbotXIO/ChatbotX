@@ -5771,6 +5771,19 @@
       "searching": "جارٍ البحث…",
       "error": "تعذّر البحث في جهات الاتصال",
       "empty": "لم يتم العثور على جهات اتصال"
+    },
+    "exportHistory": {
+      "title": "سجل التصدير",
+      "description": "عمليات تصدير جهات الاتصال خلال آخر {days} أيام. تُحذف الملفات بعد ذلك.",
+      "empty": "لا توجد عمليات تصدير بعد.",
+      "requestedBy": "بواسطة {name}",
+      "deletesOn": "يُحذف في {date}",
+      "rows": "{count, plural, one {# جهة اتصال} other {# جهات اتصال}}",
+      "status": {
+        "pending": "قيد المعالجة",
+        "uploaded": "جاهز",
+        "failed": "فشل"
+      }
     }
   },
   "contactScan": {

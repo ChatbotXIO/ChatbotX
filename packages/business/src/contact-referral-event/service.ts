@@ -3,6 +3,7 @@ import {
   db,
   isStatementTimeoutError,
 } from "@chatbotx.io/database/client"
+import { CONTACT_AD_IDS_LIMIT } from "@chatbotx.io/database/partials"
 import {
   type AdStatsRange,
   contactReferralEventRepository,
@@ -29,6 +30,9 @@ import {
 
 /** An ad report scans every touch in its range, so it is cut off at this. */
 const AD_STATS_STATEMENT_TIMEOUT = "15s"
+
+/** One export page of ad id lists is a quick indexed read; cut it off at this. */
+const AD_IDS_PAGE_STATEMENT_TIMEOUT = "15s"
 
 export type AdStats = {
   adId: string
@@ -203,6 +207,27 @@ class ContactReferralEventService {
         ...credited,
         revenue,
       }
+    })
+  }
+
+  /**
+   * Distinct ad ids (across inboxes, oldest touch first, at most
+   * `CONTACT_AD_IDS_LIMIT` each) for a page of contacts in one query. A contact
+   * with no ad touch is absent from the map. The query aggregates every touch
+   * of those contacts before the cap applies, so it runs under a statement
+   * timeout: a runaway page fails the caller (the export job) instead of
+   * holding a connection.
+   */
+  async listAdIdsByContacts(input: {
+    workspaceId: string
+    contactIds: string[]
+  }): Promise<Map<string, string[]>> {
+    return await db.transaction(async (tx) => {
+      await setLocalStatementTimeout(tx, AD_IDS_PAGE_STATEMENT_TIMEOUT)
+      return await contactReferralEventRepository.listAdIdsByContacts(
+        { ...input, limitPerContact: CONTACT_AD_IDS_LIMIT },
+        tx,
+      )
     })
   }
 

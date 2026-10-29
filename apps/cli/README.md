@@ -226,6 +226,7 @@ chatbotx contacts imports                            # [--page --perPage --statu
 chatbotx contacts find-by-imports <id>                # Get one import job
 chatbotx contacts export --fields <fields>            # [--contactIds --exportAll --filter]
 chatbotx contacts find-by-export-files <fileId>       # Poll export status/download URL
+chatbotx contacts export-files                        # Past exports, kept 7 days [--perPage --cursor]
 
 # Bulk
 chatbotx contacts bulk-tags --contactIds <contactIds> --tags <tags>

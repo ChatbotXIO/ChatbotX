@@ -15,12 +15,13 @@ import { Form } from "@chatbotx.io/ui/components/ui/form"
 import type { MultiSelectGroup } from "@chatbotx.io/ui/components/ui/sersavan/multi-select"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
-import { useQuery } from "@tanstack/react-query"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
 import {
   AlertCircle,
   CheckCircle2,
   CopyIcon,
   DownloadIcon,
+  HistoryIcon,
   Loader2,
 } from "lucide-react"
 import { useTranslations } from "next-intl"
@@ -32,6 +33,8 @@ import { pollUntilSettled } from "@/lib/query/poll-until-settled"
 import { useCustomFieldSelectOptions } from "../custom-fields/provider/custom-field-hook"
 import { useTagSelectOptions } from "../tags/provider/tag-hook"
 import { exportContactsAction } from "./actions/export-contacts.action"
+import { ExportHistoryDialog } from "./components/export-history-dialog"
+import { isExportPollTimedOut } from "./lib/export-poll"
 import {
   contactFieldPrefix,
   contactPrefix,
@@ -41,8 +44,15 @@ import {
   type GetExportFileResponse,
 } from "./schema/action"
 
+const pollExportFile = pollUntilSettled<GetExportFileResponse>([
+  "uploaded",
+  "failed",
+])
+
 type ExportState = {
   fileId: string
+  /** When the export was enqueued; the poll timeout counts from here. */
+  startedAt: number
 }
 
 export function ExportContactDialog({
@@ -62,10 +72,7 @@ export function ExportContactDialog({
 
   const [open, setOpen] = useState(false)
   const [exportState, setExportState] = useState<ExportState | null>(null)
-  // M-6: Track poll count to surface a timeout when the export worker stalls.
-  const [pollCount, setPollCount] = useState(0)
-  // 24 polls × 5 s = 2 minutes before we give up polling.
-  const POLL_TIMEOUT_COUNT = 24
+  const queryClient = useQueryClient()
 
   const customFieldOptions = useCustomFieldSelectOptions({
     prefix: contactFieldPrefix,
@@ -112,6 +119,17 @@ export function ExportContactDialog({
       heading: t("fields.tags.label"),
       options: tagOptions,
     },
+    // Its own group, so it stays off by default (only the first group is
+    // preselected below).
+    {
+      heading: t("ads.title"),
+      options: [
+        {
+          label: t("fields.adIds.label"),
+          value: `${contactPrefix}:adIds`,
+        },
+      ],
+    },
   ]
 
   const { form, handleSubmitWithAction, resetFormAndAction } =
@@ -122,7 +140,11 @@ export function ExportContactDialog({
         actionProps: {
           onSuccess: ({ data }) => {
             if (data) {
-              setExportState({ fileId: data.fileId })
+              setExportState({ fileId: data.fileId, startedAt: Date.now() })
+              queryClient.invalidateQueries({
+                queryKey:
+                  orpc.contactsAPIs.listExportFilesAuthenticatedAPI.key(),
+              })
             }
           },
           onError: ({ error }) => {
@@ -144,31 +166,25 @@ export function ExportContactDialog({
     )
 
   const fileId = exportState?.fileId
-  const pollExportFile = pollUntilSettled<GetExportFileResponse>([
-    "uploaded",
-    "failed",
-  ])
-  const { data: exportFile } = useQuery(
+  const exportFileQuery = useQuery(
     orpc.contactsAPIs.getExportFileAuthenticatedAPI.queryOptions({
       input: { workspaceId, fileId: fileId ?? "" },
       enabled: Boolean(fileId),
-      refetchInterval: (query) => {
-        const interval = pollExportFile(query)
-        if (interval === false) {
-          return false
-        }
-        if (pollCount >= POLL_TIMEOUT_COUNT) {
-          return false
-        }
-        setPollCount((n) => n + 1)
-        return interval
-      },
+      refetchInterval: (query) =>
+        exportState && isExportPollTimedOut(exportState.startedAt, query.state)
+          ? false
+          : pollExportFile(query),
     }),
   )
+  const exportFile = exportFileQuery.data
+  // M-6: say the export is slow instead of spinning forever. Checked after the
+  // failed and ready states below, so it only replaces the spinner.
+  const isPollTimedOut =
+    exportState !== null &&
+    isExportPollTimedOut(exportState.startedAt, exportFileQuery)
 
   const resetDialog = () => {
     setExportState(null)
-    setPollCount(0)
     resetFormAndAction()
   }
 
@@ -195,6 +211,18 @@ export function ExportContactDialog({
     }
   }
 
+  const exportHistoryButton = (
+    <ExportHistoryDialog
+      trigger={
+        <Button type="button" variant="ghost">
+          <HistoryIcon />
+          {t("contacts.exportHistory.title")}
+        </Button>
+      }
+      workspaceId={workspaceId}
+    />
+  )
+
   const renderBody = () => {
     if (!exportState) {
       return (
@@ -213,17 +241,20 @@ export function ExportContactDialog({
                 {t("actions.cancel")}
               </Button>
 
-              <Button
-                disabled={
-                  !form.formState.isValid || form.formState.isSubmitting
-                }
-                type="submit"
-              >
-                {form.formState.isSubmitting && (
-                  <Loader2 className="animate-spin" />
-                )}
-                {t("actions.export")}
-              </Button>
+              <div className="flex gap-2">
+                {exportHistoryButton}
+                <Button
+                  disabled={
+                    !form.formState.isValid || form.formState.isSubmitting
+                  }
+                  type="submit"
+                >
+                  {form.formState.isSubmitting && (
+                    <Loader2 className="animate-spin" />
+                  )}
+                  {t("actions.export")}
+                </Button>
+              </div>
             </div>
           </form>
         </Form>
@@ -285,8 +316,7 @@ export function ExportContactDialog({
       )
     }
 
-    // M-6: Show a timeout message instead of spinning indefinitely.
-    if (pollCount >= POLL_TIMEOUT_COUNT) {
+    if (isPollTimedOut) {
       return (
         <div className="space-y-4">
           <div className="flex items-start gap-3 py-4">
@@ -300,10 +330,11 @@ export function ExportContactDialog({
               </p>
             </div>
           </div>
-          <div className="flex justify-start">
+          <div className="flex justify-between gap-4">
             <Button onClick={closeDialog} type="button" variant="outline">
               {t("actions.cancel")}
             </Button>
+            {exportHistoryButton}
           </div>
         </div>
       )

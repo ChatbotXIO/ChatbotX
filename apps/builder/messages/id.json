@@ -5771,6 +5771,19 @@
       "searching": "Mencari…",
       "error": "Tidak dapat mencari kontak",
       "empty": "Kontak tidak ditemukan"
+    },
+    "exportHistory": {
+      "title": "Riwayat ekspor",
+      "description": "Ekspor kontak dari {days} hari terakhir. Setelah itu file dihapus.",
+      "empty": "Belum ada ekspor.",
+      "requestedBy": "Oleh {name}",
+      "deletesOn": "Dihapus pada {date}",
+      "rows": "{count, plural, one {# kontak} other {# kontak}}",
+      "status": {
+        "pending": "Sedang diproses",
+        "uploaded": "Siap",
+        "failed": "Gagal"
+      }
     }
   },
   "contactScan": {

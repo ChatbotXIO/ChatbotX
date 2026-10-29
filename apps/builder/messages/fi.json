@@ -5771,6 +5771,19 @@
       "searching": "Haetaan…",
       "error": "Yhteystietojen haku epäonnistui",
       "empty": "Yhteystietoja ei löytynyt"
+    },
+    "exportHistory": {
+      "title": "Vientihistoria",
+      "description": "Yhteystietojen viennit viimeisten {days} päivän ajalta. Sen jälkeen tiedostot poistetaan.",
+      "empty": "Ei vientejä vielä.",
+      "requestedBy": "Tekijä: {name}",
+      "deletesOn": "Poistetaan {date}",
+      "rows": "{count, plural, one {# yhteystieto} other {# yhteystietoa}}",
+      "status": {
+        "pending": "Käsitellään",
+        "uploaded": "Valmis",
+        "failed": "Epäonnistui"
+      }
     }
   },
   "contactScan": {

@@ -1354,6 +1354,19 @@
       "searching": "Söker…",
       "error": "Det gick inte att söka efter kontakter",
       "empty": "Inga kontakter hittades"
+    },
+    "exportHistory": {
+      "title": "Exporthistorik",
+      "description": "Kontaktexporter från de senaste {days} dagarna. Därefter raderas filerna.",
+      "empty": "Inga exporter ännu.",
+      "requestedBy": "Av {name}",
+      "deletesOn": "Raderas {date}",
+      "rows": "{count, plural, one {# kontakt} other {# kontakter}}",
+      "status": {
+        "pending": "Bearbetas",
+        "uploaded": "Klar",
+        "failed": "Misslyckades"
+      }
     }
   },
   "contactScan": {

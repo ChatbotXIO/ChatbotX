@@ -9,8 +9,10 @@ vi.mock("@chatbotx.io/business", () => ({
   tagService: {},
 }))
 
-const { CONTACT_AD_IDS_LIMIT, getFirstContactAdId, listContactAdIdsString } =
-  await import("../src/helpers/contact")
+const { CONTACT_AD_IDS_LIMIT } = await import("@chatbotx.io/database/partials")
+const { getFirstContactAdId, listContactAdIdsString } = await import(
+  "../src/helpers/contact"
+)
 
 describe("listContactAdIdsString", () => {
   beforeEach(() => {

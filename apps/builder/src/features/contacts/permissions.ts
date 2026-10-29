@@ -3,7 +3,9 @@ import {
   ChatbotXException,
   notFoundException,
 } from "@chatbotx.io/business/errors"
+import { isWorkspaceAdminMember } from "@chatbotx.io/business/workspace-member/predicates"
 import type { WorkspaceMemberPermissions } from "@chatbotx.io/database/partials"
+import type { WorkspaceMemberModel } from "@chatbotx.io/database/types"
 import {
   hasContactsAccess,
   hasWorkspacePermission,
@@ -143,4 +145,19 @@ export async function requireContactAccessForMember(input: {
   })
 
   return scope
+}
+
+/**
+ * Whose contact exports a member may list and download. An export holds
+ * contact email and phone numbers, so a plain agent reaches only their own;
+ * a workspace admin (owner or `superAdmin`) reaches every member's. Returns
+ * the user id to filter by, or undefined for no filter.
+ */
+export function exportFileOwnerFilter(context: {
+  user: { id: string }
+  workspaceMember: Pick<WorkspaceMemberModel, "role" | "permissions">
+}): string | undefined {
+  return isWorkspaceAdminMember(context.workspaceMember)
+    ? undefined
+    : context.user.id
 }

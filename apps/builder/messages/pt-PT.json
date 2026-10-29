@@ -5767,6 +5767,19 @@
       "searching": "A pesquisar…",
       "error": "Não foi possível pesquisar contactos",
       "empty": "Nenhum contacto encontrado"
+    },
+    "exportHistory": {
+      "title": "Histórico de exportações",
+      "description": "Exportações de contactos dos últimos {days} dias. Depois disso, os ficheiros são eliminados.",
+      "empty": "Ainda não há exportações.",
+      "requestedBy": "Por {name}",
+      "deletesOn": "Eliminado a {date}",
+      "rows": "{count, plural, one {# contacto} other {# contactos}}",
+      "status": {
+        "pending": "A processar",
+        "uploaded": "Pronto",
+        "failed": "Falhou"
+      }
     }
   },
   "contactScan": {
