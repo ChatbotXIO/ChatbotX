@@ -7,7 +7,13 @@ import type { OpenAPI } from "@orpc/openapi"
  * ~350 public operations to opt out individually, so the polarity is
  * inverted: opt IN to `"default"` on the ~40 that should always be visible.
  */
-type McpVisibility = "default" | "hidden"
+export type McpHitlPolicy =
+  | "none"
+  | "confirm_diff"
+  | "confirm_destructive"
+  | "confirm_outbound"
+
+export type McpVisibility = "default" | "hidden"
 
 export type McpRouteMeta = {
   /** Absent ⇒ treated as `"hidden"` by the mcp-server loader. */
@@ -24,6 +30,12 @@ export type McpRouteMeta = {
   readOnlyHint?: boolean
   destructiveHint?: boolean
   idempotentHint?: boolean
+  /**
+   * Human-in-the-loop guard for MCP and CLI clients. Write operations default
+   * to a confirmation policy in the generated public spec; `"none"` is an
+   * explicit backend-only exemption for a non-mutating POST.
+   */
+  hitlPolicy?: McpHitlPolicy
 }
 
 /**

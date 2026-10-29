@@ -1,6 +1,7 @@
 import { env } from "../env"
 import { fetchWithTimeout } from "../http"
-import type { DynamicTool } from "../openapi-loader"
+import { type DynamicTool, getCachedTools } from "../openapi-loader"
+import { type ElicitationClient, enforceHitlGate } from "./hitl-gate"
 
 const NO_BODY_METHODS = new Set(["GET", "HEAD"])
 
@@ -163,6 +164,10 @@ export type RequestCredentials = {
   workspaceId?: string
 }
 
+export type ToolExecutionOptions = {
+  elicitationClient?: ElicitationClient
+}
+
 export type ToolCallResult = {
   content: Array<{ type: "text"; text: string }>
   isError?: boolean
@@ -177,6 +182,23 @@ export const jsonResult = (value: unknown): ToolCallResult => ({
   content: [{ text: JSON.stringify(value, null, 2), type: "text" }],
 })
 
+const findCurrentStateTool = (tool: DynamicTool): DynamicTool | undefined => {
+  const pathSegments = tool.pathTemplate.split("/")
+  for (
+    let segmentCount = pathSegments.length;
+    segmentCount > 1;
+    segmentCount -= 1
+  ) {
+    const candidatePath = pathSegments.slice(0, segmentCount).join("/")
+    const candidate = getCachedTools().find(
+      (item) => item.method === "GET" && item.pathTemplate === candidatePath,
+    )
+    if (candidate) {
+      return candidate
+    }
+  }
+}
+
 /**
  * Fires the HTTP request a `DynamicTool` describes. Shared by the normal
  * `tools/call` path (`create-mcp-server.ts`) and `call_tool`
@@ -187,15 +209,53 @@ export async function executeTool(
   tool: DynamicTool,
   rawArgs: Record<string, unknown>,
   credentials: RequestCredentials,
+  options: ToolExecutionOptions = {},
 ): Promise<ToolCallResult> {
   const preparedArguments = prepareToolArguments(tool, rawArgs)
   const preflightError = preflightArgumentError(tool, preparedArguments)
   if (preflightError) {
     return errorResult(preflightError)
   }
-  const args = normalizeToolArguments(preparedArguments)
-  let path = tool.pathTemplate
 
+  let args = normalizeToolArguments(preparedArguments)
+  try {
+    const hitlGate = await enforceHitlGate({
+      args,
+      elicitationClient: options.elicitationClient,
+      getCurrentState: async () => {
+        const currentStateTool = findCurrentStateTool(tool)
+        if (!currentStateTool) {
+          return
+        }
+
+        const currentStateResult = await executeTool(
+          currentStateTool,
+          args,
+          credentials,
+          options,
+        )
+        if (currentStateResult.isError) {
+          return
+        }
+        try {
+          return JSON.parse(currentStateResult.content[0]?.text ?? "null")
+        } catch {
+          return
+        }
+      },
+      tool,
+    })
+    if (hitlGate.result) {
+      return hitlGate.result
+    }
+    args = hitlGate.args
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Unknown confirmation error"
+    return errorResult(`Confirmation failed: ${message}`)
+  }
+
+  let path = tool.pathTemplate
   for (const paramName of tool.pathParamNames) {
     const value = args[paramName]
     if (value === undefined || value === null) {

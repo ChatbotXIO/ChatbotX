@@ -152,17 +152,22 @@ function collectCopyStrings(
 
 beforeAll(async () => {
   const { publicRouter } = await import("@/routers/public")
-  const { publicSpecGenerateOptions, withChannelApiTokenSecurity } =
-    await import("@/lib/orpc/public-spec")
+  const {
+    publicSpecGenerateOptions,
+    withChannelApiTokenSecurity,
+    withMcpHitlPolicy,
+  } = await import("@/lib/orpc/public-spec")
 
   const generator = new OpenAPIGenerator({
     schemaConverters: [new ZodToJsonSchemaConverter()],
   })
 
-  const spec = withChannelApiTokenSecurity(
-    await generator.generate(
-      publicRouter,
-      publicSpecGenerateOptions("public-spec-operations.test"),
+  const spec = withMcpHitlPolicy(
+    withChannelApiTokenSecurity(
+      await generator.generate(
+        publicRouter,
+        publicSpecGenerateOptions("public-spec-operations.test"),
+      ),
     ),
   )
   if (process.env.MCP_EVAL_SPEC_OUTPUT) {

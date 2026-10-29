@@ -5,6 +5,7 @@ import {
   IDEMPOTENT_REPLAYED_HEADER,
   MAX_IDEMPOTENCY_KEY_LENGTH,
 } from "../idempotency/constants"
+import type { McpHitlPolicy, McpRouteMeta } from "./mcp-annotations"
 
 type PublicSpecDocument = Awaited<
   ReturnType<InstanceType<typeof OpenAPIGenerator>["generate"]>
@@ -47,6 +48,67 @@ const CHANNEL_API_TOKEN_SECURITY: Record<string, string[]>[] = [
 const CHANNEL_API_TOKEN_PATH_PREFIX = "/v1/channels/api/"
 
 const IDEMPOTENT_METHODS = new Set(["post", "put", "patch", "delete"])
+
+const READ_ONLY_METHODS: Record<string, true> = { get: true, head: true }
+const HITL_HTTP_METHODS: Record<string, true> = {
+  get: true,
+  head: true,
+  post: true,
+  put: true,
+  patch: true,
+  delete: true,
+}
+
+const OUTBOUND_OPERATION_PATTERNS = [
+  /^messages_create$/u,
+  /(?:^|_)(?:send|schedule|resend|resume|book|block|import)(?:_|$)/u,
+  /_issue_/u,
+  /_trigger_/u,
+  /_bulk_/u,
+  /_push_/u,
+  /_thread_control$/u,
+  /_enable_bot$/u,
+] as const
+
+const DESTRUCTIVE_OPERATION_PATTERN =
+  /(?:^|_)(?:delete|remove|reset|stop|cancel)(?:_|$)/u
+
+type OpenApiOperation = {
+  operationId?: string
+  responses?: unknown
+  "x-mcp"?: McpRouteMeta & { scope?: string | string[] }
+}
+
+const normalizeOperationId = (operationId: string): string =>
+  operationId
+    .replace(/([a-z\d])([A-Z])/gu, "$1_$2")
+    .replace(/[.-]/gu, "_")
+    .toLowerCase()
+
+const inferHitlPolicy = (
+  method: string,
+  operationId: string | undefined,
+  readOnlyHint: boolean | undefined,
+): McpHitlPolicy => {
+  if (READ_ONLY_METHODS[method] || readOnlyHint) {
+    return "none"
+  }
+
+  const normalizedOperationId = operationId
+    ? normalizeOperationId(operationId)
+    : ""
+  if (
+    OUTBOUND_OPERATION_PATTERNS.some((pattern) =>
+      pattern.test(normalizedOperationId),
+    )
+  ) {
+    return "confirm_outbound"
+  }
+  if (DESTRUCTIVE_OPERATION_PATTERN.test(normalizedOperationId)) {
+    return "confirm_destructive"
+  }
+  return "confirm_diff"
+}
 
 const IDEMPOTENCY_KEY_PARAMETER = {
   name: IDEMPOTENCY_KEY_HEADER,
@@ -92,6 +154,58 @@ export function withChannelApiTokenSecurity(spec: PublicSpecDocument) {
       ) {
         ;(operation as { security?: unknown }).security =
           CHANNEL_API_TOKEN_SECURITY
+      }
+    }
+  }
+
+  return spec
+}
+
+/**
+ * Stamps every public operation with the MCP human-in-the-loop policy. A route
+ * may explicitly override the inferred policy through `mcpSpec`, but a write
+ * never silently becomes unguarded when a new public procedure is added.
+ */
+export function withMcpHitlPolicy(spec: PublicSpecDocument) {
+  if (!spec.paths) {
+    return spec
+  }
+
+  for (const pathItem of Object.values(spec.paths)) {
+    if (!pathItem) {
+      continue
+    }
+
+    for (const [method, operation] of Object.entries(pathItem)) {
+      if (!HITL_HTTP_METHODS[method]) {
+        continue
+      }
+      if (
+        !(
+          operation &&
+          typeof operation === "object" &&
+          "responses" in operation
+        )
+      ) {
+        continue
+      }
+
+      const operationWithMcp = operation as OpenApiOperation
+      const existing = operationWithMcp["x-mcp"]
+      const hitlPolicy =
+        existing?.hitlPolicy ??
+        inferHitlPolicy(
+          method,
+          operationWithMcp.operationId,
+          existing?.readOnlyHint,
+        )
+      operationWithMcp["x-mcp"] = {
+        ...existing,
+        ...(hitlPolicy === "confirm_destructive" &&
+        existing?.destructiveHint === undefined
+          ? { destructiveHint: true }
+          : {}),
+        hitlPolicy,
       }
     }
   }

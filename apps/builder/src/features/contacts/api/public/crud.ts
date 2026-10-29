@@ -91,6 +91,7 @@ export const contactsCrudPublicRouter = {
       summary: "Search contacts with filter body",
       description:
         "Deprecated — `contacts.list` accepts the identical `contactFilter` shape as a query-string request; this POST-with-body variant is kept only for callers that have not migrated.",
+      spec: mcpSpec({ hitlPolicy: "none", readOnlyHint: true }),
       tags: ["Contacts"],
       deprecated: true,
     })

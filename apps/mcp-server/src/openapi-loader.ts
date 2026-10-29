@@ -7,9 +7,16 @@ interface OpenAPISpec {
   servers?: Array<{ url: string }>
 }
 
+export type McpHitlPolicy =
+  | "none"
+  | "confirm_diff"
+  | "confirm_destructive"
+  | "confirm_outbound"
+
 interface McpOperationMeta {
   alwaysVisible?: boolean
   destructiveHint?: boolean
+  hitlPolicy?: McpHitlPolicy
   idempotentHint?: boolean
   readOnlyHint?: boolean
   scope?: string | string[]
@@ -98,6 +105,7 @@ export interface DynamicTool {
   baseUrl: string
   bodyParamNames: string[]
   description: string
+  hitlPolicy: McpHitlPolicy
   inputSchema: {
     type: "object"
     properties: Record<string, unknown>
@@ -162,6 +170,27 @@ function buildAnnotations(
   }
 }
 
+const resolveHitlPolicy = (
+  meta: McpOperationMeta | undefined,
+  annotations: DynamicToolAnnotations,
+): McpHitlPolicy =>
+  meta?.hitlPolicy ?? (annotations.readOnlyHint ? "none" : "confirm_diff")
+
+type GuideName =
+  | "flows-and-automation"
+  | "inbox-and-handover"
+  | "contacts-and-pipelines"
+
+const GUIDE_BY_TAG: Partial<Record<string, GuideName>> = {
+  Broadcasts: "flows-and-automation",
+  Contacts: "contacts-and-pipelines",
+  Conversations: "inbox-and-handover",
+  Flows: "flows-and-automation",
+  "Inbox Teams": "inbox-and-handover",
+  Pipelines: "contacts-and-pipelines",
+  Teams: "inbox-and-handover",
+}
+
 /**
  * `summary` is the short, always-present label; `description` (when a route
  * sets one) carries the long-form usage guidance an agent needs to pick the
@@ -186,6 +215,14 @@ function buildToolDescription(
   }
   if (!annotations.readOnlyHint) {
     requirements.push("Requires a full (non read-only) token.")
+  }
+  const guideName = operation.tags
+    ?.map((tag) => GUIDE_BY_TAG[tag])
+    .find((candidate): candidate is GuideName => candidate !== undefined)
+  if (guideName) {
+    requirements.push(
+      `For the operational procedure, call get_guide with name "${guideName}".`,
+    )
   }
   if (requirements.length > 0) {
     parts.push(requirements.join("\n"))
@@ -322,13 +359,29 @@ function parseOperation(
     buildInputSchema(operation)
   const meta = operation["x-mcp"]
   const annotations = buildAnnotations(method, meta)
+  const hitlPolicy = resolveHitlPolicy(meta, annotations)
+  const inputSchema =
+    hitlPolicy === "none"
+      ? schema
+      : {
+          ...schema,
+          properties: {
+            ...schema.properties,
+            _confirm: {
+              description:
+                "Set to true only after the user has reviewed the proposed action and explicitly confirmed it.",
+              type: "boolean",
+            },
+          },
+        }
   return {
     alwaysVisible: meta?.alwaysVisible === true,
     annotations,
     baseUrl,
     bodyParamNames,
     description: buildToolDescription(operation, meta, annotations),
-    inputSchema: schema,
+    hitlPolicy,
+    inputSchema,
     method: method.toUpperCase(),
     name: toSnakeCase(operation.operationId),
     pathParamNames: extractPathParamNames(pathTemplate),

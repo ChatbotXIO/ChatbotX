@@ -1,13 +1,24 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
-import { META_TOOLS } from "../src/server/meta-tools"
+import { handleGetGuide, META_TOOLS } from "../src/server/meta-tools"
 import { specWithTools } from "./helpers/spec-fixture"
 
 describe("META_TOOLS", () => {
-  test("are exactly search_tools and call_tool", () => {
+  test("are exactly the discovery, execution, and guide tools", () => {
     expect(META_TOOLS.map((tool) => tool.name)).toEqual([
       "search_tools",
       "call_tool",
+      "get_guide",
     ])
+  })
+
+  test("returns raw markdown from the shared guide source", () => {
+    const result = handleGetGuide({ name: "overview" })
+    expect(result.content[0]?.text).toContain("# ChatbotX MCP overview")
+  })
+
+  test("rejects invalid and prototype guide names", () => {
+    expect(handleGetGuide({ name: "missing" }).isError).toBe(true)
+    expect(handleGetGuide({ name: "toString" }).isError).toBe(true)
   })
 })
 
@@ -559,7 +570,10 @@ describe("handleCallTool", () => {
     const { handleCallTool } = await import("../src/server/meta-tools")
 
     const result = await handleCallTool(
-      { arguments: { name: "Welcome" }, name: "flows_create" },
+      {
+        arguments: { _confirm: true, name: "Welcome" },
+        name: "flows_create",
+      },
       "api-key",
     )
 

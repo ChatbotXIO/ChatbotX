@@ -279,6 +279,38 @@ const decodeMcp = (result: unknown): unknown => {
   }
 }
 
+const confirmationRequired = (result: unknown): boolean => {
+  const decoded = decodeMcp(result)
+  return (
+    typeof decoded === "object" &&
+    decoded !== null &&
+    "code" in decoded &&
+    decoded.code === "CONFIRMATION_REQUIRED"
+  )
+}
+
+export const withConfirmationArgument = (
+  toolName: string,
+  args: Record<string, unknown>,
+): Record<string, unknown> => {
+  if (toolName !== "call_tool") {
+    return { ...args, _confirm: true }
+  }
+
+  const nestedArgs = args.arguments
+  if (
+    typeof nestedArgs !== "object" ||
+    nestedArgs === null ||
+    Array.isArray(nestedArgs)
+  ) {
+    return args
+  }
+  return {
+    ...args,
+    arguments: { ...nestedArgs, _confirm: true },
+  }
+}
+
 type McpClientHandle = {
   client: Client
   close: () => Promise<void>
@@ -363,10 +395,19 @@ const buildTools = (
             name: mcpTool.name,
           }
           traces.push(trace)
-          const rawResult = await client.callTool({
+          let rawResult = await client.callTool({
             name: mcpTool.name,
             arguments: argumentsObject,
           })
+          if (confirmationRequired(rawResult)) {
+            rawResult = await client.callTool({
+              name: mcpTool.name,
+              arguments: withConfirmationArgument(
+                mcpTool.name,
+                argumentsObject,
+              ),
+            })
+          }
           trace.isError = rawResult.isError === true
           trace.result = decodeMcp(rawResult)
           return trace.result
@@ -725,9 +766,11 @@ const main = async (): Promise<void> => {
   }
 }
 
-main().catch((error) => {
-  const message =
-    error instanceof Error ? (error.stack ?? error.message) : String(error)
-  process.stderr.write(`${message}\n`)
-  process.exitCode = 1
-})
+if (process.argv[1]?.endsWith("run.ts")) {
+  main().catch((error) => {
+    const message =
+      error instanceof Error ? (error.stack ?? error.message) : String(error)
+    process.stderr.write(`${message}\n`)
+    process.exitCode = 1
+  })
+}

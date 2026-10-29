@@ -1,3 +1,4 @@
+import { getGuide, guideNames, isGuideName } from "../guides"
 import {
   type DynamicTool,
   getCachedTools,
@@ -10,6 +11,7 @@ import {
   jsonResult,
   type RequestCredentials,
   type ToolCallResult,
+  type ToolExecutionOptions,
 } from "./execute-tool"
 import { expandSearchQuery, looksNonEnglish } from "./search/normalize"
 import { distinctResourceGroups, rankTools } from "./search/rank"
@@ -56,6 +58,21 @@ export const META_TOOLS = [
           type: "object",
           description:
             "JSON object containing every field declared by the selected inputSchema. Read its schema and lookup requirements first; use {} only for a no-input tool. Do not wrap fields in body, params, or workspaceId unless the selected schema declares them.",
+        },
+      },
+      required: ["name"],
+    },
+  },
+  {
+    name: "get_guide",
+    description:
+      "Read a ChatbotX operational safety guide. Use it for workflows that need the documented approval, OAuth, flow, inbox, contact, or pipeline procedure.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        name: {
+          enum: guideNames,
+          type: "string",
         },
       },
       required: ["name"],
@@ -145,6 +162,16 @@ export function handleSearchTools(
   return jsonResult({ matches } satisfies SearchToolsResult)
 }
 
+export const handleGetGuide = (
+  args: Record<string, unknown>,
+): ToolCallResult => {
+  const name = args.name
+  if (typeof name !== "string" || !isGuideName(name)) {
+    return errorResult(`get_guide requires one of: ${guideNames.join(", ")}.`)
+  }
+  return { content: [{ text: getGuide(name).content, type: "text" }] }
+}
+
 /**
  * Resolves a tool name for `call_tool`, accepting the exact executable
  * name `search_tools` returns as well as a raw dotted/camelCase
@@ -175,6 +202,7 @@ function unknownToolMessage(name: string): string {
 export async function handleCallTool(
   args: Record<string, unknown>,
   credentials: RequestCredentials,
+  options?: ToolExecutionOptions,
 ): Promise<ToolCallResult> {
   const name = args.name
   if (typeof name !== "string" || name.trim().length === 0) {
@@ -199,5 +227,5 @@ export async function handleCallTool(
 
   const toolArguments = (suppliedArguments ?? {}) as Record<string, unknown>
 
-  return await executeTool(tool, toolArguments, credentials)
+  return await executeTool(tool, toolArguments, credentials, options)
 }

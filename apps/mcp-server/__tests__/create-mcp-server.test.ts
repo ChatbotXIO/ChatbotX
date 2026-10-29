@@ -125,6 +125,7 @@ describe("createMcpServer", () => {
     expect(result.tools.map((tool: { name: string }) => tool.name)).toEqual([
       "search_tools",
       "call_tool",
+      "get_guide",
       "tags_list",
     ])
   })
@@ -177,7 +178,7 @@ describe("createMcpServer", () => {
     expect(result.isError).toBeUndefined()
   })
 
-  test("missing API key blocks a regular tool and call_tool, but not search_tools", async () => {
+  test("missing API key blocks regular tools but leaves search and guides available", async () => {
     const fetchMock = vi.fn().mockResolvedValueOnce(
       specResponse({
         "/v1/tags": {
@@ -226,6 +227,16 @@ describe("createMcpServer", () => {
       {},
     )) as CallToolResult
     expect(searchToolsResult.isError).toBeUndefined()
+
+    const guideResult = (await callHandler(
+      {
+        method: "tools/call",
+        params: { name: "get_guide", arguments: { name: "overview" } },
+      },
+      {},
+    )) as CallToolResult
+    expect(guideResult.isError).toBeUndefined()
+    expect(guideResult.content[0]?.text).toContain("# ChatbotX MCP overview")
   })
 
   test("'toString' is not treated as a meta-tool name", async () => {

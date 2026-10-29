@@ -27,6 +27,11 @@ type McpOperationMeta = {
   readOnlyHint?: boolean
   destructiveHint?: boolean
   idempotentHint?: boolean
+  hitlPolicy?:
+    | "none"
+    | "confirm_diff"
+    | "confirm_destructive"
+    | "confirm_outbound"
   scope?: string
 }
 
@@ -59,6 +64,18 @@ function isWorkspaceTokenOperation(operation: McpSpecOperation): boolean {
       workspaceTokenSecuritySchemeNames.has(scheme),
     ),
   )
+}
+
+// POST-only computations explicitly documented as side-effect free. Each must
+// remain an intentional exception rather than becoming an accidental policy
+// hole when metadata changes.
+const HITL_NONE_WRITE_ALLOWLIST: Record<string, true> = {
+  "aiFiles.search": true,
+  "broadcasts.previewRecurrence": true,
+  "contacts.search": true,
+  "flows.validate": true,
+  "inboundWebhooks.previewMapping": true,
+  "miniApps.validate": true,
 }
 
 // Guard against the default set silently growing back toward 346 — a
@@ -114,17 +131,22 @@ let operations: McpSpecOperation[]
 
 beforeAll(async () => {
   const { publicRouter } = await import("@/routers/public")
-  const { publicSpecGenerateOptions, withChannelApiTokenSecurity } =
-    await import("@/lib/orpc/public-spec")
+  const {
+    publicSpecGenerateOptions,
+    withChannelApiTokenSecurity,
+    withMcpHitlPolicy,
+  } = await import("@/lib/orpc/public-spec")
 
   const generator = new OpenAPIGenerator({
     schemaConverters: [new ZodToJsonSchemaConverter()],
   })
 
-  const spec = withChannelApiTokenSecurity(
-    await generator.generate(
-      publicRouter,
-      publicSpecGenerateOptions("public-spec-mcp.test"),
+  const spec = withMcpHitlPolicy(
+    withChannelApiTokenSecurity(
+      await generator.generate(
+        publicRouter,
+        publicSpecGenerateOptions("public-spec-mcp.test"),
+      ),
     ),
   )
 
@@ -152,6 +174,56 @@ describe("x-mcp.scope coverage", () => {
       .map((op) => op.operationId)
 
     expect(missingScope).toEqual([])
+  })
+})
+
+describe("x-mcp HITL policy coverage", () => {
+  test("guards every workspace-token write and marks destructive writes", () => {
+    const unguardedWrites = operations
+      .filter(isWorkspaceTokenOperation)
+      .filter((operation) => !["GET", "HEAD"].includes(operation.method))
+      .filter((operation) => operation["x-mcp"]?.readOnlyHint !== true)
+      .filter(
+        (operation) =>
+          !operation["x-mcp"]?.hitlPolicy ||
+          operation["x-mcp"]?.hitlPolicy === "none",
+      )
+      .map((operation) => operation.operationId)
+
+    const explicitNoneWrites = operations
+      .filter(isWorkspaceTokenOperation)
+      .filter((operation) => !["GET", "HEAD"].includes(operation.method))
+      .filter((operation) => operation["x-mcp"]?.hitlPolicy === "none")
+      .map((operation) => operation.operationId)
+      .sort()
+
+    const unmarkedDestructiveWrites = operations
+      .filter(
+        (operation) =>
+          operation["x-mcp"]?.hitlPolicy === "confirm_destructive" &&
+          operation["x-mcp"]?.destructiveHint !== true,
+      )
+      .map((operation) => operation.operationId)
+
+    expect({
+      explicitNoneWrites,
+      unguardedWrites,
+      unmarkedDestructiveWrites,
+    }).toEqual({
+      explicitNoneWrites: Object.keys(HITL_NONE_WRITE_ALLOWLIST).sort(),
+      unguardedWrites: [],
+      unmarkedDestructiveWrites: [],
+    })
+  })
+})
+
+describe("x-mcp outbound policy", () => {
+  test("classifies a contact send as outbound", () => {
+    const operation = operations.find(
+      (candidate) => candidate.operationId === "contacts.sendMessage",
+    )
+
+    expect(operation?.["x-mcp"]?.hitlPolicy).toBe("confirm_outbound")
   })
 })
 

@@ -12,6 +12,7 @@ const tool: DynamicTool = {
   baseUrl: "https://api.example.com",
   bodyParamNames: [],
   description: "List contacts",
+  hitlPolicy: "none",
   inputSchema: { properties: {}, type: "object" },
   method: "GET",
   name: "contacts_list",
@@ -273,5 +274,157 @@ describe("executeTool", () => {
 
     const url = fetchMock.mock.calls[0]?.[0] as string
     expect(url).toContain("/v1/contacts/An")
+  })
+
+  test("returns CONFIRMATION_REQUIRED without dispatching an unconfirmed mutation", async () => {
+    const fetchMock = vi.fn()
+    globalThis.fetch = fetchMock as unknown as typeof fetch
+    const mutationTool: DynamicTool = {
+      ...tool,
+      annotations: {
+        destructiveHint: false,
+        idempotentHint: false,
+        readOnlyHint: false,
+      },
+      bodyParamNames: ["name"],
+      hitlPolicy: "confirm_diff",
+      inputSchema: {
+        properties: {
+          _confirm: { type: "boolean" },
+          name: { type: "string" },
+        },
+        required: ["name"],
+        type: "object",
+      },
+      method: "POST",
+      name: "tags_create",
+      queryParamNames: [],
+      pathTemplate: "/v1/tags",
+    }
+
+    const result = await executeTool(
+      mutationTool,
+      { name: "VIP" },
+      {
+        token: "api-key",
+      },
+    )
+
+    expect(fetchMock).not.toHaveBeenCalled()
+    expect(JSON.parse(result.content[0]?.text ?? "{}")).toMatchObject({
+      code: "CONFIRMATION_REQUIRED",
+      policy: "confirm_diff",
+      proposed: { name: "VIP" },
+    })
+  })
+
+  test("dispatches a confirmed mutation without forwarding _confirm", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(successfulResponse)
+    globalThis.fetch = fetchMock as unknown as typeof fetch
+    const mutationTool: DynamicTool = {
+      ...tool,
+      annotations: {
+        destructiveHint: false,
+        idempotentHint: false,
+        readOnlyHint: false,
+      },
+      bodyParamNames: ["name"],
+      hitlPolicy: "confirm_diff",
+      inputSchema: {
+        properties: {
+          _confirm: { type: "boolean" },
+          name: { type: "string" },
+        },
+        required: ["name"],
+        type: "object",
+      },
+      method: "POST",
+      name: "tags_create",
+      queryParamNames: [],
+      pathTemplate: "/v1/tags",
+    }
+
+    await executeTool(
+      mutationTool,
+      { _confirm: true, name: "VIP" },
+      { token: "api-key" },
+    )
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "https://api.example.com/v1/tags",
+      expect.objectContaining({ body: JSON.stringify({ name: "VIP" }) }),
+    )
+  })
+
+  test("dispatches after form elicitation is accepted", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(successfulResponse)
+    globalThis.fetch = fetchMock as unknown as typeof fetch
+
+    await executeTool(
+      {
+        ...tool,
+        annotations: {
+          destructiveHint: false,
+          idempotentHint: false,
+          readOnlyHint: false,
+        },
+        bodyParamNames: ["name"],
+        hitlPolicy: "confirm_diff",
+        method: "POST",
+        name: "tags_create",
+        pathTemplate: "/v1/tags",
+      },
+      { name: "VIP" },
+      { token: "api-key" },
+      {
+        elicitationClient: {
+          elicitInput: (request) => {
+            expect(request.requestedSchema).toEqual({
+              additionalProperties: false,
+              properties: {},
+              type: "object",
+            })
+            return Promise.resolve({ action: "accept" })
+          },
+          supportsFormElicitation: () => true,
+        },
+      },
+    )
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "https://api.example.com/v1/tags",
+      expect.objectContaining({ body: JSON.stringify({ name: "VIP" }) }),
+    )
+  })
+
+  test("does not dispatch when elicitation is declined", async () => {
+    const fetchMock = vi.fn()
+    globalThis.fetch = fetchMock as unknown as typeof fetch
+    const result = await executeTool(
+      {
+        ...tool,
+        annotations: {
+          destructiveHint: true,
+          idempotentHint: false,
+          readOnlyHint: false,
+        },
+        hitlPolicy: "confirm_destructive",
+        method: "DELETE",
+        name: "tags_delete",
+      },
+      {},
+      { token: "api-key" },
+      {
+        elicitationClient: {
+          elicitInput: async () => ({ action: "decline" }),
+          supportsFormElicitation: () => true,
+        },
+      },
+    )
+
+    expect(fetchMock).not.toHaveBeenCalled()
+    expect(JSON.parse(result.content[0]?.text ?? "{}")).toMatchObject({
+      code: "CONFIRMATION_DECLINED",
+    })
   })
 })

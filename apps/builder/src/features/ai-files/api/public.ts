@@ -111,6 +111,7 @@ export const aiFilesPublicRouter = {
       summary: "Search AI file chunks",
       description:
         "Use this to test which knowledge chunks an AI agent (or a set of AI files) retrieves for a question, with each chunk's similarity, rank, whether it passed the threshold and, in `agentId` mode, whether the agent would actually use it (`usedByAgent`: above the provider default threshold and within the agent's top 5). `results[].agentVisible` says whether the agent would see the chunk using only these files, and `chunkIndex` gives its position in the file. Send `expectedText` to learn whether any chunk contains the answer (`expected.verdict`). `diagnosis` explains an empty or weak result. Pass exactly one of `agentId` (get it from `aiAgents.list`) or `fileIds` (get them from `aiFiles.list`). Requires a `full` token because every call spends one embedding on the workspace's own key; use `aiFiles.listChunks` to inspect chunks with a `read_only` token. Rate limited to about 30 calls per minute per workspace.",
+      spec: mcpSpec({ hitlPolicy: "none", readOnlyHint: true }),
       tags: ["AI Files"],
     })
     .input(searchAIFilesRequest)
