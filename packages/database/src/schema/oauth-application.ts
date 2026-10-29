@@ -1,4 +1,4 @@
-import { boolean, pgTable, text, uniqueIndex } from "drizzle-orm/pg-core"
+import { boolean, index, pgTable, text, uniqueIndex } from "drizzle-orm/pg-core"
 import { bigintAsString, sharedColumns } from "../partials/shared"
 import { userModel } from "./auth-user"
 
@@ -19,5 +19,8 @@ export const oauthApplicationModel = pgTable(
       onUpdate: "cascade",
     }),
   },
-  (table) => [uniqueIndex("OAuthApplication_clientId_key").on(table.clientId)],
+  (table) => [
+    uniqueIndex("OAuthApplication_clientId_key").on(table.clientId),
+    index("OAuthApplication_userId_idx").on(table.userId),
+  ],
 )

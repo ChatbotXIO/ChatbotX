@@ -36,6 +36,7 @@ export const oauthAccessTokenModel = pgTable(
   (table) => [
     uniqueIndex("OAuthAccessToken_accessToken_key").on(table.accessToken),
     uniqueIndex("OAuthAccessToken_refreshToken_key").on(table.refreshToken),
+    index("OAuthAccessToken_clientId_idx").on(table.clientId),
     index("OAuthAccessToken_userId_idx").on(table.userId),
   ],
 )

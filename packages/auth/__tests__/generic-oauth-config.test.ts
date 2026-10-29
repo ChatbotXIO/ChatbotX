@@ -27,6 +27,7 @@ vi.mock("better-auth/plugins", () => ({
   bearer: () => ({ id: "bearer" }),
   genericOAuth: genericOAuthMock,
   magicLink: () => ({ id: "magic-link" }),
+  mcp: () => ({ id: "mcp" }),
   oneTimeToken: () => ({ id: "one-time-token" }),
 }))
 
@@ -34,6 +35,9 @@ vi.mock("@chatbotx.io/database/client", () => ({ db: {} }))
 
 vi.mock("@chatbotx.io/database/schema", () => ({
   accountModel: {},
+  oauthAccessTokenModel: {},
+  oauthApplicationModel: {},
+  oauthConsentModel: {},
   sessionModel: {},
   userModel: {},
   verificationModel: {},
