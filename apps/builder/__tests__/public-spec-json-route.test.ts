@@ -2,25 +2,14 @@
 
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
-// Same rationale as public-spec-operations.test.ts: importing the real
-// `@/routers/public` transitively opens a real `pg.Pool` and boots the full
-// better-auth stack. Neither is reachable from this route (it only
-// generates route metadata), so both are stubbed.
-vi.mock("@/middlewares/auth", () => ({
-  authMiddleware: vi.fn(),
-  workspaceAuthorizedMidddleware: vi.fn(),
-}))
-
-vi.mock("@chatbotx.io/database/client", () => {
-  const proxy: unknown = new Proxy(() => proxy, { get: () => proxy })
-  return { db: proxy }
-})
-
+// The route reads the committed base spec and never imports `publicRouter`,
+// so no auth/database stubs are needed — only the tenant lookup.
 const getTenantSettings = vi.fn()
 vi.mock("@/features/tenant/utils", () => ({ getTenantSettings }))
 
 const { GET } = await import("@/app/api/public-spec.json/route")
 
+const API_URL_PATTERN = /^https?:\/\/[^/]+\/api$/
 const SHA1_ETAG_PATTERN = /^"[0-9a-f]{40}"$/
 
 beforeEach(() => {
@@ -38,7 +27,7 @@ const makeRequest = (
 ) => new Request(`https://${host}${path}`, { headers })
 
 describe("GET /public-spec.json", () => {
-  test("returns the generated OpenAPI document with an ETag and Cache-Control", async () => {
+  test("returns the OpenAPI document with an ETag and Cache-Control", async () => {
     const response = await GET(makeRequest("host-basic.example.com"))
 
     expect(response.status).toBe(200)
@@ -112,5 +101,27 @@ describe("GET /public-spec.json", () => {
     expect(unfiltered.headers.get("ETag")).not.toBe(
       filtered.headers.get("ETag"),
     )
+  })
+
+  test("uses the tenant name as the title and the request origin as the server", async () => {
+    const response = await GET(makeRequest("host-info.example.com"))
+    const body = await response.json()
+
+    expect(body.info.title).toBe("ChatbotX")
+    expect(body.servers).toHaveLength(1)
+    expect(body.servers[0].url).toMatch(API_URL_PATTERN)
+  })
+
+  test("?filter= keeps only paths under /v1/<filter>", async () => {
+    const response = await GET(
+      makeRequest(
+        "host-filter-paths.example.com",
+        "/public-spec.json?filter=tags",
+      ),
+    )
+    const paths = Object.keys((await response.json()).paths)
+
+    expect(paths.length).toBeGreaterThan(0)
+    expect(paths.every((path) => path.startsWith("/v1/tags"))).toBe(true)
   })
 })

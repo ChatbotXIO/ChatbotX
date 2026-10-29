@@ -451,9 +451,17 @@ Next.js-built (see `.agents/rules/no-dynamic-import.md`).
 For public API (`api/public.ts`), don't add the feature to `routers/index.ts`
 at all if it has no private procedures — register it only in
 `apps/builder/src/routers/public.ts` (see above), nested under the resource
-name. That router stays **eager** (plain imports); it feeds `/api/public-spec.json`,
-and its `operationId`s (`resource.key`) are what the MCP server turns into
-tool names.
+name. Every branch is a `lazy(() => import(...), { prefix: "/v1/<x>" })` — the
+`prefix` is **required** (oRPC's matcher loads a prefix-less branch on the first
+request, and the key path never matches `/v1/...`); a wrong prefix is a silent
+404. `__tests__/public-router-lazy-prefix.test.ts` checks every route path
+against its prefix and drives every spec operation through the handler. Its
+`operationId`s (`resource.key`) are what the MCP server turns into tool names.
+
+`/api/public-spec.json` does **not** import `publicRouter`: it serves the
+committed `apps/builder/src/generated/public-spec.base.json`. After any public
+API change run `pnpm --filter builder gen:public-spec` and commit that file —
+`public-spec-snapshot.test.ts` fails when it drifts.
 
 ## Schema Patterns
 

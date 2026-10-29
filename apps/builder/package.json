@@ -12,6 +12,7 @@
     "lint": "pnpm i18n:check",
     "start": "next start",
     "test": "vitest run --passWithNoTests",
+    "gen:public-spec": "vitest run __tests__/public-spec-snapshot.test.ts -u",
     "test:watch": "vitest"
   },
   "dependencies": {

@@ -8,6 +8,7 @@ import {
   OpenAPIGenerator,
   simplifyComposedObjectJsonSchemasAndRefs,
 } from "@orpc/openapi"
+import { isLazy, unlazy } from "@orpc/server"
 import { ZodToJsonSchemaConverter } from "@orpc/zod/zod4"
 import { beforeAll, describe, expect, test, vi } from "vitest"
 import { IDEMPOTENCY_EXEMPT_READ_PATHS } from "@/lib/idempotency/constants"
@@ -916,12 +917,18 @@ describe("public API spec — declared codes match what the mapper throws", () =
     structuredCodes: string[]
   }
 
-  function collectErrorMaps(
+  async function collectErrorMaps(
     node: unknown,
     path: string[],
     out: ProcedureErrorMap[],
-  ): void {
+  ): Promise<void> {
     if (!node || typeof node !== "object") {
+      return
+    }
+    // publicRouter branches are lazy — resolve them before descending.
+    if (isLazy(node)) {
+      const { default: resolved } = await unlazy(node)
+      await collectErrorMaps(resolved, path, out)
       return
     }
     const def = (
@@ -950,7 +957,7 @@ describe("public API spec — declared codes match what the mapper throws", () =
       return
     }
     for (const [key, child] of Object.entries(node)) {
-      collectErrorMaps(child, [...path, key], out)
+      await collectErrorMaps(child, [...path, key], out)
     }
   }
 
@@ -959,7 +966,7 @@ describe("public API spec — declared codes match what the mapper throws", () =
   beforeAll(async () => {
     const { publicRouter } = await import("@/routers/public")
     procedures = []
-    collectErrorMaps(publicRouter, [], procedures)
+    await collectErrorMaps(publicRouter, [], procedures)
   })
 
   test("every public procedure declares the universal error codes", () => {

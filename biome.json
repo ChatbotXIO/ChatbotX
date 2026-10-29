@@ -12,6 +12,7 @@
       "packages/**",
       "integrations/**",
       "!**/.next",
+      "!**/apps/builder/src/generated",
       "!**/next-env.d.ts",
       "!**/messages/*.d.json.ts",
       "!**/packages/database/drizzle",
