@@ -4,7 +4,7 @@ type McpConnectSnippetInput = {
   workspaceId: string
 }
 
-export type McpConnectSnippets = {
+type McpConnectSnippets = {
   streamableUrl: string
   sseUrl: string
   claudeCode: string

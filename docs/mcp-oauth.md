@@ -4,7 +4,7 @@ The builder is the OAuth authorization server for the MCP resource server. Disco
 
 The resource server publishes RFC 9728 metadata at `/.well-known/oauth-protected-resource` and challenges an unauthenticated MCP endpoint with `WWW-Authenticate: Bearer resource_metadata="..."`.
 
-OAuth access tokens are opaque database-backed tokens and are stored in plaintext by Better Auth, like its session rows. Refresh grants retain old token rows, so expired refresh-token rows are purged daily. The Better Auth MCP plugin ignores stored consent rows; forcing `prompt=consent` is the only way to show the consent screen and must remain in place.
+OAuth access tokens are opaque database-backed tokens and are stored in plaintext by Better Auth, like its session rows. Refresh grants retain old token rows, so expired refresh-token rows are purged daily. A matching `OAuthConsent` row with `consentGiven=true` and the requested scopes is the authorization grant; revoking a client deletes that consent so the next connection shows the consent screen.
 
 The public API accepts OAuth tokens only in `Authorization: Bearer`. Only workspace owners and `superAdmin` members can authorize OAuth access; synthetic platform-support sessions are rejected. When an account has multiple workspaces, callers must provide `x-workspace-id`; the MCP URL can carry the equivalent `?workspace_id=<id>`. The `GET /api/v1/token` introspection path enforces that workspace selection and returns the same token context as a workspace API token.
 
@@ -22,5 +22,6 @@ origin in production so bearer challenges advertise HTTPS rather than an
 internal or HTTP proxy URL.
 
 Users can copy the current workspace URL and revoke their account-level OAuth
-grants in **Settings → Integrations → ChatbotX MCP**. Revoking a client applies
-to every workspace the user administers.
+grants in **Settings → Integrations → ChatbotX MCP**. The grants page lists
+consents, so a client with no live token remains visible until revoked.
+Revoking a client applies to every workspace the user administers.

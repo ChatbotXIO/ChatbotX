@@ -1,5 +1,5 @@
 import { env } from "@/env"
-import { mcpOAuthScopes } from "@/features/mcp-oauth/lib/oauth-metadata"
+import { mcpOAuthScopes } from "@/features/mcp-oauth/lib/mcp-oauth"
 
 // Better Auth's oAuthDiscoveryMetadata advertises /mcp/jwks and /mcp/userinfo,
 // but the MCP plugin does not serve either endpoint.

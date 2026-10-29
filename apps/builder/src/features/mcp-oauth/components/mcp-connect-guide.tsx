@@ -57,6 +57,7 @@ export const McpConnectGuide = ({
   const t = useTranslations("chatbotxMcp")
   const common = useTranslations()
   const snippets = buildMcpConnectSnippets({ builderUrl, mcpUrl, workspaceId })
+  const copyLabel = common("actions.copy")
 
   return (
     <section className="space-y-4 rounded-lg border p-4">
@@ -92,28 +93,28 @@ export const McpConnectGuide = ({
 
       <div className="grid gap-4 lg:grid-cols-2">
         <CopyableSnippet
-          copyLabel={common("actions.copy")}
+          copyLabel={copyLabel}
           label={t("clients.claudeCode")}
           value={snippets.claudeCode}
         />
         <CopyableSnippet
-          copyLabel={common("actions.copy")}
+          copyLabel={copyLabel}
           label={t("clients.claudeDesktop")}
           value={snippets.claudeDesktop}
         />
         <CopyableSnippet
-          copyLabel={common("actions.copy")}
+          copyLabel={copyLabel}
           label={t("clients.cursor")}
           value={snippets.cursor}
         />
         <CopyableSnippet
-          copyLabel={common("actions.copy")}
+          copyLabel={copyLabel}
           label={t("clients.chatgpt")}
           value={snippets.chatgpt}
         />
         <div className="space-y-2 lg:col-span-2">
           <CopyableSnippet
-            copyLabel={common("actions.copy")}
+            copyLabel={copyLabel}
             label={t("clients.stdio")}
             value={snippets.stdio}
           />
@@ -123,7 +124,7 @@ export const McpConnectGuide = ({
               className="underline underline-offset-4"
               href={`/space/${workspaceId}/settings/integrations/workspace-token`}
             >
-              {t("clients.stdio")}
+              {common("workspaceToken.title")}
             </Link>
           </p>
         </div>

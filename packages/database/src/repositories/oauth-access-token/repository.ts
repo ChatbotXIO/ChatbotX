@@ -1,5 +1,4 @@
-import { and, eq, lt } from "drizzle-orm"
-import { type DatabaseClient, db } from "../../client"
+import { and, type DatabaseClient, db, eq, lt } from "../../client"
 import { oauthAccessTokenModel } from "../../schema"
 import type { OAuthAccessTokenModel, OAuthApplicationModel } from "../../types"
 
@@ -19,26 +18,6 @@ class OAuthAccessTokenRepository {
     }
 
     return row as OAuthAccessTokenModel & { client: OAuthApplicationModel }
-  }
-
-  async listActiveByUser(
-    userId: string,
-    now: Date,
-    tx: DatabaseClient = db,
-  ): Promise<(OAuthAccessTokenModel & { client: OAuthApplicationModel })[]> {
-    const rows = await tx.query.oauthAccessTokenModel.findMany({
-      where: {
-        userId,
-        refreshTokenExpiresAt: { gt: now },
-      },
-      with: { client: true },
-      orderBy: { createdAt: "desc" },
-    })
-
-    return rows.filter(
-      (row): row is OAuthAccessTokenModel & { client: OAuthApplicationModel } =>
-        row.client !== null,
-    )
   }
 
   async deleteByUserAndClient(

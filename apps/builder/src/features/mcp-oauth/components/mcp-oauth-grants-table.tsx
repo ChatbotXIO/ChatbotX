@@ -87,7 +87,7 @@ export const McpOAuthGrantsTable = ({
               <TableHead>{t("grants.scopes")}</TableHead>
               <TableHead>{t("grants.firstAuthorizedAt")}</TableHead>
               <TableHead>{t("grants.lastRefreshedAt")}</TableHead>
-              <TableHead>{t("grants.expiresAt")}</TableHead>
+              <TableHead>{t("grants.activeUntil")}</TableHead>
               <TableHead className="w-12" />
             </TableRow>
           </TableHeader>
@@ -111,7 +111,9 @@ export const McpOAuthGrantsTable = ({
                           alt=""
                           className="size-5 rounded-sm"
                           height={20}
+                          referrerPolicy="no-referrer"
                           src={grant.clientIcon}
+                          unoptimized
                           width={20}
                         />
                       ) : null}
@@ -128,9 +130,15 @@ export const McpOAuthGrantsTable = ({
                     </div>
                   </TableCell>
                   <TableCell>{formatDate(grant.firstAuthorizedAt)}</TableCell>
-                  <TableCell>{formatDate(grant.lastRefreshedAt)}</TableCell>
                   <TableCell>
-                    {formatDate(grant.accessTokenExpiresAt)}
+                    {grant.lastRefreshedAt
+                      ? formatDate(grant.lastRefreshedAt)
+                      : t("grants.noActiveToken")}
+                  </TableCell>
+                  <TableCell>
+                    {grant.activeUntil
+                      ? formatDate(grant.activeUntil)
+                      : t("grants.noActiveToken")}
                   </TableCell>
                   <TableCell>
                     <Button
@@ -157,8 +165,6 @@ export const McpOAuthGrantsTable = ({
           </TableBody>
         </Table>
       </div>
-
-      <p className="text-muted-foreground text-sm">{t("grants.description")}</p>
 
       <AlertDialog
         onOpenChange={(open) => {

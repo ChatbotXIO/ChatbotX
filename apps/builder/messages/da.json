@@ -10799,7 +10799,6 @@
   },
   "chatbotxMcp": {
     "title": "ChatbotX MCP",
-    "description": "Grants belong to your account and apply to every workspace you administer; revoking disconnects the client everywhere.",
     "workspaceId": "Workspace ID",
     "streamableUrl": "Streamable HTTP URL",
     "sseUrl": "Legacy SSE URL",
@@ -10827,11 +10826,13 @@
       "scopes": "Scopes",
       "firstAuthorizedAt": "First authorized",
       "lastRefreshedAt": "Last refreshed",
-      "expiresAt": "Access token expires",
+      "activeUntil": "Active until",
+      "noActiveToken": "No active token",
       "revoke": "Revoke",
       "revokeConfirmTitle": "Revoke application access?",
       "revokeConfirmDescription": "Revoke access for {clientName}? This disconnects the client everywhere.",
-      "revokedSuccess": "Application access revoked."
+      "revokedSuccess": "Application access revoked.",
+      "notFound": "OAuth grant no longer exists"
     }
   }
 }

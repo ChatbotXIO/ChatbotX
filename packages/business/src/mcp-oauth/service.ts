@@ -40,13 +40,9 @@ export type McpOAuthGrant = {
   clientIcon: string | null
   scopes: string[]
   firstAuthorizedAt: Date
-  lastRefreshedAt: Date
-  accessTokenExpiresAt: Date
-  refreshTokenExpiresAt: Date
-  tokenCount: number
+  lastRefreshedAt: Date | null
+  activeUntil: Date | null
 }
-
-type GroupedMcpOAuthGrant = McpOAuthGrant & { scopeSet: Set<string> }
 
 export class McpOAuthService extends BaseService {
   async resolvePrincipal(props: {
@@ -134,55 +130,19 @@ export class McpOAuthService extends BaseService {
   }
 
   async listGrantsForUser(props: { userId: string }): Promise<McpOAuthGrant[]> {
-    const tokens = await oauthAccessTokenRepository.listActiveByUser(
+    const grants = await oauthConsentRepository.listGivenByUser(
       props.userId,
       new Date(),
     )
-    const grants = new Map<string, GroupedMcpOAuthGrant>()
 
-    for (const token of tokens) {
-      const existingGrant = grants.get(token.clientId)
-      if (!existingGrant) {
-        grants.set(token.clientId, {
-          clientId: token.clientId,
-          clientName: token.client.name,
-          clientIcon: token.client.icon,
-          scopes: [],
-          scopeSet: new Set(token.scopes.split(" ").filter(Boolean)),
-          firstAuthorizedAt: token.createdAt,
-          lastRefreshedAt: token.createdAt,
-          accessTokenExpiresAt: token.accessTokenExpiresAt,
-          refreshTokenExpiresAt: token.refreshTokenExpiresAt,
-          tokenCount: 1,
-        })
-        continue
-      }
-
-      for (const scope of token.scopes.split(" ").filter(Boolean)) {
-        existingGrant.scopeSet.add(scope)
-      }
-      existingGrant.firstAuthorizedAt =
-        existingGrant.firstAuthorizedAt < token.createdAt
-          ? existingGrant.firstAuthorizedAt
-          : token.createdAt
-      existingGrant.lastRefreshedAt =
-        existingGrant.lastRefreshedAt > token.createdAt
-          ? existingGrant.lastRefreshedAt
-          : token.createdAt
-      existingGrant.accessTokenExpiresAt =
-        existingGrant.accessTokenExpiresAt > token.accessTokenExpiresAt
-          ? existingGrant.accessTokenExpiresAt
-          : token.accessTokenExpiresAt
-      existingGrant.refreshTokenExpiresAt =
-        existingGrant.refreshTokenExpiresAt > token.refreshTokenExpiresAt
-          ? existingGrant.refreshTokenExpiresAt
-          : token.refreshTokenExpiresAt
-      existingGrant.tokenCount += 1
-    }
-
-    return Array.from(grants.values(), ({ scopeSet, ...grant }) => ({
-      ...grant,
-      scopes: Array.from(scopeSet),
+    return grants.map((grant) => ({
+      activeUntil: grant.activeUntil,
+      clientIcon: grant.clientIcon,
+      clientId: grant.clientId,
+      clientName: grant.clientName,
+      firstAuthorizedAt: grant.firstAuthorizedAt,
+      lastRefreshedAt: grant.lastRefreshedAt,
+      scopes: Array.from(new Set(grant.scopes.split(" ").filter(Boolean))),
     }))
   }
 
@@ -193,11 +153,14 @@ export class McpOAuthService extends BaseService {
     const deleted = await db.transaction(async (tx) => {
       const deletedTokens =
         await oauthAccessTokenRepository.deleteByUserAndClient(props, tx)
-      await oauthConsentRepository.deleteByUserAndClient(props, tx)
-      return deletedTokens
+      const deletedConsents =
+        await oauthConsentRepository.deleteByUserAndClient(props, tx)
+      return deletedTokens + deletedConsents
     })
 
-    logger.info({ ...props, deleted }, "Revoked MCP OAuth grant")
+    if (deleted > 0) {
+      logger.info({ ...props, deleted }, "Revoked MCP OAuth grant")
+    }
     return deleted > 0
   }
 

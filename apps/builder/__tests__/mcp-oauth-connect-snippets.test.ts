@@ -26,6 +26,14 @@ describe("buildMcpConnectSnippets", () => {
         },
       },
     })
+    expect(JSON.parse(snippets.cursor)).toEqual({
+      mcpServers: {
+        chatbotx: {
+          type: "http",
+          url: snippets.streamableUrl,
+        },
+      },
+    })
     expect(snippets.chatgpt).toBe(snippets.sseUrl)
     expect(snippets.stdio).toBe(
       "CHATBOTX_API_URL=https://app.chatbotx.io/api CHATBOTX_API_KEY=<workspace-token> npx -y chatbotx-mcp",
