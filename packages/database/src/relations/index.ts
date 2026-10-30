@@ -136,8 +136,12 @@ import { minigameRelations } from "./minigame"
 import { minigameContactRelations } from "./minigame-contact"
 import { minigamePlayRelations } from "./minigame-play"
 import { oauthAccessTokenRelations } from "./oauth-access-token"
-import { oauthApplicationRelations } from "./oauth-application"
+import { oauthClientRelations } from "./oauth-client"
+import { oauthClientAssertionRelations } from "./oauth-client-assertion"
+import { oauthClientResourceRelations } from "./oauth-client-resource"
 import { oauthConsentRelations } from "./oauth-consent"
+import { oauthRefreshTokenRelations } from "./oauth-refresh-token"
+import { oauthResourceRelations } from "./oauth-resource"
 import { pipelineRelations } from "./pipeline"
 import { productRelations } from "./product"
 import { productCategoryRelations } from "./product-category"
@@ -266,8 +270,12 @@ export const relations = {
   ...auditLogRelations,
   ...sessionRelations,
   ...oauthAccessTokenRelations,
-  ...oauthApplicationRelations,
+  ...oauthClientRelations,
+  ...oauthClientAssertionRelations,
+  ...oauthClientResourceRelations,
   ...oauthConsentRelations,
+  ...oauthRefreshTokenRelations,
+  ...oauthResourceRelations,
   ...spreadsheetRelations,
   ...whatsappCallRelations,
   ...whatsappCallPermissionRelations,

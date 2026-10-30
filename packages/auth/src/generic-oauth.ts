@@ -105,8 +105,16 @@ export const warnIfGenericOAuthUnlicensed = (isLicensed: boolean): void => {
   )
 }
 
-/** True for the three generic OAuth plugin routes. */
-export const isGenericOAuthPath = (pathname: string): boolean =>
-  pathname.endsWith("/sign-in/oauth2") ||
-  pathname.endsWith("/oauth2/link") ||
-  pathname.includes("/oauth2/callback/")
+/**
+ * Matches the generic provider's callback, or a social sign-in request that
+ * explicitly selects this provider. A shared `/sign-in/social` route must not
+ * gate Google or Facebook when enterprise SSO is unavailable.
+ */
+export const isGenericOAuthPath = (
+  pathname: string,
+  provider?: string,
+): boolean =>
+  pathname.endsWith(`/callback/${GENERIC_OAUTH_PROVIDER_ID}`) ||
+  (provider === GENERIC_OAUTH_PROVIDER_ID &&
+    (pathname.endsWith("/sign-in/social") ||
+      pathname.endsWith("/sign-up/social")))

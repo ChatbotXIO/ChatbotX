@@ -1,4 +1,11 @@
 import {
+  checksSchema,
+  registerSchemaCheck,
+  schemaCheckFor,
+} from "@better-auth/core/db/internal"
+import { mcp } from "@better-auth/mcp"
+
+import {
   customDomainService,
   type PlatformSmtpTransport,
   platformCredentialService,
@@ -9,9 +16,14 @@ import {
 import { db } from "@chatbotx.io/database/client"
 import {
   accountModel,
+  jwkModel,
   oauthAccessTokenModel,
-  oauthApplicationModel,
+  oauthClientAssertionModel,
+  oauthClientModel,
+  oauthClientResourceModel,
   oauthConsentModel,
+  oauthRefreshTokenModel,
+  oauthResourceModel,
   ROOT_TENANT_ID,
   sessionModel,
   userModel,
@@ -38,14 +50,14 @@ import {
   anonymous,
   bearer,
   genericOAuth,
+  jwt,
   magicLink,
-  mcp,
   oneTimeToken,
 } from "better-auth/plugins"
 import { PHASE_PRODUCTION_BUILD } from "next/constants"
 import { claimUnverifiedAccountBeforeLink } from "./claim-unverified-account"
 import { resolveGenericOAuthConfig } from "./generic-oauth"
-import { env, getBrokerUrl } from "./keys"
+import { env, getBrokerUrl, getMcpResourceUrl } from "./keys"
 import { logger } from "./logger"
 import { GENERIC_OAUTH_PROVIDER_ID } from "./oauth-constants"
 import {
@@ -255,7 +267,17 @@ export function createTenantScopedAdapter(
     }
   }
 
-  return (options) => wrapAdapter(base(options))
+  return (options) => {
+    const inner = base(options)
+    const wrapped = wrapAdapter(inner)
+    const schemaCheck = schemaCheckFor(inner)
+    if (schemaCheck) {
+      registerSchemaCheck(wrapped, schemaCheck, {
+        runtimeEnabled: checksSchema(options),
+      })
+    }
+    return wrapped
+  }
 }
 
 /**
@@ -548,6 +570,7 @@ export function createAuth(config: AuthConfig) {
     config.socialRedirectOrigin,
   )
   const genericOAuthProvider = resolveGenericOAuthConfig()
+  const mcpResource = getMcpResourceUrl()
 
   return betterAuth({
     databaseHooks: buildDatabaseHooks({
@@ -562,9 +585,14 @@ export function createAuth(config: AuthConfig) {
           verification: verificationModel,
           session: sessionModel,
           account: accountModel,
-          oauthApplication: oauthApplicationModel,
+          jwks: jwkModel,
           oauthAccessToken: oauthAccessTokenModel,
+          oauthClient: oauthClientModel,
+          oauthClientAssertion: oauthClientAssertionModel,
+          oauthClientResource: oauthClientResourceModel,
           oauthConsent: oauthConsentModel,
+          oauthRefreshToken: oauthRefreshTokenModel,
+          oauthResource: oauthResourceModel,
         },
       }),
     ),
@@ -837,33 +865,50 @@ export function createAuth(config: AuthConfig) {
                   // Pin the redirect URI to the broker, then relay the callback
                   // to the originating branded host as social OAuth already does.
                   redirectURI: new URL(
-                    `/api/auth/oauth2/callback/${GENERIC_OAUTH_PROVIDER_ID}`,
+                    `/api/auth/callback/${GENERIC_OAUTH_PROVIDER_ID}`,
                     new URL(getBrokerUrl()).origin,
                   ).toString(),
-                  mapProfileToUser: (profile) => ({
-                    name:
-                      profile.name ??
-                      profile.preferred_username ??
-                      ([profile.given_name, profile.family_name]
-                        .filter(Boolean)
-                        .join(" ") ||
-                        undefined),
-                  }),
+                  mapProfileToUser: (profile) => {
+                    let profileName: string | undefined
+                    if (typeof profile.name === "string") {
+                      profileName = profile.name
+                    } else if (typeof profile.preferred_username === "string") {
+                      profileName = profile.preferred_username
+                    } else {
+                      profileName =
+                        [profile.given_name, profile.family_name]
+                          .filter(
+                            (value): value is string =>
+                              typeof value === "string",
+                          )
+                          .join(" ") || undefined
+                    }
+
+                    return { name: profileName }
+                  },
                 },
               ],
             }),
           ] as const)
         : ([] as const)),
+      jwt(),
       mcp({
+        accessTokenExpiresIn: 300,
+        allowDynamicClientRegistration: true,
+        allowUnauthenticatedClientRegistration: true,
+        enforcePerClientResources: false,
+        clientRegistrationDefaultApplicationType: "infer",
+        clientRegistrationDefaultResources: [mcpResource],
+        clientRegistrationDefaultScopes: [
+          "openid",
+          "profile",
+          "email",
+          "offline_access",
+        ],
+        consentPage: "/oauth/consent",
         loginPage: "/oauth/sign-in",
-        oidcConfig: {
-          loginPage: "/oauth/sign-in",
-          consentPage: "/oauth/consent",
-          requirePKCE: true,
-          allowPlainCodeChallengeMethod: false,
-          accessTokenExpiresIn: 3600,
-          refreshTokenExpiresIn: 2_592_000,
-        },
+        refreshTokenExpiresIn: 2_592_000,
+        resource: mcpResource,
       }),
       // Relays better-auth's Set-Cookie into the Next.js response. Required so a
       // server-side `auth.api.changePassword` (with `revokeOtherSessions`) rotates

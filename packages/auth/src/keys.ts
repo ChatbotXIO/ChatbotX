@@ -12,6 +12,7 @@ export const keys = () =>
       // the originating domain. Optional: falls back to NEXT_PUBLIC_BUILDER_URL so
       // single-domain deploys keep working.
       NEXT_PUBLIC_BROKER_URL: z.url().optional(),
+      MCP_PUBLIC_URL: z.url().optional(),
       AUTH_DISABLE_SIGNUP: z.stringbool().default(false),
       AUTH_OAUTH_ENABLED: z.stringbool().default(false),
       AUTH_OAUTH_CLIENT_ID: z.string().optional(),
@@ -92,6 +93,14 @@ export const env = {
  */
 export const getBrokerUrl = (): string =>
   env.NEXT_PUBLIC_BROKER_URL ?? env.NEXT_PUBLIC_BUILDER_URL
+
+const trailingSlashPattern = /\/$/
+
+export const getMcpResourceUrl = (): string =>
+  (
+    env.MCP_PUBLIC_URL ??
+    new URL("/mcp", env.NEXT_PUBLIC_BUILDER_URL).toString()
+  ).replace(trailingSlashPattern, "")
 
 /** Whether self-service account creation is disabled. */
 export const isSignUpDisabled = (): boolean => env.AUTH_DISABLE_SIGNUP

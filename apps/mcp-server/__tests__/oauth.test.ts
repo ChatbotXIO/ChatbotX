@@ -33,7 +33,7 @@ describe("OAuth protected-resource metadata", () => {
     expect(
       buildProtectedResourceMetadata(request(), "/messages"),
     ).toMatchObject({
-      resource: "https://mcp.public.example.com/messages",
+      resource: "https://mcp.public.example.com/mcp",
       authorization_servers: ["https://builder.example.com"],
       bearer_methods_supported: ["header"],
     })
@@ -51,7 +51,7 @@ describe("OAuth protected-resource metadata", () => {
         }),
         "/messages",
       ).resource,
-    ).toBe("https://mcp.proxy.example.com/messages")
+    ).toBe("https://mcp.proxy.example.com/mcp")
   })
 
   test("falls back to the Host header", async () => {
@@ -62,7 +62,7 @@ describe("OAuth protected-resource metadata", () => {
         request({ host: "mcp.local:3333" }),
         "/sse",
       ).resource,
-    ).toBe("http://mcp.local:3333/sse")
+    ).toBe("http://mcp.local:3333/mcp")
   })
 
   test("builds a bearer challenge with invalid-token details when requested", async () => {

@@ -1,51 +1,56 @@
+import { verifyOAuthQueryParams } from "@better-auth/oauth-provider"
 import { mcpOAuthService } from "@chatbotx.io/business"
-import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { notFound } from "next/navigation"
+import { env } from "@/env"
 import { OAuthConsentForm } from "@/features/oauth-consent/consent-form"
 import { getCurrentUser } from "@/lib/auth/utils"
 
 export const dynamic = "force-dynamic"
 
 export default async function OAuthConsentPage(props: {
-  searchParams: Promise<{
-    consent_code?: string
-    scope?: string
-  }>
+  searchParams: Promise<Record<string, string | string[] | undefined>>
 }) {
-  const [{ consent_code: consentCode, scope }, user] = await Promise.all([
+  const [searchParams, user] = await Promise.all([
     props.searchParams,
     getCurrentUser(),
   ])
-  if (!(consentCode && user)) {
+  const clientId = searchParams.client_id
+  if (!(typeof clientId === "string" && user)) {
     notFound()
   }
 
-  let consentRequest: { clientId: string }
-  try {
-    consentRequest = await mcpOAuthService.resolveConsentRequest({
-      consentCode,
-      userId: user.id,
-    })
-  } catch (error) {
-    if (
-      error instanceof ChatbotXException &&
-      (error.code === "notFound" || error.code === "forbidden")
-    ) {
-      notFound()
+  const oauthQuery = new URLSearchParams()
+  for (const [key, value] of Object.entries(searchParams)) {
+    if (typeof value === "string") {
+      oauthQuery.set(key, value)
+      continue
     }
-    throw error
+    for (const item of value ?? []) {
+      oauthQuery.append(key, item)
+    }
+  }
+  if (
+    !(await verifyOAuthQueryParams(
+      oauthQuery.toString(),
+      env.BETTER_AUTH_SECRET,
+    ))
+  ) {
+    notFound()
   }
 
   const [workspaces, client] = await Promise.all([
     mcpOAuthService.listAuthorizableWorkspaces({ userId: user.id }),
-    mcpOAuthService.findClient({ clientId: consentRequest.clientId }),
+    mcpOAuthService.findClient({ clientId }),
   ])
-  const scopes = scope?.split(" ").filter(Boolean) ?? []
+  const scopes =
+    typeof searchParams.scope === "string"
+      ? searchParams.scope.split(" ").filter(Boolean)
+      : []
 
   return (
     <OAuthConsentForm
-      clientName={client?.name || consentRequest.clientId}
-      consentCode={consentCode}
+      clientName={client?.name || clientId}
+      oauthQuery={oauthQuery.toString()}
       scopes={scopes}
       userEmail={user.email}
       workspaces={workspaces}

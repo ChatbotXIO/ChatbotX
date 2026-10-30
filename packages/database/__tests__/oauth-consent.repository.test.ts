@@ -43,14 +43,16 @@ describe("oauthConsentRepository.listGivenByUser", () => {
 
     const consentPredicate = render(where.mock.calls[0]?.[0] as SQL)
     expect(consentPredicate.sql).toContain('"OAuthConsent"."userId" = $1')
-    expect(consentPredicate.sql).toContain('"OAuthConsent"."consentGiven" = $2')
-    expect(consentPredicate.params).toEqual(["user-1", true])
+    expect(consentPredicate.params).toEqual(["user-1"])
 
     const activeTokenPredicate = render(
       activeTokenWhere.mock.calls[0]?.[0] as SQL,
     )
     expect(activeTokenPredicate.sql).toContain(
-      '"OAuthAccessToken"."refreshTokenExpiresAt" > $2',
+      '"OAuthRefreshToken"."expiresAt" > $2',
+    )
+    expect(activeTokenPredicate.sql).toContain(
+      '"OAuthRefreshToken"."revoked" is null',
     )
     expect(activeTokenPredicate.params).toEqual(["user-1", now.toISOString()])
     expect(orderBy).toHaveBeenCalledTimes(1)

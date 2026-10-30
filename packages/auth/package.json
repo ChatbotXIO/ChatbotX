@@ -7,6 +7,7 @@
     ".": "./src/index.ts",
     "./server": "./src/server.ts",
     "./client": "./src/client.ts",
+    "./mcp-resource": "./src/mcp-resource.ts",
     "./provisioning": "./src/provisioning.ts",
     "./tenant": "./src/tenant-context.ts"
   },
@@ -18,12 +19,16 @@
     "@chatbotx.io/sdk": "workspace:*",
     "@chatbotx.io/utils": "workspace:*",
     "@t3-oss/env-core": "^0.13.11",
-    "better-auth": "^1.6.22",
+    "@better-auth/core": "^1.7.14",
+    "@better-auth/mcp": "^1.7.14",
+    "@better-auth/oauth-provider": "^1.7.14",
+    "better-auth": "^1.7.14",
     "zod": "^4.3.6"
   },
   "devDependencies": {
     "@chatbotx.io/typescript-config": "workspace:*",
     "@chatbotx.io/vitest-config": "workspace:*",
+    "drizzle-orm": "1.0.0-beta.22",
     "typescript": "^5",
     "vitest": "^4.1.0"
   },

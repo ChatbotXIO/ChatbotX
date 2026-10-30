@@ -4,13 +4,29 @@ import { describe, expect, test, vi } from "vitest"
  * Hoisted mock handles. `vi.mock` factories run before module top-level, so any
  * value a factory references must be created with `vi.hoisted`.
  */
-const { findActiveByDomain, listActiveDomains, dbLimit, tenantFindById } =
-  vi.hoisted(() => ({
-    findActiveByDomain: vi.fn(),
-    listActiveDomains: vi.fn(),
-    dbLimit: vi.fn(),
-    tenantFindById: vi.fn(),
-  }))
+const {
+  checksSchema,
+  findActiveByDomain,
+  listActiveDomains,
+  dbLimit,
+  registerSchemaCheck,
+  schemaCheckFor,
+  tenantFindById,
+} = vi.hoisted(() => ({
+  checksSchema: vi.fn(() => true),
+  findActiveByDomain: vi.fn(),
+  listActiveDomains: vi.fn(),
+  dbLimit: vi.fn(),
+  registerSchemaCheck: vi.fn(),
+  schemaCheckFor: vi.fn(),
+  tenantFindById: vi.fn(),
+}))
+
+vi.mock("@better-auth/core/db/internal", () => ({
+  checksSchema,
+  registerSchemaCheck,
+  schemaCheckFor,
+}))
 
 // Replace the DB client with a tiny stub: a select-chain whose terminal
 // `.limit()` resolves to whatever a test queues (used by
@@ -238,8 +254,21 @@ describe("tenant-scoped adapter", () => {
       ) => Promise<unknown>
     }
 
-    return { scoped, create, findOne, findMany, count }
+    return { baseAdapter, scoped, create, findOne, findMany, count }
   }
+
+  test("preserves Better Auth schema validation after wrapping the adapter", () => {
+    const check = vi.fn()
+    schemaCheckFor.mockReturnValueOnce(check)
+
+    const { baseAdapter, scoped } = buildScoped()
+
+    expect(registerSchemaCheck).toHaveBeenCalledWith(scoped, check, {
+      runtimeEnabled: true,
+    })
+    expect(schemaCheckFor).toHaveBeenCalledWith(baseAdapter)
+    expect(checksSchema).toHaveBeenCalled()
+  })
 
   test("stamps tenantId from the bound tenant on user inserts", async () => {
     const { scoped, create } = buildScoped()

@@ -4,20 +4,18 @@ const mocks = vi.hoisted(() => ({
   assertAuthorizableWorkspace: vi.fn(),
   bindConsentWorkspace: vi.fn(),
   calls: [] as string[],
-  oAuthConsent: vi.fn(),
-  resolveConsentRequest: vi.fn(),
+  oauth2Consent: vi.fn(),
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
   mcpOAuthService: {
     assertAuthorizableWorkspace: mocks.assertAuthorizableWorkspace,
     bindConsentWorkspace: mocks.bindConsentWorkspace,
-    resolveConsentRequest: mocks.resolveConsentRequest,
   },
 }))
 vi.mock("next/headers", () => ({ headers: vi.fn().mockResolvedValue({}) }))
 vi.mock("@/lib/auth/auth", () => ({
-  auth: { api: { oAuthConsent: mocks.oAuthConsent } },
+  auth: { api: { oauth2Consent: mocks.oauth2Consent } },
 }))
 vi.mock("@/lib/safe-action", () => ({
   authActionClient: {
@@ -46,19 +44,13 @@ describe("submitOAuthConsentAction", () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mocks.calls.length = 0
-    mocks.resolveConsentRequest.mockImplementation(() => {
-      mocks.calls.push("resolve")
-      return Promise.resolve({ clientId: "claude" })
-    })
     mocks.assertAuthorizableWorkspace.mockImplementation(() => {
       mocks.calls.push("assert")
       return Promise.resolve()
     })
-    mocks.oAuthConsent.mockImplementation(() => {
+    mocks.oauth2Consent.mockImplementation(() => {
       mocks.calls.push("consent")
-      return Promise.resolve({
-        redirectURI: "https://claude.ai/callback?code=abc",
-      })
+      return Promise.resolve({ url: "https://claude.ai/callback?code=abc" })
     })
     mocks.bindConsentWorkspace.mockImplementation(() => {
       mocks.calls.push("bind")
@@ -66,20 +58,17 @@ describe("submitOAuthConsentAction", () => {
     })
   })
 
-  test("resolves the consent client, checks the workspace, records consent, then binds it before returning the redirect", async () => {
+  test("checks the workspace, records consent, then binds it before returning the redirect", async () => {
+    const oauthQuery = "client_id=claude&sig=signature"
     await expect(
       callAction({
         accept: true,
-        consentCode: "code-1",
+        oauthQuery,
         workspaceId: "ws-2",
       }),
-    ).resolves.toEqual({ redirectURI: "https://claude.ai/callback?code=abc" })
+    ).resolves.toEqual({ url: "https://claude.ai/callback?code=abc" })
 
-    expect(mocks.calls).toEqual(["resolve", "assert", "consent", "bind"])
-    expect(mocks.resolveConsentRequest).toHaveBeenCalledWith({
-      consentCode: "code-1",
-      userId: "user-1",
-    })
+    expect(mocks.calls).toEqual(["assert", "consent", "bind"])
     expect(mocks.bindConsentWorkspace).toHaveBeenCalledWith({
       clientId: "claude",
       user: { email: "owner@example.com", id: "user-1" },
@@ -93,16 +82,16 @@ describe("submitOAuthConsentAction", () => {
     await expect(
       callAction({
         accept: true,
-        consentCode: "code-1",
+        oauthQuery: "client_id=claude&sig=signature",
         workspaceId: "ws-foreign",
       }),
     ).rejects.toThrow("forbidden")
-    expect(mocks.oAuthConsent).not.toHaveBeenCalled()
+    expect(mocks.oauth2Consent).not.toHaveBeenCalled()
     expect(mocks.bindConsentWorkspace).not.toHaveBeenCalled()
   })
 
-  test("a denial skips consent resolution, workspace checks, and binding", async () => {
-    await callAction({ accept: false, consentCode: "c" })
+  test("a denial skips workspace checks and binding", async () => {
+    await callAction({ accept: false, oauthQuery: "client_id=claude&sig=x" })
 
     expect(mocks.calls).toEqual(["consent"])
   })
@@ -113,7 +102,7 @@ describe("oauthConsentRequest", () => {
     expect(
       oauthConsentRequest.safeParse({
         accept: true,
-        consentCode: "code-1",
+        oauthQuery: "client_id=claude&sig=signature",
       }).success,
     ).toBe(false)
   })
@@ -122,7 +111,7 @@ describe("oauthConsentRequest", () => {
     expect(
       oauthConsentRequest.safeParse({
         accept: false,
-        consentCode: "code-1",
+        oauthQuery: "client_id=claude&sig=signature",
       }).success,
     ).toBe(true)
   })

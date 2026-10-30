@@ -6,7 +6,8 @@ export const mcpOAuthScopes = ["openid", "profile", "email", "offline_access"]
 
 export const getMcpPublicUrl = (): string =>
   (
-    env.MCP_PUBLIC_URL ?? new URL("/mcp", env.BETTER_AUTH_URL).toString()
+    env.MCP_PUBLIC_URL ??
+    new URL("/mcp", env.NEXT_PUBLIC_BUILDER_URL).toString()
   ).replace(trailingSlash, "")
 
 export const getMcpPublicPath = (): string =>

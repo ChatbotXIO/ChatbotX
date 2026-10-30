@@ -17,7 +17,7 @@ export const GET = async (
   const mcpPath = getMcpPublicPath()
   if (
     !mcpPath ||
-    mcpUrl.origin !== new URL(env.BETTER_AUTH_URL).origin ||
+    mcpUrl.origin !== new URL(env.NEXT_PUBLIC_BUILDER_URL).origin ||
     !(resourcePath === mcpPath || resourcePath.startsWith(`${mcpPath}/`))
   ) {
     return new Response(null, { status: 404 })
@@ -25,7 +25,7 @@ export const GET = async (
 
   return Response.json(
     {
-      resource: new URL(resourcePath, mcpUrl.origin).toString(),
+      resource: getMcpPublicUrl(),
       authorization_servers: [env.BETTER_AUTH_URL],
       scopes_supported: mcpOAuthScopes,
       bearer_methods_supported: ["header"],

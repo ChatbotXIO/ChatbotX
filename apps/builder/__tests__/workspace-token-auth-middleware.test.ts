@@ -11,6 +11,7 @@ const {
   isAtLimit,
   assertApiNotRateLimited,
   resolvePrincipal,
+  verifyMcpAccessToken,
   withAuditContext,
 } = vi.hoisted(() => ({
   findWorkspaceByTokenHash: vi.fn(),
@@ -20,6 +21,7 @@ const {
   isAtLimit: vi.fn().mockResolvedValue(false),
   assertApiNotRateLimited: vi.fn().mockResolvedValue(undefined),
   resolvePrincipal: vi.fn().mockResolvedValue({ kind: "invalidToken" }),
+  verifyMcpAccessToken: vi.fn().mockResolvedValue(null),
   withAuditContext: vi.fn(
     async (
       _context: Record<string, unknown>,
@@ -51,6 +53,9 @@ vi.mock("@/lib/rate-limit/guest-rate-limit", () => ({
 }))
 
 vi.mock("@/env", () => ({ isCloud: () => true }))
+
+vi.mock("@/lib/auth/auth", () => ({ auth: {} }))
+vi.mock("@chatbotx.io/auth/mcp-resource", () => ({ verifyMcpAccessToken }))
 
 const { workspaceTokenAuthMidddleware } = await import(
   "@/middlewares/workspace-token-auth"
@@ -91,7 +96,6 @@ const oauthPrincipal = {
   workspace: { id: "ws-oauth", ownerId: "owner-oauth" },
   user: { id: "user-oauth", email: "oauth@example.com" },
   clientId: "client-oauth",
-  accessTokenId: "access-token-id",
 }
 
 beforeEach(() => {
@@ -101,6 +105,7 @@ beforeEach(() => {
   isAtLimit.mockResolvedValue(false)
   assertApiNotRateLimited.mockResolvedValue(undefined)
   resolvePrincipal.mockResolvedValue({ kind: "invalidToken" })
+  verifyMcpAccessToken.mockResolvedValue(null)
   withAuditContext.mockImplementation(
     async (_context, callback) => await callback(),
   )
@@ -332,6 +337,10 @@ describe("workspaceTokenAuthMidddleware", () => {
 
   test("authenticates an OAuth principal with user attribution and forwards x-workspace-id", async () => {
     findWorkspaceByTokenHash.mockResolvedValue(undefined)
+    verifyMcpAccessToken.mockResolvedValue({
+      clientId: "client-oauth",
+      userId: "user-oauth",
+    })
     resolvePrincipal.mockResolvedValue({
       kind: "principal",
       principal: oauthPrincipal,
@@ -345,14 +354,15 @@ describe("workspaceTokenAuthMidddleware", () => {
     await callMiddleware(headers, "GET")
 
     expect(resolvePrincipal).toHaveBeenCalledWith({
-      accessToken: "oauth-token",
+      clientId: "client-oauth",
+      userId: "user-oauth",
       workspaceId: "ws-oauth",
     })
     expect(next).toHaveBeenCalledWith({
       context: {
         workspace: oauthPrincipal.workspace,
         apiToken: {
-          id: "oauth:access-token-id",
+          id: "oauth:client-oauth:user-oauth",
           workspaceId: "ws-oauth",
           permission: "full",
           scopes: null,
@@ -374,6 +384,10 @@ describe("workspaceTokenAuthMidddleware", () => {
 
   test("maps a forbidden OAuth principal to 403", async () => {
     findWorkspaceByTokenHash.mockResolvedValue(undefined)
+    verifyMcpAccessToken.mockResolvedValue({
+      clientId: "client-oauth",
+      userId: "user-oauth",
+    })
     resolvePrincipal.mockResolvedValue({ kind: "forbidden" })
 
     await expect(
@@ -386,6 +400,10 @@ describe("workspaceTokenAuthMidddleware", () => {
 
   test("maps OAuth workspace selection to a documented 400", async () => {
     findWorkspaceByTokenHash.mockResolvedValue(undefined)
+    verifyMcpAccessToken.mockResolvedValue({
+      clientId: "client-oauth",
+      userId: "user-oauth",
+    })
     resolvePrincipal.mockResolvedValue({
       kind: "workspaceSelectionRequired",
       workspaces: [{ id: "ws-1", name: "Alpha" }],

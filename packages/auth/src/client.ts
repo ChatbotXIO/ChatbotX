@@ -1,6 +1,5 @@
 import {
   anonymousClient,
-  genericOAuthClient,
   jwtClient,
   magicLinkClient,
   oneTimeTokenClient,
@@ -13,7 +12,6 @@ export function createClient(baseURL?: string) {
   return createAuthClient({
     baseURL,
     plugins: [
-      genericOAuthClient(),
       magicLinkClient(),
       oneTimeTokenClient(),
       anonymousClient(),

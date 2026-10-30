@@ -78,7 +78,7 @@ const renderForm = (workspaces: { id: string; name: string }[]) => {
     root.render(
       <OAuthConsentForm
         clientName="Inspector"
-        consentCode="consent-code"
+        oauthQuery="client_id=client-1&sig=signature"
         scopes={["openid"]}
         userEmail="owner@example.com"
         workspaces={workspaces}
@@ -116,7 +116,7 @@ describe("OAuthConsentForm", () => {
 
     expect(useActionMock.execute).toHaveBeenCalledWith({
       accept: true,
-      consentCode: "consent-code",
+      oauthQuery: "client_id=client-1&sig=signature",
       workspaceId: "ws-1",
     })
   })
@@ -136,7 +136,7 @@ describe("OAuthConsentForm", () => {
 
     expect(useActionMock.execute).toHaveBeenCalledWith({
       accept: false,
-      consentCode: "consent-code",
+      oauthQuery: "client_id=client-1&sig=signature",
     })
   })
 

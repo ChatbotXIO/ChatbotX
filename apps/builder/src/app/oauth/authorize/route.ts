@@ -11,7 +11,7 @@ export const GET = (request: Request) => {
 
   const publicOrigin = getPublicOriginFromRequest(request)
   return NextResponse.redirect(
-    new URL(`/api/auth/mcp/authorize?${params}`, publicOrigin),
+    new URL(`/api/auth/oauth2/authorize?${params}`, publicOrigin),
     302,
   )
 }

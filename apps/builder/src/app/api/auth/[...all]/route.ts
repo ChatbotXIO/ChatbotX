@@ -30,7 +30,7 @@ const MCP_CORS_HEADERS = {
 const retryAfterPattern = /Retry after (\d+)s\./
 
 const withMcpCors = (pathname: string, response: Response): Response => {
-  if (!pathname.includes("/api/auth/mcp/")) {
+  if (!pathname.includes("/api/auth/oauth2/")) {
     return response
   }
 
@@ -96,29 +96,33 @@ const isSocialSignInPath = (pathname: string): boolean =>
   pathname.endsWith("/sign-in/social") || pathname.endsWith("/sign-up/social")
 
 /**
- * The provider requested on a `sign-in/social` / `sign-up/social` POST. Read from
- * a clone so the original body is left intact for better-auth's own handler.
+ * Read the provider requested by a social sign-in POST. The generic provider
+ * shares this endpoint with first-party providers, so only the latter are
+ * dispatched to a tenant-specific auth instance.
  */
-const getSignInProvider = async (
+const getRequestedSignInProvider = async (
   request: Request,
-): Promise<SocialProvider | null> => {
+): Promise<string | null> => {
   try {
-    const body = (await request.clone().json()) as { provider?: string }
-    return (
-      SOCIAL_PROVIDERS.find((provider) => provider === body.provider) ?? null
-    )
+    const body = (await request.clone().json()) as { provider?: unknown }
+    return typeof body.provider === "string" ? body.provider : null
   } catch {
     return null
   }
 }
 
+const isSocialProvider = (provider: string): provider is SocialProvider =>
+  SOCIAL_PROVIDERS.includes(provider as SocialProvider)
+
 const handle = async (request: Request): Promise<Response> => {
   // Use the public URL (host behind the proxy), not the raw internal request URL,
   // so the relay host comparison matches the registered platform host.
   const url = getPublicUrlFromRequest(request)
-  // genericOAuth is registered from environment at module initialization, while
-  // enterprise entitlement is request-scoped and must guard all plugin routes.
-  if (isGenericOAuthPath(url.pathname)) {
+  const requestedSignInProvider = isSocialSignInPath(url.pathname)
+    ? await getRequestedSignInProvider(request)
+    : null
+
+  if (isGenericOAuthPath(url.pathname, requestedSignInProvider ?? undefined)) {
     const isLicensed = await hasEnterpriseFeatures()
     warnIfGenericOAuthUnlicensed(isLicensed)
     if (!isLicensed) {
@@ -128,12 +132,11 @@ const handle = async (request: Request): Promise<Response> => {
 
   const isCallback = url.pathname.includes("/callback/")
   const state = url.searchParams.get("state")
-
   const tenantId = isCallback
     ? await resolveTenantFromOAuthState(state)
     : await resolveTenantByDomain(request.headers.get("x-domain"))
 
-  if (url.pathname.endsWith("/mcp/register")) {
+  if (url.pathname.endsWith("/oauth2/register")) {
     try {
       await assertApiNotRateLimited({
         scope: "mcp-client-registration",
@@ -161,13 +164,8 @@ const handle = async (request: Request): Promise<Response> => {
       throw error
     }
   }
+
   return withTenant(tenantId, async () => {
-    // White-label relay: when the social flow started on a branded custom domain
-    // (or the builder URL) but the provider redirected to the fixed broker
-    // callback, bounce back to that origin — where the authorize-time cookies live
-    // and where the session cookie must be set — preserving the original code +
-    // state. The re-entry runs on the originating host, so this guard does not
-    // match again.
     if (isCallback) {
       const callbackURL = await resolveOAuthStateCallbackURL(state)
       const relayTarget = callbackURL
@@ -180,16 +178,12 @@ const handle = async (request: Request): Promise<Response> => {
 
     const provider =
       getCallbackProvider(url.pathname) ??
-      (isSocialSignInPath(url.pathname)
-        ? await getSignInProvider(request)
+      (requestedSignInProvider && isSocialProvider(requestedSignInProvider)
+        ? requestedSignInProvider
         : null)
-
     const instance = provider
       ? await getSocialAuthForTenant(tenantId, provider)
       : auth
-
-    // Re-home a baseURL-resolved verification redirect onto the branded host
-    // the user is on (magic-link/verify, verify-email, reset-password).
     const response = await instance.handler(request)
     return withMcpCors(
       url.pathname,
@@ -203,7 +197,7 @@ export const POST = handle
 
 export const OPTIONS = (request: Request) => {
   const pathname = new URL(request.url).pathname
-  if (!pathname.includes("/api/auth/mcp/")) {
+  if (!pathname.includes("/api/auth/oauth2/")) {
     return new Response(null, { status: 405 })
   }
 
