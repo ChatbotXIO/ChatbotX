@@ -54,6 +54,13 @@ export const stripeAccountAlreadyConnectedException = () =>
     409,
   )
 
+/** What was pasted is not a Stripe secret (`sk_…`) or restricted (`rk_…`) key. */
+export const stripeSecretKeyInvalidException = () =>
+  new ChatbotXException(
+    "Paste a Stripe secret key (sk_live_… or sk_test_…) or a restricted key (rk_…), not a publishable key (pk_…).",
+    "stripeSecretKeyInvalid",
+  )
+
 export const paymentCurrencyUnsupportedException = (
   provider: OnlinePaymentProvider,
   currency: string,

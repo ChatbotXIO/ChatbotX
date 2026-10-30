@@ -10333,8 +10333,20 @@
     "title": "Stripe",
     "setting": {
       "label": "Stripe",
-      "description": "Terima pembayaran kartu di toko web Anda dengan akun Stripe Anda sendiri. Uang langsung masuk ke akun Stripe Anda.",
-      "notConfigured": "Stripe belum diatur di platform ini. Minta admin platform untuk menambahkan pengaturan Stripe Connect."
+      "description": "Terima pembayaran kartu di toko web Anda dengan akun Stripe Anda sendiri. Uang langsung masuk ke akun Stripe Anda."
+    },
+    "connectWithStripe": "Hubungkan dengan Stripe",
+    "connectWithKey": "Gunakan secret key",
+    "connectionType": {
+      "oauth": "Stripe Connect",
+      "apiKey": "Secret key"
+    },
+    "fields": {
+      "secretKey": "Secret key",
+      "secretKeyHint": "Diawali sk_live_ (atau sk_test_ untuk mode uji). Restricted key (rk_…) juga bisa jika dapat membaca akun dan menulis Checkout Sessions, Refunds, dan Webhook Endpoints."
+    },
+    "dialog": {
+      "description": "Salin secret key Anda dari <link>Stripe Dashboard → Developers → API keys</link> lalu tempel di sini. Kami memeriksanya, menyiapkan notifikasi pembayaran di akun Stripe Anda, dan menyimpan key secara terenkripsi."
     },
     "testMode": "Mode uji coba",
     "liveMode": "Live",

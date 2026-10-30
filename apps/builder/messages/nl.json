@@ -10333,8 +10333,20 @@
     "title": "Stripe",
     "setting": {
       "label": "Stripe",
-      "description": "Ontvang kaartbetalingen in je webshop met je eigen Stripe-account. Het geld gaat rechtstreeks naar je Stripe-account.",
-      "notConfigured": "Stripe is nog niet ingesteld op dit platform. Vraag de platformbeheerder om de Stripe Connect-instellingen toe te voegen."
+      "description": "Ontvang kaartbetalingen in je webshop met je eigen Stripe-account. Het geld gaat rechtstreeks naar je Stripe-account."
+    },
+    "connectWithStripe": "Verbinden met Stripe",
+    "connectWithKey": "Geheime sleutel gebruiken",
+    "connectionType": {
+      "oauth": "Stripe Connect",
+      "apiKey": "Geheime sleutel"
+    },
+    "fields": {
+      "secretKey": "Geheime sleutel",
+      "secretKeyHint": "Begint met sk_live_ (of sk_test_ voor testmodus). Een beperkte sleutel (rk_…) werkt ook als die het account kan lezen en Checkout Sessions, Refunds en Webhook Endpoints kan schrijven."
+    },
+    "dialog": {
+      "description": "Kopieer je geheime sleutel uit <link>Stripe Dashboard → Developers → API keys</link> en plak hem hier. We controleren hem, stellen betalingsmeldingen in op je Stripe-account en slaan de sleutel versleuteld op."
     },
     "testMode": "Testmodus",
     "liveMode": "Live",

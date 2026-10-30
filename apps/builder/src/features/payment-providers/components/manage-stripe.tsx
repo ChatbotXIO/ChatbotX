@@ -2,7 +2,7 @@
 
 import { Badge } from "@chatbotx.io/ui/components/ui/badge"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
-import { Loader2Icon, TriangleAlertIcon } from "lucide-react"
+import { Loader2Icon } from "lucide-react"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
@@ -14,6 +14,7 @@ import { toastActionError } from "@/lib/errors/safe-action-error-handler"
 import { disconnectPaymentProviderAction } from "../actions/disconnect-payment-provider.action"
 import { startStripeConnectAction } from "../actions/start-stripe-connect.action"
 import type { PaymentProviderResource } from "../schema/public"
+import { ConnectStripeKeyDialog } from "./connect-stripe-key-dialog"
 
 /** Why Stripe sent the member back without a connection, as the row says it. */
 const OUTCOME_ERROR_KEYS = new Set([
@@ -28,7 +29,8 @@ const OUTCOME_ERROR_KEYS = new Set([
 ])
 
 /**
- * The Stripe row: connect through Stripe Connect (Stripe's own page), or the
+ * The Stripe row: connect through Stripe Connect (Stripe's own page, when the
+ * platform has it set up) or with the store's own secret key, or the
  * connected account with a disconnect. Back from Stripe, the outcome the
  * callback put in the URL is shown once and removed.
  */
@@ -114,6 +116,9 @@ export function ManageStripe(props: {
               </p>
             ) : null}
           </div>
+          <Badge variant="outline">
+            {t(`stripe.connectionType.${connection.connectionType}`)}
+          </Badge>
           <Badge variant={connection.livemode ? "default" : "secondary"}>
             {connection.livemode ? t("stripe.liveMode") : t("stripe.testMode")}
           </Badge>
@@ -126,40 +131,26 @@ export function ManageStripe(props: {
           />
         </div>
       ) : (
-        <ConnectStripe
-          available={props.available}
-          isPending={isConnecting || redirecting}
-          onConnect={() => connect()}
-        />
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          {props.available ? (
+            <Button
+              disabled={isConnecting || redirecting}
+              onClick={() => connect()}
+              size="sm"
+              variant="secondary"
+            >
+              {isConnecting || redirecting ? (
+                <Loader2Icon className="animate-spin" />
+              ) : null}
+              {t("stripe.connectWithStripe")}
+            </Button>
+          ) : null}
+          <ConnectStripeKeyDialog
+            variant={props.available ? "ghost" : "secondary"}
+            workspaceId={props.workspaceId}
+          />
+        </div>
       )}
     </SettingRow>
-  )
-}
-
-/** The connect button, or why there is none on this platform yet. */
-function ConnectStripe(props: {
-  available: boolean
-  isPending: boolean
-  onConnect: () => void
-}) {
-  const t = useTranslations()
-  if (!props.available) {
-    return (
-      <p className="flex items-center gap-2 text-muted-foreground text-sm">
-        <TriangleAlertIcon className="size-4 shrink-0" />
-        {t("stripe.setting.notConfigured")}
-      </p>
-    )
-  }
-  return (
-    <Button
-      disabled={props.isPending}
-      onClick={props.onConnect}
-      size="sm"
-      variant="secondary"
-    >
-      {props.isPending ? <Loader2Icon className="animate-spin" /> : null}
-      {t("actions.connect")}
-    </Button>
   )
 }

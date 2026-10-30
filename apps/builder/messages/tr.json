@@ -10333,8 +10333,20 @@
     "title": "Stripe",
     "setting": {
       "label": "Stripe",
-      "description": "Web mağazanızda kendi Stripe hesabınızla kart ödemeleri alın. Para doğrudan Stripe hesabınıza geçer.",
-      "notConfigured": "Stripe bu platformda henüz kurulmamış. Platform yöneticisinden Stripe Connect ayarlarını eklemesini isteyin."
+      "description": "Web mağazanızda kendi Stripe hesabınızla kart ödemeleri alın. Para doğrudan Stripe hesabınıza geçer."
+    },
+    "connectWithStripe": "Stripe ile bağlan",
+    "connectWithKey": "Gizli anahtar kullan",
+    "connectionType": {
+      "oauth": "Stripe Connect",
+      "apiKey": "Gizli anahtar"
+    },
+    "fields": {
+      "secretKey": "Gizli anahtar",
+      "secretKeyHint": "sk_live_ ile başlar (test modu için sk_test_). Hesabı okuyabilen ve Checkout Sessions, Refunds ve Webhook Endpoints yazabilen kısıtlı anahtar (rk_…) da çalışır."
+    },
+    "dialog": {
+      "description": "Gizli anahtarınızı <link>Stripe Dashboard → Developers → API keys</link> bölümünden kopyalayıp buraya yapıştırın. Anahtarı kontrol eder, Stripe hesabınızda ödeme bildirimlerini kurar ve anahtarı şifreli olarak saklarız."
     },
     "testMode": "Test modu",
     "liveMode": "Canlı",

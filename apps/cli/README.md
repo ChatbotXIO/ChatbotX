@@ -1165,12 +1165,15 @@ announced until it is paid.
 ```bash
 chatbotx payment-providers list                         # Connected Stripe / PayPal accounts (never a key) and whether Stripe Connect is available
 chatbotx payment-providers connect-link list <provider> # Settings → Integrations page where a super admin connects stripe|paypal
+chatbotx payment-providers stripe-api-key --secret-key <sk_…> # Connect the store's own Stripe account with its secret key (no Stripe Connect needed)
 chatbotx payment-providers delete <provider>            # Disconnect stripe|paypal and stop offering it at checkout (refused while open orders need it)
 ```
 
-Connecting decides which account receives the store's money, so it is never
-done with a workspace token: give the `connect-link` URL to a super admin of
-the workspace, who connects in the browser.
+Connecting decides which account receives the store's money. Stripe Connect
+(OAuth) and PayPal are connected in the browser: give the `connect-link` URL to
+a super admin of the workspace. Stripe can also be connected with the store's
+own secret key (`stripe-api-key`) — only send a key the store owner gave you;
+it is stored encrypted and never returned.
 
 Offer a connected provider at checkout with `chatbotx ecommerce settings update
 --payments '{"paymentMethods":["cod","stripe"]}'`. PayPal does not take every

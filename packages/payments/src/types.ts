@@ -11,6 +11,27 @@ export type StripeConnectedAccount = {
   accountId: string
 }
 
+/**
+ * A store's own Stripe account, connected with the store's secret key:
+ * every call is made with that key, with no `Stripe-Account`.
+ */
+export type StripeOwnAccount = {
+  secretKey: string
+}
+
+/** What a store pastes in to connect Stripe with a key, plus what connecting adds. */
+export type StripeKeySecret = {
+  /** `sk_…` or a restricted `rk_…` key. */
+  secretKey: string
+  livemode: boolean
+  /** `acct_…`, the account the key belongs to. */
+  accountId: string
+  /** The webhook created on connect, on the store's own account. */
+  webhookId: string
+  /** That webhook's signing secret (`whsec_…`). */
+  webhookSecret: string
+}
+
 /** What a store pastes in to connect PayPal, plus what connecting adds. */
 export type PaypalSecret = {
   clientId: string
@@ -88,7 +109,7 @@ export type PaymentWebhookEvent =
       reference: string
       /** Null for an attempt ChatbotX did not create. */
       metadata: PaymentMetadata | null
-      /** Stripe: the connected account the event came from. */
+      /** Stripe: the connected account the event came from; null on a store's own webhook. */
       account: string | null
     }
   | {

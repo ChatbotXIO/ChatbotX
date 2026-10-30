@@ -10333,8 +10333,20 @@
     "title": "Stripe",
     "setting": {
       "label": "Stripe",
-      "description": "Modtag kortbetalinger i din webshop med din egen Stripe-konto. Pengene går direkte til din Stripe-konto.",
-      "notConfigured": "Stripe er ikke sat op på denne platform endnu. Bed platformens administrator om at tilføje Stripe Connect-indstillingerne."
+      "description": "Modtag kortbetalinger i din webshop med din egen Stripe-konto. Pengene går direkte til din Stripe-konto."
+    },
+    "connectWithStripe": "Forbind med Stripe",
+    "connectWithKey": "Brug hemmelig nøgle",
+    "connectionType": {
+      "oauth": "Stripe Connect",
+      "apiKey": "Hemmelig nøgle"
+    },
+    "fields": {
+      "secretKey": "Hemmelig nøgle",
+      "secretKeyHint": "Starter med sk_live_ (eller sk_test_ til testtilstand). En begrænset nøgle (rk_…) virker også, hvis den kan læse kontoen og skrive Checkout Sessions, Refunds og Webhook Endpoints."
+    },
+    "dialog": {
+      "description": "Kopiér din hemmelige nøgle fra <link>Stripe Dashboard → Developers → API keys</link> og indsæt den her. Vi tjekker den, opsætter betalingsnotifikationer på din Stripe-konto og gemmer nøglen krypteret."
     },
     "testMode": "Testtilstand",
     "liveMode": "Live",

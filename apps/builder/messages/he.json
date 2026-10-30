@@ -10333,8 +10333,20 @@
     "title": "Stripe",
     "setting": {
       "label": "Stripe",
-      "description": "קבל תשלומים בכרטיס אשראי בחנות האינטרנט שלך באמצעות חשבון ה-Stripe שלך. הכסף עובר ישירות לחשבון ה-Stripe שלך.",
-      "notConfigured": "Stripe עדיין לא מוגדר בפלטפורמה הזו. בקש ממנהל הפלטפורמה להוסיף את הגדרות Stripe Connect."
+      "description": "קבל תשלומים בכרטיס אשראי בחנות האינטרנט שלך באמצעות חשבון ה-Stripe שלך. הכסף עובר ישירות לחשבון ה-Stripe שלך."
+    },
+    "connectWithStripe": "התחברות עם Stripe",
+    "connectWithKey": "שימוש במפתח סודי",
+    "connectionType": {
+      "oauth": "Stripe Connect",
+      "apiKey": "מפתח סודי"
+    },
+    "fields": {
+      "secretKey": "מפתח סודי",
+      "secretKeyHint": "מתחיל ב-sk_live_ (או sk_test_ למצב בדיקה). גם מפתח מוגבל (rk_…) עובד אם הוא יכול לקרוא את החשבון ולכתוב Checkout Sessions, Refunds ו-Webhook Endpoints."
+    },
+    "dialog": {
+      "description": "העתיקו את המפתח הסודי מ-<link>Stripe Dashboard ← Developers ← API keys</link> והדביקו אותו כאן. נבדוק אותו, נגדיר התראות תשלום בחשבון ה-Stripe שלכם ונשמור את המפתח מוצפן."
     },
     "testMode": "מצב בדיקה",
     "liveMode": "חי",

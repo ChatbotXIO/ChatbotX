@@ -10333,8 +10333,20 @@
     "title": "Stripe",
     "setting": {
       "label": "Stripe",
-      "description": "Nimm Kartenzahlungen in deinem Webshop mit deinem eigenen Stripe-Konto entgegen. Das Geld geht direkt auf dein Stripe-Konto.",
-      "notConfigured": "Stripe ist auf dieser Plattform noch nicht eingerichtet. Bitte den Plattform-Admin, die Stripe-Connect-Einstellungen hinzuzufügen."
+      "description": "Nimm Kartenzahlungen in deinem Webshop mit deinem eigenen Stripe-Konto entgegen. Das Geld geht direkt auf dein Stripe-Konto."
+    },
+    "connectWithStripe": "Mit Stripe verbinden",
+    "connectWithKey": "Geheimen Schlüssel verwenden",
+    "connectionType": {
+      "oauth": "Stripe Connect",
+      "apiKey": "Geheimer Schlüssel"
+    },
+    "fields": {
+      "secretKey": "Geheimer Schlüssel",
+      "secretKeyHint": "Beginnt mit sk_live_ (oder sk_test_ für den Testmodus). Ein eingeschränkter Schlüssel (rk_…) funktioniert auch, wenn er das Konto lesen und Checkout Sessions, Refunds und Webhook Endpoints schreiben darf."
+    },
+    "dialog": {
+      "description": "Kopiere deinen geheimen Schlüssel aus <link>Stripe Dashboard → Developers → API keys</link> und füge ihn hier ein. Wir prüfen ihn, richten Zahlungsbenachrichtigungen in deinem Stripe-Konto ein und speichern den Schlüssel verschlüsselt."
     },
     "testMode": "Testmodus",
     "liveMode": "Live",

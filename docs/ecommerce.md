@@ -18,7 +18,7 @@ Catalog sync and product messages are covered in
 | `OrderStatusHistory` | Every status an order went through, and who moved it (`user`, `apiToken`, `system`, `contact`). |
 | `DiscountCode` | A discount code ("Coupons" in the UI), unique per workspace ignoring case (`DiscountCode_workspaceId_code_key` on `lower(code)`). Not the older `Coupon` pools (`/v1/coupons`), which take nothing off an order. `productIds` has no database default. |
 | `DiscountCodeRedemption` | One use of a code: at most one per order (`DiscountCodeRedemption_orderId_key`). Removed, with `usedCount` given back, when the order is cancelled or deleted. |
-| `EcommercePaymentProvider` | The store's own Stripe or PayPal account, one per provider per workspace. Stripe keeps only the connected account (`externalAccountId`, `acct_…`) and the platform Stripe credential it was connected through (`platformCredentialId`); one account belongs to one workspace per platform credential. PayPal keeps its Client ID, Secret and webhook id in `secret`, encrypted with AAD `ecommerce-payment:<workspaceId>:paypal`. |
+| `EcommercePaymentProvider` | The store's own Stripe or PayPal account, one per provider per workspace. Stripe connected through Stripe Connect keeps only the connected account (`externalAccountId`, `acct_…`) and the platform Stripe credential it was connected through (`platformCredentialId`); one account belongs to one workspace per platform credential. Stripe connected with the store's own secret key has no `platformCredentialId`; it keeps the account, and the key, webhook id and webhook secret in `secret`, encrypted with AAD `ecommerce-payment:<workspaceId>:stripe` — a non-null `secret` is what marks a key connection (`connectionType: "apiKey"`). PayPal keeps its Client ID, Secret and webhook id in `secret`, encrypted with AAD `ecommerce-payment:<workspaceId>:paypal`. |
 | `OrderPayment` | One attempt to pay an order online — a Stripe Checkout Session or a PayPal order (`providerReference`, unique per provider). `status` `open` → `paid` / `expired` / `refunded`; `transactionId` (payment intent / capture id) is what a refund uses. Deleted with its order. |
 | `Cart` | One web shop cart per contact (`Cart_workspaceId_contactId_key`): `items` (`productId`, `variantId`, `quantity`) as the customer left them, never prices. `lastActivityAt` is for the abandoned-cart reminder (later phase). `items` has no database default; every write sets it. `discountCode` is the code the customer typed. |
 
@@ -147,6 +147,25 @@ the rules in `packages/business/src/payment-provider` and `order-payment`.
   Every later call uses the platform key with `Stripe-Account: acct_…`.
   `account.application.deauthorized` (the store disconnected from Stripe)
   removes the connection.
+- **Stripe — the store's own secret key** (`paymentProviderService.connectStripeKey`),
+  for a platform without Stripe Connect or a store that prefers it. The row
+  offers it next to **Connect with Stripe** (alone when Stripe Connect is not
+  set up). The store pastes `sk_live_…`/`sk_test_…`, or a restricted `rk_…`
+  allowed to read the account and write Checkout Sessions, Refunds and
+  Webhook Endpoints (`pk_…` is refused: `stripeSecretKeyInvalid`). The key is
+  checked with `GET /v1/account` (live or test comes from its prefix), a
+  webhook (not `connect`) is created on the store's own account at
+  `/api/payments/stripe/workspace/<workspaceId>/webhook` on the workspace's
+  domain, and the key and webhook secret are stored encrypted. Calls use the
+  store's key with no `Stripe-Account`. Since the account may also take
+  payments elsewhere — or be connected to another workspace through Stripe
+  Connect — that webhook only queues an event whose metadata names its own
+  workspace. Switching between Stripe Connect and a key on the **same**
+  account keeps the open orders working (it is the same account); the old
+  side is cleaned up (the platform deauthorized, or the old key's webhook
+  deleted). Disconnecting or purging deletes the webhook instead of
+  deauthorizing. Also on the public API (`paymentProviders.connectStripeKey`,
+  `POST /v1/payment-providers/stripe/api-key`, scope `ecommerce`).
 - **PayPal — Client ID and Secret** in a dialog. They are tried on live, then
   sandbox, so the store never says which; a webhook is created on the app
   (`/api/payments/paypal/<workspaceId>/webhook`, `WEBHOOK_URL_ALREADY_EXISTS`
@@ -163,8 +182,9 @@ the rules in `packages/business/src/payment-provider` and `order-payment`.
   removed, while stores are connected through them
   (`stripePlatformAccountInUse`). A late `account.application.deauthorized`
   (older than the connection) is ignored.
-- **Connecting is UI only**, by a workspace super admin: it decides which
-  account receives the store's money, which a workspace token must never do.
+- **Stripe Connect and PayPal connect in the UI only**, by a workspace super
+  admin; a Stripe secret key can also be sent with a workspace token
+  (`ecommerce` scope). Every connect is audited.
 - Settings refuse an online method that is not connected
   (`paymentProviderNotConnected`) and PayPal in a currency it does not take
   (`paymentCurrencyUnsupported` — `PAYPAL_SUPPORTED_CURRENCIES`, not VND),
@@ -238,8 +258,9 @@ the rules in `packages/business/src/payment-provider` and `order-payment`.
 - A purged workspace lets go of its payment providers first
   (`paymentProviderService.teardownForPurge`, passed to `purgeDueScheduled` by
   the worker's `purgeWorkspaces`, best effort): the Stripe account
-  is deauthorized from the platform's Connect app and the PayPal webhook is
-  deleted, before the rows go with the cascade.
+  is deauthorized from the platform's Connect app (or, connected with a key,
+  its webhook deleted) and the PayPal webhook is deleted, before the rows go
+  with the cascade.
 - The expiry cancel stores `PAYMENT_EXPIRED_CANCEL_REASON` (English, for the
   API); the builder shows it translated (`orders.paymentExpiredCancelReason`).
 

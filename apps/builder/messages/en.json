@@ -10333,8 +10333,20 @@
     "title": "Stripe",
     "setting": {
       "label": "Stripe",
-      "description": "Take card payments in your web shop with your own Stripe account. The money goes straight to your Stripe account.",
-      "notConfigured": "Stripe is not set up on this platform yet. Ask the platform admin to add the Stripe Connect settings."
+      "description": "Take card payments in your web shop with your own Stripe account. The money goes straight to your Stripe account."
+    },
+    "connectWithStripe": "Connect with Stripe",
+    "connectWithKey": "Use secret key",
+    "connectionType": {
+      "oauth": "Stripe Connect",
+      "apiKey": "Secret key"
+    },
+    "fields": {
+      "secretKey": "Secret key",
+      "secretKeyHint": "Starts with sk_live_ (or sk_test_ for test mode). A restricted key (rk_…) works too if it can read the account and write Checkout Sessions, Refunds and Webhook Endpoints."
+    },
+    "dialog": {
+      "description": "Copy your secret key from <link>Stripe Dashboard → Developers → API keys</link> and paste it here. We check it, set up payment notifications on your Stripe account, and store the key encrypted."
     },
     "testMode": "Test mode",
     "liveMode": "Live",

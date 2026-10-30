@@ -10333,8 +10333,20 @@
     "title": "Stripe",
     "setting": {
       "label": "Stripe",
-      "description": "استقبل مدفوعات البطاقات في متجرك الإلكتروني عبر حسابك الخاص في Stripe. تذهب الأموال مباشرة إلى حسابك في Stripe.",
-      "notConfigured": "لم يتم إعداد Stripe على هذه المنصة بعد. اطلب من مسؤول المنصة إضافة إعدادات Stripe Connect."
+      "description": "استقبل مدفوعات البطاقات في متجرك الإلكتروني عبر حسابك الخاص في Stripe. تذهب الأموال مباشرة إلى حسابك في Stripe."
+    },
+    "connectWithStripe": "الاتصال عبر Stripe",
+    "connectWithKey": "استخدام المفتاح السري",
+    "connectionType": {
+      "oauth": "Stripe Connect",
+      "apiKey": "مفتاح سري"
+    },
+    "fields": {
+      "secretKey": "المفتاح السري",
+      "secretKeyHint": "يبدأ بـ sk_live_ (أو sk_test_ لوضع الاختبار). يعمل المفتاح المقيّد (rk_…) أيضًا إذا كان يستطيع قراءة الحساب وكتابة Checkout Sessions وRefunds وWebhook Endpoints."
+    },
+    "dialog": {
+      "description": "انسخ مفتاحك السري من <link>لوحة Stripe ← Developers ← API keys</link> والصقه هنا. سنتحقق منه، ونُعدّ إشعارات الدفع على حساب Stripe الخاص بك، ونخزّن المفتاح مشفّرًا."
     },
     "testMode": "وضع الاختبار",
     "liveMode": "مباشر",

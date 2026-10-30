@@ -1263,6 +1263,11 @@ export const possibleErrorsOnConnectingPaymentProvider = {
     message: "This Stripe account is connected to another workspace",
     status: 409,
   },
+  stripeSecretKeyInvalid: {
+    message:
+      "Not a Stripe secret key: paste sk_live_…, sk_test_… or a restricted rk_… key",
+    status: 400,
+  },
   paymentProviderInUse: {
     message:
       "Open orders still need this payment account; complete or cancel them first",

@@ -10333,8 +10333,20 @@
     "title": "Stripe",
     "setting": {
       "label": "Stripe",
-      "description": "Ta emot kortbetalningar i din webbutik med ditt eget Stripe-konto. Pengarna går direkt till ditt Stripe-konto.",
-      "notConfigured": "Stripe är inte konfigurerat på den här plattformen ännu. Be plattformens administratör lägga till Stripe Connect-inställningarna."
+      "description": "Ta emot kortbetalningar i din webbutik med ditt eget Stripe-konto. Pengarna går direkt till ditt Stripe-konto."
+    },
+    "connectWithStripe": "Anslut med Stripe",
+    "connectWithKey": "Använd hemlig nyckel",
+    "connectionType": {
+      "oauth": "Stripe Connect",
+      "apiKey": "Hemlig nyckel"
+    },
+    "fields": {
+      "secretKey": "Hemlig nyckel",
+      "secretKeyHint": "Börjar med sk_live_ (eller sk_test_ för testläge). En begränsad nyckel (rk_…) fungerar också om den kan läsa kontot och skriva Checkout Sessions, Refunds och Webhook Endpoints."
+    },
+    "dialog": {
+      "description": "Kopiera din hemliga nyckel från <link>Stripe Dashboard → Developers → API keys</link> och klistra in den här. Vi kontrollerar den, ställer in betalningsaviseringar på ditt Stripe-konto och sparar nyckeln krypterad."
     },
     "testMode": "Testläge",
     "liveMode": "Live",

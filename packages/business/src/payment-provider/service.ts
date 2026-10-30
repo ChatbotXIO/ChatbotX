@@ -14,15 +14,20 @@ import {
   buildStripeAuthorizeUrl,
   connectPaypal,
   createPaypalGateway,
+  createStripeAccountWebhook,
   createStripeGateway,
   deauthorizeStripe,
+  deleteStripeAccountWebhook,
   disconnectPaypal,
   exchangeStripeCode,
+  isStripeSecretKey,
   type PaymentGateway,
   type PaypalSecret,
   readStripeAccount,
+  readStripeKeyAccount,
+  type StripeKeySecret,
 } from "@chatbotx.io/payments"
-import { distributedStore } from "@chatbotx.io/redis"
+import { distributedLock, distributedStore } from "@chatbotx.io/redis"
 import { joinAppUrl } from "@chatbotx.io/utils/web-url"
 import { z } from "zod"
 import { BaseService } from "../base.service"
@@ -35,6 +40,7 @@ import {
   paymentProviderNotConnectedException,
   stripeAccountAlreadyConnectedException,
   stripePlatformNotConfiguredException,
+  stripeSecretKeyInvalidException,
   toPaymentProviderException,
 } from "./errors"
 
@@ -50,15 +56,67 @@ const paypalSecretSchema = z.object({
 const paypalSecretAad = (workspaceId: string) =>
   `ecommerce-payment:${workspaceId}:paypal`
 
+/** The decrypted Stripe key connection, checked before use. */
+const stripeKeySecretSchema = z.object({
+  secretKey: z.string().min(1),
+  livemode: z.boolean(),
+  accountId: z.string().min(1),
+  webhookId: z.string().min(1),
+  webhookSecret: z.string().min(1),
+}) satisfies z.ZodType<StripeKeySecret>
+
+/** Ties an encrypted Stripe key to its workspace: copied to another row it does not decrypt. */
+const stripeKeySecretAad = (workspaceId: string) =>
+  `ecommerce-payment:${workspaceId}:stripe`
+
+/**
+ * A Stripe row connected with the store's own key rather than through
+ * Stripe Connect: it holds the encrypted key and no platform app.
+ */
+const isStripeKeyRow = (
+  row: Pick<EcommercePaymentProviderModel, "provider" | "secret">,
+) => row.provider === "stripe" && Boolean(row.secret)
+
+/**
+ * Whether a new Stripe connection is another account than the row's — or the
+ * same account in the other mode: a test key cannot read, close or refund a
+ * live session, nor a live key a test one.
+ */
+const changesStripeAccount = (
+  previous: Pick<
+    EcommercePaymentProviderModel,
+    "externalAccountId" | "livemode"
+  >,
+  next: { accountId: string; livemode: boolean },
+) =>
+  previous.externalAccountId !== next.accountId ||
+  previous.livemode !== next.livemode
+
+/**
+ * One Stripe connect at a time per workspace: two at once (a double submit,
+ * the API and the UI) would each create a webhook and keep only one.
+ */
+const STRIPE_CONNECT_LOCK_SECONDS = 90
+const stripeConnectLockKey = (workspaceId: string) =>
+  `payment-provider-connect:${workspaceId}:stripe`
+
 /** `AbCd…wxyz`: enough to recognise the app, never the whole id. */
 const maskClientId = (clientId: string) =>
   clientId.length <= 8
     ? "••••"
     : `${clientId.slice(0, 4)}…${clientId.slice(-4)}`
 
+/**
+ * How a provider was connected: `oauth` through the platform's Stripe Connect
+ * app, `apiKey` with the store's own keys (a Stripe secret key, or PayPal's
+ * Client ID and Secret).
+ */
+export type PaymentProviderConnectionType = "oauth" | "apiKey"
+
 /** A connection as the settings page and the API show it: never a secret. */
 export type PaymentProviderView = {
   provider: OnlinePaymentProvider
+  connectionType: PaymentProviderConnectionType
   livemode: boolean
   /** The Stripe account's name, or the masked PayPal Client ID. */
   accountLabel: string | null
@@ -69,6 +127,8 @@ export type PaymentProviderView = {
 
 const toView = (row: EcommercePaymentProviderModel): PaymentProviderView => ({
   provider: row.provider,
+  connectionType:
+    row.provider === "stripe" && !isStripeKeyRow(row) ? "oauth" : "apiKey",
   livemode: row.livemode,
   accountLabel: row.accountLabel,
   accountId: row.externalAccountId,
@@ -129,6 +189,9 @@ const workspaceWebhookUrl = async (workspaceId: string, path: string) => {
 
 export const paypalWebhookPath = (workspaceId: string) =>
   `/api/payments/paypal/${encodeURIComponent(workspaceId)}/webhook`
+
+export const stripeAccountWebhookPath = (workspaceId: string) =>
+  `/api/payments/stripe/workspace/${encodeURIComponent(workspaceId)}/webhook`
 
 export const stripeConnectWebhookPath = (platformCredentialId: string) =>
   `/api/payments/stripe/webhook/${encodeURIComponent(platformCredentialId)}`
@@ -285,14 +348,31 @@ class PaymentProviderService extends BaseService {
       return null
     })
 
+    return await distributedLock.runExclusive({
+      key: stripeConnectLockKey(input.workspaceId),
+      timeoutInSeconds: STRIPE_CONNECT_LOCK_SECONDS,
+      fn: async () =>
+        await this.saveStripeConnect({
+          workspaceId: input.workspaceId,
+          platformCredentialId: platform.credentialId,
+          connection,
+          account,
+        }),
+    })
+  }
+
+  private async saveStripeConnect(input: {
+    workspaceId: string
+    platformCredentialId: string
+    connection: { accountId: string; livemode: boolean }
+    account: { label: string | null; chargesEnabled: boolean } | null
+  }): Promise<PaymentProviderView & { chargesEnabled: boolean | null }> {
+    const { connection, account } = input
     const previous = await paymentProviderRepository.find({
       workspaceId: input.workspaceId,
       provider: "stripe",
     })
-    const replacesAccount =
-      Boolean(previous?.externalAccountId) &&
-      previous?.externalAccountId !== connection.accountId
-    if (replacesAccount) {
+    if (previous && changesStripeAccount(previous, connection)) {
       try {
         await this.assertNotNeededByOrders({
           workspaceId: input.workspaceId,
@@ -302,7 +382,7 @@ class PaymentProviderService extends BaseService {
         // The new account was just connected to the platform: let it go.
         await this.deauthorizeQuietly({
           workspaceId: input.workspaceId,
-          platformCredentialId: platform.credentialId,
+          platformCredentialId: input.platformCredentialId,
           externalAccountId: connection.accountId,
         })
         throw error
@@ -316,7 +396,7 @@ class PaymentProviderService extends BaseService {
         livemode: connection.livemode,
         accountLabel: account?.label ?? null,
         externalAccountId: connection.accountId,
-        platformCredentialId: platform.credentialId,
+        platformCredentialId: input.platformCredentialId,
         secret: null,
         webhookEndpointId: null,
       })
@@ -329,12 +409,137 @@ class PaymentProviderService extends BaseService {
     if (!row) {
       throw new Error("Failed to save the Stripe connection")
     }
-    // Another account replaced: the old one no longer belongs to this store.
-    if (previous && replacesAccount) {
+    if (previous && isStripeKeyRow(previous)) {
+      // A key connection replaced: its webhook would keep calling us.
+      await this.removeStripeKeyWebhookQuietly(previous)
+    } else if (
+      previous &&
+      (previous.externalAccountId !== connection.accountId ||
+        previous.platformCredentialId !== input.platformCredentialId)
+    ) {
+      // Another account or app replaced: it no longer belongs to this store.
       await this.deauthorizeQuietly(previous)
     }
     await this.audit("connect", "connected Stripe for the web shop")
     return { ...toView(row), chargesEnabled: account?.chargesEnabled ?? null }
+  }
+
+  /**
+   * Connects the store's own Stripe account with its secret (or restricted)
+   * key, without Stripe Connect: the key is checked, a webhook is created on
+   * the account and both are saved encrypted. Replaces any Stripe connection
+   * the workspace had; a different account is refused while orders still
+   * need the old one.
+   */
+  async connectStripeKey(input: {
+    workspaceId: string
+    secretKey: string
+  }): Promise<PaymentProviderView & { chargesEnabled: boolean }> {
+    const secretKey = input.secretKey.trim()
+    if (!isStripeSecretKey(secretKey)) {
+      throw stripeSecretKeyInvalidException()
+    }
+    let account: Awaited<ReturnType<typeof readStripeKeyAccount>>
+    try {
+      account = await readStripeKeyAccount(secretKey)
+    } catch (error) {
+      throw toPaymentProviderException("stripe", error)
+    }
+
+    return await distributedLock.runExclusive({
+      key: stripeConnectLockKey(input.workspaceId),
+      timeoutInSeconds: STRIPE_CONNECT_LOCK_SECONDS,
+      fn: async () =>
+        await this.saveStripeKey({
+          workspaceId: input.workspaceId,
+          secretKey,
+          account,
+        }),
+    })
+  }
+
+  private async saveStripeKey(input: {
+    workspaceId: string
+    secretKey: string
+    account: Awaited<ReturnType<typeof readStripeKeyAccount>>
+  }): Promise<PaymentProviderView & { chargesEnabled: boolean }> {
+    const { secretKey, account } = input
+    const previous = await paymentProviderRepository.find({
+      workspaceId: input.workspaceId,
+      provider: "stripe",
+    })
+    const replacesAccount = previous
+      ? changesStripeAccount(previous, account)
+      : false
+    if (replacesAccount) {
+      await this.assertNotNeededByOrders({
+        workspaceId: input.workspaceId,
+        provider: "stripe",
+      })
+    }
+    const webhookUrl = await workspaceWebhookUrl(
+      input.workspaceId,
+      stripeAccountWebhookPath(input.workspaceId),
+    )
+    let webhook: Awaited<ReturnType<typeof createStripeAccountWebhook>>
+    try {
+      webhook = await createStripeAccountWebhook({ secretKey, url: webhookUrl })
+    } catch (error) {
+      throw toPaymentProviderException("stripe", error)
+    }
+
+    const connection: StripeKeySecret = {
+      secretKey,
+      livemode: account.livemode,
+      accountId: account.accountId,
+      webhookId: webhook.endpointId,
+      webhookSecret: webhook.secret,
+    }
+    let row: EcommercePaymentProviderModel | undefined
+    try {
+      row = await paymentProviderRepository.upsert({
+        workspaceId: input.workspaceId,
+        provider: "stripe",
+        livemode: account.livemode,
+        accountLabel: account.label,
+        externalAccountId: account.accountId,
+        platformCredentialId: null,
+        secret: await encryptUtils.encryptObject(
+          connection,
+          stripeKeySecretAad(input.workspaceId),
+        ),
+        webhookEndpointId: webhook.endpointId,
+      })
+    } catch (error) {
+      await this.removeStripeKeyWebhookQuietly({
+        workspaceId: input.workspaceId,
+        secretKey,
+        webhookId: webhook.endpointId,
+      })
+      throw error
+    }
+    if (!row) {
+      throw new Error("Failed to save the Stripe connection")
+    }
+    if (previous) {
+      if (isStripeKeyRow(previous)) {
+        // The old key's webhook would keep calling us. On the same account
+        // the new key removes it: a store usually reconnects because it
+        // rolled the old one, which Stripe no longer accepts.
+        await this.removeStripeKeyWebhookQuietly(
+          previous,
+          replacesAccount ? undefined : secretKey,
+        )
+      } else {
+        // The platform no longer acts on the store's account.
+        await this.deauthorizeQuietly(previous)
+      }
+    }
+    await this.audit(
+      "connect",
+      "connected Stripe for the web shop with a secret key",
+    )
+    return { ...toView(row), chargesEnabled: account.chargesEnabled }
   }
 
   /**
@@ -415,7 +620,9 @@ class PaymentProviderService extends BaseService {
       return
     }
     await this.assertNotNeededByOrders(input)
-    if (row.provider === "stripe") {
+    if (isStripeKeyRow(row)) {
+      await this.removeStripeKeyWebhookQuietly(row)
+    } else if (row.provider === "stripe") {
       await this.deauthorizeQuietly(row)
     } else {
       await this.removePaypalWebhookQuietly(row)
@@ -433,7 +640,9 @@ class PaymentProviderService extends BaseService {
   async teardownForPurge(workspaceId: string): Promise<void> {
     const rows = await paymentProviderRepository.listByWorkspace(workspaceId)
     for (const row of rows) {
-      if (row.provider === "stripe") {
+      if (isStripeKeyRow(row)) {
+        await this.removeStripeKeyWebhookQuietly(row)
+      } else if (row.provider === "stripe") {
         await this.deauthorizeQuietly(row)
       } else {
         await this.removePaypalWebhookQuietly(row)
@@ -467,7 +676,8 @@ class PaymentProviderService extends BaseService {
 
   /**
    * The gateway that takes the workspace's payments: the store's PayPal app,
-   * or the platform key acting on the store's Stripe account.
+   * the store's own Stripe key, or the platform key acting on the store's
+   * Stripe account.
    */
   async loadGateway(
     input: { workspaceId: string; provider: OnlinePaymentProvider },
@@ -476,6 +686,16 @@ class PaymentProviderService extends BaseService {
     const row = await paymentProviderRepository.find(input, tx)
     if (!row) {
       throw paymentProviderNotConnectedException(input.provider)
+    }
+    if (isStripeKeyRow(row)) {
+      const secret = await this.decryptStripeKeySecret(row)
+      if (!secret) {
+        throw paymentProviderNotConnectedException("stripe")
+      }
+      return {
+        gateway: createStripeGateway({ secretKey: secret.secretKey }),
+        livemode: row.livemode,
+      }
     }
     if (row.provider === "stripe") {
       const platform = row.platformCredentialId
@@ -510,6 +730,27 @@ class PaymentProviderService extends BaseService {
       provider: "paypal",
     })
     return row ? await this.decryptPaypalSecret(row) : null
+  }
+
+  /**
+   * The store's Stripe key and webhook secret, for checking the signature of
+   * an event its own webhook received. Null when it is not connected with a
+   * key (any more).
+   */
+  async loadStripeAccountWebhook(
+    workspaceId: string,
+  ): Promise<{ secretKey: string; webhookSecret: string } | null> {
+    const row = await paymentProviderRepository.find({
+      workspaceId,
+      provider: "stripe",
+    })
+    if (!(row && isStripeKeyRow(row))) {
+      return null
+    }
+    const secret = await this.decryptStripeKeySecret(row)
+    return secret
+      ? { secretKey: secret.secretKey, webhookSecret: secret.webhookSecret }
+      : null
   }
 
   /**
@@ -581,6 +822,68 @@ class PaymentProviderService extends BaseService {
       paypalSecretSchema,
       paypalSecretAad(row.workspaceId),
     )
+  }
+
+  private async decryptStripeKeySecret(
+    row: EcommercePaymentProviderModel,
+  ): Promise<StripeKeySecret | null> {
+    if (!row.secret) {
+      return null
+    }
+    return await encryptUtils.decryptObject(
+      row.secret,
+      stripeKeySecretSchema,
+      stripeKeySecretAad(row.workspaceId),
+    )
+  }
+
+  /**
+   * Removes the webhook a key connection created; best effort. With
+   * `currentKey` (a newer key of the same account and mode) it is tried
+   * first, then the row's own key.
+   */
+  private async removeStripeKeyWebhookQuietly(
+    target:
+      | EcommercePaymentProviderModel
+      | { workspaceId: string; secretKey: string; webhookId: string },
+    currentKey?: string,
+  ) {
+    try {
+      const secret =
+        "secretKey" in target
+          ? target
+          : await this.decryptStripeKeySecret(target).catch(() => null)
+      const webhookId =
+        secret?.webhookId ??
+        ("webhookEndpointId" in target ? target.webhookEndpointId : null)
+      if (!webhookId) {
+        return
+      }
+      const keys = [currentKey, secret?.secretKey].filter(
+        (key, index, all): key is string =>
+          Boolean(key) && all.indexOf(key) === index,
+      )
+      let lastError: unknown
+      for (const key of keys) {
+        try {
+          await deleteStripeAccountWebhook({
+            secretKey: key,
+            endpointId: webhookId,
+          })
+          return
+        } catch (error) {
+          lastError = error
+        }
+      }
+      if (lastError) {
+        throw lastError
+      }
+    } catch (err) {
+      logger.warn(
+        { err, workspaceId: target.workspaceId },
+        "[payments] could not remove the Stripe webhook",
+      )
+    }
   }
 
   private async deauthorizeQuietly(

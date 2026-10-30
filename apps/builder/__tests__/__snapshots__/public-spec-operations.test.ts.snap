@@ -2613,6 +2613,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "path": "/v1/orders/{id}/ship",
   },
   {
+    "method": "POST",
+    "operationId": "paymentProviders.connectStripeKey",
+    "path": "/v1/payment-providers/stripe/api-key",
+  },
+  {
     "method": "DELETE",
     "operationId": "paymentProviders.disconnect",
     "path": "/v1/payment-providers/{provider}",
