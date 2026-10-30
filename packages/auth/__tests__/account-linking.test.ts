@@ -32,9 +32,13 @@ vi.mock("better-auth/plugins", () => ({
   anonymous: () => ({ id: "anonymous" }),
   bearer: () => ({ id: "bearer" }),
   genericOAuth: () => ({ id: "generic-oauth" }),
-  mcp: () => ({ id: "mcp" }),
+  jwt: () => ({ id: "jwt" }),
   magicLink: () => ({ id: "magic-link" }),
   oneTimeToken: () => ({ id: "one-time-token" }),
+}))
+
+vi.mock("@better-auth/mcp", () => ({
+  mcp: () => ({ id: "mcp" }),
 }))
 
 vi.mock("@chatbotx.io/database/client", () => ({
@@ -44,7 +48,12 @@ vi.mock("@chatbotx.io/database/client", () => ({
 vi.mock("@chatbotx.io/database/schema", () => ({
   accountModel: {},
   oauthAccessTokenModel: {},
-  oauthApplicationModel: {},
+  jwkModel: {},
+  oauthClientModel: {},
+  oauthClientAssertionModel: {},
+  oauthClientResourceModel: {},
+  oauthRefreshTokenModel: {},
+  oauthResourceModel: {},
   oauthConsentModel: {},
   sessionModel: {},
   userModel: {},

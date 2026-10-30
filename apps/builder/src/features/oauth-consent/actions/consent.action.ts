@@ -7,17 +7,17 @@ import { authActionClient } from "@/lib/safe-action"
 
 const consentRequest = z.object({
   accept: z.boolean(),
-  consentCode: z.string().min(1),
+  oauthQuery: z.string().min(1),
 })
 
 export const submitOAuthConsentAction = authActionClient
   .inputSchema(consentRequest)
   .action(
     async ({ parsedInput }) =>
-      await auth.api.oAuthConsent({
+      await auth.api.oauth2Consent({
         body: {
           accept: parsedInput.accept,
-          consent_code: parsedInput.consentCode,
+          oauth_query: parsedInput.oauthQuery,
         },
         headers: await headers(),
       }),

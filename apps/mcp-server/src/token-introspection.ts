@@ -51,6 +51,35 @@ const cacheResult = (
   return result
 }
 
+/**
+ * OAuth access tokens are JWTs. The builder verifies their signatures before
+ * returning success; decoding here only bounds this cache entry so it cannot
+ * outlive the already-verified `exp`. Opaque workspace API tokens retain the
+ * configured cache TTL.
+ */
+const getPositiveCacheTtl = (token: string): number => {
+  const payload = token.split(".")[1]
+  if (!payload) {
+    return env.CHATBOTX_SPEC_TTL_MS
+  }
+
+  try {
+    const decoded = JSON.parse(
+      Buffer.from(payload, "base64url").toString("utf8"),
+    ) as { exp?: unknown }
+    if (typeof decoded.exp !== "number" || !Number.isFinite(decoded.exp)) {
+      return env.CHATBOTX_SPEC_TTL_MS
+    }
+
+    return Math.max(
+      0,
+      Math.min(env.CHATBOTX_SPEC_TTL_MS, decoded.exp * 1000 - Date.now()),
+    )
+  } catch {
+    return env.CHATBOTX_SPEC_TTL_MS
+  }
+}
+
 export const introspectToken = async (
   token: string,
   workspaceId?: string,
@@ -124,7 +153,7 @@ export const introspectToken = async (
     return cacheResult(
       cacheKey,
       { status: "ok", data: parsed.data },
-      env.CHATBOTX_SPEC_TTL_MS,
+      getPositiveCacheTtl(token),
     )
   } catch (error) {
     logger.error({ err: error }, "MCP token introspection failed")

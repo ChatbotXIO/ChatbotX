@@ -6,8 +6,9 @@ import {
 } from "@/features/mcp-oauth/lib/mcp-oauth"
 
 const env = vi.hoisted(() => ({
-  BETTER_AUTH_URL: "https://app.chatbotx.io",
+  BETTER_AUTH_URL: "https://broker.chatbotx.io",
   MCP_PUBLIC_URL: undefined as string | undefined,
+  NEXT_PUBLIC_BUILDER_URL: "https://app.chatbotx.io",
 }))
 vi.mock("@/env", () => ({ env }))
 
@@ -26,9 +27,9 @@ describe("OAuth protected resource discovery", () => {
 
     expect(response.status).toBe(200)
     await expect(response.json()).resolves.toEqual({
-      authorization_servers: ["https://app.chatbotx.io"],
+      authorization_servers: ["https://broker.chatbotx.io"],
       bearer_methods_supported: ["header"],
-      resource: "https://app.chatbotx.io/mcp/messages",
+      resource: "https://app.chatbotx.io/mcp",
       scopes_supported: ["openid", "profile", "email", "offline_access"],
     })
   })

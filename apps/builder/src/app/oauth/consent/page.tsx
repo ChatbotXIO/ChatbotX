@@ -6,25 +6,38 @@ import { getCurrentUser } from "@/lib/auth/utils"
 export const dynamic = "force-dynamic"
 
 export default async function OAuthConsentPage(props: {
-  searchParams: Promise<{
-    client_id?: string
-    consent_code?: string
-    scope?: string
-  }>
+  searchParams: Promise<Record<string, string | string[] | undefined>>
 }) {
-  const [{ client_id: clientId, consent_code: consentCode, scope }, user] =
-    await Promise.all([props.searchParams, getCurrentUser()])
-  if (!(clientId && consentCode && user)) {
+  const [searchParams, user] = await Promise.all([
+    props.searchParams,
+    getCurrentUser(),
+  ])
+  const clientId = searchParams.client_id
+  if (!(typeof clientId === "string" && user)) {
     notFound()
   }
 
+  const oauthQuery = new URLSearchParams()
+  for (const [key, value] of Object.entries(searchParams)) {
+    if (typeof value === "string") {
+      oauthQuery.set(key, value)
+      continue
+    }
+    for (const item of value ?? []) {
+      oauthQuery.append(key, item)
+    }
+  }
+
   const client = await mcpOAuthService.findClient({ clientId })
-  const scopes = scope?.split(" ").filter(Boolean) ?? []
+  const scopes =
+    typeof searchParams.scope === "string"
+      ? searchParams.scope.split(" ").filter(Boolean)
+      : []
 
   return (
     <OAuthConsentForm
       clientName={client?.name || clientId}
-      consentCode={consentCode}
+      oauthQuery={oauthQuery.toString()}
       scopes={scopes}
       userEmail={user.email}
     />

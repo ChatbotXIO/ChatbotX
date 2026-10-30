@@ -26,20 +26,20 @@ afterEach(() => {
 const loadOAuth = async () => await import("../src/oauth")
 
 describe("OAuth protected-resource metadata", () => {
-  test("uses CHATBOTX_MCP_PUBLIC_URL for the advertised resource", async () => {
+  test("uses CHATBOTX_MCP_PUBLIC_URL's origin for the canonical resource", async () => {
     process.env.CHATBOTX_MCP_PUBLIC_URL = "https://mcp.public.example.com/base"
     const { buildProtectedResourceMetadata } = await loadOAuth()
 
     expect(
       buildProtectedResourceMetadata(request(), "/messages"),
     ).toMatchObject({
-      resource: "https://mcp.public.example.com/messages",
+      resource: "https://mcp.public.example.com/mcp",
       authorization_servers: ["https://builder.example.com"],
       bearer_methods_supported: ["header"],
     })
   })
 
-  test("uses forwarded protocol and host behind a proxy", async () => {
+  test("uses the canonical /mcp resource behind a proxy", async () => {
     const { buildProtectedResourceMetadata } = await loadOAuth()
 
     expect(
@@ -51,10 +51,10 @@ describe("OAuth protected-resource metadata", () => {
         }),
         "/messages",
       ).resource,
-    ).toBe("https://mcp.proxy.example.com/messages")
+    ).toBe("https://mcp.proxy.example.com/mcp")
   })
 
-  test("falls back to the Host header", async () => {
+  test("falls back to the Host header for the canonical resource", async () => {
     const { buildProtectedResourceMetadata } = await loadOAuth()
 
     expect(
@@ -62,7 +62,7 @@ describe("OAuth protected-resource metadata", () => {
         request({ host: "mcp.local:3333" }),
         "/sse",
       ).resource,
-    ).toBe("http://mcp.local:3333/sse")
+    ).toBe("http://mcp.local:3333/mcp")
   })
 
   test("builds a bearer challenge with invalid-token details when requested", async () => {
@@ -80,6 +80,17 @@ describe("OAuth protected-resource metadata", () => {
         "invalid_token",
       ),
     ).toContain('error="invalid_token"')
+  })
+
+  test("points public bearer challenges at the builder's MCP metadata path", async () => {
+    process.env.CHATBOTX_MCP_PUBLIC_URL = "https://app.example.com"
+    const { buildWwwAuthenticate } = await loadOAuth()
+
+    expect(
+      buildWwwAuthenticate(request({ host: "internal:3333" }), "/messages"),
+    ).toBe(
+      'Bearer resource_metadata="https://app.example.com/.well-known/oauth-protected-resource/mcp/messages"',
+    )
   })
 
   test("derives the issuer without the API path", async () => {

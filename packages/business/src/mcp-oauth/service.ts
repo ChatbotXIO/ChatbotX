@@ -1,11 +1,12 @@
 import { db } from "@chatbotx.io/database/client"
 import {
   oauthAccessTokenRepository,
-  oauthApplicationRepository,
+  oauthClientRepository,
   oauthConsentRepository,
+  oauthRefreshTokenRepository,
 } from "@chatbotx.io/database/repositories"
 import type {
-  OAuthApplicationModel,
+  OAuthClientModel,
   UserModel,
   WorkspaceModel,
 } from "@chatbotx.io/database/types"
@@ -22,7 +23,6 @@ export type McpOAuthPrincipal = {
   workspace: WorkspaceModel
   user: Pick<UserModel, "id" | "email">
   clientId: string
-  accessTokenId: string
 }
 
 export type McpOAuthResolution =
@@ -46,24 +46,18 @@ export type McpOAuthGrant = {
 
 export class McpOAuthService extends BaseService {
   async resolvePrincipal(props: {
-    accessToken: string
+    clientId: string
+    userId: string
     workspaceId?: string
   }): Promise<McpOAuthResolution> {
-    const token = await oauthAccessTokenRepository.findByAccessToken(
-      props.accessToken,
-    )
-    const now = new Date()
-    if (
-      !token?.userId ||
-      token.accessTokenExpiresAt <= now ||
-      token.client.disabled
-    ) {
+    const client = await oauthClientRepository.findByClientId(props.clientId)
+    if (!client || client.disabled) {
       return { kind: "invalidToken" }
     }
 
     let user: Pick<UserModel, "id" | "email">
     try {
-      user = await userService.findByIdOrFail(token.userId)
+      user = await userService.findByIdOrFail(props.userId)
     } catch (error) {
       if (error instanceof ChatbotXException && error.code === "notFound") {
         return { kind: "invalidToken" }
@@ -123,8 +117,7 @@ export class McpOAuthService extends BaseService {
       principal: {
         workspace: access.workspace,
         user,
-        clientId: token.clientId,
-        accessTokenId: token.id,
+        clientId: props.clientId,
       },
     }
   }
@@ -139,10 +132,10 @@ export class McpOAuthService extends BaseService {
       activeUntil: grant.activeUntil,
       clientIcon: grant.clientIcon,
       clientId: grant.clientId,
-      clientName: grant.clientName,
+      clientName: grant.clientName ?? grant.clientId,
       firstAuthorizedAt: grant.firstAuthorizedAt,
       lastRefreshedAt: grant.lastRefreshedAt,
-      scopes: Array.from(new Set(grant.scopes.split(" ").filter(Boolean))),
+      scopes: Array.from(new Set(grant.scopes)),
     }))
   }
 
@@ -151,11 +144,13 @@ export class McpOAuthService extends BaseService {
     clientId: string
   }): Promise<boolean> {
     const deleted = await db.transaction(async (tx) => {
-      const deletedTokens =
-        await oauthAccessTokenRepository.deleteByUserAndClient(props, tx)
-      const deletedConsents =
-        await oauthConsentRepository.deleteByUserAndClient(props, tx)
-      return deletedTokens + deletedConsents
+      const [deletedAccessTokens, deletedConsents, deletedRefreshTokens] =
+        await Promise.all([
+          oauthAccessTokenRepository.deleteByUserAndClient(props, tx),
+          oauthConsentRepository.deleteByUserAndClient(props, tx),
+          oauthRefreshTokenRepository.deleteByUserAndClient(props, tx),
+        ])
+      return deletedAccessTokens + deletedConsents + deletedRefreshTokens
     })
 
     if (deleted > 0) {
@@ -165,13 +160,17 @@ export class McpOAuthService extends BaseService {
   }
 
   async purgeExpiredTokens(now = new Date()): Promise<number> {
-    return await oauthAccessTokenRepository.deleteExpired(now)
+    const [accessTokens, refreshTokens] = await Promise.all([
+      oauthAccessTokenRepository.deleteExpired(now),
+      oauthRefreshTokenRepository.deleteExpired(now),
+    ])
+    return accessTokens + refreshTokens
   }
 
   async findClient(props: {
     clientId: string
-  }): Promise<OAuthApplicationModel | null> {
-    return await oauthApplicationRepository.findByClientId(props.clientId)
+  }): Promise<OAuthClientModel | null> {
+    return await oauthClientRepository.findByClientId(props.clientId)
   }
 }
 

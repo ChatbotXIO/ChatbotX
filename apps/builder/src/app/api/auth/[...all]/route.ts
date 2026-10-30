@@ -30,10 +30,9 @@ const MCP_CORS_HEADERS = {
 const retryAfterPattern = /Retry after (\d+)s\./
 
 const withMcpCors = (pathname: string, response: Response): Response => {
-  if (!pathname.includes("/api/auth/mcp/")) {
+  if (!pathname.includes("/api/auth/oauth2/")) {
     return response
   }
-
   for (const [key, value] of Object.entries(MCP_CORS_HEADERS)) {
     response.headers.set(key, value)
   }
@@ -96,29 +95,36 @@ const isSocialSignInPath = (pathname: string): boolean =>
   pathname.endsWith("/sign-in/social") || pathname.endsWith("/sign-up/social")
 
 /**
- * The provider requested on a `sign-in/social` / `sign-up/social` POST. Read from
- * a clone so the original body is left intact for better-auth's own handler.
+ * Read the provider requested by a social sign-in POST. The generic provider
+ * shares this endpoint with first-party providers, so only the latter are
+ * dispatched to a tenant-specific auth instance.
  */
-const getSignInProvider = async (
+const getRequestedSignInProvider = async (
   request: Request,
-): Promise<SocialProvider | null> => {
+): Promise<string | null> => {
   try {
-    const body = (await request.clone().json()) as { provider?: string }
-    return (
-      SOCIAL_PROVIDERS.find((provider) => provider === body.provider) ?? null
-    )
+    const body = (await request.clone().json()) as { provider?: unknown }
+    return typeof body.provider === "string" ? body.provider : null
   } catch {
     return null
   }
 }
 
+const isSocialProvider = (provider: string): provider is SocialProvider =>
+  SOCIAL_PROVIDERS.includes(provider as SocialProvider)
+
 const handle = async (request: Request): Promise<Response> => {
   // Use the public URL (host behind the proxy), not the raw internal request URL,
   // so the relay host comparison matches the registered platform host.
   const url = getPublicUrlFromRequest(request)
+  const requestedSignInProvider = isSocialSignInPath(url.pathname)
+    ? await getRequestedSignInProvider(request)
+    : null
   // genericOAuth is registered from environment at module initialization, while
-  // enterprise entitlement is request-scoped and must guard all plugin routes.
-  if (isGenericOAuthPath(url.pathname)) {
+  // enterprise entitlement is request-scoped. Gate the fixed callback and only
+  // social requests selecting the generic provider; Google/Facebook share the
+  // same sign-in endpoint and must remain available without enterprise SSO.
+  if (isGenericOAuthPath(url.pathname, requestedSignInProvider ?? undefined)) {
     const isLicensed = await hasEnterpriseFeatures()
     warnIfGenericOAuthUnlicensed(isLicensed)
     if (!isLicensed) {
@@ -133,7 +139,7 @@ const handle = async (request: Request): Promise<Response> => {
     ? await resolveTenantFromOAuthState(state)
     : await resolveTenantByDomain(request.headers.get("x-domain"))
 
-  if (url.pathname.endsWith("/mcp/register")) {
+  if (url.pathname.endsWith("/oauth2/register")) {
     try {
       await assertApiNotRateLimited({
         scope: "mcp-client-registration",
@@ -180,8 +186,8 @@ const handle = async (request: Request): Promise<Response> => {
 
     const provider =
       getCallbackProvider(url.pathname) ??
-      (isSocialSignInPath(url.pathname)
-        ? await getSignInProvider(request)
+      (requestedSignInProvider && isSocialProvider(requestedSignInProvider)
+        ? requestedSignInProvider
         : null)
 
     const instance = provider
@@ -203,7 +209,7 @@ export const POST = handle
 
 export const OPTIONS = (request: Request) => {
   const pathname = new URL(request.url).pathname
-  if (!pathname.includes("/api/auth/mcp/")) {
+  if (!pathname.includes("/api/auth/oauth2/")) {
     return new Response(null, { status: 405 })
   }
 

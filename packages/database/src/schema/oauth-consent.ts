@@ -1,7 +1,7 @@
-import { boolean, index, pgTable, text } from "drizzle-orm/pg-core"
+import { index, pgTable, text } from "drizzle-orm/pg-core"
 import { bigintAsString, sharedColumns } from "../partials/shared"
 import { userModel } from "./auth-user"
-import { oauthApplicationModel } from "./oauth-application"
+import { oauthClientModel } from "./oauth-client"
 
 export const oauthConsentModel = pgTable(
   "OAuthConsent",
@@ -9,18 +9,18 @@ export const oauthConsentModel = pgTable(
     ...sharedColumns,
     clientId: text()
       .notNull()
-      .references(() => oauthApplicationModel.clientId, {
+      .references(() => oauthClientModel.clientId, {
         onDelete: "cascade",
         onUpdate: "cascade",
       }),
-    userId: bigintAsString()
-      .notNull()
-      .references(() => userModel.id, {
-        onDelete: "cascade",
-        onUpdate: "cascade",
-      }),
-    scopes: text().notNull(),
-    consentGiven: boolean().notNull(),
+    userId: bigintAsString().references(() => userModel.id, {
+      onDelete: "cascade",
+      onUpdate: "cascade",
+    }),
+    referenceId: text(),
+    resources: text().array(),
+    requestedUserInfoClaims: text().array(),
+    scopes: text().array().notNull(),
   },
   (table) => [
     index("OAuthConsent_clientId_idx").on(table.clientId),

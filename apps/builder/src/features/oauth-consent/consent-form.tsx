@@ -15,25 +15,25 @@ import { submitOAuthConsentAction } from "./actions/consent.action"
 
 type OAuthConsentFormProps = {
   clientName: string
-  consentCode: string
+  oauthQuery: string
   scopes: string[]
   userEmail: string
 }
 
 export const OAuthConsentForm = ({
   clientName,
-  consentCode,
+  oauthQuery,
   scopes,
   userEmail,
 }: OAuthConsentFormProps) => {
   const t = useTranslations("oauthConsent")
   const { execute, isPending } = useAction(submitOAuthConsentAction, {
     onSuccess: ({ data }) => {
-      if (!data?.redirectURI) {
+      if (!data?.url) {
         toast.error(t("failed"))
         return
       }
-      window.location.assign(data.redirectURI)
+      window.location.assign(data.url)
     },
     onError: ({ error }) => {
       toast.error(error.serverError ?? t("failed"))
@@ -41,7 +41,7 @@ export const OAuthConsentForm = ({
   })
 
   const handleConsent = (accept: boolean) => {
-    execute({ accept, consentCode })
+    execute({ accept, oauthQuery })
   }
 
   return (

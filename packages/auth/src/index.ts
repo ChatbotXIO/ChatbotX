@@ -1,3 +1,8 @@
+export type { McpAccessTokenSubject } from "./mcp-resource"
+export {
+  getMcpAuthorizationServerMetadata,
+  verifyMcpAccessToken,
+} from "./mcp-resource"
 export type {
   Auth,
   AuthConfig,

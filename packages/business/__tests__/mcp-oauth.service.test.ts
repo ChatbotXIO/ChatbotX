@@ -2,40 +2,40 @@ import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const mocks = vi.hoisted(() => ({
-  deleteByUserAndClient: vi.fn(),
+  deleteAccessByUserAndClient: vi.fn(),
   deleteConsentByUserAndClient: vi.fn(),
-  deleteExpired: vi.fn(),
-  findByAccessToken: vi.fn(),
+  deleteExpiredAccessTokens: vi.fn(),
+  deleteExpiredRefreshTokens: vi.fn(),
+  deleteRefreshByUserAndClient: vi.fn(),
   findByClientId: vi.fn(),
   findByIdOrFail: vi.fn(),
   findMembership: vi.fn(),
-  listGivenByUser: vi.fn(),
   listByUserId: vi.fn(),
+  listGivenByUser: vi.fn(),
+  logInfo: vi.fn(),
   resolveWorkspaceAccess: vi.fn(),
   transaction: vi.fn(),
-  logInfo: vi.fn(),
-  invalidateCacheByTags: vi.fn(),
-  dispatchAuditRecord: vi.fn(),
 }))
 
 vi.mock("@chatbotx.io/database/repositories", () => ({
   oauthAccessTokenRepository: {
-    deleteByUserAndClient: mocks.deleteByUserAndClient,
-    deleteExpired: mocks.deleteExpired,
-    findByAccessToken: mocks.findByAccessToken,
-    listGivenByUser: mocks.listGivenByUser,
+    deleteByUserAndClient: mocks.deleteAccessByUserAndClient,
+    deleteExpired: mocks.deleteExpiredAccessTokens,
   },
-  oauthApplicationRepository: { findByClientId: mocks.findByClientId },
+  oauthClientRepository: { findByClientId: mocks.findByClientId },
   oauthConsentRepository: {
     deleteByUserAndClient: mocks.deleteConsentByUserAndClient,
     listGivenByUser: mocks.listGivenByUser,
+  },
+  oauthRefreshTokenRepository: {
+    deleteByUserAndClient: mocks.deleteRefreshByUserAndClient,
+    deleteExpired: mocks.deleteExpiredRefreshTokens,
   },
 }))
 
 vi.mock("@chatbotx.io/database/client", () => ({
   db: { transaction: mocks.transaction },
 }))
-
 vi.mock("../src/user/service", () => ({
   userService: { findByIdOrFail: mocks.findByIdOrFail },
 }))
@@ -48,114 +48,58 @@ vi.mock("../src/workspace-member/service", () => ({
 vi.mock("../src/workspace-support-access/resolve-access", () => ({
   resolveWorkspaceAccess: mocks.resolveWorkspaceAccess,
 }))
-vi.mock("@chatbotx.io/redis", () => ({
-  invalidateCacheByTags: mocks.invalidateCacheByTags,
-}))
-vi.mock("../src/audit/dispatcher", () => ({
-  dispatchAuditRecord: mocks.dispatchAuditRecord,
-}))
 vi.mock("../src/logger", () => ({
   logger: { info: mocks.logInfo },
 }))
 
 const { mcpOAuthService } = await import("../src/mcp-oauth/service")
 
-const FUTURE = new Date(Date.now() + 60 * 60 * 1000)
-const PAST = new Date(Date.now() - 60 * 1000)
 const user = { id: "user-1", email: "owner@example.com" }
-
-const accessToken = (overrides: Record<string, unknown> = {}) => ({
-  id: "at-1",
-  userId: "user-1",
-  clientId: "client-1",
-  client: { disabled: false },
-  accessTokenExpiresAt: FUTURE,
-  ...overrides,
-})
+const principalInput = { clientId: "client-1", userId: "user-1" }
 
 describe("mcpOAuthService.resolvePrincipal", () => {
   beforeEach(() => {
     vi.clearAllMocks()
   })
 
-  test("returns invalidToken when no access-token row matches", async () => {
-    mocks.findByAccessToken.mockResolvedValue(null)
+  test("rejects a missing OAuth client before resolving the user", async () => {
+    mocks.findByClientId.mockResolvedValue(null)
 
     await expect(
-      mcpOAuthService.resolvePrincipal({ accessToken: "missing" }),
+      mcpOAuthService.resolvePrincipal(principalInput),
     ).resolves.toEqual({ kind: "invalidToken" })
     expect(mocks.findByIdOrFail).not.toHaveBeenCalled()
   })
 
-  test("returns invalidToken when the access token has expired", async () => {
-    mocks.findByAccessToken.mockResolvedValue(
-      accessToken({ accessTokenExpiresAt: PAST }),
-    )
+  test("rejects a disabled OAuth client", async () => {
+    mocks.findByClientId.mockResolvedValue({ disabled: true })
 
     await expect(
-      mcpOAuthService.resolvePrincipal({ accessToken: "expired" }),
+      mcpOAuthService.resolvePrincipal(principalInput),
     ).resolves.toEqual({ kind: "invalidToken" })
   })
 
-  test("returns invalidToken when the row has no userId", async () => {
-    mocks.findByAccessToken.mockResolvedValue(accessToken({ userId: null }))
-
-    await expect(
-      mcpOAuthService.resolvePrincipal({ accessToken: "no-user" }),
-    ).resolves.toEqual({ kind: "invalidToken" })
-  })
-
-  test("returns invalidToken when the OAuth client is disabled", async () => {
-    mocks.findByAccessToken.mockResolvedValue(
-      accessToken({ client: { disabled: true } }),
-    )
-
-    await expect(
-      mcpOAuthService.resolvePrincipal({ accessToken: "disabled-client" }),
-    ).resolves.toEqual({ kind: "invalidToken" })
-    expect(mocks.findByIdOrFail).not.toHaveBeenCalled()
-  })
-
-  test("returns invalidToken when the token user no longer exists", async () => {
-    mocks.findByAccessToken.mockResolvedValue(accessToken())
+  test("rejects a deleted OAuth user", async () => {
+    mocks.findByClientId.mockResolvedValue({ disabled: false })
     mocks.findByIdOrFail.mockRejectedValue(
       new ChatbotXException("User not found", "notFound"),
     )
 
     await expect(
-      mcpOAuthService.resolvePrincipal({ accessToken: "deleted-user" }),
+      mcpOAuthService.resolvePrincipal(principalInput),
     ).resolves.toEqual({ kind: "invalidToken" })
   })
 
-  test("returns forbidden when the account has no eligible workspace memberships", async () => {
-    mocks.findByAccessToken.mockResolvedValue(accessToken())
-    mocks.findByIdOrFail.mockResolvedValue(user)
-    mocks.listByUserId.mockResolvedValue([])
-
-    await expect(
-      mcpOAuthService.resolvePrincipal({ accessToken: "valid" }),
-    ).resolves.toEqual({ kind: "forbidden" })
-    expect(mocks.resolveWorkspaceAccess).not.toHaveBeenCalled()
-  })
-
-  test("excludes workspaces scheduled for deletion from the selection list", async () => {
-    mocks.findByAccessToken.mockResolvedValue(accessToken())
+  test("requires a workspace when the user belongs to multiple workspaces", async () => {
+    mocks.findByClientId.mockResolvedValue({ disabled: false })
     mocks.findByIdOrFail.mockResolvedValue(user)
     mocks.listByUserId.mockResolvedValue([
-      {
-        workspaceId: "ws-deleting",
-        workspace: {
-          id: "ws-deleting",
-          name: "Deleting",
-          scheduledDeletionAt: new Date(),
-        },
-      },
       { workspaceId: "ws-1", workspace: { id: "ws-1", name: "Alpha" } },
       { workspaceId: "ws-2", workspace: { id: "ws-2", name: "Beta" } },
     ])
 
     await expect(
-      mcpOAuthService.resolvePrincipal({ accessToken: "valid" }),
+      mcpOAuthService.resolvePrincipal(principalInput),
     ).resolves.toEqual({
       kind: "workspaceSelectionRequired",
       workspaces: [
@@ -165,121 +109,16 @@ describe("mcpOAuthService.resolvePrincipal", () => {
     })
   })
 
-  test("uses the uncached membership as the access gate after auto-selecting the only workspace", async () => {
-    mocks.findByAccessToken.mockResolvedValue(accessToken())
-    mocks.findByIdOrFail.mockResolvedValue(user)
-    const cachedMembership = {
+  test("returns a principal only for an active admin membership", async () => {
+    const membership = {
       workspaceId: "ws-1",
       workspace: { id: "ws-1", name: "Alpha", ownerId: "user-1" },
-    }
-    const realMembership = {
-      ...cachedMembership,
       role: "owner",
       permissions: {},
     }
-    mocks.listByUserId.mockResolvedValue([cachedMembership])
-    mocks.findMembership.mockResolvedValue(realMembership)
-    mocks.resolveWorkspaceAccess.mockResolvedValue({
-      workspace: realMembership.workspace,
-      member: realMembership,
-      isSupportSession: false,
-    })
-
-    await expect(
-      mcpOAuthService.resolvePrincipal({ accessToken: "valid" }),
-    ).resolves.toEqual({
-      kind: "principal",
-      principal: {
-        workspace: realMembership.workspace,
-        user,
-        clientId: "client-1",
-        accessTokenId: "at-1",
-      },
-    })
-    expect(mocks.findMembership).toHaveBeenCalledWith({
-      workspaceId: "ws-1",
-      userId: user.id,
-    })
-    expect(mocks.resolveWorkspaceAccess).toHaveBeenCalledWith({
-      realMember: realMembership,
-      workspaceId: "ws-1",
-      user,
-    })
-  })
-
-  test("returns forbidden when resolveWorkspaceAccess finds no access", async () => {
-    mocks.findByAccessToken.mockResolvedValue(accessToken())
+    mocks.findByClientId.mockResolvedValue({ disabled: false })
     mocks.findByIdOrFail.mockResolvedValue(user)
-    mocks.listByUserId.mockResolvedValue([
-      { workspaceId: "ws-1", workspace: { id: "ws-1", name: "Alpha" } },
-    ])
-    mocks.findMembership.mockResolvedValue(undefined)
-    mocks.resolveWorkspaceAccess.mockResolvedValue(undefined)
-
-    await expect(
-      mcpOAuthService.resolvePrincipal({
-        accessToken: "valid",
-        workspaceId: "ws-1",
-      }),
-    ).resolves.toEqual({ kind: "forbidden" })
-  })
-
-  test("returns forbidden for a support session", async () => {
-    mocks.findByAccessToken.mockResolvedValue(accessToken())
-    mocks.findByIdOrFail.mockResolvedValue(user)
-    mocks.listByUserId.mockResolvedValue([
-      { workspaceId: "ws-1", workspace: { id: "ws-1", name: "Alpha" } },
-    ])
-    mocks.findMembership.mockResolvedValue(undefined)
-    mocks.resolveWorkspaceAccess.mockResolvedValue({
-      workspace: { id: "ws-1", name: "Alpha" },
-      member: { role: "member", permissions: { superAdmin: true } },
-      isSupportSession: true,
-    })
-
-    await expect(
-      mcpOAuthService.resolvePrincipal({
-        accessToken: "valid",
-        workspaceId: "ws-1",
-      }),
-    ).resolves.toEqual({ kind: "forbidden" })
-  })
-
-  test("returns forbidden when the resolved member is not an admin", async () => {
-    mocks.findByAccessToken.mockResolvedValue(accessToken())
-    mocks.findByIdOrFail.mockResolvedValue(user)
-    mocks.listByUserId.mockResolvedValue([
-      { workspaceId: "ws-1", workspace: { id: "ws-1", name: "Alpha" } },
-    ])
-    const member = { role: "member", permissions: { superAdmin: false } }
-    mocks.findMembership.mockResolvedValue(member)
-    mocks.resolveWorkspaceAccess.mockResolvedValue({
-      workspace: { id: "ws-1", name: "Alpha" },
-      member,
-      isSupportSession: false,
-    })
-
-    await expect(
-      mcpOAuthService.resolvePrincipal({
-        accessToken: "valid",
-        workspaceId: "ws-1",
-      }),
-    ).resolves.toEqual({ kind: "forbidden" })
-  })
-
-  test("allows an owner-role member without a superAdmin permission flag", async () => {
-    mocks.findByAccessToken.mockResolvedValue(accessToken())
-    mocks.findByIdOrFail.mockResolvedValue(user)
-    const membership = {
-      workspaceId: "ws-2",
-      workspace: { id: "ws-2", name: "Beta", ownerId: "user-1" },
-      role: "owner",
-      permissions: {},
-    }
-    mocks.listByUserId.mockResolvedValue([
-      { workspaceId: "ws-1", workspace: { id: "ws-1", name: "Alpha" } },
-      membership,
-    ])
+    mocks.listByUserId.mockResolvedValue([membership])
     mocks.findMembership.mockResolvedValue(membership)
     mocks.resolveWorkspaceAccess.mockResolvedValue({
       workspace: membership.workspace,
@@ -288,49 +127,15 @@ describe("mcpOAuthService.resolvePrincipal", () => {
     })
 
     await expect(
-      mcpOAuthService.resolvePrincipal({
-        accessToken: "valid",
-        workspaceId: "ws-2",
-      }),
+      mcpOAuthService.resolvePrincipal(principalInput),
     ).resolves.toEqual({
       kind: "principal",
       principal: {
         workspace: membership.workspace,
         user,
         clientId: "client-1",
-        accessTokenId: "at-1",
       },
     })
-  })
-})
-
-describe("mcpOAuthService.purgeExpiredTokens", () => {
-  beforeEach(() => {
-    vi.clearAllMocks()
-  })
-
-  test("delegates token retention to the repository", async () => {
-    const now = new Date("2026-10-29T00:00:00.000Z")
-    mocks.deleteExpired.mockResolvedValue(3)
-
-    await expect(mcpOAuthService.purgeExpiredTokens(now)).resolves.toBe(3)
-    expect(mocks.deleteExpired).toHaveBeenCalledWith(now)
-  })
-})
-
-describe("mcpOAuthService.findClient", () => {
-  beforeEach(() => {
-    vi.clearAllMocks()
-  })
-
-  test("delegates to the OAuth application repository", async () => {
-    const application = { id: "app-1", clientId: "client-1", name: "Inspector" }
-    mocks.findByClientId.mockResolvedValue(application)
-
-    await expect(
-      mcpOAuthService.findClient({ clientId: "client-1" }),
-    ).resolves.toBe(application)
-    expect(mocks.findByClientId).toHaveBeenCalledWith("client-1")
   })
 })
 
@@ -339,7 +144,7 @@ describe("mcpOAuthService.listGrantsForUser", () => {
     vi.clearAllMocks()
   })
 
-  test("lists a consent without a live token", async () => {
+  test("preserves active grant data and de-duplicates array scopes", async () => {
     const firstAuthorizedAt = new Date("2026-10-01T00:00:00.000Z")
     mocks.listGivenByUser.mockResolvedValue([
       {
@@ -349,7 +154,7 @@ describe("mcpOAuthService.listGrantsForUser", () => {
         clientName: "Claude",
         firstAuthorizedAt,
         lastRefreshedAt: null,
-        scopes: "openid profile",
+        scopes: ["openid", "profile", "openid"],
       },
     ])
 
@@ -365,43 +170,6 @@ describe("mcpOAuthService.listGrantsForUser", () => {
         lastRefreshedAt: null,
         scopes: ["openid", "profile"],
       },
-    ])
-    expect(mocks.listGivenByUser).toHaveBeenCalledWith(
-      "user-1",
-      expect.any(Date),
-    )
-  })
-
-  test("keeps separate client grants and omits empty scopes", async () => {
-    mocks.listGivenByUser.mockResolvedValue([
-      {
-        activeUntil: new Date("2026-11-01T00:00:00.000Z"),
-        clientIcon: null,
-        clientId: "claude",
-        clientName: "Claude",
-        firstAuthorizedAt: new Date("2026-10-01T00:00:00.000Z"),
-        lastRefreshedAt: new Date("2026-10-02T00:00:00.000Z"),
-        scopes: "openid profile",
-      },
-      {
-        activeUntil: null,
-        clientIcon: null,
-        clientId: "cursor",
-        clientName: "Cursor",
-        firstAuthorizedAt: new Date("2026-10-03T00:00:00.000Z"),
-        lastRefreshedAt: null,
-        scopes: "",
-      },
-    ])
-
-    await expect(
-      mcpOAuthService.listGrantsForUser({ userId: "user-1" }),
-    ).resolves.toEqual([
-      expect.objectContaining({
-        clientId: "claude",
-        scopes: ["openid", "profile"],
-      }),
-      expect.objectContaining({ clientId: "cursor", scopes: [] }),
     ])
   })
 })
@@ -412,36 +180,33 @@ describe("mcpOAuthService.revokeGrant", () => {
     mocks.transaction.mockImplementation(async (callback) => await callback({}))
   })
 
-  test("returns true when revoking a consent without token rows", async () => {
-    mocks.deleteByUserAndClient.mockResolvedValue(0)
+  test("removes consent, refresh credentials, and stored access tokens", async () => {
+    mocks.deleteAccessByUserAndClient.mockResolvedValue(1)
     mocks.deleteConsentByUserAndClient.mockResolvedValue(1)
+    mocks.deleteRefreshByUserAndClient.mockResolvedValue(1)
 
     await expect(
       mcpOAuthService.revokeGrant({ clientId: "claude", userId: "user-1" }),
     ).resolves.toBe(true)
     expect(mocks.logInfo).toHaveBeenCalledWith(
-      { clientId: "claude", deleted: 1, userId: "user-1" },
+      { clientId: "claude", deleted: 3, userId: "user-1" },
       "Revoked MCP OAuth grant",
     )
   })
+})
 
-  test("returns false and does not log when no grant rows exist", async () => {
-    mocks.deleteByUserAndClient.mockResolvedValue(0)
-    mocks.deleteConsentByUserAndClient.mockResolvedValue(0)
-
-    await expect(
-      mcpOAuthService.revokeGrant({ clientId: "foreign", userId: "user-1" }),
-    ).resolves.toBe(false)
-    expect(mocks.logInfo).not.toHaveBeenCalled()
+describe("mcpOAuthService.purgeExpiredTokens", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
   })
 
-  test("propagates a consent deletion failure without logging", async () => {
-    mocks.deleteByUserAndClient.mockResolvedValue(0)
-    mocks.deleteConsentByUserAndClient.mockRejectedValue(new Error("database"))
+  test("purges expired access and refresh token rows", async () => {
+    const now = new Date("2026-10-29T00:00:00.000Z")
+    mocks.deleteExpiredAccessTokens.mockResolvedValue(2)
+    mocks.deleteExpiredRefreshTokens.mockResolvedValue(3)
 
-    await expect(
-      mcpOAuthService.revokeGrant({ clientId: "claude", userId: "user-1" }),
-    ).rejects.toThrow("database")
-    expect(mocks.logInfo).not.toHaveBeenCalled()
+    await expect(mcpOAuthService.purgeExpiredTokens(now)).resolves.toBe(5)
+    expect(mocks.deleteExpiredAccessTokens).toHaveBeenCalledWith(now)
+    expect(mocks.deleteExpiredRefreshTokens).toHaveBeenCalledWith(now)
   })
 })

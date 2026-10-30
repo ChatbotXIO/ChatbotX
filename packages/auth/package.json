@@ -7,10 +7,13 @@
     ".": "./src/index.ts",
     "./server": "./src/server.ts",
     "./client": "./src/client.ts",
+    "./mcp-resource": "./src/mcp-resource.ts",
     "./provisioning": "./src/provisioning.ts",
     "./tenant": "./src/tenant-context.ts"
   },
   "dependencies": {
+    "@better-auth/mcp": "^1.7.14",
+    "@better-auth/oauth-provider": "^1.7.14",
     "@chatbotx.io/business": "workspace:*",
     "@chatbotx.io/database": "workspace:*",
     "@chatbotx.io/logger": "workspace:*",
@@ -18,7 +21,7 @@
     "@chatbotx.io/sdk": "workspace:*",
     "@chatbotx.io/utils": "workspace:*",
     "@t3-oss/env-core": "^0.13.11",
-    "better-auth": "^1.7.7",
+    "better-auth": "^1.7.14",
     "zod": "^4.3.6"
   },
   "devDependencies": {

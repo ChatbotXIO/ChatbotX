@@ -4,9 +4,9 @@ import * as schema from "../schema"
 
 export const oauthConsentRelations = defineRelationsPart(schema, (r) => ({
   oauthConsentModel: {
-    client: r.one.oauthApplicationModel({
+    client: r.one.oauthClientModel({
       from: r.oauthConsentModel.clientId,
-      to: r.oauthApplicationModel.clientId,
+      to: r.oauthClientModel.clientId,
     }),
     user: r.one.userModel({
       from: r.oauthConsentModel.userId,

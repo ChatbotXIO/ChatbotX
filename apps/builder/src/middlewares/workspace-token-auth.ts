@@ -1,4 +1,8 @@
 import {
+  type McpAccessTokenSubject,
+  verifyMcpAccessToken,
+} from "@chatbotx.io/auth/mcp-resource"
+import {
   isWorkspaceScheduledForDeletion,
   mcpOAuthService,
   workspaceApiTokenService,
@@ -11,6 +15,7 @@ import type {
   WorkspaceModel,
 } from "@chatbotx.io/database/types"
 import { ORPCError } from "@orpc/server"
+import { auth } from "@/lib/auth/auth"
 import { logger } from "@/lib/log"
 import { assertApiNotRateLimited } from "@/lib/rate-limit/api-rate-limit"
 import { getGuestClientIp } from "@/lib/rate-limit/guest-rate-limit"
@@ -83,13 +88,14 @@ export const workspaceTokenAuthMidddleware = base.middleware(
     await assertPreAuthNotRateLimited(context.headers, context.resHeaders)
 
     const tokenHash = await hashToken(token)
-    let auth:
+    let workspaceTokenAuth:
       | { workspace: WorkspaceModel; apiToken: WorkspaceApiTokenModel }
       | undefined
     try {
-      auth = await workspaceApiTokenService.findWorkspaceByTokenHash({
-        tokenHash,
-      })
+      workspaceTokenAuth =
+        await workspaceApiTokenService.findWorkspaceByTokenHash({
+          tokenHash,
+        })
     } catch (error) {
       // The token-row cache (up to 300s TTL) can outlive the workspace it
       // points at if a purge runs before the tag is invalidated — the
@@ -111,21 +117,21 @@ export const workspaceTokenAuthMidddleware = base.middleware(
       audit: { userId: string; source: string }
     }
 
-    if (auth) {
+    if (workspaceTokenAuth) {
       resolved = {
-        workspace: auth.workspace,
+        workspace: workspaceTokenAuth.workspace,
         apiToken: {
-          id: auth.apiToken.id,
-          workspaceId: auth.apiToken.workspaceId,
-          permission: auth.apiToken.permission,
-          scopes: auth.apiToken.scopes,
-          isDefault: auth.apiToken.isDefault,
+          id: workspaceTokenAuth.apiToken.id,
+          workspaceId: workspaceTokenAuth.apiToken.workspaceId,
+          permission: workspaceTokenAuth.apiToken.permission,
+          scopes: workspaceTokenAuth.apiToken.scopes,
+          isDefault: workspaceTokenAuth.apiToken.isDefault,
         },
         // API-token calls are attributed to the workspace owner because an
         // opaque token has no individual user identity to audit.
         audit: {
-          userId: auth.workspace.ownerId,
-          source: `api-token:${auth.apiToken.id}`,
+          userId: workspaceTokenAuth.workspace.ownerId,
+          source: `api-token:${workspaceTokenAuth.apiToken.id}`,
         },
       }
     } else {
@@ -133,9 +139,21 @@ export const workspaceTokenAuthMidddleware = base.middleware(
         throw invalidTokenError()
       }
 
+      let mcpAccessToken: McpAccessTokenSubject | null
+      try {
+        mcpAccessToken = await verifyMcpAccessToken(auth, bearerToken)
+      } catch (error) {
+        logger.warn({ err: error }, "Rejected invalid MCP OAuth access token")
+        throw invalidTokenError()
+      }
+      if (!mcpAccessToken) {
+        throw invalidTokenError()
+      }
+
       // OAuth calls retain the real user identity and OAuth client source.
       const oauth = await mcpOAuthService.resolvePrincipal({
-        accessToken: bearerToken,
+        clientId: mcpAccessToken.clientId,
+        userId: mcpAccessToken.userId,
         workspaceId: requestedWorkspaceId,
       })
 
@@ -160,7 +178,7 @@ export const workspaceTokenAuthMidddleware = base.middleware(
       resolved = {
         workspace: oauth.principal.workspace,
         apiToken: {
-          id: `oauth:${oauth.principal.accessTokenId}`,
+          id: `oauth:${oauth.principal.clientId}:${oauth.principal.user.id}`,
           workspaceId: oauth.principal.workspace.id,
           permission: "full",
           scopes: null,
@@ -220,7 +238,7 @@ export const workspaceTokenAuthMidddleware = base.middleware(
           context: {
             workspace,
             apiToken,
-            apiCredentialId: auth
+            apiCredentialId: workspaceTokenAuth
               ? `api-token:${apiToken.id}`
               : resolved.audit.source,
           },

@@ -13,26 +13,34 @@ const resolveIssuer = () =>
     env.CHATBOTX_API_URL.replace(apiPathSuffixPattern, "")
   ).replace(trailingSlashPattern, "")
 
-export const resolveResourceUrl = (
-  req: IncomingMessage,
-  pathSuffix: string,
-) => {
+const resolvePublicOrigin = (req: IncomingMessage): string => {
   const publicUrl = env.CHATBOTX_MCP_PUBLIC_URL
+  if (publicUrl) {
+    return new URL(publicUrl).origin
+  }
+
   const protocol =
     resolveHeaderValue(req.headers["x-forwarded-proto"]) || "http"
   const host =
     resolveHeaderValue(req.headers["x-forwarded-host"]) ||
     resolveHeaderValue(req.headers.host) ||
     "localhost"
-  const origin = publicUrl ? new URL(publicUrl).origin : `${protocol}://${host}`
-  return new URL(pathSuffix, origin).toString()
+  return `${protocol}://${host}`
 }
+
+export const resolveMcpResourceUrl = (req: IncomingMessage): string =>
+  new URL("/mcp", env.CHATBOTX_MCP_PUBLIC_URL ?? resolvePublicOrigin(req))
+    .toString()
+    .replace(trailingSlashPattern, "")
+
+const resolveMetadataUrl = (req: IncomingMessage, pathSuffix: string): string =>
+  new URL(pathSuffix, resolvePublicOrigin(req)).toString()
 
 export const buildProtectedResourceMetadata = (
   req: IncomingMessage,
-  pathSuffix: string,
+  _pathSuffix: string,
 ) => ({
-  resource: resolveResourceUrl(req, pathSuffix),
+  resource: resolveMcpResourceUrl(req),
   authorization_servers: [resolveIssuer()],
   scopes_supported: oauthScopes,
   bearer_methods_supported: ["header"],
@@ -43,10 +51,10 @@ export const buildWwwAuthenticate = (
   pathSuffix: string,
   error?: "invalid_token",
 ) => {
-  const metadataUrl = resolveResourceUrl(
-    req,
-    `${protectedResourcePrefix}${pathSuffix}`,
-  )
+  const metadataPath = env.CHATBOTX_MCP_PUBLIC_URL
+    ? `${protectedResourcePrefix}/mcp${pathSuffix}`
+    : `${protectedResourcePrefix}${pathSuffix}`
+  const metadataUrl = resolveMetadataUrl(req, metadataPath)
   const attributes = [`resource_metadata="${metadataUrl}"`]
   if (error) {
     attributes.unshift(

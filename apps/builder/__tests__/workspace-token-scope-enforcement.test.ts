@@ -26,6 +26,12 @@ vi.mock("@chatbotx.io/business", () => ({
   quotaEnforcementService: { isAtLimit },
 }))
 
+vi.mock("@chatbotx.io/auth/mcp-resource", () => ({
+  verifyMcpAccessToken: vi.fn(),
+}))
+
+vi.mock("@/lib/auth/auth", () => ({ auth: {} }))
+
 vi.mock("@/lib/log", () => ({
   logger: { warn: vi.fn(), error: vi.fn() },
 }))

@@ -222,6 +222,32 @@ describe("introspectToken", () => {
     expect(fetchMock).toHaveBeenCalledTimes(2)
   })
 
+  test("does not cache an OAuth JWT past its verified expiry", async () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date("2026-01-01T00:00:00.000Z"))
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        workspaceId: "workspace-1",
+        permission: "full",
+        scopes: null,
+      }),
+    })
+    globalThis.fetch = fetchMock as unknown as typeof fetch
+    const payload = Buffer.from(
+      JSON.stringify({ exp: Math.floor(Date.now() / 1000) + 1 }),
+    ).toString("base64url")
+    const token = `header.${payload}.signature`
+
+    const { introspectToken } = await import("../src/token-introspection")
+    await introspectToken(token)
+    vi.advanceTimersByTime(1001)
+    await introspectToken(token)
+
+    expect(fetchMock).toHaveBeenCalledTimes(2)
+  })
+
   test("caches a failed introspection for 30 seconds", async () => {
     vi.useFakeTimers()
     const fetchMock = vi.fn().mockResolvedValue({ ok: false, status: 500 })

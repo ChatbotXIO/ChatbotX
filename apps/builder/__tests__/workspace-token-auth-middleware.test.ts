@@ -11,6 +11,7 @@ const {
   isAtLimit,
   assertApiNotRateLimited,
   resolvePrincipal,
+  verifyMcpAccessToken,
   withAuditContext,
 } = vi.hoisted(() => ({
   findWorkspaceByTokenHash: vi.fn(),
@@ -20,6 +21,10 @@ const {
   isAtLimit: vi.fn().mockResolvedValue(false),
   assertApiNotRateLimited: vi.fn().mockResolvedValue(undefined),
   resolvePrincipal: vi.fn().mockResolvedValue({ kind: "invalidToken" }),
+  verifyMcpAccessToken: vi.fn().mockResolvedValue({
+    clientId: "client-oauth",
+    userId: "user-oauth",
+  }),
   withAuditContext: vi.fn(
     async (
       _context: Record<string, unknown>,
@@ -35,6 +40,10 @@ vi.mock("@chatbotx.io/business", () => ({
   userQuotaService: { getAccessState },
   quotaEnforcementService: { isAtLimit },
 }))
+
+vi.mock("@chatbotx.io/auth/mcp-resource", () => ({ verifyMcpAccessToken }))
+
+vi.mock("@/lib/auth/auth", () => ({ auth: {} }))
 
 vi.mock("@chatbotx.io/business/audit", () => ({ withAuditContext }))
 
@@ -91,7 +100,6 @@ const oauthPrincipal = {
   workspace: { id: "ws-oauth", ownerId: "owner-oauth" },
   user: { id: "user-oauth", email: "oauth@example.com" },
   clientId: "client-oauth",
-  accessTokenId: "access-token-id",
 }
 
 beforeEach(() => {
@@ -344,15 +352,17 @@ describe("workspaceTokenAuthMidddleware", () => {
 
     await callMiddleware(headers, "GET")
 
+    expect(verifyMcpAccessToken).toHaveBeenCalledWith({}, "oauth-token")
     expect(resolvePrincipal).toHaveBeenCalledWith({
-      accessToken: "oauth-token",
+      clientId: "client-oauth",
+      userId: "user-oauth",
       workspaceId: "ws-oauth",
     })
     expect(next).toHaveBeenCalledWith({
       context: {
         workspace: oauthPrincipal.workspace,
         apiToken: {
-          id: "oauth:access-token-id",
+          id: "oauth:client-oauth:user-oauth",
           workspaceId: "ws-oauth",
           permission: "full",
           scopes: null,

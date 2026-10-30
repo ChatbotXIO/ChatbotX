@@ -37,13 +37,13 @@ const {
 // `packages/auth/__tests__/generic-oauth-path.test.ts` (importing from the
 // package avoids pulling the heavy `@chatbotx.io/auth/server` module graph —
 // better-auth, drizzle, business — into this route test). This mock mirrors
-// that real implementation's three suffix/substring checks; a drift between
-// the two is caught by that dedicated test.
+// the generic callback and provider-specific shared social sign-in path.
 vi.mock("@chatbotx.io/auth/server", () => ({
-  isGenericOAuthPath: (pathname: string) =>
-    pathname.endsWith("/sign-in/oauth2") ||
-    pathname.endsWith("/oauth2/link") ||
-    pathname.includes("/oauth2/callback/"),
+  isGenericOAuthPath: (pathname: string, provider?: string) =>
+    pathname.endsWith("/callback/oidc") ||
+    (provider === "oidc" &&
+      (pathname.endsWith("/sign-in/social") ||
+        pathname.endsWith("/sign-up/social"))),
   SOCIAL_PROVIDERS: ["google", "facebook"] as const,
   warnIfGenericOAuthUnlicensed,
 }))
@@ -159,45 +159,48 @@ describe("auth route — white-label relay", () => {
   })
 })
 
-describe("auth route — generic OAuth enterprise gate (real isGenericOAuthPath matcher)", () => {
-  const genericOAuthPaths = [
-    "/api/auth/sign-in/oauth2",
-    "/api/auth/oauth2/link",
-    "/api/auth/oauth2/callback/oidc",
-  ]
-
-  for (const path of genericOAuthPaths) {
-    test(`returns 404 for ${path} when enterprise features are unavailable`, async () => {
-      hasEnterpriseFeatures.mockResolvedValue(false)
-
-      const response = await GET(new Request(`https://${PLATFORM_HOST}${path}`))
-
-      expect(response.status).toBe(404)
-      expect(defaultHandler).not.toHaveBeenCalled()
-      expect(warnIfGenericOAuthUnlicensed).toHaveBeenCalledWith(false)
-    })
-
-    test(`reaches the default handler for ${path} when enterprise features are available`, async () => {
-      hasEnterpriseFeatures.mockResolvedValue(true)
-
-      const response = await GET(new Request(`https://${PLATFORM_HOST}${path}`))
-
-      expect(response.status).not.toBe(404)
-      expect(defaultHandler).toHaveBeenCalledTimes(1)
-      expect(warnIfGenericOAuthUnlicensed).toHaveBeenCalledWith(true)
-      expect(await response.text()).toBe("default")
-    })
-  }
-
-  test("a path containing but not matching the generic OAuth segments is never gated", async () => {
+describe("auth route — generic OAuth enterprise gate", () => {
+  test("gates the generic OAuth callback when enterprise features are unavailable", async () => {
     hasEnterpriseFeatures.mockResolvedValue(false)
 
     const response = await GET(
-      new Request(`https://${PLATFORM_HOST}/api/auth/get-session`),
+      new Request(`https://${PLATFORM_HOST}/api/auth/callback/oidc`),
+    )
+
+    expect(response.status).toBe(404)
+    expect(defaultHandler).not.toHaveBeenCalled()
+    expect(warnIfGenericOAuthUnlicensed).toHaveBeenCalledWith(false)
+  })
+
+  test("gates the generic provider on the shared social sign-in route", async () => {
+    hasEnterpriseFeatures.mockResolvedValue(false)
+
+    const response = await POST(
+      new Request(`https://${PLATFORM_HOST}/api/auth/sign-in/social`, {
+        body: JSON.stringify({ provider: "oidc" }),
+        headers: { "Content-Type": "application/json" },
+        method: "POST",
+      }),
+    )
+
+    expect(response.status).toBe(404)
+    expect(defaultHandler).not.toHaveBeenCalled()
+  })
+
+  test("does not gate a first-party provider on the shared social sign-in route", async () => {
+    hasEnterpriseFeatures.mockResolvedValue(false)
+
+    const response = await POST(
+      new Request(`https://${PLATFORM_HOST}/api/auth/sign-in/social`, {
+        body: JSON.stringify({ provider: "google" }),
+        headers: { "Content-Type": "application/json" },
+        method: "POST",
+      }),
     )
 
     expect(response.status).not.toBe(404)
-    expect(defaultHandler).toHaveBeenCalledTimes(1)
+    expect(mockGetSocialAuthForTenant).toHaveBeenCalledWith("1", "google")
+    expect(warnIfGenericOAuthUnlicensed).not.toHaveBeenCalled()
   })
 })
 
@@ -207,7 +210,7 @@ describe("auth route — MCP browser responses", () => {
     const { POST } = await loadRoute()
 
     const response = await POST(
-      new Request(`https://${PLATFORM_HOST}/api/auth/mcp/token`, {
+      new Request(`https://${PLATFORM_HOST}/api/auth/oauth2/token`, {
         method: "POST",
       }),
     )
@@ -233,7 +236,7 @@ describe("auth route — MCP browser responses", () => {
     const { POST } = await loadRoute()
 
     const response = await POST(
-      new Request(`https://${PLATFORM_HOST}/api/auth/mcp/register`, {
+      new Request(`https://${PLATFORM_HOST}/api/auth/oauth2/register`, {
         method: "POST",
       }),
     )

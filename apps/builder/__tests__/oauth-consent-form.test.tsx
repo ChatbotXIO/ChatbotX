@@ -14,7 +14,7 @@ vi.mock("sonner", () => ({ toast: toastMock }))
 
 type UseActionOptions = {
   onError?: (args: { error: { serverError?: string } }) => void
-  onSuccess?: (args: { data?: { redirectURI?: string } }) => void
+  onSuccess?: (args: { data?: { url?: string } }) => void
 }
 
 const useActionMock = vi.hoisted(() => ({
@@ -64,7 +64,7 @@ beforeEach(() => {
     root.render(
       <OAuthConsentForm
         clientName="Inspector"
-        consentCode="consent-code"
+        oauthQuery="client_id=mcp-client"
         scopes={["openid"]}
         userEmail="owner@example.com"
       />,

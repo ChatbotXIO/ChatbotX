@@ -10820,7 +10820,7 @@
     },
     "grants": {
       "title": "Authorized applications",
-      "description": "Grants belong to your account and apply to every workspace you administer; revoking disconnects the client everywhere.",
+      "description": "Grants belong to your account and apply to every workspace you administer. Revoking stops refreshes and new tokens immediately; an already-issued access token can remain valid for up to five minutes.",
       "empty": "OAuth grants appear here after you connect an MCP client.",
       "client": "Client",
       "scopes": "Scopes",
@@ -10830,7 +10830,7 @@
       "noActiveToken": "No active token",
       "revoke": "Revoke",
       "revokeConfirmTitle": "Revoke application access?",
-      "revokeConfirmDescription": "Revoke access for {clientName}? This disconnects the client everywhere.",
+      "revokeConfirmDescription": "Revoke access for {clientName}? This disconnects the client everywhere. An already-issued access token can remain valid for up to five minutes.",
       "revokedSuccess": "Application access revoked.",
       "notFound": "OAuth grant no longer exists"
     }
