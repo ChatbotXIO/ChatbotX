@@ -10806,7 +10806,11 @@
     "signedInAs": "Đã đăng nhập với",
     "approve": "Chấp nhận",
     "deny": "Từ chối",
-    "failed": "Không thể hoàn tất việc ủy quyền. Vui lòng thử lại."
+    "failed": "Không thể hoàn tất việc ủy quyền. Vui lòng thử lại.",
+    "workspaceLabel": "Workspace",
+    "workspacePlaceholder": "Chọn workspace",
+    "workspaceHint": "{clientName} chỉ thao tác trên workspace này. Muốn đổi workspace, hãy ngắt kết nối rồi kết nối lại.",
+    "noWorkspaces": "Bạn không phải quản trị viên của workspace nào nên không thể cấp quyền cho ứng dụng này."
   },
   "chatbotxMcp": {
     "title": "ChatbotX MCP",

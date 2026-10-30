@@ -10806,7 +10806,11 @@
     "signedInAs": "Signed in as",
     "approve": "Approve",
     "deny": "Deny",
-    "failed": "无法完成授权。请重试。"
+    "failed": "无法完成授权。请重试。",
+    "workspaceLabel": "工作区",
+    "workspacePlaceholder": "选择工作区",
+    "workspaceHint": "{clientName} 只能在此工作区中操作。如需更换，请断开连接后重新连接。",
+    "noWorkspaces": "你不是任何工作区的管理员，因此无法授权此应用。"
   },
   "chatbotxMcp": {
     "title": "ChatbotX MCP",

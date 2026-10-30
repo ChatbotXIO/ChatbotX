@@ -44,6 +44,20 @@ vi.mock("@chatbotx.io/ui/components/ui/card", () => ({
   CardHeader: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   CardTitle: ({ children }: { children: ReactNode }) => <div>{children}</div>,
 }))
+vi.mock("@chatbotx.io/ui/components/ui/label", () => ({
+  Label: ({ children }: { children: ReactNode }) => <span>{children}</span>,
+}))
+vi.mock("@chatbotx.io/ui/components/ui/select", () => ({
+  Select: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  SelectContent: ({ children }: { children: ReactNode }) => (
+    <div>{children}</div>
+  ),
+  SelectItem: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  SelectTrigger: ({ children }: { children: ReactNode }) => (
+    <div>{children}</div>
+  ),
+  SelectValue: () => null,
+}))
 vi.mock("@/features/oauth-consent/actions/consent.action", () => ({
   submitOAuthConsentAction: vi.fn(),
 }))
@@ -55,10 +69,10 @@ const { OAuthConsentForm } = await import(
 let container: HTMLDivElement
 let root: Root
 
-beforeEach(() => {
-  vi.clearAllMocks()
-  container = document.createElement("div")
-  document.body.append(container)
+// A fresh root per render, so the preselected workspace state is not
+// carried over from an earlier render.
+const renderForm = (workspaces: { id: string; name: string }[]) => {
+  act(() => root.unmount())
   root = createRoot(container)
   act(() => {
     root.render(
@@ -67,9 +81,28 @@ beforeEach(() => {
         consentCode="consent-code"
         scopes={["openid"]}
         userEmail="owner@example.com"
+        workspaces={workspaces}
       />,
     )
   })
+}
+
+const findButton = (label: string) => {
+  const button = Array.from(container.querySelectorAll("button")).find(
+    (element) => element.textContent === label,
+  )
+  if (!button) {
+    throw new Error(`Button ${label} not found`)
+  }
+  return button
+}
+
+beforeEach(() => {
+  vi.clearAllMocks()
+  container = document.createElement("div")
+  document.body.append(container)
+  root = createRoot(container)
+  renderForm([{ id: "ws-1", name: "Alpha" }])
 })
 
 afterEach(() => {
@@ -78,6 +111,44 @@ afterEach(() => {
 })
 
 describe("OAuthConsentForm", () => {
+  test("preselects the only workspace and approves with it", () => {
+    act(() => findButton("approve").click())
+
+    expect(useActionMock.execute).toHaveBeenCalledWith({
+      accept: true,
+      consentCode: "consent-code",
+      workspaceId: "ws-1",
+    })
+  })
+
+  test("requires a workspace choice before approving when several are available", () => {
+    renderForm([
+      { id: "ws-1", name: "Alpha" },
+      { id: "ws-2", name: "Beta" },
+    ])
+
+    expect(findButton("approve").disabled).toBe(true)
+    expect(container.textContent).toContain("Beta")
+  })
+
+  test("denies without a workspace", () => {
+    act(() => findButton("deny").click())
+
+    expect(useActionMock.execute).toHaveBeenCalledWith({
+      accept: false,
+      consentCode: "consent-code",
+    })
+  })
+
+  test("blocks approval and explains when the user administers no workspace", () => {
+    renderForm([])
+
+    expect(findButton("approve").disabled).toBe(true)
+    expect(container.querySelector('[role="alert"]')?.textContent).toBe(
+      "noWorkspaces",
+    )
+  })
+
   test("shows a translated fallback when the consent action omits its redirect URI", () => {
     act(() => {
       useActionMock.lastOptions?.onSuccess?.({ data: {} })

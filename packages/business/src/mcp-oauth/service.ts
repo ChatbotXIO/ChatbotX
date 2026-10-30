@@ -3,12 +3,14 @@ import {
   oauthAccessTokenRepository,
   oauthApplicationRepository,
   oauthConsentRepository,
+  verificationRepository,
 } from "@chatbotx.io/database/repositories"
 import type {
   OAuthApplicationModel,
   UserModel,
   WorkspaceModel,
 } from "@chatbotx.io/database/types"
+import { z } from "zod"
 import { BaseService } from "../base.service"
 import { ChatbotXException } from "../errors"
 import { logger } from "../logger"
@@ -44,6 +46,12 @@ export type McpOAuthGrant = {
   activeUntil: Date | null
 }
 
+const mcpOAuthConsentRequestSchema = z.object({
+  clientId: z.string().min(1),
+  requireConsent: z.boolean(),
+  userId: z.string().min(1),
+})
+
 export class McpOAuthService extends BaseService {
   async resolvePrincipal(props: {
     accessToken: string
@@ -61,72 +69,234 @@ export class McpOAuthService extends BaseService {
       return { kind: "invalidToken" }
     }
 
-    let user: Pick<UserModel, "id" | "email">
-    try {
-      user = await userService.findByIdOrFail(token.userId)
-    } catch (error) {
-      if (error instanceof ChatbotXException && error.code === "notFound") {
-        return { kind: "invalidToken" }
-      }
-      throw error
+    const user = await this.findTokenUser(token.userId)
+    if (!user) {
+      return { kind: "invalidToken" }
     }
 
     /**
-     * OAuth credentials map to a full workspace token, so only workspace
-     * admins may authorize them. The cached member list is selection-only;
-     * the uncached membership below gates access immediately after removal.
-     * Support sessions are rejected because their synthetic membership must
-     * never mint durable third-party access.
+     * Every authorization passes the consent screen, so a token without a
+     * given consent was revoked or lost its workspace to a cascade. Rejecting
+     * it makes the client re-authorize instead of silently switching to
+     * another workspace.
      */
-    const members = (
-      await workspaceMemberService.listByUserId({
-        userId: user.id,
-      })
-    ).filter((member) => !isWorkspaceScheduledForDeletion(member.workspace))
-    const workspaceId =
-      props.workspaceId ??
-      (members.length === 1 ? members[0]?.workspaceId : undefined)
-
-    if (!workspaceId) {
-      if (members.length === 0) {
-        return { kind: "forbidden" }
-      }
-
-      return {
-        kind: "workspaceSelectionRequired",
-        workspaces: members.map((member) => ({
-          id: member.workspace.id,
-          name: member.workspace.name,
-        })),
-      }
+    const consent = await oauthConsentRepository.findLatestGivenByUserAndClient(
+      { userId: user.id, clientId: token.clientId },
+    )
+    if (!consent) {
+      return { kind: "invalidToken" }
     }
 
-    const realMember = await workspaceMemberService.findMembership({
-      workspaceId,
-      userId: user.id,
-    })
-    const access = await resolveWorkspaceAccess({
-      realMember,
-      workspaceId,
-      user,
-    })
+    // A bound consent is the limit of the grant: an explicit selection may
+    // only repeat it. Legacy consents (without a workspace) accept a pick.
     if (
-      !access ||
-      access.isSupportSession ||
-      !isWorkspaceAdminMember(access.member)
+      consent.workspaceId &&
+      props.workspaceId &&
+      props.workspaceId !== consent.workspaceId
     ) {
+      return { kind: "forbidden" }
+    }
+    let workspaceId = consent.workspaceId ?? props.workspaceId ?? undefined
+    if (!workspaceId) {
+      const selection = await this.selectOnlyWorkspace(user.id)
+      if (selection.kind !== "selected") {
+        return selection
+      }
+      workspaceId = selection.workspaceId
+    }
+
+    const workspace = await this.findAdminWorkspace({ user, workspaceId })
+    if (!workspace) {
       return { kind: "forbidden" }
     }
 
     return {
       kind: "principal",
       principal: {
-        workspace: access.workspace,
+        workspace,
         user,
         clientId: token.clientId,
         accessTokenId: token.id,
       },
     }
+  }
+
+  async resolveConsentRequest(props: {
+    userId: string
+    consentCode: string
+  }): Promise<{ clientId: string }> {
+    const verification = await verificationRepository.findByIdentifier(
+      props.consentCode,
+    )
+    if (!verification) {
+      throw new ChatbotXException("Consent request not found", "notFound", 404)
+    }
+
+    let request: unknown
+    try {
+      request = JSON.parse(verification.value)
+    } catch {
+      throw new ChatbotXException("Consent request not found", "notFound", 404)
+    }
+    const parsedRequest = mcpOAuthConsentRequestSchema.safeParse(request)
+    if (!parsedRequest.success) {
+      throw new ChatbotXException("Consent request not found", "notFound", 404)
+    }
+    if (
+      verification.expiresAt <= new Date() ||
+      parsedRequest.data.userId !== props.userId ||
+      !parsedRequest.data.requireConsent
+    ) {
+      throw new ChatbotXException(
+        "Consent request is invalid",
+        "forbidden",
+        403,
+      )
+    }
+
+    return { clientId: parsedRequest.data.clientId }
+  }
+
+  /**
+   * Workspaces the consent screen offers: the ones where the user is an
+   * admin and that are not scheduled for deletion. Cached membership is fine
+   * for listing; `bindConsentWorkspace` re-checks uncached.
+   */
+  async listAuthorizableWorkspaces(props: {
+    userId: string
+  }): Promise<{ id: string; name: string }[]> {
+    const members = await workspaceMemberService.listByUserId({
+      userId: props.userId,
+    })
+    return members
+      .filter(
+        (member) =>
+          !isWorkspaceScheduledForDeletion(member.workspace) &&
+          isWorkspaceAdminMember(member),
+      )
+      .map((member) => ({
+        id: member.workspace.id,
+        name: member.workspace.name,
+      }))
+  }
+
+  /**
+   * Throws unless the user may authorize an MCP client on this workspace.
+   * The consent action calls it before approving so a rejected pick never
+   * leaves an unbound consent behind.
+   */
+  async assertAuthorizableWorkspace(props: {
+    user: Pick<UserModel, "id" | "email">
+    workspaceId: string
+  }): Promise<WorkspaceModel> {
+    const workspace = await this.findAdminWorkspace({
+      user: props.user,
+      workspaceId: props.workspaceId,
+    })
+    if (!workspace || isWorkspaceScheduledForDeletion(workspace)) {
+      throw new ChatbotXException(
+        "You must be an admin of the selected workspace",
+        "forbidden",
+        403,
+      )
+    }
+    return workspace
+  }
+
+  /**
+   * Binds the client's consent to a workspace once the user approved it.
+   * Re-authorizing the same client rebinds every consent it holds for the
+   * user, which is how a user switches workspace.
+   */
+  async bindConsentWorkspace(props: {
+    user: Pick<UserModel, "id" | "email">
+    clientId: string
+    workspaceId: string
+  }): Promise<void> {
+    const workspace = await this.assertAuthorizableWorkspace(props)
+    const updated = await oauthConsentRepository.setWorkspaceByUserAndClient({
+      userId: props.user.id,
+      clientId: props.clientId,
+      workspaceId: workspace.id,
+    })
+    if (updated === 0) {
+      throw new ChatbotXException("OAuth consent not found", "notFound", 404)
+    }
+    logger.info(
+      {
+        userId: props.user.id,
+        clientId: props.clientId,
+        workspaceId: workspace.id,
+      },
+      "Bound MCP OAuth consent to workspace",
+    )
+  }
+
+  private async findTokenUser(
+    userId: string,
+  ): Promise<Pick<UserModel, "id" | "email"> | null> {
+    try {
+      return await userService.findByIdOrFail(userId)
+    } catch (error) {
+      if (error instanceof ChatbotXException && error.code === "notFound") {
+        return null
+      }
+      throw error
+    }
+  }
+
+  /** Legacy fallback for a consent with no bound workspace. */
+  private async selectOnlyWorkspace(
+    userId: string,
+  ): Promise<
+    | { kind: "selected"; workspaceId: string }
+    | Extract<
+        McpOAuthResolution,
+        { kind: "forbidden" | "workspaceSelectionRequired" }
+      >
+  > {
+    const workspaces = await this.listAuthorizableWorkspaces({ userId })
+    const [onlyWorkspace] = workspaces
+    if (workspaces.length === 1 && onlyWorkspace) {
+      return { kind: "selected", workspaceId: onlyWorkspace.id }
+    }
+    if (workspaces.length === 0) {
+      return { kind: "forbidden" }
+    }
+
+    return {
+      kind: "workspaceSelectionRequired",
+      workspaces,
+    }
+  }
+
+  /**
+   * OAuth credentials map to a full workspace token, so only workspace
+   * admins may hold them. The membership read is uncached so a removal takes
+   * effect immediately. Support sessions are rejected because their synthetic
+   * membership must never mint durable third-party access.
+   */
+  private async findAdminWorkspace(props: {
+    user: Pick<UserModel, "id" | "email">
+    workspaceId: string
+  }): Promise<WorkspaceModel | null> {
+    const realMember = await workspaceMemberService.findMembership({
+      workspaceId: props.workspaceId,
+      userId: props.user.id,
+    })
+    const access = await resolveWorkspaceAccess({
+      realMember,
+      workspaceId: props.workspaceId,
+      user: props.user,
+    })
+    if (
+      !access ||
+      access.isSupportSession ||
+      !isWorkspaceAdminMember(access.member)
+    ) {
+      return null
+    }
+    return access.workspace
   }
 
   async listGrantsForUser(props: { userId: string }): Promise<McpOAuthGrant[]> {

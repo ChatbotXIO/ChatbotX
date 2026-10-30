@@ -10806,7 +10806,11 @@
     "signedInAs": "Signed in as",
     "approve": "Approve",
     "deny": "Deny",
-    "failed": "Die Autorisierung konnte nicht abgeschlossen werden. Bitte versuchen Sie es erneut."
+    "failed": "Die Autorisierung konnte nicht abgeschlossen werden. Bitte versuchen Sie es erneut.",
+    "workspaceLabel": "Workspace",
+    "workspacePlaceholder": "Workspace auswählen",
+    "workspaceHint": "{clientName} kann nur in diesem Workspace handeln. Zum späteren Wechseln trennen und erneut verbinden.",
+    "noWorkspaces": "Du bist in keinem Workspace Administrator und kannst diese Anwendung daher nicht autorisieren."
   },
   "chatbotxMcp": {
     "title": "ChatbotX MCP",

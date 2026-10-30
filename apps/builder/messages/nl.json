@@ -10806,7 +10806,11 @@
     "signedInAs": "Signed in as",
     "approve": "Approve",
     "deny": "Deny",
-    "failed": "De autorisatie kon niet worden voltooid. Probeer het opnieuw."
+    "failed": "De autorisatie kon niet worden voltooid. Probeer het opnieuw.",
+    "workspaceLabel": "Werkruimte",
+    "workspacePlaceholder": "Selecteer een werkruimte",
+    "workspaceHint": "{clientName} kan alleen in deze werkruimte handelen. Verbreek de verbinding en maak opnieuw verbinding om later te wisselen.",
+    "noWorkspaces": "Je bent geen beheerder van een werkruimte, dus je kunt deze applicatie niet autoriseren."
   },
   "chatbotxMcp": {
     "title": "ChatbotX MCP",

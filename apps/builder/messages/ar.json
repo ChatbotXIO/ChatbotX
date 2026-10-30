@@ -10806,7 +10806,11 @@
     "signedInAs": "Signed in as",
     "approve": "Approve",
     "deny": "Deny",
-    "failed": "تعذر إكمال التفويض. يرجى المحاولة مرة أخرى."
+    "failed": "تعذر إكمال التفويض. يرجى المحاولة مرة أخرى.",
+    "workspaceLabel": "مساحة العمل",
+    "workspacePlaceholder": "اختر مساحة عمل",
+    "workspaceHint": "يمكن لـ {clientName} العمل على مساحة العمل هذه فقط. للتبديل لاحقًا، افصل الاتصال ثم اتصل مجددًا.",
+    "noWorkspaces": "لست مسؤولًا في أي مساحة عمل، لذا لا يمكنك تفويض هذا التطبيق."
   },
   "chatbotxMcp": {
     "title": "ChatbotX MCP",

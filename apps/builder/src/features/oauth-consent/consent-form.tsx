@@ -8,16 +8,28 @@ import {
   CardHeader,
   CardTitle,
 } from "@chatbotx.io/ui/components/ui/card"
+import { Label } from "@chatbotx.io/ui/components/ui/label"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@chatbotx.io/ui/components/ui/select"
 import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
+import { useState } from "react"
 import { toast } from "sonner"
 import { submitOAuthConsentAction } from "./actions/consent.action"
+
+type ConsentWorkspace = { id: string; name: string }
 
 type OAuthConsentFormProps = {
   clientName: string
   consentCode: string
   scopes: string[]
   userEmail: string
+  workspaces: ConsentWorkspace[]
 }
 
 export const OAuthConsentForm = ({
@@ -25,8 +37,12 @@ export const OAuthConsentForm = ({
   consentCode,
   scopes,
   userEmail,
+  workspaces,
 }: OAuthConsentFormProps) => {
   const t = useTranslations("oauthConsent")
+  const [workspaceId, setWorkspaceId] = useState<string | undefined>(
+    workspaces.length === 1 ? workspaces[0]?.id : undefined,
+  )
   const { execute, isPending } = useAction(submitOAuthConsentAction, {
     onSuccess: ({ data }) => {
       if (!data?.redirectURI) {
@@ -40,8 +56,15 @@ export const OAuthConsentForm = ({
     },
   })
 
-  const handleConsent = (accept: boolean) => {
-    execute({ accept, consentCode })
+  const handleDeny = () => {
+    execute({ accept: false, consentCode })
+  }
+
+  const handleApprove = () => {
+    if (!workspaceId) {
+      return
+    }
+    execute({ accept: true, consentCode, workspaceId })
   }
 
   return (
@@ -58,6 +81,12 @@ export const OAuthConsentForm = ({
               <dd className="font-medium">{userEmail}</dd>
             </div>
           </dl>
+          <WorkspacePicker
+            clientName={clientName}
+            onChange={setWorkspaceId}
+            value={workspaceId}
+            workspaces={workspaces}
+          />
           <section aria-labelledby="oauth-permissions-title">
             <h2 className="font-medium" id="oauth-permissions-title">
               {t("permissionsTitle")}
@@ -71,15 +100,15 @@ export const OAuthConsentForm = ({
           <div className="flex justify-end gap-3">
             <Button
               disabled={isPending}
-              onClick={() => handleConsent(false)}
+              onClick={handleDeny}
               type="button"
               variant="outline"
             >
               {t("deny")}
             </Button>
             <Button
-              disabled={isPending}
-              onClick={() => handleConsent(true)}
+              disabled={isPending || !workspaceId}
+              onClick={handleApprove}
               type="button"
             >
               {t("approve")}
@@ -88,5 +117,61 @@ export const OAuthConsentForm = ({
         </CardContent>
       </Card>
     </main>
+  )
+}
+
+type WorkspacePickerProps = {
+  clientName: string
+  onChange: (workspaceId: string) => void
+  value: string | undefined
+  workspaces: ConsentWorkspace[]
+}
+
+const WorkspacePicker = ({
+  clientName,
+  onChange,
+  value,
+  workspaces,
+}: WorkspacePickerProps) => {
+  const t = useTranslations("oauthConsent")
+
+  if (workspaces.length === 0) {
+    return (
+      <p className="text-destructive text-sm" role="alert">
+        {t("noWorkspaces")}
+      </p>
+    )
+  }
+
+  return (
+    <div className="space-y-2">
+      <Label htmlFor="oauth-consent-workspace">{t("workspaceLabel")}</Label>
+      <Select
+        items={workspaces.map((workspace) => ({
+          label: workspace.name,
+          value: workspace.id,
+        }))}
+        onValueChange={(next) => {
+          if (typeof next === "string") {
+            onChange(next)
+          }
+        }}
+        value={value ?? null}
+      >
+        <SelectTrigger className="w-full" id="oauth-consent-workspace">
+          <SelectValue placeholder={t("workspacePlaceholder")} />
+        </SelectTrigger>
+        <SelectContent className="max-h-64 min-w-(--anchor-width)">
+          {workspaces.map((workspace) => (
+            <SelectItem key={workspace.id} value={workspace.id}>
+              {workspace.name}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      <p className="text-muted-foreground text-xs">
+        {t("workspaceHint", { clientName })}
+      </p>
+    </div>
   )
 }

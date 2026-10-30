@@ -10806,7 +10806,11 @@
     "signedInAs": "Signed in as",
     "approve": "Approve",
     "deny": "Deny",
-    "failed": "L’autorisation n’a pas pu être finalisée. Veuillez réessayer."
+    "failed": "L’autorisation n’a pas pu être finalisée. Veuillez réessayer.",
+    "workspaceLabel": "Espace de travail",
+    "workspacePlaceholder": "Sélectionnez un espace de travail",
+    "workspaceHint": "{clientName} ne peut agir que sur cet espace de travail. Pour en changer plus tard, déconnectez-vous puis reconnectez-vous.",
+    "noWorkspaces": "Vous n'êtes administrateur d'aucun espace de travail, vous ne pouvez donc pas autoriser cette application."
   },
   "chatbotxMcp": {
     "title": "ChatbotX MCP",

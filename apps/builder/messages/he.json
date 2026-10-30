@@ -10806,7 +10806,11 @@
     "signedInAs": "Signed in as",
     "approve": "Approve",
     "deny": "Deny",
-    "failed": "לא ניתן היה להשלים את ההרשאה. נסה שוב."
+    "failed": "לא ניתן היה להשלים את ההרשאה. נסה שוב.",
+    "workspaceLabel": "סביבת עבודה",
+    "workspacePlaceholder": "בחר סביבת עבודה",
+    "workspaceHint": "{clientName} יכול לפעול רק בסביבת עבודה זו. כדי להחליף בהמשך, נתק והתחבר מחדש.",
+    "noWorkspaces": "אינך מנהל באף סביבת עבודה, ולכן אינך יכול לאשר את האפליקציה הזו."
   },
   "chatbotxMcp": {
     "title": "ChatbotX MCP",

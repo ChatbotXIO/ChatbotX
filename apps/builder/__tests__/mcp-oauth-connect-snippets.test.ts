@@ -2,21 +2,16 @@ import { describe, expect, test } from "vitest"
 import { buildMcpConnectSnippets } from "@/features/mcp-oauth/lib/connect-snippets"
 
 describe("buildMcpConnectSnippets", () => {
-  test("builds OAuth and workspace-token connection artifacts", () => {
+  test("builds workspace-free OAuth URLs and the workspace-token fallback", () => {
     const snippets = buildMcpConnectSnippets({
       builderUrl: "https://app.chatbotx.io",
       mcpUrl: "https://app.chatbotx.io/mcp",
-      workspaceId: "42",
     })
 
-    expect(snippets.streamableUrl).toBe(
-      "https://app.chatbotx.io/mcp/messages?workspace_id=42",
-    )
-    expect(snippets.sseUrl).toBe(
-      "https://app.chatbotx.io/mcp/sse?workspace_id=42",
-    )
+    expect(snippets.streamableUrl).toBe("https://app.chatbotx.io/mcp/messages")
+    expect(snippets.sseUrl).toBe("https://app.chatbotx.io/mcp/sse")
     expect(snippets.claudeCode).toBe(
-      'claude mcp add chatbotx -t http -s user "https://app.chatbotx.io/mcp/messages?workspace_id=42"',
+      'claude mcp add chatbotx -t http -s user "https://app.chatbotx.io/mcp/messages"',
     )
     expect(JSON.parse(snippets.claudeDesktop)).toEqual({
       mcpServers: {

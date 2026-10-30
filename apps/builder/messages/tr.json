@@ -10806,7 +10806,11 @@
     "signedInAs": "Signed in as",
     "approve": "Approve",
     "deny": "Deny",
-    "failed": "Yetkilendirme tamamlanamadı. Lütfen tekrar deneyin."
+    "failed": "Yetkilendirme tamamlanamadı. Lütfen tekrar deneyin.",
+    "workspaceLabel": "Çalışma alanı",
+    "workspacePlaceholder": "Bir çalışma alanı seçin",
+    "workspaceHint": "{clientName} yalnızca bu çalışma alanında işlem yapabilir. Daha sonra değiştirmek için bağlantıyı kesip yeniden bağlanın.",
+    "noWorkspaces": "Hiçbir çalışma alanında yönetici değilsiniz, bu nedenle bu uygulamayı yetkilendiremezsiniz."
   },
   "chatbotxMcp": {
     "title": "ChatbotX MCP",
