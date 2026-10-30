@@ -6466,8 +6466,7 @@
     }
   },
   "manageSidebar": {
-    "communityGroup": "المجتمع",
-    "enterpriseGroup": "المؤسسات",
+    "administrationGroup": "الإدارة",
     "platformGroup": "المنصة",
     "toolsGroup": "الأدوات",
     "saasGroup": "البرمجيات كخدمة",

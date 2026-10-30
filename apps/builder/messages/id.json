@@ -6855,8 +6855,7 @@
     }
   },
   "manageSidebar": {
-    "communityGroup": "Komunitas",
-    "enterpriseGroup": "Enterprise",
+    "administrationGroup": "Administrasi",
     "platformGroup": "Platform",
     "toolsGroup": "Alat",
     "saasGroup": "SaaS",

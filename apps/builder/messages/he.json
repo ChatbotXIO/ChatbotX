@@ -4646,8 +4646,7 @@
     }
   },
   "manageSidebar": {
-    "communityGroup": "קהילה",
-    "enterpriseGroup": "ארגוני",
+    "administrationGroup": "ניהול",
     "platformGroup": "פלטפורמה",
     "toolsGroup": "כלים",
     "saasGroup": "SaaS",

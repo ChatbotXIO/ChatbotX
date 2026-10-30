@@ -6855,8 +6855,7 @@
     }
   },
   "manageSidebar": {
-    "communityGroup": "Topluluk",
-    "enterpriseGroup": "Kurumsal",
+    "administrationGroup": "Yönetim",
     "platformGroup": "Platform",
     "toolsGroup": "Araçlar",
     "saasGroup": "SaaS",

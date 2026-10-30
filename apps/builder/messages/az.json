@@ -7724,8 +7724,7 @@
     }
   },
   "manageSidebar": {
-    "communityGroup": "İcma",
-    "enterpriseGroup": "Müəssisə",
+    "administrationGroup": "İdarəetmə",
     "platformGroup": "Platforma",
     "toolsGroup": "Alətlər",
     "saasGroup": "SaaS",

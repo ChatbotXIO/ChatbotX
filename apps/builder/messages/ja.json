@@ -6855,8 +6855,7 @@
     }
   },
   "manageSidebar": {
-    "communityGroup": "コミュニティ",
-    "enterpriseGroup": "エンタープライズ",
+    "administrationGroup": "管理",
     "platformGroup": "プラットフォーム",
     "toolsGroup": "ツール",
     "saasGroup": "SaaS",

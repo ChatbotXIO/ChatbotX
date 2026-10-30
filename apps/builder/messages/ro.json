@@ -6764,8 +6764,7 @@
     }
   },
   "manageSidebar": {
-    "communityGroup": "Comunitate",
-    "enterpriseGroup": "Enterprise",
+    "administrationGroup": "Administrare",
     "platformGroup": "Platformă",
     "portalCustomDomain": "Domeniu personalizat",
     "portalPaymentProcessor": "Procesator de plăți",

@@ -6855,8 +6855,7 @@
     }
   },
   "manageSidebar": {
-    "communityGroup": "Community",
-    "enterpriseGroup": "Enterprise",
+    "administrationGroup": "Administration",
     "platformGroup": "Plattform",
     "toolsGroup": "Tools",
     "saasGroup": "SaaS",
