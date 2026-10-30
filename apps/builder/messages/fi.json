@@ -6855,8 +6855,7 @@
     }
   },
   "manageSidebar": {
-    "communityGroup": "Yhteisö",
-    "enterpriseGroup": "Yritys",
+    "administrationGroup": "Hallinta",
     "platformGroup": "Alusta",
     "toolsGroup": "Työkalut",
     "saasGroup": "SaaS",

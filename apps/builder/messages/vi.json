@@ -7084,8 +7084,7 @@
     }
   },
   "manageSidebar": {
-    "communityGroup": "Cộng đồng",
-    "enterpriseGroup": "Doanh nghiệp",
+    "administrationGroup": "Quản trị",
     "platformGroup": "Nền tảng",
     "toolsGroup": "Công cụ",
     "saasGroup": "SaaS",

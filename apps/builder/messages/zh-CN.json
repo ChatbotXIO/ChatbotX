@@ -5214,8 +5214,7 @@
     "title": "Make.com"
   },
   "manageSidebar": {
-    "communityGroup": "社区",
-    "enterpriseGroup": "企业版",
+    "administrationGroup": "管理",
     "platformGroup": "平台",
     "portalCustomDomain": "自订网域",
     "portalPaymentProcessor": "支付处理器",

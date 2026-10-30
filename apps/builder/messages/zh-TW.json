@@ -6901,8 +6901,7 @@
     }
   },
   "manageSidebar": {
-    "communityGroup": "社群",
-    "enterpriseGroup": "企業版",
+    "administrationGroup": "管理",
     "platformGroup": "平台",
     "toolsGroup": "工具",
     "saasGroup": "SaaS",

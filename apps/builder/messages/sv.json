@@ -5214,8 +5214,7 @@
     "title": "Make"
   },
   "manageSidebar": {
-    "communityGroup": "Gemenskap",
-    "enterpriseGroup": "Enterprise",
+    "administrationGroup": "Administration",
     "platformGroup": "Plattform",
     "portalCustomDomain": "Anpassad domän",
     "portalPaymentProcessor": "Betalningsleverantör",
