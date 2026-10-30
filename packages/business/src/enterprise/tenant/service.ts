@@ -14,6 +14,7 @@ import { connectionStateService } from "../../connection/state-service"
 import { inboxService } from "../../inbox/service"
 import { logger } from "../../logger"
 import type { EmailTemplate } from "../../platform/settings"
+import { hasEnterpriseFeatures } from "../../user/entitlements"
 import { userQuotaService } from "../../user-quota/service"
 import { workspaceLifecycleService } from "../../workspace-lifecycle/service"
 
@@ -79,7 +80,9 @@ export const tenantService = {
       this.findByOwner(ownerId),
     ])
 
-    const platformHidden = new Set(root?.hiddenChannels ?? [])
+    const platformHidden = new Set(
+      (await hasEnterpriseFeatures()) ? (root?.hiddenChannels ?? []) : [],
+    )
     const resellerHidden = new Set(
       owned?.status === "active" ? (owned.hiddenChannels ?? []) : [],
     )

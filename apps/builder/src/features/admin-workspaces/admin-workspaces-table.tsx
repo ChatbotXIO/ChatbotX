@@ -16,7 +16,6 @@ import { CreateAdminWorkspaceDialog } from "@/enterprise/features/admin-workspac
 import type { ListAdminWorkspacesResponse } from "./queries"
 
 type AdminWorkspacesTableProps = {
-  canCreateWorkspace: boolean
   consentRequired: boolean
   promises: Promise<[ListAdminWorkspacesResponse]>
 }
@@ -48,7 +47,6 @@ function OwnerCell({
 }
 
 export function AdminWorkspacesTable({
-  canCreateWorkspace,
   consentRequired,
   promises,
 }: AdminWorkspacesTableProps) {
@@ -187,7 +185,7 @@ export function AdminWorkspacesTable({
   return (
     <DataTable table={table}>
       <DataTableToolbar table={table}>
-        {canCreateWorkspace && <CreateAdminWorkspaceDialog />}
+        <CreateAdminWorkspaceDialog />
       </DataTableToolbar>
     </DataTable>
   )

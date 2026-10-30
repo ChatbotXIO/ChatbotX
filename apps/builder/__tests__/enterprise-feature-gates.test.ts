@@ -105,6 +105,10 @@ const { listAuditLogs } = await import(
   "../src/enterprise/features/audit-logs/queries"
 )
 
+const { updateRootPlatformChannelsAction } = await import(
+  "../src/features/platform-channels/update-platform-channels.action"
+)
+
 const brandingInput = {
   ctx: { user: { id: "user-1" } },
   parsedInput: {
@@ -118,6 +122,10 @@ const brandingInput = {
 const templateInput = {
   ctx: { user: { id: "user-1" } },
   parsedInput: { type: "signup", subject: "s", body: "b" },
+}
+
+const channelInput = {
+  parsedInput: { hiddenChannels: ["tiktok"] },
 }
 
 beforeEach(() => {
@@ -147,6 +155,13 @@ describe("enterprise mutations reject without a valid license", () => {
       code: "enterpriseFeatureRequired",
     })
     expect(mockUpsertByOwner).not.toHaveBeenCalled()
+    expect(mockUpsertById).not.toHaveBeenCalled()
+  })
+
+  test("updateRootPlatformChannelsAction throws enterpriseFeatureRequired and writes nothing", async () => {
+    await expect(
+      (updateRootPlatformChannelsAction as Action)(channelInput),
+    ).rejects.toMatchObject({ code: "enterpriseFeatureRequired" })
     expect(mockUpsertById).not.toHaveBeenCalled()
   })
 
@@ -193,6 +208,14 @@ describe("enterprise mutations proceed with a valid license", () => {
         signupEmailTemplate: { subject: "s", body: "b" },
       }),
     )
+  })
+
+  test("updateRootPlatformChannelsAction writes the root tenant policy", async () => {
+    await (updateRootPlatformChannelsAction as Action)(channelInput)
+
+    expect(mockUpsertById).toHaveBeenCalledWith("1", {
+      hiddenChannels: ["tiktok"],
+    })
   })
 
   test("listAuditLogs returns rows", async () => {

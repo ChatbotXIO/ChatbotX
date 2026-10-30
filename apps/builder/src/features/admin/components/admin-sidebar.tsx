@@ -51,6 +51,9 @@ export function AdminSidebar({
       url: "/admin/platform-credentials",
       icon: Grid2x2PlusIcon,
     },
+  ]
+
+  const enterpriseItems = [
     {
       title: t("platformAdmin.workspaces.title"),
       url: "/admin/workspaces",
@@ -66,9 +69,6 @@ export function AdminSidebar({
       url: "/admin/platform-channels",
       icon: RadioTowerIcon,
     },
-  ]
-
-  const enterpriseItems = [
     {
       title: t("platformAdmin.admins.title"),
       url: "/admin/admins",

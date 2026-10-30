@@ -1,6 +1,6 @@
 "use server"
 
-import { tenantService } from "@chatbotx.io/business"
+import { assertEnterpriseFeatures, tenantService } from "@chatbotx.io/business"
 import { ROOT_TENANT_ID } from "@chatbotx.io/database/schema"
 import type { UserModel } from "@chatbotx.io/database/types"
 import {
@@ -37,6 +37,7 @@ export const updateRootPlatformChannelsAction = superAdminActionClient
   .inputSchema(updatePlatformChannelsSchema)
   .action(
     async ({ parsedInput }: { parsedInput: UpdatePlatformChannelsSchema }) => {
+      await assertEnterpriseFeatures()
       await tenantService.upsertById(ROOT_TENANT_ID, parsedInput)
     },
   )

@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
+const mockHasEnterpriseFeatures = vi.hoisted(() => vi.fn())
+
 // ---------------------------------------------------------------------------
 // tenantService.resolveVisibleChannels is the two-tier channel-visibility
 // policy: the platform (root tenant) sets the ceiling for every tenant, and a
@@ -26,6 +28,10 @@ vi.mock("@chatbotx.io/redis", async (importOriginal) => ({
   invalidateCacheByTags: vi.fn(async () => undefined),
 }))
 
+vi.mock("../src/user/entitlements", () => ({
+  hasEnterpriseFeatures: mockHasEnterpriseFeatures,
+}))
+
 const { tenantService } = await import("../src/enterprise/tenant/service")
 
 type TenantRow = {
@@ -40,6 +46,7 @@ describe("tenantService.resolveVisibleChannels", () => {
   beforeEach(() => {
     root = null
     owned = null
+    mockHasEnterpriseFeatures.mockResolvedValue(true)
     vi.spyOn(tenantService, "findById").mockImplementation(
       () => Promise.resolve(root) as ReturnType<typeof tenantService.findById>,
     )
@@ -66,6 +73,15 @@ describe("tenantService.resolveVisibleChannels", () => {
 
     expect(visible).not.toContain("tiktok")
     expect(visible).toContain("whatsapp")
+  })
+
+  test("ignores platform hidden channels on OSS", async () => {
+    mockHasEnterpriseFeatures.mockResolvedValue(false)
+    root = { status: "active", hiddenChannels: ["tiktok"] }
+
+    const visible = await tenantService.resolveVisibleChannels("plain-user")
+
+    expect(visible).toContain("tiktok")
   })
 
   test("a reseller can narrow further on top of the platform ceiling", async () => {

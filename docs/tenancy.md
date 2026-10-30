@@ -244,7 +244,7 @@ keeps working even after it is hidden. Hiding only blocks *new* creation.
 
 | Tier | Set by | Scope | Where |
 |------|--------|-------|-------|
-| Platform | SaaS operator | Ceiling for **every** tenant | root tenant's `hiddenChannels`, edited at `/admin/platform-channels` (superAdmin route) |
+| Platform | SaaS operator | Ceiling for **every** tenant on Enterprise or Cloud | root tenant's `hiddenChannels`, edited at `/admin/platform-channels` (superAdmin Enterprise/Cloud route) |
 | Reseller | White-label owner | Narrows further, **only for their own users** | reseller tenant's `hiddenChannels`, edited at `/manage/platform-channels` (active-tenant-owner route) |
 
 The two hidden sets are **unioned, never overridden** — a reseller can only narrow what the
@@ -258,14 +258,15 @@ disabled + checked with a tooltip so a reseller cannot un-hide them.
 
 ```
 CREATABLE_CHANNELS
-  minus root tenant's hiddenChannels
+  minus root tenant's hiddenChannels  (Enterprise or Cloud only)
   minus owned tenant's hiddenChannels  (only when owned.status === "active")
 ```
 
 A suspended reseller tenant contributes **nothing** to the hidden set — its policy is ignored
 until reactivated (the `/manage` route is itself blocked for non-active tenants, so a suspended
-reseller can never reach the toggles). A plain platform user with no owned tenant sees whatever
-the platform allows.
+reseller can never reach the toggles). On OSS, the root tenant's hidden channels are ignored, so
+a downgraded deployment restores every creatable channel. A plain platform user with no owned
+tenant sees whatever the applicable platform policy allows.
 
 The `ownerId` passed in must be the **tenant-aware owner**, resolved by
 `resolvePlatformOwnerId` / `resolveOwnerForWorkspace`
