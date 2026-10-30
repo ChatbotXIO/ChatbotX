@@ -42,6 +42,8 @@ export type BeforeStartContext = {
    * `Promise.all` instead of waiting on workspace resolve-or-create first.
    */
   targetWorkspacePromise: Promise<WorkspaceModel>
+  /** Provider callback URL persisted on final OAuth auth values. */
+  callbackUrl: string
   /** Type-erased (`ConnectionCredential = unknown`, same as `resolveOAuthCredential`'s own return) — a caller that needs the concrete shape casts it, same as every other generic-credential call site. */
   credential: Record<string, unknown>
 }
@@ -145,6 +147,7 @@ export async function startChannelConnect(
       userId,
       platformOwnerId,
       targetWorkspacePromise,
+      callbackUrl: resolved.callbackUrl,
       credential: resolved.credential,
     })
     if (before.type === "redirect") {
