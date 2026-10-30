@@ -16,6 +16,7 @@ const findManyContactsOnBroadcasts = vi.fn()
 const updateReturning = vi.fn()
 const updateWhere = vi.fn()
 const insertOnConflictDoNothing = vi.fn()
+const countRows = vi.fn()
 
 vi.mock("@chatbotx.io/analytics", () => ({
   broadcastAnalyticsService: { getContacts: vi.fn() },
@@ -44,6 +45,7 @@ vi.mock("@chatbotx.io/database/client", () => ({
         },
       }),
     }),
+    $count: (...args: unknown[]) => countRows(...args),
     insert: () => ({
       values: (values: unknown) => ({
         onConflictDoNothing: () => insertOnConflictDoNothing({ values }),
@@ -213,21 +215,37 @@ describe("resolveTemplateIntegrationMessengerId", () => {
   })
 })
 
+// Starts the prepared contactCount: a retried prepare counts the rows its
+// failed run kept.
+describe("countRecipients", () => {
+  test("counts the broadcast's stored recipient rows", async () => {
+    countRows.mockResolvedValue(7)
+
+    const total = await broadcastService.countRecipients({ broadcastId: "b-1" })
+
+    expect(total).toBe(7)
+    expect(countRows).toHaveBeenCalledTimes(1)
+  })
+})
+
 describe("insertRecipients", () => {
-  test("no-ops without an insert when recipients is empty", async () => {
-    await broadcastService.insertRecipients({ recipients: [] })
+  const recipient = (contactId: string) => ({
+    broadcastId: "b-1",
+    contactId,
+    contactInboxId: `ci-${contactId}`,
+    conversationId: `conv-${contactId}`,
+  })
+
+  test("no-ops without an insert and reports zero when recipients is empty", async () => {
+    const inserted = await broadcastService.insertRecipients({ recipients: [] })
+
+    expect(inserted).toBe(0)
     expect(insertOnConflictDoNothing).not.toHaveBeenCalled()
   })
 
   test("bulk-inserts recipient rows with onConflictDoNothing", async () => {
-    const recipients = [
-      {
-        broadcastId: "b-1",
-        contactId: "c-1",
-        contactInboxId: "ci-1",
-        conversationId: "conv-1",
-      },
-    ]
+    insertOnConflictDoNothing.mockResolvedValue({ rowCount: 1 })
+    const recipients = [recipient("c-1")]
 
     await broadcastService.insertRecipients({ recipients })
 
@@ -235,6 +253,18 @@ describe("insertRecipients", () => {
     expect(insertOnConflictDoNothing).toHaveBeenCalledWith({
       values: recipients,
     })
+  })
+
+  // A contact reached through several inboxes is one recipient: the conflict
+  // is skipped, so the count must be what was stored, not what was offered.
+  test("reports only the rows stored, not the conflicts it skipped", async () => {
+    insertOnConflictDoNothing.mockResolvedValue({ rowCount: 1 })
+
+    const inserted = await broadcastService.insertRecipients({
+      recipients: [recipient("c-1"), recipient("c-1")],
+    })
+
+    expect(inserted).toBe(1)
   })
 })
 

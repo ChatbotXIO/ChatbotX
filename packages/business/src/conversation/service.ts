@@ -23,6 +23,7 @@ import {
   contactInboxRepository,
   createMessageRepository,
   getSafeSinceTime,
+  insertDmConversationsIfAbsent,
 } from "@chatbotx.io/database/repositories"
 import { conversationModel, inboxModel } from "@chatbotx.io/database/schema"
 import type {
@@ -857,6 +858,41 @@ class ConversationService extends BaseService {
       ids: [conversation.id],
     })
     return updated
+  }
+
+  /**
+   * One DM conversation per contact, opening the ones that don't exist yet.
+   * A contact that only ever commented (or was imported) has a `ContactInbox`
+   * but no DM, and a broadcast still has to deliver to it, so the audience
+   * walk resolves its recipients here instead of dropping them.
+   */
+  async findOrCreateDMByContactIds(props: {
+    workspaceId: string
+    contactIds: string[]
+    tx?: DatabaseClient
+  }): Promise<ConversationModel[]> {
+    const { tx = db, workspaceId, contactIds } = props
+    const existing = await this.findDMByContactIds({
+      workspaceId,
+      contactIds,
+      tx,
+    })
+    const hasDm = new Set(
+      existing.map((conversation) => conversation.contactId),
+    )
+    const missing = Array.from(new Set(contactIds)).filter(
+      (contactId) => !hasDm.has(contactId),
+    )
+    if (missing.length === 0) {
+      return existing
+    }
+
+    await insertDmConversationsIfAbsent(
+      { workspaceId, contactIds: missing },
+      tx,
+    )
+    // One re-read covers the rows just inserted and any a concurrent writer won.
+    return await this.findDMByContactIds({ workspaceId, contactIds, tx })
   }
 
   async findOrCreate(props: {

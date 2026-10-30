@@ -14,6 +14,7 @@ import {
   buildContactWhere,
   buildSmartKeywordWhere,
   contactFilterHasPredicate,
+  contactInboxHasDmSQL,
   parseConversationAssigneeValues,
   pruneEmailPhoneFilterConditions,
 } from "../src/queries/contact-filter"
@@ -2212,6 +2213,27 @@ describe("applyContactFilter — contactInbox relation fields", () => {
     )
   })
 
+  // "Never messaged the page": a comment or an imported contact has no inbound
+  // message, and opening a DM for it (a broadcast does) must not change that.
+  test("lastInteraction isEmpty / isNotEmpty test the latest inbound message for NULL", () => {
+    const render = (operator: string) =>
+      renderContactWhere(
+        applyContactFilter({
+          operator: "and",
+          conditions: [{ field: "lastInteraction", operator }],
+        }),
+      )
+
+    const never = render(operatorTypes.enum.isEmpty)
+    expect(never.sql).toContain(
+      'SELECT MAX("ContactInbox"."lastIncomingMessageAt")',
+    )
+    expect(never.sql).toContain('"latestInteraction"."latest" IS NULL')
+
+    const ever = render(operatorTypes.enum.isNotEmpty)
+    expect(ever.sql).toContain('"latestInteraction"."latest" IS NOT NULL')
+  })
+
   test("renders lastInteraction date filters against latest ContactInbox.lastIncomingMessageAt", () => {
     const eq = renderContactWhere(
       applyContactFilter({
@@ -3173,6 +3195,15 @@ describe("applyContactFilter — conversation relation fields", () => {
     )
     expect(notTransferred.sql).toContain('"Conversation"."botEnabled" = false')
     expect(notTransferred.sql).toContain('"Conversation"."botResumeAt" > NOW()')
+  })
+})
+
+describe("contactInboxHasDmSQL", () => {
+  test("is an EXISTS over the contact's DM, never a comment thread", () => {
+    const rendered = new PgDialect().sqlToQuery(contactInboxHasDmSQL())
+    expect(rendered.sql).toBe(
+      'EXISTS (SELECT 1 FROM "Conversation" WHERE "Conversation"."contactId" = "ContactInbox"."contactId" AND "Conversation"."sourceId" IS NULL)',
+    )
   })
 })
 

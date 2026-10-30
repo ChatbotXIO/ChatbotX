@@ -29,6 +29,13 @@ const {
   }
 })
 
+// The service queues draft cleanups; these suites never reach that path.
+vi.mock("@chatbotx.io/worker-config", () => ({
+  ScheduleJobData: {},
+  broadcastDraftPurgeJobId: vi.fn(),
+  scheduleQueue: { add: vi.fn() },
+}))
+
 vi.mock("@chatbotx.io/analytics", () => ({
   broadcastAnalyticsService: { getContacts: vi.fn() },
   sequenceAnalyticsService: { getContacts: vi.fn() },

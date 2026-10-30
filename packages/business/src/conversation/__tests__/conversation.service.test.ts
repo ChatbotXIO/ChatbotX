@@ -30,6 +30,7 @@ const mocks = vi.hoisted(() => ({
   })),
   cancelQuickReplyFollowUps: vi.fn(),
   closeHumanReplyWindow: vi.fn(),
+  insertDmConversationsIfAbsent: vi.fn(),
   trackWindow: vi.fn(),
 }))
 
@@ -107,6 +108,7 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
   getSafeSinceTime: mocks.getSafeSinceTime,
   assignUserIfUnassigned: mocks.assignUserIfUnassigned,
   closeHumanReplyWindow: mocks.closeHumanReplyWindow,
+  insertDmConversationsIfAbsent: mocks.insertDmConversationsIfAbsent,
 }))
 
 vi.mock("@chatbotx.io/worker-config", async (importOriginal) => {
@@ -470,6 +472,103 @@ describe("ConversationService.findOrCreate concurrent insert", () => {
 
     expect(result).toEqual(existing)
     expect(returning).not.toHaveBeenCalled()
+  })
+})
+
+// A broadcast must reach every contact in its audience, including a contact
+// that has only ever commented (no DM yet): the bulk resolver opens the
+// missing DMs instead of leaving them out.
+describe("ConversationService.findOrCreateDMByContactIds", () => {
+  const tx = {
+    query: { conversationModel: { findMany: mocks.conversationFindMany } },
+  } as unknown as Parameters<
+    typeof conversationService.findOrCreateDMByContactIds
+  >[0]["tx"]
+
+  beforeEach(() => {
+    mocks.conversationFindMany.mockReset()
+    mocks.insertDmConversationsIfAbsent.mockReset()
+  })
+
+  test("returns existing DMs without inserting when every contact has one", async () => {
+    const rows = [
+      { id: "conv-1", contactId: "contact-1" },
+      { id: "conv-2", contactId: "contact-2" },
+    ]
+    mocks.conversationFindMany.mockResolvedValue(rows)
+
+    const result = await conversationService.findOrCreateDMByContactIds({
+      workspaceId: WORKSPACE_ID,
+      contactIds: ["contact-1", "contact-2"],
+      tx,
+    })
+
+    expect(result).toEqual(rows)
+    expect(mocks.insertDmConversationsIfAbsent).not.toHaveBeenCalled()
+  })
+
+  test("opens a DM only for contacts that have none, then re-reads them all", async () => {
+    const existing = { id: "conv-1", contactId: "contact-1" }
+    const opened = { id: "conv-2", contactId: "contact-2" }
+    mocks.conversationFindMany
+      .mockResolvedValueOnce([existing])
+      .mockResolvedValueOnce([existing, opened])
+
+    const result = await conversationService.findOrCreateDMByContactIds({
+      workspaceId: WORKSPACE_ID,
+      contactIds: ["contact-1", "contact-2", "contact-2"],
+      tx,
+    })
+
+    expect(mocks.insertDmConversationsIfAbsent).toHaveBeenCalledWith(
+      { workspaceId: WORKSPACE_ID, contactIds: ["contact-2"] },
+      tx,
+    )
+    expect(result).toEqual([existing, opened])
+  })
+
+  test("returns the DM a concurrent writer opened first when our insert is skipped", async () => {
+    const winner = { id: "conv-winner", contactId: "contact-1" }
+    mocks.conversationFindMany
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([winner])
+
+    const result = await conversationService.findOrCreateDMByContactIds({
+      workspaceId: WORKSPACE_ID,
+      contactIds: ["contact-1"],
+      tx,
+    })
+
+    expect(mocks.insertDmConversationsIfAbsent).toHaveBeenCalledTimes(1)
+    expect(result).toEqual([winner])
+  })
+
+  test("propagates an insert failure instead of returning a partial list", async () => {
+    mocks.conversationFindMany.mockResolvedValueOnce([])
+    mocks.insertDmConversationsIfAbsent.mockRejectedValueOnce(
+      new Error("insert failed"),
+    )
+
+    await expect(
+      conversationService.findOrCreateDMByContactIds({
+        workspaceId: WORKSPACE_ID,
+        contactIds: ["contact-1"],
+        tx,
+      }),
+    ).rejects.toThrow("insert failed")
+    expect(mocks.conversationFindMany).toHaveBeenCalledTimes(1)
+  })
+
+  test("short-circuits with no query when contactIds is empty", async () => {
+    const result = await conversationService.findOrCreateDMByContactIds({
+      workspaceId: WORKSPACE_ID,
+      contactIds: [],
+      tx,
+    })
+
+    expect(result).toEqual([])
+    expect(mocks.conversationFindMany).not.toHaveBeenCalled()
+    expect(mocks.insertDmConversationsIfAbsent).not.toHaveBeenCalled()
   })
 })
 

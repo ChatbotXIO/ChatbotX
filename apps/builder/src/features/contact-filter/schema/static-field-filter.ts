@@ -171,7 +171,7 @@ const STATIC_OPERATOR_RULES: Record<string, readonly OperatorType[]> = {
   shoppingCartIsEmpty: NON_NULLABLE_BOOLEAN_OPERATORS,
   lastSent: DATE_OPERATORS,
   lastSeen: DATE_OPERATORS,
-  lastInteraction: DATE_OPERATORS,
+  lastInteraction: DATE_PRESENCE_OPERATORS,
 }
 
 /**

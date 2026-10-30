@@ -196,6 +196,7 @@ vi.mock("@chatbotx.io/database/client", () => ({
 
 vi.mock("@chatbotx.io/database/queries", () => ({
   buildContactInboxContactFilterSQL: mocks.buildContactInboxContactFilterSQL,
+  contactInboxHasDmSQL: () => ({ RAW: "has-dm" }),
   contactInboxInteractedWithin24hSQL: mocks.contactInboxInteractedWithin24hSQL,
   pruneEmailPhoneFilterConditions: (
     contactFilter: { operator: "and" | "or"; conditions: unknown[] },
@@ -387,6 +388,58 @@ describe("broadcastService.countAudience", () => {
         conditions: [{ field: "fullName", operator: "contains", value: "Ada" }],
       },
     })
+  })
+
+  // By default only contacts that already have a DM are reached, so a
+  // broadcast opens no conversations; a chat-history filter lifts that.
+  test("requires an existing DM by default", async () => {
+    mocks.resolveBroadcastInboxIds.mockResolvedValue(["inbox-1"])
+    mocks.count.mockResolvedValue(30)
+
+    await broadcastService.countAudience({
+      workspaceId: "ws-1",
+      channels: ["messenger"],
+      subaction: "messengerTemplateMessage",
+    })
+
+    const where = mocks.count.mock.calls[0]?.[1] as { __and?: unknown[] }
+    expect(where.__and).toContainEqual({ RAW: "has-dm" })
+  })
+
+  test("drops the DM requirement when the filter is on Last interaction", async () => {
+    mocks.resolveBroadcastInboxIds.mockResolvedValue(["inbox-1"])
+    mocks.count.mockResolvedValue(337)
+
+    await broadcastService.countAudience({
+      workspaceId: "ws-1",
+      channels: ["messenger"],
+      subaction: "messengerTemplateMessage",
+      contactFilter: {
+        operator: "and",
+        conditions: [{ field: "lastInteraction", operator: "isEmpty" }],
+      },
+    })
+
+    const where = mocks.count.mock.calls[0]?.[1] as { __and?: unknown[] }
+    expect(where.__and).not.toContainEqual({ RAW: "has-dm" })
+  })
+
+  test("keeps the DM requirement for filters on anything else", async () => {
+    mocks.resolveBroadcastInboxIds.mockResolvedValue(["inbox-1"])
+    mocks.count.mockResolvedValue(30)
+
+    await broadcastService.countAudience({
+      workspaceId: "ws-1",
+      channels: ["messenger"],
+      subaction: "messengerTemplateMessage",
+      contactFilter: {
+        operator: "and",
+        conditions: [{ field: "tags", operator: "in", value: ["t-1"] }],
+      },
+    })
+
+    const where = mocks.count.mock.calls[0]?.[1] as { __and?: unknown[] }
+    expect(where.__and).toContainEqual({ RAW: "has-dm" })
   })
 
   test("omits the 24h predicate for non-windowed broadcast subactions", async () => {

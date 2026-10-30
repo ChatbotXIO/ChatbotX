@@ -13,10 +13,22 @@ const mocks = vi.hoisted(() => ({
   updateSet: vi.fn(),
   updateWhere: vi.fn(),
   updateReturning: vi.fn(),
+  insertValues: vi.fn(),
+  insertOnConflictDoNothing: vi.fn(),
 }))
+
+const insertInto = () => ({
+  values: (rows: unknown) => {
+    mocks.insertValues(rows)
+    return {
+      onConflictDoNothing: () => mocks.insertOnConflictDoNothing(),
+    }
+  },
+})
 
 vi.mock("../src/client", () => ({
   db: {
+    insert: insertInto,
     update: (..._args: unknown[]) => ({
       set: (values: unknown) => {
         mocks.updateSet(values)
@@ -46,9 +58,65 @@ vi.mock("../src/schema", () => ({
   },
 }))
 
-const { assignTargetIfUnassigned, assignUserIfUnassigned } = await import(
-  "../src/repositories/conversation/repository"
-)
+const {
+  assignTargetIfUnassigned,
+  assignUserIfUnassigned,
+  insertDmConversationsIfAbsent,
+} = await import("../src/repositories/conversation/repository")
+
+describe("conversationRepository.insertDmConversationsIfAbsent", () => {
+  test("inserts one DM (sourceId null) per contact, each with its own id", async () => {
+    mocks.insertOnConflictDoNothing.mockResolvedValue(undefined)
+
+    await insertDmConversationsIfAbsent({
+      workspaceId: "ws-1",
+      contactIds: ["contact-1", "contact-2"],
+    })
+
+    const rows = mocks.insertValues.mock.calls.at(-1)?.[0] as Array<{
+      id: string
+      workspaceId: string
+      contactId: string
+      sourceId: null
+    }>
+    expect(
+      rows.map(({ workspaceId, contactId, sourceId }) => ({
+        workspaceId,
+        contactId,
+        sourceId,
+      })),
+    ).toEqual([
+      { workspaceId: "ws-1", contactId: "contact-1", sourceId: null },
+      { workspaceId: "ws-1", contactId: "contact-2", sourceId: null },
+    ])
+    expect(new Set(rows.map((row) => row.id)).size).toBe(2)
+  })
+
+  test("skips conflicts instead of failing, so a DM opened concurrently is not an error", async () => {
+    mocks.insertOnConflictDoNothing.mockResolvedValue(undefined)
+
+    await insertDmConversationsIfAbsent({
+      workspaceId: "ws-1",
+      contactIds: ["contact-1"],
+    })
+
+    expect(mocks.insertOnConflictDoNothing).toHaveBeenCalled()
+  })
+
+  test("uses the transaction handle it is given", async () => {
+    mocks.insertOnConflictDoNothing.mockResolvedValue(undefined)
+    const txInsert = vi.fn(() => ({
+      values: () => ({ onConflictDoNothing: () => Promise.resolve() }),
+    }))
+
+    await insertDmConversationsIfAbsent(
+      { workspaceId: "ws-1", contactIds: ["contact-1"] },
+      { insert: txInsert } as never,
+    )
+
+    expect(txInsert).toHaveBeenCalledTimes(1)
+  })
+})
 
 describe("conversationRepository.assignUserIfUnassigned", () => {
   test("scopes the update to the workspace and conversation id, guarded by both assignment columns being NULL", async () => {

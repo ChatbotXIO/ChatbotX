@@ -1,3 +1,4 @@
+import { DrizzleQueryError } from "drizzle-orm"
 import { PgDialect } from "drizzle-orm/pg-core"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
@@ -12,13 +13,21 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const mocks = vi.hoisted(() => ({
   execute: vi.fn(),
+  setLocalStatementTimeout: vi.fn(),
 }))
 
 vi.mock("../src/client", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../src/client")>()
   return {
     ...actual,
-    db: { execute: mocks.execute },
+    db: {
+      execute: mocks.execute,
+      // Each chunk runs in its own short transaction; the tx executes through
+      // the same mock so the rendered DELETE is asserted as before.
+      transaction: (run: (tx: unknown) => Promise<unknown>) =>
+        run({ execute: mocks.execute }),
+    },
+    setLocalStatementTimeout: mocks.setLocalStatementTimeout,
   }
 })
 
@@ -31,18 +40,15 @@ const {
 } = await import("../src/repositories/broadcast-purge")
 
 const dialect = new PgDialect()
+const MILLISECONDS_LITERAL = /^\d+ms$/
 
 function renderQuery(sqlArg: unknown): { text: string; params: unknown[] } {
   const { sql: text, params } = dialect.sqlToQuery(sqlArg as never)
   return { text: text.replace(/\s+/g, " ").trim(), params }
 }
 
-function fullChunk(count: number, offset = 0) {
-  return {
-    rows: Array.from({ length: count }, (_, i) => ({
-      contactId: `c-${i + offset}`,
-    })),
-  }
+function fullChunk(count: number) {
+  return { rowCount: count }
 }
 
 beforeEach(() => {
@@ -78,16 +84,95 @@ describe("purgeBroadcastRecipients", () => {
 
     const { text, params } = renderQuery(mocks.execute.mock.calls[0]?.[0])
     expect(text).toBe(
-      'DELETE FROM "ContactOnBroadcast" WHERE ("broadcastId", "contactId") IN ( SELECT "broadcastId", "contactId" FROM "ContactOnBroadcast" WHERE "broadcastId" = $1 ORDER BY "contactId" ASC LIMIT $2 FOR UPDATE SKIP LOCKED ) RETURNING "contactId"',
+      'DELETE FROM "ContactOnBroadcast" WHERE ("broadcastId", "contactId") IN ( SELECT "broadcastId", "contactId" FROM "ContactOnBroadcast" WHERE "broadcastId" = $1 ORDER BY "contactId" ASC LIMIT $2 FOR UPDATE SKIP LOCKED )',
     )
     expect(params).toEqual(["b-1", 500])
   })
 
+  // A background draft cleanup must never delete the fresh audience of a
+  // broadcast that was re-scheduled meanwhile, so every chunk re-checks that
+  // the broadcast is still a draft in the same statement.
+  test("with onlyWhileDraft, deletes a chunk only while the broadcast is still a draft", async () => {
+    mocks.execute.mockResolvedValueOnce(fullChunk(1))
+
+    await purgeBroadcastRecipients({
+      broadcastId: "b-1",
+      chunkSize: 500,
+      interChunkDelayMs: 10,
+      maxRunDurationMs: 60_000,
+      onlyWhileDraft: true,
+    })
+
+    const { text, params } = renderQuery(mocks.execute.mock.calls[0]?.[0])
+    expect(text).toBe(
+      'DELETE FROM "ContactOnBroadcast" WHERE ("broadcastId", "contactId") IN ( SELECT "broadcastId", "contactId" FROM "ContactOnBroadcast" WHERE "broadcastId" = $1 AND EXISTS ( SELECT 1 FROM "Broadcast" WHERE "id" = $2 AND "status" = \'draft\' ) ORDER BY "contactId" ASC LIMIT $3 FOR UPDATE SKIP LOCKED )',
+    )
+    expect(params).toEqual(["b-1", "b-1", 500])
+  })
+
+  // A DELETE waiting on a table lock (e.g. during a migration) must not hold
+  // the caller's worker slot past its budget: every chunk is capped at the
+  // time left, and a cancelled chunk ends the run as "deadline".
+  test("caps each chunk at the time left in the run", async () => {
+    mocks.execute.mockResolvedValueOnce(fullChunk(1))
+
+    await purgeBroadcastRecipients({
+      broadcastId: "b-1",
+      chunkSize: 500,
+      interChunkDelayMs: 10,
+      maxRunDurationMs: 60_000,
+    })
+
+    const [, timeout] = mocks.setLocalStatementTimeout.mock.calls[0] as [
+      unknown,
+      string,
+    ]
+    expect(timeout).toMatch(MILLISECONDS_LITERAL)
+    const ms = Number.parseInt(timeout, 10)
+    expect(ms).toBeGreaterThan(0)
+    expect(ms).toBeLessThanOrEqual(60_000)
+  })
+
+  test("ends the run as 'deadline', keeping what was deleted, when a chunk times out", async () => {
+    const timeout = new DrizzleQueryError(
+      "DELETE",
+      [],
+      Object.assign(new Error("canceling statement due to statement timeout"), {
+        code: "57014",
+      }),
+    )
+    mocks.execute
+      .mockResolvedValueOnce(fullChunk(3))
+      .mockRejectedValueOnce(timeout)
+
+    const result = await purgeBroadcastRecipients({
+      broadcastId: "b-1",
+      chunkSize: 3,
+      interChunkDelayMs: 0,
+      maxRunDurationMs: 60_000,
+    })
+
+    expect(result).toEqual({ deleted: 3, stopReason: "deadline" })
+  })
+
+  test("propagates any other database error", async () => {
+    mocks.execute.mockRejectedValueOnce(new Error("connection lost"))
+
+    await expect(
+      purgeBroadcastRecipients({
+        broadcastId: "b-1",
+        chunkSize: 3,
+        interChunkDelayMs: 0,
+        maxRunDurationMs: 60_000,
+      }),
+    ).rejects.toThrow("connection lost")
+  })
+
   test("loops chunk-by-chunk and stops with 'drained' once a chunk returns fewer rows than chunkSize", async () => {
     mocks.execute
-      .mockResolvedValueOnce(fullChunk(3, 0))
-      .mockResolvedValueOnce(fullChunk(3, 3))
-      .mockResolvedValueOnce(fullChunk(1, 6)) // short: 1 < chunkSize(3)
+      .mockResolvedValueOnce(fullChunk(3))
+      .mockResolvedValueOnce(fullChunk(3))
+      .mockResolvedValueOnce(fullChunk(1)) // short: 1 < chunkSize(3)
 
     const result = await purgeBroadcastRecipients({
       broadcastId: "b-1",

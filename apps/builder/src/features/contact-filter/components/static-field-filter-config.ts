@@ -222,7 +222,7 @@ export const staticFieldRules: Record<string, StaticFieldRule> = {
   lastSent: dateRule,
   lastDelivered: datePresenceRule,
   lastSeen: dateRule,
-  lastInteraction: dateRule,
+  lastInteraction: datePresenceRule,
   currentDate: dateRule,
   bought: dateRule,
 

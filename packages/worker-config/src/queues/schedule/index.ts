@@ -14,6 +14,7 @@ export const ScheduleJobData = {
   enqueueRecurringBroadcasts: "enqueueRecurringBroadcasts",
   materializeRecurringBroadcasts: "materializeRecurringBroadcasts",
   prepareBroadcast: "prepareBroadcast",
+  purgeDraftBroadcastRecipients: "purgeDraftBroadcastRecipients",
   sendBroadcast: "sendBroadcast",
   reconcileBroadcasts: "reconcileBroadcasts",
   enqueueMarketingMessages: "enqueueMarketingMessages",
@@ -100,6 +101,24 @@ export const broadcastSendJobId = (broadcastId: string) =>
 export const broadcastPrepareJobId = (broadcastId: string) =>
   `schedule-prepare-broadcast-${broadcastId}`
 
+/**
+ * Who asks for a draft's leftover-recipient cleanup: the draft transitions
+ * (`moveToDraft`, a refused `scheduleDraft`) or a stale prepare run that wrote
+ * a chunk after `moveToDraft`.
+ */
+export type BroadcastDraftPurgeRequester = "draft" | "stalePrepare"
+
+/**
+ * One cleanup per draft and requester: re-asking while one is queued or
+ * running is a no-op. A stale prepare gets its own id so its request never
+ * folds into a cleanup that is just finishing — that one may have checked
+ * before the prepare's last chunk landed.
+ */
+export const broadcastDraftPurgeJobId = (
+  broadcastId: string,
+  requester: BroadcastDraftPurgeRequester,
+) => `schedule-purge-draft-broadcast-${broadcastId}-${requester}`
+
 /** Series handled by one `materializeRecurringBroadcasts` job. */
 export const MATERIALIZE_BATCH_SIZE = 100
 /** Series a schedule-worker slot materializes in parallel inside one job. */
@@ -158,6 +177,14 @@ export type ScheduleJobMaterializeRecurringBroadcasts = {
 export type ScheduleJobPrepareBroadcast = {
   type: typeof ScheduleJobData.prepareBroadcast
   data: {
+    broadcastId: string
+  }
+}
+
+export type ScheduleJobPurgeDraftBroadcastRecipients = {
+  type: typeof ScheduleJobData.purgeDraftBroadcastRecipients
+  data: {
+    workspaceId: string
     broadcastId: string
   }
 }
@@ -409,6 +436,7 @@ export type ScheduleJobData =
   | ScheduleJobEnqueueRecurringBroadcasts
   | ScheduleJobMaterializeRecurringBroadcasts
   | ScheduleJobPrepareBroadcast
+  | ScheduleJobPurgeDraftBroadcastRecipients
   | ScheduleJobFinalizeBroadcasts
   | ScheduleJobReconcileBroadcasts
   | ScheduleJobEvaluateTriggers

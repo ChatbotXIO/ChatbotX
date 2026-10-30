@@ -56,6 +56,7 @@ import {
 import {
   buildContactInboxContactFilterSQL,
   type ContactFilterCriteriaInput,
+  contactInboxHasDmSQL,
   contactInboxInteractedWithin24hSQL,
   pruneEmailPhoneFilterConditions,
 } from "@chatbotx.io/database/queries"
@@ -64,6 +65,8 @@ import {
   broadcastRecurrenceRepository,
   broadcastRepository,
   contactRepository,
+  hasBroadcastRecipients,
+  purgeBroadcastRecipients,
 } from "@chatbotx.io/database/repositories"
 import {
   broadcastModel,
@@ -101,6 +104,13 @@ import {
 import { casStore } from "@chatbotx.io/redis"
 import { createId } from "@chatbotx.io/utils"
 import type { RecurrenceRule } from "@chatbotx.io/utils/recurrence"
+import {
+  type BroadcastDraftPurgeRequester,
+  broadcastDraftPurgeJobId,
+  broadcastPrepareJobId,
+  ScheduleJobData,
+  scheduleQueue,
+} from "@chatbotx.io/worker-config"
 import { startOfMinute } from "date-fns"
 import type { PgUpdateSetSource } from "drizzle-orm/pg-core"
 import { BaseService } from "../base.service"
@@ -135,6 +145,11 @@ const DEFAULT_BROADCAST_NAME = "Broadcast"
 /** Next runs shown on a repeating broadcast's detail. */
 const UPCOMING_RUNS_IN_DETAIL = 3
 const DEFAULT_CHUNK_SIZE = 1000
+// One background pass over a draft's leftover recipients: short, so the shared
+// schedule-worker slot is released and the job is re-run later instead.
+const DRAFT_PURGE_CHUNK_SIZE = 1000
+const DRAFT_PURGE_INTER_CHUNK_DELAY_MS = 50
+const DRAFT_PURGE_MAX_RUN_DURATION_MS = 30_000
 /** `ContactInbox` rows read per scan page when the audience has a contact filter. */
 const AUDIENCE_SCAN_PAGE_SIZE = 5000
 const OPTION_LIST_LIMIT = 500
@@ -959,6 +974,7 @@ class BroadcastService extends BaseService {
     if (input.schedulesType === broadcastScheduleTypes.enum.recurring) {
       return await this.scheduleRecurringDraft(input)
     }
+    await this.assertNoDraftLeftovers(input)
     const planContext = await broadcastPlanPolicyService.resolveForWorkspace(
       input.workspaceId,
     )
@@ -1267,8 +1283,104 @@ class BroadcastService extends BaseService {
       "broadcast_moved_to_draft",
       `moved broadcast (#${row.id}) to draft`,
     )
-
     return row
+  }
+
+  /**
+   * Scheduling on top of recipients a prepare interrupted by `moveToDraft`
+   * left behind would send to the old audience. A draft is refused (and its
+   * cleanup queued again) while its previous prepare job is still live — its
+   * last chunk may not be committed yet — or while leftover rows remain.
+   * Runs before the schedule transaction so it holds no lock while waiting
+   * on the database or the queue.
+   */
+  private async assertNoDraftLeftovers(input: {
+    workspaceId: string
+    broadcastId: string
+  }): Promise<void> {
+    // Only a draft of this workspace counts: anything else keeps the write's
+    // own "not a draft" error and never queues a cleanup.
+    const holdsLeftovers =
+      ((await this.isPrepareJobLive(input.broadcastId)) ||
+        (await hasBroadcastRecipients(input.broadcastId))) &&
+      (await this.isDraft(input))
+    if (!holdsLeftovers) {
+      return
+    }
+    await this.queueDraftRecipientsPurge({ ...input, requester: "draft" })
+    throw new ChatbotXException(
+      "Broadcast is still clearing recipients from its previous schedule. Try again in a moment.",
+    )
+  }
+
+  /** Whether the broadcast's prepare job is still queued or running, so it may still write recipients. */
+  private async isPrepareJobLive(broadcastId: string): Promise<boolean> {
+    const job = await scheduleQueue.getJob(broadcastPrepareJobId(broadcastId))
+    if (!job) {
+      return false
+    }
+    const state = await job.getState()
+    return state !== "failed" && state !== "completed"
+  }
+
+  private async isDraft(input: {
+    workspaceId: string
+    broadcastId: string
+  }): Promise<boolean> {
+    const row = await db.query.broadcastModel.findFirst({
+      where: {
+        id: input.broadcastId,
+        workspaceId: input.workspaceId,
+        status: broadcastStatuses.enum.draft,
+        deletedAt: { isNull: true },
+      },
+      columns: { id: true },
+    })
+    return row !== undefined
+  }
+
+  /**
+   * Queues the background cleanup of the recipients a prepare left on a draft.
+   * One job per draft and requester: asking again while it is queued or
+   * running is a no-op, and an empty draft costs one empty pass.
+   */
+  async queueDraftRecipientsPurge(input: {
+    workspaceId: string
+    broadcastId: string
+    requester: BroadcastDraftPurgeRequester
+  }): Promise<void> {
+    const { workspaceId, broadcastId, requester } = input
+    await scheduleQueue.add(
+      ScheduleJobData.purgeDraftBroadcastRecipients,
+      {
+        type: ScheduleJobData.purgeDraftBroadcastRecipients,
+        data: { workspaceId, broadcastId },
+      },
+      {
+        jobId: broadcastDraftPurgeJobId(broadcastId, requester),
+        removeOnComplete: true,
+        removeOnFail: true,
+      },
+    )
+  }
+
+  /**
+   * One bounded pass of a draft's leftover-recipient cleanup; `done` once a
+   * pass drains. Each chunk deletes only while the broadcast is still a draft,
+   * and anything a pass misses keeps `scheduleDraft` refusing, which queues
+   * the cleanup again.
+   */
+  async purgeDraftRecipients(input: {
+    broadcastId: string
+  }): Promise<{ done: boolean }> {
+    const { stopReason } = await purgeBroadcastRecipients({
+      broadcastId: input.broadcastId,
+      chunkSize: DRAFT_PURGE_CHUNK_SIZE,
+      interChunkDelayMs: DRAFT_PURGE_INTER_CHUNK_DELAY_MS,
+      maxRunDurationMs: DRAFT_PURGE_MAX_RUN_DURATION_MS,
+      onlyWhileDraft: true,
+    })
+    return { done: stopReason === "drained" }
   }
 
   /** A repeating broadcast, running or paused, back to an editable draft; its series is stopped. */
@@ -2610,10 +2722,26 @@ class BroadcastService extends BaseService {
   ): SQL | undefined {
     return and(
       inArray(contactInboxModel.inboxId, inboxIds),
+      this.buildDmRequirement(input),
       requiresRecentInteractionWindow(input.subaction)
         ? contactInboxInteractedWithin24hSQL()
         : undefined,
     )
+  }
+
+  /**
+   * By default a broadcast reaches only contacts that already have a DM, so
+   * it opens no conversations. A filter on chat history (**Last interaction**)
+   * chooses the audience itself — e.g. "has no value" for contacts who never
+   * messaged, including ones with no DM yet — and the send opens their DM.
+   */
+  private buildDmRequirement(input: BroadcastAudienceInput): SQL | undefined {
+    const filtersByChatHistory = input.contactFilter?.conditions.some(
+      (condition) =>
+        (condition as { field?: unknown } | null)?.field ===
+        contactFilterFields.enum.lastInteraction,
+    )
+    return filtersByChatHistory ? undefined : contactInboxHasDmSQL()
   }
 
   private buildAudienceWhere(
@@ -2631,6 +2759,7 @@ class BroadcastService extends BaseService {
             contactFilter,
           })
         : undefined,
+      this.buildDmRequirement(input),
       requiresRecentInteractionWindow(input.subaction)
         ? contactInboxInteractedWithin24hSQL()
         : undefined,
@@ -3321,6 +3450,27 @@ class BroadcastService extends BaseService {
   }
 
   /**
+   * `prepare-broadcast.ts`: false once the broadcast left the schedule this
+   * prepare run started for (`moveToDraft` bumps `resumeCount`), so a stale
+   * run stops writing recipients instead of leaving more to clean up.
+   */
+  async isStillPreparing(input: {
+    broadcastId: string
+    resumeCount: number
+  }): Promise<boolean> {
+    const row = await db.query.broadcastModel.findFirst({
+      where: {
+        id: input.broadcastId,
+        status: broadcastStatuses.enum.scheduled,
+        resumeCount: input.resumeCount,
+        deletedAt: { isNull: true },
+      },
+      columns: { id: true },
+    })
+    return row !== undefined
+  }
+
+  /**
    * `prepare-broadcast.ts`: resolves the page a Messenger template belongs
    * to, scoped to the workspace via the nested `integrationMessenger`
    * relation filter — that nested filter IS the tenant scope, keep it
@@ -3340,7 +3490,12 @@ class BroadcastService extends BaseService {
     return template?.integrationMessengerId ?? null
   }
 
-  /** `prepare-broadcast.ts`: bulk-insert the resolved audience's recipient rows. */
+  /**
+   * `prepare-broadcast.ts`: bulk-insert the resolved audience's recipient rows
+   * and return how many were written. A contact reached through several
+   * inboxes is one recipient per broadcast (`onConflictDoNothing`), so this is
+   * the count to add up, not the length of the input.
+   */
   async insertRecipients(input: {
     recipients: {
       broadcastId: string
@@ -3348,14 +3503,20 @@ class BroadcastService extends BaseService {
       contactInboxId: string
       conversationId: string
     }[]
-  }): Promise<void> {
+  }): Promise<number> {
     if (input.recipients.length === 0) {
-      return
+      return 0
     }
-    await db
+    const result = await db
       .insert(contactsOnBroadcastsModel)
       .values(input.recipients)
       .onConflictDoNothing()
+    return result.rowCount ?? 0
+  }
+
+  /** `prepare-broadcast.ts`: how many recipients the broadcast already holds. */
+  async countRecipients(input: { broadcastId: string }): Promise<number> {
+    return await broadcastRepository.countAudience(input.broadcastId)
   }
 
   /**

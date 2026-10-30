@@ -1,4 +1,9 @@
-import { db, sql } from "../client"
+import {
+  db,
+  isStatementTimeoutError,
+  setLocalStatementTimeout,
+  sql,
+} from "../client"
 
 /**
  * Composite-key chunked purge for `ContactOnBroadcast` recipient rows, driven
@@ -14,7 +19,6 @@ import { db, sql } from "../client"
 export type PurgeStopReason = "drained" | "deadline" | "chunkCap"
 
 type PurgeableBroadcastRow = { id: string }
-type PurgedContactRow = { contactId: string }
 
 /**
  * Default chunk-count safety backstop for `purgeBroadcastRecipients` when
@@ -77,6 +81,12 @@ export async function purgeBroadcastRecipients(input: {
   interChunkDelayMs: number
   maxRunDurationMs: number
   maxChunks?: number
+  /**
+   * Delete only while the broadcast is still a draft, checked inside every
+   * chunk's statement: a background cleanup of a draft's leftover recipients
+   * must never touch the fresh audience of a broadcast re-scheduled meanwhile.
+   */
+  onlyWhileDraft?: boolean
 }): Promise<{ deleted: number; stopReason: PurgeStopReason }> {
   const {
     broadcastId,
@@ -84,30 +94,50 @@ export async function purgeBroadcastRecipients(input: {
     interChunkDelayMs,
     maxRunDurationMs,
     maxChunks = DEFAULT_PURGE_MAX_CHUNKS,
+    onlyWhileDraft = false,
   } = input
   const deadline = Date.now() + maxRunDurationMs
+  const draftGuard = onlyWhileDraft
+    ? sql` AND EXISTS (
+      SELECT 1 FROM "Broadcast" WHERE "id" = ${broadcastId} AND "status" = 'draft'
+    )`
+    : sql``
   let deleted = 0
 
   for (let chunk = 0; chunk < maxChunks; chunk++) {
     // Checked BEFORE starting the chunk: a spent budget must stop the run
     // here, not after one more DELETE has already run past it.
-    if (Date.now() >= deadline) {
+    const remainingMs = deadline - Date.now()
+    if (remainingMs <= 0) {
       return { deleted, stopReason: "deadline" }
     }
 
-    const result = await db.execute<PurgedContactRow>(sql`
+    // SKIP LOCKED skips locked rows, not a table lock (e.g. a migration), so
+    // the chunk is also capped at the time left: a DELETE blocked in Postgres
+    // must not hold the caller's worker slot past its budget.
+    let result: { rowCount: number | null }
+    try {
+      result = await db.transaction(async (tx) => {
+        await setLocalStatementTimeout(tx, `${remainingMs}ms`)
+        return await tx.execute(sql`
     DELETE FROM "ContactOnBroadcast"
     WHERE ("broadcastId", "contactId") IN (
       SELECT "broadcastId", "contactId" FROM "ContactOnBroadcast"
-      WHERE "broadcastId" = ${broadcastId}
+      WHERE "broadcastId" = ${broadcastId}${draftGuard}
       ORDER BY "contactId" ASC
       LIMIT ${chunkSize}
       FOR UPDATE SKIP LOCKED
     )
-    RETURNING "contactId"
   `)
+      })
+    } catch (error) {
+      if (isStatementTimeoutError(error)) {
+        return { deleted, stopReason: "deadline" }
+      }
+      throw error
+    }
 
-    const count = result.rows.length
+    const count = result.rowCount ?? 0
     deleted += count
 
     // A short chunk means nothing claimable is left for this broadcast.
