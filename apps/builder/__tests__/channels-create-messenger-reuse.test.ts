@@ -199,7 +199,7 @@ describe("GET /channels/create/messenger — Facebook SSO token reuse", () => {
         authType: "oauth2",
         clientId: "app-id",
         clientSecret: "app-secret",
-        redirectUrl: "",
+        redirectUrl: "https://app.example.com/integrations/messenger/callback",
         version: "v23.0",
         tokens: { accessToken: "long-lived-user-token" },
       },

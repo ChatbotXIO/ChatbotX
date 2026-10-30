@@ -2869,17 +2869,48 @@ describe("ConnectionService.connectTargets", () => {
     ])
   })
 
-  it("does not release a claim when the connect actually succeeds", async () => {
+  it("releases the claim after a successful connect so a deleted target can reconnect in the same session (regression: the lease blocked it with inProgress for five minutes)", async () => {
     mocks.inboxCreate.mockResolvedValue({
       inbox: { id: "inbox-new" },
       wasCreated: true,
     })
-    await connectionService.connectTargets({
+    const result = await connectionService.connectTargets({
       sessionId: "session-1",
       workspaceId: "ws-1",
       targetIds: ["page-1"],
     })
-    expect(mocks.releaseTarget).not.toHaveBeenCalled()
+    const claimToken = mocks.claimTarget.mock.calls[0]?.[0]?.ownerToken
+    expect(mocks.releaseTarget).toHaveBeenCalledWith({
+      id: "session-1",
+      workspaceId: "ws-1",
+      targetId: "page-1",
+      ownerToken: claimToken,
+    })
+    expect(result.outcomes).toEqual([
+      { targetId: "page-1", status: "connected", connectionId: "conn-new" },
+    ])
+  })
+
+  it("keeps a connected outcome when releasing the claim fails", async () => {
+    mocks.releaseTarget.mockRejectedValueOnce(new Error("release failed"))
+
+    const result = await connectionService.connectTargets({
+      sessionId: "session-1",
+      workspaceId: "ws-1",
+      targetIds: ["page-1"],
+    })
+
+    expect(result.outcomes).toEqual([
+      { targetId: "page-1", status: "connected", connectionId: "conn-new" },
+    ])
+    expect(mocks.loggerError).toHaveBeenCalledWith(
+      {
+        err: expect.objectContaining({ message: "release failed" }),
+        targetId: "page-1",
+        provider: "messenger",
+      },
+      "connectTargets: failed to release a target claim after a connect attempt",
+    )
   })
 
   it("maps an unrecognized targetId to a failed/unknown outcome", async () => {

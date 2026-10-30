@@ -27,6 +27,7 @@ async function tryMessengerSsoReuse({
   userId,
   platformOwnerId,
   targetWorkspacePromise,
+  callbackUrl,
   credential,
 }: BeforeStartContext): Promise<BeforeStartResult> {
   const messengerCredential = credential as MessengerCredential
@@ -55,7 +56,7 @@ async function tryMessengerSsoReuse({
       authType: "oauth2",
       clientId: messengerCredential.clientId,
       clientSecret: messengerCredential.clientSecret,
-      redirectUrl: "",
+      redirectUrl: callbackUrl,
       version: messengerCredential.version,
       tokens: { accessToken: reuse.userToken },
     }
