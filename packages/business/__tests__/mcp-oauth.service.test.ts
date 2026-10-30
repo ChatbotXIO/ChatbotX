@@ -193,19 +193,61 @@ describe("mcpOAuthService.resolvePrincipal", () => {
     })
   })
 
-  test("an explicit workspace selection overrides the consented workspace", async () => {
+  test("returns forbidden when a workspace selection differs from the consented workspace", async () => {
     mocks.findByAccessToken.mockResolvedValue(accessToken())
     mocks.findByIdOrFail.mockResolvedValue(user)
     mocks.findLatestConsent.mockResolvedValue({ workspaceId: "ws-2" })
-    ownerAccess("ws-3")
 
-    await mcpOAuthService.resolvePrincipal({
-      accessToken: "valid",
-      workspaceId: "ws-3",
+    await expect(
+      mcpOAuthService.resolvePrincipal({
+        accessToken: "valid",
+        workspaceId: "ws-1",
+      }),
+    ).resolves.toEqual({ kind: "forbidden" })
+    expect(mocks.findMembership).not.toHaveBeenCalled()
+  })
+
+  test("accepts a workspace selection that repeats the consented workspace", async () => {
+    mocks.findByAccessToken.mockResolvedValue(accessToken())
+    mocks.findByIdOrFail.mockResolvedValue(user)
+    mocks.findLatestConsent.mockResolvedValue({ workspaceId: "ws-2" })
+    const member = ownerAccess("ws-2")
+
+    await expect(
+      mcpOAuthService.resolvePrincipal({
+        accessToken: "valid",
+        workspaceId: "ws-2",
+      }),
+    ).resolves.toEqual({
+      kind: "principal",
+      principal: {
+        workspace: member.workspace,
+        user,
+        clientId: "client-1",
+        accessTokenId: "at-1",
+      },
     })
-    expect(mocks.findMembership).toHaveBeenCalledWith({
-      workspaceId: "ws-3",
-      userId: user.id,
+  })
+
+  test("uses an explicit workspace selection for a legacy unbound consent", async () => {
+    mocks.findByAccessToken.mockResolvedValue(accessToken())
+    mocks.findByIdOrFail.mockResolvedValue(user)
+    mocks.findLatestConsent.mockResolvedValue({ workspaceId: null })
+    const member = ownerAccess("ws-1")
+
+    await expect(
+      mcpOAuthService.resolvePrincipal({
+        accessToken: "valid",
+        workspaceId: "ws-1",
+      }),
+    ).resolves.toEqual({
+      kind: "principal",
+      principal: {
+        workspace: member.workspace,
+        user,
+        clientId: "client-1",
+        accessTokenId: "at-1",
+      },
     })
   })
 

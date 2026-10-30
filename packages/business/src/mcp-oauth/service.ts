@@ -87,9 +87,16 @@ export class McpOAuthService extends BaseService {
       return { kind: "invalidToken" }
     }
 
-    // An explicit URL/header selection wins; otherwise the workspace picked
-    // on the consent screen. Consents given before the picker have none.
-    let workspaceId = props.workspaceId ?? consent.workspaceId ?? undefined
+    // A bound consent is the limit of the grant: an explicit selection may
+    // only repeat it. Legacy consents (without a workspace) accept a pick.
+    if (
+      consent.workspaceId &&
+      props.workspaceId &&
+      props.workspaceId !== consent.workspaceId
+    ) {
+      return { kind: "forbidden" }
+    }
+    let workspaceId = consent.workspaceId ?? props.workspaceId ?? undefined
     if (!workspaceId) {
       const selection = await this.selectOnlyWorkspace(user.id)
       if (selection.kind !== "selected") {

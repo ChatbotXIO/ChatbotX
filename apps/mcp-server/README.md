@@ -17,8 +17,10 @@ Remote MCP clients should authenticate through OAuth 2.1. The production endpoin
 works as a Claude or ChatGPT marketplace connector. The user picks the target workspace on
 the consent screen, and every token the client holds acts on that workspace; to switch,
 disconnect and connect again. Only workspace owners and `superAdmin` members can authorize.
-An explicit `?workspace_id=<id>` (or `x-workspace-id` header) still overrides the consented
-workspace for advanced setups, subject to the same admin check.
+An explicit `?workspace_id=<id>` (or `x-workspace-id` header) may select a
+workspace only for legacy connections that predate the picker. A different
+workspace than the one consented for a new connection is rejected; disconnect
+and connect again to switch.
 The builder settings block **Settings → Integrations → ChatbotX MCP** provides the exact
 connection URL and lets each user revoke their OAuth grants.
 

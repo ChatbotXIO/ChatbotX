@@ -64,9 +64,10 @@ class OAuthConsentRepository {
   }
 
   /**
-   * The most recent consent the user gave this client, or null when they never
-   * approved it (or the consent was revoked or cascaded away with its
-   * workspace).
+   * The latest workspace-bound consent the user gave this client, falling back
+   * to the most recent legacy unbound consent when no bound consent exists.
+   * Returns null when they never approved it or the consent was revoked or
+   * cascaded away with its workspace.
    */
   async findLatestGivenByUserAndClient(
     input: { userId: string; clientId: string },
@@ -82,7 +83,11 @@ class OAuthConsentRepository {
           eq(oauthConsentModel.consentGiven, true),
         ),
       )
-      .orderBy(desc(oauthConsentModel.createdAt), desc(oauthConsentModel.id))
+      .orderBy(
+        sql`${oauthConsentModel.workspaceId} IS NULL`,
+        desc(oauthConsentModel.createdAt),
+        desc(oauthConsentModel.id),
+      )
       .limit(1)
 
     return row ?? null
