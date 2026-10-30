@@ -5,12 +5,14 @@ const mocks = vi.hoisted(() => ({
   bindConsentWorkspace: vi.fn(),
   calls: [] as string[],
   oAuthConsent: vi.fn(),
+  resolveConsentRequest: vi.fn(),
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
   mcpOAuthService: {
     assertAuthorizableWorkspace: mocks.assertAuthorizableWorkspace,
     bindConsentWorkspace: mocks.bindConsentWorkspace,
+    resolveConsentRequest: mocks.resolveConsentRequest,
   },
 }))
 vi.mock("next/headers", () => ({ headers: vi.fn().mockResolvedValue({}) }))
@@ -32,15 +34,22 @@ const [{ submitOAuthConsentAction }, { oauthConsentRequest }] =
 const callAction = (parsedInput: unknown) =>
   (
     submitOAuthConsentAction as unknown as (input: {
-      ctx: { user: { id: string } }
+      ctx: { user: { email: string; id: string } }
       parsedInput: unknown
     }) => Promise<unknown>
-  )({ ctx: { user: { id: "user-1" } }, parsedInput })
+  )({
+    ctx: { user: { email: "owner@example.com", id: "user-1" } },
+    parsedInput,
+  })
 
 describe("submitOAuthConsentAction", () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mocks.calls.length = 0
+    mocks.resolveConsentRequest.mockImplementation(() => {
+      mocks.calls.push("resolve")
+      return Promise.resolve({ clientId: "claude" })
+    })
     mocks.assertAuthorizableWorkspace.mockImplementation(() => {
       mocks.calls.push("assert")
       return Promise.resolve()
@@ -57,20 +66,23 @@ describe("submitOAuthConsentAction", () => {
     })
   })
 
-  test("checks the workspace, records consent, then binds it before returning the redirect", async () => {
+  test("resolves the consent client, checks the workspace, records consent, then binds it before returning the redirect", async () => {
     await expect(
       callAction({
         accept: true,
-        clientId: "claude",
         consentCode: "code-1",
         workspaceId: "ws-2",
       }),
     ).resolves.toEqual({ redirectURI: "https://claude.ai/callback?code=abc" })
 
-    expect(mocks.calls).toEqual(["assert", "consent", "bind"])
-    expect(mocks.bindConsentWorkspace).toHaveBeenCalledWith({
+    expect(mocks.calls).toEqual(["resolve", "assert", "consent", "bind"])
+    expect(mocks.resolveConsentRequest).toHaveBeenCalledWith({
+      consentCode: "code-1",
       userId: "user-1",
+    })
+    expect(mocks.bindConsentWorkspace).toHaveBeenCalledWith({
       clientId: "claude",
+      user: { email: "owner@example.com", id: "user-1" },
       workspaceId: "ws-2",
     })
   })
@@ -81,7 +93,6 @@ describe("submitOAuthConsentAction", () => {
     await expect(
       callAction({
         accept: true,
-        clientId: "claude",
         consentCode: "code-1",
         workspaceId: "ws-foreign",
       }),
@@ -90,8 +101,8 @@ describe("submitOAuthConsentAction", () => {
     expect(mocks.bindConsentWorkspace).not.toHaveBeenCalled()
   })
 
-  test("a denial skips workspace checks and binding", async () => {
-    await callAction({ accept: false, clientId: "claude", consentCode: "c" })
+  test("a denial skips consent resolution, workspace checks, and binding", async () => {
+    await callAction({ accept: false, consentCode: "c" })
 
     expect(mocks.calls).toEqual(["consent"])
   })
@@ -102,7 +113,6 @@ describe("oauthConsentRequest", () => {
     expect(
       oauthConsentRequest.safeParse({
         accept: true,
-        clientId: "claude",
         consentCode: "code-1",
       }).success,
     ).toBe(false)
@@ -112,7 +122,6 @@ describe("oauthConsentRequest", () => {
     expect(
       oauthConsentRequest.safeParse({
         accept: false,
-        clientId: "claude",
         consentCode: "code-1",
       }).success,
     ).toBe(true)

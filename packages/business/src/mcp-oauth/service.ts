@@ -3,12 +3,14 @@ import {
   oauthAccessTokenRepository,
   oauthApplicationRepository,
   oauthConsentRepository,
+  verificationRepository,
 } from "@chatbotx.io/database/repositories"
 import type {
   OAuthApplicationModel,
   UserModel,
   WorkspaceModel,
 } from "@chatbotx.io/database/types"
+import { z } from "zod"
 import { BaseService } from "../base.service"
 import { ChatbotXException } from "../errors"
 import { logger } from "../logger"
@@ -43,6 +45,12 @@ export type McpOAuthGrant = {
   lastRefreshedAt: Date | null
   activeUntil: Date | null
 }
+
+const mcpOAuthConsentRequestSchema = z.object({
+  clientId: z.string().min(1),
+  requireConsent: z.boolean(),
+  userId: z.string().min(1),
+})
 
 export class McpOAuthService extends BaseService {
   async resolvePrincipal(props: {
@@ -106,6 +114,42 @@ export class McpOAuthService extends BaseService {
     }
   }
 
+  async resolveConsentRequest(props: {
+    userId: string
+    consentCode: string
+  }): Promise<{ clientId: string }> {
+    const verification = await verificationRepository.findByIdentifier(
+      props.consentCode,
+    )
+    if (!verification) {
+      throw new ChatbotXException("Consent request not found", "notFound", 404)
+    }
+
+    let request: unknown
+    try {
+      request = JSON.parse(verification.value)
+    } catch {
+      throw new ChatbotXException("Consent request not found", "notFound", 404)
+    }
+    const parsedRequest = mcpOAuthConsentRequestSchema.safeParse(request)
+    if (!parsedRequest.success) {
+      throw new ChatbotXException("Consent request not found", "notFound", 404)
+    }
+    if (
+      verification.expiresAt <= new Date() ||
+      parsedRequest.data.userId !== props.userId ||
+      !parsedRequest.data.requireConsent
+    ) {
+      throw new ChatbotXException(
+        "Consent request is invalid",
+        "forbidden",
+        403,
+      )
+    }
+
+    return { clientId: parsedRequest.data.clientId }
+  }
+
   /**
    * Workspaces the consent screen offers: the ones where the user is an
    * admin and that are not scheduled for deletion. Cached membership is fine
@@ -135,12 +179,11 @@ export class McpOAuthService extends BaseService {
    * leaves an unbound consent behind.
    */
   async assertAuthorizableWorkspace(props: {
-    userId: string
+    user: Pick<UserModel, "id" | "email">
     workspaceId: string
   }): Promise<WorkspaceModel> {
-    const user = await userService.findByIdOrFail(props.userId)
     const workspace = await this.findAdminWorkspace({
-      user,
+      user: props.user,
       workspaceId: props.workspaceId,
     })
     if (!workspace || isWorkspaceScheduledForDeletion(workspace)) {
@@ -159,13 +202,13 @@ export class McpOAuthService extends BaseService {
    * user, which is how a user switches workspace.
    */
   async bindConsentWorkspace(props: {
-    userId: string
+    user: Pick<UserModel, "id" | "email">
     clientId: string
     workspaceId: string
   }): Promise<void> {
     const workspace = await this.assertAuthorizableWorkspace(props)
     const updated = await oauthConsentRepository.setWorkspaceByUserAndClient({
-      userId: props.userId,
+      userId: props.user.id,
       clientId: props.clientId,
       workspaceId: workspace.id,
     })
@@ -174,7 +217,7 @@ export class McpOAuthService extends BaseService {
     }
     logger.info(
       {
-        userId: props.userId,
+        userId: props.user.id,
         clientId: props.clientId,
         workspaceId: workspace.id,
       },
@@ -205,23 +248,18 @@ export class McpOAuthService extends BaseService {
         { kind: "forbidden" | "workspaceSelectionRequired" }
       >
   > {
-    const members = (
-      await workspaceMemberService.listByUserId({ userId })
-    ).filter((member) => !isWorkspaceScheduledForDeletion(member.workspace))
-    const [onlyMember] = members
-    if (members.length === 1 && onlyMember) {
-      return { kind: "selected", workspaceId: onlyMember.workspaceId }
+    const workspaces = await this.listAuthorizableWorkspaces({ userId })
+    const [onlyWorkspace] = workspaces
+    if (workspaces.length === 1 && onlyWorkspace) {
+      return { kind: "selected", workspaceId: onlyWorkspace.id }
     }
-    if (members.length === 0) {
+    if (workspaces.length === 0) {
       return { kind: "forbidden" }
     }
 
     return {
       kind: "workspaceSelectionRequired",
-      workspaces: members.map((member) => ({
-        id: member.workspace.id,
-        name: member.workspace.name,
-      })),
+      workspaces,
     }
   }
 

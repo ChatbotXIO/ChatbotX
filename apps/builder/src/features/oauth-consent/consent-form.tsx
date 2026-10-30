@@ -25,7 +25,6 @@ import { submitOAuthConsentAction } from "./actions/consent.action"
 type ConsentWorkspace = { id: string; name: string }
 
 type OAuthConsentFormProps = {
-  clientId: string
   clientName: string
   consentCode: string
   scopes: string[]
@@ -34,7 +33,6 @@ type OAuthConsentFormProps = {
 }
 
 export const OAuthConsentForm = ({
-  clientId,
   clientName,
   consentCode,
   scopes,
@@ -59,14 +57,14 @@ export const OAuthConsentForm = ({
   })
 
   const handleDeny = () => {
-    execute({ accept: false, clientId, consentCode })
+    execute({ accept: false, consentCode })
   }
 
   const handleApprove = () => {
     if (!workspaceId) {
       return
     }
-    execute({ accept: true, clientId, consentCode, workspaceId })
+    execute({ accept: true, consentCode, workspaceId })
   }
 
   return (

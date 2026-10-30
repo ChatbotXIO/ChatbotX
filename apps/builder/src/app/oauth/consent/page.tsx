@@ -7,27 +7,33 @@ export const dynamic = "force-dynamic"
 
 export default async function OAuthConsentPage(props: {
   searchParams: Promise<{
-    client_id?: string
     consent_code?: string
     scope?: string
   }>
 }) {
-  const [{ client_id: clientId, consent_code: consentCode, scope }, user] =
-    await Promise.all([props.searchParams, getCurrentUser()])
-  if (!(clientId && consentCode && user)) {
+  const [{ consent_code: consentCode, scope }, user] = await Promise.all([
+    props.searchParams,
+    getCurrentUser(),
+  ])
+  if (!(consentCode && user)) {
     notFound()
   }
 
-  const [client, workspaces] = await Promise.all([
-    mcpOAuthService.findClient({ clientId }),
+  const [consentRequest, workspaces] = await Promise.all([
+    mcpOAuthService.resolveConsentRequest({
+      consentCode,
+      userId: user.id,
+    }),
     mcpOAuthService.listAuthorizableWorkspaces({ userId: user.id }),
   ])
+  const client = await mcpOAuthService.findClient({
+    clientId: consentRequest.clientId,
+  })
   const scopes = scope?.split(" ").filter(Boolean) ?? []
 
   return (
     <OAuthConsentForm
-      clientId={clientId}
-      clientName={client?.name || clientId}
+      clientName={client?.name || consentRequest.clientId}
       consentCode={consentCode}
       scopes={scopes}
       userEmail={user.email}

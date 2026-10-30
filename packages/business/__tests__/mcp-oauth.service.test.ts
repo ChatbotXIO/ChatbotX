@@ -7,6 +7,7 @@ const mocks = vi.hoisted(() => ({
   deleteExpired: vi.fn(),
   findByAccessToken: vi.fn(),
   findByClientId: vi.fn(),
+  findByIdentifier: vi.fn(),
   findLatestConsent: vi.fn(),
   setConsentWorkspace: vi.fn(),
   findByIdOrFail: vi.fn(),
@@ -34,6 +35,7 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
     listGivenByUser: mocks.listGivenByUser,
     setWorkspaceByUserAndClient: mocks.setConsentWorkspace,
   },
+  verificationRepository: { findByIdentifier: mocks.findByIdentifier },
 }))
 
 vi.mock("@chatbotx.io/database/client", () => ({
@@ -92,6 +94,58 @@ const ownerAccess = (workspaceId: string) => {
   })
   return member
 }
+
+describe("mcpOAuthService.resolveConsentRequest", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mocks.findByIdentifier.mockResolvedValue({
+      expiresAt: FUTURE,
+      value: JSON.stringify({
+        clientId: "client-1",
+        requireConsent: true,
+        userId: "user-1",
+      }),
+    })
+  })
+
+  test("returns the client bound to a live consent code for its user", async () => {
+    await expect(
+      mcpOAuthService.resolveConsentRequest({
+        consentCode: "consent-code",
+        userId: "user-1",
+      }),
+    ).resolves.toEqual({ clientId: "client-1" })
+
+    expect(mocks.findByIdentifier).toHaveBeenCalledWith("consent-code")
+  })
+
+  test("rejects a consent code belonging to another user", async () => {
+    await expect(
+      mcpOAuthService.resolveConsentRequest({
+        consentCode: "consent-code",
+        userId: "user-2",
+      }),
+    ).rejects.toMatchObject({ code: "forbidden" })
+  })
+
+  test("rejects an expired consent code", async () => {
+    mocks.findByIdentifier.mockResolvedValue({
+      expiresAt: PAST,
+      value: JSON.stringify({
+        clientId: "client-1",
+        requireConsent: true,
+        userId: "user-1",
+      }),
+    })
+
+    await expect(
+      mcpOAuthService.resolveConsentRequest({
+        consentCode: "consent-code",
+        userId: "user-1",
+      }),
+    ).rejects.toMatchObject({ code: "forbidden" })
+  })
+})
 
 describe("mcpOAuthService.resolvePrincipal", () => {
   beforeEach(() => {
@@ -237,6 +291,8 @@ describe("mcpOAuthService.resolvePrincipal", () => {
     mocks.findByIdOrFail.mockResolvedValue(user)
     mocks.listByUserId.mockResolvedValue([
       {
+        permissions: {},
+        role: "owner",
         workspaceId: "ws-deleting",
         workspace: {
           id: "ws-deleting",
@@ -244,8 +300,24 @@ describe("mcpOAuthService.resolvePrincipal", () => {
           scheduledDeletionAt: new Date(),
         },
       },
-      { workspaceId: "ws-1", workspace: { id: "ws-1", name: "Alpha" } },
-      { workspaceId: "ws-2", workspace: { id: "ws-2", name: "Beta" } },
+      {
+        permissions: {},
+        role: "owner",
+        workspaceId: "ws-1",
+        workspace: { id: "ws-1", name: "Alpha" },
+      },
+      {
+        permissions: {},
+        role: "owner",
+        workspaceId: "ws-2",
+        workspace: { id: "ws-2", name: "Beta" },
+      },
+      {
+        permissions: { superAdmin: false },
+        role: "member",
+        workspaceId: "ws-non-admin",
+        workspace: { id: "ws-non-admin", name: "Agent only" },
+      },
     ])
 
     await expect(
@@ -263,6 +335,8 @@ describe("mcpOAuthService.resolvePrincipal", () => {
     mocks.findByAccessToken.mockResolvedValue(accessToken())
     mocks.findByIdOrFail.mockResolvedValue(user)
     const cachedMembership = {
+      permissions: {},
+      role: "owner",
       workspaceId: "ws-1",
       workspace: { id: "ws-1", name: "Alpha", ownerId: "user-1" },
     }
@@ -585,7 +659,6 @@ describe("mcpOAuthService.listAuthorizableWorkspaces", () => {
 describe("mcpOAuthService.bindConsentWorkspace", () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    mocks.findByIdOrFail.mockResolvedValue(user)
   })
 
   test("binds every consent the client holds for the user to an admin workspace", async () => {
@@ -593,8 +666,8 @@ describe("mcpOAuthService.bindConsentWorkspace", () => {
     mocks.setConsentWorkspace.mockResolvedValue(2)
 
     await mcpOAuthService.bindConsentWorkspace({
-      userId: "user-1",
       clientId: "claude",
+      user,
       workspaceId: "ws-2",
     })
     expect(mocks.setConsentWorkspace).toHaveBeenCalledWith({
@@ -610,8 +683,8 @@ describe("mcpOAuthService.bindConsentWorkspace", () => {
 
     await expect(
       mcpOAuthService.bindConsentWorkspace({
-        userId: "user-1",
         clientId: "claude",
+        user,
         workspaceId: "ws-foreign",
       }),
     ).rejects.toMatchObject({ code: "forbidden" })
@@ -628,7 +701,7 @@ describe("mcpOAuthService.bindConsentWorkspace", () => {
 
     await expect(
       mcpOAuthService.assertAuthorizableWorkspace({
-        userId: "user-1",
+        user,
         workspaceId: "ws-2",
       }),
     ).rejects.toMatchObject({ code: "forbidden" })
@@ -640,8 +713,8 @@ describe("mcpOAuthService.bindConsentWorkspace", () => {
 
     await expect(
       mcpOAuthService.bindConsentWorkspace({
-        userId: "user-1",
         clientId: "claude",
+        user,
         workspaceId: "ws-2",
       }),
     ).rejects.toMatchObject({ code: "notFound" })
