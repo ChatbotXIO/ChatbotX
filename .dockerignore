@@ -15,6 +15,9 @@ dist
 .devcontainer
 **/.git
 **/*.md
+# The MCP server reads its guides at runtime (apps/mcp-server/src/guides/index.ts)
+# and tsdown copies them into dist/guides. Keep them in the build context.
+!apps/mcp-server/src/guides/*.md
 **/LICENSE
 **/npm-debug.log
 **/*.vscode
