@@ -11,14 +11,18 @@ class OAuthConsentRepository {
       .select({
         activeTokenCount: sql<number>`count(*)`.as("activeTokenCount"),
         activeUntil:
-          sql<Date | null>`max(${oauthAccessTokenModel.refreshTokenExpiresAt})`.as(
-            "activeUntil",
-          ),
+          sql<Date | null>`max(${oauthAccessTokenModel.refreshTokenExpiresAt})`
+            .mapWith((value: string | Date | null) =>
+              value ? new Date(value) : null,
+            )
+            .as("activeUntil"),
         clientId: oauthAccessTokenModel.clientId,
         lastRefreshedAt:
-          sql<Date | null>`max(${oauthAccessTokenModel.createdAt})`.as(
-            "lastRefreshedAt",
-          ),
+          sql<Date | null>`max(${oauthAccessTokenModel.createdAt})`
+            .mapWith((value: string | Date | null) =>
+              value ? new Date(value) : null,
+            )
+            .as("lastRefreshedAt"),
       })
       .from(oauthAccessTokenModel)
       .where(

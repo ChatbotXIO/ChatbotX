@@ -35,7 +35,7 @@ const createSelectTx = (rows: unknown[]) => {
 describe("oauthConsentRepository.listGivenByUser", () => {
   test("lists given consents and aggregates only live refresh tokens", async () => {
     const now = new Date("2026-10-29T00:00:00.000Z")
-    const { activeTokenWhere, orderBy, tx, where } = createSelectTx([])
+    const { activeTokenWhere, orderBy, select, tx, where } = createSelectTx([])
 
     await expect(
       oauthConsentRepository.listGivenByUser("user-1", now, tx),
@@ -54,5 +54,28 @@ describe("oauthConsentRepository.listGivenByUser", () => {
     )
     expect(activeTokenPredicate.params).toEqual(["user-1", now.toISOString()])
     expect(orderBy).toHaveBeenCalledTimes(1)
+
+    const selectedFields = select.mock.calls[0]?.[0] as {
+      activeUntil: {
+        sql: {
+          decoder?: { mapFromDriverValue: (value: string) => Date | null }
+        }
+      }
+      lastRefreshedAt: {
+        sql: {
+          decoder?: { mapFromDriverValue: (value: string) => Date | null }
+        }
+      }
+    }
+    expect(
+      selectedFields.activeUntil.sql.decoder?.mapFromDriverValue(
+        "2026-11-01T00:00:00.000Z",
+      ),
+    ).toEqual(new Date("2026-11-01T00:00:00.000Z"))
+    expect(
+      selectedFields.lastRefreshedAt.sql.decoder?.mapFromDriverValue(
+        "2026-10-30T00:00:00.000Z",
+      ),
+    ).toEqual(new Date("2026-10-30T00:00:00.000Z"))
   })
 })
