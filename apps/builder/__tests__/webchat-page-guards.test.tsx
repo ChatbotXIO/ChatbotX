@@ -4,12 +4,14 @@ import { isValidElement } from "react"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const {
+  mockCreateWebchatAccessToken,
   mockFindFirst,
   mockGetDomainFromHeader,
   mockHeaders,
   mockIsCommunity,
   mockWorkspaceFind,
 } = vi.hoisted(() => ({
+  mockCreateWebchatAccessToken: vi.fn().mockResolvedValue("access-token"),
   mockFindFirst: vi.fn(),
   mockGetDomainFromHeader: vi.fn(),
   mockHeaders: vi.fn(),
@@ -73,7 +75,7 @@ vi.mock("@/features/integration-webchat/lib/guest-conversation-id", () => ({
 }))
 
 vi.mock("@/features/integration-webchat/lib/webchat-access-token", () => ({
-  createWebchatAccessToken: vi.fn().mockResolvedValue("access-token"),
+  createWebchatAccessToken: mockCreateWebchatAccessToken,
 }))
 
 vi.mock(
@@ -149,6 +151,48 @@ describe("WebchatPage", () => {
 
     expect((element as { type: { name: string } }).type.name).toBe(
       "GuestSessionStoreProvider",
+    )
+  })
+
+  test("mints an access token for the URL parent origin after a first-party RSC refresh", async () => {
+    setReferer("https://app.chatbotx.io/webchat?workspaceId=1&webchatId=2")
+
+    const element = await WebchatPage({
+      searchParams: Promise.resolve({
+        ...searchParams,
+        parentOrigin: "https://www.allowed.example",
+      }),
+    })
+
+    expect(isValidElement(element)).toBe(true)
+    expect(mockCreateWebchatAccessToken).toHaveBeenCalledWith(
+      expect.objectContaining({ origin: "https://www.allowed.example" }),
+    )
+  })
+
+  test("refuses an attacker referer even when the URL parent origin is allowed", async () => {
+    setReferer("https://attacker.test")
+
+    const element = await WebchatPage({
+      searchParams: Promise.resolve({
+        ...searchParams,
+        parentOrigin: "https://allowed.example",
+      }),
+    })
+
+    expect(JSON.stringify(element)).toContain("Webchat unavailable")
+    expect(mockCreateWebchatAccessToken).not.toHaveBeenCalled()
+  })
+
+  test("mints an access token from the referer when URL origin parameters are absent", async () => {
+    setReferer("https://allowed.example/path")
+
+    await WebchatPage({
+      searchParams: Promise.resolve(searchParams),
+    })
+
+    expect(mockCreateWebchatAccessToken).toHaveBeenCalledWith(
+      expect.objectContaining({ origin: "https://allowed.example/path" }),
     )
   })
 

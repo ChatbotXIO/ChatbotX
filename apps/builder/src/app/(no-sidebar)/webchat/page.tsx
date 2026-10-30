@@ -18,6 +18,7 @@ import {
 import {
   isFirstPartyOrigin,
   isOriginAuthorized,
+  resolveEmbeddingOrigin,
 } from "@/features/integration-webchat/lib/authorized-domain"
 import { createGuestConversationId } from "@/features/integration-webchat/lib/guest-conversation-id"
 import { createWebchatAccessToken } from "@/features/integration-webchat/lib/webchat-access-token"
@@ -110,8 +111,15 @@ export default async function WebchatPage(props: WebchatPageProps) {
     data.guestConversationId ??
     createGuestConversationId(targetWebchat.workspaceId)
 
+  // The URL preserves the embedding origin across RSC refreshes, whose referer
+  // points to the iframe's own URL rather than the embedding page.
+  const accessTokenOrigin = resolveEmbeddingOrigin({
+    domain: data.domain,
+    parentOrigin: data.parentOrigin,
+    referer: embeddingOrigin,
+  })
   const accessToken = await createWebchatAccessToken({
-    origin: embeddingOrigin,
+    origin: accessTokenOrigin,
     webchatId: targetWebchat.id,
     workspaceId: targetWebchat.workspaceId,
   })
@@ -147,7 +155,7 @@ export default async function WebchatPage(props: WebchatPageProps) {
       {targetWebchat.customCss && (
         <CustomWidgetStyle css={targetWebchat.customCss} />
       )}
-      <WebchatWrapper parentOrigin={embeddingOrigin} referral={data.ref} />
+      <WebchatWrapper referral={data.ref} />
     </GuestSessionStoreProvider>
   )
 }

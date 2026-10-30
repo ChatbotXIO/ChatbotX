@@ -3,8 +3,10 @@
 import type { IntegrationWebchatModel } from "@chatbotx.io/database/types"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 import {
+  getClientEmbeddingOrigin,
   getParentOriginFromUrl,
   isOriginAuthorized,
+  resolveEmbeddingOrigin,
 } from "@/features/integration-webchat/lib/authorized-domain"
 import { createGuestConversationId } from "@/features/integration-webchat/lib/guest-conversation-id"
 import {
@@ -305,6 +307,37 @@ describe("webchat authorized domains", () => {
         "https://builder.test/webchat?parentOrigin=https%3A%2F%2Fexample.com",
       ),
     ).toBe("https://example.com")
+  })
+
+  test("prefers parentOrigin, then domain, then referer when resolving the embedding origin", () => {
+    expect(
+      resolveEmbeddingOrigin({
+        domain: "domain.example",
+        parentOrigin: "https://parent.example",
+        referer: "https://referer.example/path",
+      }),
+    ).toBe("https://parent.example")
+    expect(
+      resolveEmbeddingOrigin({
+        domain: "domain.example",
+        referer: "https://referer.example/path",
+      }),
+    ).toBe("domain.example")
+    expect(
+      resolveEmbeddingOrigin({ referer: "https://referer.example/path" }),
+    ).toBe("https://referer.example/path")
+    expect(resolveEmbeddingOrigin({})).toBeNull()
+  })
+
+  test("reads parentOrigin from the webchat URL", () => {
+    vi.stubGlobal("window", {
+      location: {
+        search: "?parentOrigin=https%3A%2F%2Fwww.example.com",
+      },
+    })
+    vi.stubGlobal("document", { referrer: "https://referer.example" })
+
+    expect(getClientEmbeddingOrigin()).toBe("https://www.example.com")
   })
 })
 

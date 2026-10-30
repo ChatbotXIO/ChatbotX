@@ -115,16 +115,25 @@ export const getParentOriginFromUrl = (url: string | null | undefined) => {
   }
 }
 
+export const resolveEmbeddingOrigin = ({
+  parentOrigin,
+  domain,
+  referer,
+}: {
+  parentOrigin?: string | null
+  domain?: string | null
+  referer?: string | null
+}) => parentOrigin || domain || referer || null
+
 export const getClientEmbeddingOrigin = () => {
   if (typeof window === "undefined") {
     return null
   }
 
   const searchParams = new URLSearchParams(window.location.search)
-  return (
-    searchParams.get(PARENT_ORIGIN_PARAM) ||
-    searchParams.get("domain") ||
-    document.referrer ||
-    null
-  )
+  return resolveEmbeddingOrigin({
+    domain: searchParams.get("domain"),
+    parentOrigin: searchParams.get(PARENT_ORIGIN_PARAM),
+    referer: document.referrer,
+  })
 }

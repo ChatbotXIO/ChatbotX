@@ -20,24 +20,18 @@ import { flattenValidationErrors } from "../messages/lib/validation-errors"
 import { createWebchatMessageRequest } from "../messages/schema/mutation"
 import { getWebchatProfileFields } from "./browser-profile-fields"
 import WebchatMessageMenu from "./components/webchat-message-menu"
+import { getClientEmbeddingOrigin } from "./lib/authorized-domain"
 import { useGuestSessionStore } from "./providers/store/guest-session-provider"
 
 type WebchatMessageInputProps = {
   workspaceId: string
   webchatId: string
   referral?: string | undefined
-  parentOrigin?: string | null
   accessToken?: string | null
 }
 
 export const WebchatMessageInput = (props: WebchatMessageInputProps) => {
-  const {
-    workspaceId,
-    webchatId,
-    referral = "",
-    parentOrigin,
-    accessToken,
-  } = props
+  const { workspaceId, webchatId, referral = "", accessToken } = props
   const { sendMessage, guestConversationId, appendMessage, markMessageFailed } =
     useGuestSessionStore((state) => state)
 
@@ -55,16 +49,8 @@ export const WebchatMessageInput = (props: WebchatMessageInputProps) => {
       ref: referral,
       ...getWebchatProfileFields(),
       accessToken: accessToken ?? undefined,
-      parentOrigin: parentOrigin ?? undefined,
     }),
-    [
-      workspaceId,
-      webchatId,
-      guestConversationId,
-      referral,
-      parentOrigin,
-      accessToken,
-    ],
+    [workspaceId, webchatId, guestConversationId, referral, accessToken],
   )
 
   const {
@@ -132,6 +118,7 @@ export const WebchatMessageInput = (props: WebchatMessageInputProps) => {
     const values = {
       ...form.getValues(),
       clientId,
+      parentOrigin: getClientEmbeddingOrigin() ?? undefined,
     }
     const parsed = createWebchatMessageRequest.safeParse(values)
     if (!parsed.success) {
@@ -229,7 +216,6 @@ export const WebchatMessageInput = (props: WebchatMessageInputProps) => {
             <div className="flex-1">
               <WebchatMessageMenu
                 accessToken={accessToken}
-                parentOrigin={parentOrigin}
                 webchatId={webchatId}
                 workspaceId={workspaceId}
               />
