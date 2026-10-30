@@ -84,7 +84,9 @@ export default async function WebchatPage(props: WebchatPageProps) {
   const requestHeaders = await headers()
   const embeddingOrigin = requestHeaders.get("referer")
   const appHost = await getDomainFromHeader()
-  const isDirectOpen = isFirstPartyOrigin(embeddingOrigin, appHost)
+  const isFirstPartyRscRefresh =
+    !!embeddingOrigin && isFirstPartyOrigin(embeddingOrigin, appHost)
+  const isDirectOpen = !embeddingOrigin || isFirstPartyRscRefresh
   if (
     !(
       isDirectOpen ||
@@ -111,13 +113,15 @@ export default async function WebchatPage(props: WebchatPageProps) {
     data.guestConversationId ??
     createGuestConversationId(targetWebchat.workspaceId)
 
-  // The URL preserves the embedding origin across RSC refreshes, whose referer
-  // points to the iframe's own URL rather than the embedding page.
-  const accessTokenOrigin = resolveEmbeddingOrigin({
-    domain: data.domain,
-    parentOrigin: data.parentOrigin,
-    referer: embeddingOrigin,
-  })
+  // Only a first-party RSC refresh can preserve the embedding origin in URL
+  // parameters. Direct opens and third-party embeds must use their referer.
+  const accessTokenOrigin = isFirstPartyRscRefresh
+    ? resolveEmbeddingOrigin({
+        domain: data.domain,
+        parentOrigin: data.parentOrigin,
+        referer: embeddingOrigin,
+      })
+    : embeddingOrigin
   const accessToken = await createWebchatAccessToken({
     origin: accessTokenOrigin,
     webchatId: targetWebchat.id,

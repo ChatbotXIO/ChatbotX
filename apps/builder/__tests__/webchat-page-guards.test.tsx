@@ -142,6 +142,21 @@ describe("WebchatPage", () => {
     )
   })
 
+  test("does not trust a URL parent origin when a direct open has no referer", async () => {
+    setReferer(null)
+
+    await WebchatPage({
+      searchParams: Promise.resolve({
+        ...searchParams,
+        parentOrigin: "https://allowed.example",
+      }),
+    })
+
+    expect(mockCreateWebchatAccessToken).toHaveBeenCalledWith(
+      expect.objectContaining({ origin: null }),
+    )
+  })
+
   test("renders the chat for a first-party referer matching the app host", async () => {
     setReferer("https://app.chatbotx.io/some/path")
 
