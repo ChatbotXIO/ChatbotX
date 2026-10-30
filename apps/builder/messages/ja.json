@@ -10346,8 +10346,20 @@
     "title": "Stripe",
     "setting": {
       "label": "Stripe",
-      "description": "ご自身の Stripe アカウントで、ウェブショップのカード決済を受け付けます。代金は直接あなたの Stripe アカウントに入金されます。",
-      "notConfigured": "このプラットフォームでは Stripe がまだ設定されていません。プラットフォーム管理者に Stripe Connect の設定を追加するよう依頼してください。"
+      "description": "ご自身の Stripe アカウントで、ウェブショップのカード決済を受け付けます。代金は直接あなたの Stripe アカウントに入金されます。"
+    },
+    "connectWithStripe": "Stripe で接続",
+    "connectWithKey": "シークレットキーを使う",
+    "connectionType": {
+      "oauth": "Stripe Connect",
+      "apiKey": "シークレットキー"
+    },
+    "fields": {
+      "secretKey": "シークレットキー",
+      "secretKeyHint": "sk_live_ で始まります(テストモードは sk_test_)。アカウントの読み取りと Checkout Sessions・Refunds・Webhook Endpoints の書き込みができる制限付きキー(rk_…)も使えます。"
+    },
+    "dialog": {
+      "description": "<link>Stripe ダッシュボード → Developers → API keys</link> からシークレットキーをコピーしてここに貼り付けてください。キーを確認し、Stripe アカウントに支払い通知を設定し、キーを暗号化して保存します。"
     },
     "testMode": "テストモード",
     "liveMode": "本番",

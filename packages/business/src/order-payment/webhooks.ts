@@ -3,6 +3,7 @@ import {
   isPaymentProviderError,
   type PaymentWebhookEvent,
   parsePaypalWebhook,
+  parseStripeAccountWebhook,
   parseStripeConnectWebhook,
 } from "@chatbotx.io/payments"
 import {
@@ -101,6 +102,43 @@ export const receiveStripeWebhook = async (input: {
     return OK
   }
   await enqueue({ provider: "stripe", workspaceId: store.workspaceId, event })
+  return OK
+}
+
+/**
+ * An event a store's own Stripe webhook received (created when it connected
+ * with its secret key), signed with that webhook's secret. The account may
+ * also be used outside the shop, or by another workspace through Stripe
+ * Connect, so only an attempt whose metadata names this workspace is taken.
+ */
+export const receiveStripeAccountWebhook = async (input: {
+  workspaceId: string
+  rawBody: string
+  headers: Headers
+}): Promise<WebhookReceipt> => {
+  const secrets = await paymentProviderService.loadStripeAccountWebhook(
+    input.workspaceId,
+  )
+  if (!secrets) {
+    return { status: 404 }
+  }
+  let event: PaymentWebhookEvent
+  try {
+    event = await parseStripeAccountWebhook({
+      rawBody: input.rawBody,
+      headers: input.headers,
+      ...secrets,
+    })
+  } catch (error) {
+    return toReceiptOrThrow(error)
+  }
+  if (event.kind !== "checkout" || !event.metadata) {
+    return OK
+  }
+  if (event.metadata.workspaceId !== input.workspaceId) {
+    return OK
+  }
+  await enqueue({ provider: "stripe", workspaceId: input.workspaceId, event })
   return OK
 }
 

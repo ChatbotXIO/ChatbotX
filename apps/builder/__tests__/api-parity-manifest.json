@@ -376,6 +376,7 @@
     "orders/transition-order.action:transitionOrderAction": "covered:orders",
     "oauth-consent/consent.action:submitOAuthConsentAction": "private:OAuth browser consent must be approved by the authenticated user; a workspace token must never grant that authorization",
     "payment-providers/connect-paypal.action:connectPaypalAction": "private:decides which account receives the store's money, so only a workspace super admin does it in the UI — a workspace token must never (invariant 23 exempt); agents get the page with paymentProviders.getConnectLink",
+    "payment-providers/connect-stripe-key.action:connectStripeKeyAction": "covered:payment-providers",
     "payment-providers/disconnect-payment-provider.action:disconnectPaymentProviderAction": "covered:payment-providers",
     "payment-providers/start-stripe-connect.action:startStripeConnectAction": "private:decides which account receives the store's money, so only a workspace super admin does it in the UI — a workspace token must never (invariant 23 exempt); agents get the page with paymentProviders.getConnectLink",
     "pipelines/field-member.action:createFieldAction": "covered:pipelines",

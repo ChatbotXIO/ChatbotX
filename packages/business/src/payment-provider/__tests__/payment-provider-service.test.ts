@@ -14,12 +14,17 @@ const mocks = vi.hoisted(() => ({
   deauthorizeStripe: vi.fn(),
   connectPaypal: vi.fn(),
   disconnectPaypal: vi.fn(),
+  readStripeKeyAccount: vi.fn(),
+  createStripeAccountWebhook: vi.fn(),
+  deleteStripeAccountWebhook: vi.fn(),
+  createStripeGateway: vi.fn(),
   encryptObject: vi.fn(),
   decryptObject: vi.fn(),
   dropPaymentMethod: vi.fn(),
   countOrdersNeedingProvider: vi.fn(),
   invalidateSettings: vi.fn(),
   put: vi.fn(),
+  runExclusive: vi.fn(),
   take: vi.fn(),
   get: vi.fn(),
   audit: vi.fn(),
@@ -61,12 +66,24 @@ vi.mock("@chatbotx.io/payments", () => ({
   deauthorizeStripe: (...args: unknown[]) => mocks.deauthorizeStripe(...args),
   connectPaypal: (...args: unknown[]) => mocks.connectPaypal(...args),
   disconnectPaypal: (...args: unknown[]) => mocks.disconnectPaypal(...args),
-  createStripeGateway: vi.fn(),
+  readStripeKeyAccount: (...args: unknown[]) =>
+    mocks.readStripeKeyAccount(...args),
+  createStripeAccountWebhook: (...args: unknown[]) =>
+    mocks.createStripeAccountWebhook(...args),
+  deleteStripeAccountWebhook: (...args: unknown[]) =>
+    mocks.deleteStripeAccountWebhook(...args),
+  isStripeSecretKey: (key: string) =>
+    key.startsWith("sk_") || key.startsWith("rk_"),
+  createStripeGateway: (...args: unknown[]) =>
+    mocks.createStripeGateway(...args),
   createPaypalGateway: vi.fn(),
   isPaymentProviderError: () => false,
 }))
 
 vi.mock("@chatbotx.io/redis", () => ({
+  distributedLock: {
+    runExclusive: (...args: unknown[]) => mocks.runExclusive(...args),
+  },
   distributedStore: {
     put: (...args: unknown[]) => mocks.put(...args),
     take: (...args: unknown[]) => mocks.take(...args),
@@ -139,6 +156,20 @@ beforeEach(() => {
     ...values,
   }))
   mocks.encryptObject.mockResolvedValue({ v: 1, text: "cipher" })
+  mocks.readStripeKeyAccount.mockResolvedValue({
+    accountId: "acct_store",
+    label: "Acme",
+    chargesEnabled: true,
+    livemode: false,
+  })
+  mocks.createStripeAccountWebhook.mockResolvedValue({
+    endpointId: "we_new",
+    secret: "whsec_new",
+  })
+  mocks.deleteStripeAccountWebhook.mockResolvedValue(undefined)
+  mocks.runExclusive.mockImplementation(
+    async ({ fn }: { fn: () => Promise<unknown> }) => await fn(),
+  )
 })
 
 describe("paymentProviderService — Stripe Connect", () => {
@@ -428,5 +459,256 @@ describe("paymentProviderService.disconnect", () => {
     })
     expect(mocks.deauthorizeStripe).not.toHaveBeenCalled()
     expect(mocks.delete).not.toHaveBeenCalled()
+  })
+})
+
+describe("paymentProviderService — Stripe secret key", () => {
+  const keyRow = {
+    workspaceId: "ws1",
+    provider: "stripe",
+    livemode: false,
+    accountLabel: "Acme",
+    externalAccountId: "acct_store",
+    platformCredentialId: null,
+    secret: { v: 1, text: "old" },
+    webhookEndpointId: "we_old",
+    createdAt: new Date(),
+  }
+  const keySecret = {
+    secretKey: "sk_test_old",
+    livemode: false,
+    accountId: "acct_store",
+    webhookId: "we_old",
+    webhookSecret: "whsec_old",
+  }
+
+  test("checks the key, creates the webhook, keeps both encrypted to this workspace", async () => {
+    const connected = await paymentProviderService.connectStripeKey({
+      workspaceId: "ws1",
+      secretKey: " sk_test_store ",
+    })
+    expect(mocks.readStripeKeyAccount).toHaveBeenCalledWith("sk_test_store")
+    expect(mocks.createStripeAccountWebhook).toHaveBeenCalledWith({
+      secretKey: "sk_test_store",
+      url: "https://app.test/api/payments/stripe/workspace/ws1/webhook",
+    })
+    expect(mocks.encryptObject).toHaveBeenCalledWith(
+      {
+        secretKey: "sk_test_store",
+        livemode: false,
+        accountId: "acct_store",
+        webhookId: "we_new",
+        webhookSecret: "whsec_new",
+      },
+      "ecommerce-payment:ws1:stripe",
+    )
+    expect(mocks.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        provider: "stripe",
+        externalAccountId: "acct_store",
+        platformCredentialId: null,
+        secret: { v: 1, text: "cipher" },
+        webhookEndpointId: "we_new",
+      }),
+    )
+    expect(connected).toMatchObject({
+      connectionType: "apiKey",
+      accountId: "acct_store",
+      chargesEnabled: true,
+    })
+    expect(JSON.stringify(connected)).not.toContain("sk_test_store")
+  })
+
+  test("a publishable key is refused before Stripe is called", async () => {
+    await expect(
+      paymentProviderService.connectStripeKey({
+        workspaceId: "ws1",
+        secretKey: "pk_test_store",
+      }),
+    ).rejects.toMatchObject({ code: "stripeSecretKeyInvalid" })
+    expect(mocks.readStripeKeyAccount).not.toHaveBeenCalled()
+  })
+
+  test("another account is refused while orders still need the old one", async () => {
+    mocks.find.mockResolvedValue({
+      ...keyRow,
+      externalAccountId: "acct_other",
+    })
+    mocks.countOrdersNeedingProvider.mockResolvedValue(1)
+    await expect(
+      paymentProviderService.connectStripeKey({
+        workspaceId: "ws1",
+        secretKey: "sk_test_store",
+      }),
+    ).rejects.toMatchObject({ code: "paymentProviderInUse" })
+    expect(mocks.createStripeAccountWebhook).not.toHaveBeenCalled()
+  })
+
+  test("the same account moving from Stripe Connect to a key keeps its orders and lets the platform go", async () => {
+    mocks.find.mockResolvedValue({
+      workspaceId: "ws1",
+      provider: "stripe",
+      externalAccountId: "acct_store",
+      platformCredentialId: "cred1",
+      secret: null,
+      livemode: false,
+    })
+    mocks.countOrdersNeedingProvider.mockResolvedValue(1)
+    await paymentProviderService.connectStripeKey({
+      workspaceId: "ws1",
+      secretKey: "sk_test_store",
+    })
+    expect(mocks.countOrdersNeedingProvider).not.toHaveBeenCalled()
+    expect(mocks.deauthorizeStripe).toHaveBeenCalledWith(
+      expect.objectContaining({ accountId: "acct_store" }),
+    )
+  })
+
+  test("a new key of the same account removes the old webhook with the new key", async () => {
+    mocks.find.mockResolvedValue(keyRow)
+    mocks.decryptObject.mockResolvedValue(keySecret)
+    await paymentProviderService.connectStripeKey({
+      workspaceId: "ws1",
+      secretKey: "sk_test_store",
+    })
+    expect(mocks.deleteStripeAccountWebhook).toHaveBeenCalledTimes(1)
+    expect(mocks.deleteStripeAccountWebhook).toHaveBeenCalledWith({
+      secretKey: "sk_test_store",
+      endpointId: "we_old",
+    })
+    expect(mocks.deauthorizeStripe).not.toHaveBeenCalled()
+  })
+
+  test("falls back to the old key when the new one cannot remove the webhook", async () => {
+    mocks.find.mockResolvedValue(keyRow)
+    mocks.decryptObject.mockResolvedValue(keySecret)
+    mocks.deleteStripeAccountWebhook
+      .mockRejectedValueOnce(new Error("no permission"))
+      .mockResolvedValueOnce(undefined)
+    await paymentProviderService.connectStripeKey({
+      workspaceId: "ws1",
+      secretKey: "sk_test_store",
+    })
+    expect(mocks.deleteStripeAccountWebhook).toHaveBeenLastCalledWith({
+      secretKey: "sk_test_old",
+      endpointId: "we_old",
+    })
+    expect(mocks.warn).not.toHaveBeenCalled()
+  })
+
+  test("another account's old webhook is removed with the old key only", async () => {
+    mocks.find.mockResolvedValue({ ...keyRow, externalAccountId: "acct_other" })
+    mocks.decryptObject.mockResolvedValue({
+      ...keySecret,
+      accountId: "acct_other",
+    })
+    await paymentProviderService.connectStripeKey({
+      workspaceId: "ws1",
+      secretKey: "sk_test_store",
+    })
+    expect(mocks.deleteStripeAccountWebhook).toHaveBeenCalledTimes(1)
+    expect(mocks.deleteStripeAccountWebhook).toHaveBeenCalledWith({
+      secretKey: "sk_test_old",
+      endpointId: "we_old",
+    })
+  })
+
+  test("the same account in the other mode is refused while orders still need it", async () => {
+    mocks.find.mockResolvedValue(keyRow)
+    mocks.readStripeKeyAccount.mockResolvedValue({
+      accountId: "acct_store",
+      label: "Acme",
+      chargesEnabled: true,
+      livemode: true,
+    })
+    mocks.countOrdersNeedingProvider.mockResolvedValue(1)
+    await expect(
+      paymentProviderService.connectStripeKey({
+        workspaceId: "ws1",
+        secretKey: "sk_live_store",
+      }),
+    ).rejects.toMatchObject({ code: "paymentProviderInUse" })
+    expect(mocks.createStripeAccountWebhook).not.toHaveBeenCalled()
+  })
+
+  test("one connect at a time per workspace", async () => {
+    await paymentProviderService.connectStripeKey({
+      workspaceId: "ws1",
+      secretKey: "sk_test_store",
+    })
+    expect(mocks.runExclusive).toHaveBeenCalledWith(
+      expect.objectContaining({ key: "payment-provider-connect:ws1:stripe" }),
+    )
+    const [{ fn }] = mocks.runExclusive.mock.calls[0] as [
+      { fn: () => Promise<unknown> },
+    ]
+    expect(fn).toBeTypeOf("function")
+    expect(mocks.createStripeAccountWebhook).toHaveBeenCalledTimes(1)
+  })
+
+  test("payments go through the store's own key", async () => {
+    mocks.find.mockResolvedValue(keyRow)
+    mocks.decryptObject.mockResolvedValue(keySecret)
+    await paymentProviderService.loadGateway({
+      workspaceId: "ws1",
+      provider: "stripe",
+    })
+    expect(mocks.createStripeGateway).toHaveBeenCalledWith({
+      secretKey: "sk_test_old",
+    })
+    expect(mocks.findDecryptedById).not.toHaveBeenCalled()
+  })
+
+  test("disconnecting removes the webhook instead of deauthorizing", async () => {
+    mocks.find.mockResolvedValue(keyRow)
+    mocks.decryptObject.mockResolvedValue(keySecret)
+    await paymentProviderService.disconnect({
+      workspaceId: "ws1",
+      provider: "stripe",
+    })
+    expect(mocks.deleteStripeAccountWebhook).toHaveBeenCalledWith({
+      secretKey: "sk_test_old",
+      endpointId: "we_old",
+    })
+    expect(mocks.deauthorizeStripe).not.toHaveBeenCalled()
+    expect(mocks.delete).toHaveBeenCalled()
+  })
+
+  test("Stripe Connect on the same account in the other mode checks the orders", async () => {
+    mocks.find.mockResolvedValue(keyRow)
+    mocks.exchangeStripeCode.mockResolvedValue({
+      accountId: "acct_store",
+      livemode: true,
+    })
+    mocks.countOrdersNeedingProvider.mockResolvedValue(1)
+    await expect(
+      paymentProviderService.completeStripeConnect({
+        workspaceId: "ws1",
+        ownerId: "owner1",
+        platformCredentialId: "cred1",
+        code: "ac_1",
+      }),
+    ).rejects.toMatchObject({ code: "paymentProviderInUse" })
+    expect(mocks.upsert).not.toHaveBeenCalled()
+    expect(mocks.deleteStripeAccountWebhook).not.toHaveBeenCalled()
+  })
+
+  test("Stripe Connect replacing a key connection removes its webhook", async () => {
+    mocks.find.mockResolvedValue(keyRow)
+    mocks.decryptObject.mockResolvedValue(keySecret)
+    mocks.exchangeStripeCode.mockResolvedValue({
+      accountId: "acct_store",
+      livemode: false,
+    })
+    await paymentProviderService.completeStripeConnect({
+      workspaceId: "ws1",
+      ownerId: "owner1",
+      platformCredentialId: "cred1",
+      code: "ac_1",
+    })
+    expect(mocks.deleteStripeAccountWebhook).toHaveBeenCalledWith({
+      secretKey: "sk_test_old",
+      endpointId: "we_old",
+    })
   })
 })

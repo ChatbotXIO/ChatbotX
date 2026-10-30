@@ -10346,8 +10346,20 @@
     "title": "Stripe",
     "setting": {
       "label": "Stripe",
-      "description": "Primește plăți cu cardul în magazinul tău web folosind propriul cont Stripe. Banii ajung direct în contul tău Stripe.",
-      "notConfigured": "Stripe nu este încă configurat pe această platformă. Cere administratorului platformei să adauge setările Stripe Connect."
+      "description": "Primește plăți cu cardul în magazinul tău web folosind propriul cont Stripe. Banii ajung direct în contul tău Stripe."
+    },
+    "connectWithStripe": "Conectează cu Stripe",
+    "connectWithKey": "Folosește cheia secretă",
+    "connectionType": {
+      "oauth": "Stripe Connect",
+      "apiKey": "Cheie secretă"
+    },
+    "fields": {
+      "secretKey": "Cheie secretă",
+      "secretKeyHint": "Începe cu sk_live_ (sau sk_test_ pentru modul de test). Funcționează și o cheie restricționată (rk_…) dacă poate citi contul și scrie Checkout Sessions, Refunds și Webhook Endpoints."
+    },
+    "dialog": {
+      "description": "Copiază cheia secretă din <link>Stripe Dashboard → Developers → API keys</link> și lipește-o aici. O verificăm, configurăm notificările de plată în contul tău Stripe și păstrăm cheia criptată."
     },
     "testMode": "Mod test",
     "liveMode": "Live",

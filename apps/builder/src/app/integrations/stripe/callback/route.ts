@@ -87,7 +87,8 @@ export async function GET(req: NextRequest): Promise<Response> {
       code,
     })
     outcome =
-      connected.chargesEnabled === false
+      // Test mode takes test payments before the account is activated.
+      connected.livemode && connected.chargesEnabled === false
         ? { stripe: "connected", chargesEnabled: "false" }
         : { stripe: "connected" }
   } catch (error) {

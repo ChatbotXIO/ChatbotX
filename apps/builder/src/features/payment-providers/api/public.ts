@@ -12,6 +12,8 @@ import { workspaceTokenAuthAPIForScope } from "@/orpc"
 import { getPaymentProviders } from "../lib/get-payment-providers"
 import { paymentIntegrationPath } from "../lib/stripe-connect"
 import {
+  connectStripeKeyRequest,
+  connectStripeKeyResponse,
   disconnectPaymentProviderRequest,
   listPaymentProvidersResponse,
   paymentProviderConnectLinkRequest,
@@ -42,7 +44,7 @@ export const paymentProvidersPublicRouter = {
       path: "/v1/payment-providers/{provider}/connect-link",
       summary: "Get payment provider connect link",
       description:
-        "Where a super admin of this workspace connects Stripe (Stripe Connect sign-in) or PayPal (Client ID and Secret): the provider's row on Settings → Integrations. Give `url` to the store owner, then check the result with `paymentProviders.list`. Connecting is never done with a workspace token, since it decides which account receives the store's money.",
+        "Where a super admin of this workspace connects Stripe (Stripe Connect sign-in, or a secret key) or PayPal (Client ID and Secret): the provider's row on Settings → Integrations. Give `url` to the store owner, then check the result with `paymentProviders.list`. With the store's Stripe secret key in hand, `paymentProviders.connectStripeKey` connects Stripe directly instead.",
       tags: ["Payment Providers"],
     })
     .input(paymentProviderConnectLinkRequest)
@@ -61,6 +63,26 @@ export const paymentProvidersPublicRouter = {
         ),
       }
     }),
+
+  connectStripeKey: workspaceTokenAuthAPI
+    .route({
+      method: "POST",
+      path: "/v1/payment-providers/stripe/api-key",
+      summary: "Connect Stripe with secret key",
+      description:
+        "Connects the store's own Stripe account with its secret key, without Stripe Connect (works whether or not `paymentProviders.list` reports `stripeAvailable`). The key is checked with Stripe, a webhook for the shop's payments is created on the account, and the key is stored encrypted, never returned. It decides which Stripe account receives the store's money: only send a key the store owner gave you. Replaces any Stripe connection the workspace had; a different account is refused with `paymentProviderInUse` while orders still need the old one (find them with `orders.list`). Then offer Stripe at checkout with `ecommerceSettings.update` (`payments.paymentMethods`).",
+      tags: ["Payment Providers"],
+    })
+    .input(connectStripeKeyRequest)
+    .output(connectStripeKeyResponse)
+    .errors(possibleErrorsOnConnectingPaymentProvider)
+    .handler(
+      async ({ context, input }) =>
+        await paymentProviderService.connectStripeKey({
+          workspaceId: context.workspace.id,
+          secretKey: input.secretKey,
+        }),
+    ),
 
   disconnect: workspaceTokenAuthAPI
     .route({

@@ -3,10 +3,15 @@ import { describe, expect, test } from "vitest"
 import { PaymentProviderError } from "../src/errors"
 import {
   buildStripeAuthorizeUrl,
+  createStripeAccountWebhook,
   createStripeGateway,
+  deleteStripeAccountWebhook,
   ensureStripeConnectWebhook,
   exchangeStripeCode,
+  isStripeSecretKey,
+  parseStripeAccountWebhook,
   parseStripeConnectWebhook,
+  readStripeKeyAccount,
 } from "../src/stripe"
 
 type Call = {
@@ -412,5 +417,137 @@ describe("parseStripeConnectWebhook", () => {
         webhookSecret: secret,
       }),
     ).rejects.toBeInstanceOf(PaymentProviderError)
+  })
+})
+
+describe("a store's own secret key", () => {
+  test("the gateway calls with the store's key and no Stripe-Account", async () => {
+    const stripe = fakeStripe((call) =>
+      call.url.pathname === "/v1/checkout/sessions/cs_test_1"
+        ? { body: session() }
+        : undefined,
+    )
+    const gateway = createStripeGateway(
+      { secretKey: "sk_test_store" },
+      { fetch: stripe.fetch },
+    )
+    await expect(gateway.getCheckoutStatus("cs_test_1")).resolves.toEqual({
+      state: "open",
+    })
+    const [call] = stripe.calls
+    expect(call?.headers.get("authorization")).toBe("Bearer sk_test_store")
+    expect(call?.headers.has("stripe-account")).toBe(false)
+  })
+
+  test.each([
+    ["sk_live_abc123", true],
+    ["sk_test_abc123", true],
+    ["rk_live_abc123", true],
+    ["pk_live_abc123", false],
+    ["whsec_abc123", false],
+    ["sk_live_", false],
+  ])("isStripeSecretKey(%s) is %s", (key, expected) => {
+    expect(isStripeSecretKey(key)).toBe(expected)
+  })
+
+  test("reads the key's account, and live or test from its prefix", async () => {
+    const stripe = fakeStripe((call) =>
+      call.url.pathname === "/v1/account"
+        ? {
+            body: {
+              id: "acct_store",
+              object: "account",
+              business_profile: { name: "Acme" },
+              charges_enabled: false,
+            },
+          }
+        : undefined,
+    )
+    await expect(
+      readStripeKeyAccount("rk_live_store", { fetch: stripe.fetch }),
+    ).resolves.toEqual({
+      accountId: "acct_store",
+      label: "Acme",
+      chargesEnabled: false,
+      livemode: true,
+    })
+  })
+
+  test("a key Stripe refuses is credentialsRejected", async () => {
+    const stripe = fakeStripe(() => ({
+      status: 401,
+      body: {
+        error: { type: "invalid_request_error", message: "Invalid API Key" },
+      },
+    }))
+    await expect(
+      readStripeKeyAccount("sk_test_wrong", { fetch: stripe.fetch }),
+    ).rejects.toMatchObject({ kind: "credentialsRejected" })
+  })
+
+  test("creates the webhook on the account itself, not a Connect one", async () => {
+    const stripe = fakeStripe((call) =>
+      call.method === "POST" && call.url.pathname === "/v1/webhook_endpoints"
+        ? {
+            body: {
+              id: "we_1",
+              object: "webhook_endpoint",
+              url: "https://app.test/hook",
+              status: "enabled",
+              secret: "whsec_1",
+            },
+          }
+        : undefined,
+    )
+    await expect(
+      createStripeAccountWebhook(
+        { secretKey: "sk_test_store", url: "https://app.test/hook" },
+        { fetch: stripe.fetch },
+      ),
+    ).resolves.toEqual({ endpointId: "we_1", secret: "whsec_1" })
+    const [call] = stripe.calls
+    expect(call?.body.get("connect")).toBeNull()
+    expect(call?.body.getAll("enabled_events[0]")).toEqual([
+      "checkout.session.completed",
+    ])
+    expect(call?.body.get("enabled_events[4]")).toBeNull()
+  })
+
+  test("a webhook already gone counts as removed", async () => {
+    const stripe = fakeStripe(() => undefined)
+    await expect(
+      deleteStripeAccountWebhook(
+        { secretKey: "sk_test_store", endpointId: "we_gone" },
+        { fetch: stripe.fetch },
+      ),
+    ).resolves.toBeUndefined()
+  })
+
+  test("an event on the store's own webhook carries no account", async () => {
+    const secret = "whsec_store"
+    const rawBody = JSON.stringify({
+      id: "evt_1",
+      object: "event",
+      type: "checkout.session.completed",
+      data: { object: session({ status: "complete" }) },
+    })
+    const header = await Stripe.webhooks.generateTestHeaderStringAsync({
+      payload: rawBody,
+      secret,
+    })
+    await expect(
+      parseStripeAccountWebhook({
+        rawBody,
+        headers: new Headers({ "stripe-signature": header }),
+        secretKey: "sk_test_store",
+        webhookSecret: secret,
+      }),
+    ).resolves.toEqual({
+      kind: "checkout",
+      eventId: "evt_1",
+      reference: "cs_test_1",
+      metadata: METADATA,
+      account: null,
+    })
   })
 })

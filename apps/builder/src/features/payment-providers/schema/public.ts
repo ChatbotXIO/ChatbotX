@@ -3,6 +3,11 @@ import { z } from "zod"
 
 export const paymentProviderResource = z.object({
   provider: onlinePaymentProviders,
+  connectionType: z
+    .enum(["oauth", "apiKey"])
+    .describe(
+      "`oauth`: Stripe connected through the platform's Stripe Connect. `apiKey`: connected with the store's own keys (a Stripe secret key from `paymentProviders.connectStripeKey`, or PayPal's Client ID and Secret).",
+    ),
   livemode: z
     .boolean()
     .describe("False for a Stripe test connection or the PayPal sandbox."),
@@ -24,7 +29,9 @@ export const listPaymentProvidersResponse = z.object({
   data: z.array(paymentProviderResource),
   stripeAvailable: z
     .boolean()
-    .describe("Whether this platform has Stripe Connect set up."),
+    .describe(
+      "Whether this platform has Stripe Connect set up. Connecting Stripe with a secret key (`paymentProviders.connectStripeKey`) works either way.",
+    ),
 })
 
 export const paymentProviderConnectLinkRequest = z.object({
@@ -36,6 +43,25 @@ export const paymentProviderConnectLinkResponse = z.object({
     .string()
     .describe(
       "The provider's row on Settings → Integrations, for a super admin of the workspace to open and press Connect.",
+    ),
+})
+
+export const connectStripeKeyRequest = z.object({
+  secretKey: z
+    .string()
+    .trim()
+    .min(1)
+    .max(512)
+    .describe(
+      "The store's Stripe secret key (`sk_live_…` or `sk_test_…`, from dashboard.stripe.com → Developers → API keys), or a restricted key (`rk_…`) allowed to read the account and write Checkout Sessions, Refunds and Webhook Endpoints. A test key connects in test mode. Stored encrypted, never returned.",
+    ),
+})
+
+export const connectStripeKeyResponse = paymentProviderResource.extend({
+  chargesEnabled: z
+    .boolean()
+    .describe(
+      "False while Stripe does not let the account take live payments yet (its onboarding is unfinished): finish it on dashboard.stripe.com. A test key (`livemode: false`) takes test payments either way.",
     ),
 })
 

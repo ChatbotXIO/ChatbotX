@@ -10346,8 +10346,20 @@
     "title": "Stripe",
     "setting": {
       "label": "Stripe",
-      "description": "Veb mağazanızda öz Stripe hesabınızla kart ödənişlərini qəbul edin. Pul birbaşa Stripe hesabınıza köçürülür.",
-      "notConfigured": "Stripe bu platformada hələ qurulmayıb. Platforma administratorundan Stripe Connect parametrlərini əlavə etməsini xahiş edin."
+      "description": "Veb mağazanızda öz Stripe hesabınızla kart ödənişlərini qəbul edin. Pul birbaşa Stripe hesabınıza köçürülür."
+    },
+    "connectWithStripe": "Stripe ilə qoşul",
+    "connectWithKey": "Gizli açardan istifadə et",
+    "connectionType": {
+      "oauth": "Stripe Connect",
+      "apiKey": "Gizli açar"
+    },
+    "fields": {
+      "secretKey": "Gizli açar",
+      "secretKeyHint": "sk_live_ ilə başlayır (test rejimi üçün sk_test_). Hesabı oxuya və Checkout Sessions, Refunds və Webhook Endpoints yaza bilən məhdud açar (rk_…) da işləyir."
+    },
+    "dialog": {
+      "description": "Gizli açarınızı <link>Stripe Dashboard → Developers → API keys</link> bölməsindən kopyalayıb bura yapışdırın. Biz onu yoxlayır, Stripe hesabınızda ödəniş bildirişlərini qurur və açarı şifrələnmiş saxlayırıq."
     },
     "testMode": "Test rejimi",
     "liveMode": "Canlı",

@@ -10346,8 +10346,20 @@
     "title": "Stripe",
     "setting": {
       "label": "Stripe",
-      "description": "使用您自己的 Stripe 账户在网店接收银行卡付款。款项会直接进入您的 Stripe 账户。",
-      "notConfigured": "此平台尚未设置 Stripe。请联系平台管理员添加 Stripe Connect 设置。"
+      "description": "使用您自己的 Stripe 账户在网店接收银行卡付款。款项会直接进入您的 Stripe 账户。"
+    },
+    "connectWithStripe": "通过 Stripe 连接",
+    "connectWithKey": "使用密钥",
+    "connectionType": {
+      "oauth": "Stripe Connect",
+      "apiKey": "密钥"
+    },
+    "fields": {
+      "secretKey": "密钥",
+      "secretKeyHint": "以 sk_live_ 开头(测试模式为 sk_test_)。也可使用受限密钥(rk_…),前提是它能读取账户并写入 Checkout Sessions、Refunds 和 Webhook Endpoints。"
+    },
+    "dialog": {
+      "description": "从 <link>Stripe 控制台 → Developers → API keys</link> 复制您的密钥并粘贴到这里。我们会验证密钥、在您的 Stripe 账户上设置付款通知,并加密保存密钥。"
     },
     "testMode": "测试模式",
     "liveMode": "正式",

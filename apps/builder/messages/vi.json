@@ -10346,8 +10346,20 @@
     "title": "Stripe",
     "setting": {
       "label": "Stripe",
-      "description": "Nhận thanh toán bằng thẻ trên web shop bằng tài khoản Stripe của chính bạn. Tiền vào thẳng tài khoản Stripe của bạn.",
-      "notConfigured": "Nền tảng chưa cài đặt Stripe. Hãy nhờ quản trị viên nền tảng thêm cấu hình Stripe Connect."
+      "description": "Nhận thanh toán bằng thẻ trên web shop bằng tài khoản Stripe của chính bạn. Tiền vào thẳng tài khoản Stripe của bạn."
+    },
+    "connectWithStripe": "Kết nối với Stripe",
+    "connectWithKey": "Dùng Secret key",
+    "connectionType": {
+      "oauth": "Stripe Connect",
+      "apiKey": "Secret key"
+    },
+    "fields": {
+      "secretKey": "Secret key",
+      "secretKeyHint": "Bắt đầu bằng sk_live_ (hoặc sk_test_ cho chế độ thử). Restricted key (rk_…) cũng dùng được nếu có quyền đọc tài khoản và ghi Checkout Sessions, Refunds, Webhook Endpoints."
+    },
+    "dialog": {
+      "description": "Sao chép secret key trong <link>Stripe Dashboard → Developers → API keys</link> rồi dán vào đây. Hệ thống sẽ kiểm tra key, tự cài thông báo thanh toán trên tài khoản Stripe của bạn và lưu key ở dạng mã hoá."
     },
     "testMode": "Chế độ thử",
     "liveMode": "Thật",

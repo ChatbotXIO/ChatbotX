@@ -11,6 +11,7 @@ import type {
   PaymentWebhookRequest,
   RefundResult,
   StripeConnectedAccount,
+  StripeOwnAccount,
 } from "./types"
 
 /** The events the platform's Connect webhook listens to. */
@@ -147,16 +148,21 @@ const toCheckoutStatus = (session: Stripe.Checkout.Session): CheckoutStatus => {
 }
 
 /**
- * One store's connected Stripe account. Every request carries
- * `Stripe-Account`, so the session, the payment and any refund live in the
- * store's account and the money is theirs.
+ * One store's Stripe account. Connected through Stripe Connect, every request
+ * carries `Stripe-Account`; connected with the store's own key, the key
+ * already is the account. Either way the session, the payment and any refund
+ * live in the store's account and the money is theirs.
  */
 export const createStripeGateway = (
-  account: StripeConnectedAccount,
+  account: StripeConnectedAccount | StripeOwnAccount,
   options?: StripeClientOptions,
 ): PaymentGateway => {
-  const client = createClient(account.platformSecretKey, options)
-  const onAccount = { stripeAccount: account.accountId }
+  const client =
+    "secretKey" in account
+      ? createClient(account.secretKey, options)
+      : createClient(account.platformSecretKey, options)
+  const onAccount =
+    "secretKey" in account ? {} : { stripeAccount: account.accountId }
 
   const getCheckoutStatus = async (
     reference: string,
@@ -297,6 +303,31 @@ export const parseStripeConnectWebhook = async (
     metadata: readMetadata(session.metadata),
     account: event.account ?? null,
   }
+}
+
+/**
+ * Checks the signature of an event a store's own webhook received (the one
+ * created when it connected with its key). `account` is always null: the
+ * caller matches the event to the store by its metadata.
+ */
+export const parseStripeAccountWebhook = async (
+  input: PaymentWebhookRequest & { secretKey: string; webhookSecret: string },
+  options?: StripeClientOptions,
+): Promise<PaymentWebhookEvent> => {
+  const event = await parseStripeConnectWebhook(
+    {
+      rawBody: input.rawBody,
+      headers: input.headers,
+      platformSecretKey: input.secretKey,
+      webhookSecret: input.webhookSecret,
+    },
+    options,
+  )
+  // Not subscribed on a store's own webhook; never a reason to disconnect it.
+  if (event.kind === "deauthorized") {
+    return { kind: "ignored", eventId: event.eventId }
+  }
+  return event.kind === "checkout" ? { ...event, account: null } : event
 }
 
 // ─── Stripe Connect OAuth ───────────────────────────────────────────────────
@@ -469,3 +500,89 @@ export const deleteStripeConnectWebhook = async (
     throw toProviderError(error)
   }
 }
+
+// ─── A store's own secret key ───────────────────────────────────────────────
+
+/** The events a store's own webhook listens to. */
+export const STRIPE_ACCOUNT_WEBHOOK_EVENTS = [
+  "checkout.session.completed",
+  "checkout.session.async_payment_succeeded",
+  "checkout.session.async_payment_failed",
+  "checkout.session.expired",
+] as const
+
+const STRIPE_SECRET_KEY_PATTERN = /^(sk|rk)_(live|test)_[A-Za-z0-9]+$/
+
+/**
+ * A secret (`sk_…`) or restricted (`rk_…`) key, live or test. A publishable
+ * key (`pk_…`) cannot take payments and is refused.
+ */
+export const isStripeSecretKey = (key: string) =>
+  STRIPE_SECRET_KEY_PATTERN.test(key)
+
+/** Whether the key works on live payments, read from its prefix. */
+export const isStripeLiveKey = (key: string) =>
+  key.startsWith("sk_live_") || key.startsWith("rk_live_")
+
+/**
+ * The account a store's key belongs to: its id, name, and whether it can
+ * take payments yet. A key Stripe refuses is `credentialsRejected`.
+ */
+export const readStripeKeyAccount = async (
+  secretKey: string,
+  options?: StripeClientOptions,
+): Promise<{
+  accountId: string
+  label: string | null
+  chargesEnabled: boolean
+  livemode: boolean
+}> => {
+  const client = createClient(secretKey, options)
+  const account = await callStripe(() => client.accounts.retrieveCurrent())
+  return {
+    accountId: account.id,
+    label:
+      account.business_profile?.name ??
+      account.settings?.dashboard?.display_name ??
+      account.email ??
+      null,
+    chargesEnabled: account.charges_enabled ?? false,
+    livemode: isStripeLiveKey(secretKey),
+  }
+}
+
+/**
+ * The webhook on the store's own account that tells the shop a customer
+ * paid. Created on every connect; the caller removes the one it replaces.
+ */
+export const createStripeAccountWebhook = async (
+  input: { secretKey: string; url: string },
+  options?: StripeClientOptions,
+): Promise<{ endpointId: string; secret: string }> => {
+  const client = createClient(input.secretKey, options)
+  const endpoint = await callStripe(() =>
+    client.webhookEndpoints.create({
+      url: input.url,
+      enabled_events: [...STRIPE_ACCOUNT_WEBHOOK_EVENTS],
+      // Shown in the store's own Stripe dashboard: no platform name.
+      description: "Web shop payments",
+    }),
+  )
+  if (!endpoint.secret) {
+    throw new PaymentProviderError(
+      "invalidRequest",
+      "Stripe created the webhook without a signing secret.",
+    )
+  }
+  return { endpointId: endpoint.id, secret: endpoint.secret }
+}
+
+/** Removes a store's own webhook; one already gone is fine. */
+export const deleteStripeAccountWebhook = async (
+  input: { secretKey: string; endpointId: string },
+  options?: StripeClientOptions,
+): Promise<void> =>
+  await deleteStripeConnectWebhook(
+    { platformSecretKey: input.secretKey, endpointId: input.endpointId },
+    options,
+  )

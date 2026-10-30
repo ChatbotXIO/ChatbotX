@@ -2,6 +2,8 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const mocks = vi.hoisted(() => ({
   parseStripe: vi.fn(),
+  parseStripeAccount: vi.fn(),
+  loadStripeAccountWebhook: vi.fn(),
   parsePaypal: vi.fn(),
   loadStripeConnectWebhook: vi.fn(),
   loadPaypalSecret: vi.fn(),
@@ -22,6 +24,8 @@ class FakeProviderError extends Error {
 
 vi.mock("@chatbotx.io/payments", () => ({
   parseStripeConnectWebhook: (...args: unknown[]) => mocks.parseStripe(...args),
+  parseStripeAccountWebhook: (...args: unknown[]) =>
+    mocks.parseStripeAccount(...args),
   parsePaypalWebhook: (...args: unknown[]) => mocks.parsePaypal(...args),
   isPaymentProviderError: (error: unknown) =>
     error instanceof FakeProviderError,
@@ -39,6 +43,8 @@ vi.mock("../../payment-provider/service", () => ({
     loadStripeConnectWebhook: (...args: unknown[]) =>
       mocks.loadStripeConnectWebhook(...args),
     loadPaypalSecret: (...args: unknown[]) => mocks.loadPaypalSecret(...args),
+    loadStripeAccountWebhook: (...args: unknown[]) =>
+      mocks.loadStripeAccountWebhook(...args),
     findByStripeAccount: (...args: unknown[]) =>
       mocks.findByStripeAccount(...args),
     handleStripeDeauthorized: (...args: unknown[]) =>
@@ -50,9 +56,11 @@ vi.mock("../../logger", () => ({
   logger: { warn: (...args: unknown[]) => mocks.warn(...args) },
 }))
 
-const { receivePaypalWebhook, receiveStripeWebhook } = await import(
-  "../webhooks"
-)
+const {
+  receivePaypalWebhook,
+  receiveStripeAccountWebhook,
+  receiveStripeWebhook,
+} = await import("../webhooks")
 
 const request = { rawBody: "{}", headers: new Headers() }
 const metadata = { workspaceId: "ws1", orderId: "o1", orderPaymentId: "pay1" }
@@ -64,6 +72,10 @@ beforeEach(() => {
     webhookSecret: "whsec",
   })
   mocks.loadPaypalSecret.mockResolvedValue({ webhookId: "WH-1" })
+  mocks.loadStripeAccountWebhook.mockResolvedValue({
+    secretKey: "sk_test_store",
+    webhookSecret: "whsec_store",
+  })
   mocks.findByStripeAccount.mockResolvedValue({ workspaceId: "ws1" })
 })
 
@@ -197,6 +209,69 @@ describe("receivePaypalWebhook", () => {
     )
     await expect(
       receivePaypalWebhook({ workspaceId: "ws1", ...request }),
+    ).resolves.toEqual({ status: 400 })
+    expect(mocks.queueAdd).not.toHaveBeenCalled()
+  })
+})
+
+describe("receiveStripeAccountWebhook", () => {
+  test("queues an event of this workspace's attempt", async () => {
+    mocks.parseStripeAccount.mockResolvedValue({
+      kind: "checkout",
+      eventId: "evt_1",
+      reference: "cs_1",
+      metadata,
+      account: null,
+    })
+    await expect(
+      receiveStripeAccountWebhook({ workspaceId: "ws1", ...request }),
+    ).resolves.toEqual({ status: 200 })
+    expect(mocks.parseStripeAccount).toHaveBeenCalledWith(
+      expect.objectContaining({
+        secretKey: "sk_test_store",
+        webhookSecret: "whsec_store",
+      }),
+    )
+    expect(mocks.queueAdd).toHaveBeenCalledWith(
+      "confirmOrderPayment",
+      expect.objectContaining({
+        data: expect.objectContaining({
+          provider: "stripe",
+          workspaceId: "ws1",
+          reference: "cs_1",
+        }),
+      }),
+      { jobId: "order-payment-event-stripe-evt_1" },
+    )
+  })
+
+  test.each([
+    ["another workspace's attempt", { ...metadata, workspaceId: "ws2" }],
+    ["a payment made outside the shop", null],
+  ])("ignores %s on the same account", async (_, eventMetadata) => {
+    mocks.parseStripeAccount.mockResolvedValue({
+      kind: "checkout",
+      eventId: "evt_1",
+      reference: "cs_1",
+      metadata: eventMetadata,
+      account: null,
+    })
+    await expect(
+      receiveStripeAccountWebhook({ workspaceId: "ws1", ...request }),
+    ).resolves.toEqual({ status: 200 })
+    expect(mocks.queueAdd).not.toHaveBeenCalled()
+  })
+
+  test("a workspace without a key connection is 404; a bad signature 400", async () => {
+    mocks.loadStripeAccountWebhook.mockResolvedValueOnce(null)
+    await expect(
+      receiveStripeAccountWebhook({ workspaceId: "ws1", ...request }),
+    ).resolves.toEqual({ status: 404 })
+    mocks.parseStripeAccount.mockRejectedValue(
+      new FakeProviderError("signatureInvalid"),
+    )
+    await expect(
+      receiveStripeAccountWebhook({ workspaceId: "ws1", ...request }),
     ).resolves.toEqual({ status: 400 })
     expect(mocks.queueAdd).not.toHaveBeenCalled()
   })

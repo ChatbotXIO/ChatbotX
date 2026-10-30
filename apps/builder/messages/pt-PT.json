@@ -10346,8 +10346,20 @@
     "title": "Stripe",
     "setting": {
       "label": "Stripe",
-      "description": "Receba pagamentos com cartão na sua loja online com a sua própria conta Stripe. O dinheiro vai diretamente para a sua conta Stripe.",
-      "notConfigured": "O Stripe ainda não está configurado nesta plataforma. Peça ao administrador da plataforma para adicionar as definições do Stripe Connect."
+      "description": "Receba pagamentos com cartão na sua loja online com a sua própria conta Stripe. O dinheiro vai diretamente para a sua conta Stripe."
+    },
+    "connectWithStripe": "Ligar com Stripe",
+    "connectWithKey": "Usar chave secreta",
+    "connectionType": {
+      "oauth": "Stripe Connect",
+      "apiKey": "Chave secreta"
+    },
+    "fields": {
+      "secretKey": "Chave secreta",
+      "secretKeyHint": "Começa por sk_live_ (ou sk_test_ no modo de teste). Uma chave restrita (rk_…) também funciona se puder ler a conta e escrever Checkout Sessions, Refunds e Webhook Endpoints."
+    },
+    "dialog": {
+      "description": "Copie a sua chave secreta em <link>Stripe Dashboard → Developers → API keys</link> e cole-a aqui. Verificamo-la, configuramos as notificações de pagamento na sua conta Stripe e guardamos a chave encriptada."
     },
     "testMode": "Modo de teste",
     "liveMode": "Ao vivo",

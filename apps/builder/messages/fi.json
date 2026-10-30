@@ -10346,8 +10346,20 @@
     "title": "Stripe",
     "setting": {
       "label": "Stripe",
-      "description": "Vastaanota korttimaksuja verkkokaupassasi omalla Stripe-tililläsi. Rahat menevät suoraan Stripe-tilillesi.",
-      "notConfigured": "Stripeä ei ole vielä otettu käyttöön tällä alustalla. Pyydä alustan ylläpitäjää lisäämään Stripe Connect -asetukset."
+      "description": "Vastaanota korttimaksuja verkkokaupassasi omalla Stripe-tililläsi. Rahat menevät suoraan Stripe-tilillesi."
+    },
+    "connectWithStripe": "Yhdistä Stripeen",
+    "connectWithKey": "Käytä salaista avainta",
+    "connectionType": {
+      "oauth": "Stripe Connect",
+      "apiKey": "Salainen avain"
+    },
+    "fields": {
+      "secretKey": "Salainen avain",
+      "secretKeyHint": "Alkaa sk_live_ (tai sk_test_ testitilassa). Myös rajoitettu avain (rk_…) toimii, jos se voi lukea tilin ja kirjoittaa Checkout Sessions, Refunds ja Webhook Endpoints."
+    },
+    "dialog": {
+      "description": "Kopioi salainen avaimesi kohdasta <link>Stripe Dashboard → Developers → API keys</link> ja liitä se tähän. Tarkistamme sen, määritämme maksuilmoitukset Stripe-tilillesi ja tallennamme avaimen salattuna."
     },
     "testMode": "Testitila",
     "liveMode": "Live",

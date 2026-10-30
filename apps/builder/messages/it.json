@@ -10346,8 +10346,20 @@
     "title": "Stripe",
     "setting": {
       "label": "Stripe",
-      "description": "Accetta pagamenti con carta nel tuo negozio web con il tuo account Stripe. Il denaro va direttamente sul tuo account Stripe.",
-      "notConfigured": "Stripe non è ancora configurato su questa piattaforma. Chiedi all'amministratore della piattaforma di aggiungere le impostazioni di Stripe Connect."
+      "description": "Accetta pagamenti con carta nel tuo negozio web con il tuo account Stripe. Il denaro va direttamente sul tuo account Stripe."
+    },
+    "connectWithStripe": "Connetti con Stripe",
+    "connectWithKey": "Usa chiave segreta",
+    "connectionType": {
+      "oauth": "Stripe Connect",
+      "apiKey": "Chiave segreta"
+    },
+    "fields": {
+      "secretKey": "Chiave segreta",
+      "secretKeyHint": "Inizia con sk_live_ (o sk_test_ in modalità test). Funziona anche una chiave limitata (rk_…) se può leggere l'account e scrivere Checkout Sessions, Refunds e Webhook Endpoints."
+    },
+    "dialog": {
+      "description": "Copia la tua chiave segreta da <link>Stripe Dashboard → Developers → API keys</link> e incollala qui. La verifichiamo, configuriamo le notifiche di pagamento sul tuo account Stripe e salviamo la chiave cifrata."
     },
     "testMode": "Modalità test",
     "liveMode": "Live",
