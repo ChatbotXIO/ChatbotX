@@ -10795,7 +10795,11 @@
     "signedInAs": "Signed in as",
     "approve": "Approve",
     "deny": "Deny",
-    "failed": "Autorizarea nu a putut fi finalizată. Încercați din nou."
+    "failed": "Autorizarea nu a putut fi finalizată. Încercați din nou.",
+    "workspaceLabel": "Spațiu de lucru",
+    "workspacePlaceholder": "Selectează un spațiu de lucru",
+    "workspaceHint": "{clientName} poate acționa doar în acest spațiu de lucru. Pentru a schimba mai târziu, deconectează-te și conectează-te din nou.",
+    "noWorkspaces": "Nu ești administrator în niciun spațiu de lucru, deci nu poți autoriza această aplicație."
   },
   "chatbotxMcp": {
     "title": "ChatbotX MCP",

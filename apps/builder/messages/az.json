@@ -10795,7 +10795,11 @@
     "signedInAs": "Signed in as",
     "approve": "Approve",
     "deny": "Deny",
-    "failed": "Authorization could not be completed. Please try again."
+    "failed": "Authorization could not be completed. Please try again.",
+    "workspaceLabel": "İş sahəsi",
+    "workspacePlaceholder": "İş sahəsi seçin",
+    "workspaceHint": "{clientName} yalnız bu iş sahəsində işləyə bilər. Sonra dəyişmək üçün bağlantını kəsib yenidən qoşulun.",
+    "noWorkspaces": "Heç bir iş sahəsinin admini deyilsiniz, ona görə bu tətbiqə icazə verə bilməzsiniz."
   },
   "chatbotxMcp": {
     "title": "ChatbotX MCP",

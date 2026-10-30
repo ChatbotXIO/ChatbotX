@@ -1,7 +1,6 @@
 type McpConnectSnippetInput = {
   builderUrl: string
   mcpUrl: string
-  workspaceId: string
 }
 
 type McpConnectSnippets = {
@@ -17,10 +16,11 @@ type McpConnectSnippets = {
 export const buildMcpConnectSnippets = ({
   builderUrl,
   mcpUrl,
-  workspaceId,
 }: McpConnectSnippetInput): McpConnectSnippets => {
-  const streamableUrl = `${mcpUrl}/messages?workspace_id=${workspaceId}`
-  const sseUrl = `${mcpUrl}/sse?workspace_id=${workspaceId}`
+  // No workspace id: the user picks the workspace on the OAuth consent
+  // screen, so one URL serves every account (marketplace installs included).
+  const streamableUrl = `${mcpUrl}/messages`
+  const sseUrl = `${mcpUrl}/sse`
   const httpConfig = JSON.stringify(
     {
       mcpServers: {

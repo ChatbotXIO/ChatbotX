@@ -63,6 +63,50 @@ class OAuthConsentRepository {
       .orderBy(desc(oauthConsentModel.createdAt))
   }
 
+  /**
+   * The most recent consent the user gave this client, or null when they never
+   * approved it (or the consent was revoked or cascaded away with its
+   * workspace).
+   */
+  async findLatestGivenByUserAndClient(
+    input: { userId: string; clientId: string },
+    tx: DatabaseClient = db,
+  ): Promise<{ workspaceId: string | null } | null> {
+    const [row] = await tx
+      .select({ workspaceId: oauthConsentModel.workspaceId })
+      .from(oauthConsentModel)
+      .where(
+        and(
+          eq(oauthConsentModel.userId, input.userId),
+          eq(oauthConsentModel.clientId, input.clientId),
+          eq(oauthConsentModel.consentGiven, true),
+        ),
+      )
+      .orderBy(desc(oauthConsentModel.createdAt), desc(oauthConsentModel.id))
+      .limit(1)
+
+    return row ?? null
+  }
+
+  async setWorkspaceByUserAndClient(
+    input: { userId: string; clientId: string; workspaceId: string },
+    tx: DatabaseClient = db,
+  ): Promise<number> {
+    const rows = await tx
+      .update(oauthConsentModel)
+      .set({ workspaceId: input.workspaceId })
+      .where(
+        and(
+          eq(oauthConsentModel.userId, input.userId),
+          eq(oauthConsentModel.clientId, input.clientId),
+          eq(oauthConsentModel.consentGiven, true),
+        ),
+      )
+      .returning({ id: oauthConsentModel.id })
+
+    return rows.length
+  }
+
   async deleteByUserAndClient(
     input: { userId: string; clientId: string },
     tx: DatabaseClient = db,

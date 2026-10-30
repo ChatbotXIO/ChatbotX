@@ -10795,7 +10795,11 @@
     "signedInAs": "Signed in as",
     "approve": "Approve",
     "deny": "Deny",
-    "failed": "No se pudo completar la autorización. Inténtalo de nuevo."
+    "failed": "No se pudo completar la autorización. Inténtalo de nuevo.",
+    "workspaceLabel": "Espacio de trabajo",
+    "workspacePlaceholder": "Selecciona un espacio de trabajo",
+    "workspaceHint": "{clientName} solo puede actuar en este espacio de trabajo. Para cambiarlo más tarde, desconecta y vuelve a conectar.",
+    "noWorkspaces": "No eres administrador de ningún espacio de trabajo, así que no puedes autorizar esta aplicación."
   },
   "chatbotxMcp": {
     "title": "ChatbotX MCP",

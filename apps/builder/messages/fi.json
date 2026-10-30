@@ -10795,7 +10795,11 @@
     "signedInAs": "Signed in as",
     "approve": "Approve",
     "deny": "Deny",
-    "failed": "Valtuutusta ei voitu suorittaa. Yritä uudelleen."
+    "failed": "Valtuutusta ei voitu suorittaa. Yritä uudelleen.",
+    "workspaceLabel": "Työtila",
+    "workspacePlaceholder": "Valitse työtila",
+    "workspaceHint": "{clientName} voi toimia vain tässä työtilassa. Vaihda myöhemmin katkaisemalla yhteys ja yhdistämällä uudelleen.",
+    "noWorkspaces": "Et ole minkään työtilan ylläpitäjä, joten et voi valtuuttaa tätä sovellusta."
   },
   "chatbotxMcp": {
     "title": "ChatbotX MCP",

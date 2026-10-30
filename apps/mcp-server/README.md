@@ -12,9 +12,13 @@ On startup the server fetches `{CHATBOTX_API_URL}/public-spec.json` and register
 ## OAuth 2.1
 
 Remote MCP clients should authenticate through OAuth 2.1. The production endpoints are
-`https://app.chatbotx.io/mcp/messages?workspace_id=<id>` for Streamable HTTP and
-`https://app.chatbotx.io/mcp/sse?workspace_id=<id>` for legacy SSE. The `workspace_id`
-selects the target workspace; only workspace owners and `superAdmin` members can authorize.
+`https://app.chatbotx.io/mcp/messages` for Streamable HTTP and
+`https://app.chatbotx.io/mcp/sse` for legacy SSE — the same URL for every account, so it
+works as a Claude or ChatGPT marketplace connector. The user picks the target workspace on
+the consent screen, and every token the client holds acts on that workspace; to switch,
+disconnect and connect again. Only workspace owners and `superAdmin` members can authorize.
+An explicit `?workspace_id=<id>` (or `x-workspace-id` header) still overrides the consented
+workspace for advanced setups, subject to the same admin check.
 The builder settings block **Settings → Integrations → ChatbotX MCP** provides the exact
 connection URL and lets each user revoke their OAuth grants.
 
@@ -206,7 +210,7 @@ no workspace token belongs in the client configuration.
 **Claude Code:**
 ```bash
 claude mcp add chatbotx -t http -s user \
-  "https://app.chatbotx.io/mcp/messages?workspace_id=<workspace-id>"
+  "https://app.chatbotx.io/mcp/messages"
 ```
 
 **Claude Desktop / Cursor:**
@@ -215,13 +219,13 @@ claude mcp add chatbotx -t http -s user \
   "mcpServers": {
     "chatbotx": {
       "type": "http",
-      "url": "https://app.chatbotx.io/mcp/messages?workspace_id=<workspace-id>"
+      "url": "https://app.chatbotx.io/mcp/messages"
     }
   }
 }
 ```
 
-**ChatGPT:** add `https://app.chatbotx.io/mcp/sse?workspace_id=<workspace-id>`
+**ChatGPT:** add `https://app.chatbotx.io/mcp/sse`
 as a custom connector. ChatGPT completes OAuth in the browser.
 
 The load balancer must forward `/mcp/*` to the MCP server **without stripping the

@@ -10795,7 +10795,11 @@
     "signedInAs": "Signed in as",
     "approve": "Approve",
     "deny": "Deny",
-    "failed": "Auktoriseringen kunde inte slutföras. Försök igen."
+    "failed": "Auktoriseringen kunde inte slutföras. Försök igen.",
+    "workspaceLabel": "Arbetsyta",
+    "workspacePlaceholder": "Välj en arbetsyta",
+    "workspaceHint": "{clientName} kan bara agera i den här arbetsytan. Koppla från och anslut igen för att byta senare.",
+    "noWorkspaces": "Du är inte administratör för någon arbetsyta och kan därför inte auktorisera den här applikationen."
   },
   "chatbotxMcp": {
     "title": "ChatbotX MCP",

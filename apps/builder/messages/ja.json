@@ -10795,7 +10795,11 @@
     "signedInAs": "Signed in as",
     "approve": "Approve",
     "deny": "Deny",
-    "failed": "認可を完了できませんでした。もう一度お試しください。"
+    "failed": "認可を完了できませんでした。もう一度お試しください。",
+    "workspaceLabel": "ワークスペース",
+    "workspacePlaceholder": "ワークスペースを選択",
+    "workspaceHint": "{clientName} はこのワークスペースでのみ操作できます。後で切り替えるには、接続を解除して再接続してください。",
+    "noWorkspaces": "管理者であるワークスペースがないため、このアプリケーションを承認できません。"
   },
   "chatbotxMcp": {
     "title": "ChatbotX MCP",

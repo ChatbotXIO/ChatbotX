@@ -56,7 +56,7 @@ export const McpConnectGuide = ({
 }: McpConnectGuideProps) => {
   const t = useTranslations("chatbotxMcp")
   const common = useTranslations()
-  const snippets = buildMcpConnectSnippets({ builderUrl, mcpUrl, workspaceId })
+  const snippets = buildMcpConnectSnippets({ builderUrl, mcpUrl })
   const copyLabel = common("actions.copy")
 
   return (

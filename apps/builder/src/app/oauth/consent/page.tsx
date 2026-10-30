@@ -18,15 +18,20 @@ export default async function OAuthConsentPage(props: {
     notFound()
   }
 
-  const client = await mcpOAuthService.findClient({ clientId })
+  const [client, workspaces] = await Promise.all([
+    mcpOAuthService.findClient({ clientId }),
+    mcpOAuthService.listAuthorizableWorkspaces({ userId: user.id }),
+  ])
   const scopes = scope?.split(" ").filter(Boolean) ?? []
 
   return (
     <OAuthConsentForm
+      clientId={clientId}
       clientName={client?.name || clientId}
       consentCode={consentCode}
       scopes={scopes}
       userEmail={user.email}
+      workspaces={workspaces}
     />
   )
 }

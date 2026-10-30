@@ -12,5 +12,9 @@ export const oauthConsentRelations = defineRelationsPart(schema, (r) => ({
       from: r.oauthConsentModel.userId,
       to: r.userModel.id,
     }),
+    workspace: r.one.workspaceModel({
+      from: r.oauthConsentModel.workspaceId,
+      to: r.workspaceModel.id,
+    }),
   },
 }))

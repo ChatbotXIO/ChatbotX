@@ -10795,7 +10795,11 @@
     "signedInAs": "Signed in as",
     "approve": "Approve",
     "deny": "Deny",
-    "failed": "Godkendelsen kunne ikke gennemføres. Prøv igen."
+    "failed": "Godkendelsen kunne ikke gennemføres. Prøv igen.",
+    "workspaceLabel": "Arbejdsområde",
+    "workspacePlaceholder": "Vælg et arbejdsområde",
+    "workspaceHint": "{clientName} kan kun arbejde i dette arbejdsområde. Afbryd og forbind igen for at skifte senere.",
+    "noWorkspaces": "Du er ikke administrator i noget arbejdsområde og kan derfor ikke godkende denne applikation."
   },
   "chatbotxMcp": {
     "title": "ChatbotX MCP",

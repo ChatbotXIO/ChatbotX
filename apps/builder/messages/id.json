@@ -10795,7 +10795,11 @@
     "signedInAs": "Signed in as",
     "approve": "Approve",
     "deny": "Deny",
-    "failed": "Otorisasi tidak dapat diselesaikan. Silakan coba lagi."
+    "failed": "Otorisasi tidak dapat diselesaikan. Silakan coba lagi.",
+    "workspaceLabel": "Workspace",
+    "workspacePlaceholder": "Pilih workspace",
+    "workspaceHint": "{clientName} hanya dapat bertindak di workspace ini. Untuk menggantinya nanti, putuskan lalu sambungkan kembali.",
+    "noWorkspaces": "Anda bukan admin di workspace mana pun, jadi Anda tidak dapat mengotorisasi aplikasi ini."
   },
   "chatbotxMcp": {
     "title": "ChatbotX MCP",

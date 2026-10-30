@@ -153,7 +153,7 @@ export const workspaceTokenAuthMidddleware = base.middleware(
           .join(", ")
         throw new ORPCError("WORKSPACE_SELECTION_REQUIRED", {
           status: 400,
-          message: `This account has access to ${oauth.workspaces.length} workspaces. Select one by adding ?workspace_id=<id> to the MCP server URL (or sending the x-workspace-id header). Available: ${workspaces}`,
+          message: `This account has access to ${oauth.workspaces.length} workspaces. Disconnect and reconnect this MCP client to choose one on the consent screen, or add ?workspace_id=<id> to the MCP server URL (or send the x-workspace-id header). Available: ${workspaces}`,
         })
       }
 
