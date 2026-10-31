@@ -129,6 +129,9 @@ vi.mock("@chatbotx.io/database/client", () => {
       },
       select: () => selectBuilder,
       query: {
+        // `updateDraft`'s leftover gate reads the draft's epoch first; none
+        // found leaves the write's own scope (covered in the drafts tests).
+        broadcastModel: { findFirst: async () => undefined },
         inboxModel: { findMany: mocks.inboxFindMany },
         integrationWhatsappModel: {
           findFirst: mocks.integrationWhatsappFindFirst,
