@@ -22,6 +22,7 @@ type FlowDetailProps = {
   openaiCompatibleIntegrations: IntegrationOpenaiCompatibleResource[]
   canRevertToPublished: boolean
   hasPublishedVersion: boolean
+  workspaceTargetCountry: string | null
 }
 
 export function FlowDetail({
@@ -30,12 +31,14 @@ export function FlowDetail({
   openaiCompatibleIntegrations,
   canRevertToPublished,
   hasPublishedVersion,
+  workspaceTargetCountry,
 }: FlowDetailProps) {
   return (
     <ReactFlowProvider>
       <StepStoreProvider
         initialState={{
           activeFlowId: flow.id,
+          workspaceTargetCountry,
         }}
       >
         <FlowTemplateStoreProvider

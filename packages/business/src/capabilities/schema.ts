@@ -1,4 +1,5 @@
 import {
+  buttonTypes,
   productMessageConditions,
   sendProductsDisplays,
   waTemplateParamsSchema,
@@ -33,6 +34,11 @@ const capabilitiesChannelPolicySchema = z.object({
   policyVersion: z.number(),
   unsupportedSteps: z.array(z.string()),
   noButtonSteps: z.array(z.string()),
+  nativeButtonTypes: z
+    .array(buttonTypes)
+    .describe(
+      "Button types this channel renders as its own control (`callPhoneNumber` dials on tap). A button type not listed is sent as a reply button.",
+    ),
   limits: z.object({
     buttonCount: z.number(),
     buttonLabel: z.number(),

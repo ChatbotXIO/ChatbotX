@@ -56,6 +56,30 @@ again equals the published content.
 - The revert action is destructive from the user's perspective because it discards
   local draft work, so the builder shows a confirmation dialog before executing it.
 
+## Call Phone Number buttons
+
+A step button (`buttonType: "callPhoneNumber"`, or `call` in a flow spec) that dials
+a number when tapped. The number is either a real number in E.164 form
+(`+14155552671`, at most 16 characters; checked with libphonenumber when the flow is
+saved or published) or an expression embedding `{{variables}}` (at most 100
+characters) that is resolved, and validated the same way, when the message is sent.
+
+- **Native channels** (`capabilities.get` → `selectedChannelPolicy.nativeButtonTypes`
+  contains `callPhoneNumber`): Messenger (`phone_number`), Zalo (`oa.open.phone`,
+  digits without `+`) and webchat/inbox (`tel:` link). The device places the call;
+  the bot is not told about the tap. Native vs. reply is decided per delivery
+  channel, so an omnichannel node sent to one of these channels dials too.
+- **Every other channel** (Instagram, Telegram, TikTok, WhatsApp, API) sends an ordinary reply button whose title is `"{label} {number}"` when
+  that fits the channel's button-label limit, otherwise just the number. Tapping it
+  replies with the number as text. The reply resolves `{{variables}}` again at tap
+  time, so if the value changed after the message was sent, the reply shows the
+  new number while the button title still shows the old one.
+- A number that does not resolve to a valid international number degrades to an
+  inert button (logged) rather than being dropped, so card button counts stay equal.
+- The button can neither continue the flow nor run additional steps, and it is
+  rejected on quick replies (node quick replies and `sendQuickReply` steps), on
+  WhatsApp / Messenger message-template steps and as the WhatsApp Flow button.
+
 ## Channel capability validation
 
 Publishing, importing, and restoring a flow validate every message step against its
@@ -104,7 +128,7 @@ here, so it cannot drift from the schema.
 
 | Type | Terminal? | Notes |
 |---|---|---|
-| `send` | No | Text, image, or file, with optional quick-reply `buttons`. Each button's `then` is a nested step list. |
+| `send` | No | Text, image, or file, with optional `buttons`. Each button's `then` is a nested step list. A button may instead set `call` (an international number such as `+14155552671`, optionally with `{{variables}}`) to become a Call Phone Number button; `call` cannot be combined with `then`. See "Call Phone Number buttons". |
 | `sendTemplate` | No | Sends an existing WhatsApp template by `templateName`. The template must resolve (by name) to a workspace template with status `APPROVED`. |
 | `sendCollection` | No | A product carousel (Messenger): `collectionType` `automated` picks the products matching `conditions` (`name`, `categoryId`, `subcategoryId`, `vendorId`) when sent, `manual` the chosen `productIds`; at most 10, only what the web shop shows. Each card opens the product in the web shop signed for the contact (`{{shop_token}}`). A collection matching nothing is skipped. See `docs/ecommerce.md`. |
 | `sendProducts` | No | Sends catalog products (`display`: `products` or `carousel`) by ChatbotX product id; get ids from `products.listSendable`. Needs a `channel` that supports product messages (WhatsApp); omnichannel flows reject it. Limits per channel come from `capabilities.get`. See `docs/product-messages.md`. |

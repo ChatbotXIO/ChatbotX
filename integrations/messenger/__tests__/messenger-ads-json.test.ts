@@ -458,3 +458,50 @@ describe("convertStartNodeToMessengerAdsJson (lenient)", () => {
     })
   })
 })
+
+describe("convertStartNodeToMessengerAdsJson — call phone number buttons", () => {
+  const callButton = (phoneNumber: string) => ({
+    ...buttonStepDefaultFn({ label: "Call us" }),
+    buttonType: "callPhoneNumber" as const,
+    beforeStep: {
+      id: "2",
+      stepType: "callPhoneNumber" as const,
+      phoneNumber,
+    },
+    steps: [],
+  })
+  const textNode = (phoneNumber: string) =>
+    makeStartNode([
+      {
+        ...sendTextStepDefaultFn({ text: "Need help?" }),
+        buttons: [callButton(phoneNumber)],
+      },
+    ])
+
+  test("a literal number becomes a native phone_number button", () => {
+    const result = convert(textNode("+14155552671"))
+    expect(JSON.stringify(result)).toContain(
+      '"type":"phone_number","title":"Call us","payload":"+14155552671"',
+    )
+  })
+
+  test("strict mode rejects a number that still holds a variable", () => {
+    expect(convert(textNode("{{contact.phone}}"))).toEqual({
+      status: "error",
+      reason: "invalidVariable",
+    })
+  })
+
+  test("lenient mode drops a number that still holds a variable", () => {
+    const result = convertStartNodeToMessengerAdsJson({
+      startNode: textNode("{{contact.phone}}"),
+      flowId: FLOW_ID,
+      flowVersionId: FLOW_VERSION_ID,
+      mode: "lenient",
+    })
+    expect(result).toEqual({
+      status: "ok",
+      messages: [{ message: { text: "Need help?" } }],
+    })
+  })
+})

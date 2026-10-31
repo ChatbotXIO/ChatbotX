@@ -3,6 +3,7 @@ import { channelTypes } from "@chatbotx.io/utils/channel"
 import { z } from "zod"
 import { countMessageCharacters } from "../channel-rules/characters"
 import { BUTTON_LABEL_MAX } from "../steps/button"
+import { callPhoneNumberStepSchema } from "../steps/call-phone-number"
 import {
   PIPELINE_STEP_LIMITS,
   pipelineActionCanSkip,
@@ -66,7 +67,7 @@ export type FlowStepSpec =
       text?: string
       imageUrl?: string
       fileUrl?: string
-      buttons?: Array<{ text: string; then?: FlowStepSpec[] }>
+      buttons?: Array<{ text: string; then?: FlowStepSpec[]; call?: string }>
     }
   | { type: "sendTemplate"; id?: string; templateName: string }
   | {
@@ -138,6 +139,7 @@ const stepTypeLiteral = <Type extends string>(type: Type) =>
 const sendButtonSpecSchema: z.ZodType<{
   text: string
   then?: FlowStepSpec[]
+  call?: string
 }> = z.lazy(() =>
   z
     .object({
@@ -163,6 +165,15 @@ const sendButtonSpecSchema: z.ZodType<{
         .describe(
           "Steps to run when the contact taps this button. Omitted or empty means the button has no follow-up.",
         ),
+      call: callPhoneNumberStepSchema.shape.phoneNumber
+        .optional()
+        .describe(
+          "Turns the button into a Call Phone Number button: the number to dial, in international format (e.g. +14155552671), optionally embedding {{variables}}. Cannot be combined with `then`.",
+        ),
+    })
+    .refine((button) => button.call === undefined || !button.then?.length, {
+      message: "A call button cannot have `then` steps.",
+      path: ["then"],
     })
     .describe("A quick-reply button attached to a send step."),
 )

@@ -1,6 +1,7 @@
 import type { FlowNode, NodeType, StepType } from "@chatbotx.io/flow-config"
 import {
   buttonStepDefaultFn,
+  buttonTypes,
   disabledCopyActionTypes,
   hiddenActionsStepTypes,
   MAX_QUICK_REPLIES,
@@ -127,7 +128,15 @@ const NodeEditorQuickReplies = ({ nodeId }: { nodeId: string }) => {
           {quickReplies.map((field, index) => (
             <SortableItem
               key={field.id}
-              render={<ButtonStepEditor parentName={`quickReplies.${index}`} />}
+              render={
+                <ButtonStepEditor
+                  // A quick reply is sent as a reply and cannot dial.
+                  editorConfig={{
+                    hiddenButtonTypes: [buttonTypes.enum.callPhoneNumber],
+                  }}
+                  parentName={`quickReplies.${index}`}
+                />
+              }
               value={field.id}
             />
           ))}

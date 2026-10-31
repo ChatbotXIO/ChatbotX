@@ -2,6 +2,7 @@ import { type ButtonStepProps, buttonTypes } from "@chatbotx.io/flow-config"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import { cn } from "@chatbotx.io/ui/lib/utils"
 import { Position } from "@xyflow/react"
+import { PhoneCallIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { BaseHandle } from "@/components/base-handle"
 import { useFlowAnalyticsStore } from "../../stores/flow-analytics-store-provider"
@@ -31,6 +32,10 @@ export const ButtonStepViewer = (props: ButtonStepViewerProps) => {
           type="button"
           variant="secondary"
         >
+          {/* A call button dials instead of continuing the flow; the icon says so. */}
+          {data.buttonType === buttonTypes.enum.callPhoneNumber && (
+            <PhoneCallIcon aria-hidden="true" data-testid="call-button-icon" />
+          )}
           {data.label}
         </Button>
         {/* React Flow routes from physical Position.Right, so this offset must stay physical. */}

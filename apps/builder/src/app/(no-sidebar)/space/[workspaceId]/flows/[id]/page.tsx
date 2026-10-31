@@ -5,6 +5,7 @@ import { isSameContent } from "@/features/flows/flow-version-content"
 import { listIntegrationOpenaiCompatible } from "@/features/integration-openai-compatible/queries"
 import { withWorkspaceIdAndIdSchema } from "@/features/workspaces/schema/resource"
 import { requireWorkspacePermission } from "@/lib/auth/require-workspace-permission"
+import { getCurrentUserAndTargetWorkspace } from "@/lib/auth/utils"
 import { isNotFoundException } from "@/lib/errors/validation-exception"
 
 type FlowPageProps = {
@@ -37,9 +38,11 @@ export default async function FlowPage({ params }: FlowPageProps) {
     return notFound()
   }
 
-  const openaiCompatibleIntegrations = await listIntegrationOpenaiCompatible({
-    workspaceId: data.workspaceId,
-  })
+  const [openaiCompatibleIntegrations, access] = await Promise.all([
+    listIntegrationOpenaiCompatible({ workspaceId: data.workspaceId }),
+    // Already loaded for this request by the permission check above.
+    getCurrentUserAndTargetWorkspace(data.workspaceId),
+  ])
   const publishedVersion = flow.flowVersions?.find(
     (v) => v.isLatest && !v.isDraft,
   )
@@ -61,6 +64,7 @@ export default async function FlowPage({ params }: FlowPageProps) {
         flowVersion={draftFlowVersion}
         hasPublishedVersion={hasPublishedVersion}
         openaiCompatibleIntegrations={openaiCompatibleIntegrations}
+        workspaceTargetCountry={access?.targetWorkspace.targetCountry ?? null}
       />
     </div>
   )

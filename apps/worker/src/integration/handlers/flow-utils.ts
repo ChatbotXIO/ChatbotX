@@ -194,6 +194,7 @@ export const STEP_PRODUCES_MESSAGE: Record<StepType, boolean> = {
   // External/Others (X_)
   openWebsite: false,
   openMiniApp: false,
+  callPhoneNumber: true,
   addNotes: false,
 
   // Broadcast Operations (B_)

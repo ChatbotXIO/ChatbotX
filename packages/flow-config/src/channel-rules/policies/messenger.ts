@@ -1,3 +1,4 @@
+import { buttonTypes } from "../../steps/button"
 import { stepTypes } from "../../steps/step-action"
 import { defineChannelFlowPolicy } from "./define"
 // Messenger's Graph API text payload is capped at 2,000 characters.
@@ -8,6 +9,7 @@ export const messengerFlowPolicy = defineChannelFlowPolicy({
     buttonLabel: 20,
     text: 2000,
   },
+  nativeButtonTypes: [buttonTypes.enum.callPhoneNumber],
   supported: [
     stepTypes.enum.sendText,
     stepTypes.enum.sendImage,

@@ -7,6 +7,7 @@ import {
   buttonStepSchema,
   buttonTypes,
   mergeTemplateButtonsWithExisting,
+  refineNoCallPhoneNumberButtons,
 } from "./button"
 import { openMiniAppStepDefaultFn } from "./open-mini-app"
 import { stepTypes } from "./step-action"
@@ -122,7 +123,10 @@ export const sendMessengerTemplateMessageStepSchema = baseStepSchema.extend({
   // An `openMiniApp` button stands for one of the template's Mini App URL
   // buttons (see `extractMessengerFlowButtons`): its edge is where the flow
   // continues once the contact submits that Mini App.
-  buttons: z.array(buttonStepSchema).default([]),
+  buttons: z
+    .array(buttonStepSchema)
+    .superRefine(refineNoCallPhoneNumberButtons)
+    .default([]),
 })
 
 export type SendMessengerTemplateMessageStepSchema = z.infer<
