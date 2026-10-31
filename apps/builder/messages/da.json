@@ -1255,7 +1255,8 @@
     },
     "button": {
       "label": "Knap",
-      "whenPressed": "Når denne knap er pressed"
+      "whenPressed": "Når denne knap er pressed",
+      "callToThisNumber": "Ring til dette nummer"
     },
     "buttonLabel": {
       "label": "Knap Etiket"
@@ -2839,7 +2840,8 @@
       "sendCollection": "Kollektion",
       "pipeline": "Pipelines",
       "moreOptions": "Flere muligheder",
-      "findPlacesNearMe": "Find steder i nærheden"
+      "findPlacesNearMe": "Find steder i nærheden",
+      "callPhoneNumber": "Ring til telefonnummer"
     },
     "externalRequest": {
       "errors": {
@@ -3114,6 +3116,14 @@
       "allLocations": "Alle lokationer",
       "whatsappOnly": "Sendes kun til WhatsApp-kontakter.",
       "noLocationSource": "Lokationen skal indsamles i dette flow: tilføj et Hent brugerdata-trin med svarformatet Lokation før denne handling. En lokation gemt af et andet flow bruges ikke. Uden det springes handlingen over."
+    },
+    "callPhoneNumber": {
+      "fallbackHint": "På kanaler, der ikke kan starte et opkald, modtager kontakten i stedet dette nummer som svar.",
+      "countryLabel": "Landekode",
+      "noCountry": "Intet land",
+      "invalidForCountry": "Dette er ikke et gyldigt telefonnummer for {country}.",
+      "needsCountry": "Vælg landet, eller start nummeret med + og landekoden.",
+      "invalidInternational": "Dette er ikke et gyldigt internationalt telefonnummer."
     }
   },
   "folders": {
@@ -4345,7 +4355,9 @@
     "savedReplyImagesRemoved": "Billeder, der ikke kan sendes her, blev fjernet",
     "onlyImagesAllowed": "Kun billeder kan tilføjes",
     "tooManySavedReplyImages": "Et gemt svar kan højst have {max} billeder",
-    "savedReplyImagesNotSentHere": "Billeder bliver ikke sendt her"
+    "savedReplyImagesNotSentHere": "Billeder bliver ikke sendt her",
+    "invalidPhoneNumber": "Dette er ikke et gyldigt telefonnummer. Medtag landekoden, for eksempel +1.",
+    "buttonCallPhoneNumberUnsupported": "Denne knap kan ikke ringe til et telefonnummer her. Vælg en anden handling."
   },
   "instagram": {
     "description": "Denne integration lets du opret Instagram bots.",

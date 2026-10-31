@@ -1255,7 +1255,8 @@
     },
     "button": {
       "label": "ボタン",
-      "whenPressed": "このボタンが押されたとき"
+      "whenPressed": "このボタンが押されたとき",
+      "callToThisNumber": "この番号に発信"
     },
     "buttonLabel": {
       "label": "ボタンラベル"
@@ -2839,7 +2840,8 @@
       "sendCollection": "コレクション",
       "pipeline": "パイプライン",
       "moreOptions": "その他のオプション",
-      "findPlacesNearMe": "近くの場所を探す"
+      "findPlacesNearMe": "近くの場所を探す",
+      "callPhoneNumber": "電話番号に発信"
     },
     "externalRequest": {
       "errors": {
@@ -3114,6 +3116,14 @@
       "allLocations": "すべてのロケーション",
       "whatsappOnly": "WhatsApp の連絡先にのみ送信されます。",
       "noLocationSource": "位置情報はこのフローで取得する必要があります。このアクションの前に、返信形式が「位置情報」のユーザーデータ取得ステップを追加してください。別のフローで保存された位置情報は使用されません。ない場合、このアクションはスキップされます。"
+    },
+    "callPhoneNumber": {
+      "fallbackHint": "通話を開始できないチャネルでは、代わりにこの番号が返信として相手に届きます。",
+      "countryLabel": "国番号",
+      "noCountry": "国を指定しない",
+      "invalidForCountry": "{country} の電話番号として正しくありません。",
+      "needsCountry": "国を選択するか、+ と国番号から番号を入力してください。",
+      "invalidInternational": "国際電話番号として正しくありません。"
     }
   },
   "folders": {
@@ -4324,7 +4334,9 @@
     "savedReplyImagesRemoved": "ここで送信できない画像を削除しました",
     "onlyImagesAllowed": "追加できるのは画像のみです",
     "tooManySavedReplyImages": "保存済み返信の画像は最大 {max} 枚です",
-    "savedReplyImagesNotSentHere": "ここでは画像は送信されません"
+    "savedReplyImagesNotSentHere": "ここでは画像は送信されません",
+    "invalidPhoneNumber": "電話番号が正しくありません。国番号（例: +1）を含めてください。",
+    "buttonCallPhoneNumberUnsupported": "このボタンではここで電話番号に発信できません。別のアクションを選択してください。"
   },
   "instagram": {
     "description": "この連携を使用すると、Instagramボットを作成できます。",

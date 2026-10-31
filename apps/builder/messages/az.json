@@ -1453,7 +1453,8 @@
     },
     "button": {
       "label": "Düymə",
-      "whenPressed": "Bu düyməyə basıldıqda"
+      "whenPressed": "Bu düyməyə basıldıqda",
+      "callToThisNumber": "Bu nömrəyə zəng et"
     },
     "buttonLabel": {
       "label": "Düymə etiketi"
@@ -3677,7 +3678,8 @@
       "sendCollection": "Kolleksiya",
       "pipeline": "Satış xətləri",
       "moreOptions": "Daha çox seçim",
-      "findPlacesNearMe": "Yaxınlığımdakı yerləri tap"
+      "findPlacesNearMe": "Yaxınlığımdakı yerləri tap",
+      "callPhoneNumber": "Telefon nömrəsinə zəng et"
     },
     "externalRequest": {
       "errors": {
@@ -3952,6 +3954,14 @@
       "allLocations": "Bütün məkanlar",
       "whatsappOnly": "Yalnız WhatsApp kontaktlarına göndərilir.",
       "noLocationSource": "Məkan bu axında toplanmalıdır: bu əməliyyatdan əvvəl cavab formatı Məkan olan İstifadəçi Məlumatını Al addımı əlavə edin. Başqa axının saxladığı məkan istifadə olunmur. Onsuz bu əməliyyat ötürülür."
+    },
+    "callPhoneNumber": {
+      "fallbackHint": "Zəng edə bilməyən kanallarda kontakt bu nömrəni cavab olaraq alır.",
+      "countryLabel": "Ölkə kodu",
+      "noCountry": "Ölkə yoxdur",
+      "invalidForCountry": "Bu, {country} üçün etibarlı telefon nömrəsi deyil.",
+      "needsCountry": "Ölkəni seçin və ya nömrəni + və ölkə kodu ilə başlayın.",
+      "invalidInternational": "Bu etibarlı beynəlxalq telefon nömrəsi deyil."
     }
   },
   "folders": {
@@ -5027,7 +5037,9 @@
     "savedReplyImagesRemoved": "Burada göndərilə bilməyən şəkillər silindi",
     "onlyImagesAllowed": "Yalnız şəkil əlavə etmək olar",
     "tooManySavedReplyImages": "Saxlanmış cavabda ən çox {max} şəkil ola bilər",
-    "savedReplyImagesNotSentHere": "Şəkillər burada göndərilməyəcək"
+    "savedReplyImagesNotSentHere": "Şəkillər burada göndərilməyəcək",
+    "invalidPhoneNumber": "Bu etibarlı telefon nömrəsi deyil. Ölkə kodunu daxil edin, məsələn +1.",
+    "buttonCallPhoneNumberUnsupported": "Bu düymə burada telefon nömrəsinə zəng edə bilməz. Başqa əməliyyat seçin."
   },
   "instagram": {
     "description": "Bu inteqrasiya Instagram botları yaratmağa imkan verir.",

@@ -18,6 +18,7 @@ import { archiveConversationStep } from "./archive-conversation"
 import { assignConversationStep } from "./assign-conversation"
 import { autoAssignConversationStep } from "./auto-assign-conversation"
 import { blockContactStep } from "./block-contact"
+import { callPhoneNumberStep } from "./call-phone-number"
 import { changeGamificationScoreStep } from "./change-gamification-score"
 import { chooseChannelStep } from "./choose-channel"
 import { clearCustomFieldStep } from "./clear-custom-field"
@@ -173,6 +174,7 @@ export const allSteps: Record<StepType, StepDefinition<any> | undefined> = {
   [stepTypes.enum.performAction]: undefined,
   [stepTypes.enum.openWebsite]: openWebsiteStep,
   [stepTypes.enum.openMiniApp]: openMiniAppStep,
+  [stepTypes.enum.callPhoneNumber]: callPhoneNumberStep,
   [stepTypes.enum.setCustomField]: setCustomFieldStep,
   [stepTypes.enum.clearCustomField]: clearCustomFieldStep,
   [stepTypes.enum.landingPage]: undefined,

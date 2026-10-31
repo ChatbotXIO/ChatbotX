@@ -2337,7 +2337,8 @@
     },
     "button": {
       "label": "按钮",
-      "whenPressed": "当按下此按钮时"
+      "whenPressed": "当按下此按钮时",
+      "callToThisNumber": "拨打此号码"
     },
     "buttonLabel": {
       "label": "按钮标签"
@@ -3950,7 +3951,8 @@
       "sendCollection": "商品集合",
       "pipeline": "管道",
       "moreOptions": "更多选项",
-      "findPlacesNearMe": "查找我附近的地点"
+      "findPlacesNearMe": "查找我附近的地点",
+      "callPhoneNumber": "拨打电话号码"
     },
     "externalRequest": {
       "errors": {
@@ -4273,6 +4275,14 @@
       "allLocations": "所有地点",
       "whatsappOnly": "仅发送给 WhatsApp 联系人。",
       "noLocationSource": "位置必须在此流程中收集：请在此操作之前添加一个回复格式为“位置”的获取用户数据步骤。其他流程保存的位置不会被使用。否则将跳过此操作。"
+    },
+    "callPhoneNumber": {
+      "fallbackHint": "在无法发起通话的渠道上，联系人将改为收到这个号码作为回复。",
+      "countryLabel": "国家/地区代码",
+      "noCountry": "不选择国家/地区",
+      "invalidForCountry": "这不是有效的{country}电话号码。",
+      "needsCountry": "请选择国家/地区，或以 + 和国家代码开头输入号码。",
+      "invalidInternational": "这不是有效的国际电话号码。"
     }
   },
   "folders": {
@@ -5444,7 +5454,9 @@
     "savedReplyImagesRemoved": "已移除无法在此发送的图片",
     "onlyImagesAllowed": "只能添加图片",
     "tooManySavedReplyImages": "一条快捷回复最多包含 {max} 张图片",
-    "savedReplyImagesNotSentHere": "图片不会在此发送"
+    "savedReplyImagesNotSentHere": "图片不会在此发送",
+    "invalidPhoneNumber": "这不是有效的电话号码。请包含国家代码，例如 +1。",
+    "buttonCallPhoneNumberUnsupported": "此按钮在这里无法拨打电话号码，请选择其他操作。"
   },
   "messenger": {
     "botProfile": "机器人个人数据",

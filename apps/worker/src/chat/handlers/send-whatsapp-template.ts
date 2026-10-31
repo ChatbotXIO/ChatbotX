@@ -260,6 +260,7 @@ export async function processWhatsappTemplate(
     const flowButtonTemplates =
       flow && flowButtons.length > 0
         ? convertButtonsToTemplate({
+            channel: contactInbox.channel,
             flowId: flow.id,
             flowVersionId: flow.versionId,
             buttons: flowButtons,

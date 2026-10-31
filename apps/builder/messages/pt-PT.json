@@ -1255,7 +1255,8 @@
     },
     "button": {
       "label": "Botão",
-      "whenPressed": "Quando este botão for premido"
+      "whenPressed": "Quando este botão for premido",
+      "callToThisNumber": "Ligar para este número"
     },
     "buttonLabel": {
       "label": "Texto do botão"
@@ -2839,7 +2840,8 @@
       "sendCollection": "Coleção",
       "pipeline": "Funis",
       "moreOptions": "Mais opções",
-      "findPlacesNearMe": "Encontrar locais perto de mim"
+      "findPlacesNearMe": "Encontrar locais perto de mim",
+      "callPhoneNumber": "Ligar para um número de telefone"
     },
     "externalRequest": {
       "errors": {
@@ -3114,6 +3116,14 @@
       "allLocations": "Todos os locais",
       "whatsappOnly": "Enviado apenas para contactos do WhatsApp.",
       "noLocationSource": "A localização tem de ser recolhida neste fluxo: adicione um passo Obter dados do utilizador com formato de resposta Localização antes desta ação. Uma localização guardada por outro fluxo não é usada. Sem ele, esta ação é ignorada."
+    },
+    "callPhoneNumber": {
+      "fallbackHint": "Em canais que não conseguem fazer uma chamada, o contacto recebe este número como resposta.",
+      "countryLabel": "Indicativo do país",
+      "noCountry": "Nenhum país",
+      "invalidForCountry": "Este não é um número de telefone válido para {country}.",
+      "needsCountry": "Escolha o país ou comece o número com + e o indicativo do país.",
+      "invalidInternational": "Este não é um número de telefone internacional válido."
     }
   },
   "folders": {
@@ -4345,7 +4355,9 @@
     "savedReplyImagesRemoved": "As imagens que não podem ser enviadas aqui foram removidas",
     "onlyImagesAllowed": "Só é possível adicionar imagens",
     "tooManySavedReplyImages": "Uma resposta guardada pode ter no máximo {max} imagens",
-    "savedReplyImagesNotSentHere": "As imagens não serão enviadas aqui"
+    "savedReplyImagesNotSentHere": "As imagens não serão enviadas aqui",
+    "invalidPhoneNumber": "Este não é um número de telefone válido. Inclua o indicativo do país, por exemplo +1.",
+    "buttonCallPhoneNumberUnsupported": "Este botão não pode ligar para um número aqui. Escolha outra ação."
   },
   "instagram": {
     "description": "Esta integração permite-lhe criar bots do Instagram.",

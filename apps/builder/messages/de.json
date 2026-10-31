@@ -1255,7 +1255,8 @@
     },
     "button": {
       "label": "Schaltfläche",
-      "whenPressed": "Wenn diese Schaltfläche gedrückt wird"
+      "whenPressed": "Wenn diese Schaltfläche gedrückt wird",
+      "callToThisNumber": "Diese Nummer anrufen"
     },
     "buttonLabel": {
       "label": "Schaltflächenbeschriftung"
@@ -2839,7 +2840,8 @@
       "sendCollection": "Kollektion",
       "pipeline": "Pipelines",
       "moreOptions": "Weitere Optionen",
-      "findPlacesNearMe": "Orte in meiner Nähe finden"
+      "findPlacesNearMe": "Orte in meiner Nähe finden",
+      "callPhoneNumber": "Telefonnummer anrufen"
     },
     "externalRequest": {
       "errors": {
@@ -3114,6 +3116,14 @@
       "allLocations": "Alle Standorte",
       "whatsappOnly": "Wird nur an WhatsApp-Kontakte gesendet.",
       "noLocationSource": "Der Standort muss in diesem Flow erfasst werden: Füge vor dieser Aktion einen Schritt „Benutzerdaten abrufen“ mit dem Antwortformat Standort hinzu. Ein von einem anderen Flow gespeicherter Standort wird nicht verwendet. Ohne ihn wird diese Aktion übersprungen."
+    },
+    "callPhoneNumber": {
+      "fallbackHint": "Auf Kanälen, die keine Anrufe auslösen können, erhält der Kontakt diese Nummer stattdessen als Antwort.",
+      "countryLabel": "Ländervorwahl",
+      "noCountry": "Kein Land",
+      "invalidForCountry": "Das ist keine gültige Telefonnummer für {country}.",
+      "needsCountry": "Wähle das Land oder beginne die Nummer mit + und der Ländervorwahl.",
+      "invalidInternational": "Das ist keine gültige internationale Telefonnummer."
     }
   },
   "folders": {
@@ -4345,7 +4355,9 @@
     "savedReplyImagesRemoved": "Bilder, die hier nicht gesendet werden können, wurden entfernt",
     "onlyImagesAllowed": "Es können nur Bilder hinzugefügt werden",
     "tooManySavedReplyImages": "Eine gespeicherte Antwort kann höchstens {max} Bilder enthalten",
-    "savedReplyImagesNotSentHere": "Bilder werden hier nicht gesendet"
+    "savedReplyImagesNotSentHere": "Bilder werden hier nicht gesendet",
+    "invalidPhoneNumber": "Das ist keine gültige Telefonnummer. Gib die Ländervorwahl an, zum Beispiel +1.",
+    "buttonCallPhoneNumberUnsupported": "Diese Schaltfläche kann hier keine Telefonnummer anrufen. Wähle eine andere Aktion."
   },
   "instagram": {
     "description": "Mit dieser Integration können Sie Instagram-Bots erstellen.",

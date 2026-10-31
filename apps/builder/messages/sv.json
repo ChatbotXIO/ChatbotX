@@ -2334,7 +2334,8 @@
     },
     "button": {
       "label": "Knapp",
-      "whenPressed": "När den här knappen trycks ned"
+      "whenPressed": "När den här knappen trycks ned",
+      "callToThisNumber": "Ring till det här numret"
     },
     "buttonLabel": {
       "label": "Knappetikett"
@@ -3947,7 +3948,8 @@
       "sendCollection": "Kollektion",
       "pipeline": "Pipelines",
       "moreOptions": "Fler alternativ",
-      "findPlacesNearMe": "Hitta platser nära mig"
+      "findPlacesNearMe": "Hitta platser nära mig",
+      "callPhoneNumber": "Ring ett telefonnummer"
     },
     "externalRequest": {
       "errors": {
@@ -4270,6 +4272,14 @@
       "allLocations": "Alla platser",
       "whatsappOnly": "Skickas endast till WhatsApp-kontakter.",
       "noLocationSource": "Platsen måste samlas in i det här flödet: lägg till ett steg Hämta användardata med svarsformatet Plats före den här åtgärden. En plats som sparats av ett annat flöde används inte. Utan det hoppas åtgärden över."
+    },
+    "callPhoneNumber": {
+      "fallbackHint": "I kanaler som inte kan starta ett samtal får kontakten i stället numret som ett svar.",
+      "countryLabel": "Landskod",
+      "noCountry": "Inget land",
+      "invalidForCountry": "Det här är inte ett giltigt telefonnummer för {country}.",
+      "needsCountry": "Välj land eller börja numret med + och landskoden.",
+      "invalidInternational": "Det här är inte ett giltigt internationellt telefonnummer."
     }
   },
   "folders": {
@@ -5444,7 +5454,9 @@
     "savedReplyImagesRemoved": "Bilder som inte kan skickas här har tagits bort",
     "onlyImagesAllowed": "Endast bilder kan läggas till",
     "tooManySavedReplyImages": "Ett sparat svar kan ha högst {max} bilder",
-    "savedReplyImagesNotSentHere": "Bilder skickas inte här"
+    "savedReplyImagesNotSentHere": "Bilder skickas inte här",
+    "invalidPhoneNumber": "Det här är inte ett giltigt telefonnummer. Ange landskoden, till exempel +1.",
+    "buttonCallPhoneNumberUnsupported": "Den här knappen kan inte ringa ett telefonnummer här. Välj en annan åtgärd."
   },
   "messenger": {
     "botProfile": "Botprofil",

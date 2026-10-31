@@ -623,6 +623,54 @@ describe("POST /v1/flows/validate", () => {
     expect(flowVersionService.updateDraftByFlowId).not.toHaveBeenCalled()
   })
 
+  test("compiles a Call Phone Number button from `call`", async () => {
+    const result = await procedure.handler?.({
+      context: { workspace: { id: "workspace-1" } },
+      input: {
+        spec: {
+          formatVersion: 1,
+          name: "Call flow",
+          channel: "messenger",
+          steps: [
+            {
+              type: "send",
+              text: "Need help?",
+              buttons: [{ text: "Call us", call: "+14155552671" }],
+            },
+          ],
+        },
+      },
+    })
+
+    expect(result.nodes[0].data.details.steps[0].buttons[0]).toMatchObject({
+      buttonType: "callPhoneNumber",
+      beforeStep: { phoneNumber: "+14155552671" },
+      steps: [],
+    })
+    expect(result.edges).toEqual([])
+  })
+
+  test("rejects a `call` number that is not a real international number", async () => {
+    await expect(
+      procedure.handler?.({
+        context: { workspace: { id: "workspace-1" } },
+        input: {
+          spec: {
+            formatVersion: 1,
+            name: "Call flow",
+            steps: [
+              {
+                type: "send",
+                text: "Need help?",
+                buttons: [{ text: "Call us", call: "+9991234567" }],
+              },
+            ],
+          },
+        },
+      }),
+    ).rejects.toThrow()
+  })
+
   test("compiles a pipeline step through publishFlowSchema using the authoring context", async () => {
     getFlowAuthoringContext.mockResolvedValueOnce({
       templatesByName: new Map(),

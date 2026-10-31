@@ -97,6 +97,8 @@ type PlainTextTiptapEditorProps = {
   editorAttributes?: Record<string, string>
   /** Render the variable picker next to the editor instead of portaling it to `<body>`. */
   inlineVariablePicker?: boolean
+  /** Focus the editor, caret at the end, as soon as it mounts. */
+  autoFocus?: boolean
 }
 
 export const PlainTextTiptapEditor = ({
@@ -116,6 +118,7 @@ export const PlainTextTiptapEditor = ({
   plainText = false,
   editorAttributes,
   inlineVariablePicker = false,
+  autoFocus = false,
 }: PlainTextTiptapEditorProps) => {
   const [isOpenEmoji, setIsOpenEmoji] = useState(false)
   const [isEditorFocused, setIsEditorFocused] = useState(false)
@@ -144,6 +147,7 @@ export const PlainTextTiptapEditor = ({
   )
 
   const tiptapEditor = useEditor({
+    autofocus: autoFocus ? "end" : false,
     extensions: [
       plainText ? plainTextStarterKit : StarterKit,
       Mention.configure({

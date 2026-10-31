@@ -61,10 +61,10 @@ describe("getCapabilities", () => {
   })
 
   test.each([
-    ["tiktok", ["sendCard"], ["sendImage"], 3],
-    ["messenger", [], ["sendAudio", "sendFile"], 3],
-    ["omnichannel", [], [], 3],
-  ])("projects the %s channel policy", async (channel, unsupportedSteps, noButtonSteps, buttonCount) => {
+    ["tiktok", ["sendCard"], ["sendImage"], 3, []],
+    ["messenger", [], ["sendAudio", "sendFile"], 3, ["callPhoneNumber"]],
+    ["omnichannel", [], [], 3, []],
+  ])("projects the %s channel policy", async (channel, unsupportedSteps, noButtonSteps, buttonCount, nativeButtonTypes) => {
     const result = await getCapabilities({
       channel,
       include: ["flowSpec"],
@@ -72,7 +72,8 @@ describe("getCapabilities", () => {
     })
 
     expect(result.flowSpec?.selectedChannelPolicy).toMatchObject({
-      policyVersion: 2,
+      policyVersion: 3,
+      nativeButtonTypes,
       limits: { buttonCount },
     })
     expect(result.flowSpec?.selectedChannelPolicy?.unsupportedSteps).toEqual(

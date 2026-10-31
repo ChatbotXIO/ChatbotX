@@ -1448,7 +1448,8 @@
     },
     "button": {
       "label": "Nút",
-      "whenPressed": "Khi nút này được nhấn"
+      "whenPressed": "Khi nút này được nhấn",
+      "callToThisNumber": "Gọi đến số này"
     },
     "buttonLabel": {
       "label": "Nhãn nút"
@@ -3037,7 +3038,8 @@
       "sendCollection": "Bộ sưu tập sản phẩm",
       "pipeline": "Quản lý Pipeline",
       "moreOptions": "Tùy chọn khác",
-      "findPlacesNearMe": "Tìm địa điểm gần tôi"
+      "findPlacesNearMe": "Tìm địa điểm gần tôi",
+      "callPhoneNumber": "Gọi số điện thoại"
     },
     "externalRequest": {
       "errors": {
@@ -3312,6 +3314,14 @@
       "allLocations": "Tất cả địa điểm",
       "whatsappOnly": "Chỉ gửi cho liên hệ WhatsApp.",
       "noLocationSource": "Vị trí phải được thu thập trong flow này: thêm bước Lấy dữ liệu người dùng với định dạng trả lời Vị trí trước hành động này. Vị trí được lưu bởi flow khác sẽ không được dùng. Nếu không có, hành động này sẽ bị bỏ qua."
+    },
+    "callPhoneNumber": {
+      "fallbackHint": "Trên các kênh không thể gọi điện, khách hàng sẽ nhận được số này dưới dạng tin nhắn trả lời.",
+      "countryLabel": "Mã quốc gia",
+      "noCountry": "Không chọn quốc gia",
+      "invalidForCountry": "Số này không phải số điện thoại hợp lệ của {country}.",
+      "needsCountry": "Chọn quốc gia, hoặc nhập số bắt đầu bằng + và mã quốc gia.",
+      "invalidInternational": "Số điện thoại quốc tế không hợp lệ."
     }
   },
   "folders": {
@@ -4387,7 +4397,9 @@
     "savedReplyImagesRemoved": "Đã bỏ những ảnh không gửi được ở đây",
     "onlyImagesAllowed": "Chỉ được thêm hình ảnh",
     "tooManySavedReplyImages": "Một câu trả lời nhanh có tối đa {max} ảnh",
-    "savedReplyImagesNotSentHere": "Ảnh sẽ không được gửi ở đây"
+    "savedReplyImagesNotSentHere": "Ảnh sẽ không được gửi ở đây",
+    "invalidPhoneNumber": "Số điện thoại không hợp lệ. Hãy kèm mã quốc gia, ví dụ +1.",
+    "buttonCallPhoneNumberUnsupported": "Nút này không thể gọi số điện thoại ở đây. Hãy chọn hành động khác."
   },
   "instagram": {
     "description": "Tích hợp này cho phép bạn tạo bot Instagram.",

@@ -1039,7 +1039,8 @@
     },
     "button": {
       "label": "Knop",
-      "whenPressed": "Wanneer op deze knop wordt gedrukt"
+      "whenPressed": "Wanneer op deze knop wordt gedrukt",
+      "callToThisNumber": "Bel dit nummer"
     },
     "buttonLabel": {
       "label": "Knoplabel"
@@ -2839,7 +2840,8 @@
       "sendCollection": "Collectie",
       "pipeline": "Pipelines",
       "moreOptions": "Meer opties",
-      "findPlacesNearMe": "Plaatsen bij mij in de buurt zoeken"
+      "findPlacesNearMe": "Plaatsen bij mij in de buurt zoeken",
+      "callPhoneNumber": "Telefoonnummer bellen"
     },
     "externalRequest": {
       "errors": {
@@ -3114,6 +3116,14 @@
       "allLocations": "Alle locaties",
       "whatsappOnly": "Alleen verzonden naar WhatsApp-contacten.",
       "noLocationSource": "De locatie moet in deze flow worden verzameld: voeg vóór deze actie een stap Gebruikersgegevens ophalen toe met antwoordformaat Locatie. Een locatie die door een andere flow is opgeslagen, wordt niet gebruikt. Zonder die stap wordt deze actie overgeslagen."
+    },
+    "callPhoneNumber": {
+      "fallbackHint": "Op kanalen die geen gesprek kunnen starten, ontvangt het contact dit nummer als antwoord.",
+      "countryLabel": "Landcode",
+      "noCountry": "Geen land",
+      "invalidForCountry": "Dit is geen geldig telefoonnummer voor {country}.",
+      "needsCountry": "Kies het land of begin het nummer met + en de landcode.",
+      "invalidInternational": "Dit is geen geldig internationaal telefoonnummer."
     }
   },
   "folders": {
@@ -4345,7 +4355,9 @@
     "savedReplyImagesRemoved": "Afbeeldingen die hier niet verstuurd kunnen worden, zijn verwijderd",
     "onlyImagesAllowed": "Alleen afbeeldingen kunnen worden toegevoegd",
     "tooManySavedReplyImages": "Een opgeslagen antwoord kan maximaal {max} afbeeldingen bevatten",
-    "savedReplyImagesNotSentHere": "Afbeeldingen worden hier niet verstuurd"
+    "savedReplyImagesNotSentHere": "Afbeeldingen worden hier niet verstuurd",
+    "invalidPhoneNumber": "Dit is geen geldig telefoonnummer. Voeg de landcode toe, bijvoorbeeld +1.",
+    "buttonCallPhoneNumberUnsupported": "Deze knop kan hier geen telefoonnummer bellen. Kies een andere actie."
   },
   "instagram": {
     "description": "Met deze integratie kun je Instagram-bots maken.",

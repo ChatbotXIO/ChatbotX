@@ -32,8 +32,13 @@ vi.mock("@chatbotx.io/utils", async (importOriginal) => {
   return { ...actual, createId: vi.fn(() => "generated-id") }
 })
 
-const { kyGet } = vi.hoisted(() => ({ kyGet: vi.fn() }))
-vi.mock("ky", () => ({ default: { get: kyGet } }))
+const { kyGet, kyPost } = vi.hoisted(() => ({
+  kyGet: vi.fn(),
+  kyPost: vi.fn(
+    async (_url: string, _options: { json: { postback?: string } }) => ({}),
+  ),
+}))
+vi.mock("ky", () => ({ default: { get: kyGet, post: kyPost } }))
 
 const createLocalStorageMock = (initial: Record<string, string> = {}) => {
   const items = new Map(Object.entries(initial))
@@ -268,6 +273,57 @@ describe("webchat guest session store", () => {
       "message-older",
       "message-realtime",
     ])
+  })
+})
+
+describe("webchat guest session postback", () => {
+  beforeEach(() => {
+    vi.unstubAllGlobals()
+    vi.clearAllMocks()
+    vi.stubGlobal("localStorage", createLocalStorageMock())
+  })
+
+  const postedPostbacks = () =>
+    kyPost.mock.calls.map(([, options]) => options.json.postback)
+
+  test("replays a reply button's postback", async () => {
+    const store = createGuestSessionStore(createWebchatConfig())
+
+    await store.getState().sendPostback({
+      id: "1",
+      label: "More",
+      buttonType: "postback",
+      postback: "more-payload",
+    })
+
+    expect(postedPostbacks()).toEqual(["more-payload"])
+  })
+
+  test("replays a call button's postback when it is shown as a reply", async () => {
+    const store = createGuestSessionStore(createWebchatConfig())
+
+    await store.getState().sendPostback({
+      id: "1",
+      label: "Call us",
+      buttonType: "phoneNumber",
+      phoneNumber: "+14155552671",
+      postback: "call-payload",
+    })
+
+    expect(postedPostbacks()).toEqual(["call-payload"])
+  })
+
+  test("sends nothing for a link button", async () => {
+    const store = createGuestSessionStore(createWebchatConfig())
+
+    await store.getState().sendPostback({
+      id: "1",
+      label: "Open",
+      buttonType: "url",
+      url: "https://example.com",
+    })
+
+    expect(kyPost).not.toHaveBeenCalled()
   })
 })
 

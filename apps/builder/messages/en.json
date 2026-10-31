@@ -1453,7 +1453,8 @@
     },
     "button": {
       "label": "Button",
-      "whenPressed": "When this button is pressed"
+      "whenPressed": "When this button is pressed",
+      "callToThisNumber": "Call to this number"
     },
     "buttonLabel": {
       "label": "Button Label"
@@ -3677,7 +3678,8 @@
       "sendCollection": "Collection",
       "pipeline": "Pipelines",
       "moreOptions": "More options",
-      "findPlacesNearMe": "Find places near me"
+      "findPlacesNearMe": "Find places near me",
+      "callPhoneNumber": "Call Phone Number"
     },
     "externalRequest": {
       "errors": {
@@ -3952,6 +3954,14 @@
       "allLocations": "All locations",
       "whatsappOnly": "Only sent to WhatsApp contacts.",
       "noLocationSource": "The location must be collected in this flow: add a Get User Data step with reply format Location before this action. A location saved by another flow is not used. Without it, this action is skipped."
+    },
+    "callPhoneNumber": {
+      "fallbackHint": "On channels that cannot place a call, the contact receives this number as a reply instead.",
+      "countryLabel": "Country code",
+      "noCountry": "No country",
+      "invalidForCountry": "This isn't a valid phone number for {country}.",
+      "needsCountry": "Pick the country, or start the number with + and the country code.",
+      "invalidInternational": "This isn't a valid international phone number."
     }
   },
   "folders": {
@@ -5027,7 +5037,9 @@
     "savedReplyImagesRemoved": "Images that can't be sent here were removed",
     "onlyImagesAllowed": "Only images can be added",
     "tooManySavedReplyImages": "A saved reply can have at most {max} images",
-    "savedReplyImagesNotSentHere": "Images won't be sent here"
+    "savedReplyImagesNotSentHere": "Images won't be sent here",
+    "invalidPhoneNumber": "This isn't a valid phone number. Include the country code, for example +1.",
+    "buttonCallPhoneNumberUnsupported": "This button cannot call a phone number here. Choose another action."
   },
   "instagram": {
     "description": "This integration lets you create Instagram bots.",

@@ -244,7 +244,8 @@
     },
     "button": {
       "label": "按鈕",
-      "whenPressed": "當按下此按鈕時"
+      "whenPressed": "當按下此按鈕時",
+      "callToThisNumber": "撥打此號碼"
     },
     "buttonLabel": {
       "label": "按鈕標籤"
@@ -1829,7 +1830,9 @@
     "savedReplyImagesRemoved": "已移除無法在此傳送的圖片",
     "onlyImagesAllowed": "只能新增圖片",
     "tooManySavedReplyImages": "一則快速回覆最多包含 {max} 張圖片",
-    "savedReplyImagesNotSentHere": "圖片不會在此傳送"
+    "savedReplyImagesNotSentHere": "圖片不會在此傳送",
+    "invalidPhoneNumber": "這不是有效的電話號碼。請包含國碼，例如 +1。",
+    "buttonCallPhoneNumberUnsupported": "此按鈕在這裡無法撥打電話號碼，請選擇其他動作。"
   },
   "productCategories": {
     "deleteDescription": "{count, plural, =0 {此分類尚未指派任何商品。} one {# 項商品將移至未分類。} other {# 項商品將移至未分類。}}",
@@ -3243,7 +3246,8 @@
       "sendCollection": "商品集合",
       "pipeline": "管道",
       "moreOptions": "更多選項",
-      "findPlacesNearMe": "尋找我附近的地點"
+      "findPlacesNearMe": "尋找我附近的地點",
+      "callPhoneNumber": "撥打電話號碼"
     },
     "externalRequest": {
       "errors": {
@@ -3518,6 +3522,14 @@
       "allLocations": "所有地點",
       "whatsappOnly": "僅傳送給 WhatsApp 聯絡人。",
       "noLocationSource": "位置必須在此流程中收集：請在此動作之前新增一個回覆格式為「位置」的取得使用者資料步驟。其他流程儲存的位置不會被使用。否則將略過此動作。"
+    },
+    "callPhoneNumber": {
+      "fallbackHint": "在無法發起通話的管道上，聯絡人將改為收到這個號碼作為回覆。",
+      "countryLabel": "國碼",
+      "noCountry": "不選擇國家/地區",
+      "invalidForCountry": "這不是有效的{country}電話號碼。",
+      "needsCountry": "請選擇國家/地區，或以 + 和國碼開頭輸入號碼。",
+      "invalidInternational": "這不是有效的國際電話號碼。"
     }
   },
   "folders": {

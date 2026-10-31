@@ -1,4 +1,5 @@
 import { channelTypes } from "@chatbotx.io/utils/channel"
+import type { ButtonType } from "../../steps/button"
 import { apiFlowPolicy } from "./api"
 import type { ChannelFlowPolicy, ChannelFlowPolicyMap } from "./define"
 import { instagramFlowPolicy } from "./instagram"
@@ -32,6 +33,17 @@ export const getChannelFlowPolicy = (
   const parsed = channelTypes.safeParse(channel)
   return parsed.success ? CHANNEL_FLOW_POLICIES[parsed.data] : undefined
 }
+
+/**
+ * Whether the channel renders this button type as its own control on step and
+ * card buttons (a call button that dials). False for an unknown channel, so
+ * callers fall back to the reply form every channel can send.
+ */
+export const isNativeButtonType = (
+  channel: string | null | undefined,
+  buttonType: ButtonType,
+): boolean =>
+  getChannelFlowPolicy(channel)?.nativeButtonTypes.includes(buttonType) ?? false
 
 export {
   CHANNEL_POLICY_VERSION,

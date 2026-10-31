@@ -46,6 +46,7 @@ import {
   extractMetadata,
   getChannelFlowPolicy,
   isBulkOutboundMetadata,
+  isNativeButtonType,
   isProactiveOutboundMetadata,
   messageEventTypeSchema,
   type SendCardStepSchema,
@@ -75,6 +76,7 @@ import {
   settleCommentAutomationFailure,
 } from "../../lib/comment-automation-anchor"
 import { logger } from "../../lib/logger"
+import { resolveCallPhoneButtons } from "../utils/call-phone-buttons"
 import { resolveMiniAppLinks } from "../utils/mini-app-buttons"
 import { mapStepButtons } from "../utils/step-buttons"
 import { resolveStoredStepContent } from "../utils/stored-step-content"
@@ -170,13 +172,21 @@ const findTargetContactInbox = ({
 }
 
 export const convertButtonsToTemplate = (props: {
+  channel: string
   flowId: string
   flowVersionId?: string
   buttons: ButtonStepProps[]
   metadata?: MetadataPayload
   contactInboxId?: string
 }): MessageButtonTemplate[] => {
-  const { flowId, flowVersionId, buttons, metadata, contactInboxId } = props
+  const { channel, flowId, flowVersionId, buttons, metadata, contactInboxId } =
+    props
+  // A channel that cannot dial sends a call button as a reply button (see
+  // `resolveCallPhoneButtons`), so it is stored as one too.
+  const dialsCallButtons = isNativeButtonType(
+    channel,
+    buttonTypes.enum.callPhoneNumber,
+  )
   const broadcastId = extractMetadata("broadcastId", metadata)
   const sequenceStepId = extractMetadata("sequenceStepId", metadata)
   // Read the same way as the two above, and — critically — the same way each
@@ -202,6 +212,19 @@ export const convertButtonsToTemplate = (props: {
         label: button.label,
         buttonType: "url",
         url: appendCodeToMagicLink(button.beforeStep.url, buttonPayload),
+        postback: buttonPayload,
+      }
+    }
+
+    if (
+      button.buttonType === buttonTypes.enum.callPhoneNumber &&
+      dialsCallButtons
+    ) {
+      return {
+        id: button.id,
+        label: button.label,
+        buttonType: "phoneNumber",
+        phoneNumber: button.beforeStep.phoneNumber,
         postback: buttonPayload,
       }
     }
@@ -385,13 +408,14 @@ const wrapOpenLinksInStep = async (props: {
   )
 
 const convertCardsToTemplate = (props: {
+  channel: string
   flowId: string
   flowVersionId?: string
   cards: SendCardStepSchema[]
   metadata?: MetadataPayload
   contactInboxId?: string
 }): MessageCardTemplate[] => {
-  const { flowId, flowVersionId, cards, metadata, contactInboxId } = props
+  const { cards, ...buttonProps } = props
 
   return cards.map((card) => ({
     id: card.id,
@@ -400,13 +424,7 @@ const convertCardsToTemplate = (props: {
     imageUrl: "image" in card ? card.image?.url : undefined,
     buttons:
       "buttons" in card
-        ? convertButtonsToTemplate({
-            flowId,
-            flowVersionId,
-            buttons: card.buttons,
-            metadata,
-            contactInboxId,
-          })
+        ? convertButtonsToTemplate({ ...buttonProps, buttons: card.buttons })
         : undefined,
   }))
 }
@@ -711,6 +729,14 @@ export async function sendFlowStep({
       workspaceId: conversation.workspaceId,
     })
     const { appUrl, storageUrl } = tenantSettings
+    // Call Phone Number buttons get a validated E.164 number (or become inert)
+    // and, on channels that cannot dial, the number in their title.
+    const stepWithCallButtons = await resolveCallPhoneButtons({
+      workspaceId: conversation.workspaceId,
+      flowId,
+      channel: targetContactInbox.channel,
+      step: resolvedStep as SendFlowStepData,
+    })
     // Open Mini App buttons become link buttons first, so everything below
     // (booking signing, the `/go` wrap, every channel encoder) only ever sees
     // `openWebsite`. The Mini App URL is same-origin, so `/go` leaves it alone.
@@ -726,7 +752,7 @@ export async function sendFlowStep({
       flowVersionId,
       metadata,
       appUrl,
-      step: resolvedStep as SendFlowStepData,
+      step: stepWithCallButtons,
       quickReplies,
     })
     const stepWithSignedBookingLinks = await signBookingLinksInStep({
@@ -788,6 +814,7 @@ export async function sendFlowStep({
     const canonicalQuickReplies =
       quickRepliesForSend && quickRepliesForSend.length > 0
         ? convertButtonsToTemplate({
+            channel: targetContactInbox.channel,
             flowId,
             flowVersionId,
             buttons: quickRepliesForSend,
@@ -799,6 +826,7 @@ export async function sendFlowStep({
     const canonicalStepButtons =
       "buttons" in stepForSend && stepForSend.buttons.length > 0
         ? convertButtonsToTemplate({
+            channel: targetContactInbox.channel,
             flowId,
             flowVersionId,
             buttons: stepForSend.buttons,
@@ -835,6 +863,7 @@ export async function sendFlowStep({
         payload: {
           templateType: "carousel",
           cards: convertCardsToTemplate({
+            channel: targetContactInbox.channel,
             flowId,
             flowVersionId,
             cards: stepForSend.cards,

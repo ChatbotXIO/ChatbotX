@@ -40,6 +40,7 @@ import {
   useWatch,
 } from "react-hook-form"
 import { setProperty } from "@/lib/object-util"
+import { ButtonEditorChannelContext } from "./button-editor-channel"
 import RecursiveDropdownMenu from "./components/recursive-dropdown-menu"
 import {
   useCreateButtonTarget,
@@ -148,9 +149,15 @@ export function ActiveButton({
   )
 }
 
-function ButtonSteps() {
+function ButtonSteps({ buttonType }: { buttonType: ButtonType }) {
   const t = useTranslations()
   const { control } = useFormContext()
+  const allowsSteps = useMemo(
+    () =>
+      allButtonsConfig(t).find((config) => config.buttonType === buttonType)
+        ?.allowsSteps !== false,
+    [t, buttonType],
+  )
   const { fields, append, remove } = useFieldArray({
     control,
     name: "steps",
@@ -167,6 +174,10 @@ function ButtonSteps() {
     },
     [append],
   )
+
+  if (!allowsSteps) {
+    return null
+  }
 
   return (
     <div className="mt-2 flex flex-col gap-2">
@@ -248,13 +259,12 @@ export function ButtonEditorDialog() {
   // quick reply or a button attached to a step. The visible counter sits on
   // the button itself (steps/button/editor.tsx); this only caps the input.
   const isQuickReply = buttonPath?.startsWith("data.details.quickReplies")
+  const channel = resolveNodeChannel(activeNode)
   const labelMax = useMemo(() => {
-    const limits = resolveSendTextLengthLimits({
-      channel: resolveNodeChannel(activeNode),
-    })
+    const limits = resolveSendTextLengthLimits({ channel })
 
     return isQuickReply ? limits.quickReplyLabel : limits.buttonLabel
-  }, [activeNode, isQuickReply])
+  }, [channel, isQuickReply])
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: wip
   useEffect(() => {
@@ -413,44 +423,46 @@ export function ButtonEditorDialog() {
         </DialogHeader>
 
         <Form {...form}>
-          <SpreadsheetDialogProvider>
-            <form
-              className="flex w-full flex-col gap-4"
-              onSubmit={(e) => {
-                e.stopPropagation()
-                return form.handleSubmit(onSave)(e)
-              }}
-            >
-              <InputField
-                disabled={!!buttonEditorConfig?.lockLabel}
-                label={t("fields.name.label")}
-                maxLength={labelMax}
-                name="label"
-                required
-              />
+          <ButtonEditorChannelContext.Provider value={channel}>
+            <SpreadsheetDialogProvider>
+              <form
+                className="flex w-full flex-col gap-4"
+                onSubmit={(e) => {
+                  e.stopPropagation()
+                  return form.handleSubmit(onSave)(e)
+                }}
+              >
+                <InputField
+                  disabled={!!buttonEditorConfig?.lockLabel}
+                  label={t("fields.name.label")}
+                  maxLength={labelMax}
+                  name="label"
+                  required
+                />
 
-              <div className="mt-2 font-medium">
-                {t("fields.button.whenPressed")}
-              </div>
+                <div className="mt-2 font-medium">
+                  {t("fields.button.whenPressed")}
+                </div>
 
-              {buttonType ? (
-                <div className="flex flex-col gap-2">
-                  <ActiveButton
-                    buttonType={buttonType}
+                {buttonType ? (
+                  <div className="flex flex-col gap-2">
+                    <ActiveButton
+                      buttonType={buttonType}
+                      onChooseButton={onChooseButton}
+                    />
+                    <ButtonSteps buttonType={buttonType} />
+                  </div>
+                ) : (
+                  <AllButtonOptions
+                    hiddenButtonTypes={
+                      buttonEditorConfig?.hiddenButtonTypes ?? undefined
+                    }
                     onChooseButton={onChooseButton}
                   />
-                  <ButtonSteps />
-                </div>
-              ) : (
-                <AllButtonOptions
-                  hiddenButtonTypes={
-                    buttonEditorConfig?.hiddenButtonTypes ?? undefined
-                  }
-                  onChooseButton={onChooseButton}
-                />
-              )}
-            </form>
-          </SpreadsheetDialogProvider>
+                )}
+              </form>
+            </SpreadsheetDialogProvider>
+          </ButtonEditorChannelContext.Provider>
         </Form>
 
         <DialogFooter>
