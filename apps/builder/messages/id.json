@@ -2553,7 +2553,8 @@
       "settings": "Pengaturan",
       "miniApps": "Mini Apps",
       "leaderboards": "Papan peringkat",
-      "pipelines": "Pipeline"
+      "pipelines": "Pipeline",
+      "places": "Tempat"
     },
     "adReferral": {
       "label": "Ads",
@@ -2829,7 +2830,9 @@
       "sendViewCatalog": "Lihat katalog",
       "sendProducts": "Kirim produk",
       "sendCollection": "Koleksi",
-      "pipeline": "Pipeline"
+      "pipeline": "Pipeline",
+      "moreOptions": "Opsi lainnya",
+      "findPlacesNearMe": "Cari tempat di dekat saya"
     },
     "externalRequest": {
       "errors": {
@@ -3098,6 +3101,12 @@
       "comment": "Komentar",
       "destinationPipeline": "Pipeline tujuan",
       "destinationStage": "Tahap tujuan"
+    },
+    "findPlacesNearMe": {
+      "category": "Kategori lokasi",
+      "allLocations": "Semua lokasi",
+      "whatsappOnly": "Hanya dikirim ke kontak WhatsApp.",
+      "noLocationSource": "Lokasi harus dikumpulkan di flow ini: tambahkan langkah Dapatkan Data Pengguna dengan format balasan Lokasi sebelum tindakan ini. Lokasi yang disimpan oleh flow lain tidak digunakan. Tanpanya, tindakan ini dilewati."
     }
   },
   "folders": {
@@ -6022,7 +6031,45 @@
   },
   "placesNearMe": {
     "title": "Tempat di Sekitar Saya",
-    "description": "Temukan tempat di dekat kontak Anda."
+    "description": "Biarkan pelanggan Anda dengan mudah menemukan lokasi bisnis Anda di dekat mereka.",
+    "tabs": {
+      "locations": "Lokasi",
+      "categories": "Kategori"
+    },
+    "categories": {
+      "columns": {
+        "locations": "Lokasi"
+      },
+      "add": "Tambah kategori",
+      "edit": "Ubah kategori",
+      "empty": "Belum ada kategori.",
+      "created": "Kategori ditambahkan",
+      "updated": "Kategori diperbarui",
+      "deleted": "Kategori dihapus",
+      "saveError": "Tidak dapat menyimpan kategori",
+      "deleteError": "Tidak dapat menghapus kategori",
+      "deleteTitle": "Hapus {name}?",
+      "deleteDescription": "{count, plural, =0 {Tidak ada lokasi yang menggunakan kategori ini.} one {# lokasi akan menjadi tanpa kategori.} other {# lokasi akan menjadi tanpa kategori.}}"
+    },
+    "locations": {
+      "columns": {
+        "coordinates": "Koordinat"
+      },
+      "preview": "Pratinjau",
+      "add": "Tambah lokasi",
+      "edit": "Edit lokasi",
+      "empty": "Belum ada lokasi.",
+      "created": "Lokasi ditambahkan",
+      "updated": "Lokasi diperbarui",
+      "deleted": "Lokasi dihapus",
+      "saveError": "Tidak dapat menyimpan lokasi",
+      "deleteError": "Tidak dapat menghapus lokasi",
+      "deleteTitle": "Hapus {name}?",
+      "deleteDescription": "Lokasi ini akan dihapus secara permanen.",
+      "noCategory": "Tanpa kategori",
+      "latitude": "Lintang",
+      "longitude": "Bujur"
+    }
   },
   "questionnaires": {
     "title": "Kuesioner",

@@ -176,6 +176,18 @@ describe("mapKnownOrpcErrors", () => {
     expect(mockLoggerWarn).toHaveBeenCalledTimes(1)
   })
 
+  test("maps a duplicate place category to a 409 placeCategoryDuplicated error", () => {
+    const error = new ChatbotXException(
+      "Place category already exists",
+      "placeCategoryDuplicated",
+      409,
+    )
+
+    expect(() => mapKnownOrpcErrors(error)).toThrow(
+      expect.objectContaining({ code: "placeCategoryDuplicated", status: 409 }),
+    )
+  })
+
   test("maps a 5xx ChatbotXException without warn-logging — the route callback logs it once", () => {
     const error = new ChatbotXException("boom", "upstream", 502)
 

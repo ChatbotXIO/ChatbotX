@@ -2553,7 +2553,8 @@
       "settings": "Definições",
       "miniApps": "Mini Apps",
       "leaderboards": "Classificações",
-      "pipelines": "Funis"
+      "pipelines": "Funis",
+      "places": "Locais"
     },
     "adReferral": {
       "label": "Ads",
@@ -2829,7 +2830,9 @@
       "sendViewCatalog": "Ver catálogo",
       "sendProducts": "Enviar produtos",
       "sendCollection": "Coleção",
-      "pipeline": "Funis"
+      "pipeline": "Funis",
+      "moreOptions": "Mais opções",
+      "findPlacesNearMe": "Encontrar locais perto de mim"
     },
     "externalRequest": {
       "errors": {
@@ -3098,6 +3101,12 @@
       "comment": "Comentário",
       "destinationPipeline": "Funil de destino",
       "destinationStage": "Fase de destino"
+    },
+    "findPlacesNearMe": {
+      "category": "Categoria de local",
+      "allLocations": "Todos os locais",
+      "whatsappOnly": "Enviado apenas para contactos do WhatsApp.",
+      "noLocationSource": "A localização tem de ser recolhida neste fluxo: adicione um passo Obter dados do utilizador com formato de resposta Localização antes desta ação. Uma localização guardada por outro fluxo não é usada. Sem ele, esta ação é ignorada."
     }
   },
   "folders": {
@@ -6018,7 +6027,45 @@
   },
   "placesNearMe": {
     "title": "Locais perto de mim",
-    "description": "Encontre locais perto dos seus contactos."
+    "description": "Permita que os seus clientes encontrem facilmente os locais da sua empresa perto deles.",
+    "tabs": {
+      "locations": "Locais",
+      "categories": "Categorias"
+    },
+    "categories": {
+      "columns": {
+        "locations": "Locais"
+      },
+      "add": "Adicionar categoria",
+      "edit": "Editar categoria",
+      "empty": "Ainda sem categorias.",
+      "created": "Categoria adicionada",
+      "updated": "Categoria atualizada",
+      "deleted": "Categoria eliminada",
+      "saveError": "Não foi possível guardar a categoria",
+      "deleteError": "Não foi possível eliminar a categoria",
+      "deleteTitle": "Eliminar {name}?",
+      "deleteDescription": "{count, plural, =0 {Nenhum local usa esta categoria.} one {# local ficará sem categoria.} other {# locais ficarão sem categoria.}}"
+    },
+    "locations": {
+      "columns": {
+        "coordinates": "Coordenadas"
+      },
+      "preview": "Pré-visualizar",
+      "add": "Adicionar local",
+      "edit": "Editar local",
+      "empty": "Ainda não há locais.",
+      "created": "Local adicionado",
+      "updated": "Local atualizado",
+      "deleted": "Local eliminado",
+      "saveError": "Não foi possível guardar o local",
+      "deleteError": "Não foi possível eliminar o local",
+      "deleteTitle": "Eliminar {name}?",
+      "deleteDescription": "Este local será eliminado permanentemente.",
+      "noCategory": "Sem categoria",
+      "latitude": "Latitude",
+      "longitude": "Longitude"
+    }
   },
   "questionnaires": {
     "title": "Questionários",

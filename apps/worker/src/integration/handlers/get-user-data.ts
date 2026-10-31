@@ -161,6 +161,7 @@ async function handleWebviewSelection(
         keyword: step.outputFieldId,
         value: metadata.selectedValue,
         allowBotFields: true,
+        touchUnchanged: step.replyFormat === ReplyFormat.location,
       })
     }
   } catch (error) {
@@ -285,6 +286,9 @@ async function handleSkipOrError(
         keyword: step.outputFieldId,
         value,
         allowBotFields: true,
+        // A re-shared identical location must still rank as the newest one
+        // for Find places near me, which orders location fields by updatedAt.
+        touchUnchanged: step.replyFormat === ReplyFormat.location,
       })
     }
 

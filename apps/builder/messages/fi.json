@@ -2553,7 +2553,8 @@
       "settings": "Asetukset",
       "miniApps": "Mini Apps",
       "leaderboards": "Tulostaulukot",
-      "pipelines": "Myyntiputket"
+      "pipelines": "Myyntiputket",
+      "places": "Paikat"
     },
     "adReferral": {
       "label": "Ads",
@@ -2829,7 +2830,9 @@
       "sendViewCatalog": "Näytä tuotekatalogi",
       "sendProducts": "Lähetä tuotteita",
       "sendCollection": "Kokoelma",
-      "pipeline": "Pipelinet"
+      "pipeline": "Pipelinet",
+      "moreOptions": "Lisää vaihtoehtoja",
+      "findPlacesNearMe": "Etsi lähellä olevia paikkoja"
     },
     "externalRequest": {
       "errors": {
@@ -3098,6 +3101,12 @@
       "comment": "Kommentti",
       "destinationPipeline": "Kohdepipeline",
       "destinationStage": "Kohdevaihe"
+    },
+    "findPlacesNearMe": {
+      "category": "Sijaintiluokka",
+      "allLocations": "Kaikki sijainnit",
+      "whatsappOnly": "Lähetetään vain WhatsApp-yhteystiedoille.",
+      "noLocationSource": "Sijainti on kerättävä tässä flow'ssa: lisää ennen tätä toimintoa Hae käyttäjätiedot -vaihe, jonka vastausmuoto on Sijainti. Toisen flow'n tallentamaa sijaintia ei käytetä. Ilman sitä toiminto ohitetaan."
     }
   },
   "folders": {
@@ -6022,7 +6031,45 @@
   },
   "placesNearMe": {
     "title": "Lähellä olevat paikat",
-    "description": "Etsi paikkoja yhteystietojesi läheltä."
+    "description": "Anna asiakkaidesi löytää helposti yrityksesi toimipisteet läheltään.",
+    "tabs": {
+      "locations": "Sijainnit",
+      "categories": "Kategoriat"
+    },
+    "categories": {
+      "columns": {
+        "locations": "Sijainnit"
+      },
+      "add": "Lisää luokka",
+      "edit": "Muokkaa luokkaa",
+      "empty": "Ei vielä luokkia.",
+      "created": "Luokka lisätty",
+      "updated": "Luokka päivitetty",
+      "deleted": "Luokka poistettu",
+      "saveError": "Luokan tallennus epäonnistui",
+      "deleteError": "Luokan poisto epäonnistui",
+      "deleteTitle": "Poistetaanko {name}?",
+      "deleteDescription": "{count, plural, =0 {Yksikään sijainti ei käytä tätä luokkaa.} one {# sijainti jää ilman luokkaa.} other {# sijaintia jää ilman luokkaa.}}"
+    },
+    "locations": {
+      "columns": {
+        "coordinates": "Koordinaatit"
+      },
+      "preview": "Esikatselu",
+      "add": "Lisää sijainti",
+      "edit": "Muokkaa sijaintia",
+      "empty": "Ei vielä sijainteja.",
+      "created": "Sijainti lisätty",
+      "updated": "Sijainti päivitetty",
+      "deleted": "Sijainti poistettu",
+      "saveError": "Sijaintia ei voitu tallentaa",
+      "deleteError": "Sijaintia ei voitu poistaa",
+      "deleteTitle": "Poistetaanko {name}?",
+      "deleteDescription": "Tämä sijainti poistetaan pysyvästi.",
+      "noCategory": "Ei luokkaa",
+      "latitude": "Leveysaste",
+      "longitude": "Pituusaste"
+    }
   },
   "questionnaires": {
     "title": "Kyselylomakkeet",

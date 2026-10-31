@@ -620,7 +620,9 @@
       "sendViewCatalog": "הצגת קטלוג",
       "sendProducts": "שליחת מוצרים",
       "sendCollection": "אוסף",
-      "pipeline": "פייפליינים"
+      "pipeline": "פייפליינים",
+      "moreOptions": "אפשרויות נוספות",
+      "findPlacesNearMe": "מצא מקומות בקרבתי"
     },
     "externalRequest": {
       "errors": {
@@ -889,6 +891,12 @@
       "comment": "תגובה",
       "destinationPipeline": "פייפליין יעד",
       "destinationStage": "שלב יעד"
+    },
+    "findPlacesNearMe": {
+      "category": "קטגוריית מיקום",
+      "allLocations": "כל המיקומים",
+      "whatsappOnly": "נשלח רק לאנשי קשר ב-WhatsApp.",
+      "noLocationSource": "יש לאסוף את המיקום בזרימה הזו: הוסף לפני פעולה זו שלב קבלת נתוני משתמש עם פורמט תשובה מיקום. מיקום שנשמר בזרימה אחרת אינו בשימוש. בלעדיו, פעולה זו מדולגת."
     }
   },
   "folders": {
@@ -3813,7 +3821,45 @@
   },
   "placesNearMe": {
     "title": "מקומות בקרבתי",
-    "description": "מציאת מקומות בקרבת אנשי הקשר שלכם."
+    "description": "אפשרו ללקוחות שלכם למצוא בקלות את מיקומי העסק שלכם הקרובים אליהם.",
+    "tabs": {
+      "locations": "מיקומים",
+      "categories": "קטגוריות"
+    },
+    "categories": {
+      "columns": {
+        "locations": "מיקומים"
+      },
+      "add": "הוספת קטגוריה",
+      "edit": "עריכת קטגוריה",
+      "empty": "עדיין אין קטגוריות.",
+      "created": "הקטגוריה נוספה",
+      "updated": "הקטגוריה עודכנה",
+      "deleted": "הקטגוריה נמחקה",
+      "saveError": "לא ניתן לשמור את הקטגוריה",
+      "deleteError": "לא ניתן למחוק את הקטגוריה",
+      "deleteTitle": "למחוק את {name}?",
+      "deleteDescription": "{count, plural, =0 {אף מיקום לא משתמש בקטגוריה זו.} one {# מיקום יהפוך ללא קטגוריה.} other {# מיקומים יהפכו ללא קטגוריה.}}"
+    },
+    "locations": {
+      "columns": {
+        "coordinates": "קואורדינטות"
+      },
+      "preview": "תצוגה מקדימה",
+      "add": "הוספת מיקום",
+      "edit": "עריכת מיקום",
+      "empty": "אין מיקומים עדיין.",
+      "created": "המיקום נוסף",
+      "updated": "המיקום עודכן",
+      "deleted": "המיקום נמחק",
+      "saveError": "לא ניתן לשמור את המיקום",
+      "deleteError": "לא ניתן למחוק את המיקום",
+      "deleteTitle": "למחוק את {name}?",
+      "deleteDescription": "מיקום זה יימחק לצמיתות.",
+      "noCategory": "ללא קטגוריה",
+      "latitude": "קו רוחב",
+      "longitude": "קו אורך"
+    }
   },
   "questionnaires": {
     "title": "שאלונים",
@@ -6802,7 +6848,8 @@
       "settings": "הגדרות",
       "miniApps": "Mini Apps",
       "leaderboards": "טבלאות מובילים",
-      "pipelines": "צינורות עבודה"
+      "pipelines": "צינורות עבודה",
+      "places": "מקומות"
     },
     "adReferral": {
       "label": "Ads",

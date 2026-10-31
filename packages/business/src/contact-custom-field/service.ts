@@ -4,6 +4,7 @@ import {
   db,
   eq,
   inArray,
+  sql,
 } from "@chatbotx.io/database/client"
 import { contactCustomFieldRepository } from "@chatbotx.io/database/repositories"
 import { contactCustomFieldModel } from "@chatbotx.io/database/schema"
@@ -14,6 +15,7 @@ import {
 import {
   FieldOperationType,
   FieldReferenceKind,
+  isBotFieldReference,
   parseFieldReference,
 } from "@chatbotx.io/flow-config"
 import { createId, isNumericId } from "@chatbotx.io/utils"
@@ -73,6 +75,12 @@ type SetValuesInput = {
    * inbox instead of the contact's most-recently-active one.
    */
   contactInboxId?: string
+  /**
+   * Refresh `updatedAt` on a field whose value is unchanged, without emitting a
+   * change event. Get User Data (Location) sets it so a re-shared identical
+   * location still counts as the newest one for `listValuesByKeys`.
+   */
+  touchUnchanged?: boolean
 }
 
 /**
@@ -145,6 +153,8 @@ type SetValueByKeyInput = DeleteByKeyInput & {
    * pre-existing platform bug tracked separately (plan §3.2, Phase 5).
    */
   operation?: FieldOperationType
+  /** Forwarded to `setValues`; ignored by the bot-field branch. */
+  touchUnchanged?: boolean
 }
 
 /**
@@ -503,6 +513,7 @@ class ContactCustomFieldService extends BaseService {
       sourceTimezoneStrategy,
       sourceTimezoneOverride,
       fillEmptyTemporalWithNow,
+      touchUnchanged,
     } = input
     const customFieldIds = fields.map((f) => f.customFieldId)
     const fieldById = new Map(
@@ -564,6 +575,12 @@ class ContactCustomFieldService extends BaseService {
         }
         const existing = existingById.get(customField.id)
         if (existing?.value === normalizedValue) {
+          if (touchUnchanged) {
+            await client
+              .update(contactCustomFieldModel)
+              .set({ updatedAt: sql`CURRENT_TIMESTAMP` })
+              .where(eq(contactCustomFieldModel.id, existing.id))
+          }
           return null
         }
 
@@ -812,6 +829,7 @@ class ContactCustomFieldService extends BaseService {
       contactInboxId,
       allowBotFields,
       operation,
+      touchUnchanged,
     } = input
 
     const botFieldKey = resolveBotFieldKey(keyword, allowBotFields)
@@ -856,7 +874,44 @@ class ContactCustomFieldService extends BaseService {
       temporalInputParsing,
       fillEmptyTemporalWithNow,
       contactInboxId,
+      touchUnchanged,
     })
+  }
+
+  /**
+   * The contact's values for flow field references (id or legacy name,
+   * resolved like `setValueByKey`), newest write first. Bot-field tokens and
+   * keys that match no field are ignored.
+   */
+  async listValuesByKeys(input: {
+    workspaceId: string
+    contactId: string
+    keys: string[]
+  }): Promise<{ key: string; value: string; updatedAt: Date }[]> {
+    const keys = [...new Set(input.keys)].filter(
+      (key) => key && !isBotFieldReference(key),
+    )
+    if (keys.length === 0) {
+      return []
+    }
+
+    const rows = await contactCustomFieldRepository.listValuesByFieldKeys({
+      workspaceId: input.workspaceId,
+      contactId: input.contactId,
+      ids: keys.filter((key) => isNumericId(key)),
+      names: keys,
+    })
+
+    const values: { key: string; value: string; updatedAt: Date }[] = []
+    for (const key of keys) {
+      const row =
+        rows.find((candidate) => candidate.customFieldId === key) ??
+        rows.find((candidate) => candidate.name === key)
+      if (row) {
+        values.push({ key, value: row.value, updatedAt: row.updatedAt })
+      }
+    }
+    return values.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime())
   }
 
   async deleteByKey(input: DeleteByKeyInput): Promise<void> {

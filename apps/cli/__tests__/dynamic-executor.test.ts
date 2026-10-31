@@ -142,4 +142,58 @@ describe("executeDynamicCommand", () => {
       ).toBe(JSON.stringify({ currency: "VND" }))
     })
   })
+
+  describe("number and integer body flags", () => {
+    const numericTool: DynamicTool = {
+      ...tool,
+      bodyParamNames: ["latitude", "rank", "name"],
+      commandName: "place-locations-create",
+      inputSchema: {
+        properties: {
+          latitude: { type: "number" },
+          name: { type: "string" },
+          rank: { type: "integer" },
+        },
+        type: "object",
+      },
+      method: "POST",
+    }
+    const config = { apiKey: "api-key", apiUrl: "https://api.example.com" }
+
+    test("sends number and integer flags as JSON numbers, keeping precision", async () => {
+      const fetchMock = vi.fn().mockResolvedValue(successfulResponse)
+      globalThis.fetch = fetchMock as unknown as typeof fetch
+
+      await executeDynamicCommand(
+        numericTool,
+        { latitude: "16.0078846304474", name: "123", rank: "3" },
+        config,
+      )
+
+      const init = fetchMock.mock.calls[0]?.[1] as RequestInit
+      expect(init.body).toBe(
+        '{"latitude":16.0078846304474,"rank":3,"name":"123"}',
+      )
+    })
+
+    test("rejects a non-numeric number flag without calling the API", async () => {
+      const fetchMock = vi.fn()
+      globalThis.fetch = fetchMock as unknown as typeof fetch
+
+      await expect(
+        executeDynamicCommand(numericTool, { latitude: "abc" }, config),
+      ).rejects.toThrow("--latitude must be a number")
+      expect(fetchMock).not.toHaveBeenCalled()
+    })
+
+    test("rejects a fractional integer flag instead of rounding", async () => {
+      const fetchMock = vi.fn()
+      globalThis.fetch = fetchMock as unknown as typeof fetch
+
+      await expect(
+        executeDynamicCommand(numericTool, { rank: "2.5" }, config),
+      ).rejects.toThrow("--rank must be an integer")
+      expect(fetchMock).not.toHaveBeenCalled()
+    })
+  })
 })

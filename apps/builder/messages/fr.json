@@ -2553,7 +2553,8 @@
       "settings": "Paramètres",
       "miniApps": "Mini Apps",
       "leaderboards": "Classements",
-      "pipelines": "Pipelines"
+      "pipelines": "Pipelines",
+      "places": "Lieux"
     },
     "adReferral": {
       "label": "Ads",
@@ -2829,7 +2830,9 @@
       "sendViewCatalog": "Voir le catalogue",
       "sendProducts": "Envoyer des produits",
       "sendCollection": "Collection",
-      "pipeline": "Pipelines"
+      "pipeline": "Pipelines",
+      "moreOptions": "Plus d'options",
+      "findPlacesNearMe": "Trouver des lieux près de moi"
     },
     "externalRequest": {
       "errors": {
@@ -3098,6 +3101,12 @@
       "comment": "Commentaire",
       "destinationPipeline": "Pipeline de destination",
       "destinationStage": "Étape de destination"
+    },
+    "findPlacesNearMe": {
+      "category": "Catégorie de lieu",
+      "allLocations": "Tous les lieux",
+      "whatsappOnly": "Envoyé uniquement aux contacts WhatsApp.",
+      "noLocationSource": "La localisation doit être collectée dans ce flux : ajoutez une étape Obtenir les données de l'utilisateur au format de réponse Localisation avant cette action. Une localisation enregistrée par un autre flux n'est pas utilisée. Sans elle, cette action est ignorée."
     }
   },
   "folders": {
@@ -6022,7 +6031,45 @@
   },
   "placesNearMe": {
     "title": "Lieux à proximité",
-    "description": "Trouvez des lieux à proximité de vos contacts."
+    "description": "Permettez à vos clients de trouver facilement les établissements de votre entreprise près de chez eux.",
+    "tabs": {
+      "locations": "Emplacements",
+      "categories": "Catégories"
+    },
+    "categories": {
+      "columns": {
+        "locations": "Emplacements"
+      },
+      "add": "Ajouter une catégorie",
+      "edit": "Modifier la catégorie",
+      "empty": "Aucune catégorie pour le moment.",
+      "created": "Catégorie ajoutée",
+      "updated": "Catégorie mise à jour",
+      "deleted": "Catégorie supprimée",
+      "saveError": "Impossible d'enregistrer la catégorie",
+      "deleteError": "Impossible de supprimer la catégorie",
+      "deleteTitle": "Supprimer {name} ?",
+      "deleteDescription": "{count, plural, =0 {Aucun emplacement n’utilise cette catégorie.} one {# emplacement deviendra sans catégorie.} other {# emplacements deviendront sans catégorie.}}"
+    },
+    "locations": {
+      "columns": {
+        "coordinates": "Coordonnées"
+      },
+      "preview": "Aperçu",
+      "add": "Ajouter un lieu",
+      "edit": "Modifier le lieu",
+      "empty": "Aucun lieu pour le moment.",
+      "created": "Lieu ajouté",
+      "updated": "Lieu mis à jour",
+      "deleted": "Lieu supprimé",
+      "saveError": "Impossible d'enregistrer le lieu",
+      "deleteError": "Impossible de supprimer le lieu",
+      "deleteTitle": "Supprimer {name} ?",
+      "deleteDescription": "Ce lieu sera supprimé définitivement.",
+      "noCategory": "Aucune catégorie",
+      "latitude": "Latitude",
+      "longitude": "Longitude"
+    }
   },
   "questionnaires": {
     "title": "Questionnaires",

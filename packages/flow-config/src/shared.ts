@@ -29,6 +29,7 @@ import { evaluateDecisionStepSchema } from "./steps/evaluate-decision"
 import { executeJavascriptStepSchema } from "./steps/execute-javascript"
 import { externalRequestStepSchema } from "./steps/external-request"
 import { facebookCustomAudienceSchema } from "./steps/facebook-custom-audience"
+import { findPlacesNearMeStepSchema } from "./steps/find-places-near-me"
 import { followConversationStepSchema } from "./steps/follow-conversation"
 import { formatDateStepSchema } from "./steps/format-date"
 import { generateCodeStepSchema } from "./steps/generate-code"
@@ -169,6 +170,8 @@ const messengerSteps = [
 
 const googleAdsSteps = [sendGoogleAdsConversionSchema]
 
+const moreOptionsSteps = [findPlacesNearMeStepSchema]
+
 const googleSheetStep = [
   spreadsheetGetRowSchema,
   spreadsheetClearRowSchema,
@@ -190,4 +193,5 @@ export const actionSteps = [
   ...messengerSteps,
   ...googleAdsSteps,
   ...triggerSteps,
+  ...moreOptionsSteps,
 ]

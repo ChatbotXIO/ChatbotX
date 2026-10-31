@@ -3,8 +3,10 @@ import {
   asc,
   type DatabaseClient,
   db,
+  desc,
   eq,
   inArray,
+  or,
   sql,
 } from "../../client"
 import {
@@ -51,6 +53,65 @@ export const contactCustomFieldRepository = {
           eq(customFieldModel.workspaceId, input.workspaceId),
           inArray(contactCustomFieldModel.customFieldId, input.customFieldIds),
         ),
+      )
+  },
+  /**
+   * A contact's values for the fields matching any of `ids` or `names`,
+   * newest write first. Scoped through both ownership boundaries.
+   */
+  async listValuesByFieldKeys(
+    input: {
+      workspaceId: string
+      contactId: string
+      ids: string[]
+      names: string[]
+    },
+    tx: DatabaseClient = db,
+  ): Promise<
+    Array<{
+      customFieldId: string
+      name: string
+      value: string
+      updatedAt: Date
+    }>
+  > {
+    if (input.ids.length === 0 && input.names.length === 0) {
+      return []
+    }
+    return await tx
+      .select({
+        customFieldId: customFieldModel.id,
+        name: customFieldModel.name,
+        value: contactCustomFieldModel.value,
+        updatedAt: contactCustomFieldModel.updatedAt,
+      })
+      .from(contactCustomFieldModel)
+      .innerJoin(
+        customFieldModel,
+        eq(contactCustomFieldModel.customFieldId, customFieldModel.id),
+      )
+      .innerJoin(
+        contactModel,
+        eq(contactCustomFieldModel.contactId, contactModel.id),
+      )
+      .where(
+        and(
+          eq(contactCustomFieldModel.contactId, input.contactId),
+          eq(contactModel.workspaceId, input.workspaceId),
+          eq(customFieldModel.workspaceId, input.workspaceId),
+          or(
+            input.ids.length > 0
+              ? inArray(customFieldModel.id, input.ids)
+              : undefined,
+            input.names.length > 0
+              ? inArray(customFieldModel.name, input.names)
+              : undefined,
+          ),
+        ),
+      )
+      .orderBy(
+        desc(contactCustomFieldModel.updatedAt),
+        desc(contactCustomFieldModel.id),
       )
   },
   listWithDefinitionByContact(

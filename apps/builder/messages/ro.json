@@ -173,7 +173,9 @@
       "sendViewCatalog": "Vezi catalogul",
       "sendProducts": "Trimite produse",
       "sendCollection": "Colecție",
-      "pipeline": "Pipeline-uri"
+      "pipeline": "Pipeline-uri",
+      "moreOptions": "Mai multe opțiuni",
+      "findPlacesNearMe": "Găsește locuri în apropiere"
     },
     "externalRequest": {
       "errors": {
@@ -442,6 +444,12 @@
       "comment": "Comentariu",
       "destinationPipeline": "Pipeline de destinație",
       "destinationStage": "Etapă de destinație"
+    },
+    "findPlacesNearMe": {
+      "category": "Categoria locației",
+      "allLocations": "Toate locațiile",
+      "whatsappOnly": "Trimis doar contactelor WhatsApp.",
+      "noLocationSource": "Locația trebuie colectată în acest flux: adaugă înainte de această acțiune un pas Obține datele utilizatorului cu formatul de răspuns Locație. O locație salvată de alt flux nu este folosită. Fără el, această acțiune este omisă."
     }
   },
   "folders": {
@@ -3871,7 +3879,8 @@
       "settings": "Setări",
       "miniApps": "Mini Apps",
       "leaderboards": "Clasamente",
-      "pipelines": "Canale de vânzări"
+      "pipelines": "Canale de vânzări",
+      "places": "Locuri"
     },
     "adReferral": {
       "label": "Ads",
@@ -6022,7 +6031,45 @@
   },
   "placesNearMe": {
     "title": "Locuri din apropiere",
-    "description": "Găsește locuri lângă contactele tale."
+    "description": "Permite clienților tăi să găsească ușor locațiile afacerii tale din apropierea lor.",
+    "tabs": {
+      "locations": "Locații",
+      "categories": "Categorii"
+    },
+    "categories": {
+      "columns": {
+        "locations": "Locații"
+      },
+      "add": "Adaugă categorie",
+      "edit": "Editează categoria",
+      "empty": "Încă nu există categorii.",
+      "created": "Categorie adăugată",
+      "updated": "Categorie actualizată",
+      "deleted": "Categorie ștearsă",
+      "saveError": "Categoria nu a putut fi salvată",
+      "deleteError": "Categoria nu a putut fi ștearsă",
+      "deleteTitle": "Ștergi {name}?",
+      "deleteDescription": "{count, plural, =0 {Nicio locație nu folosește această categorie.} one {# locație va rămâne fără categorie.} other {# locații vor rămâne fără categorie.}}"
+    },
+    "locations": {
+      "columns": {
+        "coordinates": "Coordonate"
+      },
+      "preview": "Previzualizare",
+      "add": "Adaugă locație",
+      "edit": "Editează locația",
+      "empty": "Încă nu există locații.",
+      "created": "Locație adăugată",
+      "updated": "Locație actualizată",
+      "deleted": "Locație ștearsă",
+      "saveError": "Locația nu a putut fi salvată",
+      "deleteError": "Locația nu a putut fi ștearsă",
+      "deleteTitle": "Ștergi {name}?",
+      "deleteDescription": "Această locație va fi ștearsă definitiv.",
+      "noCategory": "Fără categorie",
+      "latitude": "Latitudine",
+      "longitude": "Longitudine"
+    }
   },
   "questionnaires": {
     "title": "Chestionare",

@@ -2804,6 +2804,56 @@ exports[`public API spec — operation naming guard > operation list (operationI
   },
   {
     "method": "POST",
+    "operationId": "placeCategories.create",
+    "path": "/v1/place-categories",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "placeCategories.delete",
+    "path": "/v1/place-categories/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "placeCategories.get",
+    "path": "/v1/place-categories/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "placeCategories.list",
+    "path": "/v1/place-categories",
+  },
+  {
+    "method": "PATCH",
+    "operationId": "placeCategories.update",
+    "path": "/v1/place-categories/{id}",
+  },
+  {
+    "method": "POST",
+    "operationId": "placeLocations.create",
+    "path": "/v1/place-locations",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "placeLocations.delete",
+    "path": "/v1/place-locations/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "placeLocations.get",
+    "path": "/v1/place-locations/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "placeLocations.list",
+    "path": "/v1/place-locations",
+  },
+  {
+    "method": "PATCH",
+    "operationId": "placeLocations.update",
+    "path": "/v1/place-locations/{id}",
+  },
+  {
+    "method": "POST",
     "operationId": "productCategories.create",
     "path": "/v1/product-categories",
   },

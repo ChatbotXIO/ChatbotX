@@ -2553,7 +2553,8 @@
       "settings": "Einstellungen",
       "miniApps": "Mini Apps",
       "leaderboards": "Bestenlisten",
-      "pipelines": "Pipelines"
+      "pipelines": "Pipelines",
+      "places": "Orte"
     },
     "adReferral": {
       "label": "Ads",
@@ -2829,7 +2830,9 @@
       "sendViewCatalog": "Katalog ansehen",
       "sendProducts": "Produkte senden",
       "sendCollection": "Kollektion",
-      "pipeline": "Pipelines"
+      "pipeline": "Pipelines",
+      "moreOptions": "Weitere Optionen",
+      "findPlacesNearMe": "Orte in meiner Nähe finden"
     },
     "externalRequest": {
       "errors": {
@@ -3098,6 +3101,12 @@
       "comment": "Kommentar",
       "destinationPipeline": "Ziel-Pipeline",
       "destinationStage": "Zielphase"
+    },
+    "findPlacesNearMe": {
+      "category": "Standortkategorie",
+      "allLocations": "Alle Standorte",
+      "whatsappOnly": "Wird nur an WhatsApp-Kontakte gesendet.",
+      "noLocationSource": "Der Standort muss in diesem Flow erfasst werden: Füge vor dieser Aktion einen Schritt „Benutzerdaten abrufen“ mit dem Antwortformat Standort hinzu. Ein von einem anderen Flow gespeicherter Standort wird nicht verwendet. Ohne ihn wird diese Aktion übersprungen."
     }
   },
   "folders": {
@@ -6022,7 +6031,45 @@
   },
   "placesNearMe": {
     "title": "Orte in der Nähe",
-    "description": "Finden Sie Orte in der Nähe Ihrer Kontakte."
+    "description": "Ermöglichen Sie Ihren Kunden, Ihre Geschäftsstandorte in ihrer Nähe einfach zu finden.",
+    "tabs": {
+      "locations": "Standorte",
+      "categories": "Kategorien"
+    },
+    "categories": {
+      "columns": {
+        "locations": "Standorte"
+      },
+      "add": "Kategorie hinzufügen",
+      "edit": "Kategorie bearbeiten",
+      "empty": "Noch keine Kategorien.",
+      "created": "Kategorie hinzugefügt",
+      "updated": "Kategorie aktualisiert",
+      "deleted": "Kategorie gelöscht",
+      "saveError": "Kategorie konnte nicht gespeichert werden",
+      "deleteError": "Kategorie konnte nicht gelöscht werden",
+      "deleteTitle": "{name} löschen?",
+      "deleteDescription": "{count, plural, =0 {Keine Standorte verwenden diese Kategorie.} one {# Standort wird unkategorisiert.} other {# Standorte werden unkategorisiert.}}"
+    },
+    "locations": {
+      "columns": {
+        "coordinates": "Koordinaten"
+      },
+      "preview": "Vorschau",
+      "add": "Standort hinzufügen",
+      "edit": "Standort bearbeiten",
+      "empty": "Noch keine Standorte.",
+      "created": "Standort hinzugefügt",
+      "updated": "Standort aktualisiert",
+      "deleted": "Standort gelöscht",
+      "saveError": "Standort konnte nicht gespeichert werden",
+      "deleteError": "Standort konnte nicht gelöscht werden",
+      "deleteTitle": "{name} löschen?",
+      "deleteDescription": "Dieser Standort wird dauerhaft gelöscht.",
+      "noCategory": "Keine Kategorie",
+      "latitude": "Breitengrad",
+      "longitude": "Längengrad"
+    }
   },
   "questionnaires": {
     "title": "Fragebögen",

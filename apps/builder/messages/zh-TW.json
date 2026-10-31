@@ -1519,7 +1519,8 @@
       "settings": "設定",
       "miniApps": "迷你應用程式",
       "leaderboards": "排行榜",
-      "pipelines": "管道"
+      "pipelines": "管道",
+      "places": "地點"
     },
     "adReferral": {
       "label": "Ads",
@@ -3233,7 +3234,9 @@
       "sendViewCatalog": "查看商品目錄",
       "sendProducts": "傳送商品",
       "sendCollection": "商品集合",
-      "pipeline": "管道"
+      "pipeline": "管道",
+      "moreOptions": "更多選項",
+      "findPlacesNearMe": "尋找我附近的地點"
     },
     "externalRequest": {
       "errors": {
@@ -3502,6 +3505,12 @@
       "comment": "留言",
       "destinationPipeline": "目標管道",
       "destinationStage": "目標階段"
+    },
+    "findPlacesNearMe": {
+      "category": "地點類別",
+      "allLocations": "所有地點",
+      "whatsappOnly": "僅傳送給 WhatsApp 聯絡人。",
+      "noLocationSource": "位置必須在此流程中收集：請在此動作之前新增一個回覆格式為「位置」的取得使用者資料步驟。其他流程儲存的位置不會被使用。否則將略過此動作。"
     }
   },
   "folders": {
@@ -6068,7 +6077,45 @@
   },
   "placesNearMe": {
     "title": "我附近的地方",
-    "description": "尋找您的聯絡人附近的地點。"
+    "description": "讓您的客戶輕鬆找到離他們最近的營業地點。",
+    "tabs": {
+      "locations": "地點",
+      "categories": "分類"
+    },
+    "categories": {
+      "columns": {
+        "locations": "地點"
+      },
+      "add": "新增分類",
+      "edit": "編輯分類",
+      "empty": "尚無分類。",
+      "created": "分類已新增",
+      "updated": "分類已更新",
+      "deleted": "分類已刪除",
+      "saveError": "無法儲存分類",
+      "deleteError": "無法刪除分類",
+      "deleteTitle": "刪除 {name}?",
+      "deleteDescription": "{count, plural, =0 {沒有地點使用此分類。} one {# 個地點將變為未分類。} other {# 個地點將變為未分類。}}"
+    },
+    "locations": {
+      "columns": {
+        "coordinates": "座標"
+      },
+      "preview": "預覽",
+      "add": "新增地點",
+      "edit": "編輯地點",
+      "empty": "尚無地點。",
+      "created": "地點已新增",
+      "updated": "地點已更新",
+      "deleted": "地點已刪除",
+      "saveError": "無法儲存地點",
+      "deleteError": "無法刪除地點",
+      "deleteTitle": "刪除 {name}？",
+      "deleteDescription": "此地點將永久刪除。",
+      "noCategory": "無分類",
+      "latitude": "緯度",
+      "longitude": "經度"
+    }
   },
   "questionnaires": {
     "title": "問卷",

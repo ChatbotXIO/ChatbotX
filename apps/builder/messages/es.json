@@ -2709,7 +2709,8 @@
       "settings": "Ajustes",
       "miniApps": "Mini Apps",
       "leaderboards": "Clasificaciones",
-      "pipelines": "Canalizaciones"
+      "pipelines": "Canalizaciones",
+      "places": "Lugares"
     },
     "adReferral": {
       "label": "Ads",
@@ -2985,7 +2986,9 @@
       "sendViewCatalog": "Ver catálogo",
       "sendProducts": "Enviar productos",
       "sendCollection": "Colección",
-      "pipeline": "Pipelines"
+      "pipeline": "Pipelines",
+      "moreOptions": "Más opciones",
+      "findPlacesNearMe": "Buscar lugares cerca de mí"
     },
     "externalRequest": {
       "errors": {
@@ -3254,6 +3257,12 @@
       "comment": "Comentario",
       "destinationPipeline": "Pipeline de destino",
       "destinationStage": "Etapa de destino"
+    },
+    "findPlacesNearMe": {
+      "category": "Categoría de ubicación",
+      "allLocations": "Todas las ubicaciones",
+      "whatsappOnly": "Solo se envía a contactos de WhatsApp.",
+      "noLocationSource": "La ubicación debe recopilarse en este flujo: agrega un paso Obtener datos del usuario con formato de respuesta Ubicación antes de esta acción. No se usa una ubicación guardada por otro flujo. Sin él, esta acción se omite."
     }
   },
   "folders": {
@@ -6022,7 +6031,45 @@
   },
   "placesNearMe": {
     "title": "Lugares cercanos",
-    "description": "Find places near tu contactoos."
+    "description": "Permite que tus clientes encuentren fácilmente las ubicaciones de tu negocio cercanas a ellos.",
+    "tabs": {
+      "locations": "Ubicaciones",
+      "categories": "Categorías"
+    },
+    "categories": {
+      "columns": {
+        "locations": "Ubicaciones"
+      },
+      "add": "Añadir categoría",
+      "edit": "Editar categoría",
+      "empty": "Aún no hay categorías.",
+      "created": "Categoría añadida",
+      "updated": "Categoría actualizada",
+      "deleted": "Categoría eliminada",
+      "saveError": "No se pudo guardar la categoría",
+      "deleteError": "No se pudo eliminar la categoría",
+      "deleteTitle": "¿Eliminar {name}?",
+      "deleteDescription": "{count, plural, =0 {Ninguna ubicación usa esta categoría.} one {# ubicación quedará sin categoría.} other {# ubicaciones quedarán sin categoría.}}"
+    },
+    "locations": {
+      "columns": {
+        "coordinates": "Coordenadas"
+      },
+      "preview": "Vista previa",
+      "add": "Añadir ubicación",
+      "edit": "Editar ubicación",
+      "empty": "Aún no hay ubicaciones.",
+      "created": "Ubicación añadida",
+      "updated": "Ubicación actualizada",
+      "deleted": "Ubicación eliminada",
+      "saveError": "No se pudo guardar la ubicación",
+      "deleteError": "No se pudo eliminar la ubicación",
+      "deleteTitle": "¿Eliminar {name}?",
+      "deleteDescription": "Esta ubicación se eliminará de forma permanente.",
+      "noCategory": "Sin categoría",
+      "latitude": "Latitud",
+      "longitude": "Longitud"
+    }
   },
   "questionnaires": {
     "title": "Cuestionarios",

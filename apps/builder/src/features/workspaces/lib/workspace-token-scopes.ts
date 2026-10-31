@@ -27,6 +27,7 @@ export const workspaceApiTokenScopeRegistry: Record<
   "mini-apps": { labelKey: "fields.tokenScopes.miniApps", order: 13 },
   leaderboards: { labelKey: "fields.tokenScopes.leaderboards", order: 14 },
   pipelines: { labelKey: "fields.tokenScopes.pipelines", order: 15 },
+  places: { labelKey: "fields.tokenScopes.places", order: 16 },
 }
 
 export const orderedWorkspaceApiTokenScopes = (

@@ -244,6 +244,9 @@ export const STEP_PRODUCES_MESSAGE: Record<StepType, boolean> = {
   disableMessengerComposer: false,
   setMessengerPersona: false,
   updateMessengerContactData: false,
+
+  // More options — sends a whatsappLocation without the comment anchor.
+  findPlacesNearMe: false,
 }
 
 /**

@@ -59,6 +59,9 @@ export const REFERENCE_FIELD_ENTITY_KIND: Record<string, string> = {
   stageId: "pipelineStage",
   destinationStageId: "pipelineStage",
   pipelineFieldId: "pipelineField",
+  // Find places near me step (steps/find-places-near-me.ts). Warned about
+  // only: an unresolved category makes the action skip at runtime.
+  placeCategoryId: "placeCategory",
 }
 
 // `flowId` shows up both as a cross-flow jump target (steps/start-external-flow.ts,

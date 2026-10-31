@@ -1112,6 +1112,31 @@ export const possibleErrorsOnMutatingProductVendor = {
   ...productVendorErrors,
 } satisfies ErrorMap
 
+/**
+ * Place category create/update enforce unique names per workspace
+ * (`placeCategoryService` in packages/business/src/place-near-me).
+ */
+const placeCategoryErrors = {
+  placeCategoryDuplicated: {
+    message: "A place category with this name already exists",
+    status: 409,
+  },
+  placeCategoryNameRequired: {
+    message: "Place category name is required",
+    status: 400,
+  },
+} satisfies ErrorMap
+
+export const possibleErrorsOnCreatingPlaceCategory = {
+  ...possibleErrorsOnCreatingResource,
+  ...placeCategoryErrors,
+} satisfies ErrorMap
+
+export const possibleErrorsOnMutatingPlaceCategory = {
+  ...possibleErrorsOnMutatingResource,
+  ...placeCategoryErrors,
+} satisfies ErrorMap
+
 /** `ecommerceSettingsService.update` refuses a Pro setting the plan lacks. */
 export const possibleErrorsOnUpdatingEcommerceSettings = {
   ...possibleErrorsOnMutatingResource,

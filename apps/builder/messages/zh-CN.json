@@ -3699,7 +3699,8 @@
       "settings": "设置",
       "miniApps": "迷你应用",
       "leaderboards": "排行榜",
-      "pipelines": "管道"
+      "pipelines": "管道",
+      "places": "地点"
     },
     "adReferral": {
       "label": "Ads",
@@ -3940,7 +3941,9 @@
       "sendViewCatalog": "查看商品目录",
       "sendProducts": "发送商品",
       "sendCollection": "商品集合",
-      "pipeline": "管道"
+      "pipeline": "管道",
+      "moreOptions": "更多选项",
+      "findPlacesNearMe": "查找我附近的地点"
     },
     "externalRequest": {
       "errors": {
@@ -4257,6 +4260,12 @@
       "comment": "评论",
       "destinationPipeline": "目标管道",
       "destinationStage": "目标阶段"
+    },
+    "findPlacesNearMe": {
+      "category": "地点类别",
+      "allLocations": "所有地点",
+      "whatsappOnly": "仅发送给 WhatsApp 联系人。",
+      "noLocationSource": "位置必须在此流程中收集：请在此操作之前添加一个回复格式为“位置”的获取用户数据步骤。其他流程保存的位置不会被使用。否则将跳过此操作。"
     }
   },
   "folders": {
@@ -5887,8 +5896,46 @@
     "paymentExpiredCancelReason": "未在规定时间内收到付款。"
   },
   "placesNearMe": {
-    "description": "寻找您的联系人附近的地点。",
-    "title": "我附近的地方"
+    "description": "让您的客户轻松找到离他们最近的营业地点。",
+    "title": "我附近的地方",
+    "tabs": {
+      "locations": "地点",
+      "categories": "分类"
+    },
+    "categories": {
+      "columns": {
+        "locations": "地点"
+      },
+      "add": "添加分类",
+      "edit": "编辑分类",
+      "empty": "暂无分类。",
+      "created": "分类已添加",
+      "updated": "分类已更新",
+      "deleted": "分类已删除",
+      "saveError": "无法保存分类",
+      "deleteError": "无法删除分类",
+      "deleteTitle": "删除 {name}?",
+      "deleteDescription": "{count, plural, =0 {没有地点使用此分类。} one {# 个地点将变为未分类。} other {# 个地点将变为未分类。}}"
+    },
+    "locations": {
+      "columns": {
+        "coordinates": "坐标"
+      },
+      "preview": "预览",
+      "add": "添加地点",
+      "edit": "编辑地点",
+      "empty": "暂无地点。",
+      "created": "地点已添加",
+      "updated": "地点已更新",
+      "deleted": "地点已删除",
+      "saveError": "无法保存地点",
+      "deleteError": "无法删除地点",
+      "deleteTitle": "删除 {name}？",
+      "deleteDescription": "此地点将被永久删除。",
+      "noCategory": "无分类",
+      "latitude": "纬度",
+      "longitude": "经度"
+    }
   },
   "platformAdmin": {
     "helpItems": {

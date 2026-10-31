@@ -287,13 +287,14 @@ function expectNoLastInputFailureUpdate() {
   expect(callsWithLastInputFailure).toHaveLength(0)
 }
 
-function expectCustomFieldWrite(value: string) {
+function expectCustomFieldWrite(value: string, touchUnchanged = false) {
   expect(contactCustomFieldSetValueByKey).toHaveBeenCalledWith({
     workspaceId: "ws-1",
     contactId: "contact-1",
     keyword: "field-1",
     value,
     allowBotFields: true,
+    touchUnchanged,
   })
 }
 
@@ -571,7 +572,7 @@ describe("getUserData — validation logic", () => {
       const result = await getUserData(makeProps(ReplyFormat.location))
 
       expect(result.status).toBe("success")
-      expectCustomFieldWrite("10.5,106.75")
+      expectCustomFieldWrite("10.5,106.75", true)
     })
 
     test("typed coordinate pair → returns success", async () => {
@@ -582,7 +583,7 @@ describe("getUserData — validation logic", () => {
       const result = await getUserData(makeProps(ReplyFormat.location))
 
       expect(result.status).toBe("success")
-      expectCustomFieldWrite("10.5,106.75")
+      expectCustomFieldWrite("10.5,106.75", true)
     })
 
     test("plain text without coordinates → returns retry", async () => {

@@ -84,6 +84,10 @@ import { ordersPublicRouter } from "@/features/orders/api/public"
 import { paymentProvidersPublicRouter } from "@/features/payment-providers/api/public"
 import { messengerPersonasPublicRouter } from "@/features/personas/api/public"
 import { pipelinesPublicRouter } from "@/features/pipelines/api/public"
+import {
+  placeCategoriesPublicRouter,
+  placeLocationsPublicRouter,
+} from "@/features/places-near-me/api/public"
 import { productCategoriesPublicRouter } from "@/features/product-categories/api/public"
 import { productVendorsPublicRouter } from "@/features/product-vendors/api/public"
 import { productsPublicRouter } from "@/features/products/api/public"
@@ -182,6 +186,8 @@ export const publicRouter = {
   openHours: openHoursPublicRouter,
   orders: ordersPublicRouter,
   paymentProviders: paymentProvidersPublicRouter,
+  placeCategories: placeCategoriesPublicRouter,
+  placeLocations: placeLocationsPublicRouter,
   productCategories: productCategoriesPublicRouter,
   products: productsPublicRouter,
   productVendors: productVendorsPublicRouter,

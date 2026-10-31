@@ -53,7 +53,13 @@ vi.mock("@chatbotx.io/database/client", () => {
     transaction: (cb: (tx: unknown) => unknown) => cb(dbMock),
   }
 
-  return { db: dbMock, and: vi.fn(), eq: vi.fn(), inArray: vi.fn() }
+  return {
+    db: dbMock,
+    and: vi.fn(),
+    eq: vi.fn(),
+    inArray: vi.fn(),
+    sql: (strings: TemplateStringsArray) => ({ sql: strings.join("") }),
+  }
 })
 
 vi.mock("@chatbotx.io/events", () => ({
@@ -236,6 +242,34 @@ describe("contactCustomFieldService.setValues — write/emit contract", () => {
 
     expect(mocks.insertValues).not.toHaveBeenCalled()
     expect(mocks.updateSet).not.toHaveBeenCalled()
+    expect(mocks.emitCustomFieldChanged).not.toHaveBeenCalled()
+  })
+
+  test("touchUnchanged refreshes updatedAt on an unchanged value without emitting", async () => {
+    mocks.customFieldFindMany.mockResolvedValue([
+      { id: "cf-loc", name: "last_location", type: "shortText" },
+    ])
+    mocks.contactCustomFieldFindMany.mockResolvedValue([
+      {
+        id: "v1",
+        contactId: "contact-1",
+        customFieldId: "cf-loc",
+        value: "10.77,106.70",
+      },
+    ])
+
+    await contactCustomFieldService.setValues({
+      workspaceId: "ws-1",
+      contactId: "contact-1",
+      fields: [{ customFieldId: "cf-loc", value: "10.77,106.70" }],
+      touchUnchanged: true,
+    })
+
+    expect(mocks.updateSet).toHaveBeenCalledOnce()
+    expect(mocks.updateSet).toHaveBeenCalledWith({
+      updatedAt: { sql: "CURRENT_TIMESTAMP" },
+    })
+    expect(mocks.insertValues).not.toHaveBeenCalled()
     expect(mocks.emitCustomFieldChanged).not.toHaveBeenCalled()
   })
 
@@ -435,6 +469,50 @@ describe("contactCustomFieldService.setValueByKey — temporal forwarding", () =
     )
     expect(mocks.contactFindFirst).not.toHaveBeenCalled()
     expect(mocks.workspaceFindFirst).not.toHaveBeenCalled()
+  })
+})
+
+describe("contactCustomFieldService.setValueByKey — touchUnchanged forwarding", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mocks.customFieldFindFirst.mockResolvedValue({ id: "cf-loc" })
+    mocks.customFieldFindMany.mockResolvedValue([
+      { id: "cf-loc", name: "last_location", type: "shortText" },
+    ])
+    mocks.contactCustomFieldFindMany.mockResolvedValue([
+      {
+        id: "v1",
+        contactId: "contact-1",
+        customFieldId: "cf-loc",
+        value: "10.77,106.70",
+      },
+    ])
+  })
+
+  test("touches the unchanged row when touchUnchanged is set", async () => {
+    await contactCustomFieldService.setValueByKey({
+      workspaceId: "ws-1",
+      contactId: "contact-1",
+      keyword: "cf-loc",
+      value: "10.77,106.70",
+      touchUnchanged: true,
+    })
+
+    expect(mocks.updateSet).toHaveBeenCalledWith({
+      updatedAt: { sql: "CURRENT_TIMESTAMP" },
+    })
+    expect(mocks.emitCustomFieldChanged).not.toHaveBeenCalled()
+  })
+
+  test("leaves the unchanged row alone by default", async () => {
+    await contactCustomFieldService.setValueByKey({
+      workspaceId: "ws-1",
+      contactId: "contact-1",
+      keyword: "cf-loc",
+      value: "10.77,106.70",
+    })
+
+    expect(mocks.updateSet).not.toHaveBeenCalled()
   })
 })
 
