@@ -12,6 +12,7 @@ import { useDataTable } from "@chatbotx.io/ui/hooks/use-data-table"
 import type { DataTableRowAction } from "@chatbotx.io/ui/types/data-table"
 import { useTranslations } from "next-intl"
 import { use, useMemo, useState } from "react"
+import { LockedIdsProvider } from "@/features/templates/components/lock-badge"
 import type { listAppointmentCalendars } from "../queries"
 import type { AppointmentCalendarListItem } from "../schema/resource"
 import { getAppointmentCalendarColumns } from "./appointment-calendars-table-columns"
@@ -55,32 +56,38 @@ export function AppointmentCalendarsTable({ workspaceId, promises }: Props) {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <DataTable table={table}>
-          <DataTableToolbar table={table}>
-            <AppointmentCalendarsTableToolbarActions
-              table={table}
-              workspaceId={workspaceId}
-            />
-          </DataTableToolbar>
-        </DataTable>
-        <RenameAppointmentCalendarDialog
-          calendar={rowAction?.row.original ?? null}
-          onOpenChange={() => setRowAction(null)}
-          open={rowAction?.variant === "rename"}
+        <LockedIdsProvider
+          resourceIds={data.map((row) => row.id)}
+          resourceKind="calendar"
           workspaceId={workspaceId}
-        />
-        <DuplicateAppointmentCalendarDialog
-          calendar={rowAction?.row.original ?? null}
-          onOpenChange={() => setRowAction(null)}
-          open={rowAction?.variant === "duplicate"}
-          workspaceId={workspaceId}
-        />
-        <DeleteAppointmentCalendarsDialog
-          calendars={rowAction?.row.original ? [rowAction.row.original] : []}
-          onOpenChange={() => setRowAction(null)}
-          open={rowAction?.variant === "delete"}
-          workspaceId={workspaceId}
-        />
+        >
+          <DataTable table={table}>
+            <DataTableToolbar table={table}>
+              <AppointmentCalendarsTableToolbarActions
+                table={table}
+                workspaceId={workspaceId}
+              />
+            </DataTableToolbar>
+          </DataTable>
+          <RenameAppointmentCalendarDialog
+            calendar={rowAction?.row.original ?? null}
+            onOpenChange={() => setRowAction(null)}
+            open={rowAction?.variant === "rename"}
+            workspaceId={workspaceId}
+          />
+          <DuplicateAppointmentCalendarDialog
+            calendar={rowAction?.row.original ?? null}
+            onOpenChange={() => setRowAction(null)}
+            open={rowAction?.variant === "duplicate"}
+            workspaceId={workspaceId}
+          />
+          <DeleteAppointmentCalendarsDialog
+            calendars={rowAction?.row.original ? [rowAction.row.original] : []}
+            onOpenChange={() => setRowAction(null)}
+            open={rowAction?.variant === "delete"}
+            workspaceId={workspaceId}
+          />
+        </LockedIdsProvider>
       </CardContent>
     </Card>
   )

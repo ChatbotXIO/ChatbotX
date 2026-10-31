@@ -1,4 +1,8 @@
-import { templateService, workspaceMemberService } from "@chatbotx.io/business"
+import {
+  templateInstallationRequestService,
+  templateService,
+  workspaceMemberService,
+} from "@chatbotx.io/business"
 import { AspectRatio } from "@chatbotx.io/ui/components/ui/aspect-ratio"
 import { Badge } from "@chatbotx.io/ui/components/ui/badge"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
@@ -16,7 +20,6 @@ import { cache } from "react"
 import { PublicMessage } from "@/components/public-message"
 import { WorkspacePicker } from "@/features/templates/components/workspace-picker"
 import { getTenantSettings } from "@/features/tenant/utils"
-import { hasWorkspacePermission } from "@/lib/auth/permission-routes"
 import { getCurrentUser } from "@/lib/auth/utils"
 
 // Publisher-supplied free text. YouTube IDs are always 11 chars from this
@@ -173,11 +176,7 @@ export default async function PublicTemplatePage(
 
         <CardFooter className="flex flex-col items-stretch gap-3 bg-muted/40 py-6">
           {user ? (
-            <InstallSection
-              shareToken={shareToken}
-              tenantId={template.tenantId}
-              userId={user.id}
-            />
+            <InstallSection shareToken={shareToken} userId={user.id} />
           ) : (
             <SignInPrompt
               label={t("signInToInstall")}
@@ -192,27 +191,30 @@ export default async function PublicTemplatePage(
 
 async function InstallSection({
   shareToken,
-  tenantId,
   userId,
 }: {
   shareToken: string
-  tenantId: string
   userId: string
 }) {
   const t = await getTranslations("templatesPublicPage")
-  const members = await workspaceMemberService.listByUserId({ userId })
+  // The member list and the template's inbox manifest do not depend on each other.
+  const [members, requiredInboxes] = await Promise.all([
+    workspaceMemberService.listByUserId({ userId }),
+    templateInstallationRequestService.findInboxManifestByShareToken(
+      shareToken,
+    ),
+  ])
 
-  // The tenant filter here is UI convenience only — `installTemplateAction`
-  // re-checks both membership (via `workspaceActionClient`) and the
-  // same-tenant gate (via `templateService.assertInstallable`) server-side,
+  // The tenant and category filter here is UI convenience only —
+  // `installTemplateAction` re-checks both membership (via
+  // `workspaceActionClient`) and the same-tenant gate and per-category
+  // permissions (via `templateService.assertInstallable`) server-side,
   // so a forged workspace id in a direct action call still fails.
-  const installableWorkspaces = members
-    .filter(
-      (member) =>
-        member.workspace.tenantId === tenantId &&
-        hasWorkspacePermission(member.permissions, "superAdmin"),
-    )
-    .map((member) => member.workspace)
+  const installableWorkspaces =
+    await templateInstallationRequestService.filterInstallableWorkspaces({
+      shareToken,
+      members,
+    })
 
   if (installableWorkspaces.length === 0) {
     return (
@@ -222,8 +224,28 @@ async function InstallSection({
     )
   }
 
+  // Inboxes the template was built around: the installer says which of their
+  // own stand in for them. Offered per workspace, since the choice follows it.
+  const channels = [
+    ...new Set(requiredInboxes.map((inbox) => inbox.channelType)),
+  ]
+  const workspaceIds = installableWorkspaces.map((workspace) => workspace.id)
+  const [inboxOptions, installedCopies] = await Promise.all([
+    templateInstallationRequestService.listBindableInboxes({
+      workspaceIds,
+      channels,
+    }),
+    templateInstallationRequestService.listInstalledCopies({
+      shareToken,
+      workspaceIds,
+    }),
+  ])
+
   return (
     <WorkspacePicker
+      inboxOptions={inboxOptions}
+      installedCopies={installedCopies}
+      requiredInboxes={requiredInboxes}
       shareToken={shareToken}
       workspaces={installableWorkspaces}
     />

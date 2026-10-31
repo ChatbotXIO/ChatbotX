@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation"
+import { LockedEditorGuard } from "@/features/templates/components/locked-editor-guard"
 
 import { findTrigger } from "@/features/triggers/queries"
 import UpdateTriggerForm from "@/features/triggers/update-trigger-form"
@@ -22,5 +23,13 @@ export default async function UpdateTriggerPage({
     return notFound()
   }
 
-  return <UpdateTriggerForm trigger={trigger} workspaceId={workspaceId} />
+  return (
+    <LockedEditorGuard
+      resourceId={id}
+      resourceKind="trigger"
+      workspaceId={workspaceId}
+    >
+      <UpdateTriggerForm trigger={trigger} workspaceId={workspaceId} />
+    </LockedEditorGuard>
+  )
 }

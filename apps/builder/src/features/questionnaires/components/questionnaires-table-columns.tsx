@@ -26,6 +26,7 @@ import {
 import Link from "next/link"
 import type { useTranslations } from "next-intl"
 import type { Dispatch, SetStateAction } from "react"
+import { LockBadge } from "@/features/templates/components/lock-badge"
 import type { QuestionnaireListItem } from "../schema/resource"
 
 type Props = {
@@ -75,12 +76,15 @@ export function getQuestionnaireColumns({
         <Tooltip>
           <TooltipTrigger
             render={
-              <Link
-                className="inline-block max-w-[320px] truncate font-medium"
-                href={`/space/${row.original.workspaceId}/questionnaires/${row.original.id}/edit`}
-              >
-                {row.original.name}
-              </Link>
+              <span className="flex max-w-[320px] items-center font-medium">
+                <Link
+                  className="truncate"
+                  href={`/space/${row.original.workspaceId}/questionnaires/${row.original.id}/edit`}
+                >
+                  {row.original.name}
+                </Link>
+                <LockBadge resourceId={row.original.id} />
+              </span>
             }
           />
           <TooltipContent>{row.original.name}</TooltipContent>

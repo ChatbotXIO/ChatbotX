@@ -7,6 +7,7 @@ import {
   CardTitle,
 } from "@chatbotx.io/ui/components/ui/card"
 import { useFormatter, useTranslations } from "next-intl"
+import { useIsLocked } from "@/features/templates/components/lock-badge"
 import { ReindexAIFileDialog } from "./reindex-ai-file-dialog"
 
 const strategyKey = {
@@ -23,6 +24,7 @@ export function AIFileChunkingCard({
   workspaceId: string
 }) {
   const t = useTranslations()
+  const isLocked = useIsLocked(file.id)
   const format = useFormatter()
   const active =
     file.processingRun &&
@@ -34,7 +36,7 @@ export function AIFileChunkingCard({
       <CardHeader className="flex-row items-center justify-between gap-3">
         <CardTitle>{t("aiFiles.chunking.title")}</CardTitle>
         <ReindexAIFileDialog
-          disabled={Boolean(active)}
+          disabled={Boolean(active) || isLocked}
           file={file}
           workspaceId={workspaceId}
         />

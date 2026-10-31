@@ -20,6 +20,10 @@ import { useRouter, useSearchParams } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { use, useCallback, useState } from "react"
 import { AppBreadcrumb } from "@/components/app-breadcrumb"
+import {
+  LockBadge,
+  LockedIdsProvider,
+} from "@/features/templates/components/lock-badge"
 import { CreateFolderDialog } from "./create-folder-dialog"
 import { DeleteFolderDialog } from "./delete-folder-dialog"
 import { EditFolderDialog } from "./edit-folder-dialog"
@@ -89,100 +93,106 @@ const ListFolders = (props: ListFoldersProps) => {
   const rootLabel = t("folders.root")
 
   return (
-    <div className="mb-4 flex flex-col gap-3 border-b pb-4">
-      {hasFolderInUrl && (
-        <AppBreadcrumb
-          items={[
-            {
-              label: rootLabel,
-              element: (
-                <Button
-                  className={breadcrumbButtonClassName}
-                  onClick={() => setFolderId(null)}
-                  variant="ghost"
-                >
-                  {rootLabel}
-                </Button>
-              ),
-            },
-            ...parents.map((parentFolder: FolderResource) => ({
-              label: parentFolder.name,
-              element: (
-                <Button
-                  className={cn(breadcrumbButtonClassName, "max-w-40")}
-                  onClick={() => setFolderId(parentFolder.id)}
-                  title={parentFolder.name}
-                  variant="ghost"
-                >
-                  <span className="truncate">{parentFolder.name}</span>
-                </Button>
-              ),
-            })),
-            ...(folder
-              ? [
-                  {
-                    label: folder.name,
-                    element: (
-                      <span
-                        className="block max-w-48 truncate font-medium text-foreground text-sm"
-                        title={folder.name}
-                      >
-                        {folder.name}
-                      </span>
-                    ),
-                  },
-                ]
-              : []),
-          ]}
+    <LockedIdsProvider
+      resourceIds={visibleFolders.map((folderItem) => folderItem.id)}
+      resourceKind="folder"
+      workspaceId={workspaceId}
+    >
+      <div className="mb-4 flex flex-col gap-3 border-b pb-4">
+        {hasFolderInUrl && (
+          <AppBreadcrumb
+            items={[
+              {
+                label: rootLabel,
+                element: (
+                  <Button
+                    className={breadcrumbButtonClassName}
+                    onClick={() => setFolderId(null)}
+                    variant="ghost"
+                  >
+                    {rootLabel}
+                  </Button>
+                ),
+              },
+              ...parents.map((parentFolder: FolderResource) => ({
+                label: parentFolder.name,
+                element: (
+                  <Button
+                    className={cn(breadcrumbButtonClassName, "max-w-40")}
+                    onClick={() => setFolderId(parentFolder.id)}
+                    title={parentFolder.name}
+                    variant="ghost"
+                  >
+                    <span className="truncate">{parentFolder.name}</span>
+                  </Button>
+                ),
+              })),
+              ...(folder
+                ? [
+                    {
+                      label: folder.name,
+                      element: (
+                        <span
+                          className="block max-w-48 truncate font-medium text-foreground text-sm"
+                          title={folder.name}
+                        >
+                          {folder.name}
+                        </span>
+                      ),
+                    },
+                  ]
+                : []),
+            ]}
+          />
+        )}
+
+        <div className="flex flex-wrap items-center gap-2">
+          {visibleFolders.map((folderItem: FolderResource) => (
+            <FolderChip
+              folder={folderItem}
+              key={folderItem.id}
+              onDelete={onDelete}
+              onEdit={onEdit}
+              onOpen={setFolderId}
+            />
+          ))}
+
+          {hiddenCount > 0 && (
+            <Button
+              className="text-muted-foreground"
+              onClick={() => setExpanded((value) => !value)}
+              size="sm"
+              variant="ghost"
+            >
+              {expanded
+                ? t("folders.showLess")
+                : t("folders.showMore", { count: hiddenCount })}
+            </Button>
+          )}
+
+          {!isMissingFolder && (
+            <CreateFolderDialog
+              folderType={folderType}
+              workspaceId={workspaceId}
+            />
+          )}
+        </div>
+
+        <EditFolderDialog
+          folder={targetFolder}
+          onOpenChange={setOpenEditDialog}
+          open={openEditDialog}
+          workspaceId={workspaceId}
         />
-      )}
 
-      <div className="flex flex-wrap items-center gap-2">
-        {visibleFolders.map((folderItem: FolderResource) => (
-          <FolderChip
-            folder={folderItem}
-            key={folderItem.id}
-            onDelete={onDelete}
-            onEdit={onEdit}
-            onOpen={setFolderId}
-          />
-        ))}
-
-        {hiddenCount > 0 && (
-          <Button
-            className="text-muted-foreground"
-            onClick={() => setExpanded((value) => !value)}
-            size="sm"
-            variant="ghost"
-          >
-            {expanded
-              ? t("folders.showLess")
-              : t("folders.showMore", { count: hiddenCount })}
-          </Button>
-        )}
-
-        {!isMissingFolder && (
-          <CreateFolderDialog
-            folderType={folderType}
-            workspaceId={workspaceId}
-          />
-        )}
+        <DeleteFolderDialog
+          folder={targetFolder}
+          onOpenChange={setOpenDeleteDialog}
+          open={openDeleteDialog}
+          workspaceId={workspaceId}
+        />
       </div>
-
-      <EditFolderDialog
-        folder={targetFolder}
-        onOpenChange={setOpenEditDialog}
-        open={openEditDialog}
-        workspaceId={workspaceId}
-      />
-
-      <DeleteFolderDialog
-        folder={targetFolder}
-        onOpenChange={setOpenDeleteDialog}
-        open={openDeleteDialog}
-        workspaceId={workspaceId}
-      />
-    </div>
+    </LockedIdsProvider>
   )
 }
 
@@ -212,6 +222,7 @@ const FolderChip = ({ folder, onOpen, onEdit, onDelete }: FolderChipProps) => {
         <span className="min-w-0 flex-1 truncate text-start">
           {folder.name}
         </span>
+        <LockBadge resourceId={folder.id} />
       </button>
 
       {!folder.isTrash && (

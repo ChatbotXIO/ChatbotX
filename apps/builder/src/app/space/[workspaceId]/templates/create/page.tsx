@@ -1,9 +1,13 @@
+import {
+  listSelectableTemplateCategories,
+  TEMPLATE_MANAGE_PERMISSION,
+} from "@chatbotx.io/business"
 import { getIdFromParams } from "@chatbotx.io/utils"
 import { notFound } from "next/navigation"
 import { getTranslations } from "next-intl/server"
 import { AppBreadcrumb } from "@/components/app-breadcrumb"
 import { TemplateForm } from "@/features/templates/components/template-form"
-import { hasWorkspacePermission } from "@/lib/auth/permission-routes"
+import { requireWorkspacePermission } from "@/lib/auth/require-workspace-permission"
 import { getCurrentUserAndTargetWorkspace } from "@/lib/auth/utils"
 
 export default async function CreateTemplatePage({
@@ -16,16 +20,9 @@ export default async function CreateTemplatePage({
     return notFound()
   }
 
+  await requireWorkspacePermission(workspaceId, TEMPLATE_MANAGE_PERMISSION)
   const userAndWorkspace = await getCurrentUserAndTargetWorkspace(workspaceId)
-  if (
-    !(
-      userAndWorkspace &&
-      hasWorkspacePermission(
-        userAndWorkspace.targetWorkspaceMember.permissions,
-        "superAdmin",
-      )
-    )
-  ) {
+  if (!userAndWorkspace) {
     return notFound()
   }
 
@@ -43,7 +40,12 @@ export default async function CreateTemplatePage({
           { label: t("actions.create"), href: "" },
         ]}
       />
-      <TemplateForm workspaceId={workspaceId} />
+      <TemplateForm
+        selectableCategories={listSelectableTemplateCategories(
+          userAndWorkspace.targetWorkspaceMember.permissions,
+        )}
+        workspaceId={workspaceId}
+      />
     </div>
   )
 }

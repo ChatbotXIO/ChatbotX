@@ -69,6 +69,10 @@ export const templateModel = pgTable(
     createInstallFolder: boolean().default(false).notNull(),
     defaultAutoUpdate: boolean().default(false).notNull(),
     installCount: integer().default(0).notNull(),
+    // Bumped in the transaction that saves a payload whose semantic hash
+    // changed; installs follow it. `payloadHash` is that hash.
+    version: integer().default(1).notNull(),
+    payloadHash: text(),
     createdBy: bigintAsString().references(() => userModel.id, {
       onDelete: "set null",
       onUpdate: "cascade",

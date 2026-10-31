@@ -36,6 +36,10 @@ import { toast } from "sonner"
 import { DirectUploadOrInsertLink } from "@/components/direct-upload"
 import { CustomFieldSelect } from "@/features/custom-fields/custom-field-select"
 import { useFlowSelectOptions } from "@/features/flows/provider/flow-hook"
+import {
+  LockedContent,
+  useIsEditorLocked,
+} from "@/features/templates/components/lock-badge"
 import { updateQuestionnaireAction } from "../actions/update-questionnaire.action"
 import {
   noQuestionnaireTriggerFlowValue,
@@ -92,6 +96,7 @@ export function EditQuestionnaireForm({
   questionnaire: QuestionnaireForEdit
 }) {
   const t = useTranslations()
+  const isLocked = useIsEditorLocked()
   const router = useRouter()
   const flowOptions = useFlowSelectOptions()
   const triggerFlowOptions = useMemo(
@@ -219,7 +224,11 @@ export function EditQuestionnaireForm({
               {t("actions.cancel")}
             </Button>
             <Button
-              disabled={!form.formState.isValid || form.formState.isSubmitting}
+              disabled={
+                isLocked ||
+                !form.formState.isValid ||
+                form.formState.isSubmitting
+              }
               type="submit"
             >
               {form.formState.isSubmitting && (
@@ -230,344 +239,349 @@ export function EditQuestionnaireForm({
           </div>
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>{t("questionnaires.generalSettings")}</CardTitle>
-          </CardHeader>
-          <CardContent className="grid gap-4">
-            <ComboboxField
-              emptyText={t("actions.noRecordFound")}
-              label={t("questionnaires.triggerFlow")}
-              name="triggerFlowId"
-              options={triggerFlowOptions}
-              placeholder={t("actions.pleaseSelect")}
-            />
-            <SwitchField
-              label={t("questionnaires.enableScore")}
-              name="enableScore"
-              required
-            />
-            <SwitchField
-              label={t("questionnaires.enableRetryMessages")}
-              name="enableRetryMessages"
-              required
-            />
-            <SwitchField
-              label={t("questionnaires.enableCustomFieldMapping")}
-              name="enableCustomFieldMapping"
-              required
-            />
-          </CardContent>
-        </Card>
+        <LockedContent className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>{t("questionnaires.generalSettings")}</CardTitle>
+            </CardHeader>
+            <CardContent className="grid gap-4">
+              <ComboboxField
+                emptyText={t("actions.noRecordFound")}
+                label={t("questionnaires.triggerFlow")}
+                name="triggerFlowId"
+                options={triggerFlowOptions}
+                placeholder={t("actions.pleaseSelect")}
+              />
+              <SwitchField
+                label={t("questionnaires.enableScore")}
+                name="enableScore"
+                required
+              />
+              <SwitchField
+                label={t("questionnaires.enableRetryMessages")}
+                name="enableRetryMessages"
+                required
+              />
+              <SwitchField
+                label={t("questionnaires.enableCustomFieldMapping")}
+                name="enableCustomFieldMapping"
+                required
+              />
+            </CardContent>
+          </Card>
 
-        <div className="space-y-3">
-          {fields.map((field, index) => {
-            const type = questions?.[index]?.type ?? "text"
-            return (
-              <Card key={field.id}>
-                <CardHeader>
-                  <CardTitle className="text-base">
-                    {t("questionnaires.question")} {index + 1}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="flex items-start gap-4">
-                  <div className="grid min-w-0 flex-1 gap-4">
-                    <InputField
-                      label={t("questionnaires.question")}
-                      name={`questions.${index}.title`}
-                      required
-                    />
-                    <div className="space-y-2 rounded-md border bg-muted/20 p-3">
-                      <div className="space-y-1">
-                        <div className="font-medium text-sm">
-                          {t("questionnaires.questionImage")}
-                        </div>
-                        <div className="text-muted-foreground text-xs">
-                          {t("questionnaires.questionImageHint")}
-                        </div>
-                      </div>
-                      <DirectUploadOrInsertLink
-                        fileType="image"
-                        parentName={`questions.${index}.image`}
-                        uploadPath={`public/space/${workspaceId}/questionnaires/${questionnaire.id}/questions/${field.id}`}
-                        useMediaLibrary
-                      />
-                    </div>
-                    <SwitchField
-                      label={t("questionnaires.activeQuestion")}
-                      name={`questions.${index}.active`}
-                      required
-                    />
-                    <SelectField
-                      label={t("questionnaires.responseType")}
-                      name={`questions.${index}.type`}
-                      options={responseTypeOptions}
-                      required
-                      triggerValueChange={(value) => {
-                        if (!value) {
-                          return
-                        }
-                        const nextType =
-                          value as UpdateQuestionnaireRequest["questions"][number]["type"]
-                        const reset = getQuestionFieldMappingReset()
-                        form.setValue(
-                          `questions.${index}.customFieldId`,
-                          reset.customFieldId,
-                        )
-                        form.setValue(
-                          `questions.${index}.systemFieldKey`,
-                          reset.systemFieldKey,
-                        )
-                        form.setValue(
-                          `questions.${index}.retryMessage`,
-                          getQuestionnaireDefaultRetryMessage(
-                            getRetryMessageType(nextType),
-                            t,
-                          ),
-                        )
-                      }}
-                    />
-                    {type === "multipleChoice" ? (
-                      <div className="space-y-2">
-                        <div className="font-medium text-sm">
-                          {t("questionnaires.options")}
-                        </div>
-                        {(questions?.[index]?.config?.options ?? []).map(
-                          (option, optionIndex) => (
-                            <div
-                              className="flex flex-wrap items-start gap-2"
-                              key={option.id}
-                            >
-                              <InputField
-                                formItemClassName="w-full max-w-[300px]"
-                                label=""
-                                name={`questions.${index}.config.options.${optionIndex}.label`}
-                              />
-                              {enableScore ? (
-                                <InputNumberField
-                                  formItemClassName="w-[120px]"
-                                  label=""
-                                  min={0}
-                                  name={`questions.${index}.config.options.${optionIndex}.points`}
-                                />
-                              ) : null}
-                              <Button
-                                aria-label={t("actions.moveUp")}
-                                disabled={optionIndex === 0}
-                                onClick={() => {
-                                  const options = [
-                                    ...(form.getValues(
-                                      `questions.${index}.config.options`,
-                                    ) ?? []),
-                                  ]
-                                  const previousOption =
-                                    options[optionIndex - 1]
-                                  const currentOption = options[optionIndex]
-                                  if (!(previousOption && currentOption)) {
-                                    return
-                                  }
-                                  options[optionIndex - 1] = currentOption
-                                  options[optionIndex] = previousOption
-                                  form.setValue(
-                                    `questions.${index}.config.options`,
-                                    options,
-                                  )
-                                }}
-                                size="icon"
-                                type="button"
-                                variant="ghost"
-                              >
-                                <ArrowUpIcon className="size-4" />
-                              </Button>
-                              <Button
-                                aria-label={t("actions.moveDown")}
-                                disabled={
-                                  optionIndex ===
-                                  (questions?.[index]?.config?.options
-                                    ?.length ?? 0) -
-                                    1
-                                }
-                                onClick={() => {
-                                  const options = [
-                                    ...(form.getValues(
-                                      `questions.${index}.config.options`,
-                                    ) ?? []),
-                                  ]
-                                  const currentOption = options[optionIndex]
-                                  const nextOption = options[optionIndex + 1]
-                                  if (!(currentOption && nextOption)) {
-                                    return
-                                  }
-                                  options[optionIndex] = nextOption
-                                  options[optionIndex + 1] = currentOption
-                                  form.setValue(
-                                    `questions.${index}.config.options`,
-                                    options,
-                                  )
-                                }}
-                                size="icon"
-                                type="button"
-                                variant="ghost"
-                              >
-                                <ArrowDownIcon className="size-4" />
-                              </Button>
-                              <Button
-                                aria-label={t("actions.delete")}
-                                onClick={() => {
-                                  const options =
-                                    form.getValues(
-                                      `questions.${index}.config.options`,
-                                    ) ?? []
-                                  form.setValue(
-                                    `questions.${index}.config.options`,
-                                    options.filter(
-                                      (_, idx) => idx !== optionIndex,
-                                    ),
-                                  )
-                                }}
-                                type="button"
-                                variant="ghost"
-                              >
-                                <Trash2Icon className="size-4" />
-                              </Button>
-                            </div>
-                          ),
-                        )}
-                        <Button
-                          onClick={() => {
-                            const options =
-                              form.getValues(
-                                `questions.${index}.config.options`,
-                              ) ?? []
-                            form.setValue(`questions.${index}.config.options`, [
-                              ...options,
-                              {
-                                id: crypto.randomUUID(),
-                                label: "",
-                                points: 0,
-                              },
-                            ])
-                          }}
-                          type="button"
-                          variant="outline"
-                        >
-                          <PlusIcon className="size-4" />
-                          {t("actions.add")}
-                        </Button>
-                      </div>
-                    ) : null}
-                    {enableScore && type !== "multipleChoice" ? (
-                      <InputNumberField
-                        formItemClassName="max-w-[300px]"
-                        label={t("questionnaires.points")}
-                        min={0}
-                        name={`questions.${index}.point`}
-                        required
-                      />
-                    ) : null}
-                    {enableRetryMessages ? (
+          <div className="space-y-3">
+            {fields.map((field, index) => {
+              const type = questions?.[index]?.type ?? "text"
+              return (
+                <Card key={field.id}>
+                  <CardHeader>
+                    <CardTitle className="text-base">
+                      {t("questionnaires.question")} {index + 1}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="flex items-start gap-4">
+                    <div className="grid min-w-0 flex-1 gap-4">
                       <InputField
-                        label={t("questionnaires.retryMessage")}
-                        name={`questions.${index}.retryMessage`}
+                        label={t("questionnaires.question")}
+                        name={`questions.${index}.title`}
                         required
                       />
-                    ) : null}
-                    {enableCustomFieldMapping ? (
-                      <CustomFieldSelect
-                        allowCreate
-                        includeReserved
-                        label={t("questionnaires.customField")}
-                        name={`questions.${index}.customFieldId`}
-                        onValueChange={() => {
-                          const reset = getCustomFieldSelectionReset()
+                      <div className="space-y-2 rounded-md border bg-muted/20 p-3">
+                        <div className="space-y-1">
+                          <div className="font-medium text-sm">
+                            {t("questionnaires.questionImage")}
+                          </div>
+                          <div className="text-muted-foreground text-xs">
+                            {t("questionnaires.questionImageHint")}
+                          </div>
+                        </div>
+                        <DirectUploadOrInsertLink
+                          fileType="image"
+                          parentName={`questions.${index}.image`}
+                          uploadPath={`public/space/${workspaceId}/questionnaires/${questionnaire.id}/questions/${field.id}`}
+                          useMediaLibrary
+                        />
+                      </div>
+                      <SwitchField
+                        label={t("questionnaires.activeQuestion")}
+                        name={`questions.${index}.active`}
+                        required
+                      />
+                      <SelectField
+                        label={t("questionnaires.responseType")}
+                        name={`questions.${index}.type`}
+                        options={responseTypeOptions}
+                        required
+                        triggerValueChange={(value) => {
+                          if (!value) {
+                            return
+                          }
+                          const nextType =
+                            value as UpdateQuestionnaireRequest["questions"][number]["type"]
+                          const reset = getQuestionFieldMappingReset()
+                          form.setValue(
+                            `questions.${index}.customFieldId`,
+                            reset.customFieldId,
+                          )
                           form.setValue(
                             `questions.${index}.systemFieldKey`,
                             reset.systemFieldKey,
                           )
+                          form.setValue(
+                            `questions.${index}.retryMessage`,
+                            getQuestionnaireDefaultRetryMessage(
+                              getRetryMessageType(nextType),
+                              t,
+                            ),
+                          )
                         }}
-                        required
-                        reservedFieldIds={
-                          writableSystemFieldIdsByQuestionType[type]
-                        }
                       />
-                    ) : null}
-                  </div>
-                  <div className="flex w-10 shrink-0 flex-col items-center gap-1 pt-1">
-                    <Button
-                      aria-label={t("actions.delete")}
-                      onClick={() => {
-                        remove(index)
-                        triggerQuestionsValidation()
-                      }}
-                      size="icon"
-                      type="button"
-                      variant="ghost"
-                    >
-                      <Trash2Icon className="size-4" />
-                    </Button>
-                    <Button
-                      aria-label={t("actions.duplicate")}
-                      disabled={fields.length >= 100}
-                      onClick={() => {
-                        const question = questions[
-                          index
-                        ] as UpdateQuestionnaireRequest["questions"][number]
-                        insert(
-                          index + 1,
-                          duplicateQuestionnaireQuestionDraft(question),
-                        )
-                        triggerQuestionsValidation()
-                      }}
-                      size="icon"
-                      type="button"
-                      variant="ghost"
-                    >
-                      <CopyIcon className="size-4" />
-                    </Button>
-                    <Button
-                      aria-label={t("actions.moveUp")}
-                      disabled={index === 0}
-                      onClick={() => move(index, index - 1)}
-                      size="icon"
-                      type="button"
-                      variant="ghost"
-                    >
-                      <ArrowUpIcon className="size-4" />
-                    </Button>
-                    <Button
-                      aria-label={t("actions.moveDown")}
-                      disabled={index === fields.length - 1}
-                      onClick={() => move(index, index + 1)}
-                      size="icon"
-                      type="button"
-                      variant="ghost"
-                    >
-                      <ArrowDownIcon className="size-4" />
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            )
-          })}
-        </div>
-        <div className="flex justify-center">
-          <Button
-            className="min-w-32"
-            disabled={fields.length >= 100}
-            onClick={() => {
-              append(
-                createDraftQuestion(
-                  getQuestionnaireDefaultRetryMessage("text", t),
-                ),
+                      {type === "multipleChoice" ? (
+                        <div className="space-y-2">
+                          <div className="font-medium text-sm">
+                            {t("questionnaires.options")}
+                          </div>
+                          {(questions?.[index]?.config?.options ?? []).map(
+                            (option, optionIndex) => (
+                              <div
+                                className="flex flex-wrap items-start gap-2"
+                                key={option.id}
+                              >
+                                <InputField
+                                  formItemClassName="w-full max-w-[300px]"
+                                  label=""
+                                  name={`questions.${index}.config.options.${optionIndex}.label`}
+                                />
+                                {enableScore ? (
+                                  <InputNumberField
+                                    formItemClassName="w-[120px]"
+                                    label=""
+                                    min={0}
+                                    name={`questions.${index}.config.options.${optionIndex}.points`}
+                                  />
+                                ) : null}
+                                <Button
+                                  aria-label={t("actions.moveUp")}
+                                  disabled={optionIndex === 0}
+                                  onClick={() => {
+                                    const options = [
+                                      ...(form.getValues(
+                                        `questions.${index}.config.options`,
+                                      ) ?? []),
+                                    ]
+                                    const previousOption =
+                                      options[optionIndex - 1]
+                                    const currentOption = options[optionIndex]
+                                    if (!(previousOption && currentOption)) {
+                                      return
+                                    }
+                                    options[optionIndex - 1] = currentOption
+                                    options[optionIndex] = previousOption
+                                    form.setValue(
+                                      `questions.${index}.config.options`,
+                                      options,
+                                    )
+                                  }}
+                                  size="icon"
+                                  type="button"
+                                  variant="ghost"
+                                >
+                                  <ArrowUpIcon className="size-4" />
+                                </Button>
+                                <Button
+                                  aria-label={t("actions.moveDown")}
+                                  disabled={
+                                    optionIndex ===
+                                    (questions?.[index]?.config?.options
+                                      ?.length ?? 0) -
+                                      1
+                                  }
+                                  onClick={() => {
+                                    const options = [
+                                      ...(form.getValues(
+                                        `questions.${index}.config.options`,
+                                      ) ?? []),
+                                    ]
+                                    const currentOption = options[optionIndex]
+                                    const nextOption = options[optionIndex + 1]
+                                    if (!(currentOption && nextOption)) {
+                                      return
+                                    }
+                                    options[optionIndex] = nextOption
+                                    options[optionIndex + 1] = currentOption
+                                    form.setValue(
+                                      `questions.${index}.config.options`,
+                                      options,
+                                    )
+                                  }}
+                                  size="icon"
+                                  type="button"
+                                  variant="ghost"
+                                >
+                                  <ArrowDownIcon className="size-4" />
+                                </Button>
+                                <Button
+                                  aria-label={t("actions.delete")}
+                                  onClick={() => {
+                                    const options =
+                                      form.getValues(
+                                        `questions.${index}.config.options`,
+                                      ) ?? []
+                                    form.setValue(
+                                      `questions.${index}.config.options`,
+                                      options.filter(
+                                        (_, idx) => idx !== optionIndex,
+                                      ),
+                                    )
+                                  }}
+                                  type="button"
+                                  variant="ghost"
+                                >
+                                  <Trash2Icon className="size-4" />
+                                </Button>
+                              </div>
+                            ),
+                          )}
+                          <Button
+                            onClick={() => {
+                              const options =
+                                form.getValues(
+                                  `questions.${index}.config.options`,
+                                ) ?? []
+                              form.setValue(
+                                `questions.${index}.config.options`,
+                                [
+                                  ...options,
+                                  {
+                                    id: crypto.randomUUID(),
+                                    label: "",
+                                    points: 0,
+                                  },
+                                ],
+                              )
+                            }}
+                            type="button"
+                            variant="outline"
+                          >
+                            <PlusIcon className="size-4" />
+                            {t("actions.add")}
+                          </Button>
+                        </div>
+                      ) : null}
+                      {enableScore && type !== "multipleChoice" ? (
+                        <InputNumberField
+                          formItemClassName="max-w-[300px]"
+                          label={t("questionnaires.points")}
+                          min={0}
+                          name={`questions.${index}.point`}
+                          required
+                        />
+                      ) : null}
+                      {enableRetryMessages ? (
+                        <InputField
+                          label={t("questionnaires.retryMessage")}
+                          name={`questions.${index}.retryMessage`}
+                          required
+                        />
+                      ) : null}
+                      {enableCustomFieldMapping ? (
+                        <CustomFieldSelect
+                          allowCreate
+                          includeReserved
+                          label={t("questionnaires.customField")}
+                          name={`questions.${index}.customFieldId`}
+                          onValueChange={() => {
+                            const reset = getCustomFieldSelectionReset()
+                            form.setValue(
+                              `questions.${index}.systemFieldKey`,
+                              reset.systemFieldKey,
+                            )
+                          }}
+                          required
+                          reservedFieldIds={
+                            writableSystemFieldIdsByQuestionType[type]
+                          }
+                        />
+                      ) : null}
+                    </div>
+                    <div className="flex w-10 shrink-0 flex-col items-center gap-1 pt-1">
+                      <Button
+                        aria-label={t("actions.delete")}
+                        onClick={() => {
+                          remove(index)
+                          triggerQuestionsValidation()
+                        }}
+                        size="icon"
+                        type="button"
+                        variant="ghost"
+                      >
+                        <Trash2Icon className="size-4" />
+                      </Button>
+                      <Button
+                        aria-label={t("actions.duplicate")}
+                        disabled={fields.length >= 100}
+                        onClick={() => {
+                          const question = questions[
+                            index
+                          ] as UpdateQuestionnaireRequest["questions"][number]
+                          insert(
+                            index + 1,
+                            duplicateQuestionnaireQuestionDraft(question),
+                          )
+                          triggerQuestionsValidation()
+                        }}
+                        size="icon"
+                        type="button"
+                        variant="ghost"
+                      >
+                        <CopyIcon className="size-4" />
+                      </Button>
+                      <Button
+                        aria-label={t("actions.moveUp")}
+                        disabled={index === 0}
+                        onClick={() => move(index, index - 1)}
+                        size="icon"
+                        type="button"
+                        variant="ghost"
+                      >
+                        <ArrowUpIcon className="size-4" />
+                      </Button>
+                      <Button
+                        aria-label={t("actions.moveDown")}
+                        disabled={index === fields.length - 1}
+                        onClick={() => move(index, index + 1)}
+                        size="icon"
+                        type="button"
+                        variant="ghost"
+                      >
+                        <ArrowDownIcon className="size-4" />
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
               )
-              triggerQuestionsValidation()
-            }}
-            type="button"
-          >
-            <PlusIcon className="size-4" />
-            {t("questionnaires.addNew")}
-          </Button>
-        </div>
+            })}
+          </div>
+          <div className="flex justify-center">
+            <Button
+              className="min-w-32"
+              disabled={fields.length >= 100}
+              onClick={() => {
+                append(
+                  createDraftQuestion(
+                    getQuestionnaireDefaultRetryMessage("text", t),
+                  ),
+                )
+                triggerQuestionsValidation()
+              }}
+              type="button"
+            >
+              <PlusIcon className="size-4" />
+              {t("questionnaires.addNew")}
+            </Button>
+          </div>
+        </LockedContent>
       </form>
     </Form>
   )

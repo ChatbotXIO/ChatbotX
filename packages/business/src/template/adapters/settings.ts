@@ -1,18 +1,28 @@
-import { db } from "@chatbotx.io/database/client"
+import { type DatabaseClient, db, eq } from "@chatbotx.io/database/client"
 import {
   mediaLibraryFileRepository,
   savedReplyImageRepository,
 } from "@chatbotx.io/database/repositories"
 import { savedReplyModel } from "@chatbotx.io/database/schema"
+import type { BotFieldModel } from "@chatbotx.io/database/types"
 import { uploader } from "@chatbotx.io/filesystem"
 import { createId, mapWithConcurrency } from "@chatbotx.io/utils"
+import { sha256Hex } from "@chatbotx.io/utils/crypto"
+import { customFieldResolutionKey } from "@chatbotx.io/utils/custom-field"
+import { z } from "zod"
 import { botFieldService } from "../../bot-field/service"
 import { logger } from "../../logger"
+import { omitKeys } from "../fingerprint"
+import { savedReplyImagePrefix } from "../template-object-keys"
+import { assertBackupFormat, EMPTY_COLLECT_RESULT, resolveRef } from "./shared"
 import type {
   PatchTask,
   ResourceAdapter,
   ResourceCollector,
+  ResourceSyncHandler,
+  StagedObject,
   TemplateInstallContext,
+  TemplateStageContext,
 } from "./types"
 
 type TemplateSavedReplyImage = {
@@ -53,61 +63,90 @@ const isCopyableImage = (image: unknown): image is TemplateSavedReplyImage => {
   )
 }
 
-/** Parallel storage copies per saved reply, to keep the install tx short. */
+/** Parallel storage copies per saved reply, to keep staging short. */
 const IMAGE_COPY_CONCURRENCY = 4
 
+/** The slot `stage` and `insert` agree on for one saved-reply image. */
+const savedReplyImageStageKey = (
+  sourceId: string,
+  imageIndex: number,
+): string => `settings:savedReplies:${sourceId}:${imageIndex}`
+
 /**
- * Copies a saved reply's images into the installing workspace's media
- * library and returns the new file ids, in order. An image whose source
- * object is gone (or whose path isn't a public media library object) is
- * skipped with a warning instead of failing the install.
+ * Copies a saved reply's images to deterministic keys of the installing
+ * workspace's media library, before the apply transaction. An image whose
+ * source object is gone (or whose path isn't a public media library object)
+ * is staged as skipped; `insert` turns that into a warning instead of failing
+ * the install.
+ */
+const stageSavedReplyImages = async (
+  ctx: TemplateStageContext,
+  entry: TemplateSavedReplyEntry,
+  staged: Map<string, StagedObject>,
+): Promise<void> => {
+  const images = entry.images ?? []
+  const copies = await mapWithConcurrency(
+    images,
+    IMAGE_COPY_CONCURRENCY,
+    async (image, imageIndex) => {
+      if (!isCopyableImage(image)) {
+        return null
+      }
+      // Deterministic per (installation, saved reply, image slot), so a retried
+      // install overwrites the same key instead of orphaning a new copy.
+      const targetPath = `${savedReplyImagePrefix(ctx.workspaceId, ctx.installationId, ctx.scope)}${await sha256Hex(`${ctx.installationId}:${entry.sourceId}:${imageIndex}:${image.path}`)}`
+      await uploader.copyObject(image.path, targetPath)
+      ctx.trackCopiedObject(targetPath)
+      return targetPath
+    },
+  )
+  for (const [index, copy] of copies.entries()) {
+    const key = savedReplyImageStageKey(entry.sourceId, index)
+    if (copy.status === "fulfilled" && copy.value !== null) {
+      staged.set(key, { targetPath: copy.value })
+      continue
+    }
+    if (copy.status === "rejected") {
+      logger.warn(
+        { err: copy.reason },
+        "Template install: saved reply image could not be copied",
+      )
+    }
+    staged.set(key, { skipped: "savedReplyImage" })
+  }
+}
+
+/**
+ * Adds the media-library rows for a saved reply's staged images and returns the
+ * new file ids, in order. Only rows are written here; the objects were copied
+ * before the transaction.
  */
 const installSavedReplyImages = async (
   ctx: TemplateInstallContext,
   entry: TemplateSavedReplyEntry,
 ): Promise<string[]> => {
   const images = entry.images ?? []
-  const copies = await mapWithConcurrency(
-    images,
-    IMAGE_COPY_CONCURRENCY,
-    async (image) => {
-      if (!isCopyableImage(image)) {
-        return null
-      }
-      const targetPath = `public/space/${ctx.workspaceId}/media-library/${createId()}`
-      await uploader.copyObject(image.path, targetPath)
-      ctx.trackCopiedObject?.(targetPath)
-      return { image, targetPath }
-    },
-  )
-
   const fileIds: string[] = []
-  for (const [index, copy] of copies.entries()) {
-    const source = images[index] as unknown
-    if (copy.status === "rejected" || copy.value === null) {
-      if (copy.status === "rejected") {
-        logger.warn(
-          { err: copy.reason },
-          "Template install: saved reply image could not be copied",
-        )
-      }
+  for (const [index, image] of images.entries()) {
+    const staged = ctx.staged?.get(
+      savedReplyImageStageKey(entry.sourceId, index),
+    )
+    if (!staged || "skipped" in staged || !isCopyableImage(image)) {
       ctx.warn({
         category: "settings",
         entityKind: "savedReplyImage",
         path: `settings.savedReplies.${entry.sourceId}.images.${index}`,
-        value: String((source as { path?: unknown } | null)?.path ?? ""),
+        value: String((image as { path?: unknown } | null)?.path ?? ""),
       })
       continue
     }
-
-    const { image, targetPath } = copy.value
     const file = await mediaLibraryFileRepository.create(
       {
         id: createId(),
         workspaceId: ctx.workspaceId,
         folderId: null,
         name: image.name,
-        path: targetPath,
+        path: staged.targetPath,
         mimeType: image.mimeType,
         size: image.size,
       },
@@ -118,10 +157,41 @@ const installSavedReplyImages = async (
   return fileIds
 }
 
+/** The shape `serializeBackup` writes and `restoreBackup` reads. */
+const BACKUP_FORMAT_VERSION = 1
+
+/**
+ * Fields the installer owns. A bot field's folder is theirs, and a saved
+ * reply has none; bot fields are only ever found-or-created (never updated by
+ * a sync), so their fingerprint ignores the folder alone.
+ */
+const SETTINGS_INSTALLER_OWNED_FIELDS = ["folderId"] as const
+
+/** What a template update overwrites on an installed saved reply (its images stay as the installer has them). */
+const savedReplyContentSchema = z.object({
+  shortcut: z.string(),
+  text: z.string(),
+})
+type SavedReplyContent = z.infer<typeof savedReplyContentSchema>
+
+const readSavedReply = async (
+  tx: DatabaseClient,
+  resourceId: string,
+): Promise<SavedReplyContent | null> => {
+  // Locked for the rest of the transaction (see the keywords adapter).
+  const [row] = await tx
+    .select()
+    .from(savedReplyModel)
+    .where(eq(savedReplyModel.id, resourceId))
+    .for("update")
+    .limit(1)
+  return row ? { shortcut: row.shortcut, text: row.text } : null
+}
+
 type TemplateBotFieldEntry = {
   sourceId: string
   name: string
-  type: string
+  type: BotFieldModel["type"]
   value: string | null
   description: string | null
   // Bot fields share the `customField` folder namespace (see
@@ -132,26 +202,128 @@ type TemplateBotFieldEntry = {
 }
 
 /**
+ * Finds or creates one bot field and fills `idMaps.botField` for it. Shared by
+ * `insertEarly` (an install or sync resolves every bot field BEFORE the
+ * categories that carry `{{bot_field:<id>}}` text — questionnaires, products,
+ * saved replies, ... — are written) and by `insert`.
+ */
+const insertBotFieldEntry = async (
+  ctx: TemplateInstallContext,
+  entry: TemplateBotFieldEntry & { sourceId: string },
+): Promise<void> => {
+  const folderId = resolveFolderRef(ctx, entry)
+  // Held through commit: the name read below and the create stay one step.
+  await botFieldService.lockNames(ctx.tx, ctx.workspaceId)
+  // A same-typed field the installer already has is reused as is (its value
+  // stays theirs). A name held by a field of ANOTHER type is created as
+  // `<name>_<n>` (the custom-field rule, one shared planner): creating it
+  // under the same name would violate the unique index or make a
+  // type-blind `{{name}}` ambiguous. `{{bot_field:<id>}}` tokens are
+  // id-remapped, so a rename needs no token rewrite.
+  const fieldKey = { name: entry.name, type: entry.type }
+  const { plans } = await botFieldService.planResolution({
+    workspaceId: ctx.workspaceId,
+    fields: [fieldKey],
+    tx: ctx.tx,
+  })
+  const plan = plans.get(customFieldResolutionKey(fieldKey))
+  const existing = plan?.action === "reuse" ? plan.row : undefined
+  const created =
+    existing ??
+    (await botFieldService.create({
+      workspaceId: ctx.workspaceId,
+      data: {
+        name: plan && plan.action !== "reuse" ? plan.plannedName : entry.name,
+        type: entry.type,
+        value: entry.value,
+        description: entry.description,
+        folderId,
+      },
+      tx: ctx.tx,
+    }))
+  if (plan?.action === "rename") {
+    ctx.warn({
+      category: "settings",
+      entityKind: "botFieldRenamed",
+      path: `settings.botFields.${entry.sourceId}`,
+      value: `${entry.name} -> ${created.name} (${entry.type})`,
+    })
+  }
+  // `flowsAdapter` (and any other consumer) resolves `bot_field:<id>`
+  // tokens against this map — populate it here, the moment the row
+  // exists, exactly like every other `providesKinds` entry.
+  if (!ctx.idMaps.botField) {
+    ctx.idMaps.botField = new Map()
+  }
+  ctx.idMaps.botField.set(entry.sourceId, created.id)
+  ctx.track({
+    category: "settings",
+    resourceKind: "botField",
+    resourceId: created.id,
+    sourceResourceId: entry.sourceId,
+    wasExisting: Boolean(existing),
+  })
+}
+
+/** A settings entry: the flattened saved replies and bot fields, told apart by `kind`. */
+type TemplateSettingsEntry =
+  | (TemplateSavedReplyEntry & { kind: "savedReply" })
+  | (TemplateBotFieldEntry & { kind: "botField" })
+
+/** The bot-field entries among a settings category's flattened entries. */
+const isBotFieldEntry = (
+  entry: Record<string, unknown>,
+): entry is TemplateBotFieldEntry & { kind: "botField"; sourceId: string } =>
+  entry.kind === "botField"
+
+/**
  * `settings` bundles two unrelated tables (`SavedReply`, `BotField`) under
  * one template category, per the plan's "Settings subset" — `CustomField`/
  * `Tag` participate only via their Phase-R manifests, `SystemField` is
  * excluded entirely (no `workspaceId`, a global table).
  */
-export const settingsAdapter: ResourceAdapter = {
+export const settingsAdapter: ResourceAdapter<TemplateSettingsEntry> = {
+  earlyEntry: isBotFieldEntry,
+  async insertEarly(ctx, entries) {
+    for (const entry of entries) {
+      if (entry.kind === "botField") {
+        await insertBotFieldEntry(ctx, entry)
+      }
+    }
+  },
+
   category: "settings",
   providesKinds: ["botField"],
   consumesKinds: ["folder"],
   deferredKinds: [],
+  trackedKind: null,
+  folderTypes: ["customField"],
+  minFormatVersion: 1,
+  fingerprint: {
+    project: (entry) =>
+      entry.kind === "botField"
+        ? omitKeys(entry, SETTINGS_INSTALLER_OWNED_FIELDS)
+        : entry,
+  },
+
+  async stage(
+    ctx: TemplateStageContext,
+    entries: readonly TemplateSettingsEntry[],
+  ): Promise<Map<string, StagedObject>> {
+    const staged = new Map<string, StagedObject>()
+    for (const entry of entries) {
+      if (entry.kind === "savedReply") {
+        await stageSavedReplyImages(ctx, entry, staged)
+      }
+    }
+    return staged
+  },
 
   async insert(
     ctx: TemplateInstallContext,
-    entries: readonly (Record<string, unknown> & { sourceId: string })[],
+    entries: readonly TemplateSettingsEntry[],
   ): Promise<PatchTask[]> {
-    for (const rawEntry of entries) {
-      const entry = rawEntry as unknown as
-        | (TemplateSavedReplyEntry & { kind: "savedReply" })
-        | (TemplateBotFieldEntry & { kind: "botField" })
-
+    for (const entry of entries) {
       if (entry.kind === "savedReply") {
         const imageFileIds = await installSavedReplyImages(ctx, entry)
         // An image-only reply that lost every image would install empty,
@@ -193,47 +365,62 @@ export const settingsAdapter: ResourceAdapter = {
         continue
       }
 
-      const folderId = resolveFolderRef(ctx, entry)
-      const created = await botFieldService.create({
-        workspaceId: ctx.workspaceId,
-        data: {
-          name: entry.name,
-          type: entry.type as never,
-          value: entry.value,
-          description: entry.description,
-          folderId,
-        },
-        tx: ctx.tx,
-      })
-      // `flowsAdapter` (and any other consumer) resolves `bot_field:<id>`
-      // tokens against this map — populate it here, the moment the row
-      // exists, exactly like every other `providesKinds` entry.
-      if (!ctx.idMaps.botField) {
-        ctx.idMaps.botField = new Map()
-      }
-      ctx.idMaps.botField.set(entry.sourceId, created.id)
-      ctx.track({
-        category: "settings",
-        resourceKind: "botField",
-        resourceId: created.id,
-        sourceResourceId: entry.sourceId,
-        wasExisting: false,
-      })
+      await insertBotFieldEntry(ctx, entry)
     }
 
     return [] satisfies PatchTask[]
   },
 
+  // Saved replies only. A bot field is shared infrastructure, found-or-created
+  // through the manifest path: the sync never touches it (and never plans it
+  // for an update), so it can not overwrite a value the installer set.
+  sync: {
+    async project(tx, resourceId) {
+      return await readSavedReply(tx, resourceId)
+    },
+
+    async serializeBackup(tx, resourceId) {
+      const content = await readSavedReply(tx, resourceId)
+      return content ? { formatVersion: BACKUP_FORMAT_VERSION, content } : null
+    },
+
+    async restoreBackup(tx, resourceId, content, formatVersion) {
+      assertBackupFormat(formatVersion, BACKUP_FORMAT_VERSION)
+      const parsed = savedReplyContentSchema.safeParse(content)
+      if (!parsed.success) {
+        throw new Error("The saved reply backup is not in a restorable shape")
+      }
+      await tx
+        .update(savedReplyModel)
+        .set(parsed.data)
+        .where(eq(savedReplyModel.id, resourceId))
+    },
+
+    async update(ctx, pairs) {
+      for (const { entry, resourceId } of pairs) {
+        if (entry.kind !== "savedReply") {
+          continue
+        }
+        await ctx.tx
+          .update(savedReplyModel)
+          .set({ shortcut: entry.shortcut, text: entry.text })
+          .where(eq(savedReplyModel.id, resourceId))
+      }
+    },
+  } satisfies ResourceSyncHandler<TemplateSettingsEntry>,
+
   collector: {
-    async resolveIds(workspaceId) {
+    async resolveIds(workspaceId, limit) {
       const [savedReplies, botFields] = await Promise.all([
         db.query.savedReplyModel.findMany({
           where: { workspaceId },
           columns: { id: true },
+          limit,
         }),
         db.query.botFieldModel.findMany({
           where: { workspaceId },
           columns: { id: true },
+          limit,
         }),
       ])
       return [...savedReplies, ...botFields].map((row) => row.id)
@@ -263,12 +450,7 @@ export const settingsAdapter: ResourceAdapter = {
 
     async collect(workspaceId, ids) {
       if (ids.length === 0) {
-        return {
-          entries: [],
-          folderIds: [],
-          productCategoryIds: [],
-          hardDependencies: [],
-        }
+        return EMPTY_COLLECT_RESULT
       }
       const uniqueIds = [...ids]
       const [savedReplies, botFields] = await Promise.all([
@@ -328,19 +510,10 @@ export const settingsAdapter: ResourceAdapter = {
 const resolveFolderRef = (
   ctx: TemplateInstallContext,
   entry: TemplateBotFieldEntry,
-): string | null => {
-  if (!entry.folderId) {
-    return null
-  }
-  const targetId = ctx.idMaps.folder?.get(entry.folderId)
-  if (!targetId) {
-    ctx.warn({
-      category: "settings",
-      entityKind: "folder",
-      path: `settings.botFields.${entry.sourceId}.folderId`,
-      value: entry.folderId,
-    })
-    return null
-  }
-  return targetId
-}
+): string | null =>
+  resolveRef(ctx, {
+    category: "settings",
+    kind: "folder",
+    path: `settings.botFields.${entry.sourceId}.folderId`,
+    sourceRef: entry.folderId,
+  })

@@ -55,6 +55,7 @@ export const resolveFolderManifest = async (
 
       const targetId = await findOrCreateFolder(
         ctx,
+        sourceId,
         entry,
         parentTargetId,
         category,
@@ -94,6 +95,7 @@ const resolveParentTargetId = (
 
 const findOrCreateFolder = async (
   ctx: TemplateInstallContext,
+  sourceId: string,
   entry: TemplateFolderManifestEntry,
   parentTargetId: string | null,
   category: TemplateCategory,
@@ -111,7 +113,7 @@ const findOrCreateFolder = async (
       category,
       resourceKind: "folder",
       resourceId: existing.id,
-      sourceResourceId: existing.id,
+      sourceResourceId: sourceId,
       wasExisting: true,
     })
     return existing.id
@@ -137,7 +139,7 @@ const findOrCreateFolder = async (
     category,
     resourceKind: "folder",
     resourceId: created.id,
-    sourceResourceId: created.id,
+    sourceResourceId: sourceId,
     wasExisting: false,
   })
   return created.id

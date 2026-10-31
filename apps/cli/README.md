@@ -244,6 +244,7 @@ chatbotx contacts tags update <identifier> --tags <tags>  # Replace all tags on 
 chatbotx contacts tag add <identifier> --tagIds <tagIds>
 chatbotx contacts tag delete <identifier> --tagIds <tagIds>
 chatbotx contacts by-name add <identifier> --tags <tags>  # Add tags by name (creates missing ones)
+chatbotx contacts by-name delete <identifier> --tags <tags>  # Remove tags by name (nothing is created)
 
 # Custom fields
 chatbotx contacts custom-fields list <identifier>    # Get all custom fields from contact
@@ -375,6 +376,47 @@ chatbotx flows validate --spec <spec>                # Compile/validate a flow-s
 chatbotx flows draft update <id>                     # [--spec | --nodes --edges]  overwrite the draft in place
 chatbotx flows versions list <id>                    # List immutable published versions, newest first
 chatbotx flows import --fileId <fileId>              # [--folderId]  queue async import of an uploaded flow-export file
+chatbotx flows export list <id>                      # [--version published|draft]  portable export of the flow (published graph by default)
+```
+
+---
+
+### `templates` / `template-installations` / `template-previews` (scope `templates`)
+
+Publish a snapshot of resources as a share link, and install templates shared by others (same tenant only).
+
+```bash
+chatbotx templates list                              # [--cursor --limit]  templates this workspace published, with active install count; pass `nextCursor` back for the next page (max 100)
+chatbotx templates get <id>                          # Template with its selection (never the snapshot)
+chatbotx templates create --name <name> --selection <json> --defaultPermissions <json> --createInstallFolder <bool> --defaultAutoUpdate <bool>
+                                                     # selection: {"flows":{"mode":"ids","ids":["…"],"lockedIds":["…"]}} — list ids with `templates selectable-resources`
+chatbotx templates update <id> ...                   # Same body as create; takes a new snapshot
+chatbotx templates delete <id>                       # Copies already installed stay (their view-only locks are released)
+chatbotx templates selectable-resources --category <category>  # [--keyword --cursor --limit]  ids for `selection`
+chatbotx templates dependencies-preview --selection <json>  # Read only: what saving that selection takes along (includedDependencies, manifests of tags/custom fields/folders/...)
+chatbotx templates locked-resources --resourceKind <kind> --resourceIds <json>  # Read only: which of those ids (<=200, from the kind's own list) are view-only template copies (editing is refused)
+chatbotx templates link <id>                         # Share link, enabled flag and expiry
+chatbotx templates share <id> --enabled <bool>       # [--expiresAt <ISO date-time> | null]  omit expiresAt to keep it
+chatbotx templates rotate-share <id>                 # New link; every earlier link stops working
+chatbotx templates analytics <id>                    # Installation counts by status and by template version (aggregates only)
+chatbotx templates installers <id>                   # [--search --cursor --limit]  who installed it: workspace name, installs, oldest version, auto-update (publisherRef is opaque)
+chatbotx templates uninstall-preview <id> <installerId>  # What removing the template from that installer would do (counts by outcome, edited copies listed as `deletedModified`); only if they allowed it
+chatbotx templates uninstall-installer <id> <installerId>  # Start removing it (202, runs in the background; follow `uninstallState` in `templates installers`): everything the install created is deleted, edited copies included; shared tags/fields/folders and items something else depends on are kept
+chatbotx template-previews get <shareToken>          # Can this link be installed into the token's workspace? (installable / reason) + requiredInboxes / requiredChannels to bind + collisions / collisionSummary (what the install would reuse, create or rename here)
+chatbotx template-installations create --shareToken <token>  # [--allowDuplicate --inboxBindings <json>]  queue an install → { installationId }; an already installed template is updated in place → { installationId, syncId } (use --allowDuplicate for a separate copy)
+                                                     # inboxBindings: {"<templateInboxId>":"<yourInboxId>"} (ids from `template-previews get` / `inboxes list`); an unbound comment automation installs inactive
+chatbotx template-installations list                 # [--status --activeOnly --cursor --limit]
+chatbotx template-installations get <id>             # Status, errorCode, warnings; poll until completed / partial / failed
+chatbotx template-installations resources list <id>  # [--cursor --limit]  what the install created or reused
+chatbotx template-installations retry <id>           # Re-queue a failed install
+chatbotx template-installations update <id> --autoUpdate <bool> --publisherUninstallGrant <bool>  # Follow later saves of the template; get shows updateAvailable
+chatbotx template-installations sync <id>            # Bring the copy to the newest template version → { syncId }; edited copies are backed up first
+chatbotx template-installations syncs <id>           # Sync history, newest first
+chatbotx template-installations sync-detail <id> <syncId>  # Status, counts, warnings and backups (ids for restore-backup)
+chatbotx template-installations uninstall-preview <id>  # What an uninstall would do (counts)
+chatbotx template-installations uninstall <id>       # Start removing the template here (202, background): everything it created is deleted, edited copies included; follow `uninstallState` with `get`
+chatbotx template-installations cancel-uninstall <id>  # Take back an uninstall that stopped part-way (partial / failed / skipped): waiting copies are given back and switched on again
+chatbotx template-installations restore-backup <id> <backupId>  # Put back what a sync overwrote (flows restore into the draft only)
 ```
 
 ---

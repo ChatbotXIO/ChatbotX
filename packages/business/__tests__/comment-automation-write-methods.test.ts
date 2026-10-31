@@ -76,8 +76,29 @@ vi.mock("date-fns-tz", () => ({
   formatInTimeZone: () => "00:00",
 }))
 
-vi.mock("../src/template/installed-resource.service", () => ({
-  assertDeletable: mocks.assertDeletable,
+const mockLockOptions = vi.hoisted(() => vi.fn())
+
+// Run the locked transaction against the same mocked client the test asserts on.
+vi.mock("../src/template/template-resource-locks", async () => {
+  const { db } = await import("@chatbotx.io/database/client")
+  return {
+    withTemplateLockedTransaction: (
+      run: (tx: unknown) => unknown,
+      options?: unknown,
+    ) => {
+      mockLockOptions(options)
+      return run(db)
+    },
+  }
+})
+
+vi.mock("../src/template/installed-resource.service", async () => ({
+  ...(await import("./helpers/template-guard-mocks")).templateGuardMocks({
+    assertDeletable: mocks.assertDeletable,
+    assertResourceEditable: vi.fn(),
+  }),
+  assertReferencable: vi.fn(),
+  changedKeysOf: vi.fn(() => []),
 }))
 
 vi.mock("../src/flow/service", () => ({
@@ -169,9 +190,84 @@ describe("commentAutomationService — type-scoped writes", () => {
     expect(set).toHaveBeenCalledWith({ name: "x" })
   })
 
+  test("updateMessenger guards first on the locked transaction and locks the reply flows", async () => {
+    const { assertResourceEditable } = await import(
+      "../src/template/installed-resource.service"
+    )
+    const { db } = await import("@chatbotx.io/database/client")
+    vi.mocked(assertResourceEditable).mockClear()
+    mocks.findFirst.mockResolvedValue({ id: "9", type: "messenger" })
+    mocks.flowExists.mockResolvedValue(true)
+    const returning = vi.fn().mockResolvedValue([{ id: "9" }])
+    const where = vi.fn(() => ({ returning }))
+    const set = vi.fn(() => ({ where }))
+    mocks.update.mockReturnValue({ set })
+
+    await commentAutomationService.updateMessenger(
+      { workspaceId: "1", id: "9" },
+      { privateReply: { type: "flow", value: "flow-1" } } as never,
+    )
+
+    expect(assertResourceEditable).toHaveBeenCalledWith(
+      expect.objectContaining({
+        resourceKind: "fbCommentAutomation",
+        resourceIds: ["9"],
+        referencedParents: [{ kind: "flow", resourceId: "flow-1" }],
+        tx: db,
+      }),
+    )
+    expect(
+      vi.mocked(assertResourceEditable).mock.invocationCallOrder[0],
+    ).toBeLessThan(mocks.update.mock.invocationCallOrder[0] as number)
+  })
+
+  test("updateMessenger locks the automation and reply flows before the stored row is read", async () => {
+    mocks.findFirst.mockResolvedValue({ id: "9", type: "messenger" })
+    mocks.flowExists.mockResolvedValue(true)
+    const returning = vi.fn().mockResolvedValue([{ id: "9" }])
+    mocks.update.mockReturnValue({
+      set: () => ({ where: () => ({ returning }) }),
+    })
+    mocks.findFirst.mockClear()
+    mockLockOptions.mockClear()
+
+    await commentAutomationService.updateMessenger(
+      { workspaceId: "1", id: "9" },
+      { privateReply: { type: "flow", value: "flow-1" } } as never,
+    )
+
+    expect(mockLockOptions).toHaveBeenCalledWith({
+      workspaceId: expect.any(String),
+      initialKeys: [
+        { kind: "fbCommentAutomation", resourceId: "9" },
+        { kind: "flow", resourceId: "flow-1" },
+      ],
+    })
+    expect(mockLockOptions.mock.invocationCallOrder[0]).toBeLessThan(
+      mocks.findFirst.mock.invocationCallOrder[0] as number,
+    )
+  })
+
+  test("updateInstagram blocked by the guard writes nothing", async () => {
+    const { assertResourceEditable } = await import(
+      "../src/template/installed-resource.service"
+    )
+    mocks.findFirst.mockResolvedValue({ id: "9", type: "instagram" })
+    mocks.update.mockClear()
+    vi.mocked(assertResourceEditable).mockRejectedValueOnce(new Error("locked"))
+
+    await expect(
+      commentAutomationService.updateInstagram(
+        { workspaceId: "1", id: "9" },
+        { name: "x" },
+      ),
+    ).rejects.toThrow("locked")
+    expect(mocks.update).not.toHaveBeenCalled()
+  })
+
   test("deleteMessenger deletes through deleteMany scoped to the messenger type only", async () => {
     mocks.findFirst.mockResolvedValue({ id: "9", type: "messenger" })
-    const where = vi.fn().mockResolvedValue(undefined)
+    const where = vi.fn(() => ({ returning: vi.fn().mockResolvedValue([]) }))
     mocks.delete.mockReturnValue({ where })
 
     await commentAutomationService.deleteMessenger({
@@ -188,7 +284,7 @@ describe("commentAutomationService — type-scoped writes", () => {
   })
 
   test("deleteMany filters by the caller-supplied types array", async () => {
-    const where = vi.fn().mockResolvedValue(undefined)
+    const where = vi.fn(() => ({ returning: vi.fn().mockResolvedValue([]) }))
     mocks.delete.mockReturnValue({ where })
 
     await commentAutomationService.deleteMany({
@@ -197,7 +293,9 @@ describe("commentAutomationService — type-scoped writes", () => {
       types: ["instagram", "instagramFacebook"],
     })
 
-    const whereArg = where.mock.calls[0]?.[0] as { and: unknown[] }
+    const whereArg = (where.mock.calls[0] as unknown[])[0] as {
+      and: unknown[]
+    }
     // The types filter is threaded into the compound where-clause as one of
     // the `inArray` conditions built by the mocked `and`/`inArray` helpers.
     expect(
@@ -418,6 +516,7 @@ describe("commentAutomationService — type-scoped writes", () => {
   })
 
   test("updateThreadsAutomation rejects a publicReply flow from another workspace", async () => {
+    mocks.findFirst.mockResolvedValue({ id: "9", name: "Before" })
     mocks.flowExists.mockResolvedValue(false)
 
     await expect(
@@ -461,6 +560,7 @@ describe("commentAutomationService — type-scoped writes", () => {
   })
 
   test("updateTiktokAutomation rejects a publicReply flow from another workspace", async () => {
+    mocks.findFirst.mockResolvedValue({ id: "9", name: "Before" })
     mocks.flowExists.mockResolvedValue(false)
 
     await expect(

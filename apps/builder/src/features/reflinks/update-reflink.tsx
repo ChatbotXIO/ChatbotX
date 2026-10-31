@@ -18,6 +18,8 @@ import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useEffect } from "react"
 import { toast } from "sonner"
+import { LockedDialogFieldset } from "@/components/locked-dialog-fieldset"
+import { useIsLocked } from "@/features/templates/components/lock-badge"
 import { CustomFieldSelect } from "../custom-fields/custom-field-select"
 import { useFlowSelectOptions } from "../flows/provider/flow-hook"
 import { updateReflinkAction } from "./actions/update-reflink.action"
@@ -74,6 +76,7 @@ export function UpdateReflinkForm(props: {
 }) {
   const { workspaceId, reflink, onCompletedForm } = props
   const t = useTranslations()
+  const isLocked = useIsLocked(reflink.id)
 
   const flowOptions = useFlowSelectOptions()
 
@@ -120,29 +123,32 @@ export function UpdateReflinkForm(props: {
   return (
     <Form {...form}>
       <form className="flex-1 space-y-4" onSubmit={handleSubmitWithAction}>
-        <InputField label={t("fields.name.label")} name="name" required />
+        <LockedDialogFieldset resourceId={reflink.id}>
+          <InputField label={t("fields.name.label")} name="name" required />
 
-        <ComboboxField
-          emptyText={t("actions.noRecordFound")}
-          label={t("fields.flow.label")}
-          name="flowId"
-          options={flowOptions}
-          placeholder={t("actions.pleaseSelect")}
-          required
-        />
+          <ComboboxField
+            emptyText={t("actions.noRecordFound")}
+            label={t("fields.flow.label")}
+            name="flowId"
+            options={flowOptions}
+            placeholder={t("actions.pleaseSelect")}
+            required
+          />
 
-        <CustomFieldSelect
-          label={t("fields.savePayloadToCustomField.label")}
-          name="customFieldId"
-        />
-
+          <CustomFieldSelect
+            label={t("fields.savePayloadToCustomField.label")}
+            name="customFieldId"
+          />
+        </LockedDialogFieldset>
         <div className="flex justify-end gap-4">
           <Button onClick={onCompletedForm} type="button" variant="ghost">
             {t("actions.cancel")}
           </Button>
 
           <Button
-            disabled={!form.formState.isValid || form.formState.isSubmitting}
+            disabled={
+              isLocked || !form.formState.isValid || form.formState.isSubmitting
+            }
             type="submit"
           >
             {form.formState.isSubmitting && (

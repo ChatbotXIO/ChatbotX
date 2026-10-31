@@ -26,6 +26,9 @@ import { createId } from "@chatbotx.io/utils"
 import {
   canonicalNumberLiteral,
   customFieldResolutionKey,
+  normalizeCustomFieldName,
+  pickCustomFieldRow,
+  planCustomFieldResolution,
 } from "@chatbotx.io/utils/custom-field"
 import {
   SourceTimezoneStrategy,
@@ -37,13 +40,20 @@ import {
   normalizeCustomFieldValueForStorage,
   type SourceTimezoneResolver,
 } from "../contact-custom-field/normalize"
+import type { ResolvedCustomField } from "../custom-field/service"
 import {
   ChatbotXException,
   notFoundException,
   validationException,
 } from "../errors"
 import { folderService } from "../folder/service"
-import { assertDeletable } from "../template/installed-resource.service"
+import {
+  assertResourceEditable,
+  changedKeysOf,
+  withDeleteGuard,
+} from "../template/installed-resource.service"
+import { TEMPLATE_LOCKED_CONTENT_KEYS } from "../template/lock-policy"
+import { withTemplateLockedTransaction } from "../template/template-resource-locks"
 import type { PaginatedResult } from "../types"
 
 type ListBotFieldsInput = {
@@ -259,21 +269,24 @@ class BotFieldService extends BaseService {
   }
 
   /**
-   * Resolves flow/template bot-field references by `(name, type)` — the same
-   * pair the unique index (`workspaceId`, `type`, `name`) keys on, so it
-   * disambiguates same-name fields of different types instead of colliding
-   * them. Mirrors `customFieldService.resolveByNameAndType` verbatim (shares
-   * `customFieldResolutionKey`, the case/whitespace-insensitive folding, and
-   * the same-batch conflict-race handling) since both tables share an
-   * identical find-or-create-by-(name,type) contract; the only difference is
-   * the target table.
+   * Resolves flow/template bot-field references by `(name, type)`: a same-typed
+   * field is reused, otherwise one is created. A name already used by a field
+   * of ANOTHER type (or by an earlier field of this request) is created as
+   * `<name>_<n>` - exactly the custom-field policy, decided by the same pure
+   * planner (`planCustomFieldResolution`), under the workspace's `bf-names:`
+   * lock. `{{bot_field:<id>}}` tokens address a field by id, so a rename needs
+   * no token rewrite. The outcome per requested field is in `resolved`.
    */
   async resolveByNameAndType(props: {
     workspaceId: string
     fields: { name: string; type: CustomFieldType }[]
     tx?: DatabaseClient
-  }): Promise<{ idMap: Map<string, string>; createdIds: string[] }> {
-    const { workspaceId, fields, tx = db } = props
+  }): Promise<{
+    idMap: Map<string, string>
+    createdIds: string[]
+    resolved: Map<string, ResolvedCustomField>
+  }> {
+    const { workspaceId, fields } = props
 
     const uniqueFields = Array.from(
       new Map(
@@ -281,59 +294,86 @@ class BotFieldService extends BaseService {
       ).values(),
     )
     if (uniqueFields.length === 0) {
-      return { idMap: new Map(), createdIds: [] }
+      return { idMap: new Map(), createdIds: [], resolved: new Map() }
     }
 
-    // Requested names, keyed the same way, so a folded collision can be
-    // broken by "does this row match the requested casing exactly?".
+    const resolve = async (tx: DatabaseClient) => {
+      await this.lockNames(tx, workspaceId)
+      return await this.resolveLocked({ workspaceId, uniqueFields, tx })
+    }
+    const result = props.tx
+      ? await resolve(props.tx)
+      : await db.transaction(resolve)
+
+    // Whole-workspace caches (e.g. the variables package's bot-field map) cache
+    // the ABSENCE of a field too, so a created row must invalidate them or a
+    // template-installed flow's `{{bot_field:<newId>}}` stays unresolved.
+    if (result.createdIds.length > 0) {
+      await this.invalidate({ workspaceId, ids: result.createdIds })
+    }
+    return result
+  }
+
+  /**
+   * What resolving `fields` against this workspace's bot fields does (reuse,
+   * create, or create under a numbered name), without writing. The caller must
+   * hold the name lock when it goes on to write.
+   */
+  async planResolution(props: {
+    workspaceId: string
+    fields: { name: string; type: CustomFieldType }[]
+    tx?: DatabaseClient
+  }) {
+    const { workspaceId, fields, tx = db } = props
+    const existing = (await tx.query.botFieldModel.findMany({
+      where: { workspaceId },
+      columns: { id: true, name: true, type: true },
+    })) as BotFieldModel[]
+    return planCustomFieldResolution(existing, fields)
+  }
+
+  private async resolveLocked(props: {
+    workspaceId: string
+    uniqueFields: { name: string; type: CustomFieldType }[]
+    tx: DatabaseClient
+  }): Promise<{
+    idMap: Map<string, string>
+    createdIds: string[]
+    resolved: Map<string, ResolvedCustomField>
+  }> {
+    const { workspaceId, uniqueFields, tx } = props
+
     const requestedNameByKey = new Map(
       uniqueFields.map(
         (field) =>
           [customFieldResolutionKey(field), field.name.trim()] as const,
       ),
     )
-
-    const byKey = new Map<string, BotFieldModel>()
-    /**
-     * Deterministic winner between two rows folding to the same key: exact
-     * (trimmed) name match beats a case-only match; otherwise the lowest id
-     * — the oldest row — wins. Without this the last row of an unordered
-     * `findMany` would win and the mapping would drift between runs.
-     */
-    const pickBetter = (
-      current: BotFieldModel | undefined,
-      candidate: BotFieldModel,
-      key: string,
-    ): BotFieldModel => {
-      if (!current) {
-        return candidate
-      }
-      const requested = requestedNameByKey.get(key)
-      if (requested !== undefined) {
-        const currentExact = current.name.trim() === requested
-        const candidateExact = candidate.name.trim() === requested
-        if (currentExact !== candidateExact) {
-          return candidateExact ? candidate : current
-        }
-      }
-      return candidate.id < current.id ? candidate : current
-    }
+    const { plans, winners } = await this.planResolution({
+      workspaceId,
+      fields: uniqueFields,
+      tx,
+    })
+    const byKey = new Map<string, BotFieldModel>(winners)
     const remember = (row: BotFieldModel): void => {
       const key = customFieldResolutionKey(row)
-      byKey.set(key, pickBetter(byKey.get(key), row, key))
+      byKey.set(
+        key,
+        pickCustomFieldRow(byKey.get(key), row, requestedNameByKey.get(key)),
+      )
     }
 
-    const existing = await tx.query.botFieldModel.findMany({
-      where: { workspaceId },
-      columns: { id: true, name: true, type: true },
-    })
-    for (const row of existing) {
-      remember(row as BotFieldModel)
+    const missing: { name: string; type: CustomFieldType }[] = []
+    const plannedNameByKey = new Map<string, string>()
+    for (const field of uniqueFields) {
+      const requestedKey = customFieldResolutionKey(field)
+      const plan = plans.get(requestedKey)
+      if (plan && plan.action !== "reuse") {
+        missing.push(field)
+        plannedNameByKey.set(requestedKey, plan.plannedName)
+      }
     }
 
-    const missing = uniqueFields.filter(
-      (field) => !byKey.has(customFieldResolutionKey(field)),
-    )
     const createdIds: string[] = []
     let lostRace = false
 
@@ -344,7 +384,9 @@ class BotFieldService extends BaseService {
           missing.map((field) => ({
             id: createId(),
             workspaceId,
-            name: field.name,
+            name:
+              plannedNameByKey.get(customFieldResolutionKey(field)) ??
+              field.name,
             type: field.type,
           })),
         )
@@ -355,10 +397,8 @@ class BotFieldService extends BaseService {
         createdIds.push(row.id)
         remember(row)
       }
-      // Rows dropped by onConflictDoNothing (a concurrent import won the
-      // race) can't be matched by array position — returning() doesn't
-      // preserve input order or cardinality on partial conflict — so detect
-      // the gap by count and re-select below to pick up the winners' rows.
+      // Rows dropped by onConflictDoNothing can't be matched by position, so
+      // detect the gap by count and re-select to pick up the winners' rows.
       lostRace = inserted.length < missing.length
     }
 
@@ -372,25 +412,27 @@ class BotFieldService extends BaseService {
       }
     }
 
-    const idMap = new Map(
-      uniqueFields.flatMap((field) => {
-        const key = customFieldResolutionKey(field)
-        const row = byKey.get(key)
-        return row ? [[key, row.id] as const] : []
-      }),
-    )
-
-    // Newly created rows must invalidate the workspace tags: whole-workspace
-    // caches (e.g. the variables package's bot-field map) cache the ABSENCE
-    // of a field too, so without this a template-installed flow's
-    // `{{bot_field:<newId>}}` token would stay unresolved until TTL expiry.
-    // (Per-key `findByKey` caches never cached the miss, which is why this
-    // insert historically skipped invalidation.)
-    if (createdIds.length > 0) {
-      await this.invalidate({ workspaceId, ids: createdIds })
+    const resolved = new Map<string, ResolvedCustomField>()
+    for (const field of uniqueFields) {
+      const requestedKey = customFieldResolutionKey(field)
+      const plannedName = plannedNameByKey.get(requestedKey)
+      const renamed =
+        plannedName !== undefined &&
+        normalizeCustomFieldName(plannedName) !==
+          normalizeCustomFieldName(field.name)
+      const row = byKey.get(
+        plannedName === undefined
+          ? requestedKey
+          : customFieldResolutionKey({ name: plannedName, type: field.type }),
+      )
+      if (row) {
+        resolved.set(requestedKey, { id: row.id, name: row.name, renamed })
+      }
     }
-
-    return { idMap, createdIds }
+    const idMap = new Map(
+      [...resolved].map(([key, field]) => [key, field.id] as const),
+    )
+    return { idMap, createdIds, resolved }
   }
 
   /**
@@ -452,9 +494,66 @@ class BotFieldService extends BaseService {
     workspaceId: string
     existing: BotFieldModel
     data: UpdateBotFieldData
+    /** A caller-owned transaction; absent, a locked one is opened here. */
     tx?: DatabaseClient
   }): Promise<BotFieldModel> {
-    const { workspaceId, existing, data, tx = db } = props
+    const { workspaceId, existing, data, tx } = props
+    if (tx) {
+      const updated = await this.writeUpdate({
+        workspaceId,
+        existing,
+        data,
+        tx,
+      })
+      await this.invalidate({ workspaceId, ids: [existing.id] })
+      return updated
+    }
+    // A bare `db` would release the advisory lock at statement end, so the
+    // guard and the write run in one locked transaction; the cache is dropped
+    // after it commits. The field's lock is taken before the stored row is
+    // re-read, so the diff that decides the guard is computed under the lock.
+    const updated = await withTemplateLockedTransaction(
+      (lockedTx) =>
+        this.writeUpdate({ workspaceId, existing, data, tx: lockedTx }),
+      {
+        workspaceId,
+        initialKeys: this.touchesLockedContent(data)
+          ? [{ kind: "botField", resourceId: existing.id }]
+          : [],
+      },
+    )
+    await this.invalidate({ workspaceId, ids: [existing.id] })
+    return updated
+  }
+
+  /** A patch with none of the kind's content keys can never trip the guard, so it needs neither the lock nor a re-read. */
+  private touchesLockedContent(data: UpdateBotFieldData): boolean {
+    return Object.keys(data).some((key) =>
+      TEMPLATE_LOCKED_CONTENT_KEYS.botField.includes(key),
+    )
+  }
+
+  private async writeUpdate(props: {
+    workspaceId: string
+    existing: BotFieldModel
+    data: UpdateBotFieldData
+    tx: DatabaseClient
+  }): Promise<BotFieldModel> {
+    const { workspaceId, data, tx } = props
+
+    // The row the caller read may predate a sync's write; the diff is taken
+    // against the row as it stands now, inside the transaction.
+    const existing = this.touchesLockedContent(data)
+      ? await this.reloadForUpdate({ workspaceId, id: props.existing.id, tx })
+      : props.existing
+
+    await assertResourceEditable({
+      workspaceId,
+      resourceKind: "botField",
+      resourceIds: [existing.id],
+      changedKeys: changedKeysOf(existing, data),
+      tx,
+    })
 
     if (data.folderId && data.folderId !== existing.folderId) {
       await folderService.ensureExists({
@@ -464,23 +563,61 @@ class BotFieldService extends BaseService {
       })
     }
 
-    let updated: BotFieldModel
+    if (data.name !== undefined) {
+      await this.lockNames(tx, workspaceId)
+    }
     try {
-      ;[updated] = await tx
+      const [updated] = await tx
         .update(botFieldModel)
         .set(data)
         .where(eq(botFieldModel.id, existing.id))
         .returning()
+      return updated
     } catch (error) {
       if (isUniqueViolationError(error)) {
         throw validationException("name", "Name is already taken")
       }
       throw error
     }
+  }
 
-    await this.invalidate({ workspaceId, ids: [existing.id] })
+  private async reloadForUpdate(props: {
+    workspaceId: string
+    id: string
+    tx: DatabaseClient
+  }): Promise<BotFieldModel> {
+    const row = await props.tx.query.botFieldModel.findFirst({
+      where: { workspaceId: props.workspaceId, id: props.id },
+    })
+    if (!row) {
+      throw notFoundException("Bot field not found")
+    }
+    return row
+  }
 
-    return updated
+  /**
+   * Serializes every bot-field name write of one workspace (transaction-scoped,
+   * held until the surrounding transaction commits), so a template install that
+   * looked a name up can create it without a concurrent writer taking it first.
+   * Same pattern as the custom-field `cf-names:` lock.
+   */
+  async lockNames(tx: DatabaseClient, workspaceId: string): Promise<void> {
+    await tx.execute(
+      sql`select pg_advisory_xact_lock(hashtextextended(${`bf-names:${workspaceId}`}, 0))`,
+    )
+  }
+
+  /** The bot field with exactly this `(name, type)`, the pair the unique index keys on. */
+  async findByNameAndType(props: {
+    workspaceId: string
+    name: string
+    type: CustomFieldType
+    tx?: DatabaseClient
+  }): Promise<BotFieldModel | undefined> {
+    const { workspaceId, name, type, tx = db } = props
+    return await tx.query.botFieldModel.findFirst({
+      where: { workspaceId, name, type },
+    })
   }
 
   async create(props: {
@@ -504,6 +641,7 @@ class BotFieldService extends BaseService {
       data,
     )
 
+    await this.lockNames(tx, workspaceId)
     let botField: BotFieldModel
     try {
       ;[botField] = await tx
@@ -527,7 +665,7 @@ class BotFieldService extends BaseService {
     data: UpdateBotFieldData
     tx?: DatabaseClient
   }): Promise<BotFieldModel> {
-    const { workspaceId, key, data, tx = db } = props
+    const { workspaceId, key, data, tx } = props
     const existing = await this.findByKeyOrFail({ workspaceId, key, tx })
 
     const preparedData = await this.prepareValuePatch(
@@ -785,22 +923,24 @@ class BotFieldService extends BaseService {
     ids: string[]
     tx?: DatabaseClient
   }): Promise<void> {
-    const { workspaceId, ids, tx = db } = props
+    const { workspaceId, ids } = props
 
-    await assertDeletable({
-      workspaceId,
-      resourceKind: "botField",
-      resourceIds: ids,
-    })
-
-    await tx
-      .delete(botFieldModel)
-      .where(
-        and(
-          eq(botFieldModel.workspaceId, workspaceId),
-          inArray(botFieldModel.id, ids),
-        ),
-      )
+    await withDeleteGuard(
+      {
+        workspaceId,
+        targets: [{ resourceKind: "botField", resourceIds: ids }],
+        tx: props.tx,
+      },
+      (tx) =>
+        tx
+          .delete(botFieldModel)
+          .where(
+            and(
+              eq(botFieldModel.workspaceId, workspaceId),
+              inArray(botFieldModel.id, ids),
+            ),
+          ),
+    )
 
     await this.invalidate({ workspaceId, ids })
   }

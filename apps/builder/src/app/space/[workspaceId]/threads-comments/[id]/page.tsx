@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation"
+import { LockedEditorGuard } from "@/features/templates/components/locked-editor-guard"
 import { EditThreadsCommentForm } from "@/features/threads-comments/components/edit-threads-comment-form"
 import { getThreadsComment } from "@/features/threads-comments/queries"
 import { withWorkspaceIdAndIdSchema } from "@/features/workspaces/schema/resource"
@@ -19,9 +20,15 @@ export default async function EditThreadsCommentPage(props: {
   }
 
   return (
-    <EditThreadsCommentForm
-      initialData={record}
+    <LockedEditorGuard
+      resourceId={data.id}
+      resourceKind="fbCommentAutomation"
       workspaceId={data.workspaceId}
-    />
+    >
+      <EditThreadsCommentForm
+        initialData={record}
+        workspaceId={data.workspaceId}
+      />
+    </LockedEditorGuard>
   )
 }

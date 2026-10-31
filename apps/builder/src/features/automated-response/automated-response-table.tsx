@@ -40,6 +40,10 @@ import { useAction } from "next-safe-action/hooks"
 import React, { Suspense, use, useMemo } from "react"
 import { toast } from "sonner"
 import { FolderBarSlot } from "@/features/folders/folder-bar-slot"
+import {
+  LockBadge,
+  LockedIdsProvider,
+} from "@/features/templates/components/lock-badge"
 import { useWorkspaceId } from "@/hooks/routing"
 import { useFlows } from "../flows/provider/flow-hook"
 import { ChangeFolderDialog } from "../folders/change-folder"
@@ -113,14 +117,15 @@ function AutomatedResponsesTableContent({
         cell: ({ row }) => {
           const { id, keywords } = row.original
           return (
-            <div className="max-w-[200px] truncate">
+            <div className="flex max-w-[200px] items-center">
               <Link
-                className="truncate"
+                className="min-w-0 truncate"
                 href={`/space/${workspaceId}/${basePath}/${id}/edit?${searchParams.toString()}`}
                 title={keywords.join(",")}
               >
                 {keywords.join(",")}
               </Link>
+              <LockBadge resourceId={id} />
             </div>
           )
         },
@@ -263,17 +268,23 @@ function AutomatedResponsesTableContent({
 
   return (
     <>
-      <DataTable table={table}>
-        <DataTableToolbar table={table}>
-          <AutomatedResponseTableToolbarActions
-            folderType={folderType}
-            table={table}
-            type={type}
-            workspaceId={workspaceId}
-          />
-          <AddAutomatedResponseButton basePath={basePath} />
-        </DataTableToolbar>
-      </DataTable>
+      <LockedIdsProvider
+        resourceIds={data.map((row) => row.id)}
+        resourceKind="automatedResponse"
+        workspaceId={workspaceId}
+      >
+        <DataTable table={table}>
+          <DataTableToolbar table={table}>
+            <AutomatedResponseTableToolbarActions
+              folderType={folderType}
+              table={table}
+              type={type}
+              workspaceId={workspaceId}
+            />
+            <AddAutomatedResponseButton basePath={basePath} />
+          </DataTableToolbar>
+        </DataTable>
+      </LockedIdsProvider>
 
       <DeleteAutomatedResponsesDialog
         automatedResponses={

@@ -1,119 +1,71 @@
-import { type DatabaseClient, db, eq } from "@chatbotx.io/database/client"
+import { type DatabaseClient, db, sql } from "@chatbotx.io/database/client"
 import type {
-  FolderType,
   TemplateCategory,
+  TemplatePermissions,
+  TemplateResourceKind,
 } from "@chatbotx.io/database/partials"
-import {
-  templateInstallationModel,
-  templateInstalledResourceModel,
-} from "@chatbotx.io/database/schema"
+import { templateInstallationRepository } from "@chatbotx.io/database/repositories"
+import { templateInstalledResourceModel } from "@chatbotx.io/database/schema"
+import { setLocalStatementTimeout } from "@chatbotx.io/database/statement-timeout"
 import { updateTriggerCache } from "@chatbotx.io/events"
-import { uploader } from "@chatbotx.io/filesystem"
-import type {
-  TemplateExport,
-  TemplateFolderManifestEntry,
-} from "@chatbotx.io/flow-config"
-import { createId, mapWithConcurrency } from "@chatbotx.io/utils"
+import type { TemplateExport } from "@chatbotx.io/flow-config"
+import { createId } from "@chatbotx.io/utils"
 import { aiAgentService } from "../ai-agent/service"
 import { automatedResponseService } from "../automated-response/service"
 import { botFieldService } from "../bot-field/service"
+import { couponService } from "../coupon/service"
 import { customFieldService } from "../custom-field/service"
-import { toPublicErrorMessage } from "../errors"
-import { folderService } from "../folder"
+import { ChatbotXException, toPublicErrorMessage } from "../errors"
 import { logger } from "../logger"
 import { pipelineService } from "../pipeline/service"
-import { resolveCustomFieldManifest } from "./adapters/manifests/custom-fields"
-import { resolveFolderManifest } from "./adapters/manifests/folders"
-import { resolvePipelineManifest } from "./adapters/manifests/pipelines"
-import { resolveProductCategoryManifest } from "./adapters/manifests/product-categories"
-import { resolveTagManifest } from "./adapters/manifests/tags"
-import {
-  TEMPLATE_INSTALL_ORDER,
-  templateAdapterRegistry,
-} from "./adapters/registry"
+import { resolveManifests } from "./adapters/manifests/resolve"
+import { getTemplateAdapter, TEMPLATE_INSTALL_ORDER } from "./adapters/registry"
 import type {
   PatchTask,
+  StagedObjects,
   TemplateInstallContext,
   TemplateInstallWarning,
 } from "./adapters/types"
+import {
+  rewriteBotFieldTokensDeep,
+  rewriteCouponTokensDeep,
+  rewriteFieldTokensDeep,
+} from "./field-token-binder"
+import {
+  placeRootEntriesInInstallRoots,
+  rootLevelFolderTypes,
+} from "./install-root-placement"
+import {
+  flushPublishEffects,
+  PUBLISH_EFFECTS_SWEEP_GRACE_MS,
+} from "./publish-effects"
+import { stampSyncedHashes } from "./sync-hash"
+import { COUPON_TOPICS_CATEGORY, entriesForCategory } from "./template-entries"
+import { INSTALL_LEASE_MS, STAGED_CLEANUP_LEASE_MS } from "./template-leases"
+import { markTemplateEngineTransaction } from "./template-resource-locks"
+import { deleteInstallStagedObjects } from "./template-staged-cleanup"
+import { stageTemplateObjects } from "./template-staging"
 
 const MAX_STORED_WARNINGS = 200
 
-type TrackedResource = {
+// The lease was committed before the apply transaction, and storage copies are
+// staged before it opens (see `stageTemplateObjects`). The cap bounds a stuck
+// statement.
+const TEMPLATE_INSTALL_STATEMENT_TIMEOUT = "60s"
+// Built when the install runs, not at import: this module sits behind the
+// business barrel, which unrelated suites import with a partial client mock.
+const idleTimeoutStatement = () =>
+  sql.raw("SET LOCAL idle_in_transaction_session_timeout = '30s'")
+
+export type TrackedResource = {
   category: TemplateCategory
-  resourceKind: string
+  resourceKind: TemplateResourceKind
   resourceId: string
   sourceResourceId: string
   wasExisting: boolean
 }
 
-/**
- * Every folder-manifest entry is annotated with the category it actually
- * belongs to, so `resolveFolderManifest`'s provenance/warnings land on the
- * right category rather than a hardcoded one — see `manifests/folders.ts`.
- */
-type FolderManifestByCategory = Partial<
-  Record<TemplateCategory, TemplateExport["manifests"]["folders"]>
->
-
-const groupFoldersByCategory = (
-  folders: TemplateExport["manifests"]["folders"],
-): FolderManifestByCategory => {
-  const grouped: FolderManifestByCategory = {}
-  for (const [sourceId, entry] of Object.entries(folders)) {
-    const category = folderTypeToCategory(entry.folderType)
-    const bucket = grouped[category] ?? {}
-    bucket[sourceId] = entry
-    grouped[category] = bucket
-  }
-  return grouped
-}
-
-/**
- * Maps a folder's `folderType` back to the template category that owns it,
- * for provenance/warning attribution only — install ordering for folders
- * themselves is unaffected (all folders resolve in Phase R, before any
- * category-specific ordering applies).
- */
-const folderTypeToCategory = (folderType: string): TemplateCategory => {
-  switch (folderType) {
-    case "automatedResponse":
-    case "outboundAutomatedResponse":
-      return "keywords"
-    case "trigger":
-      return "triggers"
-    case "customField":
-      return "settings"
-    default:
-      return "flows"
-  }
-}
-
-/**
- * Flattens `resources.settings.{savedReplies,botFields}` into one array with
- * an injected `kind` discriminator, matching `settingsAdapter`'s expected
- * entry shape — the only category whose stored resources aren't already a
- * flat array of `{sourceId, ...}` rows.
- */
-const flattenSettingsEntries = (
-  settings: TemplateExport["resources"]["settings"],
-): (Record<string, unknown> & { sourceId: string })[] => [
-  ...settings.savedReplies.map((entry) => ({ ...entry, kind: "savedReply" })),
-  ...settings.botFields.map((entry) => ({ ...entry, kind: "botField" })),
-]
-
-const entriesForCategory = (
-  resources: TemplateExport["resources"],
-  category: TemplateCategory,
-): (Record<string, unknown> & { sourceId: string })[] => {
-  if (category === "settings") {
-    return flattenSettingsEntries(resources.settings)
-  }
-  const value = resources[category as keyof typeof resources]
-  return Array.isArray(value)
-    ? (value as (Record<string, unknown> & { sourceId: string })[])
-    : []
-}
+export { entriesForCategory } from "./template-entries"
 
 /**
  * Builds the mutable `TemplateInstallContext` shared across all three
@@ -123,11 +75,20 @@ const entriesForCategory = (
  * below) rather than as an unawaited per-call side effect racing the
  * transaction commit.
  */
-const createInstallContext = (
-  tx: DatabaseClient,
-  installationId: string,
-  workspaceId: string,
-  copiedObjectPaths: string[],
+export type CreateInstallContextInput = {
+  tx: DatabaseClient
+  installationId: string
+  workspaceId: string
+  /** `{ sourceInboxId: targetInboxId }` the installer chose, if any. */
+  inboxBindings?: Readonly<Record<string, string>>
+  /** The workspace the template was published from. */
+  sourceWorkspaceId: string
+  /** Storage objects the staging pre-phase already copied. */
+  staged?: StagedObjects
+}
+
+export const createInstallContext = (
+  input: CreateInstallContextInput,
 ): {
   ctx: TemplateInstallContext
   tracked: TrackedResource[]
@@ -139,10 +100,13 @@ const createInstallContext = (
   const resourceCount = { value: 0 }
 
   const ctx: TemplateInstallContext = {
-    tx,
-    workspaceId,
-    installationId,
+    tx: input.tx,
+    workspaceId: input.workspaceId,
+    installationId: input.installationId,
     idMaps: {},
+    inboxBindings: input.inboxBindings,
+    sourceWorkspaceId: input.sourceWorkspaceId,
+    staged: input.staged,
     track: (entry) => {
       tracked.push(entry)
       resourceCount.value++
@@ -152,19 +116,41 @@ const createInstallContext = (
         warnings.push(warning)
       }
     },
-    trackCopiedObject: (path) => {
-      copiedObjectPaths.push(path)
-    },
   }
 
   return { ctx, tracked, warnings, resourceCount }
 }
 
-const flushTracked = async (
+/** What a copy may do once installed; a reused row is never locked. */
+type ItemLock = { allowEdit: boolean; allowDelete: boolean }
+
+/**
+ * The lock a tracked copy installs with, copied once and never re-derived: the
+ * template's install-wide `allowEdit` / `allowDelete`, narrowed by the item's
+ * own View-only choice in the payload's `permissions` map.
+ */
+export const lockFor = (
+  entry: TrackedResource,
+  input: Pick<TemplateInstallRunInput, "payload" | "permissions">,
+): ItemLock => {
+  if (entry.wasExisting) {
+    return { allowEdit: true, allowDelete: true }
+  }
+  const itemLocked =
+    input.payload.permissions?.[entry.category]?.[entry.sourceResourceId]
+      ?.allowEdit === false
+  return {
+    allowEdit: input.permissions.allowEdit && !itemLocked,
+    allowDelete: input.permissions.allowDelete,
+  }
+}
+
+export const flushTracked = async (
   tx: DatabaseClient,
   installationId: string,
   workspaceId: string,
   tracked: TrackedResource[],
+  lockOf: (entry: TrackedResource) => ItemLock,
 ): Promise<void> => {
   if (tracked.length === 0) {
     return
@@ -179,6 +165,7 @@ const flushTracked = async (
       resourceId: entry.resourceId,
       sourceResourceId: entry.sourceResourceId,
       wasExisting: entry.wasExisting,
+      ...lockOf(entry),
     })),
   )
   tracked.length = 0
@@ -189,78 +176,8 @@ type RunInstallResult = {
   warnings: TemplateInstallWarning[]
   resourceCount: number
   installFolderId: string | null
-}
-
-/**
- * When the source template has `createInstallFolder` enabled, creates one
- * root folder per distinct `FolderType` present in the manifest, pre-seeds
- * `ctx.idMaps.folder` with each root's id under a synthetic sourceId, and
- * rewrites every root-level entry (`parentSourceId: null`) to point at that
- * synthetic sourceId — so `resolveFolderManifest` nests it under the new
- * root without ever needing a fabricated manifest entry of its own.
- *
- * Threading the parent through at manifest-resolution time (rather than
- * `folderService.changeFolder` after the fact) avoids the
- * `automatedResponse`/`outboundAutomatedResponse` shared-table scoping trap
- * documented on `FolderService.changeFolder` (AGENTS.md invariant #17).
- *
- * Returns the first created root folder id (for display on
- * `TemplateInstallation.installFolderId`) — categories sharing one
- * `FolderType` (e.g. Keywords' two automatedResponse variants) still nest
- * under the same single root per type.
- */
-const nestManifestUnderInstallFolders = async (
-  ctx: TemplateInstallContext,
-  templateName: string,
-  folders: Readonly<Record<string, TemplateFolderManifestEntry>>,
-): Promise<{
-  folders: Record<string, TemplateFolderManifestEntry>
-  installFolderId: string | null
-}> => {
-  const folderTypesUsed = new Set(
-    Object.values(folders).map((entry) => entry.folderType),
-  )
-  if (folderTypesUsed.size === 0) {
-    return { folders: { ...folders }, installFolderId: null }
-  }
-
-  if (!ctx.idMaps.folder) {
-    ctx.idMaps.folder = new Map()
-  }
-  const idMap = ctx.idMaps.folder
-
-  const rootSourceIdByFolderType = new Map<string, string>()
-  let firstRootId: string | null = null
-  for (const folderType of folderTypesUsed) {
-    const root = await folderService.create({
-      workspaceId: ctx.workspaceId,
-      data: {
-        name: templateName,
-        parentId: null,
-        folderType: folderType as FolderType,
-      },
-      tx: ctx.tx,
-    })
-    const rootSourceId = `__installRoot:${folderType}`
-    idMap.set(rootSourceId, root.id)
-    rootSourceIdByFolderType.set(folderType, rootSourceId)
-    firstRootId ??= root.id
-  }
-
-  const nested = Object.fromEntries(
-    Object.entries(folders).map(([sourceId, entry]) => [
-      sourceId,
-      entry.parentSourceId === null
-        ? {
-            ...entry,
-            parentSourceId:
-              rootSourceIdByFolderType.get(entry.folderType) ?? null,
-          }
-        : entry,
-    ]),
-  )
-
-  return { folders: nested, installFolderId: firstRootId }
+  /** Flows installed with a published version, for the after-publish effects. */
+  publishedFlows: { flowId: string; versionId: string }[]
 }
 
 /**
@@ -272,94 +189,140 @@ const nestManifestUnderInstallFolders = async (
  * webchat's quota exhaustion, an unresolved reference) degrade to a
  * `warnings` entry instead of throwing.
  */
-/**
- * Best-effort cleanup of storage objects an aborted install copied: the
- * transaction rolled their rows back, so nothing references them anymore.
- * A failed delete is only logged — it must not mask the install error.
- */
-const deleteCopiedObjects = async (paths: string[]): Promise<void> => {
-  const results = await mapWithConcurrency(paths, 4, (path) =>
-    uploader.deleteObject(path),
-  )
-  for (const [index, result] of results.entries()) {
-    if (result.status === "rejected") {
-      logger.warn(
-        { err: result.reason, path: paths[index] },
-        "Template install: could not delete a copied object after rollback",
-      )
-    }
-  }
-}
-
 const runInstall = async (
   tx: DatabaseClient,
-  input: {
-    installationId: string
-    workspaceId: string
-    payload: TemplateExport
-    templateName: string
-    createInstallFolder: boolean
-  },
-  copiedObjectPaths: string[],
+  input: TemplateInstallRunInput,
+  staged: StagedObjects,
 ): Promise<RunInstallResult> => {
-  const { ctx, tracked, warnings, resourceCount } = createInstallContext(
+  const lockOf = (entry: TrackedResource) => lockFor(entry, input)
+  const { ctx, tracked, warnings, resourceCount } = createInstallContext({
+    tx,
+    installationId: input.installationId,
+    workspaceId: input.workspaceId,
+    inboxBindings: input.inboxBindings,
+    sourceWorkspaceId: input.payload.source.workspaceId,
+    staged,
+  })
+  const publishedFlows: RunInstallResult["publishedFlows"] = []
+  ctx.publishedFlows = publishedFlows
+
+  const { installFolderId } = await resolveManifests(
+    ctx,
+    input.payload.manifests,
+    {
+      skipMapped: false,
+      mayUse: () => true,
+      installFolder: input.createInstallFolder
+        ? { templateName: input.templateName, mode: "create" }
+        : undefined,
+      rootFolderTypes: input.createInstallFolder
+        ? rootLevelFolderTypes(input.payload.resources)
+        : undefined,
+    },
+  )
+  await flushTracked(
     tx,
     input.installationId,
     input.workspaceId,
-    copiedObjectPaths,
+    tracked,
+    lockOf,
   )
 
-  let installFolderId: string | null = null
-  let folderManifest = input.payload.manifests.folders
-  if (input.createInstallFolder) {
-    const nested = await nestManifestUnderInstallFolders(
-      ctx,
-      input.templateName,
-      folderManifest,
-    )
-    folderManifest = nested.folders
-    installFolderId = nested.installFolderId
-  }
-
-  const foldersByCategory = groupFoldersByCategory(folderManifest)
-  for (const [category, folders] of Object.entries(foldersByCategory)) {
-    await resolveFolderManifest(ctx, folders, category as TemplateCategory)
-  }
-  await resolveCustomFieldManifest(ctx, input.payload.manifests.customFields)
-  await resolveTagManifest(ctx, input.payload.manifests.tags)
-  await resolveProductCategoryManifest(
-    ctx,
-    input.payload.manifests.productCategories,
+  // A field reused under another spelling, or created under a renamed name, is
+  // addressed by `{{name}}` in the shipped text, so the tokens follow it.
+  const resources = rewriteFieldTokensDeep(
+    input.createInstallFolder
+      ? placeRootEntriesInInstallRoots(input.payload.resources)
+      : input.payload.resources,
+    ctx.customFieldNameBindings ?? new Map(),
   )
-  await resolvePipelineManifest(ctx, input.payload.manifests.pipelines)
-  await flushTracked(tx, input.installationId, input.workspaceId, tracked)
 
   const patchTasks: PatchTask[] = []
-  for (const category of TEMPLATE_INSTALL_ORDER) {
-    const adapter =
-      templateAdapterRegistry[category as keyof typeof templateAdapterRegistry]
+  const insertedCategories = new Set<TemplateCategory>()
+  const insertCategory = async (category: TemplateCategory): Promise<void> => {
+    const adapter = getTemplateAdapter(category)
     if (!adapter) {
-      continue
+      return
     }
-    const entries = entriesForCategory(input.payload.resources, category)
+    // Coupon topics install before every category that can name one, so the
+    // `{{coupon:<id>}}` tokens in this category's text can follow them.
+    // Likewise `{{bot_field:<id>}}` follows the Account Field it resolved to
+    // (settings installs before every category that can carry the text).
+    const entries = rewriteBotFieldTokensDeep(
+      rewriteCouponTokensDeep(
+        entriesForCategory(resources, category).filter(
+          (entry) => !adapter.earlyEntry?.(entry),
+        ),
+        ctx.idMaps.couponTopic,
+      ),
+      ctx.idMaps.botField,
+    )
     if (entries.length === 0) {
+      return
+    }
+    patchTasks.push(...(await adapter.insert(ctx, entries)))
+    await flushTracked(
+      tx,
+      input.installationId,
+      input.workspaceId,
+      tracked,
+      lockOf,
+    )
+  }
+
+  // Coupon topics go in before the early entries: a bot field's value can
+  // carry `{{coupon:<id>}}`, which needs the installed topic's id.
+  await insertCategory(COUPON_TOPICS_CATEGORY)
+  insertedCategories.add(COUPON_TOPICS_CATEGORY)
+
+  // Early entries (settings' bot fields) resolve before any category:
+  // `{{bot_field:<id>}}` text in a questionnaire, product or saved reply must
+  // follow the field it names, and those are written before or with settings.
+  for (const category of TEMPLATE_INSTALL_ORDER) {
+    const adapter = getTemplateAdapter(category)
+    if (!(adapter?.earlyEntry && adapter.insertEarly)) {
       continue
     }
-    const tasks = await adapter.insert(ctx, entries)
-    patchTasks.push(...tasks)
-    await flushTracked(tx, input.installationId, input.workspaceId, tracked)
+    const early = rewriteCouponTokensDeep(
+      entriesForCategory(resources, category).filter(adapter.earlyEntry),
+      ctx.idMaps.couponTopic,
+    )
+    if (early.length === 0) {
+      continue
+    }
+    await adapter.insertEarly(ctx, early)
+    await flushTracked(
+      tx,
+      input.installationId,
+      input.workspaceId,
+      tracked,
+      lockOf,
+    )
+  }
+
+  for (const category of TEMPLATE_INSTALL_ORDER) {
+    if (!insertedCategories.has(category)) {
+      await insertCategory(category)
+    }
   }
 
   for (const task of patchTasks) {
     await task.apply(ctx)
   }
-  await flushTracked(tx, input.installationId, input.workspaceId, tracked)
+  await flushTracked(
+    tx,
+    input.installationId,
+    input.workspaceId,
+    tracked,
+    lockOf,
+  )
 
   return {
     status: warnings.length > 0 ? "partial" : "completed",
     warnings,
     resourceCount: resourceCount.value,
     installFolderId,
+    publishedFlows,
   }
 }
 
@@ -372,7 +335,9 @@ const runInstall = async (
  * agents. An installed trigger or AI agent was previously served stale until
  * something else evicted it.
  */
-const invalidateAfterCommit = async (workspaceId: string): Promise<void> => {
+export const invalidateAfterCommit = async (
+  workspaceId: string,
+): Promise<void> => {
   await Promise.all([
     customFieldService.invalidate({ workspaceId }),
     // Bot fields created by the settings adapter invalidate inside the tx
@@ -384,60 +349,313 @@ const invalidateAfterCommit = async (workspaceId: string): Promise<void> => {
     updateTriggerCache(workspaceId),
     aiAgentService.invalidate({ workspaceId }),
     pipelineService.invalidateList(workspaceId),
+    couponService.invalidate(workspaceId),
   ])
+}
+
+/**
+ * Raised inside the apply transaction when the lease was lost (another
+ * worker reclaimed the row), so every write of this attempt rolls back.
+ */
+const TEMPLATE_INSTALL_LEASE_LOST_CODE = "templateInstallLeaseLost"
+
+const templateInstallLeaseLostException = () =>
+  new ChatbotXException(
+    "The template install lease was lost",
+    TEMPLATE_INSTALL_LEASE_LOST_CODE,
+  )
+
+/** A `pending` row younger than this may still be on its way to the queue. */
+const TEMPLATE_INSTALL_UNCLAIMED_GRACE_MS = 5 * 60 * 1000
+/** The sweep stops retrying an installation this old. */
+const TEMPLATE_INSTALL_REDISPATCH_MAX_AGE_MS = 24 * 60 * 60 * 1000
+
+const unfinishedWindow = (now: number) => ({
+  pendingBefore: new Date(now - TEMPLATE_INSTALL_UNCLAIMED_GRACE_MS),
+  leaseExpiredBefore: new Date(now - INSTALL_LEASE_MS),
+})
+
+export type TemplateInstallRunInput = {
+  installationId: string
+  workspaceId: string
+  claimToken: string
+  /** The installation's copied permissions (`allowEdit` / `allowDelete`). */
+  permissions: TemplatePermissions
+  /** `{ sourceInboxId: targetInboxId }` the installer chose, if any. */
+  inboxBindings?: Readonly<Record<string, string>>
+  payload: TemplateExport
+  templateName: string
+  createInstallFolder: boolean
+  /** The template version being applied; recorded on the copies as their baseline. */
+  sourceVersion: number
+  /**
+   * `TemplateInstallation.stagingGeneration`: the storage keys this attempt
+   * stages under. Absent means the first generation.
+   */
+  stagingGeneration?: number
+}
+
+/**
+ * Deletes the staged objects of every generation an installation still owes,
+ * oldest first, under the cleanup lease. A generation counts as cleaned only
+ * when no key failed to delete, so a partial or throwing delete is retried by
+ * the sweep; the lease is released either way. True when everything owed is gone.
+ *
+ * `stamp: false` deletes without recording it: right after a failure, a
+ * stale attempt of the same generation (its lease lost, still copying) may
+ * write a key after this delete, so only the sweep — past twice the install
+ * lease, when nothing can still write — stamps the generation clean.
+ */
+const cleanStagedObjects = async (input: {
+  installationId: string
+  completedBefore: Date
+  stamp: boolean
+}): Promise<boolean> => {
+  const claim = await templateInstallationRepository.claimStagedObjectsCleanup({
+    id: input.installationId,
+    completedBefore: input.completedBefore,
+    leaseExpiredBefore: new Date(Date.now() - STAGED_CLEANUP_LEASE_MS),
+  })
+  if (!claim) {
+    return false
+  }
+  let done = true
+  try {
+    for (let generation = claim.from; generation <= claim.to; generation += 1) {
+      const result = await deleteInstallStagedObjects({
+        workspaceId: claim.workspaceId,
+        installationId: input.installationId,
+        generation,
+      })
+      if (result.failed > 0) {
+        done = false
+        break
+      }
+      if (!input.stamp) {
+        continue
+      }
+      await templateInstallationRepository.advanceStagedCleanedGeneration({
+        id: input.installationId,
+        from: generation,
+        to: generation,
+      })
+    }
+  } finally {
+    await templateInstallationRepository.releaseStagedObjectsCleanup(
+      input.installationId,
+    )
+  }
+  return done
 }
 
 export const templateInstallService = {
   /**
-   * Runs the full install inside one transaction; writes `status` (
-   * `installing` -> `completed`/`partial`) before commit. On any thrown
-   * error the transaction rolls back entirely and `status: "failed"` is
-   * written in a SEPARATE transaction afterward (the `importService.fail`
-   * pattern) — a rolled-back transaction cannot itself carry the failure
-   * record.
+   * Takes the install lease in one statement. `null` means the job is a
+   * redelivery or another worker owns the row — the caller must do nothing.
    */
-  async run(input: {
+  async claim(input: {
     installationId: string
     workspaceId: string
-    payload: TemplateExport
-    templateName: string
-    createInstallFolder: boolean
-  }): Promise<void> {
-    const copiedObjectPaths: string[] = []
-    try {
-      await db.transaction(async (tx) => {
-        await tx
-          .update(templateInstallationModel)
-          .set({ status: "installing" })
-          .where(eq(templateInstallationModel.id, input.installationId))
+  }): Promise<{ claimToken: string } | null> {
+    const claimToken = createId()
+    const claimed = await templateInstallationRepository.claim({
+      id: input.installationId,
+      workspaceId: input.workspaceId,
+      claimToken,
+      leaseExpiredBefore: new Date(Date.now() - INSTALL_LEASE_MS),
+    })
+    return claimed ? { claimToken } : null
+  },
 
-        const outcome = await runInstall(tx, input, copiedObjectPaths)
-
-        await tx
-          .update(templateInstallationModel)
-          .set({
-            status: outcome.status,
-            warnings: outcome.warnings,
-            warningCount: outcome.warnings.length,
-            resourceCount: outcome.resourceCount,
-            installFolderId: outcome.installFolderId,
-            completedAt: new Date(),
-          })
-          .where(eq(templateInstallationModel.id, input.installationId))
+  /**
+   * One bounded apply transaction: every write is fenced by the lease, and
+   * it commits together with `completed`/`partial`. On any thrown error the
+   * transaction rolls back entirely and the row is left `installing` — the
+   * caller (the worker handler) classifies the error and either releases the
+   * claim for a retry or records the terminal failure via `fail`.
+   */
+  async run(input: TemplateInstallRunInput): Promise<void> {
+    {
+      // Storage I/O happens here, before the transaction: inside it the copies
+      // would hold a connection idle past `idle_in_transaction_session_timeout`.
+      const staged = await stageTemplateObjects({
+        ctx: {
+          workspaceId: input.workspaceId,
+          // Keys are deterministic per (installation, generation), so a
+          // redelivery overwrites them. Nothing deletes them on a failed
+          // attempt (a lease check before a delete is not atomic): a FINAL
+          // failure deletes its generation by prefix, see `fail` and
+          // `cleanupFailedObjects`, while a manual retry stages under the next
+          // generation and never meets that delete.
+          installationId: input.installationId,
+          scope: { generation: input.stagingGeneration ?? 0 },
+          sourceWorkspaceId: input.payload.source.workspaceId,
+          trackCopiedObject: () => undefined,
+        },
+        resources: input.payload.resources,
       })
+      await db.transaction(async (tx) => {
+        markTemplateEngineTransaction(tx)
+        await setLocalStatementTimeout(tx, TEMPLATE_INSTALL_STATEMENT_TIMEOUT)
+        await tx.execute(idleTimeoutStatement())
 
-      await invalidateAfterCommit(input.workspaceId)
-    } catch (error) {
-      await deleteCopiedObjects(copiedObjectPaths)
-      await db
-        .update(templateInstallationModel)
-        .set({
-          status: "failed",
-          errorMessage: toPublicErrorMessage(error, "Template install failed"),
-          completedAt: new Date(),
-        })
-        .where(eq(templateInstallationModel.id, input.installationId))
-      throw error
+        const outcome = await runInstall(tx, input, staged)
+        await stampSyncedHashes(tx, input.installationId, input.sourceVersion)
+
+        const completed = await templateInstallationRepository.complete(
+          {
+            id: input.installationId,
+            claimToken: input.claimToken,
+            completion: {
+              status: outcome.status,
+              warnings: outcome.warnings,
+              warningCount: outcome.warnings.length,
+              resourceCount: outcome.resourceCount,
+              installFolderId: outcome.installFolderId,
+              // Owed until run: a crash after commit cannot lose them.
+              pendingPublishEffects:
+                outcome.publishedFlows.length > 0
+                  ? outcome.publishedFlows
+                  : null,
+            },
+          },
+          tx,
+        )
+        if (!completed) {
+          throw templateInstallLeaseLostException()
+        }
+      })
     }
+
+    await invalidateAfterCommit(input.workspaceId)
+    // Same effects as a manual publish (version-list cache, Meta welcome-flow
+    // sync, stale quick-reply state), which only make sense once the rows are
+    // committed. Recorded on the installation by the completion above, so the
+    // sweep re-runs them if this process dies here.
+    await flushPublishEffects({
+      installationId: input.installationId,
+      workspaceId: input.workspaceId,
+    })
+  },
+
+  /** Runs the after-publish effects an installation still owes (see `flushPublishEffects`). */
+  flushPublishEffects,
+
+  /** Installations that committed but never ran their after-publish effects. */
+  listPendingPublishEffects(limit: number) {
+    return templateInstallationRepository.listWithPendingPublishEffects({
+      settledBefore: new Date(Date.now() - PUBLISH_EFFECTS_SWEEP_GRACE_MS),
+      limit,
+    })
+  },
+
+  /**
+   * Installations nobody finished — never enqueued / job lost, or a worker
+   * that died holding the lease — and still young enough to retry.
+   */
+  listStale(limit: number) {
+    const now = Date.now()
+    return templateInstallationRepository.listStale({
+      ...unfinishedWindow(now),
+      createdAfter: new Date(now - TEMPLATE_INSTALL_REDISPATCH_MAX_AGE_MS),
+      limit,
+    })
+  },
+
+  /** Closes what the sweep has stopped retrying, so nothing stays pending forever. */
+  abandonStale(): Promise<number> {
+    const now = Date.now()
+    return templateInstallationRepository.failAbandoned({
+      ...unfinishedWindow(now),
+      createdBefore: new Date(now - TEMPLATE_INSTALL_REDISPATCH_MAX_AGE_MS),
+      errorCode: "templateInstallAbandoned",
+      errorMessage: "The template install could not be completed",
+    })
+  },
+
+  /** Gives the claim back so BullMQ's retry (or the sweep) can run the install again. */
+  async release(input: {
+    installationId: string
+    claimToken: string
+  }): Promise<void> {
+    await templateInstallationRepository.release({
+      id: input.installationId,
+      claimToken: input.claimToken,
+    })
+  },
+
+  /** Records the terminal failure, fenced by the lease, in its own transaction. */
+  async fail(input: {
+    installationId: string
+    workspaceId: string
+    claimToken: string
+    errorCode: string
+    error: unknown
+  }): Promise<void> {
+    const failed = await templateInstallationRepository.fail({
+      id: input.installationId,
+      claimToken: input.claimToken,
+      errorCode: input.errorCode,
+      errorMessage: toPublicErrorMessage(
+        input.error,
+        "Template install failed",
+      ),
+    })
+    if (!failed) {
+      // Fenced out: another attempt owns the row and may reference the keys.
+      return
+    }
+    // Terminal and unclaimed now: free the storage at once, but leave the
+    // generation owed — the sweep deletes it again past the lease window and
+    // only then stamps it, catching a late write by a stale attempt.
+    try {
+      await cleanStagedObjects({
+        installationId: input.installationId,
+        completedBefore: new Date(Date.now() + 1000),
+        stamp: false,
+      })
+    } catch (err) {
+      logger.warn(
+        { err, installationId: input.installationId },
+        "Template: could not clean a failed install's staged objects",
+      )
+    }
+  },
+
+  /**
+   * The sweep's half of the cleanup: staged-object generations whose delete
+   * never finished — a failed install past its lease window, or the earlier
+   * generations of a retried one. Each row is leased before deleting, so one
+   * worker does it, and is stamped clean only after every key is gone.
+   */
+  async cleanupFailedObjects(limit: number): Promise<number> {
+    const now = Date.now()
+    const completedBefore = new Date(now - 2 * INSTALL_LEASE_MS)
+    const rows =
+      await templateInstallationRepository.listWithStagedObjectsToClean({
+        completedBefore,
+        leaseExpiredBefore: new Date(now - STAGED_CLEANUP_LEASE_MS),
+        limit,
+      })
+    let cleaned = 0
+    for (const row of rows) {
+      try {
+        if (
+          await cleanStagedObjects({
+            installationId: row.id,
+            completedBefore,
+            stamp: true,
+          })
+        ) {
+          cleaned += 1
+        }
+      } catch (err) {
+        logger.warn(
+          { err, installationId: row.id },
+          "Template: could not clean a failed install's staged objects",
+        )
+      }
+    }
+    return cleaned
   },
 }

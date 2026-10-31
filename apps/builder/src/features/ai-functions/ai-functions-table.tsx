@@ -13,6 +13,7 @@ import { useDataTable } from "@chatbotx.io/ui/hooks/use-data-table"
 import { useRouter } from "next/navigation"
 import { useLocale, useTranslations } from "next-intl"
 import { use, useMemo, useState } from "react"
+import { LockedIdsProvider } from "@/features/templates/components/lock-badge"
 import {
   type AIFunctionRowAction,
   getAIFunctionsColumns,
@@ -65,34 +66,41 @@ export function AIFunctionsTable({
         <CardDescription>{t("aiFunctions.description")}</CardDescription>
       </CardHeader>
       <CardContent>
-        <DataTable table={table}>
-          <DataTableToolbar table={table}>
-            <AIFunctionsTableToolbarActions workspaceId={workspaceId} />
-          </DataTableToolbar>
-        </DataTable>
-
-        <AIFunctionsCreate
-          initialData={rowAction?.row.original}
-          mode={rowAction?.variant === "duplicate" ? "duplicate" : "edit"}
-          onOpenChange={(open) => !open && setRowAction(null)}
-          onSuccess={() => {
-            router.refresh()
-          }}
-          open={
-            rowAction?.variant === "edit" || rowAction?.variant === "duplicate"
-          }
+        <LockedIdsProvider
+          resourceIds={data.map((row) => row.id)}
+          resourceKind="aiFunction"
           workspaceId={workspaceId}
-        />
+        >
+          <DataTable table={table}>
+            <DataTableToolbar table={table}>
+              <AIFunctionsTableToolbarActions workspaceId={workspaceId} />
+            </DataTableToolbar>
+          </DataTable>
 
-        <DeleteAIFunctionDialog
-          aiFunction={rowAction?.row.original ?? null}
-          onOpenChange={(open) => !open && setRowAction(null)}
-          onSuccess={() => {
-            router.refresh()
-          }}
-          open={rowAction?.variant === "delete"}
-          workspaceId={workspaceId}
-        />
+          <AIFunctionsCreate
+            initialData={rowAction?.row.original}
+            mode={rowAction?.variant === "duplicate" ? "duplicate" : "edit"}
+            onOpenChange={(open) => !open && setRowAction(null)}
+            onSuccess={() => {
+              router.refresh()
+            }}
+            open={
+              rowAction?.variant === "edit" ||
+              rowAction?.variant === "duplicate"
+            }
+            workspaceId={workspaceId}
+          />
+
+          <DeleteAIFunctionDialog
+            aiFunction={rowAction?.row.original ?? null}
+            onOpenChange={(open) => !open && setRowAction(null)}
+            onSuccess={() => {
+              router.refresh()
+            }}
+            open={rowAction?.variant === "delete"}
+            workspaceId={workspaceId}
+          />
+        </LockedIdsProvider>
       </CardContent>
     </Card>
   )

@@ -42,8 +42,21 @@ vi.mock("../src/audit/dispatcher", () => ({
   dispatchAuditRecord: mocks.dispatchAuditRecord,
 }))
 
-vi.mock("../src/template/installed-resource.service", () => ({
-  assertDeletable: mocks.assertDeletable,
+// Run the locked transaction against the same mocked client the test asserts on.
+vi.mock("../src/template/template-resource-locks", async () => {
+  const { db } = await import("@chatbotx.io/database/client")
+  return {
+    withTemplateLockedTransaction: (run: (tx: unknown) => unknown) => run(db),
+  }
+})
+
+vi.mock("../src/template/installed-resource.service", async () => ({
+  ...(await import("./helpers/template-guard-mocks")).templateGuardMocks({
+    assertDeletable: mocks.assertDeletable,
+    assertResourceEditable: vi.fn(),
+  }),
+  assertReferencable: vi.fn(),
+  changedKeysOf: vi.fn(() => []),
 }))
 
 // This suite doesn't exercise `create` (which needs `flowService.exists`),
@@ -248,6 +261,29 @@ describe("automatedResponseService — type scoping (Contact vs Page keywords)",
     })
   })
 
+  test("deleteMany hands its transaction and an uninstall exclusion to the delete guard", async () => {
+    const tx = { delete: vi.fn(() => ({ where: mocks.deleteWhere })) }
+    mocks.deleteWhere.mockReturnValue({ returning: mocks.deleteReturning })
+    mocks.deleteReturning.mockResolvedValue([])
+
+    await automatedResponseService.deleteMany(
+      "workspace-1",
+      ["automation-1"],
+      "inbound",
+      tx as never,
+      { excludeInstallationIds: ["inst-1"] },
+    )
+
+    expect(mocks.assertDeletable).toHaveBeenCalledWith(
+      expect.objectContaining({
+        resourceKind: "automatedResponse",
+        resourceIds: ["automation-1"],
+        tx,
+        excludeInstallationIds: ["inst-1"],
+      }),
+    )
+  })
+
   test("findOrFail scopes the lookup by type", async () => {
     mocks.findFirst.mockResolvedValueOnce(undefined)
 
@@ -329,7 +365,7 @@ describe("automatedResponseService.update — keywords and flowId/text invariant
     expect(mocks.flowExists).toHaveBeenCalledWith(
       "workspace-1",
       "flow-1",
-      undefined,
+      expect.anything(),
     )
     expect(mocks.updateSet).toHaveBeenCalledWith(
       expect.objectContaining({ flowId: "flow-1", text: null }),
@@ -370,7 +406,7 @@ describe("automatedResponseService.create — flowId XOR text", () => {
     expect(mocks.flowExists).toHaveBeenCalledWith(
       "workspace-1",
       "flow-1",
-      undefined,
+      expect.anything(),
     )
     expect(mocks.insertValues).toHaveBeenCalledWith(
       expect.objectContaining({ flowId: "flow-1", text: undefined }),
@@ -455,5 +491,28 @@ describe("automatedResponseService.create — flowId XOR text", () => {
     })
 
     expect(mocks.ensureExists).not.toHaveBeenCalled()
+  })
+})
+
+describe("automatedResponseService.update template lock", () => {
+  test("guards on the locked transaction and locks the reply flow as a parent", async () => {
+    const { assertResourceEditable } = await import(
+      "../src/template/installed-resource.service"
+    )
+    vi.mocked(assertResourceEditable).mockClear()
+    mocks.updateSet.mockClear()
+    mocks.flowExists.mockResolvedValue(true)
+
+    await automatedResponseService.update(
+      { id: "ar-1", workspaceId: "workspace-1", type: "keyword" as never },
+      { flowId: "flow-1" } as never,
+    )
+
+    const input = vi.mocked(assertResourceEditable).mock.calls[0]?.[0]
+    expect(input?.tx).toBeDefined()
+    expect(input).toMatchObject({
+      resourceKind: "automatedResponse",
+      referencedParents: [{ kind: "flow", resourceId: "flow-1" }],
+    })
   })
 })

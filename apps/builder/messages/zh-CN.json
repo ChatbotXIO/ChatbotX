@@ -3370,7 +3370,8 @@
       "pending": "待定",
       "processing": "处理中",
       "installing": "Installing",
-      "success": "成功"
+      "success": "成功",
+      "uninstalled": "Uninstalled"
     },
     "statusCode": {
       "label": "状态码"
@@ -3700,7 +3701,8 @@
       "miniApps": "迷你应用",
       "leaderboards": "排行榜",
       "pipelines": "管道",
-      "places": "地点"
+      "places": "地点",
+      "templates": "模板"
     },
     "adReferral": {
       "label": "Ads",
@@ -6659,14 +6661,107 @@
       "dialogDescription": "任何拥有此链接的人都可以将此范本的副本安装到您所在租户的工作区中。",
       "enableLabel": "启用分享链接",
       "linkLabel": "分享链接",
-      "description": "任何拥有该链接的人都可以将此模板安装到自己的工作区。"
+      "description": "任何拥有该链接的人都可以将此模板安装到自己的工作区。",
+      "rotateLabel": "Rotate link",
+      "rotateTitle": "Rotate share link?",
+      "rotateDescription": "The current link stops working immediately. Anyone who still needs to install this template needs the new link.",
+      "rotated": "Share link rotated",
+      "expiryLabel": "Link expires",
+      "expiryHint": "Leave empty for a link that never expires.",
+      "clearExpiry": "Remove expiry",
+      "expiredNotice": "This link has expired. Set a later date or remove the expiry to share it again."
+    },
+    "sync": {
+      "title": "Updates",
+      "updateAvailable": "Update available",
+      "upToDate": "Up to date",
+      "updateNow": "Update now",
+      "updating": "Updating…",
+      "version": "Template version {version}",
+      "lastSynced": "last updated {date}",
+      "autoUpdateLabel": "Update automatically when the template changes",
+      "noHistory": "No updates yet.",
+      "counts": "{created} added · {updated} updated · {detached} detached",
+      "notUpdatable": "{count} not updatable yet",
+      "overwritten": "{name} was edited and replaced by the update",
+      "restore": "Restore my version",
+      "restored": "Your version was restored",
+      "status": {
+        "pending": "Queued",
+        "running": "Running",
+        "completed": "Completed",
+        "partial": "Partial",
+        "failed": "Failed",
+        "skipped": "Skipped",
+        "cancelled": "Cancelled"
+      },
+      "trigger": {
+        "autoUpdate": "Automatic",
+        "manual": "Manual",
+        "reinstall": "Reinstall"
+      },
+      "publisherAccessLabel": "Let the publisher see this workspace and uninstall the template",
+      "publisherAccessHint": "Only the workspace name is shared. If the publisher uninstalls, everything the template created is deleted, including copies you edited.",
+      "requestedVersion": "请求的版本 v{version}"
+    },
+    "installers": {
+      "title": "Installers",
+      "workspace": "Workspace",
+      "installs": "Installs",
+      "lastInstalled": "Last installed",
+      "version": "Version",
+      "autoUpdate": "Auto-update",
+      "uninstalled": "Uninstalled",
+      "hidden": "Workspace not shared",
+      "totalInstallEvents": "累计安装次数(全部时间)",
+      "uninstallNotAllowed": "安装方未允许发布者卸载此副本。",
+      "loadError": "无法加载安装方列表,请重试。",
+      "byVersionTitle": "Installs by version",
+      "versionLabel": "Version {version}",
+      "byVersionHint": "The newest version is {version}. Grey bars are copies that are behind."
     },
     "installs": {
       "title": "安装记录",
       "resources": "资源",
       "warnings": "警告",
       "completedAt": "完成时间",
-      "autoUpdate": "自动更新"
+      "autoUpdate": "自动更新",
+      "detailTitle": "Install details",
+      "installedBy": "Installed by",
+      "viaApi": "API token",
+      "attempts": "Attempts",
+      "autoUpdateOn": "On",
+      "autoUpdateOff": "Off",
+      "retry": "Retry install",
+      "resourcesTitle": "Installed resources",
+      "noResources": "Nothing was created yet.",
+      "deletedResource": "Deleted resource",
+      "viewOnly": "View only",
+      "created": "Created",
+      "reused": "Reused",
+      "loadMore": "Load more",
+      "backToList": "Back to installs",
+      "viewWarnings": "View warnings",
+      "warningsHint": "Items the install skipped or could not fully bring over.",
+      "warningsTruncated": "Showing {shown} of {total} warnings.",
+      "statusFilter": "Status",
+      "allStatuses": "All statuses",
+      "errors": {
+        "unknown": "The install failed. Try again, or contact support if it keeps failing.",
+        "templatePayloadIncompatible": "This template was saved in a newer format than this server can install.",
+        "templateInstallationSourceMissing": "The template was deleted before the install ran.",
+        "templateCrossTenantInstall": "This template is not available for your workspace.",
+        "templateCategoryPermissionDenied": "You no longer have permission to install everything in this template.",
+        "templateInvalidInboxBinding": "A selected inbox does not match the template.",
+        "templateInstallEnqueueFailed": "The install could not be queued.",
+        "templateInstallFailed": "The install failed. Try again.",
+        "templateInstallAbandoned": "The install did not finish in time and was closed.",
+        "templateInstallSuperseded": "A newer install of this template replaced this one.",
+        "workspaceOwnerBlocked": "The workspace owner's account is blocked."
+      },
+      "uninstalledBy": "{by, select, publisher {The publisher uninstalled this template.} installer {This template was uninstalled from this workspace.} other {This template was uninstalled.}}",
+      "uninstalledSummary": "{deleted} deleted, {kept} kept.",
+      "lastAttemptAt": "最近一次尝试"
     },
     "form": {
       "contents": "范本内容",
@@ -6685,8 +6780,20 @@
       "installBehavior": "安装行为",
       "createInstallFolder": "安装到专属文件夹",
       "createInstallFolderDescription": "将每个已安装的资源都归入一个以此范本命名的新文件夹中。",
-      "defaultAutoUpdate": "默认将安装标记为需要更新",
-      "defaultAutoUpdateDescription": "每次重新发布此范本时，新安装都会显示可用更新的提示。"
+      "defaultAutoUpdate": "Update new installs automatically by default",
+      "defaultAutoUpdateDescription": "Whenever you save this template with changed content, installs that follow auto-update are overwritten with the new content (copies the installer edited are backed up first). Installers can turn it off.",
+      "viewOnly": "仅查看",
+      "viewOnlyAll": "将所选项全部设为仅查看",
+      "includedAutomatically": {
+        "title": "Included automatically",
+        "hint": "Taken along because something you selected needs it. Read only.",
+        "rows": "{count, plural, one {# more item} other {# more items}}",
+        "kind": {
+          "folders": "Folders",
+          "inboxes": "Inboxes"
+        },
+        "dropped": "{count, plural, one {# 个对范本未包含项目的引用将在安装时被移除（失去引用的触发器将被关闭）} other {# 个对范本未包含项目的引用将在安装时被移除（失去引用的触发器将被关闭）}}"
+      }
     },
     "categories": {
       "flows": "流程",
@@ -6701,8 +6808,108 @@
       "keywords": "关键字",
       "entryPointLinks": "入口点链接",
       "triggers": "触发器",
-      "fbCommentAutomations": "Facebook 评论自动化",
-      "settings": "设置"
+      "fbCommentAutomations": "评论自动化",
+      "settings": "设置",
+      "sequences": "Sequences",
+      "aiMcpServers": "MCP servers",
+      "aiFiles": "AI knowledge files",
+      "questionnaires": "Questionnaires",
+      "couponTopics": "Coupon topics",
+      "pipelines": "管道"
+    },
+    "locked": {
+      "flowBanner": "此流程来自仅查看的模板。你可以查看，但无法编辑。",
+      "badge": "仅查看",
+      "editorBanner": "这是从仅查看模板安装的。你可以查看，但不能编辑。",
+      "badgeHint": "Installed from a view-only template"
+    },
+    "channels": {
+      "messenger": "Messenger",
+      "instagram": "Instagram",
+      "instagramFacebook": "Instagram (Facebook login)",
+      "threads": "Threads",
+      "tiktok": "TikTok",
+      "whatsapp": "WhatsApp",
+      "telegram": "Telegram",
+      "zalo": "Zalo",
+      "webchat": "Webchat",
+      "line": "LINE",
+      "email": "Email"
+    },
+    "uninstall": {
+      "title": "Uninstall template",
+      "description": "The template removes everything it created in this workspace, including copies that were edited. Shared tags, fields and folders, items that existed before, and anything you built on top of a copy are kept.",
+      "loading": "Checking what will happen…",
+      "previewFailed": "Could not check what an uninstall would do.",
+      "failed": "Could not uninstall the template.",
+      "done": "Template uninstalled",
+      "confirm": "Uninstall",
+      "action": "Uninstall",
+      "deleted": "{count, plural, one {# item will be deleted} other {# items will be deleted}}",
+      "deletedDone": "{count, plural, one {# item was deleted} other {# items were deleted}}",
+      "keptModified": "{count, plural, one {# edited or unverified copy is kept} other {# edited or unverified copies are kept}}",
+      "keptShared": "{count, plural, one {# shared tag or field is kept} other {# shared tags and fields are kept}}",
+      "keptByPolicy": "{count, plural, one {# other item is kept} other {# other items are kept}}",
+      "keptHasDependents": "{count, plural, one {# copy is kept because something still uses it} other {# copies are kept because something still uses them}}",
+      "deletedModified": "{count, plural, one {# of them was edited by you: those edits are lost and can not be restored} other {# of them were edited by you: those edits are lost and can not be restored}}",
+      "keptLockedByOther": "{count, plural, one {# item is kept because another template installation still protects it} other {# items are kept because another template installation still protects them}}",
+      "confirmCheckbox": "I understand this deletes the items above and can not be undone",
+      "started": "Uninstall started",
+      "inProgress": "Uninstalling…",
+      "retry": "Retry uninstall",
+      "state": {
+        "pending": "Uninstall queued",
+        "running": "Uninstalling…",
+        "partial": "Uninstall incomplete, retry it",
+        "failed": "Uninstall failed, retry it",
+        "skipped": "Uninstall skipped: the workspace is blocked"
+      },
+      "deletedUnverified": "{count, plural, one {# of them can not be checked for edits: if you changed it, those changes are lost} other {# of them can not be checked for edits: if you changed them, those changes are lost}}",
+      "cancelAction": "Cancel uninstall",
+      "cancelled": "Uninstall cancelled: the remaining items are yours to use again",
+      "blockedByReference": "{count, plural, one {# item was not deleted because something you created still points at it: remove that reference, then retry the uninstall} other {# items were not deleted because something you created still points at them: remove those references, then retry the uninstall}}",
+      "keptPartlyRemoved": "{count, plural, one {# copy was kept after a blocked uninstall; history and duplicate-protection data may have been removed, so review it before switching it on} other {# copies were kept after a blocked uninstall; history and duplicate-protection data may have been removed, so review them before switching them on}}",
+      "keptInactiveForReview": "{count, plural, one {# copy was left inactive: its history and duplicate-protection data were removed, so review it before switching it on} other {# copies were left inactive: their history and duplicate-protection data were removed, so review them before switching them on}}",
+      "keptHistoryRemoved": "{count, plural, one {# copy was kept, but its history was removed (it has nothing to switch on): review it before relying on it} other {# copies were kept, but their history was removed (they have nothing to switch on): review them before relying on them}}",
+      "cancelledPartial": "{count, plural, one {# item is already being deleted and will finish; the rest was given back} other {# items are already being deleted and will finish; the rest was given back}}"
+    },
+    "warningCodes": {
+      "aiFileTooLarge": "此知识文件超出了模板安装可复制的大小，已跳过。",
+      "aiFileUnavailable": "此知识文件无法复制，已跳过。",
+      "ambiguousSourceFieldToken": "多个源字段使用相同名称，因此使用该名称的变量保持不变。",
+      "backupTooLarge": "本地编辑过的项目太大，无法备份，因此未被覆盖。",
+      "backupUnavailable": "此项目的备份已不可用。",
+      "botFieldRenamed": "A bot field with this name and another type already exists, so a renamed field was created.",
+      "categoryPermissionDenied": "你没有此类别的权限，因此已跳过。",
+      "couponTopicExpired": "此优惠券主题已过期。",
+      "credentialRequired": "使用此项目前，请先添加其凭据。",
+      "custom": "在此工作区中未找到被引用的项目，因此已移除该链接。",
+      "customField": "在此工作区中未找到被引用的项目，因此已移除该链接。",
+      "customFieldRenamed": "已存在同名但类型不同的字段，因此创建了一个重命名的字段。",
+      "enqueueFailed": "无法将此项目的后台处理加入队列。",
+      "flow": "在此工作区中未找到被引用的项目，因此已移除该链接。",
+      "flowInvalidStructure": "Flow 的结构无效，因此已跳过。",
+      "flowNotPublished": "Flow 已作为草稿安装，尚未发布。",
+      "flowSkippedRequiredReference": "由于无法解析必需的引用，已跳过该 Flow。",
+      "folder": "在此工作区中未找到被引用的项目，因此已移除该链接。",
+      "inboxBindingRequired": "请为此频道选择收件匣；在此之前该项目保持未启用状态。",
+      "integration": "在此工作区中未找到被引用的项目，因此已移除该链接。",
+      "localModifiedOverwritten": "本地编辑过的项目已被覆盖。已保存备份，可以还原。",
+      "name": "未找到此项目可用的名称，因此已跳过。",
+      "noEmbeddingProvider": "此工作区未配置嵌入服务提供商，因此已跳过知识文件。请连接 OpenAI 或 Gemini 后重新安装。",
+      "notUpdatable": "此类项目暂不支持自动更新。",
+      "pipelineField": "在此工作区中未找到被引用的项目，因此已移除该链接。",
+      "pipelineStage": "在此工作区中未找到被引用的项目，因此已移除该链接。",
+      "postSelectionRequired": "请重新选择帖子：无法带入原始帖子。",
+      "product": "在此工作区中未找到被引用的项目，因此已移除该链接。",
+      "productCategory": "在此工作区中未找到被引用的项目，因此已移除该链接。",
+      "questionImage": "无法复制图片。",
+      "quota": "已达到套餐上限，因此已跳过该项目。",
+      "referenceRemoved": "无法解析的引用已被移除。",
+      "savedReply": "在此工作区中未找到被引用的项目，因此已移除该链接。",
+      "savedReplyImage": "无法复制图片。",
+      "tag": "在此工作区中未找到被引用的项目，因此已移除该链接。",
+      "unlisted": "项目未完全导入：{code}"
     }
   },
   "texts": {
@@ -6830,7 +7037,34 @@
     "selectWorkspace": "选择一个工作区",
     "install": "安装",
     "installStarted": "安装已开始",
-    "noEligibleWorkspaces": "您没有可安装此范本的合适工作区。"
+    "noEligibleWorkspaces": "您没有可安装此范本的合适工作区。",
+    "alreadyInstalled": "This template is already installed in this workspace.",
+    "viewInstall": "View install",
+    "installAnotherCopy": "Install another copy",
+    "inboxesTitle": "Inboxes",
+    "inboxesHint": "This template was built around these inboxes. Choose which of your own inboxes to use; anything left out is installed switched off.",
+    "noInbox": "Don't connect — install switched off",
+    "noInboxAvailable": "No connected inbox on this channel",
+    "updateExisting": "Update installed copy",
+    "updateStarted": "Update started",
+    "publisherAccessLabel": "Let the publisher see this workspace's name and uninstall this template from it",
+    "publisherAccessHint": "They never see your data, contacts or email. If they uninstall, everything the template created is deleted, including copies you edited; anything you built on top of a copy is kept. You can turn this off later on the install page.",
+    "autoUpdateLabel": "Update automatically when the template changes",
+    "collisions": {
+      "title": "What the install will do here",
+      "loading": "Checking this workspace…",
+      "action": {
+        "create": "Created",
+        "reuse": "Reused",
+        "rename": "Renamed",
+        "bind": "Bound",
+        "unbound": "Left unbound"
+      },
+      "detail": {
+        "rename": "“{name}” already exists with another type, so the template’s one is added under a new name.",
+        "unbound": "“{name}” is left unconnected until you pick an inbox."
+      }
+    }
   },
   "userPersistentMenus": {
     "title": "用户常驻菜单"

@@ -18,6 +18,16 @@ const mocks = vi.hoisted(() => ({
   purgeWorkspaceActivity: vi.fn(),
   purgeWorkspacePosts: vi.fn(),
   dispatchAuditRecord: vi.fn(),
+  hasLiveUninstallTouchingWorkspace: vi.fn(async () => false),
+}))
+
+vi.mock("@chatbotx.io/database/repositories", async (importOriginal) => ({
+  ...(await importOriginal<
+    typeof import("@chatbotx.io/database/repositories")
+  >()),
+  templateUninstallStateRepository: {
+    hasLiveUninstallTouchingWorkspace: mocks.hasLiveUninstallTouchingWorkspace,
+  },
 }))
 
 vi.mock("@chatbotx.io/analytics", () => ({
@@ -91,7 +101,8 @@ vi.mock("@chatbotx.io/database/partials", async (importOriginal) => {
   }
 })
 
-vi.mock("@chatbotx.io/database/schema", () => ({
+vi.mock("@chatbotx.io/database/schema", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@chatbotx.io/database/schema")>()),
   ROOT_TENANT_ID: "1",
   workspaceDeletionRecordModel: { workspaceId: {} },
   workspaceMemberModel: {},
@@ -379,6 +390,16 @@ describe("WorkspaceService.purgeDueScheduled", () => {
     await expect(workspaceService.purgeDueScheduled()).resolves.toBe(1)
     // The failed workspace keeps its row; only the clean one is deleted.
     expect(mocks.workspaceDelete).toHaveBeenCalledTimes(1)
+  })
+
+  test("defers a workspace while a template uninstall holds a live lease on it", async () => {
+    setupPurgeTransactions([{ id: "w1", ownerId: "o1", tenantId: "t1" }])
+    mocks.purgeWorkspaceHeavyData.mockResolvedValue(0)
+    mocks.hasLiveUninstallTouchingWorkspace.mockResolvedValueOnce(true)
+
+    await expect(workspaceService.purgeDueScheduled()).resolves.toBe(0)
+    // The row stays for the next run; nothing cascades under the uninstall.
+    expect(mocks.workspaceDelete).not.toHaveBeenCalled()
   })
 
   test("skips a workspace that was rescheduled before its fence is acquired", async () => {

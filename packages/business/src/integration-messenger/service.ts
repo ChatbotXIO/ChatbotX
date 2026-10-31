@@ -25,6 +25,9 @@ import { connectionStateService } from "../connection/state-service"
 import { notFoundException } from "../errors"
 import { flowService } from "../flow/service"
 import { logger } from "../logger"
+import { assertReferencable } from "../template/installed-resource.service"
+import { withTemplateLockedTransaction } from "../template/template-resource-locks"
+import { referencedParentsOf } from "../template/uninstall-references"
 import { isWorkspaceAdminMember } from "../workspace-member/predicates"
 import { workspaceMemberService } from "../workspace-member/service"
 
@@ -270,10 +273,33 @@ class MessengerIntegrationService extends BaseService {
   }
 
   async updateProfileFields(
-    props: { id: string },
+    props: { id: string; workspaceId: string },
     data: Record<string, unknown>,
     tx: DatabaseClient,
   ) {
+    // Every flow the settings point at (welcome flow, menu buttons, ice
+    // breakers): their tpl-res locks are held until the reference commits, so
+    // an uninstall that tombstoned one is seen (write refused) or sees it.
+    const flowIds = new Set<string>()
+    if (typeof data.welcomeFlowId === "string") {
+      flowIds.add(data.welcomeFlowId)
+    }
+    for (const parent of referencedParentsOf({
+      persistentMenus: data.persistentMenus,
+      conversationStarters: data.conversationStarters,
+    })) {
+      if (parent.kind === "flow") {
+        flowIds.add(parent.resourceId)
+      }
+    }
+    await assertReferencable({
+      workspaceId: props.workspaceId,
+      parents: [...flowIds].map((resourceId) => ({
+        kind: "flow" as const,
+        resourceId,
+      })),
+      tx,
+    })
     await tx
       .update(integrationMessengerModel)
       .set(data)
@@ -340,10 +366,19 @@ class MessengerIntegrationService extends BaseService {
         throw notFoundException("Handover flow not found")
       }
     }
-    const row = await integrationMessengerRepository.updateHandoverResumeFlow({
-      id,
-      workspaceId,
-      handoverResumeFlowId,
+    // The flow's lock is held until the reference commits (see WhatsApp).
+    const row = await withTemplateLockedTransaction(async (tx) => {
+      if (handoverResumeFlowId) {
+        await assertReferencable({
+          workspaceId,
+          parents: [{ kind: "flow", resourceId: handoverResumeFlowId }],
+          tx,
+        })
+      }
+      return await integrationMessengerRepository.updateHandoverResumeFlow(
+        { id, workspaceId, handoverResumeFlowId },
+        tx,
+      )
     })
     if (!row) {
       throw notFoundException("Messenger integration not found")

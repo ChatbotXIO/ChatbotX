@@ -7,6 +7,7 @@ import {
   isDatabaseError,
   type RelationsFieldFilter,
   relationsFilterToSQL,
+  sql,
 } from "@chatbotx.io/database/client"
 import {
   type CustomFieldType,
@@ -21,10 +22,21 @@ import {
 } from "@chatbotx.io/database/utils"
 import { withCache } from "@chatbotx.io/redis"
 import { createId, isNumericId } from "@chatbotx.io/utils"
-import { customFieldResolutionKey } from "@chatbotx.io/utils/custom-field"
+import {
+  customFieldResolutionKey,
+  normalizeCustomFieldName,
+  pickCustomFieldRow,
+  planCustomFieldResolution,
+} from "@chatbotx.io/utils/custom-field"
 import { BaseService } from "../base.service"
 import { notFoundException, validationException } from "../errors"
 import { folderService, toStoredFolderId } from "../folder/service"
+import {
+  assertResourceEditable,
+  changedKeysOf,
+  withDeleteGuard,
+} from "../template/installed-resource.service"
+import { withTemplateLockedTransaction } from "../template/template-resource-locks"
 import type { PaginatedResult } from "../types"
 
 type ListCustomFieldsInput = {
@@ -44,6 +56,43 @@ type CreateCustomFieldData = {
 }
 
 type UpdateCustomFieldData = Partial<CreateCustomFieldData>
+
+/**
+ * Serializes every custom-field name write of one workspace. The DB's unique
+ * index is on `(workspaceId, type, name)` — it cannot stop two writers from
+ * claiming the same case-folded name under different types, which is the
+ * collision `{{name}}` cannot tell apart. The lock is transaction-scoped, so it
+ * is held until the surrounding transaction commits.
+ */
+const lockCustomFieldNames = async (
+  tx: DatabaseClient,
+  workspaceId: string,
+): Promise<void> => {
+  await tx.execute(
+    sql`select pg_advisory_xact_lock(hashtextextended(${`cf-names:${workspaceId}`}, 0))`,
+  )
+}
+
+/** Runs `write` inside a transaction that holds the name lock, opening one when the caller has none. */
+const withCustomFieldNameLock = async <T>(
+  tx: DatabaseClient | undefined,
+  workspaceId: string,
+  write: (client: DatabaseClient) => Promise<T>,
+): Promise<T> => {
+  const locked = async (client: DatabaseClient): Promise<T> => {
+    await lockCustomFieldNames(client, workspaceId)
+    return await write(client)
+  }
+  return tx ? await locked(tx) : await db.transaction(locked)
+}
+
+export type ResolvedCustomField = {
+  id: string
+  /** The target row's exact stored name — what `{{name}}` must say. */
+  name: string
+  /** True when the requested name was taken by a field of another type. */
+  renamed: boolean
+}
 
 class CustomFieldService extends BaseService {
   async list(
@@ -186,8 +235,12 @@ class CustomFieldService extends BaseService {
     workspaceId: string
     fields: { name: string; type: CustomFieldType }[]
     tx?: DatabaseClient
-  }): Promise<{ idMap: Map<string, string>; createdIds: string[] }> {
-    const { workspaceId, fields, tx = db } = props
+  }): Promise<{
+    idMap: Map<string, string>
+    createdIds: string[]
+    resolved: Map<string, ResolvedCustomField>
+  }> {
+    const { workspaceId, fields } = props
 
     const uniqueFields = Array.from(
       new Map(
@@ -195,8 +248,31 @@ class CustomFieldService extends BaseService {
       ).values(),
     )
     if (uniqueFields.length === 0) {
-      return { idMap: new Map(), createdIds: [] }
+      return { idMap: new Map(), createdIds: [], resolved: new Map() }
     }
+
+    return await withCustomFieldNameLock(props.tx, workspaceId, (tx) =>
+      this.resolveLocked({ workspaceId, uniqueFields, tx }),
+    )
+  }
+
+  /**
+   * The body of `resolveByNameAndType`, run with the workspace's name lock
+   * held. A missing field whose case-folded name is already used by a field of
+   * ANOTHER type is created as `<name>_<n>` (never as a second field sharing
+   * the name, which `{{name}}` could not tell apart); the caller learns the
+   * outcome from `resolved`, keyed by the requested field's resolution key.
+   */
+  private async resolveLocked(props: {
+    workspaceId: string
+    uniqueFields: { name: string; type: CustomFieldType }[]
+    tx: DatabaseClient
+  }): Promise<{
+    idMap: Map<string, string>
+    createdIds: string[]
+    resolved: Map<string, ResolvedCustomField>
+  }> {
+    const { workspaceId, uniqueFields, tx } = props
 
     // Requested names, keyed the same way, so a folded collision can be
     // broken by "does this row match the requested casing exactly?".
@@ -207,47 +283,34 @@ class CustomFieldService extends BaseService {
       ),
     )
 
-    const byKey = new Map<string, CustomFieldModel>()
-    /**
-     * Deterministic winner between two rows folding to the same key: exact
-     * (trimmed) name match beats a case-only match; otherwise the lowest id
-     * — the oldest row — wins. Without this the last row of an unordered
-     * `findMany` would win and the mapping would drift between runs.
-     */
-    const pickBetter = (
-      current: CustomFieldModel | undefined,
-      candidate: CustomFieldModel,
-      key: string,
-    ): CustomFieldModel => {
-      if (!current) {
-        return candidate
-      }
-      const requested = requestedNameByKey.get(key)
-      if (requested !== undefined) {
-        const currentExact = current.name.trim() === requested
-        const candidateExact = candidate.name.trim() === requested
-        if (currentExact !== candidateExact) {
-          return candidateExact ? candidate : current
-        }
-      }
-      return candidate.id < current.id ? candidate : current
-    }
-    const remember = (row: CustomFieldModel): void => {
-      const key = customFieldResolutionKey(row)
-      byKey.set(key, pickBetter(byKey.get(key), row, key))
-    }
-
-    const existing = await tx.query.customFieldModel.findMany({
+    const existing = (await tx.query.customFieldModel.findMany({
       where: { workspaceId },
       columns: { id: true, name: true, type: true },
-    })
-    for (const row of existing) {
-      remember(row as CustomFieldModel)
+    })) as CustomFieldModel[]
+    // What to reuse, create and rename is decided by one pure function the
+    // install preview shares, so the preview cannot predict something else.
+    const { plans, winners } = planCustomFieldResolution(existing, uniqueFields)
+    const byKey = new Map<string, CustomFieldModel>(winners)
+    const remember = (row: CustomFieldModel): void => {
+      const key = customFieldResolutionKey(row)
+      byKey.set(
+        key,
+        pickCustomFieldRow(byKey.get(key), row, requestedNameByKey.get(key)),
+      )
     }
 
-    const missing = uniqueFields.filter(
-      (field) => !byKey.has(customFieldResolutionKey(field)),
-    )
+    const missing: { name: string; type: CustomFieldType }[] = []
+    // Requested key -> the name the row will actually be created with.
+    const plannedNameByKey = new Map<string, string>()
+    for (const field of uniqueFields) {
+      const requestedKey = customFieldResolutionKey(field)
+      const plan = plans.get(requestedKey)
+      if (plan && plan.action !== "reuse") {
+        missing.push(field)
+        plannedNameByKey.set(requestedKey, plan.plannedName)
+      }
+    }
+
     const createdIds: string[] = []
     let lostRace = false
 
@@ -258,7 +321,9 @@ class CustomFieldService extends BaseService {
           missing.map((field) => ({
             id: createId(),
             workspaceId,
-            name: field.name,
+            name:
+              plannedNameByKey.get(customFieldResolutionKey(field)) ??
+              field.name,
             type: field.type,
             showInInbox: true,
           })),
@@ -287,15 +352,28 @@ class CustomFieldService extends BaseService {
       }
     }
 
+    const resolved = new Map<string, ResolvedCustomField>()
+    for (const field of uniqueFields) {
+      const requestedKey = customFieldResolutionKey(field)
+      const plannedName = plannedNameByKey.get(requestedKey)
+      const renamed =
+        plannedName !== undefined &&
+        normalizeCustomFieldName(plannedName) !==
+          normalizeCustomFieldName(field.name)
+      const row = byKey.get(
+        plannedName === undefined
+          ? requestedKey
+          : customFieldResolutionKey({ name: plannedName, type: field.type }),
+      )
+      if (row) {
+        resolved.set(requestedKey, { id: row.id, name: row.name, renamed })
+      }
+    }
     const idMap = new Map(
-      uniqueFields.flatMap((field) => {
-        const key = customFieldResolutionKey(field)
-        const row = byKey.get(key)
-        return row ? [[key, row.id] as const] : []
-      }),
+      [...resolved].map(([key, field]) => [key, field.id] as const),
     )
 
-    return { idMap, createdIds }
+    return { idMap, createdIds, resolved }
   }
 
   async create(props: {
@@ -303,7 +381,7 @@ class CustomFieldService extends BaseService {
     data: CreateCustomFieldData
     tx?: DatabaseClient
   }): Promise<CustomFieldModel> {
-    const { workspaceId, tx = db } = props
+    const { workspaceId } = props
     const data = {
       ...props.data,
       folderId: toStoredFolderId(props.data.folderId),
@@ -317,61 +395,118 @@ class CustomFieldService extends BaseService {
       })
     }
 
-    try {
-      const [field] = await tx
-        .insert(customFieldModel)
-        .values({ id: createId(), workspaceId, showInInbox: true, ...data })
-        .returning()
-      await this.invalidate({ workspaceId })
-      return field
-    } catch (error) {
-      if (isDatabaseError(error) && error.cause.code === "23505") {
-        throw validationException("name", "Name is already taken")
-      }
-      throw error
-    }
+    const field = await withCustomFieldNameLock(
+      props.tx,
+      workspaceId,
+      async (client) => {
+        try {
+          const [row] = await client
+            .insert(customFieldModel)
+            .values({ id: createId(), workspaceId, showInInbox: true, ...data })
+            .returning()
+          return row
+        } catch (error) {
+          if (isDatabaseError(error) && error.cause.code === "23505") {
+            throw validationException("name", "Name is already taken")
+          }
+          throw error
+        }
+      },
+    )
+    // After the write commits: invalidating inside the transaction would let a
+    // concurrent read re-cache the list without the new field.
+    await this.invalidate({ workspaceId })
+    return field
   }
 
   async update(
     ctx: { workspaceId: string; id: string },
     input: UpdateCustomFieldData,
-    tx: DatabaseClient = db,
+    tx?: DatabaseClient,
+  ): Promise<CustomFieldModel> {
+    // The key may be a name, so it is resolved to the stable id first; that
+    // read only names the row. The row's lock is then taken before the stored
+    // row is read AGAIN inside the transaction, so the diff behind the guard
+    // is computed under the lock and a racing sync's write is never reverted.
+    const resolved = await this.findByKeyOrFail({
+      workspaceId: ctx.workspaceId,
+      key: ctx.id,
+      tx,
+    })
+    // Without a caller transaction the guard still needs one: the template
+    // lock must be held until the write commits, so a racing sync waits.
+    const updated = tx
+      ? await this.applyUpdate(ctx.workspaceId, resolved.id, input, tx)
+      : await withTemplateLockedTransaction(
+          (lockedTx) =>
+            this.applyUpdate(ctx.workspaceId, resolved.id, input, lockedTx),
+          {
+            workspaceId: ctx.workspaceId,
+            initialKeys: [{ kind: "customField", resourceId: resolved.id }],
+          },
+        )
+    await this.invalidate({ workspaceId: ctx.workspaceId, ids: [updated.id] })
+    return updated
+  }
+
+  private async applyUpdate(
+    workspaceId: string,
+    id: string,
+    input: UpdateCustomFieldData,
+    tx: DatabaseClient,
   ): Promise<CustomFieldModel> {
     // `folderId` omitted keeps the folder; null or rootFolderId means the root.
     const data =
       input.folderId === undefined
         ? input
         : { ...input, folderId: toStoredFolderId(input.folderId) }
-    const existing = await this.findByKeyOrFail({
-      workspaceId: ctx.workspaceId,
-      key: ctx.id,
-      tx,
+    // Uncached, on the locked transaction: `findByKey` may serve a cached row
+    // that predates a sync's write.
+    const existing = await tx.query.customFieldModel.findFirst({
+      where: { id, workspaceId },
     })
+    if (!existing) {
+      throw notFoundException("Custom field not found")
+    }
 
     if (data.folderId && data.folderId !== existing.folderId) {
       await folderService.ensureExists({
         id: data.folderId,
-        workspaceId: ctx.workspaceId,
+        workspaceId,
         folderType: "customField",
       })
     }
 
-    let updated: CustomFieldModel | undefined
-    try {
-      ;[updated] = await tx
-        .update(customFieldModel)
-        .set(data)
-        .where(eq(customFieldModel.id, existing.id))
-        .returning()
-    } catch (error) {
-      if (isDatabaseError(error) && error.cause.code === "23505") {
-        throw validationException("name", "Name is already taken")
+    const write = async (client: DatabaseClient): Promise<CustomFieldModel> => {
+      try {
+        const [row] = await client
+          .update(customFieldModel)
+          .set(data)
+          .where(eq(customFieldModel.id, existing.id))
+          .returning()
+        return row
+      } catch (error) {
+        if (isDatabaseError(error) && error.cause.code === "23505") {
+          throw validationException("name", "Name is already taken")
+        }
+        throw error
       }
-      throw error
     }
-
-    await this.invalidate({ workspaceId: ctx.workspaceId, ids: [existing.id] })
-    return updated
+    // Only a write that can change the field's name or type needs the name
+    // lock; a folder move or an inbox toggle must not queue behind installs.
+    const changesName = "name" in data || "type" in data
+    // Any content field (a description-only update too) is guarded; a folder
+    // move or inbox toggle touches none and costs no query.
+    await assertResourceEditable({
+      workspaceId,
+      resourceKind: "customField",
+      resourceIds: [existing.id],
+      changedKeys: changedKeysOf(existing, data),
+      tx,
+    })
+    return changesName
+      ? await withCustomFieldNameLock(tx, workspaceId, write)
+      : await write(tx)
   }
 
   async delete(props: {
@@ -379,16 +514,24 @@ class CustomFieldService extends BaseService {
     ids: string[]
     tx?: DatabaseClient
   }): Promise<void> {
-    const { workspaceId, ids, tx = db } = props
+    const { workspaceId, ids } = props
 
-    await tx
-      .delete(customFieldModel)
-      .where(
-        and(
-          eq(customFieldModel.workspaceId, workspaceId),
-          inArray(customFieldModel.id, ids),
-        ),
-      )
+    await withDeleteGuard(
+      {
+        workspaceId,
+        targets: [{ resourceKind: "customField", resourceIds: ids }],
+        tx: props.tx,
+      },
+      (tx) =>
+        tx
+          .delete(customFieldModel)
+          .where(
+            and(
+              eq(customFieldModel.workspaceId, workspaceId),
+              inArray(customFieldModel.id, ids),
+            ),
+          ),
+    )
 
     await this.invalidate({ workspaceId, ids })
   }

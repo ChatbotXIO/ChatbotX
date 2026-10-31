@@ -30,6 +30,12 @@ import type { FolderModel } from "@chatbotx.io/database/types"
 import { createId } from "@chatbotx.io/utils"
 import { BaseService } from "../base.service"
 import { ChatbotXException, notFoundException } from "../errors"
+import {
+  assertResourceEditable,
+  changedKeysOf,
+  withDeleteGuard,
+} from "../template/installed-resource.service"
+import { withTemplateLockedTransaction } from "../template/template-resource-locks"
 
 type ListFoldersInput = {
   workspaceId: string
@@ -161,8 +167,23 @@ class FolderService extends BaseService {
     data: { name?: string }
     tx?: DatabaseClient
   }): Promise<FolderModel> {
-    const { workspaceId, id, data, tx = db } = props
-    await this.findOrFail({ id, workspaceId, tx })
+    const { workspaceId, id, data, tx } = props
+    if (!tx) {
+      // Locked before the stored row is read, so the diff that decides the
+      // guard is computed under the lock.
+      return await withTemplateLockedTransaction(
+        (lockedTx) => this.update({ ...props, tx: lockedTx }),
+        { workspaceId, initialKeys: [{ kind: "folder", resourceId: id }] },
+      )
+    }
+    const existingFolder = await this.findOrFail({ id, workspaceId, tx })
+    await assertResourceEditable({
+      workspaceId,
+      resourceKind: "folder",
+      resourceIds: [id],
+      changedKeys: changedKeysOf(existingFolder, data),
+      tx,
+    })
 
     const [updated] = await tx
       .update(folderModel)
@@ -178,7 +199,33 @@ class FolderService extends BaseService {
     ids: string[]
   }): Promise<void> {
     const { workspaceId, ids } = props
-    await db.transaction(async (tx) => {
+    // The delete below removes every descendant too, so the lock check covers
+    // the whole subtree, not just the requested roots.
+    const subtree =
+      ids.length === 0
+        ? []
+        : await db
+            .select({ id: folderModel.id })
+            .from(folderModel)
+            .where(
+              and(
+                eq(folderModel.workspaceId, workspaceId),
+                or(
+                  inArray(folderModel.id, ids),
+                  ...ids.map((id) => arrayContains(folderModel.paths, [id])),
+                ),
+              ),
+            )
+    const guarded = {
+      workspaceId,
+      targets: [
+        {
+          resourceKind: "folder" as const,
+          resourceIds: [...new Set([...ids, ...subtree.map((row) => row.id)])],
+        },
+      ],
+    }
+    await withDeleteGuard(guarded, async (tx) => {
       for (const id of ids) {
         const folder = await this.find({ id, workspaceId, tx })
         if (!folder) {

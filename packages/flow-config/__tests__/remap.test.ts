@@ -446,3 +446,242 @@ describe("collectReferencesByKind", () => {
     expect(byKind.get("customField")).toEqual(new Set(["42"]))
   })
 })
+
+describe("remapReferences — cross-flow node jumps", () => {
+  const jump = { flowId: "flow-1", nodeId: "node-1" }
+
+  test("remaps the node id when the sibling flow resolved", () => {
+    const unresolved: string[] = []
+    const remapped = remapReferences(
+      jump,
+      {
+        flow: new Map([["flow-1", "flow-target"]]),
+        flowNode: new Map([["node-1", "node-1"]]),
+      },
+      { onUnresolved: (ref) => unresolved.push(ref.entityKind) },
+    )
+
+    expect(remapped).toEqual({ flowId: "flow-target", nodeId: "node-1" })
+    expect(unresolved).toEqual([])
+  })
+
+  test("reports only the flow when the sibling flow is unresolved", () => {
+    const unresolved: string[] = []
+    const remapped = remapReferences(
+      jump,
+      { flowNode: new Map() },
+      { onUnresolved: (ref) => unresolved.push(ref.entityKind) },
+    )
+
+    expect(remapped).toEqual(jump)
+    expect(unresolved).toEqual(["flow"])
+  })
+})
+
+describe("remapReferences — step overrides", () => {
+  const stepIn = (step: Record<string, unknown>) => ({
+    nodes: [{ id: "n", data: { details: { steps: [step] } } }],
+    edges: [],
+  })
+
+  test("ActiveCampaign tagIds are third-party ids: never remapped, never warned", () => {
+    const unresolved: string[] = []
+    const flow = stepIn({
+      id: "s",
+      stepType: "activeCampaignSyncContact",
+      tagIds: ["12", "34"],
+    })
+
+    const remapped = remapFlowGraphReferences(
+      flow,
+      { tag: new Map([["12", "99"]]) },
+      { onUnresolved: (ref) => unresolved.push(ref.entityKind) },
+    )
+
+    expect(remapped).toEqual(flow)
+    expect(unresolved).toEqual([])
+  })
+
+  test("a regular step's tagIds are still remapped", () => {
+    const remapped = remapFlowGraphReferences(
+      stepIn({ id: "s", stepType: "addContactTag", tagIds: ["12"] }),
+      { tag: new Map([["12", "99"]]) },
+    )
+
+    expect(remapped.nodes[0]?.data.details.steps[0]).toMatchObject({
+      tagIds: ["99"],
+    })
+  })
+
+  test("assignConversation.assignedId is a workspace member and reported when unresolved", () => {
+    const unresolved: string[] = []
+    remapFlowGraphReferences(
+      stepIn({ id: "s", stepType: "assignConversation", assignedId: "77" }),
+      {},
+      {
+        onUnresolved: (ref) =>
+          unresolved.push(`${ref.entityKind}:${ref.value}`),
+      },
+    )
+
+    expect(unresolved).toEqual(["workspaceMember:77"])
+  })
+
+  test("a nested slot is matched by its path relative to the step", () => {
+    const unresolved: string[] = []
+    remapFlowGraphReferences(
+      stepIn({
+        id: "s",
+        stepType: "whatsappFlow",
+        flow: { id: "55", sourceId: "x" },
+      }),
+      {},
+      {
+        onUnresolved: (ref) =>
+          unresolved.push(`${ref.entityKind}:${ref.value}`),
+      },
+    )
+
+    expect(unresolved).toContain("whatsappFlow:55")
+  })
+
+  test("the sendViewCatalog thumbnail is a Meta retailerId, not a product", () => {
+    const unresolved: string[] = []
+    const flow = stepIn({
+      id: "s",
+      stepType: "sendViewCatalog",
+      thumbnailProductId: "SKU-1",
+    })
+
+    remapFlowGraphReferences(
+      flow,
+      {},
+      { onUnresolved: (ref) => unresolved.push(ref.entityKind) },
+    )
+
+    expect(unresolved).toEqual([])
+  })
+
+  test("an override only applies inside its own step", () => {
+    const unresolved: string[] = []
+    remapFlowGraphReferences(
+      stepIn({ id: "s", stepType: "someOtherStep", assignedId: "77" }),
+      {},
+      { onUnresolved: (ref) => unresolved.push(ref.entityKind) },
+    )
+
+    expect(unresolved).toEqual([])
+  })
+})
+
+describe("remapReferences — Condition row values", () => {
+  const row = (field: string, value: unknown) => ({
+    field,
+    operator: "in",
+    value,
+  })
+
+  test("remaps tag ids held in a Condition value", () => {
+    const remapped = remapReferences(row("tags", ["12", "13"]), {
+      tag: new Map([
+        ["12", "92"],
+        ["13", "93"],
+      ]),
+    })
+
+    expect(remapped.value).toEqual(["92", "93"])
+  })
+
+  test("remaps a scalar product id", () => {
+    const remapped = remapReferences(row("boughtItems", "5"), {
+      product: new Map([["5", "55"]]),
+    })
+
+    expect(remapped.value).toBe("55")
+  })
+
+  test("never touches a plain value like a country", () => {
+    const unresolved: string[] = []
+    const value = row("country", ["VN"])
+
+    expect(
+      remapReferences(
+        value,
+        {},
+        { onUnresolved: (ref) => unresolved.push(ref.entityKind) },
+      ),
+    ).toEqual(value)
+    expect(unresolved).toEqual([])
+  })
+
+  test("third-party ids (ads, posts) are left alone", () => {
+    const unresolved: string[] = []
+    const value = row("clickedAd", ["ad-1"])
+
+    remapReferences(
+      value,
+      {},
+      { onUnresolved: (ref) => unresolved.push(ref.entityKind) },
+    )
+
+    expect(unresolved).toEqual([])
+  })
+
+  test("a value key without the field and operator siblings is not a Condition row", () => {
+    const unresolved: string[] = []
+    const value = { field: "tags", value: ["12"] }
+
+    expect(
+      remapReferences(
+        value,
+        { tag: new Map([["12", "92"]]) },
+        { onUnresolved: (ref) => unresolved.push(ref.entityKind) },
+      ),
+    ).toEqual(value)
+    expect(unresolved).toEqual([])
+  })
+
+  test("an unresolved workspace member in a Condition value is removed", () => {
+    const unresolved: string[] = []
+    const remapped = remapReferences(
+      row("conversationAssigned", ["77"]),
+      {},
+      { onUnresolved: (ref) => unresolved.push(ref.entityKind) },
+    )
+
+    expect(remapped.value).toEqual([])
+    expect(unresolved).toEqual(["workspaceMember"])
+  })
+
+  test("an unresolved tag in a Condition value is kept and reported", () => {
+    const unresolved: string[] = []
+    const remapped = remapReferences(
+      row("tags", ["12"]),
+      {},
+      { onUnresolved: (ref) => unresolved.push(ref.entityKind) },
+    )
+
+    expect(remapped.value).toEqual(["12"])
+    expect(unresolved).toEqual(["tag"])
+  })
+})
+
+describe("remapReferences — assignee sentinels", () => {
+  const row = (value: unknown) => ({
+    field: "conversationAssigned",
+    operator: "in",
+    value,
+  })
+
+  test('keeps the "unassigned" sentinel and strips only member / team ids', () => {
+    const unresolved: string[] = []
+    const remapped = remapReferences(
+      row(["unassigned", "u_77", "t_88"]),
+      {},
+      { onUnresolved: (ref) => unresolved.push(ref.value) },
+    )
+
+    expect(remapped.value).toEqual(["unassigned"])
+    expect(unresolved).toEqual(["u_77", "t_88"])
+  })
+})

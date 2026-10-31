@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import { useState } from "react"
 import { ConfirmDialog } from "@/components/confirm-dialog"
+import { useIsLocked } from "@/features/templates/components/lock-badge"
 import { deleteFieldAction } from "../../actions/field-member.action"
 import { usePipelineAction } from "../../lib/use-pipeline-action"
 import type { BoardField } from "../board/types"
@@ -23,6 +24,7 @@ export function FieldsTab({
 }) {
   const t = useTranslations("pipelines")
   const tRoot = useTranslations()
+  const isLocked = useIsLocked(pipelineId)
   const [deletingField, setDeletingField] = useState<BoardField | null>(null)
   const [dialogTarget, setDialogTarget] = useState<FieldDialogTarget | null>(
     null,
@@ -57,6 +59,7 @@ export function FieldsTab({
               <Button
                 aria-label={tRoot("actions.edit")}
                 className="size-7"
+                disabled={isLocked}
                 onClick={() => setDialogTarget({ mode: "edit", field })}
                 size="icon"
                 variant="ghost"
@@ -66,6 +69,7 @@ export function FieldsTab({
               <Button
                 aria-label={t("settings.deleteField")}
                 className="size-7"
+                disabled={isLocked}
                 onClick={() => setDeletingField(field)}
                 size="icon"
                 variant="ghost"
@@ -78,6 +82,7 @@ export function FieldsTab({
       </ul>
       <Button
         className="justify-self-start"
+        disabled={isLocked}
         onClick={() => setDialogTarget({ mode: "create" })}
         size="sm"
         variant="outline"

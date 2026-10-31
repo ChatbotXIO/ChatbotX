@@ -17,8 +17,10 @@ import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useEffect } from "react"
 import { toast } from "sonner"
+import { LockedDialogFieldset } from "@/components/locked-dialog-fieldset"
 import { editFolderAction } from "@/features/folders/actions/edit-folder-action"
 import { editFolderSchema } from "@/features/folders/schema/action"
+import { useIsLocked } from "@/features/templates/components/lock-badge"
 import type { FolderResource } from "./schema/resource"
 
 export function EditFolderDialog({
@@ -33,6 +35,7 @@ export function EditFolderDialog({
   folder: FolderResource | null
 }) {
   const t = useTranslations()
+  const isLocked = useIsLocked(folder?.id)
   const router = useRouter()
 
   const { form, handleSubmitWithAction, resetFormAndAction } =
@@ -86,8 +89,13 @@ export function EditFolderDialog({
               className="flex-1 space-y-4"
               onSubmit={handleSubmitWithAction}
             >
-              <InputField label={t("fields.name.label")} name="name" required />
-
+              <LockedDialogFieldset resourceId={folder?.id}>
+                <InputField
+                  label={t("fields.name.label")}
+                  name="name"
+                  required
+                />
+              </LockedDialogFieldset>
               <div className="flex justify-end gap-4">
                 <Button
                   onClick={() => onOpenChange(false)}
@@ -98,7 +106,9 @@ export function EditFolderDialog({
                 </Button>
                 <Button
                   disabled={
-                    !form.formState.isValid || form.formState.isSubmitting
+                    isLocked ||
+                    !form.formState.isValid ||
+                    form.formState.isSubmitting
                   }
                   type="submit"
                 >

@@ -2,6 +2,7 @@ import { ECOMMERCE_SETTINGS_DEFAULTS } from "@chatbotx.io/database/partials"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const mocks = vi.hoisted(() => ({
+  assertReferencable: vi.fn(async () => undefined),
   find: vi.fn(),
   findForUpdate: vi.fn(),
   insertIfMissing: vi.fn(),
@@ -12,6 +13,31 @@ const mocks = vi.hoisted(() => ({
   audit: vi.fn(),
   listProviders: vi.fn(),
 }))
+
+// The template guards are covered by their own suites; here they only must not
+// block the write, and run it on this file's mocked client.
+vi.mock(
+  "../../template/installed-resource.service",
+  async (importOriginal) => ({
+    ...(await importOriginal<
+      typeof import("../../template/installed-resource.service")
+    >()),
+    assertReferencable: mocks.assertReferencable,
+  }),
+)
+
+vi.mock("../../template/template-resource-locks", async (importOriginal) => {
+  const { db } = await import("@chatbotx.io/database/client")
+  return {
+    ...(await importOriginal<
+      typeof import("../../template/template-resource-locks")
+    >()),
+    withTemplateLockedTransaction: (run: (tx: unknown) => unknown) =>
+      "transaction" in db
+        ? (db as { transaction: (fn: typeof run) => unknown }).transaction(run)
+        : run(db),
+  }
+})
 
 vi.mock("@chatbotx.io/database/client", () => ({
   db: {
@@ -220,6 +246,27 @@ describe("ecommerceSettingsService", () => {
         patch: { shipping: { shippingType: "pickup" } },
       }),
     ).rejects.toMatchObject({ field: "storeAddress" })
+  })
+
+  test("guards the flows it references against a template uninstall, inside the save", async () => {
+    await ecommerceSettingsService.update({
+      workspaceId: "ws1",
+      patch: {
+        checkout: {
+          checkoutMode: "flow",
+          checkoutFlowId: "7",
+          orderConfirmationMode: "flow",
+          orderConfirmationFlowId: "7",
+        },
+      },
+    })
+
+    // One parent per distinct flow, checked on the save's own transaction.
+    expect(mocks.assertReferencable).toHaveBeenCalledWith({
+      workspaceId: "ws1",
+      parents: [{ kind: "flow", resourceId: "7" }],
+      tx: expect.anything(),
+    })
   })
 
   test("saves another group when the stored checkout flow was deleted", async () => {

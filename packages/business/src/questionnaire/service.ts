@@ -16,6 +16,7 @@ import {
   type SupportedQuestionnaireQuestionType,
   supportedQuestionnaireQuestionTypes,
 } from "@chatbotx.io/database/partials"
+import { questionnaireRepository } from "@chatbotx.io/database/repositories"
 import {
   questionnaireAnswerModel,
   questionnaireModel,
@@ -33,6 +34,12 @@ import {
   type RichSystemContactField,
 } from "../contact/service"
 import { ChatbotXException, notFoundException } from "../errors"
+import { copyNamePrefix, insertWithFreeCopyName } from "../lib/copy-name"
+import {
+  assertResourceEditable,
+  withDeleteGuard,
+} from "../template/installed-resource.service"
+import { withTemplateLockedTransaction } from "../template/template-resource-locks"
 import type { UpdateQuestionnaireInput } from "./types"
 
 const SYSTEM_FIELDS_BY_QUESTION_TYPE: Record<
@@ -46,7 +53,19 @@ const SYSTEM_FIELDS_BY_QUESTION_TYPE: Record<
   phone: ["phone"],
 } as const
 
-export class QuestionnaireService extends BaseService {
+export const QUESTIONNAIRE_COPY_NAME = {
+  style: "dash",
+  maxLength: 255,
+} as const
+
+const questionnaireNameExistsException = () =>
+  new ChatbotXException(
+    "Questionnaire name already exists",
+    "nameAlreadyExists",
+    409,
+  )
+
+class QuestionnaireService extends BaseService {
   async findBy(
     input: { workspaceId: string; id: string },
     tx: DatabaseClient = db,
@@ -190,17 +209,27 @@ export class QuestionnaireService extends BaseService {
 
   async rename(input: { workspaceId: string; id: string; name: string }) {
     try {
-      const [row] = await db
-        .update(questionnaireModel)
-        .set({ name: input.name.trim() })
-        .where(
-          and(
-            eq(questionnaireModel.id, input.id),
-            eq(questionnaireModel.workspaceId, input.workspaceId),
-            isNull(questionnaireModel.deletedAt),
-          ),
-        )
-        .returning({ id: questionnaireModel.id })
+      const [row] = await withTemplateLockedTransaction(async (tx) => {
+        // First step: a sync/restore/uninstall cannot race this local edit.
+        await assertResourceEditable({
+          workspaceId: input.workspaceId,
+          resourceKind: "questionnaire",
+          resourceIds: [input.id],
+          changedKeys: ["name"],
+          tx,
+        })
+        return await tx
+          .update(questionnaireModel)
+          .set({ name: input.name.trim() })
+          .where(
+            and(
+              eq(questionnaireModel.id, input.id),
+              eq(questionnaireModel.workspaceId, input.workspaceId),
+              isNull(questionnaireModel.deletedAt),
+            ),
+          )
+          .returning({ id: questionnaireModel.id })
+      })
 
       if (!row) {
         throw notFoundException("Questionnaire not found")
@@ -220,15 +249,42 @@ export class QuestionnaireService extends BaseService {
           orderBy: { orderNo: "asc" },
         })
         const copiedId = createId()
-        await tx.insert(questionnaireModel).values({
-          id: copiedId,
-          workspaceId: input.workspaceId,
-          name: `${questionnaire.name} - Copy`,
-          triggerFlowId: questionnaire.triggerFlowId,
-          enableScore: questionnaire.enableScore,
-          enableRetryMessages: questionnaire.enableRetryMessages,
-          enableCustomFieldMapping: questionnaire.enableCustomFieldMapping,
+        const taken = new Set(
+          await questionnaireRepository.listNamesWithPrefix(
+            {
+              workspaceId: input.workspaceId,
+              prefix: copyNamePrefix(
+                questionnaire.name,
+                QUESTIONNAIRE_COPY_NAME,
+              ),
+            },
+            tx,
+          ),
+        )
+        // A savepoint per candidate: a name taken by a concurrent copy must
+        // not abort the transaction that goes on to insert the questions.
+        const inserted = await insertWithFreeCopyName({
+          constraint: "Questionnaire_workspaceId_name_key",
+          base: questionnaire.name,
+          taken,
+          options: QUESTIONNAIRE_COPY_NAME,
+          insert: (name) =>
+            tx.transaction((savepoint) =>
+              savepoint.insert(questionnaireModel).values({
+                id: copiedId,
+                workspaceId: input.workspaceId,
+                name,
+                triggerFlowId: questionnaire.triggerFlowId,
+                enableScore: questionnaire.enableScore,
+                enableRetryMessages: questionnaire.enableRetryMessages,
+                enableCustomFieldMapping:
+                  questionnaire.enableCustomFieldMapping,
+              }),
+            ),
         })
+        if (!inserted) {
+          throw questionnaireNameExistsException()
+        }
         if (questions.length > 0) {
           await tx.insert(questionnaireQuestionModel).values(
             questions.map((question) => ({
@@ -261,39 +317,79 @@ export class QuestionnaireService extends BaseService {
     if (input.ids.length === 0) {
       return
     }
-    await db.transaction(async (tx) => {
-      await tx
-        .update(questionnaireSubmissionModel)
-        .set({
-          status: "cancelled",
-          cancelledAt: new Date(),
-          currentQuestionId: null,
-          currentQuestionSentAt: null,
-        })
-        .where(
-          and(
-            eq(questionnaireSubmissionModel.workspaceId, input.workspaceId),
-            inArray(questionnaireSubmissionModel.questionnaireId, input.ids),
-            eq(questionnaireSubmissionModel.status, "inProgress"),
-          ),
-        )
-      await tx
-        .update(questionnaireModel)
-        .set({ deletedAt: new Date() })
-        .where(
-          and(
-            eq(questionnaireModel.workspaceId, input.workspaceId),
-            inArray(questionnaireModel.id, input.ids),
-            isNull(questionnaireModel.deletedAt),
-          ),
-        )
-    })
+    await withDeleteGuard(
+      {
+        workspaceId: input.workspaceId,
+        targets: [{ resourceKind: "questionnaire", resourceIds: input.ids }],
+      },
+      (tx) => this.deleteInTx(tx, input),
+    )
+  }
+
+  /**
+   * The delete core (cancel open submissions, soft-delete), shared with the
+   * template uninstall so there is one implementation.
+   */
+  async deleteInTx(
+    tx: DatabaseClient,
+    input: { workspaceId: string; ids: string[] },
+  ): Promise<void> {
+    await tx
+      .update(questionnaireSubmissionModel)
+      .set({
+        status: "cancelled",
+        cancelledAt: new Date(),
+        currentQuestionId: null,
+        currentQuestionSentAt: null,
+      })
+      .where(
+        and(
+          eq(questionnaireSubmissionModel.workspaceId, input.workspaceId),
+          inArray(questionnaireSubmissionModel.questionnaireId, input.ids),
+          eq(questionnaireSubmissionModel.status, "inProgress"),
+        ),
+      )
+    await tx
+      .update(questionnaireModel)
+      .set({ deletedAt: new Date() })
+      .where(
+        and(
+          eq(questionnaireModel.workspaceId, input.workspaceId),
+          inArray(questionnaireModel.id, input.ids),
+          isNull(questionnaireModel.deletedAt),
+        ),
+      )
   }
 
   async update(input: UpdateQuestionnaireInput) {
     await this.validateEditInput(input)
     try {
-      await db.transaction(async (tx) => {
+      await withTemplateLockedTransaction(async (tx) => {
+        // A save rewrites the question list, which is the template-locked
+        // content. First step, with the flow and custom fields the payload
+        // points at locked alongside the questionnaire.
+        await assertResourceEditable({
+          workspaceId: input.workspaceId,
+          resourceKind: "questionnaire",
+          resourceIds: [input.id],
+          changedKeys: ["questions"],
+          referencedParents: [
+            ...(input.triggerFlowId
+              ? [{ kind: "flow" as const, resourceId: input.triggerFlowId }]
+              : []),
+            ...input.questions.flatMap((question) =>
+              question.customFieldId
+                ? [
+                    {
+                      kind: "customField" as const,
+                      resourceId: question.customFieldId,
+                    },
+                  ]
+                : [],
+            ),
+          ],
+          tx,
+        })
         const questionnaire = await this.findByOrFail(input, tx)
         if (input.triggerFlowId) {
           const flow = await tx.query.flowModel.findFirst({
@@ -551,11 +647,7 @@ export class QuestionnaireService extends BaseService {
 
   private throwMappedUniqueError(error: unknown): never | undefined {
     if (isUniqueViolationError(error)) {
-      throw new ChatbotXException(
-        "Questionnaire name already exists",
-        "nameAlreadyExists",
-        409,
-      )
+      throw questionnaireNameExistsException()
     }
   }
 }

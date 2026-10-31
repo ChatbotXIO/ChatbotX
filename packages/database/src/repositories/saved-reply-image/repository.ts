@@ -11,6 +11,17 @@ export type SavedReplyImageWithFile = {
 }
 
 export const savedReplyImageRepository = {
+  /** How many saved replies still point at a media file. */
+  async countReferences(
+    mediaLibraryFileId: string,
+    tx: DatabaseClient = db,
+  ): Promise<number> {
+    return await tx.$count(
+      savedReplyImageModel,
+      eq(savedReplyImageModel.mediaLibraryFileId, mediaLibraryFileId),
+    )
+  },
+
   async listBySavedReplyIds(
     input: { workspaceId: string; savedReplyIds: string[] },
     tx: DatabaseClient = db,

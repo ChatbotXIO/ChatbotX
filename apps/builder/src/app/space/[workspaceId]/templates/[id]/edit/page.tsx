@@ -1,10 +1,14 @@
-import { templateService } from "@chatbotx.io/business"
+import {
+  listSelectableTemplateCategories,
+  TEMPLATE_MANAGE_PERMISSION,
+  templateService,
+} from "@chatbotx.io/business"
 import { getIdFromParams } from "@chatbotx.io/utils"
 import { notFound } from "next/navigation"
 import { getTranslations } from "next-intl/server"
 import { AppBreadcrumb } from "@/components/app-breadcrumb"
 import { TemplateForm } from "@/features/templates/components/template-form"
-import { hasWorkspacePermission } from "@/lib/auth/permission-routes"
+import { requireWorkspacePermission } from "@/lib/auth/require-workspace-permission"
 import { getCurrentUserAndTargetWorkspace } from "@/lib/auth/utils"
 
 export default async function EditTemplatePage({
@@ -19,23 +23,15 @@ export default async function EditTemplatePage({
     return notFound()
   }
 
-  const userAndWorkspace = await getCurrentUserAndTargetWorkspace(workspaceId)
-  if (
-    !(
-      userAndWorkspace &&
-      hasWorkspacePermission(
-        userAndWorkspace.targetWorkspaceMember.permissions,
-        "superAdmin",
-      )
-    )
-  ) {
-    return notFound()
-  }
+  await requireWorkspacePermission(workspaceId, TEMPLATE_MANAGE_PERMISSION)
 
+  const userAndWorkspace = await getCurrentUserAndTargetWorkspace(workspaceId)
+  // The detail read leaves out the snapshot payload: it is megabytes the
+  // editor never shows and must not be serialized into the client component.
   const template = await templateService
-    .findByIdOrFail({ workspaceId, templateId: id })
+    .getDetailOrFail({ workspaceId, templateId: id })
     .catch(() => null)
-  if (!template) {
+  if (!(template && userAndWorkspace)) {
     return notFound()
   }
 
@@ -53,7 +49,13 @@ export default async function EditTemplatePage({
           { label: t("actions.edit"), href: "" },
         ]}
       />
-      <TemplateForm template={template} workspaceId={workspaceId} />
+      <TemplateForm
+        selectableCategories={listSelectableTemplateCategories(
+          userAndWorkspace.targetWorkspaceMember.permissions,
+        )}
+        template={template}
+        workspaceId={workspaceId}
+      />
     </div>
   )
 }

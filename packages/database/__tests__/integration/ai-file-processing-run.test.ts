@@ -15,7 +15,7 @@
  * `pnpm --filter @chatbotx.io/database test:db`.
  */
 
-import { eq } from "drizzle-orm"
+import { eq, inArray } from "drizzle-orm"
 import { drizzle } from "drizzle-orm/node-postgres"
 import { Client } from "pg"
 import { afterAll, beforeAll, describe, expect, test } from "vitest"
@@ -303,7 +303,7 @@ describe.skipIf(!databaseUrl)(
       )
     })
 
-    test("reconcile resets error/processing chunks it keeps and leaves success alone", async () => {
+    test("reconcile retries the error chunks it keeps and leaves processing and success alone", async () => {
       await run(null, async (repository, fixture, tx) => {
         await tx.insert(schema.aiEmbeddingModel).values(
           (
@@ -330,15 +330,28 @@ describe.skipIf(!databaseUrl)(
           ],
         })
 
-        expect(pending.map((row) => row.id).sort()).toEqual([
-          "910000000000000001",
-          "910000000000000002",
-        ])
-        const [success] = await tx
-          .select({ status: schema.aiEmbeddingModel.status })
+        // Only a chunk whose embedding job gave up (`error`) is retried. A
+        // file's chunks never take `processing` (the run's lease covers the
+        // file, not its chunks), so one such row is left as it is.
+        expect(pending.map((row) => row.id)).toEqual(["910000000000000001"])
+        const rows = await tx
+          .select({
+            id: schema.aiEmbeddingModel.id,
+            status: schema.aiEmbeddingModel.status,
+          })
           .from(schema.aiEmbeddingModel)
-          .where(eq(schema.aiEmbeddingModel.id, "910000000000000003"))
-        expect(success?.status).toBe("success")
+          .where(
+            inArray(schema.aiEmbeddingModel.id, [
+              "910000000000000002",
+              "910000000000000003",
+            ]),
+          )
+        expect(
+          Object.fromEntries(rows.map((row) => [row.id, row.status])),
+        ).toEqual({
+          "910000000000000002": "processing",
+          "910000000000000003": "success",
+        })
       })
     })
 

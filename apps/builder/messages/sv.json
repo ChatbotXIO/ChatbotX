@@ -3367,7 +3367,8 @@
       "pending": "Väntande",
       "processing": "Bearbetas",
       "installing": "Installing",
-      "success": "Lyckades"
+      "success": "Lyckades",
+      "uninstalled": "Uninstalled"
     },
     "statusCode": {
       "label": "Statuskod"
@@ -3697,7 +3698,8 @@
       "miniApps": "Mini Apps",
       "leaderboards": "Topplistor",
       "pipelines": "Pipelines",
-      "places": "Platser"
+      "places": "Platser",
+      "templates": "Mallar"
     },
     "adReferral": {
       "label": "Ads",
@@ -6659,14 +6661,107 @@
       "dialogDescription": "Alla med den här länken kan installera en kopia av den här mallen i en arbetsyta i din organisation.",
       "enableLabel": "Aktivera dellänk",
       "linkLabel": "Dellänk",
-      "description": "Alla med länken kan installera den här mallen i sin egen arbetsyta."
+      "description": "Alla med länken kan installera den här mallen i sin egen arbetsyta.",
+      "rotateLabel": "Rotate link",
+      "rotateTitle": "Rotate share link?",
+      "rotateDescription": "The current link stops working immediately. Anyone who still needs to install this template needs the new link.",
+      "rotated": "Share link rotated",
+      "expiryLabel": "Link expires",
+      "expiryHint": "Leave empty for a link that never expires.",
+      "clearExpiry": "Remove expiry",
+      "expiredNotice": "This link has expired. Set a later date or remove the expiry to share it again."
+    },
+    "sync": {
+      "title": "Updates",
+      "updateAvailable": "Update available",
+      "upToDate": "Up to date",
+      "updateNow": "Update now",
+      "updating": "Updating…",
+      "version": "Template version {version}",
+      "lastSynced": "last updated {date}",
+      "autoUpdateLabel": "Update automatically when the template changes",
+      "noHistory": "No updates yet.",
+      "counts": "{created} added · {updated} updated · {detached} detached",
+      "notUpdatable": "{count} not updatable yet",
+      "overwritten": "{name} was edited and replaced by the update",
+      "restore": "Restore my version",
+      "restored": "Your version was restored",
+      "status": {
+        "pending": "Queued",
+        "running": "Running",
+        "completed": "Completed",
+        "partial": "Partial",
+        "failed": "Failed",
+        "skipped": "Skipped",
+        "cancelled": "Cancelled"
+      },
+      "trigger": {
+        "autoUpdate": "Automatic",
+        "manual": "Manual",
+        "reinstall": "Reinstall"
+      },
+      "publisherAccessLabel": "Let the publisher see this workspace and uninstall the template",
+      "publisherAccessHint": "Only the workspace name is shared. If the publisher uninstalls, everything the template created is deleted, including copies you edited.",
+      "requestedVersion": "begärd v{version}"
+    },
+    "installers": {
+      "title": "Installers",
+      "workspace": "Workspace",
+      "installs": "Installs",
+      "lastInstalled": "Last installed",
+      "version": "Version",
+      "autoUpdate": "Auto-update",
+      "uninstalled": "Uninstalled",
+      "hidden": "Workspace not shared",
+      "totalInstallEvents": "Installationer totalt (genom tiderna)",
+      "uninstallNotAllowed": "Installatören har inte tillåtit utgivare att avinstallera den här kopian.",
+      "loadError": "Kunde inte läsa in installatörerna. Försök igen.",
+      "byVersionTitle": "Installs by version",
+      "versionLabel": "Version {version}",
+      "byVersionHint": "The newest version is {version}. Grey bars are copies that are behind."
     },
     "installs": {
       "title": "Installationer",
       "resources": "Resurser",
       "warnings": "Varningar",
       "completedAt": "Slutförd",
-      "autoUpdate": "Automatisk uppdatering"
+      "autoUpdate": "Automatisk uppdatering",
+      "detailTitle": "Install details",
+      "installedBy": "Installed by",
+      "viaApi": "API token",
+      "attempts": "Attempts",
+      "autoUpdateOn": "On",
+      "autoUpdateOff": "Off",
+      "retry": "Retry install",
+      "resourcesTitle": "Installed resources",
+      "noResources": "Nothing was created yet.",
+      "deletedResource": "Deleted resource",
+      "viewOnly": "View only",
+      "created": "Created",
+      "reused": "Reused",
+      "loadMore": "Load more",
+      "backToList": "Back to installs",
+      "viewWarnings": "View warnings",
+      "warningsHint": "Items the install skipped or could not fully bring over.",
+      "warningsTruncated": "Showing {shown} of {total} warnings.",
+      "statusFilter": "Status",
+      "allStatuses": "All statuses",
+      "errors": {
+        "unknown": "The install failed. Try again, or contact support if it keeps failing.",
+        "templatePayloadIncompatible": "This template was saved in a newer format than this server can install.",
+        "templateInstallationSourceMissing": "The template was deleted before the install ran.",
+        "templateCrossTenantInstall": "This template is not available for your workspace.",
+        "templateCategoryPermissionDenied": "You no longer have permission to install everything in this template.",
+        "templateInvalidInboxBinding": "A selected inbox does not match the template.",
+        "templateInstallEnqueueFailed": "The install could not be queued.",
+        "templateInstallFailed": "The install failed. Try again.",
+        "templateInstallAbandoned": "The install did not finish in time and was closed.",
+        "templateInstallSuperseded": "A newer install of this template replaced this one.",
+        "workspaceOwnerBlocked": "The workspace owner's account is blocked."
+      },
+      "uninstalledBy": "{by, select, publisher {The publisher uninstalled this template.} installer {This template was uninstalled from this workspace.} other {This template was uninstalled.}}",
+      "uninstalledSummary": "{deleted} deleted, {kept} kept.",
+      "lastAttemptAt": "Senaste försök"
     },
     "form": {
       "contents": "Mallens innehåll",
@@ -6685,8 +6780,20 @@
       "installBehavior": "Installationsbeteende",
       "createInstallFolder": "Installera i en dedikerad mapp",
       "createInstallFolderDescription": "Placerar varje installerad resurs i en ny mapp uppkallad efter den här mallen.",
-      "defaultAutoUpdate": "Markera installationer för uppdatering som standard",
-      "defaultAutoUpdateDescription": "Nya installationer visar ett meddelande om tillgänglig uppdatering varje gång du publicerar om den här mallen."
+      "defaultAutoUpdate": "Update new installs automatically by default",
+      "defaultAutoUpdateDescription": "Whenever you save this template with changed content, installs that follow auto-update are overwritten with the new content (copies the installer edited are backed up first). Installers can turn it off.",
+      "viewOnly": "Endast visning",
+      "viewOnlyAll": "Gör alla valda skrivskyddade",
+      "includedAutomatically": {
+        "title": "Included automatically",
+        "hint": "Taken along because something you selected needs it. Read only.",
+        "rows": "{count, plural, one {# more item} other {# more items}}",
+        "kind": {
+          "folders": "Folders",
+          "inboxes": "Inboxes"
+        },
+        "dropped": "{count, plural, one {# referens till ett objekt som mallen inte innehåller tas bort vid installation (en utlösare som förlorar en stängs av)} other {# referenser till objekt som mallen inte innehåller tas bort vid installation (en utlösare som förlorar en stängs av)}}"
+      }
     },
     "categories": {
       "flows": "Flöden",
@@ -6701,8 +6808,108 @@
       "keywords": "Nyckelord",
       "entryPointLinks": "Länkar till startpunkter",
       "triggers": "Utlösare",
-      "fbCommentAutomations": "Facebook-kommentarautomatiseringar",
-      "settings": "Inställningar"
+      "fbCommentAutomations": "Kommentarautomatiseringar",
+      "settings": "Inställningar",
+      "sequences": "Sequences",
+      "aiMcpServers": "MCP servers",
+      "aiFiles": "AI knowledge files",
+      "questionnaires": "Questionnaires",
+      "couponTopics": "Coupon topics",
+      "pipelines": "Pipelines"
+    },
+    "locked": {
+      "flowBanner": "Det här flödet installerades från en skrivskyddad mall. Du kan titta på det men inte redigera det.",
+      "badge": "Endast visning",
+      "editorBanner": "This was installed from a view-only template. You can look at it but not edit it.",
+      "badgeHint": "Installed from a view-only template"
+    },
+    "channels": {
+      "messenger": "Messenger",
+      "instagram": "Instagram",
+      "instagramFacebook": "Instagram (Facebook login)",
+      "threads": "Threads",
+      "tiktok": "TikTok",
+      "whatsapp": "WhatsApp",
+      "telegram": "Telegram",
+      "zalo": "Zalo",
+      "webchat": "Webchat",
+      "line": "LINE",
+      "email": "Email"
+    },
+    "uninstall": {
+      "title": "Uninstall template",
+      "description": "The template removes everything it created in this workspace, including copies that were edited. Shared tags, fields and folders, items that existed before, and anything you built on top of a copy are kept.",
+      "loading": "Checking what will happen…",
+      "previewFailed": "Could not check what an uninstall would do.",
+      "failed": "Could not uninstall the template.",
+      "done": "Template uninstalled",
+      "confirm": "Uninstall",
+      "action": "Uninstall",
+      "deleted": "{count, plural, one {# item will be deleted} other {# items will be deleted}}",
+      "deletedDone": "{count, plural, one {# item was deleted} other {# items were deleted}}",
+      "keptModified": "{count, plural, one {# edited or unverified copy is kept} other {# edited or unverified copies are kept}}",
+      "keptShared": "{count, plural, one {# shared tag or field is kept} other {# shared tags and fields are kept}}",
+      "keptByPolicy": "{count, plural, one {# other item is kept} other {# other items are kept}}",
+      "keptHasDependents": "{count, plural, one {# copy is kept because something still uses it} other {# copies are kept because something still uses them}}",
+      "deletedModified": "{count, plural, one {# of them was edited by you: those edits are lost and can not be restored} other {# of them were edited by you: those edits are lost and can not be restored}}",
+      "keptLockedByOther": "{count, plural, one {# item is kept because another template installation still protects it} other {# items are kept because another template installation still protects them}}",
+      "confirmCheckbox": "I understand this deletes the items above and can not be undone",
+      "started": "Uninstall started",
+      "inProgress": "Uninstalling…",
+      "retry": "Retry uninstall",
+      "state": {
+        "pending": "Uninstall queued",
+        "running": "Uninstalling…",
+        "partial": "Uninstall incomplete, retry it",
+        "failed": "Uninstall failed, retry it",
+        "skipped": "Uninstall skipped: the workspace is blocked"
+      },
+      "deletedUnverified": "{count, plural, one {# of them can not be checked for edits: if you changed it, those changes are lost} other {# of them can not be checked for edits: if you changed them, those changes are lost}}",
+      "cancelAction": "Cancel uninstall",
+      "cancelled": "Uninstall cancelled: the remaining items are yours to use again",
+      "blockedByReference": "{count, plural, one {# item was not deleted because something you created still points at it: remove that reference, then retry the uninstall} other {# items were not deleted because something you created still points at them: remove those references, then retry the uninstall}}",
+      "keptPartlyRemoved": "{count, plural, one {# copy was kept after a blocked uninstall; history and duplicate-protection data may have been removed, so review it before switching it on} other {# copies were kept after a blocked uninstall; history and duplicate-protection data may have been removed, so review them before switching them on}}",
+      "keptInactiveForReview": "{count, plural, one {# copy was left inactive: its history and duplicate-protection data were removed, so review it before switching it on} other {# copies were left inactive: their history and duplicate-protection data were removed, so review them before switching them on}}",
+      "keptHistoryRemoved": "{count, plural, one {# copy was kept, but its history was removed (it has nothing to switch on): review it before relying on it} other {# copies were kept, but their history was removed (they have nothing to switch on): review them before relying on them}}",
+      "cancelledPartial": "{count, plural, one {# item is already being deleted and will finish; the rest was given back} other {# items are already being deleted and will finish; the rest was given back}}"
+    },
+    "warningCodes": {
+      "aiFileTooLarge": "Den här kunskapsfilen är större än en mallinstallation kan kopiera, så den hoppades över.",
+      "aiFileUnavailable": "Den här kunskapsfilen kunde inte kopieras, så den hoppades över.",
+      "ambiguousSourceFieldToken": "Flera källfält har detta namn, så variablerna som använder det lämnades oförändrade.",
+      "backupTooLarge": "Ett lokalt redigerat objekt var för stort för att säkerhetskopieras, så det skrevs inte över.",
+      "backupUnavailable": "Säkerhetskopian för detta objekt är inte längre tillgänglig.",
+      "botFieldRenamed": "A bot field with this name and another type already exists, so a renamed field was created.",
+      "categoryPermissionDenied": "Du har inte behörighet för denna kategori, så den hoppades över.",
+      "couponTopicExpired": "Detta kupongämne har redan gått ut.",
+      "credentialRequired": "Lägg till inloggningsuppgifterna för detta objekt innan du använder det.",
+      "custom": "Ett refererat objekt hittades inte i denna arbetsyta, så länken togs bort.",
+      "customField": "Ett refererat objekt hittades inte i denna arbetsyta, så länken togs bort.",
+      "customFieldRenamed": "Ett fält med detta namn och en annan typ finns redan, så ett omdöpt fält skapades.",
+      "enqueueFailed": "Bakgrundsbearbetningen kunde inte köas för detta objekt.",
+      "flow": "Ett refererat objekt hittades inte i denna arbetsyta, så länken togs bort.",
+      "flowInvalidStructure": "Flowets struktur är ogiltig, så det hoppades över.",
+      "flowNotPublished": "Flowet installerades som utkast och är inte publicerat.",
+      "flowSkippedRequiredReference": "Flowet hoppades över eftersom en obligatorisk referens inte kunde lösas.",
+      "folder": "Ett refererat objekt hittades inte i denna arbetsyta, så länken togs bort.",
+      "inboxBindingRequired": "Välj en inkorg för denna kanal; tills dess förblir objektet inaktivt.",
+      "integration": "Ett refererat objekt hittades inte i denna arbetsyta, så länken togs bort.",
+      "localModifiedOverwritten": "Ett lokalt redigerat objekt skrevs över. En säkerhetskopia sparades och kan återställas.",
+      "name": "Inget ledigt namn hittades för detta objekt, så det hoppades över.",
+      "noEmbeddingProvider": "Ingen embedding-leverantör är konfigurerad i den här arbetsytan, så kunskapsfilerna hoppades över. Anslut OpenAI eller Gemini och installera igen.",
+      "notUpdatable": "Den här typen av objekt uppdateras inte automatiskt ännu.",
+      "pipelineField": "Ett refererat objekt hittades inte i denna arbetsyta, så länken togs bort.",
+      "pipelineStage": "Ett refererat objekt hittades inte i denna arbetsyta, så länken togs bort.",
+      "postSelectionRequired": "Välj inlägget igen: det ursprungliga inlägget kunde inte föras över.",
+      "product": "Ett refererat objekt hittades inte i denna arbetsyta, så länken togs bort.",
+      "productCategory": "Ett refererat objekt hittades inte i denna arbetsyta, så länken togs bort.",
+      "questionImage": "En bild kunde inte kopieras.",
+      "quota": "En plangräns nåddes, så objektet hoppades över.",
+      "referenceRemoved": "En referens som inte kunde lösas togs bort.",
+      "savedReply": "Ett refererat objekt hittades inte i denna arbetsyta, så länken togs bort.",
+      "savedReplyImage": "En bild kunde inte kopieras.",
+      "tag": "Ett refererat objekt hittades inte i denna arbetsyta, så länken togs bort.",
+      "unlisted": "Objektet fördes inte över helt: {code}"
     }
   },
   "texts": {
@@ -6830,7 +7037,34 @@
     "selectWorkspace": "Välj en arbetsyta",
     "install": "Installera",
     "installStarted": "Installationen har startat",
-    "noEligibleWorkspaces": "Du har ingen arbetsyta som är berättigad att installera den här mallen."
+    "noEligibleWorkspaces": "Du har ingen arbetsyta som är berättigad att installera den här mallen.",
+    "alreadyInstalled": "This template is already installed in this workspace.",
+    "viewInstall": "View install",
+    "installAnotherCopy": "Install another copy",
+    "inboxesTitle": "Inboxes",
+    "inboxesHint": "This template was built around these inboxes. Choose which of your own inboxes to use; anything left out is installed switched off.",
+    "noInbox": "Don't connect — install switched off",
+    "noInboxAvailable": "No connected inbox on this channel",
+    "updateExisting": "Update installed copy",
+    "updateStarted": "Update started",
+    "publisherAccessLabel": "Let the publisher see this workspace's name and uninstall this template from it",
+    "publisherAccessHint": "They never see your data, contacts or email. If they uninstall, everything the template created is deleted, including copies you edited; anything you built on top of a copy is kept. You can turn this off later on the install page.",
+    "autoUpdateLabel": "Update automatically when the template changes",
+    "collisions": {
+      "title": "What the install will do here",
+      "loading": "Checking this workspace…",
+      "action": {
+        "create": "Created",
+        "reuse": "Reused",
+        "rename": "Renamed",
+        "bind": "Bound",
+        "unbound": "Left unbound"
+      },
+      "detail": {
+        "rename": "“{name}” already exists with another type, so the template’s one is added under a new name.",
+        "unbound": "“{name}” is left unconnected until you pick an inbox."
+      }
+    }
   },
   "userPersistentMenus": {
     "title": "Beständiga användarmenyer"

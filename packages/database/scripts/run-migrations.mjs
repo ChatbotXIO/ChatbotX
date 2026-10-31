@@ -194,6 +194,100 @@ const reconcileRenamedMigrations = async (client) => {
   }
 }
 
+/**
+ * The template migrations were re-squashed per table before the branch
+ * shipped. A database that applied every one of the old migrations already
+ * has the exact schema the squashed ones create (verified by migrating a
+ * fresh database and diffing every template column, index, constraint,
+ * trigger, function and enum), so it only records the new names; nothing is
+ * re-run. A database that applied only some of them is left alone and the
+ * squashed SQL then fails loudly instead of being half-reconciled.
+ */
+const SQUASHED_TEMPLATE_MIGRATIONS = {
+  legacy: [
+    "20261029083526_template_resource_categories",
+    "20261029095630_template_installation",
+    "20261029101608_template_installed_resource",
+    "20261029124755_template_versioning",
+    "20261029152604_template_installation_sync",
+    "20261029163616_ai_file_queued_run_index",
+    "20261030003435_template_installed_resource_active_unique",
+    "20261030060741_template_uninstall_state",
+    "20261030073546_template_uninstall_effects_attempts",
+    "20261030080551_template_uninstall_freeze_and_drain",
+    "20261030142022_template_install_staged_objects_cleaned",
+    "20261030143121_template_hard_delete_stamps_installations",
+    "20261030144037_template_pending_publish_effects",
+    "20261030155356_template_staging_generation_and_fingerprint",
+    "20261030155632_template_drop_staged_objects_cleaned_at",
+    "20261030234339_template_installation_staged_cleanup_idx",
+  ],
+  squashed: [
+    "20261031010000_template_enums",
+    "20261031010100_template_versioning",
+    "20261031010200_template_uninstall_operation",
+    "20261031010300_template_installation",
+    "20261031010400_template_installed_resource",
+    "20261031010500_template_installed_resource_active_unique",
+    "20261031010600_template_installation_sync",
+    "20261031010700_ai_file_queued_run_index",
+  ],
+}
+
+const reconcileSquashedTemplateMigrations = async (client) => {
+  const migrationTableResult = await client.query(
+    "SELECT to_regclass('drizzle.__drizzle_migrations') IS NOT NULL AS exists",
+  )
+  if (!migrationTableResult.rows[0]?.exists) {
+    return
+  }
+  const { legacy, squashed } = SQUASHED_TEMPLATE_MIGRATIONS
+  const dbMigrationsResult = await client.query(
+    "SELECT name FROM drizzle.__drizzle_migrations",
+  )
+  const dbNames = new Set(dbMigrationsResult.rows.map(({ name }) => name))
+  if (squashed.some((name) => dbNames.has(name))) {
+    return
+  }
+  const appliedLegacy = legacy.filter((name) => dbNames.has(name))
+  if (appliedLegacy.length === 0) {
+    return
+  }
+  if (appliedLegacy.length !== legacy.length) {
+    console.warn(
+      `Not reconciling the squashed template migrations: only ${appliedLegacy.length} of ${legacy.length} legacy ones are applied.`,
+    )
+    return
+  }
+  const localByName = new Map(
+    readMigrationFiles({ migrationsFolder }).map((migration) => [
+      migration.name,
+      migration,
+    ]),
+  )
+  const rows = squashed.map((name) => localByName.get(name))
+  if (rows.some((migration) => !migration)) {
+    return
+  }
+  await client.query("BEGIN")
+  try {
+    for (const migration of rows) {
+      await client.query(
+        `INSERT INTO drizzle.__drizzle_migrations ("hash", "created_at", "name")
+         VALUES ($1, $2, $3)`,
+        [migration.hash, migration.folderMillis, migration.name],
+      )
+    }
+    await client.query("COMMIT")
+  } catch (error) {
+    await client.query("ROLLBACK")
+    throw error
+  }
+  console.log(
+    `Reconciled squashed template migrations: ${legacy.length} -> ${squashed.length}`,
+  )
+}
+
 const reconcileSquashedQuestionnaireMigration = async (client) => {
   const legacyQuestionnaireMigrationNames = [
     "20260714152243_create_questionnaires",
@@ -331,6 +425,9 @@ try {
   ])
   migrationLockAcquired = true
 
+  // First: the squashed AI-file index keeps its SQL (and hash), so the rename
+  // reconciler would otherwise claim its legacy row and break the full match.
+  await reconcileSquashedTemplateMigrations(client)
   await reconcileRenamedMigrations(client)
   await reconcileSquashedQuestionnaireMigration(client)
   const db = drizzle({ client })

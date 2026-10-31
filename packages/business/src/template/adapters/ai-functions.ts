@@ -1,12 +1,22 @@
-import { db, eq } from "@chatbotx.io/database/client"
+import { type DatabaseClient, db, eq } from "@chatbotx.io/database/client"
 import { aiFunctionModel } from "@chatbotx.io/database/schema"
+import { z } from "zod"
 import { aiFunctionService } from "../../ai-function/service"
+import {
+  assertBackupFormat,
+  EMPTY_COLLECT_RESULT,
+  verifyOwnedIds,
+} from "./shared"
 import type {
   PatchTask,
   ResourceAdapter,
   ResourceCollector,
+  ResourceSyncHandler,
   TemplateInstallContext,
 } from "./types"
+
+/** The shape `serializeBackup` writes and `restoreBackup` reads. */
+const BACKUP_FORMAT_VERSION = 1
 
 type TemplateAIFunctionEntry = {
   sourceId: string
@@ -20,6 +30,39 @@ type TemplateAIFunctionEntry = {
   triggerFlowId?: string | null
 }
 
+/** What a template update overwrites on an installed function. */
+const aiFunctionContentSchema = z.object({
+  name: z.string(),
+  purpose: z.string().nullable(),
+  /** Stored as untyped jsonb; the template entry types it. */
+  dataCollect: z.unknown(),
+  outputMessage: z.string().nullable(),
+  triggerFlowId: z.string().nullable(),
+})
+type AIFunctionContent = z.infer<typeof aiFunctionContentSchema>
+
+const contentColumns = (content: AIFunctionContent): AIFunctionContent => ({
+  name: content.name,
+  purpose: content.purpose,
+  dataCollect: content.dataCollect,
+  outputMessage: content.outputMessage,
+  triggerFlowId: content.triggerFlowId,
+})
+
+const readContent = async (
+  tx: DatabaseClient,
+  resourceId: string,
+): Promise<AIFunctionContent | null> => {
+  // Locked for the rest of the transaction (see the keywords adapter).
+  const [row] = await tx
+    .select()
+    .from(aiFunctionModel)
+    .where(eq(aiFunctionModel.id, resourceId))
+    .for("update")
+    .limit(1)
+  return row ? contentColumns(row) : null
+}
+
 /**
  * AIFunctions insert with `triggerFlowId: null` — flows are inserted later
  * in Phase 1 (`products -> settings -> aiFunctions -> aiAgents -> calendars
@@ -28,15 +71,18 @@ type TemplateAIFunctionEntry = {
  * every other field written at insert time is left untouched) once
  * `idMaps.flow` is complete.
  */
-export const aiFunctionsAdapter: ResourceAdapter = {
+export const aiFunctionsAdapter: ResourceAdapter<TemplateAIFunctionEntry> = {
   category: "aiFunctions",
   providesKinds: ["aiFunction"],
   consumesKinds: ["flow"],
   deferredKinds: ["flow"],
+  trackedKind: "aiFunction",
+  folderTypes: [],
+  minFormatVersion: 1,
 
   async insert(
     ctx: TemplateInstallContext,
-    entries: readonly (Record<string, unknown> & { sourceId: string })[],
+    entries: readonly TemplateAIFunctionEntry[],
   ): Promise<PatchTask[]> {
     if (!ctx.idMaps.aiFunction) {
       ctx.idMaps.aiFunction = new Map()
@@ -44,8 +90,7 @@ export const aiFunctionsAdapter: ResourceAdapter = {
     const idMap = ctx.idMaps.aiFunction
     const pendingTriggerFlowBySourceId = new Map<string, string>()
 
-    for (const rawEntry of entries) {
-      const entry = rawEntry as unknown as TemplateAIFunctionEntry
+    for (const entry of entries) {
       const [created] = await aiFunctionService.create(
         ctx.workspaceId,
         {
@@ -99,35 +144,104 @@ export const aiFunctionsAdapter: ResourceAdapter = {
     ]
   },
 
+  sync: {
+    async project(tx, resourceId) {
+      return await readContent(tx, resourceId)
+    },
+
+    async serializeBackup(tx, resourceId) {
+      const content = await readContent(tx, resourceId)
+      return content ? { formatVersion: BACKUP_FORMAT_VERSION, content } : null
+    },
+
+    async restoreBackup(tx, resourceId, content, formatVersion) {
+      assertBackupFormat(formatVersion, BACKUP_FORMAT_VERSION)
+      const parsed = aiFunctionContentSchema.safeParse(content)
+      if (!parsed.success) {
+        throw new Error("The AI function backup is not in a restorable shape")
+      }
+      const backup = contentColumns(parsed.data)
+      const [row] = await tx
+        .select({ workspaceId: aiFunctionModel.workspaceId })
+        .from(aiFunctionModel)
+        .where(eq(aiFunctionModel.id, resourceId))
+        .limit(1)
+      // The trigger flow may have been deleted since, and must belong to the
+      // copy's own workspace; restore the rest without it.
+      const flowExists =
+        backup.triggerFlowId && row
+          ? Boolean(
+              await tx.query.flowModel.findFirst({
+                where: {
+                  id: backup.triggerFlowId,
+                  workspaceId: row.workspaceId,
+                },
+                columns: { id: true },
+              }),
+            )
+          : false
+      await tx
+        .update(aiFunctionModel)
+        .set({
+          ...backup,
+          triggerFlowId: flowExists ? backup.triggerFlowId : null,
+        })
+        .where(eq(aiFunctionModel.id, resourceId))
+    },
+
+    // A flow that is no longer resolvable clears the trigger rather than
+    // leaving the source workspace's id behind.
+    async update(ctx, pairs) {
+      for (const { entry, resourceId } of pairs) {
+        const triggerFlowId = entry.triggerFlowId
+          ? (ctx.idMaps.flow?.get(entry.triggerFlowId) ?? null)
+          : null
+        if (entry.triggerFlowId && !triggerFlowId) {
+          ctx.warn({
+            category: "aiFunctions",
+            entityKind: "flow",
+            path: `aiFunctions.${entry.sourceId}.triggerFlowId`,
+            value: entry.triggerFlowId,
+          })
+        }
+        await ctx.tx
+          .update(aiFunctionModel)
+          .set(
+            contentColumns({
+              name: entry.name,
+              purpose: entry.purpose ?? null,
+              dataCollect: entry.dataCollect,
+              outputMessage: entry.outputMessage ?? null,
+              triggerFlowId,
+            }),
+          )
+          .where(eq(aiFunctionModel.id, resourceId))
+      }
+    },
+  } satisfies ResourceSyncHandler<TemplateAIFunctionEntry>,
+
   collector: {
-    async resolveIds(workspaceId) {
+    async resolveIds(workspaceId, limit) {
       const rows = await db.query.aiFunctionModel.findMany({
         where: { workspaceId },
         columns: { id: true },
+        limit,
       })
       return rows.map((row) => row.id)
     },
 
     async verifyOwnership(workspaceId, ids) {
-      const uniqueIds = [...new Set(ids)]
-      if (uniqueIds.length === 0) {
-        return []
-      }
-      const rows = await db.query.aiFunctionModel.findMany({
-        where: { workspaceId, id: { in: uniqueIds } },
-        columns: { id: true },
-      })
-      return rows.map((row) => row.id)
+      return await verifyOwnedIds(ids, (uniqueIds) =>
+        db.query.aiFunctionModel.findMany({
+          where: { workspaceId, id: { in: uniqueIds } },
+          columns: { id: true },
+        }),
+      )
     },
 
     async collect(workspaceId, ids) {
       if (ids.length === 0) {
-        return {
-          entries: [],
-          folderIds: [],
-          productCategoryIds: [],
-          hardDependencies: [],
-        }
+        return EMPTY_COLLECT_RESULT
       }
       const rows = await db.query.aiFunctionModel.findMany({
         where: { workspaceId, id: { in: [...ids] } },

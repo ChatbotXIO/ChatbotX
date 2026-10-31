@@ -1078,6 +1078,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "path": "/v1/contacts/{identifier}/tags",
   },
   {
+    "method": "DELETE",
+    "operationId": "contacts.removeTagsByName",
+    "path": "/v1/contacts/{identifier}/tags/by-name",
+  },
+  {
     "method": "POST",
     "operationId": "contacts.resolveFilterValueLabels",
     "path": "/v1/contacts/filter-value-labels",
@@ -1691,6 +1696,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "method": "POST",
     "operationId": "flows.duplicate",
     "path": "/v1/flows/{id}/duplicate",
+  },
+  {
+    "method": "GET",
+    "operationId": "flows.export",
+    "path": "/v1/flows/{id}/export",
   },
   {
     "method": "GET",
@@ -3308,9 +3318,154 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "path": "/v1/tags/{id}",
   },
   {
+    "method": "POST",
+    "operationId": "templateInstallations.cancelUninstall",
+    "path": "/v1/template-installations/{id}/uninstall/cancel",
+  },
+  {
+    "method": "GET",
+    "operationId": "templateInstallations.get",
+    "path": "/v1/template-installations/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "templateInstallations.getSync",
+    "path": "/v1/template-installations/{id}/syncs/{syncId}",
+  },
+  {
+    "method": "POST",
+    "operationId": "templateInstallations.install",
+    "path": "/v1/template-installations",
+  },
+  {
+    "method": "GET",
+    "operationId": "templateInstallations.list",
+    "path": "/v1/template-installations",
+  },
+  {
+    "method": "GET",
+    "operationId": "templateInstallations.listResources",
+    "path": "/v1/template-installations/{id}/resources",
+  },
+  {
+    "method": "GET",
+    "operationId": "templateInstallations.listSyncs",
+    "path": "/v1/template-installations/{id}/syncs",
+  },
+  {
+    "method": "GET",
+    "operationId": "templateInstallations.previewUninstall",
+    "path": "/v1/template-installations/{id}/uninstall-preview",
+  },
+  {
+    "method": "POST",
+    "operationId": "templateInstallations.restoreBackup",
+    "path": "/v1/template-installations/{id}/backups/{backupId}/restore",
+  },
+  {
+    "method": "POST",
+    "operationId": "templateInstallations.retry",
+    "path": "/v1/template-installations/{id}/retry",
+  },
+  {
+    "method": "POST",
+    "operationId": "templateInstallations.sync",
+    "path": "/v1/template-installations/{id}/sync",
+  },
+  {
+    "method": "POST",
+    "operationId": "templateInstallations.uninstall",
+    "path": "/v1/template-installations/{id}/uninstall",
+  },
+  {
+    "method": "PATCH",
+    "operationId": "templateInstallations.update",
+    "path": "/v1/template-installations/{id}",
+  },
+  {
     "method": "GET",
     "operationId": "templateMessages.list",
     "path": "/v1/template-messages",
+  },
+  {
+    "method": "GET",
+    "operationId": "templatePreviews.get",
+    "path": "/v1/template-previews/{id}",
+  },
+  {
+    "method": "POST",
+    "operationId": "templates.create",
+    "path": "/v1/templates",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "templates.delete",
+    "path": "/v1/templates/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "templates.get",
+    "path": "/v1/templates/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "templates.getAnalytics",
+    "path": "/v1/templates/{id}/analytics",
+  },
+  {
+    "method": "GET",
+    "operationId": "templates.getLink",
+    "path": "/v1/templates/{id}/link",
+  },
+  {
+    "method": "GET",
+    "operationId": "templates.list",
+    "path": "/v1/templates",
+  },
+  {
+    "method": "GET",
+    "operationId": "templates.listInstallers",
+    "path": "/v1/templates/{id}/installers",
+  },
+  {
+    "method": "POST",
+    "operationId": "templates.listLockedResources",
+    "path": "/v1/templates/locked-resources",
+  },
+  {
+    "method": "GET",
+    "operationId": "templates.listSelectableResources",
+    "path": "/v1/templates/selectable-resources",
+  },
+  {
+    "method": "POST",
+    "operationId": "templates.previewDependencies",
+    "path": "/v1/templates/dependencies-preview",
+  },
+  {
+    "method": "GET",
+    "operationId": "templates.previewUninstallInstaller",
+    "path": "/v1/templates/{id}/installers/{installerId}/uninstall-preview",
+  },
+  {
+    "method": "POST",
+    "operationId": "templates.rotateShare",
+    "path": "/v1/templates/{id}/share/rotate",
+  },
+  {
+    "method": "POST",
+    "operationId": "templates.uninstallInstaller",
+    "path": "/v1/templates/{id}/installers/{installerId}/uninstall",
+  },
+  {
+    "method": "PUT",
+    "operationId": "templates.update",
+    "path": "/v1/templates/{id}",
+  },
+  {
+    "method": "PUT",
+    "operationId": "templates.updateShare",
+    "path": "/v1/templates/{id}/share",
   },
   {
     "method": "POST",

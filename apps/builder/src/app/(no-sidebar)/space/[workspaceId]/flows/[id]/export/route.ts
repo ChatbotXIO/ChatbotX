@@ -1,16 +1,4 @@
-import {
-  botFieldService,
-  customFieldService,
-  flowService,
-  flowVersionService,
-} from "@chatbotx.io/business"
-import {
-  collectFieldReferences,
-  FLOW_EXPORT_FORMAT_VERSION,
-  type FlowExportBotField,
-  type FlowExportCustomField,
-  flowExportSchema,
-} from "@chatbotx.io/flow-config"
+import { flowService } from "@chatbotx.io/business"
 import { withWorkspaceIdAndIdSchema } from "@/features/workspaces/schema/resource"
 import {
   hasWorkspacePermission,
@@ -21,16 +9,6 @@ import { getCurrentUserAndTargetWorkspace } from "@/lib/auth/utils"
 export const runtime = "nodejs"
 
 const FLOW_EXPORT_PERMISSION: WorkspacePermissionKey = "flows"
-
-const toExportFileName = (name: string): string => {
-  const slug =
-    name
-      .trim()
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-+|-+$/g, "") || "flow"
-  return `${slug}.chatbotx-flow.json`
-}
 
 export async function GET(
   _request: Request,
@@ -58,78 +36,20 @@ export async function GET(
     return new Response(null, { status: 404 })
   }
 
-  const flow = await flowService.findBy({
+  const result = await flowService.buildExport({
     workspaceId: data.workspaceId,
     id: data.id,
   })
-  if (!flow) {
-    return new Response(null, { status: 404 })
+  if (!result.ok) {
+    return result.reason === "notFound"
+      ? new Response(null, { status: 404 })
+      : Response.json({ code: result.reason }, { status: 409 })
   }
 
-  const publishedVersion = await flowVersionService.findPublished({
-    flowId: flow.id,
-    workspaceId: flow.workspaceId,
-  })
-  if (!publishedVersion) {
-    return Response.json({ code: "notPublished" }, { status: 409 })
-  }
-
-  const { customFieldIds, botFieldIds } = collectFieldReferences({
-    nodes: publishedVersion.nodes,
-    edges: publishedVersion.edges,
-  })
-  const [customFieldRows, botFieldRows] = await Promise.all([
-    customFieldService.findManyByIds({
-      workspaceId: flow.workspaceId,
-      ids: customFieldIds,
-    }),
-    botFieldService.findManyByIds({
-      workspaceId: flow.workspaceId,
-      ids: botFieldIds,
-    }),
-  ])
-  const customFields = Object.fromEntries(
-    customFieldRows.map((row): [string, FlowExportCustomField] => [
-      row.id,
-      { name: row.name, type: row.type },
-    ]),
-  )
-  const botFields = Object.fromEntries(
-    botFieldRows.map((row): [string, FlowExportBotField] => [
-      row.id,
-      { name: row.name, type: row.type },
-    ]),
-  )
-
-  const envelope = {
-    formatVersion: FLOW_EXPORT_FORMAT_VERSION,
-    exportedAt: new Date().toISOString(),
-    source: { workspaceId: flow.workspaceId, flowId: flow.id },
-    flows: [
-      {
-        name: flow.name,
-        active: flow.active,
-        enableInInbox: flow.enableInInbox,
-        startNodeId: publishedVersion.startNodeId,
-        nodes: publishedVersion.nodes,
-        edges: publishedVersion.edges,
-      },
-    ],
-    customFields,
-    botFields,
-  }
-
-  // Guards against export ever emitting a payload the importer would reject —
-  // the route hand-builds the envelope above and does not otherwise validate
-  // its own output.
-  flowExportSchema.parse(envelope)
-
-  const body = JSON.stringify(envelope, null, 2)
-
-  return new Response(body, {
+  return new Response(JSON.stringify(result.envelope, null, 2), {
     headers: {
       "Content-Type": "application/json",
-      "Content-Disposition": `attachment; filename="${toExportFileName(flow.name)}"`,
+      "Content-Disposition": `attachment; filename="${result.fileName}"`,
       "Cache-Control": "no-store",
     },
   })

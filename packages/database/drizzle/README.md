@@ -21,3 +21,28 @@ a `drizzle-kit generate` run at their point in history):
 Verified at synthesis time: `drizzle-kit generate` → "No schema changes" and
 `drizzle-kit check` → clean. Branches that do not carry these two files will
 still hit the three-head error until they rebase/merge onto them.
+
+## Template enum migrations are forward-only
+
+The `templateResourceCategory` / `templateInstallationStatus` `ADD VALUE`
+statements in `20261031010000_template_enums` cannot be
+reversed: PostgreSQL has no `DROP VALUE` for enums. A rolled-back app version
+simply ignores the extra values. Deploy readers and workers before writers.
+
+## Template migrations squashed per table (2026-10-31)
+
+The sixteen template migrations of the Templates feature branch were
+re-squashed, before it shipped, into one migration per table:
+`20261031010000_template_enums` … `20261031010700_ai_file_queued_run_index`.
+Their SQL is the old statements regrouped by table in dependency order (the
+add-then-drop of `stagedObjectsCleanedAt` cancelled out); verified by migrating
+an empty database and diffing every template column, index, constraint,
+trigger, function and enum against a database that ran the old ones
+(identical). `run-migrations.mjs` (`reconcileSquashedTemplateMigrations`)
+records the new names on a database that applied all the old ones, re-running
+nothing.
+
+Their snapshots are SYNTHESIZED: each carries the full final `ddl` (only the
+last one is read by `drizzle-kit generate`), and the first is the merge node
+over the two `main` heads it follows (`20261029043008_…`, `20261029080244_…`).
+`drizzle-kit check` and `db:check-drift` are clean.

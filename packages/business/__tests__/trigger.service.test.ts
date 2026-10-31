@@ -2,37 +2,41 @@
 
 import { afterEach, describe, expect, test, vi } from "vitest"
 
+vi.mock("../src/template/uninstall-references", () => ({
+  referencedParentsOf: () => [],
+}))
+
 // The broadcast policy import reaches quota/workspace modules these narrow mocks omit.
 vi.mock("../src/broadcast/plan-policy.service", () => ({
   broadcastPlanPolicyService: {},
 }))
 
 const {
+  mockAssertDeletable,
   mockAudit,
   mockCount,
   mockDelete,
   mockEnsureExists,
   mockInsertReturning,
   mockInsertValues,
-  mockInstalledResourceFindMany,
-  mockInstallationFindMany,
   mockRemoveTriggerCache,
   mockTriggerFindMany,
   mockUpdateTriggerCache,
 } = vi.hoisted(() => {
-  const mockDeleteWhere = vi.fn().mockResolvedValue(undefined)
+  const mockDeleteWhere = vi.fn(() => ({
+    returning: vi.fn().mockResolvedValue([]),
+  }))
   const mockDelete = vi.fn(() => ({ where: mockDeleteWhere }))
   const mockInsertReturning = vi.fn()
   const mockInsertValues = vi.fn(() => ({ returning: mockInsertReturning }))
   return {
+    mockAssertDeletable: vi.fn(),
     mockAudit: vi.fn(),
     mockCount: vi.fn(),
     mockDelete,
     mockEnsureExists: vi.fn(),
     mockInsertReturning,
     mockInsertValues,
-    mockInstalledResourceFindMany: vi.fn(),
-    mockInstallationFindMany: vi.fn(),
     mockRemoveTriggerCache: vi.fn(),
     mockTriggerFindMany: vi.fn(),
     mockUpdateTriggerCache: vi.fn(),
@@ -45,12 +49,6 @@ vi.mock("@chatbotx.io/database/client", () => ({
     delete: mockDelete,
     insert: vi.fn(() => ({ values: mockInsertValues })),
     query: {
-      templateInstalledResourceModel: {
-        findMany: mockInstalledResourceFindMany,
-      },
-      templateInstallationModel: {
-        findMany: mockInstallationFindMany,
-      },
       triggerModel: {
         findMany: mockTriggerFindMany,
       },
@@ -84,6 +82,12 @@ vi.mock("../src/base.service", () => ({
   },
 }))
 
+vi.mock("../src/template/installed-resource.service", async () => ({
+  ...(await import("./helpers/template-guard-mocks")).templateGuardMocks({
+    assertDeletable: mockAssertDeletable,
+  }),
+}))
+
 vi.mock("../src/folder/service", () => ({
   folderService: { ensureExists: mockEnsureExists },
 }))
@@ -95,27 +99,28 @@ describe("triggerService.deleteMany", () => {
     vi.clearAllMocks()
   })
 
-  test("blocks the delete when the trigger was installed from a template with allowDelete: false", async () => {
-    mockInstalledResourceFindMany.mockResolvedValue([
-      { resourceId: "trigger-1", installationId: "install-1" },
-    ])
-    mockInstallationFindMany.mockResolvedValue([
-      { id: "install-1", permissions: { allowDelete: false } },
-    ])
+  test("blocks the delete when the template guard refuses it", async () => {
+    mockAssertDeletable.mockRejectedValue(
+      new Error("templateAllowDeleteViolation"),
+    )
 
     await expect(
       triggerService.deleteMany({ workspaceId: "ws-1", ids: ["trigger-1"] }),
-    ).rejects.toThrow(
-      "This resource was installed from a template that disallows deletion",
-    )
+    ).rejects.toThrow("templateAllowDeleteViolation")
 
+    expect(mockAssertDeletable).toHaveBeenCalledWith(
+      expect.objectContaining({
+        workspaceId: "ws-1",
+        resourceKind: "trigger",
+        resourceIds: ["trigger-1"],
+      }),
+    )
     expect(mockDelete).not.toHaveBeenCalled()
     expect(mockRemoveTriggerCache).not.toHaveBeenCalled()
   })
 
   test("deletes and invalidates the cache when nothing blocks it", async () => {
-    mockInstalledResourceFindMany.mockResolvedValue([])
-    mockTriggerFindMany.mockResolvedValue([])
+    mockAssertDeletable.mockResolvedValue(undefined)
 
     await triggerService.deleteMany({ workspaceId: "ws-1", ids: ["trigger-1"] })
 

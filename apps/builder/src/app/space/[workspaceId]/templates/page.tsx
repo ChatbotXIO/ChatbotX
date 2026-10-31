@@ -1,4 +1,7 @@
-import { templateService } from "@chatbotx.io/business"
+import {
+  TEMPLATE_MANAGE_PERMISSION,
+  templateService,
+} from "@chatbotx.io/business"
 import { buttonVariants } from "@chatbotx.io/ui/components/ui/button"
 import { getIdFromParams } from "@chatbotx.io/utils"
 import { PlusIcon } from "lucide-react"
@@ -7,8 +10,7 @@ import { notFound } from "next/navigation"
 import { getTranslations } from "next-intl/server"
 import { AppBreadcrumb } from "@/components/app-breadcrumb"
 import { TemplatesTable } from "@/features/templates/components/templates-table"
-import { hasWorkspacePermission } from "@/lib/auth/permission-routes"
-import { getCurrentUserAndTargetWorkspace } from "@/lib/auth/utils"
+import { requireWorkspacePermission } from "@/lib/auth/require-workspace-permission"
 
 export default async function TemplatesPage({
   params,
@@ -20,14 +22,7 @@ export default async function TemplatesPage({
     return notFound()
   }
 
-  const userAndWorkspace = await getCurrentUserAndTargetWorkspace(workspaceId)
-  const isSuperAdmin = Boolean(
-    userAndWorkspace &&
-      hasWorkspacePermission(
-        userAndWorkspace.targetWorkspaceMember.permissions,
-        "superAdmin",
-      ),
-  )
+  await requireWorkspacePermission(workspaceId, TEMPLATE_MANAGE_PERMISSION)
 
   const t = await getTranslations()
   const templates = await templateService.list(workspaceId)
@@ -51,22 +46,16 @@ export default async function TemplatesPage({
           >
             {t("templates.installs.title")}
           </Link>
-          {isSuperAdmin && (
-            <Link
-              className={buttonVariants({ variant: "default" })}
-              href={`/space/${workspaceId}/templates/create`}
-            >
-              <PlusIcon />
-              {t("actions.create")}
-            </Link>
-          )}
+          <Link
+            className={buttonVariants({ variant: "default" })}
+            href={`/space/${workspaceId}/templates/create`}
+          >
+            <PlusIcon />
+            {t("actions.create")}
+          </Link>
         </div>
       </div>
-      <TemplatesTable
-        isSuperAdmin={isSuperAdmin}
-        templates={templates}
-        workspaceId={workspaceId}
-      />
+      <TemplatesTable templates={templates} workspaceId={workspaceId} />
     </div>
   )
 }

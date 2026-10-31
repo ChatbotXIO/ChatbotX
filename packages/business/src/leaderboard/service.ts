@@ -28,6 +28,8 @@ import {
 } from "../errors"
 import { flowService } from "../flow"
 import { flowVersionService } from "../flow-version"
+import { assertReferencable } from "../template/installed-resource.service"
+import { withTemplateLockedTransaction } from "../template/template-resource-locks"
 import { assertValidLeaderboardConfig, defaultLeaderboardRules } from "./config"
 import { purgeLeaderboardDataForWorkspace } from "./purge"
 import { leaderboardRankingService } from "./ranking"
@@ -295,7 +297,17 @@ class LeaderboardService extends BaseService {
       columns.platform !== "email" &&
       Boolean(options.buildViewUrl)
 
-    const row = await db.transaction(async (tx) => {
+    const row = await withTemplateLockedTransaction(async (tx) => {
+      // The welcome flow's tpl-res lock is held until the reference commits.
+      if (columns.referralWelcomeFlowId) {
+        await assertReferencable({
+          workspaceId: input.workspaceId,
+          parents: [
+            { kind: "flow", resourceId: columns.referralWelcomeFlowId },
+          ],
+          tx,
+        })
+      }
       const inserted = await leaderboardRepository.insert(
         { workspaceId: input.workspaceId, status: "draft", ...columns },
         tx,
@@ -367,7 +379,19 @@ class LeaderboardService extends BaseService {
     }
     assertValidLeaderboardConfig(columns)
     await this.assertReferences(input.workspaceId, input)
-    const row = await leaderboardRepository.update(input, columns)
+    const row = await withTemplateLockedTransaction(async (tx) => {
+      // The welcome flow's tpl-res lock is held until the reference commits.
+      if (columns.referralWelcomeFlowId) {
+        await assertReferencable({
+          workspaceId: input.workspaceId,
+          parents: [
+            { kind: "flow", resourceId: columns.referralWelcomeFlowId },
+          ],
+          tx,
+        })
+      }
+      return await leaderboardRepository.update(input, columns, tx)
+    })
     if (!row) {
       throw notFoundException("Leaderboard not found")
     }

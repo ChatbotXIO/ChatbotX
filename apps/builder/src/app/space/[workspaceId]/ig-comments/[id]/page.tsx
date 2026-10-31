@@ -3,6 +3,7 @@ import { EditIgCommentForm } from "@/features/ig-comments/components/edit-ig-com
 import { IgCommentPostsStoreProvider } from "@/features/ig-comments/provider/ig-comment-posts-store-context"
 import { getIgComment } from "@/features/ig-comments/queries"
 import type { IgCommentVariant } from "@/features/ig-comments/schema/action"
+import { LockedEditorGuard } from "@/features/templates/components/locked-editor-guard"
 import { withWorkspaceIdAndIdSchema } from "@/features/workspaces/schema/resource"
 
 export default async function EditIgCommentPage(props: {
@@ -29,7 +30,13 @@ export default async function EditIgCommentPage(props: {
       variant={variant}
       workspaceId={workspaceId}
     >
-      <EditIgCommentForm initialData={igComment} workspaceId={workspaceId} />
+      <LockedEditorGuard
+        resourceId={id}
+        resourceKind="fbCommentAutomation"
+        workspaceId={workspaceId}
+      >
+        <EditIgCommentForm initialData={igComment} workspaceId={workspaceId} />
+      </LockedEditorGuard>
     </IgCommentPostsStoreProvider>
   )
 }

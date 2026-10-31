@@ -35,6 +35,7 @@ import { toast } from "sonner"
 import { useFlowSelectOptions } from "@/features/flows/provider/flow-hook"
 import { MarkReadOnOutboundField } from "@/features/inboxes/components/mark-read-on-outbound-field"
 import { useInvalidateInboxes } from "@/features/inboxes/provider/inbox-hook"
+import { LockedContent } from "@/features/templates/components/lock-badge"
 import { useWorkspaceId } from "@/hooks/routing"
 import { updateWebchatAction } from "../actions/update-webchat.action"
 import { updateWebchatRequest } from "../schema/mutation"
@@ -149,131 +150,134 @@ export function UpdateWebchatForm({
   return (
     <Form {...form}>
       <form className="space-y-6" onSubmit={handleSubmitWithAction}>
-        <InputField label="Name" name="name" required />
-        <ComboboxField
-          allowClear
-          clearLabel={t("messages.none")}
-          description={t("fields.welcomeFlowId.description")}
-          emptyText={t("actions.noRecordFound")}
-          label={t("fields.welcomeFlowId.label")}
-          name="welcomeFlowId"
-          options={flowOptions}
-          placeholder={t("actions.pleaseSelect")}
-        />
-
+        <LockedContent className="space-y-6">
+          <InputField label="Name" name="name" required />
+          <ComboboxField
+            allowClear
+            clearLabel={t("messages.none")}
+            description={t("fields.welcomeFlowId.description")}
+            emptyText={t("actions.noRecordFound")}
+            label={t("fields.welcomeFlowId.label")}
+            name="welcomeFlowId"
+            options={flowOptions}
+            placeholder={t("actions.pleaseSelect")}
+          />
+        </LockedContent>
         <Separator />
 
         <AuthorizedDomainField />
 
         <Separator />
 
-        <div className="space-y-2">
-          <Label htmlFor="conversationStarters">
-            {t("fields.conversationStarter.label", { plural: 1 })}
-          </Label>
-          <p className="text-muted-foreground text-sm">
-            {t("fields.conversationStarter.description")}
-          </p>
-          <Accordion className="w-full">
-            {conversationStarters.map((_, index) => (
-              <AccordionItem
-                className="flex flex-col gap-2"
-                // biome-ignore lint/suspicious/noArrayIndexKey: wip
-                key={index}
-                value={`conversationStarter-${index}`}
-              >
-                <div className="flex items-center justify-between">
-                  <AccordionTrigger>
-                    {t("fields.conversationStarter.label", { plural: 0 })} #
-                    {index + 1}
-                  </AccordionTrigger>
-                  <Button
-                    onClick={() => removeConversationStarters(index)}
-                    size="icon"
-                    variant="ghost"
-                  >
-                    <TrashIcon className="h-4 w-4 text-destructive" />
-                  </Button>
-                </div>
-                <AccordionContent className="flex flex-col gap-4">
-                  <InputField
-                    label={t("fields.buttonLabel.label")}
-                    name={`conversationStarters.${index}.label`}
-                  />
-
-                  <RadioGroupField
-                    name={`conversationStarters.${index}.type`}
-                    options={conversationStarterTypeOptions}
-                  />
-
-                  {form.watch(`conversationStarters.${index}.type`) ===
-                    webchatConversationStarterType.enum.flow && (
-                    <SelectField
-                      label={t("fields.flowId.label")}
-                      name={`conversationStarters.${index}.flowId`}
-                      options={flowOptions}
-                    />
-                  )}
-
-                  {form.watch(`conversationStarters.${index}.type`) ===
-                    webchatConversationStarterType.enum.url && (
+        <LockedContent className="space-y-6">
+          <div className="space-y-2">
+            <Label htmlFor="conversationStarters">
+              {t("fields.conversationStarter.label", { plural: 1 })}
+            </Label>
+            <p className="text-muted-foreground text-sm">
+              {t("fields.conversationStarter.description")}
+            </p>
+            <Accordion className="w-full">
+              {conversationStarters.map((_, index) => (
+                <AccordionItem
+                  className="flex flex-col gap-2"
+                  // biome-ignore lint/suspicious/noArrayIndexKey: wip
+                  key={index}
+                  value={`conversationStarter-${index}`}
+                >
+                  <div className="flex items-center justify-between">
+                    <AccordionTrigger>
+                      {t("fields.conversationStarter.label", { plural: 0 })} #
+                      {index + 1}
+                    </AccordionTrigger>
+                    <Button
+                      onClick={() => removeConversationStarters(index)}
+                      size="icon"
+                      variant="ghost"
+                    >
+                      <TrashIcon className="h-4 w-4 text-destructive" />
+                    </Button>
+                  </div>
+                  <AccordionContent className="flex flex-col gap-4">
                     <InputField
-                      label={t("fields.url.label")}
-                      name={`conversationStarters.${index}.url`}
+                      label={t("fields.buttonLabel.label")}
+                      name={`conversationStarters.${index}.label`}
                     />
-                  )}
-                </AccordionContent>
-              </AccordionItem>
-            ))}
-          </Accordion>
 
-          <Button
-            onClick={() =>
-              appendConversationStarters({
-                label: "",
-                type: webchatConversationStarterType.enum.flow,
-                flowId: "",
-              })
-            }
-            size="sm"
-            variant="outline"
-          >
-            <PlusIcon className="h-4 w-4" />
-            {t("actions.addFeature", {
-              feature: t("fields.conversationStarter.label", { plural: 0 }),
-            })}
-          </Button>
-        </div>
+                    <RadioGroupField
+                      name={`conversationStarters.${index}.type`}
+                      options={conversationStarterTypeOptions}
+                    />
 
-        <PersistentMenuField channel={channelTypes.enum.webchat} />
+                    {form.watch(`conversationStarters.${index}.type`) ===
+                      webchatConversationStarterType.enum.flow && (
+                      <SelectField
+                        label={t("fields.flowId.label")}
+                        name={`conversationStarters.${index}.flowId`}
+                        options={flowOptions}
+                      />
+                    )}
 
-        <Separator />
+                    {form.watch(`conversationStarters.${index}.type`) ===
+                      webchatConversationStarterType.enum.url && (
+                      <InputField
+                        label={t("fields.url.label")}
+                        name={`conversationStarters.${index}.url`}
+                      />
+                    )}
+                  </AccordionContent>
+                </AccordionItem>
+              ))}
+            </Accordion>
 
-        <ColorPickerField
-          label={t("fields.brandColor.label")}
-          name="brandColor"
-          required
-        />
-        <SwitchField
-          label={t("fields.hideHeader.label")}
-          name="hideHeader"
-          required
-        />
-        <SwitchField
-          label={t("fields.showLogo.label")}
-          name="showLogo"
-          required
-        />
-        <SwitchField
-          label={t("fields.hideMessageInput.label")}
-          name="hideMessageInput"
-          required
-        />
-        <TextareaField
-          label={t("fields.customCss.label")}
-          name="customCss"
-          placeholder="body { background-color: #000; }"
-        />
+            <Button
+              onClick={() =>
+                appendConversationStarters({
+                  label: "",
+                  type: webchatConversationStarterType.enum.flow,
+                  flowId: "",
+                })
+              }
+              size="sm"
+              variant="outline"
+            >
+              <PlusIcon className="h-4 w-4" />
+              {t("actions.addFeature", {
+                feature: t("fields.conversationStarter.label", { plural: 0 }),
+              })}
+            </Button>
+          </div>
+
+          <PersistentMenuField channel={channelTypes.enum.webchat} />
+
+          <Separator />
+
+          <ColorPickerField
+            label={t("fields.brandColor.label")}
+            name="brandColor"
+            required
+          />
+          <SwitchField
+            label={t("fields.hideHeader.label")}
+            name="hideHeader"
+            required
+          />
+          <SwitchField
+            label={t("fields.showLogo.label")}
+            name="showLogo"
+            required
+          />
+          <SwitchField
+            label={t("fields.hideMessageInput.label")}
+            name="hideMessageInput"
+            required
+          />
+          <TextareaField
+            label={t("fields.customCss.label")}
+            name="customCss"
+            placeholder="body { background-color: #000; }"
+          />
+        </LockedContent>
         {integrationWebchat && <MarkReadOnOutboundField />}
         <DialogFooter>
           <Button

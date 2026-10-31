@@ -2,9 +2,9 @@ import { getIdFromParams } from "@chatbotx.io/utils"
 import { notFound } from "next/navigation"
 import { getTranslations } from "next-intl/server"
 import { AppBreadcrumb } from "@/components/app-breadcrumb"
-
 import { EditQuestionnaireForm } from "@/features/questionnaires/components/edit-questionnaire-form"
 import { getQuestionnaire } from "@/features/questionnaires/queries"
+import { LockedEditorGuard } from "@/features/templates/components/locked-editor-guard"
 
 export default async function EditQuestionnairePage({
   params,
@@ -33,10 +33,16 @@ export default async function EditQuestionnairePage({
           { label: questionnaire.name, href: "" },
         ]}
       />
-      <EditQuestionnaireForm
-        questionnaire={questionnaire}
+      <LockedEditorGuard
+        resourceId={id}
+        resourceKind="questionnaire"
         workspaceId={workspaceId}
-      />
+      >
+        <EditQuestionnaireForm
+          questionnaire={questionnaire}
+          workspaceId={workspaceId}
+        />
+      </LockedEditorGuard>
     </div>
   )
 }

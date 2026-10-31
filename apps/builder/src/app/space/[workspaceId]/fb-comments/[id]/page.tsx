@@ -3,6 +3,7 @@ import { EditFbCommentForm } from "@/features/fb-comments/components/edit-fb-com
 import { FbCommentPostsStoreProvider } from "@/features/fb-comments/provider/fb-comment-posts-store-context"
 import { getFbComment } from "@/features/fb-comments/queries"
 import { getIgComment } from "@/features/ig-comments/queries"
+import { LockedEditorGuard } from "@/features/templates/components/locked-editor-guard"
 import { withWorkspaceIdAndIdSchema } from "@/features/workspaces/schema/resource"
 
 export default async function EditFbCommentPage(props: {
@@ -33,7 +34,13 @@ export default async function EditFbCommentPage(props: {
       autoInitialize={true}
       workspaceId={workspaceId}
     >
-      <EditFbCommentForm initialData={fbComment} workspaceId={workspaceId} />
+      <LockedEditorGuard
+        resourceId={id}
+        resourceKind="fbCommentAutomation"
+        workspaceId={workspaceId}
+      >
+        <EditFbCommentForm initialData={fbComment} workspaceId={workspaceId} />
+      </LockedEditorGuard>
     </FbCommentPostsStoreProvider>
   )
 }

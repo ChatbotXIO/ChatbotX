@@ -44,6 +44,10 @@ import { useCallback, useEffect, useState } from "react"
 import { toast } from "sonner"
 import { useCouponTopicStore } from "@/features/coupons/provider/coupon-topic-store-context"
 import type { CouponTopicResource } from "@/features/coupons/schema/resource"
+import {
+  LockBadge,
+  LockedIdsProvider,
+} from "@/features/templates/components/lock-badge"
 import { client } from "@/lib/orpc/orpc"
 import { TopicDialog } from "./topic-dialog"
 
@@ -231,335 +235,348 @@ export function TopicList({ workspaceId, archived }: TopicListProps) {
   }
 
   return (
-    <div className="grid gap-3">
-      <div className="flex flex-wrap items-center gap-2">
-        <Input
-          className="w-56"
-          onChange={(event) => {
-            setPage(1)
-            setSearch(event.target.value)
-          }}
-          placeholder={t("actions.search")}
-          value={search}
-        />
-        {search ? (
-          <Button onClick={resetSearch} size="sm" variant="outline">
-            <XIcon className="size-4" />
-            {t("actions.reset")}
-          </Button>
-        ) : null}
-        {selectedCount > 0 && !archived ? (
-          <Button
-            onClick={() => runBulkAction("archive")}
-            size="sm"
-            variant="outline"
-          >
-            <ArchiveIcon className="size-4" />
-            {t("actions.archive")} ({selectedCount})
-          </Button>
-        ) : null}
-        {selectedCount > 0 && archived ? (
-          <>
+    <LockedIdsProvider
+      resourceIds={topics.map((topic) => topic.id)}
+      resourceKind="couponTopic"
+      workspaceId={workspaceId}
+    >
+      <div className="grid gap-3">
+        <div className="flex flex-wrap items-center gap-2">
+          <Input
+            className="w-56"
+            onChange={(event) => {
+              setPage(1)
+              setSearch(event.target.value)
+            }}
+            placeholder={t("actions.search")}
+            value={search}
+          />
+          {search ? (
+            <Button onClick={resetSearch} size="sm" variant="outline">
+              <XIcon className="size-4" />
+              {t("actions.reset")}
+            </Button>
+          ) : null}
+          {selectedCount > 0 && !archived ? (
             <Button
-              onClick={() => runBulkAction("unarchive")}
+              onClick={() => runBulkAction("archive")}
               size="sm"
               variant="outline"
             >
-              <RotateCcwIcon className="size-4" />
-              {t("actions.restore")} ({selectedCount})
+              <ArchiveIcon className="size-4" />
+              {t("actions.archive")} ({selectedCount})
             </Button>
-            <AlertDialog>
-              <AlertDialogTrigger
-                render={
-                  <Button size="sm" variant="destructive">
-                    <Trash2Icon className="size-4" />
-                    {t("actions.delete")} ({selectedCount})
-                  </Button>
-                }
-              />
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>
-                    {t("coupons.messages.deleteTitle")}
-                  </AlertDialogTitle>
-                  <AlertDialogDescription>
-                    {t("coupons.messages.deleteConfirm")}
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>{t("actions.cancel")}</AlertDialogCancel>
-                  <AlertDialogAction onClick={() => runBulkAction("delete")}>
-                    {t("actions.delete")}
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          </>
-        ) : null}
-        <Button
-          className="ms-auto"
-          onClick={() => {
-            setEditing(null)
-            setDialogOpen(true)
-          }}
-          size="sm"
-        >
-          <PlusIcon className="size-4" />
-          {t("coupons.topic.create")}
-        </Button>
-      </div>
-      <div className="overflow-hidden rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-10">
-                <Checkbox
-                  aria-label={t("actions.selectAll")}
-                  checked={allPageRowsSelected}
-                  indeterminate={somePageRowsSelected}
-                  onCheckedChange={(value) => toggleAllPageRows(Boolean(value))}
-                />
-              </TableHead>
-              <TableHead>{t("fields.name.label")}</TableHead>
-              <TableHead className="text-center">
-                {t("coupons.fields.couponCount")}
-              </TableHead>
-              <TableHead className="text-center">
-                {t("coupons.fields.validity")}
-              </TableHead>
-              <TableHead className="w-32 text-center">
-                {t("actions.actions")}
-              </TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {topics.map((topic) => (
-              <TableRow
-                data-state={selectedTopicIds.has(topic.id) ? "selected" : ""}
-                key={topic.id}
+          ) : null}
+          {selectedCount > 0 && archived ? (
+            <>
+              <Button
+                onClick={() => runBulkAction("unarchive")}
+                size="sm"
+                variant="outline"
               >
-                <TableCell>
+                <RotateCcwIcon className="size-4" />
+                {t("actions.restore")} ({selectedCount})
+              </Button>
+              <AlertDialog>
+                <AlertDialogTrigger
+                  render={
+                    <Button size="sm" variant="destructive">
+                      <Trash2Icon className="size-4" />
+                      {t("actions.delete")} ({selectedCount})
+                    </Button>
+                  }
+                />
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>
+                      {t("coupons.messages.deleteTitle")}
+                    </AlertDialogTitle>
+                    <AlertDialogDescription>
+                      {t("coupons.messages.deleteConfirm")}
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>{t("actions.cancel")}</AlertDialogCancel>
+                    <AlertDialogAction onClick={() => runBulkAction("delete")}>
+                      {t("actions.delete")}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </>
+          ) : null}
+          <Button
+            className="ms-auto"
+            onClick={() => {
+              setEditing(null)
+              setDialogOpen(true)
+            }}
+            size="sm"
+          >
+            <PlusIcon className="size-4" />
+            {t("coupons.topic.create")}
+          </Button>
+        </div>
+        <div className="overflow-hidden rounded-md border">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-10">
                   <Checkbox
-                    aria-label={t("actions.selectRow")}
-                    checked={selectedTopicIds.has(topic.id)}
+                    aria-label={t("actions.selectAll")}
+                    checked={allPageRowsSelected}
+                    indeterminate={somePageRowsSelected}
                     onCheckedChange={(value) =>
-                      toggleTopic(topic.id, Boolean(value))
+                      toggleAllPageRows(Boolean(value))
                     }
                   />
-                </TableCell>
-                <TableCell className="font-medium">{topic.name}</TableCell>
-                <TableCell className="text-center">
-                  {topic.couponCount ?? 0}
-                </TableCell>
-                <TableCell className="text-center">
-                  {topic.expiresAt
-                    ? formatter.dateTime(new Date(topic.expiresAt), {
-                        dateStyle: "medium",
-                      })
-                    : t("coupons.fields.unlimited")}
-                </TableCell>
-                <TableCell className="text-center">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger
-                      render={
-                        <Button size="icon" variant="ghost">
-                          <MoreHorizontalIcon className="size-4" />
-                          <span className="sr-only">
-                            {t("actions.openMenu")}
-                          </span>
-                        </Button>
+                </TableHead>
+                <TableHead>{t("fields.name.label")}</TableHead>
+                <TableHead className="text-center">
+                  {t("coupons.fields.couponCount")}
+                </TableHead>
+                <TableHead className="text-center">
+                  {t("coupons.fields.validity")}
+                </TableHead>
+                <TableHead className="w-32 text-center">
+                  {t("actions.actions")}
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {topics.map((topic) => (
+                <TableRow
+                  data-state={selectedTopicIds.has(topic.id) ? "selected" : ""}
+                  key={topic.id}
+                >
+                  <TableCell>
+                    <Checkbox
+                      aria-label={t("actions.selectRow")}
+                      checked={selectedTopicIds.has(topic.id)}
+                      onCheckedChange={(value) =>
+                        toggleTopic(topic.id, Boolean(value))
                       }
                     />
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem
-                        onClick={() => {
-                          setEditing(topic)
-                          setDialogOpen(true)
-                        }}
-                      >
-                        <PencilIcon className="me-2 size-4" />
-                        {t("actions.edit")}
-                      </DropdownMenuItem>
-                      {archived ? (
-                        <>
+                  </TableCell>
+                  <TableCell className="font-medium">
+                    <span className="flex items-center">
+                      {topic.name}
+                      <LockBadge resourceId={topic.id} />
+                    </span>
+                  </TableCell>
+                  <TableCell className="text-center">
+                    {topic.couponCount ?? 0}
+                  </TableCell>
+                  <TableCell className="text-center">
+                    {topic.expiresAt
+                      ? formatter.dateTime(new Date(topic.expiresAt), {
+                          dateStyle: "medium",
+                        })
+                      : t("coupons.fields.unlimited")}
+                  </TableCell>
+                  <TableCell className="text-center">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger
+                        render={
+                          <Button size="icon" variant="ghost">
+                            <MoreHorizontalIcon className="size-4" />
+                            <span className="sr-only">
+                              {t("actions.openMenu")}
+                            </span>
+                          </Button>
+                        }
+                      />
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem
+                          onClick={() => {
+                            setEditing(topic)
+                            setDialogOpen(true)
+                          }}
+                        >
+                          <PencilIcon className="me-2 size-4" />
+                          {t("actions.edit")}
+                        </DropdownMenuItem>
+                        {archived ? (
+                          <>
+                            <DropdownMenuItem
+                              onClick={() =>
+                                setTransferConfirmation({
+                                  action: "unarchive",
+                                  topics: [topic],
+                                })
+                              }
+                            >
+                              <RotateCcwIcon className="me-2 size-4" />
+                              {t("actions.restore")}
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              className="text-destructive"
+                              onClick={() => setDeletingTopic(topic)}
+                            >
+                              <Trash2Icon className="me-2 size-4" />
+                              {t("actions.delete")}
+                            </DropdownMenuItem>
+                          </>
+                        ) : (
                           <DropdownMenuItem
                             onClick={() =>
                               setTransferConfirmation({
-                                action: "unarchive",
+                                action: "archive",
                                 topics: [topic],
                               })
                             }
                           >
-                            <RotateCcwIcon className="me-2 size-4" />
-                            {t("actions.restore")}
+                            <ArchiveIcon className="me-2 size-4" />
+                            {t("actions.archive")}
                           </DropdownMenuItem>
-                          <DropdownMenuItem
-                            className="text-destructive"
-                            onClick={() => setDeletingTopic(topic)}
-                          >
-                            <Trash2Icon className="me-2 size-4" />
-                            {t("actions.delete")}
-                          </DropdownMenuItem>
-                        </>
-                      ) : (
-                        <DropdownMenuItem
-                          onClick={() =>
-                            setTransferConfirmation({
-                              action: "archive",
-                              topics: [topic],
-                            })
-                          }
-                        >
-                          <ArchiveIcon className="me-2 size-4" />
-                          {t("actions.archive")}
-                        </DropdownMenuItem>
-                      )}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </TableCell>
-              </TableRow>
-            ))}
-            {topics.length === 0 ? (
-              <TableRow>
-                <TableCell
-                  className="text-center text-muted-foreground"
-                  colSpan={5}
-                >
-                  {isLoading
-                    ? t("actions.loading")
-                    : t("coupons.messages.empty")}
-                </TableCell>
-              </TableRow>
-            ) : null}
-          </TableBody>
-        </Table>
-      </div>
-      <div className="flex flex-wrap items-center justify-between gap-3 px-1 text-sm">
-        <div className="text-muted-foreground">
-          {t("analytics.total")}: {total.toLocaleString()}
+                        )}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+                </TableRow>
+              ))}
+              {topics.length === 0 ? (
+                <TableRow>
+                  <TableCell
+                    className="text-center text-muted-foreground"
+                    colSpan={5}
+                  >
+                    {isLoading
+                      ? t("actions.loading")
+                      : t("coupons.messages.empty")}
+                  </TableCell>
+                </TableRow>
+              ) : null}
+            </TableBody>
+          </Table>
         </div>
-        {pageCount > 1 ? (
-          <div className="flex items-center gap-2">
-            <span className="text-muted-foreground">
-              {t("analytics.pagination.pageOf", { page, pageCount })}
-            </span>
-            <Button
-              aria-label={t("analytics.pagination.previousPage")}
-              disabled={page <= 1}
-              onClick={() => setPage((current) => Math.max(1, current - 1))}
-              size="icon"
-              variant="outline"
-            >
-              <ChevronLeftIcon className="size-4 rtl:rotate-180" />
-            </Button>
-            <Button
-              aria-label={t("analytics.pagination.nextPage")}
-              disabled={page >= pageCount}
-              onClick={() =>
-                setPage((current) => Math.min(pageCount, current + 1))
-              }
-              size="icon"
-              variant="outline"
-            >
-              <ChevronRightIcon className="size-4 rtl:rotate-180" />
-            </Button>
+        <div className="flex flex-wrap items-center justify-between gap-3 px-1 text-sm">
+          <div className="text-muted-foreground">
+            {t("analytics.total")}: {total.toLocaleString()}
           </div>
-        ) : null}
+          {pageCount > 1 ? (
+            <div className="flex items-center gap-2">
+              <span className="text-muted-foreground">
+                {t("analytics.pagination.pageOf", { page, pageCount })}
+              </span>
+              <Button
+                aria-label={t("analytics.pagination.previousPage")}
+                disabled={page <= 1}
+                onClick={() => setPage((current) => Math.max(1, current - 1))}
+                size="icon"
+                variant="outline"
+              >
+                <ChevronLeftIcon className="size-4 rtl:rotate-180" />
+              </Button>
+              <Button
+                aria-label={t("analytics.pagination.nextPage")}
+                disabled={page >= pageCount}
+                onClick={() =>
+                  setPage((current) => Math.min(pageCount, current + 1))
+                }
+                size="icon"
+                variant="outline"
+              >
+                <ChevronRightIcon className="size-4 rtl:rotate-180" />
+              </Button>
+            </div>
+          ) : null}
+        </div>
+        <TopicDialog
+          onOpenChange={setDialogOpen}
+          onSaved={handleTopicSaved}
+          open={dialogOpen}
+          topic={editing}
+          workspaceId={workspaceId}
+        />
+        <AlertDialog
+          onOpenChange={(open) => {
+            if (!open) {
+              setTransferConfirmation(null)
+            }
+          }}
+          open={Boolean(transferConfirmation)}
+        >
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>
+                {transferConfirmation?.action === "archive"
+                  ? t("coupons.messages.archiveTitle")
+                  : t("coupons.messages.restoreTitle")}
+              </AlertDialogTitle>
+              <AlertDialogDescription>
+                {transferConfirmation
+                  ? t(
+                      transferConfirmation.topics.length === 1
+                        ? `coupons.messages.${transferConfirmation.action}Confirm`
+                        : `coupons.messages.${transferConfirmation.action}BulkConfirm`,
+                      {
+                        count: transferConfirmation.topics.length,
+                        name: transferConfirmation.topics[0]?.name,
+                      },
+                    )
+                  : null}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>{t("actions.cancel")}</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => {
+                  if (transferConfirmation) {
+                    runTopicTransfer(
+                      transferConfirmation.topics,
+                      transferConfirmation.action,
+                    ).catch((error) =>
+                      toast.error(
+                        error instanceof Error
+                          ? error.message
+                          : t("messages.error"),
+                      ),
+                    )
+                  }
+                  setTransferConfirmation(null)
+                }}
+              >
+                {transferConfirmation?.action === "archive"
+                  ? t("actions.archive")
+                  : t("actions.restore")}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+        <AlertDialog
+          onOpenChange={(open) => {
+            if (!open) {
+              setDeletingTopic(null)
+            }
+          }}
+          open={Boolean(deletingTopic)}
+        >
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>
+                {t("coupons.messages.deleteTitle")}
+              </AlertDialogTitle>
+              <AlertDialogDescription>
+                {t("coupons.messages.deleteConfirm")}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>{t("actions.cancel")}</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => {
+                  if (deletingTopic) {
+                    runAction(deletingTopic, "delete")
+                  }
+                  setDeletingTopic(null)
+                }}
+              >
+                {t("actions.delete")}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
-      <TopicDialog
-        onOpenChange={setDialogOpen}
-        onSaved={handleTopicSaved}
-        open={dialogOpen}
-        topic={editing}
-        workspaceId={workspaceId}
-      />
-      <AlertDialog
-        onOpenChange={(open) => {
-          if (!open) {
-            setTransferConfirmation(null)
-          }
-        }}
-        open={Boolean(transferConfirmation)}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>
-              {transferConfirmation?.action === "archive"
-                ? t("coupons.messages.archiveTitle")
-                : t("coupons.messages.restoreTitle")}
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              {transferConfirmation
-                ? t(
-                    transferConfirmation.topics.length === 1
-                      ? `coupons.messages.${transferConfirmation.action}Confirm`
-                      : `coupons.messages.${transferConfirmation.action}BulkConfirm`,
-                    {
-                      count: transferConfirmation.topics.length,
-                      name: transferConfirmation.topics[0]?.name,
-                    },
-                  )
-                : null}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>{t("actions.cancel")}</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => {
-                if (transferConfirmation) {
-                  runTopicTransfer(
-                    transferConfirmation.topics,
-                    transferConfirmation.action,
-                  ).catch((error) =>
-                    toast.error(
-                      error instanceof Error
-                        ? error.message
-                        : t("messages.error"),
-                    ),
-                  )
-                }
-                setTransferConfirmation(null)
-              }}
-            >
-              {transferConfirmation?.action === "archive"
-                ? t("actions.archive")
-                : t("actions.restore")}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-      <AlertDialog
-        onOpenChange={(open) => {
-          if (!open) {
-            setDeletingTopic(null)
-          }
-        }}
-        open={Boolean(deletingTopic)}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>
-              {t("coupons.messages.deleteTitle")}
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              {t("coupons.messages.deleteConfirm")}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>{t("actions.cancel")}</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => {
-                if (deletingTopic) {
-                  runAction(deletingTopic, "delete")
-                }
-                setDeletingTopic(null)
-              }}
-            >
-              {t("actions.delete")}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </div>
+    </LockedIdsProvider>
   )
 }

@@ -19,6 +19,7 @@ import { useAction } from "next-safe-action/hooks"
 import { useState } from "react"
 import { toast } from "sonner"
 import { ConfirmDialog } from "@/components/confirm-dialog"
+import { useIsLocked } from "@/features/templates/components/lock-badge"
 import { toastActionError } from "@/lib/errors/safe-action-error-handler"
 import {
   deleteStageAction,
@@ -51,6 +52,8 @@ export function StageMenu({
   canMoveItems,
 }: StageMenuProps) {
   const t = useTranslations("pipelines")
+  // Stages are pipeline content; moving items between them is not.
+  const isLocked = useIsLocked(pipelineId)
   const [dialog, setDialog] = useState<"settings" | "delete" | null>(null)
 
   return (
@@ -69,17 +72,20 @@ export function StageMenu({
           }
         />
         <DropdownMenuContent align="end" className="w-48">
-          <DropdownMenuItem onClick={onRename}>
+          <DropdownMenuItem disabled={isLocked} onClick={onRename}>
             <PencilIcon />
             {t("stage.rename")}
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => setDialog("settings")}>
+          <DropdownMenuItem
+            disabled={isLocked}
+            onClick={() => setDialog("settings")}
+          >
             <SettingsIcon />
             {t("stage.settings")}
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem
-            disabled={columns.length <= 1}
+            disabled={isLocked || columns.length <= 1}
             onClick={() => setDialog("delete")}
             variant="destructive"
           >

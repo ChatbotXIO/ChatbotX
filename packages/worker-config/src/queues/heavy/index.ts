@@ -167,6 +167,24 @@ const heavyJobProcessAIFileSchema = z.object({
   }),
 })
 
+/**
+ * Queues the first embedding run of an AI file. The id is the one a plain
+ * upload uses, so a file whose job was already queued is not queued twice.
+ */
+export const enqueueProcessAIFile = async (data: {
+  aiFileId: string
+  runId: string
+}): Promise<void> => {
+  await heavyQueue.add(
+    HeavyJobAction.processAIFile,
+    { type: HeavyJobAction.processAIFile, data },
+    {
+      ...getHeavyJobOptions(HeavyJobAction.processAIFile),
+      jobId: `heavy-ai-file-${data.aiFileId}`,
+    },
+  )
+}
+
 /** Job ids are retained by BullMQ, so a reindex run must never reuse one. */
 export function buildAIFileReindexJobId(
   aiFileId: string,

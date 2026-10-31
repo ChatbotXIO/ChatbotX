@@ -12,6 +12,7 @@ const PHASE_R_KINDS = new Set([
   "tag",
   "productCategory",
   "folder",
+  "inbox",
 ])
 
 /**
@@ -123,7 +124,8 @@ export const assertInstallOrderMatches = (
         continue
       }
       const providerEntry = Object.entries(templateAdapterRegistry).find(
-        ([, providerAdapter]) => providerAdapter.providesKinds.includes(kind),
+        ([, providerAdapter]) =>
+          (providerAdapter.providesKinds as readonly string[]).includes(kind),
       )
       if (!providerEntry) {
         continue

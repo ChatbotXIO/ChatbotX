@@ -9,6 +9,7 @@ import {
 import { Loader2Icon, MessageSquareMoreIcon, PlusIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useMemo, useState } from "react"
+import { LockedIdsProvider } from "@/features/templates/components/lock-badge"
 import { useWorkspaceId } from "@/hooks/routing"
 import {
   useSavedReplies,
@@ -66,70 +67,76 @@ const SavedReplyManage = (props: {
         }
       />
       <PopoverContent align="end" className="w-[min(100vw-2rem,25rem)] p-0">
-        {view.type === "create" ? (
-          <SavedReplyCreateForm
-            onCancel={() => setView({ type: "list" })}
-            onSaved={upsertSavedReply}
-            workspaceId={workspaceId}
-          />
-        ) : null}
-        {view.type === "edit" && editingSavedReply ? (
-          <SavedReplyEditForm
-            editingSavedReply={editingSavedReply}
-            onCancel={() => setView({ type: "list" })}
-            onSaved={upsertSavedReply}
-            workspaceId={workspaceId}
-          />
-        ) : null}
+        <LockedIdsProvider
+          resourceIds={savedReplies.map((item) => item.id)}
+          resourceKind="savedReply"
+          workspaceId={workspaceId}
+        >
+          {view.type === "create" ? (
+            <SavedReplyCreateForm
+              onCancel={() => setView({ type: "list" })}
+              onSaved={upsertSavedReply}
+              workspaceId={workspaceId}
+            />
+          ) : null}
+          {view.type === "edit" && editingSavedReply ? (
+            <SavedReplyEditForm
+              editingSavedReply={editingSavedReply}
+              onCancel={() => setView({ type: "list" })}
+              onSaved={upsertSavedReply}
+              workspaceId={workspaceId}
+            />
+          ) : null}
 
-        {view.type === "list" ? (
-          <div>
-            <div className="flex items-center justify-between border-b px-4 py-3">
-              <h3 className="font-semibold text-xl">
-                {t("fields.savedReplies.label")}
-              </h3>
-              <Button
-                onClick={() => setView({ type: "create" })}
-                size="sm"
-                type="button"
-                variant="ghost"
-              >
-                <PlusIcon />
-                {t("actions.addNew")}
-              </Button>
+          {view.type === "list" ? (
+            <div>
+              <div className="flex items-center justify-between border-b px-4 py-3">
+                <h3 className="font-semibold text-xl">
+                  {t("fields.savedReplies.label")}
+                </h3>
+                <Button
+                  onClick={() => setView({ type: "create" })}
+                  size="sm"
+                  type="button"
+                  variant="ghost"
+                >
+                  <PlusIcon />
+                  {t("actions.addNew")}
+                </Button>
+              </div>
+
+              <div className="max-h-75 overflow-y-auto">
+                {isLoading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2Icon className="animate-spin" />
+                  </div>
+                ) : null}
+
+                {!isLoading && savedReplies.length === 0 ? (
+                  <div className="px-4 py-8 text-center text-muted-foreground text-sm">
+                    {t("messages.noDataAvailable")}
+                  </div>
+                ) : null}
+
+                {isLoading
+                  ? null
+                  : savedReplies.map((item, index) => (
+                      <SavedReplyItem
+                        isLast={index === savedReplies.length - 1}
+                        item={item}
+                        key={item.id}
+                        onDeleteSuccess={onDeleteSavedReply}
+                        onEdit={(savedReply) =>
+                          setView({ type: "edit", item: savedReply })
+                        }
+                        onSelect={onSelectSavedReply}
+                        workspaceId={workspaceId}
+                      />
+                    ))}
+              </div>
             </div>
-
-            <div className="max-h-75 overflow-y-auto">
-              {isLoading ? (
-                <div className="flex items-center justify-center py-8">
-                  <Loader2Icon className="animate-spin" />
-                </div>
-              ) : null}
-
-              {!isLoading && savedReplies.length === 0 ? (
-                <div className="px-4 py-8 text-center text-muted-foreground text-sm">
-                  {t("messages.noDataAvailable")}
-                </div>
-              ) : null}
-
-              {isLoading
-                ? null
-                : savedReplies.map((item, index) => (
-                    <SavedReplyItem
-                      isLast={index === savedReplies.length - 1}
-                      item={item}
-                      key={item.id}
-                      onDeleteSuccess={onDeleteSavedReply}
-                      onEdit={(savedReply) =>
-                        setView({ type: "edit", item: savedReply })
-                      }
-                      onSelect={onSelectSavedReply}
-                      workspaceId={workspaceId}
-                    />
-                  ))}
-            </div>
-          </div>
-        ) : null}
+          ) : null}
+        </LockedIdsProvider>
       </PopoverContent>
     </Popover>
   )

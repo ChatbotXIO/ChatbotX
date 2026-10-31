@@ -3,6 +3,7 @@ import { notFound } from "next/navigation"
 import { AIFileDetail } from "@/features/ai-files/components/ai-file-detail"
 import { getAIFile } from "@/features/ai-files/queries"
 import { AITab } from "@/features/ai-hub/ai-hub-breadcrumb"
+import { LockedIdsProvider } from "@/features/templates/components/lock-badge"
 
 type AIFileDetailPageProps = {
   params: Promise<{ workspaceId: string; aiFileId: string }>
@@ -27,7 +28,13 @@ export default async function AIFileDetailPage({
   return (
     <div className="space-y-6">
       <AITab />
-      <AIFileDetail aiFileId={aiFileId} workspaceId={workspaceId} />
+      <LockedIdsProvider
+        resourceIds={[aiFileId]}
+        resourceKind="aiFile"
+        workspaceId={workspaceId}
+      >
+        <AIFileDetail aiFileId={aiFileId} workspaceId={workspaceId} />
+      </LockedIdsProvider>
     </div>
   )
 }

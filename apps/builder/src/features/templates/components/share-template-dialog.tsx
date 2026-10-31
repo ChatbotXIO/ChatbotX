@@ -1,6 +1,5 @@
 "use client"
 
-import type { TemplateModel } from "@chatbotx.io/database/types"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
   Dialog,
@@ -11,24 +10,25 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@chatbotx.io/ui/components/ui/dialog"
-import { Input } from "@chatbotx.io/ui/components/ui/input"
-import { Label } from "@chatbotx.io/ui/components/ui/label"
-import { Switch } from "@chatbotx.io/ui/components/ui/switch"
-import { CopyIcon, Loader2Icon } from "lucide-react"
+import { Loader2Icon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
-import { useEffect, useState } from "react"
+import { useEffect, useMemo } from "react"
 import { toast } from "sonner"
-import { useClipboard } from "@/hooks/use-clipboard"
-import { updateShareSettingsAction } from "../actions/update-share-settings.action"
+import { getShareSettingsAction } from "../actions/get-share-settings.action"
+import { ShareSettingsPanel } from "./share-settings-panel"
 
 type ShareTemplateDialogProps = {
   workspaceId: string
-  template: TemplateModel | null
+  template: { id: string } | null
   open: boolean
   onOpenChange: (open: boolean) => void
 }
 
+/**
+ * The template list carries no share token, so the dialog loads the share
+ * settings for the chosen template when it opens and again after each change.
+ */
 export function ShareTemplateDialog({
   workspaceId,
   template,
@@ -36,51 +36,31 @@ export function ShareTemplateDialog({
   onOpenChange,
 }: ShareTemplateDialogProps) {
   const t = useTranslations()
-  const { handleCopy } = useClipboard()
-  const [shareEnabled, setShareEnabled] = useState(false)
+  const templateId = template?.id
+
+  const loadSettings = useMemo(
+    () => getShareSettingsAction.bind(null, workspaceId, templateId ?? ""),
+    [workspaceId, templateId],
+  )
+  const {
+    execute: load,
+    result,
+    isPending,
+  } = useAction(loadSettings, {
+    onError: ({ error }) => {
+      if (error.serverError) {
+        toast.error(error.serverError)
+      }
+    },
+  })
 
   useEffect(() => {
-    if (template) {
-      setShareEnabled(template.shareEnabled)
+    if (open && templateId) {
+      load()
     }
-  }, [template])
+  }, [open, templateId, load])
 
-  const { execute, isPending } = useAction(
-    updateShareSettingsAction.bind(null, workspaceId),
-    {
-      onSuccess: () => {
-        toast.success(
-          t("messages.updatedSuccess", { feature: t("fields.template.label") }),
-        )
-      },
-      onError: ({ error }) => {
-        if (error.serverError) {
-          toast.error(error.serverError)
-        }
-        if (template) {
-          setShareEnabled(template.shareEnabled)
-        }
-      },
-    },
-  )
-
-  if (!template) {
-    return (
-      <Dialog onOpenChange={onOpenChange} open={open}>
-        <DialogContent className="max-w-lg" />
-      </Dialog>
-    )
-  }
-
-  const shareUrl =
-    typeof window === "undefined"
-      ? ""
-      : `${window.location.origin}/t/${template.shareToken}`
-
-  const toggleShareEnabled = (checked: boolean) => {
-    setShareEnabled(checked)
-    execute({ templateId: template.id, shareEnabled: checked })
-  }
+  const settings = result.data?.id === templateId ? result.data : undefined
 
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
@@ -92,53 +72,21 @@ export function ShareTemplateDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex flex-col gap-4">
-          <div className="flex items-center justify-between gap-4">
-            <Label htmlFor="template-share-enabled">
-              {t("templates.share.enableLabel")}
-            </Label>
-            <Switch
-              checked={shareEnabled}
-              disabled={isPending}
-              id="template-share-enabled"
-              onCheckedChange={toggleShareEnabled}
-            />
-          </div>
-
-          {shareEnabled && (
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="template-share-url">
-                {t("templates.share.linkLabel")}
-              </Label>
-              <div className="flex items-center gap-2">
-                <Input
-                  className="truncate"
-                  id="template-share-url"
-                  readOnly
-                  value={shareUrl}
-                />
-                <Button
-                  className="flex-none"
-                  disabled={!shareUrl}
-                  onClick={() => handleCopy(shareUrl)}
-                  size="icon"
-                  type="button"
-                  variant="outline"
-                >
-                  <CopyIcon className="size-4" />
-                </Button>
-              </div>
-            </div>
-          )}
-        </div>
+        {settings ? (
+          <ShareSettingsPanel
+            onChanged={() => load()}
+            template={settings}
+            workspaceId={workspaceId}
+          />
+        ) : null}
+        {!settings && isPending ? (
+          <Loader2Icon className="mx-auto size-5 animate-spin text-muted-foreground" />
+        ) : null}
 
         <DialogFooter className="justify-end">
           <DialogClose
             render={
               <Button size="sm" type="button" variant="ghost">
-                {isPending && (
-                  <Loader2Icon className="me-2 h-4 w-4 animate-spin" />
-                )}
                 {t("actions.cancel")}
               </Button>
             }

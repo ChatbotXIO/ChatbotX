@@ -12,12 +12,14 @@ export function FrameHeader({
   hasPublishedVersion,
   cancelAutosave,
   markSaved,
+  isTemplateLocked,
 }: {
   flow: FlowResource
   canRevertToPublished: boolean
   hasPublishedVersion: boolean
   cancelAutosave: (() => void) | null
   markSaved: ((nodes: Node[], edges: Edge[]) => void) | null
+  isTemplateLocked: boolean
 }) {
   const t = useTranslations()
 
@@ -36,14 +38,16 @@ export function FrameHeader({
       </div>
       {/* <ThemeSwitcher /> */}
 
-      <FlowEditToolbar
-        cancelAutosave={cancelAutosave}
-        canRevertToPublished={canRevertToPublished}
-        flow={flow}
-        hasPublishedVersion={hasPublishedVersion}
-        markSaved={markSaved}
-        workspaceId={flow.workspaceId}
-      />
+      {isTemplateLocked ? null : (
+        <FlowEditToolbar
+          cancelAutosave={cancelAutosave}
+          canRevertToPublished={canRevertToPublished}
+          flow={flow}
+          hasPublishedVersion={hasPublishedVersion}
+          markSaved={markSaved}
+          workspaceId={flow.workspaceId}
+        />
+      )}
     </header>
   )
 }

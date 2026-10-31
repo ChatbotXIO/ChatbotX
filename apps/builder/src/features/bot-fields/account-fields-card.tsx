@@ -44,6 +44,10 @@ import {
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { use, useEffect, useMemo, useState } from "react"
+import {
+  LockBadge,
+  LockedIdsProvider,
+} from "@/features/templates/components/lock-badge"
 import { getBrowserTimezone } from "../contact-filter/lib/timezone"
 import CustomFieldTypeLabel from "../custom-fields/components/custom-field-label"
 import { formatCustomFieldDisplayValue } from "../custom-fields/lib/format-custom-field-display-value"
@@ -270,141 +274,150 @@ export function AccountFieldsCard({
           </div>
         </div>
 
-        <div className="overflow-hidden rounded-md border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-10">
-                  <Checkbox
-                    aria-label={t("actions.selectAll")}
-                    checked={allPageRowsSelected}
-                    indeterminate={somePageRowsSelected}
-                    onCheckedChange={(value) =>
-                      toggleAllPageRows(Boolean(value))
-                    }
-                  />
-                </TableHead>
-                <TableHead>{t("fields.name.label")}</TableHead>
-                <TableHead>{t("fields.type.label")}</TableHead>
-                <TableHead>{t("fields.value.label")}</TableHead>
-                <TableHead className="w-12" />
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {pageData.map((field) => (
-                <TableRow
-                  data-state={selectedIds.has(field.id) ? "selected" : ""}
-                  key={field.id}
-                >
-                  <TableCell>
-                    <Checkbox
-                      aria-label={t("actions.selectRow")}
-                      checked={selectedIds.has(field.id)}
-                      onCheckedChange={(value) =>
-                        toggleRow(field.id, Boolean(value))
-                      }
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <TruncatedCell value={field.name} />
-                  </TableCell>
-                  <TableCell>
-                    <CustomFieldTypeLabel
-                      type={field.type as CustomFieldType}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <TruncatedCell
-                      value={formatCustomFieldDisplayValue(
-                        field.type as CustomFieldType,
-                        field.value,
-                        timezone,
-                        {
-                          false: t("fields.boolean.false"),
-                          true: t("fields.boolean.true"),
-                        },
-                      )}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <AccountFieldRowActions
-                      onSelect={(variant) =>
-                        setRowAction({ record: field, variant })
-                      }
-                    />
-                  </TableCell>
-                </TableRow>
-              ))}
-              {pageData.length === 0 ? (
+        <LockedIdsProvider
+          resourceIds={pageData.map((field) => field.id)}
+          resourceKind="botField"
+          workspaceId={workspaceId}
+        >
+          <div className="overflow-hidden rounded-md border">
+            <Table>
+              <TableHeader>
                 <TableRow>
-                  <TableCell
-                    className="text-center text-muted-foreground"
-                    colSpan={5}
-                  >
-                    {t("actions.noRecordFound")}
-                  </TableCell>
+                  <TableHead className="w-10">
+                    <Checkbox
+                      aria-label={t("actions.selectAll")}
+                      checked={allPageRowsSelected}
+                      indeterminate={somePageRowsSelected}
+                      onCheckedChange={(value) =>
+                        toggleAllPageRows(Boolean(value))
+                      }
+                    />
+                  </TableHead>
+                  <TableHead>{t("fields.name.label")}</TableHead>
+                  <TableHead>{t("fields.type.label")}</TableHead>
+                  <TableHead>{t("fields.value.label")}</TableHead>
+                  <TableHead className="w-12" />
                 </TableRow>
-              ) : null}
-            </TableBody>
-          </Table>
-        </div>
-
-        {pageCount > 1 ? (
-          <div className="flex items-center justify-end gap-2 text-sm">
-            <span className="text-muted-foreground">
-              {t("analytics.pagination.pageOf", {
-                page: currentPage,
-                pageCount,
-              })}
-            </span>
-            <Button
-              aria-label={t("analytics.pagination.previousPage")}
-              disabled={currentPage <= 1}
-              onClick={() => setPage((current) => Math.max(1, current - 1))}
-              size="icon"
-              variant="outline"
-            >
-              <ChevronLeftIcon className="size-4 rtl:rotate-180" />
-            </Button>
-            <Button
-              aria-label={t("analytics.pagination.nextPage")}
-              disabled={currentPage >= pageCount}
-              onClick={() =>
-                setPage((current) => Math.min(pageCount, current + 1))
-              }
-              size="icon"
-              variant="outline"
-            >
-              <ChevronRightIcon className="size-4 rtl:rotate-180" />
-            </Button>
+              </TableHeader>
+              <TableBody>
+                {pageData.map((field) => (
+                  <TableRow
+                    data-state={selectedIds.has(field.id) ? "selected" : ""}
+                    key={field.id}
+                  >
+                    <TableCell>
+                      <Checkbox
+                        aria-label={t("actions.selectRow")}
+                        checked={selectedIds.has(field.id)}
+                        onCheckedChange={(value) =>
+                          toggleRow(field.id, Boolean(value))
+                        }
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center">
+                        <TruncatedCell value={field.name} />
+                        <LockBadge resourceId={field.id} />
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <CustomFieldTypeLabel
+                        type={field.type as CustomFieldType}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <TruncatedCell
+                        value={formatCustomFieldDisplayValue(
+                          field.type as CustomFieldType,
+                          field.value,
+                          timezone,
+                          {
+                            false: t("fields.boolean.false"),
+                            true: t("fields.boolean.true"),
+                          },
+                        )}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <AccountFieldRowActions
+                        onSelect={(variant) =>
+                          setRowAction({ record: field, variant })
+                        }
+                      />
+                    </TableCell>
+                  </TableRow>
+                ))}
+                {pageData.length === 0 ? (
+                  <TableRow>
+                    <TableCell
+                      className="text-center text-muted-foreground"
+                      colSpan={5}
+                    >
+                      {t("actions.noRecordFound")}
+                    </TableCell>
+                  </TableRow>
+                ) : null}
+              </TableBody>
+            </Table>
           </div>
-        ) : null}
 
-        <DeleteBotFieldsDialog
-          onOpenChange={() => setRowAction(null)}
-          onSuccess={() => {
-            setSelectedIds((current) => {
-              const next = new Set(current)
-              if (rowAction?.record.id) {
-                next.delete(rowAction.record.id)
-              }
-              return next
-            })
-            handleRefresh()
-          }}
-          open={rowAction?.variant === "delete"}
-          records={rowAction?.record ? [rowAction.record] : []}
-          showTrigger={false}
-          workspaceId={workspaceId}
-        />
+          {pageCount > 1 ? (
+            <div className="flex items-center justify-end gap-2 text-sm">
+              <span className="text-muted-foreground">
+                {t("analytics.pagination.pageOf", {
+                  page: currentPage,
+                  pageCount,
+                })}
+              </span>
+              <Button
+                aria-label={t("analytics.pagination.previousPage")}
+                disabled={currentPage <= 1}
+                onClick={() => setPage((current) => Math.max(1, current - 1))}
+                size="icon"
+                variant="outline"
+              >
+                <ChevronLeftIcon className="size-4 rtl:rotate-180" />
+              </Button>
+              <Button
+                aria-label={t("analytics.pagination.nextPage")}
+                disabled={currentPage >= pageCount}
+                onClick={() =>
+                  setPage((current) => Math.min(pageCount, current + 1))
+                }
+                size="icon"
+                variant="outline"
+              >
+                <ChevronRightIcon className="size-4 rtl:rotate-180" />
+              </Button>
+            </div>
+          ) : null}
 
-        <UpdateBotFieldDialog
-          botField={rowAction?.record ?? null}
-          onOpenChange={() => setRowAction(null)}
-          onSuccess={handleRefresh}
-          open={rowAction?.variant === "update"}
-          workspaceId={workspaceId}
-        />
+          <DeleteBotFieldsDialog
+            onOpenChange={() => setRowAction(null)}
+            onSuccess={() => {
+              setSelectedIds((current) => {
+                const next = new Set(current)
+                if (rowAction?.record.id) {
+                  next.delete(rowAction.record.id)
+                }
+                return next
+              })
+              handleRefresh()
+            }}
+            open={rowAction?.variant === "delete"}
+            records={rowAction?.record ? [rowAction.record] : []}
+            showTrigger={false}
+            workspaceId={workspaceId}
+          />
+
+          <UpdateBotFieldDialog
+            botField={rowAction?.record ?? null}
+            onOpenChange={() => setRowAction(null)}
+            onSuccess={handleRefresh}
+            open={rowAction?.variant === "update"}
+            workspaceId={workspaceId}
+          />
+        </LockedIdsProvider>
       </CardContent>
     </Card>
   )

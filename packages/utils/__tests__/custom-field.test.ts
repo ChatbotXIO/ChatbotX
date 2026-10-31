@@ -1,7 +1,9 @@
 import { describe, expect, test } from "vitest"
 import {
+  allocateRenamedCustomFieldName,
   canonicalNumberLiteral,
   coerceBooleanLiteral,
+  normalizeCustomFieldName,
 } from "../src/custom-field"
 
 // `coerceBooleanLiteral` itself still treats blank as falsy ("" -> "false") —
@@ -68,5 +70,32 @@ describe("canonicalNumberLiteral", () => {
     "NaN",
   ])("returns null for unparseable/non-finite input %s", (raw) => {
     expect(canonicalNumberLiteral(raw)).toBeNull()
+  })
+})
+
+describe("allocateRenamedCustomFieldName", () => {
+  test("takes the smallest suffix whose normalized name is free", () => {
+    const taken = new Set(["size", "size_1", "size_2"])
+
+    expect(allocateRenamedCustomFieldName("Size", taken)).toBe("Size_3")
+  })
+
+  test("compares case- and whitespace-insensitively across every type", () => {
+    const taken = new Set([normalizeCustomFieldName("  FOO_1 ")])
+
+    expect(allocateRenamedCustomFieldName("foo", taken)).toBe("foo_2")
+  })
+
+  test("shortens the base so the suffixed name stays within the limit", () => {
+    const renamed = allocateRenamedCustomFieldName("abcdefghij", new Set(), 8)
+
+    expect(renamed).toBe("abcdef_1")
+    expect(renamed.length).toBe(8)
+  })
+
+  test("does not change the stored spelling of the base", () => {
+    expect(allocateRenamedCustomFieldName("Date of Birth", new Set())).toBe(
+      "Date of Birth_1",
+    )
   })
 })

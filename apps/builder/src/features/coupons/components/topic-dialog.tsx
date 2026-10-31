@@ -15,7 +15,9 @@ import { Loader2Icon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useEffect, useMemo, useState } from "react"
 import { toast } from "sonner"
+import { LockedDialogFieldset } from "@/components/locked-dialog-fieldset"
 import type { CouponTopicResource } from "@/features/coupons/schema/resource"
+import { useIsLocked } from "@/features/templates/components/lock-badge"
 import { client } from "@/lib/orpc/orpc"
 
 type TopicDialogProps = {
@@ -47,6 +49,7 @@ export function TopicDialog({
   const [expiresAt, setExpiresAt] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const locked = Boolean(topic?.hasEverHadCoupon)
+  const isTemplateLocked = useIsLocked(topic?.id)
 
   useEffect(() => {
     setName(topic?.name ?? "")
@@ -100,44 +103,48 @@ export function TopicDialog({
             {topic ? t("coupons.topic.edit") : t("coupons.topic.create")}
           </DialogTitle>
         </DialogHeader>
-        <div className="grid gap-4">
-          <div className="grid gap-2">
-            <Label htmlFor="coupon-topic-name">{t("fields.name.label")}</Label>
-            <Input
-              disabled={locked}
-              id="coupon-topic-name"
-              onChange={(event) => setName(event.target.value)}
-              value={name}
-            />
+        <LockedDialogFieldset resourceId={topic?.id}>
+          <div className="grid gap-4">
+            <div className="grid gap-2">
+              <Label htmlFor="coupon-topic-name">
+                {t("fields.name.label")}
+              </Label>
+              <Input
+                disabled={locked}
+                id="coupon-topic-name"
+                onChange={(event) => setName(event.target.value)}
+                value={name}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="coupon-topic-expires">
+                {t("coupons.fields.validity")}
+              </Label>
+              <Input
+                id="coupon-topic-expires"
+                onChange={(event) => setExpiresAt(event.target.value)}
+                type="date"
+                value={expiresAt}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="coupon-topic-description">
+                {t("fields.description.label")}
+              </Label>
+              <Textarea
+                disabled={locked}
+                id="coupon-topic-description"
+                onChange={(event) => setDescription(event.target.value)}
+                value={description}
+              />
+            </div>
+            {locked ? (
+              <p className="text-muted-foreground text-sm">
+                {t("coupons.messages.editLocked")}
+              </p>
+            ) : null}
           </div>
-          <div className="grid gap-2">
-            <Label htmlFor="coupon-topic-expires">
-              {t("coupons.fields.validity")}
-            </Label>
-            <Input
-              id="coupon-topic-expires"
-              onChange={(event) => setExpiresAt(event.target.value)}
-              type="date"
-              value={expiresAt}
-            />
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="coupon-topic-description">
-              {t("fields.description.label")}
-            </Label>
-            <Textarea
-              disabled={locked}
-              id="coupon-topic-description"
-              onChange={(event) => setDescription(event.target.value)}
-              value={description}
-            />
-          </div>
-          {locked ? (
-            <p className="text-muted-foreground text-sm">
-              {t("coupons.messages.editLocked")}
-            </p>
-          ) : null}
-        </div>
+        </LockedDialogFieldset>
         <DialogFooter>
           <Button
             onClick={() => onOpenChange(false)}
@@ -147,7 +154,9 @@ export function TopicDialog({
             {t("actions.cancel")}
           </Button>
           <Button
-            disabled={isSubmitting || !name.trim() || unchanged}
+            disabled={
+              isSubmitting || !name.trim() || unchanged || isTemplateLocked
+            }
             onClick={handleSubmit}
             type="button"
           >

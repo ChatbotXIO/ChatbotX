@@ -125,60 +125,6 @@ describe("templateSelectableResourceRepository.listTags", () => {
   })
 })
 
-describe("templateSelectableResourceRepository.listKeywords", () => {
-  beforeEach(() => {
-    vi.clearAllMocks()
-  })
-
-  test("scopes to inbound type and labels rows via text, falling back to keywords", async () => {
-    mocks.automatedResponseFindMany
-      .mockResolvedValueOnce([
-        { id: "kw-1", text: "hello", keywords: ["hi"] },
-        { id: "kw-2", text: null, keywords: ["bye", "later"] },
-        { id: "kw-3", text: "  ", keywords: [] },
-      ])
-      .mockResolvedValueOnce([{ id: "kw-1" }, { id: "kw-2" }, { id: "kw-3" }])
-    mocks.count.mockResolvedValue(3)
-
-    const result = await templateSelectableResourceRepository.listKeywords({
-      workspaceId: "ws-1",
-      offset: 0,
-      limit: 100,
-    })
-
-    expect(result.rows).toEqual([
-      { id: "kw-1", name: "hello" },
-      { id: "kw-2", name: "bye, later" },
-      { id: "kw-3", name: "(untitled)" },
-    ])
-
-    const call = mocks.automatedResponseFindMany.mock.calls[0]?.[0] as {
-      where: { type: string }
-    }
-    expect(call.where.type).toBe("inbound")
-  })
-})
-
-describe("templateSelectableResourceRepository.listSettings", () => {
-  beforeEach(() => {
-    vi.clearAllMocks()
-  })
-
-  test("returns the two raw arrays scoped to the workspace", async () => {
-    mocks.savedReplyFindMany.mockResolvedValue([
-      { id: "sr-1", shortcut: "/hello" },
-    ])
-    mocks.botFieldFindMany.mockResolvedValue([{ id: "bf-1", name: "Age" }])
-
-    const result =
-      await templateSelectableResourceRepository.listSettings("ws-1")
-
-    expect(result).toEqual({
-      savedReplies: [{ id: "sr-1", shortcut: "/hello" }],
-      botFields: [{ id: "bf-1", name: "Age" }],
-    })
-    expect(mocks.savedReplyFindMany).toHaveBeenCalledWith(
-      expect.objectContaining({ where: { workspaceId: "ws-1" } }),
-    )
-  })
-})
+// listKeywords and listSettings run raw SQL (microsecond keyset, UNION ALL);
+// they are covered against a real database in
+// packages/business/__tests__/integration/template-selectable-resources-db.test.ts.

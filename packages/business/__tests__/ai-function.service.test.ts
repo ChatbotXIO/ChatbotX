@@ -68,7 +68,33 @@ vi.mock("@chatbotx.io/database/client", () => ({
     update: mockUpdate,
   },
   eq: vi.fn((field: unknown, value: unknown) => ({ field, value })),
+  inArray: vi.fn((field: unknown, values: unknown) => ({ field, values })),
   and: vi.fn((...args: unknown[]) => ({ and: args })),
+}))
+
+// The locked transaction runs the body against the same mocked client.
+vi.mock("../src/template/template-resource-locks", () => ({
+  // The guards' live-key lookup is not what this suite scripts: nothing is installed.
+  findLiveTemplateKeys: async () => [],
+  acquireTemplateResourceLocks: async () => undefined,
+  isTemplateEngineTransaction: () => false,
+  withTemplateLockedTransaction: (run: (tx: unknown) => unknown) =>
+    run({
+      delete: mockDelete,
+      insert: mockInsert,
+      update: mockUpdate,
+      query: {
+        aiFunctionModel: {
+          findFirst: mockFindFirst,
+          findMany: mockFindMany,
+        },
+        templateInstalledResourceModel: {
+          findMany: mockInstalledResourceFindMany,
+        },
+        templateInstallationModel: { findMany: mockInstallationFindMany },
+      },
+      execute: vi.fn(),
+    }),
 }))
 
 vi.mock("@chatbotx.io/database/schema", () => ({

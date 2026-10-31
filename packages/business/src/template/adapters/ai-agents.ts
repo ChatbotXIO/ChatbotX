@@ -1,17 +1,87 @@
-import { db } from "@chatbotx.io/database/client"
+import { type DatabaseClient, db, eq } from "@chatbotx.io/database/client"
 import { aiAgentModel } from "@chatbotx.io/database/schema"
 import { remapReferences } from "@chatbotx.io/flow-config"
 import { createId } from "@chatbotx.io/utils"
+import { z } from "zod"
+import { omitKeys } from "../fingerprint"
+import {
+  assertBackupFormat,
+  EMPTY_COLLECT_RESULT,
+  verifyOwnedIds,
+} from "./shared"
 import type {
   PatchTask,
   ResourceAdapter,
   ResourceCollector,
+  ResourceSyncHandler,
   TemplateInstallContext,
 } from "./types"
+
+/** The shape `serializeBackup` writes and `restoreBackup` reads. */
+const BACKUP_FORMAT_VERSION = 1
+
+/** Fields the installer owns: a sync never writes them, and they never enter the fingerprint. */
+const AI_AGENT_INSTALLER_OWNED_FIELDS = ["isDefault"] as const
+
+/** What a template update overwrites on an installed agent. */
+const aiAgentContentSchema = z.object({
+  name: z.string(),
+  prompt: z.string().nullable(),
+  messages: z.array(z.unknown()),
+  models: z.array(z.unknown()),
+  temperature: z.number(),
+  maxOutputTokens: z.number().int(),
+  tools: z.array(z.string()),
+  isRichResponse: z.boolean(),
+  webSearchAuthorizedDomains: z.array(z.string()),
+})
+type AIAgentContent = z.infer<typeof aiAgentContentSchema>
+type AIAgentInsert = typeof aiAgentModel.$inferInsert
+
+const toColumns = (content: AIAgentContent) => ({
+  name: content.name,
+  prompt: content.prompt,
+  messages: content.messages as AIAgentInsert["messages"],
+  models: content.models as AIAgentInsert["models"],
+  temperature: content.temperature,
+  maxOutputTokens: content.maxOutputTokens,
+  tools: content.tools,
+  isRichResponse: content.isRichResponse,
+  webSearchAuthorizedDomains: content.webSearchAuthorizedDomains,
+})
+
+const readContent = async (
+  tx: DatabaseClient,
+  resourceId: string,
+): Promise<AIAgentContent | null> => {
+  // Locked for the rest of the transaction (see the keywords adapter).
+  const [row] = await tx
+    .select()
+    .from(aiAgentModel)
+    .where(eq(aiAgentModel.id, resourceId))
+    .for("update")
+    .limit(1)
+  return row
+    ? {
+        name: row.name,
+        prompt: row.prompt,
+        messages: row.messages,
+        models: row.models,
+        temperature: row.temperature,
+        maxOutputTokens: row.maxOutputTokens,
+        tools: row.tools,
+        isRichResponse: row.isRichResponse,
+        webSearchAuthorizedDomains: row.webSearchAuthorizedDomains,
+      }
+    : null
+}
 
 type AIAgentModelConfig =
   | { provider: string; model: string }
   | { kind: "openaiCompatible"; integrationId: string; model: string }
+
+const MCP_TOOL_PREFIX = "mcp:"
+const FILE_TOOL_PREFIX = "file:"
 
 type TemplateAIAgentEntry = {
   sourceId: string
@@ -37,10 +107,9 @@ type TemplateAIAgentEntry = {
  *
  * `tools` is remapped through the generic prefixed-token rules
  * (`fn:`/`file:`/`mcp:`) against whatever of `aiFunction`/`aiFile`/
- * `aiMcpServer` has already been resolved. AIFunctions insert earlier in
- * Phase 1, so `fn:` tokens resolve directly; `aiFile`/`aiMcpServer` are not
- * yet modeled as template categories, so those tokens are left unresolved
- * and reported as warnings (never corrupted — the prefix allowlist is
+ * `aiMcpServer` has already been resolved. AIFunctions, MCP servers and AI
+ * files insert earlier in Phase 1, so `fn:`, `mcp:` and `file:` tokens resolve
+ * directly; one that does not resolve is reported as a warning (never corrupted — the prefix allowlist is
  * exact-key gated, so free text is never touched).
  *
  * `models[].integrationId` (the `openaiCompatible` variant) is dropped and
@@ -48,41 +117,30 @@ type TemplateAIAgentEntry = {
  * an installed template should never silently point at the source
  * workspace's credential.
  */
-export const aiAgentsAdapter: ResourceAdapter = {
+export const aiAgentsAdapter: ResourceAdapter<TemplateAIAgentEntry> = {
   category: "aiAgents",
   providesKinds: ["aiAgent"],
   consumesKinds: ["aiFunction", "aiFile", "aiMcpServer"],
   deferredKinds: [],
+  trackedKind: "aiAgent",
+  folderTypes: [],
+  minFormatVersion: 1,
+  fingerprint: {
+    project: (entry) => omitKeys(entry, AI_AGENT_INSTALLER_OWNED_FIELDS),
+    unorderedPaths: ["webSearchAuthorizedDomains"],
+  },
 
   async insert(
     ctx: TemplateInstallContext,
-    entries: readonly (Record<string, unknown> & { sourceId: string })[],
+    entries: readonly TemplateAIAgentEntry[],
   ): Promise<PatchTask[]> {
     if (!ctx.idMaps.aiAgent) {
       ctx.idMaps.aiAgent = new Map()
     }
     const idMap = ctx.idMaps.aiAgent
 
-    for (const rawEntry of entries) {
-      const entry = rawEntry as unknown as TemplateAIAgentEntry
-      const remappedTools = remapReferences(
-        { tools: entry.tools },
-        ctx.idMaps,
-        {
-          kinds: ["aiFunction", "aiFile", "aiMcpServer"],
-          onUnresolved: (ref) =>
-            ctx.warn({
-              category: "aiAgents",
-              entityKind: ref.entityKind,
-              path: `aiAgents.${entry.sourceId}.tools`,
-              value: ref.value,
-            }),
-        },
-      )
-
-      const models = entry.models.flatMap((model) =>
-        keepInstallableModel(ctx, entry.sourceId, model),
-      )
+    for (const entry of entries) {
+      const { tools, models } = resolveAgentReferences(ctx, entry)
 
       const id = createId()
       await ctx.tx.insert(aiAgentModel).values({
@@ -94,7 +152,7 @@ export const aiAgentsAdapter: ResourceAdapter = {
         models,
         temperature: entry.temperature,
         maxOutputTokens: entry.maxOutputTokens,
-        tools: remappedTools.tools,
+        tools,
         // Never carry `isDefault` across workspaces — the target workspace
         // already has its own default agent (or none), and blindly
         // installing a second `isDefault: true` row would race the unique
@@ -119,35 +177,77 @@ export const aiAgentsAdapter: ResourceAdapter = {
     return [] satisfies PatchTask[]
   },
 
+  sync: {
+    async project(tx, resourceId) {
+      return await readContent(tx, resourceId)
+    },
+
+    async serializeBackup(tx, resourceId) {
+      const content = await readContent(tx, resourceId)
+      return content ? { formatVersion: BACKUP_FORMAT_VERSION, content } : null
+    },
+
+    async restoreBackup(tx, resourceId, content, formatVersion) {
+      assertBackupFormat(formatVersion, BACKUP_FORMAT_VERSION)
+      const parsed = aiAgentContentSchema.safeParse(content)
+      if (!parsed.success) {
+        throw new Error("The AI agent backup is not in a restorable shape")
+      }
+      await tx
+        .update(aiAgentModel)
+        .set(toColumns(parsed.data))
+        .where(eq(aiAgentModel.id, resourceId))
+    },
+
+    // `isDefault` is the installer's; `actionPrompt`/`actionRules` are not
+    // shipped, so they stay as they are. Tools and models resolve exactly as at
+    // install (an unresolvable tool is dropped and warned about).
+    async update(ctx, pairs) {
+      for (const { entry, resourceId } of pairs) {
+        const { tools, models } = resolveAgentReferences(ctx, entry)
+        await ctx.tx
+          .update(aiAgentModel)
+          .set(
+            toColumns({
+              name: entry.name,
+              prompt: entry.prompt,
+              messages: entry.messages,
+              models,
+              temperature: entry.temperature,
+              maxOutputTokens: entry.maxOutputTokens,
+              tools,
+              isRichResponse: entry.isRichResponse,
+              webSearchAuthorizedDomains:
+                entry.webSearchAuthorizedDomains ?? [],
+            }),
+          )
+          .where(eq(aiAgentModel.id, resourceId))
+      }
+    },
+  } satisfies ResourceSyncHandler<TemplateAIAgentEntry>,
+
   collector: {
-    async resolveIds(workspaceId) {
+    async resolveIds(workspaceId, limit) {
       const rows = await db.query.aiAgentModel.findMany({
         where: { workspaceId },
         columns: { id: true },
+        limit,
       })
       return rows.map((row) => row.id)
     },
 
     async verifyOwnership(workspaceId, ids) {
-      const uniqueIds = [...new Set(ids)]
-      if (uniqueIds.length === 0) {
-        return []
-      }
-      const rows = await db.query.aiAgentModel.findMany({
-        where: { workspaceId, id: { in: uniqueIds } },
-        columns: { id: true },
-      })
-      return rows.map((row) => row.id)
+      return await verifyOwnedIds(ids, (uniqueIds) =>
+        db.query.aiAgentModel.findMany({
+          where: { workspaceId, id: { in: uniqueIds } },
+          columns: { id: true },
+        }),
+      )
     },
 
     async collect(workspaceId, ids) {
       if (ids.length === 0) {
-        return {
-          entries: [],
-          folderIds: [],
-          productCategoryIds: [],
-          hardDependencies: [],
-        }
+        return EMPTY_COLLECT_RESULT
       }
       const rows = await db.query.aiAgentModel.findMany({
         where: { workspaceId, id: { in: [...ids] } },
@@ -171,11 +271,43 @@ export const aiAgentsAdapter: ResourceAdapter = {
         webSearchAuthorizedDomains: row.webSearchAuthorizedDomains,
       }))
 
+      // An agent's `mcp:<serverId>` tools only work with their server, so the
+      // servers travel with the agent (without their credentials).
+      const mcpServerIds = new Set(
+        entries.flatMap((entry) =>
+          entry.tools.flatMap((tool) =>
+            tool.startsWith(MCP_TOOL_PREFIX)
+              ? [tool.slice(MCP_TOOL_PREFIX.length).split(":")[0]]
+              : [],
+          ),
+        ),
+      )
+
+      // Knowledge files an agent searches (`file:<id>`) travel with it too.
+      const fileIds = new Set(
+        entries.flatMap((entry) =>
+          entry.tools.flatMap((tool) =>
+            tool.startsWith(FILE_TOOL_PREFIX)
+              ? [tool.slice(FILE_TOOL_PREFIX.length)]
+              : [],
+          ),
+        ),
+      )
+
       return {
         entries,
         folderIds: [],
         productCategoryIds: [],
-        hardDependencies: [],
+        hardDependencies: [
+          ...[...mcpServerIds].map((sourceId) => ({
+            category: "aiMcpServers" as const,
+            sourceId,
+          })),
+          ...[...fileIds].map((sourceId) => ({
+            category: "aiFiles" as const,
+            sourceId,
+          })),
+        ],
       }
     },
   } satisfies ResourceCollector,
@@ -203,4 +335,27 @@ const keepInstallableModel = (
     value: model.integrationId,
   })
   return []
+}
+
+/** The entry's tools and models as they install: references remapped, unusable models dropped. */
+const resolveAgentReferences = (
+  ctx: TemplateInstallContext,
+  entry: TemplateAIAgentEntry,
+): { tools: string[]; models: AIAgentModelConfig[] } => {
+  const remapped = remapReferences({ tools: entry.tools }, ctx.idMaps, {
+    kinds: ["aiFunction", "aiFile", "aiMcpServer"],
+    onUnresolved: (ref) =>
+      ctx.warn({
+        category: "aiAgents",
+        entityKind: ref.entityKind,
+        path: `aiAgents.${entry.sourceId}.tools`,
+        value: ref.value,
+      }),
+  })
+  return {
+    tools: remapped.tools,
+    models: entry.models.flatMap((model) =>
+      keepInstallableModel(ctx, entry.sourceId, model),
+    ),
+  }
 }

@@ -1,4 +1,4 @@
-import { flowService } from "@chatbotx.io/business"
+import { flowService, listLockedIds } from "@chatbotx.io/business"
 import { notFound } from "next/navigation"
 import { FlowDetail } from "@/features/flows/flow-detail"
 import { isSameContent } from "@/features/flows/flow-version-content"
@@ -37,9 +37,16 @@ export default async function FlowPage({ params }: FlowPageProps) {
     return notFound()
   }
 
-  const openaiCompatibleIntegrations = await listIntegrationOpenaiCompatible({
-    workspaceId: data.workspaceId,
-  })
+  // A copy installed from a View-only template opens read-only. The write
+  // paths refuse independently, so this only spares the editor a failed save.
+  const [openaiCompatibleIntegrations, lockedFlowIds] = await Promise.all([
+    listIntegrationOpenaiCompatible({ workspaceId: data.workspaceId }),
+    listLockedIds({
+      workspaceId: data.workspaceId,
+      resourceKind: "flow",
+      resourceIds: [flow.id],
+    }),
+  ])
   const publishedVersion = flow.flowVersions?.find(
     (v) => v.isLatest && !v.isDraft,
   )
@@ -60,6 +67,7 @@ export default async function FlowPage({ params }: FlowPageProps) {
         flow={flow}
         flowVersion={draftFlowVersion}
         hasPublishedVersion={hasPublishedVersion}
+        isTemplateLocked={lockedFlowIds.length > 0}
         openaiCompatibleIntegrations={openaiCompatibleIntegrations}
       />
     </div>

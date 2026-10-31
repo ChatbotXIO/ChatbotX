@@ -5,6 +5,8 @@ import { afterEach, describe, expect, test, vi } from "vitest"
 const {
   mockCreateId,
   mockDb,
+  mockDbRef,
+  mockExecute,
   mockFindMany,
   mockInsert,
   mockInsertValues,
@@ -18,13 +20,19 @@ const {
   }))
   const mockInsert = vi.fn(() => ({ values: mockInsertValues }))
   const mockFindMany = vi.fn()
+  const mockExecute = vi.fn()
+  const mockDbRef: { current: unknown } = { current: undefined }
 
   return {
     mockCreateId: vi.fn(),
     mockDb: {
       query: { botFieldModel: { findMany: mockFindMany } },
       insert: mockInsert,
+      execute: mockExecute,
+      transaction: (run: (tx: unknown) => unknown) => run(mockDbRef.current),
     },
+    mockDbRef,
+    mockExecute,
     mockFindMany,
     mockInsert,
     mockInsertValues,
@@ -76,10 +84,13 @@ vi.mock("@chatbotx.io/utils", () => ({
   createId: mockCreateId,
 }))
 
-vi.mock("@chatbotx.io/utils/custom-field", () => ({
-  customFieldResolutionKey: (field: { name: string; type: string }) =>
-    `${field.type}:${field.name.trim().toLowerCase()}`,
-}))
+// The real planner: this suite pins what the service does with its decisions.
+vi.mock("@chatbotx.io/utils/custom-field", async () => {
+  const actual = await vi.importActual<
+    typeof import("@chatbotx.io/utils/custom-field")
+  >("@chatbotx.io/utils/custom-field")
+  return actual
+})
 
 vi.mock("@chatbotx.io/utils/datetime", () => ({
   SourceTimezoneStrategy: { Workspace: "workspace" },
@@ -120,6 +131,7 @@ vi.mock("../src/template/installed-resource.service", () => ({
 }))
 
 const { botFieldService } = await import("../src/bot-field/service")
+mockDbRef.current = mockDb
 
 describe("botFieldService.resolveByNameAndType", () => {
   afterEach(() => {
@@ -247,6 +259,33 @@ describe("botFieldService.resolveByNameAndType", () => {
     expect(idMap.get("number:loyalty points")).toBe("winner-id")
     expect(createdIds).toEqual([])
     expect(mockFindMany).toHaveBeenCalledTimes(2)
+  })
+
+  test("creates a numbered name when the name is held by another type, under the bf-names lock", async () => {
+    mockFindMany.mockResolvedValue([
+      { id: "1", workspaceId: "ws-1", name: "Score", type: "number" },
+      { id: "2", workspaceId: "ws-1", name: "score_1", type: "date" },
+    ])
+    mockCreateId.mockReturnValue("new-id")
+    mockReturning.mockResolvedValue([
+      { id: "new-id", workspaceId: "ws-1", name: "Score_2", type: "shortText" },
+    ])
+
+    const { idMap, resolved } = await botFieldService.resolveByNameAndType({
+      workspaceId: "ws-1",
+      fields: [{ name: "Score", type: "shortText" }],
+    })
+
+    expect(mockInsertValues).toHaveBeenCalledWith([
+      expect.objectContaining({ name: "Score_2", type: "shortText" }),
+    ])
+    expect(idMap.get("shortText:score")).toBe("new-id")
+    expect(resolved.get("shortText:score")).toEqual({
+      id: "new-id",
+      name: "Score_2",
+      renamed: true,
+    })
+    expect(mockExecute).toHaveBeenCalledTimes(1)
   })
 
   test("returns an empty result for an empty fields list without querying", async () => {

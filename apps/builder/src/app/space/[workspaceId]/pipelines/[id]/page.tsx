@@ -4,6 +4,7 @@ import { getTranslations } from "next-intl/server"
 import { AppBreadcrumb } from "@/components/app-breadcrumb"
 import { PipelineBoard } from "@/features/pipelines/components/board/pipeline-board"
 import { canViewPipeline } from "@/features/pipelines/queries/can-view-pipeline.query"
+import { LockedIdsProvider } from "@/features/templates/components/lock-badge"
 
 export default async function PipelineBoardPage({
   params,
@@ -34,7 +35,13 @@ export default async function PipelineBoardPage({
           { label: t("pipelines.board.title"), href: "" },
         ]}
       />
-      <PipelineBoard pipelineId={pipelineId} workspaceId={workspaceId} />
+      <LockedIdsProvider
+        resourceIds={[pipelineId]}
+        resourceKind="pipeline"
+        workspaceId={workspaceId}
+      >
+        <PipelineBoard pipelineId={pipelineId} workspaceId={workspaceId} />
+      </LockedIdsProvider>
     </div>
   )
 }

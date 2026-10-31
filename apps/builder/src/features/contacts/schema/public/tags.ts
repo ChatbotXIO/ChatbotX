@@ -23,3 +23,14 @@ export const addTagsByNamePublicRequest = setAllContactTagsPublicRequest.extend(
 export type AddTagsByNamePublicRequest = z.infer<
   typeof addTagsByNamePublicRequest
 >
+
+export const removeTagsByNamePublicRequest = z.object({
+  identifier: publicContactIdentifier,
+  tags: z
+    .array(z.string().trim().min(1))
+    .min(1)
+    .max(100)
+    .describe(
+      "Tag names — not ids — to detach. Names that match no tag, or a tag the contact does not have, are ignored.",
+    ),
+})

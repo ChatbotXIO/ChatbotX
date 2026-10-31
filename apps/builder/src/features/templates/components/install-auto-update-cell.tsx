@@ -4,7 +4,7 @@ import { Switch } from "@chatbotx.io/ui/components/ui/switch"
 import { useRouter } from "next/navigation"
 import { useAction } from "next-safe-action/hooks"
 import { toast } from "sonner"
-import { updateInstallationAutoUpdateAction } from "../actions/update-installation-auto-update.action"
+import { setInstallationAutoUpdateAction } from "../actions/set-installation-auto-update.action"
 
 type InstallAutoUpdateCellProps = {
   workspaceId: string
@@ -20,7 +20,7 @@ export function InstallAutoUpdateCell({
   const router = useRouter()
 
   const { execute: executeToggle, isPending: isToggling } = useAction(
-    updateInstallationAutoUpdateAction.bind(null, workspaceId, installationId),
+    setInstallationAutoUpdateAction.bind(null, workspaceId, installationId),
     {
       onSuccess: () => router.refresh(),
       onError: ({ error }) => {

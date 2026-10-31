@@ -28,6 +28,7 @@ import Link from "next/link"
 import type { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import type { Dispatch, SetStateAction } from "react"
+import { LockBadge } from "@/features/templates/components/lock-badge"
 import { updateTriggerSettingsAction } from "./actions/update-trigger-settings-action"
 import type { TriggerResource } from "./schema/resource"
 
@@ -77,23 +78,26 @@ export function getColumns({
         <DataTableColumnHeader column={column} title={t("fields.name.label")} />
       ),
       cell: ({ row }) => (
-        <Tooltip>
-          <TooltipTrigger
-            render={
-              <div className="inline-block max-w-[300px] truncate">
-                <Link
-                  className="truncate"
-                  href={`/space/${workspaceId}/triggers/${row.original.id}/edit`}
-                >
-                  {row.original.name}
-                </Link>
-              </div>
-            }
-          />
-          <TooltipContent>
-            <p>{row.original.name}</p>
-          </TooltipContent>
-        </Tooltip>
+        <div className="flex max-w-[300px] items-center">
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <div className="inline-block max-w-[300px] truncate">
+                  <Link
+                    className="truncate"
+                    href={`/space/${workspaceId}/triggers/${row.original.id}/edit`}
+                  >
+                    {row.original.name}
+                  </Link>
+                </div>
+              }
+            />
+            <TooltipContent>
+              <p>{row.original.name}</p>
+            </TooltipContent>
+          </Tooltip>
+          <LockBadge resourceId={row.original.id} />
+        </div>
       ),
       size: 400,
       meta: {

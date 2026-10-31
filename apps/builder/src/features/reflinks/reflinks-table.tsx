@@ -36,6 +36,10 @@ import {
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import React, { use, useMemo } from "react"
+import {
+  LockBadge,
+  LockedIdsProvider,
+} from "@/features/templates/components/lock-badge"
 import { GetInboxUrlDialog } from "../inboxes/components/get-inbox-url"
 import { ReflinkChatWidgetDialog } from "./components/reflink-chat-widget-dialog"
 import { DeleteReflinksDialog } from "./delete-reflinks"
@@ -96,8 +100,9 @@ export function ReflinksTable({ workspaceId, promises }: ReflinksTableProps) {
           <Tooltip>
             <TooltipTrigger
               render={
-                <div className="inline-block max-w-[200px] truncate">
-                  {row.original.name}
+                <div className="flex max-w-[200px] items-center">
+                  <span className="truncate">{row.original.name}</span>
+                  <LockBadge resourceId={row.original.id} />
                 </div>
               }
             />
@@ -228,48 +233,54 @@ export function ReflinksTable({ workspaceId, promises }: ReflinksTableProps) {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <DataTable table={table}>
-          <DataTableToolbar table={table}>
-            <ReflinksTableToolbarActions
-              table={table}
-              workspaceId={workspaceId}
-            />
-          </DataTableToolbar>
-        </DataTable>
-
-        <GetInboxUrlDialog
-          onOpenChange={() => setRowAction(null)}
-          open={rowAction?.variant === "copyUrl"}
-          refConfig={{
-            type: "reflink",
-            name: rowAction?.row.original?.name ?? "",
-          }}
-        />
-
-        <ReflinkChatWidgetDialog
-          onOpenChange={() => setRowAction(null)}
-          open={rowAction?.variant === "chatWidget"}
-          reflink={rowAction?.row.original ?? null}
+        <LockedIdsProvider
+          resourceIds={data.map((row) => row.id)}
+          resourceKind="reflink"
           workspaceId={workspaceId}
-        />
+        >
+          <DataTable table={table}>
+            <DataTableToolbar table={table}>
+              <ReflinksTableToolbarActions
+                table={table}
+                workspaceId={workspaceId}
+              />
+            </DataTableToolbar>
+          </DataTable>
 
-        <UpdateReflinkDialog
-          onOpenChange={() => setRowAction(null)}
-          open={rowAction?.variant === "update"}
-          reflink={rowAction?.row.original ?? null}
-          workspaceId={workspaceId}
-        />
+          <GetInboxUrlDialog
+            onOpenChange={() => setRowAction(null)}
+            open={rowAction?.variant === "copyUrl"}
+            refConfig={{
+              type: "reflink",
+              name: rowAction?.row.original?.name ?? "",
+            }}
+          />
 
-        <DeleteReflinksDialog
-          onOpenChange={() => setRowAction(null)}
-          onSuccess={() => {
-            router.refresh()
-          }}
-          open={rowAction?.variant === "delete"}
-          reflinks={rowAction?.row.original ? [rowAction?.row.original] : []}
-          showTrigger={false}
-          workspaceId={workspaceId}
-        />
+          <ReflinkChatWidgetDialog
+            onOpenChange={() => setRowAction(null)}
+            open={rowAction?.variant === "chatWidget"}
+            reflink={rowAction?.row.original ?? null}
+            workspaceId={workspaceId}
+          />
+
+          <UpdateReflinkDialog
+            onOpenChange={() => setRowAction(null)}
+            open={rowAction?.variant === "update"}
+            reflink={rowAction?.row.original ?? null}
+            workspaceId={workspaceId}
+          />
+
+          <DeleteReflinksDialog
+            onOpenChange={() => setRowAction(null)}
+            onSuccess={() => {
+              router.refresh()
+            }}
+            open={rowAction?.variant === "delete"}
+            reflinks={rowAction?.row.original ? [rowAction?.row.original] : []}
+            showTrigger={false}
+            workspaceId={workspaceId}
+          />
+        </LockedIdsProvider>
       </CardContent>
     </Card>
   )

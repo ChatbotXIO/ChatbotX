@@ -1,7 +1,6 @@
 "use client"
 
 import type { TemplateCategory } from "@chatbotx.io/database/partials"
-import { templateCategories } from "@chatbotx.io/database/partials"
 import {
   Accordion,
   AccordionContent,
@@ -15,62 +14,36 @@ import {
   CardHeader,
   CardTitle,
 } from "@chatbotx.io/ui/components/ui/card"
+import { useQuery } from "@tanstack/react-query"
 import { useTranslations } from "next-intl"
-import { useState } from "react"
+import { useEffect, useMemo, useState } from "react"
+import { orpc } from "@/lib/orpc/query"
 import type {
   CategorySelectionState,
   TemplateSelectionFormState,
 } from "../lib/selection"
 import { EMPTY_SELECTION, selectionCount } from "../lib/selection"
 import { CategoryResourceList } from "./category-resource-list"
+import { IncludedAutomatically } from "./included-automatically"
 
-/**
- * Categories currently exposed for sharing. This is a deliberate **product**
- * restriction, not a technical one: every category in `ALL_CATEGORIES` still
- * has a working adapter and picker query (`registry.ts` enforces adapter
- * completeness at compile time via
- * `satisfies Record<TemplateResourceCategory, ResourceAdapter>`), so the rest
- * are fully implemented — they are just held back from the share flow for now
- * and render disabled with a "Coming soon" badge.
- *
- * Kept as an explicit list rather than derived from
- * `templateResourceCategories` so that narrowing what users can share never
- * requires touching the enum: that enum feeds a `pgEnum`
- * (`schema/template-installed-resource.ts`) and the adapter registry, so
- * editing it to gate the UI breaks the build and drifts from the database.
- * To release a category, add it back to this array — nothing else.
- *
- * `productCategories` is excluded for a different, permanent reason: it is
- * never independently selectable — a product's category comes along
- * automatically via `productsAdapter`'s collector.
- */
-const AVAILABLE_CATEGORIES: readonly TemplateCategory[] = [
-  "flows",
-  "tags",
-  "customFields",
-]
+const DEPENDENCY_DEBOUNCE_MS = 600
 
-/**
- * Display order: the available categories first, in the order above, then
- * every remaining category. The tail is derived from `templateCategories`
- * rather than hand-listed so a newly added category still shows up here (as
- * "Coming soon") instead of silently vanishing from the form.
- */
-const ALL_CATEGORIES: readonly TemplateCategory[] = [
-  ...AVAILABLE_CATEGORIES,
-  ...templateCategories.options.filter(
-    (category) => !AVAILABLE_CATEGORIES.includes(category),
-  ),
-]
+const hasSelectedAnything = (selection: TemplateSelectionFormState) =>
+  Object.values(selection).some((chosen) =>
+    chosen?.mode === "all" ? true : (chosen?.ids.length ?? 0) > 0,
+  )
 
 type TemplateContentsCardProps = {
   workspaceId: string
+  /** Categories the member may include, in display order. */
+  categories: readonly TemplateCategory[]
   selection: TemplateSelectionFormState
   onChange: (category: TemplateCategory, next: CategorySelectionState) => void
 }
 
 export function TemplateContentsCard({
   workspaceId,
+  categories,
   selection,
   onChange,
 }: TemplateContentsCardProps) {
@@ -82,6 +55,27 @@ export function TemplateContentsCard({
     Partial<Record<TemplateCategory, number>>
   >({})
 
+  // Read-only: what saving this selection takes along by itself. Debounced
+  // because every checkbox tick changes the selection.
+  const selectionKey = JSON.stringify(selection)
+  const [debouncedSelection, setDebouncedSelection] = useState(selection)
+  // biome-ignore lint/correctness/useExhaustiveDependencies: `selectionKey` is the content identity of `selection`
+  useEffect(() => {
+    const timer = setTimeout(
+      () => setDebouncedSelection(selection),
+      DEPENDENCY_DEBOUNCE_MS,
+    )
+    return () => clearTimeout(timer)
+  }, [selectionKey])
+  const dependencies = useQuery({
+    ...orpc.templatesAPI.previewDependenciesAPI.queryOptions({
+      input: { workspaceId, selection: debouncedSelection },
+    }),
+    enabled: hasSelectedAnything(debouncedSelection),
+    retry: false,
+  })
+  const manifestKinds = useMemo(() => new Set<string>(categories), [categories])
+
   return (
     <Card>
       <CardHeader>
@@ -89,47 +83,46 @@ export function TemplateContentsCard({
       </CardHeader>
       <CardContent>
         <Accordion>
-          {ALL_CATEGORIES.map((category) => {
-            const isAvailable = AVAILABLE_CATEGORIES.includes(category)
+          {categories.map((category) => {
             const count = selectionCount(
               selection[category],
               totalHints[category],
             )
             return (
               <AccordionItem key={category} value={category}>
-                <AccordionTrigger disabled={!isAvailable}>
+                <AccordionTrigger>
                   <span className="flex flex-1 items-center justify-between pr-2">
                     <span>{t(`templates.categories.${category}`)}</span>
-                    {isAvailable ? (
-                      count > 0 && <Badge variant="secondary">{count}</Badge>
-                    ) : (
-                      <Badge variant="outline">
-                        {t("templates.form.comingSoon")}
-                      </Badge>
-                    )}
+                    {count > 0 && <Badge variant="secondary">{count}</Badge>}
                   </span>
                 </AccordionTrigger>
-                {isAvailable ? (
-                  <AccordionContent keepMounted>
-                    <CategoryResourceList
-                      category={category}
-                      onChange={(next) => onChange(category, next)}
-                      onTotalChange={(total) =>
-                        setTotalHints((current) =>
-                          current[category] === total
-                            ? current
-                            : { ...current, [category]: total },
-                        )
-                      }
-                      selection={selection[category] ?? EMPTY_SELECTION}
-                      workspaceId={workspaceId}
-                    />
-                  </AccordionContent>
-                ) : null}
+                <AccordionContent keepMounted>
+                  <CategoryResourceList
+                    category={category}
+                    onChange={(next) => onChange(category, next)}
+                    onTotalChange={(total) =>
+                      setTotalHints((current) =>
+                        current[category] === total
+                          ? current
+                          : { ...current, [category]: total },
+                      )
+                    }
+                    selection={selection[category] ?? EMPTY_SELECTION}
+                    workspaceId={workspaceId}
+                  />
+                  <IncludedAutomatically
+                    category={category}
+                    dependencies={dependencies.data}
+                  />
+                </AccordionContent>
               </AccordionItem>
             )
           })}
         </Accordion>
+        <IncludedAutomatically
+          dependencies={dependencies.data}
+          excludeKinds={manifestKinds}
+        />
       </CardContent>
     </Card>
   )

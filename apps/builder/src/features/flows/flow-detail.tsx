@@ -22,6 +22,8 @@ type FlowDetailProps = {
   openaiCompatibleIntegrations: IntegrationOpenaiCompatibleResource[]
   canRevertToPublished: boolean
   hasPublishedVersion: boolean
+  /** The flow was installed from a View-only template: open it read-only. */
+  isTemplateLocked: boolean
 }
 
 export function FlowDetail({
@@ -30,6 +32,7 @@ export function FlowDetail({
   openaiCompatibleIntegrations,
   canRevertToPublished,
   hasPublishedVersion,
+  isTemplateLocked,
 }: FlowDetailProps) {
   return (
     <ReactFlowProvider>
@@ -53,6 +56,7 @@ export function FlowDetail({
                         flow={flow}
                         flowVersion={flowVersion}
                         hasPublishedVersion={hasPublishedVersion}
+                        isTemplateLocked={isTemplateLocked}
                       />
                     </PlatformCredentialsStoreProvider>
                   </AIToolsStoreProvider>

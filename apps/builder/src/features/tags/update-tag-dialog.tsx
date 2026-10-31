@@ -25,7 +25,9 @@ import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useEffect } from "react"
 import { toast } from "sonner"
+import { LockedDialogFieldset } from "@/components/locked-dialog-fieldset"
 import { useInvalidateTags } from "@/features/tags/provider/tag-hook"
+import { useIsLocked } from "@/features/templates/components/lock-badge"
 import { updateTagAction } from "./actions/update-tag-action"
 import { updateTagSchema } from "./schema/action"
 
@@ -41,6 +43,7 @@ export function UpdateTagDialog({
   tag: TagModel | null
 }) {
   const t = useTranslations()
+  const isLocked = useIsLocked(tag?.id)
   const router = useRouter()
   const invalidateTags = useInvalidateTags()
 
@@ -99,20 +102,24 @@ export function UpdateTagDialog({
               className="flex-1 space-y-4"
               onSubmit={handleSubmitWithAction}
             >
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t("fields.name.label")}</FormLabel>
-                    <FormControl>
-                      <Input placeholder={t("fields.name.label")} {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
+              <LockedDialogFieldset resourceId={tag?.id}>
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t("fields.name.label")}</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder={t("fields.name.label")}
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </LockedDialogFieldset>
               <div className="flex justify-end gap-4">
                 <Button
                   onClick={() => onOpenChange(false)}
@@ -123,7 +130,9 @@ export function UpdateTagDialog({
                 </Button>
                 <Button
                   disabled={
-                    !form.formState.isValid || form.formState.isSubmitting
+                    isLocked ||
+                    !form.formState.isValid ||
+                    form.formState.isSubmitting
                   }
                   type="submit"
                 >

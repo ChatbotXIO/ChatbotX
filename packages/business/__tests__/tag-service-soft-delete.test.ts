@@ -1,11 +1,20 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
+const mockAssertDeletable = vi.hoisted(() => vi.fn())
 const dbUpdate = vi.fn()
 const updateSet = vi.fn()
 const updateWhere = vi.fn()
 const updateReturning = vi.fn()
 const enqueueDelete = vi.fn()
 const invalidateCacheByTags = vi.fn()
+
+// The template lock guard has its own suite; these tests cover the service.
+vi.mock("../src/template/installed-resource.service", async () => ({
+  ...(await import("./helpers/template-guard-mocks")).templateGuardMocks({
+    assertDeletable: mockAssertDeletable,
+    assertResourceEditable: vi.fn(),
+  }),
+}))
 
 vi.mock("@chatbotx.io/database/client", () => ({
   db: {
@@ -146,5 +155,27 @@ describe("tagService.softDelete", () => {
     updateReturning.mockResolvedValue([])
     await tagService.softDelete({ workspaceId: WS, ids: ["missing"] })
     expect(enqueueDelete).not.toHaveBeenCalled()
+  })
+})
+
+describe("tagService.softDelete template lock", () => {
+  test("checks every id once and deletes nothing when a copy disallows deletion", async () => {
+    mockAssertDeletable.mockRejectedValueOnce(
+      Object.assign(new Error("locked"), {
+        code: "templateAllowDeleteViolation",
+      }),
+    )
+    dbUpdate.mockClear()
+
+    await expect(
+      tagService.softDelete({ workspaceId: WS, ids: ["t1", "t2"] }),
+    ).rejects.toMatchObject({ code: "templateAllowDeleteViolation" })
+
+    expect(mockAssertDeletable).toHaveBeenCalledWith({
+      workspaceId: WS,
+      resourceKind: "tag",
+      resourceIds: ["t1", "t2"],
+    })
+    expect(dbUpdate).not.toHaveBeenCalled()
   })
 })

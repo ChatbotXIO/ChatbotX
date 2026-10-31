@@ -3,6 +3,15 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 const mocks = vi.hoisted(() => ({
   updateHandoverResumeFlow: vi.fn(),
   findActiveById: vi.fn(),
+  assertReferencable: vi.fn(),
+}))
+
+const TX = { tx: true }
+vi.mock("../src/template/installed-resource.service", () => ({
+  assertReferencable: mocks.assertReferencable,
+}))
+vi.mock("../src/template/template-resource-locks", () => ({
+  withTemplateLockedTransaction: (run: (tx: unknown) => unknown) => run(TX),
 }))
 
 vi.mock("@chatbotx.io/database/repositories", () => ({
@@ -48,9 +57,18 @@ describe("messengerIntegrationService.updateHandoverResumeFlow", () => {
       id: "flow-1",
       workspaceId: "ws-1",
     })
-    expect(mocks.updateHandoverResumeFlow).toHaveBeenCalledWith({
-      ...target,
-      handoverResumeFlowId: "flow-1",
+    expect(mocks.updateHandoverResumeFlow).toHaveBeenCalledWith(
+      {
+        ...target,
+        handoverResumeFlowId: "flow-1",
+      },
+      TX,
+    )
+    // The flow is locked and checked against an uninstall in the same transaction.
+    expect(mocks.assertReferencable).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      parents: [{ kind: "flow", resourceId: "flow-1" }],
+      tx: TX,
     })
   })
 
@@ -73,10 +91,14 @@ describe("messengerIntegrationService.updateHandoverResumeFlow", () => {
     })
 
     expect(mocks.findActiveById).not.toHaveBeenCalled()
-    expect(mocks.updateHandoverResumeFlow).toHaveBeenCalledWith({
-      ...target,
-      handoverResumeFlowId: null,
-    })
+    expect(mocks.updateHandoverResumeFlow).toHaveBeenCalledWith(
+      {
+        ...target,
+        handoverResumeFlowId: null,
+      },
+      TX,
+    )
+    expect(mocks.assertReferencable).not.toHaveBeenCalled()
   })
 
   test("an integration outside the workspace is not found", async () => {

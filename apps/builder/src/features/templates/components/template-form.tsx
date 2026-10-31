@@ -1,7 +1,7 @@
 "use client"
 
+import type { TemplateDetail } from "@chatbotx.io/business"
 import type { TemplateCategory } from "@chatbotx.io/database/partials"
-import type { TemplateModel } from "@chatbotx.io/database/types"
 import { InputField } from "@chatbotx.io/ui/components/form/input-field"
 import { SwitchField } from "@chatbotx.io/ui/components/form/switch-field"
 import { TextareaField } from "@chatbotx.io/ui/components/form/textarea-field"
@@ -29,15 +29,21 @@ import type {
 } from "../lib/selection"
 import { saveTemplateRequest } from "../schema/mutation"
 import { TemplateContentsCard } from "./template-contents-card"
-import { TemplateImageUploadField } from "./template-image-upload-field"
+import { TemplateCoverImageField } from "./template-cover-image-field"
 import { TemplateShareCard } from "./template-share-card"
 
 type TemplateFormProps = {
   workspaceId: string
-  template?: TemplateModel
+  template?: TemplateDetail
+  /** Categories the member may include in a template. */
+  selectableCategories: readonly TemplateCategory[]
 }
 
-export function TemplateForm({ workspaceId, template }: TemplateFormProps) {
+export function TemplateForm({
+  workspaceId,
+  template,
+  selectableCategories,
+}: TemplateFormProps) {
   const t = useTranslations()
   const router = useRouter()
   const isEdit = Boolean(template)
@@ -71,7 +77,11 @@ export function TemplateForm({ workspaceId, template }: TemplateFormProps) {
         },
       },
       formProps: {
-        mode: "onChange",
+        // Validate on submit (then on every change): a button disabled until the
+        // form is valid gives no reason, and RHF focuses the first invalid field.
+        mode: "onSubmit",
+        reValidateMode: "onChange",
+        shouldFocusError: true,
         defaultValues: {
           templateId: template?.id,
           name: template?.name ?? "",
@@ -124,15 +134,16 @@ export function TemplateForm({ workspaceId, template }: TemplateFormProps) {
               <p className="font-medium text-sm">
                 {t("templates.form.imageUrl")}
               </p>
-              <TemplateImageUploadField
-                onUploaded={(path) =>
+              <TemplateCoverImageField
+                onClear={() =>
+                  form.setValue("imageUrl", "", { shouldDirty: true })
+                }
+                onSelect={(path) =>
                   form.setValue("imageUrl", path, { shouldDirty: true })
                 }
                 previewUrl={
                   imageUrl ? getPublicFileUrl(imageUrl, storageUrl) : undefined
                 }
-                uploadLabel={t("actions.uploadFile")}
-                uploadPath={`public/space/${workspaceId}/templates`}
                 workspaceId={workspaceId}
               />
             </div>
@@ -150,6 +161,7 @@ export function TemplateForm({ workspaceId, template }: TemplateFormProps) {
         </Card>
 
         <TemplateContentsCard
+          categories={selectableCategories}
           onChange={handleSelectionChange}
           selection={selection}
           workspaceId={workspaceId}
@@ -205,10 +217,7 @@ export function TemplateForm({ workspaceId, template }: TemplateFormProps) {
           >
             {t("actions.cancel")}
           </Button>
-          <Button
-            disabled={!form.formState.isValid || form.formState.isSubmitting}
-            type="submit"
-          >
+          <Button disabled={form.formState.isSubmitting} type="submit">
             {form.formState.isSubmitting && (
               <Loader2Icon className="animate-spin" />
             )}

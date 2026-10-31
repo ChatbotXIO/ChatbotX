@@ -29,6 +29,7 @@
 | Comment automation (auto-reply/like/hide on post comments — Messenger, Instagram, Threads, TikTok) | `comment-automation` |
 | Minigame tool (Jackpot CRUD, prize draw, public play link/token, extending to a new minigame type) | `minigame` |
 | New flow step with states (success/error/skip routing) | `flow-step-development` |
+| New resource users build (shareable via Templates), new field/id reference on one (flow step, trigger action, contact filter, JSON column), or a write/delete path / list / editor of a template-copied kind | `template-integration` |
 | Dev/build/lint commands | `turborepo-workflow` |
 | Approved implementation plan | `implement-plan` |
 | Security-sensitive change (auth, scoping, webhooks, AI tools, permissions) | `security-review` |

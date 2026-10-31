@@ -31,6 +31,7 @@ import { CodeXml, Smile } from "lucide-react"
 import { useCallback, useEffect, useRef, useState } from "react"
 import { htmlToPlainTextWithBlocks } from "./html-to-plain-text"
 import { usePromptVariableOptions } from "./use-prompt-variable-options"
+import { useReadOnlyWhenLocked } from "./use-read-only-when-locked"
 
 // Swallows Enter / Shift+Enter so a single-line value never gets a line
 // break. Priority sits below Mention (101) so Enter still picks a variable
@@ -232,6 +233,8 @@ export const PlainTextTiptapEditor = ({
       tiptapEditor.commands.focus()
     }
   }
+
+  useReadOnlyWhenLocked(tiptapEditor)
 
   useEffect(() => {
     if (tiptapEditor && initValue !== undefined) {

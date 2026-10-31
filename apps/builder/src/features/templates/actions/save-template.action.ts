@@ -10,7 +10,7 @@ export const saveTemplateAction = templateActionClient
   .inputSchema(saveTemplateRequest)
   .action(
     async ({
-      ctx: { user, workspace },
+      ctx: { user, workspace, templateActor },
       bindArgsParsedInputs: [workspaceId],
       parsedInput,
     }) => {
@@ -29,6 +29,7 @@ export const saveTemplateAction = templateActionClient
         createInstallFolder: parsedInput.createInstallFolder,
         defaultAutoUpdate: parsedInput.defaultAutoUpdate,
         existingTemplateId: parsedInput.templateId,
+        actor: templateActor,
       })
 
       return { templateId: template.id }

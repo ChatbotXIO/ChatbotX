@@ -74,6 +74,7 @@ import { useFieldArray } from "react-hook-form"
 import { toast } from "sonner"
 import { PlainTextEditorField } from "@/components/tiptap/plain-text-editor-field"
 import { useFlowSelectOptions } from "@/features/flows/provider/flow-hook"
+import { LockedContent } from "@/features/templates/components/lock-badge"
 import { allTimezoneOptions } from "@/features/workspaces/schema/types"
 import { updateAppointmentCalendarAction } from "../actions/update-appointment-calendar.action"
 import type { getAppointmentCalendar } from "../queries"
@@ -541,18 +542,20 @@ export function EditAppointmentCalendarForm({
                   {t("appointmentCalendars.sections.appointment")}
                 </AccordionTrigger>
                 <AccordionContent className="border-t bg-background px-4 py-6">
-                  <div className="grid gap-4">
-                    <InputField
-                      formItemClassName="max-w-xl"
-                      label={t("fields.name.label")}
-                      name="name"
-                      required
-                    />
-                    <TextareaField
-                      label={t("appointmentCalendars.fields.description")}
-                      name="description"
-                    />
-                  </div>
+                  <LockedContent>
+                    <div className="grid gap-4">
+                      <InputField
+                        formItemClassName="max-w-xl"
+                        label={t("fields.name.label")}
+                        name="name"
+                        required
+                      />
+                      <TextareaField
+                        label={t("appointmentCalendars.fields.description")}
+                        name="description"
+                      />
+                    </div>
+                  </LockedContent>
                 </AccordionContent>
               </AccordionItem>
 
@@ -561,117 +564,120 @@ export function EditAppointmentCalendarForm({
                   {t("appointmentCalendars.sections.availability")}
                 </AccordionTrigger>
                 <AccordionContent className="border-t px-0 pt-6 pb-6">
-                  <div className="space-y-8 px-4 sm:px-6">
-                    <div className="overflow-x-auto">
-                      <div className="flex min-w-[720px] border-y bg-muted/60">
-                        {WEEKDAY_ORDER.map((weekday) => (
-                          <div
-                            className="min-w-0 flex-1 basis-0 px-3 py-4 text-center font-semibold text-xs"
-                            key={weekday}
-                          >
-                            {t(`appointmentCalendars.weekdays.${weekday}`)}
-                          </div>
-                        ))}
-                      </div>
-                      <div className="flex min-w-[720px]">
-                        {WEEKDAY_ORDER.map((weekday) => {
-                          const intervals = availabilityValues.filter(
-                            (interval) => interval.weekday === weekday,
-                          )
-                          return (
+                  <LockedContent>
+                    <div className="space-y-8 px-4 sm:px-6">
+                      <div className="overflow-x-auto">
+                        <div className="flex min-w-[720px] border-y bg-muted/60">
+                          {WEEKDAY_ORDER.map((weekday) => (
                             <div
-                              className="flex min-h-28 min-w-0 flex-1 basis-0 flex-col items-center px-3 py-4 text-center"
+                              className="min-w-0 flex-1 basis-0 px-3 py-4 text-center font-semibold text-xs"
                               key={weekday}
                             >
-                              <div className="flex flex-1 flex-col gap-4">
-                                {intervals.length > 0 ? (
-                                  intervals.map((interval, index) => (
-                                    <p
-                                      className="whitespace-nowrap font-medium text-sm"
-                                      // biome-ignore lint/suspicious/noArrayIndexKey: availability intervals do not have stable ids
-                                      key={index}
-                                    >
-                                      {formatIntervalTimeRange(interval)}
-                                    </p>
-                                  ))
-                                ) : (
-                                  <p className="text-muted-foreground text-sm">
-                                    {t(
-                                      "appointmentCalendars.weekdayEditor.unavailable",
-                                    )}
-                                  </p>
-                                )}
-                              </div>
-                              <Button
-                                className="mt-4 h-auto p-0 font-normal text-[10px]"
-                                onClick={() => setEditingWeekday(weekday)}
-                                size="sm"
-                                type="button"
-                                variant="link"
-                              >
-                                {t("actions.edit")}
-                              </Button>
+                              {t(`appointmentCalendars.weekdays.${weekday}`)}
                             </div>
-                          )
-                        })}
+                          ))}
+                        </div>
+                        <div className="flex min-w-[720px]">
+                          {WEEKDAY_ORDER.map((weekday) => {
+                            const intervals = availabilityValues.filter(
+                              (interval) => interval.weekday === weekday,
+                            )
+                            return (
+                              <div
+                                className="flex min-h-28 min-w-0 flex-1 basis-0 flex-col items-center px-3 py-4 text-center"
+                                key={weekday}
+                              >
+                                <div className="flex flex-1 flex-col gap-4">
+                                  {intervals.length > 0 ? (
+                                    intervals.map((interval, index) => (
+                                      <p
+                                        className="whitespace-nowrap font-medium text-sm"
+                                        // biome-ignore lint/suspicious/noArrayIndexKey: availability intervals do not have stable ids
+                                        key={index}
+                                      >
+                                        {formatIntervalTimeRange(interval)}
+                                      </p>
+                                    ))
+                                  ) : (
+                                    <p className="text-muted-foreground text-sm">
+                                      {t(
+                                        "appointmentCalendars.weekdayEditor.unavailable",
+                                      )}
+                                    </p>
+                                  )}
+                                </div>
+                                <Button
+                                  className="mt-4 h-auto p-0 font-normal text-[10px]"
+                                  onClick={() => setEditingWeekday(weekday)}
+                                  size="sm"
+                                  type="button"
+                                  variant="link"
+                                >
+                                  {t("actions.edit")}
+                                </Button>
+                              </div>
+                            )
+                          })}
+                        </div>
+                      </div>
+
+                      <div className="max-w-[220px]">
+                        <ComboboxField
+                          description={t(
+                            "appointmentCalendars.tooltips.timezone",
+                          )}
+                          descriptionType="tooltip"
+                          formItemClassName="max-w-xs"
+                          label={t("appointmentCalendars.fields.timezone")}
+                          name="timezone"
+                          options={APPOINTMENT_CALENDAR_TIMEZONE_OPTIONS}
+                          placeholder={t("actions.pleaseSelect")}
+                          required
+                        />
                       </div>
                     </div>
-
-                    <div className="max-w-[220px]">
-                      <ComboboxField
-                        description={t(
-                          "appointmentCalendars.tooltips.timezone",
-                        )}
-                        descriptionType="tooltip"
-                        formItemClassName="max-w-xs"
-                        label={t("appointmentCalendars.fields.timezone")}
-                        name="timezone"
-                        options={APPOINTMENT_CALENDAR_TIMEZONE_OPTIONS}
-                        placeholder={t("actions.pleaseSelect")}
-                        required
-                      />
-                    </div>
-                  </div>
-                  <AppointmentCalendarWeekdayEditor
-                    intervals={
-                      editingWeekday == null
-                        ? []
-                        : availabilityValues
-                            .filter(
-                              (interval) => interval.weekday === editingWeekday,
-                            )
-                            .map((interval) => ({
-                              startMinute: interval.startMinute,
-                              endMinute: interval.endMinute,
-                            }))
-                    }
-                    onOpenChange={(open) => {
-                      if (!open) {
-                        setEditingWeekday(null)
+                    <AppointmentCalendarWeekdayEditor
+                      intervals={
+                        editingWeekday == null
+                          ? []
+                          : availabilityValues
+                              .filter(
+                                (interval) =>
+                                  interval.weekday === editingWeekday,
+                              )
+                              .map((interval) => ({
+                                startMinute: interval.startMinute,
+                                endMinute: interval.endMinute,
+                              }))
                       }
-                    }}
-                    onSave={(intervals) => {
-                      if (editingWeekday == null) {
-                        return
+                      onOpenChange={(open) => {
+                        if (!open) {
+                          setEditingWeekday(null)
+                        }
+                      }}
+                      onSave={(intervals) => {
+                        if (editingWeekday == null) {
+                          return
+                        }
+                        const others = availabilityValues.filter(
+                          (interval) => interval.weekday !== editingWeekday,
+                        )
+                        availabilityFieldArray.replace([
+                          ...others,
+                          ...intervals.map((interval) => ({
+                            weekday: editingWeekday,
+                            ...interval,
+                          })),
+                        ])
+                      }}
+                      open={editingWeekday != null}
+                      weekdayLabel={
+                        editingWeekday == null
+                          ? ""
+                          : t(`appointmentCalendars.weekdays.${editingWeekday}`)
                       }
-                      const others = availabilityValues.filter(
-                        (interval) => interval.weekday !== editingWeekday,
-                      )
-                      availabilityFieldArray.replace([
-                        ...others,
-                        ...intervals.map((interval) => ({
-                          weekday: editingWeekday,
-                          ...interval,
-                        })),
-                      ])
-                    }}
-                    open={editingWeekday != null}
-                    weekdayLabel={
-                      editingWeekday == null
-                        ? ""
-                        : t(`appointmentCalendars.weekdays.${editingWeekday}`)
-                    }
-                  />
+                    />
+                  </LockedContent>
                 </AccordionContent>
               </AccordionItem>
 
@@ -680,22 +686,26 @@ export function EditAppointmentCalendarForm({
                   {t("appointmentCalendars.sections.location")}
                 </AccordionTrigger>
                 <AccordionContent className="border-t bg-background px-4 py-6">
-                  <div className="grid max-w-4xl gap-4 sm:grid-cols-2">
-                    <SelectField
-                      formItemClassName="max-w-sm"
-                      label={t("appointmentCalendars.fields.locationType")}
-                      name="locationType"
-                      options={locationTypeOptions}
-                      required
-                    />
-                    {locationType !== "phoneCall" && (
-                      <InputField
-                        formItemClassName="max-w-xl"
-                        label={t("appointmentCalendars.fields.locationDetail")}
-                        name="locationDetail"
+                  <LockedContent>
+                    <div className="grid max-w-4xl gap-4 sm:grid-cols-2">
+                      <SelectField
+                        formItemClassName="max-w-sm"
+                        label={t("appointmentCalendars.fields.locationType")}
+                        name="locationType"
+                        options={locationTypeOptions}
+                        required
                       />
-                    )}
-                  </div>
+                      {locationType !== "phoneCall" && (
+                        <InputField
+                          formItemClassName="max-w-xl"
+                          label={t(
+                            "appointmentCalendars.fields.locationDetail",
+                          )}
+                          name="locationDetail"
+                        />
+                      )}
+                    </div>
+                  </LockedContent>
                 </AccordionContent>
               </AccordionItem>
 
@@ -704,169 +714,171 @@ export function EditAppointmentCalendarForm({
                   {t("appointmentCalendars.sections.notifications")}
                 </AccordionTrigger>
                 <AccordionContent className="border-t bg-background px-4 py-6">
-                  <div className="flex flex-col gap-4">
-                    <TextareaField
-                      label={t(
-                        "appointmentCalendars.fields.confirmationMessage",
-                      )}
-                      name="confirmationMessage"
-                    />
-                    <ComboboxField
-                      description={t(
-                        "appointmentCalendars.tooltips.confirmationFlow",
-                      )}
-                      descriptionType="tooltip"
-                      emptyText={t("actions.noRecordFound")}
-                      formItemClassName="max-w-xl"
-                      label={t(
-                        "appointmentCalendars.fields.confirmationFlowId",
-                      )}
-                      name="confirmationFlowId"
-                      options={flowOptionsWithNone}
-                      placeholder={t("actions.pleaseSelect")}
-                    />
-                    <ComboboxField
-                      description={t(
-                        "appointmentCalendars.tooltips.cancellationFlow",
-                      )}
-                      descriptionType="tooltip"
-                      emptyText={t("actions.noRecordFound")}
-                      formItemClassName="max-w-xl"
-                      label={t(
-                        "appointmentCalendars.fields.cancellationFlowId",
-                      )}
-                      name="cancellationFlowId"
-                      options={flowOptionsWithNone}
-                      placeholder={t("actions.pleaseSelect")}
-                    />
+                  <LockedContent>
+                    <div className="flex flex-col gap-4">
+                      <TextareaField
+                        label={t(
+                          "appointmentCalendars.fields.confirmationMessage",
+                        )}
+                        name="confirmationMessage"
+                      />
+                      <ComboboxField
+                        description={t(
+                          "appointmentCalendars.tooltips.confirmationFlow",
+                        )}
+                        descriptionType="tooltip"
+                        emptyText={t("actions.noRecordFound")}
+                        formItemClassName="max-w-xl"
+                        label={t(
+                          "appointmentCalendars.fields.confirmationFlowId",
+                        )}
+                        name="confirmationFlowId"
+                        options={flowOptionsWithNone}
+                        placeholder={t("actions.pleaseSelect")}
+                      />
+                      <ComboboxField
+                        description={t(
+                          "appointmentCalendars.tooltips.cancellationFlow",
+                        )}
+                        descriptionType="tooltip"
+                        emptyText={t("actions.noRecordFound")}
+                        formItemClassName="max-w-xl"
+                        label={t(
+                          "appointmentCalendars.fields.cancellationFlowId",
+                        )}
+                        name="cancellationFlowId"
+                        options={flowOptionsWithNone}
+                        placeholder={t("actions.pleaseSelect")}
+                      />
 
-                    <div className="space-y-5">
-                      <div className="flex items-center gap-1 font-medium text-sm">
-                        <p>{t("appointmentCalendars.fields.reminders")}</p>
-                        <Tooltip>
-                          <TooltipTrigger
-                            render={
-                              <InfoIcon className="size-3.5 cursor-help text-muted-foreground" />
+                      <div className="space-y-5">
+                        <div className="flex items-center gap-1 font-medium text-sm">
+                          <p>{t("appointmentCalendars.fields.reminders")}</p>
+                          <Tooltip>
+                            <TooltipTrigger
+                              render={
+                                <InfoIcon className="size-3.5 cursor-help text-muted-foreground" />
+                              }
+                            />
+                            <TooltipContent className="max-w-sm">
+                              {t("appointmentCalendars.tooltips.reminders")}
+                            </TooltipContent>
+                          </Tooltip>
+                        </div>
+                        <div className="max-w-[42rem] space-y-2">
+                          {remindersFieldArray.fields.map((field, index) => {
+                            const reminder = reminderValues[index]
+                            if (!reminder) {
+                              return null
                             }
-                          />
-                          <TooltipContent className="max-w-sm">
-                            {t("appointmentCalendars.tooltips.reminders")}
-                          </TooltipContent>
-                        </Tooltip>
-                      </div>
-                      <div className="max-w-[42rem] space-y-2">
-                        {remindersFieldArray.fields.map((field, index) => {
-                          const reminder = reminderValues[index]
-                          if (!reminder) {
-                            return null
-                          }
-                          return (
-                            <div
-                              className="flex min-h-11 items-center gap-4 ps-4"
-                              key={field.id}
-                            >
-                              <p className="min-w-0 flex-1 text-sm">
-                                {t("appointmentCalendars.reminderSummary", {
-                                  calendar: calendar.name,
-                                  timing: t(
-                                    REMINDER_TIMING_LABEL_KEY_BY_UNIT[
-                                      reminder.timingUnit
-                                    ],
-                                    { count: reminder.timingValue },
-                                  ),
-                                })}
-                              </p>
-                              <Button
-                                onClick={() =>
-                                  remindersFieldArray.remove(index)
-                                }
-                                size="icon"
-                                type="button"
-                                variant="outline"
+                            return (
+                              <div
+                                className="flex min-h-11 items-center gap-4 ps-4"
+                                key={field.id}
                               >
-                                <TrashIcon className="size-4 text-destructive" />
-                              </Button>
+                                <p className="min-w-0 flex-1 text-sm">
+                                  {t("appointmentCalendars.reminderSummary", {
+                                    calendar: calendar.name,
+                                    timing: t(
+                                      REMINDER_TIMING_LABEL_KEY_BY_UNIT[
+                                        reminder.timingUnit
+                                      ],
+                                      { count: reminder.timingValue },
+                                    ),
+                                  })}
+                                </p>
+                                <Button
+                                  onClick={() =>
+                                    remindersFieldArray.remove(index)
+                                  }
+                                  size="icon"
+                                  type="button"
+                                  variant="outline"
+                                >
+                                  <TrashIcon className="size-4 text-destructive" />
+                                </Button>
+                              </div>
+                            )
+                          })}
+                        </div>
+                        <div className="flex items-center gap-5">
+                          <div className="h-px flex-1 bg-border" />
+                          <p className="font-medium text-sm">
+                            {t("appointmentCalendars.addNew")}
+                          </p>
+                          <div className="h-px flex-1 bg-border" />
+                        </div>
+                        <div className="overflow-x-auto">
+                          <div className="flex min-w-[45rem] max-w-[48rem] items-center gap-3">
+                            <Label className="h-9">{t("actions.send")}</Label>
+                            <ReminderFlowCombobox
+                              emptyText={t("actions.noRecordFound")}
+                              onChange={(value) =>
+                                setNewReminder((current) => ({
+                                  ...current,
+                                  flowId: value,
+                                }))
+                              }
+                              options={flowOptionsWithNone}
+                              placeholder={t("actions.pleaseSelect")}
+                              searchPlaceholder={t("actions.search")}
+                              value={newReminder.flowId}
+                            />
+                            <div className="w-24 shrink-0">
+                              <NumberInput
+                                className="w-16"
+                                min={1}
+                                onValueChange={(value) =>
+                                  setNewReminder((current) => ({
+                                    ...current,
+                                    timingValue: value,
+                                  }))
+                                }
+                                value={newReminder.timingValue}
+                              />
                             </div>
-                          )
-                        })}
-                      </div>
-                      <div className="flex items-center gap-5">
-                        <div className="h-px flex-1 bg-border" />
-                        <p className="font-medium text-sm">
-                          {t("appointmentCalendars.addNew")}
-                        </p>
-                        <div className="h-px flex-1 bg-border" />
-                      </div>
-                      <div className="overflow-x-auto">
-                        <div className="flex min-w-[45rem] max-w-[48rem] items-center gap-3">
-                          <Label className="h-9">{t("actions.send")}</Label>
-                          <ReminderFlowCombobox
-                            emptyText={t("actions.noRecordFound")}
-                            onChange={(value) =>
-                              setNewReminder((current) => ({
-                                ...current,
-                                flowId: value,
-                              }))
-                            }
-                            options={flowOptionsWithNone}
-                            placeholder={t("actions.pleaseSelect")}
-                            searchPlaceholder={t("actions.search")}
-                            value={newReminder.flowId}
-                          />
-                          <div className="w-24 shrink-0">
-                            <NumberInput
-                              className="w-16"
-                              min={1}
+                            <Select
+                              items={reminderTimingUnitOptions}
                               onValueChange={(value) =>
                                 setNewReminder((current) => ({
                                   ...current,
-                                  timingValue: value,
+                                  timingUnit:
+                                    value as AppointmentReminder["timingUnit"],
                                 }))
                               }
-                              value={newReminder.timingValue}
-                            />
+                              value={newReminder.timingUnit}
+                            >
+                              <SelectTrigger className="w-48">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {reminderTimingUnitOptions.map((option) => (
+                                  <SelectItem
+                                    key={option.value}
+                                    value={option.value}
+                                  >
+                                    {option.label}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <Button
+                              disabled={
+                                !newReminder.timingValue ||
+                                newReminder.flowId ===
+                                  noAppointmentCalendarSelectionValue
+                              }
+                              onClick={handleAddReminder}
+                              size="icon"
+                              type="button"
+                            >
+                              <PlusIcon className="size-4" />
+                            </Button>
                           </div>
-                          <Select
-                            items={reminderTimingUnitOptions}
-                            onValueChange={(value) =>
-                              setNewReminder((current) => ({
-                                ...current,
-                                timingUnit:
-                                  value as AppointmentReminder["timingUnit"],
-                              }))
-                            }
-                            value={newReminder.timingUnit}
-                          >
-                            <SelectTrigger className="w-48">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {reminderTimingUnitOptions.map((option) => (
-                                <SelectItem
-                                  key={option.value}
-                                  value={option.value}
-                                >
-                                  {option.label}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <Button
-                            disabled={
-                              !newReminder.timingValue ||
-                              newReminder.flowId ===
-                                noAppointmentCalendarSelectionValue
-                            }
-                            onClick={handleAddReminder}
-                            size="icon"
-                            type="button"
-                          >
-                            <PlusIcon className="size-4" />
-                          </Button>
                         </div>
                       </div>
                     </div>
-                  </div>
+                  </LockedContent>
                 </AccordionContent>
               </AccordionItem>
 
@@ -875,178 +887,187 @@ export function EditAppointmentCalendarForm({
                   {t("appointmentCalendars.sections.restrictions")}
                 </AccordionTrigger>
                 <AccordionContent className="border-t bg-background px-4 py-6">
-                  <div className="space-y-6">
-                    <div className="grid max-w-4xl gap-4 sm:grid-cols-2">
-                      <SelectField
-                        description={t(
-                          "appointmentCalendars.tooltips.appointmentDuration",
-                        )}
-                        descriptionType="tooltip"
-                        label={t("appointmentCalendars.fields.durationMinutes")}
-                        name="durationMinutes"
-                        options={durationOptions}
-                        required
-                      />
-                      <SelectField
-                        description={t(
-                          "appointmentCalendars.tooltips.bufferAfterMinutes",
-                        )}
-                        descriptionType="tooltip"
-                        label={t(
-                          "appointmentCalendars.fields.bufferAfterMinutes",
-                        )}
-                        name="bufferAfterMinutes"
-                        options={bufferOptions}
-                        value={
-                          bufferAfterMinutes == null
-                            ? noAppointmentCalendarSelectionValue
-                            : String(bufferAfterMinutes)
-                        }
-                      />
-                    </div>
-                    <SelectField
-                      description={t(
-                        "appointmentCalendars.tooltips.peopleCanSchedule",
-                      )}
-                      descriptionType="tooltip"
-                      formItemClassName="max-w-4xl"
-                      label={t(
-                        "appointmentCalendars.fields.scheduleWindowType",
-                      )}
-                      name="scheduleWindowConfig.scheduleWindowType"
-                      options={scheduleWindowTypeOptions}
-                      required
-                    />
-                    {scheduleWindowType === "rollingDays" && (
+                  <LockedContent>
+                    <div className="space-y-6">
                       <div className="grid max-w-4xl gap-4 sm:grid-cols-2">
-                        <InputNumberField
+                        <SelectField
                           description={t(
-                            "appointmentCalendars.tooltips.rollingDays",
-                          )}
-                          descriptionType="tooltip"
-                          label={t("appointmentCalendars.fields.rollingDays")}
-                          name="scheduleWindowConfig.rollingDays"
-                          required
-                        />
-                        <InputNumberField
-                          description={t(
-                            "appointmentCalendars.tooltips.minAdvanceDays",
+                            "appointmentCalendars.tooltips.appointmentDuration",
                           )}
                           descriptionType="tooltip"
                           label={t(
-                            "appointmentCalendars.fields.minAdvanceDays",
+                            "appointmentCalendars.fields.durationMinutes",
                           )}
-                          min={0}
-                          name="scheduleWindowConfig.minAdvanceDays"
+                          name="durationMinutes"
+                          options={durationOptions}
                           required
                         />
-                      </div>
-                    )}
-                    {scheduleWindowType === "dateRange" && (
-                      <div className="grid max-w-4xl gap-4 sm:grid-cols-2">
-                        <DatePickerField
-                          label={t("appointmentCalendars.fields.startDate")}
-                          name="scheduleWindowConfig.startDate"
-                          required
-                        />
-                        <DatePickerField
-                          label={t("appointmentCalendars.fields.endDate")}
-                          name="scheduleWindowConfig.endDate"
-                          required
-                        />
-                      </div>
-                    )}
-                    {scheduleWindowType === "specificDay" && (
-                      <div className="grid max-w-4xl gap-4 sm:grid-cols-2">
-                        <DatePickerField
-                          label={t("appointmentCalendars.fields.specificDate")}
-                          name="scheduleWindowConfig.date"
-                          required
-                        />
-                      </div>
-                    )}
-                    <div className="max-w-4xl space-y-3">
-                      <div className="flex items-center gap-2">
-                        <Label className="flex items-center gap-1">
-                          {t(
-                            "appointmentCalendars.fields.maxAppointmentsPerUser",
+                        <SelectField
+                          description={t(
+                            "appointmentCalendars.tooltips.bufferAfterMinutes",
                           )}
-                          <Tooltip>
-                            <TooltipTrigger
-                              render={
-                                <InfoIcon className="size-3.5 cursor-help text-muted-foreground" />
+                          descriptionType="tooltip"
+                          label={t(
+                            "appointmentCalendars.fields.bufferAfterMinutes",
+                          )}
+                          name="bufferAfterMinutes"
+                          options={bufferOptions}
+                          value={
+                            bufferAfterMinutes == null
+                              ? noAppointmentCalendarSelectionValue
+                              : String(bufferAfterMinutes)
+                          }
+                        />
+                      </div>
+                      <SelectField
+                        description={t(
+                          "appointmentCalendars.tooltips.peopleCanSchedule",
+                        )}
+                        descriptionType="tooltip"
+                        formItemClassName="max-w-4xl"
+                        label={t(
+                          "appointmentCalendars.fields.scheduleWindowType",
+                        )}
+                        name="scheduleWindowConfig.scheduleWindowType"
+                        options={scheduleWindowTypeOptions}
+                        required
+                      />
+                      {scheduleWindowType === "rollingDays" && (
+                        <div className="grid max-w-4xl gap-4 sm:grid-cols-2">
+                          <InputNumberField
+                            description={t(
+                              "appointmentCalendars.tooltips.rollingDays",
+                            )}
+                            descriptionType="tooltip"
+                            label={t("appointmentCalendars.fields.rollingDays")}
+                            name="scheduleWindowConfig.rollingDays"
+                            required
+                          />
+                          <InputNumberField
+                            description={t(
+                              "appointmentCalendars.tooltips.minAdvanceDays",
+                            )}
+                            descriptionType="tooltip"
+                            label={t(
+                              "appointmentCalendars.fields.minAdvanceDays",
+                            )}
+                            min={0}
+                            name="scheduleWindowConfig.minAdvanceDays"
+                            required
+                          />
+                        </div>
+                      )}
+                      {scheduleWindowType === "dateRange" && (
+                        <div className="grid max-w-4xl gap-4 sm:grid-cols-2">
+                          <DatePickerField
+                            label={t("appointmentCalendars.fields.startDate")}
+                            name="scheduleWindowConfig.startDate"
+                            required
+                          />
+                          <DatePickerField
+                            label={t("appointmentCalendars.fields.endDate")}
+                            name="scheduleWindowConfig.endDate"
+                            required
+                          />
+                        </div>
+                      )}
+                      {scheduleWindowType === "specificDay" && (
+                        <div className="grid max-w-4xl gap-4 sm:grid-cols-2">
+                          <DatePickerField
+                            label={t(
+                              "appointmentCalendars.fields.specificDate",
+                            )}
+                            name="scheduleWindowConfig.date"
+                            required
+                          />
+                        </div>
+                      )}
+                      <div className="max-w-4xl space-y-3">
+                        <div className="flex items-center gap-2">
+                          <Label className="flex items-center gap-1">
+                            {t(
+                              "appointmentCalendars.fields.maxAppointmentsPerUser",
+                            )}
+                            <Tooltip>
+                              <TooltipTrigger
+                                render={
+                                  <InfoIcon className="size-3.5 cursor-help text-muted-foreground" />
+                                }
+                              />
+                              <TooltipContent className="max-w-sm">
+                                {t(
+                                  "appointmentCalendars.tooltips.maxAppointmentsPerUser",
+                                )}
+                              </TooltipContent>
+                            </Tooltip>
+                          </Label>
+                          <div className="flex items-center gap-2">
+                            <Switch
+                              checked={maxAppointmentsUnlimited}
+                              onCheckedChange={
+                                handleMaxAppointmentsUnlimitedChange
                               }
                             />
-                            <TooltipContent className="max-w-sm">
+                            <span className="text-muted-foreground text-sm">
                               {t(
-                                "appointmentCalendars.tooltips.maxAppointmentsPerUser",
+                                "appointmentCalendars.fields.maxAppointmentsUnlimited",
                               )}
-                            </TooltipContent>
-                          </Tooltip>
-                        </Label>
-                        <div className="flex items-center gap-2">
-                          <Switch
-                            checked={maxAppointmentsUnlimited}
-                            onCheckedChange={
-                              handleMaxAppointmentsUnlimitedChange
-                            }
-                          />
-                          <span className="text-muted-foreground text-sm">
-                            {t(
-                              "appointmentCalendars.fields.maxAppointmentsUnlimited",
-                            )}
-                          </span>
+                            </span>
+                          </div>
                         </div>
+                        {!maxAppointmentsUnlimited && (
+                          <InputNumberField
+                            formItemClassName="max-w-xs"
+                            min={1}
+                            name="maxAppointmentsPerUser"
+                          />
+                        )}
                       </div>
-                      {!maxAppointmentsUnlimited && (
+                      <SwitchField
+                        description={t(
+                          "appointmentCalendars.tooltips.dailyLimit",
+                        )}
+                        descriptionType="tooltip"
+                        formItemClassName="max-w-xs"
+                        label={t(
+                          "appointmentCalendars.fields.dailyLimitEnabled",
+                        )}
+                        name="dailyLimitEnabled"
+                        required
+                      />
+                      {dailyLimitEnabled && (
                         <InputNumberField
                           formItemClassName="max-w-xs"
+                          label={t("appointmentCalendars.fields.maxPerDay")}
+                          name="maxPerDay"
+                          required
+                        />
+                      )}
+                      <SwitchField
+                        description={t(
+                          "appointmentCalendars.tooltips.allowGroupMeeting",
+                        )}
+                        descriptionType="tooltip"
+                        formItemClassName="max-w-xs"
+                        label={t(
+                          "appointmentCalendars.fields.allowGroupMeeting",
+                        )}
+                        name="allowGroupMeeting"
+                        required
+                      />
+                      {allowGroupMeeting && (
+                        <InputNumberField
+                          formItemClassName="max-w-xs"
+                          label={t("appointmentCalendars.fields.maxPerSlot")}
                           min={1}
-                          name="maxAppointmentsPerUser"
+                          name="maxPerSlot"
+                          required
                         />
                       )}
                     </div>
-                    <SwitchField
-                      description={t(
-                        "appointmentCalendars.tooltips.dailyLimit",
-                      )}
-                      descriptionType="tooltip"
-                      formItemClassName="max-w-xs"
-                      label={t("appointmentCalendars.fields.dailyLimitEnabled")}
-                      name="dailyLimitEnabled"
-                      required
-                    />
-                    {dailyLimitEnabled && (
-                      <InputNumberField
-                        formItemClassName="max-w-xs"
-                        label={t("appointmentCalendars.fields.maxPerDay")}
-                        name="maxPerDay"
-                        required
-                      />
-                    )}
-                    <SwitchField
-                      description={t(
-                        "appointmentCalendars.tooltips.allowGroupMeeting",
-                      )}
-                      descriptionType="tooltip"
-                      formItemClassName="max-w-xs"
-                      label={t("appointmentCalendars.fields.allowGroupMeeting")}
-                      name="allowGroupMeeting"
-                      required
-                    />
-                    {allowGroupMeeting && (
-                      <InputNumberField
-                        formItemClassName="max-w-xs"
-                        label={t("appointmentCalendars.fields.maxPerSlot")}
-                        min={1}
-                        name="maxPerSlot"
-                        required
-                      />
-                    )}
-                  </div>
+                  </LockedContent>
                 </AccordionContent>
               </AccordionItem>
-
               <AccordionItem value="external-calendar">
                 <AccordionTrigger className="py-4 text-base">
                   {t("appointmentCalendars.sections.externalCalendar")}
@@ -1067,52 +1088,54 @@ export function EditAppointmentCalendarForm({
                       "appointmentCalendars.noExternalConnections",
                     )}
                   />
-                  {externalConnectionId ===
-                  noAppointmentCalendarSelectionValue ? null : (
-                    <div className="mt-6 grid gap-4 border-t pt-6">
-                      <p className="max-w-xl text-muted-foreground text-sm">
-                        {t("appointmentCalendars.externalEventDisclosure")}
-                      </p>
-                      <PlainTextEditorField
-                        includeBotFieldVariables
-                        includeRawCustomFieldVariables
-                        inline
-                        label={t(
-                          "appointmentCalendars.fields.externalEventTitleTemplate",
-                        )}
-                        name="externalEventTitleTemplate"
-                        placeholder={t(
-                          "appointmentCalendars.placeholders.externalEventTitleTemplate",
-                        )}
-                        showEmojiPicker={false}
-                      />
-                      <PlainTextEditorField
-                        editorClassName="min-h-36"
-                        includeBotFieldVariables
-                        includeRawCustomFieldVariables
-                        label={t(
-                          "appointmentCalendars.fields.externalEventDescriptionTemplate",
-                        )}
-                        name="externalEventDescriptionTemplate"
-                        placeholder={t(
-                          "appointmentCalendars.placeholders.externalEventDescriptionTemplate",
-                        )}
-                        showEmojiPicker={false}
-                      />
-                      <PlainTextEditorField
-                        includeBotFieldVariables
-                        includeRawCustomFieldVariables
-                        label={t(
-                          "appointmentCalendars.fields.externalEventAttendeesTemplate",
-                        )}
-                        name="externalEventAttendeesTemplate"
-                        placeholder={t(
-                          "appointmentCalendars.placeholders.externalEventAttendeesTemplate",
-                        )}
-                        showEmojiPicker={false}
-                      />
-                    </div>
-                  )}
+                  <LockedContent>
+                    {externalConnectionId ===
+                    noAppointmentCalendarSelectionValue ? null : (
+                      <div className="mt-6 grid gap-4 border-t pt-6">
+                        <p className="max-w-xl text-muted-foreground text-sm">
+                          {t("appointmentCalendars.externalEventDisclosure")}
+                        </p>
+                        <PlainTextEditorField
+                          includeBotFieldVariables
+                          includeRawCustomFieldVariables
+                          inline
+                          label={t(
+                            "appointmentCalendars.fields.externalEventTitleTemplate",
+                          )}
+                          name="externalEventTitleTemplate"
+                          placeholder={t(
+                            "appointmentCalendars.placeholders.externalEventTitleTemplate",
+                          )}
+                          showEmojiPicker={false}
+                        />
+                        <PlainTextEditorField
+                          editorClassName="min-h-36"
+                          includeBotFieldVariables
+                          includeRawCustomFieldVariables
+                          label={t(
+                            "appointmentCalendars.fields.externalEventDescriptionTemplate",
+                          )}
+                          name="externalEventDescriptionTemplate"
+                          placeholder={t(
+                            "appointmentCalendars.placeholders.externalEventDescriptionTemplate",
+                          )}
+                          showEmojiPicker={false}
+                        />
+                        <PlainTextEditorField
+                          includeBotFieldVariables
+                          includeRawCustomFieldVariables
+                          label={t(
+                            "appointmentCalendars.fields.externalEventAttendeesTemplate",
+                          )}
+                          name="externalEventAttendeesTemplate"
+                          placeholder={t(
+                            "appointmentCalendars.placeholders.externalEventAttendeesTemplate",
+                          )}
+                          showEmojiPicker={false}
+                        />
+                      </div>
+                    )}
+                  </LockedContent>
                 </AccordionContent>
               </AccordionItem>
             </Accordion>
