@@ -108,12 +108,18 @@ const LOOPBACK_HOSTNAMES = new Set(["localhost", "127.0.0.1", "[::1]"])
 // real env, so a loopback placeholder is safe and never reaches production.
 const BUILD_PLACEHOLDER_MCP_URL = "http://localhost:3123/mcp"
 
+const isUnsetBuildUrl = (): boolean =>
+  process.env.SKIP_ENV_CHECK === "true" &&
+  !URL.canParse(env.NEXT_PUBLIC_BUILDER_URL ?? "")
+
+// Origin used as the JWT issuer. Same build-time placeholder rationale as above.
+export const getBuilderOrigin = (): string =>
+  isUnsetBuildUrl()
+    ? new URL(BUILD_PLACEHOLDER_MCP_URL).origin
+    : new URL(env.NEXT_PUBLIC_BUILDER_URL).origin
+
 export const getMcpResourceUrl = (): string => {
-  if (
-    process.env.SKIP_ENV_CHECK === "true" &&
-    !env.MCP_PUBLIC_URL &&
-    !URL.canParse(env.NEXT_PUBLIC_BUILDER_URL ?? "")
-  ) {
+  if (!env.MCP_PUBLIC_URL && isUnsetBuildUrl()) {
     return BUILD_PLACEHOLDER_MCP_URL
   }
   const resource = (
