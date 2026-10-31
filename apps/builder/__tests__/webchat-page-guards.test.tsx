@@ -169,7 +169,7 @@ describe("WebchatPage", () => {
     )
   })
 
-  test("mints an access token for the URL parent origin after a first-party RSC refresh", async () => {
+  test("mints an access token for the URL parent origin after a first-party referer", async () => {
     setReferer("https://app.chatbotx.io/webchat?workspaceId=1&webchatId=2")
 
     const element = await WebchatPage({
@@ -182,6 +182,36 @@ describe("WebchatPage", () => {
     expect(isValidElement(element)).toBe(true)
     expect(mockCreateWebchatAccessToken).toHaveBeenCalledWith(
       expect.objectContaining({ origin: "https://www.allowed.example" }),
+    )
+  })
+
+  test("keeps a token bound to an allowed third-party referer when the URL parent origin differs", async () => {
+    setReferer("https://allowed.example/path")
+
+    await WebchatPage({
+      searchParams: Promise.resolve({
+        ...searchParams,
+        parentOrigin: "https://attacker.test",
+      }),
+    })
+
+    expect(mockCreateWebchatAccessToken).toHaveBeenCalledWith(
+      expect.objectContaining({ origin: "https://allowed.example/path" }),
+    )
+  })
+
+  test("mints an access token from the domain parameter after a first-party referer", async () => {
+    setReferer("https://app.chatbotx.io/webchat?workspaceId=1&webchatId=2")
+
+    await WebchatPage({
+      searchParams: Promise.resolve({
+        ...searchParams,
+        domain: "allowed.example",
+      }),
+    })
+
+    expect(mockCreateWebchatAccessToken).toHaveBeenCalledWith(
+      expect.objectContaining({ origin: "allowed.example" }),
     )
   })
 

@@ -47,7 +47,6 @@ export default async function WebchatPage(props: WebchatPageProps) {
       domain: z.string().optional(),
       parentOrigin: z.string().optional(),
       guestConversationId: z.string().optional(),
-      accessToken: z.string().optional(),
     })
     .safeParse(searchParams)
   if (!data) {
@@ -84,12 +83,11 @@ export default async function WebchatPage(props: WebchatPageProps) {
   const requestHeaders = await headers()
   const embeddingOrigin = requestHeaders.get("referer")
   const appHost = await getDomainFromHeader()
-  const isFirstPartyRscRefresh =
+  const hasFirstPartyReferer =
     !!embeddingOrigin && isFirstPartyOrigin(embeddingOrigin, appHost)
-  const isDirectOpen = !embeddingOrigin || isFirstPartyRscRefresh
   if (
     !(
-      isDirectOpen ||
+      isFirstPartyOrigin(embeddingOrigin, appHost) ||
       isOriginAuthorized(embeddingOrigin, targetWebchat.authorizedDomains)
     )
   ) {
@@ -113,9 +111,9 @@ export default async function WebchatPage(props: WebchatPageProps) {
     data.guestConversationId ??
     createGuestConversationId(targetWebchat.workspaceId)
 
-  // Only a first-party RSC refresh can preserve the embedding origin in URL
-  // parameters. Direct opens and third-party embeds must use their referer.
-  const accessTokenOrigin = isFirstPartyRscRefresh
+  // Only a first-party referer can make URL origin parameters trustworthy.
+  // Direct opens and third-party embeds use their referer.
+  const accessTokenOrigin = hasFirstPartyReferer
     ? resolveEmbeddingOrigin({
         domain: data.domain,
         parentOrigin: data.parentOrigin,

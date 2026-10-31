@@ -1,10 +1,9 @@
 // @vitest-environment node
 
 import type { IntegrationWebchatModel } from "@chatbotx.io/database/types"
-import { beforeEach, describe, expect, test, vi } from "vitest"
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 import {
   getClientEmbeddingOrigin,
-  getParentOriginFromUrl,
   isOriginAuthorized,
   resolveEmbeddingOrigin,
 } from "@/features/integration-webchat/lib/authorized-domain"
@@ -273,6 +272,9 @@ describe("webchat guest session store", () => {
 })
 
 describe("webchat authorized domains", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
   test("rejects origins when no domains are configured (fail closed)", () => {
     expect(isOriginAuthorized("https://example.com", [])).toBe(false)
   })
@@ -299,14 +301,6 @@ describe("webchat authorized domains", () => {
   test("allows a missing origin even when domains are configured (direct, non-embedded access)", () => {
     expect(isOriginAuthorized(null, ["example.com"])).toBe(true)
     expect(isOriginAuthorized(undefined, ["example.com"])).toBe(true)
-  })
-
-  test("extracts a parent origin from a webchat referer URL", () => {
-    expect(
-      getParentOriginFromUrl(
-        "https://builder.test/webchat?parentOrigin=https%3A%2F%2Fexample.com",
-      ),
-    ).toBe("https://example.com")
   })
 
   test("prefers parentOrigin, then domain, then referer when resolving the embedding origin", () => {

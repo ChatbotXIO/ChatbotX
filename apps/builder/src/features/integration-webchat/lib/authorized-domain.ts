@@ -103,18 +103,6 @@ export const isAllowedGuestOrigin = (
   isEmbedOriginAllowed(parentOrigin, authorizedDomains) ||
   isFirstPartyOrigin(parentOrigin, appHost)
 
-export const getParentOriginFromUrl = (url: string | null | undefined) => {
-  if (!url) {
-    return null
-  }
-
-  try {
-    return new URL(url).searchParams.get(PARENT_ORIGIN_PARAM)
-  } catch {
-    return null
-  }
-}
-
 export const resolveEmbeddingOrigin = ({
   parentOrigin,
   domain,
