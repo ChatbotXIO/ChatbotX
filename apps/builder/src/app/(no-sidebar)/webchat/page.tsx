@@ -18,6 +18,7 @@ import {
 import {
   isFirstPartyOrigin,
   isOriginAuthorized,
+  resolveEmbeddingOrigin,
 } from "@/features/integration-webchat/lib/authorized-domain"
 import { createGuestConversationId } from "@/features/integration-webchat/lib/guest-conversation-id"
 import { createWebchatAccessToken } from "@/features/integration-webchat/lib/webchat-access-token"
@@ -46,7 +47,6 @@ export default async function WebchatPage(props: WebchatPageProps) {
       domain: z.string().optional(),
       parentOrigin: z.string().optional(),
       guestConversationId: z.string().optional(),
-      accessToken: z.string().optional(),
     })
     .safeParse(searchParams)
   if (!data) {
@@ -83,10 +83,20 @@ export default async function WebchatPage(props: WebchatPageProps) {
   const requestHeaders = await headers()
   const embeddingOrigin = requestHeaders.get("referer")
   const appHost = await getDomainFromHeader()
-  const isDirectOpen = isFirstPartyOrigin(embeddingOrigin, appHost)
+  const hasFirstPartyReferer =
+    !!embeddingOrigin && isFirstPartyOrigin(embeddingOrigin, appHost)
+  // A `referrerpolicy="no-referrer"` iframe has no Referer, which would pass
+  // as a direct open and skip the allowlist. Browsers still label iframe
+  // navigations with `Sec-Fetch-Dest: iframe`, so a restricted webchat
+  // refuses a referer-less iframe load.
+  const isRefererlessIframe =
+    !embeddingOrigin &&
+    requestHeaders.get("sec-fetch-dest") === "iframe" &&
+    targetWebchat.authorizedDomains.length > 0
   if (
+    isRefererlessIframe ||
     !(
-      isDirectOpen ||
+      isFirstPartyOrigin(embeddingOrigin, appHost) ||
       isOriginAuthorized(embeddingOrigin, targetWebchat.authorizedDomains)
     )
   ) {
@@ -110,8 +120,17 @@ export default async function WebchatPage(props: WebchatPageProps) {
     data.guestConversationId ??
     createGuestConversationId(targetWebchat.workspaceId)
 
+  // Only a first-party referer can make URL origin parameters trustworthy.
+  // Direct opens and third-party embeds use their referer.
+  const accessTokenOrigin = hasFirstPartyReferer
+    ? resolveEmbeddingOrigin({
+        domain: data.domain,
+        parentOrigin: data.parentOrigin,
+        referer: embeddingOrigin,
+      })
+    : embeddingOrigin
   const accessToken = await createWebchatAccessToken({
-    origin: embeddingOrigin,
+    origin: accessTokenOrigin,
     webchatId: targetWebchat.id,
     workspaceId: targetWebchat.workspaceId,
   })
@@ -147,7 +166,7 @@ export default async function WebchatPage(props: WebchatPageProps) {
       {targetWebchat.customCss && (
         <CustomWidgetStyle css={targetWebchat.customCss} />
       )}
-      <WebchatWrapper parentOrigin={embeddingOrigin} referral={data.ref} />
+      <WebchatWrapper referral={data.ref} />
     </GuestSessionStoreProvider>
   )
 }

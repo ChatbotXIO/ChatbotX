@@ -1,6 +1,7 @@
 import {
   contactInboxService,
   conversationService,
+  integrationWebchatService,
   isWorkspaceScheduledForDeletion,
   workspaceService,
 } from "@chatbotx.io/business"
@@ -8,7 +9,6 @@ import { type NextRequest, NextResponse } from "next/server"
 import { getTranslations } from "next-intl/server"
 import { isAllowedGuestOrigin } from "@/features/integration-webchat/lib/authorized-domain"
 import { verifyWebchatAccessToken } from "@/features/integration-webchat/lib/webchat-access-token"
-import { findIntegrationWebchat } from "@/features/integration-webchat/queries"
 import { handleCreateWebchatMessage } from "@/features/messages/actions/create-webchat-message.action"
 import { listMessages } from "@/features/messages/queries"
 import { createWebchatMessageRequest } from "@/features/messages/schema/mutation"
@@ -106,7 +106,7 @@ export async function GET(req: NextRequest) {
       )
     }
 
-    const webchat = await findIntegrationWebchat({
+    const webchat = await integrationWebchatService.findByIdForWorkspace({
       id: data.webchatId,
       workspaceId: data.workspaceId,
     })
@@ -172,7 +172,7 @@ export async function POST(req: NextRequest) {
     const data = await req.json()
     const parsedInput = createWebchatMessageRequest.parse(data)
 
-    const webchat = await findIntegrationWebchat({
+    const webchat = await integrationWebchatService.findByIdForWorkspace({
       id: parsedInput.webchatId,
       workspaceId: parsedInput.workspaceId,
     })

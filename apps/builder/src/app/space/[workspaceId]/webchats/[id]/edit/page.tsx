@@ -1,9 +1,8 @@
-import { inboxService } from "@chatbotx.io/business"
+import { inboxService, integrationWebchatService } from "@chatbotx.io/business"
 import { notFound } from "next/navigation"
 import { Suspense } from "react"
 
 import { UpdateWebchatForm } from "@/features/integration-webchat/components/update-webchat-form"
-import { findIntegrationWebchat } from "@/features/integration-webchat/queries"
 import { withWorkspaceIdAndIdSchema } from "@/features/workspaces/schema/resource"
 import { requireWorkspacePermission } from "@/lib/auth/require-workspace-permission"
 
@@ -18,10 +17,11 @@ export default async function WebchatEditPage({
   }
   await requireWorkspacePermission(data.workspaceId, "superAdmin")
 
-  const integrationWebchat = await findIntegrationWebchat({
-    id: data.id,
-    workspaceId: data.workspaceId,
-  })
+  const integrationWebchat =
+    await integrationWebchatService.findByIdForWorkspace({
+      id: data.id,
+      workspaceId: data.workspaceId,
+    })
   const inbox = await inboxService.find({
     where: { id: integrationWebchat.inboxId, workspaceId: data.workspaceId },
   })

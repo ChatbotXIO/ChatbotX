@@ -4,12 +4,14 @@ import { isValidElement } from "react"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const {
+  mockCreateWebchatAccessToken,
   mockFindFirst,
   mockGetDomainFromHeader,
   mockHeaders,
   mockIsCommunity,
   mockWorkspaceFind,
 } = vi.hoisted(() => ({
+  mockCreateWebchatAccessToken: vi.fn().mockResolvedValue("access-token"),
   mockFindFirst: vi.fn(),
   mockGetDomainFromHeader: vi.fn(),
   mockHeaders: vi.fn(),
@@ -73,7 +75,7 @@ vi.mock("@/features/integration-webchat/lib/guest-conversation-id", () => ({
 }))
 
 vi.mock("@/features/integration-webchat/lib/webchat-access-token", () => ({
-  createWebchatAccessToken: vi.fn().mockResolvedValue("access-token"),
+  createWebchatAccessToken: mockCreateWebchatAccessToken,
 }))
 
 vi.mock(
@@ -112,9 +114,14 @@ const searchParams = {
   webchatId: "2",
 }
 
-const setReferer = (referer: string | null) => {
+const setReferer = (referer: string | null, secFetchDest?: string) => {
   mockHeaders.mockResolvedValue({
-    get: vi.fn((name: string) => (name === "referer" ? referer : null)),
+    get: vi.fn((name: string) => {
+      if (name === "referer") {
+        return referer
+      }
+      return name === "sec-fetch-dest" ? (secFetchDest ?? null) : null
+    }),
   })
 }
 
@@ -140,6 +147,44 @@ describe("WebchatPage", () => {
     )
   })
 
+  test("shows the unauthorized-domain message for a referer-less iframe when authorizedDomains is configured", async () => {
+    setReferer(null, "iframe")
+
+    const element = await WebchatPage({
+      searchParams: Promise.resolve(searchParams),
+    })
+
+    expect((element as { type: string }).type).toBe("main")
+    expect(mockCreateWebchatAccessToken).not.toHaveBeenCalled()
+  })
+
+  test("still allows a referer-less iframe when authorizedDomains is empty", async () => {
+    setReferer(null, "iframe")
+    mockFindFirst.mockResolvedValue({ ...targetWebchat, authorizedDomains: [] })
+
+    const element = await WebchatPage({
+      searchParams: Promise.resolve(searchParams),
+    })
+
+    expect(isValidElement(element)).toBe(true)
+    expect(mockCreateWebchatAccessToken).toHaveBeenCalled()
+  })
+
+  test("does not trust a URL parent origin when a direct open has no referer", async () => {
+    setReferer(null)
+
+    await WebchatPage({
+      searchParams: Promise.resolve({
+        ...searchParams,
+        parentOrigin: "https://allowed.example",
+      }),
+    })
+
+    expect(mockCreateWebchatAccessToken).toHaveBeenCalledWith(
+      expect.objectContaining({ origin: null }),
+    )
+  })
+
   test("renders the chat for a first-party referer matching the app host", async () => {
     setReferer("https://app.chatbotx.io/some/path")
 
@@ -149,6 +194,78 @@ describe("WebchatPage", () => {
 
     expect((element as { type: { name: string } }).type.name).toBe(
       "GuestSessionStoreProvider",
+    )
+  })
+
+  test("mints an access token for the URL parent origin after a first-party referer", async () => {
+    setReferer("https://app.chatbotx.io/webchat?workspaceId=1&webchatId=2")
+
+    const element = await WebchatPage({
+      searchParams: Promise.resolve({
+        ...searchParams,
+        parentOrigin: "https://www.allowed.example",
+      }),
+    })
+
+    expect(isValidElement(element)).toBe(true)
+    expect(mockCreateWebchatAccessToken).toHaveBeenCalledWith(
+      expect.objectContaining({ origin: "https://www.allowed.example" }),
+    )
+  })
+
+  test("keeps a token bound to an allowed third-party referer when the URL parent origin differs", async () => {
+    setReferer("https://allowed.example/path")
+
+    await WebchatPage({
+      searchParams: Promise.resolve({
+        ...searchParams,
+        parentOrigin: "https://attacker.test",
+      }),
+    })
+
+    expect(mockCreateWebchatAccessToken).toHaveBeenCalledWith(
+      expect.objectContaining({ origin: "https://allowed.example/path" }),
+    )
+  })
+
+  test("mints an access token from the domain parameter after a first-party referer", async () => {
+    setReferer("https://app.chatbotx.io/webchat?workspaceId=1&webchatId=2")
+
+    await WebchatPage({
+      searchParams: Promise.resolve({
+        ...searchParams,
+        domain: "allowed.example",
+      }),
+    })
+
+    expect(mockCreateWebchatAccessToken).toHaveBeenCalledWith(
+      expect.objectContaining({ origin: "allowed.example" }),
+    )
+  })
+
+  test("refuses an attacker referer even when the URL parent origin is allowed", async () => {
+    setReferer("https://attacker.test")
+
+    const element = await WebchatPage({
+      searchParams: Promise.resolve({
+        ...searchParams,
+        parentOrigin: "https://allowed.example",
+      }),
+    })
+
+    expect(JSON.stringify(element)).toContain("Webchat unavailable")
+    expect(mockCreateWebchatAccessToken).not.toHaveBeenCalled()
+  })
+
+  test("mints an access token from the referer when URL origin parameters are absent", async () => {
+    setReferer("https://allowed.example/path")
+
+    await WebchatPage({
+      searchParams: Promise.resolve(searchParams),
+    })
+
+    expect(mockCreateWebchatAccessToken).toHaveBeenCalledWith(
+      expect.objectContaining({ origin: "https://allowed.example/path" }),
     )
   })
 
