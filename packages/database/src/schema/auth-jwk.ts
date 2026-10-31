@@ -5,5 +5,7 @@ export const jwkModel = pgTable("Jwk", {
   ...sharedColumns,
   publicKey: text().notNull(),
   privateKey: text().notNull(),
+  alg: text(),
+  crv: text(),
   expiresAt: timestamp(timestampConfig),
 })

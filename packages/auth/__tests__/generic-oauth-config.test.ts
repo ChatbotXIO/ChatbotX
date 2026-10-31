@@ -26,6 +26,7 @@ vi.mock("better-auth/plugins", () => ({
   anonymous: () => ({ id: "anonymous" }),
   bearer: () => ({ id: "bearer" }),
   genericOAuth: genericOAuthMock,
+  jwt: () => ({ id: "jwt" }),
   magicLink: () => ({ id: "magic-link" }),
   mcp: () => ({ id: "mcp" }),
   oneTimeToken: () => ({ id: "one-time-token" }),
@@ -35,9 +36,14 @@ vi.mock("@chatbotx.io/database/client", () => ({ db: {} }))
 
 vi.mock("@chatbotx.io/database/schema", () => ({
   accountModel: {},
+  jwkModel: {},
   oauthAccessTokenModel: {},
-  oauthApplicationModel: {},
+  oauthClientAssertionModel: {},
+  oauthClientModel: {},
+  oauthClientResourceModel: {},
   oauthConsentModel: {},
+  oauthRefreshTokenModel: {},
+  oauthResourceModel: {},
   sessionModel: {},
   userModel: {},
   verificationModel: {},
@@ -131,7 +137,7 @@ describe("generic OAuth configuration", () => {
 
     expect(plugin?.config[0]).toMatchObject({
       pkce: true,
-      redirectURI: "https://broker.example.com/api/auth/oauth2/callback/oidc",
+      redirectURI: "https://broker.example.com/api/auth/callback/oidc",
       scopes: ["openid", "email", "profile"],
     })
   })
@@ -150,7 +156,7 @@ describe("generic OAuth configuration", () => {
     ).toMatchObject({
       discoveryUrl: "https://idp.example.com/.well-known/openid-configuration",
       pkce: true,
-      redirectURI: "https://broker.example.com/api/auth/oauth2/callback/oidc",
+      redirectURI: "https://broker.example.com/api/auth/callback/oidc",
     })
   })
 

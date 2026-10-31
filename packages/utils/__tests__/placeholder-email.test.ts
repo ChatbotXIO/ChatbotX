@@ -23,6 +23,13 @@ describe("mapFacebookProfileToUser", () => {
     expect(second).toEqual(first)
   })
 
+  test("uses the subject claim from a limited-login profile", () => {
+    expect(mapFacebookProfileToUser({ sub: "limited-123" })).toEqual({
+      email: "fb-limited-123@facebook.placeholder.invalid",
+      emailVerified: false,
+    })
+  })
+
   test("leaves a profile without an id untouched", () => {
     expect(mapFacebookProfileToUser({ id: "" })).toEqual({})
     expect(mapFacebookProfileToUser({ id: undefined })).toEqual({})

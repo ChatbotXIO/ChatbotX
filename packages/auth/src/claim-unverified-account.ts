@@ -1,3 +1,4 @@
+import { isPlaceholderEmail } from "@chatbotx.io/utils/placeholder-email"
 import type { BetterAuthOptions } from "better-auth"
 import { env } from "./keys"
 import { logger } from "./logger"
@@ -88,6 +89,14 @@ const EMAIL_ATTESTATION_BY_PROVIDER: Record<string, EmailAttestation> = {
 }
 
 /**
+ * Providers whose attestation may mark the user `emailVerified`. Facebook is
+ * excluded on purpose: its attestation is a policy assumption, not a signed
+ * claim, and a verified user lets every other trusted provider link in with no
+ * claim and no session revocation.
+ */
+const PROMOTES_TO_VERIFIED = new Set(["google", GENERIC_OAUTH_PROVIDER_ID])
+
+/**
  * Runs BEFORE better-auth inserts a social `Account` row. It must be a before
  * hook: better-auth defers `account.create.after` hooks until the HTTP handler
  * has returned, by which point `link-account.mjs` has already marked the user
@@ -108,8 +117,8 @@ const EMAIL_ATTESTATION_BY_PROVIDER: Record<string, EmailAttestation> = {
  * otherwise a pre-registered login would keep working once the real owner's
  * sign-in marks the user verified.
  *
- * After a Facebook claim the user still has `emailVerified: false` (better-auth
- * only marks a user verified from a provider that says so), so a later Google
+ * After a Facebook claim the user still has `emailVerified: false` (only Google
+ * and the generic OIDC provider promote a user to verified), so a later Google
  * sign-in with a verified claim will claim the account again and remove the
  * Facebook row and sessions; that is accepted and recovers on the next
  * Facebook sign-in.
@@ -145,21 +154,31 @@ export const claimUnverifiedAccountBeforeLink: AccountCreateBeforeHook = async (
   }
 
   const others = await internalAdapter.findAccounts(userId)
-  if (others.length === 0 && isFreshSignUp(user.createdAt)) {
-    return
-  }
   const attest = Object.hasOwn(
     EMAIL_ATTESTATION_BY_PROVIDER,
     account.providerId,
   )
     ? EMAIL_ATTESTATION_BY_PROVIDER[account.providerId]
     : undefined
+  const attested = attest?.(account as { idToken?: unknown }) ?? false
+  const shouldPromote =
+    attested &&
+    PROMOTES_TO_VERIFIED.has(account.providerId) &&
+    typeof user.email === "string" &&
+    !isPlaceholderEmail(user.email)
+
+  if (others.length === 0 && isFreshSignUp(user.createdAt)) {
+    if (shouldPromote) {
+      await internalAdapter.updateUser(userId, { emailVerified: true })
+    }
+    return
+  }
   if (!attest) {
     throw new Error(
       "Only an email-attesting provider can claim an unverified account",
     )
   }
-  if (!attest(account as { idToken?: unknown })) {
+  if (!attested) {
     throw new Error("The provider did not attest the email address")
   }
 
@@ -174,6 +193,9 @@ export const claimUnverifiedAccountBeforeLink: AccountCreateBeforeHook = async (
     model: "session",
     where: [{ field: "userId", value: userId }],
   })
+  if (shouldPromote) {
+    await internalAdapter.updateUser(userId, { emailVerified: true })
+  }
 
   logger.info(
     {

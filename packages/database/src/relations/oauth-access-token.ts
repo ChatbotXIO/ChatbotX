@@ -4,9 +4,17 @@ import * as schema from "../schema"
 
 export const oauthAccessTokenRelations = defineRelationsPart(schema, (r) => ({
   oauthAccessTokenModel: {
-    client: r.one.oauthApplicationModel({
+    client: r.one.oauthClientModel({
       from: r.oauthAccessTokenModel.clientId,
-      to: r.oauthApplicationModel.clientId,
+      to: r.oauthClientModel.clientId,
+    }),
+    refreshToken: r.one.oauthRefreshTokenModel({
+      from: r.oauthAccessTokenModel.refreshId,
+      to: r.oauthRefreshTokenModel.id,
+    }),
+    session: r.one.sessionModel({
+      from: r.oauthAccessTokenModel.sessionId,
+      to: r.sessionModel.id,
     }),
     user: r.one.userModel({
       from: r.oauthAccessTokenModel.userId,

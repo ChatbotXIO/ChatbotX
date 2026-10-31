@@ -1,0 +1,57 @@
+import {
+  boolean,
+  index,
+  jsonb,
+  pgTable,
+  text,
+  uniqueIndex,
+} from "drizzle-orm/pg-core"
+import { bigintAsString, sharedColumns } from "../partials/shared"
+import { userModel } from "./auth-user"
+
+export const oauthClientModel = pgTable(
+  "OAuthClient",
+  {
+    ...sharedColumns,
+    clientId: text().notNull(),
+    clientSecret: text(),
+    clientDiscoveryId: text(),
+    disabled: boolean().notNull().default(false),
+    skipConsent: boolean(),
+    enableEndSession: boolean(),
+    subjectType: text(),
+    scopes: text().array(),
+    clientCredentialsScopes: text().array().notNull().default([]),
+    userId: bigintAsString().references(() => userModel.id, {
+      onDelete: "cascade",
+      onUpdate: "cascade",
+    }),
+    name: text(),
+    uri: text(),
+    icon: text(),
+    contacts: text().array(),
+    tos: text(),
+    policy: text(),
+    softwareId: text(),
+    softwareVersion: text(),
+    softwareStatement: text(),
+    redirectUris: text().array().notNull(),
+    postLogoutRedirectUris: text().array(),
+    backchannelLogoutUri: text(),
+    backchannelLogoutSessionRequired: boolean(),
+    tokenEndpointAuthMethod: text(),
+    applicationType: text(),
+    jwks: text(),
+    jwksUri: text(),
+    grantTypes: text().array(),
+    responseTypes: text().array(),
+    requirePKCE: boolean(),
+    dpopBoundAccessTokens: boolean().notNull().default(false),
+    referenceId: text(),
+    metadata: jsonb().$type<Record<string, unknown>>(),
+  },
+  (table) => [
+    uniqueIndex("OAuthClient_clientId_key").on(table.clientId),
+    index("OAuthClient_userId_idx").on(table.userId),
+  ],
+)

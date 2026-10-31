@@ -1,16 +1,15 @@
 import { db } from "@chatbotx.io/database/client"
 import {
   oauthAccessTokenRepository,
-  oauthApplicationRepository,
+  oauthClientRepository,
   oauthConsentRepository,
-  verificationRepository,
+  oauthRefreshTokenRepository,
 } from "@chatbotx.io/database/repositories"
 import type {
-  OAuthApplicationModel,
+  OAuthClientModel,
   UserModel,
   WorkspaceModel,
 } from "@chatbotx.io/database/types"
-import { z } from "zod"
 import { BaseService } from "../base.service"
 import { ChatbotXException } from "../errors"
 import { logger } from "../logger"
@@ -24,7 +23,6 @@ export type McpOAuthPrincipal = {
   workspace: WorkspaceModel
   user: Pick<UserModel, "id" | "email">
   clientId: string
-  accessTokenId: string
 }
 
 export type McpOAuthResolution =
@@ -46,49 +44,29 @@ export type McpOAuthGrant = {
   activeUntil: Date | null
 }
 
-const mcpOAuthConsentRequestSchema = z.object({
-  clientId: z.string().min(1),
-  requireConsent: z.boolean(),
-  userId: z.string().min(1),
-})
-
 export class McpOAuthService extends BaseService {
   async resolvePrincipal(props: {
-    accessToken: string
+    clientId: string
+    userId: string
     workspaceId?: string
   }): Promise<McpOAuthResolution> {
-    const token = await oauthAccessTokenRepository.findByAccessToken(
-      props.accessToken,
-    )
-    const now = new Date()
-    if (
-      !token?.userId ||
-      token.accessTokenExpiresAt <= now ||
-      token.client.disabled
-    ) {
+    const client = await oauthClientRepository.findByClientId(props.clientId)
+    if (!client || client.disabled) {
       return { kind: "invalidToken" }
     }
 
-    const user = await this.findTokenUser(token.userId)
+    const user = await this.findTokenUser(props.userId)
     if (!user) {
       return { kind: "invalidToken" }
     }
 
-    /**
-     * Every authorization passes the consent screen, so a token without a
-     * given consent was revoked or lost its workspace to a cascade. Rejecting
-     * it makes the client re-authorize instead of silently switching to
-     * another workspace.
-     */
     const consent = await oauthConsentRepository.findLatestGivenByUserAndClient(
-      { userId: user.id, clientId: token.clientId },
+      { userId: user.id, clientId: props.clientId },
     )
     if (!consent) {
       return { kind: "invalidToken" }
     }
 
-    // A bound consent is the limit of the grant: an explicit selection may
-    // only repeat it. Legacy consents (without a workspace) accept a pick.
     if (
       consent.workspaceId &&
       props.workspaceId &&
@@ -96,7 +74,7 @@ export class McpOAuthService extends BaseService {
     ) {
       return { kind: "forbidden" }
     }
-    let workspaceId = consent.workspaceId ?? props.workspaceId ?? undefined
+    let workspaceId = consent.workspaceId ?? props.workspaceId
     if (!workspaceId) {
       const selection = await this.selectOnlyWorkspace(user.id)
       if (selection.kind !== "selected") {
@@ -107,6 +85,12 @@ export class McpOAuthService extends BaseService {
 
     const workspace = await this.findAdminWorkspace({ user, workspaceId })
     if (!workspace) {
+      if (consent.workspaceId) {
+        await this.revokeGrant({
+          userId: user.id,
+          clientId: props.clientId,
+        })
+      }
       return { kind: "forbidden" }
     }
 
@@ -115,46 +99,9 @@ export class McpOAuthService extends BaseService {
       principal: {
         workspace,
         user,
-        clientId: token.clientId,
-        accessTokenId: token.id,
+        clientId: props.clientId,
       },
     }
-  }
-
-  async resolveConsentRequest(props: {
-    userId: string
-    consentCode: string
-  }): Promise<{ clientId: string }> {
-    const verification = await verificationRepository.findByIdentifier(
-      props.consentCode,
-    )
-    if (!verification) {
-      throw new ChatbotXException("Consent request not found", "notFound", 404)
-    }
-
-    let request: unknown
-    try {
-      request = JSON.parse(verification.value)
-    } catch {
-      throw new ChatbotXException("Consent request not found", "notFound", 404)
-    }
-    const parsedRequest = mcpOAuthConsentRequestSchema.safeParse(request)
-    if (!parsedRequest.success) {
-      throw new ChatbotXException("Consent request not found", "notFound", 404)
-    }
-    if (
-      verification.expiresAt <= new Date() ||
-      parsedRequest.data.userId !== props.userId ||
-      !parsedRequest.data.requireConsent
-    ) {
-      throw new ChatbotXException(
-        "Consent request is invalid",
-        "forbidden",
-        403,
-      )
-    }
-
-    return { clientId: parsedRequest.data.clientId }
   }
 
   /**
@@ -205,8 +152,8 @@ export class McpOAuthService extends BaseService {
 
   /**
    * Binds the client's consent to a workspace once the user approved it.
-   * Re-authorizing the same client rebinds every consent it holds for the
-   * user, which is how a user switches workspace.
+   * Better Auth reuses a stored consent without showing the consent page, so
+   * switching workspace means revoking the grant and authorizing again.
    */
   async bindConsentWorkspace(props: {
     user: Pick<UserModel, "id" | "email">
@@ -309,10 +256,10 @@ export class McpOAuthService extends BaseService {
       activeUntil: grant.activeUntil,
       clientIcon: grant.clientIcon,
       clientId: grant.clientId,
-      clientName: grant.clientName,
+      clientName: grant.clientName ?? grant.clientId,
       firstAuthorizedAt: grant.firstAuthorizedAt,
       lastRefreshedAt: grant.lastRefreshedAt,
-      scopes: Array.from(new Set(grant.scopes.split(" ").filter(Boolean))),
+      scopes: Array.from(new Set(grant.scopes)),
     }))
   }
 
@@ -321,11 +268,15 @@ export class McpOAuthService extends BaseService {
     clientId: string
   }): Promise<boolean> {
     const deleted = await db.transaction(async (tx) => {
-      const deletedTokens =
-        await oauthAccessTokenRepository.deleteByUserAndClient(props, tx)
+      // Sequential on purpose: one transaction owns one connection, and the
+      // consent must go first so no new token can be issued mid-revoke.
       const deletedConsents =
         await oauthConsentRepository.deleteByUserAndClient(props, tx)
-      return deletedTokens + deletedConsents
+      const deletedRefreshTokens =
+        await oauthRefreshTokenRepository.deleteByUserAndClient(props, tx)
+      const deletedAccessTokens =
+        await oauthAccessTokenRepository.deleteByUserAndClient(props, tx)
+      return deletedAccessTokens + deletedConsents + deletedRefreshTokens
     })
 
     if (deleted > 0) {
@@ -335,13 +286,15 @@ export class McpOAuthService extends BaseService {
   }
 
   async purgeExpiredTokens(now = new Date()): Promise<number> {
-    return await oauthAccessTokenRepository.deleteExpired(now)
+    const accessTokens = await oauthAccessTokenRepository.deleteExpired(now)
+    const refreshTokens = await oauthRefreshTokenRepository.deleteExpired(now)
+    return accessTokens + refreshTokens
   }
 
   async findClient(props: {
     clientId: string
-  }): Promise<OAuthApplicationModel | null> {
-    return await oauthApplicationRepository.findByClientId(props.clientId)
+  }): Promise<OAuthClientModel | null> {
+    return await oauthClientRepository.findByClientId(props.clientId)
   }
 }
 

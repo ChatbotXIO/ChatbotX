@@ -1,74 +1,70 @@
-import { and, type DatabaseClient, db, desc, eq, gt, sql } from "../../client"
 import {
-  oauthAccessTokenModel,
-  oauthApplicationModel,
+  and,
+  type DatabaseClient,
+  db,
+  desc,
+  eq,
+  gt,
+  isNull,
+  sql,
+} from "../../client"
+import {
+  oauthClientModel,
   oauthConsentModel,
+  oauthRefreshTokenModel,
 } from "../../schema"
 
 class OAuthConsentRepository {
   async listGivenByUser(userId: string, now: Date, tx: DatabaseClient = db) {
     const activeTokens = tx
       .select({
-        activeTokenCount: sql<number>`count(*)`.as("activeTokenCount"),
-        activeUntil:
-          sql<Date | null>`max(${oauthAccessTokenModel.refreshTokenExpiresAt})`
-            .mapWith((value: string | Date | null) =>
-              value ? new Date(value) : null,
-            )
-            .as("activeUntil"),
-        clientId: oauthAccessTokenModel.clientId,
+        activeUntil: sql<Date | null>`max(${oauthRefreshTokenModel.expiresAt})`
+          .mapWith((value: string | Date | null) =>
+            value ? new Date(value) : null,
+          )
+          .as("activeUntil"),
+        clientId: oauthRefreshTokenModel.clientId,
         lastRefreshedAt:
-          sql<Date | null>`max(${oauthAccessTokenModel.createdAt})`
+          sql<Date | null>`max(${oauthRefreshTokenModel.createdAt})`
             .mapWith((value: string | Date | null) =>
               value ? new Date(value) : null,
             )
             .as("lastRefreshedAt"),
       })
-      .from(oauthAccessTokenModel)
+      .from(oauthRefreshTokenModel)
       .where(
         and(
-          eq(oauthAccessTokenModel.userId, userId),
-          gt(oauthAccessTokenModel.refreshTokenExpiresAt, now),
+          eq(oauthRefreshTokenModel.userId, userId),
+          gt(oauthRefreshTokenModel.expiresAt, now),
+          isNull(oauthRefreshTokenModel.revoked),
         ),
       )
-      .groupBy(oauthAccessTokenModel.clientId)
+      .groupBy(oauthRefreshTokenModel.clientId)
       .as("activeTokens")
 
     return await tx
       .select({
-        activeTokenCount: activeTokens.activeTokenCount,
         activeUntil: activeTokens.activeUntil,
-        clientIcon: oauthApplicationModel.icon,
+        clientIcon: oauthClientModel.icon,
         clientId: oauthConsentModel.clientId,
-        clientName: oauthApplicationModel.name,
+        clientName: oauthClientModel.name,
         firstAuthorizedAt: oauthConsentModel.createdAt,
         lastRefreshedAt: activeTokens.lastRefreshedAt,
         scopes: oauthConsentModel.scopes,
       })
       .from(oauthConsentModel)
       .innerJoin(
-        oauthApplicationModel,
-        eq(oauthConsentModel.clientId, oauthApplicationModel.clientId),
+        oauthClientModel,
+        eq(oauthConsentModel.clientId, oauthClientModel.clientId),
       )
       .leftJoin(
         activeTokens,
         eq(oauthConsentModel.clientId, activeTokens.clientId),
       )
-      .where(
-        and(
-          eq(oauthConsentModel.userId, userId),
-          eq(oauthConsentModel.consentGiven, true),
-        ),
-      )
+      .where(eq(oauthConsentModel.userId, userId))
       .orderBy(desc(oauthConsentModel.createdAt))
   }
 
-  /**
-   * The latest workspace-bound consent the user gave this client, falling back
-   * to the most recent legacy unbound consent when no bound consent exists.
-   * Returns null when they never approved it or the consent was revoked or
-   * cascaded away with its workspace.
-   */
   async findLatestGivenByUserAndClient(
     input: { userId: string; clientId: string },
     tx: DatabaseClient = db,
@@ -80,7 +76,6 @@ class OAuthConsentRepository {
         and(
           eq(oauthConsentModel.userId, input.userId),
           eq(oauthConsentModel.clientId, input.clientId),
-          eq(oauthConsentModel.consentGiven, true),
         ),
       )
       .orderBy(
@@ -104,7 +99,6 @@ class OAuthConsentRepository {
         and(
           eq(oauthConsentModel.userId, input.userId),
           eq(oauthConsentModel.clientId, input.clientId),
-          eq(oauthConsentModel.consentGiven, true),
         ),
       )
       .returning({ id: oauthConsentModel.id })

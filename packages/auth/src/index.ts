@@ -1,3 +1,5 @@
+export { getMcpAuthorizationServerMetadata } from "./mcp-resource"
+
 export type {
   Auth,
   AuthConfig,

@@ -1,4 +1,11 @@
 import {
+  checksSchema,
+  registerSchemaCheck,
+  schemaCheckFor,
+} from "@better-auth/core/db/internal"
+import { mcp } from "@better-auth/mcp"
+
+import {
   customDomainService,
   type PlatformSmtpTransport,
   platformCredentialService,
@@ -9,9 +16,14 @@ import {
 import { db } from "@chatbotx.io/database/client"
 import {
   accountModel,
+  jwkModel,
   oauthAccessTokenModel,
-  oauthApplicationModel,
+  oauthClientAssertionModel,
+  oauthClientModel,
+  oauthClientResourceModel,
   oauthConsentModel,
+  oauthRefreshTokenModel,
+  oauthResourceModel,
   ROOT_TENANT_ID,
   sessionModel,
   userModel,
@@ -38,15 +50,16 @@ import {
   anonymous,
   bearer,
   genericOAuth,
+  jwt,
   magicLink,
-  mcp,
   oneTimeToken,
 } from "better-auth/plugins"
 import { PHASE_PRODUCTION_BUILD } from "next/constants"
 import { claimUnverifiedAccountBeforeLink } from "./claim-unverified-account"
 import { resolveGenericOAuthConfig } from "./generic-oauth"
-import { env, getBrokerUrl } from "./keys"
+import { env, getBrokerUrl, getMcpResourceUrl } from "./keys"
 import { logger } from "./logger"
+import { buildMcpPluginOptions, defaultMcpResource } from "./mcp-config"
 import { GENERIC_OAUTH_PROVIDER_ID } from "./oauth-constants"
 import {
   isSignUpAllowed,
@@ -124,15 +137,17 @@ export function createTenantScopedAdapter(
   // isolated:
   //   • `user` lookups *by email* — the same email is a separate account per
   //     tenant.
-  //   • `account` lookups *by social identity* (`accountId`) — the same provider
-  //     identity links to a separate account row per tenant, so sub-accounts stay
-  //     isolated. The reseller owner's own row is stamped `ROOT_TENANT_ID` (see
-  //     `create` below) and so misses here on their domain; better-auth then
-  //     falls through to the email lookup, where the reseller-owner fallback
-  //     resolves their root-tenant account and the unscoped `userId` account list
-  //     shows the identity as already linked.
-  // Lookups by id/token/userId are left untouched, so sessions and a user's own
-  // account list stay tenant-neutral.
+  //   • `account` lookups *by social identity* (`accountId` without `userId`) —
+  //     the same provider identity links to a separate account row per tenant,
+  //     so sub-accounts stay isolated. The reseller owner's own row is stamped
+  //     `ROOT_TENANT_ID` (see `create` below) and so misses here on their domain;
+  //     better-auth then falls through to the email lookup, where the
+  //     reseller-owner fallback resolves their root-tenant account.
+  // Lookups by id/token/userId are left untouched, so sessions, a user's own
+  // account list, and credential lookups stay tenant-neutral. Credential
+  // lookups use `userId` and therefore already identify one user; adding a
+  // tenant predicate would hide a reseller credential from server actions that
+  // run in the root tenant.
   const scopeByTenant = (
     model: string,
     where: WhereClause[] | undefined,
@@ -144,7 +159,8 @@ export function createTenantScopedAdapter(
       model === "user" && where.some((clause) => clause.field === "email")
     const scopesAccountByIdentity =
       model === "account" &&
-      where.some((clause) => clause.field === "accountId")
+      where.some((clause) => clause.field === "accountId") &&
+      !where.some((clause) => clause.field === "userId")
     if (!(scopesUserByEmail || scopesAccountByIdentity)) {
       return where
     }
@@ -255,7 +271,17 @@ export function createTenantScopedAdapter(
     }
   }
 
-  return (options) => wrapAdapter(base(options))
+  return (options) => {
+    const inner = base(options)
+    const wrapped = wrapAdapter(inner)
+    const schemaCheck = schemaCheckFor(inner)
+    if (schemaCheck) {
+      registerSchemaCheck(wrapped, schemaCheck, {
+        runtimeEnabled: checksSchema(options),
+      })
+    }
+    return wrapped
+  }
 }
 
 /**
@@ -539,7 +565,14 @@ const guardEmailSignUp = createAuthMiddleware(async (ctx) => {
   if (ctx.path === "/sign-up/email" && !(await isSignUpAllowed(ctx))) {
     throw new APIError("FORBIDDEN", { message: "Sign-up is disabled" })
   }
+  return defaultMcpResource(ctx)
 })
+
+const firstString = (...values: unknown[]): string | undefined =>
+  values.find((value): value is string => typeof value === "string")
+
+const joinStrings = (...values: unknown[]): string =>
+  values.filter((value): value is string => typeof value === "string").join(" ")
 
 export function createAuth(config: AuthConfig) {
   const socialProviders = buildSocialProviders(
@@ -548,6 +581,7 @@ export function createAuth(config: AuthConfig) {
     config.socialRedirectOrigin,
   )
   const genericOAuthProvider = resolveGenericOAuthConfig()
+  const mcpResource = getMcpResourceUrl()
 
   return betterAuth({
     databaseHooks: buildDatabaseHooks({
@@ -562,9 +596,14 @@ export function createAuth(config: AuthConfig) {
           verification: verificationModel,
           session: sessionModel,
           account: accountModel,
-          oauthApplication: oauthApplicationModel,
+          jwks: jwkModel,
           oauthAccessToken: oauthAccessTokenModel,
+          oauthClient: oauthClientModel,
+          oauthClientAssertion: oauthClientAssertionModel,
+          oauthClientResource: oauthClientResourceModel,
           oauthConsent: oauthConsentModel,
+          oauthRefreshToken: oauthRefreshTokenModel,
+          oauthResource: oauthResourceModel,
         },
       }),
     ),
@@ -834,19 +873,31 @@ export function createAuth(config: AuthConfig) {
                 {
                   ...genericOAuthProvider,
                   pkce: true,
+                  // The web client signs out locally and never follows an
+                  // `end_session_endpoint` redirect, so keep 1.6 behavior.
+                  disableProviderLogout: true,
+                  // 1.7 binds an ID token to a nonce; an IdP that never echoes
+                  // one needs this escape hatch (AUTH_OAUTH_DISABLE_NONCE_BINDING).
+                  disableIdTokenNonceBinding:
+                    env.AUTH_OAUTH_DISABLE_NONCE_BINDING,
                   // Pin the redirect URI to the broker, then relay the callback
                   // to the originating branded host as social OAuth already does.
+                  // Better Auth 1.7 moved this from /oauth2/callback/<id>; IdPs
+                  // registered before the upgrade must update their redirect URI.
                   redirectURI: new URL(
-                    `/api/auth/oauth2/callback/${GENERIC_OAUTH_PROVIDER_ID}`,
+                    `/api/auth/callback/${GENERIC_OAUTH_PROVIDER_ID}`,
                     new URL(getBrokerUrl()).origin,
                   ).toString(),
+                  accountSubject: ({ profile }) => {
+                    const subject = profile.id ?? profile.sub
+                    return subject === undefined || subject === null
+                      ? ""
+                      : String(subject)
+                  },
                   mapProfileToUser: (profile) => ({
                     name:
-                      profile.name ??
-                      profile.preferred_username ??
-                      ([profile.given_name, profile.family_name]
-                        .filter(Boolean)
-                        .join(" ") ||
+                      firstString(profile.name, profile.preferred_username) ??
+                      (joinStrings(profile.given_name, profile.family_name) ||
                         undefined),
                   }),
                 },
@@ -854,17 +905,11 @@ export function createAuth(config: AuthConfig) {
             }),
           ] as const)
         : ([] as const)),
-      mcp({
-        loginPage: "/oauth/sign-in",
-        oidcConfig: {
-          loginPage: "/oauth/sign-in",
-          consentPage: "/oauth/consent",
-          requirePKCE: true,
-          allowPlainCodeChallengeMethod: false,
-          accessTokenExpiresIn: 3600,
-          refreshTokenExpiresIn: 2_592_000,
-        },
+      jwt({
+        disableSettingJwtHeader: true,
+        jwt: { issuer: new URL(env.NEXT_PUBLIC_BUILDER_URL).origin },
       }),
+      mcp(buildMcpPluginOptions(mcpResource)),
       // Relays better-auth's Set-Cookie into the Next.js response. Required so a
       // server-side `auth.api.changePassword` (with `revokeOtherSessions`) rotates
       // the caller's session cookie instead of silently logging them out. Must be
@@ -916,6 +961,7 @@ export type Auth = ReturnType<typeof createAuth>
 
 export {
   isGenericOAuthPath,
+  isSharedSocialPath,
   resolveGenericOAuthConfig,
   warnIfGenericOAuthUnlicensed,
 } from "./generic-oauth"

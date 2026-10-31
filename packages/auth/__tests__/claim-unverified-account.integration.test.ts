@@ -36,6 +36,7 @@ vi.mock("better-auth/plugins", () => ({
   anonymous: () => ({ id: "anonymous" }),
   bearer: () => ({ id: "bearer" }),
   genericOAuth: () => ({ id: "generic-oauth" }),
+  jwt: () => ({ id: "jwt" }),
   mcp: () => ({ id: "mcp" }),
   magicLink: () => ({ id: "magic-link" }),
   oneTimeToken: () => ({ id: "one-time-token" }),
@@ -48,9 +49,14 @@ vi.mock("@chatbotx.io/database/client", () => ({
 vi.mock("@chatbotx.io/database/schema", () => ({
   ROOT_TENANT_ID: "1",
   accountModel: {},
+  jwkModel: {},
   oauthAccessTokenModel: {},
-  oauthApplicationModel: {},
+  oauthClientAssertionModel: {},
+  oauthClientModel: {},
+  oauthClientResourceModel: {},
   oauthConsentModel: {},
+  oauthRefreshTokenModel: {},
+  oauthResourceModel: {},
   sessionModel: {},
   userModel: {},
   verificationModel: {},
@@ -104,9 +110,9 @@ const setup = async (
   createAuth({})
   const config = betterAuthMock.mock.calls.at(-1)?.[0] as BetterAuthOptions
   const store = {
-    user: seed.user ?? [],
-    account: seed.account ?? [],
-    session: seed.session ?? [],
+    user: seed.user?.map((row) => ({ ...row })) ?? [],
+    account: seed.account?.map((row) => ({ ...row })) ?? [],
+    session: seed.session?.map((row) => ({ ...row })) ?? [],
     verification: [] as Row[],
   }
   const adapter = memoryAdapter(store)(config as never)
@@ -227,6 +233,26 @@ describe("claimUnverifiedAccountBeforeLink through the real internal adapter", (
     await internal.linkAccount(social("facebook"))
     expect(store.account.map((a) => a.providerId)).toEqual(["facebook"])
     expect(store.session).toHaveLength(0)
+  })
+
+  test("a Facebook claim leaves the user unverified", async () => {
+    const { internal, store } = await setup({
+      user: [placeholder],
+      account: [credentialRow],
+    })
+    await internal.linkAccount(social("facebook"))
+    expect(store.user[0]?.emailVerified).toBe(false)
+  })
+
+  test("a Google claim marks the user verified", async () => {
+    const { internal, store } = await setup({
+      user: [placeholder],
+      account: [credentialRow],
+    })
+    await internal.linkAccount(
+      social("google", idTokenWith({ email_verified: true })),
+    )
+    expect(store.user[0]?.emailVerified).toBe(true)
   })
 
   test("linking Facebook into an old placeholder with zero accounts claims it", async () => {

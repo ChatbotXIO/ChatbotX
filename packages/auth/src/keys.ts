@@ -1,7 +1,7 @@
 import { createEnv } from "@t3-oss/env-core"
 import { z } from "zod"
 
-export const keys = () =>
+const keys = () =>
   createEnv({
     server: {
       NEXT_PUBLIC_BUILDER_URL: z.url(),
@@ -12,6 +12,7 @@ export const keys = () =>
       // the originating domain. Optional: falls back to NEXT_PUBLIC_BUILDER_URL so
       // single-domain deploys keep working.
       NEXT_PUBLIC_BROKER_URL: z.url().optional(),
+      MCP_PUBLIC_URL: z.url().optional(),
       AUTH_DISABLE_SIGNUP: z.stringbool().default(false),
       AUTH_OAUTH_ENABLED: z.stringbool().default(false),
       AUTH_OAUTH_CLIENT_ID: z.string().optional(),
@@ -22,6 +23,7 @@ export const keys = () =>
       AUTH_OAUTH_USERINFO_URL: z.url().optional(),
       AUTH_OAUTH_SCOPES: z.string().default("openid,email,profile"),
       AUTH_OAUTH_TRUST_EMAIL: z.stringbool().default(false),
+      AUTH_OAUTH_DISABLE_NONCE_BINDING: z.stringbool().default(false),
       BETTER_AUTH_SECRET: z.string(),
     },
     runtimeEnv: process.env,
@@ -83,6 +85,9 @@ export const env = {
   AUTH_OAUTH_ENABLED: normalizeBoolean(rawEnv.AUTH_OAUTH_ENABLED),
   AUTH_OAUTH_SCOPES: normalizeScopeList(rawEnv.AUTH_OAUTH_SCOPES),
   AUTH_OAUTH_TRUST_EMAIL: normalizeBoolean(rawEnv.AUTH_OAUTH_TRUST_EMAIL),
+  AUTH_OAUTH_DISABLE_NONCE_BINDING: normalizeBoolean(
+    rawEnv.AUTH_OAUTH_DISABLE_NONCE_BINDING,
+  ),
 }
 
 /**
@@ -92,6 +97,24 @@ export const env = {
  */
 export const getBrokerUrl = (): string =>
   env.NEXT_PUBLIC_BROKER_URL ?? env.NEXT_PUBLIC_BUILDER_URL
+
+const trailingSlashPattern = /\/$/
+
+const LOOPBACK_HOSTNAMES = new Set(["localhost", "127.0.0.1", "[::1]"])
+
+export const getMcpResourceUrl = (): string => {
+  const resource = (
+    env.MCP_PUBLIC_URL ??
+    new URL("/mcp", env.NEXT_PUBLIC_BUILDER_URL).toString()
+  ).replace(trailingSlashPattern, "")
+  const { protocol, hostname } = new URL(resource)
+  if (protocol !== "https:" && !LOOPBACK_HOSTNAMES.has(hostname)) {
+    throw new Error(
+      `MCP resource URL must use HTTPS unless it is a loopback host (got ${resource}). Set NEXT_PUBLIC_BUILDER_URL or MCP_PUBLIC_URL to an https:// URL.`,
+    )
+  }
+  return resource
+}
 
 /** Whether self-service account creation is disabled. */
 export const isSignUpDisabled = (): boolean => env.AUTH_DISABLE_SIGNUP
