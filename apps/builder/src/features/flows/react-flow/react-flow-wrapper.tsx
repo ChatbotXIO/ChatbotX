@@ -90,6 +90,12 @@ const edgeTypes = {
   buttonedge: ButtonEdge,
 }
 
+const AUTOSAVE_DEBOUNCE_MS = 1500
+const AUTOSAVE_DEBOUNCE_OPTIONS = {
+  maxWait: 4000,
+  flushOnUnmount: true,
+} as const
+
 type ReactFlowFrameProps = {
   flowVersion: FlowVersionResource
   setOpenNodeDetailSheet: (open: boolean) => void
@@ -159,6 +165,9 @@ export function ReactFlowWrapper({
       },
     )
 
+  // A pending draft must survive navigation. next-safe-action starts the request
+  // synchronously; delete, duplicate, and revert cancel before replacement
+  // saves, so they cannot be resurrected on unmount.
   const handleChanges = useDebouncedCallback(
     (changedNodes: FlowNode[], changedEdges: Edge[]) => {
       savingDraft({
@@ -166,8 +175,8 @@ export function ReactFlowWrapper({
         edges: changedEdges as unknown as UpdateDraftFlowVersionSchema["edges"],
       })
     },
-    1500,
-    4000,
+    AUTOSAVE_DEBOUNCE_MS,
+    AUTOSAVE_DEBOUNCE_OPTIONS,
   )
 
   const t = useTranslations()

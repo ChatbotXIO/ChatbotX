@@ -5,6 +5,12 @@ import { createDebouncedFn, type DebouncedFn } from "./create-debounced-fn"
 
 type DebounceOptions = {
   maxWait?: number
+  /**
+   * Invokes a pending call when the component unmounts. Use only when the
+   * pending call is a durability guarantee, such as an autosave. Calling
+   * `cancel()` before unmount still makes this flush a no-op.
+   */
+  flushOnUnmount?: boolean
 }
 
 export function useDebouncedCallback<T extends (...args: never[]) => unknown>(
@@ -17,12 +23,32 @@ export function useDebouncedCallback<T extends (...args: never[]) => unknown>(
   // `handleCallback` is identity-stable (useCallbackRef memoizes once), so the
   // debounced fn is stable across renders. Stability matters: the autosave effect
   // in react-flow-wrapper depends on this returned function.
+  const maxWait =
+    typeof maxWaitOrOptions === "number"
+      ? maxWaitOrOptions
+      : maxWaitOrOptions?.maxWait
+  const flushOnUnmount =
+    typeof maxWaitOrOptions === "object" &&
+    maxWaitOrOptions.flushOnUnmount === true
+  const flushOnUnmountRef = React.useRef(flushOnUnmount)
+  flushOnUnmountRef.current = flushOnUnmount
+
   const debounced = React.useMemo(
-    () => createDebouncedFn(handleCallback as T, delay, maxWaitOrOptions),
-    [handleCallback, delay, maxWaitOrOptions],
+    () => createDebouncedFn(handleCallback as T, delay, maxWait),
+    [handleCallback, delay, maxWait],
   )
 
-  React.useEffect(() => () => debounced.cancel(), [debounced])
+  React.useEffect(
+    () => () => {
+      if (flushOnUnmountRef.current) {
+        debounced.flush()
+        return
+      }
+
+      debounced.cancel()
+    },
+    [debounced],
+  )
 
   return debounced
 }

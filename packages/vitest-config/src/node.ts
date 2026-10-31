@@ -48,8 +48,8 @@ const OPTIMIZED_DEPENDENCIES: readonly string[] = [
   "date-fns-tz",
 ]
 
-/** Workers per suite on CI. See the `resolveWorkerPool` doc comment. */
-const CI_MAX_WORKERS = 4
+/** Default per-suite worker cap. `VITEST_MAX_WORKERS` can override it. */
+const DEFAULT_MAX_WORKERS = 4
 
 /**
  * Worker sizing. `turbo run test --concurrency=N` runs N workspace suites at
@@ -70,9 +70,10 @@ const CI_MAX_WORKERS = 4
  *
  * Measured on builder (248 files, CI env, cold): forks/2w 71.9s (the previous
  * setting), threads/2w 66.6s, threads/3w 47.5s, threads/4w 42.3s — all 248
- * files green. Set `VITEST_MAX_WORKERS` to experiment without editing this
- * preset — it is declared in the root turbo.json `passThroughEnv` so it
- * survives turbo's strict env mode.
+ * files green. The same cap applies locally so an accidental workspace-wide
+ * selection cannot use one worker per host core. Set `VITEST_MAX_WORKERS` to
+ * experiment without editing this preset — it is declared in the root
+ * turbo.json `passThroughEnv` so it survives turbo's strict env mode.
  */
 function resolveWorkerPool(): { maxWorkers?: number; minWorkers?: number } {
   const override = Number(process.env.VITEST_MAX_WORKERS)
@@ -81,11 +82,7 @@ function resolveWorkerPool(): { maxWorkers?: number; minWorkers?: number } {
     return { maxWorkers: override, minWorkers: 1 }
   }
 
-  if (process.env.CI) {
-    return { maxWorkers: CI_MAX_WORKERS, minWorkers: 1 }
-  }
-
-  return {}
+  return { maxWorkers: DEFAULT_MAX_WORKERS, minWorkers: 1 }
 }
 
 /**

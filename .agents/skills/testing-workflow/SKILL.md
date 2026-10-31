@@ -14,6 +14,20 @@ The verification gate every change passes before it is "done". CI runs Types, Li
 3. **Test** — run the affected package's Vitest suite.
 4. **Coverage** — keep the 80% threshold (`packages/vitest-config/src/node.ts`). Do **not** set `VITEST_SKIP_COVERAGE_THRESHOLDS` to dodge it — that silently nulls all thresholds and hides under-coverage.
 
+### Focused Vitest runs
+
+For a single test file, invoke Vitest directly and cap its local worker pool:
+
+```bash
+VITEST_MAX_WORKERS=1 pnpm --filter <workspace> exec vitest run <relative-test-path>
+```
+
+`packages/vitest-config/src/node.ts` honors `VITEST_MAX_WORKERS`; it bounds memory even if the selected scope grows. NEVER use `pnpm --filter <workspace> test -- <relative-test-path>` for a focused run: the forwarded `--` can make Vitest ignore the path and run the entire workspace suite. To confirm the selected scope without executing tests, run:
+
+```bash
+pnpm --filter <workspace> exec vitest list <relative-test-path>
+```
+
 ## Where tests live
 
 - App/package/integration-level tests (actions, routes, API behavior, cache, worker behavior, cross-boundary): `<workspace>/__tests__/` — e.g. `apps/builder/__tests__`, `apps/worker/__tests__`, `packages/sdk/__tests__`, `integrations/messenger/__tests__`.
