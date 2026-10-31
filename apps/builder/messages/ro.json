@@ -449,7 +449,7 @@
       "category": "Categoria locației",
       "allLocations": "Toate locațiile",
       "whatsappOnly": "Trimis doar contactelor WhatsApp.",
-      "noLocationSource": "Adaugă înainte de această acțiune un pas Obține datele utilizatorului cu formatul de răspuns Locație. Fără el, această acțiune este omisă."
+      "noLocationSource": "Locația trebuie colectată în acest flux: adaugă înainte de această acțiune un pas Obține datele utilizatorului cu formatul de răspuns Locație. O locație salvată de alt flux nu este folosită. Fără el, această acțiune este omisă."
     }
   },
   "folders": {

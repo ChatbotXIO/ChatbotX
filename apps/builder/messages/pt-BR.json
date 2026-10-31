@@ -3106,7 +3106,7 @@
       "category": "Categoria de local",
       "allLocations": "Todos os locais",
       "whatsappOnly": "Enviado apenas para contatos do WhatsApp.",
-      "noLocationSource": "Adicione uma etapa Obter dados do usuário com formato de resposta Localização antes desta ação. Sem ela, esta ação é ignorada."
+      "noLocationSource": "A localização precisa ser coletada neste fluxo: adicione uma etapa Obter dados do usuário com formato de resposta Localização antes desta ação. Uma localização salva por outro fluxo não é usada. Sem ela, esta ação é ignorada."
     }
   },
   "folders": {

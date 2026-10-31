@@ -3106,7 +3106,7 @@
       "category": "Lokationskategori",
       "allLocations": "Alle lokationer",
       "whatsappOnly": "Sendes kun til WhatsApp-kontakter.",
-      "noLocationSource": "Tilføj et Hent brugerdata-trin med svarformatet Lokation før denne handling. Uden det springes handlingen over."
+      "noLocationSource": "Lokationen skal indsamles i dette flow: tilføj et Hent brugerdata-trin med svarformatet Lokation før denne handling. En lokation gemt af et andet flow bruges ikke. Uden det springes handlingen over."
     }
   },
   "folders": {

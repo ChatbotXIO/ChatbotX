@@ -3106,7 +3106,7 @@
       "category": "Standortkategorie",
       "allLocations": "Alle Standorte",
       "whatsappOnly": "Wird nur an WhatsApp-Kontakte gesendet.",
-      "noLocationSource": "Füge vor dieser Aktion einen Schritt „Benutzerdaten abrufen“ mit dem Antwortformat Standort hinzu. Ohne ihn wird diese Aktion übersprungen."
+      "noLocationSource": "Der Standort muss in diesem Flow erfasst werden: Füge vor dieser Aktion einen Schritt „Benutzerdaten abrufen“ mit dem Antwortformat Standort hinzu. Ein von einem anderen Flow gespeicherter Standort wird nicht verwendet. Ohne ihn wird diese Aktion übersprungen."
     }
   },
   "folders": {

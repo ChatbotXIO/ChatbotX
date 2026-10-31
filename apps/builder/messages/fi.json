@@ -3106,7 +3106,7 @@
       "category": "Sijaintiluokka",
       "allLocations": "Kaikki sijainnit",
       "whatsappOnly": "Lähetetään vain WhatsApp-yhteystiedoille.",
-      "noLocationSource": "Lisää ennen tätä toimintoa Hae käyttäjätiedot -vaihe, jonka vastausmuoto on Sijainti. Ilman sitä toiminto ohitetaan."
+      "noLocationSource": "Sijainti on kerättävä tässä flow'ssa: lisää ennen tätä toimintoa Hae käyttäjätiedot -vaihe, jonka vastausmuoto on Sijainti. Toisen flow'n tallentamaa sijaintia ei käytetä. Ilman sitä toiminto ohitetaan."
     }
   },
   "folders": {

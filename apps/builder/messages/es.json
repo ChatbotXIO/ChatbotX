@@ -3262,7 +3262,7 @@
       "category": "Categoría de ubicación",
       "allLocations": "Todas las ubicaciones",
       "whatsappOnly": "Solo se envía a contactos de WhatsApp.",
-      "noLocationSource": "Agrega un paso Obtener datos del usuario con formato de respuesta Ubicación antes de esta acción. Sin él, esta acción se omite."
+      "noLocationSource": "La ubicación debe recopilarse en este flujo: agrega un paso Obtener datos del usuario con formato de respuesta Ubicación antes de esta acción. No se usa una ubicación guardada por otro flujo. Sin él, esta acción se omite."
     }
   },
   "folders": {

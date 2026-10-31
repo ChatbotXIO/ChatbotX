@@ -3944,7 +3944,7 @@
       "category": "Location category",
       "allLocations": "All locations",
       "whatsappOnly": "Only sent to WhatsApp contacts.",
-      "noLocationSource": "Add a Get User Data step with reply format Location before this action. Without it, this action is skipped."
+      "noLocationSource": "The location must be collected in this flow: add a Get User Data step with reply format Location before this action. A location saved by another flow is not used. Without it, this action is skipped."
     }
   },
   "folders": {

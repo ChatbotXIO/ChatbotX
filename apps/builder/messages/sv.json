@@ -4262,7 +4262,7 @@
       "category": "Platskategori",
       "allLocations": "Alla platser",
       "whatsappOnly": "Skickas endast till WhatsApp-kontakter.",
-      "noLocationSource": "Lägg till ett steg Hämta användardata med svarsformatet Plats före den här åtgärden. Utan det hoppas åtgärden över."
+      "noLocationSource": "Platsen måste samlas in i det här flödet: lägg till ett steg Hämta användardata med svarsformatet Plats före den här åtgärden. En plats som sparats av ett annat flöde används inte. Utan det hoppas åtgärden över."
     }
   },
   "folders": {

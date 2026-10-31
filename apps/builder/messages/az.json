@@ -3944,7 +3944,7 @@
       "category": "Məkan kateqoriyası",
       "allLocations": "Bütün məkanlar",
       "whatsappOnly": "Yalnız WhatsApp kontaktlarına göndərilir.",
-      "noLocationSource": "Bu əməliyyatdan əvvəl cavab formatı Məkan olan İstifadəçi Məlumatını Al addımı əlavə edin. Onsuz bu əməliyyat ötürülür."
+      "noLocationSource": "Məkan bu axında toplanmalıdır: bu əməliyyatdan əvvəl cavab formatı Məkan olan İstifadəçi Məlumatını Al addımı əlavə edin. Başqa axının saxladığı məkan istifadə olunmur. Onsuz bu əməliyyat ötürülür."
     }
   },
   "folders": {

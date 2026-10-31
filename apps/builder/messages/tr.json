@@ -3262,7 +3262,7 @@
       "category": "Konum kategorisi",
       "allLocations": "Tüm konumlar",
       "whatsappOnly": "Yalnızca WhatsApp kişilerine gönderilir.",
-      "noLocationSource": "Bu işlemden önce yanıt biçimi Konum olan bir Kullanıcı Verisi Al adımı ekleyin. Bu adım olmadan işlem atlanır."
+      "noLocationSource": "Konum bu akışta toplanmalıdır: bu işlemden önce yanıt biçimi Konum olan bir Kullanıcı Verisi Al adımı ekleyin. Başka bir akışın kaydettiği konum kullanılmaz. Bu adım olmadan işlem atlanır."
     }
   },
   "folders": {

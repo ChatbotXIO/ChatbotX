@@ -3304,7 +3304,7 @@
       "category": "Danh mục địa điểm",
       "allLocations": "Tất cả địa điểm",
       "whatsappOnly": "Chỉ gửi cho liên hệ WhatsApp.",
-      "noLocationSource": "Thêm bước Lấy dữ liệu người dùng với định dạng trả lời Vị trí trước hành động này. Nếu không có, hành động này sẽ bị bỏ qua."
+      "noLocationSource": "Vị trí phải được thu thập trong flow này: thêm bước Lấy dữ liệu người dùng với định dạng trả lời Vị trí trước hành động này. Vị trí được lưu bởi flow khác sẽ không được dùng. Nếu không có, hành động này sẽ bị bỏ qua."
     }
   },
   "folders": {

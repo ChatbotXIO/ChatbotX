@@ -3106,7 +3106,7 @@
       "category": "Kategori lokasi",
       "allLocations": "Semua lokasi",
       "whatsappOnly": "Hanya dikirim ke kontak WhatsApp.",
-      "noLocationSource": "Tambahkan langkah Dapatkan Data Pengguna dengan format balasan Lokasi sebelum tindakan ini. Tanpanya, tindakan ini dilewati."
+      "noLocationSource": "Lokasi harus dikumpulkan di flow ini: tambahkan langkah Dapatkan Data Pengguna dengan format balasan Lokasi sebelum tindakan ini. Lokasi yang disimpan oleh flow lain tidak digunakan. Tanpanya, tindakan ini dilewati."
     }
   },
   "folders": {

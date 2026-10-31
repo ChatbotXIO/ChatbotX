@@ -3106,7 +3106,7 @@
       "category": "Locatiecategorie",
       "allLocations": "Alle locaties",
       "whatsappOnly": "Alleen verzonden naar WhatsApp-contacten.",
-      "noLocationSource": "Voeg vóór deze actie een stap Gebruikersgegevens ophalen toe met antwoordformaat Locatie. Zonder die stap wordt deze actie overgeslagen."
+      "noLocationSource": "De locatie moet in deze flow worden verzameld: voeg vóór deze actie een stap Gebruikersgegevens ophalen toe met antwoordformaat Locatie. Een locatie die door een andere flow is opgeslagen, wordt niet gebruikt. Zonder die stap wordt deze actie overgeslagen."
     }
   },
   "folders": {

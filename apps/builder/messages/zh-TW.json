@@ -3510,7 +3510,7 @@
       "category": "地點類別",
       "allLocations": "所有地點",
       "whatsappOnly": "僅傳送給 WhatsApp 聯絡人。",
-      "noLocationSource": "請在此動作之前新增一個回覆格式為「位置」的取得使用者資料步驟。否則將略過此動作。"
+      "noLocationSource": "位置必須在此流程中收集：請在此動作之前新增一個回覆格式為「位置」的取得使用者資料步驟。其他流程儲存的位置不會被使用。否則將略過此動作。"
     }
   },
   "folders": {

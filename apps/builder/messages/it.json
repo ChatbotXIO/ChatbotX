@@ -3106,7 +3106,7 @@
       "category": "Categoria della sede",
       "allLocations": "Tutte le sedi",
       "whatsappOnly": "Inviato solo ai contatti WhatsApp.",
-      "noLocationSource": "Aggiungi un passaggio Ottieni dati utente con formato di risposta Posizione prima di questa azione. Senza di esso, l'azione viene saltata."
+      "noLocationSource": "La posizione deve essere raccolta in questo flusso: aggiungi un passaggio Ottieni dati utente con formato di risposta Posizione prima di questa azione. Una posizione salvata da un altro flusso non viene usata. Senza di esso, l'azione viene saltata."
     }
   },
   "folders": {

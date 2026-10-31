@@ -4265,7 +4265,7 @@
       "category": "地点类别",
       "allLocations": "所有地点",
       "whatsappOnly": "仅发送给 WhatsApp 联系人。",
-      "noLocationSource": "请在此操作之前添加一个回复格式为“位置”的获取用户数据步骤。否则将跳过此操作。"
+      "noLocationSource": "位置必须在此流程中收集：请在此操作之前添加一个回复格式为“位置”的获取用户数据步骤。其他流程保存的位置不会被使用。否则将跳过此操作。"
     }
   },
   "folders": {
