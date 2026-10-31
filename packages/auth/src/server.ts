@@ -57,7 +57,7 @@ import {
 import { PHASE_PRODUCTION_BUILD } from "next/constants"
 import { claimUnverifiedAccountBeforeLink } from "./claim-unverified-account"
 import { resolveGenericOAuthConfig } from "./generic-oauth"
-import { env, getBrokerUrl, getMcpResourceUrl } from "./keys"
+import { env, getBrokerUrl, getBuilderOrigin, getMcpResourceUrl } from "./keys"
 import { logger } from "./logger"
 import { buildMcpPluginOptions, defaultMcpResource } from "./mcp-config"
 import { GENERIC_OAUTH_PROVIDER_ID } from "./oauth-constants"
@@ -907,7 +907,7 @@ export function createAuth(config: AuthConfig) {
         : ([] as const)),
       jwt({
         disableSettingJwtHeader: true,
-        jwt: { issuer: new URL(env.NEXT_PUBLIC_BUILDER_URL).origin },
+        jwt: { issuer: getBuilderOrigin() },
       }),
       // The mcp/oauth-provider plugin seeds its `OAuthResource` row from `init`,
       // i.e. a DB query whenever `createAuth` runs. During `next build` that fires
