@@ -55,7 +55,10 @@ vi.mock("@/lib/rate-limit/guest-rate-limit", () => ({
 vi.mock("@/env", () => ({ isCloud: () => true }))
 
 vi.mock("@/lib/auth/auth", () => ({ auth: {} }))
-vi.mock("@chatbotx.io/auth/mcp-resource", () => ({ verifyMcpAccessToken }))
+vi.mock("@chatbotx.io/auth/mcp-resource", () => ({
+  McpTokenVerificationUnavailableError: class McpTokenVerificationUnavailableError extends Error {},
+  verifyMcpAccessToken,
+}))
 
 const { workspaceTokenAuthMidddleware } = await import(
   "@/middlewares/workspace-token-auth"
@@ -457,6 +460,23 @@ describe("workspaceTokenAuthMidddleware", () => {
       ),
     ).rejects.toMatchObject({ code: "INVALID_CHATBOT_TOKEN", status: 401 })
     expect(resolvePrincipal).not.toHaveBeenCalled()
+  })
+
+  test("maps a JWKS outage to 503 instead of 500", async () => {
+    findWorkspaceByTokenHash.mockResolvedValue(undefined)
+    const { McpTokenVerificationUnavailableError } = await import(
+      "@chatbotx.io/auth/mcp-resource"
+    )
+    verifyMcpAccessToken.mockRejectedValue(
+      new McpTokenVerificationUnavailableError(),
+    )
+
+    await expect(
+      callMiddleware(
+        new Headers({ Authorization: "Bearer header.payload.signature" }),
+        "GET",
+      ),
+    ).rejects.toMatchObject({ code: "SERVICE_UNAVAILABLE", status: 503 })
   })
 
   test("never sends a query-string workspace token to OAuth resolution", async () => {

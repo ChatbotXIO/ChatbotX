@@ -85,6 +85,12 @@ export class McpOAuthService extends BaseService {
 
     const workspace = await this.findAdminWorkspace({ user, workspaceId })
     if (!workspace) {
+      if (consent.workspaceId) {
+        await this.revokeGrant({
+          userId: user.id,
+          clientId: props.clientId,
+        })
+      }
       return { kind: "forbidden" }
     }
 

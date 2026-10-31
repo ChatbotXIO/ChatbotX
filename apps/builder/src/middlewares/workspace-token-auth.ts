@@ -144,11 +144,24 @@ export const workspaceTokenAuthMidddleware = base.middleware(
 
       // Lazy import: the OAuth verifier is only needed on this fallback path
       // and stays out of tests/routes that authenticate workspace API tokens.
-      const [{ auth }, { verifyMcpAccessToken }] = await Promise.all([
+      const [
+        { auth },
+        { McpTokenVerificationUnavailableError, verifyMcpAccessToken },
+      ] = await Promise.all([
         import("@/lib/auth/auth"),
         import("@chatbotx.io/auth/mcp-resource"),
       ])
-      const mcpAccessToken = await verifyMcpAccessToken(auth, bearerToken)
+      const mcpAccessToken = await verifyMcpAccessToken(
+        auth,
+        bearerToken,
+      ).catch((error: unknown) => {
+        if (error instanceof McpTokenVerificationUnavailableError) {
+          throw new ORPCError("SERVICE_UNAVAILABLE", {
+            message: "Token verification is temporarily unavailable",
+          })
+        }
+        throw error
+      })
       if (!mcpAccessToken) {
         throw invalidTokenError()
       }

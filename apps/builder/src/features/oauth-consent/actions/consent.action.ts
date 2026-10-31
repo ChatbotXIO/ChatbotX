@@ -62,6 +62,9 @@ export const submitOAuthConsentAction = authActionClient
     // Bind before the redirect reaches the client. Better Auth reuses a stored
     // consent without showing this page again, so an unbound one must not
     // survive a failed bind: revoke it and let the next attempt re-prompt.
+    // Better Auth keeps one consent row per user and client, so the one just
+    // recorded replaced any earlier grant; revoking removes that grant's
+    // tokens too, which forces the client to authorize again.
     try {
       await mcpOAuthService.bindConsentWorkspace(binding)
     } catch (error) {

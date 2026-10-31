@@ -222,6 +222,22 @@ describe("auth route — generic OAuth enterprise gate (real isGenericOAuthPath 
   })
 })
 
+describe("auth route — MCP consent", () => {
+  test("rejects direct HTTP consent requests", async () => {
+    const { POST } = await loadRoute()
+
+    expect(
+      (
+        await POST(
+          new Request(`https://${PLATFORM_HOST}/api/auth/oauth2/consent`, {
+            method: "POST",
+          }),
+        )
+      ).status,
+    ).toBe(404)
+    expect(defaultHandler).not.toHaveBeenCalled()
+  })
+})
 describe("auth route — MCP browser responses", () => {
   test("adds CORS headers to the MCP token response", async () => {
     mockResolveTenantByDomain.mockResolvedValue("1")

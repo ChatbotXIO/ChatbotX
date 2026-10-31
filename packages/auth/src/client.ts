@@ -1,3 +1,4 @@
+import { oauthProviderClient } from "@better-auth/oauth-provider/client"
 import {
   anonymousClient,
   jwtClient,
@@ -16,6 +17,7 @@ export function createClient(baseURL?: string) {
       oneTimeTokenClient(),
       anonymousClient(),
       jwtClient(),
+      oauthProviderClient(),
     ],
   })
 }

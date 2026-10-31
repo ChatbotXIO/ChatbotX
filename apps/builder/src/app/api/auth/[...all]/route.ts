@@ -28,10 +28,18 @@ const MCP_CORS_HEADERS = {
     "Content-Type, Authorization, mcp-protocol-version",
 } as const
 
+const MCP_CORS_PATHS = new Set([
+  "/api/auth/oauth2/token",
+  "/api/auth/oauth2/register",
+  "/api/auth/oauth2/revoke",
+  "/api/auth/oauth2/introspect",
+  "/api/auth/oauth2/userinfo",
+])
+
 const retryAfterPattern = /Retry after (\d+)s\./
 
 const withMcpCors = (pathname: string, response: Response): Response => {
-  if (!pathname.includes("/api/auth/oauth2/")) {
+  if (!MCP_CORS_PATHS.has(pathname)) {
     return response
   }
 
@@ -116,6 +124,10 @@ const handle = async (request: Request): Promise<Response> => {
   // Use the public URL (host behind the proxy), not the raw internal request URL,
   // so the relay host comparison matches the registered platform host.
   const url = getPublicUrlFromRequest(request)
+
+  if (url.pathname.endsWith("/oauth2/consent")) {
+    return new Response(null, { status: 404 })
+  }
   const requestedSignInProvider = isSharedSocialPath(url.pathname)
     ? await getRequestedSignInProvider(request)
     : null
@@ -195,7 +207,7 @@ export const POST = handle
 
 export const OPTIONS = (request: Request) => {
   const pathname = new URL(request.url).pathname
-  if (!pathname.includes("/api/auth/oauth2/")) {
+  if (!MCP_CORS_PATHS.has(pathname)) {
     return new Response(null, { status: 405 })
   }
 

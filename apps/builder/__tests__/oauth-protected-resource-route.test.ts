@@ -31,7 +31,6 @@ describe("OAuth protected resource discovery", () => {
       authorization_servers: ["https://app.chatbotx.io"],
       bearer_methods_supported: ["header"],
       resource: "https://app.chatbotx.io/mcp",
-      scopes_supported: ["openid", "profile", "email", "offline_access"],
     })
   })
 

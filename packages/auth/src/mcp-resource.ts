@@ -5,6 +5,7 @@ import {
 import { oauthProviderResourceClient } from "@better-auth/oauth-provider/resource-client"
 import { isAPIError } from "better-auth/api"
 import { env, getMcpResourceUrl } from "./keys"
+import { logger } from "./logger"
 import type { Auth } from "./server"
 
 export type McpAccessTokenSubject = {
@@ -19,6 +20,18 @@ const JWKS_INFRASTRUCTURE_ERROR_CODES = new Set([
   "ERR_JWKS_INVALID",
   "ERR_JWKS_MULTIPLE_MATCHING_KEYS",
 ])
+
+export class McpTokenVerificationUnavailableError extends Error {
+  constructor(options?: ErrorOptions) {
+    super("MCP token verification is temporarily unavailable", options)
+    this.name = "McpTokenVerificationUnavailableError"
+  }
+}
+
+const isJwksInfrastructureError = (error: unknown): boolean => {
+  const code = (error as { code?: unknown } | null)?.code
+  return typeof code === "string" && JWKS_INFRASTRUCTURE_ERROR_CODES.has(code)
+}
 
 const isInvalidTokenError = (error: unknown): boolean => {
   // Better Auth wraps an expired, mis-signed, or wrong-audience token in an
@@ -53,11 +66,18 @@ export const verifyMcpAccessToken = async (
     .getActions()
     .verifyBearerToken(accessToken, {
       jwksUrl: `${baseURL}/jwks`,
-      verifyOptions: { audience: getMcpResourceUrl(), issuer: baseURL },
+      verifyOptions: {
+        audience: getMcpResourceUrl(),
+        issuer: new URL(baseURL).origin,
+      },
     })
     .catch((error: unknown) => {
       if (isInvalidTokenError(error)) {
         return null
+      }
+      if (isJwksInfrastructureError(error)) {
+        logger.error({ err: error }, "MCP JWKS verification unavailable")
+        throw new McpTokenVerificationUnavailableError({ cause: error })
       }
       throw error
     })

@@ -17,6 +17,33 @@ Keep `MCP_PUBLIC_URL` equal to `<CHATBOTX_MCP_PUBLIC_URL origin>/mcp`. If they d
 
 OAuth uses the deployment's canonical builder URL. Reseller custom domains are intentionally outside this flow; reseller sub-accounts continue to use workspace API tokens.
 
+## Better Auth 1.7 deployment
+
+The authorization-server issuer is the canonical builder origin (for example,
+`https://app.chatbotx.io`); discovery metadata and issued access tokens use
+that same issuer. MCP clients should send the RFC 8707 `resource` parameter
+with the canonical MCP resource URL. The authorization server supplies it for
+legacy clients that omit it because this deployment has exactly one resource.
+
+Deploy this upgrade in a maintenance window. Magic links issued in the previous
+five minutes, OAuth state issued in the previous ten minutes, and existing MCP
+OAuth access tokens are invalidated by the schema and token-format change.
+Clients must authorize again. Confidential clients migrated from
+`client_secret_post` must register again because the migration assigns
+`client_secret_basic`; do not modify the applied migration.
+
+If the OIDC provider never echoes the ID-token nonce, set
+`AUTH_OAUTH_DISABLE_NONCE_BINDING=true` (weakens replay protection). Sign-out
+stays local; the provider's `end_session_endpoint` is not followed.
+
+If the MCP resource is not HTTPS (and not loopback), the builder now fails at
+startup with a clear error instead of issuing unusable tokens. If the JWKS
+endpoint is unreachable, MCP calls return 503 rather than 500.
+
+Generic OIDC providers must update their registered redirect URI to
+`<broker-origin>/api/auth/callback/oidc`. MCP resources must use HTTPS except
+on loopback hosts during local development.
+
 ## Production topology
 
 The load balancer MUST expose the builder's `/mcp/*` proxy publicly. The builder

@@ -2,7 +2,6 @@ import { env } from "@/env"
 import {
   getMcpPublicPath,
   getMcpPublicUrl,
-  mcpOAuthScopes,
 } from "@/features/mcp-oauth/lib/mcp-oauth"
 
 export const GET = async (
@@ -27,7 +26,6 @@ export const GET = async (
     {
       resource: getMcpPublicUrl(),
       authorization_servers: [env.BETTER_AUTH_URL],
-      scopes_supported: mcpOAuthScopes,
       bearer_methods_supported: ["header"],
     },
     { headers: { "Cache-Control": "no-store" } },

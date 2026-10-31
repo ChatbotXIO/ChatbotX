@@ -9,6 +9,7 @@ const {
   findActiveByDomain,
   listActiveDomains,
   dbLimit,
+  dbWhere,
   registerSchemaCheck,
   schemaCheckFor,
   tenantFindById,
@@ -17,6 +18,7 @@ const {
   findActiveByDomain: vi.fn(),
   listActiveDomains: vi.fn(),
   dbLimit: vi.fn(),
+  dbWhere: vi.fn(),
   registerSchemaCheck: vi.fn(),
   schemaCheckFor: vi.fn(),
   tenantFindById: vi.fn(),
@@ -36,14 +38,17 @@ vi.mock("@better-auth/core/db/internal", () => ({
 vi.mock("@chatbotx.io/database/client", () => {
   const chain = {
     from: () => chain,
-    where: () => chain,
+    where: (clause: unknown) => {
+      dbWhere(clause)
+      return chain
+    },
     limit: dbLimit,
   }
   return {
     db: {
       select: () => chain,
     },
-    eq: () => ({}),
+    eq: (column: unknown, value: unknown) => ({ column, value }),
   }
 })
 
@@ -134,6 +139,14 @@ describe("resolveOAuthStateCallbackURL", () => {
     ])
     expect(await resolveOAuthStateCallbackURL("state-token")).toBe(
       "https://reseller.com/welcome",
+    )
+  })
+
+  test("looks the row up by better-auth 1.7's prefixed state identifier", async () => {
+    dbLimit.mockResolvedValue([])
+    await resolveOAuthStateCallbackURL("state-token")
+    expect(dbWhere).toHaveBeenCalledWith(
+      expect.objectContaining({ value: "auth-state:state-token" }),
     )
   })
 
@@ -419,6 +432,25 @@ describe("tenant-scoped adapter", () => {
 
     const passed = findOne.mock.calls[0]?.[0] as AdapterCall
     expect(passed.where).toContainEqual({ field: "tenantId", value: "42" })
+  })
+
+  test("leaves credential lookups by userId tenant-neutral", async () => {
+    const { scoped, findOne } = buildScoped()
+    findOne.mockResolvedValue(null)
+
+    await withTenant("42", () =>
+      scoped.findOne({
+        model: "account",
+        where: [
+          { field: "userId", value: "7" },
+          { field: "providerId", value: "credential" },
+          { field: "accountId", value: "7" },
+        ],
+      }),
+    )
+
+    const passed = findOne.mock.calls[0]?.[0] as AdapterCall
+    expect(passed.where).not.toContainEqual({ field: "tenantId", value: "42" })
   })
 
   test("leaves account lookups by userId tenant-neutral", async () => {

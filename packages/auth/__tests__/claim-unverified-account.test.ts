@@ -17,6 +17,7 @@ const internalAdapter = {
   findUserById: vi.fn(),
   findAccounts: vi.fn(),
   deleteAccount: vi.fn(async () => undefined),
+  updateUser: vi.fn(async () => ({ id: USER_ID, emailVerified: true })),
 }
 const deleteMany = vi.fn(async () => 2)
 const context = {
@@ -45,6 +46,7 @@ beforeEach(() => {
   vi.clearAllMocks()
   internalAdapter.findUserById.mockResolvedValue({
     id: USER_ID,
+    email: "owner@example.com",
     emailVerified: false,
     createdAt: oldDate(),
   })
@@ -66,6 +68,9 @@ describe("claimUnverifiedAccountBeforeLink", () => {
     expect(internalAdapter.deleteAccount).toHaveBeenCalledWith("acc-pwd")
     expect(internalAdapter.deleteAccount).toHaveBeenCalledWith("acc-fb")
     expect(deleteMany).toHaveBeenCalledWith(SESSION_DELETE)
+    expect(internalAdapter.updateUser).toHaveBeenCalledWith(USER_ID, {
+      emailVerified: true,
+    })
   })
 
   test.each([

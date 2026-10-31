@@ -22,7 +22,13 @@ vi.mock("../src/keys", () => ({
   getMcpResourceUrl: () => "https://app.example.com/mcp",
 }))
 
-import { verifyMcpAccessToken, verifyMcpOAuthQuery } from "../src/mcp-resource"
+vi.mock("../src/logger", () => ({ logger: { error: vi.fn() } }))
+
+import {
+  McpTokenVerificationUnavailableError,
+  verifyMcpAccessToken,
+  verifyMcpOAuthQuery,
+} from "../src/mcp-resource"
 import type { Auth } from "../src/server"
 
 const auth = {
@@ -37,7 +43,7 @@ describe("verifyMcpAccessToken", () => {
     verifyBearerToken.mockReset()
   })
 
-  test("returns the subject and verifies against the MCP audience, auth issuer and JWKS", async () => {
+  test("returns the subject and verifies against the MCP audience, origin issuer and JWKS", async () => {
     verifyBearerToken.mockResolvedValue({ client_id: "client-1", sub: "42" })
 
     await expect(verifyMcpAccessToken(auth, "a.b.c")).resolves.toEqual({
@@ -48,7 +54,7 @@ describe("verifyMcpAccessToken", () => {
       jwksUrl: "https://app.example.com/api/auth/jwks",
       verifyOptions: {
         audience: "https://app.example.com/mcp",
-        issuer: "https://app.example.com/api/auth",
+        issuer: "https://app.example.com",
       },
     })
   })
@@ -75,11 +81,12 @@ describe("verifyMcpAccessToken", () => {
     await expect(verifyMcpAccessToken(auth, "a.b.c")).resolves.toBeNull()
   })
 
-  test("rethrows JWKS infrastructure failures", async () => {
-    const error = joseError("ERR_JWKS_TIMEOUT")
-    verifyBearerToken.mockRejectedValue(error)
+  test("maps JWKS infrastructure failures to an unavailable error", async () => {
+    verifyBearerToken.mockRejectedValue(joseError("ERR_JWKS_TIMEOUT"))
 
-    await expect(verifyMcpAccessToken(auth, "a.b.c")).rejects.toBe(error)
+    await expect(verifyMcpAccessToken(auth, "a.b.c")).rejects.toBeInstanceOf(
+      McpTokenVerificationUnavailableError,
+    )
   })
 
   test("rethrows non-UNAUTHORIZED API errors", async () => {

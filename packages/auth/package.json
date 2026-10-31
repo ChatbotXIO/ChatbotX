@@ -20,10 +20,10 @@
     "@chatbotx.io/sdk": "workspace:*",
     "@chatbotx.io/utils": "workspace:*",
     "@t3-oss/env-core": "^0.13.11",
-    "@better-auth/core": "^1.7.14",
-    "@better-auth/mcp": "^1.7.14",
-    "@better-auth/oauth-provider": "^1.7.14",
-    "better-auth": "^1.7.14",
+    "@better-auth/core": "1.7.14",
+    "@better-auth/mcp": "1.7.14",
+    "@better-auth/oauth-provider": "1.7.14",
+    "better-auth": "1.7.14",
     "zod": "^4.3.6"
   },
   "devDependencies": {
