@@ -28,18 +28,15 @@ const resolvePublicOrigin = (req: IncomingMessage): string => {
   return `${protocol}://${host}`
 }
 
-export const resolveMcpResourceUrl = (req: IncomingMessage): string =>
-  new URL("/mcp", env.CHATBOTX_MCP_PUBLIC_URL ?? resolvePublicOrigin(req))
+const resolveMcpResourceUrl = (req: IncomingMessage): string =>
+  new URL("/mcp", resolvePublicOrigin(req))
     .toString()
     .replace(trailingSlashPattern, "")
 
 const resolveMetadataUrl = (req: IncomingMessage, pathSuffix: string): string =>
   new URL(pathSuffix, resolvePublicOrigin(req)).toString()
 
-export const buildProtectedResourceMetadata = (
-  req: IncomingMessage,
-  _pathSuffix: string,
-) => ({
+export const buildProtectedResourceMetadata = (req: IncomingMessage) => ({
   resource: resolveMcpResourceUrl(req),
   authorization_servers: [resolveIssuer()],
   scopes_supported: oauthScopes,

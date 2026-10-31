@@ -346,7 +346,7 @@ describe("workspaceTokenAuthMidddleware", () => {
       principal: oauthPrincipal,
     })
     const headers = new Headers({
-      Authorization: "Bearer oauth-token",
+      Authorization: "Bearer header.payload.signature",
       "User-Agent": "MCP Inspector",
       "x-workspace-id": "ws-oauth",
     })
@@ -392,7 +392,7 @@ describe("workspaceTokenAuthMidddleware", () => {
 
     await expect(
       callMiddleware(
-        new Headers({ Authorization: "Bearer oauth-token" }),
+        new Headers({ Authorization: "Bearer header.payload.signature" }),
         "GET",
       ),
     ).rejects.toMatchObject({ code: "FORBIDDEN", status: 403 })
@@ -411,7 +411,7 @@ describe("workspaceTokenAuthMidddleware", () => {
 
     await expect(
       callMiddleware(
-        new Headers({ Authorization: "Bearer oauth-token" }),
+        new Headers({ Authorization: "Bearer header.payload.signature" }),
         "GET",
       ),
     ).rejects.toMatchObject({
@@ -427,10 +427,36 @@ describe("workspaceTokenAuthMidddleware", () => {
 
     await expect(
       callMiddleware(
-        new Headers({ Authorization: "Bearer oauth-token" }),
+        new Headers({ Authorization: "Bearer header.payload.signature" }),
         "GET",
       ),
     ).rejects.toMatchObject({ code: "INVALID_CHATBOT_TOKEN", status: 401 })
+  })
+
+  test("rejects a non-JWT bearer without verifying it as an OAuth token", async () => {
+    findWorkspaceByTokenHash.mockResolvedValue(undefined)
+
+    await expect(
+      callMiddleware(
+        new Headers({ Authorization: "Bearer revoked-api-key" }),
+        "GET",
+      ),
+    ).rejects.toMatchObject({ code: "INVALID_CHATBOT_TOKEN", status: 401 })
+    expect(verifyMcpAccessToken).not.toHaveBeenCalled()
+    expect(resolvePrincipal).not.toHaveBeenCalled()
+  })
+
+  test("maps a token the verifier rejects to 401", async () => {
+    findWorkspaceByTokenHash.mockResolvedValue(undefined)
+    verifyMcpAccessToken.mockResolvedValue(null)
+
+    await expect(
+      callMiddleware(
+        new Headers({ Authorization: "Bearer header.payload.signature" }),
+        "GET",
+      ),
+    ).rejects.toMatchObject({ code: "INVALID_CHATBOT_TOKEN", status: 401 })
+    expect(resolvePrincipal).not.toHaveBeenCalled()
   })
 
   test("never sends a query-string workspace token to OAuth resolution", async () => {

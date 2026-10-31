@@ -6,6 +6,9 @@ export const verificationModel = pgTable(
   "Verification",
   {
     ...sharedColumns,
+    // Text, not bigint: Better Auth reserves rows with a deterministic base64url
+    // id (`reserveVerificationValue`, used by magic-link cleanup) to get an
+    // atomic single-use guarantee from the primary key.
     id: text()
       .primaryKey()
       .$defaultFn(() => createId()),

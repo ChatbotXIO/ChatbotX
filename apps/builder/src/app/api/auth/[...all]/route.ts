@@ -1,5 +1,6 @@
 import {
   isGenericOAuthPath,
+  isSharedSocialPath,
   SOCIAL_PROVIDERS,
   type SocialProvider,
   warnIfGenericOAuthUnlicensed,
@@ -92,11 +93,8 @@ const getCallbackProvider = (pathname: string): SocialProvider | null =>
     pathname.endsWith(`/callback/${provider}`),
   ) ?? null
 
-const isSocialSignInPath = (pathname: string): boolean =>
-  pathname.endsWith("/sign-in/social") || pathname.endsWith("/sign-up/social")
-
 /**
- * Read the provider requested by a social sign-in POST. The generic provider
+ * Read the provider requested by a social sign-in, sign-up or link POST. The generic provider
  * shares this endpoint with first-party providers, so only the latter are
  * dispatched to a tenant-specific auth instance.
  */
@@ -118,7 +116,7 @@ const handle = async (request: Request): Promise<Response> => {
   // Use the public URL (host behind the proxy), not the raw internal request URL,
   // so the relay host comparison matches the registered platform host.
   const url = getPublicUrlFromRequest(request)
-  const requestedSignInProvider = isSocialSignInPath(url.pathname)
+  const requestedSignInProvider = isSharedSocialPath(url.pathname)
     ? await getRequestedSignInProvider(request)
     : null
 

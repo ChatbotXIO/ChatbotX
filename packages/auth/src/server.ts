@@ -59,6 +59,7 @@ import { claimUnverifiedAccountBeforeLink } from "./claim-unverified-account"
 import { resolveGenericOAuthConfig } from "./generic-oauth"
 import { env, getBrokerUrl, getMcpResourceUrl } from "./keys"
 import { logger } from "./logger"
+import { buildMcpPluginOptions } from "./mcp-config"
 import { GENERIC_OAUTH_PROVIDER_ID } from "./oauth-constants"
 import {
   isSignUpAllowed,
@@ -563,6 +564,12 @@ const guardEmailSignUp = createAuthMiddleware(async (ctx) => {
   }
 })
 
+const firstString = (...values: unknown[]): string | undefined =>
+  values.find((value): value is string => typeof value === "string")
+
+const joinStrings = (...values: unknown[]): string =>
+  values.filter((value): value is string => typeof value === "string").join(" ")
+
 export function createAuth(config: AuthConfig) {
   const socialProviders = buildSocialProviders(
     config.socialCredentials,
@@ -868,48 +875,19 @@ export function createAuth(config: AuthConfig) {
                     `/api/auth/callback/${GENERIC_OAUTH_PROVIDER_ID}`,
                     new URL(getBrokerUrl()).origin,
                   ).toString(),
-                  mapProfileToUser: (profile) => {
-                    let profileName: string | undefined
-                    if (typeof profile.name === "string") {
-                      profileName = profile.name
-                    } else if (typeof profile.preferred_username === "string") {
-                      profileName = profile.preferred_username
-                    } else {
-                      profileName =
-                        [profile.given_name, profile.family_name]
-                          .filter(
-                            (value): value is string =>
-                              typeof value === "string",
-                          )
-                          .join(" ") || undefined
-                    }
-
-                    return { name: profileName }
-                  },
+                  mapProfileToUser: (profile) => ({
+                    name:
+                      firstString(profile.name, profile.preferred_username) ??
+                      (joinStrings(profile.given_name, profile.family_name) ||
+                        undefined),
+                  }),
                 },
               ],
             }),
           ] as const)
         : ([] as const)),
       jwt(),
-      mcp({
-        accessTokenExpiresIn: 300,
-        allowDynamicClientRegistration: true,
-        allowUnauthenticatedClientRegistration: true,
-        enforcePerClientResources: false,
-        clientRegistrationDefaultApplicationType: "infer",
-        clientRegistrationDefaultResources: [mcpResource],
-        clientRegistrationDefaultScopes: [
-          "openid",
-          "profile",
-          "email",
-          "offline_access",
-        ],
-        consentPage: "/oauth/consent",
-        loginPage: "/oauth/sign-in",
-        refreshTokenExpiresIn: 2_592_000,
-        resource: mcpResource,
-      }),
+      mcp(buildMcpPluginOptions(mcpResource)),
       // Relays better-auth's Set-Cookie into the Next.js response. Required so a
       // server-side `auth.api.changePassword` (with `revokeOtherSessions`) rotates
       // the caller's session cookie instead of silently logging them out. Must be
@@ -961,6 +939,7 @@ export type Auth = ReturnType<typeof createAuth>
 
 export {
   isGenericOAuthPath,
+  isSharedSocialPath,
   resolveGenericOAuthConfig,
   warnIfGenericOAuthUnlicensed,
 } from "./generic-oauth"

@@ -105,16 +105,25 @@ export const warnIfGenericOAuthUnlicensed = (isLicensed: boolean): void => {
   )
 }
 
+/** Better Auth routes shared by every social provider, generic OAuth included. */
+const SHARED_SOCIAL_PATH_SUFFIXES = [
+  "/sign-in/social",
+  "/sign-up/social",
+  "/link-social",
+] as const
+
+export const isSharedSocialPath = (pathname: string): boolean =>
+  SHARED_SOCIAL_PATH_SUFFIXES.some((suffix) => pathname.endsWith(suffix))
+
 /**
- * Matches the generic provider's callback, or a social sign-in request that
- * explicitly selects this provider. A shared `/sign-in/social` route must not
- * gate Google or Facebook when enterprise SSO is unavailable.
+ * Matches the generic provider's callback, or a social sign-in / sign-up /
+ * account-link request that explicitly selects this provider. These routes are
+ * shared with first-party providers, so they must not gate Google or Facebook
+ * when enterprise SSO is unavailable.
  */
 export const isGenericOAuthPath = (
   pathname: string,
   provider?: string,
 ): boolean =>
   pathname.endsWith(`/callback/${GENERIC_OAUTH_PROVIDER_ID}`) ||
-  (provider === GENERIC_OAUTH_PROVIDER_ID &&
-    (pathname.endsWith("/sign-in/social") ||
-      pathname.endsWith("/sign-up/social")))
+  (provider === GENERIC_OAUTH_PROVIDER_ID && isSharedSocialPath(pathname))

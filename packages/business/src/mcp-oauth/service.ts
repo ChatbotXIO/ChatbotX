@@ -262,12 +262,14 @@ export class McpOAuthService extends BaseService {
     clientId: string
   }): Promise<boolean> {
     const deleted = await db.transaction(async (tx) => {
-      const [deletedAccessTokens, deletedConsents, deletedRefreshTokens] =
-        await Promise.all([
-          oauthAccessTokenRepository.deleteByUserAndClient(props, tx),
-          oauthConsentRepository.deleteByUserAndClient(props, tx),
-          oauthRefreshTokenRepository.deleteByUserAndClient(props, tx),
-        ])
+      // Sequential on purpose: one transaction owns one connection, and the
+      // consent must go first so no new token can be issued mid-revoke.
+      const deletedConsents =
+        await oauthConsentRepository.deleteByUserAndClient(props, tx)
+      const deletedRefreshTokens =
+        await oauthRefreshTokenRepository.deleteByUserAndClient(props, tx)
+      const deletedAccessTokens =
+        await oauthAccessTokenRepository.deleteByUserAndClient(props, tx)
       return deletedAccessTokens + deletedConsents + deletedRefreshTokens
     })
 
@@ -278,10 +280,8 @@ export class McpOAuthService extends BaseService {
   }
 
   async purgeExpiredTokens(now = new Date()): Promise<number> {
-    const [accessTokens, refreshTokens] = await Promise.all([
-      oauthAccessTokenRepository.deleteExpired(now),
-      oauthRefreshTokenRepository.deleteExpired(now),
-    ])
+    const accessTokens = await oauthAccessTokenRepository.deleteExpired(now)
+    const refreshTokens = await oauthRefreshTokenRepository.deleteExpired(now)
     return accessTokens + refreshTokens
   }
 

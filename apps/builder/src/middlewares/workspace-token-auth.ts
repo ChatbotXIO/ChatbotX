@@ -47,6 +47,8 @@ const assertPreAuthNotRateLimited = (
     resHeaders,
   })
 
+const JWT_SEGMENT_COUNT = 3
+
 const invalidTokenError = () =>
   new ORPCError("INVALID_CHATBOT_TOKEN", {
     status: 401,
@@ -134,19 +136,19 @@ export const workspaceTokenAuthMidddleware = base.middleware(
         throw invalidTokenError()
       }
 
-      // Dynamic imports keep Better Auth's Node-only OAuth verifier out of every
-      // builder test and route that authenticates only workspace API tokens.
+      // OAuth access tokens are JWTs; anything else (a revoked API key, a
+      // typo) cannot be one, so skip the signature verification entirely.
+      if (bearerToken.split(".").length !== JWT_SEGMENT_COUNT) {
+        throw invalidTokenError()
+      }
+
+      // Lazy import: the OAuth verifier is only needed on this fallback path
+      // and stays out of tests/routes that authenticate workspace API tokens.
       const [{ auth }, { verifyMcpAccessToken }] = await Promise.all([
         import("@/lib/auth/auth"),
         import("@chatbotx.io/auth/mcp-resource"),
       ])
-      const mcpAccessToken = await verifyMcpAccessToken(
-        auth,
-        bearerToken,
-      ).catch((error) => {
-        logger.warn({ err: error }, "Rejected invalid MCP OAuth access token")
-        throw invalidTokenError()
-      })
+      const mcpAccessToken = await verifyMcpAccessToken(auth, bearerToken)
       if (!mcpAccessToken) {
         throw invalidTokenError()
       }

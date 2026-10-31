@@ -39,12 +39,18 @@ const {
 // better-auth, drizzle, business — into this route test). This mock mirrors
 // that real implementation's three suffix/substring checks; a drift between
 // the two is caught by that dedicated test.
+const { isSharedSocialPath } = vi.hoisted(() => ({
+  isSharedSocialPath: (pathname: string) =>
+    ["/sign-in/social", "/sign-up/social", "/link-social"].some((suffix) =>
+      pathname.endsWith(suffix),
+    ),
+}))
+
 vi.mock("@chatbotx.io/auth/server", () => ({
   isGenericOAuthPath: (pathname: string, provider?: string) =>
     pathname.endsWith("/callback/oidc") ||
-    ((pathname.endsWith("/sign-in/social") ||
-      pathname.endsWith("/sign-up/social")) &&
-      provider === "oidc"),
+    (isSharedSocialPath(pathname) && provider === "oidc"),
+  isSharedSocialPath,
   SOCIAL_PROVIDERS: ["google", "facebook"] as const,
   warnIfGenericOAuthUnlicensed,
 }))
@@ -164,11 +170,12 @@ describe("auth route — generic OAuth enterprise gate (real isGenericOAuthPath 
   const genericOAuthPaths = [
     "/api/auth/sign-in/social?provider=oidc",
     "/api/auth/sign-up/social?provider=oidc",
+    "/api/auth/link-social?provider=oidc",
     "/api/auth/callback/oidc",
   ]
 
   const callGenericOAuthPath = async (path: string) => {
-    const isSocialPath = path.includes("/social")
+    const isSocialPath = path.includes("social")
     const request = new Request(`https://${PLATFORM_HOST}${path}`, {
       ...(isSocialPath && {
         body: JSON.stringify({ provider: "oidc" }),

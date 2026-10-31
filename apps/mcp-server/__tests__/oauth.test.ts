@@ -30,9 +30,7 @@ describe("OAuth protected-resource metadata", () => {
     process.env.CHATBOTX_MCP_PUBLIC_URL = "https://mcp.public.example.com/base"
     const { buildProtectedResourceMetadata } = await loadOAuth()
 
-    expect(
-      buildProtectedResourceMetadata(request(), "/messages"),
-    ).toMatchObject({
+    expect(buildProtectedResourceMetadata(request())).toMatchObject({
       resource: "https://mcp.public.example.com/mcp",
       authorization_servers: ["https://builder.example.com"],
       bearer_methods_supported: ["header"],
@@ -49,7 +47,6 @@ describe("OAuth protected-resource metadata", () => {
           "x-forwarded-proto": "https",
           host: "internal:3333",
         }),
-        "/messages",
       ).resource,
     ).toBe("https://mcp.proxy.example.com/mcp")
   })
@@ -58,10 +55,8 @@ describe("OAuth protected-resource metadata", () => {
     const { buildProtectedResourceMetadata } = await loadOAuth()
 
     expect(
-      buildProtectedResourceMetadata(
-        request({ host: "mcp.local:3333" }),
-        "/sse",
-      ).resource,
+      buildProtectedResourceMetadata(request({ host: "mcp.local:3333" }))
+        .resource,
     ).toBe("http://mcp.local:3333/mcp")
   })
 
@@ -87,7 +82,7 @@ describe("OAuth protected-resource metadata", () => {
     const { buildProtectedResourceMetadata } = await loadOAuth()
 
     expect(
-      buildProtectedResourceMetadata(request({ host: "mcp.local" }), "/sse")
+      buildProtectedResourceMetadata(request({ host: "mcp.local" }))
         .authorization_servers,
     ).toEqual(["https://builder.example.com"])
   })

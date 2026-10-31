@@ -63,11 +63,6 @@ export type WorkspaceMemberModel =
 export type WorkspaceApiTokenModel =
   typeof schema.workspaceApiTokenModel.$inferSelect
 export type OAuthClientModel = typeof schema.oauthClientModel.$inferSelect
-export type OAuthAccessTokenModel =
-  typeof schema.oauthAccessTokenModel.$inferSelect
-export type OAuthConsentModel = typeof schema.oauthConsentModel.$inferSelect
-export type OAuthRefreshTokenModel =
-  typeof schema.oauthRefreshTokenModel.$inferSelect
 export type UserQuotaModel = typeof schema.userQuotaModel.$inferSelect
 export type WorkspaceUsageModel = typeof schema.workspaceUsageModel.$inferSelect
 export type ContactModel = typeof schema.contactModel.$inferSelect

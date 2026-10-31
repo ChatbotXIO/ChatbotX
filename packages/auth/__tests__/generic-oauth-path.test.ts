@@ -11,6 +11,11 @@ describe("isGenericOAuthPath", () => {
     expect(isGenericOAuthPath("/api/auth/sign-up/social", "oidc")).toBe(true)
   })
 
+  test("matches linking an account with the generic provider", () => {
+    expect(isGenericOAuthPath("/api/auth/link-social", "oidc")).toBe(true)
+    expect(isGenericOAuthPath("/api/auth/link-social", "google")).toBe(false)
+  })
+
   test("does not match unrelated or first-party social auth paths", () => {
     expect(isGenericOAuthPath("/api/auth/get-session")).toBe(false)
     expect(isGenericOAuthPath("/api/auth/sign-in/social", "google")).toBe(false)

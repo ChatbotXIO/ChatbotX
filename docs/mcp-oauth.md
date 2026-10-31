@@ -1,10 +1,10 @@
 # MCP OAuth 2.1
 
-The builder is the OAuth authorization server for the MCP resource server. Discovery is served at `/.well-known/oauth-authorization-server` (and the OpenID-compatible alias `/.well-known/openid-configuration`). The `/oauth/authorize` wrapper forwards to Better Auth's `/api/auth/oauth2/authorize`; token exchange and dynamic client registration use `/api/auth/oauth2/token` and `/api/auth/oauth2/register`.
+The builder is the OAuth authorization server for the MCP resource server. Discovery is served at `/.well-known/oauth-authorization-server` (and the OpenID-compatible alias `/.well-known/openid-configuration`). Discovery advertises Better Auth's `/api/auth/oauth2/authorize`, `/api/auth/oauth2/token` and `/api/auth/oauth2/register` directly. The first authorization shows the consent screen at `/oauth/consent`, where the workspace is chosen; later authorizations reuse the stored consent and its workspace. `/oauth/sign-in` sends the user back to the authorize endpoint after login.
 
 The resource server publishes RFC 9728 metadata at `/.well-known/oauth-protected-resource`. Requests under `/mcp/*` advertise the canonical configured resource URL, `<builder-origin>/mcp`, rather than an endpoint-specific URL. Unauthenticated MCP endpoints challenge with `WWW-Authenticate: Bearer resource_metadata="..."`.
 
-The provider issues JWT access tokens for the MCP resource with a five-minute lifetime. Refresh-token and consent rows remain database-backed. Revoking a client deletes its consent and refresh credentials immediately, blocking new and refreshed tokens; an already-issued access JWT can remain valid until its five-minute expiry.
+The provider issues JWT access tokens for the MCP resource with a five-minute lifetime. Refresh-token and consent rows remain database-backed. Revoking a client deletes its consent and refresh credentials immediately. The public API rejects the client's access JWT on the next request because it requires a live consent; only the MCP server's introspection cache can keep an already-issued token usable, for at most its five-minute expiry.
 
 The public API accepts OAuth tokens only in `Authorization: Bearer`. Only workspace owners and `superAdmin` members can authorize OAuth access; synthetic platform-support sessions are rejected. Consent binds a client to one workspace. Callers may repeat that workspace with `x-workspace-id` or the MCP URL's `?workspace_id=<id>`; a different workspace is forbidden. The `GET /api/v1/token` introspection path verifies the JWT audience and signature, enforces that workspace selection, and returns the same token context as a workspace API token.
 
@@ -24,5 +24,5 @@ HTTP proxy URL.
 Users can copy the current workspace URL and revoke their account-level OAuth
 grants in **Settings → Integrations → ChatbotX MCP**. The grants page lists
 consents, so a client with no live refresh token remains visible until revoked.
-Revoking a client applies to every workspace the user administers, while an
-already-issued access JWT remains valid for at most five minutes.
+Revoking a client applies to every workspace the user administers, while the
+MCP server's introspection cache can keep an already-issued access JWT usable for at most five minutes.

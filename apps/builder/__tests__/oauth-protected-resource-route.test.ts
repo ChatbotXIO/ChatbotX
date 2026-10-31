@@ -1,3 +1,4 @@
+// @vitest-environment node
 import { beforeEach, describe, expect, test, vi } from "vitest"
 import { GET } from "@/app/.well-known/oauth-protected-resource/[...path]/route"
 import {

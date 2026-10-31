@@ -1,6 +1,9 @@
-import { oauthProviderAuthServerMetadata } from "@better-auth/oauth-provider"
+import {
+  oauthProviderAuthServerMetadata,
+  verifyOAuthQueryParams,
+} from "@better-auth/oauth-provider"
 import { oauthProviderResourceClient } from "@better-auth/oauth-provider/resource-client"
-import { getMcpResourceUrl } from "./keys"
+import { env, getMcpResourceUrl } from "./keys"
 import type { Auth } from "./server"
 
 export type McpAccessTokenSubject = {
@@ -8,6 +11,28 @@ export type McpAccessTokenSubject = {
   userId: string
 }
 
+// jose error codes that signal a JWKS fetch/config problem rather than a bad
+// token; those must surface as server errors, not as a 401.
+const JWKS_INFRASTRUCTURE_ERROR_CODES = new Set([
+  "ERR_JWKS_TIMEOUT",
+  "ERR_JWKS_INVALID",
+  "ERR_JWKS_MULTIPLE_MATCHING_KEYS",
+])
+
+const isInvalidTokenError = (error: unknown): boolean => {
+  const code = (error as { code?: unknown } | null)?.code
+  return (
+    typeof code === "string" &&
+    code.startsWith("ERR_J") &&
+    !JWKS_INFRASTRUCTURE_ERROR_CODES.has(code)
+  )
+}
+
+/**
+ * Verifies an MCP OAuth access token (signature, issuer, audience, expiry).
+ * Returns null when the token itself is malformed, expired, or for another
+ * audience; infrastructure failures are rethrown.
+ */
 export const verifyMcpAccessToken = async (
   auth: Auth,
   accessToken: string,
@@ -17,6 +42,16 @@ export const verifyMcpAccessToken = async (
     .verifyBearerToken(accessToken, {
       verifyOptions: { audience: getMcpResourceUrl() },
     })
+    .catch((error: unknown) => {
+      if (isInvalidTokenError(error)) {
+        return null
+      }
+      throw error
+    })
+
+  if (!claims) {
+    return null
+  }
 
   if (typeof claims.client_id !== "string" || typeof claims.sub !== "string") {
     return null
@@ -35,3 +70,32 @@ export const getMcpAuthorizationServerMetadata = (auth: Auth) =>
       "Cache-Control": "no-store",
     },
   })
+
+export type McpConsentQuery = {
+  clientId: string
+  scopes: string[]
+}
+
+/**
+ * Verify the signature and expiry Better Auth put on the consent-page query,
+ * then return what the page and action need. Returns null for a forged,
+ * expired, or incomplete query, so callers never trust an unverified client id.
+ */
+export const verifyMcpOAuthQuery = async (
+  query: string,
+): Promise<McpConsentQuery | null> => {
+  if (!(await verifyOAuthQueryParams(query, env.BETTER_AUTH_SECRET))) {
+    return null
+  }
+
+  const params = new URLSearchParams(query)
+  const clientId = params.get("client_id")
+  if (!clientId) {
+    return null
+  }
+
+  return {
+    clientId,
+    scopes: params.get("scope")?.split(" ").filter(Boolean) ?? [],
+  }
+}

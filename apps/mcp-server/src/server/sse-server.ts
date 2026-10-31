@@ -408,11 +408,10 @@ export const createRequestListener =
         (url.pathname === protectedResourcePrefix ||
           url.pathname.startsWith(`${protectedResourcePrefix}/`))
       ) {
-        const suffix = url.pathname.slice(protectedResourcePrefix.length)
         res.statusCode = 200
         res.setHeader("Cache-Control", "no-store")
         res.setHeader("Content-Type", "application/json")
-        res.end(JSON.stringify(buildProtectedResourceMetadata(req, suffix)))
+        res.end(JSON.stringify(buildProtectedResourceMetadata(req)))
         return
       }
 

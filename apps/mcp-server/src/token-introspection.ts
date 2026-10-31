@@ -150,11 +150,10 @@ export const introspectToken = async (
         NEGATIVE_CACHE_TTL_MS,
       )
     }
-    return cacheResult(
-      cacheKey,
-      { status: "ok", data: parsed.data },
-      getPositiveCacheTtl(token),
-    )
+    const ttlMs = getPositiveCacheTtl(token)
+    const result: IntrospectionResult = { status: "ok", data: parsed.data }
+    // A token about to expire is not worth caching; the next call re-verifies.
+    return ttlMs > 0 ? cacheResult(cacheKey, result, ttlMs) : result
   } catch (error) {
     logger.error({ err: error }, "MCP token introspection failed")
     return cacheResult(

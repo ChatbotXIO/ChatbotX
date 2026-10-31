@@ -1,7 +1,7 @@
 import { createEnv } from "@t3-oss/env-core"
 import { z } from "zod"
 
-export const keys = () =>
+const keys = () =>
   createEnv({
     server: {
       NEXT_PUBLIC_BUILDER_URL: z.url(),

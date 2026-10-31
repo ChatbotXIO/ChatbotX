@@ -7,6 +7,7 @@
     ".": "./src/index.ts",
     "./server": "./src/server.ts",
     "./client": "./src/client.ts",
+    "./mcp-config": "./src/mcp-config.ts",
     "./mcp-resource": "./src/mcp-resource.ts",
     "./provisioning": "./src/provisioning.ts",
     "./tenant": "./src/tenant-context.ts"

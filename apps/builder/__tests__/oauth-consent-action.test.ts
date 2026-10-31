@@ -5,6 +5,11 @@ const mocks = vi.hoisted(() => ({
   bindConsentWorkspace: vi.fn(),
   calls: [] as string[],
   oauth2Consent: vi.fn(),
+  verifyMcpOAuthQuery: vi.fn(),
+}))
+
+vi.mock("@chatbotx.io/auth/mcp-resource", () => ({
+  verifyMcpOAuthQuery: mocks.verifyMcpOAuthQuery,
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
@@ -44,6 +49,10 @@ describe("submitOAuthConsentAction", () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mocks.calls.length = 0
+    mocks.verifyMcpOAuthQuery.mockResolvedValue({
+      clientId: "claude",
+      scopes: ["openid"],
+    })
     mocks.assertAuthorizableWorkspace.mockImplementation(() => {
       mocks.calls.push("assert")
       return Promise.resolve()
@@ -86,6 +95,21 @@ describe("submitOAuthConsentAction", () => {
         workspaceId: "ws-foreign",
       }),
     ).rejects.toThrow("forbidden")
+    expect(mocks.oauth2Consent).not.toHaveBeenCalled()
+    expect(mocks.bindConsentWorkspace).not.toHaveBeenCalled()
+  })
+
+  test("rejects an unverifiable query before touching the workspace or consent", async () => {
+    mocks.verifyMcpOAuthQuery.mockResolvedValueOnce(null)
+
+    await expect(
+      callAction({
+        accept: true,
+        oauthQuery: "client_id=claude&sig=forged",
+        workspaceId: "ws-2",
+      }),
+    ).rejects.toMatchObject({ code: "forbidden" })
+    expect(mocks.assertAuthorizableWorkspace).not.toHaveBeenCalled()
     expect(mocks.oauth2Consent).not.toHaveBeenCalled()
     expect(mocks.bindConsentWorkspace).not.toHaveBeenCalled()
   })

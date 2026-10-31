@@ -1,6 +1,8 @@
 "use server"
 
+import { verifyMcpOAuthQuery } from "@chatbotx.io/auth/mcp-resource"
 import { mcpOAuthService } from "@chatbotx.io/business"
+import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { headers } from "next/headers"
 import { auth } from "@/lib/auth/auth"
 import { authActionClient } from "@/lib/safe-action"
@@ -19,14 +21,16 @@ export const submitOAuthConsentAction = authActionClient
       })
     }
 
-    const clientId = new URLSearchParams(parsedInput.oauthQuery).get(
-      "client_id",
-    )
-    if (!clientId) {
-      throw new Error("OAuth query does not include a client id")
+    const verified = await verifyMcpOAuthQuery(parsedInput.oauthQuery)
+    if (!verified) {
+      throw new ChatbotXException(
+        "OAuth consent request is invalid or expired",
+        "forbidden",
+        403,
+      )
     }
     const binding = {
-      clientId,
+      clientId: verified.clientId,
       user: ctx.user,
       workspaceId: parsedInput.workspaceId,
     }

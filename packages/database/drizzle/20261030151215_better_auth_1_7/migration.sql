@@ -39,23 +39,6 @@ ALTER TABLE "OAuthClient" ADD COLUMN "requirePKCE" boolean;--> statement-breakpo
 ALTER TABLE "OAuthClient" ADD COLUMN "dpopBoundAccessTokens" boolean DEFAULT false NOT NULL;--> statement-breakpoint
 ALTER TABLE "OAuthClient" ADD COLUMN "referenceId" text;--> statement-breakpoint
 
-CREATE FUNCTION "__oauth_redirect_uris"(value text) RETURNS text[] LANGUAGE plpgsql AS $$
-DECLARE parsed jsonb;
-BEGIN
-  IF value IS NULL OR btrim(value) = '' THEN
-    RETURN ARRAY[]::text[];
-  END IF;
-  BEGIN
-    parsed := value::jsonb;
-    IF jsonb_typeof(parsed) = 'array' THEN
-      RETURN ARRAY(SELECT jsonb_array_elements_text(parsed));
-    END IF;
-  EXCEPTION WHEN others THEN
-    RETURN ARRAY[value];
-  END;
-  RETURN ARRAY[value];
-END;
-$$;--> statement-breakpoint
 CREATE FUNCTION "__oauth_metadata"(value text) RETURNS jsonb LANGUAGE plpgsql AS $$
 BEGIN
   IF value IS NULL OR btrim(value) = '' THEN
@@ -68,15 +51,26 @@ BEGIN
   END;
 END;
 $$;--> statement-breakpoint
+-- Better Auth 1.6 stored `redirectUrls` comma-joined, public clients with an
+-- empty-string secret, and confidential secrets in plaintext. 1.7 expects a
+-- text[] of URIs, a NULL secret for public clients, and a SHA-256 base64url
+-- hash (its default `storeClientSecret: "hashed"`) for confidential ones.
 UPDATE "OAuthClient" SET
-  "redirectUris" = "__oauth_redirect_uris"("redirectUrls"),
-  "tokenEndpointAuthMethod" = CASE WHEN "clientSecret" IS NULL THEN 'none' ELSE 'client_secret_basic' END,
+  "redirectUris" = ARRAY(
+    SELECT btrim(uri)
+    FROM unnest(string_to_array("redirectUrls", ',')) AS uri
+    WHERE btrim(uri) <> ''
+  ),
+  "tokenEndpointAuthMethod" = CASE WHEN COALESCE("clientSecret", '') = '' THEN 'none' ELSE 'client_secret_basic' END,
   "applicationType" = CASE WHEN "type" IN ('web', 'native') THEN "type" ELSE 'web' END,
   "grantTypes" = ARRAY['authorization_code', 'refresh_token']::text[],
   "responseTypes" = ARRAY['code']::text[],
-  "requirePKCE" = true;--> statement-breakpoint
+  "requirePKCE" = true,
+  "clientSecret" = CASE
+    WHEN COALESCE("clientSecret", '') = '' THEN NULL
+    ELSE translate(rtrim(encode(sha256(convert_to("clientSecret", 'UTF8')), 'base64'), '='), '+/', '-_')
+  END;--> statement-breakpoint
 ALTER TABLE "OAuthClient" ALTER COLUMN "metadata" TYPE jsonb USING "__oauth_metadata"("metadata");--> statement-breakpoint
-DROP FUNCTION "__oauth_redirect_uris"(text);--> statement-breakpoint
 DROP FUNCTION "__oauth_metadata"(text);--> statement-breakpoint
 ALTER TABLE "OAuthClient" ALTER COLUMN "redirectUris" SET NOT NULL;--> statement-breakpoint
 ALTER TABLE "OAuthClient" ALTER COLUMN "name" DROP NOT NULL;--> statement-breakpoint

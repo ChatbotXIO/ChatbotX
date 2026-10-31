@@ -1,7 +1,6 @@
-import { verifyOAuthQueryParams } from "@better-auth/oauth-provider"
+import { verifyMcpOAuthQuery } from "@chatbotx.io/auth/mcp-resource"
 import { mcpOAuthService } from "@chatbotx.io/business"
 import { notFound } from "next/navigation"
-import { env } from "@/env"
 import { OAuthConsentForm } from "@/features/oauth-consent/consent-form"
 import { getCurrentUser } from "@/lib/auth/utils"
 
@@ -14,44 +13,32 @@ export default async function OAuthConsentPage(props: {
     props.searchParams,
     getCurrentUser(),
   ])
-  const clientId = searchParams.client_id
-  if (!(typeof clientId === "string" && user)) {
+  if (!user) {
     notFound()
   }
 
   const oauthQuery = new URLSearchParams()
   for (const [key, value] of Object.entries(searchParams)) {
-    if (typeof value === "string") {
-      oauthQuery.set(key, value)
-      continue
-    }
-    for (const item of value ?? []) {
+    for (const item of typeof value === "string" ? [value] : (value ?? [])) {
       oauthQuery.append(key, item)
     }
   }
-  if (
-    !(await verifyOAuthQueryParams(
-      oauthQuery.toString(),
-      env.BETTER_AUTH_SECRET,
-    ))
-  ) {
+  const query = oauthQuery.toString()
+  const verified = await verifyMcpOAuthQuery(query)
+  if (!verified) {
     notFound()
   }
 
   const [workspaces, client] = await Promise.all([
     mcpOAuthService.listAuthorizableWorkspaces({ userId: user.id }),
-    mcpOAuthService.findClient({ clientId }),
+    mcpOAuthService.findClient({ clientId: verified.clientId }),
   ])
-  const scopes =
-    typeof searchParams.scope === "string"
-      ? searchParams.scope.split(" ").filter(Boolean)
-      : []
 
   return (
     <OAuthConsentForm
-      clientName={client?.name || clientId}
-      oauthQuery={oauthQuery.toString()}
-      scopes={scopes}
+      clientName={client?.name || verified.clientId}
+      oauthQuery={query}
+      scopes={verified.scopes}
       userEmail={user.email}
       workspaces={workspaces}
     />

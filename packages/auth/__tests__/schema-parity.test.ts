@@ -17,6 +17,7 @@ import {
 import { anonymous, jwt } from "better-auth/plugins"
 import { getTableColumns } from "drizzle-orm"
 import { describe, expect, test } from "vitest"
+import { buildMcpPluginOptions } from "../src/mcp-config"
 
 const oauthTableNames = [
   "jwks",
@@ -46,15 +47,7 @@ describe("Better Auth OAuth schema parity", () => {
       plugins: [
         anonymous(),
         jwt(),
-        mcp({
-          allowDynamicClientRegistration: true,
-          allowUnauthenticatedClientRegistration: true,
-          clientRegistrationDefaultApplicationType: "infer",
-          clientRegistrationDefaultResources: ["https://app.example.com/mcp"],
-          clientRegistrationDefaultScopes: ["openid"],
-          enforcePerClientResources: false,
-          resource: "https://app.example.com/mcp",
-        }),
+        mcp(buildMcpPluginOptions("https://app.example.com/mcp")),
       ],
       secret: "test-secret",
       user: {
