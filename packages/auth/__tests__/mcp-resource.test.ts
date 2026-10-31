@@ -25,7 +25,9 @@ vi.mock("../src/keys", () => ({
 import { verifyMcpAccessToken, verifyMcpOAuthQuery } from "../src/mcp-resource"
 import type { Auth } from "../src/server"
 
-const auth = {} as Auth
+const auth = {
+  $context: Promise.resolve({ baseURL: "https://app.example.com/api/auth" }),
+} as unknown as Auth
 
 const joseError = (code: string) =>
   Object.assign(new Error(code), { code, name: "JOSEError" })
@@ -35,7 +37,7 @@ describe("verifyMcpAccessToken", () => {
     verifyBearerToken.mockReset()
   })
 
-  test("returns the subject and verifies against the MCP resource audience", async () => {
+  test("returns the subject and verifies against the MCP audience, auth issuer and JWKS", async () => {
     verifyBearerToken.mockResolvedValue({ client_id: "client-1", sub: "42" })
 
     await expect(verifyMcpAccessToken(auth, "a.b.c")).resolves.toEqual({
@@ -43,7 +45,11 @@ describe("verifyMcpAccessToken", () => {
       userId: "42",
     })
     expect(verifyBearerToken).toHaveBeenCalledWith("a.b.c", {
-      verifyOptions: { audience: "https://app.example.com/mcp" },
+      jwksUrl: "https://app.example.com/api/auth/jwks",
+      verifyOptions: {
+        audience: "https://app.example.com/mcp",
+        issuer: "https://app.example.com/api/auth",
+      },
     })
   })
 

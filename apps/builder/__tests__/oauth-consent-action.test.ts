@@ -21,9 +21,14 @@ vi.mock("@chatbotx.io/business", () => ({
   },
 }))
 vi.mock("@/lib/log", () => ({ logger: { error: vi.fn() } }))
-vi.mock("next/headers", () => ({ headers: vi.fn().mockResolvedValue({}) }))
+vi.mock("next/headers", () => ({
+  headers: vi.fn().mockResolvedValue(new Headers({ cookie: "session=abc" })),
+}))
 vi.mock("@/lib/auth/auth", () => ({
-  auth: { api: { oauth2Consent: mocks.oauth2Consent } },
+  auth: {
+    $context: Promise.resolve({ baseURL: "http://localhost:3123/api/auth/" }),
+    api: { oauth2Consent: mocks.oauth2Consent },
+  },
 }))
 vi.mock("@/lib/safe-action", () => ({
   authActionClient: {
@@ -86,6 +91,35 @@ describe("submitOAuthConsentAction", () => {
       user: { email: "owner@example.com", id: "user-1" },
       workspaceId: "ws-2",
     })
+  })
+
+  test("passes a request carrying the session so Better Auth can run authorize", async () => {
+    await callAction({
+      accept: true,
+      oauthQuery: "client_id=claude&sig=signature",
+      workspaceId: "ws-2",
+    })
+
+    const [{ request }] = mocks.oauth2Consent.mock.calls[0] as [
+      { request: Request },
+    ]
+    expect(request.url).toBe("http://localhost:3123/api/auth/oauth2/consent")
+    expect(request.method).toBe("POST")
+    expect(request.headers.get("cookie")).toBe("session=abc")
+  })
+
+  test("asks for a JSON body, not a Response the action cannot serialize", async () => {
+    await callAction({
+      accept: true,
+      oauthQuery: "client_id=claude&sig=signature",
+      workspaceId: "ws-2",
+    })
+
+    const [{ asResponse, headers }] = mocks.oauth2Consent.mock.calls[0] as [
+      { asResponse: boolean; headers: Headers },
+    ]
+    expect(asResponse).toBe(false)
+    expect(headers.get("accept")).toBe("application/json")
   })
 
   test("revokes the recorded consent and rethrows when binding fails", async () => {

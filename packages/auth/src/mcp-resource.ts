@@ -44,10 +44,16 @@ export const verifyMcpAccessToken = async (
   auth: Auth,
   accessToken: string,
 ): Promise<McpAccessTokenSubject | null> => {
+  // The resource client only derives issuer/JWKS from a static string
+  // `baseURL`; ours comes from BETTER_AUTH_URL, so pass the resolved one — the
+  // same `ctx.context.baseURL` the provider signs `iss` with. Without
+  // `jwksUrl` the token is never verified and every call is a 401.
+  const { baseURL } = await auth.$context
   const claims = await oauthProviderResourceClient(auth)
     .getActions()
     .verifyBearerToken(accessToken, {
-      verifyOptions: { audience: getMcpResourceUrl() },
+      jwksUrl: `${baseURL}/jwks`,
+      verifyOptions: { audience: getMcpResourceUrl(), issuer: baseURL },
     })
     .catch((error: unknown) => {
       if (isInvalidTokenError(error)) {
