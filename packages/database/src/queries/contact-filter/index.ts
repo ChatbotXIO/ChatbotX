@@ -87,6 +87,7 @@ export {
   ctwaRetargetSegments,
 } from "./ctwa-retarget"
 export {
+  contactFilterUsesField,
   EMAIL_PHONE_FILTER_FIELDS,
   pruneContactFilterFields,
   pruneEmailPhoneFilterConditions,

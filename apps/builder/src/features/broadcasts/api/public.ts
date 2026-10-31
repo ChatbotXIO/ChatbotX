@@ -297,7 +297,7 @@ export const broadcastsPublicRouter = {
       path: "/v1/broadcasts/{id}/draft",
       summary: "Replace draft broadcast payload",
       description:
-        "Replaces a draft's complete payload and can schedule it when `saveAsDraft` is false. Call `broadcasts.get` to inspect the draft first, or use `broadcasts.schedule` to keep its payload.",
+        "Replaces a draft's complete payload and can schedule it when `saveAsDraft` is false. Call `broadcasts.get` to inspect the draft first, or use `broadcasts.schedule` to keep its payload. Scheduling it is refused like `broadcasts.schedule` (400, retry shortly) while a draft moved back mid-preparation is still clearing its previous recipients.",
       tags: ["Broadcasts"],
     })
     .input(

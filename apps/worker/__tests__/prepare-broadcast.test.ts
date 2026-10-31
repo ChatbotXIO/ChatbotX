@@ -9,7 +9,6 @@ const forEachAudienceChunk = vi.fn()
 const insertRecipients = vi.fn()
 const promoteAfterPrepare = vi.fn()
 const scheduleAddSpy = vi.fn()
-const loggerInfoSpy = vi.fn()
 const loggerWarnSpy = vi.fn()
 const countRecipients = vi.fn()
 const blockedWorkspaceIds = new Set<string>()
@@ -49,7 +48,6 @@ vi.mock("@chatbotx.io/database/partials", async () =>
 
 vi.mock("../src/lib/logger", () => ({
   logger: {
-    info: (...args: unknown[]) => loggerInfoSpy(...args),
     warn: (...args: unknown[]) => loggerWarnSpy(...args),
   },
 }))
@@ -108,7 +106,6 @@ beforeEach(() => {
     Promise.resolve(promotionSucceeds),
   )
   scheduleAddSpy.mockReset()
-  loggerInfoSpy.mockReset()
   loggerWarnSpy.mockReset()
   promotionSucceeds = true
   blockedWorkspaceIds.clear()
@@ -364,10 +361,6 @@ describe("prepareBroadcast", () => {
         },
       ],
     })
-    expect(loggerInfoSpy).toHaveBeenCalledWith(
-      { broadcastId: BROADCAST_ID, skippedCount: 1 },
-      "Skipped broadcast contacts without a DM conversation",
-    )
     expect(promoteAfterPrepare).toHaveBeenCalledTimes(1)
     expect(promoteAfterPrepare).toHaveBeenCalledWith(
       expect.objectContaining({ status: "sending", contactCount: 1 }),
@@ -515,10 +508,6 @@ describe("prepareBroadcast", () => {
       expect.objectContaining({ status: "sent", contactCount: 0 }),
     )
     expect(scheduleAddSpy).not.toHaveBeenCalled()
-    expect(loggerInfoSpy).toHaveBeenCalledWith(
-      { broadcastId: BROADCAST_ID, skippedCount: 1 },
-      "Skipped broadcast contacts without a DM conversation",
-    )
   })
 
   // moveToDraft bumps the epoch mid-run. The check runs after each write, so

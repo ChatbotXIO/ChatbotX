@@ -56,6 +56,7 @@ import {
 import {
   buildContactInboxContactFilterSQL,
   type ContactFilterCriteriaInput,
+  contactFilterUsesField,
   contactInboxHasDmSQL,
   contactInboxInteractedWithin24hSQL,
   pruneEmailPhoneFilterConditions,
@@ -145,6 +146,8 @@ const DEFAULT_BROADCAST_NAME = "Broadcast"
 /** Next runs shown on a repeating broadcast's detail. */
 const UPCOMING_RUNS_IN_DETAIL = 3
 const DEFAULT_CHUNK_SIZE = 1000
+/** How an audience query already joins the DM conversation, if it does. */
+type AudienceDmJoin = "inner" | "left"
 // One background pass over a draft's leftover recipients: short, so the shared
 // schedule-worker slot is released and the job is re-run later instead.
 const DRAFT_PURGE_CHUNK_SIZE = 1000
@@ -974,12 +977,10 @@ class BroadcastService extends BaseService {
     if (input.schedulesType === broadcastScheduleTypes.enum.recurring) {
       return await this.scheduleRecurringDraft(input)
     }
-    await this.assertNoDraftLeftovers(input)
+    const scope = await this.draftActivationScope(input)
     const planContext = await broadcastPlanPolicyService.resolveForWorkspace(
       input.workspaceId,
     )
-
-    const scope = this.draftScope(input.workspaceId, input.broadcastId)
 
     const result = await db.transaction(async (tx) => {
       const write = async (override?: { sendRatePerMinute: number | null }) => {
@@ -1287,30 +1288,45 @@ class BroadcastService extends BaseService {
   }
 
   /**
-   * Scheduling on top of recipients a prepare interrupted by `moveToDraft`
-   * left behind would send to the old audience. A draft is refused (and its
-   * cleanup queued again) while its previous prepare job is still live — its
-   * last chunk may not be committed yet — or while leftover rows remain.
-   * Runs before the schedule transaction so it holds no lock while waiting
-   * on the database or the queue.
+   * The WHERE a one-off draft is scheduled through (`scheduleDraft`, and
+   * `updateDraft` when it sends). Scheduling on top of recipients a prepare
+   * interrupted by `moveToDraft` left behind would send to the old audience,
+   * so the draft is refused (and its cleanup queued again) while its previous
+   * prepare job is still live — its last chunk may not be committed yet — or
+   * leftover rows remain. The scope is pinned to the epoch read before those
+   * checks: a moveToDraft round-trip in between bumps it, so the write then
+   * matches nothing. Runs before the write's transaction so it holds no lock
+   * while waiting on the database or the queue.
    */
-  private async assertNoDraftLeftovers(input: {
+  private async draftActivationScope(input: {
     workspaceId: string
     broadcastId: string
-  }): Promise<void> {
-    // Only a draft of this workspace counts: anything else keeps the write's
-    // own "not a draft" error and never queues a cleanup.
-    const holdsLeftovers =
-      ((await this.isPrepareJobLive(input.broadcastId)) ||
-        (await hasBroadcastRecipients(input.broadcastId))) &&
-      (await this.isDraft(input))
-    if (!holdsLeftovers) {
-      return
+  }): Promise<SQL | undefined> {
+    const scope = this.draftScope(input.workspaceId, input.broadcastId)
+    const draft = await db.query.broadcastModel.findFirst({
+      where: {
+        id: input.broadcastId,
+        workspaceId: input.workspaceId,
+        status: broadcastStatuses.enum.draft,
+        deletedAt: { isNull: true },
+      },
+      columns: { resumeCount: true },
+    })
+    // Not this workspace's draft: the write reports it, nothing is queued.
+    if (!draft) {
+      return scope
     }
-    await this.queueDraftRecipientsPurge({ ...input, requester: "draft" })
-    throw new ChatbotXException(
-      "Broadcast is still clearing recipients from its previous schedule. Try again in a moment.",
-    )
+
+    if (
+      (await this.isPrepareJobLive(input.broadcastId)) ||
+      (await hasBroadcastRecipients(input.broadcastId))
+    ) {
+      await this.queueDraftRecipientsPurge({ ...input, requester: "draft" })
+      throw new ChatbotXException(
+        "Broadcast is still clearing recipients from its previous schedule. Try again in a moment.",
+      )
+    }
+    return and(scope, eq(broadcastModel.resumeCount, draft.resumeCount))
   }
 
   /** Whether the broadcast's prepare job is still queued or running, so it may still write recipients. */
@@ -1321,22 +1337,6 @@ class BroadcastService extends BaseService {
     }
     const state = await job.getState()
     return state !== "failed" && state !== "completed"
-  }
-
-  private async isDraft(input: {
-    workspaceId: string
-    broadcastId: string
-  }): Promise<boolean> {
-    const row = await db.query.broadcastModel.findFirst({
-      where: {
-        id: input.broadcastId,
-        workspaceId: input.workspaceId,
-        status: broadcastStatuses.enum.draft,
-        deletedAt: { isNull: true },
-      },
-      columns: { id: true },
-    })
-    return row !== undefined
   }
 
   /**
@@ -2148,7 +2148,8 @@ class BroadcastService extends BaseService {
   /**
    * Re-applies a validated create payload to an existing draft. `saveAsDraft`
    * decides whether the row stays a draft or becomes `scheduled`, mirroring
-   * `createBroadcastAction`. The conditional WHERE (`draftScope`) is the guard:
+   * `createBroadcastAction`. The conditional WHERE (`draftScope`, or
+   * `draftActivationScope` when it sends) is the guard:
    * a row that is no longer a draft — or belongs to another workspace — matches
    * nothing and the update is rejected rather than silently applied.
    */
@@ -2182,6 +2183,13 @@ class BroadcastService extends BaseService {
     } else if (isRecurring) {
       status = broadcastStatuses.enum.recurring
     }
+    const scope =
+      status === broadcastStatuses.enum.scheduled
+        ? await this.draftActivationScope({
+            workspaceId,
+            broadcastId: input.broadcastId,
+          })
+        : this.draftScope(workspaceId, input.broadcastId)
 
     const planContext =
       !(data.saveAsDraft || isRecurring) &&
@@ -2214,7 +2222,7 @@ class BroadcastService extends BaseService {
             ...this.buildBroadcastColumns(data, input.canViewEmailAndPhone),
             ...override,
           })
-          .where(this.draftScope(workspaceId, input.broadcastId))
+          .where(scope)
           .returning({ id: broadcastModel.id })
 
         if (updated) {
@@ -2230,7 +2238,7 @@ class BroadcastService extends BaseService {
       const [draft] = await tx
         .select({ id: broadcastModel.id })
         .from(broadcastModel)
-        .where(this.draftScope(workspaceId, input.broadcastId))
+        .where(scope)
         .for("update")
         .limit(1)
 
@@ -2734,19 +2742,36 @@ class BroadcastService extends BaseService {
    * it opens no conversations. A filter on chat history (**Last interaction**)
    * chooses the audience itself — e.g. "has no value" for contacts who never
    * messaged, including ones with no DM yet — and the send opens their DM.
+   *
+   * A query that already joins the DM (`buildDmConversationJoin`) passes how,
+   * so the requirement reuses that join instead of probing the DM again.
    */
-  private buildDmRequirement(input: BroadcastAudienceInput): SQL | undefined {
-    const filtersByChatHistory = input.contactFilter?.conditions.some(
-      (condition) =>
-        (condition as { field?: unknown } | null)?.field ===
+  private buildDmRequirement(
+    input: BroadcastAudienceInput,
+    dmJoin?: AudienceDmJoin,
+  ): SQL | undefined {
+    if (
+      contactFilterUsesField(
+        input.contactFilter,
         contactFilterFields.enum.lastInteraction,
-    )
-    return filtersByChatHistory ? undefined : contactInboxHasDmSQL()
+      )
+    ) {
+      return
+    }
+    switch (dmJoin) {
+      case "inner":
+        return
+      case "left":
+        return isNotNull(conversationModel.id)
+      default:
+        return contactInboxHasDmSQL()
+    }
   }
 
   private buildAudienceWhere(
     inboxIds: string[],
     input: BroadcastAudienceInput,
+    dmJoin?: AudienceDmJoin,
   ): SQL | undefined {
     const contactFilter = this.pruneAudienceContactFilter(input)
 
@@ -2759,7 +2784,7 @@ class BroadcastService extends BaseService {
             contactFilter,
           })
         : undefined,
-      this.buildDmRequirement(input),
+      this.buildDmRequirement(input, dmJoin),
       requiresRecentInteractionWindow(input.subaction)
         ? contactInboxInteractedWithin24hSQL()
         : undefined,
@@ -2807,10 +2832,16 @@ class BroadcastService extends BaseService {
     }
 
     const range = input.audienceRange ?? null
-    const audienceWhere = this.buildAudienceWhere(inboxIds, input)
+    // Inner-joined to the DM below, so the join itself is the DM requirement.
     const restricted = input.restrictToAssignedUserId
-      ? and(audienceWhere, this.buildAssignedConversationWhere(input))
+      ? and(
+          this.buildAudienceWhere(inboxIds, input, "inner"),
+          this.buildAssignedConversationWhere(input),
+        )
       : undefined
+    const audienceWhere = restricted
+      ? undefined
+      : this.buildAudienceWhere(inboxIds, input)
 
     const buildScopedSelect = (client: DatabaseClient) =>
       restricted
@@ -2904,7 +2935,7 @@ class BroadcastService extends BaseService {
       .leftJoin(conversationModel, this.buildDmConversationJoin())
       .where(
         and(
-          this.buildAudienceWhere(inboxIds, input),
+          this.buildAudienceWhere(inboxIds, input, "left"),
           eq(contactModel.workspaceId, input.workspaceId),
           this.buildAssignedConversationWhere(input),
         ),

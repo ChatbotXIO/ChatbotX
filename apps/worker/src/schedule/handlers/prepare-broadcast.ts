@@ -41,6 +41,15 @@ export const prepareBroadcast = async (broadcastId: string) => {
   // returns at once. Each chunk then adds the rows it actually wrote.
   let contactCount = await broadcastService.countRecipients({ broadcastId })
 
+  // Rows a stale run wrote belong to a schedule nobody will send: queue their
+  // cleanup (the draft cannot be scheduled again until they are gone).
+  const queueStaleRecipientsPurge = () =>
+    broadcastService.queueDraftRecipientsPurge({
+      workspaceId: broadcast.workspaceId,
+      broadcastId,
+      requester: "stalePrepare",
+    })
+
   const parsedChannel = channelTypes.safeParse(broadcast.channel)
   const parsedSubaction = broadcastSubactions.safeParse(broadcast.subaction)
   // The audience must stay scoped to the page the broadcast was created for;
@@ -99,27 +108,17 @@ export const prepareBroadcast = async (broadcastId: string) => {
 
       const recipients = contactInboxes.flatMap((contactInbox) => {
         const conversation = conversationMap.get(contactInbox.contactId)
-        if (!conversation) {
-          return []
-        }
-
-        return [
-          {
-            broadcastId,
-            contactId: contactInbox.contactId,
-            contactInboxId: contactInbox.id,
-            conversationId: conversation.id,
-          },
-        ]
+        return conversation
+          ? [
+              {
+                broadcastId,
+                contactId: contactInbox.contactId,
+                contactInboxId: contactInbox.id,
+                conversationId: conversation.id,
+              },
+            ]
+          : []
       })
-      const skippedCount = contactInboxes.length - recipients.length
-
-      if (skippedCount > 0) {
-        logger.info(
-          { broadcastId, skippedCount },
-          "Skipped broadcast contacts without a DM conversation",
-        )
-      }
 
       if (recipients.length > 0) {
         contactCount += await broadcastService.insertRecipients({ recipients })
@@ -136,11 +135,7 @@ export const prepareBroadcast = async (broadcastId: string) => {
       ) {
         return
       }
-      await broadcastService.queueDraftRecipientsPurge({
-        workspaceId: broadcast.workspaceId,
-        broadcastId,
-        requester: "stalePrepare",
-      })
+      await queueStaleRecipientsPurge()
       return false
     },
   )
@@ -159,15 +154,9 @@ export const prepareBroadcast = async (broadcastId: string) => {
 
   if (!promoted) {
     // Lost the promotion race — a moveToDraft (or delete) bumped the epoch
-    // or moved the row off `scheduled` after the walk's last check. The rows
-    // this run wrote belong to a stale schedule: queue their cleanup (the
-    // draft cannot be scheduled again until they are gone).
+    // or moved the row off `scheduled` after the walk's last check.
     if (contactCount > 0) {
-      await broadcastService.queueDraftRecipientsPurge({
-        workspaceId: broadcast.workspaceId,
-        broadcastId,
-        requester: "stalePrepare",
-      })
+      await queueStaleRecipientsPurge()
     }
     logger.warn(
       { broadcastId, promotionEpoch },

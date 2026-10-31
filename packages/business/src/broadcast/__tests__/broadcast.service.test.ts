@@ -196,6 +196,13 @@ vi.mock("@chatbotx.io/database/client", () => ({
 
 vi.mock("@chatbotx.io/database/queries", () => ({
   buildContactInboxContactFilterSQL: mocks.buildContactInboxContactFilterSQL,
+  contactFilterUsesField: (
+    contactFilter: { conditions: unknown[] } | null | undefined,
+    field: string,
+  ) =>
+    contactFilter?.conditions.some(
+      (condition) => (condition as { field?: unknown }).field === field,
+    ) ?? false,
   contactInboxHasDmSQL: () => ({ RAW: "has-dm" }),
   contactInboxInteractedWithin24hSQL: mocks.contactInboxInteractedWithin24hSQL,
   pruneEmailPhoneFilterConditions: (
@@ -549,6 +556,8 @@ describe("broadcastService.countAudience", () => {
         ]),
       }),
     )
+    // The inner join is the DM requirement; no second probe of the DM.
+    expect(JSON.stringify(mocks.selectWhere.mock.calls)).not.toContain("has-dm")
   })
 
   test("counts null sourceId DM conversations for a restricted TikTok scope", async () => {
@@ -803,12 +812,15 @@ describe("broadcastService.listAudiencePreview", () => {
             __and: expect.arrayContaining([
               { __inArray: ["ContactInbox.inboxId", ["inbox-1"]] },
               { RAW: "contact-filter" },
+              // The left-joined DM is the DM requirement; no second probe.
+              { __isNotNull: "Conversation.id" },
             ]),
           }),
           { __eq: ["Contact.workspaceId", "ws-1"] },
         ]),
       }),
     )
+    expect(JSON.stringify(mocks.selectWhere.mock.calls)).not.toContain("has-dm")
     expect(mocks.selectOrderBy).toHaveBeenCalledWith({
       __asc: "ContactInbox.id",
     })

@@ -14,6 +14,7 @@ import {
   buildContactWhere,
   buildSmartKeywordWhere,
   contactFilterHasPredicate,
+  contactFilterUsesField,
   contactInboxHasDmSQL,
   parseConversationAssigneeValues,
   pruneEmailPhoneFilterConditions,
@@ -3204,6 +3205,32 @@ describe("contactInboxHasDmSQL", () => {
     expect(rendered.sql).toBe(
       'EXISTS (SELECT 1 FROM "Conversation" WHERE "Conversation"."contactId" = "ContactInbox"."contactId" AND "Conversation"."sourceId" IS NULL)',
     )
+  })
+})
+
+describe("contactFilterUsesField", () => {
+  test("is true only when a condition is on the field", () => {
+    const filter = {
+      operator: "or" as const,
+      conditions: [
+        { field: "tag", operator: "in", value: ["vip"] },
+        { field: "lastInteraction", operator: "isEmpty" },
+      ],
+    }
+
+    expect(contactFilterUsesField(filter, "lastInteraction")).toBe(true)
+    expect(contactFilterUsesField(filter, "lastSeen")).toBe(false)
+  })
+
+  test("is false for a missing filter or malformed conditions", () => {
+    expect(contactFilterUsesField(null, "lastInteraction")).toBe(false)
+    expect(contactFilterUsesField(undefined, "lastInteraction")).toBe(false)
+    expect(
+      contactFilterUsesField(
+        { operator: "and", conditions: [null, "lastInteraction", 1] },
+        "lastInteraction",
+      ),
+    ).toBe(false)
   })
 })
 
