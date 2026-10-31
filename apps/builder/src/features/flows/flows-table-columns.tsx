@@ -209,7 +209,7 @@ export function getFlowColumns({
     },
     {
       id: "actions",
-      header: "Actions",
+      header: t("actions.actions"),
       cell: ({ row }) => (
         <DropdownMenu>
           <DropdownMenuTrigger

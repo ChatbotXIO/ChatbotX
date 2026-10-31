@@ -1386,6 +1386,13 @@
     "bot": {
       "label": "Bot"
     },
+    "botCategory": {
+      "options": {
+        "all": "Tümü",
+        "human": "İnsan",
+        "bot": "Bot"
+      }
+    },
     "botResponse": {
       "label": "Bot Yanıtı"
     },

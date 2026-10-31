@@ -1386,6 +1386,13 @@
     "bot": {
       "label": "بوت"
     },
+    "botCategory": {
+      "options": {
+        "all": "الكل",
+        "human": "إنسان",
+        "bot": "بوت"
+      }
+    },
     "botResponse": {
       "label": "رد البوت"
     },

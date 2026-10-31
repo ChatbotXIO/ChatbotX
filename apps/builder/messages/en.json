@@ -1428,6 +1428,13 @@
     "bot": {
       "label": "Bot"
     },
+    "botCategory": {
+      "options": {
+        "all": "All",
+        "human": "Human",
+        "bot": "Bot"
+      }
+    },
     "botResponse": {
       "label": "Bot Response"
     },

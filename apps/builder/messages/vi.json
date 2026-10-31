@@ -1423,6 +1423,13 @@
     "bot": {
       "label": "Bot"
     },
+    "botCategory": {
+      "options": {
+        "all": "Tất cả",
+        "human": "Người",
+        "bot": "Bot"
+      }
+    },
     "botResponse": {
       "label": "Phản hồi bot"
     },

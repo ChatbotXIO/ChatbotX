@@ -196,6 +196,13 @@
     "bot": {
       "label": "Bot"
     },
+    "botCategory": {
+      "options": {
+        "all": "Tutte",
+        "human": "Operatore",
+        "bot": "Bot"
+      }
+    },
     "botResponse": {
       "label": "Risposta del bot"
     },

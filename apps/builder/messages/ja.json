@@ -1230,6 +1230,13 @@
     "bot": {
       "label": "ボット"
     },
+    "botCategory": {
+      "options": {
+        "all": "すべて",
+        "human": "人間",
+        "bot": "ボット"
+      }
+    },
     "botResponse": {
       "label": "ボットの応答"
     },

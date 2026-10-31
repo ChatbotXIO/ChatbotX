@@ -83,7 +83,7 @@ export function ContactListAction({
         render={
           <Button disabled={disabled} variant="outline">
             <ListIcon />
-            Actions
+            {t("actions.actions")}
           </Button>
         }
       />

@@ -2556,6 +2556,13 @@
     "bot": {
       "label": "Bot"
     },
+    "botCategory": {
+      "options": {
+        "all": "Toate",
+        "human": "Om",
+        "bot": "Bot"
+      }
+    },
     "botResponse": {
       "label": "Răspunsul botului"
     },

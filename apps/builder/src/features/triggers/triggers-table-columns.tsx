@@ -146,7 +146,7 @@ export function getColumns({
     {
       id: "action",
       size: 10,
-      header: "Actions",
+      header: t("actions.actions"),
       cell: ({ row }) => (
         <DropdownMenu>
           <DropdownMenuTrigger

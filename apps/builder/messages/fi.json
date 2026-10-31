@@ -1230,6 +1230,13 @@
     "bot": {
       "label": "Botti"
     },
+    "botCategory": {
+      "options": {
+        "all": "Kaikki",
+        "human": "Ihminen",
+        "bot": "Botti"
+      }
+    },
     "botResponse": {
       "label": "Botin vastaus"
     },

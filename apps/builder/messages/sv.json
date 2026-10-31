@@ -2299,6 +2299,13 @@
     "bot": {
       "label": "Bot"
     },
+    "botCategory": {
+      "options": {
+        "all": "Alla",
+        "human": "Människa",
+        "bot": "Bot"
+      }
+    },
     "botField": {
       "label": "Botfält"
     },

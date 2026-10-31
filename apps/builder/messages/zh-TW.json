@@ -219,6 +219,13 @@
     "bot": {
       "label": "機器人"
     },
+    "botCategory": {
+      "options": {
+        "all": "全部",
+        "human": "真人客服",
+        "bot": "機器人"
+      }
+    },
     "botResponse": {
       "label": "機器人回應"
     },

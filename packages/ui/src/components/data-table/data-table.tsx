@@ -5,8 +5,11 @@ import {
 } from "@tanstack/react-table"
 import type * as React from "react"
 
+import {
+  type DataTableLabels,
+  useDataTableLabels,
+} from "@chatbotx.io/ui/components/data-table/data-table-labels"
 import { DataTablePagination } from "@chatbotx.io/ui/components/data-table/data-table-pagination"
-import type { DataTablePaginationLabels } from "@chatbotx.io/ui/components/data-table/data-table-pagination"
 import {
   Table,
   TableBody,
@@ -21,9 +24,7 @@ import { cn } from "@chatbotx.io/ui/lib/utils"
 interface DataTableProps<TData> extends React.ComponentProps<"div"> {
   table: TanstackTable<TData>
   actionBar?: React.ReactNode
-  labels?: DataTablePaginationLabels & {
-    noResults?: string
-  }
+  labels?: DataTableLabels
   /**
    * Renders one row as a card for narrow viewports.
    *
@@ -43,14 +44,15 @@ interface DataTableProps<TData> extends React.ComponentProps<"div"> {
 export function DataTable<TData>({
   table,
   actionBar,
-  labels,
+  labels: labelOverrides,
   mobileCard,
   children,
   className,
   ...props
 }: DataTableProps<TData>) {
   const rows = table.getRowModel().rows
-  const noResults = labels?.noResults ?? "No results."
+  const labels = useDataTableLabels(labelOverrides)
+  const noResults = labels.noResults ?? "No results."
 
   return (
     <div
