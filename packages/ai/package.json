@@ -10,7 +10,7 @@
     "./utils": "./src/utils/index.ts"
   },
   "dependencies": {
-    "@ai-sdk/anthropic": "^4.0.82",
+    "@ai-sdk/anthropic": "^4.0.87",
     "@ai-sdk/deepseek": "^3.0.67",
     "@ai-sdk/google": "^4.0.99",
     "@ai-sdk/openai": "^4.0.96",
