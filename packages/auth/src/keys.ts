@@ -102,7 +102,20 @@ const trailingSlashPattern = /\/$/
 
 const LOOPBACK_HOSTNAMES = new Set(["localhost", "127.0.0.1", "[::1]"])
 
+// `SKIP_ENV_CHECK=true` (docker/CI build) leaves NEXT_PUBLIC_BUILDER_URL unset,
+// and `createAuth` runs at module load while Next collects page data. There is
+// no real URL to validate then; the runtime container re-evaluates with the
+// real env, so a loopback placeholder is safe and never reaches production.
+const BUILD_PLACEHOLDER_MCP_URL = "http://localhost:3123/mcp"
+
 export const getMcpResourceUrl = (): string => {
+  if (
+    process.env.SKIP_ENV_CHECK === "true" &&
+    !env.MCP_PUBLIC_URL &&
+    !URL.canParse(env.NEXT_PUBLIC_BUILDER_URL ?? "")
+  ) {
+    return BUILD_PLACEHOLDER_MCP_URL
+  }
   const resource = (
     env.MCP_PUBLIC_URL ??
     new URL("/mcp", env.NEXT_PUBLIC_BUILDER_URL).toString()

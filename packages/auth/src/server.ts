@@ -909,7 +909,13 @@ export function createAuth(config: AuthConfig) {
         disableSettingJwtHeader: true,
         jwt: { issuer: new URL(env.NEXT_PUBLIC_BUILDER_URL).origin },
       }),
-      mcp(buildMcpPluginOptions(mcpResource)),
+      // The mcp/oauth-provider plugin seeds its `OAuthResource` row from `init`,
+      // i.e. a DB query whenever `createAuth` runs. During `next build` that fires
+      // in every page-data worker for nothing (and fails with no DB). Skip it
+      // there; the runtime server re-evaluates `createAuth` and seeds normally.
+      ...(process.env.NEXT_PHASE === "phase-production-build"
+        ? ([] as const)
+        : ([mcp(buildMcpPluginOptions(mcpResource))] as const)),
       // Relays better-auth's Set-Cookie into the Next.js response. Required so a
       // server-side `auth.api.changePassword` (with `revokeOtherSessions`) rotates
       // the caller's session cookie instead of silently logging them out. Must be
