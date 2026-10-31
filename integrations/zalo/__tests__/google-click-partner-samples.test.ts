@@ -67,15 +67,13 @@ describe("Zalo Google click: Google's partner samples", () => {
       queue: { add: queueAdd },
     } as unknown as HandleRequestProps<ZaloConfig>)
 
-    expect(queueAdd).toHaveBeenCalledWith(
-      "incomingMessage",
-      expect.objectContaining({
-        data: expect.objectContaining({
-          integrationType: "zalo",
-          integrationIdentifier: "3461485453960411318",
-        }),
+    expect(queueAdd.mock.calls[0]?.[0]).toBe("incomingMessage")
+    expect(queueAdd.mock.calls[0]?.[1]).toMatchObject({
+      data: expect.objectContaining({
+        integrationType: "zalo",
+        integrationIdentifier: "3461485453960411318",
       }),
-    )
+    })
     const result = await receiveMessage({
       ctx,
       data: {

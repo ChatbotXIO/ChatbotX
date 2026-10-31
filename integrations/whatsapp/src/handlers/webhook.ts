@@ -4,6 +4,7 @@ import {
   type ReceivedMessageProps,
   SdkException,
 } from "@chatbotx.io/sdk"
+import { toBullMqSafeIdSegment } from "@chatbotx.io/utils"
 import { sha256Hex, verifyHmacSha256Signature } from "@chatbotx.io/utils/crypto"
 import type { WhatsappIdentityChangePayload } from "@chatbotx.io/worker-config"
 import type { OnMessageArgs, OnStatusArgs } from "whatsapp-api-js/emitters"
@@ -179,9 +180,6 @@ const automaticEventFieldExtractors: Record<
   },
 }
 
-const toBullMqSafeIdSegment = (value: string): string =>
-  value.replace(/[^a-zA-Z0-9._-]/g, "_")
-
 /**
  * The phone number id the calling route pinned, if any. The per-integration
  * manual route pins its own number because it may be unsigned — otherwise a
@@ -223,7 +221,6 @@ const dropMismatchedPhoneNumberId = <T extends { phoneNumberId: string }>(
     return false
   })
 }
-
 export const extractAutomaticEventPayloads = (
   rawBody: unknown,
 ): AutomaticEventPayload[] => {
