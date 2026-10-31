@@ -65,6 +65,7 @@ export const errorLogProviders = z.enum([
   "claude",
   "deepseek",
   "openrouter",
+  "muse",
   "openai-compatible",
 ])
 
@@ -126,6 +127,7 @@ export const errorLogProviderLabels = {
   claude: "Claude",
   deepseek: "DeepSeek",
   openrouter: "OpenRouter",
+  muse: "Muse",
   "openai-compatible": "OpenAI Compatible",
 } as const satisfies Record<ErrorLogProvider, string>
 

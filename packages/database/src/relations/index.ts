@@ -106,6 +106,7 @@ import { integrationMailchimpRelations } from "./integration-mailchimp"
 import { integrationMailerLiteRelations } from "./integration-mailer-lite"
 import { integrationMessengerRelations } from "./integration-messenger"
 import { integrationMoosendRelations } from "./integration-moosend"
+import { integrationMuseRelations } from "./integration-muse"
 import { integrationOpenaiRelations } from "./integration-openai"
 import { integrationOpenaiCompatibleRelations } from "./integration-openai-compatible"
 import { integrationOpenrouterRelations } from "./integration-openrouter"
@@ -288,6 +289,7 @@ export const relations = {
   ...integrationSmtpRelations,
   ...integrationClaudeRelations,
   ...integrationDeepseekRelations,
+  ...integrationMuseRelations,
   ...integrationGeminiRelations,
   ...integrationOpenrouterRelations,
   ...integrationOutlookCalendarRelations,

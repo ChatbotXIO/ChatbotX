@@ -3258,6 +3258,48 @@
       "destinationPipeline": "Pipeline de destino",
       "destinationStage": "Etapa de destino"
     },
+    "aiSpeechToText": {
+      "muse": {
+        "formatHint": "Solo se aceptan archivos WAV: PCM de 16 bits, mono, 16 kHz o 24 kHz, hasta 10 minutos. Cualquier otro archivo (por ejemplo, mensajes de voz) va a la rama de error.",
+        "languageBias": {
+          "label": "Preferencia de idioma",
+          "description": "Idiomas probables del audio. Déjalo vacío para detectarlo automáticamente.",
+          "placeholder": "Detección automática"
+        },
+        "keywords": {
+          "label": "Palabras clave",
+          "description": "Nombres o términos del sector que ayudan a Muse a escribir bien las palabras.",
+          "placeholder": "Añade una palabra clave y pulsa Enter"
+        }
+      },
+      "languages": {
+        "Arabic": "Árabe",
+        "Bengali": "Bengalí",
+        "Dutch": "Neerlandés",
+        "English": "Inglés",
+        "French": "Francés",
+        "German": "Alemán",
+        "Hebrew": "Hebreo",
+        "Hindi": "Hindi",
+        "Indonesian": "Indonesio",
+        "Italian": "Italiano",
+        "Japanese": "Japonés",
+        "Kannada": "Canarés",
+        "Korean": "Coreano",
+        "Malay": "Malayo",
+        "MandarinChinese": "Chino mandarín",
+        "Marathi": "Maratí",
+        "Polish": "Polaco",
+        "Portuguese": "Portugués",
+        "Spanish": "Español",
+        "Tagalog": "Tagalo",
+        "Tamil": "Tamil",
+        "Telugu": "Telugu",
+        "Thai": "Tailandés",
+        "Turkish": "Turco",
+        "Vietnamese": "Vietnamita"
+      }
+    },
     "findPlacesNearMe": {
       "category": "Categoría de ubicación",
       "allLocations": "Todas las ubicaciones",
@@ -4498,6 +4540,18 @@
     },
     "title": "DeepSeek"
   },
+  "muse": {
+    "autoReply": {
+      "description": "Activar AI auto respuesta un respond un usuarios naturtodosy con AI powered by tu empresa datos.",
+      "label": "AI Auto Respuesta"
+    },
+    "connect": {
+      "description": "Respond un usuarios naturtodosy con AI powered by tu empresa datos.",
+      "embeddingHint": "Muse no ofrece modelos de embeddings. La base de conocimiento y los archivos de IA siguen necesitando una integración con OpenAI o Gemini.",
+      "label": "Muse"
+    },
+    "title": "Muse"
+  },
   "decision": {
     "addConnection": "Add AI Router connection",
     "advanced": "Advanced",
@@ -4633,6 +4687,10 @@
     "deepseek": {
       "description": "DeepSeek integración descripción",
       "title": "DeepSeek Integración"
+    },
+    "muse": {
+      "description": "Muse integración descripción",
+      "title": "Muse Integración"
     }
   },
   "auth": {
@@ -5990,6 +6048,7 @@
     "gemini": "Gemini",
     "claude": "Claude",
     "deepseek": "DeepSeek",
+    "muse": "Muse",
     "openrouter": "AbrirRouter",
     "openaiCompatible": "AbrirAI Compatible"
   },

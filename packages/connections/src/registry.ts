@@ -11,6 +11,7 @@ import {
   claudeConnectionProvider,
   deepseekConnectionProvider,
   geminiConnectionProvider,
+  museConnectionProvider,
   openaiCompatibleConnectionProvider,
   openaiConnectionProvider,
   openrouterConnectionProvider,
@@ -187,6 +188,7 @@ export const CONNECTION_REGISTRY: StoreBoundConnectionRegistry = {
   },
   metaCatalog: null,
   moosend: fromIntegration(integrationMoosend, "moosend"),
+  muse: fromCredentialProvider(museConnectionProvider, "muse"),
   openai: fromCredentialProvider(openaiConnectionProvider, "openai"),
   openaiCompatible: fromCredentialProvider(
     openaiCompatibleConnectionProvider,

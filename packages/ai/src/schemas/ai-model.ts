@@ -6,6 +6,7 @@ export const aiProviders = z.enum([
   "claude",
   "deepseek",
   "openrouter",
+  "muse",
 ])
 export type AIProvider = z.infer<typeof aiProviders>
 

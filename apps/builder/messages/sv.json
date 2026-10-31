@@ -383,6 +383,7 @@
   "aiProviders": {
     "claude": "Claude",
     "deepseek": "DeepSeek",
+    "muse": "Muse",
     "gemini": "Gemini",
     "openai": "OpenAI",
     "openaiCompatible": "OpenAI-kompatibel",
@@ -1519,6 +1520,18 @@
       "label": "DeepSeek"
     },
     "title": "DeepSeek"
+  },
+  "muse": {
+    "autoReply": {
+      "description": "Aktivera automatiska AI-svar för att svara användare naturligt med AI som drivs av dina företagsdata.",
+      "label": "Automatiskt AI-svar"
+    },
+    "connect": {
+      "description": "Svara användare naturligt med AI som drivs av dina företagsdata.",
+      "embeddingHint": "Muse erbjuder inga embedding-modeller. Kunskapsbas och AI-filer kräver fortfarande en OpenAI- eller Gemini-integration.",
+      "label": "Muse"
+    },
+    "title": "Muse"
   },
   "developerAccessToken": {
     "description": "Generera en token som ger din arbetsyta åtkomst till de offentliga API:erna. Håll denna token hemlig och dela den inte med någon.",
@@ -4258,6 +4271,48 @@
       "destinationPipeline": "Målpipeline",
       "destinationStage": "Målfas"
     },
+    "aiSpeechToText": {
+      "muse": {
+        "formatHint": "Endast WAV-filer accepteras: PCM 16-bit, mono, 16 kHz eller 24 kHz, högst 10 minuter. Alla andra filer (till exempel röstmeddelanden) går till felgrenen.",
+        "languageBias": {
+          "label": "Språkpreferens",
+          "description": "Språk som ljudet troligen är på. Lämna tomt för automatisk identifiering.",
+          "placeholder": "Identifiera automatiskt"
+        },
+        "keywords": {
+          "label": "Nyckelord",
+          "description": "Namn eller facktermer som hjälper Muse att stava ord rätt.",
+          "placeholder": "Lägg till ett nyckelord och tryck på Enter"
+        }
+      },
+      "languages": {
+        "Arabic": "Arabiska",
+        "Bengali": "Bengali",
+        "Dutch": "Nederländska",
+        "English": "Engelska",
+        "French": "Franska",
+        "German": "Tyska",
+        "Hebrew": "Hebreiska",
+        "Hindi": "Hindi",
+        "Indonesian": "Indonesiska",
+        "Italian": "Italienska",
+        "Japanese": "Japanska",
+        "Kannada": "Kannada",
+        "Korean": "Koreanska",
+        "Malay": "Malajiska",
+        "MandarinChinese": "Mandarinkinesiska",
+        "Marathi": "Marathi",
+        "Polish": "Polska",
+        "Portuguese": "Portugisiska",
+        "Spanish": "Spanska",
+        "Tagalog": "Tagalog",
+        "Tamil": "Tamil",
+        "Telugu": "Telugu",
+        "Thai": "Thailändska",
+        "Turkish": "Turkiska",
+        "Vietnamese": "Vietnamesiska"
+      }
+    },
     "findPlacesNearMe": {
       "category": "Platskategori",
       "allLocations": "Alla platser",
@@ -6620,6 +6675,10 @@
     "deepseek": {
       "description": "Beskrivning av DeepSeek-integrationen",
       "title": "DeepSeek-integration"
+    },
+    "muse": {
+      "description": "Beskrivning av Muse-integrationen",
+      "title": "Muse-integration"
     },
     "openai": {
       "description": "Beskrivning av OpenAI-integrationen",

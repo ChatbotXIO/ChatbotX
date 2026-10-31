@@ -571,6 +571,7 @@
   "aiProviders": {
     "claude": "Claude",
     "deepseek": "DeepSeek",
+    "muse": "Muse",
     "gemini": "Gemini",
     "openai": "OpenAI",
     "openaiCompatible": "OpenAI兼容",
@@ -1707,6 +1708,18 @@
       "label": "DeepSeek"
     },
     "title": "DeepSeek"
+  },
+  "muse": {
+    "autoReply": {
+      "description": "激活人工智能自动回复，通过您的业务数据支持的人工智能自然地回复用户。",
+      "label": "人工智能自动回复"
+    },
+    "connect": {
+      "description": "利用由您的业务数据提供支持的 AI 自然地回应用户。",
+      "embeddingHint": "Muse 不提供嵌入模型。知识库和 AI 文件仍需要接入 OpenAI 或 Gemini。",
+      "label": "Muse"
+    },
+    "title": "Muse"
   },
   "developerAccessToken": {
     "description": "产生权杖以允许您的工作区访问公共 API。请将此权杖保密，不要与任何人共享。",
@@ -4261,6 +4274,48 @@
       "destinationPipeline": "目标管道",
       "destinationStage": "目标阶段"
     },
+    "aiSpeechToText": {
+      "muse": {
+        "formatHint": "仅支持 WAV 文件：PCM 16 位、单声道、16 kHz 或 24 kHz，最长 10 分钟。其他文件（例如语音消息）将进入错误分支。",
+        "languageBias": {
+          "label": "语言偏好",
+          "description": "音频可能使用的语言。留空则自动检测。",
+          "placeholder": "自动检测"
+        },
+        "keywords": {
+          "label": "关键词",
+          "description": "帮助 Muse 正确拼写的名称或专业术语。",
+          "placeholder": "输入关键词后按 Enter"
+        }
+      },
+      "languages": {
+        "Arabic": "阿拉伯语",
+        "Bengali": "孟加拉语",
+        "Dutch": "荷兰语",
+        "English": "英语",
+        "French": "法语",
+        "German": "德语",
+        "Hebrew": "希伯来语",
+        "Hindi": "印地语",
+        "Indonesian": "印度尼西亚语",
+        "Italian": "意大利语",
+        "Japanese": "日语",
+        "Kannada": "卡纳达语",
+        "Korean": "韩语",
+        "Malay": "马来语",
+        "MandarinChinese": "普通话",
+        "Marathi": "马拉地语",
+        "Polish": "波兰语",
+        "Portuguese": "葡萄牙语",
+        "Spanish": "西班牙语",
+        "Tagalog": "他加禄语",
+        "Tamil": "泰米尔语",
+        "Telugu": "泰卢固语",
+        "Thai": "泰语",
+        "Turkish": "土耳其语",
+        "Vietnamese": "越南语"
+      }
+    },
     "findPlacesNearMe": {
       "category": "地点类别",
       "allLocations": "所有地点",
@@ -6620,6 +6675,10 @@
     "deepseek": {
       "description": "DeepSeek 集成说明",
       "title": "DeepSeek集成"
+    },
+    "muse": {
+      "description": "Muse 集成说明",
+      "title": "Muse集成"
     },
     "openai": {
       "description": "OpenAI 集成说明",

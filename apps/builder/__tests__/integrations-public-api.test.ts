@@ -77,6 +77,7 @@ vi.mock("@chatbotx.io/ai", () => ({
       claude: "claude",
       deepseek: "deepseek",
       gemini: "gemini",
+      muse: "muse",
       openai: "openai",
     },
   },
@@ -103,6 +104,11 @@ const integrationGeminiService = {
   connect: vi.fn(),
   disconnect: vi.fn(),
 }
+const integrationMuseService = {
+  findByWorkspaceId: vi.fn(),
+  connect: vi.fn(),
+  disconnect: vi.fn(),
+}
 const integrationOpenAIService = {
   findByWorkspaceId: vi.fn(),
   connect: vi.fn(),
@@ -116,6 +122,7 @@ vi.mock("@chatbotx.io/business", () => ({
   integrationClaudeService,
   integrationDeepSeekService,
   integrationGeminiService,
+  integrationMuseService,
   integrationOpenAIService,
   connectionStateService,
 }))
@@ -291,6 +298,34 @@ describe("GET /v1/integrations/ai/{provider}", () => {
       "workspace-1",
     )
     expect(integrationClaudeService.findByWorkspaceId).not.toHaveBeenCalled()
+  })
+
+  test("dispatches the muse provider to the Muse service", async () => {
+    integrationMuseService.findByWorkspaceId.mockResolvedValueOnce({
+      id: "muse-1",
+      model: "muse-spark-1.3",
+      temperature: 0.4,
+      maxOutputTokens: 4096,
+      autoReply: false,
+      auth: { authType: "secretText", secretText: "muse-key" },
+    })
+
+    const result = await procedure.handler?.({
+      context: { workspace: { id: "workspace-1" } },
+      input: { provider: "muse" },
+    })
+
+    expect(integrationMuseService.findByWorkspaceId).toHaveBeenCalledWith(
+      "workspace-1",
+    )
+    expect(result).toEqual({
+      id: "muse-1",
+      model: "muse-spark-1.3",
+      temperature: 0.4,
+      maxOutputTokens: 4096,
+      autoReply: false,
+      hasApiKey: true,
+    })
   })
 })
 

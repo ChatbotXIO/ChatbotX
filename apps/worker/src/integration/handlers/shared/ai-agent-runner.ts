@@ -3,6 +3,7 @@ import {
   helpTexts,
   processStreamingText,
   toolPrefixes,
+  toStepSeparatedTextStream,
 } from "@chatbotx.io/ai"
 import {
   aiContextService,
@@ -211,7 +212,7 @@ async function runAIReplyInternal(
     })
 
     const { fullText } = await processStreamingText(
-      result.textStream,
+      toStepSeparatedTextStream(result.stream),
       async () => {
         // noop: fullText is accumulated internally, no message to send
       },

@@ -3258,6 +3258,48 @@
       "destinationPipeline": "خط سير العمل الوجهة",
       "destinationStage": "المرحلة الوجهة"
     },
+    "aiSpeechToText": {
+      "muse": {
+        "formatHint": "تُقبل ملفات WAV فقط: PCM بدقة 16 بت، أحادي القناة، 16 أو 24 كيلوهرتز، بحد أقصى 10 دقائق. أي ملف آخر (مثل الرسائل الصوتية) ينتقل إلى فرع الخطأ.",
+        "languageBias": {
+          "label": "تفضيل اللغة",
+          "description": "اللغات المحتملة في الصوت. اتركه فارغًا للاكتشاف التلقائي.",
+          "placeholder": "اكتشاف تلقائي"
+        },
+        "keywords": {
+          "label": "الكلمات المفتاحية",
+          "description": "أسماء أو مصطلحات متخصصة تساعد Muse على كتابة الكلمات بشكل صحيح.",
+          "placeholder": "أضف كلمة مفتاحية واضغط Enter"
+        }
+      },
+      "languages": {
+        "Arabic": "العربية",
+        "Bengali": "البنغالية",
+        "Dutch": "الهولندية",
+        "English": "الإنجليزية",
+        "French": "الفرنسية",
+        "German": "الألمانية",
+        "Hebrew": "العبرية",
+        "Hindi": "الهندية",
+        "Indonesian": "الإندونيسية",
+        "Italian": "الإيطالية",
+        "Japanese": "اليابانية",
+        "Kannada": "الكانادا",
+        "Korean": "الكورية",
+        "Malay": "الماليزية",
+        "MandarinChinese": "الصينية الماندرين",
+        "Marathi": "الماراثية",
+        "Polish": "البولندية",
+        "Portuguese": "البرتغالية",
+        "Spanish": "الإسبانية",
+        "Tagalog": "التاغالوغية",
+        "Tamil": "التاميلية",
+        "Telugu": "التيلوغوية",
+        "Thai": "التايلاندية",
+        "Turkish": "التركية",
+        "Vietnamese": "الفيتنامية"
+      }
+    },
     "findPlacesNearMe": {
       "category": "فئة الموقع",
       "allLocations": "كل المواقع",
@@ -4498,6 +4540,18 @@
     },
     "title": "DeepSeek"
   },
+  "muse": {
+    "autoReply": {
+      "description": "فعّل الرد التلقائي بالذكاء الاصطناعي للرد على المستخدمين بصورة طبيعية استنادًا إلى بيانات نشاطك التجاري.",
+      "label": "الرد التلقائي بالذكاء الاصطناعي"
+    },
+    "connect": {
+      "description": "ردّ على المستخدمين بصورة طبيعية باستخدام ذكاء اصطناعي مدعوم ببيانات نشاطك التجاري.",
+      "embeddingHint": "لا يوفر Muse نماذج تضمين. لا تزال قاعدة المعرفة وملفات الذكاء الاصطناعي تحتاج إلى تكامل OpenAI أو Gemini.",
+      "label": "Muse"
+    },
+    "title": "Muse"
+  },
   "decision": {
     "addConnection": "Add AI Router connection",
     "advanced": "Advanced",
@@ -4633,6 +4687,10 @@
     "deepseek": {
       "description": "وصف تكامل DeepSeek",
       "title": "تكامل DeepSeek"
+    },
+    "muse": {
+      "description": "وصف تكامل Muse",
+      "title": "تكامل Muse"
     }
   },
   "auth": {
@@ -5990,6 +6048,7 @@
     "gemini": "Gemini",
     "claude": "Claude",
     "deepseek": "DeepSeek",
+    "muse": "Muse",
     "openrouter": "OpenRouter",
     "openaiCompatible": "متوافق مع OpenAI"
   },

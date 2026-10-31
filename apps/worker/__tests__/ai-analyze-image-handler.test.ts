@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const mocks = vi.hoisted(() => ({
   isImageUrl: vi.fn(),
+  logStepProviderError: vi.fn(),
   processStreamingText: vi.fn(),
   readCustomFieldValue: vi.fn(),
   resolveFlowAIModel: vi.fn(),
@@ -21,10 +22,10 @@ vi.mock("../src/integration/utils/contact", () => ({
   saveResultToCustomField: mocks.saveResultToCustomField,
 }))
 vi.mock("../src/integration/handlers/flow-utils", () => ({
-  logStepProviderError: vi.fn(),
+  logStepProviderError: mocks.logStepProviderError,
 }))
 vi.mock("../src/integration/handlers/shared/ai-error-log-provider", () => ({
-  aiErrorLogProvider: vi.fn(),
+  aiErrorLogProvider: vi.fn((provider: string) => provider),
 }))
 vi.mock("../src/integration/handlers/shared/flow-ai-model-resolver", () => ({
   resolveFlowAIModel: mocks.resolveFlowAIModel,
@@ -96,6 +97,41 @@ describe("handleAIAnalyzeImage", () => {
           },
         ],
       }),
+    )
+  })
+
+  test("reports a provider error from the stream as a step error", async () => {
+    const providerError = new Error("The requested model was not found.")
+    // The SDK reports stream errors through onError and drops them from
+    // textStream, which then ends empty.
+    mocks.streamText.mockImplementation(
+      (options: { onError: (event: { error: unknown }) => void }) => {
+        // Like the SDK, swallow a throw from onError.
+        try {
+          options.onError({ error: providerError })
+        } catch {
+          // ignored
+        }
+        return { textStream: [] }
+      },
+    )
+    mocks.processStreamingText.mockResolvedValue({ fullText: "" })
+
+    await expect(
+      handleAIAnalyzeImage({
+        ...props,
+        step: { ...props.step, outputFieldId: "field-2" },
+      }),
+    ).resolves.toEqual({
+      status: "error",
+      errorMessage: "The requested model was not found.",
+      result: null,
+    })
+    expect(mocks.saveResultToCustomField).not.toHaveBeenCalled()
+    expect(mocks.logStepProviderError).toHaveBeenCalledWith(
+      "openai",
+      expect.anything(),
+      providerError,
     )
   })
 })

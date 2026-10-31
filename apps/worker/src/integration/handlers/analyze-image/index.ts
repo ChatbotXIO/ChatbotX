@@ -68,6 +68,9 @@ export async function handleAIAnalyzeImage({
       }
     }
 
+    // `textStream` drops error parts, so keep the provider error and rethrow
+    // it once the stream ends — otherwise a failed call reports success.
+    let streamError: unknown
     const result = streamText({
       model: resolvedModel.model,
       messages: [
@@ -82,6 +85,9 @@ export async function handleAIAnalyzeImage({
       maxOutputTokens: step.maxOutputTokens,
       temperature: step.temperature,
       abortSignal: controller.signal,
+      onError: ({ error }) => {
+        streamError = error
+      },
     })
 
     const { fullText } = await processStreamingText(
@@ -91,6 +97,9 @@ export async function handleAIAnalyzeImage({
       },
       { sendParts: false },
     )
+    if (streamError) {
+      throw streamError
+    }
 
     if (step.outputFieldId) {
       await saveResultToCustomField({

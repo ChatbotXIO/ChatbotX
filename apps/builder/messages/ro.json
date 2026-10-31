@@ -445,6 +445,48 @@
       "destinationPipeline": "Pipeline de destinație",
       "destinationStage": "Etapă de destinație"
     },
+    "aiSpeechToText": {
+      "muse": {
+        "formatHint": "Sunt acceptate doar fișiere WAV: PCM 16 biți, mono, 16 kHz sau 24 kHz, maximum 10 minute. Orice alt fișier (de exemplu, mesajele vocale) merge pe ramura de eroare.",
+        "languageBias": {
+          "label": "Preferință de limbă",
+          "description": "Limbile probabile ale înregistrării. Lăsați gol pentru detectare automată.",
+          "placeholder": "Detectare automată"
+        },
+        "keywords": {
+          "label": "Cuvinte-cheie",
+          "description": "Nume sau termeni de specialitate care ajută Muse să scrie corect cuvintele.",
+          "placeholder": "Adăugați un cuvânt-cheie și apăsați Enter"
+        }
+      },
+      "languages": {
+        "Arabic": "Arabă",
+        "Bengali": "Bengaleză",
+        "Dutch": "Neerlandeză",
+        "English": "Engleză",
+        "French": "Franceză",
+        "German": "Germană",
+        "Hebrew": "Ebraică",
+        "Hindi": "Hindi",
+        "Indonesian": "Indoneziană",
+        "Italian": "Italiană",
+        "Japanese": "Japoneză",
+        "Kannada": "Kannada",
+        "Korean": "Coreeană",
+        "Malay": "Malaeză",
+        "MandarinChinese": "Chineză mandarină",
+        "Marathi": "Marathi",
+        "Polish": "Poloneză",
+        "Portuguese": "Portugheză",
+        "Spanish": "Spaniolă",
+        "Tagalog": "Tagalog",
+        "Tamil": "Tamilă",
+        "Telugu": "Telugu",
+        "Thai": "Thailandeză",
+        "Turkish": "Turcă",
+        "Vietnamese": "Vietnameză"
+      }
+    },
     "findPlacesNearMe": {
       "category": "Categoria locației",
       "allLocations": "Toate locațiile",
@@ -4498,6 +4540,18 @@
     },
     "title": "DeepSeek"
   },
+  "muse": {
+    "autoReply": {
+      "description": "Activează răspunsul automat cu IA pentru a răspunde utilizatorilor în mod natural, folosind IA alimentată de datele afacerii tale.",
+      "label": "Răspuns automat IA"
+    },
+    "connect": {
+      "description": "Răspunde utilizatorilor în mod natural cu IA alimentată de datele afacerii tale.",
+      "embeddingHint": "Muse nu oferă modele de embedding. Baza de cunoștințe și fișierele AI necesită în continuare o integrare OpenAI sau Gemini.",
+      "label": "Muse"
+    },
+    "title": "Muse"
+  },
   "decision": {
     "addConnection": "Add AI Router connection",
     "advanced": "Advanced",
@@ -4633,6 +4687,10 @@
     "deepseek": {
       "description": "Descrierea integrării DeepSeek",
       "title": "Integrare DeepSeek"
+    },
+    "muse": {
+      "description": "Descrierea integrării Muse",
+      "title": "Integrare Muse"
     }
   },
   "auth": {
@@ -5990,6 +6048,7 @@
     "gemini": "Gemini",
     "claude": "Claude",
     "deepseek": "DeepSeek",
+    "muse": "Muse",
     "openrouter": "OpenRouter",
     "openaiCompatible": "Compatibil cu OpenAI"
   },

@@ -4,6 +4,7 @@ import {
   type HeavyFlowContinuation,
   HeavyJobAction,
   type HeavyJobData,
+  type HeavyStepResultData,
   heavyJobDataSchema,
   heavyStepResultSchema,
   IntegrationJobAction,
@@ -16,7 +17,7 @@ import { env } from "../env"
 import {
   completeHeavyStep,
   failHeavyStep,
-  shouldRunHeavyStep,
+  resolveHeavyStepAttempt,
 } from "../integration/handlers/heavy-step-runner"
 import { createQueueWorker } from "../lib/create-queue-worker"
 import { detectConversationAndContactInbox } from "../lib/db"
@@ -40,6 +41,7 @@ import { recordHeavyAIStepProviderError } from "./handlers/provider-error"
 import { speechToTextOutput } from "./handlers/speech-to-text"
 import { textToSpeechOutput } from "./handlers/text-to-speech"
 import { waitForHeavyProviderSlot } from "./services/provider-rate-limiter"
+import { getMaxHeavyStepAttemptBudgetMs } from "./timeouts"
 
 type HeavyStepJobData = Extract<
   HeavyJobData,
@@ -52,9 +54,13 @@ type HeavyStepJobData = Extract<
   }
 >
 
+function getHeavyStepProvider(jobData: HeavyStepJobData) {
+  return jobData.data.step.provider
+}
+
 function getProviderForRateLimit(jobData: HeavyJobData): string | undefined {
-  if ("step" in jobData.data) {
-    return jobData.data.step.provider
+  if (isHeavyFlowStep(jobData)) {
+    return getHeavyStepProvider(jobData)
   }
   if (jobData.type === HeavyJobAction.analyzeImage) {
     return "provider" in jobData.data.providerInfo
@@ -105,7 +111,10 @@ async function resumeHeavyFlow(input: {
   )
 }
 
-async function runHeavyStep(jobData: HeavyStepJobData, job: Job<HeavyJobData>) {
+async function runHeavyStep(
+  jobData: HeavyStepJobData,
+  job: Job<HeavyJobData>,
+): Promise<HeavyStepResultData> {
   const { conversation, contactInbox } =
     await detectConversationAndContactInbox({
       conversationId: jobData.data.conversationId,
@@ -123,35 +132,59 @@ async function runHeavyStep(jobData: HeavyStepJobData, job: Job<HeavyJobData>) {
     switch (jobData.type) {
       case HeavyJobAction.aiEditImage:
         return {
-          status: "success" as const,
-          outputValue: await editImageOutput({
-            ...props,
-            step: jobData.data.step,
-          }),
+          status: "success",
+          outputValues: [
+            {
+              customFieldId: jobData.data.step.outputFieldId,
+              value: await editImageOutput({
+                ...props,
+                step: jobData.data.step,
+              }),
+            },
+          ],
         }
       case HeavyJobAction.aiGenerateImage:
         return {
-          status: "success" as const,
-          outputValue: await generateImageOutput({
-            ...props,
-            step: jobData.data.step,
-          }),
+          status: "success",
+          outputValues: [
+            {
+              customFieldId: jobData.data.step.outputFieldId,
+              value: await generateImageOutput({
+                ...props,
+                step: jobData.data.step,
+              }),
+            },
+          ],
         }
       case HeavyJobAction.aiSpeechToText:
         return {
-          status: "success" as const,
-          outputValue: await speechToTextOutput({
-            ...props,
-            step: jobData.data.step,
-          }),
+          status: "success",
+          outputValues: [
+            {
+              customFieldId: jobData.data.step.outputFieldId,
+              value: await speechToTextOutput({
+                ...props,
+                // BullMQ keeps the job id across retries, so Meta sees one
+                // session for every attempt of this step run.
+                sessionId:
+                  job.id ?? jobData.data.outcomeKey ?? jobData.data.step.id,
+                step: jobData.data.step,
+              }),
+            },
+          ],
         }
       case HeavyJobAction.aiTextToSpeech:
         return {
-          status: "success" as const,
-          outputValue: await textToSpeechOutput({
-            ...props,
-            step: jobData.data.step,
-          }),
+          status: "success",
+          outputValues: [
+            {
+              customFieldId: jobData.data.step.outputFieldId,
+              value: await textToSpeechOutput({
+                ...props,
+                step: jobData.data.step,
+              }),
+            },
+          ],
         }
       default: {
         const _exhaustive: never = jobData
@@ -161,7 +194,7 @@ async function runHeavyStep(jobData: HeavyStepJobData, job: Job<HeavyJobData>) {
   } catch (err) {
     const error = normalizeError(err)
     await recordHeavyAIStepProviderError({
-      provider: jobData.data.step.provider,
+      provider: getHeavyStepProvider(jobData),
       workspaceId: conversation.workspaceId,
       contactId: conversation.contactId,
       sourceId: contactInbox.sourceId,
@@ -185,7 +218,7 @@ async function runHeavyStep(jobData: HeavyStepJobData, job: Job<HeavyJobData>) {
       throw err
     }
 
-    return { status: "error" as const, errorMessage: error.message }
+    return { status: "error", errorMessage: error.message }
   }
 }
 
@@ -312,7 +345,42 @@ function startHeavyWorker() {
         return
       }
 
-      if (provider && workspaceId && env.HEAVY_PROVIDER_MIN_INTERVAL_MS > 0) {
+      const outcomeKey = isHeavyFlowStep(jobData)
+        ? jobData.data.outcomeKey
+        : undefined
+      const attempt = outcomeKey
+        ? await resolveHeavyStepAttempt(outcomeKey)
+        : undefined
+      if (attempt?.action === "skip") {
+        logger.info(
+          { jobId: job.id, outcomeKey },
+          "Heavy flow step already reached a terminal outcome",
+        )
+        return
+      }
+      // A retry after a partial write replays the stored values: no provider
+      // call, so no provider slot either.
+      const replayed: HeavyStepResultData | undefined =
+        attempt?.action === "replay"
+          ? { status: "success", outputValues: attempt.outputValues }
+          : undefined
+      if (replayed) {
+        logger.info(
+          {
+            action: jobData.type,
+            jobId: job.id,
+            outcomeKey,
+          },
+          "Replaying stored heavy step output",
+        )
+      }
+
+      if (
+        !replayed &&
+        provider &&
+        workspaceId &&
+        env.HEAVY_PROVIDER_MIN_INTERVAL_MS > 0
+      ) {
         await waitForHeavyProviderSlot({
           minIntervalMs: env.HEAVY_PROVIDER_MIN_INTERVAL_MS,
           provider,
@@ -320,65 +388,84 @@ function startHeavyWorker() {
         })
       }
 
-      if (
-        isHeavyFlowStep(jobData) &&
-        jobData.data.outcomeKey &&
-        !(await shouldRunHeavyStep(jobData.data.outcomeKey))
-      ) {
-        logger.info(
-          { jobId: job.id, outcomeKey: jobData.data.outcomeKey },
-          "Heavy flow step already reached a terminal outcome",
-        )
-        return
-      }
-
-      const providerStartedAt = provider ? performance.now() : undefined
-      const result = await runJobWithAuditContext(
-        { workspaceId, source: `heavy:${jobData.type}` },
-        async () => {
-          switch (jobData.type) {
-            case HeavyJobAction.processAIFile:
-              await processAIFile(jobData.data)
-              return
-            case HeavyJobAction.aiEditImage:
-            case HeavyJobAction.aiGenerateImage:
-            case HeavyJobAction.aiSpeechToText:
-            case HeavyJobAction.aiTextToSpeech:
-              return await runHeavyStep(jobData, job)
-            case HeavyJobAction.extractTextFromFile:
-              return await extractFallbackTextSnippets(jobData.data)
-            case HeavyJobAction.analyzeImage:
-              return await analyzeImage(jobData.data)
-            case HeavyJobAction.optimizeStoredImage: {
-              // One info line per job: outcome plus bytes before/after, so
-              // storage savings and skip reasons can be read off the logs.
-              const startedAt = Date.now()
-              const result = await optimizeStoredImage(jobData.data)
-              logger.info(
-                {
-                  jobId: job.id,
-                  kind: jobData.data.kind,
-                  workspaceId: jobData.data.workspaceId,
-                  ...result,
-                  durationMs: Date.now() - startedAt,
-                },
-                "Stored image optimization finished",
-              )
-              return
+      const providerStartedAt =
+        provider && !replayed ? performance.now() : undefined
+      const result =
+        replayed ??
+        (await runJobWithAuditContext(
+          { workspaceId, source: `heavy:${jobData.type}` },
+          async () => {
+            switch (jobData.type) {
+              case HeavyJobAction.processAIFile:
+                await processAIFile(jobData.data)
+                return
+              case HeavyJobAction.aiEditImage:
+              case HeavyJobAction.aiGenerateImage:
+              case HeavyJobAction.aiSpeechToText:
+              case HeavyJobAction.aiTextToSpeech:
+                return await runHeavyStep(jobData, job)
+              case HeavyJobAction.extractTextFromFile:
+                return await extractFallbackTextSnippets(jobData.data)
+              case HeavyJobAction.analyzeImage:
+                return await analyzeImage(jobData.data)
+              case HeavyJobAction.optimizeStoredImage: {
+                // One info line per job: outcome plus bytes before/after, so
+                // storage savings and skip reasons can be read off the logs.
+                const startedAt = Date.now()
+                const result = await optimizeStoredImage(jobData.data)
+                logger.info(
+                  {
+                    jobId: job.id,
+                    kind: jobData.data.kind,
+                    workspaceId: jobData.data.workspaceId,
+                    ...result,
+                    durationMs: Date.now() - startedAt,
+                  },
+                  "Stored image optimization finished",
+                )
+                return
+              }
+              default: {
+                const _exhaustive: never = jobData
+                logger.warn(
+                  { data: _exhaustive, jobName: job.name },
+                  "Unhandled heavy job type",
+                )
+                return
+              }
             }
-            default: {
-              const _exhaustive: never = jobData
-              logger.warn(
-                { data: _exhaustive, jobName: job.name },
-                "Unhandled heavy job type",
-              )
-              return
-            }
-          }
-        },
-      )
+          },
+        ))
 
       const stepResult = heavyStepResultSchema.safeParse(result)
+      if (
+        !stepResult.success &&
+        isHeavyFlowStep(jobData) &&
+        jobData.data.outcomeKey &&
+        jobData.data.continuation
+      ) {
+        // A malformed producer result must not leave the flow waiting for
+        // the fallback deadline with no reason logged.
+        logger.error(
+          {
+            err: normalizeError(stepResult.error),
+            action: jobData.type,
+            conversationId: jobData.data.conversationId,
+            jobId: job.id,
+            workspaceId,
+          },
+          "Heavy step returned an invalid result",
+        )
+        await failHeavyStep(jobData.data.outcomeKey, stepResult.error)
+        await resumeHeavyFlow({
+          contactInboxId: jobData.data.contactInboxId,
+          continuation: jobData.data.continuation,
+          conversationId: jobData.data.conversationId,
+          jobId: job.id,
+          outcomeKey: jobData.data.outcomeKey,
+          stepId: jobData.data.step.id,
+        })
+      }
       if (
         stepResult.success &&
         isHeavyFlowStep(jobData) &&
@@ -394,7 +481,6 @@ function startHeavyWorker() {
           contactId: conversation.contactId,
           contactInboxId: contactInbox.id,
           outcomeKey: jobData.data.outcomeKey,
-          outputFieldId: jobData.data.step.outputFieldId,
           result: stepResult.data,
           workspaceId: conversation.workspaceId,
         })
@@ -426,11 +512,13 @@ function startHeavyWorker() {
     },
     {
       concurrency: env.HEAVY_WORKER_CONCURRENCY,
-      // AI provider calls are allowed to run for HEAVY_JOB_WAIT_TIMEOUT_MS;
-      // keep the BullMQ lock alive for the whole budget plus a small handoff
-      // margin so a slow provider cannot be redelivered while still running.
+      // AI provider calls are allowed to run for the longest heavy-step
+      // attempt (HEAVY_JOB_WAIT_TIMEOUT_MS, or MUSE_TRANSCRIBE_TIMEOUT_MS for
+      // Muse Speech to Text); keep the BullMQ lock alive for that budget plus
+      // a small handoff margin so a slow provider cannot be redelivered while
+      // still running.
       lockDuration: Math.max(
-        env.HEAVY_JOB_WAIT_TIMEOUT_MS + 60_000,
+        getMaxHeavyStepAttemptBudgetMs() + 60_000,
         5 * 60_000,
       ),
       stalledInterval: 60_000,

@@ -3102,6 +3102,48 @@
       "destinationPipeline": "Pipeline de destination",
       "destinationStage": "Étape de destination"
     },
+    "aiSpeechToText": {
+      "muse": {
+        "formatHint": "Seuls les fichiers WAV sont acceptés : PCM 16 bits, mono, 16 kHz ou 24 kHz, 10 minutes maximum. Tout autre fichier (par exemple les messages vocaux) passe par la branche Erreur.",
+        "languageBias": {
+          "label": "Préférence de langue",
+          "description": "Langues probables de l'audio. Laissez vide pour une détection automatique.",
+          "placeholder": "Détection automatique"
+        },
+        "keywords": {
+          "label": "Mots-clés",
+          "description": "Noms ou termes métier qui aident Muse à bien orthographier les mots.",
+          "placeholder": "Ajoutez un mot-clé et appuyez sur Entrée"
+        }
+      },
+      "languages": {
+        "Arabic": "Arabe",
+        "Bengali": "Bengali",
+        "Dutch": "Néerlandais",
+        "English": "Anglais",
+        "French": "Français",
+        "German": "Allemand",
+        "Hebrew": "Hébreu",
+        "Hindi": "Hindi",
+        "Indonesian": "Indonésien",
+        "Italian": "Italien",
+        "Japanese": "Japonais",
+        "Kannada": "Kannada",
+        "Korean": "Coréen",
+        "Malay": "Malais",
+        "MandarinChinese": "Chinois mandarin",
+        "Marathi": "Marathi",
+        "Polish": "Polonais",
+        "Portuguese": "Portugais",
+        "Spanish": "Espagnol",
+        "Tagalog": "Tagalog",
+        "Tamil": "Tamoul",
+        "Telugu": "Télougou",
+        "Thai": "Thaï",
+        "Turkish": "Turc",
+        "Vietnamese": "Vietnamien"
+      }
+    },
     "findPlacesNearMe": {
       "category": "Catégorie de lieu",
       "allLocations": "Tous les lieux",
@@ -4498,6 +4540,18 @@
     },
     "title": "DeepSeek"
   },
+  "muse": {
+    "autoReply": {
+      "description": "Activez la réponse automatique par IA pour répondre naturellement aux utilisateurs grâce aux données de votre entreprise.",
+      "label": "Réponse automatique par IA"
+    },
+    "connect": {
+      "description": "Répondez naturellement aux utilisateurs grâce à une IA alimentée par les données de votre entreprise.",
+      "embeddingHint": "Muse ne propose pas de modèles d'embedding. La base de connaissances et les fichiers IA nécessitent toujours une intégration OpenAI ou Gemini.",
+      "label": "Muse"
+    },
+    "title": "Muse"
+  },
   "decision": {
     "addConnection": "Add AI Router connection",
     "advanced": "Advanced",
@@ -4633,6 +4687,10 @@
     "deepseek": {
       "description": "Description de l’intégration DeepSeek",
       "title": "Intégration DeepSeek"
+    },
+    "muse": {
+      "description": "Description de l’intégration Muse",
+      "title": "Intégration Muse"
     }
   },
   "auth": {
@@ -5990,6 +6048,7 @@
     "gemini": "Gemini",
     "claude": "Claude",
     "deepseek": "DeepSeek",
+    "muse": "Muse",
     "openrouter": "OpenRouter",
     "openaiCompatible": "Compatible avec OpenAI"
   },

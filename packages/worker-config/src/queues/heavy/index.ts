@@ -318,10 +318,20 @@ export const heavyJobDataSchema = z.discriminatedUnion("type", [
   heavyJobOptimizeStoredImageSchema,
 ])
 
+export const heavyStepOutputValueSchema = z.object({
+  customFieldId: z.string().min(1),
+  value: z.string().min(1),
+})
+
 export const heavyStepResultSchema = z.discriminatedUnion("status", [
   z.object({
     status: z.literal("success"),
-    outputValue: z.string().min(1),
+    outputValues: z.array(heavyStepOutputValueSchema).min(1),
+  }),
+  // A completed run that found nothing to write; the flow routes to its skip
+  // state and no custom field is touched.
+  z.object({
+    status: z.literal("skip"),
   }),
   z.object({
     status: z.literal("error"),
@@ -358,6 +368,7 @@ export type HeavyJobOptimizeStoredImage = z.infer<
   typeof heavyJobOptimizeStoredImageSchema
 >
 export type StoredImageOptimization = HeavyJobOptimizeStoredImage["data"]
+export type HeavyStepOutputValue = z.infer<typeof heavyStepOutputValueSchema>
 export type HeavyStepResultData = z.infer<typeof heavyStepResultSchema>
 export type HeavyExtractTextFromFileResultData = z.infer<
   typeof heavyExtractTextFromFileResultSchema

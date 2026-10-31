@@ -3102,6 +3102,48 @@
       "destinationPipeline": "Destinationspipeline",
       "destinationStage": "Destinationsfase"
     },
+    "aiSpeechToText": {
+      "muse": {
+        "formatHint": "Kun WAV-filer accepteres: PCM 16-bit, mono, 16 kHz eller 24 kHz, op til 10 minutter. Alle andre filer (fx talebeskeder) går til fejlgrenen.",
+        "languageBias": {
+          "label": "Sprogpræference",
+          "description": "Sprog, lyden sandsynligvis er på. Lad feltet være tomt for automatisk registrering.",
+          "placeholder": "Automatisk registrering"
+        },
+        "keywords": {
+          "label": "Nøgleord",
+          "description": "Navne eller fagtermer, der hjælper Muse med at stave ord korrekt.",
+          "placeholder": "Tilføj et nøgleord, og tryk på Enter"
+        }
+      },
+      "languages": {
+        "Arabic": "Arabisk",
+        "Bengali": "Bengali",
+        "Dutch": "Nederlandsk",
+        "English": "Engelsk",
+        "French": "Fransk",
+        "German": "Tysk",
+        "Hebrew": "Hebraisk",
+        "Hindi": "Hindi",
+        "Indonesian": "Indonesisk",
+        "Italian": "Italiensk",
+        "Japanese": "Japansk",
+        "Kannada": "Kannada",
+        "Korean": "Koreansk",
+        "Malay": "Malajisk",
+        "MandarinChinese": "Mandarin-kinesisk",
+        "Marathi": "Marathi",
+        "Polish": "Polsk",
+        "Portuguese": "Portugisisk",
+        "Spanish": "Spansk",
+        "Tagalog": "Tagalog",
+        "Tamil": "Tamil",
+        "Telugu": "Telugu",
+        "Thai": "Thai",
+        "Turkish": "Tyrkisk",
+        "Vietnamese": "Vietnamesisk"
+      }
+    },
     "findPlacesNearMe": {
       "category": "Lokationskategori",
       "allLocations": "Alle lokationer",
@@ -4498,6 +4540,18 @@
     },
     "title": "DeepSeek"
   },
+  "muse": {
+    "autoReply": {
+      "description": "Aktivér AI auto svar til respond til brugere naturally med AI powered af din business data.",
+      "label": "AI Auto Svar"
+    },
+    "connect": {
+      "description": "Respond til brugere naturally med AI powered af din business data.",
+      "embeddingHint": "Muse tilbyder ikke embedding-modeller. Vidensbase og AI-filer kræver stadig en OpenAI- eller Gemini-integration.",
+      "label": "Muse"
+    },
+    "title": "Muse"
+  },
   "decision": {
     "addConnection": "Add AI Router connection",
     "advanced": "Advanced",
@@ -4633,6 +4687,10 @@
     "deepseek": {
       "description": "DeepSeek integration beskrivelse",
       "title": "DeepSeek Integration"
+    },
+    "muse": {
+      "description": "Muse integration beskrivelse",
+      "title": "Muse Integration"
     }
   },
   "auth": {
@@ -5990,6 +6048,7 @@
     "gemini": "Gemini",
     "claude": "Claude",
     "deepseek": "DeepSeek",
+    "muse": "Muse",
     "openrouter": "OpenRouter",
     "openaiCompatible": "OpenAI Compatible"
   },

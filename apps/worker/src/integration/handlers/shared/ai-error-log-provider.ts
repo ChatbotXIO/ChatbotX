@@ -21,6 +21,7 @@ const aiErrorLogProviders = {
   claude: "claude",
   deepseek: "deepseek",
   openrouter: "openrouter",
+  muse: "muse",
   openaiCompatible: "openai-compatible",
 } as const satisfies Record<AIProvider | "openaiCompatible", ErrorLogProvider>
 

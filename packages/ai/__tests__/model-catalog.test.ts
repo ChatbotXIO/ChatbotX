@@ -8,6 +8,11 @@ import {
   geminiAnalyzeImageModelOptions,
   geminiModelOptions,
   geminiModels,
+  museAnalyzeImageModelOptions,
+  museImageModelOptions,
+  museImageModels,
+  museModelOptions,
+  museModels,
   openaiAnalyzeImageModelOptions,
   openaiImageModelOptions,
   openaiImageModels,
@@ -35,6 +40,7 @@ describe("AI model catalog", () => {
       claude: claudeModels,
       deepseek: deepseekModels,
       openrouter: openrouterModels,
+      muse: museModels,
     }
 
     for (const provider of aiChatProviders) {
@@ -53,6 +59,9 @@ describe("AI model catalog", () => {
       { options: geminiAnalyzeImageModelOptions, schema: geminiModels },
       { options: claudeModelOptions, schema: claudeModels },
       { options: claudeAnalyzeImageModelOptions, schema: claudeModels },
+      { options: museModelOptions, schema: museModels },
+      { options: museAnalyzeImageModelOptions, schema: museModels },
+      { options: museImageModelOptions, schema: museImageModels },
       { options: openrouterModelOptions, schema: openrouterModels },
       { options: openrouterAnalyzeImageModelOptions, schema: openrouterModels },
       { options: openrouterExtractFileModelOptions, schema: openrouterModels },
@@ -172,5 +181,19 @@ describe("AI model catalog", () => {
         }),
       ).not.toThrow()
     }
+  })
+
+  test("creates a Muse image model through the openai-compatible imageModel()", () => {
+    const integration = {
+      auth: { authType: "secretText", secretText: "test-key" },
+    } as Parameters<typeof createAIImageModelInstance>[0]["model"]
+
+    const model = createAIImageModelInstance({
+      model: integration,
+      modelId: "muse-image-1.0",
+      provider: "muse",
+    })
+
+    expect(model).toMatchObject({ modelId: "muse-image-1.0" })
   })
 })

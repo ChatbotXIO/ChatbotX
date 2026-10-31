@@ -3506,6 +3506,48 @@
       "destinationPipeline": "目標管道",
       "destinationStage": "目標階段"
     },
+    "aiSpeechToText": {
+      "muse": {
+        "formatHint": "僅支援 WAV 檔案：PCM 16 位元、單聲道、16 kHz 或 24 kHz，最長 10 分鐘。其他檔案（例如語音訊息）會進入錯誤分支。",
+        "languageBias": {
+          "label": "語言偏好",
+          "description": "音訊可能使用的語言。留空則自動偵測。",
+          "placeholder": "自動偵測"
+        },
+        "keywords": {
+          "label": "關鍵字",
+          "description": "協助 Muse 正確拼寫的名稱或專業術語。",
+          "placeholder": "輸入關鍵字後按 Enter"
+        }
+      },
+      "languages": {
+        "Arabic": "阿拉伯文",
+        "Bengali": "孟加拉文",
+        "Dutch": "荷蘭文",
+        "English": "英文",
+        "French": "法文",
+        "German": "德文",
+        "Hebrew": "希伯來文",
+        "Hindi": "印地文",
+        "Indonesian": "印尼文",
+        "Italian": "義大利文",
+        "Japanese": "日文",
+        "Kannada": "坎那達文",
+        "Korean": "韓文",
+        "Malay": "馬來文",
+        "MandarinChinese": "華語（普通話）",
+        "Marathi": "馬拉地文",
+        "Polish": "波蘭文",
+        "Portuguese": "葡萄牙文",
+        "Spanish": "西班牙文",
+        "Tagalog": "他加祿語",
+        "Tamil": "坦米爾文",
+        "Telugu": "泰盧固文",
+        "Thai": "泰文",
+        "Turkish": "土耳其文",
+        "Vietnamese": "越南文"
+      }
+    },
     "findPlacesNearMe": {
       "category": "地點類別",
       "allLocations": "所有地點",
@@ -4544,6 +4586,18 @@
     },
     "title": "DeepSeek"
   },
+  "muse": {
+    "autoReply": {
+      "description": "啟用人工智慧自動回覆，透過您的業務資料支援的人工智慧自然地回復使用者。",
+      "label": "人工智慧自動回覆"
+    },
+    "connect": {
+      "description": "利用由您的業務資料提供支援的 AI 自然地回應使用者。",
+      "embeddingHint": "Muse 不提供嵌入模型。知識庫與 AI 檔案仍需要串接 OpenAI 或 Gemini。",
+      "label": "Muse"
+    },
+    "title": "Muse"
+  },
   "decision": {
     "addConnection": "Add AI Router connection",
     "advanced": "Advanced",
@@ -4679,6 +4733,10 @@
     "deepseek": {
       "description": "DeepSeek 整合說明",
       "title": "DeepSeek整合"
+    },
+    "muse": {
+      "description": "Muse 整合說明",
+      "title": "Muse整合"
     }
   },
   "auth": {
@@ -6036,6 +6094,7 @@
     "gemini": "Gemini",
     "claude": "Claude",
     "deepseek": "DeepSeek",
+    "muse": "Muse",
     "openrouter": "開放路由器",
     "openaiCompatible": "OpenAI相容"
   },

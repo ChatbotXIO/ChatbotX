@@ -588,6 +588,54 @@ describe("appointmentScheduling handler", () => {
     )
   })
 
+  test("checkAvailability: tries the next provider when the AI stream reports an error", async () => {
+    streamText.mockImplementationOnce(
+      (options: { onError: (event: { error: unknown }) => void }) => {
+        options.onError({ error: new Error("openai stream failed") })
+        return { textStream: [] }
+      },
+    )
+    streamText.mockReturnValueOnce({
+      textStream: ["Gemini response"],
+    })
+    processStreamingText
+      .mockResolvedValueOnce({ fullText: "" })
+      .mockResolvedValueOnce({ fullText: "Gemini response" })
+
+    const result = await appointmentScheduling({
+      ...baseProps,
+      metadata: {
+        type: "appointmentAvailabilityRangeSelection",
+        stepId: "step-1",
+        contactInboxId: "contact-inbox-1",
+        startDate: "2026-08-10T09:00:00.000",
+        endDate: "2026-08-11T17:00:00.000",
+      },
+      step: {
+        ...checkAvailabilityStep,
+        resultUsedByAI: true,
+      },
+    } as never)
+
+    expect(streamText).toHaveBeenCalledTimes(2)
+    expect(loggerWarn).toHaveBeenCalledWith(
+      expect.objectContaining({
+        provider: "openai",
+        reason: "ai_response_generation_failed",
+      }),
+      "Failed to generate appointment availability response with AI",
+    )
+    expect(result).toEqual(
+      expect.objectContaining({
+        status: "success",
+        result: expect.objectContaining({
+          text: "Gemini response",
+          rawText: "Available: Aug 10, 9:00 AM",
+        }),
+      }),
+    )
+  })
+
   test("checkAvailability: falls back to raw text when all AI providers fail", async () => {
     resolveFlowAIModel.mockResolvedValue({
       ok: false,
@@ -610,7 +658,10 @@ describe("appointmentScheduling handler", () => {
       },
     } as never)
 
-    expect(resolveFlowAIModel).toHaveBeenCalledTimes(5)
+    expect(resolveFlowAIModel).toHaveBeenCalledTimes(6)
+    expect(resolveFlowAIModel).toHaveBeenLastCalledWith(
+      expect.objectContaining({ provider: "muse", modelId: "muse-spark-1.3" }),
+    )
     expect(streamText).not.toHaveBeenCalled()
     expect(setValueByKey).toHaveBeenCalledWith({
       workspaceId: "workspace-1",

@@ -3,7 +3,7 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 // ---------------------------------------------------------------------------
-// The five LLM provider connect actions (Claude, DeepSeek, Gemini, OpenAI,
+// The LLM provider connect actions (Claude, DeepSeek, Gemini, Muse, OpenAI,
 // OpenRouter) — thin wrappers that verify the API key via the shared
 // tri-state `verifyAiProviderApiKey`, then delegate to the Connection
 // domain's `connectionService.connectFromCredentials` (the same engine path
@@ -50,6 +50,7 @@ vi.mock("@chatbotx.io/ai", async (importOriginal) => {
         claude: "claude",
         deepseek: "deepseek",
         gemini: "gemini",
+        muse: "muse",
         openai: "openai",
         openrouter: "openrouter",
       },
@@ -84,6 +85,9 @@ const { connectDeepSeekAction } = await import(
 )
 const { connectGeminiAction } = await import(
   "@/features/integration-gemini/actions/connect.action"
+)
+const { connectMuseAction } = await import(
+  "@/features/integration-muse/actions/connect.action"
 )
 const { connectOpenAIAction } = await import(
   "@/features/integration-openai/actions/connect.action"
@@ -125,6 +129,11 @@ describe.each([
     action: () => connectGeminiAction,
     expectedProviderArg: "gemini",
     label: "Gemini",
+  },
+  {
+    action: () => connectMuseAction,
+    expectedProviderArg: "muse",
+    label: "Muse",
   },
   {
     action: () => connectOpenAIAction,
