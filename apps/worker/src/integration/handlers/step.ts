@@ -23,6 +23,10 @@ import { mintRandomFlowExecutionKey } from "../flow-execution-key"
 import { syncActiveCampaignContact } from "./active-campaign-handler"
 import { handleAIAnalyzeImage } from "./analyze-image"
 import { appointmentScheduling } from "./appointment-scheduling"
+import {
+  type CallPhoneNumberReplyProps,
+  resolveCallPhoneNumberReply,
+} from "./call-phone-number"
 import { handleCondition } from "./condition"
 import {
   addContactNotes,
@@ -146,6 +150,13 @@ export async function sendFlowMessage(
     commentAnchor,
     appointmentId,
   })
+}
+
+async function replyWithCallPhoneNumber(props: CallPhoneNumberReplyProps) {
+  const step = await resolveCallPhoneNumberReply(props)
+  if (step) {
+    await sendFlowMessage({ ...props, step, quickReplies: undefined })
+  }
 }
 
 async function splitTraffic({
@@ -493,6 +504,7 @@ export const flowStepHandlers: Record<
   [stepTypes.enum.notifyAgent]: undefined,
   [stepTypes.enum.openWebsite]: undefined,
   [stepTypes.enum.openMiniApp]: undefined,
+  [stepTypes.enum.callPhoneNumber]: replyWithCallPhoneNumber,
   [stepTypes.enum.aiAnalyzeImage]: handleAIAnalyzeImage,
   [stepTypes.enum.aiDeleteMessageHistory]: handleAIDeleteMessageHistory,
   [stepTypes.enum.aiEditImage]: (props) =>

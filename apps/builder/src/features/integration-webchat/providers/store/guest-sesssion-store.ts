@@ -238,12 +238,16 @@ export const createGuestSessionStore = (
 
       await Promise.resolve()
 
+      // A link opens on its own; every other button (a reply, or a call button
+      // shown as one) replays its postback.
+      const postback = button.buttonType === "url" ? undefined : button.postback
+
       try {
-        if (button.buttonType === "postback") {
+        if (postback) {
           await ky.post("/api/guest/messages", {
             json: {
               text: button.label,
-              postback: button.postback,
+              postback,
               workspaceId: config.workspaceId,
               guestConversationId,
               clientId: newMessage.clientId,

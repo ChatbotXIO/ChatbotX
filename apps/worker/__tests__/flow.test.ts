@@ -1270,7 +1270,10 @@ describe("runStepsAndQuickReplies — message-driven flag continuation", () => {
 })
 
 describe("runStepsAndQuickReplies — button action vs. leftover edge", () => {
-  beforeEach(() => integrationQueueAdd.mockClear())
+  beforeEach(() => {
+    integrationQueueAdd.mockClear()
+    chatQueueAdd.mockClear()
+  })
 
   /** node-2 is wired to `btn-1`'s handle, as a since-changed config left it. */
   function makeFlowWithEdgeFromButton() {
@@ -1345,6 +1348,35 @@ describe("runStepsAndQuickReplies — button action vs. leftover edge", () => {
     )
 
     expect(integrationQueueAdd).not.toHaveBeenCalled()
+  })
+
+  test("a callPhoneNumber button replies with its number and does not fire the node a stale edge still points at", async () => {
+    await runStepsAndQuickReplies(
+      makeButtonProps({
+        id: "btn-1",
+        label: "Call us",
+        buttonType: "callPhoneNumber",
+        beforeStep: {
+          id: "before-1",
+          stepType: "callPhoneNumber",
+          phoneNumber: "+14155552671",
+        },
+        steps: [],
+      } as unknown as ButtonStepProps),
+    )
+
+    expect(integrationQueueAdd).not.toHaveBeenCalled()
+
+    // The tap on a channel that cannot dial replies with the number, once.
+    expect(chatQueueAdd).toHaveBeenCalledOnce()
+    const [, job] = chatQueueAdd.mock.calls[0] as unknown as [
+      string,
+      { data: { step: { stepType: string; text: string } } },
+    ]
+    expect(job.data.step).toMatchObject({
+      stepType: "sendText",
+      text: "+14155552671",
+    })
   })
 
   // --- preserved behavior: these buttons legitimately route by edge ---

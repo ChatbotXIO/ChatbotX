@@ -75,6 +75,7 @@ import {
   settleCommentAutomationFailure,
 } from "../../lib/comment-automation-anchor"
 import { logger } from "../../lib/logger"
+import { resolveCallPhoneButtons } from "../utils/call-phone-buttons"
 import { resolveMiniAppLinks } from "../utils/mini-app-buttons"
 import { mapStepButtons } from "../utils/step-buttons"
 import { resolveStoredStepContent } from "../utils/stored-step-content"
@@ -202,6 +203,16 @@ export const convertButtonsToTemplate = (props: {
         label: button.label,
         buttonType: "url",
         url: appendCodeToMagicLink(button.beforeStep.url, buttonPayload),
+        postback: buttonPayload,
+      }
+    }
+
+    if (button.buttonType === buttonTypes.enum.callPhoneNumber) {
+      return {
+        id: button.id,
+        label: button.label,
+        buttonType: "phoneNumber",
+        phoneNumber: button.beforeStep.phoneNumber,
         postback: buttonPayload,
       }
     }
@@ -711,6 +722,14 @@ export async function sendFlowStep({
       workspaceId: conversation.workspaceId,
     })
     const { appUrl, storageUrl } = tenantSettings
+    // Call Phone Number buttons get a validated E.164 number (or become inert)
+    // and, on channels that cannot dial, the number in their title.
+    const stepWithCallButtons = await resolveCallPhoneButtons({
+      workspaceId: conversation.workspaceId,
+      flowId,
+      channel: targetContactInbox.channel,
+      step: resolvedStep as SendFlowStepData,
+    })
     // Open Mini App buttons become link buttons first, so everything below
     // (booking signing, the `/go` wrap, every channel encoder) only ever sees
     // `openWebsite`. The Mini App URL is same-origin, so `/go` leaves it alone.
@@ -726,7 +745,7 @@ export async function sendFlowStep({
       flowVersionId,
       metadata,
       appUrl,
-      step: resolvedStep as SendFlowStepData,
+      step: stepWithCallButtons,
       quickReplies,
     })
     const stepWithSignedBookingLinks = await signBookingLinksInStep({

@@ -1411,7 +1411,8 @@
     },
     "button": {
       "label": "زر",
-      "whenPressed": "عند الضغط على هذا الزر"
+      "whenPressed": "عند الضغط على هذا الزر",
+      "callToThisNumber": "الاتصال بهذا الرقم"
     },
     "buttonLabel": {
       "label": "تسمية الزر"
@@ -2995,7 +2996,8 @@
       "sendCollection": "مجموعة",
       "pipeline": "خطوط سير العمل",
       "moreOptions": "خيارات إضافية",
-      "findPlacesNearMe": "البحث عن أماكن بالقرب مني"
+      "findPlacesNearMe": "البحث عن أماكن بالقرب مني",
+      "callPhoneNumber": "الاتصال برقم هاتف"
     },
     "externalRequest": {
       "errors": {
@@ -3270,6 +3272,14 @@
       "allLocations": "كل المواقع",
       "whatsappOnly": "يُرسل فقط إلى جهات اتصال WhatsApp.",
       "noLocationSource": "يجب جمع الموقع في هذا التدفق: أضف خطوة الحصول على بيانات المستخدم بتنسيق رد الموقع قبل هذا الإجراء. لا يُستخدم موقع محفوظ بواسطة تدفق آخر. بدونها، يتم تخطي هذا الإجراء."
+    },
+    "callPhoneNumber": {
+      "fallbackHint": "في القنوات التي لا يمكنها إجراء مكالمة، تتلقى جهة الاتصال هذا الرقم كرد بدلاً من ذلك.",
+      "countryLabel": "رمز الدولة",
+      "noCountry": "بدون دولة",
+      "invalidForCountry": "هذا ليس رقم هاتف صالحًا في {country}.",
+      "needsCountry": "اختر الدولة، أو ابدأ الرقم بـ + ورمز الدولة.",
+      "invalidInternational": "هذا ليس رقم هاتف دوليًا صالحًا."
     }
   },
   "folders": {
@@ -4345,7 +4355,9 @@
     "savedReplyImagesRemoved": "تمت إزالة الصور التي لا يمكن إرسالها هنا",
     "onlyImagesAllowed": "يمكن إضافة الصور فقط",
     "tooManySavedReplyImages": "يمكن أن يحتوي الرد المحفوظ على {max} صور كحد أقصى",
-    "savedReplyImagesNotSentHere": "لن يتم إرسال الصور هنا"
+    "savedReplyImagesNotSentHere": "لن يتم إرسال الصور هنا",
+    "invalidPhoneNumber": "هذا ليس رقم هاتف صالحًا. أضف رمز الدولة، مثل ‎+1.",
+    "buttonCallPhoneNumberUnsupported": "لا يمكن لهذا الزر الاتصال برقم هاتف هنا. اختر إجراءً آخر."
   },
   "instagram": {
     "description": "يتيح لك هذا التكامل إنشاء بوتات Instagram.",

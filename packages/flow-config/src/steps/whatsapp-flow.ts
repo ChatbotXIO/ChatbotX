@@ -2,7 +2,11 @@ import { createId, zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 import { flowValidationCodes } from "../validation-codes"
 import { baseStepSchema } from "./base"
-import { type ButtonStepProps, buttonStepSchema } from "./button"
+import {
+  type ButtonStepProps,
+  buttonStepSchema,
+  refineNoCallPhoneNumberButtons,
+} from "./button"
 import { stepTypes } from "./step-action"
 
 export const WHATSAPP_FLOW_BODY_MAX = 1024
@@ -49,7 +53,12 @@ export const whatsappFlowStepSchema = baseStepSchema.extend({
     .literal(stepTypes.enum.whatsappFlow)
     .describe('Step type discriminator: "whatsappFlow".'),
   text: z.string().trim().min(1).max(WHATSAPP_FLOW_BODY_MAX),
-  buttons: z.array(buttonStepSchema).min(1).max(1),
+  // The button is the CTA that opens the WhatsApp Flow, so it cannot dial.
+  buttons: z
+    .array(buttonStepSchema)
+    .min(1)
+    .max(1)
+    .superRefine(refineNoCallPhoneNumberButtons),
   inboxId: zodBigintAsString().nullable(),
   flow: whatsappFlowStepFlowSchema,
 })

@@ -3,6 +3,8 @@
 import {
   type ButtonType,
   buttonTypes,
+  type CallPhoneNumberStepSchema,
+  callPhoneNumberStepDefaultFn,
   type FlowNode,
   nodeTypeSchema,
   type OpenMiniAppStepSchema,
@@ -26,6 +28,7 @@ export type ButtonTargetBeforeStep =
   | StartAnotherNodeStepSchema
   | OpenWebsiteStepSchema
   | OpenMiniAppStepSchema
+  | CallPhoneNumberStepSchema
   | StartExternalFlowStepSchema
   | StartExternalNodeStepSchema
 
@@ -132,6 +135,9 @@ export function useCreateButtonTarget() {
           break
         case buttonTypes.enum.openMiniApp:
           beforeStep = openMiniAppStepDefaultFn()
+          break
+        case buttonTypes.enum.callPhoneNumber:
+          beforeStep = callPhoneNumberStepDefaultFn()
           break
         default:
           return null

@@ -1,8 +1,9 @@
 import type { ChannelType } from "@chatbotx.io/utils/channel"
+import type { ButtonType } from "../../steps/button"
 import { type StepType, stepTypes } from "../../steps/step-action"
 import type { ProductMessageCapability } from "../product-message-rules"
 
-export const CHANNEL_POLICY_VERSION = 2
+export const CHANNEL_POLICY_VERSION = 3
 
 export const stepSupport = {
   full: "full",
@@ -89,6 +90,7 @@ const stepExecutionKinds = {
   startExternalNode: "worker",
   openWebsite: "worker",
   openMiniApp: "worker",
+  callPhoneNumber: "worker",
   addNotes: "worker",
   subscribeBroadcast: "worker",
   unsubscribeBroadcast: "worker",
@@ -179,6 +181,13 @@ export type ChannelFlowPolicy = {
     viewCatalog?: { footer: number; text: number }
   }
   quickRepliesShareButtonSlots: boolean
+  /**
+   * Button types the channel renders as a native control on step and card
+   * buttons. Today only `callPhoneNumber` (dials on tap): a channel that does
+   * not list it sends that button as a reply showing the number. Informational:
+   * it never gates publish.
+   */
+  nativeButtonTypes: readonly ButtonType[]
   steps: Record<StepType, StepSupport>
   /** Present only on channels that can render `sendProducts`. */
   productMessages?: ProductMessageCapability
@@ -187,6 +196,7 @@ export type ChannelFlowPolicy = {
 type ChannelFlowPolicyDefinition = {
   limits: ChannelFlowPolicy["limits"]
   quickRepliesShareButtonSlots?: boolean
+  nativeButtonTypes?: readonly ButtonType[]
   productMessages?: ProductMessageCapability
   supported?: readonly ChannelDeliverableStepType[]
   noButtons?: readonly ChannelDeliverableStepType[]
@@ -219,6 +229,7 @@ export const defineChannelFlowPolicy = (
     limits: definition.limits,
     quickRepliesShareButtonSlots:
       definition.quickRepliesShareButtonSlots ?? false,
+    nativeButtonTypes: definition.nativeButtonTypes ?? [],
     steps,
     ...(definition.productMessages
       ? { productMessages: definition.productMessages }

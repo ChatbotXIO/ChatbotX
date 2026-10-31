@@ -1106,6 +1106,103 @@ describe("sendFlowStep", () => {
     expect(persistedButtonUrl()).toBe(sentButtonUrl())
   })
 
+  // -------------------------------------------------------------------------
+  // Call Phone Number buttons
+  // -------------------------------------------------------------------------
+
+  const callPhoneStep = (phoneNumber: string, label = "Call") =>
+    ({
+      ...sendTextStep,
+      buttons: [
+        {
+          id: "button-1",
+          label,
+          buttonType: "callPhoneNumber",
+          beforeStep: {
+            id: "before-1",
+            stepType: "callPhoneNumber",
+            phoneNumber,
+          },
+          steps: [],
+        },
+      ],
+    }) as unknown as SendFlowStepData["step"]
+
+  const sentCallButton = () =>
+    mockSendFlowStepToChannel.mock.calls.at(-1)?.[0]?.step?.buttons?.[0]
+
+  const persistedCallButton = () =>
+    mockRepositoryCreate.mock.calls.at(-1)?.[0]?.contentAttributes?.payload
+      ?.buttons?.[0]
+
+  test("normalises a resolved call number and keeps the label on a native channel", async () => {
+    mockResolveContactVariables.mockImplementation(
+      (_contactId: string, step: unknown) =>
+        Promise.resolve(
+          JSON.parse(
+            JSON.stringify(step).replace(
+              "{{contact.phone}}",
+              "+1 415 555 2671",
+            ),
+          ),
+        ),
+    )
+
+    await sendFlowStep({
+      ...baseParams,
+      contactInboxId: "ci-1",
+      step: callPhoneStep("{{contact.phone}}"),
+    })
+
+    expect(sentCallButton()).toMatchObject({
+      label: "Call",
+      buttonType: "callPhoneNumber",
+      beforeStep: { phoneNumber: "+14155552671" },
+    })
+    expect(persistedCallButton()).toMatchObject({
+      buttonType: "phoneNumber",
+      label: "Call",
+      phoneNumber: "+14155552671",
+    })
+  })
+
+  test("shows the number in the title on a channel that cannot dial", async () => {
+    mockFindContactInbox.mockResolvedValue({
+      ...fakeContactInbox,
+      channel: "telegram",
+    })
+
+    await sendFlowStep({
+      ...baseParams,
+      contactInboxId: "ci-1",
+      step: callPhoneStep("+14155552671"),
+    })
+
+    expect(sentCallButton()?.label).toBe("Call +14155552671")
+    expect(persistedCallButton()).toMatchObject({
+      buttonType: "phoneNumber",
+      label: "Call +14155552671",
+    })
+  })
+
+  test("degrades an unresolved number to an inert reply button", async () => {
+    await sendFlowStep({
+      ...baseParams,
+      contactInboxId: "ci-1",
+      step: callPhoneStep("{{contact.phone}}"),
+    })
+
+    expect(sentCallButton()).toMatchObject({
+      buttonType: null,
+      beforeStep: null,
+      label: "Call",
+    })
+    expect(persistedCallButton()).toMatchObject({
+      buttonType: "postback",
+      label: "Call",
+    })
+  })
+
   test("leaves every link outside the deep-link table untouched", async () => {
     // The detour exists to open a native app. A link it cannot open gains
     // nothing from it and would only put the builder in the path of a link that

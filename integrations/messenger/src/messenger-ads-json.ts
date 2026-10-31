@@ -1,10 +1,12 @@
 import {
   type ButtonStepProps,
+  buttonTypes,
   encodeButtonPayload,
   type SendCardStepSchema,
   sendMessageNodeSchema,
   stepTypes,
 } from "@chatbotx.io/flow-config"
+import { containsVariablePlaceholder } from "@chatbotx.io/utils/variables"
 import { chunk } from "remeda"
 import { getAttachmentTemplate } from "./handlers/message/outgoing-message/send-attachment"
 import { convertButtons } from "./handlers/message/outgoing-message/send-button"
@@ -119,6 +121,23 @@ export function convertStartNodeToMessengerAdsJson(props: {
     lenient && rewriteLabel(label) === ""
 
   /**
+   * Ad JSON is static, so a Call Phone Number button whose number still holds
+   * a `{{variable}}` can never become the `+<country><number>` Meta requires.
+   * Strict mode reports it like any other unsupported variable; lenient mode
+   * drops the button, as it does a blank one.
+   */
+  const shouldDropButton = (button: ButtonStepProps): boolean => {
+    if (
+      button.buttonType === buttonTypes.enum.callPhoneNumber &&
+      containsVariablePlaceholder(button.beforeStep.phoneNumber)
+    ) {
+      hasInvalidVariable = true
+      return lenient
+    }
+    return isBlankLabel(button.label)
+  }
+
+  /**
    * Templates a step's buttons via the shared runtime helper so ad JSON and
    * live sends never diverge, applying the variable rewrite to each label.
    * If every button is dropped the helper returns `undefined`, so a text
@@ -128,7 +147,7 @@ export function convertStartNodeToMessengerAdsJson(props: {
     convertButtons({
       flowId,
       flowVersionId,
-      buttons: buttons.filter((button) => !isBlankLabel(button.label)),
+      buttons: buttons.filter((button) => !shouldDropButton(button)),
       transformLabel: rewriteLabel,
     })
 

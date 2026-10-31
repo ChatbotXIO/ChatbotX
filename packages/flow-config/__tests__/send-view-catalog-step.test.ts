@@ -225,6 +225,6 @@ describe("channel policy", () => {
   })
 
   test("the externally reported policy version was bumped for the new support", () => {
-    expect(CHANNEL_POLICY_VERSION).toBe(2)
+    expect(CHANNEL_POLICY_VERSION).toBe(3)
   })
 })

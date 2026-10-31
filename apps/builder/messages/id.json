@@ -1255,7 +1255,8 @@
     },
     "button": {
       "label": "Tombol",
-      "whenPressed": "Saat tombol ini ditekan"
+      "whenPressed": "Saat tombol ini ditekan",
+      "callToThisNumber": "Telepon ke nomor ini"
     },
     "buttonLabel": {
       "label": "Label Tombol"
@@ -2839,7 +2840,8 @@
       "sendCollection": "Koleksi",
       "pipeline": "Pipeline",
       "moreOptions": "Opsi lainnya",
-      "findPlacesNearMe": "Cari tempat di dekat saya"
+      "findPlacesNearMe": "Cari tempat di dekat saya",
+      "callPhoneNumber": "Telepon nomor"
     },
     "externalRequest": {
       "errors": {
@@ -3114,6 +3116,14 @@
       "allLocations": "Semua lokasi",
       "whatsappOnly": "Hanya dikirim ke kontak WhatsApp.",
       "noLocationSource": "Lokasi harus dikumpulkan di flow ini: tambahkan langkah Dapatkan Data Pengguna dengan format balasan Lokasi sebelum tindakan ini. Lokasi yang disimpan oleh flow lain tidak digunakan. Tanpanya, tindakan ini dilewati."
+    },
+    "callPhoneNumber": {
+      "fallbackHint": "Di kanal yang tidak dapat melakukan panggilan, kontak menerima nomor ini sebagai balasan.",
+      "countryLabel": "Kode negara",
+      "noCountry": "Tanpa negara",
+      "invalidForCountry": "Ini bukan nomor telepon yang valid untuk {country}.",
+      "needsCountry": "Pilih negara, atau awali nomor dengan + dan kode negara.",
+      "invalidInternational": "Ini bukan nomor telepon internasional yang valid."
     }
   },
   "folders": {
@@ -4345,7 +4355,9 @@
     "savedReplyImagesRemoved": "Gambar yang tidak bisa dikirim di sini telah dihapus",
     "onlyImagesAllowed": "Hanya gambar yang dapat ditambahkan",
     "tooManySavedReplyImages": "Balasan tersimpan dapat memiliki maksimal {max} gambar",
-    "savedReplyImagesNotSentHere": "Gambar tidak akan dikirim di sini"
+    "savedReplyImagesNotSentHere": "Gambar tidak akan dikirim di sini",
+    "invalidPhoneNumber": "Ini bukan nomor telepon yang valid. Sertakan kode negara, misalnya +1.",
+    "buttonCallPhoneNumberUnsupported": "Tombol ini tidak dapat menelepon nomor di sini. Pilih tindakan lain."
   },
   "instagram": {
     "description": "Integrasi ini memungkinkan Anda membuat bot Instagram.",

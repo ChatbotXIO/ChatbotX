@@ -1,7 +1,10 @@
 import { type ChannelType, channelTypes } from "@chatbotx.io/utils/channel"
 import { z } from "zod"
 import { actionSteps } from "../shared"
-import { buttonStepSchema } from "../steps/button"
+import {
+  buttonStepSchema,
+  refineNoCallPhoneNumberButtons,
+} from "../steps/button"
 import {
   chooseChannelStepDefaultFn,
   chooseChannelStepSchema,
@@ -77,6 +80,7 @@ export const sendMessageNodeSchema = baseNodeSchema.extend({
         ),
         quickReplies: z
           .array(buttonStepSchema)
+          .superRefine(refineNoCallPhoneNumberButtons)
           .max(MAX_QUICK_REPLIES)
           .describe(
             `Quick-reply buttons shown after the last message (max ${MAX_QUICK_REPLIES}); use [] for none.`,

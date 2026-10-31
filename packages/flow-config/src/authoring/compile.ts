@@ -15,7 +15,12 @@ import { addContactTagStepDefaultFn } from "../steps/add-contact-tag"
 import { addNotesStepDefaultFn } from "../steps/add-notes"
 import { archiveConversationStepDefaultFn } from "../steps/archive-conversation"
 import { assignConversationStepDefaultFn } from "../steps/assign-conversation"
-import { type ButtonStepProps, buttonStepDefaultFn } from "../steps/button"
+import {
+  type ButtonStepProps,
+  buttonStepDefaultFn,
+  buttonTypes,
+} from "../steps/button"
+import { callPhoneNumberStepDefaultFn } from "../steps/call-phone-number"
 import { chooseChannelStepDefaultFn } from "../steps/choose-channel"
 import {
   conditionCaseDefaultFn,
@@ -345,12 +350,28 @@ const withSteps = <T extends NodeWithSteps>(
 
 /** Compiles one quick-reply button: its node chain (if any), route, and edge. */
 function compileSendButton(
-  buttonSpec: { id?: string; text: string; then?: FlowStepSpec[] },
+  buttonSpec: {
+    id?: string
+    text: string
+    then?: FlowStepSpec[]
+    call?: string
+  },
   sourceNodeId: string,
   buttonPath: string,
   state: CompileState,
 ): ButtonStepProps {
   const button = buttonStepDefaultFn({ label: buttonSpec.text })
+  if (buttonSpec.call !== undefined) {
+    return {
+      ...button,
+      buttonType: buttonTypes.enum.callPhoneNumber,
+      beforeStep: {
+        ...callPhoneNumberStepDefaultFn(),
+        phoneNumber: buttonSpec.call,
+      },
+      steps: [],
+    }
+  }
   if (!buttonSpec.then || buttonSpec.then.length === 0) {
     return button
   }

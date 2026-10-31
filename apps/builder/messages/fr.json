@@ -1255,7 +1255,8 @@
     },
     "button": {
       "label": "Bouton",
-      "whenPressed": "Lorsque ce bouton est actionné"
+      "whenPressed": "Lorsque ce bouton est actionné",
+      "callToThisNumber": "Appeler ce numéro"
     },
     "buttonLabel": {
       "label": "Libellé du bouton"
@@ -2839,7 +2840,8 @@
       "sendCollection": "Collection",
       "pipeline": "Pipelines",
       "moreOptions": "Plus d'options",
-      "findPlacesNearMe": "Trouver des lieux près de moi"
+      "findPlacesNearMe": "Trouver des lieux près de moi",
+      "callPhoneNumber": "Appeler un numéro de téléphone"
     },
     "externalRequest": {
       "errors": {
@@ -3114,6 +3116,14 @@
       "allLocations": "Tous les lieux",
       "whatsappOnly": "Envoyé uniquement aux contacts WhatsApp.",
       "noLocationSource": "La localisation doit être collectée dans ce flux : ajoutez une étape Obtenir les données de l'utilisateur au format de réponse Localisation avant cette action. Une localisation enregistrée par un autre flux n'est pas utilisée. Sans elle, cette action est ignorée."
+    },
+    "callPhoneNumber": {
+      "fallbackHint": "Sur les canaux qui ne peuvent pas lancer d'appel, le contact reçoit ce numéro en réponse.",
+      "countryLabel": "Indicatif du pays",
+      "noCountry": "Aucun pays",
+      "invalidForCountry": "Ce n'est pas un numéro de téléphone valide pour {country}.",
+      "needsCountry": "Choisissez le pays, ou commencez le numéro par + et l'indicatif du pays.",
+      "invalidInternational": "Ce n'est pas un numéro de téléphone international valide."
     }
   },
   "folders": {
@@ -4345,7 +4355,9 @@
     "savedReplyImagesRemoved": "Les images qui ne peuvent pas être envoyées ici ont été retirées",
     "onlyImagesAllowed": "Seules les images peuvent être ajoutées",
     "tooManySavedReplyImages": "Une réponse enregistrée peut contenir au maximum {max} images",
-    "savedReplyImagesNotSentHere": "Les images ne seront pas envoyées ici"
+    "savedReplyImagesNotSentHere": "Les images ne seront pas envoyées ici",
+    "invalidPhoneNumber": "Ce n'est pas un numéro de téléphone valide. Indiquez l'indicatif du pays, par exemple +1.",
+    "buttonCallPhoneNumberUnsupported": "Ce bouton ne peut pas appeler un numéro ici. Choisissez une autre action."
   },
   "instagram": {
     "description": "Cette intégration permet de créer des bots Instagram.",

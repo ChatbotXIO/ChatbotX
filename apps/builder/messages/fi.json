@@ -1255,7 +1255,8 @@
     },
     "button": {
       "label": "Painike",
-      "whenPressed": "Kun tätä painiketta painetaan"
+      "whenPressed": "Kun tätä painiketta painetaan",
+      "callToThisNumber": "Soita tähän numeroon"
     },
     "buttonLabel": {
       "label": "Painikkeen teksti"
@@ -2839,7 +2840,8 @@
       "sendCollection": "Kokoelma",
       "pipeline": "Pipelinet",
       "moreOptions": "Lisää vaihtoehtoja",
-      "findPlacesNearMe": "Etsi lähellä olevia paikkoja"
+      "findPlacesNearMe": "Etsi lähellä olevia paikkoja",
+      "callPhoneNumber": "Soita puhelinnumeroon"
     },
     "externalRequest": {
       "errors": {
@@ -3114,6 +3116,14 @@
       "allLocations": "Kaikki sijainnit",
       "whatsappOnly": "Lähetetään vain WhatsApp-yhteystiedoille.",
       "noLocationSource": "Sijainti on kerättävä tässä flow'ssa: lisää ennen tätä toimintoa Hae käyttäjätiedot -vaihe, jonka vastausmuoto on Sijainti. Toisen flow'n tallentamaa sijaintia ei käytetä. Ilman sitä toiminto ohitetaan."
+    },
+    "callPhoneNumber": {
+      "fallbackHint": "Kanavissa, jotka eivät voi soittaa puhelua, yhteystieto saa numeron vastauksena.",
+      "countryLabel": "Maatunnus",
+      "noCountry": "Ei maata",
+      "invalidForCountry": "Tämä ei ole kelvollinen puhelinnumero maassa {country}.",
+      "needsCountry": "Valitse maa tai aloita numero +-merkillä ja maatunnuksella.",
+      "invalidInternational": "Tämä ei ole kelvollinen kansainvälinen puhelinnumero."
     }
   },
   "folders": {
@@ -4345,7 +4355,9 @@
     "savedReplyImagesRemoved": "Kuvat, joita ei voi lähettää täällä, poistettiin",
     "onlyImagesAllowed": "Vain kuvia voi lisätä",
     "tooManySavedReplyImages": "Tallennetussa vastauksessa voi olla enintään {max} kuvaa",
-    "savedReplyImagesNotSentHere": "Kuvia ei lähetetä täällä"
+    "savedReplyImagesNotSentHere": "Kuvia ei lähetetä täällä",
+    "invalidPhoneNumber": "Tämä ei ole kelvollinen puhelinnumero. Lisää maatunnus, esimerkiksi +1.",
+    "buttonCallPhoneNumberUnsupported": "Tämä painike ei voi soittaa puhelinnumeroon täällä. Valitse toinen toiminto."
   },
   "instagram": {
     "description": "Tämän integraation avulla voit luoda Instagram-botteja.",

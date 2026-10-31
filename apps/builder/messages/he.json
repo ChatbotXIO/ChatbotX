@@ -622,7 +622,8 @@
       "sendCollection": "אוסף",
       "pipeline": "פייפליינים",
       "moreOptions": "אפשרויות נוספות",
-      "findPlacesNearMe": "מצא מקומות בקרבתי"
+      "findPlacesNearMe": "מצא מקומות בקרבתי",
+      "callPhoneNumber": "התקשרות למספר טלפון"
     },
     "externalRequest": {
       "errors": {
@@ -897,6 +898,14 @@
       "allLocations": "כל המיקומים",
       "whatsappOnly": "נשלח רק לאנשי קשר ב-WhatsApp.",
       "noLocationSource": "יש לאסוף את המיקום בזרימה הזו: הוסף לפני פעולה זו שלב קבלת נתוני משתמש עם פורמט תשובה מיקום. מיקום שנשמר בזרימה אחרת אינו בשימוש. בלעדיו, פעולה זו מדולגת."
+    },
+    "callPhoneNumber": {
+      "fallbackHint": "בערוצים שאינם יכולים לבצע שיחה, איש הקשר יקבל את המספר הזה כתשובה במקום.",
+      "countryLabel": "קידומת מדינה",
+      "noCountry": "ללא מדינה",
+      "invalidForCountry": "זה אינו מספר טלפון תקין עבור {country}.",
+      "needsCountry": "בחרו מדינה, או התחילו את המספר ב-+ ובקידומת המדינה.",
+      "invalidInternational": "זה אינו מספר טלפון בינלאומי תקין."
     }
   },
   "folders": {
@@ -2128,7 +2137,9 @@
     "savedReplyImagesRemoved": "תמונות שלא ניתן לשלוח כאן הוסרו",
     "onlyImagesAllowed": "ניתן להוסיף תמונות בלבד",
     "tooManySavedReplyImages": "תשובה שמורה יכולה לכלול עד {max} תמונות",
-    "savedReplyImagesNotSentHere": "התמונות לא יישלחו כאן"
+    "savedReplyImagesNotSentHere": "התמונות לא יישלחו כאן",
+    "invalidPhoneNumber": "זה אינו מספר טלפון תקין. כללו את קידומת המדינה, לדוגמה ‎+1.",
+    "buttonCallPhoneNumberUnsupported": "כפתור זה אינו יכול להתקשר למספר טלפון כאן. בחרו פעולה אחרת."
   },
   "instagram": {
     "description": "שילוב זה מאפשר ליצור בוטים ל-Instagram.",
@@ -5550,7 +5561,8 @@
     },
     "button": {
       "label": "כפתור",
-      "whenPressed": "כאשר כפתור זה נלחץ"
+      "whenPressed": "כאשר כפתור זה נלחץ",
+      "callToThisNumber": "התקשר למספר זה"
     },
     "buttonLabel": {
       "label": "תווית כפתור"

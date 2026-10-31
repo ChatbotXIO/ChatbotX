@@ -175,7 +175,8 @@
       "sendCollection": "Colecție",
       "pipeline": "Pipeline-uri",
       "moreOptions": "Mai multe opțiuni",
-      "findPlacesNearMe": "Găsește locuri în apropiere"
+      "findPlacesNearMe": "Găsește locuri în apropiere",
+      "callPhoneNumber": "Apelează un număr de telefon"
     },
     "externalRequest": {
       "errors": {
@@ -450,6 +451,14 @@
       "allLocations": "Toate locațiile",
       "whatsappOnly": "Trimis doar contactelor WhatsApp.",
       "noLocationSource": "Locația trebuie colectată în acest flux: adaugă înainte de această acțiune un pas Obține datele utilizatorului cu formatul de răspuns Locație. O locație salvată de alt flux nu este folosită. Fără el, această acțiune este omisă."
+    },
+    "callPhoneNumber": {
+      "fallbackHint": "Pe canalele care nu pot iniția un apel, contactul primește în schimb acest număr ca răspuns.",
+      "countryLabel": "Prefix de țară",
+      "noCountry": "Nicio țară",
+      "invalidForCountry": "Acesta nu este un număr de telefon valid pentru {country}.",
+      "needsCountry": "Alege țara sau începe numărul cu + și prefixul țării.",
+      "invalidInternational": "Acesta nu este un număr de telefon internațional valid."
     }
   },
   "folders": {
@@ -2581,7 +2590,8 @@
     },
     "button": {
       "label": "Buton",
-      "whenPressed": "Când este apăsat acest buton"
+      "whenPressed": "Când este apăsat acest buton",
+      "callToThisNumber": "Apelează acest număr"
     },
     "buttonLabel": {
       "label": "Eticheta butonului"
@@ -4345,7 +4355,9 @@
     "savedReplyImagesRemoved": "Imaginile care nu pot fi trimise aici au fost eliminate",
     "onlyImagesAllowed": "Se pot adăuga doar imagini",
     "tooManySavedReplyImages": "Un răspuns salvat poate avea cel mult {max} imagini",
-    "savedReplyImagesNotSentHere": "Imaginile nu vor fi trimise aici"
+    "savedReplyImagesNotSentHere": "Imaginile nu vor fi trimise aici",
+    "invalidPhoneNumber": "Acesta nu este un număr de telefon valid. Include prefixul țării, de exemplu +1.",
+    "buttonCallPhoneNumberUnsupported": "Acest buton nu poate apela un număr de telefon aici. Alege altă acțiune."
   },
   "instagram": {
     "description": "Această integrare îți permite să creezi boți Instagram.",
