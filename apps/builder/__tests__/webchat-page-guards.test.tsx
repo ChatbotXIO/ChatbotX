@@ -114,9 +114,14 @@ const searchParams = {
   webchatId: "2",
 }
 
-const setReferer = (referer: string | null) => {
+const setReferer = (referer: string | null, secFetchDest?: string) => {
   mockHeaders.mockResolvedValue({
-    get: vi.fn((name: string) => (name === "referer" ? referer : null)),
+    get: vi.fn((name: string) => {
+      if (name === "referer") {
+        return referer
+      }
+      return name === "sec-fetch-dest" ? (secFetchDest ?? null) : null
+    }),
   })
 }
 
@@ -140,6 +145,29 @@ describe("WebchatPage", () => {
     expect((element as { type: { name: string } }).type.name).toBe(
       "GuestSessionStoreProvider",
     )
+  })
+
+  test("shows the unauthorized-domain message for a referer-less iframe when authorizedDomains is configured", async () => {
+    setReferer(null, "iframe")
+
+    const element = await WebchatPage({
+      searchParams: Promise.resolve(searchParams),
+    })
+
+    expect((element as { type: string }).type).toBe("main")
+    expect(mockCreateWebchatAccessToken).not.toHaveBeenCalled()
+  })
+
+  test("still allows a referer-less iframe when authorizedDomains is empty", async () => {
+    setReferer(null, "iframe")
+    mockFindFirst.mockResolvedValue({ ...targetWebchat, authorizedDomains: [] })
+
+    const element = await WebchatPage({
+      searchParams: Promise.resolve(searchParams),
+    })
+
+    expect(isValidElement(element)).toBe(true)
+    expect(mockCreateWebchatAccessToken).toHaveBeenCalled()
   })
 
   test("does not trust a URL parent origin when a direct open has no referer", async () => {
