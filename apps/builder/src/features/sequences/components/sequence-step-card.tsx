@@ -6,6 +6,7 @@ import { Switch } from "@chatbotx.io/ui/components/ui/switch"
 import { ChevronDownIcon, XIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useState } from "react"
+import { LockedContent } from "@/features/templates/components/lock-badge"
 
 import { useDelayState } from "../hooks/use-delay-state"
 import { useSequenceStep } from "../hooks/use-sequence-step"
@@ -103,7 +104,7 @@ export function SequenceStepCard({
             {/* Main row */}
             <div className="flex flex-wrap items-center gap-4">
               {/* Column 1: Switch + Label + Flow Selector */}
-              <div className="order-1 flex min-w-55 flex-1 items-center gap-2">
+              <LockedContent className="order-1 flex min-w-55 flex-1 items-center gap-2">
                 <Switch
                   checked={isActive}
                   className="cursor-pointer"
@@ -130,10 +131,10 @@ export function SequenceStepCard({
                   showError={showFlowError}
                   value={selectedFlowId}
                 />
-              </div>
+              </LockedContent>
 
               {/* Column 2: Delay Selector */}
-              <div className="@6xl:order-2 order-3">
+              <LockedContent className="@6xl:order-2 order-3">
                 <DelaySelector
                   delayUnit={delayUnit}
                   delayValue={delayValue}
@@ -143,7 +144,7 @@ export function SequenceStepCard({
                   onSpecificDateTimeChange={handleSpecificDateTimeChange}
                   specificDateTime={specificDateTime}
                 />
-              </div>
+              </LockedContent>
 
               {/* Column 3: Stats */}
               <div className="@6xl:order-3 order-4 @6xl:w-auto w-full min-w-0">
@@ -168,15 +169,17 @@ export function SequenceStepCard({
                   />
                 </Button>
                 {!isNew && step?.id && (
-                  <Button
-                    className="h-8 w-8 hover:bg-muted hover:text-destructive"
-                    onClick={() => setShowDeleteDialog(true)}
-                    size="icon"
-                    type="button"
-                    variant="ghost"
-                  >
-                    <XIcon className="h-4 w-4" />
-                  </Button>
+                  <LockedContent>
+                    <Button
+                      className="h-8 w-8 hover:bg-muted hover:text-destructive"
+                      onClick={() => setShowDeleteDialog(true)}
+                      size="icon"
+                      type="button"
+                      variant="ghost"
+                    >
+                      <XIcon className="h-4 w-4" />
+                    </Button>
+                  </LockedContent>
                 )}
               </div>
             </div>
@@ -188,18 +191,20 @@ export function SequenceStepCard({
                   : "max-h-0 opacity-0"
               }`}
             >
-              <TimeRangeSelector
-                disabled={isSaving}
-                endTime={endTime}
-                onEndTimeChange={handleEndTimeChange}
-                onSelectedDaysChange={handleSelectedDaysChange}
-                onStartTimeChange={handleStartTimeChange}
-                onTimeOptionChange={handleTimeOptionChange}
-                selectedDays={selectedDays}
-                startTime={startTime}
-                stepId={step?.id}
-                timeOption={timeOption}
-              />
+              <LockedContent>
+                <TimeRangeSelector
+                  disabled={isSaving}
+                  endTime={endTime}
+                  onEndTimeChange={handleEndTimeChange}
+                  onSelectedDaysChange={handleSelectedDaysChange}
+                  onStartTimeChange={handleStartTimeChange}
+                  onTimeOptionChange={handleTimeOptionChange}
+                  selectedDays={selectedDays}
+                  startTime={startTime}
+                  stepId={step?.id}
+                  timeOption={timeOption}
+                />
+              </LockedContent>
             </div>
           </CardContent>
         </Card>

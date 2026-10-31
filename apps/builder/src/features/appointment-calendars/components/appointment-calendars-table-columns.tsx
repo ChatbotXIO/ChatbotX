@@ -28,6 +28,7 @@ import Link from "next/link"
 import type { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import type { Dispatch, SetStateAction } from "react"
+import { LockBadge } from "@/features/templates/components/lock-badge"
 import { useTenantSettings } from "@/features/tenant"
 import { useClipboard } from "@/hooks/use-clipboard"
 import { updateAppointmentCalendarActiveAction } from "../actions/update-appointment-calendar-active.action"
@@ -125,12 +126,15 @@ export function getAppointmentCalendarColumns({
         <Tooltip>
           <TooltipTrigger
             render={
-              <Link
-                className="inline-block max-w-[320px] truncate font-medium"
-                href={`/space/${row.original.workspaceId}/appointment-calendars/${row.original.id}/edit`}
-              >
-                {row.original.name}
-              </Link>
+              <span className="flex max-w-[320px] items-center font-medium">
+                <Link
+                  className="truncate"
+                  href={`/space/${row.original.workspaceId}/appointment-calendars/${row.original.id}/edit`}
+                >
+                  {row.original.name}
+                </Link>
+                <LockBadge resourceId={row.original.id} />
+              </span>
             }
           />
           <TooltipContent>{row.original.name}</TooltipContent>

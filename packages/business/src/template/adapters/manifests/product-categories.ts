@@ -38,6 +38,7 @@ export const resolveProductCategoryManifest = async (
 
       const targetId = await findOrCreateProductCategory(
         ctx,
+        sourceId,
         entry,
         parentTargetId,
       )
@@ -76,6 +77,7 @@ const resolveParentTargetId = (
 
 const findOrCreateProductCategory = async (
   ctx: TemplateInstallContext,
+  sourceId: string,
   entry: TemplateProductCategoryManifestEntry,
   parentTargetId: string | null,
 ): Promise<string> => {
@@ -94,7 +96,7 @@ const findOrCreateProductCategory = async (
       category: "productCategories",
       resourceKind: "productCategory",
       resourceId: existing.id,
-      sourceResourceId: existing.id,
+      sourceResourceId: sourceId,
       wasExisting: true,
     })
     return existing.id
@@ -108,7 +110,7 @@ const findOrCreateProductCategory = async (
     category: "productCategories",
     resourceKind: "productCategory",
     resourceId: created.id,
-    sourceResourceId: created.id,
+    sourceResourceId: sourceId,
     wasExisting: false,
   })
   return created.id

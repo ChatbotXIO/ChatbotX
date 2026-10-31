@@ -21,6 +21,7 @@ import {
   useState,
   useTransition,
 } from "react"
+import { LockBadge } from "@/features/templates/components/lock-badge"
 import { WebshopLinkMenuItems } from "@/features/webshop/components/webshop-link-menu-items"
 import { toggleProductActiveAction } from "./actions/toggle-product-active-action"
 import type { ProductResource } from "./schema/resource"
@@ -93,8 +94,9 @@ export function getProductColumns({
         <DataTableColumnHeader column={column} title={t("fields.name.label")} />
       ),
       cell: ({ row }) => (
-        <span className="max-w-75 truncate font-medium">
-          {row.original.name}
+        <span className="flex max-w-75 items-center font-medium">
+          <span className="truncate">{row.original.name}</span>
+          <LockBadge resourceId={row.original.id} />
         </span>
       ),
       meta: {

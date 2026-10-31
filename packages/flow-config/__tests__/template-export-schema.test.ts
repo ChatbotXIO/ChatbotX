@@ -2,6 +2,7 @@ import { describe, expect, test } from "vitest"
 import {
   parseTemplateExport,
   TEMPLATE_EXPORT_FORMAT_VERSION,
+  TEMPLATE_EXPORT_FORMAT_VERSION_V2,
 } from "../src/import-export/template-schema"
 
 const buildEnvelope = () => ({
@@ -33,6 +34,42 @@ describe("parseTemplateExport", () => {
   test("accepts a well-formed empty envelope", () => {
     const result = parseTemplateExport(buildEnvelope())
     expect(result.ok).toBe(true)
+  })
+
+  test("a v2 payload carries its per-item permissions through a parse round-trip", () => {
+    const permissions = { flows: { f1: { allowEdit: false } } }
+
+    const result = parseTemplateExport({
+      ...buildEnvelope(),
+      formatVersion: TEMPLATE_EXPORT_FORMAT_VERSION_V2,
+      permissions,
+    })
+
+    expect(result.ok && result.data.permissions).toEqual(permissions)
+  })
+
+  test("a v2 payload carries its inboxes manifest through a parse round-trip", () => {
+    const inboxes = { "11": { channelType: "messenger", name: "Page A" } }
+    const envelope = buildEnvelope()
+    const result = parseTemplateExport({
+      ...envelope,
+      formatVersion: TEMPLATE_EXPORT_FORMAT_VERSION_V2,
+      manifests: { ...envelope.manifests, inboxes },
+    })
+
+    expect(result.ok && result.data.manifests.inboxes).toEqual(inboxes)
+  })
+
+  test("a payload without an inboxes manifest parses with none", () => {
+    const result = parseTemplateExport(buildEnvelope())
+
+    expect(result.ok && result.data.manifests.inboxes).toEqual({})
+  })
+
+  test("a v1 payload still parses and has no permissions", () => {
+    const result = parseTemplateExport(buildEnvelope())
+
+    expect(result.ok && result.data.permissions).toBeUndefined()
   })
 
   test("never throws on malformed input", () => {

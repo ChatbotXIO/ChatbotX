@@ -38,6 +38,10 @@ import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import prettyBytes from "pretty-bytes"
 import { use, useMemo, useState } from "react"
+import {
+  LockBadge,
+  LockedIdsProvider,
+} from "@/features/templates/components/lock-badge"
 import { useWorkspaceId } from "@/hooks/routing"
 import { AIFileProcessingStatus } from "./ai-file-processing-status"
 import { AIFilesCreate } from "./ai-files-create"
@@ -141,12 +145,14 @@ export default function AIFilesTable({ promises }: AIFilesTableProps) {
           <Tooltip>
             <TooltipTrigger
               render={
-                <div className="inline-block max-w-[300px] truncate">
+                <div className="flex max-w-[300px] items-center">
                   <Link
+                    className="truncate"
                     href={`/space/${workspaceId}/ai-files/${row.original.id}`}
                   >
                     {row.original.name}
                   </Link>
+                  <LockBadge resourceId={row.original.id} />
                 </div>
               }
             />
@@ -283,25 +289,31 @@ export default function AIFilesTable({ promises }: AIFilesTableProps) {
         <CardDescription>{t("aiFiles.description")}</CardDescription>
       </CardHeader>
       <CardContent>
-        <DataTable table={table}>
-          <DataTableToolbar table={table}>
-            <AIFilesCreate
-              onSuccess={() => {
-                router.refresh()
-              }}
-            />
-            <Button
-              nativeButton={false}
-              render={
-                <Link href={`/space/${workspaceId}/ai-files/test-query`} />
-              }
-              size="sm"
-              variant="outline"
-            >
-              {t("aiFiles.testQuery.open")}
-            </Button>
-          </DataTableToolbar>
-        </DataTable>
+        <LockedIdsProvider
+          resourceIds={data.map((row) => row.id)}
+          resourceKind="aiFile"
+          workspaceId={workspaceId}
+        >
+          <DataTable table={table}>
+            <DataTableToolbar table={table}>
+              <AIFilesCreate
+                onSuccess={() => {
+                  router.refresh()
+                }}
+              />
+              <Button
+                nativeButton={false}
+                render={
+                  <Link href={`/space/${workspaceId}/ai-files/test-query`} />
+                }
+                size="sm"
+                variant="outline"
+              >
+                {t("aiFiles.testQuery.open")}
+              </Button>
+            </DataTableToolbar>
+          </DataTable>
+        </LockedIdsProvider>
       </CardContent>
     </Card>
   )

@@ -17,6 +17,7 @@ import React, { Suspense, useMemo } from "react"
 import { toast } from "sonner"
 import { useCopyToClipboard } from "usehooks-ts"
 import { FolderBarSlot } from "@/features/folders/folder-bar-slot"
+import { LockedIdsProvider } from "@/features/templates/components/lock-badge"
 import { ChangeFolderDialog } from "../folders/change-folder"
 import { CreateTagDialog } from "./create-tag-dialog"
 import { DeleteTagsDialog } from "./delete-tag-dialog"
@@ -70,7 +71,11 @@ function TagsTableContent({ promises, workspaceId, folderId }: TagsTableProps) {
   })
 
   return (
-    <>
+    <LockedIdsProvider
+      resourceIds={data.map((row) => row.id)}
+      resourceKind="tag"
+      workspaceId={workspaceId}
+    >
       <DataTable table={table}>
         <DataTableToolbar table={table}>
           <TagsTableToolbarActions table={table} workspaceId={workspaceId} />
@@ -103,7 +108,7 @@ function TagsTableContent({ promises, workspaceId, folderId }: TagsTableProps) {
         open={rowAction?.variant === "move"}
         workspaceId={workspaceId}
       />
-    </>
+    </LockedIdsProvider>
   )
 }
 

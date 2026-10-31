@@ -18,6 +18,8 @@ import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useEffect } from "react"
 import { toast } from "sonner"
+import { LockedDialogFieldset } from "@/components/locked-dialog-fieldset"
+import { useIsLocked } from "@/features/templates/components/lock-badge"
 import { renameAppointmentCalendarAction } from "../actions/rename-appointment-calendar.action"
 import { renameAppointmentCalendarRequest } from "../schema/action"
 import type { AppointmentCalendarListItem } from "../schema/resource"
@@ -36,6 +38,7 @@ export function RenameAppointmentCalendarDialog({
   onOpenChange,
 }: Props) {
   const t = useTranslations()
+  const isLocked = useIsLocked(calendar?.id)
   const router = useRouter()
   const { form, handleSubmitWithAction } = useHookFormAction(
     renameAppointmentCalendarAction.bind(null, workspaceId, calendar?.id ?? ""),
@@ -79,7 +82,9 @@ export function RenameAppointmentCalendarDialog({
         </DialogHeader>
         <Form {...form}>
           <form className="space-y-4" onSubmit={handleSubmitWithAction}>
-            <InputField label={t("fields.name.label")} name="name" required />
+            <LockedDialogFieldset resourceId={calendar?.id}>
+              <InputField label={t("fields.name.label")} name="name" required />
+            </LockedDialogFieldset>
             <DialogFooter>
               <Button
                 onClick={() => onOpenChange(false)}
@@ -90,7 +95,9 @@ export function RenameAppointmentCalendarDialog({
               </Button>
               <Button
                 disabled={
-                  !form.formState.isValid || form.formState.isSubmitting
+                  isLocked ||
+                  !form.formState.isValid ||
+                  form.formState.isSubmitting
                 }
                 type="submit"
               >

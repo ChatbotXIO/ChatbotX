@@ -13,6 +13,7 @@ import { workspaceTokenAuthAPIForScope } from "@/orpc"
 import { listContactTags } from "../../lib/list-contact-tags"
 import {
   addTagsByNamePublicRequest,
+  removeTagsByNamePublicRequest,
   setAllContactTagsPublicRequest,
 } from "../../schema/public/tags"
 
@@ -137,6 +138,31 @@ export const contactsTagsPublicRouter = {
         workspaceId,
       })
       await tagService.attachByNamesToContacts({
+        workspaceId,
+        contactIds: [contactId],
+        names: input.tags,
+      })
+    }),
+
+  removeTagsByName: workspaceTokenAuthAPI
+    .route({
+      method: "DELETE",
+      path: "/v1/contacts/{identifier}/tags/by-name",
+      summary: "Remove tags from contact by name",
+      description:
+        'Same as `removeTags` but takes tag names instead of ids; nothing is created. Use this when you know the tag name but not its id. Example: `{"tags":["VIP"]}`.',
+      successStatus: 204,
+      tags: ["Contacts"],
+    })
+    .input(removeTagsByNamePublicRequest)
+    .errors(possibleErrorsOnDeletingResource)
+    .handler(async ({ context, input }) => {
+      const workspaceId = context.workspace.id
+      const contactId = await contactService.resolveIdByIdentifier({
+        identifier: input.identifier,
+        workspaceId,
+      })
+      await tagService.detachByNamesFromContacts({
         workspaceId,
         contactIds: [contactId],
         names: input.tags,

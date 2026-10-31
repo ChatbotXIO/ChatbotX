@@ -21,6 +21,7 @@ import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useState } from "react"
 import { toast } from "sonner"
+import { LockedContent } from "@/features/templates/components/lock-badge"
 import { upsertSequenceStepAction } from "./actions/upsert-sequence-step.action"
 import { SequenceStepCard } from "./components/sequence-step-card"
 import { DEFAULT_NEW_STEP_DELAY } from "./lib/delay"
@@ -133,10 +134,12 @@ export function SequenceEditor({ sequence, workspaceId }: SequenceEditorProps) {
           {sequence.steps.length === 0 && !isAddingStep && (
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <p className="text-muted-foreground">{t("sequences.noSteps")}</p>
-              <Button className="mt-4" onClick={handleAddStep}>
-                <PlusIcon className="h-4 w-4" />
-                {t("sequences.addFirstStep")}
-              </Button>
+              <LockedContent className="mt-4">
+                <Button onClick={handleAddStep}>
+                  <PlusIcon className="h-4 w-4" />
+                  {t("sequences.addFirstStep")}
+                </Button>
+              </LockedContent>
             </div>
           )}
 
@@ -156,13 +159,15 @@ export function SequenceEditor({ sequence, workspaceId }: SequenceEditorProps) {
           {!isAddingStep && sequence.steps.length > 0 && (
             <div className="grid">
               <div className="mt-2 mb-2 space-y-4 ps-4">
-                <button
-                  className="mt-2 flex h-10 w-full items-center justify-center rounded-md border border-primary/40 border-dashed font-medium text-primary text-sm hover:bg-primary/5"
-                  onClick={handleAddStep}
-                  type="button"
-                >
-                  + {t("sequences.addStep")}
-                </button>
+                <LockedContent>
+                  <button
+                    className="mt-2 flex h-10 w-full items-center justify-center rounded-md border border-primary/40 border-dashed font-medium text-primary text-sm hover:bg-primary/5"
+                    onClick={handleAddStep}
+                    type="button"
+                  >
+                    + {t("sequences.addStep")}
+                  </button>
+                </LockedContent>
               </div>
             </div>
           )}

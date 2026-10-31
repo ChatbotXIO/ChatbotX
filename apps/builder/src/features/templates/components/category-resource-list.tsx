@@ -1,6 +1,7 @@
 "use client"
 
 import type { TemplateCategory } from "@chatbotx.io/database/partials"
+import { Badge } from "@chatbotx.io/ui/components/ui/badge"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import { Checkbox } from "@chatbotx.io/ui/components/ui/checkbox"
 import { Input } from "@chatbotx.io/ui/components/ui/input"
@@ -11,7 +12,14 @@ import { SearchIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useEffect, useState } from "react"
 import { client } from "@/lib/orpc/orpc"
-import type { CategorySelectionState } from "../lib/selection"
+import {
+  type CategorySelectionState,
+  explicitSelection,
+  isItemLocked,
+  withAllLocked,
+  withAllSelected,
+  withItemLocked,
+} from "../lib/selection"
 
 const PAGE_SIZE = 100
 const SEARCH_DEBOUNCE_MS = 300
@@ -20,6 +28,7 @@ type ResourceItem = {
   id: string
   name: string
   folderName?: string
+  badge?: string
 }
 
 type CategoryResourceListProps = {
@@ -61,6 +70,7 @@ export function CategoryResourceList({
   onTotalChange,
 }: CategoryResourceListProps) {
   const t = useTranslations()
+  const tChannels = useTranslations("templates.channels")
   const [items, setItems] = useState<ResourceItem[]>([])
   const [allIds, setAllIds] = useState<string[] | undefined>(undefined)
   const [total, setTotal] = useState(0)
@@ -121,29 +131,49 @@ export function CategoryResourceList({
   const isRowChecked = (id: string): boolean =>
     isAllMode ? true : (selectedIds?.has(id) ?? false)
 
+  // Downgrading from "all" to an explicit list must be exact — never silently
+  // fall back to just the loaded page. Use `allIds` when we already have the
+  // exact unfiltered set; otherwise fetch it fresh.
+  const loadBaseIds = async (): Promise<string[]> =>
+    allIds ??
+    (
+      await client.templatesAPI.listSelectableResourcesAPI({
+        workspaceId,
+        category,
+        limit: total,
+      })
+    ).items.map((item) => item.id)
+
   const toggleRow = async (id: string, checked: boolean) => {
     if (isAllMode) {
-      // Downgrading from "all" to an explicit list must be exact — never
-      // silently fall back to just the loaded page. Use `allIds` when we
-      // already have the exact unfiltered set; otherwise fetch it fresh.
-      const base =
-        allIds ??
-        (
-          await client.templatesAPI.listSelectableResourcesAPI({
-            workspaceId,
-            category,
-            limit: total,
-          })
-        ).items.map((item) => item.id)
+      const base = await loadBaseIds()
       const next = checked ? base : base.filter((itemId) => itemId !== id)
-      onChange({ mode: "ids", ids: next })
+      // Unselecting one row of an all-locked selection keeps the rest locked.
+      const lockedIds = selection.lockAll ? base : []
+      onChange(explicitSelection(next, lockedIds))
       return
     }
     const current = selection.mode === "ids" ? selection.ids : []
     const next = checked
       ? [...new Set([...current, id])]
       : current.filter((itemId) => itemId !== id)
-    onChange({ mode: "ids", ids: next })
+    onChange(
+      explicitSelection(
+        next,
+        selection.mode === "ids" ? (selection.lockedIds ?? []) : [],
+      ),
+    )
+  }
+
+  const toggleRowLock = async (id: string, locked: boolean) => {
+    onChange(
+      withItemLocked(
+        selection,
+        id,
+        locked,
+        isAllMode ? await loadBaseIds() : [],
+      ),
+    )
   }
 
   const toggleSelectAll = (checked: boolean) => {
@@ -151,8 +181,14 @@ export function CategoryResourceList({
       onChange({ mode: "ids", ids: [] })
       return
     }
-    onChange(allIds ? { mode: "ids", ids: allIds } : { mode: "all" as const })
+    onChange(withAllSelected(selection, allIds))
   }
+
+  const allSelectedLocked =
+    selectedCount > 0 &&
+    (selection.mode === "all"
+      ? Boolean(selection.lockAll)
+      : (selection.lockedIds?.length ?? 0) >= selection.ids.length)
 
   const allRowsSelected = total > 0 && selectedCount >= total
   const someRowsSelected = selectedCount > 0 && !allRowsSelected
@@ -190,6 +226,21 @@ export function CategoryResourceList({
         >
           {t("templates.form.selectAll")}
         </Label>
+        <Checkbox
+          checked={allSelectedLocked}
+          className="ml-auto"
+          disabled={selectedCount === 0}
+          id={`${category}-lock-all`}
+          onCheckedChange={(checked) =>
+            onChange(withAllLocked(selection, Boolean(checked)))
+          }
+        />
+        <Label
+          className="cursor-pointer font-normal"
+          htmlFor={`${category}-lock-all`}
+        >
+          {t("templates.form.viewOnlyAll")}
+        </Label>
       </div>
 
       <ScrollArea className="h-64 rounded-md border">
@@ -212,9 +263,33 @@ export function CategoryResourceList({
               >
                 {item.name}
               </Label>
+              {item.badge ? (
+                <Badge className="flex-none" variant="outline">
+                  {tChannels.has(item.badge)
+                    ? tChannels(item.badge)
+                    : item.badge}
+                </Badge>
+              ) : null}
               {item.folderName ? (
                 <span className="ml-auto truncate text-muted-foreground text-xs">
                   {item.folderName}
+                </span>
+              ) : null}
+              {isRowChecked(item.id) ? (
+                <span className="ml-auto flex items-center gap-1.5">
+                  <Checkbox
+                    checked={isItemLocked(selection, item.id)}
+                    id={`${category}-${item.id}-lock`}
+                    onCheckedChange={(checked) =>
+                      toggleRowLock(item.id, Boolean(checked))
+                    }
+                  />
+                  <Label
+                    className="cursor-pointer font-normal text-muted-foreground text-xs"
+                    htmlFor={`${category}-${item.id}-lock`}
+                  >
+                    {t("templates.form.viewOnly")}
+                  </Label>
                 </span>
               ) : null}
             </div>

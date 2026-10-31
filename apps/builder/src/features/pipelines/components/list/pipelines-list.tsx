@@ -37,6 +37,10 @@ import { useAction } from "next-safe-action/hooks"
 import { useQueryStates } from "nuqs"
 import { useMemo, useState } from "react"
 import { ConfirmDialog } from "@/components/confirm-dialog"
+import {
+  LockBadge,
+  LockedIdsProvider,
+} from "@/features/templates/components/lock-badge"
 import { orpc } from "@/lib/orpc/query"
 import {
   deletePipelineAction,
@@ -87,12 +91,15 @@ export function PipelinesList({ workspaceId }: { workspaceId: string }) {
           />
         ),
         cell: ({ row }) => (
-          <Link
-            className="inline-block max-w-[320px] truncate font-medium hover:underline"
-            href={`/space/${workspaceId}/pipelines/${row.original.pipeline.id}`}
-          >
-            {row.original.pipeline.name}
-          </Link>
+          <span className="flex max-w-[320px] items-center font-medium">
+            <Link
+              className="truncate hover:underline"
+              href={`/space/${workspaceId}/pipelines/${row.original.pipeline.id}`}
+            >
+              {row.original.pipeline.name}
+            </Link>
+            <LockBadge resourceId={row.original.pipeline.id} />
+          </span>
         ),
         meta: {
           label: t("fields.name.label"),
@@ -249,72 +256,78 @@ export function PipelinesList({ workspaceId }: { workspaceId: string }) {
         <CardDescription>{t("pipelines.list.description")}</CardDescription>
       </CardHeader>
       <CardContent>
-        {isPending ? (
-          <DataTableSkeleton
-            columnCount={5}
-            data-testid="pipelines-loading"
-            rowCount={3}
-            withViewOptions={false}
-          />
-        ) : null}
+        <LockedIdsProvider
+          resourceIds={visible.rows.map((row) => row.pipeline.id)}
+          resourceKind="pipeline"
+          workspaceId={workspaceId}
+        >
+          {isPending ? (
+            <DataTableSkeleton
+              columnCount={5}
+              data-testid="pipelines-loading"
+              rowCount={3}
+              withViewOptions={false}
+            />
+          ) : null}
 
-        {isError ? (
-          <div className="flex flex-col items-center gap-3 rounded-lg border p-10 text-center">
-            <p className="text-muted-foreground text-sm">
-              {t("pipelines.list.error")}
-            </p>
-            <Button onClick={() => refetch()} size="sm" variant="outline">
-              {t("pipelines.retry")}
-            </Button>
-          </div>
-        ) : null}
+          {isError ? (
+            <div className="flex flex-col items-center gap-3 rounded-lg border p-10 text-center">
+              <p className="text-muted-foreground text-sm">
+                {t("pipelines.list.error")}
+              </p>
+              <Button onClick={() => refetch()} size="sm" variant="outline">
+                {t("pipelines.retry")}
+              </Button>
+            </div>
+          ) : null}
 
-        {data?.length === 0 ? (
-          <div className="flex flex-col items-center gap-3 rounded-lg border border-dashed p-12 text-center">
-            <SquareKanbanIcon className="size-8 text-muted-foreground" />
-            <p className="font-medium">{t("pipelines.list.empty")}</p>
-            <p className="max-w-md text-muted-foreground text-sm">
-              {t("pipelines.list.emptyHint")}
-            </p>
-            <Button onClick={() => setDialog({ kind: "create" })} size="sm">
-              <PlusIcon />
-              {t("pipelines.list.add")}
-            </Button>
-          </div>
-        ) : null}
-
-        {data && data.length > 0 ? (
-          <DataTable table={table}>
-            <DataTableToolbar table={table}>
+          {data?.length === 0 ? (
+            <div className="flex flex-col items-center gap-3 rounded-lg border border-dashed p-12 text-center">
+              <SquareKanbanIcon className="size-8 text-muted-foreground" />
+              <p className="font-medium">{t("pipelines.list.empty")}</p>
+              <p className="max-w-md text-muted-foreground text-sm">
+                {t("pipelines.list.emptyHint")}
+              </p>
               <Button onClick={() => setDialog({ kind: "create" })} size="sm">
                 <PlusIcon />
                 {t("pipelines.list.add")}
               </Button>
-            </DataTableToolbar>
-          </DataTable>
-        ) : null}
+            </div>
+          ) : null}
 
-        <CreatePipelineDialog
-          onOpenChange={(open) => !open && setDialog(null)}
-          open={dialog?.kind === "create"}
-          workspaceId={workspaceId}
-        />
-        {dialog?.kind === "rename" ? (
-          <RenamePipelineDialog
-            dialog={dialog}
-            key={dialog.id}
-            onClose={() => setDialog(null)}
+          {data && data.length > 0 ? (
+            <DataTable table={table}>
+              <DataTableToolbar table={table}>
+                <Button onClick={() => setDialog({ kind: "create" })} size="sm">
+                  <PlusIcon />
+                  {t("pipelines.list.add")}
+                </Button>
+              </DataTableToolbar>
+            </DataTable>
+          ) : null}
+
+          <CreatePipelineDialog
+            onOpenChange={(open) => !open && setDialog(null)}
+            open={dialog?.kind === "create"}
             workspaceId={workspaceId}
           />
-        ) : null}
-        {dialog?.kind === "delete" ? (
-          <DeletePipelineDialog
-            dialog={dialog}
-            key={dialog.id}
-            onClose={() => setDialog(null)}
-            workspaceId={workspaceId}
-          />
-        ) : null}
+          {dialog?.kind === "rename" ? (
+            <RenamePipelineDialog
+              dialog={dialog}
+              key={dialog.id}
+              onClose={() => setDialog(null)}
+              workspaceId={workspaceId}
+            />
+          ) : null}
+          {dialog?.kind === "delete" ? (
+            <DeletePipelineDialog
+              dialog={dialog}
+              key={dialog.id}
+              onClose={() => setDialog(null)}
+              workspaceId={workspaceId}
+            />
+          ) : null}
+        </LockedIdsProvider>
       </CardContent>
     </Card>
   )
@@ -342,6 +355,7 @@ function RenamePipelineDialog({
       onOpenChange={(open) => !open && onClose()}
       onSubmit={(name) => execute({ id: dialog.id, name })}
       open
+      resourceId={dialog.id}
       submitLabel={t("rename.submit")}
       title={t("rename.title")}
     />

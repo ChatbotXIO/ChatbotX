@@ -1,4 +1,11 @@
-import { and, db, eq, inArray, sql } from "@chatbotx.io/database/client"
+import {
+  and,
+  type DatabaseClient,
+  db,
+  eq,
+  inArray,
+  sql,
+} from "@chatbotx.io/database/client"
 import type { FolderType } from "@chatbotx.io/database/partials"
 import { triggerRepository } from "@chatbotx.io/database/repositories"
 import {
@@ -15,7 +22,12 @@ import { isSameJsonValue } from "../audit/diff"
 import { BaseService } from "../base.service"
 import { notFoundException, validationException } from "../errors"
 import { folderService } from "../folder/service"
-import { assertDeletable } from "../template/installed-resource.service"
+import {
+  assertResourceEditable,
+  withDeleteGuard,
+} from "../template/installed-resource.service"
+import { withTemplateLockedTransaction } from "../template/template-resource-locks"
+import { referencedParentsOf } from "../template/uninstall-references"
 import {
   type ConditionInput,
   toConditionColumnsShared as toConditionColumns,
@@ -131,18 +143,33 @@ class TriggerService extends BaseService {
     workspaceId: string
     ids: string[]
   }): Promise<void> {
-    await assertDeletable({
-      workspaceId: input.workspaceId,
-      resourceKind: "trigger",
-      resourceIds: input.ids,
-    })
+    const deleted = await withDeleteGuard(
+      {
+        workspaceId: input.workspaceId,
+        targets: [{ resourceKind: "trigger", resourceIds: input.ids }],
+      },
+      (tx) => this.deleteInTx(tx, input),
+    )
 
-    const deletedTriggers = await db.query.triggerModel.findMany({
-      where: { workspaceId: input.workspaceId, id: { in: input.ids } },
-      columns: { id: true },
-    })
+    await removeTriggerCache(input.workspaceId)
 
-    await db
+    if (deleted.length > 0) {
+      await this.audit(
+        "delete",
+        `deleted trigger${deleted.length > 1 ? "s" : ""} (${deleted.map((id) => `#${id}`).join(", ")})`,
+      )
+    }
+  }
+
+  /**
+   * The delete core (row write only), shared with the template uninstall so
+   * there is one implementation. Returns the ids actually deleted.
+   */
+  async deleteInTx(
+    tx: DatabaseClient,
+    input: { workspaceId: string; ids: string[] },
+  ): Promise<string[]> {
+    const rows = await tx
       .delete(triggerModel)
       .where(
         and(
@@ -150,15 +177,8 @@ class TriggerService extends BaseService {
           inArray(triggerModel.id, input.ids),
         ),
       )
-
-    await removeTriggerCache(input.workspaceId)
-
-    if (deletedTriggers.length > 0) {
-      await this.audit(
-        "delete",
-        `deleted trigger${deletedTriggers.length > 1 ? "s" : ""} (${deletedTriggers.map((trigger) => `#${trigger.id}`).join(", ")})`,
-      )
-    }
+      .returning({ id: triggerModel.id })
+    return rows.map((row) => String(row.id))
   }
 
   /**
@@ -181,128 +201,147 @@ class TriggerService extends BaseService {
   > {
     const { workspaceId, id, actions, conditions } = input
 
-    const result = await db.transaction(async (tx) => {
-      const [existingTrigger, existingConditions] = await Promise.all([
-        tx.query.triggerModel.findFirst({
-          where: {
-            id,
-            workspaceId,
-          },
-        }),
-        tx.query.conditionModel.findMany({
-          where: {
-            triggerId: id,
-          },
-        }),
-      ])
+    const referencedParents = referencedParentsOf(actions)
+    const result = await withTemplateLockedTransaction(
+      async (tx) => {
+        await assertResourceEditable({
+          workspaceId,
+          resourceKind: "trigger",
+          resourceIds: [id],
+          changedKeys: ["actions", "conditions"],
+          // The flows, sequences... the new actions point at are locked with the trigger.
+          referencedParents,
+          tx,
+        })
+        const [existingTrigger, existingConditions] = await Promise.all([
+          tx.query.triggerModel.findFirst({
+            where: {
+              id,
+              workspaceId,
+            },
+          }),
+          tx.query.conditionModel.findMany({
+            where: {
+              triggerId: id,
+            },
+          }),
+        ])
 
-      if (!existingTrigger) {
-        return {
-          trigger: undefined,
-          conditions: undefined,
-          hasRealChange: false,
-        }
-      }
-
-      const existingIds = new Set(existingConditions.map((c) => c.id))
-      const existingById = new Map(existingConditions.map((c) => [c.id, c]))
-      const submittedIds = new Set(
-        conditions.filter((c) => c.id).map((c) => c.id),
-      )
-
-      const conditionsToDelete = existingConditions.filter(
-        (existing) => !submittedIds.has(existing.id.toString()),
-      )
-
-      const conditionsToUpdate = conditions.filter(
-        (c) => c.id && existingIds.has(c.id),
-      )
-
-      const changedConditionsToUpdate = conditionsToUpdate.filter(
-        (condition) => {
-          const existing = condition.id
-            ? existingById.get(condition.id)
-            : undefined
-          if (!existing) {
-            return false
+        if (!existingTrigger) {
+          return {
+            trigger: undefined,
+            conditions: undefined,
+            hasRealChange: false,
           }
-          const next = toConditionColumns(condition)
-          return !isSameJsonValue(next, {
-            type: existing.type,
-            sourceId: existing.sourceId,
-            operator: existing.operator,
-            value: existing.value,
-          })
-        },
-      )
+        }
 
-      const conditionsToCreate = conditions.filter((c) => !c.id)
+        const existingIds = new Set(existingConditions.map((c) => c.id))
+        const existingById = new Map(existingConditions.map((c) => [c.id, c]))
+        const submittedIds = new Set(
+          conditions.filter((c) => c.id).map((c) => c.id),
+        )
 
-      let actionsChanged = false
-      if (!isSameJsonValue(actions, existingTrigger.actions)) {
-        const updated = await tx
-          .update(triggerModel)
-          .set({ actions })
-          .where(
-            and(
-              eq(triggerModel.workspaceId, workspaceId),
-              eq(triggerModel.id, id),
+        const conditionsToDelete = existingConditions.filter(
+          (existing) => !submittedIds.has(existing.id.toString()),
+        )
+
+        const conditionsToUpdate = conditions.filter(
+          (c) => c.id && existingIds.has(c.id),
+        )
+
+        const changedConditionsToUpdate = conditionsToUpdate.filter(
+          (condition) => {
+            const existing = condition.id
+              ? existingById.get(condition.id)
+              : undefined
+            if (!existing) {
+              return false
+            }
+            const next = toConditionColumns(condition)
+            return !isSameJsonValue(next, {
+              type: existing.type,
+              sourceId: existing.sourceId,
+              operator: existing.operator,
+              value: existing.value,
+            })
+          },
+        )
+
+        const conditionsToCreate = conditions.filter((c) => !c.id)
+
+        let actionsChanged = false
+        if (!isSameJsonValue(actions, existingTrigger.actions)) {
+          const updated = await tx
+            .update(triggerModel)
+            .set({ actions })
+            .where(
+              and(
+                eq(triggerModel.workspaceId, workspaceId),
+                eq(triggerModel.id, id),
+              ),
+            )
+            .returning({ id: triggerModel.id })
+
+          actionsChanged = updated.length > 0
+        }
+
+        if (conditionsToDelete.length > 0) {
+          await tx.delete(conditionModel).where(
+            inArray(
+              conditionModel.id,
+              conditionsToDelete.map((c) => c.id),
             ),
           )
-          .returning({ id: triggerModel.id })
+        }
 
-        actionsChanged = updated.length > 0
-      }
+        for (const condition of changedConditionsToUpdate) {
+          await tx
+            .update(conditionModel)
+            .set(toConditionColumns(condition))
+            .where(eq(conditionModel.id, condition.id ?? ""))
+        }
 
-      if (conditionsToDelete.length > 0) {
-        await tx.delete(conditionModel).where(
-          inArray(
-            conditionModel.id,
-            conditionsToDelete.map((c) => c.id),
-          ),
-        )
-      }
+        if (conditionsToCreate.length > 0) {
+          await tx.insert(conditionModel).values(
+            conditionsToCreate.map((c) => ({
+              id: createId(),
+              triggerId: id,
+              ...toConditionColumns(c),
+            })),
+          )
+        }
 
-      for (const condition of changedConditionsToUpdate) {
-        await tx
-          .update(conditionModel)
-          .set(toConditionColumns(condition))
-          .where(eq(conditionModel.id, condition.id ?? ""))
-      }
+        const [trigger, updatedConditions] = await Promise.all([
+          tx.query.triggerModel.findFirst({
+            where: {
+              id,
+            },
+          }),
+          tx.query.conditionModel.findMany({
+            where: {
+              triggerId: id,
+            },
+          }),
+        ])
 
-      if (conditionsToCreate.length > 0) {
-        await tx.insert(conditionModel).values(
-          conditionsToCreate.map((c) => ({
-            id: createId(),
-            triggerId: id,
-            ...toConditionColumns(c),
-          })),
-        )
-      }
-
-      const [trigger, updatedConditions] = await Promise.all([
-        tx.query.triggerModel.findFirst({
-          where: {
-            id,
-          },
-        }),
-        tx.query.conditionModel.findMany({
-          where: {
-            triggerId: id,
-          },
-        }),
-      ])
-
-      return {
-        trigger,
-        conditions: updatedConditions,
-        hasRealChange:
-          actionsChanged ||
-          conditionsToDelete.length > 0 ||
-          changedConditionsToUpdate.length > 0 ||
-          conditionsToCreate.length > 0,
-      }
-    })
+        return {
+          trigger,
+          conditions: updatedConditions,
+          hasRealChange:
+            actionsChanged ||
+            conditionsToDelete.length > 0 ||
+            changedConditionsToUpdate.length > 0 ||
+            conditionsToCreate.length > 0,
+        }
+      },
+      {
+        workspaceId,
+        initialKeys: [
+          { kind: "trigger", resourceId: id },
+          ...referencedParents,
+        ],
+      },
+    )
 
     if (result.trigger) {
       await updateTriggerCache(workspaceId)
@@ -333,39 +372,57 @@ class TriggerService extends BaseService {
   > {
     const { workspaceId, id, ...patch } = input
 
-    const trigger = await db.query.triggerModel.findFirst({
-      where: {
-        id,
-        workspaceId,
-      },
-    })
+    // The trigger is locked before the stored row is read, so the diff that
+    // decides the guard is computed under the lock; the audit follows commit.
+    const { trigger, changedEntries, updated } =
+      await withTemplateLockedTransaction(
+        async (tx) => {
+          const current = await tx.query.triggerModel.findFirst({
+            where: { id, workspaceId },
+          })
 
-    if (!trigger) {
-      throw notFoundException("Trigger not found")
-    }
+          if (!current) {
+            throw notFoundException("Trigger not found")
+          }
 
-    const changedEntries = Object.entries(patch).filter(
-      ([key, value]) => trigger[key as keyof typeof patch] !== value,
-    )
+          const entries = Object.entries(patch).filter(
+            ([key, value]) => current[key as keyof typeof patch] !== value,
+          )
+          if (entries.length === 0) {
+            return {
+              trigger: current,
+              changedEntries: entries,
+              updated: [] as { id: string }[],
+            }
+          }
 
-    if (changedEntries.length > 0) {
-      const updated = await db
-        .update(triggerModel)
-        .set(patch)
-        .where(eq(triggerModel.id, trigger.id))
-        .returning({ id: triggerModel.id })
+          await assertResourceEditable({
+            workspaceId,
+            resourceKind: "trigger",
+            resourceIds: [current.id],
+            changedKeys: entries.map(([key]) => key),
+            tx,
+          })
+          const rows = await tx
+            .update(triggerModel)
+            .set(patch)
+            .where(eq(triggerModel.id, current.id))
+            .returning({ id: triggerModel.id })
+          return { trigger: current, changedEntries: entries, updated: rows }
+        },
+        { workspaceId, initialKeys: [{ kind: "trigger", resourceId: id }] },
+      )
 
-      if (updated.length > 0) {
-        const changedKeys = changedEntries.map(([key]) => key)
-        let detail = `updated a trigger (#${trigger.id})`
-        if (changedKeys.length === 1 && changedKeys[0] === "active") {
-          detail = patch.active
-            ? `enabled a trigger (#${trigger.id})`
-            : `disabled a trigger (#${trigger.id})`
-        }
-
-        await this.audit("update", detail)
+    if (changedEntries.length > 0 && updated.length > 0) {
+      const changedKeys = changedEntries.map(([key]) => key)
+      let detail = `updated a trigger (#${trigger.id})`
+      if (changedKeys.length === 1 && changedKeys[0] === "active") {
+        detail = patch.active
+          ? `enabled a trigger (#${trigger.id})`
+          : `disabled a trigger (#${trigger.id})`
       }
+
+      await this.audit("update", detail)
     }
 
     const withConditions = await triggerRepository.findWithConditions({

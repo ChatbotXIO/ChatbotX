@@ -96,6 +96,8 @@ export const myModel = pgTable("MyModel", {
 
 The enum name passed to `pgEnum` becomes the PostgreSQL enum type name — use `camelCase` matching the column name.
 
+> **Templates.** A new table holding content users build, or a new column on a template-copied kind (or an id column pointing at one), must be registered with the Templates engine — read the `template-integration` skill before writing the migration.
+
 ## Relations
 
 Define in `src/relations/<domain>.ts` using `defineRelationsPart`:

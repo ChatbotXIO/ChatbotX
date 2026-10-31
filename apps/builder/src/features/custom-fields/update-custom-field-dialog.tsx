@@ -18,7 +18,9 @@ import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useEffect } from "react"
 import { toast } from "sonner"
+import { LockedDialogFieldset } from "@/components/locked-dialog-fieldset"
 import { useInvalidateCustomFields } from "@/features/custom-fields/provider/custom-field-hook"
+import { useIsLocked } from "@/features/templates/components/lock-badge"
 import { updateCustomFieldAction } from "./actions/update-custom-field.action"
 import { updateCustomFieldRequest } from "./schema/action"
 import type { CustomFieldResource } from "./schema/resource"
@@ -34,6 +36,7 @@ export function UpdateCustomFieldDialog({
   customField: CustomFieldResource | null
 }) {
   const t = useTranslations()
+  const isLocked = useIsLocked(customField?.id)
   const router = useRouter()
   const invalidateCustomFields = useInvalidateCustomFields()
 
@@ -96,19 +99,20 @@ export function UpdateCustomFieldDialog({
               className="flex-1 space-y-4"
               onSubmit={handleSubmitWithAction}
             >
-              <InputField
-                label={t("fields.name.label")}
-                name="name"
-                placeholder={t("fields.name.placeholder")}
-                required
-              />
+              <LockedDialogFieldset resourceId={customField?.id}>
+                <InputField
+                  label={t("fields.name.label")}
+                  name="name"
+                  placeholder={t("fields.name.placeholder")}
+                  required
+                />
 
-              <TextareaField
-                label={t("fields.description.label")}
-                name="description"
-                placeholder={t("fields.description.placeholder")}
-              />
-
+                <TextareaField
+                  label={t("fields.description.label")}
+                  name="description"
+                  placeholder={t("fields.description.placeholder")}
+                />
+              </LockedDialogFieldset>
               <div className="flex justify-end gap-4">
                 <Button
                   onClick={() => onOpenChange(false)}
@@ -119,7 +123,9 @@ export function UpdateCustomFieldDialog({
                 </Button>
                 <Button
                   disabled={
-                    !form.formState.isValid || form.formState.isSubmitting
+                    isLocked ||
+                    !form.formState.isValid ||
+                    form.formState.isSubmitting
                   }
                   type="submit"
                 >

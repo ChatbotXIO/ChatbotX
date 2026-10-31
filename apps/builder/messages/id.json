@@ -1816,7 +1816,8 @@
       "partial": "Partial",
       "failed": "Gagal",
       "success": "Berhasil",
-      "error": "Kesalahan"
+      "error": "Kesalahan",
+      "uninstalled": "Uninstalled"
     },
     "subtitle": {
       "placeholder": "Masukkan subjudul"
@@ -2554,7 +2555,8 @@
       "miniApps": "Mini Apps",
       "leaderboards": "Papan peringkat",
       "pipelines": "Pipeline",
-      "places": "Tempat"
+      "places": "Tempat",
+      "templates": "Templat"
     },
     "adReferral": {
       "label": "Ads",
@@ -6694,14 +6696,107 @@
       "dialogDescription": "Siapa pun yang memiliki tautan ini dapat menginstal salinan templat ini ke workspace di tenant Anda.",
       "enableLabel": "Aktifkan tautan berbagi",
       "linkLabel": "Tautan berbagi",
-      "description": "Siapa pun yang memiliki tautan dapat menginstal templat ini ke workspace mereka sendiri."
+      "description": "Siapa pun yang memiliki tautan dapat menginstal templat ini ke workspace mereka sendiri.",
+      "rotateLabel": "Rotate link",
+      "rotateTitle": "Rotate share link?",
+      "rotateDescription": "The current link stops working immediately. Anyone who still needs to install this template needs the new link.",
+      "rotated": "Share link rotated",
+      "expiryLabel": "Link expires",
+      "expiryHint": "Leave empty for a link that never expires.",
+      "clearExpiry": "Remove expiry",
+      "expiredNotice": "This link has expired. Set a later date or remove the expiry to share it again."
+    },
+    "sync": {
+      "title": "Updates",
+      "updateAvailable": "Update available",
+      "upToDate": "Up to date",
+      "updateNow": "Update now",
+      "updating": "Updating…",
+      "version": "Template version {version}",
+      "lastSynced": "last updated {date}",
+      "autoUpdateLabel": "Update automatically when the template changes",
+      "noHistory": "No updates yet.",
+      "counts": "{created} added · {updated} updated · {detached} detached",
+      "notUpdatable": "{count} not updatable yet",
+      "overwritten": "{name} was edited and replaced by the update",
+      "restore": "Restore my version",
+      "restored": "Your version was restored",
+      "status": {
+        "pending": "Queued",
+        "running": "Running",
+        "completed": "Completed",
+        "partial": "Partial",
+        "failed": "Failed",
+        "skipped": "Skipped",
+        "cancelled": "Cancelled"
+      },
+      "trigger": {
+        "autoUpdate": "Automatic",
+        "manual": "Manual",
+        "reinstall": "Reinstall"
+      },
+      "publisherAccessLabel": "Let the publisher see this workspace and uninstall the template",
+      "publisherAccessHint": "Only the workspace name is shared. If the publisher uninstalls, everything the template created is deleted, including copies you edited.",
+      "requestedVersion": "diminta v{version}"
+    },
+    "installers": {
+      "title": "Installers",
+      "workspace": "Workspace",
+      "installs": "Installs",
+      "lastInstalled": "Last installed",
+      "version": "Version",
+      "autoUpdate": "Auto-update",
+      "uninstalled": "Uninstalled",
+      "hidden": "Workspace not shared",
+      "totalInstallEvents": "Total instalasi (sepanjang waktu)",
+      "uninstallNotAllowed": "Pemasang belum mengizinkan penerbit mencopot salinan ini.",
+      "loadError": "Gagal memuat daftar pemasang. Coba lagi.",
+      "byVersionTitle": "Installs by version",
+      "versionLabel": "Version {version}",
+      "byVersionHint": "The newest version is {version}. Grey bars are copies that are behind."
     },
     "installs": {
       "title": "Instalasi",
       "resources": "Sumber daya",
       "warnings": "Peringatan",
       "completedAt": "Selesai pada",
-      "autoUpdate": "Pembaruan otomatis"
+      "autoUpdate": "Pembaruan otomatis",
+      "detailTitle": "Install details",
+      "installedBy": "Installed by",
+      "viaApi": "API token",
+      "attempts": "Attempts",
+      "autoUpdateOn": "On",
+      "autoUpdateOff": "Off",
+      "retry": "Retry install",
+      "resourcesTitle": "Installed resources",
+      "noResources": "Nothing was created yet.",
+      "deletedResource": "Deleted resource",
+      "viewOnly": "View only",
+      "created": "Created",
+      "reused": "Reused",
+      "loadMore": "Load more",
+      "backToList": "Back to installs",
+      "viewWarnings": "View warnings",
+      "warningsHint": "Items the install skipped or could not fully bring over.",
+      "warningsTruncated": "Showing {shown} of {total} warnings.",
+      "statusFilter": "Status",
+      "allStatuses": "All statuses",
+      "errors": {
+        "unknown": "The install failed. Try again, or contact support if it keeps failing.",
+        "templatePayloadIncompatible": "This template was saved in a newer format than this server can install.",
+        "templateInstallationSourceMissing": "The template was deleted before the install ran.",
+        "templateCrossTenantInstall": "This template is not available for your workspace.",
+        "templateCategoryPermissionDenied": "You no longer have permission to install everything in this template.",
+        "templateInvalidInboxBinding": "A selected inbox does not match the template.",
+        "templateInstallEnqueueFailed": "The install could not be queued.",
+        "templateInstallFailed": "The install failed. Try again.",
+        "templateInstallAbandoned": "The install did not finish in time and was closed.",
+        "templateInstallSuperseded": "A newer install of this template replaced this one.",
+        "workspaceOwnerBlocked": "The workspace owner's account is blocked."
+      },
+      "uninstalledBy": "{by, select, publisher {The publisher uninstalled this template.} installer {This template was uninstalled from this workspace.} other {This template was uninstalled.}}",
+      "uninstalledSummary": "{deleted} deleted, {kept} kept.",
+      "lastAttemptAt": "Percobaan terakhir"
     },
     "form": {
       "contents": "Isi templat",
@@ -6720,8 +6815,20 @@
       "installBehavior": "Perilaku instalasi",
       "createInstallFolder": "Instal ke folder khusus",
       "createInstallFolderDescription": "Menempatkan setiap sumber daya yang diinstal ke dalam satu folder baru yang diberi nama sesuai templat ini.",
-      "defaultAutoUpdate": "Tandai instalasi untuk pembaruan secara default",
-      "defaultAutoUpdateDescription": "Instalasi baru akan menampilkan pemberitahuan pembaruan tersedia setiap kali Anda menerbitkan ulang templat ini."
+      "defaultAutoUpdate": "Update new installs automatically by default",
+      "defaultAutoUpdateDescription": "Whenever you save this template with changed content, installs that follow auto-update are overwritten with the new content (copies the installer edited are backed up first). Installers can turn it off.",
+      "viewOnly": "Hanya lihat",
+      "viewOnlyAll": "Jadikan semua yang dipilih hanya lihat",
+      "includedAutomatically": {
+        "title": "Included automatically",
+        "hint": "Taken along because something you selected needs it. Read only.",
+        "rows": "{count, plural, one {# more item} other {# more items}}",
+        "kind": {
+          "folders": "Folders",
+          "inboxes": "Inboxes"
+        },
+        "dropped": "{count, plural, one {# referensi ke item yang tidak disertakan template akan dibuang saat pemasangan (trigger yang kehilangan satu referensi dinonaktifkan)} other {# referensi ke item yang tidak disertakan template akan dibuang saat pemasangan (trigger yang kehilangan satu referensi dinonaktifkan)}}"
+      }
     },
     "categories": {
       "flows": "Flow",
@@ -6736,8 +6843,108 @@
       "keywords": "Kata Kunci",
       "entryPointLinks": "Tautan Titik Masuk",
       "triggers": "Trigger",
-      "fbCommentAutomations": "Otomatisasi komentar Facebook",
-      "settings": "Pengaturan"
+      "fbCommentAutomations": "Otomatisasi komentar",
+      "settings": "Pengaturan",
+      "sequences": "Sequences",
+      "aiMcpServers": "MCP servers",
+      "aiFiles": "AI knowledge files",
+      "questionnaires": "Questionnaires",
+      "couponTopics": "Coupon topics",
+      "pipelines": "Pipeline"
+    },
+    "locked": {
+      "flowBanner": "Alur ini dipasang dari templat hanya-lihat. Anda dapat melihatnya tetapi tidak dapat mengeditnya.",
+      "badge": "Hanya lihat",
+      "editorBanner": "This was installed from a view-only template. You can look at it but not edit it.",
+      "badgeHint": "Installed from a view-only template"
+    },
+    "channels": {
+      "messenger": "Messenger",
+      "instagram": "Instagram",
+      "instagramFacebook": "Instagram (Facebook login)",
+      "threads": "Threads",
+      "tiktok": "TikTok",
+      "whatsapp": "WhatsApp",
+      "telegram": "Telegram",
+      "zalo": "Zalo",
+      "webchat": "Webchat",
+      "line": "LINE",
+      "email": "Email"
+    },
+    "uninstall": {
+      "title": "Uninstall template",
+      "description": "The template removes everything it created in this workspace, including copies that were edited. Shared tags, fields and folders, items that existed before, and anything you built on top of a copy are kept.",
+      "loading": "Checking what will happen…",
+      "previewFailed": "Could not check what an uninstall would do.",
+      "failed": "Could not uninstall the template.",
+      "done": "Template uninstalled",
+      "confirm": "Uninstall",
+      "action": "Uninstall",
+      "deleted": "{count, plural, one {# item will be deleted} other {# items will be deleted}}",
+      "deletedDone": "{count, plural, one {# item was deleted} other {# items were deleted}}",
+      "keptModified": "{count, plural, one {# edited or unverified copy is kept} other {# edited or unverified copies are kept}}",
+      "keptShared": "{count, plural, one {# shared tag or field is kept} other {# shared tags and fields are kept}}",
+      "keptByPolicy": "{count, plural, one {# other item is kept} other {# other items are kept}}",
+      "keptHasDependents": "{count, plural, one {# copy is kept because something still uses it} other {# copies are kept because something still uses them}}",
+      "deletedModified": "{count, plural, one {# of them was edited by you: those edits are lost and can not be restored} other {# of them were edited by you: those edits are lost and can not be restored}}",
+      "keptLockedByOther": "{count, plural, one {# item is kept because another template installation still protects it} other {# items are kept because another template installation still protects them}}",
+      "confirmCheckbox": "I understand this deletes the items above and can not be undone",
+      "started": "Uninstall started",
+      "inProgress": "Uninstalling…",
+      "retry": "Retry uninstall",
+      "state": {
+        "pending": "Uninstall queued",
+        "running": "Uninstalling…",
+        "partial": "Uninstall incomplete, retry it",
+        "failed": "Uninstall failed, retry it",
+        "skipped": "Uninstall skipped: the workspace is blocked"
+      },
+      "deletedUnverified": "{count, plural, one {# of them can not be checked for edits: if you changed it, those changes are lost} other {# of them can not be checked for edits: if you changed them, those changes are lost}}",
+      "cancelAction": "Cancel uninstall",
+      "cancelled": "Uninstall cancelled: the remaining items are yours to use again",
+      "blockedByReference": "{count, plural, one {# item was not deleted because something you created still points at it: remove that reference, then retry the uninstall} other {# items were not deleted because something you created still points at them: remove those references, then retry the uninstall}}",
+      "keptPartlyRemoved": "{count, plural, one {# copy was kept after a blocked uninstall; history and duplicate-protection data may have been removed, so review it before switching it on} other {# copies were kept after a blocked uninstall; history and duplicate-protection data may have been removed, so review them before switching them on}}",
+      "keptInactiveForReview": "{count, plural, one {# copy was left inactive: its history and duplicate-protection data were removed, so review it before switching it on} other {# copies were left inactive: their history and duplicate-protection data were removed, so review them before switching them on}}",
+      "keptHistoryRemoved": "{count, plural, one {# copy was kept, but its history was removed (it has nothing to switch on): review it before relying on it} other {# copies were kept, but their history was removed (they have nothing to switch on): review them before relying on them}}",
+      "cancelledPartial": "{count, plural, one {# item is already being deleted and will finish; the rest was given back} other {# items are already being deleted and will finish; the rest was given back}}"
+    },
+    "warningCodes": {
+      "aiFileTooLarge": "File pengetahuan ini lebih besar dari yang dapat disalin oleh instalasi template, jadi dilewati.",
+      "aiFileUnavailable": "File pengetahuan ini tidak dapat disalin, jadi dilewati.",
+      "ambiguousSourceFieldToken": "Beberapa kolom sumber memiliki nama ini, sehingga variabel yang menggunakannya dibiarkan tidak berubah.",
+      "backupTooLarge": "Item yang diedit secara lokal terlalu besar untuk dicadangkan, sehingga tidak ditimpa.",
+      "backupUnavailable": "Cadangan untuk item ini tidak lagi tersedia.",
+      "botFieldRenamed": "A bot field with this name and another type already exists, so a renamed field was created.",
+      "categoryPermissionDenied": "Anda tidak memiliki izin untuk kategori ini, sehingga dilewati.",
+      "couponTopicExpired": "Topik kupon ini sudah kedaluwarsa.",
+      "credentialRequired": "Tambahkan kredensial untuk item ini sebelum menggunakannya.",
+      "custom": "Item yang dirujuk tidak ditemukan di workspace ini, sehingga tautannya dihapus.",
+      "customField": "Item yang dirujuk tidak ditemukan di workspace ini, sehingga tautannya dihapus.",
+      "customFieldRenamed": "Sudah ada kolom dengan nama ini dan tipe lain, sehingga dibuat kolom dengan nama baru.",
+      "enqueueFailed": "Pemrosesan latar belakang tidak dapat dimasukkan ke antrean untuk item ini.",
+      "flow": "Item yang dirujuk tidak ditemukan di workspace ini, sehingga tautannya dihapus.",
+      "flowInvalidStructure": "Struktur flow tidak valid, sehingga dilewati.",
+      "flowNotPublished": "Flow dipasang sebagai draf dan belum diterbitkan.",
+      "flowSkippedRequiredReference": "Flow dilewati karena referensi yang diperlukan tidak dapat diselesaikan.",
+      "folder": "Item yang dirujuk tidak ditemukan di workspace ini, sehingga tautannya dihapus.",
+      "inboxBindingRequired": "Pilih inbox untuk kanal ini; sampai saat itu item tetap tidak aktif.",
+      "integration": "Item yang dirujuk tidak ditemukan di workspace ini, sehingga tautannya dihapus.",
+      "localModifiedOverwritten": "Item yang diedit secara lokal telah ditimpa. Cadangan disimpan dan dapat dipulihkan.",
+      "name": "Tidak ditemukan nama yang tersedia untuk item ini, sehingga dilewati.",
+      "noEmbeddingProvider": "Belum ada penyedia embedding yang dikonfigurasi di workspace ini, jadi file pengetahuan dilewati. Hubungkan OpenAI atau Gemini, lalu instal ulang.",
+      "notUpdatable": "Jenis item ini belum diperbarui secara otomatis.",
+      "pipelineField": "Item yang dirujuk tidak ditemukan di workspace ini, sehingga tautannya dihapus.",
+      "pipelineStage": "Item yang dirujuk tidak ditemukan di workspace ini, sehingga tautannya dihapus.",
+      "postSelectionRequired": "Pilih postingan lagi: postingan asli tidak dapat dibawa.",
+      "product": "Item yang dirujuk tidak ditemukan di workspace ini, sehingga tautannya dihapus.",
+      "productCategory": "Item yang dirujuk tidak ditemukan di workspace ini, sehingga tautannya dihapus.",
+      "questionImage": "Gambar tidak dapat disalin.",
+      "quota": "Batas paket tercapai, sehingga item dilewati.",
+      "referenceRemoved": "Referensi yang tidak dapat diselesaikan telah dihapus.",
+      "savedReply": "Item yang dirujuk tidak ditemukan di workspace ini, sehingga tautannya dihapus.",
+      "savedReplyImage": "Gambar tidak dapat disalin.",
+      "tag": "Item yang dirujuk tidak ditemukan di workspace ini, sehingga tautannya dihapus.",
+      "unlisted": "Item tidak sepenuhnya terbawa: {code}"
     }
   },
   "qrCodeGenerator": {
@@ -6950,7 +7157,34 @@
     "selectWorkspace": "Pilih workspace",
     "install": "Instal",
     "installStarted": "Instalasi dimulai",
-    "noEligibleWorkspaces": "Anda tidak memiliki workspace yang memenuhi syarat untuk menginstal templat ini."
+    "noEligibleWorkspaces": "Anda tidak memiliki workspace yang memenuhi syarat untuk menginstal templat ini.",
+    "alreadyInstalled": "This template is already installed in this workspace.",
+    "viewInstall": "View install",
+    "installAnotherCopy": "Install another copy",
+    "inboxesTitle": "Inboxes",
+    "inboxesHint": "This template was built around these inboxes. Choose which of your own inboxes to use; anything left out is installed switched off.",
+    "noInbox": "Don't connect — install switched off",
+    "noInboxAvailable": "No connected inbox on this channel",
+    "updateExisting": "Update installed copy",
+    "updateStarted": "Update started",
+    "publisherAccessLabel": "Let the publisher see this workspace's name and uninstall this template from it",
+    "publisherAccessHint": "They never see your data, contacts or email. If they uninstall, everything the template created is deleted, including copies you edited; anything you built on top of a copy is kept. You can turn this off later on the install page.",
+    "autoUpdateLabel": "Update automatically when the template changes",
+    "collisions": {
+      "title": "What the install will do here",
+      "loading": "Checking this workspace…",
+      "action": {
+        "create": "Created",
+        "reuse": "Reused",
+        "rename": "Renamed",
+        "bind": "Bound",
+        "unbound": "Left unbound"
+      },
+      "detail": {
+        "rename": "“{name}” already exists with another type, so the template’s one is added under a new name.",
+        "unbound": "“{name}” is left unconnected until you pick an inbox."
+      }
+    }
   },
   "extensionsMe": {
     "actions": {

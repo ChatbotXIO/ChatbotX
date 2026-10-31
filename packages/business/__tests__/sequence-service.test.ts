@@ -7,6 +7,35 @@ vi.mock("../src/broadcast/plan-policy.service", () => ({
   broadcastPlanPolicyService: {},
 }))
 
+const { mockAssertDeletable, mockAssertEditable } = vi.hoisted(() => ({
+  mockAssertDeletable: vi.fn(),
+  mockAssertEditable: vi.fn(),
+}))
+
+// The template lock guard has its own suite; these tests cover the call sites.
+vi.mock("../src/template/installed-resource.service", async () => ({
+  ...(await import("./helpers/template-guard-mocks")).templateGuardMocks({
+    assertDeletable: mockAssertDeletable,
+    assertResourceEditable: mockAssertEditable,
+  }),
+}))
+
+const mockLockOptions = vi.hoisted(() => vi.fn())
+
+// Run the locked transaction against the same mocked client the test asserts on.
+vi.mock("../src/template/template-resource-locks", async () => {
+  const { db } = await import("@chatbotx.io/database/client")
+  return {
+    withTemplateLockedTransaction: (
+      run: (tx: unknown) => unknown,
+      options?: unknown,
+    ) => {
+      mockLockOptions(options)
+      return run(db)
+    },
+  }
+})
+
 const {
   mockCreateId,
   mockInsert,
@@ -28,7 +57,9 @@ const {
 } = vi.hoisted(() => {
   const mockInsertValues = vi.fn().mockResolvedValue(undefined)
   const mockInsert = vi.fn().mockReturnValue({ values: mockInsertValues })
-  const mockDeleteWhere = vi.fn().mockResolvedValue(undefined)
+  const mockDeleteWhere = vi.fn(() => ({
+    returning: vi.fn().mockResolvedValue([]),
+  }))
   const mockDelete = vi.fn().mockReturnValue({ where: mockDeleteWhere })
 
   const mockStepUpdateReturning = vi.fn()
@@ -98,6 +129,7 @@ vi.mock("@chatbotx.io/database/client", () => ({
   },
   and: (...args: unknown[]) => ({ and: args }),
   eq: (...args: unknown[]) => ({ eq: args }),
+  inArray: (...args: unknown[]) => ({ inArray: args }),
   findOrFail: mockFindOrFail,
   isUniqueViolationError: mockIsUniqueViolationError,
 }))
@@ -287,6 +319,31 @@ describe("sequenceService.update", () => {
     vi.clearAllMocks()
   })
 
+  test("locks the sequence before the stored row is read, and reads it on the locked client", async () => {
+    mockFindOrFail.mockResolvedValue({
+      id: "seq-1",
+      name: "Seq",
+      active: false,
+    })
+    mockStepUpdateReturning.mockResolvedValue([{ id: "seq-1" }])
+
+    await sequenceService.update(
+      { workspaceId: WS, id: "seq-1" },
+      { name: "Next" },
+    )
+
+    expect(mockLockOptions).toHaveBeenCalledWith({
+      workspaceId: expect.any(String),
+      initialKeys: [{ kind: "sequence", resourceId: "seq-1" }],
+    })
+    expect(mockLockOptions.mock.invocationCallOrder[0]).toBeLessThan(
+      mockFindOrFail.mock.invocationCallOrder[0] as number,
+    )
+    expect(mockFindOrFail).toHaveBeenCalledWith(
+      expect.objectContaining({ client: expect.anything() }),
+    )
+  })
+
   test("no-ops when nothing changed", async () => {
     mockFindOrFail.mockResolvedValue({
       id: "seq-1",
@@ -395,6 +452,25 @@ describe("sequenceService.delete", () => {
       action: "delete",
       detail: "deleted a sequence (#seq-1)",
     })
+  })
+
+  test("is refused for a sequence a template installed with deletion disallowed", async () => {
+    mockFindOrFail.mockResolvedValue({ id: "seq-1" })
+    mockAssertDeletable.mockRejectedValueOnce(
+      Object.assign(new Error("locked"), {
+        code: "templateAllowDeleteViolation",
+      }),
+    )
+
+    await expect(
+      sequenceService.delete({ workspaceId: WS, id: "seq-1" }),
+    ).rejects.toMatchObject({ code: "templateAllowDeleteViolation" })
+    expect(mockAssertDeletable).toHaveBeenCalledWith({
+      workspaceId: WS,
+      resourceKind: "sequence",
+      resourceIds: ["seq-1"],
+    })
+    expect(mockDelete).not.toHaveBeenCalled()
   })
 
   test("propagates the not-found error and never deletes", async () => {
@@ -671,5 +747,141 @@ describe("sequenceService step flow validation", () => {
     ).rejects.toThrow("Step not found")
 
     expect(mockStepDelete).not.toHaveBeenCalled()
+  })
+})
+
+describe("sequenceService template locks", () => {
+  afterEach(() => {
+    vi.clearAllMocks()
+  })
+
+  test("renaming runs the edit guard with the changed keys, so toggles stay free", async () => {
+    mockFindOrFail.mockResolvedValue({
+      id: "seq-1",
+      name: "Welcome",
+      active: true,
+      folderId: null,
+    })
+
+    await sequenceService.update(
+      { workspaceId: WS, id: "seq-1" },
+      { name: "Renamed", active: false },
+    )
+
+    expect(mockAssertEditable).toHaveBeenCalledWith(
+      expect.objectContaining({
+        workspaceId: WS,
+        resourceKind: "sequence",
+        resourceIds: ["seq-1"],
+        changedKeys: ["name", "active"],
+        tx: expect.anything(),
+      }),
+    )
+    expect(mockAssertEditable.mock.invocationCallOrder[0]).toBeLessThan(
+      mockStepUpdate.mock.invocationCallOrder[0] as number,
+    )
+  })
+
+  test("a blocked rename never writes", async () => {
+    mockFindOrFail.mockResolvedValue({
+      id: "seq-1",
+      name: "Welcome",
+      active: true,
+      folderId: null,
+    })
+    mockAssertEditable.mockRejectedValueOnce(new Error("locked"))
+
+    await expect(
+      sequenceService.update(
+        { workspaceId: WS, id: "seq-1" },
+        { name: "Renamed" },
+      ),
+    ).rejects.toThrow("locked")
+    expect(mockStepUpdate).not.toHaveBeenCalled()
+  })
+
+  test("createStep guards first inside the transaction and locks the step's flow as a parent", async () => {
+    mockFlowFindFirst.mockResolvedValue({ id: "flow-1" })
+    mockStepInsertReturning.mockResolvedValue([{ id: "step-1" }])
+
+    await sequenceService.createStep({
+      workspaceId: WS,
+      sequenceId: "seq-1",
+      data: { flowId: "flow-1" } as never,
+    })
+
+    expect(mockAssertEditable).toHaveBeenCalledWith(
+      expect.objectContaining({
+        resourceKind: "sequence",
+        resourceIds: ["seq-1"],
+        changedKeys: ["steps"],
+        referencedParents: [{ kind: "flow", resourceId: "flow-1" }],
+        tx: expect.anything(),
+      }),
+    )
+    expect(mockAssertEditable.mock.invocationCallOrder[0]).toBeLessThan(
+      mockStepInsert.mock.invocationCallOrder[0] as number,
+    )
+  })
+
+  test("createStep blocked by the guard inserts nothing", async () => {
+    mockFlowFindFirst.mockResolvedValue({ id: "flow-1" })
+    mockAssertEditable.mockRejectedValueOnce(new Error("locked"))
+
+    await expect(
+      sequenceService.createStep({
+        workspaceId: WS,
+        sequenceId: "seq-1",
+        data: { flowId: "flow-1" } as never,
+      }),
+    ).rejects.toThrow("locked")
+    expect(mockStepInsert).not.toHaveBeenCalled()
+  })
+
+  test("updateStep and deleteStep guard first inside the transaction", async () => {
+    mockStepFindFirst.mockResolvedValue({
+      id: "step-1",
+      sequenceId: "seq-1",
+      order: 1,
+      sequence: { workspaceId: WS },
+    })
+    mockStepUpdateReturning.mockResolvedValue([{ id: "step-1" }])
+
+    await sequenceService.updateStep({
+      workspaceId: WS,
+      stepId: "step-1",
+      data: {} as never,
+    })
+    expect(mockAssertEditable.mock.invocationCallOrder[0]).toBeLessThan(
+      mockStepUpdate.mock.invocationCallOrder[0] as number,
+    )
+
+    mockAssertEditable.mockClear()
+    await sequenceService.deleteStep({ workspaceId: WS, stepId: "step-1" })
+    expect(mockAssertEditable).toHaveBeenCalledWith(
+      expect.objectContaining({
+        resourceIds: ["seq-1"],
+        changedKeys: ["steps"],
+        tx: expect.anything(),
+      }),
+    )
+    expect(mockAssertEditable.mock.invocationCallOrder[0]).toBeLessThan(
+      mockStepDelete.mock.invocationCallOrder[0] as number,
+    )
+  })
+
+  test("a no-op update never reaches the guard", async () => {
+    mockFindOrFail.mockResolvedValue({
+      id: "seq-1",
+      name: "Welcome",
+      active: true,
+    })
+
+    await sequenceService.update(
+      { workspaceId: WS, id: "seq-1" },
+      { name: "Welcome" },
+    )
+
+    expect(mockAssertEditable).not.toHaveBeenCalled()
   })
 })

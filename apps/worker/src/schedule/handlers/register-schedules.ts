@@ -443,6 +443,22 @@ export const registerSchedules = async () => {
     },
   )
 
+  // The template-install outbox sweep (the row is the outbox) applies to
+  // every edition.
+  await scheduleQueue.upsertJobScheduler(
+    ScheduleJobData.redispatchTemplateJobs,
+    {
+      pattern: "*/5 * * * *",
+    },
+    {
+      name: ScheduleJobData.redispatchTemplateJobs,
+      data: {
+        type: ScheduleJobData.redispatchTemplateJobs,
+        data: {},
+      },
+    },
+  )
+
   await scheduleQueue.upsertJobScheduler(
     ScheduleJobData.purgeInboundWebhookRequests,
     {

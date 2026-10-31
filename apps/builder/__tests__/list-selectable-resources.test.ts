@@ -28,9 +28,18 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
   },
 }))
 
-const { listSelectableResources } = await import(
-  "../src/features/templates/queries/list-selectable-resources"
-)
+const { templateService } = await import("@chatbotx.io/business")
+
+type ListInput = Omit<
+  Parameters<typeof templateService.listSelectableResources>[0],
+  "actor"
+>
+
+const listSelectableResources = (input: ListInput) =>
+  templateService.listSelectableResources({
+    ...input,
+    actor: { kind: "member", permissions: { superAdmin: true } },
+  })
 
 const WS = "ws-1"
 
@@ -80,15 +89,19 @@ describe("listSelectableResources — switch dispatch", () => {
   })
 })
 
+const NUMERIC_CURSOR = /^\d+$/
+
 describe("listSelectableResources — pagination math", () => {
   beforeEach(() => {
     vi.clearAllMocks()
   })
 
-  test("computes nextCursor as offset + limit when more rows remain", async () => {
+  test("issues an opaque keyset cursor from the last row when more rows remain", async () => {
     mockListFlows.mockResolvedValue({
-      rows: [{ id: "flow-1", name: "Flow 1" }],
+      rows: [{ id: "10", name: "Flow 1" }],
       total: 150,
+      hasMore: true,
+      lastKey: "Flow 1",
     })
 
     const result = await listSelectableResources({
@@ -97,7 +110,8 @@ describe("listSelectableResources — pagination math", () => {
       limit: 100,
     })
 
-    expect(result.nextCursor).toBe("100")
+    expect(result.nextCursor).toBeTruthy()
+    expect(result.nextCursor).not.toMatch(NUMERIC_CURSOR)
   })
 
   test("returns null nextCursor when the page reaches the total", async () => {
@@ -114,7 +128,7 @@ describe("listSelectableResources — pagination math", () => {
     expect(result.nextCursor).toBeNull()
   })
 
-  test("parses the cursor into an offset for the next page", async () => {
+  test("a legacy numeric cursor still resolves to an offset", async () => {
     mockListFlows.mockResolvedValue({ rows: [], total: 0 })
 
     await listSelectableResources({
@@ -207,61 +221,59 @@ describe("listSelectableResources — keywords toLabel fallback", () => {
   })
 })
 
-describe("listSelectableResources — settings merge/sort/paginate", () => {
+describe("listSelectableResources — settings", () => {
   beforeEach(() => {
     vi.clearAllMocks()
   })
 
-  test("merges saved replies and bot fields, sorts by name, and paginates in memory", async () => {
+  // Search, ordering and paging run in SQL; the real-database coverage lives in
+  // packages/business/__tests__/integration/template-selectable-resources-db.test.ts.
+  test("delegates settings to the repository with the decoded keyset", async () => {
     mockListSettings.mockResolvedValue({
-      savedReplies: [
-        { id: "sr-1", shortcut: "zeta" },
-        { id: "sr-2", shortcut: "alpha" },
-      ],
-      botFields: [{ id: "bf-1", name: "middle" }],
-    })
-
-    const result = await listSelectableResources({
-      workspaceId: WS,
-      category: "settings",
-      limit: 2,
-    })
-
-    expect(result.items).toEqual([
-      { id: "sr-2", name: "alpha" },
-      { id: "bf-1", name: "middle" },
-    ])
-    expect(result.total).toBe(3)
-    expect(result.nextCursor).toBe("2")
-  })
-
-  test("filters settings by keyword case-insensitively", async () => {
-    mockListSettings.mockResolvedValue({
-      savedReplies: [{ id: "sr-1", shortcut: "Hello World" }],
-      botFields: [{ id: "bf-1", name: "Age" }],
+      rows: [{ id: "1", name: "alpha" }],
+      total: 1,
+      allIds: ["1"],
+      hasMore: false,
     })
 
     const result = await listSelectableResources({
       workspaceId: WS,
       category: "settings",
       keyword: "hello",
+      limit: 2,
     })
 
-    expect(result.items).toEqual([{ id: "sr-1", name: "Hello World" }])
-    expect(result.total).toBe(1)
+    expect(mockListSettings).toHaveBeenCalledWith(
+      expect.objectContaining({ keyword: "hello", limit: 2, offset: 0 }),
+    )
+    expect(result).toEqual({
+      items: [{ id: "1", name: "alpha" }],
+      total: 1,
+      allIds: ["1"],
+      nextCursor: null,
+    })
+  })
+})
+
+describe("listSelectableResources — authorization", () => {
+  test("rejects a member without the flows permission", async () => {
+    await expect(
+      templateService.listSelectableResources({
+        workspaceId: WS,
+        category: "flows",
+        actor: { kind: "member", permissions: { ecommerce: true } },
+      }),
+    ).rejects.toMatchObject({ code: "templateManagePermissionDenied" })
+    expect(mockListFlows).not.toHaveBeenCalled()
   })
 
-  test("returns allIds for settings when under the cap at offset 0", async () => {
-    mockListSettings.mockResolvedValue({
-      savedReplies: [{ id: "sr-1", shortcut: "alpha" }],
-      botFields: [],
-    })
-
-    const result = await listSelectableResources({
-      workspaceId: WS,
-      category: "settings",
-    })
-
-    expect(result.allIds).toEqual(["sr-1"])
+  test("rejects a category the member lacks the permission for", async () => {
+    await expect(
+      templateService.listSelectableResources({
+        workspaceId: WS,
+        category: "products",
+        actor: { kind: "member", permissions: { flows: true } },
+      }),
+    ).rejects.toMatchObject({ code: "templateCategoryPermissionDenied" })
   })
 })

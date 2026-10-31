@@ -1,6 +1,34 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 // The broadcast policy import reaches quota/workspace modules these narrow mocks omit.
+// The template lock guard has its own suite; these tests cover the service.
+vi.mock("../src/template/installed-resource.service", async () => ({
+  ...(await import("./helpers/template-guard-mocks")).templateGuardMocks({
+    assertDeletable: vi.fn(),
+    assertResourceEditable: vi.fn(),
+  }),
+  assertReferencable: vi.fn(),
+  changedKeysOf: vi.fn((_existing: unknown, patch: Record<string, unknown>) =>
+    Object.keys(patch),
+  ),
+}))
+
+const mockLockOptions = vi.hoisted(() => vi.fn())
+
+// Run the locked transaction against the same mocked client the test asserts on.
+vi.mock("../src/template/template-resource-locks", async () => {
+  const { db } = await import("@chatbotx.io/database/client")
+  return {
+    withTemplateLockedTransaction: (
+      run: (tx: unknown) => unknown,
+      options?: unknown,
+    ) => {
+      mockLockOptions(options)
+      return run(db)
+    },
+  }
+})
+
 vi.mock("../src/broadcast/plan-policy.service", () => ({
   broadcastPlanPolicyService: {},
 }))
@@ -23,6 +51,11 @@ const mocks = vi.hoisted(() => ({
   count: vi.fn(),
   listWhere: vi.fn(),
   flowExists: vi.fn(),
+  reflinkDeleteInTx: vi.fn().mockResolvedValue([]),
+}))
+
+vi.mock("../src/reflink/service", () => ({
+  reflinkService: { deleteInTx: mocks.reflinkDeleteInTx },
 }))
 
 vi.mock("../src/flow/service", () => ({
@@ -220,6 +253,34 @@ describe("qrCodeService.update", () => {
     })
   })
 
+  test("locks the code and its flow before the stored row is read", async () => {
+    mocks.findFirst.mockResolvedValue({ id: "qr-1", qrStyles: null })
+    mocks.flowExists.mockResolvedValue(true)
+    const returning = vi.fn().mockResolvedValue([{ id: "qr-1" }])
+    mocks.update.mockReturnValue({
+      set: () => ({ where: () => ({ returning }) }),
+    })
+    mocks.findFirst.mockClear()
+
+    await qrCodeService.update({
+      workspaceId: "ws-1",
+      id: "qr-1",
+      data: { flowId: "flow-2" },
+      duplicateNameMessage: "Name already exists",
+    })
+
+    expect(mockLockOptions).toHaveBeenCalledWith({
+      workspaceId: expect.any(String),
+      initialKeys: [
+        { kind: "reflink", resourceId: "qr-1" },
+        { kind: "flow", resourceId: "flow-2" },
+      ],
+    })
+    expect(mockLockOptions.mock.invocationCallOrder[0]).toBeLessThan(
+      mocks.findFirst.mock.invocationCallOrder[0] as number,
+    )
+  })
+
   test("rejects when flowId does not belong to the workspace", async () => {
     mocks.findFirst.mockResolvedValue({ id: "qr-1", qrStyles: null })
     mocks.flowExists.mockResolvedValue(false)
@@ -241,20 +302,18 @@ describe("qrCodeService.update", () => {
 })
 
 describe("qrCodeService.deleteMany", () => {
-  test("scopes the delete to the workspace, the qrCode type, and the given ids", async () => {
+  test("deletes through the shared reflink core, scoped to the qrCode type", async () => {
     await qrCodeService.deleteMany({
       workspaceId: "ws-1",
       ids: ["qr-1", "qr-2"],
     })
 
-    // Without the `type` predicate this would delete `refLink` rows sharing
-    // the `reflinkModel` table, so pin it explicitly.
-    expect(mocks.deleteWhere).toHaveBeenCalledWith({
-      and: [
-        { eq: ["reflink.workspaceId", "ws-1"] },
-        { eq: ["reflink.type", "qrCode"] },
-        { inArray: ["reflink.id", ["qr-1", "qr-2"]] },
-      ],
+    // Without the `type` the core would delete `refLink` rows sharing the
+    // `reflinkModel` table, so pin it explicitly.
+    expect(mocks.reflinkDeleteInTx).toHaveBeenCalledWith(expect.anything(), {
+      workspaceId: "ws-1",
+      ids: ["qr-1", "qr-2"],
+      type: "qrCode",
     })
   })
 

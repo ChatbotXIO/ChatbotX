@@ -12,6 +12,7 @@ import { useDataTable } from "@chatbotx.io/ui/hooks/use-data-table"
 import type { DataTableRowAction } from "@chatbotx.io/ui/types/data-table"
 import { useTranslations } from "next-intl"
 import { use, useMemo, useState } from "react"
+import { LockedIdsProvider } from "@/features/templates/components/lock-badge"
 import type { listQuestionnaires } from "../queries"
 import type { QuestionnaireListItem } from "../schema/resource"
 import { DeleteQuestionnairesDialog } from "./delete-questionnaires-dialog"
@@ -55,34 +56,40 @@ export function QuestionnairesTable({ workspaceId, promises }: Props) {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <DataTable table={table}>
-          <DataTableToolbar table={table}>
-            <QuestionnairesTableToolbarActions
-              table={table}
-              workspaceId={workspaceId}
-            />
-          </DataTableToolbar>
-        </DataTable>
-        <RenameQuestionnaireDialog
-          onOpenChange={() => setRowAction(null)}
-          open={rowAction?.variant === "rename"}
-          questionnaire={rowAction?.row.original ?? null}
+        <LockedIdsProvider
+          resourceIds={data.map((row) => row.id)}
+          resourceKind="questionnaire"
           workspaceId={workspaceId}
-        />
-        <DuplicateQuestionnaireDialog
-          onOpenChange={() => setRowAction(null)}
-          open={rowAction?.variant === "duplicate"}
-          questionnaire={rowAction?.row.original ?? null}
-          workspaceId={workspaceId}
-        />
-        <DeleteQuestionnairesDialog
-          onOpenChange={() => setRowAction(null)}
-          open={rowAction?.variant === "delete"}
-          questionnaires={
-            rowAction?.row.original ? [rowAction.row.original] : []
-          }
-          workspaceId={workspaceId}
-        />
+        >
+          <DataTable table={table}>
+            <DataTableToolbar table={table}>
+              <QuestionnairesTableToolbarActions
+                table={table}
+                workspaceId={workspaceId}
+              />
+            </DataTableToolbar>
+          </DataTable>
+          <RenameQuestionnaireDialog
+            onOpenChange={() => setRowAction(null)}
+            open={rowAction?.variant === "rename"}
+            questionnaire={rowAction?.row.original ?? null}
+            workspaceId={workspaceId}
+          />
+          <DuplicateQuestionnaireDialog
+            onOpenChange={() => setRowAction(null)}
+            open={rowAction?.variant === "duplicate"}
+            questionnaire={rowAction?.row.original ?? null}
+            workspaceId={workspaceId}
+          />
+          <DeleteQuestionnairesDialog
+            onOpenChange={() => setRowAction(null)}
+            open={rowAction?.variant === "delete"}
+            questionnaires={
+              rowAction?.row.original ? [rowAction.row.original] : []
+            }
+            workspaceId={workspaceId}
+          />
+        </LockedIdsProvider>
       </CardContent>
     </Card>
   )

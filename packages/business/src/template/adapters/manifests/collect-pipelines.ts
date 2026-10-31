@@ -3,6 +3,10 @@ import {
   collectReferencesByKind,
   type TemplateExport,
 } from "@chatbotx.io/flow-config"
+import {
+  collectTriggerConditionReferences,
+  type TriggerConditionRow,
+} from "../../trigger-conditions"
 
 type PipelineManifest = TemplateExport["manifests"]["pipelines"]
 
@@ -16,6 +20,7 @@ const PIPELINE_KINDS = ["pipeline", "pipelineStage", "pipelineField"] as const
 export const collectPipelineManifest = async (
   workspaceId: string,
   flows: readonly { nodes: readonly unknown[]; edges: readonly unknown[] }[],
+  triggerConditions: readonly TriggerConditionRow[] = [],
 ): Promise<PipelineManifest> => {
   const referenced = new Map<string, Set<string>>()
   for (const flow of flows) {
@@ -31,8 +36,18 @@ export const collectPipelineManifest = async (
       referenced.set(kind, bucket)
     }
   }
-  const pipelineIds = new Set(referenced.get("pipeline"))
-  const stageIds = [...(referenced.get("pipelineStage") ?? [])]
+  // A trigger's pipeline-item conditions point at pipelines and stages too.
+  const fromTriggers = collectTriggerConditionReferences(triggerConditions)
+  const pipelineIds = new Set([
+    ...(referenced.get("pipeline") ?? []),
+    ...(fromTriggers.get("pipeline") ?? []),
+  ])
+  const stageIds = [
+    ...new Set([
+      ...(referenced.get("pipelineStage") ?? []),
+      ...(fromTriggers.get("pipelineStage") ?? []),
+    ]),
+  ]
   const fieldIds = [...(referenced.get("pipelineField") ?? [])]
   if (stageIds.length > 0) {
     const stages = await db.query.pipelineStageModel.findMany({

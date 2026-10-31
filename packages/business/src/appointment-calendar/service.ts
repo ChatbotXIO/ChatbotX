@@ -33,8 +33,17 @@ import { BaseService } from "../base.service"
 import { ChatbotXException, notFoundException } from "../errors"
 import { flowService } from "../flow/service"
 import { flowVersionService } from "../flow-version"
+import { copyNamePrefix, insertWithFreeCopyName } from "../lib/copy-name"
 import { logger } from "../logger"
-import { assertDeletable } from "../template/installed-resource.service"
+import {
+  assertResourceEditable,
+  changedStoredContentKeys,
+  withDeleteGuard,
+} from "../template/installed-resource.service"
+import {
+  type TemplateLockKey,
+  withTemplateLockedTransaction,
+} from "../template/template-resource-locks"
 
 const MINUTES_PER_DAY = 1440
 const DATE_LABEL_FORMAT = "yyyy-MM-dd"
@@ -333,7 +342,70 @@ export function listZonedCalendarDays(
   return days
 }
 
-export class AppointmentCalendarService extends BaseService {
+export const CALENDAR_COPY_NAME = { style: "dash", maxLength: 255 } as const
+
+const calendarNameExistsException = () =>
+  new ChatbotXException(
+    "Calendar name already exists",
+    "nameAlreadyExists",
+    409,
+  )
+
+/** The flows a calendar write points at (confirmation, cancellation, reminders). */
+const referencedFlowIdsOf = (
+  input: Pick<
+    UpdateAppointmentCalendarInput,
+    "confirmationFlowId" | "cancellationFlowId" | "reminders"
+  >,
+): string[] => [
+  ...new Set(
+    [
+      input.confirmationFlowId,
+      input.cancellationFlowId,
+      ...input.reminders.map((reminder) => reminder.flowId),
+    ].filter((flowId): flowId is string => flowId != null),
+  ),
+]
+
+/**
+ * Taken before the stored row is read, so the diff that decides the guard is
+ * computed under the lock: the calendar and every flow it points at.
+ */
+/**
+ * A calendar's content as it behaves: an event template left empty uses the
+ * default (the update writes the default once a connection is set), so
+ * "empty" and "the default" are the same content.
+ */
+const effectiveCalendarContent = <
+  T extends {
+    externalEventTitleTemplate: string | null
+    externalEventAttendeesTemplate: string | null
+  },
+>(
+  calendar: T,
+): T => ({
+  ...calendar,
+  // Only null means "the default": an empty template is its own content (the
+  // worker invites nobody for "" attendees, and titles "" differently).
+  externalEventTitleTemplate:
+    calendar.externalEventTitleTemplate ??
+    defaultAppointmentExternalEventTitleTemplate,
+  externalEventAttendeesTemplate:
+    calendar.externalEventAttendeesTemplate ??
+    defaultAppointmentExternalEventAttendeesTemplate,
+})
+
+const calendarUpdateLockKeys = (
+  input: UpdateAppointmentCalendarInput,
+): TemplateLockKey[] => [
+  { kind: "calendar", resourceId: input.id },
+  ...referencedFlowIdsOf(input).map((resourceId) => ({
+    kind: "flow" as const,
+    resourceId,
+  })),
+]
+
+class AppointmentCalendarService extends BaseService {
   async findBy(
     input: { workspaceId: string; id: string; includeDeleted?: boolean },
     tx?: DatabaseClient,
@@ -479,10 +551,23 @@ export class AppointmentCalendarService extends BaseService {
 
   async rename(input: { workspaceId: string; id: string; name: string }) {
     try {
-      const row = await appointmentCalendarRepository.update({
-        workspaceId: input.workspaceId,
-        id: input.id,
-        name: input.name.trim(),
+      const row = await withTemplateLockedTransaction(async (tx) => {
+        // First step: a sync/restore/uninstall cannot race this local edit.
+        await assertResourceEditable({
+          workspaceId: input.workspaceId,
+          resourceKind: "calendar",
+          resourceIds: [input.id],
+          changedKeys: ["name"],
+          tx,
+        })
+        return await appointmentCalendarRepository.update(
+          {
+            workspaceId: input.workspaceId,
+            id: input.id,
+            name: input.name.trim(),
+          },
+          tx,
+        )
       })
       if (!row) {
         throw notFoundException("Appointment calendar not found")
@@ -497,16 +582,39 @@ export class AppointmentCalendarService extends BaseService {
     try {
       return await db.transaction(async (tx) => {
         const source = await this.getForEdit(input, tx)
-        const created = await appointmentCalendarRepository.create(
-          {
-            workspaceId: input.workspaceId,
-            name: `${source.name} - Copy`,
-            timezone: source.timezone,
-            locationType: source.locationType,
-            publicLinkSlug: createId().toString(),
-          },
-          tx,
+        const taken = new Set(
+          await appointmentCalendarRepository.listNamesWithPrefix(
+            {
+              workspaceId: input.workspaceId,
+              prefix: copyNamePrefix(source.name, CALENDAR_COPY_NAME),
+            },
+            tx,
+          ),
         )
+        // A savepoint per candidate: a name taken by a concurrent copy must
+        // not abort the transaction that goes on to copy the schedule.
+        const created = await insertWithFreeCopyName({
+          constraint: "AppointmentCalendar_workspaceId_name_key",
+          base: source.name,
+          taken,
+          options: CALENDAR_COPY_NAME,
+          insert: (name) =>
+            tx.transaction((savepoint) =>
+              appointmentCalendarRepository.create(
+                {
+                  workspaceId: input.workspaceId,
+                  name,
+                  timezone: source.timezone,
+                  locationType: source.locationType,
+                  publicLinkSlug: createId().toString(),
+                },
+                savepoint,
+              ),
+            ),
+        })
+        if (!created) {
+          throw calendarNameExistsException()
+        }
 
         await appointmentCalendarRepository.update(
           {
@@ -573,127 +681,178 @@ export class AppointmentCalendarService extends BaseService {
     if (input.ids.length === 0) {
       return
     }
-    await assertDeletable({
-      workspaceId: input.workspaceId,
-      resourceKind: "calendar",
-      resourceIds: input.ids,
-    })
-    await appointmentCalendarRepository.softDeleteMany(input)
+    await withDeleteGuard(
+      {
+        workspaceId: input.workspaceId,
+        targets: [{ resourceKind: "calendar", resourceIds: input.ids }],
+      },
+      (tx) => this.deleteInTx(tx, input),
+    )
+  }
+
+  /**
+   * The delete core (soft delete), shared with the template uninstall so
+   * there is one implementation. Returns the ids actually deleted.
+   */
+  async deleteInTx(
+    tx: DatabaseClient,
+    input: { workspaceId: string; ids: string[] },
+  ): Promise<string[]> {
+    const rows = await appointmentCalendarRepository.softDeleteMany(input, tx)
+    return rows.map((row) => String(row.id))
   }
 
   async update(input: UpdateAppointmentCalendarInput) {
     let staleReminderJobIds: string[] = []
     try {
-      await db.transaction(async (tx) => {
-        await this.findByOrFail(input, tx)
-        if (input.externalConnectionId) {
-          await appointmentExternalCalendarService.getGoogleConnectionForProviderCall(
-            {
-              workspaceId: input.workspaceId,
-              integrationId: input.externalConnectionId,
-            },
+      await withTemplateLockedTransaction(
+        async (tx) => {
+          const existing = await appointmentCalendarRepository.getForEdit(
+            { workspaceId: input.workspaceId, id: input.id },
             tx,
           )
-        }
-        // `confirmationFlowId`/`cancellationFlowId`/`reminders[].flowId` are
-        // client-settable (public API + builder form). A plain FK only
-        // checks the flow exists, not that it belongs to this workspace —
-        // without this, a caller could pin another workspace's flow id onto
-        // their calendar. Mirrors the `externalConnectionId` ownership check
-        // above.
-        const referencedFlowIds = [
-          ...new Set(
-            [
-              input.confirmationFlowId,
-              input.cancellationFlowId,
-              ...input.reminders.map((reminder) => reminder.flowId),
-            ].filter((flowId): flowId is string => flowId != null),
-          ),
-        ]
-        if (referencedFlowIds.length > 0) {
-          await flowService.assertAllExist(
-            {
-              workspaceId: input.workspaceId,
-              flowIds: referencedFlowIds,
-            },
-            tx,
+          if (!existing) {
+            throw notFoundException("Appointment calendar not found")
+          }
+          // Tombstone and parent checks up front; whether locked content
+          // changed is decided after the write, from the stored rows (below).
+          const referencedParents = referencedFlowIdsOf(input).map(
+            (resourceId) => ({ kind: "flow" as const, resourceId }),
           )
-        }
-        const row = await appointmentCalendarRepository.update(
-          {
+          await assertResourceEditable({
             workspaceId: input.workspaceId,
-            id: input.id,
-            name: input.name.trim(),
-            description: input.description,
-            active: input.active,
-            timezone: input.timezone,
-            durationMinutes: input.durationMinutes,
-            bufferAfterMinutes: input.bufferAfterMinutes,
-            locationType: input.locationType,
-            locationDetail: input.locationDetail,
-            scheduleWindowType: input.scheduleWindowType,
-            scheduleWindowConfig: input.scheduleWindowConfig,
-            maxAppointmentsPerUser: input.maxAppointmentsPerUser,
-            dailyLimitEnabled: input.dailyLimitEnabled,
-            maxPerDay: input.maxPerDay,
-            allowGroupMeeting: input.allowGroupMeeting,
-            maxPerSlot: input.maxPerSlot,
-            confirmationMessage: input.confirmationMessage,
-            confirmationFlowId: input.confirmationFlowId,
-            cancellationFlowId: input.cancellationFlowId,
-            externalConnectionId: input.externalConnectionId,
-            externalEventTitleTemplate:
-              input.externalEventTitleTemplate ??
-              (input.externalConnectionId
-                ? defaultAppointmentExternalEventTitleTemplate
-                : null),
-            externalEventDescriptionTemplate:
-              input.externalEventDescriptionTemplate,
-            externalEventAttendeesTemplate:
-              input.externalEventAttendeesTemplate ??
-              (input.externalConnectionId
-                ? defaultAppointmentExternalEventAttendeesTemplate
-                : null),
-          },
-          tx,
-        )
-        if (!row) {
-          throw notFoundException("Appointment calendar not found")
-        }
-        await appointmentCalendarRepository.replaceAvailability(
-          {
-            calendarId: input.id,
-            availability: input.availability,
-          },
-          tx,
-        )
-        staleReminderJobIds =
-          await appointmentReminderDispatchRepository.listPendingJobIdsForFutureCalendar(
-            {
-              workspaceId: input.workspaceId,
-              calendarId: input.id,
-            },
+            resourceKind: "calendar",
+            resourceIds: [input.id],
+            changedKeys: [],
+            referencedParents,
             tx,
-          )
-        try {
-          await appointmentCalendarRepository.replaceReminders(
-            {
-              calendarId: input.id,
-              reminders: input.reminders,
-            },
-            tx,
-          )
-        } catch (error) {
-          if (isUniqueViolationError(error)) {
-            throw new ChatbotXException(
-              "Duplicate reminder: same flow and timing already exists",
-              "duplicateReminder",
-              409,
+          })
+          if (input.externalConnectionId) {
+            await appointmentExternalCalendarService.getGoogleConnectionForProviderCall(
+              {
+                workspaceId: input.workspaceId,
+                integrationId: input.externalConnectionId,
+              },
+              tx,
             )
           }
-          throw error
-        }
-      })
+          // `confirmationFlowId`/`cancellationFlowId`/`reminders[].flowId` are
+          // client-settable (public API + builder form). A plain FK only
+          // checks the flow exists, not that it belongs to this workspace —
+          // without this, a caller could pin another workspace's flow id onto
+          // their calendar. Mirrors the `externalConnectionId` ownership check
+          // above.
+          const referencedFlowIds = referencedFlowIdsOf(input)
+          if (referencedFlowIds.length > 0) {
+            await flowService.assertAllExist(
+              {
+                workspaceId: input.workspaceId,
+                flowIds: referencedFlowIds,
+              },
+              tx,
+            )
+          }
+          const row = await appointmentCalendarRepository.update(
+            {
+              workspaceId: input.workspaceId,
+              id: input.id,
+              name: input.name.trim(),
+              description: input.description,
+              active: input.active,
+              timezone: input.timezone,
+              durationMinutes: input.durationMinutes,
+              bufferAfterMinutes: input.bufferAfterMinutes,
+              locationType: input.locationType,
+              locationDetail: input.locationDetail,
+              scheduleWindowType: input.scheduleWindowType,
+              scheduleWindowConfig: input.scheduleWindowConfig,
+              maxAppointmentsPerUser: input.maxAppointmentsPerUser,
+              dailyLimitEnabled: input.dailyLimitEnabled,
+              maxPerDay: input.maxPerDay,
+              allowGroupMeeting: input.allowGroupMeeting,
+              maxPerSlot: input.maxPerSlot,
+              confirmationMessage: input.confirmationMessage,
+              confirmationFlowId: input.confirmationFlowId,
+              cancellationFlowId: input.cancellationFlowId,
+              externalConnectionId: input.externalConnectionId,
+              externalEventTitleTemplate:
+                input.externalEventTitleTemplate ??
+                (input.externalConnectionId
+                  ? defaultAppointmentExternalEventTitleTemplate
+                  : null),
+              externalEventDescriptionTemplate:
+                input.externalEventDescriptionTemplate,
+              externalEventAttendeesTemplate:
+                input.externalEventAttendeesTemplate ??
+                (input.externalConnectionId
+                  ? defaultAppointmentExternalEventAttendeesTemplate
+                  : null),
+            },
+            tx,
+          )
+          if (!row) {
+            throw notFoundException("Appointment calendar not found")
+          }
+          await appointmentCalendarRepository.replaceAvailability(
+            {
+              calendarId: input.id,
+              availability: input.availability,
+            },
+            tx,
+          )
+          staleReminderJobIds =
+            await appointmentReminderDispatchRepository.listPendingJobIdsForFutureCalendar(
+              {
+                workspaceId: input.workspaceId,
+                calendarId: input.id,
+              },
+              tx,
+            )
+          try {
+            await appointmentCalendarRepository.replaceReminders(
+              {
+                calendarId: input.id,
+                reminders: input.reminders,
+              },
+              tx,
+            )
+          } catch (error) {
+            if (isUniqueViolationError(error)) {
+              throw new ChatbotXException(
+                "Duplicate reminder: same flow and timing already exists",
+                "duplicateReminder",
+                409,
+              )
+            }
+            throw error
+          }
+          // `active` and the calendar connection are the installer's. The
+          // locked content is compared stored-to-stored, so a form that sends
+          // "" for null, or a connection that fills in the default event
+          // templates, is not an edit; a real change rolls the write back.
+          const after = await appointmentCalendarRepository.getForEdit(
+            { workspaceId: input.workspaceId, id: input.id },
+            tx,
+          )
+          await assertResourceEditable({
+            workspaceId: input.workspaceId,
+            resourceKind: "calendar",
+            resourceIds: [input.id],
+            changedKeys: changedStoredContentKeys({
+              resourceKind: "calendar",
+              before: effectiveCalendarContent(existing),
+              after: effectiveCalendarContent(after ?? existing),
+              parentKeys: ["calendarId"],
+            }),
+            referencedParents,
+            tx,
+          })
+        },
+        {
+          workspaceId: input.workspaceId,
+          initialKeys: calendarUpdateLockKeys(input),
+        },
+      )
     } catch (error) {
       this.throwMappedUniqueError(error)
       throw error
@@ -1033,11 +1192,7 @@ export class AppointmentCalendarService extends BaseService {
 
   private throwMappedUniqueError(error: unknown): never | undefined {
     if (isUniqueViolationError(error)) {
-      throw new ChatbotXException(
-        "Calendar name already exists",
-        "nameAlreadyExists",
-        409,
-      )
+      throw calendarNameExistsException()
     }
   }
 }

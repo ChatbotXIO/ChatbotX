@@ -9,6 +9,15 @@ const mocks = vi.hoisted(() => ({
   findInbox: vi.fn(),
   invalidateCacheByTags: vi.fn(),
   withCache: vi.fn(),
+  assertReferencable: vi.fn(),
+}))
+
+const TX = { tx: true }
+vi.mock("../src/template/installed-resource.service", () => ({
+  assertReferencable: mocks.assertReferencable,
+}))
+vi.mock("../src/template/template-resource-locks", () => ({
+  withTemplateLockedTransaction: (run: (tx: unknown) => unknown) => run(TX),
 }))
 
 vi.mock("@chatbotx.io/database/repositories", () => ({
@@ -331,7 +340,9 @@ describe("aiHandoverSettingsService.save", () => {
         gotoFlowId: null,
         returnMessage: null,
       }),
+      TX,
     )
+    expect(mocks.assertReferencable).not.toHaveBeenCalled()
     expect(mocks.invalidateCacheByTags).toHaveBeenCalledExactlyOnceWith([
       "ai-handover-settings:inbox-1",
     ])
@@ -426,6 +437,12 @@ describe("aiHandoverSettingsService.save", () => {
     mocks.findActiveById.mockResolvedValue({ id: "flow-1" })
     await aiHandoverSettingsService.save(saveInput({ gotoFlowId: "flow-1" }))
     expect(mocks.upsert.mock.calls[0][0].gotoFlowId).toBe("flow-1")
+    // The flow is locked and checked against an uninstall in the same transaction.
+    expect(mocks.assertReferencable).toHaveBeenCalledExactlyOnceWith({
+      workspaceId: WORKSPACE_ID,
+      parents: [{ kind: "flow", resourceId: "flow-1" }],
+      tx: TX,
+    })
   })
 
   test("does not look up a flow when none is selected", async () => {

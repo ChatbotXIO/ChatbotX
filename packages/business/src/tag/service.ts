@@ -36,6 +36,11 @@ import { type ContactAccessScope, contactService } from "../contact"
 import { notFoundException, validationException } from "../errors"
 import { folderService, toStoredFolderId } from "../folder/service"
 import { logger } from "../logger"
+import {
+  changedKeysOf,
+  withDeleteGuard,
+  withEditGuard,
+} from "../template/installed-resource.service"
 import { tagSyncService } from "./sync.service"
 
 const CONTACT_CHUNK_SIZE = 200
@@ -186,12 +191,6 @@ class TagService extends BaseService {
       throw validationException("name", "Name is already taken.")
     }
 
-    const tag = await findOrFail({
-      table: tagModel,
-      where: { id, workspaceId, deletedAt: { isNull: true as const } },
-      message: "Tag not found",
-    })
-
     // `folderId` omitted keeps the current folder; null or rootFolderId moves
     // the tag to the root.
     const folderId =
@@ -206,15 +205,33 @@ class TagService extends BaseService {
       })
     }
 
-    const updatedTag = await db
-      .update(tagModel)
-      .set({
-        name: parsedInput.name,
-        ...(folderId === undefined ? {} : { folderId }),
-      })
-      .where(eq(tagModel.id, tag.id))
-      .returning()
-      .then((result) => result[0])
+    // The tag is locked before its stored row is read, so the rename diff that
+    // decides the guard is computed under the lock. The guard runs for a folder
+    // move too, so a tombstoned copy rejects it; only a rename is template
+    // content.
+    const updatedTag = await withEditGuard({
+      workspaceId,
+      resourceKind: "tag",
+      resourceId: id,
+      load: (tx) =>
+        findOrFail({
+          client: tx,
+          table: tagModel,
+          where: { id, workspaceId, deletedAt: { isNull: true as const } },
+          message: "Tag not found",
+        }),
+      changedKeys: (tag) => changedKeysOf(tag, { name: parsedInput.name }),
+      write: (tx, tag) =>
+        tx
+          .update(tagModel)
+          .set({
+            name: parsedInput.name,
+            ...(folderId === undefined ? {} : { folderId }),
+          })
+          .where(eq(tagModel.id, tag.id))
+          .returning()
+          .then((result) => result[0]),
+    })
 
     await this.invalidateCacheTags(tagCacheTags(workspaceId))
     return updatedTag
@@ -227,23 +244,38 @@ class TagService extends BaseService {
     workspaceId: string
     ids: string[]
   }) {
-    for (let offset = 0; offset < ids.length; offset += CONTACT_CHUNK_SIZE) {
-      const chunk = ids.slice(offset, offset + CONTACT_CHUNK_SIZE)
-      const updated = await db
-        .update(tagModel)
-        .set({ deletedAt: new Date() })
-        .where(
-          and(
-            eq(tagModel.workspaceId, workspaceId),
-            inArray(tagModel.id, chunk),
-            isNull(tagModel.deletedAt),
-          ),
-        )
-        .returning({ id: tagModel.id })
-
-      for (const row of updated) {
-        await tagSyncService.enqueueDelete({ workspaceId, tagId: row.id })
-      }
+    const deletedIds = await withDeleteGuard(
+      {
+        workspaceId,
+        targets: [{ resourceKind: "tag", resourceIds: ids }],
+      },
+      async (tx) => {
+        const deleted: string[] = []
+        for (
+          let offset = 0;
+          offset < ids.length;
+          offset += CONTACT_CHUNK_SIZE
+        ) {
+          const chunk = ids.slice(offset, offset + CONTACT_CHUNK_SIZE)
+          const updated = await tx
+            .update(tagModel)
+            .set({ deletedAt: new Date() })
+            .where(
+              and(
+                eq(tagModel.workspaceId, workspaceId),
+                inArray(tagModel.id, chunk),
+                isNull(tagModel.deletedAt),
+              ),
+            )
+            .returning({ id: tagModel.id })
+          deleted.push(...updated.map((row) => row.id))
+        }
+        return deleted
+      },
+    )
+    // After the commit: the sync jobs must not see an uncommitted delete.
+    for (const tagId of deletedIds) {
+      await tagSyncService.enqueueDelete({ workspaceId, tagId })
     }
 
     await this.invalidateCacheTags(tagCacheTags(workspaceId))

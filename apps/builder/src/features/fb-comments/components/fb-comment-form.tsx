@@ -36,6 +36,7 @@ import {
 import { ExcludeKeywordsField } from "@/features/shared/comment-automation/exclude-keywords-field"
 import { ReplyTextsField } from "@/features/shared/comment-automation/reply-texts-field"
 import { ReplyToField } from "@/features/shared/comment-automation/reply-to-field"
+import { LockedContent } from "@/features/templates/components/lock-badge"
 import { useWorkspaceId } from "@/hooks/routing"
 import { useFbCommentPostsStore } from "../provider/fb-comment-posts-store-context"
 import type { CreateFbCommentRequest } from "../schema/action"
@@ -197,7 +198,9 @@ export function FbCommentForm({
 
   return (
     <form className="m-auto w-full max-w-200 space-y-6" onSubmit={onSubmit}>
-      <InputField label={t("fields.name.label")} name="name" required />
+      <LockedContent>
+        <InputField label={t("fields.name.label")} name="name" required />
+      </LockedContent>
 
       <Card>
         <CardHeader>
@@ -213,334 +216,336 @@ export function FbCommentForm({
             targetField="post"
             type="messenger"
           />
-
-          {!isLive && (
-            <RadioGroupField
-              description={t(
-                "facebookCommentAutomation.trackCommentsOnDescription",
-              )}
-              descriptionType="tooltip"
-              label={t("facebookCommentAutomation.trackCommentsOn")}
-              name="post.type"
-              options={postTypeOptions}
-              orientation="horizontal"
-              required
-            />
-          )}
-
-          {postType === "postIds" && (
-            <>
-              <Button
-                onClick={() => setSelectPostsOpen(true)}
-                type="button"
-                variant="outline"
-              >
-                {t("facebookCommentAutomation.chooseSpecificPosts")}
-                {postValue.length > 0 && ` (${postValue.length})`}
-              </Button>
-              <SelectFacebookPostsDialog
-                inboxId={inboxId}
-                onChange={(ids) =>
-                  form.setValue("post.value", ids, { shouldValidate: true })
-                }
-                onOpenChange={setSelectPostsOpen}
-                open={selectPostsOpen}
-                value={postValue}
-              />
-            </>
-          )}
-
-          <div className="flex flex-col gap-2 space-y-2">
-            <RadioGroupField
-              description={t(
-                "facebookCommentAutomation.privateReplyDescription",
-              )}
-              descriptionType="tooltip"
-              label={t("facebookCommentAutomation.privateReply")}
-              name="privateReply.type"
-              options={replyTypeOptions}
-              orientation="horizontal"
-              required
-            />
-            {privateReplyType === "text" && (
-              <TiptapEditorField
-                channels={["messenger"]}
-                includeBotFieldVariables
-                label={t("facebookCommentAutomation.replyMessage")}
-                name="privateReply.value"
-                placeholder={t(
-                  "facebookCommentAutomation.replyMessagePlaceholder",
+          <LockedContent className="flex flex-col gap-2 space-y-4">
+            {!isLive && (
+              <RadioGroupField
+                description={t(
+                  "facebookCommentAutomation.trackCommentsOnDescription",
                 )}
+                descriptionType="tooltip"
+                label={t("facebookCommentAutomation.trackCommentsOn")}
+                name="post.type"
+                options={postTypeOptions}
+                orientation="horizontal"
                 required
               />
             )}
-            {privateReplyType === "flow" && (
-              <ComboboxField
-                emptyText={t("actions.noRecordFound")}
-                label={t("fields.flow.label")}
-                name="privateReply.value"
-                options={flowOptions}
-                placeholder={t("actions.pleaseSelect")}
-                required
-              />
-            )}
-            {privateReplyType === "AIAgent" && (
-              <ComboboxField
-                emptyText={t("actions.noRecordFound")}
-                label={t("fields.aiAgent.label")}
-                name="privateReply.value"
-                options={aiAgentOptions}
-                placeholder={t("actions.pleaseSelect")}
-                required
-              />
-            )}
-          </div>
 
-          <div className="flex flex-col gap-2 space-y-2">
-            <RadioGroupField
-              description={t(
-                "facebookCommentAutomation.publicReplyDescription",
+            {postType === "postIds" && (
+              <>
+                <Button
+                  onClick={() => setSelectPostsOpen(true)}
+                  type="button"
+                  variant="outline"
+                >
+                  {t("facebookCommentAutomation.chooseSpecificPosts")}
+                  {postValue.length > 0 && ` (${postValue.length})`}
+                </Button>
+                <SelectFacebookPostsDialog
+                  inboxId={inboxId}
+                  onChange={(ids) =>
+                    form.setValue("post.value", ids, { shouldValidate: true })
+                  }
+                  onOpenChange={setSelectPostsOpen}
+                  open={selectPostsOpen}
+                  value={postValue}
+                />
+              </>
+            )}
+
+            <div className="flex flex-col gap-2 space-y-2">
+              <RadioGroupField
+                description={t(
+                  "facebookCommentAutomation.privateReplyDescription",
+                )}
+                descriptionType="tooltip"
+                label={t("facebookCommentAutomation.privateReply")}
+                name="privateReply.type"
+                options={replyTypeOptions}
+                orientation="horizontal"
+                required
+              />
+              {privateReplyType === "text" && (
+                <TiptapEditorField
+                  channels={["messenger"]}
+                  includeBotFieldVariables
+                  label={t("facebookCommentAutomation.replyMessage")}
+                  name="privateReply.value"
+                  placeholder={t(
+                    "facebookCommentAutomation.replyMessagePlaceholder",
+                  )}
+                  required
+                />
               )}
-              descriptionType="tooltip"
-              label={t("facebookCommentAutomation.publicReply")}
-              name="publicReply.type"
-              options={replyTypeOptions}
-              orientation="horizontal"
+              {privateReplyType === "flow" && (
+                <ComboboxField
+                  emptyText={t("actions.noRecordFound")}
+                  label={t("fields.flow.label")}
+                  name="privateReply.value"
+                  options={flowOptions}
+                  placeholder={t("actions.pleaseSelect")}
+                  required
+                />
+              )}
+              {privateReplyType === "AIAgent" && (
+                <ComboboxField
+                  emptyText={t("actions.noRecordFound")}
+                  label={t("fields.aiAgent.label")}
+                  name="privateReply.value"
+                  options={aiAgentOptions}
+                  placeholder={t("actions.pleaseSelect")}
+                  required
+                />
+              )}
+            </div>
+
+            <div className="flex flex-col gap-2 space-y-2">
+              <RadioGroupField
+                description={t(
+                  "facebookCommentAutomation.publicReplyDescription",
+                )}
+                descriptionType="tooltip"
+                label={t("facebookCommentAutomation.publicReply")}
+                name="publicReply.type"
+                options={replyTypeOptions}
+                orientation="horizontal"
+                required
+              />
+              {publicReplyType === "text" && (
+                <ReplyTextsField
+                  channel="messenger"
+                  label={t("facebookCommentAutomation.replyMessage")}
+                  name="publicReply"
+                  placeholder={t(
+                    "facebookCommentAutomation.replyMessagePlaceholder",
+                  )}
+                />
+              )}
+              {publicReplyType === "flow" && (
+                <ComboboxField
+                  emptyText={t("actions.noRecordFound")}
+                  label={t("fields.flow.label")}
+                  name="publicReply.value"
+                  options={flowOptions}
+                  placeholder={t("actions.pleaseSelect")}
+                  required
+                />
+              )}
+              {publicReplyType === "AIAgent" && (
+                <ComboboxField
+                  emptyText={t("actions.noRecordFound")}
+                  label={t("fields.aiAgent.label")}
+                  name="publicReply.value"
+                  options={aiAgentOptions}
+                  placeholder={t("actions.pleaseSelect")}
+                  required
+                />
+              )}
+            </div>
+          </LockedContent>
+        </CardContent>
+      </Card>
+      <LockedContent className="space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>{t("facebookCommentAutomation.card.filters")}</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <ReplyToField
+              labels={{
+                type: t("facebookCommentAutomation.includeKeywordsType"),
+                typeDescription: t(
+                  "facebookCommentAutomation.includeKeywordsTypeDescription",
+                ),
+                keywords: t("facebookCommentAutomation.includeKeywords"),
+                keywordsPlaceholder: t(
+                  "facebookCommentAutomation.keywordsPlaceholder",
+                ),
+                all: t("facebookCommentAutomation.keywordsType.all"),
+                equal: t("facebookCommentAutomation.keywordsType.equal"),
+                contain: t("facebookCommentAutomation.keywordsType.contain"),
+              }}
+            />
+
+            <ExcludeKeywordsField
+              description={t(
+                "facebookCommentAutomation.excludeKeywordsDescription",
+              )}
+              label={t("facebookCommentAutomation.excludeKeywords")}
+              placeholder={t("facebookCommentAutomation.keywordsPlaceholder")}
+            />
+
+            <div className="space-y-3 border-t pt-4">
+              <SwitchField
+                description={t(
+                  "facebookCommentAutomation.options.replyToNewContactsOnlyDescription",
+                )}
+                descriptionType="tooltip"
+                label={t(
+                  "facebookCommentAutomation.options.replyToNewContactsOnly",
+                )}
+                name="options.replyToNewContactsOnly"
+                required
+              />
+              <SwitchField
+                description={t(
+                  "facebookCommentAutomation.options.replyOncePerUserPerPostDescription",
+                )}
+                descriptionType="tooltip"
+                label={t(
+                  "facebookCommentAutomation.options.replyOncePerUserPerPost",
+                )}
+                name="options.replyOncePerUserPerPost"
+                required
+              />
+              <SwitchField
+                description={t(
+                  "facebookCommentAutomation.options.likeUserCommentDescription",
+                )}
+                descriptionType="tooltip"
+                label={t("facebookCommentAutomation.options.likeUserComment")}
+                name="options.likeUserComment"
+                required
+              />
+              <SwitchField
+                description={t(
+                  "facebookCommentAutomation.options.replyToUsersWhoCommentedOnOtherPostsDescription",
+                )}
+                descriptionType="tooltip"
+                label={t(
+                  "facebookCommentAutomation.options.replyToUsersWhoCommentedOnOtherPosts",
+                )}
+                name="options.replyToUsersWhoCommentedOnOtherPosts"
+                required
+              />
+              <SwitchField
+                description={t(
+                  "facebookCommentAutomation.options.ignoreCommentRepliesDescription",
+                )}
+                descriptionType="tooltip"
+                label={t(
+                  "facebookCommentAutomation.options.ignoreCommentReplies",
+                )}
+                name="options.ignoreCommentReplies"
+                required
+              />
+              <SwitchField
+                description={t(
+                  "facebookCommentAutomation.options.trackUserTagsDescription",
+                )}
+                descriptionType="tooltip"
+                label={t("facebookCommentAutomation.options.trackUserTags")}
+                name="options.trackUserTags"
+                required
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>
+              {t("facebookCommentAutomation.card.replyTiming")}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <SelectField
+              label={t("facebookCommentAutomation.replyAfter")}
+              name="replyAfter.type"
+              options={replyAfterTypeOptions}
               required
             />
-            {publicReplyType === "text" && (
-              <ReplyTextsField
-                channel="messenger"
-                label={t("facebookCommentAutomation.replyMessage")}
-                name="publicReply"
-                placeholder={t(
-                  "facebookCommentAutomation.replyMessagePlaceholder",
+            {needsReplyAfterValue && (
+              <InputField
+                label={t("facebookCommentAutomation.replyAfterValue")}
+                min={1}
+                name="replyAfter.value"
+                type="number"
+              />
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>
+              {t("facebookCommentAutomation.card.hideComments")}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <SwitchField
+              label={t("facebookCommentAutomation.hideComments.all")}
+              name="hideComments.all"
+              required
+            />
+            <SwitchField
+              label={t("facebookCommentAutomation.hideComments.hasPhoneNumber")}
+              name="hideComments.hasPhoneNumber"
+              required
+            />
+            <SwitchField
+              label={t("facebookCommentAutomation.hideComments.hasImage")}
+              name="hideComments.hasImage"
+              required
+            />
+            <SwitchField
+              label={t("facebookCommentAutomation.hideComments.hasVideo")}
+              name="hideComments.hasVideo"
+              required
+            />
+            <SwitchField
+              label={t("commentAutomation.hideComments.hasGif")}
+              name="hideComments.hasGif"
+              required
+            />
+            <SwitchField
+              label={t("commentAutomation.hideComments.hasEmoji")}
+              name="hideComments.hasEmoji"
+              required
+            />
+            <SwitchField
+              label={t("facebookCommentAutomation.hideComments.hasLink")}
+              name="hideComments.hasLink"
+              required
+            />
+            <SwitchField
+              label={t("facebookCommentAutomation.hideComments.hasKeywords")}
+              name="hideComments.hasKeywords"
+              required
+            />
+            {hideCommentsKeywords && (
+              <FormField
+                control={form.control}
+                name="hideComments.keywords"
+                render={() => (
+                  <FormItem>
+                    <FormLabel>
+                      {t("facebookCommentAutomation.hideComments.keywords")}
+                    </FormLabel>
+                    <FormControl>
+                      <TagsInputField
+                        name="hideComments.keywords"
+                        placeholder={t(
+                          "facebookCommentAutomation.keywordsPlaceholder",
+                        )}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
                 )}
               />
             )}
-            {publicReplyType === "flow" && (
-              <ComboboxField
-                emptyText={t("actions.noRecordFound")}
-                label={t("fields.flow.label")}
-                name="publicReply.value"
-                options={flowOptions}
-                placeholder={t("actions.pleaseSelect")}
-                required
-              />
-            )}
-            {publicReplyType === "AIAgent" && (
-              <ComboboxField
-                emptyText={t("actions.noRecordFound")}
-                label={t("fields.aiAgent.label")}
-                name="publicReply.value"
-                options={aiAgentOptions}
-                placeholder={t("actions.pleaseSelect")}
-                required
-              />
-            )}
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>{t("facebookCommentAutomation.card.filters")}</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <ReplyToField
-            labels={{
-              type: t("facebookCommentAutomation.includeKeywordsType"),
-              typeDescription: t(
-                "facebookCommentAutomation.includeKeywordsTypeDescription",
-              ),
-              keywords: t("facebookCommentAutomation.includeKeywords"),
-              keywordsPlaceholder: t(
-                "facebookCommentAutomation.keywordsPlaceholder",
-              ),
-              all: t("facebookCommentAutomation.keywordsType.all"),
-              equal: t("facebookCommentAutomation.keywordsType.equal"),
-              contain: t("facebookCommentAutomation.keywordsType.contain"),
-            }}
-          />
-
-          <ExcludeKeywordsField
-            description={t(
-              "facebookCommentAutomation.excludeKeywordsDescription",
-            )}
-            label={t("facebookCommentAutomation.excludeKeywords")}
-            placeholder={t("facebookCommentAutomation.keywordsPlaceholder")}
-          />
-
-          <div className="space-y-3 border-t pt-4">
-            <SwitchField
-              description={t(
-                "facebookCommentAutomation.options.replyToNewContactsOnlyDescription",
-              )}
-              descriptionType="tooltip"
+            <SelectField
               label={t(
-                "facebookCommentAutomation.options.replyToNewContactsOnly",
+                "facebookCommentAutomation.hideComments.showCommentsAfter",
               )}
-              name="options.replyToNewContactsOnly"
+              name="hideComments.showCommentsAfter"
+              options={showCommentsAfterOptions}
               required
             />
-            <SwitchField
-              description={t(
-                "facebookCommentAutomation.options.replyOncePerUserPerPostDescription",
-              )}
-              descriptionType="tooltip"
-              label={t(
-                "facebookCommentAutomation.options.replyOncePerUserPerPost",
-              )}
-              name="options.replyOncePerUserPerPost"
-              required
-            />
-            <SwitchField
-              description={t(
-                "facebookCommentAutomation.options.likeUserCommentDescription",
-              )}
-              descriptionType="tooltip"
-              label={t("facebookCommentAutomation.options.likeUserComment")}
-              name="options.likeUserComment"
-              required
-            />
-            <SwitchField
-              description={t(
-                "facebookCommentAutomation.options.replyToUsersWhoCommentedOnOtherPostsDescription",
-              )}
-              descriptionType="tooltip"
-              label={t(
-                "facebookCommentAutomation.options.replyToUsersWhoCommentedOnOtherPosts",
-              )}
-              name="options.replyToUsersWhoCommentedOnOtherPosts"
-              required
-            />
-            <SwitchField
-              description={t(
-                "facebookCommentAutomation.options.ignoreCommentRepliesDescription",
-              )}
-              descriptionType="tooltip"
-              label={t(
-                "facebookCommentAutomation.options.ignoreCommentReplies",
-              )}
-              name="options.ignoreCommentReplies"
-              required
-            />
-            <SwitchField
-              description={t(
-                "facebookCommentAutomation.options.trackUserTagsDescription",
-              )}
-              descriptionType="tooltip"
-              label={t("facebookCommentAutomation.options.trackUserTags")}
-              name="options.trackUserTags"
-              required
-            />
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>
-            {t("facebookCommentAutomation.card.replyTiming")}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <SelectField
-            label={t("facebookCommentAutomation.replyAfter")}
-            name="replyAfter.type"
-            options={replyAfterTypeOptions}
-            required
-          />
-          {needsReplyAfterValue && (
-            <InputField
-              label={t("facebookCommentAutomation.replyAfterValue")}
-              min={1}
-              name="replyAfter.value"
-              type="number"
-            />
-          )}
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>
-            {t("facebookCommentAutomation.card.hideComments")}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <SwitchField
-            label={t("facebookCommentAutomation.hideComments.all")}
-            name="hideComments.all"
-            required
-          />
-          <SwitchField
-            label={t("facebookCommentAutomation.hideComments.hasPhoneNumber")}
-            name="hideComments.hasPhoneNumber"
-            required
-          />
-          <SwitchField
-            label={t("facebookCommentAutomation.hideComments.hasImage")}
-            name="hideComments.hasImage"
-            required
-          />
-          <SwitchField
-            label={t("facebookCommentAutomation.hideComments.hasVideo")}
-            name="hideComments.hasVideo"
-            required
-          />
-          <SwitchField
-            label={t("commentAutomation.hideComments.hasGif")}
-            name="hideComments.hasGif"
-            required
-          />
-          <SwitchField
-            label={t("commentAutomation.hideComments.hasEmoji")}
-            name="hideComments.hasEmoji"
-            required
-          />
-          <SwitchField
-            label={t("facebookCommentAutomation.hideComments.hasLink")}
-            name="hideComments.hasLink"
-            required
-          />
-          <SwitchField
-            label={t("facebookCommentAutomation.hideComments.hasKeywords")}
-            name="hideComments.hasKeywords"
-            required
-          />
-          {hideCommentsKeywords && (
-            <FormField
-              control={form.control}
-              name="hideComments.keywords"
-              render={() => (
-                <FormItem>
-                  <FormLabel>
-                    {t("facebookCommentAutomation.hideComments.keywords")}
-                  </FormLabel>
-                  <FormControl>
-                    <TagsInputField
-                      name="hideComments.keywords"
-                      placeholder={t(
-                        "facebookCommentAutomation.keywordsPlaceholder",
-                      )}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          )}
-          <SelectField
-            label={t(
-              "facebookCommentAutomation.hideComments.showCommentsAfter",
-            )}
-            name="hideComments.showCommentsAfter"
-            options={showCommentsAfterOptions}
-            required
-          />
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </LockedContent>
 
       <div className="flex justify-end gap-2">
         <Button onClick={onCancel} type="button" variant="ghost">

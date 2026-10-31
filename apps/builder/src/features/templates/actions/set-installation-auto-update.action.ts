@@ -1,22 +1,25 @@
 "use server"
 
-import { templateService } from "@chatbotx.io/business"
+import { templateSyncRequestService } from "@chatbotx.io/business"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
-import { templateActionClient } from "./template-action-client"
+import { installerActionClient } from "./installer-action-client"
 
-export const updateInstallationAutoUpdateAction = templateActionClient
+export const setInstallationAutoUpdateAction = installerActionClient
   .bindArgsSchemas([zodBigintAsString(), zodBigintAsString()])
   .inputSchema(z.object({ autoUpdate: z.boolean() }))
   .action(
     async ({
+      ctx: { templateActor },
       bindArgsParsedInputs: [workspaceId, installationId],
       parsedInput,
     }) => {
-      await templateService.updateInstallationAutoUpdate({
+      await templateSyncRequestService.setAutoUpdate({
         workspaceId,
         installationId,
+        actor: templateActor,
         autoUpdate: parsedInput.autoUpdate,
       })
+      return { autoUpdate: parsedInput.autoUpdate }
     },
   )

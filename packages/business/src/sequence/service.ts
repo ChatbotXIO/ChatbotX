@@ -1,10 +1,12 @@
 import { sequenceAnalyticsService } from "@chatbotx.io/analytics"
 import type { SequenceStepEventType } from "@chatbotx.io/analytics/schemas"
+import type { DatabaseClient } from "@chatbotx.io/database/client"
 import {
   and,
   db,
   eq,
   findOrFail,
+  inArray,
   isUniqueViolationError,
 } from "@chatbotx.io/database/client"
 import {
@@ -28,6 +30,11 @@ import { notFoundException, validationException } from "../errors"
 import { folderService } from "../folder/service"
 import { type IdLabel, selectLabelsByIds } from "../select-labels-by-ids"
 import {
+  assertResourceEditable,
+  withDeleteGuard,
+} from "../template/installed-resource.service"
+import { withTemplateLockedTransaction } from "../template/template-resource-locks"
+import {
   handleStepCreationImpact,
   handleStepUpdateImpact,
   recalculateAllContactsInSequence,
@@ -37,6 +44,25 @@ import {
   buildUpdateData,
   type SequenceStepPayloadInput,
 } from "./step-payload"
+
+/** A sequence's steps are its template-locked content. */
+const assertStepsEditable = (props: {
+  workspaceId: string
+  sequenceId: string
+  /** The flow a step write points at, locked together with the sequence. */
+  flowId?: string | null
+  tx: DatabaseClient
+}) =>
+  assertResourceEditable({
+    workspaceId: props.workspaceId,
+    resourceKind: "sequence",
+    resourceIds: [props.sequenceId],
+    changedKeys: ["steps"],
+    referencedParents: props.flowId
+      ? [{ kind: "flow", resourceId: props.flowId }]
+      : [],
+    tx: props.tx,
+  })
 
 /**
  * Check if we need to recalculate contact schedules when UPDATING a step.
@@ -136,47 +162,73 @@ class SequenceService extends BaseService {
     ctx: { workspaceId: string; id: string },
     data: { name?: string; active?: boolean; folderId?: string | null },
   ): Promise<void> {
-    const sequence = await findOrFail({
-      table: sequenceModel,
-      where: {
-        id: ctx.id,
-        workspaceId: ctx.workspaceId,
-      },
-      message: "Sequence not found",
-    })
-
-    if (data.folderId !== undefined && data.folderId !== sequence.folderId) {
-      await this.assertSequenceFolder(ctx.workspaceId, data.folderId)
+    let result: {
+      sequence: SequenceModel
+      changedEntries: [string, unknown][]
+      updated: { id: string }[]
     }
-
-    const changedEntries = Object.entries(data).filter(
-      ([key, value]) => sequence[key as keyof typeof data] !== value,
-    )
-
-    if (changedEntries.length === 0) {
-      return
-    }
-
     try {
-      const updated = await db
-        .update(sequenceModel)
-        .set(data)
-        .where(
-          and(
-            eq(sequenceModel.id, ctx.id),
-            eq(sequenceModel.workspaceId, ctx.workspaceId),
-          ),
-        )
-        .returning({ id: sequenceModel.id })
+      // The sequence is locked before the stored row is read, so the diff that
+      // decides the guard is computed under the lock.
+      result = await withTemplateLockedTransaction(
+        async (tx) => {
+          const sequence = await findOrFail({
+            client: tx,
+            table: sequenceModel,
+            where: { id: ctx.id, workspaceId: ctx.workspaceId },
+            message: "Sequence not found",
+          })
 
-      if (updated.length === 0) {
-        return
-      }
+          if (
+            data.folderId !== undefined &&
+            data.folderId !== sequence.folderId
+          ) {
+            await this.assertSequenceFolder(ctx.workspaceId, data.folderId)
+          }
+
+          const entries = Object.entries(data).filter(
+            ([key, value]) => sequence[key as keyof typeof data] !== value,
+          )
+          if (entries.length === 0) {
+            return { sequence, changedEntries: entries, updated: [] }
+          }
+
+          // Only the name is the template's; switching a sequence on or off
+          // and moving it between folders stay the installer's.
+          await assertResourceEditable({
+            workspaceId: ctx.workspaceId,
+            resourceKind: "sequence",
+            resourceIds: [ctx.id],
+            changedKeys: entries.map(([key]) => key),
+            tx,
+          })
+          const updated = await tx
+            .update(sequenceModel)
+            .set(data)
+            .where(
+              and(
+                eq(sequenceModel.id, ctx.id),
+                eq(sequenceModel.workspaceId, ctx.workspaceId),
+              ),
+            )
+            .returning({ id: sequenceModel.id })
+          return { sequence, changedEntries: entries, updated }
+        },
+        {
+          workspaceId: ctx.workspaceId,
+          initialKeys: [{ kind: "sequence", resourceId: ctx.id }],
+        },
+      )
     } catch (error) {
       if (isUniqueViolationError(error)) {
         throw validationException("name", "Name is already taken.")
       }
       throw error
+    }
+
+    const { sequence, changedEntries, updated } = result
+    if (changedEntries.length === 0 || updated.length === 0) {
+      return
     }
 
     const changedKeys = changedEntries.map(([key]) => key)
@@ -199,17 +251,39 @@ class SequenceService extends BaseService {
       },
       message: "Sequence not found",
     })
+    await withDeleteGuard(
+      {
+        workspaceId: input.workspaceId,
+        targets: [{ resourceKind: "sequence", resourceIds: [input.id] }],
+      },
+      (tx) =>
+        this.deleteInTx(tx, {
+          workspaceId: input.workspaceId,
+          ids: [input.id],
+        }),
+    )
 
-    await db
+    await this.audit("delete", `deleted a sequence (#${sequence.id})`)
+  }
+
+  /**
+   * The delete core (row write only), shared with the template uninstall so
+   * there is one implementation. Returns the ids actually deleted.
+   */
+  async deleteInTx(
+    tx: DatabaseClient,
+    input: { workspaceId: string; ids: string[] },
+  ): Promise<string[]> {
+    const rows = await tx
       .delete(sequenceModel)
       .where(
         and(
-          eq(sequenceModel.id, input.id),
           eq(sequenceModel.workspaceId, input.workspaceId),
+          inArray(sequenceModel.id, input.ids),
         ),
       )
-
-    await this.audit("delete", `deleted a sequence (#${sequence.id})`)
+      .returning({ id: sequenceModel.id })
+    return rows.map((row) => String(row.id))
   }
 
   async assertOwned(input: {
@@ -362,10 +436,15 @@ class SequenceService extends BaseService {
       flowId: input.data.flowId,
     })
     const createData = buildCreateData(input.data, input.sequenceId, createId())
-    const [created] = await db
-      .insert(sequenceStepModel)
-      .values(createData)
-      .returning()
+    const [created] = await withTemplateLockedTransaction(async (tx) => {
+      await assertStepsEditable({
+        workspaceId: input.workspaceId,
+        sequenceId: input.sequenceId,
+        flowId: input.data.flowId,
+        tx,
+      })
+      return await tx.insert(sequenceStepModel).values(createData).returning()
+    })
 
     return created
   }
@@ -405,11 +484,19 @@ class SequenceService extends BaseService {
 
     const updateData = buildUpdateData(input.data)
 
-    const [updated] = await db
-      .update(sequenceStepModel)
-      .set(updateData)
-      .where(eq(sequenceStepModel.id, input.stepId))
-      .returning()
+    const [updated] = await withTemplateLockedTransaction(async (tx) => {
+      await assertStepsEditable({
+        workspaceId: input.workspaceId,
+        sequenceId: step.sequenceId,
+        flowId: input.data.flowId,
+        tx,
+      })
+      return await tx
+        .update(sequenceStepModel)
+        .set(updateData)
+        .where(eq(sequenceStepModel.id, input.stepId))
+        .returning()
+    })
 
     return { previousOrder: step.order, step: updated }
   }
@@ -448,9 +535,16 @@ class SequenceService extends BaseService {
       throw notFoundException("Step not found")
     }
 
-    await db
-      .delete(sequenceStepModel)
-      .where(eq(sequenceStepModel.id, input.stepId))
+    await withTemplateLockedTransaction(async (tx) => {
+      await assertStepsEditable({
+        workspaceId: input.workspaceId,
+        sequenceId: step.sequenceId,
+        tx,
+      })
+      await tx
+        .delete(sequenceStepModel)
+        .where(eq(sequenceStepModel.id, input.stepId))
+    })
 
     await recalculateAllContactsInSequence(step.sequenceId, input.workspaceId)
   }

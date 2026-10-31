@@ -5,6 +5,7 @@ const mocks = vi.hoisted(() => ({
   findByImportIdentifiers: vi.fn(),
   findByRetailerIds: vi.fn(),
   linkImported: vi.fn(),
+  listLockedIds: vi.fn(),
   lockCatalogAssignments: vi.fn(),
   resolveCategoryPaths: vi.fn(),
   resolveVendorNames: vi.fn(),
@@ -33,6 +34,10 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
       mocks.findByImportIdentifiers(...args),
     update: (...args: unknown[]) => mocks.updateProduct(...args),
   },
+}))
+
+vi.mock("../src/template/installed-resource.service", () => ({
+  listLockedIds: (...args: unknown[]) => mocks.listLockedIds(...args),
 }))
 
 vi.mock("../src/product-category", () => ({
@@ -81,6 +86,7 @@ beforeEach(() => {
   mocks.resolveCategoryPaths.mockResolvedValue(new Map())
   mocks.resolveVendorNames.mockResolvedValue(new Map())
   mocks.createFromImport.mockResolvedValue([])
+  mocks.listLockedIds.mockResolvedValue([])
   mocks.updateProduct.mockResolvedValue({ id: "updated-product" })
   mocks.transaction.mockImplementation(
     async (callback: (client: typeof transactionClient) => unknown) =>
@@ -89,6 +95,22 @@ beforeEach(() => {
 })
 
 describe("metaCatalogImportService", () => {
+  test("skips a template-locked product instead of updating it", async () => {
+    mocks.findByRetailerIds.mockResolvedValue([
+      { retailerId: "existing", productId: "product-existing" },
+    ])
+    mocks.listLockedIds.mockResolvedValue(["product-existing"])
+
+    await metaCatalogImportService.importPage({
+      workspaceId: "workspace-1",
+      integrationMetaCatalogId: "connection-1",
+      catalogId: "catalog-1",
+      products: [createProduct("existing")],
+    })
+
+    expect(mocks.updateProduct).not.toHaveBeenCalled()
+  })
+
   test("updates a linked product once when its retailer ID is repeated in a page", async () => {
     mocks.findByRetailerIds.mockResolvedValue([
       { retailerId: "existing", productId: "product-existing" },

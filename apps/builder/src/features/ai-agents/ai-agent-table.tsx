@@ -19,6 +19,7 @@ import { useInvalidateAIAgents } from "@/features/ai-agents/hooks/use-ai-agents"
 import type { listAIAgents } from "@/features/ai-agents/queries"
 import { UpdateAIAgentDialog } from "@/features/ai-agents/update-ai-agent"
 import type { listIntegrationOpenaiCompatible } from "@/features/integration-openai-compatible/queries"
+import { LockedIdsProvider } from "@/features/templates/components/lock-badge"
 import type { AIAgentActionOptions } from "./components/ai-actions-field"
 import { BotReplyDelayDialog } from "./components/bot-reply-delay-dialog"
 import { ChangeDefault } from "./components/change-default"
@@ -84,19 +85,25 @@ export function AIAgentsTable({ workspaceId, promises }: AIAgentsTableProps) {
         <CardDescription>{t("aiAgent.description")}</CardDescription>
       </CardHeader>
       <CardContent>
-        <DataTable table={table}>
-          <DataTableToolbar table={table}>
-            <CreateAIAgentDialog
-              actionOptions={actionOptions}
-              onSuccess={() => {
-                router.refresh()
-                invalidateAIAgents()
-              }}
-              openaiCompatibleIntegrations={openaiCompatibleIntegrations}
-              workspaceId={workspaceId}
-            />
-          </DataTableToolbar>
-        </DataTable>
+        <LockedIdsProvider
+          resourceIds={data.map((row) => row.id)}
+          resourceKind="aiAgent"
+          workspaceId={workspaceId}
+        >
+          <DataTable table={table}>
+            <DataTableToolbar table={table}>
+              <CreateAIAgentDialog
+                actionOptions={actionOptions}
+                onSuccess={() => {
+                  router.refresh()
+                  invalidateAIAgents()
+                }}
+                openaiCompatibleIntegrations={openaiCompatibleIntegrations}
+                workspaceId={workspaceId}
+              />
+            </DataTableToolbar>
+          </DataTable>
+        </LockedIdsProvider>
 
         <DeleteAIAgentsDialog
           agents={rowAction?.row.original ? [rowAction?.row.original] : []}

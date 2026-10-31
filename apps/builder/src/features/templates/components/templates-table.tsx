@@ -1,6 +1,6 @@
 "use client"
 
-import type { TemplateModel } from "@chatbotx.io/database/types"
+import type { TemplateListItem } from "@chatbotx.io/business"
 import { DataTable } from "@chatbotx.io/ui/components/data-table/data-table"
 import { DataTableColumnHeader } from "@chatbotx.io/ui/components/data-table/data-table-column-header"
 import { Badge } from "@chatbotx.io/ui/components/ui/badge"
@@ -19,6 +19,7 @@ import {
   PencilIcon,
   Share2Icon,
   Trash2Icon,
+  UsersIcon,
 } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
@@ -28,24 +29,21 @@ import { ShareTemplateDialog } from "./share-template-dialog"
 
 type TemplatesTableProps = {
   workspaceId: string
-  templates: TemplateModel[]
-  isSuperAdmin: boolean
+  templates: TemplateListItem[]
 }
 
 export function TemplatesTable({
   workspaceId,
   templates,
-  isSuperAdmin,
 }: TemplatesTableProps) {
   const t = useTranslations()
   const router = useRouter()
   const [deletingTemplate, setDeletingTemplate] =
-    useState<TemplateModel | null>(null)
-  const [sharingTemplate, setSharingTemplate] = useState<TemplateModel | null>(
-    null,
-  )
+    useState<TemplateListItem | null>(null)
+  const [sharingTemplate, setSharingTemplate] =
+    useState<TemplateListItem | null>(null)
 
-  const columns = useMemo<ColumnDef<TemplateModel>[]>(
+  const columns = useMemo<ColumnDef<TemplateListItem>[]>(
     () => [
       {
         accessorKey: "name",
@@ -130,18 +128,26 @@ export function TemplatesTable({
               }
             />
             <DropdownMenuContent align="end">
-              {isSuperAdmin && (
-                <DropdownMenuItem
-                  onClick={() =>
-                    router.push(
-                      `/space/${workspaceId}/templates/${row.original.id}/edit`,
-                    )
-                  }
-                >
-                  <PencilIcon />
-                  {t("actions.edit")}
-                </DropdownMenuItem>
-              )}
+              <DropdownMenuItem
+                onClick={() =>
+                  router.push(
+                    `/space/${workspaceId}/templates/${row.original.id}/edit`,
+                  )
+                }
+              >
+                <PencilIcon />
+                {t("actions.edit")}
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() =>
+                  router.push(
+                    `/space/${workspaceId}/templates/${row.original.id}/installers`,
+                  )
+                }
+              >
+                <UsersIcon />
+                {t("templates.installers.title")}
+              </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => setSharingTemplate(row.original)}
               >
@@ -162,7 +168,7 @@ export function TemplatesTable({
         enableHiding: false,
       },
     ],
-    [t, router, workspaceId, isSuperAdmin],
+    [t, router, workspaceId],
   )
 
   const { table } = useDataTable({

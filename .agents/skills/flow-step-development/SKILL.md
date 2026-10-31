@@ -233,6 +233,8 @@ If a step returns `success`/`error`/`skip` **and** no edge is connected to that 
 
 ## Common Mistakes
 
+- **A step field that stores an id (flow, tag, field, sequence, product, inbox…) without a reference policy.** Templates and flow import copy the graph into another workspace; an id with no `REFERENCE_KIND_POLICY` / `STEP_REFERENCE_OVERRIDES` entry dangles there. `reference-registry-completeness.test.ts` fails on a new `*Id`/`*Ids` key — see the `template-integration` skill, section 4.
+
 | Mistake | Correct approach |
 |---------|-----------------|
 | Rendering only `successState` and `errorState` with `.find()` | Use `data.states.map(<BaseStateViewer>)` |

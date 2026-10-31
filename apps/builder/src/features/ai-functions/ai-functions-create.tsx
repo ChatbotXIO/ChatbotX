@@ -23,6 +23,8 @@ import { useTranslations } from "next-intl"
 import { useEffect, useState } from "react"
 import { useFieldArray } from "react-hook-form"
 import { toast } from "sonner"
+import { LockedDialogFieldset } from "@/components/locked-dialog-fieldset"
+import { useIsLocked } from "@/features/templates/components/lock-badge"
 import CustomFieldField from "../custom-fields/components/custom-field-field"
 import { useFlowSelectOptions } from "../flows/provider/flow-hook"
 import { createAIFunctionAction } from "./actions/create-ai-function.action"
@@ -47,6 +49,7 @@ export function AIFunctionsCreate({
   onOpenChange: setControlledOpen,
 }: AIFunctionsCreateProps) {
   const t = useTranslations()
+  const isLocked = useIsLocked(mode === "edit" ? initialData?.id : undefined)
 
   const [internalOpen, setInternalOpen] = useState(false)
   const isOpen = controlledOpen ?? internalOpen
@@ -164,64 +167,67 @@ export function AIFunctionsCreate({
             className="flex flex-col space-y-6 py-4"
             onSubmit={handleSubmitWithAction}
           >
-            <InputField
-              label={t("fields.name.label")}
-              name="name"
-              placeholder={t("fields.name.placeholder")}
-              required
-            />
-            <TextareaField
-              label={t("fields.purpose.label")}
-              name="purpose"
-              placeholder={t("fields.purpose.placeholder")}
-            />
-            <div className="space-y-2">
-              <div className="font-medium text-sm">
-                {t("fields.dataCollect.label")}
-              </div>
-              {fields.map((field, index) => (
-                <div className="mt-2 flex items-start gap-2" key={field.id}>
-                  <InputField
-                    name={`dataCollect.${index}.from`}
-                    placeholder="Attribute"
-                  />
-                  <MoveRightIcon className="size-10" />
-                  <CustomFieldField
-                    emptyText={t("actions.noRecordFound")}
-                    name={`dataCollect.${index}.to`}
-                    placeholder={t("actions.pleaseSelect")}
-                  />
-                  <Button
-                    onClick={() => remove(index)}
-                    type="button"
-                    variant="outline"
-                  >
-                    <TrashIcon className="h-4 w-4" />
-                  </Button>
+            <LockedDialogFieldset
+              resourceId={mode === "edit" ? initialData?.id : undefined}
+            >
+              <InputField
+                label={t("fields.name.label")}
+                name="name"
+                placeholder={t("fields.name.placeholder")}
+                required
+              />
+              <TextareaField
+                label={t("fields.purpose.label")}
+                name="purpose"
+                placeholder={t("fields.purpose.placeholder")}
+              />
+              <div className="space-y-2">
+                <div className="font-medium text-sm">
+                  {t("fields.dataCollect.label")}
                 </div>
-              ))}
-              <Button
-                onClick={() => append({ from: "", to: "" })}
-                type="button"
-                variant="outline"
-              >
-                <PlusIcon className="h-4 w-4" />
-                {t("actions.addMore")}
-              </Button>
-            </div>
-            <TextareaField
-              label={t("fields.outputMessage.label")}
-              name="outputMessage"
-              placeholder={t("fields.outputMessage.placeholder")}
-            />
-            <ComboboxField
-              emptyText={t("actions.noRecordFound")}
-              label={t("fields.triggerFlowId.label")}
-              name="triggerFlowId"
-              options={flowOptions}
-              placeholder={t("fields.triggerFlowId.placeholder")}
-            />
-
+                {fields.map((field, index) => (
+                  <div className="mt-2 flex items-start gap-2" key={field.id}>
+                    <InputField
+                      name={`dataCollect.${index}.from`}
+                      placeholder="Attribute"
+                    />
+                    <MoveRightIcon className="size-10" />
+                    <CustomFieldField
+                      emptyText={t("actions.noRecordFound")}
+                      name={`dataCollect.${index}.to`}
+                      placeholder={t("actions.pleaseSelect")}
+                    />
+                    <Button
+                      onClick={() => remove(index)}
+                      type="button"
+                      variant="outline"
+                    >
+                      <TrashIcon className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
+                <Button
+                  onClick={() => append({ from: "", to: "" })}
+                  type="button"
+                  variant="outline"
+                >
+                  <PlusIcon className="h-4 w-4" />
+                  {t("actions.addMore")}
+                </Button>
+              </div>
+              <TextareaField
+                label={t("fields.outputMessage.label")}
+                name="outputMessage"
+                placeholder={t("fields.outputMessage.placeholder")}
+              />
+              <ComboboxField
+                emptyText={t("actions.noRecordFound")}
+                label={t("fields.triggerFlowId.label")}
+                name="triggerFlowId"
+                options={flowOptions}
+                placeholder={t("fields.triggerFlowId.placeholder")}
+              />
+            </LockedDialogFieldset>
             <DialogFooter className="gap-2 sm:space-x-0">
               <DialogClose
                 render={<Button variant="ghost">{t("actions.cancel")}</Button>}
@@ -229,7 +235,9 @@ export function AIFunctionsCreate({
 
               <Button
                 disabled={
-                  !form.formState.isValid || form.formState.isSubmitting
+                  isLocked ||
+                  !form.formState.isValid ||
+                  form.formState.isSubmitting
                 }
                 type="submit"
               >

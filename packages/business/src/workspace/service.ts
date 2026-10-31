@@ -13,6 +13,7 @@ import {
   type WorkspaceMemberPermissions,
   workspaceMemberRoles,
 } from "@chatbotx.io/database/partials"
+import { templateUninstallStateRepository } from "@chatbotx.io/database/repositories"
 import { workspaceRepository } from "@chatbotx.io/database/repositories/workspace"
 import {
   ROOT_TENANT_ID,
@@ -701,6 +702,25 @@ class WorkspaceService extends BaseService {
         table: "Workspace",
         workspaceId: fencedWorkspace.id,
         fn: async (tx) => {
+          // A running template uninstall holds installation rows and then
+          // waits for the copies' rows; the cascade below takes those rows
+          // and, through the Template delete trigger, the installation rows:
+          // they can deadlock. Defer to the next run while one holds a live
+          // lease (an abandoned claim's lease expires). This narrows the
+          // collision, it does not close it: an uninstall claimed right after
+          // this check can still contend, and then Postgres aborts one side
+          // (40P01) or the purge's lock timeout trips — both retried.
+          if (
+            await templateUninstallStateRepository.hasLiveUninstallTouchingWorkspace(
+              fencedWorkspace.id,
+              tx,
+            )
+          ) {
+            throw new WorkspacePurgeIncompleteError(
+              fencedWorkspace.id,
+              "TemplateUninstall",
+            )
+          }
           const deleted = await tx
             .delete(workspaceModel)
             .where(eq(workspaceModel.id, fencedWorkspace.id))

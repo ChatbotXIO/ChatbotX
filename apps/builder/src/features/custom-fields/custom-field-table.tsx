@@ -37,6 +37,10 @@ import {
 import { useTranslations } from "next-intl"
 import { Suspense, use, useMemo, useState } from "react"
 import { FolderBarSlot } from "@/features/folders/folder-bar-slot"
+import {
+  LockBadge,
+  LockedIdsProvider,
+} from "@/features/templates/components/lock-badge"
 import { ChangeFolderDialog } from "../folders/change-folder"
 import CustomFieldTypeLabel from "./components/custom-field-label"
 import { CreateCustomFieldDialog } from "./create-custom-field"
@@ -114,8 +118,9 @@ function CustomFieldsTableContent({
             <Tooltip>
               <TooltipTrigger
                 render={
-                  <div className="inline-block max-w-[200px] truncate">
-                    {row.original.name}
+                  <div className="flex max-w-[200px] items-center">
+                    <span className="truncate">{row.original.name}</span>
+                    <LockBadge resourceId={row.original.id} />
                   </div>
                 }
               />
@@ -255,7 +260,11 @@ function CustomFieldsTableContent({
   })
 
   return (
-    <>
+    <LockedIdsProvider
+      resourceIds={data.map((row) => row.id)}
+      resourceKind="customField"
+      workspaceId={workspaceId}
+    >
       <DataTable table={table}>
         <DataTableToolbar table={table}>
           <CustomFieldsTableToolbarActions
@@ -295,7 +304,7 @@ function CustomFieldsTableContent({
         open={rowAction?.variant === "move"}
         workspaceId={workspaceId}
       />
-    </>
+    </LockedIdsProvider>
   )
 }
 

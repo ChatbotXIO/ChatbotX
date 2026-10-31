@@ -870,6 +870,7 @@ describe("public API spec — error response coverage", () => {
 
     expect(deletesWithBody).toEqual([
       "contacts.removeTags",
+      "contacts.removeTagsByName",
       "contacts.unsubscribeSequences",
       "decisionProfiles.deleteMany",
       "inboxTeams.removeMembers",

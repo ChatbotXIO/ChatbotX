@@ -50,7 +50,6 @@ export const saveTemplateRequest = z.object({
   createInstallFolder: z.boolean(),
   defaultAutoUpdate: z.boolean(),
 })
-export type SaveTemplateRequest = z.infer<typeof saveTemplateRequest>
 
 export const updateShareSettingsRequest = z.object({
   templateId: zodBigintAsString(),
@@ -58,6 +57,19 @@ export const updateShareSettingsRequest = z.object({
   shareExpiresAt: z.string().datetime().nullable().optional(),
 })
 
+const inboxBindingsSchema = z.record(zodBigintAsString(), zodBigintAsString())
+
 export const installTemplateRequest = z.object({
   shareToken: z.string().trim().min(1),
+  allowDuplicate: z.boolean().optional(),
+  autoUpdate: z.boolean().optional(),
+  acceptPublisherUninstall: z.boolean().optional(),
+  inboxBindings: inboxBindingsSchema.optional(),
+  /** A client-generated key: a replayed reinstall returns the same sync. */
+  idempotencyKey: z.string().trim().min(1).max(255).optional(),
+})
+
+/** Input of the manual sync action. */
+export const syncInstallationRequest = z.object({
+  idempotencyKey: z.string().trim().min(1).max(255).optional(),
 })

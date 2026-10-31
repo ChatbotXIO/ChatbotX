@@ -6,6 +6,7 @@ import { Loader2Icon, PlusIcon, XIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import { useState } from "react"
+import { useIsLocked } from "@/features/templates/components/lock-badge"
 import { createStageAction } from "../../actions/stage.action"
 import { usePipelineAction } from "../../lib/use-pipeline-action"
 
@@ -17,6 +18,7 @@ export function AddStage({
   pipelineId: string
 }) {
   const t = useTranslations("pipelines")
+  const isLocked = useIsLocked(pipelineId)
   const [isEditing, setIsEditing] = useState(false)
   const [name, setName] = useState("")
   const cancel = () => {
@@ -39,6 +41,7 @@ export function AddStage({
     return (
       <button
         className="flex w-[300px] shrink-0 flex-col items-center justify-center gap-2 rounded-xl border bg-muted/20 text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground focus-visible:outline-2 focus-visible:outline-ring"
+        disabled={isLocked}
         onClick={() => setIsEditing(true)}
         type="button"
       >

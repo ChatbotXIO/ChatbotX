@@ -2,7 +2,18 @@ import { customFieldTypes } from "@chatbotx.io/utils/custom-field"
 import { z } from "zod"
 import { flowExportedFlowSchema } from "./schema"
 
+/** The format a payload is written in when it uses nothing newer (every legacy template). */
 export const TEMPLATE_EXPORT_FORMAT_VERSION = 1
+/**
+ * Written only when a payload uses something v1 cannot express (today the
+ * per-item `permissions` map), so an older worker rejects it with
+ * `templatePayloadIncompatible` instead of silently stripping the new part.
+ */
+export const TEMPLATE_EXPORT_FORMAT_VERSION_V2 = 2
+const SUPPORTED_FORMAT_VERSIONS: readonly number[] = [
+  TEMPLATE_EXPORT_FORMAT_VERSION,
+  TEMPLATE_EXPORT_FORMAT_VERSION_V2,
+]
 
 /**
  * `manifests` are *identity-resolved* at install time: each entry describes
@@ -92,6 +103,19 @@ export type TemplatePipelineManifestEntry = z.infer<
   typeof templatePipelineManifestEntrySchema
 >
 
+/**
+ * An inbox the template was built around. It only identifies the source inbox
+ * so the installer can say which of their own inboxes stands in for it — an
+ * install never creates an inbox. `channelType` is the inbox's `channel`.
+ */
+export const templateInboxManifestEntrySchema = z.object({
+  channelType: z.string().min(1),
+  name: z.string(),
+})
+export type TemplateInboxManifestEntry = z.infer<
+  typeof templateInboxManifestEntrySchema
+>
+
 export const templateManifestsSchema = z.object({
   customFields: z
     .record(z.string(), templateCustomFieldManifestEntrySchema)
@@ -104,6 +128,7 @@ export const templateManifestsSchema = z.object({
   pipelines: z
     .record(z.string(), templatePipelineManifestEntrySchema)
     .default({}),
+  inboxes: z.record(z.string(), templateInboxManifestEntrySchema).default({}),
 })
 export type TemplateManifests = z.infer<typeof templateManifestsSchema>
 
@@ -125,6 +150,9 @@ export const templateFlowEntrySchema = z
     // Points at a `manifests.folders` sourceId — resolved against
     // `idMaps.folder` at install time, same as any other manifest reference.
     folderId: z.string().nullable().optional(),
+    // Whether the source flow had a published version; absent in older
+    // snapshots, which install as drafts.
+    published: z.boolean().optional(),
   })
   .and(flowExportedFlowSchema)
 export type TemplateFlowEntry = z.infer<typeof templateFlowEntrySchema>
@@ -140,6 +168,12 @@ export const templateResourcesSchema = z.object({
   entryPointLinks: z.array(templateResourceEntrySchema).default([]),
   triggers: z.array(templateResourceEntrySchema).default([]),
   fbCommentAutomations: z.array(templateResourceEntrySchema).default([]),
+  sequences: z.array(templateResourceEntrySchema).default([]),
+  aiMcpServers: z.array(templateResourceEntrySchema).default([]),
+  aiFiles: z.array(templateResourceEntrySchema).default([]),
+  questionnaires: z.array(templateResourceEntrySchema).default([]),
+  couponTopics: z.array(templateResourceEntrySchema).default([]),
+  pipelines: z.array(templateResourceEntrySchema).default([]),
   settings: z
     .object({
       savedReplies: z.array(templateResourceEntrySchema).default([]),
@@ -149,8 +183,25 @@ export const templateResourcesSchema = z.object({
 })
 export type TemplateResources = z.infer<typeof templateResourcesSchema>
 
+/**
+ * Per-item permissions, `{ category: { sourceId: { allowEdit } } }`. Only a
+ * locked item is listed; an absent item is editable. Top-level (not on each
+ * entry) because the flow entry schema strips unknown keys on parse.
+ */
+export const templateItemPermissionsSchema = z.record(
+  z.string(),
+  z.record(z.string(), z.object({ allowEdit: z.boolean() })),
+)
+export type TemplateItemPermissions = z.infer<
+  typeof templateItemPermissionsSchema
+>
+
 export const templateExportSchema = z.object({
-  formatVersion: z.literal(TEMPLATE_EXPORT_FORMAT_VERSION),
+  formatVersion: z.union([
+    z.literal(TEMPLATE_EXPORT_FORMAT_VERSION),
+    z.literal(TEMPLATE_EXPORT_FORMAT_VERSION_V2),
+  ]),
+  permissions: templateItemPermissionsSchema.optional(),
   exportedAt: z.string(),
   source: z.object({
     workspaceId: z.string(),
@@ -176,7 +227,7 @@ export const parseTemplateExport = (
   const preParsed = z.object({ formatVersion: z.unknown() }).safeParse(raw)
   if (
     preParsed.success &&
-    preParsed.data.formatVersion !== TEMPLATE_EXPORT_FORMAT_VERSION
+    !SUPPORTED_FORMAT_VERSIONS.includes(preParsed.data.formatVersion as number)
   ) {
     return {
       ok: false,

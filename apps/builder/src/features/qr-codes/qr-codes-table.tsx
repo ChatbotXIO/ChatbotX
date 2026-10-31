@@ -29,6 +29,10 @@ import { MoreHorizontalIcon, PencilIcon, Trash2Icon } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import React, { use, useMemo } from "react"
+import {
+  LockBadge,
+  LockedIdsProvider,
+} from "@/features/templates/components/lock-badge"
 import { stripQrPrefix } from "./constants"
 import { DeleteQrCodesDialog } from "./delete-qr-codes"
 import { QrCodesTableToolbarActions } from "./qr-codes-table-toolbar-actions"
@@ -88,7 +92,12 @@ export function QrCodesTable({ workspaceId, promises }: QrCodesTableProps) {
           return (
             <Tooltip>
               <TooltipTrigger
-                render={<div className="max-w-50 truncate">{displayName}</div>}
+                render={
+                  <div className="flex max-w-50 items-center">
+                    <span className="truncate">{displayName}</span>
+                    <LockBadge resourceId={row.original.id} />
+                  </div>
+                }
               />
               <TooltipContent>
                 <p>{displayName}</p>
@@ -207,22 +216,28 @@ export function QrCodesTable({ workspaceId, promises }: QrCodesTableProps) {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <DataTable table={table}>
-          <DataTableToolbar table={table}>
-            <QrCodesTableToolbarActions
-              table={table}
-              workspaceId={workspaceId}
-            />
-          </DataTableToolbar>
-        </DataTable>
-
-        <DeleteQrCodesDialog
-          onOpenChange={() => setRowAction(null)}
-          open={rowAction?.variant === "delete"}
-          qrCodes={rowAction?.row.original ? [rowAction?.row.original] : []}
-          showTrigger={false}
+        <LockedIdsProvider
+          resourceIds={data.map((row) => row.id)}
+          resourceKind="reflink"
           workspaceId={workspaceId}
-        />
+        >
+          <DataTable table={table}>
+            <DataTableToolbar table={table}>
+              <QrCodesTableToolbarActions
+                table={table}
+                workspaceId={workspaceId}
+              />
+            </DataTableToolbar>
+          </DataTable>
+
+          <DeleteQrCodesDialog
+            onOpenChange={() => setRowAction(null)}
+            open={rowAction?.variant === "delete"}
+            qrCodes={rowAction?.row.original ? [rowAction?.row.original] : []}
+            showTrigger={false}
+            workspaceId={workspaceId}
+          />
+        </LockedIdsProvider>
       </CardContent>
     </Card>
   )

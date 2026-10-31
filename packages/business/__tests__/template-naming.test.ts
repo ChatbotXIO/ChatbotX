@@ -2,7 +2,10 @@
 
 import { DrizzleQueryError } from "drizzle-orm/errors"
 import { describe, expect, test, vi } from "vitest"
-import { insertWithNameRetry } from "../src/template/adapters/naming"
+import {
+  insertWithCopyName,
+  insertWithNameRetry,
+} from "../src/template/adapters/naming"
 
 const uniqueViolation = (constraint: string) =>
   new DrizzleQueryError("insert", [], { code: "23505", constraint })
@@ -112,5 +115,39 @@ describe("insertWithNameRetry", () => {
 
     expect(result).toBeUndefined()
     expect(onGiveUp).toHaveBeenCalledWith("Welcome (20)")
+  })
+})
+
+describe("insertWithCopyName", () => {
+  test("reads the existing names once per prefix and learns the names it inserts", async () => {
+    const existing = new Set(["Welcome"])
+    const insert = vi.fn((_tx: unknown, name: string) => {
+      if (existing.has(name)) {
+        throw uniqueViolation("Sequence_workspaceId_name_key")
+      }
+      existing.add(name)
+      return Promise.resolve(name)
+    })
+    const loadTakenNames = vi.fn(async (_tx: unknown, prefix: string) =>
+      [...existing].filter((name) => name.startsWith(prefix)),
+    )
+    const tx = fakeTx() as Parameters<typeof insertWithCopyName>[0]["tx"]
+    const run = () =>
+      insertWithCopyName({
+        tx,
+        constraint: "Sequence_workspaceId_name_key",
+        name: "Welcome",
+        loadTakenNames,
+        insert,
+        onGiveUp: vi.fn(),
+      })
+
+    const first = await run()
+    const second = await run()
+
+    expect(first).toBe("Welcome - Copy")
+    expect(second).toBe("Welcome - Copy 2")
+    expect(loadTakenNames).toHaveBeenCalledTimes(1)
+    expect(loadTakenNames).toHaveBeenCalledWith(tx, "Welcome - Copy")
   })
 })

@@ -782,7 +782,8 @@
       "partial": "Partial",
       "failed": "Non riuscito",
       "success": "Operazione riuscita",
-      "error": "Errore"
+      "error": "Errore",
+      "uninstalled": "Uninstalled"
     },
     "subtitle": {
       "placeholder": "Inserisci il sottotitolo"
@@ -1520,7 +1521,8 @@
       "miniApps": "Mini Apps",
       "leaderboards": "Classifiche",
       "pipelines": "Pipeline",
-      "places": "Luoghi"
+      "places": "Luoghi",
+      "templates": "Modelli"
     },
     "adReferral": {
       "label": "Ads",
@@ -6694,14 +6696,107 @@
       "dialogDescription": "Chiunque abbia questo link può installare una copia di questo modello in uno spazio di lavoro del tuo tenant.",
       "enableLabel": "Attiva link di condivisione",
       "linkLabel": "Link di condivisione",
-      "description": "Chiunque abbia il link può installare questo modello nel proprio spazio di lavoro."
+      "description": "Chiunque abbia il link può installare questo modello nel proprio spazio di lavoro.",
+      "rotateLabel": "Rotate link",
+      "rotateTitle": "Rotate share link?",
+      "rotateDescription": "The current link stops working immediately. Anyone who still needs to install this template needs the new link.",
+      "rotated": "Share link rotated",
+      "expiryLabel": "Link expires",
+      "expiryHint": "Leave empty for a link that never expires.",
+      "clearExpiry": "Remove expiry",
+      "expiredNotice": "This link has expired. Set a later date or remove the expiry to share it again."
+    },
+    "sync": {
+      "title": "Updates",
+      "updateAvailable": "Update available",
+      "upToDate": "Up to date",
+      "updateNow": "Update now",
+      "updating": "Updating…",
+      "version": "Template version {version}",
+      "lastSynced": "last updated {date}",
+      "autoUpdateLabel": "Update automatically when the template changes",
+      "noHistory": "No updates yet.",
+      "counts": "{created} added · {updated} updated · {detached} detached",
+      "notUpdatable": "{count} not updatable yet",
+      "overwritten": "{name} was edited and replaced by the update",
+      "restore": "Restore my version",
+      "restored": "Your version was restored",
+      "status": {
+        "pending": "Queued",
+        "running": "Running",
+        "completed": "Completed",
+        "partial": "Partial",
+        "failed": "Failed",
+        "skipped": "Skipped",
+        "cancelled": "Cancelled"
+      },
+      "trigger": {
+        "autoUpdate": "Automatic",
+        "manual": "Manual",
+        "reinstall": "Reinstall"
+      },
+      "publisherAccessLabel": "Let the publisher see this workspace and uninstall the template",
+      "publisherAccessHint": "Only the workspace name is shared. If the publisher uninstalls, everything the template created is deleted, including copies you edited.",
+      "requestedVersion": "richiesta v{version}"
+    },
+    "installers": {
+      "title": "Installers",
+      "workspace": "Workspace",
+      "installs": "Installs",
+      "lastInstalled": "Last installed",
+      "version": "Version",
+      "autoUpdate": "Auto-update",
+      "uninstalled": "Uninstalled",
+      "hidden": "Workspace not shared",
+      "totalInstallEvents": "Installazioni totali (da sempre)",
+      "uninstallNotAllowed": "L'installatore non ha consentito agli editori di disinstallare questa copia.",
+      "loadError": "Impossibile caricare gli installatori. Riprova.",
+      "byVersionTitle": "Installs by version",
+      "versionLabel": "Version {version}",
+      "byVersionHint": "The newest version is {version}. Grey bars are copies that are behind."
     },
     "installs": {
       "title": "Installazioni",
       "resources": "Risorse",
       "warnings": "Avvisi",
       "completedAt": "Completato il",
-      "autoUpdate": "Aggiornamento automatico"
+      "autoUpdate": "Aggiornamento automatico",
+      "detailTitle": "Install details",
+      "installedBy": "Installed by",
+      "viaApi": "API token",
+      "attempts": "Attempts",
+      "autoUpdateOn": "On",
+      "autoUpdateOff": "Off",
+      "retry": "Retry install",
+      "resourcesTitle": "Installed resources",
+      "noResources": "Nothing was created yet.",
+      "deletedResource": "Deleted resource",
+      "viewOnly": "View only",
+      "created": "Created",
+      "reused": "Reused",
+      "loadMore": "Load more",
+      "backToList": "Back to installs",
+      "viewWarnings": "View warnings",
+      "warningsHint": "Items the install skipped or could not fully bring over.",
+      "warningsTruncated": "Showing {shown} of {total} warnings.",
+      "statusFilter": "Status",
+      "allStatuses": "All statuses",
+      "errors": {
+        "unknown": "The install failed. Try again, or contact support if it keeps failing.",
+        "templatePayloadIncompatible": "This template was saved in a newer format than this server can install.",
+        "templateInstallationSourceMissing": "The template was deleted before the install ran.",
+        "templateCrossTenantInstall": "This template is not available for your workspace.",
+        "templateCategoryPermissionDenied": "You no longer have permission to install everything in this template.",
+        "templateInvalidInboxBinding": "A selected inbox does not match the template.",
+        "templateInstallEnqueueFailed": "The install could not be queued.",
+        "templateInstallFailed": "The install failed. Try again.",
+        "templateInstallAbandoned": "The install did not finish in time and was closed.",
+        "templateInstallSuperseded": "A newer install of this template replaced this one.",
+        "workspaceOwnerBlocked": "The workspace owner's account is blocked."
+      },
+      "uninstalledBy": "{by, select, publisher {The publisher uninstalled this template.} installer {This template was uninstalled from this workspace.} other {This template was uninstalled.}}",
+      "uninstalledSummary": "{deleted} deleted, {kept} kept.",
+      "lastAttemptAt": "Ultimo tentativo"
     },
     "form": {
       "contents": "Contenuto del modello",
@@ -6720,8 +6815,20 @@
       "installBehavior": "Comportamento di installazione",
       "createInstallFolder": "Installa in una cartella dedicata",
       "createInstallFolderDescription": "Raggruppa ogni risorsa installata in una nuova cartella con il nome di questo modello.",
-      "defaultAutoUpdate": "Contrassegna le installazioni per gli aggiornamenti per impostazione predefinita",
-      "defaultAutoUpdateDescription": "Le nuove installazioni mostreranno un avviso di aggiornamento disponibile ogni volta che ripubblichi questo modello."
+      "defaultAutoUpdate": "Update new installs automatically by default",
+      "defaultAutoUpdateDescription": "Whenever you save this template with changed content, installs that follow auto-update are overwritten with the new content (copies the installer edited are backed up first). Installers can turn it off.",
+      "viewOnly": "Sola lettura",
+      "viewOnlyAll": "Imposta tutti i selezionati in sola lettura",
+      "includedAutomatically": {
+        "title": "Included automatically",
+        "hint": "Taken along because something you selected needs it. Read only.",
+        "rows": "{count, plural, one {# more item} other {# more items}}",
+        "kind": {
+          "folders": "Folders",
+          "inboxes": "Inboxes"
+        },
+        "dropped": "{count, plural, one {# riferimento a un elemento che il modello non include verrà rimosso durante l’installazione (un trigger che ne perde uno viene disattivato)} other {# riferimenti a elementi che il modello non include verranno rimossi durante l’installazione (un trigger che ne perde uno viene disattivato)}}"
+      }
     },
     "categories": {
       "flows": "Flussi",
@@ -6736,8 +6843,108 @@
       "keywords": "Parole chiave",
       "entryPointLinks": "Link dei punti di ingresso",
       "triggers": "Trigger",
-      "fbCommentAutomations": "Automazioni dei commenti Facebook",
-      "settings": "Impostazioni"
+      "fbCommentAutomations": "Automazioni dei commenti",
+      "settings": "Impostazioni",
+      "sequences": "Sequences",
+      "aiMcpServers": "MCP servers",
+      "aiFiles": "AI knowledge files",
+      "questionnaires": "Questionnaires",
+      "couponTopics": "Coupon topics",
+      "pipelines": "Pipeline"
+    },
+    "locked": {
+      "flowBanner": "Questo flusso è stato installato da un modello in sola lettura. Puoi vederlo ma non modificarlo.",
+      "badge": "Sola lettura",
+      "editorBanner": "This was installed from a view-only template. You can look at it but not edit it.",
+      "badgeHint": "Installed from a view-only template"
+    },
+    "channels": {
+      "messenger": "Messenger",
+      "instagram": "Instagram",
+      "instagramFacebook": "Instagram (Facebook login)",
+      "threads": "Threads",
+      "tiktok": "TikTok",
+      "whatsapp": "WhatsApp",
+      "telegram": "Telegram",
+      "zalo": "Zalo",
+      "webchat": "Webchat",
+      "line": "LINE",
+      "email": "Email"
+    },
+    "uninstall": {
+      "title": "Uninstall template",
+      "description": "The template removes everything it created in this workspace, including copies that were edited. Shared tags, fields and folders, items that existed before, and anything you built on top of a copy are kept.",
+      "loading": "Checking what will happen…",
+      "previewFailed": "Could not check what an uninstall would do.",
+      "failed": "Could not uninstall the template.",
+      "done": "Template uninstalled",
+      "confirm": "Uninstall",
+      "action": "Uninstall",
+      "deleted": "{count, plural, one {# item will be deleted} other {# items will be deleted}}",
+      "deletedDone": "{count, plural, one {# item was deleted} other {# items were deleted}}",
+      "keptModified": "{count, plural, one {# edited or unverified copy is kept} other {# edited or unverified copies are kept}}",
+      "keptShared": "{count, plural, one {# shared tag or field is kept} other {# shared tags and fields are kept}}",
+      "keptByPolicy": "{count, plural, one {# other item is kept} other {# other items are kept}}",
+      "keptHasDependents": "{count, plural, one {# copy is kept because something still uses it} other {# copies are kept because something still uses them}}",
+      "deletedModified": "{count, plural, one {# of them was edited by you: those edits are lost and can not be restored} other {# of them were edited by you: those edits are lost and can not be restored}}",
+      "keptLockedByOther": "{count, plural, one {# item is kept because another template installation still protects it} other {# items are kept because another template installation still protects them}}",
+      "confirmCheckbox": "I understand this deletes the items above and can not be undone",
+      "started": "Uninstall started",
+      "inProgress": "Uninstalling…",
+      "retry": "Retry uninstall",
+      "state": {
+        "pending": "Uninstall queued",
+        "running": "Uninstalling…",
+        "partial": "Uninstall incomplete, retry it",
+        "failed": "Uninstall failed, retry it",
+        "skipped": "Uninstall skipped: the workspace is blocked"
+      },
+      "deletedUnverified": "{count, plural, one {# of them can not be checked for edits: if you changed it, those changes are lost} other {# of them can not be checked for edits: if you changed them, those changes are lost}}",
+      "cancelAction": "Cancel uninstall",
+      "cancelled": "Uninstall cancelled: the remaining items are yours to use again",
+      "blockedByReference": "{count, plural, one {# item was not deleted because something you created still points at it: remove that reference, then retry the uninstall} other {# items were not deleted because something you created still points at them: remove those references, then retry the uninstall}}",
+      "keptPartlyRemoved": "{count, plural, one {# copy was kept after a blocked uninstall; history and duplicate-protection data may have been removed, so review it before switching it on} other {# copies were kept after a blocked uninstall; history and duplicate-protection data may have been removed, so review them before switching them on}}",
+      "keptInactiveForReview": "{count, plural, one {# copy was left inactive: its history and duplicate-protection data were removed, so review it before switching it on} other {# copies were left inactive: their history and duplicate-protection data were removed, so review them before switching them on}}",
+      "keptHistoryRemoved": "{count, plural, one {# copy was kept, but its history was removed (it has nothing to switch on): review it before relying on it} other {# copies were kept, but their history was removed (they have nothing to switch on): review them before relying on them}}",
+      "cancelledPartial": "{count, plural, one {# item is already being deleted and will finish; the rest was given back} other {# items are already being deleted and will finish; the rest was given back}}"
+    },
+    "warningCodes": {
+      "aiFileTooLarge": "Questo file di conoscenza è più grande di quanto un'installazione del modello possa copiare, quindi è stato saltato.",
+      "aiFileUnavailable": "Impossibile copiare questo file di conoscenza, quindi è stato saltato.",
+      "ambiguousSourceFieldToken": "Più campi di origine hanno questo nome, quindi le variabili che lo usano sono state lasciate invariate.",
+      "backupTooLarge": "Un elemento modificato localmente era troppo grande per il backup, quindi non è stato sovrascritto.",
+      "backupUnavailable": "Il backup di questo elemento non è più disponibile.",
+      "botFieldRenamed": "A bot field with this name and another type already exists, so a renamed field was created.",
+      "categoryPermissionDenied": "Non hai l’autorizzazione per questa categoria, quindi è stata saltata.",
+      "couponTopicExpired": "Questo argomento del coupon è già scaduto.",
+      "credentialRequired": "Aggiungi le credenziali per questo elemento prima di usarlo.",
+      "custom": "Un elemento referenziato non è stato trovato in questo spazio di lavoro, quindi il collegamento è stato rimosso.",
+      "customField": "Un elemento referenziato non è stato trovato in questo spazio di lavoro, quindi il collegamento è stato rimosso.",
+      "customFieldRenamed": "Esiste già un campo con questo nome e un altro tipo, quindi è stato creato un campo rinominato.",
+      "enqueueFailed": "Non è stato possibile mettere in coda l’elaborazione in background per questo elemento.",
+      "flow": "Un elemento referenziato non è stato trovato in questo spazio di lavoro, quindi il collegamento è stato rimosso.",
+      "flowInvalidStructure": "La struttura del Flow non è valida, quindi è stato saltato.",
+      "flowNotPublished": "Il Flow è stato installato come bozza e non è pubblicato.",
+      "flowSkippedRequiredReference": "Il Flow è stato saltato perché non è stato possibile risolvere un riferimento obbligatorio.",
+      "folder": "Un elemento referenziato non è stato trovato in questo spazio di lavoro, quindi il collegamento è stato rimosso.",
+      "inboxBindingRequired": "Scegli una posta in arrivo per questo canale; fino ad allora l’elemento resta inattivo.",
+      "integration": "Un elemento referenziato non è stato trovato in questo spazio di lavoro, quindi il collegamento è stato rimosso.",
+      "localModifiedOverwritten": "Un elemento modificato localmente è stato sovrascritto. È stato salvato un backup che può essere ripristinato.",
+      "name": "Non è stato trovato un nome libero per questo elemento, quindi è stato saltato.",
+      "noEmbeddingProvider": "In questo workspace non è configurato alcun provider di embedding, quindi i file di conoscenza sono stati saltati. Collega OpenAI o Gemini e reinstalla.",
+      "notUpdatable": "Questo tipo di elemento non viene ancora aggiornato automaticamente.",
+      "pipelineField": "Un elemento referenziato non è stato trovato in questo spazio di lavoro, quindi il collegamento è stato rimosso.",
+      "pipelineStage": "Un elemento referenziato non è stato trovato in questo spazio di lavoro, quindi il collegamento è stato rimosso.",
+      "postSelectionRequired": "Seleziona di nuovo il post: il post originale non ha potuto essere trasferito.",
+      "product": "Un elemento referenziato non è stato trovato in questo spazio di lavoro, quindi il collegamento è stato rimosso.",
+      "productCategory": "Un elemento referenziato non è stato trovato in questo spazio di lavoro, quindi il collegamento è stato rimosso.",
+      "questionImage": "Non è stato possibile copiare un’immagine.",
+      "quota": "È stato raggiunto un limite del piano, quindi l’elemento è stato saltato.",
+      "referenceRemoved": "Un riferimento non risolvibile è stato rimosso.",
+      "savedReply": "Un elemento referenziato non è stato trovato in questo spazio di lavoro, quindi il collegamento è stato rimosso.",
+      "savedReplyImage": "Non è stato possibile copiare un’immagine.",
+      "tag": "Un elemento referenziato non è stato trovato in questo spazio di lavoro, quindi il collegamento è stato rimosso.",
+      "unlisted": "Elemento non importato del tutto: {code}"
     }
   },
   "qrCodeGenerator": {
@@ -6950,7 +7157,34 @@
     "selectWorkspace": "Seleziona uno spazio di lavoro",
     "install": "Installa",
     "installStarted": "Installazione avviata",
-    "noEligibleWorkspaces": "Non hai uno spazio di lavoro idoneo per installare questo modello."
+    "noEligibleWorkspaces": "Non hai uno spazio di lavoro idoneo per installare questo modello.",
+    "alreadyInstalled": "This template is already installed in this workspace.",
+    "viewInstall": "View install",
+    "installAnotherCopy": "Install another copy",
+    "inboxesTitle": "Inboxes",
+    "inboxesHint": "This template was built around these inboxes. Choose which of your own inboxes to use; anything left out is installed switched off.",
+    "noInbox": "Don't connect — install switched off",
+    "noInboxAvailable": "No connected inbox on this channel",
+    "updateExisting": "Update installed copy",
+    "updateStarted": "Update started",
+    "publisherAccessLabel": "Let the publisher see this workspace's name and uninstall this template from it",
+    "publisherAccessHint": "They never see your data, contacts or email. If they uninstall, everything the template created is deleted, including copies you edited; anything you built on top of a copy is kept. You can turn this off later on the install page.",
+    "autoUpdateLabel": "Update automatically when the template changes",
+    "collisions": {
+      "title": "What the install will do here",
+      "loading": "Checking this workspace…",
+      "action": {
+        "create": "Created",
+        "reuse": "Reused",
+        "rename": "Renamed",
+        "bind": "Bound",
+        "unbound": "Left unbound"
+      },
+      "detail": {
+        "rename": "“{name}” already exists with another type, so the template’s one is added under a new name.",
+        "unbound": "“{name}” is left unconnected until you pick an inbox."
+      }
+    }
   },
   "extensionsMe": {
     "actions": {

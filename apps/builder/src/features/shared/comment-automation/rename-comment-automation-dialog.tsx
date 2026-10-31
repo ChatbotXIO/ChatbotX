@@ -19,6 +19,8 @@ import { useEffect } from "react"
 import { useForm } from "react-hook-form"
 import { toast } from "sonner"
 import z from "zod"
+import { LockedDialogFieldset } from "@/components/locked-dialog-fieldset"
+import { useIsLocked } from "@/features/templates/components/lock-badge"
 import type {
   CommentAutomationRow,
   CommentAutomationTranslationNamespace,
@@ -48,6 +50,7 @@ export function RenameCommentAutomationDialog({
   onSuccess?: () => void
 }) {
   const t = useTranslations()
+  const isLocked = useIsLocked(resource?.id)
 
   const form = useForm<RenameValues>({
     resolver: zodResolver(renameSchema),
@@ -92,7 +95,13 @@ export function RenameCommentAutomationDialog({
         <div className="flex items-center space-x-2">
           <Form {...form}>
             <form className="flex-1 space-y-4" onSubmit={handleSubmit}>
-              <InputField label={t("fields.name.label")} name="name" required />
+              <LockedDialogFieldset resourceId={resource?.id}>
+                <InputField
+                  label={t("fields.name.label")}
+                  name="name"
+                  required
+                />
+              </LockedDialogFieldset>
               <DialogFooter className="justify-end">
                 <DialogClose
                   render={
@@ -104,7 +113,9 @@ export function RenameCommentAutomationDialog({
                 <Button
                   className="ms-auto"
                   disabled={
-                    !form.formState.isValid || form.formState.isSubmitting
+                    isLocked ||
+                    !form.formState.isValid ||
+                    form.formState.isSubmitting
                   }
                   size="sm"
                   type="submit"

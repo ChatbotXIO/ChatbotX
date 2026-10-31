@@ -6,6 +6,11 @@ import {
   type CreateWebchatRequest,
   integrationWebchatService,
 } from "../../integration-webchat/service"
+import {
+  EMPTY_COLLECT_RESULT,
+  updateNotSupported,
+  verifyOwnedIds,
+} from "./shared"
 import type {
   PatchTask,
   ResourceAdapter,
@@ -48,15 +53,19 @@ const isChannelLimitReached = (error: unknown): boolean =>
  * `welcomeFlowId` is always deferred (webchats insert before flows in Phase
  * 1) and patched once `idMaps.flow` is complete.
  */
-export const webchatsAdapter: ResourceAdapter = {
+export const webchatsAdapter: ResourceAdapter<TemplateWebchatEntry> = {
   category: "webchats",
   providesKinds: [],
   consumesKinds: ["flow"],
   deferredKinds: ["flow"],
+  trackedKind: "integrationWebchat",
+  folderTypes: [],
+  minFormatVersion: 1,
+  sync: updateNotSupported("webchats"),
 
   async insert(
     ctx: TemplateInstallContext,
-    entries: readonly (Record<string, unknown> & { sourceId: string })[],
+    entries: readonly TemplateWebchatEntry[],
   ): Promise<PatchTask[]> {
     if (entries.length === 0) {
       return []
@@ -72,8 +81,7 @@ export const webchatsAdapter: ResourceAdapter = {
 
     const pendingWelcomeFlowBySourceId = new Map<string, string>()
 
-    for (const rawEntry of entries) {
-      const entry = rawEntry as unknown as TemplateWebchatEntry
+    for (const entry of entries) {
       const data: CreateWebchatRequest = {
         name: entry.name,
         auth: entry.auth ?? {},
@@ -152,34 +160,27 @@ export const webchatsAdapter: ResourceAdapter = {
   },
 
   collector: {
-    async resolveIds(workspaceId) {
+    async resolveIds(workspaceId, limit) {
       const rows = await db.query.integrationWebchatModel.findMany({
         where: { workspaceId },
         columns: { id: true },
+        limit,
       })
       return rows.map((row) => row.id)
     },
 
     async verifyOwnership(workspaceId, ids) {
-      const uniqueIds = [...new Set(ids)]
-      if (uniqueIds.length === 0) {
-        return []
-      }
-      const rows = await db.query.integrationWebchatModel.findMany({
-        where: { workspaceId, id: { in: uniqueIds } },
-        columns: { id: true },
-      })
-      return rows.map((row) => row.id)
+      return await verifyOwnedIds(ids, (uniqueIds) =>
+        db.query.integrationWebchatModel.findMany({
+          where: { workspaceId, id: { in: uniqueIds } },
+          columns: { id: true },
+        }),
+      )
     },
 
     async collect(workspaceId, ids) {
       if (ids.length === 0) {
-        return {
-          entries: [],
-          folderIds: [],
-          productCategoryIds: [],
-          hardDependencies: [],
-        }
+        return EMPTY_COLLECT_RESULT
       }
       const rows = await db.query.integrationWebchatModel.findMany({
         where: { workspaceId, id: { in: [...ids] } },

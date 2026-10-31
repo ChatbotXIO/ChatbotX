@@ -35,3 +35,18 @@ export function decodeBase62(input: string): string {
   }
   return result.toString()
 }
+
+/** URL-safe base64 of `text` (Unicode-safe: `btoa` alone rejects non-Latin1). */
+export function encodeBase64UrlText(text: string): string {
+  return btoa(encodeURIComponent(text))
+    .replaceAll("+", "-")
+    .replaceAll("/", "_")
+    .replaceAll("=", "")
+}
+
+/** Inverse of {@link encodeBase64UrlText}; throws on malformed input. */
+export function decodeBase64UrlText(encoded: string): string {
+  return decodeURIComponent(
+    atob(encoded.replaceAll("-", "+").replaceAll("_", "/")),
+  )
+}

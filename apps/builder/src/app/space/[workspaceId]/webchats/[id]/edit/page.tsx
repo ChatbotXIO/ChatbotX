@@ -1,9 +1,9 @@
 import { inboxService } from "@chatbotx.io/business"
 import { notFound } from "next/navigation"
 import { Suspense } from "react"
-
 import { UpdateWebchatForm } from "@/features/integration-webchat/components/update-webchat-form"
 import { findIntegrationWebchat } from "@/features/integration-webchat/queries"
+import { LockedEditorGuard } from "@/features/templates/components/locked-editor-guard"
 import { withWorkspaceIdAndIdSchema } from "@/features/workspaces/schema/resource"
 import { requireWorkspacePermission } from "@/lib/auth/require-workspace-permission"
 
@@ -28,10 +28,16 @@ export default async function WebchatEditPage({
 
   return (
     <Suspense fallback={<div>Loading...</div>}>
-      <UpdateWebchatForm
-        integrationWebchat={integrationWebchat}
-        markReadOnOutbound={inbox?.markReadOnOutbound ?? false}
-      />
+      <LockedEditorGuard
+        resourceId={data.id}
+        resourceKind="integrationWebchat"
+        workspaceId={data.workspaceId}
+      >
+        <UpdateWebchatForm
+          integrationWebchat={integrationWebchat}
+          markReadOnOutbound={inbox?.markReadOnOutbound ?? false}
+        />
+      </LockedEditorGuard>
     </Suspense>
   )
 }

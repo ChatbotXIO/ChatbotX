@@ -24,6 +24,7 @@ import { Loader2Icon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useEffect } from "react"
 import { toast } from "sonner"
+import { useIsLocked } from "@/features/templates/components/lock-badge"
 import { BotFieldValueInput } from "./account-field-value-input"
 import { updateBotFieldAction } from "./actions/update-bot-field.action"
 import { updateBotFieldRequest } from "./schema/action"
@@ -45,6 +46,8 @@ export function UpdateBotFieldDialog({
   onSuccess,
 }: UpdateBotFieldDialogProps) {
   const t = useTranslations()
+  const tLocked = useTranslations("templates.locked")
+  const isLocked = useIsLocked(botField?.id)
 
   const {
     form,
@@ -104,7 +107,25 @@ export function UpdateBotFieldDialog({
               className="flex-1 space-y-4"
               onSubmit={handleSubmitWithAction}
             >
-              <InputField label={t("fields.name.label")} name="name" required />
+              {isLocked && (
+                <div
+                  className="rounded-md border bg-muted px-4 py-2 text-muted-foreground text-sm"
+                  data-testid="template-locked-banner"
+                  role="status"
+                >
+                  {tLocked("editorBanner")}
+                </div>
+              )}
+              <fieldset
+                className="m-0 min-w-0 border-0 p-0"
+                disabled={isLocked}
+              >
+                <InputField
+                  label={t("fields.name.label")}
+                  name="name"
+                  required
+                />
+              </fieldset>
 
               <FormField
                 control={form.control}
@@ -120,10 +141,15 @@ export function UpdateBotFieldDialog({
                 )}
               />
 
-              <TextareaField
-                label={t("fields.description.label")}
-                name="description"
-              />
+              <fieldset
+                className="m-0 min-w-0 border-0 p-0"
+                disabled={isLocked}
+              >
+                <TextareaField
+                  label={t("fields.description.label")}
+                  name="description"
+                />
+              </fieldset>
 
               <div className="flex justify-end gap-4">
                 <Button

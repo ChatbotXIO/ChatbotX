@@ -23,6 +23,7 @@ import { useEffect, useMemo, useState } from "react"
 import { useFieldArray, useWatch } from "react-hook-form"
 import { toast } from "sonner"
 import { PlainTextEditorField } from "@/components/tiptap/plain-text-editor-field"
+import { useIsLocked } from "@/features/templates/components/lock-badge"
 import { client } from "@/lib/orpc/orpc"
 import { createAIMcpServerAction } from "./actions/create-ai-mcp-server.action"
 import { updateAIMcpServerAction } from "./actions/update-ai-mcp-server.action"
@@ -49,6 +50,8 @@ export function AIMcpServersCreate({
   onOpenChange: setControlledOpen,
 }: AIMcpServersCreateProps) {
   const t = useTranslations()
+  const tLocked = useTranslations("templates.locked")
+  const isLocked = useIsLocked(mode === "edit" ? initialData?.id : undefined)
 
   const [isMcpServerValidating, setIsMcpServerValidating] =
     useState<boolean>(false)
@@ -238,7 +241,18 @@ export function AIMcpServersCreate({
             className="flex flex-col space-y-6 py-4"
             onSubmit={handleSubmitWithAction}
           >
-            <InputField label={t("fields.name.label")} name="name" required />
+            {isLocked && (
+              <div
+                className="rounded-md border bg-muted px-4 py-2 text-muted-foreground text-sm"
+                data-testid="template-locked-banner"
+                role="status"
+              >
+                {tLocked("editorBanner")}
+              </div>
+            )}
+            <fieldset className="m-0 min-w-0 border-0 p-0" disabled={isLocked}>
+              <InputField label={t("fields.name.label")} name="name" required />
+            </fieldset>
             <InputField label={t("fields.url.label")} name="url" required />
             <SelectField
               label={t("fields.auth.label")}
@@ -290,7 +304,10 @@ export function AIMcpServersCreate({
               </div>
             )}
             {allTools.length > 0 && (
-              <div className="flex flex-col gap-4">
+              <fieldset
+                className="m-0 flex min-w-0 flex-col gap-4 border-0 p-0"
+                disabled={isLocked}
+              >
                 <div className="font-medium text-sm leading-none">
                   {t("aiMcpServers.tools.label")}
                 </div>
@@ -302,7 +319,7 @@ export function AIMcpServersCreate({
                     value: tool.name,
                   }))}
                 />
-              </div>
+              </fieldset>
             )}
             <DialogFooter className="gap-2 sm:space-x-0">
               <DialogClose

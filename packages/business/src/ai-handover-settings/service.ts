@@ -20,6 +20,8 @@ import { notFoundException, validationException } from "../errors"
 import { flowService } from "../flow/service"
 import { inboxService } from "../inbox/service"
 import { logger } from "../logger"
+import { assertReferencable } from "../template/installed-resource.service"
+import { withTemplateLockedTransaction } from "../template/template-resource-locks"
 import { workspaceService } from "../workspace/service"
 import { aiHandoverSettingsCacheTag } from "./cache-tag"
 import { isAiHandoverActive } from "./policy"
@@ -225,11 +227,25 @@ class AiHandoverSettingsService extends BaseService {
       }
     }
 
-    const row = await aiHandoverSettingsRepository.upsert({
-      ...input,
-      channel: inbox.channel,
-      timeRanges: timeRanges.data,
-      returnMessage,
+    // The goto flow's lock is held until the reference commits, so an uninstall
+    // that tombstoned it is seen (save refused) or sees this reference.
+    const row = await withTemplateLockedTransaction(async (tx) => {
+      if (gotoFlowId) {
+        await assertReferencable({
+          workspaceId,
+          parents: [{ kind: "flow", resourceId: gotoFlowId }],
+          tx,
+        })
+      }
+      return await aiHandoverSettingsRepository.upsert(
+        {
+          ...input,
+          channel: inbox.channel,
+          timeRanges: timeRanges.data,
+          returnMessage,
+        },
+        tx,
+      )
     })
     // The row is committed: a cache outage must not fail the save (callers
     // act on it, e.g. stopping a running enable), and the entry expires anyway.

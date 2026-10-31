@@ -36,6 +36,10 @@ import React, { use, useCallback, useMemo } from "react"
 import { toast } from "sonner"
 import { useInvalidateSequences } from "@/features/sequences/provider/sequence-hook"
 import type { listSequences } from "@/features/sequences/queries"
+import {
+  LockBadge,
+  LockedIdsProvider,
+} from "@/features/templates/components/lock-badge"
 import { ChangeFolderDialog } from "../folders/change-folder"
 import { updateSequenceAction } from "./actions/update-sequence.action"
 import { DeleteSequenceDialog } from "./delete-sequence-dialog"
@@ -114,12 +118,12 @@ export function SequencesTable({ workspaceId, promises }: SequencesTableProps) {
           />
         ),
         cell: ({ row }) => (
-          <div className="max-w-75 truncate">
+          <div className="flex max-w-75 items-center">
             <Tooltip>
               <TooltipTrigger
                 render={
                   <Link
-                    className="truncate"
+                    className="min-w-0 truncate"
                     href={`/space/${workspaceId}/sequences/${row.original.id}`}
                   >
                     {row.original.name ?? ""}
@@ -130,6 +134,7 @@ export function SequencesTable({ workspaceId, promises }: SequencesTableProps) {
                 <p>{row.original.name}</p>
               </TooltipContent>
             </Tooltip>
+            <LockBadge resourceId={row.original.id} />
           </div>
         ),
         meta: {
@@ -266,15 +271,21 @@ export function SequencesTable({ workspaceId, promises }: SequencesTableProps) {
 
   return (
     <>
-      <DataTable table={table}>
-        <DataTableToolbar table={table}>
-          <SequencesTableToolbarActions
-            setRowAction={setRowAction}
-            table={table}
-            workspaceId={workspaceId}
-          />
-        </DataTableToolbar>
-      </DataTable>
+      <LockedIdsProvider
+        resourceIds={data.map((row) => row.id)}
+        resourceKind="sequence"
+        workspaceId={workspaceId}
+      >
+        <DataTable table={table}>
+          <DataTableToolbar table={table}>
+            <SequencesTableToolbarActions
+              setRowAction={setRowAction}
+              table={table}
+              workspaceId={workspaceId}
+            />
+          </DataTableToolbar>
+        </DataTable>
+      </LockedIdsProvider>
 
       <RenameSequenceDialog
         onOpenChange={() => setRowAction(null)}

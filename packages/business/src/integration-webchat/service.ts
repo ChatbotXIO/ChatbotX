@@ -4,6 +4,7 @@ import {
   db,
   eq,
   findOrFail,
+  inArray,
   relationsFilterToSQL,
 } from "@chatbotx.io/database/client"
 import {
@@ -42,7 +43,13 @@ import { flowService } from "../flow/service"
 import { inboxService } from "../inbox/service"
 import { messageCleanupService } from "../message-cleanup/service"
 import { quotaEnforcementService } from "../quota-enforcement/service"
-import { assertDeletable } from "../template/installed-resource.service"
+import {
+  assertReferencable,
+  assertResourceEditable,
+  changedKeysOf,
+  withDeleteGuard,
+} from "../template/installed-resource.service"
+import { withTemplateLockedTransaction } from "../template/template-resource-locks"
 import { type WorkspaceQuotaConsumption, workspaceService } from "../workspace"
 import { brandWebchatMenus } from "./branding"
 
@@ -152,6 +159,14 @@ class IntegrationWebchatService extends BaseService {
     connection: ConnectionModel
   }> {
     const { workspaceId, ownerId, data } = props
+    if (data.welcomeFlowId) {
+      // `tx` is the caller's: its lock on the welcome flow lasts until commit.
+      await assertReferencable({
+        workspaceId,
+        parents: [{ kind: "flow", resourceId: data.welcomeFlowId }],
+        tx,
+      })
+    }
 
     // Guard against inserting an Inbox + IntegrationWebchat + disconnected
     // Connection row for a webchat the owner can never actually use: without
@@ -253,29 +268,54 @@ class IntegrationWebchatService extends BaseService {
       workspaceService.findById({ id: input.workspaceId }),
     ])
 
-    await assertDeletable({
-      workspaceId: input.workspaceId,
-      resourceKind: "integrationWebchat",
-      resourceIds: [input.id],
-    })
-
-    await db.transaction(async (tx) => {
-      await tx
-        .delete(integrationWebchatModel)
-        .where(eq(integrationWebchatModel.id, integrationWebchat.id))
-
-      await connectionStateService.disconnectInbox({
-        inboxId: integrationWebchat.inboxId,
-        ownerId: workspace.ownerId,
+    await withDeleteGuard(
+      {
         workspaceId: input.workspaceId,
-        tx,
-      })
-    })
+        targets: [
+          { resourceKind: "integrationWebchat", resourceIds: [input.id] },
+        ],
+      },
+      async (tx) => {
+        await this.deleteInTx(tx, {
+          workspaceId: input.workspaceId,
+          ids: [integrationWebchat.id],
+        })
+
+        await connectionStateService.disconnectInbox({
+          inboxId: integrationWebchat.inboxId,
+          ownerId: workspace.ownerId,
+          workspaceId: input.workspaceId,
+          tx,
+        })
+      },
+    )
 
     await this.audit(
       "disconnect",
       `disconnected the Webchat channel (#${integrationWebchat.id})`,
     )
+  }
+
+  /**
+   * The delete core (the webchat row only), shared with the template uninstall
+   * so there is one implementation. The inbox disconnect stays with the
+   * caller: inline in the public delete, a recorded post-commit effect in the
+   * uninstall. Returns the ids actually deleted.
+   */
+  async deleteInTx(
+    tx: DatabaseClient,
+    input: { workspaceId: string; ids: string[] },
+  ): Promise<string[]> {
+    const rows = await tx
+      .delete(integrationWebchatModel)
+      .where(
+        and(
+          eq(integrationWebchatModel.workspaceId, input.workspaceId),
+          inArray(integrationWebchatModel.id, input.ids),
+        ),
+      )
+      .returning({ id: integrationWebchatModel.id })
+    return rows.map((row) => String(row.id))
   }
 
   /**
@@ -533,13 +573,49 @@ class IntegrationWebchatService extends BaseService {
     tx?: DatabaseClient
   }): Promise<void> {
     if (!input.tx) {
-      await db.transaction(async (tx) => {
-        await this.update({ ...input, tx })
-      })
+      // The webchat and its welcome flow are locked before the stored row is
+      // read, so the diff that decides the guard is computed under the lock.
+      await withTemplateLockedTransaction(
+        async (tx) => {
+          await this.update({ ...input, tx })
+        },
+        {
+          workspaceId: input.workspaceId,
+          initialKeys: [
+            { kind: "integrationWebchat", resourceId: input.id },
+            ...(input.data.welcomeFlowId
+              ? [
+                  {
+                    kind: "flow" as const,
+                    resourceId: input.data.welcomeFlowId,
+                  },
+                ]
+              : []),
+          ],
+        },
+      )
       return
     }
 
     const { workspaceId, id, data, tx } = input
+
+    // Diffed against the stored row: the builder form submits every field, and
+    // enabling the widget or editing its domains is the installer's.
+    const existingWebchat = await tx.query.integrationWebchatModel.findFirst({
+      where: { id, workspaceId },
+    })
+    if (existingWebchat) {
+      await assertResourceEditable({
+        workspaceId,
+        resourceKind: "integrationWebchat",
+        resourceIds: [id],
+        changedKeys: changedKeysOf(existingWebchat, data),
+        referencedParents: data.welcomeFlowId
+          ? [{ kind: "flow", resourceId: data.welcomeFlowId }]
+          : [],
+        tx,
+      })
+    }
 
     // `welcomeFlowId` is normalized (falsy -> null) and validated as
     // workspace-owned here — not by callers — so the public API and the

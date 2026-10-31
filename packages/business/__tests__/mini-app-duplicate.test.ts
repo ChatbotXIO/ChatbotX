@@ -84,7 +84,7 @@ describe("miniAppService.duplicate", () => {
 
     expect(listNamesWithPrefix).toHaveBeenCalledWith({
       workspaceId: "ws-1",
-      prefix: "X",
+      prefix: "X - Copy",
     })
     expect(insertedNames()).toEqual(["X - Copy 4"])
   })

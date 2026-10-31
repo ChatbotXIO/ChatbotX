@@ -30,6 +30,7 @@ import Link from "next/link"
 import type { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import type { Dispatch, SetStateAction } from "react"
+import { LockBadge } from "@/features/templates/components/lock-badge"
 import { updateFlowAction } from "./actions/update-flow-action"
 import { downloadFlowExport } from "./lib/download-flow-export"
 import type { FlowResource } from "./schema/resource"
@@ -82,12 +83,12 @@ export function getFlowColumns({
         <DataTableColumnHeader column={column} title={t("fields.name.label")} />
       ),
       cell: ({ row }) => (
-        <div className="max-w-75 truncate">
+        <div className="flex max-w-75 items-center">
           <Tooltip>
             <TooltipTrigger
               render={
                 <Link
-                  className="max-w-75 truncate"
+                  className="min-w-0 max-w-75 truncate"
                   href={`/space/${row.original.workspaceId}/flows/${row.original.id}`}
                 >
                   {row.original.name}
@@ -98,6 +99,7 @@ export function getFlowColumns({
               <p>{row.original.name}</p>
             </TooltipContent>
           </Tooltip>
+          <LockBadge resourceId={row.original.id} />
         </div>
       ),
       meta: {

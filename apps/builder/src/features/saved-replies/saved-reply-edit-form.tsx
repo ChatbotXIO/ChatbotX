@@ -10,6 +10,8 @@ import { Loader2Icon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useEffect } from "react"
 import { toast } from "sonner"
+import { LockedDialogFieldset } from "@/components/locked-dialog-fieldset"
+import { useIsLocked } from "@/features/templates/components/lock-badge"
 import { editSavedReplyAction } from "./actions/edit-saved-reply.action"
 import { SavedReplyImagesField } from "./saved-reply-images-field"
 import { buildSavedReplyFormSchema } from "./schema/mutation"
@@ -29,6 +31,7 @@ const SavedReplyEditForm = ({
   onSaved,
 }: SavedReplyEditFormProps) => {
   const t = useTranslations()
+  const isLocked = useIsLocked(editingSavedReply.id)
 
   const {
     form,
@@ -81,30 +84,34 @@ const SavedReplyEditForm = ({
   return (
     <Form {...form}>
       <form className="space-y-4 p-4" onSubmit={handleSubmitWithAction}>
-        <InputField
-          label={t("fields.shortcut.label")}
-          name="shortcut"
-          placeholder="/hello"
-          required
-        />
+        <LockedDialogFieldset resourceId={editingSavedReply.id}>
+          <InputField
+            label={t("fields.shortcut.label")}
+            name="shortcut"
+            placeholder="/hello"
+            required
+          />
 
-        <TextareaField
-          label={t("fields.messages.label")}
-          name="text"
-          placeholder="..."
-        />
+          <TextareaField
+            label={t("fields.messages.label")}
+            name="text"
+            placeholder="..."
+          />
 
-        <SavedReplyImagesField
-          initialImages={editingSavedReply.images}
-          workspaceId={workspaceId}
-        />
+          <SavedReplyImagesField
+            initialImages={editingSavedReply.images}
+            workspaceId={workspaceId}
+          />
+        </LockedDialogFieldset>
 
         <div className="flex items-center justify-between pt-2">
           <Button onClick={onCancel} type="button" variant="outline">
             {t("actions.cancel")}
           </Button>
           <Button
-            disabled={!form.formState.isValid || form.formState.isSubmitting}
+            disabled={
+              isLocked || !form.formState.isValid || form.formState.isSubmitting
+            }
             type="submit"
           >
             {form.formState.isSubmitting ? (

@@ -19,6 +19,10 @@ import { useTranslations } from "next-intl"
 import { toast } from "sonner"
 import { useFlowSelectOptions } from "@/features/flows/provider/flow-hook"
 import { QrCodeLinkContent } from "@/features/qr-codes/qr-code-link-content"
+import {
+  LockedContent,
+  useIsEditorLocked,
+} from "@/features/templates/components/lock-badge"
 import { useTenantSettings } from "@/features/tenant"
 import { updateQrCodeAction } from "./actions/update-qr-code.action"
 import { QR_CODE_SIZE, stripQrPrefix } from "./constants"
@@ -33,6 +37,7 @@ export function UpdateQrCodeForm({
   qrCode: QrCodeResource
 }) {
   const t = useTranslations()
+  const isLocked = useIsEditorLocked()
   const router = useRouter()
   const flowOptions = useFlowSelectOptions()
   const { appUrl } = useTenantSettings()
@@ -94,24 +99,30 @@ export function UpdateQrCodeForm({
         <CardContent>
           <Form {...form}>
             <form className="space-y-6" onSubmit={handleSubmitWithAction}>
-              <InputField label={t("fields.name.label")} name="name" required />
+              <LockedContent className="space-y-6">
+                <InputField
+                  label={t("fields.name.label")}
+                  name="name"
+                  required
+                />
 
-              <ComboboxField
-                emptyText={t("actions.noRecordFound")}
-                label={t("fields.botResponse.label")}
-                name="flowId"
-                options={flowOptions}
-                placeholder={t("actions.pleaseSelect")}
-                required
-              />
+                <ComboboxField
+                  emptyText={t("actions.noRecordFound")}
+                  label={t("fields.botResponse.label")}
+                  name="flowId"
+                  options={flowOptions}
+                  placeholder={t("actions.pleaseSelect")}
+                  required
+                />
 
-              <InputField
-                label={t("fields.size.label")}
-                max={QR_CODE_SIZE.MAX}
-                min={QR_CODE_SIZE.MIN}
-                name="size"
-                type="number"
-              />
+                <InputField
+                  label={t("fields.size.label")}
+                  max={QR_CODE_SIZE.MAX}
+                  min={QR_CODE_SIZE.MIN}
+                  name="size"
+                  type="number"
+                />
+              </LockedContent>
 
               <div className="flex justify-end gap-2">
                 <Button
@@ -123,7 +134,9 @@ export function UpdateQrCodeForm({
                 </Button>
                 <Button
                   disabled={
-                    !form.formState.isValid || form.formState.isSubmitting
+                    isLocked ||
+                    !form.formState.isValid ||
+                    form.formState.isSubmitting
                   }
                   type="submit"
                 >

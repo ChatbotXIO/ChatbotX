@@ -56,8 +56,20 @@ vi.mock("@chatbotx.io/database/utils", () => ({
 
 vi.mock("@chatbotx.io/utils", () => ({ createId: () => "id-1" }))
 vi.mock("date-fns-tz", () => ({ formatInTimeZone: () => "00:00" }))
-vi.mock("../src/template/installed-resource.service", () => ({
-  assertDeletable: vi.fn(),
+// Run the locked transaction against the same mocked client the test asserts on.
+vi.mock("../src/template/template-resource-locks", async () => {
+  const { db } = await import("@chatbotx.io/database/client")
+  return {
+    withTemplateLockedTransaction: (run: (tx: unknown) => unknown) => run(db),
+  }
+})
+
+vi.mock("../src/template/installed-resource.service", async () => ({
+  ...(await import("./helpers/template-guard-mocks")).templateGuardMocks({
+    assertDeletable: vi.fn(),
+    assertResourceEditable: vi.fn(),
+  }),
+  changedKeysOf: vi.fn(() => []),
 }))
 vi.mock("../src/flow/service", () => ({ flowService: { exists: vi.fn() } }))
 

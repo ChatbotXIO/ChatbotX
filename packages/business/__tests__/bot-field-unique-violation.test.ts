@@ -23,8 +23,25 @@ class UniqueViolationError extends Error {
   cause = { code: "23505" }
 }
 
+// Run the locked transaction against the same mocked client the test asserts on.
+vi.mock("../src/template/template-resource-locks", async () => {
+  const { db } = await import("@chatbotx.io/database/client")
+  return {
+    withTemplateLockedTransaction: (run: (tx: unknown) => unknown) => run(db),
+  }
+})
+
+// The template lock guard has its own suite; these tests cover the service.
+vi.mock("../src/template/installed-resource.service", () => ({
+  changedKeysOf: vi.fn(() => []),
+  assertDeletable: vi.fn(),
+  assertResourceEditable: vi.fn(),
+}))
+
 vi.mock("@chatbotx.io/database/client", () => ({
+  sql: vi.fn(),
   db: {
+    execute: vi.fn(),
     query: {
       botFieldModel: { findFirst: mocks.findFirst },
     },

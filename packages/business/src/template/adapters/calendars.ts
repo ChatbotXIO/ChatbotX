@@ -6,6 +6,12 @@ import type {
 } from "@chatbotx.io/database/partials"
 import { appointmentCalendarRepository } from "@chatbotx.io/database/repositories"
 import { createId } from "@chatbotx.io/utils"
+import {
+  EMPTY_COLLECT_RESULT,
+  resolveRef,
+  updateNotSupported,
+  verifyOwnedIds,
+} from "./shared"
 import type {
   PatchTask,
   ResourceAdapter,
@@ -66,15 +72,19 @@ type TemplateCalendarEntry = {
  * `confirmationFlowId`/`cancellationFlowId`/reminders all point at flows,
  * which insert later in Phase 1 — deferred to the returned `PatchTask`.
  */
-export const calendarsAdapter: ResourceAdapter = {
+export const calendarsAdapter: ResourceAdapter<TemplateCalendarEntry> = {
   category: "calendars",
   providesKinds: ["calendar"],
   consumesKinds: ["flow"],
   deferredKinds: ["flow"],
+  trackedKind: "calendar",
+  folderTypes: [],
+  minFormatVersion: 1,
+  sync: updateNotSupported("calendars"),
 
   async insert(
     ctx: TemplateInstallContext,
-    entries: readonly (Record<string, unknown> & { sourceId: string })[],
+    entries: readonly TemplateCalendarEntry[],
   ): Promise<PatchTask[]> {
     if (!ctx.idMaps.calendar) {
       ctx.idMaps.calendar = new Map()
@@ -87,8 +97,7 @@ export const calendarsAdapter: ResourceAdapter = {
       reminders: TemplateCalendarReminder[]
     }> = []
 
-    for (const rawEntry of entries) {
-      const entry = rawEntry as unknown as TemplateCalendarEntry
+    for (const entry of entries) {
       if (entry.externalConnectionId) {
         ctx.warn({
           category: "calendars",
@@ -165,38 +174,31 @@ export const calendarsAdapter: ResourceAdapter = {
   },
 
   collector: {
-    async resolveIds(workspaceId) {
+    async resolveIds(workspaceId, limit) {
       const rows = await db.query.appointmentCalendarModel.findMany({
         where: { workspaceId, deletedAt: { isNull: true as const } },
         columns: { id: true },
+        limit,
       })
       return rows.map((row) => row.id)
     },
 
     async verifyOwnership(workspaceId, ids) {
-      const uniqueIds = [...new Set(ids)]
-      if (uniqueIds.length === 0) {
-        return []
-      }
-      const rows = await db.query.appointmentCalendarModel.findMany({
-        where: {
-          workspaceId,
-          id: { in: uniqueIds },
-          deletedAt: { isNull: true as const },
-        },
-        columns: { id: true },
-      })
-      return rows.map((row) => row.id)
+      return await verifyOwnedIds(ids, (uniqueIds) =>
+        db.query.appointmentCalendarModel.findMany({
+          where: {
+            workspaceId,
+            id: { in: uniqueIds },
+            deletedAt: { isNull: true as const },
+          },
+          columns: { id: true },
+        }),
+      )
     },
 
     async collect(workspaceId, ids) {
       if (ids.length === 0) {
-        return {
-          entries: [],
-          folderIds: [],
-          productCategoryIds: [],
-          hardDependencies: [],
-        }
+        return EMPTY_COLLECT_RESULT
       }
       const rows = await db.query.appointmentCalendarModel.findMany({
         where: { workspaceId, id: { in: [...ids] } },
@@ -268,22 +270,13 @@ const resolveFlowRef = (
   calendarId: string,
   field: string,
   flowSourceId: string | null,
-): string | null => {
-  if (!flowSourceId) {
-    return null
-  }
-  const targetId = ctx.idMaps.flow?.get(flowSourceId)
-  if (!targetId) {
-    ctx.warn({
-      category: "calendars",
-      entityKind: "flow",
-      path: `calendars.${calendarId}.${field}`,
-      value: flowSourceId,
-    })
-    return null
-  }
-  return targetId
-}
+): string | null =>
+  resolveRef(ctx, {
+    category: "calendars",
+    kind: "flow",
+    path: `calendars.${calendarId}.${field}`,
+    sourceRef: flowSourceId,
+  })
 
 const patchCalendarFlowRefs = async (
   ctx: TemplateInstallContext,

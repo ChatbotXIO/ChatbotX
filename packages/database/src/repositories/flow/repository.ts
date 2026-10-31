@@ -2,6 +2,7 @@ import { type DatabaseClient, db, relationsFilterToSQL } from "../../client"
 import { rootFolderId } from "../../partials"
 import { flowModel } from "../../schema"
 import {
+  escapeLikePattern,
   likeContains,
   parseOrderByAsObject,
   parsePagination,
@@ -30,6 +31,21 @@ const buildWhere = (input: FlowListInput) => ({
 })
 
 export const flowRepository = {
+  /** Names of the workspace's flows starting with `prefix` (taken as plain text). */
+  async listNamesWithPrefix(
+    input: { workspaceId: string; prefix: string },
+    tx: DatabaseClient = db,
+  ): Promise<string[]> {
+    const rows = await tx.query.flowModel.findMany({
+      where: {
+        workspaceId: input.workspaceId,
+        name: { like: `${escapeLikePattern(input.prefix)}%` },
+      },
+      columns: { name: true },
+    })
+    return rows.map((row) => row.name)
+  },
+
   /** Whether a flow with this id exists in the workspace (id-only read). */
   async existsInWorkspace(
     input: { workspaceId: string; id: string },

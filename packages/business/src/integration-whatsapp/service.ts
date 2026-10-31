@@ -39,6 +39,8 @@ import {
   resolveCapiScopeStateForChannel,
 } from "../meta-conversions/service"
 import { platformCredentialService } from "../platform-credential/service"
+import { assertReferencable } from "../template/installed-resource.service"
+import { withTemplateLockedTransaction } from "../template/template-resource-locks"
 import { whatsappBusinessAccountService } from "../whatsapp-business-account/service"
 import { workspaceService } from "../workspace/service"
 import type { WhatsappAuthValue } from "./auth-schema"
@@ -862,10 +864,20 @@ class IntegrationWhatsappService extends BaseService {
         throw notFoundException("Handover flow not found")
       }
     }
-    const row = await integrationWhatsappRepository.updateHandoverResumeFlow({
-      id,
-      workspaceId,
-      handoverResumeFlowId,
+    // The flow's lock is held until the reference commits, so an uninstall that
+    // tombstoned it is seen (and this write refused) or sees this reference.
+    const row = await withTemplateLockedTransaction(async (tx) => {
+      if (handoverResumeFlowId) {
+        await assertReferencable({
+          workspaceId,
+          parents: [{ kind: "flow", resourceId: handoverResumeFlowId }],
+          tx,
+        })
+      }
+      return await integrationWhatsappRepository.updateHandoverResumeFlow(
+        { id, workspaceId, handoverResumeFlowId },
+        tx,
+      )
     })
     if (!row) {
       throw notFoundException("WhatsApp integration not found")

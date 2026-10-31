@@ -19,6 +19,10 @@ import { useTranslations } from "next-intl"
 import { useEffect, useState } from "react"
 import { useFieldArray } from "react-hook-form"
 import { toast } from "sonner"
+import {
+  LockedContent,
+  useIsEditorLocked,
+} from "@/features/templates/components/lock-badge"
 import { useFlowSelectOptions } from "../flows/provider/flow-hook"
 import { updateAutomatedResponseAction } from "./actions/update-automated-response-action"
 import { useKeywordFieldNavigation } from "./hooks/use-keyword-field-navigation"
@@ -35,6 +39,7 @@ export default function EditAutomatedResponseForm(
 ) {
   const { workspaceId, automatedResponse, type } = props
   const t = useTranslations()
+  const isLocked = useIsEditorLocked()
   const router = useRouter()
 
   const flowOptions = useFlowSelectOptions()
@@ -113,110 +118,113 @@ export default function EditAutomatedResponseForm(
   return (
     <Form {...form}>
       <form className="flex-1 space-y-4" onSubmit={handleSubmitWithAction}>
-        <div className="flex flex-col gap-2">
-          <Label className="flex-1" htmlFor="keywords">
-            {t("fields.keywords.label")}
-          </Label>
+        <LockedContent className="space-y-4">
           <div className="flex flex-col gap-2">
-            {keywords.map((_, index) => (
-              // biome-ignore lint/suspicious/noArrayIndexKey: wip
-              <div className="flex gap-2" key={index}>
-                <InputField
-                  formItemClassName="w-1/2"
-                  name={`keywords.${index}.value`}
-                  onKeyDown={(event) => {
-                    handleKeywordInputKeyDown(event, index)
-                  }}
-                />
-                {index === 0 ? (
-                  <div className="w-12">&nbsp;</div>
-                ) : (
-                  <Button
-                    onClick={() => {
-                      removeKeywords(index)
+            <Label className="flex-1" htmlFor="keywords">
+              {t("fields.keywords.label")}
+            </Label>
+            <div className="flex flex-col gap-2">
+              {keywords.map((_, index) => (
+                // biome-ignore lint/suspicious/noArrayIndexKey: wip
+                <div className="flex gap-2" key={index}>
+                  <InputField
+                    formItemClassName="w-1/2"
+                    name={`keywords.${index}.value`}
+                    onKeyDown={(event) => {
+                      handleKeywordInputKeyDown(event, index)
                     }}
-                    variant="ghost"
-                  >
-                    <XIcon />
-                  </Button>
-                )}
-              </div>
-            ))}
+                  />
+                  {index === 0 ? (
+                    <div className="w-12">&nbsp;</div>
+                  ) : (
+                    <Button
+                      onClick={() => {
+                        removeKeywords(index)
+                      }}
+                      variant="ghost"
+                    >
+                      <XIcon />
+                    </Button>
+                  )}
+                </div>
+              ))}
+            </div>
+            <FormMessage />
+            <div>
+              <Button
+                onClick={() => {
+                  appendKeywords({ value: "" })
+                }}
+                type="button"
+                variant="ghost"
+              >
+                <PlusCircleIcon /> {t("actions.addMore")}
+              </Button>
+            </div>
           </div>
-          <FormMessage />
-          <div>
-            <Button
-              onClick={() => {
-                appendKeywords({ value: "" })
+
+          {/* Bot response block */}
+          {/* Bot response block */}
+          <div className="mt-4 flex items-center gap-4">
+            <Label className="font-bold" htmlFor="replyMode">
+              {t("fields.botResponse.label")}
+            </Label>
+
+            <ToggleGroup
+              defaultValue={[responseMode]}
+              onValueChange={(vals) => {
+                const val = vals[0]
+                if (val) {
+                  setResponseMode(val)
+                  if (val === responseModes.enum.flowId) {
+                    setValue("text", "")
+                  }
+                  if (val === responseModes.enum.text) {
+                    setValue("flowId", "")
+                  }
+                }
               }}
-              type="button"
-              variant="ghost"
+              value={[responseMode]}
+              variant="outline"
             >
-              <PlusCircleIcon /> {t("actions.addMore")}
-            </Button>
+              <ToggleGroupItem
+                aria-label="Send flow"
+                value={responseModes.enum.flowId}
+              >
+                {t("fields.flow.label")}
+              </ToggleGroupItem>
+              <ToggleGroupItem
+                aria-label="Send text"
+                value={responseModes.enum.text}
+              >
+                {t("fields.text.label")}
+              </ToggleGroupItem>
+            </ToggleGroup>
           </div>
-        </div>
 
-        {/* Bot response block */}
-        {/* Bot response block */}
-        <div className="mt-4 flex items-center gap-4">
-          <Label className="font-bold" htmlFor="replyMode">
-            {t("fields.botResponse.label")}
-          </Label>
+          {responseMode === responseModes.enum.flowId && (
+            <ComboboxField
+              emptyText={t("actions.noRecordFound")}
+              label={t("fields.flowId.label")}
+              name="flowId"
+              options={flowOptions}
+              placeholder={t("actions.pleaseSelect")}
+              required
+            />
+          )}
 
-          <ToggleGroup
-            defaultValue={[responseMode]}
-            onValueChange={(vals) => {
-              const val = vals[0]
-              if (val) {
-                setResponseMode(val)
-                if (val === responseModes.enum.flowId) {
-                  setValue("text", "")
-                }
-                if (val === responseModes.enum.text) {
-                  setValue("flowId", "")
-                }
-              }
-            }}
-            value={[responseMode]}
-            variant="outline"
-          >
-            <ToggleGroupItem
-              aria-label="Send flow"
-              value={responseModes.enum.flowId}
-            >
-              {t("fields.flow.label")}
-            </ToggleGroupItem>
-            <ToggleGroupItem
-              aria-label="Send text"
-              value={responseModes.enum.text}
-            >
-              {t("fields.text.label")}
-            </ToggleGroupItem>
-          </ToggleGroup>
-        </div>
-
-        {responseMode === responseModes.enum.flowId && (
-          <ComboboxField
-            emptyText={t("actions.noRecordFound")}
-            label={t("fields.flowId.label")}
-            name="flowId"
-            options={flowOptions}
-            placeholder={t("actions.pleaseSelect")}
-            required
-          />
-        )}
-
-        {responseMode === responseModes.enum.text && (
-          <InputField label={t("fields.text.label")} name="text" required />
-        )}
-
+          {responseMode === responseModes.enum.text && (
+            <InputField label={t("fields.text.label")} name="text" required />
+          )}
+        </LockedContent>
         <div className="flex justify-end gap-4">
           <Button onClick={() => router.back()} type="button" variant="ghost">
             {t("actions.cancel")}
           </Button>
           <Button
-            disabled={!form.formState.isValid || form.formState.isSubmitting}
+            disabled={
+              isLocked || !form.formState.isValid || form.formState.isSubmitting
+            }
             type="submit"
           >
             {form.formState.isSubmitting && (

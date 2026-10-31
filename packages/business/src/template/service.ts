@@ -1,55 +1,79 @@
-import { db, eq } from "@chatbotx.io/database/client"
-import type {
-  TemplateCategory,
-  TemplatePermissions,
-  TemplateSelection,
-} from "@chatbotx.io/database/partials"
-import { templateSelectableResourceRepository } from "@chatbotx.io/database/repositories"
+import type { TemplateInstallationStatus } from "@chatbotx.io/database/partials"
 import {
-  templateInstallationModel,
-  templateModel,
-} from "@chatbotx.io/database/schema"
+  type PublisherInstallationRow,
+  type TemplateInstallationPageRow,
+  type TemplateListRow,
+  templateInstallationRepository,
+  templateRepository,
+  templateVersionRepository,
+} from "@chatbotx.io/database/repositories"
 import type {
   TemplateInstallationModel,
   TemplateModel,
 } from "@chatbotx.io/database/types"
 import { parseTemplateExport } from "@chatbotx.io/flow-config"
-import { createId } from "@chatbotx.io/utils"
+import { enqueueFanOutTemplateUpdate } from "@chatbotx.io/worker-config"
 import { ChatbotXException, notFoundException } from "../errors"
-import { workspaceService } from "../workspace"
+import { logger } from "../logger"
+import { categoryCountsOfPayload } from "./category-counts"
+import {
+  assertTemplateInstallable,
+  type InstallableTemplate,
+} from "./installability"
+import {
+  assertInstallerMayInstall,
+  resolveInstallerActor,
+} from "./installer-actor"
+import {
+  assertCanManageTemplates,
+  assertCanReadTemplates,
+  type TemplateActor,
+} from "./permissions"
+import {
+  decodePublisherCursor,
+  encodePublisherCursor,
+  PUBLISHER_PAGE_SIZE,
+} from "./publisher-cursor"
+import {
+  decodeSelectableCursor,
+  encodeSelectableCursor,
+} from "./selectable-cursor"
+import {
+  type ListSelectableResourcesResult,
+  listSelectableResources,
+} from "./selectable-resources"
+import { isShareLive } from "./share-live"
 import { generateShareToken } from "./share-token"
-import { buildTemplateSnapshot } from "./snapshot.service"
+import { templateSourceMissingException } from "./template-errors"
+import { type SaveTemplateInput, saveTemplate } from "./template-save"
 
-const SELECTABLE_RESOURCE_PAGE_SIZE = 100
-const SELECTABLE_RESOURCE_ALL_IDS_CAP = 1000
+export { categoryCountsOfPayload } from "./category-counts"
+export {
+  type InstallableTemplate,
+  templateCrossTenantInstallException,
+  templateShareDisabledException,
+} from "./installability"
+export { PUBLISHER_PAGE_SIZE } from "./publisher-cursor"
+export type {
+  ListSelectableResourcesResult,
+  SelectableResourceItem,
+} from "./selectable-resources"
 
-export type SelectableResourceItem = {
-  id: string
-  name: string
-  folderName?: string
-}
+export const INSTALLATIONS_PAGE_SIZE = 50
 
-export type ListSelectableResourcesResult = {
-  items: SelectableResourceItem[]
+/** A template row as the list page needs it: no payload, selection, share token or hash. */
+export type TemplateListItem = TemplateListRow
+
+/** `activeSync` is true while a sync of the installation is queued or running. */
+export type TemplateInstallationListItem = TemplateInstallationPageRow
+
+export type TemplateInstallationPage = {
+  items: TemplateInstallationListItem[]
   nextCursor: string | null
-  total: number
-  allIds?: string[]
 }
-
-export const templateShareDisabledException = () =>
-  new ChatbotXException(
-    "This share link is no longer available",
-    "templateShareDisabled",
-  )
-
-export const templateCrossTenantInstallException = () =>
-  new ChatbotXException(
-    "This template is not available for your workspace",
-    "templateCrossTenantInstall",
-  )
 
 /**
- * Explicit projection for the public share-token landing page — a
+ * Explicit projection for the public share-token landing page: a
  * hard-whitelisted column set, never a spread of the row. The page is
  * internet-reachable with no session, so leaking `workspaceId`, internal
  * resource ids, or anything not in this list would be a real information
@@ -63,10 +87,11 @@ export type PublicTemplateProjection = {
   youtubeVideoId: string | null
   testLink: string | null
   categoryCounts: TemplateModel["categoryCounts"]
-  tenantId: string
 }
 
-const toPublicProjection = (row: TemplateModel): PublicTemplateProjection => ({
+export const toPublicProjection = (
+  row: TemplateModel,
+): PublicTemplateProjection => ({
   name: row.name,
   description: row.description,
   imageUrl: row.imageUrl,
@@ -74,27 +99,61 @@ const toPublicProjection = (row: TemplateModel): PublicTemplateProjection => ({
   youtubeVideoId: row.youtubeVideoId,
   testLink: row.testLink,
   categoryCounts: row.categoryCounts,
-  tenantId: row.tenantId,
 })
 
+/** A template as the editor and the API need it: the selection, never the snapshot `payload`. */
+export type TemplateDetail = Omit<TemplateModel, "payload">
+
+/** The default and the largest page of the public template list. */
+export const TEMPLATE_LIST_MAX_LIMIT = 100
+
 class TemplateService {
-  async list(workspaceId: string): Promise<TemplateModel[]> {
-    return await db.query.templateModel.findMany({
-      where: { workspaceId, deletedAt: { isNull: true as const } },
-      orderBy: { createdAt: "desc" },
-    })
+  /** Never returns `payload`/`selection`/`shareToken`; see {@link TemplateListItem}. */
+  async list(workspaceId: string): Promise<TemplateListItem[]> {
+    return await templateRepository.listWithInstallCounts(workspaceId)
   }
 
-  async findByIdOrFail(input: {
+  /**
+   * One keyset page of {@link list}: newest first, `limit` at most
+   * {@link TEMPLATE_LIST_MAX_LIMIT}. `nextCursor` is null on the last page.
+   * A malformed cursor is an `invalidCursor` error.
+   */
+  async listPage(input: {
+    workspaceId: string
+    cursor?: string | null
+    limit?: number
+  }): Promise<{ items: TemplateListItem[]; nextCursor: string | null }> {
+    const decoded = decodeSelectableCursor(input.cursor, "timestamp")
+    if (decoded.kind === "offset") {
+      throw new ChatbotXException("Invalid cursor", "invalidCursor", 400)
+    }
+    const limit = Math.min(
+      Math.max(input.limit ?? TEMPLATE_LIST_MAX_LIMIT, 1),
+      TEMPLATE_LIST_MAX_LIMIT,
+    )
+    const page = await templateRepository.listWithInstallCountsPage({
+      workspaceId: input.workspaceId,
+      limit,
+      after: decoded.kind === "after" ? decoded.after : undefined,
+    })
+    const lastId = page.rows.at(-1)?.id
+    return {
+      items: page.rows,
+      nextCursor:
+        page.hasMore && page.lastKey && lastId
+          ? encodeSelectableCursor({ key: page.lastKey, id: lastId })
+          : null,
+    }
+  }
+
+  /** One live template without its (multi-MB) snapshot payload. */
+  async getDetailOrFail(input: {
     workspaceId: string
     templateId: string
-  }): Promise<TemplateModel> {
-    const row = await db.query.templateModel.findFirst({
-      where: {
-        id: input.templateId,
-        workspaceId: input.workspaceId,
-        deletedAt: { isNull: true as const },
-      },
+  }): Promise<TemplateDetail> {
+    const row = await templateRepository.findLiveDetail({
+      id: input.templateId,
+      workspaceId: input.workspaceId,
     })
     if (!row) {
       throw notFoundException("Template not found")
@@ -102,40 +161,124 @@ class TemplateService {
     return row
   }
 
-  async listInstallations(
-    workspaceId: string,
-  ): Promise<TemplateInstallationModel[]> {
-    return await db.query.templateInstallationModel.findMany({
-      where: { workspaceId },
-      orderBy: { createdAt: "desc" },
-    })
-  }
-
   /**
-   * Flips an installer's own override of the publisher's
-   * `defaultAutoUpdate` default — independent of the template-wide setting,
-   * mirroring how `allowEdit`/`allowDelete` are copied once at install time
-   * but never re-synced afterward.
+   * Install figures for the publisher: counts only, never a target workspace.
+   * Managing templates is required, as for every other publisher-side read.
    */
-  async updateInstallationAutoUpdate(input: {
+  async getInstallAnalytics(input: {
     workspaceId: string
-    installationId: string
-    autoUpdate: boolean
-  }): Promise<void> {
-    const existing = await db.query.templateInstallationModel.findFirst({
-      where: { id: input.installationId, workspaceId: input.workspaceId },
-    })
-    if (!existing) {
-      throw notFoundException("Template installation not found")
-    }
-    await db
-      .update(templateInstallationModel)
-      .set({ autoUpdate: input.autoUpdate })
-      .where(eq(templateInstallationModel.id, input.installationId))
+    templateId: string
+    actor: TemplateActor
+  }) {
+    assertCanReadTemplates(input.actor)
+    await this.getDetailOrFail(input)
+    return await templateRepository.installAnalytics(input.templateId)
   }
 
   /**
-   * Resolves a template by share token only — NEVER by id, and every
+   * Replaces the share token, so every previously shared link stops working.
+   * The share switch and expiry are left as they are.
+   */
+  async rotateShareToken(input: {
+    workspaceId: string
+    templateId: string
+    actor: TemplateActor
+  }): Promise<TemplateModel> {
+    assertCanManageTemplates(input.actor)
+    const updated = await templateRepository.rotateShareToken({
+      id: input.templateId,
+      workspaceId: input.workspaceId,
+      shareToken: generateShareToken(),
+    })
+    if (!updated) {
+      throw notFoundException("Template not found")
+    }
+    return updated
+  }
+
+  async findByIdOrFail(input: {
+    workspaceId: string
+    templateId: string
+  }): Promise<TemplateModel> {
+    const row = await templateRepository.findLive({
+      id: input.templateId,
+      workspaceId: input.workspaceId,
+    })
+    if (!row) {
+      throw notFoundException("Template not found")
+    }
+    return row
+  }
+
+  /**
+   * One keyset page of the workspace's installations, newest first. The row
+   * shape is a strict projection: `warnings`, `permissions` and the raw
+   * `errorMessage` stay server-side.
+   */
+  async listInstallationsPage(input: {
+    workspaceId: string
+    status?: TemplateInstallationStatus
+    activeOnly?: boolean
+    beforeId?: string
+    limit?: number
+  }): Promise<TemplateInstallationPage> {
+    const limit = input.limit ?? INSTALLATIONS_PAGE_SIZE
+    const rows = await templateInstallationRepository.listPage({
+      workspaceId: input.workspaceId,
+      status: input.status,
+      activeOnly: input.activeOnly,
+      beforeId: input.beforeId,
+      limit,
+    })
+    const pageRows = rows.slice(0, limit)
+    return {
+      items: pageRows,
+      nextCursor: rows.length > limit ? (pageRows.at(-1)?.id ?? null) : null,
+    }
+  }
+
+  /**
+   * The workspaces that installed one of this workspace's templates, grouped
+   * per installer (one row however many copies they hold). Shows only the
+   * target workspace's name: no ids, emails or contents, and the cursor and
+   * `publisherRef` are opaque.
+   */
+  async listPublisherInstallations(input: {
+    workspaceId: string
+    templateId: string
+    actor: TemplateActor
+    search?: string
+    cursor?: string
+    limit?: number
+  }): Promise<{
+    items: PublisherInstallationRow[]
+    nextCursor: string | null
+  }> {
+    assertCanReadTemplates(input.actor)
+    await this.findByIdOrFail({
+      workspaceId: input.workspaceId,
+      templateId: input.templateId,
+    })
+    const limit = Math.min(input.limit ?? PUBLISHER_PAGE_SIZE, 100)
+    const rows = await templateRepository.listPublisherRows({
+      templateId: input.templateId,
+      search: input.search?.trim() || undefined,
+      after: decodePublisherCursor(input.cursor),
+      limit: limit + 1,
+    })
+    const page = rows.slice(0, limit)
+    const last = page.at(-1)
+    return {
+      items: page,
+      nextCursor:
+        rows.length > limit && last?.lastInstalledAt
+          ? encodePublisherCursor(last.lastInstalledAt, last.publisherRef)
+          : null,
+    }
+  }
+
+  /**
+   * Resolves a template by share token only, NEVER by id, and every
    * failure mode (bad token, disabled share, expired) collapses into the
    * same generic "not available" outcome so the endpoint is never a
    * token-existence oracle. Mirrors `/unsubscribe`'s single try/catch shape.
@@ -143,231 +286,120 @@ class TemplateService {
   async findPublicByShareToken(
     shareToken: string,
   ): Promise<PublicTemplateProjection | undefined> {
-    const row = await db.query.templateModel.findFirst({
-      where: { shareToken, deletedAt: { isNull: true as const } },
-    })
-    if (!row?.shareEnabled) {
-      return
-    }
-    if (row.shareExpiresAt && row.shareExpiresAt.getTime() < Date.now()) {
+    const row = await templateRepository.findLiveByShareToken(shareToken)
+    if (!(row && isShareLive(row))) {
       return
     }
     return toPublicProjection(row)
   }
 
+  /** See {@link saveTemplate}; a saved new version starts the auto-update fan-out. */
+  async createOrUpdate(input: SaveTemplateInput): Promise<TemplateModel> {
+    return await saveTemplate(input, (saved) =>
+      this.requestAutoUpdateFanOut(saved),
+    )
+  }
+
   /**
-   * Resolves the selection to a concrete, validated snapshot payload and
-   * persists it. `mode:"all"` is expanded to the current row set — the
-   * stored payload is frozen from this point until the next save.
+   * Starts the auto-update fan-out for a version that just landed. Best
+   * effort: the template is saved either way, and the sweep catches up any
+   * following installation that was missed.
    */
-  async createOrUpdate(input: {
-    workspaceId: string
-    tenantId: string
-    createdBy: string
-    name: string
-    description?: string | null
-    imageUrl?: string | null
-    publisherName?: string | null
-    youtubeVideoId?: string | null
-    testLink?: string | null
-    selection: TemplateSelection
-    defaultPermissions: TemplatePermissions
-    createInstallFolder: boolean
-    defaultAutoUpdate: boolean
-    existingTemplateId?: string
-  }): Promise<TemplateModel> {
-    const { payload, categoryCounts } = await buildTemplateSnapshot({
-      workspaceId: input.workspaceId,
-      tenantId: input.tenantId,
-      selection: input.selection,
-    })
-
-    if (input.existingTemplateId) {
-      const existing = await db.query.templateModel.findFirst({
-        where: {
-          id: input.existingTemplateId,
-          workspaceId: input.workspaceId,
-        },
+  private async requestAutoUpdateFanOut(
+    template: Pick<TemplateModel, "id" | "workspaceId" | "version">,
+  ): Promise<void> {
+    try {
+      await enqueueFanOutTemplateUpdate({
+        templateId: template.id,
+        workspaceId: template.workspaceId,
+        version: template.version,
       })
-      if (!existing) {
-        throw notFoundException("Template not found")
-      }
-      const [updated] = await db
-        .update(templateModel)
-        .set({
-          name: input.name,
-          description: input.description,
-          imageUrl: input.imageUrl,
-          publisherName: input.publisherName,
-          youtubeVideoId: input.youtubeVideoId,
-          testLink: input.testLink,
-          selection: input.selection,
-          payload,
-          categoryCounts,
-          formatVersion: payload.formatVersion,
-          defaultPermissions: input.defaultPermissions,
-          createInstallFolder: input.createInstallFolder,
-          defaultAutoUpdate: input.defaultAutoUpdate,
-        })
-        .where(eq(templateModel.id, existing.id))
-        .returning()
-      return updated
+    } catch (error) {
+      logger.warn(
+        { err: error, templateId: template.id },
+        "Could not enqueue the template auto-update fan-out; the sweep will",
+      )
     }
-
-    const [created] = await db
-      .insert(templateModel)
-      .values({
-        id: createId(),
-        workspaceId: input.workspaceId,
-        tenantId: input.tenantId,
-        createdBy: input.createdBy,
-        name: input.name,
-        description: input.description,
-        imageUrl: input.imageUrl,
-        publisherName: input.publisherName,
-        youtubeVideoId: input.youtubeVideoId,
-        testLink: input.testLink,
-        selection: input.selection,
-        payload,
-        categoryCounts,
-        formatVersion: payload.formatVersion,
-        shareToken: generateShareToken(),
-        shareEnabled: false,
-        defaultPermissions: input.defaultPermissions,
-        createInstallFolder: input.createInstallFolder,
-        defaultAutoUpdate: input.defaultAutoUpdate,
-      })
-      .returning()
-    return created
   }
 
   async updateShareSettings(input: {
     workspaceId: string
     templateId: string
     shareEnabled: boolean
+    /** Omitted keeps the current expiry; `null` removes it. */
     shareExpiresAt?: Date | null
+    actor: TemplateActor
   }): Promise<TemplateModel> {
-    const existing = await this.findByIdOrFail({
+    assertCanManageTemplates(input.actor)
+    const updated = await templateRepository.updateShareSettings({
+      id: input.templateId,
       workspaceId: input.workspaceId,
-      templateId: input.templateId,
+      shareEnabled: input.shareEnabled,
+      shareExpiresAt: input.shareExpiresAt,
     })
-    const [updated] = await db
-      .update(templateModel)
-      .set({
-        shareEnabled: input.shareEnabled,
-        shareExpiresAt: input.shareExpiresAt,
-      })
-      .where(eq(templateModel.id, existing.id))
-      .returning()
+    if (!updated) {
+      throw notFoundException("Template not found")
+    }
     return updated
   }
 
   /**
-   * Resolves the template by `shareToken`, enforces the same-tenant gate
-   * against the *target* workspace's `Workspace.tenantId` (never the
-   * template's own `workspaceId`, and never a request-derived tenant
-   * context), and re-validates the stored payload with
-   * `parseTemplateExport` before enqueuing the install — never trust a
-   * stored jsonb blob across a format change.
-   *
-   * This is an authorization check performed here in the service, not
-   * merely a UI filter on the workspace picker.
+   * Resolves the template by `shareToken` and runs every install gate on it
+   * (see {@link assertTemplateInstallable}). This is an authorization check
+   * performed here in the service, not merely a UI filter on the workspace
+   * picker.
    */
   async assertInstallable(input: {
     shareToken: string
     targetWorkspaceId: string
-  }): Promise<{ template: TemplateModel }> {
-    const template = await db.query.templateModel.findFirst({
-      where: {
-        shareToken: input.shareToken,
-        deletedAt: { isNull: true as const },
-      },
-    })
-    if (!template?.shareEnabled) {
-      throw templateShareDisabledException()
-    }
-    if (
-      template.shareExpiresAt &&
-      template.shareExpiresAt.getTime() < Date.now()
-    ) {
-      throw templateShareDisabledException()
-    }
-
-    const targetWorkspace = await workspaceService.findOrFail({
-      where: { id: input.targetWorkspaceId },
-    })
-    if (targetWorkspace.tenantId !== template.tenantId) {
-      throw templateCrossTenantInstallException()
-    }
-
-    const parsed = parseTemplateExport(template.payload)
-    if (!parsed.ok) {
-      throw new ChatbotXException(
-        `This template's saved data is no longer compatible: ${parsed.reason}`,
-        "templatePayloadIncompatible",
-      )
-    }
-
-    return { template }
+    actor: TemplateActor
+  }): Promise<InstallableTemplate> {
+    const template = await templateRepository.findLiveByShareToken(
+      input.shareToken,
+    )
+    return await assertTemplateInstallable({ template, ...input })
   }
 
   /**
-   * Inserts the `TemplateInstallation` tracking row with `status: "pending"`
-   * — always called before enqueueing the worker job, so the caller has a
-   * row to mark failed if the enqueue itself throws (`markInstallationFailed`).
+   * `assertInstallable` for an installation retry, which knows the template by
+   * id rather than by link. The share gates still apply: sharing switched off
+   * or expired stops retries. Rotating the token does not: an installation
+   * does not remember which link it came from.
    */
-  async createInstallationRecord(input: {
-    workspaceId: string
-    installedBy: string
-    template: TemplateModel
-  }): Promise<TemplateInstallationModel> {
-    const [installation] = await db
-      .insert(templateInstallationModel)
-      .values({
-        id: createId(),
-        workspaceId: input.workspaceId,
-        templateId: input.template.id,
-        templateName: input.template.name,
-        sourceWorkspaceId: input.template.workspaceId,
-        formatVersion: input.template.formatVersion,
-        status: "pending",
-        permissions: input.template.defaultPermissions,
-        autoUpdate: input.template.defaultAutoUpdate,
-        sourceUpdatedAt: input.template.updatedAt,
-        installedBy: input.installedBy,
-      })
-      .returning()
-    return installation
+  async assertInstallableById(input: {
+    templateId: string
+    targetWorkspaceId: string
+    actor: TemplateActor
+  }): Promise<InstallableTemplate> {
+    const template = await templateRepository.findLiveById(input.templateId)
+    return await assertTemplateInstallable({ template, ...input })
   }
 
   /**
-   * Marks a `TemplateInstallation` failed without ever running the install
-   * — used only when enqueueing the worker job itself throws, so the row
-   * is never left stuck at `pending` forever (the `importService.fail`
-   * precedent, `import/service.ts`).
+   * Marks a `TemplateInstallation` failed without ever running the install,
+   * used when enqueueing the worker job itself throws, or the target owner is
+   * blocked, so the row is never left stuck at `pending` for the sweep to
+   * re-find (the `importService.fail` precedent, `import/service.ts`).
    */
   async markInstallationFailed(input: {
     installationId: string
+    errorCode: string
     errorMessage: string
   }): Promise<void> {
-    await db
-      .update(templateInstallationModel)
-      .set({
-        status: "failed",
-        errorMessage: input.errorMessage,
-        completedAt: new Date(),
-      })
-      .where(eq(templateInstallationModel.id, input.installationId))
+    await templateInstallationRepository.failUnclaimed({
+      id: input.installationId,
+      errorCode: input.errorCode,
+      errorMessage: input.errorMessage,
+    })
   }
 
   /**
    * Fetches the installation row plus the payload it should install from.
-   * `TemplateInstallation` has no payload column of its own — the payload
-   * lives only on `Template`, fetched here via `templateId`. `templateId`
-   * is `set null` (not cascade) specifically so provenance survives the
-   * source template being deleted; if that has already happened by the
-   * time this worker job runs, the install fails with a clear error rather
-   * than silently reading nothing.
+   * `TemplateInstallation` has no payload column of its own: the payload
+   * lives on `Template` (or its pinned `TemplateVersion`). `templateId` is
+   * `set null` (not cascade) so provenance survives the source template being
+   * deleted; if that has already happened by the time this worker job runs,
+   * the install fails with a clear error rather than silently reading nothing.
    */
   async findInstallationByIdOrFail(input: {
     installationId: string
@@ -378,34 +410,59 @@ class TemplateService {
     templateName: string
     createInstallFolder: boolean
   }> {
-    const installation = await db.query.templateInstallationModel.findFirst({
-      where: { id: input.installationId, workspaceId: input.workspaceId },
-    })
+    const installation =
+      await templateInstallationRepository.findByIdAndWorkspace({
+        id: input.installationId,
+        workspaceId: input.workspaceId,
+      })
     if (!installation) {
       throw notFoundException("Template installation not found")
     }
     if (!installation.templateId) {
-      throw new ChatbotXException(
-        "The source template for this installation is no longer available",
-        "templateInstallationSourceMissing",
-      )
+      throw templateSourceMissingException()
     }
-    const template = await db.query.templateModel.findFirst({
-      where: { id: installation.templateId },
-      columns: { payload: true, name: true, createInstallFolder: true },
-    })
+    const template = await templateRepository.findInstallSource(
+      installation.templateId,
+    )
     if (!template) {
-      throw new ChatbotXException(
-        "The source template for this installation is no longer available",
-        "templateInstallationSourceMissing",
-      )
+      throw templateSourceMissingException()
     }
+    // The version this installation was pinned to when it was requested; a
+    // template saved since must not change what a queued install applies.
+    // Falls back to the live payload for rows written before versioning.
+    const pinned = await templateVersionRepository.find({
+      templateId: installation.templateId,
+      version: installation.sourceVersion,
+    })
+    const payload =
+      pinned?.payload ??
+      (await templateRepository.findLivePayload(installation.templateId))
+        ?.payload
+    if (!payload) {
+      throw templateSourceMissingException()
+    }
+    // The installer is authorized against what is actually about to be
+    // installed (the pinned payload), not the template's current contents.
+    const parsed = parseTemplateExport(payload)
+    await assertInstallerMayInstall({
+      installation,
+      categoryCounts: parsed.ok
+        ? categoryCountsOfPayload(parsed.data)
+        : template.categoryCounts,
+    })
     return {
       installation,
-      payload: template.payload,
+      payload,
       templateName: template.name,
       createInstallFolder: template.createInstallFolder,
     }
+  }
+
+  /** See {@link resolveInstallerActor}. */
+  async resolveInstallerActor(
+    installation: Parameters<typeof resolveInstallerActor>[0],
+  ): Promise<TemplateActor | null> {
+    return await resolveInstallerActor(installation)
   }
 
   /**
@@ -416,202 +473,23 @@ class TemplateService {
   async softDelete(input: {
     workspaceId: string
     templateId: string
+    actor: TemplateActor
   }): Promise<void> {
-    const existing = await db.query.templateModel.findFirst({
-      where: { id: input.templateId, workspaceId: input.workspaceId },
+    assertCanManageTemplates(input.actor)
+    const deleted = await templateRepository.softDelete({
+      id: input.templateId,
+      workspaceId: input.workspaceId,
     })
-    if (!existing) {
+    if (!deleted) {
       throw notFoundException("Template not found")
     }
-    await db
-      .update(templateModel)
-      .set({ deletedAt: new Date() })
-      .where(eq(templateModel.id, input.templateId))
   }
 
-  /**
-   * One unified query for the template picker's category tabs, so the
-   * picker depends on a single seam rather than each category's own
-   * incompatible list-query signature. Search is server-side `ilike`
-   * (never client-side `.toLowerCase()`, which is locale-broken for
-   * Vietnamese names). Returns `allIds` alongside page 1 whenever `total <=
-   * SELECTABLE_RESOURCE_ALL_IDS_CAP`, so a `mode:"all"` -> uncheck-one-row
-   * downgrade on the client can be exact instead of guessing at what "all"
-   * means.
-   */
-  async listSelectableResources(input: {
-    workspaceId: string
-    category: TemplateCategory
-    keyword?: string | null
-    cursor?: string | null
-    limit?: number | null
-  }): Promise<ListSelectableResourcesResult> {
-    const limit = input.limit ?? SELECTABLE_RESOURCE_PAGE_SIZE
-    const offset = input.cursor ? Number.parseInt(input.cursor, 10) || 0 : 0
-
-    const categoryInput = {
-      workspaceId: input.workspaceId,
-      keyword: input.keyword,
-      offset,
-      limit,
-    }
-
-    switch (input.category) {
-      case "flows":
-        return projectSelectableResourceRows(
-          await templateSelectableResourceRepository.listFlows(categoryInput),
-          offset,
-          limit,
-        )
-      case "tags":
-        return projectSelectableResourceRows(
-          await templateSelectableResourceRepository.listTags(categoryInput),
-          offset,
-          limit,
-        )
-      case "customFields":
-        return projectSelectableResourceRows(
-          await templateSelectableResourceRepository.listCustomFields(
-            categoryInput,
-          ),
-          offset,
-          limit,
-        )
-      case "products":
-        return projectSelectableResourceRows(
-          await templateSelectableResourceRepository.listProducts(
-            categoryInput,
-          ),
-          offset,
-          limit,
-        )
-      case "aiFunctions":
-        return projectSelectableResourceRows(
-          await templateSelectableResourceRepository.listAIFunctions(
-            categoryInput,
-          ),
-          offset,
-          limit,
-        )
-      case "aiAgents":
-        return projectSelectableResourceRows(
-          await templateSelectableResourceRepository.listAIAgents(
-            categoryInput,
-          ),
-          offset,
-          limit,
-        )
-      case "calendars":
-        return projectSelectableResourceRows(
-          await templateSelectableResourceRepository.listCalendars(
-            categoryInput,
-          ),
-          offset,
-          limit,
-        )
-      case "webchats":
-        return projectSelectableResourceRows(
-          await templateSelectableResourceRepository.listWebchats(
-            categoryInput,
-          ),
-          offset,
-          limit,
-        )
-      case "triggers":
-        return projectSelectableResourceRows(
-          await templateSelectableResourceRepository.listTriggers(
-            categoryInput,
-          ),
-          offset,
-          limit,
-        )
-      case "fbCommentAutomations":
-        return projectSelectableResourceRows(
-          await templateSelectableResourceRepository.listFbCommentAutomations(
-            categoryInput,
-          ),
-          offset,
-          limit,
-        )
-      case "keywords":
-        return projectSelectableResourceRows(
-          await templateSelectableResourceRepository.listKeywords(
-            categoryInput,
-          ),
-          offset,
-          limit,
-        )
-      case "entryPointLinks":
-        return projectSelectableResourceRows(
-          await templateSelectableResourceRepository.listEntryPointLinks(
-            categoryInput,
-          ),
-          offset,
-          limit,
-        )
-      case "settings":
-        return listSelectableSettings(
-          input.workspaceId,
-          input.keyword,
-          offset,
-          limit,
-        )
-      default:
-        return { items: [], nextCursor: null, total: 0 }
-    }
-  }
-}
-
-const projectSelectableResourceRows = (
-  result: { rows: SelectableResourceItem[]; total: number; allIds?: string[] },
-  offset: number,
-  limit: number,
-): ListSelectableResourcesResult => ({
-  items: result.rows,
-  nextCursor:
-    offset + result.rows.length < result.total ? String(offset + limit) : null,
-  total: result.total,
-  allIds: result.allIds,
-})
-
-/**
- * `settings` bundles two tables (`SavedReply`, `BotField`) under one
- * category, mirroring `settingsAdapter`'s two-kind entries. Search and
- * pagination run in memory over the combined, name-sorted list — both
- * tables are small, workspace-admin-configured settings, never large enough
- * to warrant a real cross-table paginated query.
- */
-const listSelectableSettings = async (
-  workspaceId: string,
-  keyword: string | null | undefined,
-  offset: number,
-  limit: number,
-): Promise<ListSelectableResourcesResult> => {
-  const { savedReplies, botFields } =
-    await templateSelectableResourceRepository.listSettings(workspaceId)
-
-  const all = [
-    ...savedReplies.map((row) => ({ id: row.id, name: row.shortcut })),
-    ...botFields.map((row) => ({ id: row.id, name: row.name })),
-  ].sort((a, b) => a.name.localeCompare(b.name))
-
-  const filtered = keyword
-    ? all.filter((row) =>
-        row.name.toLowerCase().includes(keyword.toLowerCase()),
-      )
-    : all
-
-  const total = filtered.length
-  const page = filtered.slice(offset, offset + limit)
-
-  return {
-    items: page,
-    nextCursor: offset + page.length < total ? String(offset + limit) : null,
-    total,
-    allIds:
-      offset === 0 && total <= SELECTABLE_RESOURCE_ALL_IDS_CAP
-        ? filtered.map((row) => row.id)
-        : undefined,
+  /** See {@link listSelectableResources}. */
+  async listSelectableResources(
+    input: Parameters<typeof listSelectableResources>[0],
+  ): Promise<ListSelectableResourcesResult> {
+    return await listSelectableResources(input)
   }
 }
 

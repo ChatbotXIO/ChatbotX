@@ -16,6 +16,8 @@ import { useTranslations } from "next-intl"
 import { useEffect, useState } from "react"
 import { useForm } from "react-hook-form"
 import { toast } from "sonner"
+import { LockedDialogFieldset } from "@/components/locked-dialog-fieldset"
+import { useIsLocked } from "@/features/templates/components/lock-badge"
 import type {
   CommentAutomationRow,
   CommentAutomationTranslationNamespace,
@@ -56,6 +58,7 @@ export function CommentAutomationScheduleDialog({
   onSuccess?: () => void
 }) {
   const t = useTranslations()
+  const isLocked = useIsLocked(resource?.id)
   const [isPending, setIsPending] = useState(false)
 
   const form = useForm<ScheduleFormValues>({
@@ -118,25 +121,27 @@ export function CommentAutomationScheduleDialog({
             {t(`${translationNamespace}.schedule.description`)}
           </DialogDescription>
         </DialogHeader>
-        <Form {...form}>
-          <div className="flex w-full items-end gap-2">
-            <div className="flex-1">
-              <TimeField<ScheduleFormValues>
-                label={t(`${translationNamespace}.schedule.startTime`)}
-                name="startTime"
-                required
-              />
+        <LockedDialogFieldset resourceId={resource?.id}>
+          <Form {...form}>
+            <div className="flex w-full items-end gap-2">
+              <div className="flex-1">
+                <TimeField<ScheduleFormValues>
+                  label={t(`${translationNamespace}.schedule.startTime`)}
+                  name="startTime"
+                  required
+                />
+              </div>
+              <span className="mb-2 text-muted-foreground">-</span>
+              <div className="flex-1">
+                <TimeField<ScheduleFormValues>
+                  label={t(`${translationNamespace}.schedule.endTime`)}
+                  name="endTime"
+                  required
+                />
+              </div>
             </div>
-            <span className="mb-2 text-muted-foreground">-</span>
-            <div className="flex-1">
-              <TimeField<ScheduleFormValues>
-                label={t(`${translationNamespace}.schedule.endTime`)}
-                name="endTime"
-                required
-              />
-            </div>
-          </div>
-        </Form>
+          </Form>
+        </LockedDialogFieldset>
         <DialogFooter className="justify-end">
           <Button
             disabled={isPending}
@@ -150,7 +155,7 @@ export function CommentAutomationScheduleDialog({
           </Button>
           <Button
             className="ms-auto"
-            disabled={isPending}
+            disabled={isPending || isLocked}
             onClick={handleSaveSchedule}
             size="sm"
             type="button"

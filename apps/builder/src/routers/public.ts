@@ -100,6 +100,11 @@ import { sequencesPublicRouter } from "@/features/sequences/api/public"
 import { commentAutomationsPublicRouter } from "@/features/shared/comment-automation/api/public"
 import { spreadsheetsPublicRouter } from "@/features/spreadsheets/api/public"
 import { tagsPublicRouter } from "@/features/tags/api/public"
+import {
+  templateInstallationsPublicRouter,
+  templatePreviewsPublicRouter,
+  templatesPublicRouter,
+} from "@/features/templates/api/public"
 import { threadsCommentsPublicRouter } from "@/features/threads-comments/api/public"
 import { tiktokCommentsPublicRouter } from "@/features/tiktok-comments/api/public"
 import { tokenPublicRouter } from "@/features/token/api/public"
@@ -183,6 +188,9 @@ export const publicRouter = {
   minigames: minigamesPublicRouter,
   leaderboards: leaderboardsPublicRouter,
   pipelines: pipelinesPublicRouter,
+  templateInstallations: templateInstallationsPublicRouter,
+  templatePreviews: templatePreviewsPublicRouter,
+  templates: templatesPublicRouter,
   openHours: openHoursPublicRouter,
   orders: ordersPublicRouter,
   paymentProviders: paymentProvidersPublicRouter,

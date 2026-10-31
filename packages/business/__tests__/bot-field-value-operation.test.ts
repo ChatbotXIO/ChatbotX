@@ -19,6 +19,7 @@ const mocks = vi.hoisted(() => {
   const insertReturning = vi.fn()
   const workspaceFindFirst = vi.fn()
   const invalidateCacheTags = vi.fn()
+  const lockOptions = vi.fn()
   const sqlMock = vi.fn(
     (strings: TemplateStringsArray, ...values: unknown[]) => ({
       text: strings.join("?"),
@@ -40,6 +41,7 @@ const mocks = vi.hoisted(() => {
     insertReturning,
     workspaceFindFirst,
     invalidateCacheTags,
+    lockOptions,
     sqlMock,
     parseOrderByAsObject,
     parsePagination,
@@ -59,6 +61,10 @@ const botFieldModel = {
 
 vi.mock("@chatbotx.io/database/client", () => ({
   db: {
+    execute: vi.fn(),
+    // Runs the callback against the same mocked client the test asserts on.
+    transaction: async (run: (tx: unknown) => unknown) =>
+      run((await import("@chatbotx.io/database/client")).db),
     query: {
       botFieldModel: {
         findFirst: mocks.findFirst,
@@ -139,8 +145,26 @@ vi.mock("../src/folder/service", () => ({
   folderService: { ensureExists: vi.fn() },
 }))
 
-vi.mock("../src/template/installed-resource.service", () => ({
-  assertDeletable: vi.fn(),
+// Run the locked transaction against the same mocked client the test asserts on.
+vi.mock("../src/template/template-resource-locks", async () => {
+  const { db } = await import("@chatbotx.io/database/client")
+  return {
+    withTemplateLockedTransaction: (
+      run: (tx: unknown) => unknown,
+      options?: unknown,
+    ) => {
+      mocks.lockOptions(options)
+      return run(db)
+    },
+  }
+})
+
+vi.mock("../src/template/installed-resource.service", async () => ({
+  ...(await import("./helpers/template-guard-mocks")).templateGuardMocks({
+    assertDeletable: vi.fn(),
+    assertResourceEditable: vi.fn(),
+  }),
+  changedKeysOf: vi.fn(() => []),
 }))
 
 const { botFieldService } = await import("../src/bot-field/service")
@@ -212,6 +236,60 @@ describe("botFieldService.applyValueOperation — set", () => {
     expect(mocks.updateSet).toHaveBeenCalledWith(
       expect.objectContaining({ value: expected }),
     )
+  })
+
+  test("a name patch locks the field before the stored row is re-read, then diffs the fresh row", async () => {
+    const { changedKeysOf } = await import(
+      "../src/template/installed-resource.service"
+    )
+    mocks.findFirst.mockResolvedValue(existingRow({ name: "stale" }))
+    mocks.updateReturning.mockResolvedValue([existingRow({ name: "next" })])
+    mocks.findFirst.mockClear()
+    vi.mocked(changedKeysOf).mockClear()
+    mocks.lockOptions.mockClear()
+
+    await botFieldService.updateByKey({
+      workspaceId: "ws-1",
+      key: "field",
+      data: { name: "next" },
+    })
+
+    expect(mocks.lockOptions).toHaveBeenCalledWith({
+      workspaceId: expect.any(String),
+      initialKeys: [{ kind: "botField", resourceId: "1" }],
+    })
+    // First read resolves the key; the second is the re-read under the lock.
+    expect(mocks.findFirst).toHaveBeenCalledTimes(2)
+    expect(mocks.lockOptions.mock.invocationCallOrder[0]).toBeLessThan(
+      mocks.findFirst.mock.invocationCallOrder[1] as number,
+    )
+    expect(changedKeysOf).toHaveBeenCalledTimes(1)
+  })
+
+  test("set without a caller transaction guards first on the locked transaction, before the write", async () => {
+    const { assertResourceEditable } = await import(
+      "../src/template/installed-resource.service"
+    )
+    const { db } = await import("@chatbotx.io/database/client")
+    vi.mocked(assertResourceEditable).mockClear()
+    mocks.findFirst.mockResolvedValue(existingRow({ type: "shortText" }))
+    mocks.updateReturning.mockResolvedValue([
+      existingRow({ type: "shortText", value: "after" }),
+    ])
+
+    await botFieldService.applyValueOperation({
+      workspaceId: "ws-1",
+      key: "field",
+      operation: FieldOperationType.set,
+      value: "after",
+    })
+
+    expect(assertResourceEditable).toHaveBeenCalledWith(
+      expect.objectContaining({ resourceKind: "botField", tx: db }),
+    )
+    expect(
+      vi.mocked(assertResourceEditable).mock.invocationCallOrder[0],
+    ).toBeLessThan(mocks.updateSet.mock.invocationCallOrder[0] as number)
   })
 
   // Runtime coercion for `boolean`/`number` set values (unified normalizer,

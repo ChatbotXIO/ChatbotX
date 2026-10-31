@@ -162,9 +162,16 @@ describe("CategoryResourceList selection", () => {
     )
 
     const allCheckboxes = Array.from(el.querySelectorAll('[role="checkbox"]'))
+    // Selection checkboxes only: the select-all box and every View only (lock)
+    // box are separate controls with their own labels.
     const rowCheckboxes = allCheckboxes.filter(
       (node) =>
-        node.getAttribute("aria-labelledby") !== "flows-select-all-label",
+        !(
+          ["flows-select-all-label", "flows-lock-all-label"].includes(
+            node.getAttribute("aria-labelledby") ?? "",
+          ) ||
+          (node.getAttribute("aria-labelledby") ?? "").endsWith("-lock-label")
+        ),
     )
     expect(rowCheckboxes.length).toBe(FULL_SET.length)
 

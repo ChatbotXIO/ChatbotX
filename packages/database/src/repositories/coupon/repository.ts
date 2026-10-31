@@ -294,23 +294,28 @@ export const couponRepository = {
     return row
   },
 
-  async softDeleteTopic(
-    input: { workspaceId: string; topicId: string },
+  /** `archivedOnly`: the public delete only takes archived topics; an uninstall takes any live one. */
+  async softDeleteTopics(
+    input: { workspaceId: string; topicIds: string[]; archivedOnly: boolean },
     tx: DatabaseClient = db,
   ) {
-    const [row] = await tx
+    if (input.topicIds.length === 0) {
+      return []
+    }
+    return await tx
       .update(couponTopicModel)
       .set({ deletedAt: new Date() })
       .where(
         and(
-          eq(couponTopicModel.id, input.topicId),
+          inArray(couponTopicModel.id, input.topicIds),
           eq(couponTopicModel.workspaceId, input.workspaceId),
-          eq(couponTopicModel.status, couponTopicStatuses.enum.archived),
+          input.archivedOnly
+            ? eq(couponTopicModel.status, couponTopicStatuses.enum.archived)
+            : undefined,
           isNull(couponTopicModel.deletedAt),
         ),
       )
       .returning()
-    return row
   },
 
   async listActiveTopicOptions(

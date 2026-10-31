@@ -18,6 +18,7 @@ import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useMemo, useState } from "react"
 import { toast } from "sonner"
+import { LockedIdsProvider } from "@/features/templates/components/lock-badge"
 import { CategoryFormDialog } from "./components/category-form-dialog"
 import { DeleteCategoryDialog } from "./components/delete-category-dialog"
 import {
@@ -102,34 +103,40 @@ export function ProductCategoriesTable({
         ) : null}
       </CardHeader>
       <CardContent>
-        <DataTable table={table}>
-          <DataTableToolbar table={table}>
+        <LockedIdsProvider
+          resourceIds={categories.data.map((row) => row.id)}
+          resourceKind="productCategory"
+          workspaceId={workspaceId}
+        >
+          <DataTable table={table}>
+            <DataTableToolbar table={table}>
+              <CategoryFormDialog
+                key={parent?.id ?? "root"}
+                parentId={parent?.id ?? null}
+                workspaceId={workspaceId}
+              />
+            </DataTableToolbar>
+          </DataTable>
+
+          {editing ? (
             <CategoryFormDialog
-              key={parent?.id ?? "root"}
-              parentId={parent?.id ?? null}
+              category={editing}
+              hideTrigger
+              key={editing.id}
+              onOpenChange={(open) => !open && setRowAction(null)}
+              open
               workspaceId={workspaceId}
             />
-          </DataTableToolbar>
-        </DataTable>
-
-        {editing ? (
-          <CategoryFormDialog
-            category={editing}
-            hideTrigger
-            key={editing.id}
-            onOpenChange={(open) => !open && setRowAction(null)}
-            open
-            workspaceId={workspaceId}
-          />
-        ) : null}
-        {deleting ? (
-          <DeleteCategoryDialog
-            category={deleting}
-            onOpenChange={(open) => !open && setRowAction(null)}
-            open
-            workspaceId={workspaceId}
-          />
-        ) : null}
+          ) : null}
+          {deleting ? (
+            <DeleteCategoryDialog
+              category={deleting}
+              onOpenChange={(open) => !open && setRowAction(null)}
+              open
+              workspaceId={workspaceId}
+            />
+          ) : null}
+        </LockedIdsProvider>
       </CardContent>
     </Card>
   )

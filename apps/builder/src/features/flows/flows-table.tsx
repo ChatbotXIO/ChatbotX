@@ -20,6 +20,7 @@ import { useLocale, useTranslations } from "next-intl"
 import { Suspense, use, useMemo, useState } from "react"
 import { useInvalidateFlows } from "@/features/flows/provider/flow-hook"
 import { FolderBarSlot } from "@/features/folders/folder-bar-slot"
+import { LockedIdsProvider } from "@/features/templates/components/lock-badge"
 import { ChangeFolderDialog } from "../folders/change-folder"
 import { CreateFlowDialog } from "./create-flow-dialog"
 import { DeleteFlowsDialog } from "./delete-flow-dialog"
@@ -71,27 +72,33 @@ function FlowsTableContent({
 
   return (
     <>
-      <DataTable
-        mobileCard={(row) => <DataTableRowCard row={row} />}
-        table={table}
+      <LockedIdsProvider
+        resourceIds={data.map((row) => row.id)}
+        resourceKind="flow"
+        workspaceId={workspaceId}
       >
-        <DataTableToolbar table={table}>
-          <FlowsTableToolbarActions
-            setRowAction={setRowAction}
-            table={table}
-            workspaceId={workspaceId}
-          />
-          <Link
-            className={buttonVariants({ variant: "outline", size: "sm" })}
-            href={`/space/${workspaceId}/flows/import/histories`}
-          >
-            <HistoryIcon className="size-4" />
-            {t("fields.import.histories.title")}
-          </Link>
-          <ImportFlowDialog folderId={folderId} workspaceId={workspaceId} />
-          <CreateFlowDialog folderId={folderId} workspaceId={workspaceId} />
-        </DataTableToolbar>
-      </DataTable>
+        <DataTable
+          mobileCard={(row) => <DataTableRowCard row={row} />}
+          table={table}
+        >
+          <DataTableToolbar table={table}>
+            <FlowsTableToolbarActions
+              setRowAction={setRowAction}
+              table={table}
+              workspaceId={workspaceId}
+            />
+            <Link
+              className={buttonVariants({ variant: "outline", size: "sm" })}
+              href={`/space/${workspaceId}/flows/import/histories`}
+            >
+              <HistoryIcon className="size-4" />
+              {t("fields.import.histories.title")}
+            </Link>
+            <ImportFlowDialog folderId={folderId} workspaceId={workspaceId} />
+            <CreateFlowDialog folderId={folderId} workspaceId={workspaceId} />
+          </DataTableToolbar>
+        </DataTable>
+      </LockedIdsProvider>
 
       <DeleteFlowsDialog
         flows={rowAction?.row.original ? [rowAction?.row.original] : []}

@@ -18,6 +18,7 @@ import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { use, useMemo, useState } from "react"
 import type { listImports } from "@/features/import/queries/list-imports.queries"
+import { LockedIdsProvider } from "@/features/templates/components/lock-badge"
 import { ImportProductDialog } from "./components/import-product-dialog"
 import { MetaCatalogDialog } from "./components/meta-catalog-dialog"
 import { DeleteProductsDialog } from "./delete-product-dialog"
@@ -95,15 +96,21 @@ export function ProductsTable({
         </CardAction>
       </CardHeader>
       <CardContent>
-        <DataTable table={table}>
-          <DataTableToolbar table={table}>
-            <ProductsTableToolbarActions
-              setRowAction={setRowAction}
-              table={table}
-              workspaceId={workspaceId}
-            />
-          </DataTableToolbar>
-        </DataTable>
+        <LockedIdsProvider
+          resourceIds={data.map((row) => row.id)}
+          resourceKind="product"
+          workspaceId={workspaceId}
+        >
+          <DataTable table={table}>
+            <DataTableToolbar table={table}>
+              <ProductsTableToolbarActions
+                setRowAction={setRowAction}
+                table={table}
+                workspaceId={workspaceId}
+              />
+            </DataTableToolbar>
+          </DataTable>
+        </LockedIdsProvider>
 
         <DeleteProductsDialog
           onOpenChange={() => setRowAction(null)}

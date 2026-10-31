@@ -22,6 +22,7 @@ import { useRouter } from "next/navigation"
 import type { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import { useState } from "react"
+import { LockBadge } from "@/features/templates/components/lock-badge"
 import { WebshopLinkMenuItems } from "@/features/webshop/components/webshop-link-menu-items"
 import { toastActionError } from "@/lib/errors/safe-action-error-handler"
 import { toggleProductCategoryVisibleAction } from "./actions/update-product-category.action"
@@ -125,6 +126,7 @@ export const getProductCategoryColumns = ({
           />
         ) : null}
         <span className="truncate font-medium">{row.original.name}</span>
+        <LockBadge resourceId={row.original.id} />
       </div>
     ),
     meta: {

@@ -4,8 +4,8 @@ import { getTranslations } from "next-intl/server"
 import { AppBreadcrumb } from "@/components/app-breadcrumb"
 import { EditAppointmentCalendarForm } from "@/features/appointment-calendars/components/edit-appointment-calendar-form"
 import { getAppointmentCalendar } from "@/features/appointment-calendars/queries"
-
 import { listExternalCalendarsForSelect } from "@/features/external-calendars/queries"
+import { LockedEditorGuard } from "@/features/templates/components/locked-editor-guard"
 
 export default async function EditAppointmentCalendarPage({
   params,
@@ -35,14 +35,20 @@ export default async function EditAppointmentCalendarPage({
           { label: calendar.name, href: "" },
         ]}
       />
-      <EditAppointmentCalendarForm
-        calendar={calendar}
-        externalCalendarOptions={externalCalendars.map((connection) => ({
-          label: connection.label,
-          value: connection.id,
-        }))}
+      <LockedEditorGuard
+        resourceId={id}
+        resourceKind="calendar"
         workspaceId={workspaceId}
-      />
+      >
+        <EditAppointmentCalendarForm
+          calendar={calendar}
+          externalCalendarOptions={externalCalendars.map((connection) => ({
+            label: connection.label,
+            value: connection.id,
+          }))}
+          workspaceId={workspaceId}
+        />
+      </LockedEditorGuard>
     </div>
   )
 }

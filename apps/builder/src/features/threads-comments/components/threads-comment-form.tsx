@@ -36,6 +36,7 @@ import {
 import { ExcludeKeywordsField } from "@/features/shared/comment-automation/exclude-keywords-field"
 import { ReplyTextsField } from "@/features/shared/comment-automation/reply-texts-field"
 import { ReplyToField } from "@/features/shared/comment-automation/reply-to-field"
+import { LockedContent } from "@/features/templates/components/lock-badge"
 import { useWorkspaceId } from "@/hooks/routing"
 import { useThreadsPosts } from "../hooks/use-threads-posts"
 import type { CreateThreadsCommentRequest } from "../schema/action"
@@ -159,7 +160,9 @@ export function ThreadsCommentForm({
     <form className="m-auto w-full max-w-4xl space-y-6" onSubmit={onSubmit}>
       <Card>
         <CardContent className="space-y-4 pt-6">
-          <InputField label={t("fields.name.label")} name="name" required />
+          <LockedContent>
+            <InputField label={t("fields.name.label")} name="name" required />
+          </LockedContent>
         </CardContent>
       </Card>
 
@@ -176,337 +179,345 @@ export function ThreadsCommentForm({
             targetField="post"
             type="threads"
           />
-
-          <RadioGroupField
-            label={t("threadsCommentAutomation.trackCommentsOn")}
-            name="post.type"
-            options={[
-              {
-                label: t("threadsCommentAutomation.postType.all"),
-                value: "all",
-              },
-              {
-                label: t("threadsCommentAutomation.postType.specificPosts"),
-                value: "postIds",
-              },
-            ]}
-            orientation="horizontal"
-            required
-          />
-
-          {postType === "postIds" ? (
-            <FormField
-              control={form.control}
-              name="post.value"
-              render={() => (
-                <FormItem>
-                  <FormControl>
-                    <Button
-                      className="w-full"
-                      onClick={() => setSelectPostsOpen(true)}
-                      type="button"
-                      variant="outline"
-                    >
-                      {t("threadsCommentAutomation.chooseSpecificPosts")}
-                      {postValue.length > 0 && ` (${postValue.length})`}
-                    </Button>
-                  </FormControl>
-                  <FormMessage />
-                  <SelectThreadsPostsDialog
-                    inboxId={inboxId}
-                    onChange={(ids) =>
-                      form.setValue("post.value", ids, {
-                        shouldDirty: true,
-                        shouldValidate: true,
-                      })
-                    }
-                    onOpenChange={setSelectPostsOpen}
-                    open={selectPostsOpen}
-                    value={postValue}
-                  />
-                </FormItem>
-              )}
-            />
-          ) : null}
-
-          <RadioGroupField
-            description={t("threadsCommentAutomation.publicReplyDescription")}
-            descriptionType="tooltip"
-            label={t("threadsCommentAutomation.publicReply")}
-            name="publicReply.type"
-            options={[
-              {
-                label: t("threadsCommentAutomation.replyType.text"),
-                value: "text",
-              },
-              {
-                label: t("threadsCommentAutomation.replyType.flow"),
-                value: "flow",
-              },
-              {
-                label: t("threadsCommentAutomation.replyType.AIAgent"),
-                value: "AIAgent",
-              },
-              {
-                label: t("threadsCommentAutomation.replyType.none"),
-                value: "none",
-              },
-            ]}
-            orientation="horizontal"
-            required
-          />
-
-          {replyType === "text" ? (
-            <ReplyTextsField
-              channel="threads"
-              label={t("threadsCommentAutomation.replyMessage")}
-              name="publicReply"
-              placeholder={t("threadsCommentAutomation.replyMessage")}
-            />
-          ) : null}
-          {replyType === "flow" ? (
-            <ComboboxField
-              label={t("threadsCommentAutomation.replyFlow")}
-              name="publicReply.value"
-              options={flowOptions}
+          <LockedContent className="flex flex-col gap-2 space-y-4">
+            <RadioGroupField
+              label={t("threadsCommentAutomation.trackCommentsOn")}
+              name="post.type"
+              options={[
+                {
+                  label: t("threadsCommentAutomation.postType.all"),
+                  value: "all",
+                },
+                {
+                  label: t("threadsCommentAutomation.postType.specificPosts"),
+                  value: "postIds",
+                },
+              ]}
+              orientation="horizontal"
               required
             />
-          ) : null}
-          {replyType === "AIAgent" ? (
-            <ComboboxField
-              label={t("threadsCommentAutomation.replyAIAgent")}
-              name="publicReply.value"
-              options={aiAgentOptions}
-              required
-            />
-          ) : null}
-        </CardContent>
-      </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>{t("threadsCommentAutomation.card.filters")}</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <ReplyToField
-            labels={{
-              type: t("threadsCommentAutomation.includeKeywordsType"),
-              keywords: t("threadsCommentAutomation.includeKeywords"),
-              keywordsPlaceholder: t(
-                "threadsCommentAutomation.keywordsPlaceholder",
-              ),
-              all: t("threadsCommentAutomation.keywordsType.all"),
-              equal: t("threadsCommentAutomation.keywordsType.equal"),
-              contain: t("threadsCommentAutomation.keywordsType.contain"),
-            }}
-          />
-
-          <ExcludeKeywordsField
-            label={t("threadsCommentAutomation.excludeKeywords")}
-            placeholder={t("threadsCommentAutomation.keywordsPlaceholder")}
-          />
-
-          <SwitchField
-            label={t("threadsCommentAutomation.options.replyToNewContactsOnly")}
-            name="options.replyToNewContactsOnly"
-            required
-          />
-          <SwitchField
-            label={t(
-              "threadsCommentAutomation.options.replyOncePerUserPerPost",
-            )}
-            name="options.replyOncePerUserPerPost"
-            required
-          />
-          <SwitchField
-            label={t(
-              "threadsCommentAutomation.options.replyToUsersWhoCommentedOnOtherPosts",
-            )}
-            name="options.replyToUsersWhoCommentedOnOtherPosts"
-            required
-          />
-          <SwitchField
-            label={t("threadsCommentAutomation.options.ignoreCommentReplies")}
-            name="options.ignoreCommentReplies"
-            required
-          />
-          <SwitchField
-            description={t("commentAutomation.trackUserTags.descriptionText")}
-            descriptionType="tooltip"
-            label={t("commentAutomation.trackUserTags.label")}
-            name="options.trackUserTags"
-          />
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>
-            {t("threadsCommentAutomation.card.replyTiming")}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <SelectField
-            label={t("threadsCommentAutomation.replyAfter")}
-            name="replyAfter.type"
-            options={[
-              {
-                label: t("threadsCommentAutomation.replyAfterType.immediately"),
-                value: "immediately",
-              },
-              {
-                label: t("threadsCommentAutomation.replyAfterType.seconds"),
-                value: "seconds",
-              },
-              {
-                label: t("threadsCommentAutomation.replyAfterType.minutes"),
-                value: "minutes",
-              },
-              {
-                label: t("threadsCommentAutomation.replyAfterType.hours"),
-                value: "hours",
-              },
-              {
-                label: t(
-                  "threadsCommentAutomation.replyAfterType.randomWithin3Minutes",
-                ),
-                value: "randomWithin3Minutes",
-              },
-              {
-                label: t(
-                  "threadsCommentAutomation.replyAfterType.randomWithin5Minutes",
-                ),
-                value: "randomWithin5Minutes",
-              },
-              {
-                label: t(
-                  "threadsCommentAutomation.replyAfterType.randomWithin10Minutes",
-                ),
-                value: "randomWithin10Minutes",
-              },
-              {
-                label: t(
-                  "threadsCommentAutomation.replyAfterType.randomWithin20Minutes",
-                ),
-                value: "randomWithin20Minutes",
-              },
-              {
-                label: t(
-                  "threadsCommentAutomation.replyAfterType.randomWithin30Minutes",
-                ),
-                value: "randomWithin30Minutes",
-              },
-              {
-                label: t(
-                  "threadsCommentAutomation.replyAfterType.randomWithin60Minutes",
-                ),
-                value: "randomWithin60Minutes",
-              },
-            ]}
-            required
-          />
-          {requiresDelayValue ? (
-            <InputNumberField
-              label={t("threadsCommentAutomation.replyAfterValue")}
-              min={1}
-              name="replyAfter.value"
-              required
-            />
-          ) : null}
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>
-            {t("threadsCommentAutomation.card.hideComments")}
-          </CardTitle>
-          <CardDescription>
-            {t("threadsCommentAutomation.hideCommentsDescription")}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <SwitchField
-            label={t("threadsCommentAutomation.hideComments.all")}
-            name="hideComments.all"
-            required
-          />
-          <SwitchField
-            label={t("threadsCommentAutomation.hideComments.hasPhoneNumber")}
-            name="hideComments.hasPhoneNumber"
-            required
-          />
-          <SwitchField
-            label={t("threadsCommentAutomation.hideComments.hasLink")}
-            name="hideComments.hasLink"
-            required
-          />
-          <SwitchField
-            label={t("commentAutomation.hideComments.hasGif")}
-            name="hideComments.hasGif"
-            required
-          />
-          <SwitchField
-            label={t("commentAutomation.hideComments.hasEmoji")}
-            name="hideComments.hasEmoji"
-            required
-          />
-          <SwitchField
-            label={t("threadsCommentAutomation.hideComments.hasKeywords")}
-            name="hideComments.hasKeywords"
-            required
-          />
-          {hideKeywords ? (
-            <FormField
-              control={form.control}
-              name="hideComments.keywords"
-              render={() => (
-                <FormItem>
-                  <FormLabel>
-                    {t("threadsCommentAutomation.hideComments.keywords")}
-                  </FormLabel>
-                  <FormControl>
-                    <TagsInputField
-                      name="hideComments.keywords"
-                      placeholder={t(
-                        "threadsCommentAutomation.keywordsPlaceholder",
-                      )}
+            {postType === "postIds" ? (
+              <FormField
+                control={form.control}
+                name="post.value"
+                render={() => (
+                  <FormItem>
+                    <FormControl>
+                      <Button
+                        className="w-full"
+                        onClick={() => setSelectPostsOpen(true)}
+                        type="button"
+                        variant="outline"
+                      >
+                        {t("threadsCommentAutomation.chooseSpecificPosts")}
+                        {postValue.length > 0 && ` (${postValue.length})`}
+                      </Button>
+                    </FormControl>
+                    <FormMessage />
+                    <SelectThreadsPostsDialog
+                      inboxId={inboxId}
+                      onChange={(ids) =>
+                        form.setValue("post.value", ids, {
+                          shouldDirty: true,
+                          shouldValidate: true,
+                        })
+                      }
+                      onOpenChange={setSelectPostsOpen}
+                      open={selectPostsOpen}
+                      value={postValue}
                     />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+                  </FormItem>
+                )}
+              />
+            ) : null}
+
+            <RadioGroupField
+              description={t("threadsCommentAutomation.publicReplyDescription")}
+              descriptionType="tooltip"
+              label={t("threadsCommentAutomation.publicReply")}
+              name="publicReply.type"
+              options={[
+                {
+                  label: t("threadsCommentAutomation.replyType.text"),
+                  value: "text",
+                },
+                {
+                  label: t("threadsCommentAutomation.replyType.flow"),
+                  value: "flow",
+                },
+                {
+                  label: t("threadsCommentAutomation.replyType.AIAgent"),
+                  value: "AIAgent",
+                },
+                {
+                  label: t("threadsCommentAutomation.replyType.none"),
+                  value: "none",
+                },
+              ]}
+              orientation="horizontal"
+              required
             />
-          ) : null}
-          <SelectField
-            label={t("threadsCommentAutomation.hideComments.showCommentsAfter")}
-            name="hideComments.showCommentsAfter"
-            options={[
-              {
-                label: t("threadsCommentAutomation.showCommentsAfter.none"),
-                value: "none",
-              },
-              ...(
-                [
-                  "6h",
-                  "12h",
-                  "1d",
-                  "2d",
-                  "3d",
-                  "4d",
-                  "5d",
-                  "6d",
-                  "7d",
-                  "8d",
-                  "9d",
-                  "10d",
-                ] as const
-              ).map((value) => ({ label: value, value })),
-            ]}
-            required
-          />
+
+            {replyType === "text" ? (
+              <ReplyTextsField
+                channel="threads"
+                label={t("threadsCommentAutomation.replyMessage")}
+                name="publicReply"
+                placeholder={t("threadsCommentAutomation.replyMessage")}
+              />
+            ) : null}
+            {replyType === "flow" ? (
+              <ComboboxField
+                label={t("threadsCommentAutomation.replyFlow")}
+                name="publicReply.value"
+                options={flowOptions}
+                required
+              />
+            ) : null}
+            {replyType === "AIAgent" ? (
+              <ComboboxField
+                label={t("threadsCommentAutomation.replyAIAgent")}
+                name="publicReply.value"
+                options={aiAgentOptions}
+                required
+              />
+            ) : null}
+          </LockedContent>
         </CardContent>
       </Card>
+      <LockedContent className="space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>{t("threadsCommentAutomation.card.filters")}</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <ReplyToField
+              labels={{
+                type: t("threadsCommentAutomation.includeKeywordsType"),
+                keywords: t("threadsCommentAutomation.includeKeywords"),
+                keywordsPlaceholder: t(
+                  "threadsCommentAutomation.keywordsPlaceholder",
+                ),
+                all: t("threadsCommentAutomation.keywordsType.all"),
+                equal: t("threadsCommentAutomation.keywordsType.equal"),
+                contain: t("threadsCommentAutomation.keywordsType.contain"),
+              }}
+            />
+
+            <ExcludeKeywordsField
+              label={t("threadsCommentAutomation.excludeKeywords")}
+              placeholder={t("threadsCommentAutomation.keywordsPlaceholder")}
+            />
+
+            <SwitchField
+              label={t(
+                "threadsCommentAutomation.options.replyToNewContactsOnly",
+              )}
+              name="options.replyToNewContactsOnly"
+              required
+            />
+            <SwitchField
+              label={t(
+                "threadsCommentAutomation.options.replyOncePerUserPerPost",
+              )}
+              name="options.replyOncePerUserPerPost"
+              required
+            />
+            <SwitchField
+              label={t(
+                "threadsCommentAutomation.options.replyToUsersWhoCommentedOnOtherPosts",
+              )}
+              name="options.replyToUsersWhoCommentedOnOtherPosts"
+              required
+            />
+            <SwitchField
+              label={t("threadsCommentAutomation.options.ignoreCommentReplies")}
+              name="options.ignoreCommentReplies"
+              required
+            />
+            <SwitchField
+              description={t("commentAutomation.trackUserTags.descriptionText")}
+              descriptionType="tooltip"
+              label={t("commentAutomation.trackUserTags.label")}
+              name="options.trackUserTags"
+            />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>
+              {t("threadsCommentAutomation.card.replyTiming")}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <SelectField
+              label={t("threadsCommentAutomation.replyAfter")}
+              name="replyAfter.type"
+              options={[
+                {
+                  label: t(
+                    "threadsCommentAutomation.replyAfterType.immediately",
+                  ),
+                  value: "immediately",
+                },
+                {
+                  label: t("threadsCommentAutomation.replyAfterType.seconds"),
+                  value: "seconds",
+                },
+                {
+                  label: t("threadsCommentAutomation.replyAfterType.minutes"),
+                  value: "minutes",
+                },
+                {
+                  label: t("threadsCommentAutomation.replyAfterType.hours"),
+                  value: "hours",
+                },
+                {
+                  label: t(
+                    "threadsCommentAutomation.replyAfterType.randomWithin3Minutes",
+                  ),
+                  value: "randomWithin3Minutes",
+                },
+                {
+                  label: t(
+                    "threadsCommentAutomation.replyAfterType.randomWithin5Minutes",
+                  ),
+                  value: "randomWithin5Minutes",
+                },
+                {
+                  label: t(
+                    "threadsCommentAutomation.replyAfterType.randomWithin10Minutes",
+                  ),
+                  value: "randomWithin10Minutes",
+                },
+                {
+                  label: t(
+                    "threadsCommentAutomation.replyAfterType.randomWithin20Minutes",
+                  ),
+                  value: "randomWithin20Minutes",
+                },
+                {
+                  label: t(
+                    "threadsCommentAutomation.replyAfterType.randomWithin30Minutes",
+                  ),
+                  value: "randomWithin30Minutes",
+                },
+                {
+                  label: t(
+                    "threadsCommentAutomation.replyAfterType.randomWithin60Minutes",
+                  ),
+                  value: "randomWithin60Minutes",
+                },
+              ]}
+              required
+            />
+            {requiresDelayValue ? (
+              <InputNumberField
+                label={t("threadsCommentAutomation.replyAfterValue")}
+                min={1}
+                name="replyAfter.value"
+                required
+              />
+            ) : null}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>
+              {t("threadsCommentAutomation.card.hideComments")}
+            </CardTitle>
+            <CardDescription>
+              {t("threadsCommentAutomation.hideCommentsDescription")}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <SwitchField
+              label={t("threadsCommentAutomation.hideComments.all")}
+              name="hideComments.all"
+              required
+            />
+            <SwitchField
+              label={t("threadsCommentAutomation.hideComments.hasPhoneNumber")}
+              name="hideComments.hasPhoneNumber"
+              required
+            />
+            <SwitchField
+              label={t("threadsCommentAutomation.hideComments.hasLink")}
+              name="hideComments.hasLink"
+              required
+            />
+            <SwitchField
+              label={t("commentAutomation.hideComments.hasGif")}
+              name="hideComments.hasGif"
+              required
+            />
+            <SwitchField
+              label={t("commentAutomation.hideComments.hasEmoji")}
+              name="hideComments.hasEmoji"
+              required
+            />
+            <SwitchField
+              label={t("threadsCommentAutomation.hideComments.hasKeywords")}
+              name="hideComments.hasKeywords"
+              required
+            />
+            {hideKeywords ? (
+              <FormField
+                control={form.control}
+                name="hideComments.keywords"
+                render={() => (
+                  <FormItem>
+                    <FormLabel>
+                      {t("threadsCommentAutomation.hideComments.keywords")}
+                    </FormLabel>
+                    <FormControl>
+                      <TagsInputField
+                        name="hideComments.keywords"
+                        placeholder={t(
+                          "threadsCommentAutomation.keywordsPlaceholder",
+                        )}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            ) : null}
+            <SelectField
+              label={t(
+                "threadsCommentAutomation.hideComments.showCommentsAfter",
+              )}
+              name="hideComments.showCommentsAfter"
+              options={[
+                {
+                  label: t("threadsCommentAutomation.showCommentsAfter.none"),
+                  value: "none",
+                },
+                ...(
+                  [
+                    "6h",
+                    "12h",
+                    "1d",
+                    "2d",
+                    "3d",
+                    "4d",
+                    "5d",
+                    "6d",
+                    "7d",
+                    "8d",
+                    "9d",
+                    "10d",
+                  ] as const
+                ).map((value) => ({ label: value, value })),
+              ]}
+              required
+            />
+          </CardContent>
+        </Card>
+      </LockedContent>
 
       <div className="flex items-center justify-end gap-2">
         <button

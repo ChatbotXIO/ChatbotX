@@ -8,6 +8,7 @@ import type { DataTableRowAction } from "@chatbotx.io/ui/types/data-table"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { use, useMemo, useState } from "react"
+import { LockedIdsProvider } from "@/features/templates/components/lock-badge"
 import { ChangeFolderDialog } from "../folders/change-folder"
 import { RenameTriggerDialog } from "./components/rename-trigger-dialog"
 import { DeleteTriggersDialog } from "./delete-triggers-dialog"
@@ -54,16 +55,22 @@ export function TriggersTable({
 
   return (
     <>
-      <DataTable table={table}>
-        <DataTableToolbar table={table}>
-          <TriggersTableToolbarActions
-            folderId={folderId}
-            setRowAction={setRowAction}
-            table={table}
-            workspaceId={workspaceId}
-          />
-        </DataTableToolbar>
-      </DataTable>
+      <LockedIdsProvider
+        resourceIds={data.map((row) => row.id)}
+        resourceKind="trigger"
+        workspaceId={workspaceId}
+      >
+        <DataTable table={table}>
+          <DataTableToolbar table={table}>
+            <TriggersTableToolbarActions
+              folderId={folderId}
+              setRowAction={setRowAction}
+              table={table}
+              workspaceId={workspaceId}
+            />
+          </DataTableToolbar>
+        </DataTable>
+      </LockedIdsProvider>
 
       <RenameTriggerDialog
         onOpenChange={() => setRowAction(null)}

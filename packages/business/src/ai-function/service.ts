@@ -3,6 +3,7 @@ import {
   type DatabaseClient,
   db,
   eq,
+  inArray,
   type RelationsFieldFilter,
   relationsFilterToSQL,
 } from "@chatbotx.io/database/client"
@@ -16,7 +17,13 @@ import { createId } from "@chatbotx.io/utils"
 import { isSameJsonValue } from "../audit/diff"
 import { BaseService } from "../base.service"
 import { notFoundException, validationException } from "../errors"
-import { assertDeletable } from "../template/installed-resource.service"
+import {
+  assertReferencable,
+  assertResourceEditable,
+  changedKeysOf,
+  withDeleteGuard,
+} from "../template/installed-resource.service"
+import { withTemplateLockedTransaction } from "../template/template-resource-locks"
 import type { PaginatedResult } from "../types"
 
 type FindByProps = {
@@ -98,12 +105,6 @@ class AiFunctionService extends BaseService {
       throw notFoundException("AI Function not found")
     }
 
-    await assertDeletable({
-      workspaceId: ctx.workspaceId,
-      resourceKind: "aiFunction",
-      resourceIds: [ctx.aiFunctionId],
-    })
-
     await this.delete({ workspaceId: ctx.workspaceId, id: ctx.aiFunctionId })
 
     await this.audit("delete", `deleted an AI Function (#${aiFunction.id})`)
@@ -149,11 +150,24 @@ class AiFunctionService extends BaseService {
     workspaceId: string,
     data: CreateAIFunctionRequest,
     tx?: DatabaseClient,
-  ) {
+  ): Promise<AIFunctionModel[]> {
     if (!tx && (await this.isNameTaken(workspaceId, data.name))) {
       throw validationException("name", "Name is already taken")
     }
 
+    if (data.triggerFlowId && !tx) {
+      // The referenced flow's lock must be held until the reference commits.
+      return await withTemplateLockedTransaction((locked) =>
+        this.create(workspaceId, data, locked),
+      )
+    }
+    if (data.triggerFlowId && tx) {
+      await assertReferencable({
+        workspaceId,
+        parents: [{ kind: "flow", resourceId: data.triggerFlowId }],
+        tx,
+      })
+    }
     const client = tx ?? db
     const created = await client
       .insert(aiFunctionModel)
@@ -178,8 +192,39 @@ class AiFunctionService extends BaseService {
     ctx: { workspaceId: string; id: string },
     data: UpdateAIFunctionRequest,
     tx?: DatabaseClient,
-  ) {
-    const client = tx ?? db
+  ): Promise<AIFunctionModel[]> {
+    if (!tx) {
+      // The function and its trigger flow are locked before the stored row is
+      // read, so the diff that decides the guard is computed under the lock.
+      return await withTemplateLockedTransaction(
+        (lockedTx) => this.update(ctx, data, lockedTx),
+        {
+          workspaceId: ctx.workspaceId,
+          initialKeys: [
+            { kind: "aiFunction", resourceId: ctx.id },
+            ...(data.triggerFlowId
+              ? [{ kind: "flow" as const, resourceId: data.triggerFlowId }]
+              : []),
+          ],
+        },
+      )
+    }
+    const client = tx
+    const existing = await client.query.aiFunctionModel.findFirst({
+      where: { id: ctx.id, workspaceId: ctx.workspaceId },
+    })
+    if (existing) {
+      await assertResourceEditable({
+        workspaceId: ctx.workspaceId,
+        resourceKind: "aiFunction",
+        resourceIds: [ctx.id],
+        changedKeys: changedKeysOf(existing, data),
+        referencedParents: data.triggerFlowId
+          ? [{ kind: "flow", resourceId: data.triggerFlowId }]
+          : [],
+        tx,
+      })
+    }
     return await client
       .update(aiFunctionModel)
       .set(data)
@@ -193,13 +238,34 @@ class AiFunctionService extends BaseService {
   }
 
   async delete(ctx: { workspaceId: string; id: string }, tx?: DatabaseClient) {
-    const client = tx ?? db
-    return await client
+    return await withDeleteGuard(
+      {
+        workspaceId: ctx.workspaceId,
+        targets: [{ resourceKind: "aiFunction", resourceIds: [ctx.id] }],
+        tx,
+      },
+      (client) =>
+        this.deleteInTx(client, {
+          workspaceId: ctx.workspaceId,
+          ids: [ctx.id],
+        }),
+    )
+  }
+
+  /**
+   * The delete core (row write only), shared with the template uninstall so
+   * there is one implementation. Returns the rows actually deleted.
+   */
+  async deleteInTx(
+    tx: DatabaseClient,
+    input: { workspaceId: string; ids: string[] },
+  ) {
+    return await tx
       .delete(aiFunctionModel)
       .where(
         and(
-          eq(aiFunctionModel.id, ctx.id),
-          eq(aiFunctionModel.workspaceId, ctx.workspaceId),
+          eq(aiFunctionModel.workspaceId, input.workspaceId),
+          inArray(aiFunctionModel.id, input.ids),
         ),
       )
       .returning()

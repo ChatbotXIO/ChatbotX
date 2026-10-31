@@ -22,6 +22,7 @@ import {
   notFoundException,
   validationException,
 } from "../errors"
+import { assertReferencable } from "../template/installed-resource.service"
 import type { PipelineAccessScope } from "./access"
 import { type PipelineWithCurrency, withEffectiveCurrency } from "./currency"
 import {
@@ -138,6 +139,12 @@ export class PipelineItemService extends PipelineItemBaseService {
     if (replay) {
       return replay
     }
+    // A deal is installer data: a pipeline an uninstall tombstoned takes no new ones.
+    await assertReferencable({
+      workspaceId,
+      parents: [{ kind: "pipeline", resourceId: pipelineId }],
+      tx,
+    })
     const stages = await pipelineStageRepository.listByPipeline(
       { workspaceId, pipelineId },
       tx,

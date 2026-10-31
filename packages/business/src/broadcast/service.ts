@@ -50,6 +50,7 @@ import {
   resolveBroadcastTargetMode,
   resolveBroadcastTemplateSend,
   resolveSubmittedSendRatePatch,
+  type TemplateResourceKind,
   usesBroadcastTargets,
   withBroadcastTargets,
 } from "@chatbotx.io/database/partials"
@@ -130,6 +131,8 @@ import {
 import { inboxService } from "../inbox/service"
 import { logger } from "../logger"
 import { type IdLabel, selectLabelsByIds } from "../select-labels-by-ids"
+import { assertReferencable } from "../template/installed-resource.service"
+import { contactFilterParentsOf } from "../template/uninstall-references"
 import { buildDerivedBroadcastValues, copyBroadcastTargets } from "./derive"
 import {
   broadcastPlanPolicyService,
@@ -220,6 +223,41 @@ export type BroadcastTargetInput = {
   templateId?: string
   templateData?: Record<string, unknown>
   buttons?: BroadcastTemplateButton[]
+}
+
+/**
+ * The copied resources a broadcast payload points at: its own flow, its pages'
+ * and its template buttons' flows, and every id its audience filter names
+ * (sequence, keyword, ref link, flow, ...).
+ */
+const broadcastReferencedParents = (data: {
+  flowId?: string
+  buttons?: BroadcastTemplateButton[]
+  targets?: BroadcastTargetInput[]
+  contactFilter?: unknown
+}): { kind: TemplateResourceKind; resourceId: string }[] => {
+  const parents = new Map<
+    string,
+    { kind: TemplateResourceKind; resourceId: string }
+  >()
+  const add = (parent: { kind: TemplateResourceKind; resourceId: string }) =>
+    parents.set(`${parent.kind}:${parent.resourceId}`, parent)
+  for (const id of [
+    data.flowId,
+    ...(data.buttons ?? []).map((button) => button.flowId),
+    ...(data.targets ?? []).flatMap((target) => [
+      target.flowId,
+      ...(target.buttons ?? []).map((button) => button.flowId),
+    ]),
+  ]) {
+    if (id) {
+      add({ kind: "flow", resourceId: id })
+    }
+  }
+  for (const parent of contactFilterParentsOf(data.contactFilter)) {
+    add(parent)
+  }
+  return [...parents.values()]
 }
 
 /**
@@ -1834,6 +1872,13 @@ class BroadcastService extends BaseService {
       tx: DatabaseClient,
       override?: { sendRatePerMinute: number },
     ) => {
+      // A broadcast is installer data that cascades away with its flow: an
+      // uninstall of a template that owns the flow must see (or be seen by) it.
+      await assertReferencable({
+        workspaceId,
+        parents: broadcastReferencedParents(resolved),
+        tx,
+      })
       const [inserted] = await tx
         .insert(broadcastModel)
         .values({
@@ -2201,6 +2246,11 @@ class BroadcastService extends BaseService {
       : null
 
     const row = await db.transaction(async (tx) => {
+      await assertReferencable({
+        workspaceId,
+        parents: broadcastReferencedParents(data),
+        tx,
+      })
       if (isRecurring) {
         return await this.updateRecurringDraft(tx, {
           workspaceId,

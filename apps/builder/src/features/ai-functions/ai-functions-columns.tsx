@@ -24,6 +24,7 @@ import {
   Trash2Icon,
 } from "lucide-react"
 import type { useTranslations } from "next-intl"
+import { LockBadge } from "@/features/templates/components/lock-badge"
 
 export type AIFunctionRowAction = {
   row: Row<AIFunctionModel>
@@ -68,7 +69,10 @@ export const getAIFunctionsColumns = (
       <Tooltip>
         <TooltipTrigger
           render={
-            <div className="max-w-[400px] truncate">{row.original.name}</div>
+            <div className="flex max-w-[400px] items-center">
+              <span className="truncate">{row.original.name}</span>
+              <LockBadge resourceId={row.original.id} />
+            </div>
           }
         />
         <TooltipContent>

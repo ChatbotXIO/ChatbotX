@@ -13,6 +13,23 @@ const mocks = vi.hoisted(() => ({
   count: vi.fn(),
 }))
 
+// The template lock guard has its own suite; these tests cover the service.
+// Run the locked transaction against the same mocked client the test asserts on.
+vi.mock("../src/template/template-resource-locks", async () => {
+  const { db } = await import("@chatbotx.io/database/client")
+  return {
+    withTemplateLockedTransaction: (run: (tx: unknown) => unknown) => run(db),
+  }
+})
+
+vi.mock("../src/template/installed-resource.service", async () => ({
+  ...(await import("./helpers/template-guard-mocks")).templateGuardMocks({
+    assertDeletable: vi.fn(),
+    assertResourceEditable: vi.fn(),
+  }),
+  changedKeysOf: vi.fn(() => []),
+}))
+
 vi.mock("@chatbotx.io/database/client", () => ({
   db: {
     query: {
@@ -157,6 +174,7 @@ describe("commentAutomationService threads CRUD", () => {
   })
 
   test("update only allows supported mutable fields", async () => {
+    mocks.findFirst.mockResolvedValue({ id: "thread-1", name: "Before" })
     await commentAutomationService.updateThreadsAutomation({
       workspaceId: "workspace-1",
       id: "thread-1",

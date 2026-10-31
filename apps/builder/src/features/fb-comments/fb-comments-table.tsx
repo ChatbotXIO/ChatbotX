@@ -38,6 +38,10 @@ import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import React, { use, useCallback, useMemo } from "react"
 import { toast } from "sonner"
+import {
+  LockBadge,
+  LockedIdsProvider,
+} from "@/features/templates/components/lock-badge"
 import { ChangeFolderDialog } from "../folders/change-folder"
 import { buildAutomationAccountColumn } from "../shared/comment-automation/automation-account-column"
 import { BulkDeleteCommentAutomationsDialog } from "../shared/comment-automation/bulk-delete-comment-automations-dialog"
@@ -149,7 +153,7 @@ export function FbCommentsTable({
           />
         ),
         cell: ({ row }) => (
-          <div className="max-w-75 truncate">
+          <div className="flex max-w-75 items-center">
             <Tooltip>
               <TooltipTrigger
                 render={
@@ -165,6 +169,7 @@ export function FbCommentsTable({
                 <p>{row.original.name}</p>
               </TooltipContent>
             </Tooltip>
+            <LockBadge resourceId={row.original.id} />
             <LiveAutomationBadge post={row.original.post} />
             {missedCommentsInProgress.has(row.original.id) ? (
               <MissedCommentsProcessingLabel />
@@ -315,7 +320,11 @@ export function FbCommentsTable({
   const selectedRows = table.getFilteredSelectedRowModel().rows
 
   return (
-    <>
+    <LockedIdsProvider
+      resourceIds={data.map((row) => row.id)}
+      resourceKind="fbCommentAutomation"
+      workspaceId={workspaceId}
+    >
       <DataTable table={table}>
         <DataTableToolbar table={table}>
           <div className="flex items-center gap-2">
@@ -413,6 +422,6 @@ export function FbCommentsTable({
         }}
         resource={missedCommentsItem}
       />
-    </>
+    </LockedIdsProvider>
   )
 }

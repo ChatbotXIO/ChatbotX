@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation"
+import { LockedEditorGuard } from "@/features/templates/components/locked-editor-guard"
 import { EditTiktokCommentForm } from "@/features/tiktok-comments/components/edit-tiktok-comment-form"
 import { getTiktokComment } from "@/features/tiktok-comments/queries"
 import { withWorkspaceIdAndIdSchema } from "@/features/workspaces/schema/resource"
@@ -19,9 +20,15 @@ export default async function EditTiktokCommentPage(props: {
   }
 
   return (
-    <EditTiktokCommentForm
-      initialData={record}
+    <LockedEditorGuard
+      resourceId={data.id}
+      resourceKind="fbCommentAutomation"
       workspaceId={data.workspaceId}
-    />
+    >
+      <EditTiktokCommentForm
+        initialData={record}
+        workspaceId={data.workspaceId}
+      />
+    </LockedEditorGuard>
   )
 }

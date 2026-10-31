@@ -14,6 +14,7 @@ import type { DataTableRowAction } from "@chatbotx.io/ui/types/data-table"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { use, useMemo, useState } from "react"
+import { LockedIdsProvider } from "@/features/templates/components/lock-badge"
 import { getAIMcpServerColumns } from "./ai-mcp-servers-columns"
 import { AIMcpServersCreate } from "./ai-mcp-servers-create"
 import { AIMcpServersTableToolbarActions } from "./ai-mcp-servers-table-toolbar-actions"
@@ -61,39 +62,47 @@ export function AIMcpServersTable({
         <CardDescription>{t("aiMcpServers.description")}</CardDescription>
       </CardHeader>
       <CardContent>
-        <DataTable table={table}>
-          <DataTableToolbar table={table}>
-            <AIMcpServersTableToolbarActions
-              table={table}
-              workspaceId={workspaceId}
-            />
-          </DataTableToolbar>
-        </DataTable>
-
-        <AIMcpServersCreate
-          initialData={
-            rowAction?.variant === "update" ? rowAction.row.original : undefined
-          }
-          mode="edit"
-          onOpenChange={(open) => !open && setRowAction(null)}
-          onSuccess={() => {
-            router.refresh()
-          }}
-          open={rowAction?.variant === "update"}
+        <LockedIdsProvider
+          resourceIds={data.map((row) => row.id)}
+          resourceKind="aiMcpServer"
           workspaceId={workspaceId}
-        />
+        >
+          <DataTable table={table}>
+            <DataTableToolbar table={table}>
+              <AIMcpServersTableToolbarActions
+                table={table}
+                workspaceId={workspaceId}
+              />
+            </DataTableToolbar>
+          </DataTable>
 
-        <DeleteAIMcpServerDialog
-          mcpServer={
-            rowAction?.variant === "delete" ? rowAction.row.original : null
-          }
-          onOpenChange={(open) => !open && setRowAction(null)}
-          onSuccess={() => {
-            rowAction?.row.toggleSelected(false)
-          }}
-          open={rowAction?.variant === "delete"}
-          workspaceId={workspaceId}
-        />
+          <AIMcpServersCreate
+            initialData={
+              rowAction?.variant === "update"
+                ? rowAction.row.original
+                : undefined
+            }
+            mode="edit"
+            onOpenChange={(open) => !open && setRowAction(null)}
+            onSuccess={() => {
+              router.refresh()
+            }}
+            open={rowAction?.variant === "update"}
+            workspaceId={workspaceId}
+          />
+
+          <DeleteAIMcpServerDialog
+            mcpServer={
+              rowAction?.variant === "delete" ? rowAction.row.original : null
+            }
+            onOpenChange={(open) => !open && setRowAction(null)}
+            onSuccess={() => {
+              rowAction?.row.toggleSelected(false)
+            }}
+            open={rowAction?.variant === "delete"}
+            workspaceId={workspaceId}
+          />
+        </LockedIdsProvider>
       </CardContent>
     </Card>
   )

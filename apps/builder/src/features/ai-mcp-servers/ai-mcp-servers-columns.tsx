@@ -18,6 +18,7 @@ import type { DataTableRowAction } from "@chatbotx.io/ui/types/data-table"
 import type { ColumnDef } from "@tanstack/react-table"
 import { MoreHorizontalIcon, PencilIcon, Trash2Icon } from "lucide-react"
 import type { useTranslations } from "next-intl"
+import { LockBadge } from "@/features/templates/components/lock-badge"
 import type { AIMcpServerResource } from "./schema/resource"
 
 type GetAIMcpServerColumnsProps = {
@@ -62,8 +63,9 @@ export const getAIMcpServerColumns = ({
       <Tooltip>
         <TooltipTrigger
           render={
-            <div className="inline-block max-w-[300px] truncate">
-              {row.original.name}
+            <div className="flex max-w-[300px] items-center">
+              <span className="truncate">{row.original.name}</span>
+              <LockBadge resourceId={row.original.id} />
             </div>
           }
         />

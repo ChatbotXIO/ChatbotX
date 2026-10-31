@@ -1,3 +1,5 @@
+import { inArray } from "@chatbotx.io/database/client"
+import { tagModel } from "@chatbotx.io/database/schema"
 import type { TemplateTagManifestEntry } from "@chatbotx.io/flow-config"
 import { tagService } from "../../../tag/service"
 import type { TemplateInstallContext } from "../types"
@@ -9,10 +11,15 @@ import type { TemplateInstallContext } from "../types"
  * in this workspace". Queries existing tags first (rather than trusting
  * `upsertByNames`'s uniform return) purely to know which names were
  * pre-existing for accurate `wasExisting` provenance.
+ *
+ * `installFolder` (set when the template asked for an install folder) places
+ * only the tags this call CREATES in it: a same-name tag the installer already had is
+ * reused where it is and never moved.
  */
 export const resolveTagManifest = async (
   ctx: TemplateInstallContext,
   manifest: Readonly<Record<string, TemplateTagManifestEntry>>,
+  options: { installFolder?: () => Promise<string> } = {},
 ): Promise<void> => {
   const entries = Object.entries(manifest)
   if (entries.length === 0) {
@@ -39,6 +46,15 @@ export const resolveTagManifest = async (
     tx: ctx.tx,
   })
   const resolvedByName = new Map(resolved.map((row) => [row.name, row.id]))
+  const createdIds = resolved
+    .filter((row) => !existingByName.has(row.name))
+    .map((row) => row.id)
+  if (options.installFolder && createdIds.length > 0) {
+    await ctx.tx
+      .update(tagModel)
+      .set({ folderId: await options.installFolder() })
+      .where(inArray(tagModel.id, createdIds))
+  }
 
   if (!ctx.idMaps.tag) {
     ctx.idMaps.tag = new Map()

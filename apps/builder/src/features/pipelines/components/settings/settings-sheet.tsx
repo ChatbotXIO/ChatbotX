@@ -22,6 +22,7 @@ import { useQuery } from "@tanstack/react-query"
 import { Loader2Icon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useMemo, useState } from "react"
+import { useIsLocked } from "@/features/templates/components/lock-badge"
 import { orpc } from "@/lib/orpc/query"
 import type { PipelineMessageKey } from "../../lib/message-key"
 import type { BoardField } from "../board/types"
@@ -171,6 +172,9 @@ function SettingsForm({
 }) {
   const t = useTranslations("pipelines")
   const tc = useTranslations("actions")
+  const tLocked = useTranslations("templates.locked")
+  // Member grants stay editable; the pipeline content is read-only.
+  const isLocked = useIsLocked(pipeline.id)
   // `base` is the settings the draft started from: Save sends what differs
   // from it, so a refetch alone never turns an untouched field into a change.
   const [base, setBase] = useState<SettingsDraft>(() =>
@@ -276,7 +280,7 @@ function SettingsForm({
       labelKey: "settings.general",
       content: (
         <GeneralTab
-          disabled={isSaving}
+          disabled={isSaving || isLocked}
           draft={draft}
           errors={errors}
           onChange={change}
@@ -288,11 +292,13 @@ function SettingsForm({
       id: "fields",
       labelKey: "settings.fields",
       content: (
-        <FieldsTab
-          fields={fields}
-          pipelineId={pipeline.id}
-          workspaceId={workspaceId}
-        />
+        <fieldset className="m-0 min-w-0 border-0 p-0" disabled={isLocked}>
+          <FieldsTab
+            fields={fields}
+            pipelineId={pipeline.id}
+            workspaceId={workspaceId}
+          />
+        </fieldset>
       ),
     },
     {
@@ -300,7 +306,7 @@ function SettingsForm({
       labelKey: "settings.features",
       content: (
         <ToggleGroupSection
-          disabled={isSaving}
+          disabled={isSaving || isLocked}
           items={VISIBLE_FEATURE_ITEMS}
           onChange={(visibleFeatures) => change({ visibleFeatures })}
           values={draft.visibleFeatures}
@@ -312,7 +318,7 @@ function SettingsForm({
       labelKey: "settings.cardVisibleElements",
       content: (
         <ToggleGroupSection
-          disabled={isSaving}
+          disabled={isSaving || isLocked}
           items={CARD_ELEMENT_ITEMS}
           onChange={(cardElements) => change({ cardElements })}
           values={draft.cardElements}
@@ -324,7 +330,7 @@ function SettingsForm({
       labelKey: "settings.statusLabels",
       content: (
         <StatusLabelsSection
-          disabled={isSaving}
+          disabled={isSaving || isLocked}
           labels={draft.statusLabels}
           onChange={(statusLabels) => change({ statusLabels })}
         />
@@ -334,6 +340,15 @@ function SettingsForm({
 
   return (
     <>
+      {isLocked && (
+        <div
+          className="mx-4 rounded-md border bg-muted px-4 py-2 text-muted-foreground text-sm"
+          data-testid="template-locked-banner"
+          role="status"
+        >
+          {tLocked("editorBanner")}
+        </div>
+      )}
       <Accordion
         className="min-h-0 flex-1 overflow-y-auto px-4 pb-6"
         defaultValue={["general"]}

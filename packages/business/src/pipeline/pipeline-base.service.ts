@@ -17,6 +17,8 @@ import {
   notFoundException,
   validationException,
 } from "../errors"
+import { assertResourceEditable } from "../template/installed-resource.service"
+import { withTemplateLockedTransaction } from "../template/template-resource-locks"
 import {
   type PipelineAccessScope,
   type PipelineAction,
@@ -133,13 +135,27 @@ export class PipelineBaseService extends BaseService {
     work: (tx: DatabaseClient) => Promise<T>,
   ): Promise<T> {
     await this.requireAccess({ ...input, action: "manageSettings" })
-    return await db.transaction(async (tx) => {
-      await acquirePipelineAdvisoryLock(
-        tx,
-        this.structureLockKey(input.workspaceId, input.pipelineId),
-      )
-      return await work(tx)
-    })
+    return await withTemplateLockedTransaction(
+      async (tx) => {
+        // Every structural edit (stages and custom fields) is locked content.
+        await assertResourceEditable({
+          workspaceId: input.workspaceId,
+          resourceKind: "pipeline",
+          resourceIds: [input.pipelineId],
+          changedKeys: ["stages", "fields"],
+          tx,
+        })
+        await acquirePipelineAdvisoryLock(
+          tx,
+          this.structureLockKey(input.workspaceId, input.pipelineId),
+        )
+        return await work(tx)
+      },
+      {
+        workspaceId: input.workspaceId,
+        initialKeys: [{ kind: "pipeline", resourceId: input.pipelineId }],
+      },
+    )
   }
 
   /** `structureTransaction`, then drops the list cache and refreshes open boards. */

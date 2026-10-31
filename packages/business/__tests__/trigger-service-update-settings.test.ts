@@ -7,6 +7,7 @@ const {
   mockDbUpdate,
   mockDbUpdateReturning,
   mockDispatchAuditRecord,
+  mockLockOptions,
 } = vi.hoisted(() => {
   const mockDbUpdateReturning = vi.fn().mockResolvedValue([{ id: "trigger-1" }])
   const mockDbUpdateWhere = vi
@@ -20,6 +21,29 @@ const {
     mockDbUpdate,
     mockDbUpdateReturning,
     mockDispatchAuditRecord: vi.fn().mockResolvedValue(undefined),
+    mockLockOptions: vi.fn(),
+  }
+})
+
+// The template lock guard has its own suite; these tests cover the service.
+vi.mock("../src/template/installed-resource.service", async () => ({
+  ...(await import("./helpers/template-guard-mocks")).templateGuardMocks({
+    assertDeletable: vi.fn(),
+    assertResourceEditable: vi.fn(),
+  }),
+}))
+
+// Run the locked transaction against the same mocked client the test asserts on.
+vi.mock("../src/template/template-resource-locks", async () => {
+  const { db } = await import("@chatbotx.io/database/client")
+  return {
+    withTemplateLockedTransaction: (
+      run: (tx: unknown) => unknown,
+      options?: unknown,
+    ) => {
+      mockLockOptions(options)
+      return run(db)
+    },
   }
 })
 
@@ -65,6 +89,10 @@ vi.mock("../src/audit/dispatcher", () => ({
 }))
 
 const { triggerService } = await import("../src/trigger/service")
+const { assertResourceEditable } = await import(
+  "../src/template/installed-resource.service"
+)
+const { db: mockedDb } = await import("@chatbotx.io/database/client")
 
 const WS = "ws-1"
 const TRIGGER_ID = "trigger-1"
@@ -189,5 +217,74 @@ describe("triggerService.updateSettings", () => {
     })
 
     expect(mockDispatchAuditRecord).not.toHaveBeenCalled()
+  })
+
+  test("runs the guard first inside the transaction, before the write", async () => {
+    setUpMocks()
+    mockTriggerFindFirst.mockResolvedValue({
+      id: TRIGGER_ID,
+      name: "Old name",
+      active: true,
+    })
+
+    await triggerService.updateSettings({
+      workspaceId: WS,
+      id: TRIGGER_ID,
+      name: "New name",
+    })
+
+    expect(assertResourceEditable).toHaveBeenCalledWith(
+      expect.objectContaining({
+        resourceKind: "trigger",
+        resourceIds: [TRIGGER_ID],
+        changedKeys: ["name"],
+        tx: mockedDb,
+      }),
+    )
+    expect(
+      vi.mocked(assertResourceEditable).mock.invocationCallOrder[0],
+    ).toBeLessThan(mockDbUpdate.mock.invocationCallOrder[0] as number)
+  })
+
+  test("locks the trigger before the stored row is read", async () => {
+    setUpMocks()
+    mockTriggerFindFirst.mockResolvedValue({
+      id: TRIGGER_ID,
+      name: "Old name",
+      active: true,
+    })
+
+    await triggerService.updateSettings({
+      workspaceId: WS,
+      id: TRIGGER_ID,
+      name: "New name",
+    })
+
+    expect(mockLockOptions).toHaveBeenCalledWith({
+      workspaceId: expect.any(String),
+      initialKeys: [{ kind: "trigger", resourceId: TRIGGER_ID }],
+    })
+    expect(mockLockOptions.mock.invocationCallOrder[0]).toBeLessThan(
+      mockTriggerFindFirst.mock.invocationCallOrder[0] as number,
+    )
+  })
+
+  test("does not write when the guard blocks the edit", async () => {
+    setUpMocks()
+    mockTriggerFindFirst.mockResolvedValue({
+      id: TRIGGER_ID,
+      name: "Old name",
+      active: true,
+    })
+    vi.mocked(assertResourceEditable).mockRejectedValueOnce(new Error("locked"))
+
+    await expect(
+      triggerService.updateSettings({
+        workspaceId: WS,
+        id: TRIGGER_ID,
+        name: "New name",
+      }),
+    ).rejects.toThrow("locked")
+    expect(mockDbUpdate).not.toHaveBeenCalled()
   })
 })

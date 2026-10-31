@@ -216,6 +216,29 @@ const COMMAND_NAME_OVERRIDES: Readonly<Record<string, string>> = {
   "POST /v1/pipelines/{id}/items/{itemId}/transfer": "pipelines:item:transfer",
   "GET /v1/pipelines/{id}/stats": "pipelines:stats",
   "GET /v1/pipelines/{id}/stage-totals": "pipelines:stage-totals",
+  // Template share/analytics/retry are verbs on the template or install.
+  "GET /v1/templates/{id}/link": "templates:link",
+  "PUT /v1/templates/{id}/share": "templates:share",
+  "POST /v1/templates/{id}/share/rotate": "templates:rotate-share",
+  "GET /v1/templates/{id}/analytics": "templates:analytics",
+  "GET /v1/templates/{id}/installers": "templates:installers",
+  "GET /v1/templates/{id}/installers/{installerId}/uninstall-preview":
+    "templates:uninstall-preview",
+  "POST /v1/templates/{id}/installers/{installerId}/uninstall":
+    "templates:uninstall-installer",
+  "GET /v1/template-installations/{id}/uninstall-preview":
+    "template-installations:uninstall-preview",
+  "POST /v1/template-installations/{id}/uninstall":
+    "template-installations:uninstall",
+  "POST /v1/template-installations/{id}/uninstall/cancel":
+    "template-installations:cancel-uninstall",
+  "POST /v1/template-installations/{id}/retry": "template-installations:retry",
+  "POST /v1/template-installations/{id}/sync": "template-installations:sync",
+  "GET /v1/template-installations/{id}/syncs": "template-installations:syncs",
+  "GET /v1/template-installations/{id}/syncs/{syncId}":
+    "template-installations:sync-detail",
+  "POST /v1/template-installations/{id}/backups/{backupId}/restore":
+    "template-installations:restore-backup",
   // Order status moves are verbs on the order, not sub-resources to "add".
   "POST /v1/orders/{id}/accept": "orders:accept",
   "POST /v1/orders/{id}/ship": "orders:ship",

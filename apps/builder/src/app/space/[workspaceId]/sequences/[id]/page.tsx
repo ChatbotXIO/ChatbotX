@@ -3,6 +3,7 @@ import type { SearchParams } from "nuqs/server"
 import { Suspense } from "react"
 import { getSequence } from "@/features/sequences/queries"
 import { SequenceEditor } from "@/features/sequences/sequence-editor"
+import { LockedEditorGuard } from "@/features/templates/components/locked-editor-guard"
 import { withWorkspaceIdAndIdSchema } from "@/features/workspaces/schema/resource"
 
 export default async function SequenceDetailPage(props: {
@@ -20,8 +21,14 @@ export default async function SequenceDetailPage(props: {
   const sequence = await getSequence(workspaceId, id)
 
   return (
-    <Suspense>
-      <SequenceEditor sequence={sequence} workspaceId={workspaceId} />
-    </Suspense>
+    <LockedEditorGuard
+      resourceId={id}
+      resourceKind="sequence"
+      workspaceId={workspaceId}
+    >
+      <Suspense>
+        <SequenceEditor sequence={sequence} workspaceId={workspaceId} />
+      </Suspense>
+    </LockedEditorGuard>
   )
 }
