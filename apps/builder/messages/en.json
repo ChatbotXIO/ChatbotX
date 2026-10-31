@@ -5424,6 +5424,7 @@
   "webchat": {
     "chatUnavailable": "This chat is currently unavailable.",
     "description": "Let your customers get instant automated responses from your business directly from your website",
+    "loadMessagesError": "Couldn't load messages. Check your connection and try again.",
     "rateLimitExceeded": "Too many requests. Please try again in a moment.",
     "title": "Web Chat",
     "workspaceUnavailable": "This workspace is no longer available.",

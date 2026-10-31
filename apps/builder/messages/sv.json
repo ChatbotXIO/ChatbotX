@@ -6884,6 +6884,7 @@
   "webchat": {
     "chatUnavailable": "Den här chatten är inte tillgänglig just nu.",
     "description": "Låt dina kunder få omedelbara automatiska svar från ditt företag direkt på din webbplats",
+    "loadMessagesError": "Det gick inte att läsa in meddelanden. Kontrollera din anslutning och försök igen.",
     "rateLimitExceeded": "För många förfrågningar. Försök igen om en stund.",
     "title": "Webbchatt",
     "unauthorizedDomain": {

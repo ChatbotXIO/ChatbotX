@@ -20,3 +20,11 @@ const GUEST_CONVERSATION_ID_REGEX =
 
 export const zodGuestConversationId = () =>
   z.string().regex(GUEST_CONVERSATION_ID_REGEX)
+
+// Guards against corrupted/stale localStorage values that predate the current
+// accepted shapes (see GUEST_CONVERSATION_ID_REGEX) — e.g. a value left over
+// from an older widget version. Callers must discard, not forward, a stored
+// id that fails this check: forwarding it to the guest API always 400s and
+// permanently strands that visitor's session until they clear storage.
+export const isValidGuestConversationId = (value: string): boolean =>
+  GUEST_CONVERSATION_ID_REGEX.test(value)

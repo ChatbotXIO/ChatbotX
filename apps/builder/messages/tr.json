@@ -4742,6 +4742,7 @@
   "webchat": {
     "chatUnavailable": "Bu sohbet şu anda kullanılamıyor.",
     "description": "Müşterilerinizin web sitenizden doğrudan işletmenizden anında otomatik yanıtlar almasını sağlayın",
+    "loadMessagesError": "Mesajlar yüklenemedi. Bağlantınızı kontrol edip tekrar deneyin.",
     "rateLimitExceeded": "Çok fazla istek. Lütfen bir süre sonra tekrar deneyin.",
     "title": "Web Sohbeti",
     "workspaceUnavailable": "Bu çalışma alanı artık kullanılamıyor.",

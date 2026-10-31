@@ -5424,6 +5424,7 @@
   "webchat": {
     "chatUnavailable": "Bu söhbət hazırda əlçatan deyil.",
     "description": "Müştərilərinizin birbaşa veb saytınızdan biznesinizin ani avtomatik cavablarını almasına imkan verin",
+    "loadMessagesError": "Mesajlar yüklənmədi. Bağlantınızı yoxlayın və yenidən cəhd edin.",
     "rateLimitExceeded": "Həddindən çox sorğu. Bir az sonra yenidən cəhd edin.",
     "title": "Veb söhbət",
     "workspaceUnavailable": "Bu iş sahəsi artıq əlçatan deyil.",

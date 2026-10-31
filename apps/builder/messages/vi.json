@@ -4784,6 +4784,7 @@
   "webchat": {
     "chatUnavailable": "Cuộc trò chuyện này hiện không khả dụng.",
     "description": "Cho phép khách hàng của bạn nhận phản hồi tự động ngay lập tức từ doanh nghiệp của bạn trực tiếp từ trang web của bạn",
+    "loadMessagesError": "Không thể tải tin nhắn. Kiểm tra kết nối và thử lại.",
     "rateLimitExceeded": "Quá nhiều yêu cầu. Vui lòng thử lại sau giây lát.",
     "title": "Web Chat",
     "workspaceUnavailable": "Không gian làm việc này không còn khả dụng.",

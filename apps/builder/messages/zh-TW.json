@@ -4788,6 +4788,7 @@
   "webchat": {
     "chatUnavailable": "此聊天目前不可用。",
     "description": "讓您的客戶直接從您的網站獲得來自您企業的即時自動回覆",
+    "loadMessagesError": "無法載入訊息。請檢查您的網路連線並重試。",
     "rateLimitExceeded": "請求過多。請稍後重試。",
     "title": "網路聊天",
     "workspaceUnavailable": "此工作區不再可用。",

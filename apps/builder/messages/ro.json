@@ -4742,6 +4742,7 @@
   "webchat": {
     "chatUnavailable": "Acest chat este momentan indisponibil.",
     "description": "Oferă-le clienților tăi răspunsuri automate instant din partea afacerii tale direct de pe site-ul tău web",
+    "loadMessagesError": "Mesajele nu au putut fi încărcate. Verifică-ți conexiunea și încearcă din nou.",
     "rateLimitExceeded": "Prea multe cereri. Te rugăm să încerci din nou peste puțin timp.",
     "title": "Chat web",
     "workspaceUnavailable": "Acest spațiu de lucru nu mai este disponibil.",

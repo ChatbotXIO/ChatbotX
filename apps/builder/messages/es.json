@@ -4742,6 +4742,7 @@
   "webchat": {
     "chatUnavailable": "This chat es currently undisponible.",
     "description": "Let tu personalizadoers Obtener instant automated respuestas desde tu empresa directly desde tu website",
+    "loadMessagesError": "No se pudieron cargar los mensajes. Comprueba tu conexión e inténtalo de nuevo.",
     "rateLimitExceeded": "Too mcualquier requests. Por favor, try again en un moment.",
     "title": "Chat web",
     "workspaceUnavailable": "This espacio de trabajo es no longer disponible.",
