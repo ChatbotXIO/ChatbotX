@@ -212,6 +212,7 @@ See **`.agents/rules/git.md`** for the full canonical rules (commit format, bran
 - Human-facing docs: [chatbotx.io/docs](https://chatbotx.io/docs) (including Quick Start).
 - Tech stack details: `docs/tech-stack.md`
 - Architecture decisions: `docs/adr/`
+- Broadcast audience (direct-chat-only default, reaching contacts without one by chat history with **Last interaction**, moving back to draft): `docs/broadcasts.md`
 - Messaging scaling runbook: `docs/scaling-messaging.md`
 - Request flow diagrams: `docs/request-workflow.md`
 - White-label tenancy model: `docs/tenancy.md`

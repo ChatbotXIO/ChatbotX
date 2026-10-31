@@ -166,7 +166,7 @@ export const broadcastsPublicRouter = {
       path: BROADCAST_AUDIENCE_PREVIEW_TOKEN_PATH,
       summary: "Preview broadcast audience before send",
       description:
-        'Counts and lists the contact inboxes a broadcast would be sent to, without creating anything. `total` is the size of the whole audience (the `audienceRangeStart`/`audienceRangeEnd` window already applied, one contact on several channels counts once per channel); `data` is one page of it in send order (ascending contact inbox id), `page` from 1 and `perPage` up to 50. Select the audience like `broadcasts.create`: `subaction`, `contactFilter`, the window, and the inboxes with `inboxIds`, or `channels` (`omnichannel` = every channel), or an integration id; none given means an empty audience (`total` 0). `fullName`, `avatar` and `occurredAt` come from the contact. Use `perPage: 1` when you only need `total`. On very large audiences pass `countMode: "bounded"`: the count then stops at `countCap` and `totalCountCapped: true` means `total` is a lower bound (it can even be 0 when the window starts past `countCap`, which is not an empty audience); an exact count that takes too long fails with 503 `countTimeout`. A page past the window is empty. Use `broadcasts.getAudience` for a broadcast that already exists.',
+        'Counts and lists the contact inboxes a broadcast would be sent to, without creating anything. `total` is the size of the whole audience (the `audienceRangeStart`/`audienceRangeEnd` window already applied, one contact on several channels counts once per channel); `data` is one page of it in send order (ascending contact inbox id), `page` from 1 and `perPage` up to 50. Select the audience like `broadcasts.create`: `subaction`, `contactFilter` (only contacts with a DM are counted unless it has a `lastInteraction` condition), the window, and the inboxes with `inboxIds`, or `channels` (`omnichannel` = every channel), or an integration id; none given means an empty audience (`total` 0). `fullName`, `avatar` and `occurredAt` come from the contact. Use `perPage: 1` when you only need `total`. On very large audiences pass `countMode: "bounded"`: the count then stops at `countCap` and `totalCountCapped: true` means `total` is a lower bound (it can even be 0 when the window starts past `countCap`, which is not an empty audience); an exact count that takes too long fails with 503 `countTimeout`. A page past the window is empty. Use `broadcasts.getAudience` for a broadcast that already exists.',
       tags: ["Broadcasts"],
     })
     .input(previewBroadcastAudiencePublicRequest)
@@ -334,7 +334,7 @@ export const broadcastsPublicRouter = {
       path: "/v1/broadcasts/{id}/schedule",
       summary: "Schedule draft broadcast",
       description:
-        "Moves a draft broadcast to its scheduled state using the provided schedule; for `schedulesType: recurring` it starts the repeating schedule (send `recurrence` to replace the saved rule, or omit it to keep it). Call `broadcasts.get` to inspect it first, or use `broadcasts.updateDraft` to change its payload.",
+        "Moves a draft broadcast to its scheduled state using the provided schedule; for `schedulesType: recurring` it starts the repeating schedule (send `recurrence` to replace the saved rule, or omit it to keep it). Call `broadcasts.get` to inspect it first, or use `broadcasts.updateDraft` to change its payload. A draft moved back from `scheduled` mid-preparation may still be clearing its previous recipients; it then fails with 400 and a message to retry shortly, and succeeds once the cleanup finishes.",
       tags: ["Broadcasts"],
     })
     .input(
@@ -366,7 +366,7 @@ export const broadcastsPublicRouter = {
       path: "/v1/broadcasts/{id}/move-to-draft",
       summary: "Move scheduled broadcast back to draft",
       description:
-        "Reverses a broadcast's `scheduled` state so its payload can be edited again. For a repeating broadcast it stops the schedule, running or paused, so the rule can be edited; slots that pass while it is a draft are skipped. Only matches a broadcast whose status is `scheduled`, or a repeating one that is `recurring` or paused (`cancelled`); 404 otherwise. Use `broadcasts.updateDraft` afterward, or `broadcasts.schedule` to re-schedule.",
+        "Reverses a broadcast's `scheduled` state so its payload can be edited again. For a repeating broadcast it stops the schedule, running or paused, so the rule can be edited; slots that pass while it is a draft are skipped. Only matches a broadcast whose status is `scheduled`, or a repeating one that is `recurring` or paused (`cancelled`); 404 otherwise. Use `broadcasts.updateDraft` afterward, or `broadcasts.schedule` to re-schedule (recipients a half-done preparation left behind are cleared in the background first).",
       tags: ["Broadcasts"],
     })
     .input(

@@ -94,6 +94,7 @@ export {
 export {
   buildContactInboxScopeWhere,
   type ContactInboxScope,
+  contactInboxHasDmSQL,
   contactInboxInteractedWithin24hSQL,
 } from "./predicates"
 export {

@@ -789,3 +789,21 @@ describe("flow-only contact filter fields", () => {
     expect(withCondition({ operator: "in" })).toBe(false)
   })
 })
+
+describe("lastInteraction filter", () => {
+  const parse = (operator: string, value?: string) =>
+    staticFieldFilter("lastInteraction").safeParse({
+      field: "lastInteraction",
+      operator,
+      value,
+    }).success
+
+  test("accepts isEmpty (never messaged) and isNotEmpty (has messaged) without a value", () => {
+    expect(parse(operatorTypes.enum.isEmpty)).toBe(true)
+    expect(parse(operatorTypes.enum.isNotEmpty)).toBe(true)
+  })
+
+  test("still accepts a date comparison", () => {
+    expect(parse(operatorTypes.enum.gt, "2026-05-19T10:00:00Z")).toBe(true)
+  })
+})

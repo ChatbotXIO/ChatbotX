@@ -42,6 +42,7 @@ import { purgeAutomationThrottle } from "./handlers/purge-automation-throttle"
 import { purgeBroadcasts } from "./handlers/purge-broadcasts"
 import { purgeCoexistStaging } from "./handlers/purge-coexist-staging"
 import { purgeCommentAutomationEvents } from "./handlers/purge-comment-automation-events"
+import { purgeDraftBroadcastRecipients } from "./handlers/purge-draft-broadcast-recipients"
 import { purgeErrorLogs } from "./handlers/purge-error-logs"
 import { purgeExpiredCallRecordings } from "./handlers/purge-expired-call-recordings"
 import { purgeExpiredConnectSessions } from "./handlers/purge-expired-connect-sessions"
@@ -82,7 +83,7 @@ async function startScheduleWorker() {
 
   createQueueWorker(
     queueNames.enum.schedule,
-    async (job: Job<ScheduleJobData>) =>
+    async (job: Job<ScheduleJobData>, token?: string) =>
       runJobWithAuditContext(
         { source: `schedule:${job.data.type}` },
         async () => {
@@ -101,6 +102,15 @@ async function startScheduleWorker() {
 
             case ScheduleJobData.prepareBroadcast:
               await prepareBroadcast(job.data.data.broadcastId)
+              return
+
+            case ScheduleJobData.purgeDraftBroadcastRecipients:
+              await purgeDraftBroadcastRecipients({
+                job,
+                token,
+                workspaceId: job.data.data.workspaceId,
+                broadcastId: job.data.data.broadcastId,
+              })
               return
 
             case ScheduleJobData.sendBroadcast:

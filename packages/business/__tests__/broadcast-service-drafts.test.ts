@@ -11,6 +11,9 @@ const deleteTargetsWhere = vi.fn()
 const pruneFilter = vi.fn()
 const mockDispatchAuditRecord = vi.fn().mockResolvedValue(undefined)
 const selectForUpdate = vi.fn()
+const mockHasBroadcastRecipients = vi.fn()
+const mockScheduleAdd = vi.fn()
+const mockScheduleGetJob = vi.fn()
 
 vi.mock("@chatbotx.io/analytics", () => ({
   broadcastAnalyticsService: { getContacts: vi.fn() },
@@ -123,7 +126,24 @@ vi.mock("@chatbotx.io/database/schema", () => ({
   whatsappMessageTemplateModel: {},
 }))
 
+vi.mock("@chatbotx.io/worker-config", () => ({
+  ScheduleJobData: {
+    purgeDraftBroadcastRecipients: "purgeDraftBroadcastRecipients",
+  },
+  broadcastDraftPurgeJobId: (broadcastId: string, requester: string) =>
+    `schedule-purge-draft-broadcast-${broadcastId}-${requester}`,
+  broadcastPrepareJobId: (broadcastId: string) =>
+    `schedule-prepare-broadcast-${broadcastId}`,
+  scheduleQueue: {
+    add: (...args: unknown[]) => mockScheduleAdd(...args),
+    getJob: (...args: unknown[]) => mockScheduleGetJob(...args),
+  },
+}))
+
 vi.mock("@chatbotx.io/database/repositories", () => ({
+  hasBroadcastRecipients: (...args: unknown[]) =>
+    mockHasBroadcastRecipients(...args),
+  purgeBroadcastRecipients: vi.fn(),
   broadcastRepository: {
     findByIdOrName: vi.fn(),
   },
@@ -253,6 +273,9 @@ beforeEach(() => {
   pruneFilter.mockReset().mockImplementation((filter: unknown) => filter)
   mockDispatchAuditRecord.mockClear()
   selectForUpdate.mockReset()
+  mockHasBroadcastRecipients.mockReset().mockResolvedValue(false)
+  mockScheduleAdd.mockReset().mockResolvedValue(undefined)
+  mockScheduleGetJob.mockReset().mockResolvedValue(undefined)
   vi.mocked(broadcastPlanPolicyService.appliesToChannel).mockImplementation(
     (channel) => channel === "messenger",
   )
@@ -275,6 +298,121 @@ beforeEach(() => {
 })
 
 describe("broadcastService.scheduleDraft", () => {
+  // A draft whose interrupted prepare left recipients behind must not be
+  // re-scheduled on top of them. The check runs before the schedule
+  // transaction, so nothing is written or locked while it queues the cleanup.
+  test("refuses while the draft still holds leftover recipients and queues their cleanup", async () => {
+    mockHasBroadcastRecipients.mockResolvedValue(true)
+    findFirstBroadcast.mockResolvedValue({ id: "b-1" })
+
+    await expect(
+      broadcastService.scheduleDraft({
+        workspaceId: "ws-1",
+        broadcastId: "b-1",
+        schedulesType: "future",
+        schedulesAt: new Date("2026-09-01T09:00:00Z"),
+      }),
+    ).rejects.toThrow("still clearing")
+
+    expect(findFirstBroadcast).toHaveBeenCalledWith({
+      where: {
+        id: "b-1",
+        workspaceId: "ws-1",
+        status: "draft",
+        deletedAt: { isNull: true },
+      },
+      columns: { id: true },
+    })
+    expect(mockScheduleAdd).toHaveBeenCalledWith(
+      "purgeDraftBroadcastRecipients",
+      {
+        type: "purgeDraftBroadcastRecipients",
+        data: { workspaceId: "ws-1", broadcastId: "b-1" },
+      },
+      expect.objectContaining({
+        jobId: "schedule-purge-draft-broadcast-b-1-draft",
+      }),
+    )
+    expect(updateReturning).not.toHaveBeenCalled()
+  })
+
+  // The previous prepare may still be writing its last chunk (not committed
+  // yet, so the row probe cannot see it): scheduling waits for that job.
+  test.each([
+    "active",
+    "waiting",
+    "delayed",
+  ])("refuses while the previous prepare job is %s", async (state) => {
+    mockScheduleGetJob.mockResolvedValue({ getState: async () => state })
+    findFirstBroadcast.mockResolvedValue({ id: "b-1" })
+
+    await expect(
+      broadcastService.scheduleDraft({
+        workspaceId: "ws-1",
+        broadcastId: "b-1",
+        schedulesType: "future",
+        schedulesAt: new Date("2026-09-01T09:00:00Z"),
+      }),
+    ).rejects.toThrow("still clearing")
+
+    expect(mockScheduleGetJob).toHaveBeenCalledWith(
+      "schedule-prepare-broadcast-b-1",
+    )
+    expect(updateReturning).not.toHaveBeenCalled()
+  })
+
+  test.each([
+    "completed",
+    "failed",
+  ])("schedules once the previous prepare job is %s and nothing is left", async (state) => {
+    mockScheduleGetJob.mockResolvedValue({ getState: async () => state })
+    updateReturning.mockResolvedValue([{ id: "b-1" }])
+
+    await expect(
+      broadcastService.scheduleDraft({
+        workspaceId: "ws-1",
+        broadcastId: "b-1",
+        schedulesType: "future",
+        schedulesAt: new Date("2026-09-01T09:00:00Z"),
+      }),
+    ).resolves.toEqual({ id: "b-1" })
+  })
+
+  // Rows that are not this workspace's draft (another workspace, or a
+  // broadcast that is not a draft) keep the write's own error.
+  test("leaves a non-draft to the write's own error and queues nothing", async () => {
+    mockHasBroadcastRecipients.mockResolvedValue(true)
+    findFirstBroadcast.mockResolvedValue(undefined)
+    updateReturning.mockResolvedValue([])
+
+    await expect(
+      broadcastService.scheduleDraft({
+        workspaceId: "ws-1",
+        broadcastId: "b-1",
+        schedulesType: "future",
+        schedulesAt: new Date("2026-09-01T09:00:00Z"),
+      }),
+    ).rejects.toThrow("Broadcast is not a draft")
+
+    expect(mockScheduleAdd).not.toHaveBeenCalled()
+  })
+
+  // The common case costs one cheap probe: no draft lookup, no enqueue.
+  test("skips the draft lookup when nothing is left over", async () => {
+    updateReturning.mockResolvedValue([{ id: "b-1" }])
+
+    await broadcastService.scheduleDraft({
+      workspaceId: "ws-1",
+      broadcastId: "b-1",
+      schedulesType: "future",
+      schedulesAt: new Date("2026-09-01T09:00:00Z"),
+    })
+
+    expect(mockHasBroadcastRecipients).toHaveBeenCalledWith("b-1")
+    expect(findFirstBroadcast).not.toHaveBeenCalled()
+    expect(mockScheduleAdd).not.toHaveBeenCalled()
+  })
+
   test("moves a draft to scheduled, scoped to the workspace and draft status", async () => {
     updateReturning.mockResolvedValue([{ id: "b-1" }])
     const schedulesAt = new Date("2026-09-01T09:00:00Z")

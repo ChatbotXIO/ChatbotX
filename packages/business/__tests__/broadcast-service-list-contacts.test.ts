@@ -9,6 +9,13 @@ const mocks = vi.hoisted(() => ({
   dispatchAuditRecord: vi.fn().mockResolvedValue(undefined),
 }))
 
+// The service queues draft cleanups; these suites never reach that path.
+vi.mock("@chatbotx.io/worker-config", () => ({
+  ScheduleJobData: {},
+  broadcastDraftPurgeJobId: vi.fn(),
+  scheduleQueue: { add: vi.fn() },
+}))
+
 vi.mock("@chatbotx.io/database/client", () => ({
   and: (...conditions: unknown[]) => ({ and: conditions }),
   db: {
