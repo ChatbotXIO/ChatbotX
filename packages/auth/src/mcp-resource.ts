@@ -3,6 +3,7 @@ import {
   verifyOAuthQueryParams,
 } from "@better-auth/oauth-provider"
 import { oauthProviderResourceClient } from "@better-auth/oauth-provider/resource-client"
+import { isAPIError } from "better-auth/api"
 import { env, getMcpResourceUrl } from "./keys"
 import type { Auth } from "./server"
 
@@ -20,6 +21,12 @@ const JWKS_INFRASTRUCTURE_ERROR_CODES = new Set([
 ])
 
 const isInvalidTokenError = (error: unknown): boolean => {
+  // Better Auth wraps an expired, mis-signed, or wrong-audience token in an
+  // UNAUTHORIZED APIError (which has no jose `code`); JWKS infrastructure
+  // errors escape as raw jose errors and fall through to the check below.
+  if (isAPIError(error)) {
+    return error.status === "UNAUTHORIZED"
+  }
   const code = (error as { code?: unknown } | null)?.code
   return (
     typeof code === "string" &&

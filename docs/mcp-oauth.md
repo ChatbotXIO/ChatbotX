@@ -8,7 +8,12 @@ The provider issues JWT access tokens for the MCP resource with a five-minute li
 
 The public API accepts OAuth tokens only in `Authorization: Bearer`. Only workspace owners and `superAdmin` members can authorize OAuth access; synthetic platform-support sessions are rejected. Consent binds a client to one workspace. Callers may repeat that workspace with `x-workspace-id` or the MCP URL's `?workspace_id=<id>`; a different workspace is forbidden. The `GET /api/v1/token` introspection path verifies the JWT audience and signature, enforces that workspace selection, and returns the same token context as a workspace API token.
 
-Set `CHATBOTX_MCP_PUBLIC_URL` to the public builder origin in production. Otherwise the canonical `/mcp` resource URL is derived from request headers, which may expose an internal HTTP host behind an incorrectly configured proxy.
+Two variables describe the same resource URL and must agree:
+
+- Builder `MCP_PUBLIC_URL` is the full resource URL, defaulting to `<NEXT_PUBLIC_BUILDER_URL>/mcp`. It is the `aud` of every issued access token and the `resource` in the builder's protected-resource metadata.
+- MCP server `CHATBOTX_MCP_PUBLIC_URL` is the public origin only; the server appends `/mcp` to advertise its resource. Without it, the origin is derived from request headers, which may expose an internal HTTP host behind an incorrectly configured proxy, so set it in production.
+
+Keep `MCP_PUBLIC_URL` equal to `<CHATBOTX_MCP_PUBLIC_URL origin>/mcp`. If they differ, clients request a resource the tokens are not issued for, and every request is rejected with 401 after an otherwise successful OAuth flow.
 
 OAuth uses the deployment's canonical builder URL. Reseller custom domains are intentionally outside this flow; reseller sub-accounts continue to use workspace API tokens.
 
@@ -17,9 +22,9 @@ OAuth uses the deployment's canonical builder URL. Reseller custom domains are i
 The load balancer MUST expose the builder's `/mcp/*` proxy publicly. The builder
 serves RFC 9728 discovery at `/.well-known/oauth-protected-resource/mcp/*`;
 that metadata and all issued access-token audiences use the single canonical
-`<builder-origin>/mcp` resource URL. Set `CHATBOTX_MCP_PUBLIC_URL` to the public
-builder origin so bearer challenges advertise HTTPS rather than an internal or
-HTTP proxy URL.
+`MCP_PUBLIC_URL` resource (default `<builder-origin>/mcp`). Set the MCP server's
+`CHATBOTX_MCP_PUBLIC_URL` to the same public origin so bearer challenges
+advertise HTTPS rather than an internal or HTTP proxy URL.
 
 Users can copy the current workspace URL and revoke their account-level OAuth
 grants in **Settings → Integrations → ChatbotX MCP**. The grants page lists

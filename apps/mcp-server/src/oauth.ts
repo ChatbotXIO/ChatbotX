@@ -2,6 +2,8 @@ import type { IncomingMessage } from "node:http"
 import { env } from "./env"
 import { resolveHeaderValue } from "./http-headers"
 
+// Keep in sync with MCP_OAUTH_SCOPES in packages/auth/src/mcp-config.ts;
+// mcp-server does not depend on @chatbotx.io/auth.
 const oauthScopes = ["openid", "profile", "email", "offline_access"]
 export const protectedResourcePrefix = "/.well-known/oauth-protected-resource"
 const apiPathSuffixPattern = /\/api\/?$/

@@ -157,6 +157,105 @@ describe("mcpOAuthService.resolvePrincipal", () => {
     expect(mocks.findMembership).not.toHaveBeenCalled()
   })
 
+  test("forbids a consented workspace the user no longer administers", async () => {
+    const member = { permissions: {}, role: "agent", workspace }
+    mocks.findMembership.mockResolvedValueOnce(member)
+    mocks.resolveWorkspaceAccess.mockResolvedValueOnce({
+      isSupportSession: false,
+      member,
+      workspace,
+    })
+
+    await expect(
+      mcpOAuthService.resolvePrincipal({
+        clientId: "client-1",
+        userId: user.id,
+      }),
+    ).resolves.toEqual({ kind: "forbidden" })
+  })
+
+  test("forbids a synthetic platform-support membership", async () => {
+    mocks.findMembership.mockResolvedValueOnce(null)
+    mocks.resolveWorkspaceAccess.mockResolvedValueOnce({
+      isSupportSession: true,
+      member: { permissions: {}, role: "owner", workspace },
+      workspace,
+    })
+
+    await expect(
+      mcpOAuthService.resolvePrincipal({
+        clientId: "client-1",
+        userId: user.id,
+      }),
+    ).resolves.toEqual({ kind: "forbidden" })
+  })
+
+  test("forbids a workspace the user cannot access at all", async () => {
+    mocks.findMembership.mockResolvedValueOnce(null)
+    mocks.resolveWorkspaceAccess.mockResolvedValueOnce(null)
+
+    await expect(
+      mcpOAuthService.resolvePrincipal({
+        clientId: "client-1",
+        userId: user.id,
+      }),
+    ).resolves.toEqual({ kind: "forbidden" })
+  })
+
+  test("accepts the consented workspace when it is requested explicitly", async () => {
+    await expect(
+      mcpOAuthService.resolvePrincipal({
+        clientId: "client-1",
+        userId: user.id,
+        workspaceId: workspace.id,
+      }),
+    ).resolves.toMatchObject({ kind: "principal" })
+  })
+
+  test("auto-selects the only authorizable workspace for legacy unbound consent", async () => {
+    mocks.findLatestConsent.mockResolvedValueOnce({ workspaceId: null })
+    mocks.listMemberships.mockResolvedValueOnce([
+      { permissions: {}, role: "owner", workspace },
+    ])
+
+    await expect(
+      mcpOAuthService.resolvePrincipal({
+        clientId: "client-1",
+        userId: user.id,
+      }),
+    ).resolves.toEqual({
+      kind: "principal",
+      principal: { clientId: "client-1", user, workspace },
+    })
+    expect(mocks.findMembership).toHaveBeenCalledWith({
+      userId: user.id,
+      workspaceId: workspace.id,
+    })
+  })
+
+  test("forbids legacy unbound consent when no workspace is authorizable", async () => {
+    mocks.findLatestConsent.mockResolvedValueOnce({ workspaceId: null })
+    mocks.listMemberships.mockResolvedValueOnce([
+      { permissions: {}, role: "agent", workspace },
+      {
+        permissions: {},
+        role: "owner",
+        workspace: {
+          id: "workspace-2",
+          name: "Deleting",
+          scheduledDeletionAt: new Date("2026-10-01T00:00:00.000Z"),
+        },
+      },
+    ])
+
+    await expect(
+      mcpOAuthService.resolvePrincipal({
+        clientId: "client-1",
+        userId: user.id,
+      }),
+    ).resolves.toEqual({ kind: "forbidden" })
+  })
+
   test("requires a workspace selection for legacy unbound consent", async () => {
     mocks.findLatestConsent.mockResolvedValueOnce({ workspaceId: null })
     mocks.listMemberships.mockResolvedValueOnce([
@@ -204,6 +303,48 @@ describe("mcpOAuthService.bindConsentWorkspace", () => {
       userId: user.id,
       workspaceId: workspace.id,
     })
+  })
+
+  test("rejects a workspace the user does not administer without writing", async () => {
+    const member = { permissions: {}, role: "agent", workspace }
+    mocks.findMembership.mockResolvedValueOnce(member)
+    mocks.resolveWorkspaceAccess.mockResolvedValueOnce({
+      isSupportSession: false,
+      member,
+      workspace,
+    })
+
+    await expect(
+      mcpOAuthService.bindConsentWorkspace({
+        clientId: "client-1",
+        user,
+        workspaceId: workspace.id,
+      }),
+    ).rejects.toMatchObject({ code: "forbidden" })
+    expect(mocks.setConsentWorkspace).not.toHaveBeenCalled()
+  })
+
+  test("rejects a workspace scheduled for deletion without writing", async () => {
+    const deleting = {
+      ...workspace,
+      scheduledDeletionAt: new Date("2026-10-01T00:00:00.000Z"),
+    }
+    const member = { permissions: {}, role: "owner", workspace: deleting }
+    mocks.findMembership.mockResolvedValueOnce(member)
+    mocks.resolveWorkspaceAccess.mockResolvedValueOnce({
+      isSupportSession: false,
+      member,
+      workspace: deleting,
+    })
+
+    await expect(
+      mcpOAuthService.bindConsentWorkspace({
+        clientId: "client-1",
+        user,
+        workspaceId: workspace.id,
+      }),
+    ).rejects.toMatchObject({ code: "forbidden" })
+    expect(mocks.setConsentWorkspace).not.toHaveBeenCalled()
   })
 
   test("fails when Better Auth did not create a consent", async () => {
@@ -265,6 +406,26 @@ describe("mcpOAuthService grants", () => {
       { clientId: "client-1", userId: user.id },
       {},
     )
+  })
+
+  test("returns false and does not log when there is nothing to revoke", async () => {
+    mocks.deleteAccessTokens.mockResolvedValueOnce(0)
+    mocks.deleteConsents.mockResolvedValueOnce(0)
+    mocks.deleteRefreshTokens.mockResolvedValueOnce(0)
+
+    await expect(
+      mcpOAuthService.revokeGrant({ clientId: "client-1", userId: user.id }),
+    ).resolves.toBe(false)
+    expect(mocks.logInfo).not.toHaveBeenCalled()
+  })
+
+  test("propagates a revoke failure without logging success", async () => {
+    mocks.deleteConsents.mockRejectedValueOnce(new Error("db down"))
+
+    await expect(
+      mcpOAuthService.revokeGrant({ clientId: "client-1", userId: user.id }),
+    ).rejects.toThrow("db down")
+    expect(mocks.logInfo).not.toHaveBeenCalled()
   })
 
   test("purges expired access and refresh tokens", async () => {

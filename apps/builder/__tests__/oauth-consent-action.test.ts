@@ -5,6 +5,7 @@ const mocks = vi.hoisted(() => ({
   bindConsentWorkspace: vi.fn(),
   calls: [] as string[],
   oauth2Consent: vi.fn(),
+  revokeGrant: vi.fn(),
   verifyMcpOAuthQuery: vi.fn(),
 }))
 
@@ -16,8 +17,10 @@ vi.mock("@chatbotx.io/business", () => ({
   mcpOAuthService: {
     assertAuthorizableWorkspace: mocks.assertAuthorizableWorkspace,
     bindConsentWorkspace: mocks.bindConsentWorkspace,
+    revokeGrant: mocks.revokeGrant,
   },
 }))
+vi.mock("@/lib/log", () => ({ logger: { error: vi.fn() } }))
 vi.mock("next/headers", () => ({ headers: vi.fn().mockResolvedValue({}) }))
 vi.mock("@/lib/auth/auth", () => ({
   auth: { api: { oauth2Consent: mocks.oauth2Consent } },
@@ -82,6 +85,24 @@ describe("submitOAuthConsentAction", () => {
       clientId: "claude",
       user: { email: "owner@example.com", id: "user-1" },
       workspaceId: "ws-2",
+    })
+  })
+
+  test("revokes the recorded consent and rethrows when binding fails", async () => {
+    const bindError = new Error("db down")
+    mocks.bindConsentWorkspace.mockRejectedValue(bindError)
+    mocks.revokeGrant.mockResolvedValue(true)
+
+    await expect(
+      callAction({
+        accept: true,
+        oauthQuery: "client_id=claude&sig=signature",
+        workspaceId: "ws-2",
+      }),
+    ).rejects.toBe(bindError)
+    expect(mocks.revokeGrant).toHaveBeenCalledWith({
+      clientId: "claude",
+      userId: "user-1",
     })
   })
 

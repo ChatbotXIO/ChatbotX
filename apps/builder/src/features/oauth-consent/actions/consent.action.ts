@@ -5,6 +5,7 @@ import { mcpOAuthService } from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { headers } from "next/headers"
 import { auth } from "@/lib/auth/auth"
+import { logger } from "@/lib/log"
 import { authActionClient } from "@/lib/safe-action"
 import { oauthConsentRequest } from "../schema/consent"
 
@@ -35,6 +36,8 @@ export const submitOAuthConsentAction = authActionClient
       workspaceId: parsedInput.workspaceId,
     }
 
+    // Check the pick before approving so a refused workspace never leaves a
+    // consent behind.
     await mcpOAuthService.assertAuthorizableWorkspace(binding)
     const result = await auth.api.oauth2Consent({
       body: {
@@ -43,6 +46,21 @@ export const submitOAuthConsentAction = authActionClient
       },
       headers: await headers(),
     })
-    await mcpOAuthService.bindConsentWorkspace(binding)
+    // Bind before the redirect reaches the client. Better Auth reuses a stored
+    // consent without showing this page again, so an unbound one must not
+    // survive a failed bind: revoke it and let the next attempt re-prompt.
+    try {
+      await mcpOAuthService.bindConsentWorkspace(binding)
+    } catch (error) {
+      logger.error(
+        { err: error, clientId: binding.clientId, userId: ctx.user.id },
+        "Failed to bind MCP OAuth consent to workspace; revoking consent",
+      )
+      await mcpOAuthService.revokeGrant({
+        userId: ctx.user.id,
+        clientId: binding.clientId,
+      })
+      throw error
+    }
     return result
   })

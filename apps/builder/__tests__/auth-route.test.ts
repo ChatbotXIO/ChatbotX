@@ -37,8 +37,9 @@ const {
 // `packages/auth/__tests__/generic-oauth-path.test.ts` (importing from the
 // package avoids pulling the heavy `@chatbotx.io/auth/server` module graph —
 // better-auth, drizzle, business — into this route test). This mock mirrors
-// that real implementation's three suffix/substring checks; a drift between
-// the two is caught by that dedicated test.
+// that real implementation's two branches (the `/callback/oidc` suffix, or a
+// shared social path selecting the `oidc` provider); a drift between the two
+// is caught by that dedicated test.
 const { isSharedSocialPath } = vi.hoisted(() => ({
   isSharedSocialPath: (pathname: string) =>
     ["/sign-in/social", "/sign-up/social", "/link-social"].some((suffix) =>

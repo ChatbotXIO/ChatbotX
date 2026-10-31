@@ -871,6 +871,8 @@ export function createAuth(config: AuthConfig) {
                   pkce: true,
                   // Pin the redirect URI to the broker, then relay the callback
                   // to the originating branded host as social OAuth already does.
+                  // Better Auth 1.7 moved this from /oauth2/callback/<id>; IdPs
+                  // registered before the upgrade must update their redirect URI.
                   redirectURI: new URL(
                     `/api/auth/callback/${GENERIC_OAUTH_PROVIDER_ID}`,
                     new URL(getBrokerUrl()).origin,

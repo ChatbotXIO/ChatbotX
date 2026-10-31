@@ -146,8 +146,8 @@ export class McpOAuthService extends BaseService {
 
   /**
    * Binds the client's consent to a workspace once the user approved it.
-   * Re-authorizing the same client rebinds every consent it holds for the
-   * user, which is how a user switches workspace.
+   * Better Auth reuses a stored consent without showing the consent page, so
+   * switching workspace means revoking the grant and authorizing again.
    */
   async bindConsentWorkspace(props: {
     user: Pick<UserModel, "id" | "email">
