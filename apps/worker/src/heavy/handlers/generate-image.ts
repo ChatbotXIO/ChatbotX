@@ -18,6 +18,7 @@ import { env } from "../../env"
 import type { HeavyStepComputeProps } from "../../integration/handlers/flow-utils"
 import { getIntegrationContext } from "../../integration/utils/contact"
 import { logger } from "../../lib/logger"
+import { toChannelSafeImage } from "./channel-safe-image"
 import { ExpectedHeavyStepError } from "./errors"
 import { getOpenAIImageQuality } from "./image-options"
 
@@ -59,7 +60,7 @@ export async function generateImageOutput({
       throw new ExpectedHeavyStepError("Integration context not found")
     }
 
-    let buffer: Buffer | null = null
+    let rawBuffer: Buffer | null = null
     const modelId = step.model
     const model = createAIImageModelInstance({
       model: aiConfig,
@@ -67,8 +68,11 @@ export async function generateImageOutput({
       modelId,
     })
 
+    // Muse takes `size` only as an aspect-ratio hint and rejects
+    // `quality`/`aspect_ratio`, so it shares the OpenAI size path only.
     const size =
-      step.provider === aiProviders.enum.openai &&
+      (step.provider === aiProviders.enum.openai ||
+        step.provider === aiProviders.enum.muse) &&
       step.size !== IMAGE_AUTO_VALUE
         ? (step.size as `${number}x${number}`)
         : undefined
@@ -98,16 +102,19 @@ export async function generateImageOutput({
     })
 
     if (image.uint8Array && image.uint8Array.byteLength > 0) {
-      buffer = Buffer.from(image.uint8Array)
+      rawBuffer = Buffer.from(image.uint8Array)
     } else if (image.base64) {
-      buffer = Buffer.from(image.base64, IMAGE_BASE64_ENCODING)
+      rawBuffer = Buffer.from(image.base64, IMAGE_BASE64_ENCODING)
     }
 
-    const contentType = image.mediaType || IMAGE_DEFAULT_MIME_TYPE
-
-    if (!buffer || buffer.length === 0) {
+    if (!rawBuffer || rawBuffer.length === 0) {
       throw new Error("[ai-generate-image] Empty image payload from provider")
     }
+
+    const { buffer, contentType } = await toChannelSafeImage({
+      buffer: rawBuffer,
+      contentType: image.mediaType || IMAGE_DEFAULT_MIME_TYPE,
+    })
 
     if (buffer.length > env.HEAVY_MAX_IMAGE_BYTES) {
       throw new ExpectedHeavyStepError(

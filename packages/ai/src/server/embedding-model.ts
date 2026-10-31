@@ -71,6 +71,6 @@ export async function resolveEmbeddingModel(
   }
 
   throw new EmbeddingProviderNotConfiguredError(
-    "No embedding provider configured. AI file embeddings require OpenAI or Gemini integration. DeepSeek and Claude do not support embedding models.",
+    "No embedding provider configured. AI file embeddings require OpenAI or Gemini integration. DeepSeek, Claude and Muse do not support embedding models.",
   )
 }

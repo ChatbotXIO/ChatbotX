@@ -65,6 +65,24 @@ describe("AI agent action schemas", () => {
     expect(result.success).toBe(false)
   })
 
+  test("accepts Muse model rows and rejects ids outside the Muse catalog", () => {
+    const parse = (model: string) =>
+      createAIAgentRequest.safeParse({
+        name: "Support",
+        prompt: "Answer customer questions.",
+        messages: [],
+        models: [{ provider: "muse", model }],
+        temperature: 0.4,
+        maxOutputTokens: 2048,
+        tools: [],
+        isDefault: false,
+      })
+
+    expect(parse("muse-spark-1.3").success).toBe(true)
+    expect(parse("muse-wonder-1.0").success).toBe(true)
+    expect(parse("gpt-5.4-mini").success).toBe(false)
+  })
+
   test("rejects retired model ids from new or edited AI agent settings", () => {
     const oldModels = [
       { provider: "gemini", model: "gemini-2.5-pro" },

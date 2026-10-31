@@ -5,6 +5,7 @@ import {
   claudeModelOptions,
   deepseekModelOptions,
   geminiModelOptions,
+  museModelOptions,
   openaiModelOptions,
   openrouterModelOptions,
 } from "@chatbotx.io/ai"
@@ -23,6 +24,7 @@ const modelOptions: Record<AIProvider, SelectOption[]> = {
   gemini: geminiModelOptions,
   deepseek: deepseekModelOptions,
   openrouter: openrouterModelOptions,
+  muse: museModelOptions,
 }
 
 type AIModelSelectProps = SelectFieldProps<FieldValues> & {

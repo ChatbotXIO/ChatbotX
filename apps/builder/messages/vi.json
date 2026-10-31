@@ -311,7 +311,7 @@
     },
     "description": "Cho phép Agents của bạn truy cập PDF, Docs và nhiều hơn nữa",
     "title": "Knowledge",
-    "noEmbeddingProvider": "Chưa cấu hình nhà cung cấp embedding. Tính năng AI File yêu cầu tích hợp OpenAI hoặc Gemini. DeepSeek và Claude không hỗ trợ mô hình embedding.",
+    "noEmbeddingProvider": "Chưa cấu hình nhà cung cấp embedding. Tính năng AI File yêu cầu tích hợp OpenAI hoặc Gemini. DeepSeek, Claude và Muse không hỗ trợ mô hình embedding.",
     "testQuery": {
       "title": "Thử truy vấn",
       "description": "Chọn file, đặt câu hỏi và xem chunk nào trả lời. Chỉ mô phỏng khâu tìm kiếm, không tạo câu trả lời của AI.",
@@ -3300,6 +3300,48 @@
       "destinationPipeline": "Pipeline đích",
       "destinationStage": "Giai đoạn đích"
     },
+    "aiSpeechToText": {
+      "muse": {
+        "formatHint": "Chỉ nhận file WAV: PCM 16-bit, mono, 16 kHz hoặc 24 kHz, tối đa 10 phút. File khác (ví dụ tin nhắn thoại) sẽ đi nhánh Error.",
+        "languageBias": {
+          "label": "Ưu tiên ngôn ngữ",
+          "description": "Các ngôn ngữ có thể có trong audio. Để trống để tự động nhận diện.",
+          "placeholder": "Tự động nhận diện"
+        },
+        "keywords": {
+          "label": "Từ khóa",
+          "description": "Tên riêng hoặc thuật ngữ giúp Muse viết đúng chính tả.",
+          "placeholder": "Nhập từ khóa rồi nhấn Enter"
+        }
+      },
+      "languages": {
+        "Arabic": "Tiếng Ả Rập",
+        "Bengali": "Tiếng Bangla",
+        "Dutch": "Tiếng Hà Lan",
+        "English": "Tiếng Anh",
+        "French": "Tiếng Pháp",
+        "German": "Tiếng Đức",
+        "Hebrew": "Tiếng Do Thái",
+        "Hindi": "Tiếng Hindi",
+        "Indonesian": "Tiếng Indonesia",
+        "Italian": "Tiếng Italy",
+        "Japanese": "Tiếng Nhật",
+        "Kannada": "Tiếng Kannada",
+        "Korean": "Tiếng Hàn",
+        "Malay": "Tiếng Mã Lai",
+        "MandarinChinese": "Tiếng Trung Quan Thoại",
+        "Marathi": "Tiếng Marathi",
+        "Polish": "Tiếng Ba Lan",
+        "Portuguese": "Tiếng Bồ Đào Nha",
+        "Spanish": "Tiếng Tây Ban Nha",
+        "Tagalog": "Tiếng Tagalog",
+        "Tamil": "Tiếng Tamil",
+        "Telugu": "Tiếng Telugu",
+        "Thai": "Tiếng Thái",
+        "Turkish": "Tiếng Thổ Nhĩ Kỳ",
+        "Vietnamese": "Tiếng Việt"
+      }
+    },
     "findPlacesNearMe": {
       "category": "Danh mục địa điểm",
       "allLocations": "Tất cả địa điểm",
@@ -4540,6 +4582,18 @@
     },
     "title": "DeepSeek"
   },
+  "muse": {
+    "autoReply": {
+      "description": "Bật AI tự động trả lời để trả lời người dùng một cách tự nhiên với AI được hỗ trợ bởi dữ liệu kinh doanh của bạn.",
+      "label": "AI tự động trả lời"
+    },
+    "connect": {
+      "description": "Trả lời người dùng một cách tự nhiên với AI được hỗ trợ bởi dữ liệu kinh doanh của bạn.",
+      "embeddingHint": "Muse không có model embedding. Knowledge Base và AI file vẫn cần kết nối OpenAI hoặc Gemini.",
+      "label": "Muse"
+    },
+    "title": "Muse"
+  },
   "decision": {
     "addConnection": "Thêm kết nối AI Router",
     "advanced": "Nâng cao",
@@ -4675,6 +4729,10 @@
     "deepseek": {
       "description": "Mô tả tích hợp DeepSeek",
       "title": "Tích hợp DeepSeek"
+    },
+    "muse": {
+      "description": "Mô tả tích hợp Muse",
+      "title": "Tích hợp Muse"
     }
   },
   "auth": {
@@ -6071,6 +6129,7 @@
     "gemini": "Gemini",
     "claude": "Claude",
     "deepseek": "DeepSeek",
+    "muse": "Muse",
     "openrouter": "OpenRouter",
     "openaiCompatible": "OpenAI Compatible"
   },

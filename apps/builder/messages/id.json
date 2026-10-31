@@ -3102,6 +3102,48 @@
       "destinationPipeline": "Pipeline tujuan",
       "destinationStage": "Tahap tujuan"
     },
+    "aiSpeechToText": {
+      "muse": {
+        "formatHint": "Hanya file WAV yang diterima: PCM 16-bit, mono, 16 kHz atau 24 kHz, maksimal 10 menit. File lain (misalnya pesan suara) masuk ke cabang Error.",
+        "languageBias": {
+          "label": "Preferensi bahasa",
+          "description": "Bahasa yang kemungkinan digunakan dalam audio. Kosongkan untuk deteksi otomatis.",
+          "placeholder": "Deteksi otomatis"
+        },
+        "keywords": {
+          "label": "Kata kunci",
+          "description": "Nama atau istilah khusus yang membantu Muse mengeja kata dengan benar.",
+          "placeholder": "Tambahkan kata kunci lalu tekan Enter"
+        }
+      },
+      "languages": {
+        "Arabic": "Arab",
+        "Bengali": "Bengali",
+        "Dutch": "Belanda",
+        "English": "Inggris",
+        "French": "Prancis",
+        "German": "Jerman",
+        "Hebrew": "Ibrani",
+        "Hindi": "Hindi",
+        "Indonesian": "Indonesia",
+        "Italian": "Italia",
+        "Japanese": "Jepang",
+        "Kannada": "Kannada",
+        "Korean": "Korea",
+        "Malay": "Melayu",
+        "MandarinChinese": "Mandarin",
+        "Marathi": "Marathi",
+        "Polish": "Polski",
+        "Portuguese": "Portugis",
+        "Spanish": "Spanyol",
+        "Tagalog": "Tagalog",
+        "Tamil": "Tamil",
+        "Telugu": "Telugu",
+        "Thai": "Thai",
+        "Turkish": "Turki",
+        "Vietnamese": "Vietnam"
+      }
+    },
     "findPlacesNearMe": {
       "category": "Kategori lokasi",
       "allLocations": "Semua lokasi",
@@ -4498,6 +4540,18 @@
     },
     "title": "DeepSeek"
   },
+  "muse": {
+    "autoReply": {
+      "description": "Aktifkan balasan otomatis AI untuk menanggapi pengguna secara alami dengan AI yang didukung data bisnis Anda.",
+      "label": "Balasan Otomatis AI"
+    },
+    "connect": {
+      "description": "Tanggapi pengguna secara alami dengan AI yang didukung data bisnis Anda.",
+      "embeddingHint": "Muse tidak menyediakan model embedding. Basis Pengetahuan dan file AI tetap memerlukan integrasi OpenAI atau Gemini.",
+      "label": "Muse"
+    },
+    "title": "Muse"
+  },
   "decision": {
     "addConnection": "Add AI Router connection",
     "advanced": "Advanced",
@@ -4633,6 +4687,10 @@
     "deepseek": {
       "description": "Deskripsi integrasi DeepSeek",
       "title": "Integrasi DeepSeek"
+    },
+    "muse": {
+      "description": "Deskripsi integrasi Muse",
+      "title": "Integrasi Muse"
     }
   },
   "auth": {
@@ -5990,6 +6048,7 @@
     "gemini": "Gemini",
     "claude": "Claude",
     "deepseek": "DeepSeek",
+    "muse": "Muse",
     "openrouter": "OpenRouter",
     "openaiCompatible": "Kompatibel dengan OpenAI"
   },

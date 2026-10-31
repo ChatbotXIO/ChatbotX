@@ -214,20 +214,47 @@ describe("heavyJobDataSchema", () => {
 })
 
 describe("heavy result schemas", () => {
-  test("requires outputValue for successful flow-step results", () => {
+  test("requires at least one output value for successful flow-step results", () => {
+    const outputValues = [
+      {
+        customFieldId: "custom-field-output",
+        value: "https://cdn.example.com/result.png",
+      },
+      { customFieldId: "custom-field-details", value: '{"count":1}' },
+    ]
+
     expect(
-      heavyStepResultSchema.parse({
-        status: "success",
-        outputValue: "https://cdn.example.com/result.png",
-      }),
-    ).toEqual({
-      status: "success",
-      outputValue: "https://cdn.example.com/result.png",
-    })
+      heavyStepResultSchema.parse({ status: "success", outputValues }),
+    ).toEqual({ status: "success", outputValues })
 
     expect(heavyStepResultSchema.safeParse({ status: "success" }).success).toBe(
       false,
     )
+    expect(
+      heavyStepResultSchema.safeParse({ status: "success", outputValues: [] })
+        .success,
+    ).toBe(false)
+    expect(
+      heavyStepResultSchema.safeParse({
+        status: "success",
+        outputValues: [{ customFieldId: "custom-field-output", value: "" }],
+      }).success,
+    ).toBe(false)
+  })
+
+  test("rejects the legacy single outputValue success shape", () => {
+    expect(
+      heavyStepResultSchema.safeParse({
+        status: "success",
+        outputValue: "https://cdn.example.com/result.png",
+      }).success,
+    ).toBe(false)
+  })
+
+  test("accepts a skip result without output values", () => {
+    expect(heavyStepResultSchema.parse({ status: "skip" })).toEqual({
+      status: "skip",
+    })
   })
 
   test("requires errorMessage for failed flow-step results", () => {
@@ -270,12 +297,37 @@ describe("heavy job policies", () => {
     )
   })
 
-  test("keeps paid media retries bounded with a longer backoff", () => {
-    expect(getHeavyJobOptions(HeavyJobAction.aiGenerateImage)).toEqual(
+  test.each([
+    HeavyJobAction.aiGenerateImage,
+    HeavyJobAction.aiEditImage,
+  ])("keeps paid media retries bounded with a longer backoff for %s", (action) => {
+    expect(getHeavyJobOptions(action)).toEqual(
       expect.objectContaining({
         attempts: 2,
         backoff: { type: "exponential", delay: 30_000 },
+        removeOnComplete: { count: 200 },
+        removeOnFail: { count: 500 },
       }),
     )
+  })
+})
+
+describe("heavyStepResultSchema", () => {
+  test("strips stray fields from a skip result", () => {
+    expect(
+      heavyStepResultSchema.parse({
+        status: "skip",
+        outputValues: [{ customFieldId: "x", value: "y" }],
+      }),
+    ).toEqual({ status: "skip" })
+  })
+
+  test("rejects an output value without its custom field", () => {
+    expect(
+      heavyStepResultSchema.safeParse({
+        status: "success",
+        outputValues: [{ customFieldId: "", value: "https://cdn/x.png" }],
+      }).success,
+    ).toBe(false)
   })
 })

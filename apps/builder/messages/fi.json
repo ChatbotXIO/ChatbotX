@@ -3102,6 +3102,48 @@
       "destinationPipeline": "Kohdepipeline",
       "destinationStage": "Kohdevaihe"
     },
+    "aiSpeechToText": {
+      "muse": {
+        "formatHint": "Vain WAV-tiedostot hyväksytään: PCM 16-bit, mono, 16 kHz tai 24 kHz, enintään 10 minuuttia. Muut tiedostot (esimerkiksi ääniviestit) ohjataan virhehaaraan.",
+        "languageBias": {
+          "label": "Kielipainotus",
+          "description": "Kielet, joilla ääni todennäköisesti on. Jätä tyhjäksi automaattista tunnistusta varten.",
+          "placeholder": "Automaattinen tunnistus"
+        },
+        "keywords": {
+          "label": "Avainsanat",
+          "description": "Nimet tai alan termit, jotka auttavat Musea kirjoittamaan sanat oikein.",
+          "placeholder": "Lisää avainsana ja paina Enter"
+        }
+      },
+      "languages": {
+        "Arabic": "Arabia",
+        "Bengali": "Bengali",
+        "Dutch": "Hollanti",
+        "English": "Englanti",
+        "French": "Ranska",
+        "German": "Saksa",
+        "Hebrew": "Heprea",
+        "Hindi": "Hindi",
+        "Indonesian": "Indonesia",
+        "Italian": "Italia",
+        "Japanese": "Japani",
+        "Kannada": "Kannada",
+        "Korean": "Korea",
+        "Malay": "Malaiji",
+        "MandarinChinese": "Mandariinikiina",
+        "Marathi": "Marathi",
+        "Polish": "Puola",
+        "Portuguese": "Portugali",
+        "Spanish": "Espanja",
+        "Tagalog": "Tagalog",
+        "Tamil": "Tamili",
+        "Telugu": "Telugu",
+        "Thai": "Thai",
+        "Turkish": "Turkki",
+        "Vietnamese": "Vietnam"
+      }
+    },
     "findPlacesNearMe": {
       "category": "Sijaintiluokka",
       "allLocations": "Kaikki sijainnit",
@@ -4498,6 +4540,18 @@
     },
     "title": "DeepSeek"
   },
+  "muse": {
+    "autoReply": {
+      "description": "Ota automaattinen AI-vastaus käyttöön vastataksesi käyttäjille luontevasti yrityksesi tietoihin perustuvan AI:n avulla.",
+      "label": "Automaattinen AI-vastaus"
+    },
+    "connect": {
+      "description": "Vastaa käyttäjille luontevasti yrityksesi tietoihin perustuvan AI:n avulla.",
+      "embeddingHint": "Muse ei tarjoa upotusmalleja. Tietopankki ja AI-tiedostot tarvitsevat edelleen OpenAI- tai Gemini-integraation.",
+      "label": "Muse"
+    },
+    "title": "Muse"
+  },
   "decision": {
     "addConnection": "Add AI Router connection",
     "advanced": "Advanced",
@@ -4633,6 +4687,10 @@
     "deepseek": {
       "description": "DeepSeek-integraation kuvaus",
       "title": "DeepSeek-integraatio"
+    },
+    "muse": {
+      "description": "Muse-integraation kuvaus",
+      "title": "Muse-integraatio"
     }
   },
   "auth": {
@@ -5990,6 +6048,7 @@
     "gemini": "Gemini",
     "claude": "Claude",
     "deepseek": "DeepSeek",
+    "muse": "Muse",
     "openrouter": "OpenRouter",
     "openaiCompatible": "OpenAI-yhteensopiva"
   },

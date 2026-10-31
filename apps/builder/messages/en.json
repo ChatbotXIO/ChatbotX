@@ -311,7 +311,7 @@
     },
     "description": "Give Your Agents Access to PDFs, Docs, and More",
     "title": "Knowledge",
-    "noEmbeddingProvider": "No embedding provider configured. AI file embeddings require OpenAI or Gemini integration. DeepSeek and Claude do not support embedding models.",
+    "noEmbeddingProvider": "No embedding provider configured. AI file embeddings require OpenAI or Gemini integration. DeepSeek, Claude and Muse do not support embedding models.",
     "testQuery": {
       "title": "Test query",
       "description": "Pick files, ask a question and see which chunk answers it. Only the retrieval step is simulated; no AI answer is generated.",
@@ -3940,6 +3940,48 @@
       "destinationPipeline": "Destination pipeline",
       "destinationStage": "Destination stage"
     },
+    "aiSpeechToText": {
+      "muse": {
+        "formatHint": "Only WAV files are accepted: PCM 16-bit, mono, 16 kHz or 24 kHz, up to 10 minutes. Any other file (for example voice messages) goes to the Error branch.",
+        "languageBias": {
+          "label": "Language bias",
+          "description": "Languages the audio is likely in. Leave empty to detect automatically.",
+          "placeholder": "Auto-detect"
+        },
+        "keywords": {
+          "label": "Keywords",
+          "description": "Names or domain terms that help Muse spell words correctly.",
+          "placeholder": "Add a keyword and press Enter"
+        }
+      },
+      "languages": {
+        "Arabic": "Arabic",
+        "Bengali": "Bangla",
+        "Dutch": "Dutch",
+        "English": "English",
+        "French": "French",
+        "German": "German",
+        "Hebrew": "Hebrew",
+        "Hindi": "Hindi",
+        "Indonesian": "Indonesian",
+        "Italian": "Italian",
+        "Japanese": "Japanese",
+        "Kannada": "Kannada",
+        "Korean": "Korean",
+        "Malay": "Malay",
+        "MandarinChinese": "Mandarin Chinese",
+        "Marathi": "Marathi",
+        "Polish": "Polish",
+        "Portuguese": "Portuguese",
+        "Spanish": "Spanish",
+        "Tagalog": "Tagalog",
+        "Tamil": "Tamil",
+        "Telugu": "Telugu",
+        "Thai": "Thai",
+        "Turkish": "Turkish",
+        "Vietnamese": "Vietnamese"
+      }
+    },
     "findPlacesNearMe": {
       "category": "Location category",
       "allLocations": "All locations",
@@ -5180,6 +5222,18 @@
     },
     "title": "DeepSeek"
   },
+  "muse": {
+    "autoReply": {
+      "description": "Enable AI auto reply to respond to users naturally with AI powered by your business data.",
+      "label": "AI Auto Reply"
+    },
+    "connect": {
+      "description": "Respond to users naturally with AI powered by your business data.",
+      "embeddingHint": "Muse does not provide embedding models. Knowledge Base and AI files still need an OpenAI or Gemini integration.",
+      "label": "Muse"
+    },
+    "title": "Muse"
+  },
   "decision": {
     "addConnection": "Add AI Router connection",
     "advanced": "Advanced",
@@ -5315,6 +5369,10 @@
     "deepseek": {
       "description": "DeepSeek integration description",
       "title": "DeepSeek Integration"
+    },
+    "muse": {
+      "description": "Muse integration description",
+      "title": "Muse Integration"
     }
   },
   "auth": {
@@ -6715,6 +6773,7 @@
     "gemini": "Gemini",
     "claude": "Claude",
     "deepseek": "DeepSeek",
+    "muse": "Muse",
     "openrouter": "OpenRouter",
     "openaiCompatible": "OpenAI Compatible"
   },

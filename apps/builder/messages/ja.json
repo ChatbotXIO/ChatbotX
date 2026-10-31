@@ -3102,6 +3102,48 @@
       "destinationPipeline": "移管先のパイプライン",
       "destinationStage": "移管先のステージ"
     },
+    "aiSpeechToText": {
+      "muse": {
+        "formatHint": "WAV ファイルのみ対応しています（PCM 16 ビット、モノラル、16 kHz または 24 kHz、最大 10 分）。それ以外のファイル（ボイスメッセージなど）はエラー分岐に進みます。",
+        "languageBias": {
+          "label": "言語の優先",
+          "description": "音声に含まれる可能性のある言語です。空欄の場合は自動検出します。",
+          "placeholder": "自動検出"
+        },
+        "keywords": {
+          "label": "キーワード",
+          "description": "Muse が単語を正しく表記するための名前や専門用語です。",
+          "placeholder": "キーワードを入力して Enter を押してください"
+        }
+      },
+      "languages": {
+        "Arabic": "アラビア語",
+        "Bengali": "ベンガル語",
+        "Dutch": "オランダ語",
+        "English": "英語",
+        "French": "フランス語",
+        "German": "ドイツ語",
+        "Hebrew": "ヘブライ語",
+        "Hindi": "ヒンディー語",
+        "Indonesian": "インドネシア語",
+        "Italian": "イタリア語",
+        "Japanese": "日本語",
+        "Kannada": "カンナダ語",
+        "Korean": "韓国語",
+        "Malay": "マレー語",
+        "MandarinChinese": "中国語（北京語）",
+        "Marathi": "マラーティー語",
+        "Polish": "ポーランド語",
+        "Portuguese": "ポルトガル語",
+        "Spanish": "スペイン語",
+        "Tagalog": "タガログ語",
+        "Tamil": "タミル語",
+        "Telugu": "テルグ語",
+        "Thai": "タイ語",
+        "Turkish": "トルコ語",
+        "Vietnamese": "ベトナム語"
+      }
+    },
     "findPlacesNearMe": {
       "category": "ロケーションカテゴリ",
       "allLocations": "すべてのロケーション",
@@ -4477,6 +4519,18 @@
     },
     "title": "DeepSeek"
   },
+  "muse": {
+    "autoReply": {
+      "description": "AI自動返信を有効にし、ビジネスデータを活用したAIでユーザーに自然に応答します。",
+      "label": "AI自動返信"
+    },
+    "connect": {
+      "description": "ビジネスデータを活用したAIで、ユーザーに自然に応答します。",
+      "embeddingHint": "Muse には埋め込みモデルがありません。ナレッジベースと AI ファイルには引き続き OpenAI または Gemini の連携が必要です。",
+      "label": "Muse"
+    },
+    "title": "Muse"
+  },
   "decision": {
     "addConnection": "Add AI Router connection",
     "advanced": "Advanced",
@@ -4612,6 +4666,10 @@
     "deepseek": {
       "description": "DeepSeek連携の説明",
       "title": "DeepSeek連携"
+    },
+    "muse": {
+      "description": "Muse連携の説明",
+      "title": "Muse連携"
     }
   },
   "auth": {
@@ -5969,6 +6027,7 @@
     "gemini": "Gemini",
     "claude": "Claude",
     "deepseek": "DeepSeek",
+    "muse": "Muse",
     "openrouter": "OpenRouter",
     "openaiCompatible": "OpenAI互換"
   },

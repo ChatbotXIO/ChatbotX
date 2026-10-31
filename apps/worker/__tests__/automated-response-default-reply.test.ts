@@ -91,6 +91,7 @@ vi.mock("@chatbotx.io/ai", () => ({
     urlReader: "urlReader",
   },
   toolPrefixes: { enum: { sys: "sys", file: "file", fn: "fn", mcp: "mcp" } },
+  toStepSeparatedTextStream: vi.fn((stream: unknown) => stream),
   appendFabricationGuard: (p: string) => p,
   appendHandoffPolicy: (p: string) => p,
   appendKnowledgeBaseGuard: (p: string) => p,

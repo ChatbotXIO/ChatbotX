@@ -892,6 +892,48 @@
       "destinationPipeline": "פייפליין יעד",
       "destinationStage": "שלב יעד"
     },
+    "aiSpeechToText": {
+      "muse": {
+        "formatHint": "מתקבלים רק קובצי WAV: ‏PCM ‏16 ביט, מונו, 16 או 24 קילו-הרץ, עד 10 דקות. כל קובץ אחר (למשל הודעות קוליות) עובר לענף השגיאה.",
+        "languageBias": {
+          "label": "העדפת שפה",
+          "description": "השפות שבהן סביר שהשמע מוקלט. השאירו ריק לזיהוי אוטומטי.",
+          "placeholder": "זיהוי אוטומטי"
+        },
+        "keywords": {
+          "label": "מילות מפתח",
+          "description": "שמות או מונחים מקצועיים שעוזרים ל-Muse לאיית מילים נכון.",
+          "placeholder": "הוסיפו מילת מפתח והקישו Enter"
+        }
+      },
+      "languages": {
+        "Arabic": "ערבית",
+        "Bengali": "בנגלית",
+        "Dutch": "הולנדית",
+        "English": "אנגלית",
+        "French": "צרפתית",
+        "German": "גרמנית",
+        "Hebrew": "עברית",
+        "Hindi": "הינדי",
+        "Indonesian": "אינדונזית",
+        "Italian": "איטלקית",
+        "Japanese": "יפנית",
+        "Kannada": "קנאדה",
+        "Korean": "קוריאנית",
+        "Malay": "מלאית",
+        "MandarinChinese": "סינית מנדרינית",
+        "Marathi": "מראטהית",
+        "Polish": "פולנית",
+        "Portuguese": "פורטוגזית",
+        "Spanish": "ספרדית",
+        "Tagalog": "טאגאלוג",
+        "Tamil": "טמילית",
+        "Telugu": "טלוגו",
+        "Thai": "תאית",
+        "Turkish": "טורקית",
+        "Vietnamese": "וייטנאמית"
+      }
+    },
     "findPlacesNearMe": {
       "category": "קטגוריית מיקום",
       "allLocations": "כל המיקומים",
@@ -2288,6 +2330,18 @@
     },
     "title": "DeepSeek"
   },
+  "muse": {
+    "autoReply": {
+      "description": "הפעילו מענה אוטומטי כדי להשיב למשתמשים באופן טבעי באמצעות AI המבוסס על הנתונים העסקיים שלכם.",
+      "label": "מענה אוטומטי באמצעות AI"
+    },
+    "connect": {
+      "description": "השיבו למשתמשים באופן טבעי באמצעות AI המבוסס על הנתונים העסקיים שלכם.",
+      "embeddingHint": "Muse אינו מספק מודלי הטמעה. מאגר הידע וקובצי ה-AI עדיין דורשים שילוב של OpenAI או Gemini.",
+      "label": "Muse"
+    },
+    "title": "Muse"
+  },
   "decision": {
     "addConnection": "Add AI Router connection",
     "advanced": "Advanced",
@@ -2423,6 +2477,10 @@
     "deepseek": {
       "description": "תיאור שילוב DeepSeek",
       "title": "שילוב DeepSeek"
+    },
+    "muse": {
+      "description": "תיאור שילוב Muse",
+      "title": "שילוב Muse"
     }
   },
   "auth": {
@@ -3780,6 +3838,7 @@
     "gemini": "Gemini",
     "claude": "Claude",
     "deepseek": "DeepSeek",
+    "muse": "Muse",
     "openrouter": "OpenRouter",
     "openaiCompatible": "תואם OpenAI"
   },

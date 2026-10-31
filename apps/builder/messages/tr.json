@@ -3258,6 +3258,48 @@
       "destinationPipeline": "Hedef işlem hattı",
       "destinationStage": "Hedef aşama"
     },
+    "aiSpeechToText": {
+      "muse": {
+        "formatHint": "Yalnızca WAV dosyaları kabul edilir: PCM 16 bit, mono, 16 kHz veya 24 kHz, en fazla 10 dakika. Diğer dosyalar (örneğin sesli mesajlar) Hata dalına gider.",
+        "languageBias": {
+          "label": "Dil tercihi",
+          "description": "Sesin muhtemel dilleri. Otomatik algılama için boş bırakın.",
+          "placeholder": "Otomatik algıla"
+        },
+        "keywords": {
+          "label": "Anahtar kelimeler",
+          "description": "Muse'un kelimeleri doğru yazmasına yardımcı olan adlar veya alan terimleri.",
+          "placeholder": "Bir anahtar kelime ekleyip Enter'a basın"
+        }
+      },
+      "languages": {
+        "Arabic": "Arapça",
+        "Bengali": "Bengalce",
+        "Dutch": "Felemenkçe",
+        "English": "İngilizce",
+        "French": "Fransızca",
+        "German": "Almanca",
+        "Hebrew": "İbranice",
+        "Hindi": "Hintçe",
+        "Indonesian": "Endonezce",
+        "Italian": "İtalyanca",
+        "Japanese": "Japonca",
+        "Kannada": "Kannada dili",
+        "Korean": "Korece",
+        "Malay": "Malayca",
+        "MandarinChinese": "Mandarin Çincesi",
+        "Marathi": "Marathi dili",
+        "Polish": "Lehçe",
+        "Portuguese": "Portekizce",
+        "Spanish": "İspanyolca",
+        "Tagalog": "Tagalogca",
+        "Tamil": "Tamilce",
+        "Telugu": "Telugu dili",
+        "Thai": "Tayca",
+        "Turkish": "Türkçe",
+        "Vietnamese": "Vietnamca"
+      }
+    },
     "findPlacesNearMe": {
       "category": "Konum kategorisi",
       "allLocations": "Tüm konumlar",
@@ -4498,6 +4540,18 @@
     },
     "title": "DeepSeek"
   },
+  "muse": {
+    "autoReply": {
+      "description": "İşletme verilerinizle desteklenen yapay zeka ile kullanıcılara doğal bir şekilde yanıt vermek için AI otomatik yanıtı etkinleştirin.",
+      "label": "AI Otomatik Yanıt"
+    },
+    "connect": {
+      "description": "İşletme verilerinizle desteklenen yapay zeka ile kullanıcılara doğal bir şekilde yanıt verin.",
+      "embeddingHint": "Muse gömme (embedding) modelleri sunmaz. Bilgi Bankası ve AI dosyaları için yine de OpenAI veya Gemini entegrasyonu gerekir.",
+      "label": "Muse"
+    },
+    "title": "Muse"
+  },
   "decision": {
     "addConnection": "Add AI Router connection",
     "advanced": "Advanced",
@@ -4633,6 +4687,10 @@
     "deepseek": {
       "description": "DeepSeek entegrasyonu açıklaması",
       "title": "DeepSeek Entegrasyonu"
+    },
+    "muse": {
+      "description": "Muse entegrasyonu açıklaması",
+      "title": "Muse Entegrasyonu"
     }
   },
   "auth": {
@@ -5990,6 +6048,7 @@
     "gemini": "Gemini",
     "claude": "Claude",
     "deepseek": "DeepSeek",
+    "muse": "Muse",
     "openrouter": "OpenRouter",
     "openaiCompatible": "OpenAI Uyumlu"
   },

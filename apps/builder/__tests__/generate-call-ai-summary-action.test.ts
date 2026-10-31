@@ -35,6 +35,7 @@ vi.mock("@chatbotx.io/ai", async () => {
       "claude",
       "deepseek",
       "openrouter",
+      "muse",
     ]),
   }
 })

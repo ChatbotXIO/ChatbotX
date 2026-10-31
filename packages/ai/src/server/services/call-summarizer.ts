@@ -24,6 +24,7 @@ const PROVIDER_LABELS: Record<AIProvider, string> = {
   claude: "Claude",
   deepseek: "DeepSeek",
   openrouter: "OpenRouter",
+  muse: "Muse",
 }
 
 /** Mirrors `defaultAIModels` (`packages/flow-config/src/steps/ai-generate-text.ts`) — kept as an independent copy since this feature has no flow-step context to read a model choice from. */
@@ -33,6 +34,7 @@ const DEFAULT_SUMMARY_MODELS: Record<AIProvider, string> = {
   claude: "claude-sonnet-4-6",
   deepseek: "deepseek-flash",
   openrouter: "openai/gpt-5.4-mini",
+  muse: "muse-spark-1.3",
 }
 
 export async function listConnectedCallSummaryProviders(

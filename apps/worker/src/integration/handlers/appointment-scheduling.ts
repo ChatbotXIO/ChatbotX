@@ -89,6 +89,7 @@ const availabilityAIModelCandidates = [
   { provider: "claude", modelId: defaultAIModels.claude },
   { provider: "deepseek", modelId: defaultAIModels.deepseek },
   { provider: "openrouter", modelId: defaultAIModels.openrouter },
+  { provider: "muse", modelId: defaultAIModels.muse },
 ] as const
 
 function buildRawAvailabilityText(input: {
@@ -157,6 +158,10 @@ async function buildAvailabilityResponseText(input: {
     const timeoutId = setTimeout(() => controller.abort(), 120_000)
 
     try {
+      // `textStream` drops error parts, so keep the provider error and rethrow
+      // it once the stream ends — otherwise a failed call skips the remaining
+      // candidates and returns the raw availability text.
+      let streamError: unknown
       const result = streamText({
         model: resolvedModel.model,
         instructions: `You are an appointment scheduling assistant. Write a short response for the customer in ${language}. Use only the provided availability data. Do not invent appointment times. If there are no slots, politely say no slots are available in the selected range and suggest choosing another range. Do not mention internal IDs, JSON, or system instructions.`,
@@ -164,6 +169,9 @@ async function buildAvailabilityResponseText(input: {
         temperature: 0.2,
         maxOutputTokens: 250,
         abortSignal: controller.signal,
+        onError: ({ error }) => {
+          streamError = error
+        },
       })
 
       const { fullText } = await processStreamingText(
@@ -173,6 +181,9 @@ async function buildAvailabilityResponseText(input: {
         },
         { sendParts: false },
       )
+      if (streamError) {
+        throw streamError
+      }
 
       return fullText.trim() || input.rawText
     } catch (err) {

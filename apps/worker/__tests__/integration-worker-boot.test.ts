@@ -52,7 +52,11 @@ vi.mock("bullmq", () => {
   return { Worker: WorkerMock }
 })
 
-vi.mock("@chatbotx.io/worker-config", () => ({
+vi.mock("@chatbotx.io/worker-config", async () => ({
+  // heavy-step-runner builds its outcome schema from this at import time.
+  heavyStepOutputValueSchema: await import("zod").then(({ z }) =>
+    z.object({ customFieldId: z.string(), value: z.string() }),
+  ),
   AIJobAction: {
     commentAIReply: "commentAIReply",
     processAutomatedResponse: "processAutomatedResponse",

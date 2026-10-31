@@ -3102,6 +3102,48 @@
       "destinationPipeline": "Funil de destino",
       "destinationStage": "Fase de destino"
     },
+    "aiSpeechToText": {
+      "muse": {
+        "formatHint": "Apenas são aceites ficheiros WAV: PCM 16 bits, mono, 16 kHz ou 24 kHz, até 10 minutos. Qualquer outro ficheiro (por exemplo, mensagens de voz) segue para o ramo de erro.",
+        "languageBias": {
+          "label": "Preferência de idioma",
+          "description": "Idiomas prováveis do áudio. Deixe em branco para deteção automática.",
+          "placeholder": "Deteção automática"
+        },
+        "keywords": {
+          "label": "Palavras-chave",
+          "description": "Nomes ou termos do setor que ajudam o Muse a escrever corretamente as palavras.",
+          "placeholder": "Adicione uma palavra-chave e prima Enter"
+        }
+      },
+      "languages": {
+        "Arabic": "Árabe",
+        "Bengali": "Bengalês",
+        "Dutch": "Neerlandês",
+        "English": "Inglês",
+        "French": "Francês",
+        "German": "Alemão",
+        "Hebrew": "Hebraico",
+        "Hindi": "Hindi",
+        "Indonesian": "Indonésio",
+        "Italian": "Italiano",
+        "Japanese": "Japonês",
+        "Kannada": "Canarim",
+        "Korean": "Coreano",
+        "Malay": "Malaio",
+        "MandarinChinese": "Chinês mandarim",
+        "Marathi": "Marata",
+        "Polish": "Polaco",
+        "Portuguese": "Português",
+        "Spanish": "Espanhol",
+        "Tagalog": "Tagalo",
+        "Tamil": "Tâmil",
+        "Telugu": "Telugu",
+        "Thai": "Tailandês",
+        "Turkish": "Turco",
+        "Vietnamese": "Vietnamita"
+      }
+    },
     "findPlacesNearMe": {
       "category": "Categoria de local",
       "allLocations": "Todos os locais",
@@ -4498,6 +4540,18 @@
     },
     "title": "DeepSeek"
   },
+  "muse": {
+    "autoReply": {
+      "description": "Ative a resposta automática por IA para responder naturalmente aos utilizadores com base nos dados da sua empresa.",
+      "label": "Resposta automática por IA"
+    },
+    "connect": {
+      "description": "Responda aos utilizadores naturalmente com IA baseada nos dados da sua empresa.",
+      "embeddingHint": "O Muse não disponibiliza modelos de embedding. A base de conhecimento e os ficheiros de IA continuam a precisar de uma integração com OpenAI ou Gemini.",
+      "label": "Muse"
+    },
+    "title": "Muse"
+  },
   "decision": {
     "addConnection": "Add AI Router connection",
     "advanced": "Advanced",
@@ -4633,6 +4687,10 @@
     "deepseek": {
       "description": "Descrição da integração DeepSeek",
       "title": "Integração DeepSeek"
+    },
+    "muse": {
+      "description": "Descrição da integração Muse",
+      "title": "Integração Muse"
     }
   },
   "auth": {
@@ -5986,6 +6044,7 @@
     "gemini": "Gemini",
     "claude": "Claude",
     "deepseek": "DeepSeek",
+    "muse": "Muse",
     "openrouter": "OpenRouter",
     "openaiCompatible": "Compatível com OpenAI"
   },

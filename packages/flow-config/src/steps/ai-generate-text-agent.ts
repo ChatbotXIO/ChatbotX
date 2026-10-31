@@ -16,6 +16,7 @@ export const aiGenerateTextAgentProvider = z.enum([
   "claude",
   "deepseek",
   "openrouter",
+  "muse",
   "openaiCompatible",
 ])
 export type AIGenerateTextAgentProvider = z.infer<

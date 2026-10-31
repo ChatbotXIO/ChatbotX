@@ -5,6 +5,7 @@ import {
   processStreamingText,
   systemFunctionNames,
   toolPrefixes,
+  toStepSeparatedTextStream,
 } from "@chatbotx.io/ai"
 import {
   type AIProviderInstance,
@@ -55,7 +56,10 @@ import { logger } from "../../../lib/logger"
 import { handoffExecutorService } from "../../../trigger/services/handoff-executor.service"
 import { sendMessageAndWait, sendMessageWithRender } from "../../utils/message"
 import { buildAIAgentActionsPrompt } from "../ai-agent-actions/prompt"
-import { createAIAgentActionsTool } from "../ai-agent-actions/tool-executor"
+import {
+  createAIAgentActionsTool,
+  resolveActionValueFieldNames,
+} from "../ai-agent-actions/tool-executor"
 import {
   type AgentToolStats,
   createAgentToolStatsCollector,
@@ -334,6 +338,7 @@ function createReplyToolset(options: {
   providerInfo: AIAgentModelConfig
   providerInstance?: AIProviderInstance
   actionRules?: AIAgentActionRule[]
+  actionFieldNames?: ReadonlyMap<string, string>
   executedRuleIds: Set<string>
   trackingContextRef: TrackingContextRef
 }) {
@@ -464,6 +469,7 @@ function createReplyToolset(options: {
         ? {
             apply_ai_agent_actions: createAIAgentActionsTool({
               rules: options.actionRules,
+              fieldNames: options.actionFieldNames,
               executedRuleIds: options.executedRuleIds,
               context: {
                 workspaceId: conversation.workspaceId,
@@ -764,6 +770,22 @@ async function runAIReply(
         "[ai-agent-actions] action tool disabled",
       )
     }
+    const actionFieldNames = actionRules?.length
+      ? await resolveActionValueFieldNames({
+          rules: actionRules,
+          workspaceId: conversation.workspaceId,
+        }).catch((error) => {
+          logger.warn(
+            {
+              err: normalizeError(error),
+              workspaceId: conversation.workspaceId,
+              conversationId: conversation.id,
+            },
+            "[ai-agent-actions] custom field names unavailable",
+          )
+          return new Map<string, string>()
+        })
+      : undefined
     const toolset = await createReplyToolset({
       abortSignal,
       directSendTracker,
@@ -775,6 +797,7 @@ async function runAIReply(
       providerInstance: modelConfig.providerInstance,
       trackingContextRef,
       actionRules: actionRules?.length ? actionRules : undefined,
+      actionFieldNames,
       executedRuleIds,
     })
     const tools = toolset.tools
@@ -906,7 +929,7 @@ async function runAIReply(
     }
 
     const { messageCount, fullText } = await processStreamingText(
-      result.textStream,
+      toStepSeparatedTextStream(result.stream),
       async (_segment, parts) => {
         if (directSendTracker.sent) {
           return

@@ -5,6 +5,7 @@ import {
   integrationClaudeService,
   integrationDeepSeekService,
   integrationGeminiService,
+  integrationMuseService,
   integrationOpenAIService,
 } from "@chatbotx.io/business"
 import { notFoundException } from "@chatbotx.io/business/errors"
@@ -45,6 +46,7 @@ const aiProviderServices = {
   claude: integrationClaudeService,
   deepseek: integrationDeepSeekService,
   gemini: integrationGeminiService,
+  muse: integrationMuseService,
   openai: integrationOpenAIService,
 } satisfies Record<
   AiProviderPathParam,

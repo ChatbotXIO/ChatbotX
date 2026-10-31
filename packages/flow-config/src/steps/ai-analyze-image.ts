@@ -8,6 +8,10 @@ import {
   successStateDefaultFn,
   successStateSchema,
 } from "../states"
+import {
+  MUSE_MAX_OUTPUT_TOKENS_DESCRIPTION,
+  MUSE_MAX_TEMPERATURE,
+} from "./ai-generate-text"
 import { stepTypes } from "./step-action"
 
 export const aiAnalyzeImageProvider = z.enum([
@@ -15,6 +19,7 @@ export const aiAnalyzeImageProvider = z.enum([
   "gemini",
   "claude",
   "openrouter",
+  "muse",
 ])
 export type AIAnalyzeImageProvider = z.infer<typeof aiAnalyzeImageProvider>
 export const aiAnalyzeImageProviderSchema = z.enum([
@@ -27,6 +32,7 @@ export const defaultAnalyzeModels = {
   gemini: "gemini-3.5-flash",
   claude: "claude-haiku-4-5-20251001",
   openrouter: "openai/gpt-5.4-mini",
+  muse: "muse-spark-1.3",
 } as const
 
 export const aiAnalyzeImageSchema = z
@@ -43,8 +49,17 @@ export const aiAnalyzeImageSchema = z
     prompt: z.string().trim().min(1),
     inputFieldId: z.string().trim().min(1),
     outputFieldId: zodFieldReference(),
-    temperature: z.number().min(0).max(2),
-    maxOutputTokens: z.number().int().min(250).max(4096),
+    temperature: z
+      .number()
+      .min(0)
+      .max(2)
+      .describe(`Sampling temperature, 0-2 (Muse: 0-${MUSE_MAX_TEMPERATURE}).`),
+    maxOutputTokens: z
+      .number()
+      .int()
+      .min(250)
+      .max(4096)
+      .describe(MUSE_MAX_OUTPUT_TOKENS_DESCRIPTION),
     states: z.tuple([successStateSchema, errorStateSchema]).optional(),
   })
   .superRefine((value, ctx) => {
@@ -60,6 +75,13 @@ export const aiAnalyzeImageSchema = z
         code: "custom",
         path: ["integrationId"],
         message: "Integration is required",
+      })
+    }
+    if (value.provider === "muse" && value.temperature > MUSE_MAX_TEMPERATURE) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["temperature"],
+        message: `Muse supports temperature up to ${MUSE_MAX_TEMPERATURE}`,
       })
     }
   })

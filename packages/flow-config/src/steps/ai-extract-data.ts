@@ -100,6 +100,10 @@ export const aiExtractDataModels = {
     ],
     default: "openai/gpt-5.4-mini",
   },
+  muse: {
+    models: ["muse-spark-1.3", "muse-spark-1.2", "muse-wonder-1.0"],
+    default: "muse-spark-1.3",
+  },
 } as const
 
 const extractFieldSchema = z.object({
@@ -124,6 +128,7 @@ export const aiExtractDataNativeProviderSchema = z.enum([
   "gemini",
   "claude",
   "openrouter",
+  "muse",
 ])
 export type AIExtractDataNativeProvider = z.infer<
   typeof aiExtractDataNativeProviderSchema
