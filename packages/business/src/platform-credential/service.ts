@@ -4,6 +4,7 @@ import {
   type DatabaseClient,
   db,
   eq,
+  isNotNull,
   isNull,
   sql,
 } from "@chatbotx.io/database/client"
@@ -21,7 +22,6 @@ import { encryptUtils } from "@chatbotx.io/encryption"
 import { withCache } from "@chatbotx.io/redis"
 import type { z } from "zod"
 import { BaseService } from "../base.service"
-import { tenantService } from "../enterprise/tenant/service"
 import { logger } from "../logger"
 
 type CredentialRow<T extends CredentialType> = Omit<
@@ -85,12 +85,14 @@ class PlatformCredentialService extends BaseService {
     type: T
     livemode?: boolean
     tx?: DatabaseClient
+    /** Ignore a stored row when its owner selected platform delegation. */
+    requireOwnCredential?: boolean
     /** Rethrow DB/decrypt failures instead of reporting "no credential". */
     strict?: boolean
   }): Promise<DecryptedCredential<T> | undefined> {
     try {
       const row = await this.findForUser(props)
-      if (!row) {
+      if (!row || (props.requireOwnCredential && row.usePlatformCredential)) {
         return
       }
       return this._decrypt(row)
@@ -103,7 +105,31 @@ class PlatformCredentialService extends BaseService {
     }
   }
 
+  /**
+   * Resolves an explicitly addressed, user-owned credential for an inbound
+   * broker webhook. It intentionally never follows a platform delegation.
+   */
+  async findDecryptedForWebhook<T extends CredentialType>(props: {
+    id: string
+    type: T
+  }): Promise<DecryptedCredential<T> | undefined> {
+    const [row] = await db
+      .select()
+      .from(platformCredentialModel)
+      .where(
+        and(
+          eq(platformCredentialModel.id, props.id),
+          eq(platformCredentialModel.type, props.type),
+          isNotNull(platformCredentialModel.userId),
+          eq(platformCredentialModel.usePlatformCredential, false),
+        ),
+      )
+      .limit(1)
+    return row ? this._decrypt(row as CredentialRow<T>) : undefined
+  }
+
   async upsertForUser<T extends CredentialType>(props: {
+    id?: string
     userId: string
     type: T
     config: CredentialByType[T]
@@ -112,8 +138,9 @@ class PlatformCredentialService extends BaseService {
     isVerified?: boolean
     verifiedAt?: Date | null
     tx?: DatabaseClient
-  }): Promise<void> {
+  }): Promise<{ id: string }> {
     const {
+      id,
       userId,
       type,
       config,
@@ -127,9 +154,10 @@ class PlatformCredentialService extends BaseService {
     const aad = `user:${userId}:${type}:${livemode}`
     const value = await encryptUtils.encryptObject(config, aad)
 
-    await tx
+    const [credential] = await tx
       .insert(platformCredentialModel)
       .values({
+        ...(id ? { id } : {}),
         userId,
         type,
         publicConfig,
@@ -154,8 +182,14 @@ class PlatformCredentialService extends BaseService {
           verifiedAt,
         },
       })
+      .returning({ id: platformCredentialModel.id })
+
+    if (!credential) {
+      throw new Error("Failed to upsert platform credential")
+    }
 
     await this.invalidateCacheTags(`cred:u:${userId}`)
+    return credential
   }
 
   async removeForUser(props: {
@@ -291,13 +325,13 @@ class PlatformCredentialService extends BaseService {
     config: CredentialByType[T]
     livemode?: boolean
     tx?: DatabaseClient
-  }): Promise<void> {
+  }): Promise<{ id: string }> {
     const { type, config, livemode = false, tx = db } = props
     const publicConfig = this._publicConfig(type, config)
     const aad = `platform:${type}:${livemode}`
     const value = await encryptUtils.encryptObject(config, aad)
 
-    await tx
+    const [credential] = await tx
       .insert(platformCredentialModel)
       .values({ type, publicConfig, value, livemode })
       .onConflictDoUpdate({
@@ -308,8 +342,14 @@ class PlatformCredentialService extends BaseService {
         ],
         set: { publicConfig, value },
       })
+      .returning({ id: platformCredentialModel.id })
+
+    if (!credential) {
+      throw new Error("Failed to upsert platform credential")
+    }
 
     await this.invalidateCacheTags(`cred:p:${type}`)
+    return credential
   }
 
   async removePlatform(props: {
@@ -359,12 +399,13 @@ class PlatformCredentialService extends BaseService {
   }
 
   upsert<T extends CredentialType>(props: {
+    id?: string
     userId: string | undefined
     type: T
     config: CredentialByType[T]
     livemode?: boolean
     tx?: DatabaseClient
-  }): Promise<void> {
+  }): Promise<{ id: string }> {
     if (props.userId !== undefined) {
       return this.upsertForUser({ ...props, userId: props.userId })
     }
@@ -413,27 +454,23 @@ class PlatformCredentialService extends BaseService {
     /** Rethrow DB/decrypt failures instead of falling back / reporting "no credential". */
     strict?: boolean
   }): Promise<DecryptedCredential<T> | undefined> {
-    const setting = await tenantService.findByOwner(props.ownerId)
-    const livemode = props.livemode ?? false
-
-    if (setting?.status === "active") {
-      const own = await this.findDecryptedForUser({
-        userId: props.ownerId,
-        type: props.type,
-        livemode,
-        tx: props.tx,
-        strict: props.strict,
-      })
-      if (own) {
-        return own
-      }
+    const own = await this.findDecryptedForUser({
+      userId: props.ownerId,
+      type: props.type,
+      livemode: props.livemode,
+      tx: props.tx,
+      requireOwnCredential: true,
+      strict: props.strict,
+    })
+    if (own) {
+      return own
     }
 
-    // Reseller has no own credential (or tenant is inactive): fall back to the
-    // platform-global default.
+    // Existing user-owned credentials are grandfathered after an entitlement
+    // downgrade. New writes remain gated at the action boundary.
     return this.findDecryptedPlatform({
       type: props.type,
-      livemode,
+      livemode: props.livemode ?? false,
       tx: props.tx,
       strict: props.strict,
     })
@@ -477,12 +514,17 @@ class PlatformCredentialService extends BaseService {
     livemode?: boolean
     tx?: DatabaseClient
   }): Promise<
-    | { publicConfig: CredentialPublicByType[T]; isInherited: boolean }
+    | {
+        credentialId?: string
+        publicConfig: CredentialPublicByType[T]
+        isInherited: boolean
+      }
     | undefined
   > {
     const userRow = await this.findForUser(props)
     if (userRow && !userRow.usePlatformCredential) {
       return {
+        credentialId: userRow.id,
         publicConfig: await this._publicWithDerivedFlags(userRow),
         isInherited: false,
       }

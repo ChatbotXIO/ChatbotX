@@ -11,8 +11,9 @@ import { type CredentialScope, resolveCredentialScopedUserId } from "../scope"
 export const resolveStripeCredentialScope = async (
   user: UserModel,
   scope: CredentialScope,
+  options?: { allowWithoutEntitlement?: boolean },
 ): Promise<string | undefined> => {
-  const userId = await resolveCredentialScopedUserId(user, scope)
+  const userId = await resolveCredentialScopedUserId(user, scope, options)
   if (userId === undefined && !(await isSuperAdmin(user))) {
     throw new Error("Unauthorized")
   }

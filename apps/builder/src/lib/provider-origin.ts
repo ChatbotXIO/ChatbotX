@@ -1,5 +1,6 @@
 import "server-only"
 import { customDomainService, tenantService } from "@chatbotx.io/business"
+import type { CredentialType } from "@chatbotx.io/database/partials"
 import { cache } from "react"
 import { isCloud } from "@/env"
 import { getBrokerOrigin } from "@/lib/oauth-broker"
@@ -15,26 +16,37 @@ import { getBrokerOrigin } from "@/lib/oauth-broker"
  */
 
 /**
- * The reseller's active custom domain origin, or `null` when they don't have
- * one (self-hosted, suspended tenant, no active domain). Cached per-request
- * on the primitive `ownerId` — see `resolveTenantOwnerIdCached` in
- * `lib/platform-credential-owner.ts` for why the cache key must be a string.
+ * The tenant state and active custom domain for a credential owner. Cached per
+ * request on the primitive `ownerId`, so callers needing both values do not
+ * repeat the tenant lookup.
  */
-export const resolveTenantCustomDomainOrigin = cache(
-  async (ownerId: string): Promise<string | null> => {
+export const resolveCredentialOwnerOrigin = cache(
+  async (
+    ownerId: string,
+  ): Promise<{
+    customDomainOrigin: string | null
+    hasActiveTenant: boolean
+  }> => {
     if (!isCloud()) {
-      return null
+      return { customDomainOrigin: null, hasActiveTenant: false }
     }
 
     const tenant = await tenantService.findByOwner(ownerId)
     if (tenant?.status !== "active") {
-      return null
+      return { customDomainOrigin: null, hasActiveTenant: false }
     }
 
     const domain = await customDomainService.findActiveByTenantId(tenant.id)
-    return domain ? `https://${domain.domain}` : null
+    return {
+      customDomainOrigin: domain ? `https://${domain.domain}` : null,
+      hasActiveTenant: true,
+    }
   },
 )
+
+/** The reseller's active custom domain origin, or `null` when unavailable. */
+export const resolveTenantCustomDomainOrigin = async (ownerId: string) =>
+  (await resolveCredentialOwnerOrigin(ownerId)).customDomainOrigin
 
 /**
  * The concrete origin a server-side OAuth/webhook URL must use for this
@@ -48,8 +60,43 @@ export async function resolveTenantProviderOrigin(
   return (await resolveTenantCustomDomainOrigin(ownerId)) ?? getBrokerOrigin()
 }
 
+/**
+ * Build the provider webhook URL for a credential. Owners without an active
+ * tenant use the broker's credential-scoped route so inbound signatures are
+ * validated with their credential rather than the platform default.
+ */
+export function buildCredentialWebhookUrl(props: {
+  credentialId?: string
+  hasActiveTenant: boolean
+  origin: string
+  type: CredentialType
+}): string {
+  const { credentialId, hasActiveTenant, origin, type } = props
+  const path =
+    credentialId && !hasActiveTenant
+      ? `/integrations/${type}/webhook/c/${credentialId}`
+      : `/integrations/${type}/webhook`
+  const normalizedOrigin = origin.endsWith("/") ? origin.slice(0, -1) : origin
+  return `${normalizedOrigin}${path}`
+}
+
 /** Display-only placeholder shown when a tenant-owned credential has no active domain yet. */
 export const PLACEHOLDER_DOMAIN_ORIGIN = "https://<your-domain.com>"
+
+/** Origin displayed to configure a credential's callback and webhook URLs. */
+export const resolveCredentialDisplayOrigin = (props: {
+  brokerOrigin: string
+  customDomainOrigin: string | null | undefined
+  hasActiveTenant: boolean
+  isInherited: boolean
+}): string => {
+  const { brokerOrigin, customDomainOrigin, hasActiveTenant, isInherited } =
+    props
+  if (isInherited || !hasActiveTenant) {
+    return brokerOrigin
+  }
+  return customDomainOrigin ?? PLACEHOLDER_DOMAIN_ORIGIN
+}
 
 /**
  * The origin to use for a given credential: the owning tenant's custom

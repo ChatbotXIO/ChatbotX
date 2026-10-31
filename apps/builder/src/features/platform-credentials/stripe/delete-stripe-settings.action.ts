@@ -10,6 +10,8 @@ export const deleteStripeSettingsAction = authActionClient
   .bindArgsSchemas([credentialScopeSchema])
   .action(async ({ ctx, bindArgsParsedInputs: [scope] }) => {
     await removePlatformStripe({
-      userId: await resolveStripeCredentialScope(ctx.user, scope),
+      userId: await resolveStripeCredentialScope(ctx.user, scope, {
+        allowWithoutEntitlement: true,
+      }),
     })
   })
