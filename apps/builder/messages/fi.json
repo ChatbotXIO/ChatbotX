@@ -4735,6 +4735,7 @@
   "webchat": {
     "chatUnavailable": "Tämä keskustelu ei ole tällä hetkellä käytettävissä.",
     "description": "Anna asiakkaidesi saada automaattisia vastauksia yritykseltäsi välittömästi suoraan verkkosivustoltasi",
+    "loadMessagesError": "Viestejä ei voitu ladata. Tarkista yhteytesi ja yritä uudelleen.",
     "rateLimitExceeded": "Liian monta pyyntöä. Yritä hetken kuluttua uudelleen.",
     "title": "Verkkokeskustelu",
     "workspaceUnavailable": "Tämä työtila ei ole enää käytettävissä.",

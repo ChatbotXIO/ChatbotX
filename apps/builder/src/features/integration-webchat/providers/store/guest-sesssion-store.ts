@@ -9,6 +9,7 @@ import type { MessageResource } from "@/features/messages/schema/resource"
 import type { UserResource } from "@/features/users/schema/resource"
 import { getWebchatProfileFields } from "../../browser-profile-fields"
 import { getClientEmbeddingOrigin } from "../../lib/authorized-domain"
+import { isValidGuestConversationId } from "../../lib/guest-conversation-id"
 import {
   buildGuestStorageKey,
   readLegacyGuestId,
@@ -94,17 +95,27 @@ export const createGuestSessionStore = (
       const scopedKey = buildGuestStorageKey(config.workspaceId, config.id)
       const scopedGuestId = safeStorageGet(scopedKey)
       if (scopedGuestId) {
-        set({ guestConversationId: scopedGuestId, isNewGuestSession: false })
-        return
+        if (isValidGuestConversationId(scopedGuestId)) {
+          set({ guestConversationId: scopedGuestId, isNewGuestSession: false })
+          return
+        }
+        console.warn(
+          "Discarding corrupted guest conversation id from storage",
+          { scopedKey },
+        )
       }
 
       const legacyGuestId = readLegacyGuestId()
-      if (legacyGuestId) {
+      if (legacyGuestId && isValidGuestConversationId(legacyGuestId)) {
         safeStorageSet(scopedKey, legacyGuestId)
         set({ guestConversationId: legacyGuestId, isNewGuestSession: false })
         return
       }
 
+      // Either nothing was stored, or what was stored failed validation
+      // above — in both cases fall back to the id minted by the server for
+      // this page load (always valid) and overwrite storage so a corrupted
+      // value never persists past the request that detects it.
       safeStorageSet(scopedKey, serverGuestConversationId)
       set({
         guestConversationId: serverGuestConversationId,

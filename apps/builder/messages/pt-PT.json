@@ -4735,6 +4735,7 @@
   "webchat": {
     "chatUnavailable": "Este chat está atualmente indisponível.",
     "description": "Permita que os seus clientes recebam respostas automáticas instantâneas da sua empresa diretamente no seu site",
+    "loadMessagesError": "Não foi possível carregar as mensagens. Verifique a sua ligação e tente novamente.",
     "rateLimitExceeded": "Demasiados pedidos. Tente novamente dentro de momentos.",
     "title": "Chat na Web",
     "workspaceUnavailable": "Este espaço de trabalho já não está disponível.",

@@ -4735,6 +4735,7 @@
   "webchat": {
     "chatUnavailable": "Denne chat er currently unavailable.",
     "description": "Let din customers get instant automated responses fra din business directly fra din website",
+    "loadMessagesError": "Beskederne kunne ikke indlæses. Tjek din forbindelse, og prøv igen.",
     "rateLimitExceeded": "Too many requests. Prøv igen i a moment.",
     "title": "Web Chat",
     "workspaceUnavailable": "Denne arbejdsområde er ingen longer tilgængelig.",

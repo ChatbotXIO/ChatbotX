@@ -6877,6 +6877,7 @@
   "webchat": {
     "chatUnavailable": "此聊天目前不可用。",
     "description": "让您的客户直接从您的网站获得来自您企业的即时自动回复",
+    "loadMessagesError": "无法加载消息。请检查您的网络连接并重试。",
     "rateLimitExceeded": "请求过多。请稍后重试。",
     "title": "网络聊天",
     "unauthorizedDomain": {

@@ -4714,6 +4714,7 @@
   "webchat": {
     "chatUnavailable": "このチャットは現在利用できません。",
     "description": "ウェブサイトから直接、顧客にビジネスの即時自動応答を提供します",
+    "loadMessagesError": "メッセージを読み込めませんでした。接続を確認して、もう一度お試しください。",
     "rateLimitExceeded": "リクエストが多すぎます。しばらくしてからもう一度お試しください。",
     "title": "ウェブチャット",
     "workspaceUnavailable": "このワークスペースは利用できなくなりました。",

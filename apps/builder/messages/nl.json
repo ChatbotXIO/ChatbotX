@@ -4735,6 +4735,7 @@
   "webchat": {
     "chatUnavailable": "Deze chat is momenteel niet beschikbaar.",
     "description": "Laat je klanten rechtstreeks vanaf je website direct geautomatiseerde antwoorden van je bedrijf ontvangen",
+    "loadMessagesError": "Berichten konden niet worden geladen. Controleer je verbinding en probeer het opnieuw.",
     "rateLimitExceeded": "Te veel verzoeken. Probeer het zo meteen opnieuw.",
     "title": "Webchat",
     "workspaceUnavailable": "Deze workspace is niet meer beschikbaar.",

@@ -4735,6 +4735,7 @@
   "webchat": {
     "chatUnavailable": "Obrolan ini saat ini tidak tersedia.",
     "description": "Berikan pelanggan Anda respons otomatis seketika dari bisnis Anda langsung melalui situs web",
+    "loadMessagesError": "Pesan gagal dimuat. Periksa koneksi Anda dan coba lagi.",
     "rateLimitExceeded": "Terlalu banyak permintaan. Silakan coba lagi sebentar lagi.",
     "title": "Obrolan Web",
     "workspaceUnavailable": "Ruang kerja ini tidak lagi tersedia.",

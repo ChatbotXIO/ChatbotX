@@ -147,7 +147,7 @@ describe("webchat guest session store", () => {
     const scopedKey = buildGuestStorageKey("workspace-1", "webchat-1")
     vi.stubGlobal(
       "localStorage",
-      createLocalStorageMock({ [scopedKey]: "workspace-1:existing-guest" }),
+      createLocalStorageMock({ [scopedKey]: "20260101000000001" }),
     )
 
     const store = createGuestSessionStore(createWebchatConfig())
@@ -155,13 +155,13 @@ describe("webchat guest session store", () => {
     store.getState().initGuestSession("workspace-1:server-guest")
 
     const state = store.getState()
-    expect(state.guestConversationId).toBe("workspace-1:existing-guest")
+    expect(state.guestConversationId).toBe("20260101000000001")
     expect(state.isNewGuestSession).toBe(false)
   })
 
   test("migrates a legacy global session without marking it new", () => {
     const localStorageMock = createLocalStorageMock({
-      [GUEST_CONVERSATION_ID_KEY]: "workspace-1:legacy-guest",
+      [GUEST_CONVERSATION_ID_KEY]: "20260101000000002",
     })
     vi.stubGlobal("localStorage", localStorageMock)
 
@@ -171,10 +171,49 @@ describe("webchat guest session store", () => {
 
     const scopedKey = buildGuestStorageKey("workspace-1", "webchat-1")
     const state = store.getState()
-    expect(state.guestConversationId).toBe("workspace-1:legacy-guest")
+    expect(state.guestConversationId).toBe("20260101000000002")
     expect(state.isNewGuestSession).toBe(false)
+    expect(localStorageMock.items.get(scopedKey)).toBe("20260101000000002")
+  })
+
+  test("discards a corrupted scoped guest id and mints a fresh session", () => {
+    const scopedKey = buildGuestStorageKey("workspace-1", "webchat-1")
+    const localStorageMock = createLocalStorageMock({
+      // Two Snowflake ids joined by `:` — matches neither the digits-only
+      // legacy shape nor the current `<workspaceId>:<uuid>` shape.
+      [scopedKey]: "11588416937148416:11609574568902656",
+    })
+    vi.stubGlobal("localStorage", localStorageMock)
+    vi.spyOn(console, "warn").mockImplementation(() => undefined)
+
+    const store = createGuestSessionStore(createWebchatConfig())
+
+    store.getState().initGuestSession("workspace-1:server-guest")
+
+    const state = store.getState()
+    expect(state.guestConversationId).toBe("workspace-1:server-guest")
+    expect(state.isNewGuestSession).toBe(true)
     expect(localStorageMock.items.get(scopedKey)).toBe(
-      "workspace-1:legacy-guest",
+      "workspace-1:server-guest",
+    )
+  })
+
+  test("discards a corrupted legacy guest id and mints a fresh session", () => {
+    const localStorageMock = createLocalStorageMock({
+      [GUEST_CONVERSATION_ID_KEY]: "not-a-valid-id",
+    })
+    vi.stubGlobal("localStorage", localStorageMock)
+
+    const store = createGuestSessionStore(createWebchatConfig())
+
+    store.getState().initGuestSession("workspace-1:server-guest")
+
+    const scopedKey = buildGuestStorageKey("workspace-1", "webchat-1")
+    const state = store.getState()
+    expect(state.guestConversationId).toBe("workspace-1:server-guest")
+    expect(state.isNewGuestSession).toBe(true)
+    expect(localStorageMock.items.get(scopedKey)).toBe(
+      "workspace-1:server-guest",
     )
   })
 
