@@ -424,6 +424,13 @@ export const createRequestListener =
       ) {
         return
       }
+      // A POST to the SSE path comes from a Streamable HTTP client pointed at
+      // the SSE URL; serve it like the messages path instead of a 405.
+      if (url.pathname === env.CHATBOTX_MCP_SSE_PATH && req.method === "POST") {
+        await handleMessagesRequest(req, res, createMcpServer)
+        return
+      }
+
       if (url.pathname === env.CHATBOTX_MCP_SSE_PATH) {
         await handleSseRequest(req, res, createMcpServer)
         return
