@@ -2,8 +2,12 @@ import { createId, zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 import { countMessageCharacters } from "../channel-rules/characters"
 import { actionSteps } from "../shared"
-import { flowValidationCodes } from "../validation-codes"
+import {
+  type FlowValidationCode,
+  flowValidationCodes,
+} from "../validation-codes"
 import { BUTTON_LABEL_MAX } from "./button-limits"
+import { callPhoneNumberStepSchema } from "./call-phone-number"
 import { openMiniAppStepSchema } from "./open-mini-app"
 import { openWebsiteStepSchema } from "./open-website"
 import { startAnotherNodeStepSchema } from "./start-another-node"
@@ -19,6 +23,7 @@ export const buttonTypes = z.enum([
   "startAnotherNode",
   "whatsappOptionList",
   "openMiniApp",
+  "callPhoneNumber",
 ])
 export type ButtonType = z.infer<typeof buttonTypes>
 
@@ -84,6 +89,14 @@ export const buttonStepSchema = z
         beforeStep: openMiniAppStepSchema,
         steps: z.array(z.union(actionSteps)),
       }),
+      // A call button is answered on the contact's device and never reaches
+      // the bot on a native channel, so it can neither continue the flow nor
+      // run follow-up steps.
+      z.object({
+        buttonType: z.literal(buttonTypes.enum.callPhoneNumber),
+        beforeStep: callPhoneNumberStepSchema,
+        steps: z.array(z.union(actionSteps)).max(0),
+      }),
       z.object({
         buttonType: z.literal(null),
         beforeStep: z.null(),
@@ -118,27 +131,44 @@ export const isLinkButton = (button: Pick<ButtonStepProps, "buttonType">) =>
   button.buttonType === buttonTypes.enum.openMiniApp
 
 /**
- * Rejects Open Mini App on buttons of a WhatsApp message template step. That
- * step sends its buttons as the template's own quick replies and never passes
- * through the worker's Mini App link rewrite, so such a button would continue
- * the flow on tap without opening anything. (A Messenger template step allows
- * it: there an `openMiniApp` button stands for one of the template's Mini App
- * URL buttons.)
+ * Rejects one button type on a step whose buttons are sent in a form that
+ * cannot carry it (e.g. a WhatsApp message template step sends its buttons as
+ * the template's own quick replies and never passes through the worker's Mini
+ * App link rewrite, so an `openMiniApp` button would continue the flow on tap
+ * without opening anything). Each step picks its own refiners — a Messenger
+ * template step, for instance, allows Open Mini App.
  */
-export const refineNoOpenMiniAppButtons = (
-  buttons: Pick<ButtonStepProps, "buttonType">[],
-  ctx: z.RefinementCtx,
-): void => {
-  for (const [index, button] of buttons.entries()) {
-    if (button.buttonType === buttonTypes.enum.openMiniApp) {
-      ctx.addIssue({
-        code: "custom",
-        message: flowValidationCodes.templateButtonOpenMiniAppUnsupported,
-        path: [index, "buttonType"],
-      })
+const refineDisallowedButtonType =
+  (
+    disallowedType: ButtonType,
+    message: FlowValidationCode,
+  ): ((
+    buttons: Pick<ButtonStepProps, "buttonType">[],
+    ctx: z.RefinementCtx,
+  ) => void) =>
+  (buttons, ctx) => {
+    for (const [index, button] of buttons.entries()) {
+      if (button.buttonType === disallowedType) {
+        ctx.addIssue({
+          code: "custom",
+          message,
+          path: [index, "buttonType"],
+        })
+      }
     }
   }
-}
+
+/** WhatsApp template step: its buttons never pass the Mini App link rewrite. */
+export const refineNoOpenMiniAppButtons = refineDisallowedButtonType(
+  buttonTypes.enum.openMiniApp,
+  flowValidationCodes.templateButtonOpenMiniAppUnsupported,
+)
+
+/** Surfaces whose buttons are sent as replies, which cannot dial. */
+export const refineNoCallPhoneNumberButtons = refineDisallowedButtonType(
+  buttonTypes.enum.callPhoneNumber,
+  flowValidationCodes.buttonCallPhoneNumberUnsupported,
+)
 
 export const buttonStepDefaultFn = (
   props?: Pick<ButtonStepProps, "label">,

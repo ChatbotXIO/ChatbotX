@@ -993,6 +993,13 @@ export type MessageButtonTemplate = {
       buttonType: "postback"
       postback: string
     }
+  | {
+      buttonType: "phoneNumber"
+      /** Dialable number in E.164 form. */
+      phoneNumber: string
+      /** Replayed on channels that cannot dial: the tap replies with the number. */
+      postback: string
+    }
 )
 
 /**
@@ -1067,7 +1074,7 @@ export const URL_QUICK_REPLY_CAPABLE_CHANNELS: ReadonlySet<string> = new Set([
 export function getCanonicalReplyPayload(
   button: MessageButtonTemplate,
 ): string {
-  if (button.buttonType === "postback") {
+  if (button.buttonType === "postback" || button.buttonType === "phoneNumber") {
     return button.postback
   }
 

@@ -3,6 +3,7 @@ import { channelTypes } from "@chatbotx.io/utils/channel"
 import { z } from "zod"
 import { countMessageCharacters } from "../channel-rules/characters"
 import { BUTTON_LABEL_MAX } from "../steps/button"
+import { callPhoneNumberStepSchema } from "../steps/call-phone-number"
 import {
   PIPELINE_STEP_LIMITS,
   pipelineActionCanSkip,
@@ -59,6 +60,13 @@ export type PipelineStepSpec = {
  * `z.lazy` can close the cycle — zod cannot infer a recursive type from a
  * schema that references itself before it exists.
  */
+/** A button on a `send` step: replies (optionally running `then`) or dials `call`. */
+export type FlowSendButtonSpec = {
+  text: string
+  then?: FlowStepSpec[]
+  call?: string
+}
+
 export type FlowStepSpec =
   | {
       type: "send"
@@ -66,7 +74,7 @@ export type FlowStepSpec =
       text?: string
       imageUrl?: string
       fileUrl?: string
-      buttons?: Array<{ text: string; then?: FlowStepSpec[] }>
+      buttons?: FlowSendButtonSpec[]
     }
   | { type: "sendTemplate"; id?: string; templateName: string }
   | {
@@ -135,10 +143,7 @@ const stepIdField = z
 const stepTypeLiteral = <Type extends string>(type: Type) =>
   z.literal(type).describe(`Step type: "${type}".`)
 
-const sendButtonSpecSchema: z.ZodType<{
-  text: string
-  then?: FlowStepSpec[]
-}> = z.lazy(() =>
+const sendButtonSpecSchema: z.ZodType<FlowSendButtonSpec> = z.lazy(() =>
   z
     .object({
       text: z
@@ -163,6 +168,15 @@ const sendButtonSpecSchema: z.ZodType<{
         .describe(
           "Steps to run when the contact taps this button. Omitted or empty means the button has no follow-up.",
         ),
+      call: callPhoneNumberStepSchema.shape.phoneNumber
+        .optional()
+        .describe(
+          "Turns the button into a Call Phone Number button: the number to dial, in international format (e.g. +14155552671), optionally embedding {{variables}}. Cannot be combined with `then`.",
+        ),
+    })
+    .refine((button) => button.call === undefined || !button.then?.length, {
+      message: "A call button cannot have `then` steps.",
+      path: ["then"],
     })
     .describe("A quick-reply button attached to a send step."),
 )

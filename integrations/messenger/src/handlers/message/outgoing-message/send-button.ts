@@ -12,6 +12,19 @@ import { MAX_BUTTONS } from "../../../constants"
 import { logger } from "../../../lib/logger"
 import type { FacebookButton } from "../../../schema"
 
+/**
+ * Messenger's Call button: `payload` is the number to dial, `+` followed by
+ * the country code (E.164, which flow buttons already carry).
+ */
+export const toCallButton = (
+  title: string,
+  e164PhoneNumber: string,
+): FacebookButton => ({
+  type: "phone_number",
+  title,
+  payload: e164PhoneNumber,
+})
+
 export function getButtonTemplate(props: {
   flowId: string
   flowVersionId?: string
@@ -61,6 +74,8 @@ export function getButtonTemplate(props: {
         title: button.label,
         url: appendCodeToMagicLink(button.beforeStep.url, buttonPayload),
       }
+    case buttonTypes.enum.callPhoneNumber:
+      return toCallButton(button.label, button.beforeStep.phoneNumber)
     default: {
       return {
         type: "postback",

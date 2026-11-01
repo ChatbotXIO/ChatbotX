@@ -45,6 +45,7 @@ import {
 import { convertCanonicalQuickReplies } from "./canonical-quick-replies"
 import { resolveMessengerPersonaId } from "./persona"
 import { getAttachmentTemplate } from "./send-attachment"
+import { toCallButton } from "./send-button"
 import { convertFlowStepCarousel } from "./send-carousel"
 import { convertFlowStepFile } from "./send-file"
 import { convertFlowStepGif } from "./send-gif"
@@ -409,6 +410,14 @@ export function* convertMessage(
   }
 }
 
+/**
+ * Buttons Messenger can only render inside a button template. Postback-only
+ * buttons are sent as quick replies elsewhere, so they need no template.
+ */
+const NATIVE_TEMPLATE_BUTTON_TYPES: ReadonlySet<
+  MessageButtonTemplate["buttonType"]
+> = new Set(["url", "phoneNumber"])
+
 const getMessageTemplateButtons = (
   message: OutgoingMessage,
 ): FacebookButton[] => {
@@ -429,7 +438,11 @@ const getMessageTemplateButtons = (
   }
 
   const buttons = record.payload.buttons.filter(isMessageButtonTemplate)
-  if (!buttons.some((button) => button.buttonType === "url")) {
+  if (
+    !buttons.some((button) =>
+      NATIVE_TEMPLATE_BUTTON_TYPES.has(button.buttonType),
+    )
+  ) {
     return []
   }
 
@@ -450,6 +463,12 @@ const isMessageButtonTemplate = (
   }
   if (button.buttonType === "url") {
     return typeof button.url === "string"
+  }
+  if (button.buttonType === "phoneNumber") {
+    return (
+      typeof button.phoneNumber === "string" &&
+      typeof button.postback === "string"
+    )
   }
   if (
     !(button.buttonType === "postback" && typeof button.postback === "string")
@@ -481,6 +500,9 @@ const toFacebookButton = (
           }
         : {}),
     }
+  }
+  if (button.buttonType === "phoneNumber") {
+    return toCallButton(button.label, button.phoneNumber)
   }
   return {
     type: "postback",

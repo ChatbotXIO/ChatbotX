@@ -587,6 +587,32 @@ describe("compileFlowSpec — a realistic multi-step flow", () => {
 })
 
 describe("compileFlowSpec — button routing", () => {
+  test("a call button compiles to a callPhoneNumber button with no route or edge", () => {
+    const compiled = compileFlowSpec(
+      spec([
+        {
+          type: "send",
+          text: "Need help?",
+          buttons: [{ text: "Call us", call: "+14155552671" }],
+        },
+      ]),
+      emptyCtx,
+    )
+
+    const sendNode = compiled.nodes[0]
+    if (sendNode?.type !== "sendMessage") {
+      throw new Error("expected sendMessage node")
+    }
+    const [button] = sendNode.data.details.steps[0]?.buttons ?? []
+    expect(button).toMatchObject({
+      label: "Call us",
+      buttonType: "callPhoneNumber",
+      beforeStep: { stepType: "callPhoneNumber", phoneNumber: "+14155552671" },
+      steps: [],
+    })
+    expect(compiled.edges).toHaveLength(0)
+  })
+
   test("a routed button writes both the node's beforeStep and a matching edge", () => {
     const compiled = compileFlowSpec(
       spec([
