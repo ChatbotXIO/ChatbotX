@@ -86,6 +86,24 @@ export const env = createEnv({
       .min(1)
       .max(100 * 1024 * 1024)
       .default(25 * 1024 * 1024),
+    // Muse needs its own cap: a 10-minute 24 kHz mono WAV (~28.8 MB) is over
+    // HEAVY_MAX_AUDIO_BYTES. Bounded by the client's 32 MiB request limit
+    // minus multipart overhead (`MUSE_TRANSCRIBE_MAX_REQUEST_BYTES` and
+    // `MUSE_TRANSCRIBE_MULTIPART_OVERHEAD_BYTES` in @chatbotx.io/ai/server).
+    MUSE_TRANSCRIBE_MAX_AUDIO_BYTES: z.coerce
+      .number()
+      .int()
+      .min(1)
+      .max(32 * 1024 * 1024 - 64 * 1024)
+      .default(32 * 1024 * 1024 - 64 * 1024),
+    // One Muse Speech to Text attempt (download + upload + transcription).
+    // Also sizes the step's completion deadline and the worker locks.
+    MUSE_TRANSCRIBE_TIMEOUT_MS: z.coerce
+      .number()
+      .int()
+      .min(5000)
+      .max(9 * 60 * 1000)
+      .default(9 * 60 * 1000),
     HEAVY_MAX_IMAGE_BYTES: z.coerce
       .number()
       .int()

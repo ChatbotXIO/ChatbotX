@@ -4,6 +4,7 @@ import {
   SiGooglegemini,
   SiMake,
   SiMessenger,
+  SiMeta,
   SiN8n,
 } from "@icons-pack/react-simple-icons"
 import {
@@ -146,6 +147,45 @@ const PROVIDER_CONFIGS: ProviderConfig[] = [
       {
         stepType: stepTypes.enum.aiTextToSpeech,
         getLabel: stepWithAiName("fields.flows.aiTextToSpeech"),
+      },
+      {
+        stepType: stepTypes.enum.aiDeleteMessageHistory,
+        getLabel: stepWithAiName("fields.flows.aiDeleteMessageHistory"),
+      },
+    ],
+  },
+  {
+    label: "Muse",
+    icon: SiMeta,
+    providerKey: "muse",
+    steps: [
+      {
+        stepType: stepTypes.enum.aiGenerateText,
+        getLabel: stepWithName("flows.aiGenerateText.label"),
+      },
+      {
+        stepType: stepTypes.enum.aiGenerateImage,
+        getLabel: stepWithName("flows.aiGenerateImage.label"),
+      },
+      {
+        stepType: stepTypes.enum.aiEditImage,
+        getLabel: stepWithName("flows.aiEditImage.label"),
+      },
+      {
+        stepType: stepTypes.enum.aiAnalyzeImage,
+        getLabel: stepWithName("flows.aiAnalyzeImage.label"),
+      },
+      {
+        stepType: stepTypes.enum.aiGenerateTextAgent,
+        getLabel: stepWithAiName("fields.flows.aiGenerateTextAgent"),
+      },
+      {
+        stepType: stepTypes.enum.aiExtractData,
+        getLabel: stepWithName("flows.aiExtractData.label"),
+      },
+      {
+        stepType: stepTypes.enum.aiSpeechToText,
+        getLabel: stepWithAiName("fields.flows.aiSpeechToText"),
       },
       {
         stepType: stepTypes.enum.aiDeleteMessageHistory,

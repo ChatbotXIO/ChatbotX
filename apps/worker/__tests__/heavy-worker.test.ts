@@ -27,7 +27,7 @@ const mocks = vi.hoisted(() => ({
   recordHeavyAIStepProviderError: vi.fn(),
   loggerError: vi.fn(),
   speechToTextOutput: vi.fn(),
-  shouldRunHeavyStep: vi.fn(),
+  resolveHeavyStepAttempt: vi.fn(),
   textToSpeechOutput: vi.fn(),
   workerQueueName: undefined as string | undefined,
   workerOptions: undefined as Record<string, unknown> | undefined,
@@ -107,6 +107,7 @@ vi.mock("../src/env", () => ({
   env: {
     HEAVY_JOB_WAIT_TIMEOUT_MS: 120_000,
     HEAVY_PROVIDER_MIN_INTERVAL_MS: 250,
+    MUSE_TRANSCRIBE_TIMEOUT_MS: 540_000,
     HEAVY_WORKER_CONCURRENCY: 1,
   },
 }))
@@ -160,9 +161,13 @@ vi.mock("../src/heavy/services/provider-rate-limiter", () => ({
   waitForHeavyProviderSlot: mocks.waitForHeavyProviderSlot,
 }))
 vi.mock("../src/integration/handlers/heavy-step-runner", () => ({
+  buildHeavyStepIdentityHash: (input: {
+    parentJobId: string
+    stepId: string
+  }) => `hash-${input.parentJobId}-${input.stepId}`,
   completeHeavyStep: mocks.completeHeavyStep,
   failHeavyStep: mocks.failHeavyStep,
-  shouldRunHeavyStep: mocks.shouldRunHeavyStep,
+  resolveHeavyStepAttempt: mocks.resolveHeavyStepAttempt,
 }))
 
 beforeAll(async () => {
@@ -188,7 +193,7 @@ beforeEach(() => {
   })
   mocks.completeHeavyStep.mockResolvedValue(undefined)
   mocks.integrationQueueAdd.mockResolvedValue(undefined)
-  mocks.shouldRunHeavyStep.mockResolvedValue(true)
+  mocks.resolveHeavyStepAttempt.mockResolvedValue({ action: "run" })
 })
 
 const { ExpectedHeavyStepError } = await import("../src/heavy/handlers/errors")
@@ -225,8 +230,9 @@ describe("heavy worker", () => {
     expect(mocks.workerOptions?.concurrency).toBe(1)
   })
 
-  test("keeps a short renewable BullMQ lock so a dead process is retried within a minute", () => {
-    expect(mocks.workerOptions?.lockDuration).toBe(300_000)
+  test("sizes the BullMQ lock to the longest heavy-step attempt", () => {
+    // MUSE_TRANSCRIBE_TIMEOUT_MS (9 min) + 60s handoff.
+    expect(mocks.workerOptions?.lockDuration).toBe(600_000)
     expect(mocks.workerOptions?.stalledInterval).toBe(60_000)
     expect(mocks.workerOptions?.maxStalledCount).toBe(1)
   })
@@ -386,7 +392,12 @@ describe("heavy worker", () => {
     )
     expect(result).toEqual({
       status: "success",
-      outputValue: "https://cdn.example.com/a.png",
+      outputValues: [
+        {
+          customFieldId: "custom-field-1",
+          value: "https://cdn.example.com/a.png",
+        },
+      ],
     })
   })
 
@@ -407,9 +418,13 @@ describe("heavy worker", () => {
       contactId: "contact-1",
       contactInboxId: "contact-inbox-1",
       outcomeKey: "heavy-step-outcome-1",
-      outputFieldId: "custom-field-1",
       result: {
-        outputValue: "https://cdn.example.com/a.png",
+        outputValues: [
+          {
+            customFieldId: "custom-field-1",
+            value: "https://cdn.example.com/a.png",
+          },
+        ],
         status: "success",
       },
       workspaceId: "workspace-1",
@@ -456,6 +471,189 @@ describe("heavy worker", () => {
         }),
       },
       expect.anything(),
+    )
+  })
+
+  describe("flow-owned heavy step outcome", () => {
+    function buildFlowGenerateImageJob() {
+      const job = buildGenerateImageJob()
+      return {
+        ...job,
+        id: "heavy-aiGenerateImage-abc",
+        data: {
+          ...job.data,
+          data: {
+            ...job.data.data,
+            outcomeKey: "heavy-step-outcome-1",
+            continuation: {
+              flowExecutionKey: "flow-execution-1",
+              flowId: "flow-1",
+              nodeId: "node-1",
+            },
+          },
+        },
+      }
+    }
+
+    test("does not call the provider again once the step reached a terminal outcome", async () => {
+      mocks.resolveHeavyStepAttempt.mockResolvedValueOnce({ action: "skip" })
+
+      await mocks.processJob?.(buildFlowGenerateImageJob())
+
+      expect(mocks.resolveHeavyStepAttempt).toHaveBeenCalledWith(
+        "heavy-step-outcome-1",
+      )
+      expect(mocks.generateImageOutput).not.toHaveBeenCalled()
+      expect(mocks.completeHeavyStep).not.toHaveBeenCalled()
+      expect(mocks.integrationQueueAdd).not.toHaveBeenCalled()
+    })
+
+    test("replays stored output values after a partial write without calling the provider", async () => {
+      const outputValues = [
+        { customFieldId: "custom-field-1", value: "https://cdn/image.png" },
+      ]
+      mocks.resolveHeavyStepAttempt.mockResolvedValueOnce({
+        action: "replay",
+        outputValues,
+      })
+
+      await mocks.processJob?.(buildFlowGenerateImageJob())
+
+      expect(mocks.generateImageOutput).not.toHaveBeenCalled()
+      expect(mocks.waitForHeavyProviderSlot).not.toHaveBeenCalled()
+      expect(mocks.completeHeavyStep).toHaveBeenCalledWith(
+        expect.objectContaining({
+          outcomeKey: "heavy-step-outcome-1",
+          result: { status: "success", outputValues },
+        }),
+      )
+      expect(mocks.integrationQueueAdd).toHaveBeenCalledWith(
+        "resumeHeavyStep",
+        expect.objectContaining({
+          data: expect.objectContaining({ startFromStepId: "1" }),
+        }),
+        expect.anything(),
+      )
+    })
+
+    test("fails and resumes the flow after the last retry is exhausted", async () => {
+      const job = buildFlowGenerateImageJob()
+
+      await mocks.workerFailedHandler?.(
+        {
+          ...job,
+          name: "aiGenerateImage",
+          attemptsMade: 2,
+          opts: { attempts: 2 },
+        },
+        new Error("Provider 503"),
+      )
+
+      expect(mocks.failHeavyStep).toHaveBeenCalledWith(
+        "heavy-step-outcome-1",
+        expect.objectContaining({ message: "Provider 503" }),
+      )
+      expect(mocks.integrationQueueAdd).toHaveBeenCalledWith(
+        "resumeHeavyStep",
+        expect.objectContaining({
+          data: expect.objectContaining({ startFromStepId: "1" }),
+        }),
+        { jobId: "heavy-resume-heavy-aiGenerateImage-abc" },
+      )
+    })
+
+    test("leaves the outcome pending while a retry is still due", async () => {
+      const job = buildFlowGenerateImageJob()
+
+      await mocks.workerFailedHandler?.(
+        {
+          ...job,
+          name: "aiGenerateImage",
+          attemptsMade: 1,
+          opts: { attempts: 2 },
+        },
+        new Error("Provider 503"),
+      )
+
+      expect(mocks.failHeavyStep).not.toHaveBeenCalled()
+      expect(mocks.integrationQueueAdd).not.toHaveBeenCalled()
+    })
+  })
+
+  test.each([
+    [
+      "aiEditImage",
+      mocks.editImageOutput,
+      {
+        provider: "openai",
+        model: "gpt-image-2",
+        inputFieldId: "custom-field-in",
+        prompt: "brighter",
+        size: "1024x1024",
+        quality: "low",
+      },
+    ],
+    [
+      "aiSpeechToText",
+      mocks.speechToTextOutput,
+      {
+        provider: "openai",
+        model: "whisper-1",
+        inputFieldId: "custom-field-in",
+      },
+    ],
+    [
+      "aiTextToSpeech",
+      mocks.textToSpeechOutput,
+      {
+        provider: "openai",
+        model: "tts-1",
+        voiceType: "alloy",
+        message: "Xin chao",
+      },
+    ],
+  ])("maps the %s output to its outputFieldId", async (type, handler, stepFields) => {
+    handler.mockResolvedValue("https://cdn.example.com/out")
+    const job = buildGenerateImageJob()
+    job.data.type = type
+    job.data.data.step = {
+      id: "1",
+      stepType: type,
+      outputFieldId: "custom-field-1",
+      ...stepFields,
+    } as typeof job.data.data.step
+
+    const result = await mocks.processJob?.(job)
+
+    expect(handler).toHaveBeenCalledOnce()
+    expect(result).toEqual({
+      status: "success",
+      outputValues: [
+        {
+          customFieldId: "custom-field-1",
+          value: "https://cdn.example.com/out",
+        },
+      ],
+    })
+  })
+
+  test("passes the stable heavy job id to Muse speech-to-text as its session", async () => {
+    mocks.speechToTextOutput.mockResolvedValue("xin chao")
+    const job = buildGenerateImageJob()
+    job.data.type = "aiSpeechToText"
+    job.data.data.step = {
+      id: "1",
+      stepType: "aiSpeechToText",
+      provider: "muse",
+      model: "muse-voice-transcribe-1.0",
+      inputFieldId: "custom-field-in",
+      outputFieldId: "custom-field-1",
+    } as unknown as typeof job.data.data.step
+
+    await mocks.processJob?.({ ...job, attemptsMade: 1 })
+
+    expect(mocks.speechToTextOutput).toHaveBeenCalledWith(
+      expect.objectContaining({ sessionId: "job-1" }),
     )
   })
 

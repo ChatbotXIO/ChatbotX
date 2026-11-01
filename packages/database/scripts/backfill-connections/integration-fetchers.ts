@@ -15,6 +15,7 @@ import {
   integrationMailchimpModel,
   integrationMailerLiteModel,
   integrationMoosendModel,
+  integrationMuseModel,
   integrationOpenaiCompatibleModel,
   integrationOpenaiModel,
   integrationOpenrouterModel,
@@ -40,6 +41,7 @@ const INTEGRATION_DISPLAY_NAMES = {
   mailchimp: "Mailchimp",
   mailerLite: "MailerLite",
   moosend: "Moosend",
+  muse: "Muse",
   openai: "OpenAI",
   openrouter: "OpenRouter",
   sendGrid: "SendGrid",
@@ -350,6 +352,11 @@ export const INTEGRATION_FETCHERS: Partial<
     "moosend",
     integrationMoosendModel,
     INTEGRATION_DISPLAY_NAMES.moosend,
+  ),
+  muse: makeWorkspaceSingletonFetcher(
+    "muse",
+    integrationMuseModel,
+    INTEGRATION_DISPLAY_NAMES.muse,
   ),
   openai: makeWorkspaceSingletonFetcher(
     "openai",

@@ -62,6 +62,7 @@ import { integrationKlaviyoService } from "../integration-klaviyo/service"
 import { integrationMailchimpService } from "../integration-mailchimp/service"
 import { integrationMailerLiteService } from "../integration-mailer-lite/service"
 import { integrationMoosendService } from "../integration-moosend/service"
+import { integrationMuseService } from "../integration-muse/service"
 import { integrationOpenAIService } from "../integration-openai/service"
 import { integrationOpenRouterService } from "../integration-openrouter/service"
 import { integrationSendGridService } from "../integration-sendgrid/service"
@@ -178,6 +179,7 @@ class WorkspaceLifecycleService extends BaseService {
       ["mailchimp", integrationMailchimpService],
       ["mailer-lite", integrationMailerLiteService],
       ["moosend", integrationMoosendService],
+      ["muse", integrationMuseService],
       ["openai", integrationOpenAIService],
       ["openrouter", integrationOpenRouterService],
       ["sendgrid", integrationSendGridService],

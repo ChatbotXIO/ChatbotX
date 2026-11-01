@@ -133,6 +133,38 @@ export function processTextForImagesAndLinks(text: string): string[] {
   return getMeaningfulParts(parts)
 }
 
+type StepStreamPart = { type: string; text?: string }
+
+/**
+ * `streamText().textStream` concatenates every step's text with no separator,
+ * so text a model writes before a tool call runs straight into the text it
+ * writes after the tool result ("…the sleeve.I've noted…"). Rebuild the text
+ * stream from `result.stream` with a paragraph break between steps, so
+ * `processStreamingText` treats each step's text as its own segment.
+ */
+export async function* toStepSeparatedTextStream(
+  stream: AsyncIterable<StepStreamPart>,
+): AsyncIterable<string> {
+  let hasText = false
+  let pendingStepBreak = false
+
+  for await (const part of stream) {
+    if (part.type === "start-step") {
+      pendingStepBreak = hasText
+      continue
+    }
+    if (part.type !== "text-delta" || !part.text) {
+      continue
+    }
+    if (pendingStepBreak) {
+      pendingStepBreak = false
+      yield PARAGRAPH_SEPARATOR
+    }
+    hasText = true
+    yield part.text
+  }
+}
+
 export async function processStreamingText(
   textStream: AsyncIterable<string>,
   onSegment: (segment: string, parts: string[]) => Promise<void>,

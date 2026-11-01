@@ -89,6 +89,10 @@ export async function handleAIGenerateText({
     })
     cleanupToolset = cleanup
 
+    // The SDK swallows a throw from `onError` and drops error parts from
+    // `textStream`, so keep the provider error and rethrow it once the stream
+    // ends — otherwise a failed call saves "" and reports success.
+    let streamError: unknown
     const result = streamText({
       model: resolvedModel.model,
       instructions: step.system,
@@ -98,8 +102,8 @@ export async function handleAIGenerateText({
       maxOutputTokens: step.maxOutputTokens,
       temperature: step.temperature,
       abortSignal: controller.signal,
-      onError: (error) => {
-        throw error.error
+      onError: ({ error }) => {
+        streamError = error
       },
     })
 
@@ -110,6 +114,9 @@ export async function handleAIGenerateText({
       },
       { sendParts: false },
     )
+    if (streamError) {
+      throw streamError
+    }
 
     await saveResultToCustomField({
       contactId: conversation.contactId,

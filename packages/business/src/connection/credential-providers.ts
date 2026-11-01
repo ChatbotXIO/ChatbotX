@@ -14,7 +14,7 @@ import { validateOpenaiCompatibleBaseUrlForEnvironment } from "../integration-op
 import { logger } from "../logger"
 
 /**
- * `claude`/`deepseek`/`gemini`/`openai`/`openrouter`/`openaiCompatible` have
+ * `claude`/`deepseek`/`gemini`/`muse`/`openai`/`openrouter`/`openaiCompatible` have
  * no `integrations/<name>` SDK package (see `packages/connections`'s
  * registry note) — they are workspace-scoped API-key credentials with no
  * inbound webhook or message dispatch. Their `ConnectionProvider` lives here
@@ -79,6 +79,7 @@ export const deepseekConnectionProvider = makeAiKeyProvider(
   "DeepSeek",
 )
 export const geminiConnectionProvider = makeAiKeyProvider("gemini", "Gemini")
+export const museConnectionProvider = makeAiKeyProvider("muse", "Muse")
 export const openaiConnectionProvider = makeAiKeyProvider("openai", "OpenAI")
 export const openrouterConnectionProvider = makeAiKeyProvider(
   "openrouter",

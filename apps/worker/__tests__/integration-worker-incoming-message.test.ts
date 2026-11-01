@@ -543,7 +543,11 @@ vi.mock("@chatbotx.io/encryption", () => ({
   verifyAppointmentCancelPostback: vi.fn(),
 }))
 
-vi.mock("@chatbotx.io/worker-config", () => ({
+vi.mock("@chatbotx.io/worker-config", async () => ({
+  // heavy-step-runner builds its outcome schema from this at import time.
+  heavyStepOutputValueSchema: await import("zod").then(({ z }) =>
+    z.object({ customFieldId: z.string(), value: z.string() }),
+  ),
   isNoRedisEnv: () => true,
   defaultWorkerOptions: {
     concurrency: 5,

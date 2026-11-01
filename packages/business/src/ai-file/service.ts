@@ -281,7 +281,7 @@ class AiFileService extends BaseService {
       // surface a translated message via next-intl — see
       // apps/builder/src/features/ai-files/actions/create-ai-file.action.ts.
       throw new ChatbotXException(
-        "No embedding provider configured. AI file embeddings require OpenAI or Gemini integration. DeepSeek and Claude do not support embedding models.",
+        "No embedding provider configured. AI file embeddings require OpenAI or Gemini integration. DeepSeek, Claude and Muse do not support embedding models.",
         "noEmbeddingProvider",
         400,
       )

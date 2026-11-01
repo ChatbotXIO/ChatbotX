@@ -80,6 +80,23 @@ export const SizeSelect = (props: SizeSelectProps) => {
         { label: "9:16", value: "9:16" },
         { label: "16:9", value: "16:9" },
       ],
+      // Muse snaps `size` to its own presets (1024x1024 → 1600x1600,
+      // 1536x1024 → 1920x1280, 1024x1536 → 1280x1920); auto is landscape.
+      muse: [
+        { label: t("fields.size.options.auto"), value: "auto" },
+        {
+          label: t("fields.size.options.square1024"),
+          value: "1024x1024",
+        },
+        {
+          label: t("fields.size.options.landscape1536x1024"),
+          value: "1536x1024",
+        },
+        {
+          label: t("fields.size.options.portrait1024x1536"),
+          value: "1024x1536",
+        },
+      ],
     }),
     [isGPTImage, t],
   )

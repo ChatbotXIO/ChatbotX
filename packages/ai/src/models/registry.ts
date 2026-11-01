@@ -2,6 +2,7 @@ import { type AIProvider, aiProviders } from "../schemas/ai-model"
 import { claudeModelOptions, claudeModels } from "./claude"
 import { deepseekModelOptions, deepseekModels } from "./deepseek"
 import { geminiModelOptions, geminiModels } from "./gemini"
+import { museModelOptions, museModels } from "./muse"
 import { openaiModelOptions, openaiModels } from "./openai"
 import { openrouterModelOptions, openrouterModels } from "./openrouter"
 
@@ -49,5 +50,10 @@ export const aiChatProviders: readonly AiChatProviderConfig[] = [
     provider: aiProviders.enum.openrouter,
     modelOptions: openrouterModelOptions,
     defaultModel: openrouterModels.enum["openai/gpt-5.4-mini"],
+  },
+  {
+    provider: aiProviders.enum.muse,
+    modelOptions: museModelOptions,
+    defaultModel: museModels.enum["muse-spark-1.3"],
   },
 ]

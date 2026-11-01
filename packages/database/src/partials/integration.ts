@@ -22,6 +22,7 @@ export const integrationTypes = z.enum([
   "metaCatalog",
   "messenger",
   "moosend",
+  "muse",
   "openai",
   "openaiCompatible",
   "openrouter",

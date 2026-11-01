@@ -1,6 +1,6 @@
-import type { AIGenerateTextSchema } from "@chatbotx.io/flow-config"
+import type { AIProvider } from "@chatbotx.io/ai"
 
-type AIProvider = AIGenerateTextSchema["provider"]
+type AIProviderWithCompatible = AIProvider | "openaiCompatible"
 
 const aiProviderLabelKeyByProvider = {
   openai: "aiProviders.openai",
@@ -8,8 +8,9 @@ const aiProviderLabelKeyByProvider = {
   claude: "aiProviders.claude",
   deepseek: "aiProviders.deepseek",
   openrouter: "aiProviders.openrouter",
+  muse: "aiProviders.muse",
   openaiCompatible: "aiProviders.openaiCompatible",
-} as const satisfies Record<AIProvider, string>
+} as const satisfies Record<AIProviderWithCompatible, string>
 
-export const getAiProviderLabelKey = (provider: AIProvider) =>
+export const getAiProviderLabelKey = (provider: AIProviderWithCompatible) =>
   aiProviderLabelKeyByProvider[provider]

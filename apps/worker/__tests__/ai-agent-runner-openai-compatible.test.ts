@@ -43,6 +43,7 @@ vi.mock("@chatbotx.io/ai", () => ({
   },
   processStreamingText: vi.fn(async () => ({ fullText: state.aiResponseText })),
   toolPrefixes: { enum: { file: "file", fn: "fn", mcp: "mcp", sys: "sys" } },
+  toStepSeparatedTextStream: vi.fn((stream: unknown) => stream),
 }))
 
 vi.mock("@chatbotx.io/ai/server", () => ({

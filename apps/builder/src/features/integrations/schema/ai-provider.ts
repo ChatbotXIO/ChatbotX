@@ -4,6 +4,7 @@ export const aiProviderPathParam = z.enum([
   "claude",
   "deepseek",
   "gemini",
+  "muse",
   "openai",
 ])
 export type AiProviderPathParam = z.infer<typeof aiProviderPathParam>

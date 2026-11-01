@@ -22,6 +22,7 @@ type AiIntegrationApiKeyDialogProps<TForm extends FieldValues> = {
   open: boolean
   onOpenChange: (open: boolean) => void
   title: string
+  description?: string
   credentialLabel?: string
   form: UseFormReturn<TForm>
   onSubmit: (event: FormEvent<HTMLFormElement>) => void | Promise<void>
@@ -36,6 +37,7 @@ export function AiIntegrationApiKeyDialog<TForm extends FieldValues>({
   open,
   onOpenChange,
   title,
+  description,
   credentialLabel,
   form,
   onSubmit,
@@ -56,7 +58,7 @@ export function AiIntegrationApiKeyDialog<TForm extends FieldValues>({
           <DialogTitle>
             {t("actions.connectFeature", { feature: title })}
           </DialogTitle>
-          <DialogDescription />
+          <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form className="flex-1 space-y-4" onSubmit={onSubmit}>

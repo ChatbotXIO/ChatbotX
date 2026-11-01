@@ -1,5 +1,7 @@
 import {
+  AISpeechToTextDefaultFn,
   FlowAuthoringException,
+  performActionNodeDefaultFn,
   sendMessageNodeDefaultFn,
 } from "@chatbotx.io/flow-config"
 import { beforeEach, describe, expect, test, vi } from "vitest"
@@ -462,6 +464,75 @@ describe("POST /v1/flows", () => {
     ).rejects.toBeInstanceOf(FlowAuthoringException)
 
     expect(flowService.createDraft).not.toHaveBeenCalled()
+  })
+
+  const speechNode = (step: Record<string, unknown>) => {
+    const node = performActionNodeDefaultFn({
+      nodeProps: { id: "n1" },
+      dataProps: {},
+      detailProps: {},
+    })
+    node.data.details.steps = [
+      {
+        ...AISpeechToTextDefaultFn({ inputFieldId: "1", outputFieldId: "2" }),
+        ...step,
+      } as never,
+    ]
+    return node
+  }
+
+  const createSpeechFlow = (step: Record<string, unknown>) =>
+    procedure.handler?.({
+      context: { workspace: { id: "workspace-1" } },
+      input: {
+        name: "Speech flow",
+        folderId: null,
+        nodes: [speechNode(step)],
+        edges: [],
+        publish: true,
+      },
+    })
+
+  test("publish: true accepts a Muse aiSpeechToText step through the shared flow schema", async () => {
+    flowService.createPublished.mockResolvedValueOnce({ id: "flow-11" })
+
+    await createSpeechFlow({
+      provider: "muse",
+      model: "muse-voice-transcribe-1.0",
+      languageBias: ["Vietnamese"],
+    })
+
+    const graph = flowService.createPublished.mock.calls[0][0].graph
+    expect(graph.nodes[0].data.details.steps[0]).toMatchObject({
+      stepType: "aiSpeechToText",
+      provider: "muse",
+      model: "muse-voice-transcribe-1.0",
+      languageBias: ["Vietnamese"],
+    })
+  })
+
+  test.each([
+    [
+      "a Muse step with another model",
+      { provider: "muse", model: "whisper-1" },
+    ],
+    [
+      "a Muse step with an unknown language",
+      {
+        provider: "muse",
+        model: "muse-voice-transcribe-1.0",
+        languageBias: ["Klingon"],
+      },
+    ],
+    [
+      "an OpenAI step with Muse-only fields",
+      { provider: "openai", model: "whisper-1", keywords: ["ChatbotX"] },
+    ],
+  ])("publish: true rejects %s", async (_name, step) => {
+    await expect(createSpeechFlow(step)).rejects.toBeInstanceOf(
+      FlowAuthoringException,
+    )
+    expect(flowService.createPublished).not.toHaveBeenCalled()
   })
 })
 

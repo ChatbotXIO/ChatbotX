@@ -1,4 +1,7 @@
-import { aiEditImageQuality } from "@chatbotx.io/flow-config"
+import {
+  aiEditImageProvider,
+  aiEditImageQuality,
+} from "@chatbotx.io/flow-config"
 import { z } from "zod"
 
 export const editImageInputSchema = z.object({
@@ -11,7 +14,7 @@ export const editImageInputSchema = z.object({
       "Input image URL must use HTTP or HTTPS",
     ),
   prompt: z.string().trim().min(1, "Prompt is required"),
-  provider: z.enum(["openai", "gemini"]),
+  provider: aiEditImageProvider,
   model: z.string().trim().min(1),
   size: z.string().trim().min(1),
   quality: aiEditImageQuality,
