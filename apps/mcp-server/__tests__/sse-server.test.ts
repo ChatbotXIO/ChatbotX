@@ -367,6 +367,62 @@ describe("createRequestListener", () => {
       await requestServer.close()
     }
   })
+
+  // A client configured as Streamable HTTP (`type: "http"`) against the SSE
+  // URL POSTs `initialize` to it; that used to be a hard 405.
+  test("serves a Streamable HTTP session when a client POSTs to the SSE path", async () => {
+    const { createRequestListener } = await import("../src/server/sse-server")
+    const { McpServer } = await import(
+      "@modelcontextprotocol/sdk/server/mcp.js"
+    )
+    const createMcpServer = vi.fn(
+      () => new McpServer({ name: "test", version: "1.0.0" }),
+    )
+    const requestServer = await startRequestServer(
+      createRequestListener(createMcpServer as never),
+    )
+    const headers = {
+      accept: "application/json, text/event-stream",
+      "content-type": "application/json",
+    }
+
+    try {
+      const initResponse = await fetch(`${requestServer.url}/sse`, {
+        body: JSON.stringify({
+          id: 1,
+          jsonrpc: "2.0",
+          method: "initialize",
+          params: {
+            capabilities: {},
+            clientInfo: { name: "test", version: "1.0.0" },
+            protocolVersion: "2025-03-26",
+          },
+        }),
+        headers,
+        method: "POST",
+      })
+      await initResponse.text()
+
+      expect(initResponse.status).toBe(200)
+      const sessionId = initResponse.headers.get("mcp-session-id")
+      expect(sessionId).toBeTruthy()
+
+      const followUp = await fetch(`${requestServer.url}/sse`, {
+        body: JSON.stringify({
+          jsonrpc: "2.0",
+          method: "notifications/initialized",
+        }),
+        headers: { ...headers, "mcp-session-id": sessionId ?? "" },
+        method: "POST",
+      })
+      await followUp.text()
+
+      expect(followUp.status).toBe(202)
+      expect(createMcpServer).toHaveBeenCalledTimes(1)
+    } finally {
+      await requestServer.close()
+    }
+  })
 })
 
 describe("createRequestListener OAuth gate", () => {
