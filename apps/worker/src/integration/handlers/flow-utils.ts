@@ -164,6 +164,7 @@ export const STEP_PRODUCES_MESSAGE: Record<StepType, boolean> = {
   aiAnalyzeImage: false,
   aiGenerateImage: false,
   aiEditImage: false,
+  aiSegmentImage: false,
   aiSpeechToText: false,
   aiTextToSpeech: false,
   aiExtractData: false,

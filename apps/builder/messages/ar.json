@@ -1598,7 +1598,8 @@
       "label": "المسارات",
       "placeholder": "اختر مسارًا",
       "aiGenerateTextAgent": "{aiName}: وكيل توليد النص",
-      "aiDeleteMessageHistory": "{aiName}: حذف سجل الرسائل"
+      "aiDeleteMessageHistory": "{aiName}: حذف سجل الرسائل",
+      "aiSegmentImage": "{aiName}: تقسيم الصورة"
     },
     "steps": {
       "label": "عقدة",
@@ -2818,6 +2819,39 @@
     },
     "empty": {
       "label": "فارغ"
+    },
+    "aiSegmentImage": {
+      "description": "يعثر على عنصر في الصورة باستخدام SAM 3.1 ويحفظ صورة مقصوصة له.",
+      "inputFieldId": {
+        "label": "الصورة المصدر"
+      },
+      "target": {
+        "label": "العنصر المطلوب",
+        "description": "عبارة اسمية قصيرة مثل \"سيارة حمراء\" أو \"علبة منتج\". ليست سؤالاً أو أمراً.",
+        "placeholder": "علبة منتج"
+      },
+      "matchSelection": {
+        "label": "التطابقات",
+        "options": {
+          "largest": "أكبر عنصر فقط",
+          "all": "كل العناصر المطابقة (قص واحد يشملها)"
+        }
+      },
+      "outputFieldId": {
+        "label": "حفظ الصورة في"
+      },
+      "detailsOutputFieldId": {
+        "label": "حفظ التفاصيل في",
+        "description": "اختياري. يستقبل JSON يتضمن عدد التطابقات والمربعات.",
+        "sameAsOutput": "اختر حقلاً مختلفاً عن حقل الصورة الناتجة.",
+        "sameAsInput": "اختر حقلاً مختلفاً عن حقل الصورة المصدر."
+      },
+      "overwriteWarning": "ستحل النتيجة محل الصورة المصدر في هذا الحقل.",
+      "states": {
+        "success": "تم العثور",
+        "skip": "لم يتم العثور",
+        "error": "فشل"
+      }
     }
   },
   "flows": {
@@ -3266,6 +3300,9 @@
       "comment": "التعليق",
       "destinationPipeline": "خط سير العمل الوجهة",
       "destinationStage": "المرحلة الوجهة"
+    },
+    "aiSegmentImage": {
+      "label": "{name}: تقسيم الصورة"
     },
     "aiSpeechToText": {
       "muse": {

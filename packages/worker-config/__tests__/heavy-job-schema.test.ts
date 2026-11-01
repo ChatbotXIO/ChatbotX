@@ -3,9 +3,11 @@ import {
   AITextToSpeechDefaultFn,
   aiEditImageDefaultFn,
   aiGenerateImageDefaultFn,
+  aiSegmentImageDefaultFn,
 } from "@chatbotx.io/flow-config"
 import { describe, expect, test } from "vitest"
 import {
+  getHeavyJobCompletionWaitTimeoutMs,
   getHeavyJobOptions,
   HeavyJobAction,
   heavyAnalyzeImageResultSchema,
@@ -38,6 +40,19 @@ describe("heavyJobDataSchema", () => {
           inputFieldId: "custom-field-input",
           prompt: "Make it brighter",
           outputFieldId: "custom-field-output",
+        }),
+      },
+    },
+    {
+      type: HeavyJobAction.aiSegmentImage,
+      data: {
+        ...stepBaseData,
+        step: aiSegmentImageDefaultFn({
+          id: "5",
+          inputFieldId: "custom-field-input",
+          target: "product box",
+          outputFieldId: "custom-field-output",
+          detailsOutputFieldId: "custom-field-details",
         }),
       },
     },
@@ -300,6 +315,7 @@ describe("heavy job policies", () => {
   test.each([
     HeavyJobAction.aiGenerateImage,
     HeavyJobAction.aiEditImage,
+    HeavyJobAction.aiSegmentImage,
   ])("keeps paid media retries bounded with a longer backoff for %s", (action) => {
     expect(getHeavyJobOptions(action)).toEqual(
       expect.objectContaining({
@@ -312,7 +328,83 @@ describe("heavy job policies", () => {
   })
 })
 
-describe("heavyStepResultSchema", () => {
+describe("aiSegmentImage heavy contract", () => {
+  const segmentStep = (overrides = {}) =>
+    aiSegmentImageDefaultFn({
+      id: "5",
+      inputFieldId: "custom-field-input",
+      target: "product box",
+      outputFieldId: "custom-field-output",
+      ...overrides,
+    })
+
+  test("rejects a step whose details share the output field at the Redis boundary", () => {
+    expect(
+      heavyJobDataSchema.safeParse({
+        type: HeavyJobAction.aiSegmentImage,
+        data: {
+          ...stepBaseData,
+          step: segmentStep({ detailsOutputFieldId: "custom-field-output" }),
+        },
+      }).success,
+    ).toBe(false)
+  })
+
+  test("rejects a segment job carrying another step type", () => {
+    expect(
+      heavyJobDataSchema.safeParse({
+        type: HeavyJobAction.aiSegmentImage,
+        data: {
+          ...stepBaseData,
+          step: aiGenerateImageDefaultFn({
+            id: "2",
+            prompt: "A quiet workspace",
+            outputFieldId: "custom-field-output",
+          }),
+        },
+      }).success,
+    ).toBe(false)
+  })
+
+  test("rejects a segment job without its conversation", () => {
+    expect(
+      heavyJobDataSchema.safeParse({
+        type: HeavyJobAction.aiSegmentImage,
+        data: { contactInboxId: "contact-inbox-1", step: segmentStep() },
+      }).success,
+    ).toBe(false)
+  })
+
+  test("keeps the durable continuation on a segment job", () => {
+    const parsed = heavyJobDataSchema.parse({
+      type: HeavyJobAction.aiSegmentImage,
+      data: {
+        ...stepBaseData,
+        outcomeKey: "heavy-step-outcome-1",
+        continuation: {
+          flowExecutionKey: "flow-execution-1",
+          flowId: "flow-1",
+        },
+        step: segmentStep(),
+      },
+    })
+
+    expect(parsed.data).toMatchObject({
+      outcomeKey: "heavy-step-outcome-1",
+      continuation: { flowExecutionKey: "flow-execution-1" },
+    })
+  })
+
+  test("waits for both paid attempts, the backoff and the handoff", () => {
+    // 2 × 120s + 30s backoff + 60s QueueEvents handoff.
+    expect(
+      getHeavyJobCompletionWaitTimeoutMs(
+        HeavyJobAction.aiSegmentImage,
+        120_000,
+      ),
+    ).toBe(330_000)
+  })
+
   test("strips stray fields from a skip result", () => {
     expect(
       heavyStepResultSchema.parse({

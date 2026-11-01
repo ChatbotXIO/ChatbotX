@@ -2627,7 +2627,8 @@
       "aiSpeechToText": "{aiName}：语音转文本",
       "aiTextToSpeech": "{aiName}：文本转语音",
       "label": "流程",
-      "placeholder": "选择流程"
+      "placeholder": "选择流程",
+      "aiSegmentImage": "{aiName}: 图像分割"
     },
     "folder": {
       "label": "文件夹"
@@ -3821,6 +3822,39 @@
     },
     "empty": {
       "label": "空"
+    },
+    "aiSegmentImage": {
+      "description": "使用 SAM 3.1 在图像中查找对象，并保存其裁剪后的图像。",
+      "inputFieldId": {
+        "label": "源图像"
+      },
+      "target": {
+        "label": "要查找的对象",
+        "description": "简短的名词短语，例如“红色汽车”或“产品盒”。不要使用问句或指令。",
+        "placeholder": "产品盒"
+      },
+      "matchSelection": {
+        "label": "匹配",
+        "options": {
+          "largest": "仅最大的对象",
+          "all": "所有匹配的对象（一个包含全部对象的裁剪区域）"
+        }
+      },
+      "outputFieldId": {
+        "label": "图像保存到"
+      },
+      "detailsOutputFieldId": {
+        "label": "详情保存到",
+        "description": "可选。接收包含匹配数量和边框的 JSON。",
+        "sameAsOutput": "请选择与输出图像不同的字段。",
+        "sameAsInput": "请选择与源图像不同的字段。"
+      },
+      "overwriteWarning": "结果将替换此字段中的源图像。",
+      "states": {
+        "success": "已找到",
+        "skip": "未找到",
+        "error": "失败"
+      }
     }
   },
   "flowAnalytics": {
@@ -4282,6 +4316,9 @@
       "comment": "评论",
       "destinationPipeline": "目标管道",
       "destinationStage": "目标阶段"
+    },
+    "aiSegmentImage": {
+      "label": "{name}: 图像分割"
     },
     "aiSpeechToText": {
       "muse": {

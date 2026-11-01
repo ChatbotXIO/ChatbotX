@@ -5,7 +5,11 @@ import { env } from "../env"
 
 type HeavyStepAction = Extract<
   HeavyJobAction,
-  "aiEditImage" | "aiGenerateImage" | "aiSpeechToText" | "aiTextToSpeech"
+  | "aiEditImage"
+  | "aiGenerateImage"
+  | "aiSegmentImage"
+  | "aiSpeechToText"
+  | "aiTextToSpeech"
 >
 
 /** Abort deadline for one Speech to Text provider attempt. */

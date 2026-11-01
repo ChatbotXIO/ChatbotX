@@ -1442,7 +1442,8 @@
       "label": "Flows",
       "placeholder": "Flow auswählen",
       "aiGenerateTextAgent": "{aiName}: Text-Agent generieren",
-      "aiDeleteMessageHistory": "{aiName}: Nachrichtenverlauf löschen"
+      "aiDeleteMessageHistory": "{aiName}: Nachrichtenverlauf löschen",
+      "aiSegmentImage": "{aiName}: Bild segmentieren"
     },
     "steps": {
       "label": "Node",
@@ -2662,6 +2663,39 @@
     },
     "empty": {
       "label": "Leer"
+    },
+    "aiSegmentImage": {
+      "description": "Findet mit SAM 3.1 ein Objekt im Bild und speichert einen zugeschnittenen Bildausschnitt davon.",
+      "inputFieldId": {
+        "label": "Quellbild"
+      },
+      "target": {
+        "label": "Gesuchtes Objekt",
+        "description": "Eine kurze Nominalphrase wie \"rotes Auto\" oder \"Produktkarton\". Keine Frage und kein Befehl.",
+        "placeholder": "Produktkarton"
+      },
+      "matchSelection": {
+        "label": "Treffer",
+        "options": {
+          "largest": "Nur größtes Objekt",
+          "all": "Alle passenden Objekte (ein Ausschnitt um alle)"
+        }
+      },
+      "outputFieldId": {
+        "label": "Bild speichern in"
+      },
+      "detailsOutputFieldId": {
+        "label": "Details speichern in",
+        "description": "Optional. Erhält JSON mit Trefferanzahl und Rahmen.",
+        "sameAsOutput": "Wähle ein anderes Feld als das Ausgabebild.",
+        "sameAsInput": "Wähle ein anderes Feld als das Quellbild."
+      },
+      "overwriteWarning": "Das Ergebnis ersetzt das Quellbild in diesem Feld.",
+      "states": {
+        "success": "Gefunden",
+        "skip": "Nicht gefunden",
+        "error": "Fehlgeschlagen"
+      }
     }
   },
   "flows": {
@@ -3110,6 +3144,9 @@
       "comment": "Kommentar",
       "destinationPipeline": "Ziel-Pipeline",
       "destinationStage": "Zielphase"
+    },
+    "aiSegmentImage": {
+      "label": "{name}: Bild segmentieren"
     },
     "aiSpeechToText": {
       "muse": {

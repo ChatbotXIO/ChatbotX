@@ -893,6 +893,9 @@
       "destinationPipeline": "פייפליין יעד",
       "destinationStage": "שלב יעד"
     },
+    "aiSegmentImage": {
+      "label": "{name}: פילוח תמונה"
+    },
     "aiSpeechToText": {
       "muse": {
         "formatHint": "מתקבלים רק קובצי WAV: ‏PCM ‏16 ביט, מונו, 16 או 24 קילו-הרץ, עד 10 דקות. כל קובץ אחר (למשל הודעות קוליות) עובר לענף השגיאה.",
@@ -5807,7 +5810,8 @@
       "label": "תהליכים",
       "placeholder": "בחירת תהליך",
       "aiGenerateTextAgent": "{aiName}: סוכן ליצירת טקסט",
-      "aiDeleteMessageHistory": "{aiName}: מחיקת היסטוריית הודעות"
+      "aiDeleteMessageHistory": "{aiName}: מחיקת היסטוריית הודעות",
+      "aiSegmentImage": "{aiName}: פילוח תמונה"
     },
     "steps": {
       "label": "צומת",
@@ -7027,6 +7031,39 @@
     },
     "empty": {
       "label": "ריק"
+    },
+    "aiSegmentImage": {
+      "description": "מאתר אובייקט בתמונה באמצעות SAM 3.1 ושומר שלו תמונה חתוכה.",
+      "inputFieldId": {
+        "label": "תמונת מקור"
+      },
+      "target": {
+        "label": "אובייקט לאיתור",
+        "description": "צירוף שמני קצר כמו \"מכונית אדומה\" או \"קופסת מוצר\". לא שאלה ולא פקודה.",
+        "placeholder": "קופסת מוצר"
+      },
+      "matchSelection": {
+        "label": "התאמות",
+        "options": {
+          "largest": "רק האובייקט הגדול ביותר",
+          "all": "כל האובייקטים התואמים (חיתוך אחד שמקיף אותם)"
+        }
+      },
+      "outputFieldId": {
+        "label": "שמירת התמונה ב"
+      },
+      "detailsOutputFieldId": {
+        "label": "שמירת הפרטים ב",
+        "description": "אופציונלי. מקבל JSON עם מספר ההתאמות והמסגרות.",
+        "sameAsOutput": "יש לבחור שדה שונה משדה תמונת הפלט.",
+        "sameAsInput": "יש לבחור שדה שונה משדה תמונת המקור."
+      },
+      "overwriteWarning": "התוצאה תחליף את תמונת המקור בשדה זה.",
+      "states": {
+        "success": "נמצא",
+        "skip": "לא נמצא",
+        "error": "נכשל"
+      }
     }
   },
   "billing": {

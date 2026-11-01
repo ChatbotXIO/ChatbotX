@@ -2024,6 +2024,9 @@ importers:
       ai:
         specifier: ^7.0.143
         version: 7.0.143(zod@4.6.5)
+      eventsource-parser:
+        specifier: ^3.1.1
+        version: 3.1.1
       ky:
         specifier: ^2.0.2
         version: 2.0.2

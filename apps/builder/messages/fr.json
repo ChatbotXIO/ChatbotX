@@ -1442,7 +1442,8 @@
       "label": "Flux",
       "placeholder": "Sélectionnez un flux",
       "aiGenerateTextAgent": "{aiName} : agent de génération de texte",
-      "aiDeleteMessageHistory": "{aiName} : supprimer l’historique des messages"
+      "aiDeleteMessageHistory": "{aiName} : supprimer l’historique des messages",
+      "aiSegmentImage": "{aiName}: Segmenter l'image"
     },
     "steps": {
       "label": "Nœud",
@@ -2662,6 +2663,39 @@
     },
     "empty": {
       "label": "Vide"
+    },
+    "aiSegmentImage": {
+      "description": "Trouve un objet dans une image avec SAM 3.1 et enregistre une image recadrée de celui-ci.",
+      "inputFieldId": {
+        "label": "Image source"
+      },
+      "target": {
+        "label": "Objet à trouver",
+        "description": "Un groupe nominal court comme « voiture rouge » ou « boîte produit ». Pas une question ni une commande.",
+        "placeholder": "boîte produit"
+      },
+      "matchSelection": {
+        "label": "Correspondances",
+        "options": {
+          "largest": "Seulement le plus grand objet",
+          "all": "Tous les objets correspondants (un recadrage qui les englobe)"
+        }
+      },
+      "outputFieldId": {
+        "label": "Enregistrer l'image dans"
+      },
+      "detailsOutputFieldId": {
+        "label": "Enregistrer les détails dans",
+        "description": "Facultatif. Reçoit un JSON avec le nombre de correspondances et les cadres.",
+        "sameAsOutput": "Choisissez un champ différent de l'image de sortie.",
+        "sameAsInput": "Choisissez un champ différent de l'image source."
+      },
+      "overwriteWarning": "Le résultat remplacera l'image source dans ce champ.",
+      "states": {
+        "success": "Trouvé",
+        "skip": "Introuvable",
+        "error": "Échec"
+      }
     }
   },
   "flows": {
@@ -3110,6 +3144,9 @@
       "comment": "Commentaire",
       "destinationPipeline": "Pipeline de destination",
       "destinationStage": "Étape de destination"
+    },
+    "aiSegmentImage": {
+      "label": "{name}: Segmenter l'image"
     },
     "aiSpeechToText": {
       "muse": {

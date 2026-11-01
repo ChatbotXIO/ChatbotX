@@ -416,7 +416,8 @@
       "label": "流程",
       "placeholder": "選擇流程",
       "aiGenerateTextAgent": "{aiName}：產生文字 Agent",
-      "aiDeleteMessageHistory": "{aiName}：刪除訊息歷史記錄"
+      "aiDeleteMessageHistory": "{aiName}：刪除訊息歷史記錄",
+      "aiSegmentImage": "{aiName}: 影像分割"
     },
     "steps": {
       "label": "節點",
@@ -1628,6 +1629,39 @@
     },
     "empty": {
       "label": "空白"
+    },
+    "aiSegmentImage": {
+      "description": "使用 SAM 3.1 在影像中尋找物件，並儲存其裁切後的影像。",
+      "inputFieldId": {
+        "label": "來源影像"
+      },
+      "target": {
+        "label": "要尋找的物件",
+        "description": "簡短的名詞片語，例如「紅色汽車」或「產品盒」。不要使用問句或指令。",
+        "placeholder": "產品盒"
+      },
+      "matchSelection": {
+        "label": "符合項目",
+        "options": {
+          "largest": "僅最大的物件",
+          "all": "所有符合的物件（一個涵蓋全部物件的裁切範圍）"
+        }
+      },
+      "outputFieldId": {
+        "label": "影像儲存至"
+      },
+      "detailsOutputFieldId": {
+        "label": "詳細資料儲存至",
+        "description": "選填。接收包含符合數量與邊框的 JSON。",
+        "sameAsOutput": "請選擇與輸出影像不同的欄位。",
+        "sameAsInput": "請選擇與來源影像不同的欄位。"
+      },
+      "overwriteWarning": "結果將取代此欄位中的來源影像。",
+      "states": {
+        "success": "已找到",
+        "skip": "找不到",
+        "error": "失敗"
+      }
     }
   },
   "messages": {
@@ -3516,6 +3550,9 @@
       "comment": "留言",
       "destinationPipeline": "目標管道",
       "destinationStage": "目標階段"
+    },
+    "aiSegmentImage": {
+      "label": "{name}: 影像分割"
     },
     "aiSpeechToText": {
       "muse": {

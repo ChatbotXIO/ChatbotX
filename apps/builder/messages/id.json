@@ -1442,7 +1442,8 @@
       "label": "Flow",
       "placeholder": "Pilih flow",
       "aiGenerateTextAgent": "{aiName}: Buat Text Agent",
-      "aiDeleteMessageHistory": "{aiName}: Hapus Message History"
+      "aiDeleteMessageHistory": "{aiName}: Hapus Message History",
+      "aiSegmentImage": "{aiName}: Segmentasi gambar"
     },
     "steps": {
       "label": "Node",
@@ -2662,6 +2663,39 @@
     },
     "empty": {
       "label": "Kosong"
+    },
+    "aiSegmentImage": {
+      "description": "Menemukan objek dalam gambar dengan SAM 3.1 dan menyimpan potongan gambarnya.",
+      "inputFieldId": {
+        "label": "Gambar sumber"
+      },
+      "target": {
+        "label": "Objek yang dicari",
+        "description": "Frasa benda singkat seperti \"mobil merah\" atau \"kotak produk\". Bukan pertanyaan atau perintah.",
+        "placeholder": "kotak produk"
+      },
+      "matchSelection": {
+        "label": "Kecocokan",
+        "options": {
+          "largest": "Hanya objek terbesar",
+          "all": "Semua objek yang cocok (satu potongan yang mencakup semuanya)"
+        }
+      },
+      "outputFieldId": {
+        "label": "Simpan gambar ke"
+      },
+      "detailsOutputFieldId": {
+        "label": "Simpan detail ke",
+        "description": "Opsional. Menerima JSON berisi jumlah kecocokan dan kotak.",
+        "sameAsOutput": "Pilih field yang berbeda dari gambar keluaran.",
+        "sameAsInput": "Pilih field yang berbeda dari gambar sumber."
+      },
+      "overwriteWarning": "Hasil akan menggantikan gambar sumber di field ini.",
+      "states": {
+        "success": "Ditemukan",
+        "skip": "Tidak ditemukan",
+        "error": "Gagal"
+      }
     }
   },
   "flows": {
@@ -3110,6 +3144,9 @@
       "comment": "Komentar",
       "destinationPipeline": "Pipeline tujuan",
       "destinationStage": "Tahap tujuan"
+    },
+    "aiSegmentImage": {
+      "label": "{name}: Segmentasi gambar"
     },
     "aiSpeechToText": {
       "muse": {

@@ -1598,7 +1598,8 @@
       "label": "Flujos",
       "placeholder": "Seleccionar flujo",
       "aiGenerateTextAgent": "{aiName}: Generate Texto Agent",
-      "aiDeleteMessageHistory": "{aiName}: Eliminar Mensaje Historial"
+      "aiDeleteMessageHistory": "{aiName}: Eliminar Mensaje Historial",
+      "aiSegmentImage": "{aiName}: Segmentar imagen"
     },
     "steps": {
       "label": "Nodo",
@@ -2818,6 +2819,39 @@
     },
     "empty": {
       "label": "Vacío"
+    },
+    "aiSegmentImage": {
+      "description": "Encuentra un objeto en una imagen con SAM 3.1 y guarda una imagen recortada de él.",
+      "inputFieldId": {
+        "label": "Imagen de origen"
+      },
+      "target": {
+        "label": "Objeto a buscar",
+        "description": "Una frase nominal corta como \"coche rojo\" o \"caja de producto\". No una pregunta ni una orden.",
+        "placeholder": "caja de producto"
+      },
+      "matchSelection": {
+        "label": "Coincidencias",
+        "options": {
+          "largest": "Solo el objeto más grande",
+          "all": "Todos los objetos coincidentes (un recorte que los abarca)"
+        }
+      },
+      "outputFieldId": {
+        "label": "Guardar imagen en"
+      },
+      "detailsOutputFieldId": {
+        "label": "Guardar detalles en",
+        "description": "Opcional. Recibe un JSON con el número de coincidencias y los recuadros.",
+        "sameAsOutput": "Elige un campo distinto al de la imagen de salida.",
+        "sameAsInput": "Elige un campo distinto al de la imagen de origen."
+      },
+      "overwriteWarning": "El resultado reemplazará la imagen de origen en este campo.",
+      "states": {
+        "success": "Encontrado",
+        "skip": "No encontrado",
+        "error": "Error"
+      }
     }
   },
   "flows": {
@@ -3266,6 +3300,9 @@
       "comment": "Comentario",
       "destinationPipeline": "Pipeline de destino",
       "destinationStage": "Etapa de destino"
+    },
+    "aiSegmentImage": {
+      "label": "{name}: Segmentar imagen"
     },
     "aiSpeechToText": {
       "muse": {

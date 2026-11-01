@@ -2,10 +2,12 @@ import { createHash } from "node:crypto"
 import {
   type AIEditImageSchema,
   type AIGenerateImageSchema,
+  type AISegmentImageSchema,
   type AISpeechToTextSchema,
   type AITextToSpeechSchema,
   aiEditImageSchema,
   aiGenerateImageSchema,
+  aiSegmentImageSchema,
   aiSpeechToTextSchema,
   aiTextToSpeechSchema,
 } from "@chatbotx.io/flow-config"
@@ -33,11 +35,16 @@ import type { ExecuteStepResult } from "./step"
 
 type HeavyStepRunnerAction = Extract<
   HeavyJobAction,
-  "aiEditImage" | "aiGenerateImage" | "aiSpeechToText" | "aiTextToSpeech"
+  | "aiEditImage"
+  | "aiGenerateImage"
+  | "aiSegmentImage"
+  | "aiSpeechToText"
+  | "aiTextToSpeech"
 >
 type HeavyStepRunnerStep =
   | AIEditImageSchema
   | AIGenerateImageSchema
+  | AISegmentImageSchema
   | AISpeechToTextSchema
   | AITextToSpeechSchema
 type HeavyStepJobData = Extract<HeavyJobData, { type: HeavyStepRunnerAction }>
@@ -423,6 +430,11 @@ function buildHeavyStepJobData(
         return {
           type: action,
           data: { ...baseData, step: aiGenerateImageSchema.parse(props.step) },
+        }
+      case HeavyJobAction.aiSegmentImage:
+        return {
+          type: action,
+          data: { ...baseData, step: aiSegmentImageSchema.parse(props.step) },
         }
       case HeavyJobAction.aiSpeechToText:
         return {

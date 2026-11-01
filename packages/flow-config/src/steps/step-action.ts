@@ -67,6 +67,7 @@ export const stepTypes = z.enum([
   "aiAnalyzeImage",
   "aiGenerateImage",
   "aiEditImage",
+  "aiSegmentImage",
   "aiSpeechToText",
   "aiTextToSpeech",
   "aiExtractData",

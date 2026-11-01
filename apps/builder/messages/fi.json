@@ -1442,7 +1442,8 @@
       "label": "Flow't",
       "placeholder": "Valitse flow",
       "aiGenerateTextAgent": "{aiName}: Luo tekstiagentti",
-      "aiDeleteMessageHistory": "{aiName}: Poista viestihistoria"
+      "aiDeleteMessageHistory": "{aiName}: Poista viestihistoria",
+      "aiSegmentImage": "{aiName}: Segmentoi kuva"
     },
     "steps": {
       "label": "Solmu",
@@ -2662,6 +2663,39 @@
     },
     "empty": {
       "label": "Tyhjä"
+    },
+    "aiSegmentImage": {
+      "description": "Etsii kuvasta kohteen SAM 3.1:llä ja tallentaa siitä rajatun kuvan.",
+      "inputFieldId": {
+        "label": "Lähdekuva"
+      },
+      "target": {
+        "label": "Etsittävä kohde",
+        "description": "Lyhyt substantiivilauseke, kuten \"punainen auto\" tai \"tuotelaatikko\". Ei kysymys eikä käsky.",
+        "placeholder": "tuotelaatikko"
+      },
+      "matchSelection": {
+        "label": "Osumat",
+        "options": {
+          "largest": "Vain suurin kohde",
+          "all": "Kaikki osuvat kohteet (yksi rajaus niiden ympäriltä)"
+        }
+      },
+      "outputFieldId": {
+        "label": "Tallenna kuva kenttään"
+      },
+      "detailsOutputFieldId": {
+        "label": "Tallenna tiedot kenttään",
+        "description": "Valinnainen. Vastaanottaa JSONin, jossa on osumien määrä ja rajauslaatikot.",
+        "sameAsOutput": "Valitse eri kenttä kuin tuloskuvalle.",
+        "sameAsInput": "Valitse eri kenttä kuin lähdekuvalle."
+      },
+      "overwriteWarning": "Tulos korvaa tämän kentän lähdekuvan.",
+      "states": {
+        "success": "Löytyi",
+        "skip": "Ei löytynyt",
+        "error": "Epäonnistui"
+      }
     }
   },
   "flows": {
@@ -3110,6 +3144,9 @@
       "comment": "Kommentti",
       "destinationPipeline": "Kohdepipeline",
       "destinationStage": "Kohdevaihe"
+    },
+    "aiSegmentImage": {
+      "label": "{name}: Segmentoi kuva"
     },
     "aiSpeechToText": {
       "muse": {

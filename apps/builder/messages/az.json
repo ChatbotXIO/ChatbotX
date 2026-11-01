@@ -1649,7 +1649,8 @@
       "label": "Axınlar",
       "placeholder": "Axın seçin",
       "aiGenerateTextAgent": "{aiName}: agentlə mətn yarat",
-      "aiDeleteMessageHistory": "{aiName}: mesaj tarixçəsini sil"
+      "aiDeleteMessageHistory": "{aiName}: mesaj tarixçəsini sil",
+      "aiSegmentImage": "{aiName}: Şəkli seqmentləşdir"
     },
     "steps": {
       "label": "Düyün",
@@ -2860,6 +2861,39 @@
     },
     "empty": {
       "label": "Boş"
+    },
+    "aiSegmentImage": {
+      "description": "SAM 3.1 ilə şəkildə obyekti tapır və onun kəsilmiş şəklini saxlayır.",
+      "inputFieldId": {
+        "label": "Mənbə şəkli"
+      },
+      "target": {
+        "label": "Tapılacaq obyekt",
+        "description": "\"qırmızı maşın\" və ya \"məhsul qutusu\" kimi qısa isim ifadəsi. Sual və ya əmr deyil.",
+        "placeholder": "məhsul qutusu"
+      },
+      "matchSelection": {
+        "label": "Uyğunluqlar",
+        "options": {
+          "largest": "Yalnız ən böyük obyekt",
+          "all": "Bütün uyğun obyektlər (hamısını əhatə edən bir kəsim)"
+        }
+      },
+      "outputFieldId": {
+        "label": "Şəkli bura saxla"
+      },
+      "detailsOutputFieldId": {
+        "label": "Təfərrüatları bura saxla",
+        "description": "İstəyə bağlı. Uyğunluq sayı və çərçivələr olan JSON alır.",
+        "sameAsOutput": "Nəticə şəklindən fərqli sahə seçin.",
+        "sameAsInput": "Mənbə şəklindən fərqli sahə seçin."
+      },
+      "overwriteWarning": "Nəticə bu sahədəki mənbə şəklini əvəz edəcək.",
+      "states": {
+        "success": "Tapıldı",
+        "skip": "Tapılmadı",
+        "error": "Uğursuz"
+      }
     }
   },
   "metaConversions": {
@@ -3948,6 +3982,9 @@
       "comment": "Şərh",
       "destinationPipeline": "Təyinat satış xətti",
       "destinationStage": "Təyinat mərhələsi"
+    },
+    "aiSegmentImage": {
+      "label": "{name}: Şəkli seqmentləşdir"
     },
     "aiSpeechToText": {
       "muse": {

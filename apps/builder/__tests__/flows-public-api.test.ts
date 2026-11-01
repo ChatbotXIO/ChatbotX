@@ -1,5 +1,6 @@
 import {
   AISpeechToTextDefaultFn,
+  aiSegmentImageDefaultFn,
   FlowAuthoringException,
   performActionNodeDefaultFn,
   sendMessageNodeDefaultFn,
@@ -464,6 +465,64 @@ describe("POST /v1/flows", () => {
     ).rejects.toBeInstanceOf(FlowAuthoringException)
 
     expect(flowService.createDraft).not.toHaveBeenCalled()
+  })
+
+  const segmentNode = (
+    overrides: Parameters<typeof aiSegmentImageDefaultFn>[0] = {},
+  ) => {
+    const node = performActionNodeDefaultFn({
+      nodeProps: { id: "n1" },
+      dataProps: {},
+      detailProps: {},
+    })
+    node.data.details.steps = [
+      aiSegmentImageDefaultFn({
+        inputFieldId: "1",
+        target: "product box",
+        outputFieldId: "2",
+        ...overrides,
+      }),
+    ]
+    return node
+  }
+
+  test("publish: true accepts an aiSegmentImage step through the shared flow schema", async () => {
+    flowService.createPublished.mockResolvedValueOnce({ id: "flow-10" })
+
+    await procedure.handler?.({
+      context: { workspace: { id: "workspace-1" } },
+      input: {
+        name: "Segment flow",
+        folderId: null,
+        nodes: [segmentNode({ detailsOutputFieldId: "3" })],
+        edges: [],
+        publish: true,
+      },
+    })
+
+    const graph = flowService.createPublished.mock.calls[0][0].graph
+    expect(graph.nodes[0].data.details.steps[0]).toMatchObject({
+      stepType: "aiSegmentImage",
+      target: "product box",
+      detailsOutputFieldId: "3",
+    })
+  })
+
+  test("publish: true rejects an aiSegmentImage step whose details share the output field", async () => {
+    await expect(
+      procedure.handler?.({
+        context: { workspace: { id: "workspace-1" } },
+        input: {
+          name: "Segment flow",
+          folderId: null,
+          nodes: [segmentNode({ detailsOutputFieldId: "2" })],
+          edges: [],
+          publish: true,
+        },
+      }),
+    ).rejects.toBeInstanceOf(FlowAuthoringException)
+
+    expect(flowService.createPublished).not.toHaveBeenCalled()
   })
 
   const speechNode = (step: Record<string, unknown>) => {
