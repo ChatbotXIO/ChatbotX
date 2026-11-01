@@ -8,6 +8,7 @@ import { aiExtractDataSchema } from "./steps/ai-extract-data"
 import { aiGenerateImageSchema } from "./steps/ai-generate-image"
 import { aiGenerateTextSchema } from "./steps/ai-generate-text"
 import { aiGenerateTextAgentSchema } from "./steps/ai-generate-text-agent"
+import { aiSegmentImageSchema } from "./steps/ai-segment-image"
 import { aiSpeechToTextSchema } from "./steps/ai-speech-to-text"
 import { aiTextToSpeechSchema } from "./steps/ai-text-to-speech"
 import { appointmentSchedulingStepSchema } from "./steps/appointment-scheduling"
@@ -151,6 +152,7 @@ const aiSteps = [
   aiGenerateImageSchema,
   aiDeleteMessageHistorySchema,
   aiEditImageSchema,
+  aiSegmentImageSchema,
   aiAnalyzeImageSchema,
   aiGenerateTextAgentSchema,
   aiExtractDataSchema,

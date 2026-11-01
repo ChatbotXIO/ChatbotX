@@ -499,6 +499,8 @@ export const flowStepHandlers: Record<
     runViaHeavyWorker(HeavyJobAction.aiEditImage, toHeavyStepProps(props)),
   [stepTypes.enum.aiGenerateImage]: (props) =>
     runViaHeavyWorker(HeavyJobAction.aiGenerateImage, toHeavyStepProps(props)),
+  [stepTypes.enum.aiSegmentImage]: (props) =>
+    runViaHeavyWorker(HeavyJobAction.aiSegmentImage, toHeavyStepProps(props)),
   [stepTypes.enum.aiGenerateTextAgent]: handleAIGenerateTextAgent,
   [stepTypes.enum.aiGenerateText]: handleAIGenerateText,
   [stepTypes.enum.aiExtractData]: handleAIExtractData,

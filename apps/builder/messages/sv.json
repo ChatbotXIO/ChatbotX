@@ -2623,7 +2623,8 @@
       "aiSpeechToText": "{aiName}: Tal till text",
       "aiTextToSpeech": "{aiName}: Text till tal",
       "label": "Flöden",
-      "placeholder": "Välj flöde"
+      "placeholder": "Välj flöde",
+      "aiSegmentImage": "{aiName}: Segmentera bild"
     },
     "folder": {
       "label": "Mapp"
@@ -3817,6 +3818,39 @@
     },
     "empty": {
       "label": "Tom"
+    },
+    "aiSegmentImage": {
+      "description": "Hittar ett objekt i en bild med SAM 3.1 och sparar en beskuren bild av det.",
+      "inputFieldId": {
+        "label": "Källbild"
+      },
+      "target": {
+        "label": "Objekt att hitta",
+        "description": "En kort substantivfras som \"röd bil\" eller \"produktkartong\". Inte en fråga eller ett kommando.",
+        "placeholder": "produktkartong"
+      },
+      "matchSelection": {
+        "label": "Träffar",
+        "options": {
+          "largest": "Endast största objektet",
+          "all": "Alla matchande objekt (en beskärning runt dem)"
+        }
+      },
+      "outputFieldId": {
+        "label": "Spara bild i"
+      },
+      "detailsOutputFieldId": {
+        "label": "Spara detaljer i",
+        "description": "Valfritt. Tar emot JSON med antal träffar och rutor.",
+        "sameAsOutput": "Välj ett annat fält än utdatabilden.",
+        "sameAsInput": "Välj ett annat fält än källbilden."
+      },
+      "overwriteWarning": "Resultatet ersätter källbilden i det här fältet.",
+      "states": {
+        "success": "Hittad",
+        "skip": "Hittades inte",
+        "error": "Misslyckades"
+      }
     }
   },
   "flowAnalytics": {
@@ -4277,6 +4311,9 @@
       "comment": "Kommentar",
       "destinationPipeline": "Målpipeline",
       "destinationStage": "Målfas"
+    },
+    "aiSegmentImage": {
+      "label": "{name}: Segmentera bild"
     },
     "aiSpeechToText": {
       "muse": {

@@ -1441,7 +1441,8 @@
       "label": "Flows",
       "placeholder": "Vælg flow",
       "aiGenerateTextAgent": "{aiName}: Generér Tekst Agent",
-      "aiDeleteMessageHistory": "{aiName}: Slet Besked Historik"
+      "aiDeleteMessageHistory": "{aiName}: Slet Besked Historik",
+      "aiSegmentImage": "{aiName}: Segmentér billede"
     },
     "steps": {
       "label": "Node",
@@ -2661,6 +2662,39 @@
     },
     "empty": {
       "label": "Tom"
+    },
+    "aiSegmentImage": {
+      "description": "Finder et objekt i et billede med SAM 3.1 og gemmer et beskåret billede af det.",
+      "inputFieldId": {
+        "label": "Kildebillede"
+      },
+      "target": {
+        "label": "Objekt at finde",
+        "description": "En kort navneordsfrase som \"rød bil\" eller \"produktæske\". Ikke et spørgsmål eller en kommando.",
+        "placeholder": "produktæske"
+      },
+      "matchSelection": {
+        "label": "Match",
+        "options": {
+          "largest": "Kun største objekt",
+          "all": "Alle matchende objekter (én beskæring omkring dem)"
+        }
+      },
+      "outputFieldId": {
+        "label": "Gem billede i"
+      },
+      "detailsOutputFieldId": {
+        "label": "Gem detaljer i",
+        "description": "Valgfrit. Modtager JSON med antal match og bokse.",
+        "sameAsOutput": "Vælg et andet felt end outputbilledet.",
+        "sameAsInput": "Vælg et andet felt end kildebilledet."
+      },
+      "overwriteWarning": "Resultatet erstatter kildebilledet i dette felt.",
+      "states": {
+        "success": "Fundet",
+        "skip": "Ikke fundet",
+        "error": "Mislykkedes"
+      }
     }
   },
   "flows": {
@@ -3108,6 +3142,9 @@
       "comment": "Kommentar",
       "destinationPipeline": "Destinationspipeline",
       "destinationStage": "Destinationsfase"
+    },
+    "aiSegmentImage": {
+      "label": "{name}: Segmentér billede"
     },
     "aiSpeechToText": {
       "muse": {

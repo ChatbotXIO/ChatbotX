@@ -445,6 +445,9 @@
       "destinationPipeline": "Pipeline de destinație",
       "destinationStage": "Etapă de destinație"
     },
+    "aiSegmentImage": {
+      "label": "{name}: Segmentează imaginea"
+    },
     "aiSpeechToText": {
       "muse": {
         "formatHint": "Sunt acceptate doar fișiere WAV: PCM 16 biți, mono, 16 kHz sau 24 kHz, maximum 10 minute. Orice alt fișier (de exemplu, mesajele vocale) merge pe ramura de eroare.",
@@ -2809,7 +2812,8 @@
       "label": "Fluxuri",
       "placeholder": "Selectează fluxul",
       "aiGenerateTextAgent": "{aiName}: Generează agent text",
-      "aiDeleteMessageHistory": "{aiName}: Șterge istoricul mesajelor"
+      "aiDeleteMessageHistory": "{aiName}: Șterge istoricul mesajelor",
+      "aiSegmentImage": "{aiName}: Segmentează imaginea"
     },
     "steps": {
       "label": "Nod",
@@ -4029,6 +4033,39 @@
     },
     "empty": {
       "label": "Gol"
+    },
+    "aiSegmentImage": {
+      "description": "Găsește un obiect într-o imagine cu SAM 3.1 și salvează o decupare a acestuia.",
+      "inputFieldId": {
+        "label": "Imagine sursă"
+      },
+      "target": {
+        "label": "Obiect de găsit",
+        "description": "O expresie nominală scurtă, de exemplu \"mașină roșie\" sau \"cutie de produs\". Nu o întrebare sau o comandă.",
+        "placeholder": "cutie de produs"
+      },
+      "matchSelection": {
+        "label": "Potriviri",
+        "options": {
+          "largest": "Doar cel mai mare obiect",
+          "all": "Toate obiectele potrivite (o singură decupare care le cuprinde)"
+        }
+      },
+      "outputFieldId": {
+        "label": "Salvează imaginea în"
+      },
+      "detailsOutputFieldId": {
+        "label": "Salvează detaliile în",
+        "description": "Opțional. Primește JSON cu numărul de potriviri și casetele.",
+        "sameAsOutput": "Alege un câmp diferit de imaginea rezultată.",
+        "sameAsInput": "Alege un câmp diferit de imaginea sursă."
+      },
+      "overwriteWarning": "Rezultatul va înlocui imaginea sursă din acest câmp.",
+      "states": {
+        "success": "Găsit",
+        "skip": "Negăsit",
+        "error": "Eșuat"
+      }
     }
   },
   "channels": {

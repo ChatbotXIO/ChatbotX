@@ -1441,7 +1441,8 @@
       "label": "フロー",
       "placeholder": "フローを選択",
       "aiGenerateTextAgent": "{aiName}：テキスト生成エージェント",
-      "aiDeleteMessageHistory": "{aiName}：メッセージ履歴を削除"
+      "aiDeleteMessageHistory": "{aiName}：メッセージ履歴を削除",
+      "aiSegmentImage": "{aiName}: 画像セグメンテーション"
     },
     "steps": {
       "label": "ノード",
@@ -2661,6 +2662,39 @@
     },
     "empty": {
       "label": "空"
+    },
+    "aiSegmentImage": {
+      "description": "SAM 3.1 で画像内のオブジェクトを見つけ、その部分を切り抜いた画像として保存します。",
+      "inputFieldId": {
+        "label": "元の画像"
+      },
+      "target": {
+        "label": "検出するオブジェクト",
+        "description": "「赤い車」や「商品の箱」のような短い名詞句。質問や命令文は不可です。",
+        "placeholder": "商品の箱"
+      },
+      "matchSelection": {
+        "label": "一致",
+        "options": {
+          "largest": "最大のオブジェクトのみ",
+          "all": "一致するすべてのオブジェクト (すべてを囲む 1 つの切り抜き)"
+        }
+      },
+      "outputFieldId": {
+        "label": "画像の保存先"
+      },
+      "detailsOutputFieldId": {
+        "label": "詳細の保存先",
+        "description": "任意。一致数とボックスを含む JSON を受け取ります。",
+        "sameAsOutput": "出力画像とは別のフィールドを選択してください。",
+        "sameAsInput": "元の画像とは別のフィールドを選択してください。"
+      },
+      "overwriteWarning": "このフィールドの元の画像は結果で置き換えられます。",
+      "states": {
+        "success": "見つかった",
+        "skip": "見つからない",
+        "error": "失敗"
+      }
     }
   },
   "flows": {
@@ -3108,6 +3142,9 @@
       "comment": "コメント",
       "destinationPipeline": "移管先のパイプライン",
       "destinationStage": "移管先のステージ"
+    },
+    "aiSegmentImage": {
+      "label": "{name}: 画像セグメンテーション"
     },
     "aiSpeechToText": {
       "muse": {

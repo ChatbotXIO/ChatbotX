@@ -38,6 +38,7 @@ import { extractFallbackTextSnippets } from "./handlers/extract-text-from-file"
 import { generateImageOutput } from "./handlers/generate-image"
 import { processAIFile } from "./handlers/process-ai-file"
 import { recordHeavyAIStepProviderError } from "./handlers/provider-error"
+import { segmentImageOutput } from "./handlers/segment-image"
 import { speechToTextOutput } from "./handlers/speech-to-text"
 import { textToSpeechOutput } from "./handlers/text-to-speech"
 import { waitForHeavyProviderSlot } from "./services/provider-rate-limiter"
@@ -49,13 +50,17 @@ type HeavyStepJobData = Extract<
     type:
       | typeof HeavyJobAction.aiEditImage
       | typeof HeavyJobAction.aiGenerateImage
+      | typeof HeavyJobAction.aiSegmentImage
       | typeof HeavyJobAction.aiSpeechToText
       | typeof HeavyJobAction.aiTextToSpeech
   }
 >
 
+/** SAM has no provider setting: it always runs on the Muse integration. */
 function getHeavyStepProvider(jobData: HeavyStepJobData) {
-  return jobData.data.step.provider
+  return jobData.type === HeavyJobAction.aiSegmentImage
+    ? ("muse" as const)
+    : jobData.data.step.provider
 }
 
 function getProviderForRateLimit(jobData: HeavyJobData): string | undefined {
@@ -156,6 +161,17 @@ async function runHeavyStep(
             },
           ],
         }
+      case HeavyJobAction.aiSegmentImage:
+        // The runner always sets the id (`buildHeavyJobId`); it names the
+        // output object, so a run must never fall back to a shared name.
+        if (!job.id) {
+          throw new UnrecoverableError("Segment image job has no id")
+        }
+        return await segmentImageOutput({
+          ...props,
+          jobId: job.id,
+          step: jobData.data.step,
+        })
       case HeavyJobAction.aiSpeechToText:
         return {
           status: "success",
@@ -401,6 +417,7 @@ function startHeavyWorker() {
                 return
               case HeavyJobAction.aiEditImage:
               case HeavyJobAction.aiGenerateImage:
+              case HeavyJobAction.aiSegmentImage:
               case HeavyJobAction.aiSpeechToText:
               case HeavyJobAction.aiTextToSpeech:
                 return await runHeavyStep(jobData, job)

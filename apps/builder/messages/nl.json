@@ -1225,7 +1225,8 @@
       "label": "Flows",
       "placeholder": "Selecteer een flow",
       "aiGenerateTextAgent": "{aiName}: tekstagent genereren",
-      "aiDeleteMessageHistory": "{aiName}: berichtgeschiedenis verwijderen"
+      "aiDeleteMessageHistory": "{aiName}: berichtgeschiedenis verwijderen",
+      "aiSegmentImage": "{aiName}: Afbeelding segmenteren"
     },
     "steps": {
       "label": "Node",
@@ -2445,6 +2446,39 @@
     },
     "empty": {
       "label": "Leeg"
+    },
+    "aiSegmentImage": {
+      "description": "Vindt een object in een afbeelding met SAM 3.1 en slaat een bijgesneden afbeelding ervan op.",
+      "inputFieldId": {
+        "label": "Bronafbeelding"
+      },
+      "target": {
+        "label": "Te vinden object",
+        "description": "Een korte zelfstandignaamwoordgroep zoals \"rode auto\" of \"productdoos\". Geen vraag of opdracht.",
+        "placeholder": "productdoos"
+      },
+      "matchSelection": {
+        "label": "Overeenkomsten",
+        "options": {
+          "largest": "Alleen grootste object",
+          "all": "Alle overeenkomende objecten (één uitsnede eromheen)"
+        }
+      },
+      "outputFieldId": {
+        "label": "Afbeelding opslaan in"
+      },
+      "detailsOutputFieldId": {
+        "label": "Details opslaan in",
+        "description": "Optioneel. Ontvangt JSON met het aantal overeenkomsten en de kaders.",
+        "sameAsOutput": "Kies een ander veld dan de uitvoerafbeelding.",
+        "sameAsInput": "Kies een ander veld dan de bronafbeelding."
+      },
+      "overwriteWarning": "Het resultaat vervangt de bronafbeelding in dit veld.",
+      "states": {
+        "success": "Gevonden",
+        "skip": "Niet gevonden",
+        "error": "Mislukt"
+      }
     }
   },
   "condition": {
@@ -3108,6 +3142,9 @@
       "comment": "Opmerking",
       "destinationPipeline": "Doelpipeline",
       "destinationStage": "Doelfase"
+    },
+    "aiSegmentImage": {
+      "label": "{name}: Afbeelding segmenteren"
     },
     "aiSpeechToText": {
       "muse": {

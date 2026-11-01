@@ -172,6 +172,10 @@ const PROVIDER_CONFIGS: ProviderConfig[] = [
         getLabel: stepWithName("flows.aiEditImage.label"),
       },
       {
+        stepType: stepTypes.enum.aiSegmentImage,
+        getLabel: stepWithName("flows.aiSegmentImage.label"),
+      },
+      {
         stepType: stepTypes.enum.aiAnalyzeImage,
         getLabel: stepWithName("flows.aiAnalyzeImage.label"),
       },
@@ -331,6 +335,11 @@ const PROVIDER_CONFIGS: ProviderConfig[] = [
 ]
 
 function buildProviderStepProps(providerKey: string, stepType: StepType) {
+  // SAM always runs on the Muse integration; the step has no provider field.
+  if (stepType === stepTypes.enum.aiSegmentImage) {
+    return
+  }
+
   if (providerKey !== "openaiCompatible") {
     return { provider: providerKey }
   }

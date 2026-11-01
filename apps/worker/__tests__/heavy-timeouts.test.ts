@@ -29,6 +29,9 @@ describe("heavy step timeouts", () => {
       150_000,
     )
     expect(getHeavyStepAttemptBudgetMs("aiGenerateImage", "muse")).toBe(150_000)
+    expect(getHeavyStepAttemptBudgetMs("aiSegmentImage", undefined)).toBe(
+      150_000,
+    )
   })
 
   test("sizes the heavy lock from the longest attempt", () => {

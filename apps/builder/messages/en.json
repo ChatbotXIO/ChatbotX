@@ -1648,7 +1648,8 @@
       "label": "Flows",
       "placeholder": "Select flow",
       "aiGenerateTextAgent": "{aiName}: Generate Text Agent",
-      "aiDeleteMessageHistory": "{aiName}: Delete Message History"
+      "aiDeleteMessageHistory": "{aiName}: Delete Message History",
+      "aiSegmentImage": "{aiName}: Segment Image"
     },
     "steps": {
       "label": "Node",
@@ -2859,6 +2860,39 @@
     },
     "empty": {
       "label": "Empty"
+    },
+    "aiSegmentImage": {
+      "description": "Finds an object in an image with SAM 3.1 and saves a cropped image of it.",
+      "inputFieldId": {
+        "label": "Source image"
+      },
+      "target": {
+        "label": "Object to find",
+        "description": "A short noun phrase such as \"red car\" or \"product box\". Not a question or a command.",
+        "placeholder": "product box"
+      },
+      "matchSelection": {
+        "label": "Matches",
+        "options": {
+          "largest": "Largest object only",
+          "all": "All matching objects (one crop around them)"
+        }
+      },
+      "outputFieldId": {
+        "label": "Save image to"
+      },
+      "detailsOutputFieldId": {
+        "label": "Save details to",
+        "description": "Optional. Receives JSON with the match count and boxes.",
+        "sameAsOutput": "Choose a different field from the output image.",
+        "sameAsInput": "Choose a different field from the source image."
+      },
+      "overwriteWarning": "The result will replace the source image in this field.",
+      "states": {
+        "success": "Found",
+        "skip": "Not found",
+        "error": "Failed"
+      }
     }
   },
   "metaConversions": {
@@ -3946,6 +3980,9 @@
       "comment": "Comment",
       "destinationPipeline": "Destination pipeline",
       "destinationStage": "Destination stage"
+    },
+    "aiSegmentImage": {
+      "label": "{name}: Segment Image"
     },
     "aiSpeechToText": {
       "muse": {

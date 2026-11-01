@@ -66,6 +66,7 @@ const stepExecutionKinds = {
   aiAnalyzeImage: "worker",
   aiGenerateImage: "worker",
   aiEditImage: "worker",
+  aiSegmentImage: "worker",
   aiSpeechToText: "worker",
   aiTextToSpeech: "worker",
   aiExtractData: "worker",

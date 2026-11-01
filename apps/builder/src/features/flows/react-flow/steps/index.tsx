@@ -11,6 +11,7 @@ import { aiExtractDataStep } from "./ai-extract-data/index"
 import { aiGenerateImageStep } from "./ai-generate-image/index"
 import { aiGenerateTextStep } from "./ai-generate-text"
 import { aiGenerateTextAgentStep } from "./ai-generate-text-agent"
+import { aiSegmentImageStep } from "./ai-segment-image/index"
 import { aiSpeechToTextStep } from "./ai-speech-to-text"
 import { aiTextToSpeechStep } from "./ai-text-to-speech"
 import { appointmentSchedulingStep } from "./appointment-scheduling"
@@ -195,6 +196,7 @@ export const allSteps: Record<StepType, StepDefinition<any> | undefined> = {
   [stepTypes.enum.aiGenerateTextAgent]: aiGenerateTextAgentStep,
   [stepTypes.enum.aiGenerateImage]: aiGenerateImageStep,
   [stepTypes.enum.aiEditImage]: aiEditImageStep,
+  [stepTypes.enum.aiSegmentImage]: aiSegmentImageStep,
   [stepTypes.enum.aiAnalyzeImage]: aiAnalyzeImageStep,
   [stepTypes.enum.aiSpeechToText]: aiSpeechToTextStep,
   [stepTypes.enum.aiTextToSpeech]: aiTextToSpeechStep,

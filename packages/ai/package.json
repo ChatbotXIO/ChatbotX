@@ -6,6 +6,7 @@
   "exports": {
     ".": "./src/index.ts",
     "./models": "./src/models/index.ts",
+    "./sam": "./src/server/sam.ts",
     "./server": "./src/server.ts",
     "./utils": "./src/utils/index.ts"
   },
@@ -25,6 +26,7 @@
     "@openrouter/ai-sdk-provider": "^3.1.0",
     "@t3-oss/env-core": "^0.13.11",
     "ai": "^7.0.143",
+    "eventsource-parser": "^3.1.1",
     "ky": "^2.0.2",
     "mime-types": "^3.0.2",
     "universal-error-normalizer": "^1.0.0",

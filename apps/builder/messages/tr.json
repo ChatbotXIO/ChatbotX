@@ -1597,7 +1597,8 @@
       "label": "Akışlar",
       "placeholder": "Akış seçin",
       "aiGenerateTextAgent": "{aiName}: Metin Temsilcisi Oluştur",
-      "aiDeleteMessageHistory": "{aiName}: Mesaj Geçmişini Sil"
+      "aiDeleteMessageHistory": "{aiName}: Mesaj Geçmişini Sil",
+      "aiSegmentImage": "{aiName}: Görüntüyü segmentlere ayır"
     },
     "steps": {
       "label": "Düğüm",
@@ -2817,6 +2818,39 @@
     },
     "empty": {
       "label": "Boş"
+    },
+    "aiSegmentImage": {
+      "description": "SAM 3.1 ile görüntüde bir nesne bulur ve kırpılmış görüntüsünü kaydeder.",
+      "inputFieldId": {
+        "label": "Kaynak görüntü"
+      },
+      "target": {
+        "label": "Bulunacak nesne",
+        "description": "\"kırmızı araba\" veya \"ürün kutusu\" gibi kısa bir isim öbeği. Soru veya komut değil.",
+        "placeholder": "ürün kutusu"
+      },
+      "matchSelection": {
+        "label": "Eşleşmeler",
+        "options": {
+          "largest": "Yalnızca en büyük nesne",
+          "all": "Tüm eşleşen nesneler (hepsini kapsayan tek bir kırpma)"
+        }
+      },
+      "outputFieldId": {
+        "label": "Görüntüyü şuraya kaydet"
+      },
+      "detailsOutputFieldId": {
+        "label": "Ayrıntıları şuraya kaydet",
+        "description": "İsteğe bağlı. Eşleşme sayısı ve kutuları içeren JSON alır.",
+        "sameAsOutput": "Çıktı görüntüsünden farklı bir alan seçin.",
+        "sameAsInput": "Kaynak görüntüden farklı bir alan seçin."
+      },
+      "overwriteWarning": "Sonuç bu alandaki kaynak görüntünün yerini alacak.",
+      "states": {
+        "success": "Bulundu",
+        "skip": "Bulunamadı",
+        "error": "Başarısız"
+      }
     }
   },
   "flows": {
@@ -3264,6 +3298,9 @@
       "comment": "Yorum",
       "destinationPipeline": "Hedef işlem hattı",
       "destinationStage": "Hedef aşama"
+    },
+    "aiSegmentImage": {
+      "label": "{name}: Görüntüyü segmentlere ayır"
     },
     "aiSpeechToText": {
       "muse": {

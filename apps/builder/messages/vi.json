@@ -1640,7 +1640,8 @@
       "label": "Luồng",
       "placeholder": "Chọn luồng",
       "aiGenerateTextAgent": "{aiName}: Tạo văn bản Agent",
-      "aiDeleteMessageHistory": "{aiName}: Xóa lịch sử tin nhắn"
+      "aiDeleteMessageHistory": "{aiName}: Xóa lịch sử tin nhắn",
+      "aiSegmentImage": "{aiName}: Tách đối tượng trong ảnh"
     },
     "steps": {
       "label": "Node",
@@ -2859,6 +2860,39 @@
     },
     "empty": {
       "label": "Trống"
+    },
+    "aiSegmentImage": {
+      "description": "Tìm một đối tượng trong ảnh bằng SAM 3.1 và lưu phần ảnh đã cắt.",
+      "inputFieldId": {
+        "label": "Ảnh nguồn"
+      },
+      "target": {
+        "label": "Đối tượng cần tìm",
+        "description": "Một cụm danh từ ngắn như \"xe màu đỏ\" hoặc \"hộp sản phẩm\". Không phải câu hỏi hay câu lệnh.",
+        "placeholder": "hộp sản phẩm"
+      },
+      "matchSelection": {
+        "label": "Kết quả khớp",
+        "options": {
+          "largest": "Chỉ đối tượng lớn nhất",
+          "all": "Tất cả đối tượng khớp (một vùng cắt bao quanh tất cả)"
+        }
+      },
+      "outputFieldId": {
+        "label": "Lưu ảnh vào"
+      },
+      "detailsOutputFieldId": {
+        "label": "Lưu chi tiết vào",
+        "description": "Không bắt buộc. Nhận JSON gồm số lượng đối tượng và khung bao.",
+        "sameAsOutput": "Hãy chọn trường khác với trường ảnh kết quả.",
+        "sameAsInput": "Hãy chọn trường khác với trường ảnh nguồn."
+      },
+      "overwriteWarning": "Kết quả sẽ thay thế ảnh nguồn trong trường này.",
+      "states": {
+        "success": "Tìm thấy",
+        "skip": "Không tìm thấy",
+        "error": "Thất bại"
+      }
     }
   },
   "flows": {
@@ -3306,6 +3340,9 @@
       "comment": "Bình luận",
       "destinationPipeline": "Pipeline đích",
       "destinationStage": "Giai đoạn đích"
+    },
+    "aiSegmentImage": {
+      "label": "{name}: Tách đối tượng trong ảnh"
     },
     "aiSpeechToText": {
       "muse": {

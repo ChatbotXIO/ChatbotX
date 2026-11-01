@@ -407,7 +407,8 @@
       "label": "Flussi",
       "placeholder": "Seleziona flusso",
       "aiGenerateTextAgent": "{aiName}: Genera agente testuale",
-      "aiDeleteMessageHistory": "{aiName}: Elimina cronologia messaggi"
+      "aiDeleteMessageHistory": "{aiName}: Elimina cronologia messaggi",
+      "aiSegmentImage": "{aiName}: Segmenta immagine"
     },
     "steps": {
       "label": "Nodo",
@@ -1627,6 +1628,39 @@
     },
     "empty": {
       "label": "Vuoto"
+    },
+    "aiSegmentImage": {
+      "description": "Trova un oggetto in un'immagine con SAM 3.1 e ne salva un ritaglio.",
+      "inputFieldId": {
+        "label": "Immagine di origine"
+      },
+      "target": {
+        "label": "Oggetto da trovare",
+        "description": "Una breve frase nominale come \"auto rossa\" o \"scatola del prodotto\". Non una domanda né un comando.",
+        "placeholder": "scatola del prodotto"
+      },
+      "matchSelection": {
+        "label": "Corrispondenze",
+        "options": {
+          "largest": "Solo l'oggetto più grande",
+          "all": "Tutti gli oggetti corrispondenti (un ritaglio che li comprende)"
+        }
+      },
+      "outputFieldId": {
+        "label": "Salva immagine in"
+      },
+      "detailsOutputFieldId": {
+        "label": "Salva dettagli in",
+        "description": "Facoltativo. Riceve un JSON con il numero di corrispondenze e i riquadri.",
+        "sameAsOutput": "Scegli un campo diverso dall'immagine di output.",
+        "sameAsInput": "Scegli un campo diverso dall'immagine di origine."
+      },
+      "overwriteWarning": "Il risultato sostituirà l'immagine di origine in questo campo.",
+      "states": {
+        "success": "Trovato",
+        "skip": "Non trovato",
+        "error": "Non riuscito"
+      }
     }
   },
   "actions": {
@@ -3108,6 +3142,9 @@
       "comment": "Commento",
       "destinationPipeline": "Pipeline di destinazione",
       "destinationStage": "Fase di destinazione"
+    },
+    "aiSegmentImage": {
+      "label": "{name}: Segmenta immagine"
     },
     "aiSpeechToText": {
       "muse": {

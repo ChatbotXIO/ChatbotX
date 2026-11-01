@@ -14,6 +14,7 @@ import ky, { HTTPError } from "ky"
 import { z } from "zod"
 import { MUSE_BASE_URL } from "../core/muse"
 import type { MuseTranscriptionModel } from "../models/muse"
+import { describeMuseErrorBody, isRetryableMuseStatus } from "./muse-errors"
 
 export const MUSE_TRANSCRIBE_URL = `${MUSE_BASE_URL}/asr/transcribe`
 export const MUSE_TRANSCRIBE_MAX_SECONDS = 600
@@ -256,45 +257,6 @@ const museTranscribeResponseSchema = z.looseObject({
     .catch(undefined),
 })
 
-const museErrorDetailSchema = z.looseObject({
-  message: z.string().optional(),
-  type: z.string().optional(),
-  code: z.union([z.string(), z.number()]).optional(),
-  param: z.string().nullish(),
-})
-const museWrappedErrorBodySchema = z.looseObject({
-  error: museErrorDetailSchema,
-})
-
-function describeMuseErrorBody(data: unknown): string | undefined {
-  const wrapped = museWrappedErrorBodySchema.safeParse(data)
-  const parsed = wrapped.success
-    ? { success: true as const, data: wrapped.data.error }
-    : museErrorDetailSchema.safeParse(data)
-  if (!parsed.success) {
-    return typeof data === "string" && data.trim()
-      ? data.trim().slice(0, 300)
-      : undefined
-  }
-  const detail = parsed.data
-  const parts = [
-    detail.message,
-    detail.type && `type=${detail.type}`,
-    detail.code !== undefined && `code=${detail.code}`,
-    detail.param && `param=${detail.param}`,
-  ].filter((part): part is string => typeof part === "string" && part !== "")
-  return parts.length > 0 ? parts.join(", ").slice(0, 300) : undefined
-}
-
-const PERMANENT_STATUSES = new Set([400, 401, 403, 406, 413])
-
-function isRetryableStatus(status: number): boolean {
-  if (PERMANENT_STATUSES.has(status)) {
-    return false
-  }
-  return status === 408 || status === 429 || status >= 500
-}
-
 export type TranscribeWithMuseInput = {
   /** Resolved `IntegrationMuse` row; only `auth` is read. */
   integration: { auth: unknown }
@@ -384,7 +346,7 @@ export async function transcribeWithMuse(
         {
           cause: error,
           code: "http_error",
-          retryable: isRetryableStatus(status),
+          retryable: isRetryableMuseStatus(status),
           sessionId,
           status,
         },
