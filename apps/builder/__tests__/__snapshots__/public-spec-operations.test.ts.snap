@@ -588,6 +588,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "path": "/v1/appointments",
   },
   {
+    "method": "POST",
+    "operationId": "botFields.applyOperation",
+    "path": "/v1/bot-fields/{idOrName}/operations",
+  },
+  {
     "method": "PUT",
     "operationId": "botFields.bulkUpdate",
     "path": "/v1/bot-fields/bulk-update",

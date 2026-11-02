@@ -303,6 +303,15 @@
       "label": "自訂欄位",
       "savePayloadTo": "將回應儲存到自訂欄位",
       "set_value": "設定值",
+      "clear": "Clear value",
+      "formula": "Use custom formula",
+      "set_now": "Set to now",
+      "date_expression": "Free-form date (with math)",
+      "add_minutes": "Add minutes",
+      "add_hours": "Add hours",
+      "add_days": "Add days",
+      "formulaHint": "Math where value is the current number, e.g. round(value * 1.1). Functions: abs, ceil, floor, round, min, max, pow, sqrt, log, sin, cos.",
+      "dateExpressionHint": "e.g. now + 2 days - 3 hours. Units: min, h, d, w, mo, y.",
       "append": "追加到末尾",
       "prepend": "加入到開頭",
       "increase": "增加",
@@ -4862,6 +4871,9 @@
     "maxCharacters": "最多 {max} 個字元。",
     "invalidApiKey": "API 金鑰無效",
     "maxMustBeGreaterThanMin": "{maxField} 必須大於或等於 {minField}",
+    "trigger": {
+      "actionReferenceNotFound": "An action refers to a record that no longer exists. Re-select it in the action and save again."
+    },
     "inboundWebhook": {
       "inboxRequired": "請選擇一個收件匣。",
       "inboxNotFound": "找不到所選收件匣。",
@@ -5893,6 +5905,7 @@
       "setCustomField": "設定自訂欄位",
       "clearCustomField": "清除自訂欄位",
       "startAnotherFlow": "開始另一個流程",
+      "startExternalStep": "Start External Step",
       "notifyAdmins": "通知管理員",
       "transferConversationToHuman": "將對話轉移給人類",
       "sendMetaCapiEvent": "傳送 Meta CAPI 事件",

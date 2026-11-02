@@ -27,10 +27,14 @@ import {
   canonicalNumberLiteral,
   customFieldResolutionKey,
 } from "@chatbotx.io/utils/custom-field"
+import { isFieldOperationAllowed } from "@chatbotx.io/utils/custom-field-operation"
 import {
+  DEFAULT_FILTER_TIMEZONE,
+  isTemporalCustomFieldType,
   SourceTimezoneStrategy,
-  type TemporalInputParsing,
+  TemporalInputParsing,
 } from "@chatbotx.io/utils/datetime"
+import { calculateFieldValue } from "@chatbotx.io/utils/field-value-calculator"
 import { BaseService } from "../base.service"
 import {
   createSourceTimezoneResolver,
@@ -39,6 +43,7 @@ import {
 } from "../contact-custom-field/normalize"
 import {
   ChatbotXException,
+  invalidFieldOperationException,
   notFoundException,
   validationException,
 } from "../errors"
@@ -67,47 +72,30 @@ type UpdateBotFieldData = Partial<CreateBotFieldData>
 
 const REGEX_BOT_FIELD_ID = /^\d+$/
 
-/**
- * Which `CustomFieldType`s each `FieldOperationType` is valid against.
- * `"all"` short-circuits the type check for `set`, which accepts every type.
- * Registry, not an if-else ladder, so adding an operation only means adding a
- * row here plus (when it isn't `set`) an entry in `ATOMIC_VALUE_EXPRESSIONS`.
- */
-const OPERATION_ALLOWED_TYPES: Record<
-  FieldOperationType,
-  readonly CustomFieldType[] | "all"
-> = {
-  [FieldOperationType.set]: "all",
-  [FieldOperationType.append]: ["shortText", "longText"],
-  [FieldOperationType.prepend]: ["shortText", "longText"],
-  [FieldOperationType.increase]: ["number"],
-  [FieldOperationType.decrease]: ["number"],
-}
-
-const isOperationAllowedForType = (
-  operation: FieldOperationType,
-  type: CustomFieldType,
-): boolean => {
-  const allowed = OPERATION_ALLOWED_TYPES[operation]
-  return allowed === "all" || allowed.includes(type)
-}
+/** The operations that run as one atomic `UPDATE` instead of the calculator. */
+type AtomicFieldOperation =
+  | typeof FieldOperationType.append
+  | typeof FieldOperationType.prepend
+  | typeof FieldOperationType.increase
+  | typeof FieldOperationType.decrease
 
 /**
- * One parameterized Drizzle `sql` expression per non-`set` operation, run as a
- * single atomic `UPDATE ... SET value = <expression>` (see
+ * One parameterized Drizzle `sql` expression per atomic operation, run as a
+ * single `UPDATE ... SET value = <expression>` (see
  * `applyAtomicValueOperation`). No read-modify-write: the arithmetic/string
  * concatenation happens inside Postgres, so concurrent calls (chatbot-scale
  * traffic across worker replicas) never race on a stale in-process read, and
- * every operand is a bound parameter — never string-interpolated.
+ * every operand is a bound parameter — never string-interpolated. Every other
+ * operation locks the row and goes through `calculateFieldValue`.
  */
 const ATOMIC_VALUE_EXPRESSIONS: Record<
-  Exclude<FieldOperationType, typeof FieldOperationType.set>,
+  AtomicFieldOperation,
   (value: string) => SQL
 > = {
   [FieldOperationType.append]: (value) =>
-    sql`concat(coalesce(${botFieldModel.value}, ''), ${value})`,
+    sql`concat(coalesce(${botFieldModel.value}, ''), ${value}::text)`,
   [FieldOperationType.prepend]: (value) =>
-    sql`concat(${value}, coalesce(${botFieldModel.value}, ''))`,
+    sql`concat(${value}::text, coalesce(${botFieldModel.value}, ''))`,
   [FieldOperationType.increase]: (value) =>
     sql`(coalesce(nullif(${botFieldModel.value}, ''), '0')::numeric + ${value}::numeric)::text`,
   [FieldOperationType.decrease]: (value) =>
@@ -126,12 +114,15 @@ const ATOMIC_VALUE_EXPRESSIONS: Record<
 const createWorkspaceSourceTimezoneResolver = (props: {
   workspaceId: string
   sourceTimezoneOverride?: string
+  /** Pass the open transaction so the lookup never waits on a second connection. */
+  tx?: DatabaseClient
 }): SourceTimezoneResolver =>
   createSourceTimezoneResolver({
     workspaceId: props.workspaceId,
     contactId: "",
     strategy: SourceTimezoneStrategy.Workspace,
     explicitSourceTimezone: props.sourceTimezoneOverride,
+    tx: props.tx,
   })
 
 /**
@@ -453,8 +444,10 @@ class BotFieldService extends BaseService {
     existing: BotFieldModel
     data: UpdateBotFieldData
     tx?: DatabaseClient
+    /** The caller invalidates after its own transaction commits. */
+    deferInvalidation?: boolean
   }): Promise<BotFieldModel> {
-    const { workspaceId, existing, data, tx = db } = props
+    const { workspaceId, existing, data, tx = db, deferInvalidation } = props
 
     if (data.folderId && data.folderId !== existing.folderId) {
       await folderService.ensureExists({
@@ -478,7 +471,9 @@ class BotFieldService extends BaseService {
       throw error
     }
 
-    await this.invalidate({ workspaceId, ids: [existing.id] })
+    if (!deferInvalidation) {
+      await this.invalidate({ workspaceId, ids: [existing.id] })
+    }
 
     return updated
   }
@@ -577,7 +572,7 @@ class BotFieldService extends BaseService {
     } = props
     const existing = await this.findByKeyOrFail({ workspaceId, key })
 
-    if (!isOperationAllowedForType(operation, existing.type)) {
+    if (!isFieldOperationAllowed(operation, existing.type)) {
       throw new ChatbotXException(
         `Operation "${operation}" is not supported for field type "${existing.type}"`,
         "invalidFieldOperation",
@@ -611,12 +606,103 @@ class BotFieldService extends BaseService {
       })
     }
 
-    return await this.applyAtomicValueOperation({
+    if (Object.hasOwn(ATOMIC_VALUE_EXPRESSIONS, operation)) {
+      return await this.applyAtomicValueOperation({
+        workspaceId,
+        id: existing.id,
+        operation: operation as AtomicFieldOperation,
+        value,
+      })
+    }
+
+    return await this.applyCalculatedOperation({
       workspaceId,
       id: existing.id,
       operation,
       value,
+      sourceTimezoneOverride,
     })
+  }
+
+  /**
+   * Clear, formula and date operations: lock the row, calculate against the
+   * value read under the lock, then persist. Rejections surface as a typed
+   * `invalidFieldOperation` carrying the machine-readable reason.
+   */
+  private async applyCalculatedOperation(props: {
+    workspaceId: string
+    id: string
+    operation: FieldOperationType
+    value: string
+    sourceTimezoneOverride?: string
+  }): Promise<BotFieldModel> {
+    const { workspaceId, id, operation, value, sourceTimezoneOverride } = props
+    const updated = await db.transaction(async (tx) => {
+      const resolveSourceTimezone = createWorkspaceSourceTimezoneResolver({
+        workspaceId,
+        sourceTimezoneOverride,
+        tx,
+      })
+      const [locked] = await tx
+        .select()
+        .from(botFieldModel)
+        .where(
+          and(
+            eq(botFieldModel.workspaceId, workspaceId),
+            eq(botFieldModel.id, id),
+          ),
+        )
+        .for("update")
+      if (!locked) {
+        throw notFoundException("Bot field not found")
+      }
+
+      const timeZone = isTemporalCustomFieldType(locked.type)
+        ? await resolveSourceTimezone()
+        : DEFAULT_FILTER_TIMEZONE
+      const result = calculateFieldValue({
+        fieldType: locked.type,
+        operation,
+        currentValue: locked.value,
+        operand: value,
+        clock: { now: new Date(), timeZone },
+      })
+      if (result.kind === "rejected") {
+        throw invalidFieldOperationException(result.reason)
+      }
+      if (result.kind === "unchanged") {
+        return locked
+      }
+
+      const normalizedValue =
+        result.kind === "clear"
+          ? null
+          : await normalizeCustomFieldValueForStorage({
+              type: locked.type,
+              value: result.value,
+              resolveSourceTimezone,
+              explicitTimezone: timeZone,
+              temporalInputParsing: TemporalInputParsing.Strict,
+            })
+      if (result.kind === "set" && normalizedValue === null) {
+        throw new ChatbotXException(
+          `Invalid ${locked.type} value for bot field`,
+          "invalidFieldOperation",
+        )
+      }
+      return await this.persistUpdate({
+        workspaceId,
+        existing: locked,
+        data: { value: normalizedValue },
+        tx,
+        // Invalidating inside the transaction lets a concurrent read re-cache
+        // the old value before the commit; do it once the write is visible.
+        deferInvalidation: true,
+      })
+    })
+
+    await this.invalidate({ workspaceId, ids: [id] })
+    return updated
   }
 
   /**
@@ -629,7 +715,7 @@ class BotFieldService extends BaseService {
   private async applyAtomicValueOperation(props: {
     workspaceId: string
     id: string
-    operation: Exclude<FieldOperationType, typeof FieldOperationType.set>
+    operation: AtomicFieldOperation
     value: string
   }): Promise<BotFieldModel> {
     const { workspaceId, id, operation, value } = props

@@ -6,9 +6,9 @@ import {
 } from "@chatbotx.io/database/repositories"
 import { isBigintId } from "@chatbotx.io/database/utils"
 import type {
+  PipelineActionOf,
   PipelineStepAction,
   PipelineStepDueDate,
-  PipelineStepOf,
   PipelineStepSchema,
 } from "@chatbotx.io/flow-config"
 import { isTemporalCustomFieldType } from "@chatbotx.io/utils/datetime"
@@ -44,9 +44,28 @@ export type PipelineFlowActionContext = {
   interpolate: (text: string) => Promise<string>
 }
 
-type ActionEnv = {
-  ctx: PipelineFlowActionContext
+/** What runs a pipeline action: a flow step, a trigger, ... */
+export type PipelineActionContext = {
+  workspaceId: string
+  contactId: string
   actor: PipelineActor
+  /**
+   * Durable key of this occurrence of the action, identical on every retry.
+   * Only the actions that add something use it (see `DEDUPED_ACTIONS`); when
+   * absent, a retried add is not deduplicated.
+   */
+  baseIdempotencyKey?: string
+  /** Resolves `{{variables}}` for the contact. */
+  interpolate: (text: string) => Promise<string>
+}
+
+/** An action's own fields, without the envelope a flow step or trigger adds. */
+export type PipelineActionInput<
+  A extends PipelineStepAction = PipelineStepAction,
+> = A extends PipelineStepAction ? Omit<PipelineActionOf<A>, "type"> : never
+
+type ActionEnv = {
+  ctx: PipelineActionContext
   pipelineId: string
   /** Dedup key for the one action per step that must not repeat on a retry. */
   idempotencyKey: string | undefined
@@ -57,12 +76,12 @@ type TargetItem = NonNullable<
 >
 
 type ActionHandler<A extends PipelineStepAction> = (
-  step: PipelineStepOf<A>,
+  step: PipelineActionInput<A>,
   env: ActionEnv,
 ) => Promise<PipelineFlowActionResult>
 
 type TargetActionHandler<A extends PipelineStepAction> = (
-  step: PipelineStepOf<A>,
+  step: PipelineActionInput<A>,
   env: ActionEnv,
   target: TargetItem,
 ) => Promise<void>
@@ -114,7 +133,7 @@ const updateTarget = (
     itemId: target.id,
     fields,
     scope: FLOW_SCOPE,
-    actor: env.actor,
+    actor: env.ctx.actor,
   })
 
 const parseValue = (raw: string): number => {
@@ -194,7 +213,7 @@ async function resolveDueDate(
 }
 
 async function interpolateFieldValues(
-  values: PipelineStepOf<"addToPipeline">["fieldValues"],
+  values: PipelineActionInput<"addToPipeline">["fieldValues"],
   env: ActionEnv,
 ): Promise<Record<string, string>> {
   const resolved: Record<string, string> = {}
@@ -276,7 +295,7 @@ async function liveReferences(
     dropped.stageId
   ) {
     logger.warn(
-      { workspaceId, pipelineId, flowId: env.ctx.flowId, dropped },
+      { workspaceId, pipelineId, sourceId: env.ctx.actor.sourceId, dropped },
       "Pipeline step names deleted references; they were skipped",
     )
   }
@@ -354,7 +373,7 @@ export const PIPELINE_FLOW_ACTION_HANDLERS: {
       },
       idempotencyKey: env.idempotencyKey,
       scope: FLOW_SCOPE,
-      actor: env.actor,
+      actor: env.ctx.actor,
     })
     return success
   },
@@ -463,7 +482,7 @@ export const PIPELINE_FLOW_ACTION_HANDLERS: {
       pipelineId: env.pipelineId,
       itemId: target.id,
       scope: FLOW_SCOPE,
-      actor: env.actor,
+      actor: env.ctx.actor,
     })
   }),
 
@@ -485,7 +504,7 @@ export const PIPELINE_FLOW_ACTION_HANDLERS: {
       text,
       idempotencyKey: env.idempotencyKey,
       scope: FLOW_SCOPE,
-      actor: env.actor,
+      actor: env.ctx.actor,
     })
   }),
 
@@ -506,7 +525,7 @@ export const PIPELINE_FLOW_ACTION_HANDLERS: {
       destinationPipelineId,
       destinationStageId,
       scope: FLOW_SCOPE,
-      actor: env.actor,
+      actor: env.ctx.actor,
     })
   }),
 }
@@ -518,38 +537,53 @@ const DEDUPED_ACTIONS: ReadonlySet<PipelineStepAction> = new Set([
 ])
 
 /**
- * Runs one Pipelines flow step. Never throws for caller-fixable problems:
- * a missing target is `skip`, a validation/conflict/not-found failure is
- * `error`. Unexpected failures (database down) propagate so the job retries.
+ * Runs one Pipelines action for a contact. Never throws for caller-fixable
+ * problems: a missing target is `skip`, a validation/conflict/not-found
+ * failure is `error`. Unexpected failures (database down) propagate so the
+ * job retries.
  */
-export async function runPipelineFlowAction(
-  step: PipelineStepSchema,
-  ctx: PipelineFlowActionContext,
+export async function runPipelineAction(
+  action: PipelineActionInput,
+  ctx: PipelineActionContext,
 ): Promise<PipelineFlowActionResult> {
-  if (!step.pipelineId) {
+  if (!action.pipelineId) {
     return fail("No pipeline is selected")
   }
-  if (!isBigintId(step.pipelineId)) {
+  if (!isBigintId(action.pipelineId)) {
     return fail("The pipeline id is not valid")
   }
   const env: ActionEnv = {
     ctx,
-    actor: { kind: "flow", userId: null, sourceId: ctx.flowId },
-    pipelineId: step.pipelineId,
-    idempotencyKey:
-      ctx.flowExecutionKey && DEDUPED_ACTIONS.has(step.action)
-        ? `${ctx.flowExecutionKey}:${step.id}`
-        : undefined,
+    pipelineId: action.pipelineId,
+    idempotencyKey: DEDUPED_ACTIONS.has(action.action)
+      ? ctx.baseIdempotencyKey
+      : undefined,
   }
   try {
     const handler = PIPELINE_FLOW_ACTION_HANDLERS[
-      step.action
+      action.action
     ] as ActionHandler<PipelineStepAction>
-    return await handler(step, env)
+    return await handler(action, env)
   } catch (error) {
     if (error instanceof ChatbotXException) {
       return fail(error.message)
     }
     throw error
   }
+}
+
+/** Runs one Pipelines flow step, attributed to its flow. */
+export function runPipelineFlowAction(
+  step: PipelineStepSchema,
+  ctx: PipelineFlowActionContext,
+): Promise<PipelineFlowActionResult> {
+  return runPipelineAction(step, {
+    workspaceId: ctx.workspaceId,
+    contactId: ctx.contactId,
+    actor: { kind: "flow", userId: null, sourceId: ctx.flowId },
+    baseIdempotencyKey: ctx.flowExecutionKey
+      ? `${ctx.flowExecutionKey}:${step.id}`
+      : undefined,
+    interpolate: ctx.interpolate,
+  })
 }

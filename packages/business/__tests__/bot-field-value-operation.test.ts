@@ -17,6 +17,7 @@ const mocks = vi.hoisted(() => {
   const updateReturning = vi.fn()
   const insertValues = vi.fn()
   const insertReturning = vi.fn()
+  const selectForUpdate = vi.fn()
   const workspaceFindFirst = vi.fn()
   const invalidateCacheTags = vi.fn()
   const sqlMock = vi.fn(
@@ -38,6 +39,7 @@ const mocks = vi.hoisted(() => {
     updateReturning,
     insertValues,
     insertReturning,
+    selectForUpdate,
     workspaceFindFirst,
     invalidateCacheTags,
     sqlMock,
@@ -89,10 +91,30 @@ vi.mock("@chatbotx.io/database/client", () => ({
       },
     })),
     $count: mocks.countMock,
+    transaction: async (callback: (tx: unknown) => unknown) =>
+      await callback({
+        query: {
+          workspaceModel: { findFirst: mocks.workspaceFindFirst },
+        },
+        select: () => ({
+          from: () => ({
+            where: () => ({ for: () => mocks.selectForUpdate() }),
+          }),
+        }),
+        update: () => ({
+          set: (setValue: unknown) => {
+            mocks.updateSet(setValue)
+            return {
+              where: () => ({ returning: mocks.updateReturning }),
+            }
+          },
+        }),
+      }),
   },
   and: vi.fn((...conditions: unknown[]) => ({ and: conditions })),
   eq: vi.fn((column: unknown, value: unknown) => ({ eq: [column, value] })),
   inArray: vi.fn(),
+  isUniqueViolationError: () => false,
   relationsFilterToSQL: mocks.relationsFilterToSQL,
   sql: mocks.sqlMock,
 }))
@@ -125,6 +147,11 @@ vi.mock("../src/base.service", () => ({
 
 vi.mock("../src/errors", () => ({
   notFoundException: (message: string) => new Error(message),
+  invalidFieldOperationException: (reason: string) =>
+    Object.assign(new Error(reason), {
+      code: "invalidFieldOperation",
+      data: { reason },
+    }),
   ChatbotXException: class ChatbotXException extends Error {
     code: string
     constructor(message: string, code?: string) {
@@ -461,6 +488,10 @@ describe("botFieldService.applyValueOperation — append/prepend/increase/decrea
     // literal, proving the concatenation happens inside Postgres.
     const [[setArg]] = mocks.updateSet.mock.calls
     expect(setArg.value.text).toContain("concat")
+    // Postgres cannot infer the type of an untyped parameter inside concat()
+    // ("could not determine data type of parameter $1"), so the bound operand
+    // must be cast.
+    expect(setArg.value.text).toContain("::text")
     expect(setArg.value.values).toContain("bar")
   })
 
@@ -482,6 +513,7 @@ describe("botFieldService.applyValueOperation — append/prepend/increase/decrea
     expect(result.value).toBe("foobar")
     const [[setArg]] = mocks.updateSet.mock.calls
     expect(setArg.value.text).toContain("concat")
+    expect(setArg.value.text).toContain("::text")
   })
 
   test("increase runs a single atomic numeric UPDATE for type number", async () => {
@@ -709,6 +741,180 @@ describe("botFieldService.applyValueOperation — operation x type policy", () =
         value: "1",
       }),
     ).rejects.toBeInstanceOf(ChatbotXException)
+  })
+})
+
+describe("botFieldService.applyValueOperation — error contract", () => {
+  afterEach(() => {
+    vi.clearAllMocks()
+  })
+
+  const run = (operation: FieldOperationType, value: string) =>
+    botFieldService.applyValueOperation({
+      workspaceId: "ws-1",
+      key: "field",
+      operation,
+      value,
+    })
+
+  test("an unsupported operation for the type throws invalidFieldOperation with its message and no reason", async () => {
+    mocks.findFirst.mockResolvedValue(existingRow({ type: "boolean" }))
+
+    const error = await run(FieldOperationType.increase, "1").catch(
+      (caught: unknown) => caught,
+    )
+
+    expect(error).toBeInstanceOf(ChatbotXException)
+    expect(error).toMatchObject({
+      code: "invalidFieldOperation",
+      message: 'Operation "O04" is not supported for field type "boolean"',
+    })
+    expect((error as ChatbotXException).data).toBeUndefined()
+  })
+
+  test("a calculator rejection carries the machine-readable reason", async () => {
+    mocks.findFirst.mockResolvedValue(existingRow({ type: "number" }))
+    mocks.selectForUpdate.mockResolvedValue([
+      existingRow({ type: "number", value: "4" }),
+    ])
+
+    const error = await run(FieldOperationType.formula, "1 +").catch(
+      (caught: unknown) => caught,
+    )
+
+    expect(error).toMatchObject({
+      code: "invalidFieldOperation",
+      data: { reason: "invalidExpression" },
+    })
+  })
+
+  test.each([
+    FieldOperationType.increase,
+    FieldOperationType.decrease,
+  ])("%s on a number field rejects a non-numeric operand with the documented message and no reason", async (operation) => {
+    mocks.findFirst.mockResolvedValue(
+      existingRow({ type: "number", value: "10" }),
+    )
+
+    const error = await run(operation, "abc").catch((caught: unknown) => caught)
+
+    expect(error).toMatchObject({
+      code: "invalidFieldOperation",
+      message: '"abc" is not a valid number value for this field.',
+    })
+    expect((error as ChatbotXException).data).toBeUndefined()
+    expect(mocks.updateSet).not.toHaveBeenCalled()
+  })
+})
+
+describe("botFieldService.applyValueOperation — calculated operations", () => {
+  afterEach(() => {
+    vi.clearAllMocks()
+  })
+
+  const arrangeRow = (type: string, value: string | null) => {
+    mocks.findFirst.mockResolvedValue(existingRow({ type }))
+    mocks.selectForUpdate.mockResolvedValue([existingRow({ type, value })])
+    mocks.updateReturning.mockImplementation(async () => [
+      existingRow({ type, value: "persisted" }),
+    ])
+  }
+  const apply = (operation: FieldOperationType, value: string) =>
+    botFieldService.applyValueOperation({
+      workspaceId: "ws-1",
+      key: "field",
+      operation,
+      value,
+    })
+
+  test("clear nulls the value under the row lock", async () => {
+    arrangeRow("shortText", "old")
+
+    await apply(FieldOperationType.clear, "")
+
+    expect(mocks.updateSet).toHaveBeenCalledWith(
+      expect.objectContaining({ value: null }),
+    )
+  })
+
+  test("formula is computed from the locked value", async () => {
+    arrangeRow("number", "4")
+
+    await apply(FieldOperationType.formula, "value * 2 + 1")
+
+    expect(mocks.updateSet).toHaveBeenCalledWith(
+      expect.objectContaining({ value: "9" }),
+    )
+  })
+
+  test("set now stamps the current instant on a datetime field", async () => {
+    arrangeRow("datetime", null)
+
+    await apply(FieldOperationType.setNow, "")
+
+    const [setValue] = mocks.updateSet.mock.calls[0] ?? []
+    expect(Number.isNaN(Date.parse(setValue.value))).toBe(false)
+  })
+
+  test("add days moves a stored datetime by calendar days", async () => {
+    arrangeRow("datetime", "2026-03-10T00:00:00.000Z")
+
+    await apply(FieldOperationType.addDays, "3")
+
+    expect(mocks.updateSet).toHaveBeenCalledWith(
+      expect.objectContaining({ value: "2026-03-13T00:00:00.000Z" }),
+    )
+  })
+
+  test("invalidates the cache once, after the transaction has committed", async () => {
+    arrangeRow("number", "4")
+
+    await apply(FieldOperationType.formula, "value + 1")
+
+    expect(mocks.invalidateCacheTags).toHaveBeenCalledTimes(1)
+    expect(
+      mocks.invalidateCacheTags.mock.invocationCallOrder[0],
+    ).toBeGreaterThan(mocks.updateReturning.mock.invocationCallOrder[0] ?? 0)
+  })
+
+  test("a rolled-back calculation never invalidates", async () => {
+    arrangeRow("number", "4")
+    mocks.updateReturning.mockRejectedValueOnce(new Error("db down"))
+
+    await expect(
+      apply(FieldOperationType.formula, "value + 1"),
+    ).rejects.toThrow("db down")
+    expect(mocks.invalidateCacheTags).not.toHaveBeenCalled()
+  })
+
+  test("a rejected calculation throws a typed error with the reason and writes nothing", async () => {
+    arrangeRow("number", "4")
+
+    await expect(
+      apply(FieldOperationType.formula, "1 +"),
+    ).rejects.toMatchObject({
+      code: "invalidFieldOperation",
+      data: { reason: "invalidExpression" },
+    })
+    expect(mocks.updateSet).not.toHaveBeenCalled()
+  })
+
+  test("an operation the type does not allow never reaches the calculator", async () => {
+    arrangeRow("shortText", "x")
+
+    await expect(
+      apply(FieldOperationType.formula, "value + 1"),
+    ).rejects.toMatchObject({ code: "invalidFieldOperation" })
+    expect(mocks.selectForUpdate).not.toHaveBeenCalled()
+  })
+
+  test("throws notFound when the row vanishes before the lock", async () => {
+    mocks.findFirst.mockResolvedValue(existingRow({ type: "number" }))
+    mocks.selectForUpdate.mockResolvedValue([])
+
+    await expect(apply(FieldOperationType.formula, "1")).rejects.toThrow(
+      "Bot field not found",
+    )
   })
 })
 

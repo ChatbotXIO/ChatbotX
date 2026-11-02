@@ -1111,6 +1111,15 @@
       "prepend": "Aan het begin toevoegen",
       "increase": "Verhogen met",
       "decrease": "Verlagen met",
+      "clear": "Clear value",
+      "formula": "Use custom formula",
+      "set_now": "Set to now",
+      "date_expression": "Free-form date (with math)",
+      "add_minutes": "Add minutes",
+      "add_hours": "Add hours",
+      "add_days": "Add days",
+      "formulaHint": "Math where value is the current number, e.g. round(value * 1.1). Functions: abs, ceil, floor, round, min, max, pow, sqrt, log, sin, cos.",
+      "dateExpressionHint": "e.g. now + 2 days - 3 hours. Units: min, h, d, w, mo, y.",
       "groupSystemFields": "Systeemvelden",
       "groupCustomFields": "Aangepaste velden",
       "groupAccountFields": "Botvelden"
@@ -4816,6 +4825,9 @@
     "maxCharacters": "Maximaal {max} tekens.",
     "invalidApiKey": "Ongeldige API-sleutel",
     "maxMustBeGreaterThanMin": "{maxField} moet groter zijn dan of gelijk zijn aan {minField}",
+    "trigger": {
+      "actionReferenceNotFound": "An action refers to a record that no longer exists. Re-select it in the action and save again."
+    },
     "inboundWebhook": {
       "inboxRequired": "Kies een inbox.",
       "inboxNotFound": "De geselecteerde inbox is niet gevonden.",
@@ -5847,6 +5859,7 @@
       "setCustomField": "Aangepast veld instellen",
       "clearCustomField": "Aangepast veld wissen",
       "startAnotherFlow": "Andere flow starten",
+      "startExternalStep": "Start External Step",
       "notifyAdmins": "Beheerders informeren",
       "transferConversationToHuman": "Gesprek overdragen aan een medewerker",
       "sendMetaCapiEvent": "Meta CAPI-gebeurtenis verzenden",

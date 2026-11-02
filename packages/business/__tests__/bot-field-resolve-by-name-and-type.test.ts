@@ -76,12 +76,14 @@ vi.mock("@chatbotx.io/utils", () => ({
   createId: mockCreateId,
 }))
 
-vi.mock("@chatbotx.io/utils/custom-field", () => ({
+vi.mock("@chatbotx.io/utils/custom-field", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@chatbotx.io/utils/custom-field")>()),
   customFieldResolutionKey: (field: { name: string; type: string }) =>
     `${field.type}:${field.name.trim().toLowerCase()}`,
 }))
 
-vi.mock("@chatbotx.io/utils/datetime", () => ({
+vi.mock("@chatbotx.io/utils/datetime", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@chatbotx.io/utils/datetime")>()),
   SourceTimezoneStrategy: { Workspace: "workspace" },
 }))
 

@@ -45,15 +45,34 @@ describe("AddAction allowedTypes", () => {
 
     expect(labels).toContain("trigger.actions.sendMetaCapiEvent")
     expect(labels).toContain("trigger.actions.addTag")
-    expect(labels).toHaveLength(9)
+    expect(labels).toHaveLength(11)
+    expect(labels).toContain("flows.actions.pipeline")
+    expect(labels).toContain("trigger.actions.startExternalStep")
   })
 
   test("offers only the allowlisted actions", () => {
     const labels = openMenuLabels(["addTag", "startAnotherFlow"])
 
+    // The allowlist never reorders: it keeps the picker's reference order.
     expect(labels).toEqual([
-      "trigger.actions.addTag",
       "trigger.actions.startAnotherFlow",
+      "trigger.actions.addTag",
+    ])
+  })
+
+  test("lists the actions in the reference order, ChatbotX-only ones last", () => {
+    expect(openMenuLabels()).toEqual([
+      "trigger.actions.startAnotherFlow",
+      "trigger.actions.startExternalStep",
+      "trigger.actions.addTag",
+      "trigger.actions.removeTag",
+      "trigger.actions.setCustomField",
+      "trigger.actions.clearCustomField",
+      "trigger.actions.transferConversationToHuman",
+      "flows.actions.pipeline",
+      "Google Sheets",
+      "trigger.actions.sendMetaCapiEvent",
+      "trigger.actions.sendGoogleAdsConversion",
     ])
   })
 })

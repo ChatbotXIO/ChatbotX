@@ -124,6 +124,8 @@ export const BaseEditor = ({
         return t("trigger.actions.clearCustomField")
       case triggerActions.enum.startAnotherFlow:
         return t("trigger.actions.startAnotherFlow")
+      case triggerActions.enum.startExternalStep:
+        return t("trigger.actions.startExternalStep")
       case triggerActions.enum.transferConversationToHuman:
         return t("trigger.actions.transferConversationToHuman")
       case triggerActions.enum.sendMetaCapiEvent:
@@ -132,6 +134,8 @@ export const BaseEditor = ({
         return t("trigger.actions.sendGoogleAdsConversion")
       case triggerActions.enum.runGoogleSheet:
         return "Google Sheets"
+      case triggerActions.enum.pipeline:
+        return t("flows.actions.pipeline")
       default:
         break
     }

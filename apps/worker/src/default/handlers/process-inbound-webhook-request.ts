@@ -25,6 +25,8 @@ import type { Job } from "bullmq"
 import { isFinalAttempt } from "../../lib/job-attempts"
 import { logger } from "../../lib/logger"
 import { ActionExecutor } from "../../trigger/services/action-executor"
+import { createTriggerActionScope } from "../../trigger/services/actions/scope"
+import type { TriggerActionScope } from "../../trigger/services/actions/types"
 
 const PROCESSING_FAILED_MESSAGE = "The request could not be processed"
 const ACTION_FAILED_MESSAGE = "The action failed"
@@ -52,28 +54,40 @@ const shortMessage = (error: unknown, fallback: string): string =>
 
 const executeAction = async (input: {
   executor: ActionExecutor
+  scope: TriggerActionScope
   webhook: InboundWebhookModel
   request: InboundWebhookRequestModel
   contactId: string
   contactInboxId: string
   index: number
 }): Promise<InboundWebhookActionResult> => {
-  const { executor, webhook, request, contactId, contactInboxId, index } = input
+  const {
+    executor,
+    scope,
+    webhook,
+    request,
+    contactId,
+    contactInboxId,
+    index,
+  } = input
   const action = webhook.actions[index]
   const type = String(action?.type)
   if (!(action && inboundWebhookActionTypes.safeParse(action.type).success)) {
     return { index, type, status: "skipped", reason: "unsupportedAction" }
   }
   try {
-    const outcome = await executor.execute({
-      action,
-      contactId,
-      contactInboxId,
-      workspaceId: webhook.workspaceId,
-      source: { kind: "inboundWebhook", inboundWebhookId: webhook.id },
-      // Stable across retries of this request, different per action.
-      occurrenceKey: `inboundWebhook:${request.id}:${index}`,
-    })
+    const outcome = await executor.execute(
+      {
+        action,
+        contactId,
+        contactInboxId,
+        workspaceId: webhook.workspaceId,
+        source: { kind: "inboundWebhook", inboundWebhookId: webhook.id },
+        // Stable across retries of this request, different per action.
+        occurrenceKey: `inboundWebhook:${request.id}:${index}`,
+      },
+      scope,
+    )
     return outcome.status === "succeeded"
       ? { index, type, status: "succeeded" }
       : { index, type, status: "skipped", reason: outcome.reason }
@@ -92,6 +106,42 @@ const executeAction = async (input: {
       type,
       status: "failed",
       error: shortMessage(error, ACTION_FAILED_MESSAGE),
+    }
+  }
+}
+
+const CHECKPOINT_ATTEMPTS = 3
+const CHECKPOINT_RETRY_DELAY_MS = 150
+
+const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
+
+/**
+ * Records an action's result right after it ran. A failure here is retried a
+ * few times before it is allowed to fail the attempt: the action's side effect
+ * is already done, and a request that fails now is retried without its result,
+ * which runs the action again (an increase or an append would apply twice).
+ */
+const checkpointActionResults = async (input: {
+  id: string
+  claimToken: string
+  actionResults: InboundWebhookActionResult[]
+}): Promise<boolean> => {
+  for (let attempt = 1; ; attempt += 1) {
+    try {
+      return await inboundWebhookService.checkpointRequest({
+        id: input.id,
+        claimToken: input.claimToken,
+        progress: { actionResults: input.actionResults },
+      })
+    } catch (error) {
+      if (attempt >= CHECKPOINT_ATTEMPTS) {
+        throw error
+      }
+      logger.warn(
+        { err: toLoggableDatabaseError(error), requestId: input.id, attempt },
+        "Inbound webhook checkpoint failed; retrying",
+      )
+      await wait(CHECKPOINT_RETRY_DELAY_MS * attempt)
     }
   }
 }
@@ -116,6 +166,11 @@ const runActions = async (input: {
   )
   const done = new Set(results.map(({ index }) => index))
   const executor = new ActionExecutor()
+  const scope = createTriggerActionScope({
+    contactId,
+    workspaceId: webhook.workspaceId,
+    contactInboxId,
+  })
 
   for (const index of webhook.actions.keys()) {
     if (done.has(index)) {
@@ -124,6 +179,7 @@ const runActions = async (input: {
     results.push(
       await executeAction({
         executor,
+        scope,
         webhook,
         request,
         contactId,
@@ -131,10 +187,10 @@ const runActions = async (input: {
         index,
       }),
     )
-    const owned = await inboundWebhookService.checkpointRequest({
+    const owned = await checkpointActionResults({
       id: request.id,
       claimToken,
-      progress: { actionResults: results },
+      actionResults: results,
     })
     if (!owned) {
       return null

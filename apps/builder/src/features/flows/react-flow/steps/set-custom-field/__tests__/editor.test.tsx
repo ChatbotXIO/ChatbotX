@@ -243,15 +243,22 @@ describe("SetCustomFieldStepEditor", () => {
     const operationSelect = container.querySelector(
       '[data-testid="select-operation"]',
     ) as HTMLSelectElement
-    const valueInput = container.querySelector(
-      '[data-testid="input-value"]',
-    ) as HTMLInputElement
 
     await act(async () => {
       fieldSelect.value = "field-1"
       fieldSelect.dispatchEvent(new Event("change", { bubbles: true }))
       operationSelect.value = FieldOperationType.append
       operationSelect.dispatchEvent(new Event("change", { bubbles: true }))
+      await Promise.resolve()
+    })
+    await flush()
+
+    // The operation decides which value control renders, so the input is
+    // looked up after choosing it, like a user typing after picking.
+    const valueInput = container.querySelector(
+      '[data-testid="input-value"]',
+    ) as HTMLInputElement
+    await act(async () => {
       setInputValue(valueInput, "Hello")
       await Promise.resolve()
     })

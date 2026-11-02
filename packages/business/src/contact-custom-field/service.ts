@@ -6,6 +6,7 @@ import {
   inArray,
   sql,
 } from "@chatbotx.io/database/client"
+import type { CustomFieldType } from "@chatbotx.io/database/partials"
 import { contactCustomFieldRepository } from "@chatbotx.io/database/repositories"
 import { contactCustomFieldModel } from "@chatbotx.io/database/schema"
 import {
@@ -24,18 +25,29 @@ import {
   canonicalNumberLiteral,
 } from "@chatbotx.io/utils/custom-field"
 import {
+  DEFAULT_FILTER_TIMEZONE,
+  isTemporalCustomFieldType,
   type SourceTimezoneStrategy,
   TemporalInputParsing,
 } from "@chatbotx.io/utils/datetime"
+import {
+  calculateFieldValue,
+  type FieldValueCalculationResult,
+} from "@chatbotx.io/utils/field-value-calculator"
 import { BaseService } from "../base.service"
 import { botFieldService } from "../bot-field/service"
 import { type ContactAccessScope, contactService } from "../contact/service"
 import { customFieldService } from "../custom-field/service"
-import { ChatbotXException, notFoundException } from "../errors"
+import {
+  ChatbotXException,
+  invalidFieldOperationException,
+  notFoundException,
+} from "../errors"
 import { logger } from "../logger"
 import {
   createSourceTimezoneResolver,
   normalizeCustomFieldValueForStorage,
+  type SourceTimezoneResolver,
 } from "./normalize"
 import { contactCustomFieldValueService } from "./value-service"
 
@@ -92,7 +104,57 @@ export type PendingContactCustomFieldChange = {
   customFieldId: string
   customFieldName: string
   oldValue: string | null
-  newValue: string
+  /** `null` when the change deleted the value. */
+  newValue: string | null
+}
+
+export type FieldOperationRequest = {
+  contactId: string
+  customFieldId: string
+  operation: FieldOperationType
+  /** Already `{{variable}}`-resolved by the caller. */
+  operand: string
+}
+
+export type ApplyFieldOperationsInput = {
+  workspaceId: string
+  /** Applied in order; a later operation sees the earlier ones' result. */
+  operations: FieldOperationRequest[]
+  accessScope?: ContactAccessScope
+  contactInboxId?: string
+  /** Browser zone captured at submit; anchors the clock and naive `date`. */
+  sourceTimezone?: string
+  /** Anchors the clock and every naive temporal type (the flow step's zone). */
+  sourceTimezoneOverride?: string
+  temporalInputParsing?: TemporalInputParsing
+  fillEmptyTemporalWithNow?: boolean
+}
+
+type ResolvedFieldOperation = {
+  request: FieldOperationRequest
+  customField: { id: string; name: string; type: CustomFieldType }
+}
+
+type PendingChangesByContact = Map<string, PendingContactCustomFieldChange[]>
+
+type OperationContext = {
+  tx: DatabaseClient
+  workspaceId: string
+  request: FieldOperationRequest
+  customField: ResolvedFieldOperation["customField"]
+  timeZone: string
+  options: ApplyFieldOperationsInput
+  /** Throw on a rejected operation instead of skipping it. */
+  strict: boolean
+}
+
+type ResultApplier<Kind extends FieldValueCalculationResult["kind"]> = (
+  result: Extract<FieldValueCalculationResult, { kind: Kind }>,
+  context: OperationContext,
+) => Promise<PendingContactCustomFieldChange[]>
+
+type ResultAppliers = {
+  [Kind in FieldValueCalculationResult["kind"]]: ResultApplier<Kind>
 }
 
 type EmitCustomFieldChangesInput = {
@@ -146,11 +208,9 @@ type SetValueByKeyInput = DeleteByKeyInput & {
   /** Blank temporal value -> stamp "now" in the resolved source zone. */
   fillEmptyTemporalWithNow?: boolean
   /**
-   * Consumed ONLY by the bot-field branch (`allowBotFields: true` + a
-   * `bot_field:<id>` token) — defaults to `set` there. The contact branch
-   * below IGNORES this field and always sets the value, preserving today's
-   * set-only behavior byte-for-byte; the contact-field operation no-op is a
-   * pre-existing platform bug tracked separately (plan §3.2, Phase 5).
+   * The operation to apply, defaulting to `set`. Bot fields and contact fields
+   * both honor it; a non-`set` contact operation runs through
+   * `applyFieldOperations` (lock, calculate, write, emit after commit).
    */
   operation?: FieldOperationType
   /** Forwarded to `setValues`; ignored by the bot-field branch. */
@@ -186,37 +246,6 @@ const contactCacheTags = (
   ...contactIds.map((contactId) => `contacts:${contactId}`),
 ]
 
-const computeUpdatedFieldValue = ({
-  currentValue,
-  operation,
-  operationValue,
-}: {
-  currentValue: string
-  operation: FieldOperationType
-  operationValue: string
-}): string | null => {
-  switch (operation) {
-    case FieldOperationType.append:
-      return currentValue + operationValue
-    case FieldOperationType.prepend:
-      return operationValue + currentValue
-    case FieldOperationType.increase:
-    case FieldOperationType.decrease: {
-      const currentNumber = Number(currentValue)
-      const operationNumber = Number(operationValue)
-      if (Number.isNaN(currentNumber) || Number.isNaN(operationNumber)) {
-        return null
-      }
-      const updatedNumber =
-        operation === FieldOperationType.increase
-          ? currentNumber + operationNumber
-          : currentNumber - operationNumber
-      return String(updatedNumber)
-    }
-    default:
-      return operationValue
-  }
-}
 class ContactCustomFieldService extends BaseService {
   async listSelectedDefinitionValuesByContact(input: {
     contactId: string
@@ -229,99 +258,207 @@ class ContactCustomFieldService extends BaseService {
   }
 
   /**
-   * Persist-only half of `applyOperationToContacts`, callable with a
-   * caller-supplied `tx` so a multi-operation caller (`applyOperations`) can
-   * fold several calls into one outer transaction. Returns the pending
-   * changes; the caller MUST emit them (via `emitCustomFieldChanges`) only
-   * after that outer transaction commits — see the commit-safety note on
-   * `setValuesInTransaction`.
+   * The single entry point for every field operation, on one contact or many.
+   * In one transaction it locks each `(contact, field)` pair (global order, so
+   * concurrent calls cannot deadlock), reads all current values in one query,
+   * calculates each result with the pure calculator and applies it. Events and
+   * cache invalidation fire only after the commit, exactly once.
+   *
+   * A rejected operation throws `invalidFieldOperation` (rolling everything
+   * back) when the call targets one contact, and is skipped and logged when
+   * it spans several (a bulk edit).
    */
-  private async applyOperationToContactsInTransaction(
-    input: {
-      workspaceId: string
-      contactIds: string[]
-      customFieldId: string
-      operation: FieldOperationType
-      value: string
-      sourceTimezone?: string
-      accessScope?: ContactAccessScope
-    },
-    tx: DatabaseClient,
-  ): Promise<
-    Array<{
-      contactId: string
-      changes: PendingContactCustomFieldChange[]
-    }>
-  > {
-    const { workspaceId, accessScope } = input
+  async applyFieldOperations(input: ApplyFieldOperationsInput): Promise<void> {
+    const { workspaceId } = input
     const contacts = await contactService.findManyByIds({
       workspaceId,
-      ids: input.contactIds,
-      accessScope,
+      ids: [...new Set(input.operations.map(({ contactId }) => contactId))],
+      accessScope: input.accessScope,
     })
-    if (contacts.length === 0) {
-      return []
+    const accessibleContactIds = new Set(contacts.map(({ id }) => id))
+    const operations = input.operations.filter(({ contactId }) =>
+      accessibleContactIds.has(contactId),
+    )
+    if (operations.length === 0) {
+      return
     }
 
-    const [customField] = await customFieldService.findManyByIds({
+    const customFields = await customFieldService.findManyByIds({
       workspaceId,
-      ids: [input.customFieldId],
+      ids: [...new Set(operations.map(({ customFieldId }) => customFieldId))],
     })
-    if (!customField) {
-      throw notFoundException("Custom field not found")
-    }
-
-    const changes: Array<{
-      contactId: string
-      newValue: string
-    }> = []
-
-    for (const contact of contacts) {
-      const [contactCustomField] = await tx
-        .select({
-          value: contactCustomFieldModel.value,
-        })
-        .from(contactCustomFieldModel)
-        .where(
-          and(
-            eq(contactCustomFieldModel.contactId, contact.id),
-            eq(contactCustomFieldModel.customFieldId, customField.id),
-          ),
-        )
-        .for("update")
-        .limit(1)
-
-      const value = contactCustomField
-        ? computeUpdatedFieldValue({
-            currentValue: contactCustomField.value,
-            operation: input.operation,
-            operationValue: input.value,
-          })
-        : input.value
-
-      if (value === null || value === contactCustomField?.value) {
-        continue
+    const customFieldById = new Map(
+      customFields.map((customField) => [customField.id, customField] as const),
+    )
+    const resolved = operations.map((request): ResolvedFieldOperation => {
+      const customField = customFieldById.get(request.customFieldId)
+      if (!customField) {
+        throw notFoundException("Custom field not found")
       }
+      return { request, customField }
+    })
 
-      changes.push({
-        contactId: contact.id,
-        newValue: value,
-      })
-    }
+    const pending = await db.transaction((tx) =>
+      this.applyFieldOperationsInTransaction(input, resolved, tx),
+    )
 
-    return await Promise.all(
-      changes.map(async (change) => ({
-        contactId: change.contactId,
-        changes: await contactCustomFieldService.setValuesInTransaction(
-          {
-            workspaceId,
-            contactId: change.contactId,
-            fields: [{ customFieldId: customField.id, value: change.newValue }],
-            sourceTimezone: input.sourceTimezone,
-          },
+    await Promise.all(
+      [...pending].map(([contactId, changes]) =>
+        this.emitCustomFieldChanges({
+          workspaceId,
+          contactId,
+          changes,
+          contactInboxId: input.contactInboxId,
+        }),
+      ),
+    )
+  }
+
+  private async applyFieldOperationsInTransaction(
+    input: ApplyFieldOperationsInput,
+    operations: ResolvedFieldOperation[],
+    tx: DatabaseClient,
+  ): Promise<PendingChangesByContact> {
+    const { workspaceId } = input
+    const requests = operations.map(({ request }) => request)
+    const contactIds = [...new Set(requests.map(({ contactId }) => contactId))]
+    await contactCustomFieldRepository.lockPairs(tx, requests)
+    const storedValues = await contactCustomFieldRepository.listValuesForPairs(
+      {
+        contactIds,
+        customFieldIds: [
+          ...new Set(requests.map(({ customFieldId }) => customFieldId)),
+        ],
+      },
+      tx,
+    )
+    const currentValues = new Map(
+      storedValues.map((row) => [
+        `${row.contactId}:${row.customFieldId}`,
+        row.value,
+      ]),
+    )
+    const strict = contactIds.length === 1
+    const timeZoneResolvers = new Map<string, SourceTimezoneResolver>()
+    const timeZoneResolverFor = (contactId: string): SourceTimezoneResolver => {
+      let resolver = timeZoneResolvers.get(contactId)
+      if (!resolver) {
+        resolver = createSourceTimezoneResolver({
+          workspaceId,
+          contactId,
+          explicitSourceTimezone:
+            input.sourceTimezoneOverride ?? input.sourceTimezone,
           tx,
-        ),
-      })),
+        })
+        timeZoneResolvers.set(contactId, resolver)
+      }
+      return resolver
+    }
+    const pending: PendingChangesByContact = new Map()
+
+    for (const { request, customField } of operations) {
+      const key = `${request.contactId}:${request.customFieldId}`
+      const timeZone = isTemporalCustomFieldType(customField.type)
+        ? await timeZoneResolverFor(request.contactId)()
+        : DEFAULT_FILTER_TIMEZONE
+      const result = calculateFieldValue({
+        fieldType: customField.type,
+        operation: request.operation,
+        currentValue: currentValues.get(key) ?? null,
+        operand: request.operand,
+        clock: { now: new Date(), timeZone },
+      })
+      const changes = await this.applyResult(result, {
+        tx,
+        workspaceId,
+        request,
+        customField,
+        timeZone,
+        options: input,
+        strict,
+      })
+      for (const change of changes) {
+        if (change.newValue === null) {
+          currentValues.delete(key)
+        } else {
+          currentValues.set(key, change.newValue)
+        }
+      }
+      const contactChanges = pending.get(request.contactId) ?? []
+      contactChanges.push(...changes)
+      pending.set(request.contactId, contactChanges)
+    }
+    return pending
+  }
+
+  private readonly resultAppliers: ResultAppliers = {
+    set: (result, context) => this.applySetResult(result.value, context),
+    clear: async (_result, { tx, request, customField }) => {
+      const oldValue = await contactCustomFieldRepository.deleteValue(
+        { contactId: request.contactId, customFieldId: customField.id },
+        tx,
+      )
+      return oldValue === null
+        ? []
+        : [
+            {
+              customFieldId: customField.id,
+              customFieldName: customField.name,
+              oldValue,
+              newValue: null,
+            },
+          ]
+    },
+    unchanged: () => Promise.resolve([]),
+    rejected: ({ reason }, { strict, workspaceId, request }) => {
+      if (strict) {
+        throw invalidFieldOperationException(reason)
+      }
+      logger.warn(
+        { workspaceId, ...request, reason },
+        "Skipped a rejected custom-field operation",
+      )
+      return Promise.resolve([])
+    },
+  }
+
+  private applyResult(
+    result: FieldValueCalculationResult,
+    context: OperationContext,
+  ): Promise<PendingContactCustomFieldChange[]> {
+    const apply = this.resultAppliers[result.kind] as ResultApplier<
+      typeof result.kind
+    >
+    return apply(result, context)
+  }
+
+  /**
+   * A calculated value is already canonical and in the clock's zone, so it is
+   * written strictly in that zone; a plain `set` keeps the caller's options.
+   */
+  private applySetResult(
+    value: string,
+    context: OperationContext,
+  ): Promise<PendingContactCustomFieldChange[]> {
+    const { tx, workspaceId, request, customField, options } = context
+    const isPlainSet = request.operation === FieldOperationType.set
+    return this.writeValues(
+      {
+        workspaceId,
+        contactId: request.contactId,
+        fields: [{ customFieldId: customField.id, value }],
+        sourceTimezone: options.sourceTimezone,
+        sourceTimezoneOverride: isPlainSet
+          ? options.sourceTimezoneOverride
+          : context.timeZone,
+        temporalInputParsing: isPlainSet
+          ? options.temporalInputParsing
+          : TemporalInputParsing.Strict,
+        fillEmptyTemporalWithNow: isPlainSet
+          ? options.fillEmptyTemporalWithNow
+          : undefined,
+      },
+      tx,
     )
   }
 
@@ -334,41 +471,22 @@ class ContactCustomFieldService extends BaseService {
     sourceTimezone?: string
     accessScope?: ContactAccessScope
   }) {
-    const { workspaceId } = input
-
-    // Persist inside the transaction, collecting the pending change per contact so
-    // their events can be emitted only after commit. The trigger worker re-reads
-    // the value from the DB, so a mid-transaction emit could observe uncommitted
-    // or rolled-back data.
-    const persistedByContact = await db.transaction((tx) =>
-      this.applyOperationToContactsInTransaction(input, tx),
-    )
-
-    await Promise.all(
-      persistedByContact.map((contact) =>
-        contactCustomFieldService.emitCustomFieldChanges({
-          workspaceId,
-          contactId: contact.contactId,
-          changes: contact.changes,
-        }),
-      ),
-    )
+    await this.applyFieldOperations({
+      workspaceId: input.workspaceId,
+      operations: input.contactIds.map((contactId) => ({
+        contactId,
+        customFieldId: input.customFieldId,
+        operation: input.operation,
+        operand: input.value,
+      })),
+      sourceTimezone: input.sourceTimezone,
+      accessScope: input.accessScope,
+    })
   }
 
   /**
-   * Applies a sequence of arithmetic/append operations to one contact's
-   * custom field, in order — the public `PATCH .../custom-fields` handler's
-   * single call site for what would otherwise be a per-op loop in the app
-   * layer.
-   *
-   * All operations run inside one outer transaction: a batch is an
-   * all-or-nothing unit (matching the legacy `setValues`/`setCustomFields`
-   * behavior it replaced), not a sequence of independently-committed writes —
-   * a failure partway (e.g. an unknown `customFieldId`) must roll back every
-   * earlier operation in the same call, not leave them applied. Events are
-   * collected per operation and emitted only after the transaction commits,
-   * for the same uncommitted-read reason `applyOperationToContacts` defers
-   * its own emission.
+   * The public `PATCH .../custom-fields` handler's call: operations on one
+   * contact, in order, as one all-or-nothing unit.
    */
   async applyOperations(input: {
     workspaceId: string
@@ -381,41 +499,17 @@ class ContactCustomFieldService extends BaseService {
     sourceTimezone?: string
     accessScope?: ContactAccessScope
   }): Promise<void> {
-    const { workspaceId, contactId, operations, sourceTimezone, accessScope } =
-      input
-
-    const persistedByContact = await db.transaction(async (tx) => {
-      const allChanges: Array<{
-        contactId: string
-        changes: PendingContactCustomFieldChange[]
-      }> = []
-      for (const op of operations) {
-        const changes = await this.applyOperationToContactsInTransaction(
-          {
-            workspaceId,
-            contactIds: [contactId],
-            customFieldId: op.customFieldId,
-            operation: op.operation,
-            value: op.value,
-            sourceTimezone,
-            accessScope,
-          },
-          tx,
-        )
-        allChanges.push(...changes)
-      }
-      return allChanges
+    await this.applyFieldOperations({
+      workspaceId: input.workspaceId,
+      operations: input.operations.map((operation) => ({
+        contactId: input.contactId,
+        customFieldId: operation.customFieldId,
+        operation: operation.operation,
+        operand: operation.value,
+      })),
+      sourceTimezone: input.sourceTimezone,
+      accessScope: input.accessScope,
     })
-
-    await Promise.all(
-      persistedByContact.map((contact) =>
-        contactCustomFieldService.emitCustomFieldChanges({
-          workspaceId,
-          contactId: contact.contactId,
-          changes: contact.changes,
-        }),
-      ),
-    )
   }
 
   async setValueForContact(input: {
@@ -864,6 +958,25 @@ class ContactCustomFieldService extends BaseService {
 
     if (!customField) {
       throw notFoundException("Custom field not found")
+    }
+
+    if (operation && operation !== FieldOperationType.set) {
+      await this.applyFieldOperations({
+        workspaceId,
+        operations: [
+          {
+            contactId,
+            customFieldId: customField.id,
+            operation,
+            operand: value,
+          },
+        ],
+        contactInboxId,
+        sourceTimezoneOverride,
+        temporalInputParsing,
+        fillEmptyTemporalWithNow,
+      })
+      return
     }
 
     await this.setValues({

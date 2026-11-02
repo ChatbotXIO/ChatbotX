@@ -1,21 +1,23 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 // ---------------------------------------------------------------------------
-// Covers the `setCustomField` / `clearCustomField` cases of `ActionExecutor`
-// (apps/worker/src/trigger/services/action-executor.ts): the executor must
-// dispatch on `parseFieldReference(action.customFieldId)` — a `bot_field:<id>`
-// token routes to `botFieldService` (all 5 operations), while a plain numeric
-// id keeps today's `contactCustomFieldService.setValues` /
-// `deleteByCustomFieldId` behavior (only `set` persists; other operations
-// stay a pre-existing silent no-op) untouched.
+// Covers the `setCustomField` / `clearCustomField` actions of `ActionExecutor`.
+// `setCustomField` hands every field reference (bot field or contact field)
+// and every operation to `contactCustomFieldService.setValueByKey`, which owns
+// the dispatch; `clearCustomField` still dispatches on
+// `parseFieldReference(action.customFieldId)`.
 // ---------------------------------------------------------------------------
 
 const mocks = vi.hoisted(() => ({
   findLatestCreatedByContact: vi.fn(),
-  setValues: vi.fn(),
+  setValueByKey: vi.fn(),
   deleteByCustomFieldId: vi.fn(),
   applyValueOperation: vi.fn(),
   clearValueByKey: vi.fn(),
+}))
+
+vi.mock("@chatbotx.io/business/pipeline", () => ({
+  runPipelineAction: vi.fn(),
 }))
 
 vi.mock("@chatbotx.io/database/schema", () => ({
@@ -39,7 +41,7 @@ vi.mock("@chatbotx.io/business", () => ({
     clearValueByKey: (...args: unknown[]) => mocks.clearValueByKey(...args),
   },
   contactCustomFieldService: {
-    setValues: (...args: unknown[]) => mocks.setValues(...args),
+    setValueByKey: (...args: unknown[]) => mocks.setValueByKey(...args),
     deleteByCustomFieldId: (...args: unknown[]) =>
       mocks.deleteByCustomFieldId(...args),
   },
@@ -92,6 +94,12 @@ vi.mock("@chatbotx.io/logger", () => ({
 vi.mock("@chatbotx.io/variables", () => ({
   resolveContactVariablesDeep: async (_contactId: string, value: unknown) =>
     value,
+  contactVariableService: {
+    getAll: vi.fn(async () => ({})),
+    replaceAll: vi.fn(async ({ text }: { text: string }) =>
+      text.replace("{{name}}", "Ada"),
+    ),
+  },
 }))
 
 vi.mock("@chatbotx.io/worker-config", () => ({
@@ -121,87 +129,147 @@ describe("ActionExecutor setCustomField / clearCustomField — field-reference d
     })
   })
 
-  test("setCustomField with a bot_field token routes to applyValueOperation with the action's operation", async () => {
-    const executor = new ActionExecutor()
+  const setCustomField = (action: Record<string, unknown>, extra = {}) =>
+    new ActionExecutor().execute({
+      action: { type: "setCustomField", ...action },
+      contactId: "contact-1",
+      workspaceId: "ws-1",
+      source: { kind: "trigger", triggerId: "trigger-1" },
+      ...extra,
+    })
 
-    await executor.execute({
-      action: {
-        type: "setCustomField",
-        customFieldId: "bot_field:5",
+  test("a bot_field token and its operation go through setValueByKey", async () => {
+    const outcome = await setCustomField({
+      customFieldId: "bot_field:5",
+      value: "9",
+      operation: "O04",
+    })
+
+    expect(outcome).toEqual({ status: "succeeded" })
+    expect(mocks.setValueByKey).toHaveBeenCalledTimes(1)
+    expect(mocks.setValueByKey).toHaveBeenCalledWith(
+      expect.objectContaining({
+        workspaceId: "ws-1",
+        contactId: "contact-1",
+        keyword: "bot_field:5",
         value: "9",
         operation: "O04",
-      },
-      contactId: "contact-1",
-      workspaceId: "ws-1",
-    })
-
-    expect(mocks.applyValueOperation).toHaveBeenCalledTimes(1)
-    expect(mocks.applyValueOperation).toHaveBeenCalledWith({
-      workspaceId: "ws-1",
-      key: "5",
-      operation: "O04",
-      value: "9",
-    })
-    expect(mocks.setValues).not.toHaveBeenCalled()
+        allowBotFields: true,
+      }),
+    )
+    expect(mocks.applyValueOperation).not.toHaveBeenCalled()
   })
 
-  test("setCustomField with a bot_field token defaults the operation to set when omitted", async () => {
-    const executor = new ActionExecutor()
-
-    await executor.execute({
-      action: {
-        type: "setCustomField",
-        customFieldId: "bot_field:5",
-        value: "9",
-      },
-      contactId: "contact-1",
-      workspaceId: "ws-1",
+  test.each([
+    undefined,
+    "",
+  ])("an omitted operation (%j) defaults to set", async (operation) => {
+    await setCustomField({
+      customFieldId: "bot_field:5",
+      value: "9",
+      operation,
     })
 
-    expect(mocks.applyValueOperation).toHaveBeenCalledWith(
-      expect.objectContaining({ key: "5", operation: "O01" }),
+    expect(mocks.setValueByKey).toHaveBeenCalledWith(
+      expect.objectContaining({ keyword: "bot_field:5", operation: "O01" }),
     )
   })
 
-  test("setCustomField with a numeric customFieldId keeps calling setValues for the set operation", async () => {
-    const executor = new ActionExecutor()
+  test.each([
+    ["an absent operation", { operation: undefined }],
+    ["a blank operation", { operation: "" }],
+  ])("a legacy action with %s and no value sets an empty value", async (_label, legacy) => {
+    const outcome = await setCustomField({ customFieldId: "42", ...legacy })
 
-    await executor.execute({
-      action: {
-        type: "setCustomField",
-        customFieldId: "42",
-        value: "9",
+    expect(outcome).toEqual({ status: "succeeded" })
+    expect(mocks.setValueByKey).toHaveBeenCalledTimes(1)
+    expect(mocks.setValueByKey).toHaveBeenCalledWith(
+      expect.objectContaining({
+        workspaceId: "ws-1",
+        contactId: "contact-1",
+        keyword: "42",
         operation: "O01",
-      },
-      contactId: "contact-1",
-      workspaceId: "ws-1",
-    })
-
-    expect(mocks.setValues).toHaveBeenCalledTimes(1)
-    expect(mocks.setValues).toHaveBeenCalledWith({
-      workspaceId: "ws-1",
-      contactId: "contact-1",
-      fields: [{ customFieldId: "42", value: "9" }],
-    })
-    expect(mocks.applyValueOperation).not.toHaveBeenCalled()
+        value: "",
+      }),
+    )
   })
 
-  test("setCustomField with a numeric customFieldId and a non-set operation stays a silent no-op (pre-existing behavior)", async () => {
-    const executor = new ActionExecutor()
+  test("a contact field applies every operation, not only set", async () => {
+    await setCustomField({ customFieldId: "42", value: "9", operation: "O04" })
 
-    await executor.execute({
-      action: {
-        type: "setCustomField",
-        customFieldId: "42",
+    expect(mocks.setValueByKey).toHaveBeenCalledWith(
+      expect.objectContaining({
+        keyword: "42",
         value: "9",
         operation: "O04",
-      },
-      contactId: "contact-1",
-      workspaceId: "ws-1",
+      }),
+    )
+  })
+
+  test("the editor timezone and the threaded contact inbox are forwarded", async () => {
+    await setCustomField(
+      { customFieldId: "42", value: "2026-05-01", timezone: "Asia/Bangkok" },
+      { contactInboxId: "ci-7" },
+    )
+
+    expect(mocks.setValueByKey).toHaveBeenCalledWith(
+      expect.objectContaining({
+        sourceTimezoneOverride: "Asia/Bangkok",
+        contactInboxId: "ci-7",
+      }),
+    )
+  })
+
+  test("{{variables}} in the value are resolved before the write", async () => {
+    await setCustomField({ customFieldId: "42", value: "Hi {{name}}" })
+
+    expect(mocks.setValueByKey).toHaveBeenCalledWith(
+      expect.objectContaining({ value: "Hi Ada" }),
+    )
+  })
+
+  test("a calculator rejection is reported as a skipped outcome", async () => {
+    const { ChatbotXException } = await import("@chatbotx.io/business/errors")
+    const rejection = new ChatbotXException(
+      "rejected",
+      "invalidFieldOperation",
+      400,
+    )
+    rejection.data = { reason: "operandNotNumber" }
+    mocks.setValueByKey.mockRejectedValueOnce(rejection)
+
+    const outcome = await setCustomField({
+      customFieldId: "42",
+      value: "abc",
+      operation: "O04",
     })
 
-    expect(mocks.setValues).not.toHaveBeenCalled()
-    expect(mocks.applyValueOperation).not.toHaveBeenCalled()
+    expect(outcome).toEqual({
+      status: "skipped",
+      reason: "invalidFieldOperation:operandNotNumber",
+    })
+  })
+
+  test("any other failure still throws", async () => {
+    mocks.setValueByKey.mockRejectedValueOnce(new Error("db down"))
+
+    await expect(
+      setCustomField({ customFieldId: "42", value: "1" }),
+    ).rejects.toThrow("db down")
+  })
+
+  test.each([
+    ["a missing field id", { value: "1" }],
+    ["an unknown operation code", { customFieldId: "42", operation: "O99" }],
+    [
+      "a formula without an expression",
+      { customFieldId: "42", operation: "O07", value: "" },
+    ],
+  ])("%s is skipped as an invalid action", async (_label, action) => {
+    const outcome = await setCustomField(action)
+
+    expect(outcome).toEqual({ status: "skipped", reason: "invalidAction" })
+    expect(mocks.setValueByKey).not.toHaveBeenCalled()
   })
 
   test("clearCustomField with a bot_field token routes to clearValueByKey", async () => {

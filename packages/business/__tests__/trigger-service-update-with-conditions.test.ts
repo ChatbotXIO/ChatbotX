@@ -3,6 +3,17 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 
 // The broadcast policy import reaches quota/workspace modules these narrow mocks omit.
+const referenceMocks = vi.hoisted(() => ({
+  findInvalid: vi.fn(),
+  newIndexes: vi.fn(),
+  lockRow: vi.fn(),
+}))
+
+vi.mock("../src/automation-action/references", () => ({
+  findInvalidActionReferences: referenceMocks.findInvalid,
+  indexesOfNewActions: referenceMocks.newIndexes,
+}))
+
 vi.mock("../src/broadcast/plan-policy.service", () => ({
   broadcastPlanPolicyService: {},
 }))
@@ -55,6 +66,11 @@ const tx = {
     triggerModel: { findFirst: mockTriggerFindFirst },
     conditionModel: { findMany: mockConditionFindMany },
   },
+  select: () => ({
+    from: () => ({
+      where: () => ({ for: referenceMocks.lockRow }),
+    }),
+  }),
   update: mockTxUpdate,
   delete: mockTxDelete,
   insert: mockTxInsert,
@@ -106,6 +122,9 @@ describe("triggerService.updateWithConditions", () => {
     mockDbTransaction.mockImplementation(
       async (fn: (tx: unknown) => Promise<unknown>) => fn(tx),
     )
+    referenceMocks.lockRow.mockResolvedValue([{ id: TRIGGER_ID }])
+    referenceMocks.newIndexes.mockReturnValue(new Set<number>())
+    referenceMocks.findInvalid.mockResolvedValue([])
   })
 
   afterEach(() => {
@@ -227,5 +246,94 @@ describe("triggerService.updateWithConditions", () => {
         type: "newContact",
       }),
     ])
+  })
+
+  describe("action references", () => {
+    const existing = {
+      id: TRIGGER_ID,
+      workspaceId: WS,
+      actions: [{ type: "addTag", tagIds: ["1"] }],
+    }
+
+    beforeEach(() => {
+      mockTriggerFindFirst.mockResolvedValue(existing)
+      mockConditionFindMany.mockResolvedValue([])
+    })
+
+    test("locks the trigger row before reading what is stored", async () => {
+      await triggerService.updateWithConditions({
+        workspaceId: WS,
+        id: TRIGGER_ID,
+        actions: existing.actions,
+        conditions: [],
+      })
+
+      expect(referenceMocks.lockRow).toHaveBeenCalledTimes(1)
+      expect(referenceMocks.lockRow.mock.invocationCallOrder[0]).toBeLessThan(
+        mockTriggerFindFirst.mock.invocationCallOrder[0] ?? 0,
+      )
+    })
+
+    test("checks only the actions that are not already stored", async () => {
+      const next = [
+        { type: "addTag", tagIds: ["1"] },
+        { type: "startExternalStep", flowId: "9", nodeId: "8" },
+      ]
+      referenceMocks.newIndexes.mockReturnValue(new Set([1]))
+
+      await triggerService.updateWithConditions({
+        workspaceId: WS,
+        id: TRIGGER_ID,
+        actions: next,
+        conditions: [],
+      })
+
+      expect(referenceMocks.newIndexes).toHaveBeenCalledWith(
+        next,
+        existing.actions,
+      )
+      expect(referenceMocks.findInvalid).toHaveBeenCalledWith({
+        workspaceId: WS,
+        actions: next,
+        indexes: new Set([1]),
+        // A trigger resolves a custom field by name, and the lookups run on the
+        // transaction that holds the row lock.
+        fieldNames: true,
+        tx,
+      })
+    })
+
+    test("a dangling new reference fails at actions.<index>.<field> and writes nothing", async () => {
+      referenceMocks.newIndexes.mockReturnValue(new Set([0]))
+      referenceMocks.findInvalid.mockResolvedValue([
+        { index: 0, field: "nodeId" },
+      ])
+
+      await expect(
+        triggerService.updateWithConditions({
+          workspaceId: WS,
+          id: TRIGGER_ID,
+          actions: [{ type: "startExternalStep", flowId: "9", nodeId: "8" }],
+          conditions: [],
+        }),
+      ).rejects.toMatchObject({
+        field: "actions.0.nodeId",
+        message: "validation.trigger.actionReferenceNotFound",
+        data: { field: "actions.0.nodeId" },
+      })
+      expect(mockTxUpdate).not.toHaveBeenCalled()
+      expect(mockUpdateTriggerCache).not.toHaveBeenCalled()
+    })
+
+    test("nothing new means no reference lookup at all", async () => {
+      await triggerService.updateWithConditions({
+        workspaceId: WS,
+        id: TRIGGER_ID,
+        actions: existing.actions,
+        conditions: [],
+      })
+
+      expect(referenceMocks.findInvalid).not.toHaveBeenCalled()
+    })
   })
 })

@@ -1030,9 +1030,16 @@ const invalidCustomFieldValue = {
   status: 400,
 }
 
+const invalidFieldOperation = {
+  message:
+    "The operation or its value does not fit this field's type; the message names the reason.",
+  status: 400,
+}
+
 export const possibleErrorsOnWritingContactFields = {
   ...possibleErrorsOnMutatingResource,
   invalidCustomFieldValue,
+  invalidFieldOperation,
 } satisfies ErrorMap
 
 /** Create-or-update by identifier: unknown `id:` contact (404), phone taken (422). */
@@ -1051,12 +1058,6 @@ export const possibleErrorsOnCreatingContact = {
   notFound,
   invalidCustomFieldValue,
 } satisfies ErrorMap
-
-/** A bot-field value that does not fit the field's type. */
-const invalidFieldOperation = {
-  message: "The value does not fit this bot field's type.",
-  status: 400,
-}
 
 export const possibleErrorsOnCreatingBotField = {
   ...possibleErrorsOnCreatingResource,
