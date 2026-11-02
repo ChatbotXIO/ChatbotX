@@ -5045,7 +5045,36 @@
       "pageTitle": "Sidnyckelord",
       "page": "Svara automatiskt när du skickar ett meddelande som innehåller ett nyckelord till en kontakt."
     },
-    "pageWarning": "Meddelandeinnehåll som innehåller ett sidnyckelord kan leda till att meddelanden skickas till kunden i en oändlig loop. Inaktivera sidnyckelordet omedelbart om du stöter på detta!"
+    "pageWarning": "Meddelandeinnehåll som innehåller ett sidnyckelord kan leda till att meddelanden skickas till kunden i en oändlig loop. Inaktivera sidnyckelordet omedelbart om du stöter på detta!",
+    "conditions": {
+      "operators": {
+        "is": "Meddelandet är",
+        "similarTo": "Meddelandet liknar",
+        "contains": "Meddelandet innehåller",
+        "containsPhone": "Meddelandet innehåller telefonnummer",
+        "containsEmail": "Meddelandet innehåller e-post",
+        "containsImage": "Meddelandet innehåller bild",
+        "containsVideo": "Meddelandet innehåller video",
+        "containsLink": "Meddelandet innehåller länk",
+        "containsWholeWord": "Meddelandet innehåller hela ordet",
+        "beginsWith": "Meddelandet börjar med",
+        "endsWith": "Meddelandet slutar med",
+        "isThumbsUp": "Meddelandet är 👍",
+        "notContains": "Meddelandet innehåller inte",
+        "matchesRegex": "Meddelandet matchar regex"
+      },
+      "and": "och",
+      "addCondition": "Meddelandevillkor",
+      "removeCondition": "Ta bort villkor",
+      "note": "Nyckelord skiljer inte på stora och små bokstäver och ignorerar accenter, t.ex. tolkas \"Tư vấn\" och \"tu van\" som samma.",
+      "keywordPlaceholder": "+ Nyckelord",
+      "regexPlaceholder": "+ Regex",
+      "errors": {
+        "keywordConditionValuesRequired": "Lägg till minst ett nyckelord.",
+        "keywordConditionTakesNoValues": "Det här villkoret använder inga nyckelord.",
+        "invalidKeywordRegex": "Ogiltigt reguljärt uttryck."
+      }
+    }
   },
   "klaviyo": {
     "errors": {

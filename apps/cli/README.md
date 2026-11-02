@@ -461,10 +461,15 @@ chatbotx integrations find-by-ai --provider <provider>  # Get AI provider integr
 
 ```bash
 chatbotx keywords list                               # List keywords (automated responses) [--type]
-chatbotx keywords get <id>                           # [--type]  type: inbound|comment, default inbound
-chatbotx keywords create --keywords <keywords>       # [--type --text --flowId --folderId]
+chatbotx keywords get <id>                           # [--type]  type: inbound|outbound, default inbound
+chatbotx keywords create --keywords <keywords>       # [--type --conditions --text --flowId --folderId]
                                                      # keywords: JSON array of phrases; text or flowId (not both)
-chatbotx keywords update <id>                        # [--type --keywords --text --flowId --folderId]
+chatbotx keywords create --conditions <conditions>   # inbound only, instead of --keywords. JSON array of
+                                                     # {"operator","values"}: conditions are ANDed, values ORed
+                                                     # operators: is, similarTo, contains, containsWholeWord,
+                                                     # beginsWith, endsWith, notContains, matchesRegex,
+                                                     # containsPhone|Email|Link|Image|Video, isThumbsUp (no values)
+chatbotx keywords update <id>                        # [--type --keywords | --conditions --text --flowId --folderId]
 chatbotx keywords status update <id> --status <status>  # [--type]  enable/disable without touching other fields
 chatbotx keywords delete <id>                        # [--type]
 ```

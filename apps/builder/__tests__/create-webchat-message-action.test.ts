@@ -120,6 +120,8 @@ vi.mock("@chatbotx.io/automated-response", () => ({
     enqueueFlowAction: mockAutomatedResponseEnqueueFlowAction,
     enqueueHandoffReentry: mockAutomatedResponseEnqueueHandoffReentry,
   },
+  isKeywordMediaFileType: (fileType: string) =>
+    ["image", "gif", "video"].includes(fileType),
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
@@ -528,6 +530,7 @@ describe("handleCreateWebchatMessage", () => {
       contactInboxId: "ci-1",
       messageId: "msg-1",
       messageText: "hello",
+      attachmentFileTypes: [],
       workspaceId: "ws-1",
     })
     expect(mockAutomatedResponseEnqueueHandoffReentry).not.toHaveBeenCalled()

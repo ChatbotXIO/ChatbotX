@@ -6,6 +6,7 @@ import { automatedResponseTypes } from "@chatbotx.io/database/partials"
 import { returnValidationErrors } from "next-safe-action"
 import { workspaceIdrequestParams } from "@/features/common/schema"
 import { workspaceActionClient } from "@/lib/safe-action"
+import { toKeywordRuleMatch } from "../lib/keyword-rule-match"
 import { createAutomatedResponseRequest } from "../schema/action"
 
 export const createAutomatedResponseAction = workspaceActionClient
@@ -23,7 +24,7 @@ export const createAutomatedResponseAction = workspaceActionClient
         text: parsedInput.text,
         flowId: parsedInput.flowId,
         folderId: parsedInput.folderId,
-        keywords: parsedInput.keywords.map((m) => m.value),
+        ...toKeywordRuleMatch(parsedInput),
       })
     } catch (error) {
       if (

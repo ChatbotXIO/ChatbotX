@@ -6015,7 +6015,36 @@
       "pageTitle": "Cuvinte-cheie de pagină",
       "page": "Răspunde automat atunci când trimiteți un mesaj care conține un cuvânt-cheie unui contact."
     },
-    "pageWarning": "Conținutul unui mesaj care conține un cuvânt-cheie de Pagină poate duce la trimiterea de mesaje către client într-o buclă infinită. Dezactivați imediat cuvântul-cheie de Pagină dacă întâmpinați această situație!"
+    "pageWarning": "Conținutul unui mesaj care conține un cuvânt-cheie de Pagină poate duce la trimiterea de mesaje către client într-o buclă infinită. Dezactivați imediat cuvântul-cheie de Pagină dacă întâmpinați această situație!",
+    "conditions": {
+      "operators": {
+        "is": "Mesajul este",
+        "similarTo": "Mesajul seamănă cu",
+        "contains": "Mesajul conține",
+        "containsPhone": "Mesajul conține telefon",
+        "containsEmail": "Mesajul conține e-mail",
+        "containsImage": "Mesajul conține imagine",
+        "containsVideo": "Mesajul conține video",
+        "containsLink": "Mesajul conține link",
+        "containsWholeWord": "Mesajul conține cuvântul întreg",
+        "beginsWith": "Mesajul începe cu",
+        "endsWith": "Mesajul se termină cu",
+        "isThumbsUp": "Mesajul este 👍",
+        "notContains": "Mesajul nu conține",
+        "matchesRegex": "Mesajul corespunde regex-ului"
+      },
+      "and": "și",
+      "addCondition": "Condiție mesaj",
+      "removeCondition": "Elimină condiția",
+      "note": "Cuvintele cheie nu țin cont de majuscule și ignoră diacriticele, de ex. \"Tư vấn\" și \"tu van\" sunt recunoscute la fel.",
+      "keywordPlaceholder": "+ Cuvânt cheie",
+      "regexPlaceholder": "+ Regex",
+      "errors": {
+        "keywordConditionValuesRequired": "Adaugă cel puțin un cuvânt cheie.",
+        "keywordConditionTakesNoValues": "Această condiție nu folosește cuvinte cheie.",
+        "invalidKeywordRegex": "Expresie regulată invalidă."
+      }
+    }
   },
   "triggers": {
     "title": "Declanșatoare"

@@ -40,3 +40,74 @@ export const replyMessage = z.discriminatedUnion("type", [
     flowId: zodBigintAsString(),
   }),
 ])
+
+// ManyChat-style message conditions for Contact (inbound) keyword rules.
+// Conditions are ANDed; the values inside one condition are ORed, except
+// `notContains`, which requires the message to contain none of them.
+export const keywordConditionOperators = z.enum([
+  "is",
+  "similarTo",
+  "contains",
+  "containsPhone",
+  "containsEmail",
+  "containsImage",
+  "containsVideo",
+  "containsLink",
+  "containsWholeWord",
+  "beginsWith",
+  "endsWith",
+  "isThumbsUp",
+  "notContains",
+  "matchesRegex",
+])
+export type KeywordConditionOperator = z.infer<typeof keywordConditionOperators>
+
+// Operators that inspect the message itself and take no keyword values.
+export const valuelessKeywordConditionOperators: readonly KeywordConditionOperator[] =
+  [
+    "containsPhone",
+    "containsEmail",
+    "containsImage",
+    "containsVideo",
+    "containsLink",
+    "isThumbsUp",
+  ]
+
+export const isValuelessKeywordConditionOperator = (
+  operator: KeywordConditionOperator,
+): boolean => valuelessKeywordConditionOperators.includes(operator)
+
+export const MAX_KEYWORD_CONDITIONS = 10
+export const MAX_KEYWORD_CONDITION_VALUES = 50
+export const MAX_KEYWORD_REGEX_LENGTH = 200
+
+export type KeywordCondition = {
+  operator: KeywordConditionOperator
+  values: string[]
+}
+
+// Operators whose values are words that trigger the rule. `notContains`
+// values exclude and `matchesRegex` values are patterns, so neither belongs
+// in the flat `keywords` column.
+const triggerKeywordConditionOperators: readonly KeywordConditionOperator[] = [
+  "is",
+  "similarTo",
+  "contains",
+  "containsWholeWord",
+  "beginsWith",
+  "endsWith",
+]
+
+// The flat `keywords` column mirrors the trigger words in `conditions` so
+// keyword search, `findByInboundKeyword` and older API clients keep working.
+export const flattenKeywordConditionValues = (
+  conditions: readonly KeywordCondition[],
+): string[] => [
+  ...new Set(
+    conditions
+      .filter((condition) =>
+        triggerKeywordConditionOperators.includes(condition.operator),
+      )
+      .flatMap((condition) => condition.values),
+  ),
+]

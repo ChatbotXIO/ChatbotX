@@ -476,6 +476,23 @@ const families: CaseFamily[] = [
   }),
   complete({
     domain: "keywords",
+    family: "keyword-inbound-conditions",
+    expectedTools: ["keywords_create"],
+    argumentPredicates: [
+      { key: "type", value: "inbound" },
+      { key: "conditions" },
+    ],
+    forbiddenTools: ["fb_comments_create"],
+    prompts: {
+      vi: "Khi khách gửi ảnh thì chạy flow tư vấn",
+      "vi-unaccented": "Khi khach gui anh thi chay flow tu van",
+      colloquial: "khách gửi hình chạy tư vấn",
+      en: "Run Consulting when customer sends an image",
+      mixed: "customer gửi image run flow tư vấn",
+    },
+  }),
+  complete({
+    domain: "keywords",
     family: "keyword-outbound",
     expectedTools: ["keywords_create"],
     argumentPredicates: [{ key: "type", value: "outbound" }],

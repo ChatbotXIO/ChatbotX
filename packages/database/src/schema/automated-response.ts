@@ -1,6 +1,16 @@
 import { sql } from "drizzle-orm"
-import { boolean, index, pgEnum, pgTable, text } from "drizzle-orm/pg-core"
-import { automatedResponseTypes } from "../partials/automated-response"
+import {
+  boolean,
+  index,
+  jsonb,
+  pgEnum,
+  pgTable,
+  text,
+} from "drizzle-orm/pg-core"
+import {
+  automatedResponseTypes,
+  type KeywordCondition,
+} from "../partials/automated-response"
 import { bigintAsString, sharedColumns } from "../partials/shared"
 import { flowModel } from "./flow"
 import { folderModel } from "./folder"
@@ -26,6 +36,11 @@ export const automatedResponseModel = pgTable(
       onUpdate: "cascade",
     }),
     keywords: text().array().notNull().default(sql`[]`),
+    // ManyChat-style match conditions. Every Contact (inbound) rule has them —
+    // the migration turned older rules into one "contains" condition, matched
+    // ignoring case and accents. Null only on Page (outbound) rules, which
+    // match `keywords` exactly.
+    conditions: jsonb().$type<KeywordCondition[]>(),
     status: boolean().notNull(),
     text: text(),
     flowId: bigintAsString().references(() => flowModel.id, {

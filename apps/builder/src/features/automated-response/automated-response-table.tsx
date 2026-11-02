@@ -46,6 +46,7 @@ import { ChangeFolderDialog } from "../folders/change-folder"
 import { enableAutomatedResponseAction } from "./actions/enable-automated-response-action"
 import { AutomatedResponseTableToolbarActions } from "./automated-response-table-toolbar-actions"
 import { AddAutomatedResponseButton } from "./components/add-automated-response-button"
+import { KeywordConditionsSummary } from "./components/keyword-conditions-summary"
 import { DeleteAutomatedResponsesDialog } from "./delete-automated-response-dialog"
 import type { listAutomatedResponses } from "./queries"
 import type { AutomatedResponseResource } from "./schema/resource"
@@ -111,14 +112,18 @@ function AutomatedResponsesTableContent({
           />
         ),
         cell: ({ row }) => {
-          const { id, keywords } = row.original
+          const { id, keywords, conditions } = row.original
+          const href = `/space/${workspaceId}/${basePath}/${id}/edit?${searchParams.toString()}`
+          if (conditions?.length) {
+            return (
+              <Link className="block max-w-[420px]" href={href}>
+                <KeywordConditionsSummary conditions={conditions} />
+              </Link>
+            )
+          }
           return (
             <div className="max-w-[200px] truncate">
-              <Link
-                className="truncate"
-                href={`/space/${workspaceId}/${basePath}/${id}/edit?${searchParams.toString()}`}
-                title={keywords.join(",")}
-              >
+              <Link className="truncate" href={href} title={keywords.join(",")}>
                 {keywords.join(",")}
               </Link>
             </div>

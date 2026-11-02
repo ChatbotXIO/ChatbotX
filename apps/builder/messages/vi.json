@@ -5724,7 +5724,36 @@
       "pageTitle": "Từ khoá Trang",
       "page": "Tự động phản hồi khi bạn gửi tin nhắn chứa từ khoá đến khách hàng."
     },
-    "pageWarning": "Nội dung tin nhắn chứa từ khoá cho trang có thể dẫn đến gửi tin nhắn cho khách lặp vô hạn. Hãy huỷ kích hoạt từ khoá cho trang ngay lập tức nếu bạn gặp phải trường hợp này!"
+    "pageWarning": "Nội dung tin nhắn chứa từ khoá cho trang có thể dẫn đến gửi tin nhắn cho khách lặp vô hạn. Hãy huỷ kích hoạt từ khoá cho trang ngay lập tức nếu bạn gặp phải trường hợp này!",
+    "conditions": {
+      "operators": {
+        "is": "Tin nhắn là",
+        "similarTo": "Tin nhắn gần giống",
+        "contains": "Tin nhắn có chứa",
+        "containsPhone": "Tin nhắn có số điện thoại",
+        "containsEmail": "Tin nhắn có email",
+        "containsImage": "Tin nhắn có hình ảnh",
+        "containsVideo": "Tin nhắn có video",
+        "containsLink": "Tin nhắn có đường link",
+        "containsWholeWord": "Tin nhắn chứa nguyên từ",
+        "beginsWith": "Tin nhắn bắt đầu bằng",
+        "endsWith": "Tin nhắn kết thúc bằng",
+        "isThumbsUp": "Tin nhắn là 👍",
+        "notContains": "Tin nhắn không chứa",
+        "matchesRegex": "Tin nhắn khớp regex"
+      },
+      "and": "và",
+      "addCondition": "Điều kiện tin nhắn",
+      "removeCondition": "Xoá điều kiện",
+      "note": "Từ khoá không phân biệt chữ hoa, chữ thường và dấu, ví dụ \"Tư vấn\" và \"tu van\" được xem là giống nhau.",
+      "keywordPlaceholder": "+ Từ khoá",
+      "regexPlaceholder": "+ Regex",
+      "errors": {
+        "keywordConditionValuesRequired": "Hãy thêm ít nhất một từ khoá.",
+        "keywordConditionTakesNoValues": "Điều kiện này không cần từ khoá.",
+        "invalidKeywordRegex": "Biểu thức regex không hợp lệ."
+      }
+    }
   },
   "triggers": {
     "title": "Kích hoạt"

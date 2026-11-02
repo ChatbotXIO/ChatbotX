@@ -5650,7 +5650,36 @@
       "pageTitle": "Palavras-chave de página",
       "page": "Responde automaticamente quando você envia uma mensagem contendo uma palavra-chave para um contato."
     },
-    "pageWarning": "O conteúdo de uma mensagem com uma palavra-chave de Página pode causar o envio de mensagens ao cliente em um loop infinito. Desative a palavra-chave de Página imediatamente se isso ocorrer!"
+    "pageWarning": "O conteúdo de uma mensagem com uma palavra-chave de Página pode causar o envio de mensagens ao cliente em um loop infinito. Desative a palavra-chave de Página imediatamente se isso ocorrer!",
+    "conditions": {
+      "operators": {
+        "is": "A mensagem é",
+        "similarTo": "A mensagem é parecida com",
+        "contains": "A mensagem contém",
+        "containsPhone": "A mensagem contém telefone",
+        "containsEmail": "A mensagem contém e-mail",
+        "containsImage": "A mensagem contém imagem",
+        "containsVideo": "A mensagem contém vídeo",
+        "containsLink": "A mensagem contém link",
+        "containsWholeWord": "A mensagem contém a palavra inteira",
+        "beginsWith": "A mensagem começa com",
+        "endsWith": "A mensagem termina com",
+        "isThumbsUp": "A mensagem é 👍",
+        "notContains": "A mensagem não contém",
+        "matchesRegex": "A mensagem corresponde à regex"
+      },
+      "and": "e",
+      "addCondition": "Condição da mensagem",
+      "removeCondition": "Remover condição",
+      "note": "As palavras-chave não diferenciam maiúsculas nem acentos, ex.: \"Tư vấn\" e \"tu van\" são reconhecidas como iguais.",
+      "keywordPlaceholder": "+ Palavra-chave",
+      "regexPlaceholder": "+ Regex",
+      "errors": {
+        "keywordConditionValuesRequired": "Adicione pelo menos uma palavra-chave.",
+        "keywordConditionTakesNoValues": "Esta condição não usa palavras-chave.",
+        "invalidKeywordRegex": "Expressão regular inválida."
+      }
+    }
   },
   "triggers": {
     "title": "Gatilhos"

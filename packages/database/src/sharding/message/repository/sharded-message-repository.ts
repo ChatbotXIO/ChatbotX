@@ -46,6 +46,7 @@ import type {
   ListIncomingTextsByContactInboxParams,
   ListMessagesQuery,
   MessageSourceRow,
+  MessageTextWithFileTypes,
   MessageWithAttachments,
   PaginatedMessages,
   PaginationCursor,
@@ -2509,7 +2510,7 @@ export class ShardedMessageRepository implements IMessageRepository {
     contactInboxId: string,
     sinceTime?: Date,
     workspaceId?: string,
-  ): Promise<Pick<MessageModel, "id" | "text">[]> {
+  ): Promise<MessageTextWithFileTypes[]> {
     if (ids.length === 0) {
       return []
     }
@@ -2531,34 +2532,44 @@ export class ShardedMessageRepository implements IMessageRepository {
 
     // Query all shards in parallel and deduplicate
     const shardResults = await Promise.all(
-      shards.map(
-        async (shardInfo): Promise<Pick<MessageModel, "id" | "text">[]> => {
-          try {
-            return await this.shardManager.withShardClientForRead(
-              shardInfo.shard,
-              async (shardClient) => {
-                const messages = await shardClient
-                  .select({ id: messageModel.id, text: messageModel.text })
-                  .from(messageModel)
-                  .where(
-                    and(
-                      eq(messageModel.contactInboxId, contactInboxId),
-                      inArray(messageModel.id, ids),
-                      gte(messageModel.createdAt, sinceTime),
-                    ),
-                  )
-                return messages as Pick<MessageModel, "id" | "text">[]
-              },
-            )
-          } catch (error) {
-            logger.warn(
-              { err: error, shardId: shardInfo.shard.id },
-              "Shard query failed in findManyByIds",
-            )
-            return []
-          }
-        },
-      ),
+      shards.map(async (shardInfo): Promise<MessageTextWithFileTypes[]> => {
+        try {
+          return await this.shardManager.withShardClientForRead(
+            shardInfo.shard,
+            async (shardClient) => {
+              const messages = await shardClient
+                .select({
+                  id: messageModel.id,
+                  text: messageModel.text,
+                  createdAt: messageModel.createdAt,
+                })
+                .from(messageModel)
+                .where(
+                  and(
+                    eq(messageModel.contactInboxId, contactInboxId),
+                    inArray(messageModel.id, ids),
+                    gte(messageModel.createdAt, sinceTime),
+                  ),
+                )
+              const attachmentsByMessageId =
+                await this.fetchAndGroupAttachments(shardClient, messages)
+              return messages.map((message) => ({
+                id: message.id,
+                text: message.text,
+                attachmentFileTypes: (
+                  attachmentsByMessageId[message.id] ?? []
+                ).map((attachment) => attachment.fileType),
+              }))
+            },
+          )
+        } catch (error) {
+          logger.warn(
+            { err: error, shardId: shardInfo.shard.id },
+            "Shard query failed in findManyByIds",
+          )
+          return []
+        }
+      }),
     )
 
     const seen = new Set<string>()

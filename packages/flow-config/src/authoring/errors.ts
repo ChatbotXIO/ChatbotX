@@ -1,3 +1,4 @@
+import { levenshteinDistance } from "@chatbotx.io/utils/levenshtein"
 import { z } from "zod"
 
 /**
@@ -149,38 +150,6 @@ export function zodErrorToFlowAuthoringErrors(
       message: issue.message,
     }
   })
-}
-
-// Small edit-distance algorithm — names here are short (workspace entity
-// names), so the O(n*m) cost is negligible, and a real distance catches the
-// single-character typos a prefix/substring check misses (e.g.
-// "welcom_promo" vs "welcome_promo").
-function levenshteinDistance(a: string, b: string): number {
-  const rows = a.length + 1
-  const cols = b.length + 1
-
-  const initialCell = (row: number, col: number): number => {
-    if (row === 0) {
-      return col
-    }
-    return col === 0 ? row : 0
-  }
-  const distances: number[][] = Array.from({ length: rows }, (_, i) =>
-    Array.from({ length: cols }, (_, j) => initialCell(i, j)),
-  )
-
-  for (let i = 1; i < rows; i++) {
-    for (let j = 1; j < cols; j++) {
-      const cost = a[i - 1] === b[j - 1] ? 0 : 1
-      distances[i][j] = Math.min(
-        distances[i - 1][j] + 1,
-        distances[i][j - 1] + 1,
-        distances[i - 1][j - 1] + cost,
-      )
-    }
-  }
-
-  return distances[a.length][b.length]
 }
 
 // A candidate qualifies when it's "close enough": either a prefix/substring

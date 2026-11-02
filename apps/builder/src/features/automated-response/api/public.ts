@@ -1,5 +1,6 @@
 import { automatedResponseService } from "@chatbotx.io/business"
 import { automatedResponseTypes } from "@chatbotx.io/database/partials"
+import { keywordConditionsSchema } from "@chatbotx.io/database/partials/keyword-condition-schema"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 import { mcpSpec } from "@/lib/orpc/mcp-annotations"
@@ -17,6 +18,22 @@ import { publicKeywordResource } from "../schema/resource"
 const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("automation")
 const keywordDirectionDescription =
   "Keyword direction: inbound matches messages from contacts; outbound matches messages sent by the Page/agent. Defaults to inbound. Keep the same type when reading, updating, disabling, or deleting a rule. This is not post/comment automation; use the channel's comment-automation tools for comments."
+
+const keywordConditionsDescription =
+  'Contact (inbound) match conditions, ManyChat-style. Every condition must match (AND); inside one condition any value may match (OR), except `notContains`, which matches when the message contains none of its values. Text matching ignores case and Vietnamese accents ("tu van" matches "tư vấn"). Operators that take values: is (whole message equals), similarTo (whole message is close to the value, small typos allowed), contains, containsWholeWord, beginsWith, endsWith, notContains, matchesRegex (RE2 syntax, case-insensitive, max 200 chars). Operators that take no values (send `values: []`): containsPhone, containsEmail, containsLink, containsImage, containsVideo, isThumbsUp (message is only 👍). Max 10 conditions, 50 values each. Send either `conditions` or `keywords`, never both; inbound `keywords` alone are stored as one `contains` condition. Not allowed for outbound rules, which match exact `keywords`.'
+
+const keywordMatchInputRefinement = (
+  data: { keywords?: string[]; conditions?: unknown[] },
+  ctx: z.RefinementCtx,
+) => {
+  if (data.keywords && data.conditions) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["conditions"],
+      message: "Send either keywords or conditions, not both",
+    })
+  }
+}
 
 export const keywordsPublicRouter = {
   list: workspaceTokenAuthAPI
@@ -86,37 +103,54 @@ export const keywordsPublicRouter = {
       path: "/v1/keywords",
       summary: "Create keyword automation",
       description:
-        'Use this for "when a contact says <keyword/trigger phrase>, run flow X" automations. Adds a keyword automation that sends text or starts a flow. Inbound matches messages from contacts; outbound matches messages sent by the Page/agent. Use `keywords.list` first to inspect existing rules and `flows.list` to resolve a flow. This is not post/comment automation; use the channel\'s comment-automation tools for comments.',
+        'Use this for "when a contact says <keyword/trigger phrase>, run flow X" automations. Adds a keyword automation that sends text or starts a flow. Inbound matches messages from contacts (send `keywords`, or `conditions` for richer matching: exact, similar, whole word, begins/ends with, does not contain, regex, phone, email, link, image, video, thumbs up); outbound matches messages sent by the Page/agent exactly. Use `keywords.list` first to inspect existing rules and `flows.list` to resolve a flow. This is not post/comment automation; use the channel\'s comment-automation tools for comments.',
       successStatus: 201,
       tags: ["Keywords"],
     })
     .input(
-      z.object({
-        type: automatedResponseTypes
-          .default("inbound")
-          .describe(keywordDirectionDescription),
-        keywords: z
-          .array(z.string().min(1).max(255))
-          .min(1)
-          .describe("Keyword phrases that trigger this automation."),
-        text: z
-          .string()
-          .min(1)
-          .nullish()
-          .describe(
-            "Reply text to send when matched. Mutually exclusive with flowId in practice.",
-          ),
-        flowId: zodBigintAsString()
-          .nullish()
-          .describe(
-            "Flow id (numeric string) to start when matched instead of sending text.",
-          ),
-        folderId: zodBigintAsString()
-          .nullish()
-          .describe(
-            "Folder id (numeric string) to organize this automation under.",
-          ),
-      }),
+      z
+        .object({
+          type: automatedResponseTypes
+            .default("inbound")
+            .describe(keywordDirectionDescription),
+          keywords: z
+            .array(z.string().min(1).max(255))
+            .min(1)
+            .optional()
+            .describe(
+              "Keyword phrases that trigger this automation. Required for outbound rules; for inbound rules send this or `conditions`.",
+            ),
+          conditions: keywordConditionsSchema
+            .optional()
+            .describe(keywordConditionsDescription),
+          text: z
+            .string()
+            .min(1)
+            .nullish()
+            .describe(
+              "Reply text to send when matched. Mutually exclusive with flowId in practice.",
+            ),
+          flowId: zodBigintAsString()
+            .nullish()
+            .describe(
+              "Flow id (numeric string) to start when matched instead of sending text.",
+            ),
+          folderId: zodBigintAsString()
+            .nullish()
+            .describe(
+              "Folder id (numeric string) to organize this automation under.",
+            ),
+        })
+        .superRefine((data, ctx) => {
+          keywordMatchInputRefinement(data, ctx)
+          if (!(data.keywords || data.conditions)) {
+            ctx.addIssue({
+              code: "custom",
+              path: ["keywords"],
+              message: "Send keywords or conditions",
+            })
+          }
+        }),
     )
     .output(publicKeywordResource)
     .errors(possibleErrorsOnCreatingResource)
@@ -135,34 +169,41 @@ export const keywordsPublicRouter = {
       tags: ["Keywords"],
     })
     .input(
-      z.object({
-        id: zodBigintAsString().describe(
-          "Keyword automation id. Get it from `keywords.list`.",
-        ),
-        type: automatedResponseTypes
-          .default("inbound")
-          .describe(keywordDirectionDescription),
-        keywords: z
-          .array(z.string().min(1).max(255))
-          .min(1)
-          .optional()
-          .describe("Keyword phrases that trigger this automation."),
-        text: z
-          .string()
-          .min(1)
-          .nullish()
-          .describe("Reply text to send when matched."),
-        flowId: zodBigintAsString()
-          .nullish()
-          .describe(
-            "Flow id (numeric string) to start when matched instead of sending text.",
+      z
+        .object({
+          id: zodBigintAsString().describe(
+            "Keyword automation id. Get it from `keywords.list`.",
           ),
-        folderId: zodBigintAsString()
-          .nullish()
-          .describe(
-            "Folder id (numeric string) to organize this automation under.",
-          ),
-      }),
+          type: automatedResponseTypes
+            .default("inbound")
+            .describe(keywordDirectionDescription),
+          keywords: z
+            .array(z.string().min(1).max(255))
+            .min(1)
+            .optional()
+            .describe(
+              "Keyword phrases that trigger this automation. On an inbound rule this replaces its conditions with one `contains` condition.",
+            ),
+          conditions: keywordConditionsSchema
+            .optional()
+            .describe(keywordConditionsDescription),
+          text: z
+            .string()
+            .min(1)
+            .nullish()
+            .describe("Reply text to send when matched."),
+          flowId: zodBigintAsString()
+            .nullish()
+            .describe(
+              "Flow id (numeric string) to start when matched instead of sending text.",
+            ),
+          folderId: zodBigintAsString()
+            .nullish()
+            .describe(
+              "Folder id (numeric string) to organize this automation under.",
+            ),
+        })
+        .superRefine(keywordMatchInputRefinement),
     )
     .output(publicKeywordResource)
     .errors(possibleErrorsOnMutatingResource)

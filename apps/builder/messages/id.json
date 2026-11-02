@@ -6015,7 +6015,36 @@
       "pageTitle": "Kata kunci halaman",
       "page": "Balas otomatis saat Anda mengirim pesan yang berisi kata kunci ke kontak."
     },
-    "pageWarning": "Konten pesan yang berisi kata kunci Page dapat menyebabkan pesan terkirim ke pelanggan secara berulang tanpa henti. Segera nonaktifkan kata kunci Page jika Anda mengalami situasi ini!"
+    "pageWarning": "Konten pesan yang berisi kata kunci Page dapat menyebabkan pesan terkirim ke pelanggan secara berulang tanpa henti. Segera nonaktifkan kata kunci Page jika Anda mengalami situasi ini!",
+    "conditions": {
+      "operators": {
+        "is": "Pesan adalah",
+        "similarTo": "Pesan mirip dengan",
+        "contains": "Pesan berisi",
+        "containsPhone": "Pesan berisi nomor telepon",
+        "containsEmail": "Pesan berisi email",
+        "containsImage": "Pesan berisi gambar",
+        "containsVideo": "Pesan berisi video",
+        "containsLink": "Pesan berisi tautan",
+        "containsWholeWord": "Pesan berisi kata utuh",
+        "beginsWith": "Pesan diawali dengan",
+        "endsWith": "Pesan diakhiri dengan",
+        "isThumbsUp": "Pesan adalah 👍",
+        "notContains": "Pesan tidak berisi",
+        "matchesRegex": "Pesan cocok dengan regex"
+      },
+      "and": "dan",
+      "addCondition": "Kondisi pesan",
+      "removeCondition": "Hapus kondisi",
+      "note": "Kata kunci tidak membedakan huruf besar/kecil dan mengabaikan aksen, mis. \"Tư vấn\" dan \"tu van\" dianggap sama.",
+      "keywordPlaceholder": "+ Kata kunci",
+      "regexPlaceholder": "+ Regex",
+      "errors": {
+        "keywordConditionValuesRequired": "Tambahkan minimal satu kata kunci.",
+        "keywordConditionTakesNoValues": "Kondisi ini tidak memerlukan kata kunci.",
+        "invalidKeywordRegex": "Ekspresi reguler tidak valid."
+      }
+    }
   },
   "triggers": {
     "title": "Pemicu"

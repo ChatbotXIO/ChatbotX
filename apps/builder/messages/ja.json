@@ -5994,7 +5994,36 @@
       "pageTitle": "ページキーワード",
       "page": "あなたが連絡先にキーワードを含むメッセージを送信したときに自動的に返信します。"
     },
-    "pageWarning": "ページキーワードを含むメッセージの内容が、無限ループで顧客にメッセージを送信する原因となる可能性があります。この状況が発生した場合は、直ちにページキーワードを無効にしてください!"
+    "pageWarning": "ページキーワードを含むメッセージの内容が、無限ループで顧客にメッセージを送信する原因となる可能性があります。この状況が発生した場合は、直ちにページキーワードを無効にしてください!",
+    "conditions": {
+      "operators": {
+        "is": "メッセージが次と一致",
+        "similarTo": "メッセージが次に類似",
+        "contains": "メッセージに次を含む",
+        "containsPhone": "メッセージに電話番号を含む",
+        "containsEmail": "メッセージにメールを含む",
+        "containsImage": "メッセージに画像を含む",
+        "containsVideo": "メッセージに動画を含む",
+        "containsLink": "メッセージにリンクを含む",
+        "containsWholeWord": "メッセージに単語として含む",
+        "beginsWith": "メッセージが次で始まる",
+        "endsWith": "メッセージが次で終わる",
+        "isThumbsUp": "メッセージが 👍",
+        "notContains": "メッセージに次を含まない",
+        "matchesRegex": "メッセージが正規表現に一致"
+      },
+      "and": "かつ",
+      "addCondition": "メッセージ条件",
+      "removeCondition": "条件を削除",
+      "note": "キーワードは大文字・小文字やアクセントを区別しません（例：\"Tư vấn\" と \"tu van\" は同じとみなされます）。",
+      "keywordPlaceholder": "+ キーワード",
+      "regexPlaceholder": "+ 正規表現",
+      "errors": {
+        "keywordConditionValuesRequired": "キーワードを1つ以上追加してください。",
+        "keywordConditionTakesNoValues": "この条件にキーワードは不要です。",
+        "invalidKeywordRegex": "正規表現が無効です。"
+      }
+    }
   },
   "triggers": {
     "title": "トリガー"

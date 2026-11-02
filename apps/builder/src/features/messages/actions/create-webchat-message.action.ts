@@ -1,6 +1,9 @@
 "use server"
 
-import { automatedResponseService } from "@chatbotx.io/automated-response"
+import {
+  automatedResponseService,
+  isKeywordMediaFileType,
+} from "@chatbotx.io/automated-response"
 import {
   contactInboxService,
   contactService,
@@ -314,6 +317,12 @@ export async function handleCreateWebchatMessage({
     )
 
     const promises: Promise<unknown>[] = []
+    // An image/video without text still reaches Keywords (image/video
+    // conditions); the enqueue only queues it when a keyword rule matches.
+    const attachmentFileTypes = newMessage.attachments.map(
+      (attachment) => attachment.fileType,
+    )
+    const hasKeywordMedia = attachmentFileTypes.some(isKeywordMediaFileType)
 
     const additionalAttributes =
       conversation.additionalAttributes as unknown as ConversationAttributes
@@ -343,27 +352,32 @@ export async function handleCreateWebchatMessage({
         ),
       )
     } else if (
-      newMessage.text &&
+      (newMessage.text || hasKeywordMedia) &&
       !("postback" in parsedInput && parsedInput.postback)
     ) {
       const isConversationActive =
         await conversationService.ensureActive(conversation)
-      promises.push(
-        isConversationActive
-          ? automatedResponseService.enqueue({
-              conversationId: conversation.id,
-              contactInboxId: contactInbox.id,
-              messageId: newMessage.id,
-              messageText: newMessage.text,
-              workspaceId: conversation.workspaceId,
-            })
-          : automatedResponseService.enqueueHandoffReentry({
-              conversationId: conversation.id,
-              contactInboxId: contactInbox.id,
-              messageId: newMessage.id,
-              workspaceId: conversation.workspaceId,
-            }),
-      )
+      if (isConversationActive) {
+        promises.push(
+          automatedResponseService.enqueue({
+            conversationId: conversation.id,
+            contactInboxId: contactInbox.id,
+            messageId: newMessage.id,
+            messageText: newMessage.text ?? undefined,
+            attachmentFileTypes,
+            workspaceId: conversation.workspaceId,
+          }),
+        )
+      } else if (newMessage.text) {
+        promises.push(
+          automatedResponseService.enqueueHandoffReentry({
+            conversationId: conversation.id,
+            contactInboxId: contactInbox.id,
+            messageId: newMessage.id,
+            workspaceId: conversation.workspaceId,
+          }),
+        )
+      }
     }
 
     if (isNewContact && contactInbox.sourceId) {

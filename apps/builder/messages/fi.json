@@ -6015,7 +6015,36 @@
       "pageTitle": "Sivun avainsanat",
       "page": "Vastaa automaattisesti, kun lähetät avainsanan sisältävän viestin kontaktille."
     },
-    "pageWarning": "Sivun avainsanan sisältävä viestisisältö voi johtaa viestien lähettämiseen asiakkaalle loputtomana silmukkana. Poista sivun avainsana käytöstä välittömästi, jos kohtaat tämän tilanteen!"
+    "pageWarning": "Sivun avainsanan sisältävä viestisisältö voi johtaa viestien lähettämiseen asiakkaalle loputtomana silmukkana. Poista sivun avainsana käytöstä välittömästi, jos kohtaat tämän tilanteen!",
+    "conditions": {
+      "operators": {
+        "is": "Viesti on",
+        "similarTo": "Viesti muistuttaa",
+        "contains": "Viesti sisältää",
+        "containsPhone": "Viesti sisältää puhelinnumeron",
+        "containsEmail": "Viesti sisältää sähköpostin",
+        "containsImage": "Viesti sisältää kuvan",
+        "containsVideo": "Viesti sisältää videon",
+        "containsLink": "Viesti sisältää linkin",
+        "containsWholeWord": "Viesti sisältää kokonaisen sanan",
+        "beginsWith": "Viesti alkaa",
+        "endsWith": "Viesti päättyy",
+        "isThumbsUp": "Viesti on 👍",
+        "notContains": "Viesti ei sisällä",
+        "matchesRegex": "Viesti vastaa regexiä"
+      },
+      "and": "ja",
+      "addCondition": "Viestin ehto",
+      "removeCondition": "Poista ehto",
+      "note": "Avainsanat eivät erottele isoja ja pieniä kirjaimia eivätkä aksentteja, esim. \"Tư vấn\" ja \"tu van\" tunnistetaan samaksi.",
+      "keywordPlaceholder": "+ Avainsana",
+      "regexPlaceholder": "+ Regex",
+      "errors": {
+        "keywordConditionValuesRequired": "Lisää vähintään yksi avainsana.",
+        "keywordConditionTakesNoValues": "Tämä ehto ei käytä avainsanoja.",
+        "invalidKeywordRegex": "Virheellinen säännöllinen lauseke."
+      }
+    }
   },
   "triggers": {
     "title": "Käynnistimet"

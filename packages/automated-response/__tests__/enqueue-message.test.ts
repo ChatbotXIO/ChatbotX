@@ -246,7 +246,7 @@ describe("enqueueMessage", () => {
     const lookupError = new Error("cache unavailable")
     mockWorkspaceFindById.mockRejectedValue(lookupError)
 
-    await expect(enqueueMessage(enqueueProps)).resolves.toBeUndefined()
+    await expect(enqueueMessage(enqueueProps)).resolves.toBe(true)
 
     expect(mockLoggerWarn).toHaveBeenCalledWith(
       lookupError,
@@ -262,5 +262,62 @@ describe("enqueueMessage", () => {
         }),
       }),
     )
+  })
+
+  describe("image/video without text", () => {
+    const mediaProps = {
+      ...enqueueProps,
+      messageText: "",
+      attachmentFileTypes: ["image" as const],
+    }
+
+    test("is not queued when no inbound keyword rule matches it", async () => {
+      mockWorkspaceFindById.mockResolvedValue({})
+      mockAutomatedResponseGetAll.mockResolvedValue([
+        {
+          type: "inbound",
+          keywords: [],
+          conditions: [{ operator: "containsVideo", values: [] }],
+        },
+        {
+          type: "outbound",
+          keywords: [],
+          conditions: [{ operator: "containsImage", values: [] }],
+        },
+      ])
+
+      await expect(enqueueMessage(mediaProps)).resolves.toBe(false)
+
+      expect(mockAiAgentQueueAdd).not.toHaveBeenCalled()
+      expect(mockSimpleQueueEnqueue).not.toHaveBeenCalled()
+    })
+
+    test("is queued when an inbound image condition matches it", async () => {
+      mockWorkspaceFindById.mockResolvedValue({})
+      mockAutomatedResponseGetAll.mockResolvedValue([
+        {
+          type: "inbound",
+          keywords: [],
+          conditions: [{ operator: "containsImage", values: [] }],
+        },
+      ])
+
+      await expect(enqueueMessage(mediaProps)).resolves.toBe(true)
+
+      expect(mockAiAgentQueueAdd).toHaveBeenCalledTimes(1)
+      expect(mockSimpleQueueEnqueue).toHaveBeenCalledWith(
+        queueKey,
+        "message-1",
+        expect.any(Number),
+      )
+    })
+
+    test("is not queued when the keyword lookup fails", async () => {
+      mockAutomatedResponseGetAll.mockRejectedValue(new Error("redis down"))
+
+      await expect(enqueueMessage(mediaProps)).resolves.toBe(false)
+
+      expect(mockAiAgentQueueAdd).not.toHaveBeenCalled()
+    })
   })
 })

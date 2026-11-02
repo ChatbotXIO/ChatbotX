@@ -6015,7 +6015,36 @@
       "pageTitle": "Mots-clés de page",
       "page": "Répond automatiquement lorsque vous envoyez un message contenant un mot-clé à un contact."
     },
-    "pageWarning": "Un message contenant un mot-clé de Page peut entraîner l'envoi de messages au contact en boucle infinie. Désactivez immédiatement le mot-clé de Page si cela se produit !"
+    "pageWarning": "Un message contenant un mot-clé de Page peut entraîner l'envoi de messages au contact en boucle infinie. Désactivez immédiatement le mot-clé de Page si cela se produit !",
+    "conditions": {
+      "operators": {
+        "is": "Le message est",
+        "similarTo": "Le message ressemble à",
+        "contains": "Le message contient",
+        "containsPhone": "Le message contient un téléphone",
+        "containsEmail": "Le message contient un e-mail",
+        "containsImage": "Le message contient une image",
+        "containsVideo": "Le message contient une vidéo",
+        "containsLink": "Le message contient un lien",
+        "containsWholeWord": "Le message contient le mot entier",
+        "beginsWith": "Le message commence par",
+        "endsWith": "Le message se termine par",
+        "isThumbsUp": "Le message est 👍",
+        "notContains": "Le message ne contient pas",
+        "matchesRegex": "Le message correspond à la regex"
+      },
+      "and": "et",
+      "addCondition": "Condition de message",
+      "removeCondition": "Supprimer la condition",
+      "note": "Les mots-clés ne tiennent compte ni de la casse ni des accents, p. ex. \"Tư vấn\" et \"tu van\" sont reconnus comme identiques.",
+      "keywordPlaceholder": "+ Mot-clé",
+      "regexPlaceholder": "+ Regex",
+      "errors": {
+        "keywordConditionValuesRequired": "Ajoutez au moins un mot-clé.",
+        "keywordConditionTakesNoValues": "Cette condition n'utilise pas de mots-clés.",
+        "invalidKeywordRegex": "Expression régulière invalide."
+      }
+    }
   },
   "triggers": {
     "title": "Déclencheurs"

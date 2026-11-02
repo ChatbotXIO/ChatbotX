@@ -3,11 +3,14 @@ import {
   decisionProfileService,
   workspaceService,
 } from "@chatbotx.io/business"
-import { isSmartResponseDelayOption } from "@chatbotx.io/database/partials"
+import {
+  type FileType,
+  isSmartResponseDelayOption,
+} from "@chatbotx.io/database/partials"
 import { simpleQueue } from "@chatbotx.io/redis"
 import { AIJobAction, aiAgentQueue } from "@chatbotx.io/worker-config"
 import { getKey } from "./constants"
-import { matchesAnyKeywordRule } from "./keyword-match"
+import { type KeywordMatchInput, matchesAnyKeywordRule } from "./keyword-match"
 import { logger } from "./lib/logger"
 import {
   isSmartDelayEligible,
@@ -15,35 +18,62 @@ import {
 } from "./smart-delay"
 import { automatedResponseService } from "./utils"
 
+const findInboundKeywordRules = async (workspaceId: string) =>
+  (await automatedResponseService.getAll(workspaceId)).filter(
+    (rule) => rule.type === "inbound",
+  )
+
+/**
+ * Queues a contact message for Keywords → AI. Returns false when nothing was
+ * queued: an image/video without text is queued only when an inbound keyword
+ * rule matches it, so the AI agent / Global Router never answer a bare photo.
+ */
 export const enqueueMessage = async (props: {
   conversationId: string
   contactInboxId: string
   messageId: string
   messageText?: string
+  attachmentFileTypes?: readonly FileType[]
   workspaceId: string
-}) => {
+}): Promise<boolean> => {
   const key = getKey(props)
   let timing = resolveAutomatedResponseTiming(null)
+  const matchInput: KeywordMatchInput = {
+    text: props.messageText || null,
+    attachmentFileTypes: props.attachmentFileTypes ?? [],
+  }
+  const hasMatchInput =
+    Boolean(matchInput.text) || matchInput.attachmentFileTypes.length > 0
+
+  if (!matchInput.text && hasMatchInput) {
+    try {
+      const keywordRules = await findInboundKeywordRules(props.workspaceId)
+      if (!matchesAnyKeywordRule(matchInput, keywordRules)) {
+        return false
+      }
+    } catch (error) {
+      logger.error(
+        { err: error, messageId: props.messageId },
+        "Keyword lookup failed for a media-only message",
+      )
+      return false
+    }
+  }
 
   try {
     const workspace = await workspaceService.findById({ id: props.workspaceId })
     const workspaceDelay = workspace?.smartResponseDelaySeconds
 
     if (isSmartResponseDelayOption(workspaceDelay)) {
-      const [allAutomatedResponses, aiAgent, hasGlobalRouter] =
-        await Promise.all([
-          props.messageText
-            ? automatedResponseService.getAll(props.workspaceId)
-            : Promise.resolve([]),
-          aiAgentService.findDefault(props.workspaceId),
-          decisionProfileService.hasGlobalRouterEnabled(props.workspaceId),
-        ])
-      const keywordRules = allAutomatedResponses.filter(
-        (rule) => rule.type === "inbound",
-      )
-      const matchesKeyword = props.messageText
-        ? matchesAnyKeywordRule(props.messageText, keywordRules)
-        : false
+      const [keywordRules, aiAgent, hasGlobalRouter] = await Promise.all([
+        hasMatchInput
+          ? findInboundKeywordRules(props.workspaceId)
+          : Promise.resolve([]),
+        aiAgentService.findDefault(props.workspaceId),
+        decisionProfileService.hasGlobalRouterEnabled(props.workspaceId),
+      ])
+      const matchesKeyword =
+        hasMatchInput && matchesAnyKeywordRule(matchInput, keywordRules)
 
       timing = resolveAutomatedResponseTiming(
         isSmartDelayEligible({
@@ -93,4 +123,5 @@ export const enqueueMessage = async (props: {
   } catch (error) {
     logger.error(error, "Unable to trigger automated response")
   }
+  return true
 }

@@ -6015,7 +6015,36 @@
       "pageTitle": "Parole chiave pagina",
       "page": "Rispondi automaticamente quando invii un messaggio contenente una parola chiave a un contatto."
     },
-    "pageWarning": "Il contenuto di un messaggio con una parola chiave Page può causare l'invio di messaggi al cliente in un ciclo infinito. Disattiva immediatamente la parola chiave Page se riscontri questa situazione!"
+    "pageWarning": "Il contenuto di un messaggio con una parola chiave Page può causare l'invio di messaggi al cliente in un ciclo infinito. Disattiva immediatamente la parola chiave Page se riscontri questa situazione!",
+    "conditions": {
+      "operators": {
+        "is": "Il messaggio è",
+        "similarTo": "Il messaggio è simile a",
+        "contains": "Il messaggio contiene",
+        "containsPhone": "Il messaggio contiene un telefono",
+        "containsEmail": "Il messaggio contiene un'e-mail",
+        "containsImage": "Il messaggio contiene un'immagine",
+        "containsVideo": "Il messaggio contiene un video",
+        "containsLink": "Il messaggio contiene un link",
+        "containsWholeWord": "Il messaggio contiene la parola intera",
+        "beginsWith": "Il messaggio inizia con",
+        "endsWith": "Il messaggio termina con",
+        "isThumbsUp": "Il messaggio è 👍",
+        "notContains": "Il messaggio non contiene",
+        "matchesRegex": "Il messaggio corrisponde alla regex"
+      },
+      "and": "e",
+      "addCondition": "Condizione del messaggio",
+      "removeCondition": "Rimuovi condizione",
+      "note": "Le parole chiave non distinguono maiuscole/minuscole e ignorano gli accenti, ad es. \"Tư vấn\" e \"tu van\" sono riconosciute come uguali.",
+      "keywordPlaceholder": "+ Parola chiave",
+      "regexPlaceholder": "+ Regex",
+      "errors": {
+        "keywordConditionValuesRequired": "Aggiungi almeno una parola chiave.",
+        "keywordConditionTakesNoValues": "Questa condizione non usa parole chiave.",
+        "invalidKeywordRegex": "Espressione regolare non valida."
+      }
+    }
   },
   "triggers": {
     "title": "Trigger"

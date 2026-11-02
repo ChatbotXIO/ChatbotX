@@ -6697,7 +6697,36 @@
       "pageTitle": "Page keywords",
       "page": "Automatically reply when you send a message containing a keyword to a contact."
     },
-    "pageWarning": "Message content containing a Page keyword can cause messages to be sent to the customer in an infinite loop. Disable the Page keyword immediately if you encounter this situation!"
+    "pageWarning": "Message content containing a Page keyword can cause messages to be sent to the customer in an infinite loop. Disable the Page keyword immediately if you encounter this situation!",
+    "conditions": {
+      "operators": {
+        "is": "Message is",
+        "similarTo": "Message similar to",
+        "contains": "Message contains",
+        "containsPhone": "Message contains phone",
+        "containsEmail": "Message contains email",
+        "containsImage": "Message contains image",
+        "containsVideo": "Message contains video",
+        "containsLink": "Message contains link",
+        "containsWholeWord": "Message contains whole word",
+        "beginsWith": "Message begins with",
+        "endsWith": "Message ends with",
+        "isThumbsUp": "Message is thumbs up",
+        "notContains": "Message doesn't contain",
+        "matchesRegex": "Message matching regex"
+      },
+      "and": "and",
+      "addCondition": "Message condition",
+      "removeCondition": "Remove condition",
+      "note": "Keywords are not case-sensitive and ignore accents, e.g. \"Tư vấn\" and \"tu van\" are recognised as the same.",
+      "keywordPlaceholder": "+ Keyword",
+      "regexPlaceholder": "+ Regex",
+      "errors": {
+        "keywordConditionValuesRequired": "Add at least one keyword.",
+        "keywordConditionTakesNoValues": "This condition takes no keywords.",
+        "invalidKeywordRegex": "Invalid regular expression."
+      }
+    }
   },
   "triggers": {
     "title": "Triggers"

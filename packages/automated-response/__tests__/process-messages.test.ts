@@ -53,7 +53,9 @@ describe("processPendingMessages", () => {
     vi.clearAllMocks()
     mockQueueClear.mockResolvedValue(undefined)
     mockQueueGetAll.mockResolvedValue(["message-1"])
-    mockFindManyByIds.mockResolvedValue([{ id: "message-1", text: "price" }])
+    mockFindManyByIds.mockResolvedValue([
+      { id: "message-1", text: "price", attachmentFileTypes: [] },
+    ])
     mockGetAll.mockResolvedValue([{ id: "rule-1", type: "inbound" }])
   })
 
@@ -103,8 +105,9 @@ describe("processPendingMessages", () => {
 
   test("does not dispatch attachment, postback, challenge, or quick-reply batches without text", async () => {
     mockFindManyByIds.mockResolvedValue([
-      { id: "attachment", text: null },
-      { id: "postback", text: "" },
+      { id: "attachment", text: null, attachmentFileTypes: ["file"] },
+      { id: "audio", text: null, attachmentFileTypes: ["audio"] },
+      { id: "postback", text: "", attachmentFileTypes: [] },
     ])
 
     await expect(
@@ -115,5 +118,27 @@ describe("processPendingMessages", () => {
     ).resolves.toEqual({ status: "noEligibleMessage" })
 
     expect(mockDispatchReply).not.toHaveBeenCalled()
+  })
+
+  test("dispatches an image/video-only message with its attachment types", async () => {
+    mockFindManyByIds.mockResolvedValue([
+      { id: "image", text: null, attachmentFileTypes: ["image"] },
+    ])
+    mockDispatchReply.mockResolvedValue(true)
+
+    await expect(
+      processPendingMessages({
+        contactInbox: contactInbox as never,
+        conversation: conversation as never,
+      }),
+    ).resolves.toEqual({ status: "handled" })
+
+    expect(mockDispatchReply).toHaveBeenCalledWith(
+      expect.objectContaining({
+        messageId: "image",
+        text: "",
+        attachmentFileTypes: ["image"],
+      }),
+    )
   })
 })

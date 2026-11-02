@@ -1,6 +1,12 @@
 import type { RichResponseContentAttributes } from "../../schema"
 import type { AttachmentModel, MessageModel } from "../../types"
 
+/** A queued message's text plus the file types attached to it (keyword
+ * rules match image/video attachments, not just text). */
+export type MessageTextWithFileTypes = Pick<MessageModel, "id" | "text"> & {
+  attachmentFileTypes: AttachmentModel["fileType"][]
+}
+
 export interface CreateMessageInput {
   contactInboxId: string
   contentAttributes?: Record<string, unknown> | null
@@ -318,7 +324,7 @@ export interface IMessageRepository {
     contactInboxId: string,
     sinceTime?: Date,
     workspaceId?: string,
-  ): Promise<Pick<MessageModel, "id" | "text">[]>
+  ): Promise<MessageTextWithFileTypes[]>
 
   findManyBySourceIds(
     params: FindManyBySourceIdsParams,
