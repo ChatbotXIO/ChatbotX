@@ -1,7 +1,10 @@
 ---
 name: worker-development
 description: >-
-  Create and manage background workers, BullMQ queues, and scheduled jobs. Use when adding new workers, creating queues, defining job types, building scheduled tasks, or working with async processing.
+  Use when adding or changing a BullMQ queue, job type, consumer, or scheduled job
+  — job types in `packages/worker-config`, handlers in `apps/worker/src`. Covers
+  consumer registration, `withBlockedOwnerGuard` for workspace-scoped jobs, and
+  retries. Pair with `reliability-concurrency` for idempotency and locks.
 ---
 
 # Worker Development
@@ -23,217 +26,32 @@ standalone` and `worker core` default `WORKER_SHUTDOWN_TIMEOUT_MS` to 8 seconds,
 while other modes drain until complete unless that variable is set.
 
 **Shared config** lives in `packages/worker-config/` (`@chatbotx.io/worker-config`).
-
-## Existing Workers
-
-| Worker | Queue | Entry |
-|--------|-------|-------|
-| integration | `integration` | `src/integration/worker.ts` |
-| chat | `chat` | `src/chat/worker.ts` |
-| ai-agent | `aiAgent` | `src/ai-agent/worker.ts` |
-| heavy | `heavy` | `src/heavy/worker.ts` |
-| default | `default` | `src/default/worker.ts` |
-| trigger | `trigger` | `src/trigger/worker.ts` |
-| webhook | `webhook` | `src/webhook/worker.ts` |
-| schedule | (cron) | `src/schedule/worker.ts` |
-| sequence-scheduler | `sequenceScheduler` | `src/sequence-scheduler/worker*.ts` |
-| notification | `notification` | `src/notification/worker.ts` |
-| low | `low` | `src/low/worker.ts` |
-| marketing-message | `marketingMessage` | `src/marketing-message/worker.ts` |
-| events | event-bus (not BullMQ) | `src/events/worker.ts` — `startWorker([...listeners])` from `@chatbotx.io/event-bus/worker` |
-
-`queueNames` (`packages/worker-config/src/lib/types.ts:3`) also declares `broadcast` and
-`quota`, which have queues but no dedicated worker entry — their jobs are consumed by the
-workers above. Some queues get their own `Worker` (own concurrency) hosted inside an existing
-process: `profileSnapshot` and `leaderboard` in `src/low/worker.ts`. Marketing Messages
-campaign steps have their own `marketingMessage` worker, while schedule crons enqueue them.
 Check `apps/worker/tsdown.config.ts` for the authoritative entry list.
 
-The `heavy` queue/worker is a **workload-class** queue, not a domain queue:
-use it for bounded but RAM/CPU/I/O/model-heavy jobs that should not occupy
-latency-sensitive domain workers. AI file processing, media generation,
-speech/text conversion, document extraction, and image analysis are current
-tenants. Future heavy workloads can join this queue with their own
-`src/heavy/handlers/<domain-or-capability>/` handler area when the same
-resource-isolation tradeoff applies.
+## Workflow: new queue / job / consumer
 
-## Creating a New Queue
+1. **Queue name** — add the member to the `queueNames` zod enum in `packages/worker-config/src/lib/types.ts`; refer to it as `queueNames.enum.myQueue`.
+2. **Job types and queue** — `packages/worker-config/src/queues/<name>/index.ts`, exported from `packages/worker-config/src/index.ts`. Samples: [queue-definition](references/queue-definition.md).
+3. **Worker** — copy `apps/worker/src/notification/worker.ts` to `apps/worker/src/<domain>/worker.ts`; use `createQueueWorker` + `runWorker`, never a hand-rolled `new Worker(…)`, `ensureBootstrapped()` or `failed` listeners. Change the queue, the `Job<MyQueueJobData>` type, the `switch (job.data.type)` body (with `default: return`), and the concurrency env var.
+4. **Register in three places** — import in `apps/worker/src/core.ts` (or `standalone.ts` for cron/sequence-like workers), add the tsdown entry, add it to the existing-workers table. Plus a dev script in `apps/worker/package.json`. Details: [worker-registration](references/worker-registration.md).
+5. **Producer** — `myQueue.add(...)` / `addBulk` from `@chatbotx.io/worker-config`. See [enqueue-and-job-ids](references/enqueue-and-job-ids.md).
+6. **Cron job** — four-edit flow (`ScheduleJobData`, handler, `case` in `src/schedule/worker.ts`, `upsertJobScheduler`). See [scheduled-jobs](references/scheduled-jobs.md).
 
-### 1. Define Queue Name
+The `heavy` queue is a workload-class queue (RAM/CPU/I/O/model-heavy jobs); see [existing-workers](references/existing-workers.md).
 
-Add the member to the `queueNames` **zod enum** in
-`packages/worker-config/src/lib/types.ts` (it is a `z.enum([...])`, not an object literal —
-there is no `queueName` symbol):
+## Traps
 
-```typescript
-export const queueNames = z.enum([
-  // ...existing
-  "myQueue",
-])
-```
+- **Do not drop `withBlockedOwnerGuard`.** Every workspace-scoped processor must wrap its body in it (repo invariant 15) — a template without it is the single most common mistake here.
+- **`jobId` must NOT contain `:`** — BullMQ throws `Custom Id cannot contain :`. Use `-`/`_`; keep ids deterministic and whitespace-free (e.g. `schedule-prepare-broadcast-<id>`).
+- **Dedup jobs**: `removeOnComplete: { age, count }`, never `removeOnComplete: true`. **Re-driveable (cron) jobs**: `removeOnComplete: true` + `removeOnFail: true`.
+- **Never reuse an active job's `jobId`** for a self-requeue inside that same job — BullMQ drops the add. Drive continuation from a separate cron.
+- **Mocked `queue.add` does not validate `jobId`** — assert it contains no `:`, and prefer one integration test against real (or `ioredis-mock`) BullMQ.
+- **Unknown job action** is a no-op (`default: return`), not a throw.
+- **A worker not imported by an entry point never runs** under `worker standalone` — do all three registration steps.
+- **Cron handlers that mutate shared state** wrap their body in `distributedLock.runExclusive({ key, timeoutInSeconds, fn })`; the TTL must be shorter than the schedule cadence. When changing `purgeWorkspaces`, also read `workspace-purge`.
+- **Never `console`**; never a per-entry signal handler or `process.exit()`.
 
-Refer to it everywhere as `queueNames.enum.myQueue`.
-
-### 2. Define Job Types
-
-Create `packages/worker-config/src/queues/<name>/index.ts`:
-
-```typescript
-import { Queue } from "bullmq"
-import { getRedisConnection, defaultJobOptions, fakeQueue } from "../../lib/connection"
-
-export enum MyQueueJobAction {
-  processItem = "processItem",
-  syncData = "syncData",
-}
-
-type ProcessItemJob = {
-  type: MyQueueJobAction.processItem
-  data: { itemId: string; workspaceId: string }
-}
-
-type SyncDataJob = {
-  type: MyQueueJobAction.syncData
-  data: { source: string }
-}
-
-export type MyQueueJobData = ProcessItemJob | SyncDataJob
-
-const NEXT_PHASE = process.env.NEXT_PHASE
-export const myQueue =
-  NEXT_PHASE === "phase-production-build"
-    ? fakeQueue
-    : new Queue(queueNames.enum.myQueue, {
-        connection: getRedisConnection(),
-        defaultJobOptions,
-      })
-```
-
-### 3. Export from Package
-
-Add to `packages/worker-config/src/index.ts`:
-
-```typescript
-export * from "./queues/<name>"
-```
-
-## Creating a New Worker
-
-**Copy `apps/worker/src/notification/worker.ts`** — it is the smallest complete example and
-already shows the shape you need: a `start` function that calls
-`createQueueWorker(queueNames.enum.<queue>, processor, { concurrency: env.<X>_WORKER_CONCURRENCY,
-onFailed? })` with a `withBlockedOwnerGuard(workspaceId, …)`-wrapped processor, then
-`runWorker("<name>", start)` at module bottom. `createQueueWorker`
-(`apps/worker/src/lib/create-queue-worker.ts`) supplies the connection, `defaultWorkerOptions`, the
-`error`/`failed` listeners and shutdown draining — do not hand-roll `new Worker(…)`,
-`ensureBootstrapped()` or `failed` listeners. `runWorker` (`apps/worker/src/lib/shutdown.ts`)
-bootstraps and routes start failures into the shared shutdown.
-
-Create `apps/worker/src/<domain>/worker.ts` from it and change four things:
-
-1. The queue: `queueNames.enum.myQueue`.
-2. The job type: `Job<MyQueueJobData>`.
-3. The processor body — `switch (job.data.type)` over your `MyQueueJobAction` members, with a
-   `default: return` so an unknown action is a no-op rather than a throw.
-4. The concurrency env var, if the workload needs one.
-
-**Do not drop `withBlockedOwnerGuard`.** Every workspace-scoped processor must wrap its body in
-it (repo invariant 15) — a template without it is the single most common mistake here. See
-"Blocked-owner guard" below for which jobs are exempt.
-
-### Register the Worker (three places)
-
-A worker that is not imported by an entry point never runs under the image default
-`worker standalone`. Do all three:
-
-1. Import it in `apps/worker/src/core.ts` (or `apps/worker/src/standalone.ts` for cron/sequence-like workers).
-2. Add the tsdown entry below.
-3. Add it to the existing-workers table in this skill.
-
-#### tsdown entry
-
-Add to `apps/worker/tsdown.config.ts`:
-
-```typescript
-entry: [
-  // ...existing
-  "src/<domain>/worker.ts",
-]
-```
-
-### Add Dev Script
-
-Add to `apps/worker/package.json`:
-
-```json
-{
-  "scripts": {
-    "worker:<domain>": "dotenv -e ../../.env -- tsx --watch src/<domain>/worker.ts"
-  }
-}
-```
-
-Include in the `dev` script's concurrently list if needed.
-
-## Enqueuing Jobs (Producer Side)
-
-From builder or other apps:
-
-```typescript
-import { myQueue, MyQueueJobAction } from "@chatbotx.io/worker-config"
-
-await myQueue.add("processItem", {
-  type: MyQueueJobAction.processItem,
-  data: { itemId: "123", workspaceId: "456" },
-})
-
-// Bulk enqueue
-await myQueue.addBulk([
-  {
-    name: "syncData",
-    data: { type: MyQueueJobAction.syncData, data: { source: "api" } },
-  },
-])
-```
-
-## Custom Job IDs & Deduplication
-
-A custom `jobId` deduplicates work: a second `add` with an existing `jobId` returns the existing job instead of creating a new one (while that job is still present in the queue).
-
-**CRITICAL — `jobId` must NOT contain `:`.** BullMQ uses `:` as its internal Redis key delimiter, so a custom id containing it throws at runtime: `Error: Custom Id cannot contain :`. Build ids from `-`/`_` plus the entity ids:
-
-```typescript
-// ✅ correct
-const jobId = `broadcast-send-contact-${broadcastId}-${contactId}-${type}`
-// ❌ runtime crash: "Custom Id cannot contain :"
-const jobId = `bcast:${broadcastId}:${contactId}:${type}`
-```
-
-Keep ids deterministic (so retries / re-picks collapse onto the same job) and free of whitespace. The repo convention is `-`-separated (e.g. `schedule-prepare-broadcast-<id>`).
-
-### Retention vs re-drive — two opposite `removeOnComplete` policies
-
-- **Dedup job** (one-shot per entity, e.g. per-contact send): use `removeOnComplete: { age, count }` (TTL retention) so the id survives long enough to dedup concurrent / retry / crash-window re-adds. **Never `removeOnComplete: true`** — it removes the id immediately and reopens the duplicate window.
-- **Re-driveable job** (a cron re-adds the same id every tick): use `removeOnComplete: true` + `removeOnFail: true` so the id frees after each run and the next tick can re-add it. Retention here would dedup the next tick away and stall the entity.
-
-Never reuse an active job's `jobId` for a self-requeue created *inside* that same job — BullMQ drops the add (id already active) and the chain dies. Drive continuation from a separate cron instead.
-
-### Testing job IDs (mock pitfall)
-
-Unit tests usually mock `queue.add` as `vi.fn()`, which accepts **any** args — it does **not** validate the `jobId` like real BullMQ. A wrong id format (e.g. containing `:`) passes a self-consistent unit test (code and test agree on the bad string) but crashes at runtime. Always assert the produced `jobId` against the constraint:
-
-```typescript
-const jobIds = addSpy.mock.calls.map((c) => c[2].jobId)
-for (const jobId of jobIds) expect(jobId).not.toContain(":")
-```
-
-For at least one enqueue path, prefer an integration test against real (or `ioredis-mock`) BullMQ to catch library-level input validation that mocks miss.
-
-## Scheduled Jobs (Cron)
-
-Handlers that mutate shared state must wrap their body in
-`distributedLock.runExclusive({ key, timeoutInSeconds, fn })`. The TTL must be
-shorter than the schedule cadence so concurrent worker replicas cannot overlap.
+### Blocked-owner guard
 
 Every workspace-scoped processor should resolve its workspace with
 `resolveWorkspaceId` and gate execution with `withBlockedOwnerGuard` (or the
@@ -241,20 +59,6 @@ worker helper built on it). A blocked owner is a safe-return no-op: return
 without throwing so BullMQ acknowledges the job without retry/DLQ. Jobs that
 cannot be attributed to a workspace remain deliberately fail-open. System,
 quota, and tenancy lifecycle jobs are excluded from this gate.
-
-### Adding a schedule handler
-
-Use this four-edit flow, shown by the `purgeWorkspaces` handler:
-When changing `purgeWorkspaces`, also read `workspace-purge` so the schedule remains bounded below its lock TTL.
-
-
-1. Add the `ScheduleJobData` key, payload type, and union member in
-   `packages/worker-config/src/queues/schedule/index.ts`.
-2. Add `handlers/purge-workspaces.ts` (or the new handler name).
-3. Add the corresponding `case` in `src/schedule/worker.ts`.
-4. Register it with `upsertJobScheduler` in `handlers/register-schedules.ts`.
-
-### Blocked-owner guard
 
 Every new workspace-scoped worker or consumer must wrap its processor with
 `withBlockedOwnerGuard`. A blocked owner must use a bare `return`, never throw:
@@ -269,14 +73,6 @@ The guard excludes system/quota/tenancy work: `sendAuditLog`, the
 broadcast handlers that operate on workspace-owned broadcast work (`prepareBroadcast`, `processBroadcastContacts` and
 `materializeRecurringBroadcasts`, which advances the series with a `skipped/blockedOwner` ledger row instead of a bare `return`). Observability jobs stay unguarded so blocked
 jobs can still report failures.
-
-## Sequence scheduling
-
-Sequence dispatch uses BullMQ on Redis. `packages/sequence-scheduler` hashes
-dispatches across 256 buckets, while `SchedulerClient` stores schedule and retry
-entries in Redis sorted sets. Redlock-backed `withLock` claims each dispatch before
-it is published to the `sequenceScheduler` queue, preventing concurrent scheduler
-workers from processing the same dispatch.
 
 ## Worker Imports
 
@@ -300,3 +96,16 @@ never use `console`. Log errors as `{ err, jobId: job?.id }` — the key is `err
 - Workers load env via `dotenv -e ../../.env` (root `.env` file)
 - Redis URL configured in `packages/worker-config/src/keys.ts`
 - `fakeQueue` stubs are used during Next.js production build to avoid Redis requirement
+
+## Verification
+
+- `pnpm lint` and `pnpm --filter worker check-types` (plus `@chatbotx.io/worker-config` if touched).
+- Unit-test the processor and assert produced `jobId`s.
+
+## References
+
+- [references/existing-workers.md](references/existing-workers.md) — table of current workers/queues/entries; read to find the right host worker or the `heavy` queue rules.
+- [references/queue-definition.md](references/queue-definition.md) — `queueNames` enum, job-type/queue code sample, package export; read when creating a queue.
+- [references/worker-registration.md](references/worker-registration.md) — worker template steps, three-place registration, tsdown entry, dev script.
+- [references/enqueue-and-job-ids.md](references/enqueue-and-job-ids.md) — producer samples, custom job id/dedup rules, retention policies, job-id test pitfalls.
+- [references/scheduled-jobs.md](references/scheduled-jobs.md) — cron lock rule, four-edit schedule-handler flow, sequence scheduling internals.

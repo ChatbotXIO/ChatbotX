@@ -1,6 +1,6 @@
 ---
 name: implement-plan
-description: Implement an already-approved technical plan from a plan path, executing the next unfinished task without replanning or expanding scope.
+description: Use when the user hands over an approved implementation plan (a plan path) and asks to implement, continue, or resume it. Executes the next unfinished task without replanning or expanding scope.
 ---
 
 # Implement Approved Plan

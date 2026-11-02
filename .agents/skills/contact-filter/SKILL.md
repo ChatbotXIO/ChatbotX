@@ -12,98 +12,12 @@ description: >-
 
 # Contact Filter
 
-A reusable, structured filter (`{ operator, conditions[] }`) applied to contacts.
-Lives in two packages:
-
-- **Frontend feature** — `apps/builder/src/features/contact-filter/` (Zod schemas,
-  UI config, React components). Barrel: `index.ts`.
-- **Backend query builder** — `packages/database/src/queries/contact-filter/`
-  (`@chatbotx.io/database/queries`). Shared by the builder app **and** the worker
-  so both resolve the same contacts. **`queries/contact-filter.ts` is now a one-line
-  re-export barrel** (`export * from "./contact-filter/index"`) — the real code is the
-  14-file directory beside it:
-
-  | Concern | File |
-  |---|---|
-  | Per-field dispatch (`buildConditionWhere`) | `contact-filter/index.ts:412` |
-  | Negation/NULL predicates, 24h window | `contact-filter/predicates.ts` (`COLUMN_NEGATION_OPERATORS:21`, `contactInboxInteractedWithin24hSQL:27`) |
-  | Operator inversion map | `contact-filter/field-value-predicates.ts` (`NEGATION_TO_POSITIVE:41`) |
-  | Relation EXISTS subqueries | `contact-filter/relation-sets.ts` (`RELATION_SET_FILTERS:76`, `buildRelationSetWhere:131`) |
-  | Custom / bot fields, CTWA, timezone, continent | `custom-field-predicates.ts`, `bot-field-predicates.ts`, `ctwa-retarget.ts`, `timezone.ts`, `continent.ts` |
-
-## Architecture
-
-```
-contactFilterFields enum (partials/contact.ts)     ← the field "universe" (~90)
-        │
-CONTACT_FILTER_FIELD_DEFINITIONS (schema/definitions.ts)  ← ~49 ACTIVE fields = single source of truth
-        │  (each: { field, schemaKind, optionSource })
-        ├──► Zod condition schemas  (schema/*.ts, via staticFieldFilter)
-        └──► UI FieldConfig[]        (components/contact-filter-config.ts, getFieldConfigs)
-
-Filter object → API `contactFilter` param → buildContactWhere / buildContactInboxContactFilterSQL
-             → applyContactFilter → buildConditionWhere (switch per field) → Drizzle where / SQL
-```
-
-**Filter shape** (`schema/index.ts`):
-
-```ts
-contactFilterCriteriaSchema = { operator: "and" | "or", conditions: ContactFilterCondition[] }
-// condition (static):  { field, operator, value? }
-// condition (boolean): { field, operator: "eq", value: "true"|"false" }  |  { field, operator: "isEmpty" }
-// condition (custom):  { field: "customField", customFieldId, valueType, operator, value? }
-```
-`operator` is **top-level only** — the schema is **flat, no nested groups**.
-Operators + form-field types: `packages/database/src/partials/custom-field.ts`
-(`operatorTypes`, `FormFieldType`).
-
-## Activity-backed fields (Executed Flow/Step, Keywords Received, Sent message, Last Delivered, Completed WhatsApp Flows, Clicked ad, Email Sent/Delivered/Opened/Clicked)
-
-These read the partitioned, FK-less contact-activity store (`ContactActivity`,
-`ContactKeywordMessage`, `ContactState`), not the contact row. One registry,
-`CONTACT_ACTIVITY_FILTERS` in `packages/database/src/partials/contact-activity.ts`,
-drives storage, writers, the SQL (`queries/contact-filter/contact-activity.ts`),
-discovery and labels; a new reference type is one enum value plus one row.
-
-- **No backfill.** Activity is recorded from release onward, so `Is Not` and
-  `Has no value` mean "since tracking began". Discovery reports
-  `getContactActivityTrackingStartedAt(field)` (the store date unless the field has
-  its own) and the dialog shows a hint.
-- **Values** are validated by one parser, `parseContactActivityReferences`,
-  shared by Zod (4xx) and SQL (fail closed): ids are positive bigints, an
-  `Executed Step` is `flowId:nodeId` (a node id alone is not unique), and
-  `noTopic` is the fixed email "No Topic" bucket. Max 500 values.
-- **Fail closed, never `{}`**: malformed value, unknown operator, missing
-  workspace or the kill switch all render `FALSE`, so an AND audience never
-  widens. Negatives are `NOT EXISTS`, so a contact with no history matches them.
-- **Every subquery** carries a parameterized `"workspaceId" =` (hash partition pruning).
-- **Kill switch** `CONTACT_ACTIVITY_FILTERS_ENABLED` (database `keys.ts`,
-  default on): discovery and the picker hide the activity fields. Writers have their
-  own `CONTACT_ACTIVITY_WRITES_ENABLED` (business).
-- **Discovery** (`contacts.listFilterFields`): each field has `operators` and,
-  for these fields, `valueSource` = `{ operation, scope, fixedValues, valueFormat,
-  trackingStartedAt }` (`flows.list`, `flows.listNodes`, `keywords.list`,
-  `whatsappFlows.list`, `emailTopics.list`, `ads.listReferralAds`).
-  `trackingStartedAt` is per field (`getContactActivityTrackingStartedAt`).
-- **Pickers**: keywords / WhatsApp Flows / email topics / ads are searched on the
-  server (`contactFilterAPI.listActivityValueOptionsAPI`, one bounded page, no
-  client cache); selected values are named by id through the value-label lookup.
-
-## Pipeline item filter (`pipelineItem`)
-
-Dynamic condition `{ field: "pipelineItem", attribute, pipelineId, operator, value }`,
-a discriminated union on `attribute` (`schema/pipeline-item-filter.ts`):
-`exists` (`isNotEmpty|isEmpty`, value `any|open|won|lost`), `status` and
-`priority` (`in|notIn`, non-empty list), `stage` (`in|notIn`, stage ids, needs a
-`pipelineId`; `null` = any pipeline for the others). SQL is
-`queries/contact-filter/pipeline-item.ts`: a workspace-scoped correlated
-`EXISTS` over `PipelineItem`, and `NOT EXISTS` for `isEmpty`/`notIn`, so a
-contact with no matching item satisfies the negatives. Malformed saved values
-fail closed (`FALSE`). The UI offers one `FieldConfig` per attribute for "any
-pipeline" and per pipeline (`pipeline-item-filter-config.ts`, name
-`pipelineItem:<attribute>:<pipelineId|any>`); ids are named through the
-`pipelines` / `pipelineStages` value-label lookups; discovery reports them in
-`contacts.listFilterFields` → `pipelineItems`.
+A reusable, structured filter (`{ operator, conditions[] }`, flat, `operator` top-level only)
+applied to contacts. Frontend: `apps/builder/src/features/contact-filter/`. Backend query
+builder: `packages/database/src/queries/contact-filter/` (`@chatbotx.io/database/queries`),
+shared by the builder and the worker. Fields are defined once in
+`CONTACT_FILTER_FIELD_DEFINITIONS` (`schema/definitions.ts`), which generates both the Zod
+condition schema and the UI config. Operator rules live in two places that must stay in sync.
 
 ## Adding a new filter field
 
@@ -124,30 +38,6 @@ pipeline" and per pipeline (`pipeline-item-filter-config.ts`, name
 5. **Options / group** (if not `none`) — wire the option source in
    `use-contact-filter-configs.ts` / `contact-filter-config.ts`; group is assigned
    by `getContactFilterFieldGroup`.
-
-## Where filter application lives
-
-`contactRepository.buildListWhere` (aliases `buildContactListWhere`, `packages/database/src/repositories/contact/list-where.ts:42`)
-is the one place `applyContactFilter` is called to build the where clause for
-a contacts list/count — used by both the builder (private RSC) and the public
-API, via `contactService.list`/`count` (`packages/business/src/contact/list.ts`).
-`.query.ts` files never call `applyContactFilter` directly — that duplicates
-the where-builder per caller, which is exactly what the service/repository
-split exists to prevent (see `.agents/rules/data-access.md`). The worker's
-`export-contacts.ts` still hand-builds its own where clause — a known
-follow-up, not a pattern to extend.
-
-## Backend query builder (`packages/database/src/queries/contact-filter/`)
-
-- `applyContactFilter(criteria)` → maps `conditions` to `{ AND: [...] }` or
-  `{ OR: [...] }`; `buildConditionWhere(condition, context)` switches on `field`.
-- `buildContactWhere({ workspaceId, keyword?, contactFilter? })` → relational
-  where for `contactModel`.
-- `buildContactInboxContactFilterSQL({ contactIdColumn, workspaceId, contactFilter })`
-  → `contactId IN (SELECT id FROM Contact WHERE …)` for ContactInbox-rooted queries.
-- `ContactFilterCriteriaInput.conditions` is `unknown[]` on purpose — the DB
-  package can't import the builder's Zod schema; each entry is Zod-validated at
-  the request boundary, then narrowed here.
 
 ## CRITICAL invariants
 
@@ -175,46 +65,11 @@ follow-up, not a pattern to extend.
   backend query instead**, keyed off context — e.g. the broadcast 24h messaging
   window keys off `broadcast.subaction` in the worker (see below), never a filter
   param.
-
-## Surface-limited fields — `surfaces`
-
-A definition may set `surfaces: ["flowCondition"]` to make a field runtime-only
-(e.g. `isWithinWorkingHours`, which reads `now()`). `contactFilterCriteriaSchema`
-(contacts, conversations, broadcasts and their public APIs) is built from the
-`contacts` surface and rejects such a field; `flowConditionFilterCriteriaSchema`
-(flow Condition editor) accepts it. The pickers take a `surface` prop
-(`ContactFilter` → `useContactFilterConfigs` → `getFieldConfigs`) and the
-discovery endpoint a `surface` input. This is enforcement, not just hiding —
-use `excludeFields` only for UI hiding.
-
-## Hiding fields per context — `excludeFields`
-
-`ContactFilter` / `ContactFilterDialog` / `ContactListFilterPanel` accept
-`excludeFields?: ContactFilterField[]`. It removes the field from the "add
-condition" list **and** prunes any existing condition referencing it
-(`lib/prune-conditions.ts` → `pruneExcludedConditions`, run in a `useEffect`).
-
-Broadcast policy example — `apps/builder/src/features/broadcasts/lib/broadcast-filter-fields.ts`:
-`getBroadcastExcludedFilterFields({ channel, subaction })` hides `currentChannel`
-(+`inbox` for template sends, +`interactedInLast24h` for the two non-template
-Messenger/WhatsApp subactions).
-
-## Shared 24h window predicate
-
-`contactInboxInteractedWithin24hSQL()` (`contact-filter/predicates.ts:27`) is the single
-source for `lastIncomingMessageAt >= NOW() - INTERVAL '24 hours'`, used by:
-- the `interactedInLast24h` filter case (wrapped in a contact-level EXISTS), and
-- the broadcast audience (`apps/worker/src/schedule/handlers/prepare-broadcast.ts`)
-  + receiver-count preview (`countContactInboxes`), gated by
-  `requiresRecentInteractionWindow(subaction)` (`partials/broadcast.ts`).
-
-## Consumers
-
-- **Contacts list** — `apps/builder/src/features/contacts/` (count via
-  `countContactInboxes`, list via `listContactInboxes`).
-- **Conversations** — `conversations/conversation-filter.tsx` (excludes `currentChannel`).
-- **Broadcast audience** — `broadcasts/create-broadcast-form.tsx` (UI + count) →
-  persisted `broadcast.contactFilter` → worker `prepare-broadcast.ts`.
+- **`excludeFields` is UI hiding only** — `ContactFilter` / `ContactFilterDialog` /
+  `ContactListFilterPanel` take `excludeFields?: ContactFilterField[]`, which hides the field
+  and prunes existing conditions (`pruneExcludedConditions`). For enforcement (runtime-only
+  fields) use `surfaces: ["flowCondition"]` instead; broadcast constraints live in the
+  backend query.
 
 ## Common mistakes
 
@@ -237,3 +92,9 @@ source for `lastIncomingMessageAt >= NOW() - INTERVAL '24 hours'`, used by:
 - [ ] Tests: `apps/builder/__tests__/contact-filter-*.test.ts` and
       `packages/database/__tests__/contact-filter.test.ts`
 - [ ] `pnpm lint` + `check-types` for `builder` and `@chatbotx.io/database`
+
+## References
+
+- [references/architecture-and-file-map.md](references/architecture-and-file-map.md) — read for the field pipeline diagram, filter shape, backend file map with line anchors, `applyContactFilter`/`buildContactWhere` details, and where filters are applied for lists.
+- [references/activity-and-pipeline-filters.md](references/activity-and-pipeline-filters.md) — read when touching activity-backed fields (Executed Flow, Keywords, emails, ads) or the `pipelineItem` filter.
+- [references/surfaces-and-audience.md](references/surfaces-and-audience.md) — read for `surfaces`, `excludeFields` details, the broadcast policy, the shared 24h window predicate, and consumers.

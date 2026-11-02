@@ -1,9 +1,10 @@
 ---
 name: turborepo-workflow
 description: >-
-  Manage turborepo monorepo development workflow including dev servers, builds,
-  linting, and package management. Use when running dev, build, lint, deploy,
-  or managing workspace packages in this pnpm + turbo monorepo.
+  Use when adding a workspace package or dependency, wiring a package `exports`
+  subpath, changing `turbo.json`, debugging env loading (`dotenv -e ../../.env`,
+  `SKIP_ENV_CHECK`), or when a green `pnpm build` is mistaken for a type check
+  in this pnpm + Turborepo monorepo. Root commands live in AGENTS.md.
 ---
 
 # Turborepo Workflow
@@ -24,60 +25,15 @@ pnpm ls -r --depth -1        # every workspace package with its name
 
 Ports worth knowing: builder `3123`, realtime `1999`.
 
-## Common Commands
+## Commands
 
-### Development
-
-```bash
-# Start all apps in dev mode
-pnpm dev
-
-# Start specific app
-pnpm --filter builder dev
-pnpm --filter worker dev
-
-# Start with HTTPS
-pnpm --filter builder https
-```
-
-### Build & Lint
+The root command list (dev, build, lint, fix, test, database, circular/unused checks) is in
+**`AGENTS.md` → "Commands (root)"** — not repeated here. Extras not listed there:
 
 ```bash
-# Build all packages (respects turbo dependency graph)
-pnpm build
-
-# Lint (uses Biome via Ultracite)
-pnpm lint
-pnpm fix          # auto-fix
-
-# Type checking
-pnpm --filter builder check-types
-```
-
-### Database
-
-```bash
-# Full setup (migrate + seed)
-pnpm --filter database db:setup
-
-# Migration only
-pnpm --filter database db:migrate
-
-# Create new migration
-pnpm --filter database make:migration <name>
-
-# Studio (GUI)
-pnpm --filter database db:studio
-```
-
-### Code Quality
-
-```bash
-# Check circular dependencies
-pnpm check:circular
-
-# Check unused exports (knip)
-pnpm check:unused
+pnpm --filter builder https          # builder dev server over HTTPS
+pnpm --filter <workspace> check-types
+pnpm turbo run check-types           # every workspace
 ```
 
 ## Package Management

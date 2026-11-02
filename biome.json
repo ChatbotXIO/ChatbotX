@@ -83,5 +83,51 @@
       "trailingCommas": "all"
     }
   },
+  "overrides": [
+    {
+      "includes": ["apps/**", "integrations/**", "!**/__tests__/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "paths": {
+                  "@chatbotx.io/database/client": {
+                    "importNames": ["db"],
+                    "message": "App code calls a service from @chatbotx.io/business, never db directly. See .agents/rules/data-access.md."
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": [
+        "apps/builder/src/app/integrations/\\[...integration\\]/callback.ts",
+        "apps/builder/src/features/integration-instagram/actions/disconnect-instagram.ts",
+        "apps/builder/src/features/integration-instagram/lib/update-instagram-settings.ts",
+        "apps/builder/src/features/integration-messenger/lib/update-messenger-settings.ts",
+        "apps/builder/src/features/integration-whatsapp/actions/disconnect.action.ts",
+        "apps/builder/src/features/messages/actions/create-webchat-message.action.ts",
+        "apps/worker/src/ai-agent/handlers/process-conversation-source-embedding.ts",
+        "apps/worker/src/ai-agent/handlers/process-pending-embeddings.ts",
+        "apps/worker/src/default/handlers/send-audit-log.ts",
+        "apps/worker/src/integration/handlers/flow.ts",
+        "apps/worker/src/sequence-scheduler/revert-dispatch.ts",
+        "apps/worker/src/sequence-scheduler/services/retry-scheduler.service.ts",
+        "apps/worker/src/trigger/services/handoff-executor.service.ts"
+      ],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": "off"
+          }
+        }
+      }
+    }
+  ],
   "extends": ["ultracite/biome/core", "ultracite/biome/next"]
 }

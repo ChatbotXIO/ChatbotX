@@ -1,123 +1,57 @@
 ---
 name: orpc-api
 description: >-
-  Create and modify oRPC API routers, procedures, and middleware for the builder
-  app. Use when adding API endpoints, creating routers, defining procedures,
-  working with oRPC middleware, or building OpenAPI routes.
+  Single source for the builder's oRPC API layer. Use when adding or changing an
+  API endpoint or a public procedure (`features/<x>/api/public.ts`), choosing an
+  auth stack (`authorizedAPI`, `workspaceTokenAuthAPIForScope`,
+  `channelApiTokenAPI`, `workspaceTokenAuthMidddleware`, three d's), registering
+  a router in `routers/index.ts` or `routers/public.ts`, declaring `.errors()`,
+  tagging MCP tools (`mcpSpec`), building a result-returning operation (link,
+  preview, test send, stats, export, AI generation), or calling procedures from
+  the client (`orpc.<router>.<proc>.queryOptions()`, `client.*`).
 ---
 
 # oRPC API Development
 
 ## Architecture
 
-- **oRPC** serves both **RPC** (`/rpc`) and **OpenAPI** (`/api`) endpoints
-- `/api` serves **only** `publicRouter` (workspace-token / channel-token authed procedures). Private, session-authed procedures are reachable via `/rpc` (from the builder) only — there is no full-router HTTP mirror. `OpenAPIReferencePlugin` serves Scalar docs at `GET /api` and the spec at `/api/public-spec.json` for the public router.
-- Base context: `{ headers, url?, user?, workspace?, apiToken? }`
-- Three auth stacks: `authorizedAPI` (session), `workspaceTokenAuthAPIForScope(scope)` (Bearer workspace API token) and `channelApiTokenAPI` (Bearer channel API token)
-- Routers are plain objects of procedures, composed via object spreading
+- oRPC serves **RPC** (`/rpc`) and **OpenAPI** (`/api`). `/api` serves **only** `publicRouter` (workspace-token / channel-token procedures); private session procedures are reachable via `/rpc` from the builder only. Scalar docs at `GET /api`, spec at `/api/public-spec.json`.
+- Base context: `{ headers, url?, user?, workspace?, apiToken? }`. Routers are plain objects of procedures, composed by spreading.
+- Handlers never touch the database: `action | API handler → service → repository → DB` (`business-data-access` skill, `.agents/rules/data-access.md`). Never create a `*.service.ts` inside a feature folder; services live in `packages/business/src/<domain>/service.ts` (move a legacy one before extending it).
 
-## Auth Stacks
+## Auth stacks (`apps/builder/src/orpc.ts`)
 
-Defined in `apps/builder/src/orpc.ts`:
+- **`authorizedAPI`**: error mapping → `authMiddleware` (session/cookie). Workspace-scoped procedures add `workspaceAuthorizedMidddleware` per procedure.
+- **`workspaceTokenAuthAPIForScope(scope)`**: error mapping → `workspaceTokenAuthMidddleware` (Bearer) → `requireTokenScope(scope)`. No unscoped variant: every workspace-token endpoint declares its resource scope. Sets `context.workspace` and a projected `context.apiToken` (never `tokenHash`/`encryptedToken`). See `docs/developer/workspace-api-tokens.md`.
+- **`channelApiTokenAPI`**: error mapping → `channelApiTokenAuthMidddleware` (Bearer header only, no query fallback; looked up by hash; scoped to one inbox). See `middlewares/channel-api-token-auth.ts`.
 
-- **`authorizedAPI`**: `base` → error mapping → `authMiddleware` (session/cookie auth)
-- **`workspaceTokenAuthAPIForScope(scope)`**: `base` → error mapping → `workspaceTokenAuthMidddleware` (Authorization: Bearer header) → `requireTokenScope(scope)`. There is deliberately no unscoped variant — every workspace-token endpoint must declare its resource scope. The middleware sets `context.workspace` plus a projected `context.apiToken` (`id`, `workspaceId`, `permission`, `scopes`, `isDefault` — never `tokenHash`/`encryptedToken`). See `docs/developer/workspace-api-tokens.md`.
-- **`channelApiTokenAPI`**: `base` → error mapping → `channelApiTokenAuthMidddleware` (Authorization: Bearer header only — no query fallback; token is looked up by hash, never plaintext; scoped to a single inbox, not a whole workspace; see `middlewares/channel-api-token-auth.ts`)
+The middleware names have three `d`s (kept for backward compat; AGENTS.md invariant 1).
 
-Workspace-scoped procedures add `workspaceAuthorizedMidddleware` per-procedure.
+## Agent-first: when a public procedure is required
 
-Handlers never talk to the database themselves — see the `business-data-access`
-skill and `.agents/rules/data-access.md` for the full `action | API handler →
-service → repository → DB` chain and the `.query.ts` file contract.
+Always, by default (AGENTS.md invariant 23). The CLI and MCP server build their whole surface from `publicRouter` (`/api/public-spec.json`); an operation without a public procedure is invisible to AI agents. Every feature, and every new operation on an existing feature, adds its procedure to `api/public.ts` before (or with) the UI. "Operation" means anything a user can do from the UI, not just CRUD.
 
-## Creating a New Procedure
+Exempt only (state why in the PR): sign-in/sign-up and personal account settings; platform administration (super admin, reseller, tenant, platform credentials); end-customer public pages (webviews, short links, booking pages); the browser-redirect step of a channel OAuth connect (post-connect read, settings, disconnect still need procedures); UI-only plumbing (device push tokens, realtime, help items); anything a workspace token must never do (minting/revoking API tokens).
 
-The chain is `action | API handler → service → repository → DB` (see
-`.agents/rules/data-access.md`). A handler's job is: resolve session context
-(or none, for a token caller) → call a service method → shape the response.
-It never holds where-builders, pagination, or count logic itself.
+Public and private paths for one resource call the **same service method**; only the app layer resolves the caller's permission scope and passes it as plain data. Never write a second implementation for the public path (worked example: `contactService.list`). See `references/procedure-patterns.md`.
 
-```typescript
-import { myFeatureService } from "@chatbotx.io/business"
-import { authorizedAPI } from "@/orpc"
-import { workspaceAuthorizedMidddleware } from "@/middlewares/auth"
-import { z } from "zod"
-import { zodBigintAsString } from "@chatbotx.io/utils"
+## Result-returning operations
 
-export const myFeatureAuthenticatedAPI = {
-  listMyFeatureAPI: authorizedAPI
-    .route({
-      method: "GET",
-      path: "/workspaces/{workspaceId}/my-feature",
-      summary: "List my feature items",
-      tags: ["MyFeature"],
-    })
-    .input(
-      z.object({
-        workspaceId: zodBigintAsString(),
-        perPage: z.coerce.number().optional(),
-        cursor: z.string().optional(),
-      }),
-    )
-    .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
-    .output(myFeatureListResponse)
-    .handler(async ({ input, context }) => {
-      return await myFeatureService.list(input)
-    }),
+An operation whose point is to give the caller something back rather than change a stored resource.
 
-  createMyFeatureAPI: authorizedAPI
-    .route({
-      method: "POST",
-      path: "/workspaces/{workspaceId}/my-feature",
-      summary: "Create a new item",
-      tags: ["MyFeature"],
-    })
-    .input(createMyFeatureRequest)
-    .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
-    .handler(async ({ input }) => {
-      return await myFeatureService.create(input)
-    }),
-}
-```
+| Kind | Examples | Already in `publicRouter` |
+|---|---|---|
+| Link / code | shareable preview link, embed snippet | `botSimulator.getLink` |
+| Preview / render | render a template or message with variables | — |
+| Test run | test send, run a flow for one contact, test a connection | — |
+| Stats / report | counts, time series, breakdowns | `analytics.*`, `ads.analytics.overview` |
+| Export | CSV/JSON export | `ads.conversions.export`, contacts export |
+| AI generation | generate a reply, summarize, suggest | — |
+| Status / sync / scan | check a connection, trigger a sync or scan | — |
 
-### Public and private procedures for the same resource share one service method
+Rule of thumb: if a button in the UI produces a result, an agent must be able to call one operation and receive the same result. Reference: `botSimulator.getLink` (`features/bot-simulator/api/public.ts`; the UI and API both call `createBotSimulatorLink` in the feature's `lib/`). Essentials: return data (ids, URLs, JSON), never a screen; one implementation shared by UI and API; point at the source of every input id in `.describe()`; key = verb + noun; `GET` only when it reads/computes, `POST` when it sends, runs automation, calls a paid model or spends quota (`read_only` tokens are GET/HEAD only). Full list and sample: `references/result-returning.md`.
 
-Only the app layer resolves the caller's permission scope and passes it into
-the service as plain data — the service itself never inspects whether the
-caller was a signed-in member or a workspace token:
-
-```typescript
-// Private (session) — resolves a scope from the member's permissions
-export const myFeatureAuthenticatedAPI = {
-  listMyFeatureAPI: authorizedAPI
-    // ...
-    .handler(async ({ input, context }) => {
-      const scope = await requireMyFeaturePermissionScope(input.workspaceId)
-      return await myFeatureService.list({ ...input, scope })
-    }),
-}
-
-// Public (workspace token) — unscoped, no member permissions to resolve
-export const myFeaturePublicRouter = {
-  list: workspaceTokenAuthAPI
-    // ...
-    .handler(async ({ context, input }) =>
-      await myFeatureService.list({
-        ...input,
-        workspaceId: context.workspace.id,
-      }),
-    ),
-}
-```
-
-Never write a second implementation of the same list/filter/mutation logic
-for the public path — both handlers must converge on the same service method
-so a bug fix or a new filter only has to happen once. See
-`packages/business/src/contact/list.ts` for a worked example
-(`contactService.list`/`count` called from both the private
-`list-contacts.queries.ts` adapter and the public `crud.ts` handler).
-
-### Procedure Chain
+## Procedure chain
 
 ```
 authorizedAPI
@@ -128,460 +62,39 @@ authorizedAPI
   .handler(async ({ input, context }) => {})→ business logic
 ```
 
-## When a public procedure is required
+## Feature API structure
 
-Always, by default. ChatbotX is agent-first: the CLI and MCP server build their
-entire command/tool surface from `publicRouter` (`/api/public-spec.json`), so an
-operation without a public procedure is invisible to every AI agent
-(AGENTS.md invariant 23). Every feature — and every new operation on an existing
-feature — adds its procedure to `api/public.ts` before (or with) the UI.
+`features/<x>/api/public.ts` is **required**; `private.ts` + `index.ts` exist only if the UI needs session-authed procedures. Public procedures are NOT spread into `api/index.ts`; mount them in `routers/public.ts`, nested under the resource name. A feature with no private procedures has no `api/index.ts` and is not in `routers/index.ts`.
 
-"Operation" means anything a user can do from the UI, not just CRUD. In particular
-the **result-returning operations** below are easy to forget because they store
-nothing, yet an agent needs them just as much.
+## Registering the router
 
-Exempt only (and say why in the PR): sign-in/sign-up and personal account
-settings; platform administration (super admin, reseller, tenant, platform
-credentials); end-customer public pages (webviews, short links, booking pages); the
-browser-redirect step of a channel OAuth connect (post-connect read, settings and
-disconnect still need procedures); UI-only plumbing (device push tokens, realtime,
-help items); and anything a workspace token must never do (minting/revoking API
-tokens).
+- Private: `apps/builder/src/routers/index.ts` as a **lazy branch** (`lazy(() => import("@/features/x/api").then((m) => ({ default: m.xAPI })))`). Keep the specifier a literal string; the picked export name must match, or you get `default: undefined` at first call, not at build time. Dynamic `import()` is fine here (builder is Next-built).
+- Public: `apps/builder/src/routers/public.ts`, **eager** plain imports (feeds `/api/public-spec.json`; `operationId` `resource.key` becomes the MCP tool name).
 
-## Result-returning operations
+Snippets: `references/router-registration.md`.
 
-An operation whose point is to **give the caller something back** rather than to
-change a stored resource:
+## Traps (public procedures)
 
-| Kind | Examples | Already in `publicRouter` |
-|---|---|---|
-| Link / code | shareable preview link, embed snippet | `botSimulator.getLink` |
-| Preview / render | render a template or message with variables | — |
-| Test run | test send, run a flow for one contact, test an integration connection | — |
-| Stats / report | counts, time series, breakdowns | `analytics.*`, `ads.analytics.overview` |
-| Export | CSV/JSON export | `ads.conversions.export`, contacts export |
-| AI generation | generate a reply, summarize, suggest | — |
-| Status / sync / scan | check a connection, trigger a sync or scan | — |
+- **Key naming**: CRUD uses `list/get/create/update/delete`; otherwise verb + secondary noun. Never prefix with the resource name or an auth suffix.
+- **`summary` is the MCP tool description** (joined with `description`); put usage guidance for LLMs in `description`.
+- **Every body-less mutation (DELETE) sets `successStatus: 204`**; if it returns data add `.output(...)` instead. Enforced by `apps/builder/__tests__/public-spec-operations.test.ts`.
+- **`mcpSpec`** (`@/lib/orpc/mcp-annotations`) must be passed as the function form of `.route({ spec })`, never a plain object. Omitting `visibility` means `"hidden"` (only via `search_tools`/`call_tool`); only ~40 operations opt in with `"default"`.
+- **`.errors()` is mandatory on public routes**: pick one `possibleErrorsOn*Resource` set by what the handler can fail with; never re-declare a `commonApiErrors` code. A new `ChatbotXException` code needs a matching entry or it silently drops from the spec.
+- Split `api/public.ts` / `schema/public.ts` past ~400 lines; a submodule uses `workspaceTokenAuthAPIForScope` with **its own** scope. Prefer a sibling feature's own `api/public.ts` over a submodule.
+- Heavy list endpoints may accept `include?: string[]` and `withCount?: boolean`.
 
-Rule of thumb: **if a button in the UI produces a result, an agent must be able to
-call one operation and receive the same result.**
+Details and samples: `references/public-procedures.md`.
 
-`botSimulator.getLink` (`features/bot-simulator/api/public.ts`) is the reference:
+## Errors and logging
 
-```typescript
-const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("channels")
+Throw `ChatbotXException` (`@chatbotx.io/business/errors`) or `ModelNotfoundException` (`@chatbotx.io/database/errors`); `mapKnownOrpcErrors` (`apps/builder/src/orpc.ts`) remaps them for all three stacks. Unknown errors are logged once by `logUnexpectedOrpcErrorCallback` (`lib/orpc/handlers.ts`). Server code (handlers, actions, queries) logs through pino, never `console`: `const logger = baseLogger.child({ feature: "myFeature" })` from `@chatbotx.io/logger`, then `logger.error({ err: error }, "[myFeature] operation failed")`. The key is `err`, not `error` (invariant 20).
 
-export const botSimulatorPublicRouter = {
-  getLink: workspaceTokenAuthAPI
-    .route({
-      method: "GET",
-      path: "/v1/bot-simulator/link",
-      summary: "Get bot simulator link",
-      description:
-        "Returns a shareable link that opens the given website with a webchat widget on top, to preview the bot on a real page. The webchat must be enabled and the website on its allowed domains. Get webchat ids from `webchats.list`.",
-      tags: ["Bot Simulator"],
-    })
-    .input(z.object({ webchatId: zodBigintAsString().describe("… Get it from `webchats.list`."), websiteUrl: … }))
-    .output(z.object({ url: z.string().describe("Bot simulator link; anyone with it can open the preview.") }))
-    .errors(possibleErrorsOnFindingResource)
-    .handler(async ({ context, input }) => ({
-      url: await createBotSimulatorLink({ workspaceId: context.workspace.id, ...input }),
-    })),
-}
-```
+## References
 
-What to copy from it:
-
-- **Return data, not a screen.** The UI shows a preview; the API returns the `url`.
-  Results are ids, URLs, or JSON an agent can act on — never HTML meant for display.
-- **One implementation.** The handler calls `createBotSimulatorLink` in the feature's
-  `lib/` (or a service method when it touches the DB); the UI path calls the same
-  function. Never re-derive the result inside the handler.
-- **Point at the source of every input id** in `description`/`.describe()`
-  ("Get webchat ids from `webchats.list`") so an agent can chain calls without guessing.
-- **Key = verb + noun**: `getLink`, `preview`, `testSend`, `run`, `export`, `getStats`,
-  `generate`, `sync` (see "Public procedures" below for the naming rules).
-- **Pick the method by side effect.** `GET` when it only reads or computes (link,
-  preview, stats). `POST` when it sends something real, runs automation, calls a paid
-  AI model, or spends quota — `read_only` tokens are limited to GET/HEAD, and a test
-  send must not slip through one.
-- **Set MCP hints when the method misleads.** A `POST` preview/generate with no side
-  effect gets `mcpSpec({ readOnlyHint: true })`; a `GET` that is not safe to repeat
-  is a design smell — make it `POST`.
-
-## Feature API Structure
-
-Each feature has an `api/` directory. `public.ts` is required (see "When a public
-procedure is required"); the private files exist only when the UI needs
-session-authed procedures:
-
-```
-features/my-feature/
-  api/
-    index.ts    → private (session) API only — public procedures are NOT
-                  spread in here; they're mounted separately in
-                  routers/public.ts (see below)
-    private.ts  → session-based procedures (private naming: see below)
-    public.ts   → REQUIRED — token-based procedures (public API → CLI/MCP)
-```
-
-If a feature has no private procedures at all, it has no `api/index.ts` and
-is not mounted in `routers/index.ts` — only `api/public.ts`, wired into
-`routers/public.ts`.
-
-### api/index.ts (private only)
-
-```typescript
-import { myFeatureAuthenticatedAPI } from "./private"
-
-export const myFeatureAPI = {
-  ...myFeatureAuthenticatedAPI,
-}
-```
-
-### Public procedures (`api/public.ts`)
-
-Key naming: CRUD resources use plain `list`, `get`, `create`, `update`,
-`delete`; anything else is a verb + secondary noun (`listOptions`,
-`getStats`, `upsert`, `block`, `sendMessage`). Never prefix keys with the
-resource name or an auth suffix (no `WorkspaceTokenAPI`, no
-`listMyFeature`) — the resource name already comes from the router nesting
-in `routers/public.ts`, and the key becomes the last segment of the
-generated `operationId` (`myFeature.get`), which the MCP server turns into
-the tool name (`my_feature_get`).
-
-```typescript
-import { possibleErrorsOnFindingResource } from "@/lib/orpc/orpc-error-helper"
-import { workspaceTokenAuthAPIForScope } from "@/orpc"
-
-// Pick the resource-area scope this feature belongs to
-// (workspaceApiTokenScopes in packages/database/src/partials/workspace-api-token.ts)
-const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("automation")
-
-export const myFeaturePublicRouter = {
-  get: workspaceTokenAuthAPI
-    .route({
-      method: "GET",
-      path: "/v1/my-feature/{id}",
-      summary: "Get item by ID",
-      tags: ["MyFeature"],
-    })
-    .input(z.object({ id: zodBigintAsString() }))
-    .output(publicMyFeatureResponse)
-    // Declares only what varies by operation shape — see "Declared errors"
-    .errors(possibleErrorsOnFindingResource)
-    .handler(async ({ context, input }) => {
-      // context.workspace is available from token auth
-      return await findMyFeature({
-        id: input.id,
-        workspaceId: context.workspace.id,
-      })
-    }),
-}
-```
-
-Register it in `apps/builder/src/routers/public.ts`, nested under the
-resource name:
-
-```typescript
-import { myFeaturePublicRouter } from "@/features/my-feature/api/public"
-
-export const publicRouter = {
-  // ...existing resources
-  myFeature: myFeaturePublicRouter,
-}
-```
-
-**`summary` is what the MCP server shows as the tool description** —
-`apps/mcp-server/src/openapi-loader.ts`'s `buildToolDescription` joins
-`summary` and `description` (when both are set) into one string, so use
-`summary` for the one-line action and `description` for longer usage
-guidance (valid values, example payloads, edge cases) an LLM needs to pick
-the right tool and fill it in correctly. A `findByCustomField`-style
-endpoint with ambiguous input shape should always set `description`.
-
-**Every DELETE (and any other body-less mutation) declares `successStatus:
-204`** — a handler with no `.output(...)` returns `undefined`, and without
-an explicit `successStatus` oRPC defaults to `200` with an empty body, which
-misrepresents the response. `apps/builder/__tests__/public-spec-operations.test.ts`
-enforces this across the whole public spec: every operation whose generated
-response has no declared body schema must document `successStatus: 204`
-(and nothing else in the 2xx range). If a mutation's handler actually
-`return`s data, add `.output(...)` instead of `successStatus: 204` — don't
-declare a body-less success status on a route that has a body.
-
-```typescript
-  delete: workspaceTokenAuthAPI
-    .route({
-      method: "DELETE",
-      path: "/v1/my-feature/{id}",
-      summary: "Delete item",
-      tags: ["MyFeature"],
-      successStatus: 204,
-    })
-    .input(z.object({ id: zodBigintAsString() }))
-    .errors(possibleErrorsOnDeletingResource)
-    .handler(async ({ context, input }) => {
-      await myFeatureService.delete({ id: input.id, workspaceId: context.workspace.id })
-    }),
-```
-
-**`mcpSpec`/`x-mcp` controls MCP-specific tool metadata** beyond what
-`summary`/`description`/`tags` cover — visibility in `tools/list`, whether a
-token-scope check can be bypassed so the tool is discoverable even when the
-caller lacks its scope, and the MCP read-only/destructive/idempotent hints.
-Import `mcpSpec` from `@/lib/orpc/mcp-annotations` and pass it as the
-function form of `.route({ spec: ... })` — **never a plain object**, which
-the OpenAPI generator treats as a full replacement of the generated
-operation (dropping `parameters`/`requestBody`/`responses`) rather than a
-merge:
-
-```typescript
-import { mcpSpec } from "@/lib/orpc/mcp-annotations"
-
-  list: workspaceTokenAuthAPI
-    .route({
-      method: "GET",
-      path: "/v1/my-feature",
-      summary: "List items",
-      tags: ["MyFeature"],
-      spec: mcpSpec({ visibility: "default" }),
-    })
-    // ...
-```
-
-- `visibility: "default"`** ships the tool in `tools/list` on every MCP
-  connection. The polarity is inverted from what you'd expect: **omitting
-  `spec` entirely (or `visibility` absent from it) means `"hidden"`** —
-  reachable only through the `search_tools`/`call_tool` meta-tools, not the
-  default connection payload. We cannot ask every one of the ~350 public
-  operations to opt out individually, so only the ~40 operations an agent
-  needs on every connection (list/get the most common resources, publish a
-  flow, etc.) opt IN.
-- `alwaysVisible: true` exempts an operation from scope-based `tools/list`
-  filtering — reserved for the small set of discovery endpoints
-  (`capabilities.get`, `token.get`) a token must be able to *see* even when
-  it lacks the scope those endpoints themselves require, so the caller gets
-  a 403 body instead of the tool silently disappearing.
-- `readOnlyHint`/`destructiveHint`/`idempotentHint` override the mcp-server
-  loader's HTTP-method-based inference (GET ⇒ read-only/idempotent, DELETE ⇒
-  destructive/idempotent, everything else ⇒ none) when an operation doesn't
-  fit that default.
-- `hitlPolicy` is inferred from the HTTP method and operation id for every
-  operation. Set `hitlPolicy: "none"` on a non-mutating POST; add
-  `readOnlyHint: true` only when a `read_only` token may call it.
-
-**`include`/`withCount` convention for list endpoints**: a public list
-endpoint whose row shape has optional relations or an expensive count query
-should accept `include?: string[]` (narrows the response payload — see
-`contactService.list`'s `include`/`withCount` options in
-`packages/business/src/contact/list.ts`, which strips fields post-query
-rather than fighting Drizzle's relational-query type inference with a
-dynamic `with:`) and `withCount?: boolean` (default `true`, skips the count
-query entirely when `false` — the actual latency win, since the DB join
-happens either way). Only add this pair when a list endpoint's default
-response is genuinely heavy; a small resource with no relations doesn't need
-it.
-
-**Split `api/public.ts` (and its `schema/public.ts`) into submodules once
-either exceeds ~400 lines or accumulates more than one unrelated concern** —
-see `features/contacts/api/public/{crud,tags,custom-fields,bulk,export,
-refresh-profile,messages}.ts` and the matching
-`features/contacts/schema/public/*.ts`. Each submodule should import only
-what its own procedures need; a shared `schema/public.ts` that pulls in
-every feature's resource schemas (e.g. through a heavyweight file like
-`schema/query.ts`) makes every submodule's unit test pay that whole import
-cost even when it only needs one small schema. A submodule that hangs
-routes off another resource's path prefix (like `messages.ts`'s
-`/v1/contacts/{identifier}/messages`) still calls
-`workspaceTokenAuthAPIForScope` with **its own** scope, never the owning
-feature's — see the endpoint-to-scope table in
-`docs/developer/workspace-api-tokens.md`.
-
-**Prefer a sibling feature's own `api/public.ts` over a submodule when the
-resource already has its own feature directory** — contact notes, contact
-sequences, contact inboxes, and contact filter fields each publish their own
-`features/<feature>/api/public.ts` + `schema/public.ts` (not
-`features/contacts/api/public/{notes,sequences,inboxes,filter-fields}.ts`),
-and `features/contacts/api/public.ts` composes their exported router objects
-in alongside its own submodules:
-
-```ts
-import { contactsNotesPublicRouter } from "@/features/contact-notes/api/public"
-// ...
-export const contactsPublicRouter = {
-  ...contactsCrudPublicRouter,
-  ...contactsNotesPublicRouter,
-  // ...
-}
-```
-
-Router key and path stay unchanged either way — only the source file moves
-to live with the feature that owns the resource's business logic. The
-public handler and its equivalent server action must call the **same**
-service method; the action is the only place that resolves the caller's
-permission scope (via `requireContactPermissionScope`/
-`resolveContactPermissionScope`) — the public handler passes no
-`accessScope`, since a workspace-token caller is never member-scoped.
-
-## Registering the Router
-
-Add to `apps/builder/src/routers/index.ts` as a **lazy branch** — every feature
-router there is wrapped in oRPC's `lazy()` so the feature's api module (and its
-import graph) only loads on the first call that targets it, instead of all ~58
-feature api modules loading with the route handler:
-
-```typescript
-import { lazy } from "@orpc/server"
-
-export const router = {
-  // ...existing routes
-  myFeatureAPI: lazy(() =>
-    import("@/features/my-feature/api").then((m) => ({
-      default: m.myFeatureAPI,
-    })),
-  ),
-}
-```
-
-Two failure modes to watch: the `import("...")` specifier must stay a literal
-string (the bundler needs to statically analyze it), and the picked export
-name must match the module's actual export — a mismatch produces
-`default: undefined`, which fails at the first call to that branch rather than
-at build time. Dynamic `import()` is allowed here because `apps/builder` is
-Next.js-built (see `.agents/rules/no-dynamic-import.md`).
-
-For public API (`api/public.ts`), don't add the feature to `routers/index.ts`
-at all if it has no private procedures — register it only in
-`apps/builder/src/routers/public.ts` (see above), nested under the resource
-name. That router stays **eager** (plain imports); it feeds `/api/public-spec.json`,
-and its `operationId`s (`resource.key`) are what the MCP server turns into
-tool names.
-
-## Schema Patterns
-
-Schemas live in `features/<feature>/schema/`:
-
-```typescript
-// schema/query.ts — list/filter request
-export const listMyFeatureRequest = z.object({
-  workspaceId: zodBigintAsString(),
-  perPage: z.coerce.number().optional(),
-  cursor: z.string().optional(),
-  keyword: z.string().optional(),
-})
-
-// schema/resource.ts — response shapes
-export const myFeatureResponse = z.object({
-  id: z.string(),
-  name: z.string(),
-  createdAt: z.date(),
-})
-
-// Reuse workspace ID schema
-import { withWorkspaceIdSchema } from "@/features/workspaces/schema/resource"
-// .input(mySchema.and(withWorkspaceIdSchema))
-```
-
-## Client Usage
-
-### React components (TanStack Query)
-
-Rendering a list/detail read in a client component goes through TanStack
-Query, not a bare `client.*()` call — it dedupes concurrent reads app-wide,
-caches per query key, and lets any mutation invalidate every reader. See
-`feature-scaffold` skill's "Server data (TanStack Query)" section for the full
-hook shape (`features/ai-agents/hooks/use-ai-agents.ts` is the reference
-implementation):
-
-```typescript
-import { useQuery } from "@tanstack/react-query"
-import { orpc } from "@/lib/orpc/query"
-
-const { data, isPending } = useQuery(
-  orpc.myFeatureAPI.listMyFeatureAPI.queryOptions({
-    input: { workspaceId },
-    enabled: Boolean(workspaceId),
-  }),
-)
-```
-
-Invalidate after a mutation with `.key()`:
-
-```typescript
-import { useQueryClient } from "@tanstack/react-query"
-import { orpc } from "@/lib/orpc/query"
-
-const queryClient = useQueryClient()
-queryClient.invalidateQueries({ queryKey: orpc.myFeatureAPI.key() })
-```
-
-`router.refresh()` alone is insufficient: it re-renders the RSC tree but does
-not invalidate the browser TanStack Query cache, so call the invalidator in
-every successful mutation handler.
-
-### Imperative calls (event handlers, non-React code)
-
-```typescript
-import { client } from "@/lib/orpc/orpc"
-
-const data = await client.myFeatureAPI.listMyFeatureAPI({ workspaceId })
-```
-
-### Server (SSR)
-
-```typescript
-// Automatically uses createRouterClient with server headers
-const data = await client.myFeatureAPI.listMyFeatureAPI({ workspaceId })
-```
-
-## Error Handling
-
-Throw `ChatbotXException` (`@chatbotx.io/business/errors`) or `ModelNotfoundException` (`@chatbotx.io/database/errors`) — they are auto-mapped to oRPC errors by `mapKnownOrpcErrors` (`apps/builder/src/orpc.ts`), the middleware-level `onError` interceptor shared by all three auth stacks: it warn-logs and remaps known errors, leaving anything else untouched. Unknown errors are logged exactly once at error level by `logUnexpectedOrpcErrorCallback` (`apps/builder/src/lib/orpc/handlers.ts`), the route-level interceptor used by the `/api` and `/rpc` handlers:
-
-```typescript
-import { ChatbotXException, notFoundException } from "@chatbotx.io/business/errors"
-
-throw notFoundException("Item not found")
-throw new ChatbotXException("Custom error", "BAD_REQUEST", 400)
-```
-
-### Declared errors (`.errors()`) — public routes only
-
-Every public procedure must declare the errors it can throw, because that
-declaration is what renders the non-2xx responses in the OpenAPI spec (and
-what the MCP server and CLI show a caller). The declaration is split in two:
-
-| Layer | Where | Contains |
-|-------|-------|----------|
-| Shared | `commonApiErrors`, attached **once** to the public stacks in `@/orpc` | 401 (`UNAUTHORIZED`, `INVALID_CHATBOT_TOKEN`), 403 (`FORBIDDEN`, `trialExpired`, `macLimitReached`), 422 (`invalidRequestData`, `validation`), 429 (`tooManyRequests`), 500 (`INTERNAL_SERVER_ERROR`) |
-| Per-route | one `possibleErrorsOn*Resource` set from `@/lib/orpc/orpc-error-helper` | only what varies by operation shape — `notFound` (404) and `businessError` (400) |
-
-Pick the per-route set by what the handler can actually fail with, not by the
-HTTP verb:
-
-- `possibleErrorsOnListingResource` — a collection read that cannot 404.
-- `possibleErrorsOnFindingResource` — a read that resolves one resource.
-- `possibleErrorsOnCreatingResource` — a create with no parent lookup.
-- `possibleErrorsOnMutatingResource` — an update, **or a create that resolves a
-  parent from a path param** (e.g. `POST /v1/contacts/{identifier}/notes` calls
-  `contactService.resolveIdByIdentifier`, which throws 404).
-- `possibleErrorsOnDeletingResource` — a delete.
-
-**Never re-declare a `commonApiErrors` code in a per-route set.** Doing so
-duplicates the entry in the generated spec. The guard in
-`apps/builder/__tests__/public-spec-operations.test.ts` fails on both mistakes:
-a route missing a universal code, and a duplicated one.
-
-**The `code` string is the contract, not the status.** oRPC matches a thrown
-`ORPCError` to its declaration by `code` *and* exact `status`
-(`validateORPCError` in `@orpc/contract`). On a miss it does not error — it
-returns the error with `defined: false`, so an undeclared code still reaches
-the client but never appears in the spec. That silent degrade is why a new
-`ChatbotXException` code thrown from a public route needs a matching entry in
-one of these sets.
-
-## Logging
-
-Import the logger from the nearest `lib/log` / `lib/logger` module; never use `console` in a
-handler. Log errors as `{ err: error }` — see repo invariant 20 in `AGENTS.md`.
+- `references/procedure-patterns.md`: read when writing a first procedure or a public/private pair sharing one service.
+- `references/result-returning.md`: read when building a link/preview/test/stats/export/generate operation.
+- `references/public-procedures.md`: read for `public.ts` samples, 204 deletes, `mcpSpec`, `include`/`withCount`, splitting.
+- `references/router-registration.md`: read when wiring a router into `routers/index.ts` or `routers/public.ts`.
+- `references/schemas-and-client.md`: read for Zod schema layout and for `useQuery`/`client.*`/SSR call patterns.
+- `references/error-handling.md`: read when throwing errors or declaring `.errors()` sets.
+- UI side (page, forms, actions, TanStack hooks): `../feature-scaffold/SKILL.md`.
