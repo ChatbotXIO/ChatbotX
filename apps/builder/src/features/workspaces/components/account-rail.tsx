@@ -37,7 +37,7 @@ type AccountRailProps = {
   /** ISO date of the self-managed trial end, or null when not on a trial. */
   trialEndsAt?: string | null
   isSuperAdmin?: boolean
-  isPlatformAdmin?: boolean
+  canAccessManage?: boolean
   /**
    * True only when the request resolved to the platform host (see
    * `resolveTenantByDomain` in `page.tsx`). Gates the Redeem link:
@@ -61,7 +61,7 @@ export const AccountRail = async ({
   planStatus = null,
   trialEndsAt = null,
   isSuperAdmin = false,
-  isPlatformAdmin = false,
+  canAccessManage = false,
   isPlatformContext = false,
 }: AccountRailProps) => {
   const [t, { storageUrl }] = await Promise.all([
@@ -169,7 +169,7 @@ export const AccountRail = async ({
               {t("actions.admin")}
             </Link>
           )}
-          {cloud && isPlatformAdmin && (
+          {cloud && canAccessManage && (
             <Link className={railMenuItemClassName} href="/manage">
               <Settings2Icon aria-hidden className="size-4" />
               {t("actions.manage")}

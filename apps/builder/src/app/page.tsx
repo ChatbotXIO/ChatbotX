@@ -1,6 +1,6 @@
 import { resolveTenantByDomain } from "@chatbotx.io/auth/tenant"
 import {
-  isPlatformAdmin,
+  canUseOwnCredentials,
   isSuperAdmin,
   quotaEnforcementService,
   userQuotaService,
@@ -55,12 +55,12 @@ export default async function MainPage() {
   // community/enterprise installs use every feature freely — no quota gating.
   const cloud = isCloud()
   const domain = await getDomainFromHeader()
-  const [usageSummary, atLimit, quota, platformAdmin, tenantId, superAdmin] =
+  const [usageSummary, atLimit, quota, canAccessManage, tenantId, superAdmin] =
     await Promise.all([
       cloud ? quotaEnforcementService.getUsageSummary(user.id) : null,
       cloud ? quotaEnforcementService.getAtLimitMap(user.id) : null,
       cloud ? userQuotaService.getForUser(user.id) : null,
-      isPlatformAdmin(user),
+      cloud ? canUseOwnCredentials(user.id) : false,
       resolveTenantByDomain(domain),
       isSuperAdmin(user),
     ])
@@ -94,7 +94,7 @@ export default async function MainPage() {
       <ExpiredBanner blocked={cloud && blocked} reason={blockReason} />
       <div className="flex flex-col gap-8 py-8 md:flex-row md:items-start">
         <AccountRail
-          isPlatformAdmin={platformAdmin}
+          canAccessManage={canAccessManage}
           isPlatformContext={isPlatformContext}
           isSuperAdmin={superAdmin}
           metrics={buildQuotaMetrics(usageSummary)}

@@ -35,8 +35,8 @@ import { ThemeSwitcher } from "./theme-switcher"
 
 export function NavUser({
   user,
+  canAccessManage,
   isSuperAdmin,
-  isPlatformAdmin,
   planName,
 }: {
   user: {
@@ -44,8 +44,8 @@ export function NavUser({
     email: string
     avatar: string
   }
+  canAccessManage?: boolean
   isSuperAdmin?: boolean
-  isPlatformAdmin?: boolean
   planName?: string | null
 }) {
   const { isMobile } = useSidebar()
@@ -174,7 +174,7 @@ export function NavUser({
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator /> */}
-            {(isSuperAdmin || isPlatformAdmin) && (
+            {(isSuperAdmin || canAccessManage) && (
               <>
                 <DropdownMenuGroup>
                   {isSuperAdmin && (
@@ -187,7 +187,7 @@ export function NavUser({
                       }
                     />
                   )}
-                  {isCloud() && isPlatformAdmin && (
+                  {isCloud() && canAccessManage && (
                     <DropdownMenuItem
                       render={
                         <Link href="/manage">
