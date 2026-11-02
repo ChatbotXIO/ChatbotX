@@ -22,6 +22,7 @@ import type {
   DateTimeTriggerValue,
 } from "../utils/datetime-calculator"
 import { ActionExecutor } from "./action-executor"
+import { createTriggerActionScope } from "./actions/scope"
 
 interface DateTimeTriggerResult {
   contactId: string
@@ -172,16 +173,23 @@ async function executeActions(
 ): Promise<void> {
   const actions = Array.isArray(triggerInfo.actions) ? triggerInfo.actions : []
   const executor = new ActionExecutor()
+  const scope = createTriggerActionScope({
+    contactId,
+    workspaceId: triggerInfo.workspaceId,
+  })
 
   for (const [index, action] of actions.entries()) {
     try {
-      await executor.execute({
-        action,
-        contactId,
-        workspaceId: triggerInfo.workspaceId,
-        source: { kind: "trigger", triggerId: triggerInfo.triggerId },
-        occurrenceKey: `datetime:${triggerInfo.triggerId}:${contactId}:${index}:${occurrence}`,
-      })
+      await executor.execute(
+        {
+          action,
+          contactId,
+          workspaceId: triggerInfo.workspaceId,
+          source: { kind: "trigger", triggerId: triggerInfo.triggerId },
+          occurrenceKey: `datetime:${triggerInfo.triggerId}:${contactId}:${index}:${occurrence}`,
+        },
+        scope,
+      )
     } catch (error) {
       logger.error(
         error,

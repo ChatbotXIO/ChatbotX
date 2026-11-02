@@ -15,6 +15,7 @@ import {
 import { customFieldModel } from "@chatbotx.io/database/schema"
 import type { CustomFieldModel } from "@chatbotx.io/database/types"
 import {
+  isBigintId,
   likeContains,
   parseOrderByAsObject,
   parsePagination,
@@ -122,6 +123,40 @@ class CustomFieldService extends BaseService {
       throw notFoundException("Custom field not found")
     }
     return field
+  }
+
+  /**
+   * Resolves many id-or-name keys in one query (an id match wins over a name
+   * match, like `findByKey`). Keys that match nothing are absent from the map.
+   */
+  async findManyByKeys(props: {
+    workspaceId: string
+    keys: string[]
+    tx?: DatabaseClient
+  }): Promise<Map<string, CustomFieldModel>> {
+    const { workspaceId, tx = db } = props
+    const keys = [...new Set(props.keys)]
+    if (keys.length === 0) {
+      return new Map()
+    }
+    const rows = await tx.query.customFieldModel.findMany({
+      where: {
+        workspaceId,
+        OR: [{ id: { in: keys.filter(isBigintId) } }, { name: { in: keys } }],
+      },
+    })
+    const resolved = new Map<string, CustomFieldModel>()
+    for (const key of keys) {
+      // Postgres reads "00123" as bigint 123, so an id key is compared by value.
+      const id = isBigintId(key) ? BigInt(key).toString() : key
+      const field =
+        rows.find((row) => row.id === id) ??
+        rows.find((row) => row.name === key)
+      if (field) {
+        resolved.set(key, field)
+      }
+    }
+    return resolved
   }
 
   async findBy(props: {

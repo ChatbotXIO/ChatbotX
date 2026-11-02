@@ -113,6 +113,14 @@ export type FlowNodeSummary = {
   nodeType: string | null
 }
 
+/** Why a flow (or one of its nodes) cannot be started, or `ready`. */
+export type FlowStartTargetStatus =
+  | "ready"
+  | "flowNotFound"
+  | "flowInactive"
+  | "flowNotPublished"
+  | "nodeNotFound"
+
 const readNodeLabel = (node: { id: string; data?: unknown }): string => {
   const data = node.data
   if (data && typeof data === "object" && "name" in data) {
@@ -247,6 +255,41 @@ class FlowService extends BaseService {
       label: readNodeLabel(node),
       nodeType: typeof node.type === "string" ? node.type : null,
     }))
+  }
+
+  /**
+   * Whether `flowId` (and `nodeId` in its published version, when given) can be
+   * started right now, with the precise reason when it cannot. One query for the
+   * flow; a node check adds the published version's read (two more queries).
+   */
+  async resolveStartTarget(input: {
+    workspaceId: string
+    flowId: string
+    nodeId?: string
+  }): Promise<FlowStartTargetStatus> {
+    const flow = await this.findBy({
+      workspaceId: input.workspaceId,
+      id: input.flowId,
+    })
+    if (!flow) {
+      return "flowNotFound"
+    }
+    if (!flow.active) {
+      return "flowInactive"
+    }
+    if (!flow.currentVersionId) {
+      return "flowNotPublished"
+    }
+    if (!input.nodeId) {
+      return "ready"
+    }
+    const nodes = await flowRepository.findCurrentVersionNodes({
+      workspaceId: input.workspaceId,
+      flowId: input.flowId,
+    })
+    return nodes?.some((node) => node.id === input.nodeId)
+      ? "ready"
+      : "nodeNotFound"
   }
 
   /** Existing rows only — `id`s absent from the result no longer exist. */

@@ -112,23 +112,13 @@ const baseShape = {
   states: z.tuple([successStateSchema, errorStateSchema, skipStateSchema]),
 }
 
-const act = <A extends PipelineStepAction, S extends z.ZodRawShape>(
-  action: A,
-  shape: S,
-) =>
-  z.object({
-    ...baseShape,
-    action: z.literal(action),
-    ...shape,
-  })
-
 /**
- * "Pipelines" action step. Contact-scoped actions target the contact's most
- * recently created OPEN item in `pipelineId`; no such item routes to `skip`.
- * Text fields accept `{{variables}}`.
+ * The fields of each pipeline action, shared by the flow step (which adds the
+ * step envelope: id, states) and the trigger action (which adds `type`).
+ * Both unions below are built from these, so they cannot drift apart.
  */
-export const pipelineStepSchema = z.discriminatedUnion("action", [
-  act("addToPipeline", {
+const pipelineActionFields = {
+  addToPipeline: {
     title: z
       .string()
       .max(PIPELINE_STEP_LIMITS.title)
@@ -146,47 +136,110 @@ export const pipelineStepSchema = z.discriminatedUnion("action", [
       .array(pipelineStepFieldValueSchema)
       .max(PIPELINE_STEP_LIMITS.maxFieldIds)
       .describe("Pipeline custom field values ({{variables}} allowed)."),
-  }),
-  act("moveToStage", { stageId: zodBigintIdAsString("Select a stage") }),
-  act("changeValue", {
+  },
+  moveToStage: { stageId: zodBigintIdAsString("Select a stage") },
+  changeValue: {
     value: z
       .string()
       .describe("Opportunity value as a number >= 0; accepts {{variables}}."),
-  }),
-  act("assign", {
+  },
+  assign: {
     assigneeMemberIds: assigneeIds,
     assigneeInboxTeamIds: assigneeTeamIds,
-  }),
-  act("changeStatus", { status: pipelineStatus }),
-  act("changePriority", { priority: pipelinePriority }),
-  act("changeDueDate", { dueDate: pipelineStepDueDateSchema }),
-  act("changeTitle", {
+  },
+  changeStatus: { status: pipelineStatus },
+  changePriority: { priority: pipelinePriority },
+  changeDueDate: { dueDate: pipelineStepDueDateSchema },
+  changeTitle: {
     title: z.string().max(PIPELINE_STEP_LIMITS.title),
-  }),
-  act("setCustomField", {
+  },
+  setCustomField: {
     pipelineFieldId: optionalId.describe("Pipeline custom field id."),
     value: z.string(),
-  }),
-  act("clearCustomField", {
+  },
+  clearCustomField: {
     pipelineFieldIds: z
       .array(zodBigintIdAsString())
       .max(PIPELINE_STEP_LIMITS.maxFieldIds)
       .describe("Pipeline custom field ids to clear."),
-  }),
-  act("changeDescription", {
+  },
+  changeDescription: {
     description: z.string().max(PIPELINE_STEP_LIMITS.description),
-  }),
-  act("removeFromPipeline", {}),
-  act("addComment", {
+  },
+  removeFromPipeline: {},
+  addComment: {
     text: z.string().max(PIPELINE_STEP_LIMITS.comment),
-  }),
-  act("transfer", {
+  },
+  transfer: {
     destinationPipelineId: zodBigintIdAsString("Select a pipeline"),
     destinationStageId: optionalId
       .optional()
       .describe("Destination stage id; omitted means the first stage."),
-  }),
+  },
+} as const satisfies Record<PipelineStepAction, z.ZodRawShape>
+
+const act = <A extends PipelineStepAction>(action: A) =>
+  z.object({
+    ...baseShape,
+    action: z.literal(action),
+    ...pipelineActionFields[action],
+  })
+
+/**
+ * "Pipelines" action step. Contact-scoped actions target the contact's most
+ * recently created OPEN item in `pipelineId`; no such item routes to `skip`.
+ * Text fields accept `{{variables}}`.
+ */
+export const pipelineStepSchema = z.discriminatedUnion("action", [
+  act("addToPipeline"),
+  act("moveToStage"),
+  act("changeValue"),
+  act("assign"),
+  act("changeStatus"),
+  act("changePriority"),
+  act("changeDueDate"),
+  act("changeTitle"),
+  act("setCustomField"),
+  act("clearCustomField"),
+  act("changeDescription"),
+  act("removeFromPipeline"),
+  act("addComment"),
+  act("transfer"),
 ])
+
+const triggerAct = <A extends PipelineStepAction>(action: A) =>
+  z.object({
+    type: z.literal("pipeline").describe('Action type "pipeline".'),
+    pipelineId: baseShape.pipelineId,
+    action: z.literal(action),
+    ...pipelineActionFields[action],
+  })
+
+/**
+ * The stored shape of the trigger action "Pipelines": the same actions and
+ * fields as the flow step, without the step envelope (no id, no routing).
+ */
+export const pipelineActionSchema = z.discriminatedUnion("action", [
+  triggerAct("addToPipeline"),
+  triggerAct("moveToStage"),
+  triggerAct("changeValue"),
+  triggerAct("assign"),
+  triggerAct("changeStatus"),
+  triggerAct("changePriority"),
+  triggerAct("changeDueDate"),
+  triggerAct("changeTitle"),
+  triggerAct("setCustomField"),
+  triggerAct("clearCustomField"),
+  triggerAct("changeDescription"),
+  triggerAct("removeFromPipeline"),
+  triggerAct("addComment"),
+  triggerAct("transfer"),
+])
+export type PipelineActionSchema = z.infer<typeof pipelineActionSchema>
+export type PipelineActionOf<A extends PipelineStepAction> = Extract<
+  PipelineActionSchema,
+  { action: A }
+>
 
 export type PipelineStepSchema = z.infer<typeof pipelineStepSchema>
 export type PipelineStepOf<A extends PipelineStepAction> = Extract<
@@ -266,4 +319,18 @@ export const pipelineStepDefaultFn = (
       throw new Error(`Unhandled pipeline action: ${String(exhaustive)}`)
     }
   }
+}
+
+/** Default trigger action for `action`; the trigger editor uses it when the action select changes. */
+export const pipelineActionDefaultFn = (
+  action: PipelineStepAction = "addToPipeline",
+  carry: { pipelineId?: string } = {},
+): PipelineActionSchema => {
+  const {
+    id: _id,
+    stepType: _stepType,
+    states: _states,
+    ...fields
+  } = pipelineStepDefaultFn(action, carry)
+  return { ...fields, type: "pipeline" } as PipelineActionSchema
 }

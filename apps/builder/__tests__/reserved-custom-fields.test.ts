@@ -67,7 +67,7 @@ const getMessageValue = (
 }
 
 describe("reservedCustomFieldIds", () => {
-  test("matches the ChatRace-compatible system field picker set", () => {
+  test("matches the reserved system field picker set", () => {
     expect(reservedCustomFieldIds.map((field) => field.id)).toEqual(
       expectedReservedSystemFieldIds,
     )
@@ -111,7 +111,7 @@ describe("reservedCustomFieldIds", () => {
     ])
   })
 
-  test("does not offer the Chatrace spelling alias beside the canonical field", () => {
+  test("does not offer the legacy spelling alias beside the canonical field", () => {
     expect(reservedCustomFieldIds.map((field) => field.id)).not.toContain(
       systemFieldTypes.enum.last_btt_title,
     )

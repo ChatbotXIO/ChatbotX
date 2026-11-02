@@ -2,6 +2,7 @@
 
 import type { CustomFieldType } from "@chatbotx.io/database/partials"
 import { FieldOperationType } from "@chatbotx.io/flow-config"
+import { SelectField } from "@chatbotx.io/ui/components/form/select-field"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
   Dialog,
@@ -23,11 +24,13 @@ import { type ReactElement, useMemo, useState } from "react"
 import { useFormContext, useWatch } from "react-hook-form"
 import { toast } from "sonner"
 import { CustomFieldValueInput } from "@/features/custom-fields/components/custom-field-value-input"
+import { FieldOperationOperand } from "@/features/custom-fields/components/field-operation-operand"
 import {
   CustomFieldOperationSelect,
   CustomFieldSelect,
 } from "@/features/custom-fields/custom-field-select"
 import { findFieldByReference } from "@/features/custom-fields/lib/find-field-by-reference"
+import { useFieldOperationReset } from "@/features/custom-fields/lib/use-field-operation-reset"
 import {
   useBotFields,
   useCustomFields,
@@ -136,6 +139,30 @@ export default function AddContactCustomFieldDialog({
   )
 }
 
+/**
+ * A boolean operand is picked from True/False, not ticked. A blank selection
+ * stays "unset" (the runtime keeps a blank boolean blank).
+ */
+const BooleanValueSelect = ({ name }: { name: string }) => {
+  const t = useTranslations()
+  const options = useMemo(
+    () => [
+      { value: "true", label: t("fields.boolean.true") },
+      { value: "false", label: t("fields.boolean.false") },
+    ],
+    [t],
+  )
+
+  return (
+    <SelectField
+      label={t("fields.value.label")}
+      name={name}
+      options={options}
+      placeholder={t("fields.boolean.placeholder")}
+    />
+  )
+}
+
 export const SetCustomField = ({
   parentName,
   includeBotFields = false,
@@ -168,12 +195,23 @@ export const SetCustomField = ({
     name: getFieldName("customFieldId"),
   })
 
+  const watchOperation = useWatch({
+    control: form.control,
+    name: getFieldName("operation"),
+  }) as FieldOperationType | undefined
+
   const selectedCustomFieldType = useMemo(
     () =>
       findFieldByReference(watchCustomFieldId, { customFields, botFields })
         ?.type ?? null,
     [watchCustomFieldId, customFields, botFields],
   )
+
+  const { onOperationChange } = useFieldOperationReset({
+    operationName: getFieldName("operation"),
+    valueName: getFieldName("value"),
+    fieldType: selectedCustomFieldType,
+  })
 
   return (
     <>
@@ -188,24 +226,31 @@ export const SetCustomField = ({
 
       <CustomFieldOperationSelect
         name={getFieldName("operation")}
+        onValueChange={onOperationChange}
         required
         type={selectedCustomFieldType as CustomFieldType | null}
       />
 
-      <div className="flex flex-col gap-2">
-        <Label>{t("fields.value.label")}</Label>
-
-        {selectedCustomFieldType && (
-          <CustomFieldValueInput
-            name={getFieldName("value")}
-            required={
-              selectedCustomFieldType !== "number" &&
-              selectedCustomFieldType !== "boolean"
-            }
-            type={selectedCustomFieldType}
-          />
-        )}
-      </div>
+      <FieldOperationOperand
+        name={getFieldName("value")}
+        operation={watchOperation ?? FieldOperationType.set}
+        renderTyped={() => {
+          if (selectedCustomFieldType === "boolean") {
+            return <BooleanValueSelect name={getFieldName("value")} />
+          }
+          return selectedCustomFieldType ? (
+            <div className="flex flex-col gap-2">
+              <Label>{t("fields.value.label")}</Label>
+              <CustomFieldValueInput
+                name={getFieldName("value")}
+                required={selectedCustomFieldType !== "number"}
+                type={selectedCustomFieldType}
+              />
+            </div>
+          ) : null
+        }}
+        variables={includeBotFields}
+      />
     </>
   )
 }

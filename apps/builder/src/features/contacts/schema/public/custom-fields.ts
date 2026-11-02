@@ -1,46 +1,22 @@
-import { FieldOperationType } from "@chatbotx.io/flow-config"
 import { z } from "zod"
 import { publicContactIdentifier } from "@/lib/public-api/contact-identifier"
+import {
+  publicFieldOperationFields,
+  requireOperandForOperation,
+} from "@/lib/public-api/field-operation"
 import { ianaTimezoneSchema } from "@/lib/public-api/iana-timezone"
 
-// The public API speaks friendly operation names (`increase`, not the
-// internal `"O04"` opaque code `FieldOperationType.increase` maps to) so an
-// LLM/API consumer never has to know the flow-step step's wire codes.
-const publicFieldOperationNames = z.enum([
-  "set",
-  "append",
-  "prepend",
-  "increase",
-  "decrease",
-])
-export type PublicFieldOperationName = z.infer<typeof publicFieldOperationNames>
-
-export const publicFieldOperationNameToCode: Record<
-  PublicFieldOperationName,
-  FieldOperationType
-> = {
-  set: FieldOperationType.set,
-  append: FieldOperationType.append,
-  prepend: FieldOperationType.prepend,
-  increase: FieldOperationType.increase,
-  decrease: FieldOperationType.decrease,
-}
-
-const contactCustomFieldOperationPublicRequest = z.object({
-  customFieldId: z
-    .string()
-    .min(1)
-    .describe(
-      "Custom field id (numeric string) or field name. Get either from `customFields.list`.",
-    ),
-  operation: publicFieldOperationNames.describe(
-    "Operation to apply. `increase`/`decrease` treat the current value as a number and are a no-op if it isn't.",
-  ),
-  value: z
-    .string()
-    .trim()
-    .describe("Operand: the value to set, append, prepend, or add/subtract."),
-})
+const contactCustomFieldOperationPublicRequest = z
+  .object({
+    customFieldId: z
+      .string()
+      .min(1)
+      .describe(
+        "Custom field id (numeric string) or field name. Get either from `customFields.list`.",
+      ),
+    ...publicFieldOperationFields,
+  })
+  .superRefine(requireOperandForOperation)
 
 export const addContactCustomFieldOperationsPublicRequest = z.object({
   identifier: publicContactIdentifier,

@@ -120,6 +120,8 @@ export const BaseEditor = ({
         return t("trigger.actions.clearCustomField")
       case triggerActions.enum.startAnotherFlow:
         return t("trigger.actions.startAnotherFlow")
+      case triggerActions.enum.startExternalStep:
+        return t("trigger.actions.startExternalStep")
       case triggerActions.enum.transferConversationToHuman:
         return t("trigger.actions.transferConversationToHuman")
       case triggerActions.enum.runGoogleSheet:

@@ -95,7 +95,7 @@ Whether the identities can also **create** a contact is not a save rule. A webho
 
 ## Actions
 
-After the contact is saved the webhook runs its `actions` in order. They are the Trigger actions, limited to: `startAnotherFlow`, `addTag`, `removeTag`, `setCustomField`, `clearCustomField`, `transferConversationToHuman`. Meta CAPI, Google Ads and Sheets actions stay trigger-only because their dedup keys are scoped to a trigger.
+After the contact is saved the webhook runs its `actions` in order. They are the Trigger actions, limited to: `startAnotherFlow`, `addTag`, `removeTag`, `setCustomField`, `clearCustomField`, `transferConversationToHuman`. Meta CAPI, Google Ads, Sheets, Start External Step and Pipelines actions stay trigger-only because their dedup keys are scoped to a trigger. `setCustomField` is the same action a trigger runs, so it supports every operation (`O01`–`O12`, including formulas and date arithmetic) and resolves `{{variables}}` in its value.
 
 ## Processing guarantees
 
@@ -120,7 +120,7 @@ The list shows how many requests each webhook has accepted since it was created 
 
 ## Delivery guarantees and sender notes
 
-- **At-least-once actions.** The request row is the outbox: each action is checkpointed after it runs, and a request is resumed after a crash from its last checkpoint. A worker that dies in the instant between an action's side effect and its checkpoint can therefore run that one action again on recovery. Flow starts use a deterministic queue job id per request and action, which absorbs the common retry; an action that is not naturally repeatable (for example appending to an account field) should be kept out of webhooks that must be exactly-once. A result recorded for an action that the owner has since replaced by an action of a different type does not count as done.
+- **At-least-once actions.** The request row is the outbox: each action is checkpointed after it runs, and a request is resumed after a crash from its last checkpoint. A worker that dies in the instant between an action's side effect and its checkpoint can therefore run that one action again on recovery. Flow starts use a deterministic queue job id per request and action, which absorbs the common retry; an action that is not naturally repeatable (appending to or increasing/decreasing a field, a formula that reads the current value) should be kept out of webhooks that must be exactly-once. A failed checkpoint is retried three times before the attempt fails, which narrows that window but cannot close it. A result recorded for an action that the owner has since replaced by an action of a different type does not count as done.
 - **Retries.** A request whose processing hits an infrastructure error (a database restart, a lock timeout) is given back and retried by the re-dispatch cron for about 20 minutes before it is closed as `failed`; a business error (a 4xx, such as a quota or validation failure) closes it as `failed` at once.
 - **Token changes take effect within 10 seconds.** The token lookup is cached for 10 seconds, so a URL that was just regenerated, deactivated or deleted can still be accepted briefly by a delivery already in flight.
 - **Send ids as strings.** A numeric id above 2^53 (a PSID, page id or open id sent as a JSON number) is rounded by JSON parsing before the platform sees it, so it names a different account. Such a value is treated as absent and the request is skipped (`missingIdentifier` / `missingInboxIdentifier`) rather than creating a contact for an id that does not exist.

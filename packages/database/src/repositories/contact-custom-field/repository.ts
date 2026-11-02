@@ -17,6 +17,77 @@ import {
 
 export const contactCustomFieldRepository = {
   /**
+   * Serializes read-modify-write operations on `(contact, field)` pairs, also
+   * when the row does not exist yet (a row lock cannot guard a missing row).
+   * Locks are taken in a global id order, so concurrent single, bulk and
+   * multi-field calls cannot deadlock each other. Released at commit.
+   */
+  async lockPairs(
+    tx: DatabaseClient,
+    pairs: ReadonlyArray<{ contactId: string; customFieldId: string }>,
+  ): Promise<void> {
+    const keys = [
+      ...new Set(
+        pairs.map(
+          ({ contactId, customFieldId }) => `${contactId}:${customFieldId}`,
+        ),
+      ),
+    ].sort()
+    for (const key of keys) {
+      await tx.execute(
+        sql`select pg_advisory_xact_lock(hashtextextended(${`ccf:${key}`}, 0))`,
+      )
+    }
+  },
+
+  /**
+   * One query for every requested pair; callers match pairs in memory. Reads
+   * `FOR UPDATE` so a concurrent plain `set` (which takes no pair lock) waits
+   * for the row instead of being overwritten from a stale read.
+   */
+  async listValuesForPairs(
+    input: { contactIds: string[]; customFieldIds: string[] },
+    tx: DatabaseClient = db,
+  ): Promise<
+    Array<{ contactId: string; customFieldId: string; value: string }>
+  > {
+    if (input.contactIds.length === 0 || input.customFieldIds.length === 0) {
+      return []
+    }
+    return await tx
+      .select({
+        contactId: contactCustomFieldModel.contactId,
+        customFieldId: contactCustomFieldModel.customFieldId,
+        value: contactCustomFieldModel.value,
+      })
+      .from(contactCustomFieldModel)
+      .where(
+        and(
+          inArray(contactCustomFieldModel.contactId, input.contactIds),
+          inArray(contactCustomFieldModel.customFieldId, input.customFieldIds),
+        ),
+      )
+      .for("update")
+  },
+
+  /** Deletes one value and returns what it held, or null if there was none. */
+  async deleteValue(
+    input: { contactId: string; customFieldId: string },
+    tx: DatabaseClient = db,
+  ): Promise<string | null> {
+    const [deleted] = await tx
+      .delete(contactCustomFieldModel)
+      .where(
+        and(
+          eq(contactCustomFieldModel.contactId, input.contactId),
+          eq(contactCustomFieldModel.customFieldId, input.customFieldId),
+        ),
+      )
+      .returning({ value: contactCustomFieldModel.value })
+    return deleted?.value ?? null
+  },
+
+  /**
    * Reads selected contact values through both ownership boundaries. The
    * `ContactCustomField` table cannot be trusted on its own because legacy
    * rows can theoretically join a Contact and CustomField from other spaces.

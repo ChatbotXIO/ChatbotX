@@ -11,6 +11,7 @@ export const triggerActions = z.enum([
   "sendMetaCapiEvent",
   "sendGoogleAdsConversion",
   "runGoogleSheet",
+  "pipeline",
   "archiveConversation",
   "unarchiveConversation",
   "assignConversation",

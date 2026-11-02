@@ -51,9 +51,11 @@ vi.mock("../src/contact-custom-field/value-service", () => ({
 const { pipelineActionCanSkip, pipelineStepDefaultFn, pipelineStepActions } =
   await import("@chatbotx.io/flow-config")
 const { ChatbotXException, notFoundException } = await import("../src/errors")
-const { runPipelineFlowAction, PIPELINE_FLOW_ACTION_HANDLERS } = await import(
-  "../src/pipeline/flow-actions"
-)
+const {
+  runPipelineAction,
+  runPipelineFlowAction,
+  PIPELINE_FLOW_ACTION_HANDLERS,
+} = await import("../src/pipeline/flow-actions")
 
 const ctx = (overrides: Record<string, unknown> = {}) => ({
   workspaceId: "ws-1",
@@ -705,5 +707,121 @@ describe("runPipelineFlowAction", () => {
       expect(result.status).toBe("success")
       expect(mocks.update).not.toHaveBeenCalled()
     })
+  })
+})
+
+describe("runPipelineAction (trigger)", () => {
+  const triggerCtx = (overrides: Record<string, unknown> = {}) => ({
+    workspaceId: "ws-1",
+    contactId: "c-1",
+    actor: { kind: "trigger" as const, userId: null, sourceId: "trigger-1" },
+    baseIdempotencyKey: "trigger:job-1:trigger-1:0",
+    interpolate: async (text: string) => text.replace("{{name}}", "Ada"),
+    ...overrides,
+  })
+  // A trigger action is the step's fields without the step envelope.
+  const action = (name: string, patch: Record<string, unknown> = {}) => {
+    const { id, stepType, states, ...fields } = step(
+      name as Parameters<typeof step>[0],
+      patch,
+    ) as Record<string, unknown>
+    return { ...fields, type: "pipeline" } as never
+  }
+
+  test("attributes the change to the trigger", async () => {
+    await runPipelineAction(
+      action("addToPipeline", { title: "{{name}}" }),
+      triggerCtx(),
+    )
+
+    const call = mocks.create.mock.calls[0][0]
+    expect(call.actor).toEqual({
+      kind: "trigger",
+      userId: null,
+      sourceId: "trigger-1",
+    })
+    expect(call.fields.title).toBe("Ada")
+  })
+
+  test.each([
+    ["addToPipeline", () => mocks.create, { title: "x" }],
+    ["addComment", () => mocks.addComment, { text: "hi" }],
+  ])("%s is deduplicated by the occurrence key", async (name, service, patch) => {
+    await runPipelineAction(action(name, patch), triggerCtx())
+
+    expect(service().mock.calls[0][0].idempotencyKey).toBe(
+      "trigger:job-1:trigger-1:0",
+    )
+  })
+
+  test("identical addComment actions at different indexes forward different keys", async () => {
+    const comment = action("addComment", { text: "same" })
+    const keyFor = async (baseIdempotencyKey: string) => {
+      mocks.addComment.mockClear()
+      await runPipelineAction(comment, triggerCtx({ baseIdempotencyKey }))
+      return mocks.addComment.mock.calls[0][0].idempotencyKey
+    }
+
+    const first = await keyFor("trigger:job-1:trigger-1:0")
+    const second = await keyFor("trigger:job-1:trigger-1:1")
+    const replay = await keyFor("trigger:job-1:trigger-1:0")
+    const otherJob = await keyFor("trigger:job-2:trigger-1:0")
+
+    expect(first).toBe("trigger:job-1:trigger-1:0")
+    expect(second).toBe("trigger:job-1:trigger-1:1")
+    expect(second).not.toBe(first)
+    expect(replay).toBe(first)
+    expect(otherJob).not.toBe(first)
+  })
+
+  test("without an occurrence key an add is not deduplicated", async () => {
+    await runPipelineAction(
+      action("addToPipeline", { title: "x" }),
+      triggerCtx({ baseIdempotencyKey: undefined }),
+    )
+
+    expect(mocks.create.mock.calls[0][0].idempotencyKey).toBeUndefined()
+  })
+
+  test("actions that are already idempotent never send the key", async () => {
+    await runPipelineAction(action("changeTitle", { title: "x" }), triggerCtx())
+
+    expect(mocks.update.mock.calls[0][0]).not.toHaveProperty("idempotencyKey")
+  })
+
+  test("a contact with no open item is a skip, a deleted pipeline an error", async () => {
+    mocks.resolveTarget.mockResolvedValue(null)
+    expect(
+      (
+        await runPipelineAction(
+          action("changeTitle", { title: "x" }),
+          triggerCtx(),
+        )
+      ).status,
+    ).toBe("skip")
+
+    mocks.findPipeline.mockResolvedValue(null)
+    expect(
+      (
+        await runPipelineAction(
+          action("changeTitle", { title: "x" }),
+          triggerCtx(),
+        )
+      ).status,
+    ).toBe("error")
+  })
+
+  test("a missing or malformed pipeline is an error before any lookup", async () => {
+    for (const pipelineId of ["", "abc"]) {
+      expect(
+        (
+          await runPipelineAction(
+            action("changeTitle", { title: "x", pipelineId }),
+            triggerCtx(),
+          )
+        ).status,
+      ).toBe("error")
+    }
+    expect(mocks.resolveTarget).not.toHaveBeenCalled()
   })
 })

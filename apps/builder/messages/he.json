@@ -2564,6 +2564,9 @@
     "maxCharacters": "מקסימום {max} תווים.",
     "invalidApiKey": "מפתח API לא תקין",
     "maxMustBeGreaterThanMin": "{maxField} חייב להיות גדול או שווה ל-{minField}",
+    "trigger": {
+      "actionReferenceNotFound": "An action refers to a record that no longer exists. Re-select it in the action and save again."
+    },
     "inboundWebhook": {
       "inboxRequired": "בחרו תיבת דואר נכנס.",
       "inboxNotFound": "תיבת הדואר הנכנס שנבחרה לא נמצאה.",
@@ -3596,6 +3599,7 @@
       "setCustomField": "הגדרת שדה מותאם אישית",
       "clearCustomField": "ניקוי שדה מותאם אישית",
       "startAnotherFlow": "הפעלת תהליך אחר",
+      "startExternalStep": "Start External Step",
       "notifyAdmins": "יידוע מנהלי מערכת",
       "transferConversationToHuman": "העברת השיחה לנציג אנושי",
       "sendMetaCapiEvent": "שליחת אירוע Meta CAPI",
@@ -5692,6 +5696,15 @@
       "label": "שדה מותאם אישית",
       "savePayloadTo": "שמירת התגובה בשדה מותאם אישית",
       "set_value": "הגדרת ערך",
+      "clear": "Clear value",
+      "formula": "Use custom formula",
+      "set_now": "Set to now",
+      "date_expression": "Free-form date (with math)",
+      "add_minutes": "Add minutes",
+      "add_hours": "Add hours",
+      "add_days": "Add days",
+      "formulaHint": "Math where value is the current number, e.g. round(value * 1.1). Functions: abs, ceil, floor, round, min, max, pow, sqrt, log, sin, cos.",
+      "dateExpressionHint": "e.g. now + 2 days - 3 hours. Units: min, h, d, w, mo, y.",
       "append": "הוספה לסוף",
       "prepend": "הוספה להתחלה",
       "increase": "הגדלה ב-",

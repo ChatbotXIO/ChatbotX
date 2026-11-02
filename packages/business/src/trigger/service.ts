@@ -1,4 +1,11 @@
-import { and, db, eq, inArray, sql } from "@chatbotx.io/database/client"
+import {
+  and,
+  type DatabaseClient,
+  db,
+  eq,
+  inArray,
+  sql,
+} from "@chatbotx.io/database/client"
 import type { FolderType } from "@chatbotx.io/database/partials"
 import { triggerRepository } from "@chatbotx.io/database/repositories"
 import {
@@ -12,6 +19,10 @@ import type { ConditionModel, TriggerModel } from "@chatbotx.io/database/types"
 import { removeTriggerCache, updateTriggerCache } from "@chatbotx.io/events"
 import { createId } from "@chatbotx.io/utils"
 import { isSameJsonValue } from "../audit/diff"
+import {
+  findInvalidActionReferences,
+  indexesOfNewActions,
+} from "../automation-action/references"
 import { BaseService } from "../base.service"
 import { notFoundException, validationException } from "../errors"
 import { folderService } from "../folder/service"
@@ -33,6 +44,46 @@ export type TriggerWithConditions = TriggerModel & {
 export type ActiveTriggerWithConditionsPageRow = TriggerModel & {
   conditions: ConditionModel[]
   workspace: { timezone: string | null } | null
+}
+
+/**
+ * Rejects an update that points a NEW action at something that does not exist
+ * in the workspace, at `actions.<index>.<field>`. Only actions not already
+ * stored are checked, so a trigger that still holds a reference to a deleted
+ * record can be saved without touching it.
+ */
+const assertNewActionReferencesExist = async (input: {
+  workspaceId: string
+  next: TriggerModel["actions"]
+  stored: TriggerModel["actions"]
+  tx: DatabaseClient
+}): Promise<void> => {
+  const indexes = indexesOfNewActions(input.next, input.stored)
+  if (indexes.size === 0) {
+    return
+  }
+  const [problem] = await findInvalidActionReferences({
+    workspaceId: input.workspaceId,
+    actions: input.next.map((action) =>
+      action && typeof action === "object"
+        ? (action as Record<string, unknown>)
+        : {},
+    ),
+    indexes,
+    // The trigger runtime resolves a custom field named by `setCustomField`.
+    fieldNames: true,
+    tx: input.tx,
+  })
+  if (problem) {
+    const field = `actions.${problem.index}.${problem.field}`
+    // A message key (localised by the builder) with the path as a param, which
+    // the public API appends to the key so an agent still sees where.
+    throw validationException(
+      field,
+      "validation.trigger.actionReferenceNotFound",
+      { field },
+    )
+  }
 }
 
 class TriggerService extends BaseService {
@@ -182,6 +233,19 @@ class TriggerService extends BaseService {
     const { workspaceId, id, actions, conditions } = input
 
     const result = await db.transaction(async (tx) => {
+      // Serializes concurrent saves of one trigger, so "what is already stored"
+      // below cannot change between the read and the write.
+      await tx
+        .select({ id: triggerModel.id })
+        .from(triggerModel)
+        .where(
+          and(
+            eq(triggerModel.workspaceId, workspaceId),
+            eq(triggerModel.id, id),
+          ),
+        )
+        .for("update")
+
       const [existingTrigger, existingConditions] = await Promise.all([
         tx.query.triggerModel.findFirst({
           where: {
@@ -203,6 +267,13 @@ class TriggerService extends BaseService {
           hasRealChange: false,
         }
       }
+
+      await assertNewActionReferencesExist({
+        workspaceId,
+        next: actions,
+        stored: existingTrigger.actions,
+        tx,
+      })
 
       const existingIds = new Set(existingConditions.map((c) => c.id))
       const existingById = new Map(existingConditions.map((c) => [c.id, c]))

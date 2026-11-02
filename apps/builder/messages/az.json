@@ -1530,6 +1530,15 @@
       "label": "Fərdi sahə",
       "savePayloadTo": "Cavabı fərdi sahədə yadda saxla",
       "set_value": "Dəyər təyin et",
+      "clear": "Clear value",
+      "formula": "Use custom formula",
+      "set_now": "Set to now",
+      "date_expression": "Free-form date (with math)",
+      "add_minutes": "Add minutes",
+      "add_hours": "Add hours",
+      "add_days": "Add days",
+      "formulaHint": "Math where value is the current number, e.g. round(value * 1.1). Functions: abs, ceil, floor, round, min, max, pow, sqrt, log, sin, cos.",
+      "dateExpressionHint": "e.g. now + 2 days - 3 hours. Units: min, h, d, w, mo, y.",
       "append": "Sonuna əlavə et",
       "prepend": "Əvvəlinə əlavə et",
       "increase": "Bu qədər artır",
@@ -5498,6 +5507,9 @@
     "maxCharacters": "Ən çox {max} simvol.",
     "invalidApiKey": "Etibarsız API açarı",
     "maxMustBeGreaterThanMin": "{maxField} ən azı {minField} qədər olmalıdır",
+    "trigger": {
+      "actionReferenceNotFound": "An action refers to a record that no longer exists. Re-select it in the action and save again."
+    },
     "inboundWebhook": {
       "inboxRequired": "Gələnlər qutusu seçin.",
       "inboxNotFound": "Seçilmiş gələnlər qutusu tapılmadı.",
@@ -6530,6 +6542,7 @@
       "setCustomField": "Fərdi sahənin dəyərini təyin et",
       "clearCustomField": "Fərdi sahəni təmizlə",
       "startAnotherFlow": "Başqa axın başlat",
+      "startExternalStep": "Start External Step",
       "notifyAdmins": "Administratorları xəbərdar et",
       "sendMetaCapiEvent": "Meta CAPI hadisəsi göndər",
       "transferConversationToHuman": "Söhbəti operatora ötür",

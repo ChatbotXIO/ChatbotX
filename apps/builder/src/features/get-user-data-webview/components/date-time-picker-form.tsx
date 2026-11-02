@@ -128,10 +128,9 @@ export function DateTimePickerForm({ token, mode }: DateTimePickerFormProps) {
 }
 
 /**
- * The picker always renders light, like the Chatrace page it mirrors — the
- * contact opening the webview has no relationship to the workspace's builder
- * theme, and the builder app shares this origin, so its dark preference
- * would otherwise leak in. Redeclaring the surface tokens locally keeps
+ * The picker always renders light. The public webview must not inherit the
+ * workspace builder theme, which shares the same origin and could otherwise
+ * leak its dark preference. Redeclaring the surface tokens locally keeps
  * every descendant token class (bg-background, border-input, ...) resolving
  * to the light palette regardless of the <html> theme class; `--primary` is
  * identical in both palettes, so the brand color needs no override.
