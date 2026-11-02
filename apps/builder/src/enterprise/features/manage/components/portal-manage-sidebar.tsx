@@ -24,6 +24,8 @@ import { authClient } from "@/lib/auth/auth-client"
 const PORTAL_PREFIX = "/portal"
 
 type Props = {
+  /** Whether this user is an active reseller rather than a credentials-only user. */
+  canManageReseller: boolean
   /** The reseller's capability flags — SaaS items are filtered by them. */
   flags: PortalSaasFlags
   /**
@@ -40,7 +42,11 @@ type Props = {
  * same labels, same smart pricing. Platform items stay in-zone (builder's own
  * `/manage/*` pages); SaaS items cross-zone into `/portal/*`.
  */
-export function PortalManageSidebar({ flags, pricing }: Props) {
+export function PortalManageSidebar({
+  canManageReseller,
+  flags,
+  pricing,
+}: Props) {
   const t = useTranslations()
   const tManage = useTranslations("manageSidebar")
   const { data: session } = authClient.useSession()
@@ -57,35 +63,41 @@ export function PortalManageSidebar({ flags, pricing }: Props) {
       url: "/manage/platform-credentials",
       icon: Grid2x2PlusIcon,
     },
-    {
-      title: t("channels.title"),
-      url: "/manage/platform-channels",
-      icon: RadioTowerIcon,
-    },
-    {
-      title: t("platformBranding.title"),
-      url: "/manage/branding",
-      icon: PaletteIcon,
-    },
-    {
-      title: t("platformEmailTemplates.title"),
-      url: "/manage/email-templates",
-      icon: MailIcon,
-    },
-    {
-      title: t("helpItems.title"),
-      url: "/manage/help-items",
-      icon: CircleHelpIcon,
-    },
+    ...(canManageReseller
+      ? [
+          {
+            title: t("channels.title"),
+            url: "/manage/platform-channels",
+            icon: RadioTowerIcon,
+          },
+          {
+            title: t("platformBranding.title"),
+            url: "/manage/branding",
+            icon: PaletteIcon,
+          },
+          {
+            title: t("platformEmailTemplates.title"),
+            url: "/manage/email-templates",
+            icon: MailIcon,
+          },
+          {
+            title: t("helpItems.title"),
+            url: "/manage/help-items",
+            icon: CircleHelpIcon,
+          },
+        ]
+      : []),
   ]
 
-  const saasItems: PortalNavItem[] = portalSaasNavConfigs
-    .filter((item) => flags[item.requires])
-    .map((item) => ({
-      title: tManage(item.key satisfies PortalSaasNavKey),
-      url: `${PORTAL_PREFIX}${item.pathSuffix}`,
-      icon: item.icon,
-    }))
+  const saasItems: PortalNavItem[] = canManageReseller
+    ? portalSaasNavConfigs
+        .filter((item) => flags[item.requires])
+        .map((item) => ({
+          title: tManage(item.key satisfies PortalSaasNavKey),
+          url: `${PORTAL_PREFIX}${item.pathSuffix}`,
+          icon: item.icon,
+        }))
+    : []
 
   return (
     <PortalSideNav

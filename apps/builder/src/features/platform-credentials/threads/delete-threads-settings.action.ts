@@ -8,7 +8,9 @@ export const deleteThreadsSettingsAction = authActionClient
   .bindArgsSchemas([credentialScopeSchema])
   .action(async ({ ctx, bindArgsParsedInputs: [scope] }) => {
     await platformCredentialService.remove({
-      userId: await resolveCredentialScopedUserId(ctx.user, scope),
+      userId: await resolveCredentialScopedUserId(ctx.user, scope, {
+        allowWithoutEntitlement: true,
+      }),
       type: "threads",
     })
   })

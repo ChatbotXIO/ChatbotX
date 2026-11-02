@@ -18,6 +18,7 @@ vi.mock("@chatbotx.io/business", () => ({
   removePlatformStripe: removeSpy,
   savePlatformStripe: saveSpy,
   isSuperAdmin: isSuperAdminSpy,
+  canUseOwnCredentials: vi.fn().mockResolvedValue(true),
 }))
 vi.mock("@/env", () => ({ isCloud: () => isCloudSpy() }))
 vi.mock("@/lib/provider-origin", () => ({
