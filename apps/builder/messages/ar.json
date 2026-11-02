@@ -1479,6 +1479,15 @@
       "label": "الحقل المخصص",
       "savePayloadTo": "حفظ الرد في حقل مخصص",
       "set_value": "تعيين القيمة",
+      "clear": "Clear value",
+      "formula": "Use custom formula",
+      "set_now": "Set to now",
+      "date_expression": "Free-form date (with math)",
+      "add_minutes": "Add minutes",
+      "add_hours": "Add hours",
+      "add_days": "Add days",
+      "formulaHint": "Math where value is the current number, e.g. round(value * 1.1). Functions: abs, ceil, floor, round, min, max, pow, sqrt, log, sin, cos.",
+      "dateExpressionHint": "e.g. now + 2 days - 3 hours. Units: min, h, d, w, mo, y.",
       "append": "إضافة في النهاية",
       "prepend": "إضافة إلى البداية",
       "increase": "زيادة بمقدار",
@@ -4816,6 +4825,9 @@
     "maxCharacters": "الحد الأقصى {max} حرفًا.",
     "invalidApiKey": "مفتاح API غير صالح",
     "maxMustBeGreaterThanMin": "يجب أن يكون {maxField} أكبر من أو يساوي {minField}",
+    "trigger": {
+      "actionReferenceNotFound": "An action refers to a record that no longer exists. Re-select it in the action and save again."
+    },
     "inboundWebhook": {
       "inboxRequired": "اختر صندوق وارد.",
       "inboxNotFound": "لم يتم العثور على صندوق الوارد المحدد.",
@@ -5848,6 +5860,7 @@
       "setCustomField": "تعيين حقل مخصص",
       "clearCustomField": "مسح حقل مخصص",
       "startAnotherFlow": "بدء مسار آخر",
+      "startExternalStep": "Start External Step",
       "notifyAdmins": "إشعار المسؤولين",
       "transferConversationToHuman": "نقل المحادثة إلى موظف",
       "sendMetaCapiEvent": "إرسال حدث Meta CAPI",

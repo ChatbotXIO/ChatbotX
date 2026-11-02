@@ -80,6 +80,7 @@ import { addOrUpdateMoosendContact } from "./moosend-handler"
 import { handlePipelineStep } from "./pipeline"
 import { questionnaires } from "./questionnaires"
 import { sendEmail } from "./send-email"
+import { buildSendFlowJob, pickSendFlowExtras } from "./send-flow-job"
 import { addSendGridContact } from "./sendgrid-handler"
 import { scheduleSmartDelayResume } from "./smart-delay"
 
@@ -347,77 +348,37 @@ async function startAnotherNode(
   })
 }
 
-async function startExternalFlow({
-  conversation,
-  contactInbox,
-  step,
-  metadata,
-  isBulkBroadcast,
-  sendFrom,
-  sentByUserId,
-  nodeVisits,
-  commentAnchor,
-  appointmentId,
-  triggerMessageId,
-  triggerMessageCreatedAt,
-  startedByContactMessage,
-}: ExecuteStepProps<StartExternalFlowStepSchema>) {
-  await integrationQueue.add(IntegrationJobAction.sendFlow, {
-    type: IntegrationJobAction.sendFlow,
-    data: {
-      conversationId: conversation.id,
-      contactInboxId: contactInbox.id,
-      flowId: step.flowId,
-      metadata,
-      isBulkBroadcast,
-      appointmentId,
-      sendFrom,
-      sentByUserId,
-      nodeVisits,
-      triggerMessageId,
-      triggerMessageCreatedAt,
-      startedByContactMessage,
-      commentAnchor,
-      origin: webhookChannelOrigin(),
-    },
-  })
+async function startExternalFlow(
+  props: ExecuteStepProps<StartExternalFlowStepSchema>,
+) {
+  await integrationQueue.add(
+    IntegrationJobAction.sendFlow,
+    buildSendFlowJob(
+      {
+        conversationId: props.conversation.id,
+        contactInboxId: props.contactInbox.id,
+        flowId: props.step.flowId,
+      },
+      pickSendFlowExtras(props),
+    ),
+  )
 }
 
-async function startExternalNode({
-  conversation,
-  contactInbox,
-  step,
-  metadata,
-  isBulkBroadcast,
-  sendFrom,
-  sentByUserId,
-  nodeVisits,
-  commentAnchor,
-  appointmentId,
-  triggerMessageId,
-  triggerMessageCreatedAt,
-  startedByContactMessage,
-}: ExecuteStepProps<StartExternalNodeStepSchema>) {
-  await integrationQueue.add(IntegrationJobAction.sendFlow, {
-    type: IntegrationJobAction.sendFlow,
-    data: {
-      conversationId: conversation.id,
-      contactInboxId: contactInbox.id,
-      flowId: step.flowId,
-      nodeId: step.nodeId,
-      metadata,
-      isBulkBroadcast,
-      appointmentId,
-      sendFrom,
-      sentByUserId,
-      nodeVisits,
-      triggerMessageId,
-      triggerMessageCreatedAt,
-      startedByContactMessage,
-      commentAnchor,
-      origin: webhookChannelOrigin(),
-    },
-  })
+async function startExternalNode(
+  props: ExecuteStepProps<StartExternalNodeStepSchema>,
+) {
+  await integrationQueue.add(
+    IntegrationJobAction.sendFlow,
+    buildSendFlowJob(
+      {
+        conversationId: props.conversation.id,
+        contactInboxId: props.contactInbox.id,
+        flowId: props.step.flowId,
+        nodeId: props.step.nodeId,
+      },
+      pickSendFlowExtras(props),
+    ),
+  )
 }
 
 /** Triggers `step.states` routing to a connected node */

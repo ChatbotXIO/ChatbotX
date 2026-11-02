@@ -35,6 +35,40 @@ type ConditionOption = {
   defaultFn: () => unknown
 }
 
+/**
+ * Store events that may be narrowed to one product/category (an optional
+ * `sourceId`); the other store events take no filter.
+ */
+const ECOMMERCE_EVENTS_WITH_OPTIONAL_SOURCE: ReadonlySet<TriggerEventType> =
+  new Set([
+    triggerEventTypes.enum.shoppingCartSent,
+    triggerEventTypes.enum.userAskedAboutProduct,
+    triggerEventTypes.enum.productAddedToCart,
+    triggerEventTypes.enum.productRemovedFromCart,
+    triggerEventTypes.enum.categoryAddedToCart,
+    triggerEventTypes.enum.productOrdered,
+  ])
+
+// Same order as Chatrace's trigger picker; the events only ChatbotX has
+// (phone/email update, call recorded/transcribed, order paid/refunded) close
+// the group they belong to.
+const ECOMMERCE_EVENTS = [
+  triggerEventTypes.enum.shoppingCartSent,
+  triggerEventTypes.enum.userAskedAboutProduct,
+  triggerEventTypes.enum.cartAbandoned,
+  triggerEventTypes.enum.newOrder,
+  triggerEventTypes.enum.orderAccepted,
+  triggerEventTypes.enum.orderShipped,
+  triggerEventTypes.enum.orderConcluded,
+  triggerEventTypes.enum.orderCancelled,
+  triggerEventTypes.enum.categoryAddedToCart,
+  triggerEventTypes.enum.productAddedToCart,
+  triggerEventTypes.enum.productRemovedFromCart,
+  triggerEventTypes.enum.productOrdered,
+  triggerEventTypes.enum.orderPaid,
+  triggerEventTypes.enum.orderRefunded,
+] as const
+
 export function AddCondition({
   onAdd,
 }: {
@@ -71,6 +105,11 @@ export function AddCondition({
             value: triggerEventTypes.enum.dateTimeBasedTrigger,
             defaultFn: addDateTimeBaseTriggerCondition,
           },
+        ],
+      },
+      // Unlabeled sub-groups, as in Chatrace.
+      {
+        children: [
           {
             label: t("trigger.conditions.conversationTransferredToHuman"),
             value: triggerEventTypes.enum.conversationTransferredToHuman,
@@ -85,15 +124,14 @@ export function AddCondition({
               triggerEventTypes.enum.conversationTransferredToBot,
             ),
           },
+        ],
+      },
+      {
+        children: [
           {
             label: t("trigger.conditions.newContact"),
             value: triggerEventTypes.enum.newContact,
             defaultFn: createDefaultFn(triggerEventTypes.enum.newContact),
-          },
-          {
-            label: t("trigger.conditions.contactInfoUpdated"),
-            value: triggerEventTypes.enum.contactInfoUpdated,
-            defaultFn: addContactInfoUpdatedCondition,
           },
           {
             label: t("trigger.conditions.contactUnsubscribedFormBroadcast"),
@@ -125,6 +163,11 @@ export function AddCondition({
             defaultFn: createDefaultFn(
               triggerEventTypes.enum.conversationUnassigned,
             ),
+          },
+          {
+            label: t("trigger.conditions.contactInfoUpdated"),
+            value: triggerEventTypes.enum.contactInfoUpdated,
+            defaultFn: addContactInfoUpdatedCondition,
           },
         ],
       },
@@ -192,38 +235,13 @@ export function AddCondition({
       // Store events: chat catalog interactions, the web shop cart and orders.
       {
         label: t("fields.ecommerce.label"),
-        children: [
-          ...(
-            [
-              triggerEventTypes.enum.shoppingCartSent,
-              triggerEventTypes.enum.userAskedAboutProduct,
-              triggerEventTypes.enum.productAddedToCart,
-              triggerEventTypes.enum.productRemovedFromCart,
-              triggerEventTypes.enum.categoryAddedToCart,
-              triggerEventTypes.enum.productOrdered,
-            ] as const
-          ).map((type) => ({
-            label: t(`trigger.conditions.${type}`),
-            value: type,
-            defaultFn: createDefaultFnWithOptionalSourceId(type),
-          })),
-          ...(
-            [
-              triggerEventTypes.enum.cartAbandoned,
-              triggerEventTypes.enum.newOrder,
-              triggerEventTypes.enum.orderAccepted,
-              triggerEventTypes.enum.orderShipped,
-              triggerEventTypes.enum.orderConcluded,
-              triggerEventTypes.enum.orderCancelled,
-              triggerEventTypes.enum.orderPaid,
-              triggerEventTypes.enum.orderRefunded,
-            ] as const
-          ).map((type) => ({
-            label: t(`trigger.conditions.${type}`),
-            value: type,
-            defaultFn: createDefaultFn(type),
-          })),
-        ],
+        children: ECOMMERCE_EVENTS.map((type) => ({
+          label: t(`trigger.conditions.${type}`),
+          value: type,
+          defaultFn: ECOMMERCE_EVENTS_WITH_OPTIONAL_SOURCE.has(type)
+            ? createDefaultFnWithOptionalSourceId(type)
+            : createDefaultFn(type),
+        })),
       },
 
       {
@@ -263,11 +281,13 @@ export function AddCondition({
         {options.map((option, index) => (
           // biome-ignore lint/suspicious/noArrayIndexKey: safe index
           <div key={index}>
-            <DropdownMenuGroup>
-              <DropdownMenuLabel className="text-muted-foreground text-xs">
-                {option.label}
-              </DropdownMenuLabel>
-            </DropdownMenuGroup>
+            {option.label ? (
+              <DropdownMenuGroup>
+                <DropdownMenuLabel className="text-muted-foreground text-xs">
+                  {option.label}
+                </DropdownMenuLabel>
+              </DropdownMenuGroup>
+            ) : null}
             {option.children.map((child) => (
               <DropdownMenuItem
                 key={child.value}

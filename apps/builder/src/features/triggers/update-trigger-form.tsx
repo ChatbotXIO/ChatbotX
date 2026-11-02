@@ -61,7 +61,13 @@ export default function UpdateTriggerForm(props: UpdateTriggerFormProps) {
         },
         onError: ({ error }) => {
           if (error.serverError) {
-            toast.error(error.serverError)
+            // Services raise validation failures as message keys.
+            toast.error(
+              error.serverError.startsWith("validation.") &&
+                t.has(error.serverError as never)
+                ? t(error.serverError as never)
+                : error.serverError,
+            )
           }
         },
       },
@@ -136,8 +142,9 @@ export default function UpdateTriggerForm(props: UpdateTriggerFormProps) {
             {actions.map((action, index) => (
               <BaseEditor
                 actionType={action.type}
-                // biome-ignore lint/suspicious/noArrayIndexKey: wip
-                key={index}
+                // The array's stable id, so removing an earlier action does not
+                // hand its mounted editor (and reset state) to the next one.
+                key={action.id}
                 onRemove={() => removeActions(index)}
               >
                 <ActionEditor

@@ -1323,6 +1323,15 @@
       "label": "Champ personnalisé",
       "savePayloadTo": "Enregistrer la réponse dans un champ personnalisé",
       "set_value": "Définir la valeur",
+      "clear": "Clear value",
+      "formula": "Use custom formula",
+      "set_now": "Set to now",
+      "date_expression": "Free-form date (with math)",
+      "add_minutes": "Add minutes",
+      "add_hours": "Add hours",
+      "add_days": "Add days",
+      "formulaHint": "Math where value is the current number, e.g. round(value * 1.1). Functions: abs, ceil, floor, round, min, max, pow, sqrt, log, sin, cos.",
+      "dateExpressionHint": "e.g. now + 2 days - 3 hours. Units: min, h, d, w, mo, y.",
       "append": "Ajouter à la fin",
       "prepend": "Ajouter au début",
       "increase": "Augmenter de",
@@ -4816,6 +4825,9 @@
     "maxCharacters": "Maximum {max} caractères.",
     "invalidApiKey": "Clé API non valide",
     "maxMustBeGreaterThanMin": "{maxField} doit être supérieur ou égal à {minField}",
+    "trigger": {
+      "actionReferenceNotFound": "An action refers to a record that no longer exists. Re-select it in the action and save again."
+    },
     "inboundWebhook": {
       "inboxRequired": "Choisissez une boîte de réception.",
       "inboxNotFound": "La boîte de réception sélectionnée est introuvable.",
@@ -5848,6 +5860,7 @@
       "setCustomField": "Définir le champ personnalisé",
       "clearCustomField": "Effacer le champ personnalisé",
       "startAnotherFlow": "Démarrer un autre flux",
+      "startExternalStep": "Start External Step",
       "notifyAdmins": "Notifier les administrateurs",
       "transferConversationToHuman": "Transférer la conversation à un humain",
       "sendMetaCapiEvent": "Envoyer un événement Meta CAPI",

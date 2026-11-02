@@ -23,7 +23,7 @@ const mocks = vi.hoisted(() => ({
   recordGoogleAdsConversion: vi.fn(),
   enqueueEvent: vi.fn(),
   buildSourceKey: vi.fn(),
-  setValues: vi.fn(),
+  setValueByKey: vi.fn(),
   deleteByCustomFieldId: vi.fn(),
   updateArchived: vi.fn(),
   updateAssignment: vi.fn(),
@@ -35,6 +35,10 @@ const mocks = vi.hoisted(() => ({
   enqueueTagAppliedEvaluations: vi.fn(),
   integrationQueueAdd: vi.fn(),
   getSpreadsheetRow: vi.fn(),
+}))
+
+vi.mock("@chatbotx.io/business/pipeline", () => ({
+  runPipelineAction: vi.fn(),
 }))
 
 vi.mock("@chatbotx.io/database/schema", () => ({
@@ -70,7 +74,7 @@ vi.mock("@chatbotx.io/business", async () => ({
     }),
   },
   contactCustomFieldService: {
-    setValues: (...args: unknown[]) => mocks.setValues(...args),
+    setValueByKey: (...args: unknown[]) => mocks.setValueByKey(...args),
     deleteByCustomFieldId: (...args: unknown[]) =>
       mocks.deleteByCustomFieldId(...args),
   },
@@ -547,5 +551,34 @@ describe("ActionExecutor — outcomes and non-trigger sources", () => {
       status: "skipped",
       reason: "unknownAction",
     })
+  })
+
+  test.each([
+    "constructor",
+    "__proto__",
+    "toString",
+    "hasOwnProperty",
+  ])("the prototype key %s is an unknown action and never reaches a handler", async (type) => {
+    await expect(run({ type })).resolves.toEqual({
+      status: "skipped",
+      reason: "unknownAction",
+    })
+    expect(mocks.integrationQueueAdd).not.toHaveBeenCalled()
+    expect(mocks.updateArchived).not.toHaveBeenCalled()
+    expect(mocks.setValueByKey).not.toHaveBeenCalled()
+    expect(mocks.enqueueEvent).not.toHaveBeenCalled()
+  })
+
+  test("a Google Sheets action with an unknown spreadsheet operation is skipped", async () => {
+    await expect(
+      run(
+        { type: "runGoogleSheet", action: "spreadsheetBogus" },
+        { source: { kind: "trigger", triggerId: "trigger-1" } },
+      ),
+    ).resolves.toEqual({
+      status: "skipped",
+      reason: "unknownSpreadsheetAction",
+    })
+    expect(mocks.getSpreadsheetRow).not.toHaveBeenCalled()
   })
 })

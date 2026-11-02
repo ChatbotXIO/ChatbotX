@@ -38,6 +38,10 @@ const mocks = vi.hoisted(() => ({
   ),
 }))
 
+vi.mock("@chatbotx.io/business/pipeline", () => ({
+  runPipelineAction: vi.fn(),
+}))
+
 vi.mock("@chatbotx.io/database/schema", () => ({
   metaCapiEventChannelSchema: {
     safeParse: (value: unknown) =>

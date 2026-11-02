@@ -211,6 +211,11 @@ describe("evaluateDateTimeTriggers", () => {
     for (const call of actionExecute.mock.calls) {
       expect(call[0]).not.toHaveProperty("contactInboxId")
     }
+    // One scope per contact run, never shared across contacts.
+    expect(actionExecute.mock.calls[0]?.[1]).toBeDefined()
+    expect(actionExecute.mock.calls[0]?.[1]).not.toBe(
+      actionExecute.mock.calls[1]?.[1],
+    )
   })
 
   describe("occurrence key", () => {

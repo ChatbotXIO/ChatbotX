@@ -2471,6 +2471,15 @@
       "prepend": "加入到开头",
       "savePayloadTo": "将回应保存到自订字段",
       "set_value": "设置值",
+      "clear": "Clear value",
+      "formula": "Use custom formula",
+      "set_now": "Set to now",
+      "date_expression": "Free-form date (with math)",
+      "add_minutes": "Add minutes",
+      "add_hours": "Add hours",
+      "add_days": "Add days",
+      "formulaHint": "Math where value is the current number, e.g. round(value * 1.1). Functions: abs, ceil, floor, round, min, max, pow, sqrt, log, sin, cos.",
+      "dateExpressionHint": "e.g. now + 2 days - 3 hours. Units: min, h, d, w, mo, y.",
       "groupSystemFields": "系统字段",
       "groupCustomFields": "自订字段",
       "groupAccountFields": "机器人字段"
@@ -6846,6 +6855,7 @@
       "sendMetaCapiEvent": "发送 Meta CAPI 事件",
       "setCustomField": "设置自订字段",
       "startAnotherFlow": "开始另一个流程",
+      "startExternalStep": "Start External Step",
       "transferConversationToHuman": "将对话转移给人类",
       "sendGoogleAdsConversion": "发送 Google Ads 转化"
     },
@@ -6959,6 +6969,9 @@
     "maxCharacters": "最多 {max} 个字符。",
     "maxMustBeGreaterThanMin": "{maxField} 必须大于或等于 {minField}",
     "maxSize": "文件大小超出上限",
+    "trigger": {
+      "actionReferenceNotFound": "An action refers to a record that no longer exists. Re-select it in the action and save again."
+    },
     "inboundWebhook": {
       "inboxRequired": "请选择一个收件箱。",
       "inboxNotFound": "未找到所选收件箱。",

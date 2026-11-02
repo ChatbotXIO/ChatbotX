@@ -25,7 +25,9 @@ const suggestion = ({
     }),
 
   render: () => {
-    let component: ReactRenderer
+    // Both stay undefined until `onStart` runs, which tiptap only calls after
+    // `items` resolves — a key pressed in that window still reaches `onKeyDown`.
+    let component: ReactRenderer | undefined
     // biome-ignore lint/suspicious/noExplicitAny: Tippy type
     let popup: any
 
@@ -48,21 +50,29 @@ const suggestion = ({
       },
 
       onUpdate(props) {
-        component.updateProps(props)
+        component?.updateProps(props)
 
-        popup.setProps({
+        popup?.setProps({
           getReferenceClientRect: props.clientRect,
         })
       },
 
       onKeyDown(props) {
+        // No popup yet: let the editor handle the key itself.
+        if (!(popup && component)) {
+          return false
+        }
+
         if (props.event.key === "Escape") {
           popup.hide()
 
           return true
         }
 
-        return (component.ref as PromptVariableListRef)?.onKeyDown(props)
+        return (
+          (component.ref as PromptVariableListRef | null)?.onKeyDown(props) ??
+          false
+        )
       },
 
       onExit() {

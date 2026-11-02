@@ -13,6 +13,7 @@ import {
 } from "@chatbotx.io/ui/components/form/select-field"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import { FormItem, FormLabel } from "@chatbotx.io/ui/components/ui/form"
+import { fieldOperationsForType } from "@chatbotx.io/utils/custom-field-operation"
 import { useTranslations } from "next-intl"
 import { useCallback, useMemo } from "react"
 import { useWorkspaceId } from "@/hooks/routing"
@@ -145,61 +146,56 @@ type CustomFieldOperationSelectProps = {
   label?: string
   required?: boolean
   type: CustomFieldType | null
+  /** Runs in the same event as a change of the selected operation. */
+  onValueChange?: (value?: string) => void
 }
 
+const OPERATION_LABEL_KEYS = {
+  [FieldOperationType.set]: "set_value",
+  [FieldOperationType.append]: "append",
+  [FieldOperationType.prepend]: "prepend",
+  [FieldOperationType.increase]: "increase",
+  [FieldOperationType.decrease]: "decrease",
+  [FieldOperationType.clear]: "clear",
+  [FieldOperationType.formula]: "formula",
+  [FieldOperationType.setNow]: "set_now",
+  [FieldOperationType.dateExpression]: "date_expression",
+  [FieldOperationType.addMinutes]: "add_minutes",
+  [FieldOperationType.addHours]: "add_hours",
+  [FieldOperationType.addDays]: "add_days",
+} as const satisfies Record<FieldOperationType, string>
+
+/** Before a field is picked only the universal `set` is offered. */
 const getOperationOptions = (
   type: CustomFieldType | null,
   t: ReturnType<typeof useTranslations>,
-): SelectOption[] => {
-  if (type === "shortText" || type === "longText") {
-    return [
-      {
-        label: t("fields.customField.set_value"),
-        value: FieldOperationType.set,
-      },
-      {
-        label: t("fields.customField.append"),
-        value: FieldOperationType.append,
-      },
-      {
-        label: t("fields.customField.prepend"),
-        value: FieldOperationType.prepend,
-      },
-    ]
-  }
-
-  if (type === "number") {
-    return [
-      {
-        label: t("fields.customField.set_value"),
-        value: FieldOperationType.set,
-      },
-      {
-        label: t("fields.customField.increase"),
-        value: FieldOperationType.increase,
-      },
-      {
-        label: t("fields.customField.decrease"),
-        value: FieldOperationType.decrease,
-      },
-    ]
-  }
-
-  return [
-    {
-      label: t("fields.customField.set_value"),
-      value: FieldOperationType.set,
-    },
-  ]
-}
+): SelectOption[] =>
+  (type ? fieldOperationsForType(type) : [FieldOperationType.set]).map(
+    (operation) => ({
+      label: t(`fields.customField.${OPERATION_LABEL_KEYS[operation]}`),
+      value: operation,
+    }),
+  )
 
 export const CustomFieldOperationSelect = (
   props: CustomFieldOperationSelectProps,
 ) => {
   const t = useTranslations()
-  const { label = t("fields.operation.label"), type, ...rest } = props
+  const {
+    label = t("fields.operation.label"),
+    type,
+    onValueChange,
+    ...rest
+  } = props
 
   const options = useMemo(() => getOperationOptions(type, t), [type, t])
 
-  return <SelectField label={label} options={options} {...rest} />
+  return (
+    <SelectField
+      label={label}
+      options={options}
+      triggerValueChange={onValueChange}
+      {...rest}
+    />
+  )
 }

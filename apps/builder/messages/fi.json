@@ -1327,6 +1327,15 @@
       "prepend": "Lisää alkuun",
       "increase": "Kasvata määrällä",
       "decrease": "Vähennä määrällä",
+      "clear": "Clear value",
+      "formula": "Use custom formula",
+      "set_now": "Set to now",
+      "date_expression": "Free-form date (with math)",
+      "add_minutes": "Add minutes",
+      "add_hours": "Add hours",
+      "add_days": "Add days",
+      "formulaHint": "Math where value is the current number, e.g. round(value * 1.1). Functions: abs, ceil, floor, round, min, max, pow, sqrt, log, sin, cos.",
+      "dateExpressionHint": "e.g. now + 2 days - 3 hours. Units: min, h, d, w, mo, y.",
       "groupSystemFields": "Järjestelmäkentät",
       "groupCustomFields": "Mukautetut kentät",
       "groupAccountFields": "Bottikentät"
@@ -4816,6 +4825,9 @@
     "maxCharacters": "Enintään {max} merkkiä.",
     "invalidApiKey": "Virheellinen API-avain",
     "maxMustBeGreaterThanMin": "Kentän {maxField} arvon on oltava vähintään kentän {minField} arvo",
+    "trigger": {
+      "actionReferenceNotFound": "An action refers to a record that no longer exists. Re-select it in the action and save again."
+    },
     "inboundWebhook": {
       "inboxRequired": "Valitse saapuneet-kansio.",
       "inboxNotFound": "Valittua saapuneet-kansiota ei löytynyt.",
@@ -5848,6 +5860,7 @@
       "setCustomField": "Aseta mukautettu kenttä",
       "clearCustomField": "Tyhjennä mukautettu kenttä",
       "startAnotherFlow": "Käynnistä toinen flow",
+      "startExternalStep": "Start External Step",
       "notifyAdmins": "Ilmoita ylläpitäjille",
       "transferConversationToHuman": "Siirrä keskustelu ihmiselle",
       "sendMetaCapiEvent": "Lähetä Meta CAPI -tapahtuma",
