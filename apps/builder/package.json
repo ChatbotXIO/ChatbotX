@@ -15,9 +15,9 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@better-auth/oauth-provider": "1.7.14",
-    "@ai-sdk/mcp": "^2.0.78",
+    "@ai-sdk/mcp": "^2.0.88",
     "@base-ui/react": "^1.6.0",
+    "@better-auth/oauth-provider": "1.7.14",
     "@bull-board/api": "^9.10.1",
     "@bull-board/hono": "^9.10.1",
     "@bull-board/ui": "^9.10.1",
