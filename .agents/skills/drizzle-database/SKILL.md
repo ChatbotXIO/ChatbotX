@@ -180,7 +180,7 @@ When adding a new channel or integration type:
 
 ## Query Patterns
 
-**Important:** Direct `db` usage is only allowed inside `packages/database/src/repositories/` and `packages/business/src/`. App-layer code (`apps/`, `integrations/`) must call a service or repository instead. See `.agents/rules/data-access.md`.
+**Important:** Direct `db` usage is only allowed inside `packages/database/src/repositories/` and `packages/business/src/`. App-layer code (`apps/`, `integrations/`) calls a service from `@chatbotx.io/business`, never `db` (lint-enforced) and not a repository unless it is a pure read with no business logic. See `.agents/rules/data-access.md`.
 
 ### Relational Queries (inside a service or repository)
 

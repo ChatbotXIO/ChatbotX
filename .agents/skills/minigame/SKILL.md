@@ -13,84 +13,33 @@ description: >-
 
 # Minigame (Jackpot)
 
-## Where things live
+Builder feature in `apps/builder/src/features/minigames/`, business logic in `packages/business/src/minigame/`. No worker/queue code exists for minigames: everything runs synchronously in builder server actions/pages; outcome messages go through the pre-existing `chatQueue`/`integrationQueue` from inside `recordPlayAndDispatch`.
 
-| Concern | Path |
-|---|---|
-| DB tables (Minigame, MinigameContact, MinigamePlay) | `packages/database/src/schema/minigame{,-contact,-play}.ts` |
-| Relations | `packages/database/src/relations/minigame{,-contact,-play}.ts`, wired into `relations/index.ts` |
-| Zod partials (single source for all 6 jsonb settings columns) | `packages/database/src/partials/minigame.ts` |
-| CRUD + prize-quantity reconciliation | `packages/business/src/minigame/service.ts` (`minigameService`) |
-| Prize draw math | `packages/business/src/minigame/resolve-prize.ts` (`resolveMinigamePrize`) |
-| Play state, draw, dispatch (concurrency-critical) | `packages/business/src/minigame/minigame-contact-service.ts` (`minigameContactService`) |
-| Play token sign/verify (24h TTL) | `packages/encryption/src/minigame-play-token.ts` |
-| `minigame-share` ref encode/decode | `packages/business/src/referral/utils.ts` (`RefConfig`) |
-| Ref-capable channel list (which channels actually deliver a ref) | `packages/business/src/inbox/utils.ts` (`REF_CAPABLE_CHANNELS`, `canReceiveRef`) |
-| Share-link builder (ref link for the player's own channel) | `apps/builder/src/features/minigames/lib/minigame-share.ts` |
-| Share button (rendered once, in the play layout) | `apps/builder/src/features/minigames/components/play/minigame-share-button.tsx` |
-| Sharing Node picker | `apps/builder/src/features/minigames/components/sharing-node-field.tsx` |
-| Reset-policy rebuild (carries every shared `playerSettings` field) | `apps/builder/src/features/minigames/lib/player-settings.ts` |
-| Ref handler that runs the Sharing Node + credits the referrer | `apps/worker/src/integration/handlers/ref.ts` (`minigame-share` branch) |
-| `{{minigame_play_token}}` system variable | `packages/variables/src/utils.ts` (`systemFieldTypes.enum.minigame_play_token`), enum in `packages/database/src/partials/contact.ts` |
-| Builder feature (admin CRUD, form, dialogs) | `apps/builder/src/features/minigames/` |
-| Type picker dialog | `apps/builder/src/features/minigames/components/create-minigame-type-dialog.tsx` |
-| Public play page (auth-bypassed) | `apps/builder/src/app/minigames/page.tsx`, registered in `apps/builder/src/proxy.ts` (`publicRoutes`) |
-| Public play action | `apps/builder/src/features/minigames/actions/play-minigame.action.ts` (`actionClient`, NOT workspace-scoped) |
-| Jackpot play screen (client, slot animation) | `apps/builder/src/features/minigames/components/play/jackpot-play-screen.tsx` |
-| Jackpot SVG art + start button | `packages/minigame-ui/` (`JackpotMachineArt`, `JackpotStartButton`) |
-| Admin/type-picker previews | `apps/builder/src/features/minigames/components/preview/` (`MinigamePreview` dispatches through the `MINIGAME_PREVIEW_COMPONENTS` registry in
-`minigame-preview-registry.tsx:35`, falling back to `GenericMinigamePreview`; per-type previews
-exist for jackpot, luckyWheel, gashapon, drawLots, scratchOff) |
-| Default settings + type config | `apps/builder/src/features/minigames/constants.ts` |
-| Tests | `packages/business/__tests__/{minigame-service-update,resolve-minigame-prize,minigame-referral-bonus,referral-ref-encoding}.test.ts`, `packages/encryption/__tests__/minigame-play-token.test.ts`, `apps/worker/__tests__/run-ref-minigame-share.test.ts`, `apps/builder/__tests__/minigame-{share-url,player-settings-reset-policy}.test.ts` |
-
-No worker/queue code exists for minigames — grep confirms zero hits in `apps/worker`/`packages/worker-config`. Everything runs synchronously in builder server actions/pages; outcome messages are dispatched via the pre-existing `chatQueue`/`integrationQueue` from inside `recordPlayAndDispatch`, not a dedicated queue.
-
-## Data flow in one line
-
-`create/edit minigame (builder) → {{minigame_play_token}} resolved into a shared link at message-send time → public /minigames?minigameId&token page → verify token → resolvePlayState → <type>PlayScreen → playMinigameAction → recordPlayAndDispatch (draw prize, decrement stock, send outcome message)`.
-
-Referral loop: `player taps Share (copies a ref link for the channel they are playing on, e.g. m.me/<pageId>?ref=mg_<minigameId>_<contactId>) → friend taps it, messages that channel → webhook extracts the ref → runRef's minigame-share branch reads playerSettings.sharingNodeId and enqueues sendFlow{flowId,nodeId} → creditSharedLinkReferral creates the invitee's MinigameContact with referrerContactId stamped; only if THAT call created the row does grantReferralBonus credit the referrer (+1 sharesCount, +1 remaining, capped)`.
+Flow: `create/edit minigame (builder) → {{minigame_play_token}} resolved into a shared link at message-send time → public /minigames?minigameId&token page → verify token → resolvePlayState → <type>PlayScreen → playMinigameAction → recordPlayAndDispatch (draw prize, decrement stock, send outcome message)`.
 
 ## The traps (read before editing)
 
-1. **Playability is decided by ONE registry — keep it that way.** All five types (jackpot, luckyWheel, gashapon, drawLots, scratchOff) are playable, and both the page and the action gate on `MINIGAME_PLAY_SCREENS` (`components/play/minigame-play-screen-registry.tsx`) rather than on a `=== "jackpot"` literal. Adding a type means adding one entry there, one entry in `MINIGAME_PREVIEW_COMPONENTS` (`components/preview/minigame-preview-registry.tsx`), and one in `MINIGAME_TYPES_ENABLED_FOR_CREATION` (`constants.ts`). `MinigameType` has no compiler-enforced fan-out (unlike the `ChannelType` cascade, repo invariant #3), so before adding a type still grep for stray `=== "jackpot"` / `minigameTypes.enum.jackpot` literals — a missed one fails silently (wrong UI, or a 403 that looks like a bug).
+1. **Playability is decided by ONE registry.** All five types are playable; the page and the action gate on `MINIGAME_PLAY_SCREENS` (`components/play/minigame-play-screen-registry.tsx`), not on a `=== "jackpot"` literal. A new type needs one entry there, one in `MINIGAME_PREVIEW_COMPONENTS` (`components/preview/minigame-preview-registry.tsx`), one in `MINIGAME_TYPES_ENABLED_FOR_CREATION` (`constants.ts`). `MinigameType` has no compiler-enforced fan-out (unlike `ChannelType`, invariant #3), so grep for stray `=== "jackpot"` / `minigameTypes.enum.jackpot` literals first — a miss fails silently (wrong UI, or a 403 that looks like a bug).
 
-2. **Concurrency-critical code lives in `minigame-contact-service.ts` — read `reliability-concurrency` skill before touching it.** `drawPrize`, `resolvePlayState`, and `MinigameService.update`'s prize-quantity reconciliation all depend on `SELECT ... FOR UPDATE` locks taken **inside** the caller's transaction, plus `insert().onConflictDoNothing()` for the first-play race on `MinigameContact_minigameId_contactId_key`. Do not replace these with an application-level check-then-write — that's exactly the race these patterns close. `recordPlayAndDispatch` deliberately sends the outcome message **outside** the transaction (fire-and-forget, `.catch(() => {})`) so a failed message send never rolls back an already-recorded play — don't move message dispatch inside the transaction "to be safe."
+2. **Concurrency-critical code lives in `minigame-contact-service.ts` — read the `reliability-concurrency` skill first.** `drawPrize`, `resolvePlayState`, and `MinigameService.update`'s prize-quantity reconciliation depend on `SELECT ... FOR UPDATE` taken **inside** the caller's transaction, plus `insert().onConflictDoNothing()` for the first-play race on `MinigameContact_minigameId_contactId_key`. Never replace with check-then-write. `recordPlayAndDispatch` sends the outcome message **outside** the transaction (fire-and-forget, `.catch(() => {})`) so a failed send never rolls back a recorded play — don't move it inside.
 
-3. **No probability redistribution when a prize sells out.** `drawPrize` filters out prizes with `quantity <= 0` before drawing, but does not rescale the remaining `winRate`s — the excluded prize's share silently becomes extra lose-rate. This is intentional and tested (`resolve-minigame-prize.test.ts`'s sold-out case) — don't "fix" it by redistributing without checking that test first.
+3. **No probability redistribution when a prize sells out.** `drawPrize` filters out `quantity <= 0` prizes but does not rescale remaining `winRate`s; the share silently becomes lose-rate. Intentional and tested (`resolve-minigame-prize.test.ts` sold-out case) — check that test before "fixing".
 
-4. **`MinigamePrizeSettings` must sum to exactly 100%.** `isMinigameProbabilityTotalValid` (in the partials file) does integer-cents rounding (`Math.round(total*100) === 10_000`) specifically to avoid float drift; both the Zod `.refine()` and the builder's prize-list editor call this one helper — don't reimplement the sum check separately.
+4. **`MinigamePrizeSettings` must sum to exactly 100%.** `isMinigameProbabilityTotalValid` (partials file) uses integer-cents rounding (`Math.round(total*100) === 10_000`) to avoid float drift; the Zod `.refine()` and the builder's prize-list editor both call it — don't reimplement.
 
-5. **`MinigamePlay.prizeName` is a denormalized snapshot, not a live join.** `prizeId` is a plain `text` column, not an FK — prizes live in `Minigame.prizeSettings` jsonb and can be edited/deleted after the fact. History intentionally shows what the prize was *at play time*; don't add a join to "fix" stale-looking names.
+5. **`MinigamePlay.prizeName` is a denormalized snapshot, not a live join.** `prizeId` is a plain `text` column, not an FK (prizes live in `Minigame.prizeSettings` jsonb). History shows the prize *at play time*; don't add a join.
 
-6. **`minigameService.update`'s quantity reconciliation only protects the same prize `id` across the load-then-save window** (compares submitted quantity against a client-captured `originalPrizeQuantities` baseline; if unchanged since load, the current — possibly play-decremented — DB value wins). Deleting a prize row in the form and adding a new one (new `createId()`) has no cross-id reconciliation — the old prize's decremented stock is simply dropped.
+6. **`minigameService.update` quantity reconciliation only protects the same prize `id`** across load-then-save (submitted quantity vs client-captured `originalPrizeQuantities`; if unchanged, the current, possibly play-decremented, DB value wins). Delete + re-add (new `createId()`) has no cross-id reconciliation — the old decremented stock is dropped.
 
-7. **The referral flow has ONE consistent lock order: `player row → Minigame row`. Do not fold the referral grant into the transaction that creates the invitee's row.** A share credits a *different* `MinigameContact` row (the referrer's) than the one being created. Granting inside that transaction makes its order `invitee row → Minigame → referrer row`, which deadlocks (ABBA) against a concurrent play by the referrer themselves, who holds their own row and waits on the Minigame row. So `creditSharedLinkReferral` calls `resolveOpenerPlayState` first, then `grantReferralBonus` in its own short transaction. The narrow crash window can only under-credit, never over-credit. Related invariants that are easy to break:
-   - `resolvePlayState` returns `{ state, created }`. **`created` is the whole qualification test**: it means both "one bonus per invitee, ever" and "the invitee had never played this minigame". Never re-derive either from a separate read.
-   - The cap lives **inside** the grant UPDATE's `WHERE` (`lt(sharesCount, cap)`), never as a read-then-write.
-   - The grant self-assigns `updatedAt: sql`${col}`` to defeat `$onUpdate` — this table overloads `updatedAt` as *both* the `everyNDays` cycle marker and the admin table's `lastPlayedAt`.
-   - `referrerContactId` is stamped **only on the INSERT path** of `resolvePlayState`.
-   - Under `resetPolicy: "never"`, `remaining` is *derived* (`deriveRemaining`), so a bonus must move `sharesCount` and `remaining` together or the next `resolvePlayState` wipes it. Under `everyNDays`, unused bonus draws deliberately expire with the cycle while the cap stays lifetime.
-   - `playerSettings.maxSharesPerPerson`, `sharingFlowId` and `sharingNodeId` are all missing entirely from legacy jsonb rows — always read them as `?? 0` / `?? null`. The drizzle `$type<>` lies about them being present.
-   - `minigame-form.tsx`'s `handleResetPolicyChange` rebuilds the whole `playerSettings` union value, so **every** shared field has to be carried across. A narrower object literal still satisfies the branch type, so typecheck will NOT catch an omission — that is why the rebuild lives in `lib/player-settings.ts` behind a unit test.
+7. **Referral lock order is ONE: `player row → Minigame row`. Never fold the referral grant into the transaction that creates the invitee's row** (ABBA deadlock vs the referrer's own play). `creditSharedLinkReferral` calls `resolveOpenerPlayState` first, then `grantReferralBonus` in its own short transaction (crash window can only under-credit). Easy-to-break invariants (full text in [references/referral-and-play-token.md](references/referral-and-play-token.md)): `resolvePlayState` returns `{ state, created }` and `created` is the whole qualification test; the cap lives inside the grant UPDATE's `WHERE` (`lt(sharesCount, cap)`); the grant self-assigns `updatedAt: sql`${col}`` to defeat `$onUpdate`; `referrerContactId` is stamped only on the INSERT path; under `resetPolicy: "never"` move `sharesCount` and `remaining` together (`deriveRemaining`); read `playerSettings.maxSharesPerPerson`/`sharingFlowId`/`sharingNodeId` as `?? 0` / `?? null` (legacy rows lack them); `handleResetPolicyChange` must carry every shared `playerSettings` field (rebuild lives in `lib/player-settings.ts` behind a unit test — typecheck won't catch omissions).
 
-8. **`{{minigame_play_token}}` is minted at message/broadcast-send time, not at click time**, with a 24h TTL (`DEFAULT_TOKEN_TTL_MS` in `minigame-play-token.ts`). An old saved/forwarded link fails `verifyMinigamePlayToken` and renders the same generic "forbidden" notice as an unauthorized request — there's no distinct "link expired" UX today. Meta rejects a named variable in a Messenger utility template's URL button, so a pasted play link (or Mini App link) is saved with a positional `{{1}}` suffix (`createMessengerMessageTemplateRequest`), and `suggestMessengerUrlSuffixVariable` (`packages/flow-config/src/steps/send-messenger-message-template.ts`) defaults that suffix back to the token variable, which the worker resolves per recipient at send time. Save-time and send-time detection share one page/variable table (`normalizeMessengerTokenUrl` ↔ `suggestMessengerUrlSuffixVariable`): only a `/minigames?...token=` or `/mini-apps?...token=` link with the token **last** and no other variable is accepted — any other use of a token variable in a URL button is rejected at creation, or it would be saved with a suffix nothing fills. The worker URL-encodes suffix values and stores the unresolved `{{…_token}}` on the message row (`maskTokenButtonParams`), never the signed token.
+8. **`{{minigame_play_token}}` is minted at message/broadcast-send time**, 24h TTL (`DEFAULT_TOKEN_TTL_MS` in `minigame-play-token.ts`). An old link fails `verifyMinigamePlayToken` and shows the generic "forbidden" notice (no "link expired" UX). Messenger utility-template URL buttons can't hold a named variable: use a positional `{{1}}` suffix (`createMessengerMessageTemplateRequest`, `suggestMessengerUrlSuffixVariable`, `normalizeMessengerTokenUrl`); only `/minigames?...token=` or `/mini-apps?...token=` with the token **last** and no other variable is accepted. The worker stores the unresolved `{{…_token}}` (`maskTokenButtonParams`), never the signed token. Full text in [references/referral-and-play-token.md](references/referral-and-play-token.md).
 
-9. **`minigameService.findUnscoped(id)` is the only workspace-unscoped lookup on the service** — it exists because `/minigames` is a public route (registered in `proxy.ts`'s `publicRoutes`, bypassing auth entirely). Every call site (`app/minigames/page.tsx`, `play-minigame.action.ts`) re-checks `payload.workspaceId === minigame.workspaceId` from the verified token immediately after calling it. Any new public entry point must use the plain `actionClient` (not `workspaceActionClient`, which assumes a session) and must repeat both the token verification and this workspace-match check — there is no shared middleware doing it for you.
-
-## Adding gameplay for a new minigame type (recipe)
-
-1. Add the type's UI (preview, form fields, play screen) — mirror the jackpot components under `components/preview/` and `components/play/`.
-2. Flip `MINIGAME_TYPES_ENABLED_FOR_CREATION` in `constants.ts` to include it.
-3. Update the type gate in `play-minigame.action.ts` and `app/minigames/page.tsx` (trap #1 — grep for every `"jackpot"` literal, don't trust this list to be complete).
-4. Register the new type's preview in `MINIGAME_PREVIEW_COMPONENTS` (`minigame-preview-registry.tsx:35`).
-5. If the new type needs its own appearance/settings shape, extend the discriminated unions in `packages/database/src/partials/minigame.ts` rather than overloading the jackpot-shaped fields.
-6. Add/extend tests mirroring `resolve-minigame-prize.test.ts` if draw logic changes.
+9. **`minigameService.findUnscoped(id)` is the only workspace-unscoped lookup**, because `/minigames` is a public route (`PUBLIC_ROUTES` in `lib/public-routes.ts`, no auth). Every call site (`app/minigames/page.tsx`, `play-minigame.action.ts`) re-checks `payload.workspaceId === minigame.workspaceId` from the verified token. New public entry points must use plain `actionClient` (not `workspaceActionClient`) and repeat token verification and the workspace match — no shared middleware does it.
 
 ## i18n
 
-Namespace `minigames.*` in `apps/builder/messages/en.json`. This repo's invariant applies in full: update all locale files under `apps/builder/messages/` (19 translated locales + `en.json`), not just English — see the `minigames.*` keys added across all of them in the feature's introducing commit as the reference pattern.
+Namespace `minigames.*` in `apps/builder/messages/en.json`; update all locale files under `apps/builder/messages/` (19 translated locales + `en.json`), not just English.
 
 ## Verify
 
@@ -101,4 +50,11 @@ pnpm --filter builder check-types
 pnpm lint
 ```
 
-No automated test covers the public play page/action or the builder CRUD UI — verify those manually: create a jackpot minigame, open the public `/minigames?minigameId=...&token=...` link, play until draws run out, and confirm the history table in the builder reflects the plays.
+No automated test covers the public play page/action or the builder CRUD UI — verify manually: create a jackpot minigame, open the public `/minigames?minigameId=...&token=...` link, play until draws run out, confirm the builder history table reflects the plays.
+
+## References
+
+- [references/file-map.md](references/file-map.md) — where every table, service, token, share-link, page, action, preview, and test lives. Read to locate code.
+- [references/data-flow.md](references/data-flow.md) — the play flow and the referral (share) loop step by step.
+- [references/referral-and-play-token.md](references/referral-and-play-token.md) — full text of traps 7 and 8. Read before touching referral grants or play-token/URL-button handling.
+- [references/new-type-recipe.md](references/new-type-recipe.md) — step list for adding gameplay for a new minigame type.
