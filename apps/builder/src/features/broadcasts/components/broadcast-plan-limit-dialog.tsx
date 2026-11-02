@@ -65,11 +65,11 @@ export function BroadcastPlanLimitDialog({
         <DialogHeader className="flex-row items-center gap-3 pe-8">
           <span
             aria-hidden
-            className="flex size-10 shrink-0 items-center justify-center rounded-full bg-amber-500/10 text-amber-600 ring-1 ring-amber-500/25 dark:text-amber-500"
+            className="flex size-10 shrink-0 items-center justify-center rounded-full bg-amber-500/10 text-amber-700 ring-1 ring-amber-500/25 dark:text-amber-500"
           >
             <TriangleAlertIcon className="size-5" />
           </span>
-          <DialogTitle className="text-amber-600 dark:text-amber-500">
+          <DialogTitle className="text-amber-700 dark:text-amber-500">
             {t("broadcasts.planLimitDialog.title")}
           </DialogTitle>
         </DialogHeader>

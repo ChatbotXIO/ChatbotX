@@ -18,7 +18,7 @@ export const GoogleAdsConsentLine = ({
 
   return (
     <p
-      className="flex items-start gap-1.5 text-amber-600 text-xs dark:text-amber-500"
+      className="flex items-start gap-1.5 text-amber-700 text-xs dark:text-amber-500"
       data-testid="google-ads-consent-line"
     >
       <AlertTriangleIcon

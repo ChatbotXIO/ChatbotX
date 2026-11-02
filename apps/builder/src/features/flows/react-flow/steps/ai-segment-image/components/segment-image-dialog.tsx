@@ -152,7 +152,7 @@ export const AISegmentImageDialog = ({
                 />
                 {replacesSource && (
                   <p
-                    className="text-amber-600 text-xs dark:text-amber-400"
+                    className="text-amber-700 text-xs dark:text-amber-400"
                     role="status"
                   >
                     {t("fields.aiSegmentImage.overwriteWarning")}

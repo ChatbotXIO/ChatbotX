@@ -33,7 +33,7 @@ export function resolveTrialMessage(trial: TrialInfo, t: Translator): string {
  */
 const TRIAL_MESSAGE_CLASS: Record<TrialLevel, string> = {
   info: "text-muted-foreground",
-  warning: "font-medium text-amber-600 dark:text-amber-500",
+  warning: "font-medium text-amber-700 dark:text-amber-500",
   expired: "font-medium text-destructive",
 }
 

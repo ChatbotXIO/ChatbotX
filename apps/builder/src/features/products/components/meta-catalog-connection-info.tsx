@@ -7,7 +7,7 @@ import type { MetaCatalogConnection } from "./meta-catalog-types"
 
 const STATUS_STYLES: Record<MetaCatalogConnection["status"], string> = {
   active:
-    "border-emerald-500/40 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
+    "border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400",
   invalid: "border-destructive/40 bg-destructive/10 text-destructive",
 }
 

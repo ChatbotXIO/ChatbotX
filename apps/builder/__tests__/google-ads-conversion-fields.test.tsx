@@ -948,7 +948,7 @@ describe("consent line", () => {
     const line = consentText()
     expect(line?.textContent).toContain(`${KEY}.consentInvalid`)
     expect(line?.textContent).toContain(`${KEY}.consentFixLink`)
-    expect(line?.className).toContain("text-amber-600")
+    expect(line?.className).toContain("text-amber-700")
   })
 })
 

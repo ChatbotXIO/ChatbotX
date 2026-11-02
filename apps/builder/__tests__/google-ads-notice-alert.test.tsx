@@ -12,7 +12,7 @@ afterEach(() => ui.unmount())
 describe("NoticeAlert", () => {
   test.each([
     ["destructive", "text-destructive"],
-    ["warning", "text-amber-600"],
+    ["warning", "text-amber-700"],
   ] as const)("%s tone colors the alert, with a readable message and roomy padding", (tone, toneClass) => {
     ui.render(
       <NoticeAlert

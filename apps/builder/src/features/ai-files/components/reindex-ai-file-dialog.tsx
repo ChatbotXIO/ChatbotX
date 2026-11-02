@@ -327,7 +327,7 @@ export function ReindexAIFileDialog({
             </p>
           )}
           {changed ? (
-            <div className="space-y-1 text-amber-600 dark:text-amber-400">
+            <div className="space-y-1 text-amber-700 dark:text-amber-400">
               <p>
                 {t("aiFiles.reindex.reembedWarning", {
                   count: estimate ?? file.chunksCount,
@@ -341,7 +341,7 @@ export function ReindexAIFileDialog({
             </p>
           )}
           {file.chunkingOutdated && !changed ? (
-            <p className="text-amber-600 dark:text-amber-400">
+            <p className="text-amber-700 dark:text-amber-400">
               {t("aiFiles.reindex.downtimeWarning")}
             </p>
           ) : null}

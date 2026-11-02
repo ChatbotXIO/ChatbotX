@@ -39,7 +39,7 @@ export function CheckoutBar({
           <p className="truncate text-destructive text-xs">{hint}</p>
         ) : null}
         {!hint && savings > 0 ? (
-          <p className="truncate text-emerald-600 text-xs dark:text-emerald-400">
+          <p className="truncate text-emerald-700 text-xs dark:text-emerald-400">
             {t("summary.saved", { amount: formatShopMoney(savings, money) })}
           </p>
         ) : null}

@@ -104,7 +104,9 @@ export function TemplateInstallsTable({
           // failure — amber, not red — mirroring
           // `import-history-table.tsx`'s warning-only treatment.
           return (
-            <span className="text-amber-600 tabular-nums">{warningCount}</span>
+            <span className="text-amber-700 tabular-nums dark:text-amber-400">
+              {warningCount}
+            </span>
           )
         },
         enableSorting: false,

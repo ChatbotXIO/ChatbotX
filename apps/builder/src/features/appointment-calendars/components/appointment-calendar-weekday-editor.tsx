@@ -252,7 +252,7 @@ export function AppointmentCalendarWeekdayEditor({
           })}
 
           {hasOverlap && (
-            <p className="text-amber-600 text-sm">
+            <p className="text-amber-700 text-sm dark:text-amber-400">
               {t("appointmentCalendars.weekdayEditor.overlapWarning")}
             </p>
           )}

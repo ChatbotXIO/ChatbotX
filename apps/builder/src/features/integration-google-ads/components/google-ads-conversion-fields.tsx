@@ -265,7 +265,7 @@ export const GoogleAdsConversionFields = ({
     return (
       <div className="flex min-w-0 flex-col gap-2">
         {integration.data.readiness === "needs_reauth" ? (
-          <p className="text-amber-600 text-xs dark:text-amber-500">
+          <p className="text-amber-700 text-xs dark:text-amber-500">
             {t("googleAds.conversionFields.needsReauth")}
           </p>
         ) : null}
@@ -286,7 +286,7 @@ export const GoogleAdsConversionFields = ({
         />
         {isSelectedUnavailable ? (
           <p
-            className="text-amber-600 text-xs dark:text-amber-500"
+            className="text-amber-700 text-xs dark:text-amber-500"
             role="alert"
           >
             {t("googleAds.conversionFields.unavailableWarning")}

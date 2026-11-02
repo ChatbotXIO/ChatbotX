@@ -940,13 +940,15 @@ export function AdsAnalyticsView({
                 />
                 <DeliveryCount
                   label={t("ads.analytics.delivery.failed")}
-                  tone={delivery.failed > 0 ? "text-amber-600" : undefined}
+                  tone={delivery.failed > 0 ? "text-amber-700 dark:text-amber-400" : undefined}
                   value={delivery.failed}
                 />
                 <DeliveryCount
                   label={t("ads.analytics.delivery.skippedNoScope")}
                   tone={
-                    delivery.skippedNoScope > 0 ? "text-amber-600" : undefined
+                    delivery.skippedNoScope > 0
+                      ? "text-amber-700 dark:text-amber-400"
+                      : undefined
                   }
                   value={delivery.skippedNoScope}
                 />
@@ -955,7 +957,7 @@ export function AdsAnalyticsView({
                 <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
                   <DeliveryCount
                     label={t("ads.analytics.delivery.skippedRegion")}
-                    tone="text-amber-600"
+                    tone="text-amber-700 dark:text-amber-400"
                     value={delivery.skippedRegion}
                   />
                 </div>
