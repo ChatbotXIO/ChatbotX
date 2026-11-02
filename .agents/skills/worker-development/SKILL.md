@@ -1,7 +1,10 @@
 ---
 name: worker-development
 description: >-
-  Create and manage background workers, BullMQ queues, and scheduled jobs. Use when adding new workers, creating queues, defining job types, building scheduled tasks, or working with async processing.
+  Use when adding or changing a BullMQ queue, job type, consumer, or scheduled job
+  — job types in `packages/worker-config`, handlers in `apps/worker/src`. Covers
+  consumer registration, `withBlockedOwnerGuard` for workspace-scoped jobs, and
+  retries. Pair with `reliability-concurrency` for idempotency and locks.
 ---
 
 # Worker Development

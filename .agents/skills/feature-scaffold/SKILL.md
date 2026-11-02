@@ -1,35 +1,24 @@
 ---
 name: feature-scaffold
 description: >-
-  Scaffold new features following project conventions for the builder app.
-  Use when creating a new feature, page, component, server action, query,
-  or adding a new section to the web application.
+  Scaffold a new builder feature or page under `apps/builder/src/features/<name>/`.
+  Use when creating a feature directory, an async server-component page under
+  `app/space/[workspaceId]/...`, a client table/form, a next-safe-action server
+  action (`workspaceActionClient`), a `queries/` adapter, a TanStack Query hook
+  (`orpc.<router>.<proc>.queryOptions()`), or a zustand client-state store.
+  Defines the directory layout, build order (public API first, UI last) and the
+  new-feature checklist. API mechanics live in `orpc-api`.
 ---
 
 # Feature Scaffold
 
-## Agent-first: the public API is the feature, the UI is a client of it
+## Agent-first build order
 
-ChatbotX is built for **AI agents** first. They reach the product only through the
-public API, which the CLI and MCP server read from `/api/public-spec.json` — a
-capability with no public procedure does not exist for them. So every feature, and
-every new operation on an existing feature, ships a procedure in
-`api/public.ts` (AGENTS.md invariant 23). Mechanics live in the **`orpc-api`** skill.
-
-That includes **result-returning operations**, not only CRUD: if a button in the UI
-gives the user something back — a link, a preview, a test run or test send, stats, an
-export, AI-generated text, a status check — an agent must be able to call one operation
-and get the same result as data. `botSimulator.getLink`
-(`features/bot-simulator/api/public.ts`) is the reference: the UI opens a preview, the
-API returns the `url`, and both go through `createBotSimulatorLink` in the feature's `lib/`.
-
-Exemptions are narrow (auth/account, platform admin, end-customer webviews, the OAuth
-redirect step, UI-only plumbing, token minting) — see invariant 23 in `docs/agents/invariants.md` for the list, and
-state the reason in the PR when you use one.
+The public API is the feature; the UI is a client of it (AGENTS.md invariant 23). Build `api/public.ts` first, then the UI, both calling the same service/`lib/` function. Rules, exemptions, result-returning operations (links, previews, test sends, stats, exports, AI generation), auth stacks, router registration and error handling are owned by the **`orpc-api`** skill (`../orpc-api/SKILL.md`). Service/repository layering and the `.query.ts` contract: **`business-data-access`** skill and `.agents/rules/data-access.md`. Logging: see "Errors and logging" in `orpc-api`.
 
 ## Feature Directory Structure
 
-Features live in `apps/builder/src/features/<feature-name>/`. Standard layout:
+Features live in `apps/builder/src/features/<feature-name>/`:
 
 ```
 features/<feature-name>/
@@ -56,468 +45,22 @@ features/<feature-name>/
   create-item-dialog.tsx
 ```
 
-Not every feature needs all directories. Use what's appropriate.
+Not every feature needs all directories. A feature folder holds only these; never add a `server/` directory (every prior one became an ad-hoc business layer with `db` access) and never a `*.service.ts` (business logic goes in `packages/business`, see `orpc-api`). Logic only builder can see (e.g. depends on `profileFetcherFactories`) goes in `features/<feature>/lib/*.ts` or `queries/*.ts`, never `"use server"`. A `queries/*.ts` file is a thin request adapter over a service, with no `db` access.
 
-Never add a `server/` directory — it is not a recognized layout and every
-prior instance of one was a de-facto ad-hoc business layer with `db` access
-straight from `apps/builder`. Data access and side effects belong in
-`packages/business` (service), which may call `packages/database/src/repositories`
-(repository) itself; logic that only builder can see (e.g. it depends on
-`profileFetcherFactories` or another builder-only registry) goes in
-`features/<feature>/lib/*.ts` or `features/<feature>/queries/*.ts` instead,
-never `"use server"`.
+## Core patterns (one-liners; samples in references)
 
-A `queries/*.ts` file is a **thin request adapter**, not a place to write
-business logic — see the "Queries (Server-Side)" section below.
-
-## Page Pattern (Server Component)
-
-```typescript
-// app/space/[workspaceId]/(has-folder)/<feature>/page.tsx
-import { Suspense } from "react"
-import { getIdFromParams } from "@chatbotx.io/utils"
-import { listItems } from "@/features/<feature>/queries"
-import { ItemsTable } from "@/features/<feature>/items-table"
-
-export default async function ItemsPage(props: {
-  params: Promise<{ workspaceId: string }>
-  searchParams: Promise<SearchParams>
-}) {
-  const workspaceId = getIdFromParams(await props.params, "workspaceId")
-  const searchParams = await props.searchParams
-  const search = listItemsSearchParamsCache.parse(searchParams)
-
-  const promises = Promise.all([
-    listItems({ ...search, workspaceId }),
-  ])
-
-  return (
-    <Suspense>
-      <ItemsTable promises={promises} workspaceId={workspaceId} />
-    </Suspense>
-  )
-}
-```
-
-### Key Page Patterns
-
-- Pages are **async server components** (no `"use client"`)
-- `params` and `searchParams` are `Promise<...>` (Next.js 15+ style)
-- Use `getIdFromParams()` to extract and validate IDs
-- Pass `Promise.all([...])` as `promises` prop to client components
-- Client components unwrap with `React.use(promises)`
-- URL state via **nuqs** (`listItemsSearchParamsCache.parse()`)
-
-### Public routes (short links, webhooks, open redirects)
-
-Some features expose **unauthenticated** URLs (tracking links, asset callbacks, etc.):
-
-- Implement the handler as a **Route Handler** under `apps/builder/src/app/<public-prefix>/.../route.ts` (or `page.tsx` when appropriate).
-- Add the URL prefix to `publicRoutes` in `apps/builder/src/proxy.ts` so the middleware does not force sign-in for those paths.
-- Put redirect rules, URL templating, and validation in a small `lib/*` module when the same logic might be reused or tested.
-- Register new **Tools** entries in `apps/builder/src/features/tools/tools-list.tsx` (with `getLink`) and add **i18n** keys under `apps/builder/messages/*.json`.
-
-## Client Component Pattern
-
-```typescript
-"use client"
-
-import { use } from "react"
-
-type Props = {
-  promises: Promise<[ItemList]>
-  workspaceId: string
-}
-
-export const ItemsTable = ({ promises, workspaceId }: Props) => {
-  const [items] = use(promises)
-
-  return (
-    // Table UI using @chatbotx.io/ui components
-  )
-}
-```
-
-## Server Actions
-
-Use `next-safe-action` with workspace-scoped client:
-
-```typescript
-// actions/create-item-action.ts
-"use server"
-
-import { workspaceActionClient } from "@/lib/safe-action"
-import { createItemRequest } from "../schema/action"
-
-export const createItemAction = workspaceActionClient
-  .bindArgsSchemas([z.string()]) // workspaceId
-  .inputSchema(createItemRequest)
-  .action(
-    async ({
-      bindArgsParsedInputs: [workspaceId],
-      parsedInput,
-    }) => {
-      return await createItem({ workspaceId, ...parsedInput })
-    },
-  )
-```
+- **Pages** are async server components; `params`/`searchParams` are `Promise<...>`; `getIdFromParams()`; pass `Promise.all([...])` as `promises` to a client component that unwraps with `use(promises)`; URL state via nuqs.
+- **Public routes** (short links, webhooks, redirects): Route Handler under `app/<public-prefix>/.../route.ts` plus the prefix in `publicRoutes` in `apps/builder/src/proxy.ts`; register Tools in `features/tools/tools-list.tsx`.
+- **Server actions**: `workspaceActionClient.bindArgsSchemas([z.string()])`; always `.bind(null, workspaceId)` before `useHookFormAction`/`useAction`; `execute()` takes no argument when the action has no input (invariants 4, 6). Default to the most restrictive client; `...AllowExpired` only for delete/disconnect/cancel (invariant 14).
+- **Server data** goes through TanStack Query, never a zustand store; every create/update/delete/toggle/move calls the resource invalidator before `router.push` (invariant 21). Zustand is for client-only state.
+- **Forms**: React Hook Form + Zod + `useHookFormAction`; nullable text defaults are `""` (never `null`), use `z.preprocess` to map `""` to `null`; read values with `useWatch`, not `form.watch()`. Prefer defined fields from `@chatbotx.io/ui/components/form/*`, `<Card>` and `<Button>`, never raw HTML.
+- **i18n is mandatory**: every user-facing string via `useTranslations()`; reuse `fields.*` keys; add keys to all locale files in `apps/builder/messages/` (parity check in `pnpm lint`). See the `builder-ui-i18n` skill.
+- **Imports**: never `@chatbotx.io/database/client` or `/schema` from `features/*`; reach data through `@chatbotx.io/business`.
 
 ## Tests
 
-- Put builder app-level tests for actions, routes, API behavior, cache behavior,
-  or cross-feature behavior in `apps/builder/__tests__/`.
-- Use colocated `src/features/**/__tests__` only for narrow component/unit tests
-  that are clearly owned by that feature.
-
-### Action Clients
-
-All six live in `apps/builder/src/lib/safe-action.ts`. Default to the most restrictive one
-that fits (fail closed):
-
-| Client | Gate |
-|---|---|
-| `workspaceActionClient` (`:141`) | workspace membership **+** trial-expiry gate — the default for feature actions |
-| `workspaceActionClientAllowExpired` (`:96`) | membership, **skips** the expiry gate. Only for delete/disconnect/cancel that must stay available post-expiry (repo invariant 14) |
-| `workspaceActionClientAllowScheduledDeletion` (`:174`) | membership, tolerates a workspace inside its soft-delete grace window |
-| `superAdminActionClient` (`:89`) | authenticated **+** super admin |
-| `platformAdminActionClient` (`:80`) | authenticated **+** platform admin |
-| `authActionClient` (`:43`) | authenticated session only — no workspace scope |
-
-## Queries (Server-Side)
-
-**Rule:** The chain is `action | API handler → service → repository → DB`.
-Queries must NOT import `db` or `@chatbotx.io/database/schema` directly — call
-a service from `@chatbotx.io/business`. Neither module is importable from
-`apps/builder/src/features/*/queries/*.ts`. See `.agents/rules/data-access.md`
-for the full contract.
-
-A query file's job is narrow: turn session context into plain params, call
-the service, shape the response. It holds no where-builders, pagination, or
-count logic — that lives in the service (or the repository behind it).
-
-### No session context needed → skip the query file
-
-If a query would do nothing but forward its arguments to a service, don't
-write the file — call the service directly from the caller:
-
-```typescript
-// No query file needed — tagService.list needs nothing from the session.
-import { tagService } from "@chatbotx.io/business"
-
-const { data } = await tagService.list({ workspaceId })
-```
-
-### Session context needed → a thin adapter
-
-```typescript
-// queries/get-contact.query.ts
-import { contactService } from "@chatbotx.io/business"
-import { requireContactPermissionScope } from "../permissions"
-
-export async function getContact(input: { workspaceId: string; id: string }) {
-  const accessScope = await requireContactPermissionScope(input.workspaceId)
-  return await contactService.findDetailOrFail({
-    workspaceId: input.workspaceId,
-    id: input.id,
-    accessScope,
-  })
-}
-
-// RSC wrapper with auth check
-export const listItemsRSC = async (params: ListItemsParams) => {
-  await assertCurrentUserCanAccessChatbot(params.workspaceId)
-  return listItems(params)
-}
-```
-
-## Forms
-
-Use React Hook Form + Zod + next-safe-action adapter:
-
-```typescript
-"use client"
-
-import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { createItemAction } from "../actions/create-item-action"
-import { createItemRequest } from "../schema/action"
-
-export const CreateItemForm = ({ workspaceId }: { workspaceId: string }) => {
-  const { form, handleSubmitWithAction } = useHookFormAction(
-    createItemAction.bind(null, workspaceId),
-    zodResolver(createItemRequest),
-    { formProps: { defaultValues: { name: "" } } },
-  )
-
-  return (
-    <form onSubmit={handleSubmitWithAction}>
-      {/* Form fields using @chatbotx.io/ui form components */}
-    </form>
-  )
-}
-```
-
-### Form field component priority
-
-Always pick the highest-priority option that fits the field type:
-
-1. **Defined form field** from `@chatbotx.io/ui/components/form/*` — **first choice**.
-   Handles label, optional marker, description, and `FormMessage` automatically.
-2. **Shadcn UI primitive** from `@chatbotx.io/ui/components/ui/*` inside a manual
-   `FormField`/`FormItem` block — only when no defined field covers the use case.
-3. **Raw React/HTML element** — last resort.
-
-Available defined fields:
-
-| Component | Import path | Use for |
-|---|---|---|
-| `InputField` | `form/input-field` | Text inputs |
-| `InputNumberField` | `form/input-number-field` | Numeric inputs (stepper UI) |
-| `TextareaField` | `form/textarea-field` | Multi-line text |
-| `SelectField` | `form/select-field` | Dropdowns; supports `allowClear`, `options` |
-| `ComboboxField` | `form/combobox-field` | Searchable single-select |
-| `MultiSelectField` | `form/multi-select-field` | Multi-select |
-| `CheckboxField` | `form/checkbox-field` | Boolean checkbox |
-| `SwitchField` | `form/switch-field` | Toggle switch |
-| `RadioGroupField` | `form/radio-group-field` | Radio group |
-| `SliderField` | `form/slider-field` | Range slider |
-| `DatePickerField` | `form/date-picker-field` | Date picker popover |
-| `ColorPickerField` | `form/color-picker-field` | Color picker |
-
-All defined fields read `control` from `useFormContext` — no `control` prop
-needed as long as a `<Form {...form}>` provider wraps the form.
-
-### Use the shared components, never raw HTML
-
-- **Sections:** group multi-section forms with `<Card>` / `<CardHeader>` / `<CardTitle>` /
-  `<CardContent className="space-y-4">` (`@chatbotx.io/ui/components/ui/card`). Never a plain
-  `<div className="rounded-lg border p-6">`.
-- **Buttons:** always `<Button>` (`@chatbotx.io/ui/components/ui/button`) — including icon-only
-  buttons and ones inside a base-ui trigger's `render` prop. Never a raw `<button>`. Use the
-  `variant` prop (`ghost`, `outline`, `dashed`, …) rather than re-styling with `className`.
-- **Sticky save bars, empty states, and table shells** already exist in `@chatbotx.io/ui` and in
-  sibling features — copy the nearest real page rather than rebuilding the markup.
-
-For the full component ladder (which field component to reach for first) see the
-**`builder-ui-i18n`** skill.
-
-### CRITICAL — Default Values for Nullable Text Fields
-
-React Hook Form requires non-null values for controlled text inputs. Passing `null` as a `defaultValues` entry causes React to treat the input as **uncontrolled**, triggering warnings and unpredictable behavior.
-
-**Rule:** Always use `""` (empty string) for optional/nullable text field defaults. Never use `null` or `undefined`.
-
-When the DB field is nullable, add a `z.preprocess` step to the Zod schema so the form sends `""` while the server action still receives `null`:
-
-```typescript
-// schema/action.ts — convert "" → null before validation
-export const createItemSchema = z.object({
-  name: z.string().trim().min(1),
-  // CORRECT: preprocess empty string to null for nullable DB fields
-  icon: z.preprocess(
-    (val) => (val === "" ? null : val),
-    z.string().trim().nullable().default(null),
-  ),
-})
-```
-
-```typescript
-// In defaultValues — use "" not null
-const form = useForm<z.input<typeof createItemSchema>>({
-  resolver: zodResolver(createItemSchema),
-  defaultValues: { name: "", icon: "" }, // CORRECT
-  // defaultValues: { name: "", icon: null }, // WRONG — uncontrolled input
-})
-
-// When seeding from existing DB data (edit forms), coerce null → ""
-defaultValues={{
-  name: item.name,
-  icon: item.icon ?? "", // CORRECT — null from DB → "" for the form
-}}
-```
-
-### Watching Form Values — Use `useWatch`
-
-To reactively read form field values in render, use `useWatch` from `react-hook-form` instead of `form.watch()`. `useWatch` is a proper React hook and avoids unnecessary re-renders of parent components.
-
-```typescript
-import { useWatch } from "react-hook-form"
-
-// WRONG — causes parent re-renders
-const inventoryPolicy = form.watch("inventoryPolicy")
-
-// CORRECT — scoped subscription
-const inventoryPolicy = useWatch({ control: form.control, name: "inventoryPolicy" })
-const longDescription = useWatch({ control: form.control, name: "longDescription" }) ?? ""
-```
-
-### CRITICAL — `.bind()` for actions with `bindArgsSchemas`
-
-When an action uses `bindArgsSchemas` (e.g. for workspaceId), you **MUST** call `.bind(null, workspaceId)` before passing to `useHookFormAction`. Without `.bind()`, TypeScript will error: "Target signature provides too few arguments."
-
-```typescript
-// WRONG — will cause type error
-useHookFormAction(createItemAction, zodResolver(schema), ...)
-
-// CORRECT — bind the workspaceId first
-useHookFormAction(createItemAction.bind(null, workspaceId), zodResolver(schema), ...)
-```
-
-Similarly for `useAction` with delete actions:
-```typescript
-const { execute } = useAction(
-  deleteItemAction.bind(null, workspaceId, itemId),
-  { onSuccess: ..., onError: ... },
-)
-// Call execute() with NO arguments (not execute({}))
-execute()
-```
-
-## Server data (TanStack Query)
-
-Fetched lists/detail reads (anything backed by an oRPC procedure) go through
-TanStack Query, not a zustand store. See `orpc-api` skill's "React components
-(TanStack Query)" subsection for the client-side call pattern. Shape
-(`features/ai-agents/hooks/use-ai-agents.ts` is the reference implementation):
-
-```typescript
-// hooks/use-items.ts
-import { useQuery, useQueryClient } from "@tanstack/react-query"
-import { orpc } from "@/lib/orpc/query"
-
-export const useItems = (workspaceId: string | undefined) =>
-  useQuery(
-    orpc.<router>.<listProcedure>.queryOptions({
-      input: { workspaceId: workspaceId ?? "" },
-      enabled: Boolean(workspaceId),
-      select: (res) => res.data,
-    }),
-  )
-
-/** Call after create/update/delete so every reader refetches. */
-export const useInvalidateItems = () => {
-  const queryClient = useQueryClient()
-  return () => queryClient.invalidateQueries({ queryKey: orpc.<router>.key() })
-}
-```
-
-**Mutations:** Call the resource invalidator in every successful create, update,
-delete, toggle, or move handler in addition to `router.refresh()`; invalidate
-before any `router.push`. Existing invalidators include
-`useInvalidateTags`, `useInvalidateInboxes`, `useInvalidateUsers`,
-`useInvalidateSequences`, `useInvalidateCustomFields`,
-`useInvalidateBotFields`, `useInvalidateFlows`, and `useSavedReplyCache`.
-When a shared dialog mutates on behalf of multiple resources, give it an
-`onSuccess` prop so each caller supplies its own invalidator.
-
-Use `useWorkspaceId()` (`@/hooks/routing`) to scope the query to the current
-workspace. Never put a fetched list, `loading`, or `error` in a zustand store —
-TanStack Query already dedupes concurrent reads app-wide, caches per query key,
-and lets any mutation invalidate every reader.
-
-TanStack Query is the **only** client data-fetching layer — `lib/swr.ts` and
-the `swr` package were removed once every `useClientQuery`/`useSWR*` consumer
-was migrated. For less common shapes, reuse the shared helpers instead of
-hand-rolling them again:
-
-- **Search-as-you-type**: pass `placeholderData: keepPreviousData` (import the
-  *function* from `@tanstack/react-query`, not `true`) plus
-  `refetchOnWindowFocus: false` so the previous results stay on screen while a
-  new keyword is in flight (`meta-catalog-product-select.tsx`).
-- **Polling until a job settles** (export files, async worker results):
-  `@/lib/query/poll-until-settled`'s `pollUntilSettled(settledStatuses)`
-  returns a `refetchInterval` callback — TanStack passes it the `Query` (not
-  the data), so it reads `query.state.data?.status`.
-- **Fetching every page of a paginated list upfront** (not
-  `useInfiniteQuery`'s incremental `fetchNextPage`):
-  `@/lib/query/fetch-all-pages`'s `fetchAllPages({ fetchPage, initialPageParam,
-  maxPages })` loops and flattens every page in one `queryFn`.
-
-## Client-only state (Zustand)
-
-For features needing client-only state (selection, open/closed dialogs,
-in-progress form state — never a fetched list):
-
-```typescript
-// provider/item-store.ts
-import { createStore } from "zustand/vanilla"
-
-type ItemState = {
-  selectedId: string | null
-}
-
-type ItemActions = {
-  setSelectedId: (id: string | null) => void
-}
-
-export type ItemStore = ItemState & ItemActions
-
-export const createItemStore = (initial: Partial<ItemState> = {}) =>
-  createStore<ItemStore>((set) => ({
-    selectedId: null,
-    ...initial,
-    setSelectedId: (id) => set({ selectedId: id }),
-  }))
-```
-
-Wrap with React context provider (`provider/item-store-provider.tsx`).
-
-## Import Conventions
-
-| What | Path |
-|------|------|
-| App internal | `@/features/<feature>/...`, `@/lib/...`, `@/components/...` |
-| Shared UI | `@chatbotx.io/ui/components/ui/<component>` (via the package's `exports` map) |
-| Business services | `@chatbotx.io/business` — the only way to reach data from a feature |
-| Types | `@chatbotx.io/database/types` |
-| Shared helpers | `@chatbotx.io/utils` (`getIdFromParams`, `zodBigintAsString`, …) |
-| oRPC client | `@/lib/orpc/orpc` |
-| oRPC stacks | `@/orpc` (for `authorizedAPI`, `workspaceTokenAuthAPIForScope`) |
-| Auth middleware | `@/middlewares/auth` |
-| Safe action clients | `@/lib/safe-action` |
-
-`@chatbotx.io/database/client` and `@chatbotx.io/database/schema` are **not**
-importable from `apps/builder/src/features/*` — see `.agents/rules/data-access.md`.
-
-## Layout Patterns
-
-- **Route groups** `()` organize without URL segments: `(settings)`, `(has-folder)`, `(ai)`
-- **Parallel routes** `@slot` for multi-panel layouts — but NOT for the folder bar: rendered inside a page's table card a slot never resolves and suspends the whole table
-- **Folder bar** (`(has-folder)` pages): pass the page's `folderType` explicitly. If a client table renders the card, wrap the page in `WithFolderBar` (`@/features/folders/with-folder-bar`) and place `<FolderBarSlot />` at the top of the table's `CardContent`, outside the `Suspense` that waits for table data. If the page renders the card itself, put `<SharedFolderSlot folderType=… />` straight into `CardContent`
-- **Route-driven accordions** for the channels/integrations settings lists: each row is a real nested route (`settings/channels/<channel>`, `settings/integrations/<slug>`) rendered through the shared `RouteAccordionShell` (`@/components/route-accordion-shell`) with `prefetch={false}`, so only the active row's server/client graph loads — do NOT convert these back to slots or eager panels
-- **Workspace layout** at `space/[workspaceId]/layout.tsx`: auth, sidebar, workspace context
-- Server layouts: auth checks, data loading
-- Client layouts: tabs, accordions, interactive navigation
-
-## Internationalization (i18n)
-
-All user-facing text **must** use `useTranslations()` — never hardcode a label, placeholder,
-button, or toast. Reuse existing `fields.*` / `actions.*` / `messages.*` keys before adding new
-ones, and add every new key to **all** locale files in `apps/builder/messages/` (the parity
-check in `pnpm lint` fails otherwise).
-
-Full rules — namespaces, form-field reuse, dynamic keys, RTL — are in the **`builder-ui-i18n`**
-skill. Read it for any UI work; it is not duplicated here.
-
-## Logging
-
-Server code (actions, queries, API handlers) uses the structured logger, never `console`:
-`const logger = baseLogger.child({ feature: "myFeature" })` from `@chatbotx.io/logger`, then
-`logger.error({ err: error }, "[myFeature] operation failed")`. **The key is `err`, not `error`** —
-see repo invariant 20 in `AGENTS.md`.
-
-## Services — business logic lives in `@chatbotx.io/business`
-
-**Never** create a `*.service.ts` inside a feature folder. Business logic (DB queries, domain
-mutations, cache invalidation, events) belongs in `packages/business/src/<domain>/service.ts`;
-a feature imports it: `import { integrationService } from "@chatbotx.io/business"`. If a
-legacy service already sits in a feature folder, move it before extending it.
-
-A feature folder holds only `actions/`, `api/`, `queries/`, `schema/`, `components/`, `hooks/`,
-`provider/` — see the directory structure at the top of this file.
-
-Service/repository layering, the `.query.ts` contract, and the shared-service rule for
-public vs private paths: **`business-data-access`** skill and `.agents/rules/data-access.md`.
+- Builder app-level tests for actions, routes, API behavior, cache behavior, or cross-feature behavior go in `apps/builder/__tests__/`.
+- Colocated `src/features/**/__tests__` only for narrow component/unit tests clearly owned by that feature.
 
 ## Checklist for New Feature
 
@@ -525,16 +68,24 @@ Public API first, UI last:
 
 1. Create feature directory under `src/features/<name>/`
 2. Define Zod schemas in `schema/`
-3. Add or extend the service method in `packages/business` first (or a `lib/` function for a result-returning operation with no DB access) — every caller below only adapts to it
-4. **Create the public API in `api/public.ts`** — one procedure per operation, including result-returning ones (see the orpc-api skill, "Result-returning operations"). Not optional unless the feature is on the invariant 23 exempt list
+3. Add or extend the service method in `packages/business` first (or a `lib/` function for a result-returning operation with no DB access); every caller below only adapts to it
+4. **Create the public API in `api/public.ts`**, one procedure per operation, including result-returning ones (`orpc-api`, "Result-returning operations"). Not optional unless the feature is on the invariant 23 exempt list
 5. **Register it in `src/routers/public.ts`**, nested under the resource name
-6. **Test it** — spec/MCP tests and scope enforcement (see the testing-workflow skill)
-7. Create request adapters in `queries/` (only where session context needs adapting — see "Queries (Server-Side)" above)
-8. Add server actions in `actions/` (if the UI mutates) — they call the same service/`lib/` function as step 4
-9. If the UI needs session-authed procedures, add `api/private.ts` + `api/index.ts` and register the router in `src/routers/index.ts` as a `lazy()` branch (see the orpc-api skill — every feature router there is lazy so the route handler stays small)
+6. **Test it**: spec/MCP tests and scope enforcement (`testing-workflow` skill)
+7. Create request adapters in `queries/` (only where session context needs adapting)
+8. Add server actions in `actions/` (if the UI mutates); they call the same service/`lib/` function as step 4
+9. If the UI needs session-authed procedures, add `api/private.ts` + `api/index.ts` and register a `lazy()` branch in `src/routers/index.ts` (`orpc-api`)
 10. Create page(s) under `src/app/space/[workspaceId]/...`
-11. Build UI components (server page → client table/form)
-12. **Add i18n translations** to every locale file in `apps/builder/messages/` — reuse `fields.*` for form labels, add feature-specific text under `<featureName>.*`
-13. **Verify no hardcoded strings** — all user-facing text uses `useTranslations()` + `t()`
-14. **Parity check** — list every button in the feature's UI that creates, changes, or *returns* something. Each must map to a public procedure; any that doesn't is a gap to close or an exemption to justify in the PR
+11. Build UI components (server page, then client table/form)
+12. **Add i18n translations** to every locale file in `apps/builder/messages/`; reuse `fields.*`, add feature text under `<featureName>.*`
+13. **Verify no hardcoded strings**: all user-facing text uses `useTranslations()` + `t()`
+14. **Parity check**: list every button that creates, changes, or *returns* something. Each must map to a public procedure; any that doesn't is a gap to close or an exemption to justify in the PR
 15. Run the **`cli-mcp-docs`** skill so the CLI/MCP docs match the new surface
+
+## References
+
+- `references/page-and-components.md`: read when writing a page, public route, or client component.
+- `references/actions-and-queries.md`: read when writing server actions, choosing an action client, or a `queries/` adapter.
+- `references/forms.md`: read when building a form (field components, nullable defaults, `useWatch`, `.bind()`).
+- `references/server-data-and-state.md`: read for TanStack Query hooks, invalidators, polling/search helpers, zustand stores.
+- `references/layout-imports-i18n.md`: read for import paths, route groups/folder bar/accordions, i18n rules.

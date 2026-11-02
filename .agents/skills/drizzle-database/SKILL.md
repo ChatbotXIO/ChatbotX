@@ -1,9 +1,11 @@
 ---
 name: drizzle-database
 description: >-
-  Work with Drizzle ORM database schema, migrations, relations, and queries in
-  PostgreSQL. Use when creating tables, modifying schema, writing migrations,
-  defining relations, or querying the database.
+  Use when creating or changing a table in `packages/database/src/schema`,
+  generating a migration (`make:migration`), adding relations to
+  `relations/index.ts`, fixing `db:check-drift`, or writing Drizzle queries in a
+  repository. Covers migration safety (never auto-apply `db:migrate`) and the
+  `.default()`-is-not-a-DB-default trap.
 ---
 
 # Drizzle Database
@@ -130,10 +132,15 @@ Then add the export to `src/relations/index.ts`.
 
 1. **Modify schema** in `src/schema/` (and `src/relations/` if needed)
 2. **Generate migration:** `pnpm --filter database make:migration <descriptive_name>`
-3. **Apply migration:** `pnpm --filter database db:migrate`
-4. **Inspect:** `pnpm --filter database db:studio`
+3. **Read the generated SQL** and show it to the user. Diff it against the schema change: the snapshot chain has broken before, so a migration can re-add columns that already exist.
+4. **Apply only after explicit user approval:** `pnpm --filter database db:migrate`. Never apply it automatically, even when a plan lists it as a verification step.
+5. **Inspect:** `pnpm --filter database db:studio`
 
-Migrations output to `packages/database/drizzle/<timestamp>_<name>/migration.sql`.
+Migrations output to `packages/database/drizzle/<timestamp>_<name>/migration.sql`. `pnpm lint` runs `db:check-drift`, which fails when `src/schema` and the snapshot chain disagree.
+
+### Trap — `.default()` is not a database default
+
+`.default(...)` only makes the column optional in `$inferInsert`; drizzle emits the bare `DEFAULT` keyword and never inlines the value. A `jsonb().default(sql\`[]\`)` serializes as *no* database default, so omitting the key is a NOT NULL violation at runtime that `db:check-drift` cannot see. Prefer a real SQL default; if a column must stay TS-only, add it to `packages/database/__tests__/integration/schema-default-parity.test.ts` and write the value explicitly on every insert path.
 
 ## Schema Registration
 
