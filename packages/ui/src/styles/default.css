@@ -53,9 +53,10 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
-  --font-sans: Inter, sans-serif;
-  --font-mono: JetBrains Mono, monospace;
-  --font-serif: Source Serif 4, serif;
+  --font-sans: var(--font-inter, Inter), ui-sans-serif, system-ui, sans-serif;
+  --font-mono:
+    ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  --font-serif: ui-serif, Georgia, Cambria, "Times New Roman", serif;
   --radius: 0.375rem;
   --tracking-tighter: calc(var(--tracking-normal) - 0.05em);
   --tracking-tight: calc(var(--tracking-normal) - 0.025em);
