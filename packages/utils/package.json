@@ -57,7 +57,9 @@
     "./web-url": "./src/web-url.ts",
     "./whatsapp-call": "./src/whatsapp-call.ts",
     "./whatsapp-call-hours": "./src/whatsapp-call-hours.ts",
-    "./zod": "./src/zod.ts"
+    "./zod": "./src/zod.ts",
+    "./custom-field-operation": "./src/custom-field-operation.ts",
+    "./field-value-calculator": "./src/field-value-calculator/index.ts"
   },
   "scripts": {
     "check-types": "tsc --noEmit",

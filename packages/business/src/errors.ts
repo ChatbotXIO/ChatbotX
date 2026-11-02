@@ -183,6 +183,19 @@ export class ChatbotXException extends Error {
   }
 }
 
+/** A field operation the calculator rejected; `reason` is machine-readable. */
+export const invalidFieldOperationException = (
+  reason: string,
+): ChatbotXException => {
+  const exception = new ChatbotXException(
+    `This operation cannot be applied to the field (${reason}).`,
+    "invalidFieldOperation",
+    400,
+  )
+  exception.data = { reason }
+  return exception
+}
+
 /**
  * A bounded workspace purge reached its per-run limit while rows still
  * remain. The scheduled worker treats this as an expected, resumable state:

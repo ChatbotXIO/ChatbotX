@@ -16,6 +16,7 @@ export type FlowAuthoringErrorCode =
   | "unknownTemplate"
   | "unknownFlow"
   | "unknownCustomField"
+  | "invalidFieldOperation"
   | "unknownPipeline"
   | "unknownPipelineStage"
   | "unknownPipelineField"

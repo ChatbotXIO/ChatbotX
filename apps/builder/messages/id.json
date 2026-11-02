@@ -1323,6 +1323,15 @@
       "label": "Kustom Field",
       "savePayloadTo": "Simpan respons ke Kustom Field",
       "set_value": "Atur nilai",
+      "clear": "Clear value",
+      "formula": "Use custom formula",
+      "set_now": "Set to now",
+      "date_expression": "Free-form date (with math)",
+      "add_minutes": "Add minutes",
+      "add_hours": "Add hours",
+      "add_days": "Add days",
+      "formulaHint": "Math where value is the current number, e.g. round(value * 1.1). Functions: abs, ceil, floor, round, min, max, pow, sqrt, log, sin, cos.",
+      "dateExpressionHint": "e.g. now + 2 days - 3 hours. Units: min, h, d, w, mo, y.",
       "append": "Append ke end",
       "prepend": "Prepend ke beginning",
       "increase": "Tambah sebesar",
@@ -4816,6 +4825,9 @@
     "maxCharacters": "Maksimum {max} karakter.",
     "invalidApiKey": "Kunci API tidak valid",
     "maxMustBeGreaterThanMin": "{maxField} harus lebih besar dari atau sama dengan {minField}",
+    "trigger": {
+      "actionReferenceNotFound": "An action refers to a record that no longer exists. Re-select it in the action and save again."
+    },
     "inboundWebhook": {
       "inboxRequired": "Pilih inbox.",
       "inboxNotFound": "Inbox yang dipilih tidak ditemukan.",
@@ -5847,6 +5859,7 @@
       "setCustomField": "Atur Kolom Kustom",
       "clearCustomField": "Kosongkan Kolom Kustom",
       "startAnotherFlow": "Mulai Alur Lain",
+      "startExternalStep": "Start External Step",
       "notifyAdmins": "Beri Tahu Admin",
       "transferConversationToHuman": "Alihkan Percakapan ke Manusia",
       "sendMetaCapiEvent": "Kirim Peristiwa Meta CAPI",

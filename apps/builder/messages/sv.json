@@ -2468,6 +2468,15 @@
       "prepend": "Lägg till i början",
       "savePayloadTo": "Spara svar i anpassat fält",
       "set_value": "Ange värde",
+      "clear": "Clear value",
+      "formula": "Use custom formula",
+      "set_now": "Set to now",
+      "date_expression": "Free-form date (with math)",
+      "add_minutes": "Add minutes",
+      "add_hours": "Add hours",
+      "add_days": "Add days",
+      "formulaHint": "Math where value is the current number, e.g. round(value * 1.1). Functions: abs, ceil, floor, round, min, max, pow, sqrt, log, sin, cos.",
+      "dateExpressionHint": "e.g. now + 2 days - 3 hours. Units: min, h, d, w, mo, y.",
       "groupSystemFields": "Systemfält",
       "groupCustomFields": "Anpassade fält",
       "groupAccountFields": "Botfält"
@@ -6845,6 +6854,7 @@
       "removeTag": "Ta bort tagg",
       "setCustomField": "Ange anpassat fält",
       "startAnotherFlow": "Starta ett annat flöde",
+      "startExternalStep": "Start External Step",
       "transferConversationToHuman": "Överför konversationen till en människa",
       "sendMetaCapiEvent": "Skicka Meta CAPI-händelse",
       "sendGoogleAdsConversion": "Skicka Google Ads-konvertering"
@@ -6959,6 +6969,9 @@
     "maxCharacters": "Högst {max} tecken.",
     "maxMustBeGreaterThanMin": "{maxField} måste vara större än eller lika med {minField}",
     "maxSize": "Filstorleken överskrider maxgränsen",
+    "trigger": {
+      "actionReferenceNotFound": "An action refers to a record that no longer exists. Re-select it in the action and save again."
+    },
     "inboundWebhook": {
       "inboxRequired": "Välj en inkorg.",
       "inboxNotFound": "Den valda inkorgen hittades inte.",

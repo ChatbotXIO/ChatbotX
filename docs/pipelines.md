@@ -469,6 +469,8 @@ condition match any event source, while every other event type keeps its
 previous behavior; the evaluator (`evaluatePipelineItem`) then applies the
 pipeline and stage check.
 
+**Trigger action "Pipelines".** A trigger can run any of the 14 Pipelines actions (`type: "pipeline"`, the same `action` and fields as the flow step, without the step envelope). It runs the same runner as the flow step with the trigger as the actor. `addToPipeline` and `addComment` are deduplicated by the trigger run's occurrence key, so a retried job adds nothing twice; without a key (no job id) a retried add is not deduplicated. Its references (pipeline, stage, fields, assignees, due-date field, destination) are checked when a trigger is saved, for new actions only. Changes a trigger makes do not fire other triggers (the trigger executor runs in the worker context), so there is no trigger loop. Inbound webhooks cannot run it.
+
 **Flow-made changes fire triggers too.** Only the trigger executor runs in the
 worker context that suppresses emission; flow steps run later in the
 integration worker, so a Pipelines step that changes an item emits its event

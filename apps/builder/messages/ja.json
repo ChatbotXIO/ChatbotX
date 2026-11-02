@@ -1327,6 +1327,15 @@
       "prepend": "先頭に追加",
       "increase": "次の値だけ増やす",
       "decrease": "次の値だけ減らす",
+      "clear": "Clear value",
+      "formula": "Use custom formula",
+      "set_now": "Set to now",
+      "date_expression": "Free-form date (with math)",
+      "add_minutes": "Add minutes",
+      "add_hours": "Add hours",
+      "add_days": "Add days",
+      "formulaHint": "Math where value is the current number, e.g. round(value * 1.1). Functions: abs, ceil, floor, round, min, max, pow, sqrt, log, sin, cos.",
+      "dateExpressionHint": "e.g. now + 2 days - 3 hours. Units: min, h, d, w, mo, y.",
       "groupSystemFields": "システムフィールド",
       "groupCustomFields": "カスタムフィールド",
       "groupAccountFields": "ボットフィールド"
@@ -4795,6 +4804,9 @@
     "maxCharacters": "最大{max}文字です。",
     "invalidApiKey": "APIキーが無効です",
     "maxMustBeGreaterThanMin": "{maxField}は{minField}以上である必要があります",
+    "trigger": {
+      "actionReferenceNotFound": "An action refers to a record that no longer exists. Re-select it in the action and save again."
+    },
     "inboundWebhook": {
       "inboxRequired": "受信トレイを選択してください。",
       "inboxNotFound": "選択した受信トレイが見つかりません。",
@@ -5826,6 +5838,7 @@
       "setCustomField": "カスタムフィールドを設定",
       "clearCustomField": "カスタムフィールドをクリア",
       "startAnotherFlow": "別のフローを開始",
+      "startExternalStep": "Start External Step",
       "notifyAdmins": "管理者に通知",
       "transferConversationToHuman": "会話を担当者に転送",
       "sendMetaCapiEvent": "Meta CAPI イベントを送信",

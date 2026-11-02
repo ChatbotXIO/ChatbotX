@@ -1,75 +1,30 @@
 "use client"
 
-import { ComboboxField } from "@chatbotx.io/ui/components/form/combobox-field"
 import { ExternalLink } from "lucide-react"
 import { useTranslations } from "next-intl"
-import { useMemo } from "react"
-import { useFormContext, useWatch } from "react-hook-form"
-import {
-  getFlowNodesOptions,
-  useFlowSelectOptions,
-  useFlows,
-} from "@/features/flows/provider/flow-hook"
-import { useWorkspaceId } from "@/hooks/routing"
 import { useStepStore } from "../../stores/step-store-provider"
 import { BaseStepEditor } from "../base/editor"
+import { FlowNodePickerFields } from "./flow-node-picker-fields"
 
 type StartExternalNodeStepEditorProps = {
   parentName: string
 }
 
-const StartExternalNodeStepEditor = (
-  props: StartExternalNodeStepEditorProps,
-) => {
-  const { parentName } = props
-
+const StartExternalNodeStepEditor = ({
+  parentName,
+}: StartExternalNodeStepEditorProps) => {
   const t = useTranslations()
-  const flowOptions = useFlowSelectOptions()
-  const { data: flows = [] } = useFlows(useWorkspaceId())
   const activeFlowId = useStepStore((state) => state.activeFlowId)
-  const { control } = useFormContext()
-
-  const flowIdField = `${parentName}.flowId`
-  const nodeIdField = `${parentName}.nodeId`
-
-  const currentFlowId = useWatch({ control, name: flowIdField })
-
-  const nodeOptions = useMemo(() => {
-    if (!currentFlowId) {
-      return []
-    }
-    const targetFlow = flows.find((f) => f.id === currentFlowId)
-    if (!targetFlow) {
-      return []
-    }
-    return getFlowNodesOptions(targetFlow.flowVersions)
-  }, [currentFlowId, flows])
 
   return (
     <BaseStepEditor
       icon={ExternalLink}
       title={t("flows.actions.sendExternalNode")}
     >
-      <div className="flex flex-col gap-4">
-        <ComboboxField
-          disableValues={activeFlowId ? [activeFlowId] : undefined}
-          emptyText={t("actions.noRecordFound")}
-          label={t("fields.flow.label")}
-          name={flowIdField}
-          options={flowOptions}
-          placeholder={t("actions.pleaseSelect")}
-          required={true}
-        />
-
-        <ComboboxField
-          emptyText={t("actions.noRecordFound")}
-          label={t("fields.node.label")}
-          name={nodeIdField}
-          options={nodeOptions}
-          placeholder={t("actions.pleaseSelect")}
-          required={true}
-        />
-      </div>
+      <FlowNodePickerFields
+        disabledFlowId={activeFlowId ?? undefined}
+        parentName={parentName}
+      />
     </BaseStepEditor>
   )
 }

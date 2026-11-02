@@ -14,6 +14,11 @@ const insertOnConflictDoNothing = vi.fn()
 const insertOnConflictDoUpdate = vi.fn()
 const dbExecute = vi.fn()
 
+vi.mock("../src/automation-action/references", () => ({
+  findInvalidActionReferences: vi.fn(async () => []),
+  indexesOfNewActions: vi.fn(() => new Set<number>()),
+}))
+
 vi.mock("@chatbotx.io/database/client", () => ({
   db: {
     query: {

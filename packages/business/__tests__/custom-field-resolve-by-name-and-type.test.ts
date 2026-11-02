@@ -53,6 +53,8 @@ vi.mock("@chatbotx.io/database/schema", () => ({
 }))
 
 vi.mock("@chatbotx.io/database/utils", () => ({
+  isBigintId: (value: string) =>
+    value.length <= 19 && NUMERIC_ID_PATTERN.test(value),
   likeContains: vi.fn(),
   parseOrderByAsObject: vi.fn(),
   parsePagination: vi.fn(),
@@ -390,5 +392,69 @@ describe("customFieldService.resolveByNameAndType case collisions", () => {
     })
 
     expect(idMap.get("shortText:email")).toBe("10")
+  })
+})
+
+describe("customFieldService.findManyByKeys", () => {
+  afterEach(() => {
+    vi.clearAllMocks()
+  })
+
+  test("resolves ids and names in one query, an id winning over a name", async () => {
+    mockFindMany.mockResolvedValue([
+      { id: "7", workspaceId: "ws-1", name: "Plan" },
+      { id: "9", workspaceId: "ws-1", name: "7" },
+    ])
+
+    const resolved = await customFieldService.findManyByKeys({
+      workspaceId: "ws-1",
+      keys: ["7", "Plan", "missing"],
+    })
+
+    expect(mockFindMany).toHaveBeenCalledTimes(1)
+    expect(resolved.get("7")?.id).toBe("7")
+    expect(resolved.get("Plan")?.id).toBe("7")
+    expect(resolved.has("missing")).toBe(false)
+  })
+
+  test("an id with leading zeros resolves to the same field, like the database reads it", async () => {
+    mockFindMany.mockResolvedValue([
+      { id: "123", workspaceId: "ws-1", name: "Plan" },
+    ])
+
+    const resolved = await customFieldService.findManyByKeys({
+      workspaceId: "ws-1",
+      keys: ["00123"],
+    })
+
+    expect(resolved.get("00123")?.id).toBe("123")
+  })
+
+  test("a numeric key too long for a bigint is only matched by name, never sent as an id", async () => {
+    mockFindMany.mockResolvedValue([
+      { id: "5", workspaceId: "ws-1", name: "12345678901234567890123" },
+    ])
+
+    const resolved = await customFieldService.findManyByKeys({
+      workspaceId: "ws-1",
+      keys: ["12345678901234567890123"],
+    })
+
+    expect(resolved.get("12345678901234567890123")?.id).toBe("5")
+    expect(JSON.stringify(mockFindMany.mock.calls[0]?.[0])).not.toContain(
+      '"id":{"in":["12345678901234567890123"]}',
+    )
+  })
+
+  test("asks for nothing when there is no key", async () => {
+    expect(
+      (
+        await customFieldService.findManyByKeys({
+          workspaceId: "ws-1",
+          keys: [],
+        })
+      ).size,
+    ).toBe(0)
+    expect(mockFindMany).not.toHaveBeenCalled()
   })
 })

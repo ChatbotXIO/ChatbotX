@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const mocks = vi.hoisted(() => ({
   findLatestCreatedByContact: vi.fn(),
+  updateArchived: vi.fn(),
   findByIdForContact: vi.fn(),
   findMostRecentByContact: vi.fn(),
   attachExistingToContactForTrigger: vi.fn(),
@@ -9,6 +10,10 @@ const mocks = vi.hoisted(() => ({
   enqueueTagAppliedEvaluations: vi.fn(),
   enqueueEvent: vi.fn(),
   buildSourceKey: vi.fn(),
+}))
+
+vi.mock("@chatbotx.io/business/pipeline", () => ({
+  runPipelineAction: vi.fn(),
 }))
 
 vi.mock("@chatbotx.io/database/schema", () => ({
@@ -34,6 +39,7 @@ vi.mock("@chatbotx.io/business", () => ({
   conversationService: {
     findLatestCreatedByContact: (...args: unknown[]) =>
       mocks.findLatestCreatedByContact(...args),
+    updateArchived: (...args: unknown[]) => mocks.updateArchived(...args),
   },
   tagService: {
     attachExistingToContactForTrigger: (...args: unknown[]) =>
@@ -183,4 +189,96 @@ describe("ActionExecutor addTag", () => {
   // trigger-action-executor-send-meta-capi-event.test.ts — it needs its own
   // mocks for `@chatbotx.io/flow-config` (metaCapiEventFieldsSchema) and
   // `@chatbotx.io/variables` (resolveContactVariablesDeep).
+
+  test.each([
+    "nope",
+    "constructor",
+    "__proto__",
+    undefined,
+  ])("skips an unknown action type (%s) without running a handler", async (type) => {
+    const outcome = await new ActionExecutor().execute({
+      action: { type },
+      contactId: "contact-1",
+      workspaceId: "ws-1",
+      source: { kind: "trigger", triggerId: "trigger-1" },
+    })
+
+    expect(outcome).toEqual({ status: "skipped", reason: "unknownAction" })
+  })
+
+  test("a shared scope reads the conversation once for several actions", async () => {
+    mocks.attachExistingToContactForTrigger.mockResolvedValue([])
+    const { createTriggerActionScope } = await import(
+      "../src/trigger/services/actions/scope"
+    )
+    const context = {
+      action: { type: "addTag", tagIds: ["tag-1"] },
+      contactId: "contact-1",
+      workspaceId: "ws-1",
+      source: { kind: "trigger" as const, triggerId: "trigger-1" },
+    }
+    const scope = createTriggerActionScope(context)
+    const executor = new ActionExecutor()
+
+    await executor.execute(context, scope)
+    await executor.execute(context, scope)
+
+    expect(mocks.findLatestCreatedByContact).toHaveBeenCalledTimes(1)
+  })
+
+  test("skips when the contact has no conversation", async () => {
+    mocks.findLatestCreatedByContact.mockResolvedValue(undefined)
+
+    const outcome = await new ActionExecutor().execute({
+      action: { type: "addTag", tagIds: ["tag-1"] },
+      contactId: "contact-1",
+      workspaceId: "ws-1",
+      source: { kind: "trigger", triggerId: "trigger-1" },
+    })
+
+    expect(outcome).toEqual({ status: "skipped", reason: "noConversation" })
+  })
+
+  describe("conversation-state actions refresh the shared scope", () => {
+    const contextFor = (action: Record<string, unknown>) => ({
+      action,
+      contactId: "contact-1",
+      workspaceId: "ws-1",
+      source: { kind: "trigger" as const, triggerId: "trigger-1" },
+    })
+
+    test("the next action re-reads the conversation after an archive", async () => {
+      mocks.updateArchived.mockResolvedValue([])
+      mocks.attachExistingToContactForTrigger.mockResolvedValue([])
+      const { createTriggerActionScope } = await import(
+        "../src/trigger/services/actions/scope"
+      )
+      const scope = createTriggerActionScope(contextFor({}))
+      const executor = new ActionExecutor()
+
+      await executor.execute(contextFor({ type: "archiveConversation" }), scope)
+      await executor.execute(
+        contextFor({ type: "addTag", tagIds: ["tag-1"] }),
+        scope,
+      )
+
+      expect(mocks.findLatestCreatedByContact).toHaveBeenCalledTimes(2)
+    })
+
+    test("a failing archive still invalidates the snapshot", async () => {
+      mocks.updateArchived.mockRejectedValue(new Error("event publish failed"))
+      const { createTriggerActionScope } = await import(
+        "../src/trigger/services/actions/scope"
+      )
+      const scope = createTriggerActionScope(contextFor({}))
+      const executor = new ActionExecutor()
+
+      await expect(
+        executor.execute(contextFor({ type: "archiveConversation" }), scope),
+      ).rejects.toThrow("event publish failed")
+      await scope.getConversation()
+
+      expect(mocks.findLatestCreatedByContact).toHaveBeenCalledTimes(2)
+    })
+  })
 })

@@ -1522,6 +1522,15 @@
       "label": "Trường tùy chỉnh",
       "savePayloadTo": "Lưu phản hồi vào Trường tùy chỉnh",
       "set_value": "Thiết lập giá trị",
+      "clear": "Xóa giá trị",
+      "formula": "Dùng công thức tùy chỉnh",
+      "set_now": "Đặt thành hiện tại",
+      "date_expression": "Ngày tự do (có phép tính)",
+      "add_minutes": "Cộng thêm phút",
+      "add_hours": "Cộng thêm giờ",
+      "add_days": "Cộng thêm ngày",
+      "formulaHint": "Phép tính với value là số hiện tại, ví dụ round(value * 1.1). Hàm: abs, ceil, floor, round, min, max, pow, sqrt, log, sin, cos.",
+      "dateExpressionHint": "Ví dụ: now + 2 days - 3 hours. Đơn vị: min, h, d, w, mo, y.",
       "append": "Thêm vào cuối",
       "prepend": "Thêm vào đầu",
       "increase": "Tăng thêm",
@@ -4858,6 +4867,9 @@
     "maxCharacters": "Tối đa {max} ký tự.",
     "invalidApiKey": "API key không hợp lệ",
     "maxMustBeGreaterThanMin": "{maxField} phải lớn hơn hoặc bằng {minField}",
+    "trigger": {
+      "actionReferenceNotFound": "Một hành động tham chiếu đến bản ghi không còn tồn tại. Hãy chọn lại trong hành động rồi lưu lại."
+    },
     "inboundWebhook": {
       "inboxRequired": "Hãy chọn một hộp thư.",
       "inboxNotFound": "Không tìm thấy hộp thư đã chọn.",
@@ -5556,6 +5568,7 @@
       "setCustomField": "Thiết lập trường tùy chỉnh",
       "clearCustomField": "Xóa trường tùy chỉnh",
       "startAnotherFlow": "Bắt đầu luồng khác",
+      "startExternalStep": "Bắt đầu bước bên ngoài",
       "notifyAdmins": "Thông báo quản trị viên",
       "transferConversationToHuman": "Chuyển cuộc trò chuyện cho người",
       "sendMetaCapiEvent": "Gửi sự kiện Meta CAPI",

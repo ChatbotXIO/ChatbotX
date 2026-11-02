@@ -1,4 +1,11 @@
 import { createId } from "@chatbotx.io/utils"
+import type { CustomFieldType } from "@chatbotx.io/utils/custom-field"
+import {
+  FIELD_OPERATION_DEFINITIONS,
+  fieldOperationByApiName,
+  fieldOperationsForType,
+  isFieldOperationAllowed,
+} from "@chatbotx.io/utils/custom-field-operation"
 import { isTemporalCustomFieldType } from "@chatbotx.io/utils/datetime"
 import { addNotesNodeDefaultFn } from "../nodes/add-notes"
 import { conditionNodeDefaultFn } from "../nodes/condition"
@@ -563,7 +570,7 @@ function compileActionStep(
         return {
           ...setCustomFieldStepDefaultFn(),
           inputFieldId: customField?.id ?? "",
-          operation: FieldOperationType.set,
+          operation: resolveFieldOperation(step, customField, stepPath, state),
           value: step.value ?? "",
         }
       }
@@ -937,6 +944,44 @@ type CompiledCondition = {
   operator: string
   value?: BranchConditionSpec["value"]
   customFieldId?: string
+}
+
+/**
+ * The operation code a `setCustomField` action asks for (default `set`),
+ * recording an `invalidFieldOperation` error when the field's type does not
+ * support it.
+ */
+function resolveFieldOperation(
+  step: Extract<FlowStepSpec, { type: "action" }>,
+  customField: { id: string; type: string } | null,
+  stepPath: string,
+  state: CompileState,
+): FieldOperationType {
+  const operation = step.operation
+    ? fieldOperationByApiName(step.operation)
+    : undefined
+  if (!operation) {
+    return FieldOperationType.set
+  }
+  if (
+    customField &&
+    !isFieldOperationAllowed(operation, customField.type as CustomFieldType)
+  ) {
+    addError(
+      state,
+      `${stepPath}.operation`,
+      "invalidFieldOperation",
+      `Operation "${step.operation}" is not supported for a ${customField.type} field.`,
+      {
+        hint: `Supported: ${fieldOperationsForType(
+          customField.type as CustomFieldType,
+        )
+          .map((code) => FIELD_OPERATION_DEFINITIONS[code].apiName)
+          .join(", ")}`,
+      },
+    )
+  }
+  return operation
 }
 
 /** Resolves a workspace custom field by name, recording an `unknownCustomField` error on a miss. */

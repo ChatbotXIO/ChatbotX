@@ -23,6 +23,11 @@ const {
   }
 })
 
+vi.mock("../src/automation-action/references", () => ({
+  findInvalidActionReferences: vi.fn(async () => []),
+  indexesOfNewActions: vi.fn(() => new Set<number>()),
+}))
+
 vi.mock("@chatbotx.io/database/client", () => ({
   db: {
     query: { triggerModel: { findFirst: mockTriggerFindFirst } },

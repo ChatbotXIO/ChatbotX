@@ -1,5 +1,10 @@
 import { zodBigintAsString, zodBigintIdAsString } from "@chatbotx.io/utils"
 import { channelTypes } from "@chatbotx.io/utils/channel"
+import {
+  FieldOperationType,
+  fieldOperationApiNames,
+  fieldOperationByApiName,
+} from "@chatbotx.io/utils/custom-field-operation"
 import { z } from "zod"
 import { countMessageCharacters } from "../channel-rules/characters"
 import { BUTTON_LABEL_MAX } from "../steps/button"
@@ -11,6 +16,7 @@ import {
 } from "../steps/pipeline"
 import { sendProductsDisplays } from "../steps/send-products"
 import { sendViewCatalogStepSchema } from "../steps/send-view-catalog"
+import { isOperandBlank } from "../steps/set-custom-field"
 import { waitStepDelayUnits } from "../steps/wait"
 import { flowValidationCodes } from "../validation-codes"
 
@@ -124,6 +130,7 @@ export type FlowStepSpec =
         | "archiveConversation"
       tagNames?: string[]
       customFieldName?: string
+      operation?: string
       value?: string
       assigneeId?: string
     }
@@ -406,10 +413,18 @@ const actionStepSpecSchema = z
       .min(1)
       .optional()
       .describe("Custom field name. Required for `setCustomField`."),
+    operation: z
+      .enum(fieldOperationApiNames as [string, ...string[]])
+      .optional()
+      .describe(
+        "How `setCustomField` applies `value` (default `set`): `set`, `append`/`prepend` (text), `increase`/`decrease`/`formula` (number), `setNow`/`dateExpression`/`addMinutes`/`addHours`/`addDays` (date, datetime) or `clear`. The field type must support it.",
+      ),
     value: z
       .string()
       .optional()
-      .describe("Value to set. Required for `setCustomField`."),
+      .describe(
+        "Value to set. Required for `setCustomField`, except for the `clear` and `setNow` operations.",
+      ),
     assigneeId: z
       .string()
       .optional()
@@ -436,7 +451,15 @@ const actionStepSpecSchema = z
           path: ["customFieldName"],
         })
       }
-      if (data.value === undefined) {
+      const operation = data.operation
+        ? fieldOperationByApiName(data.operation)
+        : undefined
+      // Spelling out the default `set` must not change the rule for omitting it.
+      const valueMissing =
+        !operation || operation === FieldOperationType.set
+          ? data.value === undefined
+          : isOperandBlank(operation, data.value)
+      if (valueMissing) {
         ctx.addIssue({
           code: "custom",
           message: 'action "setCustomField" requires value',

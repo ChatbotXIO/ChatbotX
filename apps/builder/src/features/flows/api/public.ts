@@ -146,7 +146,7 @@ export const flowsPublicRouter = {
       path: "/v1/flows/{id}/nodes",
       summary: "List flow nodes",
       description:
-        "Lists the nodes (canvas blocks) of a flow's published version: `nodeId`, the node's display `label` and `nodeType`. Get the flow id from `flows.list`. A node is identified by its flow and node id together, so the `Executed Step` contact filter takes it as `{flowId}:{nodeId}`. Returns an empty list for a flow that was never published.",
+        "Lists the nodes (canvas blocks) of a flow's published version: `nodeId`, the node's display `label` and `nodeType`. Get the flow id from `flows.list`. A node is identified by its flow and node id together, so the `Executed Step` contact filter takes it as `{flowId}:{nodeId}`. Returns an empty list for a flow that was never published. The same `flowId` and `nodeId` start a flow at that node from a trigger's `startExternalStep` action.",
       tags: ["Flows"],
     })
     .input(publicIdParam("flow", "flows.list"))
