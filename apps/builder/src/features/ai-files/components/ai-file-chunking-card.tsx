@@ -89,12 +89,12 @@ export function AIFileChunkingCard({
           )}
         </p>
         {file.indexOutdated ? (
-          <p className="text-amber-600 text-sm dark:text-amber-400">
+          <p className="text-amber-700 text-sm dark:text-amber-400">
             {t("aiFiles.chunks.indexOutdated")}
           </p>
         ) : null}
         {file.chunkingOutdated ? (
-          <p className="text-amber-600 text-sm dark:text-amber-400">
+          <p className="text-amber-700 text-sm dark:text-amber-400">
             {t("aiFiles.chunking.outdated")}
           </p>
         ) : null}

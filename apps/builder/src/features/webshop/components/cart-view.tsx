@@ -52,7 +52,7 @@ function SummaryRow({
           className={cn(
             "flex size-7 shrink-0 items-center justify-center rounded-full",
             saving
-              ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+              ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
               : "bg-muted text-muted-foreground",
           )}
         >
@@ -63,7 +63,7 @@ function SummaryRow({
       <span
         className={cn(
           "shrink-0 font-medium tabular-nums",
-          saving && "text-emerald-600 dark:text-emerald-400",
+          saving && "text-emerald-700 dark:text-emerald-400",
         )}
       >
         {value}
@@ -311,7 +311,7 @@ export function CartView({ cart, shop }: { cart: CartData; shop: ShopView }) {
             {t("unavailableItems", { count: cart.unavailable.length })}
           </p>
           {cart.lines.length > 0 ? (
-            <p className="pb-1 text-amber-900/80 text-xs dark:text-amber-100/80">
+            <p className="pb-1 text-amber-900 text-xs dark:text-amber-100/80">
               {t("unavailableNotOrdered")}
             </p>
           ) : null}

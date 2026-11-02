@@ -219,7 +219,7 @@ describe("ConnectManyDialog — rows", () => {
       b.textContent?.includes("channels.connectMany.status.limitReached"),
     )
     expect(duplicatedBadge?.className).toContain("border-amber-500/40")
-    expect(duplicatedBadge?.className).toContain("text-amber-600")
+    expect(duplicatedBadge?.className).toContain("text-amber-700")
     expect(limitBadge?.className).toContain("border-amber-500/40")
     // Neither status is retryable per ROW_STATUS.
     expect(buttonByText("channels.connectMany.retry")).toBeUndefined()

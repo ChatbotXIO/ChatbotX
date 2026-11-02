@@ -107,7 +107,7 @@ export function ParticipantHistoryDialog({
                 className={cn(
                   "font-semibold text-sm",
                   event.delta >= 0
-                    ? "text-emerald-600 dark:text-emerald-400"
+                    ? "text-emerald-700 dark:text-emerald-400"
                     : "text-destructive",
                 )}
               >

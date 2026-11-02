@@ -28,9 +28,9 @@ const STATUS_STYLES: Record<MetaCatalogSyncRun["status"], string> = {
   queued: "border-muted-foreground/30 text-muted-foreground",
   running: "border-blue-500/40 bg-blue-500/10 text-blue-600 dark:text-blue-400",
   succeeded:
-    "border-emerald-500/40 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
+    "border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400",
   partial:
-    "border-amber-500/40 bg-amber-500/10 text-amber-600 dark:text-amber-400",
+    "border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-400",
   failed: "border-destructive/40 bg-destructive/10 text-destructive",
 }
 

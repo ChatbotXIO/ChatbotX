@@ -81,7 +81,8 @@ export const ROW_STATUS = {
   connected: {
     labelKey: "channels.connectMany.status.connected",
     badgeVariant: "outline",
-    badgeClassName: "border-emerald-500/40 text-emerald-600",
+    badgeClassName:
+      "border-emerald-500/40 text-emerald-700 dark:text-emerald-400",
     Icon: CheckCircle2Icon,
     iconClassName: "",
     retryable: false,
@@ -89,15 +90,16 @@ export const ROW_STATUS = {
   connectedWarning: {
     labelKey: "channels.connectMany.status.connected",
     badgeVariant: "outline",
-    badgeClassName: "border-emerald-500/40 text-emerald-600",
+    badgeClassName:
+      "border-emerald-500/40 text-emerald-700 dark:text-emerald-400",
     Icon: TriangleAlertIcon,
-    iconClassName: "text-amber-600",
+    iconClassName: "text-amber-700",
     retryable: false,
   },
   duplicated: {
     labelKey: "channels.connectMany.status.duplicated",
     badgeVariant: "outline",
-    badgeClassName: "border-amber-500/40 text-amber-600",
+    badgeClassName: "border-amber-500/40 text-amber-700 dark:text-amber-400",
     Icon: Link2OffIcon,
     iconClassName: "",
     retryable: false,
@@ -105,7 +107,7 @@ export const ROW_STATUS = {
   limitReached: {
     labelKey: "channels.connectMany.status.limitReached",
     badgeVariant: "outline",
-    badgeClassName: "border-amber-500/40 text-amber-600",
+    badgeClassName: "border-amber-500/40 text-amber-700 dark:text-amber-400",
     Icon: GaugeIcon,
     iconClassName: "",
     retryable: false,
@@ -167,14 +169,14 @@ export const COEXIST_ROW_STATUS = {
   done: {
     labelKey: "channels.connectMany.coexist.done",
     Icon: CheckCircle2Icon,
-    iconClassName: "text-emerald-600",
+    iconClassName: "text-emerald-700",
     tone: "muted",
     retryable: false,
   },
   failed: {
     labelKey: "channels.connectMany.coexist.failed",
     Icon: TriangleAlertIcon,
-    iconClassName: "text-amber-600",
+    iconClassName: "text-amber-700",
     tone: "warning",
     retryable: true,
   },

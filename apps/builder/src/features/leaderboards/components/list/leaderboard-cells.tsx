@@ -101,7 +101,7 @@ export function LeaderboardParticipantsCell({
     <div className="flex flex-col gap-0.5">
       <span className="font-medium">{stats.participants.toLocaleString()}</span>
       {stats.newToday > 0 ? (
-        <span className="text-emerald-600 text-xs dark:text-emerald-400">
+        <span className="text-emerald-700 text-xs dark:text-emerald-400">
           {t("leaderboards.list.newToday", { count: stats.newToday })}
         </span>
       ) : null}
