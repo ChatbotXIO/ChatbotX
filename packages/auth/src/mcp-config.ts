@@ -15,26 +15,60 @@ type ResourceRequestContext = {
   body?: Record<string, unknown>
 }
 
+const legacyMcpTransportPaths = ["/messages", "/sse"] as const
+
 const hasResource = (params: Record<string, unknown> | undefined): boolean => {
   const value = params?.resource
   return Array.isArray(value) ? value.length > 0 : Boolean(value)
 }
 
+const getCanonicalMcpResource = (
+  params: Record<string, unknown> | undefined,
+  resource: string,
+): string | undefined => {
+  if (!hasResource(params)) {
+    return resource
+  }
+
+  const requestedResource = params?.resource
+  const isLegacyMcpEndpoint =
+    typeof requestedResource === "string" &&
+    legacyMcpTransportPaths.some(
+      (path) => requestedResource === `${resource}${path}`,
+    )
+
+  return isLegacyMcpEndpoint ? resource : undefined
+}
+
+const withCanonicalMcpResource = (
+  params: Record<string, unknown> | undefined,
+  resource: string,
+): Record<string, unknown> | undefined => {
+  const canonicalResource = getCanonicalMcpResource(params, resource)
+  return canonicalResource
+    ? { ...params, resource: canonicalResource }
+    : undefined
+}
+
 /**
- * Better Auth `hooks.before` helper: a client that omits the RFC 8707
- * `resource` parameter would receive an opaque access token the MCP resource
- * server cannot verify. This deployment has exactly one resource, so default
- * it on `/oauth2/authorize` (query) and `/oauth2/token` (body).
+ * Better Auth rejects explicit RFC 8707 resource values that are absent from
+ * its configured targets. ChatGPT's legacy SSE connector sends the transport
+ * URL, while this server registers the common `/mcp` resource. Canonicalize
+ * only known first-party transport endpoints; all other client-provided
+ * resources remain untouched and are still rejected by Better Auth.
  */
 export const defaultMcpResource = (
   ctx: ResourceRequestContext,
   resource: string = getMcpResourceUrl(),
 ) => {
-  if (ctx.path === "/oauth2/authorize" && !hasResource(ctx.query)) {
-    return { context: { query: { ...ctx.query, resource } } }
+  if (ctx.path === "/oauth2/authorize") {
+    const query = withCanonicalMcpResource(ctx.query, resource)
+    return query ? { context: { query } } : undefined
   }
-  if (ctx.path === "/oauth2/token" && !hasResource(ctx.body)) {
-    return { context: { body: { ...ctx.body, resource } } }
+
+  if (ctx.path === "/oauth2/token") {
+    const body = withCanonicalMcpResource(ctx.body, resource)
+    return body ? { context: { body } } : undefined
   }
   return
 }
