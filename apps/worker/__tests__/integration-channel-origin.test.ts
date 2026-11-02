@@ -4,7 +4,10 @@ import {
   type IntegrationJobData,
 } from "@chatbotx.io/worker-config"
 import { describe, expect, test, vi } from "vitest"
-import { isChannelOriginatedJob } from "../src/integration/channel-origin"
+import {
+  isChannelOriginatedJob,
+  isInboundWebhookJob,
+} from "../src/integration/channel-origin"
 import { runIntegrationJobWithWebhookContext } from "../src/integration/job-context"
 
 describe("isChannelOriginatedJob", () => {
@@ -84,6 +87,23 @@ describe("isChannelOriginatedJob", () => {
     } satisfies IntegrationJobData
 
     expect(isChannelOriginatedJob(jobData)).toBe(false)
+  })
+
+  test("recognizes webhook jobs without changing webhook execution context", () => {
+    const contactMarkAsReadJob = {
+      type: IntegrationJobAction.contactMarkAsRead,
+    } as never
+    const messageReactionJob = {
+      type: IntegrationJobAction.messageReaction,
+    } as never
+    const sendSequenceFlowJob = {
+      type: IntegrationJobAction.sendSequenceFlow,
+    } as never
+
+    expect(isInboundWebhookJob(contactMarkAsReadJob)).toBe(true)
+    expect(isInboundWebhookJob(messageReactionJob)).toBe(true)
+    expect(isInboundWebhookJob(sendSequenceFlowJob)).toBe(false)
+    expect(isChannelOriginatedJob(contactMarkAsReadJob)).toBe(false)
   })
 
   test("runs channel jobs inside webhook context and non-channel jobs outside it", async () => {

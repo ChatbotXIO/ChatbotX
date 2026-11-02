@@ -2,8 +2,9 @@ import { getAuditActor } from "@chatbotx.io/business/audit"
 import { beforeAll, beforeEach, describe, expect, test, vi } from "vitest"
 
 const mocks = vi.hoisted(() => ({
+  cleanupOrphanedIntegrationOnce: vi.fn(),
   ensureBootstrapped: vi.fn(async () => undefined),
-  handleOrphanedIntegration: vi.fn(),
+  loggerError: vi.fn(),
   heavyQueueAdd: vi.fn(),
   isBlockedWorkspace: vi.fn(),
   processAutomatedResponse: vi.fn(),
@@ -91,7 +92,7 @@ vi.mock("../src/lib/is-blocked-workspace", () => ({
 vi.mock("../src/lib/logger", () => ({
   logger: {
     debug: vi.fn(),
-    error: vi.fn(),
+    error: mocks.loggerError,
     fatal: vi.fn(),
     info: vi.fn(),
     warn: vi.fn(),
@@ -114,7 +115,7 @@ vi.mock("../src/integration/handlers/story-reply-automation", () => ({
   processStoryMentionAutomation: mocks.processStoryMentionAutomation,
 }))
 vi.mock("../src/services/orphaned-integration-cleanup", () => ({
-  handleOrphanedIntegration: mocks.handleOrphanedIntegration,
+  cleanupOrphanedIntegrationOnce: mocks.cleanupOrphanedIntegrationOnce,
   IntegrationNotFoundError: class IntegrationNotFoundError extends Error {},
 }))
 vi.mock("../src/ai-agent/handlers/process-conversation-source", () => ({
@@ -309,7 +310,7 @@ describe("ai-agent worker audit context", () => {
     expect(mocks.processAutomatedResponse).not.toHaveBeenCalled()
   })
 
-  test("marks orphaned channel integrations as unrecoverable", async () => {
+  test("completes orphaned channel integrations without retry", async () => {
     const { IntegrationNotFoundError } = await import(
       "../src/services/orphaned-integration-cleanup"
     )
@@ -330,14 +331,15 @@ describe("ai-agent worker audit context", () => {
           },
         },
       }),
-    ).rejects.toMatchObject({ name: "UnrecoverableError" })
+    ).resolves.toBeUndefined()
 
-    expect(mocks.handleOrphanedIntegration).toHaveBeenCalledWith(
+    expect(mocks.cleanupOrphanedIntegrationOnce).toHaveBeenCalledWith(
       orphanedIntegrationError,
     )
+    expect(mocks.loggerError).toHaveBeenCalled()
   })
 
-  test("marks orphaned comment AI integrations as unrecoverable", async () => {
+  test("completes orphaned comment AI integrations without retry", async () => {
     const { IntegrationNotFoundError } = await import(
       "../src/services/orphaned-integration-cleanup"
     )
@@ -368,10 +370,11 @@ describe("ai-agent worker audit context", () => {
           },
         },
       }),
-    ).rejects.toMatchObject({ name: "UnrecoverableError" })
+    ).resolves.toBeUndefined()
 
-    expect(mocks.handleOrphanedIntegration).toHaveBeenCalledWith(
+    expect(mocks.cleanupOrphanedIntegrationOnce).toHaveBeenCalledWith(
       orphanedIntegrationError,
     )
+    expect(mocks.loggerError).toHaveBeenCalled()
   })
 })
