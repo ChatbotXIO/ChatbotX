@@ -142,6 +142,42 @@ describe("resolveIncomingTextRouting", () => {
 
     expect(isConversationActive).not.toHaveBeenCalled()
   })
+
+  test("routes an image/video-only message to Keywords, other attachments nowhere", async () => {
+    const isConversationActive = vi.fn(async () => true)
+
+    await expect(
+      resolveIncomingTextRouting({
+        conversation: conversation as never,
+        hasActionableInput: true,
+        hasText: false,
+        hasKeywordMedia: true,
+        isConversationActive,
+      }),
+    ).resolves.toEqual({ type: "automatedResponse", conversation })
+
+    await expect(
+      resolveIncomingTextRouting({
+        conversation: conversation as never,
+        hasActionableInput: true,
+        hasText: false,
+        hasKeywordMedia: false,
+        isConversationActive,
+      }),
+    ).resolves.toEqual({ type: "none" })
+  })
+
+  test("does not hand a media-only message back to the bot while inactive", async () => {
+    await expect(
+      resolveIncomingTextRouting({
+        conversation: conversation as never,
+        hasActionableInput: true,
+        hasText: false,
+        hasKeywordMedia: true,
+        isConversationActive: vi.fn(async () => false),
+      }),
+    ).resolves.toEqual({ type: "none" })
+  })
 })
 
 describe("shouldRunStoryMentionAutomation", () => {

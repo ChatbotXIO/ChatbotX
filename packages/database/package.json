@@ -15,6 +15,7 @@
     "date-fns-tz": "^3.2.0",
     "drizzle-orm": "1.0.0-beta.22",
     "pg": "^8.20.0",
+    "re2js": "2.9.1",
     "zod": "^4.3.6"
   },
   "devDependencies": {
@@ -57,6 +58,7 @@
     "./errors": "./src/errors.ts",
     "./keys": "./src/keys.ts",
     "./partials": "./src/partials/index.ts",
+    "./partials/keyword-condition-schema": "./src/partials/keyword-condition-schema.ts",
     "./statement-timeout": "./src/statement-timeout.ts",
     "./queries": "./src/queries/index.ts",
     "./queries/contact-filter": "./src/queries/contact-filter/index.ts",

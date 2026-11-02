@@ -5034,6 +5034,35 @@
     "signUpToJoin": "创建账户以加入"
   },
   "keywords": {
+    "conditions": {
+      "operators": {
+        "is": "消息等于",
+        "similarTo": "消息相似于",
+        "contains": "消息包含",
+        "containsPhone": "消息包含电话",
+        "containsEmail": "消息包含邮箱",
+        "containsImage": "消息包含图片",
+        "containsVideo": "消息包含视频",
+        "containsLink": "消息包含链接",
+        "containsWholeWord": "消息包含完整单词",
+        "beginsWith": "消息开头为",
+        "endsWith": "消息结尾为",
+        "isThumbsUp": "消息是 👍",
+        "notContains": "消息不包含",
+        "matchesRegex": "消息匹配正则"
+      },
+      "and": "且",
+      "addCondition": "消息条件",
+      "removeCondition": "删除条件",
+      "note": "关键词不区分大小写并忽略声调符号，例如 \"Tư vấn\" 和 \"tu van\" 视为相同。",
+      "keywordPlaceholder": "+ 关键词",
+      "regexPlaceholder": "+ 正则",
+      "errors": {
+        "keywordConditionValuesRequired": "请至少添加一个关键词。",
+        "keywordConditionTakesNoValues": "此条件不需要关键词。",
+        "invalidKeywordRegex": "正则表达式无效。"
+      }
+    },
     "descriptions": {
       "contact": "当联系人发送包含关键字的消息给您的工作区时自动回复。",
       "contactTitle": "联系人关键字",

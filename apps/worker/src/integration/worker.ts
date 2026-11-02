@@ -1,5 +1,8 @@
 import { createHash } from "node:crypto"
-import { automatedResponseService } from "@chatbotx.io/automated-response"
+import {
+  automatedResponseService,
+  isKeywordMediaFileType,
+} from "@chatbotx.io/automated-response"
 import {
   conversationService,
   withBlockedOwnerGuard,
@@ -281,6 +284,9 @@ function startIntegrationWorker() {
                 return
               }
 
+              const attachmentFileTypes = message.attachments.map(
+                (attachment) => attachment.fileType,
+              )
               const routing = await resolveIncomingTextRouting({
                 conversation,
                 hasActionableInput: Boolean(
@@ -288,46 +294,19 @@ function startIntegrationWorker() {
                     (message.text || hasAttachment || isLocation),
                 ),
                 hasText: Boolean(isFromContact && message.text),
+                hasKeywordMedia: Boolean(
+                  isFromContact &&
+                    attachmentFileTypes.some(isKeywordMediaFileType),
+                ),
                 isConversationActive: (conversation) =>
                   conversationService.ensureActive(conversation),
               })
 
-              if (routing.type === "challenge") {
-                await integrationQueue.add(
-                  IntegrationJobAction.runChallenge,
-                  {
-                    type: IntegrationJobAction.runChallenge,
-                    data: {
-                      conversationId: routing.conversation.id,
-                      contactInboxId: message.contactInboxId,
-                      messageId: message.id,
-                      messageCreatedAt: message.createdAt,
-                      challenge: routing.challenge,
-                    },
-                  },
-                  {
-                    jobId: `questionnaire-challenge-${routing.conversation.id}-${message.id}`,
-                  },
-                )
-              } else if (routing.type === "automatedResponse") {
-                await automatedResponseService.enqueue({
-                  conversationId: routing.conversation.id,
-                  contactInboxId: message.contactInboxId,
-                  messageId: message.id,
-                  messageText: message.text ?? "",
-                  workspaceId: routing.conversation.workspaceId,
-                })
-              } else if (routing.type === "handoffReentry") {
-                await automatedResponseService.enqueueHandoffReentry({
-                  conversationId: routing.conversation.id,
-                  contactInboxId: message.contactInboxId,
-                  messageId: message.id,
-                  workspaceId: routing.conversation.workspaceId,
-                })
-              } else if (isNotPostbackOrQuickReply) {
-                // Track no response for messages without content or not from contact
-                // (postback/quickReply are tracked in their own handlers)
-                await emit("analytics:dashboard", {
+              // Messages without content, not from the contact, or media no
+              // keyword matched get no response (postback/quickReply are
+              // tracked in their own handlers).
+              const trackNoResponse = () =>
+                emit("analytics:dashboard", {
                   eventType: "message:bot_received",
                   workspaceId: message.workspaceId,
                   conversationId: message.conversationId,
@@ -347,6 +326,45 @@ function startIntegrationWorker() {
                       : "no_content",
                   },
                 })
+
+              if (routing.type === "challenge") {
+                await integrationQueue.add(
+                  IntegrationJobAction.runChallenge,
+                  {
+                    type: IntegrationJobAction.runChallenge,
+                    data: {
+                      conversationId: routing.conversation.id,
+                      contactInboxId: message.contactInboxId,
+                      messageId: message.id,
+                      messageCreatedAt: message.createdAt,
+                      challenge: routing.challenge,
+                    },
+                  },
+                  {
+                    jobId: `questionnaire-challenge-${routing.conversation.id}-${message.id}`,
+                  },
+                )
+              } else if (routing.type === "automatedResponse") {
+                const enqueued = await automatedResponseService.enqueue({
+                  conversationId: routing.conversation.id,
+                  contactInboxId: message.contactInboxId,
+                  messageId: message.id,
+                  messageText: message.text ?? "",
+                  attachmentFileTypes,
+                  workspaceId: routing.conversation.workspaceId,
+                })
+                if (!enqueued) {
+                  await trackNoResponse()
+                }
+              } else if (routing.type === "handoffReentry") {
+                await automatedResponseService.enqueueHandoffReentry({
+                  conversationId: routing.conversation.id,
+                  contactInboxId: message.contactInboxId,
+                  messageId: message.id,
+                  workspaceId: routing.conversation.workspaceId,
+                })
+              } else if (isNotPostbackOrQuickReply) {
+                await trackNoResponse()
               }
               return
             }

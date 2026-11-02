@@ -6697,7 +6697,36 @@
       "pageTitle": "Səhifə açar sözləri",
       "page": "Kontakta açar söz olan mesaj göndərdiyiniz zaman avtomatik cavab verin."
     },
-    "pageWarning": "Səhifə açar sözü olan mesaj məzmunu müştəriyə sonsuz dövrədə mesaj göndərilməsinə səbəb ola bilər. Bu hal baş verərsə, səhifə açar sözünü dərhal söndürün!"
+    "pageWarning": "Səhifə açar sözü olan mesaj məzmunu müştəriyə sonsuz dövrədə mesaj göndərilməsinə səbəb ola bilər. Bu hal baş verərsə, səhifə açar sözünü dərhal söndürün!",
+    "conditions": {
+      "operators": {
+        "is": "Mesaj belədir",
+        "similarTo": "Mesaj buna bənzəyir",
+        "contains": "Mesajda var",
+        "containsPhone": "Mesajda telefon var",
+        "containsEmail": "Mesajda e-poçt var",
+        "containsImage": "Mesajda şəkil var",
+        "containsVideo": "Mesajda video var",
+        "containsLink": "Mesajda keçid var",
+        "containsWholeWord": "Mesajda tam söz var",
+        "beginsWith": "Mesaj bununla başlayır",
+        "endsWith": "Mesaj bununla bitir",
+        "isThumbsUp": "Mesaj 👍-dir",
+        "notContains": "Mesajda yoxdur",
+        "matchesRegex": "Mesaj regex-ə uyğundur"
+      },
+      "and": "və",
+      "addCondition": "Mesaj şərti",
+      "removeCondition": "Şərti sil",
+      "note": "Açar sözlər böyük-kiçik hərfə və vurğu işarələrinə həssas deyil, məsələn \"Tư vấn\" və \"tu van\" eyni sayılır.",
+      "keywordPlaceholder": "+ Açar söz",
+      "regexPlaceholder": "+ Regex",
+      "errors": {
+        "keywordConditionValuesRequired": "Ən azı bir açar söz əlavə edin.",
+        "keywordConditionTakesNoValues": "Bu şərt açar söz tələb etmir.",
+        "invalidKeywordRegex": "Yanlış regex ifadəsi."
+      }
+    }
   },
   "triggers": {
     "title": "Tətikləyicilər"

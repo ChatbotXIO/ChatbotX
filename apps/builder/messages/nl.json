@@ -6015,7 +6015,36 @@
       "pageTitle": "Pagina-trefwoorden",
       "page": "Reageer automatisch wanneer je een bericht met een trefwoord naar een contact stuurt."
     },
-    "pageWarning": "Berichtinhoud met een Pagina-trefwoord kan ertoe leiden dat er berichten in een oneindige lus naar de klant worden verzonden. Schakel het Pagina-trefwoord onmiddellijk uit als dit gebeurt!"
+    "pageWarning": "Berichtinhoud met een Pagina-trefwoord kan ertoe leiden dat er berichten in een oneindige lus naar de klant worden verzonden. Schakel het Pagina-trefwoord onmiddellijk uit als dit gebeurt!",
+    "conditions": {
+      "operators": {
+        "is": "Bericht is",
+        "similarTo": "Bericht lijkt op",
+        "contains": "Bericht bevat",
+        "containsPhone": "Bericht bevat telefoonnummer",
+        "containsEmail": "Bericht bevat e-mail",
+        "containsImage": "Bericht bevat afbeelding",
+        "containsVideo": "Bericht bevat video",
+        "containsLink": "Bericht bevat link",
+        "containsWholeWord": "Bericht bevat heel woord",
+        "beginsWith": "Bericht begint met",
+        "endsWith": "Bericht eindigt met",
+        "isThumbsUp": "Bericht is 👍",
+        "notContains": "Bericht bevat niet",
+        "matchesRegex": "Bericht komt overeen met regex"
+      },
+      "and": "en",
+      "addCondition": "Berichtvoorwaarde",
+      "removeCondition": "Voorwaarde verwijderen",
+      "note": "Trefwoorden zijn niet hoofdlettergevoelig en negeren accenten, bijv. \"Tư vấn\" en \"tu van\" worden als hetzelfde herkend.",
+      "keywordPlaceholder": "+ Trefwoord",
+      "regexPlaceholder": "+ Regex",
+      "errors": {
+        "keywordConditionValuesRequired": "Voeg minstens één trefwoord toe.",
+        "keywordConditionTakesNoValues": "Deze voorwaarde gebruikt geen trefwoorden.",
+        "invalidKeywordRegex": "Ongeldige reguliere expressie."
+      }
+    }
   },
   "triggers": {
     "title": "Triggers"

@@ -1,5 +1,8 @@
 import { db } from "@chatbotx.io/database/client"
-import type { AutomatedResponseType } from "@chatbotx.io/database/partials"
+import type {
+  AutomatedResponseType,
+  KeywordCondition,
+} from "@chatbotx.io/database/partials"
 import { automatedResponseService } from "../../automated-response/service"
 import type {
   PatchTask,
@@ -13,6 +16,9 @@ type TemplateKeywordEntry = {
   type: AutomatedResponseType
   text: string | null
   keywords: string[]
+  // Contact keyword match conditions. Absent on templates exported before
+  // conditions existed — those install from `keywords` alone.
+  conditions?: KeywordCondition[] | null
   // Points at a `resources.flows` sourceId — flows insert *before* keywords
   // in Phase 1, so this resolves directly (no deferral needed).
   flowId: string | null
@@ -65,7 +71,9 @@ export const keywordsAdapter: ResourceAdapter = {
           text: entry.text,
           flowId,
           folderId,
-          keywords: entry.keywords,
+          ...(entry.conditions?.length
+            ? { conditions: entry.conditions }
+            : { keywords: entry.keywords }),
         },
         ctx.tx,
       )
@@ -126,6 +134,7 @@ export const keywordsAdapter: ResourceAdapter = {
         type: row.type,
         text: row.text,
         keywords: row.keywords,
+        conditions: row.conditions,
         flowId: row.flowId,
         folderId: row.folderId,
       }))

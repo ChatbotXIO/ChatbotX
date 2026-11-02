@@ -6061,7 +6061,36 @@
       "pageTitle": "頁面關鍵字",
       "page": "當您傳送包含關鍵字的訊息給聯絡人時自動回覆。"
     },
-    "pageWarning": "訊息包含 Page 關鍵字的內容可能會導致訊息無限循環地傳送給客戶。遇到這種情況請立即停用Page關鍵字！"
+    "pageWarning": "訊息包含 Page 關鍵字的內容可能會導致訊息無限循環地傳送給客戶。遇到這種情況請立即停用Page關鍵字！",
+    "conditions": {
+      "operators": {
+        "is": "訊息等於",
+        "similarTo": "訊息相似於",
+        "contains": "訊息包含",
+        "containsPhone": "訊息包含電話",
+        "containsEmail": "訊息包含電子郵件",
+        "containsImage": "訊息包含圖片",
+        "containsVideo": "訊息包含影片",
+        "containsLink": "訊息包含連結",
+        "containsWholeWord": "訊息包含完整單字",
+        "beginsWith": "訊息開頭為",
+        "endsWith": "訊息結尾為",
+        "isThumbsUp": "訊息是 👍",
+        "notContains": "訊息不包含",
+        "matchesRegex": "訊息符合正規表示式"
+      },
+      "and": "且",
+      "addCondition": "訊息條件",
+      "removeCondition": "移除條件",
+      "note": "關鍵字不分大小寫並忽略聲調符號，例如 \"Tư vấn\" 與 \"tu van\" 視為相同。",
+      "keywordPlaceholder": "+ 關鍵字",
+      "regexPlaceholder": "+ 正規表示式",
+      "errors": {
+        "keywordConditionValuesRequired": "請至少新增一個關鍵字。",
+        "keywordConditionTakesNoValues": "此條件不需要關鍵字。",
+        "invalidKeywordRegex": "正規表示式無效。"
+      }
+    }
   },
   "triggers": {
     "title": "觸發器"

@@ -6015,7 +6015,36 @@
       "pageTitle": "Sayfa anahtar kelimeleri",
       "page": "Siz bir kişiye anahtar kelime içeren bir mesaj gönderdiğinizde otomatik olarak yanıtla."
     },
-    "pageWarning": "Sayfa anahtar kelimesi içeren mesaj içeriği, müşteriye sonsuz döngüde mesaj gönderilmesine neden olabilir. Bu durumla karşılaşırsanız Sayfa anahtar kelimesini hemen devre dışı bırakın!"
+    "pageWarning": "Sayfa anahtar kelimesi içeren mesaj içeriği, müşteriye sonsuz döngüde mesaj gönderilmesine neden olabilir. Bu durumla karşılaşırsanız Sayfa anahtar kelimesini hemen devre dışı bırakın!",
+    "conditions": {
+      "operators": {
+        "is": "Mesaj şudur",
+        "similarTo": "Mesaj şuna benzer",
+        "contains": "Mesaj şunu içerir",
+        "containsPhone": "Mesaj telefon içerir",
+        "containsEmail": "Mesaj e-posta içerir",
+        "containsImage": "Mesaj görsel içerir",
+        "containsVideo": "Mesaj video içerir",
+        "containsLink": "Mesaj bağlantı içerir",
+        "containsWholeWord": "Mesaj tam kelimeyi içerir",
+        "beginsWith": "Mesaj şununla başlar",
+        "endsWith": "Mesaj şununla biter",
+        "isThumbsUp": "Mesaj 👍",
+        "notContains": "Mesaj şunu içermez",
+        "matchesRegex": "Mesaj regex ile eşleşir"
+      },
+      "and": "ve",
+      "addCondition": "Mesaj koşulu",
+      "removeCondition": "Koşulu kaldır",
+      "note": "Anahtar kelimeler büyük/küçük harf ve aksan ayırt etmez, ör. \"Tư vấn\" ve \"tu van\" aynı kabul edilir.",
+      "keywordPlaceholder": "+ Anahtar kelime",
+      "regexPlaceholder": "+ Regex",
+      "errors": {
+        "keywordConditionValuesRequired": "En az bir anahtar kelime ekleyin.",
+        "keywordConditionTakesNoValues": "Bu koşul anahtar kelime kullanmaz.",
+        "invalidKeywordRegex": "Geçersiz düzenli ifade."
+      }
+    }
   },
   "triggers": {
     "title": "Tetikleyiciler"

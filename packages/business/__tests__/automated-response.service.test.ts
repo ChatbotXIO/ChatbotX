@@ -70,6 +70,33 @@ vi.mock("@chatbotx.io/database/client", () => ({
 vi.mock("@chatbotx.io/database/partials", () => ({
   automatedResponseFolderTypeByType: { keyword: "automatedResponse" },
   rootFolderId: "root",
+  flattenKeywordConditionValues: (
+    conditions: { operator: string; values: string[] }[],
+  ) => [
+    ...new Set(
+      conditions
+        .filter(
+          (condition) =>
+            !["notContains", "matchesRegex"].includes(condition.operator),
+        )
+        .flatMap((condition) => condition.values),
+    ),
+  ],
+}))
+
+// The real schema needs the real `@chatbotx.io/utils`; its rules are covered
+// in packages/database. Here only "empty" and "over 50 values" matter.
+vi.mock("@chatbotx.io/database/partials/keyword-condition-schema", () => ({
+  keywordConditionsSchema: {
+    safeParse: (value: unknown) =>
+      Array.isArray(value) &&
+      value.length > 0 &&
+      value.every(
+        (condition: { values: string[] }) => condition.values.length <= 50,
+      )
+        ? { success: true, data: value }
+        : { success: false, error: { issues: [{ message: "Too big" }] } },
+  },
 }))
 
 vi.mock("@chatbotx.io/database/schema", () => ({
@@ -428,6 +455,23 @@ describe("automatedResponseService.create — flowId XOR text", () => {
     )
   })
 
+  // Regression: the form sends `flowId: ""` in text mode, and "" is not a
+  // valid bigint — the insert failed with `invalid input syntax for type bigint`.
+  test("treats a blank flowId from the form as not set", async () => {
+    await automatedResponseService.create("workspace-1", {
+      type: "keyword",
+      text: "this is a link",
+      flowId: "",
+      folderId: null,
+      keywords: ["hi"],
+    })
+
+    expect(mocks.flowExists).not.toHaveBeenCalled()
+    expect(mocks.insertValues).toHaveBeenCalledWith(
+      expect.objectContaining({ flowId: undefined, text: "this is a link" }),
+    )
+  })
+
   test("ensures the folder exists before creating when a folderId is given", async () => {
     await automatedResponseService.create("workspace-1", {
       type: "keyword",
@@ -455,5 +499,168 @@ describe("automatedResponseService.create — flowId XOR text", () => {
     })
 
     expect(mocks.ensureExists).not.toHaveBeenCalled()
+  })
+})
+
+describe("automatedResponseService keyword conditions", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mocks.insertReturning.mockResolvedValue([{ id: "automation-1" }])
+    mocks.updateReturning.mockResolvedValue([{ id: "automation-1" }])
+    mocks.findFirst.mockResolvedValue({
+      folderId: null,
+      keywords: ["hello"],
+      conditions: [{ operator: "contains", values: ["hello"] }],
+      text: "Hi",
+      flowId: null,
+    })
+  })
+
+  test("stores plain inbound keywords as one trimmed contains condition", async () => {
+    await automatedResponseService.create("workspace-1", {
+      type: "inbound",
+      text: "Hi",
+      keywords: [" price ", "giá", " "],
+    })
+
+    expect(mocks.insertValues).toHaveBeenCalledWith(
+      expect.objectContaining({
+        keywords: ["price", "giá"],
+        conditions: [{ operator: "contains", values: ["price", "giá"] }],
+      }),
+    )
+  })
+
+  test("mirrors every condition value into the flat keywords column", async () => {
+    const conditions = [
+      { operator: "contains" as const, values: ["muốn", "quan tâm"] },
+      { operator: "containsImage" as const, values: [] },
+      { operator: "notContains" as const, values: ["test", "muốn"] },
+    ]
+
+    await automatedResponseService.create("workspace-1", {
+      type: "inbound",
+      text: "Hi",
+      conditions,
+    })
+
+    expect(mocks.insertValues).toHaveBeenCalledWith(
+      expect.objectContaining({
+        // `notContains` values exclude, so they are not trigger keywords.
+        keywords: ["muốn", "quan tâm"],
+        conditions,
+      }),
+    )
+  })
+
+  test("rejects more plain inbound keywords than one condition allows", async () => {
+    await expect(
+      automatedResponseService.create("workspace-1", {
+        type: "inbound",
+        text: "Hi",
+        keywords: Array.from({ length: 51 }, (_, index) => `k${index}`),
+      }),
+    ).rejects.toMatchObject({ field: "keywords" })
+
+    expect(mocks.insertValues).not.toHaveBeenCalled()
+  })
+
+  test("saving unchanged conditions writes no audit entry", async () => {
+    // Postgres jsonb hands the keys back in its own order.
+    mocks.findFirst.mockResolvedValue({
+      folderId: null,
+      keywords: ["hello"],
+      conditions: [{ values: ["hello"], operator: "contains" }],
+      text: "Hi",
+      flowId: null,
+    })
+
+    await automatedResponseService.update(
+      { id: "automation-1", workspaceId: "workspace-1", type: "inbound" },
+      {
+        text: "Hi",
+        conditions: [{ operator: "contains", values: ["hello"] }],
+      },
+    )
+
+    expect(mocks.dispatchAuditRecord).not.toHaveBeenCalled()
+  })
+
+  test("keeps outbound keywords exact, with no conditions", async () => {
+    await automatedResponseService.create("workspace-1", {
+      type: "outbound",
+      text: "Hi",
+      keywords: ["bắt đầu tư vấn"],
+    })
+
+    expect(mocks.insertValues).toHaveBeenCalledWith(
+      expect.objectContaining({
+        keywords: ["bắt đầu tư vấn"],
+        conditions: null,
+      }),
+    )
+  })
+
+  test("rejects conditions on an outbound rule", async () => {
+    await expect(
+      automatedResponseService.create("workspace-1", {
+        type: "outbound",
+        text: "Hi",
+        conditions: [{ operator: "contains", values: ["hi"] }],
+      }),
+    ).rejects.toMatchObject({ field: "conditions" })
+
+    expect(mocks.insertValues).not.toHaveBeenCalled()
+  })
+
+  test("rejects a request carrying both keywords and conditions", async () => {
+    await expect(
+      automatedResponseService.create("workspace-1", {
+        type: "inbound",
+        text: "Hi",
+        keywords: ["hi"],
+        conditions: [{ operator: "contains", values: ["hi"] }],
+      }),
+    ).rejects.toMatchObject({ field: "conditions" })
+  })
+
+  test("rejects a rule with neither keywords nor conditions", async () => {
+    await expect(
+      automatedResponseService.create("workspace-1", {
+        type: "inbound",
+        text: "Hi",
+        keywords: ["  "],
+      }),
+    ).rejects.toMatchObject({ field: "keywords" })
+  })
+
+  test("update replaces conditions and the mirrored keywords together", async () => {
+    await automatedResponseService.update(
+      { id: "automation-1", workspaceId: "workspace-1", type: "inbound" },
+      {
+        conditions: [{ operator: "beginsWith", values: ["chào"] }],
+      },
+    )
+
+    expect(mocks.updateSet).toHaveBeenCalledWith(
+      expect.objectContaining({
+        keywords: ["chào"],
+        conditions: [{ operator: "beginsWith", values: ["chào"] }],
+      }),
+    )
+    expect(mocks.dispatchAuditRecord).toHaveBeenCalled()
+  })
+
+  test("update without keywords or conditions leaves what the rule matches on", async () => {
+    await automatedResponseService.update(
+      { id: "automation-1", workspaceId: "workspace-1", type: "inbound" },
+      { text: "Hello again" },
+    )
+
+    const [payload] = mocks.updateSet.mock.calls[0] as unknown as [
+      Record<string, unknown>,
+    ]
+    expect(payload).not.toHaveProperty("keywords")
+    expect(payload).not.toHaveProperty("conditions")
   })
 })

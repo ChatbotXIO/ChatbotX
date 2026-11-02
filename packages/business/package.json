@@ -21,6 +21,7 @@
     "./contact-locale": "./src/contact-locale/index.ts",
     "./contact-profile-rules": "./src/contact/profile-refresh/rules.ts",
     "./contact-utils": "./src/contact/utils.ts",
+    "./extract-contact": "./src/contact/extract-contact.ts",
     "./contact-scan": "./src/contact-scan/index.ts",
     "./contact-sequence": "./src/contact-sequence/index.ts",
     "./coexist": "./src/coexist/index.ts",

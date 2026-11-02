@@ -6015,7 +6015,36 @@
       "pageTitle": "Seiten-Schlüsselwörter",
       "page": "Automatische Antwort, wenn Sie eine Nachricht mit einem Schlüsselwort an einen Kontakt senden."
     },
-    "pageWarning": "Nachrichteninhalte mit einem Seiten-Schlüsselwort können dazu führen, dass Nachrichten in einer Endlosschleife an den Kunden gesendet werden. Deaktivieren Sie das Seiten-Schlüsselwort sofort, wenn dies bei Ihnen auftritt!"
+    "pageWarning": "Nachrichteninhalte mit einem Seiten-Schlüsselwort können dazu führen, dass Nachrichten in einer Endlosschleife an den Kunden gesendet werden. Deaktivieren Sie das Seiten-Schlüsselwort sofort, wenn dies bei Ihnen auftritt!",
+    "conditions": {
+      "operators": {
+        "is": "Nachricht ist",
+        "similarTo": "Nachricht ähnelt",
+        "contains": "Nachricht enthält",
+        "containsPhone": "Nachricht enthält Telefonnummer",
+        "containsEmail": "Nachricht enthält E-Mail",
+        "containsImage": "Nachricht enthält Bild",
+        "containsVideo": "Nachricht enthält Video",
+        "containsLink": "Nachricht enthält Link",
+        "containsWholeWord": "Nachricht enthält ganzes Wort",
+        "beginsWith": "Nachricht beginnt mit",
+        "endsWith": "Nachricht endet mit",
+        "isThumbsUp": "Nachricht ist 👍",
+        "notContains": "Nachricht enthält nicht",
+        "matchesRegex": "Nachricht entspricht Regex"
+      },
+      "and": "und",
+      "addCondition": "Nachrichtenbedingung",
+      "removeCondition": "Bedingung entfernen",
+      "note": "Keywords unterscheiden nicht zwischen Groß- und Kleinschreibung und ignorieren Akzente, z. B. werden \"Tư vấn\" und \"tu van\" gleich erkannt.",
+      "keywordPlaceholder": "+ Keyword",
+      "regexPlaceholder": "+ Regex",
+      "errors": {
+        "keywordConditionValuesRequired": "Füge mindestens ein Keyword hinzu.",
+        "keywordConditionTakesNoValues": "Diese Bedingung braucht keine Keywords.",
+        "invalidKeywordRegex": "Ungültiger regulärer Ausdruck."
+      }
+    }
   },
   "triggers": {
     "title": "Trigger"

@@ -20,6 +20,7 @@ export type {
   ListIncomingTextsByContactInboxParams,
   ListMessagesQuery,
   MessageSourceRow,
+  MessageTextWithFileTypes,
   MessageWithAttachments,
   PaginatedMessages,
   Pagination,

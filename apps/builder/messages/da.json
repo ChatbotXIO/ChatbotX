@@ -6015,7 +6015,36 @@
       "pageTitle": "Side-nøgleord",
       "page": "Svar automatisk, når du sender en besked med et nøgleord til en kontakt."
     },
-    "pageWarning": "Beskedindhold med et sidenøgleord kan medføre, at der sendes beskeder til kunden i en uendelig løkke. Deaktiver sidenøgleordet med det samme, hvis du oplever dette!"
+    "pageWarning": "Beskedindhold med et sidenøgleord kan medføre, at der sendes beskeder til kunden i en uendelig løkke. Deaktiver sidenøgleordet med det samme, hvis du oplever dette!",
+    "conditions": {
+      "operators": {
+        "is": "Beskeden er",
+        "similarTo": "Beskeden ligner",
+        "contains": "Beskeden indeholder",
+        "containsPhone": "Beskeden indeholder telefonnummer",
+        "containsEmail": "Beskeden indeholder e-mail",
+        "containsImage": "Beskeden indeholder billede",
+        "containsVideo": "Beskeden indeholder video",
+        "containsLink": "Beskeden indeholder link",
+        "containsWholeWord": "Beskeden indeholder hele ordet",
+        "beginsWith": "Beskeden begynder med",
+        "endsWith": "Beskeden slutter med",
+        "isThumbsUp": "Beskeden er 👍",
+        "notContains": "Beskeden indeholder ikke",
+        "matchesRegex": "Beskeden matcher regex"
+      },
+      "and": "og",
+      "addCondition": "Beskedbetingelse",
+      "removeCondition": "Fjern betingelse",
+      "note": "Nøgleord skelner ikke mellem store og små bogstaver og ignorerer accenter, f.eks. genkendes \"Tư vấn\" og \"tu van\" som det samme.",
+      "keywordPlaceholder": "+ Nøgleord",
+      "regexPlaceholder": "+ Regex",
+      "errors": {
+        "keywordConditionValuesRequired": "Tilføj mindst ét nøgleord.",
+        "keywordConditionTakesNoValues": "Denne betingelse bruger ingen nøgleord.",
+        "invalidKeywordRegex": "Ugyldigt regulært udtryk."
+      }
+    }
   },
   "triggers": {
     "title": "Udløsere"

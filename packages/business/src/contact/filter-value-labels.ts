@@ -133,7 +133,10 @@ const activityValueOptionLoaders: Record<
         search,
         limit: ACTIVITY_VALUE_OPTIONS_LIMIT,
       })
-    ).map((rule) => ({ value: rule.id, label: rule.keywords.join(", ") })),
+    ).map((rule) => ({
+      value: rule.id,
+      label: rule.keywords.join(", ") || `#${rule.id}`,
+    })),
   whatsappFlows: async ({ workspaceId, search }) =>
     (
       await whatsappFlowService.list({

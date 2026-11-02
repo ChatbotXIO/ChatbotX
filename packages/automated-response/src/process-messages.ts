@@ -1,15 +1,16 @@
 import {
   createMessageRepository,
   getSafeSinceTime,
+  type MessageTextWithFileTypes,
 } from "@chatbotx.io/database/repositories"
 import type {
   ContactInboxModel,
   ConversationModel,
-  MessageModel,
 } from "@chatbotx.io/database/types"
 import { simpleQueue } from "@chatbotx.io/redis"
 import { getKey } from "./constants"
 import { dispatchAutomatedResponseReply } from "./dispatch-reply"
+import { isKeywordMediaFileType } from "./keyword-match"
 import { logger } from "./lib/logger"
 import { automatedResponseService } from "./utils"
 
@@ -50,7 +51,8 @@ const getMessagesFromStoreAndProcess = async (props: {
     return { status: "noEligibleMessage" }
   }
 
-  // Only process text messages
+  // Text messages, plus image/video-only messages for the attachment
+  // keyword conditions.
   const messageRepository = await createMessageRepository()
   const messages = await messageRepository
     .findManyByIds(
@@ -62,7 +64,7 @@ const getMessagesFromStoreAndProcess = async (props: {
       ),
       props.conversation.workspaceId,
     )
-    .then((data) => data.filter((v) => Boolean(v.text)))
+    .then((data) => data.filter(isKeywordEligibleMessage))
   if (messages.length === 0) {
     logger.debug(props, "No message to process")
     return { status: "noEligibleMessage" }
@@ -75,10 +77,14 @@ const getMessagesFromStoreAndProcess = async (props: {
   })
 }
 
+const isKeywordEligibleMessage = (message: MessageTextWithFileTypes) =>
+  Boolean(message.text) ||
+  message.attachmentFileTypes.some(isKeywordMediaFileType)
+
 const replyByAutomatedResponse = async (props: {
   conversation: ConversationModel
   contactInbox: ContactInboxModel
-  messages: Pick<MessageModel, "id" | "text">[]
+  messages: MessageTextWithFileTypes[]
 }): Promise<AutomatedResponseProcessResult> => {
   const { conversation, contactInbox, messages } = props
   const allAutomatedResponses = await automatedResponseService.getAll(
@@ -89,14 +95,12 @@ const replyByAutomatedResponse = async (props: {
   )
 
   for (const message of messages) {
-    if (!message.text) {
-      continue
-    }
     const replied = await dispatchAutomatedResponseReply({
       conversation,
       contactInbox,
       messageId: message.id,
-      text: message.text,
+      text: message.text ?? "",
+      attachmentFileTypes: message.attachmentFileTypes,
       rules: inboundAutomatedResponses,
       triggerType: "contact_message_in",
       startedByContactMessage: true,

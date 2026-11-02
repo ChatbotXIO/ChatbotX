@@ -21,6 +21,7 @@ import { useFieldArray } from "react-hook-form"
 import { toast } from "sonner"
 import { useFlowSelectOptions } from "../flows/provider/flow-hook"
 import { updateAutomatedResponseAction } from "./actions/update-automated-response-action"
+import { KeywordConditionsField } from "./components/keyword-conditions-field"
 import { useKeywordFieldNavigation } from "./hooks/use-keyword-field-navigation"
 import { responseModes, updateAutomatedResponseRequest } from "./schema/action"
 
@@ -72,7 +73,9 @@ export default function EditAutomatedResponseForm(
       formProps: {
         mode: "onChange",
         defaultValues: {
-          keywords: [{ value: "" }],
+          ...(type === "inbound"
+            ? { conditions: [] }
+            : { keywords: [{ value: "" }] }),
           text: "",
           flowId: "",
         },
@@ -87,13 +90,29 @@ export default function EditAutomatedResponseForm(
         setResponseMode("text")
       }
       form.reset({
-        ...automatedResponse,
+        folderId: automatedResponse.folderId,
         text: automatedResponse.text,
         flowId: automatedResponse.flowId,
-        keywords: automatedResponse.keywords?.map((m) => ({ value: m })) ?? [],
+        // Contact rules edit conditions (a rule saved before conditions
+        // existed opens as one "contains" condition); Page rules edit exact
+        // keywords. Only one is ever submitted.
+        ...(type === "inbound"
+          ? {
+              conditions: automatedResponse.conditions?.length
+                ? automatedResponse.conditions
+                : [
+                    {
+                      operator: "contains" as const,
+                      values: automatedResponse.keywords,
+                    },
+                  ],
+            }
+          : {
+              keywords: automatedResponse.keywords.map((m) => ({ value: m })),
+            }),
       })
     }
-  }, [automatedResponse, form])
+  }, [automatedResponse, form, type])
 
   const {
     fields: keywords,
@@ -113,51 +132,54 @@ export default function EditAutomatedResponseForm(
   return (
     <Form {...form}>
       <form className="flex-1 space-y-4" onSubmit={handleSubmitWithAction}>
-        <div className="flex flex-col gap-2">
-          <Label className="flex-1" htmlFor="keywords">
-            {t("fields.keywords.label")}
-          </Label>
+        {type === "inbound" ? (
+          <KeywordConditionsField />
+        ) : (
           <div className="flex flex-col gap-2">
-            {keywords.map((_, index) => (
-              // biome-ignore lint/suspicious/noArrayIndexKey: wip
-              <div className="flex gap-2" key={index}>
-                <InputField
-                  formItemClassName="w-1/2"
-                  name={`keywords.${index}.value`}
-                  onKeyDown={(event) => {
-                    handleKeywordInputKeyDown(event, index)
-                  }}
-                />
-                {index === 0 ? (
-                  <div className="w-12">&nbsp;</div>
-                ) : (
-                  <Button
-                    onClick={() => {
-                      removeKeywords(index)
+            <Label className="flex-1" htmlFor="keywords">
+              {t("fields.keywords.label")}
+            </Label>
+            <div className="flex flex-col gap-2">
+              {keywords.map((_, index) => (
+                // biome-ignore lint/suspicious/noArrayIndexKey: wip
+                <div className="flex gap-2" key={index}>
+                  <InputField
+                    formItemClassName="w-1/2"
+                    name={`keywords.${index}.value`}
+                    onKeyDown={(event) => {
+                      handleKeywordInputKeyDown(event, index)
                     }}
-                    variant="ghost"
-                  >
-                    <XIcon />
-                  </Button>
-                )}
-              </div>
-            ))}
+                  />
+                  {index === 0 ? (
+                    <div className="w-12">&nbsp;</div>
+                  ) : (
+                    <Button
+                      onClick={() => {
+                        removeKeywords(index)
+                      }}
+                      variant="ghost"
+                    >
+                      <XIcon />
+                    </Button>
+                  )}
+                </div>
+              ))}
+            </div>
+            <FormMessage />
+            <div>
+              <Button
+                onClick={() => {
+                  appendKeywords({ value: "" })
+                }}
+                type="button"
+                variant="ghost"
+              >
+                <PlusCircleIcon /> {t("actions.addMore")}
+              </Button>
+            </div>
           </div>
-          <FormMessage />
-          <div>
-            <Button
-              onClick={() => {
-                appendKeywords({ value: "" })
-              }}
-              type="button"
-              variant="ghost"
-            >
-              <PlusCircleIcon /> {t("actions.addMore")}
-            </Button>
-          </div>
-        </div>
+        )}
 
-        {/* Bot response block */}
         {/* Bot response block */}
         <div className="mt-4 flex items-center gap-4">
           <Label className="font-bold" htmlFor="replyMode">

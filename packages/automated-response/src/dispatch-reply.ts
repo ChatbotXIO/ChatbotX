@@ -5,7 +5,7 @@ import {
 } from "@chatbotx.io/business"
 import { enqueueLeaderboardAward } from "@chatbotx.io/business/leaderboard"
 import { db } from "@chatbotx.io/database/client"
-import type { AutomatedResponseType } from "@chatbotx.io/database/partials"
+import type { FileType } from "@chatbotx.io/database/partials"
 import type {
   AutomatedResponseModel,
   ContactInboxModel,
@@ -21,10 +21,7 @@ import {
   IntegrationJobAction,
   integrationQueue,
 } from "@chatbotx.io/worker-config"
-import {
-  keywordMatchesText,
-  keywordMatchModeByAutomatedResponseType,
-} from "./keyword-match"
+import { ruleMatchesMessage } from "./keyword-match"
 
 /** Channels whose leaderboards offer the "keywords" rule. */
 const KEYWORD_LEADERBOARD_CHANNELS = new Set([
@@ -95,28 +92,26 @@ export const dispatchAutomatedResponseReply = async (props: {
   text: string
   rules: Pick<
     AutomatedResponseModel,
-    "id" | "keywords" | "flowId" | "text" | "type"
+    "id" | "keywords" | "conditions" | "flowId" | "text" | "type"
   >[]
+  /** File types attached to the trigger message (image/video conditions). */
+  attachmentFileTypes?: readonly FileType[]
   triggerType: string
   /** The rule fired for a contact's inbound message (not an outbound echo). */
   startedByContactMessage?: boolean
 }): Promise<boolean> => {
   const { conversation, contactInbox, messageId, text, rules, triggerType } =
     props
-  const lowerCaseText = text.toLowerCase()
   let keywordAwarded = false
 
   for (const rule of rules) {
-    // Match mode is derived from `rule.type` — see the Contact/Page
-    // distinction documented at automated-response.ts's
+    // Contact rules match on their `conditions`; Page rules (and Contact
+    // rules without conditions) keep the mode derived from `rule.type` — see
     // `automatedResponseFolderTypeByType`.
-    const matched = keywordMatchesText(
-      rule.keywords,
-      lowerCaseText,
-      keywordMatchModeByAutomatedResponseType[
-        rule.type as AutomatedResponseType
-      ],
-    )
+    const matched = ruleMatchesMessage(rule, {
+      text,
+      attachmentFileTypes: props.attachmentFileTypes ?? [],
+    })
 
     if (!matched) {
       continue
