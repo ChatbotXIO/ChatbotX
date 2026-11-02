@@ -10,6 +10,7 @@ import { zodBigintAsString } from "@chatbotx.io/utils"
 import { DefaultJobAction, defaultQueue } from "@chatbotx.io/worker-config"
 import { z } from "zod"
 import { flowVersionResource } from "@/features/flow-versions/schema/resource"
+import { hasWorkspacePermission } from "@/lib/auth/permission-routes"
 import { mcpSpec } from "@/lib/orpc/mcp-annotations"
 import {
   possibleErrorsOnCreatingResource,
@@ -65,6 +66,12 @@ export const flowsPublicRouter = {
           .describe(
             "Restrict to active flows. Set to false to include inactive ones too.",
           ),
+        enableInInbox: z
+          .boolean()
+          .optional()
+          .describe(
+            "Restrict to flows that can be started from the inbox (`enableInInbox` true). Omit for all flows.",
+          ),
         name: z
           .string()
           .nullish()
@@ -98,6 +105,7 @@ export const flowsPublicRouter = {
           name: true,
           folderId: true,
           active: true,
+          enableInInbox: true,
         }),
       ),
     )
@@ -105,6 +113,13 @@ export const flowsPublicRouter = {
     .handler(async ({ context, input }) => {
       const { data, pageCount } = await flowService.list({
         ...input,
+        // A mobile member without the `flows` permission may only see the
+        // flows meant to be started from the inbox, whatever they ask for.
+        enableInInbox:
+          context.member &&
+          !hasWorkspacePermission(context.member.permissions, "flows")
+            ? true
+            : input.enableInInbox,
         workspaceId: context.workspace.id,
         sort: input.sort ?? [{ id: "createdAt", desc: true }],
       })
@@ -432,9 +447,11 @@ const toPublicFlowListItem = (flow: {
   name: string
   folderId: string | null
   active: boolean
+  enableInInbox: boolean
 }) => ({
   id: flow.id,
   name: flow.name,
   folderId: flow.folderId,
   active: flow.active,
+  enableInInbox: flow.enableInInbox,
 })

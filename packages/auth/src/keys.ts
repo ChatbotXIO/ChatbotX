@@ -13,6 +13,10 @@ const keys = () =>
       // single-domain deploys keep working.
       NEXT_PUBLIC_BROKER_URL: z.url().optional(),
       MCP_PUBLIC_URL: z.url().optional(),
+      // Comma-separated custom URL schemes the native mobile apps register
+      // (white-label brands each have their own). The social-login relay at
+      // /api/auth/mobile/callback only redirects to one of these.
+      MOBILE_APP_SCHEMES: z.string().optional(),
       AUTH_DISABLE_SIGNUP: z.stringbool().default(false),
       AUTH_OAUTH_ENABLED: z.stringbool().default(false),
       AUTH_OAUTH_CLIENT_ID: z.string().optional(),
@@ -137,3 +141,25 @@ export const getMcpResourceUrl = (): string => {
 
 /** Whether self-service account creation is disabled. */
 export const isSignUpDisabled = (): boolean => env.AUTH_DISABLE_SIGNUP
+
+const trailingColonPattern = /:$/
+
+const DEFAULT_MOBILE_APP_SCHEMES = ["chatconnectxapp", "chatbotxmobileapp"]
+
+/**
+ * Audience of mobile access JWTs: the REST API (`<builder>/api`), kept apart
+ * from the MCP audience (`<builder>/mcp`) so neither token type is accepted by
+ * the other's resource server.
+ */
+export const getMobileApiAudience = (): string => `${getBuilderOrigin()}/api`
+
+/** Custom URL schemes the mobile apps may be redirected back to, lowercase, no colon. */
+export const getMobileAppSchemes = (): string[] => {
+  const configured = (env.MOBILE_APP_SCHEMES ?? "")
+    .split(",")
+    .map((scheme) =>
+      scheme.trim().toLowerCase().replace(trailingColonPattern, ""),
+    )
+    .filter(Boolean)
+  return Array.from(new Set([...DEFAULT_MOBILE_APP_SCHEMES, ...configured]))
+}

@@ -98,7 +98,11 @@ type ConversationCursor = z.infer<typeof conversationCursorSchema>
 
 export const listConversations = async (
   data: ListConversationsRequest,
-  access: { includeEmailAndPhone: boolean },
+  access: {
+    includeEmailAndPhone: boolean
+    /** Restricts the list to a member's chat scope (mobile API only). */
+    scopeWhere?: Record<string, unknown>
+  },
 ): Promise<ListConversationsResponse> => {
   const { workspaceId, ...input } = data
 
@@ -113,6 +117,7 @@ export const listConversations = async (
   // tokens, which are workspace-level not member-scoped) and threads it through.
   const where = buildConversationWhere(workspaceId, input, cursor, {
     includeEmailAndPhone: access.includeEmailAndPhone,
+    scopeWhere: access.scopeWhere,
   })
 
   const conversations = await conversationService.findManyQuery({

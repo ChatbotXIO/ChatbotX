@@ -1,8 +1,8 @@
 import {
   automatedResponseService,
-  contactService,
   conversationService,
   messageService,
+  userService,
 } from "@chatbotx.io/business"
 import { notFoundException } from "@chatbotx.io/business/errors"
 import { zodBigintAsString } from "@chatbotx.io/utils"
@@ -18,6 +18,7 @@ import {
   possibleErrorsOnSendingMessage,
 } from "@/lib/orpc/orpc-error-helper"
 import { publicContactIdentifier } from "@/lib/public-api/contact-identifier"
+import { resolveContactIdForCaller } from "@/lib/public-api/member-scope"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
 
 // Sending/reading messages, auto-replies, and flows for a contact are
@@ -48,7 +49,7 @@ export const contactsMessagesPublicRouter = {
     )
     .errors(possibleErrorsOnSendingMessage)
     .handler(async ({ context, input }) => {
-      const contactId = await contactService.resolveIdByIdentifier({
+      const contactId = await resolveContactIdForCaller(context, {
         identifier: input.identifier,
         workspaceId: context.workspace.id,
       })
@@ -100,7 +101,7 @@ export const contactsMessagesPublicRouter = {
     .output(listMessagesResponse)
     .errors(possibleErrorsOnFindingResource)
     .handler(async ({ context, input }) => {
-      const contactId = await contactService.resolveIdByIdentifier({
+      const contactId = await resolveContactIdForCaller(context, {
         identifier: input.identifier,
         workspaceId: context.workspace.id,
       })
@@ -138,7 +139,7 @@ export const contactsMessagesPublicRouter = {
     .output(messageResourceWithRelations)
     .errors(possibleErrorsOnFindingResource)
     .handler(async ({ context, input }) => {
-      const contactId = await contactService.resolveIdByIdentifier({
+      const contactId = await resolveContactIdForCaller(context, {
         identifier: input.identifier,
         workspaceId: context.workspace.id,
       })
@@ -184,7 +185,7 @@ export const contactsMessagesPublicRouter = {
     )
     .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
-      const contactId = await contactService.resolveIdByIdentifier({
+      const contactId = await resolveContactIdForCaller(context, {
         identifier: input.identifier,
         workspaceId: context.workspace.id,
       })
@@ -240,7 +241,7 @@ export const contactsMessagesPublicRouter = {
     )
     .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
-      const contactId = await contactService.resolveIdByIdentifier({
+      const contactId = await resolveContactIdForCaller(context, {
         identifier: input.identifier,
         workspaceId: context.workspace.id,
       })
@@ -251,10 +252,16 @@ export const contactsMessagesPublicRouter = {
           inboxId: input.inboxId,
         })
 
+      // A member starts the flow as themselves; a workspace token has no user.
+      const user = context.member
+        ? await userService.findByIdOrFail(context.member.userId)
+        : undefined
+
       await messageService.createOutgoing({
         conversation,
         contactInbox,
         input: { flowId: input.flowId, inboxId: input.inboxId },
+        ...(user && { user }),
       })
     }),
 }

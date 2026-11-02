@@ -1,4 +1,4 @@
-import { contactService, tagService } from "@chatbotx.io/business"
+import { tagService } from "@chatbotx.io/business"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 import { publicTagResource } from "@/features/tags/schema/resource"
@@ -9,6 +9,7 @@ import {
   possibleErrorsOnMutatingResource,
 } from "@/lib/orpc/orpc-error-helper"
 import { publicContactIdentifier } from "@/lib/public-api/contact-identifier"
+import { resolveContactIdForCaller } from "@/lib/public-api/member-scope"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
 import { listContactTags } from "../../lib/list-contact-tags"
 import {
@@ -37,7 +38,7 @@ export const contactsTagsPublicRouter = {
     .output(z.object({ data: z.array(publicTagResource) }))
     .errors(possibleErrorsOnFindingResource)
     .handler(async ({ context, input }) => {
-      const contactId = await contactService.resolveIdByIdentifier({
+      const contactId = await resolveContactIdForCaller(context, {
         identifier: input.identifier,
         workspaceId: context.workspace.id,
       })
@@ -71,7 +72,7 @@ export const contactsTagsPublicRouter = {
     )
     .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
-      const contactId = await contactService.resolveIdByIdentifier({
+      const contactId = await resolveContactIdForCaller(context, {
         identifier: input.identifier,
         workspaceId: context.workspace.id,
       })
@@ -106,7 +107,7 @@ export const contactsTagsPublicRouter = {
     )
     .errors(possibleErrorsOnDeletingResource)
     .handler(async ({ context, input }) => {
-      const contactId = await contactService.resolveIdByIdentifier({
+      const contactId = await resolveContactIdForCaller(context, {
         identifier: input.identifier,
         workspaceId: context.workspace.id,
       })
@@ -132,7 +133,7 @@ export const contactsTagsPublicRouter = {
     .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
       const workspaceId = context.workspace.id
-      const contactId = await contactService.resolveIdByIdentifier({
+      const contactId = await resolveContactIdForCaller(context, {
         identifier: input.identifier,
         workspaceId,
       })
@@ -157,7 +158,7 @@ export const contactsTagsPublicRouter = {
     .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
       const workspaceId = context.workspace.id
-      const contactId = await contactService.resolveIdByIdentifier({
+      const contactId = await resolveContactIdForCaller(context, {
         identifier: input.identifier,
         workspaceId,
       })

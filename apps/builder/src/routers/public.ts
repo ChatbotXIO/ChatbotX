@@ -76,6 +76,7 @@ import { zaloChannelsPublicRouter } from "@/features/integration-zalo/api/public
 import { integrationsPublicRouter } from "@/features/integrations/api/public"
 import { leaderboardsPublicRouter } from "@/features/leaderboards/api/public"
 import { magicLinksPublicRouter } from "@/features/magic-links/api/public"
+import { mePublicRouter } from "@/features/me/api/public"
 import { mediaLibraryPublicRouter } from "@/features/media-library/api/public"
 import { messagesPublicRouter } from "@/features/messages/api/public"
 import { miniAppsPublicRouter } from "@/features/mini-apps/api/public"
@@ -93,6 +94,7 @@ import { productVendorsPublicRouter } from "@/features/product-vendors/api/publi
 import { productsPublicRouter } from "@/features/products/api/public"
 import { qrCodesPublicRouter } from "@/features/qr-codes/api/public"
 import { questionnairesPublicRouter } from "@/features/questionnaires/api/public"
+import { realtimePublicRouter } from "@/features/realtime/api/public"
 import { reflinksPublicRouter } from "@/features/reflinks/api/public"
 import { responseSlaPublicRouter } from "@/features/response-sla/api/public"
 import { savedRepliesPublicRouter } from "@/features/saved-replies/api/public"
@@ -174,6 +176,7 @@ export const publicRouter = {
   integrations: integrationsPublicRouter,
   keywords: keywordsPublicRouter,
   magicLinks: magicLinksPublicRouter,
+  me: mePublicRouter,
   mediaLibrary: mediaLibraryPublicRouter,
   messages: messagesPublicRouter,
   messengerChannels: messengerChannelsPublicRouter,
@@ -193,6 +196,7 @@ export const publicRouter = {
   productVendors: productVendorsPublicRouter,
   qrCodes: qrCodesPublicRouter,
   questionnaires: questionnairesPublicRouter,
+  realtime: realtimePublicRouter,
   reflinks: reflinksPublicRouter,
   savedReplies: savedRepliesPublicRouter,
   schemas: schemasPublicRouter,

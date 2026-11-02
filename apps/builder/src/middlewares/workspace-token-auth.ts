@@ -12,13 +12,14 @@ import type {
 } from "@chatbotx.io/database/types"
 import { ORPCError } from "@orpc/server"
 import { logger } from "@/lib/log"
+import { resolveMobileWorkspacePrincipal } from "@/lib/mobile-auth/resolve-mobile-workspace-principal"
 import { assertApiNotRateLimited } from "@/lib/rate-limit/api-rate-limit"
 import { getGuestClientIp } from "@/lib/rate-limit/guest-rate-limit"
 import {
   assertWorkspaceOwnerAccessForMethod,
   isReadOnlyTokenAllowedMethod,
 } from "@/lib/workspace/authorize-workspace-access"
-import { base, type RequestApiToken } from "./context"
+import { type BaseContext, base, type RequestApiToken } from "./context"
 
 const assertNotRateLimited = (
   workspaceId: string,
@@ -55,8 +56,16 @@ const invalidTokenError = () =>
     message: "Invalid or missing workspace API token",
   })
 
+const mobileCredentialId = (
+  mobile: { user: { id: string }; deviceId: string | null } | undefined,
+): string | undefined =>
+  mobile ? `mobile:${mobile.user.id}:${mobile.deviceId ?? "-"}` : undefined
+
 export const workspaceTokenAuthMidddleware = base.middleware(
   async ({ context, next, procedure }) => {
+    // Read before any membership lookup so a permission change racing this
+    // request is detected by the realtime gateway (see realtime connect token).
+    const requestIssuedAtMs = Date.now()
     const authHeader = context.headers.get("Authorization")
     const bearerToken = authHeader?.startsWith("Bearer ")
       ? authHeader.slice(7)
@@ -113,6 +122,10 @@ export const workspaceTokenAuthMidddleware = base.middleware(
       apiToken: RequestApiToken
       audit: { userId: string; source: string }
     }
+    // Set only when the bearer was a mobile JWT (audience `<builder>/api`).
+    let mobile:
+      | Awaited<ReturnType<typeof resolveMobileWorkspacePrincipal>>
+      | undefined
 
     if (workspaceTokenAuth) {
       resolved = {
@@ -142,73 +155,105 @@ export const workspaceTokenAuthMidddleware = base.middleware(
         throw invalidTokenError()
       }
 
-      // Lazy import: the OAuth verifier is only needed on this fallback path
-      // and stays out of tests/routes that authenticate workspace API tokens.
-      const [
-        { auth },
-        { McpTokenVerificationUnavailableError, verifyMcpAccessToken },
-      ] = await Promise.all([
-        import("@/lib/auth/auth"),
-        import("@chatbotx.io/auth/mcp-resource"),
-      ])
-      const mcpAccessToken = await verifyMcpAccessToken(
-        auth,
-        bearerToken,
-      ).catch((error: unknown) => {
-        if (error instanceof McpTokenVerificationUnavailableError) {
-          throw new ORPCError("SERVICE_UNAVAILABLE", {
-            message: "Token verification is temporarily unavailable",
+      // Mobile app JWTs carry the `<builder>/api` audience; MCP OAuth JWTs
+      // carry `<builder>/mcp`. The audience is only peeked here to pick the
+      // verifier — each branch then verifies signature, issuer, audience and
+      // expiry in full, so a token of one kind never verifies on the other.
+      const { isMobileAccessTokenCandidate } = await import(
+        "@chatbotx.io/auth/mobile-resource"
+      )
+      if (isMobileAccessTokenCandidate(bearerToken)) {
+        mobile = await resolveMobileWorkspacePrincipal({
+          bearerToken,
+          requestedWorkspaceId,
+          method: procedure["~orpc"].route.method,
+          path: procedure["~orpc"].route.path,
+        })
+        resolved = {
+          workspace: mobile.workspace,
+          apiToken: mobile.apiToken,
+          audit: {
+            userId: mobile.user.id,
+            source: `mobile:${mobile.deviceId ?? "unknown"}`,
+          },
+        }
+      } else {
+        // Lazy import: the OAuth verifier is only needed on this fallback path
+        // and stays out of tests/routes that authenticate workspace API tokens.
+        const [
+          { auth },
+          { McpTokenVerificationUnavailableError, verifyMcpAccessToken },
+        ] = await Promise.all([
+          import("@/lib/auth/auth"),
+          import("@chatbotx.io/auth/mcp-resource"),
+        ])
+        const mcpAccessToken = await verifyMcpAccessToken(
+          auth,
+          bearerToken,
+        ).catch((error: unknown) => {
+          if (error instanceof McpTokenVerificationUnavailableError) {
+            throw new ORPCError("SERVICE_UNAVAILABLE", {
+              message: "Token verification is temporarily unavailable",
+            })
+          }
+          throw error
+        })
+        if (!mcpAccessToken) {
+          throw invalidTokenError()
+        }
+
+        // OAuth calls retain the real user identity and OAuth client source.
+        const oauth = await mcpOAuthService.resolvePrincipal({
+          clientId: mcpAccessToken.clientId,
+          userId: mcpAccessToken.userId,
+          workspaceId: requestedWorkspaceId,
+        })
+
+        if (oauth.kind === "invalidToken") {
+          throw invalidTokenError()
+        }
+        if (oauth.kind === "forbidden") {
+          throw new ORPCError("FORBIDDEN", {
+            message: "Account has no access to this workspace",
           })
         }
-        throw error
-      })
-      if (!mcpAccessToken) {
-        throw invalidTokenError()
-      }
+        if (oauth.kind === "workspaceSelectionRequired") {
+          const workspaces = oauth.workspaces
+            .map((workspace) => `${workspace.id} (${workspace.name})`)
+            .join(", ")
+          throw new ORPCError("WORKSPACE_SELECTION_REQUIRED", {
+            status: 400,
+            message: `This account has access to ${oauth.workspaces.length} workspaces. Disconnect and reconnect this MCP client to choose one on the consent screen, or add ?workspace_id=<id> to the MCP server URL (or send the x-workspace-id header). Available: ${workspaces}`,
+          })
+        }
 
-      // OAuth calls retain the real user identity and OAuth client source.
-      const oauth = await mcpOAuthService.resolvePrincipal({
-        clientId: mcpAccessToken.clientId,
-        userId: mcpAccessToken.userId,
-        workspaceId: requestedWorkspaceId,
-      })
-
-      if (oauth.kind === "invalidToken") {
-        throw invalidTokenError()
-      }
-      if (oauth.kind === "forbidden") {
-        throw new ORPCError("FORBIDDEN", {
-          message: "Account has no access to this workspace",
-        })
-      }
-      if (oauth.kind === "workspaceSelectionRequired") {
-        const workspaces = oauth.workspaces
-          .map((workspace) => `${workspace.id} (${workspace.name})`)
-          .join(", ")
-        throw new ORPCError("WORKSPACE_SELECTION_REQUIRED", {
-          status: 400,
-          message: `This account has access to ${oauth.workspaces.length} workspaces. Disconnect and reconnect this MCP client to choose one on the consent screen, or add ?workspace_id=<id> to the MCP server URL (or send the x-workspace-id header). Available: ${workspaces}`,
-        })
-      }
-
-      resolved = {
-        workspace: oauth.principal.workspace,
-        apiToken: {
-          id: `oauth:${oauth.principal.clientId}:${oauth.principal.user.id}`,
-          workspaceId: oauth.principal.workspace.id,
-          permission: "full",
-          scopes: null,
-          isDefault: false,
-        },
-        audit: {
-          userId: oauth.principal.user.id,
-          source: `mcp-oauth:${oauth.principal.clientId}`,
-        },
+        resolved = {
+          workspace: oauth.principal.workspace,
+          apiToken: {
+            id: `oauth:${oauth.principal.clientId}:${oauth.principal.user.id}`,
+            workspaceId: oauth.principal.workspace.id,
+            permission: "full",
+            scopes: null,
+            isDefault: false,
+          },
+          audit: {
+            userId: oauth.principal.user.id,
+            source: `mcp-oauth:${oauth.principal.clientId}`,
+          },
+        }
       }
     }
     const { workspace, apiToken } = resolved
 
-    await assertNotRateLimited(workspace.id, context.resHeaders)
+    // A mobile principal is limited per user, not through the workspace
+    // bucket shared by every API token and integration of the workspace.
+    await (mobile
+      ? assertApiNotRateLimited({
+          scope: "mobile-user-rate-limit",
+          key: mobile.user.id,
+          resHeaders: context.resHeaders,
+        })
+      : assertNotRateLimited(workspace.id, context.resHeaders))
 
     if (isWorkspaceScheduledForDeletion(workspace)) {
       throw new ORPCError("FORBIDDEN", {
@@ -254,10 +299,17 @@ export const workspaceTokenAuthMidddleware = base.middleware(
           context: {
             workspace,
             apiToken,
-            apiCredentialId: workspaceTokenAuth
-              ? `api-token:${apiToken.id}`
-              : resolved.audit.source,
-          },
+            apiCredentialId:
+              mobileCredentialId(mobile) ??
+              (workspaceTokenAuth
+                ? `api-token:${apiToken.id}`
+                : resolved.audit.source),
+            ...(mobile && {
+              member: mobile.member,
+              mobileDeviceId: mobile.deviceId ?? undefined,
+              requestIssuedAtMs,
+            }),
+          } satisfies Partial<BaseContext>,
         }),
     )
   },

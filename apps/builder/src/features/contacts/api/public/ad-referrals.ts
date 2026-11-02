@@ -1,10 +1,10 @@
-import { contactService } from "@chatbotx.io/business"
 import { z } from "zod"
 import {
   possibleErrorsOnFindingResource,
   possibleErrorsOnListingWithCursor,
 } from "@/lib/orpc/orpc-error-helper"
 import { publicContactIdentifier } from "@/lib/public-api/contact-identifier"
+import { resolveContactIdForCaller } from "@/lib/public-api/member-scope"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
 import { listContactAdReferrals } from "../../lib/list-contact-ad-referrals"
 import {
@@ -35,7 +35,7 @@ export const contactsAdReferralsPublicRouter = {
       ...possibleErrorsOnListingWithCursor,
     })
     .handler(async ({ context, input }) => {
-      const contactId = await contactService.resolveIdByIdentifier({
+      const contactId = await resolveContactIdForCaller(context, {
         identifier: input.identifier,
         workspaceId: context.workspace.id,
       })

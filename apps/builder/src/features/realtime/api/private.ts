@@ -1,13 +1,7 @@
-import {
-  hasContactsAccess,
-  inboxTeamService,
-  resolveBroadcastSecret,
-} from "@chatbotx.io/business"
-import { signMemberConnectToken } from "@chatbotx.io/realtime-protocol/auth"
 import { z } from "zod"
-import { getAssignedContactsUserId } from "@/features/contacts/permissions"
 import { workspaceAuthorizedMidddleware } from "@/middlewares/auth"
 import { authorizedAPI } from "@/orpc"
+import { mintMemberConnectToken } from "../lib/mint-member-connect-token"
 
 const mintWorkspaceConnectTokenInput = z.object({
   workspaceId: z.string(),
@@ -39,35 +33,12 @@ export const realtimeAuthenticatedAPI = {
     .input(mintWorkspaceConnectTokenInput)
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .output(mintWorkspaceConnectTokenOutput)
-    .handler(async ({ context }) => {
-      const permissions = context.workspaceMember.permissions
-      let chatScope: "all" | "assigned" | "none" = "none"
-      if (hasContactsAccess(permissions)) {
-        chatScope = getAssignedContactsUserId({
-          permissions,
-          userId: context.user.id,
-        })
-          ? "assigned"
-          : "all"
-      }
-      const teamIds =
-        chatScope === "assigned"
-          ? await inboxTeamService.listTeamIdsByUserId({
-              workspaceId: context.workspace.id,
-              userId: context.user.id,
-            })
-          : []
-      return {
-        token: await signMemberConnectToken(
-          {
-            workspaceId: context.workspace.id,
-            userId: context.user.id,
-            chatScope,
-            teamIds,
-            issuedAtMs: context.requestIssuedAtMs,
-          },
-          resolveBroadcastSecret(),
-        ),
-      }
-    }),
+    .handler(async ({ context }) => ({
+      token: await mintMemberConnectToken({
+        workspaceId: context.workspace.id,
+        userId: context.user.id,
+        permissions: context.workspaceMember.permissions,
+        issuedAtMs: context.requestIssuedAtMs,
+      }),
+    })),
 }

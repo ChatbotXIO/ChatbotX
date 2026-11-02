@@ -2234,6 +2234,31 @@ exports[`public API spec — operation naming guard > operation list (operationI
   },
   {
     "method": "POST",
+    "operationId": "me.changePassword",
+    "path": "/v1/me/password",
+  },
+  {
+    "method": "GET",
+    "operationId": "me.get",
+    "path": "/v1/me",
+  },
+  {
+    "method": "GET",
+    "operationId": "me.listWorkspaces",
+    "path": "/v1/me/workspaces",
+  },
+  {
+    "method": "PUT",
+    "operationId": "me.registerDeviceToken",
+    "path": "/v1/me/device-tokens",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "me.unregisterDeviceToken",
+    "path": "/v1/me/device-tokens",
+  },
+  {
+    "method": "POST",
     "operationId": "mediaLibrary.createFile",
     "path": "/v1/media-library/files",
   },
@@ -3096,6 +3121,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "method": "PUT",
     "operationId": "questionnaires.update",
     "path": "/v1/questionnaires/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "realtime.getConnectToken",
+    "path": "/v1/realtime/connect-token",
   },
   {
     "method": "POST",

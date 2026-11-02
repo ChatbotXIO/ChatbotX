@@ -2,6 +2,7 @@ import {
   conversationService,
   messageService,
   resolveTemplateParams,
+  userService,
 } from "@chatbotx.io/business"
 import { notFoundException } from "@chatbotx.io/business/errors"
 import {
@@ -36,6 +37,7 @@ import {
   possibleErrorsOnMutatingResource,
   productMessageUnresolvable,
 } from "@/lib/orpc/orpc-error-helper"
+import { assertConversationAccessForCaller } from "@/lib/public-api/member-scope"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
 import {
   changeMessageAttributesPublicResponse,
@@ -80,6 +82,7 @@ export const messagesPublicRouter = {
     .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
       const workspaceId = context.workspace.id
+      await assertConversationAccessForCaller(context, input.conversationId)
       const conversation = await conversationService.findByOrFail({
         where: { id: input.conversationId, workspaceId },
       })
@@ -109,6 +112,7 @@ export const messagesPublicRouter = {
     .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
       const { conversationId, templateParams, ...request } = input
+      await assertConversationAccessForCaller(context, conversationId)
       const templateData = templateParams
         ? await resolveTemplateParams({
             workspaceId: context.workspace.id,
@@ -142,6 +146,7 @@ export const messagesPublicRouter = {
     .errors(possibleErrorsOnFindingResource)
     .handler(async ({ context, input }) => {
       const workspaceId = context.workspace.id
+      await assertConversationAccessForCaller(context, input.conversationId)
       // `listForConversation` silently returns an empty page for an unknown
       // conversation id instead of throwing — validate existence explicitly
       // so this GET-by-id-shaped route can 404, per
@@ -170,6 +175,7 @@ export const messagesPublicRouter = {
     .output(messageResourceWithRelations)
     .errors(possibleErrorsOnFindingResource)
     .handler(async ({ context, input }) => {
+      await assertConversationAccessForCaller(context, input.conversationId)
       const message = await messageService.findByIdWithUrls({
         workspaceId: context.workspace.id,
         id: input.messageId,
@@ -196,15 +202,15 @@ export const messagesPublicRouter = {
     .input(messageIdWithCreatedAtParam)
     .output(whatsappFlowResponseSchema)
     .errors(possibleErrorsOnFindingResource)
-    .handler(
-      async ({ context, input }) =>
-        await getWhatsappFlowResponseView({
-          workspaceId: context.workspace.id,
-          conversationId: input.conversationId,
-          messageId: input.messageId,
-          createdAt: input.createdAt,
-        }),
-    ),
+    .handler(async ({ context, input }) => {
+      await assertConversationAccessForCaller(context, input.conversationId)
+      return await getWhatsappFlowResponseView({
+        workspaceId: context.workspace.id,
+        conversationId: input.conversationId,
+        messageId: input.messageId,
+        createdAt: input.createdAt,
+      })
+    }),
 
   // `user` is omitted from `createOutgoing` — a workspace token has no user;
   // same as the already-public `contacts.sendMessage`
@@ -230,6 +236,7 @@ export const messagesPublicRouter = {
     .handler(async ({ context, input }) => {
       const workspaceId = context.workspace.id
 
+      await assertConversationAccessForCaller(context, input.conversationId)
       const conversation = await conversationService.findByOrFail({
         where: { id: input.conversationId, workspaceId },
       })
@@ -243,10 +250,17 @@ export const messagesPublicRouter = {
           inboxId,
         })
 
+      // A member's message is attributed to them (like the web inbox); a
+      // workspace token has no user and sends unattributed, as before.
+      const user = context.member
+        ? await userService.findByIdOrFail(context.member.userId)
+        : undefined
+
       return messageService.createOutgoing({
         conversation,
         contactInbox,
         input,
+        ...(user && { user }),
       })
     }),
 
@@ -262,13 +276,14 @@ export const messagesPublicRouter = {
     .input(editMessageRequest.omit({ messageId: true }).and(messageIdPathParam))
     .output(editMessagePublicResponse)
     .errors(possibleErrorsOnMutatingResource)
-    .handler(async ({ context, input }) =>
-      editMessage({
+    .handler(async ({ context, input }) => {
+      await assertConversationAccessForCaller(context, input.conversationId)
+      return editMessage({
         workspaceId: context.workspace.id,
         conversationId: input.conversationId,
         parsedInput: input,
-      }),
-    ),
+      })
+    }),
 
   delete: workspaceTokenAuthAPI
     .route({
@@ -283,6 +298,7 @@ export const messagesPublicRouter = {
     .input(messageIdWithCreatedAtParam)
     .errors(possibleErrorsOnDeletingResource)
     .handler(async ({ context, input }) => {
+      await assertConversationAccessForCaller(context, input.conversationId)
       await deleteMessage({
         workspaceId: context.workspace.id,
         conversationId: input.conversationId,
@@ -306,11 +322,12 @@ export const messagesPublicRouter = {
     )
     .output(changeMessageAttributesPublicResponse)
     .errors(possibleErrorsOnMutatingResource)
-    .handler(async ({ context, input }) =>
-      changeMessageAttributes({
+    .handler(async ({ context, input }) => {
+      await assertConversationAccessForCaller(context, input.conversationId)
+      return changeMessageAttributes({
         workspaceId: context.workspace.id,
         conversationId: input.conversationId,
         parsedInput: input,
-      }),
-    ),
+      })
+    }),
 }

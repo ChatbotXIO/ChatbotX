@@ -1,4 +1,4 @@
-import { contactNoteService, contactService } from "@chatbotx.io/business"
+import { contactNoteService } from "@chatbotx.io/business"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 import {
@@ -13,6 +13,7 @@ import {
   possibleErrorsOnMutatingResource,
 } from "@/lib/orpc/orpc-error-helper"
 import { publicContactIdentifier } from "@/lib/public-api/contact-identifier"
+import { resolveContactIdForCaller } from "@/lib/public-api/member-scope"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
 
 const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("contacts")
@@ -36,7 +37,7 @@ export const contactsNotesPublicRouter = {
     .errors(possibleErrorsOnFindingResource)
     .handler(async ({ context, input }) => {
       const workspaceId = context.workspace.id
-      const contactId = await contactService.resolveIdByIdentifier({
+      const contactId = await resolveContactIdForCaller(context, {
         identifier: input.identifier,
         workspaceId,
       })
@@ -70,7 +71,7 @@ export const contactsNotesPublicRouter = {
     .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
       const workspaceId = context.workspace.id
-      const contactId = await contactService.resolveIdByIdentifier({
+      const contactId = await resolveContactIdForCaller(context, {
         identifier: input.identifier,
         workspaceId,
       })
@@ -103,7 +104,7 @@ export const contactsNotesPublicRouter = {
     .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
       const workspaceId = context.workspace.id
-      const contactId = await contactService.resolveIdByIdentifier({
+      const contactId = await resolveContactIdForCaller(context, {
         identifier: input.identifier,
         workspaceId,
       })
@@ -134,7 +135,7 @@ export const contactsNotesPublicRouter = {
     .errors(possibleErrorsOnDeletingResource)
     .handler(async ({ context, input }) => {
       const workspaceId = context.workspace.id
-      const contactId = await contactService.resolveIdByIdentifier({
+      const contactId = await resolveContactIdForCaller(context, {
         identifier: input.identifier,
         workspaceId,
       })

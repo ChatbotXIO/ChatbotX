@@ -137,6 +137,7 @@ import { miniAppRelations } from "./mini-app"
 import { minigameRelations } from "./minigame"
 import { minigameContactRelations } from "./minigame-contact"
 import { minigamePlayRelations } from "./minigame-play"
+import { mobileRefreshTokenRelations } from "./mobile-refresh-token"
 import { oauthAccessTokenRelations } from "./oauth-access-token"
 import { oauthClientRelations } from "./oauth-client"
 import { oauthClientAssertionRelations } from "./oauth-client-assertion"
@@ -357,6 +358,7 @@ export const relations = {
   ...coexistSyncRunRelations,
   ...userPersistentMenuRelations,
   ...userDeviceTokenRelations,
+  ...mobileRefreshTokenRelations,
   ...whatsappSignupSessionRelations,
   ...automationThrottleRelations,
   ...miniAppRelations,
