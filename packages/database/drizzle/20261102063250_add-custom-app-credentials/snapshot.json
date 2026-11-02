@@ -1,10 +1,9 @@
 {
   "version": "8",
   "dialect": "postgres",
-  "id": "3a7146c5-4546-4adb-9740-ac0e4fddfdfb",
+  "id": "2b888b2e-3ff4-450b-b98f-31b685088e44",
   "prevIds": [
-    "da79a4d8-8f03-43cc-8dea-8ac55f7e6831",
-    "f1205fae-cdf8-44f2-805f-3eaf47919630"
+    "14b31a82-653a-4bbf-9259-ccae3ddc4cd9"
   ],
   "ddl": [
     {
@@ -2277,6 +2276,12 @@
     },
     {
       "isRlsEnabled": false,
+      "name": "IntegrationMuse",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
       "name": "IntegrationOpenai",
       "entityType": "tables",
       "schema": "public"
@@ -2499,13 +2504,37 @@
     },
     {
       "isRlsEnabled": false,
-      "name": "OAuthApplication",
+      "name": "OAuthClient",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "OAuthClientAssertion",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "OAuthClientResource",
       "entityType": "tables",
       "schema": "public"
     },
     {
       "isRlsEnabled": false,
       "name": "OAuthConsent",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "OAuthRefreshToken",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "OAuthResource",
       "entityType": "tables",
       "schema": "public"
     },
@@ -2590,6 +2619,18 @@
     {
       "isRlsEnabled": false,
       "name": "PipelineStage",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "PlaceCategory",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "PlaceLocation",
       "entityType": "tables",
       "schema": "public"
     },
@@ -8073,6 +8114,32 @@
       "table": "Jwk"
     },
     {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "alg",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Jwk"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "crv",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Jwk"
+    },
+    {
       "type": "timestamp(6) with time zone",
       "typeSchema": null,
       "notNull": false,
@@ -8320,7 +8387,7 @@
       "table": "User"
     },
     {
-      "type": "bigint",
+      "type": "text",
       "typeSchema": null,
       "notNull": true,
       "dimensions": 0,
@@ -8471,6 +8538,19 @@
       "generated": null,
       "identity": null,
       "name": "keywords",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AutomatedResponse"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "conditions",
       "entityType": "columns",
       "schema": "public",
       "table": "AutomatedResponse"
@@ -24625,6 +24705,149 @@
       "name": "id",
       "entityType": "columns",
       "schema": "public",
+      "table": "IntegrationMuse"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "createdAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationMuse"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "updatedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationMuse"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "auth",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationMuse"
+    },
+    {
+      "type": "boolean",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "false",
+      "generated": null,
+      "identity": null,
+      "name": "autoReply",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationMuse"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "workspaceId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationMuse"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "integrationId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationMuse"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "maxOutputTokens",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationMuse"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "model",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationMuse"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "prompt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationMuse"
+    },
+    {
+      "type": "double precision",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "temperature",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationMuse"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
       "table": "IntegrationOpenai"
     },
     {
@@ -30498,46 +30721,7 @@
       "default": null,
       "generated": null,
       "identity": null,
-      "name": "accessToken",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "OAuthAccessToken"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "refreshToken",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "OAuthAccessToken"
-    },
-    {
-      "type": "timestamp(6) with time zone",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "accessTokenExpiresAt",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "OAuthAccessToken"
-    },
-    {
-      "type": "timestamp(6) with time zone",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "refreshTokenExpiresAt",
+      "name": "token",
       "entityType": "columns",
       "schema": "public",
       "table": "OAuthAccessToken"
@@ -30551,6 +30735,19 @@
       "generated": null,
       "identity": null,
       "name": "clientId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OAuthAccessToken"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "sessionId",
       "entityType": "columns",
       "schema": "public",
       "table": "OAuthAccessToken"
@@ -30571,8 +30768,112 @@
     {
       "type": "text",
       "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "referenceId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OAuthAccessToken"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "authorizationCodeId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OAuthAccessToken"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 1,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "resources",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OAuthAccessToken"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 1,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "requestedUserInfoClaims",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OAuthAccessToken"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "refreshId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OAuthAccessToken"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
       "notNull": true,
       "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "expiresAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OAuthAccessToken"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "revoked",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OAuthAccessToken"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "confirmation",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OAuthAccessToken"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 1,
       "default": null,
       "generated": null,
       "identity": null,
@@ -30592,7 +30893,7 @@
       "name": "id",
       "entityType": "columns",
       "schema": "public",
-      "table": "OAuthApplication"
+      "table": "OAuthClient"
     },
     {
       "type": "timestamp(6) with time zone",
@@ -30605,7 +30906,7 @@
       "name": "createdAt",
       "entityType": "columns",
       "schema": "public",
-      "table": "OAuthApplication"
+      "table": "OAuthClient"
     },
     {
       "type": "timestamp(6) with time zone",
@@ -30618,46 +30919,7 @@
       "name": "updatedAt",
       "entityType": "columns",
       "schema": "public",
-      "table": "OAuthApplication"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "name",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "OAuthApplication"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "icon",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "OAuthApplication"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "metadata",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "OAuthApplication"
+      "table": "OAuthClient"
     },
     {
       "type": "text",
@@ -30670,7 +30932,7 @@
       "name": "clientId",
       "entityType": "columns",
       "schema": "public",
-      "table": "OAuthApplication"
+      "table": "OAuthClient"
     },
     {
       "type": "text",
@@ -30683,33 +30945,20 @@
       "name": "clientSecret",
       "entityType": "columns",
       "schema": "public",
-      "table": "OAuthApplication"
+      "table": "OAuthClient"
     },
     {
       "type": "text",
       "typeSchema": null,
-      "notNull": true,
+      "notNull": false,
       "dimensions": 0,
       "default": null,
       "generated": null,
       "identity": null,
-      "name": "redirectUrls",
+      "name": "clientDiscoveryId",
       "entityType": "columns",
       "schema": "public",
-      "table": "OAuthApplication"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "type",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "OAuthApplication"
+      "table": "OAuthClient"
     },
     {
       "type": "boolean",
@@ -30722,7 +30971,72 @@
       "name": "disabled",
       "entityType": "columns",
       "schema": "public",
-      "table": "OAuthApplication"
+      "table": "OAuthClient"
+    },
+    {
+      "type": "boolean",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "skipConsent",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OAuthClient"
+    },
+    {
+      "type": "boolean",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "enableEndSession",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OAuthClient"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "subjectType",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OAuthClient"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 1,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "scopes",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OAuthClient"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 1,
+      "default": "'{}'",
+      "generated": null,
+      "identity": null,
+      "name": "clientCredentialsScopes",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OAuthClient"
     },
     {
       "type": "bigint",
@@ -30735,7 +31049,410 @@
       "name": "userId",
       "entityType": "columns",
       "schema": "public",
-      "table": "OAuthApplication"
+      "table": "OAuthClient"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "name",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OAuthClient"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "uri",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OAuthClient"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "icon",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OAuthClient"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 1,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "contacts",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OAuthClient"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "tos",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OAuthClient"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "policy",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OAuthClient"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "softwareId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OAuthClient"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "softwareVersion",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OAuthClient"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "softwareStatement",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OAuthClient"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 1,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "redirectUris",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OAuthClient"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 1,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "postLogoutRedirectUris",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OAuthClient"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "backchannelLogoutUri",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OAuthClient"
+    },
+    {
+      "type": "boolean",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "backchannelLogoutSessionRequired",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OAuthClient"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "tokenEndpointAuthMethod",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OAuthClient"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "applicationType",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OAuthClient"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "jwks",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OAuthClient"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "jwksUri",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OAuthClient"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 1,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "grantTypes",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OAuthClient"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 1,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "responseTypes",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OAuthClient"
+    },
+    {
+      "type": "boolean",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "requirePKCE",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OAuthClient"
+    },
+    {
+      "type": "boolean",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "false",
+      "generated": null,
+      "identity": null,
+      "name": "dpopBoundAccessTokens",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OAuthClient"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "referenceId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OAuthClient"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "metadata",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OAuthClient"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OAuthClientAssertion"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "expiresAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OAuthClientAssertion"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OAuthClientResource"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "createdAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OAuthClientResource"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "updatedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OAuthClientResource"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "clientId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OAuthClientResource"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "resourceId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OAuthClientResource"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "metadata",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OAuthClientResource"
     },
     {
       "type": "bigint",
@@ -30792,7 +31509,7 @@
     {
       "type": "bigint",
       "typeSchema": null,
-      "notNull": true,
+      "notNull": false,
       "dimensions": 0,
       "default": null,
       "generated": null,
@@ -30805,8 +31522,47 @@
     {
       "type": "text",
       "typeSchema": null,
-      "notNull": true,
+      "notNull": false,
       "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "referenceId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OAuthConsent"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 1,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "resources",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OAuthConsent"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 1,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "requestedUserInfoClaims",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OAuthConsent"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 1,
       "default": null,
       "generated": null,
       "identity": null,
@@ -30816,17 +31572,459 @@
       "table": "OAuthConsent"
     },
     {
-      "type": "boolean",
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "workspaceId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OAuthConsent"
+    },
+    {
+      "type": "bigint",
       "typeSchema": null,
       "notNull": true,
       "dimensions": 0,
       "default": null,
       "generated": null,
       "identity": null,
-      "name": "consentGiven",
+      "name": "id",
       "entityType": "columns",
       "schema": "public",
-      "table": "OAuthConsent"
+      "table": "OAuthRefreshToken"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "createdAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OAuthRefreshToken"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "updatedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OAuthRefreshToken"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "token",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OAuthRefreshToken"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "clientId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OAuthRefreshToken"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "sessionId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OAuthRefreshToken"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "userId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OAuthRefreshToken"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "referenceId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OAuthRefreshToken"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "authorizationCodeId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OAuthRefreshToken"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 1,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "resources",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OAuthRefreshToken"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 1,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "requestedUserInfoClaims",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OAuthRefreshToken"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "expiresAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OAuthRefreshToken"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "revoked",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OAuthRefreshToken"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "rotatedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OAuthRefreshToken"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "rotationReplayResponse",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OAuthRefreshToken"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "rotationReplayExpiresAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OAuthRefreshToken"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "authTime",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OAuthRefreshToken"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "confirmation",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OAuthRefreshToken"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 1,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "scopes",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OAuthRefreshToken"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OAuthResource"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "createdAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OAuthResource"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "updatedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OAuthResource"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "identifier",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OAuthResource"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "name",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OAuthResource"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "accessTokenTtl",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OAuthResource"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "refreshTokenTtl",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OAuthResource"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "signingAlgorithm",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OAuthResource"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "signingKeyId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OAuthResource"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 1,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "allowedScopes",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OAuthResource"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "customClaims",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OAuthResource"
+    },
+    {
+      "type": "boolean",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "false",
+      "generated": null,
+      "identity": null,
+      "name": "dpopBoundAccessTokensRequired",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OAuthResource"
+    },
+    {
+      "type": "boolean",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "false",
+      "generated": null,
+      "identity": null,
+      "name": "disabled",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OAuthResource"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "1",
+      "generated": null,
+      "identity": null,
+      "name": "policyVersion",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OAuthResource"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "metadata",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OAuthResource"
     },
     {
       "type": "bigint",
@@ -33336,6 +34534,188 @@
       "entityType": "columns",
       "schema": "public",
       "table": "PipelineStage"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PlaceCategory"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "createdAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PlaceCategory"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "updatedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PlaceCategory"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "workspaceId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PlaceCategory"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "name",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PlaceCategory"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "10",
+      "generated": null,
+      "identity": null,
+      "name": "rank",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PlaceCategory"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PlaceLocation"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "createdAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PlaceLocation"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "updatedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PlaceLocation"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "workspaceId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PlaceLocation"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "name",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PlaceLocation"
+    },
+    {
+      "type": "double precision",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "latitude",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PlaceLocation"
+    },
+    {
+      "type": "double precision",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "longitude",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PlaceLocation"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "categoryId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PlaceLocation"
     },
     {
       "type": "bigint",
@@ -43109,6 +44489,27 @@
       "nameExplicit": true,
       "columns": [
         {
+          "value": "identifier",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "Verification_identifier_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "Verification"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
           "value": "workspaceId",
           "isExpression": false,
           "asc": true,
@@ -49999,6 +51400,48 @@
       "with": "",
       "method": "btree",
       "concurrently": false,
+      "name": "IntegrationMuse_workspaceId_key",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "IntegrationMuse"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "integrationId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": true,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "IntegrationMuse_integrationId_key",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "IntegrationMuse"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "workspaceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": true,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
       "name": "IntegrationOpenAI_workspaceId_key",
       "entityType": "indexes",
       "schema": "public",
@@ -52353,7 +53796,7 @@
       "nameExplicit": true,
       "columns": [
         {
-          "value": "accessToken",
+          "value": "token",
           "isExpression": false,
           "asc": true,
           "nullsFirst": false,
@@ -52365,28 +53808,7 @@
       "with": "",
       "method": "btree",
       "concurrently": false,
-      "name": "OAuthAccessToken_accessToken_key",
-      "entityType": "indexes",
-      "schema": "public",
-      "table": "OAuthAccessToken"
-    },
-    {
-      "nameExplicit": true,
-      "columns": [
-        {
-          "value": "refreshToken",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": null
-        }
-      ],
-      "isUnique": true,
-      "where": null,
-      "with": "",
-      "method": "btree",
-      "concurrently": false,
-      "name": "OAuthAccessToken_refreshToken_key",
+      "name": "OAuthAccessToken_token_key",
       "entityType": "indexes",
       "schema": "public",
       "table": "OAuthAccessToken"
@@ -52416,6 +53838,27 @@
       "nameExplicit": true,
       "columns": [
         {
+          "value": "sessionId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "OAuthAccessToken_sessionId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "OAuthAccessToken"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
           "value": "userId",
           "isExpression": false,
           "asc": true,
@@ -52437,6 +53880,48 @@
       "nameExplicit": true,
       "columns": [
         {
+          "value": "authorizationCodeId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "OAuthAccessToken_authorizationCodeId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "OAuthAccessToken"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "refreshId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "OAuthAccessToken_refreshId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "OAuthAccessToken"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
           "value": "clientId",
           "isExpression": false,
           "asc": true,
@@ -52449,10 +53934,10 @@
       "with": "",
       "method": "btree",
       "concurrently": false,
-      "name": "OAuthApplication_clientId_key",
+      "name": "OAuthClient_clientId_key",
       "entityType": "indexes",
       "schema": "public",
-      "table": "OAuthApplication"
+      "table": "OAuthClient"
     },
     {
       "nameExplicit": true,
@@ -52470,10 +53955,101 @@
       "with": "",
       "method": "btree",
       "concurrently": false,
-      "name": "OAuthApplication_userId_idx",
+      "name": "OAuthClient_userId_idx",
       "entityType": "indexes",
       "schema": "public",
-      "table": "OAuthApplication"
+      "table": "OAuthClient"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "expiresAt",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "OAuthClientAssertion_expiresAt_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "OAuthClientAssertion"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "clientId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "OAuthClientResource_clientId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "OAuthClientResource"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "resourceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "OAuthClientResource_resourceId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "OAuthClientResource"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "clientId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "resourceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": true,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "OAuthClientResource_clientId_resourceId_key",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "OAuthClientResource"
     },
     {
       "nameExplicit": true,
@@ -52516,6 +54092,174 @@
       "entityType": "indexes",
       "schema": "public",
       "table": "OAuthConsent"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "workspaceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": "\"workspaceId\" IS NOT NULL",
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "OAuthConsent_workspaceId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "OAuthConsent"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "token",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": true,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "OAuthRefreshToken_token_key",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "OAuthRefreshToken"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "clientId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "OAuthRefreshToken_clientId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "OAuthRefreshToken"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "sessionId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "OAuthRefreshToken_sessionId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "OAuthRefreshToken"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "userId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "OAuthRefreshToken_userId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "OAuthRefreshToken"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "authorizationCodeId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "OAuthRefreshToken_authorizationCodeId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "OAuthRefreshToken"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "identifier",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": true,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "OAuthResource_identifier_key",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "OAuthResource"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "disabled",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "OAuthResource_disabled_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "OAuthResource"
     },
     {
       "nameExplicit": true,
@@ -53993,6 +55737,104 @@
       "entityType": "indexes",
       "schema": "public",
       "table": "PipelineStage"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "workspaceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "PlaceCategory_workspaceId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "PlaceCategory"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "workspaceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "lower(\"name\")",
+          "isExpression": true,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": true,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "PlaceCategory_workspaceId_name_key",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "PlaceCategory"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "workspaceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "createdAt",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "PlaceLocation_workspaceId_createdAt_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "PlaceLocation"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "categoryId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "PlaceLocation_categoryId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "PlaceLocation"
     },
     {
       "nameExplicit": true,
@@ -61949,6 +63791,40 @@
       ],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
+      "name": "IntegrationMuse_workspaceId_Workspace_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "IntegrationMuse"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "integrationId"
+      ],
+      "schemaTo": "public",
+      "tableTo": "Integration",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "IntegrationMuse_integrationId_Integration_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "IntegrationMuse"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "workspaceId"
+      ],
+      "schemaTo": "public",
+      "tableTo": "Workspace",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
       "name": "IntegrationOpenai_workspaceId_Workspace_id_fkey",
       "entityType": "fks",
       "schema": "public",
@@ -63354,13 +65230,30 @@
         "clientId"
       ],
       "schemaTo": "public",
-      "tableTo": "OAuthApplication",
+      "tableTo": "OAuthClient",
       "columnsTo": [
         "clientId"
       ],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
-      "name": "OAuthAccessToken_clientId_OAuthApplication_clientId_fkey",
+      "name": "OAuthAccessToken_clientId_OAuthClient_clientId_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "OAuthAccessToken"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "sessionId"
+      ],
+      "schemaTo": "public",
+      "tableTo": "Session",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "CASCADE",
+      "onDelete": "SET NULL",
+      "name": "OAuthAccessToken_sessionId_Session_id_fkey",
       "entityType": "fks",
       "schema": "public",
       "table": "OAuthAccessToken"
@@ -63385,6 +65278,23 @@
     {
       "nameExplicit": false,
       "columns": [
+        "refreshId"
+      ],
+      "schemaTo": "public",
+      "tableTo": "OAuthRefreshToken",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "CASCADE",
+      "onDelete": "SET NULL",
+      "name": "OAuthAccessToken_refreshId_OAuthRefreshToken_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "OAuthAccessToken"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
         "userId"
       ],
       "schemaTo": "public",
@@ -63394,10 +65304,10 @@
       ],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
-      "name": "OAuthApplication_userId_User_id_fkey",
+      "name": "OAuthClient_userId_User_id_fkey",
       "entityType": "fks",
       "schema": "public",
-      "table": "OAuthApplication"
+      "table": "OAuthClient"
     },
     {
       "nameExplicit": false,
@@ -63405,13 +65315,47 @@
         "clientId"
       ],
       "schemaTo": "public",
-      "tableTo": "OAuthApplication",
+      "tableTo": "OAuthClient",
       "columnsTo": [
         "clientId"
       ],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
-      "name": "OAuthConsent_clientId_OAuthApplication_clientId_fkey",
+      "name": "OAuthClientResource_clientId_OAuthClient_clientId_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "OAuthClientResource"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "resourceId"
+      ],
+      "schemaTo": "public",
+      "tableTo": "OAuthResource",
+      "columnsTo": [
+        "identifier"
+      ],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "OAuthClientResource_resourceId_OAuthResource_identifier_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "OAuthClientResource"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "clientId"
+      ],
+      "schemaTo": "public",
+      "tableTo": "OAuthClient",
+      "columnsTo": [
+        "clientId"
+      ],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "OAuthConsent_clientId_OAuthClient_clientId_fkey",
       "entityType": "fks",
       "schema": "public",
       "table": "OAuthConsent"
@@ -63432,6 +65376,74 @@
       "entityType": "fks",
       "schema": "public",
       "table": "OAuthConsent"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "workspaceId"
+      ],
+      "schemaTo": "public",
+      "tableTo": "Workspace",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "OAuthConsent_workspaceId_Workspace_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "OAuthConsent"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "clientId"
+      ],
+      "schemaTo": "public",
+      "tableTo": "OAuthClient",
+      "columnsTo": [
+        "clientId"
+      ],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "OAuthRefreshToken_clientId_OAuthClient_clientId_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "OAuthRefreshToken"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "sessionId"
+      ],
+      "schemaTo": "public",
+      "tableTo": "Session",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "CASCADE",
+      "onDelete": "SET NULL",
+      "name": "OAuthRefreshToken_sessionId_Session_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "OAuthRefreshToken"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "userId"
+      ],
+      "schemaTo": "public",
+      "tableTo": "User",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "OAuthRefreshToken_userId_User_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "OAuthRefreshToken"
     },
     {
       "nameExplicit": false,
@@ -64248,6 +66260,57 @@
       "entityType": "fks",
       "schema": "public",
       "table": "PipelineStage"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "workspaceId"
+      ],
+      "schemaTo": "public",
+      "tableTo": "Workspace",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "PlaceCategory_workspaceId_Workspace_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "PlaceCategory"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "workspaceId"
+      ],
+      "schemaTo": "public",
+      "tableTo": "Workspace",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "PlaceLocation_workspaceId_Workspace_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "PlaceLocation"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "categoryId"
+      ],
+      "schemaTo": "public",
+      "tableTo": "PlaceCategory",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "CASCADE",
+      "onDelete": "SET NULL",
+      "name": "PlaceLocation_categoryId_PlaceCategory_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "PlaceLocation"
     },
     {
       "nameExplicit": false,
@@ -67524,6 +69587,16 @@
         "id"
       ],
       "nameExplicit": false,
+      "name": "IntegrationMuse_pkey",
+      "schema": "public",
+      "table": "IntegrationMuse",
+      "entityType": "pks"
+    },
+    {
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
       "name": "IntegrationOpenai_pkey",
       "schema": "public",
       "table": "IntegrationOpenai",
@@ -67854,9 +69927,29 @@
         "id"
       ],
       "nameExplicit": false,
-      "name": "OAuthApplication_pkey",
+      "name": "OAuthClient_pkey",
       "schema": "public",
-      "table": "OAuthApplication",
+      "table": "OAuthClient",
+      "entityType": "pks"
+    },
+    {
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "name": "OAuthClientAssertion_pkey",
+      "schema": "public",
+      "table": "OAuthClientAssertion",
+      "entityType": "pks"
+    },
+    {
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "name": "OAuthClientResource_pkey",
+      "schema": "public",
+      "table": "OAuthClientResource",
       "entityType": "pks"
     },
     {
@@ -67867,6 +69960,26 @@
       "name": "OAuthConsent_pkey",
       "schema": "public",
       "table": "OAuthConsent",
+      "entityType": "pks"
+    },
+    {
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "name": "OAuthRefreshToken_pkey",
+      "schema": "public",
+      "table": "OAuthRefreshToken",
+      "entityType": "pks"
+    },
+    {
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "name": "OAuthResource_pkey",
+      "schema": "public",
+      "table": "OAuthResource",
       "entityType": "pks"
     },
     {
@@ -67997,6 +70110,26 @@
       "name": "PipelineStage_pkey",
       "schema": "public",
       "table": "PipelineStage",
+      "entityType": "pks"
+    },
+    {
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "name": "PlaceCategory_pkey",
+      "schema": "public",
+      "table": "PlaceCategory",
+      "entityType": "pks"
+    },
+    {
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "name": "PlaceLocation_pkey",
+      "schema": "public",
+      "table": "PlaceLocation",
       "entityType": "pks"
     },
     {
@@ -68919,6 +71052,20 @@
       "entityType": "checks",
       "schema": "public",
       "table": "PipelineItemAssignee"
+    },
+    {
+      "value": "\"latitude\" BETWEEN -90 AND 90",
+      "name": "PlaceLocation_latitude_check",
+      "entityType": "checks",
+      "schema": "public",
+      "table": "PlaceLocation"
+    },
+    {
+      "value": "\"longitude\" BETWEEN -180 AND 180",
+      "name": "PlaceLocation_longitude_check",
+      "entityType": "checks",
+      "schema": "public",
+      "table": "PlaceLocation"
     },
     {
       "value": "(\"customFieldId\" IS NULL) OR (\"systemFieldKey\" IS NULL)",

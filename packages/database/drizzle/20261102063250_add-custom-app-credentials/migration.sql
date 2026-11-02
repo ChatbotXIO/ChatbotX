@@ -1,0 +1,1 @@
+ALTER TABLE "UserQuota" ADD COLUMN IF NOT EXISTS "customAppCredentials" boolean DEFAULT false NOT NULL;
