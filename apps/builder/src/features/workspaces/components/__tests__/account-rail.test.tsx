@@ -157,6 +157,16 @@ describe("account rail", () => {
     expect(findLink("/manage")?.textContent).toContain("Manage")
   })
 
+  it("renders admin for a credentials-only super admin on cloud edition", async () => {
+    await render({
+      canAccessManage: true,
+      cloud: true,
+      isSuperAdmin: true,
+    })
+
+    expect(findLink("/admin")?.textContent).toContain("Admin")
+  })
+
   it("hides manage on cloud edition without credential access", async () => {
     await render({ cloud: true })
     expect(findLink("/manage")).toBeUndefined()

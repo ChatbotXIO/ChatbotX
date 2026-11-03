@@ -140,12 +140,20 @@ describe("NavUser", () => {
   })
 
   const render = (
-    props: { canAccessManage?: boolean; cloud?: boolean } = {},
+    props: {
+      canAccessManage?: boolean
+      cloud?: boolean
+      isSuperAdmin?: boolean
+    } = {},
   ) => {
     isCloud.mockReturnValue(props.cloud ?? false)
     act(() => {
       root.render(
-        <NavUser canAccessManage={props.canAccessManage} user={USER} />,
+        <NavUser
+          canAccessManage={props.canAccessManage}
+          isSuperAdmin={props.isSuperAdmin}
+          user={USER}
+        />,
       )
     })
   }
@@ -153,6 +161,11 @@ describe("NavUser", () => {
   const findManageLink = () =>
     Array.from(container.querySelectorAll("a")).find(
       (link) => link.getAttribute("href") === "/manage",
+    )
+
+  const findAdminLink = () =>
+    Array.from(container.querySelectorAll("a")).find(
+      (link) => link.getAttribute("href") === "/admin",
     )
 
   it("renders Manage on cloud when the user can access credentials", () => {
@@ -164,6 +177,13 @@ describe("NavUser", () => {
   it("hides Manage on cloud without credential access", () => {
     render({ cloud: true })
 
+    expect(findManageLink()).toBeUndefined()
+  })
+
+  it("renders Admin but hides Manage for a super admin without credential access on cloud", () => {
+    render({ cloud: true, isSuperAdmin: true })
+
+    expect(findAdminLink()?.textContent).toContain("actions.admin")
     expect(findManageLink()).toBeUndefined()
   })
 

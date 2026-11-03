@@ -1,8 +1,9 @@
 import { resolveTenantByDomain } from "@chatbotx.io/auth/tenant"
 import {
-  canUseOwnCredentials,
+  hasOwnCredentialAccess,
   isSuperAdmin,
   quotaEnforcementService,
+  tenantService,
   userQuotaService,
 } from "@chatbotx.io/business"
 import { ROOT_TENANT_ID } from "@chatbotx.io/database/schema"
@@ -55,15 +56,16 @@ export default async function MainPage() {
   // community/enterprise installs use every feature freely — no quota gating.
   const cloud = isCloud()
   const domain = await getDomainFromHeader()
-  const [usageSummary, atLimit, quota, canAccessManage, tenantId, superAdmin] =
+  const [usageSummary, atLimit, quota, ownedTenant, tenantId, superAdmin] =
     await Promise.all([
       cloud ? quotaEnforcementService.getUsageSummary(user.id) : null,
       cloud ? quotaEnforcementService.getAtLimitMap(user.id) : null,
       cloud ? userQuotaService.getForUser(user.id) : null,
-      cloud ? canUseOwnCredentials(user.id) : false,
+      cloud ? tenantService.findByOwner(user.id) : null,
       resolveTenantByDomain(domain),
       isSuperAdmin(user),
     ])
+  const canAccessManage = cloud && hasOwnCredentialAccess(ownedTenant, quota)
   // "Served with platform identity" — not the same claim as user.tenantId,
   // which the session never carries (see SessionUser in lib/auth/utils.ts).
   // Gates the Redeem link: /portal/redeem 404s on non-platform hosts.
