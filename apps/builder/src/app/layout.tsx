@@ -15,7 +15,6 @@ import { getDirection } from "@/i18n/direction"
 import { getDomainFromHeader } from "@/lib/domain"
 import { QueryProvider } from "@/lib/query/query-provider"
 import { getUserTimezone } from "@/lib/timezone"
-import { fontSans } from "./fonts"
 import "./globals.css"
 import "./themes.css"
 import { DirectionProvider } from "@chatbotx.io/ui/components/ui/direction"
@@ -66,12 +65,7 @@ export default async function RootLayout({ children }: Props) {
   const pancakeChatPageId = env.NEXT_PUBLIC_PANCAKE_CHAT_PAGE_ID
 
   return (
-    <html
-      className={fontSans.variable}
-      dir={dir}
-      lang={locale}
-      suppressHydrationWarning
-    >
+    <html dir={dir} lang={locale} suppressHydrationWarning>
       <head>
         <PublicEnvScript />
         {isBuilderDomain && pancakeChatPageId && (
