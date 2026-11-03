@@ -166,6 +166,24 @@ describe("docker-entrypoint worker discovery", () => {
     ).not.toContain("--max-old-space-size")
   })
 
+  test("enables source maps unless WORKER_SOURCE_MAPS turns them off", () => {
+    const fakeNode = join(distDir, "fake-node.sh")
+    writeFileSync(fakeNode, '#!/bin/sh\nprintf "%s\\n" "$NODE_OPTIONS"\n')
+    chmodSync(fakeNode, 0o755)
+
+    expect(
+      run(["worker", "standalone"], { NODE_BIN: fakeNode }).stdout,
+    ).toContain("--enable-source-maps")
+    for (const value of ["false", "0"]) {
+      expect(
+        run(["worker", "standalone"], {
+          NODE_BIN: fakeNode,
+          WORKER_SOURCE_MAPS: value,
+        }).stdout,
+      ).not.toContain("--enable-source-maps")
+    }
+  })
+
   test("sets shared pool and shutdown defaults for consolidated worker modes", () => {
     const fakeNode = join(distDir, "fake-node.sh")
     writeFileSync(

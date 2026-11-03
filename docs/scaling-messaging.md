@@ -40,6 +40,11 @@ default `WORKER_SHUTDOWN_TIMEOUT_MS` to 8 seconds. Other modes drain until the
 orchestrator stops them unless that variable is set; keep any configured
 deadline below the orchestrator stop grace period.
 
+Source maps are enabled by default so production stack traces point at the
+original TypeScript. Set `WORKER_SOURCE_MAPS=false` to start Node without
+`--enable-source-maps`; this saves roughly 110 MB of heap on `standalone`, and
+stack traces then show positions in the built bundle.
+
 Set the orchestrator stop grace period to at least
 `WORKER_SHUTDOWN_TIMEOUT_MS` + 2 seconds; about 30 seconds is a sensible value
 for consolidated mode. A job still running at the deadline is not lost: the

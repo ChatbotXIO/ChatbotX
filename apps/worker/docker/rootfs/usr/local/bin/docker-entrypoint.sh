@@ -6,8 +6,13 @@ WORKER_DIST_DIR="${WORKER_DIST_DIR:-/app/apps/worker/dist}"
 NODE_BIN="${NODE_BIN:-/usr/local/bin/node}"
 
 # --enable-source-maps resolves production stack traces back to original
-# TypeScript source for every worker mode.
-export NODE_OPTIONS="${NODE_OPTIONS:-} --enable-source-maps"
+# TypeScript source for every worker mode. It is on by default; set
+# WORKER_SOURCE_MAPS=false (or 0) to skip it and save the heap Node spends
+# decoding the maps (~114MB on `standalone`), at the cost of raw stack traces.
+case "${WORKER_SOURCE_MAPS:-true}" in
+  false | 0) ;;
+  *) export NODE_OPTIONS="${NODE_OPTIONS:-} --enable-source-maps" ;;
+esac
 
 # Single-process bundles (see src/core.ts, src/standalone.ts). They live at the
 # dist root, outside the `<dir>/worker*.mjs` glob, so `all` never starts them.
