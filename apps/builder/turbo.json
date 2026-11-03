@@ -7,8 +7,11 @@
     // runner otherwise starts every check-types from cold — ~30s here).
     // `dependsOn` is deliberately absent — see the root turbo.json. `outputs`
     // is orthogonal to ordering and still governs the tsbuildinfo restore.
+    // CHECK_TYPES_SKIP_TESTS (set by the pre-commit hook) switches to
+    // tsconfig.check.json, so it must be part of the cache key.
     "check-types": {
-      "outputs": ["tsconfig.tsbuildinfo"]
+      "env": ["CHECK_TYPES_SKIP_TESTS"],
+      "outputs": ["tsconfig.tsbuildinfo", "tsconfig.check.tsbuildinfo"]
     }
   }
 }
