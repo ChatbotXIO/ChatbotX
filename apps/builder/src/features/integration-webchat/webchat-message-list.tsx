@@ -81,19 +81,21 @@ export function WebchatMessageList() {
         data={data}
         followOutput
         initialTopMostItemIndex={{ index: "LAST" }}
-        itemContent={(_, item) =>
-          item.id === TYPING_INDICATOR_ID ? (
-            <TypingIndicator avatarUrl={workspaceLogoUrl} />
-          ) : (
-            <MessageItem
-              avatarUrl={workspaceLogoUrl}
-              guestDisplay={true}
-              key={item.id}
-              message={item as MessageResourceWithRelations}
-              onPostback={sendPostback}
-            />
-          )
-        }
+        itemContent={(_, item) => (
+          <div className="pb-1.5">
+            {item.id === TYPING_INDICATOR_ID ? (
+              <TypingIndicator avatarUrl={workspaceLogoUrl} />
+            ) : (
+              <MessageItem
+                avatarUrl={workspaceLogoUrl}
+                guestDisplay={true}
+                key={item.id}
+                message={item as MessageResourceWithRelations}
+                onPostback={sendPostback}
+              />
+            )}
+          </div>
+        )}
         rangeChanged={({ startIndex }) => {
           if (startIndex <= 5 && page !== 1) {
             loadMoreItems()
@@ -146,7 +148,7 @@ const MessageComponentList: GridComponents["List"] = ({
   children,
   ...props
 }) => (
-  <div {...props} className="virtuoso-item-list flex flex-col gap-1.5">
+  <div {...props} className="virtuoso-item-list flex flex-col">
     {children}
   </div>
 )
