@@ -5,10 +5,29 @@ const editionRule = z
   .enum(["community", "enterprise", "cloud"])
   .default("community")
 
+export const DEFAULT_SCHEDULER_TICK_INTERVAL_MS = 5000
+export const MIN_SCHEDULER_TICK_INTERVAL_MS = 100
+export const MAX_SCHEDULER_TICK_INTERVAL_MS = 10_000
+
 export const env = createEnv({
   server: {
     NEXT_PUBLIC_EDITION: editionRule,
     QUOTA_SYNC_INTERVAL_SECONDS: z.coerce.number().int().min(10).default(60),
+    // How often the sequence producer polls each of its buckets. Idle Redis
+    // cost is `buckets x 2 x 1000 / interval` ZRANGEBYSCORE per second (256
+    // buckets: ~102/s at 5000ms). Without backlog a due dispatch waits up to
+    // one interval plus the tick time, once per step: every step goes back
+    // through the bucket, so consecutive zero-delay steps each add one wait.
+    // Backlog, lock contention or event-loop delay add more. Each tick claims
+    // at most `claimLimit` (100) dispatches per bucket from each of the
+    // schedule and retry sets, so a bucket sustains at most
+    // `claimLimit x 1000 / interval` per set.
+    SCHEDULER_TICK_INTERVAL_MS: z.coerce
+      .number()
+      .int()
+      .min(MIN_SCHEDULER_TICK_INTERVAL_MS)
+      .max(MAX_SCHEDULER_TICK_INTERVAL_MS)
+      .default(DEFAULT_SCHEDULER_TICK_INTERVAL_MS),
     // Optional upper bound for draining every worker in the process on SIGTERM
     // (lib/shutdown). Consolidated Docker modes default below the 10s stop
     // timeout; for other modes, set this with the orchestrator grace period.

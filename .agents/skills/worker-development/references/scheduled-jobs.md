@@ -15,6 +15,12 @@ When changing `purgeWorkspaces`, also read `workspace-purge` so the schedule rem
 2. Add `handlers/purge-workspaces.ts` (or the new handler name).
 3. Add the corresponding `case` in `src/schedule/worker.ts`.
 4. Register it with `upsertJobScheduler` in `handlers/register-schedules.ts`.
+   A new every-minute cron must be classified, or
+   `register-schedules-edition.test.ts` fails: add it to
+   `EVERY_MINUTE_SECOND_OFFSETS` on its own free second (use
+   `everyMinuteAtOffset`), or keep `"* * * * *"` if it reads the minute boundary
+   (`startOfMinute`) or starts user-scheduled sends. Then list it in the test's
+   `SPREAD_OVER_THE_MINUTE` or `ON_THE_MINUTE`.
 
 ## Sequence scheduling
 
@@ -22,4 +28,6 @@ Sequence dispatch uses BullMQ on Redis. `packages/sequence-scheduler` hashes
 dispatches across 256 buckets, while `SchedulerClient` stores schedule and retry
 entries in Redis sorted sets. Redlock-backed `withLock` claims each dispatch before
 it is published to the `sequenceScheduler` queue, preventing concurrent scheduler
-workers from processing the same dispatch.
+workers from processing the same dispatch. The producer polls each assigned
+bucket every `SCHEDULER_TICK_INTERVAL_MS` (default 5000; idle cost is
+`buckets x 2 x 1000 / interval` Redis commands per second).

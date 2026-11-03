@@ -1168,6 +1168,70 @@ describe("contactInboxService Instagram snapshot recovery queries", () => {
     }
   })
 
+  type SqlFragment = { strings: string[]; values: unknown[] }
+
+  const isSqlFragment = (condition: unknown): condition is SqlFragment =>
+    typeof condition === "object" &&
+    condition !== null &&
+    "strings" in condition &&
+    "values" in condition
+
+  /** The `sql` fragments the query passed to `and(...)`, in order. */
+  const whereFragments = (where: ReturnType<typeof vi.fn>): SqlFragment[] => {
+    const [conditions] = where.mock.calls[0] as [{ conditions: unknown[] }]
+    return conditions.conditions.filter(isSqlFragment)
+  }
+
+  const CURSOR_AT = new Date("2026-11-03T06:00:00.000Z")
+  const CURSOR = `${CURSOR_AT.toISOString()}|42`
+  const ROW_COMPARISON = "(, ) > (, )"
+
+  // `a > x OR (a = x AND id > y)` cannot be used as an index bound, so a cursor
+  // that has drifted deep into a pending backlog rescanned it from its start
+  // on every page. The row comparison is the same predicate as one index range.
+  test.each([
+    [
+      "due",
+      (cursor: string) =>
+        contactInboxService.listDueProfileSnapshots({ cursor, limit: 100 }),
+    ],
+    [
+      "exhausted",
+      (cursor: string) =>
+        contactInboxService.listExhaustedProfileSnapshots({
+          cursor,
+          limit: 100,
+        }),
+    ],
+  ])("pages the %s scan with a row comparison", async (_name, list) => {
+    const { where } = mockRecoveryQuery([])
+
+    await list(CURSOR)
+
+    const rowComparison = whereFragments(where).find(
+      (fragment) => fragment.strings.join("") === ROW_COMPARISON,
+    )
+    expect(rowComparison?.values).toEqual([
+      "profileSnapshotNextAttemptAt",
+      "id",
+      CURSOR_AT,
+      "42",
+    ])
+    expect(mockOr).not.toHaveBeenCalled()
+  })
+
+  test("adds no cursor predicate for the first page", async () => {
+    const { where } = mockRecoveryQuery([])
+
+    await contactInboxService.listDueProfileSnapshots({ limit: 100 })
+
+    expect(
+      whereFragments(where).some(
+        (fragment) => fragment.strings.join("") === ROW_COMPARISON,
+      ),
+    ).toBe(false)
+  })
+
   test("selects exhausted work only after its lease deadline", async () => {
     mockRecoveryQuery([])
 

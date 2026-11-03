@@ -6,6 +6,12 @@ import {
   type SequenceSchedulerJobData,
   type SequenceSchedulerQueue,
 } from "@chatbotx.io/worker-config"
+import {
+  DEFAULT_SCHEDULER_TICK_INTERVAL_MS,
+  env,
+  MAX_SCHEDULER_TICK_INTERVAL_MS,
+  MIN_SCHEDULER_TICK_INTERVAL_MS,
+} from "../env"
 import { logger } from "../lib/logger"
 import { isShutdownRequested, onShutdown, runWorker } from "../lib/shutdown"
 
@@ -13,7 +19,29 @@ import { getAssignedBuckets } from "./buckets"
 
 const CLAIM_LIMIT = 100
 const LOCK_TTL_MS = 30_000
-const TICK_INTERVAL_MS = 500
+
+/**
+ * The only place that decides the poll interval. An explicit `configValue`
+ * (constructor option, used by tests) wins as-is. The env value is clamped
+ * here as well as in the env schema because `SKIP_ENV_CHECK=true` makes
+ * `createEnv` return raw strings with no default or bounds: "0", "abc" or
+ * undefined would reach `setTimeout` and turn every bucket loop into a 1 ms
+ * busy-poll, and so would anything above 2^31-1 ms.
+ */
+export function resolveTickIntervalMs(
+  configValue: number | undefined,
+  envValue: number | string | undefined,
+): number {
+  if (configValue) {
+    return configValue
+  }
+  const candidate = Number(envValue)
+  const isInRange =
+    Number.isInteger(candidate) &&
+    candidate >= MIN_SCHEDULER_TICK_INTERVAL_MS &&
+    candidate <= MAX_SCHEDULER_TICK_INTERVAL_MS
+  return isInRange ? candidate : DEFAULT_SCHEDULER_TICK_INTERVAL_MS
+}
 
 interface SchedulerConfig {
   buckets: number[]
@@ -59,7 +87,10 @@ export class SchedulerWorker {
   constructor(config: Partial<SchedulerConfig> = {}) {
     this.config = {
       buckets: config.buckets || getAssignedBuckets(),
-      tickIntervalMs: config.tickIntervalMs || TICK_INTERVAL_MS,
+      tickIntervalMs: resolveTickIntervalMs(
+        config.tickIntervalMs,
+        env.SCHEDULER_TICK_INTERVAL_MS,
+      ),
       claimLimit: config.claimLimit || CLAIM_LIMIT,
       lockTtlMs: config.lockTtlMs || LOCK_TTL_MS,
     }
@@ -107,6 +138,13 @@ export class SchedulerWorker {
     this._queue = queue
 
     this.running = true
+    logger.info(
+      {
+        tickIntervalMs: this.config.tickIntervalMs,
+        bucketCount: this.config.buckets.length,
+      },
+      "Starting sequence producer bucket polling",
+    )
 
     for (const bucket of this.config.buckets) {
       this.startBucketScheduler(bucket)

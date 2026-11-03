@@ -181,14 +181,12 @@ export const serializeProfileSnapshotCursor = (row: {
     ? `${row.nextAttemptAt.toISOString()}|${row.contactInboxId}`
     : undefined
 
+// A row comparison, not `a > x OR (a = x AND id > y)`: Postgres only uses the
+// pair as an index bound on `ContactInbox_profileSnapshot_pending_idx` in this
+// form. The cursor lives in Redis and drifts deeper into a long-lived pending
+// backlog each run, so the OR form re-walked the index from its start per page.
 const profileSnapshotCursorWhere = (cursor: ProfileSnapshotCursor) =>
-  or(
-    gt(contactInboxModel.profileSnapshotNextAttemptAt, cursor.at),
-    and(
-      eq(contactInboxModel.profileSnapshotNextAttemptAt, cursor.at),
-      gt(contactInboxModel.id, cursor.id),
-    ),
-  )
+  sql`(${contactInboxModel.profileSnapshotNextAttemptAt}, ${contactInboxModel.id}) > (${cursor.at}, ${cursor.id})`
 
 type FindByProps = {
   id: string

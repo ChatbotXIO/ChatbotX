@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 const {
   addToRetrySpy,
   batchAddToScheduleSpy,
+  envState,
   findPendingWorkspaceIdsSpy,
   getDueSpy,
   getRetryCountSpy,
@@ -20,6 +21,9 @@ const {
 } = vi.hoisted(() => ({
   addToRetrySpy: vi.fn(),
   batchAddToScheduleSpy: vi.fn(),
+  envState: {
+    SCHEDULER_TICK_INTERVAL_MS: 5000 as number | string | undefined,
+  },
   findPendingWorkspaceIdsSpy: vi.fn(),
   getDueSpy: vi.fn(),
   getRetryCountSpy: vi.fn(),
@@ -69,10 +73,18 @@ vi.mock("@chatbotx.io/worker-config", () => ({
   getSequenceSchedulerQueue: getSequenceSchedulerQueueSpy,
 }))
 
+vi.mock("../src/env", () => ({
+  DEFAULT_SCHEDULER_TICK_INTERVAL_MS: 5000,
+  MIN_SCHEDULER_TICK_INTERVAL_MS: 100,
+  MAX_SCHEDULER_TICK_INTERVAL_MS: 10_000,
+  env: envState,
+}))
+
 vi.mock("../src/lib/logger", () => ({
   logger: {
     debug: vi.fn(),
     error: loggerErrorSpy,
+    info: vi.fn(),
     fatal: vi.fn(),
     warn: vi.fn(),
   },
@@ -85,7 +97,10 @@ vi.mock("../src/lib/shutdown", () => ({
 }))
 
 import { getAssignedBuckets } from "../src/sequence-scheduler/buckets"
-import { SchedulerWorker } from "../src/sequence-scheduler/worker-producer"
+import {
+  resolveTickIntervalMs,
+  SchedulerWorker,
+} from "../src/sequence-scheduler/worker-producer"
 
 type SchedulerWorkerConfig = {
   buckets: number[]
@@ -168,7 +183,69 @@ beforeEach(() => {
 
 afterEach(() => {
   delete process.env.SCHEDULER_BUCKET_RANGE
+  envState.SCHEDULER_TICK_INTERVAL_MS = 5000
   vi.useRealTimers()
+})
+
+describe("resolveTickIntervalMs", () => {
+  test("uses a valid env value", () => {
+    expect(resolveTickIntervalMs(undefined, 2500)).toBe(2500)
+    expect(resolveTickIntervalMs(undefined, "2500")).toBe(2500)
+  })
+
+  test("lets an explicit config value win, even below the env minimum", () => {
+    expect(resolveTickIntervalMs(5, 2500)).toBe(5)
+  })
+
+  // With SKIP_ENV_CHECK=true createEnv returns raw strings, so the env
+  // schema's default and bounds do not run; none of these may reach setTimeout.
+  test.each([
+    ["undefined", undefined],
+    ["empty string", ""],
+    ["zero", "0"],
+    ["non-numeric", "abc"],
+    ["below the minimum", "50"],
+    ["above the maximum", "20000"],
+    ["above the setTimeout limit", "99999999999"],
+    ["negative", "-1000"],
+    ["fractional", "1000.5"],
+  ])("falls back to the default for %s", (_label, value) => {
+    expect(resolveTickIntervalMs(undefined, value)).toBe(5000)
+  })
+
+  test("treats a zero config value as unset", () => {
+    expect(resolveTickIntervalMs(0, 2500)).toBe(2500)
+  })
+})
+
+describe("SchedulerWorker tick interval", () => {
+  const configOf = (worker: SchedulerWorker) =>
+    (worker as unknown as SchedulerWorkerInternals).config
+
+  test("reads the interval from env when none is passed", () => {
+    envState.SCHEDULER_TICK_INTERVAL_MS = 3000
+
+    expect(configOf(new SchedulerWorker({ buckets: [0] })).tickIntervalMs).toBe(
+      3000,
+    )
+  })
+
+  test("falls back to the default when env is missing", () => {
+    envState.SCHEDULER_TICK_INTERVAL_MS = undefined
+
+    expect(configOf(new SchedulerWorker({ buckets: [0] })).tickIntervalMs).toBe(
+      5000,
+    )
+  })
+
+  test("lets the constructor option override env", () => {
+    envState.SCHEDULER_TICK_INTERVAL_MS = 3000
+
+    expect(
+      configOf(new SchedulerWorker({ buckets: [0], tickIntervalMs: 7 }))
+        .tickIntervalMs,
+    ).toBe(7)
+  })
 })
 
 describe("SchedulerWorker lifecycle", () => {
