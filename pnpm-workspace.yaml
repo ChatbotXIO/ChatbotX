@@ -21,6 +21,7 @@ catalog:
   "@t3-oss/env-nextjs": "^0.13.11"
   "@types/mime-types": "^3.0.1"
   "@types/node": "^24.12.2"
+  "@types/pg": "^8.20.0"
   "@types/react": 19.2.14
   "@types/react-dom": 19.2.3
   ai: "^7.0.159"
@@ -43,6 +44,7 @@ catalog:
   mime-types: "^3.0.2"
   msw: "^2.7.3"
   next: 16.4.3
+  pg: "^8.20.0"
   react: 19.2.5
   react-dom: 19.2.5
   react-hook-form: "^7.74.0"
