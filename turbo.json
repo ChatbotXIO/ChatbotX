@@ -1,6 +1,10 @@
 {
   "$schema": "https://v2-11-10.turborepo.dev/schema.json",
   "ui": "tui",
+  // Root tsconfig extended by packages/database and packages/business; turbo
+  // cannot see it from either workspace, so declare it or edits to it hit cache
+  // and are skipped by `--filter=...[HEAD]`.
+  "globalDependencies": ["tsconfig.base.json"],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],

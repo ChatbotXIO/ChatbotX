@@ -5,12 +5,20 @@ post-checkout:
 
 pre-commit:
   jobs:
-    - run: pnpm ultracite fix
+    # Only the staged files: a bare `ultracite fix` rewrote the whole repo.
+    - run: pnpm ultracite fix {staged_files}
       glob: "*.{js,ts,cjs,mjs,d.cts,d.mts,jsx,tsx,json,jsonc}"
       stage_fixed: true
+      skip: [merge, rebase]
+    # Only workspaces changed since HEAD (staged + unstaged) and their
+    # dependents, two tsc at a time like the root `check-types` script. A bare
+    # `turbo check-types` ran all 64 workspaces at turbo's default concurrency
+    # of 10, with builder alone allowed an 8 GB heap.
     - name: typecheck
-      run: pnpm turbo check-types
+      run: pnpm turbo check-types --filter="...[HEAD]" --concurrency=2
       glob: "**/*.{ts,tsx}"
+      # A merge from main stages every file main changed; CI type-checks it.
+      skip: [merge, rebase]
 
 commit-msg:
   jobs:
