@@ -112,6 +112,8 @@ export const cartRepository = {
         and(
           isNull(cartModel.abandonedNotifiedAt),
           isNotNull(ecommerceSettingsModel.abandonedCartDelayMinutes),
+          // These two cart terms are the predicate of `Cart_abandoned_due_idx`;
+          // change one and the planner stops using that index.
           sql`jsonb_array_length(${cartModel.items}) > 0`,
           sql`${cartModel.lastActivityAt} < ${input.now.toISOString()}::timestamptz - make_interval(mins => ${ecommerceSettingsModel.abandonedCartDelayMinutes})`,
         ),

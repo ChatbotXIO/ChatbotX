@@ -58,9 +58,15 @@ export const cartModel = pgTable(
     ),
     index("Cart_contactId_idx").on(table.contactId),
     index("Cart_contactInboxId_idx").on(table.contactInboxId),
-    // The abandoned-cart scan reads only carts not reminded yet.
-    index("Cart_abandoned_scan_idx")
+    // The abandoned-cart scan reads only carts with items that were not
+    // reminded yet. A cart is emptied, not deleted, once an order is placed, so
+    // without the `items` term every buyer's empty cart stayed in the index and
+    // the per-minute scan walked all of them. Keep the predicate identical to
+    // `claimAbandoned` in the cart repository so the planner can use the index.
+    index("Cart_abandoned_due_idx")
       .on(table.lastActivityAt)
-      .where(sql`${table.abandonedNotifiedAt} IS NULL`),
+      .where(
+        sql`${table.abandonedNotifiedAt} IS NULL AND jsonb_array_length(${table.items}) > 0`,
+      ),
   ],
 )

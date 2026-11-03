@@ -477,8 +477,10 @@ carry snake_case fields and never `contactInboxId`.
 distributed lock) claims carts with items, idle longer than their store's
 delay and not reminded since the customer last changed them
 (`cartRepository.claimAbandoned`: `UPDATE … WHERE abandonedNotifiedAt IS NULL`
-over a `FOR UPDATE SKIP LOCKED` batch, partial index
-`Cart_abandoned_scan_idx`), so a cart is reminded once; a customer change
+over a `FOR UPDATE SKIP LOCKED` batch, partial index `Cart_abandoned_due_idx`
+on `lastActivityAt` where `abandonedNotifiedAt IS NULL AND
+jsonb_array_length(items) > 0`; keep the query's cart terms identical to that
+predicate), so a cart is reminded once; a customer change
 clears `abandonedNotifiedAt` again. For each cart, under
 `withBlockedOwnerGuard`, `webshopService.remindAbandonedCart` emits
 `cartAbandoned` and runs the store's flow in the customer's conversation on
