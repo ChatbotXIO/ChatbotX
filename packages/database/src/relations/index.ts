@@ -34,6 +34,7 @@ import { commentAutomationRelations } from "./comment-automation"
 import { commentAutomationEventRelations } from "./comment-automation-event"
 import { commentAutomationMissRelations } from "./comment-automation-miss"
 import { commentAutomationReplyRelations } from "./comment-automation-reply"
+import { commentModerationLogRelations } from "./comment-moderation-log"
 import { connectSessionRelations } from "./connect-session"
 import { connectionRelations } from "./connection"
 import { contactRelations } from "./contact"
@@ -269,6 +270,7 @@ export const relations = {
   ...commentAutomationEventRelations,
   ...commentAutomationMissRelations,
   ...commentAutomationReplyRelations,
+  ...commentModerationLogRelations,
   ...auditLogRelations,
   ...sessionRelations,
   ...oauthAccessTokenRelations,

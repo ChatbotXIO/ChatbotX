@@ -1,8 +1,10 @@
 export * from "./apis/auth"
 export {
+  getReplyAttachment,
   getReplyGifUrl,
   hideComment,
   replyToComment,
+  type ThreadsReplyAttachment,
 } from "./apis/comment"
 export * from "./apis/post"
 export * from "./integration"

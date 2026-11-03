@@ -57,6 +57,7 @@ Condensed; the full text of every trap (reasons, file paths, edge cases) is in
 20. **`replyOncePerUserPerPost` is enforced by `claimDedup`**, not `findDedup`; release with `deleteDedup` when nothing dispatches.
 21. **Account scope is `inboxId`, `NULL` = every account** — `findActiveAutomations` requires the comment's inbox; writes go through `assertAutomationAccount`; FK is `cascade`.
 22. **An async reply type records its analytics event in TWO places** — open the row with `replyText: null`, settle in the handler, pair every `rollbackCommentDedup` with `abandonAIReply` ([add-reply-type](references/add-reply-type.md)).
+23. **AI moderation runs before the reply filters; hide rules do not** — `moderateCommentWithAI` runs after the post gate and a comment it moderates is never answered (miss `moderated`); `applyHideRules` stays after the filters and hides AND answers ("DM then hide"), never move it ahead. A new hide switch needs its own `matchHideRule` value + `commentModerationRules` (pgEnum, append only); every moderation hide/delete carries `moderation: { automationId, commentId }` so the chat handler settles the log row. See the docs' "Moderation (hide rules & AI)".
 
 ## Verify
 

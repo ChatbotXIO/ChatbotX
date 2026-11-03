@@ -759,6 +759,7 @@
       "clicked": "Clicado",
       "failed": "Falhou",
       "missed": "Perdidos",
+      "moderated": "Moderados",
       "noContacts": "Nenhum contacto encontrado",
       "noComment": "(sem texto)",
       "pageInfo": "Página {page} de {pageCount}",
@@ -778,7 +779,9 @@
       "contactNotNew": "O contacto não é novo",
       "alreadyRepliedOnPost": "Já respondido nesta publicação",
       "engagedOnOtherPost": "Já interagiu noutra publicação",
-      "mentionCountNotMatched": "O número de menções não correspondeu"
+      "mentionCountNotMatched": "O número de menções não correspondeu",
+      "noImageAttachment": "Nenhuma fotografia anexada",
+      "moderated": "Ocultado ou eliminado pela moderação"
     },
     "replyTo": {
       "mentions": "Comentários com menções suficientes",
@@ -798,6 +801,10 @@
       "label": "Registar se um utilizador marca outros utilizadores",
       "descriptionText": "Conta as contas identificadas em cada comentário e soma-as aos totais do contacto em todos os comentários. Utilize '{{total_tagged}}' para todas as contas identificadas e '{{total_new_tagged}}' para contas que nunca enviaram mensagem à sua página nem foram contactos."
     },
+    "onlyCommentsWithImage": {
+      "label": "Responder apenas a comentários com fotografia",
+      "descriptionText": "Responder automaticamente apenas quando o comentário incluir uma fotografia. GIFs e autocolantes não contam. Comentários sem fotografia são ignorados e é tentada a automação seguinte."
+    },
     "card": {
       "reply": "Resposta"
     },
@@ -815,6 +822,87 @@
       "column": "Conta",
       "disconnected": "Conta desligada",
       "disconnectedDescription": "Esta automação está associada a uma conta que já não está ligada, por isso não responde a nenhum comentário. Volte a ligar a conta ou escolha outra."
+    },
+    "aiModeration": {
+      "enabled": "Moderação por IA",
+      "description": "Um agente de IA lê cada comentário antes de o bot responder e oculta ou elimina os das categorias abaixo. Um comentário moderado nunca recebe resposta.",
+      "aiAgentDescription": "Apenas o modelo de IA do agente é utilizado, não o respetivo prompt.",
+      "categoriesLabel": "Bloquear comentários que sejam",
+      "categories": {
+        "hate": "Discurso de ódio",
+        "offensive": "Ofensivos",
+        "harassment": "Assédio",
+        "negative": "Hostis à marca",
+        "spam": "Spam ou burla"
+      },
+      "categoryDescriptions": {
+        "hate": "Ataca um grupo por raça, religião, género, nacionalidade e semelhantes",
+        "offensive": "Insultos, palavrões, linguagem vulgar",
+        "harassment": "Ameaças, bullying, ataques a uma pessoa",
+        "negative": "Destina-se a prejudicar a marca. As reclamações educadas não são bloqueadas",
+        "spam": "Burlas, phishing, promoção não relacionada"
+      },
+      "instruction": "Orientações adicionais para a IA",
+      "instructionDescription": "Opcional. Indique à IA o que permitir ou bloquear.",
+      "instructionPlaceholder": "p. ex. Não bloquear clientes que se queixam do preço",
+      "action": "Quando um comentário é bloqueado",
+      "actions": {
+        "hide": "Ocultá-lo",
+        "delete": "Eliminá-lo"
+      },
+      "deleteWarning": "Os comentários eliminados perdem-se para sempre e não podem ser restaurados. Ocultar é mais seguro se a IA se enganar."
+    },
+    "moderationLog": {
+      "title": "Comentários moderados",
+      "description": "Comentários que esta automatização ocultou ou eliminou, e porquê.",
+      "allActions": "Todas as ações",
+      "allSources": "Regras e IA",
+      "actions": {
+        "hide": "Oculto",
+        "delete": "Eliminado"
+      },
+      "sources": {
+        "rule": "Por uma regra de ocultação",
+        "ai": "Pela IA"
+      },
+      "statuses": {
+        "pending": "Em curso",
+        "done": "Concluído",
+        "failed": "Falhou"
+      },
+      "rules": {
+        "all": "Ocultar todos os comentários",
+        "phoneNumber": "Contém um número de telefone",
+        "link": "Contém uma ligação",
+        "keyword": "Contém uma palavra-chave",
+        "image": "Contém uma imagem",
+        "video": "Contém um vídeo",
+        "gif": "Contém um GIF",
+        "emoji": "Contém um emoji"
+      },
+      "summary": {
+        "total": "{count} moderados",
+        "hidden": "{count} ocultos",
+        "deleted": "{count} eliminados",
+        "byAI": "{count} pela IA",
+        "byRule": "{count} por regras",
+        "failed": "{count} com falha"
+      },
+      "columns": {
+        "time": "Hora",
+        "contact": "Contacto",
+        "comment": "Comentário",
+        "action": "Ação",
+        "reason": "Motivo",
+        "status": "Estado"
+      },
+      "loading": "A carregar…",
+      "empty": "Ainda não foi ocultado nem eliminado nenhum comentário.",
+      "unknownContact": "Desconhecido",
+      "noText": "(sem texto)",
+      "previous": "Anterior",
+      "next": "Seguinte",
+      "page": "Página {page} de {pageCount}"
     }
   },
   "condition": {

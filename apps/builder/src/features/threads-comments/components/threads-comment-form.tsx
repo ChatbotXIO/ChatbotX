@@ -29,6 +29,7 @@ import { useWatch } from "react-hook-form"
 import { toast } from "sonner"
 import { useAIAgentSelectOptions } from "@/features/ai-agents/hooks/use-ai-agents"
 import { useFlowSelectOptions } from "@/features/flows/provider/flow-hook"
+import { AIModerationField } from "@/features/shared/comment-automation/ai-moderation-field"
 import {
   AutomationAccountField,
   useAccountChoiceMissing,
@@ -331,6 +332,14 @@ export function ThreadsCommentForm({
             required
           />
           <SwitchField
+            description={t(
+              "commentAutomation.onlyCommentsWithImage.descriptionText",
+            )}
+            descriptionType="tooltip"
+            label={t("commentAutomation.onlyCommentsWithImage.label")}
+            name="options.onlyCommentsWithImage"
+          />
+          <SwitchField
             description={t("commentAutomation.trackUserTags.descriptionText")}
             descriptionType="tooltip"
             label={t("commentAutomation.trackUserTags.label")}
@@ -505,6 +514,7 @@ export function ThreadsCommentForm({
             ]}
             required
           />
+          <AIModerationField canDelete={false} />
         </CardContent>
       </Card>
 

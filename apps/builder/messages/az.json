@@ -801,6 +801,7 @@
       "clicked": "Kliklənib",
       "failed": "Uğursuz",
       "missed": "Buraxılmışlar",
+      "moderated": "Moderasiya",
       "noContacts": "Kontakt tapılmadı",
       "noComment": "(mətn yoxdur)",
       "pageInfo": "Səhifə {page} / {pageCount}",
@@ -820,7 +821,9 @@
       "contactNotNew": "Kontakt yeni deyil",
       "alreadyRepliedOnPost": "Bu paylaşıma artıq cavab verilib",
       "engagedOnOtherPost": "Başqa paylaşımla artıq qarşılıqlı əlaqə qurulub",
-      "mentionCountNotMatched": "Etiketlənən şəxslərin sayı uyğun gəlmədi"
+      "mentionCountNotMatched": "Etiketlənən şəxslərin sayı uyğun gəlmədi",
+      "noImageAttachment": "Şəkil əlavə edilməyib",
+      "moderated": "Moderasiya tərəfindən gizlədildi və ya silindi"
     },
     "replyTo": {
       "mentions": "Kifayət qədər şəxsin etiketləndiyi şərhlər",
@@ -840,6 +843,10 @@
       "label": "İstifadəçinin digər istifadəçiləri etiketləməsini izlə",
       "descriptionText": "Hər şərhdə etiketlənən hesabları sayır və kontaktın bütün şərhlər üzrə ümumi sayına əlavə edir. Etiketlənən bütün hesablar üçün '{{total_tagged}}' dəyişənindən, səhifənizə heç vaxt mesaj göndərməmiş və ya kontakt olmamış hesablar üçün '{{total_new_tagged}}' dəyişənindən istifadə edin."
     },
+    "onlyCommentsWithImage": {
+      "label": "Yalnız şəkilli şərhlərə cavab ver",
+      "descriptionText": "Yalnız şərhdə şəkil olduqda avtomatik cavab ver. GIF və stikerlər sayılmır. Şəkilsiz şərhlər ötürülür və növbəti avtomatlaşdırma yoxlanılır."
+    },
     "card": {
       "reply": "Cavab"
     },
@@ -857,6 +864,87 @@
       "column": "Hesab",
       "disconnected": "Bağlantısı kəsilmiş hesab",
       "disconnectedDescription": "Bu avtomatlaşdırma artıq qoşulmayan hesaba bağlıdır, ona görə heç bir şərhə cavab vermir. Hesabı yenidən qoşun və ya başqasını seçin."
+    },
+    "aiModeration": {
+      "enabled": "Süni intellekt moderasiyası",
+      "description": "Süni intellekt agenti bot cavab verməzdən əvvəl hər şərhi oxuyur və aşağıdakı kateqoriyalara aid olanları gizlədir və ya silir. Moderasiya olunmuş şərhə cavab verilmir.",
+      "aiAgentDescription": "Yalnız agentin süni intellekt modelindən istifadə olunur, təlimatından deyil.",
+      "categoriesLabel": "Bu şərhləri blokla",
+      "categories": {
+        "hate": "Nifrət ritorikası",
+        "offensive": "Təhqiredici",
+        "harassment": "Təqib",
+        "negative": "Brend əleyhinə",
+        "spam": "Spam və ya fırıldaq"
+      },
+      "categoryDescriptions": {
+        "hate": "Irq, din, cins, milliyyət və s. görə qrupa hücum edir",
+        "offensive": "Təhqirlər, söyüş, vulqar sözlər",
+        "harassment": "Hədələr, zorakılıq, şəxsə hücum",
+        "negative": "Brendə zərər vurmaq məqsədi daşıyır. Nəzakətli şikayətlər bloklanmır",
+        "spam": "Fırıldaq, fişinq, əlaqəsiz reklam"
+      },
+      "instruction": "Süni intellekt üçün əlavə təlimat",
+      "instructionDescription": "İxtiyari. Süni intellektə nəyə icazə verəcəyini və ya nəyi bloklayacağını bildirin.",
+      "instructionPlaceholder": "məs. Qiymətdən şikayət edən müştəriləri bloklama",
+      "action": "Şərh bloklandıqda",
+      "actions": {
+        "hide": "Gizlət",
+        "delete": "Sil"
+      },
+      "deleteWarning": "Silinmiş şərhlər birdəfəlik itir və bərpa oluna bilməz. Süni intellekt səhv etsə, gizlətmək daha təhlükəsizdir."
+    },
+    "moderationLog": {
+      "title": "Moderasiya olunmuş şərhlər",
+      "description": "Bu avtomatlaşdırmanın gizlətdiyi və ya sildiyi şərhlər və səbəbi.",
+      "allActions": "Bütün əməliyyatlar",
+      "allSources": "Qaydalar və Süni intellekt",
+      "actions": {
+        "hide": "Gizlədilib",
+        "delete": "Silinib"
+      },
+      "sources": {
+        "rule": "Gizlətmə qaydası ilə",
+        "ai": "Süni intellekt ilə"
+      },
+      "statuses": {
+        "pending": "Davam edir",
+        "done": "Tamamlandı",
+        "failed": "Uğursuz oldu"
+      },
+      "rules": {
+        "all": "Bütün şərhləri gizlət",
+        "phoneNumber": "Telefon nömrəsi var",
+        "link": "Keçid var",
+        "keyword": "Açar söz var",
+        "image": "Şəkil var",
+        "video": "Video var",
+        "gif": "GIF var",
+        "emoji": "Emoji var"
+      },
+      "summary": {
+        "total": "{count} moderasiya olunub",
+        "hidden": "{count} gizlədilib",
+        "deleted": "{count} silinib",
+        "byAI": "{count} süni intellekt ilə",
+        "byRule": "{count} qaydalarla",
+        "failed": "{count} uğursuz"
+      },
+      "columns": {
+        "time": "Vaxt",
+        "contact": "Kontakt",
+        "comment": "Şərh",
+        "action": "Əməliyyat",
+        "reason": "Səbəb",
+        "status": "Status"
+      },
+      "loading": "Yüklənir…",
+      "empty": "Hələ heç bir şərh gizlədilməyib və ya silinməyib.",
+      "unknownContact": "Naməlum",
+      "noText": "(mətn yoxdur)",
+      "previous": "Əvvəlki",
+      "next": "Növbəti",
+      "page": "Səhifə {page} / {pageCount}"
     }
   },
   "condition": {

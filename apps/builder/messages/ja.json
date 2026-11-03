@@ -759,6 +759,7 @@
       "clicked": "クリック済み",
       "failed": "失敗",
       "missed": "未対応",
+      "moderated": "モデレート済み",
       "noContacts": "連絡先が見つかりません",
       "noComment": "(テキストなし)",
       "pageInfo": "{pageCount}ページ中{page}ページ",
@@ -778,7 +779,9 @@
       "contactNotNew": "新規の連絡先ではない",
       "alreadyRepliedOnPost": "この投稿では返信済み",
       "engagedOnOtherPost": "他の投稿で既に反応済み",
-      "mentionCountNotMatched": "メンション数が一致しませんでした"
+      "mentionCountNotMatched": "メンション数が一致しませんでした",
+      "noImageAttachment": "写真が添付されていません",
+      "moderated": "モデレーションにより非表示または削除されました"
     },
     "replyTo": {
       "mentions": "十分なメンションがあるコメント",
@@ -798,6 +801,10 @@
       "label": "ユーザーが他のユーザーをタグ付けしたかを記録する",
       "descriptionText": "各コメントでタグ付けされたアカウント数を数え、すべてのコメントを通じてコンタクトの累計に加算します。タグ付けされたすべてのアカウントには'{{total_tagged}}'を、ページにメッセージを送ったこともコンタクトになったこともないアカウントには'{{total_new_tagged}}'を使用します。"
     },
+    "onlyCommentsWithImage": {
+      "label": "写真付きのコメントにのみ返信",
+      "descriptionText": "コメントに写真が含まれている場合のみ自動返信します。GIFとステッカーは対象外です。写真のないコメントはスキップされ、次の自動化が試されます。"
+    },
     "card": {
       "reply": "返信"
     },
@@ -815,6 +822,87 @@
       "column": "アカウント",
       "disconnected": "接続が解除されたアカウント",
       "disconnectedDescription": "この自動化は接続が解除されたアカウントに紐づいているため、コメントに返信しません。アカウントを再接続するか、別のアカウントを選択してください。"
+    },
+    "aiModeration": {
+      "enabled": "AIモデレーション",
+      "description": "ボットが返信する前にAIエージェントがすべてのコメントを読み、以下のカテゴリに該当するものを非表示または削除します。モデレートされたコメントには返信しません。",
+      "aiAgentDescription": "エージェントのAIモデルのみを使用し、プロンプトは使用しません。",
+      "categoriesLabel": "次のコメントをブロック",
+      "categories": {
+        "hate": "ヘイトスピーチ",
+        "offensive": "攻撃的",
+        "harassment": "ハラスメント",
+        "negative": "ブランドへの敵意",
+        "spam": "スパムまたは詐欺"
+      },
+      "categoryDescriptions": {
+        "hate": "人種、宗教、性別、国籍などを理由に特定の集団を攻撃する",
+        "offensive": "侮辱、罵倒、下品な言葉",
+        "harassment": "脅迫、いじめ、個人への攻撃",
+        "negative": "ブランドを傷つける意図があるもの。丁寧な苦情はブロックされません",
+        "spam": "詐欺、フィッシング、無関係な宣伝"
+      },
+      "instruction": "AIへの追加ガイダンス",
+      "instructionDescription": "任意。AIに許可する内容やブロックする内容を伝えます。",
+      "instructionPlaceholder": "例：価格に不満を持つお客様はブロックしない",
+      "action": "コメントをブロックしたとき",
+      "actions": {
+        "hide": "非表示にする",
+        "delete": "削除する"
+      },
+      "deleteWarning": "削除したコメントは完全に失われ、復元できません。AIが誤判定した場合に備えて、非表示のほうが安全です。"
+    },
+    "moderationLog": {
+      "title": "モデレートされたコメント",
+      "description": "この自動化が非表示または削除したコメントと、その理由です。",
+      "allActions": "すべてのアクション",
+      "allSources": "ルールとAI",
+      "actions": {
+        "hide": "非表示",
+        "delete": "削除済み"
+      },
+      "sources": {
+        "rule": "非表示ルールによる",
+        "ai": "AIによる"
+      },
+      "statuses": {
+        "pending": "処理中",
+        "done": "完了",
+        "failed": "失敗"
+      },
+      "rules": {
+        "all": "すべてのコメントを非表示",
+        "phoneNumber": "電話番号を含む",
+        "link": "リンクを含む",
+        "keyword": "キーワードを含む",
+        "image": "画像を含む",
+        "video": "動画を含む",
+        "gif": "GIFを含む",
+        "emoji": "絵文字を含む"
+      },
+      "summary": {
+        "total": "モデレート {count} 件",
+        "hidden": "非表示 {count} 件",
+        "deleted": "削除 {count} 件",
+        "byAI": "AIによる {count} 件",
+        "byRule": "ルールによる {count} 件",
+        "failed": "失敗 {count} 件"
+      },
+      "columns": {
+        "time": "日時",
+        "contact": "コンタクト",
+        "comment": "コメント",
+        "action": "アクション",
+        "reason": "理由",
+        "status": "ステータス"
+      },
+      "loading": "読み込み中…",
+      "empty": "非表示または削除されたコメントはまだありません。",
+      "unknownContact": "不明",
+      "noText": "（テキストなし）",
+      "previous": "前へ",
+      "next": "次へ",
+      "page": "{page} / {pageCount} ページ"
     }
   },
   "condition": {

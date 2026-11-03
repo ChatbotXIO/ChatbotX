@@ -190,6 +190,10 @@ export type CommentAutomationMissModel =
   typeof schema.commentAutomationMissModel.$inferSelect
 export type CommentAutomationMissInsert =
   typeof schema.commentAutomationMissModel.$inferInsert
+export type CommentModerationLogModel =
+  typeof schema.commentModerationLogModel.$inferSelect
+export type CommentModerationLogInsert =
+  typeof schema.commentModerationLogModel.$inferInsert
 export type IgStoryAutomationModel =
   typeof schema.igStoryAutomationModel.$inferSelect
 export type AuditLogModel = typeof schema.auditLogModel.$inferSelect

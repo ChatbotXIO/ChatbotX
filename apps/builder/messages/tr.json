@@ -759,6 +759,7 @@
       "clicked": "Tıklandı",
       "failed": "Başarısız",
       "missed": "Kaçırılan",
+      "moderated": "Denetlenen",
       "noContacts": "Kişi bulunamadı",
       "noComment": "(metin yok)",
       "pageInfo": "{pageCount} sayfadan {page}. sayfa",
@@ -778,7 +779,9 @@
       "contactNotNew": "Kişi yeni değil",
       "alreadyRepliedOnPost": "Bu gönderide zaten yanıtlandı",
       "engagedOnOtherPost": "Başka bir gönderide zaten etkileşime girdi",
-      "mentionCountNotMatched": "Bahsetme sayısı eşleşmedi"
+      "mentionCountNotMatched": "Bahsetme sayısı eşleşmedi",
+      "noImageAttachment": "Fotoğraf eklenmemiş",
+      "moderated": "Moderasyon tarafından gizlendi veya silindi"
     },
     "replyTo": {
       "mentions": "Yeterli bahsetme içeren yorumlar",
@@ -798,6 +801,10 @@
       "label": "Bir kullanıcının başka kullanıcıları etiketleyip etiketlemediğini izle",
       "descriptionText": "Her yorumda etiketlenen hesapları sayar ve tüm yorumlar boyunca kişinin toplamlarına ekler. Etiketlenen tüm hesaplar için '{{total_tagged}}', sayfanıza hiç mesaj göndermemiş veya hiç kişi olmamış hesaplar için '{{total_new_tagged}}' kullanın."
     },
+    "onlyCommentsWithImage": {
+      "label": "Yalnızca fotoğraflı yorumlara yanıt ver",
+      "descriptionText": "Yalnızca yorum bir fotoğraf içerdiğinde otomatik yanıt ver. GIF'ler ve çıkartmalar sayılmaz. Fotoğrafsız yorumlar atlanır ve sonraki otomasyon denenir."
+    },
     "card": {
       "reply": "Yanıt"
     },
@@ -815,6 +822,87 @@
       "column": "Hesap",
       "disconnected": "Bağlantısı kesilmiş hesap",
       "disconnectedDescription": "Bu otomasyon artık bağlı olmayan bir hesaba bağlı, bu yüzden hiçbir yoruma yanıt vermez. Hesabı yeniden bağlayın veya başka bir hesap seçin."
+    },
+    "aiModeration": {
+      "enabled": "Yapay zeka moderasyonu",
+      "description": "Bir yapay zeka ajanı, bot yanıt vermeden önce her yorumu okur ve aşağıdaki kategorilerdeki yorumları gizler veya siler. Moderasyona alınan yoruma asla yanıt verilmez.",
+      "aiAgentDescription": "Yalnızca ajanın yapay zeka modeli kullanılır, istemi (prompt) kullanılmaz.",
+      "categoriesLabel": "Şu yorumları engelle",
+      "categories": {
+        "hate": "Nefret söylemi",
+        "offensive": "Saldırgan",
+        "harassment": "Taciz",
+        "negative": "Markaya düşmanca",
+        "spam": "Spam veya dolandırıcılık"
+      },
+      "categoryDescriptions": {
+        "hate": "Irk, din, cinsiyet, uyruk gibi nedenlerle bir gruba saldırır",
+        "offensive": "Hakaret, küfür, kaba dil",
+        "harassment": "Tehdit, zorbalık, bir kişiye saldırı",
+        "negative": "Markaya zarar vermeyi amaçlar. Kibar şikayetler engellenmez",
+        "spam": "Dolandırıcılık, kimlik avı, alakasız tanıtım"
+      },
+      "instruction": "Yapay zeka için ek yönerge",
+      "instructionDescription": "İsteğe bağlı. Yapay zekaya neye izin vereceğini veya neyi engelleyeceğini söyleyin.",
+      "instructionPlaceholder": "örn. Fiyattan şikayet eden müşterileri engelleme",
+      "action": "Bir yorum engellendiğinde",
+      "actions": {
+        "hide": "Gizle",
+        "delete": "Sil"
+      },
+      "deleteWarning": "Silinen yorumlar kalıcı olarak kaybolur ve geri yüklenemez. Yapay zeka hata yaparsa gizlemek daha güvenlidir."
+    },
+    "moderationLog": {
+      "title": "Moderasyona alınan yorumlar",
+      "description": "Bu otomasyonun gizlediği veya sildiği yorumlar ve nedenleri.",
+      "allActions": "Tüm işlemler",
+      "allSources": "Kurallar ve yapay zeka",
+      "actions": {
+        "hide": "Gizlendi",
+        "delete": "Silindi"
+      },
+      "sources": {
+        "rule": "Gizleme kuralıyla",
+        "ai": "Yapay zeka ile"
+      },
+      "statuses": {
+        "pending": "Devam ediyor",
+        "done": "Tamamlandı",
+        "failed": "Başarısız"
+      },
+      "rules": {
+        "all": "Tüm yorumları gizle",
+        "phoneNumber": "Telefon numarası içeriyor",
+        "link": "Bağlantı içeriyor",
+        "keyword": "Anahtar kelime içeriyor",
+        "image": "Görsel içeriyor",
+        "video": "Video içeriyor",
+        "gif": "GIF içeriyor",
+        "emoji": "Emoji içeriyor"
+      },
+      "summary": {
+        "total": "{count} moderasyon",
+        "hidden": "{count} gizlendi",
+        "deleted": "{count} silindi",
+        "byAI": "{count} yapay zeka ile",
+        "byRule": "{count} kurallarla",
+        "failed": "{count} başarısız"
+      },
+      "columns": {
+        "time": "Zaman",
+        "contact": "Kişi",
+        "comment": "Yorum",
+        "action": "İşlem",
+        "reason": "Neden",
+        "status": "Durum"
+      },
+      "loading": "Yükleniyor…",
+      "empty": "Henüz gizlenen veya silinen yorum yok.",
+      "unknownContact": "Bilinmiyor",
+      "noText": "(metin yok)",
+      "previous": "Önceki",
+      "next": "Sonraki",
+      "page": "Sayfa {page} / {pageCount}"
     }
   },
   "condition": {

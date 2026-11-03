@@ -79,21 +79,56 @@ describe("createAttachmentInfoResolver", () => {
   })
 
   test("reads a Threads reply's gif_url", async () => {
-    mockThreadsRunAction.mockResolvedValue("https://media.giphy.com/x.gif")
+    // A GIF reply is still `TEXT_POST` by media_type.
+    mockThreadsRunAction.mockResolvedValue({
+      gifUrl: "https://media.giphy.com/x.gif",
+      mediaType: "TEXT_POST",
+    })
     await expect(resolverFor("threads")()).resolves.toEqual({
       hasImage: false,
       hasVideo: false,
       hasGif: true,
     })
-    expect(mockThreadsRunAction).toHaveBeenCalledWith("getReplyGifUrl", {
+    expect(mockThreadsRunAction).toHaveBeenCalledWith("getReplyAttachment", {
       ctx: {},
       input: { replyId: "comment-1" },
     })
   })
 
-  test("treats a failed Threads lookup as no GIF", async () => {
+  test.each([
+    "IMAGE",
+    "CAROUSEL_ALBUM",
+  ])("reads a Threads %s reply as an image", async (mediaType) => {
+    mockThreadsRunAction.mockResolvedValue({ gifUrl: null, mediaType })
+    await expect(resolverFor("threads")()).resolves.toEqual({
+      hasImage: true,
+      hasVideo: false,
+      hasGif: false,
+    })
+  })
+
+  test("reads a Threads VIDEO reply as a video", async () => {
+    mockThreadsRunAction.mockResolvedValue({ gifUrl: null, mediaType: "VIDEO" })
+    await expect(resolverFor("threads")()).resolves.toEqual({
+      hasImage: false,
+      hasVideo: true,
+      hasGif: false,
+    })
+  })
+
+  test("looks a comment up once however many automations ask", async () => {
+    mockMessengerRunAction.mockResolvedValue("photo")
+    const resolve = resolverFor("messenger")
+    await resolve()
+    await resolve()
+    expect(mockMessengerRunAction).toHaveBeenCalledTimes(1)
+  })
+
+  test("treats a failed Threads lookup as no attachment", async () => {
     mockThreadsRunAction.mockRejectedValue(new Error("boom"))
-    await expect(resolverFor("threads")()).resolves.toMatchObject({
+    await expect(resolverFor("threads")()).resolves.toEqual({
+      hasImage: false,
+      hasVideo: false,
       hasGif: false,
     })
   })

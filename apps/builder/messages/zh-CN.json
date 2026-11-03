@@ -1113,6 +1113,7 @@
       "clicked": "已点击",
       "failed": "失败",
       "missed": "漏回",
+      "moderated": "已审核",
       "noContacts": "找不到联系人",
       "noComment": "(无内容)",
       "pageInfo": "第 {page} 页（共 {pageCount}）",
@@ -1132,7 +1133,9 @@
       "contactNotNew": "联系人不是新用户",
       "alreadyRepliedOnPost": "已在该帖子回复过",
       "engagedOnOtherPost": "已在其他帖子互动过",
-      "mentionCountNotMatched": "提及人数不匹配"
+      "mentionCountNotMatched": "提及人数不匹配",
+      "noImageAttachment": "未附带图片",
+      "moderated": "已被审核隐藏或删除"
     },
     "replyTo": {
       "mentions": "提及人数足够的评论",
@@ -1152,6 +1155,10 @@
       "label": "追踪用户是否标记了其他用户",
       "descriptionText": "统计每条评论中被标记的账号数,并在所有评论中累加到联系人的总数。使用 '{{total_tagged}}' 表示所有被标记的账号,使用 '{{total_new_tagged}}' 表示从未给您的主页发过消息或从未成为联系人的账号。"
     },
+    "onlyCommentsWithImage": {
+      "label": "仅回复带图片的评论",
+      "descriptionText": "仅当评论包含图片时才自动回复。GIF 和贴纸不计入。没有图片的评论将被跳过，并尝试下一个自动化。"
+    },
     "card": {
       "reply": "回复"
     },
@@ -1169,6 +1176,87 @@
       "column": "账号",
       "disconnected": "已断开连接的账号",
       "disconnectedDescription": "此自动化关联的账号已不再连接，因此不会回复任何评论。请重新连接该账号或选择其他账号。"
+    },
+    "aiModeration": {
+      "enabled": "AI 审核",
+      "description": "机器人回复之前，AI 智能体会阅读每条留言，并隐藏或删除属于以下类别的留言。被审核的留言不会收到回复。",
+      "aiAgentDescription": "仅使用智能体的 AI 模型，不使用其提示词。",
+      "categoriesLabel": "屏蔽属于以下类型的留言",
+      "categories": {
+        "hate": "仇恨言论",
+        "offensive": "冒犯性",
+        "harassment": "骚扰",
+        "negative": "对品牌怀有敌意",
+        "spam": "垃圾信息或诈骗"
+      },
+      "categoryDescriptions": {
+        "hate": "因种族、宗教、性别、国籍等攻击某一群体",
+        "offensive": "侮辱、脏话、粗俗语言",
+        "harassment": "威胁、欺凌、攻击个人",
+        "negative": "意图损害品牌。礼貌的投诉不会被屏蔽",
+        "spam": "诈骗、网络钓鱼、无关推广"
+      },
+      "instruction": "给 AI 的额外指引",
+      "instructionDescription": "可选。告诉 AI 哪些内容允许或需要屏蔽。",
+      "instructionPlaceholder": "例如：不要屏蔽抱怨价格的客户",
+      "action": "屏蔽留言时",
+      "actions": {
+        "hide": "隐藏",
+        "delete": "删除"
+      },
+      "deleteWarning": "删除的留言将永久消失，无法恢复。如果 AI 判断有误，隐藏更安全。"
+    },
+    "moderationLog": {
+      "title": "已审核的留言",
+      "description": "此自动化隐藏或删除的留言及原因。",
+      "allActions": "所有操作",
+      "allSources": "规则和 AI",
+      "actions": {
+        "hide": "已隐藏",
+        "delete": "已删除"
+      },
+      "sources": {
+        "rule": "由隐藏规则",
+        "ai": "由 AI"
+      },
+      "statuses": {
+        "pending": "进行中",
+        "done": "已完成",
+        "failed": "失败"
+      },
+      "rules": {
+        "all": "隐藏所有留言",
+        "phoneNumber": "包含电话号码",
+        "link": "包含链接",
+        "keyword": "包含关键字",
+        "image": "包含图片",
+        "video": "包含视频",
+        "gif": "包含 GIF",
+        "emoji": "包含表情符号"
+      },
+      "summary": {
+        "total": "已审核 {count} 条",
+        "hidden": "已隐藏 {count} 条",
+        "deleted": "已删除 {count} 条",
+        "byAI": "AI 处理 {count} 条",
+        "byRule": "规则处理 {count} 条",
+        "failed": "失败 {count} 条"
+      },
+      "columns": {
+        "time": "时间",
+        "contact": "联系人",
+        "comment": "留言",
+        "action": "操作",
+        "reason": "原因",
+        "status": "状态"
+      },
+      "loading": "加载中…",
+      "empty": "尚未隐藏或删除任何留言。",
+      "unknownContact": "未知",
+      "noText": "（无文字）",
+      "previous": "上一页",
+      "next": "下一页",
+      "page": "第 {page} 页，共 {pageCount} 页"
     }
   },
   "channels": {

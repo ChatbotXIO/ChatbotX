@@ -13,9 +13,19 @@ import { workspaceTokenAuthAPIForScope } from "@/orpc"
 import { processMissedComments } from "../lib/missed-comments/process-missed-comments"
 import { MISSED_COMMENTS_SCAN_DAYS } from "../lib/missed-comments/types"
 import {
+  getModerationSummary,
+  listModerationLogs,
+} from "../lib/moderation-logs"
+import {
   listAutomationAccountsRequest,
   listAutomationAccountsResponse,
 } from "../schema/account"
+import {
+  listModerationLogsRequest,
+  listModerationLogsResponse,
+  moderationLogFilterSchema,
+  moderationSummaryResponse,
+} from "../schema/moderation-log"
 
 const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("automation")
 
@@ -118,4 +128,45 @@ export const commentAutomationsPublicRouter = {
         })
       return { inProgress: running.includes(input.id) }
     }),
+
+  listModerationLogs: workspaceTokenAuthAPI
+    .route({
+      method: "GET",
+      path: "/v1/comment-automations/{id}/moderation-logs",
+      summary: "List moderated comments",
+      description:
+        "Lists the comments this automation hid or deleted, newest first, and why: `source: rule` names the hide rule that matched (and the keyword), `source: ai` carries the AI moderation categories and its one-sentence reason. `commentText` is kept even after a delete. Filter by comment time (`from`/`to`), `action` and `source`. Get the automation `id` from `fbComments.list`, `igComments.list`, `threadsComments.list` or `tiktokComments.list`.",
+      tags: ["Comment Automations"],
+    })
+    .input(listModerationLogsRequest)
+    .output(listModerationLogsResponse)
+    .errors(possibleErrorsOnFindingResource)
+    .handler(async ({ context, input }) => {
+      const result = await listModerationLogs(context.workspace.id, input)
+      // PII minimization: the dialog shows who commented; an `automation`
+      // token gets ids it can resolve through the contacts API instead.
+      return {
+        ...result,
+        data: result.data.map(
+          ({ fullName: _fullName, avatar: _avatar, ...row }) => row,
+        ),
+      }
+    }),
+
+  getModerationSummary: workspaceTokenAuthAPI
+    .route({
+      method: "GET",
+      path: "/v1/comment-automations/{id}/moderation-summary",
+      summary: "Get moderated comments summary",
+      description:
+        "Counts the comments this automation hid or deleted, split by action (hidden/deleted), source (hide rule/AI) and channel outcome (failed/pending). Same filters as `commentAutomations.listModerationLogs`.",
+      tags: ["Comment Automations"],
+    })
+    .input(moderationLogFilterSchema)
+    .output(moderationSummaryResponse)
+    .errors(possibleErrorsOnFindingResource)
+    .handler(
+      async ({ context, input }) =>
+        await getModerationSummary(context.workspace.id, input),
+    ),
 }

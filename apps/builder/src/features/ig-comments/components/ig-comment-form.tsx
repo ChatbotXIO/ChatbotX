@@ -32,6 +32,7 @@ import { toast } from "sonner"
 import { TiptapEditorField } from "@/components/tiptap/tiptap-editor-field"
 import { useAIAgentSelectOptions } from "@/features/ai-agents/hooks/use-ai-agents"
 import { useFlowSelectOptions } from "@/features/flows/provider/flow-hook"
+import { AIModerationField } from "@/features/shared/comment-automation/ai-moderation-field"
 import {
   AutomationAccountField,
   useAccountChoiceMissing,
@@ -555,6 +556,7 @@ export function IgCommentForm({
               options={showCommentsAfterOptions}
               required
             />
+            <AIModerationField canDelete={true} />
           </CardContent>
         </Card>
       )}

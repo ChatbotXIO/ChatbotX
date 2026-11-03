@@ -1,5 +1,6 @@
 import {
   COMMENT_REPLY_MAX_TEXTS,
+  commentAIModerationSchema,
   commentExcludeKeywordsTypes,
   commentIncludeKeywordsSchema,
   resolveReplyTexts,
@@ -196,6 +197,7 @@ export function createTiktokCommentRequestSchema(
       hasLink: z.boolean(),
       hasKeywords: z.boolean(),
       hasEmoji: z.boolean().optional(),
+      aiModeration: commentAIModerationSchema.optional(),
       keywords: trimmedArray(MAX_KEYWORDS, MAX_KEYWORD_LENGTH),
       showCommentsAfter: z.enum([
         "none",

@@ -9,6 +9,7 @@ const mocks = vi.hoisted(() => ({
   delete: vi.fn(),
   assertDeletable: vi.fn(),
   flowExists: vi.fn(),
+  findAIAgent: vi.fn(),
 }))
 
 vi.mock("@chatbotx.io/database/client", () => ({
@@ -40,8 +41,12 @@ vi.mock("@chatbotx.io/database/partials", async () => {
     typeof import("../../database/src/partials/comment-automation")
   >("../../database/src/partials/comment-automation")
   return {
+    commentAutomationChannelSupportsDelete:
+      actual.commentAutomationChannelSupportsDelete,
     commentAutomationChannelSupportsHideGif:
       actual.commentAutomationChannelSupportsHideGif,
+    commentAutomationChannelSupportsImageFilter:
+      actual.commentAutomationChannelSupportsImageFilter,
     isLiveCommentAutomation: actual.isLiveCommentAutomation,
     liveCommentCapabilities: actual.liveCommentCapabilities,
     commentAutomationTypes: { enum: { messenger: "messenger" } },
@@ -84,6 +89,10 @@ vi.mock("../src/flow/service", () => ({
   flowService: { exists: mocks.flowExists },
 }))
 
+vi.mock("../src/ai-agent/service", () => ({
+  aiAgentService: { findByIdForWorkspace: mocks.findAIAgent },
+}))
+
 const { commentAutomationService } = await import(
   "../src/comment-automation/service"
 )
@@ -93,6 +102,7 @@ beforeEach(() => {
   mocks.findFirst.mockResolvedValue(undefined)
   mocks.assertDeletable.mockResolvedValue(undefined)
   mocks.flowExists.mockResolvedValue(true)
+  mocks.findAIAgent.mockResolvedValue({ id: "agent-1" })
 })
 
 describe("commentAutomationService — type-scoped writes", () => {
@@ -561,6 +571,103 @@ describe("commentAutomationService — hasGif capability pin", () => {
   })
 })
 
+// Instagram delivers comment text only, so a stored `onlyCommentsWithImage`
+// would make the automation skip every comment.
+describe("commentAutomationService — onlyCommentsWithImage capability pin", () => {
+  const options = {
+    replyToNewContactsOnly: false,
+    replyOncePerUserPerPost: false,
+    likeUserComment: false,
+    replyToUsersWhoCommentedOnOtherPosts: true,
+    ignoreCommentReplies: true,
+    trackUserTags: false,
+    onlyCommentsWithImage: true,
+  }
+
+  test("createInstagram stores onlyCommentsWithImage as false", async () => {
+    const returning = vi.fn().mockResolvedValue([{ id: "id-1" }])
+    const values = vi.fn(() => ({ returning }))
+    mocks.insert.mockReturnValue({ values })
+
+    await commentAutomationService.createInstagram({
+      workspaceId: "1",
+      type: "instagram",
+      data: { name: "hello", options },
+    })
+
+    expect(values).toHaveBeenCalledWith(
+      expect.objectContaining({
+        options: { ...options, onlyCommentsWithImage: false },
+      }),
+    )
+  })
+
+  test("updateInstagram stores onlyCommentsWithImage as false", async () => {
+    mocks.findFirst.mockResolvedValue({ id: "9", type: "instagramFacebook" })
+    const returning = vi.fn().mockResolvedValue([{ id: "9" }])
+    const where = vi.fn(() => ({ returning }))
+    const set = vi.fn(() => ({ where }))
+    mocks.update.mockReturnValue({ set })
+
+    await commentAutomationService.updateInstagram(
+      { workspaceId: "1", id: "9" },
+      { options },
+    )
+
+    expect(set).toHaveBeenCalledWith({
+      options: { ...options, onlyCommentsWithImage: false },
+    })
+  })
+
+  test("createMessenger keeps onlyCommentsWithImage, which Facebook can detect", async () => {
+    const returning = vi.fn().mockResolvedValue([{ id: "id-1" }])
+    const values = vi.fn(() => ({ returning }))
+    mocks.insert.mockReturnValue({ values })
+
+    await commentAutomationService.createMessenger({
+      workspaceId: "1",
+      data: { name: "hello", options },
+    })
+
+    expect(values).toHaveBeenCalledWith(
+      expect.objectContaining({
+        options: expect.objectContaining({ onlyCommentsWithImage: true }),
+      }),
+    )
+  })
+
+  test("createThreadsAutomation keeps onlyCommentsWithImage", async () => {
+    const returning = vi.fn().mockResolvedValue([{ id: "id-1" }])
+    const values = vi.fn(() => ({ returning }))
+    mocks.insert.mockReturnValue({ values })
+
+    await commentAutomationService.createThreadsAutomation({
+      workspaceId: "1",
+      data: {
+        name: "hello",
+        post: { type: "all", value: [] },
+        publicReply: { type: "text", value: "hi" },
+        includeKeywords: { type: "all", value: [] },
+        excludeKeywords: [],
+        options: {
+          replyToNewContactsOnly: false,
+          replyOncePerUserPerPost: false,
+          replyToUsersWhoCommentedOnOtherPosts: true,
+          ignoreCommentReplies: true,
+          onlyCommentsWithImage: true,
+        },
+        replyAfter: { type: "immediately", value: 0 },
+      },
+    })
+
+    expect(values).toHaveBeenCalledWith(
+      expect.objectContaining({
+        options: expect.objectContaining({ onlyCommentsWithImage: true }),
+      }),
+    )
+  })
+})
+
 // Instagram Live is private-reply-only, cannot be hidden or liked, and only
 // accepts the DM while the broadcast runs — a write that sets any of those
 // would store a reply Meta rejects.
@@ -696,6 +803,135 @@ describe("commentAutomationService — Instagram Live capability pin", () => {
         options: expect.objectContaining({ likeUserComment: true }),
         hideComments: expect.objectContaining({ all: true }),
         replyAfter: { type: "minutes", value: 5 },
+      }),
+    )
+  })
+})
+
+describe("commentAutomationService — AI moderation", () => {
+  const aiModeration = {
+    enabled: true,
+    aiAgentId: "agent-1",
+    categories: ["hate" as const, "offensive" as const],
+    action: "delete" as const,
+  }
+  const hideComments = {
+    all: false,
+    hasPhoneNumber: false,
+    hasImage: false,
+    hasVideo: false,
+    hasLink: false,
+    hasKeywords: false,
+    keywords: [],
+    showCommentsAfter: "none" as const,
+    aiModeration,
+  }
+
+  function mockInsert() {
+    const returning = vi.fn().mockResolvedValue([{ id: "id-1" }])
+    const values = vi.fn(() => ({ returning }))
+    mocks.insert.mockReturnValue({ values })
+    return values
+  }
+
+  test("createInstagram keeps delete, which Instagram supports", async () => {
+    const values = mockInsert()
+
+    await commentAutomationService.createInstagram({
+      workspaceId: "1",
+      type: "instagram",
+      data: { name: "hello", hideComments },
+    })
+
+    expect(mocks.findAIAgent).toHaveBeenCalledWith({
+      id: "agent-1",
+      workspaceId: "1",
+    })
+    expect(values).toHaveBeenCalledWith(
+      expect.objectContaining({
+        hideComments: expect.objectContaining({ aiModeration }),
+      }),
+    )
+  })
+
+  test("rejects an AI agent from another workspace", async () => {
+    mocks.findAIAgent.mockResolvedValue(undefined)
+    mockInsert()
+
+    await expect(
+      commentAutomationService.createInstagram({
+        workspaceId: "1",
+        type: "instagram",
+        data: { name: "hello", hideComments },
+      }),
+    ).rejects.toMatchObject({ code: "validation" })
+    expect(mocks.insert).not.toHaveBeenCalled()
+  })
+
+  test("rejects enabled moderation without an agent or categories", async () => {
+    await expect(
+      commentAutomationService.createMessenger({
+        workspaceId: "1",
+        data: {
+          name: "hello",
+          hideComments: {
+            ...hideComments,
+            aiModeration: { ...aiModeration, aiAgentId: null },
+          },
+        },
+      }),
+    ).rejects.toMatchObject({ code: "validation" })
+
+    await expect(
+      commentAutomationService.createMessenger({
+        workspaceId: "1",
+        data: {
+          name: "hello",
+          hideComments: {
+            ...hideComments,
+            aiModeration: { ...aiModeration, categories: [] },
+          },
+        },
+      }),
+    ).rejects.toMatchObject({ code: "validation" })
+    expect(mocks.insert).not.toHaveBeenCalled()
+  })
+
+  test("skips the agent check when moderation is off", async () => {
+    mockInsert()
+
+    await commentAutomationService.createMessenger({
+      workspaceId: "1",
+      data: {
+        name: "hello",
+        hideComments: {
+          ...hideComments,
+          aiModeration: { ...aiModeration, enabled: false, aiAgentId: null },
+        },
+      },
+    })
+
+    expect(mocks.findAIAgent).not.toHaveBeenCalled()
+  })
+
+  test("an Instagram Live automation stores moderation as disabled", async () => {
+    const values = mockInsert()
+
+    await commentAutomationService.createInstagram({
+      workspaceId: "1",
+      type: "instagram",
+      data: {
+        name: "hello",
+        post: { type: "live", value: [] },
+        hideComments,
+      },
+    })
+
+    expect(values).toHaveBeenCalledWith(
+      expect.objectContaining({
+        hideComments: expect.objectContaining({
+          aiModeration: { ...aiModeration, enabled: false },
+        }),
       }),
     )
   })

@@ -51,6 +51,13 @@ vi.mock("@chatbotx.io/business", () => ({
   igStoryAutomationService,
 }))
 
+const listModerationLogs = vi.fn()
+const getModerationSummary = vi.fn()
+vi.mock("@/features/shared/comment-automation/lib/moderation-logs", () => ({
+  listModerationLogs,
+  getModerationSummary,
+}))
+
 const processMissedComments = vi.fn()
 vi.mock(
   "@/features/shared/comment-automation/lib/missed-comments/process-missed-comments",
@@ -175,5 +182,52 @@ describe("missed comment runs", () => {
     expect(
       commentAutomationService.findMissedCommentsInProgress,
     ).not.toHaveBeenCalled()
+  })
+})
+
+describe("GET /v1/comment-automations/{id}/moderation-logs", () => {
+  test("reads the token workspace and drops the commenter's name and avatar", async () => {
+    listModerationLogs.mockResolvedValue({
+      data: [
+        {
+          id: "log-1",
+          commentText: "trash",
+          source: "ai",
+          fullName: "Jane Doe",
+          avatar: "https://example.com/a.png",
+          contactId: "contact-1",
+        },
+      ],
+      total: 1,
+      page: 1,
+      pageCount: 1,
+    })
+    const input = { id: "9", page: 1, perPage: 50, source: "ai" }
+
+    const result = (await findProcedure(
+      "GET",
+      "/v1/comment-automations/{id}/moderation-logs",
+    ).handler?.({ context, input })) as { data: Record<string, unknown>[] }
+
+    expect(listModerationLogs).toHaveBeenCalledWith("workspace-1", input)
+    expect(result.data[0]).toEqual({
+      id: "log-1",
+      commentText: "trash",
+      source: "ai",
+      contactId: "contact-1",
+    })
+  })
+
+  test("summary reads the token workspace", async () => {
+    getModerationSummary.mockResolvedValue({ total: 2 })
+
+    await findProcedure(
+      "GET",
+      "/v1/comment-automations/{id}/moderation-summary",
+    ).handler?.({ context, input: { id: "9" } })
+
+    expect(getModerationSummary).toHaveBeenCalledWith("workspace-1", {
+      id: "9",
+    })
   })
 })

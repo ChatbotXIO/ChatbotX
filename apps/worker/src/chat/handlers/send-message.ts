@@ -57,6 +57,10 @@ import {
   settleCommentAutomationDelivered,
   settleCommentAutomationFailure,
 } from "../../lib/comment-automation-anchor"
+import {
+  failCommentModeration,
+  settleCommentModeration,
+} from "../../lib/comment-moderation"
 import { logger } from "../../lib/logger"
 import {
   allIntegrations,
@@ -575,7 +579,7 @@ export async function sendMessageToChannel(
 export async function deleteMessageFromChannel(
   data: ChatJobDeleteChannelMessage["data"],
 ) {
-  const { conversation, contactInbox, message } = data
+  const { conversation, contactInbox, message, moderation } = data
 
   const found = await messageService.findWithAttachments({
     id: message.id,
@@ -588,6 +592,11 @@ export async function deleteMessageFromChannel(
       { messageId: message.id },
       "deleteMessageFromChannel: message not found in shard",
     )
+    await failCommentModeration(
+      conversation.workspaceId,
+      moderation,
+      "Comment message not found",
+    )
     return
   }
 
@@ -596,18 +605,65 @@ export async function deleteMessageFromChannel(
       { messageId: message.id, type: found.type },
       "deleteMessageFromChannel: message is not a comment or has no sourceId, skipping",
     )
+    await failCommentModeration(
+      conversation.workspaceId,
+      moderation,
+      "Message is not a comment",
+    )
     return
   }
 
-  const { integration, ctx } = await resolveIntegrationContextFromContactInbox({
-    workspaceId: conversation.workspaceId,
-    contactInbox,
-  })
+  const commentId = found.sourceId
+  // The integration lookup sits inside the settle as well: a disconnected
+  // channel must fail the moderation log, not leave it pending.
+  await settleCommentModeration(
+    conversation.workspaceId,
+    moderation,
+    (async () => {
+      const { integration, ctx } =
+        await resolveIntegrationContextFromContactInbox({
+          workspaceId: conversation.workspaceId,
+          contactInbox,
+        })
+      await integration.runChannelHandler("comment", "deleteComment", {
+        ctx,
+        data: { commentId },
+      })
+    })(),
+  )
 
-  await integration.runChannelHandler("comment", "deleteComment", {
-    ctx,
-    data: { commentId: found.sourceId },
-  })
+  if (moderation) {
+    await removeModeratedCommentFromInbox(conversation, found)
+  }
+}
+
+/**
+ * The builder's delete action soft-deletes the inbox row before it enqueues
+ * the channel delete; a moderation delete has no such caller, so it does the
+ * same here once the channel accepted it.
+ */
+async function removeModeratedCommentFromInbox(
+  conversation: ConversationModel,
+  found: Pick<MessageModel, "id" | "sourceId" | "createdAt">,
+): Promise<void> {
+  try {
+    const deleted = await messageService.delete({
+      id: found.id,
+      sourceId: found.sourceId ?? undefined,
+      workspaceId: conversation.workspaceId,
+      createdAt: found.createdAt,
+    })
+    queueWorkspaceRealtimeEvent(conversation.workspaceId, {
+      eventType: RealtimeEventType.messageDeleted,
+      data: { messageIds: deleted.map((row) => row.id) },
+      route: routeForConversation(conversation),
+    })
+  } catch (err) {
+    logger.warn(
+      { err, messageId: found.id },
+      "deleteMessageFromChannel: failed to remove the moderated comment from the inbox",
+    )
+  }
 }
 
 export async function editMessageFromChannel(
@@ -652,7 +708,8 @@ export async function editMessageFromChannel(
 export async function changeMessageStateOnChannel(
   data: ChatJobChangeChannelMessageState["data"],
 ) {
-  const { conversation, contactInbox, message, liked, hidden } = data
+  const { conversation, contactInbox, message, liked, hidden, moderation } =
+    data
 
   const found = await messageService.findWithAttachments({
     id: message.id,
@@ -665,6 +722,11 @@ export async function changeMessageStateOnChannel(
       { messageId: message.id },
       "changeMessageStateOnChannel: message not found in shard",
     )
+    await failCommentModeration(
+      conversation.workspaceId,
+      moderation,
+      "Comment message not found",
+    )
     return
   }
 
@@ -673,55 +735,69 @@ export async function changeMessageStateOnChannel(
       { messageId: message.id, type: found.type },
       "changeMessageStateOnChannel: message is not a comment or has no sourceId, skipping",
     )
+    await failCommentModeration(
+      conversation.workspaceId,
+      moderation,
+      "Message is not a comment",
+    )
     return
   }
 
-  const current =
-    (found.attributes as { liked?: boolean; hidden?: boolean } | null) ?? {}
-  const newAttributes = {
-    liked: liked === undefined ? (current.liked ?? false) : liked,
-    hidden: hidden === undefined ? (current.hidden ?? false) : hidden,
-  }
-  await messageService.updateAttributes({
-    id: message.id,
-    workspaceId: conversation.workspaceId,
-    attributes: newAttributes,
-    createdAt: found.createdAt,
-  })
+  const commentId = found.sourceId
+  // Everything that can fail — the attribute write, the integration lookup,
+  // the channel calls — settles the moderation log, so none leaves it pending.
+  await settleCommentModeration(
+    conversation.workspaceId,
+    moderation,
+    (async () => {
+      const current =
+        (found.attributes as { liked?: boolean; hidden?: boolean } | null) ?? {}
+      const newAttributes = {
+        liked: liked === undefined ? (current.liked ?? false) : liked,
+        hidden: hidden === undefined ? (current.hidden ?? false) : hidden,
+      }
+      await messageService.updateAttributes({
+        id: message.id,
+        workspaceId: conversation.workspaceId,
+        attributes: newAttributes,
+        createdAt: found.createdAt,
+      })
 
-  const { integration, ctx } = await resolveIntegrationContextFromContactInbox({
-    workspaceId: conversation.workspaceId,
-    contactInbox,
-  })
+      const { integration, ctx } =
+        await resolveIntegrationContextFromContactInbox({
+          workspaceId: conversation.workspaceId,
+          contactInbox,
+        })
 
-  const calls: Promise<void>[] = []
-  if (liked !== undefined) {
-    calls.push(
-      integration.runChannelHandler("comment", "likeComment", {
-        ctx,
-        data: { commentId: found.sourceId, liked },
-      }),
-    )
-  }
-  if (hidden !== undefined) {
-    calls.push(
-      integration.runChannelHandler("comment", "hideComment", {
-        ctx,
-        data: {
-          commentId: found.sourceId,
-          hidden,
-          // TikTok's hide endpoint is addressed by (video_id, comment_id);
-          // Meta's by comment id alone and ignores this.
-          postId:
-            typeof found.contentAttributes?.postId === "string"
-              ? found.contentAttributes.postId
-              : undefined,
-        },
-      }),
-    )
-  }
-
-  await Promise.all(calls)
+      const calls: Promise<void>[] = []
+      if (liked !== undefined) {
+        calls.push(
+          integration.runChannelHandler("comment", "likeComment", {
+            ctx,
+            data: { commentId, liked },
+          }),
+        )
+      }
+      if (hidden !== undefined) {
+        calls.push(
+          integration.runChannelHandler("comment", "hideComment", {
+            ctx,
+            data: {
+              commentId,
+              hidden,
+              // TikTok's hide endpoint is addressed by (video_id, comment_id);
+              // Meta's by comment id alone and ignores this.
+              postId:
+                typeof found.contentAttributes?.postId === "string"
+                  ? found.contentAttributes.postId
+                  : undefined,
+            },
+          }),
+        )
+      }
+      await Promise.all(calls)
+    })(),
+  )
 }
 
 /**

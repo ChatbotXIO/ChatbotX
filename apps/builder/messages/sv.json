@@ -925,6 +925,7 @@
       "clicked": "Klickat",
       "failed": "Misslyckades",
       "missed": "Missade",
+      "moderated": "Modererade",
       "noContacts": "Inga kontakter hittades",
       "noComment": "(ingen text)",
       "pageInfo": "Sida {page} av {pageCount}",
@@ -944,7 +945,9 @@
       "contactNotNew": "Kontakten är inte ny",
       "alreadyRepliedOnPost": "Redan besvarad på detta inlägg",
       "engagedOnOtherPost": "Har redan interagerat på ett annat inlägg",
-      "mentionCountNotMatched": "Antalet omnämnanden stämde inte"
+      "mentionCountNotMatched": "Antalet omnämnanden stämde inte",
+      "noImageAttachment": "Ingen bild bifogad",
+      "moderated": "Dold eller borttagen av moderering"
     },
     "replyTo": {
       "mentions": "Kommentarer med tillräckligt många omnämnanden",
@@ -964,6 +967,10 @@
       "label": "Spåra om en användare taggar andra användare",
       "descriptionText": "Räknar kontona som taggas i varje kommentar och lägger till dem i kontaktens totaler över alla kommentarer. Använd '{{total_tagged}}' för alla taggade konton och '{{total_new_tagged}}' för konton som aldrig har skrivit till din sida eller varit kontakter."
     },
+    "onlyCommentsWithImage": {
+      "label": "Svara bara på kommentarer med en bild",
+      "descriptionText": "Svara automatiskt bara när kommentaren innehåller en bild. GIF:ar och klistermärken räknas inte. Kommentarer utan bild hoppas över och nästa automatisering provas."
+    },
     "card": {
       "reply": "Svar"
     },
@@ -981,6 +988,87 @@
       "column": "Konto",
       "disconnected": "Frånkopplat konto",
       "disconnectedDescription": "Den här automatiseringen hör till ett konto som inte längre är anslutet, så den svarar inte på några kommentarer. Anslut kontot igen eller välj ett annat."
+    },
+    "aiModeration": {
+      "enabled": "AI-moderering",
+      "description": "En AI-agent läser varje kommentar innan boten svarar och döljer eller tar bort dem i kategorierna nedan. En modererad kommentar får aldrig något svar.",
+      "aiAgentDescription": "Endast agentens AI-modell används, inte dess prompt.",
+      "categoriesLabel": "Blockera kommentarer som är",
+      "categories": {
+        "hate": "Hatpropaganda",
+        "offensive": "Kränkande",
+        "harassment": "Trakasserier",
+        "negative": "Fientliga mot varumärket",
+        "spam": "Skräppost eller bedrägeri"
+      },
+      "categoryDescriptions": {
+        "hate": "Angriper en grupp på grund av ras, religion, kön, nationalitet och liknande",
+        "offensive": "Förolämpningar, svordomar, vulgärt språk",
+        "harassment": "Hot, mobbning, angrepp på en person",
+        "negative": "Syftar till att skada varumärket. Artiga klagomål blockeras inte",
+        "spam": "Bedrägerier, nätfiske, orelaterad marknadsföring"
+      },
+      "instruction": "Extra vägledning för AI:n",
+      "instructionDescription": "Valfritt. Tala om för AI:n vad som ska tillåtas eller blockeras.",
+      "instructionPlaceholder": "t.ex. Blockera inte kunder som klagar på priset",
+      "action": "När en kommentar blockeras",
+      "actions": {
+        "hide": "Dölj den",
+        "delete": "Ta bort den"
+      },
+      "deleteWarning": "Borttagna kommentarer är borta för alltid och kan inte återställas. Att dölja är säkrare om AI:n gör fel."
+    },
+    "moderationLog": {
+      "title": "Modererade kommentarer",
+      "description": "Kommentarer som den här automatiseringen har dolt eller tagit bort, och varför.",
+      "allActions": "Alla åtgärder",
+      "allSources": "Regler och AI",
+      "actions": {
+        "hide": "Dold",
+        "delete": "Borttagen"
+      },
+      "sources": {
+        "rule": "Av en döljregel",
+        "ai": "Av AI"
+      },
+      "statuses": {
+        "pending": "Pågår",
+        "done": "Klar",
+        "failed": "Misslyckades"
+      },
+      "rules": {
+        "all": "Dölj alla kommentarer",
+        "phoneNumber": "Innehåller telefonnummer",
+        "link": "Innehåller länk",
+        "keyword": "Innehåller nyckelord",
+        "image": "Innehåller bild",
+        "video": "Innehåller video",
+        "gif": "Innehåller GIF",
+        "emoji": "Innehåller emoji"
+      },
+      "summary": {
+        "total": "{count} modererade",
+        "hidden": "{count} dolda",
+        "deleted": "{count} borttagna",
+        "byAI": "{count} av AI",
+        "byRule": "{count} av regler",
+        "failed": "{count} misslyckades"
+      },
+      "columns": {
+        "time": "Tid",
+        "contact": "Kontakt",
+        "comment": "Kommentar",
+        "action": "Åtgärd",
+        "reason": "Orsak",
+        "status": "Status"
+      },
+      "loading": "Laddar…",
+      "empty": "Inga kommentarer har dolts eller tagits bort än.",
+      "unknownContact": "Okänd",
+      "noText": "(ingen text)",
+      "previous": "Föregående",
+      "next": "Nästa",
+      "page": "Sida {page} av {pageCount}"
     }
   },
   "channels": {

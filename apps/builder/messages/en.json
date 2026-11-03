@@ -801,6 +801,7 @@
       "clicked": "Clicked",
       "failed": "Failed",
       "missed": "Misses",
+      "moderated": "Moderated",
       "noContacts": "No contacts found",
       "noComment": "(no text)",
       "pageInfo": "Page {page} of {pageCount}",
@@ -820,7 +821,9 @@
       "contactNotNew": "Contact is not new",
       "alreadyRepliedOnPost": "Already replied on this post",
       "engagedOnOtherPost": "Already engaged on another post",
-      "mentionCountNotMatched": "Mention count did not match"
+      "mentionCountNotMatched": "Mention count did not match",
+      "noImageAttachment": "No photo attached",
+      "moderated": "Hidden or deleted by moderation"
     },
     "replyTo": {
       "mentions": "Comments when enough mentions",
@@ -840,6 +843,10 @@
       "label": "Track if a user tags other users",
       "descriptionText": "Counts the accounts tagged in each comment and adds them to the contact's running totals across all comments. Use '{{total_tagged}}' for every tagged account and '{{total_new_tagged}}' for accounts that have never messaged your page or been a contact."
     },
+    "onlyCommentsWithImage": {
+      "label": "Only reply to comments with a photo",
+      "descriptionText": "Only auto-reply when the comment includes a photo. GIFs and stickers don't count. Comments without a photo are skipped and the next automation is tried."
+    },
     "card": {
       "reply": "Reply"
     },
@@ -857,6 +864,87 @@
       "column": "Account",
       "disconnected": "Disconnected account",
       "disconnectedDescription": "This automation is tied to an account that is no longer connected, so it answers no comments. Reconnect the account or choose another one."
+    },
+    "aiModeration": {
+      "enabled": "AI moderation",
+      "description": "An AI agent reads every comment before the bot replies and hides or deletes the ones in the categories below. A moderated comment is never replied to.",
+      "aiAgentDescription": "Only the agent's AI model is used, not its prompt.",
+      "categoriesLabel": "Block comments that are",
+      "categories": {
+        "hate": "Hate speech",
+        "offensive": "Offensive",
+        "harassment": "Harassment",
+        "negative": "Hostile toward the brand",
+        "spam": "Spam or scam"
+      },
+      "categoryDescriptions": {
+        "hate": "Attacks a group for race, religion, gender, nationality and similar",
+        "offensive": "Insults, swearing, vulgar language",
+        "harassment": "Threats, bullying, attacks on a person",
+        "negative": "Meant to damage the brand. Polite complaints are not blocked",
+        "spam": "Scams, phishing, unrelated promotion"
+      },
+      "instruction": "Extra guidance for the AI",
+      "instructionDescription": "Optional. Tell the AI what to allow or block.",
+      "instructionPlaceholder": "e.g. Do not block customers complaining about price",
+      "action": "When a comment is blocked",
+      "actions": {
+        "hide": "Hide it",
+        "delete": "Delete it"
+      },
+      "deleteWarning": "Deleted comments are gone for good and cannot be restored. Hiding is safer if the AI makes a mistake."
+    },
+    "moderationLog": {
+      "title": "Moderated comments",
+      "description": "Comments this automation hid or deleted, and why.",
+      "allActions": "All actions",
+      "allSources": "Rules and AI",
+      "actions": {
+        "hide": "Hidden",
+        "delete": "Deleted"
+      },
+      "sources": {
+        "rule": "By a hide rule",
+        "ai": "By AI"
+      },
+      "statuses": {
+        "pending": "In progress",
+        "done": "Done",
+        "failed": "Failed"
+      },
+      "rules": {
+        "all": "Hide all comments",
+        "phoneNumber": "Has a phone number",
+        "link": "Has a link",
+        "keyword": "Has a keyword",
+        "image": "Has an image",
+        "video": "Has a video",
+        "gif": "Has a GIF",
+        "emoji": "Has an emoji"
+      },
+      "summary": {
+        "total": "{count} moderated",
+        "hidden": "{count} hidden",
+        "deleted": "{count} deleted",
+        "byAI": "{count} by AI",
+        "byRule": "{count} by rules",
+        "failed": "{count} failed"
+      },
+      "columns": {
+        "time": "Time",
+        "contact": "Contact",
+        "comment": "Comment",
+        "action": "Action",
+        "reason": "Reason",
+        "status": "Status"
+      },
+      "loading": "Loading…",
+      "empty": "No comments have been hidden or deleted yet.",
+      "unknownContact": "Unknown",
+      "noText": "(no text)",
+      "previous": "Previous",
+      "next": "Next",
+      "page": "Page {page} of {pageCount}"
     }
   },
   "condition": {

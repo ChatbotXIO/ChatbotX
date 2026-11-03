@@ -7,6 +7,7 @@ import {
   isNoRedisEnv,
 } from "../../lib/connection"
 import { queueNames } from "../../lib/types"
+import type { IntegrationJobProcessCommentAutomation } from "../integration"
 
 export const AI_FILES_DEFAULT_CHUNK_SIZE = 1000
 export const AI_FILES_DEFAULT_OVERLAP_SIZE = 200
@@ -30,6 +31,7 @@ export const AIJobAction = {
   processAutomatedResponse: "processAutomatedResponse",
   processHandoffReentry: "processHandoffReentry",
   commentAIReply: "commentAIReply",
+  commentModeration: "commentModeration",
   processStoryReplyAutomation: "processStoryReplyAutomation",
   processStoryMentionAutomation: "processStoryMentionAutomation",
 } as const
@@ -118,6 +120,25 @@ const aiJobCommentAIReplySchema = z.object({
   }),
 })
 
+/**
+ * AI moderation of one comment for one automation. `commentAutomation` is the
+ * original `processCommentAutomation` payload: a comment the AI clears is
+ * re-run through that job for `automationId` only, with `moderationChecked`.
+ */
+const aiJobCommentModerationSchema = z.object({
+  type: z.literal(AIJobAction.commentModeration),
+  data: z.object({
+    automationId: z.string().min(1),
+    workspaceId: z.string().min(1),
+    commentId: z.string().min(1),
+    messageId: z.string().min(1),
+    messageCreatedAt: z.string().min(1),
+    commentAutomation: z.custom<IntegrationJobProcessCommentAutomation["data"]>(
+      (value) => typeof value === "object" && value !== null,
+    ),
+  }),
+})
+
 const aiJobProcessStoryReplyAutomationSchema = z.object({
   type: z.literal(AIJobAction.processStoryReplyAutomation),
   data: z.object({
@@ -152,6 +173,7 @@ export const aiJobDataSchema = z.discriminatedUnion("type", [
   aiJobProcessAutomatedResponseSchema,
   aiJobProcessHandoffReentrySchema,
   aiJobCommentAIReplySchema,
+  aiJobCommentModerationSchema,
   aiJobProcessStoryReplyAutomationSchema,
   aiJobProcessStoryMentionAutomationSchema,
 ])
@@ -177,6 +199,9 @@ export type AIJobProcessHandoffReentry = z.infer<
   typeof aiJobProcessHandoffReentrySchema
 >
 export type AIJobCommentAIReply = z.infer<typeof aiJobCommentAIReplySchema>
+export type AIJobCommentModeration = z.infer<
+  typeof aiJobCommentModerationSchema
+>
 export type AIJobProcessStoryReplyAutomation = z.infer<
   typeof aiJobProcessStoryReplyAutomationSchema
 >

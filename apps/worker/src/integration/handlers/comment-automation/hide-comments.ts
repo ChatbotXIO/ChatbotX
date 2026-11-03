@@ -1,4 +1,8 @@
-import type { CommentHideComments } from "@chatbotx.io/database/partials"
+import type {
+  CommentHideComments,
+  CommentModerationAction,
+  CommentModerationRule,
+} from "@chatbotx.io/database/partials"
 import type {
   ContactInboxModel,
   ConversationModel,
@@ -71,14 +75,12 @@ export function hasEmoji(text: string): boolean {
 }
 
 /**
- * Whether the automation's hide settings ask for anything at all. Lets the
- * orchestrator skip the whole hide path (including the attachment lookup) for
- * an all-defaults config, and lets it report the unsupported capability only
- * when the user actually configured one.
+ * Whether the automation's hide rules ask for anything at all (AI moderation
+ * aside). Lets the orchestrator skip the whole hide path (including the
+ * attachment lookup) for an all-defaults config, and lets it report the
+ * unsupported capability only when the user actually configured one.
  */
-export function hasHideCommentAction(
-  hideComments: CommentHideComments,
-): boolean {
+export function hasHideRule(hideComments: CommentHideComments): boolean {
   return (
     hideComments.all ||
     hideComments.hasPhoneNumber ||
@@ -108,69 +110,131 @@ const UNHIDE_DELAY_MS: Record<string, number> = {
   "10d": 10 * 86_400_000,
 }
 
-export async function applyHideComments(
+export type HideRuleMatch = {
+  rule: CommentModerationRule
+  /** The configured keyword that matched a `keyword` rule. */
+  matchedKeyword?: string
+}
+
+/**
+ * The first hide rule the comment trips, in the order the switches are listed
+ * in the form — or null. Pure: the caller records the match and enqueues the
+ * hide, so the moderation log can say exactly which rule fired.
+ */
+export function matchHideRule(
   hideComments: CommentHideComments,
-  commentId: string,
   message: string | undefined,
-  ctx: {
-    conversation: ConversationModel
-    contactInbox: ContactInboxModel
-    messageId: string
-    messageCreatedAt: Date
-    hasImage: boolean
-    hasVideo: boolean
-    hasGif: boolean
-  },
-) {
+  attachments: { hasImage: boolean; hasVideo: boolean; hasGif: boolean },
+): HideRuleMatch | null {
   const text = message ?? ""
-  const normalizedText = normalizeForMatch(text)
 
-  const shouldHide =
-    hideComments.all ||
-    (hideComments.hasPhoneNumber && PHONE_RE.test(text)) ||
-    (hideComments.hasLink && hasLink(text)) ||
-    (hideComments.hasKeywords &&
-      hideComments.keywords.some((k) =>
-        normalizedText.includes(normalizeForMatch(k)),
-      )) ||
-    (hideComments.hasImage && ctx.hasImage) ||
-    (hideComments.hasVideo && ctx.hasVideo) ||
-    (Boolean(hideComments.hasGif) && ctx.hasGif) ||
-    (Boolean(hideComments.hasEmoji) && hasEmoji(text))
+  if (hideComments.all) {
+    return { rule: "all" }
+  }
+  if (hideComments.hasPhoneNumber && PHONE_RE.test(text)) {
+    return { rule: "phoneNumber" }
+  }
+  if (hideComments.hasLink && hasLink(text)) {
+    return { rule: "link" }
+  }
+  if (hideComments.hasKeywords) {
+    const normalizedText = normalizeForMatch(text)
+    const matchedKeyword = hideComments.keywords.find((keyword) =>
+      normalizedText.includes(normalizeForMatch(keyword)),
+    )
+    if (matchedKeyword !== undefined) {
+      return { rule: "keyword", matchedKeyword }
+    }
+  }
+  if (hideComments.hasImage && attachments.hasImage) {
+    return { rule: "image" }
+  }
+  if (hideComments.hasVideo && attachments.hasVideo) {
+    return { rule: "video" }
+  }
+  if (hideComments.hasGif && attachments.hasGif) {
+    return { rule: "gif" }
+  }
+  if (hideComments.hasEmoji && hasEmoji(text)) {
+    return { rule: "emoji" }
+  }
+  return null
+}
 
-  if (!shouldHide) {
+/**
+ * Enqueues the channel-side hide or delete of a moderated comment. The job
+ * carries `moderation` so its handler settles the `CommentModerationLog` row.
+ *
+ * `showCommentsAfter` schedules an unhide for a hide only; a deleted comment
+ * cannot come back.
+ */
+export async function enqueueModerationAction(props: {
+  action: CommentModerationAction
+  automationId: string
+  commentId: string
+  showCommentsAfter: CommentHideComments["showCommentsAfter"]
+  conversation: ConversationModel
+  contactInbox: ContactInboxModel
+  messageId: string
+  messageCreatedAt: Date
+}): Promise<void> {
+  const message = { id: props.messageId, createdAt: props.messageCreatedAt }
+  const moderation = {
+    automationId: props.automationId,
+    commentId: props.commentId,
+  }
+  // One job per moderated comment: a redelivery that re-enqueues a still
+  // pending action joins the queued job instead of hiding or deleting twice.
+  const options = withReplayPriority({
+    jobId: `moderate-comment-${props.automationId}-${props.commentId}`,
+  })
+
+  if (props.action === "delete") {
+    await chatQueue.add(
+      ChatJobAction.deleteChannelMessage,
+      {
+        type: ChatJobAction.deleteChannelMessage,
+        data: {
+          conversation: props.conversation,
+          contactInbox: props.contactInbox,
+          message,
+          moderation,
+        },
+      },
+      options,
+    )
     return
   }
 
-  const hideOptions = withReplayPriority()
   await chatQueue.add(
     ChatJobAction.changeChannelMessageState,
     {
       type: ChatJobAction.changeChannelMessageState,
       data: {
-        conversation: ctx.conversation,
-        contactInbox: ctx.contactInbox,
-        message: { id: ctx.messageId, createdAt: ctx.messageCreatedAt },
+        conversation: props.conversation,
+        contactInbox: props.contactInbox,
+        message,
         hidden: true,
+        moderation,
       },
     },
-    ...(hideOptions ? [hideOptions] : []),
+    options,
   )
 
-  if (hideComments.showCommentsAfter !== "none") {
-    const delay = UNHIDE_DELAY_MS[hideComments.showCommentsAfter] ?? 0
+  if (props.showCommentsAfter !== "none") {
+    const delay = UNHIDE_DELAY_MS[props.showCommentsAfter] ?? 0
     await chatQueue.add(
       ChatJobAction.changeChannelMessageState,
       {
         type: ChatJobAction.changeChannelMessageState,
         data: {
-          conversation: ctx.conversation,
-          contactInbox: ctx.contactInbox,
-          message: { id: ctx.messageId, createdAt: ctx.messageCreatedAt },
+          conversation: props.conversation,
+          contactInbox: props.contactInbox,
+          message,
           hidden: false,
         },
       },
-      withReplayPriority({ delay, jobId: `unhide-comment-${commentId}` }),
+      withReplayPriority({ delay, jobId: `unhide-comment-${props.commentId}` }),
     )
   }
 }

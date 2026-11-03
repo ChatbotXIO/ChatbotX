@@ -61,6 +61,10 @@ vi.mock("../src/template/installed-resource.service", () => ({
 }))
 vi.mock("../src/flow/service", () => ({ flowService: { exists: vi.fn() } }))
 
+vi.mock("../src/ai-agent/service", () => ({
+  aiAgentService: { findByIdForWorkspace: vi.fn() },
+}))
+
 const { assertAutomationAccount, listAutomationAccounts } = await import(
   "../src/comment-automation/account-scope"
 )

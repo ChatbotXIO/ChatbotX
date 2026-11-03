@@ -759,6 +759,7 @@
       "clicked": "Diklik",
       "failed": "Gagal",
       "missed": "Terlewat",
+      "moderated": "Dimoderasi",
       "noContacts": "Tidak ada kontak yang ditemukan",
       "noComment": "(tanpa teks)",
       "pageInfo": "Halaman {page} dari {pageCount}",
@@ -778,7 +779,9 @@
       "contactNotNew": "Kontak bukan baru",
       "alreadyRepliedOnPost": "Sudah dibalas di postingan ini",
       "engagedOnOtherPost": "Sudah berinteraksi di postingan lain",
-      "mentionCountNotMatched": "Jumlah sebutan tidak cocok"
+      "mentionCountNotMatched": "Jumlah sebutan tidak cocok",
+      "noImageAttachment": "Tidak ada foto terlampir",
+      "moderated": "Disembunyikan atau dihapus oleh moderasi"
     },
     "replyTo": {
       "mentions": "Komentar dengan cukup sebutan",
@@ -798,6 +801,10 @@
       "label": "Lacak jika pengguna menandai pengguna lain",
       "descriptionText": "Menghitung akun yang ditandai di setiap komentar dan menambahkannya ke total kontak dari semua komentar. Gunakan '{{total_tagged}}' untuk semua akun yang ditandai dan '{{total_new_tagged}}' untuk akun yang belum pernah mengirim pesan ke halaman Anda atau menjadi kontak."
     },
+    "onlyCommentsWithImage": {
+      "label": "Hanya balas komentar yang berisi foto",
+      "descriptionText": "Hanya balas otomatis jika komentar menyertakan foto. GIF dan stiker tidak dihitung. Komentar tanpa foto dilewati dan otomasi berikutnya dicoba."
+    },
     "card": {
       "reply": "Balasan"
     },
@@ -815,6 +822,87 @@
       "column": "Akun",
       "disconnected": "Akun terputus",
       "disconnectedDescription": "Otomatisasi ini terikat ke akun yang tidak lagi terhubung, jadi tidak membalas komentar apa pun. Hubungkan ulang akun atau pilih akun lain."
+    },
+    "aiModeration": {
+      "enabled": "Moderasi AI",
+      "description": "Agen AI membaca setiap komentar sebelum bot membalas, lalu menyembunyikan atau menghapus komentar dalam kategori di bawah. Komentar yang dimoderasi tidak akan pernah dibalas.",
+      "aiAgentDescription": "Hanya model AI milik agen yang digunakan, bukan prompt-nya.",
+      "categoriesLabel": "Blokir komentar yang",
+      "categories": {
+        "hate": "Ujaran kebencian",
+        "offensive": "Menyinggung",
+        "harassment": "Pelecehan",
+        "negative": "Bermusuhan terhadap merek",
+        "spam": "Spam atau penipuan"
+      },
+      "categoryDescriptions": {
+        "hate": "Menyerang suatu kelompok karena ras, agama, gender, kebangsaan, dan sejenisnya",
+        "offensive": "Hinaan, makian, bahasa vulgar",
+        "harassment": "Ancaman, perundungan, serangan terhadap seseorang",
+        "negative": "Bertujuan merusak merek. Keluhan yang sopan tidak diblokir",
+        "spam": "Penipuan, phishing, promosi yang tidak relevan"
+      },
+      "instruction": "Panduan tambahan untuk AI",
+      "instructionDescription": "Opsional. Beri tahu AI apa yang boleh atau harus diblokir.",
+      "instructionPlaceholder": "mis. Jangan blokir pelanggan yang mengeluhkan harga",
+      "action": "Saat komentar diblokir",
+      "actions": {
+        "hide": "Sembunyikan",
+        "delete": "Hapus"
+      },
+      "deleteWarning": "Komentar yang dihapus hilang selamanya dan tidak dapat dipulihkan. Menyembunyikan lebih aman jika AI membuat kesalahan."
+    },
+    "moderationLog": {
+      "title": "Komentar yang dimoderasi",
+      "description": "Komentar yang disembunyikan atau dihapus oleh otomatisasi ini, beserta alasannya.",
+      "allActions": "Semua tindakan",
+      "allSources": "Aturan dan AI",
+      "actions": {
+        "hide": "Disembunyikan",
+        "delete": "Dihapus"
+      },
+      "sources": {
+        "rule": "Oleh aturan sembunyikan",
+        "ai": "Oleh AI"
+      },
+      "statuses": {
+        "pending": "Sedang diproses",
+        "done": "Selesai",
+        "failed": "Gagal"
+      },
+      "rules": {
+        "all": "Sembunyikan semua komentar",
+        "phoneNumber": "Mengandung nomor telepon",
+        "link": "Mengandung tautan",
+        "keyword": "Mengandung kata kunci",
+        "image": "Mengandung gambar",
+        "video": "Mengandung video",
+        "gif": "Mengandung GIF",
+        "emoji": "Mengandung emoji"
+      },
+      "summary": {
+        "total": "{count} dimoderasi",
+        "hidden": "{count} disembunyikan",
+        "deleted": "{count} dihapus",
+        "byAI": "{count} oleh AI",
+        "byRule": "{count} oleh aturan",
+        "failed": "{count} gagal"
+      },
+      "columns": {
+        "time": "Waktu",
+        "contact": "Kontak",
+        "comment": "Komentar",
+        "action": "Tindakan",
+        "reason": "Alasan",
+        "status": "Status"
+      },
+      "loading": "Memuat…",
+      "empty": "Belum ada komentar yang disembunyikan atau dihapus.",
+      "unknownContact": "Tidak diketahui",
+      "noText": "(tanpa teks)",
+      "previous": "Sebelumnya",
+      "next": "Berikutnya",
+      "page": "Halaman {page} dari {pageCount}"
     }
   },
   "condition": {
