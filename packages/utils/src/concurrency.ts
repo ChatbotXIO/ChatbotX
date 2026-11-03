@@ -41,3 +41,23 @@ export async function mapWithConcurrency<T, R>(
 
   return results
 }
+
+/**
+ * Settles with `promise`, or rejects once `timeoutMs` has passed, whichever
+ * comes first. The underlying work is not cancelled: it may still finish after
+ * the deadline (its late rejection is handled, never unhandled). Use it to stop
+ * a hung dependency from stalling a hot path.
+ */
+export function withTimeout<T>(
+  promise: Promise<T>,
+  timeoutMs: number,
+): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined
+  const deadline = new Promise<never>((_, reject) => {
+    timer = setTimeout(
+      () => reject(new Error(`Timed out after ${timeoutMs}ms`)),
+      timeoutMs,
+    )
+  })
+  return Promise.race([promise, deadline]).finally(() => clearTimeout(timer))
+}

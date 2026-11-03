@@ -240,6 +240,18 @@ describe("remapReferences — array-valued keys", () => {
     })
   })
 
+  test("remaps each element of sequenceIds via the sequence map", () => {
+    const remapped = remapReferences(
+      { type: "addSequence", sequenceIds: ["seq-1", "seq-missing"] },
+      { sequence: new Map([["seq-1", "target-1"]]) },
+    )
+
+    expect(remapped).toEqual({
+      type: "addSequence",
+      sequenceIds: ["target-1", "seq-missing"],
+    })
+  })
+
   test("remaps addonProductIds via the product map", () => {
     const remapped = remapReferences(
       { addonProductIds: ["p-1"] },
@@ -419,11 +431,13 @@ describe("collectReferencesByKind", () => {
       customFieldId: "cf-1",
       aiAgentId: "agent-1",
       tagIds: ["tag-1", "tag-2"],
+      sequenceIds: ["seq-1"],
     })
 
     expect(byKind.get("customField")).toEqual(new Set(["cf-1"]))
     expect(byKind.get("aiAgent")).toEqual(new Set(["agent-1"]))
     expect(byKind.get("tag")).toEqual(new Set(["tag-1", "tag-2"]))
+    expect(byKind.get("sequence")).toEqual(new Set(["seq-1"]))
   })
 
   test("scopes collection to the given kinds", () => {

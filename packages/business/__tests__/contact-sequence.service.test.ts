@@ -25,7 +25,7 @@ const {
       order.push("delete")
       return Promise.resolve(undefined)
     }),
-    enrollContactInSequenceSpy: vi.fn().mockResolvedValue(undefined),
+    enrollContactInSequenceSpy: vi.fn().mockResolvedValue({ enrolled: true }),
     emitSequenceUnsubscribedSpy: vi.fn().mockResolvedValue(undefined),
     findManySpy: vi.fn(),
     loggerWarnSpy: vi.fn(),
@@ -160,7 +160,7 @@ describe("contactSequenceService", () => {
       order.push("remove")
       return Promise.resolve(undefined)
     })
-    enrollContactInSequenceSpy.mockResolvedValue(undefined)
+    enrollContactInSequenceSpy.mockResolvedValue({ enrolled: true })
     transactionSpy.mockImplementation(async (cb) => {
       const result = await cb(txClient)
       order.push("tx-done")
@@ -455,5 +455,70 @@ describe("contactSequenceService", () => {
     await vi.waitFor(() => {
       expect(emitSequenceUnsubscribedSpy).toHaveBeenCalledTimes(2)
     })
+  })
+
+  // ---------------------------------------------------------------------
+  // Trigger actions must not re-fire sequence triggers/webhooks (loop safety).
+  // ---------------------------------------------------------------------
+
+  const flushFireAndForget = () =>
+    new Promise<void>((resolve) => setTimeout(resolve, 0))
+
+  test("removes enrollments without emitting when emitUnsubscribedEvents is false", async () => {
+    await contactSequenceService.removeContactSequencesForContacts({
+      workspaceId: "ws-1",
+      contactIds: ["contact-1"],
+      sequenceIds: ["sequence-1"],
+      reason: "subscription_removed",
+      emitUnsubscribedEvents: false,
+    })
+    await flushFireAndForget()
+
+    expect(deleteWhereSpy).toHaveBeenCalledOnce()
+    expect(removeDispatchesFromScheduleSpy).toHaveBeenCalledOnce()
+    expect(emitSequenceUnsubscribedSpy).not.toHaveBeenCalled()
+  })
+
+  test("unsubscribeContactForTrigger removes the enrollment and cancels dispatches without emitting", async () => {
+    await contactSequenceService.unsubscribeContactForTrigger({
+      workspaceId: "ws-1",
+      contactId: "contact-1",
+      sequenceIds: ["101", "101"],
+    })
+    await flushFireAndForget()
+
+    expect(cancelPendingDispatchesSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        enrollmentId: "enrollment-1",
+        reason: "subscription_removed",
+      }),
+    )
+    expect(deleteWhereSpy).toHaveBeenCalledOnce()
+    expect(emitSequenceUnsubscribedSpy).not.toHaveBeenCalled()
+  })
+
+  test("unsubscribeContactForTrigger ignores malformed ids without touching the database", async () => {
+    await contactSequenceService.unsubscribeContactForTrigger({
+      workspaceId: "ws-1",
+      contactId: "contact-1",
+      sequenceIds: ["not-a-number"],
+    })
+
+    expect(findManySpy).not.toHaveBeenCalled()
+    expect(deleteWhereSpy).not.toHaveBeenCalled()
+  })
+
+  test("unsubscribeContactForTrigger is a no-op when the contact is not enrolled", async () => {
+    findManySpy.mockResolvedValue([])
+
+    await contactSequenceService.unsubscribeContactForTrigger({
+      workspaceId: "ws-1",
+      contactId: "contact-1",
+      sequenceIds: ["101"],
+    })
+    await flushFireAndForget()
+
+    expect(deleteWhereSpy).not.toHaveBeenCalled()
+    expect(emitSequenceUnsubscribedSpy).not.toHaveBeenCalled()
   })
 })

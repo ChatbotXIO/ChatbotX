@@ -14,9 +14,11 @@ import {
 import { PlusIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useMemo } from "react"
+import { defaultFn as addSequencesAction } from "./components/actions/schema/add-sequences"
 import { defaultFn as addTagsAction } from "./components/actions/schema/add-tags"
 import { defaultFn as clearCustomFieldAction } from "./components/actions/schema/clear-custom-field"
 import { defaultFn as pipelineAction } from "./components/actions/schema/pipeline"
+import { defaultFn as removeSequencesAction } from "./components/actions/schema/remove-sequences"
 import { defaultFn as removeTagsAction } from "./components/actions/schema/remove-tags"
 import { defaultFn as runGoogleSheetAction } from "./components/actions/schema/run-google-sheet"
 import { defaultFn as sendGoogleAdsConversionAction } from "./components/actions/schema/send-google-ads-conversion"
@@ -32,6 +34,8 @@ type ActionOption = {
   defaultFn:
     | typeof addTagsAction
     | typeof removeTagsAction
+    | typeof addSequencesAction
+    | typeof removeSequencesAction
     | typeof setCustomFieldAction
     | typeof clearCustomFieldAction
     | typeof startFlowAction
@@ -74,6 +78,16 @@ export function AddAction({
         label: t("trigger.actions.removeTag"),
         value: triggerActions.enum.removeTag,
         defaultFn: removeTagsAction,
+      },
+      {
+        label: t("flows.actions.subscribeSequence"),
+        value: triggerActions.enum.addSequence,
+        defaultFn: addSequencesAction,
+      },
+      {
+        label: t("flows.actions.unsubscribeSequence"),
+        value: triggerActions.enum.removeSequence,
+        defaultFn: removeSequencesAction,
       },
       {
         label: t("trigger.actions.setCustomField"),

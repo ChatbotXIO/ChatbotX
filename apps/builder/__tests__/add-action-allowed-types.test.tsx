@@ -45,7 +45,7 @@ describe("AddAction allowedTypes", () => {
 
     expect(labels).toContain("trigger.actions.sendMetaCapiEvent")
     expect(labels).toContain("trigger.actions.addTag")
-    expect(labels).toHaveLength(11)
+    expect(labels).toHaveLength(13)
     expect(labels).toContain("flows.actions.pipeline")
     expect(labels).toContain("trigger.actions.startExternalStep")
   })
@@ -66,6 +66,8 @@ describe("AddAction allowedTypes", () => {
       "trigger.actions.startExternalStep",
       "trigger.actions.addTag",
       "trigger.actions.removeTag",
+      "flows.actions.subscribeSequence",
+      "flows.actions.unsubscribeSequence",
       "trigger.actions.setCustomField",
       "trigger.actions.clearCustomField",
       "trigger.actions.transferConversationToHuman",

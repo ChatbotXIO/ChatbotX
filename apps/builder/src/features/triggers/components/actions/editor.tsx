@@ -15,6 +15,7 @@ import { MetaCapiEventFields } from "@/features/meta-conversions/components/meta
 import { useTagSelectOptions } from "@/features/tags/provider/tag-hook"
 import { PipelineActionEditor } from "./pipeline-action-editor"
 import { GoogleSheetAction } from "./run-google-sheet"
+import { SequenceActionEditor } from "./sequence-action-editor"
 
 export const ActionEditor = ({
   parentName,
@@ -38,6 +39,9 @@ export const ActionEditor = ({
         />
       )
     }
+    case triggerActions.enum.addSequence:
+    case triggerActions.enum.removeSequence:
+      return <SequenceActionEditor parentName={parentName} />
     case triggerActions.enum.setCustomField:
       return (
         <div className="flex flex-col gap-4">

@@ -17,7 +17,8 @@ import {
 } from "@chatbotx.io/database/schema"
 import type { ConditionModel, TriggerModel } from "@chatbotx.io/database/types"
 import { removeTriggerCache, updateTriggerCache } from "@chatbotx.io/events"
-import { createId } from "@chatbotx.io/utils"
+import { distributedStore } from "@chatbotx.io/redis"
+import { createId, withTimeout } from "@chatbotx.io/utils"
 import { isSameJsonValue } from "../audit/diff"
 import {
   findInvalidActionReferences,
@@ -26,12 +27,20 @@ import {
 import { BaseService } from "../base.service"
 import { notFoundException, validationException } from "../errors"
 import { folderService } from "../folder/service"
+import { logger } from "../logger"
 import { assertDeletable } from "../template/installed-resource.service"
 import {
   type ConditionInput,
   toConditionColumnsShared as toConditionColumns,
 } from "./condition-columns"
-import { MAX_TRIGGERS_PER_WORKSPACE } from "./constants"
+import {
+  MAX_TRIGGERS_PER_WORKSPACE,
+  TRIGGER_CONTACT_RUN_LIMIT,
+  TRIGGER_CONTACT_RUN_LIMITER_BACKOFF_MS,
+  TRIGGER_CONTACT_RUN_LIMITER_TIMEOUT_MS,
+  TRIGGER_CONTACT_RUN_WINDOW_SECONDS,
+} from "./constants"
+import { FailOpenCircuit } from "./fail-open-circuit"
 
 export type { ConditionInput } from "./condition-columns"
 
@@ -85,6 +94,11 @@ const assertNewActionReferencesExist = async (input: {
     )
   }
 }
+
+/** Per worker process: switches the run limiter off while its Redis is failing. */
+const runLimiterCircuit = new FailOpenCircuit(
+  TRIGGER_CONTACT_RUN_LIMITER_BACKOFF_MS,
+)
 
 class TriggerService extends BaseService {
   async create(input: {
@@ -540,6 +554,60 @@ class TriggerService extends BaseService {
       sql`DELETE FROM "TriggerExecution" WHERE "executedAt" < ${cutoff}`,
     )
     return Number(result.rowCount ?? 0)
+  }
+
+  /**
+   * Loop circuit breaker: counts one run of `triggerId` for `contactId` in a
+   * fixed window and returns `false` once the run exceeds
+   * `TRIGGER_CONTACT_RUN_LIMIT`; the first denial of a window is logged at
+   * `warn`.
+   *
+   * Fails open (returns `true`) so a Redis problem never stops trigger runs. The
+   * Redis call is bounded by `TRIGGER_CONTACT_RUN_LIMITER_TIMEOUT_MS`, and a
+   * failure opens `runLimiterCircuit`: runs then skip the limiter until one
+   * probe call succeeds. A hung cache Redis therefore neither stalls every run
+   * nor floods the log (one error line when the outage starts, one info line on
+   * recovery, per worker process).
+   */
+  async tryAcquireContactRun(input: {
+    workspaceId: string
+    triggerId: string
+    contactId: string
+  }): Promise<boolean> {
+    const { workspaceId, triggerId, contactId } = input
+    const token = runLimiterCircuit.tryEnter()
+    if (token === null) {
+      return true
+    }
+    try {
+      const count = await withTimeout(
+        distributedStore.incrWithWindow(
+          `trigger:contact-run:${triggerId}:${contactId}`,
+          TRIGGER_CONTACT_RUN_WINDOW_SECONDS,
+        ),
+        TRIGGER_CONTACT_RUN_LIMITER_TIMEOUT_MS,
+      )
+      if (runLimiterCircuit.recordSuccess(token)) {
+        logger.info("Trigger run limiter recovered; counting runs again")
+      }
+      // Once per window, not per skipped run: a busy contact on a legitimate
+      // trigger keeps being denied until the window ends.
+      if (count === TRIGGER_CONTACT_RUN_LIMIT + 1) {
+        logger.warn(
+          { workspaceId, triggerId, contactId },
+          "Trigger run skipped: per-contact run limit exceeded (possible automation loop)",
+        )
+      }
+      return count <= TRIGGER_CONTACT_RUN_LIMIT
+    } catch (err) {
+      if (runLimiterCircuit.recordFailure(token)) {
+        logger.error(
+          { err, workspaceId, triggerId, contactId },
+          "Trigger run limiter unavailable; allowing runs uncounted",
+        )
+      }
+      return true
+    }
   }
 
   /** `trigger-executor.service.ts` execute: records first-entered contact history. */

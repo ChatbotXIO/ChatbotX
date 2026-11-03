@@ -1,4 +1,5 @@
 import { describe, expect, test } from "vitest"
+import z from "zod"
 import { setCustomField } from "@/features/triggers/components/actions/schema/set-custom-field"
 import { updateTriggerSchema } from "@/features/triggers/schema/mutation"
 import { triggerResource } from "@/features/triggers/schema/resource"
@@ -286,5 +287,44 @@ describe("legacy setCustomField operand rules (N14)", () => {
       expect(result.success).toBe(false)
       expect(!result.success && result.error.issues[0]?.path).toEqual(["value"])
     }
+  })
+})
+
+describe("addSequence / removeSequence actions", () => {
+  test.each([
+    "addSequence",
+    "removeSequence",
+  ])("%s accepts bigint-string sequence ids and strips unknown properties", (type) => {
+    const [action] = parsedActions([
+      { type, sequenceIds: ["11", "12"], legacyJunk: true },
+    ])
+
+    expect(action).toEqual({ type, sequenceIds: ["11", "12"] })
+  })
+
+  test.each([
+    ["no ids", { sequenceIds: [] }],
+    ["a missing list", {}],
+    ["a non-numeric id", { sequenceIds: ["abc"] }],
+    [
+      "an id too long for a bigint column",
+      { sequenceIds: ["1234567890123456789"] },
+    ],
+    ["a numeric (non-string) id", { sequenceIds: [11] }],
+    [
+      "more ids than one action may name",
+      { sequenceIds: Array.from({ length: 51 }, (_, index) => `${index + 1}`) },
+    ],
+  ])("%s is rejected", (_label, body) => {
+    expect(put([{ type: "addSequence", ...body }]).success).toBe(false)
+    expect(put([{ type: "removeSequence", ...body }]).success).toBe(false)
+  })
+
+  test("the PUT body schema documents where the sequence ids come from", () => {
+    const jsonSchema = JSON.stringify(
+      z.toJSONSchema(updateTriggerSchema.shape.actions, { io: "input" }),
+    )
+
+    expect(jsonSchema).toContain("sequences.list")
   })
 })

@@ -118,6 +118,10 @@ export const BaseEditor = ({
         return t("trigger.actions.addTag")
       case triggerActions.enum.removeTag:
         return t("trigger.actions.removeTag")
+      case triggerActions.enum.addSequence:
+        return t("flows.actions.subscribeSequence")
+      case triggerActions.enum.removeSequence:
+        return t("flows.actions.unsubscribeSequence")
       case triggerActions.enum.setCustomField:
         return t("trigger.actions.setCustomField")
       case triggerActions.enum.clearCustomField:

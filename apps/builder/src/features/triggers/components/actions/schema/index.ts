@@ -1,6 +1,8 @@
+import { addSequences } from "./add-sequences"
 import { addTags } from "./add-tags"
 import { clearCustomField } from "./clear-custom-field"
 import { pipeline } from "./pipeline"
+import { removeSequences } from "./remove-sequences"
 import { removeTags } from "./remove-tags"
 import { runGoogleSheet } from "./run-google-sheet"
 import { sendGoogleAdsConversion } from "./send-google-ads-conversion"
@@ -13,6 +15,8 @@ import { transferConversationToHuman } from "./transfer-conversation-to-human"
 export const allActions = {
   addTags,
   removeTags,
+  addSequences,
+  removeSequences,
   setCustomField,
   clearCustomField,
   startFlow,

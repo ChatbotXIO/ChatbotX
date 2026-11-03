@@ -12,6 +12,11 @@ type DispatchToSchedule = { id: string; bucket: number; runAtMs: string }
 export type EnrollContactParams = {
   workspaceId: string
   client?: DrizzleClient
+  /**
+   * The contact's inboxes, when the caller already has them (enrolling one
+   * contact in several sequences). Without it they are looked up here.
+   */
+  contactInboxes?: ReadonlyArray<{ id: string }>
   contactId: string
   enrolledAt?: Date
   nextRunAt: Date
@@ -19,7 +24,19 @@ export type EnrollContactParams = {
   sequenceId: string
 }
 
-export async function enrollContactInSequence(params: EnrollContactParams) {
+type EnrollResult = {
+  /**
+   * `true` only when this call created the enrollment. `false` when the
+   * contact was already enrolled (including a concurrent enrollment winning the
+   * unique index); callers that emit a "subscribed" event must emit only on
+   * `true`.
+   */
+  enrolled: boolean
+}
+
+export async function enrollContactInSequence(
+  params: EnrollContactParams,
+): Promise<EnrollResult> {
   const {
     workspaceId,
     contactId,
@@ -32,20 +49,7 @@ export async function enrollContactInSequence(params: EnrollContactParams) {
 
   const enroll = async (
     dbClient: DrizzleClient,
-  ): Promise<DispatchToSchedule[]> => {
-    const existing = await dbClient.query.contactsOnSequenceModel.findFirst({
-      where: {
-        contactId,
-        sequenceId,
-        workspaceId,
-      },
-      columns: { id: true },
-    })
-
-    if (existing) {
-      return []
-    }
-
+  ): Promise<EnrollResult & { dispatches: DispatchToSchedule[] }> => {
     const enrollmentId = createId()
     const [enrollment] = await dbClient
       .insert(contactsOnSequenceModel)
@@ -60,13 +64,20 @@ export async function enrollContactInSequence(params: EnrollContactParams) {
         nextStepId,
         enrolledAt,
       })
+      // An existing enrollment (or a concurrent one winning the unique index)
+      // yields no row: neither an error nor any dispatch.
+      .onConflictDoNothing()
       .returning({ id: contactsOnSequenceModel.id })
 
-    if (!(nextStepId && enrollment)) {
-      return []
+    if (!enrollment) {
+      return { enrolled: false, dispatches: [] }
+    }
+    if (!nextStepId) {
+      return { enrolled: true, dispatches: [] }
     }
 
-    const contactInboxes = await getContactInboxes(workspaceId, contactId)
+    const contactInboxes =
+      params.contactInboxes ?? (await getContactInboxes(workspaceId, contactId))
     const dispatches: DispatchToSchedule[] = []
 
     for (const contactInbox of contactInboxes) {
@@ -84,15 +95,15 @@ export async function enrollContactInSequence(params: EnrollContactParams) {
       dispatches.push(dispatch)
     }
 
-    return dispatches
+    return { enrolled: true, dispatches }
   }
 
-  const dispatches = client
+  const { enrolled, dispatches } = client
     ? await enroll(client)
     : await db.transaction(enroll)
 
   if (dispatches.length === 0) {
-    return
+    return { enrolled }
   }
 
   const redisClient = await sequenceConnections.useExisting()
@@ -104,6 +115,7 @@ export async function enrollContactInSequence(params: EnrollContactParams) {
       Number(dispatch.runAtMs),
     )
   }
+  return { enrolled }
 }
 export interface EnrollContactsBulkParams {
   enrolledAt?: Date
