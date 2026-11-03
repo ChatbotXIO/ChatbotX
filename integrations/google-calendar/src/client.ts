@@ -1,6 +1,8 @@
 import type { Oauth2AuthValue } from "@chatbotx.io/sdk"
 import { OAuth2Client } from "google-auth-library"
-import { google } from "googleapis"
+// Import the one API instead of the `googleapis` barrel, which loads every
+// Google API (~60MB heap at runtime, ~165MB of type files for `tsc`).
+import { calendar } from "googleapis/build/src/apis/calendar/index.js"
 import type { GoogleCalendarConfig } from "./schemas"
 
 export const GOOGLE_CALENDAR_SCOPES = [
@@ -40,7 +42,7 @@ export function generateAuthUrl(props: GoogleCalendarConfig): string {
 export function getCalendarClient(props: Oauth2AuthValue) {
   const client = getClient(props)
 
-  return google.calendar({ version: "v3", auth: client })
+  return calendar({ version: "v3", auth: client })
 }
 
 export async function revokeToken(auth: Oauth2AuthValue): Promise<void> {
