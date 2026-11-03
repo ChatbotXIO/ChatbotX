@@ -4,6 +4,7 @@ import {
   helpTexts,
   processStreamingText,
   systemFunctionNames,
+  toFinalStepTextStream,
   toolPrefixes,
   toStepSeparatedTextStream,
 } from "@chatbotx.io/ai"
@@ -917,7 +918,9 @@ async function runAIReply(
     if (richModeEnabled) {
       const richResult = await handleRichAIReply({
         props,
-        textStream: result.textStream,
+        // Rich mode parses one JSON document: drop prose written before a tool
+        // call (`textStream` would glue it to the JSON and fail the parse).
+        textStream: toFinalStepTextStream(result.stream),
         directSendTracker,
         provider,
         modelId: selectedModelId,

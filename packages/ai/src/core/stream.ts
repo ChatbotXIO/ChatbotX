@@ -165,6 +165,34 @@ export async function* toStepSeparatedTextStream(
   }
 }
 
+/**
+ * Text of the final step only. A model may write prose before a tool call
+ * ("I'll analyze your image…"); `textStream` joins that to the answer written
+ * after the tool result. A caller that needs the answer alone — rich mode
+ * parses it as one JSON document — takes the last step's text and drops the
+ * earlier steps'. The stream is buffered, so the text arrives once the last
+ * step ends.
+ */
+export async function* toFinalStepTextStream(
+  stream: AsyncIterable<StepStreamPart>,
+): AsyncIterable<string> {
+  let finalStepText = ""
+
+  for await (const part of stream) {
+    if (part.type === "start-step") {
+      finalStepText = ""
+      continue
+    }
+    if (part.type === "text-delta" && part.text) {
+      finalStepText += part.text
+    }
+  }
+
+  if (finalStepText) {
+    yield finalStepText
+  }
+}
+
 export async function processStreamingText(
   textStream: AsyncIterable<string>,
   onSegment: (segment: string, parts: string[]) => Promise<void>,

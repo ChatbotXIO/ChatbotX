@@ -2,6 +2,7 @@ import { describe, expect, test } from "vitest"
 import {
   processStreamingText,
   processTextForImagesAndLinks,
+  toFinalStepTextStream,
   toStepSeparatedTextStream,
 } from "../src/core/stream"
 
@@ -130,5 +131,59 @@ describe("stream text processing", () => {
       "next step text",
       "send: Done.",
     ])
+  })
+})
+
+describe("toFinalStepTextStream", () => {
+  test("drops prose written before a tool call", async () => {
+    const text = await collect(
+      toFinalStepTextStream(
+        streamParts([
+          { type: "start-step" },
+          { type: "text-delta", text: "I'll analyze your image." },
+          { type: "tool-call" },
+          { type: "tool-result" },
+          { type: "finish-step" },
+          { type: "start-step" },
+          { type: "text-delta", text: '{"messages":' },
+          { type: "text-delta", text: "[]}" },
+          { type: "finish-step" },
+        ]),
+      ),
+    )
+
+    expect(text).toBe('{"messages":[]}')
+  })
+
+  test("returns the whole text when the model never calls a tool", async () => {
+    const text = await collect(
+      toFinalStepTextStream(
+        streamParts([
+          { type: "start-step" },
+          { type: "text-delta", text: "Hello " },
+          { type: "text-delta", text: "there." },
+          { type: "finish-step" },
+        ]),
+      ),
+    )
+
+    expect(text).toBe("Hello there.")
+  })
+
+  test("yields nothing when the final step has no text", async () => {
+    const text = await collect(
+      toFinalStepTextStream(
+        streamParts([
+          { type: "start-step" },
+          { type: "text-delta", text: "Let me check." },
+          { type: "tool-call" },
+          { type: "finish-step" },
+          { type: "start-step" },
+          { type: "finish-step" },
+        ]),
+      ),
+    )
+
+    expect(text).toBe("")
   })
 })
