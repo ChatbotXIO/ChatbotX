@@ -19,6 +19,7 @@ import {
   sendMetaCapiEvent,
 } from "./integration-actions"
 import { pipeline } from "./pipeline-action"
+import { addSequence, removeSequence } from "./sequence-actions"
 import { addTag, removeTag } from "./tag-actions"
 import type { TriggerActionHandler } from "./types"
 
@@ -29,7 +30,9 @@ import type { TriggerActionHandler } from "./types"
  * job is retried and the actions run again. Not idempotent on replay:
  * `addTag` (re-enqueues sync), `startAnotherFlow` and `startExternalStep` from a trigger (no job id),
  * `archiveConversation` / `unarchiveConversation` (reset timestamps),
- * `assignConversation`, and `runGoogleSheet` sends. `sendMetaCapiEvent`
+ * `assignConversation`, and `runGoogleSheet` sends. `addSequence` and
+ * `removeSequence` are idempotent (an existing enrollment is kept, a missing
+ * one is a no-op). `sendMetaCapiEvent`
  * (source key) and `sendGoogleAdsConversion` (`occurrenceKey`) are deduped.
  *
  * One handler per stored trigger action. `satisfies` makes a new
@@ -38,6 +41,8 @@ import type { TriggerActionHandler } from "./types"
 export const TRIGGER_ACTION_HANDLERS = {
   addTag,
   removeTag,
+  addSequence,
+  removeSequence,
   setCustomField,
   clearCustomField,
   startAnotherFlow,

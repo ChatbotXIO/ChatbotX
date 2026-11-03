@@ -22,17 +22,19 @@ vi.mock("@/lib/orpc/orpc", () => ({
 function SequencesProbe({
   workspaceId = "workspace-1",
   enabled = true,
+  includeInactive = false,
   onData,
   onError,
   onState,
 }: {
   workspaceId?: string
   enabled?: boolean
+  includeInactive?: boolean
   onData?: (data: unknown) => void
   onError?: (isError: boolean) => void
   onState?: (state: { isError: boolean; error: unknown }) => void
 }) {
-  const sequences = useSequences(workspaceId, { enabled })
+  const sequences = useSequences(workspaceId, { enabled, includeInactive })
   onData?.(sequences.data)
   onError?.(sequences.isError)
   onState?.({ isError: sequences.isError, error: sequences.error })
@@ -92,6 +94,24 @@ describe("sequence query hooks", () => {
         perPage: 999_999_999,
         active: true,
       },
+      expect.anything(),
+    )
+  })
+
+  test("lists paused sequences too, without an active filter, when asked", async () => {
+    act(() => {
+      root.render(
+        <QueryClientProvider client={queryClient}>
+          <SequencesProbe includeInactive />
+        </QueryClientProvider>,
+      )
+    })
+
+    await vi.waitFor(() => {
+      expect(mockListSequences).toHaveBeenCalledTimes(1)
+    })
+    expect(mockListSequences).toHaveBeenCalledWith(
+      { workspaceId: "workspace-1", perPage: 999_999_999 },
       expect.anything(),
     )
   })

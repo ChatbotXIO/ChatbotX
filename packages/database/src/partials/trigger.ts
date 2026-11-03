@@ -5,6 +5,8 @@ export const triggerActions = z.enum([
   "startExternalStep",
   "addTag",
   "removeTag",
+  "addSequence",
+  "removeSequence",
   "setCustomField",
   "clearCustomField",
   "transferConversationToHuman",
@@ -20,6 +22,9 @@ export const triggerActions = z.enum([
   "enableBot",
 ])
 export type TriggerAction = z.infer<typeof triggerActions>
+
+/** Sequences one `addSequence` / `removeSequence` action may name; `addSequence` costs one enrollment transaction per id at run time. */
+export const MAX_SEQUENCES_PER_TRIGGER_ACTION = 50
 
 export const triggerEventTypes = z.enum([
   "tagApplied",

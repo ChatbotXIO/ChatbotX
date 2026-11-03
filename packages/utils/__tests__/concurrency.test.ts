@@ -1,5 +1,5 @@
-import { describe, expect, test } from "vitest"
-import { mapWithConcurrency } from "../src/concurrency"
+import { afterEach, describe, expect, test, vi } from "vitest"
+import { mapWithConcurrency, withTimeout } from "../src/concurrency"
 
 describe("mapWithConcurrency", () => {
   test("respects the concurrency cap", async () => {
@@ -74,5 +74,54 @@ describe("mapWithConcurrency", () => {
     })
 
     expect(maxActive).toBe(2)
+  })
+})
+
+describe("withTimeout", () => {
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  test("resolves with the value and leaves no timer behind when the work is fast", async () => {
+    vi.useFakeTimers()
+
+    await expect(withTimeout(Promise.resolve("ok"), 250)).resolves.toBe("ok")
+    expect(vi.getTimerCount()).toBe(0)
+  })
+
+  test("rejects once the deadline passes while the work is still pending", async () => {
+    vi.useFakeTimers()
+    // Work that never settles: the promise is intentionally pending forever.
+    const outcome = withTimeout(new Promise<never>(() => undefined), 250).then(
+      () => "resolved",
+      (error: Error) => error.message,
+    )
+
+    await vi.advanceTimersByTimeAsync(250)
+
+    await expect(outcome).resolves.toBe("Timed out after 250ms")
+  })
+
+  test("passes the work's own rejection through", async () => {
+    await expect(
+      withTimeout(Promise.reject(new Error("db down")), 250),
+    ).rejects.toThrow("db down")
+  })
+
+  test("handles a rejection that arrives after the deadline", async () => {
+    vi.useFakeTimers()
+    let rejectLate: (reason: Error) => void = () => undefined
+    const late = new Promise<never>((_, reject) => {
+      rejectLate = reject
+    })
+    const outcome = withTimeout(late, 100).then(
+      () => "resolved",
+      (error: Error) => error.message,
+    )
+
+    await vi.advanceTimersByTimeAsync(100)
+    await expect(outcome).resolves.toBe("Timed out after 100ms")
+    rejectLate(new Error("too late"))
+    await vi.advanceTimersByTimeAsync(1)
   })
 })

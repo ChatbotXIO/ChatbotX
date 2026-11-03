@@ -485,7 +485,9 @@ chatbotx triggers create --name <name>               # [--folderId]  creates an 
 chatbotx triggers update <id> --conditions <conditions> --actions <actions>
                                                      # Replaces the full condition/action set — JSON arrays.
                                                      # Action `type`s include setCustomField (O01–O12), startExternalStep (flowId + nodeId from `flows nodes`),
-                                                     # and pipeline (the Pipelines flow-step actions); a NEW action that points at a missing record is rejected
+                                                     # pipeline (the Pipelines flow-step actions), and addSequence / removeSequence (sequenceIds from `sequences list`, max 50;
+                                                     # they fire no sequence triggers/webhooks); a NEW action that points at a missing record is rejected.
+                                                     # One trigger runs at most about 20 times per contact per minute (fixed window); further runs are skipped
 chatbotx triggers settings update <id>               # [--name --active]  name/active only, conditions untouched
 chatbotx triggers delete <id>
 ```

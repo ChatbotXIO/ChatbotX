@@ -7,6 +7,7 @@ const mocks = vi.hoisted(() => ({
   listStagesByPipelines: vi.fn(),
   listFieldsByPipelines: vi.fn(),
   findTags: vi.fn(),
+  findSequences: vi.fn(),
   findBotFields: vi.fn(),
   findCustomFields: vi.fn(),
   findPipeline: vi.fn(),
@@ -33,6 +34,9 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
 }))
 vi.mock("../src/tag/service", () => ({
   tagService: { findManyByIds: mocks.findTags },
+}))
+vi.mock("../src/sequence/service", () => ({
+  sequenceService: { listLabelsByIds: mocks.findSequences },
 }))
 vi.mock("../src/bot-field/service", () => ({
   botFieldService: { findManyByIds: mocks.findBotFields },
@@ -80,6 +84,7 @@ beforeEach(() => {
       ),
   )
   mocks.findTags.mockImplementation(echoIds)
+  mocks.findSequences.mockImplementation(echoIds)
   mocks.findBotFields.mockImplementation(echoIds)
   mocks.findCustomFields.mockImplementation(echoIds)
   mocks.findPipeline.mockImplementation(({ id }: { id: string }) =>
@@ -106,6 +111,8 @@ describe("findInvalidActionReferences", () => {
         { type: "startExternalStep", flowId: "10", nodeId: "20" },
         { type: "addTag", tagIds: ["1", "2"] },
         { type: "removeTag", tagIds: ["3"] },
+        { type: "addSequence", sequenceIds: ["7", "8"] },
+        { type: "removeSequence", sequenceIds: ["9"] },
         { type: "setCustomField", customFieldId: "5" },
         { type: "clearCustomField", customFieldId: "bot_field:6" },
         { type: "transferConversationToHuman" },
@@ -181,6 +188,7 @@ describe("findInvalidActionReferences", () => {
       tx,
       actions: [
         { type: "addTag", tagIds: ["1"] },
+        { type: "addSequence", sequenceIds: ["7"] },
         { type: "startExternalStep", flowId: "10", nodeId: "20" },
         { type: "startAnotherFlow", flowId: "10" },
         { type: "setCustomField", customFieldId: "5" },
@@ -196,6 +204,9 @@ describe("findInvalidActionReferences", () => {
     })
 
     expect(mocks.findTags).toHaveBeenCalledWith(expect.objectContaining({ tx }))
+    expect(mocks.findSequences).toHaveBeenCalledWith(
+      expect.objectContaining({ tx }),
+    )
     expect(mocks.findCustomFields).toHaveBeenCalledWith(
       expect.objectContaining({ tx }),
     )
@@ -256,6 +267,21 @@ describe("findInvalidActionReferences", () => {
       "nodeId",
     ],
     ["a malformed id", { type: "addTag", tagIds: ["1", "x"] }, "tagIds.1"],
+    [
+      "a sequence that does not exist",
+      { type: "addSequence", sequenceIds: ["7", MISSING_ID] },
+      "sequenceIds.1",
+    ],
+    [
+      "a malformed sequence id",
+      { type: "removeSequence", sequenceIds: ["x"] },
+      "sequenceIds.0",
+    ],
+    [
+      "an empty sequence id",
+      { type: "addSequence", sequenceIds: [""] },
+      "sequenceIds.0",
+    ],
     [
       "a custom field referenced by name where only ids are accepted",
       { type: "setCustomField", customFieldId: "Plan" },

@@ -1,4 +1,12 @@
-import { beforeEach, describe, expect, test, vi } from "vitest"
+import {
+  afterAll,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  test,
+  vi,
+} from "vitest"
 
 // ---------------------------------------------------------------------------
 // triggerService — the execution/stats/purge surface moved from the trigger
@@ -13,6 +21,10 @@ const insertValues = vi.fn()
 const insertOnConflictDoNothing = vi.fn()
 const insertOnConflictDoUpdate = vi.fn()
 const dbExecute = vi.fn()
+const incrWithWindow = vi.fn()
+const loggerError = vi.fn()
+const loggerWarn = vi.fn()
+const loggerInfo = vi.fn()
 
 vi.mock("../src/automation-action/references", () => ({
   findInvalidActionReferences: vi.fn(async () => []),
@@ -82,6 +94,19 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
 }))
 
 vi.mock("@chatbotx.io/events", () => ({ removeTriggerCache: vi.fn() }))
+vi.mock("@chatbotx.io/redis", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@chatbotx.io/redis")>()),
+  distributedStore: {
+    incrWithWindow: (...a: unknown[]) => incrWithWindow(...a),
+  },
+}))
+vi.mock("../src/logger", () => ({
+  logger: {
+    error: (...a: unknown[]) => loggerError(...a),
+    warn: (...a: unknown[]) => loggerWarn(...a),
+    info: (...a: unknown[]) => loggerInfo(...a),
+  },
+}))
 vi.mock("../src/template/installed-resource.service", () => ({
   assertDeletable: vi.fn(),
 }))
@@ -219,5 +244,124 @@ describe("incrementStats", () => {
     }
     // successCount stays the column reference (no +1) on failure.
     expect(arg.set.successCount).toBe("stats.successCount")
+  })
+})
+
+describe("tryAcquireContactRun", () => {
+  // The limiter's circuit is module state (per worker process) on a monotonic
+  // clock; its transitions are covered in fail-open-circuit.test.ts. Here it only
+  // has to start every test closed: one fake clock for the whole block, moved an
+  // hour on per test, with a successful probe closing a circuit an earlier test
+  // left open. (A clock created per test would restart at zero.)
+  const BACKOFF_MS = 5000
+
+  const acquire = () =>
+    triggerService.tryAcquireContactRun({
+      workspaceId: "ws-1",
+      triggerId: "tr-1",
+      contactId: "c-1",
+    })
+
+  beforeAll(() => {
+    vi.useFakeTimers({
+      toFake: ["performance", "setTimeout", "clearTimeout"],
+    })
+  })
+
+  afterAll(() => {
+    vi.useRealTimers()
+  })
+
+  beforeEach(async () => {
+    vi.advanceTimersByTime(3_600_000)
+    incrWithWindow.mockReset()
+    incrWithWindow.mockResolvedValue(1)
+    await acquire()
+    incrWithWindow.mockReset()
+    loggerError.mockClear()
+    loggerInfo.mockClear()
+    loggerWarn.mockClear()
+  })
+
+  test("counts the run per trigger and contact in a one-minute window", async () => {
+    incrWithWindow.mockResolvedValue(1)
+
+    await expect(acquire()).resolves.toBe(true)
+
+    expect(incrWithWindow).toHaveBeenCalledWith(
+      "trigger:contact-run:tr-1:c-1",
+      60,
+    )
+  })
+
+  test("allows the 20th run of a window and denies the 21st", async () => {
+    incrWithWindow.mockResolvedValueOnce(20).mockResolvedValueOnce(21)
+
+    await expect(acquire()).resolves.toBe(true)
+    await expect(acquire()).resolves.toBe(false)
+  })
+
+  test("warns only at the first denial of a window, with the workspace for context", async () => {
+    incrWithWindow.mockResolvedValueOnce(21).mockResolvedValueOnce(22)
+
+    await acquire()
+    await acquire()
+
+    expect(loggerWarn).toHaveBeenCalledTimes(1)
+    expect(loggerWarn).toHaveBeenCalledWith(
+      { workspaceId: "ws-1", triggerId: "tr-1", contactId: "c-1" },
+      expect.stringContaining("run limit exceeded"),
+    )
+  })
+
+  test("does not warn for runs within the limit", async () => {
+    incrWithWindow.mockResolvedValue(20)
+
+    await acquire()
+
+    expect(loggerWarn).not.toHaveBeenCalled()
+  })
+
+  test("fails open and logs once when Redis is unavailable, then skips Redis for the backoff", async () => {
+    incrWithWindow.mockRejectedValueOnce(new Error("Redis unavailable"))
+
+    await expect(acquire()).resolves.toBe(true)
+    expect(loggerError).toHaveBeenCalledTimes(1)
+    expect(loggerError).toHaveBeenCalledWith(
+      expect.objectContaining({
+        err: expect.any(Error),
+        workspaceId: "ws-1",
+        triggerId: "tr-1",
+      }),
+      expect.any(String),
+    )
+
+    incrWithWindow.mockClear()
+    vi.advanceTimersByTime(BACKOFF_MS - 1)
+    await expect(acquire()).resolves.toBe(true)
+    expect(incrWithWindow).not.toHaveBeenCalled()
+    expect(loggerError).toHaveBeenCalledTimes(1)
+  })
+
+  test("a hung Redis is cut off at the call timeout and treated as a failure", async () => {
+    // Redis that never answers: the promise intentionally stays pending.
+    incrWithWindow.mockReturnValueOnce(new Promise<number>(() => undefined))
+
+    const run = acquire()
+    await vi.advanceTimersByTimeAsync(1000)
+
+    await expect(run).resolves.toBe(true)
+    expect(loggerError).toHaveBeenCalledTimes(1)
+  })
+
+  test("counts again and logs the recovery once the probe after the backoff succeeds", async () => {
+    incrWithWindow.mockRejectedValueOnce(new Error("Redis unavailable"))
+    await acquire()
+    vi.advanceTimersByTime(BACKOFF_MS)
+    incrWithWindow.mockResolvedValue(21)
+
+    await expect(acquire()).resolves.toBe(false)
+
+    expect(loggerInfo).toHaveBeenCalledTimes(1)
   })
 })

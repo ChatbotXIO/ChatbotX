@@ -2,6 +2,7 @@ import { sequenceAnalyticsService } from "@chatbotx.io/analytics"
 import type { SequenceStepEventType } from "@chatbotx.io/analytics/schemas"
 import {
   and,
+  type DatabaseClient,
   db,
   eq,
   findOrFail,
@@ -507,6 +508,7 @@ class SequenceService extends BaseService {
   async listLabelsByIds(input: {
     workspaceId: string
     ids: string[]
+    tx?: DatabaseClient
   }): Promise<IdLabel[]> {
     return await selectLabelsByIds(sequenceModel, input)
   }

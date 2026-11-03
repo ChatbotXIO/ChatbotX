@@ -21,6 +21,12 @@ const mocks = vi.hoisted(() => ({
   ),
 }))
 
+// The trigger action registry imports the sequence actions, which reach
+// `contactSequenceService` through its (non-barrel) subpath.
+vi.mock("@chatbotx.io/business/contact-sequence", () => ({
+  contactSequenceService: {},
+}))
+
 vi.mock("@chatbotx.io/business/pipeline", () => ({
   runPipelineAction: vi.fn(),
 }))

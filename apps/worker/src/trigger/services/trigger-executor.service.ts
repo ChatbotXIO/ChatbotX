@@ -19,6 +19,15 @@ export class TriggerExecutorService {
     const { id: triggerId, workspaceId, actions } = trigger
     const { contactId, contactInboxId, decisionFlowOrigin, occurrenceId } =
       input
+    const runAllowed = await triggerService.tryAcquireContactRun({
+      workspaceId,
+      triggerId,
+      contactId,
+    })
+    if (!runAllowed) {
+      return
+    }
+
     try {
       setTriggerExecutionContext({ source: "worker" })
 

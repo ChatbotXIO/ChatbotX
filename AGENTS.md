@@ -197,6 +197,7 @@ See **`.agents/rules/git.md`** for the full canonical rules (commit format, bran
 - Ads conversion tracking (CTWA/CTM/CTID, rules vs Trigger actions, CAPI, per-click ad touch history): `docs/ads-conversion-tracking.md`
 - Google Ads Click-to-Message conversion tracking (gclid/gbraid capture, Connection-engine OAuth, Data Manager API delivery, dedup, state machine, statistics dashboard, read-only public API, ops runbook): `docs/google-ads-conversion-tracking.md`
 - Google Ads conversion options for admins (dedup mode, conversion time, consent, legacy differences): `docs/google-ads-conversion-options-admin-guide.md`
+- Trigger sequence actions (`addSequence` / `removeSequence`: shape, no sequence events, template behavior) and trigger loop protection (non-emitting actions, per-trigger-per-contact run circuit breaker, blind spots): `docs/trigger-actions.md`
 - Comment automation (all channels): `docs/comment-automation.md` (skill: `.agents/skills/comment-automation/`)
 - Push notifications (Expo Push Service, device tokens): `docs/push-notifications.md`
 - Enterprise licensing (offline Ed25519 license keys): `docs/licensing.md`

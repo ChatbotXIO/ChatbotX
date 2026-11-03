@@ -14,12 +14,14 @@ import {
 import { stableStringify } from "../audit/diff"
 import { botFieldService } from "../bot-field/service"
 import { customFieldService } from "../custom-field/service"
+import { sequenceService } from "../sequence/service"
 import { tagService } from "../tag/service"
 
 type ActionReference =
   | { kind: "flow"; id: string }
   | { kind: "flowNode"; flowId: string; id: string }
   | { kind: "tag"; id: string }
+  | { kind: "sequence"; id: string }
   | { kind: "customField"; id: string }
   /** An id or a name: the trigger runtime resolves both. */
   | { kind: "customFieldKey"; id: string }
@@ -79,6 +81,12 @@ const usedEach = (
 
 const collectTags: ReferenceCollector = (action) =>
   usedEach("tagIds", action.tagIds, (id) => ({ kind: "tag", id }))
+
+const collectSequences: ReferenceCollector = (action) =>
+  usedEach("sequenceIds", action.sequenceIds, (id) => ({
+    kind: "sequence",
+    id,
+  }))
 
 const customFieldReference = (
   action: ActionRecord,
@@ -237,6 +245,8 @@ const COLLECTORS: Partial<Record<string, ReferenceCollector>> = {
   ],
   addTag: collectTags,
   removeTag: collectTags,
+  addSequence: collectSequences,
+  removeSequence: collectSequences,
   setCustomField: collectSetFieldReference,
   clearCustomField: collectClearFieldReference,
   pipeline: collectPipeline,
@@ -257,6 +267,7 @@ type ExistingReferences = {
   flows: Set<string>
   flowNodes: Map<string, Set<string>>
   tags: Set<string>
+  sequences: Set<string>
   customFields: Set<string>
   customFieldKeys: Set<string>
   botFields: Set<string>
@@ -340,6 +351,7 @@ const loadExisting = async (
     flowIdRows,
     flowNodeRows,
     tags,
+    sequences,
     customFields,
     customFieldKeys,
     botFields,
@@ -360,6 +372,11 @@ const loadExisting = async (
         )
       : [],
     tagService.findManyByIds({ workspaceId, ids: idsOf(uses, "tag"), tx }),
+    sequenceService.listLabelsByIds({
+      workspaceId,
+      ids: idsOf(uses, "sequence"),
+      tx,
+    }),
     customFieldService.findManyByIds({
       workspaceId,
       ids: idsOf(uses, "customField"),
@@ -407,6 +424,7 @@ const loadExisting = async (
       ]),
     ),
     tags: new Set(tags.map((tag) => tag.id)),
+    sequences: new Set(sequences.map((sequence) => sequence.id)),
     customFields: new Set(customFields.map((field) => field.id)),
     customFieldKeys: new Set(customFieldKeys.keys()),
     botFields: new Set(botFields.map((field) => field.id)),
@@ -430,6 +448,7 @@ const RESOLVERS: {
   flowNode: (reference, existing) =>
     existing.flowNodes.get(reference.flowId)?.has(reference.id) ?? false,
   tag: (reference, existing) => existing.tags.has(reference.id),
+  sequence: (reference, existing) => existing.sequences.has(reference.id),
   customField: (reference, existing) => existing.customFields.has(reference.id),
   customFieldKey: (reference, existing) =>
     existing.customFieldKeys.has(reference.id),

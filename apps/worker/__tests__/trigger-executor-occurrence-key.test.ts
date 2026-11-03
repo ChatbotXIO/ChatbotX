@@ -8,6 +8,7 @@ const mocks = vi.hoisted(() => ({
   execute: vi.fn(),
   recordContactHistory: vi.fn(),
   incrementStats: vi.fn(),
+  tryAcquireContactRun: vi.fn(),
 }))
 
 vi.mock("../src/trigger/services/action-executor", () => ({
@@ -19,6 +20,7 @@ vi.mock("@chatbotx.io/business", () => ({
   triggerService: {
     recordContactHistory: mocks.recordContactHistory,
     incrementStats: mocks.incrementStats,
+    tryAcquireContactRun: mocks.tryAcquireContactRun,
   },
 }))
 vi.mock("@chatbotx.io/events", () => ({
@@ -49,6 +51,7 @@ describe("TriggerExecutorService occurrence keys", () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mocks.execute.mockResolvedValue(undefined)
+    mocks.tryAcquireContactRun.mockResolvedValue(true)
   })
 
   test("builds one key per action from the job id, the trigger and the position", async () => {
