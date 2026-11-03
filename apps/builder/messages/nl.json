@@ -759,6 +759,7 @@
       "clicked": "Geklikt",
       "failed": "Mislukt",
       "missed": "Gemist",
+      "moderated": "Gemodereerd",
       "noContacts": "Geen contacten gevonden",
       "noComment": "(geen tekst)",
       "pageInfo": "Pagina {page} van {pageCount}",
@@ -778,7 +779,9 @@
       "contactNotNew": "Contact is niet nieuw",
       "alreadyRepliedOnPost": "Al beantwoord op dit bericht",
       "engagedOnOtherPost": "Al gereageerd op een ander bericht",
-      "mentionCountNotMatched": "Aantal vermeldingen kwam niet overeen"
+      "mentionCountNotMatched": "Aantal vermeldingen kwam niet overeen",
+      "noImageAttachment": "Geen foto bijgevoegd",
+      "moderated": "Verborgen of verwijderd door moderatie"
     },
     "replyTo": {
       "mentions": "Reacties met genoeg vermeldingen",
@@ -798,6 +801,10 @@
       "label": "Bijhouden of een gebruiker andere gebruikers tagt",
       "descriptionText": "Telt de accounts die in elke reactie worden getagd en telt ze op bij de totalen van het contact over alle reacties. Gebruik '{{total_tagged}}' voor alle getagde accounts en '{{total_new_tagged}}' voor accounts die je pagina nooit een bericht hebben gestuurd of nooit contact zijn geweest."
     },
+    "onlyCommentsWithImage": {
+      "label": "Alleen reageren op reacties met een foto",
+      "descriptionText": "Alleen automatisch reageren als de reactie een foto bevat. GIF's en stickers tellen niet mee. Reacties zonder foto worden overgeslagen en de volgende automatisering wordt geprobeerd."
+    },
     "card": {
       "reply": "Antwoord"
     },
@@ -815,6 +822,87 @@
       "column": "Account",
       "disconnected": "Ontkoppeld account",
       "disconnectedDescription": "Deze automatisering hoort bij een account dat niet meer gekoppeld is en reageert dus op geen enkele reactie. Koppel het account opnieuw of kies een ander."
+    },
+    "aiModeration": {
+      "enabled": "AI-moderatie",
+      "description": "Een AI-agent leest elke opmerking voordat de bot antwoordt en verbergt of verwijdert opmerkingen in de onderstaande categorieën. Op een gemodereerde opmerking wordt nooit gereageerd.",
+      "aiAgentDescription": "Alleen het AI-model van de agent wordt gebruikt, niet de prompt.",
+      "categoriesLabel": "Opmerkingen blokkeren die",
+      "categories": {
+        "hate": "Haatzaaiend zijn",
+        "offensive": "Beledigend zijn",
+        "harassment": "Intimidatie zijn",
+        "negative": "Vijandig zijn jegens het merk",
+        "spam": "Spam of oplichting zijn"
+      },
+      "categoryDescriptions": {
+        "hate": "Valt een groep aan op basis van ras, religie, geslacht, nationaliteit en dergelijke",
+        "offensive": "Beledigingen, vloeken, vulgair taalgebruik",
+        "harassment": "Bedreigingen, pesten, aanvallen op een persoon",
+        "negative": "Bedoeld om het merk te schaden. Beleefde klachten worden niet geblokkeerd",
+        "spam": "Oplichting, phishing, niet-gerelateerde promotie"
+      },
+      "instruction": "Extra instructies voor de AI",
+      "instructionDescription": "Optioneel. Vertel de AI wat er moet worden toegestaan of geblokkeerd.",
+      "instructionPlaceholder": "bijv. Blokkeer geen klanten die klagen over de prijs",
+      "action": "Wanneer een opmerking wordt geblokkeerd",
+      "actions": {
+        "hide": "Verbergen",
+        "delete": "Verwijderen"
+      },
+      "deleteWarning": "Verwijderde opmerkingen zijn voorgoed weg en kunnen niet worden hersteld. Verbergen is veiliger als de AI zich vergist."
+    },
+    "moderationLog": {
+      "title": "Gemodereerde opmerkingen",
+      "description": "Opmerkingen die deze automatisering heeft verborgen of verwijderd, en waarom.",
+      "allActions": "Alle acties",
+      "allSources": "Regels en AI",
+      "actions": {
+        "hide": "Verborgen",
+        "delete": "Verwijderd"
+      },
+      "sources": {
+        "rule": "Door een verbergregel",
+        "ai": "Door AI"
+      },
+      "statuses": {
+        "pending": "Bezig",
+        "done": "Klaar",
+        "failed": "Mislukt"
+      },
+      "rules": {
+        "all": "Alle opmerkingen verbergen",
+        "phoneNumber": "Bevat telefoonnummer",
+        "link": "Bevat link",
+        "keyword": "Bevat trefwoord",
+        "image": "Bevat afbeelding",
+        "video": "Bevat video",
+        "gif": "Bevat GIF",
+        "emoji": "Bevat emoji"
+      },
+      "summary": {
+        "total": "{count} gemodereerd",
+        "hidden": "{count} verborgen",
+        "deleted": "{count} verwijderd",
+        "byAI": "{count} door AI",
+        "byRule": "{count} door regels",
+        "failed": "{count} mislukt"
+      },
+      "columns": {
+        "time": "Tijd",
+        "contact": "Contact",
+        "comment": "Opmerking",
+        "action": "Actie",
+        "reason": "Reden",
+        "status": "Status"
+      },
+      "loading": "Laden…",
+      "empty": "Er zijn nog geen opmerkingen verborgen of verwijderd.",
+      "unknownContact": "Onbekend",
+      "noText": "(geen tekst)",
+      "previous": "Vorige",
+      "next": "Volgende",
+      "page": "Pagina {page} van {pageCount}"
     }
   },
   "fields": {

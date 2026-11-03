@@ -2433,6 +2433,7 @@
       "clicked": "Cliccato",
       "failed": "Non riuscito",
       "missed": "Mancati",
+      "moderated": "Moderati",
       "noContacts": "Nessun contatto trovato",
       "noComment": "(nessun testo)",
       "pageInfo": "Pagina {page} di {pageCount}",
@@ -2452,7 +2453,9 @@
       "contactNotNew": "Il contatto non è nuovo",
       "alreadyRepliedOnPost": "Già risposto su questo post",
       "engagedOnOtherPost": "Ha già interagito su un altro post",
-      "mentionCountNotMatched": "Il numero di menzioni non corrispondeva"
+      "mentionCountNotMatched": "Il numero di menzioni non corrispondeva",
+      "noImageAttachment": "Nessuna foto allegata",
+      "moderated": "Nascosto o eliminato dalla moderazione"
     },
     "replyTo": {
       "mentions": "Commenti con abbastanza menzioni",
@@ -2472,6 +2475,10 @@
       "label": "Traccia se un utente tagga altri utenti",
       "descriptionText": "Conta gli account taggati in ogni commento e li somma ai totali del contatto su tutti i commenti. Usa '{{total_tagged}}' per tutti gli account taggati e '{{total_new_tagged}}' per quelli che non hanno mai scritto alla tua pagina né sono stati contatti."
     },
+    "onlyCommentsWithImage": {
+      "label": "Rispondi solo ai commenti con una foto",
+      "descriptionText": "Rispondi automaticamente solo quando il commento include una foto. GIF e sticker non contano. I commenti senza foto vengono saltati e si prova l'automazione successiva."
+    },
     "card": {
       "reply": "Risposta"
     },
@@ -2489,6 +2496,87 @@
       "column": "Account",
       "disconnected": "Account disconnesso",
       "disconnectedDescription": "Questa automazione è legata a un account non più collegato, quindi non risponde a nessun commento. Ricollega l'account o scegline un altro."
+    },
+    "aiModeration": {
+      "enabled": "Moderazione con IA",
+      "description": "Un agente IA legge ogni commento prima che il bot risponda e nasconde o elimina quelli nelle categorie qui sotto. A un commento moderato non si risponde mai.",
+      "aiAgentDescription": "Viene usato solo il modello IA dell'agente, non il suo prompt.",
+      "categoriesLabel": "Blocca i commenti che sono",
+      "categories": {
+        "hate": "Incitamento all'odio",
+        "offensive": "Offensivi",
+        "harassment": "Molestie",
+        "negative": "Ostili verso il brand",
+        "spam": "Spam o truffa"
+      },
+      "categoryDescriptions": {
+        "hate": "Attacca un gruppo per razza, religione, genere, nazionalità e simili",
+        "offensive": "Insulti, parolacce, linguaggio volgare",
+        "harassment": "Minacce, bullismo, attacchi a una persona",
+        "negative": "Mira a danneggiare il brand. I reclami educati non vengono bloccati",
+        "spam": "Truffe, phishing, promozioni non pertinenti"
+      },
+      "instruction": "Indicazioni aggiuntive per l'IA",
+      "instructionDescription": "Facoltativo. Indica all'IA cosa consentire o bloccare.",
+      "instructionPlaceholder": "es. Non bloccare i clienti che si lamentano del prezzo",
+      "action": "Quando un commento viene bloccato",
+      "actions": {
+        "hide": "Nascondilo",
+        "delete": "Eliminalo"
+      },
+      "deleteWarning": "I commenti eliminati sono persi per sempre e non possono essere ripristinati. Nascondere è più sicuro se l'IA sbaglia."
+    },
+    "moderationLog": {
+      "title": "Commenti moderati",
+      "description": "Commenti che questa automazione ha nascosto o eliminato, e perché.",
+      "allActions": "Tutte le azioni",
+      "allSources": "Regole e IA",
+      "actions": {
+        "hide": "Nascosto",
+        "delete": "Eliminato"
+      },
+      "sources": {
+        "rule": "Da una regola di nascondimento",
+        "ai": "Dall'IA"
+      },
+      "statuses": {
+        "pending": "In corso",
+        "done": "Fatto",
+        "failed": "Non riuscito"
+      },
+      "rules": {
+        "all": "Nascondi tutti i commenti",
+        "phoneNumber": "Contiene un numero di telefono",
+        "link": "Contiene un link",
+        "keyword": "Contiene una parola chiave",
+        "image": "Contiene un'immagine",
+        "video": "Contiene un video",
+        "gif": "Contiene una GIF",
+        "emoji": "Contiene un'emoji"
+      },
+      "summary": {
+        "total": "{count} moderati",
+        "hidden": "{count} nascosti",
+        "deleted": "{count} eliminati",
+        "byAI": "{count} dall'IA",
+        "byRule": "{count} da regole",
+        "failed": "{count} non riusciti"
+      },
+      "columns": {
+        "time": "Ora",
+        "contact": "Contatto",
+        "comment": "Commento",
+        "action": "Azione",
+        "reason": "Motivo",
+        "status": "Stato"
+      },
+      "loading": "Caricamento…",
+      "empty": "Nessun commento è ancora stato nascosto o eliminato.",
+      "unknownContact": "Sconosciuto",
+      "noText": "(nessun testo)",
+      "previous": "Precedente",
+      "next": "Successivo",
+      "page": "Pagina {page} di {pageCount}"
     }
   },
   "condition": {

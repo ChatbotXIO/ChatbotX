@@ -2139,6 +2139,7 @@
       "clicked": "Accesat",
       "failed": "Eșuat",
       "missed": "Ratate",
+      "moderated": "Moderate",
       "noContacts": "Nu au fost găsite contacte",
       "noComment": "(fără text)",
       "pageInfo": "Pagina {page} din {pageCount}",
@@ -2158,7 +2159,9 @@
       "contactNotNew": "Contactul nu este nou",
       "alreadyRepliedOnPost": "Deja s-a răspuns la această postare",
       "engagedOnOtherPost": "A interacționat deja la altă postare",
-      "mentionCountNotMatched": "Numărul de mențiuni nu s-a potrivit"
+      "mentionCountNotMatched": "Numărul de mențiuni nu s-a potrivit",
+      "noImageAttachment": "Nicio fotografie atașată",
+      "moderated": "Ascuns sau șters de moderare"
     },
     "replyTo": {
       "mentions": "Comentarii cu suficiente mențiuni",
@@ -2178,6 +2181,10 @@
       "label": "Urmărește dacă un utilizator etichetează alți utilizatori",
       "descriptionText": "Numără conturile etichetate în fiecare comentariu și le adaugă la totalurile contactului pentru toate comentariile. Folosește '{{total_tagged}}' pentru toate conturile etichetate și '{{total_new_tagged}}' pentru conturile care nu au trimis niciodată mesaj paginii tale și nu au fost contacte."
     },
+    "onlyCommentsWithImage": {
+      "label": "Răspunde doar la comentariile cu fotografie",
+      "descriptionText": "Răspunde automat doar când comentariul include o fotografie. GIF-urile și stickerele nu contează. Comentariile fără fotografie sunt omise și se încearcă următoarea automatizare."
+    },
     "card": {
       "reply": "Răspuns"
     },
@@ -2195,6 +2202,87 @@
       "column": "Cont",
       "disconnected": "Cont deconectat",
       "disconnectedDescription": "Această automatizare este legată de un cont care nu mai este conectat, deci nu răspunde la niciun comentariu. Reconectează contul sau alege altul."
+    },
+    "aiModeration": {
+      "enabled": "Moderare cu AI",
+      "description": "Un agent AI citește fiecare comentariu înainte ca botul să răspundă și le ascunde sau le șterge pe cele din categoriile de mai jos. La un comentariu moderat nu se răspunde niciodată.",
+      "aiAgentDescription": "Se folosește doar modelul AI al agentului, nu și promptul acestuia.",
+      "categoriesLabel": "Blochează comentariile care sunt",
+      "categories": {
+        "hate": "Discurs de ură",
+        "offensive": "Ofensatoare",
+        "harassment": "Hărțuire",
+        "negative": "Ostile față de brand",
+        "spam": "Spam sau înșelătorie"
+      },
+      "categoryDescriptions": {
+        "hate": "Atacă un grup pe motive de rasă, religie, gen, naționalitate și similare",
+        "offensive": "Insulte, înjurături, limbaj vulgar",
+        "harassment": "Amenințări, bullying, atacuri la adresa unei persoane",
+        "negative": "Menit să afecteze brandul. Reclamațiile politicoase nu sunt blocate",
+        "spam": "Înșelătorii, phishing, promovare fără legătură"
+      },
+      "instruction": "Indicații suplimentare pentru AI",
+      "instructionDescription": "Opțional. Spune-i AI-ului ce să permită sau să blocheze.",
+      "instructionPlaceholder": "ex. Nu bloca clienții care se plâng de preț",
+      "action": "Când un comentariu este blocat",
+      "actions": {
+        "hide": "Ascunde-l",
+        "delete": "Șterge-l"
+      },
+      "deleteWarning": "Comentariile șterse dispar definitiv și nu pot fi restaurate. Ascunderea este mai sigură dacă AI-ul greșește."
+    },
+    "moderationLog": {
+      "title": "Comentarii moderate",
+      "description": "Comentarii pe care această automatizare le-a ascuns sau le-a șters, și motivul.",
+      "allActions": "Toate acțiunile",
+      "allSources": "Reguli și AI",
+      "actions": {
+        "hide": "Ascuns",
+        "delete": "Șters"
+      },
+      "sources": {
+        "rule": "De o regulă de ascundere",
+        "ai": "De AI"
+      },
+      "statuses": {
+        "pending": "În curs",
+        "done": "Finalizat",
+        "failed": "Eșuat"
+      },
+      "rules": {
+        "all": "Ascunde toate comentariile",
+        "phoneNumber": "Conține număr de telefon",
+        "link": "Conține link",
+        "keyword": "Conține cuvânt cheie",
+        "image": "Conține imagine",
+        "video": "Conține video",
+        "gif": "Conține GIF",
+        "emoji": "Conține emoji"
+      },
+      "summary": {
+        "total": "{count} moderate",
+        "hidden": "{count} ascunse",
+        "deleted": "{count} șterse",
+        "byAI": "{count} de AI",
+        "byRule": "{count} de reguli",
+        "failed": "{count} eșuate"
+      },
+      "columns": {
+        "time": "Ora",
+        "contact": "Contact",
+        "comment": "Comentariu",
+        "action": "Acțiune",
+        "reason": "Motiv",
+        "status": "Stare"
+      },
+      "loading": "Se încarcă…",
+      "empty": "Încă nu a fost ascuns sau șters niciun comentariu.",
+      "unknownContact": "Necunoscut",
+      "noText": "(fără text)",
+      "previous": "Înapoi",
+      "next": "Înainte",
+      "page": "Pagina {page} din {pageCount}"
     }
   },
   "condition": {

@@ -759,6 +759,7 @@
       "clicked": "Cliqué",
       "failed": "Échec",
       "missed": "Manqués",
+      "moderated": "Modérés",
       "noContacts": "Aucun contact trouvé",
       "noComment": "(aucun texte)",
       "pageInfo": "Page {page} sur {pageCount}",
@@ -778,7 +779,9 @@
       "contactNotNew": "Le contact n'est pas nouveau",
       "alreadyRepliedOnPost": "Déjà répondu sur cette publication",
       "engagedOnOtherPost": "A déjà interagi sur une autre publication",
-      "mentionCountNotMatched": "Le nombre de mentions ne correspondait pas"
+      "mentionCountNotMatched": "Le nombre de mentions ne correspondait pas",
+      "noImageAttachment": "Aucune photo jointe",
+      "moderated": "Masqué ou supprimé par la modération"
     },
     "replyTo": {
       "mentions": "Commentaires avec suffisamment de mentions",
@@ -798,6 +801,10 @@
       "label": "Suivre si un utilisateur identifie d'autres utilisateurs",
       "descriptionText": "Compte les comptes identifiés dans chaque commentaire et les ajoute aux totaux du contact sur l'ensemble des commentaires. Utilisez '{{total_tagged}}' pour tous les comptes identifiés et '{{total_new_tagged}}' pour ceux qui n'ont jamais écrit à votre page ni été contacts."
     },
+    "onlyCommentsWithImage": {
+      "label": "Répondre uniquement aux commentaires avec une photo",
+      "descriptionText": "Répondre automatiquement uniquement lorsque le commentaire contient une photo. Les GIF et les stickers ne comptent pas. Les commentaires sans photo sont ignorés et l'automatisation suivante est essayée."
+    },
     "card": {
       "reply": "Réponse"
     },
@@ -815,6 +822,87 @@
       "column": "Compte",
       "disconnected": "Compte déconnecté",
       "disconnectedDescription": "Cette automatisation est liée à un compte qui n'est plus connecté : elle ne répond donc à aucun commentaire. Reconnectez le compte ou choisissez-en un autre."
+    },
+    "aiModeration": {
+      "enabled": "Modération par IA",
+      "description": "Un agent IA lit chaque commentaire avant que le bot ne réponde et masque ou supprime ceux des catégories ci-dessous. Un commentaire modéré ne reçoit jamais de réponse.",
+      "aiAgentDescription": "Seul le modèle d'IA de l'agent est utilisé, pas son prompt.",
+      "categoriesLabel": "Bloquer les commentaires qui sont",
+      "categories": {
+        "hate": "Discours haineux",
+        "offensive": "Offensants",
+        "harassment": "Harcèlement",
+        "negative": "Hostiles envers la marque",
+        "spam": "Spam ou arnaque"
+      },
+      "categoryDescriptions": {
+        "hate": "Attaque un groupe en raison de sa race, religion, genre, nationalité, etc.",
+        "offensive": "Insultes, jurons, langage vulgaire",
+        "harassment": "Menaces, intimidation, attaques contre une personne",
+        "negative": "Vise à nuire à la marque. Les plaintes polies ne sont pas bloquées",
+        "spam": "Arnaques, hameçonnage, promotion sans rapport"
+      },
+      "instruction": "Consignes supplémentaires pour l'IA",
+      "instructionDescription": "Facultatif. Indiquez à l'IA ce qu'il faut autoriser ou bloquer.",
+      "instructionPlaceholder": "ex. Ne pas bloquer les clients qui se plaignent du prix",
+      "action": "Lorsqu'un commentaire est bloqué",
+      "actions": {
+        "hide": "Le masquer",
+        "delete": "Le supprimer"
+      },
+      "deleteWarning": "Les commentaires supprimés sont perdus définitivement et ne peuvent pas être restaurés. Masquer est plus sûr si l'IA se trompe."
+    },
+    "moderationLog": {
+      "title": "Commentaires modérés",
+      "description": "Commentaires que cette automatisation a masqués ou supprimés, et pourquoi.",
+      "allActions": "Toutes les actions",
+      "allSources": "Règles et IA",
+      "actions": {
+        "hide": "Masqué",
+        "delete": "Supprimé"
+      },
+      "sources": {
+        "rule": "Par une règle de masquage",
+        "ai": "Par l'IA"
+      },
+      "statuses": {
+        "pending": "En cours",
+        "done": "Terminé",
+        "failed": "Échec"
+      },
+      "rules": {
+        "all": "Masquer tous les commentaires",
+        "phoneNumber": "Contient un numéro de téléphone",
+        "link": "Contient un lien",
+        "keyword": "Contient un mot-clé",
+        "image": "Contient une image",
+        "video": "Contient une vidéo",
+        "gif": "Contient un GIF",
+        "emoji": "Contient un emoji"
+      },
+      "summary": {
+        "total": "{count} modérés",
+        "hidden": "{count} masqués",
+        "deleted": "{count} supprimés",
+        "byAI": "{count} par l'IA",
+        "byRule": "{count} par des règles",
+        "failed": "{count} en échec"
+      },
+      "columns": {
+        "time": "Heure",
+        "contact": "Contact",
+        "comment": "Commentaire",
+        "action": "Action",
+        "reason": "Motif",
+        "status": "Statut"
+      },
+      "loading": "Chargement…",
+      "empty": "Aucun commentaire n'a encore été masqué ou supprimé.",
+      "unknownContact": "Inconnu",
+      "noText": "(aucun texte)",
+      "previous": "Précédent",
+      "next": "Suivant",
+      "page": "Page {page} sur {pageCount}"
     }
   },
   "condition": {

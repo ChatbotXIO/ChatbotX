@@ -801,6 +801,7 @@
       "clicked": "Đã nhấp",
       "failed": "Thất bại",
       "missed": "Bỏ lỡ",
+      "moderated": "Đã kiểm duyệt",
       "noContacts": "Không có liên hệ nào",
       "noComment": "(không có nội dung)",
       "pageInfo": "Trang {page} / {pageCount}",
@@ -820,7 +821,9 @@
       "contactNotNew": "Contact không mới",
       "alreadyRepliedOnPost": "Đã trả lời ở bài viết này",
       "engagedOnOtherPost": "Đã tương tác ở bài viết khác",
-      "mentionCountNotMatched": "Số lượt nhắc tên không khớp"
+      "mentionCountNotMatched": "Số lượt nhắc tên không khớp",
+      "noImageAttachment": "Không có ảnh đính kèm",
+      "moderated": "Đã bị ẩn hoặc xoá khi kiểm duyệt"
     },
     "replyTo": {
       "mentions": "Bình luận có đủ số người được nhắc tên",
@@ -840,6 +843,10 @@
       "label": "Theo dõi khi người dùng gắn thẻ người khác",
       "descriptionText": "Đếm số tài khoản được tag trong mỗi bình luận và cộng dồn vào tổng của khách hàng qua mọi bình luận. Dùng '{{total_tagged}}' cho tất cả tài khoản được tag và '{{total_new_tagged}}' cho các tài khoản chưa từng nhắn tin với trang hoặc chưa từng là khách hàng."
     },
+    "onlyCommentsWithImage": {
+      "label": "Chỉ trả lời bình luận có ảnh",
+      "descriptionText": "Chỉ tự động trả lời khi bình luận có kèm ảnh. GIF và sticker không được tính. Bình luận không có ảnh sẽ được bỏ qua và chuyển sang kịch bản tiếp theo."
+    },
     "card": {
       "reply": "Trả lời"
     },
@@ -857,6 +864,87 @@
       "column": "Tài khoản",
       "disconnected": "Tài khoản đã ngắt kết nối",
       "disconnectedDescription": "Kịch bản này gắn với một tài khoản không còn kết nối nên sẽ không trả lời comment nào. Hãy kết nối lại tài khoản hoặc chọn tài khoản khác."
+    },
+    "aiModeration": {
+      "enabled": "AI kiểm duyệt",
+      "description": "AI đọc mọi bình luận trước khi bot trả lời, rồi ẩn hoặc xoá những bình luận thuộc các loại bên dưới. Bình luận đã bị kiểm duyệt sẽ không được trả lời.",
+      "aiAgentDescription": "Chỉ dùng model AI của agent, không dùng lời dặn của agent.",
+      "categoriesLabel": "Chặn bình luận",
+      "categories": {
+        "hate": "Thù ghét",
+        "offensive": "Xúc phạm",
+        "harassment": "Quấy rối",
+        "negative": "Công kích thương hiệu",
+        "spam": "Spam hoặc lừa đảo"
+      },
+      "categoryDescriptions": {
+        "hate": "Công kích một nhóm người vì chủng tộc, tôn giáo, giới tính, quốc tịch…",
+        "offensive": "Chửi bới, lăng mạ, lời lẽ thô tục",
+        "harassment": "Đe doạ, bắt nạt, nhắm vào một người",
+        "negative": "Cố tình bôi xấu thương hiệu. Lời phàn nàn lịch sự không bị chặn",
+        "spam": "Lừa đảo, câu link, quảng cáo không liên quan"
+      },
+      "instruction": "Ghi chú thêm cho AI",
+      "instructionDescription": "Không bắt buộc. Dặn AI nên cho qua hoặc chặn những gì.",
+      "instructionPlaceholder": "Ví dụ: Không chặn khách phàn nàn về giá",
+      "action": "Khi bình luận bị chặn",
+      "actions": {
+        "hide": "Ẩn đi",
+        "delete": "Xoá đi"
+      },
+      "deleteWarning": "Bình luận đã xoá sẽ mất vĩnh viễn, không khôi phục được. Nên chọn Ẩn để an toàn nếu AI đánh giá nhầm."
+    },
+    "moderationLog": {
+      "title": "Bình luận đã kiểm duyệt",
+      "description": "Những bình luận automation này đã ẩn hoặc xoá, và lý do.",
+      "allActions": "Mọi hành động",
+      "allSources": "Luật và AI",
+      "actions": {
+        "hide": "Đã ẩn",
+        "delete": "Đã xoá"
+      },
+      "sources": {
+        "rule": "Do luật ẩn",
+        "ai": "Do AI"
+      },
+      "statuses": {
+        "pending": "Đang xử lý",
+        "done": "Xong",
+        "failed": "Lỗi"
+      },
+      "rules": {
+        "all": "Ẩn tất cả bình luận",
+        "phoneNumber": "Có số điện thoại",
+        "link": "Có link",
+        "keyword": "Có từ khoá",
+        "image": "Có ảnh",
+        "video": "Có video",
+        "gif": "Có GIF",
+        "emoji": "Có emoji"
+      },
+      "summary": {
+        "total": "{count} đã kiểm duyệt",
+        "hidden": "{count} đã ẩn",
+        "deleted": "{count} đã xoá",
+        "byAI": "{count} do AI",
+        "byRule": "{count} do luật",
+        "failed": "{count} lỗi"
+      },
+      "columns": {
+        "time": "Thời gian",
+        "contact": "Người bình luận",
+        "comment": "Bình luận",
+        "action": "Hành động",
+        "reason": "Lý do",
+        "status": "Trạng thái"
+      },
+      "loading": "Đang tải…",
+      "empty": "Chưa có bình luận nào bị ẩn hoặc xoá.",
+      "unknownContact": "Không rõ",
+      "noText": "(không có chữ)",
+      "previous": "Trước",
+      "next": "Sau",
+      "page": "Trang {page}/{pageCount}"
     }
   },
   "condition": {

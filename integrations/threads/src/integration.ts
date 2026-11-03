@@ -12,7 +12,7 @@ import {
   refreshAccessToken,
   type ThreadsOAuthProfile,
 } from "./apis/auth"
-import { getReplyGifUrl } from "./apis/comment"
+import { getReplyAttachment, getReplyGifUrl } from "./apis/comment"
 import { getPostDetails } from "./apis/post"
 import { THREADS_OAUTH_URL, THREADS_SCOPES } from "./constants"
 import { ThreadsException } from "./exception"
@@ -103,6 +103,8 @@ const config: IntegrationDefinition<
       await getPostDetails(ctx.auth, input.postId),
     getReplyGifUrl: async ({ ctx, input }) =>
       await getReplyGifUrl(ctx.auth, input.replyId),
+    getReplyAttachment: async ({ ctx, input }) =>
+      await getReplyAttachment(ctx.auth, input.replyId),
   },
   refreshAuth: async ({ auth }) => {
     if (!auth.tokens.accessToken) {

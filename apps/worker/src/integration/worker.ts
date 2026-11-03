@@ -47,6 +47,7 @@ import { coexistWhatsappBuffer } from "./handlers/coexist/whatsapp-buffer"
 import { coexistWhatsappFlush } from "./handlers/coexist/whatsapp-flush"
 import { processCommentAutomation } from "./handlers/comment-automation"
 import { runDeferredCommentPrivateReply } from "./handlers/comment-automation/deferred-private-reply"
+import { runAsMissedCommentReplay } from "./handlers/comment-automation/replay-priority"
 import { confirmOrderPayment } from "./handlers/confirm-order-payment"
 import { updateContactAvatar } from "./handlers/contact/update-avatar"
 import { runContactScan } from "./handlers/contact-scan/engine"
@@ -544,7 +545,12 @@ function startIntegrationWorker() {
               return
             }
             case IntegrationJobAction.processCommentAutomation: {
-              await processCommentAutomation(job.data.data)
+              const commentAutomationData = job.data.data
+              await (commentAutomationData.replay
+                ? runAsMissedCommentReplay(() =>
+                    processCommentAutomation(commentAutomationData),
+                  )
+                : processCommentAutomation(commentAutomationData))
               return
             }
             case IntegrationJobAction.tiktokHighIntentComment: {

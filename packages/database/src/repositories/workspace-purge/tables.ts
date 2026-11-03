@@ -4,6 +4,7 @@ export const HEAVY_WORKSPACE_TABLES = [
   "InboundWebhookRequest",
   "CommentAutomationEvent",
   "CommentAutomationReply",
+  "CommentModerationLog",
   "TriggerStat",
   "FlowNodeStat",
   "MagicLinkStat",

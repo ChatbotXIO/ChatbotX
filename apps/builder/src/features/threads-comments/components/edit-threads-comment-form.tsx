@@ -8,6 +8,7 @@ import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import { type Resolver, type UseFormReturn, useForm } from "react-hook-form"
 import { toast } from "sonner"
+import { withAIModerationDefaults } from "@/features/shared/comment-automation/lib/ai-moderation-defaults"
 import { updateThreadsCommentAction } from "../actions/update-threads-comment.action"
 import {
   type CreateThreadsCommentRequest,
@@ -70,6 +71,8 @@ export function EditThreadsCommentForm({
           initialData.options.replyToUsersWhoCommentedOnOtherPosts,
         ignoreCommentReplies: initialData.options.ignoreCommentReplies,
         trackUserTags: initialData.options.trackUserTags,
+        onlyCommentsWithImage:
+          initialData.options.onlyCommentsWithImage ?? false,
       },
       hideComments: {
         all: initialData.hideComments.all,
@@ -80,6 +83,9 @@ export function EditThreadsCommentForm({
         hasEmoji: initialData.hideComments.hasEmoji ?? false,
         keywords: initialData.hideComments.keywords,
         showCommentsAfter: initialData.hideComments.showCommentsAfter,
+        aiModeration: withAIModerationDefaults(
+          initialData.hideComments.aiModeration,
+        ),
       },
       replyAfter: initialData.replyAfter,
     },

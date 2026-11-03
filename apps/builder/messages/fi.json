@@ -759,6 +759,7 @@
       "clicked": "Napsautettu",
       "failed": "Epäonnistunut",
       "missed": "Ohitetut",
+      "moderated": "Moderoidut",
       "noContacts": "Yhteystietoja ei löytynyt",
       "noComment": "(ei tekstiä)",
       "pageInfo": "Sivu {page}/{pageCount}",
@@ -778,7 +779,9 @@
       "contactNotNew": "Kontakti ei ole uusi",
       "alreadyRepliedOnPost": "Jo vastattu tässä julkaisussa",
       "engagedOnOtherPost": "Jo vuorovaikutuksessa toisessa julkaisussa",
-      "mentionCountNotMatched": "Mainintojen määrä ei täsmännyt"
+      "mentionCountNotMatched": "Mainintojen määrä ei täsmännyt",
+      "noImageAttachment": "Ei liitettyä kuvaa",
+      "moderated": "Moderointi piilotti tai poisti"
     },
     "replyTo": {
       "mentions": "Kommentit, joissa on tarpeeksi mainintoja",
@@ -798,6 +801,10 @@
       "label": "Seuraa, merkitseekö käyttäjä muita käyttäjiä",
       "descriptionText": "Laskee kussakin kommentissa merkityt tilit ja lisää ne yhteystiedon kokonaismääriin kaikista kommenteista. Käytä '{{total_tagged}}' kaikille merkityille tileille ja '{{total_new_tagged}}' tileille, jotka eivät ole koskaan viestineet sivullesi tai olleet yhteystietoja."
     },
+    "onlyCommentsWithImage": {
+      "label": "Vastaa vain kommentteihin, joissa on kuva",
+      "descriptionText": "Vastaa automaattisesti vain, kun kommentissa on kuva. GIF-kuvia ja tarroja ei lasketa. Kommentit ilman kuvaa ohitetaan ja seuraavaa automaatiota kokeillaan."
+    },
     "card": {
       "reply": "Vastaus"
     },
@@ -815,6 +822,87 @@
       "column": "Tili",
       "disconnected": "Irrotettu tili",
       "disconnectedDescription": "Tämä automaatio on sidottu tiliin, joka ei ole enää yhdistetty, joten se ei vastaa kommentteihin. Yhdistä tili uudelleen tai valitse toinen."
+    },
+    "aiModeration": {
+      "enabled": "Tekoälymoderointi",
+      "description": "Tekoälyagentti lukee jokaisen kommentin ennen kuin botti vastaa, ja piilottaa tai poistaa alla olevien luokkien kommentit. Moderoituun kommenttiin ei koskaan vastata.",
+      "aiAgentDescription": "Vain agentin tekoälymallia käytetään, ei sen kehotetta.",
+      "categoriesLabel": "Estä kommentit, jotka ovat",
+      "categories": {
+        "hate": "Vihapuhetta",
+        "offensive": "Loukkaavia",
+        "harassment": "Häirintää",
+        "negative": "Brändille vihamielisiä",
+        "spam": "Roskapostia tai huijausta"
+      },
+      "categoryDescriptions": {
+        "hate": "Hyökkää ryhmää vastaan rodun, uskonnon, sukupuolen, kansallisuuden tms. perusteella",
+        "offensive": "Haukkumista, kiroilua, rivoa kieltä",
+        "harassment": "Uhkailua, kiusaamista, hyökkäyksiä henkilöä vastaan",
+        "negative": "Tarkoitus on vahingoittaa brändiä. Kohteliaita valituksia ei estetä",
+        "spam": "Huijauksia, tietojenkalastelua, aiheeseen kuulumatonta mainontaa"
+      },
+      "instruction": "Lisäohjeita tekoälylle",
+      "instructionDescription": "Valinnainen. Kerro tekoälylle, mitä sallia tai estää.",
+      "instructionPlaceholder": "esim. Älä estä hintaa valittavia asiakkaita",
+      "action": "Kun kommentti estetään",
+      "actions": {
+        "hide": "Piilota se",
+        "delete": "Poista se"
+      },
+      "deleteWarning": "Poistetut kommentit ovat lopullisesti poissa eikä niitä voi palauttaa. Piilottaminen on turvallisempaa, jos tekoäly erehtyy."
+    },
+    "moderationLog": {
+      "title": "Moderoidut kommentit",
+      "description": "Kommentit, jotka tämä automaatio piilotti tai poisti, ja syy.",
+      "allActions": "Kaikki toiminnot",
+      "allSources": "Säännöt ja tekoäly",
+      "actions": {
+        "hide": "Piilotettu",
+        "delete": "Poistettu"
+      },
+      "sources": {
+        "rule": "Piilotussäännöllä",
+        "ai": "Tekoälyllä"
+      },
+      "statuses": {
+        "pending": "Käynnissä",
+        "done": "Valmis",
+        "failed": "Epäonnistui"
+      },
+      "rules": {
+        "all": "Piilota kaikki kommentit",
+        "phoneNumber": "Sisältää puhelinnumeron",
+        "link": "Sisältää linkin",
+        "keyword": "Sisältää avainsanan",
+        "image": "Sisältää kuvan",
+        "video": "Sisältää videon",
+        "gif": "Sisältää GIFin",
+        "emoji": "Sisältää emojin"
+      },
+      "summary": {
+        "total": "{count} moderoitu",
+        "hidden": "{count} piilotettu",
+        "deleted": "{count} poistettu",
+        "byAI": "{count} tekoälyllä",
+        "byRule": "{count} säännöillä",
+        "failed": "{count} epäonnistui"
+      },
+      "columns": {
+        "time": "Aika",
+        "contact": "Kontakti",
+        "comment": "Kommentti",
+        "action": "Toiminto",
+        "reason": "Syy",
+        "status": "Tila"
+      },
+      "loading": "Ladataan…",
+      "empty": "Kommentteja ei ole vielä piilotettu tai poistettu.",
+      "unknownContact": "Tuntematon",
+      "noText": "(ei tekstiä)",
+      "previous": "Edellinen",
+      "next": "Seuraava",
+      "page": "Sivu {page}/{pageCount}"
     }
   },
   "condition": {

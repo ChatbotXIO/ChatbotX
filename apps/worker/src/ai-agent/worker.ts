@@ -17,6 +17,7 @@ import { env } from "../env"
 import { processHandoffReentry } from "../integration/handlers/ai-agent-actions/handoff-reentry"
 import { processAutomatedResponse } from "../integration/handlers/automated-response"
 import { processCommentAIReply } from "../integration/handlers/comment-automation/ai-reply"
+import { processCommentModeration } from "../integration/handlers/comment-automation/moderation"
 import {
   processStoryMentionAutomation,
   processStoryReplyAutomation,
@@ -124,6 +125,11 @@ function startAIAgentWorker() {
             case AIJobAction.commentAIReply:
               await runInboundAIJob(AIJobAction.commentAIReply, () =>
                 processCommentAIReply(jobData.data, !isFinalAttempt(job)),
+              )
+              return
+            case AIJobAction.commentModeration:
+              await runInboundAIJob(AIJobAction.commentModeration, () =>
+                processCommentModeration(jobData.data),
               )
               return
             case AIJobAction.processStoryReplyAutomation:

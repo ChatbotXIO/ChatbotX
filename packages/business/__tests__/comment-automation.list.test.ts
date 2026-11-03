@@ -36,6 +36,10 @@ vi.mock("../src/flow/service", () => ({
   flowService: { exists: vi.fn().mockResolvedValue(true) },
 }))
 
+vi.mock("../src/ai-agent/service", () => ({
+  aiAgentService: { findByIdForWorkspace: vi.fn() },
+}))
+
 vi.mock("@chatbotx.io/database/schema", () => ({
   contactInboxModel: {},
   commentAutomationModel: { name: "commentAutomation.name" },

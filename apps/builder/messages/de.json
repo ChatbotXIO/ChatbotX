@@ -759,6 +759,7 @@
       "clicked": "Angeklickt",
       "failed": "Fehlgeschlagen",
       "missed": "Verpasst",
+      "moderated": "Moderiert",
       "noContacts": "Keine Kontakte gefunden",
       "noComment": "(kein Text)",
       "pageInfo": "Seite {page} von {pageCount}",
@@ -778,7 +779,9 @@
       "contactNotNew": "Kontakt ist nicht neu",
       "alreadyRepliedOnPost": "Bereits bei diesem Beitrag geantwortet",
       "engagedOnOtherPost": "Bereits bei einem anderen Beitrag interagiert",
-      "mentionCountNotMatched": "Anzahl der Erwähnungen stimmte nicht"
+      "mentionCountNotMatched": "Anzahl der Erwähnungen stimmte nicht",
+      "noImageAttachment": "Kein Foto angehängt",
+      "moderated": "Durch Moderation ausgeblendet oder gelöscht"
     },
     "replyTo": {
       "mentions": "Kommentare mit genügend Erwähnungen",
@@ -798,6 +801,10 @@
       "label": "Erfassen, ob ein Nutzer andere Nutzer markiert",
       "descriptionText": "Zählt die in jedem Kommentar markierten Konten und addiert sie über alle Kommentare zu den Summen des Kontakts. Verwende '{{total_tagged}}' für alle markierten Konten und '{{total_new_tagged}}' für Konten, die deiner Seite nie geschrieben haben oder nie Kontakt waren."
     },
+    "onlyCommentsWithImage": {
+      "label": "Nur auf Kommentare mit Foto antworten",
+      "descriptionText": "Nur automatisch antworten, wenn der Kommentar ein Foto enthält. GIFs und Sticker zählen nicht. Kommentare ohne Foto werden übersprungen und die nächste Automatisierung wird versucht."
+    },
     "card": {
       "reply": "Antwort"
     },
@@ -815,6 +822,87 @@
       "column": "Konto",
       "disconnected": "Getrenntes Konto",
       "disconnectedDescription": "Diese Automatisierung gehört zu einem Konto, das nicht mehr verbunden ist, und beantwortet daher keine Kommentare. Verbinde das Konto erneut oder wähle ein anderes."
+    },
+    "aiModeration": {
+      "enabled": "KI-Moderation",
+      "description": "Ein KI-Agent liest jeden Kommentar, bevor der Bot antwortet, und blendet Kommentare in den unten genannten Kategorien aus oder löscht sie. Auf einen moderierten Kommentar wird nie geantwortet.",
+      "aiAgentDescription": "Es wird nur das KI-Modell des Agenten verwendet, nicht dessen Prompt.",
+      "categoriesLabel": "Kommentare blockieren, die",
+      "categories": {
+        "hate": "Hassrede",
+        "offensive": "Beleidigend",
+        "harassment": "Belästigung",
+        "negative": "Markenfeindlich",
+        "spam": "Spam oder Betrug"
+      },
+      "categoryDescriptions": {
+        "hate": "Greift eine Gruppe wegen Herkunft, Religion, Geschlecht, Nationalität usw. an",
+        "offensive": "Beleidigungen, Schimpfwörter, vulgäre Sprache",
+        "harassment": "Drohungen, Mobbing, Angriffe auf eine Person",
+        "negative": "Soll der Marke schaden. Höfliche Beschwerden werden nicht blockiert",
+        "spam": "Betrug, Phishing, themenfremde Werbung"
+      },
+      "instruction": "Zusätzliche Hinweise für die KI",
+      "instructionDescription": "Optional. Teile der KI mit, was erlaubt oder blockiert werden soll.",
+      "instructionPlaceholder": "z. B. Kunden, die sich über den Preis beschweren, nicht blockieren",
+      "action": "Wenn ein Kommentar blockiert wird",
+      "actions": {
+        "hide": "Ausblenden",
+        "delete": "Löschen"
+      },
+      "deleteWarning": "Gelöschte Kommentare sind endgültig weg und können nicht wiederhergestellt werden. Ausblenden ist sicherer, falls die KI sich irrt."
+    },
+    "moderationLog": {
+      "title": "Moderierte Kommentare",
+      "description": "Kommentare, die diese Automatisierung ausgeblendet oder gelöscht hat, und warum.",
+      "allActions": "Alle Aktionen",
+      "allSources": "Regeln und KI",
+      "actions": {
+        "hide": "Ausgeblendet",
+        "delete": "Gelöscht"
+      },
+      "sources": {
+        "rule": "Durch Ausblenden-Regel",
+        "ai": "Durch KI"
+      },
+      "statuses": {
+        "pending": "In Bearbeitung",
+        "done": "Erledigt",
+        "failed": "Fehlgeschlagen"
+      },
+      "rules": {
+        "all": "Alle Kommentare ausblenden",
+        "phoneNumber": "Enthält Telefonnummer",
+        "link": "Enthält Link",
+        "keyword": "Enthält Schlüsselwort",
+        "image": "Enthält Bild",
+        "video": "Enthält Video",
+        "gif": "Enthält GIF",
+        "emoji": "Enthält Emoji"
+      },
+      "summary": {
+        "total": "{count} moderiert",
+        "hidden": "{count} ausgeblendet",
+        "deleted": "{count} gelöscht",
+        "byAI": "{count} durch KI",
+        "byRule": "{count} durch Regeln",
+        "failed": "{count} fehlgeschlagen"
+      },
+      "columns": {
+        "time": "Zeit",
+        "contact": "Kontakt",
+        "comment": "Kommentar",
+        "action": "Aktion",
+        "reason": "Grund",
+        "status": "Status"
+      },
+      "loading": "Wird geladen…",
+      "empty": "Es wurden noch keine Kommentare ausgeblendet oder gelöscht.",
+      "unknownContact": "Unbekannt",
+      "noText": "(kein Text)",
+      "previous": "Zurück",
+      "next": "Weiter",
+      "page": "Seite {page} von {pageCount}"
     }
   },
   "condition": {

@@ -16,6 +16,10 @@ export function runAsMissedCommentReplay<T>(callback: () => Promise<T>) {
   return missedCommentReplayStorage.run(true, callback)
 }
 
+export function isMissedCommentReplay(): boolean {
+  return missedCommentReplayStorage.getStore() === true
+}
+
 /**
  * The given job options, with `MISSED_COMMENT_REPLAY_PRIORITY` added inside a
  * replay. BullMQ runs every unprioritized job first, so a replay's sends always

@@ -73,6 +73,24 @@ export function commentAutomationChannelSupportsHideGif(
   return COMMENT_AUTOMATION_CHANNELS_WITH_GIF_DETECTION.has(type)
 }
 
+/**
+ * The channels that can tell a comment carries a photo, for
+ * `options.onlyCommentsWithImage`: Facebook from the comment's
+ * `attachment.type` (`photo`), Threads from the reply's `media_type`
+ * (`IMAGE`/`CAROUSEL_ALBUM`). Instagram and TikTok deliver comment text only,
+ * so the builder hides the switch there and the service pins it off on write.
+ *
+ * An allowlist: a new channel defaults to "cannot".
+ */
+const COMMENT_AUTOMATION_CHANNELS_WITH_IMAGE_DETECTION =
+  new Set<CommentAutomationType>(["messenger", "threads"])
+
+export function commentAutomationChannelSupportsImageFilter(
+  type: CommentAutomationType,
+): boolean {
+  return COMMENT_AUTOMATION_CHANNELS_WITH_IMAGE_DETECTION.has(type)
+}
+
 export const commentPostSchema = z.object({
   type: z
     .enum(["published", "ads", "reels", "postIds", "all", "live"])
@@ -289,8 +307,114 @@ export const commentOptionsSchema = z.object({
     .describe(
       "Count the accounts tagged in each comment into the contact's running totals, exposed as `{{total_tagged}}` and `{{total_new_tagged}}`. Only gates this tag counting; replies and other actions run regardless.",
     ),
+  /**
+   * Optional because every row written before this existed lacks the key —
+   * absent reads as off. Only channels that can see a comment's photo honor it
+   * (see `commentAutomationChannelSupportsImageFilter`).
+   */
+  onlyCommentsWithImage: z
+    .boolean()
+    .optional()
+    .describe(
+      "Only reply when the comment has a photo attachment; otherwise this automation skips the comment and the next automation is tried. GIFs and stickers do not count. Facebook and Threads only; ignored on Instagram and TikTok. Omitted means off.",
+    ),
 })
 export type CommentOptions = z.infer<typeof commentOptionsSchema>
+
+/**
+ * The channels whose API can delete a comment outright — Meta's
+ * `DELETE /{comment-id}` (Facebook, both Instagram logins) and TikTok's
+ * `business/comment/delete/`. Threads has no delete endpoint, so AI moderation
+ * pins its action to `hide` there.
+ *
+ * An allowlist: a new channel defaults to "cannot".
+ */
+const COMMENT_AUTOMATION_CHANNELS_WITH_DELETE = new Set<CommentAutomationType>([
+  "messenger",
+  "instagram",
+  "instagramFacebook",
+  "tiktok",
+])
+
+export function commentAutomationChannelSupportsDelete(
+  type: CommentAutomationType,
+): boolean {
+  return COMMENT_AUTOMATION_CHANNELS_WITH_DELETE.has(type)
+}
+
+export const commentModerationCategories = z.enum([
+  "hate",
+  "offensive",
+  "harassment",
+  "negative",
+  "spam",
+])
+export type CommentModerationCategory = z.infer<
+  typeof commentModerationCategories
+>
+
+export const commentModerationActions = z.enum(["hide", "delete"])
+export type CommentModerationAction = z.infer<typeof commentModerationActions>
+
+export const COMMENT_MODERATION_INSTRUCTION_MAX_LENGTH = 1000
+
+export const commentAIModerationSchema = z
+  .object({
+    enabled: z
+      .boolean()
+      .describe("Let an AI agent's model check every comment before replying."),
+    aiAgentId: z
+      .string()
+      .nullable()
+      .describe(
+        "AI agent whose model classifies the comment (from `aiAgents.list`). Only its model is used, not its prompt. Required when `enabled` is true.",
+      ),
+    categories: z
+      .array(commentModerationCategories)
+      .describe(
+        "What to block: `hate` (hate speech, discrimination), `offensive` (insults, profanity), `harassment` (threats, bullying), `negative` (hostile attacks on the brand), `spam` (scams, unrelated promotion). At least one when `enabled` is true.",
+      ),
+    instruction: z
+      .string()
+      .max(COMMENT_MODERATION_INSTRUCTION_MAX_LENGTH)
+      .optional()
+      .describe(
+        "Extra guidance for the AI, e.g. 'Do not block customers complaining about price'.",
+      ),
+    action: commentModerationActions.describe(
+      "What to do with a blocked comment: `hide` (reversible) or `delete` (permanent). `delete` is stored as `hide` on Threads, which cannot delete.",
+    ),
+  })
+  .superRefine((value, ctx) => {
+    if (!value.enabled) {
+      return
+    }
+    if (!value.aiAgentId) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["aiAgentId"],
+        message: "Choose an AI agent",
+      })
+    }
+    if (value.categories.length === 0) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["categories"],
+        message: "Choose at least one category",
+      })
+    }
+  })
+export type CommentAIModeration = z.infer<typeof commentAIModerationSchema>
+
+export function isAIModerationEnabled(
+  aiModeration: CommentAIModeration | undefined,
+): aiModeration is CommentAIModeration & { aiAgentId: string } {
+  return Boolean(
+    aiModeration?.enabled &&
+      aiModeration.aiAgentId &&
+      aiModeration.categories.length > 0,
+  )
+}
 
 export const commentHideCommentsSchema = z.object({
   all: z.boolean().describe("Hide every matching comment."),
@@ -322,6 +446,15 @@ export const commentHideCommentsSchema = z.object({
     .boolean()
     .optional()
     .describe("Hide comments containing an emoji. Omitted means off."),
+  /**
+   * Optional for the same reason as `hasGif`: rows written before AI
+   * moderation existed lack the key, and absent reads as off.
+   */
+  aiModeration: commentAIModerationSchema
+    .optional()
+    .describe(
+      "AI moderation: an AI agent's model reads each comment and hides or deletes the ones in the chosen categories. Runs before the reply filters; a moderated comment is never replied to. Omitted means off.",
+    ),
   keywords: z
     .array(z.string())
     .describe("Words that trigger hiding when `hasKeywords` is true."),

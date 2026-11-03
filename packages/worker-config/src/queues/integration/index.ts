@@ -932,6 +932,18 @@ export type IntegrationJobProcessCommentAutomation = {
      * every other active automation on the channel. Absent on webhook comments.
      */
     onlyAutomationId?: string
+    /**
+     * Set when AI moderation already cleared this comment for
+     * `onlyAutomationId`, so the resumed run goes straight to the reply
+     * filters instead of asking the AI again.
+     */
+    moderationChecked?: boolean
+    /**
+     * The run belongs to a missed-comment replay. Set on the payload the AI
+     * moderation job carries, so it and the resumed run keep the replay's low
+     * priority after leaving the replay's async context.
+     */
+    replay?: boolean
   }
 }
 

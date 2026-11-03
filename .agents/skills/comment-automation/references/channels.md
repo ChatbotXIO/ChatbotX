@@ -12,7 +12,8 @@
    | private DM reply (`PRIVATE_REPLY_TEXT_SENDERS`) | ✅ | ✅ | ✅ | ❌ | ⚠️ |
    | like (`supportsCommentLike`) | ✅ | ✅ | ✅ | ❌ | ✅ |
    | hide (`supportsHideComments`) | ✅ | ✅ | ✅ | ✅ | ✅ |
-   | attachment lookup (`hasImage`/`hasVideo`) | ✅ | ❌ | ❌ | ❌ | ❌ |
+   | attachment lookup (`hasImage`/`hasVideo` hide) | ✅ | ❌ | ❌ | ❌ | ❌ |
+   | `onlyCommentsWithImage` reply filter (`commentAutomationChannelSupportsImageFilter`) | ✅ | ❌ | ❌ | ✅ | ❌ |
    | GIF hide (`commentAutomationChannelSupportsHideGif`) | ✅ | ❌ | ❌ | ✅ | ❌ |
    | tag tracking / `mentions` filter | ✅ exact | ✅ text | ✅ text | ✅ text | ✅ text |
 

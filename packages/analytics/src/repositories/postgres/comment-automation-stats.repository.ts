@@ -408,7 +408,7 @@ export class CommentAutomationStatsRepository extends BaseRepository {
 
     const rows = entries.map(
       ([automationId, fields]) =>
-        sql`(${automationId}::bigint, ${fields.sentCount ?? 0}::int, ${fields.deliveredCount ?? 0}::int, ${fields.seenCount ?? 0}::int, ${fields.clickedCount ?? 0}::int, ${fields.failedCount ?? 0}::int, ${fields.missedCount ?? 0}::int)`,
+        sql`(${automationId}::bigint, ${fields.sentCount ?? 0}::int, ${fields.deliveredCount ?? 0}::int, ${fields.seenCount ?? 0}::int, ${fields.clickedCount ?? 0}::int, ${fields.failedCount ?? 0}::int, ${fields.missedCount ?? 0}::int, ${fields.moderatedCount ?? 0}::int)`,
     )
 
     await db.execute(sql`
@@ -418,9 +418,10 @@ export class CommentAutomationStatsRepository extends BaseRepository {
           "seenCount" = GREATEST(0, automation."seenCount" + delta."seen"),
           "clickedCount" = GREATEST(0, automation."clickedCount" + delta."clicked"),
           "failedCount" = GREATEST(0, automation."failedCount" + delta."failed"),
-          "missedCount" = GREATEST(0, automation."missedCount" + delta."missed")
+          "missedCount" = GREATEST(0, automation."missedCount" + delta."missed"),
+          "moderatedCount" = GREATEST(0, automation."moderatedCount" + delta."moderated")
       FROM (VALUES ${sql.join(rows, sql`, `)})
-        AS delta("id", "sent", "delivered", "seen", "clicked", "failed", "missed")
+        AS delta("id", "sent", "delivered", "seen", "clicked", "failed", "missed", "moderated")
       WHERE automation."id" = delta."id"
     `)
   }

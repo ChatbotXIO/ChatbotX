@@ -9,13 +9,17 @@ import {
   sql,
 } from "@chatbotx.io/database/client"
 import {
+  type CommentAIModeration,
   type CommentAutomationType,
   type CommentExcludeKeywordsType,
   type CommentHideComments,
   type CommentIncludeKeywords,
+  type CommentOptions,
   type CommentReply,
   canProcessMissedComments,
+  commentAutomationChannelSupportsDelete,
   commentAutomationChannelSupportsHideGif,
+  commentAutomationChannelSupportsImageFilter,
   commentAutomationTypes,
   type IgCommentAutomationType,
   igCommentAutomationTypes,
@@ -39,6 +43,7 @@ import {
 import { distributedStore } from "@chatbotx.io/redis"
 import { createId } from "@chatbotx.io/utils"
 import { formatInTimeZone } from "date-fns-tz"
+import { aiAgentService } from "../ai-agent/service"
 import { BaseService } from "../base.service"
 import { notFoundException, validationException } from "../errors"
 import { flowService } from "../flow/service"
@@ -134,6 +139,7 @@ type ThreadsCommentAutomationOptions = {
   replyToUsersWhoCommentedOnOtherPosts: boolean
   ignoreCommentReplies: boolean
   trackUserTags?: boolean
+  onlyCommentsWithImage?: boolean
 }
 
 type ThreadsCommentAutomationReplyAfter = {
@@ -185,6 +191,7 @@ type ThreadsCommentAutomationHideComments = {
   hasKeywords: boolean
   hasGif?: boolean
   hasEmoji?: boolean
+  aiModeration?: CommentAIModeration
   keywords: string[]
   showCommentsAfter: CommentHideComments["showCommentsAfter"]
 }
@@ -228,6 +235,7 @@ type TiktokCommentAutomationHideComments = {
   /** Always false: TikTok exposes no attachment data to detect a GIF with. */
   hasGif?: false
   hasEmoji?: boolean
+  aiModeration?: CommentAIModeration
   keywords: string[]
   showCommentsAfter: CommentHideComments["showCommentsAfter"]
 }
@@ -306,6 +314,7 @@ class CommentAutomationService extends BaseService {
         input?.replyToUsersWhoCommentedOnOtherPosts ?? true,
       ignoreCommentReplies: input?.ignoreCommentReplies ?? true,
       trackUserTags: input?.trackUserTags ?? false,
+      onlyCommentsWithImage: input?.onlyCommentsWithImage ?? false,
     }
   }
 
@@ -320,7 +329,7 @@ class CommentAutomationService extends BaseService {
     if (!input) {
       return this.threadsDefaults.hideComments
     }
-    return {
+    return this.withSupportedAIModeration(this.threadsType, {
       all: input.all ?? false,
       hasPhoneNumber: input.hasPhoneNumber ?? false,
       hasImage: false,
@@ -329,9 +338,10 @@ class CommentAutomationService extends BaseService {
       hasKeywords: input.hasKeywords ?? false,
       hasGif: input.hasGif ?? false,
       hasEmoji: input.hasEmoji ?? false,
+      ...(input.aiModeration && { aiModeration: input.aiModeration }),
       keywords: input.keywords ?? [],
       showCommentsAfter: input.showCommentsAfter ?? "none",
-    }
+    })
   }
 
   private readonly tiktokType = commentAutomationTypes.enum.tiktok
@@ -413,6 +423,7 @@ class CommentAutomationService extends BaseService {
       hasKeywords: input.hasKeywords ?? false,
       hasGif: false,
       hasEmoji: input.hasEmoji ?? false,
+      ...(input.aiModeration && { aiModeration: input.aiModeration }),
       keywords: input.keywords ?? [],
       showCommentsAfter: input.showCommentsAfter ?? "none",
     }
@@ -459,6 +470,16 @@ class CommentAutomationService extends BaseService {
         type: props.channelType,
         OR: [{ inboxId: { isNull: true } }, { inboxId: props.inboxId }],
       },
+    })
+  }
+
+  /**
+   * One active automation, or undefined. For async jobs that act on a single
+   * automation later and must re-read its current settings.
+   */
+  findActive(props: { workspaceId: string; id: string }) {
+    return db.query.commentAutomationModel.findFirst({
+      where: { id: props.id, workspaceId: props.workspaceId, isActive: true },
     })
   }
 
@@ -1016,6 +1037,10 @@ class CommentAutomationService extends BaseService {
     data: FbCommentAutomationWriteData
   }): Promise<CommentAutomationModel> {
     await this.assertReplyFlowsExist(input.workspaceId, input.data)
+    await this.assertModerationAgentExists(
+      input.workspaceId,
+      input.data.hideComments,
+    )
     await assertAutomationAccount({
       workspaceId: input.workspaceId,
       type: commentAutomationTypes.enum.messenger,
@@ -1039,6 +1064,7 @@ class CommentAutomationService extends BaseService {
   ): Promise<CommentAutomationModel> {
     const existing = await this.findMessengerOrFail(ctx)
     await this.assertReplyFlowsExist(ctx.workspaceId, data)
+    await this.assertModerationAgentExists(ctx.workspaceId, data.hideComments)
     await assertAutomationAccount({
       workspaceId: ctx.workspaceId,
       type: commentAutomationTypes.enum.messenger,
@@ -1137,10 +1163,93 @@ class CommentAutomationService extends BaseService {
   private withSupportedHideComments<
     T extends { hideComments?: CommentHideComments | null },
   >(type: CommentAutomationType, data: T): T {
-    if (!data.hideComments || commentAutomationChannelSupportsHideGif(type)) {
+    if (!data.hideComments) {
       return data
     }
-    return { ...data, hideComments: { ...data.hideComments, hasGif: false } }
+    const hideComments = this.withSupportedAIModeration(type, data.hideComments)
+    if (commentAutomationChannelSupportsHideGif(type)) {
+      return { ...data, hideComments }
+    }
+    return { ...data, hideComments: { ...hideComments, hasGif: false } }
+  }
+
+  /**
+   * Pins AI moderation's `delete` to `hide` on a channel with no delete
+   * endpoint (Threads), so a stored action can always be carried out.
+   */
+  private withSupportedAIModeration(
+    type: CommentAutomationType,
+    hideComments: CommentHideComments,
+  ): CommentHideComments {
+    const { aiModeration } = hideComments
+    if (
+      aiModeration?.action !== "delete" ||
+      commentAutomationChannelSupportsDelete(type)
+    ) {
+      return hideComments
+    }
+    return {
+      ...hideComments,
+      aiModeration: { ...aiModeration, action: "hide" },
+    }
+  }
+
+  /**
+   * Same idea as `assertReplyFlowsExist`: an AI moderation agent from another
+   * workspace — or one since deleted — fails at write time instead of
+   * silently letting every comment through.
+   */
+  private async assertModerationAgentExists(
+    workspaceId: string,
+    hideComments: Pick<CommentHideComments, "aiModeration"> | null | undefined,
+  ): Promise<void> {
+    const aiModeration = hideComments?.aiModeration
+    if (!aiModeration?.enabled) {
+      return
+    }
+    if (!aiModeration.aiAgentId) {
+      throw validationException(
+        "hideComments.aiModeration.aiAgentId",
+        "AI agent is required",
+      )
+    }
+    if (aiModeration.categories.length === 0) {
+      throw validationException(
+        "hideComments.aiModeration.categories",
+        "Choose at least one category",
+      )
+    }
+    const agent = await aiAgentService.findByIdForWorkspace({
+      id: aiModeration.aiAgentId,
+      workspaceId,
+    })
+    if (!agent) {
+      throw validationException(
+        "hideComments.aiModeration.aiAgentId",
+        "AI agent not found",
+      )
+    }
+  }
+
+  /**
+   * Pins `options.onlyCommentsWithImage` off on a channel that cannot see a
+   * comment's photo — stored on, it would make the automation skip every
+   * comment. Same idea as `withSupportedHideComments`.
+   */
+  private withSupportedImageFilter<T extends { options?: CommentOptions }>(
+    type: CommentAutomationType,
+    data: T,
+  ): T {
+    if (
+      !data.options?.onlyCommentsWithImage ||
+      commentAutomationChannelSupportsImageFilter(type)
+    ) {
+      return data
+    }
+    return {
+      ...data,
+      options: { ...data.options, onlyCommentsWithImage: false },
+    }
   }
 
   /**
@@ -1187,6 +1296,9 @@ class CommentAutomationService extends BaseService {
         hasGif: false,
         hasEmoji: false,
         showCommentsAfter: "none",
+        ...(hideComments.aiModeration && {
+          aiModeration: { ...hideComments.aiModeration, enabled: false },
+        }),
       }
     }
     if (!capabilities.replyDelay) {
@@ -1201,6 +1313,10 @@ class CommentAutomationService extends BaseService {
     data: FbCommentAutomationWriteData
   }): Promise<CommentAutomationModel> {
     await this.assertReplyFlowsExist(input.workspaceId, input.data)
+    await this.assertModerationAgentExists(
+      input.workspaceId,
+      input.data.hideComments,
+    )
     await assertAutomationAccount({
       workspaceId: input.workspaceId,
       type: input.type,
@@ -1214,9 +1330,12 @@ class CommentAutomationService extends BaseService {
         type: input.type,
         ...this.withLiveCapabilities(
           input.type,
-          this.withSupportedHideComments(
+          this.withSupportedImageFilter(
             input.type,
-            this.withNormalizedReplies(input.data),
+            this.withSupportedHideComments(
+              input.type,
+              this.withNormalizedReplies(input.data),
+            ),
           ),
         ),
       })
@@ -1230,6 +1349,7 @@ class CommentAutomationService extends BaseService {
   ): Promise<CommentAutomationModel> {
     const existing = await this.findInstagramOrFail(ctx)
     await this.assertReplyFlowsExist(ctx.workspaceId, data)
+    await this.assertModerationAgentExists(ctx.workspaceId, data.hideComments)
     await assertAutomationAccount({
       workspaceId: ctx.workspaceId,
       type: existing.type as IgCommentAutomationType,
@@ -1242,10 +1362,13 @@ class CommentAutomationService extends BaseService {
       .set(
         this.withLiveCapabilities(
           existing.type as IgCommentAutomationType,
-          this.withSupportedHideComments(
-            // `findInstagramOrFail` only matches `igCommentAutomationTypes`.
+          this.withSupportedImageFilter(
             existing.type as IgCommentAutomationType,
-            this.withNormalizedReplies(data),
+            this.withSupportedHideComments(
+              // `findInstagramOrFail` only matches `igCommentAutomationTypes`.
+              existing.type as IgCommentAutomationType,
+              this.withNormalizedReplies(data),
+            ),
           ),
           existing,
         ),
@@ -1343,6 +1466,7 @@ class CommentAutomationService extends BaseService {
       { publicReply: data.publicReply },
       tx,
     )
+    await this.assertModerationAgentExists(workspaceId, data.hideComments)
     await assertAutomationAccount({
       workspaceId,
       type: this.threadsType,
@@ -1385,6 +1509,7 @@ class CommentAutomationService extends BaseService {
       { publicReply: data.publicReply },
       tx,
     )
+    await this.assertModerationAgentExists(workspaceId, data.hideComments)
     await assertAutomationAccount({
       workspaceId,
       type: this.threadsType,
@@ -1536,6 +1661,7 @@ class CommentAutomationService extends BaseService {
       { publicReply: data.publicReply },
       tx,
     )
+    await this.assertModerationAgentExists(workspaceId, data.hideComments)
     await assertAutomationAccount({
       workspaceId,
       type: this.tiktokType,
@@ -1578,6 +1704,7 @@ class CommentAutomationService extends BaseService {
       { publicReply: data.publicReply },
       tx,
     )
+    await this.assertModerationAgentExists(workspaceId, data.hideComments)
     await assertAutomationAccount({
       workspaceId,
       type: this.tiktokType,

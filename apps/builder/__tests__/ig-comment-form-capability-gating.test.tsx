@@ -36,6 +36,10 @@ vi.mock(
   }),
 )
 
+vi.mock("@/features/shared/comment-automation/ai-moderation-field", () => ({
+  AIModerationField: () => <div data-testid="ai-moderation-field" />,
+}))
+
 vi.mock(
   "@/features/ig-comments/provider/ig-comment-posts-store-context",
   () => ({

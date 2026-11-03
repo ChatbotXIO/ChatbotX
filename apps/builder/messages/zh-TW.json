@@ -2683,6 +2683,7 @@
       "clicked": "已點擊",
       "failed": "失敗",
       "missed": "漏回",
+      "moderated": "已審核",
       "noContacts": "找不到聯絡人",
       "noComment": "(無內容)",
       "pageInfo": "第 {page} 頁（共 {pageCount}）",
@@ -2702,7 +2703,9 @@
       "contactNotNew": "聯絡人不是新用戶",
       "alreadyRepliedOnPost": "已在該貼文回覆過",
       "engagedOnOtherPost": "已在其他貼文互動過",
-      "mentionCountNotMatched": "提及人數不符"
+      "mentionCountNotMatched": "提及人數不符",
+      "noImageAttachment": "未附加圖片",
+      "moderated": "已被審核隱藏或刪除"
     },
     "replyTo": {
       "mentions": "提及人數足夠的留言",
@@ -2722,6 +2725,10 @@
       "label": "追蹤使用者是否標記了其他使用者",
       "descriptionText": "統計每則留言中被標記的帳號數,並在所有留言中累加到聯絡人的總數。使用 '{{total_tagged}}' 表示所有被標記的帳號,使用 '{{total_new_tagged}}' 表示從未傳訊息給您的粉絲專頁或從未成為聯絡人的帳號。"
     },
+    "onlyCommentsWithImage": {
+      "label": "僅回覆附有圖片的留言",
+      "descriptionText": "僅當留言包含圖片時才自動回覆。GIF 和貼圖不計入。沒有圖片的留言將被略過，並嘗試下一個自動化。"
+    },
     "card": {
       "reply": "回覆"
     },
@@ -2739,6 +2746,87 @@
       "column": "帳號",
       "disconnected": "已中斷連結的帳號",
       "disconnectedDescription": "此自動化綁定的帳號已不再連結，因此不會回覆任何留言。請重新連結該帳號或選擇其他帳號。"
+    },
+    "aiModeration": {
+      "enabled": "AI 審核",
+      "description": "機器人回覆之前，AI 智能體會閱讀每則留言，並隱藏或刪除屬於以下類別的留言。被審核的留言不會收到回覆。",
+      "aiAgentDescription": "僅使用智能體的 AI 模型，不使用其提示詞。",
+      "categoriesLabel": "封鎖屬於以下類型的留言",
+      "categories": {
+        "hate": "仇恨言論",
+        "offensive": "冒犯性",
+        "harassment": "騷擾",
+        "negative": "對品牌懷有敵意",
+        "spam": "垃圾訊息或詐騙"
+      },
+      "categoryDescriptions": {
+        "hate": "因種族、宗教、性別、國籍等攻擊某一群體",
+        "offensive": "侮辱、髒話、粗俗語言",
+        "harassment": "威脅、霸凌、攻擊個人",
+        "negative": "意圖損害品牌。禮貌的客訴不會被封鎖",
+        "spam": "詐騙、網路釣魚、無關推廣"
+      },
+      "instruction": "給 AI 的額外指引",
+      "instructionDescription": "選填。告訴 AI 哪些內容允許或需要封鎖。",
+      "instructionPlaceholder": "例如：不要封鎖抱怨價格的客戶",
+      "action": "封鎖留言時",
+      "actions": {
+        "hide": "隱藏",
+        "delete": "刪除"
+      },
+      "deleteWarning": "刪除的留言將永久消失，無法復原。如果 AI 判斷有誤，隱藏更安全。"
+    },
+    "moderationLog": {
+      "title": "已審核的留言",
+      "description": "此自動化隱藏或刪除的留言及原因。",
+      "allActions": "所有操作",
+      "allSources": "規則和 AI",
+      "actions": {
+        "hide": "已隱藏",
+        "delete": "已刪除"
+      },
+      "sources": {
+        "rule": "由隱藏規則",
+        "ai": "由 AI"
+      },
+      "statuses": {
+        "pending": "進行中",
+        "done": "已完成",
+        "failed": "失敗"
+      },
+      "rules": {
+        "all": "隱藏所有留言",
+        "phoneNumber": "包含電話號碼",
+        "link": "包含連結",
+        "keyword": "包含關鍵字",
+        "image": "包含圖片",
+        "video": "包含影片",
+        "gif": "包含 GIF",
+        "emoji": "包含表情符號"
+      },
+      "summary": {
+        "total": "已審核 {count} 則",
+        "hidden": "已隱藏 {count} 則",
+        "deleted": "已刪除 {count} 則",
+        "byAI": "AI 處理 {count} 則",
+        "byRule": "規則處理 {count} 則",
+        "failed": "失敗 {count} 則"
+      },
+      "columns": {
+        "time": "時間",
+        "contact": "聯絡人",
+        "comment": "留言",
+        "action": "操作",
+        "reason": "原因",
+        "status": "狀態"
+      },
+      "loading": "載入中…",
+      "empty": "尚未隱藏或刪除任何留言。",
+      "unknownContact": "未知",
+      "noText": "（無文字）",
+      "previous": "上一頁",
+      "next": "下一頁",
+      "page": "第 {page} 頁，共 {pageCount} 頁"
     }
   },
   "condition": {

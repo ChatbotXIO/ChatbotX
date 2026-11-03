@@ -29,6 +29,7 @@ import { toast } from "sonner"
 import { TiptapEditorField } from "@/components/tiptap/tiptap-editor-field"
 import { useAIAgentSelectOptions } from "@/features/ai-agents/hooks/use-ai-agents"
 import { useFlowSelectOptions } from "@/features/flows/provider/flow-hook"
+import { AIModerationField } from "@/features/shared/comment-automation/ai-moderation-field"
 import {
   AutomationAccountField,
   useAccountChoiceMissing,
@@ -427,6 +428,15 @@ export function FbCommentForm({
             />
             <SwitchField
               description={t(
+                "commentAutomation.onlyCommentsWithImage.descriptionText",
+              )}
+              descriptionType="tooltip"
+              label={t("commentAutomation.onlyCommentsWithImage.label")}
+              name="options.onlyCommentsWithImage"
+              required
+            />
+            <SwitchField
+              description={t(
                 "facebookCommentAutomation.options.trackUserTagsDescription",
               )}
               descriptionType="tooltip"
@@ -539,6 +549,7 @@ export function FbCommentForm({
             options={showCommentsAfterOptions}
             required
           />
+          <AIModerationField canDelete={true} />
         </CardContent>
       </Card>
 

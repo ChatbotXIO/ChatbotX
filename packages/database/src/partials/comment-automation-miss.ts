@@ -25,12 +25,20 @@ export const commentAutomationMissReasons = z.enum([
   "keywordsNotMatched",
   /** "Reply to" is `mentions` and the comment tagged a different number. */
   "mentionCountNotMatched",
+  /** `onlyCommentsWithImage` on and the comment carries no photo. */
+  "noImageAttachment",
   /** `replyToNewContactsOnly` on and the contact already had other inboxes. */
   "contactNotNew",
   /** `replyOncePerUserPerPost` on and this user was already answered here. */
   "alreadyRepliedOnPost",
   /** `replyToUsersWhoCommentedOnOtherPosts` off and they engaged elsewhere. */
   "engagedOnOtherPost",
+  /**
+   * A hide rule or AI moderation hid/deleted the comment, so it is not
+   * answered. Evaluated BEFORE the reply filters above, despite sitting last
+   * here — Postgres enum values can only be appended.
+   */
+  "moderated",
 ])
 
 export type CommentAutomationMissReason = z.infer<

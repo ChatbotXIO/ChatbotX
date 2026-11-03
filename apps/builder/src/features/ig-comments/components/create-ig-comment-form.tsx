@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import type { UseFormReturn } from "react-hook-form"
 import { toast } from "sonner"
+import { AI_MODERATION_DEFAULTS } from "@/features/shared/comment-automation/lib/ai-moderation-defaults"
 import { initialCommentPost } from "@/features/shared/comment-automation/lib/live-post-type"
 import { createIgCommentAction } from "../actions/create-ig-comment.action"
 import {
@@ -62,6 +63,7 @@ export function CreateIgCommentForm({
       hasEmoji: false,
       keywords: [],
       showCommentsAfter: "none" as const,
+      aiModeration: AI_MODERATION_DEFAULTS,
     },
     replyAfter: { type: "immediately" as const, value: 0 },
   }

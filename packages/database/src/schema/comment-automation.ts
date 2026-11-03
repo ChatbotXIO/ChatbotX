@@ -119,6 +119,12 @@ export const commentAutomationModel = pgTable(
      * comment only (see above), and one comment can be two of them.
      */
     missedCount: integer().notNull().default(0),
+    /**
+     * Lifetime count of comments this automation hid or deleted — one per
+     * `CommentModerationLog` row, incremented per row the idempotent insert
+     * actually returned, exactly like `missedCount`.
+     */
+    moderatedCount: integer().notNull().default(0),
     post: jsonb()
       .$type<CommentPost>()
       .notNull()

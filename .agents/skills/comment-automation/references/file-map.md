@@ -8,6 +8,8 @@
 | Supported channels union | `apps/worker/src/integration/handlers/comment-automation/channel-type.ts` (`CommentAutomationChannelType`) |
 | Private-reply capability (counter side) | `packages/database/src/partials/comment-automation.ts` (`commentAutomationChannelSupportsPrivateReply`) — mirrors `PRIVATE_REPLY_TEXT_SENDERS`, see trap 11 |
 | Attachment info (image/video for hide) | `apps/worker/src/integration/handlers/comment-automation/comment-attachment.ts` |
+| Moderation (hide rules + AI moderation job) | `apps/worker/src/integration/handlers/comment-automation/moderation.ts`, `hide-comments.ts` |
+| Moderation log (table / read API) | `packages/database/src/schema/comment-moderation-log.ts`, `packages/analytics/src/repositories/postgres/comment-moderation-log.repository.ts`, `apps/builder/src/features/shared/comment-automation/lib/moderation-logs/` |
 | Receive comment + enqueue automation | `apps/worker/src/integration/handlers/received-message.ts` (`receiveComment`) |
 | Webhook parse + enqueue | `integrations/messenger/src/handlers/webhook.ts`, `integrations/instagram/src/handlers/webhook.ts`, `integrations/instagram-facebook/src/handlers/webhook.ts` |
 | Webhook value schema | `integrations/messenger/src/schema.ts` (`messengerFeedCommentValueSchema`), `integrations/instagram{,-facebook}/src/schema.ts` (`instagramCommentEventValueSchema`) |

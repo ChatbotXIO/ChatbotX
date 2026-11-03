@@ -8,6 +8,7 @@ import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import { type Resolver, type UseFormReturn, useForm } from "react-hook-form"
 import { toast } from "sonner"
+import { withAIModerationDefaults } from "@/features/shared/comment-automation/lib/ai-moderation-defaults"
 import { updateTiktokCommentAction } from "../actions/update-tiktok-comment.action"
 import {
   type CreateTiktokCommentRequest,
@@ -86,6 +87,9 @@ export function EditTiktokCommentForm({
         hasEmoji: initialData.hideComments.hasEmoji ?? false,
         keywords: initialData.hideComments.keywords,
         showCommentsAfter: initialData.hideComments.showCommentsAfter,
+        aiModeration: withAIModerationDefaults(
+          initialData.hideComments.aiModeration,
+        ),
       },
       replyAfter: initialData.replyAfter,
     },

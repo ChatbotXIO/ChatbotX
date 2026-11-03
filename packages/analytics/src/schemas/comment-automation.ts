@@ -223,6 +223,8 @@ export const commentAutomationCounterFields = [
   // The odd one out: gated by a row existing in `CommentAutomationMiss`
   // rather than by a timestamp column, since a miss has no timeline.
   "missedCount",
+  // Same gate as `missedCount`, on `CommentModerationLog`.
+  "moderatedCount",
 ] as const
 
 export type CommentAutomationCounterField =

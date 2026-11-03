@@ -759,6 +759,7 @@
       "clicked": "Klikket",
       "failed": "Mislykkedes",
       "missed": "Oversete",
+      "moderated": "Modereret",
       "noContacts": "Ingen kontakter fundet",
       "noComment": "(ingen tekst)",
       "pageInfo": "Side {page} af {pageCount}",
@@ -778,7 +779,9 @@
       "contactNotNew": "Kontakten er ikke ny",
       "alreadyRepliedOnPost": "Allerede besvaret på dette opslag",
       "engagedOnOtherPost": "Har allerede interageret på et andet opslag",
-      "mentionCountNotMatched": "Antal omtaler matchede ikke"
+      "mentionCountNotMatched": "Antal omtaler matchede ikke",
+      "noImageAttachment": "Intet billede vedhæftet",
+      "moderated": "Skjult eller slettet af moderering"
     },
     "replyTo": {
       "mentions": "Kommentarer med nok omtaler",
@@ -798,6 +801,10 @@
       "label": "Spor om en bruger tagger andre brugere",
       "descriptionText": "Tæller de konti, der tagges i hver kommentar, og lægger dem til kontaktens samlede antal på tværs af alle kommentarer. Brug '{{total_tagged}}' for alle taggede konti og '{{total_new_tagged}}' for konti, der aldrig har skrevet til din side eller været kontakt."
     },
+    "onlyCommentsWithImage": {
+      "label": "Svar kun på kommentarer med et billede",
+      "descriptionText": "Svar kun automatisk, når kommentaren indeholder et billede. GIF'er og klistermærker tæller ikke. Kommentarer uden billede springes over, og den næste automatisering prøves."
+    },
     "card": {
       "reply": "Svar"
     },
@@ -815,6 +822,87 @@
       "column": "Konto",
       "disconnected": "Afbrudt konto",
       "disconnectedDescription": "Denne automatisering er knyttet til en konto, der ikke længere er tilsluttet, så den svarer ikke på kommentarer. Tilslut kontoen igen, eller vælg en anden."
+    },
+    "aiModeration": {
+      "enabled": "AI-moderering",
+      "description": "En AI-agent læser hver kommentar, før botten svarer, og skjuler eller sletter dem i kategorierne nedenfor. En modereret kommentar får aldrig svar.",
+      "aiAgentDescription": "Kun agentens AI-model bruges, ikke dens prompt.",
+      "categoriesLabel": "Bloker kommentarer, der er",
+      "categories": {
+        "hate": "Hadefuld tale",
+        "offensive": "Stødende",
+        "harassment": "Chikane",
+        "negative": "Fjendtlige over for brandet",
+        "spam": "Spam eller svindel"
+      },
+      "categoryDescriptions": {
+        "hate": "Angriber en gruppe på grund af race, religion, køn, nationalitet og lignende",
+        "offensive": "Fornærmelser, bandeord, vulgært sprog",
+        "harassment": "Trusler, mobning, angreb på en person",
+        "negative": "Har til formål at skade brandet. Høflige klager blokeres ikke",
+        "spam": "Svindel, phishing, urelateret reklame"
+      },
+      "instruction": "Ekstra vejledning til AI'en",
+      "instructionDescription": "Valgfrit. Fortæl AI'en, hvad der skal tillades eller blokeres.",
+      "instructionPlaceholder": "f.eks. Bloker ikke kunder, der klager over prisen",
+      "action": "Når en kommentar blokeres",
+      "actions": {
+        "hide": "Skjul den",
+        "delete": "Slet den"
+      },
+      "deleteWarning": "Slettede kommentarer er væk for altid og kan ikke gendannes. Skjul er sikrere, hvis AI'en tager fejl."
+    },
+    "moderationLog": {
+      "title": "Modererede kommentarer",
+      "description": "Kommentarer, som denne automatisering har skjult eller slettet, og hvorfor.",
+      "allActions": "Alle handlinger",
+      "allSources": "Regler og AI",
+      "actions": {
+        "hide": "Skjult",
+        "delete": "Slettet"
+      },
+      "sources": {
+        "rule": "Af en skjuleregel",
+        "ai": "Af AI"
+      },
+      "statuses": {
+        "pending": "I gang",
+        "done": "Færdig",
+        "failed": "Mislykkedes"
+      },
+      "rules": {
+        "all": "Skjul alle kommentarer",
+        "phoneNumber": "Har et telefonnummer",
+        "link": "Har et link",
+        "keyword": "Har et nøgleord",
+        "image": "Har et billede",
+        "video": "Har en video",
+        "gif": "Har en GIF",
+        "emoji": "Har en emoji"
+      },
+      "summary": {
+        "total": "{count} modereret",
+        "hidden": "{count} skjult",
+        "deleted": "{count} slettet",
+        "byAI": "{count} af AI",
+        "byRule": "{count} af regler",
+        "failed": "{count} mislykkedes"
+      },
+      "columns": {
+        "time": "Tid",
+        "contact": "Kontakt",
+        "comment": "Kommentar",
+        "action": "Handling",
+        "reason": "Årsag",
+        "status": "Status"
+      },
+      "loading": "Indlæser…",
+      "empty": "Ingen kommentarer er skjult eller slettet endnu.",
+      "unknownContact": "Ukendt",
+      "noText": "(ingen tekst)",
+      "previous": "Forrige",
+      "next": "Næste",
+      "page": "Side {page} af {pageCount}"
     }
   },
   "condition": {

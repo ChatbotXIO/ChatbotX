@@ -204,6 +204,15 @@ export type ChatJobNotifyExportResult = {
   data: Record<string, unknown>
 }
 
+/**
+ * Set when a comment automation hides or deletes a comment, so the handler
+ * settles that comment's `CommentModerationLog` row once the channel answered.
+ */
+export type ChatJobCommentModeration = {
+  automationId: string
+  commentId: string
+}
+
 export type ChatJobDeleteChannelMessage = {
   type: typeof ChatJobAction.deleteChannelMessage
   data: {
@@ -213,6 +222,12 @@ export type ChatJobDeleteChannelMessage = {
       id: string
       createdAt: Date
     }
+    /**
+     * Set by AI moderation: the handler also soft-deletes the message in the
+     * inbox after the channel accepted the delete (the builder's delete action
+     * does that before enqueueing).
+     */
+    moderation?: ChatJobCommentModeration
   }
 }
 
@@ -241,6 +256,7 @@ export type ChatJobChangeChannelMessageState = {
     }
     liked?: boolean
     hidden?: boolean
+    moderation?: ChatJobCommentModeration
   }
 }
 

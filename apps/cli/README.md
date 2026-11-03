@@ -741,7 +741,11 @@ Any channel's comment automation id (fb/ig/threads/tiktok).
 chatbotx comment-automations accounts --type <messenger|instagram|instagramFacebook|threads|tiktok>  # Accounts an automation can be scoped to (pass one's inboxId on create/update)
 chatbotx comment-automations missed-comment-run add <id>    # Process missed comments (last 7 days, single-post automations)
 chatbotx comment-automations missed-comment-runs list <id>  # { inProgress } — poll until false
+chatbotx comment-automations moderation-logs list <id> [--from <iso>] [--to <iso>] [--action hide|delete] [--source rule|ai] [--page --perPage]  # Comments hidden/deleted and why (rule + keyword, or AI categories + reason)
+chatbotx comment-automations moderation-summary list <id> [--from <iso>] [--to <iso>] [--action hide|delete] [--source rule|ai]  # { total, hidden, deleted, byRule, byAI, failed, pending }
 ```
+
+AI moderation itself is configured on the automation: `hideComments.aiModeration` (`enabled`, `aiAgentId` from `ai-agents list`, `categories`, `instruction`, `action`) on `fb-comments` / `ig-comments` / `threads-comments` / `tiktok-comments` create/update.
 
 ---
 

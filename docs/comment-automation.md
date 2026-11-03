@@ -19,6 +19,7 @@ silent failures. It is the reference for anyone touching the comment-automation 
 | `commentAutomationReplyModel` | [`packages/database/src/schema/comment-automation-reply.ts`](../packages/database/src/schema/comment-automation-reply.ts) | Dedup ledger: one row per `(automationId, contactId, postId)` written after every successful reply. Unique index `CommentAutomationReply_dedup_idx`. |
 | `commentAutomationEventModel` | [`packages/database/src/schema/comment-automation-event.ts`](../packages/database/src/schema/comment-automation-event.ts) | Analytics log: one row per `(automationId, commentId, replyChannel)` — the comment text, the text the bot sent, and `sent`/`failed`. Backs the per-automation **View Analytics** page. Successful rows are kept for the life of the automation; only `status = 'failed'` rows have a 30-day retention, via the `purgeCommentAutomationEvents` cron. |
 | `commentAutomationMissModel` | [`packages/database/src/schema/comment-automation-miss.ts`](../packages/database/src/schema/comment-automation-miss.ts) | The inverse of the event log: one row per `(automationId, commentId)` the automation was shown and **declined** — the comment text, when it was posted, and which filter stopped it. Backs the **Misses** column and its drill-down. Never purged. |
+| `commentModerationLogModel` | [`packages/database/src/schema/comment-moderation-log.ts`](../packages/database/src/schema/comment-moderation-log.ts) | One row per `(automationId, commentId)` the automation **hid or deleted** — the comment text (kept after a delete), `source` (`rule`/`ai`), the matched `rule` + `matchedKeyword`, or the AI's `categories` + `reason`, and `status` (`pending`/`done`/`failed`). Backs the **Moderated comments** card and `commentAutomations.listModerationLogs`. No retention purge (drained only with the workspace). See [Moderation](#moderation-hide-rules--ai). |
 
 Zod partials (option/reply/post/schedule shapes):
 [`packages/database/src/partials/comment-automation.ts`](../packages/database/src/partials/comment-automation.ts).
@@ -126,13 +127,15 @@ Each filter that fails calls `logAutomationSkipped(..., reason)` (logged at `inf
 | `options.ignoreCommentReplies` (default **true**) | Skip replies-to-comments | Skips only when `isCommentReply(parentId, postId, commentId)` is true. |
 | `includeKeywords` (`all`/`equal`/`contain`/`mentions`) | "Reply to" | `matchKeywords` — both sides lowercased and accent-folded (`normalizeForMatch`). `equal` = whole comment equals a keyword; `contain` = substring. `mentions` ignores keywords: the comment must tag **at least** `includeKeywords.mentionCount` (1–5) accounts — `matchMentionCount`, miss reason `mentionCountNotMatched`. The mention list is the same one tag tracking uses (see [Tag tracking](#tag-tracking)). |
 | `excludeKeywords` + `excludeKeywordsType` (`equal`/`contain`, default `contain`) | Text must not match | `matchKeywords` — `contain` = substring, `equal` = the whole trimmed comment equals a keyword; lowercased and accent-folded both sides. |
+| `options.onlyCommentsWithImage` (optional, absent = off) | Only comments carrying a photo | Evaluated after the keyword/mention gates, before the contact/dedup gates. `resolveAttachmentInfo().hasImage` false → skip, miss reason `noImageAttachment`, and the loop moves on to the next automation. A photo is Facebook `attachment.type === "photo"` or Threads `media_type` `IMAGE`/`CAROUSEL_ALBUM`; GIFs and stickers do not count. A failed lookup reads as "no photo" (skip). Instagram and TikTok expose no attachment data: the builder hides the switch, the service pins it off on Instagram writes (`withSupportedImageFilter`) and drops it on TikTok writes (`buildTiktokOptions`), and the worker ignores a stored `true` there (logged as `image filter unsupported`) rather than skipping every comment — `commentAutomationChannelSupportsImageFilter`. |
 | `options.replyToNewContactsOnly` | Only first-time contacts | `getPriorContactInboxCount(contactId) > 1` → skip. Counts `ContactInbox` rows. |
 | `options.replyOncePerUserPerPost` | Once per user per post | `findDedup(automationId, contactId, postId)` exists → skip (fast path, keeps the miss reason). Then `claimDedup` — an `INSERT … ON CONFLICT DO NOTHING RETURNING` on `CommentAutomationReply_dedup_idx` — is the actual guard: two comments from one person milliseconds apart both pass the read, only one wins the row. A claimed row is released (`deleteDedup`) when nothing was dispatched. |
 | `options.replyToUsersWhoCommentedOnOtherPosts` (default **true**) | If off, only engage each user on their first post | When `false`, `hasRepliedOnOtherPost` (a dedup row with a different `postId`) → skip. |
 | `options.likeUserComment` | Auto-like the comment | Runs only if the incoming comment's DB message was found (`findBySourceId`). |
 | `options.trackUserTags` | Count who the commenter tagged | Not a filter — never skips. Adds the comment's counts to `Contact.totalTagged`/`totalNewTagged`, which back `{{total_tagged}}`/`{{total_new_tagged}}`. Once per comment, ahead of the reply filters. See [Tag tracking](#tag-tracking). |
-| `hideComments.*` | Auto-hide matching comments | `applyHideComments` — `all`, `hasPhoneNumber` (PHONE_RE), `hasLink` (LINK_RE, matches bare domains too), `hasKeywords` (case- and accent-insensitive), `hasImage`/`hasVideo`/`hasGif` (attachment lookup, see below), `hasEmoji` (`\p{Extended_Pictographic}` on the text). A row written before `hasGif`/`hasEmoji` existed lacks the keys — absent reads as off. |
-| `hideComments.showCommentsAfter` | Auto-unhide delay | Enqueues a delayed unhide job (`jobId = unhide-comment-${commentId}`). |
+| `hideComments.*` | Auto-hide matching comments | Runs after the reply filters, on a comment the automation also answers (see [Moderation](#moderation-hide-rules--ai)). `matchHideRule` — `all`, `hasPhoneNumber` (PHONE_RE), `hasLink` (LINK_RE, matches bare domains too), `hasKeywords` (case- and accent-insensitive), `hasImage`/`hasVideo`/`hasGif` (attachment lookup, see below), `hasEmoji` (`\p{Extended_Pictographic}` on the text). A row written before `hasGif`/`hasEmoji` existed lacks the keys — absent reads as off. |
+| `hideComments.showCommentsAfter` | Auto-unhide delay | Enqueues a delayed unhide job (`jobId = unhide-comment-${commentId}`). Hide rules only — an AI moderation hide stays hidden. |
+| `hideComments.aiModeration` | AI moderation | Optional; absent = off. `enabled`, `aiAgentId` (only the agent's model list is used, never its prompt), `categories` (`hate`/`offensive`/`harassment`/`negative`/`spam`), `instruction`, `action` (`hide`/`delete`; the service pins `delete` → `hide` on Threads, and pins `enabled` off on an Instagram Live automation). See [Moderation](#moderation-hide-rules--ai). |
 | `publicReply` / `privateReply` | The reply | See [Reply types](#reply-types). |
 | `replyAfter` | Delay before replying | `computeDelayMs` → passed as BullMQ `{ delay }`. |
 
@@ -549,7 +552,7 @@ switch only there, and the service pins `hasGif` off on Instagram writes
 | Channel | GIF source |
 |---|---|
 | messenger | `GET /{comment-id}?fields=attachment` → `attachment.type` starting with `animated_image` |
-| threads | `GET /{reply-id}?fields=gif_url` (`getReplyGifUrl`) — a GIF reply is still `TEXT_POST` by `media_type`, and the reply webhook does not carry `gif_url` |
+| threads | `GET /{reply-id}?fields=gif_url,media_type` (`getReplyAttachment`) — a GIF reply is still `TEXT_POST` by `media_type`, and the reply webhook carries neither field. The same lookup answers `hasImage` (`IMAGE`/`CAROUSEL_ALBUM`) for `options.onlyCommentsWithImage`; hiding by image/video stays Facebook-only |
 | instagram, instagramFacebook, tiktok | none — comment text only |
 
 Threads hides via `POST /{reply-id}/manage_reply?hide=` (scope `threads_manage_replies`),
@@ -557,6 +560,60 @@ which Meta only allows on **top-level** replies. The worker therefore skips hidi
 Threads reply (`supportsHideForComment` in `hide-comments.ts`, logged as
 `hide nested reply unsupported`) instead of enqueuing a state change that would mark it
 hidden in the inbox and then fail at the channel.
+
+## Moderation (hide rules & AI)
+
+The two halves of moderation run at different points of the automation loop
+([`comment-automation/moderation.ts`](../apps/worker/src/integration/handlers/comment-automation/moderation.ts)).
+
+1. **Hide rules** (`applyHideRules`) keep their original place and behavior: they run only for a
+   comment that passed every reply filter, inside the reply dispatch, and the comment is **hidden
+   AND answered** (the common "DM the customer, then hide the comment" setup). `matchHideRule`
+   returns the first rule that matches (or null). On a match it writes a `CommentModerationLog`
+   row (`source: rule`) via `commentAutomationAnalyticsService.recordModeration`, then enqueues
+   `changeChannelMessageState` with `moderation: { automationId, commentId }` and the fixed jobId
+   `moderate-comment-${automationId}-${commentId}`. A row that already existed is enqueued again
+   only while it is still `pending` (`isModerationPending`) — a first run that logged the row but
+   failed to enqueue the job is not lost, and the fixed jobId stops a still-queued job from
+   running twice. It never throws: a failed hide is logged, never recorded as a failed reply.
+2. **AI moderation** (`moderateCommentWithAI`) runs right after the account/schedule/post gates and
+   **before every reply filter**, so an abusive comment is checked whether or not the automation
+   would have answered it. When `isAIModerationEnabled(aiModeration)`, the loop enqueues
+   `AIJobAction.commentModeration` (jobId `comment-moderation-${automationId}-${commentId}`)
+   carrying the original `processCommentAutomation` payload, and skips this automation for now
+   (no miss yet). A failure to enqueue fails open: logged, and the reply goes ahead. Inside a
+   missed-comment replay the payload carries `replay: true` and the jobId gets a
+   `-replay-<id>` suffix, since the webhook run's completed job may still hold the fixed id.
+   `processCommentModeration`:
+   - restores the replay context (low priority) when `replay` is set;
+   - re-reads the automation (`findActive`) and the agent; either gone → resume;
+   - classifies with `generateText` + `Output.object` over the agent's model list (the same
+     provider fallback as `generateAIReplyText`; each failure goes to Error Logs). The comment is
+     sent as quoted data in the user message, never in the instructions;
+   - keeps only the categories the automation selected. Flagged → `moderated` miss, log row
+     (`source: ai`, `reason`, `provider`, `modelId`), then `changeChannelMessageState` (hide) or
+     `deleteChannelMessage` (delete), both with the `moderation` marker and the same
+     log-then-enqueue rule as the hide rules. A comment the AI moderates is never answered;
+   - not flagged, or **every provider failed** (fail open) → re-enqueues
+     `processCommentAutomation` with `onlyAutomationId` + `moderationChecked: true`
+     (jobId `comment-auto-${commentId}-${automationId}-moderated`, `-replay-<id>` suffix on a
+     replay, default retries). That run skips the AI step and goes on to the reply filters. Tag
+     tracking is idempotent per comment, so the second run does not double-count.
+3. **Settling** — the chat handlers (`changeMessageStateOnChannel`, `deleteMessageFromChannel`)
+   wrap the integration lookup and the channel call in `settleCommentModeration`: `done` on success, `failed` + `errorDetail`
+   on a throw (re-thrown so BullMQ retries; a later success overwrites it). A message row that is
+   missing or not a comment settles `failed` too, so no log row stays `pending`. A moderation delete
+   also soft-deletes the inbox message and emits `messageDeleted`, which the builder's delete
+   action does itself before enqueueing.
+
+**Delete support** (`commentAutomationChannelSupportsDelete`): Facebook, both Instagram logins,
+TikTok. Threads has no delete endpoint. The counter `CommentAutomation.moderatedCount` moves once
+per inserted log row, exactly like `missedCount`.
+
+**Read surface**: `commentAutomations.listModerationLogs` / `getModerationSummary` (scope
+`automation`; the public list drops the commenter's name and avatar) and the
+**Moderated comments** card under the analytics dashboard
+(`moderation-log-card.tsx`), both through `lib/moderation-logs`.
 
 ## Process missed comments
 

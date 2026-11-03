@@ -58,6 +58,7 @@ export const threadsCommentResource = createSelectSchema(
       replyToUsersWhoCommentedOnOtherPosts: z.boolean(),
       ignoreCommentReplies: z.boolean(),
       trackUserTags: z.boolean(),
+      onlyCommentsWithImage: z.boolean().optional(),
     }),
     hideComments: commentHideCommentsSchema,
     replyAfter: z.object({

@@ -4,6 +4,7 @@ import type {
   Oauth2AuthValue,
   Oauth2Config,
 } from "@chatbotx.io/sdk"
+import type { ThreadsReplyAttachment } from "./apis/comment"
 import type { ThreadsPostDetails } from "./apis/post"
 
 export type ThreadsConfig = Oauth2Config & {
@@ -40,5 +41,9 @@ export type ThreadsActions<IAuth extends ThreadsAuthValue = ThreadsAuthValue> =
     getReplyGifUrl: Handler<
       { ctx: Context<IAuth>; input: { replyId: string } },
       string | null
+    >
+    getReplyAttachment: Handler<
+      { ctx: Context<IAuth>; input: { replyId: string } },
+      ThreadsReplyAttachment
     >
   }

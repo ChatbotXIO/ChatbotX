@@ -1,5 +1,6 @@
 import {
   COMMENT_REPLY_MAX_TEXTS,
+  commentAIModerationSchema,
   commentExcludeKeywordsTypes,
   commentIncludeKeywordsSchema,
   resolveReplyTexts,
@@ -161,10 +162,17 @@ export function createThreadsCommentRequestSchema(
     replyToUsersWhoCommentedOnOtherPosts: z.boolean(),
     ignoreCommentReplies: z.boolean(),
     trackUserTags: z.boolean().optional(),
+    onlyCommentsWithImage: z
+      .boolean()
+      .optional()
+      .describe(
+        "Only reply when the reply carries a photo (`media_type` IMAGE or CAROUSEL_ALBUM); otherwise this automation skips it and the next automation is tried. GIFs do not count. Omitted means off.",
+      ),
   })
 
   // Threads hides a top-level reply via `manage_reply` and exposes its
-  // `gif_url`. `hasImage`/`hasVideo` are absent: no attachment lookup exists.
+  // `gif_url`. `hasImage`/`hasVideo` are absent: hiding by them is
+  // Facebook-only.
   const threadsHideCommentsSchema = z
     .object({
       all: z.boolean(),
@@ -173,6 +181,7 @@ export function createThreadsCommentRequestSchema(
       hasKeywords: z.boolean(),
       hasGif: z.boolean().optional(),
       hasEmoji: z.boolean().optional(),
+      aiModeration: commentAIModerationSchema.optional(),
       keywords: trimmedArray(MAX_KEYWORDS, MAX_KEYWORD_LENGTH),
       showCommentsAfter: z.enum([
         "none",

@@ -67,6 +67,10 @@ vi.mock("../src/flow/service", () => ({
   flowService: { exists: vi.fn().mockResolvedValue(true) },
 }))
 
+vi.mock("../src/ai-agent/service", () => ({
+  aiAgentService: { findByIdForWorkspace: vi.fn() },
+}))
+
 vi.mock("@chatbotx.io/database/schema", () => ({
   contactInboxModel: { contactId: "ContactInbox.contactId" },
   commentAutomationModel: {
@@ -151,6 +155,7 @@ describe("commentAutomationService threads CRUD", () => {
           replyToUsersWhoCommentedOnOtherPosts: false,
           ignoreCommentReplies: false,
           trackUserTags: false,
+          onlyCommentsWithImage: false,
         },
       }),
     )
@@ -184,6 +189,7 @@ describe("commentAutomationService threads CRUD", () => {
         replyToUsersWhoCommentedOnOtherPosts: true,
         ignoreCommentReplies: true,
         trackUserTags: false,
+        onlyCommentsWithImage: false,
       },
     })
     expect(JSON.stringify(mocks.updateWhere.mock.calls[0]?.[0])).toContain(
