@@ -60,8 +60,8 @@ export function AppSidebar({
   workspaceId,
   allWorkspaces,
   callHistoryNavVisible,
+  canAccessManage,
   isSuperAdmin,
-  isPlatformAdmin,
   permissions,
   quota,
   scheduledForDeletion = false,
@@ -72,8 +72,8 @@ export function AppSidebar({
   /** Gates the Calls nav item: call-history permission AND a connected
    * call-capable channel. */
   callHistoryNavVisible: boolean
+  canAccessManage?: boolean
   isSuperAdmin?: boolean
-  isPlatformAdmin?: boolean
   // Runtime may be a partial object (the jsonb column defaults to `{}`);
   // `hasWorkspacePermission` fails closed on any missing flag.
   permissions: WorkspaceMemberPermissions
@@ -225,7 +225,7 @@ export function AppSidebar({
           trialEndsAt={quota.trialEndsAt}
         />
         <NavUser
-          isPlatformAdmin={isPlatformAdmin}
+          canAccessManage={canAccessManage}
           isSuperAdmin={isSuperAdmin}
           planName={quota.planName}
           user={data.user}

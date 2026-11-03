@@ -1,7 +1,7 @@
 import {
+  canUseOwnCredentials,
   inboxService,
   integrationService,
-  isPlatformAdmin,
   isSuperAdmin,
   isSupportConsentRequired,
   isWorkspaceScheduledForDeletion,
@@ -80,10 +80,10 @@ export default async function WorkspaceLayout({
   // community/enterprise installs use every feature freely — no quota gating.
   const cloud = isCloud()
 
-  const [{ storageUrl }, platformAdmin, superAdmin, consentRequired] =
+  const [{ storageUrl }, canAccessManage, superAdmin, consentRequired] =
     await Promise.all([
       getTenantSettings(),
-      isPlatformAdmin(user),
+      cloud ? canUseOwnCredentials(user.id) : false,
       isSuperAdmin(user),
       isSupportConsentRequired(),
     ])
@@ -168,7 +168,7 @@ export default async function WorkspaceLayout({
         <AppSidebar
           allWorkspaces={allWorkspaces}
           callHistoryNavVisible={realtimeGates.callHistoryNavVisible}
-          isPlatformAdmin={platformAdmin}
+          canAccessManage={canAccessManage}
           isSuperAdmin={superAdmin}
           permissions={targetWorkspaceMember.permissions}
           quota={quotaSummary}

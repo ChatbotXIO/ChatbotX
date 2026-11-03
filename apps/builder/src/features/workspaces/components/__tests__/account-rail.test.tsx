@@ -92,7 +92,7 @@ describe("account rail", () => {
   async function render(
     props: Partial<{
       isSuperAdmin: boolean
-      isPlatformAdmin: boolean
+      canAccessManage: boolean
       isPlatformContext: boolean
       cloud: boolean
       planName: string | null
@@ -102,7 +102,7 @@ describe("account rail", () => {
     const element = await AccountRail({
       user: BASE_USER,
       isSuperAdmin: props.isSuperAdmin,
-      isPlatformAdmin: props.isPlatformAdmin,
+      canAccessManage: props.canAccessManage,
       isPlatformContext: props.isPlatformContext,
       planName: props.planName,
     })
@@ -147,15 +147,29 @@ describe("account rail", () => {
   })
 
   it("renders admin but hides manage on community edition", async () => {
-    await render({ isSuperAdmin: true, isPlatformAdmin: true, cloud: false })
+    await render({ canAccessManage: true, cloud: false, isSuperAdmin: true })
     expect(findLink("/admin")?.textContent).toContain("Admin")
     expect(findLink("/manage")).toBeUndefined()
   })
 
-  it("renders admin and manage on cloud edition", async () => {
-    await render({ isSuperAdmin: true, isPlatformAdmin: true, cloud: true })
-    expect(findLink("/admin")?.textContent).toContain("Admin")
+  it("renders manage for a credentials-only user on cloud edition", async () => {
+    await render({ canAccessManage: true, cloud: true })
     expect(findLink("/manage")?.textContent).toContain("Manage")
+  })
+
+  it("renders admin for a credentials-only super admin on cloud edition", async () => {
+    await render({
+      canAccessManage: true,
+      cloud: true,
+      isSuperAdmin: true,
+    })
+
+    expect(findLink("/admin")?.textContent).toContain("Admin")
+  })
+
+  it("hides manage on cloud edition without credential access", async () => {
+    await render({ cloud: true })
+    expect(findLink("/manage")).toBeUndefined()
   })
 
   it("still renders the menu block on community edition", async () => {
