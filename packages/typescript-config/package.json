@@ -7,6 +7,6 @@
     "access": "public"
   },
   "dependencies": {
-    "@types/node": "^24.10.4"
+    "@types/node": "catalog:"
   }
 }

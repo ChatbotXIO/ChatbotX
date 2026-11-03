@@ -12,13 +12,13 @@
     "@chatbotx.io/redis": "workspace:*",
     "@chatbotx.io/scheduler": "workspace:*",
     "@chatbotx.io/utils": "workspace:*",
-    "date-fns": "^4.1.0"
+    "date-fns": "catalog:"
   },
   "devDependencies": {
     "@chatbotx.io/typescript-config": "workspace:*",
     "@chatbotx.io/vitest-config": "workspace:*",
-    "typescript": "^5",
-    "vitest": "^4.1.0"
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   },
   "scripts": {
     "check-types": "tsc --noEmit",

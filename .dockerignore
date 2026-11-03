@@ -8,6 +8,8 @@ docker-data/*
 dist
 .turbo
 **/.turbo
+# Local `tsc --incremental` caches (tsconfig.base.json sets incremental) — nothing in an image reads them.
+**/*.tsbuildinfo
 **/.next
 /apps/worker/dist
 /apps/mcp-server/dist

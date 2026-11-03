@@ -24,6 +24,10 @@ COPY --from=pre /app/out/json/ .
 RUN pnpm install --frozen-lockfile
 
 COPY --from=pre /app/out/full/ .
+# `turbo prune` omits the repo-root tsconfig.base.json that apps/mcp-server's
+# tsconfig extends; copy it back so tsdown's dts plugin can resolve `extends`
+# instead of failing with "File '../../tsconfig.base.json' not found".
+COPY tsconfig.base.json ./tsconfig.base.json
 RUN pnpm turbo run build --filter=chatbotx-mcp
 
 FROM base AS release

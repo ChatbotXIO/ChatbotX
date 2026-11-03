@@ -42,8 +42,11 @@ pnpm dev              # turbo dev — all dev tasks the repo wires up
 pnpm build            # turbo build
 pnpm lint             # check:agent-instructions → check:invariants → turbo run lint → ultracite check
 pnpm fix              # ultracite fix --unsafe
-pnpm test             # turbo run test --concurrency=50% (vitest, --passWithNoTests per workspace)
-pnpm test:coverage    # turbo run test --concurrency=50% -- --coverage
+pnpm check-types:cold # concurrency=1 — use on a cold run (no tsbuildinfo) or low-RAM machine; builder tsc peaks ~6 GB cold
+pnpm check-types      # turbo run check-types --concurrency=2 — always use this, not bare `pnpm turbo check-types`
+                      # (bare turbo runs 10 tsc in parallel, ~4 GB each for packages importing database/business → swaps/freezes the machine)
+pnpm test             # turbo run test --concurrency=2 — 2 suites × 4 vitest threads (VITEST_MAX_WORKERS); 50% ran 6×4 = 24 threads on a 12-core Mac
+pnpm test:coverage    # turbo run test --concurrency=2 -- --coverage
 pnpm sync:agent-instructions   # regenerate the .devin/ + .github/ invariant mirrors
 pnpm check:circular   # madge circular deps
 pnpm check:unused     # knip
@@ -111,7 +114,7 @@ Optional CodeGraph code index for AI editors: setup in `docs/developer/codegraph
 
 ### Dependencies
 
-- Add deps with **`pnpm add <pkg> --filter <workspace>`**. Import internal packages via their **`exports`** (e.g. `@chatbotx.io/database/client`).
+- Add deps with **`pnpm add <pkg> --filter <workspace>`**. Versions shared across workspaces live in the `catalog:` block of `pnpm-workspace.yaml` (reference as `"<pkg>": "catalog:"`); bump them there, not per package. Import internal packages via their **`exports`** (e.g. `@chatbotx.io/database/client`).
 
 ## Project-specific AI guidance
 

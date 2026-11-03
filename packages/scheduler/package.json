@@ -8,13 +8,13 @@
   },
   "dependencies": {
     "@chatbotx.io/redis": "workspace:*",
-    "ioredis": "5.10.1"
+    "ioredis": "catalog:"
   },
   "devDependencies": {
     "@chatbotx.io/typescript-config": "workspace:*",
     "@chatbotx.io/vitest-config": "workspace:*",
-    "typescript": "^5",
-    "vitest": "^4.1.0"
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   },
   "scripts": {
     "check-types": "tsc --noEmit",

@@ -8,3 +8,48 @@ onlyBuiltDependencies:
   - esbuild
   - isolated-vm
   - lefthook
+
+# Shared dependency versions. Reference with "catalog:" in package.json.
+catalogMode: strict
+catalog:
+  "@ai-sdk/openai": "^4.0.106"
+  "@aws-sdk/client-s3": "^3.1039.0"
+  "@better-auth/core": 1.7.14
+  "@better-auth/mcp": 1.7.14
+  "@better-auth/oauth-provider": 1.7.14
+  "@t3-oss/env-core": "^0.13.11"
+  "@t3-oss/env-nextjs": "^0.13.11"
+  "@types/mime-types": "^3.0.1"
+  "@types/node": "^24.12.2"
+  "@types/react": 19.2.14
+  "@types/react-dom": 19.2.3
+  ai: "^7.0.159"
+  better-auth: 1.7.14
+  countries-list: "^3.3.0"
+  cross-fetch: "^4.1.0"
+  date-fns: "^4.4.0"
+  date-fns-tz: "^3.2.0"
+  dot-prop: "^10.1.0"
+  dotenv-cli: "^11.0.0"
+  drizzle-kit: 1.0.0-beta.22
+  drizzle-orm: 1.0.0-beta.22
+  google-auth-library: "^10.6.2"
+  image-size: "^2.0.3"
+  ioredis: 5.10.1
+  jose: "^6.2.3"
+  ky: "^2.0.2"
+  libphonenumber-js: "^1.12.42"
+  lucide-react: "^1.17.0"
+  mime-types: "^3.0.2"
+  msw: "^2.7.3"
+  next: 16.4.3
+  react: 19.2.5
+  react-dom: 19.2.5
+  react-hook-form: "^7.74.0"
+  remeda: "^2.37.0"
+  tsdown: 0.22.3
+  tsx: "^4.23.0"
+  typescript: "^5"
+  universal-error-normalizer: "^1.0.0"
+  vitest: "^5.1.0"
+  zod: "^4.3.6"

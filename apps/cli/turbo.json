@@ -1,0 +1,14 @@
+{
+  "extends": ["//"],
+  "tasks": {
+    // `__tests__/smoke.test.ts` reads `dist/index.cjs`, so the suite needs a
+    // build first. Declaring it here (instead of `pnpm build && vitest run` in
+    // the script) lets turbo restore the cached build when the CLI source is
+    // unchanged, rather than re-running tsdown on every `pnpm test`.
+    // A package-level `dependsOn` replaces the root one, so `transit` is
+    // repeated here.
+    "test": {
+      "dependsOn": ["transit", "build"]
+    }
+  }
+}

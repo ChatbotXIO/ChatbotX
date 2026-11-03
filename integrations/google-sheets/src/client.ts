@@ -1,8 +1,7 @@
 import type { Oauth2AuthValue } from "@chatbotx.io/sdk"
+import { sheets } from "@googleapis/sheets"
 import { OAuth2Client } from "google-auth-library"
-// Import the one API instead of the `googleapis` barrel, which loads every
-// Google API (~60MB heap at runtime, ~165MB of type files for `tsc`).
-import { sheets } from "googleapis/build/src/apis/sheets/index.js"
+
 import { GOOGLE_SHEETS_SCOPES } from "./constants"
 import type { GoogleSheetsConfig } from "./schemas"
 
