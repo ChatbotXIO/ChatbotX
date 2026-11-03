@@ -57,87 +57,13 @@ vi.mock("@chatbotx.io/filesystem", () => ({
   },
 }))
 
-const { escapeCsvValue, buildHeaderLine, buildCsvChunk } = await import(
+const { buildHeaderLine, buildCsvChunk } = await import(
   "../src/default/handlers/export-contacts"
 )
 
 // ── Type alias for brevity ────────────────────────────────────────────────────
 
 type SelectedField = Parameters<typeof buildCsvChunk>[1][number]
-
-// ── escapeCsvValue ────────────────────────────────────────────────────────────
-
-describe("escapeCsvValue", () => {
-  test("wraps a plain value in double quotes", () => {
-    // Arrange
-    const value = "hello world"
-
-    // Act
-    const result = escapeCsvValue(value)
-
-    // Assert
-    expect(result).toBe('"hello world"')
-  })
-
-  test("returns empty quoted string for an empty string", () => {
-    // Arrange / Act
-    const result = escapeCsvValue("")
-
-    // Assert
-    expect(result).toBe('""')
-  })
-
-  test("escapes embedded double quotes by doubling them", () => {
-    // Arrange
-    const value = 'say "hello"'
-
-    // Act
-    const result = escapeCsvValue(value)
-
-    // Assert
-    expect(result).toBe('"say ""hello"""')
-  })
-
-  test("normalizes a Unix newline to a space", () => {
-    // Arrange
-    const value = "line1\nline2"
-
-    // Act
-    const result = escapeCsvValue(value)
-
-    // Assert
-    expect(result).toBe('"line1 line2"')
-  })
-
-  test("normalizes a Windows CRLF newline to a space", () => {
-    // Arrange
-    const value = "line1\r\nline2"
-
-    // Act
-    const result = escapeCsvValue(value)
-
-    // Assert
-    expect(result).toBe('"line1 line2"')
-  })
-
-  test.each([
-    ["=1+1", `"'=1+1"`],
-    ["+1234", `"'+1234"`],
-    ["-cmd", `"'-cmd"`],
-    ["@SUM(A1)", `"'@SUM(A1)"`],
-    ["\tleading tab", `"'\tleading tab"`],
-  ])("guards formula injection: %j is prefixed with a single quote", (value, expected) => {
-    expect(escapeCsvValue(value)).toBe(expected)
-  })
-
-  test("does not escape a value with a formula char in the middle", () => {
-    expect(escapeCsvValue("a=1+1")).toBe('"a=1+1"')
-  })
-
-  test("escapes a formula value that also contains embedded quotes", () => {
-    expect(escapeCsvValue('=HYPERLINK("x")')).toBe(`"'=HYPERLINK(""x"")"`)
-  })
-})
 
 // ── buildHeaderLine ───────────────────────────────────────────────────────────
 

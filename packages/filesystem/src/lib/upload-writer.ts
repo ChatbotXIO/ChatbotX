@@ -6,6 +6,8 @@ export type UploadWriter = {
    * producer never outruns it), and rejects as soon as the upload fails.
    */
   write: (chunk: string) => Promise<void>
+  /** UTF-8 bytes of every write the upload accepted so far (the file size). */
+  bytesWritten: () => number
   /** Ends the stream and waits for the upload to complete. */
   finish: () => Promise<void>
   /**
@@ -29,6 +31,7 @@ export function toUploadWriter(upload: {
   const { stream, done } = upload
   let failure: { error: unknown } | null = null
   let rejectPendingWrite: ((error: unknown) => void) | null = null
+  let bytesWritten = 0
   done.catch((error: unknown) => {
     failure = { error }
     rejectPendingWrite?.(error)
@@ -46,6 +49,7 @@ export function toUploadWriter(upload: {
         if (error) {
           reject(error)
         } else {
+          bytesWritten += Buffer.byteLength(chunk)
           resolve()
         }
       })
@@ -53,6 +57,7 @@ export function toUploadWriter(upload: {
 
   return {
     write,
+    bytesWritten: () => bytesWritten,
     finish: async () => {
       stream.end()
       await done

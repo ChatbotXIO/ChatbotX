@@ -24,6 +24,7 @@ import { chunkById } from "@chatbotx.io/database/utils"
 import { createUpload } from "@chatbotx.io/filesystem/node-upload"
 import { toUploadWriter } from "@chatbotx.io/filesystem/upload-writer"
 import { SOURCE_USER_ID_EXPORT_HEADER } from "@chatbotx.io/imports/modules/contacts"
+import { type CsvCell, toCsvRow, UTF8_BOM } from "@chatbotx.io/utils/csv"
 import { formatCustomFieldValueInTimeZone } from "@chatbotx.io/utils/datetime"
 import {
   type JobExportContacts,
@@ -41,7 +42,7 @@ const tagPrefix = "tag:"
 
 // Virtual contact column backed by the first ContactInbox.sourceId (the
 // platform-native id: WhatsApp wa_id, Messenger PSID, …). It is not a column on
-// the Contact row, so renderCell resolves it from the contactInboxes relation.
+// the Contact row, so resolveContactValue reads it from the contactInboxes relation.
 const contactIdField = "contactId"
 
 // Virtual contact column backed by the first contactInboxes row that carries a
@@ -91,82 +92,58 @@ type ContactRow = {
 
 // ── CSV serialization ─────────────────────────────────────────────────────────
 
-// Leading characters a spreadsheet may interpret as a formula on open.
-const FORMULA_PREFIX_RE = /^[=+\-@\t\r]/
-
-/**
- * Wraps a value in double quotes, escapes embedded quotes/newlines, and guards
- * against CSV formula injection by prefixing a single quote when the value
- * starts with a character a spreadsheet would evaluate.
- */
-export const escapeCsvValue = (value: string): string => {
-  if (!value) {
-    return '""'
-  }
-  const normalized = value.replace(/\r?\n/g, " ")
-  const guarded = FORMULA_PREFIX_RE.test(normalized)
-    ? `'${normalized}`
-    : normalized
-  return `"${guarded.replace(/"/g, '""')}"`
-}
-
-/** Renders an optional identity value as a CSV cell (empty cell when absent). */
-const renderIdentityCell = (value: string | undefined): string =>
-  value ? escapeCsvValue(value) : '""'
-
 // Resolves the export's WhatsApp User ID column: the first contactInboxes row
 // that actually carries a sourceUserId — not blindly the earliest inbox
 // connection, since a multi-inbox contact's earliest row may belong to a
 // different channel that never populates it.
-const resolveSourceUserId = (contact: ContactRow): string | undefined =>
-  contact.contactInboxes?.find((inbox) => inbox.sourceUserId)?.sourceUserId ??
-  undefined
+const resolveSourceUserId = (contact: ContactRow): CsvCell =>
+  contact.contactInboxes?.find((inbox) => inbox.sourceUserId)?.sourceUserId
 
-/** Renders one selected field of one contact into a CSV cell. */
-const renderCell = (
+/** Resolves the raw value of one built-in contact column. */
+const resolveContactValue = (contact: ContactRow, column: string): CsvCell => {
+  switch (column) {
+    // Not stored on the Contact row — it is the platform-native sourceId of
+    // the contact's first (earliest) inbox connection.
+    case contactIdField:
+      return contact.contactInboxes?.[0]?.sourceId
+    case sourceUserIdField:
+      return resolveSourceUserId(contact)
+    case adIdsField:
+      return contact.adIds?.join(", ")
+    default: {
+      const value = contact[column]
+      if (value instanceof Date) {
+        return value.toISOString()
+      }
+      return value === null || value === undefined ? "" : String(value)
+    }
+  }
+}
+
+/** Resolves the raw value of one selected field of one contact. */
+const resolveCellValue = (
   contact: ContactRow,
   field: SelectedField,
   timezone: string,
-): string => {
+): CsvCell => {
   if (field.type === "contact") {
-    // The Contact Id column is not stored on the Contact row — it comes from the
-    // contact's first (earliest) inbox connection's platform-native sourceId.
-    if (field.value === contactIdField) {
-      return renderIdentityCell(contact.contactInboxes?.[0]?.sourceId)
-    }
-    if (field.value === sourceUserIdField) {
-      return renderIdentityCell(resolveSourceUserId(contact))
-    }
-    if (field.value === adIdsField) {
-      return renderIdentityCell(contact.adIds?.join(", "))
-    }
-    const rawValue = contact[field.value]
-    if (rawValue instanceof Date) {
-      return escapeCsvValue(rawValue.toISOString())
-    }
-    if (rawValue === null || rawValue === undefined) {
-      return '""'
-    }
-    return escapeCsvValue(String(rawValue))
+    return resolveContactValue(contact, field.value)
   }
 
   if (field.type === "custom") {
-    const customField = contact.contactCustomFields?.find(
+    const value = contact.contactCustomFields?.find(
       (cf) => cf.customFieldId === field.value,
-    )
-    return customField?.value
-      ? escapeCsvValue(
-          formatCustomFieldValueInTimeZone(
-            field.customFieldType ?? "shortText",
-            customField.value,
-            timezone,
-          ),
+    )?.value
+    return value
+      ? formatCustomFieldValueInTimeZone(
+          field.customFieldType ?? "shortText",
+          value,
+          timezone,
         )
-      : '""'
+      : ""
   }
 
-  const hasTag = contact.tags?.some((tag) => tag.id === field.value)
-  return escapeCsvValue(hasTag ? "Yes" : "No")
+  return contact.tags?.some((tag) => tag.id === field.value) ? "Yes" : "No"
 }
 
 /** Builds the CSV body for a page of contacts (one row per contact). */
@@ -174,18 +151,20 @@ export const buildCsvChunk = (
   contacts: ContactRow[],
   selectedFields: SelectedField[],
   timezone = "UTC",
-): string => {
-  const lines = contacts.map((contact) =>
-    selectedFields
-      .map((field) => renderCell(contact, field, timezone))
-      .join(","),
-  )
-  return lines.length > 0 ? `${lines.join("\n")}\n` : ""
-}
+): string =>
+  contacts
+    .map((contact) =>
+      toCsvRow(
+        selectedFields.map((field) =>
+          resolveCellValue(contact, field, timezone),
+        ),
+      ),
+    )
+    .join("")
 
 /** Builds the CSV header row from the selected fields. */
 export const buildHeaderLine = (selectedFields: SelectedField[]): string =>
-  `${selectedFields.map((field) => escapeCsvValue(field.header)).join(",")}\n`
+  toCsvRow(selectedFields.map((field) => field.header))
 
 // ── Where building ────────────────────────────────────────────────────────────
 
@@ -472,14 +451,11 @@ const loopableExportContactsInner = async (data: ExportData) => {
     createUpload(outputPath, { contentType: "text/csv; charset=utf-8" }),
   )
 
-  let totalBytes = 0
   let totalRecords = 0
   let progressSavedAt = Date.now()
 
   try {
-    const headerLine = buildHeaderLine(selectedFields)
-    await upload.write(headerLine)
-    totalBytes += Buffer.byteLength(headerLine)
+    await upload.write(`${UTF8_BOM}${buildHeaderLine(selectedFields)}`)
 
     let hitRowCap = false
     await chunkById(
@@ -490,9 +466,9 @@ const loopableExportContactsInner = async (data: ExportData) => {
       {
         chunkSize: loopableItemsCount,
         callback: async (page): Promise<boolean | undefined> => {
-          const chunk = buildCsvChunk(page, selectedFields, workspaceTimezone)
-          await upload.write(chunk)
-          totalBytes += Buffer.byteLength(chunk)
+          await upload.write(
+            buildCsvChunk(page, selectedFields, workspaceTimezone),
+          )
           totalRecords += page.length
 
           // Progress for the export dialog, throttled: a large export has
@@ -515,10 +491,6 @@ const loopableExportContactsInner = async (data: ExportData) => {
     await upload.finish()
 
     if (hitRowCap) {
-      await updateExportFile(fileIds, {
-        status: fileStatuses.enum.failed,
-        meta: { totalRecords },
-      })
       throw new Error(
         `Export exceeded the ${MAX_EXPORT_ROWS.toLocaleString()}-row limit. Use filters to narrow the export.`,
       )
@@ -531,7 +503,7 @@ const loopableExportContactsInner = async (data: ExportData) => {
 
     await updateExportFile(fileIds, {
       status: finalStatus,
-      fileSize: String(totalBytes),
+      fileSize: String(upload.bytesWritten()),
       meta: { totalRecords },
     })
 
@@ -546,7 +518,10 @@ const loopableExportContactsInner = async (data: ExportData) => {
     }
   } catch (error) {
     await upload.abort()
-    await updateExportFile(fileIds, { status: fileStatuses.enum.failed })
+    await updateExportFile(fileIds, {
+      status: fileStatuses.enum.failed,
+      meta: { totalRecords },
+    })
     throw error
   }
 }

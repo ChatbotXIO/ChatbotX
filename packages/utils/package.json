@@ -29,6 +29,7 @@
     "./country-currency": "./src/country-currency.ts",
     "./coordinates": "./src/coordinates.ts",
     "./crypto": "./src/crypto.ts",
+    "./csv": "./src/csv.ts",
     "./custom-field": "./src/custom-field.ts",
     "./datetime": "./src/datetime.ts",
     "./error-log": "./src/error-log.ts",

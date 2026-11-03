@@ -2,9 +2,9 @@ import { adsConversionService } from "@chatbotx.io/business"
 import { adsConversionChannelSchema } from "@chatbotx.io/database/schema"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { DEFAULT_ADS_CONVERSION_CHANNEL } from "@chatbotx.io/utils/channel"
+import { type CsvCell, toCsvRow, UTF8_BOM } from "@chatbotx.io/utils/csv"
 import { getTranslations } from "next-intl/server"
 import { z } from "zod"
-import { toCsvRow } from "@/features/ads/lib/csv"
 import { parseAnalyticsDateRange } from "@/features/ads/schema/analytics"
 import { resolveGuardedWorkspaceId } from "@/lib/auth/require-workspace-permission"
 
@@ -67,40 +67,49 @@ type CsvExportRow = {
  * intentionally has no channel column — see the GET handler), so this
  * streamer hard-codes neither the columns nor any channel.
  *
+ * Pull-driven: one page is fetched only when the client has read the previous
+ * one, so a slow download never buffers the whole export and a cancelled one
+ * stops querying.
+ *
  * Stops on `fetchPage`'s own `hasMore` flag rather than `rows.length <
  * EXPORT_PAGE_SIZE`: `hasMore` is derived from an over-fetch at the
  * repository layer (`listExportSegmentRows`), which is the only place that
  * knows whether another page exists independent of how many rows this page
  * happened to contain.
+ *
+ * Fields use the minimal (RFC 4180) dialect: the existing consumers of this
+ * export read bare fields, so only the leading BOM (for Excel on Windows) is
+ * new.
  */
 function streamCsvResponse(input: {
   filename: string
   header: string[]
-  toCells: (row: CsvExportRow) => (string | null)[]
+  toCells: (row: CsvExportRow) => CsvCell[]
   fetchPage: (
     afterId: string | undefined,
   ) => Promise<{ rows: CsvExportRow[]; hasMore: boolean }>
 }): Response {
   const encoder = new TextEncoder()
+  let afterId: string | undefined
   const stream = new ReadableStream<Uint8Array>({
-    async start(controller) {
-      controller.enqueue(encoder.encode(toCsvRow(input.header)))
-
-      let afterId: string | undefined
-      for (;;) {
-        const { rows, hasMore } = await input.fetchPage(afterId)
-
-        for (const row of rows) {
-          controller.enqueue(encoder.encode(toCsvRow(input.toCells(row))))
-        }
-
-        afterId = rows.at(-1)?.id
-        if (!(hasMore && afterId)) {
-          break
-        }
+    start(controller) {
+      controller.enqueue(
+        encoder.encode(`${UTF8_BOM}${toCsvRow(input.header, "minimal")}`),
+      )
+    },
+    async pull(controller) {
+      const { rows, hasMore } = await input.fetchPage(afterId)
+      const chunk = rows
+        .map((row) => toCsvRow(input.toCells(row), "minimal"))
+        .join("")
+      if (chunk) {
+        controller.enqueue(encoder.encode(chunk))
       }
 
-      controller.close()
+      afterId = rows.at(-1)?.id
+      if (!(hasMore && afterId)) {
+        controller.close()
+      }
     },
   })
 
@@ -115,8 +124,8 @@ function streamCsvResponse(input: {
 
 // The channel-column cell set (explicit-channel + all-channel modes). The
 // legacy omitted-channel export uses `legacyCells` (no channel column) to
-// stay byte-identical to the pre-multichannel CSV SHAPE (column layout,
-// header, filename pattern) that external consumers already parse. This is
+// keep the pre-multichannel CSV SHAPE (column layout, header, filename
+// pattern) that external consumers already parse. This is
 // a shape guarantee only — it does NOT promise the same ROWS come back for
 // a given URL. A legacy URL that carries a messenger/instagram integration
 // id with no `channel` used to hit a contradictory predicate (whatsapp
@@ -124,7 +133,7 @@ function streamCsvResponse(input: {
 // correctly scopes to that integration and returns real rows, still in the
 // unchanged 4-column legacy shape. See
 // `apps/builder/__tests__/ads-analytics-export-route.test.ts`.
-const channelCells = (row: CsvExportRow): (string | null)[] => [
+const channelCells = (row: CsvExportRow): CsvCell[] => [
   row.contactName,
   row.phoneNumber,
   row.adId,
@@ -132,7 +141,7 @@ const channelCells = (row: CsvExportRow): (string | null)[] => [
   row.channelLabel,
 ]
 
-const legacyCells = (row: CsvExportRow): (string | null)[] => [
+const legacyCells = (row: CsvExportRow): CsvCell[] => [
   row.contactName,
   row.phoneNumber,
   row.adId,
@@ -152,7 +161,7 @@ export async function GET(
   // Checked via the RAW query param (not `adsConversionChannelSchema`,
   // which "all" is never a member of) so a well-formed `channel=all`
   // request is routed here before ever reaching the legacy schema below —
-  // the legacy omitted-`channel` param path stays byte-unchanged.
+  // the legacy omitted-`channel` param path stays unchanged.
   if (rawParams.channel === "all") {
     const parsed = allChannelExportRequestSchema.safeParse(rawParams)
     if (!parsed.success) {
@@ -227,7 +236,7 @@ export async function GET(
   // OUTPUT format is keyed on whether the request carried a `channel` param at
   // all, NOT on the resolved value. An omitted-channel request is a legacy/
   // external consumer that already parses the original 4-column `ctwa-*.csv`;
-  // it must stay byte-identical (no channel column, `ctwa-` filename). Every
+  // it must keep that shape (no channel column, `ctwa-` filename). Every
   // in-app export href sends `channel` explicitly (`buildExportHref`), so the
   // new 5-column `ads-<channel>-*.csv` format only reaches the new UI.
   const isLegacyExport = parsed.data.channel === undefined

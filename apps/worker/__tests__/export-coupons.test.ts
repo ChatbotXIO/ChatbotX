@@ -154,4 +154,45 @@ describe("exportCoupons", () => {
       meta: { totalRecords: 1 },
     })
   })
+
+  test("starts with a UTF-8 BOM and reports the byte size including it", async () => {
+    mocks.listCouponsForExportPage.mockResolvedValueOnce([
+      { ...row("1"), topicName: "Khuyến mãi Tết" },
+    ])
+    mocks.updateExportFile.mockResolvedValue(undefined)
+
+    await exportCoupons(data)
+
+    const bytes = Buffer.from(mocks.chunks.join(""), "utf8")
+    expect([...bytes.subarray(0, 3)]).toEqual([0xef, 0xbb, 0xbf])
+    expect(bytes.indexOf(Buffer.from([0xef, 0xbb, 0xbf]), 3)).toBe(-1)
+    expect(mocks.chunks.join("")).toContain('"Khuyến mãi Tết","CODE-1"')
+    expect(mocks.updateExportFile).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        status: "uploaded",
+        fileSize: String(bytes.length),
+      }),
+    )
+  })
+
+  test("fails instead of hanging when the upload dies while a write waits on backpressure", async () => {
+    // Nothing drains the stream, as when every multipart part upload failed.
+    const stream = new PassThrough({ highWaterMark: 1 })
+    let failUpload: (error: Error) => void = () => undefined
+    const done = new Promise<void>((_, reject) => {
+      failUpload = reject
+    })
+    mocks.createUpload.mockReturnValue({ stream, done })
+    mocks.listCouponsForExportPage.mockResolvedValueOnce([row("1")])
+    mocks.updateExportFile.mockResolvedValue(undefined)
+
+    const exported = exportCoupons(data)
+    await vi.waitFor(() => expect(stream.writableNeedDrain).toBe(true))
+    failUpload(new Error("s3 part upload failed"))
+
+    await expect(exported).rejects.toThrow("s3 part upload failed")
+    expect(mocks.updateExportFile).toHaveBeenLastCalledWith(
+      expect.objectContaining({ status: "failed" }),
+    )
+  })
 })

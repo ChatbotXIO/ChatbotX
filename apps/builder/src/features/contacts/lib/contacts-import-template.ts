@@ -1,3 +1,4 @@
+import { quoteCsvField, UTF8_BOM } from "@chatbotx.io/utils/csv"
 import { resolveLocale } from "@/i18n/config"
 import { messagesByLocale } from "@/i18n/messages"
 
@@ -87,16 +88,10 @@ const TEMPLATE_EXAMPLE_ROW: Record<
   },
 }
 
-// Always quotes and doubles embedded quotes, mirroring the `escapeCsvValue`
-// convention used by the worker's CSV export handlers
-// (apps/worker/src/default/handlers/export-contacts.ts and export-coupons.ts).
-// There is no shared CSV package yet, so this mirrors — rather than imports —
-// that convention for consistency across the codebase.
-const escapeCsvValue = (value: string): string =>
-  `"${value.replace(/"/g, '""')}"`
-
+// Template cells are product-authored, so they are quoted without the
+// formula guard: an example phone like "+84…" must stay importable as-is.
 const buildCsvRow = (values: readonly string[]): string =>
-  values.map(escapeCsvValue).join(",")
+  values.map(quoteCsvField).join(",")
 
 /**
  * Builds the contacts-import CSV template: a localized header row covering
@@ -117,5 +112,5 @@ export const buildContactsImportTemplateCsv = (language: string): string => {
     CONTACTS_IMPORT_TEMPLATE_COLUMNS.map((column) => example[column]),
   )
 
-  return `﻿${headerRow}\n${exampleRow}\n`
+  return `${UTF8_BOM}${headerRow}\n${exampleRow}\n`
 }
