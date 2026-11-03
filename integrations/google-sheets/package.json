@@ -6,8 +6,9 @@
   "dependencies": {
     "@chatbotx.io/logger": "workspace:*",
     "@chatbotx.io/sdk": "workspace:*",
+    "@googleapis/sheets": "^18.1.2",
     "google-auth-library": "^10.6.2",
-    "googleapis": "^171.4.0"
+    "googleapis-common": "^9.3.1"
   },
   "devDependencies": {
     "@chatbotx.io/typescript-config": "workspace:*",
@@ -15,7 +16,7 @@
     "@types/node": "^24.10.4",
     "msw": "^2.7.3",
     "typescript": "^5",
-    "vitest": "^4.1.0"
+    "vitest": "^5.1.0"
   },
   "exports": {
     ".": "./src/index.ts",

@@ -1,4 +1,5 @@
 import { SdkException } from "@chatbotx.io/sdk"
+import type { GaxiosError } from "googleapis-common"
 import { googleSheetsLogger } from "./logger"
 
 export const handleError = (error: unknown) => {
@@ -28,7 +29,7 @@ const _extractGoogleApiError = (error: Error) =>
         .replaceAll(/Invalid requests\[0\].[a-zA-Z]+:/g, "")
     : null
 
-type AggregateGAxiosError = Error & { errors: Error[] }
+type AggregateGAxiosError = GaxiosError & { errors: Error[] }
 
 const _isGaxiosError = (error: Error): error is AggregateGAxiosError =>
   "errors" in error && Array.isArray(error.errors)

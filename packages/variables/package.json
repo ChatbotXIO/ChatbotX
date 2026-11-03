@@ -29,7 +29,7 @@
     "@chatbotx.io/vitest-config": "workspace:*",
     "@types/node": "~24.12.2",
     "typescript": "^5",
-    "vitest": "^4.1.0"
+    "vitest": "^5.1.0"
   },
   "scripts": {
     "check-types": "tsc --noEmit",

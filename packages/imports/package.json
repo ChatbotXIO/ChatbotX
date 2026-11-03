@@ -8,7 +8,7 @@
     "@types/node": "^24.10.4",
     "@types/unzipper": "^0.10.11",
     "typescript": "^5",
-    "vitest": "^3.2.4"
+    "vitest": "^5.1.0"
   },
   "dependencies": {
     "@chatbotx.io/database": "workspace:*",

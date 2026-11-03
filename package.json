@@ -6,13 +6,14 @@
     "dev": "turbo dev",
     "fix": "ultracite fix --unsafe",
     "check-types": "turbo run check-types --concurrency=2",
+    "check-types:cold": "turbo run check-types --concurrency=1",
     "lint": "pnpm check:agent-instructions && pnpm check:invariants && turbo run lint && ultracite check",
     "sync:agent-instructions": "node scripts/sync-agent-instructions.mjs --write",
     "check:agent-instructions": "node scripts/sync-agent-instructions.mjs --check && node scripts/check-skills.mjs",
     "check:invariants": "node scripts/check-invariants.mjs",
-    "test": "turbo run test --concurrency=50%",
+    "test": "turbo run test --concurrency=2",
     "test:watch": "vitest",
-    "test:coverage": "turbo run test --concurrency=50% -- --coverage",
+    "test:coverage": "turbo run test --concurrency=2 -- --coverage",
     "clean": "pnpm store prune && pnpm dlx rimraf --glob '**/{node_modules,.next,.turbo}'",
     "check:circular": "pnpm dlx madge --circular --extensions ts,tsx --exclude generated {apps/**/src,packages/**/src}",
     "check:unused": "knip"
@@ -29,17 +30,17 @@
     "turbo": "^2.11.10",
     "typescript": "^5",
     "ultracite": "7.8.3",
-    "vitest": "^4.1.0",
+    "vitest": "^5.1.0",
     "zod": "^4.3.6"
   },
   "packageManager": "pnpm@10.34.5+sha512.a4ee05f2f73658255bd6a89859c065a45c28a57daefae2c893a168ee2b73168c37b91e83e57ea67654ad03f03031746430e8bce38e362e042605fb8abc80192e",
   "engines": {
-    "node": ">=24"
+    "node": "^24.0.0 || >=26.0.0"
   },
   "overrides": {
     "@types/node": "$@types/node",
     "typescript": "^5",
-    "zod": "^4.3.6",
+    "zod": "4.6.7",
     "@codemirror/state": "6.7.0"
   },
   "workspaces": [
@@ -51,7 +52,7 @@
       "typescript": "^5",
       "@types/node": "24.x",
       "kysely": "0.28.17",
-      "zod": "^4.3.6",
+      "zod": "4.6.7",
       "miniflare>zod": "^3.22.3",
       "google-auth-library": "^10.7.0",
       "@codemirror/state": "6.7.0"

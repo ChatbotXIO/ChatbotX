@@ -10,6 +10,7 @@
     "jsx": "preserve",
     "allowJs": false,
     "noEmit": true,
+    "incremental": true,
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
@@ -17,9 +18,5 @@
     "isolatedModules": true,
     "verbatimModuleSyntax": true,
     "strictNullChecks": true
-  },
-  "include": ["src/**/*.ts"],
-  "paths": {
-    "@chatbotx.io/utils": ["./packages/utils/src/index.ts"]
   }
 }

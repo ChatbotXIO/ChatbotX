@@ -75,14 +75,14 @@ const DEFAULT_MAX_WORKERS = 4
  * experiment without editing this preset — it is declared in the root
  * turbo.json `passThroughEnv` so it survives turbo's strict env mode.
  */
-function resolveWorkerPool(): { maxWorkers?: number; minWorkers?: number } {
+function resolveWorkerPool(): { maxWorkers: number } {
   const override = Number(process.env.VITEST_MAX_WORKERS)
 
   if (Number.isInteger(override) && override > 0) {
-    return { maxWorkers: override, minWorkers: 1 }
+    return { maxWorkers: override }
   }
 
-  return { maxWorkers: DEFAULT_MAX_WORKERS, minWorkers: 1 }
+  return { maxWorkers: DEFAULT_MAX_WORKERS }
 }
 
 /**

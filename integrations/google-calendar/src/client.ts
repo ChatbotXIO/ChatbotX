@@ -1,8 +1,7 @@
 import type { Oauth2AuthValue } from "@chatbotx.io/sdk"
+import { calendar } from "@googleapis/calendar"
 import { OAuth2Client } from "google-auth-library"
-// Import the one API instead of the `googleapis` barrel, which loads every
-// Google API (~60MB heap at runtime, ~165MB of type files for `tsc`).
-import { calendar } from "googleapis/build/src/apis/calendar/index.js"
+
 import type { GoogleCalendarConfig } from "./schemas"
 
 export const GOOGLE_CALENDAR_SCOPES = [
