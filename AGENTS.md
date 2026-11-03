@@ -11,7 +11,7 @@ This file summarizes how **ChatbotX** (this repository) is structured and how to
 
 ## Requirements
 
-- **Node.js** >= 24
+- **Node.js** >= 26
 - **pnpm** 10.x (see root `package.json` `packageManager`)
 
 ## Repository layout
@@ -29,7 +29,7 @@ This file summarizes how **ChatbotX** (this repository) is structured and how to
 
 ## Stack (high level)
 
-- **TypeScript 5**, **React 19**, **Next.js 16** (builder)
+- **TypeScript 7** (native compiler; `@typescript/typescript6` only where the JS compiler API is needed), **React 19**, **Next.js 16** (builder)
 - **Drizzle ORM** + **PostgreSQL** (with **pgvector**)
 - **Redis** + **BullMQ** for queues
 - **S3-compatible** storage (e.g. RustFS locally via Docker)
@@ -42,9 +42,9 @@ pnpm dev              # turbo dev — all dev tasks the repo wires up
 pnpm build            # turbo build
 pnpm lint             # check:agent-instructions → check:invariants → turbo run lint → ultracite check
 pnpm fix              # ultracite fix --unsafe
-pnpm check-types:cold # concurrency=1 — use on a cold run (no tsbuildinfo) or low-RAM machine; builder tsc peaks ~6 GB cold
+pnpm check-types:cold # concurrency=1 — use on a cold run (no tsbuildinfo) or low-RAM machine; builder tsc (TS 7, 4 checkers) peaks ~6.4 GB cold
 pnpm check-types      # turbo run check-types --concurrency=2 — always use this, not bare `pnpm turbo check-types`
-                      # (bare turbo runs 10 tsc in parallel, ~4 GB each for packages importing database/business → swaps/freezes the machine)
+                      # (bare turbo runs 10 tsc in parallel, ~2.5 GB each for packages importing database/business → swaps/freezes the machine)
 pnpm test             # turbo run test --concurrency=2 — 2 suites × 4 vitest threads (VITEST_MAX_WORKERS); 50% ran 6×4 = 24 threads on a 12-core Mac
 pnpm test:coverage    # turbo run test --concurrency=2 -- --coverage
 pnpm sync:agent-instructions   # regenerate the .devin/ + .github/ invariant mirrors

@@ -20,7 +20,7 @@ catalog:
   "@t3-oss/env-core": "^0.13.11"
   "@t3-oss/env-nextjs": "^0.13.11"
   "@types/mime-types": "^3.0.1"
-  "@types/node": "^24.12.2"
+  "@types/node": "^26.6.6"
   "@types/pg": "^8.20.0"
   "@types/react": 19.2.14
   "@types/react-dom": 19.2.3
@@ -49,9 +49,9 @@ catalog:
   react-dom: 19.2.5
   react-hook-form: "^7.74.0"
   remeda: "^2.37.0"
-  tsdown: 0.22.3
+  tsdown: 0.23.4
   tsx: "^4.23.0"
-  typescript: "^5"
+  typescript: "7.0.2"
   universal-error-normalizer: "^1.0.0"
   vitest: "^5.1.0"
   zod: "^4.3.6"

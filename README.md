@@ -131,8 +131,8 @@
 
 ## Tech Stack
 
-- Node.js 24
-- TypeScript 5
+- Node.js 26
+- TypeScript 7
 - pnpm 10 workspaces
 - Turborepo
 - Next.js 16 and React 19 for `apps/builder`

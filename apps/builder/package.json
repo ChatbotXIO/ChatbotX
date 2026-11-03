@@ -163,6 +163,7 @@
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
     "@types/swagger-ui-react": "^5.18.0",
+    "@typescript/typescript6": "6.0.2",
     "babel-plugin-react-compiler": "^1.0.0",
     "dotenv-cli": "catalog:",
     "pg": "catalog:",

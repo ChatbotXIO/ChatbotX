@@ -2,7 +2,7 @@
 
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs"
 import { dirname, join } from "node:path"
-import ts from "typescript"
+import ts from "@typescript/typescript6"
 import { describe, expect, test } from "vitest"
 
 const APP_ROOT = join(import.meta.dirname, "..")
