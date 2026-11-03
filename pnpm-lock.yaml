@@ -4,6 +4,120 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+catalogs:
+  default:
+    '@ai-sdk/openai':
+      specifier: ^4.0.106
+      version: 4.0.106
+    '@aws-sdk/client-s3':
+      specifier: ^3.1039.0
+      version: 3.1063.0
+    '@better-auth/core':
+      specifier: 1.7.14
+      version: 1.7.14
+    '@better-auth/mcp':
+      specifier: 1.7.14
+      version: 1.7.14
+    '@better-auth/oauth-provider':
+      specifier: 1.7.14
+      version: 1.7.14
+    '@t3-oss/env-core':
+      specifier: ^0.13.11
+      version: 0.13.11
+    '@t3-oss/env-nextjs':
+      specifier: ^0.13.11
+      version: 0.13.11
+    '@types/mime-types':
+      specifier: ^3.0.1
+      version: 3.0.1
+    '@types/react':
+      specifier: 19.2.14
+      version: 19.2.14
+    '@types/react-dom':
+      specifier: 19.2.3
+      version: 19.2.3
+    ai:
+      specifier: ^7.0.159
+      version: 7.0.159
+    better-auth:
+      specifier: 1.7.14
+      version: 1.7.14
+    countries-list:
+      specifier: ^3.3.0
+      version: 3.3.0
+    cross-fetch:
+      specifier: ^4.1.0
+      version: 4.1.0
+    date-fns:
+      specifier: ^4.4.0
+      version: 4.4.0
+    date-fns-tz:
+      specifier: ^3.2.0
+      version: 3.2.0
+    dot-prop:
+      specifier: ^10.1.0
+      version: 10.1.0
+    dotenv-cli:
+      specifier: ^11.0.0
+      version: 11.0.0
+    drizzle-kit:
+      specifier: 1.0.0-beta.22
+      version: 1.0.0-beta.22
+    drizzle-orm:
+      specifier: 1.0.0-beta.22
+      version: 1.0.0-beta.22
+    image-size:
+      specifier: ^2.0.3
+      version: 2.0.3
+    ioredis:
+      specifier: 5.10.1
+      version: 5.10.1
+    jose:
+      specifier: ^6.2.3
+      version: 6.2.13
+    ky:
+      specifier: ^2.0.2
+      version: 2.0.2
+    libphonenumber-js:
+      specifier: ^1.12.42
+      version: 1.13.6
+    lucide-react:
+      specifier: ^1.17.0
+      version: 1.17.0
+    mime-types:
+      specifier: ^3.0.2
+      version: 3.0.2
+    msw:
+      specifier: ^2.7.3
+      version: 2.14.6
+    next:
+      specifier: 16.4.3
+      version: 16.4.3
+    react:
+      specifier: 19.2.5
+      version: 19.2.5
+    react-dom:
+      specifier: 19.2.5
+      version: 19.2.5
+    react-hook-form:
+      specifier: ^7.74.0
+      version: 7.77.0
+    remeda:
+      specifier: ^2.37.0
+      version: 2.37.0
+    tsdown:
+      specifier: 0.22.3
+      version: 0.22.3
+    tsx:
+      specifier: ^4.23.0
+      version: 4.23.0
+    universal-error-normalizer:
+      specifier: ^1.0.0
+      version: 1.0.0
+    vitest:
+      specifier: ^5.1.0
+      version: 5.1.0
+
 overrides:
   typescript: ^5
   '@types/node': 24.x
@@ -39,7 +153,7 @@ importers:
         specifier: ^2.1.6
         version: 2.1.9
       tsx:
-        specifier: ^4.23.0
+        specifier: 'catalog:'
         version: 4.23.0
       turbo:
         specifier: ^2.11.10
@@ -51,7 +165,7 @@ importers:
         specifier: 7.8.3
         version: 7.8.3
       vitest:
-        specifier: ^5.1.0
+        specifier: 'catalog:'
         version: 5.1.0(@opentelemetry/api@1.9.1)(@types/node@24.13.1)(@vitest/coverage-v8@5.1.0)(jsdom@25.0.1)(msw@2.14.6(@types/node@24.13.1)(typescript@5.9.3))(vite@7.3.5(@types/node@24.13.1)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.23.0)(yaml@2.9.0))
       zod:
         specifier: 4.6.7
@@ -66,7 +180,7 @@ importers:
         specifier: ^1.6.0
         version: 1.6.0(@date-fns/tz@1.5.0)(@types/react@19.2.14)(date-fns@4.4.0)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
       '@better-auth/oauth-provider':
-        specifier: 1.7.14
+        specifier: 'catalog:'
         version: 1.7.14(@better-auth/core@1.7.14(@better-auth/utils@0.5.1)(@better-fetch/fetch@1.3.3)(@opentelemetry/api@1.9.1)(better-call@1.4.4(zod@4.6.7))(jose@6.2.13)(kysely@0.28.17)(nanostores@1.4.2))(@better-auth/utils@0.5.1)(@better-fetch/fetch@1.3.3)(better-auth@1.7.14(@opentelemetry/api@1.9.1)(drizzle-kit@1.0.0-beta.22)(drizzle-orm@1.0.0-beta.22(@cloudflare/workers-types@4.20240718.0)(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(pg@8.21.0)(valibot@1.5.0(typescript@5.9.3))(zod@4.6.7))(next@16.4.3(@opentelemetry/api@1.9.1)(@types/node@24.13.1)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(pg@8.21.0)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)(vitest@5.1.0))(better-call@1.4.4(zod@4.6.7))
       '@bull-board/api':
         specifier: ^9.10.1
@@ -300,7 +414,7 @@ importers:
         specifier: ^1.15.4
         version: 1.15.4(@opentelemetry/api@1.9.1)(@orpc/contract@1.15.4(@opentelemetry/api@1.9.1))(@orpc/server@1.15.4(@opentelemetry/api@1.9.1)(ws@8.21.0))(ws@8.21.0)(zod@4.6.7)
       '@t3-oss/env-nextjs':
-        specifier: ^0.13.11
+        specifier: 'catalog:'
         version: 0.13.11(typescript@5.9.3)(valibot@1.5.0(typescript@5.9.3))(zod@4.6.7)
       '@tanstack/react-query':
         specifier: ^5.102.8
@@ -339,7 +453,7 @@ importers:
         specifier: ^12.10.2
         version: 12.11.0(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(immer@11.1.15)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
       better-auth:
-        specifier: 1.7.14
+        specifier: 'catalog:'
         version: 1.7.14(@opentelemetry/api@1.9.1)(drizzle-kit@1.0.0-beta.22)(drizzle-orm@1.0.0-beta.22(@cloudflare/workers-types@4.20240718.0)(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(pg@8.21.0)(valibot@1.5.0(typescript@5.9.3))(zod@4.6.7))(next@16.4.3(@opentelemetry/api@1.9.1)(@types/node@24.13.1)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(pg@8.21.0)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)(vitest@5.1.0)
       class-variance-authority:
         specifier: ^0.7.1
@@ -348,19 +462,19 @@ importers:
         specifier: ^3.9.0
         version: 3.9.0
       countries-list:
-        specifier: ^3.3.0
+        specifier: 'catalog:'
         version: 3.3.0
       currency-codes:
         specifier: ^2.2.0
         version: 2.2.0
       date-fns:
-        specifier: ^4.1.0
+        specifier: 'catalog:'
         version: 4.4.0
       date-fns-tz:
-        specifier: ^3.2.0
+        specifier: 'catalog:'
         version: 3.2.0(date-fns@4.4.0)
       dot-prop:
-        specifier: ^10.1.0
+        specifier: 'catalog:'
         version: 10.1.0
       emoji-picker-react:
         specifier: ^4.19.1
@@ -372,22 +486,22 @@ importers:
         specifier: ^9.0.5
         version: 9.0.5
       ky:
-        specifier: ^2.0.2
+        specifier: 'catalog:'
         version: 2.0.2
       libphonenumber-js:
-        specifier: ^1.12.42
+        specifier: 'catalog:'
         version: 1.13.6
       lodash.unset:
         specifier: ^4.18.0
         version: 4.18.0
       lucide-react:
-        specifier: ^1.14.0
+        specifier: 'catalog:'
         version: 1.17.0(react@19.2.5)
       mime-types:
-        specifier: ^3.0.2
+        specifier: 'catalog:'
         version: 3.0.2
       next:
-        specifier: 16.4.3
+        specifier: 'catalog:'
         version: 16.4.3(@opentelemetry/api@1.9.1)(@types/node@24.13.1)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
       next-intl:
         specifier: ^4.14.8
@@ -405,19 +519,19 @@ importers:
         specifier: ^7.1.0
         version: 7.1.0
       react:
-        specifier: 19.2.5
+        specifier: 'catalog:'
         version: 19.2.5
       react-day-picker:
         specifier: 9.14.0
         version: 9.14.0(react@19.2.5)
       react-dom:
-        specifier: 19.2.5
+        specifier: 'catalog:'
         version: 19.2.5(react@19.2.5)
       react-dropzone:
         specifier: ^15.0.0
         version: 15.0.0(react@19.2.5)
       react-hook-form:
-        specifier: ^7.74.0
+        specifier: 'catalog:'
         version: 7.77.0(react@19.2.5)
       react-qr-code:
         specifier: ^2.0.21
@@ -432,7 +546,7 @@ importers:
         specifier: ^3.10.1
         version: 3.10.1(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react-is@16.13.1)(react@19.2.5)(redux@5.0.1)
       remeda:
-        specifier: ^2.34.0
+        specifier: 'catalog:'
         version: 2.37.0
       server-only:
         specifier: ^0.0.1
@@ -447,7 +561,7 @@ importers:
         specifier: ^6.3.7
         version: 6.3.7
       universal-error-normalizer:
-        specifier: ^1.0.0
+        specifier: 'catalog:'
         version: 1.0.0
       use-debounce:
         specifier: ^10.1.1
@@ -463,7 +577,7 @@ importers:
         version: 5.0.14(@types/react@19.2.14)(immer@11.1.15)(react@19.2.5)(use-sync-external-store@1.6.0(react@19.2.5))
     devDependencies:
       '@aws-sdk/client-s3':
-        specifier: ^3.1039.0
+        specifier: 'catalog:'
         version: 3.1063.0
       '@chatbotx.io/typescript-config':
         specifier: workspace:*
@@ -484,16 +598,16 @@ importers:
         specifier: ^4.5.9
         version: 4.5.9
       '@types/mime-types':
-        specifier: ^3.0.1
+        specifier: 'catalog:'
         version: 3.0.1
       '@types/node':
         specifier: 24.x
         version: 24.13.1
       '@types/react':
-        specifier: 19.2.14
+        specifier: 'catalog:'
         version: 19.2.14
       '@types/react-dom':
-        specifier: 19.2.3
+        specifier: 'catalog:'
         version: 19.2.3(@types/react@19.2.14)
       '@types/swagger-ui-react':
         specifier: ^5.18.0
@@ -502,7 +616,7 @@ importers:
         specifier: ^1.0.0
         version: 1.0.0
       dotenv-cli:
-        specifier: ^11.0.0
+        specifier: 'catalog:'
         version: 11.0.0
       pg:
         specifier: ^8.20.0
@@ -523,13 +637,13 @@ importers:
         specifier: ^5
         version: 5.9.3
       vitest:
-        specifier: ^5.1.0
+        specifier: 'catalog:'
         version: 5.1.0(@opentelemetry/api@1.9.1)(@types/node@24.13.1)(@vitest/coverage-v8@5.1.0)(jsdom@25.0.1)(msw@2.14.6(@types/node@24.13.1)(typescript@5.9.3))(vite@7.3.5(@types/node@24.13.1)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.23.0)(yaml@2.9.0))
 
   apps/cli:
     dependencies:
       '@t3-oss/env-core':
-        specifier: ^0.13.11
+        specifier: 'catalog:'
         version: 0.13.11(typescript@5.9.3)(valibot@1.5.0(typescript@5.9.3))(zod@4.6.7)
       yargs:
         specifier: ^18.0.0
@@ -548,16 +662,16 @@ importers:
         specifier: ^17.0.35
         version: 17.0.35
       tsdown:
-        specifier: 0.22.3
+        specifier: 'catalog:'
         version: 0.22.3(oxc-resolver@11.21.3)(tsx@4.23.0)(typescript@5.9.3)(unrun@0.2.39)
       tsx:
-        specifier: ^4.23.0
+        specifier: 'catalog:'
         version: 4.23.0
       typescript:
         specifier: ^5
         version: 5.9.3
       vitest:
-        specifier: ^5.1.0
+        specifier: 'catalog:'
         version: 5.1.0(@opentelemetry/api@1.9.1)(@types/node@24.13.1)(@vitest/coverage-v8@5.1.0)(jsdom@25.0.1)(msw@2.14.6(@types/node@24.13.1)(typescript@5.9.3))(vite@7.3.5(@types/node@24.13.1)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.23.0)(yaml@2.9.0))
 
   apps/javascript-executor:
@@ -569,7 +683,7 @@ importers:
         specifier: workspace:*
         version: link:../../packages/logger
       '@t3-oss/env-core':
-        specifier: ^0.13.11
+        specifier: 'catalog:'
         version: 0.13.11(typescript@5.9.3)(valibot@1.5.0(typescript@5.9.3))(zod@4.6.7)
       dotenv:
         specifier: ^17.4.2
@@ -591,19 +705,19 @@ importers:
         specifier: 24.x
         version: 24.13.1
       dotenv-cli:
-        specifier: ^11.0.0
+        specifier: 'catalog:'
         version: 11.0.0
       tsdown:
-        specifier: 0.22.3
+        specifier: 'catalog:'
         version: 0.22.3(oxc-resolver@11.21.3)(tsx@4.23.0)(typescript@5.9.3)(unrun@0.2.39)
       tsx:
-        specifier: 4.23.0
+        specifier: 'catalog:'
         version: 4.23.0
       typescript:
         specifier: ^5
         version: 5.9.3
       vitest:
-        specifier: ^5.1.0
+        specifier: 'catalog:'
         version: 5.1.0(@opentelemetry/api@1.9.1)(@types/node@24.13.1)(@vitest/coverage-v8@5.1.0)(jsdom@25.0.1)(msw@2.14.6(@types/node@24.13.1)(typescript@5.9.3))(vite@7.3.5(@types/node@24.13.1)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.23.0)(yaml@2.9.0))
 
   apps/mcp-server:
@@ -615,7 +729,7 @@ importers:
         specifier: ^1.32.0
         version: 1.32.0(zod@4.6.7)
       '@t3-oss/env-core':
-        specifier: ^0.13.11
+        specifier: 'catalog:'
         version: 0.13.11(typescript@5.9.3)(valibot@1.5.0(typescript@5.9.3))(zod@4.6.7)
       dotenv:
         specifier: ^17.4.2
@@ -625,7 +739,7 @@ importers:
         version: 4.6.7
     devDependencies:
       '@ai-sdk/openai':
-        specifier: ^4.0.106
+        specifier: 'catalog:'
         version: 4.0.106(zod@4.6.7)
       '@chatbotx.io/flow-config':
         specifier: workspace:*
@@ -640,22 +754,22 @@ importers:
         specifier: 24.x
         version: 24.13.1
       ai:
-        specifier: ^7.0.159
+        specifier: 'catalog:'
         version: 7.0.159(zod@4.6.7)
       dotenv-cli:
-        specifier: ^11.0.0
+        specifier: 'catalog:'
         version: 11.0.0
       tsdown:
-        specifier: 0.22.3
+        specifier: 'catalog:'
         version: 0.22.3(oxc-resolver@11.21.3)(tsx@4.23.0)(typescript@5.9.3)(unrun@0.2.39)
       tsx:
-        specifier: ^4.23.0
+        specifier: 'catalog:'
         version: 4.23.0
       typescript:
         specifier: ^5
         version: 5.9.3
       vitest:
-        specifier: ^5.1.0
+        specifier: 'catalog:'
         version: 5.1.0(@opentelemetry/api@1.9.1)(@types/node@24.13.1)(@vitest/coverage-v8@5.1.0)(jsdom@25.0.1)(msw@2.14.6(@types/node@24.13.1)(typescript@5.9.3))(vite@7.3.5(@types/node@24.13.1)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.23.0)(yaml@2.9.0))
 
   apps/realtime:
@@ -670,13 +784,13 @@ importers:
         specifier: workspace:*
         version: link:../../packages/redis
       '@t3-oss/env-core':
-        specifier: ^0.13.11
+        specifier: 'catalog:'
         version: 0.13.11(typescript@5.9.3)(valibot@1.5.0(typescript@5.9.3))(zod@4.6.7)
       ky:
-        specifier: ^2.0.2
+        specifier: 'catalog:'
         version: 2.0.2
       tsx:
-        specifier: ^4.23.0
+        specifier: 'catalog:'
         version: 4.23.0
       uWebSockets.js:
         specifier: github:uNetworking/uWebSockets.js#v20.70.0
@@ -695,19 +809,19 @@ importers:
         specifier: 24.x
         version: 24.13.1
       dotenv-cli:
-        specifier: ^11.0.0
+        specifier: 'catalog:'
         version: 11.0.0
       jose:
-        specifier: ^6.2.3
-        version: 6.2.8
+        specifier: 'catalog:'
+        version: 6.2.13
       vitest:
-        specifier: ^5.1.0
+        specifier: 'catalog:'
         version: 5.1.0(@opentelemetry/api@1.9.1)(@types/node@24.13.1)(@vitest/coverage-v8@5.1.0)(jsdom@25.0.1)(msw@2.14.6(@types/node@24.13.1)(typescript@5.9.3))(vite@7.3.5(@types/node@24.13.1)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.23.0)(yaml@2.9.0))
 
   apps/worker:
     dependencies:
       '@aws-sdk/client-s3':
-        specifier: ^3.1039.0
+        specifier: 'catalog:'
         version: 3.1063.0
       '@chatbotx.io/ai':
         specifier: workspace:*
@@ -860,22 +974,22 @@ importers:
         specifier: ^0.6.0
         version: 0.6.0
       '@t3-oss/env-core':
-        specifier: ^0.13.11
+        specifier: 'catalog:'
         version: 0.13.11(typescript@5.9.3)(valibot@1.5.0(typescript@5.9.3))(zod@4.6.7)
       ai:
-        specifier: ^7.0.159
+        specifier: 'catalog:'
         version: 7.0.159(zod@4.6.7)
       bullmq:
         specifier: ^5.76.4
         version: 5.78.0
       date-fns:
-        specifier: ^4.1.0
+        specifier: 'catalog:'
         version: 4.4.0
       date-fns-tz:
-        specifier: ^3.2.0
+        specifier: 'catalog:'
         version: 3.2.0(date-fns@4.4.0)
       dot-prop:
-        specifier: ^10.1.0
+        specifier: 'catalog:'
         version: 10.1.0
       expo-server-sdk:
         specifier: ^7.1.0
@@ -884,10 +998,10 @@ importers:
         specifier: ^9.0.5
         version: 9.0.5
       image-size:
-        specifier: ^2.0.3
+        specifier: 'catalog:'
         version: 2.0.3
       ioredis:
-        specifier: 5.10.1
+        specifier: 'catalog:'
         version: 5.10.1
       jsonrepair:
         specifier: ^3.14.1
@@ -896,10 +1010,10 @@ importers:
         specifier: ^3.10.1
         version: 3.10.1
       ky:
-        specifier: ^2.0.2
+        specifier: 'catalog:'
         version: 2.0.2
       libphonenumber-js:
-        specifier: ^1.12.42
+        specifier: 'catalog:'
         version: 1.13.6
       linkedom:
         specifier: ^0.18.12
@@ -911,7 +1025,7 @@ importers:
         specifier: ^1.12.0
         version: 1.12.0
       mime-types:
-        specifier: ^3.0.2
+        specifier: 'catalog:'
         version: 3.0.2
       p-limit:
         specifier: ^7.3.0
@@ -920,7 +1034,7 @@ importers:
         specifier: 2.0.0
         version: 2.0.0
       remeda:
-        specifier: ^2.34.0
+        specifier: 'catalog:'
         version: 2.37.0
       remove-markdown:
         specifier: ^0.6.3
@@ -929,7 +1043,7 @@ importers:
         specifier: 0.35.5
         version: 0.35.5(@types/node@24.13.1)
       universal-error-normalizer:
-        specifier: ^1.0.0
+        specifier: 'catalog:'
         version: 1.0.0
       xlsx:
         specifier: ^0.18.5
@@ -954,25 +1068,25 @@ importers:
         specifier: ^3.4.6
         version: 3.4.6
       '@types/mime-types':
-        specifier: ^3.0.1
+        specifier: 'catalog:'
         version: 3.0.1
       '@types/node':
         specifier: 24.x
         version: 24.13.1
       dotenv-cli:
-        specifier: ^11.0.0
+        specifier: 'catalog:'
         version: 11.0.0
       pino-pretty:
         specifier: ^13.1.3
         version: 13.1.3
       tsdown:
-        specifier: 0.22.3
+        specifier: 'catalog:'
         version: 0.22.3(oxc-resolver@11.21.3)(tsx@4.23.0)(typescript@5.9.3)(unrun@0.2.39)
       tsx:
-        specifier: 4.23.0
+        specifier: 'catalog:'
         version: 4.23.0
       vitest:
-        specifier: ^5.1.0
+        specifier: 'catalog:'
         version: 5.1.0(@opentelemetry/api@1.9.1)(@types/node@24.13.1)(@vitest/coverage-v8@5.1.0)(jsdom@25.0.1)(msw@2.14.6(@types/node@24.13.1)(typescript@5.9.3))(vite@7.3.5(@types/node@24.13.1)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.23.0)(yaml@2.9.0))
 
   integrations/active-campaign:
@@ -984,10 +1098,10 @@ importers:
         specifier: workspace:*
         version: link:../../packages/sdk
       ky:
-        specifier: ^2.0.2
+        specifier: 'catalog:'
         version: 2.0.2
       universal-error-normalizer:
-        specifier: ^1.0.0
+        specifier: 'catalog:'
         version: 1.0.0
       zod:
         specifier: 4.6.7
@@ -1006,7 +1120,7 @@ importers:
         specifier: ^5
         version: 5.9.3
       vitest:
-        specifier: ^5.1.0
+        specifier: 'catalog:'
         version: 5.1.0(@opentelemetry/api@1.9.1)(@types/node@24.13.1)(@vitest/coverage-v8@5.1.0)(jsdom@25.0.1)(msw@2.14.6(@types/node@24.13.1)(typescript@5.9.3))(vite@7.3.5(@types/node@24.13.1)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.23.0)(yaml@2.9.0))
 
   integrations/api:
@@ -1027,7 +1141,7 @@ importers:
         specifier: workspace:*
         version: link:../../packages/utils
       ky:
-        specifier: ^2.0.2
+        specifier: 'catalog:'
         version: 2.0.2
       zod:
         specifier: 4.6.7
@@ -1046,7 +1160,7 @@ importers:
         specifier: ^5
         version: 5.9.3
       vitest:
-        specifier: ^5.1.0
+        specifier: 'catalog:'
         version: 5.1.0(@opentelemetry/api@1.9.1)(@types/node@24.13.1)(@vitest/coverage-v8@5.1.0)(jsdom@25.0.1)(msw@2.14.6(@types/node@24.13.1)(typescript@5.9.3))(vite@7.3.5(@types/node@24.13.1)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.23.0)(yaml@2.9.0))
 
   integrations/chatbotx:
@@ -1055,7 +1169,7 @@ importers:
         specifier: workspace:*
         version: link:../../packages/sdk
       ky:
-        specifier: ^2.0.2
+        specifier: 'catalog:'
         version: 2.0.2
       zod:
         specifier: 4.6.7
@@ -1074,7 +1188,7 @@ importers:
         specifier: ^5
         version: 5.9.3
       vitest:
-        specifier: ^5.1.0
+        specifier: 'catalog:'
         version: 5.1.0(@opentelemetry/api@1.9.1)(@types/node@24.13.1)(@vitest/coverage-v8@5.1.0)(jsdom@25.0.1)(msw@2.14.6(@types/node@24.13.1)(typescript@5.9.3))(vite@7.3.5(@types/node@24.13.1)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.23.0)(yaml@2.9.0))
 
   integrations/drip:
@@ -1086,10 +1200,10 @@ importers:
         specifier: workspace:*
         version: link:../../packages/sdk
       ky:
-        specifier: ^2.0.2
+        specifier: 'catalog:'
         version: 2.0.2
       universal-error-normalizer:
-        specifier: ^1.0.0
+        specifier: 'catalog:'
         version: 1.0.0
       zod:
         specifier: 4.6.7
@@ -1108,7 +1222,7 @@ importers:
         specifier: ^5
         version: 5.9.3
       vitest:
-        specifier: ^5.1.0
+        specifier: 'catalog:'
         version: 5.1.0(@opentelemetry/api@1.9.1)(@types/node@24.13.1)(@vitest/coverage-v8@5.1.0)(jsdom@25.0.1)(msw@2.14.6(@types/node@24.13.1)(typescript@5.9.3))(vite@7.3.5(@types/node@24.13.1)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.23.0)(yaml@2.9.0))
 
   integrations/facebook-ads:
@@ -1123,10 +1237,10 @@ importers:
         specifier: workspace:*
         version: link:../../packages/utils
       ky:
-        specifier: ^2.0.2
+        specifier: 'catalog:'
         version: 2.0.2
       libphonenumber-js:
-        specifier: ^1.12.42
+        specifier: 'catalog:'
         version: 1.13.6
       zod:
         specifier: 4.6.7
@@ -1145,7 +1259,7 @@ importers:
         specifier: ^5
         version: 5.9.3
       vitest:
-        specifier: ^5.1.0
+        specifier: 'catalog:'
         version: 5.1.0(@opentelemetry/api@1.9.1)(@types/node@24.13.1)(@vitest/coverage-v8@5.1.0)(jsdom@25.0.1)(msw@2.14.6(@types/node@24.13.1)(typescript@5.9.3))(vite@7.3.5(@types/node@24.13.1)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.23.0)(yaml@2.9.0))
 
   integrations/get-response:
@@ -1154,10 +1268,10 @@ importers:
         specifier: workspace:*
         version: link:../../packages/sdk
       ky:
-        specifier: ^2.0.2
+        specifier: 'catalog:'
         version: 2.0.2
       universal-error-normalizer:
-        specifier: ^1.0.0
+        specifier: 'catalog:'
         version: 1.0.0
       zod:
         specifier: 4.6.7
@@ -1176,7 +1290,7 @@ importers:
         specifier: ^5
         version: 5.9.3
       vitest:
-        specifier: ^5.1.0
+        specifier: 'catalog:'
         version: 5.1.0(@opentelemetry/api@1.9.1)(@types/node@24.13.1)(@vitest/coverage-v8@5.1.0)(jsdom@25.0.1)(msw@2.14.6(@types/node@24.13.1)(typescript@5.9.3))(vite@7.3.5(@types/node@24.13.1)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.23.0)(yaml@2.9.0))
 
   integrations/google-ads:
@@ -1194,7 +1308,7 @@ importers:
         specifier: ^10.7.0
         version: 10.7.0
       ky:
-        specifier: ^2.0.2
+        specifier: 'catalog:'
         version: 2.0.2
       zod:
         specifier: 4.6.7
@@ -1213,7 +1327,7 @@ importers:
         specifier: ^5
         version: 5.9.3
       vitest:
-        specifier: ^5.1.0
+        specifier: 'catalog:'
         version: 5.1.0(@opentelemetry/api@1.9.1)(@types/node@24.13.1)(@vitest/coverage-v8@5.1.0)(jsdom@25.0.1)(msw@2.14.6(@types/node@24.13.1)(typescript@5.9.3))(vite@7.3.5(@types/node@24.13.1)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.23.0)(yaml@2.9.0))
 
   integrations/google-calendar:
@@ -1234,7 +1348,7 @@ importers:
         specifier: ^9.3.1
         version: 9.3.1
       universal-error-normalizer:
-        specifier: ^1.0.0
+        specifier: 'catalog:'
         version: 1.0.0
       zod:
         specifier: 4.6.7
@@ -1253,7 +1367,7 @@ importers:
         specifier: ^5
         version: 5.9.3
       vitest:
-        specifier: ^5.1.0
+        specifier: 'catalog:'
         version: 5.1.0(@opentelemetry/api@1.9.1)(@types/node@24.13.1)(@vitest/coverage-v8@5.1.0)(jsdom@25.0.1)(msw@2.14.6(@types/node@24.13.1)(typescript@5.9.3))(vite@7.3.5(@types/node@24.13.1)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.23.0)(yaml@2.9.0))
 
   integrations/google-sheets:
@@ -1284,13 +1398,13 @@ importers:
         specifier: 24.x
         version: 24.13.1
       msw:
-        specifier: ^2.7.3
+        specifier: 'catalog:'
         version: 2.14.6(@types/node@24.13.1)(typescript@5.9.3)
       typescript:
         specifier: ^5
         version: 5.9.3
       vitest:
-        specifier: ^5.1.0
+        specifier: 'catalog:'
         version: 5.1.0(@opentelemetry/api@1.9.1)(@types/node@24.13.1)(@vitest/coverage-v8@5.1.0)(jsdom@25.0.1)(msw@2.14.6(@types/node@24.13.1)(typescript@5.9.3))(vite@7.3.5(@types/node@24.13.1)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.23.0)(yaml@2.9.0))
 
   integrations/instagram:
@@ -1311,13 +1425,13 @@ importers:
         specifier: workspace:*
         version: link:../../packages/utils
       cross-fetch:
-        specifier: ^4.1.0
+        specifier: 'catalog:'
         version: 4.1.0
       ky:
-        specifier: ^2.0.2
+        specifier: 'catalog:'
         version: 2.0.2
       remeda:
-        specifier: ^2.34.0
+        specifier: 'catalog:'
         version: 2.37.0
       zod:
         specifier: 4.6.7
@@ -1336,7 +1450,7 @@ importers:
         specifier: ^5
         version: 5.9.3
       vitest:
-        specifier: ^5.1.0
+        specifier: 'catalog:'
         version: 5.1.0(@opentelemetry/api@1.9.1)(@types/node@24.13.1)(@vitest/coverage-v8@5.1.0)(jsdom@25.0.1)(msw@2.14.6(@types/node@24.13.1)(typescript@5.9.3))(vite@7.3.5(@types/node@24.13.1)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.23.0)(yaml@2.9.0))
 
   integrations/instagram-facebook:
@@ -1360,13 +1474,13 @@ importers:
         specifier: workspace:*
         version: link:../../packages/utils
       cross-fetch:
-        specifier: ^4.1.0
+        specifier: 'catalog:'
         version: 4.1.0
       ky:
-        specifier: ^2.0.2
+        specifier: 'catalog:'
         version: 2.0.2
       remeda:
-        specifier: ^2.34.0
+        specifier: 'catalog:'
         version: 2.37.0
       zod:
         specifier: 4.6.7
@@ -1385,7 +1499,7 @@ importers:
         specifier: ^5
         version: 5.9.3
       vitest:
-        specifier: ^5.1.0
+        specifier: 'catalog:'
         version: 5.1.0(@opentelemetry/api@1.9.1)(@types/node@24.13.1)(@vitest/coverage-v8@5.1.0)(jsdom@25.0.1)(msw@2.14.6(@types/node@24.13.1)(typescript@5.9.3))(vite@7.3.5(@types/node@24.13.1)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.23.0)(yaml@2.9.0))
 
   integrations/klaviyo:
@@ -1394,10 +1508,10 @@ importers:
         specifier: workspace:*
         version: link:../../packages/sdk
       ky:
-        specifier: ^2.0.2
+        specifier: 'catalog:'
         version: 2.0.2
       universal-error-normalizer:
-        specifier: ^1.0.0
+        specifier: 'catalog:'
         version: 1.0.0
       zod:
         specifier: 4.6.7
@@ -1416,7 +1530,7 @@ importers:
         specifier: ^5
         version: 5.9.3
       vitest:
-        specifier: ^5.1.0
+        specifier: 'catalog:'
         version: 5.1.0(@opentelemetry/api@1.9.1)(@types/node@24.13.1)(@vitest/coverage-v8@5.1.0)(jsdom@25.0.1)(msw@2.14.6(@types/node@24.13.1)(typescript@5.9.3))(vite@7.3.5(@types/node@24.13.1)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.23.0)(yaml@2.9.0))
 
   integrations/mailchimp:
@@ -1431,10 +1545,10 @@ importers:
         specifier: ^2.2.0
         version: 2.3.0
       ky:
-        specifier: ^2.0.2
+        specifier: 'catalog:'
         version: 2.0.2
       universal-error-normalizer:
-        specifier: ^1.0.0
+        specifier: 'catalog:'
         version: 1.0.0
       zod:
         specifier: 4.6.7
@@ -1453,7 +1567,7 @@ importers:
         specifier: ^5
         version: 5.9.3
       vitest:
-        specifier: ^5.1.0
+        specifier: 'catalog:'
         version: 5.1.0(@opentelemetry/api@1.9.1)(@types/node@24.13.1)(@vitest/coverage-v8@5.1.0)(jsdom@25.0.1)(msw@2.14.6(@types/node@24.13.1)(typescript@5.9.3))(vite@7.3.5(@types/node@24.13.1)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.23.0)(yaml@2.9.0))
 
   integrations/mailer-lite:
@@ -1462,10 +1576,10 @@ importers:
         specifier: workspace:*
         version: link:../../packages/sdk
       ky:
-        specifier: ^2.0.2
+        specifier: 'catalog:'
         version: 2.0.2
       universal-error-normalizer:
-        specifier: ^1.0.0
+        specifier: 'catalog:'
         version: 1.0.0
       zod:
         specifier: 4.6.7
@@ -1484,7 +1598,7 @@ importers:
         specifier: ^5
         version: 5.9.3
       vitest:
-        specifier: ^5.1.0
+        specifier: 'catalog:'
         version: 5.1.0(@opentelemetry/api@1.9.1)(@types/node@24.13.1)(@vitest/coverage-v8@5.1.0)(jsdom@25.0.1)(msw@2.14.6(@types/node@24.13.1)(typescript@5.9.3))(vite@7.3.5(@types/node@24.13.1)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.23.0)(yaml@2.9.0))
 
   integrations/messenger:
@@ -1511,13 +1625,13 @@ importers:
         specifier: 24.x
         version: 24.13.1
       cross-fetch:
-        specifier: ^4.1.0
+        specifier: 'catalog:'
         version: 4.1.0
       ky:
-        specifier: ^2.0.2
+        specifier: 'catalog:'
         version: 2.0.2
       remeda:
-        specifier: ^2.34.0
+        specifier: 'catalog:'
         version: 2.37.0
       zod:
         specifier: 4.6.7
@@ -1530,13 +1644,13 @@ importers:
         specifier: workspace:*
         version: link:../../packages/vitest-config
       msw:
-        specifier: ^2.7.3
+        specifier: 'catalog:'
         version: 2.14.6(@types/node@24.13.1)(typescript@5.9.3)
       typescript:
         specifier: ^5
         version: 5.9.3
       vitest:
-        specifier: ^5.1.0
+        specifier: 'catalog:'
         version: 5.1.0(@opentelemetry/api@1.9.1)(@types/node@24.13.1)(@vitest/coverage-v8@5.1.0)(jsdom@25.0.1)(msw@2.14.6(@types/node@24.13.1)(typescript@5.9.3))(vite@7.3.5(@types/node@24.13.1)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.23.0)(yaml@2.9.0))
 
   integrations/meta-catalog:
@@ -1557,7 +1671,7 @@ importers:
         specifier: workspace:*
         version: link:../../packages/utils
       ky:
-        specifier: ^2.0.2
+        specifier: 'catalog:'
         version: 2.0.2
       zod:
         specifier: 4.6.7
@@ -1576,7 +1690,7 @@ importers:
         specifier: ^5
         version: 5.9.3
       vitest:
-        specifier: ^5.1.0
+        specifier: 'catalog:'
         version: 5.1.0(@opentelemetry/api@1.9.1)(@types/node@24.13.1)(@vitest/coverage-v8@5.1.0)(jsdom@25.0.1)(msw@2.14.6(@types/node@24.13.1)(typescript@5.9.3))(vite@7.3.5(@types/node@24.13.1)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.23.0)(yaml@2.9.0))
 
   integrations/meta-conversions:
@@ -1585,7 +1699,7 @@ importers:
         specifier: workspace:*
         version: link:../../packages/utils
       ky:
-        specifier: ^2.0.2
+        specifier: 'catalog:'
         version: 2.0.2
       zod:
         specifier: 4.6.7
@@ -1604,7 +1718,7 @@ importers:
         specifier: ^5
         version: 5.9.3
       vitest:
-        specifier: ^5.1.0
+        specifier: 'catalog:'
         version: 5.1.0(@opentelemetry/api@1.9.1)(@types/node@24.13.1)(@vitest/coverage-v8@5.1.0)(jsdom@25.0.1)(msw@2.14.6(@types/node@24.13.1)(typescript@5.9.3))(vite@7.3.5(@types/node@24.13.1)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.23.0)(yaml@2.9.0))
 
   integrations/moosend:
@@ -1613,7 +1727,7 @@ importers:
         specifier: workspace:*
         version: link:../../packages/sdk
       ky:
-        specifier: ^2.0.2
+        specifier: 'catalog:'
         version: 2.0.2
       zod:
         specifier: 4.6.7
@@ -1632,19 +1746,19 @@ importers:
         specifier: ^5
         version: 5.9.3
       vitest:
-        specifier: ^5.1.0
+        specifier: 'catalog:'
         version: 5.1.0(@opentelemetry/api@1.9.1)(@types/node@24.13.1)(@vitest/coverage-v8@5.1.0)(jsdom@25.0.1)(msw@2.14.6(@types/node@24.13.1)(typescript@5.9.3))(vite@7.3.5(@types/node@24.13.1)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.23.0)(yaml@2.9.0))
 
   integrations/openai:
     dependencies:
       '@ai-sdk/openai':
-        specifier: ^4.0.106
+        specifier: 'catalog:'
         version: 4.0.106(zod@4.6.7)
       '@chatbotx.io/sdk':
         specifier: workspace:*
         version: link:../../packages/sdk
       ai:
-        specifier: ^7.0.159
+        specifier: 'catalog:'
         version: 7.0.159(zod@4.6.7)
     devDependencies:
       '@chatbotx.io/typescript-config':
@@ -1657,13 +1771,13 @@ importers:
         specifier: 24.x
         version: 24.13.1
       msw:
-        specifier: ^2.7.3
+        specifier: 'catalog:'
         version: 2.14.6(@types/node@24.13.1)(typescript@5.9.3)
       typescript:
         specifier: ^5
         version: 5.9.3
       vitest:
-        specifier: ^5.1.0
+        specifier: 'catalog:'
         version: 5.1.0(@opentelemetry/api@1.9.1)(@types/node@24.13.1)(@vitest/coverage-v8@5.1.0)(jsdom@25.0.1)(msw@2.14.6(@types/node@24.13.1)(typescript@5.9.3))(vite@7.3.5(@types/node@24.13.1)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.23.0)(yaml@2.9.0))
 
   integrations/sendgrid:
@@ -1672,7 +1786,7 @@ importers:
         specifier: workspace:*
         version: link:../../packages/sdk
       ky:
-        specifier: ^2.0.2
+        specifier: 'catalog:'
         version: 2.0.2
       zod:
         specifier: 4.6.7
@@ -1691,7 +1805,7 @@ importers:
         specifier: ^5
         version: 5.9.3
       vitest:
-        specifier: ^5.1.0
+        specifier: 'catalog:'
         version: 5.1.0(@opentelemetry/api@1.9.1)(@types/node@24.13.1)(@vitest/coverage-v8@5.1.0)(jsdom@25.0.1)(msw@2.14.6(@types/node@24.13.1)(typescript@5.9.3))(vite@7.3.5(@types/node@24.13.1)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.23.0)(yaml@2.9.0))
 
   integrations/smtp:
@@ -1719,7 +1833,7 @@ importers:
         specifier: ^5
         version: 5.9.3
       vitest:
-        specifier: ^5.1.0
+        specifier: 'catalog:'
         version: 5.1.0(@opentelemetry/api@1.9.1)(@types/node@24.13.1)(@vitest/coverage-v8@5.1.0)(jsdom@25.0.1)(msw@2.14.6(@types/node@24.13.1)(typescript@5.9.3))(vite@7.3.5(@types/node@24.13.1)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.23.0)(yaml@2.9.0))
 
   integrations/telegram:
@@ -1737,10 +1851,10 @@ importers:
         specifier: workspace:*
         version: link:../../packages/utils
       ky:
-        specifier: ^2.0.2
+        specifier: 'catalog:'
         version: 2.0.2
       remeda:
-        specifier: ^2.34.0
+        specifier: 'catalog:'
         version: 2.37.0
       zod:
         specifier: 4.6.7
@@ -1756,13 +1870,13 @@ importers:
         specifier: 24.x
         version: 24.13.1
       msw:
-        specifier: ^2.7.3
+        specifier: 'catalog:'
         version: 2.14.6(@types/node@24.13.1)(typescript@5.9.3)
       typescript:
         specifier: ^5
         version: 5.9.3
       vitest:
-        specifier: ^5.1.0
+        specifier: 'catalog:'
         version: 5.1.0(@opentelemetry/api@1.9.1)(@types/node@24.13.1)(@vitest/coverage-v8@5.1.0)(jsdom@25.0.1)(msw@2.14.6(@types/node@24.13.1)(typescript@5.9.3))(vite@7.3.5(@types/node@24.13.1)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.23.0)(yaml@2.9.0))
 
   integrations/threads:
@@ -1774,7 +1888,7 @@ importers:
         specifier: workspace:*
         version: link:../../packages/sdk
       ky:
-        specifier: ^2.0.2
+        specifier: 'catalog:'
         version: 2.0.2
       zod:
         specifier: 4.6.7
@@ -1793,7 +1907,7 @@ importers:
         specifier: ^5
         version: 5.9.3
       vitest:
-        specifier: ^5.1.0
+        specifier: 'catalog:'
         version: 5.1.0(@opentelemetry/api@1.9.1)(@types/node@24.13.1)(@vitest/coverage-v8@5.1.0)(jsdom@25.0.1)(msw@2.14.6(@types/node@24.13.1)(typescript@5.9.3))(vite@7.3.5(@types/node@24.13.1)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.23.0)(yaml@2.9.0))
 
   integrations/tiktok:
@@ -1814,10 +1928,10 @@ importers:
         specifier: 24.x
         version: 24.13.1
       ky:
-        specifier: ^2.0.2
+        specifier: 'catalog:'
         version: 2.0.2
       remeda:
-        specifier: ^2.34.0
+        specifier: 'catalog:'
         version: 2.37.0
       zod:
         specifier: 4.6.7
@@ -1830,13 +1944,13 @@ importers:
         specifier: workspace:*
         version: link:../../packages/vitest-config
       msw:
-        specifier: ^2.7.3
+        specifier: 'catalog:'
         version: 2.14.6(@types/node@24.13.1)(typescript@5.9.3)
       typescript:
         specifier: ^5
         version: 5.9.3
       vitest:
-        specifier: ^5.1.0
+        specifier: 'catalog:'
         version: 5.1.0(@opentelemetry/api@1.9.1)(@types/node@24.13.1)(@vitest/coverage-v8@5.1.0)(jsdom@25.0.1)(msw@2.14.6(@types/node@24.13.1)(typescript@5.9.3))(vite@7.3.5(@types/node@24.13.1)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.23.0)(yaml@2.9.0))
 
   integrations/webchat:
@@ -1854,7 +1968,7 @@ importers:
         specifier: workspace:*
         version: link:../../packages/utils
       ky:
-        specifier: ^2.0.2
+        specifier: 'catalog:'
         version: 2.0.2
     devDependencies:
       '@chatbotx.io/typescript-config':
@@ -1870,7 +1984,7 @@ importers:
         specifier: ^5
         version: 5.9.3
       vitest:
-        specifier: ^5.1.0
+        specifier: 'catalog:'
         version: 5.1.0(@opentelemetry/api@1.9.1)(@types/node@24.13.1)(@vitest/coverage-v8@5.1.0)(jsdom@25.0.1)(msw@2.14.6(@types/node@24.13.1)(typescript@5.9.3))(vite@7.3.5(@types/node@24.13.1)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.23.0)(yaml@2.9.0))
 
   integrations/whatsapp:
@@ -1900,16 +2014,16 @@ importers:
         specifier: 24.x
         version: 24.13.1
       cross-fetch:
-        specifier: ^4.1.0
+        specifier: 'catalog:'
         version: 4.1.0
       ky:
-        specifier: ^2.0.2
+        specifier: 'catalog:'
         version: 2.0.2
       libphonenumber-js:
-        specifier: ^1.12.42
+        specifier: 'catalog:'
         version: 1.13.6
       remeda:
-        specifier: ^2.34.0
+        specifier: 'catalog:'
         version: 2.37.0
       whatsapp-api-js:
         specifier: ^6.2.1
@@ -1925,13 +2039,13 @@ importers:
         specifier: workspace:*
         version: link:../../packages/vitest-config
       msw:
-        specifier: ^2.7.3
+        specifier: 'catalog:'
         version: 2.14.6(@types/node@24.13.1)(typescript@5.9.3)
       typescript:
         specifier: ^5
         version: 5.9.3
       vitest:
-        specifier: ^5.1.0
+        specifier: 'catalog:'
         version: 5.1.0(@opentelemetry/api@1.9.1)(@types/node@24.13.1)(@vitest/coverage-v8@5.1.0)(jsdom@25.0.1)(msw@2.14.6(@types/node@24.13.1)(typescript@5.9.3))(vite@7.3.5(@types/node@24.13.1)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.23.0)(yaml@2.9.0))
 
   integrations/zalo:
@@ -1949,16 +2063,16 @@ importers:
         specifier: workspace:*
         version: link:../../packages/utils
       cross-fetch:
-        specifier: ^4.1.0
+        specifier: 'catalog:'
         version: 4.1.0
       image-size:
-        specifier: ^2.0.3
+        specifier: 'catalog:'
         version: 2.0.3
       ky:
-        specifier: ^2.0.2
+        specifier: 'catalog:'
         version: 2.0.2
       remeda:
-        specifier: ^2.34.0
+        specifier: 'catalog:'
         version: 2.37.0
       zod:
         specifier: 4.6.7
@@ -1974,13 +2088,13 @@ importers:
         specifier: 24.x
         version: 24.13.1
       msw:
-        specifier: ^2.7.3
+        specifier: 'catalog:'
         version: 2.14.6(@types/node@24.13.1)(typescript@5.9.3)
       typescript:
         specifier: ^5
         version: 5.9.3
       vitest:
-        specifier: ^5.1.0
+        specifier: 'catalog:'
         version: 5.1.0(@opentelemetry/api@1.9.1)(@types/node@24.13.1)(@vitest/coverage-v8@5.1.0)(jsdom@25.0.1)(msw@2.14.6(@types/node@24.13.1)(typescript@5.9.3))(vite@7.3.5(@types/node@24.13.1)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.23.0)(yaml@2.9.0))
 
   packages/ai:
@@ -1995,7 +2109,7 @@ importers:
         specifier: ^4.0.109
         version: 4.0.109(zod@4.6.7)
       '@ai-sdk/openai':
-        specifier: ^4.0.106
+        specifier: 'catalog:'
         version: 4.0.106(zod@4.6.7)
       '@ai-sdk/openai-compatible':
         specifier: ^3.0.82
@@ -2025,22 +2139,22 @@ importers:
         specifier: ^3.1.0
         version: 3.1.0(ai@7.0.159(zod@4.6.7))(zod@4.6.7)
       '@t3-oss/env-core':
-        specifier: ^0.13.11
+        specifier: 'catalog:'
         version: 0.13.11(typescript@5.9.3)(valibot@1.5.0(typescript@5.9.3))(zod@4.6.7)
       ai:
-        specifier: ^7.0.159
+        specifier: 'catalog:'
         version: 7.0.159(zod@4.6.7)
       eventsource-parser:
         specifier: ^3.1.1
         version: 3.1.1
       ky:
-        specifier: ^2.0.2
+        specifier: 'catalog:'
         version: 2.0.2
       mime-types:
-        specifier: ^3.0.2
+        specifier: 'catalog:'
         version: 3.0.2
       universal-error-normalizer:
-        specifier: ^1.0.0
+        specifier: 'catalog:'
         version: 1.0.0
       zod:
         specifier: 4.6.7
@@ -2053,13 +2167,13 @@ importers:
         specifier: workspace:*
         version: link:../vitest-config
       '@types/mime-types':
-        specifier: ^3.0.1
+        specifier: 'catalog:'
         version: 3.0.1
       typescript:
         specifier: ^5
         version: 5.9.3
       vitest:
-        specifier: ^5.1.0
+        specifier: 'catalog:'
         version: 5.1.0(@opentelemetry/api@1.9.1)(@types/node@24.13.1)(@vitest/coverage-v8@5.1.0)(jsdom@25.0.1)(msw@2.14.6(@types/node@24.13.1)(typescript@5.9.3))(vite@7.3.5(@types/node@24.13.1)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.23.0)(yaml@2.9.0))
 
   packages/analytics:
@@ -2083,13 +2197,13 @@ importers:
         specifier: workspace:*
         version: link:../utils
       date-fns:
-        specifier: ^4.1.0
+        specifier: 'catalog:'
         version: 4.4.0
       date-fns-tz:
-        specifier: ^3.2.0
+        specifier: 'catalog:'
         version: 3.2.0(date-fns@4.4.0)
       ioredis:
-        specifier: 5.10.1
+        specifier: 'catalog:'
         version: 5.10.1
       zod:
         specifier: 4.6.7
@@ -2105,13 +2219,13 @@ importers:
         specifier: 24.x
         version: 24.13.1
       drizzle-orm:
-        specifier: 1.0.0-beta.22
+        specifier: 'catalog:'
         version: 1.0.0-beta.22(@cloudflare/workers-types@4.20240718.0)(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(pg@8.21.0)(valibot@1.5.0(typescript@5.9.3))(zod@4.6.7)
       tsx:
-        specifier: ^4.23.0
+        specifier: 'catalog:'
         version: 4.23.0
       vitest:
-        specifier: ^5.1.0
+        specifier: 'catalog:'
         version: 5.1.0(@opentelemetry/api@1.9.1)(@types/node@24.13.1)(@vitest/coverage-v8@5.1.0)(jsdom@25.0.1)(msw@2.14.6(@types/node@24.13.1)(typescript@5.9.3))(vite@7.3.5(@types/node@24.13.1)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.23.0)(yaml@2.9.0))
 
   packages/analytics-nextjs:
@@ -2141,22 +2255,22 @@ importers:
         specifier: ^1.15.4
         version: 1.15.4(@opentelemetry/api@1.9.1)(ws@8.21.0)
       '@t3-oss/env-nextjs':
-        specifier: ^0.13.11
+        specifier: 'catalog:'
         version: 0.13.11(typescript@5.9.3)(valibot@1.5.0(typescript@5.9.3))(zod@4.6.7)
       date-fns:
-        specifier: ^4.1.0
+        specifier: 'catalog:'
         version: 4.4.0
       lucide-react:
-        specifier: ^1.14.0
+        specifier: 'catalog:'
         version: 1.17.0(react@19.2.5)
       next-intl:
         specifier: ^4.14.8
         version: 4.14.8(@swc/helpers@0.5.23)(@types/react@19.2.14)(next@16.4.3(@opentelemetry/api@1.9.1)(@types/node@24.13.1)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(react@19.2.5)
       react:
-        specifier: 19.2.5
+        specifier: 'catalog:'
         version: 19.2.5
       react-hook-form:
-        specifier: ^7.74.0
+        specifier: 'catalog:'
         version: 7.77.0(react@19.2.5)
       zod:
         specifier: 4.6.7
@@ -2175,31 +2289,31 @@ importers:
         specifier: 24.x
         version: 24.13.1
       '@types/react':
-        specifier: 19.2.14
+        specifier: 'catalog:'
         version: 19.2.14
       '@types/react-dom':
-        specifier: 19.2.3
+        specifier: 'catalog:'
         version: 19.2.3(@types/react@19.2.14)
       react-dom:
-        specifier: 19.2.5
+        specifier: 'catalog:'
         version: 19.2.5(react@19.2.5)
       tsx:
-        specifier: ^4.23.0
+        specifier: 'catalog:'
         version: 4.23.0
       vitest:
-        specifier: ^5.1.0
+        specifier: 'catalog:'
         version: 5.1.0(@opentelemetry/api@1.9.1)(@types/node@24.13.1)(@vitest/coverage-v8@5.1.0)(jsdom@25.0.1)(msw@2.14.6(@types/node@24.13.1)(typescript@5.9.3))(vite@7.3.5(@types/node@24.13.1)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.23.0)(yaml@2.9.0))
 
   packages/auth:
     dependencies:
       '@better-auth/core':
-        specifier: 1.7.14
+        specifier: 'catalog:'
         version: 1.7.14(@better-auth/utils@0.5.1)(@better-fetch/fetch@1.3.3)(@opentelemetry/api@1.9.1)(better-call@1.4.4(zod@4.6.7))(jose@6.2.13)(kysely@0.28.17)(nanostores@1.4.2)
       '@better-auth/mcp':
-        specifier: 1.7.14
+        specifier: 'catalog:'
         version: 1.7.14(@better-auth/core@1.7.14(@better-auth/utils@0.5.1)(@better-fetch/fetch@1.3.3)(@opentelemetry/api@1.9.1)(better-call@1.4.4(zod@4.6.7))(jose@6.2.13)(kysely@0.28.17)(nanostores@1.4.2))(@better-auth/utils@0.5.1)(@better-fetch/fetch@1.3.3)(better-auth@1.7.14(@opentelemetry/api@1.9.1)(drizzle-kit@1.0.0-beta.22)(drizzle-orm@1.0.0-beta.22(@cloudflare/workers-types@4.20240718.0)(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(pg@8.21.0)(valibot@1.5.0(typescript@5.9.3))(zod@4.6.7))(next@16.4.3(@opentelemetry/api@1.9.1)(@types/node@24.13.1)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(pg@8.21.0)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)(vitest@5.1.0))(better-call@1.4.4(zod@4.6.7))
       '@better-auth/oauth-provider':
-        specifier: 1.7.14
+        specifier: 'catalog:'
         version: 1.7.14(@better-auth/core@1.7.14(@better-auth/utils@0.5.1)(@better-fetch/fetch@1.3.3)(@opentelemetry/api@1.9.1)(better-call@1.4.4(zod@4.6.7))(jose@6.2.13)(kysely@0.28.17)(nanostores@1.4.2))(@better-auth/utils@0.5.1)(@better-fetch/fetch@1.3.3)(better-auth@1.7.14(@opentelemetry/api@1.9.1)(drizzle-kit@1.0.0-beta.22)(drizzle-orm@1.0.0-beta.22(@cloudflare/workers-types@4.20240718.0)(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(pg@8.21.0)(valibot@1.5.0(typescript@5.9.3))(zod@4.6.7))(next@16.4.3(@opentelemetry/api@1.9.1)(@types/node@24.13.1)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(pg@8.21.0)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)(vitest@5.1.0))(better-call@1.4.4(zod@4.6.7))
       '@chatbotx.io/business':
         specifier: workspace:*
@@ -2220,10 +2334,10 @@ importers:
         specifier: workspace:*
         version: link:../utils
       '@t3-oss/env-core':
-        specifier: ^0.13.11
+        specifier: 'catalog:'
         version: 0.13.11(typescript@5.9.3)(valibot@1.5.0(typescript@5.9.3))(zod@4.6.7)
       better-auth:
-        specifier: 1.7.14
+        specifier: 'catalog:'
         version: 1.7.14(@opentelemetry/api@1.9.1)(drizzle-kit@1.0.0-beta.22)(drizzle-orm@1.0.0-beta.22(@cloudflare/workers-types@4.20240718.0)(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(pg@8.21.0)(valibot@1.5.0(typescript@5.9.3))(zod@4.6.7))(next@16.4.3(@opentelemetry/api@1.9.1)(@types/node@24.13.1)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(pg@8.21.0)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)(vitest@5.1.0)
       next:
         specifier: '>=16'
@@ -2239,13 +2353,13 @@ importers:
         specifier: workspace:*
         version: link:../vitest-config
       drizzle-orm:
-        specifier: 1.0.0-beta.22
+        specifier: 'catalog:'
         version: 1.0.0-beta.22(@cloudflare/workers-types@4.20240718.0)(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(pg@8.21.0)(valibot@1.5.0(typescript@5.9.3))(zod@4.6.7)
       typescript:
         specifier: ^5
         version: 5.9.3
       vitest:
-        specifier: ^5.1.0
+        specifier: 'catalog:'
         version: 5.1.0(@opentelemetry/api@1.9.1)(@types/node@24.13.1)(@vitest/coverage-v8@5.1.0)(jsdom@25.0.1)(msw@2.14.6(@types/node@24.13.1)(typescript@5.9.3))(vite@7.3.5(@types/node@24.13.1)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.23.0)(yaml@2.9.0))
 
   packages/automated-response:
@@ -2278,10 +2392,10 @@ importers:
         specifier: workspace:*
         version: link:../worker-config
       '@t3-oss/env-core':
-        specifier: ^0.13.11
+        specifier: 'catalog:'
         version: 0.13.11(typescript@5.9.3)(valibot@1.5.0(typescript@5.9.3))(zod@4.6.7)
       universal-error-normalizer:
-        specifier: ^1.0.0
+        specifier: 'catalog:'
         version: 1.0.0
       zod:
         specifier: 4.6.7
@@ -2300,7 +2414,7 @@ importers:
         specifier: ^5
         version: 5.9.3
       vitest:
-        specifier: ^5.1.0
+        specifier: 'catalog:'
         version: 5.1.0(@opentelemetry/api@1.9.1)(@types/node@24.13.1)(@vitest/coverage-v8@5.1.0)(jsdom@25.0.1)(msw@2.14.6(@types/node@24.13.1)(typescript@5.9.3))(vite@7.3.5(@types/node@24.13.1)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.23.0)(yaml@2.9.0))
 
   packages/business:
@@ -2387,46 +2501,46 @@ importers:
         specifier: 2.3.0
         version: 2.3.0
       '@t3-oss/env-core':
-        specifier: ^0.13.11
+        specifier: 'catalog:'
         version: 0.13.11(typescript@5.9.3)(valibot@1.5.0(typescript@5.9.3))(zod@4.6.7)
       better-auth:
-        specifier: 1.7.14
+        specifier: 'catalog:'
         version: 1.7.14(@opentelemetry/api@1.9.1)(drizzle-kit@1.0.0-beta.22)(drizzle-orm@1.0.0-beta.22(@cloudflare/workers-types@4.20240718.0)(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(pg@8.21.0)(valibot@1.5.0(typescript@5.9.3))(zod@4.6.7))(next@16.4.3(@opentelemetry/api@1.9.1)(@types/node@24.13.1)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(pg@8.21.0)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)(vitest@5.1.0)
       date-fns:
-        specifier: ^4.4.0
+        specifier: 'catalog:'
         version: 4.4.0
       date-fns-tz:
-        specifier: ^3.2.0
+        specifier: 'catalog:'
         version: 3.2.0(date-fns@4.4.0)
       dot-prop:
-        specifier: ^10.1.0
+        specifier: 'catalog:'
         version: 10.1.0
       drizzle-orm:
-        specifier: 1.0.0-beta.22
+        specifier: 'catalog:'
         version: 1.0.0-beta.22(@cloudflare/workers-types@4.20240718.0)(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(pg@8.21.0)(valibot@1.5.0(typescript@5.9.3))(zod@4.6.7)
       image-size:
-        specifier: ^2.0.3
+        specifier: 'catalog:'
         version: 2.0.3
       jose:
-        specifier: ^6.2.3
-        version: 6.2.8
+        specifier: 'catalog:'
+        version: 6.2.13
       ky:
-        specifier: ^2.0.2
+        specifier: 'catalog:'
         version: 2.0.2
       libphonenumber-js:
-        specifier: ^1.12.42
+        specifier: 'catalog:'
         version: 1.13.6
       qrcode:
         specifier: ^1.5.4
         version: 1.5.4
       remeda:
-        specifier: ^2.37.0
+        specifier: 'catalog:'
         version: 2.37.0
       undici:
         specifier: ^8.12.2
         version: 8.12.3
       universal-error-normalizer:
-        specifier: ^1.0.0
+        specifier: 'catalog:'
         version: 1.0.0
       zod:
         specifier: 4.6.7
@@ -2445,13 +2559,13 @@ importers:
         specifier: ^1.5.6
         version: 1.5.6
       dotenv-cli:
-        specifier: ^11.0.0
+        specifier: 'catalog:'
         version: 11.0.0
       typescript:
         specifier: ^5
         version: 5.9.3
       vitest:
-        specifier: ^5.1.0
+        specifier: 'catalog:'
         version: 5.1.0(@opentelemetry/api@1.9.1)(@types/node@24.13.1)(@vitest/coverage-v8@5.1.0)(jsdom@25.0.1)(msw@2.14.6(@types/node@24.13.1)(typescript@5.9.3))(vite@7.3.5(@types/node@24.13.1)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.23.0)(yaml@2.9.0))
 
   packages/channel-registry:
@@ -2563,13 +2677,13 @@ importers:
         specifier: 24.x
         version: 24.13.1
       tsdown:
-        specifier: 0.22.3
+        specifier: 'catalog:'
         version: 0.22.3(oxc-resolver@11.21.3)(tsx@4.23.0)(typescript@5.9.3)(unrun@0.2.39)
       typescript:
         specifier: ^5
         version: 5.9.3
       vitest:
-        specifier: ^5.1.0
+        specifier: 'catalog:'
         version: 5.1.0(@opentelemetry/api@1.9.1)(@types/node@24.13.1)(@vitest/coverage-v8@5.1.0)(jsdom@25.0.1)(msw@2.14.6(@types/node@24.13.1)(typescript@5.9.3))(vite@7.3.5(@types/node@24.13.1)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.23.0)(yaml@2.9.0))
 
   packages/connections:
@@ -2681,13 +2795,13 @@ importers:
         specifier: 24.x
         version: 24.13.1
       dotenv-cli:
-        specifier: ^11.0.0
+        specifier: 'catalog:'
         version: 11.0.0
       typescript:
         specifier: ^5
         version: 5.9.3
       vitest:
-        specifier: ^5.1.0
+        specifier: 'catalog:'
         version: 5.1.0(@opentelemetry/api@1.9.1)(@types/node@24.13.1)(@vitest/coverage-v8@5.1.0)(jsdom@25.0.1)(msw@2.14.6(@types/node@24.13.1)(typescript@5.9.3))(vite@7.3.5(@types/node@24.13.1)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.23.0)(yaml@2.9.0))
 
   packages/database:
@@ -2711,19 +2825,19 @@ importers:
         specifier: workspace:*
         version: link:../utils
       '@t3-oss/env-core':
-        specifier: ^0.13.11
+        specifier: 'catalog:'
         version: 0.13.11(typescript@5.9.3)(valibot@1.5.0(typescript@5.9.3))(zod@4.6.7)
       countries-list:
-        specifier: ^3.3.0
+        specifier: 'catalog:'
         version: 3.3.0
       date-fns:
-        specifier: ^4.4.0
+        specifier: 'catalog:'
         version: 4.4.0
       date-fns-tz:
-        specifier: ^3.2.0
+        specifier: 'catalog:'
         version: 3.2.0(date-fns@4.4.0)
       drizzle-orm:
-        specifier: 1.0.0-beta.22
+        specifier: 'catalog:'
         version: 1.0.0-beta.22(@cloudflare/workers-types@4.20240718.0)(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(pg@8.21.0)(valibot@1.5.0(typescript@5.9.3))(zod@4.6.7)
       pg:
         specifier: ^8.20.0
@@ -2748,19 +2862,19 @@ importers:
         specifier: ^8.20.0
         version: 8.20.0
       dotenv-cli:
-        specifier: ^11.0.0
+        specifier: 'catalog:'
         version: 11.0.0
       drizzle-kit:
-        specifier: 1.0.0-beta.22
+        specifier: 'catalog:'
         version: 1.0.0-beta.22
       esbuild:
         specifier: ^0.28.1
         version: 0.28.1
       tsx:
-        specifier: 4.23.0
+        specifier: 'catalog:'
         version: 4.23.0
       vitest:
-        specifier: ^5.1.0
+        specifier: 'catalog:'
         version: 5.1.0(@opentelemetry/api@1.9.1)(@types/node@24.13.1)(@vitest/coverage-v8@5.1.0)(jsdom@25.0.1)(msw@2.14.6(@types/node@24.13.1)(typescript@5.9.3))(vite@7.3.5(@types/node@24.13.1)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.23.0)(yaml@2.9.0))
 
   packages/decision-config:
@@ -2779,13 +2893,13 @@ importers:
         specifier: ^5
         version: 5.9.3
       vitest:
-        specifier: ^5.1.0
+        specifier: 'catalog:'
         version: 5.1.0(@opentelemetry/api@1.9.1)(@types/node@24.13.1)(@vitest/coverage-v8@5.1.0)(jsdom@25.0.1)(msw@2.14.6(@types/node@24.13.1)(typescript@5.9.3))(vite@7.3.5(@types/node@24.13.1)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.23.0)(yaml@2.9.0))
 
   packages/encryption:
     dependencies:
       '@t3-oss/env-core':
-        specifier: ^0.13.11
+        specifier: 'catalog:'
         version: 0.13.11(typescript@5.9.3)(valibot@1.5.0(typescript@5.9.3))(zod@4.6.7)
       zod:
         specifier: 4.6.7
@@ -2804,7 +2918,7 @@ importers:
         specifier: ^5
         version: 5.9.3
       vitest:
-        specifier: ^5.1.0
+        specifier: 'catalog:'
         version: 5.1.0(@opentelemetry/api@1.9.1)(@types/node@24.13.1)(@vitest/coverage-v8@5.1.0)(jsdom@25.0.1)(msw@2.14.6(@types/node@24.13.1)(typescript@5.9.3))(vite@7.3.5(@types/node@24.13.1)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.23.0)(yaml@2.9.0))
 
   packages/event-bus:
@@ -2835,7 +2949,7 @@ importers:
         specifier: 24.x
         version: 24.13.1
       vitest:
-        specifier: ^5.1.0
+        specifier: 'catalog:'
         version: 5.1.0(@opentelemetry/api@1.9.1)(@types/node@24.13.1)(@vitest/coverage-v8@5.1.0)(jsdom@25.0.1)(msw@2.14.6(@types/node@24.13.1)(typescript@5.9.3))(vite@7.3.5(@types/node@24.13.1)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.23.0)(yaml@2.9.0))
 
   packages/events:
@@ -2869,13 +2983,13 @@ importers:
         specifier: ^5
         version: 5.9.3
       vitest:
-        specifier: ^5.1.0
+        specifier: 'catalog:'
         version: 5.1.0(@opentelemetry/api@1.9.1)(@types/node@24.13.1)(@vitest/coverage-v8@5.1.0)(jsdom@25.0.1)(msw@2.14.6(@types/node@24.13.1)(typescript@5.9.3))(vite@7.3.5(@types/node@24.13.1)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.23.0)(yaml@2.9.0))
 
   packages/filesystem:
     dependencies:
       '@aws-sdk/client-s3':
-        specifier: ^3.1039.0
+        specifier: 'catalog:'
         version: 3.1063.0
       '@aws-sdk/lib-storage':
         specifier: ^3.1039.0
@@ -2890,13 +3004,13 @@ importers:
         specifier: workspace:*
         version: link:../utils
       '@t3-oss/env-core':
-        specifier: ^0.13.11
+        specifier: 'catalog:'
         version: 0.13.11(typescript@5.9.3)(valibot@1.5.0(typescript@5.9.3))(zod@4.6.7)
       aws4fetch:
         specifier: ^1.0.20
         version: 1.0.20
       image-size:
-        specifier: ^2.0.3
+        specifier: 'catalog:'
         version: 2.0.3
       probe-image-size:
         specifier: ^7.4.0
@@ -2921,7 +3035,7 @@ importers:
         specifier: ^5
         version: 5.9.3
       vitest:
-        specifier: ^5.1.0
+        specifier: 'catalog:'
         version: 5.1.0(@opentelemetry/api@1.9.1)(@types/node@24.13.1)(@vitest/coverage-v8@5.1.0)(jsdom@25.0.1)(msw@2.14.6(@types/node@24.13.1)(typescript@5.9.3))(vite@7.3.5(@types/node@24.13.1)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.23.0)(yaml@2.9.0))
 
   packages/flow-config:
@@ -2933,10 +3047,10 @@ importers:
         specifier: ^12.10.2
         version: 12.11.0(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(immer@11.1.15)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
       date-fns:
-        specifier: ^4.1.0
+        specifier: 'catalog:'
         version: 4.4.0
       libphonenumber-js:
-        specifier: ^1.12.42
+        specifier: 'catalog:'
         version: 1.13.6
       zod:
         specifier: 4.6.7
@@ -2952,13 +3066,13 @@ importers:
         specifier: 24.x
         version: 24.13.1
       '@types/react':
-        specifier: 19.2.14
+        specifier: 'catalog:'
         version: 19.2.14
       typescript:
         specifier: ^5
         version: 5.9.3
       vitest:
-        specifier: ^5.1.0
+        specifier: 'catalog:'
         version: 5.1.0(@opentelemetry/api@1.9.1)(@types/node@24.13.1)(@vitest/coverage-v8@5.1.0)(jsdom@25.0.1)(msw@2.14.6(@types/node@24.13.1)(typescript@5.9.3))(vite@7.3.5(@types/node@24.13.1)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.23.0)(yaml@2.9.0))
 
   packages/imports:
@@ -2998,7 +3112,7 @@ importers:
         specifier: ^5
         version: 5.9.3
       vitest:
-        specifier: ^5.1.0
+        specifier: 'catalog:'
         version: 5.1.0(@opentelemetry/api@1.9.1)(@types/node@24.13.1)(@vitest/coverage-v8@5.1.0)(jsdom@25.0.1)(msw@2.14.6(@types/node@24.13.1)(typescript@5.9.3))(vite@7.3.5(@types/node@24.13.1)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.23.0)(yaml@2.9.0))
 
   packages/javascript-sandbox:
@@ -3020,7 +3134,7 @@ importers:
         specifier: ^5
         version: 5.9.3
       vitest:
-        specifier: ^5.1.0
+        specifier: 'catalog:'
         version: 5.1.0(@opentelemetry/api@1.9.1)(@types/node@24.13.1)(@vitest/coverage-v8@5.1.0)(jsdom@25.0.1)(msw@2.14.6(@types/node@24.13.1)(typescript@5.9.3))(vite@7.3.5(@types/node@24.13.1)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.23.0)(yaml@2.9.0))
 
   packages/logger:
@@ -3042,13 +3156,13 @@ importers:
         specifier: ^5
         version: 5.9.3
       vitest:
-        specifier: ^5.1.0
+        specifier: 'catalog:'
         version: 5.1.0(@opentelemetry/api@1.9.1)(@types/node@24.13.1)(@vitest/coverage-v8@5.1.0)(jsdom@25.0.1)(msw@2.14.6(@types/node@24.13.1)(typescript@5.9.3))(vite@7.3.5(@types/node@24.13.1)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.23.0)(yaml@2.9.0))
 
   packages/mail:
     dependencies:
       '@t3-oss/env-core':
-        specifier: ^0.13.11
+        specifier: 'catalog:'
         version: 0.13.11(typescript@5.9.3)(valibot@1.5.0(typescript@5.9.3))(zod@4.6.7)
       mjml:
         specifier: ^5.2.0
@@ -3079,7 +3193,7 @@ importers:
         specifier: ^5
         version: 5.9.3
       vitest:
-        specifier: ^5.1.0
+        specifier: 'catalog:'
         version: 5.1.0(@opentelemetry/api@1.9.1)(@types/node@24.13.1)(@vitest/coverage-v8@5.1.0)(jsdom@25.0.1)(msw@2.14.6(@types/node@24.13.1)(typescript@5.9.3))(vite@7.3.5(@types/node@24.13.1)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.23.0)(yaml@2.9.0))
 
   packages/mini-app:
@@ -3101,7 +3215,7 @@ importers:
         specifier: ^5
         version: 5.9.3
       vitest:
-        specifier: ^5.1.0
+        specifier: 'catalog:'
         version: 5.1.0(@opentelemetry/api@1.9.1)(@types/node@24.13.1)(@vitest/coverage-v8@5.1.0)(jsdom@25.0.1)(msw@2.14.6(@types/node@24.13.1)(typescript@5.9.3))(vite@7.3.5(@types/node@24.13.1)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.23.0)(yaml@2.9.0))
 
   packages/minigame-ui:
@@ -3110,17 +3224,17 @@ importers:
         specifier: workspace:*
         version: link:../ui
       lucide-react:
-        specifier: ^1.17.0
+        specifier: 'catalog:'
         version: 1.17.0(react@19.2.5)
       react:
-        specifier: 19.2.5
+        specifier: 'catalog:'
         version: 19.2.5
     devDependencies:
       '@chatbotx.io/typescript-config':
         specifier: workspace:*
         version: link:../typescript-config
       '@types/react':
-        specifier: 19.2.14
+        specifier: 'catalog:'
         version: 19.2.14
       typescript:
         specifier: ^5
@@ -3145,17 +3259,17 @@ importers:
         specifier: ^5
         version: 5.9.3
       vitest:
-        specifier: ^5.1.0
+        specifier: 'catalog:'
         version: 5.1.0(@opentelemetry/api@1.9.1)(@types/node@24.13.1)(@vitest/coverage-v8@5.1.0)(jsdom@25.0.1)(msw@2.14.6(@types/node@24.13.1)(typescript@5.9.3))(vite@7.3.5(@types/node@24.13.1)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.23.0)(yaml@2.9.0))
 
   packages/realtime-protocol:
     dependencies:
       '@t3-oss/env-core':
-        specifier: ^0.13.11
+        specifier: 'catalog:'
         version: 0.13.11(typescript@5.9.3)(valibot@1.5.0(typescript@5.9.3))(zod@4.6.7)
       jose:
-        specifier: ^6.2.3
-        version: 6.2.8
+        specifier: 'catalog:'
+        version: 6.2.13
       zod:
         specifier: 4.6.7
         version: 4.6.7
@@ -3173,7 +3287,7 @@ importers:
         specifier: ^5
         version: 5.9.3
       vitest:
-        specifier: ^5.1.0
+        specifier: 'catalog:'
         version: 5.1.0(@opentelemetry/api@1.9.1)(@types/node@24.13.1)(@vitest/coverage-v8@5.1.0)(jsdom@25.0.1)(msw@2.14.6(@types/node@24.13.1)(typescript@5.9.3))(vite@7.3.5(@types/node@24.13.1)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.23.0)(yaml@2.9.0))
 
   packages/redis:
@@ -3222,7 +3336,7 @@ importers:
         specifier: workspace:*
         version: link:../redis
       ioredis:
-        specifier: 5.10.1
+        specifier: 'catalog:'
         version: 5.10.1
     devDependencies:
       '@chatbotx.io/typescript-config':
@@ -3235,7 +3349,7 @@ importers:
         specifier: ^5
         version: 5.9.3
       vitest:
-        specifier: ^5.1.0
+        specifier: 'catalog:'
         version: 5.1.0(@opentelemetry/api@1.9.1)(@types/node@24.13.1)(@vitest/coverage-v8@5.1.0)(jsdom@25.0.1)(msw@2.14.6(@types/node@24.13.1)(typescript@5.9.3))(vite@7.3.5(@types/node@24.13.1)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.23.0)(yaml@2.9.0))
 
   packages/sdk:
@@ -3269,7 +3383,7 @@ importers:
         specifier: ^5
         version: 5.9.3
       vitest:
-        specifier: ^5.1.0
+        specifier: 'catalog:'
         version: 5.1.0(@opentelemetry/api@1.9.1)(@types/node@24.13.1)(@vitest/coverage-v8@5.1.0)(jsdom@25.0.1)(msw@2.14.6(@types/node@24.13.1)(typescript@5.9.3))(vite@7.3.5(@types/node@24.13.1)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.23.0)(yaml@2.9.0))
 
   packages/sequence-scheduler:
@@ -3287,7 +3401,7 @@ importers:
         specifier: workspace:*
         version: link:../utils
       date-fns:
-        specifier: ^4.1.0
+        specifier: 'catalog:'
         version: 4.4.0
     devDependencies:
       '@chatbotx.io/typescript-config':
@@ -3300,7 +3414,7 @@ importers:
         specifier: ^5
         version: 5.9.3
       vitest:
-        specifier: ^5.1.0
+        specifier: 'catalog:'
         version: 5.1.0(@opentelemetry/api@1.9.1)(@types/node@24.13.1)(@vitest/coverage-v8@5.1.0)(jsdom@25.0.1)(msw@2.14.6(@types/node@24.13.1)(typescript@5.9.3))(vite@7.3.5(@types/node@24.13.1)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.23.0)(yaml@2.9.0))
 
   packages/typescript-config:
@@ -3357,7 +3471,7 @@ importers:
         specifier: ^5.0.3
         version: 5.0.3
       date-fns:
-        specifier: ^4.1.0
+        specifier: 'catalog:'
         version: 4.4.0
       embla-carousel:
         specifier: ^8.6.0
@@ -3375,10 +3489,10 @@ importers:
         specifier: ^1.4.2
         version: 1.4.2(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
       lucide-react:
-        specifier: ^1.14.0
+        specifier: 'catalog:'
         version: 1.17.0(react@19.2.5)
       mime-types:
-        specifier: ^3.0.2
+        specifier: 'catalog:'
         version: 3.0.2
       motion:
         specifier: ^12.38.0
@@ -3390,7 +3504,7 @@ importers:
         specifier: ^2.8.9
         version: 2.8.9(next@16.4.3(@opentelemetry/api@1.9.1)(@types/node@24.13.1)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(react@19.2.5)
       react:
-        specifier: 19.2.5
+        specifier: 'catalog:'
         version: 19.2.5
       react-colorful:
         specifier: ^5.6.1
@@ -3399,13 +3513,13 @@ importers:
         specifier: ^9.14.0
         version: 9.14.0(react@19.2.5)
       react-dom:
-        specifier: 19.2.5
+        specifier: 'catalog:'
         version: 19.2.5(react@19.2.5)
       react-easy-sort:
         specifier: ^1.8.0
         version: 1.8.0(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
       react-hook-form:
-        specifier: ^7.74.0
+        specifier: 'catalog:'
         version: 7.77.0(react@19.2.5)
       react-number-format:
         specifier: ^5.4.5
@@ -3417,7 +3531,7 @@ importers:
         specifier: ^3.10.1
         version: 3.10.1(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react-is@16.13.1)(react@19.2.5)(redux@5.0.1)
       remeda:
-        specifier: ^2.34.0
+        specifier: 'catalog:'
         version: 2.37.0
       sonner:
         specifier: ^2.0.7
@@ -3445,19 +3559,19 @@ importers:
         specifier: ^4.2.1
         version: 4.2.1
       '@types/mime-types':
-        specifier: ^3.0.1
+        specifier: 'catalog:'
         version: 3.0.1
       '@types/node':
         specifier: 24.x
         version: 24.13.1
       '@types/react':
-        specifier: 19.2.14
+        specifier: 'catalog:'
         version: 19.2.14
       '@types/react-dom':
-        specifier: 19.2.3
+        specifier: 'catalog:'
         version: 19.2.3(@types/react@19.2.14)
       next:
-        specifier: 16.4.3
+        specifier: 'catalog:'
         version: 16.4.3(@opentelemetry/api@1.9.1)(@types/node@24.13.1)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
       postcss:
         specifier: ^8.5.28
@@ -3469,7 +3583,7 @@ importers:
         specifier: ^5
         version: 5.9.3
       vitest:
-        specifier: ^5.1.0
+        specifier: 'catalog:'
         version: 5.1.0(@opentelemetry/api@1.9.1)(@types/node@24.13.1)(@vitest/coverage-v8@5.1.0)(jsdom@25.0.1)(msw@2.14.6(@types/node@24.13.1)(typescript@5.9.3))(vite@7.3.5(@types/node@24.13.1)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.23.0)(yaml@2.9.0))
 
   packages/utils:
@@ -3478,16 +3592,16 @@ importers:
         specifier: workspace:*
         version: link:../logger
       '@t3-oss/env-core':
-        specifier: ^0.13.11
+        specifier: 'catalog:'
         version: 0.13.11(typescript@5.9.3)(valibot@1.5.0(typescript@5.9.3))(zod@4.6.7)
       countries-list:
-        specifier: ^3.3.0
+        specifier: 'catalog:'
         version: 3.3.0
       date-fns:
-        specifier: ^4.4.0
+        specifier: 'catalog:'
         version: 4.4.0
       date-fns-tz:
-        specifier: ^3.2.0
+        specifier: 'catalog:'
         version: 3.2.0(date-fns@4.4.0)
       sharp:
         specifier: 0.35.5
@@ -3512,7 +3626,7 @@ importers:
         specifier: ^5
         version: 5.9.3
       vitest:
-        specifier: ^5.1.0
+        specifier: 'catalog:'
         version: 5.1.0(@opentelemetry/api@1.9.1)(@types/node@24.13.1)(@vitest/coverage-v8@5.1.0)(jsdom@25.0.1)(msw@2.14.6(@types/node@24.13.1)(typescript@5.9.3))(vite@7.3.5(@types/node@24.13.1)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.23.0)(yaml@2.9.0))
 
   packages/variables:
@@ -3551,7 +3665,7 @@ importers:
         specifier: workspace:*
         version: link:../utils
       date-fns-tz:
-        specifier: ^3.2.0
+        specifier: 'catalog:'
         version: 3.2.0(date-fns@4.4.0)
       zod:
         specifier: 4.6.7
@@ -3570,7 +3684,7 @@ importers:
         specifier: ^5
         version: 5.9.3
       vitest:
-        specifier: ^5.1.0
+        specifier: 'catalog:'
         version: 5.1.0(@opentelemetry/api@1.9.1)(@types/node@24.13.1)(@vitest/coverage-v8@5.1.0)(jsdom@25.0.1)(msw@2.14.6(@types/node@24.13.1)(typescript@5.9.3))(vite@7.3.5(@types/node@24.13.1)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.23.0)(yaml@2.9.0))
 
   packages/vitest-config:
@@ -3585,13 +3699,13 @@ importers:
         specifier: ^25.0.1
         version: 25.0.1
       msw:
-        specifier: ^2.7.3
+        specifier: 'catalog:'
         version: 2.14.6(@types/node@24.13.1)(typescript@5.9.3)
       vite-tsconfig-paths:
         specifier: ^5.1.4
         version: 5.1.4(typescript@5.9.3)(vite@7.3.5(@types/node@24.13.1)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.23.0)(yaml@2.9.0))
       vitest:
-        specifier: ^5.1.0
+        specifier: 'catalog:'
         version: 5.1.0(@opentelemetry/api@1.9.1)(@types/node@24.13.1)(@vitest/coverage-v8@5.1.0)(jsdom@25.0.1)(msw@2.14.6(@types/node@24.13.1)(typescript@5.9.3))(vite@7.3.5(@types/node@24.13.1)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.23.0)(yaml@2.9.0))
     devDependencies:
       '@chatbotx.io/typescript-config':
@@ -3628,7 +3742,7 @@ importers:
         specifier: workspace:*
         version: link:../utils
       '@t3-oss/env-nextjs':
-        specifier: ^0.13.11
+        specifier: 'catalog:'
         version: 0.13.11(typescript@5.9.3)(valibot@1.5.0(typescript@5.9.3))(zod@4.6.7)
       '@types/node':
         specifier: 24.x
@@ -3637,7 +3751,7 @@ importers:
         specifier: ^5.76.4
         version: 5.78.0
       ioredis:
-        specifier: 5.10.1
+        specifier: 'catalog:'
         version: 5.10.1
       zod:
         specifier: 4.6.7
@@ -3653,7 +3767,7 @@ importers:
         specifier: ^5
         version: 5.9.3
       vitest:
-        specifier: ^5.1.0
+        specifier: 'catalog:'
         version: 5.1.0(@opentelemetry/api@1.9.1)(@types/node@24.13.1)(@vitest/coverage-v8@5.1.0)(jsdom@25.0.1)(msw@2.14.6(@types/node@24.13.1)(typescript@5.9.3))(vite@7.3.5(@types/node@24.13.1)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.23.0)(yaml@2.9.0))
 
 packages:
@@ -8831,9 +8945,6 @@ packages:
   jose@6.2.13:
     resolution: {integrity: sha512-7TIg10ZE1x82YediN+lcrPNvGMKge9yFHQD+Qho/b8y2adfugU3AsvvHfxV0fzyFllT6l9xCjf4RWY9g/Z9PJQ==}
 
-  jose@6.2.8:
-    resolution: {integrity: sha512-Bsdjwm3Qsd/P0jR+BHDe3LytDfY7WBq2HmCCLIwuVRHMuEC9ae7/R474GIUdF1NgCyZjzVo/A9DOiOBtXq8ZoQ==}
-
   joycon@3.1.1:
     resolution: {integrity: sha512-34wB/Y7MW7bzjKRjUKTa46I2Z7eV62Rkhva+KkopW7Qvv/OSWBqvkSY7vusOPrNuZcUG3tApvdVgNB8POj3SPw==}
     engines: {node: '>=10'}
@@ -11535,7 +11646,7 @@ snapshots:
     dependencies:
       '@aws-crypto/util': 5.2.0
       '@aws-sdk/types': 3.973.11
-      tslib: 2.8.1
+      tslib: 2.9.1
 
   '@aws-crypto/sha1-browser@5.2.0':
     dependencies:
@@ -11544,7 +11655,7 @@ snapshots:
       '@aws-sdk/types': 3.973.11
       '@aws-sdk/util-locate-window': 3.965.6
       '@smithy/util-utf8': 2.3.0
-      tslib: 2.8.1
+      tslib: 2.9.1
 
   '@aws-crypto/sha256-browser@5.2.0':
     dependencies:
@@ -11554,17 +11665,17 @@ snapshots:
       '@aws-sdk/types': 3.973.11
       '@aws-sdk/util-locate-window': 3.965.6
       '@smithy/util-utf8': 2.3.0
-      tslib: 2.8.1
+      tslib: 2.9.1
 
   '@aws-crypto/sha256-js@5.2.0':
     dependencies:
       '@aws-crypto/util': 5.2.0
       '@aws-sdk/types': 3.973.11
-      tslib: 2.8.1
+      tslib: 2.9.1
 
   '@aws-crypto/supports-web-crypto@5.2.0':
     dependencies:
-      tslib: 2.8.1
+      tslib: 2.9.1
 
   '@aws-crypto/util@5.2.0':
     dependencies:
@@ -11581,7 +11692,7 @@ snapshots:
       '@aws-sdk/types': 3.973.11
       '@smithy/core': 3.24.6
       '@smithy/types': 4.14.3
-      tslib: 2.8.1
+      tslib: 2.9.1
 
   '@aws-sdk/client-s3@3.1063.0':
     dependencies:
@@ -11598,7 +11709,7 @@ snapshots:
       '@smithy/fetch-http-handler': 5.4.6
       '@smithy/node-http-handler': 4.7.7
       '@smithy/types': 4.14.3
-      tslib: 2.8.1
+      tslib: 2.9.1
 
   '@aws-sdk/core@3.974.18':
     dependencies:
@@ -11609,7 +11720,7 @@ snapshots:
       '@smithy/signature-v4': 5.4.6
       '@smithy/types': 4.14.3
       bowser: 2.14.1
-      tslib: 2.8.1
+      tslib: 2.9.1
 
   '@aws-sdk/credential-provider-env@3.972.44':
     dependencies:
@@ -11617,7 +11728,7 @@ snapshots:
       '@aws-sdk/types': 3.973.11
       '@smithy/core': 3.24.6
       '@smithy/types': 4.14.3
-      tslib: 2.8.1
+      tslib: 2.9.1
 
   '@aws-sdk/credential-provider-http@3.972.46':
     dependencies:
@@ -11627,7 +11738,7 @@ snapshots:
       '@smithy/fetch-http-handler': 5.4.6
       '@smithy/node-http-handler': 4.7.7
       '@smithy/types': 4.14.3
-      tslib: 2.8.1
+      tslib: 2.9.1
 
   '@aws-sdk/credential-provider-ini@3.972.50':
     dependencies:
@@ -11643,7 +11754,7 @@ snapshots:
       '@smithy/core': 3.24.6
       '@smithy/credential-provider-imds': 4.3.8
       '@smithy/types': 4.14.3
-      tslib: 2.8.1
+      tslib: 2.9.1
 
   '@aws-sdk/credential-provider-login@3.972.49':
     dependencies:
@@ -11652,7 +11763,7 @@ snapshots:
       '@aws-sdk/types': 3.973.11
       '@smithy/core': 3.24.6
       '@smithy/types': 4.14.3
-      tslib: 2.8.1
+      tslib: 2.9.1
 
   '@aws-sdk/credential-provider-node@3.972.52':
     dependencies:
@@ -11666,7 +11777,7 @@ snapshots:
       '@smithy/core': 3.24.6
       '@smithy/credential-provider-imds': 4.3.8
       '@smithy/types': 4.14.3
-      tslib: 2.8.1
+      tslib: 2.9.1
 
   '@aws-sdk/credential-provider-process@3.972.44':
     dependencies:
@@ -11674,7 +11785,7 @@ snapshots:
       '@aws-sdk/types': 3.973.11
       '@smithy/core': 3.24.6
       '@smithy/types': 4.14.3
-      tslib: 2.8.1
+      tslib: 2.9.1
 
   '@aws-sdk/credential-provider-sso@3.972.49':
     dependencies:
@@ -11684,7 +11795,7 @@ snapshots:
       '@aws-sdk/types': 3.973.11
       '@smithy/core': 3.24.6
       '@smithy/types': 4.14.3
-      tslib: 2.8.1
+      tslib: 2.9.1
 
   '@aws-sdk/credential-provider-web-identity@3.972.49':
     dependencies:
@@ -11693,7 +11804,7 @@ snapshots:
       '@aws-sdk/types': 3.973.11
       '@smithy/core': 3.24.6
       '@smithy/types': 4.14.3
-      tslib: 2.8.1
+      tslib: 2.9.1
 
   '@aws-sdk/lib-storage@3.1063.0(@aws-sdk/client-s3@3.1063.0)':
     dependencies:
@@ -11708,7 +11819,7 @@ snapshots:
   '@aws-sdk/middleware-flexible-checksums@3.974.27':
     dependencies:
       '@aws-sdk/checksums': 3.1000.2
-      tslib: 2.8.1
+      tslib: 2.9.1
 
   '@aws-sdk/middleware-sdk-s3@3.972.48':
     dependencies:
@@ -11717,7 +11828,7 @@ snapshots:
       '@aws-sdk/types': 3.973.11
       '@smithy/core': 3.24.6
       '@smithy/types': 4.14.3
-      tslib: 2.8.1
+      tslib: 2.9.1
 
   '@aws-sdk/nested-clients@3.997.17':
     dependencies:
@@ -11730,14 +11841,14 @@ snapshots:
       '@smithy/fetch-http-handler': 5.4.6
       '@smithy/node-http-handler': 4.7.7
       '@smithy/types': 4.14.3
-      tslib: 2.8.1
+      tslib: 2.9.1
 
   '@aws-sdk/signature-v4-multi-region@3.996.32':
     dependencies:
       '@aws-sdk/types': 3.973.11
       '@smithy/signature-v4': 5.4.6
       '@smithy/types': 4.14.3
-      tslib: 2.8.1
+      tslib: 2.9.1
 
   '@aws-sdk/token-providers@3.1063.0':
     dependencies:
@@ -11746,7 +11857,7 @@ snapshots:
       '@aws-sdk/types': 3.973.11
       '@smithy/core': 3.24.6
       '@smithy/types': 4.14.3
-      tslib: 2.8.1
+      tslib: 2.9.1
 
   '@aws-sdk/types@3.973.11':
     dependencies:
@@ -11755,13 +11866,13 @@ snapshots:
 
   '@aws-sdk/util-locate-window@3.965.6':
     dependencies:
-      tslib: 2.8.1
+      tslib: 2.9.1
 
   '@aws-sdk/xml-builder@3.972.28':
     dependencies:
       '@smithy/types': 4.14.3
       fast-xml-parser: 5.7.3
-      tslib: 2.8.1
+      tslib: 2.9.1
 
   '@aws/lambda-invoke-store@0.2.4': {}
 
@@ -12310,13 +12421,13 @@ snapshots:
   '@emnapi/core@1.11.0':
     dependencies:
       '@emnapi/wasi-threads': 1.2.2
-      tslib: 2.8.1
+      tslib: 2.9.1
     optional: true
 
   '@emnapi/core@1.11.1':
     dependencies:
       '@emnapi/wasi-threads': 1.2.2
-      tslib: 2.8.1
+      tslib: 2.9.1
     optional: true
 
   '@emnapi/runtime@1.10.0':
@@ -12326,17 +12437,17 @@ snapshots:
 
   '@emnapi/runtime@1.11.0':
     dependencies:
-      tslib: 2.8.1
+      tslib: 2.9.1
     optional: true
 
   '@emnapi/runtime@1.11.1':
     dependencies:
-      tslib: 2.8.1
+      tslib: 2.9.1
     optional: true
 
   '@emnapi/runtime@1.11.3':
     dependencies:
-      tslib: 2.8.1
+      tslib: 2.9.1
     optional: true
 
   '@emnapi/wasi-threads@1.2.1':
@@ -12346,7 +12457,7 @@ snapshots:
 
   '@emnapi/wasi-threads@1.2.2':
     dependencies:
-      tslib: 2.8.1
+      tslib: 2.9.1
     optional: true
 
   '@emotion/is-prop-valid@1.4.0':
@@ -13140,6 +13251,13 @@ snapshots:
       '@tybys/wasm-util': 0.10.4
     optional: true
 
+  '@napi-rs/wasm-runtime@1.2.7(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.1)':
+    dependencies:
+      '@emnapi/core': 1.11.1
+      '@emnapi/runtime': 1.11.1
+      '@tybys/wasm-util': 0.10.4
+    optional: true
+
   '@next-safe-action/adapter-react-hook-form@2.0.6(@hookform/resolvers@5.4.0(react-hook-form@7.77.0(react@19.2.5)))(next-safe-action@8.7.3(next@16.4.3(@opentelemetry/api@1.9.1)(@types/node@24.13.1)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(next@16.4.3(@opentelemetry/api@1.9.1)(@types/node@24.13.1)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(react-dom@19.2.5(react@19.2.5))(react-hook-form@7.77.0(react@19.2.5))(react@19.2.5)':
     dependencies:
       '@hookform/resolvers': 5.4.0(react-hook-form@7.77.0(react@19.2.5))
@@ -13667,7 +13785,7 @@ snapshots:
     dependencies:
       '@emnapi/core': 1.11.1
       '@emnapi/runtime': 1.11.1
-      '@napi-rs/wasm-runtime': 1.2.4(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.1)
+      '@napi-rs/wasm-runtime': 1.2.7(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.1)
     optional: true
 
   '@rolldown/binding-win32-arm64-msvc@1.0.0-rc.17':
@@ -13790,13 +13908,13 @@ snapshots:
     dependencies:
       '@smithy/core': 3.24.6
       '@smithy/types': 4.14.3
-      tslib: 2.8.1
+      tslib: 2.9.1
 
   '@smithy/fetch-http-handler@5.4.6':
     dependencies:
       '@smithy/core': 3.24.6
       '@smithy/types': 4.14.3
-      tslib: 2.8.1
+      tslib: 2.9.1
 
   '@smithy/is-array-buffer@2.2.0':
     dependencies:
@@ -13806,13 +13924,13 @@ snapshots:
     dependencies:
       '@smithy/core': 3.24.6
       '@smithy/types': 4.14.3
-      tslib: 2.8.1
+      tslib: 2.9.1
 
   '@smithy/signature-v4@5.4.6':
     dependencies:
       '@smithy/core': 3.24.6
       '@smithy/types': 4.14.3
-      tslib: 2.8.1
+      tslib: 2.9.1
 
   '@smithy/types@4.14.3':
     dependencies:
@@ -13904,7 +14022,7 @@ snapshots:
 
   '@swc/helpers@0.5.23':
     dependencies:
-      tslib: 2.8.1
+      tslib: 2.9.1
 
   '@swc/types@0.1.28':
     dependencies:
@@ -14228,7 +14346,7 @@ snapshots:
 
   '@tybys/wasm-util@0.10.3':
     dependencies:
-      tslib: 2.8.1
+      tslib: 2.9.1
     optional: true
 
   '@tybys/wasm-util@0.10.4':
@@ -16251,8 +16369,6 @@ snapshots:
   jiti@2.7.0: {}
 
   jose@6.2.13: {}
-
-  jose@6.2.8: {}
 
   joycon@3.1.1: {}
 
@@ -18760,11 +18876,11 @@ snapshots:
       hookable: 6.1.1
       import-without-cache: 0.4.0
       obug: 2.1.3
-      picomatch: 4.0.5
+      picomatch: 4.0.7
       rolldown: 1.1.4
       rolldown-plugin-dts: 0.26.0(oxc-resolver@11.21.3)(rolldown@1.1.4)(typescript@5.9.3)
       semver: 7.8.5
-      tinyexec: 1.2.4
+      tinyexec: 1.3.1
       tinyglobby: 0.2.17
       tree-kill: 1.2.2
       unconfig-core: 7.5.0
@@ -18782,8 +18898,7 @@ snapshots:
 
   tslib@2.8.1: {}
 
-  tslib@2.9.1:
-    optional: true
+  tslib@2.9.1: {}
 
   tsx@4.23.0:
     dependencies:

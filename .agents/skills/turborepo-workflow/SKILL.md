@@ -39,6 +39,7 @@ pnpm turbo run check-types           # every workspace
 ## Package Management
 
 - Use `pnpm add <pkg> --filter <workspace>` to add dependencies to specific workspace
+- Shared versions live in the `catalog:` block of `pnpm-workspace.yaml`; a `package.json` references them as `"<pkg>": "catalog:"`. Bump a shared dependency by editing that one line, never per-workspace. Move a dependency into the catalog once 3+ workspaces use it, or when it must stay in lockstep with one already there (`better-auth` + `@better-auth/*`, `drizzle-orm` + `drizzle-kit`, `react` + `react-dom` + types). `catalogMode: strict` makes `pnpm add` write `catalog:` for catalogued packages.
 - Workspace packages use `@chatbotx.io/*` scope
 - Cross-workspace imports must go through a package's `exports` map: `@chatbotx.io/database/client`, `@chatbotx.io/ui/components/ui/button` (the UI package exports `./components/*`, `./lib/*`, `./hooks/*`, … — there is no bare `@chatbotx.io/ui/button`).
 - Package exports are defined in each `package.json` `exports` field

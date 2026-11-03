@@ -15,18 +15,18 @@
     "@chatbotx.io/logger": "workspace:*",
     "@chatbotx.io/realtime-protocol": "workspace:*",
     "@chatbotx.io/redis": "workspace:*",
-    "@t3-oss/env-core": "^0.13.11",
-    "ky": "^2.0.2",
-    "tsx": "^4.23.0",
+    "@t3-oss/env-core": "catalog:",
+    "ky": "catalog:",
+    "tsx": "catalog:",
     "uWebSockets.js": "github:uNetworking/uWebSockets.js#v20.70.0",
-    "zod": "^4.3.6"
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@chatbotx.io/typescript-config": "workspace:*",
     "@chatbotx.io/vitest-config": "workspace:*",
-    "@types/node": "24.x",
-    "dotenv-cli": "^11.0.0",
-    "jose": "^6.2.3",
-    "vitest": "^5.1.0"
+    "@types/node": "catalog:",
+    "dotenv-cli": "catalog:",
+    "jose": "catalog:",
+    "vitest": "catalog:"
   }
 }

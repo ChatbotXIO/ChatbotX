@@ -7,16 +7,16 @@
     "@chatbotx.io/logger": "workspace:*",
     "@chatbotx.io/sdk": "workspace:*",
     "@googleapis/sheets": "^18.1.2",
-    "google-auth-library": "^10.6.2",
+    "google-auth-library": "catalog:",
     "googleapis-common": "^9.3.1"
   },
   "devDependencies": {
     "@chatbotx.io/typescript-config": "workspace:*",
     "@chatbotx.io/vitest-config": "workspace:*",
-    "@types/node": "^24.10.4",
-    "msw": "^2.7.3",
-    "typescript": "^5",
-    "vitest": "^5.1.0"
+    "@types/node": "catalog:",
+    "msw": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   },
   "exports": {
     ".": "./src/index.ts",

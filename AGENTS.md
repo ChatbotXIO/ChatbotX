@@ -114,7 +114,7 @@ Optional CodeGraph code index for AI editors: setup in `docs/developer/codegraph
 
 ### Dependencies
 
-- Add deps with **`pnpm add <pkg> --filter <workspace>`**. Import internal packages via their **`exports`** (e.g. `@chatbotx.io/database/client`).
+- Add deps with **`pnpm add <pkg> --filter <workspace>`**. Versions shared across workspaces live in the `catalog:` block of `pnpm-workspace.yaml` (reference as `"<pkg>": "catalog:"`); bump them there, not per package. Import internal packages via their **`exports`** (e.g. `@chatbotx.io/database/client`).
 
 ## Project-specific AI guidance
 

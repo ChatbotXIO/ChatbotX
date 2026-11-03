@@ -13,25 +13,25 @@
     "./tenant": "./src/tenant-context.ts"
   },
   "dependencies": {
-    "@better-auth/core": "1.7.14",
-    "@better-auth/mcp": "1.7.14",
-    "@better-auth/oauth-provider": "1.7.14",
+    "@better-auth/core": "catalog:",
+    "@better-auth/mcp": "catalog:",
+    "@better-auth/oauth-provider": "catalog:",
     "@chatbotx.io/business": "workspace:*",
     "@chatbotx.io/database": "workspace:*",
     "@chatbotx.io/logger": "workspace:*",
     "@chatbotx.io/mail": "workspace:*",
     "@chatbotx.io/sdk": "workspace:*",
     "@chatbotx.io/utils": "workspace:*",
-    "@t3-oss/env-core": "^0.13.11",
-    "better-auth": "1.7.14",
-    "zod": "^4.3.6"
+    "@t3-oss/env-core": "catalog:",
+    "better-auth": "catalog:",
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@chatbotx.io/typescript-config": "workspace:*",
     "@chatbotx.io/vitest-config": "workspace:*",
-    "drizzle-orm": "1.0.0-beta.22",
-    "typescript": "^5",
-    "vitest": "^5.1.0"
+    "drizzle-orm": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   },
   "peerDependencies": {
     "next": ">=16"

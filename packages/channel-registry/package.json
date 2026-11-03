@@ -53,9 +53,9 @@
   "devDependencies": {
     "@chatbotx.io/typescript-config": "workspace:*",
     "@chatbotx.io/vitest-config": "workspace:*",
-    "@types/node": "24.x",
-    "tsdown": "0.22.3",
-    "typescript": "^5",
-    "vitest": "^5.1.0"
+    "@types/node": "catalog:",
+    "tsdown": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   }
 }

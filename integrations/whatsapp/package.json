@@ -11,20 +11,20 @@
     "@chatbotx.io/utils": "workspace:*",
     "@chatbotx.io/worker-config": "workspace:*",
     "@edenchazard/tiny-chunk-array": "^1.0.1",
-    "@types/node": "^24.10.4",
-    "cross-fetch": "^4.1.0",
-    "ky": "^2.0.2",
-    "libphonenumber-js": "^1.12.42",
-    "remeda": "^2.34.0",
+    "@types/node": "catalog:",
+    "cross-fetch": "catalog:",
+    "ky": "catalog:",
+    "libphonenumber-js": "catalog:",
+    "remeda": "catalog:",
     "whatsapp-api-js": "^6.2.1",
-    "zod": "^4.3.6"
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@chatbotx.io/typescript-config": "workspace:*",
     "@chatbotx.io/vitest-config": "workspace:*",
-    "msw": "^2.7.3",
-    "typescript": "^5",
-    "vitest": "^5.1.0"
+    "msw": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   },
   "exports": {
     ".": "./src/index.ts",

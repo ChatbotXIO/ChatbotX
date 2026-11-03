@@ -21,15 +21,15 @@
     "@chatbotx.io/redis": "workspace:*",
     "@chatbotx.io/sdk": "workspace:*",
     "@chatbotx.io/utils": "workspace:*",
-    "date-fns-tz": "^3.2.0",
-    "zod": "^4.3.6"
+    "date-fns-tz": "catalog:",
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@chatbotx.io/typescript-config": "workspace:*",
     "@chatbotx.io/vitest-config": "workspace:*",
-    "@types/node": "~24.12.2",
-    "typescript": "^5",
-    "vitest": "^5.1.0"
+    "@types/node": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   },
   "scripts": {
     "check-types": "tsc --noEmit",

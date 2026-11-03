@@ -15,18 +15,18 @@
     "@chatbotx.io/redis": "workspace:*",
     "@chatbotx.io/sdk": "workspace:*",
     "@chatbotx.io/utils": "workspace:*",
-    "date-fns": "^4.1.0",
-    "date-fns-tz": "^3.2.0",
-    "ioredis": "5.10.1",
-    "zod": "^4.3.6"
+    "date-fns": "catalog:",
+    "date-fns-tz": "catalog:",
+    "ioredis": "catalog:",
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@chatbotx.io/typescript-config": "workspace:*",
     "@chatbotx.io/vitest-config": "workspace:*",
-    "@types/node": "^24.10.1",
-    "drizzle-orm": "1.0.0-beta.22",
-    "tsx": "^4.23.0",
-    "vitest": "^5.1.0"
+    "@types/node": "catalog:",
+    "drizzle-orm": "catalog:",
+    "tsx": "catalog:",
+    "vitest": "catalog:"
   },
   "scripts": {
     "check-types": "tsc --noEmit",

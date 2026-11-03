@@ -22,16 +22,16 @@
     "@biomejs/biome": "^2.4.16",
     "@chatbotx.io/vitest-config": "workspace:*",
     "@jridgewell/sourcemap-codec": "^1.5.5",
-    "@types/node": "^24.10.4",
+    "@types/node": "catalog:",
     "dependency-cruiser": "^17.3.10",
     "knip": "^6.25.0",
     "lefthook": "^2.1.6",
-    "tsx": "^4.23.0",
+    "tsx": "catalog:",
     "turbo": "^2.11.10",
-    "typescript": "^5",
+    "typescript": "catalog:",
     "ultracite": "7.8.3",
-    "vitest": "^5.1.0",
-    "zod": "^4.3.6"
+    "vitest": "catalog:",
+    "zod": "catalog:"
   },
   "packageManager": "pnpm@10.34.5+sha512.a4ee05f2f73658255bd6a89859c065a45c28a57daefae2c893a168ee2b73168c37b91e83e57ea67654ad03f03031746430e8bce38e362e042605fb8abc80192e",
   "engines": {

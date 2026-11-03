@@ -8,17 +8,17 @@
     "@chatbotx.io/logger": "workspace:*",
     "@chatbotx.io/sdk": "workspace:*",
     "@chatbotx.io/utils": "workspace:*",
-    "@types/node": "^24.10.4",
-    "ky": "^2.0.2",
-    "remeda": "^2.34.0",
-    "zod": "^4.3.6"
+    "@types/node": "catalog:",
+    "ky": "catalog:",
+    "remeda": "catalog:",
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@chatbotx.io/typescript-config": "workspace:*",
     "@chatbotx.io/vitest-config": "workspace:*",
-    "msw": "^2.7.3",
-    "typescript": "^5",
-    "vitest": "^5.1.0"
+    "msw": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   },
   "exports": {
     ".": "./src/index.ts",

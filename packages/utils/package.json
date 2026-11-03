@@ -5,19 +5,19 @@
   "devDependencies": {
     "@chatbotx.io/typescript-config": "workspace:*",
     "@chatbotx.io/vitest-config": "workspace:*",
-    "@types/node": "^24.10.4",
-    "typescript": "^5",
-    "vitest": "^5.1.0"
+    "@types/node": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   },
   "dependencies": {
     "@chatbotx.io/logger": "workspace:*",
-    "@t3-oss/env-core": "^0.13.11",
-    "countries-list": "^3.3.0",
-    "date-fns": "^4.4.0",
-    "date-fns-tz": "^3.2.0",
+    "@t3-oss/env-core": "catalog:",
+    "countries-list": "catalog:",
+    "date-fns": "catalog:",
+    "date-fns-tz": "catalog:",
     "sharp": "0.35.5",
     "uuniq": "^1.3.20",
-    "zod": "^4.3.6"
+    "zod": "catalog:"
   },
   "exports": {
     ".": "./src/index.ts",

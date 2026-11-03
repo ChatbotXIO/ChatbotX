@@ -5,14 +5,14 @@
   "devDependencies": {
     "@chatbotx.io/typescript-config": "workspace:*",
     "@chatbotx.io/vitest-config": "workspace:*",
-    "@types/node": "^24.10.4",
-    "typescript": "^5",
-    "vitest": "^5.1.0"
+    "@types/node": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   },
   "dependencies": {
-    "@t3-oss/env-core": "^0.13.11",
-    "jose": "^6.2.3",
-    "zod": "^4.3.6"
+    "@t3-oss/env-core": "catalog:",
+    "jose": "catalog:",
+    "zod": "catalog:"
   },
   "exports": {
     ".": "./src/index.ts",

@@ -5,17 +5,17 @@
   "devDependencies": {
     "@chatbotx.io/typescript-config": "workspace:*",
     "@chatbotx.io/vitest-config": "workspace:*",
-    "@types/node": "24.x",
-    "@types/react": "19.2.14",
-    "typescript": "^5",
-    "vitest": "^5.1.0"
+    "@types/node": "catalog:",
+    "@types/react": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   },
   "dependencies": {
     "@chatbotx.io/utils": "workspace:*",
     "@xyflow/react": "^12.10.2",
-    "date-fns": "^4.1.0",
-    "libphonenumber-js": "^1.12.42",
-    "zod": "^4.3.6"
+    "date-fns": "catalog:",
+    "libphonenumber-js": "catalog:",
+    "zod": "catalog:"
   },
   "exports": {
     ".": "./src/index.ts",

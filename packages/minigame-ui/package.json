@@ -8,13 +8,13 @@
   },
   "dependencies": {
     "@chatbotx.io/ui": "workspace:*",
-    "lucide-react": "^1.17.0",
-    "react": "19.2.5"
+    "lucide-react": "catalog:",
+    "react": "catalog:"
   },
   "devDependencies": {
     "@chatbotx.io/typescript-config": "workspace:*",
-    "@types/react": "19.2.14",
-    "typescript": "^5"
+    "@types/react": "catalog:",
+    "typescript": "catalog:"
   },
   "scripts": {
     "check-types": "tsc --noEmit"

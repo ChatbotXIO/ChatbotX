@@ -12,13 +12,13 @@
     "@chatbotx.io/sdk": "workspace:*",
     "@chatbotx.io/worker-config": "workspace:*",
     "lru-cache": "^11.3.5",
-    "zod": "^4.3.6"
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@chatbotx.io/typescript-config": "workspace:*",
     "@chatbotx.io/vitest-config": "workspace:*",
-    "typescript": "^5",
-    "vitest": "^5.1.0"
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   },
   "scripts": {
     "check-types": "tsc --noEmit",

@@ -43,6 +43,9 @@
   },
   "linter": {
     "enabled": true,
+    "domains": {
+      "test": "recommended"
+    },
     "rules": {
       "recommended": true,
       "correctness": {
@@ -127,6 +130,19 @@
           }
         }
       }
+    },
+    {
+      "includes": [
+        "apps/builder/**",
+        "packages/ui/**",
+        "packages/analytics-nextjs/**",
+        "packages/minigame-ui/**"
+      ],
+      "linter": { "domains": { "react": "recommended" } }
+    },
+    {
+      "includes": ["apps/builder/**", "packages/auth/**", "packages/ui/**"],
+      "linter": { "domains": { "next": "recommended" } }
     }
   ],
   "extends": ["ultracite/biome/core", "ultracite/biome/next"]

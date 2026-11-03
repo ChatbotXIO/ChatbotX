@@ -4,17 +4,17 @@
   "private": true,
   "type": "module",
   "dependencies": {
-    "@ai-sdk/openai": "^4.0.106",
+    "@ai-sdk/openai": "catalog:",
     "@chatbotx.io/sdk": "workspace:*",
-    "ai": "^7.0.159"
+    "ai": "catalog:"
   },
   "devDependencies": {
     "@chatbotx.io/typescript-config": "workspace:*",
     "@chatbotx.io/vitest-config": "workspace:*",
-    "@types/node": "^24.10.4",
-    "msw": "^2.7.3",
-    "typescript": "^5",
-    "vitest": "^5.1.0"
+    "@types/node": "catalog:",
+    "msw": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   },
   "exports": {
     ".": "./src/index.ts",
