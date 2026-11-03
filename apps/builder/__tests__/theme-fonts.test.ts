@@ -3,18 +3,30 @@ import { readFileSync } from "node:fs"
 import { join } from "node:path"
 import { describe, expect, test } from "vitest"
 
-const APP_DIRECTORY = join(import.meta.dirname, "../src/app")
 const DEFAULT_CSS = join(
   import.meta.dirname,
   "../../../packages/ui/src/styles/default.css",
 )
-const LAYOUT = join(APP_DIRECTORY, "layout.tsx")
-const FONTS = join(APP_DIRECTORY, "fonts.ts")
+const LAYOUT = join(import.meta.dirname, "../src/app/layout.tsx")
 const FONT_TOKEN_DECLARATION = /^\s*(--font-[\w-]+):\s*([^;]+);/gm
-const FONT_VARIABLE = /var\((--font-[\w-]+)/g
-const DECLARED_FONT_VARIABLE = /variable:\s*["'](--font-[\w-]+)["']/g
-const ROOT_FONT_VARIABLES = /<html\s+className=\{fontSans\.variable\}/
-const GENERIC_SYSTEM_FAMILIES: Record<string, true> = {
+const NEXT_FONT_IMPORT = /from\s+["']next\/font/
+const CSS_VARIABLE_REFERENCE = /var\(/
+const BODY_ANTIALIASED = /body\s*\{[^}]*@apply[^;]*\bantialiased\b/
+
+// The UI ships no web font: every script (Latin, Vietnamese, CJK, Arabic,
+// Hebrew, …) renders with the OS's native UI font, so only system families
+// may appear in a font token.
+const SYSTEM_FONT_FAMILIES: Record<string, true> = {
+  "-apple-system": true,
+  BlinkMacSystemFont: true,
+  "Segoe UI": true,
+  Roboto: true,
+  "Helvetica Neue": true,
+  "Noto Sans": true,
+  Arial: true,
+  "Apple Color Emoji": true,
+  "Segoe UI Emoji": true,
+  "Noto Color Emoji": true,
   "ui-sans-serif": true,
   "ui-monospace": true,
   "ui-serif": true,
@@ -32,57 +44,46 @@ const GENERIC_SYSTEM_FAMILIES: Record<string, true> = {
 }
 
 const readFontTokens = (): ReadonlyArray<readonly [string, string]> => {
-  const tokens: Array<readonly [string, string]> = []
   const stylesheet = readFileSync(DEFAULT_CSS, "utf8")
 
-  for (const match of stylesheet.matchAll(FONT_TOKEN_DECLARATION)) {
-    const token = match[1]
-    const fontStack = match[2]
-
-    if (token && fontStack) {
-      tokens.push([token, fontStack])
-    }
-  }
-
-  return tokens
+  return Array.from(stylesheet.matchAll(FONT_TOKEN_DECLARATION))
+    .map((match) => [match[1], match[2]] as const)
+    .filter((token): token is readonly [string, string] =>
+      Boolean(token[0] && token[1]),
+    )
 }
 
-const fontFamiliesOutsideVariables = (fontStack: string): string[] =>
+const fontFamilies = (fontStack: string): string[] =>
   fontStack
-    .replaceAll(/var\([^)]*\),?\s*/g, "")
     .split(",")
     .map((fontFamily) => fontFamily.trim().replace(/^['"]|['"]$/g, ""))
     .filter(Boolean)
 
 describe("theme fonts", () => {
-  test("backs custom font tokens with declared variables and system fallbacks", () => {
-    const fontsSource = readFileSync(FONTS, "utf8")
-    const declaredVariables = Array.from(
-      fontsSource.matchAll(DECLARED_FONT_VARIABLE),
-      (match) => match[1],
-    ).filter((variable): variable is string => Boolean(variable))
+  test("font tokens use only system font families", () => {
+    const tokens = readFontTokens()
 
-    for (const [, fontStack] of readFontTokens()) {
-      const referencedVariables = Array.from(
-        fontStack.matchAll(FONT_VARIABLE),
-        (match) => match[1],
-      ).filter((variable): variable is string => Boolean(variable))
-      const fallbackFamilies = fontFamiliesOutsideVariables(fontStack)
+    expect(tokens.map(([token]) => token)).toContain("--font-sans")
 
-      expect(declaredVariables).toEqual(
-        expect.arrayContaining(referencedVariables),
-      )
-      expect(fallbackFamilies.length).toBeGreaterThan(0)
+    for (const [, fontStack] of tokens) {
+      expect(fontStack).not.toMatch(CSS_VARIABLE_REFERENCE)
 
-      for (const fallbackFamily of fallbackFamilies) {
-        expect(GENERIC_SYSTEM_FAMILIES[fallbackFamily]).toBe(true)
+      for (const fontFamily of fontFamilies(fontStack)) {
+        expect(SYSTEM_FONT_FAMILIES[fontFamily]).toBe(true)
       }
     }
   })
 
-  test("applies the sans font variable at the document root", () => {
+  // Without grayscale smoothing macOS renders the system font heavy and blurry.
+  test("the body uses grayscale font smoothing", () => {
+    const stylesheet = readFileSync(DEFAULT_CSS, "utf8")
+
+    expect(stylesheet).toMatch(BODY_ANTIALIASED)
+  })
+
+  test("the root layout loads no web font", () => {
     const layoutSource = readFileSync(LAYOUT, "utf8")
 
-    expect(layoutSource).toMatch(ROOT_FONT_VARIABLES)
+    expect(layoutSource).not.toMatch(NEXT_FONT_IMPORT)
   })
 })
