@@ -128,7 +128,7 @@ export function DateTimePickerForm({ token, mode }: DateTimePickerFormProps) {
 }
 
 /**
- * The picker always renders light, like the Chatrace page it mirrors — the
+ * The picker always renders light, like the reference page it mirrors — the
  * contact opening the webview has no relationship to the workspace's builder
  * theme, and the builder app shares this origin, so its dark preference
  * would otherwise leak in. Redeclaring the surface tokens locally keeps

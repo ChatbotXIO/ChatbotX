@@ -62,7 +62,7 @@ describe("operation registry", () => {
     ["number", ["O01", "O04", "O05", "O06", "O07"]],
     ["date", ["O01", "O06", "O08", "O09", "O10", "O11", "O12"]],
     ["datetime", ["O01", "O06", "O08", "O09", "O10", "O11", "O12"]],
-  ] as const)("%s offers its Chatrace operations", (type, expected) => {
+  ] as const)("%s offers its supported operations", (type, expected) => {
     expect(fieldOperationsForType(type)).toEqual(expected)
   })
 })

@@ -765,7 +765,7 @@ describe("getSystemFieldValue", () => {
         systemFieldTypes.enum.last_story_id,
       ),
     ).resolves.toBeNull()
-    // Chatrace's spelling of last_btn_title, kept so imported flows resolve.
+    // Legacy spelling of last_btn_title, kept so imported flows resolve.
     await expect(
       getSystemFieldValue(
         createContext({ contactInbox: trackingInbox }),
@@ -1670,7 +1670,7 @@ describe("getSystemFieldValue — contact profile columns", () => {
       [systemFieldTypes.enum.user_country, "VN"],
       [systemFieldTypes.enum.user_state, "Ho Chi Minh"],
       [systemFieldTypes.enum.user_city, "Thu Duc"],
-      // timezone follows the ChatRace signed-offset shape; timezone_name maps to IANA.
+      // timezone follows the signed-offset shape; timezone_name maps to IANA.
       [systemFieldTypes.enum.timezone, "+7"],
     ]
 
@@ -1826,7 +1826,7 @@ describe("getSystemFieldValue — workspace and account fields", () => {
     })
   })
 
-  // Chatrace's spelling of {{api_key}} ("Account API Key"); same value.
+  // Legacy spelling of {{api_key}} ("Account API Key"); same value.
   test("page_api_key resolves the same default token as api_key", async () => {
     mockResolveDefaultTokenPlaintext.mockResolvedValue("cbx_ws_plaintext")
 
@@ -2113,7 +2113,7 @@ describe("getSystemFieldValue — questionnaire fields", () => {
     ).resolves.toBe("0")
   })
 
-  // Observed in Chatrace: a contact who never filled a questionnaire renders 0.
+  // A contact who never filled a questionnaire renders 0.
   test("last_points resolves 0 when the contact has no completed scored submission", async () => {
     mockQuestionnaireFindLatestCompleted.mockResolvedValue(undefined)
 
@@ -2124,8 +2124,8 @@ describe("getSystemFieldValue — questionnaire fields", () => {
 })
 
 describe("getSystemFieldValue — empty", () => {
-  // `{{empty}}` is how a flow clears a field or leaves a template slot blank;
-  // Chatrace renders it as an empty string.
+  // `{{empty}}` is how a flow clears a field or leaves a template slot blank,
+  // so it renders as an empty string.
   test("empty resolves to an empty string", async () => {
     await expect(
       getSystemFieldValue(createContext(), systemFieldTypes.enum.empty),

@@ -52,7 +52,7 @@ export function AddAction({
   allowedTypes?: readonly TriggerAction[]
 }) {
   const t = useTranslations()
-  // Same order as Chatrace's action picker; the actions only ChatbotX has come last.
+  // Reference action-picker order; the actions only ChatbotX has come last.
   const options = useMemo(
     () => [
       {

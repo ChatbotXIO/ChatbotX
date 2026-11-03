@@ -356,7 +356,7 @@ const getLastQuestionnairePoints = async (
     })
 
   // A contact who never completed a scored questionnaire has 0 points (the
-  // value Chatrace renders), not an empty substitution.
+  // value imported flows expect), not an empty substitution.
   return String(submission?.totalPoints ?? 0)
 }
 
@@ -598,8 +598,8 @@ export const getSystemFieldValue = async (
     // Always an empty string, for a template slot that must stay blank.
     case systemFieldTypes.enum.empty:
       return ""
-    // `last_btt_title` is Chatrace's spelling of `last_btn_title`; the alias
-    // lets flows imported from Chatrace resolve it.
+    // `last_btt_title` is a legacy spelling of `last_btn_title`; the alias
+    // lets imported flows resolve it.
     case systemFieldTypes.enum.last_btn_title:
     case systemFieldTypes.enum.last_btt_title:
       return contactInbox?.lastBtnTitle ?? null
@@ -620,7 +620,7 @@ export const getSystemFieldValue = async (
     // that predates this model gets its default token lazily minted (or its
     // legacy plaintext migrated forward from the deprecated
     // Workspace.token) on first resolve.
-    // `page_api_key` is Chatrace's spelling of `api_key`.
+    // `page_api_key` is a legacy spelling of `api_key`.
     case systemFieldTypes.enum.api_key:
     case systemFieldTypes.enum.page_api_key:
       if (workspace && isWorkspaceScheduledForDeletion(workspace)) {
