@@ -7,8 +7,13 @@ import {
 } from "../services/orphaned-integration-cleanup"
 import { isChannelOriginatedJob, isInboundWebhookJob } from "./channel-origin"
 
+type OrphanedJobContext = {
+  jobType: string
+  isInbound: boolean
+}
+
 async function skipOrphanedIntegrationJobs<T>(
-  jobData: { type: string },
+  context: OrphanedJobContext,
   callback: () => Promise<T>,
 ): Promise<T | undefined> {
   try {
@@ -23,9 +28,9 @@ async function skipOrphanedIntegrationJobs<T>(
     const logContext = {
       channel: error.channel,
       identifier: error.identifier,
-      jobType: jobData.type,
+      jobType: context.jobType,
     }
-    if (isInboundWebhookJob(jobData)) {
+    if (context.isInbound) {
       logger.warn(
         logContext,
         "Integration not found for inbound event; skipping job",
@@ -42,9 +47,10 @@ async function skipOrphanedIntegrationJobs<T>(
 }
 
 export async function runWithOrphanedIntegrationCleanup<T>(
+  context: OrphanedJobContext,
   callback: () => Promise<T>,
 ): Promise<T | undefined> {
-  return await skipOrphanedIntegrationJobs({ type: "unknown" }, callback)
+  return await skipOrphanedIntegrationJobs(context, callback)
 }
 
 export async function runIntegrationJobWithWebhookContext<T>(
@@ -57,6 +63,12 @@ export async function runIntegrationJobWithWebhookContext<T>(
     : {}
 
   return await runWithWebhookExecutionContext(webhookExecutionContext, () =>
-    skipOrphanedIntegrationJobs(jobData, callback),
+    skipOrphanedIntegrationJobs(
+      {
+        isInbound: isInboundWebhookJob(jobData),
+        jobType: jobData.type,
+      },
+      callback,
+    ),
   )
 }

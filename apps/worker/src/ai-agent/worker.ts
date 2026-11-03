@@ -39,7 +39,13 @@ async function processAutomatedResponseWithWebhookContext(
   data: AIJobProcessAutomatedResponse["data"],
 ): Promise<void> {
   await runWithWebhookExecutionContext({ source: "webhook" }, () =>
-    runWithOrphanedIntegrationCleanup(() => processAutomatedResponse(data)),
+    runWithOrphanedIntegrationCleanup(
+      {
+        isInbound: true,
+        jobType: AIJobAction.processAutomatedResponse,
+      },
+      () => processAutomatedResponse(data),
+    ),
   )
 }
 
@@ -47,7 +53,13 @@ async function processHandoffReentryWithWebhookContext(
   data: AIJobProcessHandoffReentry["data"],
 ): Promise<void> {
   await runWithWebhookExecutionContext({ source: "webhook" }, () =>
-    runWithOrphanedIntegrationCleanup(() => processHandoffReentry(data)),
+    runWithOrphanedIntegrationCleanup(
+      {
+        isInbound: true,
+        jobType: AIJobAction.processHandoffReentry,
+      },
+      () => processHandoffReentry(data),
+    ),
   )
 }
 
@@ -108,8 +120,12 @@ function startAIAgentWorker() {
               await processHandoffReentryWithWebhookContext(jobData.data)
               return
             case AIJobAction.commentAIReply:
-              await runWithOrphanedIntegrationCleanup(() =>
-                processCommentAIReply(jobData.data, !isFinalAttempt(job)),
+              await runWithOrphanedIntegrationCleanup(
+                {
+                  isInbound: true,
+                  jobType: AIJobAction.commentAIReply,
+                },
+                () => processCommentAIReply(jobData.data, !isFinalAttempt(job)),
               )
               return
             case AIJobAction.processStoryReplyAutomation:

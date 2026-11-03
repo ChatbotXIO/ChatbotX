@@ -17,7 +17,6 @@ const CHANNEL_ORIGINATED_JOB_TYPES: ReadonlySet<string> = new Set([
 ])
 
 const INBOUND_WEBHOOK_JOB_TYPES: ReadonlySet<string> = new Set([
-  ...CHANNEL_ORIGINATED_JOB_TYPES,
   IntegrationJobAction.contactMarkAsRead,
   IntegrationJobAction.messageReaction,
   IntegrationJobAction.messageStatus,
@@ -41,6 +40,9 @@ export function isChannelOriginatedJob(jobData: IntegrationJobData): boolean {
   )
 }
 
-export function isInboundWebhookJob(jobData: { type: string }): boolean {
-  return INBOUND_WEBHOOK_JOB_TYPES.has(jobData.type)
+export function isInboundWebhookJob(jobData: IntegrationJobData): boolean {
+  return (
+    INBOUND_WEBHOOK_JOB_TYPES.has(jobData.type) ||
+    isChannelOriginatedJob(jobData)
+  )
 }

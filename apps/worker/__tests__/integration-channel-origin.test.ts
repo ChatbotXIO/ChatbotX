@@ -92,17 +92,50 @@ describe("isChannelOriginatedJob", () => {
   test("recognizes webhook jobs without changing webhook execution context", () => {
     const contactMarkAsReadJob = {
       type: IntegrationJobAction.contactMarkAsRead,
-    } as never
+      data: {
+        integrationType: "messenger",
+        integrationIdentifier: "page-1",
+        sourceConversationId: "conversation-1",
+        payload: {},
+      },
+    } satisfies IntegrationJobData
     const messageReactionJob = {
       type: IntegrationJobAction.messageReaction,
-    } as never
+      data: {
+        integrationType: "messenger",
+        integrationIdentifier: "page-1",
+        messageId: "message-1",
+        action: "react",
+        contactSourceId: "contact-1",
+      },
+    } satisfies IntegrationJobData
     const sendSequenceFlowJob = {
       type: IntegrationJobAction.sendSequenceFlow,
-    } as never
+      data: {
+        dispatchId: "dispatch-1",
+        workspaceId: "workspace-1",
+        stepId: "step-1",
+        contactId: "contact-1",
+        contactInboxId: "contact-inbox-1",
+        enrollmentId: "enrollment-1",
+        sequenceId: "sequence-1",
+        bucket: 0,
+        metadata: {},
+      },
+    } satisfies IntegrationJobData
+    const channelFlowJob = {
+      type: IntegrationJobAction.sendFlow,
+      data: {
+        conversationId: "conversation-1",
+        contactInboxId: "contact-inbox-1",
+        origin: "channel",
+      },
+    } satisfies IntegrationJobData
 
     expect(isInboundWebhookJob(contactMarkAsReadJob)).toBe(true)
     expect(isInboundWebhookJob(messageReactionJob)).toBe(true)
     expect(isInboundWebhookJob(sendSequenceFlowJob)).toBe(false)
+    expect(isInboundWebhookJob(channelFlowJob)).toBe(true)
     expect(isChannelOriginatedJob(contactMarkAsReadJob)).toBe(false)
   })
 
