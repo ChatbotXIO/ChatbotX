@@ -358,6 +358,44 @@ describe("ai-agent worker audit context", () => {
     expect(mocks.loggerError).not.toHaveBeenCalled()
   })
 
+  test("completes orphaned handoff re-entry integrations without retry", async () => {
+    const { IntegrationNotFoundError } = await import(
+      "../src/services/orphaned-integration-cleanup"
+    )
+    const orphanedIntegrationError = new IntegrationNotFoundError(
+      "messenger",
+      "page-1",
+    )
+    mocks.processHandoffReentry.mockRejectedValueOnce(orphanedIntegrationError)
+
+    await expect(
+      mocks.processJob?.({
+        id: "job-orphaned-handoff-reentry",
+        data: {
+          type: "processHandoffReentry",
+          data: {
+            conversationId: "conversation-1",
+            contactInboxId: "contact-inbox-1",
+            messageId: "message-1",
+          },
+        },
+      }),
+    ).resolves.toBeUndefined()
+
+    expect(mocks.cleanupOrphanedIntegrationOnce).toHaveBeenCalledWith(
+      orphanedIntegrationError,
+    )
+    expect(mocks.loggerWarn).toHaveBeenCalledWith(
+      {
+        channel: "messenger",
+        identifier: "page-1",
+        jobType: "processHandoffReentry",
+      },
+      "Integration not found for inbound event; skipping job",
+    )
+    expect(mocks.loggerError).not.toHaveBeenCalled()
+  })
+
   test("completes orphaned comment AI integrations without retry", async () => {
     const { IntegrationNotFoundError } = await import(
       "../src/services/orphaned-integration-cleanup"

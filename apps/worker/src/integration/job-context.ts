@@ -7,12 +7,18 @@ import {
 } from "../services/orphaned-integration-cleanup"
 import { isChannelOriginatedJob, isInboundWebhookJob } from "./channel-origin"
 
-type OrphanedJobContext = {
+type OrphanedJobContext = Readonly<{
   jobType: string
   isInbound: boolean
-}
+}>
 
-async function skipOrphanedIntegrationJobs<T>(
+/**
+ * A job whose integration row is gone completes after throttled
+ * orphaned-integration cleanup instead of retrying or filling the failed set.
+ * Inbound events log at `warn`; internal jobs log at `error` because losing
+ * one is unexpected.
+ */
+export async function runWithOrphanedIntegrationCleanup<T>(
   context: OrphanedJobContext,
   callback: () => Promise<T>,
 ): Promise<T | undefined> {
@@ -35,35 +41,26 @@ async function skipOrphanedIntegrationJobs<T>(
         logContext,
         "Integration not found for inbound event; skipping job",
       )
-      return
+    } else {
+      logger.error(
+        { ...logContext, err: error },
+        "Integration not found; completing job without retry",
+      )
     }
-
-    logger.error(
-      { ...logContext, err: error },
-      "Integration not found; completing job without retry",
-    )
     return
   }
-}
-
-export async function runWithOrphanedIntegrationCleanup<T>(
-  context: OrphanedJobContext,
-  callback: () => Promise<T>,
-): Promise<T | undefined> {
-  return await skipOrphanedIntegrationJobs(context, callback)
 }
 
 export async function runIntegrationJobWithWebhookContext<T>(
   jobData: IntegrationJobData,
   callback: () => Promise<T>,
 ): Promise<T | undefined> {
-  const isChannelOriginated = isChannelOriginatedJob(jobData)
-  const webhookExecutionContext = isChannelOriginated
+  const webhookExecutionContext = isChannelOriginatedJob(jobData)
     ? { source: "webhook" as const }
     : {}
 
   return await runWithWebhookExecutionContext(webhookExecutionContext, () =>
-    skipOrphanedIntegrationJobs(
+    runWithOrphanedIntegrationCleanup(
       {
         isInbound: isInboundWebhookJob(jobData),
         jobType: jobData.type,

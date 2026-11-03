@@ -155,8 +155,8 @@ export async function processCommentAutomation(
   //
   // An `IntegrationNotFoundError` from the lookup below needs nothing extra
   // here: this channel-originated job passes through
-  // `skipOrphanedIntegrationJobs` in `integration/job-context.ts`, which
-  // completes the job after throttled orphaned-integration cleanup.
+  // `runIntegrationJobWithWebhookContext` in `integration/job-context.ts`,
+  // which completes the job after throttled orphaned-integration cleanup.
   let context: Awaited<ReturnType<typeof loadCommentAutomationContext>>
   try {
     context = await loadCommentAutomationContext({

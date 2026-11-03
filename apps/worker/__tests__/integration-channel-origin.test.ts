@@ -131,11 +131,24 @@ describe("isChannelOriginatedJob", () => {
         origin: "channel",
       },
     } satisfies IntegrationJobData
+    const audienceEventJob = {
+      type: IntegrationJobAction.channelAudienceEvent,
+      data: {
+        integrationType: "zalo",
+        integrationIdentifier: "oa-1",
+        event: {
+          kind: "follow",
+          user: { sourceId: "user-1" },
+          occurredAt: "2026-01-02T00:00:00.000Z",
+        },
+      },
+    } satisfies IntegrationJobData
 
     expect(isInboundWebhookJob(contactMarkAsReadJob)).toBe(true)
     expect(isInboundWebhookJob(messageReactionJob)).toBe(true)
     expect(isInboundWebhookJob(sendSequenceFlowJob)).toBe(false)
     expect(isInboundWebhookJob(channelFlowJob)).toBe(true)
+    expect(isInboundWebhookJob(audienceEventJob)).toBe(true)
     expect(isChannelOriginatedJob(contactMarkAsReadJob)).toBe(false)
   })
 

@@ -18,6 +18,7 @@ const CHANNEL_ORIGINATED_JOB_TYPES: ReadonlySet<string> = new Set([
 
 const INBOUND_WEBHOOK_JOB_TYPES: ReadonlySet<string> = new Set([
   IntegrationJobAction.contactMarkAsRead,
+  IntegrationJobAction.channelAudienceEvent,
   IntegrationJobAction.messageReaction,
   IntegrationJobAction.messageStatus,
   IntegrationJobAction.deleteIncomingMessage,
