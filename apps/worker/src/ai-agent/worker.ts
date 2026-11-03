@@ -128,7 +128,7 @@ function startAIAgentWorker() {
               )
               return
             case AIJobAction.commentModeration:
-              await runWithOrphanedIntegrationCleanup(() =>
+              await runInboundAIJob(AIJobAction.commentModeration, () =>
                 processCommentModeration(jobData.data),
               )
               return
