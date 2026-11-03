@@ -1,5 +1,6 @@
 // @vitest-environment node
 
+import { setTimeout as sleep } from "node:timers/promises"
 import { eq } from "drizzle-orm"
 import { drizzle } from "drizzle-orm/node-postgres"
 import { Client } from "pg"
@@ -19,6 +20,7 @@ describe.skipIf(!databaseUrl)(
   () => {
     let clientA: Client
     let clientB: Client
+    let clientObserver: Client
     let dbA: ReturnType<typeof createDatabase>
     let dbB: ReturnType<typeof createDatabase>
     let userId: string
@@ -42,10 +44,30 @@ describe.skipIf(!databaseUrl)(
       )
     }
 
+    const waitForAdvisoryLock = async (): Promise<void> => {
+      for (let attempt = 0; attempt < 100; attempt++) {
+        const { rows } = await clientObserver.query<{
+          wait_event_type: string | null
+        }>("SELECT wait_event_type FROM pg_stat_activity WHERE pid = $1", [
+          clientB.processID,
+        ])
+        if (rows[0]?.wait_event_type === "Lock") {
+          return
+        }
+        await sleep(10)
+      }
+      throw new Error("successor rotation did not wait for the family lock")
+    }
+
     beforeAll(async () => {
       clientA = new Client({ connectionString: databaseUrl as string })
       clientB = new Client({ connectionString: databaseUrl as string })
-      await Promise.all([clientA.connect(), clientB.connect()])
+      clientObserver = new Client({ connectionString: databaseUrl as string })
+      await Promise.all([
+        clientA.connect(),
+        clientB.connect(),
+        clientObserver.connect(),
+      ])
       dbA = createDatabase(clientA)
       dbB = createDatabase(clientB)
       const [user] = await dbA
@@ -57,7 +79,7 @@ describe.skipIf(!databaseUrl)(
 
     afterAll(async () => {
       await dbA.delete(schema.userModel).where(eq(schema.userModel.id, userId))
-      await Promise.all([clientA.end(), clientB.end()])
+      await Promise.all([clientA.end(), clientB.end(), clientObserver.end()])
     })
 
     test("allows exactly one concurrent active-token spend", async () => {
@@ -133,10 +155,16 @@ describe.skipIf(!databaseUrl)(
         return true
       })
 
-      releaseReplay.resolve()
-      await replay
+      let successorRotated = false
+      try {
+        await waitForAdvisoryLock()
+      } finally {
+        releaseReplay.resolve()
+        await replay
+        successorRotated = await successorRotation
+      }
 
-      await expect(successorRotation).resolves.toBe(false)
+      expect(successorRotated).toBe(false)
       const rows = await dbA.query.mobileRefreshTokenModel.findMany({
         where: { familyId },
       })

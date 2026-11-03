@@ -65,7 +65,7 @@ class MobileRefreshTokenRepository {
    */
   async lockFamilyByHash(
     tokenHash: string,
-    tx: DatabaseClient = db,
+    tx: DatabaseClient,
   ): Promise<MobileRefreshTokenModel | null> {
     const row = await this.findByHash(tokenHash, tx)
     if (!row) {
