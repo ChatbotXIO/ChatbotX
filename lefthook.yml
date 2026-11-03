@@ -16,6 +16,9 @@ pre-commit:
     # of 10, with builder alone allowed an 8 GB heap.
     - name: typecheck
       run: pnpm turbo check-types --filter="...[HEAD]" --concurrency=2
+      # Skip test files in builder (~10% faster, ~1 GB lighter); CI type-checks them.
+      env:
+        CHECK_TYPES_SKIP_TESTS: "1"
       glob: "**/*.{ts,tsx}"
       # A merge from main stages every file main changed; CI type-checks it.
       skip: [merge, rebase]
