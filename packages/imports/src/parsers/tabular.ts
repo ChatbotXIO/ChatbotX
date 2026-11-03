@@ -1,4 +1,5 @@
 import { Readable } from "node:stream"
+import { UTF8_BOM } from "@chatbotx.io/utils/csv"
 import { parse } from "csv-parse/sync"
 import { readXlsxRows, XlsxLimitError } from "./xlsx"
 
@@ -16,7 +17,6 @@ export class TabularFileError extends Error {
 }
 
 const DELIMITERS = [",", ";", "\t"] as const
-const BOM = String.fromCharCode(0xfe_ff)
 const LINE_BREAK = /\r?\n/
 
 /** Most frequent of `,` `;` tab in the header line; `,` on a tie or none. */
@@ -58,7 +58,7 @@ function toTable(raw: string[][], maxRows: number): TabularFile {
 
 function readCsv(buffer: Buffer, maxRows: number): TabularFile {
   let text = buffer.toString("utf8")
-  if (text.startsWith(BOM)) {
+  if (text.startsWith(UTF8_BOM)) {
     text = text.slice(1)
   }
   const headerLine = text.split(LINE_BREAK, 1)[0] ?? ""

@@ -34,6 +34,27 @@ describe("toUploadWriter", () => {
     expect(upload.stream.writableEnded).toBe(true)
   })
 
+  test("counts the UTF-8 bytes of every accepted write", async () => {
+    const { upload } = createFakeUpload()
+    const writer = toUploadWriter(upload)
+    expect(writer.bytesWritten()).toBe(0)
+
+    await writer.write("\uFEFFa\n") // BOM is 3 bytes
+    await writer.write("Nguyễn\n") // ễ is 3 bytes
+
+    expect(writer.bytesWritten()).toBe(Buffer.byteLength("\uFEFFa\nNguyễn\n"))
+  })
+
+  test("does not count a rejected write", async () => {
+    const { upload, settle } = createFakeUpload()
+    const writer = toUploadWriter(upload)
+    settle.reject(new Error("part upload failed"))
+    await upload.done.catch(() => undefined)
+
+    await expect(writer.write("lost")).rejects.toThrow("part upload failed")
+    expect(writer.bytesWritten()).toBe(0)
+  })
+
   test("rejects a write stuck on backpressure as soon as the upload fails", async () => {
     // Nothing reads the stream, as when every lib-storage part upload failed.
     const { upload, settle } = createFakeUpload({ reading: false })

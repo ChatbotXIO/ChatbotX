@@ -27,7 +27,7 @@ export function toSelectedValueIso(
 }
 
 /**
- * Chatrace-style submit-bar label: "21 AUG 2026" / "21 AUG 2026 00:07",
+ * Submit-bar label: "21 AUG 2026" / "21 AUG 2026 00:07",
  * locale-aware (month name and ordering follow the workspace locale).
  */
 export function formatSelectionLabel(

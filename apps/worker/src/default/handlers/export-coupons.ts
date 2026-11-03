@@ -1,70 +1,64 @@
-import type { PassThrough } from "node:stream"
 import { couponService } from "@chatbotx.io/business"
 import {
+  type CouponIssueStatus,
   couponIssueStatuses,
   fileStatuses,
 } from "@chatbotx.io/database/partials"
 import { couponRepository } from "@chatbotx.io/database/repositories"
 import { chunkById } from "@chatbotx.io/database/utils"
 import { createUpload } from "@chatbotx.io/filesystem/node-upload"
+import { toUploadWriter } from "@chatbotx.io/filesystem/upload-writer"
+import { toCsvRow, UTF8_BOM } from "@chatbotx.io/utils/csv"
 import {
   type JobExportCoupons,
   loopableItemsCount,
 } from "@chatbotx.io/worker-config"
 
 type ExportData = JobExportCoupons["data"]
+type CouponExportRow = Awaited<
+  ReturnType<typeof couponService.listCouponsForExportPage>
+>[number]
 
-const FORMULA_PREFIX_RE = /^[=+\-@\t\r]/
+const HEADER = ["Name", "Code", "Used", "Date"]
+const MAX_EXPORT_ROWS = 500_000
 
-const escapeCsvValue = (value: string): string => {
-  if (!value) {
-    return '""'
-  }
-  const normalized = value.replace(/\r?\n/g, " ")
-  const guarded = FORMULA_PREFIX_RE.test(normalized)
-    ? `'${normalized}`
-    : normalized
-  return `"${guarded.replace(/"/g, '""')}"`
-}
-
-const writeToStream = (stream: PassThrough, chunk: string): Promise<void> =>
-  new Promise((resolve, reject) => {
-    stream.write(chunk, (error) => (error ? reject(error) : resolve()))
-  })
-
-const renderIssueStatus = (
-  status: (typeof couponIssueStatuses.enum)[keyof typeof couponIssueStatuses.enum],
-) =>
+const renderIssueStatus = (status: CouponIssueStatus) =>
   status === couponIssueStatuses.enum.published ? "Published" : "Unpublished"
 
-const MAX_EXPORT_ROWS = 500_000
+const toCouponRow = (row: CouponExportRow): string =>
+  toCsvRow([
+    row.topicName,
+    row.code,
+    renderIssueStatus(row.issueStatus),
+    row.createdAt.toISOString(),
+  ])
 
 export const exportCoupons = async (data: ExportData): Promise<void> => {
   if (data.outputFormat !== "csv") {
     return
   }
 
+  const { workspaceId, fileId } = data
   const filter = data.filter ?? {}
-  const { stream, done } = createUpload(data.outputPath, {
-    contentType: "text/csv; charset=utf-8",
-  })
+  const updateFile = (
+    values: Omit<
+      Parameters<typeof couponRepository.updateExportFile>[0],
+      "fileId" | "workspaceId"
+    >,
+  ) => couponRepository.updateExportFile({ fileId, workspaceId, ...values })
 
-  let totalBytes = 0
+  const upload = toUploadWriter(
+    createUpload(data.outputPath, { contentType: "text/csv; charset=utf-8" }),
+  )
   let totalRecords = 0
 
   try {
-    const header = ["Name", "Code", "Used", "Date"]
-      .map(escapeCsvValue)
-      .join(",")
-      .concat("\n")
-    await writeToStream(stream, header)
-    totalBytes += Buffer.byteLength(header)
+    await upload.write(`${UTF8_BOM}${toCsvRow(HEADER)}`)
 
-    let hitRowCap = false
     await chunkById(
       (lastId) =>
         couponService.listCouponsForExportPage({
-          workspaceId: data.workspaceId,
+          workspaceId,
           filter: {
             topicId: filter.topicId,
             issueStatus: filter.issueStatus,
@@ -77,74 +71,34 @@ export const exportCoupons = async (data: ExportData): Promise<void> => {
       {
         chunkSize: loopableItemsCount,
         callback: async (rows): Promise<boolean | undefined> => {
-          for (const row of rows) {
-            const line = [
-              row.topicName,
-              row.code,
-              renderIssueStatus(row.issueStatus),
-              row.createdAt.toISOString(),
-            ]
-              .map(escapeCsvValue)
-              .join(",")
-              .concat("\n")
-            await writeToStream(stream, line)
-            totalBytes += Buffer.byteLength(line)
-            totalRecords += 1
+          const page = rows.slice(0, MAX_EXPORT_ROWS - totalRecords)
+          await upload.write(page.map(toCouponRow).join(""))
+          totalRecords += page.length
 
-            if (totalRecords >= MAX_EXPORT_ROWS) {
-              hitRowCap = true
-              break
-            }
-          }
-
-          await couponRepository.updateExportFile({
-            fileId: data.fileId,
-            workspaceId: data.workspaceId,
-            meta: { totalRecords },
-          })
-          if (hitRowCap) {
-            return false
-          }
-          return
+          await updateFile({ meta: { totalRecords } })
+          return totalRecords >= MAX_EXPORT_ROWS ? false : undefined
         },
       },
     )
 
-    if (hitRowCap) {
-      stream.end()
-      await done
-      await couponRepository.updateExportFile({
-        fileId: data.fileId,
-        workspaceId: data.workspaceId,
-        status: fileStatuses.enum.failed,
-        meta: { totalRecords },
-      })
+    await upload.finish()
+
+    if (totalRecords >= MAX_EXPORT_ROWS) {
       throw new Error(
         `Export exceeded the ${MAX_EXPORT_ROWS.toLocaleString()}-row limit.`,
       )
     }
 
-    stream.end()
-    await done
-
-    const finalStatus =
-      totalRecords === 0 ? fileStatuses.enum.failed : fileStatuses.enum.uploaded
-
-    await couponRepository.updateExportFile({
-      fileId: data.fileId,
-      workspaceId: data.workspaceId,
-      status: finalStatus,
-      fileSize: String(totalBytes),
+    const isEmpty = totalRecords === 0
+    await updateFile({
+      status: isEmpty ? fileStatuses.enum.failed : fileStatuses.enum.uploaded,
+      fileSize: String(upload.bytesWritten()),
       meta: { totalRecords },
-      uploadedAt:
-        finalStatus === fileStatuses.enum.uploaded ? new Date() : undefined,
+      uploadedAt: isEmpty ? undefined : new Date(),
     })
   } catch (error) {
-    stream.destroy()
-    await done.catch(() => undefined)
-    await couponRepository.updateExportFile({
-      fileId: data.fileId,
-      workspaceId: data.workspaceId,
+    await upload.abort()
+    await updateFile({
       status: fileStatuses.enum.failed,
       meta: { totalRecords },
     })

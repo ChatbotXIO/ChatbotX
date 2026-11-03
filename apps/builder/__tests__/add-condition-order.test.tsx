@@ -41,7 +41,7 @@ const conditionKeys = (items: Element[]) =>
   )
 
 describe("AddCondition order", () => {
-  test("lists the triggers in Chatrace's order, ChatbotX-only ones closing their group", () => {
+  test("lists the triggers in the reference order, ChatbotX-only ones closing their group", () => {
     openMenu()
 
     const items = Array.from(document.querySelectorAll('[role="menuitem"]'))
@@ -99,7 +99,7 @@ describe("AddCondition order", () => {
     ])
   })
 
-  test("only the Chatrace groups that have a name show a heading", () => {
+  test("only the reference groups that have a name show a heading", () => {
     openMenu()
 
     const headings = Array.from(

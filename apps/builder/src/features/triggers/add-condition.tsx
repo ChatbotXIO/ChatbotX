@@ -49,7 +49,7 @@ const ECOMMERCE_EVENTS_WITH_OPTIONAL_SOURCE: ReadonlySet<TriggerEventType> =
     triggerEventTypes.enum.productOrdered,
   ])
 
-// Same order as Chatrace's trigger picker; the events only ChatbotX has
+// Reference trigger-picker order; the events only ChatbotX has
 // (phone/email update, call recorded/transcribed, order paid/refunded) close
 // the group they belong to.
 const ECOMMERCE_EVENTS = [
@@ -107,7 +107,7 @@ export function AddCondition({
           },
         ],
       },
-      // Unlabeled sub-groups, as in Chatrace.
+      // Unlabeled sub-groups, as in the reference picker.
       {
         children: [
           {

@@ -1,4 +1,5 @@
-import { PassThrough } from "node:stream"
+import { PassThrough, Readable } from "node:stream"
+import { createImportCsvParser } from "@chatbotx.io/imports/parsers"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 // ── Mocks ─────────────────────────────────────────────────────────────────────
@@ -109,14 +110,19 @@ const buildData = (overrides: Partial<ExportData> = {}): ExportData =>
   }) as ExportData
 
 // Captures everything the handler streams to the uploader.
-const captureCsv = (): { text: () => string } => {
+const LEADING_BOM_RE = /^\uFEFF/
+
+// `text()` drops the leading UTF-8 BOM so row assertions stay readable;
+// `raw()` keeps it for the BOM test.
+const captureCsv = (): { text: () => string; raw: () => Buffer } => {
   const chunks: Buffer[] = []
   createUpload.mockImplementationOnce(() => {
     uploadStream = new PassThrough()
     uploadStream.on("data", (c: Buffer) => chunks.push(Buffer.from(c)))
     return { stream: uploadStream, done: Promise.resolve() }
   })
-  return { text: () => Buffer.concat(chunks).toString("utf8") }
+  const raw = () => Buffer.concat(chunks)
+  return { text: () => raw().toString("utf8").replace(LEADING_BOM_RE, ""), raw }
 }
 
 const lastUpdate = () =>
@@ -156,6 +162,38 @@ describe("loopableExportContacts", () => {
 
     expect(createUpload).not.toHaveBeenCalled()
     expect(findManyContacts).not.toHaveBeenCalled()
+  })
+
+  test("starts the file with a UTF-8 BOM so Excel on Windows reads Vietnamese correctly", async () => {
+    const csv = captureCsv()
+    findManyContacts.mockResolvedValueOnce([
+      contact({ fullName: "Nguyễn Văn Bình" }),
+    ])
+
+    await loopableExportContacts(buildData())
+
+    const bytes = csv.raw()
+    expect([...bytes.subarray(0, 3)]).toEqual([0xef, 0xbb, 0xbf])
+    expect(csv.text()).toContain('"Nguyễn Văn Bình"')
+    // The reported file size includes the BOM bytes.
+    expect(lastUpdate().fileSize).toBe(String(bytes.length))
+  })
+
+  test("round-trips through the production import parser without a BOM-polluted header", async () => {
+    const csv = captureCsv()
+    findManyContacts.mockResolvedValueOnce([
+      contact({ fullName: "Nguyễn Văn Bình", email: "binh@example.com" }),
+    ])
+
+    await loopableExportContacts(buildData())
+
+    const rows: Record<string, string>[] = []
+    for await (const row of createImportCsvParser(Readable.from([csv.raw()]))) {
+      rows.push(row as Record<string, string>)
+    }
+    expect(rows).toEqual([
+      { "Full Name": "Nguyễn Văn Bình", Email: "binh@example.com" },
+    ])
   })
 
   test("writes an escaped header row", async () => {
@@ -209,6 +247,9 @@ describe("loopableExportContacts", () => {
 
     expect(findManyContacts).toHaveBeenCalledTimes(3)
     expect(csv.text().trim().split("\n")).toHaveLength(6) // header + 5 rows
+    // The BOM leads the file once and is never repeated before a later page.
+    expect(csv.raw().indexOf(Buffer.from([0xef, 0xbb, 0xbf]))).toBe(0)
+    expect(csv.raw().indexOf(Buffer.from([0xef, 0xbb, 0xbf]), 3)).toBe(-1)
 
     // Only page 2 saved progress mid-export; the final update has the total.
     const totals = updateSet.mock.calls.map(
