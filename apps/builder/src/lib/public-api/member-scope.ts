@@ -4,6 +4,7 @@ import {
   contactService,
   conversationMemberScope,
   conversationService,
+  flowService,
   UNSCOPED,
 } from "@chatbotx.io/business"
 import { maskContactEmailAndPhone } from "@chatbotx.io/business/contact-utils"
@@ -30,7 +31,7 @@ type MemberScopeContext = {
   memberConversationScope?: Promise<ConversationMemberScope>
 }
 
-const conversationScopeForCaller = async (
+export const conversationScopeForCaller = async (
   context: MemberScopeContext,
 ): Promise<ConversationMemberScope | undefined> => {
   if (!context.member) {
@@ -44,7 +45,7 @@ const conversationScopeForCaller = async (
   return await context.memberConversationScope
 }
 
-const contactScopeForCaller = async (context: MemberScopeContext) => {
+export const contactScopeForCaller = async (context: MemberScopeContext) => {
   if (!context.member) {
     return UNSCOPED
   }
@@ -59,8 +60,7 @@ const contactScopeForCaller = async (context: MemberScopeContext) => {
   return {
     ...scope,
     restrictToTeamIds:
-      conversationScope?.chatScope === "assigned" &&
-      conversationScope.teamIds.length > 0
+      conversationScope?.chatScope === "assigned"
         ? conversationScope.teamIds
         : undefined,
   }
@@ -71,43 +71,34 @@ const contactScopeForCaller = async (context: MemberScopeContext) => {
  * may see that contact. Anything else is the same 404 a missing contact gets,
  * so existence is never exposed.
  */
-export const resolveContactIdForCaller = async (
-  context: MemberScopeContext,
-  props: { identifier: string; workspaceId: string },
-): Promise<string> => {
-  const contactId = await contactService.resolveIdByIdentifier(props)
-  if (context.member) {
-    const scope = await contactScopeForCaller(context)
-    const accessScope =
-      scope === UNSCOPED
-        ? undefined
-        : {
-            restrictToAssignedUserId: scope.restrictToAssignedUserId,
-            ...(scope.restrictToTeamIds && {
-              restrictToTeamIds: scope.restrictToTeamIds,
-            }),
-          }
-    await contactService.findByIdOrFail({
-      workspaceId: props.workspaceId,
-      id: contactId,
-      accessScope,
-    })
-  }
-  return contactId
-}
-
 export const contactIdFor = async (
   context: MemberScopeContext,
   identifier: string,
-): Promise<string> =>
-  await resolveContactIdForCaller(context, {
+): Promise<string> => {
+  const contactId = await contactService.resolveIdByIdentifier({
     identifier,
     workspaceId: context.workspace.id,
   })
-
-/** `scope` argument for `contactService.list`/`count`. */
-export const contactListScopeForCaller = async (context: MemberScopeContext) =>
-  await contactScopeForCaller(context)
+  if (!context.member) {
+    return contactId
+  }
+  const scope = await contactScopeForCaller(context)
+  const accessScope =
+    scope === UNSCOPED
+      ? undefined
+      : {
+          restrictToAssignedUserId: scope.restrictToAssignedUserId,
+          ...(scope.restrictToTeamIds !== undefined && {
+            restrictToTeamIds: scope.restrictToTeamIds,
+          }),
+        }
+  await contactService.findByIdOrFail({
+    workspaceId: context.workspace.id,
+    id: contactId,
+    accessScope,
+  })
+  return contactId
+}
 
 /** Hides email/phone from a member who lacks the `emailAndPhone` permission. */
 export const maskContactForCaller = <
@@ -127,10 +118,28 @@ export const resolveSenderForCaller = (
 ): Pick<UserModel, "id"> | undefined =>
   context.member ? context.user : undefined
 
-export const conversationAccessForCaller = async (
+/**
+ * A member without the general flows permission may only start flows that are
+ * explicitly enabled in an inbox. Workspace-token callers remain unrestricted.
+ */
+export const assertMemberMayStartFlow = async (
   context: MemberScopeContext,
-): Promise<ConversationMemberScope | undefined> =>
-  await conversationScopeForCaller(context)
+  flowId: string | undefined,
+): Promise<void> => {
+  if (
+    !(
+      flowId &&
+      context.member &&
+      !hasWorkspacePermission(context.member.permissions, "flows")
+    )
+  ) {
+    return
+  }
+  await flowService.assertEnabledInInbox({
+    workspaceId: context.workspace.id,
+    flowId,
+  })
+}
 
 /**
  * Loads a conversation once and returns it after applying the caller's member

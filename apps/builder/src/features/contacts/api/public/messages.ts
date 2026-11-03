@@ -1,11 +1,9 @@
 import {
   automatedResponseService,
   conversationService,
-  flowService,
   messageService,
 } from "@chatbotx.io/business"
 import { notFoundException } from "@chatbotx.io/business/errors"
-import { hasWorkspacePermission } from "@chatbotx.io/business/workspace-member/permissions"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 import { listMessages } from "@/features/messages/queries"
@@ -20,6 +18,7 @@ import {
 } from "@/lib/orpc/orpc-error-helper"
 import { publicContactIdentifier } from "@/lib/public-api/contact-identifier"
 import {
+  assertMemberMayStartFlow,
   contactIdFor,
   resolveSenderForCaller,
 } from "@/lib/public-api/member-scope"
@@ -60,6 +59,10 @@ export const contactsMessagesPublicRouter = {
           workspaceId: context.workspace.id,
           inboxId: input.inboxId,
         })
+      await assertMemberMayStartFlow(
+        context,
+        "flowId" in input ? input.flowId : undefined,
+      )
       const user = resolveSenderForCaller(context)
       await messageService.createOutgoing({
         conversation,
@@ -242,15 +245,7 @@ export const contactsMessagesPublicRouter = {
           inboxId: input.inboxId,
         })
 
-      if (
-        context.member &&
-        !hasWorkspacePermission(context.member.permissions, "flows")
-      ) {
-        await flowService.assertEnabledInInbox({
-          workspaceId: context.workspace.id,
-          flowId: input.flowId,
-        })
-      }
+      await assertMemberMayStartFlow(context, input.flowId)
       const user = resolveSenderForCaller(context)
 
       await messageService.createOutgoing({

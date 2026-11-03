@@ -58,6 +58,7 @@ vi.mock("@/features/realtime/lib/mint-member-connect-token", () => ({
   mintMemberConnectToken: mocks.mintMemberConnectToken,
 }))
 vi.mock("@chatbotx.io/business", () => ({
+  logger: { error: vi.fn() },
   resolveTenantSettings: mocks.resolveTenantSettings,
 }))
 

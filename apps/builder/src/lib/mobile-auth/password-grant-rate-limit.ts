@@ -5,7 +5,11 @@ const MOBILE_TOKEN_PATH_SUFFIX = "/mobile/token"
 const PASSWORD_GRANT_ACCOUNT_LIMIT = 5
 const RETRY_AFTER_PATTERN = /Retry after (\d+)s\./
 
-type PasswordGrantBody = { grantType?: unknown; email?: unknown }
+type PasswordGrantBody = {
+  grantType?: unknown
+  grant_type?: unknown
+  email?: unknown
+}
 
 type PasswordGrantReadResult =
   | { kind: "invalid" }
@@ -24,11 +28,15 @@ const readPasswordGrant = async (
       const form = await request.clone().formData()
       body = {
         email: form.get("email"),
-        grantType: form.get("grant_type"),
+        grantType: form.get("grantType") ?? form.get("grant_type"),
       }
     }
-    if (body.grantType !== "password") {
+    const grantType = body.grantType ?? body.grant_type
+    if (grantType === "refresh_token" || grantType === "exchange_code") {
       return { kind: "other" }
+    }
+    if (grantType !== "password") {
+      return { kind: "invalid" }
     }
     return {
       kind: "password",

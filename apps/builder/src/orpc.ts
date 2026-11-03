@@ -239,6 +239,6 @@ export const mobileUserAPI = publicAPI
   .use(apiIdempotencyMiddleware)
 
 /** Same, but still callable while `mustChangePassword` is set: identity read and password change. */
-export const mobileUserPasswordChangeAPI = publicAPI
-  .use(mobileUserPasswordChangeAuthMiddleware)
-  .use(apiIdempotencyMiddleware)
+export const mobileUserPasswordChangeAPI = publicAPI.use(
+  mobileUserPasswordChangeAuthMiddleware,
+)

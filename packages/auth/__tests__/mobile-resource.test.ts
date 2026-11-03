@@ -16,11 +16,13 @@ vi.mock("../src/keys", () => ({
 vi.mock("../src/logger", () => ({ logger: { error: vi.fn() } }))
 
 import {
-  isMobileAccessTokenCandidate,
   MobileTokenVerificationUnavailableError,
-  peekJwtAudiences,
   verifyMobileAccessToken,
 } from "../src/mobile-resource"
+import {
+  isMobileAccessTokenCandidate,
+  peekJwtAudiences,
+} from "../src/mobile-resource-candidate"
 import type { Auth } from "../src/server"
 
 const auth = {

@@ -149,7 +149,7 @@ describe("workspaceTokenAuthMidddleware — mobile JWT branch", () => {
       workspace: { id: "42" },
       member: { userId: "7", permissions: AGENT_PERMISSIONS },
       mobileDeviceId: "install-1",
-      apiCredentialId: "mobile:7:install-1",
+      apiCredentialId: "mobile:42:7:install-1",
       apiToken: {
         permission: "full",
         scopes: ["contacts", "inbox", "automation", "broadcasts", "media"],

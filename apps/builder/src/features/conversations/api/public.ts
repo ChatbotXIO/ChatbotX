@@ -2,10 +2,7 @@ import {
   conversationMemberScope,
   conversationService,
 } from "@chatbotx.io/business"
-import {
-  ChatbotXException,
-  notFoundException,
-} from "@chatbotx.io/business/errors"
+import { ChatbotXException } from "@chatbotx.io/business/errors"
 import {
   requestConversationThreadControl,
   syncConversationThreadOwner,
@@ -28,7 +25,7 @@ import {
 import { cursorPaginationRequest } from "@/lib/pagination"
 import {
   assertConversationAccessForCaller,
-  conversationAccessForCaller,
+  conversationScopeForCaller,
   maskContactForCaller,
 } from "@/lib/public-api/member-scope"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
@@ -154,7 +151,7 @@ export const conversationsPublicRouter = {
     .handler(async ({ context, input }) => {
       // Mobile (member) callers: restricted to their chat scope, email/phone
       // masked without the permission. Workspace tokens stay workspace-level.
-      const access = await conversationAccessForCaller(context)
+      const access = await conversationScopeForCaller(context)
       const { view, ...request } = input
       const listAccess = {
         includeEmailAndPhone:
@@ -214,25 +211,11 @@ export const conversationsPublicRouter = {
     .output(getConversationPublicResponse)
     .errors(possibleErrorsOnFindingResource)
     .handler(async ({ context, input }) => {
+      await assertConversationAccessForCaller(context, input.id)
       const result = await findConversation({
         id: input.id,
         workspaceId: context.workspace.id,
       })
-      const access = await conversationAccessForCaller(context)
-      if (
-        !conversationMemberScope.allows(access, {
-          assignedUserId:
-            typeof result.data.assignedUserId === "string"
-              ? result.data.assignedUserId
-              : null,
-          assignedInboxTeamId:
-            typeof result.data.assignedInboxTeamId === "string"
-              ? result.data.assignedInboxTeamId
-              : null,
-        })
-      ) {
-        throw notFoundException("Conversation not found")
-      }
       return {
         ...result,
         data: {

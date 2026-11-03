@@ -3,7 +3,7 @@
   "dialect": "postgres",
   "id": "ae38f4ea-28c2-4b22-ada8-f008fa3a6c03",
   "prevIds": [
-    "2b888b2e-3ff4-450b-b98f-31b685088e44"
+    "6c05ca87-35cd-4e76-90c4-69c76a28b3ed"
   ],
   "ddl": [
     {
@@ -445,11 +445,56 @@
         "commentIsReply",
         "keywordsNotMatched",
         "mentionCountNotMatched",
+        "noImageAttachment",
         "contactNotNew",
         "alreadyRepliedOnPost",
-        "engagedOnOtherPost"
+        "engagedOnOtherPost",
+        "moderated"
       ],
       "name": "commentAutomationMissReason",
+      "entityType": "enums",
+      "schema": "public"
+    },
+    {
+      "values": [
+        "hide",
+        "delete"
+      ],
+      "name": "commentModerationAction",
+      "entityType": "enums",
+      "schema": "public"
+    },
+    {
+      "values": [
+        "all",
+        "phoneNumber",
+        "link",
+        "keyword",
+        "image",
+        "video",
+        "gif",
+        "emoji"
+      ],
+      "name": "commentModerationRule",
+      "entityType": "enums",
+      "schema": "public"
+    },
+    {
+      "values": [
+        "rule",
+        "ai"
+      ],
+      "name": "commentModerationSource",
+      "entityType": "enums",
+      "schema": "public"
+    },
+    {
+      "values": [
+        "pending",
+        "done",
+        "failed"
+      ],
+      "name": "commentModerationStatus",
       "entityType": "enums",
       "schema": "public"
     },
@@ -1766,6 +1811,12 @@
     },
     {
       "isRlsEnabled": false,
+      "name": "CommentModerationLog",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
       "name": "ConnectSession",
       "entityType": "tables",
       "schema": "public"
@@ -2493,12 +2544,6 @@
     {
       "isRlsEnabled": false,
       "name": "MinigamePlay",
-      "entityType": "tables",
-      "schema": "public"
-    },
-    {
-      "isRlsEnabled": false,
-      "name": "MobileRefreshToken",
       "entityType": "tables",
       "schema": "public"
     },
@@ -10512,6 +10557,19 @@
       "table": "CommentAutomation"
     },
     {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "0",
+      "generated": null,
+      "identity": null,
+      "name": "moderatedCount",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "CommentAutomation"
+    },
+    {
       "type": "jsonb",
       "typeSchema": null,
       "notNull": true,
@@ -11147,6 +11205,279 @@
       "entityType": "columns",
       "schema": "public",
       "table": "CommentAutomationReply"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "CommentModerationLog"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "createdAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "CommentModerationLog"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "updatedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "CommentModerationLog"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "workspaceId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "CommentModerationLog"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "automationId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "CommentModerationLog"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "contactId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "CommentModerationLog"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "contactInboxId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "CommentModerationLog"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "postId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "CommentModerationLog"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "commentId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "CommentModerationLog"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "commentText",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "CommentModerationLog"
+    },
+    {
+      "type": "commentModerationSource",
+      "typeSchema": "public",
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "source",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "CommentModerationLog"
+    },
+    {
+      "type": "commentModerationRule",
+      "typeSchema": "public",
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "rule",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "CommentModerationLog"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "matchedKeyword",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "CommentModerationLog"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 1,
+      "default": "'{}'",
+      "generated": null,
+      "identity": null,
+      "name": "categories",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "CommentModerationLog"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "reason",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "CommentModerationLog"
+    },
+    {
+      "type": "commentModerationAction",
+      "typeSchema": "public",
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "action",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "CommentModerationLog"
+    },
+    {
+      "type": "commentModerationStatus",
+      "typeSchema": "public",
+      "notNull": true,
+      "dimensions": 0,
+      "default": "'pending'",
+      "generated": null,
+      "identity": null,
+      "name": "status",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "CommentModerationLog"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "errorDetail",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "CommentModerationLog"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "provider",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "CommentModerationLog"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "modelId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "CommentModerationLog"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "occurredAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "CommentModerationLog"
     },
     {
       "type": "bigint",
@@ -30691,136 +31022,6 @@
       "name": "id",
       "entityType": "columns",
       "schema": "public",
-      "table": "MobileRefreshToken"
-    },
-    {
-      "type": "timestamp(6) with time zone",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "now()",
-      "generated": null,
-      "identity": null,
-      "name": "createdAt",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "MobileRefreshToken"
-    },
-    {
-      "type": "timestamp(6) with time zone",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "now()",
-      "generated": null,
-      "identity": null,
-      "name": "updatedAt",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "MobileRefreshToken"
-    },
-    {
-      "type": "bigint",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "userId",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "MobileRefreshToken"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "deviceId",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "MobileRefreshToken"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "familyId",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "MobileRefreshToken"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "tokenHash",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "MobileRefreshToken"
-    },
-    {
-      "type": "timestamp(6) with time zone",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "expiresAt",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "MobileRefreshToken"
-    },
-    {
-      "type": "timestamp(6) with time zone",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "rotatedAt",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "MobileRefreshToken"
-    },
-    {
-      "type": "timestamp(6) with time zone",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "revoked",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "MobileRefreshToken"
-    },
-    {
-      "type": "bigint",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "id",
-      "entityType": "columns",
-      "schema": "public",
       "table": "OAuthAccessToken"
     },
     {
@@ -45913,6 +46114,111 @@
       "nameExplicit": true,
       "columns": [
         {
+          "value": "automationId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "commentId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": true,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "CommentModerationLog_dedup_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "CommentModerationLog"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "workspaceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "automationId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "occurredAt",
+          "isExpression": false,
+          "asc": false,
+          "nullsFirst": true,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "CommentModerationLog_workspace_automation_occurredAt_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "CommentModerationLog"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "contactId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": "\"contactId\" IS NOT NULL",
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "CommentModerationLog_contactId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "CommentModerationLog"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "contactInboxId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": "\"contactInboxId\" IS NOT NULL",
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "CommentModerationLog_contactInboxId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "CommentModerationLog"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
           "value": "workspaceId",
           "isExpression": false,
           "asc": true,
@@ -47645,90 +47951,6 @@
       "method": "btree",
       "concurrently": false,
       "name": "Conversation_workspaceId_lastActivityAt_id_idx",
-      "entityType": "indexes",
-      "schema": "public",
-      "table": "Conversation"
-    },
-    {
-      "nameExplicit": true,
-      "columns": [
-        {
-          "value": "workspaceId",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": null
-        },
-        {
-          "value": "assignedUserId",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": null
-        },
-        {
-          "value": "lastActivityAt",
-          "isExpression": false,
-          "asc": false,
-          "nullsFirst": false,
-          "opclass": null
-        },
-        {
-          "value": "id",
-          "isExpression": false,
-          "asc": false,
-          "nullsFirst": false,
-          "opclass": null
-        }
-      ],
-      "isUnique": false,
-      "where": "\"assignedUserId\" IS NOT NULL",
-      "with": "",
-      "method": "btree",
-      "concurrently": false,
-      "name": "Conversation_workspaceId_assignedUserId_lastActivityAt_id_idx",
-      "entityType": "indexes",
-      "schema": "public",
-      "table": "Conversation"
-    },
-    {
-      "nameExplicit": true,
-      "columns": [
-        {
-          "value": "workspaceId",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": null
-        },
-        {
-          "value": "assignedInboxTeamId",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": null
-        },
-        {
-          "value": "lastActivityAt",
-          "isExpression": false,
-          "asc": false,
-          "nullsFirst": false,
-          "opclass": null
-        },
-        {
-          "value": "id",
-          "isExpression": false,
-          "asc": false,
-          "nullsFirst": false,
-          "opclass": null
-        }
-      ],
-      "isUnique": false,
-      "where": "\"assignedInboxTeamId\" IS NOT NULL",
-      "with": "",
-      "method": "btree",
-      "concurrently": false,
-      "name": "Conversation_ws_team_lastActivity_id_idx",
       "entityType": "indexes",
       "schema": "public",
       "table": "Conversation"
@@ -54011,97 +54233,6 @@
       "entityType": "indexes",
       "schema": "public",
       "table": "MinigamePlay"
-    },
-    {
-      "nameExplicit": true,
-      "columns": [
-        {
-          "value": "tokenHash",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": null
-        }
-      ],
-      "isUnique": true,
-      "where": null,
-      "with": "",
-      "method": "btree",
-      "concurrently": false,
-      "name": "MobileRefreshToken_tokenHash_key",
-      "entityType": "indexes",
-      "schema": "public",
-      "table": "MobileRefreshToken"
-    },
-    {
-      "nameExplicit": true,
-      "columns": [
-        {
-          "value": "userId",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": null
-        }
-      ],
-      "isUnique": false,
-      "where": null,
-      "with": "",
-      "method": "btree",
-      "concurrently": false,
-      "name": "MobileRefreshToken_userId_idx",
-      "entityType": "indexes",
-      "schema": "public",
-      "table": "MobileRefreshToken"
-    },
-    {
-      "nameExplicit": true,
-      "columns": [
-        {
-          "value": "familyId",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": null
-        },
-        {
-          "value": "rotatedAt",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": null
-        }
-      ],
-      "isUnique": false,
-      "where": null,
-      "with": "",
-      "method": "btree",
-      "concurrently": false,
-      "name": "MobileRefreshToken_familyId_rotatedAt_idx",
-      "entityType": "indexes",
-      "schema": "public",
-      "table": "MobileRefreshToken"
-    },
-    {
-      "nameExplicit": true,
-      "columns": [
-        {
-          "value": "expiresAt",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": null
-        }
-      ],
-      "isUnique": false,
-      "where": null,
-      "with": "",
-      "method": "btree",
-      "concurrently": false,
-      "name": "MobileRefreshToken_expiresAt_idx",
-      "entityType": "indexes",
-      "schema": "public",
-      "table": "MobileRefreshToken"
     },
     {
       "nameExplicit": true,
@@ -61382,6 +61513,74 @@
       ],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
+      "name": "CommentModerationLog_workspaceId_Workspace_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "CommentModerationLog"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "automationId"
+      ],
+      "schemaTo": "public",
+      "tableTo": "CommentAutomation",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "CommentModerationLog_automationId_CommentAutomation_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "CommentModerationLog"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "contactId"
+      ],
+      "schemaTo": "public",
+      "tableTo": "Contact",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "CASCADE",
+      "onDelete": "SET NULL",
+      "name": "CommentModerationLog_contactId_Contact_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "CommentModerationLog"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "contactInboxId"
+      ],
+      "schemaTo": "public",
+      "tableTo": "ContactInbox",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "CASCADE",
+      "onDelete": "SET NULL",
+      "name": "CommentModerationLog_contactInboxId_ContactInbox_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "CommentModerationLog"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "workspaceId"
+      ],
+      "schemaTo": "public",
+      "tableTo": "Workspace",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
       "name": "ConnectSession_workspaceId_Workspace_id_fkey",
       "entityType": "fks",
       "schema": "public",
@@ -65538,23 +65737,6 @@
     {
       "nameExplicit": false,
       "columns": [
-        "userId"
-      ],
-      "schemaTo": "public",
-      "tableTo": "User",
-      "columnsTo": [
-        "id"
-      ],
-      "onUpdate": "CASCADE",
-      "onDelete": "CASCADE",
-      "name": "MobileRefreshToken_userId_User_id_fkey",
-      "entityType": "fks",
-      "schema": "public",
-      "table": "MobileRefreshToken"
-    },
-    {
-      "nameExplicit": false,
-      "columns": [
         "clientId"
       ],
       "schemaTo": "public",
@@ -69165,6 +69347,16 @@
         "id"
       ],
       "nameExplicit": false,
+      "name": "CommentModerationLog_pkey",
+      "schema": "public",
+      "table": "CommentModerationLog",
+      "entityType": "pks"
+    },
+    {
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
       "name": "ConnectSession_pkey",
       "schema": "public",
       "table": "ConnectSession",
@@ -70238,16 +70430,6 @@
       "name": "MinigamePlay_pkey",
       "schema": "public",
       "table": "MinigamePlay",
-      "entityType": "pks"
-    },
-    {
-      "columns": [
-        "id"
-      ],
-      "nameExplicit": false,
-      "name": "MobileRefreshToken_pkey",
-      "schema": "public",
-      "table": "MobileRefreshToken",
       "entityType": "pks"
     },
     {
@@ -71453,6 +71635,260 @@
       "entityType": "checks",
       "schema": "public",
       "table": "WorkingHoursInterval"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "MobileRefreshToken",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "MobileRefreshToken"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "createdAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "MobileRefreshToken"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "updatedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "MobileRefreshToken"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "userId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "MobileRefreshToken"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "deviceId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "MobileRefreshToken"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "familyId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "MobileRefreshToken"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "tokenHash",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "MobileRefreshToken"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "expiresAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "MobileRefreshToken"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "rotatedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "MobileRefreshToken"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "revoked",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "MobileRefreshToken"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "tokenHash",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": true,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "MobileRefreshToken_tokenHash_key",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "MobileRefreshToken"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "userId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "MobileRefreshToken_userId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "MobileRefreshToken"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "familyId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "rotatedAt",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "MobileRefreshToken_familyId_rotatedAt_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "MobileRefreshToken"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "expiresAt",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "MobileRefreshToken_expiresAt_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "MobileRefreshToken"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "userId"
+      ],
+      "schemaTo": "public",
+      "tableTo": "User",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "MobileRefreshToken_userId_User_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "MobileRefreshToken"
+    },
+    {
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "name": "MobileRefreshToken_pkey",
+      "schema": "public",
+      "table": "MobileRefreshToken",
+      "entityType": "pks"
     }
   ],
   "renames": []

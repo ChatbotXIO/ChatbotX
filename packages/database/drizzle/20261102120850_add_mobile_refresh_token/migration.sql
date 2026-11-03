@@ -11,8 +11,6 @@ CREATE TABLE "MobileRefreshToken" (
 	"revoked" timestamp(6) with time zone
 );
 --> statement-breakpoint
-CREATE INDEX "Conversation_workspaceId_assignedUserId_lastActivityAt_id_idx" ON "Conversation" ("workspaceId","assignedUserId","lastActivityAt" DESC NULLS LAST,"id" DESC NULLS LAST) WHERE "assignedUserId" IS NOT NULL;--> statement-breakpoint
-CREATE INDEX "Conversation_ws_team_lastActivity_id_idx" ON "Conversation" ("workspaceId","assignedInboxTeamId","lastActivityAt" DESC NULLS LAST,"id" DESC NULLS LAST) WHERE "assignedInboxTeamId" IS NOT NULL;--> statement-breakpoint
 CREATE UNIQUE INDEX "MobileRefreshToken_tokenHash_key" ON "MobileRefreshToken" ("tokenHash");--> statement-breakpoint
 CREATE INDEX "MobileRefreshToken_userId_idx" ON "MobileRefreshToken" ("userId");--> statement-breakpoint
 CREATE INDEX "MobileRefreshToken_familyId_rotatedAt_idx" ON "MobileRefreshToken" ("familyId","rotatedAt");--> statement-breakpoint

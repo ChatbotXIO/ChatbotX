@@ -1,6 +1,5 @@
 import { db } from "@chatbotx.io/database/client"
 import {
-  mobileRefreshTokenRepository,
   oauthAccessTokenRepository,
   oauthClientRepository,
   oauthConsentRepository,
@@ -14,6 +13,7 @@ import type {
 import { BaseService } from "../base.service"
 import { ChatbotXException } from "../errors"
 import { logger } from "../logger"
+import { mobileRefreshTokenService } from "../mobile-auth/service"
 import { userService } from "../user/service"
 import { isWorkspaceScheduledForDeletion } from "../workspace-lifecycle/predicates"
 import { isWorkspaceAdminMember } from "../workspace-member/predicates"
@@ -291,7 +291,7 @@ export class McpOAuthService extends BaseService {
       await Promise.all([
         oauthAccessTokenRepository.deleteExpired(now),
         oauthRefreshTokenRepository.deleteExpired(now),
-        mobileRefreshTokenRepository.deleteExpired(now),
+        mobileRefreshTokenService.deleteExpired(now),
       ])
     return accessTokens + refreshTokens + mobileRefreshTokens
   }

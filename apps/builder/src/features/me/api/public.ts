@@ -11,10 +11,8 @@ import {
 import { listMyWorkspaces } from "@/features/workspaces/lib/list-my-workspaces"
 import { workspaceResource } from "@/features/workspaces/schema/resource"
 import { auth } from "@/lib/auth/auth"
-import {
-  isValidWorkspaceId,
-  WORKSPACE_ID_PATTERN,
-} from "@/lib/mobile-auth/resolve-mobile-principal"
+import { logger } from "@/lib/log"
+import { isValidWorkspaceId } from "@/lib/mobile-auth/resolve-mobile-principal"
 import {
   possibleErrorsOnFindingResource,
   possibleErrorsOnListingResource,
@@ -41,7 +39,7 @@ const parseOptionalWorkspaceHeader = (headers: Headers): string | undefined => {
   if (!raw) {
     return
   }
-  if (!(WORKSPACE_ID_PATTERN.test(raw) && isValidWorkspaceId(raw))) {
+  if (!isValidWorkspaceId(raw)) {
     throw new ORPCError("BAD_REQUEST", {
       status: 400,
       message: "x-workspace-id must be a numeric workspace identifier",
@@ -153,13 +151,18 @@ export const mePublicRouter = {
           },
         })
       } catch (error) {
-        if (error instanceof APIError) {
+        if (
+          error instanceof APIError &&
+          error.statusCode >= 400 &&
+          error.statusCode < 500
+        ) {
           throw new ChatbotXException(
             error.body?.message ?? "Failed to change password",
             "changePasswordFailed",
-            400,
+            error.statusCode,
           )
         }
+        logger.error({ err: error }, "Mobile password change failed")
         throw error
       }
     }),

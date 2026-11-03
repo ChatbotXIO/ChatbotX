@@ -18,7 +18,7 @@ import {
 import { publicContactIdentifier } from "@/lib/public-api/contact-identifier"
 import {
   contactIdFor,
-  contactListScopeForCaller,
+  contactScopeForCaller,
   maskContactForCaller,
 } from "@/lib/public-api/member-scope"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
@@ -72,7 +72,7 @@ export const contactsCrudPublicRouter = {
       const result = await contactService.list({
         ...rest,
         workspaceId: context.workspace.id,
-        scope: await contactListScopeForCaller(context),
+        scope: await contactScopeForCaller(context),
         include,
         withCount,
       })
@@ -108,7 +108,7 @@ export const contactsCrudPublicRouter = {
       const result = await contactService.list({
         ...rest,
         workspaceId: context.workspace.id,
-        scope: await contactListScopeForCaller(context),
+        scope: await contactScopeForCaller(context),
         include,
         withCount,
       })
@@ -139,7 +139,7 @@ export const contactsCrudPublicRouter = {
         await contactService.count({
           ...input,
           workspaceId: context.workspace.id,
-          scope: await contactListScopeForCaller(context),
+          scope: await contactScopeForCaller(context),
         }),
     ),
 

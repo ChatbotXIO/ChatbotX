@@ -58,7 +58,7 @@ describe("rateLimitMobilePasswordGrant", () => {
     const response = await rateLimitMobilePasswordGrant(
       formPost(
         {
-          grant_type: "password",
+          grantType: "password",
           email: "agent@example.com",
           password: "x",
         },

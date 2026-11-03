@@ -17,7 +17,6 @@ export {
   buildContactPermissionScope,
   canAccessContactsSection,
   canViewContactEmailAndPhone,
-  getAssignedContactsUserId,
 } from "@chatbotx.io/business"
 export { maskContactEmailAndPhone } from "@chatbotx.io/business/contact-utils"
 export { stripContactPIIFields } from "@chatbotx.io/worker-config/contact-pii"

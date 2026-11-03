@@ -44,7 +44,7 @@ const { fakeDb, mobileRefreshTokenRepository, rows } = vi.hoisted(() => {
       row.rotatedAt = now
       return { ...row }
     },
-    findByHash: (tokenHash: string) => {
+    lockFamilyByHash: (tokenHash: string) => {
       const row = rows.find((candidate) => candidate.tokenHash === tokenHash)
       return row ? { ...row } : null
     },
@@ -176,6 +176,12 @@ describe("mobileRefreshTokenService", () => {
       throw new Error("expected rotated")
     }
 
+    expect(
+      await mobileRefreshTokenService.rotate({ token: first.token }),
+    ).toEqual({ kind: "invalid" })
+    expect(rows.every((row) => row.revoked === null)).toBe(true)
+
+    rows[0].rotatedAt = new Date(Date.now() - 30_001)
     const replay = await mobileRefreshTokenService.rotate({
       token: first.token,
     })
@@ -234,7 +240,12 @@ describe("mobileRefreshTokenService", () => {
     const hashes = rows.map((row) => row.tokenHash)
     expect(hashes).not.toContain(await hashToken(first.token))
     expect(rows).toHaveLength(2)
-    // The recently spent one is still there to catch a replay.
+    const secondHash = await hashToken(second.refreshToken.token)
+    const spentSecond = rows.find((row) => row.tokenHash === secondHash)
+    if (!spentSecond) {
+      throw new Error("expected spent refresh token")
+    }
+    spentSecond.rotatedAt = new Date(Date.now() - 30_001)
     await expect(
       mobileRefreshTokenService.rotate({ token: second.refreshToken.token }),
     ).resolves.toMatchObject({ kind: "reused" })

@@ -8,6 +8,7 @@ import {
   isNull,
   lt,
   or,
+  sql,
 } from "../../client"
 import { mobileRefreshTokenModel } from "../../schema"
 import type { MobileRefreshTokenModel } from "../../types"
@@ -58,20 +59,22 @@ class MobileRefreshTokenRepository {
     return row ?? null
   }
 
-  async revokeFamily(
-    familyId: string,
-    now: Date,
+  /**
+   * Serializes mutations for a token family until the surrounding transaction
+   * ends. Re-reads after acquiring the lock so callers never act on a stale row.
+   */
+  async lockFamilyByHash(
+    tokenHash: string,
     tx: DatabaseClient = db,
-  ): Promise<void> {
-    await tx
-      .update(mobileRefreshTokenModel)
-      .set({ revoked: now })
-      .where(
-        and(
-          eq(mobileRefreshTokenModel.familyId, familyId),
-          isNull(mobileRefreshTokenModel.revoked),
-        ),
-      )
+  ): Promise<MobileRefreshTokenModel | null> {
+    const row = await this.findByHash(tokenHash, tx)
+    if (!row) {
+      return null
+    }
+    await tx.execute(
+      sql`select pg_advisory_xact_lock(hashtextextended(${row.familyId}, 0))`,
+    )
+    return await this.findByHash(tokenHash, tx)
   }
 
   async revokeFamilyByHash(

@@ -7,6 +7,7 @@ import type { HTTPMethod } from "@orpc/server"
 import { ORPCError } from "@orpc/server"
 import type { RequestApiToken } from "@/middlewares/context"
 import { isMobileMemberRoute } from "./member-route-allowlist"
+import { mobileCredentialId } from "./mobile-credential-id"
 import {
   authenticateMobileBearer,
   deriveMemberScopes,
@@ -62,7 +63,7 @@ export const resolveMobileWorkspacePrincipal = async (props: {
     workspace,
     member,
     apiToken: {
-      id: `mobile:${user.id}:${deviceId ?? "-"}`,
+      id: mobileCredentialId({ user, deviceId, workspace }),
       workspaceId: workspace.id,
       // Members have no read-only mode; what they may do is bounded by the
       // derived `scopes` and, per route, by member scoping in the handler.

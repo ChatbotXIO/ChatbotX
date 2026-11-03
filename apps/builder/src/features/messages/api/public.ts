@@ -2,7 +2,6 @@ import {
   conversationService,
   messageService,
   resolveTemplateParams,
-  userService,
 } from "@chatbotx.io/business"
 import { notFoundException } from "@chatbotx.io/business/errors"
 import {
@@ -37,7 +36,11 @@ import {
   possibleErrorsOnMutatingResource,
   productMessageUnresolvable,
 } from "@/lib/orpc/orpc-error-helper"
-import { assertConversationAccessForCaller } from "@/lib/public-api/member-scope"
+import {
+  assertConversationAccessForCaller,
+  assertMemberMayStartFlow,
+  resolveSenderForCaller,
+} from "@/lib/public-api/member-scope"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
 import {
   changeMessageAttributesPublicResponse,
@@ -236,10 +239,10 @@ export const messagesPublicRouter = {
     .handler(async ({ context, input }) => {
       const workspaceId = context.workspace.id
 
-      await assertConversationAccessForCaller(context, input.conversationId)
-      const conversation = await conversationService.findByOrFail({
-        where: { id: input.conversationId, workspaceId },
-      })
+      const conversation = await assertConversationAccessForCaller(
+        context,
+        input.conversationId,
+      )
 
       const inboxId =
         "inboxId" in input && input.inboxId ? input.inboxId : undefined
@@ -249,12 +252,14 @@ export const messagesPublicRouter = {
           workspaceId,
           inboxId,
         })
+      await assertMemberMayStartFlow(
+        context,
+        "flowId" in input ? input.flowId : undefined,
+      )
 
       // A member's message is attributed to them (like the web inbox); a
       // workspace token has no user and sends unattributed, as before.
-      const user = context.member
-        ? await userService.findByIdOrFail(context.member.userId)
-        : undefined
+      const user = resolveSenderForCaller(context)
 
       return messageService.createOutgoing({
         conversation,

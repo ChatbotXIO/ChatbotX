@@ -9,6 +9,7 @@ export const MOBILE_REFRESH_TOKEN_TTL_MS = 30 * 24 * 60 * 60 * 1000
 // signed-in device rotates about every 10 minutes, so without a bound a family
 // would grow by ~144 rows a day.
 const SPENT_TOKEN_RETENTION_MS = 24 * 60 * 60 * 1000
+const ROTATION_GRACE_MS = 30 * 1000
 
 const REFRESH_TOKEN_PREFIX = "cbx_mrt_"
 const REFRESH_TOKEN_BYTES = 32
@@ -83,6 +84,14 @@ class MobileRefreshTokenService {
   async rotate(props: { token: string }): Promise<MobileRefreshRotation> {
     const tokenHash = await hashToken(props.token)
     return await db.transaction(async (tx) => {
+      const existing = await mobileRefreshTokenRepository.lockFamilyByHash(
+        tokenHash,
+        tx,
+      )
+      if (!existing) {
+        return { kind: "invalid" as const }
+      }
+
       const now = new Date()
       const spent = await mobileRefreshTokenRepository.spendActive(
         tokenHash,
@@ -110,11 +119,10 @@ class MobileRefreshTokenService {
         }
       }
 
-      const existing = await mobileRefreshTokenRepository.findByHash(
-        tokenHash,
-        tx,
-      )
-      if (!existing) {
+      if (
+        existing.rotatedAt &&
+        now.getTime() - existing.rotatedAt.getTime() <= ROTATION_GRACE_MS
+      ) {
         return { kind: "invalid" as const }
       }
       if (existing.rotatedAt || existing.revoked) {
@@ -136,10 +144,25 @@ class MobileRefreshTokenService {
 
   /** Logout: revokes the family a presented token belongs to. Unknown tokens are a no-op. */
   async revokeByToken(props: { token: string }): Promise<void> {
-    await mobileRefreshTokenRepository.revokeFamilyByHash(
-      await hashToken(props.token),
-      new Date(),
-    )
+    const tokenHash = await hashToken(props.token)
+    await db.transaction(async (tx) => {
+      const existing = await mobileRefreshTokenRepository.lockFamilyByHash(
+        tokenHash,
+        tx,
+      )
+      if (!existing) {
+        return
+      }
+      await mobileRefreshTokenRepository.revokeFamilyByHash(
+        tokenHash,
+        new Date(),
+        tx,
+      )
+    })
+  }
+
+  async deleteExpired(now = new Date()): Promise<number> {
+    return await mobileRefreshTokenRepository.deleteExpired(now)
   }
 
   /** Password change/reset: every device must sign in again. */

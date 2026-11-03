@@ -48,6 +48,7 @@ const messageService = {
   findByIdWithUrls: vi.fn(),
   createOutgoing: vi.fn(),
 }
+const flowService = { assertEnabledInInbox: vi.fn() }
 const userService = { findByIdOrFail: vi.fn() }
 const inboxTeamService = { listTeamIdsByUserId: vi.fn() }
 
@@ -126,6 +127,7 @@ vi.mock("@chatbotx.io/business", () => ({
   conversationMemberScope,
   conversationService,
   messageService,
+  flowService,
   userService,
   inboxTeamService,
   resolveTemplateParams: vi.fn(),
@@ -368,6 +370,9 @@ describe("conversations.get for a mobile member", () => {
     ["their own", { assignedUserId: ME }],
     ["their team's", { assignedInboxTeamId: "team-1" }],
   ])("%s conversation is returned, with PII masked", async (_name, assignment) => {
+    conversationService.findByOrFail.mockResolvedValue(
+      conversationRow(assignment),
+    )
     findConversation.mockResolvedValue(found(assignment))
 
     const result = await get.handler?.({
@@ -527,11 +532,14 @@ describe("messages routes for a mobile member", () => {
     messageService.createOutgoing.mockResolvedValue({ id: "m1" })
 
     await findProcedure("POST", base).handler?.({
-      context: memberContext(ASSIGNED_ONLY),
+      context: {
+        ...memberContext(ASSIGNED_ONLY),
+        user: { id: ME, name: "Agent" },
+      },
       input,
     })
 
-    expect(userService.findByIdOrFail).toHaveBeenCalledWith(ME)
+    expect(userService.findByIdOrFail).not.toHaveBeenCalled()
     expect(messageService.createOutgoing).toHaveBeenCalledWith(
       expect.objectContaining({ user: { id: ME, name: "Agent" } }),
     )

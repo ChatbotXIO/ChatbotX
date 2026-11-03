@@ -1,7 +1,9 @@
-import { resolveBroadcastSecret } from "@chatbotx.io/business"
+import {
+  conversationMemberScope,
+  resolveBroadcastSecret,
+} from "@chatbotx.io/business"
 import type { WorkspaceMemberPermissions } from "@chatbotx.io/database/partials"
 import { signMemberConnectToken } from "@chatbotx.io/realtime-protocol/auth"
-import { resolveMemberChatScope } from "./member-chat-scope"
 
 /**
  * Mints the short-lived (60s) realtime connect token bound to
@@ -15,7 +17,11 @@ export const mintMemberConnectToken = async (input: {
   permissions: WorkspaceMemberPermissions
   issuedAtMs: number
 }): Promise<string> => {
-  const { chatScope, teamIds } = await resolveMemberChatScope(input)
+  const {
+    userId: _userId,
+    chatScope,
+    teamIds,
+  } = await conversationMemberScope.resolve(input)
   return await signMemberConnectToken(
     {
       workspaceId: input.workspaceId,

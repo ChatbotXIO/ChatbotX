@@ -1351,14 +1351,15 @@ function isContactWithinAccessScope(
     | undefined,
 ): boolean {
   if (
-    !(
-      accessScope?.restrictToAssignedUserId ||
-      accessScope?.restrictToTeamIds?.length
-    )
+    accessScope?.restrictToAssignedUserId === undefined &&
+    accessScope?.restrictToTeamIds === undefined
   ) {
     return true
   }
-  if (conversation?.assignedUserId === accessScope.restrictToAssignedUserId) {
+  if (
+    accessScope.restrictToAssignedUserId !== undefined &&
+    conversation?.assignedUserId === accessScope.restrictToAssignedUserId
+  ) {
     return true
   }
   return Boolean(
@@ -1372,10 +1373,8 @@ function withContactAccessScope<TWhere extends Record<string, unknown>>(
   accessScope?: ContactAccessScope,
 ) {
   if (
-    !(
-      accessScope?.restrictToAssignedUserId ||
-      accessScope?.restrictToTeamIds?.length
-    )
+    accessScope?.restrictToAssignedUserId === undefined &&
+    accessScope?.restrictToTeamIds === undefined
   ) {
     return where
   }
@@ -1387,12 +1386,12 @@ function withContactAccessScope<TWhere extends Record<string, unknown>>(
       ? where.conversation
       : {}
   const assignmentScopes = [
-    ...(accessScope.restrictToAssignedUserId
-      ? [{ assignedUserId: accessScope.restrictToAssignedUserId }]
-      : []),
-    ...(accessScope.restrictToTeamIds?.length
-      ? [{ assignedInboxTeamId: { in: accessScope.restrictToTeamIds } }]
-      : []),
+    ...(accessScope.restrictToAssignedUserId === undefined
+      ? []
+      : [{ assignedUserId: accessScope.restrictToAssignedUserId }]),
+    ...(accessScope.restrictToTeamIds === undefined
+      ? []
+      : [{ assignedInboxTeamId: { in: accessScope.restrictToTeamIds } }]),
   ]
 
   return {

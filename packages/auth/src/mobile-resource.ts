@@ -25,11 +25,6 @@ export class MobileTokenVerificationUnavailableError extends Error {
   }
 }
 
-export {
-  isMobileAccessTokenCandidate,
-  peekJwtAudiences,
-} from "./mobile-resource-candidate"
-
 const isInvalidTokenError = (error: unknown): boolean => {
   if (isAPIError(error)) {
     return error.status === "UNAUTHORIZED"

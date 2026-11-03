@@ -226,6 +226,7 @@ describe("contacts.list / count / search for a mobile member", () => {
     expect(call.scope).toEqual({
       canViewEmailAndPhone: false,
       restrictToAssignedUserId: "user-7",
+      restrictToTeamIds: [],
     })
   })
 
@@ -286,7 +287,10 @@ describe("per-contact routes for a mobile member", () => {
     expect(findByIdOrFail).toHaveBeenCalledWith({
       workspaceId: "workspace-1",
       id: "contact-1",
-      accessScope: { restrictToAssignedUserId: "user-7" },
+      accessScope: {
+        restrictToAssignedUserId: "user-7",
+        restrictToTeamIds: [],
+      },
     })
     // No emailAndPhone permission: PII is masked.
     expect(result).toMatchObject({ email: null, phoneNumber: null })
