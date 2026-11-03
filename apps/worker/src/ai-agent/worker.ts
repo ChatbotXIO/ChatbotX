@@ -35,11 +35,23 @@ import { processPendingEmbedding } from "./handlers/process-pending-embeddings"
 import { handleSummarizeConversation } from "./handlers/summarize-conversation"
 import { markEmbeddingChunkFailed } from "./lib/mark-embedding-chunk-failed"
 
+function runInboundAIJob<T>(
+  jobType: string,
+  callback: () => Promise<T>,
+): Promise<T | undefined> {
+  return runWithOrphanedIntegrationCleanup(
+    { isInbound: true, jobType },
+    callback,
+  )
+}
+
 async function processAutomatedResponseWithWebhookContext(
   data: AIJobProcessAutomatedResponse["data"],
 ): Promise<void> {
   await runWithWebhookExecutionContext({ source: "webhook" }, () =>
-    runWithOrphanedIntegrationCleanup(() => processAutomatedResponse(data)),
+    runInboundAIJob(AIJobAction.processAutomatedResponse, () =>
+      processAutomatedResponse(data),
+    ),
   )
 }
 
@@ -47,7 +59,9 @@ async function processHandoffReentryWithWebhookContext(
   data: AIJobProcessHandoffReentry["data"],
 ): Promise<void> {
   await runWithWebhookExecutionContext({ source: "webhook" }, () =>
-    runWithOrphanedIntegrationCleanup(() => processHandoffReentry(data)),
+    runInboundAIJob(AIJobAction.processHandoffReentry, () =>
+      processHandoffReentry(data),
+    ),
   )
 }
 
@@ -108,7 +122,7 @@ function startAIAgentWorker() {
               await processHandoffReentryWithWebhookContext(jobData.data)
               return
             case AIJobAction.commentAIReply:
-              await runWithOrphanedIntegrationCleanup(() =>
+              await runInboundAIJob(AIJobAction.commentAIReply, () =>
                 processCommentAIReply(jobData.data, !isFinalAttempt(job)),
               )
               return

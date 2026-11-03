@@ -1,11 +1,11 @@
-import { UnrecoverableError } from "bullmq"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const mocks = vi.hoisted(() => ({
   cleanupOrphanedIntegrationOnce: vi.fn().mockResolvedValue(undefined),
-  handleOrphanedIntegration: vi.fn().mockResolvedValue(undefined),
   isChannelOriginatedJob: vi.fn().mockReturnValue(false),
-  loggerInfo: vi.fn(),
+  isInboundWebhookJob: vi.fn().mockReturnValue(false),
+  loggerError: vi.fn(),
+  loggerWarn: vi.fn(),
   runWithWebhookExecutionContext: vi.fn(
     (_context: unknown, callback: () => Promise<unknown>) => callback(),
   ),
@@ -17,11 +17,13 @@ vi.mock("@chatbotx.io/events/context", () => ({
 
 vi.mock("../src/integration/channel-origin", () => ({
   isChannelOriginatedJob: mocks.isChannelOriginatedJob,
+  isInboundWebhookJob: mocks.isInboundWebhookJob,
 }))
 
 vi.mock("../src/lib/logger", () => ({
   logger: {
-    info: mocks.loggerInfo,
+    error: mocks.loggerError,
+    warn: mocks.loggerWarn,
   },
 }))
 
@@ -40,7 +42,6 @@ vi.mock("../src/services/orphaned-integration-cleanup", () => {
 
   return {
     cleanupOrphanedIntegrationOnce: mocks.cleanupOrphanedIntegrationOnce,
-    handleOrphanedIntegration: mocks.handleOrphanedIntegration,
     IntegrationNotFoundError,
   }
 })
@@ -55,9 +56,8 @@ const { IntegrationNotFoundError } = await import(
 describe("runIntegrationJobWithWebhookContext orphan handling", () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    mocks.cleanupOrphanedIntegrationOnce.mockResolvedValue(undefined)
-    mocks.handleOrphanedIntegration.mockResolvedValue(undefined)
     mocks.isChannelOriginatedJob.mockReturnValue(false)
+    mocks.isInboundWebhookJob.mockReturnValue(false)
     mocks.runWithWebhookExecutionContext.mockImplementation(
       (_context: unknown, callback: () => Promise<unknown>) => callback(),
     )
@@ -68,66 +68,84 @@ describe("runIntegrationJobWithWebhookContext orphan handling", () => {
       runIntegrationJobWithWebhookContext({} as never, async () => "ok"),
     ).resolves.toBe("ok")
 
-    expect(mocks.handleOrphanedIntegration).not.toHaveBeenCalled()
+    expect(mocks.cleanupOrphanedIntegrationOnce).not.toHaveBeenCalled()
   })
 
-  test("cleans orphaned integration once and rethrows as unrecoverable", async () => {
+  test("completes an internal job for a missing Messenger integration", async () => {
     const error = new IntegrationNotFoundError("messenger" as never, "page-1")
+    const jobData = { type: "sendSequenceFlow" } as never
 
     await expect(
-      runIntegrationJobWithWebhookContext({} as never, () =>
-        Promise.reject(error),
-      ),
-    ).rejects.toBeInstanceOf(UnrecoverableError)
-
-    expect(mocks.handleOrphanedIntegration).toHaveBeenCalledWith(error)
-    expect(mocks.handleOrphanedIntegration).toHaveBeenCalledTimes(1)
-  })
-
-  test("completes a channel-originated job for a missing Messenger integration", async () => {
-    mocks.isChannelOriginatedJob.mockReturnValue(true)
-    const error = new IntegrationNotFoundError("messenger" as never, "page-1")
-
-    await expect(
-      runIntegrationJobWithWebhookContext({} as never, () =>
-        Promise.reject(error),
-      ),
+      runIntegrationJobWithWebhookContext(jobData, () => Promise.reject(error)),
     ).resolves.toBeUndefined()
 
     expect(mocks.cleanupOrphanedIntegrationOnce).toHaveBeenCalledWith(error)
-    expect(mocks.loggerInfo).toHaveBeenCalledWith(
-      { channel: "messenger", identifier: "page-1" },
+    expect(mocks.loggerError).toHaveBeenCalledWith(
+      {
+        channel: "messenger",
+        err: error,
+        identifier: "page-1",
+        jobType: "sendSequenceFlow",
+      },
+      "Integration not found; completing job without retry",
+    )
+  })
+
+  test("completes an inbound job for a missing Messenger integration", async () => {
+    mocks.isChannelOriginatedJob.mockReturnValue(true)
+    mocks.isInboundWebhookJob.mockReturnValue(true)
+    const error = new IntegrationNotFoundError("messenger" as never, "page-1")
+    const jobData = { type: "incomingMessage" } as never
+
+    await expect(
+      runIntegrationJobWithWebhookContext(jobData, () => Promise.reject(error)),
+    ).resolves.toBeUndefined()
+
+    expect(mocks.cleanupOrphanedIntegrationOnce).toHaveBeenCalledWith(error)
+    expect(mocks.loggerWarn).toHaveBeenCalledWith(
+      {
+        channel: "messenger",
+        identifier: "page-1",
+        jobType: "incomingMessage",
+      },
       "Integration not found for inbound event; skipping job",
     )
   })
 
-  test("completes a channel-originated job for a missing Zalo integration", async () => {
-    mocks.isChannelOriginatedJob.mockReturnValue(true)
+  test("completes contactMarkAsRead for a missing Zalo integration", async () => {
+    mocks.isInboundWebhookJob.mockReturnValue(true)
     const error = new IntegrationNotFoundError("zalo" as never, "oa-1")
+    const jobData = { type: "contactMarkAsRead" } as never
 
     await expect(
-      runIntegrationJobWithWebhookContext({} as never, () =>
-        Promise.reject(error),
-      ),
+      runIntegrationJobWithWebhookContext(jobData, () => Promise.reject(error)),
     ).resolves.toBeUndefined()
 
     expect(mocks.cleanupOrphanedIntegrationOnce).toHaveBeenCalledWith(error)
-    expect(mocks.loggerInfo).toHaveBeenCalledWith(
-      { channel: "zalo", identifier: "oa-1" },
-      expect.any(String),
+    expect(mocks.loggerWarn).toHaveBeenCalledWith(
+      { channel: "zalo", identifier: "oa-1", jobType: "contactMarkAsRead" },
+      "Integration not found for inbound event; skipping job",
     )
   })
 
-  test("still fails an internal job for a missing Zalo integration", async () => {
+  test("completes an internal job for a missing Zalo integration", async () => {
     const error = new IntegrationNotFoundError("zalo" as never, "oa-1")
+    const jobData = { type: "sendSequenceFlow" } as never
 
     await expect(
-      runIntegrationJobWithWebhookContext({} as never, () =>
-        Promise.reject(error),
-      ),
-    ).rejects.toBeInstanceOf(UnrecoverableError)
+      runIntegrationJobWithWebhookContext(jobData, () => Promise.reject(error)),
+    ).resolves.toBeUndefined()
 
-    expect(mocks.handleOrphanedIntegration).toHaveBeenCalledWith(error)
+    expect(mocks.cleanupOrphanedIntegrationOnce).toHaveBeenCalledWith(error)
+    expect(mocks.loggerError).toHaveBeenCalledWith(
+      {
+        channel: "zalo",
+        err: error,
+        identifier: "oa-1",
+        jobType: "sendSequenceFlow",
+      },
+      "Integration not found; completing job without retry",
+    )
   })
 
   test("passes through unrelated errors", async () => {
@@ -139,6 +157,6 @@ describe("runIntegrationJobWithWebhookContext orphan handling", () => {
       ),
     ).rejects.toBe(error)
 
-    expect(mocks.handleOrphanedIntegration).not.toHaveBeenCalled()
+    expect(mocks.cleanupOrphanedIntegrationOnce).not.toHaveBeenCalled()
   })
 })

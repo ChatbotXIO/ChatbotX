@@ -128,11 +128,10 @@ export async function processCommentAIReply(
 /**
  * BullMQ will not run this job again after the current attempt.
  *
- * `willRetryOnThrow` alone is not enough. `runWithOrphanedIntegrationCleanup`
- * turns an `IntegrationNotFoundError` into a BullMQ `UnrecoverableError`, but it
- * wraps this handler from the *outside* (`ai-agent/worker.ts`), so the catch
- * here only ever sees the original error — and an attempt that is nominally
- * "1 of 2" is in fact the last one.
+ * `willRetryOnThrow` alone is not enough. The outer
+ * `runWithOrphanedIntegrationCleanup` completes an
+ * `IntegrationNotFoundError` after this handler rethrows it, so this catch must
+ * settle the terminal failure even when BullMQ has attempts remaining.
  */
 function isTerminalAIReplyFailure(
   error: unknown,

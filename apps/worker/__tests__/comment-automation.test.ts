@@ -2700,9 +2700,8 @@ describe("processCommentAIReply", () => {
       expect(mockGenerateAIReplyText).not.toHaveBeenCalled()
     })
 
-    // `runWithOrphanedIntegrationCleanup` converts this into a BullMQ
-    // `UnrecoverableError` from outside this handler, so the attempt counter
-    // still says "retry coming" while BullMQ will in fact never run it again.
+    // The worker completes this rejected orphaned-integration job without retry,
+    // while this handler records the failed event before it propagates the error.
     test("an orphaned integration is terminal even on a non-final attempt", async () => {
       mockIdentifyInboxAndIntegrationAuth.mockRejectedValue(
         new IntegrationNotFoundError("messenger" as never, PAGE_ID),

@@ -2,8 +2,10 @@ import { getAuditActor } from "@chatbotx.io/business/audit"
 import { beforeAll, beforeEach, describe, expect, test, vi } from "vitest"
 
 const mocks = vi.hoisted(() => ({
+  cleanupOrphanedIntegrationOnce: vi.fn(),
   ensureBootstrapped: vi.fn(async () => undefined),
-  handleOrphanedIntegration: vi.fn(),
+  loggerError: vi.fn(),
+  loggerWarn: vi.fn(),
   heavyQueueAdd: vi.fn(),
   isBlockedWorkspace: vi.fn(),
   processAutomatedResponse: vi.fn(),
@@ -91,10 +93,10 @@ vi.mock("../src/lib/is-blocked-workspace", () => ({
 vi.mock("../src/lib/logger", () => ({
   logger: {
     debug: vi.fn(),
-    error: vi.fn(),
+    error: mocks.loggerError,
     fatal: vi.fn(),
     info: vi.fn(),
-    warn: vi.fn(),
+    warn: mocks.loggerWarn,
   },
 }))
 vi.mock("../src/lib/resolve-workspace-id", () => ({
@@ -114,8 +116,17 @@ vi.mock("../src/integration/handlers/story-reply-automation", () => ({
   processStoryMentionAutomation: mocks.processStoryMentionAutomation,
 }))
 vi.mock("../src/services/orphaned-integration-cleanup", () => ({
-  handleOrphanedIntegration: mocks.handleOrphanedIntegration,
-  IntegrationNotFoundError: class IntegrationNotFoundError extends Error {},
+  cleanupOrphanedIntegrationOnce: mocks.cleanupOrphanedIntegrationOnce,
+  IntegrationNotFoundError: class IntegrationNotFoundError extends Error {
+    readonly channel: string
+    readonly identifier: string
+
+    constructor(channel: string, identifier: string) {
+      super(`Integration not found: ${channel} ${identifier}`)
+      this.channel = channel
+      this.identifier = identifier
+    }
+  },
 }))
 vi.mock("../src/ai-agent/handlers/process-conversation-source", () => ({
   processConversationSource: vi.fn(),
@@ -309,12 +320,13 @@ describe("ai-agent worker audit context", () => {
     expect(mocks.processAutomatedResponse).not.toHaveBeenCalled()
   })
 
-  test("marks orphaned channel integrations as unrecoverable", async () => {
+  test("completes orphaned channel integrations without retry", async () => {
     const { IntegrationNotFoundError } = await import(
       "../src/services/orphaned-integration-cleanup"
     )
     const orphanedIntegrationError = new IntegrationNotFoundError(
-      "integration missing",
+      "messenger",
+      "page-1",
     )
     mocks.processAutomatedResponse.mockRejectedValue(orphanedIntegrationError)
 
@@ -330,19 +342,67 @@ describe("ai-agent worker audit context", () => {
           },
         },
       }),
-    ).rejects.toMatchObject({ name: "UnrecoverableError" })
+    ).resolves.toBeUndefined()
 
-    expect(mocks.handleOrphanedIntegration).toHaveBeenCalledWith(
+    expect(mocks.cleanupOrphanedIntegrationOnce).toHaveBeenCalledWith(
       orphanedIntegrationError,
     )
+    expect(mocks.loggerWarn).toHaveBeenCalledWith(
+      {
+        channel: "messenger",
+        identifier: "page-1",
+        jobType: "processAutomatedResponse",
+      },
+      "Integration not found for inbound event; skipping job",
+    )
+    expect(mocks.loggerError).not.toHaveBeenCalled()
   })
 
-  test("marks orphaned comment AI integrations as unrecoverable", async () => {
+  test("completes orphaned handoff re-entry integrations without retry", async () => {
     const { IntegrationNotFoundError } = await import(
       "../src/services/orphaned-integration-cleanup"
     )
     const orphanedIntegrationError = new IntegrationNotFoundError(
-      "integration missing",
+      "messenger",
+      "page-1",
+    )
+    mocks.processHandoffReentry.mockRejectedValueOnce(orphanedIntegrationError)
+
+    await expect(
+      mocks.processJob?.({
+        id: "job-orphaned-handoff-reentry",
+        data: {
+          type: "processHandoffReentry",
+          data: {
+            conversationId: "conversation-1",
+            contactInboxId: "contact-inbox-1",
+            messageId: "message-1",
+          },
+        },
+      }),
+    ).resolves.toBeUndefined()
+
+    expect(mocks.cleanupOrphanedIntegrationOnce).toHaveBeenCalledWith(
+      orphanedIntegrationError,
+    )
+    expect(mocks.loggerWarn).toHaveBeenCalledWith(
+      {
+        channel: "messenger",
+        identifier: "page-1",
+        jobType: "processHandoffReentry",
+      },
+      "Integration not found for inbound event; skipping job",
+    )
+    expect(mocks.loggerError).not.toHaveBeenCalled()
+  })
+
+  test("completes orphaned comment AI integrations without retry", async () => {
+    const { IntegrationNotFoundError } = await import(
+      "../src/services/orphaned-integration-cleanup"
+    )
+    const orphanedIntegrationError = new IntegrationNotFoundError(
+      "messenger",
+      "page-1",
     )
     mocks.processCommentAIReply.mockRejectedValueOnce(orphanedIntegrationError)
 
@@ -368,10 +428,19 @@ describe("ai-agent worker audit context", () => {
           },
         },
       }),
-    ).rejects.toMatchObject({ name: "UnrecoverableError" })
+    ).resolves.toBeUndefined()
 
-    expect(mocks.handleOrphanedIntegration).toHaveBeenCalledWith(
+    expect(mocks.cleanupOrphanedIntegrationOnce).toHaveBeenCalledWith(
       orphanedIntegrationError,
     )
+    expect(mocks.loggerWarn).toHaveBeenCalledWith(
+      {
+        channel: "messenger",
+        identifier: "page-1",
+        jobType: "commentAIReply",
+      },
+      "Integration not found for inbound event; skipping job",
+    )
+    expect(mocks.loggerError).not.toHaveBeenCalled()
   })
 })

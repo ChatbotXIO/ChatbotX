@@ -16,10 +16,34 @@ const CHANNEL_ORIGINATED_JOB_TYPES: ReadonlySet<string> = new Set([
   IntegrationJobAction.threadControlEvent,
 ])
 
+const INBOUND_WEBHOOK_JOB_TYPES: ReadonlySet<string> = new Set([
+  IntegrationJobAction.contactMarkAsRead,
+  IntegrationJobAction.channelAudienceEvent,
+  IntegrationJobAction.messageReaction,
+  IntegrationJobAction.messageStatus,
+  IntegrationJobAction.deleteIncomingMessage,
+  IntegrationJobAction.updateIncomingComment,
+  IntegrationJobAction.deleteIncomingComment,
+  IntegrationJobAction.processLeadgen,
+  IntegrationJobAction.processMarketingMessageWebhook,
+  IntegrationJobAction.tiktokHighIntentComment,
+  IntegrationJobAction.adsAutomaticEvent,
+  IntegrationJobAction.whatsappIdentityChange,
+  IntegrationJobAction.whatsappCallEvent,
+  IntegrationJobAction.coexistWhatsappBuffer,
+])
+
 export function isChannelOriginatedJob(jobData: IntegrationJobData): boolean {
   return (
     CHANNEL_ORIGINATED_JOB_TYPES.has(jobData.type) ||
     (jobData.type === IntegrationJobAction.sendFlow &&
       jobData.data.origin === "channel")
+  )
+}
+
+export function isInboundWebhookJob(jobData: IntegrationJobData): boolean {
+  return (
+    INBOUND_WEBHOOK_JOB_TYPES.has(jobData.type) ||
+    isChannelOriginatedJob(jobData)
   )
 }

@@ -70,7 +70,7 @@ const ORPHAN_CLEANUP_THROTTLE_SECONDS = 3600
 /**
  * Throttles best-effort orphaned integration cleanup so repeated webhooks do
  * not repeatedly call the platform API. Redis failures intentionally preserve
- * the inbound job's successful completion.
+ * the orphaned job's successful completion.
  */
 export async function cleanupOrphanedIntegrationOnce(
   error: IntegrationNotFoundError,
@@ -106,7 +106,8 @@ export async function cleanupOrphanedIntegrationOnce(
 
 /**
  * Best-effort cleanup for a webhook that keeps arriving after its integration
- * row was deleted. Never throws; callers may run it inline.
+ * row was deleted. Never throws. Reached through the throttled
+ * `cleanupOrphanedIntegrationOnce`; exported for its unit tests.
  */
 export async function handleOrphanedIntegration(
   error: IntegrationNotFoundError,
