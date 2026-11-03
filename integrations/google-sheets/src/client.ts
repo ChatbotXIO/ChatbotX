@@ -1,6 +1,8 @@
 import type { Oauth2AuthValue } from "@chatbotx.io/sdk"
 import { OAuth2Client } from "google-auth-library"
-import { google } from "googleapis"
+// Import the one API instead of the `googleapis` barrel, which loads every
+// Google API (~60MB heap at runtime, ~165MB of type files for `tsc`).
+import { sheets } from "googleapis/build/src/apis/sheets/index.js"
 import { GOOGLE_SHEETS_SCOPES } from "./constants"
 import type { GoogleSheetsConfig } from "./schemas"
 
@@ -37,7 +39,7 @@ export function generateAuthUrl(props: GoogleSheetsConfig): string {
 export function getSheetsClient(props: Oauth2AuthValue) {
   const client = getClient(props)
 
-  return google.sheets({ version: "v4", auth: client })
+  return sheets({ version: "v4", auth: client })
 }
 
 export async function revokeToken(auth: Oauth2AuthValue): Promise<void> {
