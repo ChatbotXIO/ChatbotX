@@ -91,6 +91,7 @@ const withContext = (
   user,
   mobileDeviceId: "install-1",
   headers: new Headers(headers),
+  resHeaders: new Headers(),
   ...extra,
 })
 
@@ -204,9 +205,10 @@ describe("POST /v1/me/password", () => {
 
   test("changes the password of the token's user and returns the fresh token pair", async () => {
     mocks.mobileChangePassword.mockResolvedValue(tokens)
+    const context = withContext()
 
     const result = await change().handler?.({
-      context: withContext(),
+      context,
       input: { currentPassword: "old-password", newPassword: "new-password-1" },
     })
 
@@ -218,6 +220,8 @@ describe("POST /v1/me/password", () => {
         deviceId: "install-1",
       },
     })
+    expect(context.resHeaders.get("cache-control")).toBe("no-store")
+    expect(context.resHeaders.get("pragma")).toBe("no-cache")
     expect(result).toBe(tokens)
   })
 

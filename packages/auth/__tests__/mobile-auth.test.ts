@@ -7,94 +7,59 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 const ISSUER = "https://app.example.com"
 const AUDIENCE = "https://app.example.com/api"
 const PASSWORD = "correct-horse-battery"
+const PKCE_VERIFIER = "a".repeat(64)
 
-type VerificationRow = {
-  identifier: string
-  value: string
-  expiresAt: Date
-}
 type RefreshRecord = { userId: string; deviceId: string; spent: boolean }
 
-const { verificationRows, refreshTokens, refreshService, userService } =
-  vi.hoisted(() => {
-    const verificationRows: VerificationRow[] = []
-    const refreshTokens = new Map<string, RefreshRecord>()
-    let counter = 0
-    const issue = (props: { userId: string; deviceId: string }) => {
-      const token = `rt-${++counter}`
-      refreshTokens.set(token, {
-        userId: props.userId,
-        deviceId: props.deviceId,
-        spent: false,
-      })
-      return Promise.resolve({
-        token,
-        expiresAt: new Date(Date.now() + 86_400_000),
-      })
-    }
-    return {
-      verificationRows,
-      refreshTokens,
-      refreshService: {
-        issue: vi.fn(issue),
-        rotate: vi.fn(async ({ token }: { token: string }) => {
-          const record = refreshTokens.get(token)
-          if (!record) {
-            return { kind: "invalid" as const }
-          }
-          if (record.spent) {
-            return {
-              kind: "reused" as const,
-              userId: record.userId,
-              deviceId: record.deviceId,
-            }
-          }
-          record.spent = true
+const { refreshTokens, refreshService, userService } = vi.hoisted(() => {
+  const refreshTokens = new Map<string, RefreshRecord>()
+  let counter = 0
+  const issue = (props: { userId: string; deviceId: string }) => {
+    const token = `rt-${++counter}`
+    refreshTokens.set(token, {
+      userId: props.userId,
+      deviceId: props.deviceId,
+      spent: false,
+    })
+    return Promise.resolve({
+      token,
+      expiresAt: new Date(Date.now() + 86_400_000),
+    })
+  }
+  return {
+    refreshTokens,
+    refreshService: {
+      issue: vi.fn(issue),
+      rotate: vi.fn(async ({ token }: { token: string }) => {
+        const record = refreshTokens.get(token)
+        if (!record) {
+          return { kind: "invalid" as const }
+        }
+        if (record.spent) {
           return {
-            kind: "rotated" as const,
+            kind: "reused" as const,
             userId: record.userId,
             deviceId: record.deviceId,
-            refreshToken: await issue(record),
           }
-        }),
-        revokeByToken: vi.fn(async () => undefined),
-        revokeAllForUser: vi.fn(async () => undefined),
-      },
-      userService: { clearMustChangePassword: vi.fn(async () => undefined) },
-    }
-  })
+        }
+        record.spent = true
+        return {
+          kind: "rotated" as const,
+          userId: record.userId,
+          deviceId: record.deviceId,
+          refreshToken: await issue(record),
+        }
+      }),
+      revokeByToken: vi.fn(async () => undefined),
+      revokeAllForUser: vi.fn(async () => undefined),
+    },
+    userService: { clearMustChangePassword: vi.fn(async () => undefined) },
+  }
+})
 
 vi.mock("@chatbotx.io/business", () => ({
   mobileRefreshTokenService: refreshService,
   userService,
-}))
-
-vi.mock("@chatbotx.io/database/client", () => ({
-  eq: (_column: unknown, value: string) => value,
-  db: {
-    insert: () => ({
-      values: (row: VerificationRow) => {
-        verificationRows.push(row)
-        return Promise.resolve()
-      },
-    }),
-    delete: () => ({
-      where: (identifier: string) => ({
-        returning: () => {
-          const index = verificationRows.findIndex(
-            (row) => row.identifier === identifier,
-          )
-          return Promise.resolve(
-            index === -1 ? [] : verificationRows.splice(index, 1),
-          )
-        },
-      }),
-    }),
-  },
-}))
-
-vi.mock("@chatbotx.io/database/schema", () => ({
-  verificationModel: { identifier: "identifier" },
 }))
 
 vi.mock("../src/keys", () => ({
@@ -171,7 +136,13 @@ const post = (auth: TestAuth, path: string, body: unknown) =>
   )
 
 const tokenGrant = (auth: TestAuth, body: Record<string, unknown>) =>
-  post(auth, "/mobile/token", body)
+  post(
+    auth,
+    "/mobile/token",
+    body.grantType === "exchange_code" && !body.codeVerifier
+      ? { ...body, codeVerifier: PKCE_VERIFIER }
+      : body,
+  )
 
 // Signature, issuer, audience and expiry verified against the published JWKS —
 // the same check `verifyMobileAccessToken` makes in production.
@@ -206,7 +177,6 @@ let auth: TestAuth
 
 beforeEach(() => {
   vi.clearAllMocks()
-  verificationRows.length = 0
   refreshTokens.clear()
   store = tables()
   auth = createTestAuth(store)
@@ -346,13 +316,25 @@ describe("POST /mobile/token — password grant", () => {
 })
 
 describe("social flow — /mobile/callback and exchange_code", () => {
-  const callback = async (query: Record<string, string>, cookie?: string) =>
-    await auth.handler(
+  const callback = async (query: Record<string, string>, cookie?: string) => {
+    const codeChallenge =
+      query.code_challenge ??
+      Buffer.from(
+        await crypto.subtle.digest(
+          "SHA-256",
+          new TextEncoder().encode(PKCE_VERIFIER),
+        ),
+      ).toString("base64url")
+    return await auth.handler(
       new Request(
-        `${ISSUER}/api/auth/mobile/callback?${new URLSearchParams(query)}`,
+        `${ISSUER}/api/auth/mobile/callback?${new URLSearchParams({
+          ...query,
+          code_challenge: codeChallenge,
+        })}`,
         { headers: cookie ? { cookie } : {} },
       ),
     )
+  }
 
   const codeFrom = (response: Response) =>
     new URL(response.headers.get("location") ?? "").searchParams.get("code")
@@ -380,7 +362,7 @@ describe("social flow — /mobile/callback and exchange_code", () => {
     expect(location.searchParams.get("code")).toBeTruthy()
     expect(store.session).toHaveLength(0)
     // Only a hash of the code is stored, never the code itself.
-    expect(JSON.stringify(verificationRows)).not.toContain(
+    expect(JSON.stringify(store.verification)).not.toContain(
       location.searchParams.get("code") ?? "never",
     )
   })
@@ -408,6 +390,54 @@ describe("social flow — /mobile/callback and exchange_code", () => {
     expect(await second.json()).toMatchObject({ code: "INVALID_EXCHANGE_CODE" })
   })
 
+  test("atomically consumes a concurrently exchanged code", async () => {
+    await seedUser(auth)
+    const code = codeFrom(
+      await callback(
+        { redirect_uri: "chatbotxmobileapp://auth-callback" },
+        await sessionCookie(auth),
+      ),
+    )
+
+    const responses = await Promise.all([
+      tokenGrant(auth, { grantType: "exchange_code", code }),
+      tokenGrant(auth, { grantType: "exchange_code", code }),
+    ])
+
+    expect(responses.map((response) => response.status).sort()).toEqual([
+      200, 401,
+    ])
+  })
+
+  test("requires PKCE challenge and verifier for custom-scheme exchange", async () => {
+    await seedUser(auth)
+    const missingChallenge = await auth.handler(
+      new Request(
+        `${ISSUER}/api/auth/mobile/callback?${new URLSearchParams({
+          redirect_uri: "chatbotxmobileapp://auth-callback",
+        })}`,
+        { headers: { cookie: await sessionCookie(auth) } },
+      ),
+    )
+    expect(missingChallenge.status).toBe(400)
+    expect(store.verification).toHaveLength(0)
+
+    const code = codeFrom(
+      await callback(
+        { redirect_uri: "chatbotxmobileapp://auth-callback" },
+        await sessionCookie(auth),
+      ),
+    )
+    const missingVerifier = await post(auth, "/mobile/token", {
+      grantType: "exchange_code",
+      code,
+    })
+    expect(missingVerifier.status).toBe(400)
+    await expect(
+      tokenGrant(auth, { grantType: "exchange_code", code }),
+    ).resolves.toMatchObject({ status: 200 })
+  })
+
   test("an expired code is rejected", async () => {
     await seedUser(auth)
     const code = codeFrom(
@@ -416,7 +446,7 @@ describe("social flow — /mobile/callback and exchange_code", () => {
         await sessionCookie(auth),
       ),
     )
-    verificationRows[0].expiresAt = new Date(Date.now() - 1)
+    store.verification[0].expiresAt = new Date(Date.now() - 1)
 
     const response = await tokenGrant(auth, {
       grantType: "exchange_code",
@@ -443,21 +473,26 @@ describe("social flow — /mobile/callback and exchange_code", () => {
         ),
       )
 
+    const missingVerifierCode = await mint()
+    const withoutVerifier = await post(auth, "/mobile/token", {
+      grantType: "exchange_code",
+      code: missingVerifierCode,
+    })
+    const retryAfterMissingVerifier = await tokenGrant(auth, {
+      grantType: "exchange_code",
+      code: missingVerifierCode,
+      codeVerifier: verifier,
+    })
     const stolen = await mint()
-    const withoutVerifier = await tokenGrant(auth, {
+    const wrongVerifier = await tokenGrant(auth, {
       grantType: "exchange_code",
       code: stolen,
+      codeVerifier: "b".repeat(64),
     })
-    const retryAfterFailure = await tokenGrant(auth, {
+    const retryAfterWrongVerifier = await tokenGrant(auth, {
       grantType: "exchange_code",
       code: stolen,
       codeVerifier: verifier,
-    })
-    const legitimate = await mint()
-    const wrongVerifier = await tokenGrant(auth, {
-      grantType: "exchange_code",
-      code: legitimate,
-      codeVerifier: "b".repeat(64),
     })
     const fresh = await mint()
     const ok = await tokenGrant(auth, {
@@ -466,9 +501,10 @@ describe("social flow — /mobile/callback and exchange_code", () => {
       codeVerifier: verifier,
     })
 
-    expect(withoutVerifier.status).toBe(401)
-    expect(retryAfterFailure.status).toBe(401)
+    expect(withoutVerifier.status).toBe(400)
+    expect(retryAfterMissingVerifier.status).toBe(200)
     expect(wrongVerifier.status).toBe(401)
+    expect(retryAfterWrongVerifier.status).toBe(401)
     expect(ok.status).toBe(200)
   })
 
@@ -486,7 +522,7 @@ describe("social flow — /mobile/callback and exchange_code", () => {
 
     expect(response.status).toBe(400)
     expect(response.headers.get("location")).toBeNull()
-    expect(verificationRows).toHaveLength(0)
+    expect(store.verification).toHaveLength(0)
   })
 
   test("without a session it redirects back with error=access_denied and mints no code", async () => {
@@ -499,7 +535,7 @@ describe("social flow — /mobile/callback and exchange_code", () => {
     expect(location.searchParams.get("error")).toBe("access_denied")
     expect(location.searchParams.get("state")).toBe("s1")
     expect(location.searchParams.get("code")).toBeNull()
-    expect(verificationRows).toHaveLength(0)
+    expect(store.verification).toHaveLength(0)
   })
 })
 

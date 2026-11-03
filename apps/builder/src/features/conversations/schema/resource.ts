@@ -79,18 +79,44 @@ export type ConversationContactInboxResource = z.infer<
   typeof conversationContactInboxResource
 >
 
-export const listConversationsItemResource = conversationResource.and(
-  z.object({
-    contactInboxes: z.array(conversationContactInboxResource),
-    messages: z.array(messageResourceWithRelations),
-    contact: contactResource.nullable(),
-    assignedUser: userResource.nullable(),
-    assignedInboxTeam: inboxTeamResource.nullable(),
-  }),
-)
+export const listConversationsItemResource = conversationResource.extend({
+  contactInboxes: z.array(conversationContactInboxResource),
+  messages: z.array(messageResourceWithRelations),
+  contact: contactResource.nullable(),
+  assignedUser: userResource.nullable(),
+  assignedInboxTeam: inboxTeamResource.nullable(),
+})
 export type ListConversationItemResource = z.infer<
   typeof listConversationsItemResource
 >
+
+export const conversationCompactContactInboxResource =
+  conversationContactInboxResource
+    .omit({
+      adReferral: true,
+      googleAdsClick: true,
+      threadControlLastEvent: true,
+      threadControlState: true,
+      threadControlUpdatedAt: true,
+      threadOwnerAppId: true,
+      threadOwnerExpiresAt: true,
+      threadOwnerRole: true,
+    })
+    .extend({
+      inbox: z.object({
+        id: z.string(),
+        name: z.string(),
+        channel: z.string(),
+      }),
+    })
+export type ConversationCompactContactInboxResource = z.infer<
+  typeof conversationCompactContactInboxResource
+>
+
+export const listConversationsCompactItemResource =
+  listConversationsItemResource.extend({
+    contactInboxes: z.array(conversationCompactContactInboxResource),
+  })
 
 export const listConversationsResponse = z.object({
   data: z.array(listConversationsItemResource),
@@ -99,6 +125,15 @@ export const listConversationsResponse = z.object({
 })
 export type ListConversationsResponse = z.infer<
   typeof listConversationsResponse
+>
+
+export const listConversationsCompactResponse = z.object({
+  data: z.array(listConversationsCompactItemResource),
+  nextCursor: z.string().nullable(),
+  prevCursor: z.string().nullable(),
+})
+export type ListConversationsCompactResponse = z.infer<
+  typeof listConversationsCompactResponse
 >
 
 export const findConversationRequest = z.object({

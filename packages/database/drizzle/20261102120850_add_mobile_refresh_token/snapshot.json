@@ -1,7 +1,7 @@
 {
   "version": "8",
   "dialect": "postgres",
-  "id": "e335684c-0056-4709-aaee-c4d4d67450a0",
+  "id": "ae38f4ea-28c2-4b22-ada8-f008fa3a6c03",
   "prevIds": [
     "2b888b2e-3ff4-450b-b98f-31b685088e44"
   ],
@@ -30805,7 +30805,7 @@
       "default": null,
       "generated": null,
       "identity": null,
-      "name": "revokedAt",
+      "name": "revoked",
       "entityType": "columns",
       "schema": "public",
       "table": "MobileRefreshToken"
@@ -47658,6 +47658,90 @@
           "asc": true,
           "nullsFirst": false,
           "opclass": null
+        },
+        {
+          "value": "assignedUserId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "lastActivityAt",
+          "isExpression": false,
+          "asc": false,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "id",
+          "isExpression": false,
+          "asc": false,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": "\"assignedUserId\" IS NOT NULL",
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "Conversation_workspaceId_assignedUserId_lastActivityAt_id_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "Conversation"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "workspaceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "assignedInboxTeamId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "lastActivityAt",
+          "isExpression": false,
+          "asc": false,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "id",
+          "isExpression": false,
+          "asc": false,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": "\"assignedInboxTeamId\" IS NOT NULL",
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "Conversation_ws_team_lastActivity_id_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "Conversation"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "workspaceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
         }
       ],
       "isUnique": false,
@@ -53979,6 +54063,13 @@
           "asc": true,
           "nullsFirst": false,
           "opclass": null
+        },
+        {
+          "value": "rotatedAt",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
         }
       ],
       "isUnique": false,
@@ -53986,7 +54077,28 @@
       "with": "",
       "method": "btree",
       "concurrently": false,
-      "name": "MobileRefreshToken_familyId_idx",
+      "name": "MobileRefreshToken_familyId_rotatedAt_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "MobileRefreshToken"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "expiresAt",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "MobileRefreshToken_expiresAt_idx",
       "entityType": "indexes",
       "schema": "public",
       "table": "MobileRefreshToken"

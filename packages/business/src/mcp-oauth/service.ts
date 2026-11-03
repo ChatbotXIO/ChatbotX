@@ -1,5 +1,6 @@
 import { db } from "@chatbotx.io/database/client"
 import {
+  mobileRefreshTokenRepository,
   oauthAccessTokenRepository,
   oauthClientRepository,
   oauthConsentRepository,
@@ -286,9 +287,13 @@ export class McpOAuthService extends BaseService {
   }
 
   async purgeExpiredTokens(now = new Date()): Promise<number> {
-    const accessTokens = await oauthAccessTokenRepository.deleteExpired(now)
-    const refreshTokens = await oauthRefreshTokenRepository.deleteExpired(now)
-    return accessTokens + refreshTokens
+    const [accessTokens, refreshTokens, mobileRefreshTokens] =
+      await Promise.all([
+        oauthAccessTokenRepository.deleteExpired(now),
+        oauthRefreshTokenRepository.deleteExpired(now),
+        mobileRefreshTokenRepository.deleteExpired(now),
+      ])
+    return accessTokens + refreshTokens + mobileRefreshTokens
   }
 
   async findClient(props: {

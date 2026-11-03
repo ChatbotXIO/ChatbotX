@@ -8,9 +8,6 @@ const { assertApiNotRateLimited } = vi.hoisted(() => ({
 }))
 
 vi.mock("@/lib/rate-limit/api-rate-limit", () => ({ assertApiNotRateLimited }))
-vi.mock("@/lib/rate-limit/guest-rate-limit", () => ({
-  getGuestClientIp: () => "203.0.113.9",
-}))
 
 const { rateLimitMobilePasswordGrant } = await import(
   "@/lib/mobile-auth/password-grant-rate-limit"
@@ -25,13 +22,20 @@ const post = (body: unknown, path = TOKEN_PATH) =>
     body: JSON.stringify(body),
   })
 
+const formPost = (body: Record<string, string>, path = TOKEN_PATH) =>
+  new Request(`https://app.example.com${path}`, {
+    method: "POST",
+    headers: { "content-type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams(body),
+  })
+
 beforeEach(() => {
   vi.clearAllMocks()
   assertApiNotRateLimited.mockResolvedValue(undefined)
 })
 
 describe("rateLimitMobilePasswordGrant", () => {
-  test("throttles the password grant per IP (3 per window, like sign-in) and per account", async () => {
+  test("throttles the password grant per account", async () => {
     const response = await rateLimitMobilePasswordGrant(
       post({
         grantType: "password",
@@ -42,16 +46,29 @@ describe("rateLimitMobilePasswordGrant", () => {
     )
 
     expect(response).toBeUndefined()
-    expect(assertApiNotRateLimited).toHaveBeenNthCalledWith(1, {
-      scope: "mobile-token-password-ip-rate-limit",
-      key: "203.0.113.9",
-      limit: 3,
-    })
-    expect(assertApiNotRateLimited).toHaveBeenNthCalledWith(2, {
+    expect(assertApiNotRateLimited).toHaveBeenCalledOnce()
+    expect(assertApiNotRateLimited).toHaveBeenCalledWith({
       scope: "mobile-token-password-account-rate-limit",
       key: "agent@example.com",
       limit: 5,
     })
+  })
+
+  test("parses form grants and normalizes a trailing slash", async () => {
+    const response = await rateLimitMobilePasswordGrant(
+      formPost(
+        {
+          grant_type: "password",
+          email: "agent@example.com",
+          password: "x",
+        },
+        `${TOKEN_PATH}/`,
+      ),
+      `${TOKEN_PATH}/`,
+    )
+    expect(response).toBeUndefined()
+
+    expect(assertApiNotRateLimited).toHaveBeenCalledOnce()
   })
 
   test("answers 429 with Retry-After once either bucket is exhausted", async () => {
@@ -73,16 +90,13 @@ describe("rateLimitMobilePasswordGrant", () => {
     expect(await response?.json()).toMatchObject({ code: "TOO_MANY_REQUESTS" })
   })
 
-  test("the account bucket is skipped when the body has no usable email, the IP bucket still applies", async () => {
+  test("skips throttling when the body has no usable email", async () => {
     await rateLimitMobilePasswordGrant(
       post({ grantType: "password", password: "x" }),
       TOKEN_PATH,
     )
 
-    expect(assertApiNotRateLimited).toHaveBeenCalledTimes(1)
-    expect(assertApiNotRateLimited).toHaveBeenCalledWith(
-      expect.objectContaining({ scope: "mobile-token-password-ip-rate-limit" }),
-    )
+    expect(assertApiNotRateLimited).not.toHaveBeenCalled()
   })
 
   test.each([
@@ -104,19 +118,25 @@ describe("rateLimitMobilePasswordGrant", () => {
       ),
       "/api/auth/mobile/revoke",
     ],
-    [
-      "a non-JSON body",
-      new Request(`https://app.example.com${TOKEN_PATH}`, {
-        method: "POST",
-        body: "nope",
-      }),
-      TOKEN_PATH,
-    ],
     ["a GET", new Request(`https://app.example.com${TOKEN_PATH}`), TOKEN_PATH],
   ])("does not throttle %s", async (_name, request, path) => {
     await expect(
       rateLimitMobilePasswordGrant(request, path),
     ).resolves.toBeUndefined()
+    expect(assertApiNotRateLimited).not.toHaveBeenCalled()
+  })
+
+  test("returns 400 rather than skipping an unparsable password-grant body", async () => {
+    const response = await rateLimitMobilePasswordGrant(
+      new Request(`https://app.example.com${TOKEN_PATH}`, {
+        method: "POST",
+        body: "nope",
+      }),
+      TOKEN_PATH,
+    )
+
+    expect(response?.status).toBe(400)
+    expect(await response?.json()).toMatchObject({ code: "BAD_REQUEST" })
     expect(assertApiNotRateLimited).not.toHaveBeenCalled()
   })
 

@@ -33,6 +33,7 @@ import {
 import type {
   ContactInboxModel,
   ContactModel,
+  ConversationModel,
 } from "@chatbotx.io/database/types"
 import { emit } from "@chatbotx.io/event-bus"
 import { emitContactCreated } from "@chatbotx.io/events"
@@ -131,6 +132,7 @@ type ContactWithInboxes = ContactModel & { contactInboxes: ContactInboxModel[] }
 
 export type ContactAccessScope = {
   restrictToAssignedUserId?: string
+  restrictToTeamIds?: string[]
 }
 
 export type ContactListScope = ContactListScopeType
@@ -355,11 +357,7 @@ class ContactService extends BaseService {
       throw notFoundException("Contact not found")
     }
 
-    if (
-      accessScope?.restrictToAssignedUserId &&
-      contact.conversation?.assignedUserId !==
-        accessScope.restrictToAssignedUserId
-    ) {
+    if (!isContactWithinAccessScope(accessScope, contact.conversation)) {
       throw notFoundException("Contact not found")
     }
 
@@ -1345,11 +1343,40 @@ export function mergeRichSystemFields(
   )
 }
 
+function isContactWithinAccessScope(
+  accessScope: ContactAccessScope | undefined,
+  conversation:
+    | Pick<ConversationModel, "assignedUserId" | "assignedInboxTeamId">
+    | null
+    | undefined,
+): boolean {
+  if (
+    !(
+      accessScope?.restrictToAssignedUserId ||
+      accessScope?.restrictToTeamIds?.length
+    )
+  ) {
+    return true
+  }
+  if (conversation?.assignedUserId === accessScope.restrictToAssignedUserId) {
+    return true
+  }
+  return Boolean(
+    conversation?.assignedInboxTeamId &&
+      accessScope.restrictToTeamIds?.includes(conversation.assignedInboxTeamId),
+  )
+}
+
 function withContactAccessScope<TWhere extends Record<string, unknown>>(
   where: TWhere,
   accessScope?: ContactAccessScope,
 ) {
-  if (!accessScope?.restrictToAssignedUserId) {
+  if (
+    !(
+      accessScope?.restrictToAssignedUserId ||
+      accessScope?.restrictToTeamIds?.length
+    )
+  ) {
     return where
   }
 
@@ -1359,12 +1386,20 @@ function withContactAccessScope<TWhere extends Record<string, unknown>>(
     !Array.isArray(where.conversation)
       ? where.conversation
       : {}
+  const assignmentScopes = [
+    ...(accessScope.restrictToAssignedUserId
+      ? [{ assignedUserId: accessScope.restrictToAssignedUserId }]
+      : []),
+    ...(accessScope.restrictToTeamIds?.length
+      ? [{ assignedInboxTeamId: { in: accessScope.restrictToTeamIds } }]
+      : []),
+  ]
 
   return {
     ...where,
     conversation: {
       ...conversation,
-      assignedUserId: accessScope.restrictToAssignedUserId,
+      OR: assignmentScopes,
     },
   }
 }

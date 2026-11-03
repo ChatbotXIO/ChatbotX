@@ -87,7 +87,7 @@ const adAttributedContactInbox = {
   language: null,
   lastIncomingMessageAt: null,
   contactLastReadAt: null,
-  inbox: { name: "WhatsApp Inbox" },
+  inbox: { id: "inbox-1", name: "WhatsApp Inbox", channel: "whatsapp" },
   sourceIdentityHistory: [
     {
       sourceId: "old-source-1",
@@ -150,6 +150,35 @@ describe("listConversations / findConversation adReferral mapping", () => {
       sourceUrl: "https://fb.com/ad/xyz",
     })
     expect(mappedContactInboxes[1]?.adReferral).toBeNull()
+  })
+
+  test("compact list responses omit attribution and thread-control fields", async () => {
+    const conversation = {
+      id: "conv-1",
+      contactId: "contact-1",
+      lastActivityAt: new Date("2026-01-01T00:00:00Z"),
+      contactInboxes: [adAttributedContactInbox],
+      contact: null,
+      assignedUser: null,
+      assignedInboxTeam: null,
+    }
+    mocks.findManyQuery.mockResolvedValue([conversation])
+
+    const result = await listConversations(
+      { workspaceId: "ws-1" },
+      { includeEmailAndPhone: true, view: "compact" },
+    )
+
+    const compactInbox = result.data[0]?.contactInboxes[0]
+    expect(compactInbox?.inbox).toEqual({
+      id: "inbox-1",
+      name: "WhatsApp Inbox",
+      channel: "whatsapp",
+    })
+    expect(compactInbox).not.toHaveProperty("adReferral")
+    expect(compactInbox).not.toHaveProperty("googleAdsClick")
+    expect(compactInbox).not.toHaveProperty("threadControlState")
+    expect(compactInbox).not.toHaveProperty("threadOwnerRole")
   })
 
   test("listConversations strips internal jsonb fields from the mapped output", async () => {

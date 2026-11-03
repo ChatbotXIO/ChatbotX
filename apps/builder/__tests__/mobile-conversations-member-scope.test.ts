@@ -51,7 +51,79 @@ const messageService = {
 const userService = { findByIdOrFail: vi.fn() }
 const inboxTeamService = { listTeamIdsByUserId: vi.fn() }
 
+const conversationMemberScope = {
+  resolve: async ({
+    permissions,
+    userId,
+  }: {
+    permissions: Record<string, boolean>
+    userId: string
+  }) => {
+    if (
+      !(
+        permissions.superAdmin ||
+        permissions.contacts ||
+        permissions.onlyAssignedContacts
+      )
+    ) {
+      return { chatScope: "none" as const, teamIds: [], userId }
+    }
+    if (permissions.superAdmin || !permissions.onlyAssignedContacts) {
+      return { chatScope: "all" as const, teamIds: [], userId }
+    }
+    return {
+      chatScope: "assigned" as const,
+      teamIds: await inboxTeamService.listTeamIdsByUserId(),
+      userId,
+    }
+  },
+  allows: (
+    scope:
+      | {
+          chatScope: "all" | "assigned" | "none"
+          teamIds: string[]
+          userId: string
+        }
+      | undefined,
+    conversation: {
+      assignedInboxTeamId: string | null
+      assignedUserId: string | null
+    },
+  ) =>
+    !scope ||
+    scope.chatScope === "all" ||
+    (scope.chatScope === "assigned" &&
+      (conversation.assignedUserId === scope.userId ||
+        (conversation.assignedInboxTeamId !== null &&
+          scope.teamIds.includes(conversation.assignedInboxTeamId)))),
+  where: (
+    scope:
+      | {
+          chatScope: "all" | "assigned" | "none"
+          teamIds: string[]
+          userId: string
+        }
+      | undefined,
+  ) => {
+    if (!scope || scope.chatScope === "all") {
+      return
+    }
+    if (scope.chatScope === "none") {
+      throw new Error("Conversation not found")
+    }
+    return {
+      OR: [
+        { assignedUserId: scope.userId },
+        ...(scope.teamIds.length
+          ? [{ assignedInboxTeamId: { in: scope.teamIds } }]
+          : []),
+      ],
+    }
+  },
+}
+
 vi.mock("@chatbotx.io/business", () => ({
+  conversationMemberScope,
   conversationService,
   messageService,
   userService,
@@ -207,12 +279,12 @@ describe("conversations.list for a mobile member", () => {
     expect(inboxTeamService.listTeamIdsByUserId).not.toHaveBeenCalled()
   })
 
-  test("a member with no inbox access matches nothing", async () => {
-    listConversations.mockResolvedValue(emptyList)
+  test("a member with no inbox access is not found before listing", async () => {
+    await expect(
+      list.handler?.({ context: memberContext(NO_INBOX), input: {} }),
+    ).rejects.toThrow("Conversation not found")
 
-    await list.handler?.({ context: memberContext(NO_INBOX), input: {} })
-
-    expect(listConversations.mock.calls[0][1].scopeWhere).toEqual({ id: "0" })
+    expect(listConversations).not.toHaveBeenCalled()
   })
 
   test("contact email/phone are masked unless the member has that permission", async () => {
@@ -403,8 +475,8 @@ describe("conversation actions for a mobile member", () => {
     expect(conversationService.setFollowed).toHaveBeenCalledWith(
       expect.objectContaining({ followed: true, userId: undefined }),
     )
-    // No scope lookup happened for the token.
-    expect(conversationService.findByOrFail).not.toHaveBeenCalled()
+    // The shared assertion returns the resource once for both token and member callers.
+    expect(conversationService.findByOrFail).toHaveBeenCalledTimes(1)
   })
 })
 

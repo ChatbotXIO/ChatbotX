@@ -1,4 +1,7 @@
-import { conversationService } from "@chatbotx.io/business"
+import {
+  conversationMemberScope,
+  conversationService,
+} from "@chatbotx.io/business"
 import {
   ChatbotXException,
   notFoundException,
@@ -25,10 +28,7 @@ import {
 import { cursorPaginationRequest } from "@/lib/pagination"
 import {
   assertConversationAccessForCaller,
-  canCallerViewEmailAndPhone,
   conversationAccessForCaller,
-  conversationAccessWhere,
-  isConversationVisible,
   maskContactForCaller,
 } from "@/lib/public-api/member-scope"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
@@ -44,7 +44,10 @@ import {
   threadControlPublicRequest,
   threadControlPublicResponse,
 } from "../schema/public"
-import { listConversationsResponse } from "../schema/resource"
+import {
+  listConversationsCompactResponse,
+  listConversationsResponse,
+} from "../schema/resource"
 
 const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("inbox")
 
@@ -55,9 +58,6 @@ const THREAD_CONTROL_ERROR_COPY = {
   "conversationRouting.errors.actionFailed":
     "The channel could not apply the thread-control action.",
 } as const
-
-const toNullableId = (value: unknown): string | null =>
-  value === null || value === undefined ? null : String(value)
 
 function jsonQueryParam<T>(schema: z.ZodType<T>) {
   return z.preprocess((val) => {
@@ -126,6 +126,12 @@ const listConversationsQueryRequest = z.object({
         "Structured filter for advanced matching on the conversation's contact. Sent as a JSON-encoded object. See `contacts.listFilterFields` for the field/operator reference.",
       ),
   ),
+  view: z
+    .enum(["full", "compact"])
+    .default("full")
+    .describe(
+      "Response detail level. `compact` omits ad attribution and thread-control metadata from contact inboxes.",
+    ),
   ...cursorPaginationRequest.shape,
 })
 
@@ -141,21 +147,47 @@ export const conversationsPublicRouter = {
       spec: mcpSpec({ visibility: "default" }),
     })
     .input(listConversationsQueryRequest)
-    .output(listConversationsResponse)
+    .output(
+      z.union([listConversationsResponse, listConversationsCompactResponse]),
+    )
     .errors(possibleErrorsOnListingResource)
     .handler(async ({ context, input }) => {
       // Mobile (member) callers: restricted to their chat scope, email/phone
       // masked without the permission. Workspace tokens stay workspace-level.
       const access = await conversationAccessForCaller(context)
+      const { view, ...request } = input
+      const listAccess = {
+        includeEmailAndPhone:
+          !context.member ||
+          context.member.permissions.emailAndPhone === true ||
+          context.member.permissions.superAdmin === true,
+        scopeWhere: conversationMemberScope.where(access),
+      }
+      if (view === "compact") {
+        const result = await listConversations(
+          {
+            ...request,
+            workspaceId: context.workspace.id,
+          },
+          { ...listAccess, view },
+        )
+        return {
+          ...result,
+          data: result.data.map((conversation) => ({
+            ...conversation,
+            contact: conversation.contact
+              ? maskContactForCaller(context, conversation.contact)
+              : conversation.contact,
+          })),
+        }
+      }
+
       const result = await listConversations(
         {
-          ...input,
+          ...request,
           workspaceId: context.workspace.id,
         },
-        {
-          includeEmailAndPhone: canCallerViewEmailAndPhone(context),
-          scopeWhere: conversationAccessWhere(access),
-        },
+        listAccess,
       )
       return {
         ...result,
@@ -188,9 +220,15 @@ export const conversationsPublicRouter = {
       })
       const access = await conversationAccessForCaller(context)
       if (
-        !isConversationVisible(access, {
-          assignedUserId: toNullableId(result.data.assignedUserId),
-          assignedInboxTeamId: toNullableId(result.data.assignedInboxTeamId),
+        !conversationMemberScope.allows(access, {
+          assignedUserId:
+            typeof result.data.assignedUserId === "string"
+              ? result.data.assignedUserId
+              : null,
+          assignedInboxTeamId:
+            typeof result.data.assignedInboxTeamId === "string"
+              ? result.data.assignedInboxTeamId
+              : null,
         })
       ) {
         throw notFoundException("Conversation not found")
@@ -227,10 +265,10 @@ export const conversationsPublicRouter = {
     .handler(async ({ context, input }) => {
       const workspaceId = context.workspace.id
 
-      await assertConversationAccessForCaller(context, input.id)
-      const conversation = await conversationService.findByOrFail({
-        where: { id: input.id, workspaceId },
-      })
+      const conversation = await assertConversationAccessForCaller(
+        context,
+        input.id,
+      )
 
       await conversationService.assignOne({
         workspaceId,
@@ -260,9 +298,6 @@ export const conversationsPublicRouter = {
     .handler(async ({ context, input }) => {
       const workspaceId = context.workspace.id
       await assertConversationAccessForCaller(context, input.id)
-      await conversationService.findByOrFail({
-        where: { id: input.id, workspaceId },
-      })
       await conversationService.archiveByIds({
         workspaceId,
         ids: [input.id],
@@ -291,9 +326,6 @@ export const conversationsPublicRouter = {
     .handler(async ({ context, input }) => {
       const workspaceId = context.workspace.id
       await assertConversationAccessForCaller(context, input.id)
-      await conversationService.findByOrFail({
-        where: { id: input.id, workspaceId },
-      })
       await conversationService.unarchiveByIds({
         workspaceId,
         ids: [input.id],
@@ -322,9 +354,6 @@ export const conversationsPublicRouter = {
     .handler(async ({ context, input }) => {
       const workspaceId = context.workspace.id
       await assertConversationAccessForCaller(context, input.id)
-      await conversationService.findByOrFail({
-        where: { id: input.id, workspaceId },
-      })
       await conversationService.updateReadStatus({
         workspaceId,
         id: input.id,
@@ -430,9 +459,6 @@ export const conversationsPublicRouter = {
     .handler(async ({ context, input }) => {
       const workspaceId = context.workspace.id
       await assertConversationAccessForCaller(context, input.id)
-      await conversationService.findByOrFail({
-        where: { id: input.id, workspaceId },
-      })
       await conversationService.setBotEnabledByIds({
         workspaceId,
         ids: [input.id],
@@ -462,9 +488,6 @@ export const conversationsPublicRouter = {
     .handler(async ({ context, input }) => {
       const workspaceId = context.workspace.id
       await assertConversationAccessForCaller(context, input.id)
-      await conversationService.findByOrFail({
-        where: { id: input.id, workspaceId },
-      })
       await conversationService.setBotEnabledByIds({
         workspaceId,
         ids: [input.id],
@@ -493,10 +516,10 @@ export const conversationsPublicRouter = {
     .errors(possibleErrorsOnThreadControl)
     .handler(async ({ context, input }) => {
       const workspaceId = context.workspace.id
-      await assertConversationAccessForCaller(context, input.id)
-      const conversation = await conversationService.findByOrFail({
-        where: { id: input.id, workspaceId },
-      })
+      const conversation = await assertConversationAccessForCaller(
+        context,
+        input.id,
+      )
       try {
         // `sync` goes through the same error mapping as the other actions,
         // so an unsupported channel or a channel failure is a declared 400.

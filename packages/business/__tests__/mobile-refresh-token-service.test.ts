@@ -8,99 +8,91 @@ type Row = {
   tokenHash: string
   expiresAt: Date
   rotatedAt: Date | null
-  revokedAt: Date | null
+  revoked: Date | null
 }
-type Predicate = (row: Row) => boolean
 
-const { rows, fakeDb } = vi.hoisted(() => {
+const { fakeDb, mobileRefreshTokenRepository, rows } = vi.hoisted(() => {
   const rows: Row[] = []
   let nextId = 1
-
-  const select = () => ({
-    from: () => ({
-      where: (predicate: Predicate) => ({
-        limit: async (count: number) =>
-          rows
-            .filter(predicate)
-            .slice(0, count)
-            .map((row) => ({ ...row })),
-      }),
-    }),
-  })
-  const update = () => ({
-    set: (values: Partial<Row>) => ({
-      where: (predicate: Predicate) => {
-        const matched = rows.filter(predicate)
-        for (const row of matched) {
-          Object.assign(row, values)
-        }
-        const result = Promise.resolve(undefined) as Promise<undefined> & {
-          returning: () => Promise<Row[]>
-        }
-        result.returning = async () => matched.map((row) => ({ ...row }))
-        return result
-      },
-    }),
-  })
-  const insert = () => ({
-    values: (values: Partial<Row>) => {
-      if (rows.some((row) => row.tokenHash === values.tokenHash)) {
-        return Promise.reject(new Error("duplicate tokenHash"))
-      }
-      rows.push({
-        id: String(nextId++),
-        rotatedAt: null,
-        revokedAt: null,
-        ...(values as Row),
-      })
-      return Promise.resolve()
-    },
-  })
-  const remove = () => ({
-    where: (predicate: Predicate) => {
-      for (let index = rows.length - 1; index >= 0; index--) {
-        if (predicate(rows[index])) {
-          rows.splice(index, 1)
-        }
-      }
-      return Promise.resolve()
-    },
-  })
   const fakeDb = {
-    select,
-    update,
-    insert,
-    delete: remove,
     transaction: async <T>(callback: (tx: unknown) => Promise<T>) =>
       await callback(fakeDb),
   }
-  return { rows, fakeDb }
+  const mobileRefreshTokenRepository = {
+    insert: (values: Omit<Row, "id" | "rotatedAt" | "revoked">) => {
+      if (rows.some((row) => row.tokenHash === values.tokenHash)) {
+        throw new Error("duplicate tokenHash")
+      }
+      rows.push({
+        ...values,
+        id: String(nextId++),
+        rotatedAt: null,
+        revoked: null,
+      })
+    },
+    spendActive: (tokenHash: string, now: Date) => {
+      const row = rows.find(
+        (candidate) =>
+          candidate.tokenHash === tokenHash &&
+          candidate.rotatedAt === null &&
+          candidate.revoked === null &&
+          candidate.expiresAt > now,
+      )
+      if (!row) {
+        return null
+      }
+      row.rotatedAt = now
+      return { ...row }
+    },
+    findByHash: (tokenHash: string) => {
+      const row = rows.find((candidate) => candidate.tokenHash === tokenHash)
+      return row ? { ...row } : null
+    },
+    revokeFamilyByHash: (tokenHash: string, now: Date) => {
+      const familyId = rows.find(
+        (candidate) => candidate.tokenHash === tokenHash,
+      )?.familyId
+      if (!familyId) {
+        return
+      }
+      for (const row of rows) {
+        if (row.familyId === familyId && row.revoked === null) {
+          row.revoked = now
+        }
+      }
+    },
+    revokeAllForUser: (userId: string, now: Date) => {
+      for (const row of rows) {
+        if (row.userId === userId && row.revoked === null) {
+          row.revoked = now
+        }
+      }
+    },
+    deleteSpentInFamily: (familyId: string, before: Date) => {
+      for (let index = rows.length - 1; index >= 0; index--) {
+        if (
+          rows[index].familyId === familyId &&
+          rows[index].rotatedAt &&
+          rows[index].rotatedAt < before
+        ) {
+          rows.splice(index, 1)
+        }
+      }
+    },
+    deleteExpiredForUser: (userId: string, now: Date) => {
+      for (let index = rows.length - 1; index >= 0; index--) {
+        if (rows[index].userId === userId && rows[index].expiresAt < now) {
+          rows.splice(index, 1)
+        }
+      }
+    },
+  }
+  return { fakeDb, mobileRefreshTokenRepository, rows }
 })
 
-vi.mock("@chatbotx.io/database/client", () => ({
-  db: fakeDb,
-  and:
-    (...predicates: Predicate[]) =>
-    (row: Row) =>
-      predicates.every((predicate) => predicate(row)),
-  eq: (column: { name: keyof Row }, value: unknown) => (row: Row) =>
-    row[column.name] === value,
-  isNull: (column: { name: keyof Row }) => (row: Row) =>
-    row[column.name] === null,
-  gt: (column: { name: keyof Row }, value: Date) => (row: Row) =>
-    (row[column.name] as Date).getTime() > value.getTime(),
-  // SQL semantics: a NULL column never satisfies a comparison.
-  lt: (column: { name: keyof Row }, value: Date) => (row: Row) => {
-    const cell = row[column.name] as Date | null
-    return cell !== null && cell.getTime() < value.getTime()
-  },
-}))
-
-vi.mock("@chatbotx.io/database/schema", () => ({
-  mobileRefreshTokenModel: new Proxy(
-    {},
-    { get: (_target, name) => ({ name }) },
-  ),
+vi.mock("@chatbotx.io/database/client", () => ({ db: fakeDb }))
+vi.mock("@chatbotx.io/database/repositories", () => ({
+  mobileRefreshTokenRepository,
 }))
 
 const { mobileRefreshTokenService, MOBILE_REFRESH_TOKEN_TTL_MS } = await import(
@@ -193,7 +185,7 @@ describe("mobileRefreshTokenService", () => {
       userId: "1",
       deviceId: "device-a",
     })
-    expect(rows.every((row) => row.revokedAt instanceof Date)).toBe(true)
+    expect(rows.every((row) => row.revoked instanceof Date)).toBe(true)
     // The legitimate successor is dead too: the thief and the owner both log in again.
     await expect(
       mobileRefreshTokenService.rotate({ token: rotation.refreshToken.token }),
@@ -215,7 +207,7 @@ describe("mobileRefreshTokenService", () => {
 
     const otherHash = await hashToken(other.token)
     const otherRow = rows.find((row) => row.tokenHash === otherHash)
-    expect(otherRow?.revokedAt).toBeNull()
+    expect(otherRow?.revoked).toBeNull()
     await expect(
       mobileRefreshTokenService.rotate({ token: other.token }),
     ).resolves.toMatchObject({ kind: "rotated" })
@@ -268,7 +260,7 @@ describe("mobileRefreshTokenService", () => {
     await expect(
       mobileRefreshTokenService.rotate({ token: "cbx_mrt_unknown" }),
     ).resolves.toEqual({ kind: "invalid" })
-    expect(rows.every((row) => row.revokedAt === null)).toBe(true)
+    expect(rows.every((row) => row.revoked === null)).toBe(true)
   })
 
   test("an expired token is invalid", async () => {
@@ -302,10 +294,10 @@ describe("mobileRefreshTokenService", () => {
     })
 
     await mobileRefreshTokenService.revokeByToken({ token: "cbx_mrt_nope" })
-    expect(rows[0].revokedAt).toBeNull()
+    expect(rows[0].revoked).toBeNull()
 
     await mobileRefreshTokenService.revokeByToken({ token: issued.token })
-    expect(rows[0].revokedAt).toBeInstanceOf(Date)
+    expect(rows[0].revoked).toBeInstanceOf(Date)
   })
 
   test("revokeAllForUser ends every device of that user and no one else", async () => {

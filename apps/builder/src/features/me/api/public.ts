@@ -1,5 +1,6 @@
 import { ChatbotXException } from "@chatbotx.io/business/errors"
-import { createId, zodBigintAsString } from "@chatbotx.io/utils"
+import { createId } from "@chatbotx.io/utils"
+import { ORPCError } from "@orpc/server"
 import { APIError } from "better-auth/api"
 import { z } from "zod"
 import { successResponse } from "@/features/common/schema"
@@ -9,6 +10,11 @@ import {
 } from "@/features/device-tokens/lib/device-tokens"
 import { listMyWorkspaces } from "@/features/workspaces/lib/list-my-workspaces"
 import { workspaceResource } from "@/features/workspaces/schema/resource"
+import { auth } from "@/lib/auth/auth"
+import {
+  isValidWorkspaceId,
+  WORKSPACE_ID_PATTERN,
+} from "@/lib/mobile-auth/resolve-mobile-principal"
 import {
   possibleErrorsOnFindingResource,
   possibleErrorsOnListingResource,
@@ -29,11 +35,19 @@ const changePasswordFailed = {
 }
 
 const WORKSPACE_ID_HEADER = "x-workspace-id"
-const workspaceIdHeaderSchema = zodBigintAsString()
 
 const parseOptionalWorkspaceHeader = (headers: Headers): string | undefined => {
   const raw = headers.get(WORKSPACE_ID_HEADER)?.trim()
-  return raw ? workspaceIdHeaderSchema.parse(raw) : undefined
+  if (!raw) {
+    return
+  }
+  if (!(WORKSPACE_ID_PATTERN.test(raw) && isValidWorkspaceId(raw))) {
+    throw new ORPCError("BAD_REQUEST", {
+      status: 400,
+      message: "x-workspace-id must be a numeric workspace identifier",
+    })
+  }
+  return raw
 }
 
 /**
@@ -127,9 +141,8 @@ export const mePublicRouter = {
       changePasswordFailed,
     })
     .handler(async ({ context, input }) => {
-      // Lazy: the better-auth instance must not boot just because the public
-      // router (every `/v1` route, CLI and MCP spec generation) was imported.
-      const { auth } = await import("@/lib/auth/auth")
+      context.resHeaders?.set("Cache-Control", "no-store")
+      context.resHeaders?.set("Pragma", "no-cache")
       try {
         return await auth.api.mobileChangePassword({
           body: {

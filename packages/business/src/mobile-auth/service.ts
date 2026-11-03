@@ -1,13 +1,5 @@
-import {
-  and,
-  type DatabaseClient,
-  db,
-  eq,
-  gt,
-  isNull,
-  lt,
-} from "@chatbotx.io/database/client"
-import { mobileRefreshTokenModel } from "@chatbotx.io/database/schema"
+import { type DatabaseClient, db } from "@chatbotx.io/database/client"
+import { mobileRefreshTokenRepository } from "@chatbotx.io/database/repositories"
 import { createId } from "@chatbotx.io/utils"
 import { hashToken } from "../workspace-api-token/credentials"
 
@@ -62,25 +54,24 @@ class MobileRefreshTokenService {
   }): Promise<IssuedMobileRefreshToken> {
     const { tx = db, userId, deviceId, familyId } = props
     if (!familyId) {
-      // A new login: sweep this user's tokens that expired and can never be used.
-      await tx
-        .delete(mobileRefreshTokenModel)
-        .where(
-          and(
-            eq(mobileRefreshTokenModel.userId, userId),
-            lt(mobileRefreshTokenModel.expiresAt, new Date()),
-          ),
-        )
+      await mobileRefreshTokenRepository.deleteExpiredForUser(
+        userId,
+        new Date(),
+        tx,
+      )
     }
     const token = generateRefreshToken()
     const expiresAt = new Date(Date.now() + MOBILE_REFRESH_TOKEN_TTL_MS)
-    await tx.insert(mobileRefreshTokenModel).values({
-      userId,
-      deviceId,
-      familyId: familyId ?? createId(),
-      tokenHash: await hashToken(token),
-      expiresAt,
-    })
+    await mobileRefreshTokenRepository.insert(
+      {
+        userId,
+        deviceId,
+        familyId: familyId ?? createId(),
+        tokenHash: await hashToken(token),
+        expiresAt,
+      },
+      tx,
+    )
     return { token, expiresAt }
   }
 
@@ -93,18 +84,11 @@ class MobileRefreshTokenService {
     const tokenHash = await hashToken(props.token)
     return await db.transaction(async (tx) => {
       const now = new Date()
-      const [spent] = await tx
-        .update(mobileRefreshTokenModel)
-        .set({ rotatedAt: now })
-        .where(
-          and(
-            eq(mobileRefreshTokenModel.tokenHash, tokenHash),
-            isNull(mobileRefreshTokenModel.rotatedAt),
-            isNull(mobileRefreshTokenModel.revokedAt),
-            gt(mobileRefreshTokenModel.expiresAt, now),
-          ),
-        )
-        .returning()
+      const spent = await mobileRefreshTokenRepository.spendActive(
+        tokenHash,
+        now,
+        tx,
+      )
 
       if (spent) {
         const refreshToken = await this.issue({
@@ -113,17 +97,11 @@ class MobileRefreshTokenService {
           deviceId: spent.deviceId,
           familyId: spent.familyId,
         })
-        await tx
-          .delete(mobileRefreshTokenModel)
-          .where(
-            and(
-              eq(mobileRefreshTokenModel.familyId, spent.familyId),
-              lt(
-                mobileRefreshTokenModel.rotatedAt,
-                new Date(now.getTime() - SPENT_TOKEN_RETENTION_MS),
-              ),
-            ),
-          )
+        await mobileRefreshTokenRepository.deleteSpentInFamily(
+          spent.familyId,
+          new Date(now.getTime() - SPENT_TOKEN_RETENTION_MS),
+          tx,
+        )
         return {
           kind: "rotated" as const,
           userId: spent.userId,
@@ -132,16 +110,19 @@ class MobileRefreshTokenService {
         }
       }
 
-      const [existing] = await tx
-        .select()
-        .from(mobileRefreshTokenModel)
-        .where(eq(mobileRefreshTokenModel.tokenHash, tokenHash))
-        .limit(1)
+      const existing = await mobileRefreshTokenRepository.findByHash(
+        tokenHash,
+        tx,
+      )
       if (!existing) {
         return { kind: "invalid" as const }
       }
-      if (existing.rotatedAt || existing.revokedAt) {
-        await this.revokeFamily({ tx, familyId: existing.familyId })
+      if (existing.rotatedAt || existing.revoked) {
+        await mobileRefreshTokenRepository.revokeFamilyByHash(
+          tokenHash,
+          now,
+          tx,
+        )
         return {
           kind: "reused" as const,
           userId: existing.userId,
@@ -153,33 +134,12 @@ class MobileRefreshTokenService {
     })
   }
 
-  async revokeFamily(props: {
-    tx?: DatabaseClient
-    familyId: string
-  }): Promise<void> {
-    const { tx = db, familyId } = props
-    await tx
-      .update(mobileRefreshTokenModel)
-      .set({ revokedAt: new Date() })
-      .where(
-        and(
-          eq(mobileRefreshTokenModel.familyId, familyId),
-          isNull(mobileRefreshTokenModel.revokedAt),
-        ),
-      )
-  }
-
   /** Logout: revokes the family a presented token belongs to. Unknown tokens are a no-op. */
   async revokeByToken(props: { token: string }): Promise<void> {
-    const tokenHash = await hashToken(props.token)
-    const [row] = await db
-      .select({ familyId: mobileRefreshTokenModel.familyId })
-      .from(mobileRefreshTokenModel)
-      .where(eq(mobileRefreshTokenModel.tokenHash, tokenHash))
-      .limit(1)
-    if (row) {
-      await this.revokeFamily({ familyId: row.familyId })
-    }
+    await mobileRefreshTokenRepository.revokeFamilyByHash(
+      await hashToken(props.token),
+      new Date(),
+    )
   }
 
   /** Password change/reset: every device must sign in again. */
@@ -188,15 +148,7 @@ class MobileRefreshTokenService {
     userId: string
   }): Promise<void> {
     const { tx = db, userId } = props
-    await tx
-      .update(mobileRefreshTokenModel)
-      .set({ revokedAt: new Date() })
-      .where(
-        and(
-          eq(mobileRefreshTokenModel.userId, userId),
-          isNull(mobileRefreshTokenModel.revokedAt),
-        ),
-      )
+    await mobileRefreshTokenRepository.revokeAllForUser(userId, new Date(), tx)
   }
 }
 

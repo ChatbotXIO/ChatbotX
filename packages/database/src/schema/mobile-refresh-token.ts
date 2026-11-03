@@ -35,11 +35,15 @@ export const mobileRefreshTokenModel = pgTable(
     tokenHash: text().notNull(),
     expiresAt: timestamp(timestampConfig).notNull(),
     rotatedAt: timestamp(timestampConfig),
-    revokedAt: timestamp(timestampConfig),
+    revoked: timestamp(timestampConfig),
   },
   (table) => [
     uniqueIndex("MobileRefreshToken_tokenHash_key").on(table.tokenHash),
     index("MobileRefreshToken_userId_idx").on(table.userId),
-    index("MobileRefreshToken_familyId_idx").on(table.familyId),
+    index("MobileRefreshToken_familyId_rotatedAt_idx").on(
+      table.familyId,
+      table.rotatedAt,
+    ),
+    index("MobileRefreshToken_expiresAt_idx").on(table.expiresAt),
   ],
 )

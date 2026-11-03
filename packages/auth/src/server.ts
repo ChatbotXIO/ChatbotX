@@ -7,6 +7,7 @@ import { mcp } from "@better-auth/mcp"
 
 import {
   customDomainService,
+  mobileRefreshTokenService,
   type PlatformSmtpTransport,
   platformCredentialService,
   resolvePlatformSmtpTransport,
@@ -685,6 +686,9 @@ export function createAuth(config: AuthConfig) {
     emailAndPassword: {
       enabled: true,
       requireEmailVerification: true,
+      onPasswordReset: async ({ user }) => {
+        await mobileRefreshTokenService.revokeAllForUser({ userId: user.id })
+      },
       sendResetPassword: async ({ user, url }, request) => {
         if (isPlaceholderEmail(user.email)) {
           return

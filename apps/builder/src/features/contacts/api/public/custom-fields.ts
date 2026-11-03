@@ -15,7 +15,7 @@ import {
 } from "@/lib/orpc/orpc-error-helper"
 import { publicContactIdentifier } from "@/lib/public-api/contact-identifier"
 import { ianaTimezoneSchema } from "@/lib/public-api/iana-timezone"
-import { resolveContactIdForCaller } from "@/lib/public-api/member-scope"
+import { contactIdFor } from "@/lib/public-api/member-scope"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
 import {
   findContactCustomField,
@@ -48,10 +48,7 @@ export const contactsCustomFieldsPublicRouter = {
     .output(listPublicContactCustomFieldsResponse)
     .errors(possibleErrorsOnFindingResource)
     .handler(async ({ context, input }) => {
-      const contactId = await resolveContactIdForCaller(context, {
-        identifier: input.identifier,
-        workspaceId: context.workspace.id,
-      })
+      const contactId = await contactIdFor(context, input.identifier)
       return await listContactCustomFields({
         workspaceId: context.workspace.id,
         contactId,
@@ -82,10 +79,7 @@ export const contactsCustomFieldsPublicRouter = {
     .errors(possibleErrorsOnFindingResource)
     .handler(async ({ context, input }) => {
       const workspaceId = context.workspace.id
-      const contactId = await resolveContactIdForCaller(context, {
-        identifier: input.identifier,
-        workspaceId,
-      })
+      const contactId = await contactIdFor(context, input.identifier)
       const field = await customFieldService.findByKeyOrFail({
         workspaceId,
         key: input.idOrName,
@@ -128,10 +122,7 @@ export const contactsCustomFieldsPublicRouter = {
     .errors(possibleErrorsOnWritingContactFields)
     .handler(async ({ context, input }) => {
       const workspaceId = context.workspace.id
-      const contactId = await resolveContactIdForCaller(context, {
-        identifier: input.identifier,
-        workspaceId,
-      })
+      const contactId = await contactIdFor(context, input.identifier)
       const field = await customFieldService.findByKeyOrFail({
         workspaceId,
         key: input.idOrName,
@@ -170,10 +161,7 @@ export const contactsCustomFieldsPublicRouter = {
     )
     .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
-      const contactId = await resolveContactIdForCaller(context, {
-        identifier: input.identifier,
-        workspaceId: context.workspace.id,
-      })
+      const contactId = await contactIdFor(context, input.identifier)
       await contactCustomFieldService.setValueForContact({
         workspaceId: context.workspace.id,
         contactId,
@@ -196,10 +184,7 @@ export const contactsCustomFieldsPublicRouter = {
     .errors(possibleErrorsOnWritingContactFields)
     .handler(async ({ context, input }) => {
       const workspaceId = context.workspace.id
-      const contactId = await resolveContactIdForCaller(context, {
-        identifier: input.identifier,
-        workspaceId,
-      })
+      const contactId = await contactIdFor(context, input.identifier)
 
       // One batched lookup for every referenced field; a field deleted
       // between this lookup and the write still fails inside the write's
@@ -246,10 +231,7 @@ export const contactsCustomFieldsPublicRouter = {
     )
     .errors(possibleErrorsOnDeletingResource)
     .handler(async ({ context, input }) => {
-      const contactId = await resolveContactIdForCaller(context, {
-        identifier: input.identifier,
-        workspaceId: context.workspace.id,
-      })
+      const contactId = await contactIdFor(context, input.identifier)
       await contactCustomFieldService.deleteByKey({
         workspaceId: context.workspace.id,
         contactId,
@@ -274,10 +256,7 @@ export const contactsCustomFieldsPublicRouter = {
     )
     .errors(possibleErrorsOnDeletingResource)
     .handler(async ({ context, input }) => {
-      const contactId = await resolveContactIdForCaller(context, {
-        identifier: input.identifier,
-        workspaceId: context.workspace.id,
-      })
+      const contactId = await contactIdFor(context, input.identifier)
       await contactCustomFieldService.clearByContactId({
         workspaceId: context.workspace.id,
         contactId,

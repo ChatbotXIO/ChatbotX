@@ -1,12 +1,17 @@
+import { isMobileAccessTokenCandidate } from "@chatbotx.io/auth/mobile-resource-candidate"
 import { ORPCError } from "@orpc/server"
+import { mobileCredentialId } from "@/lib/mobile-auth/mobile-credential-id"
+import {
+  authenticateMobileBearer,
+  invalidMobileTokenError,
+  toSessionUser,
+} from "@/lib/mobile-auth/resolve-mobile-principal"
 import { assertApiNotRateLimited } from "@/lib/rate-limit/api-rate-limit"
-import { getGuestClientIp } from "@/lib/rate-limit/guest-rate-limit"
 import { base } from "./context"
-
-const JWT_SEGMENT_COUNT = 3
-// Same coarse per-IP ceiling the workspace-token middleware applies before it
-// touches a token; shares its bucket so both `/v1` stacks count one client once.
-const PREAUTH_REQUEST_LIMIT = 600
+import {
+  assertPreAuthNotRateLimited,
+  extractBearer,
+} from "./workspace-token-auth"
 
 type MobileUserAuthOptions = {
   /**
@@ -27,31 +32,12 @@ export const createMobileUserAuthMiddleware = (
   options: MobileUserAuthOptions = {},
 ) =>
   base.middleware(async ({ context, next }) => {
-    // Lazy: `@/orpc` imports this file, and the principal resolver pulls in the
-    // business barrel; keep that out of every module that merely mounts a route.
-    const { authenticateMobileBearer, invalidMobileTokenError, toSessionUser } =
-      await import("@/lib/mobile-auth/resolve-mobile-principal")
-    const authHeader = context.headers.get("Authorization")
-    const bearerToken = authHeader?.startsWith("Bearer ")
-      ? authHeader.slice(7)
-      : null
-    if (!bearerToken || bearerToken.split(".").length !== JWT_SEGMENT_COUNT) {
+    const bearerToken = extractBearer(context.headers)
+    if (!(bearerToken && isMobileAccessTokenCandidate(bearerToken))) {
       throw invalidMobileTokenError()
     }
 
-    await assertApiNotRateLimited({
-      scope: "workspace-token-preauth-rate-limit",
-      key: getGuestClientIp(context.headers),
-      limit: PREAUTH_REQUEST_LIMIT,
-      resHeaders: context.resHeaders,
-    })
-
-    const { isMobileAccessTokenCandidate } = await import(
-      "@chatbotx.io/auth/mobile-resource"
-    )
-    if (!isMobileAccessTokenCandidate(bearerToken)) {
-      throw invalidMobileTokenError()
-    }
+    await assertPreAuthNotRateLimited(context.headers, context.resHeaders)
     const principal = await authenticateMobileBearer(bearerToken)
     if (!principal) {
       throw invalidMobileTokenError()
@@ -72,10 +58,9 @@ export const createMobileUserAuthMiddleware = (
 
     return await next({
       context: {
-        requestIssuedAtMs: Date.now(),
         user: toSessionUser(principal.user),
         mobileDeviceId: principal.deviceId ?? undefined,
-        apiCredentialId: `mobile:${principal.user.id}:${principal.deviceId ?? "-"}`,
+        apiCredentialId: mobileCredentialId(principal),
       },
     })
   })

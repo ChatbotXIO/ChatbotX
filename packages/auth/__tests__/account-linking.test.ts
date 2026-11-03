@@ -4,8 +4,9 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
  * Hoisted mock handles. `vi.mock` factories run before module top-level, so any
  * value a factory references must be created with `vi.hoisted`.
  */
-const { betterAuthMock } = vi.hoisted(() => ({
+const { betterAuthMock, revokeAllForUser } = vi.hoisted(() => ({
   betterAuthMock: vi.fn((config: Record<string, unknown>) => config),
+  revokeAllForUser: vi.fn(async () => undefined),
 }))
 
 // Mirrors trusted-origins-build-phase.test.ts's approach: stub `betterAuth` to
@@ -65,6 +66,7 @@ vi.mock("@chatbotx.io/business", () => ({
   },
   resolveTenantSettingsByDomain: vi.fn(),
   invitationService: { findActiveByCode: vi.fn().mockResolvedValue(null) },
+  mobileRefreshTokenService: { revokeAllForUser },
 }))
 
 vi.mock("@chatbotx.io/utils", () => ({
@@ -100,6 +102,35 @@ describe("createAuth account linking", () => {
 
   afterEach(() => {
     vi.unstubAllEnvs()
+  })
+
+  test("revokes mobile refresh tokens after a successful password reset", async () => {
+    const { createAuth } = await import("../src/server")
+    createAuth({})
+    const config = betterAuthMock.mock.calls.at(-1)?.[0] as {
+      emailAndPassword: {
+        onPasswordReset: (input: { user: { id: string } }) => Promise<void>
+      }
+    }
+
+    await config.emailAndPassword.onPasswordReset({ user: { id: "user-1" } })
+
+    expect(revokeAllForUser).toHaveBeenCalledWith({ userId: "user-1" })
+  })
+
+  test("surfaces mobile refresh-token revocation failure after password reset", async () => {
+    revokeAllForUser.mockRejectedValueOnce(new Error("database unavailable"))
+    const { createAuth } = await import("../src/server")
+    createAuth({})
+    const config = betterAuthMock.mock.calls.at(-1)?.[0] as {
+      emailAndPassword: {
+        onPasswordReset: (input: { user: { id: string } }) => Promise<void>
+      }
+    }
+
+    await expect(
+      config.emailAndPassword.onPasswordReset({ user: { id: "user-1" } }),
+    ).rejects.toThrow("database unavailable")
   })
 
   test("trusts social providers, allows linking into an unverified local user, and keeps emails matched", async () => {

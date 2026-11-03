@@ -9,7 +9,7 @@ import {
   possibleErrorsOnMutatingResource,
 } from "@/lib/orpc/orpc-error-helper"
 import { publicContactIdentifier } from "@/lib/public-api/contact-identifier"
-import { resolveContactIdForCaller } from "@/lib/public-api/member-scope"
+import { contactIdFor } from "@/lib/public-api/member-scope"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
 import { listContactTags } from "../../lib/list-contact-tags"
 import {
@@ -38,10 +38,7 @@ export const contactsTagsPublicRouter = {
     .output(z.object({ data: z.array(publicTagResource) }))
     .errors(possibleErrorsOnFindingResource)
     .handler(async ({ context, input }) => {
-      const contactId = await resolveContactIdForCaller(context, {
-        identifier: input.identifier,
-        workspaceId: context.workspace.id,
-      })
+      const contactId = await contactIdFor(context, input.identifier)
       return await listContactTags({
         workspaceId: context.workspace.id,
         contactId,
@@ -72,10 +69,7 @@ export const contactsTagsPublicRouter = {
     )
     .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
-      const contactId = await resolveContactIdForCaller(context, {
-        identifier: input.identifier,
-        workspaceId: context.workspace.id,
-      })
+      const contactId = await contactIdFor(context, input.identifier)
       await tagService.attachToContact({
         workspaceId: context.workspace.id,
         contactId,
@@ -107,10 +101,7 @@ export const contactsTagsPublicRouter = {
     )
     .errors(possibleErrorsOnDeletingResource)
     .handler(async ({ context, input }) => {
-      const contactId = await resolveContactIdForCaller(context, {
-        identifier: input.identifier,
-        workspaceId: context.workspace.id,
-      })
+      const contactId = await contactIdFor(context, input.identifier)
       await tagService.detachFromContact({
         workspaceId: context.workspace.id,
         contactId,
@@ -133,10 +124,7 @@ export const contactsTagsPublicRouter = {
     .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
       const workspaceId = context.workspace.id
-      const contactId = await resolveContactIdForCaller(context, {
-        identifier: input.identifier,
-        workspaceId,
-      })
+      const contactId = await contactIdFor(context, input.identifier)
       await tagService.attachByNamesToContacts({
         workspaceId,
         contactIds: [contactId],
@@ -158,10 +146,7 @@ export const contactsTagsPublicRouter = {
     .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
       const workspaceId = context.workspace.id
-      const contactId = await resolveContactIdForCaller(context, {
-        identifier: input.identifier,
-        workspaceId,
-      })
+      const contactId = await contactIdFor(context, input.identifier)
       await tagService.replaceContactTagsByNames({
         workspaceId,
         contactId,

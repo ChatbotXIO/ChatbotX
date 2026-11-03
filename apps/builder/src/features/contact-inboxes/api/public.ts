@@ -3,7 +3,7 @@ import { z } from "zod"
 import { listContactInboxesPublicResponse } from "@/features/contact-inboxes/schema/public"
 import { possibleErrorsOnFindingResource } from "@/lib/orpc/orpc-error-helper"
 import { publicContactIdentifier } from "@/lib/public-api/contact-identifier"
-import { resolveContactIdForCaller } from "@/lib/public-api/member-scope"
+import { contactIdFor } from "@/lib/public-api/member-scope"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
 
 const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("contacts")
@@ -27,10 +27,7 @@ export const contactsInboxesPublicRouter = {
     .errors(possibleErrorsOnFindingResource)
     .handler(async ({ context, input }) => {
       const workspaceId = context.workspace.id
-      const contactId = await resolveContactIdForCaller(context, {
-        identifier: input.identifier,
-        workspaceId,
-      })
+      const contactId = await contactIdFor(context, input.identifier)
       const data = await contactInboxService.listByContactIdUncached({
         workspaceId,
         contactId,

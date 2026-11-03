@@ -1,4 +1,9 @@
+import {
+  MobileTokenVerificationUnavailableError,
+  verifyMobileAccessToken,
+} from "@chatbotx.io/auth/mobile-resource"
 import { userService, workspaceMemberService } from "@chatbotx.io/business"
+import { hasContactsAccess } from "@chatbotx.io/business/workspace-member/permissions"
 import type { WorkspaceApiTokenScope } from "@chatbotx.io/database/partials"
 import type {
   UserModel,
@@ -6,7 +11,7 @@ import type {
   WorkspaceModel,
 } from "@chatbotx.io/database/types"
 import { ORPCError } from "@orpc/server"
-import { hasContactsAccess } from "@/lib/auth/permission-routes"
+import { auth } from "@/lib/auth/auth"
 import type { SessionUser } from "@/lib/auth/utils"
 
 /**
@@ -28,7 +33,11 @@ export const deriveMemberScopes = (
 ): WorkspaceApiTokenScope[] =>
   hasContactsAccess(member.permissions) ? INBOX_SCOPES : []
 
-const WORKSPACE_ID_PATTERN = /^\d{1,20}$/
+export const WORKSPACE_ID_PATTERN = /^\d{1,20}$/
+const POSTGRES_BIGINT_MAX = 9_223_372_036_854_775_807n
+
+export const isValidWorkspaceId = (value: string): boolean =>
+  WORKSPACE_ID_PATTERN.test(value) && BigInt(value) <= POSTGRES_BIGINT_MAX
 
 export const invalidMobileTokenError = () =>
   new ORPCError("INVALID_CHATBOT_TOKEN", {
@@ -37,7 +46,7 @@ export const invalidMobileTokenError = () =>
   })
 
 /** The verified-token subject plus the live user row it points at. */
-export type MobileUserPrincipal = {
+type MobileUserPrincipal = {
   user: UserModel
   deviceId: string | null
 }
@@ -51,13 +60,6 @@ export type MobileUserPrincipal = {
 export const authenticateMobileBearer = async (
   bearerToken: string,
 ): Promise<MobileUserPrincipal | null> => {
-  const [
-    { auth },
-    { MobileTokenVerificationUnavailableError, verifyMobileAccessToken },
-  ] = await Promise.all([
-    import("@/lib/auth/auth"),
-    import("@chatbotx.io/auth/mobile-resource"),
-  ])
   const subject = await verifyMobileAccessToken(auth, bearerToken).catch(
     (error: unknown) => {
       if (error instanceof MobileTokenVerificationUnavailableError) {
@@ -93,9 +95,7 @@ export const requireMobileMember = async (props: {
   requestedWorkspaceId: string | undefined
 }): Promise<{ workspace: WorkspaceModel; member: WorkspaceMemberModel }> => {
   const { requestedWorkspaceId } = props
-  if (
-    !(requestedWorkspaceId && WORKSPACE_ID_PATTERN.test(requestedWorkspaceId))
-  ) {
+  if (!(requestedWorkspaceId && isValidWorkspaceId(requestedWorkspaceId))) {
     throw new ORPCError("WORKSPACE_SELECTION_REQUIRED", {
       status: 400,
       message: "A numeric x-workspace-id header is required for this request",

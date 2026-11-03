@@ -1,3 +1,4 @@
+import type { ConversationMemberScope } from "@chatbotx.io/business"
 import type {
   WorkspaceApiTokenModel,
   WorkspaceMemberModel,
@@ -37,6 +38,8 @@ export type BaseContext = ResponseHeadersPluginContext & {
    * API tokens or MCP OAuth, which stay workspace-level and unscoped.
    */
   member?: WorkspaceMemberModel
+  /** Mobile member scope resolved once per request, including inbox-team ids. */
+  memberConversationScope?: Promise<ConversationMemberScope>
   /** Mobile JWT principal only: the installation the access token was issued to. */
   mobileDeviceId?: string
   /**

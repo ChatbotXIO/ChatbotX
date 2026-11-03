@@ -118,6 +118,20 @@ vi.mock("@chatbotx.io/business/audit", () => ({
 vi.mock("@chatbotx.io/business", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@chatbotx.io/business")>()
   return {
+    buildContactPermissionScope: actual.buildContactPermissionScope,
+    conversationMemberScope: {
+      resolve: async ({
+        permissions,
+        userId,
+      }: {
+        permissions: Record<string, boolean>
+        userId: string
+      }) => ({
+        chatScope: permissions.onlyAssignedContacts ? "assigned" : "all",
+        teamIds: [],
+        userId,
+      }),
+    },
     inboxResource: actual.inboxResource,
     UNSCOPED: actual.UNSCOPED,
     contactService: {

@@ -193,6 +193,7 @@ function toListWhereInput(
     contactFilter: input.contactFilter,
     inboxScope,
     restrictToAssignedUserId: scope?.restrictToAssignedUserId,
+    restrictToTeamIds: scope?.restrictToTeamIds,
     includeEmailAndPhone: scope?.canViewEmailAndPhone !== false,
   }
 }

@@ -13,7 +13,7 @@ import {
   possibleErrorsOnMutatingResource,
 } from "@/lib/orpc/orpc-error-helper"
 import { publicContactIdentifier } from "@/lib/public-api/contact-identifier"
-import { resolveContactIdForCaller } from "@/lib/public-api/member-scope"
+import { contactIdFor } from "@/lib/public-api/member-scope"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
 
 const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("contacts")
@@ -37,10 +37,7 @@ export const contactsNotesPublicRouter = {
     .errors(possibleErrorsOnFindingResource)
     .handler(async ({ context, input }) => {
       const workspaceId = context.workspace.id
-      const contactId = await resolveContactIdForCaller(context, {
-        identifier: input.identifier,
-        workspaceId,
-      })
+      const contactId = await contactIdFor(context, input.identifier)
       const data = await contactNoteService.listByContactId({
         workspaceId,
         contactId,
@@ -71,10 +68,7 @@ export const contactsNotesPublicRouter = {
     .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
       const workspaceId = context.workspace.id
-      const contactId = await resolveContactIdForCaller(context, {
-        identifier: input.identifier,
-        workspaceId,
-      })
+      const contactId = await contactIdFor(context, input.identifier)
       return await contactNoteService.create({
         workspaceId,
         contactId,
@@ -104,10 +98,7 @@ export const contactsNotesPublicRouter = {
     .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
       const workspaceId = context.workspace.id
-      const contactId = await resolveContactIdForCaller(context, {
-        identifier: input.identifier,
-        workspaceId,
-      })
+      const contactId = await contactIdFor(context, input.identifier)
       return await contactNoteService.update({
         workspaceId,
         contactId,
@@ -135,10 +126,7 @@ export const contactsNotesPublicRouter = {
     .errors(possibleErrorsOnDeletingResource)
     .handler(async ({ context, input }) => {
       const workspaceId = context.workspace.id
-      const contactId = await resolveContactIdForCaller(context, {
-        identifier: input.identifier,
-        workspaceId,
-      })
+      const contactId = await contactIdFor(context, input.identifier)
       await contactNoteService.delete({
         workspaceId,
         contactId,

@@ -23,8 +23,10 @@ vi.mock("@/lib/rate-limit/guest-rate-limit", () => ({
 vi.mock("@/lib/auth/auth", () => ({ auth: {} }))
 vi.mock("@chatbotx.io/auth/mobile-resource", () => ({
   MobileTokenVerificationUnavailableError: class extends Error {},
-  isMobileAccessTokenCandidate: (token: string) => token === MOBILE_TOKEN,
   verifyMobileAccessToken: mocks.verifyMobileAccessToken,
+}))
+vi.mock("@chatbotx.io/auth/mobile-resource-candidate", () => ({
+  isMobileAccessTokenCandidate: (token: string) => token === MOBILE_TOKEN,
 }))
 
 const { mobileUserAuthMiddleware, mobileUserPasswordChangeAuthMiddleware } =

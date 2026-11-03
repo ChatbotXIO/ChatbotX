@@ -1,31 +1,42 @@
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { assertApiNotRateLimited } from "@/lib/rate-limit/api-rate-limit"
-import { getGuestClientIp } from "@/lib/rate-limit/guest-rate-limit"
 
-export const MOBILE_TOKEN_PATH_SUFFIX = "/mobile/token"
-
-// The window is the shared 10s API window. 3 per IP is better-auth's own rule
-// for `/sign-in/email`; the per-account bucket additionally stops a botnet from
-// spreading guesses for one mailbox across many IPs.
-const PASSWORD_GRANT_IP_LIMIT = 3
+const MOBILE_TOKEN_PATH_SUFFIX = "/mobile/token"
 const PASSWORD_GRANT_ACCOUNT_LIMIT = 5
 const RETRY_AFTER_PATTERN = /Retry after (\d+)s\./
 
 type PasswordGrantBody = { grantType?: unknown; email?: unknown }
 
-const readPasswordGrantEmail = async (
+type PasswordGrantReadResult =
+  | { kind: "invalid" }
+  | { kind: "other" }
+  | { email: string | null; kind: "password" }
+
+const readPasswordGrant = async (
   request: Request,
-): Promise<string | null | undefined> => {
+): Promise<PasswordGrantReadResult> => {
   try {
-    const body = (await request.clone().json()) as PasswordGrantBody
-    if (body.grantType !== "password") {
-      return
+    const contentType = request.headers.get("content-type")?.toLowerCase() ?? ""
+    let body: PasswordGrantBody
+    if (contentType.includes("application/json")) {
+      body = (await request.clone().json()) as PasswordGrantBody
+    } else {
+      const form = await request.clone().formData()
+      body = {
+        email: form.get("email"),
+        grantType: form.get("grant_type"),
+      }
     }
-    return typeof body.email === "string"
-      ? body.email.trim().toLowerCase()
-      : null
+    if (body.grantType !== "password") {
+      return { kind: "other" }
+    }
+    return {
+      kind: "password",
+      email:
+        typeof body.email === "string" ? body.email.trim().toLowerCase() : null,
+    }
   } catch {
-    return
+    return { kind: "invalid" }
   }
 }
 
@@ -39,26 +50,34 @@ export const rateLimitMobilePasswordGrant = async (
   request: Request,
   pathname: string,
 ): Promise<Response | undefined> => {
+  const normalizedPathname =
+    pathname.length > 1 && pathname.endsWith("/")
+      ? pathname.slice(0, -1)
+      : pathname
   if (
     request.method !== "POST" ||
-    !pathname.endsWith(MOBILE_TOKEN_PATH_SUFFIX)
+    !normalizedPathname.endsWith(MOBILE_TOKEN_PATH_SUFFIX)
   ) {
     return
   }
-  const email = await readPasswordGrantEmail(request)
-  if (email === undefined) {
+  const passwordGrant = await readPasswordGrant(request)
+  if (passwordGrant.kind === "other") {
     return
   }
+  if (passwordGrant.kind === "invalid") {
+    return Response.json(
+      {
+        code: "BAD_REQUEST",
+        message: "Invalid password grant request",
+      },
+      { status: 400 },
+    )
+  }
   try {
-    await assertApiNotRateLimited({
-      scope: "mobile-token-password-ip-rate-limit",
-      key: getGuestClientIp(request.headers),
-      limit: PASSWORD_GRANT_IP_LIMIT,
-    })
-    if (email) {
+    if (passwordGrant.email) {
       await assertApiNotRateLimited({
         scope: "mobile-token-password-account-rate-limit",
-        key: email,
+        key: passwordGrant.email,
         limit: PASSWORD_GRANT_ACCOUNT_LIMIT,
       })
     }

@@ -1,6 +1,4 @@
 import { mobileRefreshTokenService, userService } from "@chatbotx.io/business"
-import { db, eq } from "@chatbotx.io/database/client"
-import { verificationModel } from "@chatbotx.io/database/schema"
 import { createId } from "@chatbotx.io/utils"
 import type { BetterAuthPlugin } from "better-auth"
 import {
@@ -32,6 +30,7 @@ const MOBILE_CODE_IDENTIFIER_PREFIX = "mobile-auth-code:"
 const MOBILE_TOKEN_PATH = "/mobile/token"
 const DEVICE_ID_MAX_LENGTH = 128
 const DEVICE_ID_PATTERN = /^[\w.:-]+$/
+const PKCE_CHALLENGE_PATTERN = /^[A-Za-z0-9_-]+$/
 // Same rule better-auth applies to `/sign-in/*`: 3 attempts per 10 seconds per IP.
 const SIGN_IN_RATE_LIMIT = { window: 10, max: 3 } as const
 
@@ -52,7 +51,11 @@ const tokenRequestSchema = z.discriminatedUnion("grantType", [
   z.object({
     grantType: z.literal("exchange_code"),
     code: z.string().min(1),
-    codeVerifier: z.string().min(1).optional(),
+    codeVerifier: z
+      .string()
+      .min(43)
+      .max(128)
+      .regex(/^[A-Za-z0-9._~-]+$/),
     deviceId: deviceIdSchema.optional(),
   }),
   z.object({
@@ -64,7 +67,7 @@ const tokenRequestSchema = z.discriminatedUnion("grantType", [
 type ExchangeCodeRecord = {
   userId: string
   deviceId: string | null
-  codeChallenge: string | null
+  codeChallenge: string
 }
 
 type MobileUser = {
@@ -88,7 +91,7 @@ export type MobileTokenResponse = {
   mustChangePassword: boolean
 }
 
-type JwtPluginLike = { id: string; options?: Record<string, unknown> }
+type JwtPluginOptions = { jwt?: Record<string, unknown> }
 
 const unauthorized = (code: string, message: string) =>
   APIError.from("UNAUTHORIZED", { code, message })
@@ -101,12 +104,8 @@ const mintAccessToken = async (
   // Reuse the jwt() plugin instance (same JWKS signing key, same issuer) but
   // override audience and expiry for this one token — the global jwt() options
   // that MCP depends on are never touched.
-  const jwtPlugin = (
-    ctx.context.options.plugins as JwtPluginLike[] | undefined
-  )?.find((plugin) => plugin.id === "jwt")
-  const jwtOptions = (jwtPlugin?.options ?? {}) as {
-    jwt?: Record<string, unknown>
-  }
+  const jwtOptions = (ctx.context.getPlugin?.("jwt")?.options ??
+    {}) as JwtPluginOptions
   const issuedAt = Math.floor(Date.now() / 1000)
   const expiresAtSeconds = issuedAt + MOBILE_ACCESS_TOKEN_TTL_SECONDS
   const token = await signJWT(ctx, {
@@ -157,39 +156,13 @@ const setNoStore = (ctx: {
   ctx.setHeader("Pragma", "no-cache")
 }
 
-type CredentialContext = {
-  context: {
-    internalAdapter: {
-      findUserByEmail: (
-        email: string,
-        options: { includeAccounts: true },
-      ) => Promise<{
-        user: MobileUser & { emailVerified?: boolean }
-        accounts: {
-          providerId: string
-          accountId: string
-          password?: string | null
-        }[]
-      } | null>
-    }
-    password: {
-      hash: (password: string) => Promise<string>
-      verify: (data: { hash: string; password: string }) => Promise<boolean>
-      config: { minPasswordLength: number; maxPasswordLength: number }
-    }
-    options: {
-      emailAndPassword?: { requireEmailVerification?: boolean }
-    }
-  }
-}
-
 /**
  * Credential check for the `password` grant. Mirrors `/sign-in/email` minus
  * the session: same lookup (tenant-scoped through the adapter wrapper), same
  * dummy-hash on a miss (constant-ish timing), same email-verification gate.
  */
 const authenticateWithPassword = async (
-  ctx: CredentialContext,
+  ctx: Parameters<typeof mintAccessToken>[0],
   input: { email: string; password: string },
 ): Promise<MobileUser> => {
   const email = input.email.trim().toLowerCase()
@@ -239,35 +212,39 @@ const authenticateWithPassword = async (
 
 /** Atomically consumes a one-time exchange code (single use even under races). */
 const consumeExchangeCode = async (
+  ctx: AuthContext,
   code: string,
 ): Promise<ExchangeCodeRecord | null> => {
   const identifier = `${MOBILE_CODE_IDENTIFIER_PREFIX}${await hashExchangeCode(code)}`
-  const [row] = await db
-    .delete(verificationModel)
-    .where(eq(verificationModel.identifier, identifier))
-    .returning()
-  if (!row || row.expiresAt.getTime() < Date.now()) {
+  const row =
+    await ctx.context.internalAdapter.consumeVerificationValue(identifier)
+  if (!row) {
     return null
   }
   try {
     const parsed = JSON.parse(row.value) as Partial<ExchangeCodeRecord>
-    if (typeof parsed.userId !== "string") {
+    if (
+      typeof parsed.userId !== "string" ||
+      typeof parsed.codeChallenge !== "string"
+    ) {
       return null
     }
     return {
       userId: parsed.userId,
       deviceId: typeof parsed.deviceId === "string" ? parsed.deviceId : null,
-      codeChallenge:
-        typeof parsed.codeChallenge === "string" ? parsed.codeChallenge : null,
+      codeChallenge: parsed.codeChallenge,
     }
   } catch {
     return null
   }
 }
 
-const storeExchangeCode = async (record: ExchangeCodeRecord) => {
+const storeExchangeCode = async (
+  ctx: AuthContext,
+  record: ExchangeCodeRecord,
+) => {
   const code = createExchangeCode()
-  await db.insert(verificationModel).values({
+  await ctx.context.internalAdapter.createVerificationValue({
     identifier: `${MOBILE_CODE_IDENTIFIER_PREFIX}${await hashExchangeCode(code)}`,
     value: JSON.stringify(record),
     expiresAt: new Date(Date.now() + MOBILE_EXCHANGE_CODE_TTL_MS),
@@ -369,7 +346,7 @@ export const mobileAuth = () =>
           }
 
           if (body.grantType === "exchange_code") {
-            const record = await consumeExchangeCode(body.code)
+            const record = await consumeExchangeCode(ctx, body.code)
             if (!record) {
               throw unauthorized(
                 "INVALID_EXCHANGE_CODE",
@@ -377,14 +354,10 @@ export const mobileAuth = () =>
               )
             }
             if (
-              record.codeChallenge &&
-              !(
-                body.codeVerifier &&
-                (await verifyPkceChallenge(
-                  body.codeVerifier,
-                  record.codeChallenge,
-                ))
-              )
+              !(await verifyPkceChallenge(
+                body.codeVerifier,
+                record.codeChallenge,
+              ))
             ) {
               throw unauthorized(
                 "INVALID_CODE_VERIFIER",
@@ -428,7 +401,7 @@ export const mobileAuth = () =>
           method: "GET",
           query: z.object({
             redirect_uri: z.string().optional(),
-            code_challenge: z.string().max(256).optional(),
+            code_challenge: z.string().length(43).regex(PKCE_CHALLENGE_PATTERN),
             device_id: deviceIdSchema.optional(),
             state: z.string().max(512).optional(),
           }),
@@ -450,10 +423,10 @@ export const mobileAuth = () =>
               }),
             )
           }
-          const code = await storeExchangeCode({
+          const code = await storeExchangeCode(ctx, {
             userId: session.user.id,
             deviceId: ctx.query.device_id ?? null,
-            codeChallenge: ctx.query.code_challenge ?? null,
+            codeChallenge: ctx.query.code_challenge,
           })
           // The social callback minted a browser session as a side effect; the
           // app only ever holds JWT + refresh token, so drop it again.
@@ -553,31 +526,6 @@ export const mobileAuth = () =>
       ),
     },
     hooks: {
-      // A web-side password change/reset must also end every mobile login.
-      // Reset has no session, so the user comes from the (still unspent) reset
-      // token; change/set run after success with the caller's session.
-      before: [
-        {
-          matcher: (context) => context.path === "/reset-password",
-          handler: createAuthMiddleware(async (ctx) => {
-            const token =
-              (ctx.body as { token?: string } | undefined)?.token ??
-              (ctx.query as { token?: string } | undefined)?.token
-            if (!token) {
-              return
-            }
-            const verification =
-              await ctx.context.internalAdapter.findVerificationValue(
-                `reset-password:${token}`,
-              )
-            if (verification && verification.expiresAt > new Date()) {
-              await mobileRefreshTokenService.revokeAllForUser({
-                userId: verification.value,
-              })
-            }
-          }),
-        },
-      ],
       after: [
         {
           matcher: (context) =>

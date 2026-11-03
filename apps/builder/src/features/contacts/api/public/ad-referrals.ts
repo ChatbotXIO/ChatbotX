@@ -4,7 +4,7 @@ import {
   possibleErrorsOnListingWithCursor,
 } from "@/lib/orpc/orpc-error-helper"
 import { publicContactIdentifier } from "@/lib/public-api/contact-identifier"
-import { resolveContactIdForCaller } from "@/lib/public-api/member-scope"
+import { contactIdFor } from "@/lib/public-api/member-scope"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
 import { listContactAdReferrals } from "../../lib/list-contact-ad-referrals"
 import {
@@ -35,10 +35,7 @@ export const contactsAdReferralsPublicRouter = {
       ...possibleErrorsOnListingWithCursor,
     })
     .handler(async ({ context, input }) => {
-      const contactId = await resolveContactIdForCaller(context, {
-        identifier: input.identifier,
-        workspaceId: context.workspace.id,
-      })
+      const contactId = await contactIdFor(context, input.identifier)
       return await listContactAdReferrals({
         workspaceId: context.workspace.id,
         contactId,

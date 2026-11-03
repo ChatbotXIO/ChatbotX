@@ -100,5 +100,21 @@ export const conversationModel = pgTable(
       table.lastActivityAt.desc().nullsLast(),
       table.id.desc(),
     ),
+    index("Conversation_workspaceId_assignedUserId_lastActivityAt_id_idx")
+      .on(
+        table.workspaceId,
+        table.assignedUserId,
+        table.lastActivityAt.desc(),
+        table.id.desc(),
+      )
+      .where(sql`${table.assignedUserId} IS NOT NULL`),
+    index("Conversation_ws_team_lastActivity_id_idx")
+      .on(
+        table.workspaceId,
+        table.assignedInboxTeamId,
+        table.lastActivityAt.desc(),
+        table.id.desc(),
+      )
+      .where(sql`${table.assignedInboxTeamId} IS NOT NULL`),
   ],
 )

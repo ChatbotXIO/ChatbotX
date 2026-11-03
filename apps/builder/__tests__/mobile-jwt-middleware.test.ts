@@ -53,8 +53,10 @@ vi.mock("@chatbotx.io/auth/mcp-resource", () => ({
 }))
 vi.mock("@chatbotx.io/auth/mobile-resource", () => ({
   MobileTokenVerificationUnavailableError: class extends Error {},
-  isMobileAccessTokenCandidate: (token: string) => token === MOBILE_TOKEN,
   verifyMobileAccessToken: mocks.verifyMobileAccessToken,
+}))
+vi.mock("@chatbotx.io/auth/mobile-resource-candidate", () => ({
+  isMobileAccessTokenCandidate: (token: string) => token === MOBILE_TOKEN,
 }))
 
 const { workspaceTokenAuthMidddleware } = await import(
