@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { act } from "react"
+import { act, type ReactNode } from "react"
 import { createRoot, type Root } from "react-dom/client"
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 import { MessageList } from "@/features/messages/message-list"
@@ -41,6 +41,21 @@ const chatStoreState = {
   setReplyToMessage: vi.fn(),
   updateMessageAttributes: vi.fn(),
   updateMessageText: vi.fn(),
+}
+
+type VirtuosoMockProps = {
+  components: {
+    Footer: () => ReactNode
+    Header: () => ReactNode
+    List: ({ children }: { children: ReactNode }) => ReactNode
+  }
+  data: { id: string; messageType: string }[]
+  firstItemIndex: number
+  itemContent: (
+    index: number,
+    message: { id: string; messageType: string },
+  ) => ReactNode
+  startReached: () => void
 }
 
 vi.mock("next-intl", () => ({
@@ -86,15 +101,23 @@ vi.mock("@/features/messages/lib/private-reply", () => ({
 
 vi.mock("react-virtuoso", () => ({
   Virtuoso: ({
+    components: { Footer, Header, List },
+    data,
     firstItemIndex,
+    itemContent,
     startReached,
-  }: {
-    firstItemIndex: number
-    startReached: () => void
-  }) => {
+  }: VirtuosoMockProps) => {
     virtuosoPropsRef.current = { firstItemIndex, startReached }
     return (
-      <div data-first-item-index={firstItemIndex} data-testid="message-list" />
+      <div data-first-item-index={firstItemIndex} data-testid="message-list">
+        <Header />
+        <List>
+          {data.map((message, index) => (
+            <div key={message.id}>{itemContent(index, message)}</div>
+          ))}
+        </List>
+        <Footer />
+      </div>
     )
   },
 }))
@@ -193,5 +216,18 @@ describe("MessageList", () => {
         .querySelector("[data-testid='message-list']")
         ?.getAttribute("data-first-item-index"),
     ).toBe("99999")
+  })
+
+  test("measures message spacing inside virtuoso items", () => {
+    chatStoreState.messages = [{ id: "message-1", messageType: "incoming" }]
+
+    render()
+
+    const list = container.querySelector(".virtuoso-item-list")
+    expect(list?.className).toBe("virtuoso-item-list flex flex-col")
+    expect(
+      list?.firstElementChild?.firstElementChild?.classList.contains("pb-1.5"),
+    ).toBe(true)
+    expect(container.querySelector(".h-3")).not.toBeNull()
   })
 })

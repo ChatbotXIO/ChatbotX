@@ -302,6 +302,7 @@ export function MessageList() {
         atBottomStateChange={handleAtBottomStateChange}
         atBottomThreshold={100}
         components={{
+          Footer: MessageComponentFooter,
           List: MessageComponentList,
           Header: MessageComponentHeader,
         }}
@@ -310,27 +311,29 @@ export function MessageList() {
         followOutput
         initialTopMostItemIndex={{ index: "LAST" }}
         itemContent={(_, message) => (
-          <MessageItem
-            canPrivateReply={(comment) =>
-              canPrivateReplyToComment({
-                channel: activeChannel,
-                message: comment,
-              })
-            }
-            key={message.id}
-            message={message}
-            onChangeHide={() => handleChangeHideState(message)}
-            onChangeLike={() => handleChangeLikeState(message)}
-            onDelete={() => {
-              handleDeleteComment({
-                id: message.id,
-                createdAt: message.createdAt,
-              })
-            }}
-            onEdit={handleEditMessage}
-            onPrivateReply={handlePrivateReplyComment}
-            onReply={handleReplyComment}
-          />
+          <div className="pb-1.5">
+            <MessageItem
+              canPrivateReply={(comment) =>
+                canPrivateReplyToComment({
+                  channel: activeChannel,
+                  message: comment,
+                })
+              }
+              key={message.id}
+              message={message}
+              onChangeHide={() => handleChangeHideState(message)}
+              onChangeLike={() => handleChangeLikeState(message)}
+              onDelete={() => {
+                handleDeleteComment({
+                  id: message.id,
+                  createdAt: message.createdAt,
+                })
+              }}
+              onEdit={handleEditMessage}
+              onPrivateReply={handlePrivateReplyComment}
+              onReply={handleReplyComment}
+            />
+          </div>
         )}
         ref={virtuosoRef}
         startReached={loadMoreItems}
@@ -365,25 +368,26 @@ const MessageComponentHeader: GridComponents["Header"] = () => {
   const { isLoadMoreMessage } = useChatStore((state) => state)
 
   return (
-    <>
+    <div className="pt-3">
       <ConversationInfo />
       {isLoadMoreMessage && (
         <div className="flex items-center space-x-2 px-3 py-2">
           <Skeleton className="h-8 w-3/5 rounded-xl" />
         </div>
       )}
-    </>
+    </div>
   )
 }
+
+const MessageComponentFooter: GridComponents["Footer"] = () => (
+  <div className="h-3" />
+)
 
 const MessageComponentList: GridComponents["List"] = ({
   children,
   ...props
 }) => (
-  <div
-    {...props}
-    className="virtuoso-item-list flex flex-col gap-1.5 [&>div:first-child]:mt-3"
-  >
+  <div {...props} className="virtuoso-item-list flex flex-col">
     {children}
   </div>
 )
