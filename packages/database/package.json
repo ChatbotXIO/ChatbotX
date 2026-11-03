@@ -14,7 +14,7 @@
     "date-fns": "catalog:",
     "date-fns-tz": "catalog:",
     "drizzle-orm": "catalog:",
-    "pg": "^8.20.0",
+    "pg": "catalog:",
     "re2js": "2.9.1",
     "zod": "catalog:"
   },
@@ -22,7 +22,7 @@
     "@chatbotx.io/sdk": "workspace:*",
     "@chatbotx.io/vitest-config": "workspace:*",
     "@types/node": "catalog:",
-    "@types/pg": "^8.20.0",
+    "@types/pg": "catalog:",
     "dotenv-cli": "catalog:",
     "drizzle-kit": "catalog:",
     "esbuild": "^0.28.1",

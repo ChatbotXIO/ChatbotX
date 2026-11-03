@@ -30,6 +30,9 @@ catalogs:
     '@types/mime-types':
       specifier: ^3.0.1
       version: 3.0.1
+    '@types/pg':
+      specifier: ^8.20.0
+      version: 8.20.0
     '@types/react':
       specifier: 19.2.14
       version: 19.2.14
@@ -93,6 +96,9 @@ catalogs:
     next:
       specifier: 16.4.3
       version: 16.4.3
+    pg:
+      specifier: ^8.20.0
+      version: 8.21.0
     react:
       specifier: 19.2.5
       version: 19.2.5
@@ -619,7 +625,7 @@ importers:
         specifier: 'catalog:'
         version: 11.0.0
       pg:
-        specifier: ^8.20.0
+        specifier: 'catalog:'
         version: 8.21.0
       pino-pretty:
         specifier: ^13.1.3
@@ -722,9 +728,6 @@ importers:
 
   apps/mcp-server:
     dependencies:
-      '@chatbotx.io/logger':
-        specifier: workspace:*
-        version: link:../../packages/logger
       '@modelcontextprotocol/sdk':
         specifier: ^1.32.0
         version: 1.32.0(zod@4.6.7)
@@ -744,6 +747,9 @@ importers:
       '@chatbotx.io/flow-config':
         specifier: workspace:*
         version: link:../../packages/flow-config
+      '@chatbotx.io/logger':
+        specifier: workspace:*
+        version: link:../../packages/logger
       '@chatbotx.io/vitest-config':
         specifier: workspace:*
         version: link:../../packages/vitest-config
@@ -2840,7 +2846,7 @@ importers:
         specifier: 'catalog:'
         version: 1.0.0-beta.22(@cloudflare/workers-types@4.20240718.0)(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(pg@8.21.0)(valibot@1.5.0(typescript@5.9.3))(zod@4.6.7)
       pg:
-        specifier: ^8.20.0
+        specifier: 'catalog:'
         version: 8.21.0
       re2js:
         specifier: 2.9.1
@@ -2859,7 +2865,7 @@ importers:
         specifier: 24.x
         version: 24.13.1
       '@types/pg':
-        specifier: ^8.20.0
+        specifier: 'catalog:'
         version: 8.20.0
       dotenv-cli:
         specifier: 'catalog:'
