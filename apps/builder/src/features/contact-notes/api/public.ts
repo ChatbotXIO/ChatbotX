@@ -1,4 +1,4 @@
-import { contactNoteService, contactService } from "@chatbotx.io/business"
+import { contactNoteService } from "@chatbotx.io/business"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 import {
@@ -13,6 +13,7 @@ import {
   possibleErrorsOnMutatingResource,
 } from "@/lib/orpc/orpc-error-helper"
 import { publicContactIdentifier } from "@/lib/public-api/contact-identifier"
+import { contactIdFor } from "@/lib/public-api/member-scope"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
 
 const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("contacts")
@@ -36,10 +37,7 @@ export const contactsNotesPublicRouter = {
     .errors(possibleErrorsOnFindingResource)
     .handler(async ({ context, input }) => {
       const workspaceId = context.workspace.id
-      const contactId = await contactService.resolveIdByIdentifier({
-        identifier: input.identifier,
-        workspaceId,
-      })
+      const contactId = await contactIdFor(context, input.identifier)
       const data = await contactNoteService.listByContactId({
         workspaceId,
         contactId,
@@ -70,10 +68,7 @@ export const contactsNotesPublicRouter = {
     .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
       const workspaceId = context.workspace.id
-      const contactId = await contactService.resolveIdByIdentifier({
-        identifier: input.identifier,
-        workspaceId,
-      })
+      const contactId = await contactIdFor(context, input.identifier)
       return await contactNoteService.create({
         workspaceId,
         contactId,
@@ -103,10 +98,7 @@ export const contactsNotesPublicRouter = {
     .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
       const workspaceId = context.workspace.id
-      const contactId = await contactService.resolveIdByIdentifier({
-        identifier: input.identifier,
-        workspaceId,
-      })
+      const contactId = await contactIdFor(context, input.identifier)
       return await contactNoteService.update({
         workspaceId,
         contactId,
@@ -134,10 +126,7 @@ export const contactsNotesPublicRouter = {
     .errors(possibleErrorsOnDeletingResource)
     .handler(async ({ context, input }) => {
       const workspaceId = context.workspace.id
-      const contactId = await contactService.resolveIdByIdentifier({
-        identifier: input.identifier,
-        workspaceId,
-      })
+      const contactId = await contactIdFor(context, input.identifier)
       await contactNoteService.delete({
         workspaceId,
         contactId,

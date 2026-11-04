@@ -193,6 +193,7 @@ function toListWhereInput(
     contactFilter: input.contactFilter,
     inboxScope,
     restrictToAssignedUserId: scope?.restrictToAssignedUserId,
+    restrictToTeamIds: scope?.restrictToTeamIds,
     includeEmailAndPhone: scope?.canViewEmailAndPhone !== false,
   }
 }
@@ -311,7 +312,8 @@ export async function count(
       input.keyword ||
       input.contactFilter ||
       inboxScope ||
-      scope?.restrictToAssignedUserId
+      scope?.restrictToAssignedUserId ||
+      scope?.restrictToTeamIds !== undefined
     )
   ) {
     // The stats shortcut is an O(1) read, so it is exact in either mode.

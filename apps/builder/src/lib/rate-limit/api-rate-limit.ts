@@ -30,6 +30,9 @@ export type ApiRateLimitScope =
   | "ai-file-search-rate-limit"
   | "ai-file-reindex-rate-limit"
   | "mcp-client-registration"
+  | "mobile-user-rate-limit"
+  | "mobile-token-password-ip-rate-limit"
+  | "mobile-token-password-account-rate-limit"
 
 type ApiRateLimitInput = {
   scope: ApiRateLimitScope

@@ -13,6 +13,7 @@ import type {
 import { BaseService } from "../base.service"
 import { ChatbotXException } from "../errors"
 import { logger } from "../logger"
+import { mobileRefreshTokenService } from "../mobile-auth/service"
 import { userService } from "../user/service"
 import { isWorkspaceScheduledForDeletion } from "../workspace-lifecycle/predicates"
 import { isWorkspaceAdminMember } from "../workspace-member/predicates"
@@ -286,9 +287,13 @@ export class McpOAuthService extends BaseService {
   }
 
   async purgeExpiredTokens(now = new Date()): Promise<number> {
-    const accessTokens = await oauthAccessTokenRepository.deleteExpired(now)
-    const refreshTokens = await oauthRefreshTokenRepository.deleteExpired(now)
-    return accessTokens + refreshTokens
+    const [accessTokens, refreshTokens, mobileRefreshTokens] =
+      await Promise.all([
+        oauthAccessTokenRepository.deleteExpired(now),
+        oauthRefreshTokenRepository.deleteExpired(now),
+        mobileRefreshTokenService.deleteExpired(now),
+      ])
+    return accessTokens + refreshTokens + mobileRefreshTokens
   }
 
   async findClient(props: {

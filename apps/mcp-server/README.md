@@ -195,7 +195,11 @@ For `connections_create` with `provider: "api"`, the response includes a one-tim
 | `sequences_get` | Get sequence |
 | `sequences_update` | Update sequence name or active state |
 
-Everything else — deletes, less-common resources (coupons, products, webhooks, saved replies, tags/triggers/inboxes/custom-fields management, workspace members, etc.), connection lifecycle management beyond the initial connect (disconnect, reconnect, refresh, verify, rename), and channel-token-only or deprecated operations — is reachable via `search_tools` → `call_tool`, not `tools/list`.
+Everything else — deletes, less-common resources (coupons, products, webhooks, saved replies, tags/triggers/inboxes/custom-fields management, workspace members, etc.), connection lifecycle management beyond the initial connect (disconnect, reconnect, refresh, verify, rename) — is reachable via `search_tools` → `call_tool`, not `tools/list`.
+
+Operations whose `security` names no workspace-token scheme are not tools at all — `isWorkspaceTokenOperation` (`src/openapi-loader.ts`) drops them, so neither `tools/list` nor `search_tools` returns them. That covers deprecated operations, channel-token operations (`/v1/channels/api/*`), and the mobile-app-only member surface (`/v1/me*`, `/v1/realtime/connect-token`, marked by `MOBILE_APP_TOKEN_ONLY_PATHS` in `apps/builder/src/lib/orpc/public-spec.ts`): an MCP OAuth or workspace token has no member identity and would always get 401.
+
+`conversations_list` accepts `view: "compact"` to drop ad attribution and thread-control metadata from each conversation's contact inboxes (default `full`); `flows_list` accepts `enableInInbox: true` to return only flows that can be started from the inbox.
 
 ## Prerequisites
 

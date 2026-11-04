@@ -223,7 +223,7 @@ export const createOutgoing = async (props: {
   conversation: ConversationModel
   contactInbox: ContactInboxModel
   input: CreateOutgoingInput
-  user?: UserModel
+  user?: Pick<UserModel, "id">
 }) => {
   const { conversation, input: parsedInput, user, contactInbox } = props
   const sender = user

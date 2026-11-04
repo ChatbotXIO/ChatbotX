@@ -17,6 +17,7 @@ import { getPublicUrlFromRequest } from "@chatbotx.io/utils"
 import { auth } from "@/lib/auth/auth"
 import { getSocialAuthForTenant } from "@/lib/auth/auth-instances"
 import { rewriteAuthRedirectToPublicHost } from "@/lib/auth-redirect"
+import { rateLimitMobilePasswordGrant } from "@/lib/mobile-auth/password-grant-rate-limit"
 import { resolveRelayTarget } from "@/lib/oauth-referer"
 import { assertApiNotRateLimited } from "@/lib/rate-limit/api-rate-limit"
 import { getGuestClientIp } from "@/lib/rate-limit/guest-rate-limit"
@@ -173,6 +174,16 @@ const handle = async (request: Request): Promise<Response> => {
       }
       throw error
     }
+  }
+
+  // The mobile `password` grant is the same credential-guessing surface as
+  // `/sign-in/email`; throttle it before any password hashing happens.
+  const mobileRateLimited = await rateLimitMobilePasswordGrant(
+    request,
+    url.pathname,
+  )
+  if (mobileRateLimited) {
+    return mobileRateLimited
   }
 
   return withTenant(tenantId, async () => {

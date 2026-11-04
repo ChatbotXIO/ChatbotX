@@ -20,6 +20,12 @@ type ConversationCursor = {
 
 type BuildConversationWhereOptions = {
   includeEmailAndPhone?: boolean
+  /**
+   * Extra restriction AND-ed onto the whole query (a member's chat scope on
+   * the mobile API). It is appended last and never replaced by the request
+   * filters, so no combination of filters can widen it.
+   */
+  scopeWhere?: QueryWhere
 }
 
 type QueryWhere = Record<string, unknown>
@@ -227,6 +233,13 @@ export function buildConversationWhere(
     if (Object.keys(contactFilterWhere).length > 0) {
       addContactWhere(where, contactFilterWhere)
     }
+  }
+
+  if (options.scopeWhere) {
+    where.AND = [
+      ...(Array.isArray(where.AND) ? where.AND : []),
+      options.scopeWhere,
+    ]
   }
 
   return where

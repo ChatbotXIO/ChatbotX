@@ -14,12 +14,12 @@ vi.mock("@/lib/auth/utils", () => ({
 const {
   canAccessContactsSection,
   canViewContactEmailAndPhone,
-  getAssignedContactsUserId,
   requireContactPermissionScope,
   requireContactPermissionScopeForMember,
   resolveContactPermissionScope,
   stripContactPIIFields,
 } = await import("../src/features/contacts/permissions")
+const { getAssignedContactsUserId } = await import("@chatbotx.io/business")
 const { getCurrentUserAndTargetWorkspace } = await import("@/lib/auth/utils")
 
 const basePermissions = {

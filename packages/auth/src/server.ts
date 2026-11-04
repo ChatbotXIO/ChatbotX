@@ -7,6 +7,7 @@ import { mcp } from "@better-auth/mcp"
 
 import {
   customDomainService,
+  mobileRefreshTokenService,
   type PlatformSmtpTransport,
   platformCredentialService,
   resolvePlatformSmtpTransport,
@@ -60,6 +61,7 @@ import { resolveGenericOAuthConfig } from "./generic-oauth"
 import { env, getBrokerUrl, getBuilderOrigin, getMcpResourceUrl } from "./keys"
 import { logger } from "./logger"
 import { buildMcpPluginOptions, defaultMcpResource } from "./mcp-config"
+import { mobileAuth } from "./mobile-auth"
 import { GENERIC_OAUTH_PROVIDER_ID } from "./oauth-constants"
 import {
   isSignUpAllowed,
@@ -684,6 +686,9 @@ export function createAuth(config: AuthConfig) {
     emailAndPassword: {
       enabled: true,
       requireEmailVerification: true,
+      onPasswordReset: async ({ user }) => {
+        await mobileRefreshTokenService.revokeAllForUser({ userId: user.id })
+      },
       sendResetPassword: async ({ user, url }, request) => {
         if (isPlaceholderEmail(user.email)) {
           return
@@ -916,6 +921,10 @@ export function createAuth(config: AuthConfig) {
       ...(process.env.NEXT_PHASE === "phase-production-build"
         ? ([] as const)
         : ([mcp(buildMcpPluginOptions(mcpResource))] as const)),
+      // Native mobile app JWT grants (`/mobile/*`). Own endpoints and a
+      // password-change hook only; no hook on sign-in/session, and the global
+      // jwt()/JWKS/MCP configuration above is untouched.
+      mobileAuth(),
       // Relays better-auth's Set-Cookie into the Next.js response. Required so a
       // server-side `auth.api.changePassword` (with `revokeOtherSessions`) rotates
       // the caller's session cookie instead of silently logging them out. Must be

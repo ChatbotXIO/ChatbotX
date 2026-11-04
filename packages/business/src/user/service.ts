@@ -18,8 +18,12 @@ class UserService extends BaseService {
       .where(eq(userModel.id, userId))
   }
 
+  async findById(userId: string): Promise<UserModel | undefined> {
+    return await db.query.userModel.findFirst({ where: { id: userId } })
+  }
+
   async findByIdOrFail(userId: string): Promise<UserModel> {
-    const user = await db.query.userModel.findFirst({ where: { id: userId } })
+    const user = await this.findById(userId)
     if (!user) {
       throw notFoundException("User not found")
     }

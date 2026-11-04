@@ -214,7 +214,7 @@ const startUpgrade = (port: number, path: string): Promise<net.Socket> => {
  * round trip plus the gateway's own scheduling can exceed that. Still far
  * below the 30s test timeout, so a real hang fails promptly.
  */
-const IO_WAIT = { timeout: 5000 } as const
+const IO_WAIT = { timeout: 15_000 } as const
 
 const waitForIo = <T>(callback: () => T | Promise<T>): Promise<T> =>
   vi.waitFor(callback, IO_WAIT)

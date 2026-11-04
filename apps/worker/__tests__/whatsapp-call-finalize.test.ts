@@ -1179,7 +1179,7 @@ describe("enrichCallActivityMessage", () => {
 
     expect(mocks.mergeContentAttributesBySourceId).not.toHaveBeenCalled()
     expect(mocks.publishWorkspaceRealtimeEvent).not.toHaveBeenCalled()
-  }, 10_000)
+  })
 
   test("converges once the finalize message shows up mid-wait", async () => {
     mocks.findBySourceId.mockResolvedValueOnce(null).mockResolvedValueOnce({

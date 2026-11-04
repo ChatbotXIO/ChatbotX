@@ -20,6 +20,10 @@ import { authMiddleware } from "./middlewares/auth"
 import { channelApiTokenAuthMidddleware } from "./middlewares/channel-api-token-auth"
 import { base } from "./middlewares/context"
 import { apiIdempotencyMiddleware } from "./middlewares/idempotency"
+import {
+  mobileUserAuthMiddleware,
+  mobileUserPasswordChangeAuthMiddleware,
+} from "./middlewares/mobile-user-auth"
 import { workspaceTokenAuthMidddleware } from "./middlewares/workspace-token-auth"
 
 const CHANNEL_ERROR_FALLBACK = "The provider rejected the request."
@@ -224,3 +228,17 @@ export const workspaceTokenAuthAPIForScope = (
 export const channelApiTokenAPI = publicAPI
   .use(channelApiTokenAuthMidddleware)
   .use(apiIdempotencyMiddleware)
+
+/**
+ * User-level `/v1/me/*` operations for the native mobile app: a mobile access
+ * JWT (audience `<builder>/api`) acting as the signed-in user, no workspace.
+ * Refuses a user who still has a provisioned temporary password.
+ */
+export const mobileUserAPI = publicAPI
+  .use(mobileUserAuthMiddleware)
+  .use(apiIdempotencyMiddleware)
+
+/** Same, but still callable while `mustChangePassword` is set: identity read and password change. */
+export const mobileUserPasswordChangeAPI = publicAPI.use(
+  mobileUserPasswordChangeAuthMiddleware,
+)

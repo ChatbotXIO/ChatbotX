@@ -1,6 +1,5 @@
 import {
   automatedResponseService,
-  contactService,
   conversationService,
   messageService,
 } from "@chatbotx.io/business"
@@ -18,6 +17,11 @@ import {
   possibleErrorsOnSendingMessage,
 } from "@/lib/orpc/orpc-error-helper"
 import { publicContactIdentifier } from "@/lib/public-api/contact-identifier"
+import {
+  assertMemberMayStartFlow,
+  contactIdFor,
+  resolveSenderForCaller,
+} from "@/lib/public-api/member-scope"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
 
 // Sending/reading messages, auto-replies, and flows for a contact are
@@ -48,21 +52,23 @@ export const contactsMessagesPublicRouter = {
     )
     .errors(possibleErrorsOnSendingMessage)
     .handler(async ({ context, input }) => {
-      const contactId = await contactService.resolveIdByIdentifier({
-        identifier: input.identifier,
-        workspaceId: context.workspace.id,
-      })
+      const contactId = await contactIdFor(context, input.identifier)
       const { conversation, contactInbox } =
         await conversationService.resolveContactInboxForSend({
           contactId,
           workspaceId: context.workspace.id,
           inboxId: input.inboxId,
         })
-
+      await assertMemberMayStartFlow(
+        context,
+        "flowId" in input ? input.flowId : undefined,
+      )
+      const user = resolveSenderForCaller(context)
       await messageService.createOutgoing({
         conversation,
         contactInbox,
         input,
+        ...(user && { user }),
       })
     }),
 
@@ -100,10 +106,7 @@ export const contactsMessagesPublicRouter = {
     .output(listMessagesResponse)
     .errors(possibleErrorsOnFindingResource)
     .handler(async ({ context, input }) => {
-      const contactId = await contactService.resolveIdByIdentifier({
-        identifier: input.identifier,
-        workspaceId: context.workspace.id,
-      })
+      const contactId = await contactIdFor(context, input.identifier)
       const conversation = await conversationService.findByContactWithInboxes({
         contactId,
         workspaceId: context.workspace.id,
@@ -138,10 +141,7 @@ export const contactsMessagesPublicRouter = {
     .output(messageResourceWithRelations)
     .errors(possibleErrorsOnFindingResource)
     .handler(async ({ context, input }) => {
-      const contactId = await contactService.resolveIdByIdentifier({
-        identifier: input.identifier,
-        workspaceId: context.workspace.id,
-      })
+      const contactId = await contactIdFor(context, input.identifier)
       const conversation = await conversationService.findByContactWithInboxes({
         contactId,
         workspaceId: context.workspace.id,
@@ -184,10 +184,7 @@ export const contactsMessagesPublicRouter = {
     )
     .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
-      const contactId = await contactService.resolveIdByIdentifier({
-        identifier: input.identifier,
-        workspaceId: context.workspace.id,
-      })
+      const contactId = await contactIdFor(context, input.identifier)
       const autoReply = await automatedResponseService.findByInboundKeyword(
         context.workspace.id,
         input.keyword,
@@ -240,10 +237,7 @@ export const contactsMessagesPublicRouter = {
     )
     .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
-      const contactId = await contactService.resolveIdByIdentifier({
-        identifier: input.identifier,
-        workspaceId: context.workspace.id,
-      })
+      const contactId = await contactIdFor(context, input.identifier)
       const { conversation, contactInbox } =
         await conversationService.resolveContactInboxForSend({
           contactId,
@@ -251,10 +245,14 @@ export const contactsMessagesPublicRouter = {
           inboxId: input.inboxId,
         })
 
+      await assertMemberMayStartFlow(context, input.flowId)
+      const user = resolveSenderForCaller(context)
+
       await messageService.createOutgoing({
         conversation,
         contactInbox,
         input: { flowId: input.flowId, inboxId: input.inboxId },
+        ...(user && { user }),
       })
     }),
 }

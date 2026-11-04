@@ -25,6 +25,7 @@ type ListWhereInput = {
   contactFilter?: ContactFilterCriteriaInput
   inboxScope?: ContactInboxScope
   restrictToAssignedUserId?: string
+  restrictToTeamIds?: string[]
   includeEmailAndPhone: boolean
 }
 
@@ -74,17 +75,28 @@ export function buildContactListWhere(input: ListWhereInput): ContactWhere {
     where.AND = filters
   }
 
-  if (input.restrictToAssignedUserId) {
+  if (
+    input.restrictToAssignedUserId ||
+    (input.restrictToTeamIds && input.restrictToTeamIds.length > 0)
+  ) {
     const conversation =
       typeof where.conversation === "object" &&
       where.conversation !== null &&
       !Array.isArray(where.conversation)
         ? where.conversation
         : {}
+    const assignmentScopes = [
+      ...(input.restrictToAssignedUserId
+        ? [{ assignedUserId: input.restrictToAssignedUserId }]
+        : []),
+      ...(input.restrictToTeamIds?.length
+        ? [{ assignedInboxTeamId: { in: input.restrictToTeamIds } }]
+        : []),
+    ]
 
     where.conversation = {
       ...conversation,
-      assignedUserId: input.restrictToAssignedUserId,
+      OR: assignmentScopes,
     }
   }
 

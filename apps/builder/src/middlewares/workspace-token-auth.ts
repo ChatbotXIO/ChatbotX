@@ -1,4 +1,9 @@
 import {
+  McpTokenVerificationUnavailableError,
+  verifyMcpAccessToken,
+} from "@chatbotx.io/auth/mcp-resource"
+import { isMobileAccessTokenCandidate } from "@chatbotx.io/auth/mobile-resource-candidate"
+import {
   isWorkspaceScheduledForDeletion,
   mcpOAuthService,
   workspaceApiTokenService,
@@ -12,13 +17,18 @@ import type {
 } from "@chatbotx.io/database/types"
 import { ORPCError } from "@orpc/server"
 import { logger } from "@/lib/log"
+import { mobileCredentialId } from "@/lib/mobile-auth/mobile-credential-id"
+import {
+  type MobileWorkspacePrincipal,
+  resolveMobileWorkspacePrincipal,
+} from "@/lib/mobile-auth/resolve-mobile-workspace-principal"
 import { assertApiNotRateLimited } from "@/lib/rate-limit/api-rate-limit"
 import { getGuestClientIp } from "@/lib/rate-limit/guest-rate-limit"
 import {
   assertWorkspaceOwnerAccessForMethod,
   isReadOnlyTokenAllowedMethod,
 } from "@/lib/workspace/authorize-workspace-access"
-import { base, type RequestApiToken } from "./context"
+import { type BaseContext, base, type RequestApiToken } from "./context"
 
 const assertNotRateLimited = (
   workspaceId: string,
@@ -36,7 +46,7 @@ const assertNotRateLimited = (
 // limiter below can never see (an invalid token resolves to no workspace).
 const PREAUTH_REQUEST_LIMIT = 600
 
-const assertPreAuthNotRateLimited = (
+export const assertPreAuthNotRateLimited = (
   headers: Headers,
   resHeaders?: Headers,
 ): Promise<void> =>
@@ -49,6 +59,11 @@ const assertPreAuthNotRateLimited = (
 
 const JWT_SEGMENT_COUNT = 3
 
+export const extractBearer = (headers: Headers): string | null => {
+  const authorization = headers.get("Authorization")
+  return authorization?.startsWith("Bearer ") ? authorization.slice(7) : null
+}
+
 const invalidTokenError = () =>
   new ORPCError("INVALID_CHATBOT_TOKEN", {
     status: 401,
@@ -57,10 +72,10 @@ const invalidTokenError = () =>
 
 export const workspaceTokenAuthMidddleware = base.middleware(
   async ({ context, next, procedure }) => {
-    const authHeader = context.headers.get("Authorization")
-    const bearerToken = authHeader?.startsWith("Bearer ")
-      ? authHeader.slice(7)
-      : null
+    // Read before any membership lookup so a permission change racing this
+    // request is detected by the realtime gateway (see realtime connect token).
+    const requestIssuedAtMs = Date.now()
+    const bearerToken = extractBearer(context.headers)
     // Deprecated: accepting the token as a query param leaks it into access
     // logs and browser history. Kept temporarily for existing integrations;
     // logged below so we can see when it's safe to remove.
@@ -84,28 +99,39 @@ export const workspaceTokenAuthMidddleware = base.middleware(
     // already over the ceiling must not pay for a hash + DB/Redis lookup.
     await assertPreAuthNotRateLimited(context.headers, context.resHeaders)
 
-    const tokenHash = await hashToken(token)
+    let mobile: MobileWorkspacePrincipal | undefined
     let workspaceTokenAuth:
       | { workspace: WorkspaceModel; apiToken: WorkspaceApiTokenModel }
       | undefined
-    try {
-      workspaceTokenAuth =
-        await workspaceApiTokenService.findWorkspaceByTokenHash({
-          tokenHash,
-        })
-    } catch (error) {
-      // The token-row cache (up to 300s TTL) can outlive the workspace it
-      // points at if a purge runs before the tag is invalidated — the
-      // service's findById then throws notFound instead of returning. That's
-      // an auth failure from the caller's perspective, not a server error.
-      if (error instanceof ChatbotXException && error.code === "notFound") {
-        logger.warn(
-          { err: error, tokenHash },
-          "Workspace token cache pointed at a purged workspace",
-        )
-        throw invalidTokenError()
+
+    if (bearerToken && isMobileAccessTokenCandidate(bearerToken)) {
+      mobile = await resolveMobileWorkspacePrincipal({
+        bearerToken,
+        requestedWorkspaceId,
+        method: procedure["~orpc"].route.method,
+        path: procedure["~orpc"].route.path,
+      })
+    } else {
+      const tokenHash = await hashToken(token)
+      try {
+        workspaceTokenAuth =
+          await workspaceApiTokenService.findWorkspaceByTokenHash({
+            tokenHash,
+          })
+      } catch (error) {
+        // The token-row cache (up to 300s TTL) can outlive the workspace it
+        // points at if a purge runs before the tag is invalidated — the
+        // service's findById then throws notFound instead of returning. That's
+        // an auth failure from the caller's perspective, not a server error.
+        if (error instanceof ChatbotXException && error.code === "notFound") {
+          logger.warn(
+            { err: error, tokenHash },
+            "Workspace token cache pointed at a purged workspace",
+          )
+          throw invalidTokenError()
+        }
+        throw error
       }
-      throw error
     }
 
     let resolved: {
@@ -113,7 +139,6 @@ export const workspaceTokenAuthMidddleware = base.middleware(
       apiToken: RequestApiToken
       audit: { userId: string; source: string }
     }
-
     if (workspaceTokenAuth) {
       resolved = {
         workspace: workspaceTokenAuth.workspace,
@@ -131,26 +156,23 @@ export const workspaceTokenAuthMidddleware = base.middleware(
           source: `api-token:${workspaceTokenAuth.apiToken.id}`,
         },
       }
+    } else if (mobile) {
+      resolved = {
+        workspace: mobile.workspace,
+        apiToken: mobile.apiToken,
+        audit: {
+          userId: mobile.user.id,
+          source: `mobile:${mobile.deviceId ?? "unknown"}`,
+        },
+      }
     } else {
-      if (!bearerToken) {
+      if (!bearerToken || bearerToken.split(".").length !== JWT_SEGMENT_COUNT) {
         throw invalidTokenError()
       }
 
-      // OAuth access tokens are JWTs; anything else (a revoked API key, a
-      // typo) cannot be one, so skip the signature verification entirely.
-      if (bearerToken.split(".").length !== JWT_SEGMENT_COUNT) {
-        throw invalidTokenError()
-      }
-
-      // Lazy import: the OAuth verifier is only needed on this fallback path
-      // and stays out of tests/routes that authenticate workspace API tokens.
-      const [
-        { auth },
-        { McpTokenVerificationUnavailableError, verifyMcpAccessToken },
-      ] = await Promise.all([
-        import("@/lib/auth/auth"),
-        import("@chatbotx.io/auth/mcp-resource"),
-      ])
+      // OAuth access tokens are JWTs. Mobile-token candidates were resolved
+      // before hashing, so this fallback verifies only MCP OAuth credentials.
+      const { auth } = await import("@/lib/auth/auth")
       const mcpAccessToken = await verifyMcpAccessToken(
         auth,
         bearerToken,
@@ -208,7 +230,15 @@ export const workspaceTokenAuthMidddleware = base.middleware(
     }
     const { workspace, apiToken } = resolved
 
-    await assertNotRateLimited(workspace.id, context.resHeaders)
+    // A mobile principal is limited per user, not through the workspace
+    // bucket shared by every API token and integration of the workspace.
+    await (mobile
+      ? assertApiNotRateLimited({
+          scope: "mobile-user-rate-limit",
+          key: mobile.user.id,
+          resHeaders: context.resHeaders,
+        })
+      : assertNotRateLimited(workspace.id, context.resHeaders))
 
     if (isWorkspaceScheduledForDeletion(workspace)) {
       throw new ORPCError("FORBIDDEN", {
@@ -241,6 +271,14 @@ export const workspaceTokenAuthMidddleware = base.middleware(
       ownerId: workspace.ownerId,
     })
 
+    let apiCredentialId = resolved.audit.source
+    if (workspaceTokenAuth) {
+      apiCredentialId = `api-token:${apiToken.id}`
+    }
+    if (mobile) {
+      apiCredentialId = mobileCredentialId(mobile)
+    }
+
     return await withAuditContext(
       {
         userId: resolved.audit.userId,
@@ -254,10 +292,14 @@ export const workspaceTokenAuthMidddleware = base.middleware(
           context: {
             workspace,
             apiToken,
-            apiCredentialId: workspaceTokenAuth
-              ? `api-token:${apiToken.id}`
-              : resolved.audit.source,
-          },
+            apiCredentialId,
+            ...(mobile && {
+              user: mobile.user,
+              member: mobile.member,
+              mobileDeviceId: mobile.deviceId ?? undefined,
+              requestIssuedAtMs,
+            }),
+          } satisfies Partial<BaseContext>,
         }),
     )
   },

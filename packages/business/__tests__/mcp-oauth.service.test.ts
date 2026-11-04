@@ -7,6 +7,7 @@ const mocks = vi.hoisted(() => ({
   deleteConsents: vi.fn(),
   deleteExpiredAccessTokens: vi.fn(),
   deleteExpiredRefreshTokens: vi.fn(),
+  deleteExpiredMobileRefreshTokens: vi.fn(),
   deleteRefreshTokens: vi.fn(),
   findClientById: vi.fn(),
   findMembership: vi.fn(),
@@ -36,6 +37,9 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
   oauthRefreshTokenRepository: {
     deleteByUserAndClient: mocks.deleteRefreshTokens,
     deleteExpired: mocks.deleteExpiredRefreshTokens,
+  },
+  mobileRefreshTokenRepository: {
+    deleteExpired: mocks.deleteExpiredMobileRefreshTokens,
   },
 }))
 
@@ -428,11 +432,12 @@ describe("mcpOAuthService grants", () => {
     expect(mocks.logInfo).not.toHaveBeenCalled()
   })
 
-  test("purges expired access and refresh tokens", async () => {
+  test("purges expired access, OAuth refresh, and mobile refresh tokens", async () => {
     const now = new Date("2026-10-01T00:00:00.000Z")
     mocks.deleteExpiredAccessTokens.mockResolvedValueOnce(2)
     mocks.deleteExpiredRefreshTokens.mockResolvedValueOnce(3)
+    mocks.deleteExpiredMobileRefreshTokens.mockResolvedValueOnce(4)
 
-    await expect(mcpOAuthService.purgeExpiredTokens(now)).resolves.toBe(5)
+    await expect(mcpOAuthService.purgeExpiredTokens(now)).resolves.toBe(9)
   })
 })

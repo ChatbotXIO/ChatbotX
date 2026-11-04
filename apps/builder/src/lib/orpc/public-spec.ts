@@ -21,12 +21,21 @@ export const WORKSPACE_TOKEN_SECURITY_SCHEMES = {
 
 export const CHANNEL_API_TOKEN_SCHEME = "channelApiToken"
 
+export const MOBILE_APP_TOKEN_SCHEME = "mobileAppToken"
+
 export const PUBLIC_SECURITY_SCHEMES = {
   ...WORKSPACE_TOKEN_SECURITY_SCHEMES,
   [CHANNEL_API_TOKEN_SCHEME]: {
     type: "http",
     scheme: "bearer",
     description: "A channel API token, scoped to a single inbox.",
+  },
+  [MOBILE_APP_TOKEN_SCHEME]: {
+    type: "http",
+    scheme: "bearer",
+    bearerFormat: "JWT",
+    description:
+      "A native mobile app access token (JWT, 10 minutes) from POST /api/auth/mobile/token. Acts as the signed-in workspace member; workspace-scoped operations also need the x-workspace-id header.",
   },
 } as const
 
@@ -40,12 +49,30 @@ const CHANNEL_API_TOKEN_SECURITY: Record<string, string[]>[] = [
   { [CHANNEL_API_TOKEN_SCHEME]: [] },
 ]
 
+const MOBILE_APP_TOKEN_SECURITY: Record<string, string[]>[] = [
+  { [MOBILE_APP_TOKEN_SCHEME]: [] },
+]
+
 // Paths under this prefix require a channel API token, never a workspace
 // token — the document-level `security` (workspace-token schemes) does not
 // apply to them, so every generated spec must override `security` on these
 // operations after generation (oRPC 1.14.5 has no per-operation `security`
 // hook — only a document-level default via `specGenerateOptions.security`).
 const CHANNEL_API_TOKEN_PATH_PREFIX = "/v1/channels/api/"
+
+// Operations that only a native mobile app access token can call: the
+// user-level `/v1/me` surface and the member-bound realtime connect token. A
+// workspace API token or MCP token has no member identity and is refused, so
+// the document must not advertise them as workspace-token operations — the CLI
+// and MCP server skip every operation whose security is not a workspace-token
+// scheme.
+const MOBILE_APP_TOKEN_ONLY_PATHS: ReadonlySet<string> = new Set([
+  "/v1/me",
+  "/v1/me/workspaces",
+  "/v1/me/device-tokens",
+  "/v1/me/password",
+  "/v1/realtime/connect-token",
+])
 
 const IDEMPOTENT_METHODS: ReadonlySet<string> = new Set([
   "post",
@@ -153,15 +180,19 @@ const forEachOperation = (
 
 /**
  * Overrides `security` to the channel-token scheme for every
- * `/v1/channels/api/*` operation in a generated spec, so the document is
- * honest about which token type each operation actually requires (the
- * default `security` supplied by `publicSpecGenerateOptions` only covers
- * workspace-token schemes).
+ * `/v1/channels/api/*` operation in a generated spec (and to the mobile-app
+ * scheme for the mobile-only operations), so the document is honest about
+ * which token type each operation actually requires (the default `security`
+ * supplied by `publicSpecGenerateOptions` only covers workspace-token
+ * schemes).
  */
 export function withChannelApiTokenSecurity(spec: PublicSpecDocument) {
   forEachOperation(spec, (path, _, operation) => {
     if (path.startsWith(CHANNEL_API_TOKEN_PATH_PREFIX)) {
       operation.security = CHANNEL_API_TOKEN_SECURITY
+    }
+    if (MOBILE_APP_TOKEN_ONLY_PATHS.has(path)) {
+      operation.security = MOBILE_APP_TOKEN_SECURITY
     }
   })
 

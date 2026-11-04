@@ -82,13 +82,15 @@ describe("resolveContactOrderBy", () => {
 })
 
 describe("buildContactListWhere", () => {
-  test("adds the assigned-user conversation filter", () => {
+  test("adds the assigned-user conversation scope", () => {
     const where = buildContactListWhere({
       ...baseInput,
       restrictToAssignedUserId: "user-1",
     })
 
-    expect(where.conversation).toEqual({ assignedUserId: "user-1" })
+    expect(where.conversation).toEqual({
+      OR: [{ assignedUserId: "user-1" }],
+    })
   })
 
   test("drops email and phone keyword clauses when emailAndPhone is denied", () => {
@@ -104,7 +106,18 @@ describe("buildContactListWhere", () => {
     ])
   })
 
-  test("preserves existing conversation filters when adding assigned-user scope", () => {
+  test("adds the assigned-team conversation scope", () => {
+    const where = buildContactListWhere({
+      ...baseInput,
+      restrictToTeamIds: ["team-1"],
+    })
+
+    expect(where.conversation).toEqual({
+      OR: [{ assignedInboxTeamId: { in: ["team-1"] } }],
+    })
+  })
+
+  test("preserves existing conversation filters when adding an assigned-user scope", () => {
     const where = buildContactListWhere({
       ...baseInput,
       contactFilter: { operator: "and", conditions: [] },
@@ -113,7 +126,7 @@ describe("buildContactListWhere", () => {
 
     expect(where.conversation).toEqual({
       status: "open",
-      assignedUserId: "user-1",
+      OR: [{ assignedUserId: "user-1" }],
     })
   })
 

@@ -148,6 +148,19 @@ class FlowService extends BaseService {
       where: { id: input.id, workspaceId: input.workspaceId },
     })
   }
+  async assertEnabledInInbox(input: {
+    workspaceId: string
+    flowId: string
+  }): Promise<FlowModel> {
+    const flow = await this.findBy({
+      workspaceId: input.workspaceId,
+      id: input.flowId,
+    })
+    if (!flow?.enableInInbox) {
+      throw notFoundException("Flow not found")
+    }
+    return flow
+  }
 
   /**
    * Paginated flow list with draft/latest versions attached. `startType`

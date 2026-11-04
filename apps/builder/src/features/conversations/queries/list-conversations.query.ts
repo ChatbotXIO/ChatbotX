@@ -19,9 +19,11 @@ import z from "zod"
 import type { ListConversationsRequest } from "@/features/conversations/schema/query"
 import { decodeCursor, encodeCursor } from "@/lib/pagination"
 import type {
+  ConversationCompactContactInboxResource,
   ConversationContactInboxResource,
   FindConversationRequest,
   FindConversationResponse,
+  ListConversationsCompactResponse,
   ListConversationsResponse,
 } from "../schema/resource"
 import { buildConversationWhere } from "./build-conversation-where"
@@ -35,24 +37,30 @@ const DEFAULT_PER_PAGE = 20
 // same `conversationContactInboxResource` shape (output validation requires
 // this). The explicit projection keeps internal jsonb columns out of the
 // response object entirely rather than relying on output validation to strip them.
+const mapConversationContactInbox = (
+  contactInbox: ContactInboxOperationalModel & { inbox: InboxModel },
+) => ({
+  id: contactInbox.id,
+  contactId: contactInbox.contactId,
+  inboxId: contactInbox.inboxId,
+  channel: contactInbox.channel,
+  source: contactInbox.source,
+  sourceId: contactInbox.sourceId,
+  sourceUserId: contactInbox.sourceUserId,
+  sourceUsername: contactInbox.sourceUsername,
+  language: contactInbox.language,
+  lastMessageAt: contactInbox.lastMessageAt,
+  lastIncomingMessageAt: contactInbox.lastIncomingMessageAt,
+  contactLastReadAt: contactInbox.contactLastReadAt,
+})
+
 const mapConversationContactInboxes = (
   contactInboxes: readonly (ContactInboxOperationalModel & {
     inbox: InboxModel
   })[],
 ): ConversationContactInboxResource[] =>
   contactInboxes.map((contactInbox) => ({
-    id: contactInbox.id,
-    contactId: contactInbox.contactId,
-    inboxId: contactInbox.inboxId,
-    channel: contactInbox.channel,
-    source: contactInbox.source,
-    sourceId: contactInbox.sourceId,
-    sourceUserId: contactInbox.sourceUserId,
-    sourceUsername: contactInbox.sourceUsername,
-    language: contactInbox.language,
-    lastMessageAt: contactInbox.lastMessageAt,
-    lastIncomingMessageAt: contactInbox.lastIncomingMessageAt,
-    contactLastReadAt: contactInbox.contactLastReadAt,
+    ...mapConversationContactInbox(contactInbox),
     inbox: contactInbox.inbox,
     adReferral: resolveAdReferral(contactInbox.referral),
     googleAdsClick: resolveGoogleAdsClick(contactInbox.referral),
@@ -65,6 +73,20 @@ const mapConversationContactInboxes = (
     threadOwnerExpiresAt: contactInbox.threadOwnerExpiresAt,
     threadOwnerAppId: contactInbox.threadOwnerAppId,
     threadControlLastEvent: contactInbox.threadControlLastEvent,
+  }))
+
+const mapCompactConversationContactInboxes = (
+  contactInboxes: readonly (ContactInboxOperationalModel & {
+    inbox: InboxModel
+  })[],
+): ConversationCompactContactInboxResource[] =>
+  contactInboxes.map((contactInbox) => ({
+    ...mapConversationContactInbox(contactInbox),
+    inbox: {
+      id: contactInbox.inbox.id,
+      name: contactInbox.inbox.name,
+      channel: contactInbox.inbox.channel,
+    },
   }))
 
 const resolveConversationContact = async <T extends { avatar: string | null }>(
@@ -96,10 +118,25 @@ const conversationCursorSchema = z.object({
 })
 type ConversationCursor = z.infer<typeof conversationCursorSchema>
 
-export const listConversations = async (
+type ListConversationsAccess = {
+  includeEmailAndPhone: boolean
+  /** Restricts the list to a member's chat scope (mobile API only). */
+  scopeWhere?: Record<string, unknown>
+  view?: "compact" | "full"
+}
+
+export function listConversations(
   data: ListConversationsRequest,
-  access: { includeEmailAndPhone: boolean },
-): Promise<ListConversationsResponse> => {
+  access: ListConversationsAccess & { view: "compact" },
+): Promise<ListConversationsCompactResponse>
+export function listConversations(
+  data: ListConversationsRequest,
+  access: ListConversationsAccess & { view?: "full" },
+): Promise<ListConversationsResponse>
+export async function listConversations(
+  data: ListConversationsRequest,
+  access: ListConversationsAccess,
+): Promise<ListConversationsResponse | ListConversationsCompactResponse> {
   const { workspaceId, ...input } = data
 
   const limit = input.perPage ?? DEFAULT_PER_PAGE
@@ -113,6 +150,7 @@ export const listConversations = async (
   // tokens, which are workspace-level not member-scoped) and threads it through.
   const where = buildConversationWhere(workspaceId, input, cursor, {
     includeEmailAndPhone: access.includeEmailAndPhone,
+    scopeWhere: access.scopeWhere,
   })
 
   const conversations = await conversationService.findManyQuery({
@@ -180,6 +218,35 @@ export const listConversations = async (
       } satisfies ConversationCursor)
     : null
 
+  const pagination = {
+    nextCursor,
+    prevCursor,
+  }
+  if (access.view === "compact") {
+    return {
+      data: await Promise.all(
+        page.map(async (c) => {
+          const lastMessage = lastMessagesByConversationId.get(c.id)
+          return {
+            ...c,
+            contact: await resolveConversationContact(
+              c.contact ?? null,
+              c.contactInboxes,
+              workspaceId,
+            ),
+            contactInboxes: mapCompactConversationContactInboxes(
+              c.contactInboxes,
+            ),
+            assignedUser: c.assignedUser ?? null,
+            assignedInboxTeam: c.assignedInboxTeam ?? null,
+            messages: lastMessage ? [lastMessage] : [],
+          }
+        }),
+      ),
+      ...pagination,
+    }
+  }
+
   return {
     data: await Promise.all(
       page.map(async (c) => {
@@ -198,8 +265,7 @@ export const listConversations = async (
         }
       }),
     ),
-    nextCursor,
-    prevCursor,
+    ...pagination,
   }
 }
 

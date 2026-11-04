@@ -12,6 +12,8 @@ export type FlowListInput = {
   name?: string | null
   folderId?: string | null
   active?: boolean | null
+  /** Restrict to flows an agent may start from the inbox (`enableInInbox`). */
+  enableInInbox?: boolean | null
   page?: number | null
   perPage?: number | null
   sort?: { id: string; desc: boolean }[] | null
@@ -27,6 +29,10 @@ const buildWhere = (input: FlowListInput) => ({
     : undefined,
   name: input.name ? { ilike: likeContains(input.name) } : undefined,
   active: input.active === null ? undefined : (input.active ?? undefined),
+  enableInInbox:
+    input.enableInInbox === null
+      ? undefined
+      : (input.enableInInbox ?? undefined),
 })
 
 export const flowRepository = {

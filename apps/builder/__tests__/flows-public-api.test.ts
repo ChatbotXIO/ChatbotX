@@ -278,6 +278,101 @@ describe("GET /v1/flows", () => {
   })
 })
 
+describe("GET /v1/flows — enableInInbox", () => {
+  const procedure = findProcedure("GET", "/v1/flows")
+  const input = { page: 1, perPage: 50, active: true }
+  const member = (permissions: Record<string, boolean>) => ({
+    userId: "user-7",
+    workspaceId: "workspace-1",
+    permissions,
+  })
+
+  test("forwards the enableInInbox filter", async () => {
+    flowService.list.mockResolvedValueOnce({ data: [], pageCount: 1 })
+
+    await procedure.handler?.({
+      context: { workspace: { id: "workspace-1" } },
+      input: { ...input, enableInInbox: true },
+    })
+
+    expect(flowService.list).toHaveBeenCalledWith(
+      expect.objectContaining({ enableInInbox: true }),
+    )
+  })
+
+  test("omitting the filter lists every flow, as before", async () => {
+    flowService.list.mockResolvedValueOnce({ data: [], pageCount: 1 })
+
+    await procedure.handler?.({
+      context: { workspace: { id: "workspace-1" } },
+      input,
+    })
+
+    expect(flowService.list.mock.calls[0][0].enableInInbox).toBeUndefined()
+  })
+
+  test("returns enableInInbox on every listed flow", async () => {
+    flowService.list.mockResolvedValueOnce({
+      data: [
+        {
+          id: "flow-1",
+          name: "Flow 1",
+          folderId: null,
+          active: true,
+          enableInInbox: false,
+          flowVersions: [],
+        },
+      ],
+      pageCount: 1,
+    })
+
+    const result = await procedure.handler?.({
+      context: { workspace: { id: "workspace-1" } },
+      input,
+    })
+
+    expect(result.data[0]).toEqual({
+      id: "flow-1",
+      name: "Flow 1",
+      folderId: null,
+      active: true,
+      enableInInbox: false,
+    })
+  })
+
+  test("a mobile member without the flows permission only ever sees inbox flows, whatever they ask for", async () => {
+    flowService.list.mockResolvedValue({ data: [], pageCount: 1 })
+
+    for (const asked of [undefined, false, true]) {
+      await procedure.handler?.({
+        context: {
+          workspace: { id: "workspace-1" },
+          member: member({ contacts: true }),
+        },
+        input: { ...input, enableInInbox: asked },
+      })
+    }
+
+    expect(
+      flowService.list.mock.calls.map(([call]) => call.enableInInbox),
+    ).toEqual([true, true, true])
+  })
+
+  test("a mobile member with the flows permission may list every flow", async () => {
+    flowService.list.mockResolvedValue({ data: [], pageCount: 1 })
+
+    await procedure.handler?.({
+      context: {
+        workspace: { id: "workspace-1" },
+        member: member({ flows: true }),
+      },
+      input,
+    })
+
+    expect(flowService.list.mock.calls[0][0].enableInInbox).toBeUndefined()
+  })
+})
+
 describe("GET /v1/flows/{id}", () => {
   const procedure = findProcedure("GET", "/v1/flows/{id}")
 
