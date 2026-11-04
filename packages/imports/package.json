@@ -25,7 +25,8 @@
     "./parsers": "./src/parsers/index.ts",
     "./parsers/headers": "./src/parsers/headers.ts",
     "./stream-guard": "./src/stream-guard.ts",
-    "./modules/contacts": "./src/modules/contacts/index.ts"
+    "./modules/contacts": "./src/modules/contacts/index.ts",
+    "./modules/products/template": "./src/modules/products/template.ts"
   },
   "scripts": {
     "check-types": "tsc --noEmit",
