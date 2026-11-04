@@ -133,7 +133,7 @@
 
 - Node.js 26
 - TypeScript 7
-- pnpm 10 workspaces
+- pnpm 12 workspaces
 - Turborepo
 - Next.js 16 and React 19 for `apps/builder`
 - uWebSockets.js gateway with Redis Streams for realtime messaging

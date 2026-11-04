@@ -2,8 +2,8 @@
 
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs"
 import { dirname, join } from "node:path"
-import ts from "@typescript/typescript6"
 import { describe, expect, test } from "vitest"
+import { findModuleSpecifierRefs } from "./helpers/module-specifier-refs"
 
 const APP_ROOT = join(import.meta.dirname, "..")
 const SRC_ROOT = join(APP_ROOT, "src")
@@ -105,65 +105,24 @@ function isUseServerFile(resolvedPath: string) {
   return false
 }
 
-/** True if this import/export clause pulls in at least one runtime value. */
-function hasValueBinding(
-  clause: ts.ImportClause | undefined,
-): clause is ts.ImportClause {
-  if (!clause) {
-    return false
-  }
-  if (clause.isTypeOnly) {
-    return false
-  }
-  if (clause.name) {
-    // default import, e.g. `import Foo from "..."`
-    return true
-  }
-  const bindings = clause.namedBindings
-  if (!bindings) {
-    return false
-  }
-  if (ts.isNamespaceImport(bindings)) {
-    // `import * as foo from "..."`
-    return true
-  }
-  // named imports: `{ a, type B }` — a value import unless every element is type-only
-  return bindings.elements.some((el) => !el.isTypeOnly)
-}
-
 function findQueriesValueImports(filePath: string, source: string) {
-  const sourceFile = ts.createSourceFile(
-    filePath,
-    source,
-    ts.ScriptTarget.Latest,
-    /* setParentNodes */ false,
-    filePath.endsWith(".tsx") ? ts.ScriptKind.TSX : ts.ScriptKind.TS,
-  )
-
   const offenders: string[] = []
 
-  for (const statement of sourceFile.statements) {
-    if (!ts.isImportDeclaration(statement)) {
+  for (const ref of findModuleSpecifierRefs(filePath, source)) {
+    if (ref.kind !== "import" || !ref.isValue) {
       continue
     }
-    if (!ts.isStringLiteral(statement.moduleSpecifier)) {
-      continue
-    }
-    const specifier = statement.moduleSpecifier.text
-    if (!isQueriesModuleSpecifier(specifier)) {
-      continue
-    }
-    if (!hasValueBinding(statement.importClause)) {
+    if (!isQueriesModuleSpecifier(ref.specifier)) {
       continue
     }
 
-    const resolved = resolveModuleSpecifier(filePath, specifier)
+    const resolved = resolveModuleSpecifier(filePath, ref.specifier)
     // A directory import (e.g. `../queries`) resolves to its `index.ts`
     // barrel, which is the adapter surface itself — flag it. An
     // unresolvable specifier is flagged conservatively rather than silently
     // skipped.
     if (!resolved || isUseServerFile(resolved)) {
-      offenders.push(specifier)
+      offenders.push(ref.specifier)
     }
   }
 
