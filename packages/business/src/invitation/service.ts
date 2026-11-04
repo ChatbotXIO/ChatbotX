@@ -1,12 +1,17 @@
 import type { DatabaseClient } from "@chatbotx.io/database/client"
 import { db } from "@chatbotx.io/database/client"
 import { invitationRepository } from "@chatbotx.io/database/repositories"
-import { invitationModel } from "@chatbotx.io/database/schema"
+import { invitationModel, ROOT_TENANT_ID } from "@chatbotx.io/database/schema"
 import type { InvitationModel } from "@chatbotx.io/database/types"
 import { createId } from "@chatbotx.io/utils"
+import { joinAppUrl } from "@chatbotx.io/utils/web-url"
 import { addDays } from "date-fns"
 import { BaseService } from "../base.service"
+import { customDomainService } from "../enterprise/custom-domain/service"
+import { tenantService } from "../enterprise/tenant/service"
 import { ChatbotXException, notFoundException } from "../errors"
+import { logger } from "../logger"
+import { resolvePlatformAppUrl } from "../platform/settings"
 import { userService } from "../user/service"
 import { workspaceService } from "../workspace/service"
 
@@ -57,6 +62,55 @@ class InvitationService extends BaseService {
     return Boolean(invitation.workspaceId && invitation.expiresAt >= new Date())
   }
 
+  /**
+   * The tenant and app URL whose host currently serves a workspace. Suspended
+   * tenants and tenants without an active custom domain fall back to root,
+   * matching request-domain tenant resolution.
+   */
+  private async resolveServingHost(workspace: {
+    tenantId: string
+  }): Promise<{ tenantId: string; appUrl: string }> {
+    if (workspace.tenantId === ROOT_TENANT_ID) {
+      return {
+        tenantId: ROOT_TENANT_ID,
+        appUrl: resolvePlatformAppUrl(),
+      }
+    }
+
+    const tenant = await tenantService.findById(workspace.tenantId)
+    if (tenant?.status !== "active") {
+      return {
+        tenantId: ROOT_TENANT_ID,
+        appUrl: resolvePlatformAppUrl(),
+      }
+    }
+
+    const customDomain = await customDomainService.findActiveByTenantId(
+      workspace.tenantId,
+    )
+    if (!customDomain) {
+      return {
+        tenantId: ROOT_TENANT_ID,
+        appUrl: resolvePlatformAppUrl(),
+      }
+    }
+
+    return {
+      tenantId: workspace.tenantId,
+      appUrl: `https://${customDomain.domain}`,
+    }
+  }
+
+  private logLookupRejection(props: {
+    invitationId?: string
+    reason: "not_found" | "expired" | "no_workspace" | "tenant_mismatch"
+    requestTenantId?: string
+    servingTenantId?: string
+    workspaceId?: string
+  }) {
+    logger.debug(props, "Invitation lookup rejected")
+  }
+
   async findByCodeOrFail(code: string): Promise<InvitationModel> {
     const invitation = await invitationRepository.findByCode(code)
     if (!invitation) {
@@ -75,14 +129,50 @@ class InvitationService extends BaseService {
     { tenantId }: { tenantId: string },
   ): Promise<(InvitationModel & { workspaceId: string }) | null> {
     const invitation = await invitationRepository.findByCode(code)
-    if (!(invitation && this.isActive(invitation))) {
+    if (!invitation) {
+      this.logLookupRejection({ reason: "not_found" })
+      return null
+    }
+    if (!this.isActive(invitation)) {
+      if (invitation.expiresAt < new Date()) {
+        this.logLookupRejection({
+          invitationId: invitation.id,
+          reason: "expired",
+        })
+      } else {
+        this.logLookupRejection({
+          invitationId: invitation.id,
+          reason: "no_workspace",
+        })
+      }
       return null
     }
 
     const workspace = await workspaceService.find({
       where: { id: invitation.workspaceId },
     })
-    return workspace?.tenantId === tenantId ? invitation : null
+    if (!workspace) {
+      this.logLookupRejection({
+        invitationId: invitation.id,
+        reason: "no_workspace",
+        workspaceId: invitation.workspaceId,
+      })
+      return null
+    }
+
+    const servingHost = await this.resolveServingHost(workspace)
+    if (servingHost.tenantId !== tenantId) {
+      this.logLookupRejection({
+        invitationId: invitation.id,
+        reason: "tenant_mismatch",
+        requestTenantId: tenantId,
+        servingTenantId: servingHost.tenantId,
+        workspaceId: invitation.workspaceId,
+      })
+      return null
+    }
+
+    return invitation
   }
 
   async findActiveByCodeOrFail(
@@ -100,12 +190,36 @@ class InvitationService extends BaseService {
     const workspace = await workspaceService.find({
       where: { id: invitation.workspaceId },
     })
-    if (workspace?.tenantId !== tenantId) {
+    if (!workspace) {
+      throw notFoundException("Invitation not found")
+    }
+    const servingHost = await this.resolveServingHost(workspace)
+    if (servingHost.tenantId !== tenantId) {
       // Same response as an unknown code: a cross-tenant guess must not be
       // distinguishable from one that never existed.
       throw notFoundException("Invitation not found")
     }
     return invitation
+  }
+
+  /** Builds an invitation URL on the host currently serving its workspace. */
+  async buildInviteUrl(invitation: InvitationModel): Promise<string> {
+    if (!invitation.workspaceId) {
+      throw new ChatbotXException("Invalid invitation: no workspace associated")
+    }
+
+    const workspace = await workspaceService.find({
+      where: { id: invitation.workspaceId },
+    })
+    if (!workspace) {
+      throw notFoundException("Invitation not found")
+    }
+
+    const servingHost = await this.resolveServingHost(workspace)
+    return joinAppUrl(
+      servingHost.appUrl,
+      `/invitations/${encodeURIComponent(invitation.code)}`,
+    )
   }
 
   /**

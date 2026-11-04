@@ -187,6 +187,14 @@ export const resolveTenantSettings = async (args: {
   )
 }
 
+/** Resolve the platform app URL without a workspace, owner, or hostname context. */
+export const resolvePlatformAppUrl = (): string => {
+  const env = integrationContextEnv()
+  return deriveUrls(env.NEXT_PUBLIC_BUILDER_URL, undefined, {
+    forceHttps: parseEnvBool(env.FORCE_PUBLIC_HTTPS),
+  }).appUrl
+}
+
 /**
  * Resolve the app URL that should be embedded in workspace-generated public
  * links. Unlike `resolveTenantSettings`, this applies an active custom domain
@@ -209,10 +217,7 @@ export const resolveWorkspaceAppUrl = async (args: {
     }
   }
 
-  const env = integrationContextEnv()
-  return deriveUrls(env.NEXT_PUBLIC_BUILDER_URL, undefined, {
-    forceHttps: parseEnvBool(env.FORCE_PUBLIC_HTTPS),
-  }).appUrl
+  return resolvePlatformAppUrl()
 }
 
 /**

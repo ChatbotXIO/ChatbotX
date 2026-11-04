@@ -21,6 +21,7 @@ const listPausedByOwnerMock = vi.fn(async () => state.pausedConnections)
 const listTenantSuspendedWithoutConnectionByOwnerMock = vi.fn(
   async () => [] as { id: string; workspaceId: string }[],
 )
+const invalidateCacheByTagsMock = vi.fn(async () => undefined)
 
 vi.mock("@chatbotx.io/database/client", () => ({
   db: {
@@ -59,7 +60,7 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
 vi.mock("@chatbotx.io/redis", async (importOriginal) => ({
   ...(await importOriginal<Record<string, unknown>>()),
   withCache: (_key: string, fn: () => unknown) => fn(),
-  invalidateCacheByTags: vi.fn(async () => undefined),
+  invalidateCacheByTags: invalidateCacheByTagsMock,
 }))
 
 vi.mock("../src/connection/state-service", () => ({
@@ -90,6 +91,7 @@ beforeEach(() => {
   connectionTransitionMock.mockResolvedValue(undefined)
   listPausedByOwnerMock.mockImplementation(async () => state.pausedConnections)
   listTenantSuspendedWithoutConnectionByOwnerMock.mockResolvedValue([])
+  invalidateCacheByTagsMock.mockClear()
 })
 
 test("suspend pauses the owner's workspaces with teardownLevel pause and reason tenant_suspended", async () => {
@@ -100,6 +102,20 @@ test("suspend pauses the owner's workspaces with teardownLevel pause and reason 
     reason: "tenant_suspended",
     teardownLevel: "pause",
   })
+})
+
+test("suspend and reactivate invalidate the tenant cache used by invitation serving-host resolution", async () => {
+  await tenantService.suspend("owner-1")
+  await tenantService.reactivate("owner-1")
+
+  expect(invalidateCacheByTagsMock).toHaveBeenNthCalledWith(1, [
+    "tenant:tenant-1",
+    "tenant:owner:owner-1",
+  ])
+  expect(invalidateCacheByTagsMock).toHaveBeenNthCalledWith(2, [
+    "tenant:tenant-1",
+    "tenant:owner:owner-1",
+  ])
 })
 
 test("reactivate resumes every paused connection for the owner via teardown.resume", async () => {
