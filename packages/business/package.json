@@ -2,6 +2,10 @@
   "name": "@chatbotx.io/business",
   "version": "0.1.0",
   "type": "module",
+  "sideEffects": [
+    "./src/audit/index.ts",
+    "./src/audit/service.ts"
+  ],
   "exports": {
     ".": "./src/index.ts",
     "./admin-workspace/constants": "./src/admin-workspace/constants.ts",
