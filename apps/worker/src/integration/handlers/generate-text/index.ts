@@ -12,6 +12,7 @@ import { logger } from "../../../lib/logger"
 import { saveResultToCustomField } from "../../utils/contact"
 import { type ExecuteStepProps, logStepProviderError } from "../flow-utils"
 import { aiErrorLogProvider } from "../shared/ai-error-log-provider"
+import { withChannelLengthInstruction } from "../shared/ai-output-length"
 import { resolveFlowAIModel } from "../shared/flow-ai-model-resolver"
 import { createMcpTokenResolver } from "../shared/resolve-mcp-token"
 import type { ExecuteStepResult } from "../step"
@@ -95,7 +96,10 @@ export async function handleAIGenerateText({
     let streamError: unknown
     const result = streamText({
       model: resolvedModel.model,
-      instructions: step.system,
+      instructions: withChannelLengthInstruction(
+        step.system,
+        contactInbox.channel,
+      ),
       messages,
       tools,
       toolChoice: Object.keys(tools).length > 0 ? "auto" : undefined,

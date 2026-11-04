@@ -10,6 +10,7 @@ import {
 import type { ExecuteStepProps } from "../flow"
 import { logStepProviderError } from "../flow-utils"
 import { aiErrorLogProvider } from "../shared/ai-error-log-provider"
+import { buildChannelLengthInstruction } from "../shared/ai-output-length"
 import { resolveFlowAIModel } from "../shared/flow-ai-model-resolver"
 import type { ExecuteStepResult } from "../step"
 
@@ -73,6 +74,7 @@ export async function handleAIAnalyzeImage({
     let streamError: unknown
     const result = streamText({
       model: resolvedModel.model,
+      instructions: buildChannelLengthInstruction(contactInbox.channel),
       messages: [
         {
           role: "user",
