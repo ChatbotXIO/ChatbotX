@@ -56,6 +56,11 @@ const messageService = {
 }
 const resolveTemplateParams = vi.fn()
 vi.mock("@chatbotx.io/business", () => ({
+  conversationMemberScope: {
+    resolve: vi.fn(),
+    allows: () => true,
+    where: () => undefined,
+  },
   conversationService,
   messageService,
   resolveTemplateParams,

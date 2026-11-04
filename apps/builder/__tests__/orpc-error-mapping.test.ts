@@ -22,6 +22,10 @@ vi.mock("@/middlewares/channel-api-token-auth", () => ({
 vi.mock("@/middlewares/workspace-token-auth", () => ({
   workspaceTokenAuthMidddleware: {},
 }))
+vi.mock("@/middlewares/mobile-user-auth", () => ({
+  mobileUserAuthMiddleware: {},
+  mobileUserPasswordChangeAuthMiddleware: {},
+}))
 
 vi.mock("@chatbotx.io/database/errors", () => ({
   ModelNotfoundException: class ModelNotfoundException extends Error {},

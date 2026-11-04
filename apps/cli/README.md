@@ -96,6 +96,12 @@ chatbotx inboxes list                                # List connected inboxes
 
 ---
 
+### `me` / `realtime` (mobile app only — not in the CLI)
+
+`/v1/me`, `/v1/me/workspaces`, `/v1/me/device-tokens`, `/v1/me/password` and `/v1/realtime/connect-token` act as a signed-in workspace member and need a native mobile app access token (`mobileAppToken` scheme, from `POST /api/auth/mobile/token`). A workspace token has no member identity, so `MOBILE_APP_TOKEN_ONLY_PATHS` (`apps/builder/src/lib/orpc/public-spec.ts`) marks them mobile-only and `isWorkspaceTokenOperation` filters them out of the CLI: there is no `chatbotx me` or `chatbotx realtime` group. Any new mobile-only path must be added to that set, or it surfaces here as a command that always 401s.
+
+---
+
 ### `teams`
 
 ```bash
@@ -293,7 +299,9 @@ chatbotx contacts coupons list <identifier>          # List coupons issued to co
 
 ```bash
 chatbotx conversations list                          # [--botCategory --assignedId --channel --status --keyword
-                                                     #  --botEnabled --tags --contactFilter --cursor --perPage --sort]
+                                                     #  --botEnabled --tags --contactFilter --cursor --perPage --sort --view]
+                                                     # Array/object filters are JSON strings: --status '["open"]'
+                                                     # --view compact drops ad attribution and thread-control metadata from contactInboxes (default full)
 chatbotx conversations get <id>
 chatbotx conversations assign add <id> --assignedId <assignedId>  # null clears the assignee
 chatbotx conversations archive add <id>
@@ -364,7 +372,8 @@ chatbotx broadcasts restore-occurrence add <id>      # same flags; undo a skip (
 ### `flows`
 
 ```bash
-chatbotx flows list                                  # [--page --perPage --active --name --folderId --startType --integrationWhatsappId --sort]  active defaults to true
+chatbotx flows list                                  # [--page --perPage --active --enableInInbox --name --folderId --startType --integrationWhatsappId --sort]  active defaults to true
+                                                     # --enableInInbox true → only flows that can be started from the inbox; each item returns enableInInbox
 chatbotx flows get <id>                              # Includes its versions
 chatbotx flows create --name <name>                  # [--folderId --spec --nodes --edges --publish]
                                                      # spec: flow-spec DSL (see `schemas flow-spec`); nodes/edges: raw

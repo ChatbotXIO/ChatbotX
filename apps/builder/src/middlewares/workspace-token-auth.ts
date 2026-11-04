@@ -16,7 +16,6 @@ import type {
   WorkspaceModel,
 } from "@chatbotx.io/database/types"
 import { ORPCError } from "@orpc/server"
-import { auth } from "@/lib/auth/auth"
 import { logger } from "@/lib/log"
 import { mobileCredentialId } from "@/lib/mobile-auth/mobile-credential-id"
 import {
@@ -173,6 +172,7 @@ export const workspaceTokenAuthMidddleware = base.middleware(
 
       // OAuth access tokens are JWTs. Mobile-token candidates were resolved
       // before hashing, so this fallback verifies only MCP OAuth credentials.
+      const { auth } = await import("@/lib/auth/auth")
       const mcpAccessToken = await verifyMcpAccessToken(
         auth,
         bearerToken,

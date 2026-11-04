@@ -11,7 +11,6 @@ import type {
   WorkspaceModel,
 } from "@chatbotx.io/database/types"
 import { ORPCError } from "@orpc/server"
-import { auth } from "@/lib/auth/auth"
 import type { SessionUser } from "@/lib/auth/utils"
 
 /**
@@ -60,6 +59,7 @@ type MobileUserPrincipal = {
 export const authenticateMobileBearer = async (
   bearerToken: string,
 ): Promise<MobileUserPrincipal | null> => {
+  const { auth } = await import("@/lib/auth/auth")
   const subject = await verifyMobileAccessToken(auth, bearerToken).catch(
     (error: unknown) => {
       if (error instanceof MobileTokenVerificationUnavailableError) {

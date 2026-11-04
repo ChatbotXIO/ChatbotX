@@ -57,6 +57,11 @@ const conversationService = {
   setBotEnabledByIds: vi.fn(),
 }
 vi.mock("@chatbotx.io/business", () => ({
+  conversationMemberScope: {
+    resolve: vi.fn(),
+    allows: () => true,
+    where: () => undefined,
+  },
   conversationService,
   ThreadControlUnsupportedError: class extends Error {},
 }))
