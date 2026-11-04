@@ -84,4 +84,22 @@ describe("resolveLastUserInputTracking", () => {
       }).lastUserInputType,
     ).toBe("image")
   })
+
+  test("a Flow response keeps its reply text, not the files it carries", () => {
+    expect(
+      resolveLastUserInputTracking({
+        contentType: "text",
+        text: "Sent",
+        attachments: [{ fileType: "image", originPath: "uploads/receipt.png" }],
+        contentAttributes: {
+          type: "whatsapp_flow_response",
+          name: "flow",
+          flowResponse: { photo: [{ id: "1" }] },
+          flowToken: null,
+          decoded: null,
+        },
+        storageUrl: "https://files.example.com",
+      }),
+    ).toEqual({ lastUserInput: "Sent", lastUserInputType: "text" })
+  })
 })

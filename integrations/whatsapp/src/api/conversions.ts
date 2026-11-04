@@ -11,6 +11,7 @@ import {
   rescue,
   WhatsappException,
 } from "../exception"
+import { isRetryableHttpStatus } from "../lib/http-status"
 
 const datasetIdResponseSchema = z.union([
   z.object({ id: z.string().trim().min(1) }),
@@ -86,10 +87,6 @@ export class WhatsappConversionsApiException extends WhatsappException {
     )
     this.retryable = retryable
   }
-}
-
-function isRetryableHttpStatus(status: number): boolean {
-  return status === 408 || status === 409 || status === 429 || status >= 500
 }
 
 async function conversionRescue<T>(fn: () => Promise<T>): Promise<T> {

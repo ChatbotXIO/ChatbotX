@@ -10,6 +10,7 @@ import type {
 
 export * from "./audience-event"
 export * from "./context"
+export * from "./flow-response-file"
 export * from "./message"
 export * from "./meta-messaging"
 export * from "./mime-types"

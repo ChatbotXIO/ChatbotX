@@ -3008,7 +3008,12 @@
       "customField": "Benutzerdefiniertes Feld",
       "selectCustomFieldPlaceholder": "Benutzerdefiniertes Feld auswählen",
       "addMapping": "Zuordnung hinzufügen",
-      "addCustomField": "Neu hinzufügen"
+      "addCustomField": "Neu hinzufügen",
+      "fileBadge": "Datei",
+      "fileFormat": "Dateilinks",
+      "fileFormatAllUrls": "Alle Links, durch Kommas getrennt",
+      "fileFormatFirstUrl": "Nur den ersten Link",
+      "fileFormatHint": "Das benutzerdefinierte Feld speichert Links zu den hochgeladenen Dateien, wie hier gewählt."
     },
     "sendCarousel": {
       "addSlide": "Karte hinzufügen",
@@ -4504,7 +4509,15 @@
       "noAnswer": "Keine Antwort",
       "labelsUnavailable": "Die Fragen des Flows konnten nicht geladen werden, daher werden die Feldnamen angezeigt.",
       "yes": "Ja",
-      "no": "Nein"
+      "no": "Nein",
+      "fileNotSaved": "Datei nicht gespeichert",
+      "filesNotSaved": "{count, plural, one {# Datei wurde nicht gespeichert} other {# Dateien wurden nicht gespeichert}}",
+      "filesAttached": "{count, plural, one {# Datei angehängt} other {# Dateien angehängt}}",
+      "fileFailure": {
+        "too_large": "Datei zu groß",
+        "unsupported_type": "Dateityp nicht unterstützt",
+        "download_failed": "Download fehlgeschlagen"
+      }
     },
     "sendViewCatalogBodyTooLong": "Der Nachrichtentext ist für eine Katalognachricht zu lang. Kürze ihn.",
     "sendViewCatalogFooterTooLong": "Die Fußzeile ist für eine Katalognachricht zu lang. Kürze sie.",
@@ -9549,7 +9562,7 @@
       "too_many_components": "Ein Bildschirm kann höchstens {max} Komponenten enthalten.",
       "component_limit": "Ein Bildschirm kann höchstens {max} × {type} enthalten.",
       "picker_conflict": "Ein Bildschirm kann nicht gleichzeitig einen Foto-Upload und einen Dokument-Upload haben.",
-      "picker_multiple_in_complete": "Setze {property} auf 1: WhatsApp sendet beim Abschluss des Flows nur eine einzelne Datei.",
+      "picker_multiple_in_complete": "WhatsApp sendet beim Abschluss des Flows höchstens {max} Dateien. Verringere die maximale Dateianzahl der Datei-Eingaben, die zu diesem Bildschirm führen.",
       "footer_not_last": "Der Footer muss die letzte Komponente auf dem Bildschirm sein.",
       "footer_in_nested_branch": "Ein Footer kann nur direkt in einem Wenn-Zweig der ersten Ebene stehen.",
       "footer_missing_in_branch": "Wenn ein Zweig einen Footer hat, braucht der andere Zweig ebenfalls einen.",

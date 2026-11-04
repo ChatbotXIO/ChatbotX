@@ -7,6 +7,7 @@ export type ContextUploader = {
     newPath: string,
     body: string | Readable | Buffer<ArrayBufferLike>,
     options?: unknown,
+    abortSignal?: AbortSignal,
     // biome-ignore lint/suspicious/noExplicitAny: wip
   ): Promise<any>
 }

@@ -358,6 +358,15 @@ const CONTACT_PROFILE_NAME_CAPABILITIES: Record<
 
 vi.mock("@chatbotx.io/business", () => ({
   appointmentService: { cancelAppointmentByToken: vi.fn() },
+  // Mirror of the real pure helper — the module is fully mocked here.
+  getContactInputAttachments: (message: {
+    contentAttributes?: unknown
+    attachments?: unknown[] | null
+  }) =>
+    (message.contentAttributes as { type?: unknown } | null)?.type ===
+    "whatsapp_flow_response"
+      ? []
+      : (message.attachments ?? []),
   flushAllPendingWorkspaceRealtimeEvents: vi.fn(),
   // Pass-through: the real resolver signs proxy URLs for the realtime payload.
   messageService: {

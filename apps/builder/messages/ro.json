@@ -212,7 +212,12 @@
       "customField": "Câmp personalizat",
       "selectCustomFieldPlaceholder": "Selectați câmpul personalizat",
       "addMapping": "Adaugă o asociere",
-      "addCustomField": "Adaugă"
+      "addCustomField": "Adaugă",
+      "fileBadge": "Fișier",
+      "fileFormat": "Linkurile fișierelor",
+      "fileFormatAllUrls": "Toate linkurile, separate prin virgulă",
+      "fileFormatFirstUrl": "Doar primul link",
+      "fileFormatHint": "Câmpul personalizat salvează linkurile fișierelor încărcate, așa cum alegi aici."
     },
     "sendCarousel": {
       "addSlide": "Adaugă cardul",
@@ -4504,7 +4509,15 @@
       "noAnswer": "Fără răspuns",
       "labelsUnavailable": "Întrebările Flow-ului nu au putut fi încărcate, așa că sunt afișate numele câmpurilor.",
       "yes": "Da",
-      "no": "Nu"
+      "no": "Nu",
+      "fileNotSaved": "Fișier nesalvat",
+      "filesNotSaved": "{count, plural, one {# fișier nu a fost salvat} other {# fișiere nu au fost salvate}}",
+      "filesAttached": "{count, plural, one {# fișier atașat} other {# fișiere atașate}}",
+      "fileFailure": {
+        "too_large": "Fișier prea mare",
+        "unsupported_type": "Tip de fișier neacceptat",
+        "download_failed": "Nu s-a putut descărca"
+      }
     },
     "sendViewCatalogBodyTooLong": "Textul mesajului este prea lung pentru un mesaj de catalog. Scurtează-l.",
     "sendViewCatalogFooterTooLong": "Subsolul este prea lung pentru un mesaj de catalog. Scurtează-l.",
@@ -9549,7 +9562,7 @@
       "too_many_components": "Un ecran poate conține cel mult {max} componente.",
       "component_limit": "Un ecran poate conține cel mult {max} × {type}.",
       "picker_conflict": "Un ecran nu poate avea și încărcare de fotografii, și încărcare de documente.",
-      "picker_multiple_in_complete": "Setează {property} la 1: WhatsApp trimite un singur fișier la finalizarea flow-ului.",
+      "picker_multiple_in_complete": "WhatsApp trimite cel mult {max} fișiere la finalizarea fluxului. Reduceți numărul maxim de fișiere al câmpurilor de fișier care duc la acest ecran.",
       "footer_not_last": "Footer-ul trebuie să fie ultima componentă de pe ecran.",
       "footer_in_nested_branch": "Un Footer poate fi doar direct într-o ramură If de primul nivel.",
       "footer_missing_in_branch": "Dacă o ramură are Footer, și cealaltă ramură are nevoie de unul.",

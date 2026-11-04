@@ -56,6 +56,7 @@ export async function captureTemplateFlowResponse(
     flowSourceId: resolved.flowSourceId,
     fieldMappings: resolved.param.fieldMappings ?? [],
     flowResponse: data.flowResponse,
+    flowFiles: data.flowFiles,
   })
 
   await awardWhatsappFlowSurvey({

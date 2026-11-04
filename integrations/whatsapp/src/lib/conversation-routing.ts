@@ -12,7 +12,7 @@ import {
 } from "@chatbotx.io/sdk"
 import { z } from "zod"
 import { logger } from "./logger"
-import { asString } from "./value"
+import { asString, isRecord } from "./value"
 
 /**
  * Conversation Routing (thread control) webhook parsing. Every shape is parsed
@@ -59,9 +59,6 @@ export const THREAD_CONTROL_JOB_ID_PREFIX: Record<
 // ---------------------------------------------------------------------------
 // Small readers
 // ---------------------------------------------------------------------------
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === "object" && value !== null && !Array.isArray(value)
 
 const toTimestampString = (value: unknown): string | undefined => {
   if (typeof value === "string" && value.length > 0) {

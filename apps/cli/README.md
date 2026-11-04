@@ -309,6 +309,7 @@ chatbotx conversations disable-bot add <id>
 chatbotx conversations messages list <conversationId>  # [--perPage --cursor]
 chatbotx conversations message get <conversationId> <messageId> --createdAt <createdAt>
 chatbotx conversations flow-response get <conversationId> <messageId> --createdAt <createdAt>  # WhatsApp Flow answers, labelled
+                                                     # file answers: kind "files", each {status: stored (url, size) | failed (failureReason) | unprocessed (no stored copy)}
 chatbotx conversations message send <conversationId>   # [--text --files --mediaFile --mediaFileId --mediaFileIds
                                                      #  --products (JSON catalog products; ids from `products sendable`)
                                                      #  --flowId --nodeId --inboxId --clientId

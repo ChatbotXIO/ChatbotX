@@ -1,6 +1,8 @@
 import { nodeName, walkNodes } from "./tree"
 import type { MiniAppDefinition, MiniAppNode } from "./types"
 
+export { sanitizeFileName } from "@chatbotx.io/utils/sanitize-file-name"
+
 /**
  * Rules for files a visitor uploads through a Mini App's web link
  * (PhotoPicker / DocumentPicker). The type of a file is decided from its
@@ -10,6 +12,8 @@ import type { MiniAppDefinition, MiniAppNode } from "./types"
 /** Meta's own cap for a single Flow upload. */
 export const MINI_APP_MAX_UPLOAD_BYTES = 25 * 1024 * 1024
 export const MINI_APP_MAX_UPLOADS_PER_INPUT = 30
+/** Meta sends at most this many files in a Flow's response message. */
+export const MINI_APP_WHATSAPP_MAX_FILES_PER_RESPONSE = 10
 /** Bytes read from the start of a file to identify its type. */
 export const MINI_APP_UPLOAD_SNIFF_BYTES = 4096
 
@@ -204,38 +208,6 @@ export const verifyUpload = (input: {
     return { ok: false, reason: "type_not_allowed" }
   }
   return { ok: true, mimeType }
-}
-
-const DIACRITICS = /[̀-ͯ]/g
-const LOWER_D_STROKE = /đ/g
-const UPPER_D_STROKE = /Đ/g
-const UNSAFE_CHARACTERS = /[^a-z0-9._-]+/g
-const REPEATED_DASHES = /-{2,}/g
-const EDGE_PUNCTUATION = /^[-._]+|[-._]+$/g
-const EXTENSION = /\.([a-z0-9]{1,10})$/
-const MAX_FILE_NAME_LENGTH = 80
-
-/**
- * A URL-safe file name: "CMND mặt trước.JPG" → "cmnd-mat-truoc.jpg". The
- * extension is kept; an empty result becomes "file".
- */
-export const sanitizeFileName = (name: string): string => {
-  const ascii = name
-    .normalize("NFD")
-    .replace(DIACRITICS, "")
-    .replace(LOWER_D_STROKE, "d")
-    .replace(UPPER_D_STROKE, "D")
-    .toLowerCase()
-    .trim()
-  const extension = EXTENSION.exec(ascii)?.[0] ?? ""
-  const base = ascii
-    .slice(0, ascii.length - extension.length)
-    .replace(UNSAFE_CHARACTERS, "-")
-    .replace(REPEATED_DASHES, "-")
-    .replace(EDGE_PUNCTUATION, "")
-    .slice(0, MAX_FILE_NAME_LENGTH - extension.length)
-    .replace(EDGE_PUNCTUATION, "")
-  return `${base || "file"}${extension}`
 }
 
 /**

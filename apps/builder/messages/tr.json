@@ -3164,7 +3164,12 @@
       "customField": "Özel Alan",
       "selectCustomFieldPlaceholder": "Özel alan seçin",
       "addMapping": "Eşleme Ekle",
-      "addCustomField": "Yeni Ekle"
+      "addCustomField": "Yeni Ekle",
+      "fileBadge": "Dosya",
+      "fileFormat": "Dosya bağlantıları",
+      "fileFormatAllUrls": "Tüm bağlantılar, virgülle ayrılmış",
+      "fileFormatFirstUrl": "Yalnızca ilk bağlantı",
+      "fileFormatHint": "Özel alan, yüklenen dosyaların bağlantılarını burada seçildiği şekilde saklar."
     },
     "sendCarousel": {
       "addSlide": "Kart ekle",
@@ -4504,7 +4509,15 @@
       "noAnswer": "Yanıt yok",
       "labelsUnavailable": "Flow'un soruları yüklenemedi, bu yüzden alan adları gösteriliyor.",
       "yes": "Evet",
-      "no": "Hayır"
+      "no": "Hayır",
+      "fileNotSaved": "Dosya kaydedilmedi",
+      "filesNotSaved": "{count, plural, one {# dosya kaydedilmedi} other {# dosya kaydedilmedi}}",
+      "filesAttached": "{count, plural, one {# dosya eklendi} other {# dosya eklendi}}",
+      "fileFailure": {
+        "too_large": "Dosya çok büyük",
+        "unsupported_type": "Desteklenmeyen dosya türü",
+        "download_failed": "İndirilemedi"
+      }
     },
     "sendViewCatalogBodyTooLong": "Mesaj metni bir katalog mesajı için çok uzun. Kısaltın.",
     "sendViewCatalogFooterTooLong": "Alt bilgi bir katalog mesajı için çok uzun. Kısaltın.",
@@ -9549,7 +9562,7 @@
       "too_many_components": "Bir ekranda en fazla {max} bileşen olabilir.",
       "component_limit": "Bir ekranda en fazla {max} × {type} olabilir.",
       "picker_conflict": "Bir ekranda hem fotoğraf yükleme hem belge yükleme bulunamaz.",
-      "picker_multiple_in_complete": "{property} değerini 1 yapın: WhatsApp akış tamamlandığında yalnızca tek bir dosya gönderir.",
+      "picker_multiple_in_complete": "WhatsApp, akış tamamlandığında en fazla {max} dosya gönderir. Bu ekrana giden dosya alanlarının en yüksek dosya sayısını azaltın.",
       "footer_not_last": "Footer ekrandaki son bileşen olmalıdır.",
       "footer_in_nested_branch": "Footer yalnızca birinci düzey bir If dalının doğrudan içinde olabilir.",
       "footer_missing_in_branch": "Bir dalda Footer varsa diğer dalda da olmalıdır.",

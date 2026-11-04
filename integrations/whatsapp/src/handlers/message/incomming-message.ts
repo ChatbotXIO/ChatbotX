@@ -10,7 +10,7 @@ import {
   messageTypes,
 } from "@chatbotx.io/sdk"
 import { extractInvisibleGoogleClick } from "@chatbotx.io/utils/google-click"
-import type { ServerMessageTypes } from "whatsapp-api-js/types"
+import type { ServerMessage, ServerMessageTypes } from "whatsapp-api-js/types"
 import { z } from "zod"
 import { getWhatsappClient } from "../../client"
 import {
@@ -21,6 +21,7 @@ import {
 import { extractWhatsappUserIdentity } from "../../lib/raw-identity"
 import { asString } from "../../lib/value"
 import type { WhatsappAuthValue, WhatsappWebhookEvent } from "../../schema"
+import { readFlowResponseMedia } from "./incoming-flow-media"
 import {
   parseAudioMessage,
   parseDocumentMessage,
@@ -235,16 +236,34 @@ const readReferredProductCommerce = (
     : undefined
 }
 
-const parseInteractiveMessage: WhatsappMessageParser<"interactive"> = (
+/**
+ * The id of the message a reply answers (`context.id`). Parsers are typed with
+ * their message type's own fields, but they get the whole webhook message, so
+ * `context` is read through `ServerMessage`.
+ */
+const readContextMessageId = (message: object): string | null =>
+  asString((message as Pick<ServerMessage, "context">).context?.id)
+
+const parseInteractiveMessage: WhatsappMessageParser<"interactive"> = async (
   message,
+  deps,
 ) => {
-  const reply = readInteractiveReply(message.interactive)
+  const reply = readInteractiveReply(
+    message.interactive,
+    readContextMessageId(message),
+  )
+  // A Flow answer can carry uploaded files (PhotoPicker / DocumentPicker).
+  const flowMedia = await readFlowResponseMedia(
+    deps.ctx,
+    reply.contentAttributes,
+  )
   return {
     text: reply.text,
     postbackAction: reply.postbackAction,
     templateFlowToken: reply.templateFlowToken,
     buttonTitle: reply.buttonTitle,
     contentAttributes: reply.contentAttributes,
+    ...flowMedia,
   }
 }
 

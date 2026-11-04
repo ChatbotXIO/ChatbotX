@@ -659,7 +659,12 @@
       "customField": "שדה מותאם אישית",
       "selectCustomFieldPlaceholder": "בחירת שדה מותאם אישית",
       "addMapping": "הוספת מיפוי",
-      "addCustomField": "הוספת חדש"
+      "addCustomField": "הוספת חדש",
+      "fileBadge": "קובץ",
+      "fileFormat": "קישורי קבצים",
+      "fileFormatAllUrls": "כל הקישורים, מופרדים בפסיקים",
+      "fileFormatFirstUrl": "הקישור הראשון בלבד",
+      "fileFormatHint": "השדה המותאם שומר קישורים לקבצים שהועלו, לפי הבחירה כאן."
     },
     "sendCarousel": {
       "addSlide": "הוספת כרטיס",
@@ -2155,7 +2160,15 @@
       "noAnswer": "אין תשובה",
       "labelsUnavailable": "לא ניתן לטעון את שאלות ה-Flow, לכן מוצגים שמות השדות.",
       "yes": "כן",
-      "no": "לא"
+      "no": "לא",
+      "fileNotSaved": "הקובץ לא נשמר",
+      "filesNotSaved": "{count, plural, one {# קובץ לא נשמר} other {# קבצים לא נשמרו}}",
+      "filesAttached": "{count, plural, one {# קובץ מצורף} other {# קבצים מצורפים}}",
+      "fileFailure": {
+        "too_large": "הקובץ גדול מדי",
+        "unsupported_type": "סוג קובץ לא נתמך",
+        "download_failed": "ההורדה נכשלה"
+      }
     },
     "sendViewCatalogBodyTooLong": "טקסט ההודעה ארוך מדי להודעת קטלוג. קצרו אותו.",
     "sendViewCatalogFooterTooLong": "הכותרת התחתונה ארוכה מדי להודעת קטלוג. קצרו אותה.",
@@ -9549,7 +9562,7 @@
       "too_many_components": "מסך יכול להכיל לכל היותר {max} רכיבים.",
       "component_limit": "מסך יכול להכיל לכל היותר {max} × {type}.",
       "picker_conflict": "מסך לא יכול לכלול גם העלאת תמונות וגם העלאת מסמכים.",
-      "picker_multiple_in_complete": "הגדירו את {property} ל-1: WhatsApp שולח קובץ אחד בלבד כשה-Flow מסתיים.",
+      "picker_multiple_in_complete": "וואטסאפ שולח עד {max} קבצים בסיום הזרימה. הקטן את מספר הקבצים המרבי בשדות הקבצים המובילים למסך זה.",
       "footer_not_last": "ה-Footer חייב להיות הרכיב האחרון במסך.",
       "footer_in_nested_branch": "Footer יכול להיות רק ישירות בענף If ברמה הראשונה.",
       "footer_missing_in_branch": "אם לענף אחד יש Footer, גם לענף השני צריך להיות Footer.",

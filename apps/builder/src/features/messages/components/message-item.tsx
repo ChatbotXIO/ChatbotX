@@ -69,7 +69,7 @@ import { ReferredProductContext } from "./referred-product-context"
 import { ThreadControlContextCard } from "./thread-control-context-card"
 import { ThreadControlDivider } from "./thread-control-divider"
 import { WhatsappCallCard } from "./whatsapp-call-card"
-import { WhatsappFlowResponseButton } from "./whatsapp-flow-response-dialog"
+import { WhatsappFlowResponseCard } from "./whatsapp-flow-response-card"
 
 type MessageItemProps = {
   message: MessageResourceWithRelations
@@ -171,8 +171,15 @@ export const MessageItem = (props: MessageItemProps) => {
   // An inbound cart renders as its own bubble; the stored text is only its
   // plain-text summary for keywords and previews.
   const inboundOrder = getInboundOrder(message.contentAttributes)
+  // A Flow response renders as one card (text, files, answers). The guest
+  // widget is the customer's own view, and the answers are agent-only.
+  const flowResponse =
+    isComment || isDeleted || guestDisplay
+      ? undefined
+      : getWhatsappFlowResponse(message.contentAttributes)
   const suppressRawText = Boolean(
-    inboundOrder ||
+    flowResponse ||
+      inboundOrder ||
       whatsappCall ||
       callPermissionReply ||
       threadControlActivity ||
@@ -275,8 +282,14 @@ export const MessageItem = (props: MessageItemProps) => {
                   </pre>
                 </div>
               )}
-            {!isDeleted && hasAttachments && !whatsappCall && (
+            {!isDeleted && hasAttachments && !whatsappCall && !flowResponse && (
               <RenderAttachments message={message} />
+            )}
+            {flowResponse && (
+              <WhatsappFlowResponseCard
+                entity={flowResponse}
+                message={message}
+              />
             )}
           </>
         )}
@@ -890,22 +903,6 @@ const RenderContentAttributes = (props: MessageItemProps) => {
   if (callPermissionReply) {
     return (
       <WhatsappCallPermissionReply response={callPermissionReply.response} />
-    )
-  }
-
-  // The guest widget is the customer's own view: the answers are agent-only.
-  // A deleted message shows only its "deleted" note, so no answers either.
-  if (
-    !(props.guestDisplay || message.deletedAt) &&
-    getWhatsappFlowResponse(message.contentAttributes)
-  ) {
-    return (
-      <WhatsappFlowResponseButton
-        conversationId={message.conversationId}
-        createdAt={message.createdAt}
-        messageId={message.id}
-        workspaceId={message.workspaceId}
-      />
     )
   }
 

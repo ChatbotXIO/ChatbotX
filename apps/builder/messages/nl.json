@@ -3008,7 +3008,12 @@
       "customField": "Aangepast veld",
       "selectCustomFieldPlaceholder": "Selecteer een aangepast veld",
       "addMapping": "Toewijzing toevoegen",
-      "addCustomField": "Nieuwe toevoegen"
+      "addCustomField": "Nieuwe toevoegen",
+      "fileBadge": "Bestand",
+      "fileFormat": "Bestandslinks",
+      "fileFormatAllUrls": "Alle links, gescheiden door komma's",
+      "fileFormatFirstUrl": "Alleen de eerste link",
+      "fileFormatHint": "Het aangepaste veld bewaart links naar de geüploade bestanden, zoals hier gekozen."
     },
     "sendCarousel": {
       "addSlide": "Kaart toevoegen",
@@ -4504,7 +4509,15 @@
       "noAnswer": "Geen antwoord",
       "labelsUnavailable": "De vragen van de Flow konden niet worden geladen, daarom worden de veldnamen getoond.",
       "yes": "Ja",
-      "no": "Nee"
+      "no": "Nee",
+      "fileNotSaved": "Bestand niet opgeslagen",
+      "filesNotSaved": "{count, plural, one {# bestand is niet opgeslagen} other {# bestanden zijn niet opgeslagen}}",
+      "filesAttached": "{count, plural, one {# bijlage} other {# bijlagen}}",
+      "fileFailure": {
+        "too_large": "Bestand te groot",
+        "unsupported_type": "Bestandstype niet ondersteund",
+        "download_failed": "Downloaden mislukt"
+      }
     },
     "sendViewCatalogBodyTooLong": "De berichttekst is te lang voor een catalogusbericht. Maak hem korter.",
     "sendViewCatalogFooterTooLong": "De voettekst is te lang voor een catalogusbericht. Maak hem korter.",
@@ -9549,7 +9562,7 @@
       "too_many_components": "Een scherm kan maximaal {max} componenten bevatten.",
       "component_limit": "Een scherm kan maximaal {max} × {type} bevatten.",
       "picker_conflict": "Een scherm kan niet tegelijk een foto-upload en een document-upload hebben.",
-      "picker_multiple_in_complete": "Stel {property} in op 1: WhatsApp verstuurt bij het afronden van de flow slechts één bestand.",
+      "picker_multiple_in_complete": "WhatsApp verstuurt maximaal {max} bestanden wanneer de flow is voltooid. Verlaag het maximum aantal bestanden van de bestandsvelden die naar dit scherm leiden.",
       "footer_not_last": "De Footer moet het laatste component op het scherm zijn.",
       "footer_in_nested_branch": "Een Footer kan alleen direct in een Als-tak op het eerste niveau staan.",
       "footer_missing_in_branch": "Als de ene tak een Footer heeft, heeft de andere tak er ook een nodig.",

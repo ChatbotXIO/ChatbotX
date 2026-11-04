@@ -20,6 +20,7 @@ const detectConversationAndContactInbox = vi.fn()
 const detectFlowVersion = vi.fn()
 const findSendableBroadcast = vi.fn()
 const resetContactForResume = vi.fn()
+const applyWhatsappFlowResponseSideEffects = vi.fn(async () => undefined)
 
 const recordContactActivity = vi.fn(async (..._args: unknown[]) => true)
 
@@ -82,6 +83,11 @@ const clearQuickReplyPendingOnFlowEntry = vi.fn(
 const clearQuickReplyChallengeOnTap = vi.fn(
   async (..._args: unknown[]) => undefined,
 )
+vi.mock("../src/integration/handlers/whatsapp-flow-response", () => ({
+  applyWhatsappFlowResponseSideEffects: (...args: unknown[]) =>
+    applyWhatsappFlowResponseSideEffects(...args),
+}))
+
 vi.mock("../src/integration/handlers/quick-reply-settings", () => ({
   armQuickReplySettings: (...args: unknown[]) => armQuickReplySettings(...args),
   clearQuickReplyPendingOnFlowEntry: (...args: unknown[]) =>
@@ -3029,5 +3035,94 @@ describe("runStepsAndQuickReplies — quick reply settings", () => {
     } finally {
       sendSpy.mockRestore()
     }
+  })
+})
+
+describe("WhatsApp Flow response postback", () => {
+  // Flow and button ids are 17-digit snowflakes; anything shorter does not decode.
+  const FLOW_ID = "11612473309626368"
+  const BUTTON_ID = "11612473309626369"
+  const flowResponse = { docs: [{ id: "111" }] }
+  const flowFiles = {
+    docs: [
+      {
+        mediaId: "111",
+        fileName: "Pass.pdf",
+        mimeType: "application/pdf",
+        size: 10,
+        url: "https://storage.example.com/111-pass.pdf",
+      },
+    ],
+  }
+
+  beforeEach(() => {
+    applyWhatsappFlowResponseSideEffects.mockClear()
+    detectConversationAndContactInbox.mockReset()
+    detectConversationAndContactInbox.mockResolvedValue({
+      conversation: makeConversation(),
+      contactInbox: { ...makeContactInbox(), channel: "whatsapp" },
+    })
+    const whatsappFlowStep = {
+      id: "step-wa",
+      stepType: "whatsappFlow",
+      text: "body",
+      buttons: [
+        {
+          id: BUTTON_ID,
+          label: "Go",
+          buttonType: null,
+          beforeStep: null,
+          steps: [],
+        },
+      ],
+      inboxId: null,
+      flow: {
+        id: "1",
+        sourceId: "wa-flow-1",
+        startScreenId: "SCREEN_1",
+        fieldMappings: [],
+      },
+    }
+    const node: FlowNode = {
+      id: "wa-node",
+      position: { x: 0, y: 0 },
+      measured: { width: 100, height: 100 },
+      data: {
+        name: "WA",
+        isStartNode: true,
+        details: { steps: [whatsappFlowStep] } as never,
+      },
+    }
+    detectFlowVersion.mockReset()
+    detectFlowVersion.mockResolvedValue({
+      flowVersion: makeFlowVersion([node]),
+      useLatestFlowVersion: true,
+    })
+  })
+
+  const run = (payload: Record<string, unknown>, messageId = "msg-1") =>
+    runFlowPostback({
+      conversationId: "conv-1",
+      contactInboxId: "ci-1",
+      action: encodeButtonPayload({ flowId: FLOW_ID, buttonId: BUTTON_ID }),
+      ref: null,
+      messageId,
+      payload,
+    } as never)
+
+  test("hands the stored files of the response to the step's side effects", async () => {
+    await run({ waFlowResponse: flowResponse, flowFiles })
+
+    expect(applyWhatsappFlowResponseSideEffects).toHaveBeenCalledWith(
+      expect.objectContaining({ flowResponse, flowFiles, messageId: "msg-1" }),
+    )
+  })
+
+  test("a response without files passes none", async () => {
+    await run({ waFlowResponse: flowResponse })
+
+    expect(applyWhatsappFlowResponseSideEffects).toHaveBeenCalledWith(
+      expect.objectContaining({ flowResponse, flowFiles: undefined }),
+    )
   })
 })

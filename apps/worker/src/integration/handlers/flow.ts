@@ -1119,6 +1119,7 @@ async function runFlowAction(
         contactInbox,
         step: whatsappFlowStep,
         flowResponse: waFlowResponse,
+        flowFiles: data.payload?.flowFiles,
         messageId: data.messageId,
       })
     }

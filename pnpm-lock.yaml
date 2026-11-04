@@ -1998,6 +1998,9 @@ importers:
       '@chatbotx.io/business':
         specifier: workspace:*
         version: link:../../packages/business
+      '@chatbotx.io/filesystem':
+        specifier: workspace:*
+        version: link:../../packages/filesystem
       '@chatbotx.io/flow-config':
         specifier: workspace:*
         version: link:../../packages/flow-config
@@ -3204,6 +3207,9 @@ importers:
 
   packages/mini-app:
     dependencies:
+      '@chatbotx.io/utils':
+        specifier: workspace:*
+        version: link:../utils
       zod:
         specifier: 4.6.7
         version: 4.6.7

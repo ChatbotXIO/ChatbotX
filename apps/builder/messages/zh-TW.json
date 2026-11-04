@@ -1846,7 +1846,15 @@
       "noAnswer": "未回答",
       "labelsUnavailable": "無法載入 Flow 的問題，因此顯示欄位名稱。",
       "yes": "是",
-      "no": "否"
+      "no": "否",
+      "fileNotSaved": "檔案未儲存",
+      "filesNotSaved": "{count, plural, one {# 個檔案未儲存} other {# 個檔案未儲存}}",
+      "filesAttached": "{count, plural, one {# 個附件} other {# 個附件}}",
+      "fileFailure": {
+        "too_large": "檔案過大",
+        "unsupported_type": "不支援的檔案類型",
+        "download_failed": "無法下載"
+      }
     },
     "sendViewCatalogBodyTooLong": "訊息文字對目錄訊息來說太長，請縮短。",
     "sendViewCatalogFooterTooLong": "頁尾對目錄訊息來說太長，請縮短。",
@@ -3414,7 +3422,12 @@
       "customField": "自訂欄位",
       "selectCustomFieldPlaceholder": "選擇自訂欄位",
       "addMapping": "新增對應",
-      "addCustomField": "新增新"
+      "addCustomField": "新增新",
+      "fileBadge": "檔案",
+      "fileFormat": "檔案連結",
+      "fileFormatAllUrls": "所有連結，以逗號分隔",
+      "fileFormatFirstUrl": "僅第一個連結",
+      "fileFormatHint": "自訂欄位會依此處的選擇儲存已上傳檔案的連結。"
     },
     "sendCarousel": {
       "addSlide": "新增幻燈片",
@@ -9549,7 +9562,7 @@
       "too_many_components": "一個畫面最多可包含 {max} 個元件。",
       "component_limit": "一個畫面最多可包含 {max} 個{type}。",
       "picker_conflict": "一個畫面不能同時包含照片上傳和文件上傳。",
-      "picker_multiple_in_complete": "請將 {property} 設為 1：流程完成時 WhatsApp 只會傳送單一檔案。",
+      "picker_multiple_in_complete": "流程完成時，WhatsApp 最多傳送 {max} 個檔案。請減少通往此畫面的檔案輸入項的最大檔案數。",
       "footer_not_last": "Footer 必須是畫面上的最後一個元件。",
       "footer_in_nested_branch": "Footer 只能直接放在第一層 If 分支中。",
       "footer_missing_in_branch": "如果一個分支有 Footer，另一個分支也需要有。",

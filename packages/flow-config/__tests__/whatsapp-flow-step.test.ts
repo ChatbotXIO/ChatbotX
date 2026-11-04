@@ -30,6 +30,41 @@ describe("whatsappFlowStepSchema", () => {
     expect(whatsappFlowStepSchema.safeParse(completeStep()).success).toBe(true)
   })
 
+  describe("field mapping file format", () => {
+    const stepWithMapping = (mapping: Record<string, unknown>) => {
+      const step = completeStep()
+      step.flow = {
+        ...step.flow,
+        fieldMappings: [
+          { paramKey: "docs", customFieldId: "33", ...mapping },
+        ] as never,
+      }
+      return step
+    }
+
+    test("is optional, so mappings saved before it existed stay valid", () => {
+      const result = whatsappFlowStepSchema.safeParse(stepWithMapping({}))
+      expect(result.success).toBe(true)
+      expect(result.data?.flow.fieldMappings[0]).not.toHaveProperty(
+        "fileFormat",
+      )
+    })
+
+    test.each(["allUrls", "firstUrl"])("accepts %s", (fileFormat) => {
+      const result = whatsappFlowStepSchema.safeParse(
+        stepWithMapping({ fileFormat }),
+      )
+      expect(result.data?.flow.fieldMappings[0]?.fileFormat).toBe(fileFormat)
+    })
+
+    test("rejects an unknown format", () => {
+      expect(
+        whatsappFlowStepSchema.safeParse(stepWithMapping({ fileFormat: "csv" }))
+          .success,
+      ).toBe(false)
+    })
+  })
+
   test("accepts an empty sourceId: the worker resolves it from flow.id", () => {
     const step = completeStep()
     step.flow = { ...step.flow, sourceId: "" }

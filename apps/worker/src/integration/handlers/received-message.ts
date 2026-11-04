@@ -151,6 +151,7 @@ import {
   refreshExistingContactProfile,
 } from "./contact-profile-refresh"
 import { resolvePostbackButtonLabel, sanitizeFlowAction } from "./flow-action"
+import { resolveMessageFlowFiles } from "./flow-response-files"
 import {
   lookupAndPersistGoogleClick,
   persistNewContactGoogleClick,
@@ -706,6 +707,21 @@ export const receiveMessage = async (
         }
       }
 
+      // Resolved once for both flow-response paths below.
+      const flowFiles = await resolveMessageFlowFiles({
+        message: newMessage,
+        storageUrl,
+        loadAttachments: async () =>
+          (
+            await messageService.findWithAttachments({
+              id: newMessage.id,
+              createdAt: newMessage.createdAt,
+              conversationId: conversation.id,
+              workspaceId: inbox.workspaceId,
+            })
+          )?.attachments ?? [],
+      })
+
       if (postbackAction && canAutomate) {
         await automatedResponseService.enqueueFlowAction({
           kind: "postback",
@@ -720,6 +736,7 @@ export const receiveMessage = async (
                 (
                   incomingMessage.contentAttributes as MessageWhatsappFlowResponseEntity
                 )?.flowResponse || "",
+              ...(flowFiles ? { flowFiles } : {}),
             },
           },
         })
@@ -752,6 +769,7 @@ export const receiveMessage = async (
                 messageId: createdMessage.id,
                 templateFlowToken,
                 flowResponse,
+                ...(flowFiles ? { flowFiles } : {}),
               },
             },
             { jobId: `template-flow-response-${createdMessage.id}` },

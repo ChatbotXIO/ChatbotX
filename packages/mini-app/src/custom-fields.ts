@@ -1,3 +1,4 @@
+import { formatDateRange } from "@chatbotx.io/utils/form-answer-format"
 import { isFileAnswer } from "./answers"
 import { MINI_APP_COMPONENTS } from "./components"
 import { inputName, setNodeCustomField, walkNodes } from "./tree"
@@ -60,12 +61,7 @@ export const formatAnswerForCustomField = (value: unknown): string | null => {
     return value.length > 0 ? value.map(String).join(", ") : null
   }
   if (typeof value === "object") {
-    const range = value as Record<string, unknown>
-    const start = range["start-date"]
-    const end = range["end-date"]
-    return typeof start === "string" && typeof end === "string"
-      ? `${start} - ${end}`
-      : null
+    return formatDateRange(value)
   }
   return String(value)
 }

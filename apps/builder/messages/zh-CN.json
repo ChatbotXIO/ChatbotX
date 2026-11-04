@@ -4248,7 +4248,12 @@
       "selectFlow": "WhatsApp流程",
       "selectFlowPlaceholder": "选择流",
       "selectScreenPlaceholder": "选择一个屏幕",
-      "startScreen": "开始画面"
+      "startScreen": "开始画面",
+      "fileBadge": "文件",
+      "fileFormat": "文件链接",
+      "fileFormatAllUrls": "所有链接，以逗号分隔",
+      "fileFormatFirstUrl": "仅第一个链接",
+      "fileFormatHint": "自定义字段按此处的选择保存已上传文件的链接。"
     },
     "whatsappOptionList": {
       "addOption": "添加新",
@@ -5645,7 +5650,15 @@
       "noAnswer": "未回答",
       "labelsUnavailable": "无法加载 Flow 的问题，因此显示字段名称。",
       "yes": "是",
-      "no": "否"
+      "no": "否",
+      "fileNotSaved": "文件未保存",
+      "filesNotSaved": "{count, plural, one {# 个文件未保存} other {# 个文件未保存}}",
+      "filesAttached": "{count, plural, one {# 个附件} other {# 个附件}}",
+      "fileFailure": {
+        "too_large": "文件过大",
+        "unsupported_type": "不支持的文件类型",
+        "download_failed": "无法下载"
+      }
     },
     "sendViewCatalogBodyTooLong": "消息文本对目录消息来说太长，请缩短。",
     "sendViewCatalogFooterTooLong": "页脚对目录消息来说太长，请缩短。",
@@ -9549,7 +9562,7 @@
       "too_many_components": "一个屏幕最多可包含 {max} 个组件。",
       "component_limit": "一个屏幕最多可包含 {max} 个{type}。",
       "picker_conflict": "一个屏幕不能同时包含照片上传和文档上传。",
-      "picker_multiple_in_complete": "请将 {property} 设为 1：流程完成时 WhatsApp 只会发送单个文件。",
+      "picker_multiple_in_complete": "流程完成时，WhatsApp 最多发送 {max} 个文件。请减少通向此屏幕的文件输入项的最大文件数。",
       "footer_not_last": "Footer 必须是屏幕上的最后一个组件。",
       "footer_in_nested_branch": "Footer 只能直接放在第一层 If 分支中。",
       "footer_missing_in_branch": "如果一个分支有 Footer，另一个分支也需要有。",

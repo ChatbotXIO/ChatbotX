@@ -3206,7 +3206,12 @@
       "customField": "Trường tùy chỉnh",
       "selectCustomFieldPlaceholder": "Chọn trường tùy chỉnh",
       "addMapping": "Thêm ánh xạ",
-      "addCustomField": "Thêm mới"
+      "addCustomField": "Thêm mới",
+      "fileBadge": "Tệp",
+      "fileFormat": "Liên kết tệp",
+      "fileFormatAllUrls": "Tất cả liên kết, cách nhau bằng dấu phẩy",
+      "fileFormatFirstUrl": "Chỉ liên kết đầu tiên",
+      "fileFormatHint": "Trường tuỳ chỉnh lưu liên kết của tệp đã tải lên, theo lựa chọn ở đây."
     },
     "sendCarousel": {
       "addSlide": "Thêm thẻ",
@@ -4546,7 +4551,15 @@
       "noAnswer": "Không trả lời",
       "labelsUnavailable": "Không tải được câu hỏi của Flow nên đang hiển thị tên trường.",
       "yes": "Có",
-      "no": "Không"
+      "no": "Không",
+      "fileNotSaved": "Tệp chưa được lưu",
+      "filesNotSaved": "{count, plural, one {# tệp chưa được lưu} other {# tệp chưa được lưu}}",
+      "filesAttached": "{count, plural, one {# tệp đính kèm} other {# tệp đính kèm}}",
+      "fileFailure": {
+        "too_large": "Tệp quá lớn",
+        "unsupported_type": "Loại tệp không được hỗ trợ",
+        "download_failed": "Không tải được"
+      }
     },
     "sendViewCatalogBodyTooLong": "Nội dung tin nhắn quá dài so với tin nhắn danh mục. Hãy rút ngắn.",
     "sendViewCatalogFooterTooLong": "Chân tin nhắn quá dài so với tin nhắn danh mục. Hãy rút ngắn.",
@@ -9549,7 +9562,7 @@
       "too_many_components": "Mỗi màn hình chứa tối đa {max} thành phần.",
       "component_limit": "Mỗi màn hình chứa tối đa {max} {type}.",
       "picker_conflict": "Một màn hình không thể có cả tải ảnh và tải tài liệu.",
-      "picker_multiple_in_complete": "Hãy đặt {property} là 1: WhatsApp chỉ gửi một file khi hoàn tất flow.",
+      "picker_multiple_in_complete": "WhatsApp chỉ gửi tối đa {max} tệp khi flow hoàn tất. Hãy giảm số tệp tối đa của các ô tải tệp dẫn tới màn hình này.",
       "footer_not_last": "Nút Footer phải là thành phần cuối cùng của màn hình.",
       "footer_in_nested_branch": "Nút Footer chỉ được đặt trực tiếp trong nhánh của khối If cấp ngoài cùng.",
       "footer_missing_in_branch": "Nếu một nhánh có nút Footer thì nhánh còn lại cũng phải có.",

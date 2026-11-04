@@ -3846,7 +3846,12 @@
       "customField": "Fərdi sahə",
       "selectCustomFieldPlaceholder": "Fərdi sahə seçin",
       "addMapping": "Uyğunlaşdırma əlavə et",
-      "addCustomField": "Yenisini əlavə et"
+      "addCustomField": "Yenisini əlavə et",
+      "fileBadge": "Fayl",
+      "fileFormat": "Fayl linkləri",
+      "fileFormatAllUrls": "Bütün linklər, vergüllə ayrılmış",
+      "fileFormatFirstUrl": "Yalnız ilk link",
+      "fileFormatHint": "Fərdi sahə yüklənmiş faylların keçidlərini burada seçdiyiniz kimi saxlayır."
     },
     "sendCarousel": {
       "addSlide": "Slayd əlavə et",
@@ -5186,7 +5191,15 @@
       "noAnswer": "Cavab yoxdur",
       "labelsUnavailable": "Flow-un sualları yüklənə bilmədi, ona görə sahə adları göstərilir.",
       "yes": "Bəli",
-      "no": "Xeyr"
+      "no": "Xeyr",
+      "fileNotSaved": "Fayl saxlanmadı",
+      "filesNotSaved": "{count, plural, one {# fayl saxlanılmadı} other {# fayl saxlanılmadı}}",
+      "filesAttached": "{count, plural, one {# fayl əlavə edilib} other {# fayl əlavə edilib}}",
+      "fileFailure": {
+        "too_large": "Fayl çox böyükdür",
+        "unsupported_type": "Dəstəklənməyən fayl növü",
+        "download_failed": "Endirmək mümkün olmadı"
+      }
     },
     "sendViewCatalogBodyTooLong": "Mesaj mətni kataloq mesajı üçün çox uzundur. Onu qısaldın.",
     "sendViewCatalogFooterTooLong": "Alt məlumat kataloq mesajı üçün çox uzundur. Onu qısaldın.",
@@ -9549,7 +9562,7 @@
       "too_many_components": "Bir ekranda ən çox {max} komponent ola bilər.",
       "component_limit": "Bir ekranda ən çox {max} × {type} ola bilər.",
       "picker_conflict": "Bir ekranda həm foto yükləmə, həm də sənəd yükləmə ola bilməz.",
-      "picker_multiple_in_complete": "{property} dəyərini 1 edin: WhatsApp axın tamamlananda yalnız tək fayl göndərir.",
+      "picker_multiple_in_complete": "WhatsApp axın tamamlananda ən çoxu {max} fayl göndərir. Bu ekrana aparan fayl sahələrinin maksimum fayl sayını azaldın.",
       "footer_not_last": "Footer ekrandakı son komponent olmalıdır.",
       "footer_in_nested_branch": "Footer yalnız birinci səviyyəli If budağında birbaşa yerləşə bilər.",
       "footer_missing_in_branch": "Bir budağda Footer varsa, digər budaqda da olmalıdır.",

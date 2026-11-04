@@ -5,6 +5,7 @@ import {
 } from "@chatbotx.io/database/partials"
 import { isStoryMention } from "@chatbotx.io/sdk"
 import { getPublicFileUrl } from "../utils"
+import { getContactInputAttachments } from "./input-attachments"
 
 type LastUserInputAttachment = {
   fileType: string
@@ -27,7 +28,7 @@ export type LastUserInputTracking = {
 export function resolveLastUserInputTracking(
   source: LastUserInputSource,
 ): LastUserInputTracking {
-  const attachment = source.attachments?.[0]
+  const attachment = getContactInputAttachments(source)[0]
 
   return {
     lastUserInput: resolveLastUserInput(source, attachment),

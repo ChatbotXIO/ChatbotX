@@ -3846,7 +3846,12 @@
       "customField": "Custom Field",
       "selectCustomFieldPlaceholder": "Select custom field",
       "addMapping": "Add Mapping",
-      "addCustomField": "Add New"
+      "addCustomField": "Add New",
+      "fileBadge": "File",
+      "fileFormat": "File links",
+      "fileFormatAllUrls": "All links, comma-separated",
+      "fileFormatFirstUrl": "First link only",
+      "fileFormatHint": "The custom field stores links to the uploaded files, as chosen here."
     },
     "sendCarousel": {
       "addSlide": "Add slide",
@@ -5186,7 +5191,15 @@
       "noAnswer": "No answer",
       "labelsUnavailable": "Couldn't load the Flow's questions, so field names are shown instead.",
       "yes": "Yes",
-      "no": "No"
+      "no": "No",
+      "fileNotSaved": "File not saved",
+      "filesNotSaved": "{count, plural, one {# file wasn't saved} other {# files weren't saved}}",
+      "filesAttached": "{count, plural, one {# file attached} other {# files attached}}",
+      "fileFailure": {
+        "too_large": "File too large",
+        "unsupported_type": "Unsupported file type",
+        "download_failed": "Couldn't download"
+      }
     },
     "sendViewCatalogBodyTooLong": "The message text is too long for a catalog message. Shorten it.",
     "sendViewCatalogFooterTooLong": "The footer is too long for a catalog message. Shorten it.",
@@ -9549,7 +9562,7 @@
       "too_many_components": "A screen can hold at most {max} components.",
       "component_limit": "A screen can hold at most {max} × {type}.",
       "picker_conflict": "A screen cannot have both a photo upload and a document upload.",
-      "picker_multiple_in_complete": "Set {property} to 1: WhatsApp only sends a single file when the flow completes.",
+      "picker_multiple_in_complete": "WhatsApp sends at most {max} files when the flow completes. Lower the maximum number of files of the file inputs leading to this screen.",
       "footer_not_last": "The Footer must be the last component on the screen.",
       "footer_in_nested_branch": "A Footer can only sit directly in a first-level If branch.",
       "footer_missing_in_branch": "If one branch has a Footer, the other branch needs one too.",

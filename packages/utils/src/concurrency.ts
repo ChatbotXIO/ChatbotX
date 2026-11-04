@@ -61,3 +61,74 @@ export function withTimeout<T>(
   })
   return Promise.race([promise, deadline]).finally(() => clearTimeout(timer))
 }
+
+export type ConcurrencyLimiterOptions = {
+  /** Gives up waiting for a slot; work that already started is not stopped. */
+  signal?: AbortSignal
+}
+
+/** Runs `work` once a slot is free; see `createConcurrencyLimiter`. */
+export type ConcurrencyLimiter = <T>(
+  work: () => Promise<T>,
+  options?: ConcurrencyLimiterOptions,
+) => Promise<T>
+
+/**
+ * A cap on how much of one kind of work runs at once in this process, shared
+ * by every caller of the returned function (e.g. downloads held in memory, so
+ * concurrent jobs cannot multiply them). Callers past the cap wait in order;
+ * a caller whose `signal` aborts while it waits leaves the queue and rejects
+ * with the signal's reason, without taking a slot.
+ */
+export function createConcurrencyLimiter(limit: number): ConcurrencyLimiter {
+  const maxActive = Math.max(1, limit)
+  // Insertion order is the waiting order; a Set removes an aborted waiter
+  // without searching for it.
+  const waiting = new Set<() => void>()
+  let active = 0
+
+  /** Waits for a slot to be handed over; only called when none is free. */
+  const waitForSlot = (signal: AbortSignal | undefined): Promise<void> => {
+    if (signal?.aborted) {
+      return Promise.reject(signal.reason)
+    }
+    return new Promise<void>((resolve, reject) => {
+      const onAbort = () => {
+        waiting.delete(start)
+        reject(signal?.reason)
+      }
+      const start = () => {
+        signal?.removeEventListener("abort", onAbort)
+        resolve()
+      }
+      waiting.add(start)
+      signal?.addEventListener("abort", onAbort, { once: true })
+    })
+  }
+
+  // A freed slot passes straight to the next waiter, so `active` only drops
+  // when nobody is waiting.
+  const release = () => {
+    const [next] = waiting
+    if (next) {
+      waiting.delete(next)
+      next()
+    } else {
+      active -= 1
+    }
+  }
+
+  return async (work, options) => {
+    // A free slot is taken at once, so `work` starts in the caller's turn.
+    if (active < maxActive) {
+      active += 1
+    } else {
+      await waitForSlot(options?.signal)
+    }
+    try {
+      return await work()
+    } finally {
+      release()
+    }
+  }
+}

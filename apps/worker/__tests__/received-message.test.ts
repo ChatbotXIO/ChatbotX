@@ -291,6 +291,9 @@ const mockEnqueueStoredImageOptimizations = vi.hoisted(() =>
 const mockWithResolvedAttachmentUrls = vi.hoisted(() =>
   vi.fn(async (message: unknown) => message),
 )
+const mockFindMessageWithAttachments = vi.hoisted(() =>
+  vi.fn(async (_params: unknown): Promise<unknown> => null),
+)
 
 vi.mock("@chatbotx.io/business", () => ({
   productMessageService: {
@@ -298,6 +301,7 @@ vi.mock("@chatbotx.io/business", () => ({
   },
   messageService: {
     withResolvedAttachmentUrls: mockWithResolvedAttachmentUrls,
+    findWithAttachments: mockFindMessageWithAttachments,
   },
   commentAutomationService: {
     reserveLiveCommentWindow: mockReserveLiveCommentWindow,
@@ -449,6 +453,12 @@ vi.mock("@chatbotx.io/sdk", () => ({
     fileType: string
     isPhotoMessage?: boolean
   }) => (attachment.fileType === "image" ? !attachment.isPhotoMessage : null),
+  // Mirror of the real pure helper — `resolveFlowFiles` reads a response through it.
+  getWhatsappFlowResponse: (contentAttributes: unknown) =>
+    (contentAttributes as { type?: unknown } | null)?.type ===
+    "whatsapp_flow_response"
+      ? contentAttributes
+      : undefined,
   // Mirror of the real pure helper — the module is fully mocked here.
   resolveSourceScopedIdentityMatch: async <T>(
     identity: {
@@ -561,6 +571,7 @@ vi.mock("@chatbotx.io/worker-config", () => ({
     runRef: "runRef",
     processCommentAutomation: "processCommentAutomation",
     replyToInboundCart: "replyToInboundCart",
+    captureTemplateFlowResponse: "captureTemplateFlowResponse",
   },
   getInboundCartReplyJobId: (messageId: string) =>
     `inbound-cart-reply-${messageId}`,
@@ -2162,6 +2173,230 @@ describe("receiveMessage — message repository branch", () => {
     expect(mockAutomatedResponseEnqueueFlowAction).toHaveBeenCalledWith({
       kind: "postback",
       data: expect.objectContaining({ action: postbackAction }),
+    })
+  })
+
+  describe("a form response carrying uploaded files", () => {
+    const FILE_PATH = "public/whatsapp/ws-1/int-1/2026/10/06/111-pass.pdf"
+    const flowResponse = {
+      flow_token: "token",
+      docs: [{ id: "111", file_name: "Pass.pdf" }],
+    }
+    const storedFile = {
+      status: "stored",
+      mediaId: "111",
+      fileName: "Pass.pdf",
+      mimeType: "application/pdf",
+      size: 10,
+    }
+    const failedFile = {
+      status: "failed",
+      mediaId: "111",
+      fileName: "Pass.pdf",
+      mimeType: "application/pdf",
+      reason: "download_failed",
+    }
+    const flowResponseAttributes = (files?: Record<string, unknown>) => ({
+      type: "whatsapp_flow_response",
+      name: "flow",
+      flowResponse,
+      flowToken: "token",
+      decoded: null,
+      ...(files ? { files } : {}),
+    })
+    const storedAttachment = {
+      id: "att-1",
+      sourceId: "111",
+      originPath: FILE_PATH,
+      createdAt: new Date(),
+      messageCreatedAt: new Date(),
+    }
+    const expectedFlowFiles = {
+      docs: [
+        {
+          mediaId: "111",
+          fileName: "Pass.pdf",
+          mimeType: "application/pdf",
+          size: 10,
+          url: `https://files.example.test/${FILE_PATH}`,
+        },
+      ],
+    }
+    const postbackAction = encodeButtonPayload({ flowId: "42", buttonId: "7" })
+
+    const incomingAttachment = {
+      sourceId: "111",
+      fileType: "file",
+      mimeType: "application/pdf",
+      originPath: FILE_PATH,
+      size: 10,
+      name: "Pass.pdf",
+    }
+
+    /** The delivery the channel parsed, with the attachments it stored. */
+    const deliver = (
+      files: Record<string, unknown> | undefined,
+      options: {
+        attachments?: unknown[]
+        action?: Record<string, unknown>
+      } = {},
+    ) =>
+      mockRunChannelHandler.mockResolvedValue({
+        message: {
+          ...baseIncomingMessage,
+          text: "Sent",
+          contentAttributes: flowResponseAttributes(files),
+          attachments: options.attachments ?? [],
+        },
+        contact: { sourceId: "psid-123", firstName: "Test" },
+        postbackAction: null,
+        quickReplyAction: null,
+        ref: null,
+        ...(options.action ?? { postbackAction }),
+      })
+
+    /**
+     * The saved copy the repository returns. A delivery with attachments is
+     * saved with them (rows included); one without goes through the plain
+     * upsert, which returns the row without its attachments.
+     */
+    const saved = (
+      files: Record<string, unknown> | undefined,
+      attachments: unknown[],
+    ) => {
+      const message = {
+        ...fakeCreatedMessage,
+        contentAttributes: flowResponseAttributes(files),
+      }
+      mockCreateOrUpdateWithAttachments.mockResolvedValue({
+        result: { ...message, attachments },
+        isNew: true,
+      })
+      mockCreateOrUpdate.mockResolvedValue({ message, isNew: true })
+    }
+
+    const postbackPayload = () =>
+      (
+        mockAutomatedResponseEnqueueFlowAction.mock.calls.at(-1)?.[0] as {
+          data: { payload: unknown }
+        }
+      ).data.payload
+
+    test("the postback job carries the saved files with their public URLs", async () => {
+      deliver({ docs: [storedFile] }, { attachments: [incomingAttachment] })
+      saved({ docs: [storedFile] }, [storedAttachment])
+
+      await receiveMessage(baseProps)
+
+      expect(postbackPayload()).toEqual({
+        waFlowResponse: flowResponse,
+        flowFiles: expectedFlowFiles,
+      })
+      expect(mockFindMessageWithAttachments).not.toHaveBeenCalled()
+    })
+
+    test("the template-button job carries them too", async () => {
+      deliver(
+        { docs: [storedFile] },
+        {
+          attachments: [incomingAttachment],
+          action: { templateFlowToken: "template-token" },
+        },
+      )
+      saved({ docs: [storedFile] }, [storedAttachment])
+
+      await receiveMessage(baseProps)
+
+      expect(mockIntegrationQueueAdd).toHaveBeenCalledWith(
+        "captureTemplateFlowResponse",
+        expect.objectContaining({
+          data: expect.objectContaining({
+            templateFlowToken: "template-token",
+            flowResponse,
+            flowFiles: expectedFlowFiles,
+          }),
+        }),
+        { jobId: "template-flow-response-msg-created" },
+      )
+    })
+
+    /** A copy stored by an earlier delivery: the upsert finds it, `isNew` false. */
+    const savedEarlier = (
+      files: Record<string, unknown>,
+      extraAttributes: Record<string, unknown> = {},
+    ) => {
+      const message = {
+        ...fakeCreatedMessage,
+        contentAttributes: {
+          ...flowResponseAttributes(files),
+          ...extraAttributes,
+        },
+      }
+      mockCreateOrUpdateWithAttachments.mockResolvedValue({
+        result: { ...message, attachments: [] },
+        isNew: false,
+      })
+      mockCreateOrUpdate.mockResolvedValue({ message, isNew: false })
+    }
+
+    test("a plain redelivery of a stored response enqueues nothing again", async () => {
+      deliver({ docs: [storedFile] })
+      savedEarlier({ docs: [storedFile] })
+
+      await receiveMessage(baseProps)
+
+      expect(mockAutomatedResponseEnqueueFlowAction).not.toHaveBeenCalled()
+    })
+
+    test("the saved copy decides: the owner delivery of a standby copy keeps its stored files", async () => {
+      // The standby copy saved earlier has the file; this owner delivery could
+      // not download it again. The saved row comes back without attachments.
+      deliver(
+        { docs: [failedFile] },
+        { action: { postbackAction, threadControl: { delivery: "owner" } } },
+      )
+      savedEarlier({ docs: [storedFile] }, { threadControlDelivery: "standby" })
+      mockPromoteStandbyDelivery.mockResolvedValueOnce(true)
+      mockFindMessageWithAttachments.mockResolvedValueOnce({
+        ...fakeCreatedMessage,
+        attachments: [storedAttachment],
+      })
+
+      await receiveMessage(baseProps)
+
+      expect(mockFindMessageWithAttachments).toHaveBeenCalledWith({
+        id: fakeCreatedMessage.id,
+        createdAt: fakeCreatedMessage.createdAt,
+        conversationId: "conv-1",
+        workspaceId: "ws-1",
+      })
+      expect(postbackPayload()).toEqual({
+        waFlowResponse: flowResponse,
+        flowFiles: expectedFlowFiles,
+      })
+    })
+
+    test("a file that could not be kept leaves its answer empty, not raw, without a lookup", async () => {
+      deliver({ docs: [failedFile] })
+      saved({ docs: [failedFile] }, [])
+
+      await receiveMessage(baseProps)
+
+      expect(postbackPayload()).toEqual({
+        waFlowResponse: flowResponse,
+        flowFiles: { docs: [] },
+      })
+      expect(mockFindMessageWithAttachments).not.toHaveBeenCalled()
+    })
+
+    test("a response without files adds no file field to the job", async () => {
+      deliver(undefined)
+      saved(undefined, [])
+
+      await receiveMessage(baseProps)
+
+      expect(postbackPayload()).toEqual({ waFlowResponse: flowResponse })
+      expect(mockFindMessageWithAttachments).not.toHaveBeenCalled()
     })
   })
 
@@ -5698,6 +5933,8 @@ describe("contact source taxonomy", () => {
       expect.stringMatching(AVATAR_STORAGE_PATH_PATTERN),
       expect.anything(),
       { ACL: "public-read", ContentLength: 3, ContentType: "image/jpeg" },
+      // No cancellation signal: an avatar upload has no deadline.
+      undefined,
     )
     expect(mockSetAvatarIfEmptyOrSentinel).toHaveBeenCalledWith(
       expect.objectContaining({
