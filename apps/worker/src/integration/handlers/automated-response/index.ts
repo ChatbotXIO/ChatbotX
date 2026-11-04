@@ -5,7 +5,11 @@ import {
 } from "@chatbotx.io/ai"
 import { aiContextService } from "@chatbotx.io/ai/server"
 import { automatedResponseService } from "@chatbotx.io/automated-response"
-import { aiAgentService, workspaceService } from "@chatbotx.io/business"
+import {
+  aiAgentService,
+  getContactInputAttachments,
+  workspaceService,
+} from "@chatbotx.io/business"
 import { isMessageStorageError } from "@chatbotx.io/database/errors"
 import {
   aiAgentProviderModels,
@@ -108,7 +112,9 @@ export async function processAutomatedResponse(
       "Automated response trigger message was not found",
     )
   }
-  const triggerAttachments = triggerMessage?.attachments ?? []
+  const triggerAttachments = triggerMessage
+    ? getContactInputAttachments(triggerMessage)
+    : []
   const isFileOnlyTrigger =
     triggerMessage?.senderType === "contact" &&
     !triggerMessage.text &&

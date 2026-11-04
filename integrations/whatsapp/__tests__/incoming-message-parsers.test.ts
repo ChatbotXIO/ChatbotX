@@ -540,6 +540,60 @@ describe("WhatsApp receiveMessage — interactive replies", () => {
   })
 })
 
+describe("WhatsApp receiveMessage — the message a Flow response answers", () => {
+  // Meta's "Receive Flow Response" example: `context` names the message that
+  // sent the Flow.
+  const flowReply = (context?: Record<string, unknown>) =>
+    buildProps({
+      type: "interactive",
+      ...(context ? { context } : {}),
+      interactive: {
+        type: "nfm_reply",
+        nfm_reply: {
+          name: "flow",
+          body: "Sent",
+          response_json: JSON.stringify({ flow_token: "token-1" }),
+        },
+      },
+    })
+
+  test("keeps context.id as contextMessageId", async () => {
+    const result = await receiveMessage(
+      flowReply({ from: "16315558151", id: "gBGGEiRVVgBPAgm7FUgc73noXjo" }),
+    )
+
+    expect(result.message?.contentAttributes).toMatchObject({
+      type: "whatsapp_flow_response",
+      contextMessageId: "gBGGEiRVVgBPAgm7FUgc73noXjo",
+    })
+  })
+
+  test.each([
+    ["no context", undefined],
+    ["a context without an id", { from: "16315558151" }],
+    ["an empty id", { id: "" }],
+  ])("adds no contextMessageId for %s", async (_label, context) => {
+    const result = await receiveMessage(flowReply(context))
+
+    expect(result.message?.contentAttributes).not.toHaveProperty(
+      "contextMessageId",
+    )
+  })
+
+  test("other interactive replies are unchanged", async () => {
+    const listReply = { id: "flow-1:1:option-1", title: "Option A" }
+    const result = await receiveMessage(
+      buildProps({
+        type: "interactive",
+        context: { id: "wamid.sent-list" },
+        interactive: { type: "list_reply", list_reply: listReply },
+      }),
+    )
+
+    expect(result.message?.contentAttributes).toEqual(listReply)
+  })
+})
+
 describe("WhatsApp receiveMessage — unlisted message types", () => {
   test("an unlisted top-level type falls back to a fixed label", async () => {
     const result = await receiveMessage(

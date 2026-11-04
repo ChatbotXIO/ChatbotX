@@ -3008,7 +3008,12 @@
       "customField": "Brugerdefineret Felt",
       "selectCustomFieldPlaceholder": "Vælg brugerdefineret felt",
       "addMapping": "Tilføj Tilknytning",
-      "addCustomField": "Tilføj Ny"
+      "addCustomField": "Tilføj Ny",
+      "fileBadge": "Fil",
+      "fileFormat": "Fillinks",
+      "fileFormatAllUrls": "Alle links, adskilt af kommaer",
+      "fileFormatFirstUrl": "Kun det første link",
+      "fileFormatHint": "Det brugerdefinerede felt gemmer links til de uploadede filer, som valgt her."
     },
     "sendCarousel": {
       "addSlide": "Tilføj kort",
@@ -4504,7 +4509,15 @@
       "noAnswer": "Intet svar",
       "labelsUnavailable": "Flowets spørgsmål kunne ikke indlæses, så feltnavne vises i stedet.",
       "yes": "Ja",
-      "no": "Nej"
+      "no": "Nej",
+      "fileNotSaved": "Filen blev ikke gemt",
+      "filesNotSaved": "{count, plural, one {# fil blev ikke gemt} other {# filer blev ikke gemt}}",
+      "filesAttached": "{count, plural, one {# vedhæftet fil} other {# vedhæftede filer}}",
+      "fileFailure": {
+        "too_large": "Filen er for stor",
+        "unsupported_type": "Filtypen understøttes ikke",
+        "download_failed": "Kunne ikke downloades"
+      }
     },
     "sendViewCatalogBodyTooLong": "Beskedteksten er for lang til en katalogbesked. Gør den kortere.",
     "sendViewCatalogFooterTooLong": "Sidefoden er for lang til en katalogbesked. Gør den kortere.",
@@ -9549,7 +9562,7 @@
       "too_many_components": "En skærm kan højst indeholde {max} komponenter.",
       "component_limit": "En skærm kan højst indeholde {max} × {type}.",
       "picker_conflict": "En skærm kan ikke have både et fotoupload og et dokumentupload.",
-      "picker_multiple_in_complete": "Sæt {property} til 1: WhatsApp sender kun én fil, når flowet afsluttes.",
+      "picker_multiple_in_complete": "WhatsApp sender højst {max} filer, når flowet afsluttes. Sænk det maksimale antal filer for filfelterne, der fører til denne skærm.",
       "footer_not_last": "Footeren skal være den sidste komponent på skærmen.",
       "footer_in_nested_branch": "En Footer kan kun sidde direkte i en Hvis-gren på første niveau.",
       "footer_missing_in_branch": "Hvis den ene gren har en Footer, skal den anden også have en.",

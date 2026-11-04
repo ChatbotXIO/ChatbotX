@@ -3008,7 +3008,12 @@
       "customField": "Campo personalizzato",
       "selectCustomFieldPlaceholder": "Seleziona un campo personalizzato",
       "addMapping": "Aggiungi mappatura",
-      "addCustomField": "Aggiungi"
+      "addCustomField": "Aggiungi",
+      "fileBadge": "File",
+      "fileFormat": "Link dei file",
+      "fileFormatAllUrls": "Tutti i link, separati da virgole",
+      "fileFormatFirstUrl": "Solo il primo link",
+      "fileFormatHint": "Il campo personalizzato salva i link dei file caricati, come scelto qui."
     },
     "sendCarousel": {
       "addSlide": "Aggiungi scheda",
@@ -4504,7 +4509,15 @@
       "noAnswer": "Nessuna risposta",
       "labelsUnavailable": "Impossibile caricare le domande del Flow, quindi vengono mostrati i nomi dei campi.",
       "yes": "Sì",
-      "no": "No"
+      "no": "No",
+      "fileNotSaved": "File non salvato",
+      "filesNotSaved": "{count, plural, one {# file non è stato salvato} other {# file non sono stati salvati}}",
+      "filesAttached": "{count, plural, one {# file allegato} other {# file allegati}}",
+      "fileFailure": {
+        "too_large": "File troppo grande",
+        "unsupported_type": "Tipo di file non supportato",
+        "download_failed": "Download non riuscito"
+      }
     },
     "sendViewCatalogBodyTooLong": "Il testo del messaggio è troppo lungo per un messaggio catalogo. Accorcialo.",
     "sendViewCatalogFooterTooLong": "Il piè di pagina è troppo lungo per un messaggio catalogo. Accorcialo.",
@@ -9549,7 +9562,7 @@
       "too_many_components": "Una schermata può contenere al massimo {max} componenti.",
       "component_limit": "Una schermata può contenere al massimo {max} × {type}.",
       "picker_conflict": "Una schermata non può avere sia un caricamento foto sia un caricamento documenti.",
-      "picker_multiple_in_complete": "Imposta {property} su 1: WhatsApp invia un solo file al completamento del flow.",
+      "picker_multiple_in_complete": "WhatsApp invia al massimo {max} file al completamento del flusso. Riduci il numero massimo di file dei campi file che portano a questa schermata.",
       "footer_not_last": "Il Footer deve essere l'ultimo componente della schermata.",
       "footer_in_nested_branch": "Un Footer può stare solo direttamente in un ramo If di primo livello.",
       "footer_missing_in_branch": "Se un ramo ha un Footer, serve anche nell'altro ramo.",

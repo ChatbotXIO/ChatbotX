@@ -3008,7 +3008,12 @@
       "customField": "Campo personalizado",
       "selectCustomFieldPlaceholder": "Selecione um campo personalizado",
       "addMapping": "Adicionar mapeamento",
-      "addCustomField": "Adicionar"
+      "addCustomField": "Adicionar",
+      "fileBadge": "Arquivo",
+      "fileFormat": "Links dos arquivos",
+      "fileFormatAllUrls": "Todos os links, separados por vírgula",
+      "fileFormatFirstUrl": "Somente o primeiro link",
+      "fileFormatHint": "O campo personalizado salva os links dos arquivos enviados, conforme escolhido aqui."
     },
     "sendCarousel": {
       "addSlide": "Adicionar cartão",
@@ -4483,7 +4488,15 @@
       "noAnswer": "Sem resposta",
       "labelsUnavailable": "Não foi possível carregar as perguntas do Flow, então os nomes dos campos são exibidos.",
       "yes": "Sim",
-      "no": "Não"
+      "no": "Não",
+      "fileNotSaved": "Arquivo não salvo",
+      "filesNotSaved": "{count, plural, one {# arquivo não foi salvo} other {# arquivos não foram salvos}}",
+      "filesAttached": "{count, plural, one {# arquivo anexado} other {# arquivos anexados}}",
+      "fileFailure": {
+        "too_large": "Arquivo grande demais",
+        "unsupported_type": "Tipo de arquivo não compatível",
+        "download_failed": "Não foi possível baixar"
+      }
     },
     "sendViewCatalogBodyTooLong": "O texto da mensagem é longo demais para uma mensagem de catálogo. Encurte-o.",
     "sendViewCatalogFooterTooLong": "O rodapé é longo demais para uma mensagem de catálogo. Encurte-o.",
@@ -9549,7 +9562,7 @@
       "too_many_components": "Uma tela pode conter no máximo {max} componentes.",
       "component_limit": "Uma tela pode conter no máximo {max} × {type}.",
       "picker_conflict": "Uma tela não pode ter envio de fotos e envio de documentos ao mesmo tempo.",
-      "picker_multiple_in_complete": "Defina {property} como 1: o WhatsApp envia apenas um arquivo ao concluir o flow.",
+      "picker_multiple_in_complete": "O WhatsApp envia no máximo {max} arquivos ao concluir o fluxo. Reduza o máximo de arquivos dos campos de arquivo que levam a esta tela.",
       "footer_not_last": "O Footer deve ser o último componente da tela.",
       "footer_in_nested_branch": "Um Footer só pode ficar diretamente em um ramo If de primeiro nível.",
       "footer_missing_in_branch": "Se um ramo tem Footer, o outro ramo também precisa de um.",

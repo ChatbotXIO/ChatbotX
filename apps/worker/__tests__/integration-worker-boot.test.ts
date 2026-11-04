@@ -108,6 +108,15 @@ vi.mock("@chatbotx.io/automated-response", () => ({
 
 vi.mock("@chatbotx.io/business", () => ({
   flushAllPendingWorkspaceRealtimeEvents: vi.fn(),
+  // Mirror of the real pure helper — the module is fully mocked here.
+  getContactInputAttachments: (message: {
+    contentAttributes?: unknown
+    attachments?: unknown[] | null
+  }) =>
+    (message.contentAttributes as { type?: unknown } | null)?.type ===
+    "whatsapp_flow_response"
+      ? []
+      : (message.attachments ?? []),
   buildContext: vi.fn(),
   conversationService: { ensureActive: vi.fn() },
   withBlockedOwnerGuard: vi.fn(

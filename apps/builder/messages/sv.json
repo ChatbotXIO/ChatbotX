@@ -4245,7 +4245,12 @@
       "selectFlow": "WhatsApp-flöde",
       "selectFlowPlaceholder": "Välj ett flöde",
       "selectScreenPlaceholder": "Välj en skärm",
-      "startScreen": "Startskärm"
+      "startScreen": "Startskärm",
+      "fileBadge": "Fil",
+      "fileFormat": "Fillänkar",
+      "fileFormatAllUrls": "Alla länkar, kommaseparerade",
+      "fileFormatFirstUrl": "Endast första länken",
+      "fileFormatHint": "Det anpassade fältet sparar länkar till de uppladdade filerna, enligt valet här."
     },
     "whatsappOptionList": {
       "addOption": "Lägg till ny",
@@ -5645,7 +5650,15 @@
       "noAnswer": "Inget svar",
       "labelsUnavailable": "Flowets frågor kunde inte läsas in, så fältnamnen visas i stället.",
       "yes": "Ja",
-      "no": "Nej"
+      "no": "Nej",
+      "fileNotSaved": "Filen sparades inte",
+      "filesNotSaved": "{count, plural, one {# fil sparades inte} other {# filer sparades inte}}",
+      "filesAttached": "{count, plural, one {# bifogad fil} other {# bifogade filer}}",
+      "fileFailure": {
+        "too_large": "Filen är för stor",
+        "unsupported_type": "Filtypen stöds inte",
+        "download_failed": "Kunde inte laddas ner"
+      }
     },
     "sendViewCatalogBodyTooLong": "Meddelandetexten är för lång för ett katalogmeddelande. Korta ned den.",
     "sendViewCatalogFooterTooLong": "Sidfoten är för lång för ett katalogmeddelande. Korta ned den.",
@@ -9549,7 +9562,7 @@
       "too_many_components": "En skärm kan innehålla högst {max} komponenter.",
       "component_limit": "En skärm kan innehålla högst {max} × {type}.",
       "picker_conflict": "En skärm kan inte ha både fotouppladdning och dokumentuppladdning.",
-      "picker_multiple_in_complete": "Ställ in {property} på 1: WhatsApp skickar bara en enda fil när flödet slutförs.",
+      "picker_multiple_in_complete": "WhatsApp skickar högst {max} filer när flödet slutförs. Sänk maxantalet filer för filfälten som leder till den här skärmen.",
       "footer_not_last": "Footern måste vara den sista komponenten på skärmen.",
       "footer_in_nested_branch": "En Footer kan bara placeras direkt i en Om-gren på första nivån.",
       "footer_missing_in_branch": "Om en gren har en Footer måste den andra grenen också ha en.",

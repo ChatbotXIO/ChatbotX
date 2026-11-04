@@ -3008,7 +3008,12 @@
       "customField": "カスタムフィールド",
       "selectCustomFieldPlaceholder": "カスタムフィールドを選択",
       "addMapping": "マッピングを追加",
-      "addCustomField": "新規追加"
+      "addCustomField": "新規追加",
+      "fileBadge": "ファイル",
+      "fileFormat": "ファイルのリンク",
+      "fileFormatAllUrls": "すべてのリンク（カンマ区切り）",
+      "fileFormatFirstUrl": "最初のリンクのみ",
+      "fileFormatHint": "カスタムフィールドには、ここで選んだ形式でアップロードされたファイルのリンクが保存されます。"
     },
     "sendCarousel": {
       "addSlide": "スライドを追加",
@@ -4483,7 +4488,15 @@
       "noAnswer": "未回答",
       "labelsUnavailable": "Flowの質問を読み込めなかったため、項目名を表示しています。",
       "yes": "はい",
-      "no": "いいえ"
+      "no": "いいえ",
+      "fileNotSaved": "ファイルは保存されていません",
+      "filesNotSaved": "{count, plural, one {#件のファイルを保存できませんでした} other {#件のファイルを保存できませんでした}}",
+      "filesAttached": "{count, plural, one {添付ファイル #件} other {添付ファイル #件}}",
+      "fileFailure": {
+        "too_large": "ファイルが大きすぎます",
+        "unsupported_type": "サポートされていないファイル形式",
+        "download_failed": "ダウンロードできませんでした"
+      }
     },
     "sendViewCatalogBodyTooLong": "メッセージ本文がカタログメッセージには長すぎます。短くしてください。",
     "sendViewCatalogFooterTooLong": "フッターがカタログメッセージには長すぎます。短くしてください。",
@@ -9549,7 +9562,7 @@
       "too_many_components": "1つの画面に配置できるコンポーネントは最大{max}個です。",
       "component_limit": "1つの画面に配置できる{type}は最大{max}個です。",
       "picker_conflict": "1つの画面に写真アップロードとドキュメントアップロードを同時に配置できません。",
-      "picker_multiple_in_complete": "{property}を1に設定してください。フロー完了時にWhatsAppが送信できるファイルは1つだけです。",
+      "picker_multiple_in_complete": "フロー完了時にWhatsAppが送信できるファイルは最大{max}個です。この画面に至るファイル入力の最大ファイル数を減らしてください。",
       "footer_not_last": "Footerは画面の最後のコンポーネントにしてください。",
       "footer_in_nested_branch": "Footerは第1階層のIf分岐の直下にのみ配置できます。",
       "footer_missing_in_branch": "一方の分岐にFooterがある場合、もう一方にも必要です。",

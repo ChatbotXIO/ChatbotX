@@ -1,6 +1,7 @@
 // biome-ignore-all lint/suspicious/noTemplateCurlyInString: Flow JSON references are literal `${...}` text
+// biome-ignore-all lint/suspicious/noThenProperty: `then` is the Flow JSON If branch key
 import { describe, expect, it } from "vitest"
-import { parseFlowResponseFields } from "../src/api/flow"
+import { parseFlowResponseFields, parseFlowScreens } from "../src/api/flow"
 
 const footer = (payload: Record<string, unknown>) => ({
   type: "Footer",
@@ -29,7 +30,12 @@ describe("parseFlowResponseFields", () => {
     )
 
     expect(fields).toEqual([
-      { key: "text_input", label: "Full name", options: {}, labelled: true },
+      {
+        key: "text_input",
+        label: "Full name",
+        options: {},
+        labelled: true,
+      },
     ])
   })
 
@@ -162,7 +168,12 @@ describe("parseFlowResponseFields", () => {
         options: { "0_basic": "Basic", "1_pro": "Pro" },
         labelled: true,
       },
-      { key: "slot", label: "Slot", options: {}, labelled: true },
+      {
+        key: "slot",
+        label: "Slot",
+        options: {},
+        labelled: true,
+      },
     ])
   })
 
@@ -212,5 +223,181 @@ describe("parseFlowResponseFields", () => {
     ["a string", "not json"],
   ])("returns no fields for %s", (_label, json) => {
     expect(parseFlowResponseFields(json)).toEqual([])
+  })
+})
+
+describe("file answers", () => {
+  /** Each output of the first screen (which reaches every later one), with its kind. */
+  const kindsOf = (flow: unknown) =>
+    parseFlowScreens(flow)[0]?.output.map((output) => [
+      output.value,
+      output.kind,
+    ])
+
+  const photoFlow = () =>
+    flowJson(
+      screen("UPLOAD", [
+        { type: "PhotoPicker", name: "photo_picker", label: "Photos" },
+        { type: "TextInput", name: "name_input", label: "Name" },
+        footer({
+          photo_picker: "${form.photo_picker}",
+          full_name: "${form.name_input}",
+        }),
+      ]),
+    )
+
+  it("tags the key of a PhotoPicker or DocumentPicker as a file", () => {
+    expect(
+      kindsOf(
+        flowJson(
+          screen("UPLOAD", [
+            { type: "DocumentPicker", name: "doc_input", label: "ID card" },
+            footer({ id_card: "${form.doc_input}" }),
+          ]),
+        ),
+      ),
+    ).toEqual([["id_card", "file"]])
+  })
+
+  it("tags every other key as a value", () => {
+    expect(kindsOf(photoFlow())).toEqual([
+      ["photo_picker", "file"],
+      ["full_name", "value"],
+    ])
+  })
+
+  it("follows a reference to a picker on an earlier screen", () => {
+    expect(
+      kindsOf(
+        flowJson(
+          screen("UPLOAD", [
+            { type: "PhotoPicker", name: "photos", label: "Photos" },
+            {
+              type: "Footer",
+              label: "Next",
+              "on-click-action": {
+                name: "navigate",
+                next: { type: "screen", name: "DONE" },
+                payload: {},
+              },
+            },
+          ]),
+          screen("DONE", [footer({ receipt: "${screen.UPLOAD.form.photos}" })]),
+        ),
+      ),
+    ).toEqual([["receipt", "file"]])
+  })
+
+  it("marks a literal or data payload value as a value", () => {
+    expect(
+      kindsOf(
+        flowJson(
+          screen("UPLOAD", [
+            { type: "PhotoPicker", name: "photos", label: "Photos" },
+            footer({ source: "web", from_data: "${data.photos}" }),
+          ]),
+        ),
+      ),
+    ).toEqual([
+      ["source", "value"],
+      ["from_data", "value"],
+    ])
+  })
+
+  it("exposes the kind on the outputs of each screen", () => {
+    expect(parseFlowScreens(photoFlow())[0]?.output).toEqual([
+      { value: "photo_picker", label: "Photos", kind: "file" },
+      { value: "full_name", label: "Full name", kind: "value" },
+    ])
+  })
+
+  it("does not call a literal answer a file because an input of that name is a picker", () => {
+    const flow = flowJson(
+      screen("UPLOAD", [
+        { type: "PhotoPicker", name: "photos", label: "Photos" },
+        footer({ photos: "none" }),
+      ]),
+    )
+
+    expect(parseFlowScreens(flow)[0]?.output).toEqual([
+      { value: "photos", label: "Photos", kind: "value" },
+    ])
+  })
+
+  it("keeps a key that two screens fill differently apart, per screen", () => {
+    const flow = flowJson(
+      screen("TEXT_PATH", [
+        { type: "TextInput", name: "note", label: "Note" },
+        footer({ answer: "${form.note}" }),
+      ]),
+      screen("DOCUMENT_PATH", [
+        { type: "DocumentPicker", name: "doc", label: "Document" },
+        footer({ answer: "${form.doc}" }),
+      ]),
+    )
+
+    const outputs = Object.fromEntries(
+      parseFlowScreens(flow).map((item) => [item.id, item.output]),
+    )
+
+    expect(outputs.TEXT_PATH?.map((output) => output.kind)).toEqual(["value"])
+    expect(outputs.DOCUMENT_PATH?.map((output) => output.kind)).toEqual([
+      "file",
+    ])
+  })
+
+  it("a key two branches from one start fill differently is a file answer", () => {
+    const navigateTo = (next: string) => ({
+      type: "Footer",
+      label: next,
+      "on-click-action": {
+        name: "navigate",
+        next: { type: "screen", name: next },
+        payload: {},
+      },
+    })
+    const flow = flowJson(
+      {
+        id: "START",
+        title: "START",
+        layout: {
+          type: "SingleColumnLayout",
+          children: [navigateTo("DOCS"), navigateTo("TEXT")],
+        },
+      },
+      screen("DOCS", [
+        { type: "DocumentPicker", name: "doc", label: "Document" },
+        footer({ answer: "${form.doc}" }),
+      ]),
+      screen("TEXT", [
+        { type: "TextInput", name: "note", label: "Note" },
+        footer({ answer: "${form.note}" }),
+      ]),
+    )
+
+    const start = parseFlowScreens(flow).find((item) => item.id === "START")
+
+    expect(start?.output.map((output) => [output.value, output.kind])).toEqual([
+      ["answer", "file"],
+    ])
+  })
+
+  it("a key the branches of one screen fill differently is a file answer", () => {
+    const flow = flowJson(
+      screen("UPLOAD", [
+        { type: "TextInput", name: "note", label: "Note" },
+        { type: "DocumentPicker", name: "doc", label: "Document" },
+        {
+          type: "If",
+          condition: "${form.note} != ''",
+          then: [footer({ answer: "${form.note}" })],
+          else: [footer({ answer: "${form.doc}" })],
+        },
+      ]),
+    )
+
+    expect(
+      parseFlowScreens(flow)[0]?.output.map((output) => output.kind),
+    ).toEqual(["file"])
   })
 })

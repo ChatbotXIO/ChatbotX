@@ -2,6 +2,7 @@ import type { ButtonPayload } from "@chatbotx.io/flow-config"
 import { z } from "zod"
 import type { ChannelError } from "../channel-error"
 import { guessFileTypeFromMimeType } from "../util"
+import type { FlowResponseFile } from "./flow-response-file"
 import { EXTENSION_MIME_TYPES } from "./mime-types"
 
 export type MessageReferral = {
@@ -514,6 +515,17 @@ export type MessageWhatsappFlowResponseEntity = {
   flowResponse: Record<string, unknown>
   flowToken: string | null
   decoded: ButtonPayload | null
+  /**
+   * The provider's id of the message that sent the Flow (WhatsApp: the
+   * reply's `context.id`), the `sourceId` of that outgoing message. Kept as
+   * received; absent when the provider gave none and on older messages.
+   */
+  contextMessageId?: string
+  /**
+   * Files attached to answers, by response key. Absent on messages stored
+   * before file ingestion existed and on responses without file answers.
+   */
+  files?: Record<string, FlowResponseFile[]>
 }
 
 /**
@@ -813,6 +825,15 @@ export const getWhatsappFlowResponse = (
     ? (contentAttributes as MessageWhatsappFlowResponseEntity)
     : undefined
 }
+
+/** The ingested files of one response key; empty when the key has none. */
+export const getFlowResponseFiles = (
+  entity: Pick<MessageWhatsappFlowResponseEntity, "files">,
+  key: string,
+): FlowResponseFile[] =>
+  entity.files && Object.hasOwn(entity.files, key)
+    ? (entity.files[key] ?? [])
+    : []
 
 export const getWhatsappCallPermissionReply = (
   contentAttributes: unknown,

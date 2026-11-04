@@ -34,10 +34,18 @@ import { CreateCustomFieldDialog } from "@/features/custom-fields/create-custom-
 import { CustomFieldSelect } from "@/features/custom-fields/custom-field-select"
 import { useInvalidateCustomFields } from "@/features/custom-fields/provider/custom-field-hook"
 import { useWhatsappFlow } from "@/features/flows/react-flow/stores/whatsapp-flow-store-provider"
+import {
+  FILE_ANSWER_CUSTOM_FIELD_TYPES,
+  FlowFileAnswerBadge,
+  FlowFileMappingField,
+} from "@/features/integration-whatsapp/flows/flow-file-mapping-field"
+import {
+  buildFlowFieldMappings,
+  collectFlowOutputs,
+} from "@/features/integration-whatsapp/flows/lib/build-flow-field-mappings"
 import type { WhatsappFlowScreenResource } from "@/features/integration-whatsapp/flows/schema/query"
 import { useWorkspaceId } from "@/hooks/routing"
 import { client } from "@/lib/orpc/orpc"
-import { buildFlowFieldMappings } from "../lib/build-flow-field-mappings"
 import {
   type MetaCatalogProductOption,
   MetaCatalogProductSelect,
@@ -196,7 +204,7 @@ function ButtonParamField(props: ButtonParamFieldProps) {
   return <Renderer {...props} />
 }
 
-function TemplateFlowFieldMappings({
+export function TemplateFlowFieldMappings({
   fieldName,
   param,
 }: {
@@ -224,6 +232,18 @@ function TemplateFlowFieldMappings({
 
   const mappings =
     (watch(`${fieldName}.fieldMappings`) as WhatsappFlowFieldMapping[]) ?? []
+
+  // Answers that are lists of uploaded files get a format choice; the same
+  // union the mappings are built from, so the two always agree.
+  const fileAnswerKeys = useMemo(
+    () =>
+      new Set(
+        collectFlowOutputs(screens)
+          .filter((output) => output.kind === "file")
+          .map((output) => output.value),
+      ),
+    [screens],
+  )
 
   const handleCustomFieldCreated = useCallback(() => {
     invalidateCustomFields()
@@ -339,25 +359,41 @@ function TemplateFlowFieldMappings({
           />
         </div>
         <div className="space-y-2">
-          {mappings.map((mapping, index) => (
-            <div
-              className="grid grid-cols-[minmax(0,1fr)_18px_minmax(0,1fr)] items-end gap-2"
-              key={mapping.paramKey}
-            >
-              <Input disabled value={mapping.paramLabel ?? mapping.paramKey} />
-              <div className="flex h-9 items-center justify-center text-muted-foreground">
-                →
-              </div>
-              <CustomFieldSelect
-                allowCreate={false}
-                label=""
-                name={`${fieldName}.fieldMappings.${index}.customFieldId`}
-                placeholder={t(
-                  "flows.whatsappFlow.selectCustomFieldPlaceholder",
+          {mappings.map((mapping, index) => {
+            const isFileAnswer = fileAnswerKeys.has(mapping.paramKey)
+            return (
+              <div className="space-y-2" key={mapping.paramKey}>
+                <div className="grid grid-cols-[minmax(0,1fr)_18px_minmax(0,1fr)] items-end gap-2">
+                  <div className="flex items-center gap-2">
+                    <Input
+                      disabled
+                      value={mapping.paramLabel ?? mapping.paramKey}
+                    />
+                    {isFileAnswer && <FlowFileAnswerBadge />}
+                  </div>
+                  <div className="flex h-9 items-center justify-center text-muted-foreground">
+                    →
+                  </div>
+                  <CustomFieldSelect
+                    allowCreate={false}
+                    customFieldTypes={
+                      isFileAnswer ? FILE_ANSWER_CUSTOM_FIELD_TYPES : undefined
+                    }
+                    label=""
+                    name={`${fieldName}.fieldMappings.${index}.customFieldId`}
+                    placeholder={t(
+                      "flows.whatsappFlow.selectCustomFieldPlaceholder",
+                    )}
+                  />
+                </div>
+                {isFileAnswer && (
+                  <FlowFileMappingField
+                    mappingName={`${fieldName}.fieldMappings.${index}`}
+                  />
                 )}
-              />
-            </div>
-          ))}
+              </div>
+            )
+          })}
         </div>
       </div>
     )

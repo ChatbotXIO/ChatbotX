@@ -28,10 +28,12 @@ import {
 } from "../../lib/connection"
 import { queueNames } from "../../lib/types"
 import type { BotResponseTrackingContext } from "../types"
+import type { ResolvedFlowFile } from "./flow-response-files"
 
 export * from "./ai-handover-bulk-job-ids"
 export * from "./coexist-job-ids"
 export * from "./contact-scan-job-ids"
+export * from "./flow-response-files"
 
 export const IntegrationJobAction = {
   sendFlow: "sendFlow",
@@ -368,6 +370,8 @@ export type IntegrationJobSendFlowPostback = {
     messageId?: string
     payload?: {
       waFlowResponse?: Record<string, unknown> | string
+      /** Stored files of the response's file answers, by response key. */
+      flowFiles?: Record<string, ResolvedFlowFile[]>
     }
   }
 }
@@ -1069,6 +1073,8 @@ export type IntegrationJobCaptureTemplateFlowResponse = {
     messageId: string
     templateFlowToken: string
     flowResponse: Record<string, unknown>
+    /** Stored files of the response's file answers, by response key. */
+    flowFiles?: Record<string, ResolvedFlowFile[]>
   }
 }
 

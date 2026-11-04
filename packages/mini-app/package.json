@@ -10,6 +10,7 @@
     "vitest": "catalog:"
   },
   "dependencies": {
+    "@chatbotx.io/utils": "workspace:*",
     "zod": "catalog:"
   },
   "exports": {

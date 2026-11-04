@@ -35,6 +35,12 @@ import {
 import { CreateCustomFieldDialog } from "@/features/custom-fields/create-custom-field"
 import { CustomFieldSelect } from "@/features/custom-fields/custom-field-select"
 import { useInvalidateCustomFields } from "@/features/custom-fields/provider/custom-field-hook"
+import {
+  FILE_ANSWER_CUSTOM_FIELD_TYPES,
+  FlowFileAnswerBadge,
+  FlowFileMappingField,
+} from "@/features/integration-whatsapp/flows/flow-file-mapping-field"
+import { toFieldMappings } from "@/features/integration-whatsapp/flows/lib/build-flow-field-mappings"
 import type { WhatsappFlowScreenResource } from "@/features/integration-whatsapp/flows/schema/query"
 import { useWorkspaceId } from "@/hooks/routing"
 import { client } from "@/lib/orpc/orpc"
@@ -198,17 +204,20 @@ function FlowDialogInner({ open, onOpenChange, parentName }: FlowDialogProps) {
     const outputs = selectedScreen.output ?? []
     const existingMappings = form.getValues("flow.fieldMappings")
 
-    const newMappings: WhatsappFlowFieldMapping[] = outputs.map((output) => {
-      const existing = existingMappings.find((m) => m.paramKey === output.value)
-      return {
-        paramKey: output.value,
-        paramLabel: output.label,
-        customFieldId: existing?.customFieldId ?? null,
-      }
-    })
-
-    replace(newMappings)
+    replace(toFieldMappings(outputs, existingMappings))
   }, [selectedStartScreenId, screens, replace, form])
+
+  // Answers that are lists of uploaded files get a format choice.
+  const fileAnswerKeys = useMemo(
+    () =>
+      new Set(
+        screens
+          .find((screen) => screen.id === selectedStartScreenId)
+          ?.output.filter((output) => output.kind === "file")
+          .map((output) => output.value),
+      ),
+    [screens, selectedStartScreenId],
+  )
 
   const flowOptions: SelectOption[] = useMemo(
     () =>
@@ -250,16 +259,7 @@ function FlowDialogInner({ open, onOpenChange, parentName }: FlowDialogProps) {
         (screen) => screen.id === values.flow.startScreenId,
       )
       const outputs = selectedScreen?.output ?? []
-      const fieldMappings = outputs.map((output) => {
-        const existing = values.flow.fieldMappings.find(
-          (mapping) => mapping.paramKey === output.value,
-        )
-        return {
-          paramKey: output.value,
-          paramLabel: output.label,
-          customFieldId: existing?.customFieldId ?? null,
-        }
-      })
+      const fieldMappings = toFieldMappings(outputs, values.flow.fieldMappings)
       const setOptions = { shouldDirty: true, shouldValidate: true }
 
       parentForm.setValue(
@@ -368,31 +368,50 @@ function FlowDialogInner({ open, onOpenChange, parentName }: FlowDialogProps) {
                 </div>
 
                 <div className="flex flex-col gap-2">
-                  {fields.map((field, index) => (
-                    <div className="flex items-end gap-2" key={field._key}>
-                      <div className="flex-1">
-                        <InputField
-                          className="hidden"
-                          name={`flow.fieldMappings.${index}.paramKey`}
-                          type="hidden"
-                        />
-                        <Input
-                          disabled
-                          value={field.paramLabel ?? field.paramKey}
-                        />
+                  {fields.map((field, index) => {
+                    const isFileAnswer = fileAnswerKeys.has(field.paramKey)
+                    return (
+                      <div className="flex flex-col gap-2" key={field._key}>
+                        <div className="flex items-end gap-2">
+                          <div className="flex flex-1 items-center gap-2">
+                            {/* Its form item is hidden too: shown, it would be
+                                an empty flex column pushing the row right. */}
+                            <InputField
+                              className="hidden"
+                              formItemClassName="hidden"
+                              name={`flow.fieldMappings.${index}.paramKey`}
+                              type="hidden"
+                            />
+                            <Input
+                              disabled
+                              value={field.paramLabel ?? field.paramKey}
+                            />
+                            {isFileAnswer && <FlowFileAnswerBadge />}
+                          </div>
+                          <div className="flex-1">
+                            <CustomFieldSelect
+                              allowCreate={false}
+                              customFieldTypes={
+                                isFileAnswer
+                                  ? FILE_ANSWER_CUSTOM_FIELD_TYPES
+                                  : undefined
+                              }
+                              label=""
+                              name={`flow.fieldMappings.${index}.customFieldId`}
+                              placeholder={t(
+                                "flows.whatsappFlow.selectCustomFieldPlaceholder",
+                              )}
+                            />
+                          </div>
+                        </div>
+                        {isFileAnswer && (
+                          <FlowFileMappingField
+                            mappingName={`flow.fieldMappings.${index}`}
+                          />
+                        )}
                       </div>
-                      <div className="flex-1">
-                        <CustomFieldSelect
-                          allowCreate={false}
-                          label=""
-                          name={`flow.fieldMappings.${index}.customFieldId`}
-                          placeholder={t(
-                            "flows.whatsappFlow.selectCustomFieldPlaceholder",
-                          )}
-                        />
-                      </div>
-                    </div>
-                  ))}
+                    )
+                  })}
                 </div>
               </div>
             )}

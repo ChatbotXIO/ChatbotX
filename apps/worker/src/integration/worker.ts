@@ -5,6 +5,7 @@ import {
 } from "@chatbotx.io/automated-response"
 import {
   conversationService,
+  getContactInputAttachments,
   withBlockedOwnerGuard,
 } from "@chatbotx.io/business"
 import { channelTypes } from "@chatbotx.io/database/partials"
@@ -271,7 +272,8 @@ function startIntegrationWorker() {
               // contentType "location".
               const isFromContact =
                 isNotPostbackOrQuickReply && message.senderType === "contact"
-              const hasAttachment = message.attachments.length > 0
+              const inputAttachments = getContactInputAttachments(message)
+              const hasAttachment = inputAttachments.length > 0
               const isLocation = message.contentType === "location"
 
               if (
@@ -285,7 +287,7 @@ function startIntegrationWorker() {
                 return
               }
 
-              const attachmentFileTypes = message.attachments.map(
+              const attachmentFileTypes = inputAttachments.map(
                 (attachment) => attachment.fileType,
               )
               const routing = await resolveIncomingTextRouting({

@@ -3164,7 +3164,12 @@
       "customField": "الحقل المخصص",
       "selectCustomFieldPlaceholder": "اختر حقلاً مخصصًا",
       "addMapping": "إضافة تعيين",
-      "addCustomField": "إضافة جديد"
+      "addCustomField": "إضافة جديد",
+      "fileBadge": "ملف",
+      "fileFormat": "روابط الملفات",
+      "fileFormatAllUrls": "كل الروابط، مفصولة بفواصل",
+      "fileFormatFirstUrl": "الرابط الأول فقط",
+      "fileFormatHint": "يحفظ الحقل المخصص روابط الملفات المرفوعة، وفق ما تختاره هنا."
     },
     "sendCarousel": {
       "addSlide": "إضافة بطاقة",
@@ -4504,7 +4509,15 @@
       "noAnswer": "لا توجد إجابة",
       "labelsUnavailable": "تعذر تحميل أسئلة التدفق، لذلك تُعرض أسماء الحقول بدلاً منها.",
       "yes": "نعم",
-      "no": "لا"
+      "no": "لا",
+      "fileNotSaved": "لم يتم حفظ الملف",
+      "filesNotSaved": "{count, plural, one {لم يتم حفظ # ملف} other {لم يتم حفظ # ملفات}}",
+      "filesAttached": "{count, plural, one {# ملف مرفق} other {# ملفات مرفقة}}",
+      "fileFailure": {
+        "too_large": "الملف كبير جدًا",
+        "unsupported_type": "نوع الملف غير مدعوم",
+        "download_failed": "تعذّر التنزيل"
+      }
     },
     "sendViewCatalogBodyTooLong": "نص الرسالة طويل جدًا لرسالة الكتالوج. قم باختصاره.",
     "sendViewCatalogFooterTooLong": "التذييل طويل جدًا لرسالة الكتالوج. قم باختصاره.",
@@ -9549,7 +9562,7 @@
       "too_many_components": "يمكن أن تحتوي الشاشة على {max} مكونًا كحد أقصى.",
       "component_limit": "يمكن أن تحتوي الشاشة على {max} × {type} كحد أقصى.",
       "picker_conflict": "لا يمكن أن تحتوي الشاشة على رفع صور ورفع مستندات معًا.",
-      "picker_multiple_in_complete": "اضبط {property} على 1: يرسل WhatsApp ملفًا واحدًا فقط عند إكمال التدفق.",
+      "picker_multiple_in_complete": "يرسل واتساب {max} ملفات كحد أقصى عند اكتمال التدفق. قلّل الحد الأقصى لعدد الملفات في حقول الملفات المؤدية إلى هذه الشاشة.",
       "footer_not_last": "يجب أن يكون Footer آخر مكون في الشاشة.",
       "footer_in_nested_branch": "يمكن وضع Footer فقط مباشرةً في فرع If من المستوى الأول.",
       "footer_missing_in_branch": "إذا كان لأحد الفرعين Footer، فيجب أن يكون للفرع الآخر واحد أيضًا.",

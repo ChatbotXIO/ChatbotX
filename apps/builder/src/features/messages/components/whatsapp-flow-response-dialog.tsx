@@ -9,12 +9,14 @@ import {
   DialogTitle,
 } from "@chatbotx.io/ui/components/ui/dialog"
 import { Skeleton } from "@chatbotx.io/ui/components/ui/skeleton"
+import { cn } from "@chatbotx.io/ui/lib/utils"
 import { useQuery } from "@tanstack/react-query"
-import { FileTextIcon, ListChecksIcon } from "lucide-react"
+import { ListChecksIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useState } from "react"
 import { orpc } from "@/lib/orpc/query"
 import type { WhatsappFlowResponseField } from "../schema/flow-response"
+import { FlowResponseFileItem } from "./whatsapp-flow-response-file"
 
 type WhatsappFlowResponseButtonProps = {
   workspaceId: string
@@ -42,12 +44,11 @@ function FlowResponseValue({ field }: { field: WhatsappFlowResponseField }) {
       )
     case "files":
       return (
-        <ul className="flex flex-col gap-1">
+        <ul className="flex flex-col gap-2">
           {field.value.map((file, index) => (
             // biome-ignore lint/suspicious/noArrayIndexKey: file names can repeat
-            <li className="flex min-w-0 items-center gap-1.5" key={index}>
-              <FileTextIcon aria-hidden className="size-3.5 shrink-0" />
-              <span className="truncate">{file.fileName}</span>
+            <li className="min-w-0" key={index}>
+              <FlowResponseFileItem file={file} />
             </li>
           ))}
         </ul>
@@ -130,19 +131,20 @@ function FlowResponseDialogBody(props: WhatsappFlowResponseButtonProps) {
 }
 
 /**
- * "View response" under a WhatsApp Flow completion ("Sent"), like the
- * WhatsApp app: the answers load only once the dialog opens.
+ * "View response" on a WhatsApp Flow completion, like the WhatsApp app: the
+ * answers load only once the dialog opens.
  */
-export function WhatsappFlowResponseButton(
-  props: WhatsappFlowResponseButtonProps,
-) {
+export function WhatsappFlowResponseButton({
+  className,
+  ...props
+}: WhatsappFlowResponseButtonProps & { className?: string }) {
   const t = useTranslations("messages.flowResponse")
   const [open, setOpen] = useState(false)
 
   return (
     <>
       <Button
-        className="mt-1 w-full"
+        className={cn("mt-1 w-full", className)}
         onClick={() => setOpen(true)}
         size="sm"
         type="button"

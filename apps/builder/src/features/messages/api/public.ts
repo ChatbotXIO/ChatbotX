@@ -199,7 +199,7 @@ export const messagesPublicRouter = {
       path: "/v1/conversations/{conversationId}/messages/{messageId}/flow-response",
       summary: "Get WhatsApp Flow response",
       description:
-        "Returns the answers of a WhatsApp Flow response message (`contentAttributes.type` = `whatsapp_flow_response`), each paired with the question as the Flow labels it, in the Flow's order. Take `messageId`/`createdAt` from `messages.list`. Labels come from the Flow JSON on Meta; when the Flow cannot be identified (e.g. it was sent by another app) `labelSource` is `fallback` and labels are humanized keys. 404 when the message is not a Flow response.",
+        "Returns the answers of a WhatsApp Flow response message (`contentAttributes.type` = `whatsapp_flow_response`), each paired with the question as the Flow labels it, in the Flow's order. Take `messageId`/`createdAt` from `messages.list`. Labels come from the Flow JSON on Meta; when the Flow cannot be identified (e.g. it was sent by another app) `labelSource` is `fallback` and labels are humanized keys. File answers (PhotoPicker / DocumentPicker) have `kind` = `files`, one entry per file: `status` `stored` (with `url` and `size`), `failed` (with `failureReason`) or `unprocessed` (no stored copy to open: a response received before files were kept, or a kept file whose stored copy is gone; only `fileName`, `mimeType`, `mediaId`, and nothing more will arrive). 404 when the message is not a Flow response.",
       tags: ["Messages"],
     })
     .input(messageIdWithCreatedAtParam)

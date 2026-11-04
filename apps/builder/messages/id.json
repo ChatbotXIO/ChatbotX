@@ -3008,7 +3008,12 @@
       "customField": "Kolom Kustom",
       "selectCustomFieldPlaceholder": "Pilih kolom kustom",
       "addMapping": "Tambah Pemetaan",
-      "addCustomField": "Tambah Baru"
+      "addCustomField": "Tambah Baru",
+      "fileBadge": "File",
+      "fileFormat": "Tautan file",
+      "fileFormatAllUrls": "Semua tautan, dipisahkan koma",
+      "fileFormatFirstUrl": "Hanya tautan pertama",
+      "fileFormatHint": "Kolom kustom menyimpan tautan file yang diunggah, sesuai pilihan di sini."
     },
     "sendCarousel": {
       "addSlide": "Tambah kartu",
@@ -4504,7 +4509,15 @@
       "noAnswer": "Tidak ada jawaban",
       "labelsUnavailable": "Pertanyaan Flow tidak dapat dimuat, jadi nama kolom yang ditampilkan.",
       "yes": "Ya",
-      "no": "Tidak"
+      "no": "Tidak",
+      "fileNotSaved": "File tidak disimpan",
+      "filesNotSaved": "{count, plural, one {# file tidak tersimpan} other {# file tidak tersimpan}}",
+      "filesAttached": "{count, plural, one {# file terlampir} other {# file terlampir}}",
+      "fileFailure": {
+        "too_large": "File terlalu besar",
+        "unsupported_type": "Jenis file tidak didukung",
+        "download_failed": "Gagal mengunduh"
+      }
     },
     "sendViewCatalogBodyTooLong": "Teks pesan terlalu panjang untuk pesan katalog. Persingkat.",
     "sendViewCatalogFooterTooLong": "Footer terlalu panjang untuk pesan katalog. Persingkat.",
@@ -9549,7 +9562,7 @@
       "too_many_components": "Satu layar dapat memuat paling banyak {max} komponen.",
       "component_limit": "Satu layar dapat memuat paling banyak {max} × {type}.",
       "picker_conflict": "Satu layar tidak boleh memiliki unggah foto sekaligus unggah dokumen.",
-      "picker_multiple_in_complete": "Atur {property} ke 1: WhatsApp hanya mengirim satu file saat flow selesai.",
+      "picker_multiple_in_complete": "WhatsApp mengirim paling banyak {max} file saat flow selesai. Kurangi jumlah file maksimum pada kolom file yang mengarah ke layar ini.",
       "footer_not_last": "Footer harus menjadi komponen terakhir di layar.",
       "footer_in_nested_branch": "Footer hanya boleh berada langsung di cabang If tingkat pertama.",
       "footer_missing_in_branch": "Jika satu cabang memiliki Footer, cabang lainnya juga harus memilikinya.",

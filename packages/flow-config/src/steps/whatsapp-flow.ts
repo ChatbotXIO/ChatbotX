@@ -1,4 +1,5 @@
 import { createId, zodBigintAsString } from "@chatbotx.io/utils"
+import type { CustomFieldType } from "@chatbotx.io/utils/custom-field"
 import { z } from "zod"
 import { flowValidationCodes } from "../validation-codes"
 import { baseStepSchema } from "./base"
@@ -13,10 +14,24 @@ export const WHATSAPP_FLOW_BODY_MAX = 1024
 export const WHATSAPP_FLOW_BUTTON_MAX = 20
 export const WHATSAPP_FLOW_PARAM_KEY_MAX = 64
 
+/** How a file answer (PhotoPicker / DocumentPicker) is written to its custom field. */
+export const whatsappFlowFileFormats = z.enum(["allUrls", "firstUrl"])
+export type WhatsappFlowFileFormat = z.infer<typeof whatsappFlowFileFormats>
+export const DEFAULT_WHATSAPP_FLOW_FILE_FORMAT: WhatsappFlowFileFormat =
+  "allUrls"
+/** File answers are links, so only text custom fields can hold them. */
+export const WHATSAPP_FLOW_FILE_ANSWER_FIELD_TYPES: readonly CustomFieldType[] =
+  ["shortText", "longText"]
+
 export const whatsappFlowFieldMappingSchema = z.object({
   paramKey: z.string().trim().min(1).max(WHATSAPP_FLOW_PARAM_KEY_MAX),
   paramLabel: z.string().optional(),
   customFieldId: zodBigintAsString().nullable(),
+  fileFormat: whatsappFlowFileFormats
+    .optional()
+    .describe(
+      'Only for file answers: "allUrls" stores every file URL, comma-separated (default); "firstUrl" stores the first one.',
+    ),
 })
 export type WhatsappFlowFieldMapping = z.infer<
   typeof whatsappFlowFieldMappingSchema

@@ -3008,7 +3008,12 @@
       "customField": "Mukautettu kenttä",
       "selectCustomFieldPlaceholder": "Valitse mukautettu kenttä",
       "addMapping": "Lisää yhdistäminen",
-      "addCustomField": "Lisää uusi"
+      "addCustomField": "Lisää uusi",
+      "fileBadge": "Tiedosto",
+      "fileFormat": "Tiedostolinkit",
+      "fileFormatAllUrls": "Kaikki linkit pilkuilla erotettuina",
+      "fileFormatFirstUrl": "Vain ensimmäinen linkki",
+      "fileFormatHint": "Mukautettu kenttä tallentaa linkit ladattuihin tiedostoihin tässä valitulla tavalla."
     },
     "sendCarousel": {
       "addSlide": "Lisää kortti",
@@ -4504,7 +4509,15 @@
       "noAnswer": "Ei vastausta",
       "labelsUnavailable": "Flow'n kysymyksiä ei voitu ladata, joten kenttien nimet näytetään.",
       "yes": "Kyllä",
-      "no": "Ei"
+      "no": "Ei",
+      "fileNotSaved": "Tiedostoa ei tallennettu",
+      "filesNotSaved": "{count, plural, one {# tiedostoa ei tallennettu} other {# tiedostoa ei tallennettu}}",
+      "filesAttached": "{count, plural, one {# liitetiedosto} other {# liitetiedostoa}}",
+      "fileFailure": {
+        "too_large": "Tiedosto on liian suuri",
+        "unsupported_type": "Tiedostotyyppiä ei tueta",
+        "download_failed": "Lataus epäonnistui"
+      }
     },
     "sendViewCatalogBodyTooLong": "Viestin teksti on liian pitkä katalogiviestiin. Lyhennä sitä.",
     "sendViewCatalogFooterTooLong": "Alatunniste on liian pitkä katalogiviestiin. Lyhennä sitä.",
@@ -9549,7 +9562,7 @@
       "too_many_components": "Näkymässä voi olla enintään {max} komponenttia.",
       "component_limit": "Näkymässä voi olla enintään {max} × {type}.",
       "picker_conflict": "Näkymässä ei voi olla sekä kuvan latausta että asiakirjan latausta.",
-      "picker_multiple_in_complete": "Aseta {property} arvoon 1: WhatsApp lähettää vain yhden tiedoston, kun Flow päättyy.",
+      "picker_multiple_in_complete": "WhatsApp lähettää enintään {max} tiedostoa, kun flow päättyy. Pienennä tähän näyttöön johtavien tiedostokenttien tiedostojen enimmäismäärää.",
       "footer_not_last": "Footerin on oltava näkymän viimeinen komponentti.",
       "footer_in_nested_branch": "Footer voi olla vain suoraan ensimmäisen tason Jos-haarassa.",
       "footer_missing_in_branch": "Jos toisessa haarassa on Footer, myös toisessa on oltava.",

@@ -24,6 +24,7 @@
   },
   "exports": {
     ".": "./src/index.ts",
+    "./bounded-fetch": "./src/lib/bounded-fetch.ts",
     "./node-upload": "./src/lib/node-upload.ts",
     "./upload-writer": "./src/lib/upload-writer.ts"
   },

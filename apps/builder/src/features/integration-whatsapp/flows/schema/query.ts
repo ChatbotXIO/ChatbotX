@@ -26,7 +26,16 @@ export type ListWhatsappFlowsResponse = z.infer<
 export const whatsappFlowScreenOutputSchema = z.object({
   value: z.string(),
   label: z.string(),
+  kind: z
+    .enum(["file", "value"])
+    .optional()
+    .describe(
+      '"file" when the answer is a list of files the customer uploaded (PhotoPicker / DocumentPicker); "value" for any other answer.',
+    ),
 })
+export type WhatsappFlowScreenOutputResource = z.infer<
+  typeof whatsappFlowScreenOutputSchema
+>
 
 export const whatsappFlowScreenSchema = z.object({
   id: z.string(),

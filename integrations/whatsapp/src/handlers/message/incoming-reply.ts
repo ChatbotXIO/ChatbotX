@@ -60,6 +60,8 @@ const getNfmFlowToken = (flowResponse: WhatsappNfmFlowResponse) =>
 type InteractiveReplyReaders = {
   readonly [Type in WhatsappInteractiveReplyType]?: (
     reply: Extract<WhatsappInteractiveReply, { type: Type }>,
+    /** The `context.id` of the reply: the message it answers. */
+    contextMessageId: string | null,
   ) => WhatsappReply
 }
 
@@ -75,7 +77,7 @@ const interactiveReplyReaders: InteractiveReplyReaders = {
     buttonTitle: interactive.list_reply.title,
     contentAttributes: interactive.list_reply,
   }),
-  nfm_reply: (interactive) => {
+  nfm_reply: (interactive, contextMessageId) => {
     const reply = interactive.nfm_reply
     const flowResponse = parseNfmReplyResponse(reply.response_json)
     const flowToken = getNfmFlowToken(flowResponse)
@@ -87,6 +89,7 @@ const interactiveReplyReaders: InteractiveReplyReaders = {
       flowResponse,
       flowToken,
       decoded: decodedPayload,
+      ...(contextMessageId ? { contextMessageId } : {}),
     }
 
     return {
@@ -167,6 +170,7 @@ const readCallPermissionReply = (
  */
 export const readInteractiveReply = (
   reply: WhatsappInteractiveReply,
+  contextMessageId: string | null = null,
 ): WhatsappReply => {
   const callPermissionReply = asCallPermissionReply(reply)
   if (callPermissionReply) {
@@ -182,7 +186,12 @@ export const readInteractiveReply = (
       buttonTitle: null,
     }
   }
-  return (read as (value: WhatsappInteractiveReply) => WhatsappReply)(reply)
+  return (
+    read as (
+      value: WhatsappInteractiveReply,
+      contextMessageId: string | null,
+    ) => WhatsappReply
+  )(reply, contextMessageId)
 }
 
 /**

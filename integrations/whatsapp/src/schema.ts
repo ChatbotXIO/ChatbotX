@@ -71,9 +71,13 @@ export type ListFlowsResponse = {
   paging: WhatsappPagination
 }
 
+/** What a Flow answer holds: a plain value, or a list of uploaded files. */
+export type WhatsappFlowResponseKind = "file" | "value"
+
 export type WhatsappFlowScreenOutput = {
   value: string
   label: string
+  kind: WhatsappFlowResponseKind
 }
 
 export type WhatsappFlowScreen = {

@@ -1,5 +1,9 @@
 import { afterEach, describe, expect, test, vi } from "vitest"
-import { mapWithConcurrency, withTimeout } from "../src/concurrency"
+import {
+  createConcurrencyLimiter,
+  mapWithConcurrency,
+  withTimeout,
+} from "../src/concurrency"
 
 describe("mapWithConcurrency", () => {
   test("respects the concurrency cap", async () => {
@@ -123,5 +127,97 @@ describe("withTimeout", () => {
     await expect(outcome).resolves.toBe("Timed out after 100ms")
     rejectLate(new Error("too late"))
     await vi.advanceTimersByTimeAsync(1)
+  })
+})
+
+describe("createConcurrencyLimiter", () => {
+  const tick = () => new Promise((resolve) => setTimeout(resolve, 1))
+
+  test("caps concurrent work across every caller", async () => {
+    const run = createConcurrencyLimiter(2)
+    let active = 0
+    let maxActive = 0
+    const work = async () => {
+      active += 1
+      maxActive = Math.max(maxActive, active)
+      await tick()
+      active -= 1
+    }
+
+    await Promise.all(Array.from({ length: 6 }, () => run(work)))
+
+    expect(maxActive).toBe(2)
+  })
+
+  test("starts work at once, in the caller's turn, when a slot is free", async () => {
+    const run = createConcurrencyLimiter(1)
+    const order: string[] = []
+
+    const done = run(() => {
+      order.push("work")
+      return Promise.resolve()
+    })
+    order.push("caller")
+    await done
+
+    expect(order).toEqual(["work", "caller"])
+  })
+
+  test("starts waiting work in order", async () => {
+    const run = createConcurrencyLimiter(1)
+    const order: number[] = []
+
+    await Promise.all(
+      [1, 2, 3].map((item) =>
+        run(async () => {
+          order.push(item)
+          await tick()
+        }),
+      ),
+    )
+
+    expect(order).toEqual([1, 2, 3])
+  })
+
+  test("frees the slot when work throws", async () => {
+    const run = createConcurrencyLimiter(1)
+
+    await expect(run(() => Promise.reject(new Error("boom")))).rejects.toThrow(
+      "boom",
+    )
+    await expect(run(async () => "next")).resolves.toBe("next")
+  })
+
+  test("a caller that gives up while waiting leaves the queue without a slot", async () => {
+    const run = createConcurrencyLimiter(1)
+    let releaseFirst: (() => void) | undefined
+    const first = run(
+      () => new Promise<void>((resolve) => (releaseFirst = resolve)),
+    )
+    const controller = new AbortController()
+    const gaveUp = run(async () => "never", { signal: controller.signal })
+
+    controller.abort(new Error("deadline"))
+
+    await expect(gaveUp).rejects.toThrow("deadline")
+    releaseFirst?.()
+    await first
+    await expect(run(async () => "next")).resolves.toBe("next")
+  })
+
+  test("a signal already aborted rejects at once when the cap is reached", async () => {
+    const run = createConcurrencyLimiter(1)
+    let releaseFirst: (() => void) | undefined
+    const first = run(
+      () => new Promise<void>((resolve) => (releaseFirst = resolve)),
+    )
+    const controller = new AbortController()
+    controller.abort(new Error("late"))
+
+    await expect(
+      run(async () => "never", { signal: controller.signal }),
+    ).rejects.toThrow("late")
+    releaseFirst?.()
+    await first
   })
 })
