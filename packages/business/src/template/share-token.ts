@@ -6,8 +6,7 @@ const BASE64URL_ALPHABET =
 /**
  * Manual base64url encode over raw bytes using arithmetic (no bitwise
  * operators, per lint policy; no `Buffer`, since that's a Node global not
- * guaranteed in the Edge Runtime that `packages/business`'s barrel is
- * traced into — see `__tests__/edge-safe-import-graph.test.ts`).
+ * available in every runtime).
  */
 const toBase64Url = (bytes: Uint8Array): string => {
   let result = ""

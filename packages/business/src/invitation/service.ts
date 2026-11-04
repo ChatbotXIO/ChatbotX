@@ -19,9 +19,7 @@ const INVITATION_CODE_BYTES = 16
 /**
  * CSPRNG invite code. A sequential id (even a snowflake) is a solved puzzle
  * for an attacker who knows roughly when the invite was issued; this is not.
- * Web Crypto + `btoa` rather than `node:crypto`, because this module is also
- * traced into the Edge instrumentation bundle via the top-level barrel —
- * see `__tests__/edge-safe-import-graph.test.ts`.
+ * Web Crypto + `btoa` rather than `node:crypto`, so it runs in any runtime.
  */
 const generateInvitationCode = (): string =>
   btoa(

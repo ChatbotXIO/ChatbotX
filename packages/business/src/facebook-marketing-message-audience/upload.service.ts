@@ -2,9 +2,8 @@
  * Audience create/upload: parses the file and hashes every row with
  * `node:crypto`, so this module is Node-only. It is a separate subpath
  * (`@chatbotx.io/business/facebook-marketing-message-audience/upload`), not part
- * of the module index, because the builder's oRPC router reaches the read
- * service and Next.js traces that graph into the Edge instrumentation bundle
- * (AGENTS.md invariant 25). Only server actions and the public API import it.
+ * of the module index, so code that only reads audiences does not load the
+ * file parser. Only server actions and the public API import it.
  */
 import { facebookMarketingMessageAudienceRepository } from "@chatbotx.io/database/repositories"
 import type { FacebookMarketingMessageAudienceModel } from "@chatbotx.io/database/types"

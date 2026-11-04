@@ -2,8 +2,8 @@
  * SAM 3.1 object detection over the Meta Model API (`/v1/responses`).
  *
  * Node/worker only — exported through `@chatbotx.io/ai/sam`, never through
- * `@chatbotx.io/ai/server`, so the stream code stays out of the builder's
- * Edge instrumentation graph (AGENTS.md invariant 25).
+ * `@chatbotx.io/ai/server`, so importers of the server barrel do not load the
+ * stream code.
  *
  * Only boxes are read, parsed against the public grammar Meta documents for
  * writing your own parser instead of its SAM-licensed client packages:
