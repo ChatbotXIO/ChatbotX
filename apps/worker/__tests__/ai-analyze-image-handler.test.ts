@@ -100,6 +100,20 @@ describe("handleAIAnalyzeImage", () => {
     )
   })
 
+  test("asks the model to fit the answer in one message on the contact's channel", async () => {
+    await handleAIAnalyzeImage({
+      ...props,
+      contactInbox: { ...props.contactInbox, channel: "messenger" },
+    })
+
+    expect(mocks.streamText).toHaveBeenCalledWith(
+      expect.objectContaining({
+        instructions:
+          "Your answer will be sent as one messenger chat message. Keep it under 1600 characters including spaces. Use plain text, no markdown headings.",
+      }),
+    )
+  })
+
   test("reports a provider error from the stream as a step error", async () => {
     const providerError = new Error("The requested model was not found.")
     // The SDK reports stream errors through onError and drops them from

@@ -128,6 +128,21 @@ describe("handleAIGenerateText", () => {
     )
   })
 
+  test("appends the channel length instruction to the author's system prompt", async () => {
+    await handleAIGenerateText({
+      ...props,
+      contactInbox: { ...props.contactInbox, channel: "instagram" },
+      step: { ...props.step, system: "You are a stylist." },
+    } as Parameters<typeof handleAIGenerateText>[0])
+
+    expect(mocks.streamText).toHaveBeenCalledWith(
+      expect.objectContaining({
+        instructions:
+          "You are a stylist.\n\nYour answer will be sent as one instagram chat message. Keep it under 800 characters including spaces. Use plain text, no markdown headings.",
+      }),
+    )
+  })
+
   test("reports a provider error from the stream as a step error", async () => {
     const providerError = new FakeAPICallError(
       "The requested model was not found.",
