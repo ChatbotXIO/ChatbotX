@@ -167,9 +167,7 @@ export function AddWorkspaceMemberForm({
               }),
             )
             invalidateUsers()
-            submitHandler?.(
-              `${window.location.origin}/invitations/${data.code}`,
-            )
+            submitHandler?.(data.inviteUrl)
           },
           onError: ({ error }) => {
             if (error.serverError) {

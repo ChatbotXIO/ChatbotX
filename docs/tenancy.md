@@ -33,6 +33,16 @@ When adding a column with `Record<ChannelType, …>`-style fan-out, remember the
 relational-query wiring: a new table needs both an `import` and a spread in
 `packages/database/src/relations/index.ts` (see `AGENTS.md` invariants).
 
+## Invitation links
+
+An invitation URL is issued on the host that currently serves its workspace:
+the workspace's own tenant when that tenant is active and has an active custom
+domain, otherwise the platform host. Invitation validation resolves the same
+serving tenant from the request host, so a reseller domain cannot resolve a
+root or another reseller's invitation. Suspending a reseller tenant, or
+removing its active domain, moves invitation issuance and validation back to
+the platform host until the tenant has an active domain again.
+
 ## Auth scoping
 
 Tenant scoping lives in `packages/auth/src/tenant-context.ts` and `server.ts`.

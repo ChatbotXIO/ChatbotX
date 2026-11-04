@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const {
   mockAuditRecord,
+  mockBuildInviteUrl,
   mockFindOrFail,
   mockFindByIdOrFail,
   mockFindNameAndEmail,
@@ -25,6 +26,7 @@ const {
 
   return {
     mockAuditRecord: vi.fn(),
+    mockBuildInviteUrl: vi.fn(),
     mockDbInsert,
     mockFindOrFail: vi.fn(),
     mockFindByIdOrFail: vi.fn(),
@@ -67,6 +69,7 @@ vi.mock("@chatbotx.io/business", () => ({
   workspaceMemberCacheTag: (userId: string) =>
     `users:${userId}:workspace-members`,
   invitationService: {
+    buildInviteUrl: mockBuildInviteUrl,
     create: mockInvitationCreate,
   },
   quotaEnforcementService: {
@@ -223,12 +226,16 @@ describe("inviteWorkspaceMemberAction", () => {
     mockWorkspaceFindById.mockResolvedValue({
       id: WORKSPACE_ID,
       ownerId: "owner-1",
+      tenantId: "tenant-1",
     })
     mockQuotaHasReachedLimit.mockResolvedValue(false)
     mockInvitationCreate.mockResolvedValue({
       id: "invitation-id",
       code: "invite-code",
     })
+    mockBuildInviteUrl.mockResolvedValue(
+      "https://app.chatbotx.test/invitations/invite-code",
+    )
     mockIsCommunity.mockReturnValue(false)
   })
 
@@ -279,6 +286,28 @@ describe("inviteWorkspaceMemberAction", () => {
 
     const insertedValues = getInsertedValues()
     expect(insertedValues.permissions).toEqual(assignedOnlyPermissions)
+  })
+
+  test("returns the invitation URL resolved by the invitation service", async () => {
+    mockCurrentMember()
+
+    await expect(
+      (inviteWorkspaceMemberAction as (props: unknown) => Promise<unknown>)(
+        actionCtx(),
+      ),
+    ).resolves.toEqual({
+      code: "invite-code",
+      id: "invitation-id",
+      inviteUrl: "https://app.chatbotx.test/invitations/invite-code",
+    })
+    expect(mockBuildInviteUrl).toHaveBeenCalledWith({
+      code: "invite-code",
+      workspace: {
+        id: WORKSPACE_ID,
+        ownerId: "owner-1",
+        tenantId: "tenant-1",
+      },
+    })
   })
 
   test("records an invite audit event labeled with the granted role", async () => {

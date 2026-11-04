@@ -187,6 +187,51 @@ export const resolveTenantSettings = async (args: {
   )
 }
 
+/** Resolve the platform app URL without a workspace, owner, or hostname context. */
+export const resolvePlatformAppUrl = (): string => {
+  const env = integrationContextEnv()
+  return deriveUrls(env.NEXT_PUBLIC_BUILDER_URL, undefined, {
+    forceHttps: parseEnvBool(env.FORCE_PUBLIC_HTTPS),
+  }).appUrl
+}
+
+/**
+ * Resolve the tenant and app URL currently serving a tenant's workspaces.
+ * A non-active tenant or one without an active custom domain falls back to
+ * the platform host, matching request-domain tenant resolution.
+ */
+export const resolveServingHost = async (
+  tenantId: string,
+): Promise<{ tenantId: string; appUrl: string }> => {
+  if (tenantId === ROOT_TENANT_ID) {
+    return {
+      tenantId: ROOT_TENANT_ID,
+      appUrl: resolvePlatformAppUrl(),
+    }
+  }
+
+  const tenant = await tenantService.findById(tenantId)
+  if (tenant?.status !== "active") {
+    return {
+      tenantId: ROOT_TENANT_ID,
+      appUrl: resolvePlatformAppUrl(),
+    }
+  }
+
+  const customDomain = await customDomainService.findActiveByTenantId(tenantId)
+  if (!customDomain) {
+    return {
+      tenantId: ROOT_TENANT_ID,
+      appUrl: resolvePlatformAppUrl(),
+    }
+  }
+
+  return {
+    tenantId,
+    appUrl: deriveUrls(`https://${customDomain.domain}`).appUrl,
+  }
+}
+
 /**
  * Resolve the app URL that should be embedded in workspace-generated public
  * links. Unlike `resolveTenantSettings`, this applies an active custom domain
@@ -202,17 +247,15 @@ export const resolveWorkspaceAppUrl = async (args: {
   })
 
   if (workspace.tenantId !== ROOT_TENANT_ID) {
-    const domains = await customDomainService.findByTenantId(workspace.tenantId)
-    const activeDomain = domains.find((domain) => domain.status === "active")
-    if (activeDomain) {
-      return deriveUrls(`https://${activeDomain.domain}`).appUrl
+    const customDomain = await customDomainService.findActiveByTenantId(
+      workspace.tenantId,
+    )
+    if (customDomain) {
+      return deriveUrls(`https://${customDomain.domain}`).appUrl
     }
   }
 
-  const env = integrationContextEnv()
-  return deriveUrls(env.NEXT_PUBLIC_BUILDER_URL, undefined, {
-    forceHttps: parseEnvBool(env.FORCE_PUBLIC_HTTPS),
-  }).appUrl
+  return resolvePlatformAppUrl()
 }
 
 /**

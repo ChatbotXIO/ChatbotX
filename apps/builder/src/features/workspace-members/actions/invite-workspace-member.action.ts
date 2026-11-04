@@ -69,5 +69,12 @@ export const inviteWorkspaceMemberAction = workspaceActionClient
       detail: `invited a new ${permissions.superAdmin ? "admin" : "member"}`,
     })
 
-    return invitation
+    return {
+      id: invitation.id,
+      code: invitation.code,
+      inviteUrl: await invitationService.buildInviteUrl({
+        code: invitation.code,
+        workspace,
+      }),
+    }
   })
