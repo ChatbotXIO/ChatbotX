@@ -76,8 +76,6 @@ describe("zalo incoming GIF messages", () => {
       http.get(GIF_URL, () => HttpResponse.text("gone", { status: 404 })),
     )
 
-    await expect(receive(USER_SEND_GIF_EVENT)).rejects.toThrow(
-      "No content found in message user_send_gif",
-    )
+    await expect(receive(USER_SEND_GIF_EVENT)).resolves.toBeNull()
   })
 })
