@@ -4,9 +4,17 @@ vi.mock("../src/keys", () => ({
   getMcpResourceUrl: () => "https://app.example.com/mcp",
 }))
 
-import { defaultMcpResource } from "../src/mcp-config"
+import { buildMcpPluginOptions, defaultMcpResource } from "../src/mcp-config"
 
 const RESOURCE = "https://app.example.com/mcp"
+
+describe("buildMcpPluginOptions", () => {
+  it("caches the configured OAuth resource", () => {
+    expect(buildMcpPluginOptions(RESOURCE).cachedResources).toEqual(
+      new Set([RESOURCE]),
+    )
+  })
+})
 
 describe("defaultMcpResource", () => {
   it("injects the resource into an authorize query that omits it", () => {

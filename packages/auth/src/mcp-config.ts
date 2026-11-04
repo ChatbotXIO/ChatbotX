@@ -92,4 +92,7 @@ export const buildMcpPluginOptions = (
   loginPage: "/oauth/sign-in",
   refreshTokenExpiresIn: REFRESH_TOKEN_TTL_SECONDS,
   resource,
+  // Per-process cache, never expires. Nothing edits OAuthResource at runtime (seeded insertOnly;
+  // admin endpoints are SERVER_ONLY and unused). After a manual DB edit, restart every builder pod.
+  cachedResources: new Set([resource]),
 })
