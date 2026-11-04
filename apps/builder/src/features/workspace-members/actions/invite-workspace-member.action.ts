@@ -70,7 +70,11 @@ export const inviteWorkspaceMemberAction = workspaceActionClient
     })
 
     return {
-      ...invitation,
-      inviteUrl: await invitationService.buildInviteUrl(invitation),
+      id: invitation.id,
+      code: invitation.code,
+      inviteUrl: await invitationService.buildInviteUrl({
+        code: invitation.code,
+        workspace,
+      }),
     }
   })

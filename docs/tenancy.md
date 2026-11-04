@@ -43,7 +43,6 @@ root or another reseller's invitation. Suspending a reseller tenant, or
 removing its active domain, moves invitation issuance and validation back to
 the platform host until the tenant has an active domain again.
 
-
 ## Auth scoping
 
 Tenant scoping lives in `packages/auth/src/tenant-context.ts` and `server.ts`.

@@ -226,6 +226,7 @@ describe("inviteWorkspaceMemberAction", () => {
     mockWorkspaceFindById.mockResolvedValue({
       id: WORKSPACE_ID,
       ownerId: "owner-1",
+      tenantId: "tenant-1",
     })
     mockQuotaHasReachedLimit.mockResolvedValue(false)
     mockInvitationCreate.mockResolvedValue({
@@ -301,7 +302,11 @@ describe("inviteWorkspaceMemberAction", () => {
     })
     expect(mockBuildInviteUrl).toHaveBeenCalledWith({
       code: "invite-code",
-      id: "invitation-id",
+      workspace: {
+        id: WORKSPACE_ID,
+        ownerId: "owner-1",
+        tenantId: "tenant-1",
+      },
     })
   })
 
