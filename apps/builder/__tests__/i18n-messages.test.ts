@@ -118,6 +118,14 @@ const parseMessage = (
   }
 }
 
+const parsedEnglishMessages = new Map<string, MessageFormatElement[]>()
+
+for (const [key, message] of Object.entries(englishMessages)) {
+  if (typeof message === "string") {
+    parsedEnglishMessages.set(key, parseMessage("en", key, message))
+  }
+}
+
 describe("builder message catalogs", () => {
   test.each(locales)("%s has the exact English key set", (locale) => {
     expect(
@@ -138,17 +146,14 @@ describe("builder message catalogs", () => {
   )("%s parses as ICU and keeps English's variables", (locale) => {
     const translatedMessages = flattenMessages(messagesByLocale[locale])
 
-    for (const [key, englishValue] of Object.entries(englishMessages)) {
+    for (const [key, parsedEnglishMessage] of parsedEnglishMessages) {
       const translatedValue = translatedMessages[key]
-      if (
-        typeof englishValue !== "string" ||
-        typeof translatedValue !== "string"
-      ) {
+      if (typeof translatedValue !== "string") {
         continue
       }
 
       const result = isStructurallySame(
-        parseMessage("en", key, englishValue),
+        parsedEnglishMessage,
         parseMessage(locale, key, translatedValue),
       )
       expect(result.error?.message, `${locale} "${key}"`).toBeUndefined()

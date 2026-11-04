@@ -48,7 +48,8 @@ pnpm check-types      # turbo run check-types --concurrency=2 — always use thi
 pnpm test             # turbo run test --concurrency=2 — 2 suites × 4 vitest threads (VITEST_MAX_WORKERS); 50% ran 6×4 = 24 threads on a 12-core Mac
 pnpm test:coverage    # turbo run test --concurrency=2 -- --coverage
 pnpm sync:agent-instructions   # regenerate the .devin/ + .github/ invariant mirrors
-pnpm check:circular   # madge circular deps
+pnpm check:circular   # reject circular dependency edges added beyond the checked-in baseline
+pnpm check:circular:update-baseline # record intentionally accepted circular dependency edges
 pnpm check:unused     # knip
 ```
 

@@ -15,7 +15,8 @@
     "test:watch": "vitest",
     "test:coverage": "turbo run test --concurrency=2 -- --coverage",
     "clean": "pnpm store prune && pnpm dlx rimraf --glob '**/{node_modules,.next,.turbo}'",
-    "check:circular": "pnpm dlx madge --circular --extensions ts,tsx --exclude generated {apps/**/src,packages/**/src}",
+    "check:circular": "node scripts/check-circular.mjs",
+    "check:circular:update-baseline": "node scripts/check-circular.mjs --write-baseline",
     "check:unused": "knip"
   },
   "devDependencies": {
@@ -23,9 +24,9 @@
     "@chatbotx.io/vitest-config": "workspace:*",
     "@jridgewell/sourcemap-codec": "^1.5.5",
     "@types/node": "catalog:",
-    "dependency-cruiser": "^17.3.10",
     "knip": "^6.25.0",
     "lefthook": "^2.1.6",
+    "oxc-parser": "catalog:",
     "tsx": "catalog:",
     "turbo": "^2.11.10",
     "typescript": "catalog:",
