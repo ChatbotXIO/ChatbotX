@@ -3,11 +3,29 @@ packages:
   - packages/*
   - integrations/*
 
-onlyBuiltDependencies:
-  - core-js-pure
-  - esbuild
-  - isolated-vm
-  - lefthook
+allowBuilds:
+  core-js-pure: true
+  esbuild: true
+  isolated-vm: true
+  lefthook: true
+  "@parcel/watcher": false
+  "@swc/core": false
+  msgpackr-extract: false
+  msw: false
+
+overrides:
+  typescript: 7.0.2
+  "@types/node": "catalog:"
+  kysely: 0.28.17
+  zod: 4.6.7
+  "miniflare>zod": "^3.22.3"
+  google-auth-library: "^10.7.0"
+  "@codemirror/state": 6.7.0
+
+updateConfig:
+  ignoreDependencies:
+    - "@types/node"
+    - typescript
 
 # Shared dependency versions. Reference with "catalog:" in package.json.
 catalogMode: strict
@@ -17,6 +35,7 @@ catalog:
   "@better-auth/core": 1.7.14
   "@better-auth/mcp": 1.7.14
   "@better-auth/oauth-provider": 1.7.14
+  "@formatjs/icu-messageformat-parser": "^3.5.11"
   "@t3-oss/env-core": "^0.13.11"
   "@t3-oss/env-nextjs": "^0.13.11"
   "@types/mime-types": "^3.0.1"
@@ -44,6 +63,7 @@ catalog:
   mime-types: "^3.0.2"
   msw: "^2.7.3"
   next: 16.4.3
+  oxc-parser: 0.137.0
   pg: "^8.20.0"
   react: 19.2.5
   react-dom: 19.2.5
@@ -55,3 +75,9 @@ catalog:
   universal-error-normalizer: "^1.0.0"
   vitest: "^5.1.0"
   zod: "^4.3.6"
+minimumReleaseAgeExclude:
+  - "@vitest/coverage-v8@5.1.0"
+  - "@vitest/mocker@5.1.0"
+  - "@vitest/spy@5.1.0"
+  - vitest@5.1.0
+  - "@napi-rs/wasm-runtime@1.2.7"

@@ -2,8 +2,8 @@
 
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs"
 import { dirname, join } from "node:path"
-import ts from "@typescript/typescript6"
 import { describe, expect, test } from "vitest"
+import { findModuleSpecifierRefs } from "./helpers/module-specifier-refs"
 
 const APP_ROOT = join(import.meta.dirname, "..")
 const SRC_ROOT = join(APP_ROOT, "src")
@@ -103,101 +103,6 @@ function resolveModuleSpecifier(importingFilePath: string, specifier: string) {
 
 function isFirstPartySpecifier(specifier: string) {
   return specifier.startsWith(".") || specifier.startsWith("@/")
-}
-
-/** True if this import/export clause pulls in at least one runtime value. */
-function hasValueBinding(
-  clause: ts.ImportClause | undefined,
-): clause is ts.ImportClause {
-  if (!clause) {
-    return false
-  }
-  if (clause.isTypeOnly) {
-    return false
-  }
-  if (clause.name) {
-    // default import, e.g. `import Foo from "..."`
-    return true
-  }
-  const bindings = clause.namedBindings
-  if (!bindings) {
-    return false
-  }
-  if (ts.isNamespaceImport(bindings)) {
-    // `import * as foo from "..."`
-    return true
-  }
-  // named imports: `{ a, type B }` — a value import unless every element is type-only
-  return bindings.elements.some((el) => !el.isTypeOnly)
-}
-
-/** True if this re-export clause (`export { a } from "..."`) pulls in at least one runtime value. */
-function hasValueExportBinding(
-  clause: ts.NamedExportBindings | undefined,
-  isTypeOnlyExport: boolean,
-): boolean {
-  if (isTypeOnlyExport) {
-    return false
-  }
-  if (!clause) {
-    // `export * from "..."` — always a value re-export.
-    return true
-  }
-  if (ts.isNamespaceExport(clause)) {
-    return true
-  }
-  return clause.elements.some((el) => !el.isTypeOnly)
-}
-
-type ModuleSpecifierRef = {
-  specifier: string
-  isValue: boolean
-}
-
-/** Every import/re-export module specifier in a file, with whether it carries a runtime value. */
-function findModuleSpecifierRefs(
-  filePath: string,
-  source: string,
-): ModuleSpecifierRef[] {
-  const sourceFile = ts.createSourceFile(
-    filePath,
-    source,
-    ts.ScriptTarget.Latest,
-    /* setParentNodes */ false,
-    filePath.endsWith(".tsx") ? ts.ScriptKind.TSX : ts.ScriptKind.TS,
-  )
-
-  const refs: ModuleSpecifierRef[] = []
-
-  for (const statement of sourceFile.statements) {
-    if (ts.isImportDeclaration(statement)) {
-      if (!ts.isStringLiteral(statement.moduleSpecifier)) {
-        continue
-      }
-      refs.push({
-        specifier: statement.moduleSpecifier.text,
-        isValue: hasValueBinding(statement.importClause),
-      })
-    } else if (ts.isExportDeclaration(statement)) {
-      if (
-        !(
-          statement.moduleSpecifier &&
-          ts.isStringLiteral(statement.moduleSpecifier)
-        )
-      ) {
-        continue
-      }
-      refs.push({
-        specifier: statement.moduleSpecifier.text,
-        isValue: hasValueExportBinding(
-          statement.exportClause,
-          statement.isTypeOnly,
-        ),
-      })
-    }
-  }
-
-  return refs
 }
 
 /**
