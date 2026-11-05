@@ -6,6 +6,7 @@ const mocks = vi.hoisted(() => ({
   logStepProviderError: vi.fn(),
   processStreamingText: vi.fn(),
   readCustomFieldValue: vi.fn(),
+  resolveContactVariablesDeep: vi.fn(),
   resolveFlowAIModel: vi.fn(),
   saveResultToCustomField: vi.fn(),
   streamText: vi.fn(),
@@ -15,6 +16,9 @@ vi.mock("@chatbotx.io/ai", () => ({
   aiTimeouts: { aiTotal: 30_000 },
   isImageUrl: mocks.isImageUrl,
   processStreamingText: mocks.processStreamingText,
+}))
+vi.mock("@chatbotx.io/variables", () => ({
+  resolveContactVariablesDeep: mocks.resolveContactVariablesDeep,
 }))
 vi.mock("ai", () => ({ streamText: mocks.streamText }))
 vi.mock("../src/integration/utils/contact", () => ({
@@ -64,6 +68,9 @@ const props: Parameters<typeof handleAIAnalyzeImage>[0] = {
 describe("handleAIAnalyzeImage", () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    mocks.resolveContactVariablesDeep.mockImplementation(
+      async (_contactId: string, value: unknown) => value,
+    )
     mocks.isImageUrl.mockReturnValue(true)
     mocks.processStreamingText.mockResolvedValue({ fullText: "description" })
     mocks.readCustomFieldValue.mockResolvedValue(
@@ -95,6 +102,34 @@ describe("handleAIAnalyzeImage", () => {
               },
             ],
           },
+        ],
+      }),
+    )
+  })
+
+  test("resolves contact variables in the prompt", async () => {
+    mocks.resolveContactVariablesDeep.mockResolvedValueOnce(
+      "Describe the image for Lan",
+    )
+
+    await handleAIAnalyzeImage({
+      ...props,
+      step: { ...props.step, prompt: "Describe the image for {{first_name}}" },
+    })
+
+    expect(mocks.resolveContactVariablesDeep).toHaveBeenCalledWith(
+      "contact-1",
+      "Describe the image for {{first_name}}",
+      expect.anything(),
+    )
+    expect(mocks.streamText).toHaveBeenCalledWith(
+      expect.objectContaining({
+        messages: [
+          expect.objectContaining({
+            content: expect.arrayContaining([
+              { type: "text", text: "Describe the image for Lan" },
+            ]),
+          }),
         ],
       }),
     )

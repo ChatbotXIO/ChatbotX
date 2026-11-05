@@ -6,6 +6,7 @@ const mocks = vi.hoisted(() => ({
   getAIToolset: vi.fn(),
   logStepProviderError: vi.fn(),
   processStreamingText: vi.fn(),
+  resolveContactVariablesDeep: vi.fn(),
   resolveFlowAIModel: vi.fn(),
   saveResultToCustomField: vi.fn(),
   streamText: vi.fn(),
@@ -34,6 +35,9 @@ vi.mock("@chatbotx.io/ai/server", () => ({
 }))
 vi.mock("@chatbotx.io/database/errors", () => ({
   isMessageStorageError: () => false,
+}))
+vi.mock("@chatbotx.io/variables", () => ({
+  resolveContactVariablesDeep: mocks.resolveContactVariablesDeep,
 }))
 vi.mock("ai", () => ({
   APICallError: FakeAPICallError,
@@ -106,6 +110,9 @@ const failStreamWith = (error: unknown) => {
 describe("handleAIGenerateText", () => {
   beforeEach(() => {
     vi.resetAllMocks()
+    mocks.resolveContactVariablesDeep.mockImplementation(
+      async (_contactId: string, value: unknown) => value,
+    )
     mocks.buildAIMessages.mockResolvedValue([
       { role: "user", content: "Hello" },
     ])
@@ -139,6 +146,42 @@ describe("handleAIGenerateText", () => {
       expect.objectContaining({
         instructions:
           "You are a stylist.\n\nYour answer will be sent as one instagram chat message. Keep it under 800 characters including spaces. Use plain text, no markdown headings.",
+      }),
+    )
+  })
+
+  test("resolves contact variables in the system prompt and user message", async () => {
+    mocks.resolveContactVariablesDeep.mockResolvedValue({
+      system: "You help Lan.",
+      text: "Hi, I am Lan",
+    })
+
+    await handleAIGenerateText({
+      ...props,
+      sentByUserId: "user-1",
+      step: {
+        ...props.step,
+        system: "You help {{first_name}}.",
+        text: "Hi, I am {{first_name}}",
+      },
+    } as Parameters<typeof handleAIGenerateText>[0])
+
+    expect(mocks.resolveContactVariablesDeep).toHaveBeenCalledWith(
+      "contact-1",
+      { system: "You help {{first_name}}.", text: "Hi, I am {{first_name}}" },
+      expect.objectContaining({ sentByUserId: "user-1" }),
+    )
+    expect(mocks.buildAIMessages).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.anything(),
+      expect.objectContaining({
+        system: "You help Lan.",
+        text: "Hi, I am Lan",
+      }),
+    )
+    expect(mocks.streamText).toHaveBeenCalledWith(
+      expect.objectContaining({
+        instructions: expect.stringContaining("You help Lan."),
       }),
     )
   })
