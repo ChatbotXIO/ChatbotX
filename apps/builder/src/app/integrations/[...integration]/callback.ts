@@ -65,6 +65,7 @@ import {
 } from "@/lib/channel-reconnect"
 import { logger } from "@/lib/log"
 import { resolveRelayTarget, sanitizeReferer } from "@/lib/oauth-referer"
+import { decodeOAuthState } from "@/lib/oauth-state"
 import { resolveOwnerForWorkspace } from "@/lib/platform-credential-owner"
 import { buildProviderCallbackUrl } from "@/lib/provider-origin"
 import { getGuestClientIp } from "@/lib/rate-limit/guest-rate-limit"
@@ -455,7 +456,7 @@ export const handleCallback = async (
   // New Connection-domain sessions (`POST /v1/connections`, `POST
   // /v1/connections/{id}/reconnect`) carry a raw "{sessionId}.{nonce}"
   // state — never JSON/base64-encoded — dispatched here before the legacy
-  // parse below, which would otherwise throw trying to atob/JSON.parse it.
+  // parse below, which would otherwise throw trying to decode/JSON.parse it.
   // Once every legacy JSON-state caller (builder pickers, ads/lead-ads/
   // meta-catalog connect flows) moves onto sessions, this early branch
   // becomes the only path and the switch below can be deleted.
@@ -469,7 +470,7 @@ export const handleCallback = async (
 
   let rawState: unknown
   try {
-    rawState = JSON.parse(atob(decodeURIComponent(rawStateParam)))
+    rawState = decodeOAuthState(rawStateParam)
   } catch {
     logger.debug(
       { url: url.toString() },
