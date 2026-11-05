@@ -13,6 +13,15 @@ export const getAiProviderRequest = z.object({
   provider: aiProviderPathParam.describe("AI provider identifier."),
 })
 
+export const updateAiProviderRequest = getAiProviderRequest.extend({
+  autoReply: z
+    .boolean()
+    .optional()
+    .describe(
+      "AI Reply switch. When true, the provider answers inbound messages automatically. Omit to leave it unchanged.",
+    ),
+})
+
 // Never includes `auth` — the encrypted/secret credential. Only `hasApiKey`
 // (a boolean) signals whether a key is configured; the raw secret must never
 // reach a public API response.

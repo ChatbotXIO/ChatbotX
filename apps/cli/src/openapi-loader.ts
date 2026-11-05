@@ -194,6 +194,9 @@ const COMMAND_NAME_OVERRIDES: Readonly<Record<string, string>> = {
     "instagram-channels:settings:edit",
   "PATCH /v1/inboxes/{inboxId}/ai-handover/settings": "inboxes:settings:edit",
   "PATCH /v1/bot-fields/{idOrName}": "bot-fields:edit",
+  // Same path as GET/PUT/DELETE `integrations:find-by-ai`; without this the
+  // PATCH would be silently dropped as a duplicate command name.
+  "PATCH /v1/integrations/ai/{provider}": "integrations:update-ai",
   "DELETE /v1/analytics/flows/{flowId}/stats": "analytics:reset-flow-stats",
   "POST /v1/decision-connections/{id}/test": "decision-connections:test",
   "POST /v1/ads/campaigns": "ads:create-campaign",

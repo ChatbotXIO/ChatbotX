@@ -562,3 +562,14 @@ describe("pathAndMethodToCommandName — every pipelines operation", () => {
     }
   })
 })
+
+describe("pathAndMethodToCommandName — AI provider integration", () => {
+  test("PATCH (AI Reply switch) does not collide with the GET `find-by-ai` command", () => {
+    expect(
+      pathAndMethodToCommandName("/v1/integrations/ai/{provider}", "GET"),
+    ).toBe("integrations:find-by-ai")
+    expect(
+      pathAndMethodToCommandName("/v1/integrations/ai/{provider}", "PATCH"),
+    ).toBe("integrations:update-ai")
+  })
+})
