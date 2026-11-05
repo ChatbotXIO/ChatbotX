@@ -20,6 +20,7 @@ import {
   connectAiProviderRequest,
   getAiProviderRequest,
   publicAiProviderResource,
+  updateAiProviderRequest,
 } from "../../schema/ai-provider"
 
 const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("integrations")
@@ -56,6 +57,29 @@ const aiProviderServices = {
     ) => Promise<AiProviderRow | undefined>
     disconnect: (workspaceId: string) => Promise<void>
   }
+>
+
+// The services' `update` signatures differ (OpenAI also needs the row `id`),
+// so each provider gets a tiny adapter. `satisfies Record<AiProviderPathParam>`
+// makes adding a provider to the path enum without an updater a compile error.
+const aiProviderAutoReplyUpdaters = {
+  claude: ({ workspaceId, autoReply }) =>
+    integrationClaudeService.update({ workspaceId }, { autoReply }),
+  deepseek: ({ workspaceId, autoReply }) =>
+    integrationDeepSeekService.update({ workspaceId }, { autoReply }),
+  gemini: ({ workspaceId, autoReply }) =>
+    integrationGeminiService.update({ workspaceId }, { autoReply }),
+  muse: ({ workspaceId, autoReply }) =>
+    integrationMuseService.update({ workspaceId }, { autoReply }),
+  openai: ({ workspaceId, id, autoReply }) =>
+    integrationOpenAIService.update({ workspaceId, id }, { autoReply }),
+} satisfies Record<
+  AiProviderPathParam,
+  (props: {
+    workspaceId: string
+    id: string
+    autoReply: boolean
+  }) => Promise<unknown>
 >
 
 export const integrationsAiPublicRouter = {
@@ -118,6 +142,49 @@ export const integrationsAiPublicRouter = {
       )
 
       const row = await service.findByWorkspaceId(context.workspace.id)
+      if (!row) {
+        throw notFoundException(`${input.provider} integration not found`)
+      }
+      return toResource(row)
+    }),
+
+  updateAiProvider: workspaceTokenAuthAPI
+    .route({
+      method: "PATCH",
+      path: "/v1/integrations/ai/{provider}",
+      summary: "Update AI provider settings",
+      description:
+        "Turns the AI Reply switch (`autoReply`) on or off for one connected AI provider. Turning it on makes the provider start answering real inbound messages. Only this switch changes — model and API key are untouched. Connect the provider first with `connections.create` (or `integrations.connectAiProvider`); read the current value with `integrations.getAiProvider`. Supports claude, deepseek, gemini, muse and openai; OpenRouter and OpenAI-compatible integrations are not supported by this operation yet.",
+      tags: ["Integrations"],
+    })
+    .input(updateAiProviderRequest)
+    .output(publicAiProviderResource)
+    .errors(possibleErrorsOnMutatingResource)
+    .handler(async ({ context, input }) => {
+      const workspaceId = context.workspace.id
+      const service = aiProviderServices[input.provider]
+      const existing = await service.findByWorkspaceId(workspaceId)
+      if (!existing) {
+        throw notFoundException(`${input.provider} integration not found`)
+      }
+
+      // PATCH merges a partial change: an omitted `autoReply` is left as is.
+      if (input.autoReply !== undefined) {
+        await aiProviderAutoReplyUpdaters[input.provider]({
+          workspaceId,
+          id: existing.id,
+          autoReply: input.autoReply,
+        })
+
+        // Required: the worker reads AI integrations through a cache, so
+        // without this the new value only applies once the TTL expires.
+        await aiIntegrationService.invalidateCache(
+          workspaceId,
+          aiProviders.enum[input.provider],
+        )
+      }
+
+      const row = await service.findByWorkspaceId(workspaceId)
       if (!row) {
         throw notFoundException(`${input.provider} integration not found`)
       }

@@ -463,6 +463,8 @@ chatbotx integrations get <id>
 chatbotx integrations status-token-errors            # Channel integrations with failed token refresh
 chatbotx integrations find-by-ai --provider <provider>  # Get AI provider integration (GET only — connect/disconnect
                                                      # PUT/DELETE on the same path collide, see Known command-name collisions)
+chatbotx integrations update-ai --provider <provider> --autoReply <true|false>  # Turn the AI Reply switch on/off
+                                                     # (claude, deepseek, gemini, muse, openai; connect the provider first)
 ```
 
 ---
@@ -1492,7 +1494,7 @@ Commands are named by `pathAndMethodToCommandName` (`apps/cli/src/openapi-loader
 | `minigames:update` | `PUT` (full) vs `PATCH` (partial) `/v1/minigames/{id}` | Only one |
 | `integrations:find-by-ai` | `GET`/`PUT`/`DELETE /v1/integrations/ai/{provider}` (get/connect/disconnect) | Only `GET` — connecting or disconnecting an AI provider has no CLI command |
 
-Resolved by explicit names in `COMMAND_NAME_OVERRIDES` (`apps/cli/src/openapi-loader.ts`): `bot-fields set`, `bot-fields edit`, `contacts set-custom-field`, `contacts clear-all-custom-fields` (the old `contacts custom-field delete <identifier>` cleared **every** field; it now clears one and needs `<idOrName>`), `ads create-campaign`, `ads create-conversion-rule` / `update-conversion-rule` / `delete-conversion-rule`, `analytics reset-flow-stats`.
+Resolved by explicit names in `COMMAND_NAME_OVERRIDES` (`apps/cli/src/openapi-loader.ts`): `integrations update-ai` (`PATCH /v1/integrations/ai/{provider}`, the AI Reply switch — without the override it would collide with `find-by-ai`), `bot-fields set`, `bot-fields edit`, `contacts set-custom-field`, `contacts clear-all-custom-fields` (the old `contacts custom-field delete <identifier>` cleared **every** field; it now clears one and needs `<idOrName>`), `ads create-campaign`, `ads create-conversion-rule` / `update-conversion-rule` / `delete-conversion-rule`, `analytics reset-flow-stats`.
 
 Root cause for the remaining `integrations:find-by-ai` row: `pathAndMethodToCommandName`'s remainder branch derives `${group}:${subResource}:update` (or its GET/DELETE equivalents) without folding the HTTP method into the name when a literal second path segment is followed by a param — unlike the sibling GET/DELETE branches, which already do this for the two-segment case.
 
