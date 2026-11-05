@@ -1,4 +1,5 @@
 import {
+  templateInstallIntentService,
   type WorkspaceQuotaConsumption,
   workspaceService,
 } from "@chatbotx.io/business"
@@ -113,6 +114,8 @@ export async function ensureFirstWorkspace(
   userId: string,
   options: Pick<FirstWorkspaceOptions, "name"> = {},
 ): Promise<WorkspaceModel | null> {
+  // The home page is no share-page flow: its default workspace gets no template choice.
+  await templateInstallIntentService.clear(userId)
   try {
     return await callEnsureWorkspace(userId, "ensureFirstForOwner", options)
   } catch (error) {

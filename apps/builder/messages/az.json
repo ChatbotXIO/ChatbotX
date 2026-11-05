@@ -2129,7 +2129,8 @@
       "partial": "Qismən",
       "failed": "Uğursuz",
       "success": "Uğurlu",
-      "error": "Xəta"
+      "error": "Xəta",
+      "uninstalled": "Uninstalled"
     },
     "subtitle": {
       "placeholder": "Alt başlıq daxil edin"
@@ -2859,6 +2860,7 @@
       "leaderboards": "Liderlər lövhələri",
       "pipelines": "Satış mərhələləri",
       "places": "Yerlər",
+      "templates": "Şablonlar",
       "polls": "Polls"
     },
     "adReferral": {
@@ -3638,6 +3640,7 @@
     "title": "Axınlar",
     "export": {
       "notPublished": "Bu axın hələ dərc edilməyib. İxrac etməzdən əvvəl onu dərc edin.",
+      "viewOnly": "Bu axın yalnız baxış üçün şablondan quraşdırılıb, ona görə ixrac edilə bilməz.",
       "failed": "İxrac uğursuz oldu. Yenidən cəhd edin."
     },
     "quickReplies": {
@@ -7864,6 +7867,9 @@
   "templates": {
     "title": "Şablonlar",
     "description": "Şablonlarınızı yaradın və idarə edin.",
+    "createDialog": {
+      "title": "Yeni şablon"
+    },
     "share": {
       "label": "Paylaş",
       "enabled": "Paylaşılıb",
@@ -7872,14 +7878,137 @@
       "dialogDescription": "Bu keçidi olan hər kəs şablonun surətini təşkilatınızdakı iş sahəsinə quraşdıra bilər.",
       "enableLabel": "Paylaşma keçidini aktivləşdir",
       "linkLabel": "Paylaşma keçidi",
-      "description": "Keçidi olan hər kəs bu şablonu öz iş sahəsinə quraşdıra bilər."
+      "rotateLabel": "Keçidi yenilə",
+      "rotateTitle": "Paylaşma keçidi yenilənsin?",
+      "rotateDescription": "Cari keçid dərhal işləməyi dayandırır. Bu şablonu hələ də quraşdırmalı olan hər kəsə yeni keçid lazımdır.",
+      "rotated": "Paylaşma keçidi yeniləndi",
+      "expiryLabel": "Keçidin bitmə vaxtı",
+      "expiryHint": "Heç vaxt bitməyən keçid üçün boş buraxın.",
+      "clearExpiry": "Bitmə vaxtını sil",
+      "expiredNotice": "Bu keçidin vaxtı bitib. Yenidən paylaşmaq üçün daha gec tarix seçin və ya bitmə vaxtını silin.",
+      "templateId": "Şablon ID",
+      "templateKey": "Şablon açarı",
+      "showKey": "Açarı göstər",
+      "hideKey": "Açarı gizlət",
+      "copyField": "{field} kopyala"
+    },
+    "sync": {
+      "title": "Yeniləmələr",
+      "updateAvailable": "Yeniləmə mövcuddur",
+      "upToDate": "Yenidir",
+      "sourceDeleted": "Şablon silinib",
+      "sourceDeletedHint": "Naşir bu şablonu silib. Nüsxəniz işləməyə davam edir, lakin artıq yenilənə bilməz.",
+      "updateNow": "İndi yenilə",
+      "updating": "Yenilənir…",
+      "version": "Şablon versiyası {version}",
+      "lastSynced": "son yenilənmə {date}",
+      "autoUpdateLabel": "Şablon dəyişəndə avtomatik yenilə",
+      "noHistory": "Hələ yeniləmə yoxdur.",
+      "countAdded": "{count} əlavə edildi",
+      "countUpdated": "{count} yeniləndi",
+      "countDetached": "{count} artıq şablona uyğun deyil",
+      "notUpdatable": "{count} hələ yenilənə bilmir",
+      "overwritten": "{name} redaktə edilmişdi və yeniləmə ilə əvəz olundu",
+      "restore": "Mənim versiyamı bərpa et",
+      "restored": "Versiyanız bərpa edildi",
+      "status": {
+        "pending": "Növbədə",
+        "running": "İcra olunur",
+        "completed": "Tamamlandı",
+        "partial": "Qismən",
+        "failed": "Uğursuz oldu",
+        "skipped": "Atlandı",
+        "cancelled": "Ləğv edildi"
+      },
+      "trigger": {
+        "autoUpdate": "Avtomatik",
+        "manual": "Əl ilə",
+        "reinstall": "Yenidən quraşdırma"
+      },
+      "publisherAccessLabel": "Naşirə bu iş sahəsini görməyə və şablonu silməyə icazə ver",
+      "publisherAccessHint": "Yalnız iş sahəsinin adı paylaşılır. Naşir şablonu sildikdə, şablonun yaratdığı hər şey, o cümlədən redaktə etdiyiniz surətlər silinir.",
+      "requestedVersion": "tələb olunan v{version}",
+      "errors": {
+        "unknown": "Yeniləmə alınmadı. Yenidən cəhd edin və ya davam edərsə dəstəyə müraciət edin.",
+        "templateSyncFailed": "Yeniləmə alınmadı. Yenidən cəhd edin.",
+        "templateSyncSuperseded": "Bu yeniləməni daha yeni yeniləmə əvəz etdi.",
+        "templateSyncAbandoned": "Yeniləmə vaxtında bitmədi və bağlandı.",
+        "templateInstallationInactive": "Bu quraşdırma artıq aktiv deyil.",
+        "workspaceOwnerBlocked": "İş sahəsi sahibinin hesabı bloklanıb.",
+        "templateUninstallInProgress": "Şablon silinir.",
+        "templateAutoUpdateOff": "Avtomatik yeniləmələr söndürülüb.",
+        "templateUpToDate": "Nüsxə artıq yenidir.",
+        "templateInstallerAccessLost": "Quraşdıran şəxsin bu nüsxəni yeniləmək icazəsi artıq yoxdur.",
+        "templateInstallationSourceMissing": "Şablon yeniləmə işləməzdən əvvəl silindi.",
+        "templateCategoryPermissionDenied": "Bu şablondakı hər şeyi yeniləmək üçün artıq icazəniz yoxdur.",
+        "templatePayloadIncompatible": "Bu şablon bu serverin quraşdıra bildiyindən daha yeni formatda saxlanılıb.",
+        "templateCrossTenantInstall": "Bu şablon sizin iş sahəniz üçün əlçatan deyil.",
+        "templateInvalidInboxBinding": "Seçilmiş gələn qutusu şablona uyğun gəlmir."
+      }
+    },
+    "versions": {
+      "detailsTab": "Təfərrüatlar",
+      "tab": "Versiyalar",
+      "versionNumber": "Versiya {version}",
+      "current": "Cari",
+      "first": "İlk versiya",
+      "noDetail": "Bu versiya üçün təfərrüat qeydə alınmayıb.",
+      "added": "Əlavə edildi",
+      "changed": "Dəyişdirildi",
+      "removed": "Silindi"
+    },
+    "installers": {
+      "title": "Analitikaya baxın",
+      "workspace": "İş sahəsi",
+      "lastInstalled": "Son quraşdırma",
+      "version": "Version",
+      "autoUpdate": "Avtomatik yeniləmə",
+      "uninstalled": "Silinib",
+      "hidden": "İş sahəsi paylaşılmayıb",
+      "uninstallNotAllowed": "Quraşdıran naşirlərə bu nüsxəni silməyə icazə verməyib.",
+      "loadError": "Quraşdıranlar yüklənmədi. Yenidən cəhd edin.",
+      "automatic": "Avtomatik",
+      "details": "Təfərrüatlar",
+      "noIssues": "Xəbərdarlıq və ya xəta yoxdur."
     },
     "installs": {
       "title": "Quraşdırmalar",
       "resources": "Resurslar",
       "warnings": "Xəbərdarlıqlar",
       "completedAt": "Tamamlanma vaxtı",
-      "autoUpdate": "Avtomatik yeniləmə"
+      "autoUpdate": "Avtomatik yeniləmə",
+      "installedBy": "Quraşdıran",
+      "viaApi": "API tokeni",
+      "attempts": "Cəhdlər",
+      "autoUpdateOn": "Aktiv",
+      "autoUpdateOff": "Deaktiv",
+      "retry": "Quraşdırmanı yenidən cəhd et",
+      "resourcesTitle": "Quraşdırılmış resurslar",
+      "noResources": "Hələ heç nə yaradılmayıb.",
+      "deletedResource": "Silinmiş resurs",
+      "viewOnly": "Yalnız baxış",
+      "created": "Yaradıldı",
+      "reused": "Təkrar istifadə edildi",
+      "loadMore": "Daha çox yüklə",
+      "statusFilter": "Status",
+      "allStatuses": "Bütün statuslar",
+      "errors": {
+        "unknown": "Quraşdırma uğursuz oldu. Yenidən cəhd edin və ya davam edərsə, dəstəklə əlaqə saxlayın.",
+        "templatePayloadIncompatible": "Bu şablon bu serverin quraşdıra bildiyindən daha yeni formatda saxlanılıb.",
+        "templateInstallationSourceMissing": "Şablon quraşdırma işə düşməzdən əvvəl silinib.",
+        "templateCrossTenantInstall": "Bu şablon sizin iş sahəniz üçün əlçatan deyil.",
+        "templateCategoryPermissionDenied": "Artıq bu şablondakı hər şeyi quraşdırmaq icazəniz yoxdur.",
+        "templateInvalidInboxBinding": "Seçilmiş gələn qutusu şablona uyğun gəlmir.",
+        "templateInstallEnqueueFailed": "Quraşdırmanı növbəyə qoymaq mümkün olmadı.",
+        "templateInstallFailed": "Quraşdırma uğursuz oldu. Yenidən cəhd edin.",
+        "templateInstallAbandoned": "Quraşdırma vaxtında başa çatmadı və bağlandı.",
+        "templateInstallSuperseded": "Bu şablonun daha yeni quraşdırması bunu əvəz etdi.",
+        "workspaceOwnerBlocked": "İş sahəsi sahibinin hesabı bloklanıb."
+      },
+      "uninstalledBy": "{by, select, publisher {Naşir bu şablonu sildi.} installer {Bu şablon bu iş sahəsindən silindi.} other {Bu şablon silindi.}}",
+      "uninstalledSummary": "{deleted} silindi, {kept} saxlanıldı.",
+      "lastAttemptAt": "Son cəhd",
+      "installedAutomatically": "Avtomatik quraşdırıldı (white-label defoltu)"
     },
     "form": {
       "contents": "Şablonun məzmunu",
@@ -7892,14 +8021,26 @@
       "allowDelete": "Quraşdırıldıqdan sonra silməyə icazə ver",
       "publisherName": "Dərc edənin adı",
       "youtubeVideoId": "YouTube video ID-si",
-      "youtubeVideoIdDescription": "Videonun URL-indəki 11 simvolluq ID, məsələn, youtube.com/watch?v=dQw4w9WgXcQ ünvanındakı \"dQw4w9WgXcQ\"",
+      "youtubeVideoIdDescription": "Videonun URL-indəki 11 simvolluq ID, məsələn, youtube.com/watch?v=xxxxxxxxxxx ünvanındakı \"xxxxxxxxxxx\"",
       "testLink": "Sınaq keçidi",
       "imageUrl": "Üz qabığı şəkli",
       "installBehavior": "Quraşdırma qaydası",
-      "createInstallFolder": "Ayrıca qovluğa quraşdır",
+      "createInstallFolder": "Quraşdırılan hesabda qovluq yaradın və resursları quraşdırın.",
       "createInstallFolderDescription": "Quraşdırılan bütün resursları bu şablonun adını daşıyan bir yeni qovluqda yerləşdirin.",
-      "defaultAutoUpdate": "Quraşdırmalar üçün yeniləmə bildirişlərini standart olaraq aktivləşdir",
-      "defaultAutoUpdateDescription": "Bu şablonu hər dəfə yenidən dərc etdikdə yeni quraşdırmalarda yeniləmənin mövcudluğu barədə bildiriş görünəcək."
+      "defaultAutoUpdate": "Quraşdırılmış şablonları avtomatik yeniləyin",
+      "defaultAutoUpdateDescription": "Bu şablonu dəyişdirilmiş məzmunla hər saxladığınızda, avtomatik yeniləməyə tabe olan quraşdırmalar yeni məzmunla əvəz olunur (quraşdıranın redaktə etdiyi surətlər əvvəlcə ehtiyat nüsxəyə alınır). Quraşdıranlar bunu söndürə bilər.",
+      "viewOnly": "Yalnız baxış",
+      "viewOnlyAll": "Seçilənlərin hamısını yalnız baxış et",
+      "includedAutomatically": {
+        "title": "Avtomatik daxil edilib",
+        "hint": "Seçdiyiniz bir şeyin ehtiyacı olduğu üçün birlikdə götürülüb. Yalnız oxumaq üçün.",
+        "rows": "{count, plural, one {# əlavə element} other {# əlavə element}}",
+        "kind": {
+          "folders": "Qovluqlar",
+          "placeCategories": "Məkan kateqoriyaları"
+        }
+      },
+      "viewOnlyCopyIncluded": "Seçdiyiniz element (və ya onun ehtiyac duyduğu element) yalnız baxış şablonundan quraşdırılıb, ona görə yeni şablonda paylaşıla bilməz."
     },
     "categories": {
       "flows": "Axınlar",
@@ -7914,8 +8055,116 @@
       "keywords": "Açar sözlər",
       "entryPointLinks": "Giriş nöqtəsi keçidləri",
       "triggers": "Tətikləyicilər",
-      "fbCommentAutomations": "Facebook şərhlərinin avtomatlaşdırılması",
-      "settings": "Parametrlər"
+      "fbCommentAutomations": "Şərh avtomatlaşdırmaları",
+      "settings": "Bot sahələri və saxlanmış cavablar",
+      "sequences": "Ardıcıllıqlar",
+      "aiMcpServers": "MCP serverləri",
+      "aiFiles": "AI bilik faylları",
+      "questionnaires": "Questionnaires",
+      "couponTopics": "Kupon mövzuları",
+      "pipelines": "Satış xətləri"
+    },
+    "locked": {
+      "flowBanner": "Bu axın yalnız baxış şablonundan quraşdırılıb. Onu görə bilərsiniz, lakin redaktə edə bilməzsiniz.",
+      "badge": "Yalnız baxış",
+      "editorBanner": "Bu, yalnız baxış şablonundan quraşdırılıb. Onu görə bilərsiniz, lakin redaktə edə bilməzsiniz.",
+      "badgeHint": "Yalnız baxış şablonundan quraşdırılıb"
+    },
+    "channels": {
+      "messenger": "Messenger",
+      "instagram": "Instagram",
+      "instagramFacebook": "Instagram (Facebook login)",
+      "threads": "Threads",
+      "tiktok": "TikTok",
+      "whatsapp": "WhatsApp",
+      "telegram": "Telegram",
+      "zalo": "Zalo",
+      "webchat": "Webchat",
+      "line": "LINE",
+      "email": "E-poçt"
+    },
+    "uninstall": {
+      "title": "Şablonu sil",
+      "description": "Şablon bu iş sahəsində yaratdığı hər şeyi, o cümlədən redaktə edilmiş surətləri silir. Paylaşılan etiketlər, sahələr və qovluqlar, əvvəldən mövcud olan elementlər və surətin üzərində qurduğunuz hər şey saxlanılır.",
+      "loading": "Nə baş verəcəyi yoxlanılır…",
+      "previewFailed": "Silmənin nə edəcəyini yoxlamaq mümkün olmadı.",
+      "failed": "Şablonu silmək mümkün olmadı.",
+      "confirm": "Sil",
+      "action": "Sil",
+      "deleted": "{count, plural, one {# element silinəcək} other {# element silinəcək}}",
+      "deletedDone": "{count, plural, one {# element silindi} other {# element silindi}}",
+      "keptModified": "{count, plural, one {# redaktə edilmiş və ya yoxlanılmamış surət saxlanılır} other {# redaktə edilmiş və ya yoxlanılmamış surət saxlanılır}}",
+      "keptShared": "{count, plural, one {# paylaşılan etiket və ya sahə saxlanılır} other {# paylaşılan etiket və sahə saxlanılır}}",
+      "keptByPolicy": "{count, plural, one {# digər element saxlanılır} other {# digər element saxlanılır}}",
+      "keptHasDependents": "{count, plural, one {# surət saxlanılır, çünki hələ nəsə ondan istifadə edir} other {# surət saxlanılır, çünki hələ nəsə onlardan istifadə edir}}",
+      "deletedModified": "{count, plural, one {Onlardan # ədəd sizin tərəfinizdən redaktə edilib: bu dəyişikliklər itir və bərpa oluna bilməz} other {Onlardan # ədəd sizin tərəfinizdən redaktə edilib: bu dəyişikliklər itir və bərpa oluna bilməz}}",
+      "keptLockedByOther": "{count, plural, one {# element saxlanılır, çünki başqa şablon quraşdırması onu hələ qoruyur} other {# element saxlanılır, çünki başqa şablon quraşdırması onları hələ qoruyur}}",
+      "confirmCheckbox": "Başa düşürəm ki, bu, yuxarıdakı elementləri silir və geri qaytarıla bilməz",
+      "started": "Silmə başladı",
+      "inProgress": "Silinir…",
+      "retry": "Silməni yenidən cəhd et",
+      "state": {
+        "pending": "Silmə növbədədir",
+        "running": "Silinir…",
+        "partial": "Silmə yarımçıqdır, yenidən cəhd edin",
+        "failed": "Silmə uğursuz oldu, yenidən cəhd edin",
+        "skipped": "Silmə atlandı: iş sahəsi bloklanıb"
+      },
+      "deletedUnverified": "{count, plural, one {Onlardan # ədədinin redaktə edilib-edilmədiyini yoxlamaq mümkün deyil: dəyişdiribsinizsə, həmin dəyişikliklər itir} other {Onlardan # ədədinin redaktə edilib-edilmədiyini yoxlamaq mümkün deyil: dəyişdiribsinizsə, həmin dəyişikliklər itir}}",
+      "cancelAction": "Silməni ləğv et",
+      "cancelled": "Silmə ləğv edildi: qalan elementlərdən yenidən istifadə edə bilərsiniz",
+      "blockedByReference": "{count, plural, one {# element silinmədi, çünki yaratdığınız nəsə hələ ona istinad edir: həmin istinadı silin, sonra silməni yenidən cəhd edin} other {# element silinmədi, çünki yaratdığınız nəsə hələ onlara istinad edir: həmin istinadları silin, sonra silməni yenidən cəhd edin}}",
+      "keptPartlyRemoved": "{count, plural, one {Bloklanmış silmədən sonra # surət saxlanıldı; tarixçə və dublikatdan qorunma məlumatları silinmiş ola bilər, ona görə də aktiv etməzdən əvvəl yoxlayın} other {Bloklanmış silmədən sonra # surət saxlanıldı; tarixçə və dublikatdan qorunma məlumatları silinmiş ola bilər, ona görə də aktiv etməzdən əvvəl yoxlayın}}",
+      "keptInactiveForReview": "{count, plural, one {# surət qeyri-aktiv saxlanıldı: onun tarixçəsi və dublikatdan qorunma məlumatları silindi, ona görə də aktiv etməzdən əvvəl yoxlayın} other {# surət qeyri-aktiv saxlanıldı: onların tarixçəsi və dublikatdan qorunma məlumatları silindi, ona görə də aktiv etməzdən əvvəl yoxlayın}}",
+      "keptHistoryRemoved": "{count, plural, one {# surət saxlanıldı, lakin tarixçəsi silindi (aktiv ediləcək heç nə yoxdur): ona etibar etməzdən əvvəl yoxlayın} other {# surət saxlanıldı, lakin tarixçələri silindi (aktiv ediləcək heç nə yoxdur): onlara etibar etməzdən əvvəl yoxlayın}}",
+      "cancelledPartial": "{count, plural, one {# element artıq silinir və tamamlanacaq; qalanı geri verildi} other {# element artıq silinir və tamamlanacaq; qalanı geri verildi}}"
+    },
+    "warningCodes": {
+      "aiFileTooLarge": "Bu bilik faylı şablon quraşdırmasının köçürə biləcəyindən böyükdür, ona görə də ötürüldü.",
+      "aiFileUnavailable": "Bu bilik faylı köçürülə bilmədi, ona görə də ötürüldü.",
+      "assigneeRequired": "Bu addımın söhbəti kimə təyin etdiyini seçin.",
+      "ambiguousSourceFieldToken": "Bir neçə mənbə sahəsi eyni adı daşıyır, ona görə bu adı istifadə edən dəyişənlər dəyişdirilmədi.",
+      "backupTooLarge": "Yerli olaraq redaktə edilmiş element ehtiyat nüsxə üçün çox böyük idi, ona görə üzərinə yazılmadı.",
+      "backupUnavailable": "Bu elementin ehtiyat nüsxəsi artıq əlçatan deyil.",
+      "botFieldRenamed": "Bu adla və başqa tipli bot sahəsi artıq mövcuddur, ona görə də adı dəyişdirilmiş sahə yaradıldı.",
+      "categoryPermissionDenied": "Bu kateqoriya üçün icazəniz yoxdur, ona görə atlandı.",
+      "couponTopicExpired": "Bu kupon mövzusunun müddəti artıq bitib.",
+      "credentialRequired": "İstifadə etməzdən əvvəl bu element üçün etibarnamələri əlavə edin.",
+      "custom": "İstinad edilən element bu iş sahəsində tapılmadı, ona görə keçid silindi.",
+      "customField": "İstinad edilən element bu iş sahəsində tapılmadı, ona görə keçid silindi.",
+      "customFieldRenamed": "Bu adda və başqa tipdə sahə artıq mövcuddur, ona görə adı dəyişdirilmiş sahə yaradıldı.",
+      "enqueueFailed": "Bu element üçün arxa plan emalını növbəyə qoymaq mümkün olmadı.",
+      "flow": "İstinad edilən element bu iş sahəsində tapılmadı, ona görə keçid silindi.",
+      "flowInvalidStructure": "Axının strukturu yararsızdır, ona görə atlandı.",
+      "flowNotPublished": "Axın qaralama kimi quraşdırıldı və dərc edilməyib.",
+      "flowSkippedRequiredReference": "Tələb olunan istinad həll edilə bilmədiyi üçün axın atlandı.",
+      "folder": "İstinad edilən element bu iş sahəsində tapılmadı, ona görə keçid silindi.",
+      "inboxBindingRequired": "Bu kanal üçün gələnlər qutusu seçin; o vaxta qədər element qeyri-aktiv qalır.",
+      "integration": "İstinad edilən element bu iş sahəsində tapılmadı, ona görə keçid silindi.",
+      "localModifiedOverwritten": "Yerli olaraq redaktə edilmiş element üzərinə yazıldı. Ehtiyat nüsxə saxlanıldı və bərpa edilə bilər.",
+      "name": "Bu element üçün boş ad tapılmadı, ona görə atlandı.",
+      "noEmbeddingProvider": "Bu iş sahəsində embedding provayderi qurulmayıb, ona görə də bilik faylları ötürüldü. OpenAI və ya Gemini qoşun, sonra yenidən quraşdırın.",
+      "notUpdatable": "Bu tip element hələ avtomatik yenilənmir.",
+      "pipeline": "Artıq mövcud olmayan pipeline istifadə edir.",
+      "pipelineField": "Artıq mövcud olmayan pipeline sahəsi istifadə edir.",
+      "pipelineStage": "Artıq mövcud olmayan pipeline mərhələsi istifadə edir.",
+      "postSelectionRequired": "Yazını yenidən seçin: orijinal yazı köçürülə bilmədi.",
+      "product": "İstinad edilən element bu iş sahəsində tapılmadı, ona görə keçid silindi.",
+      "productCategory": "İstinad edilən element bu iş sahəsində tapılmadı, ona görə keçid silindi.",
+      "questionImage": "Şəkil kopyalana bilmədi.",
+      "quota": "Plan limitinə çatıldı, ona görə element atlandı.",
+      "referenceRemoved": "Həll edilə bilməyən istinad silindi.",
+      "savedReply": "İstinad edilən element bu iş sahəsində tapılmadı, ona görə keçid silindi.",
+      "savedReplyImage": "Şəkil kopyalana bilmədi.",
+      "tag": "İstinad edilən element bu iş sahəsində tapılmadı, ona görə keçid silindi.",
+      "unlisted": "Element tam köçürülmədi: {code}",
+      "workspaceMember": "Bu iş sahəsində olmayan üzvə təyin edilib.",
+      "workspaceUnavailable": "Bu iş sahəsi artıq mövcud deyil, ona görə bu element ötürüldü."
+    },
+    "tabs": {
+      "mine": "Şablonlarım",
+      "installed": "Quraşdırılmış",
+      "installedEmpty": "Hələ quraşdırılmış şablon yoxdur. Başqa iş sahəsindən quraşdırdığınız şablonlar burada görünəcək."
     }
   },
   "qrCodeGenerator": {
@@ -8038,6 +8287,23 @@
     "hint": "Bütün kanallara icazə vermək üçün heç bir kanalı işarələməyin.",
     "hiddenByPlatform": "Platforma administratoru tərəfindən gizlədilib, bu kanalı yenidən aktivləşdirə bilməzsiniz."
   },
+  "platformDefaultTemplate": {
+    "title": "Defolt şablon",
+    "description": "Bu şablonu bu white-label daxilində yaradılan hər yeni iş sahəsinə quraşdırın. Mövcud iş sahələri dəyişmir.",
+    "clearTitle": "Defolt şablon silinsin?",
+    "clearDescription": "Yeni iş sahələri artıq avtomatik şablon almayacaq. Şablonu artıq olan iş sahələri onu saxlayır.",
+    "status": {
+      "notConfigured": "Təyin edilməyib",
+      "ready": "Aktiv",
+      "templateUnavailable": "Şablon əlçatan deyil",
+      "shareDisabled": "Paylaşım linki sönülüdür",
+      "keyRotated": "Açar etibarsızdır"
+    },
+    "errors": {
+      "unavailable": "Şablon ID və ya açar etibarsızdır.",
+      "shareDisabled": "Əvvəlcə şablonun paylaşım linkini aktivləşdirin."
+    }
+  },
   "platformEmailTemplates": {
     "title": "E-poçt şablonları",
     "description": "Sistemin standart şablonundan istifadə etmək üçün mövzunu və məzmunu boş saxlayın.",
@@ -8121,14 +8387,41 @@
     "invalidTitle": "Bu keçid artıq əlçatan deyil.",
     "invalidDescription": "Bu şablonun paylaşma keçidi etibarsızdır, deaktivdir və ya vaxtı bitib.",
     "byPublisher": "Müəllif: {publisherName}",
-    "includes": "Bu şablona daxildir",
     "videoTitle": "Şablonun önbaxış videosu",
-    "tryItOut": "Sına",
-    "signInToInstall": "Quraşdırmaq üçün daxil ol",
+    "preview": "Önizləmə",
+    "aboutTemplate": "Bu şablon haqqında",
     "selectWorkspace": "İş sahəsi seçin",
     "install": "Quraşdır",
     "installStarted": "Quraşdırma başladı",
-    "noEligibleWorkspaces": "Bu şablonu quraşdırmaq üçün uyğun iş sahəniz yoxdur."
+    "noEligibleWorkspaces": "Bu şablonu quraşdırmaq üçün uyğun iş sahəniz yoxdur.",
+    "alreadyInstalled": "Bu şablon artıq bu iş sahəsində quraşdırılıb.",
+    "viewInstall": "Quraşdırmaya bax",
+    "installAnotherCopy": "Başqa surət quraşdır",
+    "inboxesTitle": "Gələn qutuları",
+    "inboxesHint": "Bu şablon bu gələn qutuları ətrafında qurulub. Öz gələn qutularınızdan hansılardan istifadə ediləcəyini seçin; kənarda qalanlar deaktiv quraşdırılır.",
+    "noInbox": "Qoşma — deaktiv quraşdır",
+    "noInboxAvailable": "Bu kanalda qoşulmuş gələn qutusu yoxdur",
+    "updateExisting": "Quraşdırılmış surəti yenilə",
+    "updateStarted": "Yeniləmə başladı",
+    "publisherAccessLabel": "Naşirə bu iş sahəsinin adını görməyə və bu şablonu ondan silməyə icazə ver",
+    "publisherAccessHint": "Onlar heç vaxt məlumatlarınızı, kontaktlarınızı və ya e-poçtunuzu görmür. Silsələr, şablonun yaratdığı hər şey, o cümlədən redaktə etdiyiniz surətlər silinir; surətin üzərində qurduğunuz hər şey saxlanılır. Bunu sonra quraşdırma səhifəsində söndürə bilərsiniz.",
+    "autoUpdateLabel": "Şablon dəyişəndə avtomatik yenilə",
+    "collisions": {
+      "title": "Quraşdırma burada nə edəcək",
+      "loading": "Bu iş sahəsi yoxlanılır…",
+      "action": {
+        "create": "Yaradıldı",
+        "reuse": "Təkrar istifadə edildi",
+        "rename": "Adı dəyişdirildi",
+        "bind": "Bağlandı",
+        "unbound": "Bağlanmadan qaldı"
+      },
+      "detail": {
+        "rename": "“{name}” artıq başqa tiplə mövcuddur, ona görə şablondakı yeni adla əlavə olunur.",
+        "unbound": "“{name}” siz gələn qutusu seçənə qədər qoşulmamış qalır."
+      }
+    },
+    "createWorkspace": "Yeni iş sahəsi yarat"
   },
   "bookingPage": {
     "metadataTitle": "Görüşün sifarişi",
@@ -8474,14 +8767,6 @@
       "isActive": {
         "label": "Aktiv"
       },
-      "status": {
-        "label": "Status",
-        "values": {
-          "active": "Aktiv",
-          "draft": "Qaralama",
-          "unlisted": "Siyahıda deyil"
-        }
-      },
       "isAddonOnly": {
         "label": "Bu məhsuldan yalnız digər məhsullara əlavə kimi istifadə et"
       },
@@ -8512,6 +8797,14 @@
       "variantsDescription": "Bu məhsulun fərqli ölçülər və ya rənglər kimi bir neçə versiyası varsa, variantlar əlavə edin",
       "metaCatalogId": {
         "label": "Meta Catalog ID-si"
+      },
+      "status": {
+        "label": "Status",
+        "values": {
+          "active": "Aktiv",
+          "draft": "Qaralama",
+          "unlisted": "Siyahıda deyil"
+        }
       }
     },
     "inventoryPolicy": {

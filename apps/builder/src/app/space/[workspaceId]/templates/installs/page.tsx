@@ -1,22 +1,51 @@
 import { templateService } from "@chatbotx.io/business"
+import { templateInstallationStatuses } from "@chatbotx.io/database/partials"
 import { getIdFromParams } from "@chatbotx.io/utils"
 import { notFound } from "next/navigation"
 import { getTranslations } from "next-intl/server"
 import { AppBreadcrumb } from "@/components/app-breadcrumb"
 import { TemplateInstallsTable } from "@/features/templates/components/template-installs-table"
+import { TemplatesTabs } from "@/features/templates/components/templates-tabs"
+import {
+  parseCursor,
+  requireTemplateInstallsAccess,
+} from "@/features/templates/lib/page-guard"
 
 export default async function TemplateInstallsPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ workspaceId: string }>
+  searchParams: Promise<{ cursor?: string; status?: string }>
 }) {
   const workspaceId = getIdFromParams(await params, "workspaceId")
   if (!workspaceId) {
     return notFound()
   }
 
+  const { permissions, actor } =
+    await requireTemplateInstallsAccess(workspaceId)
+
   const t = await getTranslations()
-  const installations = await templateService.listInstallations(workspaceId)
+  const { cursor, status } = await searchParams
+  const parsedStatus = templateInstallationStatuses.safeParse(status)
+  const beforeId = parseCursor(cursor)
+  const [{ items, nextCursor }, inFlight] = await Promise.all([
+    templateService.listInstallationsPage({
+      workspaceId,
+      beforeId,
+      status: parsedStatus.success ? parsedStatus.data : undefined,
+      actor,
+    }),
+    // An install running under another filter or page must still keep the
+    // list refreshing.
+    templateService.listInstallationsPage({
+      workspaceId,
+      activeOnly: true,
+      limit: 1,
+      actor,
+    }),
+  ])
 
   return (
     <div className="flex flex-col gap-4">
@@ -27,11 +56,19 @@ export default async function TemplateInstallsPage({
             label: t("templates.title"),
             href: `/space/${workspaceId}/templates`,
           },
-          { label: t("templates.installs.title"), href: "" },
+          { label: t("templates.tabs.installed"), href: "" },
         ]}
       />
+      <TemplatesTabs
+        active="installed"
+        permissions={permissions}
+        workspaceId={workspaceId}
+      />
       <TemplateInstallsTable
-        installations={installations}
+        hasActiveInstalls={inFlight.items.length > 0}
+        installations={items}
+        nextCursor={nextCursor}
+        status={parsedStatus.success ? parsedStatus.data : null}
         workspaceId={workspaceId}
       />
     </div>

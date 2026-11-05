@@ -1,6 +1,7 @@
 import { AsyncLocalStorage } from "node:async_hooks"
+import type { SYSTEM_ACTOR } from "./actor"
 
-export const SYSTEM_ACTOR = "system"
+export { SYSTEM_ACTOR } from "./actor"
 
 export type AuditActor = {
   userId?: string | typeof SYSTEM_ACTOR

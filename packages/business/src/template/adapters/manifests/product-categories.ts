@@ -26,6 +26,10 @@ export const resolveProductCategoryManifest = async (
   }
   const idMap = ctx.idMaps.productCategory
   const remaining = new Map(entries)
+  // Read once: every entry is matched against the same rows, plus those it adds.
+  const known: KnownCategory[] = [
+    ...(await productCategoryRepository.list(ctx.workspaceId, ctx.tx)),
+  ]
 
   for (let pass = 0; pass < entries.length && remaining.size > 0; pass++) {
     const resolvedThisPass: string[] = []
@@ -38,6 +42,8 @@ export const resolveProductCategoryManifest = async (
 
       const targetId = await findOrCreateProductCategory(
         ctx,
+        known,
+        sourceId,
         entry,
         parentTargetId,
       )
@@ -63,6 +69,8 @@ export const resolveProductCategoryManifest = async (
   }
 }
 
+type KnownCategory = { id: string; name: string; parentId: string | null }
+
 const resolveParentTargetId = (
   parentSourceId: string | null,
   idMap: Map<string, string>,
@@ -76,15 +84,13 @@ const resolveParentTargetId = (
 
 const findOrCreateProductCategory = async (
   ctx: TemplateInstallContext,
+  known: KnownCategory[],
+  sourceId: string,
   entry: TemplateProductCategoryManifestEntry,
   parentTargetId: string | null,
 ): Promise<string> => {
   const name = normalizeName(entry.name)
-  const allCategories = await productCategoryRepository.list(
-    ctx.workspaceId,
-    ctx.tx,
-  )
-  const existing = allCategories.find(
+  const existing = known.find(
     (row) =>
       row.parentId === parentTargetId &&
       normalizeName(row.name).toLowerCase() === name.toLowerCase(),
@@ -94,21 +100,27 @@ const findOrCreateProductCategory = async (
       category: "productCategories",
       resourceKind: "productCategory",
       resourceId: existing.id,
-      sourceResourceId: existing.id,
+      sourceResourceId: sourceId,
       wasExisting: true,
     })
     return existing.id
   }
 
   const created = await productCategoryRepository.create(
-    { workspaceId: ctx.workspaceId, name, parentId: parentTargetId },
+    {
+      workspaceId: ctx.workspaceId,
+      name,
+      parentId: parentTargetId,
+      rank: entry.rank,
+    },
     ctx.tx,
   )
+  known.push({ id: created.id, name, parentId: parentTargetId })
   ctx.track({
     category: "productCategories",
     resourceKind: "productCategory",
     resourceId: created.id,
-    sourceResourceId: created.id,
+    sourceResourceId: sourceId,
     wasExisting: false,
   })
   return created.id

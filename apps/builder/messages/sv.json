@@ -3479,14 +3479,15 @@
     },
     "status": {
       "completed": "Slutförd",
-      "partial": "Partial",
+      "partial": "Delvis",
       "error": "Fel",
       "failed": "Misslyckades",
       "label": "Status",
       "pending": "Väntande",
       "processing": "Bearbetas",
       "installing": "Installing",
-      "success": "Lyckades"
+      "success": "Lyckades",
+      "uninstalled": "Uninstalled"
     },
     "statusCode": {
       "label": "Statuskod"
@@ -3817,6 +3818,7 @@
       "leaderboards": "Topplistor",
       "pipelines": "Pipelines",
       "places": "Platser",
+      "templates": "Mallar",
       "polls": "Polls"
     },
     "adReferral": {
@@ -3968,6 +3970,7 @@
   "flows": {
     "export": {
       "notPublished": "Det här flödet har aldrig publicerats. Publicera det innan du exporterar.",
+      "viewOnly": "Det här flödet installerades från en mall som bara kan visas, så det kan inte exporteras.",
       "failed": "Export misslyckades. Försök igen."
     },
     "actions": {
@@ -6330,6 +6333,23 @@
     "title": "Dolda kanaler",
     "hiddenByPlatform": "Dold av plattformsadministratören — du kan inte återaktivera den här kanalen."
   },
+  "platformDefaultTemplate": {
+    "title": "Standardmall",
+    "description": "Installera den här mallen i varje ny arbetsyta som skapas under denna white-label. Befintliga arbetsytor ändras inte.",
+    "clearTitle": "Ta bort standardmallen?",
+    "clearDescription": "Nya arbetsytor får inte längre en mall automatiskt. Arbetsytor som redan har den behåller den.",
+    "status": {
+      "notConfigured": "Inte angiven",
+      "ready": "Aktiv",
+      "templateUnavailable": "Mallen är inte tillgänglig",
+      "shareDisabled": "Delningslänk avstängd",
+      "keyRotated": "Nyckeln ogiltig"
+    },
+    "errors": {
+      "unavailable": "Mall-ID eller nyckel är ogiltig.",
+      "shareDisabled": "Aktivera mallens delningslänk först."
+    }
+  },
   "platformCredentials": {
     "notConfigured": "Inte konfigurerad ännu",
     "notConfiguredHint": "Lägg till dina inställningar för att börja använda integreringen.",
@@ -6580,14 +6600,6 @@
       "isActive": {
         "label": "Aktiv"
       },
-      "status": {
-        "label": "Status",
-        "values": {
-          "active": "Aktiv",
-          "draft": "Utkast",
-          "unlisted": "Olistad"
-        }
-      },
       "isAddonOnly": {
         "label": "Använd endast produkten som tillägg till andra produkter"
       },
@@ -6640,6 +6652,14 @@
       "vendor": {
         "label": "Leverantör",
         "none": "Ingen"
+      },
+      "status": {
+        "label": "Status",
+        "values": {
+          "active": "Aktiv",
+          "draft": "Utkast",
+          "unlisted": "Olistad"
+        }
       }
     },
     "inventoryPolicy": {
@@ -7022,6 +7042,9 @@
   },
   "templates": {
     "description": "Skapa och hantera dina mallar.",
+    "createDialog": {
+      "title": "Ny mall"
+    },
     "title": "Mallar",
     "share": {
       "label": "Dela",
@@ -7031,14 +7054,137 @@
       "dialogDescription": "Alla med den här länken kan installera en kopia av den här mallen i en arbetsyta i din organisation.",
       "enableLabel": "Aktivera dellänk",
       "linkLabel": "Dellänk",
-      "description": "Alla med länken kan installera den här mallen i sin egen arbetsyta."
+      "rotateLabel": "Byt ut länk",
+      "rotateTitle": "Byta ut dellänken?",
+      "rotateDescription": "Den nuvarande länken slutar fungera direkt. Alla som fortfarande behöver installera den här mallen behöver den nya länken.",
+      "rotated": "Dellänken har bytts ut",
+      "expiryLabel": "Länken upphör att gälla",
+      "expiryHint": "Lämna tomt för en länk som aldrig upphör att gälla.",
+      "clearExpiry": "Ta bort utgångsdatum",
+      "expiredNotice": "Den här länken har upphört att gälla. Ange ett senare datum eller ta bort utgångsdatumet för att dela den igen.",
+      "templateId": "Mall-ID",
+      "templateKey": "Mallnyckel",
+      "showKey": "Visa nyckel",
+      "hideKey": "Dölj nyckel",
+      "copyField": "Kopiera {field}"
+    },
+    "sync": {
+      "title": "Uppdateringar",
+      "updateAvailable": "Uppdatering tillgänglig",
+      "upToDate": "Uppdaterad",
+      "sourceDeleted": "Mallen har tagits bort",
+      "sourceDeletedHint": "Utgivaren har tagit bort den här mallen. Din kopia fungerar fortfarande men kan inte längre uppdateras.",
+      "updateNow": "Uppdatera nu",
+      "updating": "Uppdaterar…",
+      "version": "Mallversion {version}",
+      "lastSynced": "senast uppdaterad {date}",
+      "autoUpdateLabel": "Uppdatera automatiskt när mallen ändras",
+      "noHistory": "Inga uppdateringar än.",
+      "countAdded": "{count} tillagda",
+      "countUpdated": "{count} uppdaterade",
+      "countDetached": "{count} följer inte längre mallen",
+      "notUpdatable": "{count} kan inte uppdateras än",
+      "overwritten": "{name} redigerades och ersattes av uppdateringen",
+      "restore": "Återställ min version",
+      "restored": "Din version har återställts",
+      "status": {
+        "pending": "Köad",
+        "running": "Pågår",
+        "completed": "Slutförd",
+        "partial": "Delvis",
+        "failed": "Misslyckades",
+        "skipped": "Hoppades över",
+        "cancelled": "Avbruten"
+      },
+      "trigger": {
+        "autoUpdate": "Automatisk",
+        "manual": "Manuell",
+        "reinstall": "Ominstallation"
+      },
+      "publisherAccessLabel": "Låt utgivaren se den här arbetsytan och avinstallera mallen",
+      "publisherAccessHint": "Endast arbetsytans namn delas. Om utgivaren avinstallerar raderas allt som mallen skapade, inklusive kopior som du har redigerat.",
+      "requestedVersion": "begärd v{version}",
+      "errors": {
+        "unknown": "Uppdateringen misslyckades. Försök igen, eller kontakta supporten om det fortsätter.",
+        "templateSyncFailed": "Uppdateringen misslyckades. Försök igen.",
+        "templateSyncSuperseded": "En nyare uppdatering ersatte den här.",
+        "templateSyncAbandoned": "Uppdateringen blev inte klar i tid och stängdes.",
+        "templateInstallationInactive": "Den här installationen är inte längre aktiv.",
+        "workspaceOwnerBlocked": "Arbetsytans ägarkonto är blockerat.",
+        "templateUninstallInProgress": "Mallen avinstalleras.",
+        "templateAutoUpdateOff": "Automatiska uppdateringar är avstängda.",
+        "templateUpToDate": "Kopian är redan uppdaterad.",
+        "templateInstallerAccessLost": "Den som installerade har inte längre behörighet att uppdatera den här kopian.",
+        "templateInstallationSourceMissing": "Mallen raderades innan uppdateringen kördes.",
+        "templateCategoryPermissionDenied": "Du har inte längre behörighet att uppdatera allt i den här mallen.",
+        "templatePayloadIncompatible": "Den här mallen sparades i ett nyare format än den här servern kan installera.",
+        "templateCrossTenantInstall": "Den här mallen är inte tillgänglig för din arbetsyta.",
+        "templateInvalidInboxBinding": "En vald inkorg matchar inte mallen."
+      }
+    },
+    "versions": {
+      "detailsTab": "Detaljer",
+      "tab": "Versioner",
+      "versionNumber": "Version {version}",
+      "current": "Aktuell",
+      "first": "Första versionen",
+      "noDetail": "Inga detaljer registrerades för den här versionen.",
+      "added": "Tillagt",
+      "changed": "Ändrat",
+      "removed": "Borttaget"
+    },
+    "installers": {
+      "title": "Visa analys",
+      "workspace": "Arbetsyta",
+      "lastInstalled": "Senast installerad",
+      "version": "Version",
+      "autoUpdate": "Automatisk uppdatering",
+      "uninstalled": "Avinstallerad",
+      "hidden": "Arbetsytan delas inte",
+      "uninstallNotAllowed": "Installatören har inte tillåtit utgivare att avinstallera den här kopian.",
+      "loadError": "Kunde inte läsa in installatörerna. Försök igen.",
+      "automatic": "Automatisk",
+      "details": "Detaljer",
+      "noIssues": "Inga varningar eller fel."
     },
     "installs": {
       "title": "Installationer",
       "resources": "Resurser",
       "warnings": "Varningar",
       "completedAt": "Slutförd",
-      "autoUpdate": "Automatisk uppdatering"
+      "autoUpdate": "Automatisk uppdatering",
+      "installedBy": "Installerad av",
+      "viaApi": "API-token",
+      "attempts": "Försök",
+      "autoUpdateOn": "På",
+      "autoUpdateOff": "Av",
+      "retry": "Försök installera igen",
+      "resourcesTitle": "Installerade resurser",
+      "noResources": "Inget har skapats än.",
+      "deletedResource": "Borttagen resurs",
+      "viewOnly": "Endast visning",
+      "created": "Skapad",
+      "reused": "Återanvänd",
+      "loadMore": "Visa fler",
+      "statusFilter": "Status",
+      "allStatuses": "Alla statusar",
+      "errors": {
+        "unknown": "Installationen misslyckades. Försök igen eller kontakta supporten om det fortsätter att misslyckas.",
+        "templatePayloadIncompatible": "Den här mallen sparades i ett nyare format än den här servern kan installera.",
+        "templateInstallationSourceMissing": "Mallen raderades innan installationen kördes.",
+        "templateCrossTenantInstall": "Den här mallen är inte tillgänglig för din arbetsyta.",
+        "templateCategoryPermissionDenied": "Du har inte längre behörighet att installera allt i den här mallen.",
+        "templateInvalidInboxBinding": "En vald inkorg matchar inte mallen.",
+        "templateInstallEnqueueFailed": "Installationen kunde inte köas.",
+        "templateInstallFailed": "Installationen misslyckades. Försök igen.",
+        "templateInstallAbandoned": "Installationen blev inte klar i tid och stängdes.",
+        "templateInstallSuperseded": "En nyare installation av den här mallen ersatte den här.",
+        "workspaceOwnerBlocked": "Arbetsytans ägarkonto är blockerat."
+      },
+      "uninstalledBy": "{by, select, publisher {Utgivaren avinstallerade den här mallen.} installer {Den här mallen avinstallerades från den här arbetsytan.} other {Den här mallen avinstallerades.}}",
+      "uninstalledSummary": "{deleted} borttagna, {kept} behållna.",
+      "lastAttemptAt": "Senaste försök",
+      "installedAutomatically": "Installerad automatiskt (white-label-standard)"
     },
     "form": {
       "contents": "Mallens innehåll",
@@ -7051,14 +7197,26 @@
       "allowDelete": "Tillåt borttagning efter installation",
       "publisherName": "Utgivarens namn",
       "youtubeVideoId": "YouTube-video-id",
-      "youtubeVideoIdDescription": "Det 11-teckens id från videons URL, t.ex. \"dQw4w9WgXcQ\" i youtube.com/watch?v=dQw4w9WgXcQ",
+      "youtubeVideoIdDescription": "Det 11-teckens id från videons URL, t.ex. \"xxxxxxxxxxx\" i youtube.com/watch?v=xxxxxxxxxxx",
       "testLink": "Testlänk",
       "imageUrl": "Omslagsbild",
       "installBehavior": "Installationsbeteende",
-      "createInstallFolder": "Installera i en dedikerad mapp",
+      "createInstallFolder": "Skapa en mapp på det installerade kontot och installera resurser.",
       "createInstallFolderDescription": "Placerar varje installerad resurs i en ny mapp uppkallad efter den här mallen.",
-      "defaultAutoUpdate": "Markera installationer för uppdatering som standard",
-      "defaultAutoUpdateDescription": "Nya installationer visar ett meddelande om tillgänglig uppdatering varje gång du publicerar om den här mallen."
+      "defaultAutoUpdate": "Uppdatera installerade mallar automatiskt",
+      "defaultAutoUpdateDescription": "Varje gång du sparar den här mallen med ändrat innehåll skrivs installationer som följer automatisk uppdatering över med det nya innehållet (kopior som installatören redigerat säkerhetskopieras först). Installatörer kan stänga av det.",
+      "viewOnly": "Endast visning",
+      "viewOnlyAll": "Gör alla valda skrivskyddade",
+      "includedAutomatically": {
+        "title": "Ingår automatiskt",
+        "hint": "Medföljer eftersom något du valde behöver det. Skrivskyddat.",
+        "rows": "{count, plural, one {# objekt till} other {# objekt till}}",
+        "kind": {
+          "folders": "Mappar",
+          "placeCategories": "Platskategorier"
+        }
+      },
+      "viewOnlyCopyIncluded": "Något du valt (eller något det behöver) installerades från en mall som bara kan visas och kan inte delas i en ny mall."
     },
     "categories": {
       "flows": "Flöden",
@@ -7073,8 +7231,116 @@
       "keywords": "Nyckelord",
       "entryPointLinks": "Länkar till startpunkter",
       "triggers": "Utlösare",
-      "fbCommentAutomations": "Facebook-kommentarautomatiseringar",
-      "settings": "Inställningar"
+      "fbCommentAutomations": "Kommentarautomatiseringar",
+      "settings": "Botfält och sparade svar",
+      "sequences": "Sekvenser",
+      "aiMcpServers": "MCP-servrar",
+      "aiFiles": "AI-kunskapsfiler",
+      "questionnaires": "Frågeformulär",
+      "couponTopics": "Kupongämnen",
+      "pipelines": "Pipelines"
+    },
+    "locked": {
+      "flowBanner": "Det här flödet installerades från en skrivskyddad mall. Du kan titta på det men inte redigera det.",
+      "badge": "Endast visning",
+      "editorBanner": "Den här installerades från en mall med endast visning. Du kan titta på den men inte redigera den.",
+      "badgeHint": "Installerad från en mall med endast visning"
+    },
+    "channels": {
+      "messenger": "Messenger",
+      "instagram": "Instagram",
+      "instagramFacebook": "Instagram (Facebook-inloggning)",
+      "threads": "Threads",
+      "tiktok": "TikTok",
+      "whatsapp": "WhatsApp",
+      "telegram": "Telegram",
+      "zalo": "Zalo",
+      "webchat": "Webbchatt",
+      "line": "LINE",
+      "email": "E-post"
+    },
+    "uninstall": {
+      "title": "Avinstallera mall",
+      "description": "Mallen tar bort allt den skapade i den här arbetsytan, inklusive kopior som redigerats. Delade taggar, fält och mappar, objekt som fanns tidigare och allt du byggt ovanpå en kopia behålls.",
+      "loading": "Kontrollerar vad som kommer att hända…",
+      "previewFailed": "Det gick inte att kontrollera vad en avinstallation skulle göra.",
+      "failed": "Det gick inte att avinstallera mallen.",
+      "confirm": "Avinstallera",
+      "action": "Avinstallera",
+      "deleted": "{count, plural, one {# objekt kommer att raderas} other {# objekt kommer att raderas}}",
+      "deletedDone": "{count, plural, one {# objekt raderades} other {# objekt raderades}}",
+      "keptModified": "{count, plural, one {# redigerad eller overifierad kopia behålls} other {# redigerade eller overifierade kopior behålls}}",
+      "keptShared": "{count, plural, one {# delad tagg eller fält behålls} other {# delade taggar och fält behålls}}",
+      "keptByPolicy": "{count, plural, one {# annat objekt behålls} other {# andra objekt behålls}}",
+      "keptHasDependents": "{count, plural, one {# kopia behålls eftersom något fortfarande använder den} other {# kopior behålls eftersom något fortfarande använder dem}}",
+      "deletedModified": "{count, plural, one {# av dem redigerades av dig: dessa ändringar går förlorade och kan inte återställas} other {# av dem redigerades av dig: dessa ändringar går förlorade och kan inte återställas}}",
+      "keptLockedByOther": "{count, plural, one {# objekt behålls eftersom en annan mallinstallation fortfarande skyddar det} other {# objekt behålls eftersom en annan mallinstallation fortfarande skyddar dem}}",
+      "confirmCheckbox": "Jag förstår att detta raderar objekten ovan och inte kan ångras",
+      "started": "Avinstallationen har startat",
+      "inProgress": "Avinstallerar…",
+      "retry": "Försök avinstallera igen",
+      "state": {
+        "pending": "Avinstallation köad",
+        "running": "Avinstallerar…",
+        "partial": "Avinstallationen är ofullständig, försök igen",
+        "failed": "Avinstallationen misslyckades, försök igen",
+        "skipped": "Avinstallationen hoppades över: arbetsytan är blockerad"
+      },
+      "deletedUnverified": "{count, plural, one {# av dem kan inte kontrolleras för redigeringar: om du ändrade den går ändringarna förlorade} other {# av dem kan inte kontrolleras för redigeringar: om du ändrade dem går ändringarna förlorade}}",
+      "cancelAction": "Avbryt avinstallation",
+      "cancelled": "Avinstallationen avbröts: de återstående objekten kan du använda igen",
+      "blockedByReference": "{count, plural, one {# objekt raderades inte eftersom något du skapat fortfarande pekar på det: ta bort den referensen och försök sedan avinstallera igen} other {# objekt raderades inte eftersom något du skapat fortfarande pekar på dem: ta bort de referenserna och försök sedan avinstallera igen}}",
+      "keptPartlyRemoved": "{count, plural, one {# kopia behölls efter en blockerad avinstallation; historik och data för dubblettskydd kan ha tagits bort, så granska den innan du aktiverar den} other {# kopior behölls efter en blockerad avinstallation; historik och data för dubblettskydd kan ha tagits bort, så granska dem innan du aktiverar dem}}",
+      "keptInactiveForReview": "{count, plural, one {# kopia lämnades inaktiv: dess historik och data för dubblettskydd togs bort, så granska den innan du aktiverar den} other {# kopior lämnades inaktiva: deras historik och data för dubblettskydd togs bort, så granska dem innan du aktiverar dem}}",
+      "keptHistoryRemoved": "{count, plural, one {# kopia behölls, men dess historik togs bort (det finns inget att aktivera): granska den innan du förlitar dig på den} other {# kopior behölls, men deras historik togs bort (det finns inget att aktivera): granska dem innan du förlitar dig på dem}}",
+      "cancelledPartial": "{count, plural, one {# objekt håller redan på att raderas och slutförs; resten gavs tillbaka} other {# objekt håller redan på att raderas och slutförs; resten gavs tillbaka}}"
+    },
+    "warningCodes": {
+      "aiFileTooLarge": "Den här kunskapsfilen är större än en mallinstallation kan kopiera, så den hoppades över.",
+      "aiFileUnavailable": "Den här kunskapsfilen kunde inte kopieras, så den hoppades över.",
+      "assigneeRequired": "Välj vem det här steget tilldelar konversationen.",
+      "ambiguousSourceFieldToken": "Flera källfält har detta namn, så variablerna som använder det lämnades oförändrade.",
+      "backupTooLarge": "Ett lokalt redigerat objekt var för stort för att säkerhetskopieras, så det skrevs inte över.",
+      "backupUnavailable": "Säkerhetskopian för detta objekt är inte längre tillgänglig.",
+      "botFieldRenamed": "Ett botfält med det här namnet och en annan typ finns redan, så ett omdöpt fält skapades.",
+      "categoryPermissionDenied": "Du har inte behörighet för denna kategori, så den hoppades över.",
+      "couponTopicExpired": "Detta kupongämne har redan gått ut.",
+      "credentialRequired": "Lägg till inloggningsuppgifterna för detta objekt innan du använder det.",
+      "custom": "Ett refererat objekt hittades inte i denna arbetsyta, så länken togs bort.",
+      "customField": "Ett refererat objekt hittades inte i denna arbetsyta, så länken togs bort.",
+      "customFieldRenamed": "Ett fält med detta namn och en annan typ finns redan, så ett omdöpt fält skapades.",
+      "enqueueFailed": "Bakgrundsbearbetningen kunde inte köas för detta objekt.",
+      "flow": "Ett refererat objekt hittades inte i denna arbetsyta, så länken togs bort.",
+      "flowInvalidStructure": "Flowets struktur är ogiltig, så det hoppades över.",
+      "flowNotPublished": "Flowet installerades som utkast och är inte publicerat.",
+      "flowSkippedRequiredReference": "Flowet hoppades över eftersom en obligatorisk referens inte kunde lösas.",
+      "folder": "Ett refererat objekt hittades inte i denna arbetsyta, så länken togs bort.",
+      "inboxBindingRequired": "Välj en inkorg för denna kanal; tills dess förblir objektet inaktivt.",
+      "integration": "Ett refererat objekt hittades inte i denna arbetsyta, så länken togs bort.",
+      "localModifiedOverwritten": "Ett lokalt redigerat objekt skrevs över. En säkerhetskopia sparades och kan återställas.",
+      "name": "Inget ledigt namn hittades för detta objekt, så det hoppades över.",
+      "noEmbeddingProvider": "Ingen embedding-leverantör är konfigurerad i den här arbetsytan, så kunskapsfilerna hoppades över. Anslut OpenAI eller Gemini och installera igen.",
+      "notUpdatable": "Den här typen av objekt uppdateras inte automatiskt ännu.",
+      "pipeline": "Använder en pipeline som inte längre finns.",
+      "pipelineField": "Använder ett pipelinefält som inte längre finns.",
+      "pipelineStage": "Använder ett pipelinesteg som inte längre finns.",
+      "postSelectionRequired": "Välj inlägget igen: det ursprungliga inlägget kunde inte föras över.",
+      "product": "Ett refererat objekt hittades inte i denna arbetsyta, så länken togs bort.",
+      "productCategory": "Ett refererat objekt hittades inte i denna arbetsyta, så länken togs bort.",
+      "questionImage": "En bild kunde inte kopieras.",
+      "quota": "En plangräns nåddes, så objektet hoppades över.",
+      "referenceRemoved": "En referens som inte kunde lösas togs bort.",
+      "savedReply": "Ett refererat objekt hittades inte i denna arbetsyta, så länken togs bort.",
+      "savedReplyImage": "En bild kunde inte kopieras.",
+      "tag": "Ett refererat objekt hittades inte i denna arbetsyta, så länken togs bort.",
+      "unlisted": "Objektet fördes inte över helt: {code}",
+      "workspaceMember": "Tilldelad en medlem som inte finns i den här arbetsytan.",
+      "workspaceUnavailable": "Den här arbetsytan är inte längre tillgänglig, så objektet hoppades över."
+    },
+    "tabs": {
+      "mine": "Mina mallar",
+      "installed": "Installerade",
+      "installedEmpty": "Inga installerade mallar än. Mallar du installerar från en annan arbetsyta visas här."
     }
   },
   "texts": {
@@ -7196,14 +7462,41 @@
     "invalidTitle": "Den här länken är inte längre tillgänglig.",
     "invalidDescription": "Den här mallens dellänk är ogiltig, inaktiverad eller har gått ut.",
     "byPublisher": "Av {publisherName}",
-    "includes": "Den här mallen innehåller",
     "videoTitle": "Förhandsgranskningsvideo för mall",
-    "tryItOut": "Prova den",
-    "signInToInstall": "Logga in för att installera",
+    "preview": "Förhandsgranska",
+    "aboutTemplate": "Om den här mallen",
     "selectWorkspace": "Välj en arbetsyta",
     "install": "Installera",
     "installStarted": "Installationen har startat",
-    "noEligibleWorkspaces": "Du har ingen arbetsyta som är berättigad att installera den här mallen."
+    "noEligibleWorkspaces": "Du har ingen arbetsyta som är berättigad att installera den här mallen.",
+    "alreadyInstalled": "Den här mallen är redan installerad i den här arbetsytan.",
+    "viewInstall": "Visa installation",
+    "installAnotherCopy": "Installera en kopia till",
+    "inboxesTitle": "Inkorgar",
+    "inboxesHint": "Den här mallen byggdes kring dessa inkorgar. Välj vilka av dina egna inkorgar som ska användas; allt som utelämnas installeras avstängt.",
+    "noInbox": "Anslut inte – installera avstängd",
+    "noInboxAvailable": "Ingen ansluten inkorg i den här kanalen",
+    "updateExisting": "Uppdatera installerad kopia",
+    "updateStarted": "Uppdateringen har startat",
+    "publisherAccessLabel": "Låt utgivaren se den här arbetsytans namn och avinstallera den här mallen från den",
+    "publisherAccessHint": "De ser aldrig dina data, kontakter eller e-post. Om de avinstallerar raderas allt som mallen skapade, inklusive kopior som du har redigerat; allt du byggt ovanpå en kopia behålls. Du kan stänga av detta senare på installationssidan.",
+    "autoUpdateLabel": "Uppdatera automatiskt när mallen ändras",
+    "collisions": {
+      "title": "Vad installationen kommer att göra här",
+      "loading": "Kontrollerar den här arbetsytan…",
+      "action": {
+        "create": "Skapas",
+        "reuse": "Återanvänds",
+        "rename": "Döps om",
+        "bind": "Kopplas",
+        "unbound": "Lämnas okopplad"
+      },
+      "detail": {
+        "rename": "”{name}” finns redan med en annan typ, så mallens version läggs till under ett nytt namn.",
+        "unbound": "”{name}” lämnas okopplad tills du väljer en inkorg."
+      }
+    },
+    "createWorkspace": "Skapa en ny arbetsyta"
   },
   "userPersistentMenus": {
     "title": "Beständiga användarmenyer"

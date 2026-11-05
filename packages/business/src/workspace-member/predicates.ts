@@ -14,9 +14,11 @@ import type {
  * there is not enough. `permissions` is a jsonb column, so it is parsed
  * rather than trusted.
  */
-export function isWorkspaceAdminMember(
-  member: Pick<WorkspaceMemberModel, "role" | "permissions">,
-): boolean {
+export function isWorkspaceAdminMember(member: {
+  role: WorkspaceMemberModel["role"]
+  /** Parsed here, so any stored shape is accepted. */
+  permissions: unknown
+}): boolean {
   if (member.role === workspaceMemberRoles.enum.owner) {
     return true
   }

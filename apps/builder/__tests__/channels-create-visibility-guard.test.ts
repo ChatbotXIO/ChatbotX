@@ -34,6 +34,7 @@ vi.mock("next/navigation", () => ({
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
+  templateInstallIntentService: { clear: vi.fn(async () => undefined) },
   platformCredentialService: {
     resolveForOwner: vi.fn(async () => null),
   },

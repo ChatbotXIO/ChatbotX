@@ -176,6 +176,21 @@ describe("isReadOnlyTokenAllowedMethod", () => {
     ).toBe(true)
   })
 
+  test("allows POST to the template dependency and locked-resource previews", () => {
+    expect(
+      isReadOnlyTokenAllowedMethod(
+        "POST",
+        "/v1/templates/dependencies-preview",
+      ),
+    ).toBe(true)
+    expect(
+      isReadOnlyTokenAllowedMethod("POST", "/v1/templates/locked-resources"),
+    ).toBe(true)
+    expect(isReadOnlyTokenAllowedMethod("POST", "/v1/templates/save")).toBe(
+      false,
+    )
+  })
+
   test("allows POST to the public filter value-labels read, and not its PUT", () => {
     expect(
       isReadOnlyTokenAllowedMethod("POST", "/v1/contacts/filter-value-labels"),
@@ -240,6 +255,25 @@ describe("assertWorkspaceOwnerAccessForMethod", () => {
         path: FILTER_VALUE_LABELS_POST_PATH,
       }),
     ).resolves.toBeUndefined()
+  })
+
+  test.each([
+    "/v1/template-installations/{id}/uninstall",
+    "/v1/template-installations/{id}/uninstall/cancel",
+    "/v1/templates/{id}/installers/{installerId}/uninstall",
+  ])("allows template uninstall %s on a trial-expired workspace (UI parity)", async (path) => {
+    isCloud.mockReturnValue(true)
+    getAccessState.mockResolvedValue({ blocked: true, reason: "status" })
+
+    await expect(
+      assertWorkspaceOwnerAccessForMethod({
+        method: "POST",
+        ownerId: "owner-1",
+        path,
+      }),
+    ).resolves.toBeUndefined()
+    // A write: never opened to read_only tokens.
+    expect(isReadOnlyTokenAllowedMethod("POST", path)).toBe(false)
   })
 
   test("allows stopping a broadcast on a trial-expired workspace (UI parity)", async () => {

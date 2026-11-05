@@ -29,6 +29,7 @@ export const workspaceApiTokenScopeRegistry: Record<
   pipelines: { labelKey: "fields.tokenScopes.pipelines", order: 15 },
   places: { labelKey: "fields.tokenScopes.places", order: 16 },
   polls: { labelKey: "fields.tokenScopes.polls", order: 17 },
+  templates: { labelKey: "fields.tokenScopes.templates", order: 18 },
 }
 
 export const orderedWorkspaceApiTokenScopes = (

@@ -1703,7 +1703,8 @@
       "processing": "Wordt verwerkt",
       "installing": "Installing",
       "completed": "Voltooid",
-      "partial": "Partial",
+      "partial": "Gedeeltelijk",
+      "uninstalled": "Uninstalled",
       "failed": "Mislukt",
       "success": "Geslaagd",
       "error": "Fout"
@@ -2445,6 +2446,7 @@
       "leaderboards": "Ranglijsten",
       "pipelines": "Pijplijnen",
       "places": "Plaatsen",
+      "templates": "Sjablonen",
       "polls": "Polls"
     },
     "adReferral": {
@@ -2799,6 +2801,7 @@
   "flows": {
     "export": {
       "notPublished": "Deze flow is nog nooit gepubliceerd. Publiceer deze voordat je exporteert.",
+      "viewOnly": "Deze flow is geïnstalleerd vanuit een alleen-lezen-sjabloon en kan daarom niet worden geëxporteerd.",
       "failed": "Exporteren mislukt. Probeer het opnieuw."
     },
     "title": "Flows",
@@ -6995,6 +6998,9 @@
   "templates": {
     "title": "Sjablonen",
     "description": "Maak en beheer je sjablonen.",
+    "createDialog": {
+      "title": "Nieuw sjabloon"
+    },
     "share": {
       "label": "Delen",
       "enabled": "Gedeeld",
@@ -7003,14 +7009,137 @@
       "dialogDescription": "Iedereen met deze link kan een kopie van dit sjabloon installeren in een werkruimte binnen jouw tenant.",
       "enableLabel": "Deellink inschakelen",
       "linkLabel": "Deellink",
-      "description": "Iedereen met de link kan dit sjabloon in zijn eigen werkruimte installeren."
+      "rotateLabel": "Link vernieuwen",
+      "rotateTitle": "Deellink vernieuwen?",
+      "rotateDescription": "De huidige link werkt direct niet meer. Iedereen die dit sjabloon nog moet installeren, heeft de nieuwe link nodig.",
+      "rotated": "Deellink vernieuwd",
+      "expiryLabel": "Link verloopt",
+      "expiryHint": "Laat leeg voor een link die nooit verloopt.",
+      "clearExpiry": "Vervaldatum verwijderen",
+      "expiredNotice": "Deze link is verlopen. Stel een latere datum in of verwijder de vervaldatum om hem opnieuw te delen.",
+      "templateId": "Sjabloon-ID",
+      "templateKey": "Sjabloonsleutel",
+      "showKey": "Sleutel tonen",
+      "hideKey": "Sleutel verbergen",
+      "copyField": "Kopieer {field}"
+    },
+    "sync": {
+      "title": "Updates",
+      "updateAvailable": "Update beschikbaar",
+      "upToDate": "Up-to-date",
+      "sourceDeleted": "Sjabloon verwijderd",
+      "sourceDeletedHint": "De uitgever heeft dit sjabloon verwijderd. Je kopie blijft werken, maar kan niet meer worden bijgewerkt.",
+      "updateNow": "Nu bijwerken",
+      "updating": "Bijwerken…",
+      "version": "Sjabloonversie {version}",
+      "lastSynced": "laatst bijgewerkt op {date}",
+      "autoUpdateLabel": "Automatisch bijwerken wanneer het sjabloon verandert",
+      "noHistory": "Nog geen updates.",
+      "countAdded": "{count} toegevoegd",
+      "countUpdated": "{count} bijgewerkt",
+      "countDetached": "{count} volgen de template niet meer",
+      "notUpdatable": "{count} nog niet bij te werken",
+      "overwritten": "{name} was bewerkt en is vervangen door de update",
+      "restore": "Mijn versie herstellen",
+      "restored": "Je versie is hersteld",
+      "status": {
+        "pending": "In wachtrij",
+        "running": "Bezig",
+        "completed": "Voltooid",
+        "partial": "Gedeeltelijk",
+        "failed": "Mislukt",
+        "skipped": "Overgeslagen",
+        "cancelled": "Geannuleerd"
+      },
+      "trigger": {
+        "autoUpdate": "Automatisch",
+        "manual": "Handmatig",
+        "reinstall": "Opnieuw installeren"
+      },
+      "publisherAccessLabel": "Laat de uitgever deze werkruimte zien en het sjabloon verwijderen",
+      "publisherAccessHint": "Alleen de naam van de werkruimte wordt gedeeld. Als de uitgever het sjabloon verwijdert, wordt alles wat het sjabloon heeft aangemaakt verwijderd, inclusief kopieën die je hebt bewerkt.",
+      "requestedVersion": "aangevraagd v{version}",
+      "errors": {
+        "unknown": "De update is mislukt. Probeer het opnieuw of neem contact op met support als het blijft mislukken.",
+        "templateSyncFailed": "De update is mislukt. Probeer het opnieuw.",
+        "templateSyncSuperseded": "Een nieuwere update heeft deze vervangen.",
+        "templateSyncAbandoned": "De update is niet op tijd afgerond en is gesloten.",
+        "templateInstallationInactive": "Deze installatie is niet meer actief.",
+        "workspaceOwnerBlocked": "Het account van de eigenaar van de werkruimte is geblokkeerd.",
+        "templateUninstallInProgress": "De sjabloon wordt gedeïnstalleerd.",
+        "templateAutoUpdateOff": "Automatische updates staan uit.",
+        "templateUpToDate": "De kopie is al up-to-date.",
+        "templateInstallerAccessLost": "Degene die de sjabloon heeft geïnstalleerd mag deze kopie niet meer bijwerken.",
+        "templateInstallationSourceMissing": "De sjabloon is verwijderd voordat de update draaide.",
+        "templateCategoryPermissionDenied": "Je hebt niet langer toestemming om alles in deze sjabloon bij te werken.",
+        "templatePayloadIncompatible": "Dit sjabloon is opgeslagen in een nieuwer formaat dan deze server kan installeren.",
+        "templateCrossTenantInstall": "Dit sjabloon is niet beschikbaar voor jouw werkruimte.",
+        "templateInvalidInboxBinding": "Een geselecteerde inbox komt niet overeen met het sjabloon."
+      }
+    },
+    "versions": {
+      "detailsTab": "Details",
+      "tab": "Versies",
+      "versionNumber": "Versie {version}",
+      "current": "Huidig",
+      "first": "Eerste versie",
+      "noDetail": "Voor deze versie zijn geen details vastgelegd.",
+      "added": "Toegevoegd",
+      "changed": "Gewijzigd",
+      "removed": "Verwijderd"
+    },
+    "installers": {
+      "title": "Analyses bekijken",
+      "workspace": "Werkruimte",
+      "lastInstalled": "Laatst geïnstalleerd",
+      "version": "Versie",
+      "autoUpdate": "Automatisch bijwerken",
+      "uninstalled": "Verwijderd",
+      "hidden": "Werkruimte niet gedeeld",
+      "uninstallNotAllowed": "De installateur heeft uitgevers niet toegestaan deze kopie te verwijderen.",
+      "loadError": "De installateurs konden niet worden geladen. Probeer het opnieuw.",
+      "automatic": "Automatisch",
+      "details": "Details",
+      "noIssues": "Geen waarschuwingen of fouten."
     },
     "installs": {
       "title": "Installaties",
       "resources": "Bronnen",
       "warnings": "Waarschuwingen",
       "completedAt": "Voltooid op",
-      "autoUpdate": "Automatische update"
+      "autoUpdate": "Automatische update",
+      "installedBy": "Geïnstalleerd door",
+      "viaApi": "API-token",
+      "attempts": "Pogingen",
+      "autoUpdateOn": "Aan",
+      "autoUpdateOff": "Uit",
+      "retry": "Installatie opnieuw proberen",
+      "resourcesTitle": "Geïnstalleerde resources",
+      "noResources": "Er is nog niets aangemaakt.",
+      "deletedResource": "Verwijderde resource",
+      "viewOnly": "Alleen bekijken",
+      "created": "Aangemaakt",
+      "reused": "Hergebruikt",
+      "loadMore": "Meer laden",
+      "statusFilter": "Status",
+      "allStatuses": "Alle statussen",
+      "errors": {
+        "unknown": "De installatie is mislukt. Probeer het opnieuw of neem contact op met support als het blijft mislukken.",
+        "templatePayloadIncompatible": "Dit sjabloon is opgeslagen in een nieuwer formaat dan deze server kan installeren.",
+        "templateInstallationSourceMissing": "Het sjabloon is verwijderd voordat de installatie startte.",
+        "templateCrossTenantInstall": "Dit sjabloon is niet beschikbaar voor jouw werkruimte.",
+        "templateCategoryPermissionDenied": "Je hebt niet langer toestemming om alles in dit sjabloon te installeren.",
+        "templateInvalidInboxBinding": "Een geselecteerde inbox komt niet overeen met het sjabloon.",
+        "templateInstallEnqueueFailed": "De installatie kon niet in de wachtrij worden geplaatst.",
+        "templateInstallFailed": "De installatie is mislukt. Probeer het opnieuw.",
+        "templateInstallAbandoned": "De installatie is niet op tijd voltooid en is afgesloten.",
+        "templateInstallSuperseded": "Een nieuwere installatie van dit sjabloon heeft deze vervangen.",
+        "workspaceOwnerBlocked": "Het account van de eigenaar van de werkruimte is geblokkeerd."
+      },
+      "uninstalledBy": "{by, select, publisher {De uitgever heeft dit sjabloon verwijderd.} installer {Dit sjabloon is uit deze werkruimte verwijderd.} other {Dit sjabloon is verwijderd.}}",
+      "uninstalledSummary": "{deleted} verwijderd, {kept} behouden.",
+      "lastAttemptAt": "Laatste poging",
+      "installedAutomatically": "Automatisch geïnstalleerd (white-label-standaard)"
     },
     "form": {
       "contents": "Sjabloon-inhoud",
@@ -7023,14 +7152,26 @@
       "allowDelete": "Verwijderen na installatie toestaan",
       "publisherName": "Naam uitgever",
       "youtubeVideoId": "YouTube-video-ID",
-      "youtubeVideoIdDescription": "De 11-tekens-ID uit de video-URL, bijv. \"dQw4w9WgXcQ\" in youtube.com/watch?v=dQw4w9WgXcQ",
+      "youtubeVideoIdDescription": "De 11-tekens-ID uit de video-URL, bijv. \"xxxxxxxxxxx\" in youtube.com/watch?v=xxxxxxxxxxx",
       "testLink": "Testlink",
       "imageUrl": "Omslagafbeelding",
       "installBehavior": "Installatiegedrag",
-      "createInstallFolder": "Installeren in een aparte map",
+      "createInstallFolder": "Maak een map aan op het geïnstalleerde account en installeer de resources.",
       "createInstallFolderDescription": "Plaatst elke geïnstalleerde bron in één nieuwe map die naar dit sjabloon is vernoemd.",
-      "defaultAutoUpdate": "Installaties standaard markeren voor updates",
-      "defaultAutoUpdateDescription": "Nieuwe installaties tonen een melding over een beschikbare update zodra je dit sjabloon opnieuw publiceert."
+      "defaultAutoUpdate": "Geïnstalleerde sjablonen automatisch bijwerken",
+      "defaultAutoUpdateDescription": "Telkens wanneer je dit sjabloon met gewijzigde inhoud opslaat, worden installaties die automatisch bijwerken overschreven met de nieuwe inhoud (kopieën die de installateur heeft bewerkt worden eerst geback-upt). Installateurs kunnen dit uitschakelen.",
+      "viewOnly": "Alleen bekijken",
+      "viewOnlyAll": "Alles geselecteerd alleen-lezen maken",
+      "includedAutomatically": {
+        "title": "Automatisch meegenomen",
+        "hint": "Meegenomen omdat iets wat je hebt geselecteerd het nodig heeft. Alleen-lezen.",
+        "rows": "{count, plural, one {# extra item} other {# extra items}}",
+        "kind": {
+          "folders": "Mappen",
+          "placeCategories": "Plaatscategorieën"
+        }
+      },
+      "viewOnlyCopyIncluded": "Iets dat je hebt geselecteerd (of iets dat het nodig heeft) is geïnstalleerd vanuit een alleen-lezen-sjabloon en kan niet in een nieuw sjabloon worden gedeeld."
     },
     "categories": {
       "flows": "Flows",
@@ -7045,8 +7186,116 @@
       "keywords": "Trefwoorden",
       "entryPointLinks": "Toegangspuntlinks",
       "triggers": "Triggers",
-      "fbCommentAutomations": "Facebook-reactieautomatiseringen",
-      "settings": "Instellingen"
+      "fbCommentAutomations": "Reactieautomatiseringen",
+      "settings": "Botvelden en opgeslagen antwoorden",
+      "sequences": "Reeksen",
+      "aiMcpServers": "MCP-servers",
+      "aiFiles": "AI-kennisbestanden",
+      "questionnaires": "Vragenlijsten",
+      "couponTopics": "Coupononderwerpen",
+      "pipelines": "Pipelines"
+    },
+    "locked": {
+      "flowBanner": "Deze flow is geïnstalleerd vanuit een alleen-lezen sjabloon. Je kunt hem bekijken maar niet bewerken.",
+      "badge": "Alleen weergave",
+      "editorBanner": "Dit is geïnstalleerd vanuit een sjabloon met alleen-lezentoegang. Je kunt het bekijken, maar niet bewerken.",
+      "badgeHint": "Geïnstalleerd vanuit een sjabloon met alleen-lezentoegang"
+    },
+    "channels": {
+      "messenger": "Messenger",
+      "instagram": "Instagram",
+      "instagramFacebook": "Instagram (Facebook-login)",
+      "threads": "Threads",
+      "tiktok": "TikTok",
+      "whatsapp": "WhatsApp",
+      "telegram": "Telegram",
+      "zalo": "Zalo",
+      "webchat": "Webchat",
+      "line": "LINE",
+      "email": "E-mail"
+    },
+    "uninstall": {
+      "title": "Sjabloon verwijderen",
+      "description": "Het sjabloon verwijdert alles wat het in deze werkruimte heeft aangemaakt, inclusief bewerkte kopieën. Gedeelde tags, velden en mappen, items die er al waren en alles wat je bovenop een kopie hebt gebouwd blijven behouden.",
+      "loading": "Controleren wat er gaat gebeuren…",
+      "previewFailed": "Kon niet controleren wat een verwijdering zou doen.",
+      "failed": "Kon het sjabloon niet verwijderen.",
+      "confirm": "Verwijderen",
+      "action": "Verwijderen",
+      "deleted": "{count, plural, one {# item wordt verwijderd} other {# items worden verwijderd}}",
+      "deletedDone": "{count, plural, one {# item is verwijderd} other {# items zijn verwijderd}}",
+      "keptModified": "{count, plural, one {# bewerkte of niet-geverifieerde kopie blijft behouden} other {# bewerkte of niet-geverifieerde kopieën blijven behouden}}",
+      "keptShared": "{count, plural, one {# gedeelde tag of gedeeld veld blijft behouden} other {# gedeelde tags en velden blijven behouden}}",
+      "keptByPolicy": "{count, plural, one {# ander item blijft behouden} other {# andere items blijven behouden}}",
+      "keptHasDependents": "{count, plural, one {# kopie blijft behouden omdat iets het nog gebruikt} other {# kopieën blijven behouden omdat iets ze nog gebruikt}}",
+      "deletedModified": "{count, plural, one {# daarvan is door jou bewerkt: die bewerkingen gaan verloren en kunnen niet worden hersteld} other {# daarvan zijn door jou bewerkt: die bewerkingen gaan verloren en kunnen niet worden hersteld}}",
+      "keptLockedByOther": "{count, plural, one {# item blijft behouden omdat een andere sjablooninstallatie het nog beschermt} other {# items blijven behouden omdat een andere sjablooninstallatie ze nog beschermt}}",
+      "confirmCheckbox": "Ik begrijp dat dit de bovenstaande items verwijdert en niet ongedaan kan worden gemaakt",
+      "started": "Verwijdering gestart",
+      "inProgress": "Verwijderen…",
+      "retry": "Verwijdering opnieuw proberen",
+      "state": {
+        "pending": "Verwijdering in wachtrij",
+        "running": "Verwijderen…",
+        "partial": "Verwijdering onvolledig, probeer opnieuw",
+        "failed": "Verwijdering mislukt, probeer opnieuw",
+        "skipped": "Verwijdering overgeslagen: de werkruimte is geblokkeerd"
+      },
+      "deletedUnverified": "{count, plural, one {# daarvan kan niet op bewerkingen worden gecontroleerd: als je hem hebt gewijzigd, gaan die wijzigingen verloren} other {# daarvan kunnen niet op bewerkingen worden gecontroleerd: als je ze hebt gewijzigd, gaan die wijzigingen verloren}}",
+      "cancelAction": "Verwijdering annuleren",
+      "cancelled": "Verwijdering geannuleerd: de overige items kun je weer gebruiken",
+      "blockedByReference": "{count, plural, one {# item is niet verwijderd omdat iets wat je hebt gemaakt er nog naar verwijst: verwijder die verwijzing en probeer de verwijdering opnieuw} other {# items zijn niet verwijderd omdat iets wat je hebt gemaakt er nog naar verwijst: verwijder die verwijzingen en probeer de verwijdering opnieuw}}",
+      "keptPartlyRemoved": "{count, plural, one {# kopie is behouden na een geblokkeerde verwijdering; geschiedenis en gegevens voor duplicaatbeveiliging zijn mogelijk verwijderd, controleer hem dus voordat je hem inschakelt} other {# kopieën zijn behouden na een geblokkeerde verwijdering; geschiedenis en gegevens voor duplicaatbeveiliging zijn mogelijk verwijderd, controleer ze dus voordat je ze inschakelt}}",
+      "keptInactiveForReview": "{count, plural, one {# kopie is inactief gelaten: de geschiedenis en gegevens voor duplicaatbeveiliging zijn verwijderd, controleer hem dus voordat je hem inschakelt} other {# kopieën zijn inactief gelaten: hun geschiedenis en gegevens voor duplicaatbeveiliging zijn verwijderd, controleer ze dus voordat je ze inschakelt}}",
+      "keptHistoryRemoved": "{count, plural, one {# kopie is behouden, maar de geschiedenis is verwijderd (er valt niets in te schakelen): controleer hem voordat je erop vertrouwt} other {# kopieën zijn behouden, maar hun geschiedenis is verwijderd (er valt niets in te schakelen): controleer ze voordat je erop vertrouwt}}",
+      "cancelledPartial": "{count, plural, one {# item wordt al verwijderd en wordt afgerond; de rest is teruggegeven} other {# items worden al verwijderd en worden afgerond; de rest is teruggegeven}}"
+    },
+    "warningCodes": {
+      "aiFileTooLarge": "Dit kennisbestand is groter dan een sjablooninstallatie kan kopiëren en is daarom overgeslagen.",
+      "aiFileUnavailable": "Dit kennisbestand kon niet worden gekopieerd en is daarom overgeslagen.",
+      "assigneeRequired": "Kies aan wie deze stap het gesprek toewijst.",
+      "ambiguousSourceFieldToken": "Meerdere bronvelden hebben deze naam, dus de variabelen die ze gebruiken zijn ongewijzigd gelaten.",
+      "backupTooLarge": "Een lokaal bewerkt item was te groot om een back-up van te maken en is dus niet overschreven.",
+      "backupUnavailable": "De back-up van dit item is niet meer beschikbaar.",
+      "botFieldRenamed": "Er bestaat al een botveld met deze naam en een ander type, dus er is een hernoemd veld aangemaakt.",
+      "categoryPermissionDenied": "Je hebt geen toestemming voor deze categorie, dus deze is overgeslagen.",
+      "couponTopicExpired": "Dit coupononderwerp is al verlopen.",
+      "credentialRequired": "Voeg de inloggegevens voor dit item toe voordat je het gebruikt.",
+      "custom": "Een gerefereerd item is niet gevonden in deze werkruimte, dus de koppeling is verwijderd.",
+      "customField": "Een gerefereerd item is niet gevonden in deze werkruimte, dus de koppeling is verwijderd.",
+      "customFieldRenamed": "Er bestaat al een veld met deze naam en een ander type, dus er is een hernoemd veld aangemaakt.",
+      "enqueueFailed": "De achtergrondverwerking voor dit item kon niet in de wachtrij worden geplaatst.",
+      "flow": "Een gerefereerd item is niet gevonden in deze werkruimte, dus de koppeling is verwijderd.",
+      "flowInvalidStructure": "De structuur van de flow is ongeldig, dus deze is overgeslagen.",
+      "flowNotPublished": "De flow is als concept geïnstalleerd en is niet gepubliceerd.",
+      "flowSkippedRequiredReference": "De flow is overgeslagen omdat een vereiste verwijzing niet kon worden opgelost.",
+      "folder": "Een gerefereerd item is niet gevonden in deze werkruimte, dus de koppeling is verwijderd.",
+      "inboxBindingRequired": "Kies een inbox voor dit kanaal; tot die tijd blijft het item inactief.",
+      "integration": "Een gerefereerd item is niet gevonden in deze werkruimte, dus de koppeling is verwijderd.",
+      "localModifiedOverwritten": "Een lokaal bewerkt item is overschreven. Er is een back-up opgeslagen die kan worden hersteld.",
+      "name": "Er is geen vrije naam gevonden voor dit item, dus het is overgeslagen.",
+      "noEmbeddingProvider": "Er is geen embeddingprovider ingesteld in deze werkruimte, dus kennisbestanden zijn overgeslagen. Koppel OpenAI of Gemini en installeer opnieuw.",
+      "notUpdatable": "Dit soort item wordt nog niet automatisch bijgewerkt.",
+      "pipeline": "Gebruikt een pipeline die niet meer bestaat.",
+      "pipelineField": "Gebruikt een pipelineveld dat niet meer bestaat.",
+      "pipelineStage": "Gebruikt een pipelinefase die niet meer bestaat.",
+      "postSelectionRequired": "Selecteer het bericht opnieuw: het oorspronkelijke bericht kon niet worden overgenomen.",
+      "product": "Een gerefereerd item is niet gevonden in deze werkruimte, dus de koppeling is verwijderd.",
+      "productCategory": "Een gerefereerd item is niet gevonden in deze werkruimte, dus de koppeling is verwijderd.",
+      "questionImage": "Een afbeelding kon niet worden gekopieerd.",
+      "quota": "Een abonnementslimiet is bereikt, dus het item is overgeslagen.",
+      "referenceRemoved": "Een verwijzing die niet kon worden opgelost, is verwijderd.",
+      "savedReply": "Een gerefereerd item is niet gevonden in deze werkruimte, dus de koppeling is verwijderd.",
+      "savedReplyImage": "Een afbeelding kon niet worden gekopieerd.",
+      "tag": "Een gerefereerd item is niet gevonden in deze werkruimte, dus de koppeling is verwijderd.",
+      "unlisted": "Item niet volledig overgenomen: {code}",
+      "workspaceMember": "Toegewezen aan een lid dat niet in deze workspace zit.",
+      "workspaceUnavailable": "Deze werkruimte is niet meer beschikbaar, dus het item is overgeslagen."
+    },
+    "tabs": {
+      "mine": "Mijn sjablonen",
+      "installed": "Geïnstalleerd",
+      "installedEmpty": "Nog geen geïnstalleerde sjablonen. Sjablonen die je uit een andere werkruimte installeert, verschijnen hier."
     }
   },
   "qrCodeGenerator": {
@@ -7169,6 +7418,23 @@
     "hint": "Laat alle kanalen uitgevinkt om alle kanalen toe te staan.",
     "hiddenByPlatform": "Verborgen door de platformbeheerder — je kunt dit kanaal niet opnieuw inschakelen."
   },
+  "platformDefaultTemplate": {
+    "title": "Standaardsjabloon",
+    "description": "Installeer dit sjabloon in elke nieuwe werkruimte die onder deze white-label wordt aangemaakt. Bestaande werkruimtes blijven ongewijzigd.",
+    "clearTitle": "Standaardsjabloon verwijderen?",
+    "clearDescription": "Nieuwe werkruimtes krijgen niet langer automatisch een sjabloon. Werkruimtes die het al hebben, behouden het.",
+    "status": {
+      "notConfigured": "Niet ingesteld",
+      "ready": "Actief",
+      "templateUnavailable": "Sjabloon niet beschikbaar",
+      "shareDisabled": "Deellink uit",
+      "keyRotated": "Sleutel ongeldig"
+    },
+    "errors": {
+      "unavailable": "Het sjabloon-ID of de sleutel is ongeldig.",
+      "shareDisabled": "Zet eerst de deellink van het sjabloon aan."
+    }
+  },
   "platformEmailTemplates": {
     "title": "E-mailsjablonen",
     "description": "Laat het onderwerp en de inhoud leeg om het standaardsjabloon van het systeem te gebruiken.",
@@ -7252,14 +7518,41 @@
     "invalidTitle": "Deze link is niet meer beschikbaar.",
     "invalidDescription": "Deze sjabloon-deellink is ongeldig, uitgeschakeld of verlopen.",
     "byPublisher": "Door {publisherName}",
-    "includes": "Dit sjabloon bevat",
     "videoTitle": "Sjabloon-voorbeeldvideo",
-    "tryItOut": "Probeer het",
-    "signInToInstall": "Log in om te installeren",
+    "preview": "Voorbeeld",
+    "aboutTemplate": "Over deze sjabloon",
     "selectWorkspace": "Selecteer een werkruimte",
     "install": "Installeren",
     "installStarted": "Installatie gestart",
-    "noEligibleWorkspaces": "Je hebt geen werkruimte die geschikt is om dit sjabloon te installeren."
+    "noEligibleWorkspaces": "Je hebt geen werkruimte die geschikt is om dit sjabloon te installeren.",
+    "alreadyInstalled": "Dit sjabloon is al geïnstalleerd in deze werkruimte.",
+    "viewInstall": "Installatie bekijken",
+    "installAnotherCopy": "Nog een kopie installeren",
+    "inboxesTitle": "Inboxen",
+    "inboxesHint": "Dit sjabloon is gebouwd rond deze inboxen. Kies welke van je eigen inboxen je wilt gebruiken; alles wat je weglaat, wordt uitgeschakeld geïnstalleerd.",
+    "noInbox": "Niet koppelen — uitgeschakeld installeren",
+    "noInboxAvailable": "Geen verbonden inbox op dit kanaal",
+    "updateExisting": "Geïnstalleerde kopie bijwerken",
+    "updateStarted": "Update gestart",
+    "publisherAccessLabel": "Laat de uitgever de naam van deze werkruimte zien en dit sjabloon ervan verwijderen",
+    "publisherAccessHint": "Ze zien nooit je gegevens, contacten of e-mail. Als ze het sjabloon verwijderen, wordt alles wat het sjabloon heeft aangemaakt verwijderd, inclusief kopieën die je hebt bewerkt; alles wat je bovenop een kopie hebt gebouwd blijft behouden. Je kunt dit later uitschakelen op de installatiepagina.",
+    "autoUpdateLabel": "Automatisch bijwerken wanneer het sjabloon verandert",
+    "collisions": {
+      "title": "Wat de installatie hier gaat doen",
+      "loading": "Deze werkruimte controleren…",
+      "action": {
+        "create": "Aangemaakt",
+        "reuse": "Hergebruikt",
+        "rename": "Hernoemd",
+        "bind": "Gekoppeld",
+        "unbound": "Niet gekoppeld gelaten"
+      },
+      "detail": {
+        "rename": "“{name}” bestaat al met een ander type, dus die van het sjabloon wordt onder een nieuwe naam toegevoegd.",
+        "unbound": "“{name}” blijft niet gekoppeld totdat je een inbox kiest."
+      }
+    },
+    "createWorkspace": "Nieuwe werkruimte maken"
   },
   "extensionsMe": {
     "actions": {
@@ -7505,14 +7798,6 @@
       "isActive": {
         "label": "Actief"
       },
-      "status": {
-        "label": "Status",
-        "values": {
-          "active": "Actief",
-          "draft": "Concept",
-          "unlisted": "Niet vermeld"
-        }
-      },
       "isAddonOnly": {
         "label": "Dit product alleen gebruiken als extra voor andere producten"
       },
@@ -7543,6 +7828,14 @@
       "variantsDescription": "Voeg varianten toe als dit product in meerdere uitvoeringen beschikbaar is, zoals verschillende maten of kleuren",
       "metaCatalogId": {
         "label": "Meta-catalogus-ID"
+      },
+      "status": {
+        "label": "Status",
+        "values": {
+          "active": "Actief",
+          "draft": "Concept",
+          "unlisted": "Niet vermeld"
+        }
       }
     },
     "inventoryPolicy": {

@@ -4,6 +4,8 @@ import { Button } from "@chatbotx.io/ui/components/ui/button"
 import { PencilIcon, Trash2Icon } from "lucide-react"
 import { useAction } from "next-safe-action/hooks"
 import { toast } from "sonner"
+import { LockBadge } from "@/features/templates/components/lock-badge"
+import { useIsUndeletable } from "@/features/templates/components/lock-context"
 import { deleteSavedReplyAction } from "./actions/delete-saved-reply.action"
 import { SavedReplyImagesSummary } from "./saved-reply-image-thumbnails"
 import type { SavedReplyResource } from "./schema/resource"
@@ -25,6 +27,7 @@ export const SavedReplyItem = ({
   onEdit,
   onSelect,
 }: SavedReplyItemProps) => {
+  const undeletable = useIsUndeletable(item.id)
   const { executeAsync: deleteSavedReply, isPending: isDeletingSavedReply } =
     useAction(deleteSavedReplyAction.bind(null, workspaceId, item.id), {
       onError: ({ error }) => {
@@ -49,7 +52,10 @@ export const SavedReplyItem = ({
       variant="ghost"
     >
       <div className="min-w-0">
-        <p className="truncate font-semibold">/{item.shortcut}</p>
+        <p className="flex items-center font-semibold">
+          <span className="truncate">/{item.shortcut}</span>
+          <LockBadge resourceId={item.id} />
+        </p>
         <p className="wrap-break-word line-clamp-2 whitespace-normal text-muted-foreground text-sm">
           {item.text}
         </p>
@@ -70,7 +76,7 @@ export const SavedReplyItem = ({
         </Button>
         <Button
           className="text-destructive"
-          disabled={isDeletingSavedReply}
+          disabled={isDeletingSavedReply || undeletable}
           onClick={onDelete}
           size="icon"
           type="button"

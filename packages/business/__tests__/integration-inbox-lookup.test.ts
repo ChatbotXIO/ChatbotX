@@ -50,6 +50,9 @@ vi.mock("../src/tag/sync.service", () => ({
   tagSyncService: { enqueueChannelScan: vi.fn() },
 }))
 
+vi.mock("../src/template/installation-dispatch", () => ({
+  dispatchStagedInstalls: vi.fn(async () => undefined),
+}))
 vi.mock("../src/workspace", () => ({
   workspaceService: { create: vi.fn() },
 }))

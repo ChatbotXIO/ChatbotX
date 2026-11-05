@@ -1,5 +1,10 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
+// The reference guard needs a real transaction; its own suite covers it.
+vi.mock("../src/template/installed-resource.service", () => ({
+  assertReferencable: vi.fn().mockResolvedValue(undefined),
+}))
+
 const findManyBroadcast = vi.fn()
 const findFirstBroadcast = vi.fn()
 const findFirstFlow = vi.fn()

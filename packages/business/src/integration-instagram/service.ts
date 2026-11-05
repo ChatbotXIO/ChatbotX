@@ -17,6 +17,8 @@ import { recordRefreshedAuth } from "../connection/record-refreshed-auth"
 import { connectionStateService } from "../connection/state-service"
 import { notFoundException } from "../errors"
 import { logger } from "../logger"
+import { assertReferencable } from "../template/installed-resource.service"
+import { referencedParentsOf } from "../template/uninstall-references"
 
 class InstagramIntegrationService extends BaseService {
   findByInboxId(inboxId: string) {
@@ -237,10 +239,33 @@ class InstagramIntegrationService extends BaseService {
   }
 
   async updateProfileFields(
-    props: { id: string },
+    props: { id: string; workspaceId: string },
     data: Record<string, unknown>,
     tx: DatabaseClient,
   ) {
+    // Every flow the settings point at (welcome flow, menu buttons, ice
+    // breakers): their tpl-res locks are held until the reference commits, so
+    // an uninstall that tombstoned one is seen (write refused) or sees it.
+    const flowIds = new Set<string>()
+    if (typeof data.welcomeFlowId === "string") {
+      flowIds.add(data.welcomeFlowId)
+    }
+    for (const parent of referencedParentsOf({
+      persistentMenus: data.persistentMenus,
+      conversationStarters: data.conversationStarters,
+    })) {
+      if (parent.kind === "flow") {
+        flowIds.add(parent.resourceId)
+      }
+    }
+    await assertReferencable({
+      workspaceId: props.workspaceId,
+      parents: [...flowIds].map((resourceId) => ({
+        kind: "flow" as const,
+        resourceId,
+      })),
+      tx,
+    })
     await tx
       .update(integrationInstagramModel)
       .set(data)

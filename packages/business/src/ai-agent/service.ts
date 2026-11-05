@@ -27,7 +27,17 @@ import { inboxTeamService } from "../enterprise/inbox-team/service"
 import { notFoundException, validationException } from "../errors"
 import { flowService } from "../flow/service"
 import { tagService } from "../tag/service"
-import { assertDeletable } from "../template/installed-resource.service"
+import {
+  assertReferencable,
+  assertResourceEditable,
+  changedKeysOf,
+  withDeleteGuard,
+} from "../template/installed-resource.service"
+import {
+  type TemplateLockKey,
+  withTemplateLockedTransaction,
+} from "../template/template-resource-locks"
+import { referencedParentsOf } from "../template/uninstall-references"
 import type { PaginatedResult } from "../types"
 import { isWorkspaceAdminMember } from "../workspace-member/predicates"
 import { workspaceMemberService } from "../workspace-member/service"
@@ -52,6 +62,31 @@ function isSameStringSet(a?: string[] | null, b?: string[] | null): boolean {
     left.every((value, index) => value === right[index])
   )
 }
+
+/** The flows, tags and custom fields an action-rule write points at: parents locked with the agent. */
+const actionRuleParents = (
+  actionRules: readonly AIAgentActionRule[] | undefined,
+): TemplateLockKey[] =>
+  (actionRules ?? [])
+    .flatMap((rule) => rule.actions)
+    .flatMap((action): TemplateLockKey[] => {
+      switch (action.type) {
+        case "send_flow":
+          return [{ kind: "flow", resourceId: action.flowId }]
+        case "add_tag":
+        case "remove_tag":
+          return [{ kind: "tag", resourceId: action.tagId }]
+        case "set_custom_field":
+        case "clear_custom_field":
+          return [{ kind: "customField", resourceId: action.customFieldId }]
+        default:
+          return []
+      }
+    })
+
+/** The files, functions and MCP servers an agent's `tools` tokens point at. */
+const toolParents = (tools: readonly string[] | undefined): TemplateLockKey[] =>
+  referencedParentsOf({ tools: tools ?? [] })
 
 type AIAgentChangeGroup = "model" | "instructions" | "knowledge base"
 
@@ -412,7 +447,23 @@ class AiAgentService extends BaseService {
       return inserted
     }
 
-    const created = await (tx ? execute(tx) : db.transaction(execute))
+    // Without a caller transaction the write is guarded: the referenced flow,
+    // tag, field and tool parents are locked (and tombstoned ones refused)
+    // before the row is inserted. A caller that passes its own transaction
+    // owns the locking.
+    const created = await (tx
+      ? execute(tx)
+      : withTemplateLockedTransaction(async (client) => {
+          await assertReferencable({
+            workspaceId,
+            parents: [
+              ...actionRuleParents(actionRules),
+              ...toolParents(data.tools),
+            ],
+            tx: client,
+          })
+          return await execute(client)
+        }))
 
     await this.invalidateCacheTags(this.getWorkspaceCacheTag(workspaceId))
 
@@ -427,17 +478,19 @@ class AiAgentService extends BaseService {
     ctx: { workspaceId: string; id: string },
     data: UpdateAIAgentRequest,
   ): Promise<AIAgentModel> {
-    const aiAgent = await this.findBy({
+    // The early read only answers "does it exist" and "is there anything to
+    // do"; the row that is diffed and audited is read again under the lock.
+    const early = await this.findBy({
       where: { id: ctx.id, workspaceId: ctx.workspaceId },
     })
 
-    if (!aiAgent) {
+    if (!early) {
       throw notFoundException("AI agent not found")
     }
 
     const hasChanges = Object.values(data).some((value) => value !== undefined)
     if (!hasChanges) {
-      return aiAgent
+      return early
     }
 
     const actionRules =
@@ -445,31 +498,62 @@ class AiAgentService extends BaseService {
         ? undefined
         : await this.validateActionRules(ctx.workspaceId, data.actionRules)
 
-    await db.transaction(async (tx) => {
-      if (data.isDefault) {
+    // The agent and the flow/tag/field its action rules reference are locked
+    // before the stored row is read, so the diff that decides the guard is
+    // computed under the lock.
+    const aiAgent = await withTemplateLockedTransaction(
+      async (tx) => {
+        const current = await tx.query.aiAgentModel.findFirst({
+          where: { id: ctx.id, workspaceId: ctx.workspaceId },
+        })
+        if (!current) {
+          throw notFoundException("AI agent not found")
+        }
+        await assertResourceEditable({
+          workspaceId: ctx.workspaceId,
+          resourceKind: "aiAgent",
+          resourceIds: [current.id],
+          changedKeys: changedKeysOf(current, data),
+          referencedParents: [
+            ...actionRuleParents(actionRules),
+            ...toolParents(data.tools),
+          ],
+          tx,
+        })
+        if (data.isDefault) {
+          await tx
+            .update(aiAgentModel)
+            .set({ isDefault: false })
+            .where(eq(aiAgentModel.workspaceId, ctx.workspaceId))
+        }
+        const {
+          webSearchAuthorizedDomains,
+          actionRules: _actionRules,
+          ...rest
+        } = data
         await tx
           .update(aiAgentModel)
-          .set({ isDefault: false })
-          .where(eq(aiAgentModel.workspaceId, ctx.workspaceId))
-      }
-      const {
-        webSearchAuthorizedDomains,
-        actionRules: _actionRules,
-        ...rest
-      } = data
-      await tx
-        .update(aiAgentModel)
-        .set({
-          ...rest,
-          ...(actionRules !== undefined && { actionRules }),
-          ...(webSearchAuthorizedDomains !== undefined && {
-            webSearchAuthorizedDomains: normalizeWebSearchDomains(
-              webSearchAuthorizedDomains,
-            ),
-          }),
-        })
-        .where(eq(aiAgentModel.id, aiAgent.id))
-    })
+          .set({
+            ...rest,
+            ...(actionRules !== undefined && { actionRules }),
+            ...(webSearchAuthorizedDomains !== undefined && {
+              webSearchAuthorizedDomains: normalizeWebSearchDomains(
+                webSearchAuthorizedDomains,
+              ),
+            }),
+          })
+          .where(eq(aiAgentModel.id, current.id))
+        return current
+      },
+      {
+        workspaceId: ctx.workspaceId,
+        initialKeys: [
+          { kind: "aiAgent", resourceId: ctx.id },
+          ...actionRuleParents(actionRules),
+          ...toolParents(data.tools),
+        ],
+      },
+    )
 
     await this.invalidateCacheTags(this.getWorkspaceCacheTag(ctx.workspaceId))
 
@@ -548,35 +632,47 @@ class AiAgentService extends BaseService {
     ctx: { workspaceId: string; ids: string[] },
     tx?: DatabaseClient,
   ): Promise<void> {
-    await assertDeletable({
-      workspaceId: ctx.workspaceId,
-      resourceKind: "aiAgent",
-      resourceIds: ctx.ids,
-    })
-
-    const client = tx ?? db
-
-    const agents = await client.query.aiAgentModel.findMany({
-      where: { workspaceId: ctx.workspaceId, id: { in: ctx.ids } },
-      columns: { id: true },
-    })
-
-    await client
-      .delete(aiAgentModel)
-      .where(
-        and(
-          eq(aiAgentModel.workspaceId, ctx.workspaceId),
-          inArray(aiAgentModel.id, ctx.ids),
-        ),
-      )
+    const agents = await withDeleteGuard(
+      {
+        workspaceId: ctx.workspaceId,
+        targets: [{ resourceKind: "aiAgent", resourceIds: ctx.ids }],
+        tx,
+      },
+      (client) => this.deleteInTx(client, ctx),
+    )
 
     await this.invalidateCacheTags(this.getWorkspaceCacheTag(ctx.workspaceId))
 
     if (!tx) {
-      for (const agent of agents) {
-        await this.audit("delete", `deleted an AI Agent (#${agent.id})`)
+      for (const id of agents) {
+        await this.audit("delete", `deleted an AI Agent (#${id})`)
       }
     }
+  }
+
+  /**
+   * The delete core (row write only), shared with the template uninstall so
+   * there is one implementation. Returns the ids actually deleted.
+   */
+  async deleteInTx(
+    tx: DatabaseClient,
+    input: { workspaceId: string; ids: string[] },
+  ): Promise<string[]> {
+    const rows = await tx
+      .delete(aiAgentModel)
+      .where(
+        and(
+          eq(aiAgentModel.workspaceId, input.workspaceId),
+          inArray(aiAgentModel.id, input.ids),
+        ),
+      )
+      .returning({ id: aiAgentModel.id })
+    return rows.map((row) => String(row.id))
+  }
+
+  /** Drops the workspace's AI agent caches; the uninstall runs it after commit. */
+  async invalidateWorkspaceCache(workspaceId: string): Promise<void> {
+    await this.invalidateCacheTags(this.getWorkspaceCacheTag(workspaceId))
   }
 }
 

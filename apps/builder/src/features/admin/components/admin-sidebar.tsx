@@ -10,6 +10,7 @@ import {
   Building2Icon,
   CircleHelpIcon,
   Grid2x2PlusIcon,
+  LayoutTemplateIcon,
   ListTodoIcon,
   MailIcon,
   PaletteIcon,
@@ -65,6 +66,11 @@ export function AdminSidebar({
       title: t("channels.title"),
       url: "/admin/platform-channels",
       icon: RadioTowerIcon,
+    },
+    {
+      title: t("platformDefaultTemplate.title"),
+      url: "/admin/default-template",
+      icon: LayoutTemplateIcon,
     },
   ]
 

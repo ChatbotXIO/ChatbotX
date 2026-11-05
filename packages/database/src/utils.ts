@@ -145,6 +145,17 @@ export const parseOrderByAsObject = (
   )
 }
 
+/**
+ * Rows written in one statement share `createdAt`, and ties come back in no
+ * set order: ids grow in creation order, so they settle it the same way.
+ */
+export const withIdTieBreak = (
+  orderBy: Record<string, unknown>,
+): Record<string, unknown> =>
+  "id" in orderBy
+    ? orderBy
+    : { ...orderBy, id: Object.values(orderBy)[0] ?? "desc" }
+
 type ChunkByIdOptions<T> = {
   chunkSize?: number
   callback: (records: T[]) => Promise<boolean | undefined>
