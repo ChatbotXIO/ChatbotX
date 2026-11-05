@@ -131,6 +131,26 @@ vi.mock("../src/pipeline/currency-refresh", () => ({
   notifyWorkspaceCurrencyChange,
 }))
 
+const stageTenantDefaultInstall = vi.fn(async () => null as string | null)
+const stageSharedTemplateInstall = vi.fn(async () => null as string | null)
+vi.mock("../src/template/installation-stage", () => ({
+  stageSharedTemplateInstall,
+  stageTenantDefaultInstall,
+}))
+
+const installIntent = {
+  take: vi.fn(async () => null as string | null),
+  clear: vi.fn(async () => undefined),
+}
+vi.mock("../src/template/install-intent", () => ({
+  templateInstallIntentService: installIntent,
+}))
+
+const dispatchStagedInstalls = vi.fn(async () => undefined)
+vi.mock("../src/template/installation-dispatch", () => ({
+  dispatchStagedInstalls,
+}))
+
 const { workspaceService } = await import("../src/workspace/service")
 const { compensateWorkspaceQuotaConsumption } = await import(
   "../src/workspace/quota-consumption"
@@ -163,6 +183,8 @@ beforeEach(() => {
     .mockReset()
     .mockResolvedValue(new Map<string, string>())
   anchoredPeriod.mockClear()
+  stageTenantDefaultInstall.mockReset().mockResolvedValue(null)
+  dispatchStagedInstalls.mockReset().mockResolvedValue(undefined)
   logger.error.mockClear()
   dispatchAuditRecord.mockClear()
   notifyWorkspaceCurrencyChange.mockClear()
@@ -887,5 +909,177 @@ describe("WorkspaceService.setLogoIfEmpty", () => {
 
     expect(invalidateCacheByTags).toHaveBeenCalled()
     expect(dispatchAuditRecord).not.toHaveBeenCalled()
+  })
+})
+
+describe("WorkspaceService.create — a share page's template", () => {
+  beforeEach(() => {
+    installIntent.take.mockReset().mockResolvedValue(null)
+    stageSharedTemplateInstall.mockReset().mockResolvedValue(null)
+    stageTenantDefaultInstall.mockReset().mockResolvedValue(null)
+  })
+
+  test("installs it in place of the tenant's default", async () => {
+    installIntent.take.mockResolvedValue("tok")
+    stageSharedTemplateInstall.mockResolvedValue("inst-1")
+
+    await workspaceService.create(createInput())
+
+    expect(installIntent.take).toHaveBeenCalledWith("user-1")
+    expect(stageSharedTemplateInstall).toHaveBeenCalledWith(db, {
+      workspaceId: "ws-1",
+      tenantId: "1",
+      createdBy: "user-1",
+      shareToken: "tok",
+    })
+    expect(stageTenantDefaultInstall).not.toHaveBeenCalled()
+    expect(dispatchStagedInstalls).toHaveBeenCalledWith("ws-1")
+  })
+
+  test("falls back to the default when the link no longer works", async () => {
+    installIntent.take.mockResolvedValue("tok")
+
+    await workspaceService.create(createInput())
+
+    expect(stageTenantDefaultInstall).toHaveBeenCalledTimes(1)
+  })
+
+  test("a creation refused by the workspace limit still ends the choice", async () => {
+    isCommunity.mockReturnValue(true)
+    countWorkspaces.mockResolvedValue(1000)
+    installIntent.take.mockResolvedValue("tok")
+
+    await expect(workspaceService.create(createInput())).rejects.toMatchObject({
+      code: "workspaceLimitReached",
+    })
+
+    expect(installIntent.take).toHaveBeenCalledTimes(1)
+    isCommunity.mockReturnValue(false)
+  })
+
+  test("the admin console's creation leaves the owner's choice alone", async () => {
+    await workspaceService.create({
+      ...createInput(),
+      consumeInstallIntent: false,
+    })
+
+    expect(installIntent.take).not.toHaveBeenCalled()
+    expect(stageSharedTemplateInstall).not.toHaveBeenCalled()
+  })
+})
+
+describe("WorkspaceService.create — tenant default template", () => {
+  test("stages the default install in the creation transaction, for the workspace's tenant", async () => {
+    await workspaceService.create(createInput())
+
+    expect(stageTenantDefaultInstall).toHaveBeenCalledWith(db, {
+      workspaceId: "ws-1",
+      tenantId: "1",
+    })
+  })
+
+  test("stages after the owner member and the MAC rollup", async () => {
+    const order: string[] = []
+    userQuotaService.getForUser.mockResolvedValue({
+      id: "q-1",
+      userId: "user-1",
+      periodStart: new Date("2026-05-01T00:00:00.000Z"),
+    })
+    workspaceMemberService.create.mockImplementationOnce(() => {
+      order.push("member")
+      return Promise.resolve(undefined)
+    })
+    macRepository.ensureWorkspaceMac.mockImplementationOnce(() => {
+      order.push("mac")
+      return Promise.resolve(new Map<string, string>())
+    })
+    stageTenantDefaultInstall.mockImplementationOnce(() => {
+      order.push("stage")
+      return Promise.resolve(null)
+    })
+
+    await workspaceService.create(createInput())
+
+    expect(order).toEqual(["member", "mac", "stage"])
+  })
+
+  test("dispatches right after an owned transaction commits, before the cache bust", async () => {
+    const events: string[] = []
+    stageTenantDefaultInstall.mockResolvedValue("inst-1")
+    transaction.mockImplementationOnce(async (fn) => {
+      const result = await fn(db)
+      events.push("commit")
+      return result
+    })
+    dispatchStagedInstalls.mockImplementationOnce(() => {
+      events.push("dispatch")
+      return Promise.resolve(undefined)
+    })
+    invalidateCacheByTags.mockImplementationOnce(() => {
+      events.push("invalidate")
+      return Promise.resolve()
+    })
+
+    await workspaceService.create(createInput())
+
+    expect(events).toEqual(["commit", "dispatch", "invalidate"])
+    expect(dispatchStagedInstalls).toHaveBeenCalledWith("ws-1")
+  })
+
+  test("does not dispatch when nothing was staged", async () => {
+    await workspaceService.create(createInput())
+
+    expect(dispatchStagedInstalls).not.toHaveBeenCalled()
+  })
+
+  test("leaves dispatch to the caller when it owns the transaction", async () => {
+    stageTenantDefaultInstall.mockResolvedValue("inst-1")
+
+    await workspaceService.create({ ...createInput(), tx: db as never })
+
+    expect(stageTenantDefaultInstall).toHaveBeenCalledOnce()
+    expect(dispatchStagedInstalls).not.toHaveBeenCalled()
+  })
+
+  test("a staging failure aborts the creation and releases the seat and member count once", async () => {
+    workspaceMemberService.create.mockImplementationOnce((props: unknown) => {
+      const { teamMemberUsage } = props as {
+        teamMemberUsage?: { liveIncrementedCount: number }
+      }
+      if (teamMemberUsage) {
+        teamMemberUsage.liveIncrementedCount += 1
+      }
+      return Promise.resolve(undefined)
+    })
+    stageTenantDefaultInstall.mockRejectedValueOnce(new Error("deadlock"))
+
+    await expect(workspaceService.create(createInput())).rejects.toThrow(
+      "deadlock",
+    )
+
+    expect(quotaEnforcementService.release).toHaveBeenCalledTimes(1)
+    expect(workspaceUsageService.rollbackLiveIncrement).toHaveBeenCalledTimes(1)
+    expect(workspaceUsageService.rollbackLiveIncrement).toHaveBeenCalledWith(
+      "ws-1",
+      "teamMembers",
+      1,
+    )
+    expect(dispatchStagedInstalls).not.toHaveBeenCalled()
+    expect(dispatchAuditRecord).not.toHaveBeenCalled()
+  })
+
+  test("with a caller tx, a staging failure leaves the tracker unmarked so the caller compensates once", async () => {
+    stageTenantDefaultInstall.mockRejectedValueOnce(new Error("deadlock"))
+    const quotaConsumption = { consumed: false as const }
+
+    await expect(
+      workspaceService.create({
+        ...createInput(),
+        tx: db as never,
+        quotaConsumption,
+      }),
+    ).rejects.toThrow("deadlock")
+
+    expect(quotaConsumption).toEqual({ consumed: false })
   })
 })

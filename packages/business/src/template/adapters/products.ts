@@ -5,10 +5,17 @@ import {
   productAddonService,
   productService,
 } from "../../product/service"
+import {
+  dependenciesOn,
+  makeCollector,
+  recordCopy,
+  resolveRef,
+  scopedWhere,
+  updateNotSupported,
+} from "./shared"
 import type {
   PatchTask,
   ResourceAdapter,
-  ResourceCollector,
   TemplateInstallContext,
 } from "./types"
 
@@ -46,24 +53,27 @@ type TemplateProductEntry = Omit<ProductWriteData, "workspaceId"> & {
  * eagerly since `productCategories` is a Phase-R manifest, always available
  * before Phase 1 starts.
  */
-export const productsAdapter: ResourceAdapter = {
+export const productsAdapter: ResourceAdapter<TemplateProductEntry> = {
   category: "products",
   providesKinds: ["product"],
   consumesKinds: ["productCategory", "product"],
   deferredKinds: ["product"],
+  trackedKind: "product",
+  folderTypes: [],
+  minFormatVersion: 1,
+  sync: updateNotSupported("products"),
 
   async insert(
     ctx: TemplateInstallContext,
-    entries: readonly (Record<string, unknown> & { sourceId: string })[],
+    entries: readonly TemplateProductEntry[],
   ): Promise<PatchTask[]> {
-    if (!ctx.idMaps.product) {
-      ctx.idMaps.product = new Map()
-    }
-    const productIdMap = ctx.idMaps.product
-    const pendingAddonsByProductId = new Map<string, TemplateProductAddon[]>()
+    const pendingAddons: {
+      productId: string
+      sourceId: string
+      addons: TemplateProductAddon[]
+    }[] = []
 
-    for (const rawEntry of entries) {
-      const entry = rawEntry as unknown as TemplateProductEntry
+    for (const entry of entries) {
       const categoryId = resolveCategoryReference(ctx, entry.categoryId)
       const subcategoryId = resolveCategoryReference(ctx, entry.subcategoryId)
 
@@ -77,42 +87,51 @@ export const productsAdapter: ResourceAdapter = {
         tx: ctx.tx,
       })
 
-      productIdMap.set(entry.sourceId, product.id)
       if (entry.addons && entry.addons.length > 0) {
-        pendingAddonsByProductId.set(product.id, entry.addons)
+        pendingAddons.push({
+          productId: product.id,
+          sourceId: entry.sourceId,
+          addons: entry.addons,
+        })
       }
-      ctx.track({
+      recordCopy(ctx, {
         category: "products",
         resourceKind: "product",
+        idMapKind: "product",
+        sourceId: entry.sourceId,
         resourceId: product.id,
-        sourceResourceId: entry.sourceId,
-        wasExisting: false,
       })
     }
 
+    if (pendingAddons.length === 0) {
+      return []
+    }
     return [
       {
         category: "products",
         apply: async (patchCtx) => {
-          for (const [productId, addons] of pendingAddonsByProductId) {
+          for (const { productId, sourceId, addons } of pendingAddons) {
             const resolvedAddons = addons.flatMap((addon) => {
               const addonProductIds = addon.addonProductIds.flatMap(
-                (sourceId) => {
-                  const targetId = patchCtx.idMaps.product?.get(sourceId)
-                  if (!targetId) {
-                    patchCtx.warn({
-                      category: "products",
-                      entityKind: "product",
-                      path: `products.${productId}.addons.addonProductIds`,
-                      value: sourceId,
-                    })
-                    return []
-                  }
-                  return [targetId]
+                (addonSourceId) => {
+                  const targetId = resolveRef(patchCtx, {
+                    category: "products",
+                    kind: "product",
+                    path: `products.${sourceId}.addons.addonProductIds`,
+                    sourceRef: addonSourceId,
+                  })
+                  return targetId ? [targetId] : []
                 },
               )
-              return [{ ...addon, addonProductIds }]
+              // An add-on group none of whose products came along is empty.
+              return addon.addonProductIds.length > 0 &&
+                addonProductIds.length === 0
+                ? []
+                : [{ ...addon, addonProductIds }]
             })
+            if (resolvedAddons.length === 0) {
+              continue
+            }
             await productAddonService.createBulk({
               productId,
               addons: resolvedAddons,
@@ -124,38 +143,17 @@ export const productsAdapter: ResourceAdapter = {
     ]
   },
 
-  collector: {
-    async resolveIds(workspaceId) {
-      const rows = await db.query.productModel.findMany({
-        where: { workspaceId },
+  collector: makeCollector({
+    findIds: (query) =>
+      db.query.productModel.findMany({
+        where: scopedWhere(query),
         columns: { id: true },
-      })
-      return rows.map((row) => row.id)
-    },
+        limit: query.limit,
+      }),
 
-    async verifyOwnership(workspaceId, ids) {
-      const uniqueIds = [...new Set(ids)]
-      if (uniqueIds.length === 0) {
-        return []
-      }
+    async collectRows(workspaceId, ids) {
       const rows = await db.query.productModel.findMany({
-        where: { workspaceId, id: { in: uniqueIds } },
-        columns: { id: true },
-      })
-      return rows.map((row) => row.id)
-    },
-
-    async collect(workspaceId, ids) {
-      if (ids.length === 0) {
-        return {
-          entries: [],
-          folderIds: [],
-          productCategoryIds: [],
-          hardDependencies: [],
-        }
-      }
-      const rows = await db.query.productModel.findMany({
-        where: { workspaceId, id: { in: [...ids] } },
+        where: scopedWhere({ workspaceId, ids }),
         with: {
           variantOptions: true,
           variants: true,
@@ -223,37 +221,25 @@ export const productsAdapter: ResourceAdapter = {
       ]
 
       const selectedIds = new Set(ids)
-      const hardDependencies = [
-        ...new Set(
-          rows.flatMap((row) =>
-            row.addons.flatMap((addon) => addon.addonProductIds),
-          ),
+      const hardDependencies = dependenciesOn(
+        "products",
+        rows.flatMap((row) =>
+          row.addons.flatMap((addon) => addon.addonProductIds),
         ),
-      ]
-        .filter((sourceId) => !selectedIds.has(sourceId))
-        .map((sourceId) => ({ category: "products" as const, sourceId }))
+      ).filter((dependency) => !selectedIds.has(dependency.sourceId))
 
-      return { entries, folderIds: [], productCategoryIds, hardDependencies }
+      return { entries, productCategoryIds, hardDependencies }
     },
-  } satisfies ResourceCollector,
+  }),
 }
 
 const resolveCategoryReference = (
   ctx: TemplateInstallContext,
   sourceId: string | null | undefined,
-): string | null => {
-  if (!sourceId) {
-    return null
-  }
-  const targetId = ctx.idMaps.productCategory?.get(sourceId)
-  if (!targetId) {
-    ctx.warn({
-      category: "products",
-      entityKind: "productCategory",
-      path: "products.categoryId",
-      value: sourceId,
-    })
-    return null
-  }
-  return targetId
-}
+): string | null =>
+  resolveRef(ctx, {
+    category: "products",
+    kind: "productCategory",
+    path: "products.categoryId",
+    sourceRef: sourceId,
+  })

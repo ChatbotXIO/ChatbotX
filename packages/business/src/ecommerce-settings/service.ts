@@ -1,4 +1,4 @@
-import { type DatabaseClient, db } from "@chatbotx.io/database/client"
+import type { DatabaseClient } from "@chatbotx.io/database/client"
 import {
   ECOMMERCE_SETTINGS_DEFAULTS,
   type EcommerceCheckoutSettings,
@@ -28,6 +28,8 @@ import {
   paymentCurrencyUnsupportedException,
   paymentProviderNotConnectedException,
 } from "../payment-provider/errors"
+import { assertReferencable } from "../template/installed-resource.service"
+import { withTemplateLockedTransaction } from "../template/template-resource-locks"
 
 export type EcommerceSettingsPatch = {
   general?: Partial<EcommerceGeneralSettings>
@@ -169,7 +171,23 @@ class EcommerceSettingsService extends BaseService {
     const { workspaceId, patch } = input
     await this.assertProFeaturesAllowed(workspaceId, patch)
 
-    const merged = await db.transaction(async (tx) => {
+    const merged = await withTemplateLockedTransaction(async (tx) => {
+      // The flows being written: their tpl-res locks are held until the
+      // reference commits, so an uninstall that tombstoned one is seen (the
+      // save is refused) or sees this reference. First step of the transaction.
+      const flowIds = [
+        patch.general?.abandonedCartFlowId,
+        patch.checkout?.checkoutFlowId,
+        patch.checkout?.orderConfirmationFlowId,
+      ].filter((id): id is string => typeof id === "string")
+      await assertReferencable({
+        workspaceId,
+        parents: [...new Set(flowIds)].map((resourceId) => ({
+          kind: "flow" as const,
+          resourceId,
+        })),
+        tx,
+      })
       // Create the row if missing, then lock it so two saves of different
       // groups queue up instead of overwriting each other's merge.
       await ecommerceSettingsRepository.insertIfMissing(

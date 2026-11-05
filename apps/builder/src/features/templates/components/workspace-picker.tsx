@@ -1,6 +1,24 @@
 "use client"
 
+import type {
+  TemplateBindableInbox,
+  TemplateRequiredInbox,
+} from "@chatbotx.io/business"
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "@chatbotx.io/ui/components/ui/avatar"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
+import { Checkbox } from "@chatbotx.io/ui/components/ui/checkbox"
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@chatbotx.io/ui/components/ui/dialog"
+import { Label } from "@chatbotx.io/ui/components/ui/label"
 import {
   Select,
   SelectContent,
@@ -9,24 +27,44 @@ import {
   SelectValue,
 } from "@chatbotx.io/ui/components/ui/select"
 import { Loader2 } from "lucide-react"
+import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import { useMemo, useState } from "react"
 import { toast } from "sonner"
 import { installTemplateAction } from "../actions/install-template.action"
+import { toastActionError } from "../lib/action-error-toast"
+import { SHOW_PUBLISHER_ACCESS_OPTION } from "../lib/publisher-access-option"
+import { useIdempotencyKey } from "../lib/use-idempotency-key"
+import { useOptionalLabel } from "../lib/use-optional-label"
+import { InstallCollisionSummary } from "./install-collision-summary"
 
 type WorkspaceOption = {
   id: string
   name: string
+  logoUrl: string | null
+  crossTenant: boolean
 }
 
 type WorkspacePickerProps = {
   shareToken: string
   workspaces: WorkspaceOption[]
+  requiredInboxes: TemplateRequiredInbox[]
+  inboxOptions: Record<string, TemplateBindableInbox[]>
+  installedCopies: Record<
+    string,
+    { id: string; granted: boolean; autoUpdate: boolean }
+  >
 }
 
+const NO_INBOX = "none"
+
 /**
+ * One row per workspace, each with its Install; the workspace's own choices
+ * (inboxes, publisher access, what the install will do) open in a popup, since
+ * the publisher access has to be disclosed before installing.
+ *
  * The install action returns only `{installationId}` — it never means the
  * install already finished — so on success this only toasts "started" and
  * routes to the installs status page, never "installed".
@@ -34,36 +72,107 @@ type WorkspacePickerProps = {
 export function WorkspacePicker({
   shareToken,
   workspaces,
+  requiredInboxes,
+  inboxOptions,
+  installedCopies,
 }: WorkspacePickerProps) {
   const t = useTranslations("templatesPublicPage")
+  const tRoot = useTranslations()
   const router = useRouter()
-  const [selectedWorkspaceId, setSelectedWorkspaceId] = useState(
-    workspaces[0]?.id,
-  )
-  const options = useMemo(
-    () =>
-      workspaces.map((workspace) => ({
-        label: workspace.name,
-        value: workspace.id,
-      })),
-    [workspaces],
-  )
+  const [selectedWorkspaceId, setSelectedWorkspaceId] = useState<
+    string | undefined
+  >()
 
-  const { execute, isPending } = useAction(
+  // `{ templateInboxId: chosenInboxId }`; an inbox left out installs inactive.
+  const [bindings, setBindings] = useState<Record<string, string>>({})
+  // The checkbox shows what will be sent and always sends it, so a reinstall
+  // never applies an earlier choice the installer can not see here. Disclosed
+  // before installing; on for a first install, and changeable later on the
+  // install page.
+  const [touchedPublisherAccess, setTouchedPublisherAccess] = useState<
+    boolean | undefined
+  >()
+  const [touchedAutoUpdate, setTouchedAutoUpdate] = useState<
+    boolean | undefined
+  >()
+  // Set when the chosen workspace already has this template installed.
+  const installedCopy = installedCopies[selectedWorkspaceId ?? ""]
+  const installedId = installedCopy?.id ?? null
+  const selectedWorkspace = workspaces.find(
+    (workspace) => workspace.id === selectedWorkspaceId,
+  )
+  // Only a same-tenant copy can give its publisher access (the server refuses
+  // it otherwise), so a cross-tenant one never sends the choice as granted.
+  const canGrantPublisherAccess = selectedWorkspace?.crossTenant !== true
+  const offersPublisherAccess =
+    SHOW_PUBLISHER_ACCESS_OPTION && canGrantPublisherAccess
+  const allowPublisherAccess =
+    canGrantPublisherAccess &&
+    (!SHOW_PUBLISHER_ACCESS_OPTION ||
+      (touchedPublisherAccess ?? installedCopy?.granted ?? true))
+  const autoUpdate = touchedAutoUpdate ?? installedCopy?.autoUpdate ?? false
+
+  const channelLabel = useOptionalLabel("templates.channels")
+
+  const chooseWorkspace = (workspaceId: string | undefined) => {
+    setSelectedWorkspaceId(workspaceId)
+    // The choices made in the popup belong to the workspace they were made for.
+    setTouchedPublisherAccess(undefined)
+    setTouchedAutoUpdate(undefined)
+    setBindings({})
+  }
+
+  // One key per distinct request: resubmitting the same inputs replays the
+  // same install or sync, while changing the workspace, an inbox or a choice
+  // (or switching button) is a new request the server must not reject as reused.
+  const idempotency = useIdempotencyKey()
+  const { execute: executeAction, isPending } = useAction(
     installTemplateAction.bind(null, selectedWorkspaceId ?? ""),
     {
-      onSuccess: () => {
-        toast.success(t("installStarted"))
+      onSuccess: ({ data }) => {
+        // Updating an installed copy lands on that copy; a fresh install on the list.
+        toast.success(data?.syncId ? t("updateStarted") : t("installStarted"))
         if (selectedWorkspaceId) {
-          router.push(`/space/${selectedWorkspaceId}/templates/installs`)
+          router.push(
+            data?.syncId && data.installationId
+              ? `/space/${selectedWorkspaceId}/templates/installs/${data.installationId}`
+              : `/space/${selectedWorkspaceId}/templates/installs`,
+          )
         }
       },
-      onError: ({ error }) => {
-        if (error.serverError) {
-          toast.error(error.serverError)
-        }
-      },
+      onError: ({ error }) =>
+        toastActionError(error, tRoot("messages.unknownError")),
     },
+  )
+
+  const execute = (
+    request: Omit<Parameters<typeof executeAction>[0], "idempotencyKey">,
+  ) =>
+    executeAction({
+      ...request,
+      idempotencyKey: idempotency.keyFor(selectedWorkspaceId, request),
+    })
+
+  // The inboxes of the chosen workspace that can stand in for each required one.
+  const inboxChoices = useMemo(
+    () =>
+      requiredInboxes.map((required) => {
+        const candidates = (
+          inboxOptions[selectedWorkspaceId ?? ""] ?? []
+        ).filter((inbox) => inbox.channel === required.channelType)
+        return {
+          required,
+          candidates,
+          inboxItems: [
+            { label: t("noInbox"), value: NO_INBOX },
+            ...candidates.map((inbox) => ({
+              label: inbox.name,
+              value: inbox.id,
+            })),
+          ],
+        }
+      }),
+    [requiredInboxes, inboxOptions, selectedWorkspaceId, t],
   )
 
   if (workspaces.length === 0) {
@@ -75,34 +184,215 @@ export function WorkspacePicker({
   }
 
   return (
-    <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-      <Select
-        items={options}
-        onValueChange={(value) => {
-          if (typeof value === "string") {
-            setSelectedWorkspaceId(value)
+    <section className="flex w-full flex-col gap-4">
+      <h2 className="text-center font-semibold text-2xl">
+        {t("selectWorkspace")}
+      </h2>
+      <ul className="divide-y rounded-xl bg-card ring-1 ring-foreground/10">
+        {workspaces.map((workspace) => (
+          <li className="flex items-center gap-4 p-3" key={workspace.id}>
+            <Avatar className="size-12">
+              <AvatarImage alt={workspace.name} src={workspace.logoUrl ?? ""} />
+              <AvatarFallback className="font-medium">
+                {workspace.name.slice(0, 2)}
+              </AvatarFallback>
+            </Avatar>
+            <span className="min-w-0 flex-1 truncate text-sm">
+              {workspace.name}
+            </span>
+            <Button onClick={() => chooseWorkspace(workspace.id)}>
+              {t("install")}
+            </Button>
+          </li>
+        ))}
+      </ul>
+
+      <Dialog
+        onOpenChange={(open) => {
+          if (!open) {
+            chooseWorkspace(undefined)
           }
         }}
-        value={selectedWorkspaceId}
+        open={Boolean(selectedWorkspace)}
       >
-        <SelectTrigger className="sm:w-64">
-          <SelectValue placeholder={t("selectWorkspace")} />
-        </SelectTrigger>
-        <SelectContent>
-          {workspaces.map((workspace) => (
-            <SelectItem key={workspace.id} value={workspace.id}>
-              {workspace.name}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-      <Button
-        disabled={!selectedWorkspaceId || isPending}
-        onClick={() => execute({ shareToken })}
-      >
-        {isPending && <Loader2 className="animate-spin" />}
-        {t("install")}
-      </Button>
-    </div>
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="truncate">
+              {selectedWorkspace?.name}
+            </DialogTitle>
+          </DialogHeader>
+          {selectedWorkspaceId && (
+            <InstallCollisionSummary
+              inboxBindings={bindings}
+              shareToken={shareToken}
+              workspaceId={selectedWorkspaceId}
+            />
+          )}
+          {requiredInboxes.length > 0 && (
+            <fieldset className="flex flex-col gap-2 rounded-md border p-3">
+              <legend className="px-1 font-medium text-sm">
+                {t("inboxesTitle")}
+              </legend>
+              <p className="text-muted-foreground text-sm">
+                {t("inboxesHint")}
+              </p>
+              {inboxChoices.map(({ required, candidates, inboxItems }) => (
+                <div
+                  className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between"
+                  key={`${selectedWorkspaceId}:${required.sourceId}`}
+                >
+                  <span className="text-sm">
+                    {required.name}{" "}
+                    <span className="text-muted-foreground">
+                      ({channelLabel(required.channelType)})
+                    </span>
+                  </span>
+                  <Select
+                    disabled={candidates.length === 0}
+                    items={inboxItems}
+                    onValueChange={(value) =>
+                      setBindings((current) => {
+                        const { [required.sourceId]: _dropped, ...rest } =
+                          current
+                        return typeof value === "string" && value !== NO_INBOX
+                          ? { ...rest, [required.sourceId]: value }
+                          : rest
+                      })
+                    }
+                    value={
+                      candidates.length === 0
+                        ? null
+                        : (bindings[required.sourceId] ?? NO_INBOX)
+                    }
+                  >
+                    <SelectTrigger className="sm:w-64">
+                      <SelectValue placeholder={t("noInboxAvailable")} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={NO_INBOX}>{t("noInbox")}</SelectItem>
+                      {candidates.map((inbox) => (
+                        <SelectItem key={inbox.id} value={inbox.id}>
+                          {inbox.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              ))}
+            </fieldset>
+          )}
+          {offersPublisherAccess && (
+            <div className="flex items-start gap-2 rounded-md border p-3">
+              <Checkbox
+                checked={allowPublisherAccess}
+                id="allow-publisher-access"
+                onCheckedChange={(checked) =>
+                  setTouchedPublisherAccess(Boolean(checked))
+                }
+              />
+              <div className="flex flex-col gap-0.5">
+                <Label
+                  className="cursor-pointer font-normal text-sm"
+                  htmlFor="allow-publisher-access"
+                >
+                  {t("publisherAccessLabel")}
+                </Label>
+                <p className="text-muted-foreground text-xs">
+                  {t("publisherAccessHint")}
+                </p>
+              </div>
+            </div>
+          )}
+          {installedId && (
+            <div
+              className="flex flex-col gap-3 rounded-md border bg-muted/40 p-3 text-sm"
+              role="status"
+            >
+              {/* Stacked: three actions beside the text squeezed it into a sliver. */}
+              <span className="flex flex-col gap-2">
+                <span>{t("alreadyInstalled")}</span>
+                <span className="flex items-center gap-2">
+                  <Checkbox
+                    checked={autoUpdate}
+                    id="update-automatically"
+                    onCheckedChange={(checked) =>
+                      setTouchedAutoUpdate(Boolean(checked))
+                    }
+                  />
+                  <Label
+                    className="cursor-pointer font-normal"
+                    htmlFor="update-automatically"
+                  >
+                    {t("autoUpdateLabel")}
+                  </Label>
+                </span>
+              </span>
+              <span className="flex flex-wrap gap-2">
+                <Button
+                  nativeButton={false}
+                  render={
+                    <Link
+                      href={`/space/${selectedWorkspaceId}/templates/installs/${installedId}`}
+                    />
+                  }
+                  size="sm"
+                  variant="outline"
+                >
+                  {t("viewInstall")}
+                </Button>
+                <Button
+                  disabled={isPending}
+                  onClick={() =>
+                    execute({
+                      shareToken,
+                      inboxBindings: bindings,
+                      acceptPublisherUninstall: allowPublisherAccess,
+                      // Their current choice, so updating never switches it back on.
+                      autoUpdate,
+                    })
+                  }
+                  size="sm"
+                >
+                  {isPending && <Loader2 className="animate-spin" />}
+                  {t("updateExisting")}
+                </Button>
+                <Button
+                  disabled={isPending}
+                  onClick={() =>
+                    execute({
+                      shareToken,
+                      allowDuplicate: true,
+                      inboxBindings: bindings,
+                      acceptPublisherUninstall: allowPublisherAccess,
+                    })
+                  }
+                  size="sm"
+                  variant="outline"
+                >
+                  {t("installAnotherCopy")}
+                </Button>
+              </span>
+            </div>
+          )}
+          {installedId ? null : (
+            <DialogFooter>
+              <Button
+                disabled={isPending}
+                onClick={() =>
+                  execute({
+                    shareToken,
+                    inboxBindings: bindings,
+                    acceptPublisherUninstall: allowPublisherAccess,
+                  })
+                }
+              >
+                {isPending && <Loader2 className="animate-spin" />}
+                {t("install")}
+              </Button>
+            </DialogFooter>
+          )}
+        </DialogContent>
+      </Dialog>
+    </section>
   )
 }

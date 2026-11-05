@@ -38,6 +38,12 @@ import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import React, { use, useCallback, useMemo } from "react"
 import { toast } from "sonner"
+import { LockBadge } from "@/features/templates/components/lock-badge"
+import {
+  LockedGuard,
+  TemplateLockedList,
+  UndeletableGuard,
+} from "@/features/templates/components/lock-context"
 import { ChangeFolderDialog } from "../folders/change-folder"
 import { buildAutomationAccountColumn } from "../shared/comment-automation/automation-account-column"
 import { BulkDeleteCommentAutomationsDialog } from "../shared/comment-automation/bulk-delete-comment-automations-dialog"
@@ -149,7 +155,7 @@ export function FbCommentsTable({
           />
         ),
         cell: ({ row }) => (
-          <div className="max-w-75 truncate">
+          <div className="flex max-w-75 items-center">
             <Tooltip>
               <TooltipTrigger
                 render={
@@ -165,6 +171,7 @@ export function FbCommentsTable({
                 <p>{row.original.name}</p>
               </TooltipContent>
             </Tooltip>
+            <LockBadge resourceId={row.original.id} />
             <LiveAutomationBadge post={row.original.post} />
             {missedCommentsInProgress.has(row.original.id) ? (
               <MissedCommentsProcessingLabel />
@@ -259,12 +266,17 @@ export function FbCommentsTable({
                   <ChartColumnIcon className="me-2" />
                   {t("actions.viewAnalytics")}
                 </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => setRowAction({ row, variant: "update" })}
-                >
-                  <TextIcon className="me-2" />
-                  {t("actions.rename")}
-                </DropdownMenuItem>
+                <LockedGuard resourceId={row.original.id}>
+                  {(locked) => (
+                    <DropdownMenuItem
+                      disabled={locked}
+                      onClick={() => setRowAction({ row, variant: "update" })}
+                    >
+                      <TextIcon className="me-2" />
+                      {t("actions.rename")}
+                    </DropdownMenuItem>
+                  )}
+                </LockedGuard>
                 {canProcessMissedComments(row.original.post) ? (
                   <DropdownMenuItem
                     disabled={missedCommentsInProgress.has(row.original.id)}
@@ -280,13 +292,18 @@ export function FbCommentsTable({
                   <FolderUpIcon className="me-2" />
                   {t("actions.move")}
                 </DropdownMenuItem>
-                <DropdownMenuItem
-                  className="hover:bg-muted hover:text-destructive"
-                  onClick={() => setRowAction({ row, variant: "delete" })}
-                >
-                  <Trash2Icon className="me-2" />
-                  {t("actions.delete")}
-                </DropdownMenuItem>
+                <UndeletableGuard resourceId={row.original.id}>
+                  {(disabled) => (
+                    <DropdownMenuItem
+                      className="hover:bg-muted hover:text-destructive"
+                      disabled={disabled}
+                      onClick={() => setRowAction({ row, variant: "delete" })}
+                    >
+                      <Trash2Icon className="me-2" />
+                      {t("actions.delete")}
+                    </DropdownMenuItem>
+                  )}
+                </UndeletableGuard>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
@@ -315,7 +332,11 @@ export function FbCommentsTable({
   const selectedRows = table.getFilteredSelectedRowModel().rows
 
   return (
-    <>
+    <TemplateLockedList
+      resourceKind="fbCommentAutomation"
+      rows={data}
+      workspaceId={workspaceId}
+    >
       <DataTable table={table}>
         <DataTableToolbar table={table}>
           <div className="flex items-center gap-2">
@@ -413,6 +434,6 @@ export function FbCommentsTable({
         }}
         resource={missedCommentsItem}
       />
-    </>
+    </TemplateLockedList>
   )
 }

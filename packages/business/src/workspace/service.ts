@@ -13,6 +13,7 @@ import {
   type WorkspaceMemberPermissions,
   workspaceMemberRoles,
 } from "@chatbotx.io/database/partials"
+import { templateUninstallStateRepository } from "@chatbotx.io/database/repositories"
 import { workspaceRepository } from "@chatbotx.io/database/repositories/workspace"
 import {
   ROOT_TENANT_ID,
@@ -38,6 +39,12 @@ import { isCommunity } from "../keys"
 import { logger } from "../logger"
 import { notifyWorkspaceCurrencyChange } from "../pipeline/currency-refresh"
 import { quotaEnforcementService } from "../quota-enforcement/service"
+import { templateInstallIntentService } from "../template/install-intent"
+import { dispatchStagedInstalls } from "../template/installation-dispatch"
+import {
+  stageSharedTemplateInstall,
+  stageTenantDefaultInstall,
+} from "../template/installation-stage"
 import { userQuotaService } from "../user-quota/service"
 import { workspaceDeletionRecordService } from "../workspace-deletion-record/service"
 import { withPurgeTimeouts } from "../workspace-lifecycle/purge-batch"
@@ -61,6 +68,8 @@ type WorkspaceWhere = Partial<{ id: string; ownerId: string }>
 /** What `writeWorkspace` has already done, for `insertWorkspace`'s rollback. */
 type WriteProgress = {
   workspaceId?: string
+  /** A white-label default staged a `pending` install in this transaction: dispatch it once the transaction commits. */
+  hasStagedInstall?: boolean
   teamMemberUsage: { liveIncrementedCount: number }
 }
 type DueWorkspace = Pick<WorkspaceModel, "id" | "ownerId" | "tenantId">
@@ -171,6 +180,9 @@ class WorkspaceService extends BaseService {
         lockTx,
       )
       if (existing) {
+        // Nothing new to install into: a share page's choice must not carry
+        // over to whatever this user creates next.
+        await templateInstallIntentService.clear(ownerId)
         return existing
       }
       return await this.create({
@@ -701,6 +713,25 @@ class WorkspaceService extends BaseService {
         table: "Workspace",
         workspaceId: fencedWorkspace.id,
         fn: async (tx) => {
+          // A running template uninstall holds installation rows and then
+          // waits for the copies' rows; the cascade below takes those rows
+          // and, through the Template delete trigger, the installation rows:
+          // they can deadlock. Defer to the next run while one holds a live
+          // lease (an abandoned claim's lease expires). This narrows the
+          // collision, it does not close it: an uninstall claimed right after
+          // this check can still contend, and then Postgres aborts one side
+          // (40P01) or the purge's lock timeout trips — both retried.
+          if (
+            await templateUninstallStateRepository.hasLiveUninstallTouchingWorkspace(
+              fencedWorkspace.id,
+              tx,
+            )
+          ) {
+            throw new WorkspacePurgeIncompleteError(
+              fencedWorkspace.id,
+              "TemplateUninstall",
+            )
+          }
           const deleted = await tx
             .delete(workspaceModel)
             .where(eq(workspaceModel.id, fencedWorkspace.id))
@@ -827,7 +858,16 @@ class WorkspaceService extends BaseService {
     quotaConsumption?: WorkspaceQuotaConsumption
     /** Additional members (role `agent`) inserted alongside the owner, in the same transaction. Used by the admin console's "create workspace for an owner" flow. */
     members?: Array<{ userId: string; permissions: WorkspaceMemberPermissions }>
+    /** False when the owner is not the one creating it (the admin console): their share-page choice stays out of it. */
+    consumeInstallIntent?: boolean
   }): Promise<WorkspaceModel> {
+    // First, so a creation refused below still ends the choice.
+    const installIntentToken =
+      props.consumeInstallIntent === false
+        ? null
+        : await templateInstallIntentService.take(props.createdBy)
+    const insertProps = { ...props, installIntentToken }
+
     if (isCommunity()) {
       // Community edition allows exactly one workspace per owner. Serialize
       // the count-then-insert so concurrent create requests cannot both pass.
@@ -844,12 +884,12 @@ class WorkspaceService extends BaseService {
           if (owned >= COMMUNITY_MAX_WORKSPACES) {
             throw workspaceLimitReachedException()
           }
-          return this.insertWorkspace(props)
+          return this.insertWorkspace(insertProps)
         },
       })
     }
 
-    return await this.insertWorkspace(props)
+    return await this.insertWorkspace(insertProps)
   }
 
   private async insertWorkspace(props: {
@@ -858,6 +898,7 @@ class WorkspaceService extends BaseService {
     tx?: DatabaseClient
     quotaConsumption?: WorkspaceQuotaConsumption
     members?: Array<{ userId: string; permissions: WorkspaceMemberPermissions }>
+    installIntentToken: string | null
   }): Promise<WorkspaceModel> {
     // This consume runs against `db`, not `tx`: if a caller wraps `create` in
     // its own transaction that later rolls back (e.g. a channel connect action),
@@ -917,6 +958,14 @@ class WorkspaceService extends BaseService {
       })
     }
 
+    // Right after the owned transaction commits, before anything that could
+    // throw: the staged install is durable, and the sweep recovers a lost
+    // enqueue, so this only buys latency. A caller-owned transaction
+    // dispatches itself after its own commit (`dispatchStagedInstalls`).
+    if (!props.tx && progress.hasStagedInstall) {
+      await dispatchStagedInstalls(newWorkspace.id)
+    }
+
     // After the owned transaction commits: busting earlier would let a
     // concurrent read re-cache the owner's membership list without the new
     // workspace until the TTL.
@@ -952,6 +1001,7 @@ class WorkspaceService extends BaseService {
     tx: DatabaseClient
     progress: WriteProgress
     members?: Array<{ userId: string; permissions: WorkspaceMemberPermissions }>
+    installIntentToken: string | null
   }): Promise<WorkspaceModel> {
     const { data, tx } = props
 
@@ -1012,6 +1062,22 @@ class WorkspaceService extends BaseService {
       userId: props.createdBy,
       tx,
     })
+
+    // A share page's template takes the place of the tenant's default.
+    const stagedFromShareLink = props.installIntentToken
+      ? await stageSharedTemplateInstall(tx, {
+          workspaceId: newWorkspace.id,
+          tenantId,
+          createdBy: props.createdBy,
+          shareToken: props.installIntentToken,
+        })
+      : null
+    props.progress.hasStagedInstall =
+      (stagedFromShareLink ??
+        (await stageTenantDefaultInstall(tx, {
+          workspaceId: newWorkspace.id,
+          tenantId,
+        }))) !== null
 
     return newWorkspace
   }

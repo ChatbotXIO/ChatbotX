@@ -107,6 +107,7 @@ vi.mock("@/lib/auth/assert-workspace-super-admin", () => ({
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
+  templateInstallIntentService: { clear: vi.fn(async () => undefined) },
   messengerIntegrationService: {
     findByIdForWorkspace: mockFindMessengerIntegration,
     updateAuth: mockUpdateMessengerIntegrationAuth,

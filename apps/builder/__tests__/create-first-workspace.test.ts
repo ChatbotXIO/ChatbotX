@@ -9,6 +9,7 @@ const mocks = vi.hoisted(() => ({
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
+  templateInstallIntentService: { clear: vi.fn(async () => undefined) },
   workspaceService: {
     ensureFirstForOwner: mocks.mockEnsureFirstForOwner,
   },

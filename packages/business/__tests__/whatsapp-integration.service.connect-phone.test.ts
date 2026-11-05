@@ -8,6 +8,7 @@ const mocks = vi.hoisted(() => ({
   createRun: vi.fn(),
   createWorkspace: vi.fn(),
   dispatchAuditRecordSafely: vi.fn().mockResolvedValue(undefined),
+  dispatchStagedInstalls: vi.fn().mockResolvedValue(undefined),
   findByInboxIdForWorkspace: vi.fn(),
   findByProviderSourceId: vi.fn(),
   inboxCreate: vi.fn(),
@@ -46,6 +47,10 @@ vi.mock("@chatbotx.io/utils", async (importOriginal) => {
 
 vi.mock("../src/audit/dispatcher", () => ({
   dispatchAuditRecordSafely: mocks.dispatchAuditRecordSafely,
+}))
+
+vi.mock("../src/template/installation-dispatch", () => ({
+  dispatchStagedInstalls: mocks.dispatchStagedInstalls,
 }))
 
 vi.mock("../src/inbox/connect-channel", () => ({
@@ -231,6 +236,18 @@ describe("integrationWhatsappService.connectPhoneNumber", () => {
       id: "workspace-new",
     } as never)
     mocks.claimSignupSessionPhoneNumber.mockResolvedValue({ id: "session-1" })
+    const order: string[] = []
+    mocks.transaction.mockImplementation(
+      async (callback: (client: unknown) => Promise<unknown>) => {
+        const committed = await callback(tx)
+        order.push("commit")
+        return committed
+      },
+    )
+    mocks.dispatchStagedInstalls.mockImplementation(() => {
+      order.push("dispatch")
+      return Promise.resolve(undefined)
+    })
 
     const result = await integrationWhatsappService.connectPhoneNumber({
       ...basePhoneNumberInput,
@@ -238,6 +255,7 @@ describe("integrationWhatsappService.connectPhoneNumber", () => {
       signupSession: { id: "session-1", userId: "user-1", ownerId: "owner-1" },
     })
 
+    expect(order).toEqual(["commit", "dispatch"])
     expect(workspaceService.create).toHaveBeenCalledWith(
       expect.objectContaining({
         tx,
@@ -252,6 +270,8 @@ describe("integrationWhatsappService.connectPhoneNumber", () => {
     })
     expect(result.createdWorkspace).toBe(true)
     expect(result.workspaceId).toBe("workspace-new")
+    expect(mocks.dispatchStagedInstalls).toHaveBeenCalledTimes(1)
+    expect(mocks.dispatchStagedInstalls).toHaveBeenCalledWith("workspace-new")
     expect(mocks.dispatchAuditRecordSafely).toHaveBeenCalledWith(
       expect.objectContaining({
         action: "create",
@@ -259,6 +279,28 @@ describe("integrationWhatsappService.connectPhoneNumber", () => {
       }),
       expect.any(String),
     )
+  })
+
+  test("does not dispatch when the connect transaction rolls back", async () => {
+    vi.spyOn(workspaceService, "create").mockResolvedValue({
+      id: "workspace-new",
+    } as never)
+    mocks.claimSignupSessionPhoneNumber.mockResolvedValue({ id: "session-1" })
+    mocks.upsertConnectionRow.mockRejectedValueOnce(new Error("insert failed"))
+
+    await expect(
+      integrationWhatsappService.connectPhoneNumber({
+        ...basePhoneNumberInput,
+        workspaceId: null,
+        signupSession: {
+          id: "session-1",
+          userId: "user-1",
+          ownerId: "owner-1",
+        },
+      }),
+    ).rejects.toThrow("insert failed")
+
+    expect(mocks.dispatchStagedInstalls).not.toHaveBeenCalled()
   })
 
   test("does not create a workspace or bind the session when workspaceId is already set", async () => {
@@ -275,6 +317,7 @@ describe("integrationWhatsappService.connectPhoneNumber", () => {
 
     expect(mocks.bindSignupSessionWorkspace).not.toHaveBeenCalled()
     expect(result.createdWorkspace).toBe(false)
+    expect(mocks.dispatchStagedInstalls).not.toHaveBeenCalled()
     expect(mocks.dispatchAuditRecordSafely).not.toHaveBeenCalledWith(
       expect.objectContaining({ action: "create" }),
       expect.any(String),

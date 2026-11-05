@@ -2,6 +2,7 @@
   "flows": {
     "export": {
       "notPublished": "Acest flux nu a fost niciodată publicat. Publicați-l înainte de a-l exporta.",
+      "viewOnly": "Acest flux a fost instalat dintr-un șablon doar pentru vizualizare, deci nu poate fi exportat.",
       "failed": "Exportul a eșuat. Vă rugăm să încercați din nou."
     },
     "title": "Fluxuri",
@@ -3299,10 +3300,11 @@
       "processing": "În curs de procesare",
       "installing": "Installing",
       "completed": "Finalizat",
-      "partial": "Partial",
+      "partial": "Parțial",
       "failed": "Eșuat",
       "success": "Succes",
-      "error": "Eroare"
+      "error": "Eroare",
+      "uninstalled": "Uninstalled"
     },
     "subtitle": {
       "placeholder": "Introduceți subtitlul"
@@ -4040,7 +4042,8 @@
       "miniApps": "Mini Apps",
       "leaderboards": "Clasamente",
       "pipelines": "Canale de vânzări",
-      "places": "Locuri"
+      "places": "Locuri",
+      "templates": "Șabloane"
     },
     "adReferral": {
       "label": "Ads",
@@ -7406,6 +7409,23 @@
     "title": "Canale ascunse",
     "hiddenByPlatform": "Ascuns de administratorul platformei — nu poți reactiva acest canal."
   },
+  "platformDefaultTemplate": {
+    "title": "Șablon implicit",
+    "description": "Instalează acest șablon în fiecare spațiu de lucru nou creat sub acest white-label. Spațiile existente nu se modifică.",
+    "clearTitle": "Elimini șablonul implicit?",
+    "clearDescription": "Spațiile de lucru noi nu vor mai primi automat un șablon. Cele care îl au deja îl păstrează.",
+    "status": {
+      "notConfigured": "Nesetat",
+      "ready": "Activ",
+      "templateUnavailable": "Șablon indisponibil",
+      "shareDisabled": "Link de partajare dezactivat",
+      "keyRotated": "Cheie nevalidă"
+    },
+    "errors": {
+      "unavailable": "ID-ul sau cheia șablonului nu este validă.",
+      "shareDisabled": "Activează mai întâi linkul de partajare al șablonului."
+    }
+  },
   "platformCredentials": {
     "notConfigured": "Nu este configurat încă",
     "notConfiguredHint": "Adaugă setările tale pentru a începe să folosești această integrare.",
@@ -7670,6 +7690,9 @@
   },
   "templates": {
     "description": "Creează și gestionează șabloanele tale.",
+    "createDialog": {
+      "title": "Șablon nou"
+    },
     "title": "Șabloane",
     "share": {
       "label": "Distribuie",
@@ -7679,14 +7702,140 @@
       "dialogDescription": "Oricine are acest link poate instala o copie a acestui șablon într-un spațiu de lucru din organizația ta.",
       "enableLabel": "Activează linkul de distribuire",
       "linkLabel": "Link de distribuire",
-      "description": "Oricine are linkul poate instala acest șablon în propriul spațiu de lucru."
+      "rotateLabel": "Regenerează linkul",
+      "rotateTitle": "Regenerezi linkul de distribuire?",
+      "rotateDescription": "Linkul actual nu mai funcționează imediat. Oricine mai trebuie să instaleze acest șablon are nevoie de linkul nou.",
+      "rotated": "Linkul de distribuire a fost regenerat",
+      "expiryLabel": "Linkul expiră",
+      "expiryHint": "Lasă gol pentru un link care nu expiră niciodată.",
+      "clearExpiry": "Elimină expirarea",
+      "expiredNotice": "Acest link a expirat. Setează o dată ulterioară sau elimină expirarea pentru a-l distribui din nou.",
+      "templateId": "ID șablon",
+      "templateKey": "Cheie șablon",
+      "showKey": "Arată cheia",
+      "hideKey": "Ascunde cheia",
+      "copyField": "Copiază {field}"
+    },
+    "sync": {
+      "title": "Actualizări",
+      "updateAvailable": "Actualizare disponibilă",
+      "upToDate": "La zi",
+      "sourceDeleted": "Șablon șters",
+      "sourceDeletedHint": "Editorul a șters acest șablon. Copia ta funcționează în continuare, dar nu mai poate fi actualizată.",
+      "updateNow": "Actualizează acum",
+      "updating": "Se actualizează…",
+      "version": "Versiunea șablonului {version}",
+      "lastSynced": "actualizat ultima dată {date}",
+      "autoUpdateLabel": "Actualizează automat când șablonul se modifică",
+      "noHistory": "Nicio actualizare încă.",
+      "countAdded": "{count} adăugate",
+      "countUpdated": "{count} actualizate",
+      "countDetached": "{count} nu mai urmează șablonul",
+      "notUpdatable": "{count} nu pot fi actualizate încă",
+      "overwritten": "{name} a fost editat și înlocuit de actualizare",
+      "restore": "Restaurează versiunea mea",
+      "restored": "Versiunea ta a fost restaurată",
+      "status": {
+        "pending": "În coadă",
+        "running": "În desfășurare",
+        "completed": "Finalizat",
+        "partial": "Parțial",
+        "failed": "Eșuat",
+        "skipped": "Omis",
+        "cancelled": "Anulat"
+      },
+      "trigger": {
+        "autoUpdate": "Automat",
+        "manual": "Manual",
+        "reinstall": "Reinstalare"
+      },
+      "publisherAccessLabel": "Permite editorului să vadă acest spațiu de lucru și să dezinstaleze șablonul",
+      "publisherAccessHint": "Se distribuie doar numele spațiului de lucru. Dacă editorul dezinstalează, tot ce a creat șablonul este șters, inclusiv copiile pe care le-ai editat.",
+      "requestedVersion": "solicitată v{version}",
+      "errors": {
+        "unknown": "Actualizarea a eșuat. Încearcă din nou sau contactează asistența dacă eșuează în continuare.",
+        "templateSyncFailed": "Actualizarea a eșuat. Încearcă din nou.",
+        "templateSyncSuperseded": "O actualizare mai nouă a înlocuit-o pe aceasta.",
+        "templateSyncAbandoned": "Actualizarea nu s-a terminat la timp și a fost închisă.",
+        "templateInstallationInactive": "Această instalare nu mai este activă.",
+        "workspaceOwnerBlocked": "Contul proprietarului spațiului de lucru este blocat.",
+        "templateUninstallInProgress": "Șablonul este dezinstalat.",
+        "templateAutoUpdateOff": "Actualizările automate sunt dezactivate.",
+        "templateUpToDate": "Copia este deja actualizată.",
+        "templateInstallerAccessLost": "Cine a instalat șablonul nu mai are permisiunea de a actualiza această copie.",
+        "templateInstallationSourceMissing": "Șablonul a fost șters înainte de rularea actualizării.",
+        "templateCategoryPermissionDenied": "Nu mai ai permisiunea de a actualiza tot conținutul acestui șablon.",
+        "templatePayloadIncompatible": "Acest șablon a fost salvat într-un format mai nou decât poate instala acest server.",
+        "templateCrossTenantInstall": "Acest șablon nu este disponibil pentru spațiul tău de lucru.",
+        "templateInvalidInboxBinding": "O căsuță de mesaje selectată nu se potrivește cu șablonul."
+      }
+    },
+    "versions": {
+      "detailsTab": "Detalii",
+      "tab": "Versiuni",
+      "versionNumber": "Versiunea {version}",
+      "current": "Curentă",
+      "first": "Prima versiune",
+      "noDetail": "Nu au fost înregistrate detalii pentru această versiune.",
+      "added": "Adăugat",
+      "changed": "Modificat",
+      "removed": "Eliminat"
+    },
+    "installers": {
+      "title": "Vezi analizele",
+      "workspace": "Spațiu de lucru",
+      "installs": "Instalări",
+      "lastInstalled": "Ultima instalare",
+      "version": "Version",
+      "autoUpdate": "Actualizare automată",
+      "uninstalled": "Dezinstalat",
+      "hidden": "Spațiu de lucru nedistribuit",
+      "totalInstallEvents": "Total instalări (din totdeauna)",
+      "uninstallNotAllowed": "Cel care a instalat nu a permis editorilor să dezinstaleze această copie.",
+      "loadError": "Nu s-au putut încărca instalatorii. Încearcă din nou.",
+      "automatic": "Automată",
+      "details": "Detalii",
+      "noIssues": "Nu există avertismente sau erori."
     },
     "installs": {
       "title": "Instalări",
       "resources": "Resurse",
       "warnings": "Avertismente",
       "completedAt": "Finalizat la",
-      "autoUpdate": "Actualizare automată"
+      "autoUpdate": "Actualizare automată",
+      "detailTitle": "Detalii instalare",
+      "installedBy": "Instalat de",
+      "viaApi": "Token API",
+      "attempts": "Încercări",
+      "autoUpdateOn": "Activat",
+      "autoUpdateOff": "Dezactivat",
+      "retry": "Reîncearcă instalarea",
+      "resourcesTitle": "Resurse instalate",
+      "noResources": "Nu s-a creat nimic încă.",
+      "deletedResource": "Resursă ștearsă",
+      "viewOnly": "Doar vizualizare",
+      "created": "Creat",
+      "reused": "Reutilizat",
+      "loadMore": "Încarcă mai multe",
+      "statusFilter": "Stare",
+      "allStatuses": "Toate stările",
+      "errors": {
+        "unknown": "Instalarea a eșuat. Încearcă din nou sau contactează asistența dacă eșuează în continuare.",
+        "templatePayloadIncompatible": "Acest șablon a fost salvat într-un format mai nou decât poate instala acest server.",
+        "templateInstallationSourceMissing": "Șablonul a fost șters înainte de rularea instalării.",
+        "templateCrossTenantInstall": "Acest șablon nu este disponibil pentru spațiul tău de lucru.",
+        "templateCategoryPermissionDenied": "Nu mai ai permisiunea de a instala tot conținutul acestui șablon.",
+        "templateInvalidInboxBinding": "O căsuță de mesaje selectată nu se potrivește cu șablonul.",
+        "templateInstallEnqueueFailed": "Instalarea nu a putut fi pusă în coadă.",
+        "templateInstallFailed": "Instalarea a eșuat. Încearcă din nou.",
+        "templateInstallAbandoned": "Instalarea nu s-a finalizat la timp și a fost închisă.",
+        "templateInstallSuperseded": "O instalare mai nouă a acestui șablon a înlocuit-o pe aceasta.",
+        "workspaceOwnerBlocked": "Contul proprietarului spațiului de lucru este blocat."
+      },
+      "uninstalledBy": "{by, select, publisher {Editorul a dezinstalat acest șablon.} installer {Acest șablon a fost dezinstalat din acest spațiu de lucru.} other {Acest șablon a fost dezinstalat.}}",
+      "uninstalledSummary": "{deleted} șterse, {kept} păstrate.",
+      "lastAttemptAt": "Ultima încercare",
+      "installedAutomatically": "Instalat automat (implicit white-label)"
     },
     "form": {
       "contents": "Conținutul șablonului",
@@ -7699,14 +7848,26 @@
       "allowDelete": "Permite ștergerea după instalare",
       "publisherName": "Numele editorului",
       "youtubeVideoId": "ID-ul videoclipului YouTube",
-      "youtubeVideoIdDescription": "ID-ul de 11 caractere din URL-ul videoclipului, de ex. \"dQw4w9WgXcQ\" în youtube.com/watch?v=dQw4w9WgXcQ",
+      "youtubeVideoIdDescription": "ID-ul de 11 caractere din URL-ul videoclipului, de ex. \"xxxxxxxxxxx\" în youtube.com/watch?v=xxxxxxxxxxx",
       "testLink": "Link de test",
       "imageUrl": "Imagine de copertă",
       "installBehavior": "Comportament la instalare",
-      "createInstallFolder": "Instalează într-un folder dedicat",
+      "createInstallFolder": "Creează un folder în contul instalat și instalează resursele.",
       "createInstallFolderDescription": "Grupează fiecare resursă instalată într-un singur folder nou, denumit după acest șablon.",
-      "defaultAutoUpdate": "Marchează instalările pentru actualizări în mod implicit",
-      "defaultAutoUpdateDescription": "Instalările noi vor afișa o notificare de actualizare disponibilă de fiecare dată când republici acest șablon."
+      "defaultAutoUpdate": "Actualizează automat șabloanele instalate",
+      "defaultAutoUpdateDescription": "De fiecare dată când salvezi acest șablon cu conținut modificat, instalările cu actualizare automată sunt suprascrise cu noul conținut (copiile editate de cel care a instalat sunt salvate mai întâi). Cei care instalează o pot dezactiva.",
+      "viewOnly": "Doar vizualizare",
+      "viewOnlyAll": "Setează toate cele selectate doar pentru vizualizare",
+      "includedAutomatically": {
+        "title": "Incluse automat",
+        "hint": "Preluate deoarece un element selectat de tine are nevoie de ele. Doar citire.",
+        "rows": "{count, plural, one {încă # element} other {încă # elemente}}",
+        "kind": {
+          "folders": "Foldere",
+          "placeCategories": "Categorii de locații"
+        }
+      },
+      "viewOnlyCopyIncluded": "Un element selectat (sau un element de care are nevoie) a fost instalat dintr-un șablon doar pentru vizualizare, deci nu poate fi partajat într-un șablon nou."
     },
     "categories": {
       "flows": "Fluxuri",
@@ -7721,8 +7882,117 @@
       "keywords": "Cuvinte cheie",
       "entryPointLinks": "Linkuri de intrare",
       "triggers": "Declanșatoare",
-      "fbCommentAutomations": "Automatizări comentarii Facebook",
-      "settings": "Setări"
+      "fbCommentAutomations": "Automatizări comentarii",
+      "settings": "Câmpuri bot și răspunsuri salvate",
+      "sequences": "Secvențe",
+      "aiMcpServers": "Servere MCP",
+      "aiFiles": "Fișiere de cunoștințe AI",
+      "questionnaires": "Questionnaires",
+      "couponTopics": "Subiecte cupoane",
+      "pipelines": "Pipeline-uri"
+    },
+    "locked": {
+      "flowBanner": "Acest flux a fost instalat dintr-un șablon doar pentru vizualizare. Îl poți vedea, dar nu îl poți edita.",
+      "badge": "Doar vizualizare",
+      "editorBanner": "Acesta a fost instalat dintr-un șablon doar pentru vizualizare. Îl poți vedea, dar nu îl poți edita.",
+      "badgeHint": "Instalat dintr-un șablon doar pentru vizualizare"
+    },
+    "channels": {
+      "messenger": "Messenger",
+      "instagram": "Instagram",
+      "instagramFacebook": "Instagram (Facebook login)",
+      "threads": "Threads",
+      "tiktok": "TikTok",
+      "whatsapp": "WhatsApp",
+      "telegram": "Telegram",
+      "zalo": "Zalo",
+      "webchat": "Webchat",
+      "line": "LINE",
+      "email": "Email"
+    },
+    "uninstall": {
+      "title": "Dezinstalează șablonul",
+      "description": "Șablonul elimină tot ce a creat în acest spațiu de lucru, inclusiv copiile editate. Etichetele, câmpurile și folderele partajate, elementele care existau deja și tot ce ai construit pe baza unei copii sunt păstrate.",
+      "loading": "Se verifică ce se va întâmpla…",
+      "previewFailed": "Nu s-a putut verifica efectul dezinstalării.",
+      "failed": "Șablonul nu a putut fi dezinstalat.",
+      "done": "Șablon dezinstalat",
+      "confirm": "Dezinstalează",
+      "action": "Dezinstalează",
+      "deleted": "{count, plural, one {# element va fi șters} other {# elemente vor fi șterse}}",
+      "deletedDone": "{count, plural, one {# element a fost șters} other {# elemente au fost șterse}}",
+      "keptModified": "{count, plural, one {# copie editată sau neverificată este păstrată} other {# copii editate sau neverificate sunt păstrate}}",
+      "keptShared": "{count, plural, one {# etichetă sau câmp partajat este păstrat} other {# etichete și câmpuri partajate sunt păstrate}}",
+      "keptByPolicy": "{count, plural, one {# alt element este păstrat} other {# alte elemente sunt păstrate}}",
+      "keptHasDependents": "{count, plural, one {# copie este păstrată deoarece ceva încă o folosește} other {# copii sunt păstrate deoarece ceva încă le folosește}}",
+      "deletedModified": "{count, plural, one {# dintre ele a fost editat de tine: acele modificări se pierd și nu pot fi restaurate} other {# dintre ele au fost editate de tine: acele modificări se pierd și nu pot fi restaurate}}",
+      "keptLockedByOther": "{count, plural, one {# element este păstrat deoarece o altă instalare de șablon încă îl protejează} other {# elemente sunt păstrate deoarece o altă instalare de șablon încă le protejează}}",
+      "confirmCheckbox": "Înțeleg că acest lucru șterge elementele de mai sus și nu poate fi anulat",
+      "started": "Dezinstalarea a început",
+      "inProgress": "Se dezinstalează…",
+      "retry": "Reîncearcă dezinstalarea",
+      "state": {
+        "pending": "Dezinstalare în coadă",
+        "running": "Se dezinstalează…",
+        "partial": "Dezinstalare incompletă, reîncearc-o",
+        "failed": "Dezinstalarea a eșuat, reîncearc-o",
+        "skipped": "Dezinstalare omisă: spațiul de lucru este blocat"
+      },
+      "deletedUnverified": "{count, plural, one {# dintre ele nu poate fi verificat pentru modificări: dacă l-ai schimbat, acele modificări se pierd} other {# dintre ele nu pot fi verificate pentru modificări: dacă le-ai schimbat, acele modificări se pierd}}",
+      "cancelAction": "Anulează dezinstalarea",
+      "cancelled": "Dezinstalare anulată: elementele rămase pot fi folosite din nou de tine",
+      "blockedByReference": "{count, plural, one {# element nu a fost șters deoarece ceva creat de tine încă face referire la el: elimină acea referință, apoi reîncearcă dezinstalarea} other {# elemente nu au fost șterse deoarece ceva creat de tine încă face referire la ele: elimină acele referințe, apoi reîncearcă dezinstalarea}}",
+      "keptPartlyRemoved": "{count, plural, one {# copie a fost păstrată după o dezinstalare blocată; istoricul și datele de protecție împotriva duplicatelor ar fi putut fi eliminate, deci verific-o înainte de a o activa} other {# copii au fost păstrate după o dezinstalare blocată; istoricul și datele de protecție împotriva duplicatelor ar fi putut fi eliminate, deci verifică-le înainte de a le activa}}",
+      "keptInactiveForReview": "{count, plural, one {# copie a fost lăsată inactivă: istoricul și datele de protecție împotriva duplicatelor au fost eliminate, deci verific-o înainte de a o activa} other {# copii au fost lăsate inactive: istoricul și datele de protecție împotriva duplicatelor au fost eliminate, deci verifică-le înainte de a le activa}}",
+      "keptHistoryRemoved": "{count, plural, one {# copie a fost păstrată, dar istoricul ei a fost eliminat (nu are nimic de activat): verific-o înainte de a te baza pe ea} other {# copii au fost păstrate, dar istoricul lor a fost eliminat (nu au nimic de activat): verifică-le înainte de a te baza pe ele}}",
+      "cancelledPartial": "{count, plural, one {# element este deja în curs de ștergere și se va finaliza; restul a fost redat} other {# elemente sunt deja în curs de ștergere și se vor finaliza; restul a fost redat}}"
+    },
+    "warningCodes": {
+      "aiFileTooLarge": "Acest fișier de cunoștințe este mai mare decât poate copia o instalare de șablon, așa că a fost omis.",
+      "aiFileUnavailable": "Acest fișier de cunoștințe nu a putut fi copiat, așa că a fost omis.",
+      "assigneeRequired": "Alege cui îi atribuie acest pas conversația.",
+      "ambiguousSourceFieldToken": "Mai multe câmpuri sursă au acest nume, așa că variabilele care îl folosesc au fost lăsate neschimbate.",
+      "backupTooLarge": "Un element editat local era prea mare pentru backup, așa că nu a fost suprascris.",
+      "backupUnavailable": "Backup-ul pentru acest element nu mai este disponibil.",
+      "botFieldRenamed": "Există deja un câmp de bot cu acest nume și alt tip, așa că a fost creat un câmp redenumit.",
+      "categoryPermissionDenied": "Nu ai permisiunea pentru această categorie, așa că a fost omisă.",
+      "couponTopicExpired": "Acest subiect de cupon a expirat deja.",
+      "credentialRequired": "Adaugă datele de autentificare pentru acest element înainte de a-l folosi.",
+      "custom": "Un element referit nu a fost găsit în acest spațiu de lucru, așa că legătura a fost eliminată.",
+      "customField": "Un element referit nu a fost găsit în acest spațiu de lucru, așa că legătura a fost eliminată.",
+      "customFieldRenamed": "Există deja un câmp cu acest nume și alt tip, așa că a fost creat un câmp redenumit.",
+      "enqueueFailed": "Procesarea în fundal nu a putut fi pusă în coadă pentru acest element.",
+      "flow": "Un element referit nu a fost găsit în acest spațiu de lucru, așa că legătura a fost eliminată.",
+      "flowInvalidStructure": "Structura Flow-ului este invalidă, așa că a fost omis.",
+      "flowNotPublished": "Flow-ul a fost instalat ca ciornă și nu este publicat.",
+      "flowSkippedRequiredReference": "Flow-ul a fost omis deoarece o referință obligatorie nu a putut fi rezolvată.",
+      "folder": "Un element referit nu a fost găsit în acest spațiu de lucru, așa că legătura a fost eliminată.",
+      "inboxBindingRequired": "Alege o căsuță de mesaje pentru acest canal; până atunci elementul rămâne inactiv.",
+      "integration": "Un element referit nu a fost găsit în acest spațiu de lucru, așa că legătura a fost eliminată.",
+      "localModifiedOverwritten": "Un element editat local a fost suprascris. A fost salvat un backup care poate fi restaurat.",
+      "name": "Nu a fost găsit un nume liber pentru acest element, așa că a fost omis.",
+      "noEmbeddingProvider": "În acest spațiu de lucru nu este configurat niciun furnizor de embedding, așa că fișierele de cunoștințe au fost omise. Conectează OpenAI sau Gemini, apoi reinstalează.",
+      "notUpdatable": "Acest tip de element nu este încă actualizat automat.",
+      "pipeline": "Folosește un pipeline care nu mai există.",
+      "pipelineField": "Folosește un câmp de pipeline care nu mai există.",
+      "pipelineStage": "Folosește o etapă de pipeline care nu mai există.",
+      "postSelectionRequired": "Selectează din nou postarea: postarea originală nu a putut fi preluată.",
+      "product": "Un element referit nu a fost găsit în acest spațiu de lucru, așa că legătura a fost eliminată.",
+      "productCategory": "Un element referit nu a fost găsit în acest spațiu de lucru, așa că legătura a fost eliminată.",
+      "questionImage": "O imagine nu a putut fi copiată.",
+      "quota": "A fost atinsă o limită a planului, așa că elementul a fost omis.",
+      "referenceRemoved": "O referință care nu a putut fi rezolvată a fost eliminată.",
+      "savedReply": "Un element referit nu a fost găsit în acest spațiu de lucru, așa că legătura a fost eliminată.",
+      "savedReplyImage": "O imagine nu a putut fi copiată.",
+      "tag": "Un element referit nu a fost găsit în acest spațiu de lucru, așa că legătura a fost eliminată.",
+      "unlisted": "Element neadus complet: {code}",
+      "workspaceMember": "Atribuit unui membru care nu este în acest spațiu de lucru.",
+      "workspaceUnavailable": "Acest spațiu de lucru nu mai este disponibil, așa că elementul a fost omis."
+    },
+    "tabs": {
+      "mine": "Șabloanele mele",
+      "installed": "Instalate",
+      "installedEmpty": "Încă nu există șabloane instalate. Șabloanele pe care le instalezi dintr-un alt spațiu de lucru vor apărea aici."
     }
   },
   "tiktok": {
@@ -7757,14 +8027,41 @@
     "invalidTitle": "Acest link nu mai este disponibil.",
     "invalidDescription": "Acest link de distribuire a șablonului este invalid, dezactivat sau expirat.",
     "byPublisher": "De {publisherName}",
-    "includes": "Acest șablon include",
     "videoTitle": "Videoclip de previzualizare a șablonului",
-    "tryItOut": "Încearcă-l",
-    "signInToInstall": "Autentifică-te pentru a instala",
+    "preview": "Previzualizare",
+    "aboutTemplate": "Despre acest șablon",
     "selectWorkspace": "Selectează un spațiu de lucru",
     "install": "Instalează",
     "installStarted": "Instalarea a început",
-    "noEligibleWorkspaces": "Nu ai niciun spațiu de lucru eligibil pentru a instala acest șablon."
+    "noEligibleWorkspaces": "Nu ai niciun spațiu de lucru eligibil pentru a instala acest șablon.",
+    "alreadyInstalled": "Acest șablon este deja instalat în acest spațiu de lucru.",
+    "viewInstall": "Vezi instalarea",
+    "installAnotherCopy": "Instalează încă o copie",
+    "inboxesTitle": "Căsuțe de mesaje",
+    "inboxesHint": "Acest șablon a fost construit pentru aceste căsuțe de mesaje. Alege ce căsuțe proprii să folosești; orice rămâne neales este instalat dezactivat.",
+    "noInbox": "Nu conecta — instalează dezactivat",
+    "noInboxAvailable": "Nicio căsuță de mesaje conectată pe acest canal",
+    "updateExisting": "Actualizează copia instalată",
+    "updateStarted": "Actualizarea a început",
+    "publisherAccessLabel": "Permite editorului să vadă numele acestui spațiu de lucru și să dezinstaleze șablonul din el",
+    "publisherAccessHint": "Editorul nu vede niciodată datele, contactele sau emailul tău. Dacă dezinstalează, tot ce a creat șablonul este șters, inclusiv copiile pe care le-ai editat; tot ce ai construit pe baza unei copii este păstrat. Poți dezactiva această opțiune mai târziu din pagina instalării.",
+    "autoUpdateLabel": "Actualizează automat când șablonul se modifică",
+    "collisions": {
+      "title": "Ce va face instalarea aici",
+      "loading": "Se verifică acest spațiu de lucru…",
+      "action": {
+        "create": "Creat",
+        "reuse": "Reutilizat",
+        "rename": "Redenumit",
+        "bind": "Asociat",
+        "unbound": "Lăsat neasociat"
+      },
+      "detail": {
+        "rename": "„{name}” există deja cu alt tip, așa că cel din șablon este adăugat sub un nume nou.",
+        "unbound": "„{name}” rămâne neconectat până când alegi o căsuță de mesaje."
+      }
+    },
+    "createWorkspace": "Creează un spațiu de lucru nou"
   },
   "bookingWebview": {
     "metadataTitle": "Programează o întâlnire",

@@ -1919,10 +1919,11 @@
       "processing": "Traitement en cours",
       "installing": "Installing",
       "completed": "Terminé",
-      "partial": "Partial",
+      "partial": "Partiel",
       "failed": "Échec",
       "success": "Réussite",
-      "error": "Erreur"
+      "error": "Erreur",
+      "uninstalled": "Uninstalled"
     },
     "subtitle": {
       "placeholder": "Saisissez le sous-titre"
@@ -2660,7 +2661,8 @@
       "miniApps": "Mini Apps",
       "leaderboards": "Classements",
       "pipelines": "Pipelines",
-      "places": "Lieux"
+      "places": "Lieux",
+      "templates": "Modèles"
     },
     "adReferral": {
       "label": "Ads",
@@ -2798,6 +2800,7 @@
   "flows": {
     "export": {
       "notPublished": "Ce flux n'a jamais été publié. Publiez-le avant de l'exporter.",
+      "viewOnly": "Ce flux a été installé depuis un modèle en lecture seule, il ne peut donc pas être exporté.",
       "failed": "Échec de l'exportation. Veuillez réessayer."
     },
     "title": "Flux",
@@ -6932,6 +6935,9 @@
   "templates": {
     "title": "Modèles",
     "description": "Créez et gérez vos modèles.",
+    "createDialog": {
+      "title": "Nouveau modèle"
+    },
     "share": {
       "label": "Partager",
       "enabled": "Partagé",
@@ -6940,14 +6946,140 @@
       "dialogDescription": "Toute personne disposant de ce lien peut installer une copie de ce modèle dans un espace de travail de votre organisation.",
       "enableLabel": "Activer le lien de partage",
       "linkLabel": "Lien de partage",
-      "description": "Toute personne disposant du lien peut installer ce modèle dans son propre espace de travail."
+      "rotateLabel": "Renouveler le lien",
+      "rotateTitle": "Renouveler le lien de partage ?",
+      "rotateDescription": "Le lien actuel cesse de fonctionner immédiatement. Toute personne qui doit encore installer ce modèle aura besoin du nouveau lien.",
+      "rotated": "Lien de partage renouvelé",
+      "expiryLabel": "Expiration du lien",
+      "expiryHint": "Laissez vide pour un lien qui n'expire jamais.",
+      "clearExpiry": "Supprimer l'expiration",
+      "expiredNotice": "Ce lien a expiré. Définissez une date ultérieure ou supprimez l'expiration pour le partager à nouveau.",
+      "templateId": "ID du modèle",
+      "templateKey": "Clé du modèle",
+      "showKey": "Afficher la clé",
+      "hideKey": "Masquer la clé",
+      "copyField": "Copier {field}"
+    },
+    "sync": {
+      "title": "Mises à jour",
+      "updateAvailable": "Mise à jour disponible",
+      "upToDate": "À jour",
+      "sourceDeleted": "Modèle supprimé",
+      "sourceDeletedHint": "L’éditeur a supprimé ce modèle. Votre copie continue de fonctionner mais ne peut plus être mise à jour.",
+      "updateNow": "Mettre à jour maintenant",
+      "updating": "Mise à jour…",
+      "version": "Version du modèle {version}",
+      "lastSynced": "dernière mise à jour {date}",
+      "autoUpdateLabel": "Mettre à jour automatiquement lorsque le modèle change",
+      "noHistory": "Aucune mise à jour pour le moment.",
+      "countAdded": "{count} ajoutés",
+      "countUpdated": "{count} mis à jour",
+      "countDetached": "{count} ne suivent plus le modèle",
+      "notUpdatable": "{count} pas encore actualisable(s)",
+      "overwritten": "{name} a été modifié puis remplacé par la mise à jour",
+      "restore": "Restaurer ma version",
+      "restored": "Votre version a été restaurée",
+      "status": {
+        "pending": "En file d'attente",
+        "running": "En cours",
+        "completed": "Terminé",
+        "partial": "Partiel",
+        "failed": "Échec",
+        "skipped": "Ignoré",
+        "cancelled": "Annulé"
+      },
+      "trigger": {
+        "autoUpdate": "Automatique",
+        "manual": "Manuel",
+        "reinstall": "Réinstallation"
+      },
+      "publisherAccessLabel": "Autoriser l'éditeur à voir cet espace de travail et à désinstaller le modèle",
+      "publisherAccessHint": "Seul le nom de l'espace de travail est partagé. Si l'éditeur désinstalle le modèle, tout ce qu'il a créé est supprimé, y compris les copies que vous avez modifiées.",
+      "requestedVersion": "demandée v{version}",
+      "errors": {
+        "unknown": "La mise à jour a échoué. Réessayez, ou contactez le support si elle échoue encore.",
+        "templateSyncFailed": "La mise à jour a échoué. Réessayez.",
+        "templateSyncSuperseded": "Une mise à jour plus récente a remplacé celle-ci.",
+        "templateSyncAbandoned": "La mise à jour n'a pas abouti à temps et a été fermée.",
+        "templateInstallationInactive": "Cette installation n'est plus active.",
+        "workspaceOwnerBlocked": "Le compte du propriétaire de l'espace de travail est bloqué.",
+        "templateUninstallInProgress": "Le modèle est en cours de désinstallation.",
+        "templateAutoUpdateOff": "Les mises à jour automatiques sont désactivées.",
+        "templateUpToDate": "La copie est déjà à jour.",
+        "templateInstallerAccessLost": "La personne qui a installé le modèle n'a plus l'autorisation de mettre cette copie à jour.",
+        "templateInstallationSourceMissing": "Le modèle a été supprimé avant l'exécution de la mise à jour.",
+        "templateCategoryPermissionDenied": "Vous n'avez plus l'autorisation de mettre à jour tout le contenu de ce modèle.",
+        "templatePayloadIncompatible": "Ce modèle a été enregistré dans un format plus récent que celui que ce serveur peut installer.",
+        "templateCrossTenantInstall": "Ce modèle n'est pas disponible pour votre espace de travail.",
+        "templateInvalidInboxBinding": "Une boîte de réception sélectionnée ne correspond pas au modèle."
+      }
+    },
+    "versions": {
+      "detailsTab": "Détails",
+      "tab": "Versions",
+      "versionNumber": "Version {version}",
+      "current": "Actuelle",
+      "first": "Première version",
+      "noDetail": "Aucun détail n'a été enregistré pour cette version.",
+      "added": "Ajouté",
+      "changed": "Modifié",
+      "removed": "Supprimé"
+    },
+    "installers": {
+      "title": "Voir les analyses",
+      "workspace": "Espace de travail",
+      "installs": "Installations",
+      "lastInstalled": "Dernière installation",
+      "version": "Version",
+      "autoUpdate": "Mise à jour auto",
+      "uninstalled": "Désinstallé",
+      "hidden": "Espace de travail non partagé",
+      "totalInstallEvents": "Installations totales (depuis le début)",
+      "uninstallNotAllowed": "L'installateur n'a pas autorisé les éditeurs à désinstaller cette copie.",
+      "loadError": "Impossible de charger les installateurs. Réessayez.",
+      "automatic": "Automatique",
+      "details": "Détails",
+      "noIssues": "Aucun avertissement ni erreur."
     },
     "installs": {
       "title": "Installations",
       "resources": "Ressources",
       "warnings": "Avertissements",
       "completedAt": "Terminé le",
-      "autoUpdate": "Mise à jour automatique"
+      "autoUpdate": "Mise à jour automatique",
+      "detailTitle": "Détails de l'installation",
+      "installedBy": "Installé par",
+      "viaApi": "Jeton API",
+      "attempts": "Tentatives",
+      "autoUpdateOn": "Activée",
+      "autoUpdateOff": "Désactivée",
+      "retry": "Réessayer l'installation",
+      "resourcesTitle": "Ressources installées",
+      "noResources": "Rien n'a encore été créé.",
+      "deletedResource": "Ressource supprimée",
+      "viewOnly": "Lecture seule",
+      "created": "Créé",
+      "reused": "Réutilisé",
+      "loadMore": "Charger plus",
+      "statusFilter": "Statut",
+      "allStatuses": "Tous les statuts",
+      "errors": {
+        "unknown": "L'installation a échoué. Réessayez ou contactez le support si le problème persiste.",
+        "templatePayloadIncompatible": "Ce modèle a été enregistré dans un format plus récent que celui que ce serveur peut installer.",
+        "templateInstallationSourceMissing": "Le modèle a été supprimé avant l'exécution de l'installation.",
+        "templateCrossTenantInstall": "Ce modèle n'est pas disponible pour votre espace de travail.",
+        "templateCategoryPermissionDenied": "Vous n'avez plus l'autorisation d'installer tout le contenu de ce modèle.",
+        "templateInvalidInboxBinding": "Une boîte de réception sélectionnée ne correspond pas au modèle.",
+        "templateInstallEnqueueFailed": "L'installation n'a pas pu être mise en file d'attente.",
+        "templateInstallFailed": "L'installation a échoué. Réessayez.",
+        "templateInstallAbandoned": "L'installation ne s'est pas terminée à temps et a été fermée.",
+        "templateInstallSuperseded": "Une installation plus récente de ce modèle a remplacé celle-ci.",
+        "workspaceOwnerBlocked": "Le compte du propriétaire de l'espace de travail est bloqué."
+      },
+      "uninstalledBy": "{by, select, publisher {L'éditeur a désinstallé ce modèle.} installer {Ce modèle a été désinstallé de cet espace de travail.} other {Ce modèle a été désinstallé.}}",
+      "uninstalledSummary": "{deleted} supprimé(s), {kept} conservé(s).",
+      "lastAttemptAt": "Dernière tentative",
+      "installedAutomatically": "Installé automatiquement (défaut de la marque blanche)"
     },
     "form": {
       "contents": "Contenu du modèle",
@@ -6960,14 +7092,26 @@
       "allowDelete": "Autoriser la suppression après installation",
       "publisherName": "Nom de l'éditeur",
       "youtubeVideoId": "ID de la vidéo YouTube",
-      "youtubeVideoIdDescription": "L'identifiant de 11 caractères présent dans l'URL de la vidéo, par ex. \"dQw4w9WgXcQ\" dans youtube.com/watch?v=dQw4w9WgXcQ",
+      "youtubeVideoIdDescription": "L'identifiant de 11 caractères présent dans l'URL de la vidéo, par ex. \"xxxxxxxxxxx\" dans youtube.com/watch?v=xxxxxxxxxxx",
       "testLink": "Lien de test",
       "imageUrl": "Image de couverture",
       "installBehavior": "Comportement d'installation",
-      "createInstallFolder": "Installer dans un dossier dédié",
+      "createInstallFolder": "Créer un dossier sur le compte installé et installer les ressources.",
       "createInstallFolderDescription": "Regroupe chaque ressource installée dans un nouveau dossier portant le nom de ce modèle.",
-      "defaultAutoUpdate": "Marquer les installations comme à mettre à jour par défaut",
-      "defaultAutoUpdateDescription": "Les nouvelles installations afficheront un avis de mise à jour disponible chaque fois que vous republierez ce modèle."
+      "defaultAutoUpdate": "Mettre à jour automatiquement les modèles installés",
+      "defaultAutoUpdateDescription": "Chaque fois que vous enregistrez ce modèle avec un contenu modifié, les installations en mise à jour automatique sont remplacées par le nouveau contenu (les copies modifiées par l'installateur sont d'abord sauvegardées). Les installateurs peuvent le désactiver.",
+      "viewOnly": "Lecture seule",
+      "viewOnlyAll": "Passer toute la sélection en lecture seule",
+      "includedAutomatically": {
+        "title": "Inclus automatiquement",
+        "hint": "Ajouté car un élément sélectionné en a besoin. Lecture seule.",
+        "rows": "{count, plural, one {# élément supplémentaire} other {# éléments supplémentaires}}",
+        "kind": {
+          "folders": "Dossiers",
+          "placeCategories": "Catégories de lieux"
+        }
+      },
+      "viewOnlyCopyIncluded": "Un élément sélectionné (ou un élément dont il dépend) a été installé depuis un modèle en lecture seule et ne peut pas être partagé dans un nouveau modèle."
     },
     "categories": {
       "flows": "Flux",
@@ -6982,8 +7126,117 @@
       "keywords": "Mots-clés",
       "entryPointLinks": "Liens de point d’entrée",
       "triggers": "Déclencheurs",
-      "fbCommentAutomations": "Automatisations de commentaires Facebook",
-      "settings": "Paramètres"
+      "fbCommentAutomations": "Automatisations de commentaires",
+      "settings": "Champs du bot et réponses enregistrées",
+      "sequences": "Séquences",
+      "aiMcpServers": "Serveurs MCP",
+      "aiFiles": "Fichiers de connaissances IA",
+      "questionnaires": "Questionnaires",
+      "couponTopics": "Thèmes de coupons",
+      "pipelines": "Pipelines"
+    },
+    "locked": {
+      "flowBanner": "Ce flow a été installé depuis un modèle en lecture seule. Vous pouvez le consulter, mais pas le modifier.",
+      "badge": "Lecture seule",
+      "editorBanner": "Ceci a été installé depuis un modèle en lecture seule. Vous pouvez le consulter, mais pas le modifier.",
+      "badgeHint": "Installé depuis un modèle en lecture seule"
+    },
+    "channels": {
+      "messenger": "Messenger",
+      "instagram": "Instagram",
+      "instagramFacebook": "Instagram (Facebook login)",
+      "threads": "Threads",
+      "tiktok": "TikTok",
+      "whatsapp": "WhatsApp",
+      "telegram": "Telegram",
+      "zalo": "Zalo",
+      "webchat": "Webchat",
+      "line": "LINE",
+      "email": "E-mail"
+    },
+    "uninstall": {
+      "title": "Désinstaller le modèle",
+      "description": "Le modèle supprime tout ce qu'il a créé dans cet espace de travail, y compris les copies modifiées. Les étiquettes, champs et dossiers partagés, les éléments préexistants et tout ce que vous avez construit à partir d'une copie sont conservés.",
+      "loading": "Vérification de ce qui va se passer…",
+      "previewFailed": "Impossible de vérifier l'effet d'une désinstallation.",
+      "failed": "Impossible de désinstaller le modèle.",
+      "done": "Modèle désinstallé",
+      "confirm": "Désinstaller",
+      "action": "Désinstaller",
+      "deleted": "{count, plural, one {# élément sera supprimé} other {# éléments seront supprimés}}",
+      "deletedDone": "{count, plural, one {# élément a été supprimé} other {# éléments ont été supprimés}}",
+      "keptModified": "{count, plural, one {# copie modifiée ou non vérifiée est conservée} other {# copies modifiées ou non vérifiées sont conservées}}",
+      "keptShared": "{count, plural, one {# étiquette ou champ partagé est conservé} other {# étiquettes et champs partagés sont conservés}}",
+      "keptByPolicy": "{count, plural, one {# autre élément est conservé} other {# autres éléments sont conservés}}",
+      "keptHasDependents": "{count, plural, one {# copie est conservée car un élément l'utilise encore} other {# copies sont conservées car des éléments les utilisent encore}}",
+      "deletedModified": "{count, plural, one {# d'entre eux a été modifié par vous : ces modifications seront perdues et ne pourront pas être restaurées} other {# d'entre eux ont été modifiés par vous : ces modifications seront perdues et ne pourront pas être restaurées}}",
+      "keptLockedByOther": "{count, plural, one {# élément est conservé car une autre installation de modèle le protège encore} other {# éléments sont conservés car une autre installation de modèle les protège encore}}",
+      "confirmCheckbox": "Je comprends que cela supprime les éléments ci-dessus et que c'est irréversible",
+      "started": "Désinstallation lancée",
+      "inProgress": "Désinstallation…",
+      "retry": "Réessayer la désinstallation",
+      "state": {
+        "pending": "Désinstallation en file d'attente",
+        "running": "Désinstallation…",
+        "partial": "Désinstallation incomplète, réessayez",
+        "failed": "Échec de la désinstallation, réessayez",
+        "skipped": "Désinstallation ignorée : l'espace de travail est bloqué"
+      },
+      "deletedUnverified": "{count, plural, one {# d'entre eux ne peut pas être vérifié pour d'éventuelles modifications : si vous l'avez modifié, ces changements seront perdus} other {# d'entre eux ne peuvent pas être vérifiés pour d'éventuelles modifications : si vous les avez modifiés, ces changements seront perdus}}",
+      "cancelAction": "Annuler la désinstallation",
+      "cancelled": "Désinstallation annulée : les éléments restants vous appartiennent à nouveau",
+      "blockedByReference": "{count, plural, one {# élément n'a pas été supprimé car un élément que vous avez créé y fait encore référence : supprimez cette référence, puis réessayez la désinstallation} other {# éléments n'ont pas été supprimés car des éléments que vous avez créés y font encore référence : supprimez ces références, puis réessayez la désinstallation}}",
+      "keptPartlyRemoved": "{count, plural, one {# copie a été conservée après une désinstallation bloquée ; l'historique et les données de protection contre les doublons ont peut-être été supprimés, vérifiez-la avant de l'activer} other {# copies ont été conservées après une désinstallation bloquée ; l'historique et les données de protection contre les doublons ont peut-être été supprimés, vérifiez-les avant de les activer}}",
+      "keptInactiveForReview": "{count, plural, one {# copie a été laissée inactive : son historique et ses données de protection contre les doublons ont été supprimés, vérifiez-la avant de l'activer} other {# copies ont été laissées inactives : leur historique et leurs données de protection contre les doublons ont été supprimés, vérifiez-les avant de les activer}}",
+      "keptHistoryRemoved": "{count, plural, one {# copie a été conservée, mais son historique a été supprimé (il n'y a rien à activer) : vérifiez-la avant de vous y fier} other {# copies ont été conservées, mais leur historique a été supprimé (il n'y a rien à activer) : vérifiez-les avant de vous y fier}}",
+      "cancelledPartial": "{count, plural, one {# élément est déjà en cours de suppression et ira à son terme ; le reste a été restitué} other {# éléments sont déjà en cours de suppression et iront à leur terme ; le reste a été restitué}}"
+    },
+    "warningCodes": {
+      "aiFileTooLarge": "Ce fichier de connaissances dépasse ce qu'une installation de modèle peut copier, il a donc été ignoré.",
+      "aiFileUnavailable": "Ce fichier de connaissances n'a pas pu être copié, il a donc été ignoré.",
+      "assigneeRequired": "Choisissez à qui cette étape attribue la conversation.",
+      "ambiguousSourceFieldToken": "Plusieurs champs source portent ce nom, les variables qui l’utilisent ont donc été laissées inchangées.",
+      "backupTooLarge": "Un élément modifié localement était trop volumineux pour être sauvegardé, il n’a donc pas été écrasé.",
+      "backupUnavailable": "La sauvegarde de cet élément n’est plus disponible.",
+      "botFieldRenamed": "Un champ de bot du même nom mais d'un autre type existe déjà, un champ renommé a donc été créé.",
+      "categoryPermissionDenied": "Vous n’avez pas l’autorisation pour cette catégorie, elle a donc été ignorée.",
+      "couponTopicExpired": "Ce sujet de coupon a déjà expiré.",
+      "credentialRequired": "Ajoutez les identifiants de cet élément avant de l’utiliser.",
+      "custom": "Un élément référencé est introuvable dans cet espace de travail, le lien a donc été supprimé.",
+      "customField": "Un élément référencé est introuvable dans cet espace de travail, le lien a donc été supprimé.",
+      "customFieldRenamed": "Un champ portant ce nom et d’un autre type existe déjà, un champ renommé a donc été créé.",
+      "enqueueFailed": "Le traitement en arrière-plan n’a pas pu être mis en file d’attente pour cet élément.",
+      "flow": "Un élément référencé est introuvable dans cet espace de travail, le lien a donc été supprimé.",
+      "flowInvalidStructure": "La structure du Flow est invalide, il a donc été ignoré.",
+      "flowNotPublished": "Le Flow a été installé en brouillon et n’est pas publié.",
+      "flowSkippedRequiredReference": "Le Flow a été ignoré car une référence obligatoire n’a pas pu être résolue.",
+      "folder": "Un élément référencé est introuvable dans cet espace de travail, le lien a donc été supprimé.",
+      "inboxBindingRequired": "Choisissez une boîte de réception pour ce canal ; d’ici là, l’élément reste inactif.",
+      "integration": "Un élément référencé est introuvable dans cet espace de travail, le lien a donc été supprimé.",
+      "localModifiedOverwritten": "Un élément modifié localement a été écrasé. Une sauvegarde a été enregistrée et peut être restaurée.",
+      "name": "Aucun nom disponible n’a été trouvé pour cet élément, il a donc été ignoré.",
+      "noEmbeddingProvider": "Aucun fournisseur d'embeddings n'est configuré dans cet espace de travail, les fichiers de connaissances ont donc été ignorés. Connectez OpenAI ou Gemini, puis réinstallez.",
+      "notUpdatable": "Ce type d’élément n’est pas encore mis à jour automatiquement.",
+      "pipeline": "Utilise un pipeline qui n'existe plus.",
+      "pipelineField": "Utilise un champ de pipeline qui n'existe plus.",
+      "pipelineStage": "Utilise une étape de pipeline qui n'existe plus.",
+      "postSelectionRequired": "Sélectionnez à nouveau la publication : la publication d’origine n’a pas pu être reprise.",
+      "product": "Un élément référencé est introuvable dans cet espace de travail, le lien a donc été supprimé.",
+      "productCategory": "Un élément référencé est introuvable dans cet espace de travail, le lien a donc été supprimé.",
+      "questionImage": "Une image n’a pas pu être copiée.",
+      "quota": "Une limite du forfait a été atteinte, l’élément a donc été ignoré.",
+      "referenceRemoved": "Une référence non résolue a été supprimée.",
+      "savedReply": "Un élément référencé est introuvable dans cet espace de travail, le lien a donc été supprimé.",
+      "savedReplyImage": "Une image n’a pas pu être copiée.",
+      "tag": "Un élément référencé est introuvable dans cet espace de travail, le lien a donc été supprimé.",
+      "unlisted": "Élément non repris entièrement : {code}",
+      "workspaceMember": "Attribué à un membre absent de cet espace de travail.",
+      "workspaceUnavailable": "Cet espace de travail n'est plus disponible, l'élément a donc été ignoré."
+    },
+    "tabs": {
+      "mine": "Mes modèles",
+      "installed": "Installés",
+      "installedEmpty": "Aucun modèle installé pour l'instant. Les modèles que vous installez depuis un autre espace de travail apparaîtront ici."
     }
   },
   "qrCodeGenerator": {
@@ -7106,6 +7359,23 @@
     "hint": "Ne cochez aucun canal pour tous les autoriser.",
     "hiddenByPlatform": "Masqué par l'administrateur de la plateforme — vous ne pouvez pas réactiver ce canal."
   },
+  "platformDefaultTemplate": {
+    "title": "Modèle par défaut",
+    "description": "Installe ce modèle dans chaque nouvel espace de travail créé sous cette marque blanche. Les espaces existants ne changent pas.",
+    "clearTitle": "Retirer le modèle par défaut ?",
+    "clearDescription": "Les nouveaux espaces de travail ne recevront plus de modèle automatiquement. Ceux qui l'ont déjà le conservent.",
+    "status": {
+      "notConfigured": "Non défini",
+      "ready": "Actif",
+      "templateUnavailable": "Modèle indisponible",
+      "shareDisabled": "Lien de partage désactivé",
+      "keyRotated": "Clé invalide"
+    },
+    "errors": {
+      "unavailable": "L'ID ou la clé du modèle n'est pas valide.",
+      "shareDisabled": "Activez d'abord le lien de partage du modèle."
+    }
+  },
   "platformEmailTemplates": {
     "title": "Modèles d’e-mail",
     "description": "Laissez l’objet et le corps vides pour utiliser le modèle système par défaut.",
@@ -7189,14 +7459,41 @@
     "invalidTitle": "Ce lien n'est plus disponible.",
     "invalidDescription": "Ce lien de partage de modèle est invalide, désactivé ou a expiré.",
     "byPublisher": "Par {publisherName}",
-    "includes": "Ce modèle inclut",
     "videoTitle": "Vidéo d'aperçu du modèle",
-    "tryItOut": "Essayer",
-    "signInToInstall": "Se connecter pour installer",
+    "preview": "Aperçu",
+    "aboutTemplate": "À propos de ce modèle",
     "selectWorkspace": "Sélectionner un espace de travail",
     "install": "Installer",
     "installStarted": "Installation démarrée",
-    "noEligibleWorkspaces": "Vous n'avez aucun espace de travail éligible pour installer ce modèle."
+    "noEligibleWorkspaces": "Vous n'avez aucun espace de travail éligible pour installer ce modèle.",
+    "alreadyInstalled": "Ce modèle est déjà installé dans cet espace de travail.",
+    "viewInstall": "Voir l'installation",
+    "installAnotherCopy": "Installer une autre copie",
+    "inboxesTitle": "Boîtes de réception",
+    "inboxesHint": "Ce modèle a été conçu autour de ces boîtes de réception. Choisissez lesquelles des vôtres utiliser ; celles laissées de côté sont installées désactivées.",
+    "noInbox": "Ne pas connecter — installer désactivé",
+    "noInboxAvailable": "Aucune boîte de réception connectée sur ce canal",
+    "updateExisting": "Mettre à jour la copie installée",
+    "updateStarted": "Mise à jour lancée",
+    "publisherAccessLabel": "Autoriser l'éditeur à voir le nom de cet espace de travail et à y désinstaller ce modèle",
+    "publisherAccessHint": "Il ne voit jamais vos données, contacts ou e-mails. S'il désinstalle le modèle, tout ce qu'il a créé est supprimé, y compris les copies que vous avez modifiées ; tout ce que vous avez construit à partir d'une copie est conservé. Vous pourrez le désactiver plus tard sur la page d'installation.",
+    "autoUpdateLabel": "Mettre à jour automatiquement lorsque le modèle change",
+    "collisions": {
+      "title": "Ce que l'installation fera ici",
+      "loading": "Vérification de cet espace de travail…",
+      "action": {
+        "create": "Créé",
+        "reuse": "Réutilisé",
+        "rename": "Renommé",
+        "bind": "Associé",
+        "unbound": "Laissé non associé"
+      },
+      "detail": {
+        "rename": "« {name} » existe déjà avec un autre type, l'élément du modèle est donc ajouté sous un nouveau nom.",
+        "unbound": "« {name} » reste non connecté tant que vous n'avez pas choisi de boîte de réception."
+      }
+    },
+    "createWorkspace": "Créer un nouvel espace de travail"
   },
   "extensionsMe": {
     "actions": {

@@ -1,7 +1,10 @@
 import {
+  and,
+  type DatabaseClient,
   db,
   eq,
   findOrFail,
+  inArray,
   relationsFilterToSQL,
 } from "@chatbotx.io/database/client"
 import {
@@ -52,6 +55,11 @@ import { integrationGeminiService } from "../integration-gemini/service"
 import { integrationOpenAIService } from "../integration-openai/service"
 import { logger } from "../logger"
 import { assertPublicUrl } from "../net/ssrf-guard"
+import {
+  assertResourceEditable,
+  withDeleteGuard,
+} from "../template/installed-resource.service"
+import { withTemplateLockedTransaction } from "../template/template-resource-locks"
 import type { PaginatedResult } from "../types"
 
 export const AI_FILE_MAX_UPLOAD_BYTES = 100 * 1000 * 1000
@@ -485,6 +493,13 @@ class AiFileService extends BaseService {
     input: CreateAIFileInput,
   ): Promise<{ name: string; path: string; mimeType: string; size: number }> {
     if ("path" in input) {
+      // The caller names an object they uploaded themselves: it must sit under
+      // this workspace's own AI-file prefix, or a member could point a file at
+      // another workspace's object (and read it back through the presigned URL).
+      const prefix = `workspaces/${workspaceId}/ai-files/`
+      if (!input.path.startsWith(prefix) || input.path.includes("..")) {
+        throw new UploadValidationError("The uploaded file path is not allowed")
+      }
       return {
         name: input.name,
         path: input.path,
@@ -625,6 +640,39 @@ class AiFileService extends BaseService {
     }
   }
 
+  /**
+   * Records an AI file whose bytes a template install already copied to
+   * `path`. Inside the install's transaction it writes only the row, with a
+   * `queued` processing run: nothing is enqueued here, because a job queued
+   * before the transaction commits could run against a row that is rolled
+   * back. The template dispatch sweep (and the install handler right after
+   * commit) enqueue the run.
+   */
+  async createFromCopiedObject(input: {
+    tx: DatabaseClient
+    workspaceId: string
+    name: string
+    path: string
+    mimeType: string
+    size: number
+    chunkingConfig: AIFileChunkingConfig | null
+  }): Promise<AIFileModel> {
+    const [created] = await input.tx
+      .insert(aiFileModel)
+      .values({
+        id: createId(),
+        workspaceId: input.workspaceId,
+        name: input.name,
+        path: input.path,
+        mimeType: input.mimeType,
+        size: input.size,
+        chunkingConfig: input.chunkingConfig,
+        processingRun: this.createProcessingRun(),
+      })
+      .returning()
+    return created
+  }
+
   async reindex(props: {
     workspaceId: string
     id: string
@@ -658,15 +706,33 @@ class AiFileService extends BaseService {
     }
     await this.assertEmbeddingProviderConfigured(props.workspaceId)
     const run = this.createProcessingRun()
-    const claimed = await createAiFileEmbeddingRepository().claimProcessingRun({
-      aiFileId: props.id,
-      workspaceId: props.workspaceId,
-      run,
-      staleBeforeIso: new Date(
-        Date.now() - AI_FILE_PROCESSING_RUN_STALE_MS,
-      ).toISOString(),
-      chunkingConfig,
-    })
+    const claim = (client?: DatabaseClient) =>
+      createAiFileEmbeddingRepository(client).claimProcessingRun({
+        aiFileId: props.id,
+        workspaceId: props.workspaceId,
+        run,
+        staleBeforeIso: new Date(
+          Date.now() - AI_FILE_PROCESSING_RUN_STALE_MS,
+        ).toISOString(),
+        chunkingConfig,
+      })
+    // Re-chunking with other parameters is the template's content; a plain
+    // reindex (keep the stored parameters) is always the installer's. The
+    // guard is the first step of the transaction that writes the parameters,
+    // so a sync/restore/uninstall cannot race it. The queue add stays outside.
+    const claimed =
+      props.chunkingConfig === undefined
+        ? await claim()
+        : await withTemplateLockedTransaction(async (tx) => {
+            await assertResourceEditable({
+              workspaceId: props.workspaceId,
+              resourceKind: "aiFile",
+              resourceIds: [props.id],
+              changedKeys: ["chunkingConfig"],
+              tx,
+            })
+            return await claim(tx)
+          })
     if (!claimed) {
       // Parameters the caller chose must not vanish silently behind a coalesce.
       if (chunkingConfig !== undefined) {
@@ -747,25 +813,65 @@ class AiFileService extends BaseService {
       where: { id: ctx.id, workspaceId: ctx.workspaceId },
       message: `AIFile with id ${ctx.id} not found`,
     })
+    // A refused delete (locked, or being uninstalled) is the caller's error;
+    // only a storage/DB failure after the guard passed is best-effort.
+    let guardPassed = false
     try {
-      await db.transaction(async (tx) => {
-        await uploader.deleteObject(targetAIFile.path)
-        // NOTE: this predicate matches on aiEmbeddingModel.id, but ctx.id is
-        // an AIFile id — the correct FK is aiEmbeddingModel.aiFileId. This is
-        // a pre-existing bug carried over verbatim (harmless no-op today
-        // because AIEmbedding.aiFileId cascades on AIFile delete). Tracked as
-        // a follow-up rather than fixed here to keep this change behavior-
-        // neutral.
-        await tx.delete(aiEmbeddingModel).where(eq(aiEmbeddingModel.id, ctx.id))
-        await tx.delete(aiFileModel).where(eq(aiFileModel.id, ctx.id))
-      })
+      await withDeleteGuard(
+        {
+          workspaceId: ctx.workspaceId,
+          targets: [{ resourceKind: "aiFile", resourceIds: [ctx.id] }],
+        },
+        async (tx) => {
+          guardPassed = true
+          await uploader.deleteObject(targetAIFile.path)
+          // NOTE: this predicate matches on aiEmbeddingModel.id, but ctx.id is
+          // an AIFile id — the correct FK is aiEmbeddingModel.aiFileId. This is
+          // a pre-existing bug carried over verbatim (harmless no-op today
+          // because AIEmbedding.aiFileId cascades on AIFile delete). Tracked as
+          // a follow-up rather than fixed here to keep this change behavior-
+          // neutral.
+          await tx
+            .delete(aiEmbeddingModel)
+            .where(eq(aiEmbeddingModel.id, ctx.id))
+          await this.deleteInTx(tx, {
+            workspaceId: ctx.workspaceId,
+            ids: [ctx.id],
+          })
+        },
+      )
       await this.audit("delete", `deleted a Knowledge (#${ctx.id})`)
     } catch (error) {
+      if (!guardPassed) {
+        throw error
+      }
       // Preserves the existing best-effort semantics of the code being
       // replaced (apps/builder/src/features/ai-files/actions/delete-ai-file.action.ts):
       // a storage/DB failure here is logged, not surfaced as a request error.
       logger.warn({ err: error }, `Failed to delete AI file (#${ctx.id})`)
     }
+  }
+
+  /**
+   * The delete core (the row; its embeddings cascade), shared with the
+   * template uninstall so there is one implementation. The stored object is
+   * not touched here: the public delete removes it first, the uninstall after
+   * commit. Returns the ids actually deleted.
+   */
+  async deleteInTx(
+    tx: DatabaseClient,
+    input: { workspaceId: string; ids: string[] },
+  ): Promise<string[]> {
+    const rows = await tx
+      .delete(aiFileModel)
+      .where(
+        and(
+          eq(aiFileModel.workspaceId, input.workspaceId),
+          inArray(aiFileModel.id, input.ids),
+        ),
+      )
+      .returning({ id: aiFileModel.id })
+    return rows.map((row) => String(row.id))
   }
 }
 

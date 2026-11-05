@@ -40,6 +40,11 @@ import { useAction } from "next-safe-action/hooks"
 import React, { Suspense, use, useMemo } from "react"
 import { toast } from "sonner"
 import { FolderBarSlot } from "@/features/folders/folder-bar-slot"
+import { LockBadge } from "@/features/templates/components/lock-badge"
+import {
+  TemplateLockedList,
+  UndeletableGuard,
+} from "@/features/templates/components/lock-context"
 import { useWorkspaceId } from "@/hooks/routing"
 import { useFlows } from "../flows/provider/flow-hook"
 import { ChangeFolderDialog } from "../folders/change-folder"
@@ -116,16 +121,24 @@ function AutomatedResponsesTableContent({
           const href = `/space/${workspaceId}/${basePath}/${id}/edit?${searchParams.toString()}`
           if (conditions?.length) {
             return (
-              <Link className="block max-w-[420px]" href={href}>
-                <KeywordConditionsSummary conditions={conditions} />
-              </Link>
+              <div className="flex max-w-[420px] items-center">
+                <Link className="block min-w-0" href={href}>
+                  <KeywordConditionsSummary conditions={conditions} />
+                </Link>
+                <LockBadge resourceId={id} />
+              </div>
             )
           }
           return (
-            <div className="max-w-[200px] truncate">
-              <Link className="truncate" href={href} title={keywords.join(",")}>
+            <div className="flex max-w-[200px] items-center">
+              <Link
+                className="min-w-0 truncate"
+                href={href}
+                title={keywords.join(",")}
+              >
                 {keywords.join(",")}
               </Link>
+              <LockBadge resourceId={id} />
             </div>
           )
         },
@@ -236,13 +249,18 @@ function AutomatedResponsesTableContent({
                 {t("actions.move")}
               </DropdownMenuItem>
 
-              <DropdownMenuItem
-                onClick={() => setRowAction({ row, variant: "delete" })}
-                variant="destructive"
-              >
-                <Trash2Icon />
-                {t("actions.delete")}
-              </DropdownMenuItem>
+              <UndeletableGuard resourceId={row.original.id}>
+                {(disabled) => (
+                  <DropdownMenuItem
+                    disabled={disabled}
+                    onClick={() => setRowAction({ row, variant: "delete" })}
+                    variant="destructive"
+                  >
+                    <Trash2Icon />
+                    {t("actions.delete")}
+                  </DropdownMenuItem>
+                )}
+              </UndeletableGuard>
             </DropdownMenuContent>
           </DropdownMenu>
         ),
@@ -268,17 +286,23 @@ function AutomatedResponsesTableContent({
 
   return (
     <>
-      <DataTable table={table}>
-        <DataTableToolbar table={table}>
-          <AutomatedResponseTableToolbarActions
-            folderType={folderType}
-            table={table}
-            type={type}
-            workspaceId={workspaceId}
-          />
-          <AddAutomatedResponseButton basePath={basePath} />
-        </DataTableToolbar>
-      </DataTable>
+      <TemplateLockedList
+        resourceKind="automatedResponse"
+        rows={data}
+        workspaceId={workspaceId}
+      >
+        <DataTable table={table}>
+          <DataTableToolbar table={table}>
+            <AutomatedResponseTableToolbarActions
+              folderType={folderType}
+              table={table}
+              type={type}
+              workspaceId={workspaceId}
+            />
+            <AddAutomatedResponseButton basePath={basePath} />
+          </DataTableToolbar>
+        </DataTable>
+      </TemplateLockedList>
 
       <DeleteAutomatedResponsesDialog
         automatedResponses={

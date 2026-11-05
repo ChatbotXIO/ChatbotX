@@ -797,10 +797,11 @@
       "processing": "處理中",
       "installing": "Installing",
       "completed": "已完成",
-      "partial": "Partial",
+      "partial": "部分完成",
       "failed": "失敗",
       "success": "成功",
-      "error": "錯誤"
+      "error": "錯誤",
+      "uninstalled": "Uninstalled"
     },
     "subtitle": {
       "placeholder": "輸入字幕"
@@ -1538,7 +1539,8 @@
       "miniApps": "迷你應用程式",
       "leaderboards": "排行榜",
       "pipelines": "管道",
-      "places": "地點"
+      "places": "地點",
+      "templates": "範本"
     },
     "adReferral": {
       "label": "Ads",
@@ -3204,6 +3206,7 @@
   "flows": {
     "export": {
       "notPublished": "此流程從未發布過。請先發布後再匯出。",
+      "viewOnly": "此流程是從僅檢視範本安裝的，因此無法匯出。",
       "failed": "匯出失敗，請重試。"
     },
     "title": "流程",
@@ -6978,6 +6981,9 @@
   "templates": {
     "title": "範本",
     "description": "建立並管理您的範本。",
+    "createDialog": {
+      "title": "新增範本"
+    },
     "share": {
       "label": "分享",
       "enabled": "已分享",
@@ -6986,14 +6992,140 @@
       "dialogDescription": "任何擁有此連結的人都可以將此範本的副本安裝到您所在租戶的工作區中。",
       "enableLabel": "啟用分享連結",
       "linkLabel": "分享連結",
-      "description": "任何擁有此連結的人都可以將此範本安裝到自己的工作區。"
+      "rotateLabel": "重新產生連結",
+      "rotateTitle": "要重新產生分享連結嗎？",
+      "rotateDescription": "目前的連結將立即失效。仍需安裝此範本的人需要使用新連結。",
+      "rotated": "已重新產生分享連結",
+      "expiryLabel": "連結到期時間",
+      "expiryHint": "留空表示連結永不過期。",
+      "clearExpiry": "移除到期時間",
+      "expiredNotice": "此連結已過期。請設定較晚的日期或移除到期時間以重新分享。",
+      "templateId": "範本 ID",
+      "templateKey": "範本金鑰",
+      "showKey": "顯示金鑰",
+      "hideKey": "隱藏金鑰",
+      "copyField": "複製{field}"
+    },
+    "sync": {
+      "title": "更新",
+      "updateAvailable": "有可用的更新",
+      "upToDate": "已是最新版本",
+      "sourceDeleted": "範本已刪除",
+      "sourceDeletedHint": "發佈者已刪除此範本。你的副本仍可使用，但無法再更新。",
+      "updateNow": "立即更新",
+      "updating": "更新中…",
+      "version": "範本版本 {version}",
+      "lastSynced": "上次更新於 {date}",
+      "autoUpdateLabel": "範本變更時自動更新",
+      "noHistory": "尚無更新。",
+      "countAdded": "已新增 {count} 項",
+      "countUpdated": "已更新 {count} 項",
+      "countDetached": "{count} 項不再跟隨範本",
+      "notUpdatable": "{count} 項暫時無法更新",
+      "overwritten": "{name} 曾被編輯，已被此次更新取代",
+      "restore": "還原我的版本",
+      "restored": "已還原您的版本",
+      "status": {
+        "pending": "排隊中",
+        "running": "執行中",
+        "completed": "已完成",
+        "partial": "部分完成",
+        "failed": "失敗",
+        "skipped": "已略過",
+        "cancelled": "已取消"
+      },
+      "trigger": {
+        "autoUpdate": "自動",
+        "manual": "手動",
+        "reinstall": "重新安裝"
+      },
+      "publisherAccessLabel": "允許發佈者查看此工作區並解除安裝範本",
+      "publisherAccessHint": "僅會分享工作區名稱。若發佈者解除安裝，範本建立的所有內容都會被刪除，包括您編輯過的副本。",
+      "requestedVersion": "要求的版本 v{version}",
+      "errors": {
+        "unknown": "更新失敗。請重試；若持續失敗，請聯絡支援團隊。",
+        "templateSyncFailed": "更新失敗。請重試。",
+        "templateSyncSuperseded": "較新的更新已取代此次更新。",
+        "templateSyncAbandoned": "更新未能及時完成，已被關閉。",
+        "templateInstallationInactive": "此安裝已不再有效。",
+        "workspaceOwnerBlocked": "工作區擁有者的帳號已被封鎖。",
+        "templateUninstallInProgress": "範本正在解除安裝。",
+        "templateAutoUpdateOff": "自動更新已關閉。",
+        "templateUpToDate": "此副本已是最新。",
+        "templateInstallerAccessLost": "安裝者已無權更新此副本。",
+        "templateInstallationSourceMissing": "更新執行之前，範本已被刪除。",
+        "templateCategoryPermissionDenied": "你已無權更新此範本中的全部內容。",
+        "templatePayloadIncompatible": "此範本以較新的格式儲存，此伺服器無法安裝。",
+        "templateCrossTenantInstall": "此範本不適用於您的工作區。",
+        "templateInvalidInboxBinding": "所選的收件匣與範本不符。"
+      }
+    },
+    "versions": {
+      "detailsTab": "詳細資料",
+      "tab": "版本",
+      "versionNumber": "版本 {version}",
+      "current": "目前",
+      "first": "第一個版本",
+      "noDetail": "此版本未記錄詳細資料。",
+      "added": "已新增",
+      "changed": "已變更",
+      "removed": "已移除"
+    },
+    "installers": {
+      "title": "查看分析",
+      "workspace": "工作區",
+      "installs": "安裝次數",
+      "lastInstalled": "最近安裝",
+      "version": "Version",
+      "autoUpdate": "自動更新",
+      "uninstalled": "已解除安裝",
+      "hidden": "工作區未分享",
+      "totalInstallEvents": "累計安裝次數(全部時間)",
+      "uninstallNotAllowed": "安裝方未允許發佈者解除安裝此副本。",
+      "loadError": "無法載入安裝方清單,請重試。",
+      "automatic": "自動",
+      "details": "詳細資料",
+      "noIssues": "沒有警告或錯誤。"
     },
     "installs": {
       "title": "安裝記錄",
       "resources": "資源",
       "warnings": "警告",
       "completedAt": "完成時間",
-      "autoUpdate": "自動更新"
+      "autoUpdate": "自動更新",
+      "detailTitle": "安裝詳細資料",
+      "installedBy": "安裝者",
+      "viaApi": "API 權杖",
+      "attempts": "嘗試次數",
+      "autoUpdateOn": "開啟",
+      "autoUpdateOff": "關閉",
+      "retry": "重試安裝",
+      "resourcesTitle": "已安裝的資源",
+      "noResources": "尚未建立任何內容。",
+      "deletedResource": "已刪除的資源",
+      "viewOnly": "僅檢視",
+      "created": "已建立",
+      "reused": "已重複使用",
+      "loadMore": "載入更多",
+      "statusFilter": "狀態",
+      "allStatuses": "所有狀態",
+      "errors": {
+        "unknown": "安裝失敗。請再試一次；若持續失敗，請聯絡支援團隊。",
+        "templatePayloadIncompatible": "此範本以較新的格式儲存，此伺服器無法安裝。",
+        "templateInstallationSourceMissing": "範本在安裝執行前已被刪除。",
+        "templateCrossTenantInstall": "此範本不適用於您的工作區。",
+        "templateCategoryPermissionDenied": "您已無權安裝此範本中的所有內容。",
+        "templateInvalidInboxBinding": "所選的收件匣與範本不符。",
+        "templateInstallEnqueueFailed": "無法將安裝排入佇列。",
+        "templateInstallFailed": "安裝失敗，請再試一次。",
+        "templateInstallAbandoned": "安裝未能及時完成，已被關閉。",
+        "templateInstallSuperseded": "此範本較新的一次安裝已取代本次安裝。",
+        "workspaceOwnerBlocked": "工作區擁有者的帳號已被封鎖。"
+      },
+      "uninstalledBy": "{by, select, publisher {發佈者已解除安裝此範本。} installer {此範本已從此工作區解除安裝。} other {此範本已被解除安裝。}}",
+      "uninstalledSummary": "已刪除 {deleted} 項，保留 {kept} 項。",
+      "lastAttemptAt": "最近一次嘗試",
+      "installedAutomatically": "已自動安裝（白標預設）"
     },
     "form": {
       "contents": "範本內容",
@@ -7006,14 +7138,26 @@
       "allowDelete": "允許安裝後刪除",
       "publisherName": "發布者名稱",
       "youtubeVideoId": "YouTube 影片 ID",
-      "youtubeVideoIdDescription": "影片網址中的 11 位字元 ID，例如 youtube.com/watch?v=dQw4w9WgXcQ 中的 \"dQw4w9WgXcQ\"",
+      "youtubeVideoIdDescription": "影片網址中的 11 位字元 ID，例如 youtube.com/watch?v=xxxxxxxxxxx 中的 \"xxxxxxxxxxx\"",
       "testLink": "測試連結",
       "imageUrl": "封面圖片",
       "installBehavior": "安裝行為",
-      "createInstallFolder": "安裝到專屬資料夾",
+      "createInstallFolder": "在安裝的帳戶上建立資料夾並安裝資源。",
       "createInstallFolderDescription": "將每個已安裝的資源都歸入一個以此範本命名的新資料夾中。",
-      "defaultAutoUpdate": "預設將安裝標記為需要更新",
-      "defaultAutoUpdateDescription": "每次重新發布此範本時，新安裝都會顯示可用更新的提示。"
+      "defaultAutoUpdate": "自動更新已安裝的範本",
+      "defaultAutoUpdateDescription": "每當您儲存內容有變更的此範本時，開啟自動更新的安裝都會被新內容覆寫（安裝方編輯過的副本會先備份）。安裝方可以關閉此功能。",
+      "viewOnly": "僅檢視",
+      "viewOnlyAll": "將所選項目全部設為僅檢視",
+      "includedAutomatically": {
+        "title": "自動包含",
+        "hint": "因您選取的項目需要而一併帶入。唯讀。",
+        "rows": "{count, plural, one {另有 # 個項目} other {另有 # 個項目}}",
+        "kind": {
+          "folders": "資料夾",
+          "placeCategories": "地點分類"
+        }
+      },
+      "viewOnlyCopyIncluded": "你選擇的項目（或其依賴的項目）是從僅檢視範本安裝的，因此無法在新範本中共享。"
     },
     "categories": {
       "flows": "流程",
@@ -7028,8 +7172,117 @@
       "keywords": "關鍵字",
       "entryPointLinks": "入口點連結",
       "triggers": "觸發器",
-      "fbCommentAutomations": "Facebook 留言自動化",
-      "settings": "設定"
+      "fbCommentAutomations": "留言自動化",
+      "settings": "機器人欄位與已儲存回覆",
+      "sequences": "序列",
+      "aiMcpServers": "MCP 伺服器",
+      "aiFiles": "AI 知識檔案",
+      "questionnaires": "Questionnaires",
+      "couponTopics": "優惠券主題",
+      "pipelines": "管道"
+    },
+    "locked": {
+      "flowBanner": "此流程來自僅檢視的範本。你可以檢視，但無法編輯。",
+      "badge": "僅檢視",
+      "editorBanner": "這是從僅檢視範本安裝的。你可以檢視，但不能編輯。",
+      "badgeHint": "從僅檢視範本安裝"
+    },
+    "channels": {
+      "messenger": "Messenger",
+      "instagram": "Instagram",
+      "instagramFacebook": "Instagram (Facebook login)",
+      "threads": "Threads",
+      "tiktok": "TikTok",
+      "whatsapp": "WhatsApp",
+      "telegram": "Telegram",
+      "zalo": "Zalo",
+      "webchat": "Webchat",
+      "line": "LINE",
+      "email": "電子郵件"
+    },
+    "uninstall": {
+      "title": "解除安裝範本",
+      "description": "範本會移除它在此工作區建立的所有內容，包括已編輯的副本。共用的標籤、欄位與資料夾、原本就存在的項目，以及您以副本為基礎建立的任何內容都會保留。",
+      "loading": "正在檢查會發生什麼…",
+      "previewFailed": "無法檢查解除安裝會造成的影響。",
+      "failed": "無法解除安裝範本。",
+      "done": "已解除安裝範本",
+      "confirm": "解除安裝",
+      "action": "解除安裝",
+      "deleted": "{count, plural, one {將刪除 # 個項目} other {將刪除 # 個項目}}",
+      "deletedDone": "{count, plural, one {已刪除 # 個項目} other {已刪除 # 個項目}}",
+      "keptModified": "{count, plural, one {保留 # 個已編輯或未驗證的副本} other {保留 # 個已編輯或未驗證的副本}}",
+      "keptShared": "{count, plural, one {保留 # 個共用標籤或欄位} other {保留 # 個共用標籤與欄位}}",
+      "keptByPolicy": "{count, plural, one {保留 # 個其他項目} other {保留 # 個其他項目}}",
+      "keptHasDependents": "{count, plural, one {保留 # 個副本，因為仍有內容在使用它} other {保留 # 個副本，因為仍有內容在使用它們}}",
+      "deletedModified": "{count, plural, one {其中 # 個經您編輯：這些編輯將會遺失且無法還原} other {其中 # 個經您編輯：這些編輯將會遺失且無法還原}}",
+      "keptLockedByOther": "{count, plural, one {保留 # 個項目，因為另一個範本安裝仍在保護它} other {保留 # 個項目，因為另一個範本安裝仍在保護它們}}",
+      "confirmCheckbox": "我了解此操作會刪除上述項目且無法復原",
+      "started": "已開始解除安裝",
+      "inProgress": "解除安裝中…",
+      "retry": "重試解除安裝",
+      "state": {
+        "pending": "解除安裝排隊中",
+        "running": "解除安裝中…",
+        "partial": "解除安裝未完成，請重試",
+        "failed": "解除安裝失敗，請重試",
+        "skipped": "已略過解除安裝：工作區已被封鎖"
+      },
+      "deletedUnverified": "{count, plural, one {其中 # 個無法檢查是否經過編輯：若您曾變更，這些變更將會遺失} other {其中 # 個無法檢查是否經過編輯：若您曾變更，這些變更將會遺失}}",
+      "cancelAction": "取消解除安裝",
+      "cancelled": "已取消解除安裝：剩餘項目可重新供您使用",
+      "blockedByReference": "{count, plural, one {# 個項目未被刪除，因為您建立的內容仍參照它：請移除該參照，再重試解除安裝} other {# 個項目未被刪除，因為您建立的內容仍參照它們：請移除這些參照，再重試解除安裝}}",
+      "keptPartlyRemoved": "{count, plural, one {解除安裝受阻後保留了 # 個副本；其歷史記錄與防重複資料可能已被移除，請在啟用前檢查} other {解除安裝受阻後保留了 # 個副本；其歷史記錄與防重複資料可能已被移除，請在啟用前檢查}}",
+      "keptInactiveForReview": "{count, plural, one {# 個副本維持未啟用：其歷史記錄與防重複資料已被移除，請在啟用前檢查} other {# 個副本維持未啟用：其歷史記錄與防重複資料已被移除，請在啟用前檢查}}",
+      "keptHistoryRemoved": "{count, plural, one {保留了 # 個副本，但其歷史記錄已被移除（無需啟用）：請在依賴它之前檢查} other {保留了 # 個副本，但其歷史記錄已被移除（無需啟用）：請在依賴它們之前檢查}}",
+      "cancelledPartial": "{count, plural, one {# 個項目已在刪除中並將完成；其餘項目已歸還} other {# 個項目已在刪除中並將完成；其餘項目已歸還}}"
+    },
+    "warningCodes": {
+      "aiFileTooLarge": "此知識檔案超出範本安裝可複製的大小，已略過。",
+      "aiFileUnavailable": "此知識檔案無法複製，已略過。",
+      "assigneeRequired": "請選擇此步驟將對話指派給誰。",
+      "ambiguousSourceFieldToken": "多個來源欄位使用相同名稱，因此使用該名稱的變數保持不變。",
+      "backupTooLarge": "在本機編輯過的項目太大，無法備份，因此未被覆蓋。",
+      "backupUnavailable": "此項目的備份已無法使用。",
+      "botFieldRenamed": "已有同名但類型不同的機器人欄位，因此已建立一個重新命名的欄位。",
+      "categoryPermissionDenied": "你沒有此類別的權限，因此已略過。",
+      "couponTopicExpired": "此優惠券主題已過期。",
+      "credentialRequired": "使用此項目前，請先新增其憑證。",
+      "custom": "在此工作區中找不到被參照的項目，因此已移除該連結。",
+      "customField": "在此工作區中找不到被參照的項目，因此已移除該連結。",
+      "customFieldRenamed": "已存在同名但類型不同的欄位，因此建立了一個重新命名的欄位。",
+      "enqueueFailed": "無法將此項目的背景處理加入佇列。",
+      "flow": "在此工作區中找不到被參照的項目，因此已移除該連結。",
+      "flowInvalidStructure": "Flow 的結構無效，因此已略過。",
+      "flowNotPublished": "Flow 已以草稿安裝，尚未發布。",
+      "flowSkippedRequiredReference": "由於無法解析必要的參照，已略過該 Flow。",
+      "folder": "在此工作區中找不到被參照的項目，因此已移除該連結。",
+      "inboxBindingRequired": "請為此頻道選擇收件匣；在此之前該項目會保持未啟用。",
+      "integration": "在此工作區中找不到被參照的項目，因此已移除該連結。",
+      "localModifiedOverwritten": "在本機編輯過的項目已被覆蓋。已儲存備份，可以還原。",
+      "name": "找不到此項目可用的名稱，因此已略過。",
+      "noEmbeddingProvider": "此工作區未設定嵌入服務提供者，因此已略過知識檔案。請連接 OpenAI 或 Gemini 後重新安裝。",
+      "notUpdatable": "此類項目暫不支援自動更新。",
+      "pipeline": "使用了已不存在的管道。",
+      "pipelineField": "使用了已不存在的管道欄位。",
+      "pipelineStage": "使用了已不存在的管道階段。",
+      "postSelectionRequired": "請重新選擇貼文：無法帶入原始貼文。",
+      "product": "在此工作區中找不到被參照的項目，因此已移除該連結。",
+      "productCategory": "在此工作區中找不到被參照的項目，因此已移除該連結。",
+      "questionImage": "無法複製圖片。",
+      "quota": "已達到方案上限，因此已略過該項目。",
+      "referenceRemoved": "無法解析的參照已被移除。",
+      "savedReply": "在此工作區中找不到被參照的項目，因此已移除該連結。",
+      "savedReplyImage": "無法複製圖片。",
+      "tag": "在此工作區中找不到被參照的項目，因此已移除該連結。",
+      "unlisted": "項目未完整匯入：{code}",
+      "workspaceMember": "已指派給不在此工作區的成員。",
+      "workspaceUnavailable": "此工作區已無法使用，因此略過了該項目。"
+    },
+    "tabs": {
+      "mine": "我的範本",
+      "installed": "已安裝",
+      "installedEmpty": "尚無已安裝的範本。從其他工作區安裝的範本會顯示在這裡。"
     }
   },
   "qrCodeGenerator": {
@@ -7152,6 +7405,23 @@
     "hint": "取消選取每個頻道以允許所有頻道。",
     "hiddenByPlatform": "已被平台管理員隱藏—您無法重新啟用此頻道。"
   },
+  "platformDefaultTemplate": {
+    "title": "預設範本",
+    "description": "將此範本安裝到此白標下建立的每個新工作區。現有工作區不會變更。",
+    "clearTitle": "移除預設範本？",
+    "clearDescription": "新工作區將不再自動取得範本。已有該範本的工作區會保留。",
+    "status": {
+      "notConfigured": "未設定",
+      "ready": "生效中",
+      "templateUnavailable": "範本無法使用",
+      "shareDisabled": "分享連結已關閉",
+      "keyRotated": "金鑰無效"
+    },
+    "errors": {
+      "unavailable": "範本 ID 或金鑰無效。",
+      "shareDisabled": "請先開啟範本的分享連結。"
+    }
+  },
   "platformEmailTemplates": {
     "title": "電子郵件範本",
     "description": "將主旨與內文留空即可使用系統預設範本。",
@@ -7235,14 +7505,41 @@
     "invalidTitle": "此連結已不再可用。",
     "invalidDescription": "此範本分享連結無效、已停用或已過期。",
     "byPublisher": "發布者：{publisherName}",
-    "includes": "此範本包含",
     "videoTitle": "範本預覽影片",
-    "tryItOut": "立即體驗",
-    "signInToInstall": "登入以安裝",
+    "preview": "預覽",
+    "aboutTemplate": "關於此範本",
     "selectWorkspace": "選擇一個工作區",
     "install": "安裝",
     "installStarted": "安裝已開始",
-    "noEligibleWorkspaces": "您沒有適合安裝此範本的工作區。"
+    "noEligibleWorkspaces": "您沒有適合安裝此範本的工作區。",
+    "alreadyInstalled": "此範本已安裝在此工作區中。",
+    "viewInstall": "檢視安裝",
+    "installAnotherCopy": "再安裝一個副本",
+    "inboxesTitle": "收件匣",
+    "inboxesHint": "此範本是以這些收件匣為基礎建立的。請選擇要使用您自己的哪些收件匣；未選擇的部分將以停用狀態安裝。",
+    "noInbox": "不連接 — 以停用狀態安裝",
+    "noInboxAvailable": "此頻道沒有已連接的收件匣",
+    "updateExisting": "更新已安裝的副本",
+    "updateStarted": "已開始更新",
+    "publisherAccessLabel": "允許發佈者查看此工作區的名稱並從中解除安裝此範本",
+    "publisherAccessHint": "發佈者永遠看不到您的資料、聯絡人或電子郵件。若發佈者解除安裝，範本建立的所有內容都會被刪除，包括您編輯過的副本；您以副本為基礎建立的任何內容都會保留。您之後可以在安裝頁面關閉此選項。",
+    "autoUpdateLabel": "範本變更時自動更新",
+    "collisions": {
+      "title": "安裝在此處將執行的動作",
+      "loading": "正在檢查此工作區…",
+      "action": {
+        "create": "已建立",
+        "reuse": "已重複使用",
+        "rename": "已重新命名",
+        "bind": "已綁定",
+        "unbound": "維持未綁定"
+      },
+      "detail": {
+        "rename": "「{name}」已存在且類型不同，因此範本中的該項目將以新名稱加入。",
+        "unbound": "在您選擇收件匣之前，「{name}」將維持未連接。"
+      }
+    },
+    "createWorkspace": "建立新工作區"
   },
   "extensionsMe": {
     "actions": {

@@ -148,6 +148,10 @@ export type TenantModel = typeof schema.tenantModel.$inferSelect
 export type LicenseModel = typeof schema.licenseModel.$inferSelect
 export type PlatformAdminModel = typeof schema.platformAdminModel.$inferSelect
 export type TenantHelpItemModel = typeof schema.tenantHelpItemModel.$inferSelect
+export type TenantDefaultTemplateModel =
+  typeof schema.tenantDefaultTemplateModel.$inferSelect
+export type TenantDefaultTemplateEventModel =
+  typeof schema.tenantDefaultTemplateEventModel.$inferSelect
 export type PlatformCredentialModel =
   typeof schema.platformCredentialModel.$inferSelect
 export type ContactNoteModel = typeof schema.contactNoteModel.$inferSelect

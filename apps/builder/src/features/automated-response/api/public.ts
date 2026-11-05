@@ -35,6 +35,15 @@ const keywordMatchInputRefinement = (
   }
 }
 
+/** What `keywords.update` can change; a body with none of them is refused, not sent to the database as an empty update. */
+const UPDATABLE_KEYWORD_FIELDS = [
+  "keywords",
+  "conditions",
+  "text",
+  "flowId",
+  "folderId",
+] as const
+
 export const keywordsPublicRouter = {
   list: workspaceTokenAuthAPI
     .route({
@@ -165,7 +174,7 @@ export const keywordsPublicRouter = {
       path: "/v1/keywords/{id}",
       summary: "Update keyword automation",
       description:
-        "Overwrites the given fields on an existing keyword automation. Use `keywords.get` to inspect current values first and keep the same inbound or outbound type. This is not post/comment automation; use the channel's comment-automation tools for comments.",
+        "Overwrites the given fields on an existing keyword automation; send at least one of them (to enable or disable it, use `keywords.updateStatus`). Use `keywords.get` to inspect current values first and keep the same inbound or outbound type. This is not post/comment automation; use the channel's comment-automation tools for comments.",
       tags: ["Keywords"],
     })
     .input(
@@ -203,7 +212,15 @@ export const keywordsPublicRouter = {
               "Folder id (numeric string) to organize this automation under.",
             ),
         })
-        .superRefine(keywordMatchInputRefinement),
+        .superRefine(keywordMatchInputRefinement)
+        .refine(
+          (input) =>
+            UPDATABLE_KEYWORD_FIELDS.some((key) => input[key] !== undefined),
+          {
+            message:
+              "Nothing to update: send keywords, conditions, text, flowId or folderId. Use keywords.updateStatus to enable or disable.",
+          },
+        ),
     )
     .output(publicKeywordResource)
     .errors(possibleErrorsOnMutatingResource)

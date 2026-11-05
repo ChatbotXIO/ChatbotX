@@ -8,6 +8,7 @@ import type { DataTableRowAction } from "@chatbotx.io/ui/types/data-table"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import React, { useMemo, useState } from "react"
+import { TemplateLockedList } from "@/features/templates/components/lock-context"
 import { useWorkspaceId } from "@/hooks/routing"
 import { getWebchatColumns } from "./columns/webchat-columns"
 import { WebchatTableToolbarActions } from "./components/webchat-table-toolbar-actions"
@@ -46,7 +47,11 @@ export function WebchatTable({
   })
 
   return (
-    <>
+    <TemplateLockedList
+      resourceKind="integrationWebchat"
+      rows={data}
+      workspaceId={workspaceId}
+    >
       <DataTable table={table}>
         <DataTableToolbar table={table}>
           <WebchatTableToolbarActions
@@ -69,6 +74,6 @@ export function WebchatTable({
         webchatId={rowAction?.row.original.id ?? ""}
         workspaceId={workspaceId}
       />
-    </>
+    </TemplateLockedList>
   )
 }

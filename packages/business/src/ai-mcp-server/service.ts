@@ -3,6 +3,7 @@ import {
   type DatabaseClient,
   db,
   eq,
+  inArray,
   type RelationsFieldFilter,
   relationsFilterToSQL,
 } from "@chatbotx.io/database/client"
@@ -17,6 +18,11 @@ import { createId } from "@chatbotx.io/utils"
 import { isSameJsonValue } from "../audit/diff"
 import { BaseService } from "../base.service"
 import { validationException } from "../errors"
+import {
+  changedKeysOf,
+  withDeleteGuard,
+  withEditGuard,
+} from "../template/installed-resource.service"
 import type { PaginatedResult } from "../types"
 
 type FindByProps = {
@@ -115,27 +121,43 @@ class AiMcpServerService extends BaseService {
       throw validationException("name", "Name is already taken")
     }
 
-    const existing = await db.query.aiMCPServerModel.findFirst({
-      where: { id: ctx.id, workspaceId: ctx.workspaceId },
+    // The server is locked before the stored row is read, so the diff that
+    // decides the guard (and the audit) is computed under the lock.
+    // Credentials and the discovered tool list are the installer's; the name,
+    // the address and which tools are on are the template's.
+    const { updated, previous } = await withEditGuard({
+      workspaceId: ctx.workspaceId,
+      resourceKind: "aiMcpServer",
+      resourceId: ctx.id,
+      load: (tx) =>
+        tx.query.aiMCPServerModel.findFirst({
+          where: { id: ctx.id, workspaceId: ctx.workspaceId },
+        }),
+      changedKeys: (existing) =>
+        existing ? changedKeysOf(existing, data) : [],
+      write: async (tx, existing) => {
+        const rows = await tx
+          .update(aiMCPServerModel)
+          .set(data)
+          .where(
+            and(
+              eq(aiMCPServerModel.id, ctx.id),
+              eq(aiMCPServerModel.workspaceId, ctx.workspaceId),
+            ),
+          )
+          .returning()
+        return {
+          updated: rows,
+          previous: existing && {
+            name: existing.name,
+            url: existing.url,
+            auth: existing.auth,
+            availableTools: existing.availableTools,
+            selectedTools: existing.selectedTools,
+          },
+        }
+      },
     })
-    const previous = existing && {
-      name: existing.name,
-      url: existing.url,
-      auth: existing.auth,
-      availableTools: existing.availableTools,
-      selectedTools: existing.selectedTools,
-    }
-
-    const updated = await db
-      .update(aiMCPServerModel)
-      .set(data)
-      .where(
-        and(
-          eq(aiMCPServerModel.id, ctx.id),
-          eq(aiMCPServerModel.workspaceId, ctx.workspaceId),
-        ),
-      )
-      .returning()
 
     if (updated.length > 0 && !isSameJsonValue(data, previous)) {
       await this.audit("update", `updated an MCP Server (#${ctx.id})`)
@@ -145,21 +167,42 @@ class AiMcpServerService extends BaseService {
   }
 
   async delete(ctx: { workspaceId: string; id: string }) {
-    const deleted = await db
-      .delete(aiMCPServerModel)
-      .where(
-        and(
-          eq(aiMCPServerModel.id, ctx.id),
-          eq(aiMCPServerModel.workspaceId, ctx.workspaceId),
-        ),
-      )
-      .returning()
+    const deleted = await withDeleteGuard(
+      {
+        workspaceId: ctx.workspaceId,
+        targets: [{ resourceKind: "aiMcpServer", resourceIds: [ctx.id] }],
+      },
+      (tx) =>
+        this.deleteInTx(tx, {
+          workspaceId: ctx.workspaceId,
+          ids: [ctx.id],
+        }),
+    )
 
     if (deleted.length > 0) {
       await this.audit("delete", `deleted an MCP Server (#${ctx.id})`)
     }
 
     return deleted
+  }
+
+  /**
+   * The delete core (row write only), shared with the template uninstall so
+   * there is one implementation. Returns the rows actually deleted.
+   */
+  async deleteInTx(
+    tx: DatabaseClient,
+    input: { workspaceId: string; ids: string[] },
+  ) {
+    return await tx
+      .delete(aiMCPServerModel)
+      .where(
+        and(
+          eq(aiMCPServerModel.workspaceId, input.workspaceId),
+          inArray(aiMCPServerModel.id, input.ids),
+        ),
+      )
+      .returning()
   }
 }
 

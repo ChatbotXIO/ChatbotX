@@ -172,6 +172,8 @@ export const runFlowImport = async (row: ImportRow): Promise<void> => {
   let createdCustomFieldIds: string[]
   let createdBotFieldIds: string[]
   let warnings: FlowReferenceWarning[]
+  let renamedCustomFields: { from: string; to: string; type: string }[]
+  let renamedBotFields: { from: string; to: string; type: string }[]
   try {
     const result = await flowService.importFlowExport({
       workspaceId: row.workspaceId,
@@ -184,10 +186,11 @@ export const runFlowImport = async (row: ImportRow): Promise<void> => {
       customFields: parsed.data.customFields,
       botFields: parsed.data.botFields,
       folderId: parsedMeta.data.folderId,
-      sourceWorkspaceId: parsed.data.source.workspaceId,
     })
     createdCustomFieldIds = result.createdCustomFieldIds
     createdBotFieldIds = result.createdBotFieldIds
+    renamedCustomFields = result.renamedCustomFields
+    renamedBotFields = result.renamedBotFields
     // Custom-field (and bot-field) creation is unconditional, so any
     // reference whose source id has a manifest entry is guaranteed resolved
     // — warn on the *source* graph (ids still recognizable against the
@@ -234,18 +237,32 @@ export const runFlowImport = async (row: ImportRow): Promise<void> => {
   }
 
   const MAX_WARNING_SAMPLE = 50
-  const errorSample = warnings.slice(0, MAX_WARNING_SAMPLE).map((warning) => ({
-    path: warning.path,
-    reason: `${warning.entityKind} reference at ${warning.path} (${warning.value}) was not remapped — repoint it manually.`,
+  const renameSample = renamedCustomFields.map((rename) => ({
+    path: "customFields",
+    reason: `Custom field "${rename.from}" was created as "${rename.to}" (${rename.type}) because a field of another type already uses that name; {{${rename.from}}} in this flow now reads "${rename.to}".`,
   }))
+  const botFieldRenameSample = renamedBotFields.map((rename) => ({
+    path: "botFields",
+    reason: `Bot field "${rename.from}" was created as "${rename.to}" (${rename.type}) because a field of another type already uses that name.`,
+  }))
+  const errorSample = [
+    ...renameSample,
+    ...botFieldRenameSample,
+    ...warnings.map((warning) => ({
+      path: warning.path,
+      reason: `${warning.entityKind} reference at ${warning.path} (${warning.value}) could not be kept in this workspace — it was cleared or left unset; repoint it manually.`,
+    })),
+  ].slice(0, MAX_WARNING_SAMPLE)
 
   await importService.complete({
     importId: row.id,
     counters: { processed: 1, success: 1, failed: 0 },
     errorSample,
     warningMessage:
-      warnings.length > 0
-        ? `Imported with ${warnings.length} unresolved reference${warnings.length === 1 ? "" : "s"} — review and repoint them.`
+      warnings.length > 0 ||
+      renamedCustomFields.length > 0 ||
+      renamedBotFields.length > 0
+        ? `Imported with ${warnings.length} unresolved reference${warnings.length === 1 ? "" : "s"} and ${renamedCustomFields.length} renamed custom field${renamedCustomFields.length === 1 ? "" : "s"}${renamedBotFields.length > 0 ? ` and ${renamedBotFields.length} renamed bot field${renamedBotFields.length === 1 ? "" : "s"}` : ""} — review them.`
         : undefined,
   })
 }

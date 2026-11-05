@@ -49,7 +49,7 @@ const {
     mockLoggerWarn: vi.fn(),
     mockMarkChunked: vi.fn(),
     mockQueueAdd: vi.fn(),
-    mockTxDeleteWhere: vi.fn(),
+    mockTxDeleteWhere: vi.fn(() => ({ returning: async () => [] })),
     mockUploadFile: vi.fn(),
     mockUploadFileFromUrl: vi.fn(),
     mockFindManyAiFile: vi.fn(async () => []),
@@ -101,6 +101,8 @@ vi.mock("@chatbotx.io/database/client", () => ({
     $count: vi.fn(async () => 0),
   },
   eq: vi.fn((field: unknown, value: unknown) => ({ field, value })),
+  and: vi.fn((...args: unknown[]) => ({ and: args })),
+  inArray: vi.fn((field: unknown, values: unknown) => ({ field, values })),
   findOrFail: mockFindOrFail,
   relationsFilterToSQL: vi.fn(),
 }))
@@ -147,6 +149,26 @@ vi.mock("@chatbotx.io/logger", () => ({
     info: vi.fn(),
     warn: mockLoggerWarn,
   }),
+}))
+
+const { mockAssertDeletable, mockAssertEditable } = vi.hoisted(() => ({
+  mockAssertDeletable: vi.fn(),
+  mockAssertEditable: vi.fn(),
+}))
+
+// The template lock guard has its own suite; these tests cover the call sites.
+vi.mock("../src/template/installed-resource.service", async () => ({
+  ...(await import("./helpers/template-guard-mocks")).templateGuardMocks({
+    useTransaction: true,
+    assertDeletable: mockAssertDeletable,
+    assertResourceEditable: mockAssertEditable,
+  }),
+}))
+
+const lockedTx = { marker: "locked-tx" }
+vi.mock("../src/template/template-resource-locks", () => ({
+  withTemplateLockedTransaction: (run: (tx: unknown) => unknown) =>
+    run(lockedTx),
 }))
 
 const dispatchAuditRecord = vi.fn()
@@ -235,6 +257,30 @@ describe("aiFileService.create", () => {
     expect(result.processingRun).toEqual(
       expect.objectContaining({ status: "queued", heartbeatAt: null }),
     )
+  })
+
+  test.each([
+    ["another workspace's object", "workspaces/workspace-2/ai-files/x.pdf"],
+    [
+      "a different folder of this workspace",
+      "workspaces/workspace-1/secrets/x",
+    ],
+    [
+      "a path that climbs out of the prefix",
+      "workspaces/workspace-1/ai-files/../../workspace-2/ai-files/x",
+    ],
+    ["a bare key", "uploads/x.pdf"],
+  ])("path mode refuses %s", async (_label, path) => {
+    await expect(
+      aiFileService.create(workspaceId, {
+        name: "x.pdf",
+        path,
+        mimeType: "application/pdf",
+        size: 1,
+      }),
+    ).rejects.toMatchObject({ httpStatusCode: 400 })
+
+    expect(mockInsertReturning).not.toHaveBeenCalled()
   })
 
   test("file mode uploads the file and returns a pending resource", async () => {
@@ -536,6 +582,49 @@ describe("aiFileService.reindex with chunking parameters", () => {
     expect(
       mockClaimProcessingRun.mock.calls.at(-1)?.[0].chunkingConfig,
     ).toBeUndefined()
+  })
+
+  test("guards re-chunking first inside the locked transaction, then claims on it", async () => {
+    await aiFileService.reindex({
+      workspaceId,
+      id: "file-1",
+      chunkingConfig: { chunkSize: 500 },
+    })
+
+    expect(mockAssertEditable).toHaveBeenCalledWith(
+      expect.objectContaining({
+        resourceKind: "aiFile",
+        resourceIds: ["file-1"],
+        changedKeys: ["chunkingConfig"],
+        tx: lockedTx,
+      }),
+    )
+    expect(mockAssertEditable.mock.invocationCallOrder[0]).toBeLessThan(
+      mockClaimProcessingRun.mock.invocationCallOrder[0] as number,
+    )
+  })
+
+  test("a blocked re-chunk neither claims nor enqueues", async () => {
+    mockAssertEditable.mockRejectedValueOnce(new Error("locked"))
+
+    await expect(
+      aiFileService.reindex({
+        workspaceId,
+        id: "file-1",
+        chunkingConfig: null,
+      }),
+    ).rejects.toThrow("locked")
+    expect(mockClaimProcessingRun).not.toHaveBeenCalled()
+    expect(mockQueueAdd).not.toHaveBeenCalled()
+  })
+
+  test("a plain reindex never takes the guard or a lock", async () => {
+    mockAssertEditable.mockClear()
+
+    await aiFileService.reindex({ workspaceId, id: "file-1" })
+
+    expect(mockAssertEditable).not.toHaveBeenCalled()
+    expect(mockClaimProcessingRun).toHaveBeenCalled()
   })
 
   test("rejects parameters outside the limits without claiming", async () => {
@@ -959,6 +1048,25 @@ describe("aiFileService.delete", () => {
       "workspaces/workspace-1/ai-files/file-1",
     )
     expect(lastAuditDetail()).toBe("deleted a Knowledge (#file-1)")
+  })
+
+  test("is refused for a file a template installed with deletion disallowed", async () => {
+    mockAssertDeletable.mockRejectedValueOnce(
+      Object.assign(new Error("locked"), {
+        code: "templateAllowDeleteViolation",
+      }),
+    )
+
+    await expect(
+      aiFileService.delete({ workspaceId, id: "file-1" }),
+    ).rejects.toMatchObject({ code: "templateAllowDeleteViolation" })
+
+    expect(mockAssertDeletable).toHaveBeenCalledWith({
+      workspaceId,
+      resourceKind: "aiFile",
+      resourceIds: ["file-1"],
+    })
+    expect(mockDeleteObject).not.toHaveBeenCalled()
   })
 
   test("swallows a storage failure instead of throwing", async () => {

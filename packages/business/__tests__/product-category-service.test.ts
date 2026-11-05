@@ -1,7 +1,9 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
+import { installedResourceModelStub } from "./helpers/template-guard-mocks"
 
 const mocks = vi.hoisted(() => ({
   create: vi.fn(),
+  execute: vi.fn(),
   createMissingChildren: vi.fn(),
   createMissingByName: vi.fn(),
   deleteRow: vi.fn(),
@@ -18,10 +20,35 @@ const mocks = vi.hoisted(() => ({
   fileAsTopLevel: vi.fn(),
 }))
 
+// The template lock guard has its own suite; these tests cover the service.
+vi.mock("../src/template/installed-resource.service", async () => ({
+  ...(await import("./helpers/template-guard-mocks")).templateGuardMocks({
+    assertDeletable: vi.fn(),
+    assertResourceEditable: vi.fn(),
+  }),
+  changedKeysOf: vi.fn(() => []),
+}))
+
 vi.mock("@chatbotx.io/database/client", () => ({
   // `transaction` is not enumerable so `{ name: "default-db" }` still equals it.
   db: Object.defineProperty({ name: "default-db" }, "transaction", {
-    value: (run: (tx: unknown) => unknown) => run({ name: "tx" }),
+    // A fresh client per transaction, like a real driver (the lock registry is
+    // keyed by it); `execute` is non-enumerable so `{ name: "tx" }` still equals it.
+    value: (run: (tx: unknown) => unknown) =>
+      run(
+        Object.defineProperties(
+          { name: "tx" },
+          {
+            execute: { value: mocks.execute },
+            // Every category counts as installed, so the lock path runs.
+            query: {
+              value: {
+                templateInstalledResourceModel: installedResourceModelStub(),
+              },
+            },
+          },
+        ),
+      ),
   }),
   isUniqueViolationError: (...args: unknown[]) =>
     mocks.isUniqueViolationError(...args),
@@ -58,6 +85,10 @@ vi.mock("@chatbotx.io/redis", () => ({
 
 const { productCategoryService } = await import(
   "../src/product-category/service"
+)
+
+const { assertResourceEditable } = await import(
+  "../src/template/installed-resource.service"
 )
 
 const workspaceId = "workspace-1"
@@ -184,7 +215,8 @@ describe("productCategoryService depth limit", () => {
       name: "Renamed",
     })
 
-    expect(mocks.find).not.toHaveBeenCalled()
+    // The one lookup is the template edit guard's diff against the stored row.
+    expect(mocks.find).toHaveBeenCalledTimes(1)
     expect(mocks.listChildren).not.toHaveBeenCalled()
     expect(mocks.update).toHaveBeenCalledWith(
       expect.objectContaining({ categoryId: "category-1", name: "Renamed" }),
@@ -204,6 +236,74 @@ describe("productCategoryService depth limit", () => {
       expect.objectContaining({ parentId: null }),
       expect.anything(),
     )
+  })
+})
+
+describe("productCategoryService template locks", () => {
+  test("guards first inside the transaction and locks the new parent category", async () => {
+    await productCategoryService.update({
+      workspaceId,
+      categoryId: "category-1",
+      name: "Sneakers",
+      parentId: "parent-1",
+    })
+
+    expect(assertResourceEditable).toHaveBeenCalledWith(
+      expect.objectContaining({
+        resourceKind: "productCategory",
+        resourceIds: ["category-1"],
+        referencedParents: [
+          { kind: "productCategory", resourceId: "parent-1" },
+        ],
+        tx: { name: "tx" },
+      }),
+    )
+    expect(
+      vi.mocked(assertResourceEditable).mock.invocationCallOrder[0],
+    ).toBeLessThan(mocks.update.mock.invocationCallOrder[0] as number)
+  })
+
+  test("locks the category and its new parent before the stored row is read", async () => {
+    mocks.find.mockResolvedValue({ id: "parent-1", parentId: null })
+
+    await productCategoryService.update({
+      workspaceId,
+      categoryId: "category-1",
+      parentId: "parent-1",
+    })
+
+    // One statement takes both keys (the category, then its new parent).
+    expect(mocks.execute).toHaveBeenCalledTimes(1)
+    // find #1 is the parent-adoption check; #2 is the read under the lock.
+    expect(mocks.execute.mock.invocationCallOrder[0]).toBeLessThan(
+      mocks.find.mock.invocationCallOrder[1] as number,
+    )
+  })
+
+  test("a rename without a parent locks no parent", async () => {
+    await productCategoryService.update({
+      workspaceId,
+      categoryId: "category-1",
+      name: "Renamed",
+    })
+
+    expect(assertResourceEditable).toHaveBeenCalledWith(
+      expect.objectContaining({ referencedParents: [] }),
+    )
+  })
+
+  test("a blocked edit writes nothing and keeps the cache", async () => {
+    vi.mocked(assertResourceEditable).mockRejectedValueOnce(new Error("locked"))
+
+    await expect(
+      productCategoryService.update({
+        workspaceId,
+        categoryId: "category-1",
+        name: "Renamed",
+      }),
+    ).rejects.toThrow("locked")
+    expect(mocks.update).not.toHaveBeenCalled()
+    expect(mocks.invalidateCacheByTags).not.toHaveBeenCalled()
   })
 })
 
@@ -238,6 +338,7 @@ describe("productCategoryService re-filing on a level change", () => {
   })
 
   test("leaves references alone when the parent did not change", async () => {
+    // The parent lookup runs first, then the stored row under the lock.
     mocks.find
       .mockResolvedValueOnce({ id: "parent-1", parentId: null })
       .mockResolvedValueOnce({ id: "category-1", parentId: "parent-1" })
@@ -264,6 +365,41 @@ describe("productCategoryService delete and discount codes", () => {
     expect(mocks.deactivateCodes.mock.invocationCallOrder[0]).toBeLessThan(
       mocks.deleteRow.mock.invocationCallOrder[0] ?? 0,
     )
+  })
+})
+
+describe("productCategoryService delete guards the whole subtree", () => {
+  test("asks assertDeletable about the root and every child, in the delete transaction", async () => {
+    const { assertDeletable } = await import(
+      "../src/template/installed-resource.service"
+    )
+    mocks.listChildren.mockResolvedValue([{ id: "child-1" }, { id: "child-2" }])
+
+    await productCategoryService.delete({ workspaceId, categoryId: "cat-1" })
+
+    expect(assertDeletable).toHaveBeenCalledWith({
+      workspaceId,
+      resourceKind: "productCategory",
+      resourceIds: ["cat-1", "child-1", "child-2"],
+      tx: { name: "tx" },
+    })
+    expect(mocks.deleteRow).toHaveBeenCalled()
+  })
+
+  test("a locked child blocks the delete before anything is deactivated or removed", async () => {
+    const { assertDeletable } = await import(
+      "../src/template/installed-resource.service"
+    )
+    vi.mocked(assertDeletable).mockRejectedValueOnce(
+      new Error("templateAllowDeleteViolation"),
+    )
+    mocks.listChildren.mockResolvedValue([{ id: "child-1" }])
+
+    await expect(
+      productCategoryService.delete({ workspaceId, categoryId: "cat-1" }),
+    ).rejects.toThrow("templateAllowDeleteViolation")
+    expect(mocks.deactivateCodes).not.toHaveBeenCalled()
+    expect(mocks.deleteRow).not.toHaveBeenCalled()
   })
 })
 

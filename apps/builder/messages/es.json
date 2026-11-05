@@ -2075,10 +2075,11 @@
       "processing": "Procesando",
       "installing": "Installing",
       "completed": "Completado",
-      "partial": "Partial",
+      "partial": "Parcial",
       "failed": "Fallido",
       "success": "Éxito",
-      "error": "Error"
+      "error": "Error",
+      "uninstalled": "Uninstalled"
     },
     "subtitle": {
       "placeholder": "Introduce el subtítulo"
@@ -2816,7 +2817,8 @@
       "miniApps": "Mini Apps",
       "leaderboards": "Clasificaciones",
       "pipelines": "Canalizaciones",
-      "places": "Lugares"
+      "places": "Lugares",
+      "templates": "Plantillas"
     },
     "adReferral": {
       "label": "Ads",
@@ -2954,6 +2956,7 @@
   "flows": {
     "export": {
       "notPublished": "Este flujo nunca se ha publicado. Publícalo antes de exportarlo.",
+      "viewOnly": "Este flujo se instaló desde una plantilla de solo lectura, por lo que no se puede exportar.",
       "failed": "Error al exportar. Inténtalo de nuevo."
     },
     "title": "Flujos",
@@ -6932,6 +6935,9 @@
   "templates": {
     "title": "Plantillas",
     "description": "Crea y gestiona tus plantillas.",
+    "createDialog": {
+      "title": "Nueva plantilla"
+    },
     "share": {
       "label": "Compartir",
       "enabled": "Compartida",
@@ -6940,14 +6946,140 @@
       "dialogDescription": "Cualquiera con este enlace puede instalar una copia de esta plantilla en un espacio de trabajo de tu organización.",
       "enableLabel": "Activar enlace para compartir",
       "linkLabel": "Enlace para compartir",
-      "description": "Cualquiera con el enlace puede instalar esta plantilla en su propio espacio de trabajo."
+      "rotateLabel": "Rotar enlace",
+      "rotateTitle": "¿Rotar el enlace para compartir?",
+      "rotateDescription": "El enlace actual deja de funcionar de inmediato. Quien aún necesite instalar esta plantilla necesitará el nuevo enlace.",
+      "rotated": "Enlace para compartir rotado",
+      "expiryLabel": "El enlace caduca",
+      "expiryHint": "Déjalo vacío para un enlace que nunca caduque.",
+      "clearExpiry": "Quitar caducidad",
+      "expiredNotice": "Este enlace ha caducado. Elige una fecha posterior o quita la caducidad para volver a compartirlo.",
+      "templateId": "ID de plantilla",
+      "templateKey": "Clave de plantilla",
+      "showKey": "Mostrar clave",
+      "hideKey": "Ocultar clave",
+      "copyField": "Copiar {field}"
+    },
+    "sync": {
+      "title": "Actualizaciones",
+      "updateAvailable": "Actualización disponible",
+      "upToDate": "Actualizada",
+      "sourceDeleted": "Plantilla eliminada",
+      "sourceDeletedHint": "El editor eliminó esta plantilla. Tu copia sigue funcionando, pero ya no se puede actualizar.",
+      "updateNow": "Actualizar ahora",
+      "updating": "Actualizando…",
+      "version": "Versión de la plantilla {version}",
+      "lastSynced": "última actualización {date}",
+      "autoUpdateLabel": "Actualizar automáticamente cuando cambie la plantilla",
+      "noHistory": "Aún no hay actualizaciones.",
+      "countAdded": "{count} añadidos",
+      "countUpdated": "{count} actualizados",
+      "countDetached": "{count} ya no siguen la plantilla",
+      "notUpdatable": "{count} aún no se pueden actualizar",
+      "overwritten": "{name} se había editado y la actualización lo reemplazó",
+      "restore": "Restaurar mi versión",
+      "restored": "Se restauró tu versión",
+      "status": {
+        "pending": "En cola",
+        "running": "En curso",
+        "completed": "Completada",
+        "partial": "Parcial",
+        "failed": "Fallida",
+        "skipped": "Omitida",
+        "cancelled": "Cancelada"
+      },
+      "trigger": {
+        "autoUpdate": "Automática",
+        "manual": "Manual",
+        "reinstall": "Reinstalación"
+      },
+      "publisherAccessLabel": "Permitir que el publicador vea este espacio de trabajo y desinstale la plantilla",
+      "publisherAccessHint": "Solo se comparte el nombre del espacio de trabajo. Si el publicador desinstala, se elimina todo lo que creó la plantilla, incluidas las copias que editaste.",
+      "requestedVersion": "solicitada v{version}",
+      "errors": {
+        "unknown": "La actualización falló. Inténtalo de nuevo o contacta con soporte si sigue fallando.",
+        "templateSyncFailed": "La actualización falló. Inténtalo de nuevo.",
+        "templateSyncSuperseded": "Una actualización más reciente reemplazó a esta.",
+        "templateSyncAbandoned": "La actualización no terminó a tiempo y se cerró.",
+        "templateInstallationInactive": "Esta instalación ya no está activa.",
+        "workspaceOwnerBlocked": "La cuenta del propietario del espacio de trabajo está bloqueada.",
+        "templateUninstallInProgress": "La plantilla se está desinstalando.",
+        "templateAutoUpdateOff": "Las actualizaciones automáticas están desactivadas.",
+        "templateUpToDate": "La copia ya está actualizada.",
+        "templateInstallerAccessLost": "Quien la instaló ya no tiene permiso para actualizar esta copia.",
+        "templateInstallationSourceMissing": "La plantilla se eliminó antes de que se ejecutara la actualización.",
+        "templateCategoryPermissionDenied": "Ya no tienes permiso para actualizar todo lo de esta plantilla.",
+        "templatePayloadIncompatible": "Esta plantilla se guardó en un formato más reciente del que este servidor puede instalar.",
+        "templateCrossTenantInstall": "Esta plantilla no está disponible para tu espacio de trabajo.",
+        "templateInvalidInboxBinding": "Una bandeja de entrada seleccionada no coincide con la plantilla."
+      }
+    },
+    "versions": {
+      "detailsTab": "Detalles",
+      "tab": "Versiones",
+      "versionNumber": "Versión {version}",
+      "current": "Actual",
+      "first": "Primera versión",
+      "noDetail": "No se registraron detalles de esta versión.",
+      "added": "Añadido",
+      "changed": "Modificado",
+      "removed": "Eliminado"
+    },
+    "installers": {
+      "title": "Ver analíticas",
+      "workspace": "Espacio de trabajo",
+      "installs": "Instalaciones",
+      "lastInstalled": "Última instalación",
+      "version": "Version",
+      "autoUpdate": "Actualización automática",
+      "uninstalled": "Desinstalada",
+      "hidden": "Espacio de trabajo no compartido",
+      "totalInstallEvents": "Instalaciones totales (histórico)",
+      "uninstallNotAllowed": "El instalador no ha permitido que los editores desinstalen esta copia.",
+      "loadError": "No se pudieron cargar los instaladores. Inténtalo de nuevo.",
+      "automatic": "Automática",
+      "details": "Detalles",
+      "noIssues": "No hay advertencias ni errores."
     },
     "installs": {
       "title": "Instalaciones",
       "resources": "Recursos",
       "warnings": "Advertencias",
       "completedAt": "Completado el",
-      "autoUpdate": "Actualización automática"
+      "autoUpdate": "Actualización automática",
+      "detailTitle": "Detalles de la instalación",
+      "installedBy": "Instalada por",
+      "viaApi": "Token de API",
+      "attempts": "Intentos",
+      "autoUpdateOn": "Activada",
+      "autoUpdateOff": "Desactivada",
+      "retry": "Reintentar instalación",
+      "resourcesTitle": "Recursos instalados",
+      "noResources": "Aún no se ha creado nada.",
+      "deletedResource": "Recurso eliminado",
+      "viewOnly": "Solo lectura",
+      "created": "Creado",
+      "reused": "Reutilizado",
+      "loadMore": "Cargar más",
+      "statusFilter": "Estado",
+      "allStatuses": "Todos los estados",
+      "errors": {
+        "unknown": "La instalación falló. Inténtalo de nuevo o contacta con soporte si sigue fallando.",
+        "templatePayloadIncompatible": "Esta plantilla se guardó en un formato más reciente del que este servidor puede instalar.",
+        "templateInstallationSourceMissing": "La plantilla se eliminó antes de que se ejecutara la instalación.",
+        "templateCrossTenantInstall": "Esta plantilla no está disponible para tu espacio de trabajo.",
+        "templateCategoryPermissionDenied": "Ya no tienes permiso para instalar todo el contenido de esta plantilla.",
+        "templateInvalidInboxBinding": "Una bandeja de entrada seleccionada no coincide con la plantilla.",
+        "templateInstallEnqueueFailed": "No se pudo poner la instalación en cola.",
+        "templateInstallFailed": "La instalación falló. Inténtalo de nuevo.",
+        "templateInstallAbandoned": "La instalación no terminó a tiempo y se cerró.",
+        "templateInstallSuperseded": "Una instalación más reciente de esta plantilla reemplazó a esta.",
+        "workspaceOwnerBlocked": "La cuenta del propietario del espacio de trabajo está bloqueada."
+      },
+      "uninstalledBy": "{by, select, publisher {El publicador desinstaló esta plantilla.} installer {Esta plantilla se desinstaló de este espacio de trabajo.} other {Esta plantilla se desinstaló.}}",
+      "uninstalledSummary": "{deleted} eliminados, {kept} conservados.",
+      "lastAttemptAt": "Último intento",
+      "installedAutomatically": "Instalada automáticamente (predeterminada de la marca blanca)"
     },
     "form": {
       "contents": "Contenido de la plantilla",
@@ -6960,14 +7092,26 @@
       "allowDelete": "Permitir eliminación después de instalar",
       "publisherName": "Nombre del publicador",
       "youtubeVideoId": "ID del vídeo de YouTube",
-      "youtubeVideoIdDescription": "El ID de 11 caracteres de la URL del vídeo, por ejemplo \"dQw4w9WgXcQ\" en youtube.com/watch?v=dQw4w9WgXcQ",
+      "youtubeVideoIdDescription": "El ID de 11 caracteres de la URL del vídeo, por ejemplo \"xxxxxxxxxxx\" en youtube.com/watch?v=xxxxxxxxxxx",
       "testLink": "Enlace de prueba",
       "imageUrl": "Imagen de portada",
       "installBehavior": "Comportamiento de instalación",
-      "createInstallFolder": "Instalar en una carpeta dedicada",
+      "createInstallFolder": "Crear una carpeta en la cuenta instalada e instalar los recursos.",
       "createInstallFolderDescription": "Anida todos los recursos instalados dentro de una nueva carpeta con el nombre de esta plantilla.",
-      "defaultAutoUpdate": "Marcar instalaciones para actualizaciones de forma predeterminada",
-      "defaultAutoUpdateDescription": "Las nuevas instalaciones mostrarán un aviso de actualización disponible cada vez que vuelvas a publicar esta plantilla."
+      "defaultAutoUpdate": "Actualizar automáticamente las plantillas instaladas",
+      "defaultAutoUpdateDescription": "Cada vez que guardes esta plantilla con contenido modificado, las instalaciones con actualización automática se sobrescriben con el nuevo contenido (antes se hace una copia de seguridad de las copias que editó el instalador). Los instaladores pueden desactivarlo.",
+      "viewOnly": "Solo ver",
+      "viewOnlyAll": "Hacer todo lo seleccionado de solo lectura",
+      "includedAutomatically": {
+        "title": "Incluido automáticamente",
+        "hint": "Se incluye porque algo que seleccionaste lo necesita. Solo lectura.",
+        "rows": "{count, plural, one {# elemento más} other {# elementos más}}",
+        "kind": {
+          "folders": "Carpetas",
+          "placeCategories": "Categorías de lugares"
+        }
+      },
+      "viewOnlyCopyIncluded": "Algo que seleccionaste (o algo que necesita) se instaló desde una plantilla de solo lectura, así que no se puede compartir en una plantilla nueva."
     },
     "categories": {
       "flows": "Flujos",
@@ -6982,8 +7126,117 @@
       "keywords": "Palabras clave",
       "entryPointLinks": "Entry Point Enlaces",
       "triggers": "Desencadenadores",
-      "fbCommentAutomations": "Automatizaciones de comentarios de Facebook",
-      "settings": "Configuración"
+      "fbCommentAutomations": "Automatizaciones de comentarios",
+      "settings": "Campos del bot y respuestas guardadas",
+      "sequences": "Secuencias",
+      "aiMcpServers": "Servidores MCP",
+      "aiFiles": "Archivos de conocimiento de IA",
+      "questionnaires": "Questionnaires",
+      "couponTopics": "Temas de cupones",
+      "pipelines": "Pipelines"
+    },
+    "locked": {
+      "flowBanner": "Este flujo se instaló desde una plantilla de solo lectura. Puedes verlo, pero no editarlo.",
+      "badge": "Solo lectura",
+      "editorBanner": "Esto se instaló desde una plantilla de solo lectura. Puedes verlo, pero no editarlo.",
+      "badgeHint": "Instalado desde una plantilla de solo lectura"
+    },
+    "channels": {
+      "messenger": "Messenger",
+      "instagram": "Instagram",
+      "instagramFacebook": "Instagram (Facebook login)",
+      "threads": "Threads",
+      "tiktok": "TikTok",
+      "whatsapp": "WhatsApp",
+      "telegram": "Telegram",
+      "zalo": "Zalo",
+      "webchat": "Webchat",
+      "line": "LINE",
+      "email": "Correo electrónico"
+    },
+    "uninstall": {
+      "title": "Desinstalar plantilla",
+      "description": "La plantilla elimina todo lo que creó en este espacio de trabajo, incluidas las copias editadas. Se conservan las etiquetas, campos y carpetas compartidos, los elementos que ya existían y todo lo que hayas creado a partir de una copia.",
+      "loading": "Comprobando qué ocurrirá…",
+      "previewFailed": "No se pudo comprobar qué haría la desinstalación.",
+      "failed": "No se pudo desinstalar la plantilla.",
+      "done": "Plantilla desinstalada",
+      "confirm": "Desinstalar",
+      "action": "Desinstalar",
+      "deleted": "{count, plural, one {Se eliminará # elemento} other {Se eliminarán # elementos}}",
+      "deletedDone": "{count, plural, one {Se eliminó # elemento} other {Se eliminaron # elementos}}",
+      "keptModified": "{count, plural, one {Se conserva # copia editada o sin verificar} other {Se conservan # copias editadas o sin verificar}}",
+      "keptShared": "{count, plural, one {Se conserva # etiqueta o campo compartido} other {Se conservan # etiquetas y campos compartidos}}",
+      "keptByPolicy": "{count, plural, one {Se conserva # elemento más} other {Se conservan # elementos más}}",
+      "keptHasDependents": "{count, plural, one {Se conserva # copia porque algo todavía la usa} other {Se conservan # copias porque algo todavía las usa}}",
+      "deletedModified": "{count, plural, one {# de ellos lo editaste tú: esos cambios se pierden y no se pueden recuperar} other {# de ellos los editaste tú: esos cambios se pierden y no se pueden recuperar}}",
+      "keptLockedByOther": "{count, plural, one {Se conserva # elemento porque otra instalación de plantilla todavía lo protege} other {Se conservan # elementos porque otra instalación de plantilla todavía los protege}}",
+      "confirmCheckbox": "Entiendo que esto elimina los elementos anteriores y no se puede deshacer",
+      "started": "Desinstalación iniciada",
+      "inProgress": "Desinstalando…",
+      "retry": "Reintentar desinstalación",
+      "state": {
+        "pending": "Desinstalación en cola",
+        "running": "Desinstalando…",
+        "partial": "Desinstalación incompleta, vuelve a intentarlo",
+        "failed": "La desinstalación falló, vuelve a intentarlo",
+        "skipped": "Desinstalación omitida: el espacio de trabajo está bloqueado"
+      },
+      "deletedUnverified": "{count, plural, one {# de ellos no se puede comprobar si se editó: si lo cambiaste, esos cambios se pierden} other {# de ellos no se pueden comprobar si se editaron: si los cambiaste, esos cambios se pierden}}",
+      "cancelAction": "Cancelar desinstalación",
+      "cancelled": "Desinstalación cancelada: los elementos restantes vuelven a estar disponibles para ti",
+      "blockedByReference": "{count, plural, one {# elemento no se eliminó porque algo que creaste todavía apunta a él: quita esa referencia y vuelve a intentar la desinstalación} other {# elementos no se eliminaron porque algo que creaste todavía apunta a ellos: quita esas referencias y vuelve a intentar la desinstalación}}",
+      "keptPartlyRemoved": "{count, plural, one {Se conservó # copia tras una desinstalación bloqueada; es posible que se hayan eliminado su historial y sus datos de protección contra duplicados, así que revísala antes de activarla} other {Se conservaron # copias tras una desinstalación bloqueada; es posible que se hayan eliminado su historial y sus datos de protección contra duplicados, así que revísalas antes de activarlas}}",
+      "keptInactiveForReview": "{count, plural, one {Se dejó # copia inactiva: se eliminaron su historial y sus datos de protección contra duplicados, así que revísala antes de activarla} other {Se dejaron # copias inactivas: se eliminaron su historial y sus datos de protección contra duplicados, así que revísalas antes de activarlas}}",
+      "keptHistoryRemoved": "{count, plural, one {Se conservó # copia, pero se eliminó su historial (no tiene nada que activar): revísala antes de confiar en ella} other {Se conservaron # copias, pero se eliminó su historial (no tienen nada que activar): revísalas antes de confiar en ellas}}",
+      "cancelledPartial": "{count, plural, one {# elemento ya se está eliminando y terminará; el resto se te devolvió} other {# elementos ya se están eliminando y terminarán; el resto se te devolvió}}"
+    },
+    "warningCodes": {
+      "aiFileTooLarge": "Este archivo de conocimiento supera lo que una instalación de plantilla puede copiar, así que se omitió.",
+      "aiFileUnavailable": "No se pudo copiar este archivo de conocimiento, así que se omitió.",
+      "assigneeRequired": "Elige a quién asigna este paso la conversación.",
+      "ambiguousSourceFieldToken": "Varios campos de origen comparten este nombre, por lo que las variables que lo usan se dejaron sin cambios.",
+      "backupTooLarge": "Un elemento editado localmente era demasiado grande para respaldarlo, por lo que no se sobrescribió.",
+      "backupUnavailable": "La copia de seguridad de este elemento ya no está disponible.",
+      "botFieldRenamed": "Ya existe un campo del bot con este nombre y otro tipo, así que se creó un campo con otro nombre.",
+      "categoryPermissionDenied": "No tienes permiso para esta categoría, por lo que se omitió.",
+      "couponTopicExpired": "Este tema de cupón ya ha caducado.",
+      "credentialRequired": "Añade las credenciales de este elemento antes de usarlo.",
+      "custom": "No se encontró un elemento referenciado en este espacio de trabajo, por lo que se eliminó el vínculo.",
+      "customField": "No se encontró un elemento referenciado en este espacio de trabajo, por lo que se eliminó el vínculo.",
+      "customFieldRenamed": "Ya existe un campo con este nombre y otro tipo, por lo que se creó un campo con otro nombre.",
+      "enqueueFailed": "No se pudo poner en cola el procesamiento en segundo plano de este elemento.",
+      "flow": "No se encontró un elemento referenciado en este espacio de trabajo, por lo que se eliminó el vínculo.",
+      "flowInvalidStructure": "La estructura del Flow no es válida, por lo que se omitió.",
+      "flowNotPublished": "El Flow se instaló como borrador y no está publicado.",
+      "flowSkippedRequiredReference": "Se omitió el Flow porque no se pudo resolver una referencia obligatoria.",
+      "folder": "No se encontró un elemento referenciado en este espacio de trabajo, por lo que se eliminó el vínculo.",
+      "inboxBindingRequired": "Elige una bandeja de entrada para este canal; hasta entonces el elemento permanece inactivo.",
+      "integration": "No se encontró un elemento referenciado en este espacio de trabajo, por lo que se eliminó el vínculo.",
+      "localModifiedOverwritten": "Se sobrescribió un elemento editado localmente. Se guardó una copia de seguridad que se puede restaurar.",
+      "name": "No se encontró un nombre libre para este elemento, por lo que se omitió.",
+      "noEmbeddingProvider": "Este espacio de trabajo no tiene un proveedor de embeddings configurado, así que se omitieron los archivos de conocimiento. Conecta OpenAI o Gemini y vuelve a instalar.",
+      "notUpdatable": "Este tipo de elemento aún no se actualiza automáticamente.",
+      "pipeline": "Usa un pipeline que ya no existe.",
+      "pipelineField": "Usa un campo de pipeline que ya no existe.",
+      "pipelineStage": "Usa una etapa de pipeline que ya no existe.",
+      "postSelectionRequired": "Selecciona la publicación de nuevo: no se pudo trasladar la publicación original.",
+      "product": "No se encontró un elemento referenciado en este espacio de trabajo, por lo que se eliminó el vínculo.",
+      "productCategory": "No se encontró un elemento referenciado en este espacio de trabajo, por lo que se eliminó el vínculo.",
+      "questionImage": "No se pudo copiar una imagen.",
+      "quota": "Se alcanzó el límite del plan, por lo que se omitió el elemento.",
+      "referenceRemoved": "Se eliminó una referencia que no se pudo resolver.",
+      "savedReply": "No se encontró un elemento referenciado en este espacio de trabajo, por lo que se eliminó el vínculo.",
+      "savedReplyImage": "No se pudo copiar una imagen.",
+      "tag": "No se encontró un elemento referenciado en este espacio de trabajo, por lo que se eliminó el vínculo.",
+      "unlisted": "Elemento no incorporado por completo: {code}",
+      "workspaceMember": "Asignado a un miembro que no está en este espacio de trabajo.",
+      "workspaceUnavailable": "Este espacio de trabajo ya no está disponible, así que se omitió el elemento."
+    },
+    "tabs": {
+      "mine": "Mis plantillas",
+      "installed": "Instaladas",
+      "installedEmpty": "Aún no hay plantillas instaladas. Las plantillas que instales desde otro espacio de trabajo aparecerán aquí."
     }
   },
   "qrCodeGenerator": {
@@ -7106,6 +7359,23 @@
     "hint": "Deja todos los canales sin marcar para permitir todos los canales.",
     "hiddenByPlatform": "Oculto por el administrador de la plataforma; no puedes volver a habilitar este canal."
   },
+  "platformDefaultTemplate": {
+    "title": "Plantilla predeterminada",
+    "description": "Instala esta plantilla en cada nuevo espacio de trabajo creado bajo esta marca blanca. Los espacios existentes no cambian.",
+    "clearTitle": "¿Quitar la plantilla predeterminada?",
+    "clearDescription": "Los nuevos espacios de trabajo ya no recibirán una plantilla automáticamente. Los que ya la tienen la conservan.",
+    "status": {
+      "notConfigured": "Sin definir",
+      "ready": "Activa",
+      "templateUnavailable": "Plantilla no disponible",
+      "shareDisabled": "Enlace para compartir desactivado",
+      "keyRotated": "Clave no válida"
+    },
+    "errors": {
+      "unavailable": "El ID o la clave de la plantilla no es válido.",
+      "shareDisabled": "Activa primero el enlace para compartir de la plantilla."
+    }
+  },
   "platformEmailTemplates": {
     "title": "Correo Plantillas",
     "description": "Leave subject y body blank un use el system predeterminado plantilla.",
@@ -7189,14 +7459,41 @@
     "invalidTitle": "Este enlace ya no está disponible.",
     "invalidDescription": "Este enlace de plantilla no es válido, está deshabilitado o ha caducado.",
     "byPublisher": "Por {publisherName}",
-    "includes": "Esta plantilla incluye",
     "videoTitle": "Video de vista previa de la plantilla",
-    "tryItOut": "Pruébala",
-    "signInToInstall": "Inicia sesión para instalar",
+    "preview": "Vista previa",
+    "aboutTemplate": "Acerca de esta plantilla",
     "selectWorkspace": "Selecciona un espacio de trabajo",
     "install": "Instalar",
     "installStarted": "Instalación iniciada",
-    "noEligibleWorkspaces": "No tienes ningún espacio de trabajo apto para instalar esta plantilla."
+    "noEligibleWorkspaces": "No tienes ningún espacio de trabajo apto para instalar esta plantilla.",
+    "alreadyInstalled": "Esta plantilla ya está instalada en este espacio de trabajo.",
+    "viewInstall": "Ver instalación",
+    "installAnotherCopy": "Instalar otra copia",
+    "inboxesTitle": "Bandejas de entrada",
+    "inboxesHint": "Esta plantilla se creó en torno a estas bandejas de entrada. Elige cuáles de tus bandejas de entrada usar; lo que quede sin asignar se instala desactivado.",
+    "noInbox": "No conectar: instalar desactivado",
+    "noInboxAvailable": "No hay ninguna bandeja de entrada conectada en este canal",
+    "updateExisting": "Actualizar la copia instalada",
+    "updateStarted": "Actualización iniciada",
+    "publisherAccessLabel": "Permitir que el publicador vea el nombre de este espacio de trabajo y desinstale esta plantilla de él",
+    "publisherAccessHint": "Nunca ve tus datos, contactos ni correo electrónico. Si desinstala, se elimina todo lo que creó la plantilla, incluidas las copias que editaste; se conserva todo lo que hayas creado a partir de una copia. Puedes desactivarlo más tarde en la página de la instalación.",
+    "autoUpdateLabel": "Actualizar automáticamente cuando cambie la plantilla",
+    "collisions": {
+      "title": "Qué hará la instalación aquí",
+      "loading": "Comprobando este espacio de trabajo…",
+      "action": {
+        "create": "Creado",
+        "reuse": "Reutilizado",
+        "rename": "Renombrado",
+        "bind": "Vinculado",
+        "unbound": "Sin vincular"
+      },
+      "detail": {
+        "rename": "«{name}» ya existe con otro tipo, así que el de la plantilla se añade con otro nombre.",
+        "unbound": "«{name}» queda sin conectar hasta que elijas una bandeja de entrada."
+      }
+    },
+    "createWorkspace": "Crear un espacio de trabajo nuevo"
   },
   "extensionsMe": {
     "actions": {

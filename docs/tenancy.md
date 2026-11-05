@@ -235,6 +235,84 @@ per owner), so setup does not wait on connecting a channel. Invited users
 are not given an extra one. When a plan limit blocks creation, `/` falls back
 to the workspace list.
 
+## Default template for new workspaces
+
+A tenant owner can pick one template that is installed into every workspace created
+under the tenant: the reseller at `/manage/default-template` (cloud), the super admin for
+the root tenant at `/admin/default-template` (every edition). They enter the template's
+**Template ID** (`Template.id`) and **Template Key** (its share token); the share panel and
+`templates.getLink` show both. Existing workspaces are never touched.
+
+A template's share link is always built on the host serving its workspace
+(`resolveTemplateShareUrl`, on `resolveWorkspaceAppUrl`): the tenant's active custom domain
+when it has one, whichever host the publisher is browsing. The share page's logo and its
+sign-in link follow the host the visitor opened, so a white-label link stays white-label.
+
+- **Data.** `TenantDefaultTemplate` (one row per tenant, PK `tenantId`, cascades with the
+  tenant and the template) holds `templateId`, `keyHash` (the SHA-256 of the key at the
+  time it was entered) and `encryptedKey` (that key, encrypted with the tenant-bound AAD
+  `tenantDefaultTemplate:<tenantId>`). Only the settings page of the tenant's own admin
+  reads it back, so the saved ID and key stay shown after the publisher rotates the share
+  link; the table is not cached. `TemplateInstallation.installSource` (`manual` | `tenantDefault`, default
+  `manual`) records how a copy came to exist; retries and syncs never rewrite it.
+- **History.** `TenantDefaultTemplateEvent` is append-only: every save, and every clear that removed a default, writes one row
+  (`action` set | cleared, the template, the acting user, the time) in the same transaction
+  as the change. `templateId` has no foreign key, so the history outlives a deleted template;
+  the actor is nulled if the user is deleted; the rows go with the tenant. A workspace that
+  should have received the default but did not can be found by comparing the tenant's
+  workspaces created while a default was set against their `tenantDefault` installations;
+  why it was skipped is only in the log (`Skipped the tenant default template`).
+- **Settings** (`tenantDefaultTemplateService`, `enterprise/tenant`): `set` answers a
+  missing, deleted, other-tenant or wrong-key template with one generic error
+  (`tenantDefaultTemplateUnavailable`, so ids are no oracle) and a switched-off share with
+  `tenantDefaultTemplateShareDisabled` only after the key matched. It never provisions a
+  tenant. `getSettings` reports `ready`, `templateUnavailable`, `shareDisabled` or
+  `keyRotated` (the template's share token no longer matches `keyHash`; the page labels it
+  "Key invalid", and saving the old key again is refused until the new key is entered).
+- **On workspace creation** (`workspaceService.create` → `stageTenantDefaultInstall`, a
+  private leaf module) the `pending` installation row is written in the creation
+  transaction: no payload is read, the version is pinned by
+  `templateVersionRepository.pinVersionNumber`, the installer is null with
+  `installedByKind: "apiToken"` (the existing full-power, no-user actor) and
+  `publisherUninstallGrant` set: the publisher sees the workspace name and can uninstall,
+  as with a manual install. A suspended tenant is skipped silently;
+  expected drift of the configured template (deleted, share off, rotated key) is logged and
+  skipped; an operational error aborts the creation so "every new workspace gets the
+  default" is never silently broken.
+- **Dispatch.** The job is enqueued after the transaction commits
+  (`dispatchStagedInstalls`, subpath `@chatbotx.io/business/template-install-dispatch`): by
+  `workspaceService.create` for an owned transaction, and by the caller for a
+  caller-owned one (`startSession`, webchat, Telegram, WhatsApp, API connects). It is
+  idempotent; the installation sweep recovers a lost enqueue within minutes, so only
+  latency depends on it. Any new place that creates a workspace inside its own
+  transaction must call it after the commit.
+- **A share link wins over the default.** "Create a new workspace" on a share page's install
+  screen remembers that template for the user (`templateInstallIntentService`, Redis, 5
+  minutes, one slot per user). `workspaceService.create` takes it first, so a refused creation
+  ends it too; staging then installs that template in place of the default, as the creator's
+  own install (`stageSharedTemplateInstall`). A link that stopped
+  working falls back to the default. It also ends on an install from the share page, on a
+  cancelled OAuth, when the connect reuses an existing workspace, on the home page, on any
+  screen outside `/channels`, `/connect` and `/auth` (`TemplateInstallIntentGuard`), and, on
+  the server, on `/channels/create` reached without `fromTemplate=1` or with a `workspaceId`. The admin
+  console's creation never reads it. Browser-only: an agent creates the workspace, then installs.
+- **Not on the public API.** Tenant administration is exempt from invariant 23; the
+  workspace-level pieces are public (`templates.getLink` returns `templateId` and
+  `templateKey`, installations carry `installSource`).
+
+## Platform templates and publisher rights
+
+- **Same tenant, plus the platform's.** A template installs into a workspace of its own
+  tenant, or (when it belongs to the root tenant, ChatbotX cloud) into a workspace of any
+  white-label tenant (`canInstallFromTenant`). A white-label tenant's template never leaves
+  its tenant. A copy that crosses tenants never grants its publisher anything: the install forces it
+  off and switching it on later (`templateInstallations.update`) is refused
+  (`templatePublisherGrantCrossTenant`); the publisher-side uninstall stays same-tenant only.
+- **Who may see and remove installs.** A publisher sees the workspace name of every install
+  of their template in the same tenant and may uninstall it
+  (`TemplateInstallation.publisherUninstallGrant`, on by default, no UI choice). An API caller
+  can still turn it off with `templateInstallations.update`.
+
 ## Branding
 
 `resolveTenantSettings` / `resolveTenantSettingsByDomain`

@@ -1,41 +1,50 @@
 "use client"
 
+import { Label } from "@chatbotx.io/ui/components/ui/label"
 import { Switch } from "@chatbotx.io/ui/components/ui/switch"
-import { useRouter } from "next/navigation"
-import { useAction } from "next-safe-action/hooks"
-import { toast } from "sonner"
-import { updateInstallationAutoUpdateAction } from "../actions/update-installation-auto-update.action"
+import { setInstallationAutoUpdateAction } from "../actions/set-installation-auto-update.action"
+import { useRefreshingAction } from "../lib/use-refreshing-action"
 
 type InstallAutoUpdateCellProps = {
   workspaceId: string
   installationId: string
   autoUpdate: boolean
+  disabled?: boolean
+  id?: string
+  label?: string
 }
 
 export function InstallAutoUpdateCell({
   workspaceId,
   installationId,
   autoUpdate,
+  disabled = false,
+  id,
+  label,
 }: InstallAutoUpdateCellProps) {
-  const router = useRouter()
-
-  const { execute: executeToggle, isPending: isToggling } = useAction(
-    updateInstallationAutoUpdateAction.bind(null, workspaceId, installationId),
-    {
-      onSuccess: () => router.refresh(),
-      onError: ({ error }) => {
-        if (error.serverError) {
-          toast.error(error.serverError)
-        }
-      },
-    },
+  const { execute: executeToggle, isPending: isToggling } = useRefreshingAction(
+    setInstallationAutoUpdateAction.bind(null, workspaceId, installationId),
   )
 
-  return (
+  const toggle = (
     <Switch
       checked={autoUpdate}
-      disabled={isToggling}
-      onCheckedChange={(checked) => executeToggle({ autoUpdate: checked })}
+      disabled={isToggling || disabled}
+      id={id}
+      onCheckedChange={(checked) =>
+        executeToggle({ autoUpdate: Boolean(checked) })
+      }
     />
+  )
+  if (!label) {
+    return toggle
+  }
+  return (
+    <div className="flex items-center gap-2">
+      {toggle}
+      <Label className="cursor-pointer font-normal" htmlFor={id}>
+        {label}
+      </Label>
+    </div>
   )
 }

@@ -19,7 +19,18 @@ import type {
 import { createId } from "@chatbotx.io/utils"
 import { BaseService } from "../base.service"
 import { notFoundException } from "../errors"
-import { assertDeletable } from "../template/installed-resource.service"
+import {
+  assertResourceEditable,
+  changedKeysOf,
+  changedStoredContentKeys,
+  isTemplateInstalled,
+  withDeleteGuard,
+} from "../template/installed-resource.service"
+import { TEMPLATE_LOCKED_CONTENT_KEYS } from "../template/lock-policy"
+import {
+  type TemplateLockKey,
+  withTemplateLockedTransaction,
+} from "../template/template-resource-locks"
 import { vendorService } from "../vendor/service"
 
 export type ProductImageInput = {
@@ -86,6 +97,19 @@ export type ProductFullWriteData = ProductWriteData & {
 /** The form calls it `mode`; the column stores it as `type`. */
 const toImageRows = (images: ProductImageInput[]) =>
   images.map(({ mode, url }) => ({ type: mode, url }))
+
+/** The categories and addon products a write points at: parents locked with the product. */
+const productParents = (
+  data: { categoryId?: string | null; subcategoryId?: string | null },
+  addons: readonly ProductAddonInput[] = [],
+): TemplateLockKey[] => [
+  ...[data.categoryId, data.subcategoryId].flatMap((resourceId) =>
+    resourceId ? [{ kind: "productCategory" as const, resourceId }] : [],
+  ),
+  ...[...new Set(addons.flatMap((addon) => addon.addonProductIds))].map(
+    (resourceId) => ({ kind: "product" as const, resourceId }),
+  ),
+]
 
 class ProductService extends BaseService {
   private async assertReferencesBelongToWorkspace(input: {
@@ -272,13 +296,64 @@ class ProductService extends BaseService {
     return product
   }
 
-  private async applyPatch(input: {
+  /**
+   * The template edit guard for a partial write: a no-op unless the patch can
+   * touch locked content. Must run on a locked transaction and BEFORE the
+   * reads/writes it protects, so a sync/restore/uninstall cannot race it.
+   */
+  private async assertPatchEditable(input: {
     productId: string
     workspaceId: string
     data: Partial<Omit<ProductWriteData, "workspaceId">>
     tx: DatabaseClient
   }): Promise<void> {
+    if (
+      !Object.keys(input.data).some((key) =>
+        TEMPLATE_LOCKED_CONTENT_KEYS.product.includes(
+          key === "vendor" ? "vendorId" : key,
+        ),
+      )
+    ) {
+      return
+    }
+    // Only a patch that can touch locked content needs the stored row.
+    const existing = await productRepository.find(
+      { workspaceId: input.workspaceId, productId: input.productId },
+      input.tx,
+    )
+    // Guard what actually changes, not what the form submitted: an
+    // unchanged full-form save of a locked product is allowed. `vendor` and
+    // `images` are written in another shape than stored, so they count as
+    // changed whenever present.
+    const { vendor: _vendor, images: _images, ...comparable } = input.data
+    await assertResourceEditable({
+      workspaceId: input.workspaceId,
+      resourceKind: "product",
+      resourceIds: [input.productId],
+      changedKeys: [
+        ...(existing
+          ? changedKeysOf(existing, comparable)
+          : Object.keys(comparable)),
+        ...(input.data.vendor === undefined ? [] : ["vendorId"]),
+        ...(input.data.images === undefined ? [] : ["images"]),
+      ],
+      referencedParents: productParents(input.data),
+      tx: input.tx,
+    })
+  }
+
+  private async applyPatch(input: {
+    productId: string
+    workspaceId: string
+    data: Partial<Omit<ProductWriteData, "workspaceId">>
+    tx: DatabaseClient
+    /** The caller already ran the template edit guard for this write. */
+    guarded?: boolean
+  }): Promise<void> {
     const { images, vendor, vendorId, ...productData } = input.data
+    if (!input.guarded) {
+      await this.assertPatchEditable(input)
+    }
     const resolvedVendorId = await this.resolveVendorId({
       workspaceId: input.workspaceId,
       data: { vendor, vendorId },
@@ -358,26 +433,57 @@ class ProductService extends BaseService {
     data: Partial<Omit<ProductWriteData, "workspaceId">>
     tx?: DatabaseClient
   }): Promise<void> {
-    const { productId, workspaceId, tx = db } = props
-    const data = await this.withConsistentSubcategory({
-      productId,
-      workspaceId,
-      data: props.data,
-      tx,
-    })
-    await this.assertReferencesBelongToWorkspace({
-      workspaceId,
-      categoryId: data.categoryId,
-      subcategoryId: data.subcategoryId,
-      expectedParentId: await this.resolveExpectedParentId({
+    const { productId, workspaceId } = props
+    const run = async (tx: DatabaseClient) => {
+      // First step: the guard, before any read of the product.
+      await this.assertPatchEditable({
+        productId,
+        workspaceId,
+        data: props.data,
+        tx,
+      })
+      const data = await this.withConsistentSubcategory({
+        productId,
+        workspaceId,
+        data: props.data,
+        tx,
+      })
+      await this.assertReferencesBelongToWorkspace({
+        workspaceId,
+        categoryId: data.categoryId,
+        subcategoryId: data.subcategoryId,
+        expectedParentId: await this.resolveExpectedParentId({
+          productId,
+          workspaceId,
+          data,
+          tx,
+        }),
+        tx,
+      })
+      await this.applyPatch({
         productId,
         workspaceId,
         data,
         tx,
-      }),
-      tx,
+        guarded: true,
+      })
+    }
+    // A caller-supplied transaction holds its own locks; otherwise open the
+    // locked one here (a bare `db` would release the advisory lock at once).
+    if (props.tx) {
+      await run(props.tx)
+      return
+    }
+    // The product and the categories/addons the patch points at are locked
+    // before `assertPatchEditable` reads the stored row, so the diff behind the
+    // guard is computed under the lock.
+    await withTemplateLockedTransaction(run, {
+      workspaceId: props.workspaceId,
+      initialKeys: [
+        { kind: "product", resourceId: productId },
+        ...productParents(props.data),
+      ],
     })
-    await this.applyPatch({ productId, workspaceId, data, tx })
   }
 
   async updateFull(
@@ -394,7 +500,32 @@ class ProductService extends BaseService {
       addons,
       ...patch
     } = input
-    await db.transaction(async (tx) => {
+    await withTemplateLockedTransaction(async (tx) => {
+      // First step: the locks, tombstone and parent checks. Variants, options
+      // and addons are rewritten on every full save, so whether locked content
+      // changed is decided after the write, stored rows against stored rows:
+      // a locked product whose installer only changed rank or stock saves.
+      const referencedParents = productParents(patch, addons)
+      await assertResourceEditable({
+        workspaceId,
+        resourceKind: "product",
+        resourceIds: [productId],
+        changedKeys: [],
+        referencedParents,
+        tx,
+      })
+      // The stored before/after reads only feed the locked-content diff, which
+      // only an installed copy has; a plain product skips both reads and the
+      // second guard pass (the guard above already resolved this in memory).
+      const installed = await isTemplateInstalled({
+        workspaceId,
+        resourceKind: "product",
+        resourceIds: [productId],
+        tx,
+      })
+      const before = installed
+        ? await productRepository.findDetail({ id: productId, workspaceId }, tx)
+        : undefined
       const data = await this.withConsistentSubcategory({
         productId,
         workspaceId,
@@ -414,7 +545,13 @@ class ProductService extends BaseService {
         addons,
         tx,
       })
-      await this.applyPatch({ productId, workspaceId, data, tx })
+      await this.applyPatch({
+        productId,
+        workspaceId,
+        data,
+        tx,
+        guarded: true,
+      })
       await Promise.all([
         productVariantOptionService.deleteByProductId({ productId, tx }),
         productVariantService.deleteByProductId({ productId, tx }),
@@ -429,6 +566,25 @@ class ProductService extends BaseService {
         productVariantService.createBulk({ productId, variants, tx }),
         productAddonService.createBulk({ productId, addons, tx }),
       ])
+      const after = installed
+        ? await productRepository.findDetail({ id: productId, workspaceId }, tx)
+        : undefined
+      if (before && after) {
+        await assertResourceEditable({
+          workspaceId,
+          resourceKind: "product",
+          resourceIds: [productId],
+          changedKeys: changedStoredContentKeys({
+            resourceKind: "product",
+            before,
+            after,
+            parentKeys: ["productId"],
+            keyMap: { options: "variantOptions" },
+          }),
+          referencedParents,
+          tx,
+        })
+      }
     })
   }
 
@@ -438,26 +594,37 @@ class ProductService extends BaseService {
     tx?: DatabaseClient
   }): Promise<void> {
     const { ids, workspaceId } = input
-    await assertDeletable({
-      workspaceId,
-      resourceKind: "product",
-      resourceIds: ids,
-    })
-    const deleteWith = async (tx: DatabaseClient) => {
-      // Discount codes keep product ids in a JSON list with no foreign key, so
-      // the deleted ids have to be taken out here or the code can never be
-      // edited again.
-      await discountCodeRepository.removeProductIds(
-        { workspaceId, productIds: ids },
-        tx,
-      )
-      await productRepository.deleteByIds({ workspaceId, productIds: ids }, tx)
-    }
-    if (input.tx) {
-      await deleteWith(input.tx)
-      return
-    }
-    await db.transaction(deleteWith)
+    await withDeleteGuard(
+      {
+        workspaceId,
+        targets: [{ resourceKind: "product", resourceIds: ids }],
+        tx: input.tx,
+      },
+      async (tx) => {
+        await this.deleteInTx(tx, { workspaceId, ids })
+      },
+    )
+  }
+
+  /**
+   * The delete core, shared with the template uninstall so there is one
+   * implementation. Discount codes keep product ids in a JSON list with no
+   * foreign key, so the deleted ids have to be taken out here or the code can
+   * never be edited again. Returns the ids actually deleted.
+   */
+  async deleteInTx(
+    tx: DatabaseClient,
+    input: { workspaceId: string; ids: string[] },
+  ): Promise<string[]> {
+    await discountCodeRepository.removeProductIds(
+      { workspaceId: input.workspaceId, productIds: input.ids },
+      tx,
+    )
+    const rows = await productRepository.deleteByIds(
+      { workspaceId: input.workspaceId, productIds: input.ids },
+      tx,
+    )
+    return rows.map((row) => String(row.id))
   }
 
   async list(input: Parameters<typeof productRepository.list>[0]) {

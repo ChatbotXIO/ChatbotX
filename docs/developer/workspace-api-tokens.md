@@ -283,6 +283,7 @@ an endpoint's scope.
   needs the `media` scope as well. `GET /v1/contacts/{identifier}/pipeline-items`
   lives under the contacts path but is a `pipelines` operation. Changes made
   through a token are attributed to the token (`actorKind: workspaceToken`).
+- **Templates** — scope `templates`. Covers `/v1/templates*` (create, update, delete, share link, rotate, analytics, `installers` — who installed it, by opaque reference, with the workspace name shown only when the installer allowed it — and publisher-side uninstall), `/v1/template-previews/{id}` (the path id is a share token) and `/v1/template-installations*` (install — an already installed template is updated in place unless `allowDuplicate` —, retry, status, resources, `update` for auto-update and the publisher-uninstall consent, `sync` and its history, `restoreBackup`, and `uninstall` with its preview). A token acts with its own power: a `full` token may use every template category, a `read_only` token only reads (including the uninstall previews). An install made through a token has no installing user (`installedBy` is null); the worker therefore skips the per-user permission re-check that member installs get. Installs reach only workspaces of the template's tenant. `flows.export` stays under `automation`.
 - **Contacts** — Contacts' public surface is split by concern across
   submodules — some in `features/contacts/api/public/` (`crud.ts`,
   `tags.ts`, `custom-fields.ts`, `bulk.ts`, `export.ts`,
