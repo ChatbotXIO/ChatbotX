@@ -1,5 +1,6 @@
 import { aiTimeouts, isImageUrl, processStreamingText } from "@chatbotx.io/ai"
 import type { AIAnalyzeImageSchema } from "@chatbotx.io/flow-config"
+import { resolveContactVariablesDeep } from "@chatbotx.io/variables"
 import { streamText } from "ai"
 import { normalizeError } from "universal-error-normalizer"
 import { logger } from "../../../lib/logger"
@@ -18,6 +19,7 @@ export async function handleAIAnalyzeImage({
   conversation,
   contactInbox,
   step,
+  sentByUserId,
 }: ExecuteStepProps<AIAnalyzeImageSchema>): Promise<ExecuteStepResult> {
   const controller = new AbortController()
   const timeoutId = setTimeout(() => controller.abort(), aiTimeouts.aiTotal)
@@ -69,6 +71,14 @@ export async function handleAIAnalyzeImage({
       }
     }
 
+    // The prompt is authored with the variable picker; resolve `{{var}}`
+    // before it reaches the model (a no-op without placeholders).
+    const prompt = await resolveContactVariablesDeep(
+      conversation.contactId,
+      step.prompt,
+      { contactInbox, conversation, sentByUserId },
+    )
+
     // `textStream` drops error parts, so keep the provider error and rethrow
     // it once the stream ends — otherwise a failed call reports success.
     let streamError: unknown
@@ -79,7 +89,7 @@ export async function handleAIAnalyzeImage({
         {
           role: "user",
           content: [
-            { type: "text", text: step.prompt },
+            { type: "text", text: prompt },
             { type: "file", data: imageUrl, mediaType: "image/*" },
           ],
         },

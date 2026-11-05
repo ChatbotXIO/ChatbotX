@@ -6,6 +6,7 @@ import {
 } from "@chatbotx.io/ai/server"
 import { isMessageStorageError } from "@chatbotx.io/database/errors"
 import type { AIGenerateTextSchema } from "@chatbotx.io/flow-config"
+import { resolveContactVariablesDeep } from "@chatbotx.io/variables"
 import { APICallError, streamText } from "ai"
 import { normalizeError } from "universal-error-normalizer"
 import { logger } from "../../../lib/logger"
@@ -24,7 +25,8 @@ const ERROR_INSUFFICIENT_CREDITS =
 export async function handleAIGenerateText({
   conversation,
   contactInbox,
-  step,
+  step: rawStep,
+  sentByUserId,
 }: ExecuteStepProps<AIGenerateTextSchema>): Promise<ExecuteStepResult> {
   const controller = new AbortController()
   const timeoutId = setTimeout(() => controller.abort(), 120_000)
@@ -32,6 +34,16 @@ export async function handleAIGenerateText({
   let cleanupToolset: (() => Promise<void>) | undefined
 
   try {
+    // The prompt fields are authored with the variable picker; resolve
+    // `{{var}}` before they reach the model (a no-op without placeholders).
+    const step: AIGenerateTextSchema = {
+      ...rawStep,
+      ...(await resolveContactVariablesDeep(
+        conversation.contactId,
+        { system: rawStep.system, text: rawStep.text },
+        { contactInbox, conversation, sentByUserId },
+      )),
+    }
     const messages = await buildAIMessages(conversation, contactInbox, step)
 
     const resolvedModel = await resolveFlowAIModel({
@@ -137,7 +149,7 @@ export async function handleAIGenerateText({
     }
     const error = normalizeError(err)
     await logStepProviderError(
-      aiErrorLogProvider(step.provider),
+      aiErrorLogProvider(rawStep.provider),
       { conversation, contactInbox },
       err,
     )
