@@ -1,6 +1,19 @@
 import { z } from "zod"
 
 /**
+ * `transferPhoneNumber` was removed (Meta ends "Transfer phone" on
+ * 2026-11-16). Still accepted as absent/`false` so an older client keeps
+ * working; `true` is rejected instead of silently ignored.
+ */
+export const transferPhoneNumberField = z
+  .boolean()
+  .optional()
+  .refine((value): boolean => value !== true, {
+    message:
+      "Transferring a phone number from another provider is no longer supported",
+  })
+
+/**
  * What the multi-select picker posts to the WhatsApp connect route, one
  * request per number. Deliberately NOT `connectWhatsappSchema`: the session
  * already holds the WABA, the access token and the workspace server-side, so
@@ -15,8 +28,9 @@ export const connectWhatsappViaSessionRequest = z.object({
   signupSessionId: z.string().min(1),
   phoneNumberId: z.string().min(1),
   connectExisting: z.boolean(),
-  transferPhoneNumber: z.boolean(),
-  marketingMessageLite: z.boolean(),
+  transferPhoneNumber: transferPhoneNumberField,
+  // No longer read (see the connect form schema); accepted for older clients.
+  marketingMessageLite: z.boolean().optional(),
 })
 
 /** The body that route accepts — the single source for every caller's typing. */

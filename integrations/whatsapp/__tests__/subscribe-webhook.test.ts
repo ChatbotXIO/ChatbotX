@@ -46,6 +46,10 @@ afterEach(() => {
 })
 
 describe("subscribeWebhook", () => {
+  it("subscribes the WABA to account_update so connection lifecycle events arrive", () => {
+    expect(WHATSAPP_BASE_SUBSCRIBED_FIELDS).toContain("account_update")
+  })
+
   it("posts base subscribed_fields by default", async () => {
     postMock.mockReturnValueOnce(okResponse())
 

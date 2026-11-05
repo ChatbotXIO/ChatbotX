@@ -12,14 +12,14 @@ const {
   findByIdForWorkspaceMock,
   resolveForOwnerMock,
   resolveOwnerForWorkspaceMock,
-  ensureWhatsappCallsWebhookSubscribedMock,
+  ensureWhatsappAppWebhookFieldsMock,
 } = vi.hoisted(() => ({
   assertWorkspaceSuperAdminMock: vi.fn(async () => undefined),
   findWorkspaceByIdMock: vi.fn(),
   findByIdForWorkspaceMock: vi.fn(),
   resolveForOwnerMock: vi.fn(),
   resolveOwnerForWorkspaceMock: vi.fn(async () => "owner-1"),
-  ensureWhatsappCallsWebhookSubscribedMock: vi.fn(),
+  ensureWhatsappAppWebhookFieldsMock: vi.fn(),
 }))
 
 vi.mock("@/lib/safe-action", () => {
@@ -38,10 +38,9 @@ vi.mock("@/lib/platform-credential-owner", () => ({
 }))
 
 vi.mock(
-  "@/features/integration-whatsapp/libs/ensure-calls-webhook-subscribed",
+  "@/features/integration-whatsapp/libs/ensure-app-webhook-fields",
   () => ({
-    ensureWhatsappCallsWebhookSubscribed:
-      ensureWhatsappCallsWebhookSubscribedMock,
+    ensureWhatsappAppWebhookFields: ensureWhatsappAppWebhookFieldsMock,
   }),
 )
 
@@ -94,7 +93,7 @@ describe("fixWhatsappCallsSubscriptionAction — callingAdminActionClient", () =
         verifyToken: "verify-token",
       },
     })
-    ensureWhatsappCallsWebhookSubscribedMock.mockResolvedValue({
+    ensureWhatsappAppWebhookFieldsMock.mockResolvedValue({
       status: "already-subscribed",
     })
   })
@@ -127,7 +126,7 @@ describe("fixWhatsappCallsSubscriptionAction — callingAdminActionClient", () =
   })
 
   test("throws when the app subscription is missing after the fix attempt", async () => {
-    ensureWhatsappCallsWebhookSubscribedMock.mockResolvedValue({
+    ensureWhatsappAppWebhookFieldsMock.mockResolvedValue({
       status: "no-subscription",
     })
 

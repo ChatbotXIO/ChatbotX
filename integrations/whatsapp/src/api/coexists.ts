@@ -1,4 +1,5 @@
 import ky, { HTTPError } from "ky"
+import { z } from "zod"
 import type { WhatsappAuthValue } from ".."
 import { API_URL, DEFAULT_API_VERSION } from "../constants"
 import { rescue, WhatsappException } from "../exception"
@@ -12,6 +13,42 @@ export type SmbAppDataResult =
       ok: false
       reason: "already_triggered" | "window_expired" | "not_eligible"
     }
+
+/**
+ * Meta documents `{ messaging_product, request_id }` for an accepted trigger;
+ * the legacy `{ success }` shape is still accepted, and an empty body (or 204)
+ * with a 2xx status is treated as accepted.
+ */
+const smbAppDataResponseSchema = z.union([
+  z.object({ success: z.boolean() }),
+  z.object({ request_id: z.string().min(1) }),
+])
+
+type SmbAppDataAcceptance =
+  | { accepted: true; requestId?: string }
+  | { accepted: false }
+
+function parseSmbAppDataBody(rawBody: string): SmbAppDataAcceptance {
+  if (rawBody.trim() === "") {
+    return { accepted: true }
+  }
+
+  let parsedBody: unknown
+  try {
+    parsedBody = JSON.parse(rawBody)
+  } catch {
+    throw new WhatsappException("smb_app_data returned a non-JSON response")
+  }
+
+  const parsed = smbAppDataResponseSchema.safeParse(parsedBody)
+  if (!parsed.success) {
+    throw new WhatsappException("smb_app_data returned an unexpected response")
+  }
+  if ("request_id" in parsed.data) {
+    return { accepted: true, requestId: parsed.data.request_id }
+  }
+  return { accepted: parsed.data.success }
+}
 
 /**
  * Triggers Meta to push Coexistence sync data (contact state or message
@@ -43,16 +80,21 @@ export function triggerSmbAppDataSync({
 
   return rescue(async () => {
     try {
-      const result = await ky
-        .post<{ success: boolean }>(url, {
+      const rawBody = await ky
+        .post(url, {
           headers: { Authorization: `Bearer ${auth.tokens.accessToken}` },
           json: { messaging_product: "whatsapp", sync_type: syncType },
         })
-        .json()
+        .text()
 
-      if (!result.success) {
+      const acceptance = parseSmbAppDataBody(rawBody)
+      if (!acceptance.accepted) {
         throw new WhatsappException(`smb_app_data ${syncType} failed`)
       }
+      logger.info(
+        { phoneNumberId, syncType, requestId: acceptance.requestId },
+        "smb_app_data accepted",
+      )
       return { ok: true } as const
     } catch (error) {
       if (error instanceof HTTPError) {

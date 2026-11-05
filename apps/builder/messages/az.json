@@ -5957,7 +5957,6 @@
     "templateHeader": {
       "label": "Şablonun başlığı"
     },
-    "transferPhoneNumber": "Telefon nömrəsini başqa WhatsApp provayderindən köçür",
     "selectPage": {
       "tryAgain": "Yenidən qoşmağa cəhd et"
     },
@@ -11155,5 +11154,12 @@
       "revokedSuccess": "Application access revoked.",
       "notFound": "OAuth grant no longer exists"
     }
+  },
+  "connectionStatus": {
+    "column": "Status",
+    "reconnecting": "The provider is reconnecting this account. Messages are held until it finishes.",
+    "accessRemoved": "The provider removed access to this account. Reconnect to resume.",
+    "needsReconnect": "Reconnect required.",
+    "inactive": "This channel is inactive."
   }
 }

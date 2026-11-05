@@ -28,6 +28,7 @@ const INBOUND_WEBHOOK_JOB_TYPES: ReadonlySet<string> = new Set([
   IntegrationJobAction.processMarketingMessageWebhook,
   IntegrationJobAction.tiktokHighIntentComment,
   IntegrationJobAction.adsAutomaticEvent,
+  IntegrationJobAction.providerAccountEvent,
   IntegrationJobAction.whatsappIdentityChange,
   IntegrationJobAction.whatsappCallEvent,
   IntegrationJobAction.coexistWhatsappBuffer,

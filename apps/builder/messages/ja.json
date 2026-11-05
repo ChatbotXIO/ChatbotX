@@ -5254,7 +5254,6 @@
     "templateHeader": {
       "label": "テンプレートのヘッダー"
     },
-    "transferPhoneNumber": "別のWhatsAppプロバイダーから電話番号を移行",
     "selectPage": {
       "tryAgain": "再接続を試す"
     },
@@ -11155,5 +11154,12 @@
       "revokedSuccess": "Application access revoked.",
       "notFound": "OAuth grant no longer exists"
     }
+  },
+  "connectionStatus": {
+    "column": "Status",
+    "reconnecting": "The provider is reconnecting this account. Messages are held until it finishes.",
+    "accessRemoved": "The provider removed access to this account. Reconnect to resume.",
+    "needsReconnect": "Reconnect required.",
+    "inactive": "This channel is inactive."
   }
 }

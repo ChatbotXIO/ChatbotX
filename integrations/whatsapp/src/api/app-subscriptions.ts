@@ -15,13 +15,16 @@ export type WhatsappAppSubscriptionObject =
   (typeof WHATSAPP_APP_SUBSCRIPTION_OBJECT)[keyof typeof WHATSAPP_APP_SUBSCRIPTION_OBJECT]
 
 /**
- * App-level webhook fields relevant to WhatsApp calling. CALLS is required for
- * any call webhook (call_created, terminate, …) to reach our endpoint.
+ * App-level webhook fields we depend on. CALLS is required for any call
+ * webhook (call_created, terminate, …) to reach our endpoint; ACCOUNT_UPDATE
+ * for connection lifecycle events.
  * ACCOUNT_SETTINGS_UPDATE is optional and always subscribed in a separate
  * request so a failure there can never block CALLS.
  */
 export const WHATSAPP_APP_WEBHOOK_FIELDS = {
   CALLS: "calls",
+  // Connection lifecycle: PARTNER_REMOVED / ACCOUNT_OFFBOARDED / ACCOUNT_RECONNECTED.
+  ACCOUNT_UPDATE: "account_update",
   ACCOUNT_SETTINGS_UPDATE: "account_settings_update",
 } as const
 

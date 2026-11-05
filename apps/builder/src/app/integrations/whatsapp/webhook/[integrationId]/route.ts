@@ -1,10 +1,10 @@
 import { integrationWhatsappService } from "@chatbotx.io/business"
 import type { WhatsappAuthValue } from "@chatbotx.io/integration-whatsapp"
 import { SdkException } from "@chatbotx.io/sdk"
-import { integrationQueue } from "@chatbotx.io/worker-config"
 import type { NextRequest } from "next/server"
 import { integrations } from "@/integration"
 import { logger } from "@/lib/log"
+import { createRouteScopedQueue } from "@/lib/provider-account-route-scope"
 import { logWebhookRequestBody } from "@/lib/webhook-log"
 
 const MAX_CHALLENGE_LENGTH = 256
@@ -112,7 +112,12 @@ const handlePost = async (req: NextRequest, integrationId: string) => {
         // biome-ignore lint/suspicious/noExplicitAny: pass-through config
       } as any,
       req,
-      queue: integrationQueue,
+      // Account events carry only a WABA id; scope them to this integration.
+      queue: createRouteScopedQueue({
+        kind: "manualIntegration",
+        integrationId,
+        workspaceId: row.workspaceId,
+      }),
     })
 
     // Same "Webhook request body" log every other channel gets via the

@@ -49,6 +49,7 @@ import {
 import { useTranslations } from "next-intl"
 import { useEffect, useMemo, useRef, useState } from "react"
 import { toast } from "sonner"
+import { contactDisplayName } from "@/features/contacts/lib/contact-display-name"
 import { RequestCallPermissionDialog } from "@/features/integration-whatsapp/calling/request-call-permission-dialog"
 import { useOutboundCallMode } from "@/features/integration-whatsapp/calling/voip/use-outbound-call-mode"
 import { useWhatsappCallStarter } from "@/features/integration-whatsapp/calling/voip/use-whatsapp-call-starter"
@@ -727,7 +728,7 @@ export const ContactDetail = ({
         <div className="mb-3 flex justify-center">
           <ContactPanelCallEntry
             contactInboxId={soleCallableContactInbox.id}
-            contactName={contact.fullName}
+            contactName={contactDisplayName(contact)}
             conversationId={activeConversationForCall.id}
             inboxId={soleCallableContactInbox.inboxId}
           />
@@ -775,7 +776,7 @@ export const ContactDetail = ({
             <ContactPanelCallEntry
               autoTrigger
               contactInboxId={callSelection.contactInboxId}
-              contactName={contact.fullName}
+              contactName={contactDisplayName(contact)}
               conversationId={activeConversationForCall.id}
               inboxId={callSelection.inboxId}
               key={`${callSelection.contactInboxId}-${callSelection.token}`}

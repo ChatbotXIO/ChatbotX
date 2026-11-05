@@ -5,6 +5,8 @@ import {
   inArray,
 } from "@chatbotx.io/database/client"
 import type {
+  ProviderAccountRouteScope,
+  ProviderAccountTarget,
   WhatsappCallHoursSnapshot,
   WhatsappRegistrationStatus,
 } from "@chatbotx.io/database/partials"
@@ -870,6 +872,19 @@ class IntegrationWhatsappService extends BaseService {
     if (!row) {
       throw notFoundException("WhatsApp integration not found")
     }
+  }
+
+  /**
+   * One batch of the numbers a WABA-level provider event may act on, narrowed in
+   * SQL to the route that delivered it. Page with `afterIntegrationId` until a
+   * batch is shorter than `PROVIDER_ACCOUNT_TARGET_BATCH_SIZE`.
+   */
+  listAccountTargets(input: {
+    wabaId: string
+    scope: ProviderAccountRouteScope
+    afterIntegrationId?: string
+  }): Promise<ProviderAccountTarget[]> {
+    return integrationWhatsappRepository.listAccountTargetsByWabaId(input)
   }
 }
 

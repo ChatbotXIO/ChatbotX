@@ -1,4 +1,4 @@
-type ContactNameSource = {
+export type ContactNameSource = {
   fullName?: string | null
   email?: string | null
   phoneNumber?: string | null

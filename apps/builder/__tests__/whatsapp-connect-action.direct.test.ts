@@ -549,20 +549,6 @@ describe("connectWhatsappAction — direct paths and selection request", () => {
       expect(mocks.resolveOwningWabaIdMock).toHaveBeenCalled()
       expect(mocks.resolveBusinessAppCandidatesMock).not.toHaveBeenCalled()
     })
-
-    test("a transfer (only_waba_sharing) is not a coexistence signup either", async () => {
-      await callConnectWhatsappAction({
-        ctx: { user: { id: "user-1" } },
-        parsedInput: {
-          ...BASE_INPUT,
-          transferPhoneNumber: true,
-          code: "oauth-code-1",
-        },
-      })
-
-      expect(mocks.resolveOwningWabaIdMock).toHaveBeenCalled()
-      expect(mocks.resolveBusinessAppCandidatesMock).not.toHaveBeenCalled()
-    })
   })
 
   describe("manual connect", () => {

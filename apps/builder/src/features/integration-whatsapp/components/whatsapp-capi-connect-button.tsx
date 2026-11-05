@@ -11,7 +11,6 @@ import { connectWhatsappCapiAction } from "../actions/connect-capi.action"
 import { useWhatsappOAuthPopup } from "../hooks/use-whatsapp-oauth-popup"
 import {
   buildFacebookOAuthDialogUrl,
-  EMBEDDED_SIGNUP_VERSIONS,
   FACEBOOK_AUTH_TYPES,
 } from "../libs/embedded-signup"
 
@@ -91,12 +90,10 @@ export function WhatsappCapiConnectButton({
         configId: settings.capiConfigId,
         version: settings.version,
         connectExisting: isCoexist,
-        transferPhoneNumber: false,
         locale: document.documentElement.lang || undefined,
         // Re-ask a permission the admin declined last time, otherwise the dialog
         // hands back the grant it already has and nothing changes.
         authType: FACEBOOK_AUTH_TYPES.REREQUEST,
-        embeddedSignupVersion: EMBEDDED_SIGNUP_VERSIONS.V4,
       }),
     )
     if (!opened) {

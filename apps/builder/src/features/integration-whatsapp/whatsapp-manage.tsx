@@ -1,5 +1,7 @@
 "use client"
 
+import type { WhatsappCredentialPublic } from "@chatbotx.io/database/partials"
+import { Badge } from "@chatbotx.io/ui/components/ui/badge"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
   Table,
@@ -13,9 +15,11 @@ import Link from "next/link"
 import { useTranslations } from "next-intl"
 import { use } from "react"
 import { TokenRefreshErrorIcon } from "@/components/token-refresh-error-icon"
+import { resolveConnectionStatusNotice } from "@/features/connections/lib/status-message"
 import { AddChannelButton } from "@/features/inboxes/components/add-channel-button"
 import { InboxMarkReadOnOutboundSwitch } from "@/features/inboxes/components/inbox-mark-read-on-outbound-switch"
 import { useChannelConnectError } from "@/hooks/use-channel-connect-error"
+import { WhatsappReconnectButton } from "./components/whatsapp-reconnect-button"
 import type { listIntegrationWhatsapps } from "./queries"
 import { WhatsappDisconnectDialog } from "./whatsapp-disconnect-dialog"
 
@@ -24,6 +28,9 @@ type WhatsappManageProps = {
   isEnabled: boolean
   workspaceId: string
   promises: Promise<[Awaited<ReturnType<typeof listIntegrationWhatsapps>>]>
+  settings: WhatsappCredentialPublic | null
+  /** Absolute OAuth callback URL registered with Meta for this credential. */
+  oauthCallbackUrl: string
 }
 
 export function WhatsappManage({
@@ -31,6 +38,8 @@ export function WhatsappManage({
   isEnabled,
   workspaceId,
   promises,
+  settings,
+  oauthCallbackUrl,
 }: WhatsappManageProps) {
   const [{ data: integrationWhatsapps }] = use(promises)
   const t = useTranslations()
@@ -61,48 +70,74 @@ export function WhatsappManage({
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Name</TableHead>
+              <TableHead>{t("fields.name.label")}</TableHead>
+              <TableHead>{t("connectionStatus.column")}</TableHead>
               <TableHead>{t("inboxes.markReadOnOutbound.label")}</TableHead>
               <TableHead className="w-[200px]" />
             </TableRow>
           </TableHeader>
           <TableBody>
-            {integrationWhatsapps.map((integrationWhatsapp) => (
-              <TableRow key={integrationWhatsapp.id}>
-                <TableCell>
-                  <div className="flex items-center gap-2">
-                    {integrationWhatsapp.tokenRefreshError && (
-                      <TokenRefreshErrorIcon
-                        message={integrationWhatsapp.tokenRefreshError}
+            {integrationWhatsapps.map((integrationWhatsapp) => {
+              const notice = resolveConnectionStatusNotice(
+                integrationWhatsapp.inbox?.connection,
+              )
+              return (
+                <TableRow key={integrationWhatsapp.id}>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      {integrationWhatsapp.tokenRefreshError && (
+                        <TokenRefreshErrorIcon
+                          message={integrationWhatsapp.tokenRefreshError}
+                        />
+                      )}
+                      {integrationWhatsapp.inbox?.name}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    {notice && (
+                      <Badge
+                        variant={
+                          notice.canReconnect ? "destructive" : "secondary"
+                        }
+                      >
+                        {t(notice.messageKey)}
+                      </Badge>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    <InboxMarkReadOnOutboundSwitch
+                      inboxId={integrationWhatsapp.inboxId}
+                      workspaceId={workspaceId}
+                    />
+                  </TableCell>
+                  <TableCell className="flex w-[200px] justify-end gap-2">
+                    {notice?.canReconnect && !integrationWhatsapp.isManual && (
+                      <WhatsappReconnectButton
+                        integrationWhatsappId={integrationWhatsapp.id}
+                        isCoexist={integrationWhatsapp.isCoexist}
+                        oauthCallbackUrl={oauthCallbackUrl}
+                        settings={settings}
+                        workspaceId={workspaceId}
                       />
                     )}
-                    {integrationWhatsapp.inbox?.name}
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <InboxMarkReadOnOutboundSwitch
-                    inboxId={integrationWhatsapp.inboxId}
-                    workspaceId={workspaceId}
-                  />
-                </TableCell>
-                <TableCell className="flex w-[200px] justify-end gap-2">
-                  <Button size="sm" variant="secondary">
-                    <Link
-                      href={`/space/${workspaceId}/whatsapps/${integrationWhatsapp.id}/useful-links`}
-                    >
-                      {t("actions.manage")}
-                    </Link>
-                  </Button>
-                  <WhatsappDisconnectDialog
-                    integrationWhatsappId={integrationWhatsapp.id}
-                    workspaceId={workspaceId}
-                  />
-                </TableCell>
-              </TableRow>
-            ))}
+                    <Button size="sm" variant="secondary">
+                      <Link
+                        href={`/space/${workspaceId}/whatsapps/${integrationWhatsapp.id}/useful-links`}
+                      >
+                        {t("actions.manage")}
+                      </Link>
+                    </Button>
+                    <WhatsappDisconnectDialog
+                      integrationWhatsappId={integrationWhatsapp.id}
+                      workspaceId={workspaceId}
+                    />
+                  </TableCell>
+                </TableRow>
+              )
+            })}
             {integrationWhatsapps.length === 0 && (
               <TableRow>
-                <TableCell colSpan={3}>{t("messages.noData")}</TableCell>
+                <TableCell colSpan={4}>{t("messages.noData")}</TableCell>
               </TableRow>
             )}
           </TableBody>

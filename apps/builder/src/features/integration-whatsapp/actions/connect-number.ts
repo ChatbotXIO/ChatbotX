@@ -102,7 +102,7 @@ type ResolvedConnectOwner = {
  * itself) BEFORE any credential lookup or provider call.
  *
  * Session path: the client sends only `{signupSessionId, phoneNumberId,
- * connectExisting, transferPhoneNumber}` (enforced by the schema) — never a
+ * connectExisting}` (enforced by the schema) — never a
  * `workspaceId`, so the session row is the only source of both the owner and
  * the workspace. `findActiveSignupSessionForUser` is scoped by `id` +
  * `userId` only (no `ownerId` filter — the row hasn't been verified as this

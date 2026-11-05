@@ -114,6 +114,9 @@ export const contactRepository = {
       columns: {
         id: true,
         fullName: true,
+        // Shown in place of a missing name; masked by the caller per scope.
+        email: true,
+        phoneNumber: true,
         avatar: true,
         createdAt: true,
       },

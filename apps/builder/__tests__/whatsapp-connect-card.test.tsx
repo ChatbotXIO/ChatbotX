@@ -120,6 +120,53 @@ describe("WhatsappCreate connect card", () => {
     )
   })
 
+  describe("pre-connect options", () => {
+    const openedExtras = () => {
+      const openSpy = vi.spyOn(window, "open").mockReturnValue(window)
+      clickButtonByText("actions.continue")
+      const [url] = openSpy.mock.calls[0] as [string]
+      openSpy.mockRestore()
+      return JSON.parse(new URL(url).searchParams.get("extras") ?? "{}")
+    }
+
+    test("Continue opens the Meta dialog on Embedded Signup v4 without a featureType", () => {
+      const extras = openedExtras()
+
+      expect(extras.version).toBe("v4")
+      expect(extras.featureType).toBeUndefined()
+    })
+
+    test("connecting an existing account asks Meta for the WhatsApp Business app onboarding", () => {
+      click(switches()[0])
+
+      expect(openedExtras().featureType).toBe(
+        "whatsapp_business_app_onboarding",
+      )
+    })
+
+    test("manual connect is offered only while connect-existing is on, and no transfer option exists", async () => {
+      expect(switches()).toHaveLength(1)
+
+      click(switches()[0])
+      await flush()
+      expect(switches()).toHaveLength(2)
+
+      // Manual on: the card shows only the manual section, whose own switch
+      // is now the first one.
+      click(switches()[1])
+      await flush()
+      expect(container().querySelector('input[name="wabaId"]')).not.toBeNull()
+
+      click(switches()[0])
+      await flush()
+      expect(container().querySelector('input[name="wabaId"]')).toBeNull()
+
+      click(switches()[0])
+      await flush()
+      expect(switches()).toHaveLength(1)
+    })
+  })
+
   test("a retry after a failed signup reaches the action again, with no validation copy", async () => {
     // The action never rejects — `handleServerError` turns a throw into a
     // `{ serverError }` result (see `@/lib/safe-action`), which is what sets
@@ -163,7 +210,7 @@ describe("WhatsappCreate connect card", () => {
       )
 
       // switches()[0] = connectExisting; clicking it reveals the manual
-      // switch in place of transferPhoneNumber (switches()[1]).
+      // switch (switches()[1]).
       click(switches()[0])
       await flush()
       click(switches()[1])

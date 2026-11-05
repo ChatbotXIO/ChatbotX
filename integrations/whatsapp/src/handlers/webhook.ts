@@ -12,6 +12,10 @@ import type { GetParams } from "whatsapp-api-js/types"
 import { z } from "zod"
 import { DEFAULT_API_VERSION } from "../constants"
 import {
+  extractAccountUpdatePayloads,
+  type WhatsappAccountUpdatePayload,
+} from "../lib/account-update"
+import {
   type WhatsappAutomaticEventPayload,
   whatsappAutomaticEventNameSchema,
   whatsappAutomaticEventsValueSchema,
@@ -696,7 +700,9 @@ const parsePostPayloads = (
   identityChangePayloads: WhatsappIdentityChangePayload[]
   messagesChangeBuffers: ArrayBuffer[]
   conversationRoutingPayloads: ConversationRoutingPayload[]
+  accountUpdatePayloads: WhatsappAccountUpdatePayload[]
 } => {
+  let accountUpdatePayloads: WhatsappAccountUpdatePayload[] = []
   let conversationRoutingPayloads: ConversationRoutingPayload[] = []
   let coexistPayloads: CoexistPayload[] = []
   let automaticEventPayloads: AutomaticEventPayload[] = []
@@ -707,6 +713,14 @@ const parsePostPayloads = (
     const rawBodyText = new TextDecoder().decode(rawBodyBuffer)
     const rawBody = JSON.parse(rawBodyText) as unknown
     coexistPayloads = extractCoexistPayloads(rawBody)
+    try {
+      accountUpdatePayloads = extractAccountUpdatePayloads(rawBody)
+    } catch (err) {
+      logger.error(
+        { err },
+        "Whatsapp account_update extraction failed; webhook will still acknowledge",
+      )
+    }
     try {
       automaticEventPayloads = extractAutomaticEventPayloads(rawBody)
     } catch (err) {
@@ -757,6 +771,7 @@ const parsePostPayloads = (
     identityChangePayloads,
     messagesChangeBuffers,
     conversationRoutingPayloads,
+    accountUpdatePayloads,
   }
 }
 
@@ -877,6 +892,28 @@ const enqueueCoexistPayloads = async (
       },
       {
         jobId: `wa-coexist-${toBullMqSafeIdSegment(phoneNumberId)}-${payloadHash}`,
+        ...REDELIVERABLE_JOB_OPTIONS,
+      },
+    )
+  }
+}
+
+/**
+ * Lifecycle events arrive once and change connection state, so a failed
+ * enqueue propagates (Meta redelivers) and the deterministic jobId makes the
+ * redelivery a no-op for events that did get queued.
+ */
+const enqueueAccountUpdatePayloads = async (
+  queue: WebhookQueue,
+  accountUpdatePayloads: WhatsappAccountUpdatePayload[],
+): Promise<void> => {
+  for (const payload of accountUpdatePayloads) {
+    const payloadHash = await sha256Hex(JSON.stringify(payload))
+    await queue?.add(
+      "providerAccountEvent",
+      { type: "providerAccountEvent", data: payload },
+      {
+        jobId: `provider-account-whatsapp-${toBullMqSafeIdSegment(payload.account.id)}-${payload.event}-${payload.occurredAt}-${payloadHash}`,
         ...REDELIVERABLE_JOB_OPTIONS,
       },
     )
@@ -1410,6 +1447,7 @@ export const webhookHandler = async (
         identityChangePayloads,
         messagesChangeBuffers,
         conversationRoutingPayloads,
+        accountUpdatePayloads,
       } = parsePostPayloads(signatureOutcome.rawBodyBuffer, pinnedPhoneNumberId)
 
       const boundCoexistPayloads = dropMismatchedPhoneNumberId(
@@ -1463,6 +1501,16 @@ export const webhookHandler = async (
 
       // Enqueues that propagate (and are jobId-deduped) run first; coexist and
       // automatic events log-and-skip, so they run last.
+      // These change connection state (revoke, release quota), so they are
+      // only trusted from a delivery whose signature was actually verified.
+      if (resolveSignaturePolicy(props.config) === "enforce") {
+        await enqueueAccountUpdatePayloads(props.queue, accountUpdatePayloads)
+      } else if (accountUpdatePayloads.length > 0) {
+        logger.warn(
+          { integrationId: props.config.integrationId },
+          "Whatsapp account_update ignored: the webhook is not signature-verified",
+        )
+      }
       await enqueueCallEventPayloads(props.queue, boundCallEventPayloads)
       await enqueueVoipConnectSignaling(boundCallEventPayloads)
       await enqueueNativeCallCapture(boundCallEventPayloads)

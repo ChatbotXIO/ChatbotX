@@ -55,9 +55,7 @@ type ConnectedIntent = Extract<ConnectIntent, { kind: "connected" }>
 const connectFormDefaults = (workspaceId?: string | null) => ({
   // UI
   connectExisting: false,
-  transferPhoneNumber: false,
   manualConnect: false,
-  marketingMessageLite: true,
   workspaceId: workspaceId ?? "",
 
   // Main fields
