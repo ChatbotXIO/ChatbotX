@@ -8,7 +8,11 @@ import {
   extractMetadata,
   TemplateFlowOrigin,
 } from "@chatbotx.io/flow-config"
-import type { MessageHandlers } from "@chatbotx.io/sdk"
+import {
+  ChannelError,
+  ChannelErrorCategory,
+  type MessageHandlers,
+} from "@chatbotx.io/sdk"
 import { logger } from "../../../lib/logger"
 import type {
   TemplateMessage,
@@ -16,12 +20,17 @@ import type {
   WhatsAppTemplateComponentParameter,
   WhatsappAuthValue,
 } from "../../../schema"
+import {
+  buildPaymentRequestParameter,
+  type PaymentRequestParameterOptions,
+} from "./payment-request-parameter"
 
-type TemplateFlowTokenContext = {
+type TemplateBuildContext = {
   flowId: string
   flowVersionId?: string
   stepId: string
   broadcastId?: string
+  payment: PaymentRequestParameterOptions
 }
 
 export function* convertFlowStepWaTemplate(
@@ -42,6 +51,10 @@ export function* convertFlowStepWaTemplate(
     flowVersionId: props.data.flowVersionId,
     stepId: step.id,
     broadcastId: extractMetadata("broadcastId", props.data.metadata),
+    payment: {
+      pixRedirectEnabled:
+        props.ctx.integrationDetail?.pixRedirectEnabled === true,
+    },
   })
 
   yield {
@@ -57,7 +70,7 @@ export function* convertFlowStepWaTemplate(
 
 function buildButtonParameter(
   param: WaTemplateButtonParam,
-  tokenContext: TemplateFlowTokenContext,
+  tokenContext: TemplateBuildContext,
   cardIndex?: number,
 ): WhatsAppTemplateComponentParameter {
   const subType = param.sub_type || "url"
@@ -95,6 +108,8 @@ function buildButtonParameter(
           sections: param.sections || [],
         },
       }
+    case "payment_request":
+      return buildPaymentRequestButtonParameter(param, tokenContext)
     default:
       return {
         type: "text",
@@ -103,9 +118,25 @@ function buildButtonParameter(
   }
 }
 
+function buildPaymentRequestButtonParameter(
+  param: WaTemplateButtonParam,
+  tokenContext: TemplateBuildContext,
+): WhatsAppTemplateComponentParameter {
+  if (!param.payment_request) {
+    throw new ChannelError(
+      "WhatsApp payment request button has no payment data",
+      ChannelErrorCategory.PAYLOAD_INVALID,
+    )
+  }
+  return buildPaymentRequestParameter(
+    param.payment_request,
+    tokenContext.payment,
+  )
+}
+
 function buildFlowButtonParameter(
   param: WaTemplateButtonParam,
-  tokenContext: TemplateFlowTokenContext,
+  tokenContext: TemplateBuildContext,
   cardIndex?: number,
 ): WhatsAppTemplateComponentParameter {
   const flowToken = buildTemplateFlowToken(param, tokenContext, cardIndex)
@@ -124,7 +155,7 @@ function buildFlowButtonParameter(
 
 function buildTemplateFlowToken(
   param: WaTemplateButtonParam,
-  tokenContext: TemplateFlowTokenContext,
+  tokenContext: TemplateBuildContext,
   cardIndex?: number,
 ): string | null {
   const buttonIndex = param.index
@@ -182,6 +213,7 @@ const buttonParamContentChecks: Record<
   flow: () => true,
   catalog: (param) => !isBlank(param.thumbnail_product_retailer_id),
   mpm: (param) => (param.sections?.length ?? 0) > 0,
+  payment_request: (param) => param.payment_request !== undefined,
 }
 
 const buttonSubTypeOf = (param: WaTemplateButtonParam): string =>
@@ -288,20 +320,24 @@ function resolveButtonParams(
 
 function buildButtonComponents(
   buttons: ReadonlyArray<WaTemplateButtonParam | null | undefined>,
-  tokenContext: TemplateFlowTokenContext,
+  tokenContext: TemplateBuildContext,
   cardIndex?: number,
 ): WhatsAppTemplateComponent[] {
-  return resolveButtonParams(buttons).map(({ param, index }) => ({
-    type: "button",
-    sub_type: buttonSubTypeOf(param),
-    index,
-    parameters: [buildButtonParameter(param, tokenContext, cardIndex)],
-  }))
+  return resolveButtonParams(buttons).map(({ param, index }) => {
+    const subType = buttonSubTypeOf(param)
+    return {
+      type: "button",
+      sub_type: subType,
+      // Meta's `payment_request` examples send the index as a string.
+      index: subType === "payment_request" ? String(index) : index,
+      parameters: [buildButtonParameter(param, tokenContext, cardIndex)],
+    }
+  })
 }
 
 function buildCarouselComponent(
   cards: WaTemplateCarouselCard[],
-  tokenContext: TemplateFlowTokenContext,
+  tokenContext: TemplateBuildContext,
 ): WhatsAppTemplateComponent {
   return {
     type: "carousel",
@@ -374,7 +410,7 @@ function buildTextParameter(param: {
 
 function buildTemplateComponents(
   params: SendWaTemplateMessageStepSchema["template"]["params"],
-  tokenContext: TemplateFlowTokenContext,
+  tokenContext: TemplateBuildContext,
 ) {
   const components: WhatsAppTemplateComponent[] = []
 

@@ -1,4 +1,5 @@
 import type { WhatsappAuthValue as BusinessWhatsappAuthValue } from "@chatbotx.io/business/integration-whatsapp/auth-schema"
+import type { WaPaymentSettingType } from "@chatbotx.io/flow-config"
 import type { BaseConfig, Context, Handler } from "@chatbotx.io/sdk"
 import type { ServerMessage } from "whatsapp-api-js/types"
 import z from "zod"
@@ -151,6 +152,22 @@ export type WhatsappStatusWebhookEvent = z.infer<
   typeof whatsappStatusWebhookEventSchema
 >
 
+/** Meta's `payment_setting`: the `type` names the one sibling object that is set. */
+export type WhatsAppPaymentSetting = {
+  type: WaPaymentSettingType
+  pix_dynamic_code?: { code: string; flow_type?: "APPSWITCH" | "COPYPASTE" }
+  boleto?: { digitable_line: string }
+  payment_link?: { uri: string }
+  offsite_card_pay?: { last_four_digits: string; credential_id?: string }
+}
+
+export type WhatsAppPaymentRequestAction = {
+  payment_setting: WhatsAppPaymentSetting
+  currency?: string
+  /** Integer `value` in hundredths (`offset: 100`) of `currency`. */
+  total_amount?: { value: number; offset: number }
+}
+
 export type WhatsAppTemplateComponentParameter = {
   type: string
   text?: string
@@ -171,6 +188,7 @@ export type WhatsAppTemplateComponentParameter = {
   action?: {
     flow_token?: string
     flow_action_data?: Record<string, unknown>
+    payment_request?: WhatsAppPaymentRequestAction
     thumbnail_product_retailer_id?: string
     sections?: Array<{
       title?: string
@@ -185,7 +203,8 @@ export type WhatsAppTemplateComponent = {
   type: string
   parameters?: WhatsAppTemplateComponentParameter[]
   sub_type?: string
-  index?: number
+  // Meta's `payment_request` examples send the index as a string.
+  index?: number | string
   cards?: Array<{
     card_index: number
     components: WhatsAppTemplateComponent[]

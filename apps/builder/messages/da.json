@@ -4483,6 +4483,9 @@
     "waTemplateMpmTooManySections": "En multiprodukt-knap kan højst have 10 sektioner. Fjern nogle sektioner før udgivelse.",
     "waTemplateMpmTooManyProducts": "En multiprodukt-knap kan højst have 30 produkter i alt. Fjern nogle produkter før udgivelse.",
     "waTemplateLtoExpirationRequired": "Vælg en udløbsdato for tilbuddet, før du sender.",
+    "waTemplatePaymentRequestIncomplete": "Udfyld betalingsoplysningerne for denne knap, før du udgiver.",
+    "waTemplatePaymentRequestInvalid": "En betalingsoplysning har et ugyldigt format. Tjek beløb, link og kortcifre.",
+    "waTemplatePaymentRequestMisplaced": "Betalingsoplysninger kan kun angives på en betalingsknap i en almindelig skabelon (ikke karrusel).",
     "waTemplateMpmIncompleteProducts": "Hver sektion skal have mindst ét valgt produkt — fjern tomme rækker, eller vælg et produkt til dem.",
     "unsupportedBlock": "Denne kanal understøtter ikke denne blok.",
     "constraintExceeded": "Denne kanals grænse er overskredet.",
@@ -4496,6 +4499,8 @@
     "canceledVoiceCall": "Annulleret opkald",
     "acceptedCallPermission": "Accepterede anmodning om opkaldstilladelse",
     "declinedCallPermission": "Afviste anmodning om opkaldstilladelse",
+    "confirmedPayment": "Betaling bekræftet",
+    "confirmedPaymentWithCard": "Betaling bekræftet med kort, der ender på {lastFourDigits}",
     "sendHumanAgentTag": "Send one besked med HUMAN_AGENT tag",
     "warning": "Warning!",
     "humanAgentWarningDescription": "Du may respond til a user's besked within 7 dage kun når den issue kan ikke reasonably være resolved within 24 timer. Examples include weekends, holidays, eller cases at require mere than one day til complete. Do ikke use denne option for vilkårlig anden reason, as it could put din Facebook Page eller Instagram konto på risk. Hvis you're ikke sure, do ikke fortsæt.",
@@ -5118,7 +5123,30 @@
         "mpmSectionLimitReached": "Maks. 10 sektioner nået.",
         "mpmProductLimitReached": "Maks. 30 produkter nået.",
         "mpmProductsSummary": "{productCount} produkter i {sectionCount} sektioner",
-        "unsupportedButtonParam": "Denne knaptype understøttes endnu ikke."
+        "unsupportedButtonParam": "Denne knaptype understøttes endnu ikke.",
+        "payment": {
+          "method": {
+            "pix": "Pix",
+            "boleto": "Boleto",
+            "payment_link": "Betalingslink",
+            "card_on_file": "Kortbetaling med ét klik"
+          },
+          "field": {
+            "code": "Pix-kode",
+            "digitableLine": "Boleto-linje",
+            "url": "URL til betalingslink",
+            "lastFourDigits": "Kortets sidste 4 cifre",
+            "credentialId": "Kortets credential-ID (valgfrit)",
+            "amount": "Beløb i BRL, f.eks. 12.34"
+          },
+          "notice": {
+            "general": "WhatsApp lader ikke betalinger udløbe og afstemmer dem ikke — det gør din betalingsudbyder. I en udsendelse sendes en fast værdi til alle modtagere, så brug en variabel.",
+            "pixRedirect": "Pix med omdirigering indstilles pr. kanal i WhatsApp-kanalindstillingerne.",
+            "cardOnFile": "Kortbetaling med ét klik virker kun for virksomheder, som Meta har aktiveret den for.",
+            "region": "Betalingsanmodninger er designet til brasilianske virksomheder og kunder."
+          },
+          "unsupportedButton": "Denne skabelon har en betalingsknap, der ikke kan sendes: betalingstypen kunne ikke bestemmes. Synkroniser skabelonerne igen, eller vælg en anden."
+        }
       }
     },
     "sampleBodyCardContent": {
@@ -5533,7 +5561,16 @@
     },
     "credentialSecretsRequired": "Indtast app-hemmeligheden og systembruger-tokenet. De er ikke gemt endnu.",
     "embeddedSignupCancelled": "Tilmeldingen blev annulleret — du kan lukke denne fane.",
-    "embeddedSignupFailed": "Tilmeldingen blev ikke gennemført — luk denne fane, og prøv igen."
+    "embeddedSignupFailed": "Tilmeldingen blev ikke gennemført — luk denne fane, og prøv igen.",
+    "payment": {
+      "settings": {
+        "title": "Betalinger",
+        "description": "Hvordan dette nummer sender knapper til betalingsanmodning.",
+        "pixRedirectLabel": "Send Pix med omdirigering",
+        "pixRedirectDescription": "Købere åbner deres bankapp for at betale og vender tilbage til WhatsApp. Slå det først til, når Meta har onboardet din virksomhed; købere, der ikke kan omdirigeres, får stadig kopiér og indsæt.",
+        "adminOnly": "Kun workspace-administratorer kan ændre betalingsindstillinger."
+      }
+    }
   },
   "zalo": {
     "title": "Zalo OA",

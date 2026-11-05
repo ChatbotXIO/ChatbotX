@@ -3619,6 +3619,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
   },
   {
     "method": "GET",
+    "operationId": "whatsappChannels.getPaymentSettings",
+    "path": "/v1/whatsapp-channels/{id}/payment-settings",
+  },
+  {
+    "method": "GET",
     "operationId": "whatsappChannels.list",
     "path": "/v1/whatsapp-channels",
   },
@@ -3656,6 +3661,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "method": "PATCH",
     "operationId": "whatsappChannels.updateHandoverResumeFlow",
     "path": "/v1/whatsapp-channels/{id}/handover-resume-flow",
+  },
+  {
+    "method": "PUT",
+    "operationId": "whatsappChannels.updatePaymentSettings",
+    "path": "/v1/whatsapp-channels/{id}/payment-settings",
   },
   {
     "method": "GET",

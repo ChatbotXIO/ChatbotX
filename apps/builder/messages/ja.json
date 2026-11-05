@@ -4462,6 +4462,9 @@
     "waTemplateMpmTooManySections": "マルチ商品ボタンには最大10個のセクションを設定できます。公開前にセクションを減らしてください。",
     "waTemplateMpmTooManyProducts": "マルチ商品ボタンには合計最大30個の商品を設定できます。公開前に商品を減らしてください。",
     "waTemplateLtoExpirationRequired": "送信する前に期間限定オファーの有効期限を選択してください。",
+    "waTemplatePaymentRequestIncomplete": "公開する前に、このボタンの支払い情報を入力してください。",
+    "waTemplatePaymentRequestInvalid": "支払い情報の形式が正しくありません。金額、リンク、カード番号の下4桁を確認してください。",
+    "waTemplatePaymentRequestMisplaced": "支払い情報は、通常（カルーセル以外）のテンプレートの支払いボタンにのみ設定できます。",
     "waTemplateMpmIncompleteProducts": "各セクションには選択済みの商品が少なくとも1つ必要です。空の行を削除するか、商品を選択してください。",
     "unsupportedBlock": "このチャネルはこのブロックに対応していません。",
     "constraintExceeded": "このチャネルの上限を超えました。",
@@ -4475,6 +4478,8 @@
     "canceledVoiceCall": "キャンセルされた通話",
     "acceptedCallPermission": "通話許可リクエストを承認しました",
     "declinedCallPermission": "通話許可リクエストを拒否しました",
+    "confirmedPayment": "支払いが確認されました",
+    "confirmedPaymentWithCard": "下4桁 {lastFourDigits} のカードでの支払いが確認されました",
     "sendHumanAgentTag": "HUMAN_AGENTタグを付けてメッセージを1件送信",
     "warning": "警告！",
     "humanAgentWarningDescription": "問題を24時間以内に解決することが合理的に困難な場合に限り、ユーザーのメッセージに7日以内で返信できます。たとえば、週末、祝日、または完了までに1日以上かかるケースです。それ以外の理由でこのオプションを使用すると、FacebookページまたはInstagramアカウントが危険にさらされる可能性があります。確信がない場合は続行しないでください。",
@@ -5097,7 +5102,30 @@
         "mpmSectionLimitReached": "セクションの上限（10個）に達しました。",
         "mpmProductLimitReached": "商品の上限（30個）に達しました。",
         "mpmProductsSummary": "{sectionCount}個のセクションに{productCount}個の商品",
-        "unsupportedButtonParam": "このボタンタイプはまだサポートされていません。"
+        "unsupportedButtonParam": "このボタンタイプはまだサポートされていません。",
+        "payment": {
+          "method": {
+            "pix": "Pix",
+            "boleto": "Boleto",
+            "payment_link": "支払いリンク",
+            "card_on_file": "ワンクリックカード決済"
+          },
+          "field": {
+            "code": "Pix コード",
+            "digitableLine": "Boleto の入力用番号",
+            "url": "支払いリンクの URL",
+            "lastFourDigits": "カード番号の下4桁",
+            "credentialId": "カード認証情報 ID（任意）",
+            "amount": "BRL での金額（例: 12.34）"
+          },
+          "notice": {
+            "general": "WhatsApp は支払いの期限切れ処理や照合を行いません。それは決済プロバイダーの役割です。一斉配信では固定値が全員に送られるため、変数を使ってください。",
+            "pixRedirect": "リダイレクト付き Pix は、WhatsApp チャネル設定でチャネルごとに設定します。",
+            "cardOnFile": "ワンクリックカード決済は、Meta が有効化した事業者のみ利用できます。",
+            "region": "支払いリクエストはブラジルの事業者と顧客向けに設計されています。"
+          },
+          "unsupportedButton": "このテンプレートには送信できない支払いボタンがあります。支払い種別を判定できませんでした。テンプレートを再同期するか、別のテンプレートを選んでください。"
+        }
       }
     },
     "sampleBodyCardContent": {
@@ -5512,7 +5540,16 @@
     },
     "credentialSecretsRequired": "アプリシークレットとシステムユーザートークンを入力してください。まだ保存されていません。",
     "embeddedSignupCancelled": "登録はキャンセルされました。このタブを閉じてください。",
-    "embeddedSignupFailed": "登録が完了しませんでした。このタブを閉じて、もう一度お試しください。"
+    "embeddedSignupFailed": "登録が完了しませんでした。このタブを閉じて、もう一度お試しください。",
+    "payment": {
+      "settings": {
+        "title": "支払い",
+        "description": "この番号が支払いリクエストボタンを送信する方法です。",
+        "pixRedirectLabel": "リダイレクト付き Pix で送信",
+        "pixRedirectDescription": "購入者は銀行アプリを開いて支払い、WhatsApp に戻ります。Meta があなたのビジネスをオンボードした後にのみ有効にしてください。リダイレクトできない購入者にはコピー＆ペーストが表示されます。",
+        "adminOnly": "支払い設定を変更できるのはワークスペース管理者のみです。"
+      }
+    }
   },
   "zalo": {
     "title": "Zalo OA",

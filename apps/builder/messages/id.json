@@ -4483,6 +4483,9 @@
     "waTemplateMpmTooManySections": "Tombol multi-produk dapat memiliki maksimal 10 bagian. Hapus beberapa bagian sebelum memublikasikan.",
     "waTemplateMpmTooManyProducts": "Tombol multi-produk dapat memiliki maksimal total 30 produk. Hapus beberapa produk sebelum memublikasikan.",
     "waTemplateLtoExpirationRequired": "Pilih tanggal berakhir untuk penawaran waktu terbatas sebelum mengirim.",
+    "waTemplatePaymentRequestIncomplete": "Isi detail pembayaran tombol ini sebelum memublikasikan.",
+    "waTemplatePaymentRequestInvalid": "Format detail pembayaran tidak valid. Periksa jumlah, tautan, dan digit kartu.",
+    "waTemplatePaymentRequestMisplaced": "Detail pembayaran hanya dapat diatur pada tombol pembayaran templat biasa (bukan carousel).",
     "waTemplateMpmIncompleteProducts": "Setiap bagian membutuhkan minimal satu produk terpilih — hapus baris kosong atau pilih produknya.",
     "unsupportedBlock": "Saluran ini tidak mendukung blok ini.",
     "constraintExceeded": "Batas saluran ini telah terlampaui.",
@@ -4496,6 +4499,8 @@
     "canceledVoiceCall": "Panggilan dibatalkan",
     "acceptedCallPermission": "Menerima permintaan izin panggilan",
     "declinedCallPermission": "Menolak permintaan izin panggilan",
+    "confirmedPayment": "Pembayaran dikonfirmasi",
+    "confirmedPaymentWithCard": "Pembayaran dikonfirmasi dengan kartu berakhiran {lastFourDigits}",
     "sendHumanAgentTag": "Kirim satu pesan dengan tag HUMAN_AGENT",
     "warning": "Peringatan!",
     "humanAgentWarningDescription": "Anda hanya boleh menanggapi pesan pengguna dalam waktu 7 hari jika masalahnya tidak dapat diselesaikan secara wajar dalam 24 jam. Contohnya termasuk akhir pekan, hari libur, atau kasus yang memerlukan lebih dari satu hari untuk diselesaikan. Jangan gunakan opsi ini untuk alasan lain karena dapat membahayakan Halaman Facebook atau akun Instagram Anda. Jika tidak yakin, jangan lanjutkan.",
@@ -5118,7 +5123,30 @@
         "mpmSectionLimitReached": "Maksimum 10 bagian tercapai.",
         "mpmProductLimitReached": "Maksimum 30 produk tercapai.",
         "mpmProductsSummary": "{productCount} produk dalam {sectionCount} bagian",
-        "unsupportedButtonParam": "Jenis tombol ini belum didukung."
+        "unsupportedButtonParam": "Jenis tombol ini belum didukung.",
+        "payment": {
+          "method": {
+            "pix": "Pix",
+            "boleto": "Boleto",
+            "payment_link": "Tautan pembayaran",
+            "card_on_file": "Pembayaran kartu satu klik"
+          },
+          "field": {
+            "code": "Kode Pix",
+            "digitableLine": "Baris digitabel Boleto",
+            "url": "URL tautan pembayaran",
+            "lastFourDigits": "4 digit terakhir kartu",
+            "credentialId": "ID kredensial kartu (opsional)",
+            "amount": "Jumlah dalam BRL, mis. 12.34"
+          },
+          "notice": {
+            "general": "WhatsApp tidak mengakhiri atau merekonsiliasi pembayaran — itu dilakukan penyedia pembayaran Anda. Pada siaran, nilai tetap dikirim ke semua penerima, jadi gunakan variabel.",
+            "pixRedirect": "Pix dengan pengalihan diatur per kanal di pengaturan kanal WhatsApp.",
+            "cardOnFile": "Pembayaran kartu satu klik hanya berfungsi untuk bisnis yang diaktifkan Meta.",
+            "region": "Permintaan pembayaran dirancang untuk bisnis dan pelanggan Brasil."
+          },
+          "unsupportedButton": "Templat ini punya tombol pembayaran yang tidak dapat dikirim: jenis pembayarannya tidak dapat ditentukan. Sinkronkan ulang templat atau pilih yang lain."
+        }
       }
     },
     "sampleBodyCardContent": {
@@ -5533,7 +5561,16 @@
     },
     "credentialSecretsRequired": "Masukkan app secret dan system user token. Keduanya belum tersimpan.",
     "embeddedSignupCancelled": "Pendaftaran dibatalkan — Anda dapat menutup tab ini.",
-    "embeddedSignupFailed": "Pendaftaran belum selesai — tutup tab ini dan coba lagi."
+    "embeddedSignupFailed": "Pendaftaran belum selesai — tutup tab ini dan coba lagi.",
+    "payment": {
+      "settings": {
+        "title": "Pembayaran",
+        "description": "Cara nomor ini mengirim tombol permintaan pembayaran.",
+        "pixRedirectLabel": "Kirim Pix dengan pengalihan",
+        "pixRedirectDescription": "Pembeli membuka aplikasi bank untuk membayar lalu kembali ke WhatsApp. Aktifkan hanya setelah Meta mengonboarding bisnis Anda; pembeli yang tidak bisa dialihkan tetap mendapat salin dan tempel.",
+        "adminOnly": "Hanya admin ruang kerja yang dapat mengubah pengaturan pembayaran."
+      }
+    }
   },
   "zalo": {
     "title": "Zalo OA",

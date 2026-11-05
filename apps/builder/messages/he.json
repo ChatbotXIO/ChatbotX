@@ -2134,6 +2134,9 @@
     "waTemplateMpmTooManySections": "לכפתור רב-מוצרים יכולים להיות עד 10 מקטעים לכל היותר. הסר מקטעים לפני הפרסום.",
     "waTemplateMpmTooManyProducts": "לכפתור רב-מוצרים יכולים להיות עד 30 מוצרים בסך הכל. הסר מוצרים לפני הפרסום.",
     "waTemplateLtoExpirationRequired": "בחרו תאריך תפוגה למבצע המוגבל בזמן לפני השליחה.",
+    "waTemplatePaymentRequestIncomplete": "מלאו את פרטי התשלום של כפתור זה לפני הפרסום.",
+    "waTemplatePaymentRequestInvalid": "לפרט תשלום יש פורמט לא תקין. בדקו את הסכום, הקישור וספרות הכרטיס.",
+    "waTemplatePaymentRequestMisplaced": "ניתן להגדיר פרטי תשלום רק בכפתור תשלום של תבנית רגילה (לא קרוסלה).",
     "waTemplateMpmIncompleteProducts": "כל מקטע צריך לפחות מוצר אחד שנבחר — הסירו שורות ריקות או בחרו להן מוצר.",
     "unsupportedBlock": "הערוץ הזה אינו תומך בבלוק הזה.",
     "constraintExceeded": "חרגת ממגבלת הערוץ.",
@@ -2147,6 +2150,8 @@
     "canceledVoiceCall": "שיחה שבוטלה",
     "acceptedCallPermission": "אישר את בקשת ההרשאה לשיחה",
     "declinedCallPermission": "דחה את בקשת ההרשאה לשיחה",
+    "confirmedPayment": "התשלום אושר",
+    "confirmedPaymentWithCard": "התשלום אושר בכרטיס שמסתיים ב-{lastFourDigits}",
     "sendHumanAgentTag": "שליחת הודעה אחת עם תגית HUMAN_AGENT",
     "warning": "אזהרה!",
     "humanAgentWarningDescription": "ניתן להשיב להודעת משתמש בתוך 7 ימים רק כאשר לא ניתן לפתור את הבעיה באופן סביר בתוך 24 שעות. דוגמאות כוללות סופי שבוע, חגים או מקרים שדורשים יותר מיום אחד להשלמה. אל תשתמשו באפשרות זו מסיבה אחרת, משום שהיא עלולה לסכן את דף Facebook או חשבון Instagram שלכם. אם אינכם בטוחים, אל תמשיכו.",
@@ -2769,7 +2774,30 @@
         "mpmSectionLimitReached": "הגעת למקסימום של 10 מקטעים.",
         "mpmProductLimitReached": "הגעת למקסימום של 30 מוצרים.",
         "mpmProductsSummary": "{productCount} מוצרים ב-{sectionCount} מקטעים",
-        "unsupportedButtonParam": "סוג כפתור זה עדיין אינו נתמך."
+        "unsupportedButtonParam": "סוג כפתור זה עדיין אינו נתמך.",
+        "payment": {
+          "method": {
+            "pix": "Pix",
+            "boleto": "Boleto",
+            "payment_link": "קישור תשלום",
+            "card_on_file": "תשלום בכרטיס בלחיצה אחת"
+          },
+          "field": {
+            "code": "קוד Pix",
+            "digitableLine": "שורת Boleto",
+            "url": "כתובת URL של קישור התשלום",
+            "lastFourDigits": "4 הספרות האחרונות של הכרטיס",
+            "credentialId": "מזהה אישור הכרטיס (אופציונלי)",
+            "amount": "סכום ב-BRL, לדוגמה 12.34"
+          },
+          "notice": {
+            "general": "WhatsApp לא מבטל תוקף של תשלומים ולא מתאים אותם — ספק התשלומים שלכם עושה זאת. בשידור, ערך קבוע נשלח לכל הנמענים, לכן השתמשו במשתנה.",
+            "pixRedirect": "Pix עם הפניה מוגדר לכל ערוץ בהגדרות ערוץ WhatsApp.",
+            "cardOnFile": "תשלום בכרטיס בלחיצה אחת עובד רק לעסקים ש-Meta הפעילה עבורם.",
+            "region": "בקשות תשלום מיועדות לעסקים וללקוחות בברזיל."
+          },
+          "unsupportedButton": "בתבנית זו יש כפתור תשלום שלא ניתן לשלוח: לא ניתן היה לקבוע את סוג התשלום. סנכרנו את התבניות מחדש או בחרו תבנית אחרת."
+        }
       }
     },
     "sampleBodyCardContent": {
@@ -3184,7 +3212,16 @@
     },
     "credentialSecretsRequired": "הזינו את סוד האפליקציה ואת אסימון משתמש המערכת. הם עדיין לא נשמרו.",
     "embeddedSignupCancelled": "ההרשמה בוטלה — אפשר לסגור את הכרטיסייה.",
-    "embeddedSignupFailed": "ההרשמה לא הושלמה — סגרו את הכרטיסייה ונסו שוב."
+    "embeddedSignupFailed": "ההרשמה לא הושלמה — סגרו את הכרטיסייה ונסו שוב.",
+    "payment": {
+      "settings": {
+        "title": "תשלומים",
+        "description": "איך המספר הזה שולח כפתורי בקשת תשלום.",
+        "pixRedirectLabel": "שליחת Pix עם הפניה",
+        "pixRedirectDescription": "הקונים פותחים את אפליקציית הבנק לתשלום וחוזרים ל-WhatsApp. הפעילו רק לאחר ש-Meta קלטה את העסק שלכם; קונים שלא ניתן להפנות יקבלו עדיין העתק והדבק.",
+        "adminOnly": "רק מנהלי סביבת העבודה יכולים לשנות הגדרות תשלום."
+      }
+    }
   },
   "zalo": {
     "title": "Zalo OA",

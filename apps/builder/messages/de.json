@@ -4483,6 +4483,9 @@
     "waTemplateMpmTooManySections": "Eine Multi-Produkt-Schaltfläche kann höchstens 10 Abschnitte haben. Entferne einige Abschnitte, bevor du veröffentlichst.",
     "waTemplateMpmTooManyProducts": "Eine Multi-Produkt-Schaltfläche kann insgesamt höchstens 30 Produkte haben. Entferne einige Produkte, bevor du veröffentlichst.",
     "waTemplateLtoExpirationRequired": "Wähle ein Ablaufdatum für das zeitlich begrenzte Angebot, bevor du sendest.",
+    "waTemplatePaymentRequestIncomplete": "Füllen Sie die Zahlungsdaten dieser Schaltfläche vor dem Veröffentlichen aus.",
+    "waTemplatePaymentRequestInvalid": "Eine Zahlungsangabe hat ein ungültiges Format. Prüfen Sie Betrag, Link und Kartenziffern.",
+    "waTemplatePaymentRequestMisplaced": "Zahlungsdaten können nur bei einer Zahlungsschaltfläche in einer normalen Vorlage (kein Karussell) gesetzt werden.",
     "waTemplateMpmIncompleteProducts": "Jeder Abschnitt braucht mindestens ein ausgewähltes Produkt — entferne leere Zeilen oder wähle ein Produkt aus.",
     "unsupportedBlock": "Dieser Kanal unterstützt diesen Block nicht.",
     "constraintExceeded": "Das Limit dieses Kanals wurde überschritten.",
@@ -4496,6 +4499,8 @@
     "canceledVoiceCall": "Abgebrochener Anruf",
     "acceptedCallPermission": "Anrufberechtigung akzeptiert",
     "declinedCallPermission": "Anrufberechtigung abgelehnt",
+    "confirmedPayment": "Zahlung bestätigt",
+    "confirmedPaymentWithCard": "Zahlung mit Karte auf {lastFourDigits} bestätigt",
     "sendHumanAgentTag": "Eine Nachricht mit dem Tag HUMAN_AGENT senden",
     "warning": "Warnung!",
     "humanAgentWarningDescription": "Sie dürfen nur dann innerhalb von 7 Tagen auf die Nachricht eines Benutzers antworten, wenn das Problem nicht sinnvoll innerhalb von 24 Stunden gelöst werden kann. Beispiele sind Wochenenden, Feiertage oder Fälle, deren Bearbeitung mehr als einen Tag erfordert. Verwenden Sie diese Option aus keinem anderen Grund, da dies Ihre Facebook-Seite oder Ihr Instagram-Konto gefährden könnte. Fahren Sie im Zweifelsfall nicht fort.",
@@ -5118,7 +5123,30 @@
         "mpmSectionLimitReached": "Maximal 10 Abschnitte erreicht.",
         "mpmProductLimitReached": "Maximal 30 Produkte erreicht.",
         "mpmProductsSummary": "{productCount} Produkte in {sectionCount} Abschnitten",
-        "unsupportedButtonParam": "Dieser Schaltflächentyp wird noch nicht unterstützt."
+        "unsupportedButtonParam": "Dieser Schaltflächentyp wird noch nicht unterstützt.",
+        "payment": {
+          "method": {
+            "pix": "Pix",
+            "boleto": "Boleto",
+            "payment_link": "Zahlungslink",
+            "card_on_file": "Kartenzahlung mit einem Klick"
+          },
+          "field": {
+            "code": "Pix-Code",
+            "digitableLine": "Boleto-Zeile",
+            "url": "URL des Zahlungslinks",
+            "lastFourDigits": "Letzte 4 Ziffern der Karte",
+            "credentialId": "Karten-Credential-ID (optional)",
+            "amount": "Betrag in BRL, z. B. 12.34"
+          },
+          "notice": {
+            "general": "WhatsApp lässt Zahlungen weder ablaufen noch gleicht es sie ab – das übernimmt Ihr Zahlungsanbieter. In einem Broadcast geht ein fester Wert an alle Empfänger; verwenden Sie eine Variable.",
+            "pixRedirect": "Pix mit Weiterleitung wird pro Kanal in den WhatsApp-Kanaleinstellungen festgelegt.",
+            "cardOnFile": "Kartenzahlung mit einem Klick funktioniert nur für Unternehmen, die Meta dafür freigeschaltet hat.",
+            "region": "Zahlungsanfragen sind für brasilianische Unternehmen und Kunden gedacht."
+          },
+          "unsupportedButton": "Diese Vorlage enthält eine Zahlungsschaltfläche, die nicht gesendet werden kann: Ihre Zahlungsart konnte nicht ermittelt werden. Synchronisieren Sie die Vorlagen erneut oder wählen Sie eine andere."
+        }
       }
     },
     "sampleBodyCardContent": {
@@ -5533,7 +5561,16 @@
     },
     "credentialSecretsRequired": "Gib das App-Geheimnis und das Systembenutzer-Token ein. Sie sind noch nicht gespeichert.",
     "embeddedSignupCancelled": "Die Registrierung wurde abgebrochen – du kannst diesen Tab schließen.",
-    "embeddedSignupFailed": "Die Registrierung wurde nicht abgeschlossen – schließe diesen Tab und versuche es erneut."
+    "embeddedSignupFailed": "Die Registrierung wurde nicht abgeschlossen – schließe diesen Tab und versuche es erneut.",
+    "payment": {
+      "settings": {
+        "title": "Zahlungen",
+        "description": "Wie diese Nummer Zahlungsanfrage-Schaltflächen sendet.",
+        "pixRedirectLabel": "Pix mit Weiterleitung senden",
+        "pixRedirectDescription": "Käufer öffnen ihre Bank-App zum Bezahlen und kehren zu WhatsApp zurück. Erst aktivieren, wenn Meta Ihr Unternehmen freigeschaltet hat; Käufer ohne Weiterleitung erhalten weiterhin Kopieren und Einfügen.",
+        "adminOnly": "Nur Workspace-Admins können die Zahlungseinstellungen ändern."
+      }
+    }
   },
   "zalo": {
     "title": "Zalo OA",

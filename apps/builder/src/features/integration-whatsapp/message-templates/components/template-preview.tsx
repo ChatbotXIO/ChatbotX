@@ -90,6 +90,23 @@ function MpmButtonPreview({ button, buttonParam }: ButtonPreviewProps) {
   )
 }
 
+function PaymentRequestButtonPreview({
+  button,
+  buttonParam,
+}: ButtonPreviewProps) {
+  const t = useTranslations()
+  const request = buttonParam?.payment_request
+  const amount = request && "amount" in request ? request.amount : undefined
+  return (
+    <>
+      {button.text}
+      {request &&
+        ` · ${t(`whatsapp.messageTemplate.params.payment.method.${request.method}`)}`}
+      {amount && ` → BRL ${amount}`}
+    </>
+  )
+}
+
 /**
  * One preview renderer per button sub_type, mirroring the `ButtonParamField`
  * registry: only sub_types whose sent payload isn't self-explanatory from the
@@ -102,6 +119,7 @@ const buttonPreviewRenderers: Partial<
 > = {
   catalog: CatalogButtonPreview,
   mpm: MpmButtonPreview,
+  payment_request: PaymentRequestButtonPreview,
 }
 
 function ButtonPreview({ button, buttonParam }: ButtonPreviewProps) {

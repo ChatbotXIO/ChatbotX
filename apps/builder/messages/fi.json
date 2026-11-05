@@ -4483,6 +4483,9 @@
     "waTemplateMpmTooManySections": "Usean tuotteen painikkeessa voi olla enintään 10 osiota. Poista osioita ennen julkaisua.",
     "waTemplateMpmTooManyProducts": "Usean tuotteen painikkeessa voi olla yhteensä enintään 30 tuotetta. Poista tuotteita ennen julkaisua.",
     "waTemplateLtoExpirationRequired": "Valitse määräaikaisen tarjouksen päättymisaika ennen lähettämistä.",
+    "waTemplatePaymentRequestIncomplete": "Täytä tämän painikkeen maksutiedot ennen julkaisua.",
+    "waTemplatePaymentRequestInvalid": "Maksutiedon muoto on virheellinen. Tarkista summa, linkki ja kortin numerot.",
+    "waTemplatePaymentRequestMisplaced": "Maksutiedot voi asettaa vain tavallisen (ei karusellin) mallin maksupainikkeeseen.",
     "waTemplateMpmIncompleteProducts": "Jokaisessa osiossa on oltava vähintään yksi valittu tuote — poista tyhjät rivit tai valitse niille tuote.",
     "unsupportedBlock": "Tämä kanava ei tue tätä lohkoa.",
     "constraintExceeded": "Tämän kanavan raja ylittyi.",
@@ -4496,6 +4499,8 @@
     "canceledVoiceCall": "Peruutettu puhelu",
     "acceptedCallPermission": "Hyväksyi soittolupapyynnön",
     "declinedCallPermission": "Hylkäsi soittolupapyynnön",
+    "confirmedPayment": "Maksu vahvistettu",
+    "confirmedPaymentWithCard": "Maksu vahvistettu kortilla, jonka loppuosa on {lastFourDigits}",
     "sendHumanAgentTag": "Lähetä yksi viesti HUMAN_AGENT-tunnisteella",
     "warning": "Varoitus!",
     "humanAgentWarningDescription": "Voit vastata käyttäjän viestiin 7 päivän kuluessa vain, jos ongelmaa ei kohtuudella voi ratkaista 24 tunnissa. Esimerkkejä ovat viikonloput, pyhäpäivät tai tapaukset, joiden ratkaiseminen kestää yli päivän. Älä käytä tätä vaihtoehtoa muusta syystä, sillä se voi vaarantaa Facebook-sivusi tai Instagram-tilisi. Jos olet epävarma, älä jatka.",
@@ -5118,7 +5123,30 @@
         "mpmSectionLimitReached": "Enimmäismäärä 10 osiota saavutettu.",
         "mpmProductLimitReached": "Enimmäismäärä 30 tuotetta saavutettu.",
         "mpmProductsSummary": "{productCount} tuotetta, {sectionCount} osiossa",
-        "unsupportedButtonParam": "Tätä painiketyyppiä ei vielä tueta."
+        "unsupportedButtonParam": "Tätä painiketyyppiä ei vielä tueta.",
+        "payment": {
+          "method": {
+            "pix": "Pix",
+            "boleto": "Boleto",
+            "payment_link": "Maksulinkki",
+            "card_on_file": "Korttimaksu yhdellä napsautuksella"
+          },
+          "field": {
+            "code": "Pix-koodi",
+            "digitableLine": "Boleto-rivi",
+            "url": "Maksulinkin URL",
+            "lastFourDigits": "Kortin 4 viimeistä numeroa",
+            "credentialId": "Kortin credential-tunnus (valinnainen)",
+            "amount": "Summa BRL:nä, esim. 12.34"
+          },
+          "notice": {
+            "general": "WhatsApp ei vanhenna tai täsmäytä maksuja — se on maksupalveluntarjoajasi tehtävä. Joukkolähetyksessä kiinteä arvo lähtee kaikille vastaanottajille, joten käytä muuttujaa.",
+            "pixRedirect": "Pix ohjauksella asetetaan kanavakohtaisesti WhatsApp-kanavan asetuksissa.",
+            "cardOnFile": "Korttimaksu yhdellä napsautuksella toimii vain yrityksille, joille Meta on sen ottanut käyttöön.",
+            "region": "Maksupyynnöt on suunniteltu brasilialaisille yrityksille ja asiakkaille."
+          },
+          "unsupportedButton": "Tässä mallissa on maksupainike, jota ei voi lähettää: sen maksutyyppiä ei voitu selvittää. Synkronoi mallit uudelleen tai valitse toinen."
+        }
       }
     },
     "sampleBodyCardContent": {
@@ -5533,7 +5561,16 @@
     },
     "credentialSecretsRequired": "Anna sovelluksen salaisuus ja järjestelmäkäyttäjän tunnus. Niitä ei ole vielä tallennettu.",
     "embeddedSignupCancelled": "Rekisteröityminen peruttiin – voit sulkea tämän välilehden.",
-    "embeddedSignupFailed": "Rekisteröityminen ei valmistunut – sulje tämä välilehti ja yritä uudelleen."
+    "embeddedSignupFailed": "Rekisteröityminen ei valmistunut – sulje tämä välilehti ja yritä uudelleen.",
+    "payment": {
+      "settings": {
+        "title": "Maksut",
+        "description": "Miten tämä numero lähettää maksupyyntöpainikkeet.",
+        "pixRedirectLabel": "Lähetä Pix ohjauksella",
+        "pixRedirectDescription": "Ostaja avaa pankkisovelluksensa maksaakseen ja palaa WhatsAppiin. Ota käyttöön vasta, kun Meta on ottanut yrityksesi mukaan; ostajat, joita ei voi ohjata, saavat silti kopioi ja liitä -vaihtoehdon.",
+        "adminOnly": "Vain työtilan ylläpitäjät voivat muuttaa maksuasetuksia."
+      }
+    }
   },
   "zalo": {
     "title": "Zalo OA",

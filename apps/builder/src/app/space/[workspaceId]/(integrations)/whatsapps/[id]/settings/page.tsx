@@ -10,6 +10,7 @@ import { notFound } from "next/navigation"
 import { getTranslations } from "next-intl/server"
 import { WhatsappAutomationManage } from "@/features/integration-whatsapp/automation/whatsapp-automation-manage"
 import { ConversationRoutingCard } from "@/features/integration-whatsapp/components/conversation-routing-card"
+import { PaymentSettingsCard } from "@/features/integration-whatsapp/payment/components/payment-settings-card"
 import { UpdateWhatsappProfile } from "@/features/integration-whatsapp/profile/update-whatsapp-profile"
 import {
   findIntegrationWhatsapp,
@@ -82,6 +83,13 @@ export default async function WhatsappSettingsPage(props: {
           />
         </CardContent>
       </Card>
+
+      <PaymentSettingsCard
+        integrationWhatsappId={data.id}
+        isSuperAdmin={isSuperAdmin}
+        pixRedirectEnabled={integrationWhatsapp.pixRedirectEnabled}
+        workspaceId={data.workspaceId}
+      />
 
       <ConversationRoutingCard
         handoverResumeFlowId={integrationWhatsapp.handoverResumeFlowId}

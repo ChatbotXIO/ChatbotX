@@ -4483,6 +4483,9 @@
     "waTemplateMpmTooManySections": "Un buton multi-produs poate avea cel mult 10 secțiuni. Elimină câteva secțiuni înainte de publicare.",
     "waTemplateMpmTooManyProducts": "Un buton multi-produs poate avea în total cel mult 30 de produse. Elimină câteva produse înainte de publicare.",
     "waTemplateLtoExpirationRequired": "Alege o dată de expirare pentru oferta pe timp limitat înainte de a trimite.",
+    "waTemplatePaymentRequestIncomplete": "Completează datele de plată ale acestui buton înainte de publicare.",
+    "waTemplatePaymentRequestInvalid": "O dată de plată are un format nevalid. Verifică suma, linkul și cifrele cardului.",
+    "waTemplatePaymentRequestMisplaced": "Datele de plată pot fi setate doar pe un buton de plată al unui șablon obișnuit (nu carusel).",
     "waTemplateMpmIncompleteProducts": "Fiecare secțiune are nevoie de cel puțin un produs selectat — elimină rândurile goale sau alege un produs.",
     "unsupportedBlock": "Acest canal nu acceptă acest bloc.",
     "constraintExceeded": "Limita acestui canal a fost depășită.",
@@ -4496,6 +4499,8 @@
     "canceledVoiceCall": "Apel anulat",
     "acceptedCallPermission": "A acceptat cererea de permisiune pentru apel",
     "declinedCallPermission": "A respins cererea de permisiune pentru apel",
+    "confirmedPayment": "Plată confirmată",
+    "confirmedPaymentWithCard": "Plată confirmată cu cardul care se termină în {lastFourDigits}",
     "sendHumanAgentTag": "Trimite un mesaj cu eticheta HUMAN_AGENT",
     "warning": "Avertisment!",
     "humanAgentWarningDescription": "Poți răspunde la mesajul unui utilizator în termen de 7 zile doar atunci când problema nu poate fi rezolvată în mod rezonabil în 24 de ore. Exemple includ weekendurile, sărbătorile sau cazurile care necesită mai mult de o zi pentru a fi finalizate. Nu folosi această opțiune din niciun alt motiv, deoarece ar putea pune în pericol pagina ta de Facebook sau contul de Instagram. Dacă nu ești sigur, nu continua.",
@@ -5118,7 +5123,30 @@
         "mpmSectionLimitReached": "S-a atins maximul de 10 secțiuni.",
         "mpmProductLimitReached": "S-a atins maximul de 30 de produse.",
         "mpmProductsSummary": "{productCount} produse în {sectionCount} secțiuni",
-        "unsupportedButtonParam": "Acest tip de buton nu este încă acceptat."
+        "unsupportedButtonParam": "Acest tip de buton nu este încă acceptat.",
+        "payment": {
+          "method": {
+            "pix": "Pix",
+            "boleto": "Boleto",
+            "payment_link": "Link de plată",
+            "card_on_file": "Plată cu cardul dintr-un clic"
+          },
+          "field": {
+            "code": "Cod Pix",
+            "digitableLine": "Linie digitabilă Boleto",
+            "url": "URL-ul linkului de plată",
+            "lastFourDigits": "Ultimele 4 cifre ale cardului",
+            "credentialId": "ID credențial card (opțional)",
+            "amount": "Suma în BRL, ex. 12.34"
+          },
+          "notice": {
+            "general": "WhatsApp nu expiră și nu reconciliază plățile — o face furnizorul tău de plăți. Într-un mesaj în masă, o valoare fixă ajunge la toți destinatarii; folosește o variabilă.",
+            "pixRedirect": "Pix cu redirecționare se setează pe canal în setările canalului WhatsApp.",
+            "cardOnFile": "Plata cu cardul dintr-un clic funcționează doar pentru firmele activate de Meta.",
+            "region": "Cererile de plată sunt create pentru firme și clienți din Brazilia."
+          },
+          "unsupportedButton": "Acest șablon are un buton de plată care nu poate fi trimis: tipul de plată nu a putut fi determinat. Resincronizează șabloanele sau alege altul."
+        }
       }
     },
     "sampleBodyCardContent": {
@@ -5533,7 +5561,16 @@
     },
     "credentialSecretsRequired": "Introdu secretul aplicației și tokenul utilizatorului de sistem. Nu sunt încă salvate.",
     "embeddedSignupCancelled": "Înregistrarea a fost anulată — poți închide această filă.",
-    "embeddedSignupFailed": "Înregistrarea nu s-a finalizat — închide această filă și încearcă din nou."
+    "embeddedSignupFailed": "Înregistrarea nu s-a finalizat — închide această filă și încearcă din nou.",
+    "payment": {
+      "settings": {
+        "title": "Plăți",
+        "description": "Cum trimite acest număr butoanele de cerere de plată.",
+        "pixRedirectLabel": "Trimite Pix cu redirecționare",
+        "pixRedirectDescription": "Cumpărătorii deschid aplicația băncii pentru a plăti și revin în WhatsApp. Activează doar după ce Meta a înscris firma ta; cei care nu pot fi redirecționați primesc în continuare copiere și lipire.",
+        "adminOnly": "Doar administratorii spațiului de lucru pot schimba setările de plată."
+      }
+    }
   },
   "zalo": {
     "title": "Zalo OA",

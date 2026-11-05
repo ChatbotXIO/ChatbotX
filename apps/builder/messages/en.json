@@ -5165,6 +5165,9 @@
     "waTemplateMpmTooManySections": "A multi-product button can have at most 10 sections. Remove some sections before publishing.",
     "waTemplateMpmTooManyProducts": "A multi-product button can have at most 30 products in total. Remove some products before publishing.",
     "waTemplateLtoExpirationRequired": "Pick an expiration date for the limited-time offer before sending.",
+    "waTemplatePaymentRequestIncomplete": "Fill in the payment details of this button before publishing.",
+    "waTemplatePaymentRequestInvalid": "A payment detail has an invalid format. Check the amount, link and card digits.",
+    "waTemplatePaymentRequestMisplaced": "Payment details can only be set on a payment button of a regular (non-carousel) template.",
     "waTemplateMpmIncompleteProducts": "Every section needs at least one selected product — remove empty rows or pick a product for them.",
     "unsupportedBlock": "This channel does not support this block.",
     "constraintExceeded": "This channel limit was exceeded.",
@@ -5178,6 +5181,8 @@
     "canceledVoiceCall": "Cancelled call",
     "acceptedCallPermission": "Accepted call permission request",
     "declinedCallPermission": "Declined call permission request",
+    "confirmedPayment": "Confirmed payment",
+    "confirmedPaymentWithCard": "Confirmed payment with card ending {lastFourDigits}",
     "sendHumanAgentTag": "Send one message with HUMAN_AGENT tag",
     "warning": "Warning!",
     "humanAgentWarningDescription": "You may respond to a user's message within 7 days only when the issue cannot reasonably be resolved within 24 hours. Examples include weekends, holidays, or cases that require more than one day to complete. Do not use this option for any other reason, as it could put your Facebook Page or Instagram account at risk. If you're not sure, do not continue.",
@@ -5800,7 +5805,30 @@
         "mpmSectionLimitReached": "Maximum of 10 sections reached.",
         "mpmProductLimitReached": "Maximum of 30 products reached.",
         "mpmProductsSummary": "{productCount} products in {sectionCount} sections",
-        "unsupportedButtonParam": "This button type isn't supported yet."
+        "unsupportedButtonParam": "This button type isn't supported yet.",
+        "payment": {
+          "method": {
+            "pix": "Pix",
+            "boleto": "Boleto",
+            "payment_link": "Payment link",
+            "card_on_file": "One-click card payment"
+          },
+          "field": {
+            "code": "Pix code",
+            "digitableLine": "Boleto digitable line",
+            "url": "Payment link URL",
+            "lastFourDigits": "Last 4 digits of the card",
+            "credentialId": "Card credential ID (optional)",
+            "amount": "Amount in BRL, e.g. 12.34"
+          },
+          "notice": {
+            "general": "WhatsApp does not expire or reconcile payments — your payment provider does. In a broadcast, a fixed value is sent to every recipient, so use a variable.",
+            "pixRedirect": "Pix with redirect is set per channel in the WhatsApp channel settings.",
+            "cardOnFile": "One-click card payment only works for businesses Meta has enabled for it.",
+            "region": "Payment requests are designed for Brazilian businesses and customers."
+          },
+          "unsupportedButton": "This template has a payment button that cannot be sent: its payment type could not be determined. Re-sync the templates or pick another template."
+        }
       }
     },
     "sampleBodyCardContent": {
@@ -6215,7 +6243,16 @@
     },
     "credentialSecretsRequired": "Enter the app secret and system user token. They aren't stored yet.",
     "embeddedSignupCancelled": "Signup was cancelled — you can close this tab.",
-    "embeddedSignupFailed": "Signup didn't finish — close this tab and try again."
+    "embeddedSignupFailed": "Signup didn't finish — close this tab and try again.",
+    "payment": {
+      "settings": {
+        "title": "Payments",
+        "description": "How this number sends payment request buttons.",
+        "pixRedirectLabel": "Send Pix with redirect",
+        "pixRedirectDescription": "Buyers open their bank app to pay and return to WhatsApp. Turn this on only after Meta has onboarded your business; buyers whose app cannot redirect still get copy and paste.",
+        "adminOnly": "Only workspace admins can change payment settings."
+      }
+    }
   },
   "zalo": {
     "title": "Zalo OA",

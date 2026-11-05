@@ -72,6 +72,7 @@ import {
   templateMessagesPublicRouter,
   whatsappTemplatesPublicRouter,
 } from "@/features/integration-whatsapp/message-templates/api/public"
+import { whatsappPaymentPublicRouter } from "@/features/integration-whatsapp/payment/api/public"
 import { zaloChannelsPublicRouter } from "@/features/integration-zalo/api/public"
 import { integrationsPublicRouter } from "@/features/integrations/api/public"
 import { leaderboardsPublicRouter } from "@/features/leaderboards/api/public"
@@ -225,6 +226,7 @@ export const publicRouter = {
     ...createCoexistRoute("whatsapp"),
     ...createCapiRoutes("whatsapp"),
     ...whatsappCallingPublicRouter,
+    ...whatsappPaymentPublicRouter,
   },
   whatsappTemplates: whatsappTemplatesPublicRouter,
   responseSla: responseSlaPublicRouter,

@@ -4483,6 +4483,9 @@
     "waTemplateMpmTooManySections": "Um botão multiproduto pode ter no máximo 10 secções. Remova algumas secções antes de publicar.",
     "waTemplateMpmTooManyProducts": "Um botão multiproduto pode ter no máximo 30 produtos no total. Remova alguns produtos antes de publicar.",
     "waTemplateLtoExpirationRequired": "Escolha uma data de expiração para a oferta por tempo limitado antes de enviar.",
+    "waTemplatePaymentRequestIncomplete": "Preencha os dados de pagamento deste botão antes de publicar.",
+    "waTemplatePaymentRequestInvalid": "Um dado de pagamento tem formato inválido. Verifique o montante, a ligação e os dígitos do cartão.",
+    "waTemplatePaymentRequestMisplaced": "Os dados de pagamento só podem ser definidos num botão de pagamento de um modelo normal (não carrossel).",
     "waTemplateMpmIncompleteProducts": "Cada secção precisa de pelo menos um produto selecionado — remova linhas vazias ou escolha um produto.",
     "unsupportedBlock": "Este canal não suporta este bloco.",
     "constraintExceeded": "O limite deste canal foi excedido.",
@@ -4496,6 +4499,8 @@
     "canceledVoiceCall": "Chamada cancelada",
     "acceptedCallPermission": "Aceitou o pedido de permissão de chamada",
     "declinedCallPermission": "Recusou o pedido de permissão de chamada",
+    "confirmedPayment": "Pagamento confirmado",
+    "confirmedPaymentWithCard": "Pagamento confirmado com cartão terminado em {lastFourDigits}",
     "sendHumanAgentTag": "Enviar uma mensagem com a etiqueta HUMAN_AGENT",
     "warning": "Atenção!",
     "humanAgentWarningDescription": "Só pode responder à mensagem de um utilizador no prazo de 7 dias quando o problema não puder ser razoavelmente resolvido no prazo de 24 horas. Alguns exemplos são fins de semana, feriados ou casos que exigem mais de um dia para serem concluídos. Não utilize esta opção por qualquer outro motivo, pois poderá colocar a sua Página do Facebook ou conta do Instagram em risco. Em caso de dúvida, não continue.",
@@ -5118,7 +5123,30 @@
         "mpmSectionLimitReached": "Máximo de 10 secções atingido.",
         "mpmProductLimitReached": "Máximo de 30 produtos atingido.",
         "mpmProductsSummary": "{productCount} produtos em {sectionCount} secções",
-        "unsupportedButtonParam": "Este tipo de botão ainda não é suportado."
+        "unsupportedButtonParam": "Este tipo de botão ainda não é suportado.",
+        "payment": {
+          "method": {
+            "pix": "Pix",
+            "boleto": "Boleto",
+            "payment_link": "Ligação de pagamento",
+            "card_on_file": "Pagamento com cartão num clique"
+          },
+          "field": {
+            "code": "Código Pix",
+            "digitableLine": "Linha digitável do boleto",
+            "url": "URL da ligação de pagamento",
+            "lastFourDigits": "Últimos 4 dígitos do cartão",
+            "credentialId": "ID da credencial do cartão (opcional)",
+            "amount": "Montante em BRL, ex.: 12.34"
+          },
+          "notice": {
+            "general": "O WhatsApp não expira nem concilia pagamentos — quem o faz é o seu prestador de pagamentos. Num envio em massa, um valor fixo vai para todos os destinatários; use uma variável.",
+            "pixRedirect": "O Pix com redirecionamento é definido por canal nas definições do canal do WhatsApp.",
+            "cardOnFile": "O pagamento com cartão num clique só funciona para empresas ativadas pela Meta.",
+            "region": "Os pedidos de pagamento foram concebidos para empresas e clientes brasileiros."
+          },
+          "unsupportedButton": "Este modelo tem um botão de pagamento que não pode ser enviado: não foi possível determinar o tipo de pagamento. Sincronize novamente os modelos ou escolha outro."
+        }
       }
     },
     "sampleBodyCardContent": {
@@ -5533,7 +5561,16 @@
     },
     "credentialSecretsRequired": "Introduza o segredo da aplicação e o token de utilizador do sistema. Ainda não estão guardados.",
     "embeddedSignupCancelled": "O registo foi cancelado — pode fechar este separador.",
-    "embeddedSignupFailed": "O registo não foi concluído — feche este separador e tente novamente."
+    "embeddedSignupFailed": "O registo não foi concluído — feche este separador e tente novamente.",
+    "payment": {
+      "settings": {
+        "title": "Pagamentos",
+        "description": "Como este número envia os botões de pedido de pagamento.",
+        "pixRedirectLabel": "Enviar Pix com redirecionamento",
+        "pixRedirectDescription": "O comprador abre a app do banco para pagar e volta ao WhatsApp. Ative só depois de a Meta integrar a sua empresa; quem não pode ser redirecionado continua a receber copiar e colar.",
+        "adminOnly": "Só os administradores do espaço de trabalho podem alterar as definições de pagamento."
+      }
+    }
   },
   "zalo": {
     "title": "Zalo OA",

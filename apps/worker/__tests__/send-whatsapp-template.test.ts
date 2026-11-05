@@ -873,6 +873,106 @@ describe("processWhatsappTemplate — template quick-reply flow routing", () => 
   })
 })
 
+describe("processWhatsappTemplate — payment request guard", () => {
+  const pixComponents = [
+    {
+      type: "BUTTONS",
+      buttons: [
+        {
+          type: "PAYMENT_REQUEST",
+          text: "Copy Pix code",
+          payment_setting: { type: "pix_dynamic_code" },
+        },
+      ],
+    },
+  ]
+  const pixParams = (code: string) => ({
+    button: [
+      {
+        sub_type: "payment_request",
+        index: 0,
+        payment_request: { method: "pix", code },
+      },
+    ],
+  })
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockCreateMessageRepository.mockResolvedValue({
+      create: mockRepositoryCreate,
+      updateSourceId: mockRepositoryUpdateSourceId,
+    })
+    mockValidateTemplate.mockResolvedValue({
+      inbox: { integrationWhatsapp: { id: "iw-1" } },
+      template: {
+        id: "tmpl-wa-1",
+        name: "wa-template",
+        language: "pt_BR",
+        category: "UTILITY",
+        components: pixComponents,
+      },
+    })
+    mockContactVariables.mockResolvedValue([])
+    mockSendFlowStep.mockResolvedValue({
+      messageIds: ["provider-wa-1"],
+      sentCount: 1,
+    })
+    mockEmit.mockResolvedValue(undefined)
+  })
+
+  test("a resolved payment request is sent", async () => {
+    mockReplaceVariables.mockResolvedValue(pixParams("000201"))
+
+    await processWhatsappTemplate({
+      conversation: fakeConversation,
+      contactInbox: fakeContactInbox,
+      template: fakeTemplate,
+    })
+
+    expect(mockSendFlowStep).toHaveBeenCalledTimes(1)
+  })
+
+  test("an unresolved variable never reaches the channel and fails permanently", async () => {
+    mockReplaceVariables.mockResolvedValue(pixParams("{{pix_code}}"))
+
+    const error = await processWhatsappTemplate({
+      conversation: fakeConversation,
+      contactInbox: fakeContactInbox,
+      template: fakeTemplate,
+    }).catch((e) => e as InstanceType<typeof ChannelError>)
+
+    expect(error).toBeInstanceOf(ChannelError)
+    expect(error.category).toBe(ChannelErrorCategory.PAYLOAD_INVALID)
+    expect(mockSendFlowStep).not.toHaveBeenCalled()
+    expect(mockRepositoryCreate).not.toHaveBeenCalled()
+    expect(mockEmit).toHaveBeenCalledWith(
+      "message:failed",
+      expect.objectContaining({ willRetry: false }),
+    )
+  })
+
+  test("a payment request that does not match the template button is refused", async () => {
+    mockReplaceVariables.mockResolvedValue({
+      button: [
+        {
+          sub_type: "payment_request",
+          index: 0,
+          payment_request: { method: "boleto", digitableLine: "0339" },
+        },
+      ],
+    })
+
+    await expect(
+      processWhatsappTemplate({
+        conversation: fakeConversation,
+        contactInbox: fakeContactInbox,
+        template: fakeTemplate,
+      }),
+    ).rejects.toBeInstanceOf(ChannelError)
+    expect(mockSendFlowStep).not.toHaveBeenCalled()
+  })
+})
+
 describe("processWhatsappTemplate — BSUID auth-template guard (D5)", () => {
   const bsuidKeyedContactInbox = {
     ...fakeContactInbox,

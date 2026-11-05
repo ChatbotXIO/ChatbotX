@@ -4483,6 +4483,9 @@
     "waTemplateMpmTooManySections": "Een multi-productknop kan maximaal 10 secties hebben. Verwijder enkele secties voordat je publiceert.",
     "waTemplateMpmTooManyProducts": "Een multi-productknop kan in totaal maximaal 30 producten hebben. Verwijder enkele producten voordat je publiceert.",
     "waTemplateLtoExpirationRequired": "Kies een vervaldatum voor de tijdelijke aanbieding voordat je verzendt.",
+    "waTemplatePaymentRequestIncomplete": "Vul de betaalgegevens van deze knop in voordat je publiceert.",
+    "waTemplatePaymentRequestInvalid": "Een betaalgegeven heeft een ongeldig formaat. Controleer het bedrag, de link en de kaartcijfers.",
+    "waTemplatePaymentRequestMisplaced": "Betaalgegevens kunnen alleen worden ingesteld op een betaalknop van een gewone sjabloon (geen carrousel).",
     "waTemplateMpmIncompleteProducts": "Elke sectie heeft minstens één geselecteerd product nodig — verwijder lege rijen of kies er een product voor.",
     "unsupportedBlock": "Dit kanaal ondersteunt dit blok niet.",
     "constraintExceeded": "De limiet van dit kanaal is overschreden.",
@@ -4496,6 +4499,8 @@
     "canceledVoiceCall": "Geannuleerd gesprek",
     "acceptedCallPermission": "Verzoek om beltoestemming geaccepteerd",
     "declinedCallPermission": "Verzoek om beltoestemming geweigerd",
+    "confirmedPayment": "Betaling bevestigd",
+    "confirmedPaymentWithCard": "Betaling bevestigd met kaart eindigend op {lastFourDigits}",
     "sendHumanAgentTag": "Eén bericht verzenden met de tag HUMAN_AGENT",
     "warning": "Waarschuwing!",
     "humanAgentWarningDescription": "Je mag alleen binnen 7 dagen op het bericht van een gebruiker reageren wanneer het probleem redelijkerwijs niet binnen 24 uur kan worden opgelost. Voorbeelden zijn weekenden, feestdagen of gevallen die meer dan één dag vereisen. Gebruik deze optie om geen enkele andere reden, omdat dit je Facebook-pagina of Instagram-account in gevaar kan brengen. Ga niet verder als je twijfelt.",
@@ -5118,7 +5123,30 @@
         "mpmSectionLimitReached": "Maximum van 10 secties bereikt.",
         "mpmProductLimitReached": "Maximum van 30 producten bereikt.",
         "mpmProductsSummary": "{productCount} producten in {sectionCount} secties",
-        "unsupportedButtonParam": "Dit knoptype wordt nog niet ondersteund."
+        "unsupportedButtonParam": "Dit knoptype wordt nog niet ondersteund.",
+        "payment": {
+          "method": {
+            "pix": "Pix",
+            "boleto": "Boleto",
+            "payment_link": "Betaallink",
+            "card_on_file": "Kaartbetaling met één klik"
+          },
+          "field": {
+            "code": "Pix-code",
+            "digitableLine": "Boleto-regel",
+            "url": "URL van de betaallink",
+            "lastFourDigits": "Laatste 4 cijfers van de kaart",
+            "credentialId": "Kaart-credential-ID (optioneel)",
+            "amount": "Bedrag in BRL, bijv. 12.34"
+          },
+          "notice": {
+            "general": "WhatsApp laat betalingen niet verlopen en reconcilieert ze niet — dat doet je betaalprovider. In een broadcast gaat een vaste waarde naar alle ontvangers; gebruik een variabele.",
+            "pixRedirect": "Pix met doorverwijzing stel je per kanaal in via de WhatsApp-kanaalinstellingen.",
+            "cardOnFile": "Kaartbetaling met één klik werkt alleen voor bedrijven die Meta daarvoor heeft ingeschakeld.",
+            "region": "Betaalverzoeken zijn bedoeld voor Braziliaanse bedrijven en klanten."
+          },
+          "unsupportedButton": "Deze sjabloon heeft een betaalknop die niet kan worden verstuurd: het betaaltype kon niet worden bepaald. Synchroniseer de sjablonen opnieuw of kies een andere."
+        }
       }
     },
     "sampleBodyCardContent": {
@@ -5533,7 +5561,16 @@
     },
     "credentialSecretsRequired": "Voer het app-geheim en het systeemgebruikerstoken in. Ze zijn nog niet opgeslagen.",
     "embeddedSignupCancelled": "De registratie is geannuleerd — je kunt dit tabblad sluiten.",
-    "embeddedSignupFailed": "De registratie is niet voltooid — sluit dit tabblad en probeer het opnieuw."
+    "embeddedSignupFailed": "De registratie is niet voltooid — sluit dit tabblad en probeer het opnieuw.",
+    "payment": {
+      "settings": {
+        "title": "Betalingen",
+        "description": "Hoe dit nummer betaalverzoekknoppen verstuurt.",
+        "pixRedirectLabel": "Pix met doorverwijzing versturen",
+        "pixRedirectDescription": "Kopers openen hun bank-app om te betalen en keren terug naar WhatsApp. Zet dit pas aan nadat Meta je bedrijf heeft aangemeld; kopers die niet kunnen worden doorverwezen krijgen nog steeds kopiëren en plakken.",
+        "adminOnly": "Alleen workspacebeheerders kunnen de betaalinstellingen wijzigen."
+      }
+    }
   },
   "zalo": {
     "title": "Zalo OA",

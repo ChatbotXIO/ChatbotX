@@ -4,6 +4,7 @@ import {
   buttonStepDefaultFn,
   mergeTemplateButtonsWithExisting,
 } from "./button"
+import type { PaymentRequestMethod } from "./payment-request"
 import type {
   ButtonSubType,
   SendWaTemplateMessageStepSchema,
@@ -13,6 +14,7 @@ import type {
 } from "./send-wa-message-template"
 import { toOptionalString } from "./send-wa-message-template"
 import { stepTypes } from "./step-action"
+import { resolveWaPaymentRequestMethod } from "./wa-template-payment-request-rules"
 
 export type ParameterInfo = {
   type: "header" | "body" | "button" | "carousel" | "limited_time_offer"
@@ -21,6 +23,8 @@ export type ParameterInfo = {
   format?: string
   buttonIndex?: number
   buttonSubType?: ButtonSubType
+  /** Set for `payment_request` buttons: read from the template, never chosen. */
+  paymentMethod?: PaymentRequestMethod
   flowSourceId?: string
   navigateScreenId?: string
   cardIndex?: number
@@ -38,6 +42,8 @@ function extractButtonParameterInfos(
   buttons: TemplateComponentButton[],
   cardIndex?: number,
 ): ParameterInfo[] {
+  // Payment request buttons are supported on top-level buttons only.
+  const allowPaymentRequest = cardIndex === undefined
   const params: ParameterInfo[] = []
 
   for (const [buttonIdx, button] of buttons.entries()) {
@@ -100,6 +106,21 @@ function extractButtonParameterInfos(
         cardIndex,
         paramIndex,
       })
+    } else if (buttonType === "PAYMENT_REQUEST" && allowPaymentRequest) {
+      const paymentMethod = resolveWaPaymentRequestMethod(button)
+      if (paymentMethod !== null) {
+        params.push({
+          type: "button",
+          index: 0,
+          paramName: "payment_request",
+          buttonIndex: buttonIdx,
+          buttonSubType: "payment_request",
+          format: "payment_request",
+          paymentMethod,
+          cardIndex,
+          paramIndex,
+        })
+      }
     }
   }
 

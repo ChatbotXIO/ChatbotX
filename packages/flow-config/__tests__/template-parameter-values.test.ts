@@ -5,6 +5,7 @@ import {
   describeMessengerTemplateParameters,
   describeWaTemplateParameters,
   type TemplateComponent,
+  type TemplateComponentButton,
 } from "../src"
 
 const positional: TemplateComponent[] = [
@@ -339,5 +340,139 @@ describe("template parameter edge cases", () => {
       invalid: [],
       unsupported: [],
     })
+  })
+})
+
+describe("payment request template parameters", () => {
+  const pix = {
+    type: "PAYMENT_REQUEST",
+    text: "Copy Pix code",
+    payment_setting: { type: "pix_dynamic_code" },
+  }
+  const boleto = { type: "PAYMENT_REQUEST", text: "Copy Boleto code" }
+  const link = { type: "PAYMENT_REQUEST", text: "Open payment link" }
+  const card = { type: "PAYMENT_REQUEST", text: "Review payment" }
+  const withButtons = (
+    ...buttons: TemplateComponentButton[]
+  ): TemplateComponent[] => [
+    { type: "BODY", text: "Pay" },
+    { type: "BUTTONS", buttons },
+  ]
+
+  test("lists the per-customer keys of each method, never the method itself", () => {
+    expect(describeWaTemplateParameters(withButtons(pix))).toEqual([
+      {
+        key: "button.0",
+        component: "button",
+        kind: "pix_code",
+        required: true,
+      },
+      {
+        key: "button.0.amount",
+        component: "button",
+        kind: "payment_amount",
+        required: false,
+      },
+    ])
+    expect(
+      describeWaTemplateParameters(withButtons(boleto)).map((s) => s.kind),
+    ).toEqual(["boleto_digitable_line"])
+    expect(
+      describeWaTemplateParameters(withButtons(link)).map((s) => s.kind),
+    ).toEqual(["payment_link_url"])
+    expect(
+      describeWaTemplateParameters(withButtons(card)).map((s) => [
+        s.key,
+        s.kind,
+        s.required,
+      ]),
+    ).toEqual([
+      ["button.0", "card_last_four_digits", true],
+      ["button.0.amount", "payment_amount", true],
+      ["button.0.credential_id", "card_credential_id", false],
+    ])
+  })
+
+  test("fills the payment request of the button at its own index", () => {
+    const result = applyWaTemplateParameterValues(
+      withButtons({ type: "QUICK_REPLY", text: "Later" }, pix),
+      { "button.1": "000201", "button.1.amount": "12.34" },
+    )
+
+    expect(result.missing).toEqual([])
+    expect(result.invalid).toEqual([])
+    expect(result.params.button).toEqual([
+      {
+        sub_type: "payment_request",
+        index: 1,
+        payment_request: { method: "pix", code: "000201", amount: "12.34" },
+      },
+    ])
+  })
+
+  test("a missing required value is reported, an optional one is not", () => {
+    const result = applyWaTemplateParameterValues(withButtons(pix), {})
+    expect(result.missing).toEqual(["button.0"])
+
+    const cardResult = applyWaTemplateParameterValues(withButtons(card), {
+      "button.0": "4242",
+    })
+    expect(cardResult.missing).toEqual(["button.0.amount"])
+  })
+
+  test("malformed literals are invalid; variables are accepted", () => {
+    const result = applyWaTemplateParameterValues(withButtons(link, card), {
+      "button.0": "not a url",
+      "button.1": "42",
+      "button.1.amount": "{{total}}",
+    })
+    expect(result.invalid).toEqual(["button.0", "button.1"])
+
+    const ok = applyWaTemplateParameterValues(withButtons(link), {
+      "button.0": "{{pay_url}}",
+    })
+    expect(ok.invalid).toEqual([])
+    expect(ok.params.button?.[0]?.payment_request).toEqual({
+      method: "payment_link",
+      url: "{{pay_url}}",
+    })
+  })
+
+  test("a button whose method cannot be told is unsupported", () => {
+    const result = applyWaTemplateParameterValues(
+      withButtons({ type: "PAYMENT_REQUEST", text: "Pay now" }),
+      {},
+    )
+    expect(result.unsupported).toEqual(["button.0"])
+    expect(
+      describeWaTemplateParameters(
+        withButtons({ type: "PAYMENT_REQUEST", text: "Pay now" }),
+      ),
+    ).toEqual([])
+  })
+
+  test("a payment button inside a carousel card is unsupported", () => {
+    const components: TemplateComponent[] = [
+      {
+        type: "CAROUSEL",
+        cards: [
+          {
+            card_index: 0,
+            components: [{ type: "BUTTONS", buttons: [pix] }],
+          },
+        ],
+      },
+    ]
+    expect(applyWaTemplateParameterValues(components, {}).unsupported).toEqual([
+      "card.0.button.0",
+    ])
+  })
+
+  test("keys of another method are unknown", () => {
+    const result = applyWaTemplateParameterValues(withButtons(boleto), {
+      "button.0": "1234",
+      "button.0.amount": "10",
+    })
+    expect(result.unknown).toEqual(["button.0.amount"])
   })
 })

@@ -5165,6 +5165,9 @@
     "waTemplateMpmTooManySections": "Çoxməhsullu düymədə ən çox 10 bölmə ola bilər. Dərc etməzdən əvvəl bəzi bölmələri çıxarın.",
     "waTemplateMpmTooManyProducts": "Çoxməhsullu düymədə ümumilikdə ən çox 30 məhsul ola bilər. Dərc etməzdən əvvəl bəzi məhsulları çıxarın.",
     "waTemplateLtoExpirationRequired": "Göndərməzdən əvvəl müddəti məhdud təklif üçün bitmə tarixi seçin.",
+    "waTemplatePaymentRequestIncomplete": "Dərc etməzdən əvvəl bu düymənin ödəniş məlumatlarını doldurun.",
+    "waTemplatePaymentRequestInvalid": "Ödəniş məlumatının formatı yanlışdır. Məbləği, linki və kart rəqəmlərini yoxlayın.",
+    "waTemplatePaymentRequestMisplaced": "Ödəniş məlumatları yalnız adi (karusel olmayan) şablonun ödəniş düyməsində təyin edilə bilər.",
     "waTemplateMpmIncompleteProducts": "Hər bölmədə ən azı bir məhsul seçilməlidir: boş sətirləri çıxarın və ya onlar üçün məhsul seçin.",
     "unsupportedBlock": "Bu kanal bu bloku dəstəkləmir.",
     "constraintExceeded": "Bu kanalın limiti aşıldı.",
@@ -5178,6 +5181,8 @@
     "canceledVoiceCall": "Ləğv edilmiş zəng",
     "acceptedCallPermission": "Zəng icazəsi sorğusu qəbul edildi",
     "declinedCallPermission": "Zəng icazəsi sorğusu rədd edildi",
+    "confirmedPayment": "Ödəniş təsdiqləndi",
+    "confirmedPaymentWithCard": "Ödəniş {lastFourDigits} ilə bitən kartla təsdiqləndi",
     "sendHumanAgentTag": "HUMAN_AGENT etiketi ilə bir mesaj göndər",
     "warning": "Xəbərdarlıq!",
     "humanAgentWarningDescription": "İstifadəçinin mesajına 7 gün ərzində yalnız məsələni 24 saat ərzində həll etmək əsaslı olaraq mümkün olmadıqda cavab verə bilərsiniz. Buna həftəsonları, bayramlar və ya tamamlanması bir gündən çox vaxt tələb edən hallar daxildir. Bu seçimdən başqa səbəblə istifadə etməyin, çünki bu, Facebook səhifənizi və ya Instagram hesabınızı riskə ata bilər. Əmin deyilsinizsə, davam etməyin.",
@@ -5800,7 +5805,30 @@
         "mpmSectionLimitReached": "Maksimum 10 bölmə həddinə çatılıb.",
         "mpmProductLimitReached": "Maksimum 30 məhsul həddinə çatılıb.",
         "mpmProductsSummary": "{sectionCount} bölmədə {productCount} məhsul",
-        "unsupportedButtonParam": "Bu düymə növü hələ dəstəklənmir."
+        "unsupportedButtonParam": "Bu düymə növü hələ dəstəklənmir.",
+        "payment": {
+          "method": {
+            "pix": "Pix",
+            "boleto": "Boleto",
+            "payment_link": "Ödəniş linki",
+            "card_on_file": "Bir klikləyə kartla ödəniş"
+          },
+          "field": {
+            "code": "Pix kodu",
+            "digitableLine": "Boleto sətri",
+            "url": "Ödəniş linkinin URL-i",
+            "lastFourDigits": "Kartın son 4 rəqəmi",
+            "credentialId": "Kart credential ID-si (könüllü)",
+            "amount": "BRL ilə məbləğ, məs. 12.34"
+          },
+          "notice": {
+            "general": "WhatsApp ödənişləri bitirmir və uzlaşdırmır — bunu ödəniş provayderiniz edir. Kütləvi göndərişdə sabit dəyər bütün alıcılara gedir; dəyişən istifadə edin.",
+            "pixRedirect": "Yönləndirmə ilə Pix WhatsApp kanal ayarlarında kanal üzrə təyin edilir.",
+            "cardOnFile": "Bir klikləyə kartla ödəniş yalnız Meta-nın aktivləşdirdiyi bizneslər üçün işləyir.",
+            "region": "Ödəniş sorğuları Braziliya bizneslər və müştərilər üçün nəzərdə tutulub."
+          },
+          "unsupportedButton": "Bu şablonda göndərilə bilməyən ödəniş düyməsi var: ödəniş növü müəyyən edilə bilmədi. Şablonları yenidən sinxronlaşdırın və ya başqasını seçin."
+        }
       }
     },
     "sampleBodyCardContent": {
@@ -6215,7 +6243,16 @@
     },
     "credentialSecretsRequired": "Tətbiq sirrini və sistem istifadəçisi tokenini daxil edin. Hələ saxlanmayıb.",
     "embeddedSignupCancelled": "Qeydiyyat ləğv edildi — bu tabı bağlaya bilərsiniz.",
-    "embeddedSignupFailed": "Qeydiyyat tamamlanmadı — bu tabı bağlayın və yenidən cəhd edin."
+    "embeddedSignupFailed": "Qeydiyyat tamamlanmadı — bu tabı bağlayın və yenidən cəhd edin.",
+    "payment": {
+      "settings": {
+        "title": "Ödənişlər",
+        "description": "Bu nömrənin ödəniş sorğusu düymələrini necə göndərməsi.",
+        "pixRedirectLabel": "Pix-i yönləndirmə ilə göndər",
+        "pixRedirectDescription": "Alıcılar ödəmək üçün bank tətbiqini açır və WhatsApp-a qayıdır. Yalnız Meta bizneslərinizi qeydə aldıqdan sonra aktiv edin; yönləndirilə bilməyən alıcılar yenə kopyala-yapışdır alır.",
+        "adminOnly": "Ödəniş ayarlarını yalnız iş sahəsi adminləri dəyişə bilər."
+      }
+    }
   },
   "zalo": {
     "title": "Zalo OA",
