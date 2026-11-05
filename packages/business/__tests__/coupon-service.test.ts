@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
 import { couponService } from "../src/coupon/service"
+import { assertResourceEditable } from "../src/template/installed-resource.service"
 
 const mocks = vi.hoisted(() => ({
   transaction: vi.fn(),
@@ -25,6 +26,25 @@ const mocks = vi.hoisted(() => ({
   listIssuedCouponsForContact: vi.fn(),
   contactFindByIdOrFail: vi.fn(),
   selectWorkspace: vi.fn(),
+}))
+vi.mock("../src/template/installed-resource.service", async () => ({
+  ...(await import("./helpers/template-guard-mocks")).templateGuardMocks({
+    assertDeletable: vi.fn(),
+    assertResourceEditable: vi.fn(),
+  }),
+
+  changedKeysOf: () => [],
+}))
+const lockedTx = { marker: "locked-tx" }
+const mockLockOptions = vi.hoisted(() => vi.fn())
+vi.mock("../src/template/template-resource-locks", () => ({
+  withTemplateLockedTransaction: (
+    run: (tx: unknown) => unknown,
+    options?: unknown,
+  ) => {
+    mockLockOptions(options)
+    return run(lockedTx)
+  },
 }))
 vi.mock("@chatbotx.io/database/client", () => ({
   db: {
@@ -404,7 +424,85 @@ describe("couponService topic validation", () => {
         description: undefined,
         expiresAt: expect.any(Date),
       }),
+      lockedTx,
     )
+  })
+
+  test("updateTopic asks the template lock guard for the keys that really changed", async () => {
+    mocks.findTopic.mockResolvedValue({
+      id: "topic-1",
+      hasEverHadCoupon: false,
+      name: "Old name",
+      description: null,
+    })
+    mocks.updateTopic.mockResolvedValue({ id: "topic-1" })
+
+    await couponService.updateTopic({
+      workspaceId: "workspace-1",
+      topicId: "topic-1",
+      name: "New name",
+    })
+
+    expect(assertResourceEditable).toHaveBeenCalledWith(
+      expect.objectContaining({
+        resourceKind: "couponTopic",
+        resourceIds: ["topic-1"],
+        tx: lockedTx,
+      }),
+    )
+    expect(
+      vi.mocked(assertResourceEditable).mock.invocationCallOrder[0],
+    ).toBeLessThan(mocks.updateTopic.mock.invocationCallOrder[0] as number)
+  })
+
+  test("updateTopic locks the topic, then reads the stored row on the locked transaction", async () => {
+    mocks.findTopic.mockResolvedValue({
+      id: "topic-1",
+      hasEverHadCoupon: false,
+      name: "Old name",
+      description: null,
+    })
+    mocks.updateTopic.mockResolvedValue({ id: "topic-1" })
+    mocks.findTopic.mockClear()
+    mockLockOptions.mockClear()
+
+    await couponService.updateTopic({
+      workspaceId: "workspace-1",
+      topicId: "topic-1",
+      name: "New name",
+    })
+
+    expect(mockLockOptions).toHaveBeenCalledWith({
+      workspaceId: expect.any(String),
+      initialKeys: [{ kind: "couponTopic", resourceId: "topic-1" }],
+    })
+    // The second findTopic is the in-transaction read, on the locked client.
+    expect(mocks.findTopic).toHaveBeenLastCalledWith(
+      { workspaceId: "workspace-1", topicId: "topic-1" },
+      lockedTx,
+    )
+    expect(mockLockOptions.mock.invocationCallOrder[0]).toBeLessThan(
+      mocks.findTopic.mock.invocationCallOrder[1] as number,
+    )
+  })
+
+  test("updateTopic blocked by the guard writes nothing", async () => {
+    mocks.findTopic.mockResolvedValue({
+      id: "topic-1",
+      hasEverHadCoupon: false,
+      name: "Old name",
+      description: null,
+    })
+    vi.mocked(assertResourceEditable).mockRejectedValueOnce(new Error("locked"))
+
+    await expect(
+      couponService.updateTopic({
+        workspaceId: "workspace-1",
+        topicId: "topic-1",
+        name: "New name",
+      }),
+    ).rejects.toThrow("locked")
+    expect(mocks.updateTopic).not.toHaveBeenCalled()
   })
 })
 

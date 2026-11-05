@@ -1919,7 +1919,8 @@
       "processing": "Käsitellään",
       "installing": "Installing",
       "completed": "Valmis",
-      "partial": "Partial",
+      "partial": "Osittainen",
+      "uninstalled": "Uninstalled",
       "failed": "Epäonnistui",
       "success": "Onnistui",
       "error": "Virhe"
@@ -2661,6 +2662,7 @@
       "leaderboards": "Tulostaulukot",
       "pipelines": "Myyntiputket",
       "places": "Paikat",
+      "templates": "Mallit",
       "polls": "Polls"
     },
     "adReferral": {
@@ -2799,6 +2801,7 @@
   "flows": {
     "export": {
       "notPublished": "Tätä flow'ta ei ole koskaan julkaistu. Julkaise se ennen viemistä.",
+      "viewOnly": "Tämä kulku asennettiin vain luku -mallista, joten sitä ei voi viedä.",
       "failed": "Vienti epäonnistui. Yritä uudelleen."
     },
     "title": "Flow't",
@@ -6995,6 +6998,9 @@
   "templates": {
     "title": "Mallit",
     "description": "Luo ja hallitse mallejasi.",
+    "createDialog": {
+      "title": "Uusi malli"
+    },
     "share": {
       "label": "Jaa",
       "enabled": "Jaettu",
@@ -7003,14 +7009,135 @@
       "dialogDescription": "Kuka tahansa, jolla on tämä linkki, voi asentaa kopion tästä mallista organisaatiosi työtilaan.",
       "enableLabel": "Ota jakolinkki käyttöön",
       "linkLabel": "Jakolinkki",
-      "description": "Kuka tahansa, jolla on linkki, voi asentaa tämän mallin omaan työtilaansa."
+      "rotateLabel": "Vaihda linkki",
+      "rotateTitle": "Vaihdetaanko jakolinkki?",
+      "rotateDescription": "Nykyinen linkki lakkaa toimimasta heti. Kaikki, jotka vielä tarvitsevat tämän mallin asentamiseen, tarvitsevat uuden linkin.",
+      "rotated": "Jakolinkki vaihdettu",
+      "expiryLabel": "Linkki vanhenee",
+      "expiryHint": "Jätä tyhjäksi, jos linkki ei vanhene koskaan.",
+      "clearExpiry": "Poista vanheneminen",
+      "expiredNotice": "Tämä linkki on vanhentunut. Aseta myöhempi päivämäärä tai poista vanheneminen jakaaksesi sen uudelleen.",
+      "templateId": "Mallin tunnus",
+      "templateKey": "Mallin avain",
+      "showKey": "Näytä avain",
+      "hideKey": "Piilota avain",
+      "copyField": "Kopioi {field}"
+    },
+    "sync": {
+      "title": "Päivitykset",
+      "updateAvailable": "Päivitys saatavilla",
+      "upToDate": "Ajan tasalla",
+      "sourceDeleted": "Malli poistettu",
+      "sourceDeletedHint": "Julkaisija poisti tämän mallin. Kopiosi toimii edelleen, mutta sitä ei voi enää päivittää.",
+      "updateNow": "Päivitä nyt",
+      "updating": "Päivitetään…",
+      "version": "Mallin versio {version}",
+      "lastSynced": "päivitetty viimeksi {date}",
+      "autoUpdateLabel": "Päivitä automaattisesti, kun malli muuttuu",
+      "noHistory": "Ei vielä päivityksiä.",
+      "countAdded": "{count} lisätty",
+      "countUpdated": "{count} päivitetty",
+      "countDetached": "{count} ei enää seuraa mallia",
+      "notUpdatable": "{count} ei ole vielä päivitettävissä",
+      "overwritten": "{name} oli muokattu ja päivitys korvasi sen",
+      "restore": "Palauta oma versioni",
+      "restored": "Versiosi palautettiin",
+      "status": {
+        "pending": "Jonossa",
+        "running": "Käynnissä",
+        "completed": "Valmis",
+        "partial": "Osittainen",
+        "failed": "Epäonnistui",
+        "skipped": "Ohitettu",
+        "cancelled": "Peruttu"
+      },
+      "trigger": {
+        "autoUpdate": "Automaattinen",
+        "manual": "Manuaalinen",
+        "reinstall": "Uudelleenasennus"
+      },
+      "requestedVersion": "pyydetty v{version}",
+      "errors": {
+        "unknown": "Päivitys epäonnistui. Yritä uudelleen tai ota yhteyttä tukeen, jos virhe toistuu.",
+        "templateSyncFailed": "Päivitys epäonnistui. Yritä uudelleen.",
+        "templateSyncSuperseded": "Uudempi päivitys korvasi tämän.",
+        "templateSyncAbandoned": "Päivitys ei valmistunut ajoissa ja se suljettiin.",
+        "templateInstallationInactive": "Tämä asennus ei ole enää aktiivinen.",
+        "workspaceOwnerBlocked": "Työtilan omistajan tili on estetty.",
+        "templateUninstallInProgress": "Mallia poistetaan.",
+        "templateAutoUpdateOff": "Automaattiset päivitykset on poistettu käytöstä.",
+        "templateUpToDate": "Kopio on jo ajan tasalla.",
+        "templateInstallerAccessLost": "Asentajalla ei ole enää oikeutta päivittää tätä kopiota.",
+        "templateInstallationSourceMissing": "Malli poistettiin ennen päivityksen suoritusta.",
+        "templateCategoryPermissionDenied": "Sinulla ei ole enää oikeutta päivittää kaikkea tässä mallissa.",
+        "templatePayloadIncompatible": "Tämä malli on tallennettu uudemmassa muodossa kuin tämä palvelin pystyy asentamaan.",
+        "templateCrossTenantInstall": "Tämä malli ei ole käytettävissä työtilassasi.",
+        "templateInvalidInboxBinding": "Valittu postilaatikko ei vastaa mallia."
+      }
+    },
+    "versions": {
+      "detailsTab": "Tiedot",
+      "tab": "Versiot",
+      "versionNumber": "Versio {version}",
+      "current": "Nykyinen",
+      "first": "Ensimmäinen versio",
+      "noDetail": "Tästä versiosta ei tallennettu tietoja.",
+      "added": "Lisätty",
+      "changed": "Muutettu",
+      "removed": "Poistettu"
+    },
+    "installers": {
+      "title": "Näytä analytiikka",
+      "workspace": "Työtila",
+      "lastInstalled": "Viimeksi asennettu",
+      "version": "Versio",
+      "autoUpdate": "Automaattinen päivitys",
+      "uninstalled": "Poistettu",
+      "hidden": "Työtilaa ei jaettu",
+      "uninstallNotAllowed": "Asentaja ei ole sallinut julkaisijoiden poistaa tätä kopiota.",
+      "loadError": "Asentajien lataus epäonnistui. Yritä uudelleen.",
+      "automatic": "Automaattinen",
+      "details": "Tiedot",
+      "noIssues": "Ei varoituksia tai virheitä."
     },
     "installs": {
       "title": "Asennukset",
       "resources": "Resurssit",
       "warnings": "Varoitukset",
       "completedAt": "Valmistui",
-      "autoUpdate": "Automaattinen päivitys"
+      "autoUpdate": "Automaattinen päivitys",
+      "installedBy": "Asentaja",
+      "viaApi": "API-tunnus",
+      "attempts": "Yritykset",
+      "autoUpdateOn": "Käytössä",
+      "autoUpdateOff": "Pois käytöstä",
+      "retry": "Yritä asennusta uudelleen",
+      "resourcesTitle": "Asennetut resurssit",
+      "noResources": "Mitään ei ole vielä luotu.",
+      "deletedResource": "Poistettu resurssi",
+      "viewOnly": "Vain katselu",
+      "created": "Luotu",
+      "reused": "Käytetty uudelleen",
+      "loadMore": "Lataa lisää",
+      "statusFilter": "Tila",
+      "allStatuses": "Kaikki tilat",
+      "errors": {
+        "unknown": "Asennus epäonnistui. Yritä uudelleen tai ota yhteyttä tukeen, jos ongelma jatkuu.",
+        "templatePayloadIncompatible": "Tämä malli on tallennettu uudemmassa muodossa kuin tämä palvelin pystyy asentamaan.",
+        "templateInstallationSourceMissing": "Malli poistettiin ennen asennuksen suorittamista.",
+        "templateCrossTenantInstall": "Tämä malli ei ole käytettävissä työtilassasi.",
+        "templateCategoryPermissionDenied": "Sinulla ei ole enää oikeutta asentaa kaikkea tämän mallin sisältöä.",
+        "templateInvalidInboxBinding": "Valittu postilaatikko ei vastaa mallia.",
+        "templateInstallEnqueueFailed": "Asennusta ei voitu asettaa jonoon.",
+        "templateInstallFailed": "Asennus epäonnistui. Yritä uudelleen.",
+        "templateInstallAbandoned": "Asennus ei valmistunut ajoissa, ja se suljettiin.",
+        "templateInstallSuperseded": "Tämän mallin uudempi asennus korvasi tämän.",
+        "workspaceOwnerBlocked": "Työtilan omistajan tili on estetty."
+      },
+      "uninstalledBy": "{by, select, publisher {Julkaisija poisti tämän mallin.} installer {Tämä malli poistettiin tästä työtilasta.} other {Tämä malli poistettiin.}}",
+      "uninstalledSummary": "{deleted} poistettu, {kept} säilytetty.",
+      "lastAttemptAt": "Viimeisin yritys",
+      "installedAutomatically": "Asennettu automaattisesti (white-labelin oletus)"
     },
     "form": {
       "contents": "Mallin sisältö",
@@ -7023,14 +7150,26 @@
       "allowDelete": "Salli poistaminen asennuksen jälkeen",
       "publisherName": "Julkaisijan nimi",
       "youtubeVideoId": "YouTube-videon tunnus",
-      "youtubeVideoIdDescription": "11-merkkinen tunnus videon URL-osoitteesta, esim. \"dQw4w9WgXcQ\" osoitteessa youtube.com/watch?v=dQw4w9WgXcQ",
+      "youtubeVideoIdDescription": "11-merkkinen tunnus videon URL-osoitteesta, esim. \"xxxxxxxxxxx\" osoitteessa youtube.com/watch?v=xxxxxxxxxxx",
       "testLink": "Testilinkki",
       "imageUrl": "Kansikuva",
       "installBehavior": "Asennuksen toiminta",
-      "createInstallFolder": "Asenna omaan kansioon",
+      "createInstallFolder": "Luo kansio asennustilille ja asenna resurssit.",
       "createInstallFolderDescription": "Sijoittaa jokaisen asennetun resurssin uuteen, tämän mallin mukaan nimettyyn kansioon.",
-      "defaultAutoUpdate": "Merkitse asennukset oletuksena päivitettäviksi",
-      "defaultAutoUpdateDescription": "Uudet asennukset näyttävät päivitysilmoituksen aina, kun julkaiset tämän mallin uudelleen."
+      "defaultAutoUpdate": "Päivitä asennetut mallit automaattisesti",
+      "defaultAutoUpdateDescription": "Aina kun tallennat tämän mallin muuttuneella sisällöllä, automaattisia päivityksiä seuraavat asennukset korvataan uudella sisällöllä (asentajan muokkaamista kopioista otetaan ensin varmuuskopio). Asentajat voivat poistaa tämän käytöstä.",
+      "viewOnly": "Vain katselu",
+      "viewOnlyAll": "Aseta kaikki valitut vain katseltaviksi",
+      "includedAutomatically": {
+        "title": "Mukana automaattisesti",
+        "hint": "Mukaan otettu, koska jokin valitsemasi tarvitsee sitä. Vain luku.",
+        "rows": "{count, plural, one {# lisäkohde} other {# lisäkohdetta}}",
+        "kind": {
+          "folders": "Kansiot",
+          "placeCategories": "Paikkakategoriat"
+        }
+      },
+      "viewOnlyCopyIncluded": "Jokin valitsemasi kohde (tai sen tarvitsema kohde) on asennettu vain luku -mallista, joten sitä ei voi jakaa uudessa mallissa."
     },
     "categories": {
       "flows": "Flowt",
@@ -7045,8 +7184,116 @@
       "keywords": "Avainsanat",
       "entryPointLinks": "Aloituspisteiden linkit",
       "triggers": "Käynnistimet",
-      "fbCommentAutomations": "Facebook-kommenttiautomaatiot",
-      "settings": "Asetukset"
+      "fbCommentAutomations": "Kommenttiautomaatiot",
+      "settings": "Bottikentät ja tallennetut vastaukset",
+      "sequences": "Sekvenssit",
+      "aiMcpServers": "MCP-palvelimet",
+      "aiFiles": "Tekoälyn tietotiedostot",
+      "questionnaires": "Kyselylomakkeet",
+      "couponTopics": "Kuponkiaiheet",
+      "pipelines": "Pipelinet"
+    },
+    "locked": {
+      "flowBanner": "Tämä flow on asennettu vain katseltavasta mallista. Voit katsoa sitä, mutta et muokata sitä.",
+      "badge": "Vain katselu",
+      "editorBanner": "Tämä on asennettu vain katseltavasta mallista. Voit katsoa sitä, mutta et muokata sitä.",
+      "badgeHint": "Asennettu vain katseltavasta mallista"
+    },
+    "channels": {
+      "messenger": "Messenger",
+      "instagram": "Instagram",
+      "instagramFacebook": "Instagram (Facebook login)",
+      "threads": "Threads",
+      "tiktok": "TikTok",
+      "whatsapp": "WhatsApp",
+      "telegram": "Telegram",
+      "zalo": "Zalo",
+      "webchat": "Verkkokeskustelu",
+      "line": "LINE",
+      "email": "Sähköposti"
+    },
+    "uninstall": {
+      "title": "Poista malli",
+      "description": "Malli poistaa kaiken, minkä se loi tähän työtilaan, myös muokatut kopiot. Jaetut tunnisteet, kentät ja kansiot, aiemmin olemassa olleet kohteet sekä kaikki, minkä rakensit kopion päälle, säilytetään.",
+      "loading": "Tarkistetaan, mitä tapahtuu…",
+      "previewFailed": "Poiston vaikutusta ei voitu tarkistaa.",
+      "failed": "Mallia ei voitu poistaa.",
+      "confirm": "Poista",
+      "action": "Poista",
+      "deleted": "{count, plural, one {# kohde poistetaan} other {# kohdetta poistetaan}}",
+      "deletedDone": "{count, plural, one {# kohde poistettiin} other {# kohdetta poistettiin}}",
+      "keptModified": "{count, plural, one {# muokattu tai vahvistamaton kopio säilytetään} other {# muokattua tai vahvistamatonta kopiota säilytetään}}",
+      "keptShared": "{count, plural, one {# jaettu tunniste tai kenttä säilytetään} other {# jaettua tunnistetta ja kenttää säilytetään}}",
+      "keptByPolicy": "{count, plural, one {# muu kohde säilytetään} other {# muuta kohdetta säilytetään}}",
+      "keptHasDependents": "{count, plural, one {# kopio säilytetään, koska jokin vielä käyttää sitä} other {# kopiota säilytetään, koska jokin vielä käyttää niitä}}",
+      "deletedModified": "{count, plural, one {# niistä oli sinun muokkaamasi: muokkaukset menetetään eikä niitä voi palauttaa} other {# niistä oli sinun muokkaamiasi: muokkaukset menetetään eikä niitä voi palauttaa}}",
+      "keptLockedByOther": "{count, plural, one {# kohde säilytetään, koska toinen mallin asennus suojaa sitä vielä} other {# kohdetta säilytetään, koska toinen mallin asennus suojaa niitä vielä}}",
+      "confirmCheckbox": "Ymmärrän, että tämä poistaa yllä olevat kohteet eikä sitä voi perua",
+      "started": "Poisto aloitettu",
+      "inProgress": "Poistetaan…",
+      "retry": "Yritä poistoa uudelleen",
+      "state": {
+        "pending": "Poisto jonossa",
+        "running": "Poistetaan…",
+        "partial": "Poisto jäi kesken, yritä uudelleen",
+        "failed": "Poisto epäonnistui, yritä uudelleen",
+        "skipped": "Poisto ohitettu: työtila on estetty"
+      },
+      "deletedUnverified": "{count, plural, one {# niistä ei voida tarkistaa muokkausten varalta: jos muutit sitä, muutokset menetetään} other {# niistä ei voida tarkistaa muokkausten varalta: jos muutit niitä, muutokset menetetään}}",
+      "cancelAction": "Peruuta poisto",
+      "cancelled": "Poisto peruttu: jäljellä olevat kohteet ovat taas käytössäsi",
+      "blockedByReference": "{count, plural, one {# kohdetta ei poistettu, koska jokin luomasi viittaa siihen: poista viittaus ja yritä poistoa uudelleen} other {# kohdetta ei poistettu, koska jokin luomasi viittaa niihin: poista viittaukset ja yritä poistoa uudelleen}}",
+      "keptPartlyRemoved": "{count, plural, one {# kopio säilytettiin estyneen poiston jälkeen; historia ja kaksoiskappaleiden esto saattavat olla poistettu, joten tarkista se ennen kuin otat sen käyttöön} other {# kopiota säilytettiin estyneen poiston jälkeen; historia ja kaksoiskappaleiden esto saattavat olla poistettu, joten tarkista ne ennen kuin otat ne käyttöön}}",
+      "keptInactiveForReview": "{count, plural, one {# kopio jätettiin pois käytöstä: sen historia ja kaksoiskappaleiden esto poistettiin, joten tarkista se ennen kuin otat sen käyttöön} other {# kopiota jätettiin pois käytöstä: niiden historia ja kaksoiskappaleiden esto poistettiin, joten tarkista ne ennen kuin otat ne käyttöön}}",
+      "keptHistoryRemoved": "{count, plural, one {# kopio säilytettiin, mutta sen historia poistettiin (sitä ei voi ottaa käyttöön): tarkista se ennen kuin luotat siihen} other {# kopiota säilytettiin, mutta niiden historia poistettiin (niitä ei voi ottaa käyttöön): tarkista ne ennen kuin luotat niihin}}",
+      "cancelledPartial": "{count, plural, one {# kohdetta poistetaan jo ja poisto päättyy; loput palautettiin} other {# kohdetta poistetaan jo ja poisto päättyy; loput palautettiin}}"
+    },
+    "warningCodes": {
+      "aiFileTooLarge": "Tämä tietämystiedosto on suurempi kuin mallin asennus voi kopioida, joten se ohitettiin.",
+      "aiFileUnavailable": "Tätä tietämystiedostoa ei voitu kopioida, joten se ohitettiin.",
+      "assigneeRequired": "Valitse, kenelle tämä vaihe määrittää keskustelun.",
+      "ambiguousSourceFieldToken": "Useilla lähdekentillä on tämä nimi, joten sitä käyttävät muuttujat jätettiin ennalleen.",
+      "backupTooLarge": "Paikallisesti muokattu kohde oli liian suuri varmuuskopioitavaksi, joten sitä ei korvattu.",
+      "backupUnavailable": "Tämän kohteen varmuuskopio ei ole enää saatavilla.",
+      "botFieldRenamed": "Samanniminen botin kenttä, jonka tyyppi on eri, on jo olemassa, joten luotiin uudelleennimetty kenttä.",
+      "categoryPermissionDenied": "Sinulla ei ole oikeutta tähän luokkaan, joten se ohitettiin.",
+      "couponTopicExpired": "Tämä kuponkiaihe on jo vanhentunut.",
+      "credentialRequired": "Lisää tämän kohteen tunnistetiedot ennen sen käyttöä.",
+      "custom": "Viitattua kohdetta ei löytynyt tästä työtilasta, joten linkki poistettiin.",
+      "customField": "Viitattua kohdetta ei löytynyt tästä työtilasta, joten linkki poistettiin.",
+      "customFieldRenamed": "Samanniminen kenttä toista tyyppiä on jo olemassa, joten luotiin uudelleennimetty kenttä.",
+      "enqueueFailed": "Taustakäsittelyä ei voitu asettaa jonoon tälle kohteelle.",
+      "flow": "Viitattua kohdetta ei löytynyt tästä työtilasta, joten linkki poistettiin.",
+      "flowInvalidStructure": "Flow-kokonaisuuden rakenne on virheellinen, joten se ohitettiin.",
+      "flowNotPublished": "Flow asennettiin luonnoksena, eikä sitä ole julkaistu.",
+      "flowSkippedRequiredReference": "Flow ohitettiin, koska pakollista viittausta ei voitu ratkaista.",
+      "folder": "Viitattua kohdetta ei löytynyt tästä työtilasta, joten linkki poistettiin.",
+      "inboxBindingRequired": "Valitse tälle kanavalle saapuneet-kansio; siihen asti kohde pysyy ei-aktiivisena.",
+      "integration": "Viitattua kohdetta ei löytynyt tästä työtilasta, joten linkki poistettiin.",
+      "localModifiedOverwritten": "Paikallisesti muokattu kohde korvattiin. Varmuuskopio tallennettiin, ja se voidaan palauttaa.",
+      "name": "Tälle kohteelle ei löytynyt vapaata nimeä, joten se ohitettiin.",
+      "noEmbeddingProvider": "Tässä työtilassa ei ole määritetty upotuspalveluntarjoajaa, joten tietämystiedostot ohitettiin. Yhdistä OpenAI tai Gemini ja asenna uudelleen.",
+      "notUpdatable": "Tämän tyyppistä kohdetta ei vielä päivitetä automaattisesti.",
+      "pipeline": "Käyttää putkea, jota ei enää ole.",
+      "pipelineField": "Käyttää putken kenttää, jota ei enää ole.",
+      "pipelineStage": "Käyttää putken vaihetta, jota ei enää ole.",
+      "postSelectionRequired": "Valitse julkaisu uudelleen: alkuperäistä julkaisua ei voitu siirtää.",
+      "product": "Viitattua kohdetta ei löytynyt tästä työtilasta, joten linkki poistettiin.",
+      "productCategory": "Viitattua kohdetta ei löytynyt tästä työtilasta, joten linkki poistettiin.",
+      "questionImage": "Kuvaa ei voitu kopioida.",
+      "quota": "Pakettiraja saavutettiin, joten kohde ohitettiin.",
+      "referenceRemoved": "Ratkaisematon viittaus poistettiin.",
+      "savedReply": "Viitattua kohdetta ei löytynyt tästä työtilasta, joten linkki poistettiin.",
+      "savedReplyImage": "Kuvaa ei voitu kopioida.",
+      "tag": "Viitattua kohdetta ei löytynyt tästä työtilasta, joten linkki poistettiin.",
+      "unlisted": "Kohdetta ei tuotu kokonaan: {code}",
+      "workspaceMember": "Määritetty jäsenelle, joka ei ole tässä työtilassa.",
+      "workspaceUnavailable": "Tämä työtila ei ole enää käytettävissä, joten kohde ohitettiin."
+    },
+    "tabs": {
+      "mine": "Omat mallit",
+      "installed": "Asennetut",
+      "installedEmpty": "Asennettuja malleja ei vielä ole. Toisesta työtilasta asentamasi mallit näkyvät täällä."
     }
   },
   "qrCodeGenerator": {
@@ -7169,6 +7416,23 @@
     "hint": "Salli kaikki kanavat jättämällä kaikki kanavat valitsematta.",
     "hiddenByPlatform": "Alustan ylläpitäjä on piilottanut tämän kanavan — et voi ottaa sitä uudelleen käyttöön."
   },
+  "platformDefaultTemplate": {
+    "title": "Oletusmalli",
+    "description": "Asenna tämä malli jokaiseen uuteen työtilaan, joka luodaan tämän white-labelin alle. Olemassa oleviin työtiloihin ei tehdä muutoksia.",
+    "clearTitle": "Poistetaanko oletusmalli?",
+    "clearDescription": "Uudet työtilat eivät enää saa mallia automaattisesti. Työtilat, joilla malli jo on, säilyttävät sen.",
+    "status": {
+      "notConfigured": "Ei asetettu",
+      "ready": "Aktiivinen",
+      "templateUnavailable": "Malli ei ole käytettävissä",
+      "shareDisabled": "Jakolinkki pois päältä",
+      "keyRotated": "Avain ei kelpaa"
+    },
+    "errors": {
+      "unavailable": "Mallin tunnus tai avain ei kelpaa.",
+      "shareDisabled": "Ota ensin mallin jakolinkki käyttöön."
+    }
+  },
   "platformEmailTemplates": {
     "title": "Sähköpostimallit",
     "description": "Käytä järjestelmän oletusmallia jättämällä aihe ja runko tyhjäksi.",
@@ -7252,14 +7516,39 @@
     "invalidTitle": "Tämä linkki ei ole enää käytettävissä.",
     "invalidDescription": "Tämä mallin jakolinkki on virheellinen, poistettu käytöstä tai vanhentunut.",
     "byPublisher": "Julkaisija: {publisherName}",
-    "includes": "Tämä malli sisältää",
     "videoTitle": "Mallin esikatseluvideo",
-    "tryItOut": "Kokeile sitä",
-    "signInToInstall": "Kirjaudu sisään asentaaksesi",
+    "preview": "Esikatselu",
+    "aboutTemplate": "Tietoja tästä mallista",
     "selectWorkspace": "Valitse työtila",
     "install": "Asenna",
     "installStarted": "Asennus aloitettu",
-    "noEligibleWorkspaces": "Sinulla ei ole työtilaa, johon tämän mallin voi asentaa."
+    "noEligibleWorkspaces": "Sinulla ei ole työtilaa, johon tämän mallin voi asentaa.",
+    "alreadyInstalled": "Tämä malli on jo asennettu tähän työtilaan.",
+    "viewInstall": "Näytä asennus",
+    "installAnotherCopy": "Asenna toinen kopio",
+    "inboxesTitle": "Postilaatikot",
+    "inboxesHint": "Tämä malli on rakennettu näiden postilaatikoiden ympärille. Valitse, mitä omia postilaatikoitasi käytetään; pois jätetyt asennetaan pois käytöstä.",
+    "noInbox": "Älä yhdistä — asenna pois käytöstä",
+    "noInboxAvailable": "Tällä kanavalla ei ole yhdistettyä postilaatikkoa",
+    "updateExisting": "Päivitä asennettu kopio",
+    "updateStarted": "Päivitys aloitettu",
+    "autoUpdateLabel": "Päivitä automaattisesti, kun malli muuttuu",
+    "collisions": {
+      "title": "Mitä asennus tekee täällä",
+      "loading": "Tarkistetaan tätä työtilaa…",
+      "action": {
+        "create": "Luotu",
+        "reuse": "Käytetty uudelleen",
+        "rename": "Nimetty uudelleen",
+        "bind": "Yhdistetty",
+        "unbound": "Jätetty yhdistämättä"
+      },
+      "detail": {
+        "rename": "”{name}” on jo olemassa eri tyyppisenä, joten mallin kohde lisätään uudella nimellä.",
+        "unbound": "”{name}” jätetään yhdistämättä, kunnes valitset postilaatikon."
+      }
+    },
+    "createWorkspace": "Luo uusi työtila"
   },
   "extensionsMe": {
     "actions": {
@@ -7505,14 +7794,6 @@
       "isActive": {
         "label": "Aktiivinen"
       },
-      "status": {
-        "label": "Tila",
-        "values": {
-          "active": "Aktiivinen",
-          "draft": "Luonnos",
-          "unlisted": "Listaamaton"
-        }
-      },
       "isAddonOnly": {
         "label": "Käytä tätä tuotetta vain muiden tuotteiden lisätuotteena"
       },
@@ -7543,6 +7824,14 @@
       "variantsDescription": "Lisää muunnelmia, jos tuotteesta on useita versioita, kuten eri kokoja tai värejä",
       "metaCatalogId": {
         "label": "Meta Catalog -tunnus"
+      },
+      "status": {
+        "label": "Tila",
+        "values": {
+          "active": "Aktiivinen",
+          "draft": "Luonnos",
+          "unlisted": "Listaamaton"
+        }
       }
     },
     "inventoryPolicy": {

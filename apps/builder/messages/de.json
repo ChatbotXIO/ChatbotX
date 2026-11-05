@@ -1919,7 +1919,8 @@
       "processing": "In Verarbeitung",
       "installing": "Installing",
       "completed": "Abgeschlossen",
-      "partial": "Partial",
+      "partial": "Teilweise",
+      "uninstalled": "Uninstalled",
       "failed": "Fehlgeschlagen",
       "success": "Erfolg",
       "error": "Fehler"
@@ -2661,6 +2662,7 @@
       "leaderboards": "Bestenlisten",
       "pipelines": "Pipelines",
       "places": "Orte",
+      "templates": "Vorlagen",
       "polls": "Polls"
     },
     "adReferral": {
@@ -2799,6 +2801,7 @@
   "flows": {
     "export": {
       "notPublished": "Dieser Flow wurde noch nie veröffentlicht. Veröffentlichen Sie ihn, bevor Sie ihn exportieren.",
+      "viewOnly": "Dieser Flow wurde aus einer schreibgeschützten Vorlage installiert und kann daher nicht exportiert werden.",
       "failed": "Export fehlgeschlagen. Bitte versuchen Sie es erneut."
     },
     "title": "Flows",
@@ -6995,6 +6998,9 @@
   "templates": {
     "title": "Vorlagen",
     "description": "Erstellen und verwalten Sie Ihre Vorlagen.",
+    "createDialog": {
+      "title": "Neue Vorlage"
+    },
     "share": {
       "label": "Teilen",
       "enabled": "Geteilt",
@@ -7003,14 +7009,135 @@
       "dialogDescription": "Jeder mit diesem Link kann eine Kopie dieser Vorlage in einem Arbeitsbereich Ihres Mandanten installieren.",
       "enableLabel": "Freigabelink aktivieren",
       "linkLabel": "Freigabelink",
-      "description": "Jeder mit dem Link kann diese Vorlage in seinem eigenen Arbeitsbereich installieren."
+      "rotateLabel": "Link erneuern",
+      "rotateTitle": "Freigabelink erneuern?",
+      "rotateDescription": "Der aktuelle Link funktioniert sofort nicht mehr. Wer diese Vorlage noch installieren muss, benötigt den neuen Link.",
+      "rotated": "Freigabelink erneuert",
+      "expiryLabel": "Link läuft ab am",
+      "expiryHint": "Leer lassen für einen Link, der nie abläuft.",
+      "clearExpiry": "Ablaufdatum entfernen",
+      "expiredNotice": "Dieser Link ist abgelaufen. Legen Sie ein späteres Datum fest oder entfernen Sie das Ablaufdatum, um ihn erneut zu teilen.",
+      "templateId": "Vorlagen-ID",
+      "templateKey": "Vorlagenschlüssel",
+      "showKey": "Schlüssel anzeigen",
+      "hideKey": "Schlüssel verbergen",
+      "copyField": "{field} kopieren"
+    },
+    "sync": {
+      "title": "Aktualisierungen",
+      "updateAvailable": "Aktualisierung verfügbar",
+      "upToDate": "Aktuell",
+      "sourceDeleted": "Vorlage gelöscht",
+      "sourceDeletedHint": "Der Herausgeber hat diese Vorlage gelöscht. Deine Kopie funktioniert weiter, kann aber nicht mehr aktualisiert werden.",
+      "updateNow": "Jetzt aktualisieren",
+      "updating": "Wird aktualisiert…",
+      "version": "Vorlagenversion {version}",
+      "lastSynced": "zuletzt aktualisiert am {date}",
+      "autoUpdateLabel": "Automatisch aktualisieren, wenn sich die Vorlage ändert",
+      "noHistory": "Noch keine Aktualisierungen.",
+      "countAdded": "{count} hinzugefügt",
+      "countUpdated": "{count} aktualisiert",
+      "countDetached": "{count} folgen der Vorlage nicht mehr",
+      "notUpdatable": "{count} noch nicht aktualisierbar",
+      "overwritten": "{name} wurde bearbeitet und durch die Aktualisierung ersetzt",
+      "restore": "Meine Version wiederherstellen",
+      "restored": "Ihre Version wurde wiederhergestellt",
+      "status": {
+        "pending": "In Warteschlange",
+        "running": "Läuft",
+        "completed": "Abgeschlossen",
+        "partial": "Teilweise",
+        "failed": "Fehlgeschlagen",
+        "skipped": "Übersprungen",
+        "cancelled": "Abgebrochen"
+      },
+      "trigger": {
+        "autoUpdate": "Automatisch",
+        "manual": "Manuell",
+        "reinstall": "Neuinstallation"
+      },
+      "requestedVersion": "angefordert v{version}",
+      "errors": {
+        "unknown": "Das Update ist fehlgeschlagen. Versuche es erneut oder wende dich an den Support, falls es weiter fehlschlägt.",
+        "templateSyncFailed": "Das Update ist fehlgeschlagen. Versuche es erneut.",
+        "templateSyncSuperseded": "Ein neueres Update hat dieses ersetzt.",
+        "templateSyncAbandoned": "Das Update wurde nicht rechtzeitig abgeschlossen und beendet.",
+        "templateInstallationInactive": "Diese Installation ist nicht mehr aktiv.",
+        "workspaceOwnerBlocked": "Das Konto des Arbeitsbereich-Eigentümers ist gesperrt.",
+        "templateUninstallInProgress": "Die Vorlage wird gerade deinstalliert.",
+        "templateAutoUpdateOff": "Automatische Updates sind ausgeschaltet.",
+        "templateUpToDate": "Die Kopie ist bereits aktuell.",
+        "templateInstallerAccessLost": "Wer die Vorlage installiert hat, darf diese Kopie nicht mehr aktualisieren.",
+        "templateInstallationSourceMissing": "Die Vorlage wurde gelöscht, bevor das Update lief.",
+        "templateCategoryPermissionDenied": "Du hast nicht mehr die Berechtigung, alles in dieser Vorlage zu aktualisieren.",
+        "templatePayloadIncompatible": "Diese Vorlage wurde in einem neueren Format gespeichert, als dieser Server installieren kann.",
+        "templateCrossTenantInstall": "Diese Vorlage ist für Ihren Arbeitsbereich nicht verfügbar.",
+        "templateInvalidInboxBinding": "Ein ausgewählter Posteingang passt nicht zur Vorlage."
+      }
+    },
+    "versions": {
+      "detailsTab": "Details",
+      "tab": "Versionen",
+      "versionNumber": "Version {version}",
+      "current": "Aktuell",
+      "first": "Erste Version",
+      "noDetail": "Für diese Version wurden keine Details erfasst.",
+      "added": "Hinzugefügt",
+      "changed": "Geändert",
+      "removed": "Entfernt"
+    },
+    "installers": {
+      "title": "Analysen anzeigen",
+      "workspace": "Arbeitsbereich",
+      "lastInstalled": "Zuletzt installiert",
+      "version": "Version",
+      "autoUpdate": "Automatische Aktualisierung",
+      "uninstalled": "Deinstalliert",
+      "hidden": "Arbeitsbereich nicht geteilt",
+      "uninstallNotAllowed": "Der Installierende hat Herausgebern das Deinstallieren dieser Kopie nicht erlaubt.",
+      "loadError": "Die Installierenden konnten nicht geladen werden. Versuche es erneut.",
+      "automatic": "Automatisch",
+      "details": "Details",
+      "noIssues": "Keine Warnungen oder Fehler."
     },
     "installs": {
       "title": "Installationen",
       "resources": "Ressourcen",
       "warnings": "Warnungen",
       "completedAt": "Abgeschlossen am",
-      "autoUpdate": "Automatische Aktualisierung"
+      "autoUpdate": "Automatische Aktualisierung",
+      "installedBy": "Installiert von",
+      "viaApi": "API-Token",
+      "attempts": "Versuche",
+      "autoUpdateOn": "An",
+      "autoUpdateOff": "Aus",
+      "retry": "Installation wiederholen",
+      "resourcesTitle": "Installierte Ressourcen",
+      "noResources": "Es wurde noch nichts erstellt.",
+      "deletedResource": "Gelöschte Ressource",
+      "viewOnly": "Nur Ansicht",
+      "created": "Erstellt",
+      "reused": "Wiederverwendet",
+      "loadMore": "Mehr laden",
+      "statusFilter": "Status",
+      "allStatuses": "Alle Status",
+      "errors": {
+        "unknown": "Die Installation ist fehlgeschlagen. Versuchen Sie es erneut oder wenden Sie sich an den Support, falls der Fehler weiterhin auftritt.",
+        "templatePayloadIncompatible": "Diese Vorlage wurde in einem neueren Format gespeichert, als dieser Server installieren kann.",
+        "templateInstallationSourceMissing": "Die Vorlage wurde gelöscht, bevor die Installation lief.",
+        "templateCrossTenantInstall": "Diese Vorlage ist für Ihren Arbeitsbereich nicht verfügbar.",
+        "templateCategoryPermissionDenied": "Sie haben nicht mehr die Berechtigung, alles in dieser Vorlage zu installieren.",
+        "templateInvalidInboxBinding": "Ein ausgewählter Posteingang passt nicht zur Vorlage.",
+        "templateInstallEnqueueFailed": "Die Installation konnte nicht in die Warteschlange gestellt werden.",
+        "templateInstallFailed": "Die Installation ist fehlgeschlagen. Versuchen Sie es erneut.",
+        "templateInstallAbandoned": "Die Installation wurde nicht rechtzeitig abgeschlossen und wurde beendet.",
+        "templateInstallSuperseded": "Eine neuere Installation dieser Vorlage hat diese ersetzt.",
+        "workspaceOwnerBlocked": "Das Konto des Arbeitsbereich-Eigentümers ist gesperrt."
+      },
+      "uninstalledBy": "{by, select, publisher {Der Herausgeber hat diese Vorlage deinstalliert.} installer {Diese Vorlage wurde aus diesem Arbeitsbereich deinstalliert.} other {Diese Vorlage wurde deinstalliert.}}",
+      "uninstalledSummary": "{deleted} gelöscht, {kept} behalten.",
+      "lastAttemptAt": "Letzter Versuch",
+      "installedAutomatically": "Automatisch installiert (White-Label-Standard)"
     },
     "form": {
       "contents": "Vorlageninhalt",
@@ -7023,14 +7150,26 @@
       "allowDelete": "Löschen nach Installation erlauben",
       "publisherName": "Name des Herausgebers",
       "youtubeVideoId": "YouTube-Video-ID",
-      "youtubeVideoIdDescription": "Die 11-stellige ID aus der Video-URL, z. B. \"dQw4w9WgXcQ\" in youtube.com/watch?v=dQw4w9WgXcQ",
+      "youtubeVideoIdDescription": "Die 11-stellige ID aus der Video-URL, z. B. \"xxxxxxxxxxx\" in youtube.com/watch?v=xxxxxxxxxxx",
       "testLink": "Testlink",
       "imageUrl": "Titelbild",
       "installBehavior": "Installationsverhalten",
-      "createInstallFolder": "In einem eigenen Ordner installieren",
+      "createInstallFolder": "Einen Ordner im installierten Konto erstellen und die Ressourcen installieren.",
       "createInstallFolderDescription": "Verschachtelt jede installierte Ressource in einem neuen, nach dieser Vorlage benannten Ordner.",
-      "defaultAutoUpdate": "Installationen standardmäßig für Updates markieren",
-      "defaultAutoUpdateDescription": "Neue Installationen zeigen einen Update-Hinweis, sobald Sie diese Vorlage erneut veröffentlichen."
+      "defaultAutoUpdate": "Installierte Vorlagen automatisch aktualisieren",
+      "defaultAutoUpdateDescription": "Wenn Sie diese Vorlage mit geändertem Inhalt speichern, werden Installationen mit automatischer Aktualisierung mit dem neuen Inhalt überschrieben (vom Installierenden bearbeitete Kopien werden zuvor gesichert). Installierende können dies deaktivieren.",
+      "viewOnly": "Nur ansehen",
+      "viewOnlyAll": "Alle ausgewählten nur ansehen",
+      "includedAutomatically": {
+        "title": "Automatisch enthalten",
+        "hint": "Mitgenommen, weil etwas, das Sie ausgewählt haben, es benötigt. Schreibgeschützt.",
+        "rows": "{count, plural, one {# weiteres Element} other {# weitere Elemente}}",
+        "kind": {
+          "folders": "Ordner",
+          "placeCategories": "Ortskategorien"
+        }
+      },
+      "viewOnlyCopyIncluded": "Etwas, das du ausgewählt hast (oder das es benötigt), wurde aus einer schreibgeschützten Vorlage installiert und kann nicht in einer neuen Vorlage geteilt werden."
     },
     "categories": {
       "flows": "Flows",
@@ -7045,8 +7184,116 @@
       "keywords": "Schlüsselwörter",
       "entryPointLinks": "Einstiegspunkt-Links",
       "triggers": "Trigger",
-      "fbCommentAutomations": "Facebook-Kommentarautomatisierungen",
-      "settings": "Einstellungen"
+      "fbCommentAutomations": "Kommentarautomatisierungen",
+      "settings": "Bot-Felder & gespeicherte Antworten",
+      "sequences": "Sequenzen",
+      "aiMcpServers": "MCP-Server",
+      "aiFiles": "KI-Wissensdateien",
+      "questionnaires": "Questionnaires",
+      "couponTopics": "Gutscheinthemen",
+      "pipelines": "Pipelines"
+    },
+    "locked": {
+      "flowBanner": "Dieser Flow wurde aus einer Vorlage mit reiner Ansicht installiert. Du kannst ihn ansehen, aber nicht bearbeiten.",
+      "badge": "Nur Ansicht",
+      "editorBanner": "Dies wurde aus einer Vorlage mit reiner Ansicht installiert. Du kannst es ansehen, aber nicht bearbeiten.",
+      "badgeHint": "Aus einer Vorlage mit reiner Ansicht installiert"
+    },
+    "channels": {
+      "messenger": "Messenger",
+      "instagram": "Instagram",
+      "instagramFacebook": "Instagram (Facebook login)",
+      "threads": "Threads",
+      "tiktok": "TikTok",
+      "whatsapp": "WhatsApp",
+      "telegram": "Telegram",
+      "zalo": "Zalo",
+      "webchat": "Webchat",
+      "line": "LINE",
+      "email": "E-Mail"
+    },
+    "uninstall": {
+      "title": "Vorlage deinstallieren",
+      "description": "Die Vorlage entfernt alles, was sie in diesem Arbeitsbereich erstellt hat, einschließlich bearbeiteter Kopien. Geteilte Tags, Felder und Ordner, bereits vorher vorhandene Elemente und alles, was Sie auf einer Kopie aufgebaut haben, bleiben erhalten.",
+      "loading": "Es wird geprüft, was passieren wird…",
+      "previewFailed": "Die Auswirkungen einer Deinstallation konnten nicht geprüft werden.",
+      "failed": "Die Vorlage konnte nicht deinstalliert werden.",
+      "confirm": "Deinstallieren",
+      "action": "Deinstallieren",
+      "deleted": "{count, plural, one {# Element wird gelöscht} other {# Elemente werden gelöscht}}",
+      "deletedDone": "{count, plural, one {# Element wurde gelöscht} other {# Elemente wurden gelöscht}}",
+      "keptModified": "{count, plural, one {# bearbeitete oder nicht verifizierte Kopie bleibt erhalten} other {# bearbeitete oder nicht verifizierte Kopien bleiben erhalten}}",
+      "keptShared": "{count, plural, one {# geteiltes Tag oder Feld bleibt erhalten} other {# geteilte Tags und Felder bleiben erhalten}}",
+      "keptByPolicy": "{count, plural, one {# weiteres Element bleibt erhalten} other {# weitere Elemente bleiben erhalten}}",
+      "keptHasDependents": "{count, plural, one {# Kopie bleibt erhalten, weil sie noch verwendet wird} other {# Kopien bleiben erhalten, weil sie noch verwendet werden}}",
+      "deletedModified": "{count, plural, one {# davon wurde von Ihnen bearbeitet: Diese Änderungen gehen verloren und können nicht wiederhergestellt werden} other {# davon wurden von Ihnen bearbeitet: Diese Änderungen gehen verloren und können nicht wiederhergestellt werden}}",
+      "keptLockedByOther": "{count, plural, one {# Element bleibt erhalten, weil eine andere Vorlageninstallation es noch schützt} other {# Elemente bleiben erhalten, weil eine andere Vorlageninstallation sie noch schützt}}",
+      "confirmCheckbox": "Ich verstehe, dass dadurch die oben genannten Elemente gelöscht werden und dies nicht rückgängig gemacht werden kann",
+      "started": "Deinstallation gestartet",
+      "inProgress": "Wird deinstalliert…",
+      "retry": "Deinstallation wiederholen",
+      "state": {
+        "pending": "Deinstallation in Warteschlange",
+        "running": "Wird deinstalliert…",
+        "partial": "Deinstallation unvollständig, bitte wiederholen",
+        "failed": "Deinstallation fehlgeschlagen, bitte wiederholen",
+        "skipped": "Deinstallation übersprungen: Der Arbeitsbereich ist gesperrt"
+      },
+      "deletedUnverified": "{count, plural, one {# davon kann nicht auf Änderungen geprüft werden: Falls Sie sie geändert haben, gehen diese Änderungen verloren} other {# davon können nicht auf Änderungen geprüft werden: Falls Sie sie geändert haben, gehen diese Änderungen verloren}}",
+      "cancelAction": "Deinstallation abbrechen",
+      "cancelled": "Deinstallation abgebrochen: Die übrigen Elemente können Sie wieder verwenden",
+      "blockedByReference": "{count, plural, one {# Element wurde nicht gelöscht, weil etwas, das Sie erstellt haben, noch darauf verweist: Entfernen Sie diesen Verweis und wiederholen Sie dann die Deinstallation} other {# Elemente wurden nicht gelöscht, weil etwas, das Sie erstellt haben, noch darauf verweist: Entfernen Sie diese Verweise und wiederholen Sie dann die Deinstallation}}",
+      "keptPartlyRemoved": "{count, plural, one {# Kopie wurde nach einer blockierten Deinstallation behalten; Verlauf und Daten zum Duplikatschutz wurden möglicherweise entfernt, prüfen Sie sie daher, bevor Sie sie einschalten} other {# Kopien wurden nach einer blockierten Deinstallation behalten; Verlauf und Daten zum Duplikatschutz wurden möglicherweise entfernt, prüfen Sie sie daher, bevor Sie sie einschalten}}",
+      "keptInactiveForReview": "{count, plural, one {# Kopie wurde inaktiv belassen: Ihr Verlauf und die Daten zum Duplikatschutz wurden entfernt, prüfen Sie sie daher, bevor Sie sie einschalten} other {# Kopien wurden inaktiv belassen: Ihr Verlauf und die Daten zum Duplikatschutz wurden entfernt, prüfen Sie sie daher, bevor Sie sie einschalten}}",
+      "keptHistoryRemoved": "{count, plural, one {# Kopie wurde behalten, aber ihr Verlauf wurde entfernt (es gibt nichts einzuschalten): Prüfen Sie sie, bevor Sie sich darauf verlassen} other {# Kopien wurden behalten, aber ihr Verlauf wurde entfernt (es gibt nichts einzuschalten): Prüfen Sie sie, bevor Sie sich darauf verlassen}}",
+      "cancelledPartial": "{count, plural, one {# Element wird bereits gelöscht und wird abgeschlossen; der Rest wurde zurückgegeben} other {# Elemente werden bereits gelöscht und werden abgeschlossen; der Rest wurde zurückgegeben}}"
+    },
+    "warningCodes": {
+      "aiFileTooLarge": "Diese Wissensdatei ist größer, als eine Vorlageninstallation kopieren kann, und wurde daher übersprungen.",
+      "aiFileUnavailable": "Diese Wissensdatei konnte nicht kopiert werden und wurde daher übersprungen.",
+      "assigneeRequired": "Wähle aus, wem dieser Schritt die Konversation zuweist.",
+      "ambiguousSourceFieldToken": "Mehrere Quellfelder haben diesen Namen, daher wurden die Variablen, die ihn verwenden, unverändert gelassen.",
+      "backupTooLarge": "Ein lokal bearbeitetes Element war zu groß für ein Backup und wurde daher nicht überschrieben.",
+      "backupUnavailable": "Das Backup für dieses Element ist nicht mehr verfügbar.",
+      "botFieldRenamed": "Ein Bot-Feld mit diesem Namen und einem anderen Typ existiert bereits, daher wurde ein umbenanntes Feld erstellt.",
+      "categoryPermissionDenied": "Du hast keine Berechtigung für diese Kategorie, daher wurde sie übersprungen.",
+      "couponTopicExpired": "Dieses Gutscheinthema ist bereits abgelaufen.",
+      "credentialRequired": "Füge die Zugangsdaten für dieses Element hinzu, bevor du es verwendest.",
+      "custom": "Ein referenziertes Element wurde in diesem Arbeitsbereich nicht gefunden, daher wurde die Verknüpfung entfernt.",
+      "customField": "Ein referenziertes Element wurde in diesem Arbeitsbereich nicht gefunden, daher wurde die Verknüpfung entfernt.",
+      "customFieldRenamed": "Ein Feld mit diesem Namen und einem anderen Typ existiert bereits, daher wurde ein umbenanntes Feld erstellt.",
+      "enqueueFailed": "Die Hintergrundverarbeitung für dieses Element konnte nicht in die Warteschlange gestellt werden.",
+      "flow": "Ein referenziertes Element wurde in diesem Arbeitsbereich nicht gefunden, daher wurde die Verknüpfung entfernt.",
+      "flowInvalidStructure": "Die Struktur des Flows ist ungültig, daher wurde er übersprungen.",
+      "flowNotPublished": "Der Flow wurde als Entwurf installiert und ist nicht veröffentlicht.",
+      "flowSkippedRequiredReference": "Der Flow wurde übersprungen, weil eine erforderliche Referenz nicht aufgelöst werden konnte.",
+      "folder": "Ein referenziertes Element wurde in diesem Arbeitsbereich nicht gefunden, daher wurde die Verknüpfung entfernt.",
+      "inboxBindingRequired": "Wähle einen Posteingang für diesen Kanal; bis dahin bleibt das Element inaktiv.",
+      "integration": "Ein referenziertes Element wurde in diesem Arbeitsbereich nicht gefunden, daher wurde die Verknüpfung entfernt.",
+      "localModifiedOverwritten": "Ein lokal bearbeitetes Element wurde überschrieben. Ein Backup wurde gespeichert und kann wiederhergestellt werden.",
+      "name": "Für dieses Element wurde kein freier Name gefunden, daher wurde es übersprungen.",
+      "noEmbeddingProvider": "In diesem Workspace ist kein Embedding-Anbieter konfiguriert, daher wurden Wissensdateien übersprungen. Verbinde OpenAI oder Gemini und installiere erneut.",
+      "notUpdatable": "Diese Art von Element wird noch nicht automatisch aktualisiert.",
+      "pipeline": "Verwendet eine Pipeline, die nicht mehr existiert.",
+      "pipelineField": "Verwendet ein Pipeline-Feld, das nicht mehr existiert.",
+      "pipelineStage": "Verwendet eine Pipeline-Phase, die nicht mehr existiert.",
+      "postSelectionRequired": "Wähle den Beitrag erneut aus: Der ursprüngliche Beitrag konnte nicht übernommen werden.",
+      "product": "Ein referenziertes Element wurde in diesem Arbeitsbereich nicht gefunden, daher wurde die Verknüpfung entfernt.",
+      "productCategory": "Ein referenziertes Element wurde in diesem Arbeitsbereich nicht gefunden, daher wurde die Verknüpfung entfernt.",
+      "questionImage": "Ein Bild konnte nicht kopiert werden.",
+      "quota": "Ein Tarifmaximum wurde erreicht, daher wurde das Element übersprungen.",
+      "referenceRemoved": "Eine nicht auflösbare Referenz wurde entfernt.",
+      "savedReply": "Ein referenziertes Element wurde in diesem Arbeitsbereich nicht gefunden, daher wurde die Verknüpfung entfernt.",
+      "savedReplyImage": "Ein Bild konnte nicht kopiert werden.",
+      "tag": "Ein referenziertes Element wurde in diesem Arbeitsbereich nicht gefunden, daher wurde die Verknüpfung entfernt.",
+      "unlisted": "Element nicht vollständig übernommen: {code}",
+      "workspaceMember": "Einem Mitglied zugewiesen, das nicht in diesem Workspace ist.",
+      "workspaceUnavailable": "Dieser Arbeitsbereich ist nicht mehr verfügbar, daher wurde das Element übersprungen."
+    },
+    "tabs": {
+      "mine": "Meine Vorlagen",
+      "installed": "Installiert",
+      "installedEmpty": "Noch keine installierten Vorlagen. Vorlagen, die du aus einem anderen Workspace installierst, erscheinen hier."
     }
   },
   "qrCodeGenerator": {
@@ -7169,6 +7416,23 @@
     "hint": "Lassen Sie alle Kanäle deaktiviert, um sämtliche Kanäle zuzulassen.",
     "hiddenByPlatform": "Vom Plattform-Administrator ausgeblendet — Sie können diesen Kanal nicht wieder aktivieren."
   },
+  "platformDefaultTemplate": {
+    "title": "Standardvorlage",
+    "description": "Installiert diese Vorlage in jedem neuen Arbeitsbereich, der unter diesem White-Label erstellt wird. Bestehende Arbeitsbereiche bleiben unverändert.",
+    "clearTitle": "Standardvorlage entfernen?",
+    "clearDescription": "Neue Arbeitsbereiche erhalten nicht mehr automatisch eine Vorlage. Arbeitsbereiche, die sie bereits haben, behalten sie.",
+    "status": {
+      "notConfigured": "Nicht festgelegt",
+      "ready": "Aktiv",
+      "templateUnavailable": "Vorlage nicht verfügbar",
+      "shareDisabled": "Freigabelink aus",
+      "keyRotated": "Schlüssel ungültig"
+    },
+    "errors": {
+      "unavailable": "Vorlagen-ID oder Schlüssel ist ungültig.",
+      "shareDisabled": "Aktivieren Sie zuerst den Freigabelink der Vorlage."
+    }
+  },
   "platformEmailTemplates": {
     "title": "E-Mail-Vorlagen",
     "description": "Lassen Sie Betreff und Inhalt leer, um die Systemstandardvorlage zu verwenden.",
@@ -7252,14 +7516,39 @@
     "invalidTitle": "Dieser Link ist nicht mehr verfügbar.",
     "invalidDescription": "Dieser Vorlagen-Freigabelink ist ungültig, deaktiviert oder abgelaufen.",
     "byPublisher": "Von {publisherName}",
-    "includes": "Diese Vorlage enthält",
     "videoTitle": "Vorlagen-Vorschauvideo",
-    "tryItOut": "Ausprobieren",
-    "signInToInstall": "Zum Installieren anmelden",
+    "preview": "Vorschau",
+    "aboutTemplate": "Über diese Vorlage",
     "selectWorkspace": "Arbeitsbereich auswählen",
     "install": "Installieren",
     "installStarted": "Installation gestartet",
-    "noEligibleWorkspaces": "Sie haben keinen Arbeitsbereich, der für die Installation dieser Vorlage geeignet ist."
+    "noEligibleWorkspaces": "Sie haben keinen Arbeitsbereich, der für die Installation dieser Vorlage geeignet ist.",
+    "alreadyInstalled": "Diese Vorlage ist in diesem Arbeitsbereich bereits installiert.",
+    "viewInstall": "Installation anzeigen",
+    "installAnotherCopy": "Weitere Kopie installieren",
+    "inboxesTitle": "Posteingänge",
+    "inboxesHint": "Diese Vorlage wurde um diese Posteingänge herum aufgebaut. Wählen Sie, welche Ihrer eigenen Posteingänge verwendet werden sollen; ausgelassene werden ausgeschaltet installiert.",
+    "noInbox": "Nicht verbinden – ausgeschaltet installieren",
+    "noInboxAvailable": "Kein verbundener Posteingang in diesem Kanal",
+    "updateExisting": "Installierte Kopie aktualisieren",
+    "updateStarted": "Aktualisierung gestartet",
+    "autoUpdateLabel": "Automatisch aktualisieren, wenn sich die Vorlage ändert",
+    "collisions": {
+      "title": "Was die Installation hier bewirkt",
+      "loading": "Dieser Arbeitsbereich wird geprüft…",
+      "action": {
+        "create": "Erstellt",
+        "reuse": "Wiederverwendet",
+        "rename": "Umbenannt",
+        "bind": "Verknüpft",
+        "unbound": "Nicht verknüpft belassen"
+      },
+      "detail": {
+        "rename": "„{name}“ existiert bereits mit einem anderen Typ, daher wird die Version der Vorlage unter einem neuen Namen hinzugefügt.",
+        "unbound": "„{name}“ bleibt unverbunden, bis Sie einen Posteingang auswählen."
+      }
+    },
+    "createWorkspace": "Neuen Arbeitsbereich erstellen"
   },
   "extensionsMe": {
     "actions": {
@@ -7505,14 +7794,6 @@
       "isActive": {
         "label": "Aktiv"
       },
-      "status": {
-        "label": "Status",
-        "values": {
-          "active": "Aktiv",
-          "draft": "Entwurf",
-          "unlisted": "Nicht gelistet"
-        }
-      },
       "isAddonOnly": {
         "label": "Dieses Produkt nur als Zusatzoption für andere Produkte verwenden"
       },
@@ -7543,6 +7824,14 @@
       "variantsDescription": "Fügen Sie Varianten hinzu, wenn dieses Produkt in mehreren Ausführungen erhältlich ist, etwa in verschiedenen Größen oder Farben",
       "metaCatalogId": {
         "label": "Meta-Katalog-ID"
+      },
+      "status": {
+        "label": "Status",
+        "values": {
+          "active": "Aktiv",
+          "draft": "Entwurf",
+          "unlisted": "Nicht gelistet"
+        }
       }
     },
     "inventoryPolicy": {

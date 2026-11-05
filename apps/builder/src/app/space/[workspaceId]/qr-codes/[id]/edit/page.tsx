@@ -2,9 +2,9 @@ import { getIdFromParams } from "@chatbotx.io/utils"
 import { notFound } from "next/navigation"
 import { getTranslations } from "next-intl/server"
 import { AppBreadcrumb } from "@/components/app-breadcrumb"
-
 import { findQrCode } from "@/features/qr-codes/queries"
 import { UpdateQrCodeForm } from "@/features/qr-codes/update-qr-code-form"
+import { LockedEditorGuard } from "@/features/templates/components/locked-editor-guard"
 
 export default async function EditQrCodePage({
   params,
@@ -41,7 +41,13 @@ export default async function EditQrCodePage({
           { label: t("actions.edit"), href: "" },
         ]}
       />
-      <UpdateQrCodeForm qrCode={qrCode} workspaceId={workspaceId} />
+      <LockedEditorGuard
+        resourceId={id}
+        resourceKind="reflink"
+        workspaceId={workspaceId}
+      >
+        <UpdateQrCodeForm qrCode={qrCode} workspaceId={workspaceId} />
+      </LockedEditorGuard>
     </div>
   )
 }

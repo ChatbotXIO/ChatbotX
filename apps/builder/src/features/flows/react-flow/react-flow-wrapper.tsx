@@ -98,6 +98,7 @@ const AUTOSAVE_DEBOUNCE_OPTIONS = {
 
 type ReactFlowFrameProps = {
   flowVersion: FlowVersionResource
+  isReadOnly: boolean
   setOpenNodeDetailSheet: (open: boolean) => void
   onAutosaveFlushChange: (flushAutosave: (() => void) | null) => void
   onAutosaveCancelChange: (cancelAutosave: (() => void) | null) => void
@@ -109,6 +110,7 @@ type ReactFlowFrameProps = {
 
 export function ReactFlowWrapper({
   flowVersion,
+  isReadOnly,
   onAutosaveFlushChange,
   onAutosaveCancelChange,
   onDraftDirtiedChange,
@@ -170,6 +172,9 @@ export function ReactFlowWrapper({
   // saves, so they cannot be resurrected on unmount.
   const handleChanges = useDebouncedCallback(
     (changedNodes: FlowNode[], changedEdges: Edge[]) => {
+      if (isReadOnly) {
+        return
+      }
       savingDraft({
         nodes: changedNodes,
         edges: changedEdges as unknown as UpdateDraftFlowVersionSchema["edges"],
@@ -326,8 +331,14 @@ export function ReactFlowWrapper({
       deleteNode: deleteNodeWithHistory,
       duplicateNode: duplicateNodeWithHistory,
       isFlowMutating,
+      isReadOnly,
     }),
-    [isFlowMutating, duplicateNodeWithHistory, deleteNodeWithHistory],
+    [
+      isFlowMutating,
+      isReadOnly,
+      duplicateNodeWithHistory,
+      deleteNodeWithHistory,
+    ],
   )
 
   useEffect(() => {
@@ -378,9 +389,14 @@ export function ReactFlowWrapper({
     [releaseSnapshotSession],
   )
 
+  // A template-locked flow is view-only: its step editor would only change
+  // local state that autosave refuses to persist, so it never opens.
   const handleNodeClick = useCallback(() => {
+    if (isReadOnly) {
+      return
+    }
     setOpenNodeDetailSheet(true)
-  }, [setOpenNodeDetailSheet])
+  }, [isReadOnly, setOpenNodeDetailSheet])
 
   const handlePaneClick = useCallback(() => {
     setOpenNodeDetailSheet(false)
@@ -411,7 +427,9 @@ export function ReactFlowWrapper({
 
   const onConnect = useCallback(
     (params: Connection) => {
-      if (params.source === params.target) {
+      // A custom handle does not take `nodesConnectable` from its node, so the
+      // read-only flag has to stop the connection here.
+      if (isReadOnly || params.source === params.target) {
         return
       }
 
@@ -434,7 +452,7 @@ export function ReactFlowWrapper({
         ])
       }
     },
-    [applyButtonRoutes, setEdges, takeCoalescedSnapshot],
+    [applyButtonRoutes, isReadOnly, setEdges, takeCoalescedSnapshot],
   )
 
   const onConnectEnd = useCallback(
@@ -445,6 +463,7 @@ export function ReactFlowWrapper({
       const fromHandle = connectionState.fromHandle
       const fromNode = connectionState.fromNode
       if (
+        isReadOnly ||
         !(fromHandle?.id && fromNode) ||
         fromHandle.type !== "source" ||
         connectionState.toHandle ||
@@ -529,6 +548,7 @@ export function ReactFlowWrapper({
       addNodes,
       getNodes,
       getIntersectingNodes,
+      isReadOnly,
       setEdges,
       applyButtonRoutes,
       screenToFlowPosition,
@@ -578,15 +598,15 @@ export function ReactFlowWrapper({
             strokeWidth: 2,
           },
         }}
-        deleteKeyCode={isFlowMutating ? null : undefined}
+        deleteKeyCode={isFlowMutating || isReadOnly ? null : undefined}
         edges={edges}
         edgeTypes={edgeTypes}
         elementsSelectable={!isFlowMutating}
         maxZoom={10}
         minZoom={0.1}
         nodes={nodes}
-        nodesConnectable={!isFlowMutating}
-        nodesDraggable={!isFlowMutating}
+        nodesConnectable={!(isFlowMutating || isReadOnly)}
+        nodesDraggable={!(isFlowMutating || isReadOnly)}
         nodeTypes={viewerNodeTypes}
         onConnect={onConnect}
         onConnectEnd={onConnectEnd}
@@ -621,7 +641,7 @@ export function ReactFlowWrapper({
             <FocusButton />
             <ZoomInButton />
             <ZoomOutButton />
-            <AddNodeButton />
+            {isReadOnly ? null : <AddNodeButton />}
           </Controls>
         </Panel>
       </ReactFlow>

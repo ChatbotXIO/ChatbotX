@@ -1919,10 +1919,11 @@
       "processing": "Sedang diproses",
       "installing": "Installing",
       "completed": "Selesai",
-      "partial": "Partial",
+      "partial": "Sebagian",
       "failed": "Gagal",
       "success": "Berhasil",
-      "error": "Kesalahan"
+      "error": "Kesalahan",
+      "uninstalled": "Uninstalled"
     },
     "subtitle": {
       "placeholder": "Masukkan subjudul"
@@ -2661,6 +2662,7 @@
       "leaderboards": "Papan peringkat",
       "pipelines": "Pipeline",
       "places": "Tempat",
+      "templates": "Templat",
       "polls": "Polls"
     },
     "adReferral": {
@@ -2799,6 +2801,7 @@
   "flows": {
     "export": {
       "notPublished": "Alur ini belum pernah dipublikasikan. Publikasikan sebelum mengekspor.",
+      "viewOnly": "Alur ini dipasang dari templat hanya-lihat, jadi tidak dapat diekspor.",
       "failed": "Ekspor gagal. Silakan coba lagi."
     },
     "title": "Alur",
@@ -6995,6 +6998,9 @@
   "templates": {
     "title": "Templat",
     "description": "Buat dan kelola templat Anda.",
+    "createDialog": {
+      "title": "Template baru"
+    },
     "share": {
       "label": "Bagikan",
       "enabled": "Dibagikan",
@@ -7003,14 +7009,135 @@
       "dialogDescription": "Siapa pun yang memiliki tautan ini dapat menginstal salinan templat ini ke workspace di tenant Anda.",
       "enableLabel": "Aktifkan tautan berbagi",
       "linkLabel": "Tautan berbagi",
-      "description": "Siapa pun yang memiliki tautan dapat menginstal templat ini ke workspace mereka sendiri."
+      "rotateLabel": "Ganti tautan",
+      "rotateTitle": "Ganti tautan berbagi?",
+      "rotateDescription": "Tautan saat ini langsung berhenti berfungsi. Siapa pun yang masih perlu menginstal templat ini memerlukan tautan baru.",
+      "rotated": "Tautan berbagi diganti",
+      "expiryLabel": "Tautan kedaluwarsa",
+      "expiryHint": "Biarkan kosong agar tautan tidak pernah kedaluwarsa.",
+      "clearExpiry": "Hapus masa berlaku",
+      "expiredNotice": "Tautan ini telah kedaluwarsa. Atur tanggal yang lebih lambat atau hapus masa berlaku untuk membagikannya lagi.",
+      "templateId": "ID template",
+      "templateKey": "Kunci template",
+      "showKey": "Tampilkan kunci",
+      "hideKey": "Sembunyikan kunci",
+      "copyField": "Salin {field}"
+    },
+    "sync": {
+      "title": "Pembaruan",
+      "updateAvailable": "Pembaruan tersedia",
+      "upToDate": "Terbaru",
+      "sourceDeleted": "Templat dihapus",
+      "sourceDeletedHint": "Penerbit menghapus templat ini. Salinan Anda tetap berfungsi tetapi tidak dapat diperbarui lagi.",
+      "updateNow": "Perbarui sekarang",
+      "updating": "Memperbarui…",
+      "version": "Versi templat {version}",
+      "lastSynced": "terakhir diperbarui {date}",
+      "autoUpdateLabel": "Perbarui otomatis saat templat berubah",
+      "noHistory": "Belum ada pembaruan.",
+      "countAdded": "{count} ditambahkan",
+      "countUpdated": "{count} diperbarui",
+      "countDetached": "{count} tidak lagi mengikuti template",
+      "notUpdatable": "{count} belum dapat diperbarui",
+      "overwritten": "{name} telah diedit dan diganti oleh pembaruan",
+      "restore": "Pulihkan versi saya",
+      "restored": "Versi Anda telah dipulihkan",
+      "status": {
+        "pending": "Dalam antrean",
+        "running": "Berjalan",
+        "completed": "Selesai",
+        "partial": "Sebagian",
+        "failed": "Gagal",
+        "skipped": "Dilewati",
+        "cancelled": "Dibatalkan"
+      },
+      "trigger": {
+        "autoUpdate": "Otomatis",
+        "manual": "Manual",
+        "reinstall": "Instal ulang"
+      },
+      "requestedVersion": "diminta v{version}",
+      "errors": {
+        "unknown": "Pembaruan gagal. Coba lagi, atau hubungi dukungan jika terus gagal.",
+        "templateSyncFailed": "Pembaruan gagal. Coba lagi.",
+        "templateSyncSuperseded": "Pembaruan yang lebih baru menggantikan pembaruan ini.",
+        "templateSyncAbandoned": "Pembaruan tidak selesai tepat waktu dan ditutup.",
+        "templateInstallationInactive": "Instalasi ini tidak lagi aktif.",
+        "workspaceOwnerBlocked": "Akun pemilik workspace diblokir.",
+        "templateUninstallInProgress": "Templat sedang dihapus instalasinya.",
+        "templateAutoUpdateOff": "Pembaruan otomatis dinonaktifkan.",
+        "templateUpToDate": "Salinan sudah yang terbaru.",
+        "templateInstallerAccessLost": "Pemasang tidak lagi memiliki izin untuk memperbarui salinan ini.",
+        "templateInstallationSourceMissing": "Templat dihapus sebelum pembaruan berjalan.",
+        "templateCategoryPermissionDenied": "Anda tidak lagi memiliki izin untuk memperbarui semua isi templat ini.",
+        "templatePayloadIncompatible": "Templat ini disimpan dalam format yang lebih baru daripada yang dapat diinstal server ini.",
+        "templateCrossTenantInstall": "Templat ini tidak tersedia untuk workspace Anda.",
+        "templateInvalidInboxBinding": "Inbox yang dipilih tidak cocok dengan templat."
+      }
+    },
+    "versions": {
+      "detailsTab": "Detail",
+      "tab": "Versi",
+      "versionNumber": "Versi {version}",
+      "current": "Saat ini",
+      "first": "Versi pertama",
+      "noDetail": "Tidak ada detail yang tercatat untuk versi ini.",
+      "added": "Ditambahkan",
+      "changed": "Diubah",
+      "removed": "Dihapus"
+    },
+    "installers": {
+      "title": "Lihat analitik",
+      "workspace": "Workspace",
+      "lastInstalled": "Terakhir diinstal",
+      "version": "Version",
+      "autoUpdate": "Pembaruan otomatis",
+      "uninstalled": "Dicopot",
+      "hidden": "Workspace tidak dibagikan",
+      "uninstallNotAllowed": "Pemasang belum mengizinkan penerbit mencopot salinan ini.",
+      "loadError": "Gagal memuat daftar pemasang. Coba lagi.",
+      "automatic": "Otomatis",
+      "details": "Detail",
+      "noIssues": "Tidak ada peringatan atau kesalahan."
     },
     "installs": {
       "title": "Instalasi",
       "resources": "Sumber daya",
       "warnings": "Peringatan",
       "completedAt": "Selesai pada",
-      "autoUpdate": "Pembaruan otomatis"
+      "autoUpdate": "Pembaruan otomatis",
+      "installedBy": "Diinstal oleh",
+      "viaApi": "Token API",
+      "attempts": "Percobaan",
+      "autoUpdateOn": "Aktif",
+      "autoUpdateOff": "Nonaktif",
+      "retry": "Coba instal lagi",
+      "resourcesTitle": "Sumber daya terinstal",
+      "noResources": "Belum ada yang dibuat.",
+      "deletedResource": "Sumber daya dihapus",
+      "viewOnly": "Hanya lihat",
+      "created": "Dibuat",
+      "reused": "Digunakan ulang",
+      "loadMore": "Muat lebih banyak",
+      "statusFilter": "Status",
+      "allStatuses": "Semua status",
+      "errors": {
+        "unknown": "Instalasi gagal. Coba lagi, atau hubungi dukungan jika terus gagal.",
+        "templatePayloadIncompatible": "Templat ini disimpan dalam format yang lebih baru daripada yang dapat diinstal server ini.",
+        "templateInstallationSourceMissing": "Templat dihapus sebelum instalasi berjalan.",
+        "templateCrossTenantInstall": "Templat ini tidak tersedia untuk workspace Anda.",
+        "templateCategoryPermissionDenied": "Anda tidak lagi memiliki izin untuk menginstal semua isi templat ini.",
+        "templateInvalidInboxBinding": "Inbox yang dipilih tidak cocok dengan templat.",
+        "templateInstallEnqueueFailed": "Instalasi tidak dapat dimasukkan ke antrean.",
+        "templateInstallFailed": "Instalasi gagal. Coba lagi.",
+        "templateInstallAbandoned": "Instalasi tidak selesai tepat waktu dan ditutup.",
+        "templateInstallSuperseded": "Instalasi templat ini yang lebih baru telah menggantikan instalasi ini.",
+        "workspaceOwnerBlocked": "Akun pemilik workspace diblokir."
+      },
+      "uninstalledBy": "{by, select, publisher {Penerbit telah mencopot templat ini.} installer {Templat ini telah dicopot dari workspace ini.} other {Templat ini telah dicopot.}}",
+      "uninstalledSummary": "{deleted} dihapus, {kept} dipertahankan.",
+      "lastAttemptAt": "Percobaan terakhir",
+      "installedAutomatically": "Diinstal otomatis (default white-label)"
     },
     "form": {
       "contents": "Isi templat",
@@ -7023,14 +7150,26 @@
       "allowDelete": "Izinkan penghapusan setelah instalasi",
       "publisherName": "Nama penerbit",
       "youtubeVideoId": "ID video YouTube",
-      "youtubeVideoIdDescription": "ID 11 karakter dari URL video, misalnya \"dQw4w9WgXcQ\" pada youtube.com/watch?v=dQw4w9WgXcQ",
+      "youtubeVideoIdDescription": "ID 11 karakter dari URL video, misalnya \"xxxxxxxxxxx\" pada youtube.com/watch?v=xxxxxxxxxxx",
       "testLink": "Tautan uji",
       "imageUrl": "Gambar sampul",
       "installBehavior": "Perilaku instalasi",
-      "createInstallFolder": "Instal ke folder khusus",
+      "createInstallFolder": "Buat folder di akun yang dipasang dan pasang sumber daya.",
       "createInstallFolderDescription": "Menempatkan setiap sumber daya yang diinstal ke dalam satu folder baru yang diberi nama sesuai templat ini.",
-      "defaultAutoUpdate": "Tandai instalasi untuk pembaruan secara default",
-      "defaultAutoUpdateDescription": "Instalasi baru akan menampilkan pemberitahuan pembaruan tersedia setiap kali Anda menerbitkan ulang templat ini."
+      "defaultAutoUpdate": "Perbarui otomatis templat yang terpasang",
+      "defaultAutoUpdateDescription": "Setiap kali Anda menyimpan templat ini dengan isi yang berubah, instalasi yang mengikuti pembaruan otomatis akan ditimpa dengan isi baru (salinan yang diedit penginstal dicadangkan terlebih dahulu). Penginstal dapat menonaktifkannya.",
+      "viewOnly": "Hanya lihat",
+      "viewOnlyAll": "Jadikan semua yang dipilih hanya lihat",
+      "includedAutomatically": {
+        "title": "Disertakan otomatis",
+        "hint": "Ikut dibawa karena sesuatu yang Anda pilih membutuhkannya. Hanya baca.",
+        "rows": "{count, plural, one {# item lainnya} other {# item lainnya}}",
+        "kind": {
+          "folders": "Folder",
+          "placeCategories": "Kategori tempat"
+        }
+      },
+      "viewOnlyCopyIncluded": "Sesuatu yang Anda pilih (atau yang dibutuhkannya) dipasang dari templat hanya-lihat, jadi tidak dapat dibagikan dalam templat baru."
     },
     "categories": {
       "flows": "Flow",
@@ -7045,8 +7184,116 @@
       "keywords": "Kata Kunci",
       "entryPointLinks": "Tautan Titik Masuk",
       "triggers": "Trigger",
-      "fbCommentAutomations": "Otomatisasi komentar Facebook",
-      "settings": "Pengaturan"
+      "fbCommentAutomations": "Otomatisasi komentar",
+      "settings": "Kolom bot & balasan tersimpan",
+      "sequences": "Sequence",
+      "aiMcpServers": "Server MCP",
+      "aiFiles": "File pengetahuan AI",
+      "questionnaires": "Questionnaires",
+      "couponTopics": "Topik kupon",
+      "pipelines": "Pipeline"
+    },
+    "locked": {
+      "flowBanner": "Alur ini dipasang dari templat hanya-lihat. Anda dapat melihatnya tetapi tidak dapat mengeditnya.",
+      "badge": "Hanya lihat",
+      "editorBanner": "Ini dipasang dari templat hanya-lihat. Anda dapat melihatnya tetapi tidak dapat mengeditnya.",
+      "badgeHint": "Diinstal dari templat hanya-lihat"
+    },
+    "channels": {
+      "messenger": "Messenger",
+      "instagram": "Instagram",
+      "instagramFacebook": "Instagram (Facebook login)",
+      "threads": "Threads",
+      "tiktok": "TikTok",
+      "whatsapp": "WhatsApp",
+      "telegram": "Telegram",
+      "zalo": "Zalo",
+      "webchat": "Webchat",
+      "line": "LINE",
+      "email": "Email"
+    },
+    "uninstall": {
+      "title": "Copot templat",
+      "description": "Templat menghapus semua yang dibuatnya di workspace ini, termasuk salinan yang telah diedit. Tag, field, dan folder bersama, item yang sudah ada sebelumnya, serta apa pun yang Anda bangun di atas salinan tetap dipertahankan.",
+      "loading": "Memeriksa apa yang akan terjadi…",
+      "previewFailed": "Tidak dapat memeriksa dampak pencopotan.",
+      "failed": "Tidak dapat mencopot templat.",
+      "confirm": "Copot",
+      "action": "Copot",
+      "deleted": "{count, plural, one {# item akan dihapus} other {# item akan dihapus}}",
+      "deletedDone": "{count, plural, one {# item telah dihapus} other {# item telah dihapus}}",
+      "keptModified": "{count, plural, one {# salinan yang diedit atau belum terverifikasi dipertahankan} other {# salinan yang diedit atau belum terverifikasi dipertahankan}}",
+      "keptShared": "{count, plural, one {# tag atau field bersama dipertahankan} other {# tag dan field bersama dipertahankan}}",
+      "keptByPolicy": "{count, plural, one {# item lain dipertahankan} other {# item lain dipertahankan}}",
+      "keptHasDependents": "{count, plural, one {# salinan dipertahankan karena masih digunakan} other {# salinan dipertahankan karena masih digunakan}}",
+      "deletedModified": "{count, plural, one {# di antaranya telah Anda edit: perubahan tersebut hilang dan tidak dapat dipulihkan} other {# di antaranya telah Anda edit: perubahan tersebut hilang dan tidak dapat dipulihkan}}",
+      "keptLockedByOther": "{count, plural, one {# item dipertahankan karena instalasi templat lain masih melindunginya} other {# item dipertahankan karena instalasi templat lain masih melindunginya}}",
+      "confirmCheckbox": "Saya memahami bahwa ini menghapus item di atas dan tidak dapat dibatalkan",
+      "started": "Pencopotan dimulai",
+      "inProgress": "Mencopot…",
+      "retry": "Coba copot lagi",
+      "state": {
+        "pending": "Pencopotan dalam antrean",
+        "running": "Mencopot…",
+        "partial": "Pencopotan belum selesai, coba lagi",
+        "failed": "Pencopotan gagal, coba lagi",
+        "skipped": "Pencopotan dilewati: workspace diblokir"
+      },
+      "deletedUnverified": "{count, plural, one {# di antaranya tidak dapat diperiksa apakah diedit: jika Anda mengubahnya, perubahan tersebut hilang} other {# di antaranya tidak dapat diperiksa apakah diedit: jika Anda mengubahnya, perubahan tersebut hilang}}",
+      "cancelAction": "Batalkan pencopotan",
+      "cancelled": "Pencopotan dibatalkan: item yang tersisa dapat Anda gunakan lagi",
+      "blockedByReference": "{count, plural, one {# item tidak dihapus karena sesuatu yang Anda buat masih merujuk ke item tersebut: hapus rujukan itu, lalu coba copot lagi} other {# item tidak dihapus karena sesuatu yang Anda buat masih merujuk ke item tersebut: hapus rujukan itu, lalu coba copot lagi}}",
+      "keptPartlyRemoved": "{count, plural, one {# salinan dipertahankan setelah pencopotan yang terhambat; riwayat dan data perlindungan duplikatnya mungkin telah dihapus, jadi tinjau sebelum mengaktifkannya} other {# salinan dipertahankan setelah pencopotan yang terhambat; riwayat dan data perlindungan duplikatnya mungkin telah dihapus, jadi tinjau sebelum mengaktifkannya}}",
+      "keptInactiveForReview": "{count, plural, one {# salinan dibiarkan nonaktif: riwayat dan data perlindungan duplikatnya telah dihapus, jadi tinjau sebelum mengaktifkannya} other {# salinan dibiarkan nonaktif: riwayat dan data perlindungan duplikatnya telah dihapus, jadi tinjau sebelum mengaktifkannya}}",
+      "keptHistoryRemoved": "{count, plural, one {# salinan dipertahankan, tetapi riwayatnya dihapus (tidak ada yang perlu diaktifkan): tinjau sebelum mengandalkannya} other {# salinan dipertahankan, tetapi riwayatnya dihapus (tidak ada yang perlu diaktifkan): tinjau sebelum mengandalkannya}}",
+      "cancelledPartial": "{count, plural, one {# item sudah dalam proses dihapus dan akan diselesaikan; sisanya telah dikembalikan} other {# item sudah dalam proses dihapus dan akan diselesaikan; sisanya telah dikembalikan}}"
+    },
+    "warningCodes": {
+      "aiFileTooLarge": "File pengetahuan ini lebih besar dari yang dapat disalin oleh instalasi template, jadi dilewati.",
+      "aiFileUnavailable": "File pengetahuan ini tidak dapat disalin, jadi dilewati.",
+      "assigneeRequired": "Pilih kepada siapa langkah ini menugaskan percakapan.",
+      "ambiguousSourceFieldToken": "Beberapa kolom sumber memiliki nama ini, sehingga variabel yang menggunakannya dibiarkan tidak berubah.",
+      "backupTooLarge": "Item yang diedit secara lokal terlalu besar untuk dicadangkan, sehingga tidak ditimpa.",
+      "backupUnavailable": "Cadangan untuk item ini tidak lagi tersedia.",
+      "botFieldRenamed": "Kolom bot dengan nama ini dan tipe lain sudah ada, jadi kolom dengan nama baru dibuat.",
+      "categoryPermissionDenied": "Anda tidak memiliki izin untuk kategori ini, sehingga dilewati.",
+      "couponTopicExpired": "Topik kupon ini sudah kedaluwarsa.",
+      "credentialRequired": "Tambahkan kredensial untuk item ini sebelum menggunakannya.",
+      "custom": "Item yang dirujuk tidak ditemukan di workspace ini, sehingga tautannya dihapus.",
+      "customField": "Item yang dirujuk tidak ditemukan di workspace ini, sehingga tautannya dihapus.",
+      "customFieldRenamed": "Sudah ada kolom dengan nama ini dan tipe lain, sehingga dibuat kolom dengan nama baru.",
+      "enqueueFailed": "Pemrosesan latar belakang tidak dapat dimasukkan ke antrean untuk item ini.",
+      "flow": "Item yang dirujuk tidak ditemukan di workspace ini, sehingga tautannya dihapus.",
+      "flowInvalidStructure": "Struktur flow tidak valid, sehingga dilewati.",
+      "flowNotPublished": "Flow dipasang sebagai draf dan belum diterbitkan.",
+      "flowSkippedRequiredReference": "Flow dilewati karena referensi yang diperlukan tidak dapat diselesaikan.",
+      "folder": "Item yang dirujuk tidak ditemukan di workspace ini, sehingga tautannya dihapus.",
+      "inboxBindingRequired": "Pilih inbox untuk kanal ini; sampai saat itu item tetap tidak aktif.",
+      "integration": "Item yang dirujuk tidak ditemukan di workspace ini, sehingga tautannya dihapus.",
+      "localModifiedOverwritten": "Item yang diedit secara lokal telah ditimpa. Cadangan disimpan dan dapat dipulihkan.",
+      "name": "Tidak ditemukan nama yang tersedia untuk item ini, sehingga dilewati.",
+      "noEmbeddingProvider": "Belum ada penyedia embedding yang dikonfigurasi di workspace ini, jadi file pengetahuan dilewati. Hubungkan OpenAI atau Gemini, lalu instal ulang.",
+      "notUpdatable": "Jenis item ini belum diperbarui secara otomatis.",
+      "pipeline": "Menggunakan pipeline yang sudah tidak ada.",
+      "pipelineField": "Menggunakan kolom pipeline yang sudah tidak ada.",
+      "pipelineStage": "Menggunakan tahap pipeline yang sudah tidak ada.",
+      "postSelectionRequired": "Pilih postingan lagi: postingan asli tidak dapat dibawa.",
+      "product": "Item yang dirujuk tidak ditemukan di workspace ini, sehingga tautannya dihapus.",
+      "productCategory": "Item yang dirujuk tidak ditemukan di workspace ini, sehingga tautannya dihapus.",
+      "questionImage": "Gambar tidak dapat disalin.",
+      "quota": "Batas paket tercapai, sehingga item dilewati.",
+      "referenceRemoved": "Referensi yang tidak dapat diselesaikan telah dihapus.",
+      "savedReply": "Item yang dirujuk tidak ditemukan di workspace ini, sehingga tautannya dihapus.",
+      "savedReplyImage": "Gambar tidak dapat disalin.",
+      "tag": "Item yang dirujuk tidak ditemukan di workspace ini, sehingga tautannya dihapus.",
+      "unlisted": "Item tidak sepenuhnya terbawa: {code}",
+      "workspaceMember": "Ditugaskan ke anggota yang tidak ada di workspace ini.",
+      "workspaceUnavailable": "Workspace ini sudah tidak tersedia, jadi item ini dilewati."
+    },
+    "tabs": {
+      "mine": "Template saya",
+      "installed": "Terpasang",
+      "installedEmpty": "Belum ada template terpasang. Template yang Anda pasang dari workspace lain akan muncul di sini."
     }
   },
   "qrCodeGenerator": {
@@ -7169,6 +7416,23 @@
     "hint": "Biarkan semua saluran tidak dicentang untuk mengizinkan semua saluran.",
     "hiddenByPlatform": "Disembunyikan oleh admin platform — Anda tidak dapat mengaktifkan kembali saluran ini."
   },
+  "platformDefaultTemplate": {
+    "title": "Template default",
+    "description": "Instal template ini ke setiap workspace baru yang dibuat di bawah white-label ini. Workspace yang sudah ada tidak berubah.",
+    "clearTitle": "Hapus template default?",
+    "clearDescription": "Workspace baru tidak lagi mendapat template secara otomatis. Workspace yang sudah memilikinya tetap menyimpannya.",
+    "status": {
+      "notConfigured": "Belum diatur",
+      "ready": "Aktif",
+      "templateUnavailable": "Template tidak tersedia",
+      "shareDisabled": "Tautan berbagi nonaktif",
+      "keyRotated": "Kunci tidak valid"
+    },
+    "errors": {
+      "unavailable": "ID atau kunci template tidak valid.",
+      "shareDisabled": "Aktifkan tautan berbagi template terlebih dahulu."
+    }
+  },
   "platformEmailTemplates": {
     "title": "Templat Email",
     "description": "Biarkan subjek dan isi kosong untuk menggunakan templat bawaan sistem.",
@@ -7252,14 +7516,39 @@
     "invalidTitle": "Tautan ini sudah tidak tersedia lagi.",
     "invalidDescription": "Tautan berbagi templat ini tidak valid, dinonaktifkan, atau telah kedaluwarsa.",
     "byPublisher": "Oleh {publisherName}",
-    "includes": "Templat ini mencakup",
     "videoTitle": "Video pratinjau templat",
-    "tryItOut": "Coba sekarang",
-    "signInToInstall": "Masuk untuk menginstal",
+    "preview": "Pratinjau",
+    "aboutTemplate": "Tentang templat ini",
     "selectWorkspace": "Pilih workspace",
     "install": "Instal",
     "installStarted": "Instalasi dimulai",
-    "noEligibleWorkspaces": "Anda tidak memiliki workspace yang memenuhi syarat untuk menginstal templat ini."
+    "noEligibleWorkspaces": "Anda tidak memiliki workspace yang memenuhi syarat untuk menginstal templat ini.",
+    "alreadyInstalled": "Templat ini sudah terinstal di workspace ini.",
+    "viewInstall": "Lihat instalasi",
+    "installAnotherCopy": "Instal salinan lain",
+    "inboxesTitle": "Inbox",
+    "inboxesHint": "Templat ini dibuat untuk inbox berikut. Pilih inbox Anda sendiri yang akan digunakan; yang tidak dipilih akan diinstal dalam keadaan nonaktif.",
+    "noInbox": "Jangan hubungkan — instal dalam keadaan nonaktif",
+    "noInboxAvailable": "Tidak ada inbox terhubung di channel ini",
+    "updateExisting": "Perbarui salinan terinstal",
+    "updateStarted": "Pembaruan dimulai",
+    "autoUpdateLabel": "Perbarui otomatis saat templat berubah",
+    "collisions": {
+      "title": "Yang akan dilakukan instalasi di sini",
+      "loading": "Memeriksa workspace ini…",
+      "action": {
+        "create": "Dibuat",
+        "reuse": "Digunakan ulang",
+        "rename": "Diganti nama",
+        "bind": "Dihubungkan",
+        "unbound": "Tidak dihubungkan"
+      },
+      "detail": {
+        "rename": "“{name}” sudah ada dengan tipe lain, jadi milik templat ditambahkan dengan nama baru.",
+        "unbound": "“{name}” dibiarkan tidak terhubung hingga Anda memilih inbox."
+      }
+    },
+    "createWorkspace": "Buat workspace baru"
   },
   "extensionsMe": {
     "actions": {
@@ -7505,14 +7794,6 @@
       "isActive": {
         "label": "Aktif"
       },
-      "status": {
-        "label": "Status",
-        "values": {
-          "active": "Aktif",
-          "draft": "Draf",
-          "unlisted": "Tidak terdaftar"
-        }
-      },
       "isAddonOnly": {
         "label": "Gunakan produk ini hanya sebagai tambahan untuk produk lain"
       },
@@ -7543,6 +7824,14 @@
       "variantsDescription": "Tambahkan varian jika produk ini tersedia dalam beberapa versi, seperti ukuran atau warna yang berbeda",
       "metaCatalogId": {
         "label": "ID Katalog Meta"
+      },
+      "status": {
+        "label": "Status",
+        "values": {
+          "active": "Aktif",
+          "draft": "Draf",
+          "unlisted": "Tidak terdaftar"
+        }
       }
     },
     "inventoryPolicy": {

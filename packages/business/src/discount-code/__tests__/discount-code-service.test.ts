@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const mocks = vi.hoisted(() => ({
+  assertReferencable: vi.fn(async () => undefined),
   findByCode: vi.fn(),
   lock: vi.fn(),
   listAutoApply: vi.fn(),
@@ -23,6 +24,31 @@ vi.mock("../../ecommerce-settings/store-source", () => ({
   ecommerceSettingsCacheTag: (workspaceId: string) =>
     `ecommerce-settings:${workspaceId}`,
 }))
+// The template guards are covered by their own suites; here they only must not
+// block the write, and run it on this file's mocked client.
+vi.mock(
+  "../../template/installed-resource.service",
+  async (importOriginal) => ({
+    ...(await importOriginal<
+      typeof import("../../template/installed-resource.service")
+    >()),
+    assertReferencable: mocks.assertReferencable,
+  }),
+)
+
+vi.mock("../../template/template-resource-locks", async (importOriginal) => {
+  const { db } = await import("@chatbotx.io/database/client")
+  return {
+    ...(await importOriginal<
+      typeof import("../../template/template-resource-locks")
+    >()),
+    withTemplateLockedTransaction: (run: (tx: unknown) => unknown) =>
+      "transaction" in db
+        ? (db as { transaction: (fn: typeof run) => unknown }).transaction(run)
+        : run(db),
+  }
+})
+
 vi.mock("@chatbotx.io/database/client", () => ({
   db: {},
   isUniqueViolationError: (error: unknown) =>
@@ -434,6 +460,7 @@ describe("discountCodeService.create", () => {
         minimumValue: 0,
         customerFilter: null,
       }),
+      expect.anything(),
     )
   })
 
@@ -446,6 +473,7 @@ describe("discountCodeService.create", () => {
     })
     expect(mocks.create).toHaveBeenCalledWith(
       expect.objectContaining({ discountValue: 0, appliesTo: "entireOrder" }),
+      expect.anything(),
     )
   })
 
@@ -503,6 +531,7 @@ describe("discountCodeService.update after deletions", () => {
       expect.objectContaining({
         values: expect.objectContaining({ productIds: ["p1"] }),
       }),
+      expect.anything(),
     )
   })
 
@@ -538,6 +567,7 @@ describe("discountCodeService.update after deletions", () => {
       expect.objectContaining({
         values: expect.objectContaining({ categoryId: "cat2", isActive: true }),
       }),
+      expect.anything(),
     )
   })
 

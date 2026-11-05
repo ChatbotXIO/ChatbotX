@@ -154,6 +154,7 @@ describe("ReactFlowWrapper", () => {
         <FlowHistoryStoreProvider>
           <ReactFlowWrapper
             flowVersion={flowVersion}
+            isReadOnly={false}
             onAutosaveCancelChange={vi.fn()}
             onAutosaveFlushChange={vi.fn()}
             onDraftDirtiedChange={vi.fn()}

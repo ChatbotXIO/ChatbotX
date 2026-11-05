@@ -86,6 +86,12 @@ vi.mock("@chatbotx.io/utils", () => ({
   createId: vi.fn(() => "generated-id"),
 }))
 
+// The filter extractor reads the real flow-config registry, which this file
+// mocks partially; it has its own suite (template-contact-filter-guard).
+vi.mock("../src/template/uninstall-references", () => ({
+  contactFilterParentsOf: vi.fn(() => []),
+}))
+
 vi.mock("@chatbotx.io/flow-config", () => ({
   findTemplateStartStep: vi.fn(),
   stepTypes: {

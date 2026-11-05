@@ -27,6 +27,8 @@ import {
 } from "lucide-react"
 import type { useTranslations } from "next-intl"
 import type { Dispatch, SetStateAction } from "react"
+import { LockBadge } from "@/features/templates/components/lock-badge"
+import { UndeletableGuard } from "@/features/templates/components/lock-context"
 
 type TagWithContacts = TagModel & {
   contactsCount?: number
@@ -79,8 +81,9 @@ export function getTagColumns({
         <Tooltip>
           <TooltipTrigger
             render={
-              <div className="inline-block max-w-[300px] truncate">
-                {row.original.name}
+              <div className="flex max-w-[300px] items-center">
+                <span className="truncate">{row.original.name}</span>
+                <LockBadge resourceId={row.original.id} />
               </div>
             }
           />
@@ -148,13 +151,18 @@ export function getTagColumns({
               <FingerprintIcon />
               {t("actions.getID")}
             </DropdownMenuItem>
-            <DropdownMenuItem
-              className="text-destructive"
-              onClick={() => setRowAction({ row, variant: "delete" })}
-            >
-              <Trash2Icon className="text-destructive" />
-              {t("actions.delete")}
-            </DropdownMenuItem>
+            <UndeletableGuard resourceId={row.original.id}>
+              {(disabled) => (
+                <DropdownMenuItem
+                  className="text-destructive"
+                  disabled={disabled}
+                  onClick={() => setRowAction({ row, variant: "delete" })}
+                >
+                  <Trash2Icon className="text-destructive" />
+                  {t("actions.delete")}
+                </DropdownMenuItem>
+              )}
+            </UndeletableGuard>
           </DropdownMenuContent>
         </DropdownMenu>
       ),

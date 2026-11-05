@@ -54,6 +54,37 @@ class MessengerWelcomeMessageFlowService {
     }))
   }
 
+  /**
+   * Queues the sync and reports a queue outage to the caller, for a caller
+   * that records the effect as done only once it is queued.
+   */
+  async enqueueSyncOrThrow(input: {
+    workspaceId: string
+    flowId: string
+    reason: "publish" | "rename"
+  }): Promise<void> {
+    await defaultQueue.add(
+      DefaultJobAction.syncWelcomeMessageFlows,
+      { type: DefaultJobAction.syncWelcomeMessageFlows, data: input },
+      {
+        attempts: SYNC_ATTEMPTS,
+        backoff: { type: "exponential", delay: SYNC_BACKOFF_MS },
+        delay: DEBOUNCE_MS,
+        removeOnComplete: true,
+        removeOnFail: true,
+        deduplication: {
+          id: `welcome-message-flow-${input.reason}-${input.flowId}`,
+          ttl: DEBOUNCE_MS,
+          extend: true,
+          replace: true,
+          // A publish arriving while the job is running is kept and run
+          // right after it, instead of being dropped.
+          keepLastIfActive: true,
+        },
+      },
+    )
+  }
+
   /** Never throws: a queue outage must not fail publish or rename. */
   async enqueueSync(input: {
     workspaceId: string
@@ -61,26 +92,7 @@ class MessengerWelcomeMessageFlowService {
     reason: "publish" | "rename"
   }): Promise<void> {
     try {
-      await defaultQueue.add(
-        DefaultJobAction.syncWelcomeMessageFlows,
-        { type: DefaultJobAction.syncWelcomeMessageFlows, data: input },
-        {
-          attempts: SYNC_ATTEMPTS,
-          backoff: { type: "exponential", delay: SYNC_BACKOFF_MS },
-          delay: DEBOUNCE_MS,
-          removeOnComplete: true,
-          removeOnFail: true,
-          deduplication: {
-            id: `welcome-message-flow-${input.reason}-${input.flowId}`,
-            ttl: DEBOUNCE_MS,
-            extend: true,
-            replace: true,
-            // A publish arriving while the job is running is kept and run
-            // right after it, instead of being dropped.
-            keepLastIfActive: true,
-          },
-        },
-      )
+      await this.enqueueSyncOrThrow(input)
     } catch (error) {
       logger.warn(
         { err: error, flowId: input.flowId, reason: input.reason },

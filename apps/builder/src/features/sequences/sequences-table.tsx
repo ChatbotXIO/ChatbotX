@@ -36,6 +36,12 @@ import React, { use, useCallback, useMemo } from "react"
 import { toast } from "sonner"
 import { useInvalidateSequences } from "@/features/sequences/provider/sequence-hook"
 import type { listSequences } from "@/features/sequences/queries"
+import { LockBadge } from "@/features/templates/components/lock-badge"
+import {
+  LockedGuard,
+  TemplateLockedList,
+  UndeletableGuard,
+} from "@/features/templates/components/lock-context"
 import { ChangeFolderDialog } from "../folders/change-folder"
 import { updateSequenceAction } from "./actions/update-sequence.action"
 import { DeleteSequenceDialog } from "./delete-sequence-dialog"
@@ -114,12 +120,12 @@ export function SequencesTable({ workspaceId, promises }: SequencesTableProps) {
           />
         ),
         cell: ({ row }) => (
-          <div className="max-w-75 truncate">
+          <div className="flex max-w-75 items-center">
             <Tooltip>
               <TooltipTrigger
                 render={
                   <Link
-                    className="truncate"
+                    className="min-w-0 truncate"
                     href={`/space/${workspaceId}/sequences/${row.original.id}`}
                   >
                     {row.original.name ?? ""}
@@ -130,6 +136,7 @@ export function SequencesTable({ workspaceId, promises }: SequencesTableProps) {
                 <p>{row.original.name}</p>
               </TooltipContent>
             </Tooltip>
+            <LockBadge resourceId={row.original.id} />
           </div>
         ),
         meta: {
@@ -220,25 +227,35 @@ export function SequencesTable({ workspaceId, promises }: SequencesTableProps) {
                     </>
                   )}
                 </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => setRowAction({ row, variant: "update" })}
-                >
-                  <TextIcon className="me-2" />
-                  {t("actions.rename")}
-                </DropdownMenuItem>
+                <LockedGuard resourceId={row.original.id}>
+                  {(locked) => (
+                    <DropdownMenuItem
+                      disabled={locked}
+                      onClick={() => setRowAction({ row, variant: "update" })}
+                    >
+                      <TextIcon className="me-2" />
+                      {t("actions.rename")}
+                    </DropdownMenuItem>
+                  )}
+                </LockedGuard>
                 <DropdownMenuItem
                   onClick={() => setRowAction({ row, variant: "move" })}
                 >
                   <FolderUpIcon className="me-2" />
                   {t("actions.move")}
                 </DropdownMenuItem>
-                <DropdownMenuItem
-                  className="hover:bg-muted hover:text-destructive"
-                  onClick={() => setRowAction({ row, variant: "delete" })}
-                >
-                  <Trash2Icon className="me-2" />
-                  {t("actions.delete")}
-                </DropdownMenuItem>
+                <UndeletableGuard resourceId={row.original.id}>
+                  {(disabled) => (
+                    <DropdownMenuItem
+                      className="hover:bg-muted hover:text-destructive"
+                      disabled={disabled}
+                      onClick={() => setRowAction({ row, variant: "delete" })}
+                    >
+                      <Trash2Icon className="me-2" />
+                      {t("actions.delete")}
+                    </DropdownMenuItem>
+                  )}
+                </UndeletableGuard>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
@@ -266,15 +283,21 @@ export function SequencesTable({ workspaceId, promises }: SequencesTableProps) {
 
   return (
     <>
-      <DataTable table={table}>
-        <DataTableToolbar table={table}>
-          <SequencesTableToolbarActions
-            setRowAction={setRowAction}
-            table={table}
-            workspaceId={workspaceId}
-          />
-        </DataTableToolbar>
-      </DataTable>
+      <TemplateLockedList
+        resourceKind="sequence"
+        rows={data}
+        workspaceId={workspaceId}
+      >
+        <DataTable table={table}>
+          <DataTableToolbar table={table}>
+            <SequencesTableToolbarActions
+              setRowAction={setRowAction}
+              table={table}
+              workspaceId={workspaceId}
+            />
+          </DataTableToolbar>
+        </DataTable>
+      </TemplateLockedList>
 
       <RenameSequenceDialog
         onOpenChange={() => setRowAction(null)}

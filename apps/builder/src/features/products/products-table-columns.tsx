@@ -29,6 +29,8 @@ import {
   useTransition,
 } from "react"
 import { toast } from "sonner"
+import { LockBadge } from "@/features/templates/components/lock-badge"
+import { UndeletableGuard } from "@/features/templates/components/lock-context"
 import { WebshopLinkMenuItems } from "@/features/webshop/components/webshop-link-menu-items"
 import { toggleProductActiveAction } from "./actions/toggle-product-active-action"
 import { ProductStatusBadge } from "./components/product-status-badge"
@@ -208,8 +210,9 @@ export function getProductColumns({
         <DataTableColumnHeader column={column} title={t("fields.name.label")} />
       ),
       cell: ({ row }) => (
-        <span className="max-w-75 truncate font-medium">
-          {row.original.name}
+        <span className="flex max-w-75 items-center font-medium">
+          <span className="truncate">{row.original.name}</span>
+          <LockBadge resourceId={row.original.id} />
         </span>
       ),
       meta: {
@@ -322,13 +325,18 @@ export function getProductColumns({
               target={{ productId: row.original.id }}
               workspaceId={row.original.workspaceId}
             />
-            <DropdownMenuItem
-              onClick={() => setRowAction({ row, variant: "delete" })}
-              variant="destructive"
-            >
-              <Trash />
-              {t("actions.delete")}
-            </DropdownMenuItem>
+            <UndeletableGuard resourceId={row.original.id}>
+              {(disabled) => (
+                <DropdownMenuItem
+                  disabled={disabled}
+                  onClick={() => setRowAction({ row, variant: "delete" })}
+                  variant="destructive"
+                >
+                  <Trash />
+                  {t("actions.delete")}
+                </DropdownMenuItem>
+              )}
+            </UndeletableGuard>
           </DropdownMenuContent>
         </DropdownMenu>
       ),

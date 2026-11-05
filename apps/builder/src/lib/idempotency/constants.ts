@@ -19,4 +19,8 @@ export const IDEMPOTENCY_EXEMPT_READ_PATHS: ReadonlySet<string> = new Set([
   // A dry run of a mapping: nothing is written, and the verdict depends on
   // the workspace's current custom fields.
   "/v1/inbound-webhooks/preview-mapping",
+  // Read-only lookups that take their ids in the body: the answer follows the
+  // workspace's current resources and installs, so a replay would go stale.
+  "/v1/templates/dependencies-preview",
+  "/v1/templates/locked-resources",
 ])

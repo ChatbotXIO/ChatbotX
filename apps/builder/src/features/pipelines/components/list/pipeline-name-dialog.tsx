@@ -13,6 +13,8 @@ import { Input } from "@chatbotx.io/ui/components/ui/input"
 import { Loader2Icon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useState } from "react"
+import { LockedDialogFieldset } from "@/components/locked-dialog-fieldset"
+import { useIsLocked } from "@/features/templates/components/lock-context"
 
 type PipelineNameDialogProps = {
   open: boolean
@@ -21,6 +23,7 @@ type PipelineNameDialogProps = {
   submitLabel: string
   initialName?: string
   isPending: boolean
+  resourceId?: string
   /** Receives the trimmed, non-empty name. */
   onSubmit: (name: string) => void
 }
@@ -33,9 +36,11 @@ export function PipelineNameDialog({
   submitLabel,
   initialName = "",
   isPending,
+  resourceId,
   onSubmit,
 }: PipelineNameDialogProps) {
   const t = useTranslations("pipelines")
+  const isLocked = useIsLocked(resourceId)
   const [name, setName] = useState(initialName)
 
   return (
@@ -44,20 +49,22 @@ export function PipelineNameDialog({
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
-        <div className="flex flex-col gap-3">
-          <label className="grid gap-1.5 text-sm" htmlFor="pipeline-name">
-            {t("create.name")}
-            <Input
-              id="pipeline-name"
-              maxLength={PIPELINE_LIMITS.name}
-              onChange={(event) => setName(event.target.value)}
-              value={name}
-            />
-          </label>
-        </div>
+        <LockedDialogFieldset resourceId={resourceId}>
+          <div className="flex flex-col gap-3">
+            <label className="grid gap-1.5 text-sm" htmlFor="pipeline-name">
+              {t("create.name")}
+              <Input
+                id="pipeline-name"
+                maxLength={PIPELINE_LIMITS.name}
+                onChange={(event) => setName(event.target.value)}
+                value={name}
+              />
+            </label>
+          </div>
+        </LockedDialogFieldset>
         <DialogFooter>
           <Button
-            disabled={isPending || name.trim().length === 0}
+            disabled={isPending || isLocked || name.trim().length === 0}
             onClick={() => onSubmit(name.trim())}
           >
             {isPending ? <Loader2Icon className="animate-spin" /> : null}

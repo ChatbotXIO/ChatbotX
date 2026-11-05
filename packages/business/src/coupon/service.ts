@@ -1,4 +1,9 @@
-import { db, eq, isUniqueViolationError } from "@chatbotx.io/database/client"
+import {
+  type DatabaseClient,
+  db,
+  eq,
+  isUniqueViolationError,
+} from "@chatbotx.io/database/client"
 import {
   couponTopicStatuses,
   fileStatuses,
@@ -10,6 +15,11 @@ import { formatInTimeZone, fromZonedTime } from "date-fns-tz"
 import { BaseService } from "../base.service"
 import { type ContactAccessScope, contactService } from "../contact/service"
 import { ChatbotXException, notFoundException } from "../errors"
+import {
+  changedKeysOf,
+  withDeleteGuard,
+  withEditGuard,
+} from "../template/installed-resource.service"
 
 export type CouponImportBatchResult = {
   processed: number
@@ -249,12 +259,36 @@ class CouponService extends BaseService {
             rejectPast: false,
           })
 
-    const topic = await couponRepository.updateTopic({
+    // The topic is locked before its stored row is read, so the diff that
+    // decides the guard is computed under the lock.
+    const topic = await withEditGuard({
       workspaceId: input.workspaceId,
-      topicId: input.topicId,
-      name,
-      description,
-      expiresAt,
+      resourceKind: "couponTopic",
+      resourceId: input.topicId,
+      load: async (tx) => {
+        const stored = await couponRepository.findTopic(
+          { workspaceId: input.workspaceId, topicId: input.topicId },
+          tx,
+        )
+        if (!stored) {
+          throw notFoundException("Coupon topic not found")
+        }
+        return stored
+      },
+      // Only what actually changes counts: a form re-submits every field.
+      changedKeys: (stored) =>
+        changedKeysOf(stored, { name, description, expiresAt }),
+      write: (tx) =>
+        couponRepository.updateTopic(
+          {
+            workspaceId: input.workspaceId,
+            topicId: input.topicId,
+            name,
+            description,
+            expiresAt,
+          },
+          tx,
+        ),
     })
     if (!topic) {
       throw notFoundException("Coupon topic not found")
@@ -288,12 +322,44 @@ class CouponService extends BaseService {
   }
 
   async deleteTopic(input: { workspaceId: string; topicId: string }) {
-    const topic = await couponRepository.softDeleteTopic(input)
+    const [topic] = await withDeleteGuard(
+      {
+        workspaceId: input.workspaceId,
+        targets: [
+          { resourceKind: "couponTopic", resourceIds: [input.topicId] },
+        ],
+      },
+      (tx) =>
+        this.deleteTopicsInTx(tx, {
+          workspaceId: input.workspaceId,
+          ids: [input.topicId],
+          archivedOnly: true,
+        }),
+    )
     if (!topic) {
       throw notFoundException("Archived coupon topic not found")
     }
     await this.invalidateCacheTags(this.cacheTag(input.workspaceId))
     return topic
+  }
+
+  /**
+   * The delete core (soft delete), shared with the template uninstall so
+   * there is one implementation. The public delete takes archived topics only
+   * (`archivedOnly`); an uninstall removes the installed topic in any state.
+   */
+  async deleteTopicsInTx(
+    tx: DatabaseClient,
+    input: { workspaceId: string; ids: string[]; archivedOnly: boolean },
+  ) {
+    return await couponRepository.softDeleteTopics(
+      {
+        workspaceId: input.workspaceId,
+        topicIds: input.ids,
+        archivedOnly: input.archivedOnly,
+      },
+      tx,
+    )
   }
 
   async importBatch(input: {
@@ -575,8 +641,18 @@ class CouponService extends BaseService {
     return expiresAt
   }
 
+  /** Drops the workspace's cached topic data; for writers that bypass this service (template installs). */
+  invalidate(workspaceId: string) {
+    return this.invalidateCacheTags(this.cacheTag(workspaceId))
+  }
+
   private cacheTag(workspaceId: string) {
     return `coupons:${workspaceId}`
+  }
+
+  /** Drops the workspace's coupon caches; the uninstall runs it after commit. */
+  async invalidateWorkspaceCache(workspaceId: string): Promise<void> {
+    await this.invalidateCacheTags(this.cacheTag(workspaceId))
   }
 }
 

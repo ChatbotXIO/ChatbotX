@@ -33,6 +33,11 @@ import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import React, { use, useCallback, useMemo } from "react"
 import { toast } from "sonner"
+import { LockBadge } from "@/features/templates/components/lock-badge"
+import {
+  TemplateLockedList,
+  UndeletableGuard,
+} from "@/features/templates/components/lock-context"
 import { buildAutomationAccountColumn } from "../shared/comment-automation/automation-account-column"
 import { buildCommentAutomationStatColumns } from "../shared/comment-automation/comment-automation-stat-columns"
 import { DeleteCommentAutomationDialog } from "../shared/comment-automation/delete-comment-automation-dialog"
@@ -108,12 +113,15 @@ export function TiktokCommentsTable({
         ),
         cell: ({ row }) => (
           <div className="flex flex-col gap-0.5">
-            <Link
-              className="font-medium hover:underline"
-              href={`/space/${workspaceId}/tiktok-comments/${row.original.id}`}
-            >
-              {row.original.name}
-            </Link>
+            <div className="flex items-center">
+              <Link
+                className="font-medium hover:underline"
+                href={`/space/${workspaceId}/tiktok-comments/${row.original.id}`}
+              >
+                {row.original.name}
+              </Link>
+              <LockBadge resourceId={row.original.id} />
+            </div>
             {missedCommentsInProgress.has(row.original.id) ? (
               <MissedCommentsProcessingLabel />
             ) : null}
@@ -217,13 +225,18 @@ export function TiktokCommentsTable({
                     {t("commentAutomationMissedComments.action")}
                   </DropdownMenuItem>
                 ) : null}
-                <DropdownMenuItem
-                  className="hover:bg-muted hover:text-destructive"
-                  onClick={() => setRowAction({ row, variant: "delete" })}
-                >
-                  <Trash2Icon className="me-2" />
-                  {t("actions.delete")}
-                </DropdownMenuItem>
+                <UndeletableGuard resourceId={row.original.id}>
+                  {(disabled) => (
+                    <DropdownMenuItem
+                      className="hover:bg-muted hover:text-destructive"
+                      disabled={disabled}
+                      onClick={() => setRowAction({ row, variant: "delete" })}
+                    >
+                      <Trash2Icon className="me-2" />
+                      {t("actions.delete")}
+                    </DropdownMenuItem>
+                  )}
+                </UndeletableGuard>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
@@ -255,47 +268,53 @@ export function TiktokCommentsTable({
         <CardTitle>{t("tiktokCommentAutomation.title")}</CardTitle>
       </CardHeader>
       <CardContent>
-        <DataTable table={table}>
-          <DataTableToolbar table={table}>
-            <Button
-              render={
-                <Link href={`/space/${workspaceId}/tiktok-comments/create`}>
-                  {t("tiktokCommentAutomation.create")}
-                </Link>
-              }
-              size="sm"
-            />
-          </DataTableToolbar>
-        </DataTable>
-
-        <DeleteCommentAutomationDialog
-          action={deleteTiktokCommentAction.bind(
-            null,
-            rowAction?.row.original?.workspaceId ?? "",
-            rowAction?.row.original?.id ?? "",
-          )}
-          onOpenChange={() => setRowAction(null)}
-          onSuccess={() => router.refresh()}
-          open={rowAction?.variant === "delete"}
-          resource={
-            rowAction?.row.original
-              ? {
-                  id: rowAction.row.original.id,
-                  workspaceId: rowAction.row.original.workspaceId,
+        <TemplateLockedList
+          resourceKind="fbCommentAutomation"
+          rows={data}
+          workspaceId={workspaceId}
+        >
+          <DataTable table={table}>
+            <DataTableToolbar table={table}>
+              <Button
+                render={
+                  <Link href={`/space/${workspaceId}/tiktok-comments/create`}>
+                    {t("tiktokCommentAutomation.create")}
+                  </Link>
                 }
-              : null
-          }
-          translationNamespace="tiktokCommentAutomation"
-        />
+                size="sm"
+              />
+            </DataTableToolbar>
+          </DataTable>
 
-        <ProcessMissedCommentsDialog
-          onOpenChange={() => setMissedCommentsItem(null)}
-          onSuccess={() => {
-            refreshMissedCommentsInProgress()
-            router.refresh()
-          }}
-          resource={missedCommentsItem}
-        />
+          <DeleteCommentAutomationDialog
+            action={deleteTiktokCommentAction.bind(
+              null,
+              rowAction?.row.original?.workspaceId ?? "",
+              rowAction?.row.original?.id ?? "",
+            )}
+            onOpenChange={() => setRowAction(null)}
+            onSuccess={() => router.refresh()}
+            open={rowAction?.variant === "delete"}
+            resource={
+              rowAction?.row.original
+                ? {
+                    id: rowAction.row.original.id,
+                    workspaceId: rowAction.row.original.workspaceId,
+                  }
+                : null
+            }
+            translationNamespace="tiktokCommentAutomation"
+          />
+
+          <ProcessMissedCommentsDialog
+            onOpenChange={() => setMissedCommentsItem(null)}
+            onSuccess={() => {
+              refreshMissedCommentsInProgress()
+              router.refresh()
+            }}
+            resource={missedCommentsItem}
+          />
+        </TemplateLockedList>
       </CardContent>
     </Card>
   )

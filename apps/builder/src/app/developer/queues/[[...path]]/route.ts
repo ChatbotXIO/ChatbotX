@@ -12,6 +12,7 @@ import {
   lowQueue,
   quotaQueue,
   scheduleQueue,
+  templateQueue,
   triggerQueue,
   webhookQueue,
 } from "@chatbotx.io/worker-config"
@@ -58,6 +59,7 @@ async function buildApp() {
     lowQueue,
     quotaQueue,
     scheduleQueue,
+    templateQueue,
     ...(sequenceSchedulerQueue ? [sequenceSchedulerQueue] : []),
   ].filter(isBullBoardQueue)
 

@@ -2,7 +2,12 @@
 
 import { DrizzleQueryError } from "drizzle-orm/errors"
 import { describe, expect, test, vi } from "vitest"
-import { insertWithNameRetry } from "../src/template/adapters/naming"
+import {
+  insertCopyNamed,
+  insertWithCopyName,
+} from "../src/template/adapters/naming"
+
+const TRAILING_WILDCARD = /%$/
 
 const uniqueViolation = (constraint: string) =>
   new DrizzleQueryError("insert", [], { code: "23505", constraint })
@@ -10,7 +15,7 @@ const uniqueViolation = (constraint: string) =>
 /**
  * A fake `DatabaseClient` whose `.transaction()` mimics a real Postgres
  * SAVEPOINT: a rejection inside one call never affects a later call on the
- * same instance — proving `insertWithNameRetry` isolates each retry attempt
+ * same instance — proving `insertWithCopyName` isolates each retry attempt
  * rather than relying on the outer install transaction surviving a caught
  * 23505 (which, on real Postgres, it cannot).
  */
@@ -20,97 +25,116 @@ const fakeTx = () => {
       fn(instance),
     ),
   }
-  return instance as unknown as Parameters<typeof insertWithNameRetry>[0]
+  return instance as unknown as Parameters<typeof insertWithCopyName>[0]["tx"]
 }
 
-describe("insertWithNameRetry", () => {
-  test("suffixes the name on a matching unique-constraint violation so both rows can exist", async () => {
-    // Simulates a prior insert in the SAME install having already taken
-    // "Welcome" — this call must suffix rather than collide.
-    const created = ["Welcome"]
-    const insert = vi.fn((_tx: unknown, candidateName: string) => {
-      if (created.includes(candidateName)) {
+describe("insertCopyNamed", () => {
+  const buildCtx = (tx: unknown) => ({ tx, warn: vi.fn() }) as never
+
+  test("a trigger name that is taken installs as '<name> - Copy', then '- Copy 2'", async () => {
+    const existing = new Set(["Welcome"])
+    const insert = vi.fn((_tx: unknown, name: string) => {
+      if (existing.has(name)) {
         throw uniqueViolation("Trigger_workspaceId_name_key")
       }
-      created.push(candidateName)
-      return Promise.resolve({ id: candidateName })
+      existing.add(name)
+      return Promise.resolve(name)
     })
-    const onGiveUp = vi.fn()
-    const tx = fakeTx()
-
-    const second = await insertWithNameRetry(
-      tx,
-      "Trigger_workspaceId_name_key",
-      "Welcome",
-      insert,
-      onGiveUp,
+    const findTaken = vi.fn(async (_tx: unknown, filter: { like: string }) =>
+      [...existing]
+        .filter((name) =>
+          name.startsWith(filter.like.replace(TRAILING_WILDCARD, "")),
+        )
+        .map((name) => ({ name })),
     )
+    const tx = fakeTx()
+    const ctx = buildCtx(tx)
+    const run = () =>
+      insertCopyNamed(ctx, {
+        category: "triggers",
+        constraint: "Trigger_workspaceId_name_key",
+        entry: { sourceId: "t1", name: "Welcome" },
+        findTaken,
+        insert,
+      })
 
-    expect(second).toEqual({ id: "Welcome (2)" })
-    expect(onGiveUp).not.toHaveBeenCalled()
-    expect(created).toEqual(["Welcome", "Welcome (2)"])
+    expect(await run()).toBe("Welcome - Copy")
+    expect(await run()).toBe("Welcome - Copy 2")
+    expect(findTaken).toHaveBeenCalledTimes(1)
   })
 
-  test("does not poison later attempts when an earlier attempt's savepoint failed", async () => {
-    let attempts = 0
-    const insert = vi.fn((_tx: unknown, candidateName: string) => {
-      attempts++
-      if (attempts < 3) {
-        throw uniqueViolation("Trigger_workspaceId_name_key")
-      }
-      return Promise.resolve({ id: candidateName })
-    })
-    const tx = fakeTx()
-
-    const result = await insertWithNameRetry(
-      tx,
-      "Trigger_workspaceId_name_key",
-      "Welcome",
-      insert,
-      vi.fn(),
-    )
-
-    expect(result).toEqual({ id: "Welcome (3)" })
-    expect(attempts).toBe(3)
-  })
-
-  test("rethrows immediately on a non-matching constraint instead of retrying", async () => {
+  test("rethrows a violation of another constraint instead of renaming", async () => {
     const insert = vi.fn(() => {
       throw uniqueViolation("SomeOther_key")
     })
-    const onGiveUp = vi.fn()
-    const tx = fakeTx()
+    const ctx = buildCtx(fakeTx())
 
     await expect(
-      insertWithNameRetry(
-        tx,
-        "Trigger_workspaceId_name_key",
-        "Welcome",
+      insertCopyNamed(ctx, {
+        category: "triggers",
+        constraint: "Trigger_workspaceId_name_key",
+        entry: { sourceId: "t1", name: "Welcome" },
+        findTaken: vi.fn(),
         insert,
-        onGiveUp,
-      ),
+      }),
     ).rejects.toThrow()
-
     expect(insert).toHaveBeenCalledTimes(1)
-    expect(onGiveUp).not.toHaveBeenCalled()
   })
 
-  test("gives up after exhausting all retry attempts", async () => {
+  test("warns '<category>.<sourceId>.name' when every candidate name is taken", async () => {
     const insert = vi.fn(() => {
-      throw uniqueViolation("Trigger_workspaceId_name_key")
+      throw uniqueViolation("Reflink_workspaceId_name_key")
     })
-    const onGiveUp = vi.fn()
-    const tx = fakeTx()
+    const ctx = buildCtx(fakeTx())
 
-    const result = await insertWithNameRetry(
-      tx,
-      "Trigger_workspaceId_name_key",
-      "Welcome",
+    const result = await insertCopyNamed(ctx, {
+      category: "entryPointLinks",
+      constraint: "Reflink_workspaceId_name_key",
+      entry: { sourceId: "r1", name: "Link" },
+      findTaken: vi.fn(async () => []),
       insert,
-      onGiveUp,
-    )
+    })
 
     expect(result).toBeUndefined()
-    expect(onGiveUp).toHaveBeenCalledWith("Welcome (20)")
+    expect(ctx.warn).toHaveBeenCalledWith({
+      category: "entryPointLinks",
+      entityKind: "name",
+      path: "entryPointLinks.r1.name",
+      value: "Link",
+    })
+  })
+})
+
+describe("insertWithCopyName", () => {
+  test("reads the existing names once per prefix and learns the names it inserts", async () => {
+    const existing = new Set(["Welcome"])
+    const insert = vi.fn((_tx: unknown, name: string) => {
+      if (existing.has(name)) {
+        throw uniqueViolation("Sequence_workspaceId_name_key")
+      }
+      existing.add(name)
+      return Promise.resolve(name)
+    })
+    const loadTakenNames = vi.fn(async (_tx: unknown, prefix: string) =>
+      [...existing].filter((name) => name.startsWith(prefix)),
+    )
+    const tx = fakeTx() as Parameters<typeof insertWithCopyName>[0]["tx"]
+    const run = () =>
+      insertWithCopyName({
+        tx,
+        constraint: "Sequence_workspaceId_name_key",
+        name: "Welcome",
+        loadTakenNames,
+        insert,
+        onGiveUp: vi.fn(),
+      })
+
+    const first = await run()
+    const second = await run()
+
+    expect(first).toBe("Welcome - Copy")
+    expect(second).toBe("Welcome - Copy 2")
+    expect(loadTakenNames).toHaveBeenCalledTimes(1)
+    expect(loadTakenNames).toHaveBeenCalledWith(tx, "Welcome - Copy")
   })
 })

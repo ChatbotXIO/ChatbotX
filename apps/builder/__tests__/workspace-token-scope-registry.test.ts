@@ -18,6 +18,7 @@ const NEW_SCOPES = [
   "pipelines",
   "places",
   "polls",
+  "templates",
 ] as const
 
 describe("workspaceApiTokenScopes", () => {
@@ -26,13 +27,13 @@ describe("workspaceApiTokenScopes", () => {
       expect(workspaceApiTokenScopes.options).toContain(scope)
     }
     expect(workspaceApiTokenScopes.options).not.toContain("connections")
-    expect(workspaceApiTokenScopes.options).toHaveLength(18)
+    expect(workspaceApiTokenScopes.options).toHaveLength(19)
   })
 })
 
 describe("orderedWorkspaceApiTokenScopes", () => {
-  test("has 18 entries with unique, contiguous orders", () => {
-    expect(orderedWorkspaceApiTokenScopes).toHaveLength(18)
+  test("has 19 entries with unique, contiguous orders", () => {
+    expect(orderedWorkspaceApiTokenScopes).toHaveLength(19)
 
     const orders = orderedWorkspaceApiTokenScopes
       .map((scope) => workspaceApiTokenScopeRegistry[scope].order)

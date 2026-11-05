@@ -14,6 +14,7 @@ import {
   appointmentCalendarReminderModel,
 } from "@chatbotx.io/database/schema"
 import {
+  escapeLikePattern,
   getPaginationWithDefaults,
   likeContains,
   parseOrderBy,
@@ -74,6 +75,25 @@ const calendarWhere = (input: { workspaceId: string; search?: string }) =>
   )
 
 export const appointmentCalendarRepository = {
+  /**
+   * Names of the workspace's live calendars starting with `prefix` (taken as
+   * plain text) — the set the unique name index applies to.
+   */
+  async listNamesWithPrefix(
+    input: { workspaceId: string; prefix: string },
+    tx: DatabaseClient = db,
+  ): Promise<string[]> {
+    const rows = await tx.query.appointmentCalendarModel.findMany({
+      where: {
+        workspaceId: input.workspaceId,
+        deletedAt: { isNull: true as const },
+        name: { like: `${escapeLikePattern(input.prefix)}%` },
+      },
+      columns: { name: true },
+    })
+    return rows.map((row) => row.name)
+  },
+
   async list(
     input: AppointmentCalendarListInput,
     tx: DatabaseClient = db,

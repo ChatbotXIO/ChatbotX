@@ -24,6 +24,8 @@ import {
 } from "lucide-react"
 import type { useTranslations } from "next-intl"
 import type { Dispatch, SetStateAction } from "react"
+import { LockBadge } from "@/features/templates/components/lock-badge"
+import { UndeletableGuard } from "@/features/templates/components/lock-context"
 
 export type AIAgentDataTableRowAction<TData> = {
   row: Row<TData>
@@ -56,16 +58,19 @@ export function getAIAgentsColumns({
         <DataTableColumnHeader column={column} title="Name" />
       ),
       cell: ({ row }) => (
-        <Tooltip>
-          <TooltipTrigger
-            render={
-              <div className="max-w-100 truncate">{row.original.name}</div>
-            }
-          />
-          <TooltipContent>
-            <p>{row.original.name}</p>
-          </TooltipContent>
-        </Tooltip>
+        <div className="flex max-w-100 items-center">
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <div className="max-w-100 truncate">{row.original.name}</div>
+              }
+            />
+            <TooltipContent>
+              <p>{row.original.name}</p>
+            </TooltipContent>
+          </Tooltip>
+          <LockBadge resourceId={row.original.id} />
+        </div>
       ),
       size: 300,
       enableSorting: true,
@@ -129,13 +134,18 @@ export function getAIAgentsColumns({
               <PencilIcon className="me-2" />
               {t("actions.edit")}
             </DropdownMenuItem>
-            <DropdownMenuItem
-              className="text-destructive"
-              onClick={() => setRowAction({ row, variant: "delete" })}
-            >
-              <Trash2Icon className="me-2" />
-              {t("actions.delete")}
-            </DropdownMenuItem>
+            <UndeletableGuard resourceId={row.original.id}>
+              {(disabled) => (
+                <DropdownMenuItem
+                  className="text-destructive"
+                  disabled={disabled}
+                  onClick={() => setRowAction({ row, variant: "delete" })}
+                >
+                  <Trash2Icon className="me-2" />
+                  {t("actions.delete")}
+                </DropdownMenuItem>
+              )}
+            </UndeletableGuard>
           </DropdownMenuContent>
         </DropdownMenu>
       ),

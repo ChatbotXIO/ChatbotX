@@ -13,6 +13,7 @@ import {
 } from "../connection"
 import { connectionStateService } from "../connection/state-service"
 import { inboxService } from "../inbox/service"
+import { dispatchStagedInstalls } from "../template/installation-dispatch"
 import { type WorkspaceQuotaConsumption, workspaceService } from "../workspace"
 
 /** 64 hex chars from Web Crypto (no `node:crypto`: this module is in the Edge-safe barrel). */
@@ -185,6 +186,10 @@ class TelegramIntegrationService extends BaseService {
           }
         }),
     )
+
+    if (createdWorkspace) {
+      await dispatchStagedInstalls(result.workspaceId)
+    }
 
     return { ...result, createdWorkspace }
   }

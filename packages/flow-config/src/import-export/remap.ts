@@ -3,16 +3,20 @@ import {
   formatBotFieldReference,
   parseFieldReference,
 } from "../field-reference"
+import { EXTERNAL_REFERENCE_KIND } from "./external-reference-kind"
+import { splitPrefixedToken } from "./json-walk"
 import {
   CROSS_FLOW_NODE_FIELD,
   DISCRIMINATED_REFERENCE_FIELDS,
   FLOW_REFERENCE_FIELD,
   isPlainObject,
+  isWorkspaceBoundReferenceValue,
   MAX_WALK_DEPTH,
   PREFIXED_REFERENCE_ENTITY_KIND,
   PREFIXED_REFERENCE_FIELDS,
   REFERENCE_ARRAY_FIELD_ENTITY_KIND,
   REFERENCE_FIELD_ENTITY_KIND,
+  STEP_REFERENCE_OVERRIDES,
   STRIP_UNRESOLVED_ARRAY_REFERENCE_KINDS,
 } from "./reference-fields"
 
@@ -44,21 +48,15 @@ export type RemapOptions = {
   readonly onUnresolved?: (ref: UnresolvedReference) => void
 }
 
+/**
+ * The step a walked object belongs to: set when the walk enters an object
+ * with a string `stepType`, so a key inside it can be looked up in
+ * `STEP_REFERENCE_OVERRIDES` by its path relative to that step.
+ */
+type StepContext = { readonly stepType: string; readonly basePath: string }
+
 const kindEnabled = (kind: string, kinds?: readonly string[]): boolean =>
   !kinds || kinds.includes(kind)
-
-const splitPrefixedToken = (
-  token: string,
-): { prefix: string; id: string } | null => {
-  const separatorIndex = token.indexOf(":")
-  if (separatorIndex <= 0) {
-    return null
-  }
-  return {
-    prefix: token.slice(0, separatorIndex),
-    id: token.slice(separatorIndex + 1),
-  }
-}
 
 const remapPrefixedToken = (
   token: string,
@@ -110,6 +108,13 @@ const resolveScalarRef = (
   options: RemapOptions | undefined,
 ): { resolved: true; value: string } | { resolved: false } => {
   if (typeof value !== "string" || value.trim().length === 0) {
+    return { resolved: false }
+  }
+  // A sentinel such as `unassigned` names no member or team: not a reference.
+  if (
+    STRIP_UNRESOLVED_ARRAY_REFERENCE_KINDS.has(entityKind) &&
+    !isWorkspaceBoundReferenceValue(entityKind, value)
+  ) {
     return { resolved: false }
   }
   const idMap = idMaps[entityKind]
@@ -172,6 +177,9 @@ const resolveBotFieldReferenceSlot = (
   return { matched: true, value }
 }
 
+const isStrippableItem = (entityKind: string, item: unknown): boolean =>
+  typeof item === "string" && isWorkspaceBoundReferenceValue(entityKind, item)
+
 const remapArrayRef = (
   value: unknown,
   entityKind: string,
@@ -189,7 +197,7 @@ const remapArrayRef = (
     if (result.resolved) {
       return [result.value]
     }
-    return strip ? [] : [item]
+    return strip && isStrippableItem(entityKind, item) ? [] : [item]
   })
 }
 
@@ -205,12 +213,13 @@ const resolveScalarOrRecurse = (
   idMaps: ReferenceIdMaps,
   options: RemapOptions | undefined,
   depth: number,
+  stepContext: StepContext | undefined,
 ): unknown => {
   const result = resolveScalarRef(child, kind, childPath, idMaps, options)
   if (result.resolved) {
     return result.value
   }
-  return remapValue(child, childPath, idMaps, options, depth + 1)
+  return remapValue(child, childPath, idMaps, options, depth + 1, stepContext)
 }
 
 const resolveDiscriminatedKind = (
@@ -219,6 +228,13 @@ const resolveDiscriminatedKind = (
 ): string | null => {
   const config = DISCRIMINATED_REFERENCE_FIELDS[key]
   if (!config) {
+    return null
+  }
+  if (
+    config.requireSiblings?.some(
+      (sibling) => typeof container[sibling] !== "string",
+    )
+  ) {
     return null
   }
   const discriminatorValue = container[config.discriminatorKey]
@@ -241,7 +257,7 @@ export const remapReferences = <T>(
   value: T,
   idMaps: ReferenceIdMaps,
   options?: RemapOptions,
-): T => remapValue(value, "", idMaps, options, 0) as T
+): T => remapValue(value, "", idMaps, options, 0, undefined) as T
 
 const remapValue = (
   value: unknown,
@@ -249,13 +265,21 @@ const remapValue = (
   idMaps: ReferenceIdMaps,
   options: RemapOptions | undefined,
   depth: number,
+  stepContext: StepContext | undefined,
 ): unknown => {
   if (depth > MAX_WALK_DEPTH) {
     return value
   }
   if (Array.isArray(value)) {
     return value.map((item, index) =>
-      remapValue(item, `${path}[${index}]`, idMaps, options, depth + 1),
+      remapValue(
+        item,
+        `${path}[${index}]`,
+        idMaps,
+        options,
+        depth + 1,
+        stepContext,
+      ),
     )
   }
   if (!isPlainObject(value)) {
@@ -265,6 +289,11 @@ const remapValue = (
   const hasCrossFlowJump =
     kindEnabled("flow", options?.kinds) &&
     typeof value[FLOW_REFERENCE_FIELD] === "string"
+
+  const scopedStepContext: StepContext | undefined =
+    typeof value.stepType === "string"
+      ? { stepType: value.stepType, basePath: path }
+      : stepContext
 
   const next: Record<string, unknown> = {}
   for (const [key, child] of Object.entries(value)) {
@@ -278,6 +307,7 @@ const remapValue = (
       options,
       hasCrossFlowJump,
       depth,
+      stepContext: scopedStepContext,
     })
   }
   return next
@@ -292,10 +322,47 @@ type RemapEntryArgs = {
   options: RemapOptions | undefined
   hasCrossFlowJump: boolean
   depth: number
+  stepContext: StepContext | undefined
+}
+
+/**
+ * A step-specific override for this slot, when one applies. The key is
+ * looked up by its path relative to the owning step (`tagIds`, `flow.id`), so
+ * a nested slot is matched without any table of absolute paths.
+ */
+const findStepOverride = (args: RemapEntryArgs): string | undefined => {
+  if (!args.stepContext) {
+    return
+  }
+  const { stepType, basePath } = args.stepContext
+  const relativePath = basePath
+    ? args.childPath.slice(basePath.length + 1)
+    : args.childPath
+  return STEP_REFERENCE_OVERRIDES[stepType]?.[relativePath]
+}
+
+const applyStepOverride = (override: string, args: RemapEntryArgs): unknown => {
+  const { child, childPath, idMaps, options } = args
+  if (override === EXTERNAL_REFERENCE_KIND) {
+    return child
+  }
+  if (!kindEnabled(override, options?.kinds)) {
+    return child
+  }
+  if (Array.isArray(child)) {
+    return remapArrayRef(child, override, childPath, idMaps, options)
+  }
+  const result = resolveScalarRef(child, override, childPath, idMaps, options)
+  return result.resolved ? result.value : child
 }
 
 const remapEntry = (args: RemapEntryArgs): unknown => {
   const { key, child, childPath, container, idMaps, options, depth } = args
+
+  const stepOverride = findStepOverride(args)
+  if (stepOverride) {
+    return applyStepOverride(stepOverride, args)
+  }
 
   const scalarKind = REFERENCE_FIELD_ENTITY_KIND[key]
   if (scalarKind) {
@@ -324,6 +391,7 @@ const remapEntry = (args: RemapEntryArgs): unknown => {
         idMaps,
         options,
         depth,
+        args.stepContext,
       )
     }
   }
@@ -338,6 +406,16 @@ const remapEntry = (args: RemapEntryArgs): unknown => {
   }
 
   const discriminatedKind = resolveDiscriminatedKind(key, container)
+  if (discriminatedKind === EXTERNAL_REFERENCE_KIND) {
+    return child
+  }
+  if (
+    discriminatedKind &&
+    Array.isArray(child) &&
+    kindEnabled(discriminatedKind, options?.kinds)
+  ) {
+    return remapArrayRef(child, discriminatedKind, childPath, idMaps, options)
+  }
   if (discriminatedKind && kindEnabled(discriminatedKind, options?.kinds)) {
     return resolveScalarOrRecurse(
       child,
@@ -346,6 +424,7 @@ const remapEntry = (args: RemapEntryArgs): unknown => {
       idMaps,
       options,
       depth,
+      args.stepContext,
     )
   }
 
@@ -361,6 +440,7 @@ const remapEntry = (args: RemapEntryArgs): unknown => {
       idMaps,
       options,
       depth,
+      args.stepContext,
     )
   }
 
@@ -369,6 +449,12 @@ const remapEntry = (args: RemapEntryArgs): unknown => {
     args.hasCrossFlowJump &&
     kindEnabled("flowNode", options?.kinds)
   ) {
+    // The node id is only meaningful together with its sibling flow id. When
+    // that flow is unresolved it has already been reported, and a second
+    // warning for the node it points into would be noise.
+    if (!idMaps.flow?.has(container[FLOW_REFERENCE_FIELD] as string)) {
+      return child
+    }
     return resolveScalarOrRecurse(
       child,
       "flowNode",
@@ -376,10 +462,18 @@ const remapEntry = (args: RemapEntryArgs): unknown => {
       idMaps,
       options,
       depth,
+      args.stepContext,
     )
   }
 
-  return remapValue(child, childPath, idMaps, options, depth + 1)
+  return remapValue(
+    child,
+    childPath,
+    idMaps,
+    options,
+    depth + 1,
+    args.stepContext,
+  )
 }
 
 /**
@@ -394,8 +488,10 @@ export const remapFlowGraphReferences = <
   options?: RemapOptions,
 ): T => ({
   ...value,
-  nodes: remapReferences(value.nodes, idMaps, options),
-  edges: remapReferences(value.edges, idMaps, options),
+  // Rooted at `nodes` / `edges` so a reported path addresses the graph itself
+  // (`nodes[0].data...`), which `removeUnresolvedReferences` relies on.
+  nodes: remapValue(value.nodes, "nodes", idMaps, options, 0, undefined),
+  edges: remapValue(value.edges, "edges", idMaps, options, 0, undefined),
 })
 
 /**

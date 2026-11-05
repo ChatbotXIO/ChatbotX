@@ -48,6 +48,9 @@ export const queueGroupByName: Record<QueueName, QueueGroup> = {
   // FB Marketing Messages campaign steps: long-running Meta sends, isolated
   // from the shared schedule queue so they never hold its slots.
   marketingMessage: "bulk",
+  // Template install / sync / uninstall: long transactions, bursty on a
+  // widely installed template's save, never latency-critical.
+  template: "bulk",
 }
 
 function resolveGroupUrl(group: QueueGroup): string {

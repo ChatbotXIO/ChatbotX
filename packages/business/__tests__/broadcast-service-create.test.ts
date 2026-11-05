@@ -1,5 +1,10 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
+// The reference guard needs a real transaction; its own suite covers it.
+vi.mock("../src/template/installed-resource.service", () => ({
+  assertReferencable: vi.fn().mockResolvedValue(undefined),
+}))
+
 const {
   mockFindCapability,
   findFirstFlow,
@@ -214,6 +219,12 @@ vi.mock("@chatbotx.io/utils", async () => {
     createId: vi.fn(() => "generated-id"),
   }
 })
+
+// The filter extractor reads the real flow-config registry, which this file
+// mocks partially; it has its own suite (template-contact-filter-guard).
+vi.mock("../src/template/uninstall-references", () => ({
+  contactFilterParentsOf: vi.fn(() => []),
+}))
 
 vi.mock("@chatbotx.io/flow-config", () => ({
   BUTTON_LABEL_MAX: 20,
@@ -477,6 +488,69 @@ describe("broadcastService.create — validation branches", () => {
       action: "launch",
       detail: "launched a broadcast (#broadcast-1)",
     })
+  })
+
+  test("takes the flow's reference guard before inserting (a broadcast cascades away with its flow)", async () => {
+    const { assertReferencable } = await import(
+      "../src/template/installed-resource.service"
+    )
+    mockFindCapability.mockReturnValue({
+      subactions: ["sendMessage"],
+      supportsTemplateBroadcast: false,
+    })
+    findFirstFlow.mockResolvedValue({ id: "flow-1", name: "My Flow" })
+
+    await broadcastService.create(baseInput)
+
+    expect(assertReferencable).toHaveBeenCalledWith(
+      expect.objectContaining({
+        workspaceId: baseInput.workspaceId,
+        parents: [{ kind: "flow", resourceId: "flow-1" }],
+      }),
+    )
+  })
+
+  test("also takes the guard of every id the audience filter names (a sequence, a keyword, ...)", async () => {
+    const { assertReferencable } = await import(
+      "../src/template/installed-resource.service"
+    )
+    mockFindCapability.mockReturnValue({
+      subactions: ["sendMessage"],
+      supportsTemplateBroadcast: false,
+    })
+    findFirstFlow.mockResolvedValue({ id: "flow-1", name: "My Flow" })
+    vi.mocked(assertReferencable).mockClear()
+    const { contactFilterParentsOf } = await import(
+      "../src/template/uninstall-references"
+    )
+    vi.mocked(contactFilterParentsOf).mockReturnValueOnce([
+      { kind: "sequence", resourceId: "77" },
+      { kind: "automatedResponse", resourceId: "88" },
+    ])
+
+    await broadcastService.create({
+      ...baseInput,
+      contactFilter: {
+        operator: "and",
+        conditions: [
+          { field: "subscribedToDripCampaign", operator: "in", value: ["77"] },
+          { field: "keywordsReceived", operator: "in", value: ["88"] },
+          { field: "tags", operator: "in", value: ["99"] },
+        ],
+      },
+    } as never)
+
+    const { parents } = vi.mocked(assertReferencable).mock.calls[0][0]
+    expect(parents).toEqual(
+      expect.arrayContaining([
+        { kind: "flow", resourceId: "flow-1" },
+        { kind: "sequence", resourceId: "77" },
+        { kind: "automatedResponse", resourceId: "88" },
+      ]),
+    )
+    expect(contactFilterParentsOf).toHaveBeenCalledWith(
+      expect.objectContaining({ operator: "and" }),
+    )
   })
 
   test("does not launch-audit when saveAsDraft is true", async () => {

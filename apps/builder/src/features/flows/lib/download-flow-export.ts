@@ -20,6 +20,8 @@ export async function downloadFlowExport(
     if (!response.ok) {
       if (response.status === 409) {
         toast.error(t("flows.export.notPublished"))
+      } else if (response.status === 403) {
+        toast.error(t("flows.export.viewOnly"))
       } else {
         toast.error(t("flows.export.failed"))
       }

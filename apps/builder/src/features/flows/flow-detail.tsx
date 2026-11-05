@@ -23,6 +23,7 @@ type FlowDetailProps = {
   canRevertToPublished: boolean
   hasPublishedVersion: boolean
   workspaceTargetCountry: string | null
+  isTemplateLocked: boolean
 }
 
 export function FlowDetail({
@@ -32,6 +33,7 @@ export function FlowDetail({
   canRevertToPublished,
   hasPublishedVersion,
   workspaceTargetCountry,
+  isTemplateLocked,
 }: FlowDetailProps) {
   return (
     <ReactFlowProvider>
@@ -56,6 +58,7 @@ export function FlowDetail({
                         flow={flow}
                         flowVersion={flowVersion}
                         hasPublishedVersion={hasPublishedVersion}
+                        isTemplateLocked={isTemplateLocked}
                       />
                     </PlatformCredentialsStoreProvider>
                   </AIToolsStoreProvider>

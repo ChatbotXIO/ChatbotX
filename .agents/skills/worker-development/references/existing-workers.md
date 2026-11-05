@@ -19,7 +19,8 @@
 `queueNames` (`packages/worker-config/src/lib/types.ts:3`) also declares `broadcast` and
 `quota`, which have queues but no dedicated worker entry — their jobs are consumed by the
 workers above. Some queues get their own `Worker` (own concurrency) hosted inside an existing
-process: `profileSnapshot` and `leaderboard` in `src/low/worker.ts`. Marketing Messages
+process: `profileSnapshot` and `leaderboard` in `src/low/worker.ts`, and `template` (template
+install, sync, uninstall and fan-out) in `src/default/worker.ts`. Marketing Messages
 campaign steps have their own `marketingMessage` worker, while schedule crons enqueue them.
 Check `apps/worker/tsdown.config.ts` for the authoritative entry list.
 

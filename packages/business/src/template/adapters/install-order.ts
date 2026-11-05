@@ -12,7 +12,35 @@ const PHASE_R_KINDS = new Set([
   "tag",
   "productCategory",
   "folder",
+  "inbox",
 ])
+
+type OrderableAdapter = {
+  providesKinds: readonly string[]
+  consumesKinds: readonly string[]
+  deferredKinds: readonly string[]
+}
+
+/** The category that provides each kind. */
+const buildProviderMap = (
+  registry: Partial<Record<TemplateCategory, OrderableAdapter>>,
+): Map<string, TemplateCategory> => {
+  const providedBy = new Map<string, TemplateCategory>()
+  for (const [category, adapter] of Object.entries(registry)) {
+    for (const kind of adapter?.providesKinds ?? []) {
+      providedBy.set(kind, category as TemplateCategory)
+    }
+  }
+  return providedBy
+}
+
+/** The kinds an adapter needs resolved BEFORE it inserts (not deferred, not Phase R). */
+const insertTimeKinds = (adapter: OrderableAdapter): string[] => {
+  const deferred = new Set(adapter.deferredKinds)
+  return adapter.consumesKinds.filter(
+    (kind) => !(deferred.has(kind) || PHASE_R_KINDS.has(kind)),
+  )
+}
 
 /**
  * Topologically sorts Phase-1 categories by `providesKinds` /
@@ -28,37 +56,20 @@ const PHASE_R_KINDS = new Set([
  * message for either failure mode.
  */
 export const topoSortCategories = (
-  registry: Partial<
-    Record<
-      TemplateCategory,
-      {
-        providesKinds: readonly string[]
-        consumesKinds: readonly string[]
-        deferredKinds: readonly string[]
-      }
-    >
-  >,
+  registry: Partial<Record<TemplateCategory, OrderableAdapter>>,
 ): TemplateCategory[] | undefined => {
   const categories = Object.keys(registry) as TemplateCategory[]
-  const providedBy = new Map<string, TemplateCategory>()
-  for (const category of categories) {
-    for (const kind of registry[category]?.providesKinds ?? []) {
-      providedBy.set(kind, category)
-    }
-  }
+  const providedBy = buildProviderMap(registry)
 
   const dependenciesOf = (category: TemplateCategory): TemplateCategory[] => {
     const adapter = registry[category]
     if (!adapter) {
       return []
     }
-    const deferred = new Set(adapter.deferredKinds)
-    return adapter.consumesKinds
-      .filter((kind) => !(deferred.has(kind) || PHASE_R_KINDS.has(kind)))
-      .flatMap((kind) => {
-        const provider = providedBy.get(kind)
-        return provider && provider !== category ? [provider] : []
-      })
+    return insertTimeKinds(adapter).flatMap((kind) => {
+      const provider = providedBy.get(kind)
+      return provider && provider !== category ? [provider] : []
+    })
   }
 
   const sorted: TemplateCategory[] = []
@@ -103,38 +114,31 @@ export const topoSortCategories = (
 export const assertInstallOrderMatches = (
   order: readonly TemplateCategory[],
 ): void => {
-  const sorted = topoSortCategories(templateAdapterRegistry)
-  if (!sorted) {
+  if (!topoSortCategories(templateAdapterRegistry)) {
     throw new Error(
       "Template adapter dependency graph contains a cycle not broken by any deferredKinds entry.",
     )
   }
 
+  const providedBy = buildProviderMap(templateAdapterRegistry)
   const positionOf = new Map(order.map((category, index) => [category, index]))
   for (const category of order) {
-    const adapter =
-      templateAdapterRegistry[category as keyof typeof templateAdapterRegistry]
+    // The registry is total over the resource categories; a category outside
+    // it (the order may list manifest-only ones) has nothing to check.
+    const adapter: OrderableAdapter | undefined = (
+      templateAdapterRegistry as Partial<
+        Record<TemplateCategory, OrderableAdapter>
+      >
+    )[category]
     if (!adapter) {
       continue
     }
-    const deferred = new Set(adapter.deferredKinds)
-    for (const kind of adapter.consumesKinds) {
-      if (deferred.has(kind) || PHASE_R_KINDS.has(kind)) {
+    for (const kind of insertTimeKinds(adapter)) {
+      const providerCategory = providedBy.get(kind)
+      if (!providerCategory || providerCategory === category) {
         continue
       }
-      const providerEntry = Object.entries(templateAdapterRegistry).find(
-        ([, providerAdapter]) => providerAdapter.providesKinds.includes(kind),
-      )
-      if (!providerEntry) {
-        continue
-      }
-      const [providerCategory] = providerEntry
-      if (providerCategory === category) {
-        continue
-      }
-      const providerPosition = positionOf.get(
-        providerCategory as TemplateCategory,
-      )
+      const providerPosition = positionOf.get(providerCategory)
       const consumerPosition = positionOf.get(category)
       if (
         providerPosition !== undefined &&

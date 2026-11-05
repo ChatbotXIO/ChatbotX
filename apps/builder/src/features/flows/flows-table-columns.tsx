@@ -17,7 +17,7 @@ import {
 } from "@chatbotx.io/ui/components/ui/tooltip"
 import { formatDate } from "@chatbotx.io/ui/lib/format"
 import type { DataTableRowAction } from "@chatbotx.io/ui/types/data-table"
-import type { ColumnDef } from "@tanstack/react-table"
+import type { ColumnDef, Row } from "@tanstack/react-table"
 import {
   CopyPlus,
   DownloadIcon,
@@ -30,6 +30,11 @@ import Link from "next/link"
 import type { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import type { Dispatch, SetStateAction } from "react"
+import { LockBadge } from "@/features/templates/components/lock-badge"
+import {
+  useIsLocked,
+  useIsUndeletable,
+} from "@/features/templates/components/lock-context"
 import { updateFlowAction } from "./actions/update-flow-action"
 import { downloadFlowExport } from "./lib/download-flow-export"
 import type { FlowResource } from "./schema/resource"
@@ -82,12 +87,12 @@ export function getFlowColumns({
         <DataTableColumnHeader column={column} title={t("fields.name.label")} />
       ),
       cell: ({ row }) => (
-        <div className="max-w-75 truncate">
+        <div className="flex max-w-75 items-center">
           <Tooltip>
             <TooltipTrigger
               render={
                 <Link
-                  className="max-w-75 truncate"
+                  className="min-w-0 max-w-75 truncate"
                   href={`/space/${row.original.workspaceId}/flows/${row.original.id}`}
                 >
                   {row.original.name}
@@ -98,6 +103,7 @@ export function getFlowColumns({
               <p>{row.original.name}</p>
             </TooltipContent>
           </Tooltip>
+          <LockBadge resourceId={row.original.id} />
         </div>
       ),
       meta: {
@@ -211,58 +217,84 @@ export function getFlowColumns({
       id: "actions",
       header: t("actions.actions"),
       cell: ({ row }) => (
-        <DropdownMenu>
-          <DropdownMenuTrigger
-            render={
-              <Button
-                aria-label="Open menu"
-                className="flex size-8 p-0 data-[state=open]:bg-muted"
-                variant="ghost"
-              >
-                <EllipsisVerticalIcon aria-hidden="true" className="size-4" />
-              </Button>
-            }
-          />
-          <DropdownMenuContent align="end" className="w-40">
-            <DropdownMenuItem
-              onClick={() => setRowAction({ row, variant: "rename" })}
-            >
-              <TextIcon />
-              {t("actions.rename")}
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => setRowAction({ row, variant: "move" })}
-            >
-              <FolderUpIcon />
-              {t("actions.move")}
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => setRowAction({ row, variant: "duplicate" })}
-            >
-              <CopyPlus />
-              {t("actions.duplicate")}
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => {
-                downloadFlowExport(row.original, t)
-              }}
-            >
-              <DownloadIcon />
-              {t("actions.export")}
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => setRowAction({ row, variant: "delete" })}
-              variant="destructive"
-            >
-              <Trash />
-              {t("actions.delete")}
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <FlowRowActions row={row} setRowAction={setRowAction} t={t} />
       ),
       size: 50,
       enableSorting: false,
       enableHiding: false,
     },
   ]
+}
+
+/**
+ * A copy installed from a View-only template can not be renamed, duplicated or
+ * exported (the server refuses all three), so those entries are disabled.
+ * Delete is disabled when the template does not allow deleting the copy; move
+ * always stays available.
+ */
+function FlowRowActions({
+  row,
+  setRowAction,
+  t,
+}: {
+  row: Row<FlowResource>
+  setRowAction: GetColumnsProps["setRowAction"]
+  t: GetColumnsProps["t"]
+}) {
+  const locked = useIsLocked(row.original.id)
+  const undeletable = useIsUndeletable(row.original.id)
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger
+        render={
+          <Button
+            aria-label="Open menu"
+            className="flex size-8 p-0 data-[state=open]:bg-muted"
+            variant="ghost"
+          >
+            <EllipsisVerticalIcon aria-hidden="true" className="size-4" />
+          </Button>
+        }
+      />
+      <DropdownMenuContent align="end" className="w-40">
+        <DropdownMenuItem
+          disabled={locked}
+          onClick={() => setRowAction({ row, variant: "rename" })}
+        >
+          <TextIcon />
+          {t("actions.rename")}
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onClick={() => setRowAction({ row, variant: "move" })}
+        >
+          <FolderUpIcon />
+          {t("actions.move")}
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          disabled={locked}
+          onClick={() => setRowAction({ row, variant: "duplicate" })}
+        >
+          <CopyPlus />
+          {t("actions.duplicate")}
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          disabled={locked}
+          onClick={() => {
+            downloadFlowExport(row.original, t)
+          }}
+        >
+          <DownloadIcon />
+          {t("actions.export")}
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          disabled={undeletable}
+          onClick={() => setRowAction({ row, variant: "delete" })}
+          variant="destructive"
+        >
+          <Trash />
+          {t("actions.delete")}
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  )
 }

@@ -81,6 +81,8 @@ const HITL_NONE_WRITE_ALLOWLIST: Record<string, true> = {
   "flows.validate": true,
   "inboundWebhooks.previewMapping": true,
   "miniApps.validate": true,
+  "templates.listLockedResources": true,
+  "templates.previewDependencies": true,
 }
 
 // Guard against the default set silently growing back toward 346 — a
