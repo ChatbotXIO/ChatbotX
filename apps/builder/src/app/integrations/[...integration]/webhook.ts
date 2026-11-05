@@ -7,14 +7,20 @@ import {
 } from "@chatbotx.io/business"
 import { IntegrationNotFoundError } from "@chatbotx.io/channel-registry/errors"
 import { integrationService } from "@chatbotx.io/channel-registry/registry"
-import type { IntegrationType } from "@chatbotx.io/database/partials"
+import type {
+  IntegrationType,
+  ProviderAccountRouteScope,
+} from "@chatbotx.io/database/partials"
 import { getSafeErrorDetails } from "@chatbotx.io/integration-threads"
 import type {
   TiktokAuthValue,
   TiktokConfig,
 } from "@chatbotx.io/integration-tiktok"
 import { type ContextQueue, SdkException } from "@chatbotx.io/sdk"
-import { integrationQueue } from "@chatbotx.io/worker-config"
+import {
+  IntegrationJobAction,
+  integrationQueue,
+} from "@chatbotx.io/worker-config"
 import type { NextRequest } from "next/server"
 import { isCloud } from "@/env"
 import { findIntegrationTelegramByBotId } from "@/features/integration-telegram/queries"
@@ -22,6 +28,10 @@ import { findIntegrationTiktokByOpenId } from "@/features/integration-tiktok/que
 import { type IntegrationKey, integrations } from "@/integration"
 import { logger } from "@/lib/log"
 import { isBrokerHost } from "@/lib/oauth-broker"
+import {
+  addRouteScopedJob,
+  createRouteScopedQueue,
+} from "@/lib/provider-account-route-scope"
 import { logWebhookRequestBody } from "@/lib/webhook-log"
 
 type CredentialType = Parameters<
@@ -96,7 +106,34 @@ const normalizeCredentialScopedWebhookRequest = (
       )
     : req
 
-const createCredentialScopedQueue = (ownerId: string): ContextQueue => {
+/** The provider app id a credential's config carries, which the webhook route authenticates against. */
+const readCredentialAppId = (config: unknown): string | undefined =>
+  typeof config === "object" &&
+  config !== null &&
+  "clientId" in config &&
+  typeof config.clientId === "string" &&
+  config.clientId.length > 0
+    ? config.clientId
+    : undefined
+
+/** Who a webhook route speaks for: the credential's owner, or the platform when no tenant or user owns the credential. */
+const resolveRouteScope = (
+  credentialOwnerId: string | undefined,
+  config: unknown,
+): ProviderAccountRouteScope | undefined => {
+  const appId = readCredentialAppId(config)
+  if (!appId) {
+    return
+  }
+  return credentialOwnerId
+    ? { kind: "credentialOwner", ownerId: credentialOwnerId, appId }
+    : { kind: "platform", appId }
+}
+
+const createCredentialScopedQueue = (
+  ownerId: string,
+  routeScope: ProviderAccountRouteScope | undefined,
+): ContextQueue => {
   const ownerChecks = new Map<string, Promise<boolean>>()
 
   const belongsToOwner = (
@@ -147,6 +184,10 @@ const createCredentialScopedQueue = (ownerId: string): ContextQueue => {
 
   return {
     add: async (name, payload, options) => {
+      if (name === IntegrationJobAction.providerAccountEvent) {
+        return await addRouteScopedJob(name, payload, options, routeScope)
+      }
+
       const routing = getCredentialScopedIntegrationRouting(payload)
       if (!routing) {
         logger.error(
@@ -248,6 +289,8 @@ export const handleWebhook = async (
       >
     | undefined
   let credentialOwnerId: string | undefined
+  // Set only for a tenant's custom domain; otherwise the platform app speaks.
+  let customDomainOwnerId: string | undefined
 
   if (credentialId) {
     if (!isCloud()) {
@@ -297,6 +340,7 @@ export const handleWebhook = async (
         userId: tenant.ownerId,
         type,
       })
+      customDomainOwnerId = tenant.ownerId
     }
   } else {
     // Non-cloud (OSS/enterprise): single-tenant, always use global platform credential
@@ -320,6 +364,12 @@ export const handleWebhook = async (
   ).toString()
 
   const settings = credential.config
+  // A credential in the request path (`/c/{id}`) or on a tenant's custom domain
+  // speaks for its owner; the broker host speaks for the platform.
+  const routeScope = resolveRouteScope(
+    credentialOwnerId ?? customDomainOwnerId,
+    settings,
+  )
 
   try {
     const result = await integration.handleRequest({
@@ -334,8 +384,8 @@ export const handleWebhook = async (
       } as any,
       req: normalizeCredentialScopedWebhookRequest(req, credentialId),
       queue: credentialOwnerId
-        ? createCredentialScopedQueue(credentialOwnerId)
-        : integrationQueue,
+        ? createCredentialScopedQueue(credentialOwnerId, routeScope)
+        : createRouteScopedQueue(routeScope),
     })
 
     return new Response(result as BodyInit)

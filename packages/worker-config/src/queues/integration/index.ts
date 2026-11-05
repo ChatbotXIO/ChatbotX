@@ -3,6 +3,10 @@ import type {
   ConversationQuickReplyChallenge,
   ConversationStepChallenge,
   EmailTrackingPhase,
+  IntegrationType,
+  ProviderAccountEventDetail,
+  ProviderAccountEventKind,
+  ProviderAccountRouteScope,
 } from "@chatbotx.io/database/partials"
 import type { AdsConversionChannel } from "@chatbotx.io/database/schema"
 import type {
@@ -68,6 +72,7 @@ export const IntegrationJobAction = {
   coexistInstagramSync: "coexistInstagramSync",
   coexistAttachmentDownload: "coexistAttachmentDownload",
   adsAutomaticEvent: "adsAutomaticEvent",
+  providerAccountEvent: "providerAccountEvent",
   whatsappIdentityChange: "whatsappIdentityChange",
   whatsappCallEvent: "whatsappCallEvent",
   whatsappCallRecordingReady: "whatsappCallRecordingReady",
@@ -770,6 +775,22 @@ export const whatsappCallNativeTranscriptFetchJobId = (wacid: string): string =>
 // callTranscription queue so it can carry its own BullMQ limiter independent of
 // this shared queue's traffic.
 
+/** A lifecycle event about the provider-side account behind one or more connections. */
+export type IntegrationJobProviderAccountEvent = {
+  type: typeof IntegrationJobAction.providerAccountEvent
+  data: {
+    integrationType: IntegrationType
+    account: { kind: "businessAccount"; id: string }
+    event: ProviderAccountEventKind
+    /** Provider-reported facts, bounded by the adapter (never raw payload). */
+    detail: ProviderAccountEventDetail
+    /** Event time in epoch milliseconds, as reported by the provider. */
+    occurredAt: number
+    /** Absent until a route stamps it; the worker treats absent as "drop". */
+    routeScope?: ProviderAccountRouteScope
+  }
+}
+
 export type IntegrationJobAdsAutomaticEvent = {
   type: typeof IntegrationJobAction.adsAutomaticEvent
   data: {
@@ -1262,6 +1283,7 @@ export type IntegrationJobData =
   | IntegrationJobCoexistInstagramSync
   | IntegrationJobCoexistAttachmentDownload
   | IntegrationJobAdsAutomaticEvent
+  | IntegrationJobProviderAccountEvent
   | IntegrationJobWhatsappIdentityChange
   | IntegrationJobWhatsappCallEvent
   | IntegrationJobWhatsappCallRecordingReady

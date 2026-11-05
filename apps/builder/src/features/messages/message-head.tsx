@@ -11,6 +11,7 @@ import { ArrowLeftIcon, BotIcon, UserRoundIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import { toast } from "sonner"
+import { contactDisplayName } from "@/features/contacts/lib/contact-display-name"
 import { useWorkspaceId } from "@/hooks/routing"
 import { useChatStore } from "../chat/store/chat-store-provider"
 import { enableBotAction } from "../conversations/actions/enable-bot.action"
@@ -106,7 +107,7 @@ export default function MessageHead({
         )}
         <div className="flex min-w-0 flex-1 flex-col">
           <div className="truncate font-medium text-semibold">
-            {activeConversation?.contact?.fullName}
+            {contactDisplayName(activeConversation?.contact)}
           </div>
           <UpdateConversationAssignee
             conversation={activeConversation}
@@ -116,7 +117,7 @@ export default function MessageHead({
         {whatsappContactInbox && (
           <WhatsappVoipCallButton
             contactInboxId={whatsappContactInbox.id}
-            contactName={activeConversation?.contact?.fullName}
+            contactName={contactDisplayName(activeConversation?.contact)}
             conversationId={activeConversation.id}
             outboundCallMode={outboundCallMode.data}
           />

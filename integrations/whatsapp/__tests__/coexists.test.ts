@@ -13,6 +13,7 @@ vi.mock("ky", async () => {
 })
 
 import { triggerSmbAppDataSync } from "../src/api/coexists"
+import { WhatsappException } from "../src/exception"
 import type { WhatsappAuthValue } from "../src/schema"
 
 const buildAuth = (): WhatsappAuthValue =>
@@ -27,12 +28,14 @@ const buildAuth = (): WhatsappAuthValue =>
     metadata: { wabaId: "waba-1" },
   }) as unknown as WhatsappAuthValue
 
-const okResponse = () => ({
-  json: vi.fn().mockResolvedValue({ success: true }),
+const textResponse = (body: string) => ({
+  text: vi.fn().mockResolvedValue(body),
 })
 
+const okResponse = () => textResponse(JSON.stringify({ success: true }))
+
 const errorResponse = (err: unknown) => ({
-  json: vi.fn().mockRejectedValue(err),
+  text: vi.fn().mockRejectedValue(err),
 })
 
 const makeHttpError = (status: number, body: unknown) => {
@@ -114,5 +117,101 @@ describe("triggerSmbAppDataSync", () => {
     })
 
     expect(result).toEqual({ ok: false, reason: "window_expired" })
+  })
+
+  it("accepts the documented { messaging_product, request_id } response", async () => {
+    postMock.mockReturnValueOnce(
+      textResponse(
+        JSON.stringify({ messaging_product: "whatsapp", request_id: "req-1" }),
+      ),
+    )
+
+    const result = await triggerSmbAppDataSync({
+      auth: buildAuth(),
+      phoneNumberId: "phone-1",
+      syncType: "history",
+    })
+
+    expect(result).toEqual({ ok: true })
+  })
+
+  it("accepts an empty 2xx body", async () => {
+    postMock.mockReturnValueOnce(textResponse(""))
+
+    const result = await triggerSmbAppDataSync({
+      auth: buildAuth(),
+      phoneNumberId: "phone-1",
+      syncType: "history",
+    })
+
+    expect(result).toEqual({ ok: true })
+  })
+
+  it("throws when Meta returns { success: false }", async () => {
+    postMock.mockReturnValueOnce(
+      textResponse(JSON.stringify({ success: false })),
+    )
+
+    await expect(
+      triggerSmbAppDataSync({
+        auth: buildAuth(),
+        phoneNumberId: "phone-1",
+        syncType: "history",
+      }),
+    ).rejects.toBeInstanceOf(WhatsappException)
+  })
+
+  it("throws on a non-JSON 2xx body", async () => {
+    postMock.mockReturnValueOnce(textResponse("<html>oops</html>"))
+
+    await expect(
+      triggerSmbAppDataSync({
+        auth: buildAuth(),
+        phoneNumberId: "phone-1",
+        syncType: "history",
+      }),
+    ).rejects.toBeInstanceOf(WhatsappException)
+  })
+
+  it("throws on an unknown JSON shape", async () => {
+    postMock.mockReturnValueOnce(textResponse(JSON.stringify({ ok: 1 })))
+
+    await expect(
+      triggerSmbAppDataSync({
+        auth: buildAuth(),
+        phoneNumberId: "phone-1",
+        syncType: "history",
+      }),
+    ).rejects.toBeInstanceOf(WhatsappException)
+  })
+
+  it("returns not_eligible for Meta code 131000 / subcode 10", async () => {
+    postMock.mockReturnValueOnce(
+      errorResponse(
+        makeHttpError(400, { error: { code: 131_000, error_subcode: 10 } }),
+      ),
+    )
+
+    const result = await triggerSmbAppDataSync({
+      auth: buildAuth(),
+      phoneNumberId: "phone-1",
+      syncType: "history",
+    })
+
+    expect(result).toEqual({ ok: false, reason: "not_eligible" })
+  })
+
+  it("rethrows other HTTP errors", async () => {
+    postMock.mockReturnValueOnce(
+      errorResponse(makeHttpError(500, { error: { message: "boom" } })),
+    )
+
+    await expect(
+      triggerSmbAppDataSync({
+        auth: buildAuth(),
+        phoneNumberId: "phone-1",
+        syncType: "history",
+      }),
+    ).rejects.toThrow()
   })
 })

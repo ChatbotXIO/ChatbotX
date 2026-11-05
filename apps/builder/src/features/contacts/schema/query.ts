@@ -193,6 +193,8 @@ export const contactTableRowResource = contactResource
   .pick({
     id: true,
     fullName: true,
+    email: true,
+    phoneNumber: true,
     avatar: true,
     createdAt: true,
   })

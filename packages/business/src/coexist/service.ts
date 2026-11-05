@@ -115,15 +115,23 @@ class CoexistService extends BaseService {
     return result
   }
 
+  /**
+   * Turns coexist off and fails the live runs. `tx` joins a caller-owned
+   * transaction (a revoke does both with its status change); `currentError`
+   * is what the failed runs show.
+   */
   async disable(input: {
     workspaceId: string
     integrationId: string
     channel: CoexistChannel
+    currentError?: string
+    tx?: DatabaseClient
   }): Promise<CoexistDisableResult> {
-    const result = await db.transaction(async (tx) => {
+    const { currentError = "Coexist disabled", tx: callerTx, ...ref } = input
+    const run = async (tx: DatabaseClient): Promise<CoexistDisableResult> => {
       const integration =
         await coexistSyncRunRepository.setIntegrationCoexistEnabled({
-          ...input,
+          ...ref,
           enabled: false,
           tx,
         })
@@ -133,16 +141,16 @@ class CoexistService extends BaseService {
       }
 
       await coexistSyncRunRepository.tearDownActiveRunsForIntegration({
-        channel: input.channel,
-        integrationId: input.integrationId,
-        currentError: "Coexist disabled",
+        channel: ref.channel,
+        integrationId: ref.integrationId,
+        currentError,
         tx,
       })
 
       return { success: true } as const
-    })
+    }
 
-    return result
+    return callerTx ? await run(callerTx) : await db.transaction(run)
   }
 
   async tearDownForIntegration(input: {

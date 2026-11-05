@@ -15,11 +15,6 @@
 
 export const EMBEDDED_SIGNUP_FEATURE_TYPES = {
   WHATSAPP_BUSINESS_APP_ONBOARDING: "whatsapp_business_app_onboarding",
-  ONLY_WABA_SHARING: "only_waba_sharing",
-} as const
-
-const EMBEDDED_SIGNUP_FEATURES = {
-  MARKETING_MESSAGES_LITE: "marketing_messages_lite",
 } as const
 
 /**
@@ -122,7 +117,6 @@ export function decodeOAuthState(raw: string): WhatsappOAuthState | null {
 
 export type EmbeddedSignupIntent = {
   connectExisting: boolean
-  transferPhoneNumber: boolean
   /** Manual connect bypasses embedded signup entirely. */
   manualConnect?: boolean
 }
@@ -130,20 +124,14 @@ export type EmbeddedSignupIntent = {
 /**
  * Derive Meta's embedded-signup `featureType` from the user's intent.
  *
- * - Transferring a number hosted by another provider means the WABA already
- *   exists elsewhere, so Meta must open the existing-WABA sharing screen.
- * - Connecting an existing account means the number is live on the WhatsApp
- *   Business App, which is Meta's coexistence onboarding screen.
- *
- * When both are set the transfer wins — sharing a foreign WABA cannot also be a
- * coexist onboarding.
+ * Connecting an existing account means the number is live on the WhatsApp
+ * Business App, which is Meta's coexistence onboarding screen. (Transferring a
+ * number from another provider, `only_waba_sharing`, is no longer offered:
+ * Meta removes it after 2026-11-16.)
  */
 export function resolveEmbeddedSignupFeatureType(
   params: EmbeddedSignupIntent,
 ): string | undefined {
-  if (params.transferPhoneNumber) {
-    return EMBEDDED_SIGNUP_FEATURE_TYPES.ONLY_WABA_SHARING
-  }
   if (params.connectExisting) {
     return EMBEDDED_SIGNUP_FEATURE_TYPES.WHATSAPP_BUSINESS_APP_ONBOARDING
   }
@@ -182,31 +170,31 @@ export const EMBEDDED_SIGNUP_VERSIONS = {
 export type EmbeddedSignupVersion =
   (typeof EMBEDDED_SIGNUP_VERSIONS)[keyof typeof EMBEDDED_SIGNUP_VERSIONS]
 
-/** No `extras.version`: Meta picks its own default, which is what every flow did before v4. */
-const UNPINNED_EMBEDDED_SIGNUP = "unpinned"
+/**
+ * The version every dialog flow (connect, reconnect, CAPI) pins. Moving to a
+ * newer version is one new entry in `EMBEDDED_SIGNUP_EXTRAS_BUILDERS` plus
+ * changing this constant.
+ */
+export const DEFAULT_EMBEDDED_SIGNUP_VERSION = EMBEDDED_SIGNUP_VERSIONS.V4
 
 /**
  * `extras` is version-specific, so each version owns its builder instead of one
  * function accumulating conditionals.
  *
- * The v4 shape drops two things the older one carries: `marketing_messages_lite`
- * is no longer a feature there (it became a Login Configuration product), and
- * `sessionInfoVersion` is only needed by v2, since v3 onward returns session
- * info for every flow.
+ * v4 carries no `sessionInfoVersion` (v3 onward returns session info for every
+ * flow) and no `marketing_messages_lite` feature (it is a Login Configuration
+ * product there).
  */
 const EMBEDDED_SIGNUP_EXTRAS_BUILDERS = {
-  [UNPINNED_EMBEDDED_SIGNUP]: (featureType?: string) => ({
-    sessionInfoVersion: 3,
-    setup: {},
-    features: [EMBEDDED_SIGNUP_FEATURES.MARKETING_MESSAGES_LITE],
-    ...(featureType ? { featureType } : {}),
-  }),
   [EMBEDDED_SIGNUP_VERSIONS.V4]: (featureType?: string) => ({
     setup: {},
     version: EMBEDDED_SIGNUP_VERSIONS.V4,
     ...(featureType ? { featureType } : {}),
   }),
-} satisfies Record<string, (featureType?: string) => Record<string, unknown>>
+} satisfies Record<
+  EmbeddedSignupVersion,
+  (featureType?: string) => Record<string, unknown>
+>
 
 export type FacebookOAuthDialogParams = {
   /** The reseller origin the callback relays the result back to. */
@@ -223,18 +211,12 @@ export type FacebookOAuthDialogParams = {
   configId: string
   version: string
   connectExisting: boolean
-  transferPhoneNumber: boolean
   locale?: string
   /**
    * Set on a reconnect, left off on a first connect: the first connect has
    * nothing to re-ask for, and the dialog already shows every permission.
    */
   authType?: FacebookAuthType
-  /**
-   * Pins the Embedded Signup version for this flow. Left off, Meta uses its own
-   * default — the behaviour every flow had before any version was pinned.
-   */
-  embeddedSignupVersion?: EmbeddedSignupVersion
 }
 
 /**
@@ -264,12 +246,9 @@ export function buildFacebookOAuthDialogUrl(
 
   const featureType = resolveEmbeddedSignupFeatureType({
     connectExisting: params.connectExisting,
-    transferPhoneNumber: params.transferPhoneNumber,
   })
   const buildExtras =
-    EMBEDDED_SIGNUP_EXTRAS_BUILDERS[
-      params.embeddedSignupVersion ?? UNPINNED_EMBEDDED_SIGNUP
-    ]
+    EMBEDDED_SIGNUP_EXTRAS_BUILDERS[DEFAULT_EMBEDDED_SIGNUP_VERSION]
   url.searchParams.set("extras", JSON.stringify(buildExtras(featureType)))
 
   return url.toString()

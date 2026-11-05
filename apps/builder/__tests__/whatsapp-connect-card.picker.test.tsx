@@ -485,18 +485,6 @@ describe("WhatsappCreate connect card — phone number picker", () => {
       await flush()
     }
 
-    test("a transfer signup offers no sync-history switch at all", async () => {
-      // switches()[0] is connectExisting, [1] is transferPhoneNumber.
-      click(switches()[1])
-      await openPicker()
-
-      expect(checkboxes()).toHaveLength(3)
-      expect(switches()).toHaveLength(0)
-      expect(container().textContent).not.toContain(
-        "channels.connectMany.stepCoexist",
-      )
-    })
-
     test("a plain new-number signup offers none either", async () => {
       await openPicker()
 

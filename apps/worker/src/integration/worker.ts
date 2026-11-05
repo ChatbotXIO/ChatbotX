@@ -65,6 +65,7 @@ import { processLeadgen } from "./handlers/lead-ads"
 import { processMarketingMessageWebhook } from "./handlers/marketing-message-webhook"
 import { handleMessageStatus } from "./handlers/message-status"
 import { handleSendMetaCapiEvent } from "./handlers/meta-conversions/send-meta-capi-event"
+import { handleProviderAccountEvent } from "./handlers/provider-account-event"
 import { runQuickReplyFollowUpResume } from "./handlers/quick-reply-resume"
 import {
   deleteIncomingComment,
@@ -499,6 +500,10 @@ function startIntegrationWorker() {
             }
             case IntegrationJobAction.adsAutomaticEvent: {
               await handleAdsAutomaticEvent(job.data.data)
+              return
+            }
+            case IntegrationJobAction.providerAccountEvent: {
+              await handleProviderAccountEvent(job.data.data)
               return
             }
             case IntegrationJobAction.whatsappCallEvent: {

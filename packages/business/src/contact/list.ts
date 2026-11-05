@@ -212,8 +212,9 @@ async function getTotalContactsFromStats(
 }
 
 /**
- * "table" is the contacts page's column-level projection (no email/phone
- * column is selected, so there is nothing to mask). Otherwise
+ * "table" is the contacts page's column-level projection (email and phone are
+ * selected only to stand in for a missing name, and are masked like the full
+ * projection). Otherwise
  * `listWithInboxesAndConversation` is the "full" relation set minus
  * tags/customFields — used when `include` omits both.
  */
@@ -272,10 +273,13 @@ export async function list(
   input: ListInput,
 ): Promise<ContactListResult<ContactTableListRow | ContactModel>> {
   const { data, pageCount, scope, include, countResult } = await runList(input)
+  // Unscoped (token) callers see PII; scoped members only when permitted.
+  const masksPii = Boolean(scope && !scope.canViewEmailAndPhone)
 
   if (input.projection === "table") {
+    const tableData = data as ContactTableListRow[]
     return {
-      data: data as ContactTableListRow[],
+      data: masksPii ? tableData.map(maskContactEmailAndPhone) : tableData,
       pageCount,
       totalCount: countResult.total,
       totalCountCapped: countResult.capped,
@@ -283,11 +287,9 @@ export async function list(
   }
 
   const fullData = data as ContactFullListRow[]
-  // Unscoped (token) callers see PII; scoped members only when permitted.
-  const maskedData =
-    scope && !scope.canViewEmailAndPhone
-      ? fullData.map(maskContactEmailAndPhone)
-      : fullData
+  const maskedData = masksPii
+    ? fullData.map(maskContactEmailAndPhone)
+    : fullData
   const visibleData: ContactFullListRow[] = include
     ? maskedData.map((contact) =>
         stripUnrequestedContactRelations<ContactFullListRow>(contact, include),

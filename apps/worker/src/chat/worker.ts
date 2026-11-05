@@ -28,6 +28,7 @@ import {
   sendWhatsappTemplateMessage,
   sendWhatsappTemplateToConversation,
 } from "./handlers/send-whatsapp-template"
+import { deferSendWhileAccountReconnecting } from "./utils/connection-send-gate"
 
 const botSendActions = new Set<ChatJobData["type"]>([
   ChatJobAction.sendFlowMessage,
@@ -61,7 +62,7 @@ function isBotSendJob(data: ChatJobData): boolean {
 function startChatWorker() {
   createQueueWorker(
     queueNames.enum.chat,
-    async (job: Job<ChatJobData>) => {
+    async (job: Job<ChatJobData>, token?: string) => {
       const workspaceId = await resolveWorkspaceId(job.data.data)
       if (await isBlockedWorkspace(workspaceId)) {
         return
@@ -77,6 +78,9 @@ function startChatWorker() {
         )
         return
       }
+
+      // Before any handler runs, so a deferred send creates no Message.
+      await deferSendWhileAccountReconnecting(job, token)
 
       await runJobWithAuditContext(
         { workspaceId, source: `chat:${job.data.type}` },

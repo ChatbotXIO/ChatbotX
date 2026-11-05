@@ -8,7 +8,6 @@ import { useTranslations } from "next-intl"
 import { useCallback } from "react"
 import { useFormContext, useWatch } from "react-hook-form"
 import { toast } from "sonner"
-import type { FormVisibility } from "../hooks/use-connect-form-visibility"
 import { useEmbeddedSignupAutoConnect } from "../hooks/use-embedded-signup-auto-connect"
 import { buildFacebookOAuthDialogUrl } from "../libs/embedded-signup"
 import { FORM_FIELDS } from "../libs/form-fields"
@@ -19,7 +18,7 @@ import {
 } from "./whatsapp-connect-sections"
 
 type SdkConnectSectionProps = {
-  visibility: FormVisibility
+  visibility: { manualConnect: boolean }
   watchManualConnect: boolean
   settings: WhatsappCredentialPublic
   /** Submits the connect form without an event, once Meta returns a code. */
@@ -53,10 +52,6 @@ export function SdkConnectSection({
     control,
     name: FORM_FIELDS.CONNECT_EXISTING,
   })
-  const watchTransferPhoneNumber = useWatch({
-    control,
-    name: FORM_FIELDS.TRANSFER_PHONE_NUMBER,
-  })
 
   const { isConnecting } = useEmbeddedSignupAutoConnect({
     hasFailed,
@@ -74,7 +69,6 @@ export function SdkConnectSection({
       configId: settings.configId,
       version: settings.version,
       connectExisting: watchConnectExisting,
-      transferPhoneNumber: watchTransferPhoneNumber,
       locale: document.documentElement.lang || undefined,
     })
     // Open a real tab (not a popup window) — popups get blocked, and a tab keeps
@@ -83,13 +77,7 @@ export function SdkConnectSection({
     if (!authTab) {
       toast.error(t("whatsapp.embeddedSignupPopupBlocked"))
     }
-  }, [
-    settings,
-    oauthCallbackUrl,
-    watchConnectExisting,
-    watchTransferPhoneNumber,
-    t,
-  ])
+  }, [settings, oauthCallbackUrl, watchConnectExisting, t])
 
   // Once Meta hands back a code the card keeps every option on screen, showing the
   // choices the user made, but freezes all of them: the server re-derives the
@@ -100,23 +88,12 @@ export function SdkConnectSection({
   // covered without revisiting this line.
   return (
     <fieldset className="space-y-4" disabled={isConnecting}>
-      {visibility.connectExisting && (
-        <SwitchField
-          formItemClassName={SWITCH_FIELD_CLASS}
-          label={t("whatsapp.connectExisting")}
-          name={FORM_FIELDS.CONNECT_EXISTING}
-          required
-        />
-      )}
-
-      {visibility.transferPhoneNumber && (
-        <SwitchField
-          formItemClassName={SWITCH_FIELD_CLASS}
-          label={t("whatsapp.transferPhoneNumber")}
-          name={FORM_FIELDS.TRANSFER_PHONE_NUMBER}
-          required
-        />
-      )}
+      <SwitchField
+        formItemClassName={SWITCH_FIELD_CLASS}
+        label={t("whatsapp.connectExisting")}
+        name={FORM_FIELDS.CONNECT_EXISTING}
+        required
+      />
 
       {visibility.manualConnect && (
         <ManualConnectSection watchManualConnect={watchManualConnect} />

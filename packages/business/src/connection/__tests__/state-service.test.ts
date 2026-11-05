@@ -787,6 +787,7 @@ describe("ConnectionStateService.markUnhealthy", () => {
       statusReason: "verify_failed",
     })
     mocks.findById.mockResolvedValue(active)
+    mocks.update.mockResolvedValue(active)
 
     const result = await connectionStateService.transition({
       connectionId: "conn-1",
@@ -795,7 +796,13 @@ describe("ConnectionStateService.markUnhealthy", () => {
     })
 
     expect(result).toBe(active)
-    expect(mocks.update).not.toHaveBeenCalled()
+    // Only the reconnect stamp is written; the stored reason is left alone.
+    expect(mocks.update).toHaveBeenCalledTimes(1)
+    const [{ values }] = mocks.update.mock.calls[0] as [
+      { values: Record<string, unknown> },
+    ]
+    expect(values).toMatchObject({ providerEventKind: "reconnected" })
+    expect(values).not.toHaveProperty("statusReason")
     expect(mocks.mirrorInbox).toHaveBeenCalledWith(
       expect.objectContaining({
         values: expect.objectContaining({
@@ -1063,5 +1070,448 @@ describe("ConnectionStateService workspace-scoped reads and display name", () =>
       },
       tx,
     )
+  })
+})
+
+describe("ConnectionStateService.applyProviderAccountEvent", () => {
+  const occurredAt = new Date("2026-11-04T10:00:00Z")
+
+  test("offboarded moves a connected row to degraded/provider_offboarded and records the event", async () => {
+    mocks.findById.mockResolvedValue(
+      baseConnection({
+        status: "connected",
+        statusReason: null,
+        disconnectedAt: null,
+        providerEventAt: null,
+        providerEventKind: null,
+      }),
+    )
+    mocks.update.mockResolvedValue(
+      baseConnection({
+        status: "degraded",
+        statusReason: "provider_offboarded",
+      }),
+    )
+
+    const result = await connectionStateService.applyProviderAccountEvent({
+      ownerId: "owner-1",
+      connectionId: "conn-1",
+      event: "offboarded",
+      occurredAt,
+    })
+
+    expect(result.outcome).toBe("apply")
+    expect(mocks.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        values: expect.objectContaining({
+          status: "degraded",
+          statusReason: "provider_offboarded",
+          providerEventAt: occurredAt,
+          providerEventKind: "offboarded",
+        }),
+      }),
+      expect.anything(),
+    )
+    expect(mocks.release).not.toHaveBeenCalled()
+  })
+
+  test("a stale event changes nothing", async () => {
+    mocks.findById.mockResolvedValue(
+      baseConnection({
+        status: "degraded",
+        statusReason: "provider_offboarded",
+        providerEventAt: new Date("2026-11-04T11:00:00Z"),
+        providerEventKind: "offboarded",
+      }),
+    )
+
+    const result = await connectionStateService.applyProviderAccountEvent({
+      ownerId: "owner-1",
+      connectionId: "conn-1",
+      event: "reconnected",
+      occurredAt,
+    })
+
+    expect(result.outcome).toBe("stale")
+    expect(mocks.update).not.toHaveBeenCalled()
+  })
+
+  test("a duplicate delivery is dropped", async () => {
+    mocks.findById.mockResolvedValue(
+      baseConnection({
+        status: "needs_reauth",
+        providerEventAt: occurredAt,
+        providerEventKind: "revoked",
+      }),
+    )
+
+    const result = await connectionStateService.applyProviderAccountEvent({
+      ownerId: "owner-1",
+      connectionId: "conn-1",
+      event: "revoked",
+      occurredAt,
+    })
+
+    expect(result.outcome).toBe("duplicate")
+    expect(mocks.update).not.toHaveBeenCalled()
+    expect(mocks.release).not.toHaveBeenCalled()
+  })
+
+  test("revoked records why and releases quota exactly once, after the commit", async () => {
+    mocks.findById.mockResolvedValue(
+      baseConnection({
+        status: "degraded",
+        statusReason: "provider_offboarded",
+        disconnectedAt: null,
+        providerEventAt: new Date("2026-11-04T09:00:00Z"),
+        providerEventKind: "offboarded",
+      }),
+    )
+    mocks.update.mockResolvedValue(
+      baseConnection({
+        status: "needs_reauth",
+        statusReason: "provider_revoked",
+      }),
+    )
+    const order: string[] = []
+    vi.mocked(db.transaction).mockImplementation((async (
+      fn: (tx: unknown) => unknown,
+    ) => {
+      const result = await fn({})
+      order.push("commit")
+      return result
+    }) as typeof db.transaction)
+    mocks.release.mockImplementation(() => {
+      order.push("release")
+      return Promise.resolve(undefined)
+    })
+
+    const result = await connectionStateService.applyProviderAccountEvent({
+      connectionId: "conn-1",
+      event: "revoked",
+      occurredAt,
+      ownerId: "owner-1",
+      lastError: "Provider removed access",
+    })
+
+    expect(result.outcome).toBe("apply")
+    expect(mocks.release).toHaveBeenCalledTimes(1)
+    expect(order).toEqual(["commit", "release"])
+    expect(mocks.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        values: expect.objectContaining({
+          status: "needs_reauth",
+          statusReason: "provider_revoked",
+          lastError: "Provider removed access",
+        }),
+      }),
+      expect.anything(),
+    )
+  })
+
+  test("inside a caller-owned transaction nothing is released until the caller says so", async () => {
+    mocks.findById.mockResolvedValue(
+      baseConnection({
+        status: "connected",
+        statusReason: null,
+        disconnectedAt: null,
+      }),
+    )
+    mocks.update.mockResolvedValue(
+      baseConnection({
+        status: "needs_reauth",
+        statusReason: "provider_revoked",
+      }),
+    )
+    const callerTx = { caller: true }
+    const pendingRelease = { current: null as unknown }
+
+    await connectionStateService.applyProviderAccountEvent({
+      connectionId: "conn-1",
+      event: "revoked",
+      occurredAt,
+      ownerId: "owner-1",
+      callerTransaction: {
+        tx: callerTx as never,
+        pendingRelease: pendingRelease as never,
+      },
+    })
+
+    expect(db.transaction).not.toHaveBeenCalled()
+    expect(mocks.release).not.toHaveBeenCalled()
+    expect(pendingRelease.current).toEqual({
+      ownerId: "owner-1",
+      workspaceId: "ws-1",
+    })
+  })
+
+  test("a failing write never releases quota", async () => {
+    mocks.findById.mockResolvedValue(
+      baseConnection({
+        status: "connected",
+        statusReason: null,
+        disconnectedAt: null,
+      }),
+    )
+    mocks.update.mockRejectedValue(new Error("write failed"))
+
+    await expect(
+      connectionStateService.applyProviderAccountEvent({
+        connectionId: "conn-1",
+        event: "revoked",
+        occurredAt,
+        ownerId: "owner-1",
+      }),
+    ).rejects.toThrow("write failed")
+    expect(mocks.release).not.toHaveBeenCalled()
+  })
+
+  test("reconnected clears the error the offboard left behind", async () => {
+    mocks.findById.mockResolvedValue(
+      baseConnection({
+        status: "degraded",
+        statusReason: "provider_offboarded",
+        lastError: "stale",
+        disconnectedAt: null,
+        providerEventAt: new Date("2026-11-04T09:00:00Z"),
+        providerEventKind: "offboarded",
+      }),
+    )
+    mocks.update.mockResolvedValue(
+      baseConnection({ status: "connected", statusReason: null }),
+    )
+
+    await connectionStateService.applyProviderAccountEvent({
+      ownerId: "owner-1",
+      connectionId: "conn-1",
+      event: "reconnected",
+      occurredAt,
+    })
+
+    expect(mocks.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        values: expect.objectContaining({
+          status: "connected",
+          statusReason: null,
+          lastError: null,
+        }),
+      }),
+      expect.anything(),
+    )
+  })
+
+  test("a completed reconnect records its time so a late revoke from before it is stale", async () => {
+    mocks.findById.mockResolvedValue(
+      baseConnection({
+        status: "needs_reauth",
+        statusReason: "provider_revoked",
+      }),
+    )
+    mocks.update.mockResolvedValue(baseConnection({ status: "connected" }))
+
+    await connectionStateService.transition({
+      connectionId: "conn-1",
+      event: "connect.completed",
+      ownerId: "owner-1",
+    })
+
+    const [{ values }] = mocks.update.mock.calls[0] as [
+      { values: { providerEventAt: Date; providerEventKind: string } },
+    ]
+    expect(values.providerEventKind).toBe("reconnected")
+
+    // The stored time now exists, so a redelivered revoke from before it loses.
+    mocks.update.mockClear()
+    mocks.findById.mockResolvedValue(
+      baseConnection({
+        status: "connected",
+        statusReason: null,
+        disconnectedAt: null,
+        providerEventAt: values.providerEventAt,
+        providerEventKind: "reconnected",
+      }),
+    )
+    const result = await connectionStateService.applyProviderAccountEvent({
+      ownerId: "owner-1",
+      connectionId: "conn-1",
+      event: "revoked",
+      occurredAt: new Date(values.providerEventAt.getTime() - 60_000),
+    })
+
+    expect(result.outcome).toBe("stale")
+    expect(mocks.update).not.toHaveBeenCalled()
+  })
+
+  test("the reconnect stamp is whole seconds, so a revoke in the same second still wins the tie", async () => {
+    mocks.findById.mockResolvedValue(
+      baseConnection({
+        status: "needs_reauth",
+        statusReason: "provider_revoked",
+      }),
+    )
+    mocks.update.mockResolvedValue(baseConnection({ status: "connected" }))
+    await connectionStateService.transition({
+      connectionId: "conn-1",
+      event: "connect.completed",
+      ownerId: "owner-1",
+    })
+    const [{ values }] = mocks.update.mock.calls[0] as [
+      { values: { providerEventAt: Date } },
+    ]
+    expect(values.providerEventAt.getMilliseconds()).toBe(0)
+
+    mocks.update.mockReset()
+    mocks.update.mockResolvedValue(baseConnection({ status: "needs_reauth" }))
+    mocks.findById.mockResolvedValue(
+      baseConnection({
+        status: "connected",
+        statusReason: null,
+        disconnectedAt: null,
+        providerEventAt: values.providerEventAt,
+        providerEventKind: "reconnected",
+      }),
+    )
+
+    const result = await connectionStateService.applyProviderAccountEvent({
+      ownerId: "owner-1",
+      connectionId: "conn-1",
+      event: "revoked",
+      occurredAt: values.providerEventAt,
+    })
+
+    expect(result.outcome).toBe("apply")
+  })
+
+  test("the reconnect stamp is taken after the row lock, not before waiting for it", async () => {
+    vi.useFakeTimers()
+    try {
+      vi.setSystemTime(new Date("2026-11-04T10:00:00Z"))
+      mocks.findById.mockImplementation(() => {
+        // The lock is held by another writer for a while before it is granted.
+        vi.setSystemTime(new Date("2026-11-04T10:00:30Z"))
+        return Promise.resolve(
+          baseConnection({
+            status: "needs_reauth",
+            statusReason: "provider_revoked",
+          }),
+        )
+      })
+      mocks.update.mockResolvedValue(baseConnection({ status: "connected" }))
+
+      await connectionStateService.transition({
+        connectionId: "conn-1",
+        event: "connect.completed",
+        ownerId: "owner-1",
+      })
+
+      const [{ values }] = mocks.update.mock.calls[0] as [
+        { values: { providerEventAt: Date } },
+      ]
+      expect(values.providerEventAt).toEqual(new Date("2026-11-04T10:00:30Z"))
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  test("the reconnect stamp is strictly after any event already recorded, so its redelivery is stale", async () => {
+    // A revoke recorded with a provider time ahead of this server's clock.
+    const recordedAt = new Date("2099-01-01T00:00:10Z")
+    mocks.findById.mockResolvedValue(
+      baseConnection({
+        status: "needs_reauth",
+        statusReason: "provider_revoked",
+        providerEventAt: recordedAt,
+        providerEventKind: "revoked",
+      }),
+    )
+    mocks.update.mockResolvedValue(baseConnection({ status: "connected" }))
+
+    await connectionStateService.transition({
+      connectionId: "conn-1",
+      event: "connect.completed",
+      ownerId: "owner-1",
+    })
+
+    const [{ values }] = mocks.update.mock.calls[0] as [
+      { values: { providerEventAt: Date } },
+    ]
+    expect(values.providerEventAt.getTime()).toBeGreaterThan(
+      recordedAt.getTime(),
+    )
+  })
+
+  test("a same-second offboard and reconnect settle on connected in either arrival order", async () => {
+    const sameSecond = new Date("2026-11-04T10:00:00Z")
+    // Reconnect recorded first, the offboard arrives second.
+    mocks.findById.mockResolvedValue(
+      baseConnection({
+        status: "connected",
+        statusReason: null,
+        disconnectedAt: null,
+        providerEventAt: sameSecond,
+        providerEventKind: "reconnected",
+      }),
+    )
+
+    const result = await connectionStateService.applyProviderAccountEvent({
+      ownerId: "owner-1",
+      connectionId: "conn-1",
+      event: "offboarded",
+      occurredAt: sameSecond,
+    })
+
+    expect(result.outcome).toBe("stale")
+    expect(mocks.update).not.toHaveBeenCalled()
+  })
+
+  test("a late reconnected does not erase an unrelated error", async () => {
+    mocks.findById.mockResolvedValue(
+      baseConnection({
+        status: "degraded",
+        statusReason: "refresh_failed",
+        lastError: "token refresh failing",
+        disconnectedAt: null,
+      }),
+    )
+    mocks.update.mockResolvedValue(
+      baseConnection({ status: "degraded", statusReason: "refresh_failed" }),
+    )
+
+    await connectionStateService.applyProviderAccountEvent({
+      ownerId: "owner-1",
+      connectionId: "conn-1",
+      event: "reconnected",
+      occurredAt,
+    })
+
+    const calls = mocks.update.mock.calls as [
+      { values: Record<string, unknown> },
+    ][]
+    for (const [{ values }] of calls) {
+      expect(values).not.toHaveProperty("lastError")
+    }
+  })
+
+  test("a refresh success while offboarded keeps the hold and its lastError", async () => {
+    mocks.findById.mockResolvedValue(
+      baseConnection({
+        status: "degraded",
+        statusReason: "provider_offboarded",
+        lastError: "reconnecting",
+      }),
+    )
+    mocks.update.mockResolvedValue(baseConnection({ status: "degraded" }))
+
+    await connectionStateService.transition({
+      connectionId: "conn-1",
+      event: "auth.saved",
+      values: { lastError: null },
+    })
+
+    const [{ values }] = mocks.update.mock.calls[0] as [
+      { values: Record<string, unknown> },
+    ]
+    expect(values).not.toHaveProperty("lastError")
+    expect(values.statusReason).toBe("provider_offboarded")
   })
 })

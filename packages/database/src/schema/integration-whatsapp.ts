@@ -166,6 +166,11 @@ export const integrationWhatsappModel = pgTable(
       "btree",
       table.workspaceId.asc().nullsLast(),
     ),
+    // account_update webhooks arrive keyed by WABA id only.
+    index("IntegrationWhatsapp_wabaId_idx").using(
+      "btree",
+      table.wabaId.asc().nullsLast(),
+    ),
     index("IntegrationWhatsapp_handoverResumeFlowId_idx").using(
       "btree",
       table.handoverResumeFlowId.asc().nullsLast(),

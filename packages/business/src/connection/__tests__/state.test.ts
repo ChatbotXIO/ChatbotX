@@ -318,3 +318,121 @@ describe("transitionConnection — FSM edges", () => {
     expect(result.quotaEdge).toBeNull()
   })
 })
+
+describe("transitionConnection — provider account events", () => {
+  test("provider.offboarded moves an active connection to degraded/provider_offboarded and keeps quota", () => {
+    for (const from of ["connected", "degraded"] as const) {
+      const result = transitionConnection({
+        from,
+        event: "provider.offboarded",
+      })
+
+      expect(result.to).toBe("degraded")
+      expect(result.reason).toBe("provider_offboarded")
+      expect(result.quotaEdge).toBeNull()
+    }
+  })
+
+  test("provider.offboarded leaves an inactive connection untouched", () => {
+    for (const from of ["needs_reauth", "paused", "disconnected"] as const) {
+      const result = transitionConnection({
+        from,
+        event: "provider.offboarded",
+      })
+
+      expect(result.to).toBe(from)
+      expect(result.noop).toBe(true)
+      expect(result.quotaEdge).toBeNull()
+    }
+  })
+
+  test("provider.offboarded on an already offboarded connection is a no-op", () => {
+    const result = transitionConnection({
+      from: "degraded",
+      fromReason: "provider_offboarded",
+      event: "provider.offboarded",
+    })
+
+    expect(result.noop).toBe(true)
+    expect(result.reason).toBe("provider_offboarded")
+  })
+
+  test("provider.reconnected restores connected only from the offboarded hold", () => {
+    const result = transitionConnection({
+      from: "degraded",
+      fromReason: "provider_offboarded",
+      event: "provider.reconnected",
+    })
+
+    expect(result.to).toBe("connected")
+    expect(result.reason).toBeNull()
+    expect(result.quotaEdge).toBeNull()
+  })
+
+  test("provider.reconnected never resumes a paused/disconnected row or clears another degradation", () => {
+    const cases = [
+      { from: "connected", fromReason: null },
+      { from: "degraded", fromReason: "refresh_failed" },
+      { from: "paused", fromReason: "trial_expired" },
+      { from: "disconnected", fromReason: "manual" },
+      { from: "needs_reauth", fromReason: "provider_revoked" },
+    ] as const
+    for (const { from, fromReason } of cases) {
+      const result = transitionConnection({
+        from,
+        fromReason,
+        event: "provider.reconnected",
+      })
+
+      expect(result.to).toBe(from)
+      expect(result.noop).toBe(true)
+      expect(result.quotaEdge).toBeNull()
+    }
+  })
+
+  test("the offboarded hold is sticky: refresh/verify/auth events cannot override it", () => {
+    const events = [
+      "auth.saved",
+      "verify.ok",
+      "verify.failed_non_auth",
+      "refresh.transient_failure",
+    ] as const
+    for (const event of events) {
+      const result = transitionConnection({
+        from: "degraded",
+        fromReason: "provider_offboarded",
+        event,
+        reason: "refresh_failed",
+      })
+
+      expect(result.to).toBe("degraded")
+      expect(result.reason).toBe("provider_offboarded")
+      expect(result.noop).toBe(true)
+      expect(result.heldByProviderOffboard).toBe(true)
+    }
+  })
+
+  test("a completed reconnect clears the offboarded hold", () => {
+    const result = transitionConnection({
+      from: "degraded",
+      fromReason: "provider_offboarded",
+      event: "connect.completed",
+    })
+
+    expect(result.to).toBe("connected")
+    expect(result.reason).toBeNull()
+  })
+
+  test("a revoke from the offboarded hold releases quota and needs reauth", () => {
+    const result = transitionConnection({
+      from: "degraded",
+      fromReason: "provider_offboarded",
+      event: "auth.revoked",
+      reason: "provider_revoked",
+    })
+
+    expect(result.to).toBe("needs_reauth")
+    expect(result.reason).toBe("provider_revoked")
+    expect(result.quotaEdge).toBe("release")
+  })
+})

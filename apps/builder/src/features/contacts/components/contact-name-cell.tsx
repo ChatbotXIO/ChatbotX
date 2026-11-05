@@ -12,12 +12,15 @@ import {
   TooltipTrigger,
 } from "@chatbotx.io/ui/components/ui/tooltip"
 import Link from "next/link"
+import {
+  type ContactNameSource,
+  contactDisplayName,
+} from "@/features/contacts/lib/contact-display-name"
 import { InboxIcon } from "@/features/inboxes/components/inbox-icon"
 import { useAvatarUrl } from "../utils"
 
-type ContactNameCellContact = {
+type ContactNameCellContact = ContactNameSource & {
   avatar?: string | null
-  fullName?: string | null
 }
 
 export function ContactNameCell({
@@ -38,7 +41,7 @@ export function ContactNameCell({
   maxWidthClassName?: string
 }) {
   const avatarUrl = useAvatarUrl(contact)
-  const name = contact.fullName ?? unknownContactLabel
+  const name = contactDisplayName(contact) ?? unknownContactLabel
   const inboxHref = conversationId
     ? `/space/${workspaceId}/inbox?conversationId=${conversationId}`
     : null

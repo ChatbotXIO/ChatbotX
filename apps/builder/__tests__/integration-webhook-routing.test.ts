@@ -10,6 +10,7 @@ const markUnhealthyByIdentifier = vi.fn()
 const markLegacyInboxUnhealthy = vi.fn()
 const findOwnerUserIdByWorkspaceId = vi.fn()
 const findDecryptedForWebhook = vi.fn()
+const findDecryptedPlatform = vi.fn()
 const identifyInboxAndIntegrationAuthFromIdentifier = vi.fn()
 const integrationQueueAdd = vi.fn()
 const messengerHandleRequest = vi.fn()
@@ -25,7 +26,7 @@ vi.mock("@chatbotx.io/business", () => ({
   platformCredentialService: {
     findDecryptedForUser: vi.fn(),
     findDecryptedForWebhook,
-    findDecryptedPlatform: vi.fn(),
+    findDecryptedPlatform,
   },
   tenantService: { findById: vi.fn() },
 }))
@@ -35,6 +36,7 @@ vi.mock("@chatbotx.io/channel-registry/registry", () => ({
 }))
 
 vi.mock("@chatbotx.io/worker-config", () => ({
+  IntegrationJobAction: { providerAccountEvent: "providerAccountEvent" },
   integrationQueue: { add: integrationQueueAdd },
 }))
 
@@ -196,6 +198,78 @@ describe("credential-scoped webhook routing", () => {
     expect(
       new URL(messengerHandleRequest.mock.calls[0]?.[0].req.url).pathname,
     ).toBe("/integrations/messenger/webhook")
+  })
+
+  describe("provider account events", () => {
+    const accountEventJob = {
+      type: "providerAccountEvent",
+      data: {
+        integrationType: "whatsapp",
+        account: { kind: "businessAccount", id: "waba-1" },
+        event: "revoked",
+      },
+    }
+
+    const sendAccountEventThroughRoute = async (credentialId?: string) => {
+      messengerHandleRequest.mockImplementationOnce(async ({ queue }) => {
+        await queue.add("providerAccountEvent", accountEventJob, {
+          jobId: "provider-account-whatsapp-waba-1-revoked-1-abc",
+        })
+        return "ok"
+      })
+      await handleWebhook(
+        "messenger",
+        asNextRequest("http://localhost/integrations/messenger/webhook"),
+        credentialId,
+      )
+    }
+
+    test("a credential-scoped route stamps its owner and skips the inbox ownership check", async () => {
+      isCloud.mockReturnValue(true)
+      findDecryptedForWebhook.mockResolvedValue({
+        config: { clientId: "client-1", clientSecret: "secret-1" },
+        userId: "owner-1",
+      })
+
+      await sendAccountEventThroughRoute("credential-1")
+
+      expect(
+        identifyInboxAndIntegrationAuthFromIdentifier,
+      ).not.toHaveBeenCalled()
+      expect(integrationQueueAdd).toHaveBeenCalledWith(
+        "providerAccountEvent",
+        expect.objectContaining({
+          data: expect.objectContaining({
+            routeScope: {
+              kind: "credentialOwner",
+              ownerId: "owner-1",
+              appId: "client-1",
+            },
+          }),
+        }),
+        {
+          jobId: "provider-account-whatsapp-waba-1-revoked-1-abc-owner-owner-1",
+        },
+      )
+    })
+
+    test("the platform route stamps the platform scope", async () => {
+      findDecryptedPlatform.mockResolvedValue({
+        config: { clientId: "client-1", clientSecret: "secret-1" },
+      })
+
+      await sendAccountEventThroughRoute()
+
+      expect(integrationQueueAdd).toHaveBeenCalledWith(
+        "providerAccountEvent",
+        expect.objectContaining({
+          data: expect.objectContaining({
+            routeScope: { kind: "platform", appId: "client-1" },
+          }),
+        }),
+        { jobId: "provider-account-whatsapp-waba-1-revoked-1-abc-platform" },
+      )
+    })
   })
 
   test("drops credential-scoped jobs for another owner's inbox", async () => {

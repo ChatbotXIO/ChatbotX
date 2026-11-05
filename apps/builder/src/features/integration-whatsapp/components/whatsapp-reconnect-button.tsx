@@ -12,7 +12,6 @@ import { reconnectWhatsappAction } from "../actions/reconnect.action"
 import { useWhatsappOAuthPopup } from "../hooks/use-whatsapp-oauth-popup"
 import {
   buildFacebookOAuthDialogUrl,
-  EMBEDDED_SIGNUP_VERSIONS,
   FACEBOOK_AUTH_TYPES,
 } from "../libs/embedded-signup"
 
@@ -87,16 +86,11 @@ export function WhatsappReconnectButton({
         // where a coexistence account appears. A Cloud API number keeps the
         // default WABA selection screen.
         connectExisting: isCoexist,
-        transferPhoneNumber: false,
         locale: document.documentElement.lang || undefined,
         // A reconnect exists to pick up a permission the account is missing.
         // Without this the dialog hands back the permissions it already
         // granted and the operator sees no change.
         authType: FACEBOOK_AUTH_TYPES.REREQUEST,
-        // Reconnect leads the move to v4, where CTWA and the WhatsApp
-        // Conversions API are products of the Login Configuration rather than
-        // `extras`. Connect stays on the unpinned default until it follows.
-        embeddedSignupVersion: EMBEDDED_SIGNUP_VERSIONS.V4,
       }),
     )
     if (!opened) {

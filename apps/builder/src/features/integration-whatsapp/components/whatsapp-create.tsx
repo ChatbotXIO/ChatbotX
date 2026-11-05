@@ -81,21 +81,18 @@ export default function WhatsappCreate({
 
   const { watch, setValue } = form
   const watchConnectExisting = watch(FORM_FIELDS.CONNECT_EXISTING)
-  const watchTransferPhoneNumber = watch(FORM_FIELDS.TRANSFER_PHONE_NUMBER)
   const watchManualConnect = watch(FORM_FIELDS.MANUAL_CONNECT)
   // The same predicate the server keys its coexist eligibility check on, read
   // from the live form values — so the picker offers "sync history" exactly
   // when the signup asked Meta for the coexistence flow, and never for a
-  // transfer or a manual connect.
+  // manual connect.
   const coexistEligibleMode = isCoexistOnboardingIntent({
     connectExisting: watchConnectExisting,
-    transferPhoneNumber: watchTransferPhoneNumber,
     manualConnect: watchManualConnect,
   })
 
   const visibility = useConnectFormVisibility({
     connectExisting: watchConnectExisting,
-    transferPhoneNumber: watchTransferPhoneNumber,
     setValue,
   })
 

@@ -54,6 +54,7 @@ import { useTranslations } from "next-intl"
 import { useState } from "react"
 import type { AttachmentResource } from "@/features/attachments/schema/resource"
 import { useAttachmentSource } from "@/features/attachments/utils"
+import { contactDisplayName } from "@/features/contacts/lib/contact-display-name"
 import {
   getThreadControlActivity,
   getThreadControlContextCard,
@@ -877,7 +878,7 @@ const RenderContentAttributes = (props: MessageItemProps) => {
       <WhatsappCallCard
         call={whatsappCall}
         callEndedAt={message.createdAt}
-        contactName={message.contact?.fullName}
+        contactName={contactDisplayName(message.contact)}
         conversationId={message.conversationId}
         hasRecordingAttachment={Boolean(message.attachments?.length)}
       />

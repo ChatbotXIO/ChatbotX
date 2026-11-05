@@ -210,6 +210,38 @@ describe("coexistService", () => {
     })
   })
 
+  test("disable joins a caller-owned transaction and records the caller's reason", async () => {
+    const callerTx = { caller: true }
+    mocks.setIntegrationCoexistEnabled.mockResolvedValue({
+      id: "integration-1",
+    })
+
+    await expect(
+      coexistService.disable({
+        workspaceId: "workspace-1",
+        integrationId: "integration-1",
+        channel: "whatsapp",
+        currentError: "Provider removed access",
+        tx: callerTx as never,
+      }),
+    ).resolves.toEqual({ success: true })
+
+    expect(mocks.transaction).not.toHaveBeenCalled()
+    expect(mocks.setIntegrationCoexistEnabled).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      integrationId: "integration-1",
+      channel: "whatsapp",
+      enabled: false,
+      tx: callerTx,
+    })
+    expect(mocks.tearDownActiveRunsForIntegration).toHaveBeenCalledWith({
+      channel: "whatsapp",
+      integrationId: "integration-1",
+      currentError: "Provider removed access",
+      tx: callerTx,
+    })
+  })
+
   test("strategy registry covers pull and buffered coexist channels", () => {
     expect(coexistJobStrategies).toEqual({
       messenger: { mode: "pull", action: "coexistMessengerSync" },

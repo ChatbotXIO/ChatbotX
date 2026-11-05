@@ -25,7 +25,6 @@ export type ActionHandler = (args: {
     businessId?: string | null
     wabaId?: string | null
     connectExisting: boolean
-    transferPhoneNumber: boolean
     manualConnect: boolean
     marketingMessageLite: boolean
     phoneNumberId?: string | null
@@ -110,7 +109,6 @@ export const BASE_INPUT = {
   businessId: null,
   wabaId: null,
   connectExisting: true,
-  transferPhoneNumber: false,
   manualConnect: false,
   marketingMessageLite: true,
   phoneNumberId: null,

@@ -5304,7 +5304,6 @@
     "templateHeader": {
       "label": "Tiêu đề mẫu"
     },
-    "transferPhoneNumber": "Chuyển số điện thoại từ nhà cung cấp WhatsApp khác",
     "selectPage": {
       "tryAgain": "Kết nối lại"
     },
@@ -11142,5 +11141,12 @@
       "revokedSuccess": "Application access revoked.",
       "notFound": "OAuth grant no longer exists"
     }
+  },
+  "connectionStatus": {
+    "column": "Trạng thái",
+    "reconnecting": "Nhà cung cấp đang kết nối lại tài khoản này. Tin nhắn sẽ được giữ lại cho đến khi hoàn tất.",
+    "accessRemoved": "Nhà cung cấp đã gỡ quyền truy cập tài khoản này. Hãy kết nối lại để tiếp tục.",
+    "needsReconnect": "Cần kết nối lại.",
+    "inactive": "Kênh này đang không hoạt động."
   }
 }

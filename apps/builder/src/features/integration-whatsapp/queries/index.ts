@@ -1,30 +1,19 @@
-import type { IntegrationWhatsappResource } from "@chatbotx.io/business"
 import { findOrFail } from "@chatbotx.io/database/client"
-import { integrationWhatsappRepository } from "@chatbotx.io/database/repositories"
+import {
+  type IntegrationWhatsappClientResource,
+  integrationWhatsappRepository,
+} from "@chatbotx.io/database/repositories"
 import { integrationWhatsappModel } from "@chatbotx.io/database/schema"
-import type {
-  InboxModel,
-  IntegrationWhatsappModel,
-} from "@chatbotx.io/database/types"
+import type { IntegrationWhatsappModel } from "@chatbotx.io/database/types"
 import type { PaginatedResponse } from "@/features/common/schema/pagination"
-
-type IntegrationWhatsappWithInbox = IntegrationWhatsappResource & {
-  inbox?: Pick<InboxModel, "id" | "name">
-}
 
 export const listIntegrationWhatsapps = async (
   props: Pick<IntegrationWhatsappModel, "workspaceId">,
-): Promise<PaginatedResponse<IntegrationWhatsappWithInbox>> => {
-  const integrations =
+): Promise<PaginatedResponse<IntegrationWhatsappClientResource>> => {
+  const data =
     await integrationWhatsappRepository.listClientResourcesByWorkspaceId(
       props.workspaceId,
     )
-  const data: IntegrationWhatsappWithInbox[] = integrations.map(
-    ({ inbox, ...integration }) => ({
-      ...integration,
-      inbox: inbox ?? undefined,
-    }),
-  )
 
   return { data, pageCount: 1 }
 }

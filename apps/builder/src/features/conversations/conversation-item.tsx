@@ -27,6 +27,7 @@ import {
 } from "lucide-react"
 import { useFormatter, useTranslations } from "next-intl"
 import { useMemo } from "react"
+import { contactDisplayName } from "@/features/contacts/lib/contact-display-name"
 import { useNow } from "@/hooks/use-now"
 import { useUserAvatarUrl } from "@/lib/auth/avatar"
 import { useChatStore } from "../chat/store/chat-store-provider"
@@ -265,22 +266,25 @@ export default function ConversationItem({
     })),
   )
 
+  // Name, else email, else phone: a contact a channel never named still reads as someone.
+  const contactName = contactDisplayName(conversation.contact)
+
   const contactAvatar = useMemo(
     () => (
       <Avatar
         className={cn("h-12 w-12", isUnread && "border-2 border-primary")}
       >
         <AvatarImage
-          alt={conversation.contact?.fullName ?? ""}
+          alt={contactName ?? ""}
           className="object-cover"
           src={avatarUrl}
         />
         <AvatarFallback className="bg-gray-300 dark:bg-zinc-100 dark:text-zinc-800">
-          {conversation.contact?.fullName?.slice(0, 2)}
+          {contactName?.slice(0, 2)}
         </AvatarFallback>
       </Avatar>
     ),
-    [conversation.contact, avatarUrl, isUnread],
+    [contactName, avatarUrl, isUnread],
   )
 
   // Opening a conversation is read by the thread pane (`useThreadReadTracking`),
@@ -355,7 +359,7 @@ export default function ConversationItem({
                   : "font-medium text-muted-foreground",
               )}
             >
-              {conversation.contact?.fullName}
+              {contactName}
             </span>
             <Tooltip>
               <TooltipTrigger

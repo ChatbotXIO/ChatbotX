@@ -4,17 +4,32 @@ import {
   type DatabaseClient,
   db,
   eq,
+  gt,
   inArray,
   isNull,
   lt,
   or,
+  type SQL,
+  type SQLWrapper,
   sql,
 } from "../../client"
-import { inboxStatuses, type WhatsappCallHoursSnapshot } from "../../partials"
 import {
+  type ConnectionStatusState,
+  inboxStatuses,
+  PROVIDER_ACCOUNT_TARGET_BATCH_SIZE,
+  type ProviderAccountRouteScope,
+  type ProviderAccountTarget,
+  ROOT_TENANT_ID,
+  type WhatsappCallHoursSnapshot,
+} from "../../partials"
+import {
+  connectionModel,
   type IntegrationWhatsappRegistrationError,
   inboxModel,
   integrationWhatsappModel,
+  platformCredentialModel,
+  tenantModel,
+  workspaceModel,
 } from "../../schema"
 import type { IntegrationWhatsappModel } from "../../types"
 
@@ -37,8 +52,16 @@ export type IntegrationWhatsappClientResource = Pick<
   | "datasetId"
   | "workspaceId"
   | "createdAt"
+  | "isCoexist"
 > & {
-  inbox?: { id: string; name: string } | null
+  /** Connected with the owner's own system-user token and Meta app, not through Embedded Signup. */
+  isManual: boolean
+  inbox?: {
+    id: string
+    name: string
+    /** Lifecycle state; absent for rows predating the Connection backfill. */
+    connection?: ConnectionStatusState | null
+  } | null
 }
 
 type UpdateWhatsappRegistrationInput = WorkspaceIntegrationRef & {
@@ -127,6 +150,67 @@ const capiScopeCasFilter = (
     workspaceIntegrationFilter(input),
     sql`${integrationWhatsappModel.capiScopeCheckedAt} IS NOT DISTINCT FROM ${input.expectedCapiScopeCheckedAt}`,
   )
+
+/**
+ * Connected with the owner's own system-user token and Meta app rather than
+ * through Embedded Signup (`auth.metadata.isManual`).
+ */
+const isManualWhatsappAuth = (auth: SQLWrapper): SQL<boolean> =>
+  sql<boolean>`COALESCE(${auth} #>> '{metadata,isManual}', 'false') = 'true'`
+
+type ProviderAccountScopeSql = {
+  credentialOwnerId: SQL
+  isManualIntegration: SQL
+}
+
+/**
+ * Whether a number connected through the provider app `appId`: the app id its
+ * auth stored at connect time. Numbers that predate that field have none, so
+ * they match only when `legacyFallback` holds.
+ */
+const connectedThroughApp = (
+  appId: string,
+  legacyFallback: SQL,
+): SQL | undefined =>
+  or(
+    sql`${integrationWhatsappModel.auth} ->> 'clientId' = ${appId}`,
+    and(
+      sql`(${integrationWhatsappModel.auth} ->> 'clientId') IS NULL`,
+      legacyFallback,
+    ),
+  )
+
+/** The `WHERE` fragment that restricts a WABA's numbers to what `scope` may act on. */
+const providerAccountScopeFilter = (
+  scope: ProviderAccountRouteScope,
+  { credentialOwnerId, isManualIntegration }: ProviderAccountScopeSql,
+): SQL | undefined => {
+  switch (scope.kind) {
+    case "manualIntegration":
+      return and(
+        eq(integrationWhatsappModel.id, scope.integrationId),
+        eq(integrationWhatsappModel.workspaceId, scope.workspaceId),
+      )
+    case "credentialOwner":
+      return and(
+        sql`${credentialOwnerId} = ${scope.ownerId}`,
+        sql`NOT (${isManualIntegration})`,
+        connectedThroughApp(scope.appId, sql`TRUE`),
+      )
+    case "platform":
+      return and(
+        sql`NOT (${isManualIntegration})`,
+        connectedThroughApp(
+          scope.appId,
+          sql`NOT EXISTS (SELECT 1 FROM ${platformCredentialModel} WHERE ${platformCredentialModel.userId} = ${credentialOwnerId} AND ${platformCredentialModel.type} = 'whatsapp' AND ${platformCredentialModel.usePlatformCredential} = false AND ${platformCredentialModel.livemode} = false)`,
+        ),
+      )
+    default: {
+      const _exhaustive: never = scope
+      return _exhaustive
+    }
+  }
+}
 
 class IntegrationWhatsappRepository {
   async findConnectedPhoneNumberIds(
@@ -354,6 +438,63 @@ class IntegrationWhatsappRepository {
       .where(eq(integrationWhatsappModel.id, input.id))
   }
 
+  /**
+   * One batch of the numbers registered under a WABA that `scope` may act on,
+   * each with its `Connection`, in one indexed read
+   * (`IntegrationWhatsapp_wabaId_idx`, joined on the unique
+   * `Connection.inboxId`). The scope is applied in SQL, before the limit, and
+   * rows are keyset-paged by integration id: pass the last id of the previous
+   * batch as `afterIntegrationId` until a batch comes back shorter than
+   * {@link PROVIDER_ACCOUNT_TARGET_BATCH_SIZE}.
+   */
+  async listAccountTargetsByWabaId(
+    input: {
+      wabaId: string
+      scope: ProviderAccountRouteScope
+      afterIntegrationId?: string
+    },
+    tx: DatabaseClient = db,
+  ): Promise<ProviderAccountTarget[]> {
+    // Worker-safe mirror of `resolveCredentialOwnerIdForWorkspace`: the
+    // tenant's owner for a reseller tenant, else the workspace's own owner.
+    const credentialOwnerId = sql`CASE WHEN ${workspaceModel.tenantId} <> ${ROOT_TENANT_ID} THEN COALESCE(${tenantModel.ownerId}, ${workspaceModel.ownerId}) ELSE ${workspaceModel.ownerId} END`
+
+    return await tx
+      .select({
+        integrationId: integrationWhatsappModel.id,
+        workspaceId: integrationWhatsappModel.workspaceId,
+        workspaceOwnerId: workspaceModel.ownerId,
+        inboxId: integrationWhatsappModel.inboxId,
+        connectionId: connectionModel.id,
+      })
+      .from(integrationWhatsappModel)
+      .innerJoin(
+        workspaceModel,
+        eq(workspaceModel.id, integrationWhatsappModel.workspaceId),
+      )
+      .leftJoin(tenantModel, eq(tenantModel.id, workspaceModel.tenantId))
+      .leftJoin(
+        connectionModel,
+        eq(connectionModel.inboxId, integrationWhatsappModel.inboxId),
+      )
+      .where(
+        and(
+          eq(integrationWhatsappModel.wabaId, input.wabaId),
+          input.afterIntegrationId
+            ? gt(integrationWhatsappModel.id, input.afterIntegrationId)
+            : undefined,
+          providerAccountScopeFilter(input.scope, {
+            credentialOwnerId,
+            isManualIntegration: isManualWhatsappAuth(
+              integrationWhatsappModel.auth,
+            ),
+          }),
+        ),
+      )
+      .orderBy(integrationWhatsappModel.id)
+      .limit(PROVIDER_ACCOUNT_TARGET_BATCH_SIZE)
+  }
+
   async findByPhoneNumberId(
     input: { phoneNumberId: string; wabaId?: string },
     tx: DatabaseClient = db,
@@ -442,12 +583,19 @@ class IntegrationWhatsappRepository {
         datasetId: true,
         workspaceId: true,
         createdAt: true,
+        isCoexist: true,
+      },
+      extras: {
+        isManual: (table) => isManualWhatsappAuth(table.auth).as("isManual"),
       },
       where: { workspaceId },
       orderBy: { createdAt: "asc" },
       with: {
         inbox: {
           columns: { id: true, name: true },
+          with: {
+            connection: { columns: { status: true, statusReason: true } },
+          },
         },
       },
     })
