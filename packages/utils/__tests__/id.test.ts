@@ -5,6 +5,7 @@ import {
   resolveId,
   resolveSnowflakePlaceId,
   SNOWFLAKE_PLACE_ID_MAX,
+  toBullMqSafeIdSegment,
 } from "../src/id"
 
 // Regression: every process generated snowflakes with place_id 0 and a
@@ -230,5 +231,13 @@ describe("resolveSnowflakePlaceId", () => {
     ]) {
       expect(resolveSnowflakePlaceId(env, constantRandom(0.5))).toBe(8)
     }
+  })
+})
+
+describe("toBullMqSafeIdSegment", () => {
+  test("replaces BullMQ-unsafe characters while preserving safe segments", () => {
+    expect(toBullMqSafeIdSegment("wamid:abc/123?x=1._-")).toBe(
+      "wamid_abc_123_x_1._-",
+    )
   })
 })

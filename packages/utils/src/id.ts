@@ -187,3 +187,5 @@ export const createdAtFromId = (id: string): Date | null => {
     return null
   }
 }
+export const toBullMqSafeIdSegment = (value: string): string =>
+  value.replace(/[^a-zA-Z0-9._-]/g, "_")

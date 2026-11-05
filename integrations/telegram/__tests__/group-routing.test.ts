@@ -74,10 +74,10 @@ describe("telegram webhook group routing", () => {
 
   test("a private message still goes to incomingMessage", async () => {
     const add = await run(message({ id: 100, type: "private" }))
-    expect(add).toHaveBeenCalledWith(
-      "incomingMessage",
-      expect.objectContaining({ type: "incomingMessage" }),
-    )
+    expect(add.mock.calls[0]?.[0]).toBe("incomingMessage")
+    expect(add.mock.calls[0]?.[1]).toMatchObject({
+      type: "incomingMessage",
+    })
   })
 
   test("chat_member join/leave become groupJoin/groupLeave", async () => {
@@ -165,9 +165,9 @@ describe("telegram webhook secret token", () => {
       configured: false,
       secret: null,
     })
-    expect(dmAdd).toHaveBeenCalledWith(
-      "incomingMessage",
-      expect.objectContaining({ type: "incomingMessage" }),
-    )
+    expect(dmAdd.mock.calls[0]?.[0]).toBe("incomingMessage")
+    expect(dmAdd.mock.calls[0]?.[1]).toMatchObject({
+      type: "incomingMessage",
+    })
   })
 })
