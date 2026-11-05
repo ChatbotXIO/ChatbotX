@@ -42,8 +42,13 @@ COPY --from=deps /app/apps/worker/dist /app/apps/worker/dist
 # The bundle leaves the native `sharp` addon external (tsdown `neverBundle`);
 # install it where `dist/*.mjs` resolves it. Keep the version in step with
 # `@chatbotx.io/utils`.
+# `@ai-sdk/provider-utils` (AI SDK v7) loads `undici` for URL downloads through
+# `createRequire(<bundle path>)("undici")`, which the bundler cannot inline, so
+# it must sit next to `dist` too. Keep the version equal to the one
+# `@ai-sdk/provider-utils` resolves in `pnpm-lock.yaml`
+# (`__tests__/docker-runtime-deps.test.ts` fails on drift).
 RUN npm install --prefix /app/apps/worker --omit=dev --no-audit --no-fund \
-  sharp@0.35.5 && \
+  sharp@0.35.5 undici@7.30.1 && \
   npm cache clean --force
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
