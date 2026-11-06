@@ -651,7 +651,7 @@ class OrderService extends BaseService {
       : await this.defaultSources(input.workspaceId)
     const data: Awaited<ReturnType<typeof orderRepository.list>>["data"] = []
     let page = 1
-    let pageCount = 1
+    let pageCount: number
     do {
       const result = await orderRepository.list({
         ...input,
