@@ -18,6 +18,7 @@ interface McpOperationMeta {
   destructiveHint?: boolean
   hitlPolicy?: McpHitlPolicy
   idempotentHint?: boolean
+  openWorldHint?: boolean
   readOnlyHint?: boolean
   scope?: string | string[]
   visibility?: "default" | "hidden"
@@ -96,7 +97,9 @@ interface OpenAPISchemaObject {
 interface DynamicToolAnnotations {
   destructiveHint: boolean
   idempotentHint: boolean
+  openWorldHint: boolean
   readOnlyHint: boolean
+  title: string
 }
 
 export interface DynamicTool {
@@ -156,10 +159,13 @@ function extractPathParamNames(pathTemplate: string): string[] {
  */
 function buildAnnotations(
   method: string,
-  meta: McpOperationMeta | undefined,
+  operation: OpenAPIOperation,
+  fallbackTitle: string,
 ): DynamicToolAnnotations {
+  const meta = operation["x-mcp"]
   const upperMethod = method.toUpperCase()
   return {
+    title: operation.summary?.trim() || fallbackTitle,
     readOnlyHint: meta?.readOnlyHint ?? upperMethod === "GET",
     destructiveHint: meta?.destructiveHint ?? upperMethod === "DELETE",
     idempotentHint:
@@ -167,6 +173,8 @@ function buildAnnotations(
       (upperMethod === "GET" ||
         upperMethod === "PUT" ||
         upperMethod === "DELETE"),
+    openWorldHint:
+      meta?.openWorldHint ?? meta?.hitlPolicy === "confirm_outbound",
   }
 }
 
@@ -351,10 +359,12 @@ function parseOperation(
     return null
   }
 
+  const operationId = operation.operationId
+
   const { schema, bodyParamNames, queryParamNames } =
     buildInputSchema(operation)
   const meta = operation["x-mcp"]
-  const annotations = buildAnnotations(method, meta)
+  const annotations = buildAnnotations(method, operation, operationId)
   const hitlPolicy = resolveHitlPolicy(meta, annotations)
   const inputSchema =
     hitlPolicy === "none"
@@ -379,7 +389,7 @@ function parseOperation(
     hitlPolicy,
     inputSchema,
     method: method.toUpperCase(),
-    name: toSnakeCase(operation.operationId),
+    name: toSnakeCase(operationId),
     pathParamNames: extractPathParamNames(pathTemplate),
     pathTemplate,
     queryParamNames,

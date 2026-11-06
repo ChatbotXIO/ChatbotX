@@ -30,6 +30,8 @@ export type McpRouteMeta = {
   readOnlyHint?: boolean
   destructiveHint?: boolean
   idempotentHint?: boolean
+  /** Absent ⇒ true only for outbound operations, inferred from `hitlPolicy`. */
+  openWorldHint?: boolean
   /**
    * Human-in-the-loop guard consumed by the MCP server. Write operations
    * default to a confirmation policy in the generated public spec; `"none"`

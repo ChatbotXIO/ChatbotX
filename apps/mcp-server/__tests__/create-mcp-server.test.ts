@@ -37,7 +37,17 @@ const jsonExecuteResponse = (body: unknown): FetchResponse => ({
 })
 
 type RequestHandler = (request: unknown, extra: unknown) => Promise<unknown>
-type ListToolsResult = { tools: Array<{ name: string }> }
+type ToolAnnotations = {
+  destructiveHint: boolean
+  idempotentHint: boolean
+  openWorldHint: boolean
+  readOnlyHint: boolean
+  title: string
+}
+
+type ListToolsResult = {
+  tools: Array<{ annotations: ToolAnnotations; name: string }>
+}
 type CallToolResult = {
   isError?: boolean
   content: Array<{ type: string; text: string }>
@@ -130,6 +140,24 @@ describe("createMcpServer", () => {
       "get_guide",
       "tags_list",
     ])
+
+    for (const tool of result.tools) {
+      expect(typeof tool.annotations.title).toBe("string")
+      expect(typeof tool.annotations.readOnlyHint).toBe("boolean")
+      expect(typeof tool.annotations.destructiveHint).toBe("boolean")
+      expect(typeof tool.annotations.idempotentHint).toBe("boolean")
+      expect(typeof tool.annotations.openWorldHint).toBe("boolean")
+    }
+
+    expect(
+      result.tools.find((tool) => tool.name === "tags_list")?.annotations,
+    ).toEqual({
+      title: "List tags",
+      readOnlyHint: true,
+      destructiveHint: false,
+      idempotentHint: true,
+      openWorldHint: false,
+    })
   })
 
   test("a hidden tool (excluded from tools/list) is reachable via call_tool", async () => {
