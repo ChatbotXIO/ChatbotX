@@ -3,7 +3,7 @@
   "dialect": "postgres",
   "id": "a61d983a-4350-409d-b68b-1c179a6c8b4c",
   "prevIds": [
-    "b20381cb-457c-4c18-a8ba-01e8f5ae77e0"
+    "28123e97-6285-4033-954a-88136a68c0d0"
   ],
   "ddl": [
     {
@@ -60599,6 +60599,27 @@
       "entityType": "indexes",
       "schema": "public",
       "table": "WorkingHoursMember"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "ownerId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "Workspace_ownerId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "Workspace"
     },
     {
       "nameExplicit": true,
