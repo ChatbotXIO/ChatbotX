@@ -32,7 +32,6 @@ type McpOperationMeta = {
   readOnlyHint?: boolean
   destructiveHint?: boolean
   idempotentHint?: boolean
-  openWorldHint?: boolean
   hitlPolicy?:
     | "none"
     | "confirm_diff"

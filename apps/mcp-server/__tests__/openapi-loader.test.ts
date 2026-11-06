@@ -578,6 +578,16 @@ describe("x-mcp visibility, scope, and annotations", () => {
     })
   })
 
+  test("annotations fall back to the operation ID when summary is absent", async () => {
+    globalThis.fetch = vi
+      .fn()
+      .mockResolvedValue(specWithOperation({})) as unknown as typeof fetch
+    const { loadOpenApiSpec } = await import("../src/openapi-loader")
+    const [tool] = await loadOpenApiSpec()
+
+    expect(tool?.annotations.title).toBe("tags.list")
+  })
+
   test("a POST operation defaults to a closed world", async () => {
     globalThis.fetch = vi
       .fn()
@@ -628,6 +638,7 @@ describe("x-mcp visibility, scope, and annotations", () => {
     const { loadOpenApiSpec } = await import("../src/openapi-loader")
     const [tool] = await loadOpenApiSpec()
     expect(tool?.annotations.destructiveHint).toBe(true)
+    expect(tool?.annotations.title).toBe("tags.list")
     // readOnlyHint/idempotentHint still fall back to the GET-method default.
     expect(tool?.annotations.readOnlyHint).toBe(true)
   })
@@ -644,6 +655,7 @@ describe("x-mcp visibility, scope, and annotations", () => {
     const { loadOpenApiSpec } = await import("../src/openapi-loader")
     const [tool] = await loadOpenApiSpec()
     expect(tool?.annotations).toEqual({
+      title: "tags.delete",
       readOnlyHint: false,
       destructiveHint: true,
       idempotentHint: true,

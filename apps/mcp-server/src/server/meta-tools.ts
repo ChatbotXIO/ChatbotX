@@ -56,6 +56,7 @@ export const META_TOOLS = [
       readOnlyHint: false,
       destructiveHint: true,
       idempotentHint: false,
+      // Worst-case: this can execute any tool.
       openWorldHint: true,
     },
     description:
