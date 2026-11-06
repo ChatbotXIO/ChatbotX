@@ -449,6 +449,7 @@
   "flows": {
     "export": {
       "notPublished": "תהליך זה מעולם לא פורסם. יש לפרסם אותו לפני הייצוא.",
+      "viewOnly": "התהליך הזה הותקן מתבנית לצפייה בלבד, ולכן אי אפשר לייצא אותו.",
       "failed": "הייצוא נכשל. יש לנסות שוב."
     },
     "title": "תהליכים",
@@ -4595,6 +4596,9 @@
   "templates": {
     "title": "תבניות",
     "description": "צור ונהל את התבניות שלך.",
+    "createDialog": {
+      "title": "תבנית חדשה"
+    },
     "share": {
       "label": "שיתוף",
       "enabled": "משותפת",
@@ -4603,14 +4607,140 @@
       "dialogDescription": "כל מי שיש לו את הקישור הזה יכול להתקין עותק של התבנית הזו בסביבת עבודה בארגון שלך.",
       "enableLabel": "הפעלת קישור שיתוף",
       "linkLabel": "קישור שיתוף",
-      "description": "כל מי שיש לו את הקישור יכול להתקין את התבנית הזו בסביבת העבודה שלו."
+      "rotateLabel": "החלפת קישור",
+      "rotateTitle": "להחליף את קישור השיתוף?",
+      "rotateDescription": "הקישור הנוכחי יפסיק לעבוד מיד. כל מי שעדיין צריך להתקין את התבנית הזו יזדקק לקישור החדש.",
+      "rotated": "קישור השיתוף הוחלף",
+      "expiryLabel": "תפוגת הקישור",
+      "expiryHint": "השאירו ריק לקישור שאינו פג לעולם.",
+      "clearExpiry": "הסרת תפוגה",
+      "expiredNotice": "תוקף הקישור פג. הגדירו תאריך מאוחר יותר או הסירו את התפוגה כדי לשתף אותו שוב.",
+      "templateId": "מזהה תבנית",
+      "templateKey": "מפתח תבנית",
+      "showKey": "הצג מפתח",
+      "hideKey": "הסתר מפתח",
+      "copyField": "העתק {field}"
+    },
+    "sync": {
+      "title": "עדכונים",
+      "updateAvailable": "יש עדכון זמין",
+      "upToDate": "מעודכן",
+      "sourceDeleted": "התבנית נמחקה",
+      "sourceDeletedHint": "המפרסם מחק את התבנית הזו. העותק שלך ממשיך לעבוד אך לא ניתן עוד לעדכן אותו.",
+      "updateNow": "עדכן עכשיו",
+      "updating": "מעדכן…",
+      "version": "גרסת תבנית {version}",
+      "lastSynced": "עודכן לאחרונה {date}",
+      "autoUpdateLabel": "עדכון אוטומטי כשהתבנית משתנה",
+      "noHistory": "אין עדכונים עדיין.",
+      "countAdded": "נוספו {count}",
+      "countUpdated": "עודכנו {count}",
+      "countDetached": "{count} כבר לא עוקבים אחר התבנית",
+      "notUpdatable": "{count} עדיין לא ניתנים לעדכון",
+      "overwritten": "{name} נערך והוחלף בעדכון",
+      "restore": "שחזור הגרסה שלי",
+      "restored": "הגרסה שלך שוחזרה",
+      "status": {
+        "pending": "בתור",
+        "running": "פועל",
+        "completed": "הושלם",
+        "partial": "חלקי",
+        "failed": "נכשל",
+        "skipped": "דולג",
+        "cancelled": "בוטל"
+      },
+      "trigger": {
+        "autoUpdate": "אוטומטי",
+        "manual": "ידני",
+        "reinstall": "התקנה מחדש"
+      },
+      "publisherAccessLabel": "לאפשר למפרסם לראות את סביבת העבודה הזו ולהסיר את התבנית",
+      "publisherAccessHint": "רק שם סביבת העבודה משותף. אם המפרסם מסיר את התבנית, כל מה שהתבנית יצרה נמחק, כולל עותקים שערכת.",
+      "requestedVersion": "התבקשה v{version}",
+      "errors": {
+        "unknown": "העדכון נכשל. נסו שוב, או פנו לתמיכה אם הוא ממשיך להיכשל.",
+        "templateSyncFailed": "העדכון נכשל. נסו שוב.",
+        "templateSyncSuperseded": "עדכון חדש יותר החליף את העדכון הזה.",
+        "templateSyncAbandoned": "העדכון לא הסתיים בזמן ונסגר.",
+        "templateInstallationInactive": "ההתקנה הזו כבר לא פעילה.",
+        "workspaceOwnerBlocked": "חשבון הבעלים של סביבת העבודה חסום.",
+        "templateUninstallInProgress": "התבנית נמצאת בתהליך הסרה.",
+        "templateAutoUpdateOff": "העדכונים האוטומטיים כבויים.",
+        "templateUpToDate": "העותק כבר מעודכן.",
+        "templateInstallerAccessLost": "למי שהתקין כבר אין הרשאה לעדכן את העותק הזה.",
+        "templateInstallationSourceMissing": "התבנית נמחקה לפני שהעדכון רץ.",
+        "templateCategoryPermissionDenied": "כבר אין לכם הרשאה לעדכן את כל התוכן של התבנית הזו.",
+        "templatePayloadIncompatible": "התבנית נשמרה בפורמט חדש יותר ממה שהשרת הזה יכול להתקין.",
+        "templateCrossTenantInstall": "התבנית הזו אינה זמינה לסביבת העבודה שלך.",
+        "templateInvalidInboxBinding": "תיבת דואר נכנס שנבחרה אינה תואמת לתבנית."
+      }
+    },
+    "versions": {
+      "detailsTab": "פרטים",
+      "tab": "גרסאות",
+      "versionNumber": "גרסה {version}",
+      "current": "נוכחית",
+      "first": "גרסה ראשונה",
+      "noDetail": "לא נרשמו פרטים לגרסה זו.",
+      "added": "נוסף",
+      "changed": "שונה",
+      "removed": "הוסר"
+    },
+    "installers": {
+      "title": "הצגת נתונים",
+      "workspace": "סביבת עבודה",
+      "installs": "התקנות",
+      "lastInstalled": "הותקן לאחרונה",
+      "version": "גרסה",
+      "autoUpdate": "עדכון אוטומטי",
+      "uninstalled": "הוסר",
+      "hidden": "סביבת העבודה לא משותפת",
+      "totalInstallEvents": "סך כל ההתקנות (בכל הזמנים)",
+      "uninstallNotAllowed": "המתקין לא אישר למפרסמים להסיר עותק זה.",
+      "loadError": "לא ניתן לטעון את המתקינים. נסו שוב.",
+      "automatic": "אוטומטי",
+      "details": "פרטים",
+      "noIssues": "אין אזהרות או שגיאות."
     },
     "installs": {
       "title": "התקנות",
       "resources": "משאבים",
       "warnings": "אזהרות",
       "completedAt": "הושלם בתאריך",
-      "autoUpdate": "עדכון אוטומטי"
+      "autoUpdate": "עדכון אוטומטי",
+      "detailTitle": "פרטי ההתקנה",
+      "installedBy": "הותקן על ידי",
+      "viaApi": "טוקן API",
+      "attempts": "ניסיונות",
+      "autoUpdateOn": "פעיל",
+      "autoUpdateOff": "כבוי",
+      "retry": "ניסיון התקנה חוזר",
+      "resourcesTitle": "משאבים שהותקנו",
+      "noResources": "עדיין לא נוצר דבר.",
+      "deletedResource": "משאב שנמחק",
+      "viewOnly": "צפייה בלבד",
+      "created": "נוצר",
+      "reused": "נעשה בו שימוש חוזר",
+      "loadMore": "טען עוד",
+      "statusFilter": "סטטוס",
+      "allStatuses": "כל הסטטוסים",
+      "errors": {
+        "unknown": "ההתקנה נכשלה. נסו שוב, או פנו לתמיכה אם הבעיה נמשכת.",
+        "templatePayloadIncompatible": "התבנית נשמרה בפורמט חדש יותר ממה שהשרת הזה יכול להתקין.",
+        "templateInstallationSourceMissing": "התבנית נמחקה לפני שההתקנה רצה.",
+        "templateCrossTenantInstall": "התבנית הזו אינה זמינה לסביבת העבודה שלך.",
+        "templateCategoryPermissionDenied": "כבר אין לך הרשאה להתקין את כל מה שבתבנית הזו.",
+        "templateInvalidInboxBinding": "תיבת דואר נכנס שנבחרה אינה תואמת לתבנית.",
+        "templateInstallEnqueueFailed": "לא ניתן היה להכניס את ההתקנה לתור.",
+        "templateInstallFailed": "ההתקנה נכשלה. נסו שוב.",
+        "templateInstallAbandoned": "ההתקנה לא הסתיימה בזמן ונסגרה.",
+        "templateInstallSuperseded": "התקנה חדשה יותר של התבנית הזו החליפה את זו.",
+        "workspaceOwnerBlocked": "חשבון הבעלים של סביבת העבודה חסום."
+      },
+      "uninstalledBy": "{by, select, publisher {המפרסם הסיר את התבנית הזו.} installer {התבנית הזו הוסרה מסביבת העבודה הזו.} other {התבנית הזו הוסרה.}}",
+      "uninstalledSummary": "{deleted} נמחקו, {kept} נשמרו.",
+      "lastAttemptAt": "ניסיון אחרון",
+      "installedAutomatically": "הותקן אוטומטית (ברירת המחדל של ה-white-label)"
     },
     "form": {
       "contents": "תוכן התבנית",
@@ -4623,14 +4753,26 @@
       "allowDelete": "אפשר מחיקה לאחר ההתקנה",
       "publisherName": "שם המפרסם",
       "youtubeVideoId": "מזהה סרטון YouTube",
-      "youtubeVideoIdDescription": "המזהה בן 11 התווים מכתובת ה-URL של הסרטון, למשל \"dQw4w9WgXcQ\" בכתובת youtube.com/watch?v=dQw4w9WgXcQ",
+      "youtubeVideoIdDescription": "המזהה בן 11 התווים מכתובת ה-URL של הסרטון, למשל \"xxxxxxxxxxx\" בכתובת youtube.com/watch?v=xxxxxxxxxxx",
       "testLink": "קישור בדיקה",
       "imageUrl": "תמונת שער",
       "installBehavior": "התנהגות ההתקנה",
-      "createInstallFolder": "התקנה בתיקייה ייעודית",
+      "createInstallFolder": "יצירת תיקייה בחשבון המותקן והתקנת המשאבים.",
       "createInstallFolderDescription": "מקנן כל משאב שהותקן בתוך תיקייה חדשה אחת הנקראת על שם התבנית הזו.",
-      "defaultAutoUpdate": "סימון התקנות לעדכון כברירת מחדל",
-      "defaultAutoUpdateDescription": "התקנות חדשות יציגו הודעת עדכון זמין בכל פעם שתפרסם מחדש את התבנית הזו."
+      "defaultAutoUpdate": "עדכון אוטומטי של תבניות מותקנות",
+      "defaultAutoUpdateDescription": "בכל פעם ששומרים את התבנית עם תוכן ששונה, התקנות שמופעל בהן עדכון אוטומטי נדרסות בתוכן החדש (עותקים שהמתקין ערך מגובים קודם). המתקינים יכולים לכבות זאת.",
+      "viewOnly": "צפייה בלבד",
+      "viewOnlyAll": "הפוך את כל הנבחרים לצפייה בלבד",
+      "includedAutomatically": {
+        "title": "נכלל אוטומטית",
+        "hint": "נכלל כי משהו שבחרתם זקוק לו. לקריאה בלבד.",
+        "rows": "{count, plural, one {# פריט נוסף} other {# פריטים נוספים}}",
+        "kind": {
+          "folders": "תיקיות",
+          "placeCategories": "קטגוריות מקומות"
+        }
+      },
+      "viewOnlyCopyIncluded": "פריט שבחרת (או פריט שהוא צריך) הותקן מתבנית לצפייה בלבד, ולכן אי אפשר לשתף אותו בתבנית חדשה."
     },
     "categories": {
       "flows": "תהליכים",
@@ -4645,8 +4787,117 @@
       "keywords": "מילות מפתח",
       "entryPointLinks": "קישורים לנקודות כניסה",
       "triggers": "גורמים מפעילים",
-      "fbCommentAutomations": "אוטומציות תגובות פייסבוק",
-      "settings": "הגדרות"
+      "fbCommentAutomations": "אוטומציות תגובות",
+      "settings": "שדות בוט ותשובות שמורות",
+      "sequences": "רצפים",
+      "aiMcpServers": "שרתי MCP",
+      "aiFiles": "קובצי ידע של AI",
+      "questionnaires": "שאלונים",
+      "couponTopics": "נושאי קופונים",
+      "pipelines": "פייפליינים"
+    },
+    "locked": {
+      "flowBanner": "הזרימה הותקנה מתבנית לצפייה בלבד. אפשר לצפות בה אך לא לערוך אותה.",
+      "badge": "לצפייה בלבד",
+      "editorBanner": "הפריט הותקן מתבנית לצפייה בלבד. אפשר לצפות בו אך לא לערוך אותו.",
+      "badgeHint": "הותקן מתבנית לצפייה בלבד"
+    },
+    "channels": {
+      "messenger": "Messenger",
+      "instagram": "Instagram",
+      "instagramFacebook": "Instagram (Facebook login)",
+      "threads": "Threads",
+      "tiktok": "TikTok",
+      "whatsapp": "WhatsApp",
+      "telegram": "Telegram",
+      "zalo": "Zalo",
+      "webchat": "צ'אט אינטרנטי",
+      "line": "LINE",
+      "email": "אימייל"
+    },
+    "uninstall": {
+      "title": "הסרת תבנית",
+      "description": "התבנית מסירה את כל מה שיצרה בסביבת העבודה הזו, כולל עותקים שנערכו. תגיות, שדות ותיקיות משותפים, פריטים שהיו קיימים קודם וכל מה שבניתם על בסיס עותק נשמרים.",
+      "loading": "בודק מה יקרה…",
+      "previewFailed": "לא ניתן היה לבדוק מה תעשה ההסרה.",
+      "failed": "לא ניתן היה להסיר את התבנית.",
+      "done": "התבנית הוסרה",
+      "confirm": "הסרה",
+      "action": "הסרה",
+      "deleted": "{count, plural, one {# פריט יימחק} other {# פריטים יימחקו}}",
+      "deletedDone": "{count, plural, one {# פריט נמחק} other {# פריטים נמחקו}}",
+      "keptModified": "{count, plural, one {# עותק שנערך או לא אומת נשמר} other {# עותקים שנערכו או לא אומתו נשמרים}}",
+      "keptShared": "{count, plural, one {# תגית או שדה משותף נשמרים} other {# תגיות ושדות משותפים נשמרים}}",
+      "keptByPolicy": "{count, plural, one {# פריט נוסף נשמר} other {# פריטים נוספים נשמרים}}",
+      "keptHasDependents": "{count, plural, one {# עותק נשמר כי משהו עדיין משתמש בו} other {# עותקים נשמרים כי משהו עדיין משתמש בהם}}",
+      "deletedModified": "{count, plural, one {# מהם נערך על ידך: העריכות יאבדו ולא ניתן יהיה לשחזר אותן} other {# מהם נערכו על ידך: העריכות יאבדו ולא ניתן יהיה לשחזר אותן}}",
+      "keptLockedByOther": "{count, plural, one {# פריט נשמר כי התקנה אחרת של תבנית עדיין מגנה עליו} other {# פריטים נשמרים כי התקנה אחרת של תבנית עדיין מגנה עליהם}}",
+      "confirmCheckbox": "אני מבין/ה שפעולה זו מוחקת את הפריטים שלמעלה ואי אפשר לבטל אותה",
+      "started": "ההסרה התחילה",
+      "inProgress": "מסיר…",
+      "retry": "ניסיון הסרה חוזר",
+      "state": {
+        "pending": "ההסרה בתור",
+        "running": "מסיר…",
+        "partial": "ההסרה לא הושלמה, נסו שוב",
+        "failed": "ההסרה נכשלה, נסו שוב",
+        "skipped": "ההסרה דולגה: סביבת העבודה חסומה"
+      },
+      "deletedUnverified": "{count, plural, one {# מהם אינו ניתן לבדיקה לגבי עריכות: אם שינית אותו, השינויים יאבדו} other {# מהם אינם ניתנים לבדיקה לגבי עריכות: אם שינית אותם, השינויים יאבדו}}",
+      "cancelAction": "ביטול ההסרה",
+      "cancelled": "ההסרה בוטלה: הפריטים שנותרו שוב שלך לשימוש",
+      "blockedByReference": "{count, plural, one {# פריט לא נמחק כי משהו שיצרת עדיין מפנה אליו: הסירו את ההפניה ואז נסו שוב את ההסרה} other {# פריטים לא נמחקו כי דברים שיצרת עדיין מפנים אליהם: הסירו את ההפניות ואז נסו שוב את ההסרה}}",
+      "keptPartlyRemoved": "{count, plural, one {# עותק נשמר לאחר הסרה חסומה; ההיסטוריה ונתוני ההגנה מכפילויות אולי הוסרו, ולכן בדקו אותו לפני שתפעילו אותו} other {# עותקים נשמרו לאחר הסרה חסומה; ההיסטוריה ונתוני ההגנה מכפילויות אולי הוסרו, ולכן בדקו אותם לפני שתפעילו אותם}}",
+      "keptInactiveForReview": "{count, plural, one {# עותק נותר לא פעיל: ההיסטוריה ונתוני ההגנה מכפילויות שלו הוסרו, ולכן בדקו אותו לפני שתפעילו אותו} other {# עותקים נותרו לא פעילים: ההיסטוריה ונתוני ההגנה מכפילויות שלהם הוסרו, ולכן בדקו אותם לפני שתפעילו אותם}}",
+      "keptHistoryRemoved": "{count, plural, one {# עותק נשמר, אך ההיסטוריה שלו הוסרה (אין מה להפעיל): בדקו אותו לפני שתסתמכו עליו} other {# עותקים נשמרו, אך ההיסטוריה שלהם הוסרה (אין מה להפעיל): בדקו אותם לפני שתסתמכו עליהם}}",
+      "cancelledPartial": "{count, plural, one {# פריט כבר בתהליך מחיקה ויסתיים; השאר הוחזר} other {# פריטים כבר בתהליך מחיקה ויסתיימו; השאר הוחזר}}"
+    },
+    "warningCodes": {
+      "aiFileTooLarge": "קובץ הידע הזה גדול ממה שהתקנת תבנית יכולה להעתיק, ולכן דולג.",
+      "aiFileUnavailable": "לא ניתן היה להעתיק את קובץ הידע הזה, ולכן דולג.",
+      "assigneeRequired": "בחר למי השלב הזה משייך את השיחה.",
+      "ambiguousSourceFieldToken": "כמה שדות מקור חולקים את השם הזה, ולכן המשתנים שמשתמשים בו נשארו ללא שינוי.",
+      "backupTooLarge": "פריט שנערך מקומית היה גדול מדי לגיבוי, ולכן לא נדרס.",
+      "backupUnavailable": "הגיבוי של פריט זה אינו זמין עוד.",
+      "botFieldRenamed": "כבר קיים שדה בוט בשם הזה מסוג אחר, ולכן נוצר שדה בשם חדש.",
+      "categoryPermissionDenied": "אין לך הרשאה לקטגוריה זו, ולכן היא דולגה.",
+      "couponTopicExpired": "נושא הקופון הזה כבר פג תוקף.",
+      "credentialRequired": "הוסף את פרטי הגישה של פריט זה לפני השימוש בו.",
+      "custom": "פריט מוזכר לא נמצא בסביבת העבודה הזו, ולכן הקישור הוסר.",
+      "customField": "פריט מוזכר לא נמצא בסביבת העבודה הזו, ולכן הקישור הוסר.",
+      "customFieldRenamed": "כבר קיים שדה בשם הזה מסוג אחר, ולכן נוצר שדה בשם שונה.",
+      "enqueueFailed": "לא ניתן היה להכניס לתור את העיבוד ברקע עבור פריט זה.",
+      "flow": "פריט מוזכר לא נמצא בסביבת העבודה הזו, ולכן הקישור הוסר.",
+      "flowInvalidStructure": "המבנה של ה-Flow אינו תקין, ולכן הוא דולג.",
+      "flowNotPublished": "ה-Flow הותקן כטיוטה ואינו מפורסם.",
+      "flowSkippedRequiredReference": "ה-Flow דולג כי לא ניתן היה לפתור הפניה נדרשת.",
+      "folder": "פריט מוזכר לא נמצא בסביבת העבודה הזו, ולכן הקישור הוסר.",
+      "inboxBindingRequired": "בחר תיבת דואר נכנס עבור ערוץ זה; עד אז הפריט יישאר לא פעיל.",
+      "integration": "פריט מוזכר לא נמצא בסביבת העבודה הזו, ולכן הקישור הוסר.",
+      "localModifiedOverwritten": "פריט שנערך מקומית נדרס. נשמר גיבוי וניתן לשחזר אותו.",
+      "name": "לא נמצא שם פנוי עבור פריט זה, ולכן הוא דולג.",
+      "noEmbeddingProvider": "לא הוגדר ספק embedding בסביבת העבודה הזו, ולכן קובצי הידע דולגו. חברו את OpenAI או Gemini והתקינו מחדש.",
+      "notUpdatable": "סוג פריט זה עדיין אינו מתעדכן אוטומטית.",
+      "pipeline": "משתמש בצינור שכבר לא קיים.",
+      "pipelineField": "משתמש בשדה צינור שכבר לא קיים.",
+      "pipelineStage": "משתמש בשלב צינור שכבר לא קיים.",
+      "postSelectionRequired": "בחר את הפוסט שוב: לא ניתן היה להעביר את הפוסט המקורי.",
+      "product": "פריט מוזכר לא נמצא בסביבת העבודה הזו, ולכן הקישור הוסר.",
+      "productCategory": "פריט מוזכר לא נמצא בסביבת העבודה הזו, ולכן הקישור הוסר.",
+      "questionImage": "לא ניתן היה להעתיק תמונה.",
+      "quota": "הגעת למגבלת החבילה, ולכן הפריט דולג.",
+      "referenceRemoved": "הפניה שלא ניתן היה לפתור הוסרה.",
+      "savedReply": "פריט מוזכר לא נמצא בסביבת העבודה הזו, ולכן הקישור הוסר.",
+      "savedReplyImage": "לא ניתן היה להעתיק תמונה.",
+      "tag": "פריט מוזכר לא נמצא בסביבת העבודה הזו, ולכן הקישור הוסר.",
+      "unlisted": "הפריט לא הועבר במלואו: {code}",
+      "workspaceMember": "משויך לחבר שאינו בסביבת העבודה הזו.",
+      "workspaceUnavailable": "סביבת העבודה הזו כבר אינה זמינה, ולכן הפריט דולג."
+    },
+    "tabs": {
+      "mine": "התבניות שלי",
+      "installed": "מותקנות",
+      "installedEmpty": "עדיין אין תבניות מותקנות. תבניות שתתקינו מסביבת עבודה אחרת יופיעו כאן."
     }
   },
   "qrCodeGenerator": {
@@ -4769,6 +5020,23 @@
     "hint": "השאירו את כל הערוצים לא מסומנים כדי לאפשר את כולם.",
     "hiddenByPlatform": "הוסתר על ידי מנהל הפלטפורמה — לא ניתן להפעיל מחדש ערוץ זה."
   },
+  "platformDefaultTemplate": {
+    "title": "תבנית ברירת מחדל",
+    "description": "התקן תבנית זו בכל סביבת עבודה חדשה שנוצרת תחת ה-white-label הזה. סביבות עבודה קיימות לא ישתנו.",
+    "clearTitle": "להסיר את תבנית ברירת המחדל?",
+    "clearDescription": "סביבות עבודה חדשות לא יקבלו תבנית אוטומטית. סביבות שכבר קיבלו אותה ישמרו אותה.",
+    "status": {
+      "notConfigured": "לא הוגדר",
+      "ready": "פעיל",
+      "templateUnavailable": "התבנית אינה זמינה",
+      "shareDisabled": "קישור השיתוף כבוי",
+      "keyRotated": "המפתח אינו תקין"
+    },
+    "errors": {
+      "unavailable": "מזהה התבנית או המפתח אינם תקינים.",
+      "shareDisabled": "הפעל קודם את קישור השיתוף של התבנית."
+    }
+  },
   "platformEmailTemplates": {
     "title": "תבניות דוא\"ל",
     "description": "השאירו את הנושא והגוף ריקים כדי להשתמש בתבנית ברירת המחדל של המערכת.",
@@ -4852,14 +5120,41 @@
     "invalidTitle": "קישור זה אינו זמין עוד.",
     "invalidDescription": "קישור השיתוף של התבנית הזו אינו תקין, מושבת או שפג תוקפו.",
     "byPublisher": "מאת {publisherName}",
-    "includes": "התבנית הזו כוללת",
     "videoTitle": "סרטון תצוגה מקדימה של התבנית",
-    "tryItOut": "נסה עכשיו",
-    "signInToInstall": "התחבר כדי להתקין",
+    "preview": "תצוגה מקדימה",
+    "aboutTemplate": "אודות תבנית זו",
     "selectWorkspace": "בחר סביבת עבודה",
     "install": "התקן",
     "installStarted": "ההתקנה החלה",
-    "noEligibleWorkspaces": "אין לך סביבת עבודה מתאימה להתקנת התבנית הזו."
+    "noEligibleWorkspaces": "אין לך סביבת עבודה מתאימה להתקנת התבנית הזו.",
+    "alreadyInstalled": "התבנית הזו כבר מותקנת בסביבת העבודה הזו.",
+    "viewInstall": "הצגת ההתקנה",
+    "installAnotherCopy": "התקנת עותק נוסף",
+    "inboxesTitle": "תיבות דואר נכנס",
+    "inboxesHint": "התבנית הזו נבנתה סביב תיבות הדואר הנכנס האלה. בחרו באילו מהתיבות שלכם להשתמש; מה שיושאר בחוץ יותקן במצב כבוי.",
+    "noInbox": "לא לחבר — להתקין במצב כבוי",
+    "noInboxAvailable": "אין תיבת דואר נכנס מחוברת בערוץ הזה",
+    "updateExisting": "עדכון העותק המותקן",
+    "updateStarted": "העדכון התחיל",
+    "publisherAccessLabel": "לאפשר למפרסם לראות את שם סביבת העבודה הזו ולהסיר ממנה את התבנית",
+    "publisherAccessHint": "הוא לעולם לא רואה את הנתונים, אנשי הקשר או האימייל שלכם. אם יסיר את התבנית, כל מה שהתבנית יצרה יימחק, כולל עותקים שערכתם; כל מה שבניתם על בסיס עותק נשמר. אפשר לכבות זאת מאוחר יותר בדף ההתקנה.",
+    "autoUpdateLabel": "עדכון אוטומטי כשהתבנית משתנה",
+    "collisions": {
+      "title": "מה ההתקנה תעשה כאן",
+      "loading": "בודק את סביבת העבודה הזו…",
+      "action": {
+        "create": "נוצר",
+        "reuse": "נעשה בו שימוש חוזר",
+        "rename": "שונה שמו",
+        "bind": "חובר",
+        "unbound": "נותר לא מחובר"
+      },
+      "detail": {
+        "rename": "“{name}” כבר קיים מסוג אחר, ולכן הפריט מהתבנית נוסף בשם חדש.",
+        "unbound": "“{name}” נשאר לא מחובר עד שתבחרו תיבת דואר נכנס."
+      }
+    },
+    "createWorkspace": "צור סביבת עבודה חדשה"
   },
   "extensionsMe": {
     "actions": {
@@ -6245,10 +6540,11 @@
       "processing": "בעיבוד",
       "installing": "Installing",
       "completed": "הושלם",
-      "partial": "Partial",
+      "partial": "חלקי",
       "failed": "נכשל",
       "success": "הצלחה",
-      "error": "שגיאה"
+      "error": "שגיאה",
+      "uninstalled": "Uninstalled"
     },
     "subtitle": {
       "placeholder": "הזנת כותרת משנה"
@@ -6986,7 +7282,8 @@
       "miniApps": "Mini Apps",
       "leaderboards": "טבלאות מובילים",
       "pipelines": "צינורות עבודה",
-      "places": "מקומות"
+      "places": "מקומות",
+      "templates": "תבניות"
     },
     "adReferral": {
       "label": "Ads",

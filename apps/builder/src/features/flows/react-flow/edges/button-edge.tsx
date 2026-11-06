@@ -10,9 +10,11 @@ import {
 } from "@xyflow/react"
 import { Trash2Icon } from "lucide-react"
 import { memo } from "react"
+import { useIsFlowReadOnly } from "../flow-mutation-context"
 
 export default memo((props: EdgeProps) => {
   const { deleteElements } = useReactFlow()
+  const isReadOnly = useIsFlowReadOnly()
 
   const onDelete = () => {
     deleteElements({
@@ -50,7 +52,7 @@ export default memo((props: EdgeProps) => {
       <EdgeLabelRenderer>
         <EdgeToolbar
           edgeId={props.id}
-          isVisible={!!props.data?.isHovered}
+          isVisible={!!props.data?.isHovered && !isReadOnly}
           x={centerX}
           y={centerY}
         >

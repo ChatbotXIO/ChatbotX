@@ -11,6 +11,8 @@ const {
   mockBotFieldResolveByNameAndType,
   mockRemapFlowGraphReferences,
   mockFolderFind,
+  mockComputeBindings,
+  mockRewriteTokens,
 } = vi.hoisted(() => {
   const mockInsertValues = vi.fn().mockResolvedValue(undefined)
   const mockInsert = vi.fn(() => ({ values: mockInsertValues }))
@@ -24,6 +26,12 @@ const {
     mockBotFieldResolveByNameAndType: vi.fn(),
     mockRemapFlowGraphReferences: vi.fn(),
     mockFolderFind: vi.fn(),
+    mockComputeBindings: vi.fn(() => ({
+      bindings: new Map(),
+      renamed: [],
+      ambiguous: [],
+    })),
+    mockRewriteTokens: vi.fn(<T>(value: T) => value),
   }
 })
 
@@ -57,6 +65,11 @@ vi.mock("@chatbotx.io/database/schema", () => ({
 
 vi.mock("@chatbotx.io/flow-config", () => ({
   remapFlowGraphReferences: mockRemapFlowGraphReferences,
+  referenceKindsWithPolicy: () => [],
+  STRIP_UNRESOLVED_ARRAY_REFERENCE_KINDS: new Set([
+    "workspaceMember",
+    "inboxTeam",
+  ]),
   sendMessageNodeDefaultFn: vi.fn(() => ({ id: "default-node" })),
   // flowService.list's startType filtering imports stepTypes for the
   // sendWaTemplateMessage branch — this suite never exercises `list`, so a
@@ -72,7 +85,8 @@ vi.mock("../src/base.service", () => ({
   BaseService: class BaseService {},
 }))
 
-vi.mock("../src/errors", () => ({
+vi.mock("../src/errors", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../src/errors")>()),
   notFoundException: (message: string) => new Error(message),
 }))
 
@@ -100,6 +114,17 @@ vi.mock("../src/folder/service", () => ({
   folderService: { find: mockFolderFind },
 }))
 
+vi.mock("../src/template/field-token-binder", () => ({
+  computeCustomFieldNameBindings: mockComputeBindings,
+  rewriteFieldTokensDeep: mockRewriteTokens,
+  rewriteBotFieldTokensDeep: <T>(value: T) => value,
+}))
+
+vi.mock("../src/template/reference-sanitizer", () => ({
+  sanitizeUnresolvedReferences: async (input: { graph: unknown }) =>
+    input.graph,
+}))
+
 const { flowService } = await import("../src/flow/service")
 
 describe("flowService.importFlowExport", () => {
@@ -107,23 +132,7 @@ describe("flowService.importFlowExport", () => {
     vi.clearAllMocks()
   })
 
-  test.each([
-    [
-      "same workspace keeps member and team ids",
-      "ws-1",
-      ["customField", "botField"],
-    ],
-    [
-      "another workspace strips them",
-      "ws-other",
-      ["customField", "botField", "workspaceMember", "inboxTeam"],
-    ],
-    [
-      "an unknown source strips them",
-      undefined,
-      ["customField", "botField", "workspaceMember", "inboxTeam"],
-    ],
-  ])("pipeline assignees: %s", async (_name, sourceWorkspaceId, kinds) => {
+  test("never trusts the file's own source workspace to keep member and team ids", async () => {
     mockDbTransaction.mockImplementation(async (callback) =>
       callback(transaction),
     )
@@ -143,7 +152,6 @@ describe("flowService.importFlowExport", () => {
 
     await flowService.importFlowExport({
       workspaceId: "ws-1",
-      sourceWorkspaceId,
       name: "Flow",
       active: true,
       enableInInbox: true,
@@ -154,7 +162,19 @@ describe("flowService.importFlowExport", () => {
       botFields: {},
     })
 
-    expect(mockRemapFlowGraphReferences.mock.calls[0][2]).toEqual({ kinds })
+    expect(mockRemapFlowGraphReferences.mock.calls[0][2]).toEqual({
+      kinds: [
+        "customField",
+        "botField",
+        "tag",
+        "pipeline",
+        "folder",
+        "productCategory",
+        "workspaceMember",
+        "inboxTeam",
+      ],
+      onUnresolved: expect.any(Function),
+    })
   })
 
   test("resolves the manifest, remaps references, and inserts the flow in one transaction", async () => {
@@ -206,12 +226,26 @@ describe("flowService.importFlowExport", () => {
         customField: new Map([["source-42", "target-42"]]),
         botField: new Map(),
       },
-      { kinds: ["customField", "botField", "workspaceMember", "inboxTeam"] },
+      {
+        kinds: [
+          "customField",
+          "botField",
+          "tag",
+          "pipeline",
+          "folder",
+          "productCategory",
+          "workspaceMember",
+          "inboxTeam",
+        ],
+        onUnresolved: expect.any(Function),
+      },
     )
     expect(result).toEqual({
       flowId: "new-flow-id",
       createdCustomFieldIds: ["target-42"],
       createdBotFieldIds: [],
+      renamedCustomFields: [],
+      renamedBotFields: [],
     })
     // The remapped graph is not returned to the caller, so assert it reaches
     // the version row instead — that write is the only consumer.
@@ -222,6 +256,56 @@ describe("flowService.importFlowExport", () => {
         edges: [],
       }),
     )
+  })
+
+  test("rewrites {{name}} tokens before remapping and reports a renamed custom field", async () => {
+    mockDbTransaction.mockImplementation(async (callback) =>
+      callback(transaction),
+    )
+    mockResolveByNameAndType.mockResolvedValue({
+      idMap: new Map([["number:size", "target-9"]]),
+      createdIds: ["target-9"],
+      resolved: new Map([
+        ["number:size", { id: "target-9", name: "size_1", renamed: true }],
+      ]),
+    })
+    mockBotFieldResolveByNameAndType.mockResolvedValue({
+      idMap: new Map(),
+      createdIds: [],
+    })
+    const bindings = new Map([["size", "size_1"]])
+    mockComputeBindings.mockReturnValueOnce({
+      bindings,
+      renamed: [
+        { sourceId: "src-9", from: "size", to: "size_1", type: "number" },
+      ],
+      ambiguous: [],
+    })
+    mockRemapFlowGraphReferences.mockImplementation((flow) => flow)
+    mockCreateId
+      .mockReturnValueOnce("new-flow-id")
+      .mockReturnValueOnce("draft-version-id")
+      .mockReturnValueOnce("analytics-id")
+
+    const result = await flowService.importFlowExport({
+      workspaceId: "ws-1",
+      name: "Onboarding",
+      active: true,
+      enableInInbox: true,
+      startNodeId: "1",
+      nodes: [] as never,
+      edges: [] as never,
+      customFields: { "src-9": { name: "size", type: "number" } },
+      botFields: {},
+    })
+
+    expect(mockRewriteTokens).toHaveBeenCalledWith(
+      { nodes: [], edges: [] },
+      bindings,
+    )
+    expect(result.renamedCustomFields).toEqual([
+      { from: "size", to: "size_1", type: "number" },
+    ])
   })
 
   test("resolves a bot field manifest entry into idMaps.botField", async () => {
@@ -268,7 +352,19 @@ describe("flowService.importFlowExport", () => {
         customField: new Map(),
         botField: new Map([["source-7", "target-bot-7"]]),
       },
-      { kinds: ["customField", "botField", "workspaceMember", "inboxTeam"] },
+      {
+        kinds: [
+          "customField",
+          "botField",
+          "tag",
+          "pipeline",
+          "folder",
+          "productCategory",
+          "workspaceMember",
+          "inboxTeam",
+        ],
+        onUnresolved: expect.any(Function),
+      },
     )
     expect(result.createdBotFieldIds).toEqual(["target-bot-7"])
   })

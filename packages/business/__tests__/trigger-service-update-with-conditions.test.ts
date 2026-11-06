@@ -2,7 +2,10 @@
 
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 
-// The broadcast policy import reaches quota/workspace modules these narrow mocks omit.
+vi.mock("../src/template/uninstall-references", () => ({
+  referencedParentsOf: () => [],
+}))
+
 const referenceMocks = vi.hoisted(() => ({
   findInvalid: vi.fn(),
   newIndexes: vi.fn(),
@@ -14,6 +17,15 @@ vi.mock("../src/automation-action/references", () => ({
   indexesOfNewActions: referenceMocks.newIndexes,
 }))
 
+// The template lock guard has its own suite; these tests cover the service.
+vi.mock("../src/template/installed-resource.service", async () => ({
+  ...(await import("./helpers/template-guard-mocks")).templateGuardMocks({
+    assertDeletable: vi.fn(),
+    assertResourceEditable: vi.fn(),
+  }),
+}))
+
+// The broadcast policy import reaches quota/workspace modules these narrow mocks omit.
 vi.mock("../src/broadcast/plan-policy.service", () => ({
   broadcastPlanPolicyService: {},
 }))
@@ -63,6 +75,7 @@ const {
 
 const tx = {
   query: {
+    templateInstalledResourceModel: { findMany: async () => [] },
     triggerModel: { findFirst: mockTriggerFindFirst },
     conditionModel: { findMany: mockConditionFindMany },
   },

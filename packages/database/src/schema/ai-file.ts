@@ -1,3 +1,4 @@
+import { sql } from "drizzle-orm"
 import { index, integer, jsonb, pgTable, text } from "drizzle-orm/pg-core"
 import type {
   AIFileChunking,
@@ -25,5 +26,12 @@ export const aiFileModel = pgTable(
         onUpdate: "cascade",
       }),
   },
-  (table) => [index("AIFile_workspaceId_idx").on(table.workspaceId)],
+  (table) => [
+    index("AIFile_workspaceId_idx").on(table.workspaceId),
+    // The template dispatch sweep looks for runs still `queued`; almost no row
+    // is, so a partial expression index keeps that scan off the whole table.
+    index("AIFile_queuedAt_queued_idx")
+      .using("btree", sql`(${table.processingRun}->>'queuedAt')`)
+      .where(sql`${table.processingRun}->>'status' = 'queued'`),
+  ],
 )

@@ -5,6 +5,7 @@ const mocks = vi.hoisted(() => ({
   assertPublicUrl: vi.fn(),
   createId: vi.fn(() => "api-1"),
   dispatchAuditRecord: vi.fn(),
+  dispatchStagedInstalls: vi.fn(),
   findByInboxId: vi.fn(),
   generateApiChannelToken: vi.fn(),
   generateSigningSecret: vi.fn(),
@@ -17,6 +18,9 @@ const mocks = vi.hoisted(() => ({
   ),
 }))
 
+vi.mock("../src/template/installation-dispatch", () => ({
+  dispatchStagedInstalls: mocks.dispatchStagedInstalls,
+}))
 vi.mock("../src/audit/dispatcher", () => ({
   dispatchAuditRecord: mocks.dispatchAuditRecord,
 }))
@@ -160,6 +164,68 @@ describe("integrationApiService.connect", () => {
       action: "create",
       detail: "created a new API key (#api-1)",
     })
+  })
+
+  test("dispatches the staged installs once after a connect that created the workspace", async () => {
+    const order: string[] = []
+    mocks.transaction.mockImplementation(
+      async (fn: (tx: unknown) => Promise<unknown>) => {
+        const result = await fn({ tx: true })
+        order.push("commit")
+        return result
+      },
+    )
+    mocks.dispatchStagedInstalls.mockImplementation(() => {
+      order.push("dispatch")
+      return Promise.resolve(undefined)
+    })
+
+    await integrationApiService.connect({
+      ownerId: "owner-1",
+      actorUserId: "owner-1",
+      name: "New Workspace API",
+      auth: { authType: "custom", signingSecret: "secret" },
+      tokenHash: "hash",
+      tokenPrefix: "prefix",
+      callbackUrl: null,
+      createWorkspace: async () => "workspace-2",
+    })
+
+    expect(order).toEqual(["commit", "dispatch"])
+    expect(mocks.dispatchStagedInstalls).toHaveBeenCalledTimes(1)
+    expect(mocks.dispatchStagedInstalls).toHaveBeenCalledWith("workspace-2")
+  })
+
+  test("does not dispatch for an existing workspace", async () => {
+    await integrationApiService.connect({
+      ownerId: "owner-1",
+      workspaceId: "workspace-1",
+      name: "Support API",
+      auth: { authType: "custom", signingSecret: "secret" },
+      tokenHash: "hash",
+      tokenPrefix: "prefix",
+      callbackUrl: null,
+    })
+
+    expect(mocks.dispatchStagedInstalls).not.toHaveBeenCalled()
+  })
+
+  test("does not dispatch when the transaction rolls back", async () => {
+    mocks.upsertConnectionRow.mockRejectedValueOnce(new Error("insert failed"))
+
+    await expect(
+      integrationApiService.connect({
+        ownerId: "owner-1",
+        name: "New Workspace API",
+        auth: { authType: "custom", signingSecret: "secret" },
+        tokenHash: "hash",
+        tokenPrefix: "prefix",
+        callbackUrl: null,
+        createWorkspace: async () => "workspace-2",
+      }),
+    ).rejects.toThrow("insert failed")
+
+    expect(mocks.dispatchStagedInstalls).not.toHaveBeenCalled()
   })
 
   test("returns invalidRequestData when the callback URL is rejected", async () => {

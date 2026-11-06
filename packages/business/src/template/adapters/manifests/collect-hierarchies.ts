@@ -56,6 +56,8 @@ const toManifestEntry = (
   parentSourceId: folder.parentId,
 })
 
+const DEFAULT_CATEGORY_RANK = 10
+
 /**
  * Same walk-to-root shape as `collectFolderAncestry`, for the
  * `ProductCategory` self-reference — capped at two levels
@@ -84,6 +86,8 @@ export const collectProductCategoryAncestry = async (
       manifest[row.id] = {
         name: row.name,
         parentSourceId: row.parentId,
+        // Left out at the default, so an unranked category keeps its fingerprint.
+        ...(row.rank === DEFAULT_CATEGORY_RANK ? {} : { rank: row.rank }),
       }
       if (row.parentId && !(row.parentId in manifest)) {
         pending.add(row.parentId)

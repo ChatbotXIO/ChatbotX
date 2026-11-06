@@ -11,6 +11,7 @@ import {
 import {
   CircleHelpIcon,
   Grid2x2PlusIcon,
+  LayoutTemplateIcon,
   MailIcon,
   PaletteIcon,
   RadioTowerIcon,
@@ -69,6 +70,11 @@ export function PortalManageSidebar({
             title: t("channels.title"),
             url: "/manage/platform-channels",
             icon: RadioTowerIcon,
+          },
+          {
+            title: t("platformDefaultTemplate.title"),
+            url: "/manage/default-template",
+            icon: LayoutTemplateIcon,
           },
           {
             title: t("platformBranding.title"),

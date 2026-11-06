@@ -37,6 +37,11 @@ import {
 import { useTranslations } from "next-intl"
 import { Suspense, use, useMemo, useState } from "react"
 import { FolderBarSlot } from "@/features/folders/folder-bar-slot"
+import { LockBadge } from "@/features/templates/components/lock-badge"
+import {
+  TemplateLockedList,
+  UndeletableGuard,
+} from "@/features/templates/components/lock-context"
 import { ChangeFolderDialog } from "../folders/change-folder"
 import CustomFieldTypeLabel from "./components/custom-field-label"
 import { CreateCustomFieldDialog } from "./create-custom-field"
@@ -114,8 +119,9 @@ function CustomFieldsTableContent({
             <Tooltip>
               <TooltipTrigger
                 render={
-                  <div className="inline-block max-w-[200px] truncate">
-                    {row.original.name}
+                  <div className="flex max-w-[200px] items-center">
+                    <span className="truncate">{row.original.name}</span>
+                    <LockBadge resourceId={row.original.id} />
                   </div>
                 }
               />
@@ -223,13 +229,18 @@ function CustomFieldsTableContent({
                 <FolderUpIcon />
                 {t("actions.move")}
               </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => setRowAction({ row, variant: "delete" })}
-                variant="destructive"
-              >
-                <Trash2Icon />
-                {t("actions.delete")}
-              </DropdownMenuItem>
+              <UndeletableGuard resourceId={row.original.id}>
+                {(disabled) => (
+                  <DropdownMenuItem
+                    disabled={disabled}
+                    onClick={() => setRowAction({ row, variant: "delete" })}
+                    variant="destructive"
+                  >
+                    <Trash2Icon />
+                    {t("actions.delete")}
+                  </DropdownMenuItem>
+                )}
+              </UndeletableGuard>
             </DropdownMenuContent>
           </DropdownMenu>
         ),
@@ -255,7 +266,11 @@ function CustomFieldsTableContent({
   })
 
   return (
-    <>
+    <TemplateLockedList
+      resourceKind="customField"
+      rows={data}
+      workspaceId={workspaceId}
+    >
       <DataTable table={table}>
         <DataTableToolbar table={table}>
           <CustomFieldsTableToolbarActions
@@ -295,7 +310,7 @@ function CustomFieldsTableContent({
         open={rowAction?.variant === "move"}
         workspaceId={workspaceId}
       />
-    </>
+    </TemplateLockedList>
   )
 }
 

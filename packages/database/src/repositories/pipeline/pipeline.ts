@@ -71,6 +71,23 @@ export const pipelineRepository = {
     })
   },
 
+  /** The workspace's pipelines with any of these reference names, in one query. */
+  async findByReferenceNames(
+    input: { workspaceId: string; referenceNames: readonly string[] },
+    tx: DatabaseClient = db,
+  ) {
+    if (input.referenceNames.length === 0) {
+      return []
+    }
+    return await tx.query.pipelineModel.findMany({
+      where: {
+        workspaceId: input.workspaceId,
+        referenceName: { in: [...input.referenceNames] },
+      },
+      columns: { id: true, referenceName: true },
+    })
+  },
+
   async findByName(
     input: { workspaceId: string; name: string },
     tx: DatabaseClient = db,

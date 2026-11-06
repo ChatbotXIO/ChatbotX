@@ -29,6 +29,7 @@ export const workspaceApiTokenScopes = z.enum([
   "leaderboards",
   "pipelines",
   "places",
+  "templates",
 ])
 export type WorkspaceApiTokenScope = z.infer<typeof workspaceApiTokenScopes>
 

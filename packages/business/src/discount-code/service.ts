@@ -25,6 +25,9 @@ import {
   notFoundException,
   validationException,
 } from "../errors"
+import { assertReferencable } from "../template/installed-resource.service"
+import { withTemplateLockedTransaction } from "../template/template-resource-locks"
+import { contactFilterParentsOf } from "../template/uninstall-references"
 import {
   discountCodeAlreadyUsedException,
   discountCodeDuplicatedException,
@@ -228,9 +231,16 @@ class DiscountCodeService extends BaseService {
     const values = normalize(input)
     await this.assertValid(input.workspaceId, values)
     try {
-      const row = await discountCodeRepository.create({
-        ...values,
-        workspaceId: input.workspaceId,
+      const row = await withTemplateLockedTransaction(async (tx) => {
+        await assertReferencable({
+          workspaceId: input.workspaceId,
+          parents: contactFilterParentsOf(values.customerFilter),
+          tx,
+        })
+        return await discountCodeRepository.create(
+          { ...values, workspaceId: input.workspaceId },
+          tx,
+        )
       })
       if (!row) {
         throw new Error("Failed to create the discount code")
@@ -269,10 +279,20 @@ class DiscountCodeService extends BaseService {
     const values = normalize(merged)
     await this.assertValid(input.workspaceId, values, current.usedCount)
     try {
-      const row = await discountCodeRepository.update({
-        workspaceId: input.workspaceId,
-        discountCodeId: input.discountCodeId,
-        values,
+      const row = await withTemplateLockedTransaction(async (tx) => {
+        await assertReferencable({
+          workspaceId: input.workspaceId,
+          parents: contactFilterParentsOf(values.customerFilter),
+          tx,
+        })
+        return await discountCodeRepository.update(
+          {
+            workspaceId: input.workspaceId,
+            discountCodeId: input.discountCodeId,
+            values,
+          },
+          tx,
+        )
       })
       if (!row) {
         throw notFoundException("Discount code does not exist.")

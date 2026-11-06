@@ -23,6 +23,7 @@ import {
   runConnectTransaction,
 } from "../inbox/connect-channel"
 import { inboxService } from "../inbox/service"
+import { dispatchStagedInstalls } from "../template/installation-dispatch"
 import type { WorkspaceQuotaConsumption } from "../workspace/quota-consumption"
 import { workspaceService } from "../workspace/service"
 
@@ -90,6 +91,7 @@ export async function connectPhoneNumber(
   const result = await insertPhoneNumber(input)
 
   if (result.createdWorkspace) {
+    await dispatchStagedInstalls(result.workspaceId)
     await dispatchAuditRecordSafely(
       {
         userId: input.actorUserId,

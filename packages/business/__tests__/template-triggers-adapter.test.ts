@@ -7,16 +7,21 @@ const { insertedValues } = vi.hoisted(() => ({
 }))
 
 vi.mock("../src/template/adapters/naming", () => ({
-  insertWithNameRetry: async (
-    tx: unknown,
-    _constraint: string,
-    name: string,
-    insert: (tx: unknown, candidateName: string) => Promise<unknown>,
-  ) => await insert(tx, name),
+  insertCopyNamed: async (
+    ctx: { tx: unknown },
+    input: {
+      entry: { name: string }
+      insert: (tx: unknown, name: string) => Promise<unknown>
+    },
+  ) => await input.insert(ctx.tx, input.entry.name),
 }))
 
 vi.mock("@chatbotx.io/database/client", () => ({ db: {} }))
-vi.mock("@chatbotx.io/database/schema", () => ({ triggerModel: {} }))
+// Partial: the trigger service's import graph reads other models at load time.
+vi.mock(import("@chatbotx.io/database/schema"), async (importOriginal) => ({
+  ...(await importOriginal()),
+  triggerModel: {} as never,
+}))
 
 const { triggersAdapter } = await import("../src/template/adapters/triggers")
 

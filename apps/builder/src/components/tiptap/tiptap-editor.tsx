@@ -26,6 +26,7 @@ import EmojiPicker, { type EmojiClickData } from "emoji-picker-react"
 import { CodeXml, Smile } from "lucide-react"
 import { type ReactNode, useEffect, useRef, useState } from "react"
 import { usePromptVariableOptions } from "./use-prompt-variable-options"
+import { useReadOnlyWhenLocked } from "./use-read-only-when-locked"
 
 type TiptapEditorProps = {
   initValue?: string
@@ -136,6 +137,8 @@ export const TiptapEditor = ({
       tiptapEditor.commands.focus()
     }
   }
+
+  useReadOnlyWhenLocked(tiptapEditor)
 
   useEffect(() => {
     if (tiptapEditor && initValue) {

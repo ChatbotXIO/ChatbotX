@@ -55,6 +55,7 @@ import { reconcileBroadcasts } from "./handlers/reconcile-broadcasts"
 import { reconcileMetaCatalogSyncs } from "./handlers/reconcile-meta-catalog-syncs"
 import { reconcileTenants } from "./handlers/reconcile-tenants"
 import { redispatchInboundWebhookRequests } from "./handlers/redispatch-inbound-webhook-requests"
+import { redispatchTemplateJobs } from "./handlers/redispatch-template-jobs"
 import { refreshChannelTokens } from "./handlers/refresh-channel-tokens"
 import { refreshLicense } from "./handlers/refresh-license"
 import { registerSchedules } from "./handlers/register-schedules"
@@ -263,6 +264,10 @@ async function startScheduleWorker() {
             // default worker), so no `isBlockedJob` guard here either.
             case ScheduleJobData.redispatchInboundWebhookRequests:
               await redispatchInboundWebhookRequests()
+              return
+
+            case ScheduleJobData.redispatchTemplateJobs:
+              await redispatchTemplateJobs()
               return
 
             case ScheduleJobData.purgeInboundWebhookRequests:

@@ -13,31 +13,39 @@ import {
 import { getCurrentUserAndTargetWorkspace } from "@/lib/auth/utils"
 import { enforceWorkspaceNotScheduledForDeletionFromRequest } from "@/lib/workspace/require-not-scheduled-for-deletion"
 
+type WorkspaceAccess = NonNullable<
+  Awaited<ReturnType<typeof getCurrentUserAndTargetWorkspace>>
+>
+
+/**
+ * 404s unless the current user is a member of the workspace holding `key`, and
+ * returns that membership so a page does not look it up a second time.
+ */
 export async function requireWorkspacePermission(
   workspaceId: string,
   key: WorkspacePermissionKey,
-): Promise<void> {
+): Promise<WorkspaceAccess> {
   const userAndWorkspace = await getCurrentUserAndTargetWorkspace(workspaceId)
-  const canAccess = userAndWorkspace
-    ? hasWorkspacePermission(
+  if (
+    !(
+      userAndWorkspace &&
+      hasWorkspacePermission(
         userAndWorkspace.targetWorkspaceMember.permissions,
         key,
       )
-    : false
-
-  if (!canAccess) {
+    )
+  ) {
     notFound()
   }
 
-  if (userAndWorkspace) {
-    await enforceWorkspaceNotScheduledForDeletionFromRequest(
-      userAndWorkspace.targetWorkspace,
-      hasWorkspacePermission(
-        userAndWorkspace.targetWorkspaceMember.permissions,
-        "superAdmin",
-      ),
-    )
-  }
+  await enforceWorkspaceNotScheduledForDeletionFromRequest(
+    userAndWorkspace.targetWorkspace,
+    hasWorkspacePermission(
+      userAndWorkspace.targetWorkspaceMember.permissions,
+      "superAdmin",
+    ),
+  )
+  return userAndWorkspace
 }
 
 export async function requireContactsAccess(

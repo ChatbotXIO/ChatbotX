@@ -638,6 +638,8 @@ Pipeline step **assignees are stripped** on import/export:
 `assigneeMemberIds` (kind `workspaceMember`) and `assigneeInboxTeamIds` (kind
 `inboxTeam`) have no id map because members and teams never move between
 workspaces; they are reported and removed (`REFERENCE_ARRAY_FIELD_ENTITY_KIND`).
+Neither the installer nor the publisher sees these two in the warning groups: not
+carrying a member is by design.
 
 ## Public API, CLI and MCP
 

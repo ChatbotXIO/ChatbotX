@@ -212,6 +212,8 @@ See **`.agents/rules/git.md`** for the full canonical rules (commit format, bran
 - Working Hours (agent schedules, waiting-window state machine, response time and first response time within working hours, `agent:replied` analytics pipeline, public API): `docs/working-hours.md`
 - Messenger welcome message flows (publish/rename/delete sync of a flow's starting step to Meta Click-to-Messenger welcome flows, ad-locked behavior, table/jobs/lock): `docs/messenger-welcome-message-flows.md`
 - Contact activity store (channel-agnostic activity tables, eleven activity-backed contact filters, since-tracking semantics, bounded counts, kill switches, ops runbook): `docs/contact-activity.md`
+- Templates (creating, sharing, what an install copies, folders and list order, warning audiences, View Analytics, updates, uninstall, public API, deploy notes): `docs/templates.md`
+- Templates regression testing (rule → test map, public-API end-to-end script `scripts/templates-e2e.mjs`, manual UI checklist): `docs/templates-testing.md`
 - Pipelines (CRM kanban boards: data model, access scope/ACL, mutation engine and post-commit effects, locking order, queued stage deletion, keyset cursors, caching policy, pipelineItem* events/webhooks/realtime, Pipelines flow step, `pipelineItem` contact filter, `{{pipelines.*}}` variables, templates, public API/CLI/MCP, analytics, limits): `docs/pipelines.md`
 
 When unsure, search the codebase for an existing feature that resembles the request and mirror its structure, imports, and error-handling style.

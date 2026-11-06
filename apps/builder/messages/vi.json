@@ -2089,10 +2089,11 @@
       "processing": "Đang xử lý",
       "installing": "Installing",
       "completed": "Hoàn tất",
-      "partial": "Partial",
+      "partial": "Một phần",
       "failed": "Thất bại",
       "success": "Thành công",
-      "error": "Lỗi"
+      "error": "Lỗi",
+      "uninstalled": "Đã gỡ"
     },
     "subtitle": {
       "placeholder": "Nhập phụ đề"
@@ -2858,7 +2859,8 @@
       "miniApps": "Mini Apps",
       "leaderboards": "Bảng xếp hạng",
       "pipelines": "Pipeline",
-      "places": "Địa điểm"
+      "places": "Địa điểm",
+      "templates": "Mẫu"
     },
     "adReferral": {
       "label": "Ads",
@@ -2996,6 +2998,7 @@
   "flows": {
     "export": {
       "notPublished": "Luồng này chưa từng được xuất bản. Hãy xuất bản trước khi xuất tệp.",
+      "viewOnly": "Flow này được cài từ một template chỉ xem nên không thể xuất.",
       "failed": "Xuất tệp thất bại. Vui lòng thử lại."
     },
     "title": "Luồng",
@@ -7169,6 +7172,9 @@
   "templates": {
     "title": "Mẫu",
     "description": "Tạo và quản lý các mẫu của bạn.",
+    "createDialog": {
+      "title": "Mẫu mới"
+    },
     "share": {
       "label": "Chia sẻ",
       "enabled": "Đã chia sẻ",
@@ -7177,14 +7183,140 @@
       "dialogDescription": "Bất kỳ ai có liên kết này đều có thể cài đặt một bản sao của mẫu này vào một workspace trong tổ chức của bạn.",
       "enableLabel": "Bật liên kết chia sẻ",
       "linkLabel": "Liên kết chia sẻ",
-      "description": "Bất kỳ ai có liên kết đều có thể cài đặt mẫu này vào không gian làm việc của riêng họ."
+      "rotateLabel": "Đổi liên kết",
+      "rotateTitle": "Đổi liên kết chia sẻ?",
+      "rotateDescription": "Liên kết hiện tại sẽ ngừng hoạt động ngay. Ai còn cần cài mẫu này sẽ cần liên kết mới.",
+      "rotated": "Đã đổi liên kết chia sẻ",
+      "expiryLabel": "Liên kết hết hạn",
+      "expiryHint": "Để trống nếu liên kết không bao giờ hết hạn.",
+      "clearExpiry": "Xóa hạn",
+      "expiredNotice": "Liên kết này đã hết hạn. Hãy đặt ngày muộn hơn hoặc xóa hạn để chia sẻ lại.",
+      "templateId": "ID mẫu",
+      "templateKey": "Khóa mẫu",
+      "showKey": "Hiện khóa",
+      "hideKey": "Ẩn khóa",
+      "copyField": "Sao chép {field}"
+    },
+    "sync": {
+      "title": "Cập nhật",
+      "updateAvailable": "Có bản cập nhật",
+      "upToDate": "Đã mới nhất",
+      "sourceDeleted": "Mẫu đã bị xóa",
+      "sourceDeletedHint": "Người phát hành đã xóa mẫu này. Bản cài của bạn vẫn hoạt động nhưng không thể cập nhật nữa.",
+      "updateNow": "Cập nhật ngay",
+      "updating": "Đang cập nhật…",
+      "version": "Phiên bản mẫu {version}",
+      "lastSynced": "cập nhật lần cuối {date}",
+      "autoUpdateLabel": "Tự động cập nhật khi mẫu thay đổi",
+      "noHistory": "Chưa có lần cập nhật nào.",
+      "countAdded": "Thêm {count} mục",
+      "countUpdated": "Cập nhật {count} mục",
+      "countDetached": "{count} mục không còn theo template",
+      "notUpdatable": "{count} mục chưa thể cập nhật",
+      "overwritten": "{name} đã được chỉnh sửa và bị bản cập nhật ghi đè",
+      "restore": "Khôi phục bản của tôi",
+      "restored": "Đã khôi phục bản của bạn",
+      "status": {
+        "pending": "Đang chờ",
+        "running": "Đang chạy",
+        "completed": "Hoàn tất",
+        "partial": "Một phần",
+        "failed": "Thất bại",
+        "skipped": "Bỏ qua",
+        "cancelled": "Đã huỷ"
+      },
+      "trigger": {
+        "autoUpdate": "Tự động",
+        "manual": "Thủ công",
+        "reinstall": "Cài lại"
+      },
+      "publisherAccessLabel": "Cho phép người xuất bản thấy tên workspace và gỡ mẫu",
+      "publisherAccessHint": "Chỉ tên workspace được chia sẻ. Nếu người xuất bản gỡ mẫu, mọi thứ mẫu đã tạo sẽ bị xoá, kể cả bản bạn đã chỉnh sửa.",
+      "requestedVersion": "yêu cầu v{version}",
+      "errors": {
+        "unknown": "Cập nhật không thành công. Hãy thử lại, hoặc liên hệ hỗ trợ nếu vẫn lỗi.",
+        "templateSyncFailed": "Cập nhật không thành công. Hãy thử lại.",
+        "templateSyncSuperseded": "Một bản cập nhật mới hơn đã thay thế bản này.",
+        "templateSyncAbandoned": "Bản cập nhật không hoàn tất kịp thời và đã bị đóng.",
+        "templateInstallationInactive": "Bản cài đặt này không còn hoạt động.",
+        "workspaceOwnerBlocked": "Tài khoản chủ không gian làm việc đang bị chặn.",
+        "templateUninstallInProgress": "Mẫu đang được gỡ cài đặt.",
+        "templateAutoUpdateOff": "Cập nhật tự động đang tắt.",
+        "templateUpToDate": "Bản sao đã là mới nhất.",
+        "templateInstallerAccessLost": "Người đã cài đặt không còn quyền cập nhật bản sao này.",
+        "templateInstallationSourceMissing": "Mẫu đã bị xóa trước khi bản cập nhật chạy.",
+        "templateCategoryPermissionDenied": "Bạn không còn quyền cập nhật mọi thứ trong mẫu này.",
+        "templatePayloadIncompatible": "Mẫu này được lưu ở định dạng mới hơn máy chủ có thể cài.",
+        "templateCrossTenantInstall": "Mẫu này không khả dụng cho không gian làm việc của bạn.",
+        "templateInvalidInboxBinding": "Hộp thư đã chọn không khớp với mẫu."
+      }
+    },
+    "versions": {
+      "detailsTab": "Chi tiết",
+      "tab": "Phiên bản",
+      "versionNumber": "Phiên bản {version}",
+      "current": "Hiện tại",
+      "first": "Phiên bản đầu tiên",
+      "noDetail": "Phiên bản này không có thông tin chi tiết.",
+      "added": "Đã thêm",
+      "changed": "Đã sửa",
+      "removed": "Đã xoá"
+    },
+    "installers": {
+      "title": "Xem thống kê",
+      "workspace": "Workspace",
+      "installs": "Lượt cài",
+      "lastInstalled": "Cài gần nhất",
+      "version": "Phiên bản",
+      "autoUpdate": "Tự động cập nhật",
+      "uninstalled": "Đã gỡ",
+      "hidden": "Workspace không chia sẻ tên",
+      "totalInstallEvents": "Tổng lượt cài (từ trước đến nay)",
+      "uninstallNotAllowed": "Bên cài đặt chưa cho phép nhà xuất bản gỡ cài đặt bản sao này.",
+      "loadError": "Không thể tải danh sách bên cài đặt. Hãy thử lại.",
+      "automatic": "Tự động",
+      "details": "Chi tiết",
+      "noIssues": "Không có cảnh báo hay lỗi."
     },
     "installs": {
       "title": "Lượt cài đặt",
       "resources": "Tài nguyên",
       "warnings": "Cảnh báo",
       "completedAt": "Hoàn tất lúc",
-      "autoUpdate": "Tự động cập nhật"
+      "autoUpdate": "Tự động cập nhật",
+      "detailTitle": "Chi tiết cài đặt",
+      "installedBy": "Người cài",
+      "viaApi": "Token API",
+      "attempts": "Số lần thử",
+      "autoUpdateOn": "Bật",
+      "autoUpdateOff": "Tắt",
+      "retry": "Thử cài lại",
+      "resourcesTitle": "Tài nguyên đã cài",
+      "noResources": "Chưa tạo gì.",
+      "deletedResource": "Tài nguyên đã bị xóa",
+      "viewOnly": "Chỉ xem",
+      "created": "Đã tạo",
+      "reused": "Dùng lại",
+      "loadMore": "Tải thêm",
+      "statusFilter": "Trạng thái",
+      "allStatuses": "Tất cả trạng thái",
+      "errors": {
+        "unknown": "Cài đặt thất bại. Hãy thử lại, hoặc liên hệ hỗ trợ nếu vẫn lỗi.",
+        "templatePayloadIncompatible": "Mẫu này được lưu ở định dạng mới hơn máy chủ có thể cài.",
+        "templateInstallationSourceMissing": "Mẫu đã bị xóa trước khi cài đặt chạy.",
+        "templateCrossTenantInstall": "Mẫu này không khả dụng cho không gian làm việc của bạn.",
+        "templateCategoryPermissionDenied": "Bạn không còn quyền cài toàn bộ nội dung của mẫu này.",
+        "templateInvalidInboxBinding": "Hộp thư đã chọn không khớp với mẫu.",
+        "templateInstallEnqueueFailed": "Không thể đưa cài đặt vào hàng đợi.",
+        "templateInstallFailed": "Cài đặt thất bại. Hãy thử lại.",
+        "templateInstallAbandoned": "Cài đặt không hoàn tất kịp thời và đã bị đóng.",
+        "templateInstallSuperseded": "Một lần cài mới hơn của mẫu này đã thay thế lần này.",
+        "workspaceOwnerBlocked": "Tài khoản chủ không gian làm việc đang bị chặn."
+      },
+      "uninstalledBy": "{by, select, publisher {Người phát hành đã gỡ mẫu này.} installer {Mẫu này đã được gỡ khỏi workspace.} other {Mẫu này đã được gỡ.}}",
+      "uninstalledSummary": "Đã xóa {deleted}, giữ lại {kept}.",
+      "lastAttemptAt": "Lần thử gần nhất",
+      "installedAutomatically": "Đã cài tự động (mẫu mặc định của white-label)"
     },
     "form": {
       "contents": "Nội dung mẫu",
@@ -7197,14 +7329,26 @@
       "allowDelete": "Cho phép xóa sau khi cài đặt",
       "publisherName": "Tên nhà xuất bản",
       "youtubeVideoId": "ID video YouTube",
-      "youtubeVideoIdDescription": "ID gồm 11 ký tự lấy từ URL video, ví dụ \"dQw4w9WgXcQ\" trong youtube.com/watch?v=dQw4w9WgXcQ",
+      "youtubeVideoIdDescription": "ID gồm 11 ký tự lấy từ URL video, ví dụ \"xxxxxxxxxxx\" trong youtube.com/watch?v=xxxxxxxxxxx",
       "testLink": "Liên kết thử nghiệm",
       "imageUrl": "Ảnh bìa",
       "installBehavior": "Hành vi khi cài đặt",
-      "createInstallFolder": "Cài đặt vào một thư mục riêng",
+      "createInstallFolder": "Tạo thư mục trên tài khoản được cài đặt và cài đặt tài nguyên.",
       "createInstallFolderDescription": "Đưa mọi tài nguyên đã cài đặt vào một thư mục mới duy nhất, được đặt tên theo mẫu này.",
-      "defaultAutoUpdate": "Đánh dấu các lượt cài đặt cần cập nhật theo mặc định",
-      "defaultAutoUpdateDescription": "Các lượt cài đặt mới sẽ hiển thị thông báo có bản cập nhật mỗi khi bạn xuất bản lại mẫu này."
+      "defaultAutoUpdate": "Tự động cập nhật các mẫu đã cài đặt",
+      "defaultAutoUpdateDescription": "Mỗi lần bạn lưu mẫu và nội dung thay đổi, các bản cài đặt đang bật tự động cập nhật sẽ được ghi đè bằng nội dung mới (bản đã chỉnh sửa được sao lưu trước). Người cài đặt có thể tắt.",
+      "viewOnly": "Chỉ xem",
+      "viewOnlyAll": "Đặt tất cả mục đã chọn là chỉ xem",
+      "includedAutomatically": {
+        "title": "Tự động đi kèm",
+        "hint": "Được mang theo vì mục bạn đã chọn cần đến. Chỉ xem.",
+        "rows": "{count, plural, one {thêm # mục} other {thêm # mục}}",
+        "kind": {
+          "folders": "Thư mục",
+          "placeCategories": "Danh mục địa điểm"
+        }
+      },
+      "viewOnlyCopyIncluded": "Một mục bạn chọn (hoặc mục nó cần) được cài từ mẫu chỉ xem, nên không thể chia sẻ trong mẫu mới."
     },
     "categories": {
       "flows": "Luồng",
@@ -7219,8 +7363,117 @@
       "keywords": "Từ khóa",
       "entryPointLinks": "Liên kết giới thiệu",
       "triggers": "Trigger",
-      "fbCommentAutomations": "Tự động hóa bình luận Facebook",
-      "settings": "Cài đặt"
+      "fbCommentAutomations": "Tự động trả lời bình luận",
+      "settings": "Trường bot & câu trả lời mẫu",
+      "sequences": "Chuỗi tin nhắn",
+      "aiMcpServers": "Máy chủ MCP",
+      "aiFiles": "Tệp kiến thức AI",
+      "questionnaires": "Bộ câu hỏi",
+      "couponTopics": "Chủ đề mã giảm giá",
+      "pipelines": "Pipelines"
+    },
+    "locked": {
+      "flowBanner": "Luồng này được cài từ một mẫu chỉ xem. Bạn có thể xem nhưng không thể chỉnh sửa.",
+      "badge": "Chỉ xem",
+      "editorBanner": "Mục này được cài từ một mẫu chỉ xem. Bạn có thể xem nhưng không thể chỉnh sửa.",
+      "badgeHint": "Được cài từ một mẫu chỉ xem"
+    },
+    "channels": {
+      "messenger": "Messenger",
+      "instagram": "Instagram",
+      "instagramFacebook": "Instagram (đăng nhập bằng Facebook)",
+      "threads": "Threads",
+      "tiktok": "TikTok",
+      "whatsapp": "WhatsApp",
+      "telegram": "Telegram",
+      "zalo": "Zalo",
+      "webchat": "Webchat",
+      "line": "LINE",
+      "email": "Email"
+    },
+    "uninstall": {
+      "title": "Gỡ cài đặt mẫu",
+      "description": "Mẫu sẽ xoá mọi thứ nó đã tạo trong không gian làm việc này, kể cả các bản sao đã được chỉnh sửa. Thẻ, trường, thư mục dùng chung, các mục có sẵn từ trước và mọi thứ bạn tự xây dựng dựa trên bản sao sẽ được giữ lại.",
+      "loading": "Đang kiểm tra những gì sẽ xảy ra…",
+      "previewFailed": "Không kiểm tra được kết quả gỡ cài đặt.",
+      "failed": "Không gỡ cài đặt được mẫu.",
+      "done": "Đã gỡ cài đặt mẫu",
+      "confirm": "Gỡ cài đặt",
+      "action": "Gỡ cài đặt",
+      "deleted": "{count, plural, one {Sẽ xoá # mục} other {Sẽ xoá # mục}}",
+      "deletedDone": "{count, plural, one {Đã xoá # mục} other {Đã xoá # mục}}",
+      "keptModified": "{count, plural, one {Giữ # bản đã chỉnh sửa hoặc chưa xác minh} other {Giữ # bản đã chỉnh sửa hoặc chưa xác minh}}",
+      "keptShared": "{count, plural, one {Giữ # thẻ hoặc trường dùng chung} other {Giữ # thẻ và trường dùng chung}}",
+      "keptByPolicy": "{count, plural, one {Giữ # mục khác} other {Giữ # mục khác}}",
+      "keptHasDependents": "{count, plural, one {# bản sao được giữ lại vì vẫn có mục khác đang dùng} other {# bản sao được giữ lại vì vẫn có mục khác đang dùng}}",
+      "deletedModified": "{count, plural, one {# mục trong số đó đã được bạn chỉnh sửa: các chỉnh sửa này sẽ mất và không thể khôi phục} other {# mục trong số đó đã được bạn chỉnh sửa: các chỉnh sửa này sẽ mất và không thể khôi phục}}",
+      "keptLockedByOther": "{count, plural, one {Giữ lại # mục vì một lượt cài đặt mẫu khác vẫn đang bảo vệ chúng} other {Giữ lại # mục vì một lượt cài đặt mẫu khác vẫn đang bảo vệ chúng}}",
+      "confirmCheckbox": "Tôi hiểu rằng thao tác này xoá các mục ở trên và không thể hoàn tác",
+      "started": "Đã bắt đầu gỡ cài đặt",
+      "inProgress": "Đang gỡ cài đặt…",
+      "retry": "Thử gỡ cài đặt lại",
+      "state": {
+        "pending": "Đang chờ gỡ cài đặt",
+        "running": "Đang gỡ cài đặt…",
+        "partial": "Gỡ cài đặt chưa hoàn tất, hãy thử lại",
+        "failed": "Gỡ cài đặt thất bại, hãy thử lại",
+        "skipped": "Đã bỏ qua gỡ cài đặt: không gian làm việc đang bị chặn"
+      },
+      "deletedUnverified": "{count, plural, one {# mục trong số đó không thể kiểm tra xem có được chỉnh sửa hay không: nếu bạn đã thay đổi, các thay đổi đó sẽ mất} other {# mục trong số đó không thể kiểm tra xem có được chỉnh sửa hay không: nếu bạn đã thay đổi, các thay đổi đó sẽ mất}}",
+      "cancelAction": "Huỷ gỡ cài đặt",
+      "cancelled": "Đã huỷ gỡ cài đặt: các mục còn lại lại hoạt động bình thường",
+      "blockedByReference": "{count, plural, one {Chưa xoá # mục vì có thứ bạn tạo vẫn trỏ tới nó: hãy gỡ tham chiếu đó rồi thử gỡ cài đặt lại} other {Chưa xoá # mục vì có thứ bạn tạo vẫn trỏ tới chúng: hãy gỡ các tham chiếu đó rồi thử gỡ cài đặt lại}}",
+      "keptPartlyRemoved": "{count, plural, one {# bản sao được giữ lại sau một lần gỡ bị chặn; lịch sử và dữ liệu chống trùng lặp có thể đã bị xóa, hãy kiểm tra trước khi bật lại} other {# bản sao được giữ lại sau một lần gỡ bị chặn; lịch sử và dữ liệu chống trùng lặp có thể đã bị xóa, hãy kiểm tra trước khi bật lại}}",
+      "keptInactiveForReview": "{count, plural, one {# bản sao được để ở trạng thái tắt: lịch sử và dữ liệu chống trùng lặp đã bị xóa, hãy kiểm tra trước khi bật lại} other {# bản sao được để ở trạng thái tắt: lịch sử và dữ liệu chống trùng lặp đã bị xóa, hãy kiểm tra trước khi bật lại}}",
+      "keptHistoryRemoved": "{count, plural, one {# bản sao được giữ lại nhưng lịch sử của nó đã bị xóa (không có gì để bật): hãy kiểm tra trước khi dùng} other {# bản sao được giữ lại nhưng lịch sử của chúng đã bị xóa (không có gì để bật): hãy kiểm tra trước khi dùng}}",
+      "cancelledPartial": "{count, plural, one {# mục đã đang được xoá và sẽ hoàn tất; phần còn lại đã được trả về} other {# mục đã đang được xoá và sẽ hoàn tất; phần còn lại đã được trả về}}"
+    },
+    "warningCodes": {
+      "aiFileTooLarge": "Tệp kiến thức này lớn hơn mức một lần cài template có thể sao chép nên đã bị bỏ qua.",
+      "aiFileUnavailable": "Không sao chép được tệp kiến thức này nên đã bị bỏ qua.",
+      "assigneeRequired": "Chọn người được gán cho bước này.",
+      "ambiguousSourceFieldToken": "Các trường nguồn trùng tên này nên các biến dùng nó được giữ nguyên.",
+      "backupTooLarge": "Mục đã sửa tại chỗ quá lớn để sao lưu nên không bị ghi đè.",
+      "backupUnavailable": "Bản sao lưu của mục này không còn khả dụng.",
+      "botFieldRenamed": "Đã có trường tài khoản cùng tên nhưng khác kiểu nên một trường đổi tên đã được tạo.",
+      "categoryPermissionDenied": "Bạn không có quyền với nhóm này nên đã bỏ qua.",
+      "couponTopicExpired": "Chủ đề mã giảm giá này đã hết hạn.",
+      "credentialRequired": "Hãy thêm thông tin xác thực cho mục này trước khi dùng.",
+      "custom": "Một mục được tham chiếu không có trong workspace này nên liên kết đã bị bỏ.",
+      "customField": "Một mục được tham chiếu không có trong workspace này nên liên kết đã bị bỏ.",
+      "customFieldRenamed": "Đã có trường cùng tên nhưng khác kiểu nên một trường đổi tên đã được tạo.",
+      "enqueueFailed": "Không thể xếp hàng xử lý nền cho mục này.",
+      "flow": "Một mục được tham chiếu không có trong workspace này nên liên kết đã bị bỏ.",
+      "flowInvalidStructure": "Cấu trúc flow không hợp lệ nên đã bỏ qua.",
+      "flowNotPublished": "Flow được cài ở dạng nháp và chưa xuất bản.",
+      "flowSkippedRequiredReference": "Flow bị bỏ qua vì không phân giải được một tham chiếu bắt buộc.",
+      "folder": "Một mục được tham chiếu không có trong workspace này nên liên kết đã bị bỏ.",
+      "inboxBindingRequired": "Hãy chọn inbox cho kênh này; đến lúc đó mục vẫn ở trạng thái tắt.",
+      "integration": "Một mục được tham chiếu không có trong workspace này nên liên kết đã bị bỏ.",
+      "localModifiedOverwritten": "Một mục đã sửa tại chỗ bị ghi đè. Bản sao lưu đã được lưu và có thể khôi phục.",
+      "name": "Không tìm được tên trống cho mục này nên đã bỏ qua.",
+      "noEmbeddingProvider": "Workspace này chưa cấu hình nhà cung cấp embedding nên các tệp kiến thức đã bị bỏ qua. Hãy kết nối OpenAI hoặc Gemini rồi cài lại.",
+      "notUpdatable": "Loại mục này chưa được cập nhật tự động.",
+      "pipeline": "Dùng pipeline không còn tồn tại.",
+      "pipelineField": "Dùng trường pipeline không còn tồn tại.",
+      "pipelineStage": "Dùng giai đoạn pipeline không còn tồn tại.",
+      "postSelectionRequired": "Hãy chọn lại bài viết: không thể mang bài gốc sang.",
+      "product": "Một mục được tham chiếu không có trong workspace này nên liên kết đã bị bỏ.",
+      "productCategory": "Một mục được tham chiếu không có trong workspace này nên liên kết đã bị bỏ.",
+      "questionImage": "Không thể sao chép một hình ảnh.",
+      "quota": "Đã chạm giới hạn gói nên mục này bị bỏ qua.",
+      "referenceRemoved": "Một tham chiếu không phân giải được đã bị gỡ.",
+      "savedReply": "Một mục được tham chiếu không có trong workspace này nên liên kết đã bị bỏ.",
+      "savedReplyImage": "Không thể sao chép một hình ảnh.",
+      "tag": "Một mục được tham chiếu không có trong workspace này nên liên kết đã bị bỏ.",
+      "unlisted": "Mục chưa được mang sang đầy đủ: {code}",
+      "workspaceMember": "Được gán cho thành viên không có trong workspace này.",
+      "workspaceUnavailable": "Workspace này không còn khả dụng nên mục này đã bị bỏ qua."
+    },
+    "tabs": {
+      "mine": "Mẫu của tôi",
+      "installed": "Đã cài",
+      "installedEmpty": "Chưa có mẫu nào được cài. Mẫu bạn cài từ workspace khác sẽ hiện ở đây."
     }
   },
   "qrCodeGenerator": {
@@ -7347,6 +7600,23 @@
     "hint": "Bỏ chọn tất cả kênh để cho phép mọi kênh.",
     "hiddenByPlatform": "Đã bị platform admin ẩn — bạn không thể tự bật lại kênh này."
   },
+  "platformDefaultTemplate": {
+    "title": "Mẫu mặc định",
+    "description": "Cài mẫu này vào mọi không gian làm việc mới được tạo trong white-label này. Các không gian làm việc hiện có không bị thay đổi.",
+    "clearTitle": "Xóa mẫu mặc định?",
+    "clearDescription": "Không gian làm việc mới sẽ không còn tự động nhận mẫu. Những không gian đã có mẫu vẫn giữ nguyên.",
+    "status": {
+      "notConfigured": "Chưa đặt",
+      "ready": "Đang hoạt động",
+      "templateUnavailable": "Mẫu không khả dụng",
+      "shareDisabled": "Liên kết chia sẻ đang tắt",
+      "keyRotated": "Khóa không hợp lệ"
+    },
+    "errors": {
+      "unavailable": "ID hoặc khóa mẫu không hợp lệ.",
+      "shareDisabled": "Hãy bật liên kết chia sẻ của mẫu trước."
+    }
+  },
   "platformEmailTemplates": {
     "title": "Email Templates",
     "description": "Để trống subject và body sẽ dùng template mặc định của hệ thống.",
@@ -7430,14 +7700,41 @@
     "invalidTitle": "Liên kết này không còn khả dụng.",
     "invalidDescription": "Liên kết chia sẻ mẫu này không hợp lệ, đã bị vô hiệu hóa hoặc đã hết hạn.",
     "byPublisher": "Bởi {publisherName}",
-    "includes": "Mẫu này bao gồm",
     "videoTitle": "Video xem trước mẫu",
-    "tryItOut": "Dùng thử",
-    "signInToInstall": "Đăng nhập để cài đặt",
+    "preview": "Xem trước",
+    "aboutTemplate": "Về mẫu này",
     "selectWorkspace": "Chọn một workspace",
     "install": "Cài đặt",
     "installStarted": "Đã bắt đầu cài đặt",
-    "noEligibleWorkspaces": "Bạn không có workspace nào đủ điều kiện để cài đặt mẫu này."
+    "noEligibleWorkspaces": "Bạn không có workspace nào đủ điều kiện để cài đặt mẫu này.",
+    "alreadyInstalled": "Mẫu này đã được cài trong workspace này.",
+    "viewInstall": "Xem bản cài",
+    "installAnotherCopy": "Cài thêm một bản",
+    "inboxesTitle": "Hộp thư",
+    "inboxesHint": "Mẫu này được xây dựng quanh các hộp thư sau. Hãy chọn hộp thư của bạn để thay thế; mục nào bỏ trống sẽ được cài ở trạng thái tắt.",
+    "noInbox": "Không kết nối — cài ở trạng thái tắt",
+    "noInboxAvailable": "Chưa có hộp thư nào đã kết nối trên kênh này",
+    "updateExisting": "Cập nhật bản đã cài",
+    "updateStarted": "Đã bắt đầu cập nhật",
+    "publisherAccessLabel": "Cho phép người xuất bản thấy tên workspace này và gỡ mẫu khỏi đây",
+    "publisherAccessHint": "Họ không thấy dữ liệu, liên hệ hay email của bạn. Nếu họ gỡ mẫu, mọi thứ mẫu đã tạo sẽ bị xoá, kể cả bản bạn đã chỉnh sửa; những gì bạn tự xây dựng thêm trên bản sao vẫn được giữ lại. Bạn có thể tắt sau trên trang cài đặt.",
+    "autoUpdateLabel": "Tự động cập nhật khi mẫu thay đổi",
+    "collisions": {
+      "title": "Khi cài, mẫu sẽ làm gì ở đây",
+      "loading": "Đang kiểm tra workspace…",
+      "action": {
+        "create": "Tạo mới",
+        "reuse": "Dùng lại",
+        "rename": "Đổi tên",
+        "bind": "Đã gắn",
+        "unbound": "Chưa gắn"
+      },
+      "detail": {
+        "rename": "“{name}” đã tồn tại với kiểu khác, nên mục của mẫu sẽ được thêm với tên mới.",
+        "unbound": "“{name}” sẽ chưa được kết nối cho đến khi bạn chọn hộp thư."
+      }
+    },
+    "createWorkspace": "Tạo workspace mới"
   },
   "bookingPage": {
     "metadataTitle": "Đặt lịch",

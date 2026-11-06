@@ -14,7 +14,11 @@ import { handleBulkTagContacts } from "./handlers/bulk-tag-contacts"
 import { loopableExportContacts } from "./handlers/export-contacts"
 import { exportCoupons } from "./handlers/export-coupons"
 import { exportLeaderboardParticipants } from "./handlers/export-leaderboard-participants"
-import { installTemplate } from "./handlers/install-template"
+import { fanOutTemplateUpdate } from "./handlers/fan-out-template-update"
+import {
+  failBlockedTemplateInstall,
+  installTemplate,
+} from "./handlers/install-template"
 import { checkMetaCatalogSync } from "./handlers/meta-catalog/check"
 import { importMetaCatalogProducts } from "./handlers/meta-catalog/import-products"
 import { submitMetaCatalogSync } from "./handlers/meta-catalog/submit"
@@ -33,6 +37,14 @@ import { sendAuditLog } from "./handlers/send-audit-log"
 import { handleSyncChannelLabels } from "./handlers/sync-channel-labels"
 import { syncExternalCalendarEvent } from "./handlers/sync-external-calendar-event"
 import { handleSyncTag } from "./handlers/sync-tag"
+import {
+  skipBlockedTemplateSync,
+  syncTemplateInstallation,
+} from "./handlers/sync-template-installation"
+import {
+  skipBlockedTemplateUninstall,
+  uninstallTemplate,
+} from "./handlers/uninstall-template"
 import {
   deleteWelcomeMessageFlows,
   syncWelcomeMessageFlows,
@@ -170,8 +182,38 @@ function startDefaultWorker() {
         }
         case DefaultJobAction.installTemplate: {
           const { type, data } = job.data
+          await runGuardedDefaultJob(
+            data,
+            { source: `default:${type}` },
+            () => installTemplate(data, job),
+            () => failBlockedTemplateInstall(data),
+          )
+          return
+        }
+        case DefaultJobAction.uninstallTemplate: {
+          const { type, data } = job.data
+          await runGuardedDefaultJob(
+            data,
+            { source: `default:${type}` },
+            () => uninstallTemplate(data, job),
+            () => skipBlockedTemplateUninstall(data),
+          )
+          return
+        }
+        case DefaultJobAction.syncTemplateInstallation: {
+          const { type, data } = job.data
+          await runGuardedDefaultJob(
+            data,
+            { source: `default:${type}` },
+            () => syncTemplateInstallation(data, job),
+            () => skipBlockedTemplateSync(data),
+          )
+          return
+        }
+        case DefaultJobAction.fanOutTemplateUpdate: {
+          const { type, data } = job.data
           await runGuardedDefaultJob(data, { source: `default:${type}` }, () =>
-            installTemplate(data),
+            fanOutTemplateUpdate(data),
           )
           return
         }

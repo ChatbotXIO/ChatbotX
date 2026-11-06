@@ -5,6 +5,7 @@ import {
   integrationService,
   integrationThreadsService,
   platformCredentialService,
+  templateInstallIntentService,
   workspaceService,
 } from "@chatbotx.io/business"
 import { auditService, withAuditContext } from "@chatbotx.io/business/audit"
@@ -511,6 +512,10 @@ export const handleCallback = async (
 
   // Facebook returns ?error=access_denied when the user cancels
   if (url.searchParams.get("error")) {
+    const cancelledBy = await getCurrentUser()
+    if (cancelledBy) {
+      await templateInstallIntentService.clear(cancelledBy.id)
+    }
     const cancelReferer = await sanitizeReferer(stateParams.referer)
     // A cancelled reconnect must still surface a toast on the settings page,
     // like every other reconnect outcome.

@@ -64,6 +64,18 @@ const nextConfig: NextConfig = {
         destination: `${storageUrl}/:path*`,
       },
       {
+        // The share link shows the Template ID and Key a default-template
+        // form asks for; the page itself is `/t/{key}`, which older links use.
+        source: "/t/template",
+        has: [{ type: "query" as const, key: "key", value: "(?<key>.+)" }],
+        destination: "/t/:key",
+      },
+      {
+        source: "/t/template/install",
+        has: [{ type: "query" as const, key: "key", value: "(?<key>.+)" }],
+        destination: "/t/:key/install",
+      },
+      {
         source: "/zalo_verifier:verifier.html",
         destination: "/api/zalo-verifier/:verifier",
       },

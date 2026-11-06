@@ -19,6 +19,7 @@ const {
   mockFindMediaFile,
   mockResolveFreezeReason,
   mockIsUniqueViolationError,
+  mockLockOptions,
 } = vi.hoisted(() => {
   const mockInsertValues = vi.fn()
   const mockInsert = vi.fn(() => ({ values: mockInsertValues }))
@@ -36,6 +37,7 @@ const {
     mockListPaginated: vi.fn(),
     mockCount: vi.fn(),
     mockFindByIdAndWorkspace: vi.fn(),
+    mockLockOptions: vi.fn(),
     mockFindById: vi.fn(),
     mockListInboxLabelsByIds: vi.fn(),
     mockFindMediaFile: vi.fn(),
@@ -90,9 +92,30 @@ vi.mock("@chatbotx.io/utils", () => ({
   createId: vi.fn(() => "generated-id"),
 }))
 
-vi.mock("../src/template/installed-resource.service", () => ({
-  assertDeletable: vi.fn().mockResolvedValue(undefined),
+vi.mock("../src/template/installed-resource.service", async () => ({
+  ...(await import("./helpers/template-guard-mocks")).templateGuardMocks({
+    assertDeletable: vi.fn().mockResolvedValue(undefined),
+    assertResourceEditable: vi.fn(),
+  }),
+  assertReferencable: vi.fn(),
+  changedKeysOf: vi.fn((_existing: unknown, patch: Record<string, unknown>) =>
+    Object.keys(patch),
+  ),
 }))
+
+// Run the locked transaction against the same mocked client the test asserts on.
+vi.mock("../src/template/template-resource-locks", async () => {
+  const { db } = await import("@chatbotx.io/database/client")
+  return {
+    withTemplateLockedTransaction: (
+      run: (tx: unknown) => unknown,
+      options?: unknown,
+    ) => {
+      mockLockOptions(options)
+      return run(db)
+    },
+  }
+})
 
 const { reflinkService } = await import("../src/reflink/service")
 
@@ -100,6 +123,7 @@ const WS = "ws-1"
 
 afterEach(() => {
   vi.clearAllMocks()
+  mockFindByIdAndWorkspace.mockReset()
 })
 
 describe("reflinkService.list", () => {
@@ -199,6 +223,29 @@ describe("reflinkService.update", () => {
     expect(mockUpdateSet).toHaveBeenCalledWith({ name: "New name" })
   })
 
+  test("locks the ref link and the re-pointed flow before the stored row is read", async () => {
+    mockFindByIdAndWorkspace.mockResolvedValue({ id: "reflink-1", name: "Old" })
+    mockUpdateWhere.mockReturnValueOnce({
+      returning: vi.fn().mockResolvedValueOnce([{ id: "reflink-1" }]),
+    })
+
+    await reflinkService.update(
+      { workspaceId: WS, id: "reflink-1" },
+      { flowId: "flow-2" },
+    )
+
+    expect(mockLockOptions).toHaveBeenCalledWith({
+      workspaceId: expect.any(String),
+      initialKeys: [
+        { kind: "reflink", resourceId: "reflink-1" },
+        { kind: "flow", resourceId: "flow-2" },
+      ],
+    })
+    expect(mockLockOptions.mock.invocationCallOrder[0]).toBeLessThan(
+      mockFindByIdAndWorkspace.mock.invocationCallOrder[0] as number,
+    )
+  })
+
   test("throws not found before updating when the row does not exist", async () => {
     mockFindByIdAndWorkspace.mockResolvedValueOnce(undefined)
 
@@ -241,7 +288,7 @@ describe("reflinkService.updateWidgetSettings", () => {
   })
 
   test("folds domain case and duplicates and keeps only this workspace's inboxes", async () => {
-    mockFindByIdAndWorkspace.mockResolvedValueOnce({ id: "reflink-1" })
+    mockFindByIdAndWorkspace.mockResolvedValue({ id: "reflink-1" })
     mockListInboxLabelsByIds.mockResolvedValueOnce([
       { id: "inbox-1", name: "Page" },
     ])
@@ -277,7 +324,7 @@ describe("reflinkService.updateWidgetSettings", () => {
   })
 
   test("stores no logo, brand name or URL when they are empty", async () => {
-    mockFindByIdAndWorkspace.mockResolvedValueOnce({ id: "reflink-1" })
+    mockFindByIdAndWorkspace.mockResolvedValue({ id: "reflink-1" })
     mockListInboxLabelsByIds.mockResolvedValueOnce([])
     mockUpdateWhere.mockReturnValueOnce({
       returning: vi.fn().mockResolvedValue([{ id: "reflink-1" }]),
@@ -308,7 +355,7 @@ describe("reflinkService.updateWidgetSettings", () => {
     ["outside the workspace", undefined],
     ["not an image", { id: "file-1", mimeType: "application/pdf" }],
   ])("rejects a logo file %s", async (_case, file) => {
-    mockFindByIdAndWorkspace.mockResolvedValueOnce({ id: "reflink-1" })
+    mockFindByIdAndWorkspace.mockResolvedValue({ id: "reflink-1" })
     mockListInboxLabelsByIds.mockResolvedValueOnce([])
     mockFindMediaFile.mockResolvedValueOnce(file)
 
@@ -319,6 +366,54 @@ describe("reflinkService.updateWidgetSettings", () => {
       ),
     ).rejects.toThrow("Logo must be an image")
     expect(mockUpdate).not.toHaveBeenCalled()
+  })
+
+  test("a changed logo is the installer's: no template edit guard, it is written", async () => {
+    const { assertResourceEditable } = await import(
+      "../src/template/installed-resource.service"
+    )
+    vi.mocked(assertResourceEditable).mockClear()
+    mockFindByIdAndWorkspace.mockResolvedValue({
+      id: "reflink-1",
+      widgetLogoFileId: "old-file",
+    })
+    mockListInboxLabelsByIds.mockResolvedValueOnce([])
+    mockUpdateWhere.mockReturnValueOnce({
+      returning: vi.fn().mockResolvedValue([{ id: "reflink-1" }]),
+    })
+
+    await reflinkService.updateWidgetSettings(
+      { workspaceId: WS, id: "reflink-1" },
+      { authorizedDomains: [], hiddenInboxIds: [], ...BRANDING },
+    )
+
+    // A template never ships widget settings, so a View-only copy locks none.
+    expect(assertResourceEditable).not.toHaveBeenCalled()
+    expect(mockUpdateSet).toHaveBeenCalledWith(
+      expect.objectContaining({ widgetLogoFileId: "file-1" }),
+    )
+  })
+
+  test("an unchanged logo takes no guard", async () => {
+    const { assertResourceEditable } = await import(
+      "../src/template/installed-resource.service"
+    )
+    vi.mocked(assertResourceEditable).mockClear()
+    mockFindByIdAndWorkspace.mockResolvedValue({
+      id: "reflink-1",
+      widgetLogoFileId: "file-1",
+    })
+    mockListInboxLabelsByIds.mockResolvedValueOnce([])
+    mockUpdateWhere.mockReturnValueOnce({
+      returning: vi.fn().mockResolvedValue([{ id: "reflink-1" }]),
+    })
+
+    await reflinkService.updateWidgetSettings(
+      { workspaceId: WS, id: "reflink-1" },
+      { authorizedDomains: [], hiddenInboxIds: [], ...BRANDING },
+    )
+
+    expect(assertResourceEditable).not.toHaveBeenCalled()
   })
 
   test("throws not found for a ref link outside the workspace", async () => {
@@ -354,5 +449,50 @@ describe("reflinkService.findForWidget", () => {
 
     mockFindById.mockResolvedValueOnce(undefined)
     await expect(reflinkService.findForWidget("missing")).resolves.toBeNull()
+  })
+})
+
+describe("reflinkService.deleteInTx", () => {
+  const fakeTx = () => {
+    const where = vi.fn(() => ({
+      returning: () => Promise.resolve([{ id: "rl-1" }]),
+    }))
+    return { tx: { delete: vi.fn(() => ({ where })) }, where }
+  }
+
+  test("a given type scopes the delete to it, so a QR code delete never takes a ref link", async () => {
+    const { tx, where } = fakeTx()
+
+    const deleted = await reflinkService.deleteInTx(tx as never, {
+      workspaceId: "ws-1",
+      ids: ["rl-1", "rl-2"],
+      type: "qrCode",
+    })
+
+    expect(deleted).toEqual(["rl-1"])
+    expect(where).toHaveBeenCalledWith({
+      __and: [
+        { __eq: ["reflink.workspaceId", "ws-1"] },
+        { __eq: ["reflink.type", "qrCode"] },
+        { __inArray: ["reflink.id", ["rl-1", "rl-2"]] },
+      ],
+    })
+  })
+
+  test("without a type (the uninstall) both kinds sharing the table are matched", async () => {
+    const { tx, where } = fakeTx()
+
+    await reflinkService.deleteInTx(tx as never, {
+      workspaceId: "ws-1",
+      ids: ["rl-1"],
+    })
+
+    expect(where).toHaveBeenCalledWith({
+      __and: [
+        { __eq: ["reflink.workspaceId", "ws-1"] },
+        undefined,
+        { __inArray: ["reflink.id", ["rl-1"]] },
+      ],
+    })
   })
 })
