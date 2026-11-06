@@ -126,7 +126,6 @@ const LEGACY_UNINDEXED_FKS = [
   "WorkingHoursDateOverride:workingHoursId,workspaceId",
   "WorkingHoursMember:userId",
   "WorkingHoursMember:workingHoursId,workspaceId",
-  "Workspace:ownerId",
   "WorkspaceMember:userId",
 ]
 
