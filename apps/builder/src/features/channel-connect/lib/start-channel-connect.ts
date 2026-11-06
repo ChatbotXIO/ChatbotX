@@ -120,7 +120,9 @@ export async function startChannelConnect(
   // materialized workspace to run concurrently with its own lookup and, on
   // a hit, to mint its own session outside the normal OAuth round trip — so
   // with a hook present (or an existing `workspaceId` targeted), the
-  // workspace is still resolved/created eagerly here.
+  // workspace is still resolved/created eagerly here. The create helper
+  // reuses only an empty workspace, so replaying this GET never selects a
+  // workspace that already has a channel.
   //
   // Without a hook (Instagram, Instagram-via-Facebook's first-channel
   // path), nothing needs the workspace before `startSession` itself, so its

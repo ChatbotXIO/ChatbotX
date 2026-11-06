@@ -1,8 +1,16 @@
-import { beforeEach, describe, expect, test, vi } from "vitest"
+import {
+  beforeEach,
+  describe,
+  expect,
+  type MockInstance,
+  test,
+  vi,
+} from "vitest"
 
 const mocks = vi.hoisted(() => ({
-  lockFirstWorkspace: vi.fn(async () => undefined),
   findActiveByOwner: vi.fn(),
+  findEmptyActiveByOwner: vi.fn(),
+  lockFirstWorkspace: vi.fn(async () => undefined),
   transaction: vi.fn(),
 }))
 
@@ -13,8 +21,9 @@ vi.mock("@chatbotx.io/database/client", () => ({
 }))
 vi.mock("@chatbotx.io/database/repositories/workspace", () => ({
   workspaceRepository: {
-    lockFirstWorkspace: mocks.lockFirstWorkspace,
     findActiveByOwner: mocks.findActiveByOwner,
+    findEmptyActiveByOwner: mocks.findEmptyActiveByOwner,
+    lockFirstWorkspace: mocks.lockFirstWorkspace,
   },
 }))
 
@@ -27,7 +36,7 @@ const createdWorkspace = { id: "ws-created" }
 const callerTx = {}
 
 describe("workspaceService.ensureFirstForOwner", () => {
-  let create: ReturnType<typeof vi.spyOn>
+  let create: MockInstance
 
   beforeEach(() => {
     vi.clearAllMocks()
@@ -86,7 +95,7 @@ describe("workspaceService.ensureFirstForOwner", () => {
     )
   })
 
-  test("opens its own transaction and lets create own its tx when none is given", async () => {
+  test("uses its lock transaction to create a workspace when none is given", async () => {
     mocks.findActiveByOwner.mockResolvedValue(undefined)
 
     await workspaceService.ensureFirstForOwner({
@@ -100,7 +109,74 @@ describe("workspaceService.ensureFirstForOwner", () => {
       callerTx,
     )
     expect(create).toHaveBeenCalledWith(
-      expect.objectContaining({ tx: undefined }),
+      expect.objectContaining({ tx: callerTx }),
+    )
+  })
+})
+
+describe("workspaceService.ensureConnectTargetForOwner", () => {
+  let create: MockInstance
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    create = vi.spyOn(workspaceService, "create")
+    create.mockResolvedValue(createdWorkspace as never)
+    mocks.transaction.mockImplementation(
+      async (fn: (tx: unknown) => unknown) => await fn(callerTx),
+    )
+  })
+
+  test("returns the owner's empty workspace without creating one", async () => {
+    mocks.findEmptyActiveByOwner.mockResolvedValue(existingWorkspace)
+
+    const result = await workspaceService.ensureConnectTargetForOwner({
+      ownerId: OWNER_ID,
+      name: "New Workspace",
+    })
+
+    expect(result).toBe(existingWorkspace)
+    expect(mocks.lockFirstWorkspace).toHaveBeenCalledWith(
+      { ownerId: OWNER_ID },
+      callerTx,
+    )
+    expect(create).not.toHaveBeenCalled()
+  })
+
+  test("creates a workspace when every live workspace already has an Inbox", async () => {
+    mocks.findEmptyActiveByOwner.mockResolvedValue(undefined)
+
+    const result = await workspaceService.ensureConnectTargetForOwner({
+      ownerId: OWNER_ID,
+      name: "New Workspace",
+    })
+
+    expect(result).toBe(createdWorkspace)
+    expect(create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: { name: "New Workspace", ownerId: OWNER_ID },
+        createdBy: OWNER_ID,
+      }),
+    )
+  })
+
+  test("uses the caller transaction and quota consumption for a new target", async () => {
+    const quotaConsumption = {} as never
+    mocks.findEmptyActiveByOwner.mockResolvedValue(undefined)
+
+    await workspaceService.ensureConnectTargetForOwner({
+      ownerId: OWNER_ID,
+      name: "New Workspace",
+      tx: callerTx as never,
+      quotaConsumption,
+    })
+
+    expect(mocks.transaction).not.toHaveBeenCalled()
+    expect(mocks.lockFirstWorkspace).toHaveBeenCalledWith(
+      { ownerId: OWNER_ID },
+      callerTx,
+    )
+    expect(create).toHaveBeenCalledWith(
+      expect.objectContaining({ tx: callerTx, quotaConsumption }),
     )
   })
 })

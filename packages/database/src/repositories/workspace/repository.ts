@@ -1,4 +1,14 @@
-import { type DatabaseClient, db, sql } from "../../client"
+import {
+  and,
+  asc,
+  type DatabaseClient,
+  db,
+  eq,
+  isNull,
+  notExists,
+  sql,
+} from "../../client"
+import { inboxModel, workspaceModel } from "../../schema"
 import type { WorkspaceModel } from "../../types"
 
 export const workspaceRepository = {
@@ -24,9 +34,10 @@ export const workspaceRepository = {
     return result.rows[0]?.purgeStartedAt === null
   },
   /**
-   * Serializes "find or create the owner's first workspace" per owner for the
-   * life of `tx`. Transaction-scoped, so the lock releases on commit/rollback
-   * and also fences a caller-owned transaction a Redis lock could not.
+   * Serializes first-workspace and connect-target find-or-create per owner for
+   * the life of `tx`. The shared lock key deliberately fences both flows.
+   * Transaction-scoped, so the lock releases on commit/rollback and also
+   * fences a caller-owned transaction a Redis lock could not.
    */
   async lockFirstWorkspace(
     input: { ownerId: string },
@@ -53,5 +64,35 @@ export const workspaceRepository = {
       where: { ownerId: input.ownerId, scheduledDeletionAt: { isNull: true } },
       orderBy: { id: "asc" },
     })
+  },
+
+  /**
+   * The owner's earliest live workspace with no Inbox. Connect starts can
+   * safely reuse it after a replay, while a workspace that already has a
+   * channel remains an immutable connect target.
+   */
+  async findEmptyActiveByOwner(
+    input: { ownerId: string },
+    tx: DatabaseClient = db,
+  ): Promise<WorkspaceModel | undefined> {
+    const workspaces = await tx
+      .select()
+      .from(workspaceModel)
+      .where(
+        and(
+          eq(workspaceModel.ownerId, input.ownerId),
+          isNull(workspaceModel.scheduledDeletionAt),
+          notExists(
+            tx
+              .select({ one: sql`1` })
+              .from(inboxModel)
+              .where(eq(inboxModel.workspaceId, workspaceModel.id)),
+          ),
+        ),
+      )
+      .orderBy(asc(workspaceModel.id))
+      .limit(1)
+
+    return workspaces[0]
   },
 }
