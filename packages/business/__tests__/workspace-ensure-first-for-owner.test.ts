@@ -95,7 +95,7 @@ describe("workspaceService.ensureFirstForOwner", () => {
     )
   })
 
-  test("opens its own transaction and lets create own its tx when none is given", async () => {
+  test("uses its lock transaction to create a workspace when none is given", async () => {
     mocks.findActiveByOwner.mockResolvedValue(undefined)
 
     await workspaceService.ensureFirstForOwner({
@@ -109,7 +109,7 @@ describe("workspaceService.ensureFirstForOwner", () => {
       callerTx,
     )
     expect(create).toHaveBeenCalledWith(
-      expect.objectContaining({ tx: undefined }),
+      expect.objectContaining({ tx: callerTx }),
     )
   })
 })

@@ -177,7 +177,7 @@ class WorkspaceService extends BaseService {
       return await this.create({
         data: { name, ownerId },
         createdBy: ownerId,
-        tx,
+        tx: lockTx,
         quotaConsumption,
       })
     }
