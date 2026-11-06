@@ -22,12 +22,19 @@ export type ShopProduct = {
 }
 
 export type ShopProductDetail = ShopProduct & {
+  /** The product's own SKU; a variant's SKU, when it has one, wins. */
+  sku: string | null
+  /** Orders go through even with no stock left. */
+  allowOutOfStockPurchase: boolean
   longDescription: string | null
   variantOptions: Array<{ name: string; values: string[] }>
   variants: Array<{
     id: string
     combination: Record<string, string>
     price: number
+    sku: string | null
+    /** Stock of this variant alone; null keeps stock on the product. */
+    inventoryQuantity: number | null
   }>
 }
 
@@ -49,12 +56,34 @@ type ProductRow = Pick<
   /** The active vendor's own percent off, stacked on the product's. */
   vendorDiscountPercent?: number
   hasVariants?: boolean
+  /**
+   * Stock of each enabled variant, null where the variant has none of its own
+   * (Shopify stocks variants one by one).
+   */
+  variantInventoryQuantities?: Array<number | null>
 }
 
-const isInStock = (product: ProductRow) =>
+const isProductInStock = (product: ProductRow) =>
   product.inventoryPolicy !== "track" ||
   product.inventoryQuantity > 0 ||
   product.allowOutOfStockPurchase
+
+/**
+ * Sold out when the product's own stock is exhausted, or — when its variants
+ * are stocked one by one — when every variant is. A variant without stock of
+ * its own follows the product.
+ */
+const isInStock = (product: ProductRow) => {
+  const quantities = product.variantInventoryQuantities ?? []
+  if (!quantities.some((quantity) => quantity !== null)) {
+    return isProductInStock(product)
+  }
+  return quantities.some((quantity) =>
+    quantity === null
+      ? isProductInStock(product)
+      : quantity > 0 || product.allowOutOfStockPurchase,
+  )
+}
 
 export const toShopProduct = (product: ProductRow): ShopProduct => ({
   id: product.id,
@@ -82,20 +111,34 @@ export const toShopProductDetail = (
       id: string
       combination: Record<string, string>
       price: number
+      sku: string | null
+      inventoryQuantity: number | null
     }>
+    sku: string | null
   },
 ): ShopProductDetail => ({
-  ...toShopProduct(product),
+  ...toShopProduct({
+    ...product,
+    variantInventoryQuantities: product.variants.map(
+      (variant) => variant.inventoryQuantity,
+    ),
+  }),
+  sku: product.sku,
+  allowOutOfStockPurchase: product.allowOutOfStockPurchase,
   hasVariants: product.variants.length > 0,
   longDescription: product.longDescription,
   variantOptions: [...product.variantOptions]
     .sort((a, b) => a.position - b.position)
     .map(({ name, values }) => ({ name, values })),
-  variants: product.variants.map(({ id, combination, price }) => ({
-    id,
-    combination,
-    price,
-  })),
+  variants: product.variants.map(
+    ({ id, combination, price, sku, inventoryQuantity }) => ({
+      id,
+      combination,
+      price,
+      sku,
+      inventoryQuantity,
+    }),
+  ),
 })
 
 /** The price after the effective discount (`ShopProduct.discount`), as the cart will charge it. */

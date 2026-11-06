@@ -6952,7 +6952,40 @@
       "notPaid": "غير مدفوع"
     },
     "paymentUntil": "حتى {time}",
-    "paymentExpiredCancelReason": "لم يتم استلام الدفع في الوقت المحدد."
+    "paymentExpiredCancelReason": "لم يتم استلام الدفع في الوقت المحدد.",
+    "exportTruncated": "تم قصر التصدير على أول {count} طلب",
+    "exportError": "تعذر تصدير الطلبات",
+    "shopify": {
+      "syncOrders": "مزامنة الطلبات",
+      "orderColumn": "الطلب",
+      "customerColumn": "العميل",
+      "paymentPending": "قيد الانتظار",
+      "paymentFilter": "الدفع",
+      "paymentFilterAll": "الدفع: الكل",
+      "fulfillmentFilter": "التنفيذ",
+      "fulfillmentFilterAll": "التنفيذ: الكل",
+      "fulfillmentStatuses": {
+        "fulfilled": "تم التنفيذ",
+        "unfulfilled": "لم يتم التنفيذ",
+        "partial": "جزئي"
+      },
+      "viewDetails": "عرض التفاصيل",
+      "viewOnShopify": "عرض في Shopify",
+      "detailsTitle": "الطلب {name}",
+      "placedOn": "تم الطلب في متجر Shopify • {date}",
+      "customerDetails": "تفاصيل العميل",
+      "shippingAddress": "عنوان الشحن",
+      "noShippingAddress": "لا يوجد عنوان شحن",
+      "tracking": "التتبع: {company} #{number}",
+      "lineItems": "عناصر الطلب",
+      "itemColumn": "العنصر",
+      "skuColumn": "SKU",
+      "shipping": "الشحن",
+      "free": "مجاني",
+      "loading": "جارٍ التحميل...",
+      "loadError": "تعذر تحميل تفاصيل الطلب",
+      "close": "إغلاق"
+    }
   },
   "products": {
     "title": "المنتجات",
@@ -7024,6 +7057,14 @@
       "isActive": {
         "label": "نشط"
       },
+      "status": {
+        "label": "الحالة",
+        "values": {
+          "active": "نشط",
+          "draft": "مسودة",
+          "unlisted": "غير مدرج"
+        }
+      },
       "isAddonOnly": {
         "label": "استخدام هذا المنتج فقط كإضافة لمنتجات أخرى"
       },
@@ -7067,6 +7108,32 @@
     "inventoryPolicy": {
       "dont_track": "عدم تتبّع المخزون",
       "track": "تتبّع المخزون"
+    },
+    "shopify": {
+      "openShopify": "فتح Shopify",
+      "syncProducts": "مزامنة المنتجات",
+      "syncStarted": "بدأت المزامنة",
+      "syncError": "تعذر بدء المزامنة",
+      "viewDetails": "عرض التفاصيل",
+      "editOnShopify": "التعديل في Shopify",
+      "copyProductLink": "نسخ رابط المنتج",
+      "linkCopied": "تم نسخ رابط المنتج",
+      "noProductLink": "ليس لهذا المنتج رابط في المتجر",
+      "inStock": "{count} في المخزون",
+      "inStockWithVariants": "{count} في المخزون ({variants} متغيرات)",
+      "detailsTitle": "تفاصيل المنتج — {name}",
+      "detailsSubtitle": "تمت المزامنة من متجر Shopify {shop}",
+      "summaryLine": "الفئة: {category} • إجمالي المخزون: {units} وحدة موزعة على {variants, plural, one {# متغير} other {# متغيرات}}",
+      "uncategorized": "بدون فئة",
+      "variantsTitle": "المتغيرات ({count})",
+      "variantColumn": "المتغير",
+      "skuColumn": "SKU",
+      "priceColumn": "السعر",
+      "inventoryColumn": "المخزون",
+      "defaultVariant": "افتراضي",
+      "loading": "جارٍ التحميل...",
+      "loadError": "تعذر تحميل تفاصيل المنتج",
+      "close": "إغلاق"
     }
   },
   "tiktok": {
@@ -10117,7 +10184,8 @@
       "general": "عام",
       "payments": "المدفوعات",
       "shipping": "الشحن",
-      "checkout": "إتمام الشراء"
+      "checkout": "إتمام الشراء",
+      "shopify": "Shopify"
     },
     "general": {
       "orderingAvailable": {
@@ -10185,6 +10253,14 @@
         "label": "تدفق السلة المتروكة",
         "description": "التدفق الذي يشغّله البوت للعميل عند ترك السلة هذه المدة. استخدم '{{shop_token}}' في الأزرار لفتح السلة. يمكن للمشغّلات أيضًا استخدام حدث \"Cart abandoned\".",
         "none": "بدون تدفق (حدث المشغّل فقط)"
+      },
+      "storeSource": {
+        "label": "مصدر المتجر",
+        "description": "اختر مصدر المتجر المستخدم لإدارة منتجاتك ومخزونك وطلباتك. عند اختيار Shopify، تتم إدارة جميع المنتجات والطلبات مباشرة من متجر Shopify الخاص بك.",
+        "options": {
+          "chatbotx": "ChatbotX",
+          "shopify": "Shopify"
+        }
       }
     },
     "payments": {
@@ -10310,6 +10386,78 @@
       "orderConfirmationFlowId": {
         "label": "تدفق تأكيد الطلب",
         "description": "التدفق الذي يُرسل إلى العميل بدلًا من الرسالة الافتراضية عند تقديم طلبه."
+      },
+      "shopifyCheckoutMethod": {
+        "label": "طريقة إتمام الشراء",
+        "description": "اختر ما إذا كان العملاء يُكملون الدفع في صفحة الدفع الخاصة بـ Shopify أم يُقدّمون الطلب مباشرة في المتجر الإلكتروني.",
+        "options": {
+          "webCheckout": "إتمام الشراء عبر الويب في Shopify",
+          "inApp": "إتمام الشراء داخل التطبيق"
+        }
+      },
+      "shopifyAutoApplyDiscounts": {
+        "label": "تطبيق رموز الخصم تلقائيًا",
+        "description": "اسمح للعملاء بتطبيق رموز خصم Shopify مباشرة على سلتهم قبل التحويل إلى صفحة الدفع."
+      },
+      "inAppDeliveryCost": {
+        "label": "تكلفة التوصيل",
+        "description": "رسوم التوصيل المضافة إلى طلبات إتمام الشراء داخل التطبيق."
+      }
+    },
+    "shopify": {
+      "shopDomain": {
+        "label": "نطاق المتجر",
+        "placeholder": "your-store.myshopify.com",
+        "hint": "أدخل نطاق .myshopify.com الخاص بمتجر Shopify.",
+        "connectedHint": "نطاق متجر Shopify المتصل."
+      },
+      "authKind": {
+        "label": "المصادقة",
+        "description": "كيفية تسجيل ChatbotX الدخول إلى متجرك: باستخدام رمز وصول Admin API لتطبيق مخصص، أو باستخدام Client ID والسر الخاص بتطبيق أُنشئ في Shopify Dev Dashboard.",
+        "options": {
+          "token": "رمز وصول Admin API",
+          "clientCredentials": "Client ID والسر (تطبيق Dev Dashboard)"
+        }
+      },
+      "accessToken": {
+        "label": "رمز وصول Admin API",
+        "hint": "رمز وصول Admin API الخاص بتطبيقك المخصص. امنحه هذه الأذونات: {scopes}.",
+        "connectedHint": "يتم تخزين رمز وصول Shopify Admin API الخاص بك مشفرًا."
+      },
+      "apiSecret": {
+        "label": "المفتاح السري لـ API",
+        "hint": "المفتاح السري لـ API الخاص بالتطبيق، ويُستخدم للتحقق من webhooks التي يرسلها Shopify."
+      },
+      "clientId": {
+        "label": "Client ID",
+        "hint": "Client ID الخاص بتطبيق Dev Dashboard. امنحه هذه الأذونات: {scopes}."
+      },
+      "clientSecret": {
+        "label": "Client Secret",
+        "hint": "Client Secret الخاص بالتطبيق. يتم تخزينه مشفرًا."
+      },
+      "webhookUrl": {
+        "label": "رابط Webhook",
+        "description": "يتم تسجيله تلقائيًا في Shopify عند الاتصال لتلقي تحديثات المنتجات والمخزون والطلبات في الوقت الفعلي."
+      },
+      "syncNow": "زامن الآن",
+      "syncStarted": "بدأت المزامنة",
+      "syncError": "تعذر بدء المزامنة",
+      "syncStatus": {
+        "label": "حالة المزامنة",
+        "description": "تتم مرآة المنتجات ورموز الخصم والطلبات من متجر Shopify الخاص بك.",
+        "connectedTo": "متصل بـ {shopDomain}",
+        "lastSynced": "آخر مزامنة: {time} ({productCount} منتج، {orderCount} طلب)",
+        "neverSynced": "لم تتم المزامنة بعد",
+        "noReason": "أعد ربط متجرك للمتابعة.",
+        "invalid": "لم يعد الاتصال صالحًا: {reason}",
+        "state": {
+          "idle": "في وضع الخمول",
+          "queued": "المزامنة في قائمة الانتظار...",
+          "running": "جارٍ المزامنة...",
+          "succeeded": "نجحت آخر مزامنة",
+          "failed": "فشلت آخر مزامنة"
+        }
       }
     }
   },
@@ -10389,7 +10537,8 @@
       "total": "الإجمالي",
       "coupon": "القسيمة ({code})",
       "title": "ملخص الطلب",
-      "saved": "وفّرت {amount}"
+      "saved": "وفّرت {amount}",
+      "deliveryAtCheckout": "يُحتسب عند إتمام الشراء"
     },
     "belowMinimum": "الحد الأدنى للطلب هو {amount}.",
     "checkOut": "إتمام الشراء",
@@ -10508,7 +10657,9 @@
       "notEligible": "غير مؤهل بعد"
     },
     "itemCount": "{count, plural, one {# منتج} other {# منتجات}}",
-    "relatedProducts": "قد يعجبك أيضًا"
+    "relatedProducts": "قد يعجبك أيضًا",
+    "soldOut": "نفدت الكمية",
+    "sku": "SKU: {sku}"
   },
   "webshopLinks": {
     "preview": "معاينة",

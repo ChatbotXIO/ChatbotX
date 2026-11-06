@@ -157,7 +157,7 @@ const product = (overrides: Record<string, unknown> = {}) => ({
     minimumOrderValue: 0,
   },
   categoryId: "c1",
-  isActive: true,
+  status: "active",
   variants: [],
   ...overrides,
 })
@@ -355,6 +355,17 @@ describe("orderService.place", () => {
     await expect(orderService.place(placeInput())).rejects.toMatchObject({
       code: "orderProductUnavailable",
     })
+  })
+
+  test.each([
+    "draft",
+    "unlisted",
+  ] as const)("refuses a %s product", async (status) => {
+    mocks.findForOrder.mockResolvedValue([product({ status })])
+    await expect(orderService.place(placeInput())).rejects.toMatchObject({
+      code: "orderProductUnavailable",
+    })
+    expect(mocks.insertOrder).not.toHaveBeenCalled()
   })
 
   test("refuses an order below the store minimum", async () => {

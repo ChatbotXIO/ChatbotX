@@ -23,6 +23,7 @@ import {
 import { Textarea } from "@chatbotx.io/ui/components/ui/textarea"
 import { cn } from "@chatbotx.io/ui/lib/utils"
 import {
+  ArrowRightIcon,
   BanknoteIcon,
   CreditCardIcon,
   Loader2Icon,
@@ -154,7 +155,9 @@ export function CheckoutForm({
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(
     shop.paymentMethods[0] ?? "cod",
   )
-  const paysOnline = isOnlinePaymentMethod(paymentMethod)
+  // Shopify Web Checkout: Shopify takes the payment, so none is chosen here.
+  const handsOverToShopify = context.shopifyWebCheckout
+  const paysOnline = !handsOverToShopify && isOnlinePaymentMethod(paymentMethod)
   // Set once the provider's page opens, so the button stays busy until the
   // browser has left.
   const [redirecting, setRedirecting] = useState(false)
@@ -190,7 +193,7 @@ export function CheckoutForm({
     const result = await executeAsync({
       workspaceId: context.workspaceId,
       token: context.token,
-      paymentMethod,
+      ...(handsOverToShopify ? {} : { paymentMethod }),
       customerName: values.customerName,
       customerEmail: values.customerEmail.trim(),
       customerPhone: values.customerPhone,
@@ -242,6 +245,12 @@ export function CheckoutForm({
   }
 
   const required = shop.checkout
+  const submitLabel = (() => {
+    if (handsOverToShopify) {
+      return t("checkOut")
+    }
+    return paysOnline ? t("payment.continueToPayment") : t("placeOrder")
+  })()
   const field = (name: keyof FormValues) => `${id}-${name}`
   const formId = `${id}-form`
 
@@ -450,58 +459,63 @@ export function CheckoutForm({
         </FormSection>
       ) : null}
 
-      <FormSection icon={WalletIcon} title={t("payment.title")}>
-        <RadioGroup
-          className="gap-2"
-          onValueChange={(value) => setPaymentMethod(value as PaymentMethod)}
-          value={paymentMethod}
-        >
-          {shop.paymentMethods.map((method) => {
-            const Icon = PAYMENT_ICON[method]
-            return (
-              <Label
-                className={cn(
-                  "flex cursor-pointer items-center gap-3 rounded-xl border p-3.5 font-normal transition-colors hover:bg-muted/50",
-                  paymentMethod === method &&
-                    "border-primary bg-primary/5 hover:bg-primary/5",
-                )}
-                htmlFor={`${id}-payment-${method}`}
-                key={method}
-              >
-                <RadioGroupItem id={`${id}-payment-${method}`} value={method} />
-                <Icon
+      {handsOverToShopify ? null : (
+        <FormSection icon={WalletIcon} title={t("payment.title")}>
+          <RadioGroup
+            className="gap-2"
+            onValueChange={(value) => setPaymentMethod(value as PaymentMethod)}
+            value={paymentMethod}
+          >
+            {shop.paymentMethods.map((method) => {
+              const Icon = PAYMENT_ICON[method]
+              return (
+                <Label
                   className={cn(
-                    "size-5",
-                    paymentMethod === method
-                      ? "text-primary"
-                      : "text-muted-foreground",
+                    "flex cursor-pointer items-center gap-3 rounded-xl border p-3.5 font-normal transition-colors hover:bg-muted/50",
+                    paymentMethod === method &&
+                      "border-primary bg-primary/5 hover:bg-primary/5",
                   )}
-                />
-                {t(`payment.${method}`)}
-              </Label>
-            )
-          })}
-        </RadioGroup>
-        {paysOnline ? (
-          <p className="text-muted-foreground text-sm">
-            {t("payment.onlineHint")}
-          </p>
-        ) : null}
-        <Field
-          htmlFor={field("note")}
-          label={t("fields.note")}
-          required={false}
-        >
-          <Textarea
-            className="rounded-xl bg-background"
-            id={field("note")}
-            maxLength={2000}
-            onChange={(event) => set("note")(event.target.value)}
-            rows={3}
-            value={values.note}
-          />
-        </Field>
-      </FormSection>
+                  htmlFor={`${id}-payment-${method}`}
+                  key={method}
+                >
+                  <RadioGroupItem
+                    id={`${id}-payment-${method}`}
+                    value={method}
+                  />
+                  <Icon
+                    className={cn(
+                      "size-5",
+                      paymentMethod === method
+                        ? "text-primary"
+                        : "text-muted-foreground",
+                    )}
+                  />
+                  {t(`payment.${method}`)}
+                </Label>
+              )
+            })}
+          </RadioGroup>
+          {paysOnline ? (
+            <p className="text-muted-foreground text-sm">
+              {t("payment.onlineHint")}
+            </p>
+          ) : null}
+          <Field
+            htmlFor={field("note")}
+            label={t("fields.note")}
+            required={false}
+          >
+            <Textarea
+              className="rounded-xl bg-background"
+              id={field("note")}
+              maxLength={2000}
+              onChange={(event) => set("note")(event.target.value)}
+              rows={3}
+              value={values.note}
+            />
+          </Field>
+        </FormSection>
+      )}
 
       {/* Drawn on <body>, so `form` keeps it this form's submit. */}
       <CheckoutBar
@@ -518,7 +532,8 @@ export function CheckoutForm({
           {isPending || redirecting ? (
             <Loader2Icon className="animate-spin" />
           ) : null}
-          {paysOnline ? t("payment.continueToPayment") : t("placeOrder")}
+          {submitLabel}
+          {handsOverToShopify ? <ArrowRightIcon /> : null}
         </Button>
       </CheckoutBar>
     </form>

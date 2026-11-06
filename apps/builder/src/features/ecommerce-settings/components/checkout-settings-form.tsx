@@ -4,6 +4,7 @@ import {
   checkoutModes,
   type EcommerceCheckoutSettings,
   orderConfirmationModes,
+  shopifyCheckoutMethods,
 } from "@chatbotx.io/database/partials"
 import { ComboboxField } from "@chatbotx.io/ui/components/form/combobox-field"
 import { InputField } from "@chatbotx.io/ui/components/form/input-field"
@@ -38,7 +39,17 @@ const REQUIRED_FIELDS = [
   "requireZip",
 ] as const
 
-const toRequest = (values: CheckoutFormValues) => ({
+type CheckoutFormFields = CheckoutFormValues & {
+  /** The In-App Checkout delivery fee, saved with the shipping group. */
+  deliveryCost: number
+}
+
+const toRequest = (
+  { deliveryCost, ...values }: CheckoutFormFields,
+  isShopify: boolean,
+) => ({
+  // A Shopify store has no Shipping tab, so its delivery fee is saved here.
+  ...(isShopify && { shipping: { deliveryCost: Number(deliveryCost) || 0 } }),
   checkout: {
     ...values,
     // An emptied number field means no minimum.
@@ -66,7 +77,7 @@ export function CheckoutSettingsForm({
   /** The service's checks: each checkout mode needs its own target. */
   const rules = (
     values: CheckoutFormValues,
-  ): Array<FieldRule<CheckoutFormValues> | false> => [
+  ): Array<FieldRule<CheckoutFormFields> | false> => [
     values.checkoutMode === "externalLink" &&
       !values.checkoutLink.trim() && {
         field: "checkoutLink",
@@ -83,9 +94,13 @@ export function CheckoutSettingsForm({
         message: tValidation("required"),
       },
   ]
-  const resolver = useSettingsResolver(toRequest, rules)
+  const isShopify = settings.general.storeSource === "shopify"
+  const resolver = useSettingsResolver(
+    (values: CheckoutFormFields) => toRequest(values, isShopify),
+    rules,
+  )
 
-  const form = useForm<CheckoutFormValues>({
+  const form = useForm<CheckoutFormFields>({
     resolver,
     defaultValues: {
       ...settings.checkout,
@@ -93,19 +108,61 @@ export function CheckoutSettingsForm({
       checkoutFlowId: settings.checkout.checkoutFlowId ?? undefined,
       orderConfirmationFlowId:
         settings.checkout.orderConfirmationFlowId ?? undefined,
+      deliveryCost: settings.shipping.deliveryCost,
     },
   })
   const checkoutMode = form.watch("checkoutMode")
   const orderConfirmationMode = form.watch("orderConfirmationMode")
+  const shopifyCheckoutMethod = form.watch("shopifyCheckoutMethod")
   const flowSelectOptions = flowOptions.map((flow) => ({
     value: flow.id,
     label: flow.name,
   }))
 
   const onSubmit = form.handleSubmit(
-    (values) => execute(toRequest(values)),
+    (values) => execute(toRequest(values, isShopify)),
     showInvalidToast,
   )
+
+  if (isShopify) {
+    return (
+      <Form {...form}>
+        <form className="space-y-4" onSubmit={onSubmit}>
+          <SettingRow
+            description={t("shopifyCheckoutMethod.description")}
+            label={t("shopifyCheckoutMethod.label")}
+          >
+            <SelectField
+              name="shopifyCheckoutMethod"
+              options={shopifyCheckoutMethods.options.map((method) => ({
+                value: method,
+                label: t(`shopifyCheckoutMethod.options.${method}`),
+              }))}
+            />
+          </SettingRow>
+          <SettingRow
+            description={t("shopifyAutoApplyDiscounts.description")}
+            label={t("shopifyAutoApplyDiscounts.label")}
+          >
+            <SwitchField name="shopifyAutoApplyDiscounts" />
+          </SettingRow>
+          {shopifyCheckoutMethod === "inApp" ? (
+            <SettingRow
+              description={t("inAppDeliveryCost.description")}
+              label={t("inAppDeliveryCost.label")}
+            >
+              <InputNumberField
+                min={0}
+                name="deliveryCost"
+                {...PRICE_INPUT_PROPS}
+              />
+            </SettingRow>
+          ) : null}
+          <SettingsSaveBar isSaving={isPending} />
+        </form>
+      </Form>
+    )
+  }
 
   return (
     <Form {...form}>

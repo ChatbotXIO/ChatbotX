@@ -14,6 +14,7 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
 vi.mock("../../ecommerce-settings/service", () => ({
   ecommerceSettingsService: {
     get: (...args: unknown[]) => mocks.getSettings(...args),
+    storeSource: async () => "chatbotx",
   },
 }))
 vi.mock("../../platform/settings", () => ({
@@ -82,6 +83,7 @@ describe("listCollectionProducts", () => {
     await listCollectionProducts({ workspaceId: "ws1", step: automated })
     expect(mocks.listForShop).toHaveBeenCalledWith({
       workspaceId: "ws1",
+      source: "chatbotx",
       keyword: "shirt",
       categoryId: "sub1",
       vendorId: "v1",

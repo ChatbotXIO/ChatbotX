@@ -72,7 +72,7 @@ export type ImportedMetaProduct = {
   inventoryPolicy?: "dont_track" | "track"
   allowOutOfStockPurchase?: boolean
   images?: Array<{ url: string; type: "link" }>
-  isActive?: boolean
+  status?: "active" | "draft"
 }
 
 export type MetaProductImportMapping =
@@ -267,7 +267,14 @@ export const toImportedMetaProduct = (
         : {}),
       ...resolveInventoryPatch(quantity, availability),
       ...(images.length > 0 ? { images } : {}),
-      ...(availability ? { isActive: availability !== "discontinued" } : {}),
+      ...(availability
+        ? {
+            status:
+              availability === "discontinued"
+                ? ("draft" as const)
+                : ("active" as const),
+          }
+        : {}),
     },
   }
 }

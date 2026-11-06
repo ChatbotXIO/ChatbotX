@@ -163,6 +163,7 @@ export * from "./saved-reply"
 // built-in is a hard compile error — see edge-safe-import-graph.test.ts and
 // the same pattern for `contact-sequence`. Import from
 // `@chatbotx.io/business/sequence` instead.
+export * from "./shopify"
 export * from "./smart-delay"
 export * from "./spreadsheet"
 export * from "./tag"

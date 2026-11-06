@@ -14,8 +14,32 @@ export type OrderStatus = z.infer<typeof orderStatuses>
  * WhatsApp cart is checked out); `api` is a public API or MCP caller;
  * `manual` is a member typing one in.
  */
-export const orderSources = z.enum(["webshop", "api", "manual"])
+export const orderSources = z.enum(["webshop", "api", "manual", "shopify"])
 export type OrderSource = z.infer<typeof orderSources>
+
+/**
+ * Where the store's catalog and orders live. `chatbotx` is our own tables;
+ * `shopify` mirrors a connected Shopify store, read-only here. Each product,
+ * category, vendor and discount code carries the source it came from, and
+ * every list shows only the rows of the store's current source.
+ */
+export const storeSources = z.enum(["chatbotx", "shopify"])
+export type StoreSource = z.infer<typeof storeSources>
+
+/**
+ * How a Shopify store's web shop checks out: `webCheckout` sends the customer
+ * to Shopify's own checkout page, `inApp` places the order from our page.
+ */
+export const shopifyCheckoutMethods = z.enum(["webCheckout", "inApp"])
+export type ShopifyCheckoutMethod = z.infer<typeof shopifyCheckoutMethods>
+
+/** How much of an order was handed to the carrier; mirrored from Shopify. */
+export const fulfillmentStatuses = z.enum([
+  "unfulfilled",
+  "partial",
+  "fulfilled",
+])
+export type FulfillmentStatus = z.infer<typeof fulfillmentStatuses>
 
 /**
  * `cod` is cash on delivery; `stripe` and `paypal` are paid online on the
@@ -269,6 +293,9 @@ export type OrderShippingAddress = z.infer<typeof orderShippingAddressSchema>
  * stores them flat; `ecommerceSettingsService` converts between the two.
  */
 export const ecommerceGeneralSettingsSchema = z.object({
+  storeSource: storeSources.describe(
+    "Where products and orders come from: the platform's own catalog, managed here (the default), or `shopify`, mirrored read-only from the store connected with `shopify.connect`.",
+  ),
   orderingAvailable: z
     .boolean()
     .describe("Whether customers can place orders at all."),
@@ -420,6 +447,14 @@ export const ecommerceCheckoutSettingsSchema = z.object({
   requirePhone: z.boolean().describe("Phone number is required."),
   requireState: z.boolean().describe("State / province is required."),
   requireZip: z.boolean().describe("ZIP code is required."),
+  shopifyCheckoutMethod: shopifyCheckoutMethods.describe(
+    "With `storeSource: shopify`: `webCheckout` sends the customer to the Shopify checkout page, `inApp` places the order on Shopify from our checkout page (cash on delivery).",
+  ),
+  shopifyAutoApplyDiscounts: z
+    .boolean()
+    .describe(
+      "With `storeSource: shopify`: offer the store's Shopify discount codes in the cart and pass the chosen one to checkout.",
+    ),
 })
 export type EcommerceCheckoutSettings = z.infer<
   typeof ecommerceCheckoutSettingsSchema
@@ -436,6 +471,7 @@ export type EcommerceSettings = z.infer<typeof ecommerceSettingsSchema>
 /** What a workspace that never opened its settings gets. */
 export const ECOMMERCE_SETTINGS_DEFAULTS: EcommerceSettings = {
   general: {
+    storeSource: "chatbotx",
     orderingAvailable: true,
     webshopProductView: "list",
     openHoursId: null,
@@ -474,6 +510,8 @@ export const ECOMMERCE_SETTINGS_DEFAULTS: EcommerceSettings = {
     requirePhone: true,
     requireState: false,
     requireZip: false,
+    shopifyCheckoutMethod: "webCheckout",
+    shopifyAutoApplyDiscounts: true,
   },
 }
 

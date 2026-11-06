@@ -17,9 +17,11 @@ import {
 export function EcommerceSettingsSidebar({
   workspaceId,
   active,
+  hiddenSections = [],
 }: {
   workspaceId: string
   active: EcommerceSettingsSection
+  hiddenSections?: readonly EcommerceSettingsSection[]
 }) {
   const t = useTranslations()
   return (
@@ -29,21 +31,23 @@ export function EcommerceSettingsSidebar({
       </div>
       {/* Shows a spinner on the clicked entry instead of the page skeleton. */}
       <nav className="flex flex-col gap-1" data-local-navigation-pending="">
-        {ecommerceSettingsSections.options.map((section) => (
-          <Link
-            aria-current={section === active ? "page" : undefined}
-            className={cn(
-              buttonVariants({ variant: "ghost" }),
-              "w-full justify-start",
-              section === active && "bg-accent",
-            )}
-            href={`/space/${workspaceId}/ecommerce-settings/${section}`}
-            key={section}
-          >
-            {t(`ecommerceSettings.tabs.${section}`)}
-            <LinkPendingSpinner />
-          </Link>
-        ))}
+        {ecommerceSettingsSections.options
+          .filter((section) => !hiddenSections.includes(section))
+          .map((section) => (
+            <Link
+              aria-current={section === active ? "page" : undefined}
+              className={cn(
+                buttonVariants({ variant: "ghost" }),
+                "w-full justify-start",
+                section === active && "bg-accent",
+              )}
+              href={`/space/${workspaceId}/ecommerce-settings/${section}`}
+              key={section}
+            >
+              {t(`ecommerceSettings.tabs.${section}`)}
+              <LinkPendingSpinner />
+            </Link>
+          ))}
       </nav>
     </aside>
   )

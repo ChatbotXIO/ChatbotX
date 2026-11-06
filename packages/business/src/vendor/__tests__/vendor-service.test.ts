@@ -11,6 +11,11 @@ const mocks = vi.hoisted(() => ({
   invalidate: vi.fn(),
 }))
 
+vi.mock("../../ecommerce-settings/store-source", () => ({
+  resolveStoreSource: async () => "chatbotx",
+  ecommerceSettingsCacheTag: (workspaceId: string) =>
+    `ecommerce-settings:${workspaceId}`,
+}))
 vi.mock("@chatbotx.io/redis", () => ({
   invalidateCacheByTags: (...args: unknown[]) => mocks.invalidate(...args),
 }))

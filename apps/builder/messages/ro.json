@@ -7307,7 +7307,40 @@
       "notPaid": "Neplătit"
     },
     "paymentUntil": "până la {time}",
-    "paymentExpiredCancelReason": "Plata nu a fost primită la timp."
+    "paymentExpiredCancelReason": "Plata nu a fost primită la timp.",
+    "exportTruncated": "Exportul a fost limitat la primele {count} comenzi",
+    "exportError": "Nu s-au putut exporta comenzile",
+    "shopify": {
+      "syncOrders": "Sincronizează comenzile",
+      "orderColumn": "Comandă",
+      "customerColumn": "Client",
+      "paymentPending": "În așteptare",
+      "paymentFilter": "Plată",
+      "paymentFilterAll": "Plată: Toate",
+      "fulfillmentFilter": "Onorare",
+      "fulfillmentFilterAll": "Onorare: Toate",
+      "fulfillmentStatuses": {
+        "fulfilled": "Onorată",
+        "unfulfilled": "Neonorată",
+        "partial": "Parțială"
+      },
+      "viewDetails": "Vezi detalii",
+      "viewOnShopify": "Vezi în Shopify",
+      "detailsTitle": "Comanda {name}",
+      "placedOn": "Plasată în magazinul Shopify • {date}",
+      "customerDetails": "Detalii client",
+      "shippingAddress": "Adresa de livrare",
+      "noShippingAddress": "Nicio adresă de livrare",
+      "tracking": "Urmărire: {company} #{number}",
+      "lineItems": "Produse comandate",
+      "itemColumn": "Articol",
+      "skuColumn": "SKU",
+      "shipping": "Livrare",
+      "free": "Gratuit",
+      "loading": "Se încarcă...",
+      "loadError": "Nu s-au putut încărca detaliile comenzii",
+      "close": "Închide"
+    }
   },
   "platformAdmin": {
     "helpItems": {
@@ -7607,6 +7640,14 @@
       "isActive": {
         "label": "Activ"
       },
+      "status": {
+        "label": "Stare",
+        "values": {
+          "active": "Activ",
+          "draft": "Ciornă",
+          "unlisted": "Nelistat"
+        }
+      },
       "isAddonOnly": {
         "label": "Folosește acest produs doar ca supliment pentru alte produse"
       },
@@ -7674,7 +7715,33 @@
       "tags": "Etichete",
       "variants": "Variante"
     },
-    "title": "Produse"
+    "title": "Produse",
+    "shopify": {
+      "openShopify": "Deschide Shopify",
+      "syncProducts": "Sincronizează produsele",
+      "syncStarted": "Sincronizarea a început",
+      "syncError": "Nu s-a putut porni sincronizarea",
+      "viewDetails": "Vezi detalii",
+      "editOnShopify": "Editează în Shopify",
+      "copyProductLink": "Copiază linkul produsului",
+      "linkCopied": "Linkul produsului a fost copiat",
+      "noProductLink": "Acest produs nu are link în magazin",
+      "inStock": "{count} în stoc",
+      "inStockWithVariants": "{count} în stoc ({variants} variante)",
+      "detailsTitle": "Detalii produs — {name}",
+      "detailsSubtitle": "Sincronizat din magazinul Shopify {shop}",
+      "summaryLine": "Categorie: {category} • Stoc total: {units} unități în {variants, plural, one {# variantă} other {# de variante}}",
+      "uncategorized": "Fără categorie",
+      "variantsTitle": "Variante ({count})",
+      "variantColumn": "Variantă",
+      "skuColumn": "SKU",
+      "priceColumn": "Preț",
+      "inventoryColumn": "Stoc",
+      "defaultVariant": "Implicită",
+      "loading": "Se încarcă...",
+      "loadError": "Nu s-au putut încărca detaliile produsului",
+      "close": "Închide"
+    }
   },
   "qrCodeGenerator": {
     "description": "Creează și gestionează codurile tale QR.",
@@ -10117,7 +10184,8 @@
       "general": "General",
       "payments": "Plăți",
       "shipping": "Livrare",
-      "checkout": "Finalizare comandă"
+      "checkout": "Finalizare comandă",
+      "shopify": "Shopify"
     },
     "general": {
       "orderingAvailable": {
@@ -10185,6 +10253,14 @@
         "label": "Flux pentru coș abandonat",
         "description": "Fluxul pe care botul îl rulează pentru client când coșul e abandonat atât timp. Folosește '{{shop_token}}' în butoane pentru a deschide coșul. Triggerele pot folosi și evenimentul \"Cart abandoned\".",
         "none": "Fără flux (doar eveniment de trigger)"
+      },
+      "storeSource": {
+        "label": "Sursa magazinului",
+        "description": "Selectează sursa magazinului folosită pentru gestionarea produselor, stocului și comenzilor. Când este setat Shopify, toate produsele și comenzile sunt gestionate direct din magazinul tău Shopify.",
+        "options": {
+          "chatbotx": "ChatbotX",
+          "shopify": "Shopify"
+        }
       }
     },
     "payments": {
@@ -10310,6 +10386,78 @@
       "orderConfirmationFlowId": {
         "label": "Flux de confirmare a comenzii",
         "description": "Fluxul trimis clientului în locul mesajului implicit când plasează comanda."
+      },
+      "shopifyCheckoutMethod": {
+        "label": "Metoda de finalizare a comenzii",
+        "description": "Alege dacă clienții finalizează plata pe pagina de checkout Shopify sau plasează comanda direct în magazinul web.",
+        "options": {
+          "webCheckout": "Checkout web Shopify",
+          "inApp": "Checkout în aplicație"
+        }
+      },
+      "shopifyAutoApplyDiscounts": {
+        "label": "Aplică automat codurile de reducere",
+        "description": "Permite clienților să aplice codurile de reducere Shopify direct în coș înainte de redirecționarea către checkout."
+      },
+      "inAppDeliveryCost": {
+        "label": "Cost de livrare",
+        "description": "Taxa de livrare adăugată comenzilor din checkout-ul în aplicație."
+      }
+    },
+    "shopify": {
+      "shopDomain": {
+        "label": "Domeniul magazinului",
+        "placeholder": "your-store.myshopify.com",
+        "hint": "Introdu domeniul .myshopify.com al magazinului tău Shopify.",
+        "connectedHint": "Domeniul magazinului tău Shopify conectat."
+      },
+      "authKind": {
+        "label": "Autentificare",
+        "description": "Cum se conectează ChatbotX la magazinul tău: cu tokenul de acces Admin API al unei aplicații personalizate sau cu Client ID și secretul unei aplicații create în Shopify Dev Dashboard.",
+        "options": {
+          "token": "Token de acces Admin API",
+          "clientCredentials": "Client ID și secret (aplicație Dev Dashboard)"
+        }
+      },
+      "accessToken": {
+        "label": "Token de acces Admin API",
+        "hint": "Tokenul de acces Admin API al aplicației tale personalizate. Acordă-i aceste permisiuni: {scopes}.",
+        "connectedHint": "Tokenul tău de acces Shopify Admin API este stocat criptat."
+      },
+      "apiSecret": {
+        "label": "Cheia secretă API",
+        "hint": "Cheia secretă API a aplicației, folosită pentru verificarea webhook-urilor trimise de Shopify."
+      },
+      "clientId": {
+        "label": "Client ID",
+        "hint": "Client ID al aplicației tale Dev Dashboard. Acordă-i aceste permisiuni: {scopes}."
+      },
+      "clientSecret": {
+        "label": "Client Secret",
+        "hint": "Client Secret al aplicației. Este stocat criptat."
+      },
+      "webhookUrl": {
+        "label": "URL webhook",
+        "description": "Înregistrat automat în Shopify la conectare pentru a primi în timp real actualizări despre produse, stoc și comenzi."
+      },
+      "syncNow": "Sincronizează acum",
+      "syncStarted": "Sincronizarea a început",
+      "syncError": "Nu s-a putut porni sincronizarea",
+      "syncStatus": {
+        "label": "Starea sincronizării",
+        "description": "Produsele, codurile de reducere și comenzile sunt oglindite din magazinul tău Shopify.",
+        "connectedTo": "Conectat la {shopDomain}",
+        "lastSynced": "Ultima sincronizare: {time} ({productCount} produse, {orderCount} comenzi)",
+        "neverSynced": "Nesincronizat încă",
+        "noReason": "Reconectează magazinul pentru a continua.",
+        "invalid": "Conexiunea nu mai este validă: {reason}",
+        "state": {
+          "idle": "Inactiv",
+          "queued": "Sincronizare în coadă...",
+          "running": "Se sincronizează...",
+          "succeeded": "Ultima sincronizare a reușit",
+          "failed": "Ultima sincronizare a eșuat"
+        }
       }
     }
   },
@@ -10389,7 +10537,8 @@
       "total": "Total",
       "coupon": "Cupon ({code})",
       "title": "Sumarul comenzii",
-      "saved": "Economisești {amount}"
+      "saved": "Economisești {amount}",
+      "deliveryAtCheckout": "Calculat la finalizarea comenzii"
     },
     "belowMinimum": "Comanda minimă este {amount}.",
     "checkOut": "Finalizează comanda",
@@ -10508,7 +10657,9 @@
       "notEligible": "Încă nu ești eligibil"
     },
     "itemCount": "{count, plural, one {# produs} other {# de produse}}",
-    "relatedProducts": "S-ar putea să-ți placă și"
+    "relatedProducts": "S-ar putea să-ți placă și",
+    "soldOut": "Stoc epuizat",
+    "sku": "SKU: {sku}"
   },
   "webshopLinks": {
     "preview": "Previzualizare",

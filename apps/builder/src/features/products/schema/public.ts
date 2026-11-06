@@ -1,6 +1,9 @@
 import {
   inventoryPolicyTypes,
   metaCatalogSyncScopes,
+  type ProductStatus,
+  productStatuses,
+  storeSources,
 } from "@chatbotx.io/database/partials"
 import {
   createSelectSchema,
@@ -27,8 +30,22 @@ export const publicProductResource = createSelectSchema(productModel, {
   tags: z.array(z.string()),
   inventoryPolicy: inventoryPolicyTypes,
   vendorId: z.string().nullable(),
+  source: storeSources.describe(
+    "`shopify` for a product mirrored from the connected Shopify store: read-only, edited in Shopify — its `status` included.",
+  ),
+  externalId: z.string().nullable().describe("Shopify's product GID."),
+  externalHandle: z
+    .string()
+    .nullable()
+    .describe("Shopify's product handle, as in its storefront URL."),
+  status: productStatuses.describe(
+    "Only `active` is shown and orderable; `draft` and `unlisted` are hidden. A Shopify product mirrors Shopify's status (`ARCHIVED` reads as `draft`); set our own products' status with `products.setActive`.",
+  ),
 })
   .extend({
+    isActive: z
+      .boolean()
+      .describe("Deprecated: `status` is `active`. Read `status` instead."),
     vendor: z
       .string()
       .nullable()
@@ -56,10 +73,14 @@ export const publicProductResource = createSelectSchema(productModel, {
     rank: true,
     categoryId: true,
     subcategoryId: true,
+    status: true,
     isActive: true,
     isSearchable: true,
     allowSpecialRequest: true,
     isAddonOnly: true,
+    source: true,
+    externalId: true,
+    externalHandle: true,
     createdAt: true,
     updatedAt: true,
   })
@@ -74,6 +95,19 @@ const variant = z.object({
   combination: z.record(z.string(), z.string()),
   price: z.number(),
   isEnabled: z.boolean(),
+  sku: z.string().nullable().optional().describe("The variant's own SKU."),
+  inventoryQuantity: z
+    .number()
+    .nullable()
+    .optional()
+    .describe(
+      "Stock of this variant alone (Shopify variants); null when stock is kept on the product.",
+    ),
+  externalId: z
+    .string()
+    .nullable()
+    .optional()
+    .describe("Shopify's variant GID."),
 })
 
 const addon = z.object({
@@ -81,6 +115,14 @@ const addon = z.object({
   maxSelections: z.number(),
   addonProductIds: z.array(z.string()),
 })
+
+/**
+ * Adds the `isActive` the public product carried before `status` replaced it,
+ * so a client still reading it keeps working.
+ */
+export const withLegacyIsActive = <Product extends { status: ProductStatus }>(
+  product: Product,
+) => ({ ...product, isActive: product.status === "active" })
 
 export const publicProductDetailResource = publicProductResource.extend({
   variantOptions: z.array(variantOption),

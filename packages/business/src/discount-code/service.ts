@@ -9,6 +9,7 @@ import type {
   DiscountMinimumType,
   DiscountType,
   ShippingType,
+  StoreSource,
 } from "@chatbotx.io/database/partials"
 import {
   type DiscountCodeListInput,
@@ -20,11 +21,13 @@ import {
 import type { DiscountCodeModel } from "@chatbotx.io/database/types"
 import { BaseService } from "../base.service"
 import { contactService } from "../contact/service"
+import { resolveStoreSource } from "../ecommerce-settings/store-source"
 import {
   ChatbotXException,
   notFoundException,
   validationException,
 } from "../errors"
+import { shopifyManagedException } from "../shopify/errors"
 import {
   discountCodeAlreadyUsedException,
   discountCodeDuplicatedException,
@@ -61,6 +64,8 @@ export type DiscountCodeInput = {
 /** The order a code is priced against. */
 export type DiscountOrderContext = {
   workspaceId: string
+  /** Whose codes apply: the store's own, or the connected Shopify store's. */
+  source?: StoreSource
   contactId: string | null
   lines: CouponLine[]
   shippingType: ShippingType | null
@@ -198,7 +203,10 @@ const toInput = (row: DiscountCodeModel): DiscountCodeInput => ({
  */
 class DiscountCodeService extends BaseService {
   async list(input: DiscountCodeListInput) {
-    return await discountCodeRepository.list(input)
+    return await discountCodeRepository.list({
+      ...input,
+      source: input.source ?? (await resolveStoreSource(input.workspaceId)),
+    })
   }
 
   async get(input: { workspaceId: string; discountCodeId: string }) {
@@ -224,7 +232,26 @@ class DiscountCodeService extends BaseService {
     )
   }
 
+  /**
+   * A code mirrored from Shopify changes in Shopify. Checked while the store
+   * mirrors Shopify; otherwise its codes are not listed at all.
+   */
+  private async assertManagedHere(input: {
+    workspaceId: string
+    discountCodeId: string
+  }) {
+    if ((await resolveStoreSource(input.workspaceId)) !== "shopify") {
+      return
+    }
+    if ((await this.get(input)).source === "shopify") {
+      throw shopifyManagedException()
+    }
+  }
+
   async create(input: DiscountCodeInput & { workspaceId: string }) {
+    if ((await resolveStoreSource(input.workspaceId)) === "shopify") {
+      throw shopifyManagedException()
+    }
     const values = normalize(input)
     await this.assertValid(input.workspaceId, values)
     try {
@@ -251,6 +278,9 @@ class DiscountCodeService extends BaseService {
     data: Partial<DiscountCodeInput>
   }) {
     const current = await this.get(input)
+    if (current.source === "shopify") {
+      throw shopifyManagedException()
+    }
     const merged = { ...toInput(current), ...input.data }
     // Products deleted since the last save are dropped quietly when the caller
     // does not send a product list, so an unrelated edit is not refused.
@@ -291,6 +321,7 @@ class DiscountCodeService extends BaseService {
     discountCodeId: string
     isActive: boolean
   }) {
+    await this.assertManagedHere(input)
     // A code switched off because its products or category were deleted
     // applies to nothing — it is fixed through `update` before it can be on.
     if (input.isActive) {
@@ -314,6 +345,7 @@ class DiscountCodeService extends BaseService {
 
   /** Placed orders keep the code they used, as text. */
   async delete(input: { workspaceId: string; discountCodeId: string }) {
+    await this.assertManagedHere(input)
     const row = await discountCodeRepository.delete(input)
     if (!row) {
       throw notFoundException("Discount code does not exist.")
@@ -340,7 +372,7 @@ class DiscountCodeService extends BaseService {
     const typed = order.code?.trim()
     if (typed) {
       const found = await discountCodeRepository.findByCode(
-        { workspaceId: order.workspaceId, code: typed },
+        { workspaceId: order.workspaceId, code: typed, source: order.source },
         order.tx,
       )
       if (!found) {
@@ -352,7 +384,7 @@ class DiscountCodeService extends BaseService {
       return null
     }
     const candidates = await discountCodeRepository.listAutoApply(
-      { workspaceId: order.workspaceId, now },
+      { workspaceId: order.workspaceId, now, source: order.source },
       order.tx,
     )
     const priced: AppliedDiscount[] = []
@@ -405,6 +437,7 @@ class DiscountCodeService extends BaseService {
     const now = order.now ?? new Date()
     const candidates = await discountCodeRepository.listOffered({
       workspaceId: order.workspaceId,
+      source: order.source,
       now,
       limit: MAX_OFFERED_CODES,
     })

@@ -6143,7 +6143,40 @@
       "notPaid": "未付款"
     },
     "paymentUntil": "截至 {time}",
-    "paymentExpiredCancelReason": "未在规定时间内收到付款。"
+    "paymentExpiredCancelReason": "未在规定时间内收到付款。",
+    "exportTruncated": "导出已限制为前 {count} 个订单",
+    "exportError": "无法导出订单",
+    "shopify": {
+      "syncOrders": "同步订单",
+      "orderColumn": "订单",
+      "customerColumn": "客户",
+      "paymentPending": "待处理",
+      "paymentFilter": "付款",
+      "paymentFilterAll": "付款：全部",
+      "fulfillmentFilter": "履约",
+      "fulfillmentFilterAll": "履约：全部",
+      "fulfillmentStatuses": {
+        "fulfilled": "已履约",
+        "unfulfilled": "未履约",
+        "partial": "部分履约"
+      },
+      "viewDetails": "查看详情",
+      "viewOnShopify": "在 Shopify 中查看",
+      "detailsTitle": "订单 {name}",
+      "placedOn": "在 Shopify 店铺下单 • {date}",
+      "customerDetails": "客户详情",
+      "shippingAddress": "收货地址",
+      "noShippingAddress": "无收货地址",
+      "tracking": "物流跟踪：{company} #{number}",
+      "lineItems": "订单商品",
+      "itemColumn": "商品",
+      "skuColumn": "SKU",
+      "shipping": "运费",
+      "free": "免费",
+      "loading": "加载中...",
+      "loadError": "无法加载订单详情",
+      "close": "关闭"
+    }
   },
   "placesNearMe": {
     "description": "让您的客户轻松找到离他们最近的营业地点。",
@@ -6496,6 +6529,14 @@
       "isActive": {
         "label": "活动"
       },
+      "status": {
+        "label": "状态",
+        "values": {
+          "active": "在售",
+          "draft": "草稿",
+          "unlisted": "未列出"
+        }
+      },
       "isAddonOnly": {
         "label": "仅将此产品作为其他产品的插件使用"
       },
@@ -6563,7 +6604,33 @@
       "tags": "标签",
       "variants": "变体"
     },
-    "title": "产品"
+    "title": "产品",
+    "shopify": {
+      "openShopify": "打开 Shopify",
+      "syncProducts": "同步商品",
+      "syncStarted": "同步已开始",
+      "syncError": "无法开始同步",
+      "viewDetails": "查看详情",
+      "editOnShopify": "在 Shopify 中编辑",
+      "copyProductLink": "复制商品链接",
+      "linkCopied": "商品链接已复制",
+      "noProductLink": "此商品没有店铺链接",
+      "inStock": "库存 {count}",
+      "inStockWithVariants": "库存 {count}（{variants} 个变体）",
+      "detailsTitle": "商品详情 — {name}",
+      "detailsSubtitle": "已从 Shopify 店铺 {shop} 同步",
+      "summaryLine": "分类：{category} • 总库存：{variants, plural, one {# 个变体} other {# 个变体}}共 {units} 件",
+      "uncategorized": "未分类",
+      "variantsTitle": "变体（{count}）",
+      "variantColumn": "变体",
+      "skuColumn": "SKU",
+      "priceColumn": "价格",
+      "inventoryColumn": "库存",
+      "defaultVariant": "默认",
+      "loading": "加载中...",
+      "loadError": "无法加载商品详情",
+      "close": "关闭"
+    }
   },
   "qrCodeGenerator": {
     "description": "创建并管理您的 QR Code。",
@@ -10117,7 +10184,8 @@
       "general": "常规",
       "payments": "支付",
       "shipping": "配送",
-      "checkout": "结账"
+      "checkout": "结账",
+      "shopify": "Shopify"
     },
     "general": {
       "orderingAvailable": {
@@ -10185,6 +10253,14 @@
         "label": "弃购流程",
         "description": "购物车被搁置这么久后，机器人为顾客运行的流程。在按钮中使用 '{{shop_token}}' 可打开购物车。触发器也可使用“Cart abandoned”事件。",
         "none": "不运行流程（仅触发器事件）"
+      },
+      "storeSource": {
+        "label": "店铺来源",
+        "description": "选择用于管理商品、库存和订单的店铺来源。设置为 Shopify 后，所有商品和订单都将直接在您的 Shopify 店铺中管理。",
+        "options": {
+          "chatbotx": "ChatbotX",
+          "shopify": "Shopify"
+        }
       }
     },
     "payments": {
@@ -10310,6 +10386,78 @@
       "orderConfirmationFlowId": {
         "label": "订单确认流程",
         "description": "客户下单后，代替默认消息发送给客户的流程。"
+      },
+      "shopifyCheckoutMethod": {
+        "label": "结账方式",
+        "description": "选择客户在 Shopify 结账页面完成付款，还是直接在网店下单。",
+        "options": {
+          "webCheckout": "Shopify 网页结账",
+          "inApp": "应用内结账"
+        }
+      },
+      "shopifyAutoApplyDiscounts": {
+        "label": "自动应用折扣码",
+        "description": "允许客户在跳转到结账页之前，直接在购物车中使用 Shopify 折扣码。"
+      },
+      "inAppDeliveryCost": {
+        "label": "配送费用",
+        "description": "添加到应用内结账订单的配送费。"
+      }
+    },
+    "shopify": {
+      "shopDomain": {
+        "label": "店铺域名",
+        "placeholder": "your-store.myshopify.com",
+        "hint": "请输入您 Shopify 店铺的 .myshopify.com 域名。",
+        "connectedHint": "您已连接的 Shopify 店铺域名。"
+      },
+      "authKind": {
+        "label": "身份验证",
+        "description": "ChatbotX 登录您店铺的方式：使用自定义应用的 Admin API 访问令牌，或使用在 Shopify Dev Dashboard 中创建的应用的 Client ID 和密钥。",
+        "options": {
+          "token": "Admin API 访问令牌",
+          "clientCredentials": "Client ID 和密钥（Dev Dashboard 应用）"
+        }
+      },
+      "accessToken": {
+        "label": "Admin API 访问令牌",
+        "hint": "您自定义应用的 Admin API 访问令牌。请授予以下权限范围：{scopes}。",
+        "connectedHint": "您的 Shopify Admin API 访问令牌已加密存储。"
+      },
+      "apiSecret": {
+        "label": "API 密钥",
+        "hint": "应用的 API 密钥，用于验证 Shopify 发送的 Webhook。"
+      },
+      "clientId": {
+        "label": "Client ID",
+        "hint": "您的 Dev Dashboard 应用的 Client ID。请授予以下权限范围：{scopes}。"
+      },
+      "clientSecret": {
+        "label": "Client Secret",
+        "hint": "应用的 Client Secret。已加密存储。"
+      },
+      "webhookUrl": {
+        "label": "Webhook URL",
+        "description": "连接时自动在 Shopify 注册，以实时接收商品、库存和订单更新。"
+      },
+      "syncNow": "立即同步",
+      "syncStarted": "同步已开始",
+      "syncError": "无法开始同步",
+      "syncStatus": {
+        "label": "同步状态",
+        "description": "商品、折扣码和订单会从您的 Shopify 店铺镜像同步。",
+        "connectedTo": "已连接到 {shopDomain}",
+        "lastSynced": "上次同步：{time}（{productCount} 件商品，{orderCount} 个订单）",
+        "neverSynced": "尚未同步",
+        "noReason": "请重新连接您的店铺以继续。",
+        "invalid": "连接已失效：{reason}",
+        "state": {
+          "idle": "空闲",
+          "queued": "同步已加入队列...",
+          "running": "正在同步...",
+          "succeeded": "上次同步成功",
+          "failed": "上次同步失败"
+        }
       }
     }
   },
@@ -10389,7 +10537,8 @@
       "total": "合计",
       "coupon": "优惠券（{code}）",
       "title": "订单摘要",
-      "saved": "为你节省 {amount}"
+      "saved": "为你节省 {amount}",
+      "deliveryAtCheckout": "结账时计算"
     },
     "belowMinimum": "最低订单金额为 {amount}。",
     "checkOut": "去结算",
@@ -10508,7 +10657,9 @@
       "notEligible": "暂不符合条件"
     },
     "itemCount": "{count, plural, one {# 件} other {# 件}}",
-    "relatedProducts": "猜你喜欢"
+    "relatedProducts": "猜你喜欢",
+    "soldOut": "已售罄",
+    "sku": "SKU：{sku}"
   },
   "webshopLinks": {
     "preview": "预览",

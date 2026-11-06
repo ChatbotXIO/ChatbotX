@@ -7341,7 +7341,40 @@
       "notPaid": "Ikke betalt"
     },
     "paymentUntil": "indtil {time}",
-    "paymentExpiredCancelReason": "Betalingen blev ikke modtaget i tide."
+    "paymentExpiredCancelReason": "Betalingen blev ikke modtaget i tide.",
+    "exportTruncated": "Eksporten blev begrænset til de første {count} ordrer",
+    "exportError": "Kunne ikke eksportere ordrerne",
+    "shopify": {
+      "syncOrders": "Synkroniser ordrer",
+      "orderColumn": "Ordre",
+      "customerColumn": "Kunde",
+      "paymentPending": "Afventer",
+      "paymentFilter": "Betaling",
+      "paymentFilterAll": "Betaling: Alle",
+      "fulfillmentFilter": "Opfyldelse",
+      "fulfillmentFilterAll": "Opfyldelse: Alle",
+      "fulfillmentStatuses": {
+        "fulfilled": "Opfyldt",
+        "unfulfilled": "Ikke opfyldt",
+        "partial": "Delvis"
+      },
+      "viewDetails": "Se detaljer",
+      "viewOnShopify": "Se på Shopify",
+      "detailsTitle": "Ordre {name}",
+      "placedOn": "Afgivet i Shopify-butik • {date}",
+      "customerDetails": "Kundeoplysninger",
+      "shippingAddress": "Leveringsadresse",
+      "noShippingAddress": "Ingen leveringsadresse",
+      "tracking": "Sporing: {company} #{number}",
+      "lineItems": "Ordrelinjer",
+      "itemColumn": "Vare",
+      "skuColumn": "SKU",
+      "shipping": "Fragt",
+      "free": "Gratis",
+      "loading": "Indlæser...",
+      "loadError": "Kunne ikke indlæse ordredetaljerne",
+      "close": "Luk"
+    }
   },
   "products": {
     "title": "Produkter",
@@ -7421,6 +7454,14 @@
       "isActive": {
         "label": "Aktiv"
       },
+      "status": {
+        "label": "Status",
+        "values": {
+          "active": "Aktiv",
+          "draft": "Kladde",
+          "unlisted": "Ikke listet"
+        }
+      },
       "isAddonOnly": {
         "label": "Use denne produkt kun as an addon for others produkter"
       },
@@ -7456,6 +7497,32 @@
     "inventoryPolicy": {
       "dont_track": "Don't track inventory",
       "track": "Track inventory"
+    },
+    "shopify": {
+      "openShopify": "Åbn Shopify",
+      "syncProducts": "Synkroniser produkter",
+      "syncStarted": "Synkronisering startet",
+      "syncError": "Kunne ikke starte synkroniseringen",
+      "viewDetails": "Se detaljer",
+      "editOnShopify": "Rediger på Shopify",
+      "copyProductLink": "Kopiér produktlink",
+      "linkCopied": "Produktlink kopieret",
+      "noProductLink": "Dette produkt har intet butikslink",
+      "inStock": "{count} på lager",
+      "inStockWithVariants": "{count} på lager ({variants} varianter)",
+      "detailsTitle": "Produktdetaljer — {name}",
+      "detailsSubtitle": "Synkroniseret fra Shopify-butikken {shop}",
+      "summaryLine": "Kategori: {category} • Samlet lager: {units} enheder fordelt på {variants, plural, one {# variant} other {# varianter}}",
+      "uncategorized": "Uden kategori",
+      "variantsTitle": "Varianter ({count})",
+      "variantColumn": "Variant",
+      "skuColumn": "SKU",
+      "priceColumn": "Pris",
+      "inventoryColumn": "Lager",
+      "defaultVariant": "Standard",
+      "loading": "Indlæser...",
+      "loadError": "Kunne ikke indlæse produktdetaljerne",
+      "close": "Luk"
     }
   },
   "tiktok": {
@@ -10117,7 +10184,8 @@
       "general": "Generelt",
       "payments": "Betalinger",
       "shipping": "Levering",
-      "checkout": "Kasse"
+      "checkout": "Kasse",
+      "shopify": "Shopify"
     },
     "general": {
       "orderingAvailable": {
@@ -10185,6 +10253,14 @@
         "label": "Flow for forladt kurv",
         "description": "Det flow, botten kører for kunden, når kurven har ligget så længe. Brug '{{shop_token}}' i knapperne for at åbne kurven. Triggere kan også bruge hændelsen \"Cart abandoned\".",
         "none": "Intet flow (kun trigger-hændelse)"
+      },
+      "storeSource": {
+        "label": "Butikskilde",
+        "description": "Vælg den butikskilde, der bruges til at administrere dine produkter, lager og ordrer. Når Shopify er valgt, administreres alle produkter og ordrer direkte fra din Shopify-butik.",
+        "options": {
+          "chatbotx": "ChatbotX",
+          "shopify": "Shopify"
+        }
       }
     },
     "payments": {
@@ -10310,6 +10386,78 @@
       "orderConfirmationFlowId": {
         "label": "Flow til ordrebekræftelse",
         "description": "Flowet, der sendes til kunden i stedet for standardbeskeden, når ordren er afgivet."
+      },
+      "shopifyCheckoutMethod": {
+        "label": "Betalingsmetode",
+        "description": "Vælg, om kunder gennemfører betalingen på din Shopify-betalingsside eller afgiver ordren direkte i webshoppen.",
+        "options": {
+          "webCheckout": "Shopify-webbetaling",
+          "inApp": "Betaling i appen"
+        }
+      },
+      "shopifyAutoApplyDiscounts": {
+        "label": "Anvend rabatkoder automatisk",
+        "description": "Lad kunder anvende Shopify-rabatkoder direkte på deres kurv, før de sendes videre til betaling."
+      },
+      "inAppDeliveryCost": {
+        "label": "Leveringsomkostning",
+        "description": "Leveringsgebyr, der tilføjes til ordrer betalt i appen."
+      }
+    },
+    "shopify": {
+      "shopDomain": {
+        "label": "Butiksdomæne",
+        "placeholder": "your-store.myshopify.com",
+        "hint": "Indtast .myshopify.com-domænet for din Shopify-butik.",
+        "connectedHint": "Domænet for din tilsluttede Shopify-butik."
+      },
+      "authKind": {
+        "label": "Godkendelse",
+        "description": "Sådan logger ChatbotX ind i din butik: med Admin API-adgangstokenet fra en tilpasset app eller med Client ID og secret fra en app oprettet i Shopify Dev Dashboard.",
+        "options": {
+          "token": "Admin API-adgangstoken",
+          "clientCredentials": "Client ID og secret (Dev Dashboard-app)"
+        }
+      },
+      "accessToken": {
+        "label": "Admin API-adgangstoken",
+        "hint": "Admin API-adgangstokenet fra din tilpassede app. Giv det disse scopes: {scopes}.",
+        "connectedHint": "Dit Shopify Admin API-adgangstoken gemmes krypteret."
+      },
+      "apiSecret": {
+        "label": "API-hemmelig nøgle",
+        "hint": "Appens hemmelige API-nøgle, som bruges til at verificere webhooks sendt af Shopify."
+      },
+      "clientId": {
+        "label": "Client ID",
+        "hint": "Client ID for din Dev Dashboard-app. Giv den disse scopes: {scopes}."
+      },
+      "clientSecret": {
+        "label": "Client Secret",
+        "hint": "Appens Client Secret. Den gemmes krypteret."
+      },
+      "webhookUrl": {
+        "label": "Webhook-URL",
+        "description": "Registreres automatisk hos Shopify ved tilslutning for at modtage opdateringer om produkter, lager og ordrer i realtid."
+      },
+      "syncNow": "Synkroniser nu",
+      "syncStarted": "Synkronisering startet",
+      "syncError": "Kunne ikke starte synkroniseringen",
+      "syncStatus": {
+        "label": "Synkroniseringsstatus",
+        "description": "Produkter, rabatkoder og ordrer spejles fra din Shopify-butik.",
+        "connectedTo": "Forbundet til {shopDomain}",
+        "lastSynced": "Sidst synkroniseret: {time} ({productCount} produkter, {orderCount} ordrer)",
+        "neverSynced": "Endnu ikke synkroniseret",
+        "noReason": "Tilslut din butik igen for at fortsætte.",
+        "invalid": "Forbindelsen er ikke længere gyldig: {reason}",
+        "state": {
+          "idle": "Inaktiv",
+          "queued": "Synkronisering i kø...",
+          "running": "Synkroniserer...",
+          "succeeded": "Seneste synkronisering lykkedes",
+          "failed": "Seneste synkronisering mislykkedes"
+        }
       }
     }
   },
@@ -10389,7 +10537,8 @@
       "total": "I alt",
       "coupon": "Rabatkode ({code})",
       "title": "Ordreoversigt",
-      "saved": "Du sparer {amount}"
+      "saved": "Du sparer {amount}",
+      "deliveryAtCheckout": "Beregnes ved betaling"
     },
     "belowMinimum": "Minimumsordren er {amount}.",
     "checkOut": "Gå til kassen",
@@ -10508,7 +10657,9 @@
       "notEligible": "Ikke kvalificeret endnu"
     },
     "itemCount": "{count, plural, one {# vare} other {# varer}}",
-    "relatedProducts": "Du kan også lide"
+    "relatedProducts": "Du kan også lide",
+    "soldOut": "Udsolgt",
+    "sku": "SKU: {sku}"
   },
   "webshopLinks": {
     "preview": "Forhåndsvis",

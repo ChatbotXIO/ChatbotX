@@ -18,9 +18,12 @@ import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { use, useMemo, useState } from "react"
 import type { listImports } from "@/features/import/queries/list-imports.queries"
+import { ProductShopifyDetailsDialog } from "@/features/shopify/components/product-shopify-details-dialog"
+import { ProductShopifyHeaderActions } from "@/features/shopify/components/product-shopify-header-actions"
 import { ImportProductDialog } from "./components/import-product-dialog"
 import { MetaCatalogDialog } from "./components/meta-catalog-dialog"
 import { DeleteProductsDialog } from "./delete-product-dialog"
+import type { ShopifyStoreLinks } from "./lib/shopify-admin-url"
 import { getProductColumns } from "./products-table-columns"
 import { ProductsTableToolbarActions } from "./products-table-toolbar-actions"
 import type { ListProductsResponse } from "./schema/query"
@@ -33,6 +36,10 @@ type ProductsTableProps = {
   initialMetaCatalogState: Parameters<
     typeof MetaCatalogDialog
   >[0]["initialState"]
+  /** Set while the store source is Shopify: the table is read-only. */
+  shopify?: {
+    store: ShopifyStoreLinks
+  }
 }
 
 export function ProductsTable({
@@ -40,6 +47,7 @@ export function ProductsTable({
   workspaceId,
   importHistoryPromise,
   initialMetaCatalogState,
+  shopify,
 }: ProductsTableProps) {
   const t = useTranslations()
   const router = useRouter()
@@ -49,7 +57,10 @@ export function ProductsTable({
   const [rowAction, setRowAction] =
     useState<DataTableRowAction<ProductResource> | null>(null)
 
-  const columns = useMemo(() => getProductColumns({ t, setRowAction }), [t])
+  const columns = useMemo(
+    () => getProductColumns({ t, setRowAction, shopify }),
+    [t, shopify],
+  )
 
   const { table } = useDataTable({
     data,
@@ -74,24 +85,31 @@ export function ProductsTable({
           {t("products.title")}
         </CardTitle>
         <CardAction>
-          <div className="flex items-center gap-2">
-            <Link
-              className={buttonVariants({ size: "sm" })}
-              href={`/space/${workspaceId}/products/create`}
-            >
-              <PlusIcon />
-              {t("actions.create")}
-            </Link>
-            <ImportProductDialog
-              historyPromise={importHistoryPromise}
+          {shopify ? (
+            <ProductShopifyHeaderActions
+              adminUrl={shopify.store.adminUrl}
               workspaceId={workspaceId}
             />
-            <MetaCatalogDialog
-              initialState={initialMetaCatalogState}
-              selectedProductIds={selectedProductIds}
-              workspaceId={workspaceId}
-            />
-          </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <Link
+                className={buttonVariants({ size: "sm" })}
+                href={`/space/${workspaceId}/products/create`}
+              >
+                <PlusIcon />
+                {t("actions.create")}
+              </Link>
+              <ImportProductDialog
+                historyPromise={importHistoryPromise}
+                workspaceId={workspaceId}
+              />
+              <MetaCatalogDialog
+                initialState={initialMetaCatalogState}
+                selectedProductIds={selectedProductIds}
+                workspaceId={workspaceId}
+              />
+            </div>
+          )}
         </CardAction>
       </CardHeader>
       <CardContent>
@@ -104,6 +122,15 @@ export function ProductsTable({
             />
           </DataTableToolbar>
         </DataTable>
+
+        {shopify && rowAction?.variant === "view" ? (
+          <ProductShopifyDetailsDialog
+            onOpenChange={() => setRowAction(null)}
+            product={rowAction.row.original}
+            store={shopify.store}
+            workspaceId={workspaceId}
+          />
+        ) : null}
 
         <DeleteProductsDialog
           onOpenChange={() => setRowAction(null)}

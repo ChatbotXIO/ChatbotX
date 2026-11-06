@@ -13,7 +13,11 @@ import {
   relationsFilterToSQL,
   sql,
 } from "@chatbotx.io/database/client"
-import { inventoryPolicyTypes } from "@chatbotx.io/database/partials"
+import {
+  inventoryPolicyTypes,
+  type ProductStatus,
+  type StoreSource,
+} from "@chatbotx.io/database/partials"
 import {
   productCategoryModel,
   productModel,
@@ -31,6 +35,8 @@ import { vendorRepository } from "../vendor/repository"
 
 export type ProductListInput = {
   workspaceId: string
+  /** Our own products or the connected Shopify store's; ours when left out. */
+  source?: StoreSource
   name?: string | null
   categoryId?: string | null
   /** Only these products — how a picker names the ones already chosen. */
@@ -58,7 +64,7 @@ export type ProductImportInsert = {
   inventoryPolicy?: "dont_track" | "track"
   allowOutOfStockPurchase?: boolean
   images?: Array<{ url: string; type: "link" | "file" }>
-  isActive?: boolean
+  status?: ProductStatus
 }
 
 /** Everything a product row needs on insert except its generated id. */
@@ -92,6 +98,7 @@ const PRODUCT_ID_PATTERN = /^\d{1,18}$/
  */
 const shopVisibleWhere = (input: {
   workspaceId: string
+  source?: StoreSource
   category: ReturnType<typeof alias<typeof productCategoryModel, "category">>
   subcategory: ReturnType<
     typeof alias<typeof productCategoryModel, "subcategory">
@@ -99,7 +106,8 @@ const shopVisibleWhere = (input: {
 }) =>
   and(
     eq(productModel.workspaceId, input.workspaceId),
-    eq(productModel.isActive, true),
+    eq(productModel.source, input.source ?? "chatbotx"),
+    eq(productModel.status, "active"),
     eq(productModel.isAddonOnly, false),
     or(isNull(productModel.categoryId), eq(input.category.isVisible, true)),
     or(
@@ -113,6 +121,7 @@ export const productRepository = {
   async list(input: ProductListInput, tx: DatabaseClient = db) {
     const where = {
       workspaceId: input.workspaceId,
+      source: input.source ?? "chatbotx",
       name: input.name ? { ilike: likeContains(input.name) } : undefined,
       id: input.ids?.length ? { in: input.ids } : undefined,
       ...inCategory(input.categoryId),
@@ -127,6 +136,7 @@ export const productRepository = {
           category: true,
           subcategory: true,
           vendor: { columns: { name: true } },
+          variants: { columns: { inventoryQuantity: true, isEnabled: true } },
         },
         orderBy,
         ...pagination,
@@ -135,13 +145,37 @@ export const productRepository = {
     ])
 
     return {
-      data: rows.map(({ category, subcategory, vendor, ...product }) => ({
-        ...product,
-        inventoryPolicy: inventoryPolicyTypes.parse(product.inventoryPolicy),
-        category: category?.name ?? null,
-        subcategory: subcategory?.name ?? null,
-        vendor: vendor?.name ?? null,
-      })),
+      data: rows.map(
+        ({ category, subcategory, vendor, variants, ...product }) => {
+          const enabled = variants.filter((variant) => variant.isEnabled)
+          const stocked = enabled.flatMap((variant) =>
+            variant.inventoryQuantity === null
+              ? []
+              : [variant.inventoryQuantity],
+          )
+          return {
+            ...product,
+            inventoryPolicy: inventoryPolicyTypes.parse(
+              product.inventoryPolicy,
+            ),
+            category: category?.name ?? null,
+            subcategory: subcategory?.name ?? null,
+            vendor: vendor?.name ?? null,
+            variantCount: enabled.length,
+            /**
+             * Stock summed over variants stocked one by one (Shopify);
+             * null when stock is kept on the product.
+             */
+            variantInventoryTotal:
+              stocked.length > 0
+                ? stocked.reduce(
+                    (sum, quantity) => sum + Math.max(0, quantity),
+                    0,
+                  )
+                : null,
+          }
+        },
+      ),
       pageCount: pagination?.limit ? Math.ceil(total / pagination.limit) : 1,
     }
   },
@@ -206,23 +240,28 @@ export const productRepository = {
           inventoryPolicy: product.inventoryPolicy ?? "dont_track",
           allowOutOfStockPurchase: product.allowOutOfStockPurchase ?? false,
           images: product.images ?? [],
-          isActive: product.isActive ?? true,
+          status: product.status ?? "active",
         })),
       )
       .returning()
   },
 
   async listFormOptions(
-    input: { workspaceId: string },
+    input: { workspaceId: string; source?: StoreSource },
     tx: DatabaseClient = db,
   ) {
     const [products, vendors] = await Promise.all([
       tx
         .select({ id: productModel.id, name: productModel.name })
         .from(productModel)
-        .where(eq(productModel.workspaceId, input.workspaceId))
+        .where(
+          and(
+            eq(productModel.workspaceId, input.workspaceId),
+            eq(productModel.source, input.source ?? "chatbotx"),
+          ),
+        )
         .orderBy(asc(productModel.name), asc(productModel.id)),
-      vendorRepository.listOptions(input.workspaceId, tx),
+      vendorRepository.listOptions(input.workspaceId, tx, input.source),
     ])
     return { products, vendors }
   },
@@ -377,6 +416,7 @@ export const productRepository = {
   async listRelatedForShop(
     input: {
       workspaceId: string
+      source?: StoreSource
       product: {
         id: string
         categoryId: string | null
@@ -423,6 +463,11 @@ export const productRepository = {
         vendorName: vendorModel.name,
         vendorDiscountPercent: vendorModel.discountPercent,
         hasVariants: sql<boolean>`exists (select 1 from ${productVariantModel} where ${productVariantModel.productId} = ${productModel.id} and ${productVariantModel.isEnabled})`,
+        // Stock of each variant stocked one by one, so the shop can tell a
+        // product whose every variant sold out.
+        variantInventoryQuantities: sql<
+          Array<number | null>
+        >`coalesce((select json_agg(${productVariantModel.inventoryQuantity}) from ${productVariantModel} where ${productVariantModel.productId} = ${productModel.id} and ${productVariantModel.isEnabled}), '[]'::json)`,
       })
       .from(productModel)
       .leftJoin(category, eq(category.id, productModel.categoryId))
@@ -432,6 +477,7 @@ export const productRepository = {
         and(
           shopVisibleWhere({
             workspaceId: input.workspaceId,
+            source: input.source,
             category,
             subcategory,
           }),
@@ -442,11 +488,18 @@ export const productRepository = {
       .orderBy(closeness, asc(productModel.rank), asc(productModel.name))
       .limit(input.limit)
     return rows.map(
-      ({ product: row, vendorName, vendorDiscountPercent, hasVariants }) => ({
+      ({
+        product: row,
+        vendorName,
+        vendorDiscountPercent,
+        hasVariants,
+        variantInventoryQuantities,
+      }) => ({
         ...row,
         vendor: vendorName,
         vendorDiscountPercent: vendorDiscountPercent ?? 0,
         hasVariants,
+        variantInventoryQuantities,
       }),
     )
   },
@@ -454,6 +507,7 @@ export const productRepository = {
   async listForShop(
     input: {
       workspaceId: string
+      source?: StoreSource
       keyword?: string | null
       categoryId?: string | null
       vendorId?: string | null
@@ -469,6 +523,7 @@ export const productRepository = {
     const where = and(
       shopVisibleWhere({
         workspaceId: input.workspaceId,
+        source: input.source,
         category,
         subcategory,
       }),
@@ -498,6 +553,9 @@ export const productRepository = {
           // A product with variants is added from its own page, where the
           // customer picks one.
           hasVariants: sql<boolean>`exists (select 1 from ${productVariantModel} where ${productVariantModel.productId} = ${productModel.id} and ${productVariantModel.isEnabled})`,
+          variantInventoryQuantities: sql<
+            Array<number | null>
+          >`coalesce((select json_agg(${productVariantModel.inventoryQuantity}) from ${productVariantModel} where ${productVariantModel.productId} = ${productModel.id} and ${productVariantModel.isEnabled}), '[]'::json)`,
         })
         .from(productModel)
         .leftJoin(category, eq(category.id, productModel.categoryId))
@@ -521,11 +579,18 @@ export const productRepository = {
     const total = counted?.total ?? 0
     return {
       data: rows.map(
-        ({ product, vendorName, vendorDiscountPercent, hasVariants }) => ({
+        ({
+          product,
+          vendorName,
+          vendorDiscountPercent,
+          hasVariants,
+          variantInventoryQuantities,
+        }) => ({
           ...product,
           vendor: vendorName,
           vendorDiscountPercent: vendorDiscountPercent ?? 0,
           hasVariants,
+          variantInventoryQuantities,
         }),
       ),
       pageCount: pagination?.limit ? Math.ceil(total / pagination.limit) : 1,
@@ -538,7 +603,7 @@ export const productRepository = {
    * rank first, for matching names against a message in memory.
    */
   async listSearchableNames(
-    input: { workspaceId: string; limit: number },
+    input: { workspaceId: string; limit: number; source?: StoreSource },
     tx: DatabaseClient = db,
   ) {
     const category = alias(productCategoryModel, "category")
@@ -553,6 +618,7 @@ export const productRepository = {
         and(
           shopVisibleWhere({
             workspaceId: input.workspaceId,
+            source: input.source,
             category,
             subcategory,
           }),
@@ -568,7 +634,7 @@ export const productRepository = {
    * variant line, and the vendor's name kept on the line.
    */
   async findForOrder(
-    input: { workspaceId: string; productIds: string[] },
+    input: { workspaceId: string; productIds: string[]; source?: StoreSource },
     tx: DatabaseClient = db,
   ) {
     if (input.productIds.length === 0) {
@@ -578,6 +644,8 @@ export const productRepository = {
       where: {
         workspaceId: input.workspaceId,
         id: { in: input.productIds },
+        // Left out, any source: an order already placed reads its products.
+        source: input.source,
       },
       with: {
         variants: true,

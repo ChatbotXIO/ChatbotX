@@ -20,6 +20,11 @@ const tx = {
   insert: mocks.insert,
 }
 
+vi.mock("../src/ecommerce-settings/store-source", () => ({
+  resolveStoreSource: async () => "chatbotx",
+  ecommerceSettingsCacheTag: (workspaceId: string) =>
+    `ecommerce-settings:${workspaceId}`,
+}))
 vi.mock("@chatbotx.io/database/client", () => ({
   db: {
     transaction: mocks.transaction,
@@ -150,6 +155,40 @@ describe("productService workspace boundaries", () => {
     expect(mocks.removeProductIds).toHaveBeenCalledWith(
       { workspaceId: "workspace-1", productIds: ["product-1"] },
       tx,
+    )
+  })
+})
+
+describe("productService status", () => {
+  test("refuses to change a Shopify product's status: it follows Shopify", async () => {
+    mocks.findProductsByIds.mockResolvedValue([
+      { id: "product-1", source: "shopify" },
+    ])
+
+    await expect(
+      productService.update({
+        workspaceId: "workspace-1",
+        productId: "product-1",
+        data: { status: "draft" },
+      }),
+    ).rejects.toMatchObject({ code: "shopifyManaged" })
+    expect(mocks.productUpdate).not.toHaveBeenCalled()
+  })
+
+  test("switches our own product to draft", async () => {
+    mocks.findProductsByIds.mockResolvedValue([
+      { id: "product-1", source: "chatbotx" },
+    ])
+
+    await productService.update({
+      workspaceId: "workspace-1",
+      productId: "product-1",
+      data: { status: "draft" },
+    })
+
+    expect(mocks.productUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ values: { status: "draft" } }),
+      expect.anything(),
     )
   })
 })

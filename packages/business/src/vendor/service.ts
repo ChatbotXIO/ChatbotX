@@ -10,7 +10,9 @@ import {
 } from "@chatbotx.io/database/repositories"
 import { BaseService } from "../base.service"
 import { ecommerceOpenHoursService } from "../ecommerce-open-hours/service"
+import { resolveStoreSource } from "../ecommerce-settings/store-source"
 import { ChatbotXException, notFoundException } from "../errors"
+import { shopifyManagedException } from "../shopify/errors"
 
 const normalizeVendorName = (name: string): string => name.trim()
 
@@ -39,14 +41,41 @@ export type VendorWriteData = {
 class VendorService extends BaseService {
   /** All vendors, or one page filtered by name. */
   async list(input: VendorListInput) {
-    return await vendorRepository.listWithProductCount(input)
+    return await vendorRepository.listWithProductCount({
+      ...input,
+      source: input.source ?? (await resolveStoreSource(input.workspaceId)),
+    })
   }
 
   async listOptions(workspaceId: string) {
-    return await vendorRepository.listOptions(workspaceId)
+    return await vendorRepository.listOptions(
+      workspaceId,
+      undefined,
+      await resolveStoreSource(workspaceId),
+    )
+  }
+
+  /**
+   * A vendor mirrored from Shopify changes in Shopify. Checked while the
+   * store mirrors Shopify; otherwise its vendors are not listed at all.
+   */
+  private async assertManagedHere(input: {
+    workspaceId: string
+    vendorId: string
+  }) {
+    if ((await resolveStoreSource(input.workspaceId)) !== "shopify") {
+      return
+    }
+    const row = await vendorRepository.find(input)
+    if (row?.source === "shopify") {
+      throw shopifyManagedException()
+    }
   }
 
   async create(input: VendorWriteData & { workspaceId: string }) {
+    if ((await resolveStoreSource(input.workspaceId)) === "shopify") {
+      throw shopifyManagedException()
+    }
     const name = normalizeVendorName(input.name)
     if (!name) {
       throw vendorNameRequired()
@@ -72,6 +101,10 @@ class VendorService extends BaseService {
     vendorId: string
     data: Partial<VendorWriteData>
   }) {
+    // A Shopify vendor may only be switched on or off here.
+    if (!Object.keys(input.data).every((key) => key === "isActive")) {
+      await this.assertManagedHere(input)
+    }
     const name =
       input.data.name === undefined
         ? undefined
@@ -115,6 +148,7 @@ class VendorService extends BaseService {
 
   /** Products of the vendor stay; they just lose their vendor. */
   async delete(input: { workspaceId: string; vendorId: string }) {
+    await this.assertManagedHere(input)
     const row = await vendorRepository.delete(input)
     if (!row) {
       throw notFoundException("Vendor not found")

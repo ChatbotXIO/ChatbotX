@@ -7341,7 +7341,40 @@
       "notPaid": "Não pago"
     },
     "paymentUntil": "até às {time}",
-    "paymentExpiredCancelReason": "Pagamento não recebido a tempo."
+    "paymentExpiredCancelReason": "Pagamento não recebido a tempo.",
+    "exportTruncated": "A exportação foi limitada às primeiras {count} encomendas",
+    "exportError": "Não foi possível exportar as encomendas",
+    "shopify": {
+      "syncOrders": "Sincronizar encomendas",
+      "orderColumn": "Encomenda",
+      "customerColumn": "Cliente",
+      "paymentPending": "Pendente",
+      "paymentFilter": "Pagamento",
+      "paymentFilterAll": "Pagamento: Todos",
+      "fulfillmentFilter": "Processamento",
+      "fulfillmentFilterAll": "Processamento: Todos",
+      "fulfillmentStatuses": {
+        "fulfilled": "Processada",
+        "unfulfilled": "Não processada",
+        "partial": "Parcial"
+      },
+      "viewDetails": "Ver detalhes",
+      "viewOnShopify": "Ver no Shopify",
+      "detailsTitle": "Encomenda {name}",
+      "placedOn": "Feita na loja Shopify • {date}",
+      "customerDetails": "Detalhes do cliente",
+      "shippingAddress": "Morada de envio",
+      "noShippingAddress": "Sem morada de envio",
+      "tracking": "Seguimento: {company} #{number}",
+      "lineItems": "Artigos",
+      "itemColumn": "Artigo",
+      "skuColumn": "SKU",
+      "shipping": "Envio",
+      "free": "Grátis",
+      "loading": "A carregar...",
+      "loadError": "Não foi possível carregar os detalhes da encomenda",
+      "close": "Fechar"
+    }
   },
   "products": {
     "title": "Produtos",
@@ -7421,6 +7454,14 @@
       "isActive": {
         "label": "Ativo"
       },
+      "status": {
+        "label": "Estado",
+        "values": {
+          "active": "Ativo",
+          "draft": "Rascunho",
+          "unlisted": "Não listado"
+        }
+      },
       "isAddonOnly": {
         "label": "Utilizar este produto apenas como extra de outros produtos"
       },
@@ -7456,6 +7497,32 @@
     "inventoryPolicy": {
       "dont_track": "Não controlar o inventário",
       "track": "Controlar o inventário"
+    },
+    "shopify": {
+      "openShopify": "Abrir Shopify",
+      "syncProducts": "Sincronizar produtos",
+      "syncStarted": "Sincronização iniciada",
+      "syncError": "Não foi possível iniciar a sincronização",
+      "viewDetails": "Ver detalhes",
+      "editOnShopify": "Editar no Shopify",
+      "copyProductLink": "Copiar ligação do produto",
+      "linkCopied": "Ligação do produto copiada",
+      "noProductLink": "Este produto não tem ligação na loja",
+      "inStock": "{count} em stock",
+      "inStockWithVariants": "{count} em stock ({variants} variantes)",
+      "detailsTitle": "Detalhes do produto — {name}",
+      "detailsSubtitle": "Sincronizado da loja Shopify {shop}",
+      "summaryLine": "Categoria: {category} • Stock total: {units} unidades em {variants, plural, one {# variante} other {# variantes}}",
+      "uncategorized": "Sem categoria",
+      "variantsTitle": "Variantes ({count})",
+      "variantColumn": "Variante",
+      "skuColumn": "SKU",
+      "priceColumn": "Preço",
+      "inventoryColumn": "Stock",
+      "defaultVariant": "Predefinida",
+      "loading": "A carregar...",
+      "loadError": "Não foi possível carregar os detalhes do produto",
+      "close": "Fechar"
     }
   },
   "tiktok": {
@@ -10117,7 +10184,8 @@
       "general": "Geral",
       "payments": "Pagamentos",
       "shipping": "Envio",
-      "checkout": "Checkout"
+      "checkout": "Checkout",
+      "shopify": "Shopify"
     },
     "general": {
       "orderingAvailable": {
@@ -10185,6 +10253,14 @@
         "label": "Fluxo de carrinho abandonado",
         "description": "O fluxo que o bot executa para o cliente quando o carrinho fica abandonado durante esse tempo. Use '{{shop_token}}' nos botões para abrir o carrinho. Os triggers também podem usar o evento \"Cart abandoned\".",
         "none": "Sem fluxo (apenas evento de trigger)"
+      },
+      "storeSource": {
+        "label": "Origem da loja",
+        "description": "Selecione a origem da loja usada para gerir os seus produtos, stock e encomendas. Com o Shopify, todos os produtos e encomendas são geridos diretamente na sua loja Shopify.",
+        "options": {
+          "chatbotx": "ChatbotX",
+          "shopify": "Shopify"
+        }
       }
     },
     "payments": {
@@ -10310,6 +10386,78 @@
       "orderConfirmationFlowId": {
         "label": "Fluxo de confirmação da encomenda",
         "description": "O fluxo enviado ao cliente em vez da mensagem predefinida quando faz a encomenda."
+      },
+      "shopifyCheckoutMethod": {
+        "label": "Método de checkout",
+        "description": "Escolha se os clientes concluem o pagamento na página de checkout do Shopify ou fazem a encomenda diretamente na loja online.",
+        "options": {
+          "webCheckout": "Checkout web do Shopify",
+          "inApp": "Checkout na aplicação"
+        }
+      },
+      "shopifyAutoApplyDiscounts": {
+        "label": "Aplicar códigos de desconto automaticamente",
+        "description": "Permite que os clientes apliquem códigos de desconto do Shopify diretamente no carrinho antes de serem redirecionados para o checkout."
+      },
+      "inAppDeliveryCost": {
+        "label": "Custo de entrega",
+        "description": "Taxa de entrega adicionada às encomendas do checkout na aplicação."
+      }
+    },
+    "shopify": {
+      "shopDomain": {
+        "label": "Domínio da loja",
+        "placeholder": "your-store.myshopify.com",
+        "hint": "Introduza o domínio .myshopify.com da sua loja Shopify.",
+        "connectedHint": "O domínio da sua loja Shopify ligada."
+      },
+      "authKind": {
+        "label": "Autenticação",
+        "description": "Como o ChatbotX inicia sessão na sua loja: com o token de acesso da Admin API de uma aplicação personalizada ou com o Client ID e o secret de uma aplicação criada no Shopify Dev Dashboard.",
+        "options": {
+          "token": "Token de acesso da Admin API",
+          "clientCredentials": "Client ID e secret (aplicação do Dev Dashboard)"
+        }
+      },
+      "accessToken": {
+        "label": "Token de acesso da Admin API",
+        "hint": "O token de acesso da Admin API da sua aplicação personalizada. Conceda-lhe estes âmbitos: {scopes}.",
+        "connectedHint": "O seu token de acesso da Shopify Admin API é guardado de forma cifrada."
+      },
+      "apiSecret": {
+        "label": "Chave secreta da API",
+        "hint": "A chave secreta da API da aplicação, usada para verificar os webhooks enviados pelo Shopify."
+      },
+      "clientId": {
+        "label": "Client ID",
+        "hint": "O Client ID da sua aplicação do Dev Dashboard. Conceda-lhe estes âmbitos: {scopes}."
+      },
+      "clientSecret": {
+        "label": "Client Secret",
+        "hint": "O Client Secret da aplicação. É guardado de forma cifrada."
+      },
+      "webhookUrl": {
+        "label": "URL do webhook",
+        "description": "Registado automaticamente no Shopify ao ligar para receber atualizações de produtos, stock e encomendas em tempo real."
+      },
+      "syncNow": "Sincronizar agora",
+      "syncStarted": "Sincronização iniciada",
+      "syncError": "Não foi possível iniciar a sincronização",
+      "syncStatus": {
+        "label": "Estado da sincronização",
+        "description": "Os produtos, códigos de desconto e encomendas são espelhados da sua loja Shopify.",
+        "connectedTo": "Ligado a {shopDomain}",
+        "lastSynced": "Última sincronização: {time} ({productCount} produtos, {orderCount} encomendas)",
+        "neverSynced": "Ainda não sincronizado",
+        "noReason": "Volte a ligar a sua loja para continuar.",
+        "invalid": "A ligação já não é válida: {reason}",
+        "state": {
+          "idle": "Inativo",
+          "queued": "Sincronização em fila...",
+          "running": "A sincronizar...",
+          "succeeded": "Última sincronização concluída com sucesso",
+          "failed": "Última sincronização falhou"
+        }
       }
     }
   },
@@ -10389,7 +10537,8 @@
       "total": "Total",
       "coupon": "Cupão ({code})",
       "title": "Resumo da encomenda",
-      "saved": "Poupa {amount}"
+      "saved": "Poupa {amount}",
+      "deliveryAtCheckout": "Calculado no checkout"
     },
     "belowMinimum": "A encomenda mínima é de {amount}.",
     "checkOut": "Finalizar compra",
@@ -10508,7 +10657,9 @@
       "notEligible": "Ainda não elegível"
     },
     "itemCount": "{count, plural, one {# artigo} other {# artigos}}",
-    "relatedProducts": "Também poderá gostar"
+    "relatedProducts": "Também poderá gostar",
+    "soldOut": "Esgotado",
+    "sku": "SKU: {sku}"
   },
   "webshopLinks": {
     "preview": "Pré-visualizar",

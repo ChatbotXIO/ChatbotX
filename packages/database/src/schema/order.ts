@@ -11,6 +11,8 @@ import {
   uniqueIndex,
 } from "drizzle-orm/pg-core"
 import {
+  type FulfillmentStatus,
+  fulfillmentStatuses,
   type OrderActorType,
   type OrderShippingAddress,
   type OrderSource,
@@ -62,6 +64,10 @@ export const paymentStatus = pgEnum(
 export const shippingType = pgEnum(
   "shippingType",
   shippingTypes.options as [ShippingType, ...ShippingType[]],
+)
+export const fulfillmentStatus = pgEnum(
+  "fulfillmentStatus",
+  fulfillmentStatuses.options as [FulfillmentStatus, ...FulfillmentStatus[]],
 )
 export const orderActorType = pgEnum(
   "orderActorType",
@@ -137,8 +143,25 @@ export const orderModel = pgTable(
     concludedAt: timestamp(timestampConfig),
     cancelledAt: timestamp(timestampConfig),
     cancelReason: text(),
+    /** Shopify's order GID, with `source: shopify`. */
+    externalId: text(),
+    /** Shopify's order name, e.g. `#1004`. */
+    externalName: text(),
+    /** Mirrored from Shopify; null for our own orders. */
+    fulfillmentStatus: fulfillmentStatus(),
+    trackingCompany: text(),
+    trackingNumber: text(),
+    trackingUrl: text(),
   },
   (table) => [
+    uniqueIndex("Order_workspaceId_externalId_key")
+      .on(table.workspaceId, table.externalId)
+      .where(sql`${table.externalId} IS NOT NULL`),
+    index("Order_workspaceId_source_createdAt_idx").on(
+      table.workspaceId,
+      table.source,
+      table.createdAt.desc(),
+    ),
     uniqueIndex("Order_workspaceId_number_key").on(
       table.workspaceId,
       table.number,

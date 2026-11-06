@@ -18,6 +18,11 @@ const mocks = vi.hoisted(() => ({
   matchesContactFilter: vi.fn(),
 }))
 
+vi.mock("../../ecommerce-settings/store-source", () => ({
+  resolveStoreSource: async () => "chatbotx",
+  ecommerceSettingsCacheTag: (workspaceId: string) =>
+    `ecommerce-settings:${workspaceId}`,
+}))
 vi.mock("@chatbotx.io/database/client", () => ({
   db: {},
   isUniqueViolationError: (error: unknown) =>

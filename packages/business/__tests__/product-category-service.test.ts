@@ -18,6 +18,11 @@ const mocks = vi.hoisted(() => ({
   fileAsTopLevel: vi.fn(),
 }))
 
+vi.mock("../src/ecommerce-settings/store-source", () => ({
+  resolveStoreSource: async () => "chatbotx",
+  ecommerceSettingsCacheTag: (workspaceId: string) =>
+    `ecommerce-settings:${workspaceId}`,
+}))
 vi.mock("@chatbotx.io/database/client", () => ({
   // `transaction` is not enumerable so `{ name: "default-db" }` still equals it.
   db: Object.defineProperty({ name: "default-db" }, "transaction", {

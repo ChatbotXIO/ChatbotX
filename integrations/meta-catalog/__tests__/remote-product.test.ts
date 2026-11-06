@@ -225,7 +225,7 @@ describe("Meta Catalog inbound product mapper", () => {
       ok: true,
       product: expect.objectContaining({
         inventoryQuantity: 0,
-        isActive: false,
+        status: "draft",
       }),
     })
     expect(result).toEqual({
@@ -268,7 +268,7 @@ describe("Meta Catalog inbound product mapper", () => {
         inventoryQuantity: expect.anything(),
         inventoryPolicy: expect.anything(),
         allowOutOfStockPurchase: expect.anything(),
-        isActive: expect.anything(),
+        status: expect.anything(),
       }),
     })
   })

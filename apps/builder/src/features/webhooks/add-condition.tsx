@@ -1,6 +1,7 @@
 "use client"
 
 import {
+  type StoreSource,
   type TriggerEventType,
   triggerEventTypes,
 } from "@chatbotx.io/database/partials"
@@ -35,10 +36,21 @@ type ConditionOption = {
   defaultFn: () => unknown
 }
 
+/**
+ * WhatsApp catalog events; a Shopify store has no WhatsApp catalog, so they
+ * can never fire there.
+ */
+const WHATSAPP_CATALOG_EVENTS: ReadonlySet<TriggerEventType> = new Set([
+  triggerEventTypes.enum.shoppingCartSent,
+  triggerEventTypes.enum.userAskedAboutProduct,
+])
+
 export function AddCondition({
   onAdd,
+  storeSource = "chatbotx",
 }: {
   onAdd: (option: ConditionOption) => void
+  storeSource?: StoreSource
 }) {
   const t = useTranslations()
   const options = useMemo(
@@ -202,11 +214,16 @@ export function AddCondition({
               triggerEventTypes.enum.categoryAddedToCart,
               triggerEventTypes.enum.productOrdered,
             ] as const
-          ).map((type) => ({
-            label: t(`trigger.conditions.${type}`),
-            value: type,
-            defaultFn: createDefaultFnWithOptionalSourceId(type),
-          })),
+          )
+            .filter(
+              (type) =>
+                storeSource !== "shopify" || !WHATSAPP_CATALOG_EVENTS.has(type),
+            )
+            .map((type) => ({
+              label: t(`trigger.conditions.${type}`),
+              value: type,
+              defaultFn: createDefaultFnWithOptionalSourceId(type),
+            })),
           ...(
             [
               triggerEventTypes.enum.cartAbandoned,
@@ -246,7 +263,7 @@ export function AddCondition({
         ],
       },
     ],
-    [t],
+    [t, storeSource],
   )
 
   return (

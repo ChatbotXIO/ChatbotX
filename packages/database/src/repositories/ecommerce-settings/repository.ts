@@ -6,6 +6,7 @@ import {
   ne,
   sql,
 } from "@chatbotx.io/database/client"
+import type { StoreSource } from "@chatbotx.io/database/partials"
 import {
   ecommerceOrderCounterModel,
   ecommerceSettingsModel,
@@ -42,6 +43,17 @@ export const ecommerceSettingsRepository = {
   },
 
   /** Reads the row and holds its lock until the transaction ends. */
+  /** Only the store source; a workspace with no settings row has nothing to switch. */
+  async setStoreSource(
+    input: { workspaceId: string; storeSource: StoreSource },
+    tx: DatabaseClient = db,
+  ) {
+    await tx
+      .update(ecommerceSettingsModel)
+      .set({ storeSource: input.storeSource, updatedAt: new Date() })
+      .where(eq(ecommerceSettingsModel.workspaceId, input.workspaceId))
+  },
+
   async findForUpdate(workspaceId: string, tx: DatabaseClient) {
     const [row] = await tx
       .select()

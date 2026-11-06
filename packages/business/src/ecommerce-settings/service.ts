@@ -11,6 +11,7 @@ import {
   ecommerceSettingsSchema,
   isOnlinePaymentMethod,
   type PaymentMethod,
+  type StoreSource,
 } from "@chatbotx.io/database/partials"
 import {
   type EcommerceSettingsValues,
@@ -28,6 +29,7 @@ import {
   paymentCurrencyUnsupportedException,
   paymentProviderNotConnectedException,
 } from "../payment-provider/errors"
+import { ecommerceSettingsCacheTag, resolveStoreSource } from "./store-source"
 
 export type EcommerceSettingsPatch = {
   general?: Partial<EcommerceGeneralSettings>
@@ -40,6 +42,7 @@ export type EcommerceProFeatureAccess = Record<EcommerceProFeature, boolean>
 
 const toSettings = (row: EcommerceSettingsModel): EcommerceSettings => ({
   general: {
+    storeSource: row.storeSource,
     orderingAvailable: row.orderingAvailable,
     webshopProductView: row.webshopProductView,
     openHoursId: row.openHoursId,
@@ -78,6 +81,8 @@ const toSettings = (row: EcommerceSettingsModel): EcommerceSettings => ({
     requirePhone: row.requirePhone,
     requireState: row.requireState,
     requireZip: row.requireZip,
+    shopifyCheckoutMethod: row.shopifyCheckoutMethod,
+    shopifyAutoApplyDiscounts: row.shopifyAutoApplyDiscounts,
   },
 })
 
@@ -127,6 +132,14 @@ class EcommerceSettingsService extends BaseService {
       },
       { tags: [this.cacheTag(workspaceId)] },
     )
+  }
+
+  /**
+   * Where the store's catalog and orders come from. Every list of products,
+   * categories, vendors, discount codes and orders shows only this source.
+   */
+  storeSource(workspaceId: string): Promise<StoreSource> {
+    return resolveStoreSource(workspaceId)
   }
 
   /** Read inside a transaction, past the cache. */
@@ -406,7 +419,7 @@ class EcommerceSettingsService extends BaseService {
   }
 
   private cacheTag(workspaceId: string) {
-    return `ecommerce-settings:${workspaceId}`
+    return ecommerceSettingsCacheTag(workspaceId)
   }
 }
 

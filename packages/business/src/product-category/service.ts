@@ -8,7 +8,9 @@ import {
   productCategoryRepository,
 } from "@chatbotx.io/database/repositories"
 import { BaseService } from "../base.service"
+import { resolveStoreSource } from "../ecommerce-settings/store-source"
 import { ChatbotXException, notFoundException } from "../errors"
+import { shopifyManagedException } from "../shopify/errors"
 
 const normalizeCategoryName = (name: string): string => name.trim()
 
@@ -33,8 +35,11 @@ class ProductCategoryService extends BaseService {
     workspaceId: string,
     filter: { parentId?: string | null; name?: string | null } = {},
   ) {
-    const all =
-      await productCategoryRepository.listWithProductCount(workspaceId)
+    const all = await productCategoryRepository.listWithProductCount(
+      workspaceId,
+      undefined,
+      await resolveStoreSource(workspaceId),
+    )
     const keyword = filter.name?.trim().toLowerCase()
     return all.filter(
       (category) =>
@@ -58,6 +63,8 @@ class ProductCategoryService extends BaseService {
   }) {
     const all = await productCategoryRepository.listWithProductCount(
       input.workspaceId,
+      undefined,
+      await resolveStoreSource(input.workspaceId),
     )
     const keyword = input.name?.trim().toLowerCase()
     const level = all.filter(
@@ -93,7 +100,28 @@ class ProductCategoryService extends BaseService {
   }
 
   async listOptions(workspaceId: string) {
-    return await productCategoryRepository.list(workspaceId)
+    return await productCategoryRepository.list(
+      workspaceId,
+      undefined,
+      await resolveStoreSource(workspaceId),
+    )
+  }
+
+  /**
+   * A category mirrored from Shopify changes in Shopify. Checked while the
+   * store mirrors Shopify; otherwise its categories are not listed at all.
+   */
+  private async assertManagedHere(input: {
+    workspaceId: string
+    categoryId: string
+  }) {
+    if ((await resolveStoreSource(input.workspaceId)) !== "shopify") {
+      return
+    }
+    const row = await productCategoryRepository.find(input)
+    if (row?.source === "shopify") {
+      throw shopifyManagedException()
+    }
   }
 
   async create(input: {
@@ -104,6 +132,9 @@ class ProductCategoryService extends BaseService {
     imageUrl?: string | null
     isVisible?: boolean
   }) {
+    if ((await resolveStoreSource(input.workspaceId)) === "shopify") {
+      throw shopifyManagedException()
+    }
     const name = normalizeCategoryName(input.name)
     if (!name) {
       throw new ChatbotXException(
@@ -137,6 +168,15 @@ class ProductCategoryService extends BaseService {
     isVisible?: boolean
     rank?: number
   }) {
+    // A Shopify product type may only be shown or hidden here.
+    const {
+      workspaceId: _workspaceId,
+      categoryId: _categoryId,
+      ...changes
+    } = input
+    if (!Object.keys(changes).every((key) => key === "isVisible")) {
+      await this.assertManagedHere(input)
+    }
     const name =
       input.name === undefined ? undefined : normalizeCategoryName(input.name)
     if (name === "") {
@@ -187,6 +227,7 @@ class ProductCategoryService extends BaseService {
   }
 
   async delete(input: { workspaceId: string; categoryId: string }) {
+    await this.assertManagedHere(input)
     const row = await db.transaction(async (tx) => {
       const children = await productCategoryRepository.listChildren(
         { workspaceId: input.workspaceId, parentId: input.categoryId },

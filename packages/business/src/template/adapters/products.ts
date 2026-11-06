@@ -36,6 +36,16 @@ type TemplateProductEntry = Omit<ProductWriteData, "workspaceId"> & {
   variantOptions?: TemplateProductVariantOption[]
   variants?: TemplateProductVariant[]
   addons?: TemplateProductAddon[]
+  /** Templates exported before `status` replaced it. */
+  isActive?: boolean
+}
+
+/** A template's product status, read from the boolean older exports carry. */
+const templateProductStatus = (entry: TemplateProductEntry) => {
+  if (entry.status) {
+    return entry.status
+  }
+  return entry.isActive === false ? "draft" : "active"
 }
 
 /**
@@ -63,13 +73,15 @@ export const productsAdapter: ResourceAdapter = {
     const pendingAddonsByProductId = new Map<string, TemplateProductAddon[]>()
 
     for (const rawEntry of entries) {
-      const entry = rawEntry as unknown as TemplateProductEntry
+      const templateProduct = rawEntry as unknown as TemplateProductEntry
+      const { isActive: _legacyIsActive, ...entry } = templateProduct
       const categoryId = resolveCategoryReference(ctx, entry.categoryId)
       const subcategoryId = resolveCategoryReference(ctx, entry.subcategoryId)
 
       const product = await productService.create({
         data: {
           ...entry,
+          status: templateProductStatus(templateProduct),
           workspaceId: ctx.workspaceId,
           categoryId,
           subcategoryId,
@@ -184,7 +196,7 @@ export const productsAdapter: ResourceAdapter = {
         rank: row.rank,
         categoryId: row.categoryId,
         subcategoryId: row.subcategoryId,
-        isActive: row.isActive,
+        status: row.status,
         isSearchable: row.isSearchable,
         allowSpecialRequest: row.allowSpecialRequest,
         isAddonOnly: row.isAddonOnly,

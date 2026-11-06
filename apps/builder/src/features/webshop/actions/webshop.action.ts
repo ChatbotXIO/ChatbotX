@@ -61,8 +61,8 @@ export const changeCartAction = actionClient
   )
 
 /**
- * Places the cart as an order; returns the order to open, or — paid online —
- * the provider's page to go to first (`paymentUrl`).
+ * Places the cart as an order; returns the order to open, or — paid online,
+ * or checking out on Shopify — the page to go to first (`paymentUrl`).
  */
 export const checkoutAction = actionClient.inputSchema(checkoutRequest).action(
   async ({ parsedInput }) =>
@@ -72,10 +72,11 @@ export const checkoutAction = actionClient.inputSchema(checkoutRequest).action(
         shopper,
         form: { ...form, customerEmail: form.customerEmail || null },
       })
+      // Shopify Web Checkout places no order here: only `paymentUrl`.
       return {
-        orderId: order.id,
-        total: order.total,
-        currency: order.currency,
+        orderId: order?.id ?? null,
+        total: order?.total ?? 0,
+        currency: order?.currency ?? "",
         paymentUrl,
       }
     }),

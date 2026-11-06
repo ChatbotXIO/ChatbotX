@@ -13,6 +13,7 @@ import {
   or,
   sql,
 } from "@chatbotx.io/database/client"
+import type { StoreSource } from "@chatbotx.io/database/partials"
 import {
   discountCodeModel,
   discountCodeRedemptionModel,
@@ -28,6 +29,8 @@ export type DiscountCodeWriteValues = Omit<
 
 export type DiscountCodeListInput = {
   workspaceId: string
+  /** The store's codes or the connected Shopify store's; ours when left out. */
+  source?: StoreSource
   /** Case-insensitive part of the code. */
   code?: string | null
   page?: number
@@ -100,6 +103,7 @@ export const discountCodeRepository = {
     const pagination = parsePagination(input)
     const where = and(
       eq(discountCodeModel.workspaceId, input.workspaceId),
+      eq(discountCodeModel.source, input.source ?? "chatbotx"),
       input.code
         ? ilike(discountCodeModel.code, likeContains(input.code))
         : undefined,
@@ -131,7 +135,7 @@ export const discountCodeRepository = {
   },
 
   async findByCode(
-    input: { workspaceId: string; code: string },
+    input: { workspaceId: string; code: string; source?: StoreSource },
     tx: DatabaseClient = db,
   ) {
     const [row] = await tx
@@ -140,6 +144,7 @@ export const discountCodeRepository = {
       .where(
         and(
           eq(discountCodeModel.workspaceId, input.workspaceId),
+          eq(discountCodeModel.source, input.source ?? "chatbotx"),
           sameCode(input.code),
         ),
       )
@@ -170,7 +175,7 @@ export const discountCodeRepository = {
 
   /** Codes that apply themselves, on and within their dates at `now`. */
   async listAutoApply(
-    input: { workspaceId: string; now: Date },
+    input: { workspaceId: string; now: Date; source?: StoreSource },
     tx: DatabaseClient = db,
   ) {
     return await tx
@@ -179,6 +184,7 @@ export const discountCodeRepository = {
       .where(
         and(
           eq(discountCodeModel.workspaceId, input.workspaceId),
+          eq(discountCodeModel.source, input.source ?? "chatbotx"),
           eq(discountCodeModel.autoApply, true),
           eq(discountCodeModel.isActive, true),
           lte(discountCodeModel.startsAt, input.now),
@@ -204,7 +210,12 @@ export const discountCodeRepository = {
    * each.
    */
   async listOffered(
-    input: { workspaceId: string; now: Date; limit: number },
+    input: {
+      workspaceId: string
+      now: Date
+      limit: number
+      source?: StoreSource
+    },
     tx: DatabaseClient = db,
   ) {
     const usable = and(
@@ -223,6 +234,7 @@ export const discountCodeRepository = {
       .where(
         and(
           eq(discountCodeModel.workspaceId, input.workspaceId),
+          eq(discountCodeModel.source, input.source ?? "chatbotx"),
           eq(discountCodeModel.autoApply, false),
           eq(discountCodeModel.isActive, true),
           lte(discountCodeModel.startsAt, input.now),

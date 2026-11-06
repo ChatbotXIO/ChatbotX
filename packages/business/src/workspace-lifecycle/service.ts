@@ -68,6 +68,7 @@ import { integrationOpenRouterService } from "../integration-openrouter/service"
 import { integrationSendGridService } from "../integration-sendgrid/service"
 import { purgeLeaderboardDataForWorkspace } from "../leaderboard/purge"
 import { logger } from "../logger"
+import { shopifyIntegrationService } from "../shopify/integration.service"
 import { userQuotaService } from "../user-quota/service"
 import {
   cancelInFlightBroadcastsForWorkspace,
@@ -183,6 +184,8 @@ class WorkspaceLifecycleService extends BaseService {
       ["openai", integrationOpenAIService],
       ["openrouter", integrationOpenRouterService],
       ["sendgrid", integrationSendGridService],
+      // Store sources: Shopify stops calling the workspace's webhook URL.
+      ["shopify", shopifyIntegrationService],
     ]
 
     const results = await Promise.allSettled(

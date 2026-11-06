@@ -7670,7 +7670,40 @@
       "notPaid": "Chưa thanh toán"
     },
     "paymentUntil": "đến {time}",
-    "paymentExpiredCancelReason": "Không nhận được thanh toán kịp thời hạn."
+    "paymentExpiredCancelReason": "Không nhận được thanh toán kịp thời hạn.",
+    "exportTruncated": "Dữ liệu xuất đã được giới hạn ở {count} đơn hàng đầu tiên",
+    "exportError": "Không thể xuất đơn hàng",
+    "shopify": {
+      "syncOrders": "Đồng bộ đơn hàng",
+      "orderColumn": "Đơn hàng",
+      "customerColumn": "Khách hàng",
+      "paymentPending": "Đang chờ",
+      "paymentFilter": "Thanh toán",
+      "paymentFilterAll": "Thanh toán: Tất cả",
+      "fulfillmentFilter": "Giao hàng",
+      "fulfillmentFilterAll": "Giao hàng: Tất cả",
+      "fulfillmentStatuses": {
+        "fulfilled": "Đã giao",
+        "unfulfilled": "Chưa giao",
+        "partial": "Giao một phần"
+      },
+      "viewDetails": "Xem chi tiết",
+      "viewOnShopify": "Xem trên Shopify",
+      "detailsTitle": "Đơn hàng {name}",
+      "placedOn": "Đặt trên cửa hàng Shopify • {date}",
+      "customerDetails": "Thông tin khách hàng",
+      "shippingAddress": "Địa chỉ giao hàng",
+      "noShippingAddress": "Chưa có địa chỉ giao hàng",
+      "tracking": "Vận đơn: {company} #{number}",
+      "lineItems": "Sản phẩm trong đơn",
+      "itemColumn": "Sản phẩm",
+      "skuColumn": "SKU",
+      "shipping": "Phí vận chuyển",
+      "free": "Miễn phí",
+      "loading": "Đang tải...",
+      "loadError": "Không thể tải chi tiết đơn hàng",
+      "close": "Đóng"
+    }
   },
   "products": {
     "title": "Sản phẩm",
@@ -7750,6 +7783,14 @@
       "isActive": {
         "label": "Hoạt động"
       },
+      "status": {
+        "label": "Trạng thái",
+        "values": {
+          "active": "Đang bán",
+          "draft": "Bản nháp",
+          "unlisted": "Không công khai"
+        }
+      },
       "isAddonOnly": {
         "label": "Chỉ sử dụng sản phẩm này làm tiện ích cho sản phẩm khác"
       },
@@ -7785,6 +7826,32 @@
     "inventoryPolicy": {
       "dont_track": "Không theo dõi kho hàng",
       "track": "Theo dõi kho hàng"
+    },
+    "shopify": {
+      "openShopify": "Mở Shopify",
+      "syncProducts": "Đồng bộ sản phẩm",
+      "syncStarted": "Đã bắt đầu đồng bộ",
+      "syncError": "Không thể bắt đầu đồng bộ",
+      "viewDetails": "Xem chi tiết",
+      "editOnShopify": "Sửa trên Shopify",
+      "copyProductLink": "Sao chép liên kết sản phẩm",
+      "linkCopied": "Đã sao chép liên kết sản phẩm",
+      "noProductLink": "Sản phẩm này chưa có liên kết trên cửa hàng",
+      "inStock": "Còn {count}",
+      "inStockWithVariants": "Còn {count} ({variants} biến thể)",
+      "detailsTitle": "Chi tiết sản phẩm — {name}",
+      "detailsSubtitle": "Đồng bộ từ cửa hàng Shopify {shop}",
+      "summaryLine": "Danh mục: {category} • Tổng tồn kho: {units} sản phẩm trên {variants, plural, one {# biến thể} other {# biến thể}}",
+      "uncategorized": "Chưa phân loại",
+      "variantsTitle": "Biến thể ({count})",
+      "variantColumn": "Biến thể",
+      "skuColumn": "SKU",
+      "priceColumn": "Giá",
+      "inventoryColumn": "Tồn kho",
+      "defaultVariant": "Mặc định",
+      "loading": "Đang tải...",
+      "loadError": "Không thể tải chi tiết sản phẩm",
+      "close": "Đóng"
     }
   },
   "tiktok": {
@@ -10117,7 +10184,8 @@
       "general": "Chung",
       "payments": "Thanh toán",
       "shipping": "Giao hàng",
-      "checkout": "Đặt hàng"
+      "checkout": "Đặt hàng",
+      "shopify": "Shopify"
     },
     "general": {
       "orderingAvailable": {
@@ -10185,6 +10253,14 @@
         "label": "Flow nhắc giỏ hàng",
         "description": "Flow bot sẽ chạy cho khách khi giỏ hàng bị bỏ quên đủ lâu. Dùng '{{shop_token}}' trong nút để mở giỏ. Trigger cũng dùng được sự kiện \"Cart abandoned\".",
         "none": "Không chạy flow (chỉ phát sự kiện Trigger)"
+      },
+      "storeSource": {
+        "label": "Nguồn cửa hàng",
+        "description": "Chọn nguồn cửa hàng dùng để quản lý sản phẩm, tồn kho và đơn hàng của bạn. Khi chọn Shopify, mọi sản phẩm và đơn hàng sẽ được quản lý trực tiếp từ cửa hàng Shopify của bạn.",
+        "options": {
+          "chatbotx": "ChatbotX",
+          "shopify": "Shopify"
+        }
       }
     },
     "payments": {
@@ -10310,6 +10386,78 @@
       "orderConfirmationFlowId": {
         "label": "Flow xác nhận đơn hàng",
         "description": "Flow gửi cho khách thay cho tin mặc định khi khách vừa đặt hàng."
+      },
+      "shopifyCheckoutMethod": {
+        "label": "Cách đặt hàng",
+        "description": "Chọn khách hàng thanh toán trên trang thanh toán của Shopify hay đặt hàng trực tiếp trên cửa hàng web.",
+        "options": {
+          "webCheckout": "Thanh toán web Shopify",
+          "inApp": "Đặt hàng trong ứng dụng"
+        }
+      },
+      "shopifyAutoApplyDiscounts": {
+        "label": "Tự động áp dụng mã giảm giá",
+        "description": "Cho phép khách hàng áp dụng mã giảm giá Shopify ngay trong giỏ hàng trước khi chuyển sang trang thanh toán."
+      },
+      "inAppDeliveryCost": {
+        "label": "Phí giao hàng",
+        "description": "Phí giao hàng được cộng vào các đơn đặt trong ứng dụng."
+      }
+    },
+    "shopify": {
+      "shopDomain": {
+        "label": "Tên miền cửa hàng",
+        "placeholder": "your-store.myshopify.com",
+        "hint": "Nhập tên miền .myshopify.com của cửa hàng Shopify.",
+        "connectedHint": "Tên miền cửa hàng Shopify đã kết nối của bạn."
+      },
+      "authKind": {
+        "label": "Xác thực",
+        "description": "Cách ChatbotX đăng nhập vào cửa hàng của bạn: dùng mã truy cập Admin API của một ứng dụng tùy chỉnh, hoặc dùng Client ID và secret của ứng dụng tạo trong Shopify Dev Dashboard.",
+        "options": {
+          "token": "Mã truy cập Admin API",
+          "clientCredentials": "Client ID và secret (ứng dụng Dev Dashboard)"
+        }
+      },
+      "accessToken": {
+        "label": "Mã truy cập Admin API",
+        "hint": "Mã truy cập Admin API của ứng dụng tùy chỉnh. Hãy cấp cho nó các quyền sau: {scopes}.",
+        "connectedHint": "Mã truy cập Shopify Admin API của bạn được lưu ở dạng mã hóa."
+      },
+      "apiSecret": {
+        "label": "Khóa bí mật API",
+        "hint": "Khóa bí mật API của ứng dụng, dùng để xác minh các webhook do Shopify gửi."
+      },
+      "clientId": {
+        "label": "Client ID",
+        "hint": "Client ID của ứng dụng Dev Dashboard. Hãy cấp cho nó các quyền sau: {scopes}."
+      },
+      "clientSecret": {
+        "label": "Client Secret",
+        "hint": "Client Secret của ứng dụng. Được lưu ở dạng mã hóa."
+      },
+      "webhookUrl": {
+        "label": "URL webhook",
+        "description": "Tự động đăng ký trên Shopify khi kết nối để nhận cập nhật sản phẩm, tồn kho và đơn hàng theo thời gian thực."
+      },
+      "syncNow": "Đồng bộ ngay",
+      "syncStarted": "Đã bắt đầu đồng bộ",
+      "syncError": "Không thể bắt đầu đồng bộ",
+      "syncStatus": {
+        "label": "Trạng thái đồng bộ",
+        "description": "Sản phẩm, mã giảm giá và đơn hàng được sao chép từ cửa hàng Shopify của bạn.",
+        "connectedTo": "Đã kết nối với {shopDomain}",
+        "lastSynced": "Đồng bộ lần cuối: {time} ({productCount} sản phẩm, {orderCount} đơn hàng)",
+        "neverSynced": "Chưa đồng bộ",
+        "noReason": "Hãy kết nối lại cửa hàng để tiếp tục.",
+        "invalid": "Kết nối không còn hợp lệ: {reason}",
+        "state": {
+          "idle": "Đang chờ",
+          "queued": "Đang xếp hàng đồng bộ...",
+          "running": "Đang đồng bộ...",
+          "succeeded": "Lần đồng bộ gần nhất thành công",
+          "failed": "Lần đồng bộ gần nhất thất bại"
+        }
       }
     }
   },
@@ -10389,7 +10537,8 @@
       "total": "Tổng cộng",
       "coupon": "Mã giảm giá ({code})",
       "title": "Tóm tắt đơn hàng",
-      "saved": "Bạn tiết kiệm được {amount}"
+      "saved": "Bạn tiết kiệm được {amount}",
+      "deliveryAtCheckout": "Tính khi thanh toán"
     },
     "belowMinimum": "Đơn tối thiểu là {amount}.",
     "checkOut": "Đặt hàng",
@@ -10508,7 +10657,9 @@
       "notEligible": "Chưa đủ điều kiện"
     },
     "itemCount": "{count, plural, one {# món} other {# món}}",
-    "relatedProducts": "Có thể bạn cũng thích"
+    "relatedProducts": "Có thể bạn cũng thích",
+    "soldOut": "Hết hàng",
+    "sku": "SKU: {sku}"
   },
   "webshopLinks": {
     "preview": "Xem trước",

@@ -29,6 +29,7 @@ import {
   timestampConfig,
 } from "../partials/shared"
 import { productCategoryModel } from "./product-category"
+import { storeSource } from "./store-source"
 import { workspaceModel } from "./workspace"
 
 export const discountType = pgEnum(
@@ -98,14 +99,26 @@ export const discountCodeModel = pgTable(
     /** Null never ends. */
     endsAt: timestamp(timestampConfig),
     isActive: boolean().default(true).notNull(),
+    /**
+     * `shopify` codes mirror a connected store's discounts, read-only here.
+     * Shopify prices them again at checkout; ours is the cart's estimate.
+     */
+    source: storeSource().default("chatbotx").notNull(),
+    /** Shopify's discount node GID, with `source: shopify`. */
+    externalId: text(),
   },
   (table) => [
     // Case-insensitive, so "code20" finds "CODE20" and a second "Code20"
-    // cannot be created.
+    // cannot be created. Per source, so a store switched to Shopify keeps its
+    // own codes beside Shopify's.
     uniqueIndex("DiscountCode_workspaceId_code_key").on(
       table.workspaceId,
+      table.source,
       sql`lower(${table.code})`,
     ),
+    uniqueIndex("DiscountCode_workspaceId_source_externalId_key")
+      .on(table.workspaceId, table.source, table.externalId)
+      .where(sql`${table.externalId} IS NOT NULL`),
     index("DiscountCode_categoryId_idx").on(table.categoryId),
     check(
       "DiscountCode_usedCount_check",
