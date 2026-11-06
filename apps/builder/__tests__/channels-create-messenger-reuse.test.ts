@@ -15,6 +15,7 @@ const {
   mockTryReuseFacebookSsoToken,
   mockUpdateReturnUrl,
   mockWorkspaceCreate,
+  mockEnsureConnectTargetForOwner,
 } = vi.hoisted(() => ({
   mockConnectSessionCreate: vi.fn(),
   mockFindWorkspaceById: vi.fn(async () => ({
@@ -37,6 +38,7 @@ const {
     id: "ws-new",
     ownerId: "user-1",
   })),
+  mockEnsureConnectTargetForOwner: vi.fn(),
 }))
 
 vi.mock("next/navigation", () => ({
@@ -70,19 +72,8 @@ vi.mock("@chatbotx.io/utils", async (importOriginal) => {
 vi.mock("@chatbotx.io/business", () => ({
   workspaceService: {
     findById: mockFindWorkspaceById,
-    findActiveByOwner: vi.fn(async () => undefined),
     create: mockWorkspaceCreate,
-    // Mirrors the real service for an owner with no live workspace.
-    ensureFirstForOwner: (props: {
-      ownerId: string
-      name: string
-      tx?: unknown
-    }) =>
-      mockWorkspaceCreate({
-        data: { name: props.name, ownerId: props.ownerId },
-        createdBy: props.ownerId,
-        tx: props.tx,
-      }),
+    ensureConnectTargetForOwner: mockEnsureConnectTargetForOwner,
   },
 }))
 
@@ -149,6 +140,20 @@ describe("GET /channels/create/messenger — Facebook SSO token reuse", () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockGetCurrentUserId.mockResolvedValue("user-1")
+    mockEnsureConnectTargetForOwner.mockImplementation(
+      async (props: {
+        ownerId: string
+        name: string
+        quotaConsumption?: unknown
+        tx?: unknown
+      }) =>
+        await mockWorkspaceCreate({
+          data: { name: props.name, ownerId: props.ownerId },
+          createdBy: props.ownerId,
+          quotaConsumption: props.quotaConsumption,
+          tx: props.tx,
+        }),
+    )
     mockConnectSessionCreate.mockResolvedValue({ session: { id: "session-1" } })
     // One resolve, shared by the SSO pre-check and the OAuth fallback — no
     // more duplicate `platformCredentialService.resolveForOwner("messenger")`.
@@ -207,7 +212,14 @@ describe("GET /channels/create/messenger — Facebook SSO token reuse", () => {
     expect(mockStartSession).not.toHaveBeenCalled()
   })
 
-  test("creates a workspace first when reusing a token with no workspaceId yet (first channel ever)", async () => {
+  test("starts the session in a target distinct from workspace A when A already has an Inbox", async () => {
+    const workspaceWithInbox = {
+      id: "ws-existing",
+      inboxId: "inbox-existing",
+      ownerId: "user-1",
+    }
+    const connectTarget = { id: "ws-new", ownerId: "user-1" }
+    mockEnsureConnectTargetForOwner.mockResolvedValueOnce(connectTarget)
     mockTryReuseFacebookSsoToken.mockResolvedValue({
       reusable: true,
       userToken: "long-lived-user-token",
@@ -218,13 +230,15 @@ describe("GET /channels/create/messenger — Facebook SSO token reuse", () => {
     )
 
     expect(mockRequireWorkspacePermission).not.toHaveBeenCalled()
-    expect(mockWorkspaceCreate).toHaveBeenCalledWith({
-      data: { name: "New Workspace", ownerId: "user-1" },
-      createdBy: "user-1",
+    expect(mockEnsureConnectTargetForOwner).toHaveBeenCalledWith({
+      ownerId: workspaceWithInbox.ownerId,
+      name: "New Workspace",
+      quotaConsumption: undefined,
+      tx: undefined,
     })
-    expect(mockConnectSessionCreate).toHaveBeenCalledWith(
-      expect.objectContaining({ workspaceId: "ws-new" }),
-    )
+    const sessionInput = mockConnectSessionCreate.mock.calls[0]?.[0]
+    expect(sessionInput?.workspaceId).toBe(connectTarget.id)
+    expect(sessionInput?.workspaceId).not.toBe(workspaceWithInbox.id)
   })
 
   test("redirects to /channels/create?error=… instead of 500 when the first workspace hits the plan limit", async () => {

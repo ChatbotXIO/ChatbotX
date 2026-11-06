@@ -87,7 +87,7 @@ interface FirstWorkspaceOptions {
   tx?: DatabaseClient
 }
 
-async function callEnsure(
+async function callEnsureFirstWorkspace(
   userId: string,
   {
     tx,
@@ -96,6 +96,22 @@ async function callEnsure(
   }: FirstWorkspaceOptions,
 ): Promise<WorkspaceModel> {
   return await workspaceService.ensureFirstForOwner({
+    ownerId: userId,
+    name,
+    tx,
+    quotaConsumption,
+  })
+}
+
+async function callEnsureConnectTarget(
+  userId: string,
+  {
+    tx,
+    quotaConsumption,
+    name = DEFAULT_WORKSPACE_NAME,
+  }: FirstWorkspaceOptions,
+): Promise<WorkspaceModel> {
+  return await workspaceService.ensureConnectTargetForOwner({
     ownerId: userId,
     name,
     tx,
@@ -113,7 +129,7 @@ export async function ensureFirstWorkspace(
   options: Pick<FirstWorkspaceOptions, "name"> = {},
 ): Promise<WorkspaceModel | null> {
   try {
-    return await callEnsure(userId, options)
+    return await callEnsureFirstWorkspace(userId, options)
   } catch (error) {
     if (createChannelErrorPathFor(error)) {
       return null
@@ -123,18 +139,17 @@ export async function ensureFirstWorkspace(
 }
 
 /**
- * First-channel path: the user has no workspace yet, so one is created before
- * the channel connects. Shared by the legacy JSON-state OAuth callback
+ * Channel-connect path: an empty workspace is reused before a new one is
+ * created. This keeps replayed GET requests idempotent without redirecting a
+ * new channel into an existing workspace that already has an Inbox.
+ *
+ * Shared by the legacy JSON-state OAuth callback
  * (`app/integrations/[...integration]/callback.ts`) and
  * `startChannelConnect` (`features/channel-connect/lib/start-channel-
  * connect.ts`, itself shared by the Instagram, Instagram-via-Facebook, and
  * Messenger connect-start routes) so every caller turns a plan-limit
  * failure into a redirect back to `/channels/create` with a translated
  * message, never a bare 500.
- *
- * Idempotent on `ownerId` (regression I7): a GET route reached by a redirect
- * can be replayed, so `workspaceService.ensureFirstForOwner` reuses the user's
- * live workspace instead of minting a second one.
  *
  * Accepts an optional `tx`: `startChannelConnect`'s plain OAuth-start
  * path (no `beforeStart` hook) passes `connectionService.startSession`'s
@@ -149,7 +164,7 @@ export async function createFirstWorkspace(
   quotaConsumption?: WorkspaceQuotaConsumption,
 ) {
   try {
-    return await callEnsure(userId, { tx, quotaConsumption })
+    return await callEnsureConnectTarget(userId, { tx, quotaConsumption })
   } catch (error) {
     const errorPath = createChannelErrorPathFor(error)
     if (!errorPath) {

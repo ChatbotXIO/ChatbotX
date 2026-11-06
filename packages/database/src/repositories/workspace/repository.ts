@@ -1,4 +1,14 @@
-import { type DatabaseClient, db, sql } from "../../client"
+import {
+  and,
+  asc,
+  type DatabaseClient,
+  db,
+  eq,
+  isNull,
+  notExists,
+  sql,
+} from "../../client"
+import { inboxModel, workspaceModel } from "../../schema"
 import type { WorkspaceModel } from "../../types"
 
 export const workspaceRepository = {
@@ -53,5 +63,35 @@ export const workspaceRepository = {
       where: { ownerId: input.ownerId, scheduledDeletionAt: { isNull: true } },
       orderBy: { id: "asc" },
     })
+  },
+
+  /**
+   * The owner's earliest live workspace with no Inbox. Connect starts can
+   * safely reuse it after a replay, while a workspace that already has a
+   * channel remains an immutable connect target.
+   */
+  async findEmptyActiveByOwner(
+    input: { ownerId: string },
+    tx: DatabaseClient = db,
+  ): Promise<WorkspaceModel | undefined> {
+    const workspaces = await tx
+      .select()
+      .from(workspaceModel)
+      .where(
+        and(
+          eq(workspaceModel.ownerId, input.ownerId),
+          isNull(workspaceModel.scheduledDeletionAt),
+          notExists(
+            tx
+              .select({ one: sql`1` })
+              .from(inboxModel)
+              .where(eq(inboxModel.workspaceId, workspaceModel.id)),
+          ),
+        ),
+      )
+      .orderBy(asc(workspaceModel.id))
+      .limit(1)
+
+    return workspaces[0]
   },
 }

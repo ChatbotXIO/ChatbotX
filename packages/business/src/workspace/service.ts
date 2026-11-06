@@ -149,27 +149,26 @@ class WorkspaceService extends BaseService {
   }
 
   /**
-   * The owner's live workspace, created when they have none. Serialized per
-   * owner with a transaction-scoped advisory lock so two tabs opening `/` at
-   * once cannot both create one. A Redis lock would not fence a caller-owned
-   * `tx` (its writes are invisible to the other caller until commit), so the
-   * lock rides the transaction that stays open until `create` commits.
-   * `create` gets the caller's own `tx` (possibly undefined) so the no-tx path
-   * keeps its own transaction, audit and quota semantics.
+   * Finds or creates an owner-scoped workspace under a transaction-scoped
+   * advisory lock. The lookup defines each caller's reuse policy; `create`
+   * retains the caller's transaction and quota semantics.
    */
-  async ensureFirstForOwner(props: {
-    ownerId: string
-    name: string
-    tx?: DatabaseClient
-    quotaConsumption?: WorkspaceQuotaConsumption
-  }): Promise<WorkspaceModel> {
+  private async ensureForOwner(
+    props: {
+      ownerId: string
+      name: string
+      tx?: DatabaseClient
+      quotaConsumption?: WorkspaceQuotaConsumption
+    },
+    findExisting: (
+      input: { ownerId: string },
+      tx: DatabaseClient,
+    ) => Promise<WorkspaceModel | undefined>,
+  ): Promise<WorkspaceModel> {
     const { ownerId, name, tx, quotaConsumption } = props
     const run = async (lockTx: DatabaseClient): Promise<WorkspaceModel> => {
       await workspaceRepository.lockFirstWorkspace({ ownerId }, lockTx)
-      const existing = await workspaceRepository.findActiveByOwner(
-        { ownerId },
-        lockTx,
-      )
+      const existing = await findExisting({ ownerId }, lockTx)
       if (existing) {
         return existing
       }
@@ -180,7 +179,44 @@ class WorkspaceService extends BaseService {
         quotaConsumption,
       })
     }
+
     return tx ? await run(tx) : await db.transaction(run)
+  }
+
+  /**
+   * The owner's live workspace, created when they have none. Serialized per
+   * owner with a transaction-scoped advisory lock so two tabs opening `/` at
+   * once cannot both create one. A Redis lock would not fence a caller-owned
+   * `tx` (its writes are invisible to the other caller until commit), so the
+   * lock rides the transaction that stays open until `create` commits.
+   */
+  async ensureFirstForOwner(props: {
+    ownerId: string
+    name: string
+    tx?: DatabaseClient
+    quotaConsumption?: WorkspaceQuotaConsumption
+  }): Promise<WorkspaceModel> {
+    return await this.ensureForOwner(
+      props,
+      workspaceRepository.findActiveByOwner,
+    )
+  }
+
+  /**
+   * The owner's empty live workspace, created when none remain. Channel
+   * connects reuse an unfinished target on replay but never attach a channel
+   * to a workspace that already has an Inbox.
+   */
+  async ensureConnectTargetForOwner(props: {
+    ownerId: string
+    name: string
+    tx?: DatabaseClient
+    quotaConsumption?: WorkspaceQuotaConsumption
+  }): Promise<WorkspaceModel> {
+    return await this.ensureForOwner(
+      props,
+      workspaceRepository.findEmptyActiveByOwner,
+    )
   }
 
   // Auth gate — membership must take effect immediately on removal, so this
