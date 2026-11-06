@@ -50,6 +50,8 @@ Every operation carries an `x-mcp.hitlPolicy` from the public OpenAPI spec; read
 
 Writes that are read-only computations declare `hitlPolicy: "none"` in the backend. Destructive writes also carry the MCP `destructiveHint` annotation. When a current-state read fails for any reason, `currentState` is omitted and `currentStateUnavailable` explains why; the failed read never blocks confirmation.
 
+Every `tools/list` definition also includes a human-readable `title` and explicit `readOnlyHint`, `destructiveHint`, `idempotentHint`, and `openWorldHint` annotations. Dynamic tool titles come from the OpenAPI operation summary. The loader marks `confirm_outbound` operations as open-world by default; an `x-mcp.openWorldHint` override takes precedence.
+
 ### Scope-based filtering
 
 `tools/list` is further narrowed to what the calling token can actually use, resolved once per token via `GET /v1/token` (`introspectToken`, cached per token value for `CHATBOTX_SPEC_TTL_MS`):

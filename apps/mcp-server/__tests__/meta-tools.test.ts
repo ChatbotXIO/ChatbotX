@@ -11,6 +11,43 @@ describe("META_TOOLS", () => {
     ])
   })
 
+  test("declares complete annotations for every meta-tool", () => {
+    expect(
+      META_TOOLS.map(({ annotations, name }) => ({ annotations, name })),
+    ).toEqual([
+      {
+        name: "search_tools",
+        annotations: {
+          title: "Search tools",
+          readOnlyHint: true,
+          destructiveHint: false,
+          idempotentHint: true,
+          openWorldHint: false,
+        },
+      },
+      {
+        name: "call_tool",
+        annotations: {
+          title: "Call tool",
+          readOnlyHint: false,
+          destructiveHint: true,
+          idempotentHint: false,
+          openWorldHint: true,
+        },
+      },
+      {
+        name: "get_guide",
+        annotations: {
+          title: "Get guide",
+          readOnlyHint: true,
+          destructiveHint: false,
+          idempotentHint: true,
+          openWorldHint: false,
+        },
+      },
+    ])
+  })
+
   test("returns raw markdown from the shared guide source", () => {
     const result = handleGetGuide({ name: "overview" })
     expect(result.content[0]?.text).toContain("# ChatbotX MCP overview")

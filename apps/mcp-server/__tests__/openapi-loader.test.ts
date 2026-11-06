@@ -512,13 +512,16 @@ describe("x-mcp visibility, scope, and annotations", () => {
     globalThis.fetch = originalFetch
   })
 
-  const specWithOperation = (operation: Record<string, unknown>) => ({
+  const specWithOperation = (
+    operation: Record<string, unknown>,
+    method = "get",
+  ) => ({
     ok: true,
     headers: { get: () => null },
     json: async () => ({
       servers: [{ url: "https://api.example.com" }],
       paths: {
-        "/v1/tags": { get: { operationId: "tags.list", ...operation } },
+        "/v1/tags": { [method]: { operationId: "tags.list", ...operation } },
       },
     }),
   })
@@ -558,17 +561,62 @@ describe("x-mcp visibility, scope, and annotations", () => {
     )
   })
 
-  test("annotations default from the HTTP method when x-mcp doesn't override them", async () => {
+  test("annotations use the summary title and GET defaults", async () => {
     globalThis.fetch = vi
       .fn()
-      .mockResolvedValue(specWithOperation({})) as unknown as typeof fetch
+      .mockResolvedValue(
+        specWithOperation({ summary: "List tags" }),
+      ) as unknown as typeof fetch
     const { loadOpenApiSpec } = await import("../src/openapi-loader")
     const [tool] = await loadOpenApiSpec()
     expect(tool?.annotations).toEqual({
+      title: "List tags",
       readOnlyHint: true,
       destructiveHint: false,
       idempotentHint: true,
+      openWorldHint: false,
     })
+  })
+
+  test("a POST operation defaults to a closed world", async () => {
+    globalThis.fetch = vi
+      .fn()
+      .mockResolvedValue(
+        specWithOperation({ summary: "Create tag" }, "post"),
+      ) as unknown as typeof fetch
+    const { loadOpenApiSpec } = await import("../src/openapi-loader")
+    const [tool] = await loadOpenApiSpec()
+
+    expect(tool?.annotations.openWorldHint).toBe(false)
+  })
+
+  test("a confirm_outbound operation is open world", async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue(
+      specWithOperation({
+        summary: "Send message",
+        "x-mcp": { hitlPolicy: "confirm_outbound" },
+      }),
+    ) as unknown as typeof fetch
+    const { loadOpenApiSpec } = await import("../src/openapi-loader")
+    const [tool] = await loadOpenApiSpec()
+
+    expect(tool?.annotations.openWorldHint).toBe(true)
+  })
+
+  test("an x-mcp openWorldHint overrides the outbound policy", async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue(
+      specWithOperation({
+        summary: "Send message",
+        "x-mcp": {
+          hitlPolicy: "confirm_outbound",
+          openWorldHint: false,
+        },
+      }),
+    ) as unknown as typeof fetch
+    const { loadOpenApiSpec } = await import("../src/openapi-loader")
+    const [tool] = await loadOpenApiSpec()
+
+    expect(tool?.annotations.openWorldHint).toBe(false)
   })
 
   test("x-mcp annotation hints override the method-inferred defaults", async () => {
@@ -599,6 +647,7 @@ describe("x-mcp visibility, scope, and annotations", () => {
       readOnlyHint: false,
       destructiveHint: true,
       idempotentHint: true,
+      openWorldHint: false,
     })
   })
 

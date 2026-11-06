@@ -24,6 +24,13 @@ import { distinctResourceGroups, rankTools } from "./search/rank"
 export const META_TOOLS = [
   {
     name: "search_tools",
+    annotations: {
+      title: "Search tools",
+      readOnlyHint: true,
+      destructiveHint: false,
+      idempotentHint: true,
+      openWorldHint: false,
+    },
     description:
       "Search the full ChatbotX catalog for hidden or unlisted tool definitions; this never executes a tool. Direct listed tools may be called directly. Search with one action plus one resource, inspect each returned inputSchema, then call call_tool with the exact returned name.",
     inputSchema: {
@@ -44,6 +51,13 @@ export const META_TOOLS = [
   },
   {
     name: "call_tool",
+    annotations: {
+      title: "Call tool",
+      readOnlyHint: false,
+      destructiveHint: true,
+      idempotentHint: false,
+      openWorldHint: true,
+    },
     description:
       'Execute a hidden tool by the exact name returned by search_tools (dotted names like "contacts.get" are also accepted). Pass a flat arguments object matching inputSchema; resolve named entities first unless the user supplied a stable ID, email, or phone.',
     inputSchema: {
@@ -64,6 +78,13 @@ export const META_TOOLS = [
   },
   {
     name: "get_guide",
+    annotations: {
+      title: "Get guide",
+      readOnlyHint: true,
+      destructiveHint: false,
+      idempotentHint: true,
+      openWorldHint: false,
+    },
     description:
       "Read a ChatbotX operational safety guide. Use it for workflows that need the documented approval, OAuth, flow, inbox, contact, or pipeline procedure.",
     inputSchema: {

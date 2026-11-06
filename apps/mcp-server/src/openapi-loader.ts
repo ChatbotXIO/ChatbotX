@@ -18,6 +18,7 @@ interface McpOperationMeta {
   destructiveHint?: boolean
   hitlPolicy?: McpHitlPolicy
   idempotentHint?: boolean
+  openWorldHint?: boolean
   readOnlyHint?: boolean
   scope?: string | string[]
   visibility?: "default" | "hidden"
@@ -96,7 +97,9 @@ interface OpenAPISchemaObject {
 interface DynamicToolAnnotations {
   destructiveHint: boolean
   idempotentHint: boolean
+  openWorldHint: boolean
   readOnlyHint: boolean
+  title?: string
 }
 
 export interface DynamicTool {
@@ -157,9 +160,11 @@ function extractPathParamNames(pathTemplate: string): string[] {
 function buildAnnotations(
   method: string,
   meta: McpOperationMeta | undefined,
+  operation: OpenAPIOperation,
 ): DynamicToolAnnotations {
   const upperMethod = method.toUpperCase()
   return {
+    ...(operation.summary ? { title: operation.summary } : {}),
     readOnlyHint: meta?.readOnlyHint ?? upperMethod === "GET",
     destructiveHint: meta?.destructiveHint ?? upperMethod === "DELETE",
     idempotentHint:
@@ -167,6 +172,8 @@ function buildAnnotations(
       (upperMethod === "GET" ||
         upperMethod === "PUT" ||
         upperMethod === "DELETE"),
+    openWorldHint:
+      meta?.openWorldHint ?? meta?.hitlPolicy === "confirm_outbound",
   }
 }
 
@@ -354,7 +361,7 @@ function parseOperation(
   const { schema, bodyParamNames, queryParamNames } =
     buildInputSchema(operation)
   const meta = operation["x-mcp"]
-  const annotations = buildAnnotations(method, meta)
+  const annotations = buildAnnotations(method, meta, operation)
   const hitlPolicy = resolveHitlPolicy(meta, annotations)
   const inputSchema =
     hitlPolicy === "none"
