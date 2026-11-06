@@ -271,6 +271,13 @@ each feature's scope assignment at compile/test time. The 20
 store settings), `email-topics`, `error-logs`, `integrations`, `media`,
 `minigames`, `pipelines`, `product-categories`, `products` and `sequences`.
 
+The `polls` scope covers the Poll Manager routes
+(`apps/builder/src/features/polls/api/public.ts`, router key `polls`:
+`GET/POST /v1/polls`, `GET/PATCH/DELETE /v1/polls/{id}`,
+`POST /v1/polls/bulk-delete`, `GET /v1/polls/{id}/links`,
+`GET /v1/polls/{id}/analytics`). A `read_only` token can list, get, fetch
+links and analytics but is blocked on create, update and delete.
+
 What follows are the scope-assignment decisions and gotchas that aren't
 derivable from the code or those tests — read before adding or reassigning
 an endpoint's scope.

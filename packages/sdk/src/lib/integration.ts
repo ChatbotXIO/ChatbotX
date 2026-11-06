@@ -66,6 +66,9 @@ export type RichResponseContentAttributes = {
         | { type: "actions"; actions: Record<string, unknown>[] }
         | { type: "text"; text: string }
         | { type: "unsupported"; reason: string }
+        | { type: "poll_open"; pollId: string }
+        | { type: "poll_vote"; pollId: string; candidateId: string }
+        | { type: "poll_list" }
     }
   >
 }
