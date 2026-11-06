@@ -34,9 +34,10 @@ export const workspaceRepository = {
     return result.rows[0]?.purgeStartedAt === null
   },
   /**
-   * Serializes "find or create the owner's first workspace" per owner for the
-   * life of `tx`. Transaction-scoped, so the lock releases on commit/rollback
-   * and also fences a caller-owned transaction a Redis lock could not.
+   * Serializes first-workspace and connect-target find-or-create per owner for
+   * the life of `tx`. The shared lock key deliberately fences both flows.
+   * Transaction-scoped, so the lock releases on commit/rollback and also
+   * fences a caller-owned transaction a Redis lock could not.
    */
   async lockFirstWorkspace(
     input: { ownerId: string },

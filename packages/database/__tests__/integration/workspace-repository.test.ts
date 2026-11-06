@@ -78,4 +78,104 @@ describe.skipIf(!databaseUrl)("workspace repository against Postgres", () => {
       expect(target?.id).not.toBe(workspaceWithInbox.id)
     })
   })
+
+  test("findEmptyActiveByOwner skips a workspace scheduled for deletion", async () => {
+    const suffix = `${Date.now()}-${Math.random()}`
+    await withRolledBackTransaction(createDatabase(client), async (tx) => {
+      const [owner] = await tx
+        .insert(schema.userModel)
+        .values({ email: `workspace-repository-${suffix}@example.test` })
+        .returning({ id: schema.userModel.id })
+      await tx.insert(schema.workspaceModel).values({
+        name: `scheduled-for-deletion-${suffix}`,
+        ownerId: owner.id,
+        scheduledDeletionAt: new Date(),
+      })
+      const [activeWorkspace] = await tx
+        .insert(schema.workspaceModel)
+        .values({ name: `active-${suffix}`, ownerId: owner.id })
+        .returning({ id: schema.workspaceModel.id })
+
+      const target = await workspaceRepository.findEmptyActiveByOwner(
+        { ownerId: owner.id },
+        tx,
+      )
+
+      expect(target?.id).toBe(activeWorkspace.id)
+    })
+  })
+
+  test("findEmptyActiveByOwner returns undefined when every live workspace has an Inbox", async () => {
+    const suffix = `${Date.now()}-${Math.random()}`
+    await withRolledBackTransaction(createDatabase(client), async (tx) => {
+      const [owner] = await tx
+        .insert(schema.userModel)
+        .values({ email: `workspace-repository-${suffix}@example.test` })
+        .returning({ id: schema.userModel.id })
+      const [firstWorkspace] = await tx
+        .insert(schema.workspaceModel)
+        .values({ name: `first-${suffix}`, ownerId: owner.id })
+        .returning({ id: schema.workspaceModel.id })
+      const [secondWorkspace] = await tx
+        .insert(schema.workspaceModel)
+        .values({ name: `second-${suffix}`, ownerId: owner.id })
+        .returning({ id: schema.workspaceModel.id })
+      await tx.insert(schema.inboxModel).values([
+        {
+          channel: "webchat",
+          name: `first-inbox-${suffix}`,
+          sourceId: `first-source-${suffix}`,
+          workspaceId: firstWorkspace.id,
+        },
+        {
+          channel: "webchat",
+          name: `second-inbox-${suffix}`,
+          sourceId: `second-source-${suffix}`,
+          workspaceId: secondWorkspace.id,
+        },
+      ])
+
+      const target = await workspaceRepository.findEmptyActiveByOwner(
+        { ownerId: owner.id },
+        tx,
+      )
+
+      expect(target).toBeUndefined()
+    })
+  })
+
+  test("findEmptyActiveByOwner ignores empty workspaces belonging to another owner", async () => {
+    const suffix = `${Date.now()}-${Math.random()}`
+    await withRolledBackTransaction(createDatabase(client), async (tx) => {
+      const [owner] = await tx
+        .insert(schema.userModel)
+        .values({ email: `workspace-repository-${suffix}@example.test` })
+        .returning({ id: schema.userModel.id })
+      const [otherOwner] = await tx
+        .insert(schema.userModel)
+        .values({ email: `other-workspace-repository-${suffix}@example.test` })
+        .returning({ id: schema.userModel.id })
+      const [workspaceWithInbox] = await tx
+        .insert(schema.workspaceModel)
+        .values({ name: `connected-${suffix}`, ownerId: owner.id })
+        .returning({ id: schema.workspaceModel.id })
+      await tx.insert(schema.workspaceModel).values({
+        name: `other-owner-empty-${suffix}`,
+        ownerId: otherOwner.id,
+      })
+      await tx.insert(schema.inboxModel).values({
+        channel: "webchat",
+        name: `inbox-${suffix}`,
+        sourceId: `source-${suffix}`,
+        workspaceId: workspaceWithInbox.id,
+      })
+
+      const target = await workspaceRepository.findEmptyActiveByOwner(
+        { ownerId: owner.id },
+        tx,
+      )
+
+      expect(target).toBeUndefined()
+    })
+  })
 })

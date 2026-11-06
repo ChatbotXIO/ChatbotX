@@ -58,6 +58,13 @@ import {
 } from "./quota-consumption"
 
 type WorkspaceWhere = Partial<{ id: string; ownerId: string }>
+type EnsureOwnerWorkspaceInput = {
+  ownerId: string
+  name: string
+  tx?: DatabaseClient
+  quotaConsumption?: WorkspaceQuotaConsumption
+}
+
 /** What `writeWorkspace` has already done, for `insertWorkspace`'s rollback. */
 type WriteProgress = {
   workspaceId?: string
@@ -154,12 +161,7 @@ class WorkspaceService extends BaseService {
    * retains the caller's transaction and quota semantics.
    */
   private async ensureForOwner(
-    props: {
-      ownerId: string
-      name: string
-      tx?: DatabaseClient
-      quotaConsumption?: WorkspaceQuotaConsumption
-    },
+    props: EnsureOwnerWorkspaceInput,
     findExisting: (
       input: { ownerId: string },
       tx: DatabaseClient,
@@ -190,15 +192,11 @@ class WorkspaceService extends BaseService {
    * `tx` (its writes are invisible to the other caller until commit), so the
    * lock rides the transaction that stays open until `create` commits.
    */
-  async ensureFirstForOwner(props: {
-    ownerId: string
-    name: string
-    tx?: DatabaseClient
-    quotaConsumption?: WorkspaceQuotaConsumption
-  }): Promise<WorkspaceModel> {
-    return await this.ensureForOwner(
-      props,
-      workspaceRepository.findActiveByOwner,
+  async ensureFirstForOwner(
+    props: EnsureOwnerWorkspaceInput,
+  ): Promise<WorkspaceModel> {
+    return await this.ensureForOwner(props, (input, tx) =>
+      workspaceRepository.findActiveByOwner(input, tx),
     )
   }
 
@@ -207,15 +205,11 @@ class WorkspaceService extends BaseService {
    * connects reuse an unfinished target on replay but never attach a channel
    * to a workspace that already has an Inbox.
    */
-  async ensureConnectTargetForOwner(props: {
-    ownerId: string
-    name: string
-    tx?: DatabaseClient
-    quotaConsumption?: WorkspaceQuotaConsumption
-  }): Promise<WorkspaceModel> {
-    return await this.ensureForOwner(
-      props,
-      workspaceRepository.findEmptyActiveByOwner,
+  async ensureConnectTargetForOwner(
+    props: EnsureOwnerWorkspaceInput,
+  ): Promise<WorkspaceModel> {
+    return await this.ensureForOwner(props, (input, tx) =>
+      workspaceRepository.findEmptyActiveByOwner(input, tx),
     )
   }
 

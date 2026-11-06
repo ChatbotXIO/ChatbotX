@@ -212,13 +212,9 @@ describe("GET /channels/create/messenger — Facebook SSO token reuse", () => {
     expect(mockStartSession).not.toHaveBeenCalled()
   })
 
-  test("starts the session in a target distinct from workspace A when A already has an Inbox", async () => {
-    const workspaceWithInbox = {
-      id: "ws-existing",
-      inboxId: "inbox-existing",
-      ownerId: "user-1",
-    }
-    const connectTarget = { id: "ws-new", ownerId: "user-1" }
+  test("starts the SSO-reuse session in the target returned by the service", async () => {
+    const ownerId = "user-1"
+    const connectTarget = { id: "ws-new", ownerId }
     mockEnsureConnectTargetForOwner.mockResolvedValueOnce(connectTarget)
     mockTryReuseFacebookSsoToken.mockResolvedValue({
       reusable: true,
@@ -231,14 +227,13 @@ describe("GET /channels/create/messenger — Facebook SSO token reuse", () => {
 
     expect(mockRequireWorkspacePermission).not.toHaveBeenCalled()
     expect(mockEnsureConnectTargetForOwner).toHaveBeenCalledWith({
-      ownerId: workspaceWithInbox.ownerId,
+      ownerId,
       name: "New Workspace",
       quotaConsumption: undefined,
       tx: undefined,
     })
     const sessionInput = mockConnectSessionCreate.mock.calls[0]?.[0]
     expect(sessionInput?.workspaceId).toBe(connectTarget.id)
-    expect(sessionInput?.workspaceId).not.toBe(workspaceWithInbox.id)
   })
 
   test("redirects to /channels/create?error=… instead of 500 when the first workspace hits the plan limit", async () => {

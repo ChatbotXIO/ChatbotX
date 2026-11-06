@@ -87,31 +87,16 @@ interface FirstWorkspaceOptions {
   tx?: DatabaseClient
 }
 
-async function callEnsureFirstWorkspace(
+async function callEnsureWorkspace(
   userId: string,
+  method: "ensureFirstForOwner" | "ensureConnectTargetForOwner",
   {
     tx,
     quotaConsumption,
     name = DEFAULT_WORKSPACE_NAME,
   }: FirstWorkspaceOptions,
 ): Promise<WorkspaceModel> {
-  return await workspaceService.ensureFirstForOwner({
-    ownerId: userId,
-    name,
-    tx,
-    quotaConsumption,
-  })
-}
-
-async function callEnsureConnectTarget(
-  userId: string,
-  {
-    tx,
-    quotaConsumption,
-    name = DEFAULT_WORKSPACE_NAME,
-  }: FirstWorkspaceOptions,
-): Promise<WorkspaceModel> {
-  return await workspaceService.ensureConnectTargetForOwner({
+  return await workspaceService[method]({
     ownerId: userId,
     name,
     tx,
@@ -129,7 +114,7 @@ export async function ensureFirstWorkspace(
   options: Pick<FirstWorkspaceOptions, "name"> = {},
 ): Promise<WorkspaceModel | null> {
   try {
-    return await callEnsureFirstWorkspace(userId, options)
+    return await callEnsureWorkspace(userId, "ensureFirstForOwner", options)
   } catch (error) {
     if (createChannelErrorPathFor(error)) {
       return null
@@ -164,7 +149,10 @@ export async function createFirstWorkspace(
   quotaConsumption?: WorkspaceQuotaConsumption,
 ) {
   try {
-    return await callEnsureConnectTarget(userId, { tx, quotaConsumption })
+    return await callEnsureWorkspace(userId, "ensureConnectTargetForOwner", {
+      tx,
+      quotaConsumption,
+    })
   } catch (error) {
     const errorPath = createChannelErrorPathFor(error)
     if (!errorPath) {
