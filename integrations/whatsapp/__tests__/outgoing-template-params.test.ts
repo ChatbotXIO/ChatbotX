@@ -85,7 +85,7 @@ const sendFlowTemplate = (
 type TemplatePayloadComponent = {
   type: string
   sub_type?: string
-  index?: number
+  index?: number | string
   parameters: Array<{
     type: string
     text?: string
@@ -94,6 +94,7 @@ type TemplatePayloadComponent = {
     action?: {
       flow_token?: string
       flow_action_data?: Record<string, unknown>
+      payment_request?: Record<string, unknown>
     }
   }>
   cards?: Array<{
@@ -668,5 +669,240 @@ describe("raw Meta error surfacing", () => {
       userMessage: "Parameter name is missing or empty",
       fbtraceId: "trace-xyz",
     })
+  })
+})
+
+describe("payment request buttons", () => {
+  const sendPayment = (
+    button: Record<string, unknown>[],
+    integrationDetail?: Record<string, unknown>,
+  ) =>
+    sendFlowStep({
+      ctx: { ...(ctx as object), integrationDetail },
+      data: {
+        contact,
+        step: {
+          id: "template-1",
+          stepType: "sendWaTemplateMessage",
+          template: { name: "pay", language: "pt_BR", params: { button } },
+        },
+      },
+    } as never)
+
+  const paymentComponents = () =>
+    templatePayload().template.components.filter((c) => c.type === "button")
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockApiFetch.mockResolvedValue(
+      new Response(JSON.stringify({ messages: [{ id: "wamid.pay-1" }] }), {
+        status: 200,
+      }),
+    )
+  })
+
+  test("Pix copy & paste sends the code with a string index and no flow_type", async () => {
+    await sendPayment([
+      {
+        sub_type: "payment_request",
+        index: 0,
+        payment_request: { method: "pix", code: "000201" },
+      },
+    ])
+
+    expect(paymentComponents()).toEqual([
+      {
+        type: "button",
+        sub_type: "payment_request",
+        index: "0",
+        parameters: [
+          {
+            type: "action",
+            action: {
+              payment_request: {
+                payment_setting: {
+                  type: "pix_dynamic_code",
+                  pix_dynamic_code: { code: "000201" },
+                },
+              },
+            },
+          },
+        ],
+      },
+    ])
+  })
+
+  test("Pix with the channel's redirect setting on adds flow_type APPSWITCH", async () => {
+    await sendPayment(
+      [
+        {
+          sub_type: "payment_request",
+          index: 1,
+          payment_request: { method: "pix", code: "000201" },
+        },
+      ],
+      { pixRedirectEnabled: true },
+    )
+
+    expect(paymentComponents()[0]?.parameters[0]?.action).toMatchObject({
+      payment_request: {
+        payment_setting: {
+          pix_dynamic_code: { code: "000201", flow_type: "APPSWITCH" },
+        },
+      },
+    })
+  })
+
+  test.each([
+    [undefined],
+    [{}],
+    [{ pixRedirectEnabled: false }],
+    [{ pixRedirectEnabled: "true" }],
+  ])("redirect is off unless the setting is exactly true (%j)", async (detail) => {
+    await sendPayment(
+      [
+        {
+          sub_type: "payment_request",
+          index: 0,
+          payment_request: { method: "pix", code: "x" },
+        },
+      ],
+      detail,
+    )
+
+    const body = JSON.stringify(templatePayload())
+    expect(body).not.toContain("flow_type")
+  })
+
+  test("Pix amount becomes BRL currency and minor units with offset 100", async () => {
+    await sendPayment([
+      {
+        sub_type: "payment_request",
+        index: 0,
+        payment_request: { method: "pix", code: "x", amount: "12.34" },
+      },
+    ])
+
+    expect(paymentComponents()[0]?.parameters[0]?.action).toMatchObject({
+      payment_request: {
+        currency: "BRL",
+        total_amount: { value: 1234, offset: 100 },
+      },
+    })
+  })
+
+  test("a Pix without amount sends no currency or total_amount", async () => {
+    await sendPayment([
+      {
+        sub_type: "payment_request",
+        index: 0,
+        payment_request: { method: "pix", code: "x" },
+      },
+    ])
+
+    const body = JSON.stringify(templatePayload())
+    expect(body).not.toContain("currency")
+    expect(body).not.toContain("total_amount")
+  })
+
+  test("Boleto and payment link never carry currency or amount", async () => {
+    await sendPayment([
+      {
+        sub_type: "payment_request",
+        index: 0,
+        payment_request: { method: "boleto", digitableLine: "0339" },
+      },
+      {
+        sub_type: "payment_request",
+        index: 1,
+        payment_request: { method: "payment_link", url: "https://pay.test/1" },
+      },
+    ])
+
+    const [boleto, link] = paymentComponents()
+    expect(boleto?.parameters[0]?.action).toEqual({
+      payment_request: {
+        payment_setting: { type: "boleto", boleto: { digitable_line: "0339" } },
+      },
+    })
+    expect(link?.parameters[0]?.action).toEqual({
+      payment_request: {
+        payment_setting: {
+          type: "payment_link",
+          payment_link: { uri: "https://pay.test/1" },
+        },
+      },
+    })
+    expect(link?.index).toBe("1")
+  })
+
+  test("one-click sends the saved card with required BRL amount, credential optional", async () => {
+    await sendPayment([
+      {
+        sub_type: "payment_request",
+        index: 0,
+        payment_request: {
+          method: "card_on_file",
+          lastFourDigits: "4242",
+          credentialId: "cred_1",
+          amount: "10",
+        },
+      },
+      {
+        sub_type: "payment_request",
+        index: 1,
+        payment_request: {
+          method: "card_on_file",
+          lastFourDigits: "4242",
+          amount: "10.5",
+        },
+      },
+    ])
+
+    const [withCredential, withoutCredential] = paymentComponents()
+    expect(withCredential?.parameters[0]?.action).toEqual({
+      payment_request: {
+        currency: "BRL",
+        total_amount: { value: 1000, offset: 100 },
+        payment_setting: {
+          type: "offsite_card_pay",
+          offsite_card_pay: {
+            last_four_digits: "4242",
+            credential_id: "cred_1",
+          },
+        },
+      },
+    })
+    expect(JSON.stringify(withoutCredential)).not.toContain("credential_id")
+    expect(withoutCredential?.parameters[0]?.action).toMatchObject({
+      payment_request: { total_amount: { value: 1050 } },
+    })
+  })
+
+  test("an invalid amount is a permanent payload error and nothing is sent", async () => {
+    const error = await sendPayment([
+      {
+        sub_type: "payment_request",
+        index: 0,
+        payment_request: { method: "pix", code: "x", amount: "1.234" },
+      },
+    ]).catch((e) => e as InstanceType<typeof ChannelError>)
+
+    expect(error).toBeInstanceOf(ChannelError)
+    expect(error.category).toBe(ChannelErrorCategory.PAYLOAD_INVALID)
+    expect(mockApiFetch).not.toHaveBeenCalled()
+  })
+
+  test("other button sub_types keep their numeric index", async () => {
+    await sendPayment([
+      { sub_type: "url", index: 0, text: "abc" },
+      {
+        sub_type: "payment_request",
+        index: 1,
+        payment_request: { method: "pix", code: "x" },
+      },
+    ])
+
+    expect(paymentComponents().map((c) => c.index)).toEqual([0, "1"])
   })
 })

@@ -4483,6 +4483,9 @@
     "waTemplateMpmTooManySections": "Un pulsante multi-prodotto può avere al massimo 10 sezioni. Rimuovi alcune sezioni prima di pubblicare.",
     "waTemplateMpmTooManyProducts": "Un pulsante multi-prodotto può avere al massimo 30 prodotti in totale. Rimuovi alcuni prodotti prima di pubblicare.",
     "waTemplateLtoExpirationRequired": "Scegli una data di scadenza per l'offerta a tempo limitato prima di inviare.",
+    "waTemplatePaymentRequestIncomplete": "Compila i dati di pagamento di questo pulsante prima di pubblicare.",
+    "waTemplatePaymentRequestInvalid": "Un dato di pagamento ha un formato non valido. Controlla importo, link e cifre della carta.",
+    "waTemplatePaymentRequestMisplaced": "I dati di pagamento possono essere impostati solo su un pulsante di pagamento di un modello normale (non carosello).",
     "waTemplateMpmIncompleteProducts": "Ogni sezione richiede almeno un prodotto selezionato: rimuovi le righe vuote o scegli un prodotto.",
     "unsupportedBlock": "Questo canale non supporta questo blocco.",
     "constraintExceeded": "Il limite di questo canale è stato superato.",
@@ -4496,6 +4499,8 @@
     "canceledVoiceCall": "Chiamata annullata",
     "acceptedCallPermission": "Ha accettato la richiesta di autorizzazione alla chiamata",
     "declinedCallPermission": "Ha rifiutato la richiesta di autorizzazione alla chiamata",
+    "confirmedPayment": "Pagamento confermato",
+    "confirmedPaymentWithCard": "Pagamento confermato con carta che termina con {lastFourDigits}",
     "sendHumanAgentTag": "Invia un messaggio con il tag HUMAN_AGENT",
     "warning": "Attenzione!",
     "humanAgentWarningDescription": "Puoi rispondere al messaggio di un utente entro 7 giorni solo quando non è ragionevolmente possibile risolvere il problema entro 24 ore. Ad esempio durante fine settimana e festività o nei casi che richiedono più di un giorno. Non usare questa opzione per altri motivi, poiché potresti mettere a rischio la tua Pagina Facebook o il tuo account Instagram. Se hai dubbi, non continuare.",
@@ -5118,7 +5123,30 @@
         "mpmSectionLimitReached": "Raggiunto il massimo di 10 sezioni.",
         "mpmProductLimitReached": "Raggiunto il massimo di 30 prodotti.",
         "mpmProductsSummary": "{productCount} prodotti in {sectionCount} sezioni",
-        "unsupportedButtonParam": "Questo tipo di pulsante non è ancora supportato."
+        "unsupportedButtonParam": "Questo tipo di pulsante non è ancora supportato.",
+        "payment": {
+          "method": {
+            "pix": "Pix",
+            "boleto": "Boleto",
+            "payment_link": "Link di pagamento",
+            "card_on_file": "Pagamento con carta in un clic"
+          },
+          "field": {
+            "code": "Codice Pix",
+            "digitableLine": "Riga digitabile del boleto",
+            "url": "URL del link di pagamento",
+            "lastFourDigits": "Ultime 4 cifre della carta",
+            "credentialId": "ID credenziale della carta (facoltativo)",
+            "amount": "Importo in BRL, es. 12.34"
+          },
+          "notice": {
+            "general": "WhatsApp non fa scadere né riconcilia i pagamenti: lo fa il tuo provider di pagamento. In una trasmissione un valore fisso va a tutti i destinatari; usa una variabile.",
+            "pixRedirect": "Il Pix con reindirizzamento si imposta per canale nelle impostazioni del canale WhatsApp.",
+            "cardOnFile": "Il pagamento con carta in un clic funziona solo per le aziende abilitate da Meta.",
+            "region": "Le richieste di pagamento sono pensate per aziende e clienti brasiliani."
+          },
+          "unsupportedButton": "Questo modello ha un pulsante di pagamento che non può essere inviato: non è stato possibile determinarne il tipo di pagamento. Risincronizza i modelli o sceglierne un altro."
+        }
       }
     },
     "sampleBodyCardContent": {
@@ -5533,7 +5561,16 @@
     },
     "credentialSecretsRequired": "Inserisci il segreto dell'app e il token utente di sistema. Non sono ancora salvati.",
     "embeddedSignupCancelled": "La registrazione è stata annullata: puoi chiudere questa scheda.",
-    "embeddedSignupFailed": "La registrazione non è stata completata: chiudi questa scheda e riprova."
+    "embeddedSignupFailed": "La registrazione non è stata completata: chiudi questa scheda e riprova.",
+    "payment": {
+      "settings": {
+        "title": "Pagamenti",
+        "description": "Come questo numero invia i pulsanti di richiesta di pagamento.",
+        "pixRedirectLabel": "Invia Pix con reindirizzamento",
+        "pixRedirectDescription": "L'acquirente apre l'app della banca per pagare e torna su WhatsApp. Attivalo solo dopo che Meta ha abilitato la tua azienda; chi non può essere reindirizzato riceve comunque copia e incolla.",
+        "adminOnly": "Solo gli amministratori dello spazio di lavoro possono modificare le impostazioni di pagamento."
+      }
+    }
   },
   "zalo": {
     "title": "Zalo OA",

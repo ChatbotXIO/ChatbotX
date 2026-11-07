@@ -35,6 +35,7 @@ import type {
   ChatJobSendWhatsappTemplateMessage,
   ChatJobSendWhatsappTemplateToConversation,
 } from "@chatbotx.io/worker-config"
+import { assertPaymentRequestsSendable } from "../../integration/handlers/wa-payment-request-guard"
 import {
   replaceWhatsappTemplateVariables,
   validateWhatsappTemplate,
@@ -248,12 +249,19 @@ export async function processWhatsappTemplate(
       conversation,
       sentByUserId,
     })
+    const templateComponents =
+      (validated.template.components as TemplateComponent[]) || []
     const replacedParams = await replaceWhatsappTemplateVariables({
       templateParams: template.params,
       variables,
       // Authoritative source for NAMED vs POSITIONAL placeholders, so the send
       // works even for broadcasts/flows saved before named-parameter support.
-      components: (validated.template.components as TemplateComponent[]) || [],
+      components: templateComponents,
+    })
+
+    assertPaymentRequestsSendable({
+      params: replacedParams,
+      components: templateComponents,
     })
 
     const flowButtons = flow?.buttons ?? []
@@ -271,7 +279,7 @@ export async function processWhatsappTemplate(
 
     const resolvedParams = withQuickReplyButtonParams({
       params: replacedParams,
-      components: (validated.template.components as TemplateComponent[]) || [],
+      components: templateComponents,
       stepButtons: flowButtons,
       flowButtonTemplates,
     })

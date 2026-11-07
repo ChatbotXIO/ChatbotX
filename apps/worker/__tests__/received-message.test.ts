@@ -933,6 +933,63 @@ describe("receiveMessage — message repository branch", () => {
     expect(mockAwardInboundMessageLeaderboard).not.toHaveBeenCalled()
   })
 
+  describe("one-click payment confirmation redelivery", () => {
+    const paymentEntity = {
+      type: "whatsapp_payment_method",
+      paymentMethod: "offsite_card_pay",
+      lastFourDigits: "5235",
+      credentialId: "cred-1",
+      raw: { payment_method: "offsite_card_pay" },
+    }
+
+    const deliverPayment = (isNew: boolean) => {
+      mockCreateOrUpdate.mockResolvedValue({
+        message: { ...fakeCreatedMessage, contentAttributes: paymentEntity },
+        isNew,
+      })
+      mockRunChannelHandler.mockResolvedValue({
+        message: {
+          ...baseIncomingMessage,
+          text: "Confirmed payment with card ending 5235",
+          contentAttributes: paymentEntity,
+          attachments: [],
+        },
+        contact: { sourceId: "psid-123", firstName: "Test" },
+        postbackAction: null,
+        quickReplyAction: null,
+        ref: null,
+      })
+    }
+
+    test("is stored once, keyed by the Meta message id, with its structured entity", async () => {
+      deliverPayment(true)
+
+      await receiveMessage(baseProps)
+
+      expect(mockCreateOrUpdate).toHaveBeenCalledTimes(1)
+      expect(mockCreateOrUpdate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          sourceId: "msg-src-1",
+          contentAttributes: paymentEntity,
+        }),
+      )
+    })
+
+    test("a Meta retry of the same webhook is not treated as a new message", async () => {
+      deliverPayment(true)
+      await receiveMessage(baseProps)
+      mockAwardInboundMessageLeaderboard.mockClear()
+
+      deliverPayment(false)
+      await receiveMessage(baseProps)
+
+      expect(mockCreateOrUpdate).toHaveBeenLastCalledWith(
+        expect.objectContaining({ sourceId: "msg-src-1" }),
+      )
+      expect(mockAwardInboundMessageLeaderboard).not.toHaveBeenCalled()
+    })
+  })
+
   describe("Google click referral persistence", () => {
     const googleReferral = {
       gclid: "ABCDEFGHIJ1234567890",

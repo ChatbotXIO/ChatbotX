@@ -5624,6 +5624,9 @@
     "waTemplateMpmTooManySections": "En flerproduktsknapp kan ha högst 10 sektioner. Ta bort några sektioner innan publicering.",
     "waTemplateMpmTooManyProducts": "En flerproduktsknapp kan ha högst 30 produkter totalt. Ta bort några produkter innan publicering.",
     "waTemplateLtoExpirationRequired": "Välj ett utgångsdatum för det tidsbegränsade erbjudandet innan du skickar.",
+    "waTemplatePaymentRequestIncomplete": "Fyll i betalningsuppgifterna för den här knappen innan du publicerar.",
+    "waTemplatePaymentRequestInvalid": "En betalningsuppgift har ogiltigt format. Kontrollera belopp, länk och kortsiffror.",
+    "waTemplatePaymentRequestMisplaced": "Betalningsuppgifter kan bara anges på en betalningsknapp i en vanlig mall (inte karusell).",
     "waTemplateMpmIncompleteProducts": "Varje sektion behöver minst en vald produkt — ta bort tomma rader eller välj en produkt.",
     "unsupportedBlock": "Den här kanalen har inte stöd för det här blocket.",
     "constraintExceeded": "Den här kanalens gräns har överskridits.",
@@ -5637,6 +5640,8 @@
     "canceledVoiceCall": "Avbrutet samtal",
     "acceptedCallPermission": "Accepterade begäran om samtalstillstånd",
     "declinedCallPermission": "Avvisade begäran om samtalstillstånd",
+    "confirmedPayment": "Betalning bekräftad",
+    "confirmedPaymentWithCard": "Betalning bekräftad med kort som slutar på {lastFourDigits}",
     "humanAgentWarningDescription": "Du får endast svara på en användares meddelande inom 7 dagar när problemet rimligen inte kan lösas inom 24 timmar. Exempel är helger, högtider eller ärenden som kräver mer än en dag. Använd inte detta alternativ av någon annan anledning, eftersom det kan utsätta din Facebook-sida eller ditt Instagram-konto för risk. Fortsätt inte om du är osäker.",
     "sendHumanAgentTag": "Skicka ett meddelande med taggen HUMAN_AGENT",
     "warning": "Varning!",
@@ -7437,7 +7442,30 @@
         "mpmSectionLimitReached": "Max 10 sektioner uppnått.",
         "mpmProductLimitReached": "Max 30 produkter uppnått.",
         "mpmProductsSummary": "{productCount} produkter i {sectionCount} sektioner",
-        "unsupportedButtonParam": "Den här knapptypen stöds inte än."
+        "unsupportedButtonParam": "Den här knapptypen stöds inte än.",
+        "payment": {
+          "method": {
+            "pix": "Pix",
+            "boleto": "Boleto",
+            "payment_link": "Betalningslänk",
+            "card_on_file": "Kortbetalning med ett klick"
+          },
+          "field": {
+            "code": "Pix-kod",
+            "digitableLine": "Boleto-rad",
+            "url": "URL till betalningslänk",
+            "lastFourDigits": "Kortets sista 4 siffror",
+            "credentialId": "Kortets credential-ID (valfritt)",
+            "amount": "Belopp i BRL, t.ex. 12.34"
+          },
+          "notice": {
+            "general": "WhatsApp låter inte betalningar gå ut och stämmer inte av dem — det gör din betalningsleverantör. I ett utskick skickas ett fast värde till alla mottagare, så använd en variabel.",
+            "pixRedirect": "Pix med omdirigering ställs in per kanal i WhatsApp-kanalens inställningar.",
+            "cardOnFile": "Kortbetalning med ett klick fungerar bara för företag som Meta har aktiverat det för.",
+            "region": "Betalningsförfrågningar är utformade för brasilianska företag och kunder."
+          },
+          "unsupportedButton": "Den här mallen har en betalningsknapp som inte kan skickas: betalningstypen kunde inte fastställas. Synkronisera mallarna igen eller välj en annan."
+        }
       },
       "text": {
         "label": "Text"
@@ -7776,7 +7804,16 @@
     },
     "credentialSecretsRequired": "Ange apphemligheten och systemanvändartoken. De är inte sparade än.",
     "embeddedSignupCancelled": "Registreringen avbröts – du kan stänga den här fliken.",
-    "embeddedSignupFailed": "Registreringen slutfördes inte – stäng den här fliken och försök igen."
+    "embeddedSignupFailed": "Registreringen slutfördes inte – stäng den här fliken och försök igen.",
+    "payment": {
+      "settings": {
+        "title": "Betalningar",
+        "description": "Hur det här numret skickar knappar för betalningsförfrågan.",
+        "pixRedirectLabel": "Skicka Pix med omdirigering",
+        "pixRedirectDescription": "Köparen öppnar sin bankapp för att betala och återvänder till WhatsApp. Aktivera först när Meta har anslutit ditt företag; köpare som inte kan omdirigeras får fortfarande kopiera och klistra in.",
+        "adminOnly": "Bara arbetsytans administratörer kan ändra betalningsinställningar."
+      }
+    }
   },
   "workspace": {
     "deletion": {

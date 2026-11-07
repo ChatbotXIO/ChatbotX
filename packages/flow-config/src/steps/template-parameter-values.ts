@@ -1,3 +1,11 @@
+import { z } from "zod"
+import {
+  collectPaymentRequestIssues,
+  type PaymentRequestFieldName,
+  paymentRequestFieldNames,
+  paymentRequestMethodRules,
+  paymentRequestSchema,
+} from "./payment-request"
 import {
   extractMessengerTemplateParams,
   type MessengerTemplateComponent,
@@ -8,8 +16,10 @@ import {
   extractTemplateParams,
   type TemplateComponent,
   type TemplateComponentButton,
+  type WaTemplateButtonParam,
   type WaTemplateParams,
 } from "./send-wa-message-template"
+import { resolveWaPaymentRequestMethod } from "./wa-template-payment-request-rules"
 
 /**
  * A flat, caller-facing view of a template's send-time parameters: one `key`
@@ -19,19 +29,27 @@ import {
  * (`extractTemplateParams` / `extractMessengerTemplateParams`), so named
  * placeholders, button indexes and dense button slots stay identical.
  */
-export type TemplateParameterKind =
-  | "text"
-  | "image"
-  | "video"
-  | "document"
-  | "latitude"
-  | "longitude"
-  | "location_name"
-  | "location_address"
-  | "url_suffix"
-  | "coupon_code"
-  | "catalog_product"
-  | "expiration_ms"
+export const templateParameterKinds = z.enum([
+  "text",
+  "image",
+  "video",
+  "document",
+  "latitude",
+  "longitude",
+  "location_name",
+  "location_address",
+  "url_suffix",
+  "coupon_code",
+  "catalog_product",
+  "expiration_ms",
+  "pix_code",
+  "boleto_digitable_line",
+  "payment_link_url",
+  "payment_amount",
+  "card_last_four_digits",
+  "card_credential_id",
+])
+export type TemplateParameterKind = z.infer<typeof templateParameterKinds>
 
 export type TemplateParameterSpec = {
   /** The key to send in `templateParams`. */
@@ -103,6 +121,74 @@ function textSlots<TParams>(input: {
   }))
 }
 
+type PaymentFieldSlotConfig = {
+  kind: TemplateParameterKind
+  /** Appended to `button.{index}`; the method's main value has none. */
+  keySuffix: string
+}
+
+/** Flat-key shape of each payment field, so a new method adds no branches. */
+const paymentFieldSlotConfig: Record<
+  PaymentRequestFieldName,
+  PaymentFieldSlotConfig
+> = {
+  code: { kind: "pix_code", keySuffix: "" },
+  digitableLine: { kind: "boleto_digitable_line", keySuffix: "" },
+  url: { kind: "payment_link_url", keySuffix: "" },
+  lastFourDigits: { kind: "card_last_four_digits", keySuffix: "" },
+  credentialId: { kind: "card_credential_id", keySuffix: ".credential_id" },
+  amount: { kind: "payment_amount", keySuffix: ".amount" },
+}
+
+/**
+ * The flat keys of one payment request button. The payment method comes from
+ * the stored template, so the caller only sends the per-customer values.
+ */
+function paymentRequestSlots(input: {
+  key: string
+  component: TemplateParameterSpec["component"]
+  button: TemplateComponentButton
+  entryFor: (params: WaTemplateParams) => WaTemplateButtonParam | undefined
+  unsupported: string[]
+}): Slot<WaTemplateParams>[] {
+  const method = resolveWaPaymentRequestMethod(input.button)
+  if (method === null) {
+    input.unsupported.push(input.key)
+    return []
+  }
+  const { requiredFields } = paymentRequestMethodRules[method]
+  return paymentRequestFieldNames(method).map((field) => {
+    const { kind, keySuffix } = paymentFieldSlotConfig[field]
+    return {
+      key: `${input.key}${keySuffix}`,
+      component: input.component,
+      kind,
+      required: requiredFields.includes(field),
+      apply: (params, value) => {
+        const entry = input.entryFor(params)
+        if (!entry?.payment_request) {
+          return true
+        }
+        const next = paymentRequestSchema.safeParse({
+          ...entry.payment_request,
+          [field]: value,
+        })
+        if (!next.success) {
+          return false
+        }
+        const hasInvalidField = collectPaymentRequestIssues(next.data, {
+          allowVariables: true,
+        }).some((issue) => issue.field === field && issue.kind === "invalid")
+        if (hasInvalidField) {
+          return false
+        }
+        entry.payment_request = next.data
+        return true
+      },
+    }
+  })
+}
+
 type WaButtonSlotTarget = (
   params: WaTemplateParams,
 ) => WaTemplateParams["button"]
@@ -114,6 +200,8 @@ function waButtonSlots(input: {
   buttons: TemplateComponentButton[]
   target: WaButtonSlotTarget
   unsupported: string[]
+  /** Payment request buttons are top-level only; a card's is unsupported. */
+  allowPaymentRequest: boolean
 }): Slot<WaTemplateParams>[] {
   const slots: Slot<WaTemplateParams>[] = []
   for (const [buttonIndex, button] of input.buttons.entries()) {
@@ -171,6 +259,21 @@ function waButtonSlots(input: {
         break
       case "MPM":
         input.unsupported.push(key)
+        break
+      case "PAYMENT_REQUEST":
+        if (input.allowPaymentRequest) {
+          slots.push(
+            ...paymentRequestSlots({
+              key,
+              component: input.component,
+              button,
+              entryFor,
+              unsupported: input.unsupported,
+            }),
+          )
+        } else {
+          input.unsupported.push(key)
+        }
         break
       default:
         // FLOW and static buttons need no value: the skeleton already
@@ -292,6 +395,7 @@ function waCarouselSlots(
             buttons: cardComponent.buttons,
             target: (params) => cardOf(params)?.button,
             unsupported,
+            allowPaymentRequest: false,
           }),
         )
       }
@@ -334,6 +438,7 @@ function collectWaSlots(components: TemplateComponent[]): {
             buttons: component.buttons ?? [],
             target: (params) => params.button,
             unsupported,
+            allowPaymentRequest: true,
           }),
         )
         break

@@ -12,6 +12,7 @@ import {
   getWhatsappCallEntity,
   getWhatsappCallPermissionReply,
   getWhatsappFlowResponse,
+  getWhatsappPaymentMethod,
   isMessageProductEntity,
 } from "@chatbotx.io/sdk"
 import {
@@ -37,6 +38,7 @@ import { cn } from "@chatbotx.io/ui/lib/utils"
 import { format } from "date-fns"
 import {
   BotIcon,
+  CreditCardIcon,
   ExternalLinkIcon,
   ImageIcon,
   LockIcon,
@@ -160,6 +162,7 @@ export const MessageItem = (props: MessageItemProps) => {
   const callPermissionReply = getWhatsappCallPermissionReply(
     message.contentAttributes,
   )
+  const paymentMethod = getWhatsappPaymentMethod(message.contentAttributes)
   const threadControlActivity = getThreadControlActivity(
     message.contentAttributes,
   )
@@ -183,6 +186,7 @@ export const MessageItem = (props: MessageItemProps) => {
       inboundOrder ||
       whatsappCall ||
       callPermissionReply ||
+      paymentMethod ||
       threadControlActivity ||
       threadControlContext,
   )
@@ -751,6 +755,25 @@ const StoryReplyContext = (props: {
   )
 }
 
+const WhatsappPaymentMethodReply = ({
+  lastFourDigits,
+}: {
+  lastFourDigits?: string
+}) => {
+  const t = useTranslations("messages")
+
+  return (
+    <div className="flex items-center gap-1.5 rounded-xl bg-secondary px-4 py-3 text-sm">
+      <CreditCardIcon aria-hidden className="size-3.5" />
+      <span>
+        {lastFourDigits
+          ? t("confirmedPaymentWithCard", { lastFourDigits })
+          : t("confirmedPayment")}
+      </span>
+    </div>
+  )
+}
+
 const WhatsappCallPermissionReply = ({
   response,
 }: {
@@ -904,6 +927,15 @@ const RenderContentAttributes = (props: MessageItemProps) => {
   if (callPermissionReply) {
     return (
       <WhatsappCallPermissionReply response={callPermissionReply.response} />
+    )
+  }
+
+  const paymentMethod = getWhatsappPaymentMethod(message.contentAttributes)
+  if (paymentMethod) {
+    return (
+      <WhatsappPaymentMethodReply
+        lastFourDigits={paymentMethod.lastFourDigits}
+      />
     )
   }
 

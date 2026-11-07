@@ -1065,6 +1065,8 @@ chatbotx whatsapp-channels test-event add <id> --messagingId <id>
 chatbotx channel-integrations list                    # [--channel] Connected WhatsApp/Messenger/Instagram/Zalo/TikTok channels
 chatbotx whatsapp-channels list|get <id>              # Same data per channel; also instagram-channels, tiktok-channels
 chatbotx whatsapp-channels handover-resume-flow update <id> --handoverResumeFlowId <flowId|null>
+chatbotx whatsapp-channels payment-settings list <id>   # Whether Pix payment-request buttons are sent with redirect (APPSWITCH)
+chatbotx whatsapp-channels payment-settings update <id> --pixRedirectEnabled <true|false>   # Only after Meta has onboarded the business
 ```
 
 ### `messenger-channels`

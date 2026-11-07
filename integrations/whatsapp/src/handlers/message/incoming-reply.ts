@@ -6,13 +6,14 @@ import type {
   IncomingMessage,
   MessageWhatsappCallPermissionReplyEntity,
   MessageWhatsappFlowResponseEntity,
+  MessageWhatsappPaymentMethodEntity,
 } from "@chatbotx.io/sdk"
 import type {
   ServerButtonMessage,
   ServerInteractiveMessage,
 } from "whatsapp-api-js/types"
 import { logger } from "../../lib/logger"
-import { asString } from "../../lib/value"
+import { asString, isRecord } from "../../lib/value"
 
 type WhatsappNfmFlowResponse = Record<string, unknown> & {
   flow_token?: string
@@ -163,6 +164,59 @@ const readCallPermissionReply = (
 }
 
 /**
+ * One-click payment confirmations (`interactive.type: "payment_method"`). Not
+ * modeled by whatsapp-api-js, and the Cloud API docs only show the Orders
+ * flavor of the payload, so only the discriminant is required: whatever
+ * arrives under it is kept raw, never logged, and shown as a confirmation.
+ */
+const asPaymentMethodReply = (
+  reply: WhatsappInteractiveReply,
+): Record<string, unknown> | undefined => {
+  const raw = reply as unknown as { type?: string; payment_method?: unknown }
+  if (raw.type !== "payment_method") {
+    return
+  }
+  // A payload that is not an object is wrapped, not dropped.
+  if (isRecord(raw.payment_method)) {
+    return raw.payment_method
+  }
+  return raw.payment_method === undefined ? {} : { value: raw.payment_method }
+}
+
+const asFiniteNumber = (value: unknown): number | undefined => {
+  const parsed = Number(value)
+  return value !== null && value !== "" && Number.isFinite(parsed)
+    ? parsed
+    : undefined
+}
+
+const readPaymentMethodReply = (
+  payload: Record<string, unknown>,
+): WhatsappReply => {
+  const lastFourDigits = asString(payload.last_four_digits) ?? undefined
+  const entity: MessageWhatsappPaymentMethodEntity = {
+    type: "whatsapp_payment_method",
+    paymentMethod: asString(payload.payment_method) ?? "unknown",
+    lastFourDigits,
+    credentialId: asString(payload.credential_id) ?? undefined,
+    referenceId: asString(payload.reference_id) ?? undefined,
+    paymentTimestamp: asFiniteNumber(payload.payment_timestamp),
+    raw: payload,
+  }
+
+  return {
+    postbackAction: null,
+    // English fallback for previews; the inbox renders a localized label
+    // from `contentAttributes` instead.
+    text: lastFourDigits
+      ? `Confirmed payment with card ending ${lastFourDigits}`
+      : "Confirmed payment",
+    buttonTitle: null,
+    contentAttributes: entity,
+  }
+}
+
+/**
  * Dispatch, keyed by `interactive.type`. The table's key *is* the discriminant
  * just read off `reply`, so the pairing is sound even though TypeScript can't
  * prove it through the lookup — one documented assertion, mirroring the
@@ -175,6 +229,11 @@ export const readInteractiveReply = (
   const callPermissionReply = asCallPermissionReply(reply)
   if (callPermissionReply) {
     return readCallPermissionReply(callPermissionReply)
+  }
+
+  const paymentMethodReply = asPaymentMethodReply(reply)
+  if (paymentMethodReply) {
+    return readPaymentMethodReply(paymentMethodReply)
   }
 
   const read = interactiveReplyReaders[reply.type]

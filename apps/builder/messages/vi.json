@@ -4525,6 +4525,9 @@
     "waTemplateMpmTooManySections": "Nút đa sản phẩm chỉ được có tối đa 10 phần. Hãy xóa bớt phần trước khi xuất bản.",
     "waTemplateMpmTooManyProducts": "Nút đa sản phẩm chỉ được có tối đa 30 sản phẩm. Hãy xóa bớt sản phẩm trước khi xuất bản.",
     "waTemplateLtoExpirationRequired": "Chọn thời điểm hết hạn cho ưu đãi có thời hạn trước khi gửi.",
+    "waTemplatePaymentRequestIncomplete": "Điền thông tin thanh toán của nút này trước khi xuất bản.",
+    "waTemplatePaymentRequestInvalid": "Một thông tin thanh toán sai định dạng. Hãy kiểm tra số tiền, liên kết và 4 số cuối thẻ.",
+    "waTemplatePaymentRequestMisplaced": "Thông tin thanh toán chỉ đặt được trên nút thanh toán của mẫu thường (không phải carousel).",
     "waTemplateMpmIncompleteProducts": "Mỗi nhóm cần ít nhất một sản phẩm đã chọn — xóa dòng trống hoặc chọn sản phẩm cho dòng đó.",
     "unsupportedBlock": "Kênh này không hỗ trợ khối này.",
     "constraintExceeded": "Đã vượt quá giới hạn của kênh này.",
@@ -4538,6 +4541,8 @@
     "canceledVoiceCall": "Cuộc gọi đã huỷ",
     "acceptedCallPermission": "Đã chấp nhận yêu cầu cấp quyền gọi",
     "declinedCallPermission": "Đã từ chối yêu cầu cấp quyền gọi",
+    "confirmedPayment": "Đã xác nhận thanh toán",
+    "confirmedPaymentWithCard": "Đã xác nhận thanh toán bằng thẻ có 4 số cuối {lastFourDigits}",
     "sendHumanAgentTag": "Gửi một tin nhắn với thẻ HUMAN_AGENT",
     "warning": "Warning!",
     "humanAgentWarningDescription": "Bạn chỉ có thể trả lời tin nhắn của người dùng trong vòng 7 ngày khi vấn đề không thể giải quyết trong vòng 24 giờ. Ví dụ: cuối tuần, ngày lễ, hoặc các trường hợp cần hơn một ngày để xử lý. Không sử dụng tùy chọn này cho bất kỳ lý do nào khác vì có thể ảnh hưởng đến Trang Facebook hoặc tài khoản Instagram của bạn. Nếu bạn không chắc chắn, đừng tiếp tục.",
@@ -5160,7 +5165,30 @@
         "mpmSectionLimitReached": "Đã đạt tối đa 10 phần.",
         "mpmProductLimitReached": "Đã đạt tối đa 30 sản phẩm.",
         "mpmProductsSummary": "{productCount} sản phẩm trong {sectionCount} phần",
-        "unsupportedButtonParam": "Loại nút này chưa được hỗ trợ."
+        "unsupportedButtonParam": "Loại nút này chưa được hỗ trợ.",
+        "payment": {
+          "method": {
+            "pix": "Pix",
+            "boleto": "Boleto",
+            "payment_link": "Liên kết thanh toán",
+            "card_on_file": "Thanh toán bằng thẻ một chạm"
+          },
+          "field": {
+            "code": "Mã Pix",
+            "digitableLine": "Dòng số Boleto",
+            "url": "URL liên kết thanh toán",
+            "lastFourDigits": "4 số cuối của thẻ",
+            "credentialId": "ID thông tin thẻ (không bắt buộc)",
+            "amount": "Số tiền BRL, ví dụ 12.34"
+          },
+          "notice": {
+            "general": "WhatsApp không làm hết hạn hay đối soát thanh toán — nhà cung cấp thanh toán của bạn làm việc đó. Trong chiến dịch gửi hàng loạt, giá trị cố định sẽ gửi cho mọi người nhận, hãy dùng biến.",
+            "pixRedirect": "Pix có chuyển hướng được đặt theo từng kênh trong cài đặt kênh WhatsApp.",
+            "cardOnFile": "Thanh toán thẻ một chạm chỉ dùng được với doanh nghiệp đã được Meta bật tính năng này.",
+            "region": "Yêu cầu thanh toán được thiết kế cho doanh nghiệp và khách hàng tại Brazil."
+          },
+          "unsupportedButton": "Mẫu này có nút thanh toán không thể gửi vì không xác định được loại thanh toán. Hãy đồng bộ lại mẫu hoặc chọn mẫu khác."
+        }
       }
     },
     "sampleBodyCardContent": {
@@ -5575,7 +5603,16 @@
     },
     "credentialSecretsRequired": "Nhập App Secret và System User Token. Hiện chưa được lưu.",
     "embeddedSignupCancelled": "Đã huỷ đăng ký — bạn có thể đóng tab này.",
-    "embeddedSignupFailed": "Đăng ký chưa hoàn tất — hãy đóng tab này và thử lại."
+    "embeddedSignupFailed": "Đăng ký chưa hoàn tất — hãy đóng tab này và thử lại.",
+    "payment": {
+      "settings": {
+        "title": "Thanh toán",
+        "description": "Cách số này gửi các nút yêu cầu thanh toán.",
+        "pixRedirectLabel": "Gửi Pix có chuyển hướng",
+        "pixRedirectDescription": "Người mua mở ứng dụng ngân hàng để thanh toán rồi quay lại WhatsApp. Chỉ bật sau khi Meta đã đăng ký doanh nghiệp của bạn; người mua có ứng dụng không chuyển hướng được vẫn nhận mã để sao chép.",
+        "adminOnly": "Chỉ quản trị viên không gian làm việc mới đổi được cài đặt thanh toán."
+      }
+    }
   },
   "zalo": {
     "title": "Zalo OA",
