@@ -131,9 +131,9 @@
 
 ## Tech Stack
 
-- Node.js 24
-- TypeScript 5
-- pnpm 10 workspaces
+- Node.js 26
+- TypeScript 7
+- pnpm 12 workspaces
 - Turborepo
 - Next.js 16 and React 19 for `apps/builder`
 - uWebSockets.js gateway with Redis Streams for realtime messaging

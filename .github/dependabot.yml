@@ -78,7 +78,7 @@ updates:
 
   # pnpm workspace: a single root entry covers every apps/* packages/* integrations/*
   # member because they share one root pnpm-lock.yaml. Dependabot reads
-  # pnpm-workspace.yaml + packageManager (pnpm@10.x) automatically.
+  # pnpm-workspace.yaml + packageManager (pnpm@12.x) automatically.
   - package-ecosystem: "npm"
     directory: "/"
     schedule:

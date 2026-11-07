@@ -11,8 +11,8 @@ This file summarizes how **ChatbotX** (this repository) is structured and how to
 
 ## Requirements
 
-- **Node.js** >= 24
-- **pnpm** 10.x (see root `package.json` `packageManager`)
+- **Node.js** >= 26
+- **pnpm** 12.x (see root `package.json` `packageManager`)
 
 ## Repository layout
 
@@ -29,7 +29,7 @@ This file summarizes how **ChatbotX** (this repository) is structured and how to
 
 ## Stack (high level)
 
-- **TypeScript 5**, **React 19**, **Next.js 16** (builder)
+- **TypeScript 7** (native compiler; nothing in the tree depends on TypeScript 6), **React 19**, **Next.js 16** (builder)
 - **Drizzle ORM** + **PostgreSQL** (with **pgvector**)
 - **Redis** + **BullMQ** for queues
 - **S3-compatible** storage (e.g. RustFS locally via Docker)
@@ -42,9 +42,9 @@ pnpm dev              # turbo dev — all dev tasks the repo wires up
 pnpm build            # turbo build
 pnpm lint             # check:agent-instructions → check:invariants → turbo run lint → ultracite check
 pnpm fix              # ultracite fix --unsafe
-pnpm check-types:cold # concurrency=1 — use on a cold run (no tsbuildinfo) or low-RAM machine; builder tsc peaks ~6 GB cold
+pnpm check-types:cold # concurrency=1 — use on a cold run (no tsbuildinfo) or low-RAM machine; builder tsc (TS 7, `--checkers 2`) peaks ~6.1 GB cold (4 checkers: ~7.4 GB)
 pnpm check-types      # turbo run check-types --concurrency=2 — always use this, not bare `pnpm turbo check-types`
-                      # (bare turbo runs 10 tsc in parallel, ~4 GB each for packages importing database/business → swaps/freezes the machine)
+                      # (bare turbo runs 10 tsc in parallel, ~2.5 GB each for packages importing database/business → swaps/freezes the machine)
 pnpm test             # turbo run test --concurrency=2 — 2 suites × 4 vitest threads (VITEST_MAX_WORKERS); 50% ran 6×4 = 24 threads on a 12-core Mac
 pnpm test:coverage    # turbo run test --concurrency=2 -- --coverage
 pnpm sync:agent-instructions   # regenerate the .devin/ + .github/ invariant mirrors
@@ -177,7 +177,7 @@ One line each; the full text (reasons, file paths, edge cases) is in `docs/agent
 23. **Agent-first: every feature ships a public API** — each new feature or operation, including result-returning ones (link, preview, test run, stats, export, AI generation), adds a procedure to `features/<x>/api/public.ts` first, then the UI; both call the same function. Then run the `cli-mcp-docs` skill. Exemptions are listed in the full reference.
 24. **Workspace purge must stay bounded** — index new FKs, audit high-volume purge paths, and use bounded child-before-parent drains. Read `.agents/skills/workspace-purge/SKILL.md`.
 
-25. **Keep Node-only code out of builder router imports** — split it into a server-only package subpath; Edge instrumentation traces the full router graph. See `apps/builder/__tests__/edge-instrumentation-graph.test.ts`.
+25. **Builder instrumentation imports server code only under `NEXT_RUNTIME === "nodejs"`** — anything outside the guard is compiled into the Edge bundle too (the oRPC server = the whole router graph); the builder has no Edge routes, keep it that way. See `apps/builder/__tests__/instrumentation-runtime-guard.test.ts`.
 <!-- END GENERATED: SHARED-INVARIANTS -->
 
 ## Git conventions

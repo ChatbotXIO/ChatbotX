@@ -28,8 +28,7 @@ const MAX_ORIGINAL_NAME_LENGTH = 200
 
 /**
  * 16 random bytes, base64url (22 chars): unguessable, unlike snowflake ids.
- * Web Crypto + `btoa` rather than `node:crypto`, because this module is also
- * traced into the Edge instrumentation bundle (via the builder's oRPC router).
+ * Web Crypto + `btoa` rather than `node:crypto`, so it runs in any runtime.
  */
 const randomToken = () =>
   btoa(String.fromCharCode(...crypto.getRandomValues(new Uint8Array(16))))

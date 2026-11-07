@@ -15,4 +15,7 @@ export const handler: ImportHandler<"products"> = {
 }
 
 export * from "./header-match"
-export * from "./template"
+// `./template` (exceljs) is deliberately NOT re-exported: client components
+// import this module through the package root and `./registry`, and exceljs
+// is CommonJS with no `sideEffects` flag, so a re-export ships ~920 KB of it to
+// the browser. Server code imports `@chatbotx.io/imports/modules/products/template`.

@@ -67,8 +67,8 @@ function normalizeContentForLock(content: unknown): unknown {
 
 /**
  * Structural equality over JSON values, key-order insensitive. Hand-rolled
- * instead of `node:util`'s `isDeepStrictEqual` because the business barrel must
- * stay Edge-Runtime safe (see `__tests__/edge-safe-import-graph.test.ts`).
+ * instead of `node:util`'s `isDeepStrictEqual` so the module stays free of Node
+ * built-ins and runs in any runtime.
  */
 function jsonEqual(a: unknown, b: unknown): boolean {
   if (a === b) {

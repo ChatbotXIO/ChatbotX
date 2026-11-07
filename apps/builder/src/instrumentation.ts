@@ -10,9 +10,10 @@ export async function register() {
     return
   }
 
+  // Next.js also compiles this file for the Edge runtime and traces every
+  // import outside this guard into that bundle. The builder has no Edge
+  // routes, so all server code loads here (AGENTS.md invariant 25).
   if (process.env.NEXT_RUNTIME === "nodejs") {
-    // This node-only module reaches the database, so it cannot be statically
-    // traced into the Edge instrumentation bundle.
     const { assertLicenseAtStartup } = await import(
       "@chatbotx.io/business/license-startup"
     )
@@ -21,7 +22,7 @@ export async function register() {
     )
     await assertLicenseAtStartup()
     await bootstrapPlatformAdminAtStartup()
-  }
 
-  await import("./lib/orpc/orpc.server")
+    await import("./lib/orpc/orpc.server")
+  }
 }

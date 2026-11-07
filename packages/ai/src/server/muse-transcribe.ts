@@ -5,8 +5,7 @@
  * request at most 32 MB). Nothing here converts audio: `inspectMuseWav`
  * checks the header and the caller routes anything else to the step's error
  * state. Plain `DataView`/`FormData`/`Blob` only — no `node:*` or `Buffer` —
- * so the module is safe in the builder's Edge instrumentation graph
- * (AGENTS.md invariant 25).
+ * so any runtime can import the module.
  */
 import type { MuseVoiceLanguage } from "@chatbotx.io/flow-config"
 import { secretTextAuthSchema } from "@chatbotx.io/sdk"
