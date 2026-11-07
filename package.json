@@ -15,7 +15,8 @@
     "test:watch": "vitest",
     "test:coverage": "turbo run test --concurrency=2 -- --coverage",
     "clean": "pnpm store prune && pnpm dlx rimraf --glob '**/{node_modules,.next,.turbo}'",
-    "check:circular": "pnpm dlx madge --circular --extensions ts,tsx --exclude generated {apps/**/src,packages/**/src}",
+    "check:circular": "node scripts/check-circular.mjs",
+    "check:circular:update-baseline": "node scripts/check-circular.mjs --write-baseline",
     "check:unused": "knip"
   },
   "devDependencies": {
@@ -23,9 +24,9 @@
     "@chatbotx.io/vitest-config": "workspace:*",
     "@jridgewell/sourcemap-codec": "^1.5.5",
     "@types/node": "catalog:",
-    "dependency-cruiser": "^17.3.10",
     "knip": "^6.25.0",
     "lefthook": "^2.1.6",
+    "oxc-parser": "catalog:",
     "tsx": "catalog:",
     "turbo": "^2.11.10",
     "typescript": "catalog:",
@@ -33,35 +34,8 @@
     "vitest": "catalog:",
     "zod": "catalog:"
   },
-  "packageManager": "pnpm@10.34.5+sha512.a4ee05f2f73658255bd6a89859c065a45c28a57daefae2c893a168ee2b73168c37b91e83e57ea67654ad03f03031746430e8bce38e362e042605fb8abc80192e",
+  "packageManager": "pnpm@12.16.1",
   "engines": {
-    "node": "^24.0.0 || >=26.0.0"
-  },
-  "overrides": {
-    "@types/node": "$@types/node",
-    "typescript": "^5",
-    "zod": "4.6.7",
-    "@codemirror/state": "6.7.0"
-  },
-  "workspaces": [
-    "apps/*",
-    "packages/*"
-  ],
-  "pnpm": {
-    "overrides": {
-      "typescript": "^5",
-      "@types/node": "24.x",
-      "kysely": "0.28.17",
-      "zod": "4.6.7",
-      "miniflare>zod": "^3.22.3",
-      "google-auth-library": "^10.7.0",
-      "@codemirror/state": "6.7.0"
-    },
-    "updateConfig": {
-      "ignoreDependencies": [
-        "@types/node",
-        "typescript"
-      ]
-    }
+    "node": ">=26"
   }
 }

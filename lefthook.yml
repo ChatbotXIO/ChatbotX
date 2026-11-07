@@ -12,8 +12,8 @@ pre-commit:
       skip: [merge, rebase]
     # Only workspaces changed since HEAD (staged + unstaged) and their
     # dependents, two tsc at a time like the root `check-types` script. A bare
-    # `turbo check-types` ran all 64 workspaces at turbo's default concurrency
-    # of 10, with builder alone allowed an 8 GB heap.
+    # `turbo check-types` runs all 64 workspaces at turbo's default concurrency
+    # of 10, which can exhaust local memory.
     - name: typecheck
       run: pnpm turbo check-types --filter="...[HEAD]" --concurrency=2
       # Test files are type-checked by default. Export CHECK_TYPES_SKIP_TESTS=1

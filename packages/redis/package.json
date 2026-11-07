@@ -18,9 +18,9 @@
   "devDependencies": {
     "@chatbotx.io/typescript-config": "workspace:*",
     "@chatbotx.io/vitest-config": "workspace:*",
-    "dotenv-cli": "^11.0.0",
-    "typescript": "^5",
-    "vitest": "^5.1.0"
+    "dotenv-cli": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   },
   "scripts": {
     "check-types": "tsc --noEmit",

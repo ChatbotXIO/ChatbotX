@@ -28,9 +28,9 @@ placeholders, button text, empty states, tab names, toasts, or dialog copy in
 builder UI.
 
 Source of truth: `apps/builder/messages/en.json`. **All 20 locale files in
-`apps/builder/messages/` must carry every key** — `apps/builder`'s own `lint` script is
-`i18n:check --source en --locales messages` (`apps/builder/package.json:11-12`), which runs
-in CI's Lint job. Adding a key to `en.json` + `vi.json` only will fail the parity check.
+`apps/builder/messages/` must carry every key** with a non-empty value, parse as ICU, and
+keep English's variables — enforced by `apps/builder/__tests__/i18n-messages.test.ts` in
+CI's test job. Adding a key to `en.json` + `vi.json` only will fail the parity check.
 
 Before adding keys, check existing `fields.*`, common actions, table labels, and
 feature namespaces.
@@ -74,8 +74,8 @@ lookup and provide a translated fallback:
 t.has(key) ? t(key) : t("features.examples.unknown")
 ```
 
-`@lingual/i18n-check` also recognizes escape-hatch comments such as
-`// i18n-check t('features.examples.status.active')`. Use one when a genuinely
+`apps/builder/__tests__/i18n-source-keys.test.ts` scans source text, so a comment such as
+`// declares t('features.examples.status.active')` also counts. Use one when a genuinely
 dynamic call needs to declare a specific static key as used and doing so
 meaningfully narrows the namespace blind spot.
 
