@@ -1,5 +1,6 @@
 import {
   buttonStepDefaultFn,
+  encodeButtonPayload,
   type SendImageStepSchema,
   type SendVideoStepSchema,
   sendImageStepDefaultFn,
@@ -181,58 +182,100 @@ describe("convertFlowStepMediaV2 — inline delivery (no buttons)", () => {
   })
 })
 
-describe("convertFlowStepMediaV2 — media template fallback (buttons)", () => {
-  test("uploads and sends an image media template when the step has buttons", async () => {
+const imageCardPayload = (title: string, buttons: unknown[]) => ({
+  type: "template",
+  payload: {
+    template_type: "generic",
+    image_aspect_ratio: "square",
+    elements: [{ title, image_url: IMAGE_URL, buttons }],
+  },
+})
+
+describe("convertFlowStepMediaV2 — image card (image with buttons)", () => {
+  test("sends a square generic-template card titled by the button without uploading", async () => {
     const messages = await convert({
       step: imageStep({ buttons: [buyButton] }),
     })
 
-    expect(mockUploadAttachment).toHaveBeenCalledTimes(1)
-    expect(mockUploadAttachment).toHaveBeenCalledWith(
-      ctx.auth,
-      IMAGE_URL,
-      "image",
-    )
+    expect(mockUploadAttachment).not.toHaveBeenCalled()
     expect(messages).toEqual([
       {
-        attachment: {
-          type: "template",
-          payload: {
-            template_type: "media",
-            elements: [
-              {
-                media_type: "image",
-                attachment_id: "attachment-1",
-                buttons: [
-                  expect.objectContaining({ type: "postback", title: "Buy" }),
-                ],
-              },
-            ],
-          },
-        },
+        attachment: imageCardPayload("Buy", [
+          expect.objectContaining({ type: "postback", title: "Buy" }),
+        ]),
       },
     ])
   })
 
-  test("uploads and sends a video media template when the step has buttons", async () => {
-    const messages = await convert({
-      step: videoStep({ buttons: [buyButton] }),
-    })
-
-    expect(mockUploadAttachment).toHaveBeenCalledWith(
-      ctx.auth,
-      VIDEO_URL,
-      "video",
+  test("joins three button titles with ' - ' in order", async () => {
+    const buttons = ["Buy", "Info", "Help"].map((label) =>
+      buttonStepDefaultFn({ label }),
     )
-    expect(messages[0]?.attachment?.payload.elements?.[0]).toEqual(
-      expect.objectContaining({
-        media_type: "video",
-        attachment_id: "attachment-1",
-      }),
+
+    const [message] = await convert({ step: imageStep({ buttons }) })
+
+    expect(message?.attachment?.payload.elements?.[0]?.title).toBe(
+      "Buy - Info - Help",
     )
   })
 
-  test("attaches node quick replies to the media template", async () => {
+  test("titles the card by the buttons actually sent, not all configured", async () => {
+    const buttons = ["A", "B", "C", "D"].map((label) =>
+      buttonStepDefaultFn({ label }),
+    )
+
+    const [message] = await convert({ step: imageStep({ buttons }) })
+
+    const element = message?.attachment?.payload.elements?.[0]
+    expect(element?.title).toBe("A - B - C")
+    expect(element?.buttons).toHaveLength(3)
+  })
+
+  test("sends only the usable buttons and titles the card by them", async () => {
+    const buttons = ["Buy", "", "  ", "Help"].map((label) =>
+      buttonStepDefaultFn({ label }),
+    )
+
+    const [message] = await convert({ step: imageStep({ buttons }) })
+
+    const element = message?.attachment?.payload.elements?.[0]
+    expect(element?.title).toBe("Buy - Help")
+    expect(element?.buttons?.map((button) => button.title)).toEqual([
+      "Buy",
+      "Help",
+    ])
+  })
+
+  test("keeps three buttons when a blank label precedes three valid ones", async () => {
+    const buttons = ["", "A", "B", "C"].map((label) =>
+      buttonStepDefaultFn({ label }),
+    )
+
+    const [message] = await convert({ step: imageStep({ buttons }) })
+
+    const element = message?.attachment?.payload.elements?.[0]
+    expect(element?.title).toBe("A - B - C")
+    expect(element?.buttons).toHaveLength(3)
+  })
+
+  test("cuts a long multibyte title to 80 code points without splitting a surrogate pair", async () => {
+    const buttons = [
+      buttonStepDefaultFn({ label: "Đặt hàng ngay hôm nay".repeat(2) }),
+      buttonStepDefaultFn({ label: "😀".repeat(40) }),
+    ]
+
+    const [message] = await convert({ step: imageStep({ buttons }) })
+
+    const title = message?.attachment?.payload.elements?.[0]?.title ?? ""
+    expect(Array.from(title)).toHaveLength(80)
+    expect(
+      title.startsWith("Đặt hàng ngay hôm nayĐặt hàng ngay hôm nay - "),
+    ).toBe(true)
+    expect(title.endsWith("😀")).toBe(true)
+    expect(title.isWellFormed()).toBe(true)
+  })
+
+  test("attaches node quick replies to the card", async () => {
     const [message] = await convert({
       step: imageStep({ buttons: [buyButton] }),
       quickReplies,
@@ -246,11 +289,112 @@ describe("convertFlowStepMediaV2 — media template fallback (buttons)", () => {
     )
   })
 
+  test("omits the quick_replies key when the node has none", async () => {
+    const [message] = await convert({
+      step: imageStep({ buttons: [buyButton] }),
+    })
+
+    expect(message).not.toHaveProperty("quick_replies")
+  })
+
+  test("passes flow, metadata and contact id into the button payload", async () => {
+    const [message] = await convert({
+      step: imageStep({ buttons: [buyButton] }),
+      flowId: "11",
+      flowVersionId: "22",
+      metadata: { broadcastId: "33" },
+    } as Parameters<typeof convert>[0])
+
+    const button = message?.attachment?.payload.elements?.[0]?.buttons?.[0]
+    expect(button?.payload).toBe(
+      encodeButtonPayload({
+        flowId: "11",
+        flowVersionId: "22",
+        buttonId: buyButton.id,
+        broadcastId: "33",
+        contactInboxId: "contact-1",
+      }),
+    )
+    expect(button?.payload).toContain(":33:")
+    expect(button?.payload).toContain("contact-1")
+  })
+
+  test("falls back to the inline image and warns when every label is blank", async () => {
+    const step = imageStep({
+      buttons: [
+        buttonStepDefaultFn({ label: "" }),
+        buttonStepDefaultFn({ label: " " }),
+      ],
+    })
+    const messages = await convert({
+      step,
+      quickReplies,
+    })
+
+    expect(messages).toEqual([
+      {
+        attachment: inlineAttachment("image", IMAGE_URL),
+        quick_replies: expectedQuickReplies,
+      },
+    ])
+    expect(mockUploadAttachment).not.toHaveBeenCalled()
+    expect(mockLogger.warn).toHaveBeenCalledTimes(1)
+    expect(mockLogger.warn).toHaveBeenCalledWith(
+      { stepId: step.id },
+      expect.any(String),
+    )
+  })
+})
+
+describe("convertFlowStepMediaV2 — video media template (buttons)", () => {
+  test("uploads and sends a video media template when the step has buttons", async () => {
+    const messages = await convert({
+      step: videoStep({ buttons: [buyButton] }),
+    })
+
+    expect(mockUploadAttachment).toHaveBeenCalledTimes(1)
+    expect(mockUploadAttachment).toHaveBeenCalledWith(
+      ctx.auth,
+      VIDEO_URL,
+      "video",
+    )
+    expect(messages).toEqual([
+      {
+        attachment: {
+          type: "template",
+          payload: {
+            template_type: "media",
+            elements: [
+              {
+                media_type: "video",
+                attachment_id: "attachment-1",
+                buttons: [
+                  expect.objectContaining({ type: "postback", title: "Buy" }),
+                ],
+              },
+            ],
+          },
+        },
+      },
+    ])
+  })
+
+  test("attaches node quick replies to the video media template", async () => {
+    const [message] = await convert({
+      step: videoStep({ buttons: [buyButton] }),
+      quickReplies,
+    })
+
+    expect(message).toEqual(
+      expect.objectContaining({ quick_replies: expectedQuickReplies }),
+    )
+  })
+
   test("keeps the legacy contract: an upload failure yields nothing and does not throw", async () => {
     mockUploadAttachment.mockRejectedValueOnce(new Error("upload failed"))
 
     const messages = await convert({
-      step: imageStep({ buttons: [buyButton] }),
+      step: videoStep({ buttons: [buyButton] }),
     })
 
     expect(messages).toEqual([])
@@ -289,19 +433,31 @@ describe("messenger sendFlowStep — sendImage / sendVideo routed through v2", (
     )
   })
 
-  test("falls back to upload + media template when the step has buttons", async () => {
+  test("sends an image with buttons as one generic-template card without uploading", async () => {
     await sendFlowStep(stepProps({ step: imageStep({ buttons: [buyButton] }) }))
 
-    expect(mockUploadAttachment).toHaveBeenCalledTimes(1)
+    expect(mockUploadAttachment).not.toHaveBeenCalled()
     expect(mockSendPageMessage).toHaveBeenCalledTimes(1)
     const [, payload] = mockSendPageMessage.mock.calls[0]
-    expect(payload.message.attachment.payload.template_type).toBe("media")
-    expect(payload.message.attachment.payload.elements[0].attachment_id).toBe(
-      "attachment-1",
-    )
+    expect(payload.message.attachment.payload).toMatchObject({
+      template_type: "generic",
+      image_aspect_ratio: "square",
+      elements: [{ title: "Buy", image_url: IMAGE_URL }],
+    })
   })
 
-  test("surfaces a Graph fetch failure as a mapped ChannelError instead of swallowing it", async () => {
+  test("uploads and sends a media template for a video with buttons", async () => {
+    await sendFlowStep(stepProps({ step: videoStep({ buttons: [buyButton] }) }))
+
+    expect(mockUploadAttachment).toHaveBeenCalledTimes(1)
+    const [, payload] = mockSendPageMessage.mock.calls[0]
+    expect(payload.message.attachment.payload.template_type).toBe("media")
+  })
+
+  test.each([
+    ["inline image", () => imageStep()],
+    ["image card", () => imageStep({ buttons: [buyButton] })],
+  ] as const)("surfaces a Graph fetch failure of the %s as a mapped ChannelError instead of swallowing it", async (_, makeStep) => {
     mockSendPageMessage.mockRejectedValueOnce({
       response: {
         error: {
@@ -312,7 +468,7 @@ describe("messenger sendFlowStep — sendImage / sendVideo routed through v2", (
       },
     })
 
-    const promise = sendFlowStep(stepProps({ step: imageStep() }))
+    const promise = sendFlowStep(stepProps({ step: makeStep() }))
 
     await expect(promise).rejects.toBeInstanceOf(ChannelError)
     await expect(promise).rejects.toMatchObject({
@@ -322,11 +478,11 @@ describe("messenger sendFlowStep — sendImage / sendVideo routed through v2", (
     expect(mockUploadAttachment).not.toHaveBeenCalled()
   })
 
-  test("keeps the legacy contract end-to-end: upload failure on the buttons path resolves with no message ids", async () => {
+  test("keeps the legacy contract end-to-end: video upload failure resolves with no message ids", async () => {
     mockUploadAttachment.mockRejectedValueOnce(new Error("upload failed"))
 
     const result = await sendFlowStep(
-      stepProps({ step: imageStep({ buttons: [buyButton] }) }),
+      stepProps({ step: videoStep({ buttons: [buyButton] }) }),
     )
 
     expect(result).toEqual({ messageIds: [], sentCount: 0 })
@@ -373,7 +529,7 @@ describe("messenger sendFlowStep — private comment anchor with v2 media", () =
     })
   })
 
-  test("sends the unchanged media template through the private-reply API when the step has buttons", async () => {
+  test("sends the image card through the private-reply API when the step has buttons", async () => {
     await sendFlowStep(
       stepProps({
         step: imageStep({ buttons: [buyButton] }),
@@ -381,13 +537,27 @@ describe("messenger sendFlowStep — private comment anchor with v2 media", () =
       }),
     )
 
-    expect(mockUploadAttachment).toHaveBeenCalledTimes(1)
+    expect(mockUploadAttachment).not.toHaveBeenCalled()
     expect(mockSendPageMessage).not.toHaveBeenCalled()
     const [, commentId, message] = mockSendPrivateReplyMessage.mock.calls[0]
     expect(commentId).toBe("comment-1")
-    expect(message.attachment.payload.template_type).toBe("media")
-    expect(message.attachment.payload.elements[0].attachment_id).toBe(
-      "attachment-1",
+    expect(message.attachment.payload).toMatchObject({
+      template_type: "generic",
+      elements: [{ title: "Buy", image_url: IMAGE_URL }],
+    })
+  })
+
+  test("sends the video media template through the private-reply API when the step has buttons", async () => {
+    await sendFlowStep(
+      stepProps({
+        step: videoStep({ buttons: [buyButton] }),
+        commentAnchor: privateAnchor,
+      }),
     )
+
+    expect(mockUploadAttachment).toHaveBeenCalledTimes(1)
+    expect(mockSendPageMessage).not.toHaveBeenCalled()
+    const [, , message] = mockSendPrivateReplyMessage.mock.calls[0]
+    expect(message.attachment.payload.template_type).toBe("media")
   })
 })
