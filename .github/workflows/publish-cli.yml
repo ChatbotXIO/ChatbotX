@@ -12,7 +12,7 @@ name: Publish CLI to npm
 # Quality gate: ci.yml (PR/push-to-main) and release.yml's `check` job already
 # run the repo-wide lint/types/test. This workflow cannot `needs:` a job in
 # another workflow file, so it re-runs only the two CLI-scoped tasks, which
-# cost seconds.
+# cost seconds. The build runs first because the smoke test inspects dist/.
 #
 # Auth: OIDC trusted publishing (id-token: write), not an NPM_TOKEN secret.
 # Two things had to be true for this to work, in order:
@@ -149,20 +149,21 @@ jobs:
           mv package.json.tmp apps/cli/package.json
           node -e "console.log('stamped version:', require('./apps/cli/package.json').version)"
 
+      # Direct `tsdown` rather than `turbo run build`: the stamped package.json
+      # must be inside the bundle, and this sidesteps any turbo cache question
+      # entirely. Built BEFORE the tests: __tests__/smoke.test.ts asserts on
+      # dist/index.cjs, which does not exist on a clean runner until now.
+      - name: Build CLI
+        if: steps.guard.outputs.should_publish != 'false'
+        working-directory: apps/cli
+        run: pnpm build
+
       - name: Type-check and test CLI
         if: steps.guard.outputs.should_publish != 'false'
         working-directory: apps/cli
         run: |
           pnpm check-types
           pnpm test
-
-      # Direct `tsdown` rather than `turbo run build`: the stamped package.json
-      # must be inside the bundle, and this sidesteps any turbo cache question
-      # entirely.
-      - name: Build CLI
-        if: steps.guard.outputs.should_publish != 'false'
-        working-directory: apps/cli
-        run: pnpm build
 
       # `pnpm pack`, then `npm publish <tarball>`: package.json uses pnpm-only
       # specs (`catalog:`, `workspace:`) that `npm publish` would ship verbatim,
