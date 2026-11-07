@@ -3,6 +3,7 @@ import { getChildLogger } from "@chatbotx.io/logger"
 import { createId } from "@chatbotx.io/utils"
 import { fetchFollowingSafeRedirects, readBodyWithLimit } from "./bounded-fetch"
 import { getImageDimensions, pathJoin } from "./helper"
+import { normalizeMimeType } from "./mime-type"
 import { DEFAULT_MIME_TYPE, type UploadedFile } from "./schema"
 import { uploader } from "./uploader"
 
@@ -29,13 +30,14 @@ export async function uploadFile(
   acl = "public-read",
 ): Promise<UploadedFile> {
   const buffer = (await file.arrayBuffer()) as unknown as Buffer
+  const mimeType = normalizeMimeType(file.type)
   await uploader.putObject(path, buffer, {
     ACL: acl as ObjectCannedACL,
     ContentLength: file.size,
-    ContentType: file.type,
+    ContentType: mimeType,
   })
 
-  const imageDimensions = await getImageDimensions(file.type, buffer)
+  const imageDimensions = await getImageDimensions(mimeType, buffer)
 
   return {
     name: file.name,
@@ -94,9 +96,9 @@ export async function uploadFileFromUrl(
     )
   }
 
-  const mimeType = (response.headers.get("content-type") || DEFAULT_MIME_TYPE)
-    .split(";")[0]
-    .trim()
+  const mimeType = normalizeMimeType(
+    (response.headers.get("content-type") || DEFAULT_MIME_TYPE).split(";")[0],
+  )
   const headerLength = Number.parseInt(
     response.headers.get("content-length") ?? "0",
     10,

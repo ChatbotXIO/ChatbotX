@@ -23,6 +23,10 @@ const configs = z.discriminatedUnion("type", [
     contactId: z.string(),
   }),
   z.object({
+    type: z.literal("poll"),
+    pollId: z.string(),
+  }),
+  z.object({
     type: z.literal("qr-code"),
     name: z.string(),
   }),
@@ -47,6 +51,9 @@ export function encodeRef(params: RefConfig): string {
     }
     case "leaderboard": {
       return `lb_${encodeBase62(params.leaderboardId)}_${encodeBase62(params.contactId)}`
+    }
+    case "poll": {
+      return `pl_${encodeBase62(params.pollId)}`
     }
     case "qr-code": {
       return `qr_${params.name}`
@@ -101,6 +108,16 @@ export function decodeRef(ref: string): RefConfig | undefined {
         leaderboardId: decodeBase62(leaderboardId),
         contactId: decodeBase62(contactId),
       }
+    }
+
+    if (ref.startsWith("pl_")) {
+      const pollId = ref.slice(3)
+      // Same empty-segment guard as `mg_` above: `decodeBase62("")` would
+      // otherwise resolve "pl_" to poll "0".
+      if (!pollId) {
+        return
+      }
+      return { type: "poll", pollId: decodeBase62(pollId) }
     }
 
     if (ref.startsWith("qr_")) {

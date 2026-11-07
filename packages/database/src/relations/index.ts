@@ -147,6 +147,7 @@ import { oauthRefreshTokenRelations } from "./oauth-refresh-token"
 import { oauthResourceRelations } from "./oauth-resource"
 import { pipelineRelations } from "./pipeline"
 import { placeNearMeRelations } from "./place-near-me"
+import { pollRelations } from "./poll"
 import { productRelations } from "./product"
 import { productCategoryRelations } from "./product-category"
 import { questionnaireRelations } from "./questionnaire"
@@ -365,6 +366,7 @@ export const relations = {
   ...minigameRelations,
   ...minigameContactRelations,
   ...minigamePlayRelations,
+  ...pollRelations,
   ...placeNearMeRelations,
   ...leaderboardRelations,
   ...leaderboardParticipantRelations,

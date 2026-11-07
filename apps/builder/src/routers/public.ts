@@ -89,6 +89,7 @@ import {
   placeCategoriesPublicRouter,
   placeLocationsPublicRouter,
 } from "@/features/places-near-me/api/public"
+import { pollsPublicRouter } from "@/features/polls/api/public"
 import { productCategoriesPublicRouter } from "@/features/product-categories/api/public"
 import { productVendorsPublicRouter } from "@/features/product-vendors/api/public"
 import { productsPublicRouter } from "@/features/products/api/public"
@@ -191,6 +192,7 @@ export const publicRouter = {
   paymentProviders: paymentProvidersPublicRouter,
   placeCategories: placeCategoriesPublicRouter,
   placeLocations: placeLocationsPublicRouter,
+  polls: pollsPublicRouter,
   productCategories: productCategoriesPublicRouter,
   products: productsPublicRouter,
   productVendors: productVendorsPublicRouter,

@@ -1161,6 +1161,21 @@ chatbotx minigames players list <id>                    # Contacts who played, w
 
 ---
 
+### `polls` (scope `polls`)
+
+```bash
+chatbotx polls list                                    # Newest first, each with votesCount
+chatbotx polls get <id>                                # Poll with candidates and per-candidate votesCount
+chatbotx polls create --name <name> --startsAt <iso> --endsAt <iso> --candidates <json>   # 2-10 candidates; [--afterVoteFlowId <id>] from `flows list`
+chatbotx polls update <id>                             # Partial (PATCH); send candidate ids to keep their votes, omitted candidates are deleted with their votes
+chatbotx polls delete <id>
+chatbotx polls bulk-delete --ids <ids>
+chatbotx polls links list <id>                         # omnichannelUrl + one deep link per connected voting inbox
+chatbotx polls analytics list <id>                     # Vote totals, gender split, per-candidate votes and percentages
+```
+
+---
+
 ### `pipelines` (scope `pipelines`)
 
 CRM kanban boards: pipelines hold ordered stages, custom fields and items (one per contact deal, ticket or card).
