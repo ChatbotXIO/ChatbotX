@@ -449,6 +449,21 @@ export const ContactDetail = ({
 
   const [selectedField, setSelectedField] =
     useState<ContactEditableField | null>(null)
+  const [selectedFieldAnchor, setSelectedFieldAnchor] =
+    useState<HTMLElement | null>(null)
+
+  const openFieldEditor = (
+    field: ContactEditableField,
+    anchorElement: HTMLElement,
+  ) => {
+    setSelectedFieldAnchor(anchorElement)
+    setSelectedField(field)
+  }
+
+  const closeFieldEditor = () => {
+    setSelectedField(null)
+    setSelectedFieldAnchor(null)
+  }
 
   const [contactFields, setContactFields] = useState<ContactEditableField[]>([])
 
@@ -811,7 +826,9 @@ export const ContactDetail = ({
               ) : (
                 <Button
                   className="flex-1 justify-start truncate text-[12px]"
-                  onClick={() => setSelectedField(editable)}
+                  onClick={(event) =>
+                    openFieldEditor(editable, event.currentTarget)
+                  }
                   size="sm"
                   variant="ghost"
                 >
@@ -837,9 +854,14 @@ export const ContactDetail = ({
       </div>
 
       <EditContactField
+        anchor={selectedFieldAnchor}
         contactId={contact.id}
         onDeleted={handleCustomFieldDeleted}
-        onOpenChange={() => setSelectedField(null)}
+        onOpenChange={(open) => {
+          if (!open) {
+            closeFieldEditor()
+          }
+        }}
         onUpdated={handleCustomFieldUpdated}
         open={Boolean(selectedField)}
         targetField={selectedField}

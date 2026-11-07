@@ -4,15 +4,13 @@ import {
 } from "@chatbotx.io/database/partials"
 import { SelectField } from "@chatbotx.io/ui/components/form/select-field"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@chatbotx.io/ui/components/ui/dialog"
 import { Form } from "@chatbotx.io/ui/components/ui/form"
+import {
+  Popover,
+  PopoverContent,
+  PopoverHeader,
+  PopoverTitle,
+} from "@chatbotx.io/ui/components/ui/popover"
 import {
   isTemporalCustomFieldType,
   resolveTemporalCustomFieldFormValue,
@@ -38,6 +36,8 @@ type EditContactField = {
   open: boolean
   onOpenChange: (open: boolean) => void
   targetField: ContactEditableField | null
+  /** The clicked field value — the popover opens next to it. */
+  anchor: HTMLElement | null
   onUpdated?: (key: string, value: string) => void
   onDeleted?: (key: string) => void
 }
@@ -51,6 +51,7 @@ export function EditContactField(props: EditContactField) {
     open,
     onOpenChange,
     targetField,
+    anchor,
     onUpdated,
     onDeleted,
   } = props
@@ -123,17 +124,22 @@ export function EditContactField(props: EditContactField) {
   )
 
   return (
-    <Dialog onOpenChange={onOpenChange} open={open}>
-      <DialogContent className={"max-h-screen overflow-y-scroll lg:max-w-5xl"}>
-        <DialogHeader>
-          <DialogTitle>
-            {t("messages.editFeature", { feature: t("fields.contact.label") })}
-          </DialogTitle>
-          <DialogDescription />
-        </DialogHeader>
+    <Popover onOpenChange={onOpenChange} open={open}>
+      <PopoverContent
+        align="end"
+        anchor={anchor}
+        className="max-h-[80vh] w-[400px] max-w-[calc(100vw-2rem)] gap-3 overflow-y-auto p-4"
+        side="bottom"
+      >
+        <PopoverHeader>
+          <PopoverTitle>
+            {targetField?.label ??
+              t("messages.editFeature", { feature: t("fields.contact.label") })}
+          </PopoverTitle>
+        </PopoverHeader>
         <Form {...form}>
           <form
-            className="flex flex-col gap-4"
+            className="flex flex-col gap-3"
             onSubmit={handleSubmitWithAction}
           >
             {targetField?.options ? (
@@ -159,7 +165,7 @@ export function EditContactField(props: EditContactField) {
               />
             )}
 
-            <DialogFooter className="mt-4 justify-start">
+            <div className="flex items-center gap-2">
               <div className="flex-1">
                 {!(
                   targetField?.options ||
@@ -206,10 +212,10 @@ export function EditContactField(props: EditContactField) {
                 )}
                 {t("actions.confirm")}
               </Button>
-            </DialogFooter>
+            </div>
           </form>
         </Form>
-      </DialogContent>
-    </Dialog>
+      </PopoverContent>
+    </Popover>
   )
 }
