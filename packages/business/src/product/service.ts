@@ -1,4 +1,5 @@
 import { type DatabaseClient, db, eq } from "@chatbotx.io/database/client"
+import type { ProductStatus } from "@chatbotx.io/database/partials"
 import {
   discountCodeRepository,
   type ProductImportInsert,
@@ -18,7 +19,9 @@ import type {
 } from "@chatbotx.io/database/types"
 import { createId } from "@chatbotx.io/utils"
 import { BaseService } from "../base.service"
+import { resolveStoreSource } from "../ecommerce-settings/store-source"
 import { notFoundException } from "../errors"
+import { shopifyManagedException } from "../shopify/errors"
 import { assertDeletable } from "../template/installed-resource.service"
 import { vendorService } from "../vendor/service"
 
@@ -53,7 +56,7 @@ export type ProductWriteData = {
   rank?: number
   categoryId?: string | null
   subcategoryId?: string | null
-  isActive?: boolean
+  status?: ProductStatus
   isSearchable?: boolean
   allowSpecialRequest?: boolean
   isAddonOnly?: boolean
@@ -318,7 +321,32 @@ class ProductService extends BaseService {
     return await this.insert(data, tx)
   }
 
+  /**
+   * A store mirroring Shopify adds products in Shopify, and a mirrored
+   * product is edited there — its status included, which follows Shopify's.
+   */
+  private async assertManagedHere(input: {
+    workspaceId: string
+    productIds?: string[]
+    tx?: DatabaseClient
+  }) {
+    if (!input.productIds) {
+      if ((await resolveStoreSource(input.workspaceId)) === "shopify") {
+        throw shopifyManagedException()
+      }
+      return
+    }
+    const rows = await productRepository.findByIds(
+      { workspaceId: input.workspaceId, productIds: input.productIds },
+      input.tx,
+    )
+    if (rows.some((row) => row.source === "shopify")) {
+      throw shopifyManagedException()
+    }
+  }
+
   async createFull(data: ProductFullWriteData): Promise<ProductModel> {
+    await this.assertManagedHere({ workspaceId: data.workspaceId })
     const { variantOptions, variants, addons, ...productData } = data
     return await db.transaction(async (tx) => {
       // One guard covering categories and addons together, so the row is never
@@ -359,6 +387,11 @@ class ProductService extends BaseService {
     tx?: DatabaseClient
   }): Promise<void> {
     const { productId, workspaceId, tx = db } = props
+    await this.assertManagedHere({
+      workspaceId,
+      productIds: [productId],
+      tx,
+    })
     const data = await this.withConsistentSubcategory({
       productId,
       workspaceId,
@@ -394,6 +427,7 @@ class ProductService extends BaseService {
       addons,
       ...patch
     } = input
+    await this.assertManagedHere({ workspaceId, productIds: [productId] })
     await db.transaction(async (tx) => {
       const data = await this.withConsistentSubcategory({
         productId,
@@ -438,6 +472,7 @@ class ProductService extends BaseService {
     tx?: DatabaseClient
   }): Promise<void> {
     const { ids, workspaceId } = input
+    await this.assertManagedHere({ workspaceId, productIds: ids, tx: input.tx })
     await assertDeletable({
       workspaceId,
       resourceKind: "product",
@@ -461,7 +496,10 @@ class ProductService extends BaseService {
   }
 
   async list(input: Parameters<typeof productRepository.list>[0]) {
-    return await productRepository.list(input)
+    return await productRepository.list({
+      ...input,
+      source: input.source ?? (await resolveStoreSource(input.workspaceId)),
+    })
   }
 
   async findById(id: string, workspaceId: string) {
@@ -473,7 +511,10 @@ class ProductService extends BaseService {
   }
 
   async listFormOptions(workspaceId: string) {
-    return await productRepository.listFormOptions({ workspaceId })
+    return await productRepository.listFormOptions({
+      workspaceId,
+      source: await resolveStoreSource(workspaceId),
+    })
   }
 
   /** Rows from a file import. Vendors are named, and created when missing. */
@@ -483,6 +524,7 @@ class ProductService extends BaseService {
       Omit<ProductImportInsert, "vendorId"> & { vendor?: string | null }
     >
   }) {
+    await this.assertManagedHere({ workspaceId: input.workspaceId })
     return await db.transaction(async (tx) => {
       const vendorIds = await vendorService.resolveByNames({
         workspaceId: input.workspaceId,

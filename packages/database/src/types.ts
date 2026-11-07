@@ -320,6 +320,8 @@ export type EcommerceOpenHoursModel =
   typeof schema.ecommerceOpenHoursModel.$inferSelect
 export type EcommercePaymentProviderModel =
   typeof schema.ecommercePaymentProviderModel.$inferSelect
+export type IntegrationShopifyModel =
+  typeof schema.integrationShopifyModel.$inferSelect
 export type OrderPaymentModel = typeof schema.orderPaymentModel.$inferSelect
 export type EcommerceSettingsModel =
   typeof schema.ecommerceSettingsModel.$inferSelect

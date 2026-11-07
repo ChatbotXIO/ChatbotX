@@ -11,9 +11,20 @@ import {
 } from "@chatbotx.io/ui/components/ui/dropdown-menu"
 import { formatDate } from "@chatbotx.io/ui/lib/format"
 import type { ColumnDef, Row } from "@tanstack/react-table"
-import { EyeIcon, MoreHorizontalIcon, StarIcon, Trash2Icon } from "lucide-react"
+import {
+  ExternalLinkIcon,
+  EyeIcon,
+  MoreHorizontalIcon,
+  StarIcon,
+  Trash2Icon,
+} from "lucide-react"
 import Link from "next/link"
 import type { useTranslations } from "next-intl"
+import {
+  type ShopifyStoreLinks,
+  shopifyOrderAdminUrl,
+} from "@/features/products/lib/shopify-admin-url"
+import { OrderShopifyStatusBadges } from "@/features/shopify/components/order-shopify-status-badges"
 import { OrderPaymentBadge } from "./components/order-payment-badge"
 import { OrderStatusBadge } from "./components/order-status-badge"
 import { formatOrderMoney, type StoreCurrencyFormat } from "./lib/order-money"
@@ -21,7 +32,7 @@ import type { OrderListItem } from "./schema/resource"
 
 export type OrderRowAction = {
   row: Row<OrderListItem>
-  variant: "delete"
+  variant: "delete" | "view"
 }
 
 type GetColumnsProps = {
@@ -30,6 +41,8 @@ type GetColumnsProps = {
   store: StoreCurrencyFormat
   workspaceId: string
   setRowAction: (action: OrderRowAction | null) => void
+  /** Set while the store source is Shopify: orders are read-only. */
+  shopifyStore?: ShopifyStoreLinks
 }
 
 export function getOrderColumns({
@@ -38,7 +51,18 @@ export function getOrderColumns({
   store,
   workspaceId,
   setRowAction,
+  shopifyStore,
 }: GetColumnsProps): ColumnDef<OrderListItem>[] {
+  if (shopifyStore) {
+    return getShopifyOrderColumns({
+      t,
+      locale,
+      store,
+      setRowAction,
+      shopifyStore,
+    })
+  }
+
   const detailHref = (orderId: string) =>
     `/space/${workspaceId}/orders/${orderId}`
 
@@ -194,6 +218,184 @@ export function getOrderColumns({
               <Trash2Icon className="me-2 h-4 w-4" />
               {t("actions.delete")}
             </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      ),
+      size: 50,
+      enableSorting: false,
+      enableHiding: false,
+    },
+  ]
+}
+
+function getShopifyOrderColumns({
+  t,
+  locale,
+  store,
+  setRowAction,
+  shopifyStore,
+}: Omit<GetColumnsProps, "workspaceId"> & {
+  shopifyStore: ShopifyStoreLinks
+}): ColumnDef<OrderListItem>[] {
+  return [
+    {
+      id: "keyword",
+      accessorKey: "externalName",
+      header: ({ column }) => (
+        <DataTableColumnHeader
+          column={column}
+          title={t("orders.shopify.orderColumn")}
+        />
+      ),
+      cell: ({ row }) => (
+        <button
+          className="font-medium hover:underline"
+          onClick={() => setRowAction({ row, variant: "view" })}
+          type="button"
+        >
+          {row.original.externalName ?? `#${row.original.number}`}
+        </button>
+      ),
+      meta: {
+        label: t("orders.shopify.orderColumn"),
+        placeholder: t("orders.searchPlaceholder"),
+        variant: "text",
+      },
+      enableColumnFilter: true,
+      enableSorting: false,
+      enableHiding: false,
+    },
+    {
+      id: "customer",
+      accessorKey: "customerName",
+      header: ({ column }) => (
+        <DataTableColumnHeader
+          column={column}
+          title={t("orders.shopify.customerColumn")}
+        />
+      ),
+      cell: ({ row }) => <span>{row.original.customerName ?? "—"}</span>,
+      enableSorting: false,
+    },
+    {
+      id: "total",
+      accessorKey: "total",
+      header: ({ column }) => (
+        <DataTableColumnHeader
+          column={column}
+          title={t("orders.columns.total")}
+        />
+      ),
+      cell: ({ row }) => (
+        <span className="tabular-nums">
+          {formatOrderMoney(row.original.total, row.original.currency, store)}
+        </span>
+      ),
+      enableSorting: false,
+    },
+    {
+      id: "paymentStatus",
+      accessorKey: "paymentStatus",
+      header: ({ column }) => (
+        <DataTableColumnHeader
+          column={column}
+          title={t("orders.columns.status")}
+        />
+      ),
+      cell: ({ row }) => (
+        <OrderShopifyStatusBadges
+          fulfillmentStatus={row.original.fulfillmentStatus}
+          paymentStatus={row.original.paymentStatus}
+        />
+      ),
+      meta: {
+        label: t("orders.shopify.paymentFilter"),
+        placeholder: t("orders.shopify.paymentFilterAll"),
+        variant: "select",
+        options: [
+          { label: t("orders.paymentStatuses.paid"), value: "paid" },
+          { label: t("orders.shopify.paymentPending"), value: "unpaid" },
+          { label: t("orders.paymentStatuses.refunded"), value: "refunded" },
+        ],
+      },
+      enableColumnFilter: true,
+      enableSorting: false,
+    },
+    {
+      // Hidden: only carries the Fulfillment filter (the badges sit under Status).
+      id: "fulfillmentStatus",
+      accessorKey: "fulfillmentStatus",
+      header: () => null,
+      cell: () => null,
+      meta: {
+        label: t("orders.shopify.fulfillmentFilter"),
+        placeholder: t("orders.shopify.fulfillmentFilterAll"),
+        variant: "select",
+        options: [
+          {
+            label: t("orders.shopify.fulfillmentStatuses.fulfilled"),
+            value: "fulfilled",
+          },
+          {
+            label: t("orders.shopify.fulfillmentStatuses.unfulfilled"),
+            value: "unfulfilled",
+          },
+        ],
+      },
+      enableColumnFilter: true,
+      enableSorting: false,
+    },
+    {
+      id: "createdAt",
+      accessorKey: "createdAt",
+      header: ({ column }) => (
+        <DataTableColumnHeader
+          column={column}
+          title={t("fields.createdAt.label")}
+        />
+      ),
+      cell: ({ row }) => (
+        <span className="font-medium">
+          {formatDate(row.original.createdAt, { locale })}
+        </span>
+      ),
+      enableSorting: false,
+    },
+    {
+      id: "actions",
+      header: t("actions.actions"),
+      cell: ({ row }) => (
+        <DropdownMenu>
+          <DropdownMenuTrigger
+            render={
+              <Button size="icon" variant="ghost">
+                <MoreHorizontalIcon className="h-4 w-4" />
+                <span className="sr-only">{t("actions.openMenu")}</span>
+              </Button>
+            }
+          />
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem
+              onClick={() => setRowAction({ row, variant: "view" })}
+            >
+              <EyeIcon className="me-2 h-4 w-4" />
+              {t("orders.shopify.viewDetails")}
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              render={
+                <a
+                  href={shopifyOrderAdminUrl({
+                    adminUrl: shopifyStore.adminUrl,
+                    externalId: row.original.externalId,
+                  })}
+                  rel="noopener noreferrer"
+                  target="_blank"
+                >
+                  <ExternalLinkIcon className="me-2 h-4 w-4" />
+                  {t("orders.shopify.viewOnShopify")}
+                </a>
+              }
+            />
           </DropdownMenuContent>
         </DropdownMenu>
       ),

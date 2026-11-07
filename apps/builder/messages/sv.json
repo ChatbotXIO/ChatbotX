@@ -6143,7 +6143,40 @@
       "notPaid": "Ej betald"
     },
     "paymentUntil": "till {time}",
-    "paymentExpiredCancelReason": "Betalningen togs inte emot i tid."
+    "paymentExpiredCancelReason": "Betalningen togs inte emot i tid.",
+    "exportTruncated": "Exporten begränsades till de första {count} beställningarna",
+    "exportError": "Det gick inte att exportera beställningarna",
+    "shopify": {
+      "syncOrders": "Synkronisera beställningar",
+      "orderColumn": "Beställning",
+      "customerColumn": "Kund",
+      "paymentPending": "Väntande",
+      "paymentFilter": "Betalning",
+      "paymentFilterAll": "Betalning: Alla",
+      "fulfillmentFilter": "Leverans",
+      "fulfillmentFilterAll": "Leverans: Alla",
+      "fulfillmentStatuses": {
+        "fulfilled": "Levererad",
+        "unfulfilled": "Ej levererad",
+        "partial": "Delvis"
+      },
+      "viewDetails": "Visa detaljer",
+      "viewOnShopify": "Visa i Shopify",
+      "detailsTitle": "Beställning {name}",
+      "placedOn": "Lagd i Shopify-butiken • {date}",
+      "customerDetails": "Kunduppgifter",
+      "shippingAddress": "Leveransadress",
+      "noShippingAddress": "Ingen leveransadress",
+      "tracking": "Spårning: {company} #{number}",
+      "lineItems": "Orderrader",
+      "itemColumn": "Artikel",
+      "skuColumn": "SKU",
+      "shipping": "Frakt",
+      "free": "Gratis",
+      "loading": "Läser in...",
+      "loadError": "Det gick inte att läsa in beställningsdetaljerna",
+      "close": "Stäng"
+    }
   },
   "placesNearMe": {
     "description": "Låt dina kunder enkelt hitta dina verksamhetsplatser nära dem.",
@@ -6496,6 +6529,14 @@
       "isActive": {
         "label": "Aktiv"
       },
+      "status": {
+        "label": "Status",
+        "values": {
+          "active": "Aktiv",
+          "draft": "Utkast",
+          "unlisted": "Olistad"
+        }
+      },
       "isAddonOnly": {
         "label": "Använd endast produkten som tillägg till andra produkter"
       },
@@ -6563,7 +6604,33 @@
       "tags": "Taggar",
       "variants": "Varianter"
     },
-    "title": "Produkter"
+    "title": "Produkter",
+    "shopify": {
+      "openShopify": "Öppna Shopify",
+      "syncProducts": "Synkronisera produkter",
+      "syncStarted": "Synkroniseringen startade",
+      "syncError": "Det gick inte att starta synkroniseringen",
+      "viewDetails": "Visa detaljer",
+      "editOnShopify": "Redigera i Shopify",
+      "copyProductLink": "Kopiera produktlänk",
+      "linkCopied": "Produktlänk kopierad",
+      "noProductLink": "Den här produkten har ingen butikslänk",
+      "inStock": "{count} i lager",
+      "inStockWithVariants": "{count} i lager ({variants} varianter)",
+      "detailsTitle": "Produktdetaljer — {name}",
+      "detailsSubtitle": "Synkroniserad från Shopify-butiken {shop}",
+      "summaryLine": "Kategori: {category} • Totalt lager: {units} enheter fördelade på {variants, plural, one {# variant} other {# varianter}}",
+      "uncategorized": "Okategoriserad",
+      "variantsTitle": "Varianter ({count})",
+      "variantColumn": "Variant",
+      "skuColumn": "SKU",
+      "priceColumn": "Pris",
+      "inventoryColumn": "Lager",
+      "defaultVariant": "Standard",
+      "loading": "Läser in...",
+      "loadError": "Det gick inte att läsa in produktdetaljerna",
+      "close": "Stäng"
+    }
   },
   "qrCodeGenerator": {
     "description": "Skapa och hantera dina QR-koder.",
@@ -10117,7 +10184,8 @@
       "general": "Allmänt",
       "payments": "Betalningar",
       "shipping": "Frakt",
-      "checkout": "Kassa"
+      "checkout": "Kassa",
+      "shopify": "Shopify"
     },
     "general": {
       "orderingAvailable": {
@@ -10185,6 +10253,14 @@
         "label": "Flöde för övergiven varukorg",
         "description": "Flödet som boten kör för kunden när varukorgen lämnats så länge. Använd '{{shop_token}}' i knapparna för att öppna varukorgen. Triggers kan också använda händelsen \"Cart abandoned\".",
         "none": "Inget flöde (endast trigger-händelse)"
+      },
+      "storeSource": {
+        "label": "Butikskälla",
+        "description": "Välj den butikskälla som används för att hantera dina produkter, lager och beställningar. När Shopify är valt hanteras alla produkter och beställningar direkt från din Shopify-butik.",
+        "options": {
+          "chatbotx": "ChatbotX",
+          "shopify": "Shopify"
+        }
       }
     },
     "payments": {
@@ -10310,6 +10386,78 @@
       "orderConfirmationFlowId": {
         "label": "Flöde för orderbekräftelse",
         "description": "Flödet som skickas till kunden i stället för standardmeddelandet när beställningen är lagd."
+      },
+      "shopifyCheckoutMethod": {
+        "label": "Betalningsmetod",
+        "description": "Välj om kunder slutför betalningen på din Shopify-kassasida eller lägger beställningen direkt i webbutiken.",
+        "options": {
+          "webCheckout": "Shopify-webbkassa",
+          "inApp": "Kassa i appen"
+        }
+      },
+      "shopifyAutoApplyDiscounts": {
+        "label": "Tillämpa rabattkoder automatiskt",
+        "description": "Låt kunder tillämpa Shopify-rabattkoder direkt på sin varukorg innan de skickas vidare till kassan."
+      },
+      "inAppDeliveryCost": {
+        "label": "Leveranskostnad",
+        "description": "Leveransavgift som läggs till i beställningar via kassan i appen."
+      }
+    },
+    "shopify": {
+      "shopDomain": {
+        "label": "Butiksdomän",
+        "placeholder": "your-store.myshopify.com",
+        "hint": "Ange .myshopify.com-domänen för din Shopify-butik.",
+        "connectedHint": "Domänen för din anslutna Shopify-butik."
+      },
+      "authKind": {
+        "label": "Autentisering",
+        "description": "Hur ChatbotX loggar in i din butik: med Admin API-åtkomsttoken från en anpassad app eller med Client ID och secret från en app som skapats i Shopify Dev Dashboard.",
+        "options": {
+          "token": "Admin API-åtkomsttoken",
+          "clientCredentials": "Client ID och secret (Dev Dashboard-app)"
+        }
+      },
+      "accessToken": {
+        "label": "Admin API-åtkomsttoken",
+        "hint": "Admin API-åtkomsttoken för din anpassade app. Ge den dessa behörigheter: {scopes}.",
+        "connectedHint": "Din Shopify Admin API-åtkomsttoken lagras krypterad."
+      },
+      "apiSecret": {
+        "label": "Hemlig API-nyckel",
+        "hint": "Appens hemliga API-nyckel, som används för att verifiera webhooks som skickas av Shopify."
+      },
+      "clientId": {
+        "label": "Client ID",
+        "hint": "Client ID för din Dev Dashboard-app. Ge den dessa behörigheter: {scopes}."
+      },
+      "clientSecret": {
+        "label": "Client Secret",
+        "hint": "Appens Client Secret. Den lagras krypterad."
+      },
+      "webhookUrl": {
+        "label": "Webhook-URL",
+        "description": "Registreras automatiskt hos Shopify vid anslutning för att ta emot uppdateringar om produkter, lager och beställningar i realtid."
+      },
+      "syncNow": "Synkronisera nu",
+      "syncStarted": "Synkroniseringen startade",
+      "syncError": "Det gick inte att starta synkroniseringen",
+      "syncStatus": {
+        "label": "Synkroniseringsstatus",
+        "description": "Produkter, rabattkoder och beställningar speglas från din Shopify-butik.",
+        "connectedTo": "Ansluten till {shopDomain}",
+        "lastSynced": "Senast synkroniserad: {time} ({productCount} produkter, {orderCount} beställningar)",
+        "neverSynced": "Inte synkroniserad ännu",
+        "noReason": "Anslut din butik igen för att fortsätta.",
+        "invalid": "Anslutningen är inte längre giltig: {reason}",
+        "state": {
+          "idle": "Inaktiv",
+          "queued": "Synkronisering köad...",
+          "running": "Synkroniserar...",
+          "succeeded": "Senaste synkroniseringen lyckades",
+          "failed": "Senaste synkroniseringen misslyckades"
+        }
       }
     }
   },
@@ -10389,7 +10537,8 @@
       "total": "Totalt",
       "coupon": "Rabattkod ({code})",
       "title": "Ordersammanfattning",
-      "saved": "Du sparar {amount}"
+      "saved": "Du sparar {amount}",
+      "deliveryAtCheckout": "Beräknas i kassan"
     },
     "belowMinimum": "Minsta beställning är {amount}.",
     "checkOut": "Till kassan",
@@ -10508,7 +10657,9 @@
       "notEligible": "Inte behörig än"
     },
     "itemCount": "{count, plural, one {# vara} other {# varor}}",
-    "relatedProducts": "Du kanske också gillar"
+    "relatedProducts": "Du kanske också gillar",
+    "soldOut": "Slutsåld",
+    "sku": "SKU: {sku}"
   },
   "webshopLinks": {
     "preview": "Förhandsgranska",

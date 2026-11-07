@@ -49,6 +49,7 @@ export async function listCollectionProducts(input: {
     }
     const { data } = await productRepository.listForShop({
       workspaceId: input.workspaceId,
+      source: await ecommerceSettingsService.storeSource(input.workspaceId),
       productIds: step.productIds,
     })
     // In the order they were chosen.
@@ -60,6 +61,7 @@ export async function listCollectionProducts(input: {
   const { conditions } = step
   const { data } = await productRepository.listForShop({
     workspaceId: input.workspaceId,
+    source: await ecommerceSettingsService.storeSource(input.workspaceId),
     keyword: conditions.name.trim() || null,
     categoryId: conditions.subcategoryId ?? conditions.categoryId,
     vendorId: conditions.vendorId,

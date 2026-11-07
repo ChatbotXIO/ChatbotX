@@ -7341,7 +7341,40 @@
       "notPaid": "未払い"
     },
     "paymentUntil": "{time} まで",
-    "paymentExpiredCancelReason": "期限内に支払いが確認できませんでした。"
+    "paymentExpiredCancelReason": "期限内に支払いが確認できませんでした。",
+    "exportTruncated": "エクスポートは最初の {count} 件の注文に制限されました",
+    "exportError": "注文をエクスポートできませんでした",
+    "shopify": {
+      "syncOrders": "注文を同期",
+      "orderColumn": "注文",
+      "customerColumn": "お客様",
+      "paymentPending": "保留中",
+      "paymentFilter": "支払い",
+      "paymentFilterAll": "支払い：すべて",
+      "fulfillmentFilter": "フルフィルメント",
+      "fulfillmentFilterAll": "フルフィルメント：すべて",
+      "fulfillmentStatuses": {
+        "fulfilled": "発送済み",
+        "unfulfilled": "未発送",
+        "partial": "一部発送"
+      },
+      "viewDetails": "詳細を表示",
+      "viewOnShopify": "Shopify で表示",
+      "detailsTitle": "注文 {name}",
+      "placedOn": "Shopify ストアで注文 • {date}",
+      "customerDetails": "お客様の詳細",
+      "shippingAddress": "配送先住所",
+      "noShippingAddress": "配送先住所がありません",
+      "tracking": "追跡：{company} #{number}",
+      "lineItems": "注文商品",
+      "itemColumn": "商品",
+      "skuColumn": "SKU",
+      "shipping": "配送",
+      "free": "無料",
+      "loading": "読み込み中...",
+      "loadError": "注文の詳細を読み込めませんでした",
+      "close": "閉じる"
+    }
   },
   "products": {
     "title": "商品",
@@ -7421,6 +7454,14 @@
       "isActive": {
         "label": "有効"
       },
+      "status": {
+        "label": "ステータス",
+        "values": {
+          "active": "販売中",
+          "draft": "下書き",
+          "unlisted": "非公開"
+        }
+      },
       "isAddonOnly": {
         "label": "この商品を他の商品の追加商品としてのみ使用する"
       },
@@ -7456,6 +7497,32 @@
     "inventoryPolicy": {
       "dont_track": "在庫を追跡しない",
       "track": "在庫を追跡する"
+    },
+    "shopify": {
+      "openShopify": "Shopify を開く",
+      "syncProducts": "商品を同期",
+      "syncStarted": "同期を開始しました",
+      "syncError": "同期を開始できませんでした",
+      "viewDetails": "詳細を表示",
+      "editOnShopify": "Shopify で編集",
+      "copyProductLink": "商品リンクをコピー",
+      "linkCopied": "商品リンクをコピーしました",
+      "noProductLink": "この商品にはストアフロントのリンクがありません",
+      "inStock": "在庫 {count}",
+      "inStockWithVariants": "在庫 {count}（{variants} バリエーション）",
+      "detailsTitle": "商品の詳細 — {name}",
+      "detailsSubtitle": "Shopify ストア {shop} から同期済み",
+      "summaryLine": "カテゴリ：{category} • 合計在庫：{variants, plural, one {# バリエーション} other {# バリエーション}}で {units} 個",
+      "uncategorized": "未分類",
+      "variantsTitle": "バリエーション（{count}）",
+      "variantColumn": "バリエーション",
+      "skuColumn": "SKU",
+      "priceColumn": "価格",
+      "inventoryColumn": "在庫",
+      "defaultVariant": "デフォルト",
+      "loading": "読み込み中...",
+      "loadError": "商品の詳細を読み込めませんでした",
+      "close": "閉じる"
     }
   },
   "tiktok": {
@@ -10117,7 +10184,8 @@
       "general": "一般",
       "payments": "支払い",
       "shipping": "配送",
-      "checkout": "チェックアウト"
+      "checkout": "チェックアウト",
+      "shopify": "Shopify"
     },
     "general": {
       "orderingAvailable": {
@@ -10185,6 +10253,14 @@
         "label": "カゴ落ちフロー",
         "description": "カートがこの時間放置されたときにボットがお客様に実行するフロー。ボタンに'{{shop_token}}'を使うとカートを開けます。トリガーでも「Cart abandoned」イベントを使えます。",
         "none": "フローなし（トリガーイベントのみ）"
+      },
+      "storeSource": {
+        "label": "ストアソース",
+        "description": "商品、在庫、注文の管理に使用するストアソースを選択します。Shopify を選択すると、すべての商品と注文が Shopify ストアから直接管理されます。",
+        "options": {
+          "chatbotx": "ChatbotX",
+          "shopify": "Shopify"
+        }
       }
     },
     "payments": {
@@ -10310,6 +10386,78 @@
       "orderConfirmationFlowId": {
         "label": "注文確認フロー",
         "description": "注文が確定したときに、既定のメッセージの代わりにお客様へ送るフローです。"
+      },
+      "shopifyCheckoutMethod": {
+        "label": "チェックアウト方法",
+        "description": "お客様が Shopify のチェックアウトページで支払いを完了するか、ウェブショップで直接注文するかを選択します。",
+        "options": {
+          "webCheckout": "Shopify ウェブチェックアウト",
+          "inApp": "アプリ内チェックアウト"
+        }
+      },
+      "shopifyAutoApplyDiscounts": {
+        "label": "割引コードを自動適用",
+        "description": "チェックアウトにリダイレクトする前に、お客様がカートに Shopify の割引コードを直接適用できるようにします。"
+      },
+      "inAppDeliveryCost": {
+        "label": "配送料",
+        "description": "アプリ内チェックアウトの注文に加算される配送料です。"
+      }
+    },
+    "shopify": {
+      "shopDomain": {
+        "label": "ショップドメイン",
+        "placeholder": "your-store.myshopify.com",
+        "hint": "Shopify ストアの .myshopify.com ドメインを入力してください。",
+        "connectedHint": "接続済みの Shopify ストアのドメインです。"
+      },
+      "authKind": {
+        "label": "認証",
+        "description": "ChatbotX がストアにサインインする方法です。カスタムアプリの Admin API アクセストークン、または Shopify Dev Dashboard で作成したアプリの Client ID とシークレットを使用します。",
+        "options": {
+          "token": "Admin API アクセストークン",
+          "clientCredentials": "Client ID とシークレット（Dev Dashboard アプリ）"
+        }
+      },
+      "accessToken": {
+        "label": "Admin API アクセストークン",
+        "hint": "カスタムアプリの Admin API アクセストークンです。次のスコープを付与してください：{scopes}。",
+        "connectedHint": "Shopify Admin API アクセストークンは暗号化して保存されます。"
+      },
+      "apiSecret": {
+        "label": "API シークレットキー",
+        "hint": "Shopify から送信される Webhook の検証に使用されるアプリの API シークレットキーです。"
+      },
+      "clientId": {
+        "label": "Client ID",
+        "hint": "Dev Dashboard アプリの Client ID です。次のスコープを付与してください：{scopes}。"
+      },
+      "clientSecret": {
+        "label": "Client Secret",
+        "hint": "アプリの Client Secret です。暗号化して保存されます。"
+      },
+      "webhookUrl": {
+        "label": "Webhook URL",
+        "description": "接続時に Shopify へ自動登録され、商品、在庫、注文の更新をリアルタイムで受信します。"
+      },
+      "syncNow": "今すぐ同期",
+      "syncStarted": "同期を開始しました",
+      "syncError": "同期を開始できませんでした",
+      "syncStatus": {
+        "label": "同期ステータス",
+        "description": "商品、割引コード、注文は Shopify ストアからミラーリングされます。",
+        "connectedTo": "{shopDomain} に接続済み",
+        "lastSynced": "最終同期：{time}（商品 {productCount} 件、注文 {orderCount} 件）",
+        "neverSynced": "まだ同期されていません",
+        "noReason": "続行するにはストアを再接続してください。",
+        "invalid": "接続は無効になりました：{reason}",
+        "state": {
+          "idle": "待機中",
+          "queued": "同期をキューに追加しました...",
+          "running": "同期中...",
+          "succeeded": "前回の同期は成功しました",
+          "failed": "前回の同期に失敗しました"
+        }
       }
     }
   },
@@ -10389,7 +10537,8 @@
       "total": "合計",
       "coupon": "クーポン（{code}）",
       "title": "注文内容",
-      "saved": "{amount}お得"
+      "saved": "{amount}お得",
+      "deliveryAtCheckout": "チェックアウト時に計算されます"
     },
     "belowMinimum": "最低注文金額は{amount}です。",
     "checkOut": "購入手続きへ",
@@ -10508,7 +10657,9 @@
       "notEligible": "対象外"
     },
     "itemCount": "{count, plural, one {#点} other {#点}}",
-    "relatedProducts": "こちらもおすすめ"
+    "relatedProducts": "こちらもおすすめ",
+    "soldOut": "売り切れ",
+    "sku": "SKU：{sku}"
   },
   "webshopLinks": {
     "preview": "プレビュー",

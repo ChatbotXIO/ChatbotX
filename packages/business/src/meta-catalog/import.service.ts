@@ -27,7 +27,7 @@ export type MetaCatalogImportProduct = {
   inventoryPolicy?: "dont_track" | "track"
   allowOutOfStockPurchase?: boolean
   images?: Array<{ url: string; type: "link" }>
-  isActive?: boolean
+  status?: "active" | "draft"
 }
 
 /** Lower-cased vendor name → vendor id, as `vendorService.resolveByNames` returns. */
@@ -94,7 +94,7 @@ const toProductValues = (
       ? {}
       : { allowOutOfStockPurchase: product.allowOutOfStockPurchase }),
     ...(product.images === undefined ? {} : { images: product.images }),
-    ...(product.isActive === undefined ? {} : { isActive: product.isActive }),
+    ...(product.status === undefined ? {} : { status: product.status }),
   }
 }
 

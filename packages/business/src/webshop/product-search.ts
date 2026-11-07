@@ -145,10 +145,11 @@ export async function searchProductsByMessage(input: {
     return []
   }
   const names = await withCache(
-    `webshop:searchable-names:${input.workspaceId}`,
+    `webshop:searchable-names:${input.workspaceId}:${settings.general.storeSource}`,
     () =>
       productRepository.listSearchableNames({
         workspaceId: input.workspaceId,
+        source: settings.general.storeSource,
         limit: SEARCHABLE_NAMES_LIMIT,
       }),
     { ttl: NAMES_CACHE_SECONDS },

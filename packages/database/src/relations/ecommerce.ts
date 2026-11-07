@@ -132,6 +132,13 @@ export const ecommerceRelations = defineRelationsPart(schema, (r) => ({
       optional: false,
     }),
   },
+  integrationShopifyModel: {
+    workspace: r.one.workspaceModel({
+      from: r.integrationShopifyModel.workspaceId,
+      to: r.workspaceModel.id,
+      optional: false,
+    }),
+  },
   orderItemModel: {
     order: r.one.orderModel({
       from: r.orderItemModel.orderId,

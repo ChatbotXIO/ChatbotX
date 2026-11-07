@@ -1,6 +1,7 @@
 "use client"
 
 import {
+  type StoreSource,
   type TriggerEventType,
   triggerEventTypes,
 } from "@chatbotx.io/database/partials"
@@ -69,10 +70,21 @@ const ECOMMERCE_EVENTS = [
   triggerEventTypes.enum.orderRefunded,
 ] as const
 
+/**
+ * WhatsApp catalog events; a Shopify store has no WhatsApp catalog, so they
+ * can never fire there.
+ */
+const WHATSAPP_CATALOG_EVENTS: ReadonlySet<TriggerEventType> = new Set([
+  triggerEventTypes.enum.shoppingCartSent,
+  triggerEventTypes.enum.userAskedAboutProduct,
+])
+
 export function AddCondition({
   onAdd,
+  storeSource = "chatbotx",
 }: {
   onAdd: (option: ConditionOption) => void
+  storeSource?: StoreSource
 }) {
   const t = useTranslations()
   const options = useMemo(
@@ -235,7 +247,10 @@ export function AddCondition({
       // Store events: chat catalog interactions, the web shop cart and orders.
       {
         label: t("fields.ecommerce.label"),
-        children: ECOMMERCE_EVENTS.map((type) => ({
+        children: ECOMMERCE_EVENTS.filter(
+          (type) =>
+            storeSource !== "shopify" || !WHATSAPP_CATALOG_EVENTS.has(type),
+        ).map((type) => ({
           label: t(`trigger.conditions.${type}`),
           value: type,
           defaultFn: ECOMMERCE_EVENTS_WITH_OPTIONAL_SOURCE.has(type)
@@ -264,7 +279,7 @@ export function AddCondition({
         ],
       },
     ],
-    [t],
+    [t, storeSource],
   )
 
   return (

@@ -80,6 +80,7 @@ import { runRef } from "./handlers/ref"
 import { replyToInboundCart } from "./handlers/reply-to-inbound-cart"
 import { recordEmailTrackingTransition } from "./handlers/send-email"
 import { handleSendSequenceFlow } from "./handlers/sequence-flow"
+import { runShopifySync, runShopifyWebhook } from "./handlers/shopify"
 import { captureTemplateFlowResponse } from "./handlers/template-flow-response"
 import {
   isThreadControlJobReprocess,
@@ -617,6 +618,14 @@ function startIntegrationWorker() {
             }
             case IntegrationJobAction.confirmOrderPayment: {
               await confirmOrderPayment(job.data.data)
+              return
+            }
+            case IntegrationJobAction.shopifySync: {
+              await runShopifySync(job.data.data)
+              return
+            }
+            case IntegrationJobAction.shopifyWebhook: {
+              await runShopifyWebhook(job.data.data)
               return
             }
             case IntegrationJobAction.processLeadgen: {

@@ -1,4 +1,5 @@
 import {
+  fulfillmentStatuses,
   onlinePaymentProviders,
   orderActorTypes,
   orderPaymentStatuses,
@@ -65,6 +66,22 @@ export const publicOrderResource = z.object({
   shippedAt: z.date().nullable(),
   concludedAt: z.date().nullable(),
   cancelledAt: z.date().nullable(),
+  externalId: z
+    .string()
+    .nullable()
+    .describe(
+      "Shopify's order GID, for an order mirrored from the connected Shopify store (`source: shopify`).",
+    ),
+  externalName: z
+    .string()
+    .nullable()
+    .describe("Shopify's order name, e.g. `#1004`."),
+  fulfillmentStatus: fulfillmentStatuses
+    .nullable()
+    .describe("Shopify's fulfillment state; null for our own orders."),
+  trackingCompany: z.string().nullable(),
+  trackingNumber: z.string().nullable(),
+  trackingUrl: z.string().nullable(),
   createdAt: z.date(),
   updatedAt: z.date(),
 })
@@ -148,7 +165,17 @@ export const listOrdersPublicRequest = z.object({
   source: z
     .array(orderSources)
     .optional()
-    .describe("Only orders from these sources."),
+    .describe(
+      "Only orders from these sources. Left out, the store's current source decides: `shopify` orders while `general.storeSource` is `shopify`, all others otherwise.",
+    ),
+  paymentStatus: z
+    .array(paymentStatuses)
+    .optional()
+    .describe("Only orders in these payment states."),
+  fulfillmentStatus: z
+    .array(fulfillmentStatuses)
+    .optional()
+    .describe("Only Shopify orders in these fulfillment states."),
   contactId: zodBigintAsString()
     .optional()
     .describe("Only this contact's orders. Get it from `contacts.list`."),
@@ -166,7 +193,7 @@ export const listOrdersPublicRequest = z.object({
     .max(255)
     .optional()
     .describe(
-      "An order number, or part of the customer's name, phone or email.",
+      "An order number (ours, or Shopify's such as `#1004`), or part of the customer's name, phone or email.",
     ),
   page: z.coerce
     .number()
@@ -182,6 +209,23 @@ export const listOrdersPublicRequest = z.object({
     .max(100)
     .default(20)
     .describe("Orders per page, up to 100; defaults to 20."),
+})
+
+export const exportOrdersPublicRequest = listOrdersPublicRequest.omit({
+  page: true,
+  perPage: true,
+})
+
+export const exportOrdersPublicResponse = z.object({
+  csv: z
+    .string()
+    .describe(
+      "The orders as CSV (header row first): order, created at, status, payment, fulfillment, customer, email, phone, items, currency, total.",
+    ),
+  rowCount: z.number().int(),
+  truncated: z
+    .boolean()
+    .describe("True when more orders matched than one export returns (5000)."),
 })
 
 export const listOrdersPublicResponse = z.object({

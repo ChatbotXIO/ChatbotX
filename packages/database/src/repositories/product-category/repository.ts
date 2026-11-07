@@ -7,6 +7,7 @@ import {
   eq,
   or,
 } from "@chatbotx.io/database/client"
+import type { StoreSource } from "@chatbotx.io/database/partials"
 import {
   productCategoryModel,
   productModel,
@@ -27,7 +28,11 @@ const productInCategory = (
   )
 
 export const productCategoryRepository = {
-  async listWithProductCount(workspaceId: string, tx: DatabaseClient = db) {
+  async listWithProductCount(
+    workspaceId: string,
+    tx: DatabaseClient = db,
+    source: StoreSource = "chatbotx",
+  ) {
     return await tx
       .select({
         id: productCategoryModel.id,
@@ -46,7 +51,12 @@ export const productCategoryRepository = {
           eq(productModel.workspaceId, workspaceId),
         ),
       )
-      .where(eq(productCategoryModel.workspaceId, workspaceId))
+      .where(
+        and(
+          eq(productCategoryModel.workspaceId, workspaceId),
+          eq(productCategoryModel.source, source),
+        ),
+      )
       .groupBy(productCategoryModel.id)
       .orderBy(asc(productCategoryModel.rank), asc(productCategoryModel.name))
   },
@@ -61,9 +71,13 @@ export const productCategoryRepository = {
     })
   },
 
-  async list(workspaceId: string, tx: DatabaseClient = db) {
+  async list(
+    workspaceId: string,
+    tx: DatabaseClient = db,
+    source: StoreSource = "chatbotx",
+  ) {
     return await tx.query.productCategoryModel.findMany({
-      where: { workspaceId },
+      where: { workspaceId, source },
       orderBy: { rank: "asc", name: "asc" },
     })
   },
@@ -240,7 +254,7 @@ export const productCategoryRepository = {
   },
 
   async createMissingByName(
-    input: { workspaceId: string; names: string[] },
+    input: { workspaceId: string; names: string[]; source?: StoreSource },
     tx: DatabaseClient = db,
   ) {
     const names = Array.from(
@@ -257,11 +271,13 @@ export const productCategoryRepository = {
           id: createId(),
           workspaceId: input.workspaceId,
           name,
+          source: input.source ?? "chatbotx",
         })),
       )
       .onConflictDoNothing({
         target: [
           productCategoryModel.workspaceId,
+          productCategoryModel.source,
           productCategoryModel.parentId,
           productCategoryModel.name,
         ],
@@ -270,7 +286,7 @@ export const productCategoryRepository = {
     // Read back through the same lookup the importer uses, so "which rows do
     // these names mean" is answered in exactly one place.
     return await productCategoryRepository.findByNames(
-      { workspaceId: input.workspaceId, names },
+      { workspaceId: input.workspaceId, names, source: input.source },
       tx,
     )
   },
@@ -310,6 +326,7 @@ export const productCategoryRepository = {
       .onConflictDoNothing({
         target: [
           productCategoryModel.workspaceId,
+          productCategoryModel.source,
           productCategoryModel.parentId,
           productCategoryModel.name,
         ],
@@ -317,7 +334,7 @@ export const productCategoryRepository = {
   },
 
   async findByNames(
-    input: { workspaceId: string; names: string[] },
+    input: { workspaceId: string; names: string[]; source?: StoreSource },
     tx: DatabaseClient = db,
   ) {
     if (input.names.length === 0) {
@@ -330,6 +347,7 @@ export const productCategoryRepository = {
         // top-level one — a sub-category name is unique only under its parent.
         parentId: { isNull: true },
         name: { in: input.names },
+        source: input.source ?? "chatbotx",
       },
     })
   },

@@ -4992,7 +4992,40 @@
       "notPaid": "לא שולם"
     },
     "paymentUntil": "עד {time}",
-    "paymentExpiredCancelReason": "התשלום לא התקבל בזמן."
+    "paymentExpiredCancelReason": "התשלום לא התקבל בזמן.",
+    "exportTruncated": "הייצוא הוגבל ל-{count} ההזמנות הראשונות",
+    "exportError": "לא ניתן לייצא את ההזמנות",
+    "shopify": {
+      "syncOrders": "סנכרן הזמנות",
+      "orderColumn": "הזמנה",
+      "customerColumn": "לקוח",
+      "paymentPending": "ממתין",
+      "paymentFilter": "תשלום",
+      "paymentFilterAll": "תשלום: הכול",
+      "fulfillmentFilter": "מילוי הזמנה",
+      "fulfillmentFilterAll": "מילוי הזמנה: הכול",
+      "fulfillmentStatuses": {
+        "fulfilled": "מולאה",
+        "unfulfilled": "לא מולאה",
+        "partial": "חלקית"
+      },
+      "viewDetails": "הצג פרטים",
+      "viewOnShopify": "הצג ב-Shopify",
+      "detailsTitle": "הזמנה {name}",
+      "placedOn": "בוצעה בחנות Shopify • {date}",
+      "customerDetails": "פרטי לקוח",
+      "shippingAddress": "כתובת למשלוח",
+      "noShippingAddress": "אין כתובת למשלוח",
+      "tracking": "מעקב: {company} #{number}",
+      "lineItems": "פריטים בהזמנה",
+      "itemColumn": "פריט",
+      "skuColumn": "SKU",
+      "shipping": "משלוח",
+      "free": "חינם",
+      "loading": "טוען...",
+      "loadError": "לא ניתן לטעון את פרטי ההזמנה",
+      "close": "סגור"
+    }
   },
   "products": {
     "title": "מוצרים",
@@ -5072,6 +5105,14 @@
       "isActive": {
         "label": "פעיל"
       },
+      "status": {
+        "label": "סטטוס",
+        "values": {
+          "active": "פעיל",
+          "draft": "טיוטה",
+          "unlisted": "לא רשום"
+        }
+      },
       "isAddonOnly": {
         "label": "שימוש במוצר זה כתוספת למוצרים אחרים בלבד"
       },
@@ -5107,6 +5148,32 @@
     "inventoryPolicy": {
       "dont_track": "אין לעקוב אחר המלאי",
       "track": "מעקב אחר מלאי"
+    },
+    "shopify": {
+      "openShopify": "פתח את Shopify",
+      "syncProducts": "סנכרן מוצרים",
+      "syncStarted": "הסנכרון התחיל",
+      "syncError": "לא ניתן להתחיל את הסנכרון",
+      "viewDetails": "הצג פרטים",
+      "editOnShopify": "ערוך ב-Shopify",
+      "copyProductLink": "העתק קישור למוצר",
+      "linkCopied": "הקישור למוצר הועתק",
+      "noProductLink": "למוצר זה אין קישור בחנות",
+      "inStock": "{count} במלאי",
+      "inStockWithVariants": "{count} במלאי ({variants} וריאנטים)",
+      "detailsTitle": "פרטי מוצר — {name}",
+      "detailsSubtitle": "סונכרן מחנות ה-Shopify {shop}",
+      "summaryLine": "קטגוריה: {category} • סך המלאי: {units} יחידות ב-{variants, plural, one {וריאנט #} other {# וריאנטים}}",
+      "uncategorized": "ללא קטגוריה",
+      "variantsTitle": "וריאנטים ({count})",
+      "variantColumn": "וריאנט",
+      "skuColumn": "SKU",
+      "priceColumn": "מחיר",
+      "inventoryColumn": "מלאי",
+      "defaultVariant": "ברירת מחדל",
+      "loading": "טוען...",
+      "loadError": "לא ניתן לטעון את פרטי המוצר",
+      "close": "סגור"
     }
   },
   "tiktok": {
@@ -10117,7 +10184,8 @@
       "general": "כללי",
       "payments": "תשלומים",
       "shipping": "משלוח",
-      "checkout": "תשלום"
+      "checkout": "תשלום",
+      "shopify": "Shopify"
     },
     "general": {
       "orderingAvailable": {
@@ -10185,6 +10253,14 @@
         "label": "פלואו לעגלה נטושה",
         "description": "הפלואו שהבוט מריץ ללקוח כשהעגלה נזנחה למשך זמן זה. השתמשו ב-'{{shop_token}}' בכפתורים כדי לפתוח את העגלה. טריגרים יכולים להשתמש גם באירוע \"Cart abandoned\".",
         "none": "ללא פלואו (רק אירוע טריגר)"
+      },
+      "storeSource": {
+        "label": "מקור החנות",
+        "description": "בחר את מקור החנות המשמש לניהול המוצרים, המלאי וההזמנות שלך. כשהמקור מוגדר ל-Shopify, כל המוצרים וההזמנות מנוהלים ישירות מחנות ה-Shopify שלך.",
+        "options": {
+          "chatbotx": "ChatbotX",
+          "shopify": "Shopify"
+        }
       }
     },
     "payments": {
@@ -10310,6 +10386,78 @@
       "orderConfirmationFlowId": {
         "label": "תהליך אישור הזמנה",
         "description": "התהליך שנשלח ללקוח במקום הודעת ברירת המחדל כשההזמנה מתבצעת."
+      },
+      "shopifyCheckoutMethod": {
+        "label": "שיטת תשלום",
+        "description": "בחר אם הלקוחות משלימים את התשלום בעמוד התשלום של Shopify או מבצעים את ההזמנה ישירות בחנות המקוונת.",
+        "options": {
+          "webCheckout": "תשלום ב-Shopify באינטרנט",
+          "inApp": "תשלום בתוך האפליקציה"
+        }
+      },
+      "shopifyAutoApplyDiscounts": {
+        "label": "החלת קודי הנחה אוטומטית",
+        "description": "אפשר ללקוחות להחיל קודי הנחה של Shopify ישירות על העגלה לפני המעבר לתשלום."
+      },
+      "inAppDeliveryCost": {
+        "label": "עלות משלוח",
+        "description": "דמי משלוח שמתווספים להזמנות בתשלום בתוך האפליקציה."
+      }
+    },
+    "shopify": {
+      "shopDomain": {
+        "label": "דומיין החנות",
+        "placeholder": "your-store.myshopify.com",
+        "hint": "הזן את דומיין ה-.myshopify.com של חנות ה-Shopify שלך.",
+        "connectedHint": "הדומיין של חנות ה-Shopify המחוברת שלך."
+      },
+      "authKind": {
+        "label": "אימות",
+        "description": "כיצד ChatbotX מתחבר לחנות שלך: באמצעות אסימון גישה של Admin API מאפליקציה מותאמת אישית, או באמצעות Client ID וסוד של אפליקציה שנוצרה ב-Shopify Dev Dashboard.",
+        "options": {
+          "token": "אסימון גישה של Admin API",
+          "clientCredentials": "Client ID וסוד (אפליקציית Dev Dashboard)"
+        }
+      },
+      "accessToken": {
+        "label": "אסימון גישה של Admin API",
+        "hint": "אסימון הגישה של Admin API של האפליקציה המותאמת אישית שלך. העניקו לו את ההרשאות הבאות: {scopes}.",
+        "connectedHint": "אסימון הגישה של Shopify Admin API שלך נשמר בהצפנה."
+      },
+      "apiSecret": {
+        "label": "מפתח סודי של API",
+        "hint": "המפתח הסודי של ה-API של האפליקציה, המשמש לאימות webhooks שנשלחים מ-Shopify."
+      },
+      "clientId": {
+        "label": "Client ID",
+        "hint": "ה-Client ID של אפליקציית Dev Dashboard שלך. העניקו לו את ההרשאות הבאות: {scopes}."
+      },
+      "clientSecret": {
+        "label": "Client Secret",
+        "hint": "ה-Client Secret של האפליקציה. הוא נשמר בהצפנה."
+      },
+      "webhookUrl": {
+        "label": "כתובת Webhook",
+        "description": "נרשמת אוטומטית ב-Shopify בעת החיבור כדי לקבל עדכוני מוצרים, מלאי והזמנות בזמן אמת."
+      },
+      "syncNow": "סנכרן עכשיו",
+      "syncStarted": "הסנכרון התחיל",
+      "syncError": "לא ניתן להתחיל את הסנכרון",
+      "syncStatus": {
+        "label": "סטטוס סנכרון",
+        "description": "מוצרים, קודי הנחה והזמנות משוכפלים מחנות ה-Shopify שלך.",
+        "connectedTo": "מחובר אל {shopDomain}",
+        "lastSynced": "סנכרון אחרון: {time} ({productCount} מוצרים, {orderCount} הזמנות)",
+        "neverSynced": "טרם סונכרן",
+        "noReason": "חבר מחדש את החנות כדי להמשיך.",
+        "invalid": "החיבור כבר אינו תקף: {reason}",
+        "state": {
+          "idle": "במנוחה",
+          "queued": "הסנכרון בתור...",
+          "running": "מסנכרן...",
+          "succeeded": "הסנכרון האחרון הצליח",
+          "failed": "הסנכרון האחרון נכשל"
+        }
       }
     }
   },
@@ -10389,7 +10537,8 @@
       "total": "סה\"כ",
       "coupon": "קופון ({code})",
       "title": "סיכום הזמנה",
-      "saved": "חסכתם {amount}"
+      "saved": "חסכתם {amount}",
+      "deliveryAtCheckout": "מחושב בעת התשלום"
     },
     "belowMinimum": "ההזמנה המינימלית היא {amount}.",
     "checkOut": "לתשלום",
@@ -10508,7 +10657,9 @@
       "notEligible": "עדיין לא זכאי"
     },
     "itemCount": "{count, plural, one {# פריט} other {# פריטים}}",
-    "relatedProducts": "אולי תאהבו גם"
+    "relatedProducts": "אולי תאהבו גם",
+    "soldOut": "אזל המלאי",
+    "sku": "SKU: {sku}"
   },
   "webshopLinks": {
     "preview": "תצוגה מקדימה",

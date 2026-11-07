@@ -15,6 +15,8 @@ import {
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
 import {
   createOrderPublicRequest,
+  exportOrdersPublicRequest,
+  exportOrdersPublicResponse,
   listOrdersPublicRequest,
   listOrdersPublicResponse,
   orderIdRequest,
@@ -46,6 +48,26 @@ export const ordersPublicRouter = {
     .handler(
       async ({ context, input }) =>
         await orderService.list({
+          ...input,
+          workspaceId: context.workspace.id,
+        }),
+    ),
+
+  export: workspaceTokenAuthAPI
+    .route({
+      method: "GET",
+      path: "/v1/orders/export",
+      summary: "Export orders",
+      description:
+        "The orders `orders.list` would return for the same filters, newest first, as one CSV (up to 5000 rows) — what the Export button downloads.",
+      tags: ["Orders"],
+    })
+    .input(exportOrdersPublicRequest)
+    .output(exportOrdersPublicResponse)
+    .errors(possibleErrorsOnListingResource)
+    .handler(
+      async ({ context, input }) =>
+        await orderService.exportCsv({
           ...input,
           workspaceId: context.workspace.id,
         }),

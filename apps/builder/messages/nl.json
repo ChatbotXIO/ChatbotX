@@ -7341,7 +7341,40 @@
       "notPaid": "Niet betaald"
     },
     "paymentUntil": "tot {time}",
-    "paymentExpiredCancelReason": "Betaling niet op tijd ontvangen."
+    "paymentExpiredCancelReason": "Betaling niet op tijd ontvangen.",
+    "exportTruncated": "De export is beperkt tot de eerste {count} bestellingen",
+    "exportError": "Kan de bestellingen niet exporteren",
+    "shopify": {
+      "syncOrders": "Bestellingen synchroniseren",
+      "orderColumn": "Bestelling",
+      "customerColumn": "Klant",
+      "paymentPending": "In behandeling",
+      "paymentFilter": "Betaling",
+      "paymentFilterAll": "Betaling: Alle",
+      "fulfillmentFilter": "Verzending",
+      "fulfillmentFilterAll": "Verzending: Alle",
+      "fulfillmentStatuses": {
+        "fulfilled": "Verzonden",
+        "unfulfilled": "Niet verzonden",
+        "partial": "Gedeeltelijk"
+      },
+      "viewDetails": "Details bekijken",
+      "viewOnShopify": "Bekijken in Shopify",
+      "detailsTitle": "Bestelling {name}",
+      "placedOn": "Geplaatst in Shopify-winkel • {date}",
+      "customerDetails": "Klantgegevens",
+      "shippingAddress": "Verzendadres",
+      "noShippingAddress": "Geen verzendadres",
+      "tracking": "Tracking: {company} #{number}",
+      "lineItems": "Bestelregels",
+      "itemColumn": "Artikel",
+      "skuColumn": "SKU",
+      "shipping": "Verzending",
+      "free": "Gratis",
+      "loading": "Laden...",
+      "loadError": "Kan de bestelgegevens niet laden",
+      "close": "Sluiten"
+    }
   },
   "products": {
     "title": "Producten",
@@ -7421,6 +7454,14 @@
       "isActive": {
         "label": "Actief"
       },
+      "status": {
+        "label": "Status",
+        "values": {
+          "active": "Actief",
+          "draft": "Concept",
+          "unlisted": "Niet vermeld"
+        }
+      },
       "isAddonOnly": {
         "label": "Dit product alleen gebruiken als extra voor andere producten"
       },
@@ -7456,6 +7497,32 @@
     "inventoryPolicy": {
       "dont_track": "Voorraad niet bijhouden",
       "track": "Voorraad bijhouden"
+    },
+    "shopify": {
+      "openShopify": "Shopify openen",
+      "syncProducts": "Producten synchroniseren",
+      "syncStarted": "Synchronisatie gestart",
+      "syncError": "Kan de synchronisatie niet starten",
+      "viewDetails": "Details bekijken",
+      "editOnShopify": "Bewerken in Shopify",
+      "copyProductLink": "Productlink kopiëren",
+      "linkCopied": "Productlink gekopieerd",
+      "noProductLink": "Dit product heeft geen winkellink",
+      "inStock": "{count} op voorraad",
+      "inStockWithVariants": "{count} op voorraad ({variants} varianten)",
+      "detailsTitle": "Productdetails — {name}",
+      "detailsSubtitle": "Gesynchroniseerd vanuit Shopify-winkel {shop}",
+      "summaryLine": "Categorie: {category} • Totale voorraad: {units} stuks in {variants, plural, one {# variant} other {# varianten}}",
+      "uncategorized": "Zonder categorie",
+      "variantsTitle": "Varianten ({count})",
+      "variantColumn": "Variant",
+      "skuColumn": "SKU",
+      "priceColumn": "Prijs",
+      "inventoryColumn": "Voorraad",
+      "defaultVariant": "Standaard",
+      "loading": "Laden...",
+      "loadError": "Kan de productdetails niet laden",
+      "close": "Sluiten"
     }
   },
   "tiktok": {
@@ -10117,7 +10184,8 @@
       "general": "Algemeen",
       "payments": "Betalingen",
       "shipping": "Verzending",
-      "checkout": "Afrekenen"
+      "checkout": "Afrekenen",
+      "shopify": "Shopify"
     },
     "general": {
       "orderingAvailable": {
@@ -10185,6 +10253,14 @@
         "label": "Flow voor verlaten winkelwagen",
         "description": "De flow die de bot voor de klant start als de winkelwagen zo lang blijft liggen. Gebruik '{{shop_token}}' in de knoppen om de winkelwagen te openen. Triggers kunnen ook de gebeurtenis \"Cart abandoned\" gebruiken.",
         "none": "Geen flow (alleen trigger-gebeurtenis)"
+      },
+      "storeSource": {
+        "label": "Winkelbron",
+        "description": "Selecteer de winkelbron waarmee je producten, voorraad en bestellingen beheert. Bij Shopify worden alle producten en bestellingen rechtstreeks vanuit je Shopify-winkel beheerd.",
+        "options": {
+          "chatbotx": "ChatbotX",
+          "shopify": "Shopify"
+        }
       }
     },
     "payments": {
@@ -10310,6 +10386,78 @@
       "orderConfirmationFlowId": {
         "label": "Flow voor orderbevestiging",
         "description": "De flow die de klant krijgt in plaats van het standaardbericht zodra de bestelling is geplaatst."
+      },
+      "shopifyCheckoutMethod": {
+        "label": "Afrekenmethode",
+        "description": "Kies of klanten de betaling afronden op je Shopify-afrekenpagina of de bestelling direct in de webshop plaatsen.",
+        "options": {
+          "webCheckout": "Shopify-webafrekening",
+          "inApp": "Afrekenen in de app"
+        }
+      },
+      "shopifyAutoApplyDiscounts": {
+        "label": "Kortingscodes automatisch toepassen",
+        "description": "Sta klanten toe Shopify-kortingscodes rechtstreeks op hun winkelwagen toe te passen voordat ze naar het afrekenen worden doorgestuurd."
+      },
+      "inAppDeliveryCost": {
+        "label": "Bezorgkosten",
+        "description": "Bezorgkosten die worden toegevoegd aan bestellingen via afrekenen in de app."
+      }
+    },
+    "shopify": {
+      "shopDomain": {
+        "label": "Winkeldomein",
+        "placeholder": "your-store.myshopify.com",
+        "hint": "Voer het .myshopify.com-domein van je Shopify-winkel in.",
+        "connectedHint": "Het domein van je gekoppelde Shopify-winkel."
+      },
+      "authKind": {
+        "label": "Authenticatie",
+        "description": "Hoe ChatbotX inlogt bij je winkel: met de Admin API-toegangstoken van een aangepaste app, of met de Client ID en het secret van een app die in het Shopify Dev Dashboard is gemaakt.",
+        "options": {
+          "token": "Admin API-toegangstoken",
+          "clientCredentials": "Client ID en secret (Dev Dashboard-app)"
+        }
+      },
+      "accessToken": {
+        "label": "Admin API-toegangstoken",
+        "hint": "De Admin API-toegangstoken van je aangepaste app. Geef deze de volgende scopes: {scopes}.",
+        "connectedHint": "Je Shopify Admin API-toegangstoken wordt versleuteld opgeslagen."
+      },
+      "apiSecret": {
+        "label": "API-geheime sleutel",
+        "hint": "De geheime API-sleutel van de app, gebruikt om webhooks van Shopify te verifiëren."
+      },
+      "clientId": {
+        "label": "Client ID",
+        "hint": "De Client ID van je Dev Dashboard-app. Geef deze de volgende scopes: {scopes}."
+      },
+      "clientSecret": {
+        "label": "Client Secret",
+        "hint": "Het Client Secret van de app. Het wordt versleuteld opgeslagen."
+      },
+      "webhookUrl": {
+        "label": "Webhook-URL",
+        "description": "Wordt bij het koppelen automatisch bij Shopify geregistreerd om realtime updates over producten, voorraad en bestellingen te ontvangen."
+      },
+      "syncNow": "Nu synchroniseren",
+      "syncStarted": "Synchronisatie gestart",
+      "syncError": "Kan de synchronisatie niet starten",
+      "syncStatus": {
+        "label": "Synchronisatiestatus",
+        "description": "Producten, kortingscodes en bestellingen worden gespiegeld vanuit je Shopify-winkel.",
+        "connectedTo": "Verbonden met {shopDomain}",
+        "lastSynced": "Laatst gesynchroniseerd: {time} ({productCount} producten, {orderCount} bestellingen)",
+        "neverSynced": "Nog niet gesynchroniseerd",
+        "noReason": "Koppel je winkel opnieuw om door te gaan.",
+        "invalid": "De verbinding is niet meer geldig: {reason}",
+        "state": {
+          "idle": "Inactief",
+          "queued": "Synchronisatie in wachtrij...",
+          "running": "Synchroniseren...",
+          "succeeded": "Laatste synchronisatie geslaagd",
+          "failed": "Laatste synchronisatie mislukt"
+        }
       }
     }
   },
@@ -10389,7 +10537,8 @@
       "total": "Totaal",
       "coupon": "Kortingscode ({code})",
       "title": "Besteloverzicht",
-      "saved": "Je bespaart {amount}"
+      "saved": "Je bespaart {amount}",
+      "deliveryAtCheckout": "Berekend bij het afrekenen"
     },
     "belowMinimum": "De minimale bestelling is {amount}.",
     "checkOut": "Afrekenen",
@@ -10508,7 +10657,9 @@
       "notEligible": "Nog niet in aanmerking"
     },
     "itemCount": "{count, plural, one {# artikel} other {# artikelen}}",
-    "relatedProducts": "Misschien vind je dit ook leuk"
+    "relatedProducts": "Misschien vind je dit ook leuk",
+    "soldOut": "Uitverkocht",
+    "sku": "SKU: {sku}"
   },
   "webshopLinks": {
     "preview": "Voorbeeld",

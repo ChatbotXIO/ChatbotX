@@ -276,8 +276,12 @@ describe("POST /v1/products", () => {
 
   test("creates a product scoped to the token's workspace", async () => {
     productService.createFull.mockResolvedValueOnce({ id: "p-1" })
+    productService.findById.mockResolvedValueOnce({
+      id: "p-1",
+      status: "active",
+    })
 
-    await procedure.handler?.({
+    const result = await procedure.handler?.({
       context: { workspace: { id: "workspace-1" } },
       input: { name: "New product" },
     })
@@ -286,6 +290,8 @@ describe("POST /v1/products", () => {
       name: "New product",
       workspaceId: "workspace-1",
     })
+    // `isActive` is still answered for clients that read it.
+    expect(result).toMatchObject({ status: "active", isActive: true })
   })
 })
 
@@ -346,7 +352,7 @@ describe("DELETE /v1/products/{id}", () => {
 describe("PATCH /v1/products/{id}/active", () => {
   const procedure = findProcedure("PATCH", "/v1/products/{id}/active")
 
-  test("toggles only isActive, scoped to the token's workspace", async () => {
+  test("sets only the status, scoped to the token's workspace", async () => {
     productService.findById.mockResolvedValueOnce({ id: "p-1" })
 
     await procedure.handler?.({
@@ -357,7 +363,7 @@ describe("PATCH /v1/products/{id}/active", () => {
     expect(productService.update).toHaveBeenCalledWith({
       productId: "p-1",
       workspaceId: "workspace-1",
-      data: { isActive: false },
+      data: { status: "draft" },
     })
   })
 

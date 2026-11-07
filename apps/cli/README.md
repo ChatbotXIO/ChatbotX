@@ -1196,7 +1196,8 @@ chatbotx contacts pipeline-items list <identifier>      # A contact's items acro
 ### `orders`
 
 ```bash
-chatbotx orders list                                    # [--status --source --contactId --from --to --keyword --page --perPage]
+chatbotx orders list                                    # [--status --source --paymentStatus --fulfillmentStatus --contactId --from --to --keyword --page --perPage]
+chatbotx orders export                                  # The same filters as list, as one CSV (up to 5000 rows)
 chatbotx orders get <id>                                # Lines, totals and status history
 chatbotx orders create --items <json>                   # From product ids [--paymentMethod cod|stripe|paypal --contact --customerName --customerPhone --shippingAddress --note]
 chatbotx orders payment-link add <id>                   # Stripe/PayPal page to pay a pending online order; send `url` to the customer
@@ -1210,6 +1211,31 @@ chatbotx orders delete <id>                             # Puts stock back unless
 An order paid online (`--paymentMethod stripe|paypal`, needs `--contact`) waits
 30 minutes for its payment and is cancelled if none comes; nothing about it is
 announced until it is paid.
+
+While the store source is Shopify, `orders list` shows the orders mirrored from
+Shopify (`source: shopify`, with `externalName` such as `#1004`, fulfillment
+and tracking); they are read-only here — accept/ship/conclude/cancel/delete
+answer `shopifyManaged`.
+
+---
+
+### `shopify` (scope `ecommerce`)
+
+```bash
+chatbotx shopify get                                    # The connected store, its last sync and counts, or connected: false (never a credential)
+chatbotx shopify create --authKind token --shopDomain <store.myshopify.com> --accessToken <shpat_…> --apiSecret <secret>
+chatbotx shopify create --authKind clientCredentials --shopDomain <store.myshopify.com> --clientId <id> --clientSecret <secret>
+chatbotx shopify sync [--scope all|products|orders]     # Queue a sync; poll `shopify get` until syncStatus is succeeded or failed
+chatbotx shopify delete                                 # Disconnect: remove the webhooks, switch the store back to its own catalog
+```
+
+Connecting checks the credentials, subscribes the store's webhooks, stores the
+credentials encrypted and queues a full sync (products, discount codes, the
+last 60 days of orders). Then switch the store to it with `chatbotx ecommerce
+settings update --general '{"storeSource":"shopify"}'`; choose the checkout with
+`--checkout '{"shopifyCheckoutMethod":"webCheckout"}'` (or `inApp`). Shopify
+products, categories, vendors and discount codes are read-only here — a
+product's `status` included, which follows Shopify.
 
 ---
 

@@ -100,6 +100,7 @@ import { responseSlaPublicRouter } from "@/features/response-sla/api/public"
 import { savedRepliesPublicRouter } from "@/features/saved-replies/api/public"
 import { sequencesPublicRouter } from "@/features/sequences/api/public"
 import { commentAutomationsPublicRouter } from "@/features/shared/comment-automation/api/public"
+import { shopifyPublicRouter } from "@/features/shopify/api/public"
 import { spreadsheetsPublicRouter } from "@/features/spreadsheets/api/public"
 import { tagsPublicRouter } from "@/features/tags/api/public"
 import { threadsCommentsPublicRouter } from "@/features/threads-comments/api/public"
@@ -201,6 +202,7 @@ export const publicRouter = {
   savedReplies: savedRepliesPublicRouter,
   schemas: schemasPublicRouter,
   sequences: sequencesPublicRouter,
+  shopify: shopifyPublicRouter,
   smtpIntegrations: smtpIntegrationsPublicRouter,
   spreadsheets: spreadsheetsPublicRouter,
   tags: tagsPublicRouter,

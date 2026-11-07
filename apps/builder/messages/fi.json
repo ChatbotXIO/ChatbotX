@@ -7341,7 +7341,40 @@
       "notPaid": "Ei maksettu"
     },
     "paymentUntil": "klo {time} asti",
-    "paymentExpiredCancelReason": "Maksua ei saatu ajoissa."
+    "paymentExpiredCancelReason": "Maksua ei saatu ajoissa.",
+    "exportTruncated": "Vienti rajattiin ensimmäisiin {count} tilaukseen",
+    "exportError": "Tilauksia ei voitu viedä",
+    "shopify": {
+      "syncOrders": "Synkronoi tilaukset",
+      "orderColumn": "Tilaus",
+      "customerColumn": "Asiakas",
+      "paymentPending": "Odottaa",
+      "paymentFilter": "Maksu",
+      "paymentFilterAll": "Maksu: Kaikki",
+      "fulfillmentFilter": "Toimitus",
+      "fulfillmentFilterAll": "Toimitus: Kaikki",
+      "fulfillmentStatuses": {
+        "fulfilled": "Toimitettu",
+        "unfulfilled": "Ei toimitettu",
+        "partial": "Osittain"
+      },
+      "viewDetails": "Näytä tiedot",
+      "viewOnShopify": "Näytä Shopifyssa",
+      "detailsTitle": "Tilaus {name}",
+      "placedOn": "Tehty Shopify-kaupassa • {date}",
+      "customerDetails": "Asiakkaan tiedot",
+      "shippingAddress": "Toimitusosoite",
+      "noShippingAddress": "Ei toimitusosoitetta",
+      "tracking": "Seuranta: {company} #{number}",
+      "lineItems": "Tilausrivit",
+      "itemColumn": "Tuote",
+      "skuColumn": "SKU",
+      "shipping": "Toimitus",
+      "free": "Ilmainen",
+      "loading": "Ladataan...",
+      "loadError": "Tilauksen tietoja ei voitu ladata",
+      "close": "Sulje"
+    }
   },
   "products": {
     "title": "Tuotteet",
@@ -7421,6 +7454,14 @@
       "isActive": {
         "label": "Aktiivinen"
       },
+      "status": {
+        "label": "Tila",
+        "values": {
+          "active": "Aktiivinen",
+          "draft": "Luonnos",
+          "unlisted": "Listaamaton"
+        }
+      },
       "isAddonOnly": {
         "label": "Käytä tätä tuotetta vain muiden tuotteiden lisätuotteena"
       },
@@ -7456,6 +7497,32 @@
     "inventoryPolicy": {
       "dont_track": "Älä seuraa varastoa",
       "track": "Seuraa varastoa"
+    },
+    "shopify": {
+      "openShopify": "Avaa Shopify",
+      "syncProducts": "Synkronoi tuotteet",
+      "syncStarted": "Synkronointi käynnistyi",
+      "syncError": "Synkronointia ei voitu käynnistää",
+      "viewDetails": "Näytä tiedot",
+      "editOnShopify": "Muokkaa Shopifyssa",
+      "copyProductLink": "Kopioi tuotelinkki",
+      "linkCopied": "Tuotelinkki kopioitu",
+      "noProductLink": "Tuotteella ei ole kauppalinkkiä",
+      "inStock": "{count} varastossa",
+      "inStockWithVariants": "{count} varastossa ({variants} varianttia)",
+      "detailsTitle": "Tuotteen tiedot — {name}",
+      "detailsSubtitle": "Synkronoitu Shopify-kaupasta {shop}",
+      "summaryLine": "Kategoria: {category} • Varastossa yhteensä: {units} yksikköä {variants, plural, one {# variantissa} other {# variantissa}}",
+      "uncategorized": "Luokittelematon",
+      "variantsTitle": "Variantit ({count})",
+      "variantColumn": "Variantti",
+      "skuColumn": "SKU",
+      "priceColumn": "Hinta",
+      "inventoryColumn": "Varasto",
+      "defaultVariant": "Oletus",
+      "loading": "Ladataan...",
+      "loadError": "Tuotteen tietoja ei voitu ladata",
+      "close": "Sulje"
     }
   },
   "tiktok": {
@@ -10117,7 +10184,8 @@
       "general": "Yleiset",
       "payments": "Maksut",
       "shipping": "Toimitus",
-      "checkout": "Kassa"
+      "checkout": "Kassa",
+      "shopify": "Shopify"
     },
     "general": {
       "orderingAvailable": {
@@ -10185,6 +10253,14 @@
         "label": "Hylätyn ostoskorin flow",
         "description": "Flow, jonka botti käynnistää asiakkaalle, kun ostoskori on ollut näin kauan koskematta. Käytä painikkeissa '{{shop_token}}' avataksesi ostoskorin. Triggerit voivat käyttää myös tapahtumaa \"Cart abandoned\".",
         "none": "Ei flowta (vain trigger-tapahtuma)"
+      },
+      "storeSource": {
+        "label": "Kaupan lähde",
+        "description": "Valitse kaupan lähde, jonka kautta hallitset tuotteita, varastoa ja tilauksia. Kun valittuna on Shopify, kaikkia tuotteita ja tilauksia hallitaan suoraan Shopify-kaupastasi.",
+        "options": {
+          "chatbotx": "ChatbotX",
+          "shopify": "Shopify"
+        }
       }
     },
     "payments": {
@@ -10310,6 +10386,78 @@
       "orderConfirmationFlowId": {
         "label": "Tilausvahvistuksen flow",
         "description": "Flow, joka lähetetään asiakkaalle oletusviestin sijaan, kun tilaus on tehty."
+      },
+      "shopifyCheckoutMethod": {
+        "label": "Kassatapa",
+        "description": "Valitse, viimeistelevätkö asiakkaat maksun Shopify-kassasivulla vai tekevätkö he tilauksen suoraan verkkokaupassa.",
+        "options": {
+          "webCheckout": "Shopify-verkkokassa",
+          "inApp": "Sovelluksen sisäinen kassa"
+        }
+      },
+      "shopifyAutoApplyDiscounts": {
+        "label": "Käytä alennuskoodit automaattisesti",
+        "description": "Salli asiakkaiden käyttää Shopify-alennuskoodeja suoraan ostoskorissaan ennen kassalle siirtymistä."
+      },
+      "inAppDeliveryCost": {
+        "label": "Toimituskulu",
+        "description": "Sovelluksen sisäisen kassan tilauksiin lisättävä toimitusmaksu."
+      }
+    },
+    "shopify": {
+      "shopDomain": {
+        "label": "Kaupan verkkotunnus",
+        "placeholder": "your-store.myshopify.com",
+        "hint": "Anna Shopify-kauppasi .myshopify.com-verkkotunnus.",
+        "connectedHint": "Yhdistetyn Shopify-kauppasi verkkotunnus."
+      },
+      "authKind": {
+        "label": "Todennus",
+        "description": "Miten ChatbotX kirjautuu kauppaasi: mukautetun sovelluksen Admin API -käyttöoikeustunnuksella tai Shopify Dev Dashboardissa luodun sovelluksen Client ID:llä ja secretillä.",
+        "options": {
+          "token": "Admin API -käyttöoikeustunnus",
+          "clientCredentials": "Client ID ja secret (Dev Dashboard -sovellus)"
+        }
+      },
+      "accessToken": {
+        "label": "Admin API -käyttöoikeustunnus",
+        "hint": "Mukautetun sovelluksesi Admin API -käyttöoikeustunnus. Myönnä sille nämä oikeudet: {scopes}.",
+        "connectedHint": "Shopify Admin API -käyttöoikeustunnuksesi tallennetaan salattuna."
+      },
+      "apiSecret": {
+        "label": "API:n salainen avain",
+        "hint": "Sovelluksen salainen API-avain, jolla varmennetaan Shopifyn lähettämät webhookit."
+      },
+      "clientId": {
+        "label": "Client ID",
+        "hint": "Dev Dashboard -sovelluksesi Client ID. Myönnä sille nämä oikeudet: {scopes}."
+      },
+      "clientSecret": {
+        "label": "Client Secret",
+        "hint": "Sovelluksen Client Secret. Se tallennetaan salattuna."
+      },
+      "webhookUrl": {
+        "label": "Webhook-URL",
+        "description": "Rekisteröidään automaattisesti Shopifyyn yhdistettäessä, jotta saat tuote-, varasto- ja tilauspäivitykset reaaliaikaisesti."
+      },
+      "syncNow": "Synkronoi nyt",
+      "syncStarted": "Synkronointi käynnistyi",
+      "syncError": "Synkronointia ei voitu käynnistää",
+      "syncStatus": {
+        "label": "Synkronoinnin tila",
+        "description": "Tuotteet, alennuskoodit ja tilaukset peilataan Shopify-kaupastasi.",
+        "connectedTo": "Yhdistetty kauppaan {shopDomain}",
+        "lastSynced": "Viimeksi synkronoitu: {time} ({productCount} tuotetta, {orderCount} tilausta)",
+        "neverSynced": "Ei vielä synkronoitu",
+        "noReason": "Yhdistä kauppasi uudelleen jatkaaksesi.",
+        "invalid": "Yhteys ei ole enää voimassa: {reason}",
+        "state": {
+          "idle": "Lepotilassa",
+          "queued": "Synkronointi jonossa...",
+          "running": "Synkronoidaan...",
+          "succeeded": "Viimeisin synkronointi onnistui",
+          "failed": "Viimeisin synkronointi epäonnistui"
+        }
       }
     }
   },
@@ -10389,7 +10537,8 @@
       "total": "Yhteensä",
       "coupon": "Kuponki ({code})",
       "title": "Tilauksen yhteenveto",
-      "saved": "Säästät {amount}"
+      "saved": "Säästät {amount}",
+      "deliveryAtCheckout": "Lasketaan kassalla"
     },
     "belowMinimum": "Vähimmäistilaus on {amount}.",
     "checkOut": "Kassalle",
@@ -10508,7 +10657,9 @@
       "notEligible": "Et ole vielä oikeutettu"
     },
     "itemCount": "{count, plural, one {# tuote} other {# tuotetta}}",
-    "relatedProducts": "Saatat pitää myös näistä"
+    "relatedProducts": "Saatat pitää myös näistä",
+    "soldOut": "Loppuunmyyty",
+    "sku": "SKU: {sku}"
   },
   "webshopLinks": {
     "preview": "Esikatselu",

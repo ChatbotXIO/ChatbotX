@@ -126,7 +126,7 @@ export function ProductActions({
     if (!product.inStock) {
       return (
         <Button className={primaryClass} disabled size="sm" variant="secondary">
-          <span className="truncate">{t("outOfStock")}</span>
+          <span className="truncate">{t("soldOut")}</span>
         </Button>
       )
     }

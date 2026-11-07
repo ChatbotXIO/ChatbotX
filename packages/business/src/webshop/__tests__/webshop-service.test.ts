@@ -26,6 +26,7 @@ const mocks = vi.hoisted(() => ({
   emitCartItemChanged: vi.fn(),
   emitCartAbandoned: vi.fn(),
   resolveContactInboxForSend: vi.fn(),
+  buildShopifyWebCheckoutUrl: vi.fn(),
 }))
 
 vi.mock("../../conversation/service", () => ({
@@ -46,6 +47,11 @@ vi.mock("../../workspace-lifecycle/with-blocked-owner-guard", () => ({
     mocks.freezeReason(...args),
 }))
 
+vi.mock("../../shopify/checkout", () => ({
+  buildShopifyWebCheckoutUrl: (...args: unknown[]) =>
+    mocks.buildShopifyWebCheckoutUrl(...args),
+  placeShopifyInAppOrder: vi.fn(),
+}))
 vi.mock("../../order-payment/service", () => ({
   orderPaymentService: {
     startCheckout: (...args: unknown[]) => mocks.startCheckout(...args),
@@ -94,12 +100,13 @@ vi.mock("../../ecommerce-settings/service", () => ({
   ecommerceSettingsService: {
     get: (...args: unknown[]) => mocks.getSettings(...args),
     getFresh: (...args: unknown[]) => mocks.getFreshSettings(...args),
+    storeSource: async () => "chatbotx",
   },
 }))
 
 type MockProduct = {
   id: string
-  isActive?: boolean
+  status?: "active" | "draft" | "unlisted"
   name?: string
   categoryId?: string | null
   subcategoryId?: string | null
@@ -124,10 +131,10 @@ vi.mock("../../order/service", () => ({
     items: Array<{ productId: string }>,
   ) => ({
     orderable: items.filter(
-      (item) => products.get(item.productId)?.isActive !== false,
+      (item) => (products.get(item.productId)?.status ?? "active") === "active",
     ),
     unavailable: items.filter(
-      (item) => products.get(item.productId)?.isActive === false,
+      (item) => (products.get(item.productId)?.status ?? "active") !== "active",
     ),
   }),
   productCategoryIds: (product?: MockProduct) =>
@@ -260,7 +267,7 @@ describe("webshopService.checkout", () => {
     })
     mocks.findForOrder.mockResolvedValue([
       { id: "p1", vendor: null },
-      { id: "p2", vendor: null, isActive: false },
+      { id: "p2", vendor: null, status: "draft" },
     ])
     await webshopService.checkout({ shopper, form: {} })
     const [input] = mocks.place.mock.calls[0] as [
@@ -282,7 +289,7 @@ describe("webshopService.checkout", () => {
 
   test("refuses a cart whose items are all no longer sold", async () => {
     mocks.findForOrder.mockResolvedValue([
-      { id: "p1", vendor: null, isActive: false },
+      { id: "p1", vendor: null, status: "draft" },
     ])
     await expect(
       webshopService.checkout({ shopper, form: {} }),
@@ -342,6 +349,26 @@ describe("webshopService.checkout", () => {
     await expect(
       webshopService.checkout({ shopper, form: {} }),
     ).rejects.toMatchObject({ code: "webshopClosed" })
+    expect(mocks.place).not.toHaveBeenCalled()
+  })
+
+  test("a Shopify store checks out on Shopify despite an old external-page mode", async () => {
+    mocks.getFreshSettings.mockResolvedValue(
+      settings({
+        general: { storeSource: "shopify" },
+        shipping: { shippingType: "none" },
+        checkout: {
+          checkoutMode: "externalLink",
+          checkoutLink: "https://pay.example",
+          shopifyCheckoutMethod: "webCheckout",
+        },
+      }),
+    )
+    mocks.buildShopifyWebCheckoutUrl.mockResolvedValue(
+      "https://shop.example/cart/1:1",
+    )
+    const result = await webshopService.checkout({ shopper, form: {} })
+    expect(result.paymentUrl).toBe("https://shop.example/cart/1:1")
     expect(mocks.place).not.toHaveBeenCalled()
   })
 

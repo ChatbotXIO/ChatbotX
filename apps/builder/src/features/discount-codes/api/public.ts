@@ -10,6 +10,7 @@ import {
   possibleErrorsOnListingResource,
   possibleErrorsOnMutatingDiscountCode,
   possibleIdempotencyErrors,
+  shopifyManagedErrors,
 } from "@/lib/orpc/orpc-error-helper"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
 import { toDiscountCodeInput, toDiscountCodePatch } from "../lib/to-input"
@@ -157,7 +158,7 @@ export const discountCodesPublicRouter = {
     })
     .input(discountCodeIdRequest)
     .output(publicDiscountCodeResource)
-    .errors(possibleErrorsOnDeletingResource)
+    .errors({ ...possibleErrorsOnDeletingResource, ...shopifyManagedErrors })
     .handler(
       async ({ context, input }) =>
         await discountCodeService.delete({

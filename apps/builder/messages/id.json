@@ -7341,7 +7341,40 @@
       "notPaid": "Belum dibayar"
     },
     "paymentUntil": "hingga {time}",
-    "paymentExpiredCancelReason": "Pembayaran tidak diterima tepat waktu."
+    "paymentExpiredCancelReason": "Pembayaran tidak diterima tepat waktu.",
+    "exportTruncated": "Ekspor dibatasi pada {count} pesanan pertama",
+    "exportError": "Tidak dapat mengekspor pesanan",
+    "shopify": {
+      "syncOrders": "Sinkronkan pesanan",
+      "orderColumn": "Pesanan",
+      "customerColumn": "Pelanggan",
+      "paymentPending": "Tertunda",
+      "paymentFilter": "Pembayaran",
+      "paymentFilterAll": "Pembayaran: Semua",
+      "fulfillmentFilter": "Pemenuhan",
+      "fulfillmentFilterAll": "Pemenuhan: Semua",
+      "fulfillmentStatuses": {
+        "fulfilled": "Terpenuhi",
+        "unfulfilled": "Belum terpenuhi",
+        "partial": "Sebagian"
+      },
+      "viewDetails": "Lihat detail",
+      "viewOnShopify": "Lihat di Shopify",
+      "detailsTitle": "Pesanan {name}",
+      "placedOn": "Dipesan di toko Shopify • {date}",
+      "customerDetails": "Detail pelanggan",
+      "shippingAddress": "Alamat pengiriman",
+      "noShippingAddress": "Tidak ada alamat pengiriman",
+      "tracking": "Pelacakan: {company} #{number}",
+      "lineItems": "Item pesanan",
+      "itemColumn": "Item",
+      "skuColumn": "SKU",
+      "shipping": "Pengiriman",
+      "free": "Gratis",
+      "loading": "Memuat...",
+      "loadError": "Tidak dapat memuat detail pesanan",
+      "close": "Tutup"
+    }
   },
   "products": {
     "title": "Produk",
@@ -7421,6 +7454,14 @@
       "isActive": {
         "label": "Aktif"
       },
+      "status": {
+        "label": "Status",
+        "values": {
+          "active": "Aktif",
+          "draft": "Draf",
+          "unlisted": "Tidak terdaftar"
+        }
+      },
       "isAddonOnly": {
         "label": "Gunakan produk ini hanya sebagai tambahan untuk produk lain"
       },
@@ -7456,6 +7497,32 @@
     "inventoryPolicy": {
       "dont_track": "Jangan lacak inventaris",
       "track": "Lacak inventaris"
+    },
+    "shopify": {
+      "openShopify": "Buka Shopify",
+      "syncProducts": "Sinkronkan produk",
+      "syncStarted": "Sinkronisasi dimulai",
+      "syncError": "Tidak dapat memulai sinkronisasi",
+      "viewDetails": "Lihat detail",
+      "editOnShopify": "Edit di Shopify",
+      "copyProductLink": "Salin tautan produk",
+      "linkCopied": "Tautan produk disalin",
+      "noProductLink": "Produk ini tidak memiliki tautan toko",
+      "inStock": "{count} tersedia",
+      "inStockWithVariants": "{count} tersedia ({variants} varian)",
+      "detailsTitle": "Detail produk — {name}",
+      "detailsSubtitle": "Disinkronkan dari toko Shopify {shop}",
+      "summaryLine": "Kategori: {category} • Total stok: {units} unit dari {variants, plural, one {# varian} other {# varian}}",
+      "uncategorized": "Tanpa kategori",
+      "variantsTitle": "Varian ({count})",
+      "variantColumn": "Varian",
+      "skuColumn": "SKU",
+      "priceColumn": "Harga",
+      "inventoryColumn": "Inventaris",
+      "defaultVariant": "Default",
+      "loading": "Memuat...",
+      "loadError": "Tidak dapat memuat detail produk",
+      "close": "Tutup"
     }
   },
   "tiktok": {
@@ -10117,7 +10184,8 @@
       "general": "Umum",
       "payments": "Pembayaran",
       "shipping": "Pengiriman",
-      "checkout": "Checkout"
+      "checkout": "Checkout",
+      "shopify": "Shopify"
     },
     "general": {
       "orderingAvailable": {
@@ -10185,6 +10253,14 @@
         "label": "Flow keranjang ditinggal",
         "description": "Flow yang dijalankan bot untuk pelanggan saat keranjang ditinggal selama itu. Gunakan '{{shop_token}}' di tombol untuk membuka keranjang. Trigger juga bisa memakai event \"Cart abandoned\".",
         "none": "Tanpa flow (hanya event trigger)"
+      },
+      "storeSource": {
+        "label": "Sumber toko",
+        "description": "Pilih sumber toko yang digunakan untuk mengelola produk, inventaris, dan pesanan Anda. Jika diatur ke Shopify, semua produk dan pesanan dikelola langsung dari toko Shopify Anda.",
+        "options": {
+          "chatbotx": "ChatbotX",
+          "shopify": "Shopify"
+        }
       }
     },
     "payments": {
@@ -10310,6 +10386,78 @@
       "orderConfirmationFlowId": {
         "label": "Flow konfirmasi pesanan",
         "description": "Flow yang dikirim ke pelanggan sebagai ganti pesan bawaan saat pesanannya dibuat."
+      },
+      "shopifyCheckoutMethod": {
+        "label": "Metode checkout",
+        "description": "Pilih apakah pelanggan menyelesaikan pembayaran di halaman checkout Shopify atau memesan langsung di toko web.",
+        "options": {
+          "webCheckout": "Checkout Web Shopify",
+          "inApp": "Checkout dalam aplikasi"
+        }
+      },
+      "shopifyAutoApplyDiscounts": {
+        "label": "Terapkan kode diskon otomatis",
+        "description": "Izinkan pelanggan menerapkan kode diskon Shopify langsung ke keranjang sebelum diarahkan ke checkout."
+      },
+      "inAppDeliveryCost": {
+        "label": "Biaya pengiriman",
+        "description": "Biaya pengiriman yang ditambahkan ke pesanan checkout dalam aplikasi."
+      }
+    },
+    "shopify": {
+      "shopDomain": {
+        "label": "Domain toko",
+        "placeholder": "your-store.myshopify.com",
+        "hint": "Masukkan domain .myshopify.com dari toko Shopify Anda.",
+        "connectedHint": "Domain toko Shopify Anda yang terhubung."
+      },
+      "authKind": {
+        "label": "Autentikasi",
+        "description": "Cara ChatbotX masuk ke toko Anda: dengan token akses Admin API dari aplikasi kustom, atau dengan Client ID dan secret dari aplikasi yang dibuat di Shopify Dev Dashboard.",
+        "options": {
+          "token": "Token akses Admin API",
+          "clientCredentials": "Client ID dan secret (aplikasi Dev Dashboard)"
+        }
+      },
+      "accessToken": {
+        "label": "Token akses Admin API",
+        "hint": "Token akses Admin API dari aplikasi kustom Anda. Berikan scope berikut: {scopes}.",
+        "connectedHint": "Token akses Shopify Admin API Anda disimpan terenkripsi."
+      },
+      "apiSecret": {
+        "label": "Kunci rahasia API",
+        "hint": "Kunci rahasia API aplikasi, digunakan untuk memverifikasi webhook yang dikirim oleh Shopify."
+      },
+      "clientId": {
+        "label": "Client ID",
+        "hint": "Client ID aplikasi Dev Dashboard Anda. Berikan scope berikut: {scopes}."
+      },
+      "clientSecret": {
+        "label": "Client Secret",
+        "hint": "Client Secret aplikasi. Disimpan terenkripsi."
+      },
+      "webhookUrl": {
+        "label": "URL webhook",
+        "description": "Didaftarkan otomatis di Shopify saat terhubung untuk menerima pembaruan produk, inventaris, dan pesanan secara real-time."
+      },
+      "syncNow": "Sinkronkan sekarang",
+      "syncStarted": "Sinkronisasi dimulai",
+      "syncError": "Tidak dapat memulai sinkronisasi",
+      "syncStatus": {
+        "label": "Status sinkronisasi",
+        "description": "Produk, kode diskon, dan pesanan dicerminkan dari toko Shopify Anda.",
+        "connectedTo": "Terhubung ke {shopDomain}",
+        "lastSynced": "Terakhir disinkronkan: {time} ({productCount} produk, {orderCount} pesanan)",
+        "neverSynced": "Belum disinkronkan",
+        "noReason": "Hubungkan ulang toko Anda untuk melanjutkan.",
+        "invalid": "Koneksi tidak lagi valid: {reason}",
+        "state": {
+          "idle": "Diam",
+          "queued": "Sinkronisasi diantrekan...",
+          "running": "Menyinkronkan...",
+          "succeeded": "Sinkronisasi terakhir berhasil",
+          "failed": "Sinkronisasi terakhir gagal"
+        }
       }
     }
   },
@@ -10389,7 +10537,8 @@
       "total": "Total",
       "coupon": "Kupon ({code})",
       "title": "Ringkasan pesanan",
-      "saved": "Anda hemat {amount}"
+      "saved": "Anda hemat {amount}",
+      "deliveryAtCheckout": "Dihitung saat checkout"
     },
     "belowMinimum": "Pesanan minimum {amount}.",
     "checkOut": "Checkout",
@@ -10508,7 +10657,9 @@
       "notEligible": "Belum memenuhi syarat"
     },
     "itemCount": "{count, plural, one {# barang} other {# barang}}",
-    "relatedProducts": "Anda mungkin juga suka"
+    "relatedProducts": "Anda mungkin juga suka",
+    "soldOut": "Habis terjual",
+    "sku": "SKU: {sku}"
   },
   "webshopLinks": {
     "preview": "Pratinjau",

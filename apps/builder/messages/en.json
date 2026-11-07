@@ -8310,7 +8310,40 @@
       "notPaid": "Not paid"
     },
     "paymentUntil": "until {time}",
-    "paymentExpiredCancelReason": "Payment not received in time."
+    "paymentExpiredCancelReason": "Payment not received in time.",
+    "exportTruncated": "The export was limited to the first {count} orders",
+    "exportError": "Could not export the orders",
+    "shopify": {
+      "syncOrders": "Sync Orders",
+      "orderColumn": "Order",
+      "customerColumn": "Customer",
+      "paymentPending": "Pending",
+      "paymentFilter": "Payment",
+      "paymentFilterAll": "Payment: All",
+      "fulfillmentFilter": "Fulfillment",
+      "fulfillmentFilterAll": "Fulfillment: All",
+      "fulfillmentStatuses": {
+        "fulfilled": "Fulfilled",
+        "unfulfilled": "Unfulfilled",
+        "partial": "Partial"
+      },
+      "viewDetails": "View Details",
+      "viewOnShopify": "View on Shopify",
+      "detailsTitle": "Order {name}",
+      "placedOn": "Placed on Shopify Store • {date}",
+      "customerDetails": "Customer Details",
+      "shippingAddress": "Shipping Address",
+      "noShippingAddress": "No shipping address",
+      "tracking": "Tracking: {company} #{number}",
+      "lineItems": "Line Items",
+      "itemColumn": "Item",
+      "skuColumn": "SKU",
+      "shipping": "Shipping",
+      "free": "Free",
+      "loading": "Loading...",
+      "loadError": "Could not load the order details",
+      "close": "Close"
+    }
   },
   "products": {
     "title": "Products",
@@ -8390,6 +8423,14 @@
       "isActive": {
         "label": "Active"
       },
+      "status": {
+        "label": "Status",
+        "values": {
+          "active": "Active",
+          "draft": "Draft",
+          "unlisted": "Unlisted"
+        }
+      },
       "isAddonOnly": {
         "label": "Use this product only as an addon for others products"
       },
@@ -8425,6 +8466,32 @@
     "inventoryPolicy": {
       "dont_track": "Don't track inventory",
       "track": "Track inventory"
+    },
+    "shopify": {
+      "openShopify": "Open Shopify",
+      "syncProducts": "Sync Products",
+      "syncStarted": "Sync started",
+      "syncError": "Could not start the sync",
+      "viewDetails": "View Details",
+      "editOnShopify": "Edit on Shopify",
+      "copyProductLink": "Copy Product Link",
+      "linkCopied": "Product link copied",
+      "noProductLink": "This product has no storefront link",
+      "inStock": "{count} in stock",
+      "inStockWithVariants": "{count} in stock ({variants} variants)",
+      "detailsTitle": "Product Details — {name}",
+      "detailsSubtitle": "Synced from Shopify store {shop}",
+      "summaryLine": "Category: {category} • Total Stock: {units} units across {variants, plural, one {# variant} other {# variants}}",
+      "uncategorized": "Uncategorized",
+      "variantsTitle": "Variants ({count})",
+      "variantColumn": "Variant",
+      "skuColumn": "SKU",
+      "priceColumn": "Price",
+      "inventoryColumn": "Inventory",
+      "defaultVariant": "Default",
+      "loading": "Loading...",
+      "loadError": "Could not load the product details",
+      "close": "Close"
     }
   },
   "tiktok": {
@@ -10117,7 +10184,8 @@
       "general": "General",
       "payments": "Payments",
       "shipping": "Shipping",
-      "checkout": "Checkout"
+      "checkout": "Checkout",
+      "shopify": "Shopify"
     },
     "general": {
       "orderingAvailable": {
@@ -10185,6 +10253,14 @@
         "label": "Abandoned cart flow",
         "description": "The flow the bot runs for the customer when the cart is left this long. Use '{{shop_token}}' in its buttons to open the cart. Triggers can also use the \"Cart abandoned\" event.",
         "none": "No flow (trigger event only)"
+      },
+      "storeSource": {
+        "label": "Store Source",
+        "description": "Select the store source used to manage your products, inventory, and orders. When set to Shopify, all products and orders are managed directly from your Shopify store.",
+        "options": {
+          "chatbotx": "ChatbotX",
+          "shopify": "Shopify"
+        }
       }
     },
     "payments": {
@@ -10310,6 +10386,78 @@
       "orderConfirmationFlowId": {
         "label": "Order confirmation flow",
         "description": "The flow sent to the customer instead of the default message when their order is placed."
+      },
+      "shopifyCheckoutMethod": {
+        "label": "Checkout Method",
+        "description": "Choose whether customers complete payment on your Shopify Checkout page or place the order directly on the web shop.",
+        "options": {
+          "webCheckout": "Shopify Web Checkout",
+          "inApp": "In-App Checkout"
+        }
+      },
+      "shopifyAutoApplyDiscounts": {
+        "label": "Auto-apply Discount Codes",
+        "description": "Allow customers to apply Shopify discount codes directly to their cart before redirecting to checkout."
+      },
+      "inAppDeliveryCost": {
+        "label": "Delivery cost",
+        "description": "Delivery fee added to In-App Checkout orders."
+      }
+    },
+    "shopify": {
+      "shopDomain": {
+        "label": "Shop Domain",
+        "placeholder": "your-store.myshopify.com",
+        "hint": "Enter your Shopify store's .myshopify.com domain.",
+        "connectedHint": "Your connected Shopify store domain."
+      },
+      "authKind": {
+        "label": "Authentication",
+        "description": "How ChatbotX signs in to your store: with a custom app's Admin API access token, or with the Client ID and secret of an app made in the Shopify Dev Dashboard.",
+        "options": {
+          "token": "Admin API access token",
+          "clientCredentials": "Client ID and secret (Dev Dashboard app)"
+        }
+      },
+      "accessToken": {
+        "label": "Admin API Access Token",
+        "hint": "The Admin API access token of your custom app. Grant it these scopes: {scopes}.",
+        "connectedHint": "Your Shopify Admin API access token is stored encrypted."
+      },
+      "apiSecret": {
+        "label": "API secret key",
+        "hint": "The app's API secret key, used to verify webhooks sent by Shopify."
+      },
+      "clientId": {
+        "label": "Client ID",
+        "hint": "The Client ID of your Dev Dashboard app. Grant it these scopes: {scopes}."
+      },
+      "clientSecret": {
+        "label": "Client Secret",
+        "hint": "The app's Client Secret. It is stored encrypted."
+      },
+      "webhookUrl": {
+        "label": "Webhook URL",
+        "description": "Automatically registered on Shopify upon connection to receive real-time product, inventory, and order updates."
+      },
+      "syncNow": "Sync Now",
+      "syncStarted": "Sync started",
+      "syncError": "Could not start the sync",
+      "syncStatus": {
+        "label": "Sync Status",
+        "description": "Products, discount codes, and orders are mirrored from your Shopify store.",
+        "connectedTo": "Connected to {shopDomain}",
+        "lastSynced": "Last synced: {time} ({productCount} products, {orderCount} orders)",
+        "neverSynced": "Not synced yet",
+        "noReason": "Reconnect your store to continue.",
+        "invalid": "The connection is no longer valid: {reason}",
+        "state": {
+          "idle": "Idle",
+          "queued": "Sync queued...",
+          "running": "Syncing...",
+          "succeeded": "Last sync succeeded",
+          "failed": "Last sync failed"
+        }
       }
     }
   },
@@ -10389,7 +10537,8 @@
       "total": "Total",
       "coupon": "Coupon ({code})",
       "title": "Order summary",
-      "saved": "You save {amount}"
+      "saved": "You save {amount}",
+      "deliveryAtCheckout": "Calculated at checkout"
     },
     "belowMinimum": "The minimum order is {amount}.",
     "checkOut": "Check out",
@@ -10508,7 +10657,9 @@
       "notEligible": "Not eligible yet"
     },
     "itemCount": "{count, plural, one {# item} other {# items}}",
-    "relatedProducts": "You may also like"
+    "relatedProducts": "You may also like",
+    "soldOut": "Sold out",
+    "sku": "SKU: {sku}"
   },
   "webshopLinks": {
     "preview": "Preview",

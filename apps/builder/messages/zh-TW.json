@@ -7387,7 +7387,40 @@
       "notPaid": "未付款"
     },
     "paymentUntil": "截至 {time}",
-    "paymentExpiredCancelReason": "未在期限內收到付款。"
+    "paymentExpiredCancelReason": "未在期限內收到付款。",
+    "exportTruncated": "匯出已限制為前 {count} 筆訂單",
+    "exportError": "無法匯出訂單",
+    "shopify": {
+      "syncOrders": "同步訂單",
+      "orderColumn": "訂單",
+      "customerColumn": "客戶",
+      "paymentPending": "待處理",
+      "paymentFilter": "付款",
+      "paymentFilterAll": "付款：全部",
+      "fulfillmentFilter": "出貨",
+      "fulfillmentFilterAll": "出貨：全部",
+      "fulfillmentStatuses": {
+        "fulfilled": "已出貨",
+        "unfulfilled": "未出貨",
+        "partial": "部分出貨"
+      },
+      "viewDetails": "檢視詳細資料",
+      "viewOnShopify": "在 Shopify 中檢視",
+      "detailsTitle": "訂單 {name}",
+      "placedOn": "在 Shopify 商店下單 • {date}",
+      "customerDetails": "客戶詳細資料",
+      "shippingAddress": "收件地址",
+      "noShippingAddress": "無收件地址",
+      "tracking": "物流追蹤：{company} #{number}",
+      "lineItems": "訂單商品",
+      "itemColumn": "商品",
+      "skuColumn": "SKU",
+      "shipping": "運費",
+      "free": "免費",
+      "loading": "載入中...",
+      "loadError": "無法載入訂單詳細資料",
+      "close": "關閉"
+    }
   },
   "products": {
     "title": "產品",
@@ -7467,6 +7500,14 @@
       "isActive": {
         "label": "活動"
       },
+      "status": {
+        "label": "狀態",
+        "values": {
+          "active": "銷售中",
+          "draft": "草稿",
+          "unlisted": "未列出"
+        }
+      },
       "isAddonOnly": {
         "label": "僅將此產品作為其他產品的外掛使用"
       },
@@ -7502,6 +7543,32 @@
     "inventoryPolicy": {
       "dont_track": "不追蹤庫存",
       "track": "追蹤庫存"
+    },
+    "shopify": {
+      "openShopify": "開啟 Shopify",
+      "syncProducts": "同步商品",
+      "syncStarted": "同步已開始",
+      "syncError": "無法開始同步",
+      "viewDetails": "檢視詳細資料",
+      "editOnShopify": "在 Shopify 中編輯",
+      "copyProductLink": "複製商品連結",
+      "linkCopied": "商品連結已複製",
+      "noProductLink": "此商品沒有商店連結",
+      "inStock": "庫存 {count}",
+      "inStockWithVariants": "庫存 {count}（{variants} 個款式）",
+      "detailsTitle": "商品詳細資料 — {name}",
+      "detailsSubtitle": "已從 Shopify 商店 {shop} 同步",
+      "summaryLine": "分類：{category} • 總庫存：{variants, plural, one {# 個款式} other {# 個款式}}共 {units} 件",
+      "uncategorized": "未分類",
+      "variantsTitle": "款式（{count}）",
+      "variantColumn": "款式",
+      "skuColumn": "SKU",
+      "priceColumn": "價格",
+      "inventoryColumn": "庫存",
+      "defaultVariant": "預設",
+      "loading": "載入中...",
+      "loadError": "無法載入商品詳細資料",
+      "close": "關閉"
     }
   },
   "tiktok": {
@@ -10117,7 +10184,8 @@
       "general": "一般",
       "payments": "付款",
       "shipping": "配送",
-      "checkout": "結帳"
+      "checkout": "結帳",
+      "shopify": "Shopify"
     },
     "general": {
       "orderingAvailable": {
@@ -10185,6 +10253,14 @@
         "label": "棄購流程",
         "description": "購物車被擱置這麼久後，機器人為顧客執行的流程。在按鈕中使用 '{{shop_token}}' 可開啟購物車。觸發器也可使用「Cart abandoned」事件。",
         "none": "不執行流程（僅觸發器事件）"
+      },
+      "storeSource": {
+        "label": "商店來源",
+        "description": "選擇用於管理商品、庫存和訂單的商店來源。設為 Shopify 後，所有商品和訂單都將直接在您的 Shopify 商店中管理。",
+        "options": {
+          "chatbotx": "ChatbotX",
+          "shopify": "Shopify"
+        }
       }
     },
     "payments": {
@@ -10310,6 +10386,78 @@
       "orderConfirmationFlowId": {
         "label": "訂單確認流程",
         "description": "客戶下單後，取代預設訊息傳送給客戶的流程。"
+      },
+      "shopifyCheckoutMethod": {
+        "label": "結帳方式",
+        "description": "選擇客戶在 Shopify 結帳頁面完成付款，還是直接在網路商店下單。",
+        "options": {
+          "webCheckout": "Shopify 網頁結帳",
+          "inApp": "應用程式內結帳"
+        }
+      },
+      "shopifyAutoApplyDiscounts": {
+        "label": "自動套用折扣碼",
+        "description": "允許客戶在轉到結帳頁面之前，直接在購物車中使用 Shopify 折扣碼。"
+      },
+      "inAppDeliveryCost": {
+        "label": "運送費用",
+        "description": "加入應用程式內結帳訂單的運費。"
+      }
+    },
+    "shopify": {
+      "shopDomain": {
+        "label": "商店網域",
+        "placeholder": "your-store.myshopify.com",
+        "hint": "請輸入您 Shopify 商店的 .myshopify.com 網域。",
+        "connectedHint": "您已連結的 Shopify 商店網域。"
+      },
+      "authKind": {
+        "label": "驗證",
+        "description": "ChatbotX 登入您商店的方式：使用自訂應用程式的 Admin API 存取權杖，或使用在 Shopify Dev Dashboard 中建立的應用程式的 Client ID 和密鑰。",
+        "options": {
+          "token": "Admin API 存取權杖",
+          "clientCredentials": "Client ID 和密鑰（Dev Dashboard 應用程式）"
+        }
+      },
+      "accessToken": {
+        "label": "Admin API 存取權杖",
+        "hint": "您自訂應用程式的 Admin API 存取權杖。請授予以下權限範圍：{scopes}。",
+        "connectedHint": "您的 Shopify Admin API 存取權杖已加密儲存。"
+      },
+      "apiSecret": {
+        "label": "API 密鑰",
+        "hint": "應用程式的 API 密鑰，用於驗證 Shopify 傳送的 Webhook。"
+      },
+      "clientId": {
+        "label": "Client ID",
+        "hint": "您的 Dev Dashboard 應用程式的 Client ID。請授予以下權限範圍：{scopes}。"
+      },
+      "clientSecret": {
+        "label": "Client Secret",
+        "hint": "應用程式的 Client Secret。已加密儲存。"
+      },
+      "webhookUrl": {
+        "label": "Webhook URL",
+        "description": "連結時自動在 Shopify 註冊，以即時接收商品、庫存和訂單更新。"
+      },
+      "syncNow": "立即同步",
+      "syncStarted": "同步已開始",
+      "syncError": "無法開始同步",
+      "syncStatus": {
+        "label": "同步狀態",
+        "description": "商品、折扣碼和訂單會從您的 Shopify 商店鏡像同步。",
+        "connectedTo": "已連結到 {shopDomain}",
+        "lastSynced": "上次同步：{time}（{productCount} 件商品，{orderCount} 筆訂單）",
+        "neverSynced": "尚未同步",
+        "noReason": "請重新連結您的商店以繼續。",
+        "invalid": "連結已失效：{reason}",
+        "state": {
+          "idle": "閒置",
+          "queued": "同步已加入佇列...",
+          "running": "同步中...",
+          "succeeded": "上次同步成功",
+          "failed": "上次同步失敗"
+        }
       }
     }
   },
@@ -10389,7 +10537,8 @@
       "total": "合計",
       "coupon": "優惠券（{code}）",
       "title": "訂單摘要",
-      "saved": "為你省下 {amount}"
+      "saved": "為你省下 {amount}",
+      "deliveryAtCheckout": "結帳時計算"
     },
     "belowMinimum": "最低訂單金額為 {amount}。",
     "checkOut": "去結帳",
@@ -10508,7 +10657,9 @@
       "notEligible": "暫不符合條件"
     },
     "itemCount": "{count, plural, one {# 件} other {# 件}}",
-    "relatedProducts": "你可能也會喜歡"
+    "relatedProducts": "你可能也會喜歡",
+    "soldOut": "已售完",
+    "sku": "SKU：{sku}"
   },
   "webshopLinks": {
     "preview": "預覽",

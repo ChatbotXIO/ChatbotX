@@ -1,5 +1,6 @@
 "use client"
 
+import type { StoreSource } from "@chatbotx.io/database/partials"
 import type { TriggerModel } from "@chatbotx.io/database/types"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import { Form, FormMessage } from "@chatbotx.io/ui/components/ui/form"
@@ -35,10 +36,11 @@ type TriggerWithConditions = TriggerModel & {
 type UpdateTriggerFormProps = {
   workspaceId: string
   trigger: TriggerWithConditions
+  storeSource?: StoreSource
 }
 
 export default function UpdateTriggerForm(props: UpdateTriggerFormProps) {
-  const { workspaceId, trigger } = props
+  const { workspaceId, trigger, storeSource } = props
   const t = useTranslations()
   const router = useRouter()
 
@@ -133,6 +135,7 @@ export default function UpdateTriggerForm(props: UpdateTriggerFormProps) {
                   option.defaultFn() as UpdateTriggerSchema["conditions"][number]
                 appendConditions(condition)
               }}
+              storeSource={storeSource}
             />
           </div>
 

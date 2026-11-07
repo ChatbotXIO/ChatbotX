@@ -82,6 +82,7 @@
     "@chatbotx.io/integration-facebook-ads": "workspace:*",
     "@chatbotx.io/integration-google-ads": "workspace:*",
     "@chatbotx.io/integration-google-calendar": "workspace:*",
+    "@chatbotx.io/integration-shopify": "workspace:*",
     "@chatbotx.io/integration-tiktok": "workspace:*",
     "@chatbotx.io/javascript-sandbox": "workspace:*",
     "@chatbotx.io/logger": "workspace:*",

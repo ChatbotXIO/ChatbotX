@@ -49,6 +49,10 @@ import { orderPaymentService } from "../order-payment/service"
 import { resolveWorkspaceAppUrl } from "../platform/settings"
 import { productService } from "../product/service"
 import { productCategoryService } from "../product-category/service"
+import {
+  buildShopifyWebCheckoutUrl,
+  placeShopifyInAppOrder,
+} from "../shopify/checkout"
 import { vendorService } from "../vendor/service"
 import { workspaceService } from "../workspace/service"
 import { resolveWorkspaceFreezeReasonById } from "../workspace-lifecycle/with-blocked-owner-guard"
@@ -226,7 +230,10 @@ class WebshopService extends BaseService {
     page?: number
     perPage?: number
   }) {
-    return await productRepository.listForShop(input)
+    return await productRepository.listForShop({
+      ...input,
+      source: await ecommerceSettingsService.storeSource(input.workspaceId),
+    })
   }
 
   /**
@@ -245,6 +252,7 @@ class WebshopService extends BaseService {
   }) {
     return await productRepository.listRelatedForShop({
       workspaceId: input.workspaceId,
+      source: await ecommerceSettingsService.storeSource(input.workspaceId),
       product: input.product,
       limit: input.limit ?? RELATED_PRODUCTS_LIMIT,
     })
@@ -254,6 +262,7 @@ class WebshopService extends BaseService {
   async getProduct(input: { workspaceId: string; productId: string }) {
     const { data } = await productRepository.listForShop({
       workspaceId: input.workspaceId,
+      source: await ecommerceSettingsService.storeSource(input.workspaceId),
       productIds: [input.productId],
     })
     if (data.length === 0) {
@@ -700,8 +709,13 @@ class WebshopService extends BaseService {
     // A store that checks out on its own external page (to take payment
     // there) takes no order through the built-in checkout. `productPage`
     // only changes the product's Buy button, so a cart filled another way
-    // (a WhatsApp cart) still checks out here.
-    if (settings.checkout.checkoutMode === "externalLink") {
+    // (a WhatsApp cart) still checks out here. A Shopify store has no
+    // checkout mode (its settings hide it): a value left from before the
+    // switch must not block it.
+    if (
+      settings.general.storeSource !== "shopify" &&
+      settings.checkout.checkoutMode === "externalLink"
+    ) {
       throw webshopClosedException("orderingUnavailable")
     }
     const cart = await cartRepository.find(shopper)
@@ -743,6 +757,16 @@ class WebshopService extends BaseService {
     }
 
     this.assertCheckoutForm(settings, form)
+
+    if (settings.general.storeSource === "shopify") {
+      return await this.checkoutOnShopify({
+        shopper,
+        form,
+        settings,
+        lines,
+        discountCode: cart?.discountCode ?? null,
+      })
+    }
 
     const order = await orderService.place({
       workspaceId: shopper.workspaceId,
@@ -794,6 +818,82 @@ class WebshopService extends BaseService {
       })
       throw error
     }
+  }
+
+  /**
+   * A store mirroring Shopify checks out on Shopify:
+   * - `webCheckout` answers with a cart permalink (`paymentUrl`) to Shopify's
+   *   checkout page; the cart stays until Shopify reports the order;
+   * - `inApp` places the order on Shopify now (cash on delivery) and empties
+   *   what was ordered from the cart.
+   */
+  private async checkoutOnShopify(input: {
+    shopper: WebshopShopper
+    form: WebshopCheckoutForm
+    settings: EcommerceSettings
+    lines: Array<{
+      productId: string
+      variantId?: string | null
+      quantity: number
+    }>
+    discountCode: string | null
+  }) {
+    const { shopper, form, settings, lines } = input
+    const offersCodes = settings.checkout.shopifyAutoApplyDiscounts
+    const quote = await orderService.quote({
+      workspaceId: shopper.workspaceId,
+      items: lines,
+      shippingType: form.shippingType,
+      contactId: shopper.contactId,
+      discountCode: offersCodes ? input.discountCode : null,
+      autoApplyDiscount: offersCodes,
+    })
+    const discount =
+      offersCodes && quote.discount
+        ? {
+            code: quote.discount.code,
+            discountType: quote.discount.discountType,
+            amount: quote.discount.amount,
+            percent:
+              quote.discount.discountType === "percentage"
+                ? quote.discount.discountValue
+                : null,
+          }
+        : null
+    const customer = {
+      customerName: form.customerName?.trim() || null,
+      customerEmail: form.customerEmail?.trim() || null,
+      customerPhone: form.customerPhone?.trim() || null,
+      shippingAddress: form.shippingAddress ?? null,
+      note: form.note?.trim() || null,
+    }
+
+    if (settings.checkout.shopifyCheckoutMethod === "webCheckout") {
+      const url = await buildShopifyWebCheckoutUrl({
+        shopper,
+        lines,
+        customer,
+        discount,
+      })
+      return { order: null, paymentUrl: url }
+    }
+
+    const order = await placeShopifyInAppOrder({
+      shopper,
+      lines,
+      customer,
+      discount,
+      settings,
+      delivery: quote.shippingType === "delivery",
+    })
+    await db.transaction(async (tx) => {
+      const locked = await cartRepository.findForUpdate(shopper, tx)
+      const left = subtractOrderedLines(locked?.items ?? [], lines)
+      if (left) {
+        await this.keepCartLines(shopper, left, tx)
+      }
+    })
+    return { order, paymentUrl: null }
   }
 
   /**

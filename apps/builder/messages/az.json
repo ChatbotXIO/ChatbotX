@@ -8310,7 +8310,40 @@
       "notPaid": "Ödənilməyib"
     },
     "paymentUntil": "{time} qədər",
-    "paymentExpiredCancelReason": "Ödəniş vaxtında alınmadı."
+    "paymentExpiredCancelReason": "Ödəniş vaxtında alınmadı.",
+    "exportTruncated": "İxrac ilk {count} sifarişlə məhdudlaşdırıldı",
+    "exportError": "Sifarişləri ixrac etmək mümkün olmadı",
+    "shopify": {
+      "syncOrders": "Sifarişləri sinxronlaşdır",
+      "orderColumn": "Sifariş",
+      "customerColumn": "Müştəri",
+      "paymentPending": "Gözləyir",
+      "paymentFilter": "Ödəniş",
+      "paymentFilterAll": "Ödəniş: Hamısı",
+      "fulfillmentFilter": "Yerinə yetirmə",
+      "fulfillmentFilterAll": "Yerinə yetirmə: Hamısı",
+      "fulfillmentStatuses": {
+        "fulfilled": "Yerinə yetirilib",
+        "unfulfilled": "Yerinə yetirilməyib",
+        "partial": "Qismən"
+      },
+      "viewDetails": "Ətraflı bax",
+      "viewOnShopify": "Shopify-da bax",
+      "detailsTitle": "Sifariş {name}",
+      "placedOn": "Shopify mağazasında verilib • {date}",
+      "customerDetails": "Müştəri məlumatları",
+      "shippingAddress": "Çatdırılma ünvanı",
+      "noShippingAddress": "Çatdırılma ünvanı yoxdur",
+      "tracking": "İzləmə: {company} #{number}",
+      "lineItems": "Sifariş mövqeləri",
+      "itemColumn": "Məhsul",
+      "skuColumn": "SKU",
+      "shipping": "Çatdırılma",
+      "free": "Pulsuz",
+      "loading": "Yüklənir...",
+      "loadError": "Sifariş təfərrüatlarını yükləmək mümkün olmadı",
+      "close": "Bağla"
+    }
   },
   "products": {
     "title": "Məhsullar",
@@ -8390,6 +8423,14 @@
       "isActive": {
         "label": "Aktiv"
       },
+      "status": {
+        "label": "Status",
+        "values": {
+          "active": "Aktiv",
+          "draft": "Qaralama",
+          "unlisted": "Siyahıda deyil"
+        }
+      },
       "isAddonOnly": {
         "label": "Bu məhsuldan yalnız digər məhsullara əlavə kimi istifadə et"
       },
@@ -8425,6 +8466,32 @@
     "inventoryPolicy": {
       "dont_track": "Məhsul ehtiyatını izləmə",
       "track": "Məhsul ehtiyatını izlə"
+    },
+    "shopify": {
+      "openShopify": "Shopify-ı aç",
+      "syncProducts": "Məhsulları sinxronlaşdır",
+      "syncStarted": "Sinxronizasiya başladı",
+      "syncError": "Sinxronizasiyanı başlatmaq mümkün olmadı",
+      "viewDetails": "Ətraflı bax",
+      "editOnShopify": "Shopify-da redaktə et",
+      "copyProductLink": "Məhsul linkini kopyala",
+      "linkCopied": "Məhsul linki kopyalandı",
+      "noProductLink": "Bu məhsulun mağaza linki yoxdur",
+      "inStock": "{count} ədəd stokda",
+      "inStockWithVariants": "{count} ədəd stokda ({variants} variant)",
+      "detailsTitle": "Məhsul təfərrüatları — {name}",
+      "detailsSubtitle": "{shop} Shopify mağazasından sinxronlaşdırılıb",
+      "summaryLine": "Kateqoriya: {category} • Ümumi stok: {variants, plural, one {# variant} other {# variant}} üzrə {units} ədəd",
+      "uncategorized": "Kateqoriyasız",
+      "variantsTitle": "Variantlar ({count})",
+      "variantColumn": "Variant",
+      "skuColumn": "SKU",
+      "priceColumn": "Qiymət",
+      "inventoryColumn": "İnventar",
+      "defaultVariant": "Standart",
+      "loading": "Yüklənir...",
+      "loadError": "Məhsul təfərrüatlarını yükləmək mümkün olmadı",
+      "close": "Bağla"
     }
   },
   "tiktok": {
@@ -10117,7 +10184,8 @@
       "general": "Ümumi",
       "payments": "Ödənişlər",
       "shipping": "Çatdırılma",
-      "checkout": "Ödəniş səhifəsi"
+      "checkout": "Ödəniş səhifəsi",
+      "shopify": "Shopify"
     },
     "general": {
       "orderingAvailable": {
@@ -10185,6 +10253,14 @@
         "label": "Tərk edilmiş səbət axını",
         "description": "Səbət bu qədər tərk edildikdə botun müştəri üçün işlətdiyi axın. Səbəti açmaq üçün düymələrdə '{{shop_token}}' istifadə edin. Triggerlər \"Cart abandoned\" hadisəsindən də istifadə edə bilər.",
         "none": "Axın yoxdur (yalnız trigger hadisəsi)"
+      },
+      "storeSource": {
+        "label": "Mağaza mənbəyi",
+        "description": "Məhsullarınızı, inventarınızı və sifarişlərinizi idarə etmək üçün istifadə olunan mağaza mənbəyini seçin. Shopify seçildikdə bütün məhsul və sifarişlər birbaşa Shopify mağazanızdan idarə olunur.",
+        "options": {
+          "chatbotx": "ChatbotX",
+          "shopify": "Shopify"
+        }
       }
     },
     "payments": {
@@ -10310,6 +10386,78 @@
       "orderConfirmationFlowId": {
         "label": "Sifariş təsdiqi axını",
         "description": "Sifariş veriləndə standart mesajın əvəzinə müştəriyə göndərilən axın."
+      },
+      "shopifyCheckoutMethod": {
+        "label": "Ödəniş metodu",
+        "description": "Müştərilərin ödənişi Shopify ödəniş səhifənizdə tamamlayacağını, yoxsa sifarişi birbaşa veb mağazada verəcəyini seçin.",
+        "options": {
+          "webCheckout": "Shopify veb ödənişi",
+          "inApp": "Tətbiqdaxili ödəniş"
+        }
+      },
+      "shopifyAutoApplyDiscounts": {
+        "label": "Endirim kodlarını avtomatik tətbiq et",
+        "description": "Müştərilərin ödənişə yönləndirilməzdən əvvəl Shopify endirim kodlarını birbaşa səbətə tətbiq etməsinə icazə verin."
+      },
+      "inAppDeliveryCost": {
+        "label": "Çatdırılma xərci",
+        "description": "Tətbiqdaxili ödəniş sifarişlərinə əlavə olunan çatdırılma haqqı."
+      }
+    },
+    "shopify": {
+      "shopDomain": {
+        "label": "Mağaza domeni",
+        "placeholder": "your-store.myshopify.com",
+        "hint": "Shopify mağazanızın .myshopify.com domenini daxil edin.",
+        "connectedHint": "Qoşulmuş Shopify mağazanızın domeni."
+      },
+      "authKind": {
+        "label": "Autentifikasiya",
+        "description": "ChatbotX mağazanıza necə daxil olur: fərdi tətbiqin Admin API giriş tokeni ilə və ya Shopify Dev Dashboard-da yaradılmış tətbiqin Client ID və secret-i ilə.",
+        "options": {
+          "token": "Admin API giriş tokeni",
+          "clientCredentials": "Client ID və secret (Dev Dashboard tətbiqi)"
+        }
+      },
+      "accessToken": {
+        "label": "Admin API giriş tokeni",
+        "hint": "Fərdi tətbiqinizin Admin API giriş tokeni. Ona bu icazələri verin: {scopes}.",
+        "connectedHint": "Shopify Admin API giriş tokeniniz şifrələnmiş şəkildə saxlanılır."
+      },
+      "apiSecret": {
+        "label": "API gizli açarı",
+        "hint": "Shopify tərəfindən göndərilən webhook-ları yoxlamaq üçün istifadə olunan tətbiqin API gizli açarı."
+      },
+      "clientId": {
+        "label": "Client ID",
+        "hint": "Dev Dashboard tətbiqinizin Client ID-si. Ona bu icazələri verin: {scopes}."
+      },
+      "clientSecret": {
+        "label": "Client Secret",
+        "hint": "Tətbiqin Client Secret-i. Şifrələnmiş şəkildə saxlanılır."
+      },
+      "webhookUrl": {
+        "label": "Webhook URL",
+        "description": "Məhsul, inventar və sifariş yeniləmələrini real vaxtda almaq üçün qoşulma zamanı Shopify-da avtomatik qeydiyyatdan keçirilir."
+      },
+      "syncNow": "İndi sinxronlaşdır",
+      "syncStarted": "Sinxronizasiya başladı",
+      "syncError": "Sinxronizasiyanı başlatmaq mümkün olmadı",
+      "syncStatus": {
+        "label": "Sinxronizasiya statusu",
+        "description": "Məhsullar, endirim kodları və sifarişlər Shopify mağazanızdan əks etdirilir.",
+        "connectedTo": "{shopDomain} ilə əlaqələndirilib",
+        "lastSynced": "Son sinxronizasiya: {time} ({productCount} məhsul, {orderCount} sifariş)",
+        "neverSynced": "Hələ sinxronlaşdırılmayıb",
+        "noReason": "Davam etmək üçün mağazanızı yenidən qoşun.",
+        "invalid": "Əlaqə artıq etibarlı deyil: {reason}",
+        "state": {
+          "idle": "Gözləmədə",
+          "queued": "Sinxronizasiya növbədədir...",
+          "running": "Sinxronlaşdırılır...",
+          "succeeded": "Son sinxronizasiya uğurlu oldu",
+          "failed": "Son sinxronizasiya uğursuz oldu"
+        }
       }
     }
   },
@@ -10389,7 +10537,8 @@
       "total": "Cəmi",
       "coupon": "Kupon ({code})",
       "title": "Sifarişin xülasəsi",
-      "saved": "{amount} qənaət edirsiniz"
+      "saved": "{amount} qənaət edirsiniz",
+      "deliveryAtCheckout": "Ödəniş zamanı hesablanır"
     },
     "belowMinimum": "Minimum sifariş {amount} təşkil edir.",
     "checkOut": "Sifarişi rəsmiləşdir",
@@ -10508,7 +10657,9 @@
       "notEligible": "Hələ uyğun deyil"
     },
     "itemCount": "{count, plural, one {# məhsul} other {# məhsul}}",
-    "relatedProducts": "Bunlar da xoşunuza gələ bilər"
+    "relatedProducts": "Bunlar da xoşunuza gələ bilər",
+    "soldOut": "Satışda yoxdur",
+    "sku": "SKU: {sku}"
   },
   "webshopLinks": {
     "preview": "Önizləmə",

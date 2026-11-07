@@ -1,3 +1,4 @@
+import { ecommerceSettingsService } from "@chatbotx.io/business"
 import { notFound } from "next/navigation"
 
 import { findTrigger } from "@/features/triggers/queries"
@@ -22,5 +23,13 @@ export default async function UpdateTriggerPage({
     return notFound()
   }
 
-  return <UpdateTriggerForm trigger={trigger} workspaceId={workspaceId} />
+  const storeSource = await ecommerceSettingsService.storeSource(workspaceId)
+
+  return (
+    <UpdateTriggerForm
+      storeSource={storeSource}
+      trigger={trigger}
+      workspaceId={workspaceId}
+    />
+  )
 }

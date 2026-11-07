@@ -70,7 +70,7 @@ const createProduct = (retailerId: string, categoryName?: string) => ({
   inventoryQuantity: 0,
   inventoryPolicy: "dont_track" as const,
   images: undefined,
-  isActive: true,
+  status: "active",
 })
 
 beforeEach(() => {
@@ -164,7 +164,7 @@ describe("metaCatalogImportService", () => {
           inventoryPolicy: "track",
           allowOutOfStockPurchase: true,
           images: [{ url: "https://example.com/komi-298.jpg", type: "link" }],
-          isActive: false,
+          status: "draft",
         },
       ],
     })
@@ -182,7 +182,7 @@ describe("metaCatalogImportService", () => {
           inventoryPolicy: "track",
           inventoryQuantity: 0,
           allowOutOfStockPurchase: true,
-          isActive: false,
+          status: "draft",
           longDescription: "Long description from Meta",
           name: "Robot hút bụi KOMI 298",
           price: 1_025_000,
@@ -359,7 +359,7 @@ describe("metaCatalogImportService", () => {
           ...createProduct("existing"),
           price: undefined,
           discount: undefined,
-          isActive: undefined,
+          status: undefined,
         },
       ],
     })
@@ -369,7 +369,7 @@ describe("metaCatalogImportService", () => {
         values: expect.not.objectContaining({
           price: expect.anything(),
           discount: expect.anything(),
-          isActive: expect.anything(),
+          status: expect.anything(),
         }),
       }),
       transactionClient,

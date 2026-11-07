@@ -6,6 +6,7 @@ import {
   possibleErrorsOnDeletingResource,
   possibleErrorsOnListingResource,
   possibleErrorsOnMutatingProductVendor,
+  shopifyManagedErrors,
 } from "@/lib/orpc/orpc-error-helper"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
 import {
@@ -97,7 +98,7 @@ export const productVendorsPublicRouter = {
         ),
       }),
     )
-    .errors(possibleErrorsOnDeletingResource)
+    .errors({ ...possibleErrorsOnDeletingResource, ...shopifyManagedErrors })
     .handler(async ({ context, input }) => {
       await vendorService.delete({
         workspaceId: context.workspace.id,

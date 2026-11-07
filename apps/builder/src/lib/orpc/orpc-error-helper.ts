@@ -222,6 +222,19 @@ export const possibleErrorsOnCreatingBroadcast = {
   ...possibleIdempotencyErrors,
 } satisfies ErrorMap
 
+/**
+ * A product, category, vendor, discount code or order mirrored from the
+ * connected Shopify store (or any create while the store source is Shopify):
+ * it is changed in Shopify. `shopifyManagedException` in
+ * `packages/business/src/shopify/errors.ts`.
+ */
+export const shopifyManagedErrors = {
+  shopifyManaged: {
+    message: "Managed in Shopify; change it there and it syncs here",
+    status: 409,
+  },
+} satisfies ErrorMap
+
 export const possibleErrorsOnMutatingResource = {
   notFound,
   businessError,
@@ -369,6 +382,7 @@ export const possibleErrorsOnCountingWithBody = {
 
 /** Starting a product import: one import per workspace (409), file checks (404/422). */
 export const possibleErrorsOnStartingProductImport = {
+  ...shopifyManagedErrors,
   notFound,
   businessError,
   // Reading the file's headers when `columnMap` is omitted.
@@ -1104,11 +1118,13 @@ const productVendorErrors = {
 } satisfies ErrorMap
 
 export const possibleErrorsOnCreatingProductVendor = {
+  ...shopifyManagedErrors,
   ...possibleErrorsOnCreatingResource,
   ...productVendorErrors,
 } satisfies ErrorMap
 
 export const possibleErrorsOnMutatingProductVendor = {
+  ...shopifyManagedErrors,
   ...possibleErrorsOnMutatingResource,
   ...productVendorErrors,
 } satisfies ErrorMap
@@ -1200,6 +1216,7 @@ const discountCodeUseErrors = {
 } satisfies ErrorMap
 
 export const possibleErrorsOnCreatingDiscountCode = {
+  ...shopifyManagedErrors,
   ...possibleErrorsOnCreatingResource,
   discountCodeDuplicated: {
     message: "A discount code with this name already exists",
@@ -1208,6 +1225,7 @@ export const possibleErrorsOnCreatingDiscountCode = {
 } satisfies ErrorMap
 
 export const possibleErrorsOnMutatingDiscountCode = {
+  ...shopifyManagedErrors,
   ...possibleErrorsOnMutatingResource,
   discountCodeDuplicated: {
     message: "A discount code with this name already exists",
@@ -1307,6 +1325,7 @@ export const possibleErrorsOnConnectingPaymentProvider = {
 
 /** Accept/ship/conclude/cancel: a move the order's status does not allow. */
 export const possibleErrorsOnTransitioningOrder = {
+  ...shopifyManagedErrors,
   ...possibleErrorsOnMutatingResource,
   ...paymentProviderErrors,
   orderInvalidStatusTransition: {
@@ -1330,6 +1349,7 @@ export const possibleErrorsOnTransitioningOrder = {
 
 /** Deleting an order: a paid online order is cancelled (refunded) instead. */
 export const possibleErrorsOnDeletingOrder = {
+  ...shopifyManagedErrors,
   ...possibleErrorsOnDeletingResource,
   ...paymentProviderErrors,
   orderPaidOnline: {
@@ -1375,4 +1395,21 @@ export const possibleErrorsOnMutatingPipeline = {
     status: 409,
   },
   ...possibleIdempotencyErrors,
+} satisfies ErrorMap
+
+/** Connect, sync and disconnect of the Shopify store source. */
+export const possibleErrorsOnShopify = {
+  ...possibleErrorsOnMutatingResource,
+  shopifyNotConnected: {
+    message: "Connect a Shopify store first",
+    status: 400,
+  },
+  shopifyCredentialsInvalid: {
+    message: "Shopify did not accept these credentials",
+    status: 400,
+  },
+  shopifySyncInProgress: {
+    message: "A Shopify sync is already running",
+    status: 409,
+  },
 } satisfies ErrorMap

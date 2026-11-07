@@ -1,8 +1,10 @@
 import {
+  ecommerceSettingsService,
   integrationMetaCatalogService,
   metaCatalogSyncRunService,
   productCategoryService,
   productService,
+  shopifyIntegrationService,
 } from "@chatbotx.io/business"
 import { listImports } from "@/features/import/queries/list-imports.queries"
 import { CategorySidebar } from "@/features/product-categories/components/category-sidebar"
@@ -42,6 +44,8 @@ export default async function ProductsPage({
       integrationMetaCatalogService.findByWorkspaceId(workspaceId),
       metaCatalogSyncRunService.list(workspaceId),
     ])
+  const shopify = await resolveShopifyView(workspaceId)
+
   return (
     <div className="flex min-h-0 flex-1">
       <CategorySidebar categories={categories} workspaceId={workspaceId} />
@@ -53,9 +57,25 @@ export default async function ProductsPage({
             history: metaHistory,
           }}
           promises={Promise.resolve([products])}
+          shopify={shopify}
           workspaceId={workspaceId}
         />
       </div>
     </div>
   )
+}
+
+/** The connected store, when Shopify is the source. */
+async function resolveShopifyView(workspaceId: string) {
+  const storeSource = await ecommerceSettingsService.storeSource(workspaceId)
+  if (storeSource !== "shopify") {
+    return
+  }
+  const status = await shopifyIntegrationService.getStatus(workspaceId)
+  if (!status.connected) {
+    return
+  }
+  return {
+    store: { shopDomain: status.shopDomain, adminUrl: status.adminUrl },
+  }
 }

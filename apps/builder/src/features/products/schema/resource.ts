@@ -23,6 +23,13 @@ export const productResource = createSelectSchema(productModel, {
   category: z.string().nullable(),
   subcategory: z.string().nullable(),
   vendor: z.string().nullable(),
+  /** Enabled variants; only on list rows. */
+  variantCount: z.number().optional(),
+  /**
+   * Stock over variants stocked one by one (Shopify); null when stock is on
+   * the product. Only on list rows.
+   */
+  variantInventoryTotal: z.number().nullable().optional(),
 })
 export type ProductResource = z.infer<typeof productResource>
 

@@ -23,14 +23,25 @@ import {
   type ProductImageSize,
   productImageSizes,
   type ShippingMode,
+  type ShopifyCheckoutMethod,
   shippingModes,
+  shopifyCheckoutMethods,
   type WebshopProductView,
   webshopProductViews,
 } from "../partials/ecommerce"
 import { bigintAsString, money, sharedColumns } from "../partials/shared"
 import { ecommerceOpenHoursModel } from "./ecommerce-open-hours"
 import { flowModel } from "./flow"
+import { storeSource } from "./store-source"
 import { workspaceModel } from "./workspace"
+
+export const shopifyCheckoutMethod = pgEnum(
+  "shopifyCheckoutMethod",
+  shopifyCheckoutMethods.options as [
+    ShopifyCheckoutMethod,
+    ...ShopifyCheckoutMethod[],
+  ],
+)
 
 export const webshopProductView = pgEnum(
   "webshopProductView",
@@ -78,6 +89,8 @@ export const ecommerceSettingsModel = pgTable(
       }),
 
     // General
+    /** Existing stores keep managing their catalog here. */
+    storeSource: storeSource().notNull().default("chatbotx"),
     orderingAvailable: boolean().notNull(),
     webshopProductView: webshopProductView().notNull(),
     /** Null is always open. */
@@ -135,6 +148,10 @@ export const ecommerceSettingsModel = pgTable(
     requirePhone: boolean().notNull(),
     requireState: boolean().notNull(),
     requireZip: boolean().notNull(),
+    shopifyCheckoutMethod: shopifyCheckoutMethod()
+      .notNull()
+      .default("webCheckout"),
+    shopifyAutoApplyDiscounts: boolean().notNull().default(true),
   },
   (table) => [
     uniqueIndex("EcommerceSettings_workspaceId_key").on(table.workspaceId),

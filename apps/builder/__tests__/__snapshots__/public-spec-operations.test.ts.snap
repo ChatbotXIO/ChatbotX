@@ -2644,6 +2644,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
   },
   {
     "method": "GET",
+    "operationId": "orders.export",
+    "path": "/v1/orders/export",
+  },
+  {
+    "method": "GET",
     "operationId": "orders.get",
     "path": "/v1/orders/{id}",
   },
@@ -3271,6 +3276,26 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "method": "PUT",
     "operationId": "sequences.upsertStep",
     "path": "/v1/sequences/{id}/steps",
+  },
+  {
+    "method": "POST",
+    "operationId": "shopify.connect",
+    "path": "/v1/shopify",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "shopify.disconnect",
+    "path": "/v1/shopify",
+  },
+  {
+    "method": "GET",
+    "operationId": "shopify.getStatus",
+    "path": "/v1/shopify",
+  },
+  {
+    "method": "POST",
+    "operationId": "shopify.sync",
+    "path": "/v1/shopify/sync",
   },
   {
     "method": "POST",

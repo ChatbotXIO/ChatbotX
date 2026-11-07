@@ -51,7 +51,7 @@ vi.mock("@chatbotx.io/database/schema", () => ({
   productModel: {
     id: "product.id",
     workspaceId: "product.workspaceId",
-    isActive: "product.isActive",
+    status: "product.status",
     name: "product.name",
     images: "product.images",
     price: "product.price",
@@ -118,7 +118,7 @@ describe("metaCatalogItemRepository.findSendableByProductIds", () => {
     expect(conditions).toContain('"item.integrationMetaCatalogId","conn-1"')
     expect(conditions).toContain('"item.catalogId","cat-1"')
     expect(conditions).toContain('"product.workspaceId","ws-1"')
-    expect(conditions).toContain('"product.isActive",true')
+    expect(conditions).toContain('"product.status","active"')
     // The connection must still be live, in this workspace and on this catalog.
     expect(conditions).toContain('"connection.workspaceId","ws-1"')
     expect(conditions).toContain('"connection.catalogId","cat-1"')
@@ -235,7 +235,7 @@ describe("metaCatalogItemRepository.findLinkedProductsByRetailerIds", () => {
     expect(conditions).toContain('"item.retailerId",["sku-1","sku-2"]')
     // An inbound reference names a product the contact already saw, so an
     // inactive one must stay identifiable.
-    expect(conditions).not.toContain("product.isActive")
+    expect(conditions).not.toContain("product.status")
   })
 
   test("skips the query when there are no retailer ids", async () => {
