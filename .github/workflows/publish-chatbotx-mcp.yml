@@ -18,17 +18,21 @@ name: Publish chatbotx-mcp to npm
 #   4. On npmjs.com → chatbotx-mcp → Settings → Trusted publishing, add a
 #      GitHub Actions publisher for repo `ChatbotXIO/ChatbotX`, workflow
 #      filename `publish-chatbotx-mcp.yml` (exact, case-sensitive).
-# Only after that does a `mcp-v*` tag push or workflow_dispatch succeed.
+# Only after that does a `v*` tag push or workflow_dispatch succeed.
+#
+# Published in lockstep with the product release tag, exactly like publish-cli.yml:
+# tag `v1.9.0` publishes `chatbotx-mcp@1.9.0`. A version already on npm is skipped,
+# so only a genuinely new release version is ever uploaded.
 #
 # Auth: OIDC trusted publishing (id-token: write), matching publish-cli.yml.
 
 on:
   push:
-    tags: ["mcp-v*"]
+    tags: ["v*"]
   workflow_dispatch:
     inputs:
       version:
-        description: "Version to publish, e.g. 0.1.0 (a leading v or mcp-v is stripped)"
+        description: "Version to publish, e.g. 0.1.0 (a leading v is stripped)"
         required: true
         type: string
       dry_run:
@@ -86,10 +90,9 @@ jobs:
           else
             RAW="${GITHUB_REF_NAME}"
           fi
-          VERSION="${RAW#mcp-v}"
-          VERSION="${VERSION#v}"
+          VERSION="${RAW#v}"
           if [[ ! "${VERSION}" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
-            echo "::error::Invalid version '${RAW}' — expected mcp-v<major>.<minor>.<patch>[-prerelease]"
+            echo "::error::Invalid version '${RAW}' — expected v<major>.<minor>.<patch>[-prerelease]"
             exit 1
           fi
           if [[ "${VERSION}" == *-* ]]; then
