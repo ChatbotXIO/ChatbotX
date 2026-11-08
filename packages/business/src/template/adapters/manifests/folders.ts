@@ -55,6 +55,7 @@ export const resolveFolderManifest = async (
 
       const targetId = await findOrCreateFolder(
         ctx,
+        sourceId,
         entry,
         parentTargetId,
         category,
@@ -94,6 +95,7 @@ const resolveParentTargetId = (
 
 const findOrCreateFolder = async (
   ctx: TemplateInstallContext,
+  sourceId: string,
   entry: TemplateFolderManifestEntry,
   parentTargetId: string | null,
   category: TemplateCategory,
@@ -111,7 +113,7 @@ const findOrCreateFolder = async (
       category,
       resourceKind: "folder",
       resourceId: existing.id,
-      sourceResourceId: existing.id,
+      sourceResourceId: sourceId,
       wasExisting: true,
     })
     return existing.id
@@ -137,7 +139,7 @@ const findOrCreateFolder = async (
     category,
     resourceKind: "folder",
     resourceId: created.id,
-    sourceResourceId: created.id,
+    sourceResourceId: sourceId,
     wasExisting: false,
   })
   return created.id
@@ -151,4 +153,29 @@ const resolveParentPaths = async (
     where: { id: parentId },
   })
   return parent ? [...parent.paths, parent.id] : []
+}
+
+/**
+ * Places rows an install just created: in the folder they had in the template
+ * when it resolved here, else in the install folder, else left at the root.
+ * `move` writes one folder's rows, so a template's folders cost one write each.
+ */
+export const placeCreatedRows = async (
+  ctx: TemplateInstallContext,
+  rows: readonly { id: string; folderSourceId?: string }[],
+  installFolder: (() => Promise<string>) | undefined,
+  move: (folderId: string, ids: string[]) => Promise<void>,
+): Promise<void> => {
+  const idsByFolder = new Map<string, string[]>()
+  for (const row of rows) {
+    const folderId =
+      (row.folderSourceId && ctx.idMaps.folder?.get(row.folderSourceId)) ||
+      (await installFolder?.())
+    if (folderId) {
+      idsByFolder.set(folderId, [...(idsByFolder.get(folderId) ?? []), row.id])
+    }
+  }
+  for (const [folderId, ids] of idsByFolder) {
+    await move(folderId, ids)
+  }
 }

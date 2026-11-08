@@ -19,6 +19,7 @@ import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useState } from "react"
 import { toast } from "sonner"
+import { LockedDialogFieldset } from "@/components/locked-dialog-fieldset"
 import {
   DEFAULT_RANK,
   RankSelectField,
@@ -116,12 +117,16 @@ export function CategoryFormDialog({
         </DialogHeader>
         <Form {...form}>
           <form className="space-y-4" onSubmit={handleSubmitWithAction}>
-            <InputField label={t("name")} name="name" required />
-            <SingleImageField
-              label={t("image")}
-              name="imageUrl"
-              uploadPath={`public/space/${workspaceId}/product-categories`}
-            />
+            <LockedDialogFieldset resourceId={category?.id}>
+              <div className="space-y-4">
+                <InputField label={t("name")} name="name" required />
+                <SingleImageField
+                  label={t("image")}
+                  name="imageUrl"
+                  uploadPath={`public/space/${workspaceId}/product-categories`}
+                />
+              </div>
+            </LockedDialogFieldset>
             <RankSelectField />
             <DialogFooter>
               <DialogClose

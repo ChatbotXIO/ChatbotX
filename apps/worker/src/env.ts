@@ -58,6 +58,15 @@ export const env = createEnv({
     // starves the latency-sensitive integration queue. I/O-bound → higher
     // default than integration; tune per node bandwidth / Graph rate limits.
     LOW_WORKER_CONCURRENCY: z.coerce.number().int().min(1).max(200).default(30),
+    // Template install / sync / uninstall jobs: each is one long transaction,
+    // and saving a widely installed template fans out a sync per installation.
+    // Kept small so that burst queues up instead of flooding Postgres.
+    TEMPLATE_WORKER_CONCURRENCY: z.coerce
+      .number()
+      .int()
+      .min(1)
+      .max(20)
+      .default(2),
     // Leaderboard scoring jobs; bounded so a livestream comment burst queues
     // up instead of flooding Postgres.
     LEADERBOARD_WORKER_CONCURRENCY: z.coerce

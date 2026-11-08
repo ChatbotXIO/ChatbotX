@@ -18,6 +18,8 @@ import type { DataTableRowAction } from "@chatbotx.io/ui/types/data-table"
 import type { ColumnDef } from "@tanstack/react-table"
 import { MoreHorizontalIcon, PencilIcon, Trash2Icon } from "lucide-react"
 import type { useTranslations } from "next-intl"
+import { LockBadge } from "@/features/templates/components/lock-badge"
+import { UndeletableGuard } from "@/features/templates/components/lock-context"
 import type { AIMcpServerResource } from "./schema/resource"
 
 type GetAIMcpServerColumnsProps = {
@@ -62,8 +64,9 @@ export const getAIMcpServerColumns = ({
       <Tooltip>
         <TooltipTrigger
           render={
-            <div className="inline-block max-w-[300px] truncate">
-              {row.original.name}
+            <div className="flex max-w-[300px] items-center">
+              <span className="truncate">{row.original.name}</span>
+              <LockBadge resourceId={row.original.id} />
             </div>
           }
         />
@@ -118,15 +121,20 @@ export const getAIMcpServerColumns = ({
             <PencilIcon className="me-2 h-4 w-4" />
             {t("actions.edit")}
           </DropdownMenuItem>
-          <DropdownMenuItem
-            className="text-destructive"
-            onClick={() => {
-              setRowAction({ row, variant: "delete" })
-            }}
-          >
-            <Trash2Icon className="me-2 h-4 w-4" />
-            {t("actions.delete")}
-          </DropdownMenuItem>
+          <UndeletableGuard resourceId={row.original.id}>
+            {(disabled) => (
+              <DropdownMenuItem
+                className="text-destructive"
+                disabled={disabled}
+                onClick={() => {
+                  setRowAction({ row, variant: "delete" })
+                }}
+              >
+                <Trash2Icon className="me-2 h-4 w-4" />
+                {t("actions.delete")}
+              </DropdownMenuItem>
+            )}
+          </UndeletableGuard>
         </DropdownMenuContent>
       </DropdownMenu>
     ),

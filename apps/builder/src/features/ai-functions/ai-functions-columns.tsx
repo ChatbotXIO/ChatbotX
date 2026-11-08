@@ -24,6 +24,11 @@ import {
   Trash2Icon,
 } from "lucide-react"
 import type { useTranslations } from "next-intl"
+import { LockBadge } from "@/features/templates/components/lock-badge"
+import {
+  LockedGuard,
+  UndeletableGuard,
+} from "@/features/templates/components/lock-context"
 
 export type AIFunctionRowAction = {
   row: Row<AIFunctionModel>
@@ -68,7 +73,10 @@ export const getAIFunctionsColumns = (
       <Tooltip>
         <TooltipTrigger
           render={
-            <div className="max-w-[400px] truncate">{row.original.name}</div>
+            <div className="flex max-w-[400px] items-center">
+              <span className="truncate">{row.original.name}</span>
+              <LockBadge resourceId={row.original.id} />
+            </div>
           }
         />
         <TooltipContent>
@@ -120,23 +128,33 @@ export const getAIFunctionsColumns = (
             <PencilIcon className="me-2 h-4 w-4" />
             {t("actions.edit")}
           </DropdownMenuItem>
-          <DropdownMenuItem
-            onClick={() => {
-              setRowAction({ row, variant: "duplicate" })
-            }}
-          >
-            <CopyIcon className="me-2 h-4 w-4" />
-            {t("actions.duplicate")}
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            className="text-destructive"
-            onClick={() => {
-              setRowAction({ row, variant: "delete" })
-            }}
-          >
-            <Trash2Icon className="me-2 h-4 w-4" />
-            {t("actions.delete")}
-          </DropdownMenuItem>
+          <LockedGuard resourceId={row.original.id}>
+            {(locked) => (
+              <DropdownMenuItem
+                disabled={locked}
+                onClick={() => {
+                  setRowAction({ row, variant: "duplicate" })
+                }}
+              >
+                <CopyIcon className="me-2 h-4 w-4" />
+                {t("actions.duplicate")}
+              </DropdownMenuItem>
+            )}
+          </LockedGuard>
+          <UndeletableGuard resourceId={row.original.id}>
+            {(disabled) => (
+              <DropdownMenuItem
+                className="text-destructive"
+                disabled={disabled}
+                onClick={() => {
+                  setRowAction({ row, variant: "delete" })
+                }}
+              >
+                <Trash2Icon className="me-2 h-4 w-4" />
+                {t("actions.delete")}
+              </DropdownMenuItem>
+            )}
+          </UndeletableGuard>
         </DropdownMenuContent>
       </DropdownMenu>
     ),

@@ -352,6 +352,32 @@ describe("keyword conditions on create/update", () => {
     ).toBe(false)
   })
 
+  // A body with no field to change (e.g. only `status` or `name`, which this
+  // procedure does not take) used to reach the database with an empty update
+  // and fail as a 500.
+  test("update rejects a body with nothing to change", () => {
+    for (const body of [
+      { id: "1", type: "inbound" },
+      { id: "1", type: "inbound", status: false },
+      { id: "1", type: "inbound", name: "x" },
+    ]) {
+      const parsed = update.input?.safeParse(body) as
+        | { success: boolean; error?: { issues: unknown[] } }
+        | undefined
+      expect(parsed?.success).toBe(false)
+      expect(JSON.stringify(parsed?.error?.issues)).toContain(
+        "keywords.updateStatus",
+      )
+    }
+    expect(
+      update.input?.safeParse({ id: "1", type: "inbound", text: "hi" }).success,
+    ).toBe(true)
+    expect(
+      update.input?.safeParse({ id: "1", type: "inbound", folderId: null })
+        .success,
+    ).toBe(true)
+  })
+
   test("update rejects keywords and conditions together", () => {
     expect(
       update.input?.safeParse({

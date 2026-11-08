@@ -9,6 +9,7 @@ import { PublicEnvScript } from "@/components/public-env-script"
 import { SupportChatScript } from "@/components/support-chat-script"
 import { TimezoneSync } from "@/components/timezone-sync"
 import { env } from "@/env"
+import { TemplateInstallIntentGuard } from "@/features/templates/components/template-install-intent-guard"
 import { TenantProvider } from "@/features/tenant"
 import { getTenantSettings } from "@/features/tenant/utils"
 import { getDirection } from "@/i18n/direction"
@@ -88,6 +89,7 @@ export default async function RootLayout({ children }: Props) {
                   <DataTableLabelsBridge>
                     <QueryProvider>
                       <TimezoneSync timezone={timezone} />
+                      <TemplateInstallIntentGuard />
                       {children}
                     </QueryProvider>
                   </DataTableLabelsBridge>

@@ -9,7 +9,10 @@
  */
 
 import { db, eq, inArray } from "@chatbotx.io/database/client"
-import { pipelineActivityRepository } from "@chatbotx.io/database/repositories"
+import {
+  pipelineActivityRepository,
+  templateInstallationRepository,
+} from "@chatbotx.io/database/repositories"
 import {
   contactModel,
   inboxTeamModel,
@@ -18,11 +21,14 @@ import {
   pipelineItemAssigneeModel,
   pipelineItemModel,
   pipelineMemberModel,
+  templateInstalledResourceModel,
+  templateModel,
   userModel,
   workspaceMemberModel,
   workspaceModel,
 } from "@chatbotx.io/database/schema"
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
+import { barrier, heldBy, within } from "../helpers/template-concurrency"
 
 const realDatabaseUrl = (): string | null => {
   const url = process.env.DATABASE_URL
@@ -93,6 +99,12 @@ const { pipelineItemQueryService } = await import(
 )
 const { pipelineAnalyticsService } = await import(
   "../../src/pipeline/analytics.service"
+)
+const { assertReferencable } = await import(
+  "../../src/template/installed-resource.service"
+)
+const { withTemplateLockedTransaction } = await import(
+  "../../src/template/template-resource-locks"
 )
 
 type Fixture = {
@@ -395,6 +407,89 @@ describe.skipIf(!databaseUrl)("pipeline services: hardening", () => {
   })
 
   describe("concurrency", () => {
+    /** Marks `pipelineId` as copied by a template install: its writers now take its template lock. */
+    const markInstalled = async (fixture: Fixture, pipelineId: string) => {
+      const [template] = await db
+        .insert(templateModel)
+        .values({
+          workspaceId: fixture.workspaceId,
+          tenantId: "1",
+          name: "Template",
+          selection: { mode: "all" } as never,
+          payload: {} as never,
+          categoryCounts: {},
+          formatVersion: 1,
+          shareToken: `tok-${fixture.workspaceId}-${pipelineId}`,
+          defaultPermissions: { allowEdit: true, allowDelete: true },
+          version: 1,
+        })
+        .returning({ id: templateModel.id })
+      const installation = await templateInstallationRepository.create({
+        workspaceId: fixture.workspaceId,
+        templateId: template.id,
+        sourceTemplateId: template.id,
+        templateName: "Template",
+        sourceWorkspaceId: "999000",
+        formatVersion: 1,
+        status: "completed",
+        permissions: { allowEdit: true, allowDelete: true },
+        sourceVersion: 1,
+      })
+      await db.insert(templateInstalledResourceModel).values({
+        installationId: installation.id,
+        workspaceId: fixture.workspaceId,
+        category: "pipelines",
+        resourceKind: "pipeline",
+        resourceId: pipelineId,
+        sourceResourceId: `src-${pipelineId}`,
+        wasExisting: false,
+        allowEdit: true,
+        allowDelete: true,
+      })
+    }
+
+    test("deals in a template-installed pipeline are created while another deal's reference is still open", async () => {
+      const pipeline = await newPipeline(own, "Installed")
+      await markInstalled(own, pipeline.id)
+      const held = barrier()
+      const release = barrier()
+      // A writer in the middle of adding its own deal: the pipeline's
+      // reference lock is held until `release` opens.
+      const open = withTemplateLockedTransaction(
+        async (tx) => {
+          await assertReferencable({
+            workspaceId: own.workspaceId,
+            parents: [{ kind: "pipeline", resourceId: pipeline.id }],
+            tx,
+          })
+          held.open()
+          await release.promise
+        },
+        { workspaceId: own.workspaceId },
+      )
+      let items: Awaited<ReturnType<typeof newItem>>[] = []
+      let started: Promise<Awaited<ReturnType<typeof newItem>>>[] = []
+      try {
+        await within(heldBy(held.promise, open))
+        // Both new deals commit while that reference is still open: under an
+        // exclusive lock they would wait for it and the bounded wait would fail.
+        started = [
+          newItem(own, pipeline.id, { contactId: own.contactIds[0] }),
+          newItem(own, pipeline.id, { contactId: own.contactIds[1] }),
+        ]
+        items = await within(Promise.all(started))
+      } finally {
+        release.open()
+        // Every started operation, not the aggregate: one failing deal must
+        // not let the other overlap the fixture cleanup.
+        await Promise.allSettled([open, ...started])
+      }
+      expect(items.map((item) => item.pipelineId)).toEqual([
+        pipeline.id,
+        pipeline.id,
+      ])
+    }, 30_000)
+
     test("a create racing a reopen never exceeds the open-item limit", async () => {
       for (let round = 0; round < 3; round += 1) {
         const pipeline = await newPipeline(own, `Race ${round}`)

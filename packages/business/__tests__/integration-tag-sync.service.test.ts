@@ -24,7 +24,8 @@ vi.mock("@chatbotx.io/database/client", () => ({
   sql: vi.fn(),
 }))
 
-vi.mock("@chatbotx.io/database/schema", () => ({
+vi.mock("@chatbotx.io/database/schema", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@chatbotx.io/database/schema")>()),
   MESSENGER_PAGE_ID_UNIQUE_CONSTRAINT: "IntegrationMessenger_pageId_key",
   integrationMessengerModel: {
     id: "id",
@@ -42,7 +43,8 @@ vi.mock("@chatbotx.io/database/schema", () => ({
   },
 }))
 
-vi.mock("@chatbotx.io/database/partials", () => ({
+vi.mock("@chatbotx.io/database/partials", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@chatbotx.io/database/partials")>()),
   channelTypes: { enum: { messenger: "messenger", zalo: "zalo" } },
 }))
 
@@ -76,7 +78,8 @@ vi.mock("@chatbotx.io/redis", () => ({
   invalidateCacheByTags: mockInvalidateCacheByTags,
 }))
 
-vi.mock("@chatbotx.io/utils", () => ({
+vi.mock("@chatbotx.io/utils", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@chatbotx.io/utils")>()),
   createId: vi.fn(() => "generated-id"),
 }))
 

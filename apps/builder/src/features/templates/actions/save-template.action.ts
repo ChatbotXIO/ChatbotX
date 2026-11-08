@@ -1,16 +1,16 @@
 "use server"
 
 import { templateService } from "@chatbotx.io/business"
-import { workspaceIdrequestParams } from "@/features/common/schema"
+import { zodBigintAsString } from "@chatbotx.io/utils"
 import { saveTemplateRequest } from "../schema/mutation"
 import { templateActionClient } from "./template-action-client"
 
 export const saveTemplateAction = templateActionClient
-  .bindArgsSchemas(workspaceIdrequestParams)
+  .bindArgsSchemas([zodBigintAsString()])
   .inputSchema(saveTemplateRequest)
   .action(
     async ({
-      ctx: { user, workspace },
+      ctx: { user, workspace, templateActor },
       bindArgsParsedInputs: [workspaceId],
       parsedInput,
     }) => {
@@ -29,6 +29,7 @@ export const saveTemplateAction = templateActionClient
         createInstallFolder: parsedInput.createInstallFolder,
         defaultAutoUpdate: parsedInput.defaultAutoUpdate,
         existingTemplateId: parsedInput.templateId,
+        actor: templateActor,
       })
 
       return { templateId: template.id }

@@ -328,9 +328,9 @@ export const productRepository = {
     tx: DatabaseClient = db,
   ) {
     if (input.productIds.length === 0) {
-      return
+      return []
     }
-    await tx
+    return await tx
       .delete(productModel)
       .where(
         and(
@@ -338,6 +338,7 @@ export const productRepository = {
           inArray(productModel.id, input.productIds),
         ),
       )
+      .returning({ id: productModel.id })
   },
 
   /** The bare row, without the relations `findDetail` resolves for the UI. */

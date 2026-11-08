@@ -1,4 +1,8 @@
-import { platformCredentialService, tenantService } from "@chatbotx.io/business"
+import {
+  platformCredentialService,
+  templateInstallIntentService,
+  tenantService,
+} from "@chatbotx.io/business"
 import type { ChannelType } from "@chatbotx.io/database/partials"
 import { getIdFromParams } from "@chatbotx.io/utils"
 import { notFound, redirect } from "next/navigation"
@@ -12,6 +16,7 @@ import { SimpleCreateWebchat } from "@/features/integration-webchat/simple-creat
 import WhatsappCreate from "@/features/integration-whatsapp/components/whatsapp-create"
 import { WHATSAPP_OAUTH_CALLBACK_PATH } from "@/features/integration-whatsapp/libs/embedded-signup"
 import { generateZaloRedirectUri } from "@/features/integration-zalo/libs/zalo"
+import { continuesInstallIntent } from "@/features/templates/lib/install-intent-marker"
 import { requireWorkspacePermission } from "@/lib/auth/require-workspace-permission"
 import { getCurrentUserId } from "@/lib/auth/utils"
 import { resolvePlatformOwnerId } from "@/lib/platform-credential-owner"
@@ -31,6 +36,8 @@ type CreateChannelPageProps = {
     workspaceId?: string | null
     /** Set by the OAuth callback / SSO-reuse route when the first-channel workspace could not be created (plan limit). */
     error?: string | null
+    /** Set when a template's share page opened this flow. */
+    fromTemplate?: string | null
   }>
 }
 
@@ -47,6 +54,12 @@ export default async function CreateChannelPage(props: CreateChannelPageProps) {
   const userId = await getCurrentUserId()
   if (!userId) {
     return notFound()
+  }
+
+  // Server-side, so a tab that never left a dashboard can not pick up a choice
+  // made in another one.
+  if (!continuesInstallIntent(searchParams)) {
+    await templateInstallIntentService.clear(userId)
   }
 
   const platformOwnerId = await resolvePlatformOwnerId({ userId, workspaceId })

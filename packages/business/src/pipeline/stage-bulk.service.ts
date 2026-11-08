@@ -17,6 +17,8 @@ import {
   validationException,
 } from "../errors"
 import { logger } from "../logger"
+import { assertResourceEditable } from "../template/installed-resource.service"
+import { withTemplateLockedTransaction } from "../template/template-resource-locks"
 import {
   type PipelineAccessScope,
   type PipelineAction,
@@ -112,7 +114,16 @@ export class PipelineStageBulkService extends BaseService {
     const pipeline = await withEffectiveCurrency(workspaceId, access.pipeline)
     const mode = removalMode(input.moveItemsToStageId)
 
-    const prepared = await db.transaction(async (tx) => {
+    const prepared = await withTemplateLockedTransaction(async (tx) => {
+      // First step, before the pipeline locks: a sync/restore/uninstall cannot
+      // race this local edit.
+      await assertResourceEditable({
+        workspaceId,
+        resourceKind: "pipeline",
+        resourceIds: [pipelineId],
+        changedKeys: ["stages"],
+        tx,
+      })
       await acquirePipelineAdvisoryLock(
         tx,
         pipelineService.structureLockKey(workspaceId, pipelineId),

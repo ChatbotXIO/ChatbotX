@@ -1919,7 +1919,8 @@
       "processing": "処理中",
       "installing": "Installing",
       "completed": "完了",
-      "partial": "Partial",
+      "partial": "一部成功",
+      "uninstalled": "Uninstalled",
       "failed": "失敗",
       "success": "成功",
       "error": "エラー"
@@ -2661,6 +2662,7 @@
       "leaderboards": "ランキング",
       "pipelines": "パイプライン",
       "places": "場所",
+      "templates": "テンプレート",
       "polls": "Polls"
     },
     "adReferral": {
@@ -2799,6 +2801,7 @@
   "flows": {
     "export": {
       "notPublished": "このフローはまだ公開されていません。エクスポートする前に公開してください。",
+      "viewOnly": "このフローは閲覧専用テンプレートからインストールされたため、エクスポートできません。",
       "failed": "エクスポートに失敗しました。もう一度お試しください。"
     },
     "title": "フロー",
@@ -6995,6 +6998,9 @@
   "templates": {
     "title": "テンプレート",
     "description": "テンプレートを作成・管理します。",
+    "createDialog": {
+      "title": "新しいテンプレート"
+    },
     "share": {
       "label": "共有",
       "enabled": "共有中",
@@ -7003,14 +7009,135 @@
       "dialogDescription": "このリンクを持つ人は誰でも、あなたのテナント内のワークスペースにこのテンプレートのコピーをインストールできます。",
       "enableLabel": "共有リンクを有効にする",
       "linkLabel": "共有リンク",
-      "description": "リンクを持つ人は誰でも、このテンプレートを自分のワークスペースにインストールできます。"
+      "rotateLabel": "リンクを再発行",
+      "rotateTitle": "共有リンクを再発行しますか?",
+      "rotateDescription": "現在のリンクはすぐに使えなくなります。このテンプレートをまだインストールする必要がある人には、新しいリンクが必要です。",
+      "rotated": "共有リンクを再発行しました",
+      "expiryLabel": "リンクの有効期限",
+      "expiryHint": "有効期限なしにする場合は空欄のままにしてください。",
+      "clearExpiry": "有効期限を解除",
+      "expiredNotice": "このリンクは有効期限が切れています。再度共有するには、より後の日付を設定するか、有効期限を解除してください。",
+      "templateId": "テンプレートID",
+      "templateKey": "テンプレートキー",
+      "showKey": "キーを表示",
+      "hideKey": "キーを隠す",
+      "copyField": "{field}をコピー"
+    },
+    "sync": {
+      "title": "アップデート",
+      "updateAvailable": "アップデートあり",
+      "upToDate": "最新の状態",
+      "sourceDeleted": "テンプレートは削除されました",
+      "sourceDeletedHint": "発行者がこのテンプレートを削除しました。コピーは引き続き動作しますが、今後は更新できません。",
+      "updateNow": "今すぐ更新",
+      "updating": "更新中…",
+      "version": "テンプレートのバージョン {version}",
+      "lastSynced": "最終更新 {date}",
+      "autoUpdateLabel": "テンプレートが変更されたら自動的に更新",
+      "noHistory": "更新履歴はまだありません。",
+      "countAdded": "{count} 件追加",
+      "countUpdated": "{count} 件更新",
+      "countDetached": "{count} 件はテンプレートに追従しなくなりました",
+      "notUpdatable": "{count} 件はまだ更新できません",
+      "overwritten": "{name} は編集されていましたが、更新で置き換えられました",
+      "restore": "自分のバージョンを復元",
+      "restored": "自分のバージョンを復元しました",
+      "status": {
+        "pending": "待機中",
+        "running": "実行中",
+        "completed": "完了",
+        "partial": "一部成功",
+        "failed": "失敗",
+        "skipped": "スキップ",
+        "cancelled": "キャンセル済み"
+      },
+      "trigger": {
+        "autoUpdate": "自動",
+        "manual": "手動",
+        "reinstall": "再インストール"
+      },
+      "requestedVersion": "要求 v{version}",
+      "errors": {
+        "unknown": "更新に失敗しました。もう一度お試しいただくか、失敗が続く場合はサポートにお問い合わせください。",
+        "templateSyncFailed": "更新に失敗しました。もう一度お試しください。",
+        "templateSyncSuperseded": "より新しい更新がこの更新に置き換わりました。",
+        "templateSyncAbandoned": "更新が時間内に完了せず、終了しました。",
+        "templateInstallationInactive": "このインストールは現在有効ではありません。",
+        "workspaceOwnerBlocked": "ワークスペースオーナーのアカウントがブロックされています。",
+        "templateUninstallInProgress": "テンプレートをアンインストールしています。",
+        "templateAutoUpdateOff": "自動更新はオフになっています。",
+        "templateUpToDate": "このコピーはすでに最新です。",
+        "templateInstallerAccessLost": "インストールした人に、このコピーを更新する権限がなくなりました。",
+        "templateInstallationSourceMissing": "更新が実行される前にテンプレートが削除されました。",
+        "templateCategoryPermissionDenied": "このテンプレートのすべてを更新する権限がなくなりました。",
+        "templatePayloadIncompatible": "このテンプレートは、このサーバーがインストールできるより新しい形式で保存されています。",
+        "templateCrossTenantInstall": "このテンプレートはあなたのワークスペースでは利用できません。",
+        "templateInvalidInboxBinding": "選択した受信箱がテンプレートと一致しません。"
+      }
+    },
+    "versions": {
+      "detailsTab": "詳細",
+      "tab": "バージョン",
+      "versionNumber": "バージョン {version}",
+      "current": "現在",
+      "first": "最初のバージョン",
+      "noDetail": "このバージョンの詳細は記録されていません。",
+      "added": "追加",
+      "changed": "変更",
+      "removed": "削除"
+    },
+    "installers": {
+      "title": "分析を表示",
+      "workspace": "ワークスペース",
+      "lastInstalled": "最終インストール",
+      "version": "バージョン",
+      "autoUpdate": "自動更新",
+      "uninstalled": "アンインストール済み",
+      "hidden": "ワークスペースは非公開",
+      "uninstallNotAllowed": "インストールした側が、この複製をパブリッシャーがアンインストールすることを許可していません。",
+      "loadError": "インストール元を読み込めませんでした。もう一度お試しください。",
+      "automatic": "自動",
+      "details": "詳細",
+      "noIssues": "警告やエラーはありません。"
     },
     "installs": {
       "title": "インストール",
       "resources": "リソース",
       "warnings": "警告",
       "completedAt": "完了日時",
-      "autoUpdate": "自動更新"
+      "autoUpdate": "自動更新",
+      "installedBy": "インストールした人",
+      "viaApi": "APIトークン",
+      "attempts": "試行回数",
+      "autoUpdateOn": "オン",
+      "autoUpdateOff": "オフ",
+      "retry": "インストールを再試行",
+      "resourcesTitle": "インストールされたリソース",
+      "noResources": "まだ何も作成されていません。",
+      "deletedResource": "削除されたリソース",
+      "viewOnly": "閲覧のみ",
+      "created": "作成",
+      "reused": "再利用",
+      "loadMore": "さらに読み込む",
+      "statusFilter": "ステータス",
+      "allStatuses": "すべてのステータス",
+      "errors": {
+        "unknown": "インストールに失敗しました。もう一度お試しください。繰り返し失敗する場合はサポートにお問い合わせください。",
+        "templatePayloadIncompatible": "このテンプレートは、このサーバーがインストールできるより新しい形式で保存されています。",
+        "templateInstallationSourceMissing": "インストールが実行される前にテンプレートが削除されました。",
+        "templateCrossTenantInstall": "このテンプレートはあなたのワークスペースでは利用できません。",
+        "templateCategoryPermissionDenied": "このテンプレートのすべてをインストールする権限がなくなりました。",
+        "templateInvalidInboxBinding": "選択した受信箱がテンプレートと一致しません。",
+        "templateInstallEnqueueFailed": "インストールをキューに追加できませんでした。",
+        "templateInstallFailed": "インストールに失敗しました。もう一度お試しください。",
+        "templateInstallAbandoned": "インストールが時間内に完了せず、終了されました。",
+        "templateInstallSuperseded": "このテンプレートの新しいインストールに置き換えられました。",
+        "workspaceOwnerBlocked": "ワークスペースオーナーのアカウントがブロックされています。"
+      },
+      "uninstalledBy": "{by, select, publisher {パブリッシャーがこのテンプレートをアンインストールしました。} installer {このテンプレートはこのワークスペースからアンインストールされました。} other {このテンプレートはアンインストールされました。}}",
+      "uninstalledSummary": "{deleted} 件削除、{kept} 件保持。",
+      "lastAttemptAt": "最新の試行",
+      "installedAutomatically": "自動インストール済み（ホワイトラベルのデフォルト）"
     },
     "form": {
       "contents": "テンプレートの内容",
@@ -7023,14 +7150,26 @@
       "allowDelete": "インストール後の削除を許可",
       "publisherName": "公開者名",
       "youtubeVideoId": "YouTube動画ID",
-      "youtubeVideoIdDescription": "動画URLに含まれる11文字のID（例: youtube.com/watch?v=dQw4w9WgXcQ の \"dQw4w9WgXcQ\"）",
+      "youtubeVideoIdDescription": "動画URLに含まれる11文字のID（例: youtube.com/watch?v=xxxxxxxxxxx の \"xxxxxxxxxxx\"）",
       "testLink": "テストリンク",
       "imageUrl": "カバー画像",
       "installBehavior": "インストール時の動作",
-      "createInstallFolder": "専用フォルダーにインストールする",
+      "createInstallFolder": "インストール先のアカウントにフォルダを作成し、リソースをインストールします。",
       "createInstallFolderDescription": "インストールされたすべてのリソースを、このテンプレートの名前を付けた新しい1つのフォルダーにまとめます。",
-      "defaultAutoUpdate": "インストールをデフォルトで更新対象としてマークする",
-      "defaultAutoUpdateDescription": "このテンプレートを再公開するたびに、新規インストールに更新通知が表示されます。"
+      "defaultAutoUpdate": "インストール済みテンプレートを自動更新",
+      "defaultAutoUpdateDescription": "変更を加えてこのテンプレートを保存するたびに、自動更新に設定されているインストールは新しい内容で上書きされます(インストールした人が編集したコピーは先にバックアップされます)。インストールした人はオフにできます。",
+      "viewOnly": "閲覧のみ",
+      "viewOnlyAll": "選択した項目をすべて閲覧のみにする",
+      "includedAutomatically": {
+        "title": "自動的に含まれるもの",
+        "hint": "選択した項目が必要とするため、一緒に取り込まれます。読み取り専用です。",
+        "rows": "{count, plural, one {他 # 件} other {他 # 件}}",
+        "kind": {
+          "folders": "フォルダー",
+          "placeCategories": "場所カテゴリ"
+        }
+      },
+      "viewOnlyCopyIncluded": "選択した項目（またはそれが必要とする項目）は閲覧専用テンプレートからインストールされたため、新しいテンプレートで共有できません。"
     },
     "categories": {
       "flows": "フロー",
@@ -7045,8 +7184,116 @@
       "keywords": "キーワード",
       "entryPointLinks": "エントリーポイントリンク",
       "triggers": "トリガー",
-      "fbCommentAutomations": "Facebookコメント自動化",
-      "settings": "設定"
+      "fbCommentAutomations": "コメント自動化",
+      "settings": "ボットフィールドと保存済み返信",
+      "sequences": "シーケンス",
+      "aiMcpServers": "MCPサーバー",
+      "aiFiles": "AIナレッジファイル",
+      "questionnaires": "アンケート",
+      "couponTopics": "クーポントピック",
+      "pipelines": "パイプライン"
+    },
+    "locked": {
+      "flowBanner": "このフローは閲覧専用のテンプレートからインストールされました。表示はできますが編集はできません。",
+      "badge": "閲覧専用",
+      "editorBanner": "これは閲覧専用のテンプレートからインストールされました。表示はできますが編集はできません。",
+      "badgeHint": "閲覧専用テンプレートからインストールされました"
+    },
+    "channels": {
+      "messenger": "Messenger",
+      "instagram": "Instagram",
+      "instagramFacebook": "Instagram（Facebookログイン）",
+      "threads": "Threads",
+      "tiktok": "TikTok",
+      "whatsapp": "WhatsApp",
+      "telegram": "Telegram",
+      "zalo": "Zalo",
+      "webchat": "Webchat",
+      "line": "LINE",
+      "email": "メール"
+    },
+    "uninstall": {
+      "title": "テンプレートをアンインストール",
+      "description": "テンプレートは、このワークスペースで作成したものをすべて削除します。編集されたコピーも含まれます。共有タグ、フィールド、フォルダー、以前から存在していた項目、コピーの上に作成したものは保持されます。",
+      "loading": "処理内容を確認中…",
+      "previewFailed": "アンインストールの内容を確認できませんでした。",
+      "failed": "テンプレートをアンインストールできませんでした。",
+      "confirm": "アンインストール",
+      "action": "アンインストール",
+      "deleted": "{count, plural, one {# 件が削除されます} other {# 件が削除されます}}",
+      "deletedDone": "{count, plural, one {# 件が削除されました} other {# 件が削除されました}}",
+      "keptModified": "{count, plural, one {編集済みまたは未確認のコピー # 件は保持されます} other {編集済みまたは未確認のコピー # 件は保持されます}}",
+      "keptShared": "{count, plural, one {共有タグまたはフィールド # 件は保持されます} other {共有タグおよびフィールド # 件は保持されます}}",
+      "keptByPolicy": "{count, plural, one {その他の項目 # 件は保持されます} other {その他の項目 # 件は保持されます}}",
+      "keptHasDependents": "{count, plural, one {まだ使用されているため、コピー # 件は保持されます} other {まだ使用されているため、コピー # 件は保持されます}}",
+      "deletedModified": "{count, plural, one {そのうち # 件はあなたが編集したもので、編集内容は失われ復元できません} other {そのうち # 件はあなたが編集したもので、編集内容は失われ復元できません}}",
+      "keptLockedByOther": "{count, plural, one {別のテンプレートのインストールがまだ保護しているため、# 件は保持されます} other {別のテンプレートのインストールがまだ保護しているため、# 件は保持されます}}",
+      "confirmCheckbox": "上記の項目が削除され、元に戻せないことを理解しました",
+      "started": "アンインストールを開始しました",
+      "inProgress": "アンインストール中…",
+      "retry": "アンインストールを再試行",
+      "state": {
+        "pending": "アンインストール待機中",
+        "running": "アンインストール中…",
+        "partial": "アンインストールが未完了です。再試行してください",
+        "failed": "アンインストールに失敗しました。再試行してください",
+        "skipped": "アンインストールをスキップしました: ワークスペースがブロックされています"
+      },
+      "deletedUnverified": "{count, plural, one {そのうち # 件は編集の有無を確認できません。変更していた場合、その変更は失われます} other {そのうち # 件は編集の有無を確認できません。変更していた場合、その変更は失われます}}",
+      "cancelAction": "アンインストールをキャンセル",
+      "cancelled": "アンインストールをキャンセルしました: 残りの項目は再び使用できます",
+      "blockedByReference": "{count, plural, one {あなたが作成したものがまだ参照しているため、# 件は削除されませんでした。その参照を削除してから、アンインストールを再試行してください} other {あなたが作成したものがまだ参照しているため、# 件は削除されませんでした。それらの参照を削除してから、アンインストールを再試行してください}}",
+      "keptPartlyRemoved": "{count, plural, one {アンインストールがブロックされた後、コピー # 件が保持されました。履歴や重複防止データが削除された可能性があるため、オンにする前に確認してください} other {アンインストールがブロックされた後、コピー # 件が保持されました。履歴や重複防止データが削除された可能性があるため、オンにする前に確認してください}}",
+      "keptInactiveForReview": "{count, plural, one {コピー # 件は無効のままになっています。履歴と重複防止データが削除されたため、オンにする前に確認してください} other {コピー # 件は無効のままになっています。履歴と重複防止データが削除されたため、オンにする前に確認してください}}",
+      "keptHistoryRemoved": "{count, plural, one {コピー # 件は保持されましたが、履歴が削除されました(オンにするものはありません)。利用する前に確認してください} other {コピー # 件は保持されましたが、履歴が削除されました(オンにするものはありません)。利用する前に確認してください}}",
+      "cancelledPartial": "{count, plural, one {# 件はすでに削除処理中で、完了します。残りは元に戻されました} other {# 件はすでに削除処理中で、完了します。残りは元に戻されました}}"
+    },
+    "warningCodes": {
+      "aiFileTooLarge": "このナレッジファイルはテンプレートのインストールでコピーできるサイズを超えているため、スキップされました。",
+      "aiFileUnavailable": "このナレッジファイルをコピーできなかったため、スキップされました。",
+      "assigneeRequired": "このステップで会話を割り当てる相手を選択してください。",
+      "ambiguousSourceFieldToken": "複数のソースフィールドが同じ名前のため、それを使用する変数は変更されませんでした。",
+      "backupTooLarge": "ローカルで編集された項目がバックアップするには大きすぎたため、上書きされませんでした。",
+      "backupUnavailable": "この項目のバックアップは利用できなくなりました。",
+      "botFieldRenamed": "同じ名前で別のタイプのボットフィールドがすでに存在するため、名前を変更したフィールドが作成されました。",
+      "categoryPermissionDenied": "このカテゴリへの権限がないため、スキップされました。",
+      "couponTopicExpired": "このクーポントピックはすでに期限切れです。",
+      "credentialRequired": "この項目を使用する前に、認証情報を追加してください。",
+      "custom": "参照された項目がこのワークスペースに見つからなかったため、リンクを削除しました。",
+      "customField": "参照された項目がこのワークスペースに見つからなかったため、リンクを削除しました。",
+      "customFieldRenamed": "同じ名前で別のタイプのフィールドがすでに存在するため、名前を変更したフィールドを作成しました。",
+      "enqueueFailed": "この項目のバックグラウンド処理をキューに追加できませんでした。",
+      "flow": "参照された項目がこのワークスペースに見つからなかったため、リンクを削除しました。",
+      "flowInvalidStructure": "Flow の構造が無効なため、スキップされました。",
+      "flowNotPublished": "Flow は下書きとしてインストールされ、公開されていません。",
+      "flowSkippedRequiredReference": "必要な参照を解決できなかったため、Flow はスキップされました。",
+      "folder": "参照された項目がこのワークスペースに見つからなかったため、リンクを削除しました。",
+      "inboxBindingRequired": "このチャネルの受信トレイを選択してください。それまでこの項目は無効のままです。",
+      "integration": "参照された項目がこのワークスペースに見つからなかったため、リンクを削除しました。",
+      "localModifiedOverwritten": "ローカルで編集された項目が上書きされました。バックアップが保存されており、復元できます。",
+      "name": "この項目に使用できる名前が見つからなかったため、スキップされました。",
+      "noEmbeddingProvider": "このワークスペースには埋め込みプロバイダーが設定されていないため、ナレッジファイルはスキップされました。OpenAI または Gemini を接続してから再インストールしてください。",
+      "notUpdatable": "この種類の項目はまだ自動更新されません。",
+      "pipeline": "存在しなくなったパイプラインを使用しています。",
+      "pipelineField": "存在しなくなったパイプラインフィールドを使用しています。",
+      "pipelineStage": "存在しなくなったパイプラインステージを使用しています。",
+      "postSelectionRequired": "投稿を選択し直してください。元の投稿を引き継げませんでした。",
+      "product": "参照された項目がこのワークスペースに見つからなかったため、リンクを削除しました。",
+      "productCategory": "参照された項目がこのワークスペースに見つからなかったため、リンクを削除しました。",
+      "questionImage": "画像をコピーできませんでした。",
+      "quota": "プランの上限に達したため、この項目はスキップされました。",
+      "referenceRemoved": "解決できない参照が削除されました。",
+      "savedReply": "参照された項目がこのワークスペースに見つからなかったため、リンクを削除しました。",
+      "savedReplyImage": "画像をコピーできませんでした。",
+      "tag": "参照された項目がこのワークスペースに見つからなかったため、リンクを削除しました。",
+      "unlisted": "項目を完全には取り込めませんでした: {code}",
+      "workspaceMember": "このワークスペースにいないメンバーに割り当てられています。",
+      "workspaceUnavailable": "このワークスペースは利用できなくなったため、この項目はスキップされました。"
+    },
+    "tabs": {
+      "mine": "マイテンプレート",
+      "installed": "インストール済み",
+      "installedEmpty": "インストール済みのテンプレートはまだありません。他のワークスペースからインストールしたテンプレートがここに表示されます。"
     }
   },
   "qrCodeGenerator": {
@@ -7169,6 +7416,23 @@
     "hint": "すべてのチャネルを許可するには、どのチャネルにもチェックを入れないでください。",
     "hiddenByPlatform": "プラットフォーム管理者によって非表示にされています。このチャネルを再度有効にすることはできません。"
   },
+  "platformDefaultTemplate": {
+    "title": "デフォルトテンプレート",
+    "description": "このホワイトラベルで作成されるすべての新しいワークスペースにこのテンプレートをインストールします。既存のワークスペースは変更されません。",
+    "clearTitle": "デフォルトテンプレートを削除しますか？",
+    "clearDescription": "新しいワークスペースには自動でテンプレートが適用されなくなります。すでに適用済みのワークスペースはそのままです。",
+    "status": {
+      "notConfigured": "未設定",
+      "ready": "有効",
+      "templateUnavailable": "テンプレートを利用できません",
+      "shareDisabled": "共有リンクがオフ",
+      "keyRotated": "キーが無効です"
+    },
+    "errors": {
+      "unavailable": "テンプレートIDまたはキーが無効です。",
+      "shareDisabled": "先にテンプレートの共有リンクをオンにしてください。"
+    }
+  },
   "platformEmailTemplates": {
     "title": "メールテンプレート",
     "description": "システム既定のテンプレートを使用するには、件名と本文を空欄にしてください。",
@@ -7252,14 +7516,39 @@
     "invalidTitle": "このリンクはご利用いただけません。",
     "invalidDescription": "このテンプレート共有リンクは無効、無効化済み、または期限切れです。",
     "byPublisher": "{publisherName}による",
-    "includes": "このテンプレートに含まれるもの",
     "videoTitle": "テンプレートのプレビュー動画",
-    "tryItOut": "試してみる",
-    "signInToInstall": "サインインしてインストール",
+    "preview": "プレビュー",
+    "aboutTemplate": "このテンプレートについて",
     "selectWorkspace": "ワークスペースを選択",
     "install": "インストール",
     "installStarted": "インストールを開始しました",
-    "noEligibleWorkspaces": "このテンプレートをインストールできるワークスペースがありません。"
+    "noEligibleWorkspaces": "このテンプレートをインストールできるワークスペースがありません。",
+    "alreadyInstalled": "このテンプレートはすでにこのワークスペースにインストールされています。",
+    "viewInstall": "インストールを表示",
+    "installAnotherCopy": "別のコピーをインストール",
+    "inboxesTitle": "受信箱",
+    "inboxesHint": "このテンプレートはこれらの受信箱を前提に作られています。使用する自分の受信箱を選んでください。選択しなかったものはオフの状態でインストールされます。",
+    "noInbox": "接続しない — オフの状態でインストール",
+    "noInboxAvailable": "このチャネルに接続済みの受信箱はありません",
+    "updateExisting": "インストール済みのコピーを更新",
+    "updateStarted": "更新を開始しました",
+    "autoUpdateLabel": "テンプレートが変更されたら自動的に更新",
+    "collisions": {
+      "title": "このインストールで行われること",
+      "loading": "このワークスペースを確認中…",
+      "action": {
+        "create": "作成",
+        "reuse": "再利用",
+        "rename": "名前変更",
+        "bind": "接続",
+        "unbound": "未接続のまま"
+      },
+      "detail": {
+        "rename": "「{name}」は別のタイプですでに存在するため、テンプレートのものは新しい名前で追加されます。",
+        "unbound": "受信箱を選ぶまで、「{name}」は未接続のままです。"
+      }
+    },
+    "createWorkspace": "新しいワークスペースを作成"
   },
   "extensionsMe": {
     "actions": {
@@ -7505,14 +7794,6 @@
       "isActive": {
         "label": "有効"
       },
-      "status": {
-        "label": "ステータス",
-        "values": {
-          "active": "販売中",
-          "draft": "下書き",
-          "unlisted": "非公開"
-        }
-      },
       "isAddonOnly": {
         "label": "この商品を他の商品の追加商品としてのみ使用する"
       },
@@ -7543,6 +7824,14 @@
       "variantsDescription": "サイズや色など、この商品に複数の種類がある場合はバリエーションを追加します",
       "metaCatalogId": {
         "label": "MetaカタログID"
+      },
+      "status": {
+        "label": "ステータス",
+        "values": {
+          "active": "販売中",
+          "draft": "下書き",
+          "unlisted": "非公開"
+        }
       }
     },
     "inventoryPolicy": {

@@ -1,10 +1,4 @@
-import {
-  and,
-  db,
-  eq,
-  inArray,
-  isUniqueViolationError,
-} from "@chatbotx.io/database/client"
+import { and, db, eq, inArray } from "@chatbotx.io/database/client"
 import {
   type MiniAppListInput,
   miniAppRepository,
@@ -20,23 +14,15 @@ import {
 import { createId } from "@chatbotx.io/utils"
 import { BaseService } from "../base.service"
 import { notFoundException, validationException } from "../errors"
+import { copyNamePrefix, insertWithFreeCopyName } from "../lib/copy-name"
 import {
   buildNewDefinition,
   buildUpdatedDefinition,
   type MiniAppDefinitionInput,
 } from "./definition"
-import {
-  copyName,
-  copyNamePrefix,
-  MAX_COPY_NAME_ATTEMPTS,
-  NAME_TAKEN,
-  rethrowNameTaken,
-} from "./names"
+import { MINI_APP_COPY_NAME, NAME_TAKEN, rethrowNameTaken } from "./names"
 
 export { importMiniAppFlowJson } from "./definition"
-
-/** Free names tried in turn when another copy takes one at the same time. */
-const COPY_NAME_INSERT_ATTEMPTS = 2
 
 type MiniAppScope = { workspaceId: string; id: string }
 
@@ -111,28 +97,24 @@ class MiniAppService extends BaseService {
     const taken = new Set(
       await miniAppRepository.listNamesWithPrefix({
         workspaceId: scope.workspaceId,
-        prefix: copyNamePrefix(source.name),
+        prefix: copyNamePrefix(source.name, MINI_APP_COPY_NAME),
       }),
     )
-    const freeNames = Array.from(
-      { length: MAX_COPY_NAME_ATTEMPTS },
-      (_, index) => copyName(source.name, index + 1),
-    )
-      .filter((name) => !taken.has(name))
-      .slice(0, COPY_NAME_INSERT_ATTEMPTS)
-    for (const name of freeNames) {
-      try {
-        return await this.insert({
+    const copy = await insertWithFreeCopyName({
+      constraint: "MiniApp_workspaceId_name_key",
+      base: source.name,
+      taken,
+      options: MINI_APP_COPY_NAME,
+      insert: (name) =>
+        this.insert({
           workspaceId: scope.workspaceId,
           name,
           enabled: source.enabled,
           definition: source.definition,
-        })
-      } catch (error) {
-        if (!isUniqueViolationError(error)) {
-          throw error
-        }
-      }
+        }),
+    })
+    if (copy) {
+      return copy
     }
     throw validationException("name", NAME_TAKEN)
   }

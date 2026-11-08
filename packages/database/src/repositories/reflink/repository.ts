@@ -72,6 +72,27 @@ export const reflinkRepository = {
     })
   },
 
+  /**
+   * Ids of the ref links and QR codes pointing at `flowIds` (`Reflink.flowId`
+   * cascades on delete), in one statement.
+   */
+  async listIdsByFlowIds(
+    input: { workspaceId: string; flowIds: readonly string[] },
+    tx: DatabaseClient = db,
+  ): Promise<string[]> {
+    if (input.flowIds.length === 0) {
+      return []
+    }
+    const rows = await tx.query.reflinkModel.findMany({
+      where: {
+        workspaceId: input.workspaceId,
+        flowId: { in: [...input.flowIds] },
+      },
+      columns: { id: true },
+    })
+    return rows.map((row) => row.id)
+  },
+
   /** Unscoped lookup for the public chat widget, which only knows the id. */
   async findById(id: string, tx: DatabaseClient = db) {
     return await tx.query.reflinkModel.findFirst({

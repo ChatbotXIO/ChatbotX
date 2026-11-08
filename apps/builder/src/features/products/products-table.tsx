@@ -20,6 +20,7 @@ import { use, useMemo, useState } from "react"
 import type { listImports } from "@/features/import/queries/list-imports.queries"
 import { ProductShopifyDetailsDialog } from "@/features/shopify/components/product-shopify-details-dialog"
 import { ProductShopifyHeaderActions } from "@/features/shopify/components/product-shopify-header-actions"
+import { TemplateLockedList } from "@/features/templates/components/lock-context"
 import { ImportProductDialog } from "./components/import-product-dialog"
 import { MetaCatalogDialog } from "./components/meta-catalog-dialog"
 import { DeleteProductsDialog } from "./delete-product-dialog"
@@ -113,15 +114,21 @@ export function ProductsTable({
         </CardAction>
       </CardHeader>
       <CardContent>
-        <DataTable table={table}>
-          <DataTableToolbar table={table}>
-            <ProductsTableToolbarActions
-              setRowAction={setRowAction}
-              table={table}
-              workspaceId={workspaceId}
-            />
-          </DataTableToolbar>
-        </DataTable>
+        <TemplateLockedList
+          resourceKind="product"
+          rows={data}
+          workspaceId={workspaceId}
+        >
+          <DataTable table={table}>
+            <DataTableToolbar table={table}>
+              <ProductsTableToolbarActions
+                setRowAction={setRowAction}
+                table={table}
+                workspaceId={workspaceId}
+              />
+            </DataTableToolbar>
+          </DataTable>
+        </TemplateLockedList>
 
         {shopify && rowAction?.variant === "view" ? (
           <ProductShopifyDetailsDialog

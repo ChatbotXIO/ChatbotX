@@ -10,7 +10,16 @@ const mocks = vi.hoisted(() => ({
   deleteMany: vi.fn(),
   voteCounts: vi.fn(),
   existsInWorkspace: vi.fn(),
+  assertReferencable: vi.fn(),
   tx: { __tx: true },
+}))
+
+vi.mock("../src/template/installed-resource.service", () => ({
+  assertReferencable: mocks.assertReferencable,
+}))
+vi.mock("../src/template/template-resource-locks", () => ({
+  withTemplateLockedTransaction: (run: (tx: unknown) => unknown) =>
+    run(mocks.tx),
 }))
 
 vi.mock("@chatbotx.io/database/client", () => ({
@@ -226,5 +235,19 @@ describe("pollService", () => {
       ["c1", 5],
       ["c2", 0],
     ])
+  })
+
+  test("an after-vote flow is checked against the template locks", async () => {
+    await pollService.create({
+      ...base,
+      candidates: cands(2),
+      afterVoteFlowId: "f1",
+    })
+
+    expect(mocks.assertReferencable).toHaveBeenCalledWith({
+      workspaceId: "w1",
+      parents: [{ kind: "flow", resourceId: "f1" }],
+      tx: mocks.tx,
+    })
   })
 })

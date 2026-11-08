@@ -44,7 +44,6 @@ export const DefaultJobAction = {
   checkMetaCatalogSync: "checkMetaCatalogSync",
   syncExternalCalendarEvent: "syncExternalCalendarEvent",
   sendAppointmentReminder: "sendAppointmentReminder",
-  installTemplate: "installTemplate",
   syncWelcomeMessageFlows: "syncWelcomeMessageFlows",
   deleteWelcomeMessageFlows: "deleteWelcomeMessageFlows",
   processInboundWebhookRequest: "processInboundWebhookRequest",
@@ -278,14 +277,6 @@ export type JobSendAppointmentReminder = {
   data: JobSendAppointmentReminderData
 }
 
-export type JobInstallTemplate = {
-  type: typeof DefaultJobAction.installTemplate
-  data: {
-    installationId: string
-    workspaceId: string
-  }
-}
-
 /**
  * Mirror a flow's published start node (or just its name, for `rename`) to a
  * Meta welcome message flow on every Messenger page of the workspace.
@@ -410,4 +401,3 @@ export type DefaultJobData =
   | JobCheckMetaCatalogSync
   | JobSyncExternalCalendarEvent
   | JobSendAppointmentReminder
-  | JobInstallTemplate

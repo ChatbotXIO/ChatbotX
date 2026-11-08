@@ -1919,10 +1919,11 @@
       "processing": "Processing",
       "installing": "Installing",
       "completed": "Completed",
-      "partial": "Partial",
+      "partial": "Delvis",
       "failed": "Failed",
       "success": "Succes",
-      "error": "Fejl"
+      "error": "Fejl",
+      "uninstalled": "Uninstalled"
     },
     "subtitle": {
       "placeholder": "Indtast subtitle"
@@ -2661,6 +2662,7 @@
       "leaderboards": "Ranglister",
       "pipelines": "Pipelines",
       "places": "Steder",
+      "templates": "Skabeloner",
       "polls": "Polls"
     },
     "adReferral": {
@@ -2799,6 +2801,7 @@
   "flows": {
     "export": {
       "notPublished": "Denne flow er aldrig blevet offentliggjort. Udgiv den, før du eksporterer.",
+      "viewOnly": "Dette flow blev installeret fra en skabelon, der kun kan ses, så det kan ikke eksporteres.",
       "failed": "Eksport mislykkedes. Prøv igen."
     },
     "title": "Flows",
@@ -6995,6 +6998,9 @@
   "templates": {
     "title": "Skabeloner",
     "description": "Opret og administrer dine skabeloner.",
+    "createDialog": {
+      "title": "Ny skabelon"
+    },
     "share": {
       "label": "Del",
       "enabled": "Delt",
@@ -7003,14 +7009,135 @@
       "dialogDescription": "Alle med dette link kan installere en kopi af denne skabelon i et arbejdsområde i din tenant.",
       "enableLabel": "Aktivér dellink",
       "linkLabel": "Dellink",
-      "description": "Alle med linket kan installere denne skabelon i deres eget arbejdsområde."
+      "rotateLabel": "Roter link",
+      "rotateTitle": "Rotér dellink?",
+      "rotateDescription": "Det nuværende link holder op med at virke med det samme. Alle, der stadig skal installere denne skabelon, har brug for det nye link.",
+      "rotated": "Dellink roteret",
+      "expiryLabel": "Linket udløber",
+      "expiryHint": "Lad feltet stå tomt, hvis linket aldrig skal udløbe.",
+      "clearExpiry": "Fjern udløb",
+      "expiredNotice": "Dette link er udløbet. Vælg en senere dato eller fjern udløbet for at dele det igen.",
+      "templateId": "Skabelon-ID",
+      "templateKey": "Skabelonnøgle",
+      "showKey": "Vis nøgle",
+      "hideKey": "Skjul nøgle",
+      "copyField": "Kopiér {field}"
+    },
+    "sync": {
+      "title": "Opdateringer",
+      "updateAvailable": "Opdatering tilgængelig",
+      "upToDate": "Opdateret",
+      "sourceDeleted": "Skabelon slettet",
+      "sourceDeletedHint": "Udgiveren har slettet denne skabelon. Din kopi virker stadig, men kan ikke længere opdateres.",
+      "updateNow": "Opdater nu",
+      "updating": "Opdaterer…",
+      "version": "Skabelonversion {version}",
+      "lastSynced": "sidst opdateret {date}",
+      "autoUpdateLabel": "Opdater automatisk, når skabelonen ændres",
+      "noHistory": "Ingen opdateringer endnu.",
+      "countAdded": "{count} tilføjet",
+      "countUpdated": "{count} opdateret",
+      "countDetached": "{count} følger ikke længere skabelonen",
+      "notUpdatable": "{count} kan endnu ikke opdateres",
+      "overwritten": "{name} blev redigeret og erstattet af opdateringen",
+      "restore": "Gendan min version",
+      "restored": "Din version blev gendannet",
+      "status": {
+        "pending": "I kø",
+        "running": "Kører",
+        "completed": "Gennemført",
+        "partial": "Delvis",
+        "failed": "Mislykkedes",
+        "skipped": "Sprunget over",
+        "cancelled": "Annulleret"
+      },
+      "trigger": {
+        "autoUpdate": "Automatisk",
+        "manual": "Manuel",
+        "reinstall": "Geninstallation"
+      },
+      "requestedVersion": "anmodet v{version}",
+      "errors": {
+        "unknown": "Opdateringen mislykkedes. Prøv igen, eller kontakt support, hvis det bliver ved.",
+        "templateSyncFailed": "Opdateringen mislykkedes. Prøv igen.",
+        "templateSyncSuperseded": "En nyere opdatering erstattede denne.",
+        "templateSyncAbandoned": "Opdateringen blev ikke færdig i tide og blev lukket.",
+        "templateInstallationInactive": "Denne installation er ikke længere aktiv.",
+        "workspaceOwnerBlocked": "Arbejdsområdets ejers konto er blokeret.",
+        "templateUninstallInProgress": "Skabelonen er ved at blive afinstalleret.",
+        "templateAutoUpdateOff": "Automatiske opdateringer er slået fra.",
+        "templateUpToDate": "Kopien er allerede opdateret.",
+        "templateInstallerAccessLost": "Den, der installerede, har ikke længere tilladelse til at opdatere denne kopi.",
+        "templateInstallationSourceMissing": "Skabelonen blev slettet, før opdateringen kørte.",
+        "templateCategoryPermissionDenied": "Du har ikke længere tilladelse til at opdatere alt i denne skabelon.",
+        "templatePayloadIncompatible": "Denne skabelon er gemt i et nyere format, end denne server kan installere.",
+        "templateCrossTenantInstall": "Denne skabelon er ikke tilgængelig for dit arbejdsområde.",
+        "templateInvalidInboxBinding": "En valgt indbakke passer ikke til skabelonen."
+      }
+    },
+    "versions": {
+      "detailsTab": "Detaljer",
+      "tab": "Versioner",
+      "versionNumber": "Version {version}",
+      "current": "Aktuel",
+      "first": "Første version",
+      "noDetail": "Der blev ikke registreret detaljer for denne version.",
+      "added": "Tilføjet",
+      "changed": "Ændret",
+      "removed": "Fjernet"
+    },
+    "installers": {
+      "title": "Se analyser",
+      "workspace": "Arbejdsområde",
+      "lastInstalled": "Sidst installeret",
+      "version": "Version",
+      "autoUpdate": "Automatisk opdatering",
+      "uninstalled": "Afinstalleret",
+      "hidden": "Arbejdsområde ikke delt",
+      "uninstallNotAllowed": "Installatøren har ikke givet udgivere lov til at afinstallere denne kopi.",
+      "loadError": "Installatørerne kunne ikke indlæses. Prøv igen.",
+      "automatic": "Automatisk",
+      "details": "Detaljer",
+      "noIssues": "Ingen advarsler eller fejl."
     },
     "installs": {
       "title": "Installationer",
       "resources": "Ressourcer",
       "warnings": "Advarsler",
       "completedAt": "Afsluttet",
-      "autoUpdate": "Automatisk opdatering"
+      "autoUpdate": "Automatisk opdatering",
+      "installedBy": "Installeret af",
+      "viaApi": "API-token",
+      "attempts": "Forsøg",
+      "autoUpdateOn": "Til",
+      "autoUpdateOff": "Fra",
+      "retry": "Prøv installationen igen",
+      "resourcesTitle": "Installerede ressourcer",
+      "noResources": "Intet er oprettet endnu.",
+      "deletedResource": "Slettet ressource",
+      "viewOnly": "Kun visning",
+      "created": "Oprettet",
+      "reused": "Genbrugt",
+      "loadMore": "Indlæs mere",
+      "statusFilter": "Status",
+      "allStatuses": "Alle statusser",
+      "errors": {
+        "unknown": "Installationen mislykkedes. Prøv igen, eller kontakt support, hvis den bliver ved med at fejle.",
+        "templatePayloadIncompatible": "Denne skabelon er gemt i et nyere format, end denne server kan installere.",
+        "templateInstallationSourceMissing": "Skabelonen blev slettet, før installationen kørte.",
+        "templateCrossTenantInstall": "Denne skabelon er ikke tilgængelig for dit arbejdsområde.",
+        "templateCategoryPermissionDenied": "Du har ikke længere tilladelse til at installere alt i denne skabelon.",
+        "templateInvalidInboxBinding": "En valgt indbakke passer ikke til skabelonen.",
+        "templateInstallEnqueueFailed": "Installationen kunne ikke sættes i kø.",
+        "templateInstallFailed": "Installationen mislykkedes. Prøv igen.",
+        "templateInstallAbandoned": "Installationen blev ikke færdig i tide og er lukket.",
+        "templateInstallSuperseded": "En nyere installation af denne skabelon har erstattet denne.",
+        "workspaceOwnerBlocked": "Arbejdsområdets ejers konto er blokeret."
+      },
+      "uninstalledBy": "{by, select, publisher {Udgiveren afinstallerede denne skabelon.} installer {Denne skabelon blev afinstalleret fra dette arbejdsområde.} other {Denne skabelon blev afinstalleret.}}",
+      "uninstalledSummary": "{deleted} slettet, {kept} beholdt.",
+      "lastAttemptAt": "Seneste forsøg",
+      "installedAutomatically": "Installeret automatisk (white-label-standard)"
     },
     "form": {
       "contents": "Skabelonindhold",
@@ -7023,14 +7150,26 @@
       "allowDelete": "Tillad sletning efter installation",
       "publisherName": "Udgivernavn",
       "youtubeVideoId": "YouTube-video-id",
-      "youtubeVideoIdDescription": "Det 11-tegns id fra videoens URL, f.eks. \"dQw4w9WgXcQ\" i youtube.com/watch?v=dQw4w9WgXcQ",
+      "youtubeVideoIdDescription": "Det 11-tegns id fra videoens URL, f.eks. \"xxxxxxxxxxx\" i youtube.com/watch?v=xxxxxxxxxxx",
       "testLink": "Testlink",
       "imageUrl": "Forsidebillede",
       "installBehavior": "Installationsadfærd",
-      "createInstallFolder": "Installer i en dedikeret mappe",
+      "createInstallFolder": "Opret en mappe på den installerede konto, og installer ressourcer.",
       "createInstallFolderDescription": "Placer alle installerede ressourcer i én ny mappe opkaldt efter denne skabelon.",
-      "defaultAutoUpdate": "Markér installationer til opdatering som standard",
-      "defaultAutoUpdateDescription": "Nye installationer viser en besked om tilgængelig opdatering, hver gang du genudgiver denne skabelon."
+      "defaultAutoUpdate": "Opdater installerede skabeloner automatisk",
+      "defaultAutoUpdateDescription": "Hver gang du gemmer denne skabelon med ændret indhold, overskrives installationer, der følger automatisk opdatering, med det nye indhold (kopier, som installatøren har redigeret, sikkerhedskopieres først). Installatører kan slå det fra.",
+      "viewOnly": "Kun visning",
+      "viewOnlyAll": "Gør alle valgte skrivebeskyttede",
+      "includedAutomatically": {
+        "title": "Inkluderet automatisk",
+        "hint": "Taget med, fordi noget, du har valgt, har brug for det. Skrivebeskyttet.",
+        "rows": "{count, plural, one {# element mere} other {# elementer mere}}",
+        "kind": {
+          "folders": "Mapper",
+          "placeCategories": "Stedkategorier"
+        }
+      },
+      "viewOnlyCopyIncluded": "Noget, du har valgt (eller noget, det kræver), er installeret fra en skabelon med kun visning og kan ikke deles i en ny skabelon."
     },
     "categories": {
       "flows": "Flows",
@@ -7045,8 +7184,116 @@
       "keywords": "Nøgleord",
       "entryPointLinks": "Entry Point Links",
       "triggers": "Triggers",
-      "fbCommentAutomations": "Facebook-kommentarautomatiseringer",
-      "settings": "Indstillinger"
+      "fbCommentAutomations": "Kommentarautomatiseringer",
+      "settings": "Botfelter og gemte svar",
+      "sequences": "Sekvenser",
+      "aiMcpServers": "MCP-servere",
+      "aiFiles": "AI-vidensfiler",
+      "questionnaires": "Questionnaires",
+      "couponTopics": "Kuponemner",
+      "pipelines": "Pipelines"
+    },
+    "locked": {
+      "flowBanner": "Dette flow er installeret fra en skabelon med kun visning. Du kan se det, men ikke redigere det.",
+      "badge": "Kun visning",
+      "editorBanner": "Dette er installeret fra en skabelon med kun visning. Du kan se det, men ikke redigere det.",
+      "badgeHint": "Installeret fra en skabelon med kun visning"
+    },
+    "channels": {
+      "messenger": "Messenger",
+      "instagram": "Instagram",
+      "instagramFacebook": "Instagram (Facebook login)",
+      "threads": "Threads",
+      "tiktok": "TikTok",
+      "whatsapp": "WhatsApp",
+      "telegram": "Telegram",
+      "zalo": "Zalo",
+      "webchat": "Webchat",
+      "line": "LINE",
+      "email": "E-mail"
+    },
+    "uninstall": {
+      "title": "Afinstaller skabelon",
+      "description": "Skabelonen fjerner alt, den har oprettet i dette arbejdsområde, inklusive kopier, der er blevet redigeret. Delte tags, felter og mapper, elementer der fandtes før, og alt, du har bygget oven på en kopi, beholdes.",
+      "loading": "Tjekker, hvad der vil ske…",
+      "previewFailed": "Kunne ikke kontrollere, hvad en afinstallation ville gøre.",
+      "failed": "Skabelonen kunne ikke afinstalleres.",
+      "confirm": "Afinstaller",
+      "action": "Afinstaller",
+      "deleted": "{count, plural, one {# element bliver slettet} other {# elementer bliver slettet}}",
+      "deletedDone": "{count, plural, one {# element blev slettet} other {# elementer blev slettet}}",
+      "keptModified": "{count, plural, one {# redigeret eller ikke-verificeret kopi beholdes} other {# redigerede eller ikke-verificerede kopier beholdes}}",
+      "keptShared": "{count, plural, one {# delt tag eller felt beholdes} other {# delte tags og felter beholdes}}",
+      "keptByPolicy": "{count, plural, one {# andet element beholdes} other {# andre elementer beholdes}}",
+      "keptHasDependents": "{count, plural, one {# kopi beholdes, fordi noget stadig bruger den} other {# kopier beholdes, fordi noget stadig bruger dem}}",
+      "deletedModified": "{count, plural, one {# af dem blev redigeret af dig: de ændringer går tabt og kan ikke gendannes} other {# af dem blev redigeret af dig: de ændringer går tabt og kan ikke gendannes}}",
+      "keptLockedByOther": "{count, plural, one {# element beholdes, fordi en anden skabelon-installation stadig beskytter det} other {# elementer beholdes, fordi en anden skabelon-installation stadig beskytter dem}}",
+      "confirmCheckbox": "Jeg forstår, at dette sletter ovenstående elementer og ikke kan fortrydes",
+      "started": "Afinstallation startet",
+      "inProgress": "Afinstallerer…",
+      "retry": "Prøv afinstallationen igen",
+      "state": {
+        "pending": "Afinstallation i kø",
+        "running": "Afinstallerer…",
+        "partial": "Afinstallation ufuldstændig, prøv igen",
+        "failed": "Afinstallation mislykkedes, prøv igen",
+        "skipped": "Afinstallation sprunget over: arbejdsområdet er blokeret"
+      },
+      "deletedUnverified": "{count, plural, one {# af dem kan ikke kontrolleres for redigeringer: hvis du har ændret den, går ændringerne tabt} other {# af dem kan ikke kontrolleres for redigeringer: hvis du har ændret dem, går ændringerne tabt}}",
+      "cancelAction": "Annuller afinstallation",
+      "cancelled": "Afinstallation annulleret: de resterende elementer kan du bruge igen",
+      "blockedByReference": "{count, plural, one {# element blev ikke slettet, fordi noget, du har oprettet, stadig peger på det: fjern den henvisning, og prøv derefter afinstallationen igen} other {# elementer blev ikke slettet, fordi noget, du har oprettet, stadig peger på dem: fjern de henvisninger, og prøv derefter afinstallationen igen}}",
+      "keptPartlyRemoved": "{count, plural, one {# kopi blev beholdt efter en blokeret afinstallation; historik og data til dublet-beskyttelse er muligvis fjernet, så gennemgå den, før du slår den til} other {# kopier blev beholdt efter en blokeret afinstallation; historik og data til dublet-beskyttelse er muligvis fjernet, så gennemgå dem, før du slår dem til}}",
+      "keptInactiveForReview": "{count, plural, one {# kopi blev efterladt inaktiv: dens historik og data til dublet-beskyttelse blev fjernet, så gennemgå den, før du slår den til} other {# kopier blev efterladt inaktive: deres historik og data til dublet-beskyttelse blev fjernet, så gennemgå dem, før du slår dem til}}",
+      "keptHistoryRemoved": "{count, plural, one {# kopi blev beholdt, men dens historik blev fjernet (den har intet at slå til): gennemgå den, før du stoler på den} other {# kopier blev beholdt, men deres historik blev fjernet (de har intet at slå til): gennemgå dem, før du stoler på dem}}",
+      "cancelledPartial": "{count, plural, one {# element er allerede ved at blive slettet og bliver færdigt; resten blev givet tilbage} other {# elementer er allerede ved at blive slettet og bliver færdige; resten blev givet tilbage}}"
+    },
+    "warningCodes": {
+      "aiFileTooLarge": "Denne vidensfil er større end en skabeloninstallation kan kopiere, så den blev sprunget over.",
+      "aiFileUnavailable": "Denne vidensfil kunne ikke kopieres, så den blev sprunget over.",
+      "assigneeRequired": "Vælg, hvem dette trin tildeler samtalen til.",
+      "ambiguousSourceFieldToken": "Flere kildefelter har dette navn, så variabler, der bruger det, blev lasket uændrede.",
+      "backupTooLarge": "Et lokalt redigeret element var for stort til at blive sikkerhedskopieret, så det blev ikke overskrevet.",
+      "backupUnavailable": "Sikkerhedskopien af dette element er ikke længere tilgængelig.",
+      "botFieldRenamed": "Et botfelt med dette navn og en anden type findes allerede, så der blev oprettet et omdøbt felt.",
+      "categoryPermissionDenied": "Du har ikke tilladelse til denne kategori, så den blev sprunget over.",
+      "couponTopicExpired": "Dette kuponemne er allerede udløbet.",
+      "credentialRequired": "Tilføj legitimationsoplysningerne til dette element, før du bruger det.",
+      "custom": "Et refereret element blev ikke fundet i dette arbejdsområde, så linket blev fjernet.",
+      "customField": "Et refereret element blev ikke fundet i dette arbejdsområde, så linket blev fjernet.",
+      "customFieldRenamed": "Der findes allerede et felt med dette navn og en anden type, så der blev oprettet et omdøbt felt.",
+      "enqueueFailed": "Baggrundsbehandling kunne ikke sættes i kø for dette element.",
+      "flow": "Et refereret element blev ikke fundet i dette arbejdsområde, så linket blev fjernet.",
+      "flowInvalidStructure": "Flowets struktur er ugyldig, så det blev sprunget over.",
+      "flowNotPublished": "Flowet blev installeret som kladde og er ikke publiceret.",
+      "flowSkippedRequiredReference": "Flowet blev sprunget over, fordi en påkrævet reference ikke kunne løses.",
+      "folder": "Et refereret element blev ikke fundet i dette arbejdsområde, så linket blev fjernet.",
+      "inboxBindingRequired": "Vælg en indbakke til denne kanal; indtil da forbliver elementet inaktivt.",
+      "integration": "Et refereret element blev ikke fundet i dette arbejdsområde, så linket blev fjernet.",
+      "localModifiedOverwritten": "Et lokalt redigeret element blev overskrevet. En sikkerhedskopi blev gemt og kan gendannes.",
+      "name": "Der blev ikke fundet et ledigt navn til dette element, så det blev sprunget over.",
+      "noEmbeddingProvider": "Der er ikke konfigureret nogen embedding-udbyder i dette arbejdsområde, så vidensfiler blev sprunget over. Forbind OpenAI eller Gemini, og installer igen.",
+      "notUpdatable": "Denne type element opdateres endnu ikke automatisk.",
+      "pipeline": "Bruger en pipeline, der ikke længere findes.",
+      "pipelineField": "Bruger et pipelinefelt, der ikke længere findes.",
+      "pipelineStage": "Bruger en pipelinefase, der ikke længere findes.",
+      "postSelectionRequired": "Vælg opslaget igen: det oprindelige opslag kunne ikke overføres.",
+      "product": "Et refereret element blev ikke fundet i dette arbejdsområde, så linket blev fjernet.",
+      "productCategory": "Et refereret element blev ikke fundet i dette arbejdsområde, så linket blev fjernet.",
+      "questionImage": "Et billede kunne ikke kopieres.",
+      "quota": "En plangrænse blev nået, så elementet blev sprunget over.",
+      "referenceRemoved": "En reference, der ikke kunne løses, blev fjernet.",
+      "savedReply": "Et refereret element blev ikke fundet i dette arbejdsområde, så linket blev fjernet.",
+      "savedReplyImage": "Et billede kunne ikke kopieres.",
+      "tag": "Et refereret element blev ikke fundet i dette arbejdsområde, så linket blev fjernet.",
+      "unlisted": "Elementet blev ikke overført fuldt ud: {code}",
+      "workspaceMember": "Tildelt et medlem, der ikke er i dette workspace.",
+      "workspaceUnavailable": "Dette arbejdsområde er ikke længere tilgængeligt, så elementet blev sprunget over."
+    },
+    "tabs": {
+      "mine": "Mine skabeloner",
+      "installed": "Installeret",
+      "installedEmpty": "Ingen installerede skabeloner endnu. Skabeloner, du installerer fra et andet arbejdsområde, vises her."
     }
   },
   "qrCodeGenerator": {
@@ -7169,6 +7416,23 @@
     "hint": "Lad alle kanaler være umarkerede for at tillade alle kanaler.",
     "hiddenByPlatform": "Skjult af platformadministratoren — du kan ikke genaktivere denne kanal."
   },
+  "platformDefaultTemplate": {
+    "title": "Standardskabelon",
+    "description": "Installér denne skabelon i hvert nyt arbejdsområde, der oprettes under denne white-label. Eksisterende arbejdsområder ændres ikke.",
+    "clearTitle": "Fjern standardskabelonen?",
+    "clearDescription": "Nye arbejdsområder får ikke længere automatisk en skabelon. Arbejdsområder, der allerede har den, beholder den.",
+    "status": {
+      "notConfigured": "Ikke angivet",
+      "ready": "Aktiv",
+      "templateUnavailable": "Skabelon ikke tilgængelig",
+      "shareDisabled": "Delingslink slået fra",
+      "keyRotated": "Nøglen er ugyldig"
+    },
+    "errors": {
+      "unavailable": "Skabelon-ID eller nøgle er ugyldig.",
+      "shareDisabled": "Slå skabelonens delingslink til først."
+    }
+  },
   "platformEmailTemplates": {
     "title": "E-mail Skabeloner",
     "description": "Leave emne og brødtekst blank til use den system standard skabelon.",
@@ -7252,14 +7516,39 @@
     "invalidTitle": "Dette link er ikke længere tilgængeligt.",
     "invalidDescription": "Dette skabelon-dellink er ugyldigt, deaktiveret eller udløbet.",
     "byPublisher": "Af {publisherName}",
-    "includes": "Denne skabelon indeholder",
     "videoTitle": "Skabelonens forhåndsvisningsvideo",
-    "tryItOut": "Prøv den",
-    "signInToInstall": "Log ind for at installere",
+    "preview": "Forhåndsvisning",
+    "aboutTemplate": "Om denne skabelon",
     "selectWorkspace": "Vælg et arbejdsområde",
     "install": "Installer",
     "installStarted": "Installation startet",
-    "noEligibleWorkspaces": "Du har ikke et arbejdsområde, der er egnet til at installere denne skabelon."
+    "noEligibleWorkspaces": "Du har ikke et arbejdsområde, der er egnet til at installere denne skabelon.",
+    "alreadyInstalled": "Denne skabelon er allerede installeret i dette arbejdsområde.",
+    "viewInstall": "Se installation",
+    "installAnotherCopy": "Installer endnu en kopi",
+    "inboxesTitle": "Indbakker",
+    "inboxesHint": "Denne skabelon er bygget omkring disse indbakker. Vælg, hvilke af dine egne indbakker der skal bruges; alt, der udelades, installeres slået fra.",
+    "noInbox": "Opret ikke forbindelse — installer slået fra",
+    "noInboxAvailable": "Ingen tilsluttet indbakke på denne kanal",
+    "updateExisting": "Opdater installeret kopi",
+    "updateStarted": "Opdatering startet",
+    "autoUpdateLabel": "Opdater automatisk, når skabelonen ændres",
+    "collisions": {
+      "title": "Hvad installationen vil gøre her",
+      "loading": "Tjekker dette arbejdsområde…",
+      "action": {
+        "create": "Oprettet",
+        "reuse": "Genbrugt",
+        "rename": "Omdøbt",
+        "bind": "Bundet",
+        "unbound": "Efterladt ubundet"
+      },
+      "detail": {
+        "rename": "“{name}” findes allerede med en anden type, så skabelonens version tilføjes under et nyt navn.",
+        "unbound": "“{name}” forbliver uden forbindelse, indtil du vælger en indbakke."
+      }
+    },
+    "createWorkspace": "Opret et nyt arbejdsområde"
   },
   "extensionsMe": {
     "actions": {
@@ -7505,14 +7794,6 @@
       "isActive": {
         "label": "Aktiv"
       },
-      "status": {
-        "label": "Status",
-        "values": {
-          "active": "Aktiv",
-          "draft": "Kladde",
-          "unlisted": "Ikke listet"
-        }
-      },
       "isAddonOnly": {
         "label": "Use denne produkt kun as an addon for others produkter"
       },
@@ -7543,6 +7824,14 @@
       "variantsDescription": "Tilføj varianter hvis denne produkt comes i multiple versions, like different sizes eller colors",
       "metaCatalogId": {
         "label": "Meta Katalog ID"
+      },
+      "status": {
+        "label": "Status",
+        "values": {
+          "active": "Aktiv",
+          "draft": "Kladde",
+          "unlisted": "Ikke listet"
+        }
       }
     },
     "inventoryPolicy": {

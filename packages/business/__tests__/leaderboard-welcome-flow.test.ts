@@ -6,6 +6,15 @@ const mocks = vi.hoisted(() => ({
   createPublishedDefault: vi.fn(),
   invalidateList: vi.fn(),
   inboxFind: vi.fn(),
+  assertReferencable: vi.fn(),
+}))
+
+vi.mock("../src/template/installed-resource.service", () => ({
+  assertReferencable: mocks.assertReferencable,
+}))
+vi.mock("../src/template/template-resource-locks", () => ({
+  withTemplateLockedTransaction: (run: (tx: unknown) => unknown) =>
+    run({ tx: true }),
 }))
 
 vi.mock("@chatbotx.io/database/client", () => ({

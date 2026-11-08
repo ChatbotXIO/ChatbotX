@@ -62,6 +62,8 @@ import { customDomainRelations } from "./enterprise/custom-domain"
 import { licenseRelations } from "./enterprise/license"
 import { platformAdminRelations } from "./enterprise/platform-admin"
 import { tenantRelations } from "./enterprise/tenant"
+import { tenantDefaultTemplateRelations } from "./enterprise/tenant-default-template"
+import { tenantDefaultTemplateEventRelations } from "./enterprise/tenant-default-template-event"
 import { tenantHelpItemRelations } from "./enterprise/tenant-help-item"
 import { userQuotaRelations } from "./enterprise/user-quota"
 import { workspaceUsageRelations } from "./enterprise/workspace-usage"
@@ -164,6 +166,8 @@ import { telegramChatRelations } from "./telegram-chat"
 import { templateRelations } from "./template"
 import { templateInstallationRelations } from "./template-installation"
 import { templateInstalledResourceRelations } from "./template-installed-resource"
+import { templateUninstallOperationRelations } from "./template-uninstall-operation"
+import { templateVersionRelations } from "./template-version"
 import { triggerRelations } from "./trigger"
 import { conditionRelations } from "./trigger-condition"
 import { triggerContactHistoryRelations } from "./trigger-contact-history"
@@ -205,6 +209,8 @@ export const relations = {
   ...templateRelations,
   ...templateInstallationRelations,
   ...templateInstalledResourceRelations,
+  ...templateUninstallOperationRelations,
+  ...templateVersionRelations,
   ...accountRelations,
   ...userRelations,
   ...workspaceRelations,
@@ -226,6 +232,8 @@ export const relations = {
   ...licenseRelations,
   ...platformAdminRelations,
   ...tenantRelations,
+  ...tenantDefaultTemplateRelations,
+  ...tenantDefaultTemplateEventRelations,
   ...tenantHelpItemRelations,
   ...platformCredentialRelations,
   ...userQuotaRelations,

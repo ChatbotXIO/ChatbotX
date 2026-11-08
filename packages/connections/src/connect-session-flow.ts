@@ -25,6 +25,7 @@ import {
   notFoundException,
   toPublicErrorMessage,
 } from "@chatbotx.io/business/errors"
+import { dispatchStagedInstalls } from "@chatbotx.io/business/template-install-dispatch"
 import {
   compensateWorkspaceQuotaConsumption,
   type WorkspaceQuotaConsumption,
@@ -187,6 +188,9 @@ export const startSession = async (
       await compensateWorkspaceQuotaConsumption(workspaceQuotaConsumption)
       throw err
     }
+    // `createWorkspace` may hand back an existing workspace; dispatching then
+    // is one empty read, and it re-sends an install a crash left pending.
+    await dispatchStagedInstalls(session.workspaceId)
   } else {
     await verifyTargetOwnership(input.workspaceId)
     const created = await connectSessionService.create(

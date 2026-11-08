@@ -1,4 +1,4 @@
-import { db } from "@chatbotx.io/database/client"
+import type { DatabaseClient } from "@chatbotx.io/database/client"
 import {
   flowRepository,
   type PollCandidateInput,
@@ -7,7 +7,27 @@ import {
 } from "@chatbotx.io/database/repositories"
 import { BaseService } from "../base.service"
 import { ChatbotXException, notFoundException } from "../errors"
+import { assertReferencable } from "../template/installed-resource.service"
+import { withTemplateLockedTransaction } from "../template/template-resource-locks"
 import { computePollAnalytics } from "./analytics"
+
+/**
+ * A template-installed flow being uninstalled can not become a poll's
+ * after-vote flow: the reference waits on, or is refused by, its lock.
+ */
+const assertAfterVoteFlowReferencable = async (
+  workspaceId: string,
+  flowId: string | null | undefined,
+  tx: DatabaseClient,
+): Promise<void> => {
+  if (flowId) {
+    await assertReferencable({
+      workspaceId,
+      parents: [{ kind: "flow", resourceId: flowId }],
+      tx,
+    })
+  }
+}
 
 export const POLL_MIN_CANDIDATES = 2
 export const POLL_MAX_CANDIDATES = 10
@@ -132,9 +152,14 @@ class PollService extends BaseService {
     assertDateRange(input.startsAt, input.endsAt)
     assertCandidateCount(input.candidates.length)
     await this.assertFlowInWorkspace(input.workspaceId, input.afterVoteFlowId)
-    return await db.transaction(
-      async (tx) => await pollRepository.insertWithCandidates(input, tx),
-    )
+    return await withTemplateLockedTransaction(async (tx) => {
+      await assertAfterVoteFlowReferencable(
+        input.workspaceId,
+        input.afterVoteFlowId,
+        tx,
+      )
+      return await pollRepository.insertWithCandidates(input, tx)
+    })
   }
 
   async update(input: {
@@ -145,7 +170,7 @@ class PollService extends BaseService {
     const { candidates, ...fields } = input.data
     const { workspaceId, id } = input
 
-    return await db.transaction(async (tx) => {
+    return await withTemplateLockedTransaction(async (tx) => {
       // Lock the poll row: the candidate-count and kept-id checks below read a
       // snapshot that a concurrent edit must not change underneath them.
       const current = await pollRepository.findWithCandidates(
@@ -162,6 +187,11 @@ class PollService extends BaseService {
       )
       if (fields.afterVoteFlowId) {
         await this.assertFlowInWorkspace(workspaceId, fields.afterVoteFlowId)
+        await assertAfterVoteFlowReferencable(
+          workspaceId,
+          fields.afterVoteFlowId,
+          tx,
+        )
       }
 
       if (candidates) {

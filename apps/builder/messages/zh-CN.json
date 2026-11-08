@@ -3482,14 +3482,15 @@
     },
     "status": {
       "completed": "已完成",
-      "partial": "Partial",
+      "partial": "部分完成",
       "error": "错误",
       "failed": "失败",
       "label": "状态",
       "pending": "待定",
       "processing": "处理中",
       "installing": "Installing",
-      "success": "成功"
+      "success": "成功",
+      "uninstalled": "Uninstalled"
     },
     "statusCode": {
       "label": "状态码"
@@ -3820,6 +3821,7 @@
       "leaderboards": "排行榜",
       "pipelines": "管道",
       "places": "地点",
+      "templates": "模板",
       "polls": "Polls"
     },
     "adReferral": {
@@ -3971,6 +3973,7 @@
   "flows": {
     "export": {
       "notPublished": "该流程从未发布过。请先发布后再导出。",
+      "viewOnly": "此流程是从仅查看模板安装的，因此无法导出。",
       "failed": "导出失败，请重试。"
     },
     "actions": {
@@ -6330,6 +6333,23 @@
     "hint": "取消选取每个频道以允许所有频道。",
     "title": "允许频道"
   },
+  "platformDefaultTemplate": {
+    "title": "默认模板",
+    "description": "将此模板安装到该白标下创建的每个新工作区。现有工作区不会改变。",
+    "clearTitle": "移除默认模板？",
+    "clearDescription": "新工作区将不再自动获得模板。已有该模板的工作区会保留。",
+    "status": {
+      "notConfigured": "未设置",
+      "ready": "生效中",
+      "templateUnavailable": "模板不可用",
+      "shareDisabled": "分享链接已关闭",
+      "keyRotated": "密钥无效"
+    },
+    "errors": {
+      "unavailable": "模板 ID 或密钥无效。",
+      "shareDisabled": "请先开启模板的分享链接。"
+    }
+  },
   "platformCredentials": {
     "notConfigured": "尚未设置",
     "notConfiguredHint": "添加您的设置以开始使用此集成。",
@@ -6580,14 +6600,6 @@
       "isActive": {
         "label": "活动"
       },
-      "status": {
-        "label": "状态",
-        "values": {
-          "active": "在售",
-          "draft": "草稿",
-          "unlisted": "未列出"
-        }
-      },
       "isAddonOnly": {
         "label": "仅将此产品作为其他产品的插件使用"
       },
@@ -6640,6 +6652,14 @@
       "vendor": {
         "label": "供应商",
         "none": "无"
+      },
+      "status": {
+        "label": "状态",
+        "values": {
+          "active": "在售",
+          "draft": "草稿",
+          "unlisted": "未列出"
+        }
       }
     },
     "inventoryPolicy": {
@@ -7022,6 +7042,9 @@
   },
   "templates": {
     "description": "创建和管理您的范本。",
+    "createDialog": {
+      "title": "新建模板"
+    },
     "title": "范本",
     "share": {
       "label": "分享",
@@ -7031,14 +7054,135 @@
       "dialogDescription": "任何拥有此链接的人都可以将此范本的副本安装到您所在租户的工作区中。",
       "enableLabel": "启用分享链接",
       "linkLabel": "分享链接",
-      "description": "任何拥有该链接的人都可以将此模板安装到自己的工作区。"
+      "rotateLabel": "重新生成链接",
+      "rotateTitle": "重新生成分享链接？",
+      "rotateDescription": "当前链接将立即失效。仍需安装此范本的人需要使用新链接。",
+      "rotated": "分享链接已重新生成",
+      "expiryLabel": "链接到期时间",
+      "expiryHint": "留空表示链接永不过期。",
+      "clearExpiry": "移除到期时间",
+      "expiredNotice": "此链接已过期。请设置更晚的日期或移除到期时间以重新分享。",
+      "templateId": "模板 ID",
+      "templateKey": "模板密钥",
+      "showKey": "显示密钥",
+      "hideKey": "隐藏密钥",
+      "copyField": "复制{field}"
+    },
+    "sync": {
+      "title": "更新",
+      "updateAvailable": "有可用更新",
+      "upToDate": "已是最新",
+      "sourceDeleted": "范本已删除",
+      "sourceDeletedHint": "发布者已删除此范本。你的副本仍可使用，但无法再更新。",
+      "updateNow": "立即更新",
+      "updating": "正在更新…",
+      "version": "范本版本 {version}",
+      "lastSynced": "最后更新于 {date}",
+      "autoUpdateLabel": "范本变更时自动更新",
+      "noHistory": "暂无更新。",
+      "countAdded": "已添加 {count} 项",
+      "countUpdated": "已更新 {count} 项",
+      "countDetached": "{count} 项不再跟随模板",
+      "notUpdatable": "{count} 项暂时无法更新",
+      "overwritten": "{name} 已被编辑，并被此次更新替换",
+      "restore": "恢复我的版本",
+      "restored": "已恢复您的版本",
+      "status": {
+        "pending": "排队中",
+        "running": "运行中",
+        "completed": "已完成",
+        "partial": "部分完成",
+        "failed": "失败",
+        "skipped": "已跳过",
+        "cancelled": "已取消"
+      },
+      "trigger": {
+        "autoUpdate": "自动",
+        "manual": "手动",
+        "reinstall": "重新安装"
+      },
+      "requestedVersion": "请求的版本 v{version}",
+      "errors": {
+        "unknown": "更新失败。请重试；如果持续失败，请联系支持团队。",
+        "templateSyncFailed": "更新失败。请重试。",
+        "templateSyncSuperseded": "更新的版本已取代此次更新。",
+        "templateSyncAbandoned": "更新未能及时完成，已被关闭。",
+        "templateInstallationInactive": "此安装已不再有效。",
+        "workspaceOwnerBlocked": "工作区所有者的账户已被封禁。",
+        "templateUninstallInProgress": "模板正在卸载。",
+        "templateAutoUpdateOff": "自动更新已关闭。",
+        "templateUpToDate": "该副本已是最新。",
+        "templateInstallerAccessLost": "安装者已无权更新此副本。",
+        "templateInstallationSourceMissing": "更新运行之前，模板已被删除。",
+        "templateCategoryPermissionDenied": "你已无权更新此模板中的全部内容。",
+        "templatePayloadIncompatible": "此范本以较新的格式保存，此服务器无法安装。",
+        "templateCrossTenantInstall": "此范本不适用于您的工作区。",
+        "templateInvalidInboxBinding": "所选收件匣与范本不匹配。"
+      }
+    },
+    "versions": {
+      "detailsTab": "详情",
+      "tab": "版本",
+      "versionNumber": "版本 {version}",
+      "current": "当前",
+      "first": "第一个版本",
+      "noDetail": "此版本没有记录详细信息。",
+      "added": "已添加",
+      "changed": "已更改",
+      "removed": "已移除"
+    },
+    "installers": {
+      "title": "查看分析",
+      "workspace": "工作区",
+      "lastInstalled": "最近安装",
+      "version": "Version",
+      "autoUpdate": "自动更新",
+      "uninstalled": "已卸载",
+      "hidden": "工作区未分享",
+      "uninstallNotAllowed": "安装方未允许发布者卸载此副本。",
+      "loadError": "无法加载安装方列表,请重试。",
+      "automatic": "自动",
+      "details": "详情",
+      "noIssues": "没有警告或错误。"
     },
     "installs": {
       "title": "安装记录",
       "resources": "资源",
       "warnings": "警告",
       "completedAt": "完成时间",
-      "autoUpdate": "自动更新"
+      "autoUpdate": "自动更新",
+      "installedBy": "安装者",
+      "viaApi": "API 令牌",
+      "attempts": "尝试次数",
+      "autoUpdateOn": "开启",
+      "autoUpdateOff": "关闭",
+      "retry": "重试安装",
+      "resourcesTitle": "已安装的资源",
+      "noResources": "尚未创建任何内容。",
+      "deletedResource": "已删除的资源",
+      "viewOnly": "仅查看",
+      "created": "已创建",
+      "reused": "已复用",
+      "loadMore": "加载更多",
+      "statusFilter": "状态",
+      "allStatuses": "所有状态",
+      "errors": {
+        "unknown": "安装失败。请重试；如果持续失败，请联系支持团队。",
+        "templatePayloadIncompatible": "此范本以较新的格式保存，此服务器无法安装。",
+        "templateInstallationSourceMissing": "范本在安装运行前已被删除。",
+        "templateCrossTenantInstall": "此范本不适用于您的工作区。",
+        "templateCategoryPermissionDenied": "您已无权安装此范本中的全部内容。",
+        "templateInvalidInboxBinding": "所选收件匣与范本不匹配。",
+        "templateInstallEnqueueFailed": "无法将安装加入队列。",
+        "templateInstallFailed": "安装失败，请重试。",
+        "templateInstallAbandoned": "安装未能及时完成，已被关闭。",
+        "templateInstallSuperseded": "此范本的一次较新安装已取代本次安装。",
+        "workspaceOwnerBlocked": "工作区所有者的账户已被封禁。"
+      },
+      "uninstalledBy": "{by, select, publisher {发布者已卸载此范本。} installer {此范本已从此工作区卸载。} other {此范本已被卸载。}}",
+      "uninstalledSummary": "已删除 {deleted} 项，保留 {kept} 项。",
+      "lastAttemptAt": "最近一次尝试",
+      "installedAutomatically": "已自动安装（白标默认）"
     },
     "form": {
       "contents": "范本内容",
@@ -7051,14 +7195,26 @@
       "allowDelete": "允许安装后删除",
       "publisherName": "发布者名称",
       "youtubeVideoId": "YouTube 视频 ID",
-      "youtubeVideoIdDescription": "视频 URL 中的 11 位字符 ID，例如 youtube.com/watch?v=dQw4w9WgXcQ 中的 \"dQw4w9WgXcQ\"",
+      "youtubeVideoIdDescription": "视频 URL 中的 11 位字符 ID，例如 youtube.com/watch?v=xxxxxxxxxxx 中的 \"xxxxxxxxxxx\"",
       "testLink": "测试链接",
       "imageUrl": "封面图片",
       "installBehavior": "安装行为",
-      "createInstallFolder": "安装到专属文件夹",
+      "createInstallFolder": "在安装的账户上创建文件夹并安装资源。",
       "createInstallFolderDescription": "将每个已安装的资源都归入一个以此范本命名的新文件夹中。",
-      "defaultAutoUpdate": "默认将安装标记为需要更新",
-      "defaultAutoUpdateDescription": "每次重新发布此范本时，新安装都会显示可用更新的提示。"
+      "defaultAutoUpdate": "自动更新已安装的模板",
+      "defaultAutoUpdateDescription": "每当您保存内容有变更的此范本时，开启自动更新的安装都会被新内容覆盖（安装方编辑过的副本会先备份）。安装方可以关闭此功能。",
+      "viewOnly": "仅查看",
+      "viewOnlyAll": "将所选项全部设为仅查看",
+      "includedAutomatically": {
+        "title": "自动包含",
+        "hint": "因您选择的项目需要而一并带入。只读。",
+        "rows": "{count, plural, one {另有 # 项} other {另有 # 项}}",
+        "kind": {
+          "folders": "文件夹",
+          "placeCategories": "地点分类"
+        }
+      },
+      "viewOnlyCopyIncluded": "你选择的项目（或其依赖的项目）是从仅查看范本安装的，因此无法在新范本中共享。"
     },
     "categories": {
       "flows": "流程",
@@ -7073,8 +7229,116 @@
       "keywords": "关键字",
       "entryPointLinks": "入口点链接",
       "triggers": "触发器",
-      "fbCommentAutomations": "Facebook 评论自动化",
-      "settings": "设置"
+      "fbCommentAutomations": "评论自动化",
+      "settings": "机器人字段和已保存回复",
+      "sequences": "序列",
+      "aiMcpServers": "MCP 服务器",
+      "aiFiles": "AI 知识文件",
+      "questionnaires": "Questionnaires",
+      "couponTopics": "优惠券主题",
+      "pipelines": "管道"
+    },
+    "locked": {
+      "flowBanner": "此流程来自仅查看的模板。你可以查看，但无法编辑。",
+      "badge": "仅查看",
+      "editorBanner": "这是从仅查看模板安装的。你可以查看，但不能编辑。",
+      "badgeHint": "从仅查看范本安装"
+    },
+    "channels": {
+      "messenger": "Messenger",
+      "instagram": "Instagram",
+      "instagramFacebook": "Instagram (Facebook login)",
+      "threads": "Threads",
+      "tiktok": "TikTok",
+      "whatsapp": "WhatsApp",
+      "telegram": "Telegram",
+      "zalo": "Zalo",
+      "webchat": "Webchat",
+      "line": "LINE",
+      "email": "电子邮件"
+    },
+    "uninstall": {
+      "title": "卸载范本",
+      "description": "范本会移除它在此工作区创建的所有内容，包括已编辑的副本。共享的标签、字段和文件夹、原本就存在的项目，以及您基于副本构建的任何内容都会保留。",
+      "loading": "正在检查会发生什么…",
+      "previewFailed": "无法检查卸载会产生的影响。",
+      "failed": "无法卸载范本。",
+      "confirm": "卸载",
+      "action": "卸载",
+      "deleted": "{count, plural, one {将删除 # 项} other {将删除 # 项}}",
+      "deletedDone": "{count, plural, one {已删除 # 项} other {已删除 # 项}}",
+      "keptModified": "{count, plural, one {保留 # 个已编辑或未验证的副本} other {保留 # 个已编辑或未验证的副本}}",
+      "keptShared": "{count, plural, one {保留 # 个共享标签或字段} other {保留 # 个共享标签和字段}}",
+      "keptByPolicy": "{count, plural, one {保留 # 个其他项目} other {保留 # 个其他项目}}",
+      "keptHasDependents": "{count, plural, one {保留 # 个副本，因为仍有内容在使用它} other {保留 # 个副本，因为仍有内容在使用它们}}",
+      "deletedModified": "{count, plural, one {其中 # 项经您编辑：这些编辑将丢失且无法恢复} other {其中 # 项经您编辑：这些编辑将丢失且无法恢复}}",
+      "keptLockedByOther": "{count, plural, one {保留 # 项，因为另一个范本安装仍在保护它} other {保留 # 项，因为另一个范本安装仍在保护它们}}",
+      "confirmCheckbox": "我了解此操作会删除上述项目且无法撤销",
+      "started": "卸载已开始",
+      "inProgress": "正在卸载…",
+      "retry": "重试卸载",
+      "state": {
+        "pending": "卸载排队中",
+        "running": "正在卸载…",
+        "partial": "卸载未完成，请重试",
+        "failed": "卸载失败，请重试",
+        "skipped": "已跳过卸载：工作区已被封禁"
+      },
+      "deletedUnverified": "{count, plural, one {其中 # 项无法检查是否经过编辑：如果您更改过，这些更改将丢失} other {其中 # 项无法检查是否经过编辑：如果您更改过，这些更改将丢失}}",
+      "cancelAction": "取消卸载",
+      "cancelled": "已取消卸载：剩余项目可重新供您使用",
+      "blockedByReference": "{count, plural, one {# 项未被删除，因为您创建的内容仍引用它：请移除该引用，然后重试卸载} other {# 项未被删除，因为您创建的内容仍引用它们：请移除这些引用，然后重试卸载}}",
+      "keptPartlyRemoved": "{count, plural, one {卸载受阻后保留了 # 个副本；其历史记录和防重复数据可能已被移除，请在启用前检查} other {卸载受阻后保留了 # 个副本；其历史记录和防重复数据可能已被移除，请在启用前检查}}",
+      "keptInactiveForReview": "{count, plural, one {# 个副本保持未启用：其历史记录和防重复数据已被移除，请在启用前检查} other {# 个副本保持未启用：其历史记录和防重复数据已被移除，请在启用前检查}}",
+      "keptHistoryRemoved": "{count, plural, one {保留了 # 个副本，但其历史记录已被移除（无需启用）：请在依赖它之前检查} other {保留了 # 个副本，但其历史记录已被移除（无需启用）：请在依赖它们之前检查}}",
+      "cancelledPartial": "{count, plural, one {# 项已在删除中并将完成；其余项目已归还} other {# 项已在删除中并将完成；其余项目已归还}}"
+    },
+    "warningCodes": {
+      "aiFileTooLarge": "此知识文件超出了模板安装可复制的大小，已跳过。",
+      "aiFileUnavailable": "此知识文件无法复制，已跳过。",
+      "assigneeRequired": "请选择此步骤将会话分配给谁。",
+      "ambiguousSourceFieldToken": "多个源字段使用相同名称，因此使用该名称的变量保持不变。",
+      "backupTooLarge": "本地编辑过的项目太大，无法备份，因此未被覆盖。",
+      "backupUnavailable": "此项目的备份已不可用。",
+      "botFieldRenamed": "已存在同名但类型不同的机器人字段，因此已创建一个重命名的字段。",
+      "categoryPermissionDenied": "你没有此类别的权限，因此已跳过。",
+      "couponTopicExpired": "此优惠券主题已过期。",
+      "credentialRequired": "使用此项目前，请先添加其凭据。",
+      "custom": "在此工作区中未找到被引用的项目，因此已移除该链接。",
+      "customField": "在此工作区中未找到被引用的项目，因此已移除该链接。",
+      "customFieldRenamed": "已存在同名但类型不同的字段，因此创建了一个重命名的字段。",
+      "enqueueFailed": "无法将此项目的后台处理加入队列。",
+      "flow": "在此工作区中未找到被引用的项目，因此已移除该链接。",
+      "flowInvalidStructure": "Flow 的结构无效，因此已跳过。",
+      "flowNotPublished": "Flow 已作为草稿安装，尚未发布。",
+      "flowSkippedRequiredReference": "由于无法解析必需的引用，已跳过该 Flow。",
+      "folder": "在此工作区中未找到被引用的项目，因此已移除该链接。",
+      "inboxBindingRequired": "请为此频道选择收件匣；在此之前该项目保持未启用状态。",
+      "integration": "在此工作区中未找到被引用的项目，因此已移除该链接。",
+      "localModifiedOverwritten": "本地编辑过的项目已被覆盖。已保存备份，可以还原。",
+      "name": "未找到此项目可用的名称，因此已跳过。",
+      "noEmbeddingProvider": "此工作区未配置嵌入服务提供商，因此已跳过知识文件。请连接 OpenAI 或 Gemini 后重新安装。",
+      "notUpdatable": "此类项目暂不支持自动更新。",
+      "pipeline": "使用了已不存在的管道。",
+      "pipelineField": "使用了已不存在的管道字段。",
+      "pipelineStage": "使用了已不存在的管道阶段。",
+      "postSelectionRequired": "请重新选择帖子：无法带入原始帖子。",
+      "product": "在此工作区中未找到被引用的项目，因此已移除该链接。",
+      "productCategory": "在此工作区中未找到被引用的项目，因此已移除该链接。",
+      "questionImage": "无法复制图片。",
+      "quota": "已达到套餐上限，因此已跳过该项目。",
+      "referenceRemoved": "无法解析的引用已被移除。",
+      "savedReply": "在此工作区中未找到被引用的项目，因此已移除该链接。",
+      "savedReplyImage": "无法复制图片。",
+      "tag": "在此工作区中未找到被引用的项目，因此已移除该链接。",
+      "unlisted": "项目未完全导入：{code}",
+      "workspaceMember": "已分配给不在此工作区的成员。",
+      "workspaceUnavailable": "此工作区已不可用，因此跳过了该项。"
+    },
+    "tabs": {
+      "mine": "我的模板",
+      "installed": "已安装",
+      "installedEmpty": "还没有已安装的模板。从其他工作区安装的模板会显示在这里。"
     }
   },
   "texts": {
@@ -7196,14 +7460,39 @@
     "invalidTitle": "此链接已不再可用。",
     "invalidDescription": "此范本分享链接无效、已禁用或已过期。",
     "byPublisher": "发布者：{publisherName}",
-    "includes": "此范本包含",
     "videoTitle": "模板预览视频",
-    "tryItOut": "立即体验",
-    "signInToInstall": "登录以安装",
+    "preview": "预览",
+    "aboutTemplate": "关于此模板",
     "selectWorkspace": "选择一个工作区",
     "install": "安装",
     "installStarted": "安装已开始",
-    "noEligibleWorkspaces": "您没有可安装此范本的合适工作区。"
+    "noEligibleWorkspaces": "您没有可安装此范本的合适工作区。",
+    "alreadyInstalled": "此范本已安装在此工作区中。",
+    "viewInstall": "查看安装",
+    "installAnotherCopy": "再安装一个副本",
+    "inboxesTitle": "收件匣",
+    "inboxesHint": "此范本是围绕这些收件匣构建的。请选择要使用您自己的哪些收件匣；未选择的部分将以停用状态安装。",
+    "noInbox": "不连接 — 以停用状态安装",
+    "noInboxAvailable": "此频道没有已连接的收件匣",
+    "updateExisting": "更新已安装的副本",
+    "updateStarted": "更新已开始",
+    "autoUpdateLabel": "范本变更时自动更新",
+    "collisions": {
+      "title": "安装在此处将执行的操作",
+      "loading": "正在检查此工作区…",
+      "action": {
+        "create": "已创建",
+        "reuse": "已复用",
+        "rename": "已重命名",
+        "bind": "已绑定",
+        "unbound": "保持未绑定"
+      },
+      "detail": {
+        "rename": "“{name}”已存在且类型不同，因此范本中的该项将以新名称添加。",
+        "unbound": "在您选择收件匣之前，“{name}”将保持未连接。"
+      }
+    },
+    "createWorkspace": "创建新工作区"
   },
   "userPersistentMenus": {
     "title": "用户常驻菜单"

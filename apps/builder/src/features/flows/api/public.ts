@@ -3,7 +3,11 @@ import {
   flowVersionService,
   messengerWelcomeMessageFlowService,
 } from "@chatbotx.io/business"
-import { validationException } from "@chatbotx.io/business/errors"
+import {
+  ChatbotXException,
+  notFoundException,
+  validationException,
+} from "@chatbotx.io/business/errors"
 import { importService } from "@chatbotx.io/business/import"
 import { stepTypes } from "@chatbotx.io/flow-config"
 import { zodBigintAsString } from "@chatbotx.io/utils"
@@ -45,6 +49,32 @@ import {
 } from "../schema/resource"
 
 const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("automation")
+
+const exportFailure = (
+  reason: "notFound" | "notPublished" | "noDraft" | "viewOnly",
+) => {
+  if (reason === "notFound") {
+    return notFoundException("Flow not found")
+  }
+  if (reason === "viewOnly") {
+    return new ChatbotXException(
+      "This flow was installed from a view-only template and can not be exported",
+      "templateAllowEditViolation",
+      403,
+    )
+  }
+  return reason === "noDraft"
+    ? new ChatbotXException(
+        "The flow has no draft to export",
+        "flowNoDraft",
+        409,
+      )
+    : new ChatbotXException(
+        "The flow has no published version to export",
+        "flowNotPublished",
+        409,
+      )
+}
 
 export const flowsPublicRouter = {
   list: workspaceTokenAuthAPI
@@ -277,7 +307,7 @@ export const flowsPublicRouter = {
       path: "/v1/flows/{id}/duplicate",
       summary: "Duplicate flow",
       description:
-        "Copies a flow's draft into a new flow. Use `flows.get` to inspect the source first, then call `flows.updateDraft` or `flows.publish` on the returned flow.",
+        "Copies a flow within the workspace. The copy gets the source's draft; if the source is published the copy is published too with the same graph and `active` kept, otherwise it is a draft-only flow that starts inactive. References the flow makes to itself point at the copy. Named `<name> _copy`, then `_copy 2`, … . Inspect the source with `flows.get`; edit the copy with `flows.updateDraft` and publish a draft-only copy with `flows.publish`.",
       successStatus: 201,
       tags: ["Flows"],
     })
@@ -391,6 +421,44 @@ export const flowsPublicRouter = {
         workspaceId: context.workspace.id,
       })
       return { data }
+    }),
+
+  export: workspaceTokenAuthAPI
+    .route({
+      method: "GET",
+      path: "/v1/flows/{id}/export",
+      summary: "Export flow",
+      description:
+        "The flow's published graph (or its draft with `version: draft`) as a portable export, with the custom and bot fields it uses listed by name. Save the `export` object as a file and upload it with the Files API to import it into another workspace with `flows.import`.",
+      tags: ["Flows"],
+    })
+    .input(
+      publicIdParam("Flow", "flows.list").extend({
+        version: z
+          .enum(["published", "draft"])
+          .optional()
+          .describe("Which graph to export; defaults to `published`."),
+      }),
+    )
+    .output(
+      z.object({
+        fileName: z.string().describe("Suggested file name."),
+        export: z
+          .record(z.string(), z.unknown())
+          .describe("The flow export document."),
+      }),
+    )
+    .errors(possibleErrorsOnFindingResource)
+    .handler(async ({ context, input }) => {
+      const result = await flowService.buildExport({
+        workspaceId: context.workspace.id,
+        id: input.id,
+        version: input.version,
+      })
+      if (!result.ok) {
+        throw exportFailure(result.reason)
+      }
+      return { fileName: result.fileName, export: result.envelope }
     }),
 
   import: workspaceTokenAuthAPI
