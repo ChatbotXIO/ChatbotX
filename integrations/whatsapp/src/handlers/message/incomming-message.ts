@@ -15,6 +15,7 @@ import { z } from "zod"
 import { getWhatsappClient } from "../../client"
 import {
   isStandbyEchoItem,
+  isTemplateEcho,
   parseStandbyEcho,
   readThreadControlReceiveInfo,
 } from "../../lib/conversation-routing"
@@ -316,6 +317,11 @@ export const receiveMessage: MessageHandlers<WhatsappAuthValue>["receiveMessage"
 
     // A standby echo is a partner's outgoing message, not a customer message:
     // its "message" is the Send API body, so it never reaches the type parsers.
+    // Only the owner (or the escalation partner, whose send takes the thread)
+    // can send a Service message, so a Service echo means another app owns the
+    // thread. A template echo means nothing: any partner may send templates and
+    // they never change ownership (Meta thread lifecycle; Testing Guide SC-1
+    // step 3 "It is still the owner", SC-4 step 1 "The thread stays Idle").
     if (
       threadControl?.delivery === "standby" &&
       isStandbyEchoItem(data.message)
@@ -328,7 +334,9 @@ export const receiveMessage: MessageHandlers<WhatsappAuthValue>["receiveMessage"
         quickReplyAction: null,
         ref: null,
         echoOrigin: echoOrigins.enum.thirdParty,
-        threadControl,
+        threadControl: isTemplateEcho(data.message)
+          ? { ...threadControl, signalsOwnership: false }
+          : threadControl,
       }
     }
 

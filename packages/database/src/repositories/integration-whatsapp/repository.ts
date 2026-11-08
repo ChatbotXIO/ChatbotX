@@ -20,6 +20,7 @@ import {
   type ProviderAccountRouteScope,
   type ProviderAccountTarget,
   ROOT_TENANT_ID,
+  type RoutingRolesSnapshot,
   type WhatsappCallHoursSnapshot,
 } from "../../partials"
 import {
@@ -924,6 +925,29 @@ class IntegrationWhatsappRepository {
       .update(integrationWhatsappModel)
       .set({ handoverResumeFlowId: input.handoverResumeFlowId })
       .where(workspaceIntegrationFilter(input))
+      .returning()
+
+    return row ?? null
+  }
+
+  /**
+   * Stores a routing-roles snapshot unless a newer one (by `checkedAt`) is
+   * already stored: two syncs answered out of order never let the older Meta
+   * answer win. `null` when the row is missing or a newer snapshot kept it.
+   */
+  async updateRoutingRolesIfNewer(
+    input: WorkspaceIntegrationRef & { routingRoles: RoutingRolesSnapshot },
+    tx: DatabaseClient = db,
+  ): Promise<IntegrationWhatsappModel | null> {
+    const [row] = await tx
+      .update(integrationWhatsappModel)
+      .set({ routingRoles: input.routingRoles })
+      .where(
+        and(
+          workspaceIntegrationFilter(input),
+          sql`COALESCE(${integrationWhatsappModel.routingRoles} ->> 'checkedAt', '') < ${input.routingRoles.checkedAt}`,
+        ),
+      )
       .returning()
 
     return row ?? null

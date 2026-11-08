@@ -9245,7 +9245,9 @@
       "customer_service": "Kundtjänst",
       "escalation": "Eskalering",
       "marketing": "Marknadsföring",
-      "utility": "Tjänst"
+      "utility": "Tjänst",
+      "calls": "Samtal",
+      "other": "Övrigt"
     },
     "pill": {
       "standby": "Standby ({owner})",
@@ -9334,7 +9336,17 @@
       "adminOnly": "Bara arbetsyteadministratörer kan ändra routning",
       "flowNotFound": "Det valda flödet hittades inte eller är inte aktivt",
       "integrationNotFound": "WhatsApp-numret hittades inte",
-      "messengerIntegrationNotFound": "Messenger-sidan hittades inte"
+      "messengerIntegrationNotFound": "Messenger-sidan hittades inte",
+      "rolesTitle": "Dina routningsroller på det här numret",
+      "rolesDescription": "Tilldelas av företaget i Meta Business Suite.",
+      "rolesNone": "Du har ingen routningsroll på det här numret.",
+      "rolesNeverChecked": "Inte kontrollerat ännu.",
+      "rolesNotEnabled": "Konversationsroutning är inte aktiverad för det här numret.",
+      "rolesStandbyOn": "Standby-åtkomst: på (du ser konversationer du inte äger)",
+      "rolesStandbyOff": "Standby-åtkomst: av",
+      "rolesCheckedAt": "Kontrollerad {time}",
+      "rolesRefresh": "Kontrollera igen",
+      "rolesSyncFailed": "Det gick inte att hämta routningsrollerna från Meta. Försök igen."
     },
     "errors": {
       "unsupported": "Konversationsroutning är inte tillgänglig i den här kanalen",

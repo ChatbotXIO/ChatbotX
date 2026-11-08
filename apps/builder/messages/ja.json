@@ -9245,7 +9245,9 @@
       "customer_service": "カスタマーサービス",
       "escalation": "エスカレーション",
       "marketing": "マーケティング",
-      "utility": "ユーティリティ"
+      "utility": "ユーティリティ",
+      "calls": "通話",
+      "other": "その他"
     },
     "pill": {
       "standby": "スタンバイ（{owner}）",
@@ -9334,7 +9336,17 @@
       "adminOnly": "ルーティングを変更できるのはワークスペース管理者のみです",
       "flowNotFound": "選択したフローが見つからないか、有効ではありません",
       "integrationNotFound": "WhatsApp番号が見つかりません",
-      "messengerIntegrationNotFound": "Messengerページが見つかりません"
+      "messengerIntegrationNotFound": "Messengerページが見つかりません",
+      "rolesTitle": "この番号でのあなたのルーティングロール",
+      "rolesDescription": "ビジネスが Meta Business Suite で割り当てます。",
+      "rolesNone": "この番号ではルーティングロールが割り当てられていません。",
+      "rolesNeverChecked": "まだ確認していません。",
+      "rolesNotEnabled": "この番号では会話ルーティングが有効になっていません。",
+      "rolesStandbyOn": "スタンバイアクセス: オン（担当外の会話も表示できます）",
+      "rolesStandbyOff": "スタンバイアクセス: オフ",
+      "rolesCheckedAt": "確認 {time}",
+      "rolesRefresh": "再確認",
+      "rolesSyncFailed": "Meta からルーティングロールを取得できませんでした。もう一度お試しください。"
     },
     "errors": {
       "unsupported": "このチャネルでは会話ルーティングは利用できません",

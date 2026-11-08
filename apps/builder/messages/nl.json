@@ -9245,7 +9245,9 @@
       "customer_service": "Klantenservice",
       "escalation": "Escalatie",
       "marketing": "Marketing",
-      "utility": "Utility"
+      "utility": "Utility",
+      "calls": "Oproepen",
+      "other": "Overig"
     },
     "pill": {
       "standby": "Standby ({owner})",
@@ -9334,7 +9336,17 @@
       "adminOnly": "Alleen workspacebeheerders kunnen de routering wijzigen",
       "flowNotFound": "De geselecteerde flow is niet gevonden of niet actief",
       "integrationNotFound": "WhatsApp-nummer niet gevonden",
-      "messengerIntegrationNotFound": "Messenger-pagina niet gevonden"
+      "messengerIntegrationNotFound": "Messenger-pagina niet gevonden",
+      "rolesTitle": "Jouw routeringsrollen op dit nummer",
+      "rolesDescription": "Toegewezen door het bedrijf in Meta Business Suite.",
+      "rolesNone": "Je hebt geen routeringsrol op dit nummer.",
+      "rolesNeverChecked": "Nog niet gecontroleerd.",
+      "rolesNotEnabled": "Gespreksroutering is niet ingeschakeld voor dit nummer.",
+      "rolesStandbyOn": "Standby-toegang: aan (je ziet gesprekken die niet van jou zijn)",
+      "rolesStandbyOff": "Standby-toegang: uit",
+      "rolesCheckedAt": "Gecontroleerd {time}",
+      "rolesRefresh": "Opnieuw controleren",
+      "rolesSyncFailed": "De routeringsrollen konden niet bij Meta worden opgehaald. Probeer het opnieuw."
     },
     "errors": {
       "unsupported": "Gespreksroutering is niet beschikbaar op dit kanaal",

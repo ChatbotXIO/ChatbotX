@@ -9245,7 +9245,9 @@
       "customer_service": "Assistenza clienti",
       "escalation": "Escalation",
       "marketing": "Marketing",
-      "utility": "Utility"
+      "utility": "Utility",
+      "calls": "Chiamate",
+      "other": "Altro"
     },
     "pill": {
       "standby": "Standby ({owner})",
@@ -9334,7 +9336,17 @@
       "adminOnly": "Solo gli amministratori dello spazio di lavoro possono modificare l'instradamento",
       "flowNotFound": "Il flusso selezionato non è stato trovato o non è attivo",
       "integrationNotFound": "Numero WhatsApp non trovato",
-      "messengerIntegrationNotFound": "Pagina Messenger non trovata"
+      "messengerIntegrationNotFound": "Pagina Messenger non trovata",
+      "rolesTitle": "I tuoi ruoli di instradamento su questo numero",
+      "rolesDescription": "Assegnati dall'azienda in Meta Business Suite.",
+      "rolesNone": "Non hai alcun ruolo di instradamento su questo numero.",
+      "rolesNeverChecked": "Non ancora verificato.",
+      "rolesNotEnabled": "L'instradamento delle conversazioni non è attivo per questo numero.",
+      "rolesStandbyOn": "Accesso in standby: attivo (vedi le conversazioni che non gestisci)",
+      "rolesStandbyOff": "Accesso in standby: disattivato",
+      "rolesCheckedAt": "Verificato {time}",
+      "rolesRefresh": "Verifica di nuovo",
+      "rolesSyncFailed": "Impossibile ottenere i ruoli di instradamento da Meta. Riprova."
     },
     "errors": {
       "unsupported": "L'instradamento delle conversazioni non è disponibile su questo canale",

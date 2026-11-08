@@ -9245,7 +9245,9 @@
       "customer_service": "Kundeservice",
       "escalation": "Eskalering",
       "marketing": "Marketing",
-      "utility": "Service"
+      "utility": "Service",
+      "calls": "Opkald",
+      "other": "Andet"
     },
     "pill": {
       "standby": "Standby ({owner})",
@@ -9334,7 +9336,17 @@
       "adminOnly": "Kun workspace-administratorer kan ændre routing",
       "flowNotFound": "Det valgte flow blev ikke fundet eller er ikke aktivt",
       "integrationNotFound": "WhatsApp-nummer blev ikke fundet",
-      "messengerIntegrationNotFound": "Messenger-siden blev ikke fundet"
+      "messengerIntegrationNotFound": "Messenger-siden blev ikke fundet",
+      "rolesTitle": "Dine routingroller på dette nummer",
+      "rolesDescription": "Tildelt af virksomheden i Meta Business Suite.",
+      "rolesNone": "Du har ingen routingrolle på dette nummer.",
+      "rolesNeverChecked": "Ikke kontrolleret endnu.",
+      "rolesNotEnabled": "Samtalerouting er ikke aktiveret for dette nummer.",
+      "rolesStandbyOn": "Standby-adgang: til (du kan se samtaler, du ikke ejer)",
+      "rolesStandbyOff": "Standby-adgang: fra",
+      "rolesCheckedAt": "Kontrolleret {time}",
+      "rolesRefresh": "Kontrollér igen",
+      "rolesSyncFailed": "Kunne ikke hente routingrollerne fra Meta. Prøv igen."
     },
     "errors": {
       "unsupported": "Samtaleroutning er ikke tilgængelig på denne kanal",

@@ -573,3 +573,28 @@ describe("pathAndMethodToCommandName — AI provider integration", () => {
     ).toBe("integrations:update-ai")
   })
 })
+
+describe("pathAndMethodToCommandName — WhatsApp routing roles", () => {
+  test("syncing routing roles does not collide with the template sync", () => {
+    const names = [
+      pathAndMethodToCommandName(
+        "/v1/whatsapp-channels/{id}/routing-roles",
+        "GET",
+      ),
+      pathAndMethodToCommandName(
+        "/v1/whatsapp-channels/{id}/routing-roles/sync",
+        "POST",
+      ),
+      pathAndMethodToCommandName(
+        "/v1/whatsapp-channels/{id}/templates/sync",
+        "POST",
+      ),
+    ]
+    expect(names).toEqual([
+      "whatsapp-channels:routing-roles:list",
+      "whatsapp-channels:routing-roles:sync",
+      "whatsapp-channels:sync:add",
+    ])
+    expect(new Set(names)).toHaveLength(names.length)
+  })
+})

@@ -200,6 +200,11 @@ const COMMAND_NAME_OVERRIDES: Readonly<Record<string, string>> = {
   "PATCH /v1/integrations/ai/{provider}": "integrations:update-ai",
   "DELETE /v1/analytics/flows/{flowId}/stats": "analytics:reset-flow-stats",
   "POST /v1/decision-connections/{id}/test": "decision-connections:test",
+  // Derives to `whatsapp-channels:sync:add`, the name of
+  // `POST /v1/whatsapp-channels/{id}/templates/sync`; without this one of the
+  // two would be silently dropped.
+  "POST /v1/whatsapp-channels/{id}/routing-roles/sync":
+    "whatsapp-channels:routing-roles:sync",
   "POST /v1/ads/campaigns": "ads:create-campaign",
   "POST /v1/ads/conversion-rules": "ads:create-conversion-rule",
   "PATCH /v1/ads/conversion-rules/{id}": "ads:update-conversion-rule",

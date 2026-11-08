@@ -9245,7 +9245,9 @@
       "customer_service": "Servicii clienți",
       "escalation": "Escaladare",
       "marketing": "Marketing",
-      "utility": "Utilitar"
+      "utility": "Utilitar",
+      "calls": "Apeluri",
+      "other": "Altele"
     },
     "pill": {
       "standby": "Standby ({owner})",
@@ -9334,7 +9336,17 @@
       "adminOnly": "Doar administratorii spațiului de lucru pot modifica rutarea",
       "flowNotFound": "Fluxul selectat nu a fost găsit sau nu este activ",
       "integrationNotFound": "Numărul WhatsApp nu a fost găsit",
-      "messengerIntegrationNotFound": "Pagina Messenger nu a fost găsită"
+      "messengerIntegrationNotFound": "Pagina Messenger nu a fost găsită",
+      "rolesTitle": "Rolurile tale de rutare pe acest număr",
+      "rolesDescription": "Atribuite de companie în Meta Business Suite.",
+      "rolesNone": "Nu ai niciun rol de rutare pe acest număr.",
+      "rolesNeverChecked": "Neverificat încă.",
+      "rolesNotEnabled": "Rutarea conversațiilor nu este activată pentru acest număr.",
+      "rolesStandbyOn": "Acces în așteptare: activ (vezi conversațiile care nu îți aparțin)",
+      "rolesStandbyOff": "Acces în așteptare: inactiv",
+      "rolesCheckedAt": "Verificat {time}",
+      "rolesRefresh": "Verifică din nou",
+      "rolesSyncFailed": "Nu s-au putut obține rolurile de rutare de la Meta. Încearcă din nou."
     },
     "errors": {
       "unsupported": "Rutarea conversațiilor nu este disponibilă pe acest canal",

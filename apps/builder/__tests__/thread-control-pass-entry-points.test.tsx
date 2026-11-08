@@ -44,6 +44,7 @@ const view = (
   overrides: Partial<ThreadControlView> = {},
 ): ThreadControlView => ({
   contactInboxId: "ci-1",
+  inboxId: "inbox-1",
   channel: "messenger",
   state: "owned",
   ownerRole: null,

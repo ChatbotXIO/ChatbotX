@@ -9245,7 +9245,9 @@
       "customer_service": "Atendimento ao cliente",
       "escalation": "Escalonamento",
       "marketing": "Marketing",
-      "utility": "Utilidade"
+      "utility": "Utilidade",
+      "calls": "Chamadas",
+      "other": "Outro"
     },
     "pill": {
       "standby": "Standby ({owner})",
@@ -9334,7 +9336,17 @@
       "adminOnly": "Apenas administradores do espaço de trabalho podem alterar o encaminhamento",
       "flowNotFound": "O fluxo selecionado não foi encontrado ou não está ativo",
       "integrationNotFound": "Número do WhatsApp não encontrado",
-      "messengerIntegrationNotFound": "Página do Messenger não encontrada"
+      "messengerIntegrationNotFound": "Página do Messenger não encontrada",
+      "rolesTitle": "As suas funções de encaminhamento neste número",
+      "rolesDescription": "Atribuídas pela empresa no Meta Business Suite.",
+      "rolesNone": "Não tem nenhuma função de encaminhamento neste número.",
+      "rolesNeverChecked": "Ainda não verificado.",
+      "rolesNotEnabled": "O encaminhamento de conversas não está ativado para este número.",
+      "rolesStandbyOn": "Acesso em espera: ativado (vê conversas que não são suas)",
+      "rolesStandbyOff": "Acesso em espera: desativado",
+      "rolesCheckedAt": "Verificado {time}",
+      "rolesRefresh": "Verificar novamente",
+      "rolesSyncFailed": "Não foi possível obter as funções de encaminhamento da Meta. Tente novamente."
     },
     "errors": {
       "unsupported": "O encaminhamento de conversas não está disponível neste canal",

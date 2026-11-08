@@ -9245,7 +9245,9 @@
       "customer_service": "Müşteri hizmetleri",
       "escalation": "Yükseltme",
       "marketing": "Pazarlama",
-      "utility": "Yardımcı"
+      "utility": "Yardımcı",
+      "calls": "Aramalar",
+      "other": "Diğer"
     },
     "pill": {
       "standby": "Beklemede ({owner})",
@@ -9334,7 +9336,17 @@
       "adminOnly": "Yönlendirmeyi yalnızca çalışma alanı yöneticileri değiştirebilir",
       "flowNotFound": "Seçilen akış bulunamadı veya etkin değil",
       "integrationNotFound": "WhatsApp numarası bulunamadı",
-      "messengerIntegrationNotFound": "Messenger sayfası bulunamadı"
+      "messengerIntegrationNotFound": "Messenger sayfası bulunamadı",
+      "rolesTitle": "Bu numaradaki yönlendirme rolleriniz",
+      "rolesDescription": "İşletme tarafından Meta Business Suite'te atanır.",
+      "rolesNone": "Bu numarada size atanmış bir yönlendirme rolü yok.",
+      "rolesNeverChecked": "Henüz kontrol edilmedi.",
+      "rolesNotEnabled": "Bu numara için konuşma yönlendirmesi etkin değil.",
+      "rolesStandbyOn": "Bekleme erişimi: açık (size ait olmayan konuşmaları görebilirsiniz)",
+      "rolesStandbyOff": "Bekleme erişimi: kapalı",
+      "rolesCheckedAt": "Kontrol edildi {time}",
+      "rolesRefresh": "Tekrar kontrol et",
+      "rolesSyncFailed": "Yönlendirme rolleri Meta'dan alınamadı. Tekrar deneyin."
     },
     "errors": {
       "unsupported": "Konuşma yönlendirme bu kanalda kullanılamıyor",

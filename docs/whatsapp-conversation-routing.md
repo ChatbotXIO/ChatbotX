@@ -18,7 +18,7 @@ exactly like before.
 | Layer | Path |
 |-------|------|
 | Domain rules (states, transitions, idle rule, send gate, tie order) | `packages/database/src/partials/thread-control.ts` |
-| Columns | `ContactInbox.threadControlState` / `threadOwnerRole` / `threadControlUpdatedAt` / `threadControlLastEvent`, `Inbox.threadControlSeenAt`, `IntegrationWhatsapp.handoverResumeFlowId` (migration `20260929022544_conversation_routing`) |
+| Columns | `ContactInbox.threadControlState` / `threadOwnerRole` / `threadControlUpdatedAt` / `threadControlLastEvent`, `Inbox.threadControlSeenAt`, `IntegrationWhatsapp.handoverResumeFlowId` (migration `20260929022544_conversation_routing`), `IntegrationWhatsapp.routingRoles` (migration `20261108054403_whatsapp_routing_roles`) |
 | Repositories | `contact-inbox` (`applyThreadControlTransition`, `listThreadControlledByContactIds`), `inbox` (`touchThreadControlSeen`), `integration-whatsapp` (`updateHandoverResumeFlow`) |
 | Business | `packages/business/src/thread-control/` (`threadControlService`); `requestThreadControlAction` in `packages/channel-registry/src/thread-control.ts` (needs the registry, so it cannot live in business) |
 | WhatsApp | `integrations/whatsapp/src/api/webhook.ts` (subscribed fields), `api/thread-control.ts` (`POST /{phone_number_id}/thread_control`), `handlers/webhook.ts` (`extractConversationRoutingPayloads`), `lib/conversation-routing.ts` (parsers, template echo rendering), `handlers/conversation.ts` (`updateThreadControl`, `receiveThreadControlEvent`) |
@@ -76,11 +76,17 @@ Every event maps to exactly one state (`THREAD_CONTROL_TRANSITIONS`):
 | `serviceRejected` | Meta rejected our Service send for ownership | `standby` |
 | `released` | our `release` call | `idle` |
 
-- **Idle is computed, never written by a cron.** A stored `owned`/`standby`
-  resolves to `idle` once `max(lastIncomingMessageAt, threadControlUpdatedAt) + 24h`
-  has passed (`resolveThreadControlState`). Counting from the transition time too
-  keeps a handover that lands on a thread with an old last customer message (e.g.
-  standby visibility off) from resolving to idle immediately.
+- **Idle is computed, never written by a cron.** Meta resets a thread after
+  "24 hours of WhatsApp user inactivity" (or a `release`). A stored
+  `owned`/`standby` resolves to `idle` once
+  `max(lastIncomingMessageAt, threadControlUpdatedAt) + 24h` has passed
+  (`resolveThreadControlState`). Without standby access the customer's messages
+  to another owner never reach us, so `lastIncomingMessageAt` can be far behind
+  the real activity; a handover proves the thread was live at that instant (an
+  idle thread has no owner to pass or take it), which bounds the real idle time
+  to within 24h of it. The resolver keeps that latest possible bound. A wrong
+  guess is self-correcting: a Service send then gets 131070 and records
+  `serviceRejected`, and the next routed delivery re-syncs the state.
 - **Ordering.** `applyThreadControlTransition` is one guarded `UPDATE`: an event
   older than `threadControlUpdatedAt` is stale and rejected. On an equal
   timestamp (Meta sends seconds) the higher-precedence event wins —
@@ -133,7 +139,13 @@ marked standby and unpromoted), so the composer and send gate close, and still
 runs no automation. A clean standby redelivery is a no-op. Partner echoes
 (`standby.message_echoes`) are stored as outgoing third-party messages labelled
 "Partner" (dropped for an unknown contact); template echoes are rendered from the
-template definition with the sent parameters. `standby.statuses` (other partners'
+template definition with the sent parameters. Only a **Service** echo is an
+ownership signal (`standbyReceived`): only the owner, or the escalation partner
+taking the thread, can send one. A **template** echo changes nothing — any
+partner may send marketing/utility/authentication templates and they never change
+ownership (`ThreadControlReceiveInfo.signalsOwnership: false`), so an owned
+thread stays owned and an idle one stays idle (Testing Guide SC-1 step 3, SC-4
+step 1). `standby.statuses` (other partners'
 receipts) are dropped.
 
 **Handover.** A `messaging_handovers` item becomes a `threadControlEvent` job
@@ -172,6 +184,32 @@ the job completes; a retryable error rethrows for BullMQ.
 channel or any channel refusal follows the Error path with the reason; the step
 never throws into a retry.
 
+**Routing roles.** Which roles this app holds on a number (`customer_service`,
+`escalation`, `marketing`, `utility`, `ctwa`, `calls`) and whether it has
+standby access come from Meta's `GET /{phone_number_id}/routing_roles`
+(`integrations/whatsapp/src/api/routing-roles.ts`). The answer is stored on
+`IntegrationWhatsapp.routingRoles` (`{ enabled, roles, isStandby, checkedAt }`,
+`null` = never checked; migration `20261108054403_whatsapp_routing_roles`) by
+`integrationWhatsappService.syncRoutingRoles` (provider call injected), through
+one builder lib (`features/integration-whatsapp/lib/routing-roles.ts`) shared by
+the settings card and the public API (`whatsappChannels.getRoutingRoles`,
+`whatsappChannels.syncRoutingRoles`; CLI `whatsapp-channels routing-roles
+list|sync`). Code 100 "Conversation routing is not enabled for this phone
+number" is stored as `enabled: false`; any other failure is a 502
+`routingRolesUnavailable` and keeps the previous snapshot. The settings card
+reads them on demand ("Check again"), never by itself. The locked composer
+disables **Take over** up front when the stored roles say this app is not the
+escalation partner (`resolveThreadTakePermission` → `forbidden`, read through
+`useThreadTakePermission` for channels whose
+`THREAD_CONTROL_CHANNEL_UI[channel].takePermissionFromRoutingRoles` is on);
+`unknown` leaves the decision to Meta (2494191 still shows the inline refusal). Roles are
+assigned by the business in Meta Business Suite — this app never sets them.
+
+**Meta request ids.** Every successful `thread_control` call logs Meta's
+`request_id`, every refusal its code and `fbtrace_id` (Partner Testing Guide
+§2.2/§7: support asks for them). Refusals keep the error mapper's category; all
+of them are permanent, so none is retried.
+
 ## UI surfaces
 
 All render only for a conversation whose WhatsApp contact inbox
@@ -198,16 +236,19 @@ WhatsApp settings page.
 
 ## Limits
 
-- **R1 — rejection codes unknown.** Meta has not published the error code for a
-  non-owner Service send, so `THREAD_CONTROL_REJECTION_CODES`
-  (`integrations/whatsapp/src/lib/error-mapper.ts`) is empty and `serviceRejected`
-  is never recorded yet. The local gate still blocks known-`standby` threads;
-  only a rejection on a thread we believe `idle`/`owned`/`null` goes unrecognized
-  (the send error is still shown). Add the code once captured from a real
-  rejection.
-- **No current-owner API.** Meta exposes no way to read the owner. The state is
+- **Non-owner send rejection (131070).** Meta answers a Service send without
+  ownership with `131070` ("another app is controlling this thread now"), also
+  on an idle thread; the escalation partner is exempt. It is the only entry of
+  `THREAD_CONTROL_REJECTION_CODES` (`integrations/whatsapp/src/lib/error-mapper.ts`):
+  it maps to `PERMISSION_DENIED` (never `AUTH_FAILED`, whatever `type` Meta
+  attaches), is never retried, and records `serviceRejected`, so the thread
+  turns `standby` and the composer locks.
+- **No current-owner API.** Meta exposes no way to read the owner ("There is no
+  endpoint that reports which responder currently owns a thread"). The state is
   inferred from webhooks, our own calls and sends; with standby visibility off,
   ChatbotX does not see the partner's activity and the 24 h idle clock may lag.
+  `routing_roles` reports this app's roles on the number, not the owner of a
+  thread.
 - **One WhatsApp inbox per conversation.** A contact on two WhatsApp numbers
   shows the routing state of the inbox `findContactInboxByChannel` picks.
 - **Up to 30 days of false positives** after a business removes its routing

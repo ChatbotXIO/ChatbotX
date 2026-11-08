@@ -14,6 +14,7 @@ import {
 } from "drizzle-orm/pg-core"
 import type { z } from "zod"
 import {
+  type RoutingRolesSnapshot,
   type WhatsappCallHoursSnapshot,
   type WhatsappCallRecordingMode,
   type WhatsappCallTranscriptionMode,
@@ -144,6 +145,13 @@ export const integrationWhatsappModel = pgTable(
       onDelete: "set null",
       onUpdate: "cascade",
     }),
+    /**
+     * This app's Conversation Routing roles on the number, as Meta last
+     * reported them (`GET /{phone_number_id}/routing_roles`). `null` = never
+     * checked. Tells whether this app is the escalation partner (the only role
+     * that may `take`).
+     */
+    routingRoles: jsonb().$type<RoutingRolesSnapshot>(),
     workspaceId: bigintAsString()
       .notNull()
       .references(() => workspaceModel.id, {

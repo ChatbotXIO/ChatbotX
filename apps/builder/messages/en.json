@@ -9245,7 +9245,9 @@
       "customer_service": "Customer service",
       "escalation": "Escalation",
       "marketing": "Marketing",
-      "utility": "Utility"
+      "utility": "Utility",
+      "calls": "Calls",
+      "other": "Other"
     },
     "pill": {
       "standby": "Standby ({owner})",
@@ -9334,7 +9336,17 @@
       "adminOnly": "Only workspace admins can change routing",
       "flowNotFound": "The selected flow was not found or is not active",
       "integrationNotFound": "WhatsApp number not found",
-      "messengerIntegrationNotFound": "Messenger page not found"
+      "messengerIntegrationNotFound": "Messenger page not found",
+      "rolesTitle": "Your routing roles on this number",
+      "rolesDescription": "Assigned by the business in Meta Business Suite.",
+      "rolesNone": "No routing role is assigned to you on this number.",
+      "rolesNeverChecked": "Not checked yet.",
+      "rolesNotEnabled": "Conversation routing is not enabled for this number.",
+      "rolesStandbyOn": "Standby access: on (you can see conversations you don't own)",
+      "rolesStandbyOff": "Standby access: off",
+      "rolesCheckedAt": "Checked {time}",
+      "rolesRefresh": "Check again",
+      "rolesSyncFailed": "Couldn't get the routing roles from Meta. Try again."
     },
     "errors": {
       "unsupported": "Conversation routing is not available on this channel",

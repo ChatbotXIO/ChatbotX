@@ -4,11 +4,13 @@ import {
   eq,
   inArray,
 } from "@chatbotx.io/database/client"
-import type {
-  ProviderAccountRouteScope,
-  ProviderAccountTarget,
-  WhatsappCallHoursSnapshot,
-  WhatsappRegistrationStatus,
+import {
+  type ProviderAccountRouteScope,
+  type ProviderAccountTarget,
+  type RoutingRolesSnapshot,
+  routingRolesSnapshotSchema,
+  type WhatsappCallHoursSnapshot,
+  type WhatsappRegistrationStatus,
 } from "@chatbotx.io/database/partials"
 import {
   integrationWhatsappRepository,
@@ -106,6 +108,16 @@ type FindWorkspaceIntegrationInput = {
   id: string
   workspaceId: string
 }
+
+/** What the channel reports about this app's routing roles, before it is stamped. */
+export type RoutingRolesProviderAnswer = Omit<RoutingRolesSnapshot, "checkedAt">
+
+/** Primitives-only provider call — business does not depend on `@chatbotx.io/integration-whatsapp`. */
+export type FetchRoutingRoles = (input: {
+  accessToken: string
+  version?: string
+  phoneNumberId: string
+}) => Promise<RoutingRolesProviderAnswer>
 
 type RefreshCapiScopeCacheInput = FindWorkspaceIntegrationInput & {
   now?: Date
@@ -875,6 +887,84 @@ class IntegrationWhatsappService extends BaseService {
   }
 
   /**
+   * Asks the channel which Conversation Routing roles this app holds on the
+   * number and stores the answer (`IntegrationWhatsapp.routingRoles`). The
+   * provider call is injected with primitives, like `setCoexist`, so business
+   * never depends on the WhatsApp integration package. A provider error
+   * propagates and keeps the last stored snapshot.
+   *
+   * The snapshot is stamped when the lookup STARTS and stored only if nothing
+   * newer landed meanwhile, so two syncs answered out of order (two admins,
+   * the API and the UI) never leave the older Meta answer stored; the loser
+   * returns what is stored.
+   */
+  async syncRoutingRoles(
+    input: FindWorkspaceIntegrationInput & {
+      fetchRoutingRoles: FetchRoutingRoles
+      now?: Date
+    },
+  ): Promise<RoutingRolesSnapshot> {
+    const { id, workspaceId } = input
+    const checkedAt = (input.now ?? new Date()).toISOString()
+    const integration =
+      await integrationWhatsappRepository.findByIdForWorkspace({
+        id,
+        workspaceId,
+      })
+    if (!integration) {
+      throw notFoundException("WhatsApp integration not found")
+    }
+    const auth = integration.auth as WhatsappAuthValue
+    const answer = await input.fetchRoutingRoles({
+      accessToken: auth.tokens.accessToken,
+      version: auth.version,
+      phoneNumberId: integration.phoneNumberId,
+    })
+    const snapshot: RoutingRolesSnapshot = { ...answer, checkedAt }
+    const stored =
+      await integrationWhatsappRepository.updateRoutingRolesIfNewer({
+        id,
+        workspaceId,
+        routingRoles: snapshot,
+      })
+    if (stored) {
+      return snapshot
+    }
+    // A newer sync won, or the number was disconnected while Meta answered.
+    const current = await this.findRoutingRoles({ id, workspaceId })
+    if (!current) {
+      throw notFoundException("WhatsApp integration not found")
+    }
+    return current
+  }
+
+  /** The stored routing roles of an integration, `null` when never checked. */
+  async findRoutingRoles(
+    input: FindWorkspaceIntegrationInput,
+  ): Promise<RoutingRolesSnapshot | null> {
+    const integration =
+      await integrationWhatsappRepository.findByIdForWorkspace(input)
+    if (!integration) {
+      throw notFoundException("WhatsApp integration not found")
+    }
+    return readRoutingRoles(integration.routingRoles)
+  }
+
+  /**
+   * The stored routing roles of the number behind an inbox, `null` when the
+   * inbox is not a WhatsApp number of the workspace or the roles were never
+   * checked.
+   */
+  async findRoutingRolesByInbox(input: {
+    inboxId: string
+    workspaceId: string
+  }): Promise<RoutingRolesSnapshot | null> {
+    const integration =
+      await integrationWhatsappRepository.findByInboxIdForWorkspace(input)
+    return readRoutingRoles(integration?.routingRoles)
+  }
+
+  /**
    * One batch of the numbers a WABA-level provider event may act on, narrowed in
    * SQL to the route that delivered it. Page with `afterIntegrationId` until a
    * batch is shorter than `PROVIDER_ACCOUNT_TARGET_BATCH_SIZE`.
@@ -886,6 +976,12 @@ class IntegrationWhatsappService extends BaseService {
   }): Promise<ProviderAccountTarget[]> {
     return integrationWhatsappRepository.listAccountTargetsByWabaId(input)
   }
+}
+
+/** A stored snapshot, validated; a malformed or absent one reads as unknown. */
+const readRoutingRoles = (value: unknown): RoutingRolesSnapshot | null => {
+  const parsed = routingRolesSnapshotSchema.safeParse(value)
+  return parsed.success ? parsed.data : null
 }
 
 /** Thrown when transcription is turned on for a number that does not record calls. */

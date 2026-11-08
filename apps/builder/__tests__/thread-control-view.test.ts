@@ -26,6 +26,7 @@ const whatsappInbox = (
   overrides: Partial<ThreadControlContactInbox> = {},
 ): ThreadControlContactInbox => ({
   id: "ci-wa",
+  inboxId: "inbox-wa",
   channel: "whatsapp",
   lastIncomingMessageAt: MINUTES_AGO(5),
   threadControlState: "standby",

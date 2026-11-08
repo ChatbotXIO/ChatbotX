@@ -9245,7 +9245,9 @@
       "customer_service": "Layanan pelanggan",
       "escalation": "Eskalasi",
       "marketing": "Pemasaran",
-      "utility": "Utilitas"
+      "utility": "Utilitas",
+      "calls": "Panggilan",
+      "other": "Lainnya"
     },
     "pill": {
       "standby": "Standby ({owner})",
@@ -9334,7 +9336,17 @@
       "adminOnly": "Hanya admin workspace yang dapat mengubah perutean",
       "flowNotFound": "Alur yang dipilih tidak ditemukan atau tidak aktif",
       "integrationNotFound": "Nomor WhatsApp tidak ditemukan",
-      "messengerIntegrationNotFound": "Halaman Messenger tidak ditemukan"
+      "messengerIntegrationNotFound": "Halaman Messenger tidak ditemukan",
+      "rolesTitle": "Peran perutean Anda di nomor ini",
+      "rolesDescription": "Ditetapkan oleh bisnis di Meta Business Suite.",
+      "rolesNone": "Anda tidak memiliki peran perutean di nomor ini.",
+      "rolesNeverChecked": "Belum diperiksa.",
+      "rolesNotEnabled": "Perutean percakapan tidak aktif untuk nomor ini.",
+      "rolesStandbyOn": "Akses siaga: aktif (Anda dapat melihat percakapan yang bukan milik Anda)",
+      "rolesStandbyOff": "Akses siaga: nonaktif",
+      "rolesCheckedAt": "Diperiksa {time}",
+      "rolesRefresh": "Periksa lagi",
+      "rolesSyncFailed": "Tidak dapat mengambil peran perutean dari Meta. Coba lagi."
     },
     "errors": {
       "unsupported": "Perutean percakapan tidak tersedia di kanal ini",

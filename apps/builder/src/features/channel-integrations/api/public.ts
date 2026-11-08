@@ -11,10 +11,12 @@ import {
   ChatbotXException,
   notFoundException,
 } from "@chatbotx.io/business/errors"
+import { routingRolesSnapshotSchema } from "@chatbotx.io/database/partials"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { CAPI_TEST_MESSAGING_ID_MAX_LENGTH } from "@chatbotx.io/utils/meta-capi"
 import { z } from "zod"
 import { triggerSync as triggerWhatsappCoexistSync } from "@/features/integration-whatsapp/lib/coexist-trigger-sync"
+import { syncWhatsappRoutingRoles } from "@/features/integration-whatsapp/lib/routing-roles"
 import {
   disconnectCapiFor,
   provisionCapiDatasetFor,
@@ -30,6 +32,7 @@ import {
   possibleErrorsOnSendingCapiTestEvent,
   possibleErrorsOnSettingCapiDataset,
   possibleErrorsOnSettingCoexist,
+  possibleErrorsOnSyncingRoutingRoles,
 } from "@/lib/orpc/orpc-error-helper"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
 import {
@@ -167,6 +170,76 @@ export const createHandoverResumeFlowRoute = (
       }),
   }
 }
+
+// The stored snapshot's own schema, with OpenAPI descriptions for agents.
+const routingRolesSnapshotResource = routingRolesSnapshotSchema
+  .extend({
+    enabled: routingRolesSnapshotSchema.shape.enabled.describe(
+      "False when Meta says Conversation Routing is not enabled for the number.",
+    ),
+    roles: routingRolesSnapshotSchema.shape.roles.describe(
+      "This app's routing roles on the number: calls, ctwa, customer_service, escalation, marketing, utility. Only `escalation` may take a thread (`conversations.threadControl` with `take`).",
+    ),
+    isStandby: routingRolesSnapshotSchema.shape.isStandby.describe(
+      "Whether the business granted this app standby (listen-only) access to conversations it does not own.",
+    ),
+    checkedAt: routingRolesSnapshotSchema.shape.checkedAt.describe(
+      "ISO time Meta was last asked.",
+    ),
+  })
+  .describe("This app's Conversation Routing roles as Meta last reported them.")
+
+const whatsappChannelIdInput = z.object({
+  id: zodBigintAsString().describe(
+    `WhatsApp channel (integration) id. Get it from \`${channelListOperations.whatsapp}\`.`,
+  ),
+})
+
+/**
+ * Conversation Routing roles of a WhatsApp number: `GET` reads the stored
+ * snapshot, `POST .../sync` asks Meta (`GET /{phone_number_id}/routing_roles`)
+ * and stores the answer. Same lib as the builder's settings card.
+ */
+export const createWhatsappRoutingRolesRoutes = () => ({
+  getRoutingRoles: workspaceTokenAuthAPI
+    .route({
+      method: "GET",
+      path: "/v1/whatsapp-channels/{id}/routing-roles",
+      summary: "Get WhatsApp routing roles",
+      description:
+        "Returns this app's Conversation Routing roles on a WhatsApp number as last checked (`roles`, `isStandby`, `enabled`, `checkedAt`), or `null` when they were never checked — call `whatsappChannels.syncRoutingRoles` then. Roles are assigned by the business in Meta Business Suite, never by this app.",
+      tags: ["Channels"],
+    })
+    .input(whatsappChannelIdInput)
+    .output(routingRolesSnapshotResource.nullable())
+    .errors(possibleErrorsOnFindingResource)
+    .handler(
+      async ({ context, input }) =>
+        await integrationWhatsappService.findRoutingRoles({
+          id: input.id,
+          workspaceId: context.workspace.id,
+        }),
+    ),
+  syncRoutingRoles: workspaceTokenAuthAPI
+    .route({
+      method: "POST",
+      path: "/v1/whatsapp-channels/{id}/routing-roles/sync",
+      summary: "Sync WhatsApp routing roles",
+      description:
+        "Asks Meta which Conversation Routing roles this app holds on a WhatsApp number, stores the answer and returns it. Use it after the business changes routing in Meta Business Suite. A Meta failure returns `routingRolesUnavailable` and keeps the previous answer.",
+      tags: ["Channels"],
+    })
+    .input(whatsappChannelIdInput)
+    .output(routingRolesSnapshotResource)
+    .errors(possibleErrorsOnSyncingRoutingRoles)
+    .handler(
+      async ({ context, input }) =>
+        await syncWhatsappRoutingRoles({
+          workspaceId: context.workspace.id,
+          integrationWhatsappId: input.id,
+        }),
+    ),
+})
 
 type CoexistChannel = Extract<
   ChannelIntegrationChannel,

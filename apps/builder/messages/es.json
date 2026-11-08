@@ -9245,7 +9245,9 @@
       "customer_service": "Atención al cliente",
       "escalation": "Escalamiento",
       "marketing": "Marketing",
-      "utility": "Utilidad"
+      "utility": "Utilidad",
+      "calls": "Llamadas",
+      "other": "Otro"
     },
     "pill": {
       "standby": "Standby ({owner})",
@@ -9334,7 +9336,17 @@
       "adminOnly": "Solo los administradores del espacio de trabajo pueden cambiar el enrutamiento",
       "flowNotFound": "No se encontró el flujo seleccionado o no está activo",
       "integrationNotFound": "No se encontró el número de WhatsApp",
-      "messengerIntegrationNotFound": "No se encontró la página de Messenger"
+      "messengerIntegrationNotFound": "No se encontró la página de Messenger",
+      "rolesTitle": "Tus roles de enrutamiento en este número",
+      "rolesDescription": "Los asigna la empresa en Meta Business Suite.",
+      "rolesNone": "No tienes ningún rol de enrutamiento asignado en este número.",
+      "rolesNeverChecked": "Aún no se ha comprobado.",
+      "rolesNotEnabled": "El enrutamiento de conversaciones no está activado para este número.",
+      "rolesStandbyOn": "Acceso en espera: activado (puedes ver conversaciones que no te pertenecen)",
+      "rolesStandbyOff": "Acceso en espera: desactivado",
+      "rolesCheckedAt": "Comprobado {time}",
+      "rolesRefresh": "Volver a comprobar",
+      "rolesSyncFailed": "No se pudieron obtener los roles de enrutamiento de Meta. Inténtalo de nuevo."
     },
     "errors": {
       "unsupported": "El enrutamiento de conversaciones no está disponible en este canal",
