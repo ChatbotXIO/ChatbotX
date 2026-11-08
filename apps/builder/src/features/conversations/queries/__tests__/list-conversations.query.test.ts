@@ -332,7 +332,7 @@ describe("buildConversationWhere unread filter", () => {
     expect(where.OR).toEqual([
       { lastActivityAt: { lt: cursor.lastActivityAt } },
       { lastActivityAt: { isNull: true } },
-      { lastActivityAt: cursor.lastActivityAt, id: { lt: cursor.id } },
+      { lastActivityAt: { eq: cursor.lastActivityAt }, id: { lt: cursor.id } },
     ])
     expect(where.AND).toEqual([conversationUnreadWhere])
   })
