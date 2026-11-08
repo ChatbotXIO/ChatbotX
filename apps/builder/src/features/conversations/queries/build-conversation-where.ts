@@ -146,7 +146,9 @@ export function buildConversationWhere(
           { lastActivityAt: { lt: cursor.lastActivityAt } },
           { lastActivityAt: { isNull: true } },
           {
-            lastActivityAt: cursor.lastActivityAt,
+            // Explicit `eq`: drizzle's relational filter reads a bare Date as
+            // an empty operator object and drops it, leaving `id < cursor.id`.
+            lastActivityAt: { eq: cursor.lastActivityAt },
             id: { lt: cursor.id },
           },
         ]
