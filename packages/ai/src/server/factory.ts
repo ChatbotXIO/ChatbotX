@@ -130,6 +130,7 @@ export function getAIModel(model: AIIntegrationModel, provider: string) {
 
 const legacyModelIdMap: Partial<Record<AIProvider, Record<string, string>>> = {
   [aiProviders.enum.openai]: {
+    "gpt-image-1": "gpt-image-2.5-sunburst",
     "gpt-4": "gpt-5.6-sol",
     "gpt-4-turbo": "gpt-5.6-sol",
     "o4-mini": "gpt-5.6-terra",

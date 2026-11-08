@@ -82,11 +82,43 @@ describe("AI model catalog", () => {
     ["gpt-4.1-nano", "gpt-5.6-luna"],
   ])("hides retired OpenAI model %s while migrating saved configurations", (legacyId, replacement) => {
     expect(openaiModels.safeParse(legacyId).success).toBe(true)
-    expect(openaiModelOptions.map((option) => option.value)).not.toContain(legacyId)
-    expect(openaiAnalyzeImageModelOptions.map((option) => option.value)).not.toContain(legacyId)
+    expect(openaiModels.safeParse(replacement).success).toBe(true)
+    expect(openaiModelOptions.map((option) => option.value)).toContain(
+      replacement,
+    )
+    expect(openaiModelOptions.map((option) => option.value)).not.toContain(
+      legacyId,
+    )
+    expect(
+      openaiAnalyzeImageModelOptions.map((option) => option.value),
+    ).not.toContain(legacyId)
     expect(normalizeAIModelId("openai", legacyId)).toBe(replacement)
     expect(normalizeAIModelId("openai", replacement)).toBe(replacement)
     expect(normalizeAIModelId("openrouter", legacyId)).toBe(legacyId)
+  })
+
+  test("hides retired OpenAI image model while migrating saved configurations", () => {
+    const legacyId = "gpt-image-1"
+    const replacement = "gpt-image-2.5-sunburst"
+    expect(openaiImageModels.safeParse(legacyId).success).toBe(true)
+    expect(openaiImageModels.safeParse(replacement).success).toBe(true)
+    expect(openaiImageModelOptions.map((option) => option.value)).not.toContain(
+      legacyId,
+    )
+    expect(normalizeAIModelId("openai", legacyId)).toBe(replacement)
+    expect(normalizeAIModelId("openai", replacement)).toBe(replacement)
+    expect(normalizeAIModelId("openrouter", legacyId)).toBe(legacyId)
+
+    const integration = {
+      auth: { authType: "secretText", secretText: "test-key" },
+    } as Parameters<typeof createAIImageModelInstance>[0]["model"]
+    expect(
+      createAIImageModelInstance({
+        model: integration,
+        modelId: legacyId,
+        provider: "openai",
+      }),
+    ).toMatchObject({ modelId: replacement })
   })
 
   test("does not accept retired or malformed native Claude model ids", () => {

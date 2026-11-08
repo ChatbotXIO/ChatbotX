@@ -10,6 +10,9 @@ export const openaiModels = z.enum([
   "gpt-6-astra",
   "gpt-6-sol",
   "gpt-6-luna",
+  "gpt-5.6-sol",
+  "gpt-5.6-terra",
+  "gpt-5.6-luna",
   "gpt-4-turbo",
   "gpt-4.1-mini",
   "gpt-4.1-nano",
@@ -113,6 +116,18 @@ export const openaiModelOptions: { label: string; value: OpenAIModel }[] = [
     value: openaiModels.enum["gpt-6-luna"],
   },
   {
+    label: "GPT-5.6 Sol",
+    value: openaiModels.enum["gpt-5.6-sol"],
+  },
+  {
+    label: "GPT-5.6 Terra",
+    value: openaiModels.enum["gpt-5.6-terra"],
+  },
+  {
+    label: "GPT-5.6 Luna",
+    value: openaiModels.enum["gpt-5.6-luna"],
+  },
+  {
     label: "GPT-5.5",
     value: openaiModels.enum["gpt-5.5"],
   },
@@ -207,10 +222,6 @@ export const openaiImageModelOptions: {
   {
     label: "GPT Image 1.5",
     value: openaiImageModels.enum["gpt-image-1.5"],
-  },
-  {
-    label: "GPT Image 1",
-    value: openaiImageModels.enum["gpt-image-1"],
   },
   {
     label: "GPT Image 1 Mini",
