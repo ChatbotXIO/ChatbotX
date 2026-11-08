@@ -75,6 +75,20 @@ describe("AI model catalog", () => {
     }
   })
 
+  test.each([
+    ["gpt-4", "gpt-5.6-sol"],
+    ["gpt-4-turbo", "gpt-5.6-sol"],
+    ["o4-mini", "gpt-5.6-terra"],
+    ["gpt-4.1-nano", "gpt-5.6-luna"],
+  ])("hides retired OpenAI model %s while migrating saved configurations", (legacyId, replacement) => {
+    expect(openaiModels.safeParse(legacyId).success).toBe(true)
+    expect(openaiModelOptions.map((option) => option.value)).not.toContain(legacyId)
+    expect(openaiAnalyzeImageModelOptions.map((option) => option.value)).not.toContain(legacyId)
+    expect(normalizeAIModelId("openai", legacyId)).toBe(replacement)
+    expect(normalizeAIModelId("openai", replacement)).toBe(replacement)
+    expect(normalizeAIModelId("openrouter", legacyId)).toBe(legacyId)
+  })
+
   test("does not accept retired or malformed native Claude model ids", () => {
     const retiredOrMalformedIds = [
       "claude-3-5-sonnet-20241022",

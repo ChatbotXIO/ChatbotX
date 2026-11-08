@@ -97,10 +97,6 @@ export const openaiAnalyzeImageModelOptions: {
     label: "GPT-4o",
     value: openaiModels.enum["gpt-4o"],
   },
-  {
-    label: "o4-mini",
-    value: openaiModels.enum["o4-mini"],
-  },
 ]
 
 export const openaiModelOptions: { label: string; value: OpenAIModel }[] = [
@@ -173,24 +169,12 @@ export const openaiModelOptions: { label: string; value: OpenAIModel }[] = [
     value: openaiModels.enum["gpt-4.1-mini"],
   },
   {
-    label: "GPT-4.1 Nano",
-    value: openaiModels.enum["gpt-4.1-nano"],
-  },
-  {
     label: "GPT-4o",
     value: openaiModels.enum["gpt-4o"],
   },
   {
     label: "GPT-4o Mini",
     value: openaiModels.enum["gpt-4o-mini"],
-  },
-  {
-    label: "GPT-4",
-    value: openaiModels.enum["gpt-4"],
-  },
-  {
-    label: "GPT-4 Turbo",
-    value: openaiModels.enum["gpt-4-turbo"],
   },
 ]
 

@@ -129,6 +129,12 @@ export function getAIModel(model: AIIntegrationModel, provider: string) {
 }
 
 const legacyModelIdMap: Partial<Record<AIProvider, Record<string, string>>> = {
+  [aiProviders.enum.openai]: {
+    "gpt-4": "gpt-5.6-sol",
+    "gpt-4-turbo": "gpt-5.6-sol",
+    "o4-mini": "gpt-5.6-terra",
+    "gpt-4.1-nano": "gpt-5.6-luna",
+  },
   [aiProviders.enum.deepseek]: {
     "deepseek-v4-flash": "deepseek-flash",
   },
