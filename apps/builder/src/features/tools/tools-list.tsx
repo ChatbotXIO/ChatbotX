@@ -224,6 +224,7 @@ export const TOOLS_CONFIG = [
     labelKey: "pollManager.title",
     descriptionKey: "pollManager.description",
     icon: UserCheck2Icon,
+    getLink: (id: string) => `/space/${id}/polls`,
   },
 ] as const
 

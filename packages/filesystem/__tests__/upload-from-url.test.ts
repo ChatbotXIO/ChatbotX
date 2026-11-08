@@ -93,6 +93,35 @@ describe("uploadFileFromUrl byte cap and redirect handling", () => {
     )
   })
 
+  test("stores and returns image/jpeg when the host serves the non-standard image/jpg", async () => {
+    // 1x1 baseline JPEG, so the dimension probe succeeds and keeps the type.
+    const jpeg = Uint8Array.from(
+      Buffer.from(
+        "/9j/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAj/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFAEBAAAAAAAAAAAAAAAAAAAAAP/EABQRAQAAAAAAAAAAAAAAAAAAAAD/2gAMAwEAAhEDEQA/AKpAB//Z",
+        "base64",
+      ),
+    )
+    globalThis.fetch = vi.fn(async () =>
+      streamResponse([jpeg], {
+        headers: { "content-type": "image/jpg; charset=binary" },
+      }),
+    ) as unknown as typeof fetch
+
+    const result = await uploadFileFromUrl(
+      "https://example.com/photo.jpg",
+      "path/to/photo",
+    )
+
+    expect(result.mimeType).toBe("image/jpeg")
+    expect(result.fileType).toBe("image")
+    expect(mockPutObject).toHaveBeenCalledWith(
+      "path/to/photo",
+      expect.anything(),
+      expect.objectContaining({ ContentType: "image/jpeg" }),
+      undefined,
+    )
+  })
+
   test("forwards the abort signal to both the download and the upload", async () => {
     const chunk = new TextEncoder().encode("hi")
     const fetchMock = vi.fn(async () =>

@@ -59,6 +59,11 @@ import {
   seekConnectedNode,
 } from "./flow-utils"
 import {
+  handlePollTap,
+  POLL_FLOW_CONTEXT_ID,
+  POLL_RICH_RESPONSE_LOOKBACK_MS,
+} from "./poll"
+import {
   armQuickReplySettings,
   clearQuickReplyChallengeOnTap,
   clearQuickReplyPendingOnFlowEntry,
@@ -826,6 +831,34 @@ async function* executeMultipleStepsGenerator(
   }
 }
 
+/**
+ * A poll tap whose stored payload can no longer be found (card too old, rows
+ * pruned) must not be a silent no-op: show the Polls list so the contact can
+ * pick a poll again.
+ */
+async function recoverUnresolvedPollTap(props: {
+  buttonId: string
+  contactInbox: ContactInboxModel
+  conversation: ConversationModel
+}): Promise<{ handled: true; shouldEnqueueAutomatedResponse: false }> {
+  const { buttonId, contactInbox, conversation } = props
+  logger.warn(
+    {
+      workspaceId: conversation.workspaceId,
+      conversationId: conversation.id,
+      buttonId,
+      reason: "poll_tap_unresolved",
+    },
+    "[poll] poll button payload could not be resolved, sending the Polls list",
+  )
+  await handlePollTap({
+    payload: { type: "poll_list" },
+    conversation,
+    contactInbox,
+  })
+  return { handled: true, shouldEnqueueAutomatedResponse: false }
+}
+
 async function tryRunRichButtonFallback(props: {
   buttonId: string
   contactInbox: ContactInboxModel
@@ -851,17 +884,24 @@ async function tryRunRichButtonFallback(props: {
     )
   }
 
+  const isPollContext = flowContextId === POLL_FLOW_CONTEXT_ID
   const messageRepository = await createMessageRepository()
   const richResponse = await messageRepository.findRichResponseByButton({
     buttonId,
     contactInboxId: contactInbox.id,
     conversationId: conversation.id,
     messageId,
+    // Poll cards stay votable far longer than the default 7-day lookback.
+    sinceTime: isPollContext
+      ? new Date(Date.now() - POLL_RICH_RESPONSE_LOOKBACK_MS)
+      : undefined,
     workspaceId: conversation.workspaceId,
   })
 
   if (!richResponse) {
-    return { handled: false }
+    return isPollContext
+      ? await recoverUnresolvedPollTap({ buttonId, contactInbox, conversation })
+      : { handled: false }
   }
 
   const entry = richResponse.buttonPayloads[buttonId]
@@ -877,7 +917,9 @@ async function tryRunRichButtonFallback(props: {
       },
       "[rich-response] rich button payload not found",
     )
-    return { handled: false }
+    return isPollContext
+      ? await recoverUnresolvedPollTap({ buttonId, contactInbox, conversation })
+      : { handled: false }
   }
 
   const parsedPayload = richButtonPayloadSchema.safeParse(entry.payload)
@@ -903,10 +945,24 @@ async function tryRunRichButtonFallback(props: {
     return { handled: true, shouldEnqueueAutomatedResponse: true }
   }
 
+  const tapPayload = parsedPayload.data
+  if (
+    tapPayload.type === "poll_open" ||
+    tapPayload.type === "poll_vote" ||
+    tapPayload.type === "poll_list"
+  ) {
+    await handlePollTap({
+      payload: tapPayload,
+      conversation,
+      contactInbox,
+    })
+    return { handled: true, shouldEnqueueAutomatedResponse: false }
+  }
+
   await executeRichActions(
-    parsedPayload.data.type === "send_flow"
-      ? [{ action: "send_flow", flow_id: parsedPayload.data.flowId }]
-      : parsedPayload.data.actions,
+    tapPayload.type === "send_flow"
+      ? [{ action: "send_flow", flow_id: tapPayload.flowId }]
+      : tapPayload.actions,
     {
       workspaceId: conversation.workspaceId,
       conversationId: conversation.id,

@@ -247,6 +247,9 @@ export type MinigameModel = typeof schema.minigameModel.$inferSelect
 export type MinigameContactModel =
   typeof schema.minigameContactModel.$inferSelect
 export type MinigamePlayModel = typeof schema.minigamePlayModel.$inferSelect
+export type PollModel = typeof schema.pollModel.$inferSelect
+export type PollCandidateModel = typeof schema.pollCandidateModel.$inferSelect
+export type PollVoteModel = typeof schema.pollVoteModel.$inferSelect
 export type LeaderboardModel = typeof schema.leaderboardModel.$inferSelect
 export type LeaderboardParticipantModel =
   typeof schema.leaderboardParticipantModel.$inferSelect

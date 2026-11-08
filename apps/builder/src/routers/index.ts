@@ -70,6 +70,9 @@ export const router = {
       default: m.pipelinesAPI,
     })),
   ),
+  pollsAPI: lazy(() =>
+    import("@/features/polls/api").then((m) => ({ default: m.pollsAPI })),
+  ),
   placesNearMeAPI: lazy(() =>
     import("@/features/places-near-me/api").then((m) => ({
       default: m.placesNearMeAPI,

@@ -5,6 +5,7 @@ import { Upload } from "@aws-sdk/lib-storage"
 import { createId } from "@chatbotx.io/utils"
 import probe from "probe-image-size"
 import { guessFileTypeFromMimeType } from "./helper"
+import { normalizeMimeType } from "./mime-type"
 import { DEFAULT_MIME_TYPE, type UploadedFile } from "./schema"
 import { uploader } from "./uploader"
 
@@ -19,7 +20,10 @@ export function createUpload(
       Bucket: uploader.bucketName,
       Key: path,
       Body: stream,
-      ContentType: options?.contentType,
+      ContentType:
+        options?.contentType === undefined
+          ? undefined
+          : normalizeMimeType(options.contentType),
     },
   })
   const done = upload.done().then(() => undefined)
@@ -36,9 +40,9 @@ export async function uploadFileFromUrl(
     throw new Error(`Failed to download file: ${response.status}`)
   }
 
-  const mimeType = (response.headers.get("content-type") || DEFAULT_MIME_TYPE)
-    .split(";")[0]
-    .trim()
+  const mimeType = normalizeMimeType(
+    (response.headers.get("content-type") || DEFAULT_MIME_TYPE).split(";")[0],
+  )
   const contentLength = Number.parseInt(
     response.headers.get("content-length") ?? "0",
     10,

@@ -60,7 +60,18 @@ vi.mock("@chatbotx.io/database/client", () => ({
 
 // Any action carrying a button ID goes through the rich-response fallback
 // before the flow is consulted, so it has to resolve to "no rich response".
-const findRichResponseByButton = vi.fn(async () => null)
+const findRichResponseByButton = vi.fn(
+  async (..._args: unknown[]) => null as unknown,
+)
+const handlePollTap = vi.fn(async (..._args: unknown[]) => undefined)
+vi.mock("../src/integration/handlers/poll", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("../src/integration/handlers/poll")>()
+  return {
+    ...actual,
+    handlePollTap: (...args: unknown[]) => handlePollTap(...args),
+  }
+})
 vi.mock("@chatbotx.io/database/repositories", () => ({
   createMessageRepository: async () => ({ findRichResponseByButton }),
 }))
@@ -3124,5 +3135,107 @@ describe("WhatsApp Flow response postback", () => {
     expect(applyWhatsappFlowResponseSideEffects).toHaveBeenCalledWith(
       expect.objectContaining({ flowResponse, flowFiles: undefined }),
     )
+  })
+})
+
+describe("poll button taps", () => {
+  const POLL_BUTTON_ID = "11612473309626371"
+
+  beforeEach(() => {
+    integrationQueueAdd.mockClear()
+    chatQueueAdd.mockClear()
+    vi.mocked(logger.warn).mockClear()
+    findRichResponseByButton.mockReset()
+    handlePollTap.mockClear()
+    detectFlowVersion.mockReset()
+    detectConversationAndContactInbox.mockReset()
+    detectConversationAndContactInbox.mockResolvedValue({
+      conversation: makeConversation(),
+      contactInbox: { ...makeContactInbox(), channel: "whatsapp" },
+    })
+  })
+
+  function pollAction() {
+    return encodeButtonPayload({ flowId: "0", buttonId: POLL_BUTTON_ID })
+  }
+
+  function tap() {
+    return runFlowPostback({
+      conversationId: "conv-1",
+      contactInboxId: "ci-1",
+      action: pollAction(),
+      messageId: "msg-1",
+      ref: null,
+    } as never)
+  }
+
+  test("a stored poll_vote payload is handed to handlePollTap, not to a flow", async () => {
+    findRichResponseByButton.mockResolvedValue({
+      executionId: "exec-1",
+      buttonPayloads: {
+        [POLL_BUTTON_ID]: {
+          executionId: "exec-1",
+          payload: { type: "poll_vote", pollId: "p1", candidateId: "c1" },
+        },
+      },
+    })
+
+    await tap()
+
+    expect(handlePollTap).toHaveBeenCalledTimes(1)
+    expect(handlePollTap.mock.calls[0]?.[0]).toMatchObject({
+      payload: { type: "poll_vote", pollId: "p1", candidateId: "c1" },
+    })
+    expect(detectFlowVersion).not.toHaveBeenCalled()
+  })
+
+  test("looks the payload up with the extended poll window, not the 7-day default", async () => {
+    findRichResponseByButton.mockResolvedValue(null)
+    const before = Date.now()
+
+    await tap()
+
+    const params = findRichResponseByButton.mock.calls[0]?.[0] as {
+      sinceTime?: Date
+    }
+    expect(params.sinceTime).toBeInstanceOf(Date)
+    const ageMs = before - (params.sinceTime as Date).getTime()
+    expect(ageMs).toBeGreaterThanOrEqual(89 * 24 * 60 * 60 * 1000)
+  })
+
+  test("a non-poll tap keeps the default lookback (no sinceTime)", async () => {
+    findRichResponseByButton.mockResolvedValue(null)
+    detectFlowVersion.mockRejectedValue(
+      new SdkException("flow", "notFound" as never),
+    )
+
+    await runFlowPostback({
+      conversationId: "conv-1",
+      contactInboxId: "ci-1",
+      action: encodeButtonPayload({
+        flowId: "123",
+        buttonId: "11612473309626372",
+      }),
+      messageId: "msg-1",
+      ref: null,
+    } as never).catch(() => undefined)
+
+    const params = findRichResponseByButton.mock.calls[0]?.[0] as {
+      sinceTime?: Date
+    }
+    expect(params.sinceTime).toBeUndefined()
+    expect(handlePollTap).not.toHaveBeenCalled()
+  })
+
+  test("an unresolved poll tap sends the Polls list instead of silently skipping", async () => {
+    findRichResponseByButton.mockResolvedValue(null)
+
+    await tap()
+
+    expect(handlePollTap).toHaveBeenCalledTimes(1)
+    expect(handlePollTap.mock.calls[0]?.[0]).toMatchObject({
+      payload: { type: "poll_list" },
+    })
+    expect(detectFlowVersion).not.toHaveBeenCalled()
   })
 })

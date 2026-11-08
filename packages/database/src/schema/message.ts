@@ -27,6 +27,9 @@ export type RichButtonPayloadEntry = {
     | { type: "send_flow"; flowId: string }
     | { type: "actions"; actions: Record<string, unknown>[] }
     | { type: "text"; text: string }
+    | { type: "poll_open"; pollId: string }
+    | { type: "poll_vote"; pollId: string; candidateId: string }
+    | { type: "poll_list" }
     | { type: "unsupported"; reason: string }
 }
 

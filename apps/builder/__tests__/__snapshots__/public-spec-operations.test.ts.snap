@@ -2904,6 +2904,46 @@ exports[`public API spec — operation naming guard > operation list (operationI
   },
   {
     "method": "POST",
+    "operationId": "polls.bulkDelete",
+    "path": "/v1/polls/bulk-delete",
+  },
+  {
+    "method": "POST",
+    "operationId": "polls.create",
+    "path": "/v1/polls",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "polls.delete",
+    "path": "/v1/polls/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "polls.get",
+    "path": "/v1/polls/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "polls.getAnalytics",
+    "path": "/v1/polls/{id}/analytics",
+  },
+  {
+    "method": "GET",
+    "operationId": "polls.getLinks",
+    "path": "/v1/polls/{id}/links",
+  },
+  {
+    "method": "GET",
+    "operationId": "polls.list",
+    "path": "/v1/polls",
+  },
+  {
+    "method": "PATCH",
+    "operationId": "polls.update",
+    "path": "/v1/polls/{id}",
+  },
+  {
+    "method": "POST",
     "operationId": "productCategories.create",
     "path": "/v1/product-categories",
   },

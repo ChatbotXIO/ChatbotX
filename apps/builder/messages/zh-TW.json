@@ -1538,7 +1538,8 @@
       "miniApps": "迷你應用程式",
       "leaderboards": "排行榜",
       "pipelines": "管道",
-      "places": "地點"
+      "places": "地點",
+      "polls": "Polls"
     },
     "adReferral": {
       "label": "Ads",
@@ -6331,7 +6332,57 @@
   },
   "pollManager": {
     "title": "投票管理器",
-    "description": "建立並管理您的聯絡人的投票。"
+    "description": "進行投票或表決。您也可以用它來收集客戶的意見。",
+    "feature": "Poll",
+    "deleteDescription": "Deleting a poll also deletes its candidates and votes. This cannot be undone.",
+    "list": {
+      "startDate": "Start Date",
+      "endDate": "End Date",
+      "votes": "Votes",
+      "getLink": "Get Link"
+    },
+    "getLink": {
+      "title": "Get Link",
+      "description": "Share a link that opens a chat and starts the poll.",
+      "omnichannel": "Omnichannel",
+      "noInboxes": "No connected channels can open this poll yet.",
+      "loadError": "Could not load the links."
+    },
+    "form": {
+      "createTitle": "Create poll",
+      "editTitle": "Edit poll",
+      "votingPeriod": "Voting period",
+      "imageRequired": "An image is required.",
+      "dateRangeInvalid": "結束日期必須晚於開始日期。",
+      "candidatesTitle": "Candidates or Options",
+      "candidateNumber": "Candidate {number}",
+      "moreOptions": "More Options",
+      "afterVoteFlow": "Flow to be sent after the user votes",
+      "afterVoteFlowNone": "None",
+      "removeVotesTitle": "Remove candidates?",
+      "removeVotesDescription": "Deleting candidates also deletes their votes."
+    },
+    "analytics": {
+      "title": "Analytics",
+      "results": "Results",
+      "votesPerGender": "Votes per gender",
+      "totalVotes": "Total votes",
+      "noVotes": "No votes yet",
+      "other": "Other",
+      "male": "Male",
+      "female": "Female",
+      "unknown": "Unknown",
+      "loadError": "Could not load the analytics.",
+      "columns": {
+        "name": "Name",
+        "totalVotes": "Total votes",
+        "totalPercent": "T%",
+        "maleVotes": "Male votes",
+        "malePercent": "M%",
+        "femaleVotes": "Female votes",
+        "femalePercent": "F%"
+      }
+    }
   },
   "placesNearMe": {
     "title": "我附近的地方",
