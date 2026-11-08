@@ -9245,7 +9245,9 @@
       "customer_service": "Service client",
       "escalation": "Escalade",
       "marketing": "Marketing",
-      "utility": "Utilitaire"
+      "utility": "Utilitaire",
+      "calls": "Appels",
+      "other": "Autre"
     },
     "pill": {
       "standby": "Standby ({owner})",
@@ -9334,7 +9336,17 @@
       "adminOnly": "Seuls les administrateurs de l'espace de travail peuvent modifier le routage",
       "flowNotFound": "Le flux sélectionné est introuvable ou inactif",
       "integrationNotFound": "Numéro WhatsApp introuvable",
-      "messengerIntegrationNotFound": "Page Messenger introuvable"
+      "messengerIntegrationNotFound": "Page Messenger introuvable",
+      "rolesTitle": "Vos rôles de routage sur ce numéro",
+      "rolesDescription": "Attribués par l'entreprise dans Meta Business Suite.",
+      "rolesNone": "Aucun rôle de routage ne vous est attribué sur ce numéro.",
+      "rolesNeverChecked": "Pas encore vérifié.",
+      "rolesNotEnabled": "Le routage des conversations n'est pas activé pour ce numéro.",
+      "rolesStandbyOn": "Accès en veille : activé (vous voyez les conversations qui ne vous appartiennent pas)",
+      "rolesStandbyOff": "Accès en veille : désactivé",
+      "rolesCheckedAt": "Vérifié {time}",
+      "rolesRefresh": "Vérifier à nouveau",
+      "rolesSyncFailed": "Impossible d'obtenir les rôles de routage auprès de Meta. Réessayez."
     },
     "errors": {
       "unsupported": "Le routage des conversations n'est pas disponible sur ce canal",

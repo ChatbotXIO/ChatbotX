@@ -64,7 +64,7 @@ export function resolveThreadOwnerLabel(
 /** The routing fields of a contact inbox; timestamps may be strings after realtime/JSON. */
 export type ThreadControlContactInbox = Pick<
   ConversationContactInboxResource,
-  "id" | "channel" | "lastIncomingMessageAt"
+  "id" | "inboxId" | "channel" | "lastIncomingMessageAt"
 > & {
   threadControlState?: ThreadControlState | null
   threadOwnerRole?: string | null
@@ -76,6 +76,8 @@ export type ThreadControlContactInbox = Pick<
 
 export type ThreadControlView = {
   contactInboxId: string
+  /** The inbox (number/page) the resolved thread belongs to. */
+  inboxId: string
   /** The routing-capable channel of the resolved thread. */
   channel: ThreadControlChannel
   /** Resolved (24h idle applied); never null — a null thread yields no view. */
@@ -234,6 +236,7 @@ export function resolveThreadControlView(
 
   return {
     contactInboxId: contactInbox.id,
+    inboxId: contactInbox.inboxId,
     channel: contactInbox.channel,
     state,
     ownerRole,

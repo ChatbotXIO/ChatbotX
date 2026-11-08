@@ -9245,7 +9245,9 @@
       "customer_service": "Asiakaspalvelu",
       "escalation": "Eskalointi",
       "marketing": "Markkinointi",
-      "utility": "Palvelu"
+      "utility": "Palvelu",
+      "calls": "Puhelut",
+      "other": "Muu"
     },
     "pill": {
       "standby": "Valmiustila ({owner})",
@@ -9334,7 +9336,17 @@
       "adminOnly": "Vain työtilan ylläpitäjät voivat muuttaa reititystä",
       "flowNotFound": "Valittua kulkua ei löytynyt tai se ei ole aktiivinen",
       "integrationNotFound": "WhatsApp-numeroa ei löytynyt",
-      "messengerIntegrationNotFound": "Messenger-sivua ei löytynyt"
+      "messengerIntegrationNotFound": "Messenger-sivua ei löytynyt",
+      "rolesTitle": "Reititysroolisi tässä numerossa",
+      "rolesDescription": "Yritys määrittää ne Meta Business Suitessa.",
+      "rolesNone": "Sinulle ei ole määritetty reititysroolia tässä numerossa.",
+      "rolesNeverChecked": "Ei vielä tarkistettu.",
+      "rolesNotEnabled": "Keskustelujen reititys ei ole käytössä tässä numerossa.",
+      "rolesStandbyOn": "Valmiustilan käyttöoikeus: päällä (näet keskustelut, jotka eivät ole sinun)",
+      "rolesStandbyOff": "Valmiustilan käyttöoikeus: pois",
+      "rolesCheckedAt": "Tarkistettu {time}",
+      "rolesRefresh": "Tarkista uudelleen",
+      "rolesSyncFailed": "Reititysrooleja ei saatu Metalta. Yritä uudelleen."
     },
     "errors": {
       "unsupported": "Keskustelun reititys ei ole käytettävissä tällä kanavalla",

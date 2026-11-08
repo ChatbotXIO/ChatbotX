@@ -9245,7 +9245,9 @@
       "customer_service": "שירות לקוחות",
       "escalation": "הסלמה",
       "marketing": "שיווק",
-      "utility": "שירות"
+      "utility": "שירות",
+      "calls": "שיחות",
+      "other": "אחר"
     },
     "pill": {
       "standby": "המתנה ({owner})",
@@ -9334,7 +9336,17 @@
       "adminOnly": "רק מנהלי סביבת העבודה יכולים לשנות ניתוב",
       "flowNotFound": "התהליך שנבחר לא נמצא או שאינו פעיל",
       "integrationNotFound": "מספר WhatsApp לא נמצא",
-      "messengerIntegrationNotFound": "דף Messenger לא נמצא"
+      "messengerIntegrationNotFound": "דף Messenger לא נמצא",
+      "rolesTitle": "תפקידי הניתוב שלך במספר הזה",
+      "rolesDescription": "מוקצים על ידי העסק ב-Meta Business Suite.",
+      "rolesNone": "לא הוקצה לך תפקיד ניתוב במספר הזה.",
+      "rolesNeverChecked": "טרם נבדק.",
+      "rolesNotEnabled": "ניתוב שיחות אינו מופעל עבור המספר הזה.",
+      "rolesStandbyOn": "גישת המתנה: פעילה (ניתן לראות שיחות שאינן בבעלותך)",
+      "rolesStandbyOff": "גישת המתנה: כבויה",
+      "rolesCheckedAt": "נבדק {time}",
+      "rolesRefresh": "בדוק שוב",
+      "rolesSyncFailed": "לא ניתן היה לקבל את תפקידי הניתוב מ-Meta. נסה שוב."
     },
     "errors": {
       "unsupported": "ניתוב שיחות אינו זמין בערוץ הזה",

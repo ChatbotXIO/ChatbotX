@@ -34,6 +34,7 @@ const inbox = (
   overrides: Record<string, unknown> = {},
 ) => ({
   id,
+  inboxId: `inbox-${id}`,
   channel,
   lastIncomingMessageAt: MINUTES_AGO(5),
   threadControlState: "standby" as const,

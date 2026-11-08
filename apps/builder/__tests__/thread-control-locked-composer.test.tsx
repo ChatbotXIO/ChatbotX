@@ -66,6 +66,25 @@ vi.mock("@/features/messages/components/input-menu", () => ({
   },
 }))
 
+// This app's permission to take the thread, from `useThreadTakePermission`.
+const takePermission = vi.hoisted(() => ({
+  value: "unknown" as "allowed" | "forbidden" | "unknown",
+  lastInput: undefined as
+    | undefined
+    | {
+        channel: string
+        workspaceId: string
+        inboxId: string
+        enabled: boolean
+      },
+}))
+vi.mock("@/features/conversations/hooks/use-thread-take-permission", () => ({
+  useThreadTakePermission: (input: typeof takePermission.lastInput) => {
+    takePermission.lastInput = input
+    return takePermission.value
+  },
+}))
+
 const onDismiss = vi.fn()
 const refuse = () =>
   act(() =>
@@ -93,6 +112,7 @@ describe("ThreadControlLockedComposer", () => {
           channel={channel}
           contactInboxId="ci-1"
           conversationId="conv-1"
+          inboxId="inbox-1"
           onDismiss={onDismiss}
           revealOnTakeOver={revealOnTakeOver}
           workspaceId="ws-1"
@@ -103,6 +123,7 @@ describe("ThreadControlLockedComposer", () => {
   beforeEach(() => {
     vi.clearAllMocks()
     hookState.isExecuting = false
+    takePermission.value = "unknown"
     container = document.createElement("div")
     document.body.appendChild(container)
     root = createRoot(container)
@@ -246,5 +267,54 @@ describe("ThreadControlLockedComposer", () => {
       buttonByText("conversationRouting.composer.takeOver")?.disabled,
     ).toBe(true)
     expect(buttonByText("actions.sendFlow")?.disabled).toBe(true)
+  })
+
+  describe("take permission from the channel's routing roles", () => {
+    const takeButton = () =>
+      buttonByText("conversationRouting.composer.takeOver") as
+        | HTMLButtonElement
+        | undefined
+
+    test("asks for the permission of the thread's inbox, unless the take is inline", () => {
+      expect(takePermission.lastInput).toEqual({
+        channel: "whatsapp",
+        workspaceId: "ws-1",
+        inboxId: "inbox-1",
+        enabled: true,
+      })
+      render("messenger", true)
+      expect(takePermission.lastInput?.enabled).toBe(false)
+    })
+
+    test("forbidden: Take over is disabled and explained up front", () => {
+      takePermission.value = "forbidden"
+      render()
+      expect(takeButton()?.disabled).toBe(true)
+      expect(container.textContent).toContain(
+        "conversationRouting.composer.notEscalation",
+      )
+      act(() => takeButton()?.click())
+      expect(hookState.execute).not.toHaveBeenCalled()
+    })
+
+    test.each([
+      ["allowed"],
+      ["unknown"],
+    ] as const)("%s: Take over is offered and the channel decides", (value) => {
+      takePermission.value = value
+      render()
+      expect(takeButton()?.disabled).toBe(false)
+      expect(container.textContent).not.toContain(
+        "conversationRouting.composer.notEscalation",
+      )
+    })
+
+    test("an inline-reply take-over ignores a forbidden permission", () => {
+      takePermission.value = "forbidden"
+      render("messenger", true)
+      expect(takeButton()?.disabled).toBe(false)
+      act(() => takeButton()?.click())
+      expect(onDismiss).toHaveBeenCalledTimes(1)
+    })
   })
 })

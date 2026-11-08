@@ -41,6 +41,12 @@ const selectorProps = vi.hoisted(() => ({
     | { value: string; onChange: (value: string) => void }
     | undefined,
 }))
+// The roles section has its own test (routing-roles-section.test.tsx).
+vi.mock(
+  "@/features/integration-whatsapp/components/routing-roles-section",
+  () => ({ RoutingRolesSection: () => null }),
+)
+
 vi.mock("@/features/sequences/components/flow-selector", () => ({
   FlowSelectorSimple: (props: {
     value: string

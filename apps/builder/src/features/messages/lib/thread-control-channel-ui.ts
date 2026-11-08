@@ -26,6 +26,12 @@ type ThreadControlChannelUi = {
    * a WhatsApp thread is passed only while we own it as the routed partner.
    */
   passFromIdle: boolean
+  /**
+   * Whether this app's stored routing roles on the number say if it may take
+   * (WhatsApp `routing_roles`: only the escalation partner can). `true` reads
+   * them before offering "Take over"; `false` always asks the channel.
+   */
+  takePermissionFromRoutingRoles: boolean
   /** Vendor guide linked from the take-over refusal; no link when absent. */
   docsUrl?: string
   /** Start step of the template tab in the "Send flow" dialog; no tab when absent. */
@@ -56,6 +62,7 @@ export const THREAD_CONTROL_CHANNEL_UI: Record<
     supportsPass: true,
     passTarget: "escalation",
     passFromIdle: false,
+    takePermissionFromRoutingRoles: true,
     docsUrl:
       "https://developers.facebook.com/documentation/business-messaging/whatsapp/conversation-routing/thread-control",
     templateStartType: stepTypes.enum.sendWaTemplateMessage,
@@ -69,6 +76,7 @@ export const THREAD_CONTROL_CHANNEL_UI: Record<
     supportsPass: true,
     passTarget: "aiAgent",
     passFromIdle: true,
+    takePermissionFromRoutingRoles: false,
     docsUrl:
       "https://developers.facebook.com/docs/messenger-platform/handover-protocol",
     // Human handoff from AI hand-over: reply inline, the send takes over then rides

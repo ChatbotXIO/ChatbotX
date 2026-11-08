@@ -626,6 +626,7 @@ export const MessageInput = () => {
         channel={threadControl.channel}
         contactInboxId={threadControl.contactInboxId}
         conversationId={conversation.id}
+        inboxId={threadControl.inboxId}
         // Keyed per conversation so a take-over spinner or inline refusal
         // never carries over when the agent switches conversations.
         key={conversation.id}

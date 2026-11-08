@@ -504,6 +504,15 @@ export const possibleErrorsOnSendingCapiTestEvent = {
   },
 } satisfies ErrorMap
 
+/** Syncing WhatsApp routing roles: Meta's lookup can fail (502). */
+export const possibleErrorsOnSyncingRoutingRoles = {
+  ...possibleErrorsOnMutatingResource,
+  routingRolesUnavailable: {
+    message: "Meta did not return the routing roles. Try again.",
+    status: 502,
+  },
+} satisfies ErrorMap
+
 /** Cursor-paged list: a cursor that does not decode is a 400. */
 export const possibleErrorsOnListingWithCursor = {
   ...possibleErrorsOnListingResource,

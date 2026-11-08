@@ -1,0 +1,1 @@
+ALTER TABLE "IntegrationWhatsapp" ADD COLUMN "routingRoles" jsonb;

@@ -28,6 +28,7 @@ const view = (
   overrides: Partial<ThreadControlView> = {},
 ): ThreadControlView => ({
   contactInboxId: "ci-1",
+  inboxId: "inbox-1",
   channel: "whatsapp",
   state: "standby",
   ownerRole: "ai_agent",

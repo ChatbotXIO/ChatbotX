@@ -313,6 +313,14 @@ export type ThreadControlReceiveInfo = {
    * delivery.
    */
   ownerRole?: ThreadControlRole | null
+  /**
+   * `false` when the delivery says nothing about who owns the thread, so it is
+   * stored but never recorded as a routing transition. WhatsApp: a partner's
+   * template echo — marketing, utility and authentication templates can be
+   * sent by any partner and "never change ownership" (Meta thread lifecycle).
+   * Absent = the delivery signals ownership as usual.
+   */
+  signalsOwnership?: boolean
 }
 
 export type ThreadControlWebhookEvent = {

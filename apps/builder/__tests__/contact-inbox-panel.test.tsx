@@ -189,6 +189,7 @@ const makeThreadControlView = (
   state: ThreadControlView["state"],
 ): ThreadControlView => ({
   contactInboxId: "ci-1",
+  inboxId: "inbox-1",
   channel: "whatsapp",
   state,
   ownerRole: null,

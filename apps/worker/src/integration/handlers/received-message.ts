@@ -637,8 +637,11 @@ export const receiveMessage = async (
     // A standby duplicate of a message we hold as owner (the owner copy came
     // first, or it was promoted) must not flip the thread back to standby.
     // Standby never runs automation either way.
+    // A delivery that says nothing about ownership (a partner's template echo)
+    // is stored only.
     if (
       threadControl?.delivery === "standby" &&
+      threadControl.signalsOwnership !== false &&
       (isNewMessage || isUnpromotedStandbyCopy(newMessage))
     ) {
       standbyCopy = newMessage

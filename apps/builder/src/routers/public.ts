@@ -22,6 +22,7 @@ import {
   createChannelReadRoutes,
   createCoexistRoute,
   createHandoverResumeFlowRoute,
+  createWhatsappRoutingRolesRoutes,
 } from "@/features/channel-integrations/api/public"
 import { channelPostsPublicRouter } from "@/features/channel-posts/api/public"
 import {
@@ -226,6 +227,7 @@ export const publicRouter = {
   whatsappChannels: {
     ...createChannelReadRoutes("whatsapp"),
     ...createHandoverResumeFlowRoute("whatsapp"),
+    ...createWhatsappRoutingRolesRoutes(),
     ...createCoexistRoute("whatsapp"),
     ...createCapiRoutes("whatsapp"),
     ...whatsappCallingPublicRouter,

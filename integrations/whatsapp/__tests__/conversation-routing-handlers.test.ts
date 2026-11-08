@@ -270,7 +270,7 @@ describe("error mapper thread-control codes", () => {
     expect(error.category).toBe(ChannelErrorCategory.PERMISSION_DENIED)
   })
 
-  it("keeps THREAD_CONTROL_REJECTION_CODES empty until Meta publishes the code (R1)", () => {
-    expect(THREAD_CONTROL_REJECTION_CODES.size).toBe(0)
+  it("holds exactly Meta's published non-owner send code, 131070", () => {
+    expect([...THREAD_CONTROL_REJECTION_CODES]).toEqual([131_070])
   })
 })

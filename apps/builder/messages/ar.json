@@ -9245,7 +9245,9 @@
       "customer_service": "خدمة العملاء",
       "escalation": "التصعيد",
       "marketing": "التسويق",
-      "utility": "الخدمات"
+      "utility": "الخدمات",
+      "calls": "المكالمات",
+      "other": "أخرى"
     },
     "pill": {
       "standby": "وضع الاستماع ({owner})",
@@ -9334,7 +9336,17 @@
       "adminOnly": "يمكن لمسؤولي مساحة العمل فقط تغيير التوجيه",
       "flowNotFound": "لم يتم العثور على التدفق المحدد أو أنه غير نشط",
       "integrationNotFound": "لم يتم العثور على رقم WhatsApp",
-      "messengerIntegrationNotFound": "لم يتم العثور على صفحة Messenger"
+      "messengerIntegrationNotFound": "لم يتم العثور على صفحة Messenger",
+      "rolesTitle": "أدوار التوجيه الخاصة بك على هذا الرقم",
+      "rolesDescription": "يعيّنها النشاط التجاري في Meta Business Suite.",
+      "rolesNone": "لم يتم تعيين أي دور توجيه لك على هذا الرقم.",
+      "rolesNeverChecked": "لم يتم التحقق بعد.",
+      "rolesNotEnabled": "توجيه المحادثات غير مفعّل لهذا الرقم.",
+      "rolesStandbyOn": "وصول الاستعداد: مفعّل (يمكنك رؤية المحادثات التي لا تملكها)",
+      "rolesStandbyOff": "وصول الاستعداد: معطّل",
+      "rolesCheckedAt": "تم التحقق {time}",
+      "rolesRefresh": "تحقق مرة أخرى",
+      "rolesSyncFailed": "تعذّر الحصول على أدوار التوجيه من Meta. حاول مرة أخرى."
     },
     "errors": {
       "unsupported": "توجيه المحادثات غير متاح على هذه القناة",

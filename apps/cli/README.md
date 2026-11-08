@@ -1065,6 +1065,8 @@ chatbotx whatsapp-channels test-event add <id> --messagingId <id>
 chatbotx channel-integrations list                    # [--channel] Connected WhatsApp/Messenger/Instagram/Zalo/TikTok channels
 chatbotx whatsapp-channels list|get <id>              # Same data per channel; also instagram-channels, tiktok-channels
 chatbotx whatsapp-channels handover-resume-flow update <id> --handoverResumeFlowId <flowId|null>
+chatbotx whatsapp-channels routing-roles list <id>    # This app's Conversation Routing roles as last checked (null = never)
+chatbotx whatsapp-channels routing-roles sync <id>    # Ask Meta again (GET routing_roles) and store the answer
 ```
 
 ### `messenger-channels`

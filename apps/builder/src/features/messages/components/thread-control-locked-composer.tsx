@@ -1,5 +1,6 @@
 "use client"
 
+import { threadTakePermissions } from "@chatbotx.io/database/partials"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import { cn } from "@chatbotx.io/ui/lib/utils"
 import type { ThreadControlChannel } from "@chatbotx.io/utils/channel"
@@ -13,6 +14,7 @@ import {
 import { useTranslations } from "next-intl"
 import { THREAD_CONTROL_TONES } from "@/features/conversations/components/thread-control-tone"
 import { useThreadControlAction } from "@/features/conversations/hooks/use-thread-control-action"
+import { useThreadTakePermission } from "@/features/conversations/hooks/use-thread-take-permission"
 import { THREAD_CONTROL_CHANNEL_UI } from "../lib/thread-control-channel-ui"
 import { SendFlowDialogTrigger } from "./input-menu"
 
@@ -28,6 +30,8 @@ type ThreadControlLockedComposerProps = {
   workspaceId: string
   conversationId: string
   contactInboxId: string
+  /** The inbox (number/page) of the locked thread. */
+  inboxId: string
   onDismiss: () => void
 }
 
@@ -47,6 +51,7 @@ export function ThreadControlLockedComposer({
   workspaceId,
   conversationId,
   contactInboxId,
+  inboxId,
   onDismiss,
 }: ThreadControlLockedComposerProps) {
   const t = useTranslations()
@@ -56,6 +61,18 @@ export function ThreadControlLockedComposer({
     workspaceId,
     conversationId,
   })
+  // When the channel's stored roles already say this app cannot take, "Take
+  // over" is disabled up front instead of failing on click; the inline-reply
+  // take-over never asks the channel, so it never reads them.
+  const takePermission = useThreadTakePermission({
+    channel,
+    workspaceId,
+    inboxId,
+    enabled: !revealOnTakeOver,
+  })
+  const isTakeForbidden =
+    !revealOnTakeOver && takePermission === threadTakePermissions.enum.forbidden
+  const showTakeRefused = isNotEscalation || isTakeForbidden
 
   return (
     <div
@@ -87,7 +104,7 @@ export function ThreadControlLockedComposer({
       <div className="flex w-full flex-col justify-center gap-2 sm:w-auto sm:flex-row sm:items-center">
         <Button
           className="w-full sm:w-auto"
-          disabled={isExecuting}
+          disabled={isExecuting || isTakeForbidden}
           onClick={() =>
             revealOnTakeOver
               ? onDismiss()
@@ -116,7 +133,7 @@ export function ThreadControlLockedComposer({
           </SendFlowDialogTrigger>
         )}
       </div>
-      {isNotEscalation && (
+      {showTakeRefused && (
         <p className="text-destructive text-sm">
           {t(takeRefusedMessageKey)}
           {docsUrl && (

@@ -9245,7 +9245,9 @@
       "customer_service": "Chăm sóc khách hàng",
       "escalation": "Chuyển cấp",
       "marketing": "Tiếp thị",
-      "utility": "Tiện ích"
+      "utility": "Tiện ích",
+      "calls": "Cuộc gọi",
+      "other": "Khác"
     },
     "pill": {
       "standby": "Standby ({owner} đang xử lý)",
@@ -9334,7 +9336,17 @@
       "adminOnly": "Chỉ quản trị viên workspace mới có thể thay đổi điều phối",
       "flowNotFound": "Không tìm thấy luồng đã chọn hoặc luồng chưa hoạt động",
       "integrationNotFound": "Không tìm thấy số WhatsApp",
-      "messengerIntegrationNotFound": "Không tìm thấy trang Messenger"
+      "messengerIntegrationNotFound": "Không tìm thấy trang Messenger",
+      "rolesTitle": "Vai trò điều phối của bạn trên số này",
+      "rolesDescription": "Do doanh nghiệp gán trong Meta Business Suite.",
+      "rolesNone": "Bạn chưa được gán vai trò điều phối nào trên số này.",
+      "rolesNeverChecked": "Chưa kiểm tra.",
+      "rolesNotEnabled": "Số này chưa bật điều phối hội thoại.",
+      "rolesStandbyOn": "Quyền standby: bật (bạn xem được hội thoại không thuộc quyền mình)",
+      "rolesStandbyOff": "Quyền standby: tắt",
+      "rolesCheckedAt": "Đã kiểm tra {time}",
+      "rolesRefresh": "Kiểm tra lại",
+      "rolesSyncFailed": "Không lấy được vai trò điều phối từ Meta. Hãy thử lại."
     },
     "errors": {
       "unsupported": "Kênh này không hỗ trợ điều phối hội thoại",

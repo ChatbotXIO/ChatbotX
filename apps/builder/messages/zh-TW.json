@@ -9245,7 +9245,9 @@
       "customer_service": "客戶服務",
       "escalation": "升級處理",
       "marketing": "行銷",
-      "utility": "通用"
+      "utility": "通用",
+      "calls": "通話",
+      "other": "其他"
     },
     "pill": {
       "standby": "待命（{owner}）",
@@ -9334,7 +9336,17 @@
       "adminOnly": "只有工作區管理員可以變更路由",
       "flowNotFound": "找不到所選流程，或該流程未啟用",
       "integrationNotFound": "找不到 WhatsApp 號碼",
-      "messengerIntegrationNotFound": "找不到 Messenger 粉絲專頁"
+      "messengerIntegrationNotFound": "找不到 Messenger 粉絲專頁",
+      "rolesTitle": "你在此號碼上的路由角色",
+      "rolesDescription": "由企業在 Meta Business Suite 中指派。",
+      "rolesNone": "你在此號碼上未被指派任何路由角色。",
+      "rolesNeverChecked": "尚未檢查。",
+      "rolesNotEnabled": "此號碼未啟用對話路由。",
+      "rolesStandbyOn": "待命存取：開啟（可查看不屬於你的對話）",
+      "rolesStandbyOff": "待命存取：關閉",
+      "rolesCheckedAt": "檢查於 {time}",
+      "rolesRefresh": "重新檢查",
+      "rolesSyncFailed": "無法從 Meta 取得路由角色，請重試。"
     },
     "errors": {
       "unsupported": "此管道不支援對話路由",

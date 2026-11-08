@@ -9245,7 +9245,9 @@
       "customer_service": "Customer service",
       "escalation": "Escalation",
       "marketing": "Marketing",
-      "utility": "Utility"
+      "utility": "Utility",
+      "calls": "Zənglər",
+      "other": "Digər"
     },
     "pill": {
       "standby": "Standby ({owner})",
@@ -9334,7 +9336,17 @@
       "adminOnly": "Only workspace admins can change routing",
       "flowNotFound": "The selected flow was not found or is not active",
       "integrationNotFound": "WhatsApp number not found",
-      "messengerIntegrationNotFound": "Messenger page not found"
+      "messengerIntegrationNotFound": "Messenger page not found",
+      "rolesTitle": "Bu nömrədə marşrutlaşdırma rollarınız",
+      "rolesDescription": "Biznes tərəfindən Meta Business Suite-də təyin edilir.",
+      "rolesNone": "Bu nömrədə sizə heç bir marşrutlaşdırma rolu təyin edilməyib.",
+      "rolesNeverChecked": "Hələ yoxlanılmayıb.",
+      "rolesNotEnabled": "Bu nömrə üçün söhbət marşrutlaşdırması aktiv deyil.",
+      "rolesStandbyOn": "Gözləmə girişi: aktiv (sizə aid olmayan söhbətləri görə bilərsiniz)",
+      "rolesStandbyOff": "Gözləmə girişi: deaktiv",
+      "rolesCheckedAt": "Yoxlanıldı {time}",
+      "rolesRefresh": "Yenidən yoxla",
+      "rolesSyncFailed": "Marşrutlaşdırma rollarını Meta-dan almaq mümkün olmadı. Yenidən cəhd edin."
     },
     "errors": {
       "unsupported": "Conversation routing is not available on this channel",

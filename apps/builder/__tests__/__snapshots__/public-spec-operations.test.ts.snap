@@ -3689,6 +3689,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
   },
   {
     "method": "GET",
+    "operationId": "whatsappChannels.getRoutingRoles",
+    "path": "/v1/whatsapp-channels/{id}/routing-roles",
+  },
+  {
+    "method": "GET",
     "operationId": "whatsappChannels.list",
     "path": "/v1/whatsapp-channels",
   },
@@ -3711,6 +3716,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "method": "PUT",
     "operationId": "whatsappChannels.setCoexist",
     "path": "/v1/whatsapp-channels/{id}/coexist",
+  },
+  {
+    "method": "POST",
+    "operationId": "whatsappChannels.syncRoutingRoles",
+    "path": "/v1/whatsapp-channels/{id}/routing-roles/sync",
   },
   {
     "method": "PUT",

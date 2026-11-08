@@ -40,6 +40,12 @@ export const buildThreadControlBody = (input: {
     : {}),
 })
 
+/** Meta's answer to a successful thread_control call. */
+export type WhatsappThreadControlResult = {
+  /** Meta's id for the call; quote it when reporting an issue to Meta. */
+  requestId: string | null
+}
+
 /**
  * `POST /{phone_number_id}/thread_control` — take, release or pass the thread.
  * The caller must own the thread (`take`: escalation partner only, else Meta
@@ -50,11 +56,11 @@ export const buildThreadControlBody = (input: {
 export const postThreadControl = (
   auth: WhatsappAuthValue,
   body: WhatsappThreadControlBody,
-): Promise<void> => {
+): Promise<WhatsappThreadControlResult> => {
   const { version = DEFAULT_API_VERSION } = auth
 
   return rescue(async () => {
-    await ky
+    const response = await ky
       .post(
         `${API_URL}/${version}/${auth.metadata.phoneNumber.id}/thread_control`,
         {
@@ -62,6 +68,10 @@ export const postThreadControl = (
           json: body,
         },
       )
-      .json()
+      .json<{ request_id?: unknown }>()
+    return {
+      requestId:
+        typeof response?.request_id === "string" ? response.request_id : null,
+    }
   })
 }

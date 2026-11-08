@@ -503,6 +503,10 @@ export const isStandbyEchoItem = (
 ): item is Record<string, unknown> =>
   isRecord(item) && typeof item.id === "string" && isRecord(item.message)
 
+/** A standby echo of a template send (marketing, utility, authentication). */
+export const isTemplateEcho = (echo: unknown): boolean =>
+  isRecord(echo) && isRecord(echo.message) && echo.message.type === "template"
+
 /**
  * A partner's outgoing message (standby echo) as an outgoing, third-party
  * message on the contact it was sent to. The echo carries the exact Send API

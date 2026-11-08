@@ -23,6 +23,7 @@ import {
   THREAD_CONTROL_NOT_ESCALATION_CODE,
 } from "../lib/error-mapper"
 import { logger } from "../lib/logger"
+import { readWhatsappOriginErrorDetail } from "../lib/origin-error"
 import { resolveRecipientParams } from "../lib/recipient"
 import type { WhatsappAuthValue } from "../schema"
 
@@ -91,8 +92,9 @@ const updateThreadControl: ConversationHandlers<WhatsappAuthValue>["updateThread
       data: { contact, action, targetRole, metadata },
     } = props
 
+    const phoneNumberId = ctx.auth.metadata.phoneNumber.id
     try {
-      await postThreadControl(
+      const { requestId } = await postThreadControl(
         ctx.auth,
         buildThreadControlBody({
           recipient: resolveRecipientParams(contact),
@@ -101,8 +103,30 @@ const updateThreadControl: ConversationHandlers<WhatsappAuthValue>["updateThread
           metadata,
         }),
       )
+      // Meta's request id is what its support asks for (Partner Testing
+      // Guide §2.2 / §7): keep it on every successful call.
+      logger.info(
+        { action, targetRole, phoneNumberId, requestId },
+        "Whatsapp thread_control applied",
+      )
     } catch (error) {
-      throw toThreadControlChannelError(action, mapToChannelError(error))
+      const channelError = mapToChannelError(error)
+      // Meta's fbtrace_id is what its support asks for on a failed call. Read
+      // from the mapped error: the take-refused wrapper below keeps no origin.
+      logger.warn(
+        {
+          err: channelError,
+          action,
+          targetRole,
+          phoneNumberId,
+          code: channelError.code,
+          fbtraceId: readWhatsappOriginErrorDetail(
+            channelError.getOriginError(),
+          ).fbtraceId,
+        },
+        "Whatsapp thread_control refused",
+      )
+      throw toThreadControlChannelError(action, channelError)
     }
     return { ownerRole: OWNER_ROLE_AFTER_ACTION[action](targetRole) }
   }

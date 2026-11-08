@@ -58,12 +58,16 @@ const PERMISSION_DENIED_CODES = new Set([
 ])
 
 /**
- * Codes Meta returns when a non-owner sends a Service message. Meta has not
- * published the code (plan risk R1), so this stays empty until one is captured
- * from a real rejection; the local send gate covers known-standby threads.
+ * Codes Meta returns when a non-owner sends a Service message. 131070 "Message
+ * failed to send because another app is controlling this thread now." — also
+ * returned on an idle thread, which has no owner; the designated escalation
+ * partner is exempt (its Service send takes the thread). Source: Meta
+ * conversation-routing thread-control error table.
  */
+export const THREAD_CONTROL_SEND_NOT_OWNER_CODE = 131_070
+
 export const THREAD_CONTROL_REJECTION_CODES: ReadonlySet<number> =
-  new Set<number>([])
+  new Set<number>([THREAD_CONTROL_SEND_NOT_OWNER_CODE])
 
 /**
  * Matched before the generic `OAuthException` branch in `categorize`, which
