@@ -19,7 +19,7 @@ import {
  * the Graph API are intercepted (recorded, answered by a scripted responder).
  */
 
-export const CLIENT_SECRET = "e2e-secret"
+const CLIENT_SECRET = "e2e-secret"
 const GRAPH_HOST = "graph.facebook.com"
 
 export type GraphCall = { url: string; method: string; body: unknown }
@@ -190,7 +190,7 @@ export const tick = (): void => {
 }
 
 /** Meta-style second timestamp for an event happening now (after a tick). */
-export const nextTs = (): string => {
+const nextTs = (): string => {
   tick()
   return String(Math.floor(Date.now() / 1000))
 }
@@ -458,13 +458,6 @@ export const setSourceUserId = async (world: RoutingWorld, userId: string) => {
   await db
     .update(contactInboxModel)
     .set({ sourceUserId: userId })
-    .where(eq(contactInboxModel.id, world.contact.contactInboxId))
-}
-
-export const setLastIncoming = async (world: RoutingWorld, at: Date) => {
-  await db
-    .update(contactInboxModel)
-    .set({ lastIncomingMessageAt: at })
     .where(eq(contactInboxModel.id, world.contact.contactInboxId))
 }
 

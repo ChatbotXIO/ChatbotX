@@ -563,7 +563,7 @@ export class ContactStatsRepository extends BaseRepository {
 
     // Use raw table with COUNT(DISTINCT contactId) so duplicate
     // `contact_created` events for the same contact within a day collapse to
-    // 1. Matches the legacy ClickHouse `uniqMerge` semantic and keeps the sum
+    // 1. Counts each contact once per day and keeps the sum
     // of daily values consistent with `getNewContactsCount`.
     const result = await db.execute(sql`
       SELECT

@@ -9,12 +9,37 @@ import { useFormatter, useTranslations } from "next-intl"
 import { toast } from "sonner"
 import { useNow } from "@/hooks/use-now"
 import { orpc } from "@/lib/orpc/query"
-import { routingRoleLabel } from "../lib/routing-role-labels"
+
+type Translate = ReturnType<typeof useTranslations>
 
 type RoutingRolesSectionProps = {
   workspaceId: string
   integrationWhatsappId: string
 }
+
+/**
+ * Meta's routing role values (`GET /{phone_number_id}/routing_roles`) mapped to
+ * their labels. A role Meta adds later still renders, under a generic label.
+ * Brand-neutral copy (white-label).
+ */
+const ROUTING_ROLE_LABEL_KEYS = {
+  calls: "conversationRouting.roles.calls",
+  ctwa: "conversationRouting.roles.ctwa",
+  customer_service: "conversationRouting.roles.customer_service",
+  escalation: "conversationRouting.roles.escalation",
+  marketing: "conversationRouting.roles.marketing",
+  utility: "conversationRouting.roles.utility",
+} as const
+
+const isKnownRoutingRole = (
+  role: string,
+): role is keyof typeof ROUTING_ROLE_LABEL_KEYS =>
+  Object.hasOwn(ROUTING_ROLE_LABEL_KEYS, role)
+
+const routingRoleLabel = (t: Translate, role: string): string =>
+  isKnownRoutingRole(role)
+    ? t(ROUTING_ROLE_LABEL_KEYS[role])
+    : t("conversationRouting.roles.other")
 
 /** Copy shown instead of role badges, keyed by why there are none. */
 const NO_ROLES_MESSAGE_KEYS = {
