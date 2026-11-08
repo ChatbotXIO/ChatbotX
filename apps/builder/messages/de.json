@@ -8199,6 +8199,7 @@
       "invalidTokenTitle": "Dieser Buchungslink ist nicht verfügbar.",
       "invalidTokenDescription": "Der Link ist möglicherweise ungültig oder abgelaufen. Bitte fordern Sie einen neuen Buchungslink an.",
       "staleSlot": "Diese Zeit ist nicht mehr verfügbar. Bitte wählen Sie eine andere Zeit.",
+      "alreadyScheduled": "Dieser Kontakt hat in diesem Kalender bereits einen Termin zu dieser Zeit. Bitte wählen Sie eine andere Zeit.",
       "availabilityChanged": "Die Verfügbarkeit hat sich geändert, während Sie eine Zeit ausgewählt haben. Bitte wählen Sie erneut.",
       "submitFailed": "Wir konnten diese Anfrage nicht abschließen. Bitte versuchen Sie es erneut."
     },
@@ -8288,6 +8289,15 @@
     },
     "messages": {
       "empty": "Noch keine Termine."
+    },
+    "actions": {
+      "create": "Termin erstellen"
+    },
+    "create": {
+      "title": "Termin erstellen",
+      "description": "Wähle einen Kalender und eine freie Zeit, um für diesen Kontakt zu buchen.",
+      "noConversationHint": "Keine Unterhaltung geöffnet, daher erhält der Kontakt keine Bestätigung.",
+      "success": "Termin erstellt."
     }
   },
   "appointmentManagement": {
@@ -11735,5 +11745,18 @@
     "accessRemoved": "The provider removed access to this account. Reconnect to resume.",
     "needsReconnect": "Reconnect required.",
     "inactive": "This channel is inactive."
+  },
+  "inbox": {
+    "createAppointment": {
+      "title": "Termin erstellen",
+      "description": "Sende dem Kontakt einen Buchungslink für einen Kalender oder öffne ihn, um in seinem Namen zu buchen.",
+      "inactive": "Inaktiv",
+      "sendLink": "Kalenderlink senden",
+      "goToLink": "Zum Kalenderlink",
+      "sent": "Buchungslink gesendet.",
+      "failed": "Der Buchungslink konnte nicht erstellt werden.",
+      "noCalendars": "Noch keine Terminkalender.",
+      "manageCalendars": "Terminkalender verwalten"
+    }
   }
 }

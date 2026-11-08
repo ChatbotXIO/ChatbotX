@@ -9,6 +9,10 @@ import {
   resolveTenantSettings,
   SlotUnavailableException,
 } from "@chatbotx.io/business"
+import {
+  type AppointmentSchedulingCopy,
+  getAppointmentSchedulingCopy,
+} from "@chatbotx.io/business/appointment/copy"
 import { signAppointmentWebviewToken } from "@chatbotx.io/encryption"
 import {
   APPOINTMENT_AVAILABILITY_RANGE_SELECTION_PAYLOAD_TYPE,
@@ -27,39 +31,6 @@ import { logger } from "../../lib/logger"
 import type { ExecuteStepProps } from "./flow-utils"
 import { resolveFlowAIModel } from "./shared/flow-ai-model-resolver"
 import type { ExecuteStepResult } from "./step"
-
-type AppointmentSchedulingCopy = {
-  bookingPrompt: string
-  bookingButton: string
-  rangePrompt: string
-  rangeButton: string
-  noSlotsFound: string
-}
-
-const APPOINTMENT_SCHEDULING_COPY = {
-  en: {
-    bookingPrompt: "Choose an appointment time",
-    bookingButton: "Select Date",
-    rangePrompt: "Choose a date range to check availability",
-    rangeButton: "Check Availability",
-    noSlotsFound: "No available slots found.",
-  },
-  vi: {
-    bookingPrompt: "Chọn thời gian đặt lịch",
-    bookingButton: "Chọn ngày",
-    rangePrompt: "Chọn khoảng ngày cần kiểm tra lịch trống",
-    rangeButton: "Kiểm tra lịch trống",
-    noSlotsFound: "Không có lịch trống.",
-  },
-} satisfies Record<string, AppointmentSchedulingCopy>
-
-function getAppointmentSchedulingCopy(input: {
-  language?: string | null
-}): AppointmentSchedulingCopy {
-  return normalizeLanguage(input.language) === "vi"
-    ? APPOINTMENT_SCHEDULING_COPY.vi
-    : APPOINTMENT_SCHEDULING_COPY.en
-}
 
 const parseCalendarLocalInstant = (dateTime: string, timezone: string) =>
   fromZonedTime(dateTime, timezone)
@@ -385,6 +356,7 @@ export async function appointmentScheduling(
           workspaceId: conversation.workspaceId,
         })
         const token = await signAppointmentWebviewToken({
+          source: "flow",
           mode: "book",
           workspaceId: conversation.workspaceId,
           calendarId: step.calendarId,
@@ -477,6 +449,7 @@ export async function appointmentScheduling(
             workspaceId: conversation.workspaceId,
           })
           const token = await signAppointmentWebviewToken({
+            source: "flow",
             mode: "selectAvailabilityRange",
             workspaceId: conversation.workspaceId,
             calendarId: step.calendarId,

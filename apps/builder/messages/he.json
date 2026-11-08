@@ -8199,6 +8199,7 @@
       "invalidTokenTitle": "קישור קביעת הפגישה הזה אינו זמין.",
       "invalidTokenDescription": "ייתכן שהקישור אינו תקין או שפג תוקפו. בקשו קישור קביעת פגישה חדש.",
       "staleSlot": "הזמן הזה כבר אינו זמין. בחרו זמן אחר.",
+      "alreadyScheduled": "לאיש הקשר הזה כבר יש פגישה בשעה הזו ביומן הזה. בחרו זמן אחר.",
       "availabilityChanged": "הזמינות השתנתה בזמן שבחרתם זמן. בחרו שוב.",
       "submitFailed": "לא הצלחנו להשלים את הבקשה הזו. נסו שוב."
     },
@@ -8288,6 +8289,15 @@
     },
     "messages": {
       "empty": "עדיין אין פגישות."
+    },
+    "actions": {
+      "create": "יצירת פגישה"
+    },
+    "create": {
+      "title": "יצירת פגישה",
+      "description": "בחרו יומן ושעה פנויה כדי להזמין עבור איש קשר זה.",
+      "noConversationHint": "אין שיחה פתוחה, ולכן איש הקשר לא יקבל הודעת אישור.",
+      "success": "הפגישה נוצרה."
     }
   },
   "appointmentManagement": {
@@ -11735,5 +11745,18 @@
     "accessRemoved": "The provider removed access to this account. Reconnect to resume.",
     "needsReconnect": "Reconnect required.",
     "inactive": "This channel is inactive."
+  },
+  "inbox": {
+    "createAppointment": {
+      "title": "יצירת פגישה",
+      "description": "שלחו לאיש הקשר קישור הזמנה ליומן, או פתחו אותו כדי להזמין בשמו.",
+      "inactive": "לא פעיל",
+      "sendLink": "שליחת קישור ליומן",
+      "goToLink": "מעבר לקישור היומן",
+      "sent": "קישור ההזמנה נשלח.",
+      "failed": "לא ניתן ליצור את קישור ההזמנה.",
+      "noCalendars": "אין עדיין יומני פגישות.",
+      "manageCalendars": "ניהול יומני פגישות"
+    }
   }
 }

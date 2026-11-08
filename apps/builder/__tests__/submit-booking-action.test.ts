@@ -132,6 +132,55 @@ describe("submitBookingAction", () => {
     })
   })
 
+  test("resumes the flow for flow tokens signed before the source field", async () => {
+    await submitBooking({
+      token: "token-1",
+      selectedStartAt: "2026-08-15T09:00:00.000Z",
+      inviteeTimezone: "UTC",
+    })
+
+    expect(mocks.integrationQueueAdd).toHaveBeenCalledWith(
+      "sendFlow",
+      expect.objectContaining({
+        data: expect.objectContaining({
+          flowId: "flow-1",
+          flowVersionId: "flow-version-1",
+          nodeId: "node-1",
+          startFromStepId: "step-1",
+        }),
+      }),
+    )
+  })
+
+  test("books inbox tokens on the contact inbox without resuming a flow", async () => {
+    const inboxToken = {
+      source: "inbox",
+      mode: "book",
+      workspaceId: "workspace-1",
+      calendarId: "calendar-1",
+      contactId: "contact-1",
+      conversationId: "conversation-1",
+      contactInboxId: "contact-inbox-1",
+    }
+    mocks.verifyAppointmentWebviewToken.mockResolvedValue(inboxToken)
+
+    const result = await submitBooking({
+      token: "token-1",
+      selectedStartAt: "2026-08-15T09:00:00.000Z",
+      inviteeTimezone: "UTC",
+    })
+
+    expect(result).toEqual(expect.objectContaining({ completed: true }))
+    expect(mocks.completeWebviewBooking).toHaveBeenCalledWith(
+      expect.objectContaining({
+        tokenPayload: expect.objectContaining({
+          contactInboxId: "contact-inbox-1",
+        }),
+      }),
+    )
+    expect(mocks.integrationQueueAdd).not.toHaveBeenCalled()
+  })
+
   test("skips selected date custom field persistence for direct book tokens", async () => {
     mocks.verifyAppointmentWebviewToken.mockResolvedValue({
       mode: "book",

@@ -156,4 +156,24 @@ describe("submitAvailabilityRangeAction", () => {
     ).rejects.toThrow(RANGE_TOKEN_ERROR_RE)
     expect(mocks.integrationQueueAdd).not.toHaveBeenCalled()
   })
+
+  test("refuses a range token without its flow context and enqueues nothing", async () => {
+    mocks.verifyAppointmentWebviewToken.mockResolvedValue({
+      source: "flow",
+      mode: "selectAvailabilityRange",
+      workspaceId: "workspace-1",
+      conversationId: "conversation-1",
+      contactInboxId: "contact-inbox-1",
+      nodeId: "node-1",
+    })
+
+    await expect(
+      submitAvailabilityRange({
+        token: "token-1",
+        startDate: "2026-08-10",
+        endDate: "2026-08-12",
+      } as never),
+    ).rejects.toThrow("missing its flow context")
+    expect(mocks.integrationQueueAdd).not.toHaveBeenCalled()
+  })
 })

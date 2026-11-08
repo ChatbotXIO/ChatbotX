@@ -8199,6 +8199,7 @@
       "invalidTokenTitle": "Dette booking-link er ikke tilgængeligt.",
       "invalidTokenDescription": "Linket kan være ugyldigt eller udløbet. Bed om et nyt booking-link.",
       "staleSlot": "Dette tidspunkt er ikke længere ledigt. Vælg venligst et andet tidspunkt.",
+      "alreadyScheduled": "Denne kontakt har allerede en aftale på dette tidspunkt i denne kalender. Vælg venligst et andet tidspunkt.",
       "availabilityChanged": "Tilgængeligheden ændrede sig, mens du valgte tidspunkt. Vælg venligst igen.",
       "submitFailed": "Vi kunne ikke gennemføre denne anmodning. Prøv venligst igen."
     },
@@ -8288,6 +8289,15 @@
     },
     "messages": {
       "empty": "Ingen aftaler endnu."
+    },
+    "actions": {
+      "create": "Opret aftale"
+    },
+    "create": {
+      "title": "Opret aftale",
+      "description": "Vælg en kalender og et ledigt tidspunkt for at booke til denne kontakt.",
+      "noConversationHint": "Ingen samtale er åben, så kontakten modtager ikke en bekræftelse.",
+      "success": "Aftale oprettet."
     }
   },
   "appointmentManagement": {
@@ -11735,5 +11745,18 @@
     "accessRemoved": "The provider removed access to this account. Reconnect to resume.",
     "needsReconnect": "Reconnect required.",
     "inactive": "This channel is inactive."
+  },
+  "inbox": {
+    "createAppointment": {
+      "title": "Opret aftale",
+      "description": "Send kontakten et bookinglink til en kalender, eller åbn det for at booke på deres vegne.",
+      "inactive": "Inaktiv",
+      "sendLink": "Send kalenderlink",
+      "goToLink": "Gå til kalenderlink",
+      "sent": "Bookinglink sendt.",
+      "failed": "Bookinglinket kunne ikke oprettes.",
+      "noCalendars": "Ingen aftalekalendere endnu.",
+      "manageCalendars": "Administrer aftalekalendere"
+    }
   }
 }

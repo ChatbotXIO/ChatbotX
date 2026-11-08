@@ -8199,6 +8199,7 @@
       "invalidTokenTitle": "Questo link di prenotazione non è disponibile.",
       "invalidTokenDescription": "Il link potrebbe non essere valido o essere scaduto. Richiedi un nuovo link di prenotazione.",
       "staleSlot": "Questo orario non è più disponibile. Scegli un altro orario.",
+      "alreadyScheduled": "Questo contatto ha già un appuntamento a quest'ora in questo calendario. Scegli un altro orario.",
       "availabilityChanged": "La disponibilità è cambiata mentre sceglievi un orario. Scegli di nuovo.",
       "submitFailed": "Non siamo riusciti a completare questa richiesta. Riprova."
     },
@@ -8288,6 +8289,15 @@
     },
     "messages": {
       "empty": "Nessun appuntamento ancora."
+    },
+    "actions": {
+      "create": "Crea appuntamento"
+    },
+    "create": {
+      "title": "Crea appuntamento",
+      "description": "Scegli un calendario e un orario disponibile per prenotare per questo contatto.",
+      "noConversationHint": "Nessuna conversazione aperta, quindi il contatto non riceverà un messaggio di conferma.",
+      "success": "Appuntamento creato."
     }
   },
   "appointmentManagement": {
@@ -11735,5 +11745,18 @@
     "accessRemoved": "The provider removed access to this account. Reconnect to resume.",
     "needsReconnect": "Reconnect required.",
     "inactive": "This channel is inactive."
+  },
+  "inbox": {
+    "createAppointment": {
+      "title": "Crea appuntamento",
+      "description": "Invia al contatto un link di prenotazione per un calendario oppure aprilo per prenotare per suo conto.",
+      "inactive": "Inattivo",
+      "sendLink": "Invia link del calendario",
+      "goToLink": "Vai al link del calendario",
+      "sent": "Link di prenotazione inviato.",
+      "failed": "Impossibile creare il link di prenotazione.",
+      "noCalendars": "Nessun calendario appuntamenti.",
+      "manageCalendars": "Gestisci calendari appuntamenti"
+    }
   }
 }

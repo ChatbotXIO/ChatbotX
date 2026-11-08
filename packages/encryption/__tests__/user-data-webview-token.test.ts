@@ -69,6 +69,7 @@ describe("user data webview token", () => {
 
   test("rejects tokens signed for a different AAD (type mismatch)", async () => {
     const appointmentToken = await signAppointmentWebviewToken({
+      source: "flow",
       mode: "book",
       workspaceId: "workspace-1",
       calendarId: "calendar-1",

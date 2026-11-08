@@ -8199,6 +8199,7 @@
       "invalidTokenTitle": "Esta ligação de marcação não está disponível.",
       "invalidTokenDescription": "A ligação pode ser inválida ou ter expirado. Peça uma nova ligação de marcação.",
       "staleSlot": "Este horário já não está disponível. Escolha outro horário.",
+      "alreadyScheduled": "Este contacto já tem uma marcação a esta hora neste calendário. Escolha outro horário.",
       "availabilityChanged": "A disponibilidade foi alterada enquanto escolhia um horário. Escolha novamente.",
       "submitFailed": "Não foi possível concluir este pedido. Tente novamente."
     },
@@ -8288,6 +8289,15 @@
     },
     "messages": {
       "empty": "Ainda não existem marcações."
+    },
+    "actions": {
+      "create": "Criar marcação"
+    },
+    "create": {
+      "title": "Criar marcação",
+      "description": "Escolha um calendário e um horário disponível para marcar para este contacto.",
+      "noConversationHint": "Nenhuma conversa está aberta, por isso o contacto não receberá uma mensagem de confirmação.",
+      "success": "Marcação criada."
     }
   },
   "appointmentManagement": {
@@ -11735,5 +11745,18 @@
     "accessRemoved": "The provider removed access to this account. Reconnect to resume.",
     "needsReconnect": "Reconnect required.",
     "inactive": "This channel is inactive."
+  },
+  "inbox": {
+    "createAppointment": {
+      "title": "Criar marcação",
+      "description": "Envie ao contacto uma ligação de reserva de um calendário ou abra-a para reservar em nome dele.",
+      "inactive": "Inativo",
+      "sendLink": "Enviar ligação do calendário",
+      "goToLink": "Ir para a ligação do calendário",
+      "sent": "Ligação de reserva enviada.",
+      "failed": "Não foi possível criar a ligação de reserva.",
+      "noCalendars": "Ainda não existem calendários de marcações.",
+      "manageCalendars": "Gerir calendários de marcações"
+    }
   }
 }

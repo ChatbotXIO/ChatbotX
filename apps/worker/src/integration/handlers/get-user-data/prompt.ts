@@ -53,8 +53,8 @@ type UserDataWebviewCopy = {
 }
 
 // Deliberate worker-side i18n exception (no next-intl in the worker runtime):
-// mirrors the APPOINTMENT_SCHEDULING_COPY pattern already used by
-// appointment-scheduling.ts for the same reason.
+// mirrors the APPOINTMENT_SCHEDULING_COPY pattern in
+// packages/business/src/appointment/copy.ts for the same reason.
 const USER_DATA_WEBVIEW_COPY = {
   en: { selectDate: "Select Date" },
   vi: { selectDate: "Chọn ngày" },

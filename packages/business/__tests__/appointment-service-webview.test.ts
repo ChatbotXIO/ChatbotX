@@ -5,6 +5,7 @@ const mocks = vi.hoisted(() => ({
   transaction: vi.fn(),
   findBy: vi.fn(),
   create: vi.fn(),
+  existsScheduledForContactAt: vi.fn().mockResolvedValue(false),
   contactFindByIdOrFail: vi.fn(),
   conversationFindByOrFail: vi.fn(),
   list: vi.fn(),
@@ -42,6 +43,8 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
   appointmentRepository: {
     findBy: (...args: unknown[]) => mocks.findBy(...args),
     create: (...args: unknown[]) => mocks.create(...args),
+    existsScheduledForContactAt: (...args: unknown[]) =>
+      mocks.existsScheduledForContactAt(...args),
     list: (...args: unknown[]) => mocks.list(...args),
     listByContact: (...args: unknown[]) => mocks.listByContact(...args),
     listFutureScheduledForContact: (...args: unknown[]) =>
@@ -144,7 +147,10 @@ const { appointmentService } = await import("../src/appointment/service")
 // `bookAppointment` path below stays scoped-and-found unless a test overrides
 // it to exercise the not-found guard explicitly.
 mocks.contactFindByIdOrFail.mockResolvedValue({ id: "contact-1" })
-mocks.conversationFindByOrFail.mockResolvedValue({ id: "conversation-1" })
+mocks.conversationFindByOrFail.mockResolvedValue({
+  id: "conversation-1",
+  contactId: "contact-1",
+})
 
 const futureAppointment = {
   id: "appointment-1",
@@ -863,5 +869,169 @@ describe("appointmentService.completeWebviewBooking", () => {
 
     expect(mocks.create).not.toHaveBeenCalled()
     expect(mocks.chatQueueAdd).not.toHaveBeenCalled()
+  })
+
+  describe("bookAppointment", () => {
+    const bookInput = {
+      workspaceId: "workspace-1",
+      calendarId: "calendar-1",
+      contactId: "contact-1",
+      startAt: new Date("2099-01-01T10:00:00.000Z"),
+      inviteeTimezone: "UTC",
+    }
+    const groupCalendar = {
+      id: "calendar-1",
+      name: "Group Calendar",
+      active: true,
+      timezone: "UTC",
+      updatedAt: new Date("2099-01-01T00:00:00.000Z"),
+      durationMinutes: 30,
+      locationType: "onlineMeeting",
+      locationDetail: null,
+      externalConnectionId: null,
+      confirmationFlowId: "confirmation-flow-1",
+      allowGroupMeeting: true,
+      maxPerSlot: 5,
+      maxAppointmentsPerUser: null,
+    }
+
+    beforeEach(() => {
+      // An earlier test queues a `listFutureScheduledForContact` result it
+      // never consumes (unlimited cap skips the lookup); drop it here.
+      mocks.listFutureScheduledForContact.mockReset()
+      mocks.listFutureScheduledForContact.mockResolvedValue([])
+      mocks.existsScheduledForContactAt.mockReset()
+      mocks.existsScheduledForContactAt.mockResolvedValue(false)
+    })
+
+    test("rejects a conversation of another contact before booking", async () => {
+      mocks.conversationFindByOrFail.mockResolvedValueOnce({
+        id: "conversation-2",
+        contactId: "contact-2",
+      })
+
+      await expect(
+        appointmentService.bookAppointment({
+          ...bookInput,
+          conversationId: "conversation-2",
+        }),
+      ).rejects.toMatchObject({
+        code: "invalidAppointmentConversation",
+        httpStatusCode: 400,
+      })
+      expect(mocks.transaction).not.toHaveBeenCalled()
+      expect(mocks.create).not.toHaveBeenCalled()
+    })
+
+    test("rejects a conversation of another contact even with a contact inbox", async () => {
+      mocks.conversationFindByOrFail.mockResolvedValueOnce({
+        id: "conversation-2",
+        contactId: "contact-2",
+      })
+
+      await expect(
+        appointmentService.bookAppointment({
+          ...bookInput,
+          conversationId: "conversation-2",
+          contactInboxId: "contact-inbox-1",
+        }),
+      ).rejects.toMatchObject({ code: "invalidAppointmentConversation" })
+      expect(mocks.transaction).not.toHaveBeenCalled()
+    })
+
+    test("sends the confirmation flow when booked on a conversation and contact inbox", async () => {
+      await appointmentService.bookAppointment({
+        ...bookInput,
+        conversationId: "conversation-1",
+        contactInboxId: "contact-inbox-1",
+      })
+
+      expect(mocks.integrationQueueAdd).toHaveBeenCalledWith("sendFlow", {
+        type: "sendFlow",
+        data: expect.objectContaining({
+          conversationId: "conversation-1",
+          contactInboxId: "contact-inbox-1",
+          flowId: "confirmation-flow-1",
+        }),
+      })
+    })
+
+    test("falls back to the calendar timezone for an unrecognised invitee timezone", async () => {
+      mocks.findCalendarByOrFail.mockResolvedValue({
+        ...groupCalendar,
+        timezone: "Asia/Ho_Chi_Minh",
+      })
+
+      await appointmentService.bookAppointment({
+        ...bookInput,
+        inviteeTimezone: "GMT+7",
+      })
+
+      expect(mocks.create).toHaveBeenCalledWith(
+        expect.objectContaining({ inviteeTimezone: "Asia/Ho_Chi_Minh" }),
+        expect.anything(),
+      )
+    })
+
+    test("keeps a valid IANA invitee timezone", async () => {
+      mocks.findCalendarByOrFail.mockResolvedValue({
+        ...groupCalendar,
+        timezone: "Asia/Ho_Chi_Minh",
+      })
+
+      await appointmentService.bookAppointment({
+        ...bookInput,
+        inviteeTimezone: "Europe/Paris",
+      })
+
+      expect(mocks.create).toHaveBeenCalledWith(
+        expect.objectContaining({ inviteeTimezone: "Europe/Paris" }),
+        expect.anything(),
+      )
+    })
+
+    test("books silently without a contact inbox", async () => {
+      await appointmentService.bookAppointment({
+        ...bookInput,
+        conversationId: "conversation-1",
+      })
+
+      expect(mocks.create).toHaveBeenCalled()
+      expect(mocks.integrationQueueAdd).not.toHaveBeenCalled()
+    })
+
+    test("rejects the same contact booking the same start twice on a group calendar", async () => {
+      mocks.findCalendarByOrFail.mockResolvedValue(groupCalendar)
+      mocks.existsScheduledForContactAt.mockResolvedValueOnce(true)
+
+      await expect(
+        appointmentService.bookAppointment(bookInput),
+      ).rejects.toMatchObject({ code: "appointmentAlreadyScheduled" })
+      expect(mocks.existsScheduledForContactAt).toHaveBeenCalledWith(
+        {
+          workspaceId: "workspace-1",
+          calendarId: "calendar-1",
+          contactId: "contact-1",
+          startAt: new Date("2099-01-01T10:00:00.000Z"),
+        },
+        expect.objectContaining({ execute: mocks.txExecute }),
+      )
+      expect(mocks.create).not.toHaveBeenCalled()
+    })
+
+    test("lets the contact book another start, and others the same start, on a group calendar", async () => {
+      mocks.findCalendarByOrFail.mockResolvedValue(groupCalendar)
+      mocks.existsScheduledForContactAt.mockResolvedValue(false)
+
+      await appointmentService.bookAppointment({
+        ...bookInput,
+        contactId: "contact-2",
+      })
+      expect(mocks.existsScheduledForContactAt).toHaveBeenLastCalledWith(
+        expect.objectContaining({ contactId: "contact-2" }),
+        expect.anything(),
+      )
+      expect(mocks.create).toHaveBeenCalledTimes(1)
+    })
   })
 })

@@ -8199,6 +8199,7 @@
       "invalidTokenTitle": "Este enlace de reserva no está disponible.",
       "invalidTokenDescription": "Es posible que el enlace no sea válido o haya caducado. Solicita un nuevo enlace de reserva.",
       "staleSlot": "Este horario ya no está disponible. Elige otro horario.",
+      "alreadyScheduled": "Este contacto ya tiene una cita a esta hora en este calendario. Elige otro horario.",
       "availabilityChanged": "La disponibilidad cambió mientras elegías un horario. Vuelve a elegir.",
       "submitFailed": "No pudimos completar esta solicitud. Inténtalo de nuevo."
     },
@@ -8288,6 +8289,15 @@
     },
     "messages": {
       "empty": "Aún no hay citas."
+    },
+    "actions": {
+      "create": "Crear cita"
+    },
+    "create": {
+      "title": "Crear cita",
+      "description": "Elige un calendario y un horario disponible para reservar a este contacto.",
+      "noConversationHint": "No hay ninguna conversación abierta, así que el contacto no recibirá un mensaje de confirmación.",
+      "success": "Cita creada."
     }
   },
   "appointmentManagement": {
@@ -11735,5 +11745,18 @@
     "accessRemoved": "The provider removed access to this account. Reconnect to resume.",
     "needsReconnect": "Reconnect required.",
     "inactive": "This channel is inactive."
+  },
+  "inbox": {
+    "createAppointment": {
+      "title": "Crear cita",
+      "description": "Envía al contacto un enlace de reserva de un calendario o ábrelo para reservar en su nombre.",
+      "inactive": "Inactivo",
+      "sendLink": "Enviar enlace del calendario",
+      "goToLink": "Ir al enlace del calendario",
+      "sent": "Enlace de reserva enviado.",
+      "failed": "No se pudo crear el enlace de reserva.",
+      "noCalendars": "Aún no hay calendarios de citas.",
+      "manageCalendars": "Gestionar calendarios de citas"
+    }
   }
 }

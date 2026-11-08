@@ -28,6 +28,10 @@ export async function submitAvailabilityRange(
   if (tokenPayload.mode !== "selectAvailabilityRange") {
     throw new Error("Invalid appointment range token mode")
   }
+  const { flowId, flowVersionId, stepId } = tokenPayload
+  if (!(flowId && flowVersionId && stepId)) {
+    throw new Error("Appointment range token is missing its flow context")
+  }
 
   try {
     if (parsedInput.skip) {
@@ -38,20 +42,20 @@ export async function submitAvailabilityRange(
           data: {
             conversationId: tokenPayload.conversationId,
             contactInboxId: tokenPayload.contactInboxId,
-            flowId: tokenPayload.flowId,
-            flowVersionId: tokenPayload.flowVersionId,
+            flowId,
+            flowVersionId,
             nodeId: tokenPayload.nodeId,
-            startFromStepId: tokenPayload.stepId,
+            startFromStepId: stepId,
             metadata: {
               type: APPOINTMENT_AVAILABILITY_RANGE_SKIPPED_PAYLOAD_TYPE,
-              stepId: tokenPayload.stepId,
+              stepId,
               contactInboxId: tokenPayload.contactInboxId,
             },
             origin: "channel",
           },
         },
         {
-          jobId: `appointment-range-skip-${tokenPayload.conversationId}-${tokenPayload.stepId}`,
+          jobId: `appointment-range-skip-${tokenPayload.conversationId}-${stepId}`,
         },
       )
 
@@ -65,13 +69,13 @@ export async function submitAvailabilityRange(
         data: {
           conversationId: tokenPayload.conversationId,
           contactInboxId: tokenPayload.contactInboxId,
-          flowId: tokenPayload.flowId,
-          flowVersionId: tokenPayload.flowVersionId,
+          flowId,
+          flowVersionId,
           nodeId: tokenPayload.nodeId,
-          startFromStepId: tokenPayload.stepId,
+          startFromStepId: stepId,
           metadata: {
             type: APPOINTMENT_AVAILABILITY_RANGE_SELECTION_PAYLOAD_TYPE,
-            stepId: tokenPayload.stepId,
+            stepId,
             contactInboxId: tokenPayload.contactInboxId,
             startDate: parsedInput.startDate,
             endDate: parsedInput.endDate,
@@ -80,7 +84,7 @@ export async function submitAvailabilityRange(
         },
       },
       {
-        jobId: `appointment-range-${tokenPayload.conversationId}-${tokenPayload.stepId}-${new Date(parsedInput.startDate).getTime()}-${new Date(parsedInput.endDate).getTime()}`,
+        jobId: `appointment-range-${tokenPayload.conversationId}-${stepId}-${new Date(parsedInput.startDate).getTime()}-${new Date(parsedInput.endDate).getTime()}`,
       },
     )
 

@@ -239,6 +239,35 @@ export const appointmentRepository = {
     })
   },
 
+  /**
+   * Whether the contact already holds a scheduled appointment at exactly
+   * `startAt` on the calendar. Group calendars keep capacity after one
+   * booking, so this is the only guard against the same contact booking the
+   * same slot twice. Served by `Appointment_contactId_calendarId_status_idx`.
+   */
+  async existsScheduledForContactAt(
+    input: {
+      workspaceId: string
+      calendarId: string
+      contactId: string
+      startAt: Date
+    },
+    tx: DatabaseClient = db,
+  ) {
+    const row = await tx.query.appointmentModel.findFirst({
+      where: {
+        workspaceId: input.workspaceId,
+        calendarId: input.calendarId,
+        contactId: input.contactId,
+        status: "scheduled",
+        startAt: { eq: input.startAt },
+        deletedAt: { isNull: true },
+      },
+      columns: { id: true },
+    })
+    return Boolean(row)
+  },
+
   async listFutureScheduledByCalendar(
     input: { workspaceId: string; calendarId: string; now?: Date },
     tx: DatabaseClient = db,

@@ -6843,6 +6843,15 @@
     },
     "messages": {
       "empty": "Hələ görüş yoxdur."
+    },
+    "actions": {
+      "create": "Görüş yarat"
+    },
+    "create": {
+      "title": "Görüş yarat",
+      "description": "Bu kontakt üçün rezerv etmək məqsədilə təqvim və boş vaxt seçin.",
+      "noConversationHint": "Açıq söhbət yoxdur, ona görə də kontakt təsdiq mesajı almayacaq.",
+      "success": "Görüş yaradıldı."
     }
   },
   "appointmentManagement": {
@@ -8457,6 +8466,7 @@
       "invalidTokenTitle": "Görüşün sifarişi üçün bu keçid əlçatan deyil.",
       "invalidTokenDescription": "Keçid etibarsız ola bilər və ya vaxtı bitmiş ola bilər. Görüşün sifarişi üçün yeni keçid istəyin.",
       "staleSlot": "Bu vaxt artıq boş deyil. Başqa vaxt seçin.",
+      "alreadyScheduled": "Bu əlaqənin bu təqvimdə həmin vaxta artıq görüşü var. Başqa vaxt seçin.",
       "availabilityChanged": "Siz vaxt seçərkən boş vaxtlar dəyişdi. Yenidən seçin.",
       "submitFailed": "Bu sorğunu tamamlaya bilmədik. Yenidən cəhd edin."
     },
@@ -11735,5 +11745,18 @@
     "accessRemoved": "The provider removed access to this account. Reconnect to resume.",
     "needsReconnect": "Reconnect required.",
     "inactive": "This channel is inactive."
+  },
+  "inbox": {
+    "createAppointment": {
+      "title": "Görüş yarat",
+      "description": "Kontakta təqvim üçün rezervasiya linki göndərin və ya onun adından rezerv etmək üçün açın.",
+      "inactive": "Qeyri-aktiv",
+      "sendLink": "Təqvim linkini göndər",
+      "goToLink": "Təqvim linkinə keç",
+      "sent": "Rezervasiya linki göndərildi.",
+      "failed": "Rezervasiya linki yaradıla bilmədi.",
+      "noCalendars": "Hələ görüş təqvimi yoxdur.",
+      "manageCalendars": "Görüş təqvimlərini idarə et"
+    }
   }
 }

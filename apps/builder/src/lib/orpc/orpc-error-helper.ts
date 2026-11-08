@@ -636,15 +636,37 @@ const appointmentDeleteBlocked = {
   status: 409,
 }
 
+const invalidAppointmentConversation = {
+  message: "Appointment conversation does not belong to the contact",
+  status: 400,
+}
+
+const appointmentCalendarInactive = {
+  message: "Appointment calendar is inactive",
+  status: 409,
+}
+
 export const possibleErrorsOnBookingAppointment = {
   notFound,
   businessError,
+  invalidAppointmentConversation,
   slotUnavailable,
   appointmentAvailabilityChanged,
   appointmentAlreadyScheduled,
   appointmentNotCancellable,
   appointmentDeleteBlocked,
   ...possibleIdempotencyErrors,
+} satisfies ErrorMap
+
+/**
+ * `appointments.createBookingLink`: an inactive calendar is a 409
+ * `appointmentCalendarInactive`; with `send=true` the message send can also
+ * fail like `messages.create` (`validation` 422 is in `commonApiErrors`).
+ */
+export const possibleErrorsOnCreatingBookingLink = {
+  notFound,
+  appointmentCalendarInactive,
+  ...possibleErrorsOnCreatingResource,
 } satisfies ErrorMap
 
 /**

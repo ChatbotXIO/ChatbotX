@@ -967,6 +967,7 @@ describe("sendFlowStep", () => {
       publicLinkSlug: "public-slug",
     })
     expect(mockSignAppointmentWebviewToken).toHaveBeenCalledWith({
+      source: "flow",
       mode: "book",
       workspaceId: "ws-1",
       calendarId: "calendar-1",
@@ -1370,6 +1371,7 @@ describe("sendFlowStep", () => {
     })
 
     expect(mockSignAppointmentWebviewToken).toHaveBeenCalledWith({
+      source: "flow",
       mode: "book",
       workspaceId: "ws-1",
       calendarId: "calendar-1",
