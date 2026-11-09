@@ -13,30 +13,16 @@ import {
   sharedColumns,
   timestampConfig,
 } from "../partials/shared"
+import { type ShopifyAuthKind, shopifyAuthKinds } from "../partials/shopify"
 import {
-  type ShopifyAuthKind,
-  type ShopifyConnectionStatus,
-  type ShopifySyncStatus,
-  shopifyAuthKinds,
-  shopifyConnectionStatuses,
-  shopifySyncStatuses,
-} from "../partials/shopify"
+  externalStoreConnectionStatus,
+  externalStoreSyncStatus,
+} from "./store-source"
 import { workspaceModel } from "./workspace"
 
 export const shopifyAuthKind = pgEnum(
   "shopifyAuthKind",
   shopifyAuthKinds.options as [ShopifyAuthKind, ...ShopifyAuthKind[]],
-)
-export const shopifyConnectionStatus = pgEnum(
-  "shopifyConnectionStatus",
-  shopifyConnectionStatuses.options as [
-    ShopifyConnectionStatus,
-    ...ShopifyConnectionStatus[],
-  ],
-)
-export const shopifySyncStatus = pgEnum(
-  "shopifySyncStatus",
-  shopifySyncStatuses.options as [ShopifySyncStatus, ...ShopifySyncStatus[]],
 )
 
 /**
@@ -65,9 +51,9 @@ export const integrationShopifyModel = pgTable(
     authKind: shopifyAuthKind().notNull(),
     encryptedAuth: jsonb().$type<CredentialEncrypted>().notNull(),
     webhookSubscriptionIds: jsonb().$type<string[]>().notNull(),
-    status: shopifyConnectionStatus().default("active").notNull(),
+    status: externalStoreConnectionStatus().default("active").notNull(),
     statusReason: text(),
-    syncStatus: shopifySyncStatus().default("idle").notNull(),
+    syncStatus: externalStoreSyncStatus().default("idle").notNull(),
     syncError: text(),
     lastSyncedAt: timestamp(timestampConfig),
     productCount: integer().default(0).notNull(),

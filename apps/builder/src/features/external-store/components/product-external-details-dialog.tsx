@@ -22,29 +22,29 @@ import { ExternalLinkIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import { useEffect } from "react"
+import {
+  type ExternalStoreLinks,
+  externalProductAdminUrl,
+} from "@/features/external-store/lib/store-links"
 import { getProductDetailAction } from "@/features/products/actions/get-product-detail-action"
 import { ProductStatusBadge } from "@/features/products/components/product-status-badge"
-import {
-  type ShopifyStoreLinks,
-  shopifyProductAdminUrl,
-} from "@/features/products/lib/shopify-admin-url"
 import type { ProductResource } from "@/features/products/schema/resource"
 import { toastActionError } from "@/lib/errors/safe-action-error-handler"
 
-type ProductShopifyDetailsDialogProps = {
+type ProductExternalDetailsDialogProps = {
   workspaceId: string
   product: ProductResource
-  store: ShopifyStoreLinks
+  store: ExternalStoreLinks
   onOpenChange: (open: boolean) => void
 }
 
-/** Read-only view of a Shopify product and its variants. */
-export function ProductShopifyDetailsDialog({
+/** Read-only view of a product mirrored from an external store, and its variants. */
+export function ProductExternalDetailsDialog({
   workspaceId,
   product,
   store,
   onOpenChange,
-}: ProductShopifyDetailsDialogProps) {
+}: ProductExternalDetailsDialogProps) {
   const t = useTranslations("products.shopify")
   const { execute, result, isPending } = useAction(
     getProductDetailAction.bind(null, workspaceId, product.id),
@@ -72,13 +72,16 @@ export function ProductShopifyDetailsDialog({
         <DialogHeader>
           <DialogTitle>{t("detailsTitle", { name: product.name })}</DialogTitle>
           <DialogDescription>
-            {t("detailsSubtitle", { shop: store.shopDomain })}
+            {t("detailsSubtitle", {
+              store: store.storeName,
+              shop: store.shopLabel,
+            })}
           </DialogDescription>
         </DialogHeader>
 
         <div className="flex items-center gap-3 rounded-lg border p-3">
           {image ? (
-            // biome-ignore lint/performance/noImgElement: remote Shopify CDN image
+            // biome-ignore lint/performance/noImgElement: remote store CDN image
             <img
               alt={product.name}
               className="size-14 rounded-md object-cover"
@@ -150,14 +153,14 @@ export function ProductShopifyDetailsDialog({
           />
           <a
             className={buttonVariants({ variant: "default" })}
-            href={shopifyProductAdminUrl({
-              adminUrl: store.adminUrl,
+            href={externalProductAdminUrl({
+              store,
               externalId: product.externalId,
             })}
             rel="noopener noreferrer"
             target="_blank"
           >
-            {t("editOnShopify")}
+            {t("editOnStore", { store: store.storeName })}
             <ExternalLinkIcon />
           </a>
         </DialogFooter>

@@ -100,6 +100,10 @@ import {
   finalizeExhaustedHandleConnect,
   handleWhatsappVoipSignalingJob,
 } from "./handlers/whatsapp-voip-signaling"
+import {
+  runWooCommerceSync,
+  runWooCommerceWebhook,
+} from "./handlers/woocommerce"
 import { runIntegrationJobWithWebhookContext } from "./job-context"
 import { resolveIncomingTextRouting } from "./routing"
 import { dispatchStoryAutomation } from "./story-automation-dispatch"
@@ -626,6 +630,14 @@ function startIntegrationWorker() {
             }
             case IntegrationJobAction.shopifyWebhook: {
               await runShopifyWebhook(job.data.data)
+              return
+            }
+            case IntegrationJobAction.woocommerceSync: {
+              await runWooCommerceSync(job.data.data)
+              return
+            }
+            case IntegrationJobAction.woocommerceWebhook: {
+              await runWooCommerceWebhook(job.data.data)
               return
             }
             case IntegrationJobAction.processLeadgen: {

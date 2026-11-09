@@ -22,35 +22,35 @@ import { ExternalLinkIcon } from "lucide-react"
 import { useFormatter, useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import { useEffect } from "react"
+import {
+  type ExternalStoreLinks,
+  externalOrderAdminUrl,
+} from "@/features/external-store/lib/store-links"
 import { getOrderDetailAction } from "@/features/orders/actions/get-order-detail.action"
 import {
   formatOrderMoney,
   type StoreCurrencyFormat,
 } from "@/features/orders/lib/order-money"
 import type { OrderListItem } from "@/features/orders/schema/resource"
-import {
-  type ShopifyStoreLinks,
-  shopifyOrderAdminUrl,
-} from "@/features/products/lib/shopify-admin-url"
 import { toastActionError } from "@/lib/errors/safe-action-error-handler"
-import { OrderShopifyStatusBadges } from "./order-shopify-status-badges"
+import { OrderExternalStatusBadges } from "./order-external-status-badges"
 
-type OrderShopifyDetailsDialogProps = {
+type OrderExternalDetailsDialogProps = {
   workspaceId: string
   order: OrderListItem
-  store: ShopifyStoreLinks
+  store: ExternalStoreLinks
   currencyFormat: StoreCurrencyFormat
   onOpenChange: (open: boolean) => void
 }
 
-/** Read-only view of an order mirrored from Shopify. */
-export function OrderShopifyDetailsDialog({
+/** Read-only view of an order mirrored from an external store. */
+export function OrderExternalDetailsDialog({
   workspaceId,
   order,
   store,
   currencyFormat,
   onOpenChange,
-}: OrderShopifyDetailsDialogProps) {
+}: OrderExternalDetailsDialogProps) {
   const t = useTranslations("orders")
   const format = useFormatter()
   const { execute, result, isPending } = useAction(
@@ -81,13 +81,14 @@ export function OrderShopifyDetailsDialog({
         <DialogHeader>
           <DialogTitle className="flex flex-wrap items-center gap-2">
             {t("shopify.detailsTitle", { name: orderName })}
-            <OrderShopifyStatusBadges
+            <OrderExternalStatusBadges
               fulfillmentStatus={order.fulfillmentStatus}
               paymentStatus={order.paymentStatus}
             />
           </DialogTitle>
           <DialogDescription>
             {t("shopify.placedOn", {
+              store: store.storeName,
               date: format.dateTime(order.createdAt, {
                 dateStyle: "medium",
                 timeStyle: "short",
@@ -196,14 +197,14 @@ export function OrderShopifyDetailsDialog({
           />
           <a
             className={buttonVariants({ variant: "default" })}
-            href={shopifyOrderAdminUrl({
-              adminUrl: store.adminUrl,
+            href={externalOrderAdminUrl({
+              store,
               externalId: order.externalId,
             })}
             rel="noopener noreferrer"
             target="_blank"
           >
-            {t("shopify.viewOnShopify")}
+            {t("shopify.viewOnStore", { store: store.storeName })}
             <ExternalLinkIcon />
           </a>
         </DialogFooter>

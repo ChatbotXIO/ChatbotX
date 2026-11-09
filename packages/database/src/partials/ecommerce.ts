@@ -14,26 +14,51 @@ export type OrderStatus = z.infer<typeof orderStatuses>
  * WhatsApp cart is checked out); `api` is a public API or MCP caller;
  * `manual` is a member typing one in.
  */
-export const orderSources = z.enum(["webshop", "api", "manual", "shopify"])
+export const orderSources = z.enum([
+  "webshop",
+  "api",
+  "manual",
+  "shopify",
+  "woocommerce",
+])
 export type OrderSource = z.infer<typeof orderSources>
 
 /**
  * Where the store's catalog and orders live. `chatbotx` is our own tables;
- * `shopify` mirrors a connected Shopify store, read-only here. Each product,
- * category, vendor and discount code carries the source it came from, and
- * every list shows only the rows of the store's current source.
+ * `shopify` and `woocommerce` mirror a connected external store, read-only
+ * here. Each product, category, vendor and discount code carries the source
+ * it came from, and every list shows only the rows of the store's current
+ * source.
  */
-export const storeSources = z.enum(["chatbotx", "shopify"])
+export const storeSources = z.enum(["chatbotx", "shopify", "woocommerce"])
 export type StoreSource = z.infer<typeof storeSources>
 
-/**
- * How a Shopify store's web shop checks out: `webCheckout` sends the customer
- * to Shopify's own checkout page, `inApp` places the order from our page.
- */
-export const shopifyCheckoutMethods = z.enum(["webCheckout", "inApp"])
-export type ShopifyCheckoutMethod = z.infer<typeof shopifyCheckoutMethods>
+/** The store sources mirrored from a connected external store. */
+export type ExternalStoreSource = Exclude<StoreSource, "chatbotx">
 
-/** How much of an order was handed to the carrier; mirrored from Shopify. */
+export const externalStoreSources = storeSources.exclude(["chatbotx"])
+
+/** True for a store (or a row) mirrored from an external store. */
+export const isExternalStoreSource = (
+  source: StoreSource | OrderSource | null | undefined,
+): source is ExternalStoreSource =>
+  (externalStoreSources.options as readonly string[]).includes(source ?? "")
+
+/** The external store's name as merchants know it, for messages. */
+export const EXTERNAL_STORE_NAMES: Record<ExternalStoreSource, string> = {
+  shopify: "Shopify",
+  woocommerce: "WooCommerce",
+}
+
+/**
+ * How an external store's web shop checks out: `webCheckout` sends the
+ * customer to the store's own checkout (or payment) page, `inApp` places the
+ * order from our page.
+ */
+export const externalCheckoutMethods = z.enum(["webCheckout", "inApp"])
+export type ExternalCheckoutMethod = z.infer<typeof externalCheckoutMethods>
+
+/** How much of an order was handed to the carrier; mirrored from the store. */
 export const fulfillmentStatuses = z.enum([
   "unfulfilled",
   "partial",
@@ -294,7 +319,7 @@ export type OrderShippingAddress = z.infer<typeof orderShippingAddressSchema>
  */
 export const ecommerceGeneralSettingsSchema = z.object({
   storeSource: storeSources.describe(
-    "Where products and orders come from: the platform's own catalog, managed here (the default), or `shopify`, mirrored read-only from the store connected with `shopify.connect`.",
+    "Where products and orders come from: the platform's own catalog, managed here (the default), `shopify`, mirrored read-only from the store connected with `shopify.connect`, or `woocommerce`, mirrored read-only from the store connected with `woocommerce.connect`. Switching to `shopify` or `woocommerce` needs that store connected, takes its currency and queues a full sync of it (poll `shopify.getStatus` / `woocommerce.getStatus`).",
   ),
   orderingAvailable: z
     .boolean()
@@ -447,13 +472,13 @@ export const ecommerceCheckoutSettingsSchema = z.object({
   requirePhone: z.boolean().describe("Phone number is required."),
   requireState: z.boolean().describe("State / province is required."),
   requireZip: z.boolean().describe("ZIP code is required."),
-  shopifyCheckoutMethod: shopifyCheckoutMethods.describe(
-    "With `storeSource: shopify`: `webCheckout` sends the customer to the Shopify checkout page, `inApp` places the order on Shopify from our checkout page (cash on delivery).",
+  externalCheckoutMethod: externalCheckoutMethods.describe(
+    "With `storeSource: shopify` or `woocommerce`: `webCheckout` sends the customer to the store's own checkout page (Shopify) or the order's payment page (WooCommerce), `inApp` places the order on the store from our checkout page (cash on delivery).",
   ),
-  shopifyAutoApplyDiscounts: z
+  externalAutoApplyDiscounts: z
     .boolean()
     .describe(
-      "With `storeSource: shopify`: offer the store's Shopify discount codes in the cart and pass the chosen one to checkout.",
+      "With `storeSource: shopify` or `woocommerce`: offer the store's synced discount codes in the cart and pass the chosen one to checkout.",
     ),
 })
 export type EcommerceCheckoutSettings = z.infer<
@@ -510,8 +535,8 @@ export const ECOMMERCE_SETTINGS_DEFAULTS: EcommerceSettings = {
     requirePhone: true,
     requireState: false,
     requireZip: false,
-    shopifyCheckoutMethod: "webCheckout",
-    shopifyAutoApplyDiscounts: true,
+    externalCheckoutMethod: "webCheckout",
+    externalAutoApplyDiscounts: true,
   },
 }
 

@@ -2,11 +2,11 @@ import { vendorService } from "@chatbotx.io/business"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 import {
+  externalStoreManagedErrors,
   possibleErrorsOnCreatingProductVendor,
   possibleErrorsOnDeletingResource,
   possibleErrorsOnListingResource,
   possibleErrorsOnMutatingProductVendor,
-  shopifyManagedErrors,
 } from "@/lib/orpc/orpc-error-helper"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
 import {
@@ -98,7 +98,10 @@ export const productVendorsPublicRouter = {
         ),
       }),
     )
-    .errors({ ...possibleErrorsOnDeletingResource, ...shopifyManagedErrors })
+    .errors({
+      ...possibleErrorsOnDeletingResource,
+      ...externalStoreManagedErrors,
+    })
     .handler(async ({ context, input }) => {
       await vendorService.delete({
         workspaceId: context.workspace.id,

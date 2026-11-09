@@ -33,6 +33,7 @@ import {
   resolveProductImportTemplateLocale,
 } from "@/features/products/lib/product-import-template"
 import {
+  externalStoreManagedErrors,
   possibleErrorsOnCreatingImportUpload,
   possibleErrorsOnCreatingMetaCatalog,
   possibleErrorsOnCreatingResource,
@@ -44,7 +45,6 @@ import {
   possibleErrorsOnPeekingImportHeaders,
   possibleErrorsOnStartingMetaCatalogRun,
   possibleErrorsOnStartingProductImport,
-  shopifyManagedErrors,
 } from "@/lib/orpc/orpc-error-helper"
 import { withListPagingNote, withPublicPaging } from "@/lib/public-api/list"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
@@ -453,7 +453,10 @@ export const productsPublicRouter = {
     })
     .input(createProductPublicRequest)
     .output(publicProductResource)
-    .errors({ ...possibleErrorsOnCreatingResource, ...shopifyManagedErrors })
+    .errors({
+      ...possibleErrorsOnCreatingResource,
+      ...externalStoreManagedErrors,
+    })
     .handler(async ({ context, input }) => {
       const product = await productService.createFull({
         workspaceId: context.workspace.id,
@@ -484,7 +487,10 @@ export const productsPublicRouter = {
         }),
       ),
     )
-    .errors({ ...possibleErrorsOnMutatingResource, ...shopifyManagedErrors })
+    .errors({
+      ...possibleErrorsOnMutatingResource,
+      ...externalStoreManagedErrors,
+    })
     .handler(async ({ context, input }) => {
       const { id, ...data } = input
       await productService.updateFull({
@@ -511,7 +517,10 @@ export const productsPublicRouter = {
         ),
       }),
     )
-    .errors({ ...possibleErrorsOnDeletingResource, ...shopifyManagedErrors })
+    .errors({
+      ...possibleErrorsOnDeletingResource,
+      ...externalStoreManagedErrors,
+    })
     .handler(async ({ context, input }) => {
       // findById throws notFoundException (-> 404) for a missing id, so the
       // delete call below never silently no-ops on a nonexistent product.
@@ -528,7 +537,7 @@ export const productsPublicRouter = {
       path: "/v1/products/{id}/active",
       summary: "Enable or disable product",
       description:
-        "Shows (`status: active`) or hides (`status: draft`) a product in the catalog without replacing it. Not for a product mirrored from Shopify (`source: shopify`): its status follows Shopify and is changed there. Call `products.get` to see the result, or `products.update` to change its price, variants or addons instead.",
+        "Shows (`status: active`) or hides (`status: draft`) a product in the catalog without replacing it. Not for a product mirrored from Shopify or WooCommerce (`source: shopify` or `woocommerce`): its status follows that store and is changed there. Call `products.get` to see the result, or `products.update` to change its price, variants or addons instead.",
       successStatus: 204,
       tags: ["Products"],
     })
@@ -542,7 +551,10 @@ export const productsPublicRouter = {
           .describe("Whether the product is shown in the catalog."),
       }),
     )
-    .errors({ ...possibleErrorsOnMutatingResource, ...shopifyManagedErrors })
+    .errors({
+      ...possibleErrorsOnMutatingResource,
+      ...externalStoreManagedErrors,
+    })
     .handler(async ({ context, input }) => {
       const workspaceId = context.workspace.id
       // findById throws notFoundException (-> 404); `update` alone would
@@ -566,7 +578,10 @@ export const productsPublicRouter = {
       tags: ["Products"],
     })
     .input(bulkUpdateIdsRequest)
-    .errors({ ...possibleErrorsOnDeletingResource, ...shopifyManagedErrors })
+    .errors({
+      ...possibleErrorsOnDeletingResource,
+      ...externalStoreManagedErrors,
+    })
     .handler(async ({ context, input }) => {
       await productService.delete({
         ids: input.ids,

@@ -8668,9 +8668,9 @@
         "partial": "Qismən"
       },
       "viewDetails": "Ətraflı bax",
-      "viewOnShopify": "Shopify-da bax",
+      "viewOnStore": "{store}-da bax",
       "detailsTitle": "Sifariş {name}",
-      "placedOn": "Shopify mağazasında verilib • {date}",
+      "placedOn": "{store} mağazasında verilib • {date}",
       "customerDetails": "Müştəri məlumatları",
       "shippingAddress": "Çatdırılma ünvanı",
       "noShippingAddress": "Çatdırılma ünvanı yoxdur",
@@ -8808,19 +8808,19 @@
       "track": "Məhsul ehtiyatını izlə"
     },
     "shopify": {
-      "openShopify": "Shopify-ı aç",
+      "openStore": "{store}-ı aç",
       "syncProducts": "Məhsulları sinxronlaşdır",
       "syncStarted": "Sinxronizasiya başladı",
       "syncError": "Sinxronizasiyanı başlatmaq mümkün olmadı",
       "viewDetails": "Ətraflı bax",
-      "editOnShopify": "Shopify-da redaktə et",
+      "editOnStore": "{store}-da redaktə et",
       "copyProductLink": "Məhsul linkini kopyala",
       "linkCopied": "Məhsul linki kopyalandı",
       "noProductLink": "Bu məhsulun mağaza linki yoxdur",
       "inStock": "{count} ədəd stokda",
       "inStockWithVariants": "{count} ədəd stokda ({variants} variant)",
       "detailsTitle": "Məhsul təfərrüatları — {name}",
-      "detailsSubtitle": "{shop} Shopify mağazasından sinxronlaşdırılıb",
+      "detailsSubtitle": "{shop} {store} mağazasından sinxronlaşdırılıb",
       "summaryLine": "Kateqoriya: {category} • Ümumi stok: {variants, plural, one {# variant} other {# variant}} üzrə {units} ədəd",
       "uncategorized": "Kateqoriyasız",
       "variantsTitle": "Variantlar ({count})",
@@ -10537,7 +10537,8 @@
       "payments": "Ödənişlər",
       "shipping": "Çatdırılma",
       "checkout": "Ödəniş səhifəsi",
-      "shopify": "Shopify"
+      "shopify": "Shopify",
+      "woocommerce": "WooCommerce"
     },
     "general": {
       "orderingAvailable": {
@@ -10608,10 +10609,11 @@
       },
       "storeSource": {
         "label": "Mağaza mənbəyi",
-        "description": "Məhsullarınızı, inventarınızı və sifarişlərinizi idarə etmək üçün istifadə olunan mağaza mənbəyini seçin. Shopify seçildikdə bütün məhsul və sifarişlər birbaşa Shopify mağazanızdan idarə olunur.",
+        "description": "Məhsullarınızı, inventarınızı və sifarişlərinizi idarə etmək üçün istifadə olunan mağaza mənbəyini seçin. Shopify / WooCommerce seçildikdə bütün məhsul və sifarişlər birbaşa Shopify / WooCommerce mağazanızdan idarə olunur.",
         "options": {
           "chatbotx": "ChatbotX",
-          "shopify": "Shopify"
+          "shopify": "Shopify",
+          "woocommerce": "WooCommerce"
         }
       }
     },
@@ -10751,9 +10753,22 @@
         "label": "Endirim kodlarını avtomatik tətbiq et",
         "description": "Müştərilərin ödənişə yönləndirilməzdən əvvəl Shopify endirim kodlarını birbaşa səbətə tətbiq etməsinə icazə verin."
       },
+      "wooCommerceCheckoutMethod": {
+        "description": "Müştərilərin WooCommerce mağazanızın ödəniş səhifəsində ödəyəcəyini və ya sifarişi birbaşa veb mağazada (çatdırılmada ödəniş) verəcəyini seçin.",
+        "options": {
+          "webCheckout": "WooCommerce ödəniş səhifəsi",
+          "inApp": "Tətbiqdaxili ödəniş"
+        }
+      },
+      "wooCommerceAutoApplyDiscounts": {
+        "description": "Müştərilərin ödənişə yönləndirilməzdən əvvəl WooCommerce endirim kodlarını birbaşa səbətə tətbiq etməsinə icazə verin."
+      },
       "inAppDeliveryCost": {
         "label": "Çatdırılma xərci",
         "description": "Tətbiqdaxili ödəniş sifarişlərinə əlavə olunan çatdırılma haqqı."
+      },
+      "wooCommerceDeliveryCost": {
+        "description": "WooCommerce-ə göndərilən sifarişlərə hər iki ödəniş üsulunda əlavə olunan çatdırılma haqqı."
       }
     },
     "shopify": {
@@ -10799,6 +10814,46 @@
         "label": "Sinxronizasiya statusu",
         "description": "Məhsullar, endirim kodları və sifarişlər Shopify mağazanızdan əks etdirilir.",
         "connectedTo": "{shopDomain} ilə əlaqələndirilib",
+        "lastSynced": "Son sinxronizasiya: {time} ({productCount} məhsul, {orderCount} sifariş)",
+        "neverSynced": "Hələ sinxronlaşdırılmayıb",
+        "noReason": "Davam etmək üçün mağazanızı yenidən qoşun.",
+        "invalid": "Əlaqə artıq etibarlı deyil: {reason}",
+        "state": {
+          "idle": "Gözləmədə",
+          "queued": "Sinxronizasiya növbədədir...",
+          "running": "Sinxronlaşdırılır...",
+          "succeeded": "Son sinxronizasiya uğurlu oldu",
+          "failed": "Son sinxronizasiya uğursuz oldu"
+        }
+      }
+    },
+    "woocommerce": {
+      "siteUrl": {
+        "label": "Mağaza URL-i",
+        "placeholder": "https://example.com",
+        "hint": "WordPress saytınızın ünvanı, https:// ilə başlayır. WordPress-də Settings → Permalinks Plain olmamalıdır.",
+        "connectedHint": "Qoşulmuş WooCommerce mağazanız."
+      },
+      "consumerKey": {
+        "label": "Consumer key",
+        "hint": "WooCommerce → Settings → Advanced → REST API → Add key bölməsində Read/Write icazəsi ilə açar yaradın və onun Consumer key dəyərini (ck_…) yapışdırın.",
+        "connectedHint": "Qoşulmuş açarın başlanğıcı. Açarlar şifrələnmiş saxlanılır."
+      },
+      "consumerSecret": {
+        "label": "Consumer secret",
+        "hint": "Açarın Consumer secret dəyəri (cs_…). Şifrələnmiş saxlanılır."
+      },
+      "webhookUrl": {
+        "label": "Webhook URL",
+        "description": "Məhsul, inventar və sifariş yeniləmələrini real vaxtda almaq üçün qoşulma zamanı WooCommerce-da avtomatik qeydiyyatdan keçirilir."
+      },
+      "syncNow": "İndi sinxronlaşdır",
+      "syncStarted": "Sinxronizasiya başladı",
+      "syncError": "Sinxronizasiyanı başlatmaq mümkün olmadı",
+      "syncStatus": {
+        "label": "Sinxronizasiya statusu",
+        "description": "Məhsullar, endirim kodları və sifarişlər WooCommerce mağazanızdan əks etdirilir.",
+        "connectedTo": "{store} ilə əlaqələndirilib",
         "lastSynced": "Son sinxronizasiya: {time} ({productCount} məhsul, {orderCount} sifariş)",
         "neverSynced": "Hələ sinxronlaşdırılmayıb",
         "noReason": "Davam etmək üçün mağazanızı yenidən qoşun.",

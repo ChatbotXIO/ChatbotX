@@ -54,6 +54,7 @@ export async function ShopLayout({
           preview,
           open: shop.ordering.open,
           checkoutMode: shop.checkout.mode,
+          externalWebCheckout: shop.checkout.externalWebCheckout,
           shopifyWebCheckout: shop.checkout.shopifyWebCheckout,
           productButtons: shop.productButtons,
           brandColorStyle,

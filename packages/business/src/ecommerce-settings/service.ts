@@ -7,8 +7,10 @@ import {
   type EcommerceProFeature,
   type EcommerceSettings,
   type EcommerceShippingSettings,
+  type ExternalStoreSource,
   ecommerceProFeatures,
   ecommerceSettingsSchema,
+  isExternalStoreSource,
   isOnlinePaymentMethod,
   type PaymentMethod,
   type StoreSource,
@@ -25,13 +27,21 @@ import { BaseService } from "../base.service"
 import { ecommerceOpenHoursService } from "../ecommerce-open-hours/service"
 import { ChatbotXException, validationException } from "../errors"
 import { flowService } from "../flow/service"
+import { logger } from "../logger"
 import {
   paymentCurrencyUnsupportedException,
   paymentProviderNotConnectedException,
 } from "../payment-provider/errors"
+import { shopifyIntegrationService } from "../shopify/integration.service"
 import { assertReferencable } from "../template/installed-resource.service"
 import { withTemplateLockedTransaction } from "../template/template-resource-locks"
-import { ecommerceSettingsCacheTag, resolveStoreSource } from "./store-source"
+import { wooCommerceIntegrationService } from "../woocommerce/integration.service"
+import {
+  assertExternalStoreConnected,
+  currencySymbolFor,
+  ecommerceSettingsCacheTag,
+  resolveStoreSource,
+} from "./store-source"
 
 export type EcommerceSettingsPatch = {
   general?: Partial<EcommerceGeneralSettings>
@@ -83,8 +93,8 @@ const toSettings = (row: EcommerceSettingsModel): EcommerceSettings => ({
     requirePhone: row.requirePhone,
     requireState: row.requireState,
     requireZip: row.requireZip,
-    shopifyCheckoutMethod: row.shopifyCheckoutMethod,
-    shopifyAutoApplyDiscounts: row.shopifyAutoApplyDiscounts,
+    externalCheckoutMethod: row.externalCheckoutMethod,
+    externalAutoApplyDiscounts: row.externalAutoApplyDiscounts,
   },
 })
 
@@ -184,55 +194,158 @@ class EcommerceSettingsService extends BaseService {
     const { workspaceId, patch } = input
     await this.assertProFeaturesAllowed(workspaceId, patch)
 
-    const merged = await withTemplateLockedTransaction(async (tx) => {
-      // The flows being written: their tpl-res locks are held until the
-      // reference commits, so an uninstall that tombstoned one is seen (the
-      // save is refused) or sees this reference. First step of the transaction.
-      const flowIds = [
-        patch.general?.abandonedCartFlowId,
-        patch.checkout?.checkoutFlowId,
-        patch.checkout?.orderConfirmationFlowId,
-      ].filter((id): id is string => typeof id === "string")
-      await assertReferencable({
-        workspaceId,
-        parents: [...new Set(flowIds)].map((resourceId) => ({
-          kind: "flow" as const,
-          resourceId,
-        })),
-        tx,
-      })
-      // Create the row if missing, then lock it so two saves of different
-      // groups queue up instead of overwriting each other's merge.
-      await ecommerceSettingsRepository.insertIfMissing(
-        { workspaceId, values: toValues(ECOMMERCE_SETTINGS_DEFAULTS) },
-        tx,
-      )
-      const row = await ecommerceSettingsRepository.findForUpdate(
-        workspaceId,
-        tx,
-      )
-      const current = row ? toSettings(row) : ECOMMERCE_SETTINGS_DEFAULTS
-      // A key sent as `undefined` keeps the saved value rather than erasing it.
-      const next = ecommerceSettingsSchema.parse({
-        general: { ...current.general, ...definedOnly(patch.general) },
-        payments: { ...current.payments, ...definedOnly(patch.payments) },
-        shipping: { ...current.shipping, ...definedOnly(patch.shipping) },
-        checkout: { ...current.checkout, ...definedOnly(patch.checkout) },
-      })
-      await this.assertCoherent(workspaceId, next, patch)
-      if (Object.keys(definedOnly(patch.payments)).length > 0) {
-        await this.assertPaymentMethodsUsable(workspaceId, next, tx)
-      }
-      await ecommerceSettingsRepository.upsert(
-        { workspaceId, values: toValues(next) },
-        tx,
-      )
-      return next
-    })
+    const { merged, previousSource } = await withTemplateLockedTransaction(
+      async (tx) => {
+        // The flows being written: their tpl-res locks are held until the
+        // reference commits, so an uninstall that tombstoned one is seen (the
+        // save is refused) or sees this reference. First step of the transaction.
+        const flowIds = [
+          patch.general?.abandonedCartFlowId,
+          patch.checkout?.checkoutFlowId,
+          patch.checkout?.orderConfirmationFlowId,
+        ].filter((id): id is string => typeof id === "string")
+        await assertReferencable({
+          workspaceId,
+          parents: [...new Set(flowIds)].map((resourceId) => ({
+            kind: "flow" as const,
+            resourceId,
+          })),
+          tx,
+        })
+        // Create the row if missing, then lock it so two saves of different
+        // groups queue up instead of overwriting each other's merge.
+        await ecommerceSettingsRepository.insertIfMissing(
+          { workspaceId, values: toValues(ECOMMERCE_SETTINGS_DEFAULTS) },
+          tx,
+        )
+        const row = await ecommerceSettingsRepository.findForUpdate(
+          workspaceId,
+          tx,
+        )
+        const current = row ? toSettings(row) : ECOMMERCE_SETTINGS_DEFAULTS
+        // A key sent as `undefined` keeps the saved value rather than erasing it.
+        const parsed = ecommerceSettingsSchema.parse({
+          general: { ...current.general, ...definedOnly(patch.general) },
+          payments: { ...current.payments, ...definedOnly(patch.payments) },
+          shipping: { ...current.shipping, ...definedOnly(patch.shipping) },
+          checkout: { ...current.checkout, ...definedOnly(patch.checkout) },
+        })
+        const next = await this.withExternalStoreCurrency(
+          workspaceId,
+          current,
+          parsed,
+          patch,
+        )
+        await this.assertCoherent(workspaceId, next, patch)
+        if (Object.keys(definedOnly(patch.payments)).length > 0) {
+          await this.assertPaymentMethodsUsable(workspaceId, next, tx)
+        }
+        await ecommerceSettingsRepository.upsert(
+          { workspaceId, values: toValues(next) },
+          tx,
+        )
+        return { merged: next, previousSource: current.general.storeSource }
+      },
+    )
 
     await this.invalidateCacheTags(this.cacheTag(workspaceId))
     await this.audit("update", "updated ecommerce settings")
+    const source = merged.general.storeSource
+    if (isExternalStoreSource(source) && source !== previousSource) {
+      await this.syncSwitchedStore(workspaceId, source)
+    }
+    if (
+      "storeSource" in definedOnly(patch.general) &&
+      merged.general.storeSource === "woocommerce"
+    ) {
+      // The store's own symbol and its position, read from WooCommerce.
+      try {
+        await wooCommerceIntegrationService.refreshStoreCurrency(workspaceId)
+        return await this.getFresh(workspaceId)
+      } catch (err) {
+        logger.warn(
+          { err, workspaceId },
+          "[ecommerce-settings] could not read the WooCommerce store's currency",
+        )
+      }
+    }
     return merged
+  }
+
+  /**
+   * The store now sells from an external store: a full sync is queued, so
+   * its catalog, codes and recent orders are current from the start (they
+   * may have changed while the store sold from elsewhere). A sync already
+   * running covers it; failing to queue one does not undo the switch — the
+   * merchant can still press Sync Now.
+   */
+  private async syncSwitchedStore(
+    workspaceId: string,
+    source: ExternalStoreSource,
+  ): Promise<void> {
+    try {
+      if (source === "shopify") {
+        await shopifyIntegrationService.requestSync({
+          workspaceId,
+          scope: "all",
+        })
+      } else {
+        await wooCommerceIntegrationService.requestSync({
+          workspaceId,
+          scope: "all",
+        })
+      }
+    } catch (err) {
+      if (
+        err instanceof ChatbotXException &&
+        (err.code === "shopifySyncInProgress" ||
+          err.code === "woocommerceSyncInProgress")
+      ) {
+        return
+      }
+      logger.warn(
+        { err, workspaceId, source },
+        "[ecommerce-settings] could not queue the store's sync after switching to it",
+      )
+    }
+  }
+
+  /**
+   * Switching to an external store (Shopify, WooCommerce) needs it connected,
+   * and takes its currency: its products are priced in it, and every price
+   * shown and order charged reads `payments.currency`. A WooCommerce sync
+   * then brings the store's own symbol and its position.
+   */
+  private async withExternalStoreCurrency(
+    workspaceId: string,
+    current: EcommerceSettings,
+    next: EcommerceSettings,
+    patch: EcommerceSettingsPatch,
+  ): Promise<EcommerceSettings> {
+    const source = next.general.storeSource
+    if (
+      !(
+        "storeSource" in definedOnly(patch.general) &&
+        isExternalStoreSource(source)
+      )
+    ) {
+      return next
+    }
+    const store = await assertExternalStoreConnected(workspaceId, source)
+    if (
+      current.general.storeSource === source &&
+      current.payments.currency === store.currency
+    ) {
+      return next
+    }
+    return {
+      ...next,
+      payments: {
+        ...next.payments,
+        currency: store.currency,
+        currencySymbol: currencySymbolFor(store.currency),
+      },
+    }
   }
 
   /**

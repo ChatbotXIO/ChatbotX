@@ -6,7 +6,7 @@ import { Pool } from "pg"
 import { afterAll, beforeAll, describe, expect, test } from "vitest"
 import type { DatabaseClient } from "../../src/client"
 import { relations } from "../../src/relations"
-import { shopifyRepository } from "../../src/repositories/shopify/repository"
+import { externalStoreRepository } from "../../src/repositories/external-store/repository"
 // biome-ignore lint/performance/noNamespaceImport: mirrors how src/client.ts builds the db
 import * as schema from "../../src/schema"
 import { realDatabaseUrl } from "./database-url"
@@ -15,6 +15,7 @@ const databaseUrl = realDatabaseUrl()
 
 const productInput = (workspaceId: string) => ({
   workspaceId,
+  source: "shopify" as const,
   externalId: "gid://shopify/Product/1",
   values: {
     name: "Tote",
@@ -41,7 +42,7 @@ const productInput = (workspaceId: string) => ({
 // once. Each write replaces the options and matches the variants, so without
 // one transaction per write the two interleave and duplicate them.
 describe.skipIf(!databaseUrl)(
-  "shopifyRepository.upsertProduct under concurrency (real database)",
+  "externalStoreRepository.upsertProduct under concurrency (real database)",
   () => {
     let pool: Pool
     let db: DatabaseClient
@@ -86,8 +87,8 @@ describe.skipIf(!databaseUrl)(
     test("two writes of one product leave one set of options and variants", async () => {
       const input = productInput(workspaceId)
       const [first, second] = await Promise.all([
-        shopifyRepository.upsertProduct(input, db),
-        shopifyRepository.upsertProduct(input, db),
+        externalStoreRepository.upsertProduct(input, db),
+        externalStoreRepository.upsertProduct(input, db),
       ])
       expect(first.id).toBe(second.id)
 
@@ -105,18 +106,18 @@ describe.skipIf(!databaseUrl)(
 
     test("a product follows Shopify's status through draft, unlisted and back to active", async () => {
       const input = productInput(workspaceId)
-      await shopifyRepository.upsertProduct(input, db)
-      const drafted = await shopifyRepository.upsertProduct(
+      await externalStoreRepository.upsertProduct(input, db)
+      const drafted = await externalStoreRepository.upsertProduct(
         { ...input, values: { ...input.values, status: "draft" } },
         db,
       )
       expect(drafted.status).toBe("draft")
-      const unlisted = await shopifyRepository.upsertProduct(
+      const unlisted = await externalStoreRepository.upsertProduct(
         { ...input, values: { ...input.values, status: "unlisted" } },
         db,
       )
       expect(unlisted.status).toBe("unlisted")
-      const republished = await shopifyRepository.upsertProduct(input, db)
+      const republished = await externalStoreRepository.upsertProduct(input, db)
       expect(republished.status).toBe("active")
     })
   },

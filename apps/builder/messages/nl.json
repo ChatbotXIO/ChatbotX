@@ -7699,9 +7699,9 @@
         "partial": "Gedeeltelijk"
       },
       "viewDetails": "Details bekijken",
-      "viewOnShopify": "Bekijken in Shopify",
+      "viewOnStore": "Bekijken in {store}",
       "detailsTitle": "Bestelling {name}",
-      "placedOn": "Geplaatst in Shopify-winkel • {date}",
+      "placedOn": "Geplaatst in {store}-winkel • {date}",
       "customerDetails": "Klantgegevens",
       "shippingAddress": "Verzendadres",
       "noShippingAddress": "Geen verzendadres",
@@ -7839,19 +7839,19 @@
       "track": "Voorraad bijhouden"
     },
     "shopify": {
-      "openShopify": "Shopify openen",
+      "openStore": "{store} openen",
       "syncProducts": "Producten synchroniseren",
       "syncStarted": "Synchronisatie gestart",
       "syncError": "Kan de synchronisatie niet starten",
       "viewDetails": "Details bekijken",
-      "editOnShopify": "Bewerken in Shopify",
+      "editOnStore": "Bewerken in {store}",
       "copyProductLink": "Productlink kopiëren",
       "linkCopied": "Productlink gekopieerd",
       "noProductLink": "Dit product heeft geen winkellink",
       "inStock": "{count} op voorraad",
       "inStockWithVariants": "{count} op voorraad ({variants} varianten)",
       "detailsTitle": "Productdetails — {name}",
-      "detailsSubtitle": "Gesynchroniseerd vanuit Shopify-winkel {shop}",
+      "detailsSubtitle": "Gesynchroniseerd vanuit {store}-winkel {shop}",
       "summaryLine": "Categorie: {category} • Totale voorraad: {units} stuks in {variants, plural, one {# variant} other {# varianten}}",
       "uncategorized": "Zonder categorie",
       "variantsTitle": "Varianten ({count})",
@@ -10537,7 +10537,8 @@
       "payments": "Betalingen",
       "shipping": "Verzending",
       "checkout": "Afrekenen",
-      "shopify": "Shopify"
+      "shopify": "Shopify",
+      "woocommerce": "WooCommerce"
     },
     "general": {
       "orderingAvailable": {
@@ -10608,10 +10609,11 @@
       },
       "storeSource": {
         "label": "Winkelbron",
-        "description": "Selecteer de winkelbron waarmee je producten, voorraad en bestellingen beheert. Bij Shopify worden alle producten en bestellingen rechtstreeks vanuit je Shopify-winkel beheerd.",
+        "description": "Selecteer de winkelbron waarmee je producten, voorraad en bestellingen beheert. Bij Shopify / WooCommerce worden alle producten en bestellingen rechtstreeks vanuit je Shopify / WooCommerce-winkel beheerd.",
         "options": {
           "chatbotx": "ChatbotX",
-          "shopify": "Shopify"
+          "shopify": "Shopify",
+          "woocommerce": "WooCommerce"
         }
       }
     },
@@ -10751,9 +10753,22 @@
         "label": "Kortingscodes automatisch toepassen",
         "description": "Sta klanten toe Shopify-kortingscodes rechtstreeks op hun winkelwagen toe te passen voordat ze naar het afrekenen worden doorgestuurd."
       },
+      "wooCommerceCheckoutMethod": {
+        "description": "Kies of klanten betalen op de betaalpagina van je WooCommerce-winkel of de bestelling direct in de webshop plaatsen (betalen bij levering).",
+        "options": {
+          "webCheckout": "WooCommerce-betaalpagina",
+          "inApp": "Afrekenen in de app"
+        }
+      },
+      "wooCommerceAutoApplyDiscounts": {
+        "description": "Sta klanten toe WooCommerce-kortingscodes rechtstreeks op hun winkelwagen toe te passen voordat ze naar het afrekenen worden doorgestuurd."
+      },
       "inAppDeliveryCost": {
         "label": "Bezorgkosten",
         "description": "Bezorgkosten die worden toegevoegd aan bestellingen via afrekenen in de app."
+      },
+      "wooCommerceDeliveryCost": {
+        "description": "Bezorgkosten die worden toegevoegd aan bestellingen die naar WooCommerce gaan, bij beide afrekenmethoden."
       }
     },
     "shopify": {
@@ -10799,6 +10814,46 @@
         "label": "Synchronisatiestatus",
         "description": "Producten, kortingscodes en bestellingen worden gespiegeld vanuit je Shopify-winkel.",
         "connectedTo": "Verbonden met {shopDomain}",
+        "lastSynced": "Laatst gesynchroniseerd: {time} ({productCount} producten, {orderCount} bestellingen)",
+        "neverSynced": "Nog niet gesynchroniseerd",
+        "noReason": "Koppel je winkel opnieuw om door te gaan.",
+        "invalid": "De verbinding is niet meer geldig: {reason}",
+        "state": {
+          "idle": "Inactief",
+          "queued": "Synchronisatie in wachtrij...",
+          "running": "Synchroniseren...",
+          "succeeded": "Laatste synchronisatie geslaagd",
+          "failed": "Laatste synchronisatie mislukt"
+        }
+      }
+    },
+    "woocommerce": {
+      "siteUrl": {
+        "label": "Winkel-URL",
+        "placeholder": "https://example.com",
+        "hint": "Het adres van je WordPress-site, beginnend met https://. In WordPress mag Settings → Permalinks niet op Plain staan.",
+        "connectedHint": "Je gekoppelde WooCommerce-winkel."
+      },
+      "consumerKey": {
+        "label": "Consumer key",
+        "hint": "Maak een sleutel aan via WooCommerce → Settings → Advanced → REST API → Add key met Read/Write-rechten en plak de Consumer key (ck_…).",
+        "connectedHint": "Het begin van de gekoppelde sleutel. Sleutels worden versleuteld opgeslagen."
+      },
+      "consumerSecret": {
+        "label": "Consumer secret",
+        "hint": "Het Consumer secret van de sleutel (cs_…). Het wordt versleuteld opgeslagen."
+      },
+      "webhookUrl": {
+        "label": "Webhook-URL",
+        "description": "Wordt bij het koppelen automatisch bij WooCommerce geregistreerd om realtime updates over producten, voorraad en bestellingen te ontvangen."
+      },
+      "syncNow": "Nu synchroniseren",
+      "syncStarted": "Synchronisatie gestart",
+      "syncError": "Kan de synchronisatie niet starten",
+      "syncStatus": {
+        "label": "Synchronisatiestatus",
+        "description": "Producten, kortingscodes en bestellingen worden gespiegeld vanuit je WooCommerce-winkel.",
+        "connectedTo": "Verbonden met {store}",
         "lastSynced": "Laatst gesynchroniseerd: {time} ({productCount} producten, {orderCount} bestellingen)",
         "neverSynced": "Nog niet gesynchroniseerd",
         "noReason": "Koppel je winkel opnieuw om door te gaan.",

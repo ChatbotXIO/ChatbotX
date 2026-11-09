@@ -70,15 +70,17 @@ export const publicOrderResource = z.object({
     .string()
     .nullable()
     .describe(
-      "Shopify's order GID, for an order mirrored from the connected Shopify store (`source: shopify`).",
+      "The store's order id, for an order mirrored from a connected store: Shopify's order GID (`source: shopify`) or the WooCommerce site and order id such as `example.com#1234` (`source: woocommerce`).",
     ),
   externalName: z
     .string()
     .nullable()
-    .describe("Shopify's order name, e.g. `#1004`."),
+    .describe("The store's order name or number, e.g. `#1004`."),
   fulfillmentStatus: fulfillmentStatuses
     .nullable()
-    .describe("Shopify's fulfillment state; null for our own orders."),
+    .describe(
+      "The mirrored store's fulfillment state; null for our own orders.",
+    ),
   trackingCompany: z.string().nullable(),
   trackingNumber: z.string().nullable(),
   trackingUrl: z.string().nullable(),
@@ -175,7 +177,9 @@ export const listOrdersPublicRequest = z.object({
   fulfillmentStatus: z
     .array(fulfillmentStatuses)
     .optional()
-    .describe("Only Shopify orders in these fulfillment states."),
+    .describe(
+      "Only mirrored (Shopify, WooCommerce) orders in these fulfillment states.",
+    ),
   contactId: zodBigintAsString()
     .optional()
     .describe("Only this contact's orders. Get it from `contacts.list`."),
@@ -193,7 +197,7 @@ export const listOrdersPublicRequest = z.object({
     .max(255)
     .optional()
     .describe(
-      "An order number (ours, or Shopify's such as `#1004`), or part of the customer's name, phone or email.",
+      "An order number (ours, or the store's such as `#1004`), or part of the customer's name, phone or email.",
     ),
   page: z.coerce
     .number()

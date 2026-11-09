@@ -2,7 +2,9 @@ import { type DatabaseClient, db } from "@chatbotx.io/database/client"
 import {
   type CartLine,
   type EcommerceSettings,
+  type ExternalStoreSource,
   isAwaitingOnlinePayment,
+  isExternalStoreSource,
   type OrderShippingAddress,
   type PaymentMethod,
   type ShippingType,
@@ -54,6 +56,10 @@ import {
   placeShopifyInAppOrder,
 } from "../shopify/checkout"
 import { vendorService } from "../vendor/service"
+import {
+  buildWooCommerceWebCheckoutUrl,
+  placeWooCommerceInAppOrder,
+} from "../woocommerce/checkout"
 import { workspaceService } from "../workspace/service"
 import { resolveWorkspaceFreezeReasonById } from "../workspace-lifecycle/with-blocked-owner-guard"
 import {
@@ -709,11 +715,11 @@ class WebshopService extends BaseService {
     // A store that checks out on its own external page (to take payment
     // there) takes no order through the built-in checkout. `productPage`
     // only changes the product's Buy button, so a cart filled another way
-    // (a WhatsApp cart) still checks out here. A Shopify store has no
+    // (a WhatsApp cart) still checks out here. An external store has no
     // checkout mode (its settings hide it): a value left from before the
     // switch must not block it.
     if (
-      settings.general.storeSource !== "shopify" &&
+      !isExternalStoreSource(settings.general.storeSource) &&
       settings.checkout.checkoutMode === "externalLink"
     ) {
       throw webshopClosedException("orderingUnavailable")
@@ -758,8 +764,9 @@ class WebshopService extends BaseService {
 
     this.assertCheckoutForm(settings, form)
 
-    if (settings.general.storeSource === "shopify") {
-      return await this.checkoutOnShopify({
+    if (isExternalStoreSource(settings.general.storeSource)) {
+      return await this.checkoutOnExternalStore({
+        source: settings.general.storeSource,
         shopper,
         form,
         settings,
@@ -821,13 +828,16 @@ class WebshopService extends BaseService {
   }
 
   /**
-   * A store mirroring Shopify checks out on Shopify:
-   * - `webCheckout` answers with a cart permalink (`paymentUrl`) to Shopify's
-   *   checkout page; the cart stays until Shopify reports the order;
-   * - `inApp` places the order on Shopify now (cash on delivery) and empties
-   *   what was ordered from the cart.
+   * A store mirroring an external store checks out on that store:
+   * - `webCheckout` answers with a link (`paymentUrl`) to the store's own
+   *   page — Shopify's checkout with the cart, or the payment page of a
+   *   pending WooCommerce order; the cart stays until the store reports the
+   *   order paid or placed;
+   * - `inApp` places the order on the store now (cash on delivery) and
+   *   empties what was ordered from the cart.
    */
-  private async checkoutOnShopify(input: {
+  private async checkoutOnExternalStore(input: {
+    source: ExternalStoreSource
     shopper: WebshopShopper
     form: WebshopCheckoutForm
     settings: EcommerceSettings
@@ -839,7 +849,7 @@ class WebshopService extends BaseService {
     discountCode: string | null
   }) {
     const { shopper, form, settings, lines } = input
-    const offersCodes = settings.checkout.shopifyAutoApplyDiscounts
+    const offersCodes = settings.checkout.externalAutoApplyDiscounts
     const quote = await orderService.quote({
       workspaceId: shopper.workspaceId,
       items: lines,
@@ -868,17 +878,30 @@ class WebshopService extends BaseService {
       note: form.note?.trim() || null,
     }
 
-    if (settings.checkout.shopifyCheckoutMethod === "webCheckout") {
-      const url = await buildShopifyWebCheckoutUrl({
+    const adapter =
+      input.source === "shopify"
+        ? {
+            buildWebCheckoutUrl: buildShopifyWebCheckoutUrl,
+            placeInAppOrder: placeShopifyInAppOrder,
+          }
+        : {
+            buildWebCheckoutUrl: buildWooCommerceWebCheckoutUrl,
+            placeInAppOrder: placeWooCommerceInAppOrder,
+          }
+
+    if (settings.checkout.externalCheckoutMethod === "webCheckout") {
+      const url = await adapter.buildWebCheckoutUrl({
         shopper,
         lines,
         customer,
         discount,
+        settings,
+        delivery: quote.shippingType === "delivery",
       })
       return { order: null, paymentUrl: url }
     }
 
-    const order = await placeShopifyInAppOrder({
+    const order = await adapter.placeInAppOrder({
       shopper,
       lines,
       customer,

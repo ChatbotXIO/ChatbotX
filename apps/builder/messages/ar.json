@@ -7310,9 +7310,9 @@
         "partial": "جزئي"
       },
       "viewDetails": "عرض التفاصيل",
-      "viewOnShopify": "عرض في Shopify",
+      "viewOnStore": "عرض في {store}",
       "detailsTitle": "الطلب {name}",
-      "placedOn": "تم الطلب في متجر Shopify • {date}",
+      "placedOn": "تم الطلب في متجر {store} • {date}",
       "customerDetails": "تفاصيل العميل",
       "shippingAddress": "عنوان الشحن",
       "noShippingAddress": "لا يوجد عنوان شحن",
@@ -7450,19 +7450,19 @@
       "track": "تتبّع المخزون"
     },
     "shopify": {
-      "openShopify": "فتح Shopify",
+      "openStore": "فتح {store}",
       "syncProducts": "مزامنة المنتجات",
       "syncStarted": "بدأت المزامنة",
       "syncError": "تعذر بدء المزامنة",
       "viewDetails": "عرض التفاصيل",
-      "editOnShopify": "التعديل في Shopify",
+      "editOnStore": "التعديل في {store}",
       "copyProductLink": "نسخ رابط المنتج",
       "linkCopied": "تم نسخ رابط المنتج",
       "noProductLink": "ليس لهذا المنتج رابط في المتجر",
       "inStock": "{count} في المخزون",
       "inStockWithVariants": "{count} في المخزون ({variants} متغيرات)",
       "detailsTitle": "تفاصيل المنتج — {name}",
-      "detailsSubtitle": "تمت المزامنة من متجر Shopify {shop}",
+      "detailsSubtitle": "تمت المزامنة من متجر {store} {shop}",
       "summaryLine": "الفئة: {category} • إجمالي المخزون: {units} وحدة موزعة على {variants, plural, one {# متغير} other {# متغيرات}}",
       "uncategorized": "بدون فئة",
       "variantsTitle": "المتغيرات ({count})",
@@ -10537,7 +10537,8 @@
       "payments": "المدفوعات",
       "shipping": "الشحن",
       "checkout": "إتمام الشراء",
-      "shopify": "Shopify"
+      "shopify": "Shopify",
+      "woocommerce": "WooCommerce"
     },
     "general": {
       "orderingAvailable": {
@@ -10608,10 +10609,11 @@
       },
       "storeSource": {
         "label": "مصدر المتجر",
-        "description": "اختر مصدر المتجر المستخدم لإدارة منتجاتك ومخزونك وطلباتك. عند اختيار Shopify، تتم إدارة جميع المنتجات والطلبات مباشرة من متجر Shopify الخاص بك.",
+        "description": "اختر مصدر المتجر المستخدم لإدارة منتجاتك ومخزونك وطلباتك. عند اختيار Shopify / WooCommerce، تتم إدارة جميع المنتجات والطلبات مباشرة من متجر Shopify / WooCommerce الخاص بك.",
         "options": {
           "chatbotx": "ChatbotX",
-          "shopify": "Shopify"
+          "shopify": "Shopify",
+          "woocommerce": "WooCommerce"
         }
       }
     },
@@ -10751,9 +10753,22 @@
         "label": "تطبيق رموز الخصم تلقائيًا",
         "description": "اسمح للعملاء بتطبيق رموز خصم Shopify مباشرة على سلتهم قبل التحويل إلى صفحة الدفع."
       },
+      "wooCommerceCheckoutMethod": {
+        "description": "اختر ما إذا كان العملاء يدفعون في صفحة الدفع لمتجر WooCommerce أو يقدّمون الطلب مباشرة في المتجر الإلكتروني (الدفع عند الاستلام).",
+        "options": {
+          "webCheckout": "صفحة الدفع في WooCommerce",
+          "inApp": "إتمام الشراء داخل التطبيق"
+        }
+      },
+      "wooCommerceAutoApplyDiscounts": {
+        "description": "اسمح للعملاء بتطبيق رموز خصم WooCommerce مباشرة على سلتهم قبل التحويل إلى صفحة الدفع."
+      },
       "inAppDeliveryCost": {
         "label": "تكلفة التوصيل",
         "description": "رسوم التوصيل المضافة إلى طلبات إتمام الشراء داخل التطبيق."
+      },
+      "wooCommerceDeliveryCost": {
+        "description": "رسوم التوصيل المضافة إلى الطلبات المرسلة إلى WooCommerce، في طريقتي الدفع كلتيهما."
       }
     },
     "shopify": {
@@ -10799,6 +10814,46 @@
         "label": "حالة المزامنة",
         "description": "تتم مرآة المنتجات ورموز الخصم والطلبات من متجر Shopify الخاص بك.",
         "connectedTo": "متصل بـ {shopDomain}",
+        "lastSynced": "آخر مزامنة: {time} ({productCount} منتج، {orderCount} طلب)",
+        "neverSynced": "لم تتم المزامنة بعد",
+        "noReason": "أعد ربط متجرك للمتابعة.",
+        "invalid": "لم يعد الاتصال صالحًا: {reason}",
+        "state": {
+          "idle": "في وضع الخمول",
+          "queued": "المزامنة في قائمة الانتظار...",
+          "running": "جارٍ المزامنة...",
+          "succeeded": "نجحت آخر مزامنة",
+          "failed": "فشلت آخر مزامنة"
+        }
+      }
+    },
+    "woocommerce": {
+      "siteUrl": {
+        "label": "رابط المتجر",
+        "placeholder": "https://example.com",
+        "hint": "عنوان موقع WordPress الخاص بك، ويبدأ بـ https://. في WordPress، يجب ألا يكون الإعداد Settings → Permalinks على Plain.",
+        "connectedHint": "متجر WooCommerce المتصل."
+      },
+      "consumerKey": {
+        "label": "Consumer key",
+        "hint": "أنشئ مفتاحًا في WooCommerce → Settings → Advanced → REST API → Add key بصلاحية Read/Write، والصق Consumer key الخاص به (ck_…).",
+        "connectedHint": "بداية المفتاح المتصل. تُخزَّن المفاتيح مشفرة."
+      },
+      "consumerSecret": {
+        "label": "Consumer secret",
+        "hint": "قيمة Consumer secret للمفتاح (cs_…). تُخزَّن مشفرة."
+      },
+      "webhookUrl": {
+        "label": "رابط Webhook",
+        "description": "يتم تسجيله تلقائيًا في WooCommerce عند الاتصال لتلقي تحديثات المنتجات والمخزون والطلبات في الوقت الفعلي."
+      },
+      "syncNow": "زامن الآن",
+      "syncStarted": "بدأت المزامنة",
+      "syncError": "تعذر بدء المزامنة",
+      "syncStatus": {
+        "label": "حالة المزامنة",
+        "description": "تتم مرآة المنتجات ورموز الخصم والطلبات من متجر WooCommerce الخاص بك.",
+        "connectedTo": "متصل بـ {store}",
         "lastSynced": "آخر مزامنة: {time} ({productCount} منتج، {orderCount} طلب)",
         "neverSynced": "لم تتم المزامنة بعد",
         "noReason": "أعد ربط متجرك للمتابعة.",

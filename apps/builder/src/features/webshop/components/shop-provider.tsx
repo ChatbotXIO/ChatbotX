@@ -22,7 +22,9 @@ export type ShopContextValue = {
   /** The store takes orders right now. */
   open: boolean
   checkoutMode: CheckoutMode
-  /** Shopify Web Checkout: delivery and payment are settled on Shopify. */
+  /** External store Web Checkout: payment is settled on the store's page. */
+  externalWebCheckout: boolean
+  /** Shopify Web Checkout: delivery is priced on Shopify too. */
   shopifyWebCheckout: boolean
   productButtons: readonly ProductButtonType[]
   /** The brand color variables, for parts drawn outside the shop's wrapper. */

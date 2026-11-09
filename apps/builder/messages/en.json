@@ -8668,9 +8668,9 @@
         "partial": "Partial"
       },
       "viewDetails": "View Details",
-      "viewOnShopify": "View on Shopify",
+      "viewOnStore": "View on {store}",
       "detailsTitle": "Order {name}",
-      "placedOn": "Placed on Shopify Store • {date}",
+      "placedOn": "Placed on {store} Store • {date}",
       "customerDetails": "Customer Details",
       "shippingAddress": "Shipping Address",
       "noShippingAddress": "No shipping address",
@@ -8808,19 +8808,19 @@
       "track": "Track inventory"
     },
     "shopify": {
-      "openShopify": "Open Shopify",
+      "openStore": "Open {store}",
       "syncProducts": "Sync Products",
       "syncStarted": "Sync started",
       "syncError": "Could not start the sync",
       "viewDetails": "View Details",
-      "editOnShopify": "Edit on Shopify",
+      "editOnStore": "Edit on {store}",
       "copyProductLink": "Copy Product Link",
       "linkCopied": "Product link copied",
       "noProductLink": "This product has no storefront link",
       "inStock": "{count} in stock",
       "inStockWithVariants": "{count} in stock ({variants} variants)",
       "detailsTitle": "Product Details — {name}",
-      "detailsSubtitle": "Synced from Shopify store {shop}",
+      "detailsSubtitle": "Synced from {store} store {shop}",
       "summaryLine": "Category: {category} • Total Stock: {units} units across {variants, plural, one {# variant} other {# variants}}",
       "uncategorized": "Uncategorized",
       "variantsTitle": "Variants ({count})",
@@ -10537,7 +10537,8 @@
       "payments": "Payments",
       "shipping": "Shipping",
       "checkout": "Checkout",
-      "shopify": "Shopify"
+      "shopify": "Shopify",
+      "woocommerce": "WooCommerce"
     },
     "general": {
       "orderingAvailable": {
@@ -10608,10 +10609,11 @@
       },
       "storeSource": {
         "label": "Store Source",
-        "description": "Select the store source used to manage your products, inventory, and orders. When set to Shopify, all products and orders are managed directly from your Shopify store.",
+        "description": "Select the store source used to manage your products, inventory, and orders. When set to Shopify / WooCommerce, all products and orders are managed directly from your Shopify / WooCommerce store.",
         "options": {
           "chatbotx": "ChatbotX",
-          "shopify": "Shopify"
+          "shopify": "Shopify",
+          "woocommerce": "WooCommerce"
         }
       }
     },
@@ -10751,9 +10753,22 @@
         "label": "Auto-apply Discount Codes",
         "description": "Allow customers to apply Shopify discount codes directly to their cart before redirecting to checkout."
       },
+      "wooCommerceCheckoutMethod": {
+        "description": "Choose whether customers pay on your WooCommerce store's payment page or place the order directly on the web shop (cash on delivery).",
+        "options": {
+          "webCheckout": "WooCommerce payment page",
+          "inApp": "In-App Checkout"
+        }
+      },
+      "wooCommerceAutoApplyDiscounts": {
+        "description": "Allow customers to apply WooCommerce discount codes directly to their cart before redirecting to checkout."
+      },
       "inAppDeliveryCost": {
         "label": "Delivery cost",
         "description": "Delivery fee added to In-App Checkout orders."
+      },
+      "wooCommerceDeliveryCost": {
+        "description": "Delivery fee added to orders sent to WooCommerce, on both checkout methods."
       }
     },
     "shopify": {
@@ -10799,6 +10814,46 @@
         "label": "Sync Status",
         "description": "Products, discount codes, and orders are mirrored from your Shopify store.",
         "connectedTo": "Connected to {shopDomain}",
+        "lastSynced": "Last synced: {time} ({productCount} products, {orderCount} orders)",
+        "neverSynced": "Not synced yet",
+        "noReason": "Reconnect your store to continue.",
+        "invalid": "The connection is no longer valid: {reason}",
+        "state": {
+          "idle": "Idle",
+          "queued": "Sync queued...",
+          "running": "Syncing...",
+          "succeeded": "Last sync succeeded",
+          "failed": "Last sync failed"
+        }
+      }
+    },
+    "woocommerce": {
+      "siteUrl": {
+        "label": "Store URL",
+        "placeholder": "https://example.com",
+        "hint": "Your WordPress site's address, starting with https://. In WordPress, Settings → Permalinks must not be set to Plain.",
+        "connectedHint": "Your connected WooCommerce store."
+      },
+      "consumerKey": {
+        "label": "Consumer key",
+        "hint": "Create a key in WooCommerce → Settings → Advanced → REST API → Add key, with Read/Write permission, and paste its Consumer key (ck_…).",
+        "connectedHint": "The start of the connected key. Keys are stored encrypted."
+      },
+      "consumerSecret": {
+        "label": "Consumer secret",
+        "hint": "The key's Consumer secret (cs_…). It is stored encrypted."
+      },
+      "webhookUrl": {
+        "label": "Webhook URL",
+        "description": "Automatically registered on WooCommerce upon connection to receive real-time product, inventory, and order updates."
+      },
+      "syncNow": "Sync Now",
+      "syncStarted": "Sync started",
+      "syncError": "Could not start the sync",
+      "syncStatus": {
+        "label": "Sync Status",
+        "description": "Products, discount codes, and orders are mirrored from your WooCommerce store.",
+        "connectedTo": "Connected to {store}",
         "lastSynced": "Last synced: {time} ({productCount} products, {orderCount} orders)",
         "neverSynced": "Not synced yet",
         "noReason": "Reconnect your store to continue.",

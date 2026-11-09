@@ -29,15 +29,15 @@ import {
   useTransition,
 } from "react"
 import { toast } from "sonner"
+import {
+  type ExternalStoreLinks,
+  externalProductAdminUrl,
+} from "@/features/external-store/lib/store-links"
 import { LockBadge } from "@/features/templates/components/lock-badge"
 import { UndeletableGuard } from "@/features/templates/components/lock-context"
 import { WebshopLinkMenuItems } from "@/features/webshop/components/webshop-link-menu-items"
 import { toggleProductActiveAction } from "./actions/toggle-product-active-action"
 import { ProductStatusBadge } from "./components/product-status-badge"
-import {
-  type ShopifyStoreLinks,
-  shopifyProductAdminUrl,
-} from "./lib/shopify-admin-url"
 import type { ProductResource } from "./schema/resource"
 
 function ActiveToggleCell({ product }: { product: ProductResource }) {
@@ -69,16 +69,16 @@ type GetColumnsProps = {
   setRowAction: Dispatch<
     SetStateAction<DataTableRowAction<ProductResource> | null>
   >
-  /** Set while the store source is Shopify: the table is read-only. */
-  shopify?: {
-    store: ShopifyStoreLinks
+  /** Set while the store source is an external store: the table is read-only. */
+  externalStore?: {
+    store: ExternalStoreLinks
   }
 }
 
 export function getProductColumns({
   t,
   setRowAction,
-  shopify,
+  externalStore,
 }: GetColumnsProps): ColumnDef<ProductResource>[] {
   const selectColumn: ColumnDef<ProductResource> = {
     id: "select",
@@ -115,7 +115,7 @@ export function getProductColumns({
       />
     ),
     cell: ({ row }) => {
-      if (!shopify) {
+      if (!externalStore) {
         return (
           <span className="text-muted-foreground">
             {row.original.inventoryQuantity}
@@ -141,7 +141,7 @@ export function getProductColumns({
     enableHiding: false,
   }
 
-  const shopifyActionsColumn: ColumnDef<ProductResource> = {
+  const externalStoreActionsColumn: ColumnDef<ProductResource> = {
     id: "actions",
     header: t("actions.actions"),
     cell: ({ row }) => (
@@ -167,15 +167,21 @@ export function getProductColumns({
           <DropdownMenuItem
             render={
               <a
-                href={shopifyProductAdminUrl({
-                  adminUrl: shopify?.store.adminUrl ?? "",
-                  externalId: row.original.externalId,
-                })}
+                href={
+                  externalStore
+                    ? externalProductAdminUrl({
+                        store: externalStore.store,
+                        externalId: row.original.externalId,
+                      })
+                    : undefined
+                }
                 rel="noopener noreferrer"
                 target="_blank"
               >
                 <ExternalLinkIcon />
-                {t("products.shopify.editOnShopify")}
+                {t("products.shopify.editOnStore", {
+                  store: externalStore?.store.storeName ?? "",
+                })}
               </a>
             }
           />
@@ -277,15 +283,15 @@ export function getProductColumns({
         <DataTableColumnHeader
           column={column}
           title={t(
-            shopify
+            externalStore
               ? "products.fields.status.label"
               : "products.fields.isActive.label",
           )}
         />
       ),
-      // A Shopify product's status follows Shopify, so it is shown, not set.
+      // A mirrored product's status follows its store, so it is shown, not set.
       cell: ({ row }) =>
-        shopify ? (
+        externalStore ? (
           <ProductStatusBadge status={row.original.status} />
         ) : (
           <ActiveToggleCell product={row.original} />
@@ -346,10 +352,10 @@ export function getProductColumns({
     },
   ]
 
-  if (!shopify) {
+  if (!externalStore) {
     return columns
   }
   return columns
     .filter((column) => column.id !== "select" && column.id !== "actions")
-    .concat(shopifyActionsColumn)
+    .concat(externalStoreActionsColumn)
 }

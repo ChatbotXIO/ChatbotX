@@ -1,5 +1,8 @@
 import { type DatabaseClient, db, eq } from "@chatbotx.io/database/client"
-import type { ProductStatus } from "@chatbotx.io/database/partials"
+import {
+  isExternalStoreSource,
+  type ProductStatus,
+} from "@chatbotx.io/database/partials"
 import {
   discountCodeRepository,
   type ProductImportInsert,
@@ -21,7 +24,7 @@ import { createId } from "@chatbotx.io/utils"
 import { BaseService } from "../base.service"
 import { resolveStoreSource } from "../ecommerce-settings/store-source"
 import { notFoundException } from "../errors"
-import { shopifyManagedException } from "../shopify/errors"
+import { externalStoreManagedException } from "../external-store/errors"
 import {
   assertResourceEditable,
   changedKeysOf,
@@ -406,8 +409,9 @@ class ProductService extends BaseService {
     tx?: DatabaseClient
   }) {
     if (!input.productIds) {
-      if ((await resolveStoreSource(input.workspaceId)) === "shopify") {
-        throw shopifyManagedException()
+      const storeSource = await resolveStoreSource(input.workspaceId)
+      if (isExternalStoreSource(storeSource)) {
+        throw externalStoreManagedException(storeSource)
       }
       return
     }
@@ -415,8 +419,9 @@ class ProductService extends BaseService {
       { workspaceId: input.workspaceId, productIds: input.productIds },
       input.tx,
     )
-    if (rows.some((row) => row.source === "shopify")) {
-      throw shopifyManagedException()
+    const mirrored = rows.find((row) => isExternalStoreSource(row.source))
+    if (mirrored && isExternalStoreSource(mirrored.source)) {
+      throw externalStoreManagedException(mirrored.source)
     }
   }
 

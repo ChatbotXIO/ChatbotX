@@ -7699,9 +7699,9 @@
         "partial": "Parcial"
       },
       "viewDetails": "Ver detalhes",
-      "viewOnShopify": "Ver no Shopify",
+      "viewOnStore": "Ver no {store}",
       "detailsTitle": "Encomenda {name}",
-      "placedOn": "Feita na loja Shopify • {date}",
+      "placedOn": "Feita na loja {store} • {date}",
       "customerDetails": "Detalhes do cliente",
       "shippingAddress": "Morada de envio",
       "noShippingAddress": "Sem morada de envio",
@@ -7839,19 +7839,19 @@
       "track": "Controlar o inventário"
     },
     "shopify": {
-      "openShopify": "Abrir Shopify",
+      "openStore": "Abrir {store}",
       "syncProducts": "Sincronizar produtos",
       "syncStarted": "Sincronização iniciada",
       "syncError": "Não foi possível iniciar a sincronização",
       "viewDetails": "Ver detalhes",
-      "editOnShopify": "Editar no Shopify",
+      "editOnStore": "Editar no {store}",
       "copyProductLink": "Copiar ligação do produto",
       "linkCopied": "Ligação do produto copiada",
       "noProductLink": "Este produto não tem ligação na loja",
       "inStock": "{count} em stock",
       "inStockWithVariants": "{count} em stock ({variants} variantes)",
       "detailsTitle": "Detalhes do produto — {name}",
-      "detailsSubtitle": "Sincronizado da loja Shopify {shop}",
+      "detailsSubtitle": "Sincronizado da loja {store} {shop}",
       "summaryLine": "Categoria: {category} • Stock total: {units} unidades em {variants, plural, one {# variante} other {# variantes}}",
       "uncategorized": "Sem categoria",
       "variantsTitle": "Variantes ({count})",
@@ -10537,7 +10537,8 @@
       "payments": "Pagamentos",
       "shipping": "Envio",
       "checkout": "Checkout",
-      "shopify": "Shopify"
+      "shopify": "Shopify",
+      "woocommerce": "WooCommerce"
     },
     "general": {
       "orderingAvailable": {
@@ -10608,10 +10609,11 @@
       },
       "storeSource": {
         "label": "Origem da loja",
-        "description": "Selecione a origem da loja usada para gerir os seus produtos, stock e encomendas. Com o Shopify, todos os produtos e encomendas são geridos diretamente na sua loja Shopify.",
+        "description": "Selecione a origem da loja usada para gerir os seus produtos, stock e encomendas. Com o Shopify / WooCommerce, todos os produtos e encomendas são geridos diretamente na sua loja Shopify / WooCommerce.",
         "options": {
           "chatbotx": "ChatbotX",
-          "shopify": "Shopify"
+          "shopify": "Shopify",
+          "woocommerce": "WooCommerce"
         }
       }
     },
@@ -10751,9 +10753,22 @@
         "label": "Aplicar códigos de desconto automaticamente",
         "description": "Permite que os clientes apliquem códigos de desconto do Shopify diretamente no carrinho antes de serem redirecionados para o checkout."
       },
+      "wooCommerceCheckoutMethod": {
+        "description": "Escolha se os clientes pagam na página de pagamento da sua loja WooCommerce ou fazem a encomenda diretamente na loja online (pagamento na entrega).",
+        "options": {
+          "webCheckout": "Página de pagamento WooCommerce",
+          "inApp": "Checkout na aplicação"
+        }
+      },
+      "wooCommerceAutoApplyDiscounts": {
+        "description": "Permite que os clientes apliquem códigos de desconto do WooCommerce diretamente no carrinho antes de serem redirecionados para o checkout."
+      },
       "inAppDeliveryCost": {
         "label": "Custo de entrega",
         "description": "Taxa de entrega adicionada às encomendas do checkout na aplicação."
+      },
+      "wooCommerceDeliveryCost": {
+        "description": "Taxa de entrega adicionada às encomendas enviadas para o WooCommerce, em ambos os métodos de checkout."
       }
     },
     "shopify": {
@@ -10799,6 +10814,46 @@
         "label": "Estado da sincronização",
         "description": "Os produtos, códigos de desconto e encomendas são espelhados da sua loja Shopify.",
         "connectedTo": "Ligado a {shopDomain}",
+        "lastSynced": "Última sincronização: {time} ({productCount} produtos, {orderCount} encomendas)",
+        "neverSynced": "Ainda não sincronizado",
+        "noReason": "Volte a ligar a sua loja para continuar.",
+        "invalid": "A ligação já não é válida: {reason}",
+        "state": {
+          "idle": "Inativo",
+          "queued": "Sincronização em fila...",
+          "running": "A sincronizar...",
+          "succeeded": "Última sincronização concluída com sucesso",
+          "failed": "Última sincronização falhou"
+        }
+      }
+    },
+    "woocommerce": {
+      "siteUrl": {
+        "label": "URL da loja",
+        "placeholder": "https://example.com",
+        "hint": "O endereço do seu site WordPress, a começar por https://. No WordPress, Settings → Permalinks não pode estar em Plain.",
+        "connectedHint": "A sua loja WooCommerce ligada."
+      },
+      "consumerKey": {
+        "label": "Consumer key",
+        "hint": "Crie uma chave em WooCommerce → Settings → Advanced → REST API → Add key com permissão Read/Write e cole a respetiva Consumer key (ck_…).",
+        "connectedHint": "O início da chave ligada. As chaves são guardadas encriptadas."
+      },
+      "consumerSecret": {
+        "label": "Consumer secret",
+        "hint": "O Consumer secret da chave (cs_…). É guardado encriptado."
+      },
+      "webhookUrl": {
+        "label": "URL do webhook",
+        "description": "Registado automaticamente no WooCommerce ao ligar para receber atualizações de produtos, stock e encomendas em tempo real."
+      },
+      "syncNow": "Sincronizar agora",
+      "syncStarted": "Sincronização iniciada",
+      "syncError": "Não foi possível iniciar a sincronização",
+      "syncStatus": {
+        "label": "Estado da sincronização",
+        "description": "Os produtos, códigos de desconto e encomendas são espelhados da sua loja WooCommerce.",
+        "connectedTo": "Ligado a {store}",
         "lastSynced": "Última sincronização: {time} ({productCount} produtos, {orderCount} encomendas)",
         "neverSynced": "Ainda não sincronizado",
         "noReason": "Volte a ligar a sua loja para continuar.",

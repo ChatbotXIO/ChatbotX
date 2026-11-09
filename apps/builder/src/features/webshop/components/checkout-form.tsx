@@ -155,9 +155,10 @@ export function CheckoutForm({
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(
     shop.paymentMethods[0] ?? "cod",
   )
-  // Shopify Web Checkout: Shopify takes the payment, so none is chosen here.
-  const handsOverToShopify = context.shopifyWebCheckout
-  const paysOnline = !handsOverToShopify && isOnlinePaymentMethod(paymentMethod)
+  // Web Checkout: the store's own page takes the payment, so none is chosen
+  // here.
+  const handsOverToStore = context.externalWebCheckout
+  const paysOnline = !handsOverToStore && isOnlinePaymentMethod(paymentMethod)
   // Set once the provider's page opens, so the button stays busy until the
   // browser has left.
   const [redirecting, setRedirecting] = useState(false)
@@ -193,7 +194,7 @@ export function CheckoutForm({
     const result = await executeAsync({
       workspaceId: context.workspaceId,
       token: context.token,
-      ...(handsOverToShopify ? {} : { paymentMethod }),
+      ...(handsOverToStore ? {} : { paymentMethod }),
       customerName: values.customerName,
       customerEmail: values.customerEmail.trim(),
       customerPhone: values.customerPhone,
@@ -246,7 +247,7 @@ export function CheckoutForm({
 
   const required = shop.checkout
   const submitLabel = (() => {
-    if (handsOverToShopify) {
+    if (handsOverToStore) {
       return t("checkOut")
     }
     return paysOnline ? t("payment.continueToPayment") : t("placeOrder")
@@ -459,7 +460,7 @@ export function CheckoutForm({
         </FormSection>
       ) : null}
 
-      {handsOverToShopify ? null : (
+      {handsOverToStore ? null : (
         <FormSection icon={WalletIcon} title={t("payment.title")}>
           <RadioGroup
             className="gap-2"
@@ -533,7 +534,7 @@ export function CheckoutForm({
             <Loader2Icon className="animate-spin" />
           ) : null}
           {submitLabel}
-          {handsOverToShopify ? <ArrowRightIcon /> : null}
+          {handsOverToStore ? <ArrowRightIcon /> : null}
         </Button>
       </CheckoutBar>
     </form>

@@ -202,6 +202,24 @@ export const orderRepository = {
   },
 
   /** A mirrored Shopify order, locked until the transaction ends. */
+  /** A mirrored order by the external store's id; no lock. */
+  async findByExternalId(
+    input: { workspaceId: string; externalId: string },
+    tx: DatabaseClient = db,
+  ) {
+    const [row] = await tx
+      .select({ id: orderModel.id, status: orderModel.status })
+      .from(orderModel)
+      .where(
+        and(
+          eq(orderModel.workspaceId, input.workspaceId),
+          eq(orderModel.externalId, input.externalId),
+        ),
+      )
+      .limit(1)
+    return row
+  },
+
   async findByExternalIdForUpdate(
     input: { workspaceId: string; externalId: string },
     tx: DatabaseClient,

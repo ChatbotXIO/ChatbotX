@@ -223,14 +223,16 @@ export const possibleErrorsOnCreatingBroadcast = {
 } satisfies ErrorMap
 
 /**
- * A product, category, vendor, discount code or order mirrored from the
- * connected Shopify store (or any create while the store source is Shopify):
- * it is changed in Shopify. `shopifyManagedException` in
- * `packages/business/src/shopify/errors.ts`.
+ * A product, category, vendor, discount code or order mirrored from a
+ * connected external store — Shopify or WooCommerce, named in `data.store` —
+ * (or any create while the store source is one): it is changed on that
+ * store. `externalStoreManagedException` in
+ * `packages/business/src/external-store/errors.ts`.
  */
-export const shopifyManagedErrors = {
-  shopifyManaged: {
-    message: "Managed in Shopify; change it there and it syncs here",
+export const externalStoreManagedErrors = {
+  externalStoreManaged: {
+    message:
+      "Managed in the connected Shopify or WooCommerce store; change it there and it syncs here",
     status: 409,
   },
 } satisfies ErrorMap
@@ -382,7 +384,7 @@ export const possibleErrorsOnCountingWithBody = {
 
 /** Starting a product import: one import per workspace (409), file checks (404/422). */
 export const possibleErrorsOnStartingProductImport = {
-  ...shopifyManagedErrors,
+  ...externalStoreManagedErrors,
   notFound,
   businessError,
   // Reading the file's headers when `columnMap` is omitted.
@@ -1127,13 +1129,13 @@ const productVendorErrors = {
 } satisfies ErrorMap
 
 export const possibleErrorsOnCreatingProductVendor = {
-  ...shopifyManagedErrors,
+  ...externalStoreManagedErrors,
   ...possibleErrorsOnCreatingResource,
   ...productVendorErrors,
 } satisfies ErrorMap
 
 export const possibleErrorsOnMutatingProductVendor = {
-  ...shopifyManagedErrors,
+  ...externalStoreManagedErrors,
   ...possibleErrorsOnMutatingResource,
   ...productVendorErrors,
 } satisfies ErrorMap
@@ -1176,6 +1178,11 @@ export const possibleErrorsOnUpdatingEcommerceSettings = {
   },
   paymentCurrencyUnsupported: {
     message: "The payment provider does not take payments in this currency",
+    status: 400,
+  },
+  externalStoreNotConnected: {
+    message:
+      "Connect the Shopify or WooCommerce store before switching the store source to it",
     status: 400,
   },
 } satisfies ErrorMap
@@ -1225,7 +1232,7 @@ const discountCodeUseErrors = {
 } satisfies ErrorMap
 
 export const possibleErrorsOnCreatingDiscountCode = {
-  ...shopifyManagedErrors,
+  ...externalStoreManagedErrors,
   ...possibleErrorsOnCreatingResource,
   discountCodeDuplicated: {
     message: "A discount code with this name already exists",
@@ -1234,7 +1241,7 @@ export const possibleErrorsOnCreatingDiscountCode = {
 } satisfies ErrorMap
 
 export const possibleErrorsOnMutatingDiscountCode = {
-  ...shopifyManagedErrors,
+  ...externalStoreManagedErrors,
   ...possibleErrorsOnMutatingResource,
   discountCodeDuplicated: {
     message: "A discount code with this name already exists",
@@ -1334,7 +1341,7 @@ export const possibleErrorsOnConnectingPaymentProvider = {
 
 /** Accept/ship/conclude/cancel: a move the order's status does not allow. */
 export const possibleErrorsOnTransitioningOrder = {
-  ...shopifyManagedErrors,
+  ...externalStoreManagedErrors,
   ...possibleErrorsOnMutatingResource,
   ...paymentProviderErrors,
   orderInvalidStatusTransition: {
@@ -1358,7 +1365,7 @@ export const possibleErrorsOnTransitioningOrder = {
 
 /** Deleting an order: a paid online order is cancelled (refunded) instead. */
 export const possibleErrorsOnDeletingOrder = {
-  ...shopifyManagedErrors,
+  ...externalStoreManagedErrors,
   ...possibleErrorsOnDeletingResource,
   ...paymentProviderErrors,
   orderPaidOnline: {
@@ -1419,6 +1426,23 @@ export const possibleErrorsOnShopify = {
   },
   shopifySyncInProgress: {
     message: "A Shopify sync is already running",
+    status: 409,
+  },
+} satisfies ErrorMap
+
+/** Connect, sync and disconnect of the WooCommerce store source. */
+export const possibleErrorsOnWooCommerce = {
+  ...possibleErrorsOnMutatingResource,
+  woocommerceNotConnected: {
+    message: "Connect a WooCommerce store first",
+    status: 400,
+  },
+  woocommerceCredentialsInvalid: {
+    message: "WooCommerce did not accept this connection",
+    status: 400,
+  },
+  woocommerceSyncInProgress: {
+    message: "A WooCommerce sync is already running",
     status: 409,
   },
 } satisfies ErrorMap

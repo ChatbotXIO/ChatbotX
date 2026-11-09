@@ -9,8 +9,8 @@ import type {
   ProductStatus,
 } from "@chatbotx.io/database/partials"
 import type {
-  ShopifyProductValues,
-  ShopifyVariantValues,
+  ExternalProductValues,
+  ExternalVariantValues,
 } from "@chatbotx.io/database/repositories"
 import type {
   ShopifyCodeDiscount,
@@ -18,6 +18,11 @@ import type {
   ShopifyProduct,
 } from "@chatbotx.io/integration-shopify"
 import { normalizePhoneToE164 } from "../contact/phone"
+
+export {
+  nextMirroredStatus,
+  splitCustomerName,
+} from "../external-store/orders"
 
 const SHORT_DESCRIPTION_LENGTH = 300
 
@@ -44,9 +49,9 @@ export const mapShopifyProductStatus = (status: string): ProductStatus => {
 
 export type MappedShopifyProduct = {
   externalId: string
-  values: Omit<ShopifyProductValues, "categoryId" | "vendorId">
+  values: Omit<ExternalProductValues, "categoryId" | "vendorId">
   options: Array<{ name: string; values: string[]; position: number }>
-  variants: ShopifyVariantValues[]
+  variants: ExternalVariantValues[]
   categoryName: string | null
   vendorName: string | null
 }
@@ -295,32 +300,6 @@ export const mapShopifyOrderState = (
   }
 }
 
-const STATUS_RANK: Record<OrderStatus, number> = {
-  pending: 0,
-  accepted: 1,
-  shipped: 2,
-  concluded: 3,
-  cancelled: 3,
-}
-
-/**
- * The status a mirrored order moves to. A finished order (concluded or
- * cancelled) stays finished, and an order never steps back — Shopify can
- * report a fulfillment undone, but the customer was already told.
- */
-export const nextMirroredStatus = (
-  current: OrderStatus,
-  incoming: OrderStatus,
-): OrderStatus => {
-  if (current === "concluded" || current === "cancelled") {
-    return current
-  }
-  if (incoming === "cancelled") {
-    return incoming
-  }
-  return STATUS_RANK[incoming] > STATUS_RANK[current] ? incoming : current
-}
-
 /** A Shopify address in our order's shape. */
 export const mapShopifyAddress = (
   address: ShopifyOrder["shippingAddress"],
@@ -353,18 +332,4 @@ export const shopifyOrderContactIdentifiers = (
     ...(email ? [`email:${email.toLowerCase()}`] : []),
     ...(phone ? [`phone:${phone}`] : []),
   ]
-}
-
-const WHITESPACE = /\s+/
-
-/** Splits "Nguyen Van A" for Shopify's first and last name fields. */
-export const splitCustomerName = (name: string | null | undefined) => {
-  const parts = (name ?? "").trim().split(WHITESPACE).filter(Boolean)
-  if (parts.length <= 1) {
-    return { firstName: null, lastName: parts[0] ?? "Customer" }
-  }
-  return {
-    firstName: parts.slice(1).join(" "),
-    lastName: parts[0] as string,
-  }
 }

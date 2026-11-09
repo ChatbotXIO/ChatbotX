@@ -5347,9 +5347,9 @@
         "partial": "חלקית"
       },
       "viewDetails": "הצג פרטים",
-      "viewOnShopify": "הצג ב-Shopify",
+      "viewOnStore": "הצג ב-{store}",
       "detailsTitle": "הזמנה {name}",
-      "placedOn": "בוצעה בחנות Shopify • {date}",
+      "placedOn": "בוצעה בחנות {store} • {date}",
       "customerDetails": "פרטי לקוח",
       "shippingAddress": "כתובת למשלוח",
       "noShippingAddress": "אין כתובת למשלוח",
@@ -5487,19 +5487,19 @@
       "track": "מעקב אחר מלאי"
     },
     "shopify": {
-      "openShopify": "פתח את Shopify",
+      "openStore": "פתח את {store}",
       "syncProducts": "סנכרן מוצרים",
       "syncStarted": "הסנכרון התחיל",
       "syncError": "לא ניתן להתחיל את הסנכרון",
       "viewDetails": "הצג פרטים",
-      "editOnShopify": "ערוך ב-Shopify",
+      "editOnStore": "ערוך ב-{store}",
       "copyProductLink": "העתק קישור למוצר",
       "linkCopied": "הקישור למוצר הועתק",
       "noProductLink": "למוצר זה אין קישור בחנות",
       "inStock": "{count} במלאי",
       "inStockWithVariants": "{count} במלאי ({variants} וריאנטים)",
       "detailsTitle": "פרטי מוצר — {name}",
-      "detailsSubtitle": "סונכרן מחנות ה-Shopify {shop}",
+      "detailsSubtitle": "סונכרן מחנות ה-{store} {shop}",
       "summaryLine": "קטגוריה: {category} • סך המלאי: {units} יחידות ב-{variants, plural, one {וריאנט #} other {# וריאנטים}}",
       "uncategorized": "ללא קטגוריה",
       "variantsTitle": "וריאנטים ({count})",
@@ -10537,7 +10537,8 @@
       "payments": "תשלומים",
       "shipping": "משלוח",
       "checkout": "תשלום",
-      "shopify": "Shopify"
+      "shopify": "Shopify",
+      "woocommerce": "WooCommerce"
     },
     "general": {
       "orderingAvailable": {
@@ -10608,10 +10609,11 @@
       },
       "storeSource": {
         "label": "מקור החנות",
-        "description": "בחר את מקור החנות המשמש לניהול המוצרים, המלאי וההזמנות שלך. כשהמקור מוגדר ל-Shopify, כל המוצרים וההזמנות מנוהלים ישירות מחנות ה-Shopify שלך.",
+        "description": "בחר את מקור החנות המשמש לניהול המוצרים, המלאי וההזמנות שלך. כשהמקור מוגדר ל-Shopify / WooCommerce, כל המוצרים וההזמנות מנוהלים ישירות מחנות ה-Shopify / WooCommerce שלך.",
         "options": {
           "chatbotx": "ChatbotX",
-          "shopify": "Shopify"
+          "shopify": "Shopify",
+          "woocommerce": "WooCommerce"
         }
       }
     },
@@ -10751,9 +10753,22 @@
         "label": "החלת קודי הנחה אוטומטית",
         "description": "אפשר ללקוחות להחיל קודי הנחה של Shopify ישירות על העגלה לפני המעבר לתשלום."
       },
+      "wooCommerceCheckoutMethod": {
+        "description": "בחרו אם הלקוחות משלמים בדף התשלום של חנות ה-WooCommerce שלכם או מבצעים את ההזמנה ישירות בחנות המקוונת (תשלום במסירה).",
+        "options": {
+          "webCheckout": "דף התשלום של WooCommerce",
+          "inApp": "תשלום בתוך האפליקציה"
+        }
+      },
+      "wooCommerceAutoApplyDiscounts": {
+        "description": "אפשר ללקוחות להחיל קודי הנחה של WooCommerce ישירות על העגלה לפני המעבר לתשלום."
+      },
       "inAppDeliveryCost": {
         "label": "עלות משלוח",
         "description": "דמי משלוח שמתווספים להזמנות בתשלום בתוך האפליקציה."
+      },
+      "wooCommerceDeliveryCost": {
+        "description": "דמי משלוח שנוספים להזמנות הנשלחות ל-WooCommerce, בשתי שיטות התשלום."
       }
     },
     "shopify": {
@@ -10799,6 +10814,46 @@
         "label": "סטטוס סנכרון",
         "description": "מוצרים, קודי הנחה והזמנות משוכפלים מחנות ה-Shopify שלך.",
         "connectedTo": "מחובר אל {shopDomain}",
+        "lastSynced": "סנכרון אחרון: {time} ({productCount} מוצרים, {orderCount} הזמנות)",
+        "neverSynced": "טרם סונכרן",
+        "noReason": "חבר מחדש את החנות כדי להמשיך.",
+        "invalid": "החיבור כבר אינו תקף: {reason}",
+        "state": {
+          "idle": "במנוחה",
+          "queued": "הסנכרון בתור...",
+          "running": "מסנכרן...",
+          "succeeded": "הסנכרון האחרון הצליח",
+          "failed": "הסנכרון האחרון נכשל"
+        }
+      }
+    },
+    "woocommerce": {
+      "siteUrl": {
+        "label": "כתובת החנות",
+        "placeholder": "https://example.com",
+        "hint": "כתובת אתר ה-WordPress שלך, המתחילה ב-https://. ב-WordPress, ההגדרה Settings → Permalinks אינה יכולה להיות Plain.",
+        "connectedHint": "חנות ה-WooCommerce המחוברת שלך."
+      },
+      "consumerKey": {
+        "label": "Consumer key",
+        "hint": "צרו מפתח ב-WooCommerce → Settings → Advanced → REST API → Add key עם הרשאת Read/Write, והדביקו את ה-Consumer key שלו (ck_…).",
+        "connectedHint": "תחילת המפתח המחובר. המפתחות נשמרים מוצפנים."
+      },
+      "consumerSecret": {
+        "label": "Consumer secret",
+        "hint": "ה-Consumer secret של המפתח (cs_…). הוא נשמר מוצפן."
+      },
+      "webhookUrl": {
+        "label": "כתובת Webhook",
+        "description": "נרשמת אוטומטית ב-WooCommerce בעת החיבור כדי לקבל עדכוני מוצרים, מלאי והזמנות בזמן אמת."
+      },
+      "syncNow": "סנכרן עכשיו",
+      "syncStarted": "הסנכרון התחיל",
+      "syncError": "לא ניתן להתחיל את הסנכרון",
+      "syncStatus": {
+        "label": "סטטוס סנכרון",
+        "description": "מוצרים, קודי הנחה והזמנות משוכפלים מחנות ה-WooCommerce שלך.",
+        "connectedTo": "מחובר אל {store}",
         "lastSynced": "סנכרון אחרון: {time} ({productCount} מוצרים, {orderCount} הזמנות)",
         "neverSynced": "טרם סונכרן",
         "noReason": "חבר מחדש את החנות כדי להמשיך.",

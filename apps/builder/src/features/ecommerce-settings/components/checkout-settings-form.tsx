@@ -3,8 +3,9 @@
 import {
   checkoutModes,
   type EcommerceCheckoutSettings,
+  externalCheckoutMethods,
+  isExternalStoreSource,
   orderConfirmationModes,
-  shopifyCheckoutMethods,
 } from "@chatbotx.io/database/partials"
 import { ComboboxField } from "@chatbotx.io/ui/components/form/combobox-field"
 import { InputField } from "@chatbotx.io/ui/components/form/input-field"
@@ -40,16 +41,18 @@ const REQUIRED_FIELDS = [
 ] as const
 
 type CheckoutFormFields = CheckoutFormValues & {
-  /** The In-App Checkout delivery fee, saved with the shipping group. */
+  /** An external store's delivery fee, saved with the shipping group. */
   deliveryCost: number
 }
 
 const toRequest = (
   { deliveryCost, ...values }: CheckoutFormFields,
-  isShopify: boolean,
+  isExternalStore: boolean,
 ) => ({
-  // A Shopify store has no Shipping tab, so its delivery fee is saved here.
-  ...(isShopify && { shipping: { deliveryCost: Number(deliveryCost) || 0 } }),
+  // An external store has no Shipping tab, so its delivery fee is saved here.
+  ...(isExternalStore && {
+    shipping: { deliveryCost: Number(deliveryCost) || 0 },
+  }),
   checkout: {
     ...values,
     // An emptied number field means no minimum.
@@ -94,9 +97,11 @@ export function CheckoutSettingsForm({
         message: tValidation("required"),
       },
   ]
-  const isShopify = settings.general.storeSource === "shopify"
+  const storeSource = settings.general.storeSource
+  const isExternalStore = isExternalStoreSource(storeSource)
+  const isWooCommerce = storeSource === "woocommerce"
   const resolver = useSettingsResolver(
-    (values: CheckoutFormFields) => toRequest(values, isShopify),
+    (values: CheckoutFormFields) => toRequest(values, isExternalStore),
     rules,
   )
 
@@ -113,42 +118,59 @@ export function CheckoutSettingsForm({
   })
   const checkoutMode = form.watch("checkoutMode")
   const orderConfirmationMode = form.watch("orderConfirmationMode")
-  const shopifyCheckoutMethod = form.watch("shopifyCheckoutMethod")
+  const externalCheckoutMethod = form.watch("externalCheckoutMethod")
   const flowSelectOptions = flowOptions.map((flow) => ({
     value: flow.id,
     label: flow.name,
   }))
 
   const onSubmit = form.handleSubmit(
-    (values) => execute(toRequest(values, isShopify)),
+    (values) => execute(toRequest(values, isExternalStore)),
     showInvalidToast,
   )
 
-  if (isShopify) {
+  if (isExternalStore) {
     return (
       <Form {...form}>
         <form className="space-y-4" onSubmit={onSubmit}>
           <SettingRow
-            description={t("shopifyCheckoutMethod.description")}
+            description={t(
+              isWooCommerce
+                ? "wooCommerceCheckoutMethod.description"
+                : "shopifyCheckoutMethod.description",
+            )}
             label={t("shopifyCheckoutMethod.label")}
           >
             <SelectField
-              name="shopifyCheckoutMethod"
-              options={shopifyCheckoutMethods.options.map((method) => ({
+              name="externalCheckoutMethod"
+              options={externalCheckoutMethods.options.map((method) => ({
                 value: method,
-                label: t(`shopifyCheckoutMethod.options.${method}`),
+                label: t(
+                  isWooCommerce
+                    ? `wooCommerceCheckoutMethod.options.${method}`
+                    : `shopifyCheckoutMethod.options.${method}`,
+                ),
               }))}
             />
           </SettingRow>
           <SettingRow
-            description={t("shopifyAutoApplyDiscounts.description")}
+            description={t(
+              isWooCommerce
+                ? "wooCommerceAutoApplyDiscounts.description"
+                : "shopifyAutoApplyDiscounts.description",
+            )}
             label={t("shopifyAutoApplyDiscounts.label")}
           >
-            <SwitchField name="shopifyAutoApplyDiscounts" />
+            <SwitchField name="externalAutoApplyDiscounts" />
           </SettingRow>
-          {shopifyCheckoutMethod === "inApp" ? (
+          {/* WooCommerce's payment page takes the delivery fee set here too. */}
+          {externalCheckoutMethod === "inApp" || isWooCommerce ? (
             <SettingRow
-              description={t("inAppDeliveryCost.description")}
+              description={t(
+                isWooCommerce
+                  ? "wooCommerceDeliveryCost.description"
+                  : "inAppDeliveryCost.description",
+              )}
               label={t("inAppDeliveryCost.label")}
             >
               <InputNumberField

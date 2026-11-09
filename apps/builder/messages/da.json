@@ -7699,9 +7699,9 @@
         "partial": "Delvis"
       },
       "viewDetails": "Se detaljer",
-      "viewOnShopify": "Se på Shopify",
+      "viewOnStore": "Se på {store}",
       "detailsTitle": "Ordre {name}",
-      "placedOn": "Afgivet i Shopify-butik • {date}",
+      "placedOn": "Afgivet i {store}-butik • {date}",
       "customerDetails": "Kundeoplysninger",
       "shippingAddress": "Leveringsadresse",
       "noShippingAddress": "Ingen leveringsadresse",
@@ -7839,19 +7839,19 @@
       "track": "Track inventory"
     },
     "shopify": {
-      "openShopify": "Åbn Shopify",
+      "openStore": "Åbn {store}",
       "syncProducts": "Synkroniser produkter",
       "syncStarted": "Synkronisering startet",
       "syncError": "Kunne ikke starte synkroniseringen",
       "viewDetails": "Se detaljer",
-      "editOnShopify": "Rediger på Shopify",
+      "editOnStore": "Rediger på {store}",
       "copyProductLink": "Kopiér produktlink",
       "linkCopied": "Produktlink kopieret",
       "noProductLink": "Dette produkt har intet butikslink",
       "inStock": "{count} på lager",
       "inStockWithVariants": "{count} på lager ({variants} varianter)",
       "detailsTitle": "Produktdetaljer — {name}",
-      "detailsSubtitle": "Synkroniseret fra Shopify-butikken {shop}",
+      "detailsSubtitle": "Synkroniseret fra {store}-butikken {shop}",
       "summaryLine": "Kategori: {category} • Samlet lager: {units} enheder fordelt på {variants, plural, one {# variant} other {# varianter}}",
       "uncategorized": "Uden kategori",
       "variantsTitle": "Varianter ({count})",
@@ -10537,7 +10537,8 @@
       "payments": "Betalinger",
       "shipping": "Levering",
       "checkout": "Kasse",
-      "shopify": "Shopify"
+      "shopify": "Shopify",
+      "woocommerce": "WooCommerce"
     },
     "general": {
       "orderingAvailable": {
@@ -10608,10 +10609,11 @@
       },
       "storeSource": {
         "label": "Butikskilde",
-        "description": "Vælg den butikskilde, der bruges til at administrere dine produkter, lager og ordrer. Når Shopify er valgt, administreres alle produkter og ordrer direkte fra din Shopify-butik.",
+        "description": "Vælg den butikskilde, der bruges til at administrere dine produkter, lager og ordrer. Når Shopify / WooCommerce er valgt, administreres alle produkter og ordrer direkte fra din Shopify / WooCommerce-butik.",
         "options": {
           "chatbotx": "ChatbotX",
-          "shopify": "Shopify"
+          "shopify": "Shopify",
+          "woocommerce": "WooCommerce"
         }
       }
     },
@@ -10751,9 +10753,22 @@
         "label": "Anvend rabatkoder automatisk",
         "description": "Lad kunder anvende Shopify-rabatkoder direkte på deres kurv, før de sendes videre til betaling."
       },
+      "wooCommerceCheckoutMethod": {
+        "description": "Vælg, om kunderne betaler på din WooCommerce-butiks betalingsside eller afgiver ordren direkte i webshoppen (betaling ved levering).",
+        "options": {
+          "webCheckout": "WooCommerce-betalingsside",
+          "inApp": "Betaling i appen"
+        }
+      },
+      "wooCommerceAutoApplyDiscounts": {
+        "description": "Lad kunder anvende WooCommerce-rabatkoder direkte på deres kurv, før de sendes videre til betaling."
+      },
       "inAppDeliveryCost": {
         "label": "Leveringsomkostning",
         "description": "Leveringsgebyr, der tilføjes til ordrer betalt i appen."
+      },
+      "wooCommerceDeliveryCost": {
+        "description": "Leveringsgebyr, der lægges til ordrer sendt til WooCommerce, ved begge betalingsmetoder."
       }
     },
     "shopify": {
@@ -10799,6 +10814,46 @@
         "label": "Synkroniseringsstatus",
         "description": "Produkter, rabatkoder og ordrer spejles fra din Shopify-butik.",
         "connectedTo": "Forbundet til {shopDomain}",
+        "lastSynced": "Sidst synkroniseret: {time} ({productCount} produkter, {orderCount} ordrer)",
+        "neverSynced": "Endnu ikke synkroniseret",
+        "noReason": "Tilslut din butik igen for at fortsætte.",
+        "invalid": "Forbindelsen er ikke længere gyldig: {reason}",
+        "state": {
+          "idle": "Inaktiv",
+          "queued": "Synkronisering i kø...",
+          "running": "Synkroniserer...",
+          "succeeded": "Seneste synkronisering lykkedes",
+          "failed": "Seneste synkronisering mislykkedes"
+        }
+      }
+    },
+    "woocommerce": {
+      "siteUrl": {
+        "label": "Butikkens URL",
+        "placeholder": "https://example.com",
+        "hint": "Din WordPress-sides adresse, der starter med https://. I WordPress må Settings → Permalinks ikke stå på Plain.",
+        "connectedHint": "Din forbundne WooCommerce-butik."
+      },
+      "consumerKey": {
+        "label": "Consumer key",
+        "hint": "Opret en nøgle under WooCommerce → Settings → Advanced → REST API → Add key med Read/Write-tilladelse, og indsæt dens Consumer key (ck_…).",
+        "connectedHint": "Starten af den forbundne nøgle. Nøgler gemmes krypteret."
+      },
+      "consumerSecret": {
+        "label": "Consumer secret",
+        "hint": "Nøglens Consumer secret (cs_…). Den gemmes krypteret."
+      },
+      "webhookUrl": {
+        "label": "Webhook-URL",
+        "description": "Registreres automatisk hos WooCommerce ved tilslutning for at modtage opdateringer om produkter, lager og ordrer i realtid."
+      },
+      "syncNow": "Synkroniser nu",
+      "syncStarted": "Synkronisering startet",
+      "syncError": "Kunne ikke starte synkroniseringen",
+      "syncStatus": {
+        "label": "Synkroniseringsstatus",
+        "description": "Produkter, rabatkoder og ordrer spejles fra din WooCommerce-butik.",
+        "connectedTo": "Forbundet til {store}",
         "lastSynced": "Sidst synkroniseret: {time} ({productCount} produkter, {orderCount} ordrer)",
         "neverSynced": "Endnu ikke synkroniseret",
         "noReason": "Tilslut din butik igen for at fortsætte.",

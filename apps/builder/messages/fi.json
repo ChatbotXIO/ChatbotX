@@ -7699,9 +7699,9 @@
         "partial": "Osittain"
       },
       "viewDetails": "Näytä tiedot",
-      "viewOnShopify": "Näytä Shopifyssa",
+      "viewOnStore": "Näytä {store}ssa",
       "detailsTitle": "Tilaus {name}",
-      "placedOn": "Tehty Shopify-kaupassa • {date}",
+      "placedOn": "Tehty {store}-kaupassa • {date}",
       "customerDetails": "Asiakkaan tiedot",
       "shippingAddress": "Toimitusosoite",
       "noShippingAddress": "Ei toimitusosoitetta",
@@ -7839,19 +7839,19 @@
       "track": "Seuraa varastoa"
     },
     "shopify": {
-      "openShopify": "Avaa Shopify",
+      "openStore": "Avaa {store}",
       "syncProducts": "Synkronoi tuotteet",
       "syncStarted": "Synkronointi käynnistyi",
       "syncError": "Synkronointia ei voitu käynnistää",
       "viewDetails": "Näytä tiedot",
-      "editOnShopify": "Muokkaa Shopifyssa",
+      "editOnStore": "Muokkaa {store}ssa",
       "copyProductLink": "Kopioi tuotelinkki",
       "linkCopied": "Tuotelinkki kopioitu",
       "noProductLink": "Tuotteella ei ole kauppalinkkiä",
       "inStock": "{count} varastossa",
       "inStockWithVariants": "{count} varastossa ({variants} varianttia)",
       "detailsTitle": "Tuotteen tiedot — {name}",
-      "detailsSubtitle": "Synkronoitu Shopify-kaupasta {shop}",
+      "detailsSubtitle": "Synkronoitu {store}-kaupasta {shop}",
       "summaryLine": "Kategoria: {category} • Varastossa yhteensä: {units} yksikköä {variants, plural, one {# variantissa} other {# variantissa}}",
       "uncategorized": "Luokittelematon",
       "variantsTitle": "Variantit ({count})",
@@ -10537,7 +10537,8 @@
       "payments": "Maksut",
       "shipping": "Toimitus",
       "checkout": "Kassa",
-      "shopify": "Shopify"
+      "shopify": "Shopify",
+      "woocommerce": "WooCommerce"
     },
     "general": {
       "orderingAvailable": {
@@ -10608,10 +10609,11 @@
       },
       "storeSource": {
         "label": "Kaupan lähde",
-        "description": "Valitse kaupan lähde, jonka kautta hallitset tuotteita, varastoa ja tilauksia. Kun valittuna on Shopify, kaikkia tuotteita ja tilauksia hallitaan suoraan Shopify-kaupastasi.",
+        "description": "Valitse kaupan lähde, jonka kautta hallitset tuotteita, varastoa ja tilauksia. Kun valittuna on Shopify / WooCommerce, kaikkia tuotteita ja tilauksia hallitaan suoraan Shopify / WooCommerce-kaupastasi.",
         "options": {
           "chatbotx": "ChatbotX",
-          "shopify": "Shopify"
+          "shopify": "Shopify",
+          "woocommerce": "WooCommerce"
         }
       }
     },
@@ -10751,9 +10753,22 @@
         "label": "Käytä alennuskoodit automaattisesti",
         "description": "Salli asiakkaiden käyttää Shopify-alennuskoodeja suoraan ostoskorissaan ennen kassalle siirtymistä."
       },
+      "wooCommerceCheckoutMethod": {
+        "description": "Valitse, maksavatko asiakkaat WooCommerce-kauppasi maksusivulla vai tekevätkö he tilauksen suoraan verkkokaupassa (maksu toimituksen yhteydessä).",
+        "options": {
+          "webCheckout": "WooCommerce-maksusivu",
+          "inApp": "Sovelluksen sisäinen kassa"
+        }
+      },
+      "wooCommerceAutoApplyDiscounts": {
+        "description": "Salli asiakkaiden käyttää WooCommerce-alennuskoodeja suoraan ostoskorissaan ennen kassalle siirtymistä."
+      },
       "inAppDeliveryCost": {
         "label": "Toimituskulu",
         "description": "Sovelluksen sisäisen kassan tilauksiin lisättävä toimitusmaksu."
+      },
+      "wooCommerceDeliveryCost": {
+        "description": "Toimitusmaksu, joka lisätään WooCommerceen lähetettyihin tilauksiin molemmilla kassatavoilla."
       }
     },
     "shopify": {
@@ -10799,6 +10814,46 @@
         "label": "Synkronoinnin tila",
         "description": "Tuotteet, alennuskoodit ja tilaukset peilataan Shopify-kaupastasi.",
         "connectedTo": "Yhdistetty kauppaan {shopDomain}",
+        "lastSynced": "Viimeksi synkronoitu: {time} ({productCount} tuotetta, {orderCount} tilausta)",
+        "neverSynced": "Ei vielä synkronoitu",
+        "noReason": "Yhdistä kauppasi uudelleen jatkaaksesi.",
+        "invalid": "Yhteys ei ole enää voimassa: {reason}",
+        "state": {
+          "idle": "Lepotilassa",
+          "queued": "Synkronointi jonossa...",
+          "running": "Synkronoidaan...",
+          "succeeded": "Viimeisin synkronointi onnistui",
+          "failed": "Viimeisin synkronointi epäonnistui"
+        }
+      }
+    },
+    "woocommerce": {
+      "siteUrl": {
+        "label": "Kaupan URL",
+        "placeholder": "https://example.com",
+        "hint": "WordPress-sivustosi osoite, joka alkaa https://. WordPressissä asetus Settings → Permalinks ei saa olla Plain.",
+        "connectedHint": "Yhdistetty WooCommerce-kauppasi."
+      },
+      "consumerKey": {
+        "label": "Consumer key",
+        "hint": "Luo avain kohdassa WooCommerce → Settings → Advanced → REST API → Add key Read/Write-oikeuksilla ja liitä sen Consumer key (ck_…).",
+        "connectedHint": "Yhdistetyn avaimen alku. Avaimet tallennetaan salattuina."
+      },
+      "consumerSecret": {
+        "label": "Consumer secret",
+        "hint": "Avaimen Consumer secret (cs_…). Se tallennetaan salattuna."
+      },
+      "webhookUrl": {
+        "label": "Webhook-URL",
+        "description": "Rekisteröidään automaattisesti WooCommerceyn yhdistettäessä, jotta saat tuote-, varasto- ja tilauspäivitykset reaaliaikaisesti."
+      },
+      "syncNow": "Synkronoi nyt",
+      "syncStarted": "Synkronointi käynnistyi",
+      "syncError": "Synkronointia ei voitu käynnistää",
+      "syncStatus": {
+        "label": "Synkronoinnin tila",
+        "description": "Tuotteet, alennuskoodit ja tilaukset peilataan WooCommerce-kaupastasi.",
+        "connectedTo": "Yhdistetty kauppaan {store}",
         "lastSynced": "Viimeksi synkronoitu: {time} ({productCount} tuotetta, {orderCount} tilausta)",
         "neverSynced": "Ei vielä synkronoitu",
         "noReason": "Yhdistä kauppasi uudelleen jatkaaksesi.",

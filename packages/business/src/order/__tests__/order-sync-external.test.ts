@@ -128,6 +128,7 @@ const sync = (
 ) =>
   orderService.syncExternal({
     workspaceId: "ws1",
+    source: "shopify",
     externalId: "gid://shopify/Order/1",
     announce,
     status,

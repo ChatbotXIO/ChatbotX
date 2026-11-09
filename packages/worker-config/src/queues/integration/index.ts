@@ -92,6 +92,8 @@ export const IntegrationJobAction = {
   confirmOrderPayment: "confirmOrderPayment",
   shopifySync: "shopifySync",
   shopifyWebhook: "shopifyWebhook",
+  woocommerceSync: "woocommerceSync",
+  woocommerceWebhook: "woocommerceWebhook",
   // Ads-conversion actions (merged from the retired `adsConversion` queue).
   evaluateTemplateSent: "evaluateTemplateSent",
   evaluateConversionTrigger: "evaluateConversionTrigger",
@@ -1188,6 +1190,46 @@ export const getShopifyWebhookJobId = (webhookId: string) =>
   `shopify-webhook-${webhookId}`
 
 /**
+ * Pulls the connected WooCommerce store's catalog and recent orders again.
+ * Only one runs per workspace: `IntegrationWoocommerce.syncStatus` is claimed
+ * before the job is queued.
+ */
+export type IntegrationJobWoocommerceSync = {
+  type: typeof IntegrationJobAction.woocommerceSync
+  data: {
+    workspaceId: string
+    scope: "all" | "products" | "orders"
+  }
+}
+
+/** Completed jobs are kept, so each requested sync carries its own key. */
+export const getWoocommerceSyncJobId = (
+  workspaceId: string,
+  scope: string,
+  requestedAt: Date,
+) => `woocommerce-sync-${workspaceId}-${scope}-${requestedAt.getTime()}`
+
+/**
+ * A signed WooCommerce webhook. Only the topic and the object's id travel:
+ * the handler reads the object back from the store, so a late or reordered
+ * delivery still writes the store's current state.
+ */
+export type IntegrationJobWoocommerceWebhook = {
+  type: typeof IntegrationJobAction.woocommerceWebhook
+  data: {
+    workspaceId: string
+    /** WooCommerce's spelling, e.g. `order.updated`. */
+    topic: string
+    /** The product, order or coupon id the delivery is about. */
+    resourceId: string
+  }
+}
+
+/** One job per delivery, so a redelivered webhook runs once. */
+export const getWoocommerceWebhookJobId = (deliveryId: string) =>
+  `woocommerce-webhook-${deliveryId}`
+
+/**
  * Facebook Lead Ads: a page leadgen webhook. Carries only ids — the handler
  * resolves the page's Messenger inbox + token, fetches the lead's answers, then
  * finds/creates the contact by PSID and applies the matched automation.
@@ -1351,6 +1393,8 @@ export type IntegrationJobData =
   | IntegrationJobConfirmOrderPayment
   | IntegrationJobShopifySync
   | IntegrationJobShopifyWebhook
+  | IntegrationJobWoocommerceSync
+  | IntegrationJobWoocommerceWebhook
   | AdsConversionJobSendConversionEvent
   | IntegrationJobSendMetaCapiEvent
   | IntegrationJobSendGoogleAdsConversion

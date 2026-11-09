@@ -121,6 +121,7 @@ import {
   webshopPublicRouter,
 } from "@/features/webshop/api/public"
 import { whatsappCallsPublicRouter } from "@/features/whatsapp-calls/api/public"
+import { wooCommercePublicRouter } from "@/features/woocommerce/api/public"
 import { workingHoursPublicRouter } from "@/features/working-hours/api/public"
 import { workspaceMembersPublicRouter } from "@/features/workspace-members/api/public"
 import { workspaceSettingsPublicRouter } from "@/features/workspaces/api/public"
@@ -241,6 +242,7 @@ export const publicRouter = {
     ...whatsappCallingPublicRouter,
   },
   whatsappTemplates: whatsappTemplatesPublicRouter,
+  woocommerce: wooCommercePublicRouter,
   responseSla: responseSlaPublicRouter,
   workingHours: workingHoursPublicRouter,
   workspaceMembers: workspaceMembersPublicRouter,

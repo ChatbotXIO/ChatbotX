@@ -6,7 +6,11 @@ import {
   ne,
   sql,
 } from "@chatbotx.io/database/client"
-import type { StoreSource } from "@chatbotx.io/database/partials"
+import type {
+  CurrencyPosition,
+  ExternalStoreSource,
+  StoreSource,
+} from "@chatbotx.io/database/partials"
 import {
   ecommerceOrderCounterModel,
   ecommerceSettingsModel,
@@ -42,7 +46,6 @@ export const ecommerceSettingsRepository = {
       .onConflictDoNothing({ target: ecommerceSettingsModel.workspaceId })
   },
 
-  /** Reads the row and holds its lock until the transaction ends. */
   /** Only the store source; a workspace with no settings row has nothing to switch. */
   async setStoreSource(
     input: { workspaceId: string; storeSource: StoreSource },
@@ -54,6 +57,43 @@ export const ecommerceSettingsRepository = {
       .where(eq(ecommerceSettingsModel.workspaceId, input.workspaceId))
   },
 
+  /**
+   * The currency prices are shown and orders charged in, taken from the
+   * external store the workspace sells from — only while it still does
+   * (`storeSource` is that store), so a switch made meanwhile is kept.
+   * Returns whether a row changed.
+   */
+  async setCurrencyFromStore(
+    input: {
+      workspaceId: string
+      storeSource: ExternalStoreSource
+      currency: string
+      currencySymbol: string | null
+      currencyPosition?: CurrencyPosition
+    },
+    tx: DatabaseClient = db,
+  ): Promise<boolean> {
+    const rows = await tx
+      .update(ecommerceSettingsModel)
+      .set({
+        currency: input.currency,
+        currencySymbol: input.currencySymbol,
+        ...(input.currencyPosition
+          ? { currencyPosition: input.currencyPosition }
+          : {}),
+        updatedAt: new Date(),
+      })
+      .where(
+        and(
+          eq(ecommerceSettingsModel.workspaceId, input.workspaceId),
+          eq(ecommerceSettingsModel.storeSource, input.storeSource),
+        ),
+      )
+      .returning({ id: ecommerceSettingsModel.id })
+    return rows.length > 0
+  },
+
+  /** Reads the row and holds its lock until the transaction ends. */
   async findForUpdate(workspaceId: string, tx: DatabaseClient) {
     const [row] = await tx
       .select()

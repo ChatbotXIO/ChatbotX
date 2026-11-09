@@ -7699,9 +7699,9 @@
         "partial": "Sebagian"
       },
       "viewDetails": "Lihat detail",
-      "viewOnShopify": "Lihat di Shopify",
+      "viewOnStore": "Lihat di {store}",
       "detailsTitle": "Pesanan {name}",
-      "placedOn": "Dipesan di toko Shopify • {date}",
+      "placedOn": "Dipesan di toko {store} • {date}",
       "customerDetails": "Detail pelanggan",
       "shippingAddress": "Alamat pengiriman",
       "noShippingAddress": "Tidak ada alamat pengiriman",
@@ -7839,19 +7839,19 @@
       "track": "Lacak inventaris"
     },
     "shopify": {
-      "openShopify": "Buka Shopify",
+      "openStore": "Buka {store}",
       "syncProducts": "Sinkronkan produk",
       "syncStarted": "Sinkronisasi dimulai",
       "syncError": "Tidak dapat memulai sinkronisasi",
       "viewDetails": "Lihat detail",
-      "editOnShopify": "Edit di Shopify",
+      "editOnStore": "Edit di {store}",
       "copyProductLink": "Salin tautan produk",
       "linkCopied": "Tautan produk disalin",
       "noProductLink": "Produk ini tidak memiliki tautan toko",
       "inStock": "{count} tersedia",
       "inStockWithVariants": "{count} tersedia ({variants} varian)",
       "detailsTitle": "Detail produk — {name}",
-      "detailsSubtitle": "Disinkronkan dari toko Shopify {shop}",
+      "detailsSubtitle": "Disinkronkan dari toko {store} {shop}",
       "summaryLine": "Kategori: {category} • Total stok: {units} unit dari {variants, plural, one {# varian} other {# varian}}",
       "uncategorized": "Tanpa kategori",
       "variantsTitle": "Varian ({count})",
@@ -10537,7 +10537,8 @@
       "payments": "Pembayaran",
       "shipping": "Pengiriman",
       "checkout": "Checkout",
-      "shopify": "Shopify"
+      "shopify": "Shopify",
+      "woocommerce": "WooCommerce"
     },
     "general": {
       "orderingAvailable": {
@@ -10608,10 +10609,11 @@
       },
       "storeSource": {
         "label": "Sumber toko",
-        "description": "Pilih sumber toko yang digunakan untuk mengelola produk, inventaris, dan pesanan Anda. Jika diatur ke Shopify, semua produk dan pesanan dikelola langsung dari toko Shopify Anda.",
+        "description": "Pilih sumber toko yang digunakan untuk mengelola produk, inventaris, dan pesanan Anda. Jika diatur ke Shopify / WooCommerce, semua produk dan pesanan dikelola langsung dari toko Shopify / WooCommerce Anda.",
         "options": {
           "chatbotx": "ChatbotX",
-          "shopify": "Shopify"
+          "shopify": "Shopify",
+          "woocommerce": "WooCommerce"
         }
       }
     },
@@ -10751,9 +10753,22 @@
         "label": "Terapkan kode diskon otomatis",
         "description": "Izinkan pelanggan menerapkan kode diskon Shopify langsung ke keranjang sebelum diarahkan ke checkout."
       },
+      "wooCommerceCheckoutMethod": {
+        "description": "Pilih apakah pelanggan membayar di halaman pembayaran toko WooCommerce Anda atau memesan langsung di web shop (bayar di tempat).",
+        "options": {
+          "webCheckout": "Halaman pembayaran WooCommerce",
+          "inApp": "Checkout dalam aplikasi"
+        }
+      },
+      "wooCommerceAutoApplyDiscounts": {
+        "description": "Izinkan pelanggan menerapkan kode diskon WooCommerce langsung ke keranjang sebelum diarahkan ke checkout."
+      },
       "inAppDeliveryCost": {
         "label": "Biaya pengiriman",
         "description": "Biaya pengiriman yang ditambahkan ke pesanan checkout dalam aplikasi."
+      },
+      "wooCommerceDeliveryCost": {
+        "description": "Biaya pengiriman yang ditambahkan ke pesanan yang dikirim ke WooCommerce, pada kedua metode checkout."
       }
     },
     "shopify": {
@@ -10799,6 +10814,46 @@
         "label": "Status sinkronisasi",
         "description": "Produk, kode diskon, dan pesanan dicerminkan dari toko Shopify Anda.",
         "connectedTo": "Terhubung ke {shopDomain}",
+        "lastSynced": "Terakhir disinkronkan: {time} ({productCount} produk, {orderCount} pesanan)",
+        "neverSynced": "Belum disinkronkan",
+        "noReason": "Hubungkan ulang toko Anda untuk melanjutkan.",
+        "invalid": "Koneksi tidak lagi valid: {reason}",
+        "state": {
+          "idle": "Diam",
+          "queued": "Sinkronisasi diantrekan...",
+          "running": "Menyinkronkan...",
+          "succeeded": "Sinkronisasi terakhir berhasil",
+          "failed": "Sinkronisasi terakhir gagal"
+        }
+      }
+    },
+    "woocommerce": {
+      "siteUrl": {
+        "label": "URL toko",
+        "placeholder": "https://example.com",
+        "hint": "Alamat situs WordPress Anda, diawali https://. Di WordPress, Settings → Permalinks tidak boleh disetel ke Plain.",
+        "connectedHint": "Toko WooCommerce Anda yang terhubung."
+      },
+      "consumerKey": {
+        "label": "Consumer key",
+        "hint": "Buat kunci di WooCommerce → Settings → Advanced → REST API → Add key dengan izin Read/Write, lalu tempel Consumer key-nya (ck_…).",
+        "connectedHint": "Awal kunci yang terhubung. Kunci disimpan terenkripsi."
+      },
+      "consumerSecret": {
+        "label": "Consumer secret",
+        "hint": "Consumer secret kunci tersebut (cs_…). Disimpan terenkripsi."
+      },
+      "webhookUrl": {
+        "label": "URL webhook",
+        "description": "Didaftarkan otomatis di WooCommerce saat terhubung untuk menerima pembaruan produk, inventaris, dan pesanan secara real-time."
+      },
+      "syncNow": "Sinkronkan sekarang",
+      "syncStarted": "Sinkronisasi dimulai",
+      "syncError": "Tidak dapat memulai sinkronisasi",
+      "syncStatus": {
+        "label": "Status sinkronisasi",
+        "description": "Produk, kode diskon, dan pesanan dicerminkan dari toko WooCommerce Anda.",
+        "connectedTo": "Terhubung ke {store}",
         "lastSynced": "Terakhir disinkronkan: {time} ({productCount} produk, {orderCount} pesanan)",
         "neverSynced": "Belum disinkronkan",
         "noReason": "Hubungkan ulang toko Anda untuk melanjutkan.",

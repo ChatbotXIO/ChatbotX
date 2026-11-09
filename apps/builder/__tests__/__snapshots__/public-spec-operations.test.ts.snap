@@ -3939,6 +3939,26 @@ exports[`public API spec — operation naming guard > operation list (operationI
   },
   {
     "method": "POST",
+    "operationId": "woocommerce.connect",
+    "path": "/v1/woocommerce",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "woocommerce.disconnect",
+    "path": "/v1/woocommerce",
+  },
+  {
+    "method": "GET",
+    "operationId": "woocommerce.getStatus",
+    "path": "/v1/woocommerce",
+  },
+  {
+    "method": "POST",
+    "operationId": "woocommerce.sync",
+    "path": "/v1/woocommerce/sync",
+  },
+  {
+    "method": "POST",
     "operationId": "workingHours.create",
     "path": "/v1/working-hours",
   },

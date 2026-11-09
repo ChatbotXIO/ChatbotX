@@ -444,7 +444,7 @@ function CheckoutControl({
     }
   }, [checkingOut])
 
-  if (shop.checkout.mode === "externalLink" && !context.shopifyWebCheckout) {
+  if (shop.checkout.mode === "externalLink" && !context.externalWebCheckout) {
     // The store checks out on its own page; without a usable link there is
     // nowhere to send the customer (the server refuses our checkout too).
     if (!shop.checkout.externalLink) {

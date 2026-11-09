@@ -12,6 +12,11 @@ const mocks = vi.hoisted(() => ({
   invalidate: vi.fn(),
   audit: vi.fn(),
   listProviders: vi.fn(),
+  findShopify: vi.fn(),
+  findWooCommerce: vi.fn(),
+  refreshWooCommerceCurrency: vi.fn(),
+  syncShopify: vi.fn(),
+  syncWooCommerce: vi.fn(),
 }))
 
 // The template guards are covered by their own suites; here they only must not
@@ -59,6 +64,26 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
   },
   paymentProviderRepository: {
     listByWorkspace: (...args: unknown[]) => mocks.listProviders(...args),
+  },
+  shopifyRepository: {
+    findIntegration: (...args: unknown[]) => mocks.findShopify(...args),
+  },
+  woocommerceRepository: {
+    findIntegration: (...args: unknown[]) => mocks.findWooCommerce(...args),
+  },
+}))
+
+vi.mock("../../woocommerce/integration.service", () => ({
+  wooCommerceIntegrationService: {
+    refreshStoreCurrency: (...args: unknown[]) =>
+      mocks.refreshWooCommerceCurrency(...args),
+    requestSync: (...args: unknown[]) => mocks.syncWooCommerce(...args),
+  },
+}))
+
+vi.mock("../../shopify/integration.service", () => ({
+  shopifyIntegrationService: {
+    requestSync: (...args: unknown[]) => mocks.syncShopify(...args),
   },
 }))
 
@@ -377,5 +402,149 @@ describe("ecommerceSettingsService — online payment methods", () => {
       },
       { name: "tx" },
     )
+  })
+})
+
+describe("selling from an external store", () => {
+  test("switching to a store that is not connected is refused", async () => {
+    mocks.findWooCommerce.mockResolvedValue(undefined)
+    await expect(
+      ecommerceSettingsService.update({
+        workspaceId: "ws1",
+        patch: { general: { storeSource: "woocommerce" } },
+      }),
+    ).rejects.toMatchObject({
+      code: "externalStoreNotConnected",
+      data: { store: "woocommerce" },
+    })
+    expect(mocks.upsert).not.toHaveBeenCalled()
+  })
+
+  test("switching to Shopify takes the store's currency", async () => {
+    mocks.findShopify.mockResolvedValue({ currency: "VND" })
+    const saved = await ecommerceSettingsService.update({
+      workspaceId: "ws1",
+      patch: { general: { storeSource: "shopify" } },
+    })
+    expect(saved.payments).toMatchObject({
+      currency: "VND",
+      currencySymbol: "₫",
+    })
+    const [{ values }] = mocks.upsert.mock.calls[0] as [
+      { values: Record<string, unknown> },
+    ]
+    expect(values).toMatchObject({ currency: "VND", currencySymbol: "₫" })
+    expect(mocks.refreshWooCommerceCurrency).not.toHaveBeenCalled()
+  })
+
+  test("switching to WooCommerce reads the store's symbol and position too", async () => {
+    mocks.findWooCommerce.mockResolvedValue({ currency: "VND" })
+    await ecommerceSettingsService.update({
+      workspaceId: "ws1",
+      patch: { general: { storeSource: "woocommerce" } },
+    })
+    const [{ values }] = mocks.upsert.mock.calls[0] as [
+      { values: Record<string, unknown> },
+    ]
+    expect(values).toMatchObject({ currency: "VND" })
+    expect(mocks.refreshWooCommerceCurrency).toHaveBeenCalledWith("ws1")
+  })
+
+  test("a failed read of the store's currency does not fail the save", async () => {
+    mocks.findWooCommerce.mockResolvedValue({ currency: "VND" })
+    mocks.refreshWooCommerceCurrency.mockRejectedValue(new Error("offline"))
+    await expect(
+      ecommerceSettingsService.update({
+        workspaceId: "ws1",
+        patch: { general: { storeSource: "woocommerce" } },
+      }),
+    ).resolves.toMatchObject({ payments: { currency: "VND" } })
+  })
+})
+
+describe("switching the store source", () => {
+  const savedAs = (storeSource: "chatbotx" | "shopify" | "woocommerce") => {
+    const settings = {
+      ...ECOMMERCE_SETTINGS_DEFAULTS,
+      general: { ...ECOMMERCE_SETTINGS_DEFAULTS.general, storeSource },
+    }
+    return {
+      ...settings.general,
+      ...settings.payments,
+      ...settings.shipping,
+      ...settings.checkout,
+    }
+  }
+
+  test("switching to Shopify queues a full Shopify sync", async () => {
+    mocks.findForUpdate.mockResolvedValue(savedAs("chatbotx"))
+    mocks.findShopify.mockResolvedValue({ currency: "USD" })
+    await ecommerceSettingsService.update({
+      workspaceId: "ws1",
+      patch: { general: { storeSource: "shopify" } },
+    })
+    expect(mocks.syncShopify).toHaveBeenCalledWith({
+      workspaceId: "ws1",
+      scope: "all",
+    })
+    expect(mocks.syncWooCommerce).not.toHaveBeenCalled()
+  })
+
+  test("switching from Shopify to WooCommerce queues a WooCommerce sync", async () => {
+    mocks.findForUpdate.mockResolvedValue(savedAs("shopify"))
+    mocks.findWooCommerce.mockResolvedValue({ currency: "VND" })
+    await ecommerceSettingsService.update({
+      workspaceId: "ws1",
+      patch: { general: { storeSource: "woocommerce" } },
+    })
+    expect(mocks.syncWooCommerce).toHaveBeenCalledWith({
+      workspaceId: "ws1",
+      scope: "all",
+    })
+    expect(mocks.syncShopify).not.toHaveBeenCalled()
+  })
+
+  test("saving the same source again does not sync", async () => {
+    mocks.findForUpdate.mockResolvedValue(savedAs("shopify"))
+    mocks.findShopify.mockResolvedValue({ currency: "USD" })
+    await ecommerceSettingsService.update({
+      workspaceId: "ws1",
+      patch: { general: { storeSource: "shopify", orderingAvailable: false } },
+    })
+    expect(mocks.syncShopify).not.toHaveBeenCalled()
+  })
+
+  test("switching back to our own catalog does not sync", async () => {
+    mocks.findForUpdate.mockResolvedValue(savedAs("shopify"))
+    await ecommerceSettingsService.update({
+      workspaceId: "ws1",
+      patch: { general: { storeSource: "chatbotx" } },
+    })
+    expect(mocks.syncShopify).not.toHaveBeenCalled()
+    expect(mocks.syncWooCommerce).not.toHaveBeenCalled()
+  })
+
+  test("a sync already running, or a queue error, does not fail the switch", async () => {
+    const { ChatbotXException } = await import("../../errors")
+    mocks.findForUpdate.mockResolvedValue(savedAs("chatbotx"))
+    mocks.findShopify.mockResolvedValue({ currency: "USD" })
+    mocks.syncShopify.mockRejectedValueOnce(
+      new ChatbotXException("running", "shopifySyncInProgress", 409),
+    )
+    await expect(
+      ecommerceSettingsService.update({
+        workspaceId: "ws1",
+        patch: { general: { storeSource: "shopify" } },
+      }),
+    ).resolves.toMatchObject({ general: { storeSource: "shopify" } })
+
+    mocks.syncShopify.mockRejectedValueOnce(new Error("redis down"))
+    mocks.findForUpdate.mockResolvedValue(savedAs("chatbotx"))
+    await expect(
+      ecommerceSettingsService.update({
+        workspaceId: "ws1",
+        patch: { general: { storeSource: "shopify" } },
+      }),
+    ).resolves.toMatchObject({ general: { storeSource: "shopify" } })
   })
 })

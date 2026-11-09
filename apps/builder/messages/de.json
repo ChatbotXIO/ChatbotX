@@ -7699,9 +7699,9 @@
         "partial": "Teilweise"
       },
       "viewDetails": "Details anzeigen",
-      "viewOnShopify": "In Shopify ansehen",
+      "viewOnStore": "In {store} ansehen",
       "detailsTitle": "Bestellung {name}",
-      "placedOn": "Aufgegeben im Shopify-Shop • {date}",
+      "placedOn": "Aufgegeben im {store}-Shop • {date}",
       "customerDetails": "Kundendetails",
       "shippingAddress": "Lieferadresse",
       "noShippingAddress": "Keine Lieferadresse",
@@ -7839,19 +7839,19 @@
       "track": "Bestand verfolgen"
     },
     "shopify": {
-      "openShopify": "Shopify öffnen",
+      "openStore": "{store} öffnen",
       "syncProducts": "Produkte synchronisieren",
       "syncStarted": "Synchronisierung gestartet",
       "syncError": "Synchronisierung konnte nicht gestartet werden",
       "viewDetails": "Details anzeigen",
-      "editOnShopify": "In Shopify bearbeiten",
+      "editOnStore": "In {store} bearbeiten",
       "copyProductLink": "Produktlink kopieren",
       "linkCopied": "Produktlink kopiert",
       "noProductLink": "Dieses Produkt hat keinen Storefront-Link",
       "inStock": "{count} auf Lager",
       "inStockWithVariants": "{count} auf Lager ({variants} Varianten)",
       "detailsTitle": "Produktdetails — {name}",
-      "detailsSubtitle": "Synchronisiert aus dem Shopify-Shop {shop}",
+      "detailsSubtitle": "Synchronisiert aus dem {store}-Shop {shop}",
       "summaryLine": "Kategorie: {category} • Gesamtbestand: {units} Einheiten in {variants, plural, one {# Variante} other {# Varianten}}",
       "uncategorized": "Ohne Kategorie",
       "variantsTitle": "Varianten ({count})",
@@ -10537,7 +10537,8 @@
       "payments": "Zahlungen",
       "shipping": "Versand",
       "checkout": "Kasse",
-      "shopify": "Shopify"
+      "shopify": "Shopify",
+      "woocommerce": "WooCommerce"
     },
     "general": {
       "orderingAvailable": {
@@ -10608,10 +10609,11 @@
       },
       "storeSource": {
         "label": "Shop-Quelle",
-        "description": "Wählen Sie die Shop-Quelle, über die Produkte, Bestand und Bestellungen verwaltet werden. Bei Shopify werden alle Produkte und Bestellungen direkt in Ihrem Shopify-Shop verwaltet.",
+        "description": "Wählen Sie die Shop-Quelle, über die Produkte, Bestand und Bestellungen verwaltet werden. Bei Shopify / WooCommerce werden alle Produkte und Bestellungen direkt in Ihrem Shopify / WooCommerce-Shop verwaltet.",
         "options": {
           "chatbotx": "ChatbotX",
-          "shopify": "Shopify"
+          "shopify": "Shopify",
+          "woocommerce": "WooCommerce"
         }
       }
     },
@@ -10751,9 +10753,22 @@
         "label": "Rabattcodes automatisch anwenden",
         "description": "Kunden können Shopify-Rabattcodes direkt auf ihren Warenkorb anwenden, bevor sie zum Checkout weitergeleitet werden."
       },
+      "wooCommerceCheckoutMethod": {
+        "description": "Wählen Sie, ob Kunden auf der Zahlungsseite Ihres WooCommerce-Shops bezahlen oder die Bestellung direkt im Webshop aufgeben (Zahlung bei Lieferung).",
+        "options": {
+          "webCheckout": "WooCommerce-Zahlungsseite",
+          "inApp": "In-App-Checkout"
+        }
+      },
+      "wooCommerceAutoApplyDiscounts": {
+        "description": "Kunden können WooCommerce-Rabattcodes direkt auf ihren Warenkorb anwenden, bevor sie zum Checkout weitergeleitet werden."
+      },
       "inAppDeliveryCost": {
         "label": "Lieferkosten",
         "description": "Liefergebühr, die Bestellungen im In-App-Checkout hinzugefügt wird."
+      },
+      "wooCommerceDeliveryCost": {
+        "description": "Liefergebühr für an WooCommerce gesendete Bestellungen, bei beiden Checkout-Methoden."
       }
     },
     "shopify": {
@@ -10799,6 +10814,46 @@
         "label": "Synchronisierungsstatus",
         "description": "Produkte, Rabattcodes und Bestellungen werden aus Ihrem Shopify-Shop gespiegelt.",
         "connectedTo": "Verbunden mit {shopDomain}",
+        "lastSynced": "Zuletzt synchronisiert: {time} ({productCount} Produkte, {orderCount} Bestellungen)",
+        "neverSynced": "Noch nicht synchronisiert",
+        "noReason": "Verbinden Sie Ihren Shop erneut, um fortzufahren.",
+        "invalid": "Die Verbindung ist nicht mehr gültig: {reason}",
+        "state": {
+          "idle": "Inaktiv",
+          "queued": "Synchronisierung in Warteschlange...",
+          "running": "Synchronisierung läuft...",
+          "succeeded": "Letzte Synchronisierung erfolgreich",
+          "failed": "Letzte Synchronisierung fehlgeschlagen"
+        }
+      }
+    },
+    "woocommerce": {
+      "siteUrl": {
+        "label": "Shop-URL",
+        "placeholder": "https://example.com",
+        "hint": "Die Adresse Ihrer WordPress-Website, beginnend mit https://. In WordPress darf Settings → Permalinks nicht auf Plain stehen.",
+        "connectedHint": "Ihr verbundener WooCommerce-Shop."
+      },
+      "consumerKey": {
+        "label": "Consumer key",
+        "hint": "Erstellen Sie unter WooCommerce → Settings → Advanced → REST API → Add key einen Schlüssel mit Read/Write-Berechtigung und fügen Sie seinen Consumer key (ck_…) ein.",
+        "connectedHint": "Der Anfang des verbundenen Schlüssels. Schlüssel werden verschlüsselt gespeichert."
+      },
+      "consumerSecret": {
+        "label": "Consumer secret",
+        "hint": "Das Consumer secret des Schlüssels (cs_…). Es wird verschlüsselt gespeichert."
+      },
+      "webhookUrl": {
+        "label": "Webhook-URL",
+        "description": "Wird beim Verbinden automatisch bei WooCommerce registriert, um Produkt-, Bestands- und Bestellupdates in Echtzeit zu erhalten."
+      },
+      "syncNow": "Jetzt synchronisieren",
+      "syncStarted": "Synchronisierung gestartet",
+      "syncError": "Synchronisierung konnte nicht gestartet werden",
+      "syncStatus": {
+        "label": "Synchronisierungsstatus",
+        "description": "Produkte, Rabattcodes und Bestellungen werden aus Ihrem WooCommerce-Shop gespiegelt.",
+        "connectedTo": "Verbunden mit {store}",
         "lastSynced": "Zuletzt synchronisiert: {time} ({productCount} Produkte, {orderCount} Bestellungen)",
         "neverSynced": "Noch nicht synchronisiert",
         "noReason": "Verbinden Sie Ihren Shop erneut, um fortzufahren.",

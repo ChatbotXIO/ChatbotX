@@ -2,14 +2,15 @@ import {
   type DatabaseClient,
   isUniqueViolationError,
 } from "@chatbotx.io/database/client"
-import type {
-  DiscountAppliesTo,
-  DiscountCustomerFilter,
-  DiscountEligibility,
-  DiscountMinimumType,
-  DiscountType,
-  ShippingType,
-  StoreSource,
+import {
+  type DiscountAppliesTo,
+  type DiscountCustomerFilter,
+  type DiscountEligibility,
+  type DiscountMinimumType,
+  type DiscountType,
+  isExternalStoreSource,
+  type ShippingType,
+  type StoreSource,
 } from "@chatbotx.io/database/partials"
 import {
   type DiscountCodeListInput,
@@ -27,7 +28,7 @@ import {
   notFoundException,
   validationException,
 } from "../errors"
-import { shopifyManagedException } from "../shopify/errors"
+import { externalStoreManagedException } from "../external-store/errors"
 import { assertReferencable } from "../template/installed-resource.service"
 import { withTemplateLockedTransaction } from "../template/template-resource-locks"
 import { contactFilterParentsOf } from "../template/uninstall-references"
@@ -243,17 +244,19 @@ class DiscountCodeService extends BaseService {
     workspaceId: string
     discountCodeId: string
   }) {
-    if ((await resolveStoreSource(input.workspaceId)) !== "shopify") {
+    const storeSource = await resolveStoreSource(input.workspaceId)
+    if (!isExternalStoreSource(storeSource)) {
       return
     }
-    if ((await this.get(input)).source === "shopify") {
-      throw shopifyManagedException()
+    if ((await this.get(input)).source === storeSource) {
+      throw externalStoreManagedException(storeSource)
     }
   }
 
   async create(input: DiscountCodeInput & { workspaceId: string }) {
-    if ((await resolveStoreSource(input.workspaceId)) === "shopify") {
-      throw shopifyManagedException()
+    const storeSource = await resolveStoreSource(input.workspaceId)
+    if (isExternalStoreSource(storeSource)) {
+      throw externalStoreManagedException(storeSource)
     }
     const values = normalize(input)
     await this.assertValid(input.workspaceId, values)
@@ -288,8 +291,8 @@ class DiscountCodeService extends BaseService {
     data: Partial<DiscountCodeInput>
   }) {
     const current = await this.get(input)
-    if (current.source === "shopify") {
-      throw shopifyManagedException()
+    if (isExternalStoreSource(current.source)) {
+      throw externalStoreManagedException(current.source)
     }
     const merged = { ...toInput(current), ...input.data }
     // Products deleted since the last save are dropped quietly when the caller

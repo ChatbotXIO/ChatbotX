@@ -12,9 +12,9 @@ import {
 import { useDataTable } from "@chatbotx.io/ui/hooks/use-data-table"
 import { useLocale, useTranslations } from "next-intl"
 import { useMemo, useState } from "react"
-import type { ShopifyStoreLinks } from "@/features/products/lib/shopify-admin-url"
-import { OrderShopifyDetailsDialog } from "@/features/shopify/components/order-shopify-details-dialog"
-import { OrderSyncButton } from "@/features/shopify/components/order-sync-button"
+import { OrderExternalDetailsDialog } from "@/features/external-store/components/order-external-details-dialog"
+import { OrderSyncButton } from "@/features/external-store/components/order-sync-button"
+import type { ExternalStoreLinks } from "@/features/external-store/lib/store-links"
 import { DeleteOrderDialog } from "./components/delete-order-dialog"
 import { OrdersExportButton } from "./components/orders-export-button"
 import type { StoreCurrencyFormat } from "./lib/order-money"
@@ -25,15 +25,15 @@ type OrdersTableProps = {
   orders: OrderListResponse
   store: StoreCurrencyFormat
   workspaceId: string
-  /** Set while the store source is Shopify: orders are read-only. */
-  shopifyStore?: ShopifyStoreLinks
+  /** Set while the store source is an external store: orders are read-only. */
+  externalStore?: ExternalStoreLinks
 }
 
 export function OrdersTable({
   orders,
   store,
   workspaceId,
-  shopifyStore,
+  externalStore,
 }: OrdersTableProps) {
   const t = useTranslations()
   const locale = useLocale()
@@ -47,9 +47,9 @@ export function OrdersTable({
         store,
         workspaceId,
         setRowAction,
-        shopifyStore,
+        externalStore,
       }),
-    [t, locale, store, workspaceId, shopifyStore],
+    [t, locale, store, workspaceId, externalStore],
   )
 
   const { table } = useDataTable({
@@ -80,18 +80,21 @@ export function OrdersTable({
         <DataTable table={table}>
           <DataTableToolbar table={table}>
             <OrdersExportButton table={table} workspaceId={workspaceId} />
-            {shopifyStore ? (
-              <OrderSyncButton workspaceId={workspaceId} />
+            {externalStore ? (
+              <OrderSyncButton
+                source={externalStore.source}
+                workspaceId={workspaceId}
+              />
             ) : null}
           </DataTableToolbar>
         </DataTable>
 
-        {viewing && shopifyStore ? (
-          <OrderShopifyDetailsDialog
+        {viewing && externalStore ? (
+          <OrderExternalDetailsDialog
             currencyFormat={store}
             onOpenChange={() => setRowAction(null)}
             order={viewing}
-            store={shopifyStore}
+            store={externalStore}
             workspaceId={workspaceId}
           />
         ) : null}

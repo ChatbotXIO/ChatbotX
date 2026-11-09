@@ -3,33 +3,41 @@
 import { buttonVariants } from "@chatbotx.io/ui/components/ui/button"
 import { ExternalLinkIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
+import {
+  type ExternalStoreLinks,
+  externalProductsAdminUrl,
+} from "../lib/store-links"
 import { ProductSyncButton } from "./product-sync-button"
 
-type ProductShopifyHeaderActionsProps = {
+type ProductExternalHeaderActionsProps = {
   workspaceId: string
-  adminUrl: string
+  store: ExternalStoreLinks
 }
 
-/** Replaces Create / Import / Meta Catalog while the store source is Shopify. */
-export function ProductShopifyHeaderActions({
+/**
+ * Replaces Create / Import / Meta Catalog while the store source is an
+ * external store.
+ */
+export function ProductExternalHeaderActions({
   workspaceId,
-  adminUrl,
-}: ProductShopifyHeaderActionsProps) {
+  store,
+}: ProductExternalHeaderActionsProps) {
   const t = useTranslations("products.shopify")
   return (
     <div className="flex items-center gap-2">
       <a
         className={buttonVariants({ size: "sm", variant: "outline" })}
-        href={`${adminUrl}/products`}
+        href={externalProductsAdminUrl(store)}
         rel="noopener noreferrer"
         target="_blank"
       >
-        {t("openShopify")}
+        {t("openStore", { store: store.storeName })}
         <ExternalLinkIcon />
       </a>
       <ProductSyncButton
         label={t("syncProducts")}
         scope="products"
+        source={store.source}
         workspaceId={workspaceId}
       />
     </div>

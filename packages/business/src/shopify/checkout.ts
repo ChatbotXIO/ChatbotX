@@ -3,14 +3,20 @@ import type {
   EcommerceSettings,
   OrderShippingAddress,
 } from "@chatbotx.io/database/partials"
-import { shopifyRepository } from "@chatbotx.io/database/repositories"
-import { signShopToken } from "@chatbotx.io/encryption/shop-token"
+import {
+  externalStoreRepository,
+  shopifyRepository,
+} from "@chatbotx.io/database/repositories"
 import {
   buildShopifyCartPermalink,
   createShopifyOrder,
   type ShopifyOrderCreateInput,
   ShopifyUserError,
 } from "@chatbotx.io/integration-shopify"
+import {
+  type ExternalCheckoutShopper,
+  signContactReference,
+} from "../external-store/orders"
 import { orderService } from "../order/service"
 import { resolveShopifyCredentials } from "./auth"
 import {
@@ -21,18 +27,7 @@ import {
 import { splitCustomerName } from "./mappers"
 import { SHOPIFY_CONTACT_ATTRIBUTE, shopifySyncService } from "./sync.service"
 
-/**
- * How long the reference stamped on a Shopify checkout stays valid: a
- * customer may come back to Shopify's checkout page days later.
- */
-const CONTACT_REFERENCE_TTL_MS = 30 * 24 * 60 * 60 * 1000
-
-type CheckoutShopper = {
-  workspaceId: string
-  contactId: string
-  contactInboxId: string | null
-  conversationId: string | null
-}
+type CheckoutShopper = ExternalCheckoutShopper
 
 type CheckoutLine = {
   productId: string
@@ -62,7 +57,8 @@ const resolveVariantLines = async (
   workspaceId: string,
   lines: CheckoutLine[],
 ) => {
-  const ids = await shopifyRepository.findCheckoutVariantIds({
+  const ids = await externalStoreRepository.findCheckoutVariantIds({
+    source: "shopify",
     workspaceId,
     productIds: lines.map((line) => line.productId),
     variantIds: lines.flatMap((line) =>
@@ -80,16 +76,7 @@ const resolveVariantLines = async (
   })
 }
 
-const contactReference = (shopper: CheckoutShopper) =>
-  signShopToken(
-    {
-      workspaceId: shopper.workspaceId,
-      contactId: shopper.contactId,
-      contactInboxId: shopper.contactInboxId,
-      conversationId: shopper.conversationId,
-    },
-    CONTACT_REFERENCE_TTL_MS,
-  )
+const contactReference = signContactReference
 
 const toShopifyAddress = (customer: CheckoutCustomer) => {
   const address = customer.shippingAddress
