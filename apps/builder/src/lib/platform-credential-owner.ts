@@ -3,7 +3,10 @@ import {
   resolveTenantByDomain,
   resolveTenantOwnerId,
 } from "@chatbotx.io/auth/tenant"
-import { workspaceService } from "@chatbotx.io/business"
+import {
+  resolveCredentialOwnerIdForWorkspace,
+  workspaceService,
+} from "@chatbotx.io/business"
 import { ROOT_TENANT_ID } from "@chatbotx.io/database/partials"
 import type { WorkspaceModel } from "@chatbotx.io/database/types"
 import { cache } from "react"
@@ -15,10 +18,9 @@ import { getDomainFromHeader } from "@/lib/domain"
  * app) a channel connect must use, and whose tenant's channel-visibility policy
  * applies.
  *
- * `platformCredentialService.resolveForOwner` and `tenantService
- * .resolveVisibleChannels` both key on `Tenant.ownerId` (via
- * `tenantService.findByOwner`) — pass anything else and they silently fall back
- * to the platform-global credential / policy, with no error.
+ * `platformCredentialService.resolveForOwner` must receive the tenant owner
+ * for a reseller workspace. `resolveOwnerForWorkspace` delegates to the
+ * business helper so builder and worker credential resolution agree.
  *
  * Resolution order — the request's host wins over an explicit `workspaceId`:
  *   1. Non-cloud editions are single-tenant — always the current user.
@@ -60,47 +62,39 @@ export async function resolvePlatformOwnerId(props: {
     }
   }
 
-  // Platform host, no (resolvable) workspace: `resolveForOwner`/
-  // `resolveVisibleChannels` already split "owns an active tenant" from
-  // "plain platform user" via their own `findByOwner` call — re-checking it
-  // here would be a redundant read producing no new branch.
+  // Platform host, no (resolvable) workspace: let `resolveForOwner` select the
+  // user's own credential or the platform default.
   return userId
 }
 
 /**
- * Request-scoped tenant-owner lookup, keyed on the `tenantId` string.
- * `cache()` memoizes on argument identity, so the key must be a primitive —
- * caching `resolveOwnerForWorkspace` on its `WorkspaceModel` argument would
- * never hit, because every `workspaceService.find` returns a fresh object
- * (superjson-deserialized from Redis, or a new Drizzle row).
+ * Request-scoped tenant-owner lookup keyed on `tenantId`.
  */
 const resolveTenantOwnerIdCached = cache(resolveTenantOwnerId)
 
 /**
- * The tenant-aware owner for a known workspace: its own tenant's owner when
- * it has one, else the workspace's direct owner.
- *
- * `Workspace.tenantId` defaults to `ROOT_TENANT_ID` (see
- * `packages/database/src/schema/workspace.ts`), so a reseller's workspace
- * created before that stamp existed — or by any path that missed it — reads
- * back as root. `workspace.ownerId` is the self-healing fallback for those
- * legacy rows: if the workspace owner themselves owns an active tenant,
- * `resolveForOwner` picks it up the same way it does for the no-workspace
- * case above; if not, it falls back to the platform default. No migration
- * needed.
- *
- * Callers on the same request that resolve the same workspace's tenant all
- * collapse into one `resolveTenantOwnerId` read via the string-keyed cache
- * above; root-tenant workspaces short-circuit with zero I/O.
+ * Request-scoped credential-owner lookup keyed only on primitive workspace
+ * fields. Passing a `WorkspaceModel` directly would miss because workspace
+ * reads return fresh objects.
+ */
+const resolveCredentialOwnerIdForWorkspaceCached = cache(
+  async (workspaceId: string, tenantId: string, ownerId: string) =>
+    await resolveCredentialOwnerIdForWorkspace(workspaceId, {
+      tenantId,
+      ownerId,
+    }),
+)
+
+/**
+ * The credential owner for a known workspace, resolved by the shared business
+ * helper so every caller applies the same tenant-owner rule.
  */
 export async function resolveOwnerForWorkspace(
   workspace: WorkspaceModel,
 ): Promise<string> {
-  if (workspace.tenantId !== ROOT_TENANT_ID) {
-    const tenantOwnerId = await resolveTenantOwnerIdCached(workspace.tenantId)
-    if (tenantOwnerId) {
-      return tenantOwnerId
-    }
-  }
-  return workspace.ownerId
+  return await resolveCredentialOwnerIdForWorkspaceCached(
+    workspace.id,
+    workspace.tenantId,
+    workspace.ownerId,
+  )
 }

@@ -25,6 +25,8 @@ const { repositoryMock, encryptTextMock, decryptTextMock, loggerWarnMock } =
     loggerWarnMock: vi.fn(),
   }))
 
+const resolveCredentialOwnerIdForWorkspace = vi.hoisted(() => vi.fn())
+
 vi.mock("@chatbotx.io/database/repositories", () => ({
   integrationWhatsappRepository: repositoryMock,
   whatsappBusinessAccountRepository: {
@@ -45,6 +47,10 @@ vi.mock("../src/logger", () => ({
 
 vi.mock("../src/connection/record-refreshed-auth", () => ({
   recordRefreshedAuth: vi.fn(),
+}))
+
+vi.mock("../src/google-ads/owner", () => ({
+  resolveCredentialOwnerIdForWorkspace,
 }))
 
 vi.mock("@chatbotx.io/encryption", async () => {
@@ -89,6 +95,7 @@ describe("integrationWhatsappService signup sessions", () => {
       platformCredentialService,
       "resolveWhatsappSystemUserToken",
     ).mockResolvedValue(null)
+    resolveCredentialOwnerIdForWorkspace.mockResolvedValue("reseller-1")
   })
 
   test("uses a fresh CAPI scope cache without calling the checker", async () => {
@@ -285,9 +292,10 @@ describe("integrationWhatsappService signup sessions", () => {
       expect(credentialSpy).not.toHaveBeenCalled()
     })
 
-    test("embedded-signup prefers the system-user token with the connect token as fallback", async () => {
+    test("embedded-signup resolves the reseller's system-user token for its sub-account workspace", async () => {
       vi.spyOn(workspaceService, "findById").mockResolvedValue({
-        ownerId: "owner-1",
+        ownerId: "sub-account-1",
+        tenantId: "7",
       } as never)
       vi.spyOn(
         platformCredentialService,
@@ -305,9 +313,16 @@ describe("integrationWhatsappService signup sessions", () => {
         primaryToken: "sys-token",
         fallbackToken: "connect-token",
       })
+      expect(resolveCredentialOwnerIdForWorkspace).toHaveBeenCalledWith(
+        "ws-1",
+        expect.objectContaining({
+          ownerId: "sub-account-1",
+          tenantId: "7",
+        }),
+      )
       expect(
         platformCredentialService.resolveWhatsappSystemUserToken,
-      ).toHaveBeenCalledWith(expect.objectContaining({ ownerId: "owner-1" }))
+      ).toHaveBeenCalledWith(expect.objectContaining({ ownerId: "reseller-1" }))
     })
 
     test("uses the connect token with no fallback when the owner has no credential", async () => {

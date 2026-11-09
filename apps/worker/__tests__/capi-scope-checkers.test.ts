@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const mocks = vi.hoisted(() => ({
   debugTokenOrThrow: vi.fn(),
+  resolveCredentialOwnerIdForWorkspace: vi.fn(),
   resolveForOwner: vi.fn(),
   findWorkspace: vi.fn(),
 }))
@@ -31,9 +32,10 @@ vi.mock("@chatbotx.io/business", () => ({
     }),
   },
   platformCredentialService: { resolveForOwner: mocks.resolveForOwner },
+  resolveCredentialOwnerIdForWorkspace:
+    mocks.resolveCredentialOwnerIdForWorkspace,
   workspaceService: { findById: mocks.findWorkspace },
 }))
-
 vi.mock("@chatbotx.io/integration-instagram-facebook", () => ({}))
 vi.mock("@chatbotx.io/integration-messenger", () => ({}))
 vi.mock("@chatbotx.io/integration-whatsapp/api/auth", () => ({
@@ -55,6 +57,7 @@ describe("refreshScopeCache — whatsapp", () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mocks.findWorkspace.mockResolvedValue({ ownerId: "owner-1" })
+    mocks.resolveCredentialOwnerIdForWorkspace.mockResolvedValue("reseller-1")
     mocks.resolveForOwner.mockResolvedValue({
       config: { clientId: "app-id", clientSecret: "app-secret" },
     })
@@ -81,6 +84,13 @@ describe("refreshScopeCache — whatsapp", () => {
       "waba-token",
       "app-id|app-secret",
     )
+    expect(mocks.resolveCredentialOwnerIdForWorkspace).toHaveBeenCalledWith(
+      "ws-1",
+    )
+    expect(mocks.resolveForOwner).toHaveBeenCalledWith({
+      ownerId: "reseller-1",
+      type: "whatsapp",
+    })
   })
 
   test("disables CAPI when the token has no manage_events grant", async () => {

@@ -36,6 +36,7 @@ import { recordRefreshedAuth } from "../connection/record-refreshed-auth"
 import { connectionStateService } from "../connection/state-service"
 import { notFoundException } from "../errors"
 import { flowService } from "../flow/service"
+import { resolveCredentialOwnerIdForWorkspace } from "../google-ads/owner"
 import { logger } from "../logger"
 import { createDatasetWithFallback } from "../meta-conversions/dataset-fallback"
 import {
@@ -650,7 +651,10 @@ class IntegrationWhatsappService extends BaseService {
     })
     const systemUserToken =
       await platformCredentialService.resolveWhatsappSystemUserToken({
-        ownerId: workspace.ownerId,
+        ownerId: await resolveCredentialOwnerIdForWorkspace(
+          input.workspaceId,
+          workspace,
+        ),
         tx: input.tx,
       })
     if (!systemUserToken) {

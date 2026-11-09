@@ -403,15 +403,21 @@ class PlatformCredentialService extends BaseService {
     /** Rethrow DB/decrypt failures instead of falling back / reporting "no credential". */
     strict?: boolean
   }): Promise<DecryptedCredential<T> | undefined> {
-    const own = await this.findDecryptedForUser({
-      userId: props.ownerId,
-      type: props.type,
-      tx: props.tx,
-      requireOwnCredential: true,
-      strict: props.strict,
-    })
-    if (own) {
-      return own
+    try {
+      const ownRow = await this.findForUser({
+        userId: props.ownerId,
+        type: props.type,
+        tx: props.tx,
+      })
+      if (ownRow && !ownRow.usePlatformCredential) {
+        return await this._decrypt(ownRow)
+      }
+    } catch (err) {
+      if (props.strict) {
+        throw err
+      }
+      logger.error({ props, err }, "Failed to resolve own credential")
+      return
     }
 
     // Existing user-owned credentials are grandfathered after an entitlement

@@ -67,6 +67,19 @@ describe("resolveCredentialOwnerIdForWorkspace", () => {
     expect(mocks.findTenant).toHaveBeenCalledWith("7")
   })
 
+  test("reuses an already-loaded workspace", async () => {
+    mocks.findTenant.mockResolvedValue({ ownerId: "reseller-1" })
+
+    await expect(
+      resolveCredentialOwnerIdForWorkspace("ws-1", {
+        tenantId: "7",
+        ownerId: "sub-account-1",
+      }),
+    ).resolves.toBe("reseller-1")
+
+    expect(mocks.findWorkspace).not.toHaveBeenCalled()
+  })
+
   test("falls back to the workspace owner when the tenant has no owner", async () => {
     mocks.findWorkspace.mockResolvedValue({ tenantId: "7", ownerId: "owner-1" })
     mocks.findTenant.mockResolvedValue({ ownerId: null })

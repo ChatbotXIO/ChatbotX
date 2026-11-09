@@ -17,12 +17,14 @@ const {
   mockFindWorkspace,
   mockGetDomainFromHeader,
   mockIsCloud,
+  mockResolveCredentialOwnerIdForWorkspace,
   mockResolveTenantByDomain,
   mockResolveTenantOwnerId,
 } = vi.hoisted(() => ({
   mockFindWorkspace: vi.fn(),
   mockGetDomainFromHeader: vi.fn(async () => ""),
   mockIsCloud: vi.fn(() => true),
+  mockResolveCredentialOwnerIdForWorkspace: vi.fn(async () => "user-1"),
   mockResolveTenantByDomain: vi.fn(async () => "1"),
   mockResolveTenantOwnerId: vi.fn(async (): Promise<string | null> => null),
 }))
@@ -41,6 +43,8 @@ vi.mock("@chatbotx.io/auth/tenant", () => ({
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
+  resolveCredentialOwnerIdForWorkspace:
+    mockResolveCredentialOwnerIdForWorkspace,
   workspaceService: {
     find: mockFindWorkspace,
   },
@@ -61,6 +65,7 @@ describe("resolvePlatformOwnerId", () => {
     mockGetDomainFromHeader.mockResolvedValue("")
     mockResolveTenantByDomain.mockResolvedValue("1")
     mockResolveTenantOwnerId.mockResolvedValue(null)
+    mockResolveCredentialOwnerIdForWorkspace.mockResolvedValue("user-1")
   })
 
   test("non-cloud editions always use the current user, without consulting the host", async () => {
@@ -117,12 +122,13 @@ describe("resolvePlatformOwnerId", () => {
     expect(result).toBe("user-1")
   })
 
-  test("platform host with a known workspace resolves via the workspace's tenant-aware owner", async () => {
+  test("platform host with a known workspace resolves via the business tenant-owner helper", async () => {
     mockFindWorkspace.mockResolvedValue({
+      id: "ws-1",
       ownerId: "sub-account-1",
       tenantId: "42",
     })
-    mockResolveTenantOwnerId.mockResolvedValue("reseller-1")
+    mockResolveCredentialOwnerIdForWorkspace.mockResolvedValue("reseller-1")
 
     const result = await resolvePlatformOwnerId({
       userId: "sub-account-1",
@@ -130,7 +136,10 @@ describe("resolvePlatformOwnerId", () => {
     })
 
     expect(result).toBe("reseller-1")
-    expect(mockResolveTenantOwnerId).toHaveBeenCalledWith("42")
+    expect(mockResolveCredentialOwnerIdForWorkspace).toHaveBeenCalledWith(
+      "ws-1",
+      { ownerId: "sub-account-1", tenantId: "42" },
+    )
   })
 
   test("platform host, workspace not found, falls back to the current user (cases 2 and 3)", async () => {
@@ -182,36 +191,19 @@ describe("resolveOwnerForWorkspace", () => {
     mockResolveTenantOwnerId.mockResolvedValue(null)
   })
 
-  test("a workspace on a reseller's tenant resolves to that tenant's owner", async () => {
-    mockResolveTenantOwnerId.mockResolvedValue("reseller-1")
+  test("delegates to the business workspace owner resolver", async () => {
+    mockResolveCredentialOwnerIdForWorkspace.mockResolvedValue("reseller-1")
 
     const result = await resolveOwnerForWorkspace({
+      id: "ws-1",
       ownerId: "sub-account-1",
       tenantId: "42",
     } as never)
 
     expect(result).toBe("reseller-1")
-    expect(mockResolveTenantOwnerId).toHaveBeenCalledWith("42")
-  })
-
-  test("a legacy workspace stamped with the root tenant falls back to its own owner", async () => {
-    const result = await resolveOwnerForWorkspace({
-      ownerId: "reseller-1",
-      tenantId: "1",
-    } as never)
-
-    expect(result).toBe("reseller-1")
-    expect(mockResolveTenantOwnerId).not.toHaveBeenCalled()
-  })
-
-  test("falls back to the workspace owner when the tenant has no resolvable owner", async () => {
-    mockResolveTenantOwnerId.mockResolvedValue(null)
-
-    const result = await resolveOwnerForWorkspace({
-      ownerId: "workspace-owner-1",
-      tenantId: "42",
-    } as never)
-
-    expect(result).toBe("workspace-owner-1")
+    expect(mockResolveCredentialOwnerIdForWorkspace).toHaveBeenCalledWith(
+      "ws-1",
+      { ownerId: "sub-account-1", tenantId: "42" },
+    )
   })
 })
