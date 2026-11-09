@@ -9,6 +9,11 @@ import {
   isAPIError,
 } from "better-auth/api"
 import { deleteSessionCookie } from "better-auth/cookies"
+import {
+  handleOAuthUserInfo,
+  supportsIdTokenSignIn,
+  verifyProviderIdToken,
+} from "better-auth/oauth2"
 import { signJWT } from "better-auth/plugins/jwt"
 import { z } from "zod"
 import {
@@ -31,6 +36,13 @@ const MOBILE_TOKEN_PATH = "/mobile/token"
 const DEVICE_ID_MAX_LENGTH = 128
 const DEVICE_ID_PATTERN = /^[\w.:-]+$/
 const PKCE_CHALLENGE_PATTERN = /^[A-Za-z0-9_-]+$/
+// Apple identity tokens are ~1-2 KB; this only bounds hostile input.
+const ID_TOKEN_MAX_LENGTH = 8192
+const NONCE_MAX_LENGTH = 512
+const PERSON_NAME_MAX_LENGTH = 100
+/** Social providers whose native id token the `id_token` grant verifies. */
+const ID_TOKEN_PROVIDERS = ["apple"] as const
+const OAUTH_EMAIL_NOT_VERIFIED = "email not verified"
 // Same rule better-auth applies to `/sign-in/*`: 3 attempts per 10 seconds per IP.
 const SIGN_IN_RATE_LIMIT = { window: 10, max: 3 } as const
 
@@ -62,7 +74,31 @@ const tokenRequestSchema = z.discriminatedUnion("grantType", [
     grantType: z.literal("refresh_token"),
     refreshToken: z.string().min(1),
   }),
+  z.object({
+    grantType: z.literal("id_token"),
+    provider: z.enum(ID_TOKEN_PROVIDERS),
+    idToken: z.string().min(1).max(ID_TOKEN_MAX_LENGTH),
+    /** Raw nonce; the app sends its SHA-256 to the provider. */
+    nonce: z.string().max(NONCE_MAX_LENGTH).optional(),
+    /** Apple only sends the name on the first authorization. */
+    user: z
+      .object({
+        name: z
+          .object({
+            firstName: z.string().max(PERSON_NAME_MAX_LENGTH).optional(),
+            lastName: z.string().max(PERSON_NAME_MAX_LENGTH).optional(),
+          })
+          .optional(),
+      })
+      .optional(),
+    deviceId: deviceIdSchema.optional(),
+  }),
 ])
+
+type IdTokenRequest = Extract<
+  z.infer<typeof tokenRequestSchema>,
+  { grantType: "id_token" }
+>
 
 type ExchangeCodeRecord = {
   userId: string
@@ -210,6 +246,109 @@ const authenticateWithPassword = async (
   return record.user
 }
 
+const invalidIdToken = (message = "Invalid identity token") =>
+  unauthorized("INVALID_ID_TOKEN", message)
+
+/**
+ * Credential check for the `id_token` grant: a native app (Sign in with Apple)
+ * hands over the provider-signed identity token. Mirrors the id-token branch of
+ * better-auth's `signInSocial` and reuses `handleOAuthUserInfo`, so account
+ * linking, the signup gate, `claimUnverifiedAccountBeforeLink`, user bootstrap
+ * and tenant stamping behave exactly like a web social sign-in. The browser
+ * session that call mints is dropped again: the app only holds JWT + refresh.
+ */
+const authenticateWithIdToken = async (
+  ctx: AuthContext,
+  input: IdTokenRequest,
+): Promise<MobileUser> => {
+  const provider = ctx.context.socialProviders.find(
+    (candidate) => candidate.id === input.provider,
+  )
+  if (!(provider && supportsIdTokenSignIn(provider))) {
+    throw APIError.from("NOT_FOUND", {
+      code: "PROVIDER_NOT_ENABLED",
+      message: "Provider is not enabled",
+    })
+  }
+  if (
+    !(await verifyProviderIdToken(provider, input.idToken, input.nonce, ctx))
+  ) {
+    logger.warn({ provider: input.provider }, "Invalid mobile identity token")
+    throw invalidIdToken()
+  }
+
+  const tokens = { idToken: input.idToken, user: input.user }
+  const userInfo = await provider.getUserInfo(tokens)
+  if (!userInfo?.user?.email) {
+    throw invalidIdToken("Identity token has no email")
+  }
+  // Apple always attests the mailbox; refuse a token that does not instead of
+  // linking an unverified address into an existing account.
+  if (!userInfo.user.emailVerified) {
+    throw APIError.from("FORBIDDEN", {
+      code: "EMAIL_NOT_VERIFIED",
+      message: "Email not verified",
+    })
+  }
+  const accountId = await resolveAccountId(provider, tokens, userInfo.data)
+
+  const result = await handleOAuthUserInfo(ctx, {
+    userInfo: {
+      ...userInfo.user,
+      email: userInfo.user.email,
+      id: accountId,
+      name: userInfo.user.name || "",
+      image: userInfo.user.image,
+      emailVerified: userInfo.user.emailVerified,
+    },
+    account: {
+      providerId: provider.id,
+      accountId,
+      idToken: input.idToken,
+    },
+    disableSignUp: provider.options?.disableSignUp,
+    source: {
+      method: "oauth",
+      oauth: {
+        providerId: provider.id,
+        profile: userInfo.data as Record<string, unknown>,
+      },
+    },
+  })
+  if (result.error || !result.data) {
+    if (result.error === OAUTH_EMAIL_NOT_VERIFIED) {
+      throw APIError.from("FORBIDDEN", {
+        code: "EMAIL_NOT_VERIFIED",
+        message: "Email not verified",
+      })
+    }
+    throw unauthorized(
+      "OAUTH_LINK_ERROR",
+      result.error ?? "Unable to sign in with this provider",
+    )
+  }
+
+  await ctx.context.internalAdapter.deleteSession(result.data.session.token)
+  return result.data.user
+}
+
+const resolveAccountId = async (
+  provider: { accountSubject: (input: never) => unknown },
+  tokens: unknown,
+  profile: unknown,
+): Promise<string> => {
+  try {
+    const subject = await provider.accountSubject({ tokens, profile } as never)
+    const accountId = String(subject).trim()
+    if (accountId && accountId !== "undefined" && accountId !== "null") {
+      return accountId
+    }
+  } catch {
+    // Falls through to the same error as a missing subject.
+  }
+  throw invalidIdToken("Identity token has no subject")
+}
+
 /** Atomically consumes a one-time exchange code (single use even under races). */
 const consumeExchangeCode = async (
   ctx: AuthContext,
@@ -282,7 +421,9 @@ const redirectToApp = (
 /**
  * better-auth plugin: JWT grants for the native mobile app.
  *
- * - `POST /mobile/token`  grants `password`, `exchange_code`, `refresh_token`
+ * - `POST /mobile/token`  grants `password`, `exchange_code`, `refresh_token`,
+ *   `id_token` (native Sign in with Apple: the provider-signed identity token
+ *   is verified server-side; needs `APPLE_APP_BUNDLE_IDS`)
  * - `GET  /mobile/callback` end of the browser social-login flow; mints a
  *   one-time code and redirects to `<scheme>://auth-callback?code=`
  * - `POST /mobile/revoke` logout (revokes a refresh-token family)
@@ -374,6 +515,18 @@ export const mobileAuth = () =>
               )
             }
             const deviceId = body.deviceId ?? record.deviceId ?? createId()
+            const refreshToken = await mobileRefreshTokenService.issue({
+              userId: user.id,
+              deviceId,
+            })
+            return ctx.json(
+              await buildTokenResponse({ ctx, user, deviceId, refreshToken }),
+            )
+          }
+
+          if (body.grantType === "id_token") {
+            const user = await authenticateWithIdToken(ctx, body)
+            const deviceId = body.deviceId ?? createId()
             const refreshToken = await mobileRefreshTokenService.issue({
               userId: user.id,
               deviceId,

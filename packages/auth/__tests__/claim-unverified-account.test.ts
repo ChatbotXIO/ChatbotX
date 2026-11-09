@@ -85,6 +85,42 @@ describe("claimUnverifiedAccountBeforeLink", () => {
     expect(deleteMany).not.toHaveBeenCalled()
   })
 
+  test.each([
+    ["true", idTokenWith({ email_verified: true })],
+    ['"true" (string)', idTokenWith({ email_verified: "true" })],
+  ])("Apple with email_verified %s claims the placeholder and promotes it", async (_label, token) => {
+    await expect(
+      claimUnverifiedAccountBeforeLink(account("apple", token), context),
+    ).resolves.toBeUndefined()
+    expect(internalAdapter.deleteAccount).toHaveBeenCalledTimes(2)
+    expect(deleteMany).toHaveBeenCalledWith(SESSION_DELETE)
+    expect(internalAdapter.updateUser).toHaveBeenCalledWith(USER_ID, {
+      emailVerified: true,
+    })
+  })
+
+  test.each([
+    ["email_verified is false", idTokenWith({ email_verified: false })],
+    ['email_verified is "false"', idTokenWith({ email_verified: "false" })],
+    ["there is no id token", undefined],
+  ])("Apple is refused when %s", async (_label, token) => {
+    await expect(
+      claimUnverifiedAccountBeforeLink(account("apple", token), context),
+    ).rejects.toThrow(DID_NOT_ATTEST_ERROR)
+    expect(internalAdapter.deleteAccount).not.toHaveBeenCalled()
+    expect(deleteMany).not.toHaveBeenCalled()
+  })
+
+  test('Google still refuses the string "true"', async () => {
+    await expect(
+      claimUnverifiedAccountBeforeLink(
+        account("google", idTokenWith({ email_verified: "true" })),
+        context,
+      ),
+    ).rejects.toThrow(DID_NOT_ATTEST_ERROR)
+    expect(deleteMany).not.toHaveBeenCalled()
+  })
+
   test("OIDC is refused when its id token does not attest the email", async () => {
     await expect(
       claimUnverifiedAccountBeforeLink(

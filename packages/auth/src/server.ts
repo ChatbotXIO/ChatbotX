@@ -58,7 +58,13 @@ import {
 import { PHASE_PRODUCTION_BUILD } from "next/constants"
 import { claimUnverifiedAccountBeforeLink } from "./claim-unverified-account"
 import { resolveGenericOAuthConfig } from "./generic-oauth"
-import { env, getBrokerUrl, getBuilderOrigin, getMcpResourceUrl } from "./keys"
+import {
+  env,
+  getAppleAppBundleIds,
+  getBrokerUrl,
+  getBuilderOrigin,
+  getMcpResourceUrl,
+} from "./keys"
 import { logger } from "./logger"
 import { buildMcpPluginOptions, defaultMcpResource } from "./mcp-config"
 import { mobileAuth } from "./mobile-auth"
@@ -388,6 +394,26 @@ export type AuthConfig = {
 }
 
 /**
+ * Native Sign in with Apple, verified by `POST /mobile/token` (`id_token`
+ * grant). Only the identity token's signature, issuer and `aud` (the iOS bundle
+ * IDs) are checked, so there is no client secret and `createAuthorizationURL`
+ * fails by design: the web redirect flow cannot start for Apple.
+ */
+function buildAppleProvider() {
+  const bundleIds = getAppleAppBundleIds()
+  const [primaryBundleId] = bundleIds
+  if (!primaryBundleId) {
+    return
+  }
+  return {
+    clientId: primaryBundleId,
+    clientSecret: "",
+    audience: bundleIds,
+    appBundleIdentifier: primaryBundleId,
+  }
+}
+
+/**
  * Build the `socialProviders` config from the resolved per-provider credentials.
  * Returns `undefined` (all social disabled) during the production build phase —
  * the thunk runs without request context then — or when nothing resolved.
@@ -397,7 +423,7 @@ function buildSocialProviders(
   socialScopes: AuthConfig["socialScopes"],
   redirectOrigin: AuthConfig["socialRedirectOrigin"],
 ) {
-  if (process.env.NEXT_PHASE === PHASE_PRODUCTION_BUILD || !socialCredentials) {
+  if (process.env.NEXT_PHASE === PHASE_PRODUCTION_BUILD) {
     return
   }
 
@@ -414,7 +440,7 @@ function buildSocialProviders(
   } = {}
   const pinnedOrigin = new URL(redirectOrigin ?? getBrokerUrl()).origin
   for (const provider of SOCIAL_PROVIDERS) {
-    const credential = socialCredentials[provider]
+    const credential = socialCredentials?.[provider]
     if (credential?.clientId && credential.clientSecret) {
       const scope = socialScopes?.[provider]
       providers[provider] = {
@@ -447,7 +473,9 @@ function buildSocialProviders(
     }
   }
 
-  return Object.keys(providers).length > 0 ? providers : undefined
+  const apple = buildAppleProvider()
+  const allProviders = { ...providers, ...(apple && { apple }) }
+  return Object.keys(allProviders).length > 0 ? allProviders : undefined
 }
 
 /**
@@ -653,6 +681,10 @@ export function createAuth(config: AuthConfig) {
         // below for how an unverified local placeholder is handled.
         trustedProviders: [
           ...SOCIAL_PROVIDERS,
+          // Apple identity tokens always carry `email_verified` (also for
+          // private relay addresses); the claim is attested in
+          // `claim-unverified-account.ts`.
+          "apple",
           ...(env.AUTH_OAUTH_TRUST_EMAIL ? [GENERIC_OAUTH_PROVIDER_ID] : []),
         ],
         // The local side may be an email/password sign-up that never clicked

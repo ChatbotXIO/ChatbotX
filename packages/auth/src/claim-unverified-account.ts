@@ -41,9 +41,13 @@ const isFreshSignUp = (createdAt: unknown): boolean => {
  * the hook reads the same token better-auth used for the user's profile. This
  * only reads a claim, so it decodes the payload locally. Anything other than an
  * exact `email_verified === true` (missing or malformed token, missing or
- * false claim) is treated as not attested.
+ * false claim) is treated as not attested. Apple sometimes sends the claim as
+ * the string `"true"`, so only its strategy opts into `acceptStringTrue`.
  */
-const isEmailAttestedByIdToken = (idToken: unknown): boolean => {
+const isEmailAttestedByIdToken = (
+  idToken: unknown,
+  { acceptStringTrue = false }: { acceptStringTrue?: boolean } = {},
+): boolean => {
   if (typeof idToken !== "string") {
     return false
   }
@@ -55,11 +59,11 @@ const isEmailAttestedByIdToken = (idToken: unknown): boolean => {
     const payload: unknown = JSON.parse(
       Buffer.from(segment, "base64url").toString("utf8"),
     )
-    return (
-      typeof payload === "object" &&
-      payload !== null &&
-      (payload as { email_verified?: unknown }).email_verified === true
-    )
+    if (typeof payload !== "object" || payload === null) {
+      return false
+    }
+    const claim = (payload as { email_verified?: unknown }).email_verified
+    return claim === true || (acceptStringTrue && claim === "true")
   } catch {
     return false
   }
@@ -71,6 +75,8 @@ type EmailAttestation = (account: { idToken?: unknown }) => boolean
  * How each provider proves the person owns the mailbox. A provider missing
  * here cannot claim an unverified placeholder.
  * - google: the id_token carries `email_verified`; only `true` counts.
+ * - apple: the id_token carries `email_verified`, either `true` or the string
+ *   `"true"` (also for private relay addresses).
  * - facebook: better-auth's Facebook provider reads `profile.email_verified ??
  *   false`, and the default Graph request (`id,name,email,picture`) carries no
  *   verification field (the id-token / Limited Login path reads the `email`
@@ -83,6 +89,8 @@ type EmailAttestation = (account: { idToken?: unknown }) => boolean
  */
 const EMAIL_ATTESTATION_BY_PROVIDER: Record<string, EmailAttestation> = {
   google: (account) => isEmailAttestedByIdToken(account.idToken),
+  apple: (account) =>
+    isEmailAttestedByIdToken(account.idToken, { acceptStringTrue: true }),
   facebook: () => true,
   [GENERIC_OAUTH_PROVIDER_ID]: (account) =>
     env.AUTH_OAUTH_TRUST_EMAIL || isEmailAttestedByIdToken(account.idToken),
@@ -94,7 +102,11 @@ const EMAIL_ATTESTATION_BY_PROVIDER: Record<string, EmailAttestation> = {
  * claim, and a verified user lets every other trusted provider link in with no
  * claim and no session revocation.
  */
-const PROMOTES_TO_VERIFIED = new Set(["google", GENERIC_OAUTH_PROVIDER_ID])
+const PROMOTES_TO_VERIFIED = new Set([
+  "google",
+  "apple",
+  GENERIC_OAUTH_PROVIDER_ID,
+])
 
 /**
  * Runs BEFORE better-auth inserts a social `Account` row. It must be a before
@@ -109,7 +121,8 @@ const PROMOTES_TO_VERIFIED = new Set(["google", GENERIC_OAUTH_PROVIDER_ID])
  * unverified local user (a placeholder that never proved the mailbox), but only
  * a provider with an entry in `EMAIL_ATTESTATION_BY_PROVIDER` whose attestation
  * passes may claim it: Google through the id token's `email_verified: true`
- * (the hook only reads the claim), Facebook under the accepted policy that it
+ * (the hook only reads the claim), Apple the same way (`true` or `"true"`),
+ * Facebook under the accepted policy that it
  * only exposes an email the Facebook account has confirmed (better-auth itself
  * marks such a user unverified). The attesting sign-in is the first
  * proof of ownership, so every earlier login method (password or social) and
@@ -117,8 +130,8 @@ const PROMOTES_TO_VERIFIED = new Set(["google", GENERIC_OAUTH_PROVIDER_ID])
  * otherwise a pre-registered login would keep working once the real owner's
  * sign-in marks the user verified.
  *
- * After a Facebook claim the user still has `emailVerified: false` (only Google
- * and the generic OIDC provider promote a user to verified), so a later Google
+ * After a Facebook claim the user still has `emailVerified: false` (only Google,
+ * Apple and the generic OIDC provider promote a user to verified), so a later Google
  * sign-in with a verified claim will claim the account again and remove the
  * Facebook row and sessions; that is accepted and recovers on the next
  * Facebook sign-in.
