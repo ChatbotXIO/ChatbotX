@@ -563,6 +563,36 @@ describe("resolveContactAvatarUrl", () => {
     expect(mocks.signMediaToken).not.toHaveBeenCalled()
   })
 
+  test("proxies stored avatars for the builder instead of exposing the storage key", async () => {
+    const finalize = vi.fn(async (key: string) => key)
+
+    const result = await resolveContactAvatarUrl(
+      {
+        workspaceId: "workspace-1",
+        contact: { avatar: "workspace/avatars/contact-1.png" },
+        contactInboxes: [
+          {
+            id: "instagram-contact-inbox",
+            channel: "instagram",
+          },
+        ],
+      },
+      finalize,
+      undefined,
+      { proxyStoredAvatar: true },
+    )
+
+    expect(result).toBe(
+      "https://builder.example.com/media/avatar/signed-media-token",
+    )
+    expect(mocks.signMediaToken).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      kind: "avatar",
+      refId: "instagram-contact-inbox",
+    })
+    expect(finalize).not.toHaveBeenCalled()
+  })
+
   test("keeps a null avatar for a WhatsApp contact", async () => {
     const finalize = vi.fn(async (key: string) => key)
 

@@ -181,10 +181,18 @@ const resolveAvatarUrl = async (
   ref: AvatarMediaRef,
   finalize: FinalizeMediaUrl,
   ensureMirrored?: EnsureAvatarMirrored,
+  proxyStoredAvatar = false,
 ): Promise<string | null> => {
   if (ref.avatar) {
     const sentinel = parseNoAvatarSentinel(ref.avatar)
     if (!sentinel) {
+      if (proxyStoredAvatar) {
+        return await buildProxyUrl({
+          kind: "avatar",
+          refId: ref.contactInboxId,
+          workspaceId: ref.workspaceId,
+        })
+      }
       return await finalize(ref.avatar)
     }
     if (isNoAvatarSentinelFresh(sentinel.failedAtMs)) {
@@ -231,11 +239,17 @@ export const resolveMediaUrl = async (
   ref: MediaRef,
   finalize: FinalizeMediaUrl,
   ensureMirrored?: EnsureAvatarMirrored,
+  proxyStoredAvatar = false,
 ): Promise<string | null> => {
   if (ref.kind === "attachment") {
     return await resolveAttachmentUrl(ref, finalize)
   }
-  return await resolveAvatarUrl(ref, finalize, ensureMirrored)
+  return await resolveAvatarUrl(
+    ref,
+    finalize,
+    ensureMirrored,
+    proxyStoredAvatar,
+  )
 }
 
 const selectAvatarContactInbox = (
@@ -255,6 +269,7 @@ export const resolveContactAvatarUrl = async (
   input: ResolveContactAvatarUrlInput,
   finalize: FinalizeMediaUrl,
   ensureMirrored?: EnsureAvatarMirrored,
+  options: { proxyStoredAvatar?: boolean } = {},
 ): Promise<string | null> => {
   const contactInboxes =
     input.contactInboxes ?? (input.contactInbox ? [input.contactInbox] : [])
@@ -263,6 +278,8 @@ export const resolveContactAvatarUrl = async (
   if (!contactInbox) {
     // No inbox to rehydrate from: a real key finalizes, a sentinel (fresh or
     // stale) resolves to the placeholder rather than a maybe-missing key.
+    // The authenticated media proxy is keyed by contactInboxId, so contacts
+    // without an inbox keep the caller's normal storage URL behavior.
     if (!input.contact.avatar) {
       return null
     }
@@ -283,5 +300,6 @@ export const resolveContactAvatarUrl = async (
     },
     finalize,
     ensureMirrored,
+    options.proxyStoredAvatar ?? false,
   )
 }

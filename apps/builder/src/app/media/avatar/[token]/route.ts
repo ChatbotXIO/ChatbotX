@@ -1,12 +1,12 @@
+import { Readable } from "node:stream"
 import {
   contactInboxService,
   contactService,
   isNoAvatarSentinelFresh,
   parseNoAvatarSentinel,
-  resolveTenantSettings,
 } from "@chatbotx.io/business"
-import { getPublicFileUrl } from "@chatbotx.io/business/utils"
 import { resolveFreshContactAvatarUrl } from "@chatbotx.io/channel-registry/media-hydration"
+import { uploader } from "@chatbotx.io/filesystem"
 import { toLogSafeError } from "@chatbotx.io/logger"
 import { type NextRequest, NextResponse } from "next/server"
 import { httpLogger } from "@/lib/log"
@@ -16,6 +16,8 @@ import {
   placeholderUrl,
   resolveMediaRequest,
 } from "../../media-proxy"
+
+const HTTP_URL_RE = /^https?:\/\//i
 
 type RouteContext = { params: Promise<{ token: string }> }
 
@@ -59,13 +61,32 @@ export const GET = async (request: NextRequest, context: RouteContext) => {
   if (contact.avatar) {
     const sentinel = parseNoAvatarSentinel(contact.avatar)
     if (!sentinel) {
-      const { storageUrl } = await resolveTenantSettings({
-        workspaceId: resolvedRequest.workspaceId,
-      })
-      return NextResponse.redirect(
-        getPublicFileUrl(contact.avatar, storageUrl),
-        302,
-      )
+      if (HTTP_URL_RE.test(contact.avatar)) {
+        return NextResponse.redirect(contact.avatar, 302)
+      }
+
+      try {
+        const object = await uploader.getObjectStream(contact.avatar)
+        const headers = new Headers({
+          "cache-control": "private, max-age=300",
+          "content-type": object.contentType ?? "image/jpeg",
+        })
+        if (object.contentLength !== undefined) {
+          headers.set("content-length", String(object.contentLength))
+        }
+        // Node's stream/web and DOM ReadableStream declarations differ here.
+        return new NextResponse(
+          Readable.toWeb(object.stream) as unknown as BodyInit,
+          { headers },
+        )
+      } catch (err) {
+        httpLogger.error(
+          { err: toLogSafeError(err), contactInboxId: contactInbox.id },
+          "Failed to load mirrored contact avatar; serving placeholder",
+        )
+        mirror()
+        return placeholder()
+      }
     }
     // Fresh no-avatar: serve the guaranteed placeholder, not the stored sentinel
     // key which may be absent from the tenant's bucket.

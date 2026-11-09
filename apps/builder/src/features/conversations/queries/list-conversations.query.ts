@@ -108,6 +108,8 @@ const resolveConversationContact = async <T extends { avatar: string | null }>(
         contactInboxes,
       },
       (key) => key,
+      undefined,
+      { proxyStoredAvatar: true },
     ),
   }
 }

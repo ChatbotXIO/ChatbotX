@@ -174,9 +174,11 @@ export class Uploader {
     })
   }
 
-  async getObjectStream(
-    path: string,
-  ): Promise<{ stream: Readable; contentLength?: number }> {
+  async getObjectStream(path: string): Promise<{
+    stream: Readable
+    contentLength?: number
+    contentType?: string
+  }> {
     const command = new GetObjectCommand({
       Bucket: env.S3_BUCKET,
       Key: path,
@@ -189,6 +191,7 @@ export class Uploader {
     return {
       stream: response.Body as Readable,
       contentLength: response.ContentLength,
+      contentType: response.ContentType,
     }
   }
 

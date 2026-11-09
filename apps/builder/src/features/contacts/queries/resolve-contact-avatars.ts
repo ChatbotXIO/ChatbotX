@@ -11,9 +11,9 @@ type ContactWithAvatar = {
 }
 
 /**
- * `publicUrls: true` also turns a stored storage key into its absolute URL for
- * callers with no client-side resolver (the public API). The builder UI keeps
- * the key and resolves it in the browser.
+ * Builder responses use signed app-proxy URLs for mirrored avatars so the
+ * browser never has to resolve private RustFS/Docker hostnames. Public API
+ * responses can request absolute object URLs with `publicUrls: true`.
  */
 export async function resolveContactAvatars<T extends ContactWithAvatar>(
   contacts: readonly T[],
@@ -48,6 +48,8 @@ export async function resolveContactAvatars<T extends ContactWithAvatar>(
           contactInboxes: contactInboxesByContactId.get(contact.id) ?? [],
         },
         finalize,
+        undefined,
+        { proxyStoredAvatar: !options.publicUrls },
       ),
     })),
   )

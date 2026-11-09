@@ -1,4 +1,5 @@
 // @vitest-environment node
+import { Readable } from "node:stream"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const mocks = vi.hoisted(() => {
@@ -12,6 +13,7 @@ const mocks = vi.hoisted(() => {
     findContact: vi.fn(),
     findContactInbox: vi.fn(),
     getPresignedDownload: vi.fn(),
+    getObjectStream: vi.fn(),
     getPublicFileUrl: vi.fn(),
     loadServableWorkspace: vi.fn(),
     lowQueueAdd: vi.fn(),
@@ -65,7 +67,10 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
 }))
 
 vi.mock("@chatbotx.io/filesystem", () => ({
-  uploader: { getPresignedDownload: mocks.getPresignedDownload },
+  uploader: {
+    getObjectStream: mocks.getObjectStream,
+    getPresignedDownload: mocks.getPresignedDownload,
+  },
 }))
 
 vi.mock("@chatbotx.io/worker-config", () => ({
@@ -707,24 +712,31 @@ describe("avatar media proxy", () => {
     mocks.findContact.mockResolvedValue({ id: "contact-1", avatar: null })
   })
 
-  test("redirects a mirrored avatar to its public URL", async () => {
+  test("streams a mirrored avatar from private storage", async () => {
     mocks.findContact.mockResolvedValue({
       id: "contact-1",
       avatar: "workspace/workspace-1/avatar.jpg",
     })
-    mocks.getPublicFileUrl.mockReturnValue(
-      "https://storage.example/workspace/workspace-1/avatar.jpg",
-    )
+    mocks.getObjectStream.mockResolvedValue({
+      stream: Readable.from([Buffer.from("avatar-bytes")]),
+      contentLength: 12,
+      contentType: "image/jpeg",
+    })
 
     const response = await getAvatar(
       new Request("http://localhost/media/avatar/signed-token") as never,
       tokenContext(),
     )
 
-    expect(response.status).toBe(302)
-    expect(response.headers.get("location")).toBe(
-      "https://storage.example/workspace/workspace-1/avatar.jpg",
+    expect(response.status).toBe(200)
+    expect(response.headers.get("content-type")).toBe("image/jpeg")
+    expect(response.headers.get("content-length")).toBe("12")
+    expect(response.headers.get("cache-control")).toBe("private, max-age=300")
+    await expect(response.text()).resolves.toBe("avatar-bytes")
+    expect(mocks.getObjectStream).toHaveBeenCalledWith(
+      "workspace/workspace-1/avatar.jpg",
     )
+    expect(mocks.getPresignedDownload).not.toHaveBeenCalled()
     expect(mocks.resolveFreshContactAvatarUrl).not.toHaveBeenCalled()
   })
 
