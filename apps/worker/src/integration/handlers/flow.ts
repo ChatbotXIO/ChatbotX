@@ -214,6 +214,33 @@ async function releaseContinuationOfMissingTarget(
   return true
 }
 
+/**
+ * The flow version a run executes. When the flow was deleted or deactivated
+ * since the job was queued, the run can never happen, but the continuation it
+ * carries still can: that is released and undefined returned. Other lookup
+ * failures throw, so the job retries.
+ */
+async function detectRunnableFlowVersion(
+  props: SendFlowJobData,
+  target: { flowId: string; workspaceId: string },
+): Promise<Awaited<ReturnType<typeof detectFlowVersion>> | undefined> {
+  try {
+    return await detectFlowVersion({
+      flowId: target.flowId,
+      flowVersionId: props.flowVersionId,
+      workspaceId: target.workspaceId,
+    })
+  } catch (error) {
+    if (
+      error instanceof SdkException &&
+      (await releaseContinuationOfMissingTarget(props))
+    ) {
+      return
+    }
+    throw error
+  }
+}
+
 /** A job carries either an entity ID or the already-loaded entity. */
 type FlowJobEntityRef =
   | string
@@ -322,23 +349,12 @@ export const runFlowNode = async (
       conversationId: props.conversationId,
       contactInboxId: props.contactInboxId,
     })
-  let detectedFlowVersion: Awaited<ReturnType<typeof detectFlowVersion>>
-  try {
-    detectedFlowVersion = await detectFlowVersion({
-      flowId: props.flowId,
-      flowVersionId: props.flowVersionId,
-      workspaceId: conversation.workspaceId,
-    })
-  } catch (error) {
-    // The flow was deleted or deactivated since this job was queued: it can
-    // never run, but the continuation it carries still can.
-    if (
-      error instanceof SdkException &&
-      (await releaseContinuationOfMissingTarget(props))
-    ) {
-      return
-    }
-    throw error
+  const detectedFlowVersion = await detectRunnableFlowVersion(props, {
+    flowId: props.flowId,
+    workspaceId: conversation.workspaceId,
+  })
+  if (!detectedFlowVersion) {
+    return
   }
   const { flowVersion, useLatestFlowVersion } = detectedFlowVersion
 
@@ -750,6 +766,7 @@ async function runNodeSteps(
 
 /**
  * The node this run continues to through its Continue edge, if any.
+ *
  * A tapped button/quickReply resolves its next node through its edge only
  * when its own action is a node jump — or when it has no action at all
  * (`buttonType: null`, `whatsappOptionList`), where the edge is the only
