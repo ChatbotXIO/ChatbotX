@@ -342,6 +342,17 @@ describe("webshopService.checkout", () => {
     expect(mocks.place).not.toHaveBeenCalled()
   })
 
+  test("a store that checks out with a flow still places the order (the flow runs once it is placed)", async () => {
+    mocks.getFreshSettings.mockResolvedValue(
+      settings({
+        shipping: { shippingType: "none" },
+        checkout: { checkoutMode: "flow", checkoutFlowId: "f1" },
+      }),
+    )
+    await webshopService.checkout({ shopper, form: {} })
+    expect(mocks.place).toHaveBeenCalledTimes(1)
+  })
+
   test("refuses when the store checks out on its own external page", async () => {
     mocks.getFreshSettings.mockResolvedValue(
       settings({

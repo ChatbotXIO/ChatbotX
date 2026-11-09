@@ -138,8 +138,11 @@ const lineQuantity = (
       (candidate.variantId ?? null) === (line.variantId ?? null),
   )?.quantity ?? 0
 
-/** Adds `quantity` to a line, or a new line; 0 or less removes it. */
-const changeLine = (
+/**
+ * Adds `quantity` to a line, or appends a new line; 0 or less removes it. An
+ * existing line keeps its place so the cart does not reshuffle on +/-.
+ */
+export const changeLine = (
   lines: CartLine[],
   change: { productId: string; variantId: string | null; quantity: number },
   mode: "add" | "set",
@@ -152,17 +155,23 @@ const changeLine = (
     mode === "add"
       ? (current?.quantity ?? 0) + change.quantity
       : change.quantity
-  const others = lines.filter((line) => !sameLine(line))
-  return quantity > 0
-    ? [
-        ...others,
-        {
-          productId: change.productId,
-          variantId: change.variantId ?? null,
-          quantity: Math.min(quantity, 10_000),
-        },
-      ]
-    : others
+  if (quantity <= 0) {
+    return lines.filter((line) => !sameLine(line))
+  }
+  const cappedQuantity = Math.min(quantity, 10_000)
+  if (!current) {
+    return [
+      ...lines,
+      {
+        productId: change.productId,
+        variantId: change.variantId ?? null,
+        quantity: cappedQuantity,
+      },
+    ]
+  }
+  return lines.map((line) =>
+    sameLine(line) ? { ...line, quantity: cappedQuantity } : line,
+  )
 }
 
 /**
@@ -203,6 +212,29 @@ export const subtractOrderedLines = (
  * shows, keep a cart, check out, follow and rate their own orders. Prices
  * and stock always come from `orderService`, never from the cart.
  */
+/**
+ * The categories the shop shows: visible ones, and a sub-category only while
+ * its parent is shown too. A product keeps its top-level category, so under
+ * a hidden parent it is hidden as well: the sub-category would open on
+ * nothing.
+ */
+export const visibleShopCategories = <
+  TCategory extends { id: string; parentId: string | null; isVisible: boolean },
+>(
+  categories: TCategory[],
+): TCategory[] => {
+  const visibleIds = new Set(
+    categories
+      .filter((category) => category.isVisible)
+      .map((category) => category.id),
+  )
+  return categories.filter(
+    (category) =>
+      category.isVisible &&
+      (!category.parentId || visibleIds.has(category.parentId)),
+  )
+}
+
 /** A row of "You may also like": enough to browse, not a second catalog. */
 const RELATED_PRODUCTS_LIMIT = 10
 
@@ -222,7 +254,7 @@ class WebshopService extends BaseService {
       language: workspace.language,
       settings,
       ordering,
-      categories: categories.filter((category) => category.isVisible),
+      categories: visibleShopCategories(categories),
       vendors: vendors.data.filter((vendor) => vendor.isActive),
     }
   }

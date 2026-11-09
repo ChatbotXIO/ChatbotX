@@ -11066,7 +11066,9 @@
     "itemCount": "{count, plural, one {# produs} other {# de produse}}",
     "relatedProducts": "S-ar putea să-ți placă și",
     "soldOut": "Stoc epuizat",
-    "sku": "SKU: {sku}"
+    "sku": "SKU: {sku}",
+    "allProducts": "Toate produsele",
+    "noCategories": "Acest magazin nu are încă categorii."
   },
   "webshopLinks": {
     "preview": "Previzualizare",
@@ -11075,12 +11077,26 @@
     "error": "Linkul nu a putut fi obținut.",
     "copyError": "Linkul nu a putut fi copiat.",
     "shopLink": {
-      "label": "Linkul magazinului",
+      "label": "URL magazin",
       "hint": "Lipește acest link într-un buton dintr-un flux, o difuzare sau o secvență. Fiecare contact care îl primește își deschide propriul magazin și poate comanda."
     },
     "productLink": {
       "label": "URL public",
       "hint": "Copiază și lipește URL-ul în fluxul, difuzarea sau secvența ta. Fiecare contact care îl primește deschide acest produs și poate comanda."
+    },
+    "bar": "Distribuie magazinul: obține linkuri către magazin, coș și categorii pentru butoanele din fluxuri, difuzări și secvențe.",
+    "dialog": {
+      "title": "Linkurile magazinului",
+      "description": "Lipește un link într-un buton dintr-un flux, o difuzare sau o secvență. Fiecare contact care îl primește își deschide propriul magazin.",
+      "shopHint": "Deschide pagina principală a magazinului cu toate produsele."
+    },
+    "cartLink": {
+      "label": "Coș",
+      "hint": "Deschide coșul contactului, gata de plată."
+    },
+    "categoriesLink": {
+      "label": "Categorii",
+      "hint": "Deschide lista categoriilor magazinului."
     }
   },
   "discountCodes": {

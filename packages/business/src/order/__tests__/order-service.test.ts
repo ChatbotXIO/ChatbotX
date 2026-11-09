@@ -1539,6 +1539,39 @@ describe("orderService — online payment", () => {
       { jobId: "webshop-checkout-flow-o1" },
     )
   })
+
+  test("a cash-on-delivery web shop order runs the checkout flow once placed", async () => {
+    mocks.getSettings.mockResolvedValue(
+      settings({
+        checkout: {
+          checkoutMode: "flow",
+          checkoutFlowId: "f1",
+          orderConfirmationMode: "none",
+        },
+      }),
+    )
+    mocks.findDetail.mockResolvedValue({ id: "o2", items: [] })
+    await orderService.announcePlaced({
+      id: "o2",
+      workspaceId: "ws1",
+      source: "webshop",
+      status: "pending",
+      paymentMethod: "cod",
+      paymentStatus: "unpaid",
+      contactId: "c1",
+      contactInboxId: "ci1",
+      conversationId: "conv1",
+    } as never)
+
+    expect(mocks.integrationQueueAdd).toHaveBeenCalledWith(
+      "sendFlow",
+      {
+        type: "sendFlow",
+        data: { conversationId: "conv1", contactInboxId: "ci1", flowId: "f1" },
+      },
+      { jobId: "webshop-checkout-flow-o2" },
+    )
+  })
 })
 
 describe("orderService — an online order never paid", () => {

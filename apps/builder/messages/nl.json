@@ -11066,7 +11066,9 @@
     "itemCount": "{count, plural, one {# artikel} other {# artikelen}}",
     "relatedProducts": "Misschien vind je dit ook leuk",
     "soldOut": "Uitverkocht",
-    "sku": "SKU: {sku}"
+    "sku": "SKU: {sku}",
+    "allProducts": "Alle producten",
+    "noCategories": "Deze winkel heeft nog geen categorieën."
   },
   "webshopLinks": {
     "preview": "Voorbeeld",
@@ -11075,12 +11077,26 @@
     "error": "De link kon niet worden opgehaald.",
     "copyError": "De link kon niet worden gekopieerd.",
     "shopLink": {
-      "label": "Winkellink",
+      "label": "Winkel-URL",
       "hint": "Plak deze link in een knop in een flow, broadcast of reeks. Elk contact dat hem ontvangt, opent zijn eigen winkel en kan bestellen."
     },
     "productLink": {
       "label": "Openbare URL",
       "hint": "Kopieer en plak de URL in je flow, broadcast of reeks. Elk contact dat hem ontvangt, opent dit product en kan bestellen."
+    },
+    "bar": "Deel de winkel: haal links op naar de winkel, de winkelwagen en de categorieën voor knoppen in flows, broadcasts en sequenties.",
+    "dialog": {
+      "title": "Winkellinks",
+      "description": "Plak een link in een knop in een flow, broadcast of sequentie. Elk contact dat hem krijgt, opent zijn eigen winkel.",
+      "shopHint": "Opent de voorpagina van de winkel met alle producten."
+    },
+    "cartLink": {
+      "label": "Winkelwagen",
+      "hint": "Opent de winkelwagen van het contact, klaar om af te rekenen."
+    },
+    "categoriesLink": {
+      "label": "Categorieën",
+      "hint": "Opent de lijst met categorieën van de winkel."
     }
   },
   "discountCodes": {

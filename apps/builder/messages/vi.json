@@ -11066,7 +11066,9 @@
     "itemCount": "{count, plural, one {# món} other {# món}}",
     "relatedProducts": "Có thể bạn cũng thích",
     "soldOut": "Hết hàng",
-    "sku": "SKU: {sku}"
+    "sku": "SKU: {sku}",
+    "allProducts": "Tất cả sản phẩm",
+    "noCategories": "Cửa hàng chưa có danh mục nào."
   },
   "webshopLinks": {
     "preview": "Xem trước",
@@ -11075,12 +11077,26 @@
     "error": "Không lấy được liên kết.",
     "copyError": "Không sao chép được liên kết.",
     "shopLink": {
-      "label": "Link cửa hàng",
+      "label": "Shop URL",
       "hint": "Dán link này vào nút trong flow, broadcast hoặc sequence. Mỗi khách nhận được sẽ mở cửa hàng của riêng họ và đặt hàng được."
     },
     "productLink": {
       "label": "URL công khai",
       "hint": "Chép và dán link vào flow, broadcast hoặc sequence. Mỗi khách nhận được sẽ mở sản phẩm này và đặt hàng được."
+    },
+    "bar": "Chia sẻ cửa hàng: lấy link cửa hàng, giỏ hàng và danh mục để gắn vào nút trong flow, broadcast và sequence.",
+    "dialog": {
+      "title": "Link cửa hàng",
+      "description": "Dán link vào nút trong flow, broadcast hoặc sequence. Mỗi liên hệ nhận được sẽ mở cửa hàng của riêng họ.",
+      "shopHint": "Mở trang chủ cửa hàng với tất cả sản phẩm."
+    },
+    "cartLink": {
+      "label": "Giỏ hàng",
+      "hint": "Mở giỏ hàng của liên hệ, sẵn sàng thanh toán."
+    },
+    "categoriesLink": {
+      "label": "Danh mục",
+      "hint": "Mở danh sách danh mục của cửa hàng."
     }
   },
   "discountCodes": {

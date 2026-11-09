@@ -11066,7 +11066,9 @@
     "itemCount": "{count, plural, one {# barang} other {# barang}}",
     "relatedProducts": "Anda mungkin juga suka",
     "soldOut": "Habis terjual",
-    "sku": "SKU: {sku}"
+    "sku": "SKU: {sku}",
+    "allProducts": "Semua produk",
+    "noCategories": "Toko ini belum memiliki kategori."
   },
   "webshopLinks": {
     "preview": "Pratinjau",
@@ -11075,12 +11077,26 @@
     "error": "Tautan tidak bisa diambil.",
     "copyError": "Tautan tidak bisa disalin.",
     "shopLink": {
-      "label": "Tautan toko",
+      "label": "URL toko",
       "hint": "Tempelkan tautan ini ke tombol di flow, siaran, atau urutan. Setiap kontak yang menerimanya membuka tokonya sendiri dan dapat memesan."
     },
     "productLink": {
       "label": "URL Publik",
       "hint": "Salin dan tempel URL ke flow, siaran, atau urutan Anda. Setiap kontak yang menerimanya membuka produk ini dan dapat memesan."
+    },
+    "bar": "Bagikan toko: dapatkan link toko, keranjang, dan kategori untuk tombol flow, broadcast, dan sequence.",
+    "dialog": {
+      "title": "Link toko",
+      "description": "Tempel link ke tombol di flow, broadcast, atau sequence. Setiap kontak yang menerimanya membuka tokonya sendiri.",
+      "shopHint": "Membuka halaman depan toko dengan semua produknya."
+    },
+    "cartLink": {
+      "label": "Keranjang",
+      "hint": "Membuka keranjang kontak, siap checkout."
+    },
+    "categoriesLink": {
+      "label": "Kategori",
+      "hint": "Membuka daftar kategori toko."
     }
   },
   "discountCodes": {

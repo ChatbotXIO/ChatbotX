@@ -11,7 +11,6 @@ import {
 } from "@chatbotx.io/ui/components/ui/dialog"
 import { Input } from "@chatbotx.io/ui/components/ui/input"
 import { Label } from "@chatbotx.io/ui/components/ui/label"
-import { Separator } from "@chatbotx.io/ui/components/ui/separator"
 import {
   Tabs,
   TabsContent,
@@ -474,9 +473,7 @@ export function MetaCatalogDialog({
           </div>
         )}
 
-        <Separator />
-
-        <DialogFooter className="px-6 py-4 sm:justify-center">
+        <DialogFooter className="mx-0 mb-0 px-6 py-4 sm:justify-center">
           <div className="flex justify-center gap-2">
             {connection && tab === "connection" ? (
               <Button

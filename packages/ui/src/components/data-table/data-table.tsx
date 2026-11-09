@@ -21,6 +21,14 @@ import {
 import { getCommonPinningStyles } from "@chatbotx.io/ui/lib/data-table"
 import { cn } from "@chatbotx.io/ui/lib/utils"
 
+/**
+ * Pinned cells need an opaque surface so scrolled columns do not show through,
+ * and they repaint the row's hover/selected tint themselves because that tint
+ * lives on the `<tr>` underneath the opaque cell.
+ */
+const PINNED_CELL_CLASS_NAME =
+  "bg-background [tr:hover>&]:bg-[color-mix(in_oklab,var(--muted)_50%,var(--background))] [tr[data-state=selected]>&]:bg-muted"
+
 interface DataTableProps<TData> extends React.ComponentProps<"div"> {
   table: TanstackTable<TData>
   actionBar?: React.ReactNode
@@ -92,10 +100,16 @@ export function DataTable<TData>({
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => (
                   <TableHead
+                    className={cn(
+                      header.column.getIsPinned() && PINNED_CELL_CLASS_NAME,
+                    )}
                     key={header.id}
                     colSpan={header.colSpan}
                     style={{
-                      ...getCommonPinningStyles({ column: header.column }),
+                      ...getCommonPinningStyles({
+                        column: header.column,
+                        withBackground: false,
+                      }),
                       width:
                         header.column.columnDef.size === undefined
                           ? undefined
@@ -122,9 +136,15 @@ export function DataTable<TData>({
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell
+                      className={cn(
+                        cell.column.getIsPinned() && PINNED_CELL_CLASS_NAME,
+                      )}
                       key={cell.id}
                       style={{
-                        ...getCommonPinningStyles({ column: cell.column }),
+                        ...getCommonPinningStyles({
+                          column: cell.column,
+                          withBackground: false,
+                        }),
                         width:
                           cell.column.columnDef.size === undefined
                             ? undefined

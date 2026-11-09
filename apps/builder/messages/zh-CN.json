@@ -11066,7 +11066,9 @@
     "itemCount": "{count, plural, one {# 件} other {# 件}}",
     "relatedProducts": "猜你喜欢",
     "soldOut": "已售罄",
-    "sku": "SKU：{sku}"
+    "sku": "SKU：{sku}",
+    "allProducts": "全部商品",
+    "noCategories": "该店铺还没有分类。"
   },
   "webshopLinks": {
     "preview": "预览",
@@ -11075,12 +11077,26 @@
     "error": "无法获取链接。",
     "copyError": "无法复制链接。",
     "shopLink": {
-      "label": "商店链接",
+      "label": "店铺网址",
       "hint": "将此链接粘贴到流程、群发或序列中的按钮里。收到链接的每位联系人都会打开自己的商店并可以下单。"
     },
     "productLink": {
       "label": "公开链接",
       "hint": "复制该链接并粘贴到流程、群发或序列中。收到链接的每位联系人都会打开此商品并可以下单。"
+    },
+    "bar": "分享店铺：获取店铺、购物车和分类的链接，用于流程、群发和序列中的按钮。",
+    "dialog": {
+      "title": "店铺链接",
+      "description": "将链接粘贴到流程、群发或序列中的按钮里。每个收到的联系人都会打开自己的店铺。",
+      "shopHint": "打开包含所有商品的商店首页。"
+    },
+    "cartLink": {
+      "label": "购物车",
+      "hint": "打开联系人的购物车，可直接结账。"
+    },
+    "categoriesLink": {
+      "label": "分类",
+      "hint": "打开店铺的分类列表。"
     }
   },
   "discountCodes": {

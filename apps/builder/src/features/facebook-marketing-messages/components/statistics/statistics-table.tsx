@@ -410,9 +410,8 @@ function MetricHeader({ label, note }: { label: string; note?: string }) {
 }
 
 /**
- * `getCommonPinningStyles` paints pinned cells with `hsl(var(--background))`,
- * which is invalid for this theme's oklch tokens and renders transparent —
- * scrolled metric cells would show through the pinned ID/Name columns.
+ * Pinned header cells sit on the muted header surface, so the default
+ * `--background` fill from `getCommonPinningStyles` is overridden per surface.
  */
 function pinStyle<TData>(
   column: Column<TData>,
