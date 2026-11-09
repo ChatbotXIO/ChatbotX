@@ -12,11 +12,10 @@ import {
   type CredentialByType,
   type CredentialPublicByType,
   type CredentialType,
+  credentialAadFor,
   credentialEncryptedSchema,
   credentialPublicSchemas,
   credentialSchemas,
-  platformCredentialAad,
-  userCredentialAad,
 } from "@chatbotx.io/database/partials"
 import { platformCredentialModel } from "@chatbotx.io/database/schema"
 import type { PlatformCredentialModel } from "@chatbotx.io/database/types"
@@ -148,7 +147,7 @@ class PlatformCredentialService extends BaseService {
       tx = db,
     } = props
     const publicConfig = this._publicConfig(type, config)
-    const aad = userCredentialAad(userId, type)
+    const aad = credentialAadFor({ userId, type })
     const value = await encryptUtils.encryptObject(config, aad)
 
     const [credential] = await tx
@@ -308,7 +307,7 @@ class PlatformCredentialService extends BaseService {
   }): Promise<{ id: string }> {
     const { type, config, tx = db } = props
     const publicConfig = this._publicConfig(type, config)
-    const aad = platformCredentialAad(type)
+    const aad = credentialAadFor({ userId: null, type })
     const value = await encryptUtils.encryptObject(config, aad)
 
     const [credential] = await tx
@@ -396,23 +395,6 @@ class PlatformCredentialService extends BaseService {
   }
 
   // ─── Resolver: user → platform fallback ─────────────────────────────────────
-
-  async resolveForUser<T extends CredentialType>(props: {
-    userId: string
-    type: T
-    tx?: DatabaseClient
-  }): Promise<DecryptedCredential<T> | undefined> {
-    const userRow = await this.findForUser(props)
-
-    if (userRow && !userRow.usePlatformCredential) {
-      return this._decrypt(userRow)
-    }
-
-    return this.findDecryptedPlatform({
-      type: props.type,
-      tx: props.tx,
-    })
-  }
 
   async resolveForOwner<T extends CredentialType>(props: {
     ownerId: string
@@ -597,7 +579,11 @@ class PlatformCredentialService extends BaseService {
     const schema = credentialSchemas[row.type] as unknown as z.ZodType<
       CredentialByType[T]
     >
-    const config = await encryptUtils.decryptObject(blob, schema)
+    const config = await encryptUtils.decryptObject(
+      blob,
+      schema,
+      credentialAadFor(row),
+    )
     return {
       id: row.id,
       userId: row.userId ?? null,

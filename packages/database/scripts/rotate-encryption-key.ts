@@ -23,10 +23,9 @@ import { db } from "../src/client"
 import {
   type CredentialByType,
   type CredentialType,
+  credentialAadFor,
   credentialEncryptedSchema,
   credentialSchemas,
-  platformCredentialAad,
-  userCredentialAad,
 } from "../src/partials/credential"
 import { platformCredentialModel } from "../src/schema/platform-credential"
 
@@ -64,9 +63,7 @@ const main = async (): Promise<void> => {
     try {
       const blob = credentialEncryptedSchema.parse(row.value)
       const type = row.type as CredentialType
-      const aad = row.userId
-        ? userCredentialAad(row.userId, type)
-        : platformCredentialAad(type)
+      const aad = credentialAadFor({ userId: row.userId, type })
       const schema = credentialSchemas[type] as unknown as z.ZodType<
         CredentialByType[CredentialType]
       >

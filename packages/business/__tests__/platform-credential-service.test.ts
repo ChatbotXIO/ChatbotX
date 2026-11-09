@@ -27,9 +27,14 @@ vi.mock("@chatbotx.io/database/partials", () => ({
   credentialSchemas: {
     threads: {},
   },
-  platformCredentialAad: (type: string) => `platform:${type}:false`,
-  userCredentialAad: (userId: string, type: string) =>
-    `user:${userId}:${type}:false`,
+  credentialAadFor: ({
+    userId,
+    type,
+  }: {
+    userId: string | null
+    type: string
+  }) =>
+    userId === null ? `platform:${type}:false` : `user:${userId}:${type}:false`,
 }))
 vi.mock("@chatbotx.io/database/schema", () => ({
   platformCredentialModel: {
@@ -68,6 +73,91 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.restoreAllMocks()
+})
+
+describe("credential decryption AAD", () => {
+  test("passes the user credential AAD to decryptObject", async () => {
+    const row = {
+      ...OWN,
+      userId: "user-1",
+      value: { aad: "user:user-1:messenger:false" },
+    }
+    vi.spyOn(platformCredentialService, "findForUser").mockResolvedValue(
+      row as never,
+    )
+    vi.mocked(encryptUtils.decryptObject).mockResolvedValue({
+      clientId: "client-1",
+      clientSecret: "secret-1",
+    } as never)
+
+    await platformCredentialService.findDecryptedForUser({
+      userId: "user-1",
+      type: "messenger",
+      strict: true,
+    })
+
+    expect(encryptUtils.decryptObject).toHaveBeenCalledWith(
+      row.value,
+      undefined,
+      "user:user-1:messenger:false",
+    )
+  })
+
+  test("passes the platform credential AAD to decryptObject", async () => {
+    const row = {
+      ...PLATFORM,
+      userId: null,
+      value: { aad: "platform:messenger:false" },
+    }
+    vi.spyOn(platformCredentialService, "findPlatform").mockResolvedValue(
+      row as never,
+    )
+    vi.mocked(encryptUtils.decryptObject).mockResolvedValue({
+      clientId: "client-1",
+      clientSecret: "secret-1",
+    } as never)
+
+    await platformCredentialService.findDecryptedPlatform({
+      type: "messenger",
+      strict: true,
+    })
+
+    expect(encryptUtils.decryptObject).toHaveBeenCalledWith(
+      row.value,
+      undefined,
+      "platform:messenger:false",
+    )
+  })
+
+  test("rejects a ciphertext bound to another user's credential row", async () => {
+    const row = {
+      ...OWN,
+      userId: "user-1",
+      value: { aad: "user:user-2:messenger:false" },
+    }
+    vi.spyOn(platformCredentialService, "findForUser").mockResolvedValue(
+      row as never,
+    )
+    vi.mocked(encryptUtils.decryptObject).mockImplementation(
+      (blob, _schema, aad) => {
+        if (aad === undefined || aad === blob.aad) {
+          return {
+            clientId: "client-1",
+            clientSecret: "secret-1",
+          } as never
+        }
+        throw new Error("AAD mismatch")
+      },
+    )
+
+    await expect(
+      platformCredentialService.findDecryptedForUser({
+        userId: "user-1",
+        type: "messenger",
+        strict: true,
+      }),
+    ).rejects.toThrow("AAD mismatch")
+  })
 })
 
 describe("resolveForOwner", () => {

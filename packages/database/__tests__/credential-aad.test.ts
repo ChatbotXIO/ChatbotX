@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest"
 import {
+  credentialAadFor,
   platformCredentialAad,
   userCredentialAad,
 } from "../src/partials/credential"
@@ -13,5 +14,14 @@ describe("credential AAD format", () => {
 
   test("platform AAD keeps the legacy ':false' suffix", () => {
     expect(platformCredentialAad("whatsapp")).toBe("platform:whatsapp:false")
+  })
+
+  test("selects the AAD from credential ownership", () => {
+    expect(credentialAadFor({ userId: "123", type: "stripe" })).toBe(
+      "user:123:stripe:false",
+    )
+    expect(credentialAadFor({ userId: null, type: "whatsapp" })).toBe(
+      "platform:whatsapp:false",
+    )
   })
 })

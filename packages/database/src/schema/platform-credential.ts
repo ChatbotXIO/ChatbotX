@@ -35,9 +35,9 @@ export const platformCredentialModel = pgTable(
       .$type<CredentialPublicByType[CredentialType]>()
       .notNull(),
     value: jsonb().$type<CredentialEncrypted>().notNull(),
-    // @deprecated Unused: code neither reads nor writes it (always false). Kept
-    // only so old pods keep working during rollout; dropped in the cleanup PR.
-    // Not the ecommerce Stripe/PayPal livemode.
+    // Unused: code neither reads nor writes it (always false). Kept only so old
+    // pods keep working during rollout. The contract migration drops this
+    // `livemode` column and `*_livemode_key` indexes after full rollout.
     livemode: boolean().notNull().default(false),
     // When true this row is a delegation pointer — use platform credential instead.
     usePlatformCredential: boolean().notNull().default(false),
@@ -47,7 +47,7 @@ export const platformCredentialModel = pgTable(
     lastUsedAt: timestamp(timestampConfig),
   },
   (table) => [
-    // Legacy (livemode-aware) indexes — dropped in the cleanup PR.
+    // Legacy (livemode-aware) indexes — removed by that contract migration.
     uniqueIndex("PlatformCredential_user_type_livemode_key")
       .on(table.userId, table.type, table.livemode)
       .where(sql`${table.userId} IS NOT NULL`),

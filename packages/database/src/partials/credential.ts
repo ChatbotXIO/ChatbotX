@@ -507,10 +507,10 @@ export const credentialEncryptedSchema = z.object({
 export type CredentialEncrypted = z.infer<typeof credentialEncryptedSchema>
 
 /**
- * AAD strings bind ciphertext to its owner. They historically ended in the
- * `PlatformCredential.livemode` flag, which was always `false`. The column is
- * gone from the code, but every stored value was encrypted with `:false`, so the
- * suffix MUST stay or existing credentials stop decrypting.
+ * AAD strings are part of the stored ciphertext binding to the credential
+ * owner. They historically ended in the `PlatformCredential.livemode` flag,
+ * which was always `false`. The legacy suffix MUST stay so existing
+ * credentials continue to decrypt.
  */
 const LEGACY_AAD_SUFFIX = "false"
 
@@ -519,3 +519,14 @@ export const userCredentialAad = (userId: string, type: CredentialType) =>
 
 export const platformCredentialAad = (type: CredentialType) =>
   `platform:${type}:${LEGACY_AAD_SUFFIX}`
+
+export const credentialAadFor = ({
+  userId,
+  type,
+}: {
+  userId: string | null
+  type: CredentialType
+}): string =>
+  userId === null
+    ? platformCredentialAad(type)
+    : userCredentialAad(userId, type)
