@@ -1167,6 +1167,7 @@ class ContactInboxService extends BaseService {
     const {
       firstInteractionAt: explicitFirstInteractionAt,
       lastIncomingMessageAt: explicitLastIncomingMessageAt,
+      contactLastReadAt: explicitContactLastReadAt,
       lastUserInput,
       lastUserInputType,
       referral,
@@ -1177,6 +1178,13 @@ class ContactInboxService extends BaseService {
     if (explicitFirstInteractionAt) {
       Object.assign(updateData, {
         firstInteractionAt: sql`CASE WHEN ${contactInboxModel.firstInteractionAt} IS NULL OR ${contactInboxModel.firstInteractionAt} > ${explicitFirstInteractionAt} THEN ${explicitFirstInteractionAt} ELSE ${contactInboxModel.firstInteractionAt} END`,
+      })
+    }
+    if (explicitContactLastReadAt) {
+      // Advance-only, like lastIncomingMessageAt: concurrent receipts must not
+      // move the read mark backwards.
+      Object.assign(updateData, {
+        contactLastReadAt: sql`GREATEST(${contactInboxModel.contactLastReadAt}, ${explicitContactLastReadAt})`,
       })
     }
     if (explicitLastIncomingMessageAt) {

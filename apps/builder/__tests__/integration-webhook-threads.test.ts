@@ -39,6 +39,12 @@ vi.mock("@chatbotx.io/database/schema", () => ({
 }))
 
 vi.mock("@chatbotx.io/worker-config", () => ({
+  IntegrationJobAction: {
+    providerAccountEvent: "providerAccountEvent",
+    messageStatus: "messageStatus",
+  },
+  enqueueIntegrationJob: (job: { type: string }, options: unknown) =>
+    integrationQueueAdd(job.type, job, options),
   integrationQueue: { add: integrationQueueAdd },
 }))
 

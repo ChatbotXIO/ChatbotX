@@ -37,6 +37,7 @@ import {
 } from "@chatbotx.io/sdk"
 import {
   type BotResponseTrackingContext,
+  flowContinuationJobOptions,
   IntegrationJobAction,
   type IntegrationJobRunFlowNode,
   type IntegrationJobSendFlowPostback,
@@ -207,10 +208,11 @@ async function releaseContinuationOfMissingTarget(
     { flowId: props.flowId, nodeId: props.nodeId, targetId: props.targetId },
     "sendFlow target no longer exists in the flow; running its pending continuation",
   )
-  await integrationQueue.add(IntegrationJobAction.sendFlow, {
-    type: IntegrationJobAction.sendFlow,
-    data: props.thenSendFlow,
-  })
+  await integrationQueue.add(
+    IntegrationJobAction.sendFlow,
+    { type: IntegrationJobAction.sendFlow, data: props.thenSendFlow },
+    flowContinuationJobOptions(props.thenSendFlow.metadata),
+  )
   return true
 }
 
@@ -917,9 +919,14 @@ async function* executeMultipleStepsGenerator(
           } else if (jobId) {
             await integrationQueue.add(IntegrationJobAction.sendFlow, job, {
               jobId,
+              ...flowContinuationJobOptions(props.metadata),
             })
           } else {
-            await integrationQueue.add(IntegrationJobAction.sendFlow, job)
+            await integrationQueue.add(
+              IntegrationJobAction.sendFlow,
+              job,
+              flowContinuationJobOptions(props.metadata),
+            )
           }
           branched = true
           branchTargetNodeId = connectedNodeId

@@ -21,6 +21,7 @@ import {
   ChatJobAction,
   type ChatJobSendFlowStep,
   chatQueue,
+  flowContinuationJobOptions,
   IntegrationJobAction,
   integrationQueue,
   type NodeVisits,
@@ -319,16 +320,17 @@ export async function sendFlow(
           origin: webhookChannelOrigin(),
         },
       },
-      ...broadcastPriorityOptions(props.metadata),
+      flowContinuationJobOptions(props.metadata),
     )
   }
 }
 
 /**
  * The trailing job-options argument carrying `BROADCAST_SEND_PRIORITY` for a
- * job that belongs to a broadcast run, so every flow step after the
- * broadcast's first job keeps yielding to live traffic. Empty otherwise — a
- * job without a priority runs first, and its `add` call keeps its old shape.
+ * chat job that belongs to a broadcast run, so its sends keep yielding to live
+ * traffic. Empty otherwise — a job without a priority runs first, and its `add`
+ * call keeps its old shape. Chat jobs have no continuation tier: the ladder for
+ * flow jobs on `integration` is `flowContinuationJobOptions`.
  */
 function broadcastPriorityOptions(
   metadata: MetadataPayload | undefined,

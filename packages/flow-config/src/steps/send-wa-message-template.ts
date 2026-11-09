@@ -481,6 +481,25 @@ export function extractTemplateParams(
   return params
 }
 
+/** Delivery statuses a `sendWaTemplateMessage` step can branch on. */
+export const WA_TEMPLATE_STATUS_BRANCHES = ["delivered", "failed"] as const
+
+export type WaTemplateStatusBranch =
+  (typeof WA_TEMPLATE_STATUS_BRANCHES)[number]
+
+/**
+ * Labels of the leading status branches of a `sendWaTemplateMessage` step. The
+ * message-status handler routes a delivery status to the step button with the
+ * matching label, so the editor defaults and the handler share these.
+ */
+export const WA_TEMPLATE_STATUS_BUTTON_LABELS: Record<
+  WaTemplateStatusBranch,
+  string
+> = {
+  delivered: "Delivered",
+  failed: "Failed",
+}
+
 export const sendWaTemplateMessageStepSchema = baseStepSchema.extend({
   stepType: z.literal(stepTypes.enum.sendWaTemplateMessage),
   template: z.object({
@@ -506,8 +525,12 @@ export const sendWaTemplateMessageStepSchema = baseStepSchema.extend({
     .transform((buttons) => {
       if (buttons.length === 0) {
         return [
-          buttonStepDefaultFn({ label: "Delivered" }),
-          buttonStepDefaultFn({ label: "Failed" }),
+          buttonStepDefaultFn({
+            label: WA_TEMPLATE_STATUS_BUTTON_LABELS.delivered,
+          }),
+          buttonStepDefaultFn({
+            label: WA_TEMPLATE_STATUS_BUTTON_LABELS.failed,
+          }),
         ]
       }
 
@@ -533,8 +556,10 @@ export const sendWaTemplateMessageStepDefaultFn = (
       ...templateProps,
     },
     buttons: [
-      buttonStepDefaultFn({ label: "Delivered" }),
-      buttonStepDefaultFn({ label: "Failed" }),
+      buttonStepDefaultFn({
+        label: WA_TEMPLATE_STATUS_BUTTON_LABELS.delivered,
+      }),
+      buttonStepDefaultFn({ label: WA_TEMPLATE_STATUS_BUTTON_LABELS.failed }),
     ],
     ...restProps,
     id: createId(),

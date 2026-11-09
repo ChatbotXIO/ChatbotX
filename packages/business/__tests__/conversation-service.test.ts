@@ -434,7 +434,10 @@ describe("conversationService.markReadByContact", () => {
     })
 
     expect(transaction).toHaveBeenCalledTimes(1)
-    expect(set).toHaveBeenCalledWith({ contactLastReadAt: seenAt })
+    // Advance-only: an older receipt finishing last must not move the mark back.
+    const readMark = set.mock.calls[0][0].contactLastReadAt
+    expect(collectSqlText(readMark)).toContain("GREATEST(")
+    expect(collectSqlParams(readMark)).toContain(seenAt)
 
     const whereValues = collectSqlValues(where.mock.calls[0][0])
     expect(whereValues).toContain("conv-1")
@@ -1019,7 +1022,9 @@ describe("conversationService window transitions on existing UPDATEs", () => {
       humanReplyWindow: { open: at },
     })
 
-    expect(lastSet().contactLastReadAt).toBe(at)
+    // Advance-only: a late inbound must not move the read mark backwards.
+    expect(collectSqlText(lastSet().contactLastReadAt)).toContain("GREATEST(")
+    expect(collectSqlParams(lastSet().contactLastReadAt)).toContain(at)
     expect(lastSet()).toHaveProperty("awaitingHumanReplySince")
   })
 })

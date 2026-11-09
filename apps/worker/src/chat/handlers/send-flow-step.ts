@@ -493,6 +493,7 @@ export async function sendFlowStep({
   sentByUserId,
   commentAnchor,
   appointmentId,
+  statusBranches,
 }: ChatJobSendFlowStep["data"]) {
   const conversation = await conversationService.findByIdWithContactUnscoped({
     id: conversationId,
@@ -579,6 +580,7 @@ export async function sendFlowStep({
         metadata,
         isBulkBroadcast,
         sentByUserId,
+        statusBranches,
       })
     } catch (error) {
       logger.error(

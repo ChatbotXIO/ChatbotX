@@ -22,6 +22,7 @@ import {
 import {
   ChatJobAction,
   chatQueue,
+  flowContinuationJobOptions,
   IntegrationJobAction,
   integrationQueue,
 } from "@chatbotx.io/worker-config"
@@ -134,18 +135,22 @@ async function startTriggerFlow(
     return
   }
 
-  await integrationQueue.add(IntegrationJobAction.sendFlow, {
-    type: IntegrationJobAction.sendFlow,
-    data: {
-      conversationId: props.conversation.id,
-      contactInboxId: props.contactInbox.id,
-      flowId,
-      metadata: props.metadata,
-      trackingContext: props.trackingContext,
-      sendFrom: props.sendFrom,
-      origin: webhookChannelOrigin(),
+  await integrationQueue.add(
+    IntegrationJobAction.sendFlow,
+    {
+      type: IntegrationJobAction.sendFlow,
+      data: {
+        conversationId: props.conversation.id,
+        contactInboxId: props.contactInbox.id,
+        flowId,
+        metadata: props.metadata,
+        trackingContext: props.trackingContext,
+        sendFrom: props.sendFrom,
+        origin: webhookChannelOrigin(),
+      },
     },
-  })
+    flowContinuationJobOptions(props.metadata),
+  )
 }
 
 function toValidDate(value: Date | number | string | null | undefined) {

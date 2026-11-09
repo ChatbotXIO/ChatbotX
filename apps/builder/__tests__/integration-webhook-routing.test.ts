@@ -36,7 +36,12 @@ vi.mock("@chatbotx.io/channel-registry/registry", () => ({
 }))
 
 vi.mock("@chatbotx.io/worker-config", () => ({
-  IntegrationJobAction: { providerAccountEvent: "providerAccountEvent" },
+  IntegrationJobAction: {
+    providerAccountEvent: "providerAccountEvent",
+    messageStatus: "messageStatus",
+  },
+  enqueueIntegrationJob: (job: { type: string }, options: unknown) =>
+    integrationQueueAdd(job.type, job, options),
   integrationQueue: { add: integrationQueueAdd },
 }))
 
@@ -426,6 +431,39 @@ describe("tiktok webhook routing", () => {
 
     expect(response.status).toBe(200)
     expect(findOwnerUserIdByWorkspaceId).not.toHaveBeenCalled()
+  })
+
+  test("hands the TikTok handler a queue that enqueues through enqueueIntegrationJob, so echoes can be routed to low", async () => {
+    findIntegrationTiktokByOpenId.mockResolvedValue({
+      auth: {
+        clientId: "id",
+        clientSecret: "secret",
+        redirectUrl: "https://x",
+      },
+      inboxId: "inbox-1",
+      openId: "open-1",
+      workspaceId: "workspace-1",
+    })
+
+    await handleWebhook(
+      "tiktok",
+      asNextRequest(
+        "http://localhost/integrations/tiktok",
+        JSON.stringify({ event: "im_send_msg", user_openid: "open-1" }),
+      ),
+    )
+
+    const [{ queue }] = tiktokHandleRequest.mock.calls[0] as [
+      { queue: { add: (...args: unknown[]) => Promise<unknown> } },
+    ]
+    const echoJob = { type: "incomingMessageEcho", data: {} }
+    await queue.add("incomingMessageEcho", echoJob, { delay: 2000 })
+
+    expect(integrationQueueAdd).toHaveBeenCalledWith(
+      "incomingMessageEcho",
+      echoJob,
+      { delay: 2000 },
+    )
   })
 
   test("routes authorization.removed to connectionStateService.markUnhealthyByIdentifier with the resolved workspace owner (regression: previously 500'd with no ownerId)", async () => {

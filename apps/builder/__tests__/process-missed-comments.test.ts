@@ -43,6 +43,7 @@ vi.mock("@chatbotx.io/business", () => ({
 }))
 
 vi.mock("@chatbotx.io/worker-config", () => ({
+  LOW_BULK_PRIORITY: 10,
   LowJobAction: { replayMissedComment: "replayMissedComment" },
   lowQueue: { addBulk: mockQueueAddBulk },
 }))
@@ -173,6 +174,7 @@ describe("processMissedComments", () => {
         opts: {
           jobId: "missed-comment-automation-1-c-old",
           delay: 0,
+          priority: 10,
           attempts: 1,
         },
       },
@@ -180,6 +182,7 @@ describe("processMissedComments", () => {
         opts: {
           jobId: "missed-comment-automation-1-c-new",
           delay: 1000,
+          priority: 10,
           attempts: 1,
         },
       }),

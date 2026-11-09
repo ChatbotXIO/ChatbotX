@@ -12,6 +12,7 @@ import {
   aiTextToSpeechSchema,
 } from "@chatbotx.io/flow-config"
 import {
+  flowContinuationJobOptions,
   getHeavyJobCompletionWaitTimeoutMs,
   getHeavyJobOptions,
   getRedisConnection,
@@ -513,6 +514,7 @@ export async function runViaHeavyWorker(
       },
     },
     {
+      ...flowContinuationJobOptions(props.metadata),
       delay: completionWaitTimeoutMs,
       jobId: `heavy-resume-fallback-${buildHeavyStepIdentityHash(identity)}`,
     },

@@ -24,6 +24,7 @@ import type {
   SendViewCatalogStepSchema,
   SendWaTemplateMessageStepSchema,
   WaTemplateParams,
+  WaTemplateStatusBranch,
   WhatsappCallButtonStepSchema,
   WhatsappLocationStepSchema,
 } from "@chatbotx.io/flow-config"
@@ -115,6 +116,12 @@ export type ChatJobSendFlowStep = {
      * whose payloads the caller encodes itself (Get User Data's Skip button).
      */
     presetQuickReplies?: MessageButtonTemplate[]
+    /**
+     * Set by the flow runner for a `sendWaTemplateMessage` step: the delivery
+     * statuses whose button leads somewhere (actions or a connected node), so
+     * the send records them as status branches of the message it produces.
+     */
+    statusBranches?: WaTemplateStatusBranch[]
     sendFrom?: "inbox"
     /** See `IntegrationJobRunFlowNode["data"]["sentByUserId"]`. */
     sentByUserId?: string

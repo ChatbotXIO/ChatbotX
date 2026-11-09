@@ -1,6 +1,7 @@
 import { aiFileService } from "@chatbotx.io/business"
 import { optimizeStoredImage } from "@chatbotx.io/business/media/optimize-stored-image"
 import {
+  flowContinuationJobOptions,
   type HeavyFlowContinuation,
   HeavyJobAction,
   type HeavyJobData,
@@ -111,6 +112,7 @@ async function resumeHeavyFlow(input: {
       },
     },
     {
+      ...flowContinuationJobOptions(input.continuation.metadata),
       jobId: `heavy-resume-${input.jobId ?? input.continuation.flowExecutionKey}`,
     },
   )

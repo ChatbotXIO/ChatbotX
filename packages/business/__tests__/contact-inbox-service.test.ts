@@ -162,6 +162,7 @@ vi.mock("@chatbotx.io/database/schema", () => ({
     profileSnapshotState: "profileSnapshotState",
     accountVerified: "accountVerified",
     lastIncomingMessageAt: "lastIncomingMessageAt",
+    contactLastReadAt: "contactLastReadAt",
     lastMessageAt: "lastMessageAt",
     lastUserInput: "lastUserInput",
     lastUserInputType: "lastUserInputType",
@@ -421,6 +422,24 @@ describe("contactInboxService timestamp helpers", () => {
         ],
       },
       lastMessageAt,
+    })
+  })
+
+  test("updateTracking advances contactLastReadAt with GREATEST so a stale receipt cannot move it back", async () => {
+    const contactLastReadAt = new Date("2026-07-09T07:43:30.676Z")
+
+    await contactInboxService.updateTracking({
+      contactInboxId: "contact-inbox-1",
+      contactId: "contact-1",
+      workspaceId: "workspace-1",
+      data: { contactLastReadAt },
+    })
+
+    expect(mockDbSet).toHaveBeenCalledWith({
+      contactLastReadAt: {
+        strings: ["GREATEST(", ", ", ")"],
+        values: ["contactLastReadAt", contactLastReadAt],
+      },
     })
   })
 

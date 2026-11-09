@@ -1,4 +1,5 @@
 import {
+  flowContinuationJobOptions,
   IntegrationJobAction,
   type IntegrationJobRunFlowNode,
   integrationQueue,
@@ -28,10 +29,11 @@ export function createContinuationChain(
   let deferredBranch: DeferredBranchJob | undefined
 
   const enqueueSendFlow = (data: SendFlowJobData) =>
-    integrationQueue.add(IntegrationJobAction.sendFlow, {
-      type: IntegrationJobAction.sendFlow,
-      data,
-    })
+    integrationQueue.add(
+      IntegrationJobAction.sendFlow,
+      { type: IntegrationJobAction.sendFlow, data },
+      flowContinuationJobOptions(data.metadata),
+    )
 
   const enqueueBranch = (
     branch: DeferredBranchJob,
@@ -40,11 +42,10 @@ export function createContinuationChain(
     const job: IntegrationJobRunFlowNode = then
       ? { ...branch.job, data: { ...branch.job.data, thenSendFlow: then } }
       : branch.job
-    return branch.jobId
-      ? integrationQueue.add(IntegrationJobAction.sendFlow, job, {
-          jobId: branch.jobId,
-        })
-      : integrationQueue.add(IntegrationJobAction.sendFlow, job)
+    return integrationQueue.add(IntegrationJobAction.sendFlow, job, {
+      ...flowContinuationJobOptions(job.data.metadata),
+      jobId: branch.jobId,
+    })
   }
 
   const takeThen = (): SendFlowJobData | undefined => {

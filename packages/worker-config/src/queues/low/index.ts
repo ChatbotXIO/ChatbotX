@@ -6,7 +6,10 @@ import {
   isNoRedisEnv,
 } from "../../lib/connection"
 import { queueNames } from "../../lib/types"
-import type { IntegrationJobReceiveComment } from "../integration"
+import type {
+  IntegrationJobReceiveComment,
+  LowRoutedIntegrationJob,
+} from "../integration"
 
 /**
  * Workload-class queue for jobs that are individually *light* (short, I/O-bound)
@@ -17,15 +20,28 @@ import type { IntegrationJobReceiveComment } from "../integration"
  * enqueue work here whenever running it on a latency-sensitive domain worker
  * would starve customer-facing throughput during a burst. Current tenants are
  * the Coexist/Customer-Scan media backfill jobs (attachment mirroring, contact
- * avatar mirroring); future light-but-bulky jobs can join with their own action.
+ * avatar mirroring), and the bookkeeping ingress that `enqueueIntegrationJob`
+ * routes here (read receipts, delivery statuses, channel echoes); future
+ * light-but-bulky jobs can join with their own action.
  */
 export const LowJobAction = {
   coexistAttachmentDownload: "coexistAttachmentDownload",
   updateContactAvatar: "updateContactAvatar",
   replayMissedComment: "replayMissedComment",
+  // Routed here by `enqueueIntegrationJob`; same strings as IntegrationJobAction.
+  messageStatus: "messageStatus",
+  contactMarkAsRead: "contactMarkAsRead",
+  incomingMessageEcho: "incomingMessageEcho",
 } as const
 
 export type LowJobAction = (typeof LowJobAction)[keyof typeof LowJobAction]
+
+/**
+ * BullMQ priority for bulk producers on this queue (attachment mirroring,
+ * avatar mirroring, missed-comment replay). Jobs without a priority run first,
+ * so the unprioritized receipts/echoes always pass a backlog of these.
+ */
+export const LOW_BULK_PRIORITY = 10
 
 /**
  * Mirror a Coexist historical attachment's bytes to object storage and persist
@@ -86,6 +102,7 @@ export type LowJobData =
   | LowJobCoexistAttachmentDownload
   | LowJobUpdateContactAvatar
   | LowJobReplayMissedComment
+  | LowRoutedIntegrationJob
 
 export const lowQueue = isNoRedisEnv()
   ? fakeQueue

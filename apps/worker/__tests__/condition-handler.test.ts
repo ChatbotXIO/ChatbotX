@@ -34,6 +34,7 @@ vi.mock("@chatbotx.io/variables", () => ({
 
 vi.mock("@chatbotx.io/worker-config", () => ({
   IntegrationJobAction: { sendFlow: "sendFlow" },
+  flowContinuationJobOptions: () => ({ priority: 2 }),
   integrationQueue: { add: integrationQueueAdd },
 }))
 
@@ -137,17 +138,21 @@ describe("handleCondition", () => {
         ],
       },
     })
-    expect(integrationQueueAdd).toHaveBeenCalledWith("sendFlow", {
-      type: "sendFlow",
-      data: expect.objectContaining({
-        conversationId: "conversation-1",
-        contactInboxId: "contact-inbox-1",
-        flowId: "flow-1",
-        flowVersionId: "flow-version-1",
-        nodeId: "second-target",
-        origin: "webhook",
-      }),
-    })
+    expect(integrationQueueAdd).toHaveBeenCalledWith(
+      "sendFlow",
+      {
+        type: "sendFlow",
+        data: expect.objectContaining({
+          conversationId: "conversation-1",
+          contactInboxId: "contact-inbox-1",
+          flowId: "flow-1",
+          flowVersionId: "flow-version-1",
+          nodeId: "second-target",
+          origin: "webhook",
+        }),
+      },
+      { priority: 2 },
+    )
   })
 
   test.each([
@@ -182,10 +187,14 @@ describe("handleCondition", () => {
       ] as EdgeSchema[]),
     )
 
-    expect(integrationQueueAdd).toHaveBeenCalledWith("sendFlow", {
-      type: "sendFlow",
-      data: expect.objectContaining({ nodeId: "otherwise-target" }),
-    })
+    expect(integrationQueueAdd).toHaveBeenCalledWith(
+      "sendFlow",
+      {
+        type: "sendFlow",
+        data: expect.objectContaining({ nodeId: "otherwise-target" }),
+      },
+      { priority: 2 },
+    )
   })
 
   test("routes to otherwise when filter evaluation throws", async () => {
@@ -197,10 +206,14 @@ describe("handleCondition", () => {
       ] as EdgeSchema[]),
     )
 
-    expect(integrationQueueAdd).toHaveBeenCalledWith("sendFlow", {
-      type: "sendFlow",
-      data: expect.objectContaining({ nodeId: "otherwise-target" }),
-    })
+    expect(integrationQueueAdd).toHaveBeenCalledWith(
+      "sendFlow",
+      {
+        type: "sendFlow",
+        data: expect.objectContaining({ nodeId: "otherwise-target" }),
+      },
+      { priority: 2 },
+    )
   })
 
   test("does not enqueue when the matched handle has no connected edge", async () => {
@@ -253,10 +266,14 @@ describe("handleCondition", () => {
         ],
       },
     })
-    expect(integrationQueueAdd).toHaveBeenCalledWith("sendFlow", {
-      type: "sendFlow",
-      data: expect.objectContaining({ nodeId: "first-target" }),
-    })
+    expect(integrationQueueAdd).toHaveBeenCalledWith(
+      "sendFlow",
+      {
+        type: "sendFlow",
+        data: expect.objectContaining({ nodeId: "first-target" }),
+      },
+      { priority: 2 },
+    )
   })
 
   test("threads appointmentId through variable resolution and the matched branch", async () => {
@@ -275,13 +292,17 @@ describe("handleCondition", () => {
       step.cases,
       expect.objectContaining({ appointmentId: "appointment-1" }),
     )
-    expect(integrationQueueAdd).toHaveBeenCalledWith("sendFlow", {
-      type: "sendFlow",
-      data: expect.objectContaining({
-        appointmentId: "appointment-1",
-        nodeId: "first-target",
-      }),
-    })
+    expect(integrationQueueAdd).toHaveBeenCalledWith(
+      "sendFlow",
+      {
+        type: "sendFlow",
+        data: expect.objectContaining({
+          appointmentId: "appointment-1",
+          nodeId: "first-target",
+        }),
+      },
+      { priority: 2 },
+    )
   })
 
   test("threads sentByUserId through variable resolution and the matched branch", async () => {
@@ -300,13 +321,17 @@ describe("handleCondition", () => {
       step.cases,
       expect.objectContaining({ sentByUserId: "user-1" }),
     )
-    expect(integrationQueueAdd).toHaveBeenCalledWith("sendFlow", {
-      type: "sendFlow",
-      data: expect.objectContaining({
-        sentByUserId: "user-1",
-        nodeId: "first-target",
-      }),
-    })
+    expect(integrationQueueAdd).toHaveBeenCalledWith(
+      "sendFlow",
+      {
+        type: "sendFlow",
+        data: expect.objectContaining({
+          sentByUserId: "user-1",
+          nodeId: "first-target",
+        }),
+      },
+      { priority: 2 },
+    )
   })
 
   test("threads the case timezone into contact filter matching", async () => {

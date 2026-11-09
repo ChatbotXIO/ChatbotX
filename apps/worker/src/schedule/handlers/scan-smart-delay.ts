@@ -110,6 +110,7 @@ const enqueueClaimedBatch = async (claimed: SmartDelayRow[]) => {
           name: job.name,
           data: job.data,
           opts: {
+            ...job.opts,
             jobId: buildJobId(row.id, row.triggerAt),
             delay: Math.max(0, row.triggerAt.getTime() - Date.now()),
           },

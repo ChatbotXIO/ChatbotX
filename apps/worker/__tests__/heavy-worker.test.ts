@@ -444,7 +444,7 @@ describe("heavy worker", () => {
           startFromStepId: "1",
         }),
       },
-      { jobId: "heavy-resume-job-1" },
+      { jobId: "heavy-resume-job-1", priority: 2 },
     )
   })
 
@@ -713,7 +713,7 @@ describe("heavy worker", () => {
         expect.objectContaining({
           data: expect.objectContaining({ startFromStepId: "7" }),
         }),
-        { jobId: "heavy-resume-heavy-aiSegmentImage-abc" },
+        { jobId: "heavy-resume-heavy-aiSegmentImage-abc", priority: 2 },
       )
     })
 

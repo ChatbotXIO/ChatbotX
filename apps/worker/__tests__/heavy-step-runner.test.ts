@@ -741,7 +741,11 @@ describe("heavy step enqueue", () => {
       expect.objectContaining({
         data: expect.objectContaining({ startFromStepId: "9" }),
       }),
-      { delay: 330_000, jobId: `heavy-resume-fallback-${identity}` },
+      {
+        delay: 330_000,
+        jobId: `heavy-resume-fallback-${identity}`,
+        priority: 2,
+      },
     )
     const [, , options] = mocks.heavyQueueAdd.mock.calls[0] ?? []
     expect(options.jobId).toBe(`heavy-aiGenerateImage-${identity}`)

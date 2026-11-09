@@ -113,5 +113,5 @@ export async function runFollowUpResume(
   }
 
   const job = buildSendFlowResumeJob(row)
-  await integrationQueue.add(job.name, job.data)
+  await integrationQueue.add(job.name, job.data, job.opts)
 }

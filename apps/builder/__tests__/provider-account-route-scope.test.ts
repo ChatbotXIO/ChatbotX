@@ -2,14 +2,22 @@
 
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
-const { addMock, loggerError } = vi.hoisted(() => ({
+const { addMock, continuesFlowMock, loggerError } = vi.hoisted(() => ({
   addMock: vi.fn(),
+  continuesFlowMock: vi.fn(),
   loggerError: vi.fn(),
 }))
 
 vi.mock("@chatbotx.io/worker-config", () => ({
-  IntegrationJobAction: { providerAccountEvent: "providerAccountEvent" },
-  integrationQueue: { add: addMock },
+  IntegrationJobAction: {
+    providerAccountEvent: "providerAccountEvent",
+    messageStatus: "messageStatus",
+  },
+  enqueueIntegrationJob: (job: { type: string }, options: unknown) =>
+    addMock(job.type, job, options),
+}))
+vi.mock("@chatbotx.io/business", () => ({
+  messageStatusBranchService: { continuesFlow: continuesFlowMock },
 }))
 vi.mock("@/lib/log", () => ({
   logger: { error: loggerError, warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
@@ -34,6 +42,7 @@ const owner = (ownerId: string) =>
 
 beforeEach(() => {
   addMock.mockReset()
+  continuesFlowMock.mockReset()
   loggerError.mockReset()
 })
 
@@ -100,6 +109,59 @@ describe("addRouteScopedJob", () => {
     expect(addMock).toHaveBeenCalledWith("incomingMessage", messageJob, {
       jobId: "wa-msg-1",
     })
+  })
+})
+
+describe("message status routing stamp", () => {
+  const statusJob = {
+    type: "messageStatus",
+    data: {
+      integrationType: "whatsapp",
+      integrationIdentifier: "phone-1",
+      payload: { messageId: "wamid.1", status: "delivered", timestamp: "1" },
+    },
+  }
+
+  test.each([
+    true,
+    false,
+  ])("stamps continuesFlow=%s from the status-branch marker", async (continuesFlow) => {
+    continuesFlowMock.mockResolvedValue(continuesFlow)
+
+    await addRouteScopedJob(
+      "messageStatus",
+      statusJob,
+      { jobId: "wa-status-1" },
+      undefined,
+    )
+
+    expect(continuesFlowMock).toHaveBeenCalledWith({
+      channel: "whatsapp",
+      providerMessageId: "wamid.1",
+      status: "delivered",
+    })
+    expect(addMock).toHaveBeenCalledWith(
+      "messageStatus",
+      { ...statusJob, data: { ...statusJob.data, continuesFlow } },
+      { jobId: "wa-status-1" },
+    )
+  })
+
+  test("overrides a continuesFlow flag the payload already carried", async () => {
+    continuesFlowMock.mockResolvedValue(false)
+
+    await addRouteScopedJob(
+      "messageStatus",
+      { ...statusJob, data: { ...statusJob.data, continuesFlow: true } },
+      undefined,
+      undefined,
+    )
+
+    const [, job] = addMock.mock.calls[0] as [
+      string,
+      { data: { continuesFlow: boolean } },
+    ]
+    expect(job.data.continuesFlow).toBe(false)
   })
 })
 

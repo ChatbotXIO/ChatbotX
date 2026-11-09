@@ -120,4 +120,6 @@ export const fakeQueue = {
   getWaitingCount: () => Promise.resolve(0),
   getPrioritizedCount: () => Promise.resolve(0),
   getDelayedCount: () => Promise.resolve(0),
+  getJobCounts: (..._types: string[]) =>
+    Promise.resolve<Record<string, number>>({}),
 }

@@ -7,6 +7,7 @@ import {
   resolveContactVariablesDeep,
 } from "@chatbotx.io/variables"
 import {
+  flowContinuationJobOptions,
   IntegrationJobAction,
   integrationQueue,
 } from "@chatbotx.io/worker-config"
@@ -105,23 +106,27 @@ export async function handleCondition(
     return
   }
 
-  await integrationQueue.add(IntegrationJobAction.sendFlow, {
-    type: IntegrationJobAction.sendFlow,
-    data: {
-      conversationId: conversation.id,
-      contactInboxId: contactInbox.id,
-      flowId: flowVersion.flowId,
-      flowVersionId: useLatestFlowVersion ? undefined : flowVersion.id,
-      nodeId: connectedNodeId,
-      metadata,
-      appointmentId,
-      trackingContext,
-      sendFrom,
-      sentByUserId,
-      startedByContactMessage,
-      nodeVisits,
-      commentAnchor,
-      origin: webhookChannelOrigin(),
+  await integrationQueue.add(
+    IntegrationJobAction.sendFlow,
+    {
+      type: IntegrationJobAction.sendFlow,
+      data: {
+        conversationId: conversation.id,
+        contactInboxId: contactInbox.id,
+        flowId: flowVersion.flowId,
+        flowVersionId: useLatestFlowVersion ? undefined : flowVersion.id,
+        nodeId: connectedNodeId,
+        metadata,
+        appointmentId,
+        trackingContext,
+        sendFrom,
+        sentByUserId,
+        startedByContactMessage,
+        nodeVisits,
+        commentAnchor,
+        origin: webhookChannelOrigin(),
+      },
     },
-  })
+    flowContinuationJobOptions(metadata),
+  )
 }

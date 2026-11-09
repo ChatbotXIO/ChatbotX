@@ -15,6 +15,7 @@ import {
 } from "../schema/webhook"
 
 const TAG_EVENT_NAME_SET = new Set<string>(TAG_EVENT_NAMES)
+const ZALO_OA_SEND_EVENT_PREFIX = "oa_send"
 
 /** Zalo sends `timestamp` as epoch milliseconds in a string. */
 const zaloTimestampToIso = (timestamp: string | undefined): string => {
@@ -218,8 +219,13 @@ const handleWebhookEvent = async (
       ? webhookData.recipient.id
       : webhookData.sender.id
 
-    await queue.add("incomingMessage", {
-      type: "incomingMessage",
+    // `oa_send_*` is the OA's own send echoed back (also sends made through the
+    // API); nobody waits on a reply to it, so it takes the low-priority path.
+    const jobType = webhookData.event_name.startsWith(ZALO_OA_SEND_EVENT_PREFIX)
+      ? "incomingMessageEcho"
+      : "incomingMessage"
+    await queue.add(jobType, {
+      type: jobType,
       data: {
         integrationType: "zalo",
         integrationIdentifier,
