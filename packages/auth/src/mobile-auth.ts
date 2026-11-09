@@ -42,7 +42,6 @@ const NONCE_MAX_LENGTH = 512
 const PERSON_NAME_MAX_LENGTH = 100
 /** Social providers whose native id token the `id_token` grant verifies. */
 const ID_TOKEN_PROVIDERS = ["apple"] as const
-const OAUTH_EMAIL_NOT_VERIFIED = "email not verified"
 // Same rule better-auth applies to `/sign-in/*`: 3 attempts per 10 seconds per IP.
 const SIGN_IN_RATE_LIMIT = { window: 10, max: 3 } as const
 
@@ -128,6 +127,10 @@ export type MobileTokenResponse = {
 }
 
 type JwtPluginOptions = { jwt?: Record<string, unknown> }
+type IdTokenProvider = NonNullable<
+  AuthContext["context"]["socialProviders"]
+>[number]
+type AccountSubjectInput = Parameters<IdTokenProvider["accountSubject"]>[0]
 
 const unauthorized = (code: string, message: string) =>
   APIError.from("UNAUTHORIZED", { code, message })
@@ -183,6 +186,19 @@ const buildTokenResponse = async (props: {
     deviceId,
     mustChangePassword: user.mustChangePassword === true,
   }
+}
+
+const issueTokenResponse = async (props: {
+  ctx: AuthContext
+  user: MobileUser
+  deviceId: string
+}): Promise<MobileTokenResponse> => {
+  const { ctx, user, deviceId } = props
+  const refreshToken = await mobileRefreshTokenService.issue({
+    userId: user.id,
+    deviceId,
+  })
+  return buildTokenResponse({ ctx, user, deviceId, refreshToken })
 }
 
 const setNoStore = (ctx: {
@@ -306,7 +322,8 @@ const authenticateWithIdToken = async (
       accountId,
       idToken: input.idToken,
     },
-    disableSignUp: provider.options?.disableSignUp,
+    disableSignUp:
+      provider.disableImplicitSignUp || provider.options?.disableSignUp,
     source: {
       method: "oauth",
       oauth: {
@@ -315,13 +332,7 @@ const authenticateWithIdToken = async (
       },
     },
   })
-  if (result.error || !result.data) {
-    if (result.error === OAUTH_EMAIL_NOT_VERIFIED) {
-      throw APIError.from("FORBIDDEN", {
-        code: "EMAIL_NOT_VERIFIED",
-        message: "Email not verified",
-      })
-    }
+  if (!result.data) {
     throw unauthorized(
       "OAUTH_LINK_ERROR",
       result.error ?? "Unable to sign in with this provider",
@@ -333,16 +344,16 @@ const authenticateWithIdToken = async (
 }
 
 const resolveAccountId = async (
-  provider: { accountSubject: (input: never) => unknown },
-  tokens: unknown,
-  profile: unknown,
+  provider: IdTokenProvider,
+  tokens: AccountSubjectInput["tokens"],
+  profile: AccountSubjectInput["profile"],
 ): Promise<string> => {
   try {
-    const subject = await provider.accountSubject({ tokens, profile } as never)
-    const accountId = String(subject).trim()
-    if (accountId && accountId !== "undefined" && accountId !== "null") {
-      return accountId
+    const subject = await provider.accountSubject({ tokens, profile })
+    if (subject == null) {
+      throw invalidIdToken("Identity token has no subject")
     }
+    return String(subject).trim()
   } catch {
     // Falls through to the same error as a missing subject.
   }
@@ -515,36 +526,18 @@ export const mobileAuth = () =>
               )
             }
             const deviceId = body.deviceId ?? record.deviceId ?? createId()
-            const refreshToken = await mobileRefreshTokenService.issue({
-              userId: user.id,
-              deviceId,
-            })
-            return ctx.json(
-              await buildTokenResponse({ ctx, user, deviceId, refreshToken }),
-            )
+            return ctx.json(await issueTokenResponse({ ctx, user, deviceId }))
           }
 
           if (body.grantType === "id_token") {
             const user = await authenticateWithIdToken(ctx, body)
             const deviceId = body.deviceId ?? createId()
-            const refreshToken = await mobileRefreshTokenService.issue({
-              userId: user.id,
-              deviceId,
-            })
-            return ctx.json(
-              await buildTokenResponse({ ctx, user, deviceId, refreshToken }),
-            )
+            return ctx.json(await issueTokenResponse({ ctx, user, deviceId }))
           }
 
           const user = await authenticateWithPassword(ctx, body)
           const deviceId = body.deviceId ?? createId()
-          const refreshToken = await mobileRefreshTokenService.issue({
-            userId: user.id,
-            deviceId,
-          })
-          return ctx.json(
-            await buildTokenResponse({ ctx, user, deviceId, refreshToken }),
-          )
+          return ctx.json(await issueTokenResponse({ ctx, user, deviceId }))
         },
       ),
 

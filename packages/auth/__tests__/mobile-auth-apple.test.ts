@@ -1,7 +1,6 @@
 import { createHash } from "node:crypto"
 import { betterAuth } from "better-auth"
 import { memoryAdapter } from "better-auth/adapters/memory"
-import { APIError } from "better-auth/api"
 import { jwt } from "better-auth/plugins"
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 
@@ -99,11 +98,19 @@ const tables = () => ({
   jwks: [] as Record<string, unknown>[],
 })
 
-type AuthOptions = { bundleIds?: string[]; signUpDisabled?: boolean }
+type AuthOptions = {
+  bundleIds?: string[]
+  signUpDisabled?: boolean
+  implicitSignUpDisabled?: boolean
+}
 
 const createAppleAuth = (
   store: ReturnType<typeof tables>,
-  { bundleIds = [BUNDLE_ID], signUpDisabled = false }: AuthOptions = {},
+  {
+    bundleIds = [BUNDLE_ID],
+    signUpDisabled = false,
+    implicitSignUpDisabled = false,
+  }: AuthOptions = {},
 ) =>
   betterAuth({
     baseURL: ISSUER,
@@ -120,6 +127,8 @@ const createAppleAuth = (
               clientSecret: "",
               audience: bundleIds,
               appBundleIdentifier: bundleIds[0],
+              disableSignUp: signUpDisabled,
+              disableImplicitSignUp: implicitSignUpDisabled,
             },
           }
         : undefined,
@@ -128,17 +137,6 @@ const createAppleAuth = (
         enabled: true,
         trustedProviders: ["apple"],
         requireLocalEmailVerified: false,
-      },
-    },
-    databaseHooks: {
-      user: {
-        create: {
-          before: () => {
-            if (signUpDisabled) {
-              throw new APIError("FORBIDDEN", { message: "signup_disabled" })
-            }
-          },
-        },
       },
     },
     user: {
@@ -415,14 +413,18 @@ describe("POST /mobile/token — id_token grant (Apple)", () => {
   })
 
   describe("signup lockdown", () => {
-    test("a new user is 403 FORBIDDEN", async () => {
-      const auth = createAppleAuth(store, { signUpDisabled: true })
+    test.each([
+      ["signup is disabled", { signUpDisabled: true }],
+      ["implicit signup is disabled", { implicitSignUpDisabled: true }],
+    ])("a new user is rejected when %s", async (_reason, authOptions) => {
+      const auth = createAppleAuth(store, authOptions)
 
       const response = await appleGrant(auth, {
         idToken: await signAppleToken(),
       })
 
-      expect(response.status).toBe(403)
+      expect(response.status).toBe(401)
+      expect((await response.json()).code).toBe("OAUTH_LINK_ERROR")
       expect(store.user).toHaveLength(0)
     })
 

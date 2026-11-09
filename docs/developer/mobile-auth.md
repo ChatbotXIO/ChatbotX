@@ -69,8 +69,7 @@ Content-Type: application/json
 | ------ | --------------------- | --------------------------------------------------------------- |
 | 400    | (validation)          | Unsupported `provider`, missing or oversized `idToken`          |
 | 401    | `INVALID_ID_TOKEN`    | Bad signature, issuer, audience, expiry or nonce; no email/sub  |
-| 401    | `OAUTH_LINK_ERROR`    | Account could not be linked or created                          |
-| 403    | `FORBIDDEN`           | Signup is disabled (`AUTH_DISABLE_SIGNUP`) and the user is new  |
+| 401    | `OAUTH_LINK_ERROR`    | Account could not be linked or created, including blocked signup |
 | 404    | `PROVIDER_NOT_ENABLED`| `APPLE_APP_BUNDLE_IDS` is not configured                        |
 
 ### What the server does
