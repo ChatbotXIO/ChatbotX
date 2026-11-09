@@ -11066,7 +11066,9 @@
     "itemCount": "{count, plural, one {# 件} other {# 件}}",
     "relatedProducts": "你可能也會喜歡",
     "soldOut": "已售完",
-    "sku": "SKU：{sku}"
+    "sku": "SKU：{sku}",
+    "allProducts": "全部商品",
+    "noCategories": "此商店尚無分類。"
   },
   "webshopLinks": {
     "preview": "預覽",
@@ -11075,12 +11077,26 @@
     "error": "無法取得連結。",
     "copyError": "無法複製連結。",
     "shopLink": {
-      "label": "商店連結",
+      "label": "商店網址",
       "hint": "將此連結貼到流程、群發或序列中的按鈕裡。收到連結的每位聯絡人都會開啟自己的商店並可以下單。"
     },
     "productLink": {
       "label": "公開連結",
       "hint": "複製該連結並貼到流程、群發或序列中。收到連結的每位聯絡人都會開啟此商品並可以下單。"
+    },
+    "bar": "分享商店：取得商店、購物車和分類的連結，用於流程、群發和序列中的按鈕。",
+    "dialog": {
+      "title": "商店連結",
+      "description": "將連結貼到流程、群發或序列中的按鈕。每位收到的聯絡人都會開啟自己的商店。",
+      "shopHint": "開啟包含所有商品的商店首頁。"
+    },
+    "cartLink": {
+      "label": "購物車",
+      "hint": "開啟聯絡人的購物車，可直接結帳。"
+    },
+    "categoriesLink": {
+      "label": "分類",
+      "hint": "開啟商店的分類清單。"
     }
   },
   "discountCodes": {

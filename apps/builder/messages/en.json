@@ -11066,7 +11066,9 @@
     "itemCount": "{count, plural, one {# item} other {# items}}",
     "relatedProducts": "You may also like",
     "soldOut": "Sold out",
-    "sku": "SKU: {sku}"
+    "sku": "SKU: {sku}",
+    "allProducts": "All products",
+    "noCategories": "This shop has no categories yet."
   },
   "webshopLinks": {
     "preview": "Preview",
@@ -11075,12 +11077,26 @@
     "error": "Could not get the link.",
     "copyError": "Could not copy the link.",
     "shopLink": {
-      "label": "Shop link",
+      "label": "Shop URL",
       "hint": "Paste this link into a button in a flow, broadcast or sequence. Each contact who gets it opens their own shop and can order."
     },
     "productLink": {
       "label": "Public URL",
       "hint": "Copy and paste the URL into your flow, broadcast, or sequence. Each contact who gets it opens this product and can order."
+    },
+    "bar": "Share the shop: get links to the shop, the cart and the categories for flow, broadcast and sequence buttons.",
+    "dialog": {
+      "title": "Shop links",
+      "description": "Paste a link into a button in a flow, broadcast or sequence. Each contact who gets it opens their own shop.",
+      "shopHint": "Opens the shop's front page with all its products."
+    },
+    "cartLink": {
+      "label": "Cart",
+      "hint": "Opens the contact's cart, ready to check out."
+    },
+    "categoriesLink": {
+      "label": "Categories",
+      "hint": "Opens the list of the shop's categories."
     }
   },
   "discountCodes": {

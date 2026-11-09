@@ -26,7 +26,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@chatbotx.io/ui/components/ui/select"
-import { Separator } from "@chatbotx.io/ui/components/ui/separator"
 import { Skeleton } from "@chatbotx.io/ui/components/ui/skeleton"
 import { FileDownIcon, Loader2Icon, UploadIcon } from "lucide-react"
 import { useRouter } from "next/navigation"
@@ -258,8 +257,7 @@ export function ImportProductDialog({
           </Suspense>
         </div>
 
-        <Separator />
-        <DialogFooter className="px-6 py-4">
+        <DialogFooter className="mx-0 mb-0 px-6 py-4">
           <Button onClick={() => setOpen(false)} type="button" variant="ghost">
             {tActions("cancel")}
           </Button>

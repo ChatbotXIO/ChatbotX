@@ -11066,7 +11066,9 @@
     "itemCount": "{count, plural, one {# item} other {# itens}}",
     "relatedProducts": "Você também pode gostar",
     "soldOut": "Esgotado",
-    "sku": "SKU: {sku}"
+    "sku": "SKU: {sku}",
+    "allProducts": "Todos os produtos",
+    "noCategories": "Esta loja ainda não tem categorias."
   },
   "webshopLinks": {
     "preview": "Pré-visualizar",
@@ -11075,12 +11077,26 @@
     "error": "Não foi possível obter o link.",
     "copyError": "Não foi possível copiar o link.",
     "shopLink": {
-      "label": "Link da loja",
+      "label": "URL da loja",
       "hint": "Cole este link em um botão de um fluxo, transmissão ou sequência. Cada contato que o receber abre a própria loja e pode fazer pedidos."
     },
     "productLink": {
       "label": "URL Pública",
       "hint": "Copie e cole a URL no seu fluxo, transmissão ou sequência. Cada contato que a receber abre este produto e pode fazer o pedido."
+    },
+    "bar": "Compartilhe a loja: obtenha links da loja, do carrinho e das categorias para botões de fluxos, transmissões e sequências.",
+    "dialog": {
+      "title": "Links da loja",
+      "description": "Cole um link em um botão de um fluxo, transmissão ou sequência. Cada contato que o recebe abre sua própria loja.",
+      "shopHint": "Abre a página inicial da loja com todos os produtos."
+    },
+    "cartLink": {
+      "label": "Carrinho",
+      "hint": "Abre o carrinho do contato, pronto para finalizar a compra."
+    },
+    "categoriesLink": {
+      "label": "Categorias",
+      "hint": "Abre a lista de categorias da loja."
     }
   },
   "discountCodes": {

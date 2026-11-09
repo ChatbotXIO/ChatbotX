@@ -11066,7 +11066,9 @@
     "itemCount": "{count, plural, one {# ürün} other {# ürün}}",
     "relatedProducts": "Bunları da beğenebilirsiniz",
     "soldOut": "Tükendi",
-    "sku": "SKU: {sku}"
+    "sku": "SKU: {sku}",
+    "allProducts": "Tüm ürünler",
+    "noCategories": "Bu mağazada henüz kategori yok."
   },
   "webshopLinks": {
     "preview": "Önizle",
@@ -11075,12 +11077,26 @@
     "error": "Bağlantı alınamadı.",
     "copyError": "Bağlantı kopyalanamadı.",
     "shopLink": {
-      "label": "Mağaza bağlantısı",
+      "label": "Mağaza URL'si",
       "hint": "Bu bağlantıyı bir akış, yayın veya dizideki bir düğmeye yapıştırın. Bağlantıyı alan her kişi kendi mağazasını açar ve sipariş verebilir."
     },
     "productLink": {
       "label": "Genel URL",
       "hint": "URL'yi kopyalayıp akışınıza, yayınınıza veya dizinize yapıştırın. Bağlantıyı alan her kişi bu ürünü açar ve sipariş verebilir."
+    },
+    "bar": "Mağazayı paylaşın: akış, yayın ve dizi düğmeleri için mağaza, sepet ve kategori bağlantılarını alın.",
+    "dialog": {
+      "title": "Mağaza bağlantıları",
+      "description": "Bağlantıyı bir akış, yayın veya dizideki düğmeye yapıştırın. Alan her kişi kendi mağazasını açar.",
+      "shopHint": "Mağazanın tüm ürünlerini içeren ana sayfasını açar."
+    },
+    "cartLink": {
+      "label": "Sepet",
+      "hint": "Kişinin sepetini ödemeye hazır şekilde açar."
+    },
+    "categoriesLink": {
+      "label": "Kategoriler",
+      "hint": "Mağazanın kategori listesini açar."
     }
   },
   "discountCodes": {

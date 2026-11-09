@@ -11066,7 +11066,9 @@
     "itemCount": "{count, plural, one {# vara} other {# varor}}",
     "relatedProducts": "Du kanske också gillar",
     "soldOut": "Slutsåld",
-    "sku": "SKU: {sku}"
+    "sku": "SKU: {sku}",
+    "allProducts": "Alla produkter",
+    "noCategories": "Butiken har inga kategorier än."
   },
   "webshopLinks": {
     "preview": "Förhandsgranska",
@@ -11075,12 +11077,26 @@
     "error": "Det gick inte att hämta länken.",
     "copyError": "Det gick inte att kopiera länken.",
     "shopLink": {
-      "label": "Butikslänk",
+      "label": "Butikens URL",
       "hint": "Klistra in den här länken i en knapp i ett flöde, ett utskick eller en sekvens. Varje kontakt som får den öppnar sin egen butik och kan beställa."
     },
     "productLink": {
       "label": "Offentlig URL",
       "hint": "Kopiera och klistra in URL:en i ditt flöde, utskick eller din sekvens. Varje kontakt som får den öppnar den här produkten och kan beställa."
+    },
+    "bar": "Dela butiken: hämta länkar till butiken, varukorgen och kategorierna för knappar i flöden, utskick och sekvenser.",
+    "dialog": {
+      "title": "Butikslänkar",
+      "description": "Klistra in en länk i en knapp i ett flöde, utskick eller en sekvens. Varje kontakt som får den öppnar sin egen butik.",
+      "shopHint": "Öppnar butikens startsida med alla produkter."
+    },
+    "cartLink": {
+      "label": "Varukorg",
+      "hint": "Öppnar kontaktens varukorg, redo för kassan."
+    },
+    "categoriesLink": {
+      "label": "Kategorier",
+      "hint": "Öppnar listan över butikens kategorier."
     }
   },
   "discountCodes": {

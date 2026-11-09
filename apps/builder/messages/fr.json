@@ -11066,7 +11066,9 @@
     "itemCount": "{count, plural, one {# article} other {# articles}}",
     "relatedProducts": "Vous aimerez peut-être aussi",
     "soldOut": "Épuisé",
-    "sku": "SKU : {sku}"
+    "sku": "SKU : {sku}",
+    "allProducts": "Tous les produits",
+    "noCategories": "Cette boutique n'a pas encore de catégories."
   },
   "webshopLinks": {
     "preview": "Aperçu",
@@ -11075,12 +11077,26 @@
     "error": "Impossible d'obtenir le lien.",
     "copyError": "Impossible de copier le lien.",
     "shopLink": {
-      "label": "Lien de la boutique",
+      "label": "URL de la boutique",
       "hint": "Collez ce lien dans un bouton d'un flux, d'une diffusion ou d'une séquence. Chaque contact qui le reçoit ouvre sa propre boutique et peut commander."
     },
     "productLink": {
       "label": "URL publique",
       "hint": "Copiez et collez l'URL dans votre flux, diffusion ou séquence. Chaque contact qui la reçoit ouvre ce produit et peut commander."
+    },
+    "bar": "Partagez la boutique : obtenez les liens de la boutique, du panier et des catégories pour les boutons des flux, diffusions et séquences.",
+    "dialog": {
+      "title": "Liens de la boutique",
+      "description": "Collez un lien dans un bouton d'un flux, d'une diffusion ou d'une séquence. Chaque contact qui le reçoit ouvre sa propre boutique.",
+      "shopHint": "Ouvre la page d'accueil de la boutique avec tous ses produits."
+    },
+    "cartLink": {
+      "label": "Panier",
+      "hint": "Ouvre le panier du contact, prêt pour le paiement."
+    },
+    "categoriesLink": {
+      "label": "Catégories",
+      "hint": "Ouvre la liste des catégories de la boutique."
     }
   },
   "discountCodes": {

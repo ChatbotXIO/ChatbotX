@@ -11066,7 +11066,9 @@
     "itemCount": "{count, plural, one {# tuote} other {# tuotetta}}",
     "relatedProducts": "Saatat pitää myös näistä",
     "soldOut": "Loppuunmyyty",
-    "sku": "SKU: {sku}"
+    "sku": "SKU: {sku}",
+    "allProducts": "Kaikki tuotteet",
+    "noCategories": "Kaupassa ei ole vielä kategorioita."
   },
   "webshopLinks": {
     "preview": "Esikatselu",
@@ -11075,12 +11077,26 @@
     "error": "Linkkiä ei voitu hakea.",
     "copyError": "Linkkiä ei voitu kopioida.",
     "shopLink": {
-      "label": "Kaupan linkki",
+      "label": "Kaupan URL",
       "hint": "Liitä tämä linkki painikkeeseen kulussa, lähetyksessä tai sekvenssissä. Jokainen sen saava kontakti avaa oman kauppansa ja voi tilata."
     },
     "productLink": {
       "label": "Julkinen URL",
       "hint": "Kopioi ja liitä URL-osoite kulkuun, lähetykseen tai sekvenssiin. Jokainen sen saava kontakti avaa tämän tuotteen ja voi tilata."
+    },
+    "bar": "Jaa kauppa: hae linkit kauppaan, ostoskoriin ja kategorioihin flow-, lähetys- ja sekvenssipainikkeita varten.",
+    "dialog": {
+      "title": "Kaupan linkit",
+      "description": "Liitä linkki painikkeeseen flow'ssa, lähetyksessä tai sekvenssissä. Jokainen sen saava kontakti avaa oman kauppansa.",
+      "shopHint": "Avaa kaupan etusivun kaikkine tuotteineen."
+    },
+    "cartLink": {
+      "label": "Ostoskori",
+      "hint": "Avaa kontaktin ostoskorin maksuvalmiina."
+    },
+    "categoriesLink": {
+      "label": "Kategoriat",
+      "hint": "Avaa kaupan kategorialuettelon."
     }
   },
   "discountCodes": {

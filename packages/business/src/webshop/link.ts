@@ -15,8 +15,11 @@ import { vendorService } from "../vendor/service"
 
 /** The shop page a link opens. */
 export type WebshopLinkTarget = {
-  /** `cart` opens the cart, ready to check out; omitted opens the shop. */
-  page?: "cart"
+  /**
+   * `cart` opens the cart, ready to check out; `categories` the list of
+   * categories; omitted opens the shop.
+   */
+  page?: "cart" | "categories"
   /** Opens this product's page (instead of `page`). */
   productId?: string | null
   /** Opens the shop searching for this. */
@@ -27,7 +30,7 @@ export type WebshopLinkTarget = {
   categoryId?: string | null
 }
 
-/** `/products/<id>`, `/cart` or the shop's front page. */
+/** `/products/<id>`, `/cart`, `/categories` or the shop's front page. */
 const pagePath = (target: WebshopLinkTarget): string => {
   if (target.productId) {
     return `/products/${encodeURIComponent(target.productId)}`
@@ -124,6 +127,32 @@ export const createWebshopLink = async (
     preview,
     expiresInSeconds:
       (preview ? SHOP_PREVIEW_TOKEN_TTL_MS : SHOP_TOKEN_TTL_MS) / 1000,
+  }
+}
+
+/**
+ * The links the Ecommerce pages offer to share: a preview of the shop, and
+ * the shop, cart and categories as bot-button links. One app URL lookup and
+ * one preview token for all of them.
+ */
+export const createWebshopShareLinks = async (input: {
+  workspaceId: string
+}): Promise<{
+  previewUrl: string
+  buttonUrls: { shop: string; cart: string; categories: string }
+}> => {
+  const [appUrl, token] = await Promise.all([
+    resolveWorkspaceAppUrl({ workspaceId: input.workspaceId }),
+    signShopPreviewToken(input.workspaceId),
+  ])
+  const base = { appUrl, workspaceId: input.workspaceId }
+  return {
+    previewUrl: buildWebshopUrl({ ...base, token }),
+    buttonUrls: {
+      shop: buildWebshopButtonUrl(base),
+      cart: buildWebshopButtonUrl({ ...base, page: "cart" }),
+      categories: buildWebshopButtonUrl({ ...base, page: "categories" }),
+    },
   }
 }
 

@@ -11066,7 +11066,9 @@
     "itemCount": "{count, plural, one {# vare} other {# varer}}",
     "relatedProducts": "Du kan også lide",
     "soldOut": "Udsolgt",
-    "sku": "SKU: {sku}"
+    "sku": "SKU: {sku}",
+    "allProducts": "Alle produkter",
+    "noCategories": "Butikken har ingen kategorier endnu."
   },
   "webshopLinks": {
     "preview": "Forhåndsvis",
@@ -11075,12 +11077,26 @@
     "error": "Linket kunne ikke hentes.",
     "copyError": "Linket kunne ikke kopieres.",
     "shopLink": {
-      "label": "Butikslink",
+      "label": "Butiks-URL",
       "hint": "Indsæt dette link i en knap i et flow, en broadcast eller en sekvens. Hver kontakt, der får det, åbner sin egen butik og kan bestille."
     },
     "productLink": {
       "label": "Offentlig URL",
       "hint": "Kopiér og indsæt linket i dit flow, din broadcast eller sekvens. Hver kontakt, der får det, åbner dette produkt og kan bestille."
+    },
+    "bar": "Del butikken: hent links til butikken, kurven og kategorierne til knapper i flows, broadcasts og sekvenser.",
+    "dialog": {
+      "title": "Butikslinks",
+      "description": "Indsæt et link i en knap i et flow, en broadcast eller en sekvens. Hver kontakt, der får det, åbner sin egen butik.",
+      "shopHint": "Åbner butikkens forside med alle dens produkter."
+    },
+    "cartLink": {
+      "label": "Kurv",
+      "hint": "Åbner kontaktens kurv, klar til betaling."
+    },
+    "categoriesLink": {
+      "label": "Kategorier",
+      "hint": "Åbner listen over butikkens kategorier."
     }
   },
   "discountCodes": {

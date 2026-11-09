@@ -11066,7 +11066,9 @@
     "itemCount": "{count, plural, one {# Artikel} other {# Artikel}}",
     "relatedProducts": "Das könnte dir auch gefallen",
     "soldOut": "Ausverkauft",
-    "sku": "SKU: {sku}"
+    "sku": "SKU: {sku}",
+    "allProducts": "Alle Produkte",
+    "noCategories": "Dieser Shop hat noch keine Kategorien."
   },
   "webshopLinks": {
     "preview": "Vorschau",
@@ -11075,12 +11077,26 @@
     "error": "Der Link konnte nicht abgerufen werden.",
     "copyError": "Der Link konnte nicht kopiert werden.",
     "shopLink": {
-      "label": "Shop-Link",
+      "label": "Shop-URL",
       "hint": "Füge diesen Link in eine Schaltfläche in einem Flow, Broadcast oder einer Sequenz ein. Jeder Kontakt, der ihn erhält, öffnet seinen eigenen Shop und kann bestellen."
     },
     "productLink": {
       "label": "Öffentliche URL",
       "hint": "Kopiere die URL und füge sie in deinen Flow, Broadcast oder deine Sequenz ein. Jeder Kontakt, der sie erhält, öffnet dieses Produkt und kann bestellen."
+    },
+    "bar": "Shop teilen: Links zum Shop, zum Warenkorb und zu den Kategorien für Buttons in Flows, Broadcasts und Sequenzen.",
+    "dialog": {
+      "title": "Shop-Links",
+      "description": "Füge einen Link in einen Button in einem Flow, Broadcast oder einer Sequenz ein. Jeder Kontakt, der ihn erhält, öffnet seinen eigenen Shop.",
+      "shopHint": "Öffnet die Startseite des Shops mit allen Produkten."
+    },
+    "cartLink": {
+      "label": "Warenkorb",
+      "hint": "Öffnet den Warenkorb des Kontakts, bereit zum Bezahlen."
+    },
+    "categoriesLink": {
+      "label": "Kategorien",
+      "hint": "Öffnet die Liste der Kategorien des Shops."
     }
   },
   "discountCodes": {

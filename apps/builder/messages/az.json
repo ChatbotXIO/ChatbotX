@@ -11066,7 +11066,9 @@
     "itemCount": "{count, plural, one {# məhsul} other {# məhsul}}",
     "relatedProducts": "Bunlar da xoşunuza gələ bilər",
     "soldOut": "Satışda yoxdur",
-    "sku": "SKU: {sku}"
+    "sku": "SKU: {sku}",
+    "allProducts": "Bütün məhsullar",
+    "noCategories": "Bu mağazada hələ kateqoriya yoxdur."
   },
   "webshopLinks": {
     "preview": "Önizləmə",
@@ -11075,12 +11077,26 @@
     "error": "Keçidi almaq mümkün olmadı.",
     "copyError": "Keçidi kopyalamaq mümkün olmadı.",
     "shopLink": {
-      "label": "Mağaza linki",
+      "label": "Mağaza URL",
       "hint": "Bu linki axın, yayım və ya ardıcıllıqdakı düyməyə yapışdırın. Onu alan hər kontakt öz mağazasını açır və sifariş verə bilir."
     },
     "productLink": {
       "label": "İctimai URL",
       "hint": "Linki kopyalayıb axına, yayıma və ya ardıcıllığa yapışdırın. Onu alan hər kontakt bu məhsulu açır və sifariş verə bilir."
+    },
+    "bar": "Mağazanı paylaşın: flow, yayım və ardıcıllıq düymələri üçün mağaza, səbət və kateqoriya linklərini əldə edin.",
+    "dialog": {
+      "title": "Mağaza linkləri",
+      "description": "Linki flow, yayım və ya ardıcıllıqdakı düyməyə yapışdırın. Onu alan hər kontakt öz mağazasını açır.",
+      "shopHint": "Mağazanın bütün məhsulları olan ana səhifəsini açır."
+    },
+    "cartLink": {
+      "label": "Səbət",
+      "hint": "Kontaktın səbətini ödənişə hazır açır."
+    },
+    "categoriesLink": {
+      "label": "Kateqoriyalar",
+      "hint": "Mağazanın kateqoriya siyahısını açır."
     }
   },
   "discountCodes": {

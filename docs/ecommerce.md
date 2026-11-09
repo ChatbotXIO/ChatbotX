@@ -410,6 +410,7 @@ A token for another workspace, a forged or expired one, or an unresolved
 | `/shop/<ws>` | Products (`&q=`, `&category=`, `&vendor=`, `&products=<id>,<id>` (at most 20), `&page=`), drawn in the store's "Web shop product view" (6 views). Shows active products that are not add-on only, whose category/sub-category is visible and vendor active; search only finds searchable products. |
 | `/shop/<ws>/products/<id>` | Images, variant options, quantity, the store's product buttons (Add to Cart / Share / Similar / Save). With checkout `productPage`, Buy opens the product's `productUrl` instead. |
 | `/shop/<ws>/cart` | The cart priced by `orderService.quote` (same pricing as an order), items that cannot be ordered now (with their name), delivery or pickup (`&shipping=`), then the checkout form — or a link to `checkoutLink` with checkout `externalLink`. |
+| `/shop/<ws>/categories` | The visible top-level categories as cards (sub-categories listed under each); a card opens the shop on `&category=`. |
 | `/shop/<ws>/orders/<id>` | The customer's own order (another contact's is not found), status, totals, and 1–5 stars + comment once concluded when `allowRateOrders` is on. |
 
 Checkout (`webshopService.checkout`) checks, before `orderService.place`:
@@ -441,8 +442,10 @@ verified workspace, falls back to the viewer's language.
 
 **Shop link (how a merchant gets the URL for a flow).** Like a Mini App's
 Public URL, a bar pinned to the bottom of every Ecommerce page (it stays in
-view while the page scrolls) shows the whole shop's link — `https://<app>/shop/<workspaceId>?token={{shop_token}}` — with
-Copy and Preview. Pasted into a button of a flow, broadcast or sequence, the
+view while the page scrolls) has **Get link** and Preview. Get link opens a
+dialog with three links to copy: the shop
+(`https://<app>/shop/<workspaceId>?token={{shop_token}}`), the cart
+(`/cart`) and the categories (`/categories`). Pasted into a button of a flow, broadcast or sequence, the
 `{{shop_token}}` is signed for each contact who receives it, so they order as
 themselves. A product's edit page pins its own Public URL (its
 `/products/<id>` page) to the bottom, beside Save. **Preview / Get Link** in the row menu of a product, vendor or
@@ -579,7 +582,7 @@ that method is the one place a plan check goes.
 | `productCategories.setVisible` | `PATCH /v1/product-categories/{id}/visible` |
 | `productVendors.list` / `create` / `update` / `delete` | `/v1/product-vendors[/{id}]` (`list` takes `name`, `page`, `perPage`, all vendors when omitted; `update` is `PATCH`) |
 | `ecommerceSettings.get` / `update` | `GET` / `PATCH /v1/ecommerce/settings` |
-| `webshop.getLink` | `GET /v1/webshop/link` (`contact`, `page=cart`, `productId`, `vendorId`, `categoryId`): `url` signed for the contact (a preview without one) and `buttonUrl` with `{{shop_token}}` for bot buttons |
+| `webshop.getLink` | `GET /v1/webshop/link` (`contact`, `page=cart\|categories`, `productId`, `vendorId`, `categoryId`): `url` signed for the contact (a preview without one) and `buttonUrl` with `{{shop_token}}` for bot buttons |
 | `ecommerceAnalytics.get` | `GET /v1/ecommerce/analytics` (`from`, `to`, days of the workspace timezone; today by default) |
 | `discountCodes.list` / `get` / `create` / `update` / `delete` | `/v1/discount-codes[/{id}]` (`update` is `PATCH`) |
 | `discountCodes.setActive` | `PATCH /v1/discount-codes/{id}/active` |
