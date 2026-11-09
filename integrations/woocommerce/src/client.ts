@@ -1,6 +1,10 @@
 import ky from "ky"
 import { z } from "zod"
-import { WOOCOMMERCE_HTTP_TIMEOUT_MS, woocommerceApiUrl } from "./constants"
+import {
+  WOOCOMMERCE_HTTP_TIMEOUT_MS,
+  WOOCOMMERCE_PAGE_SIZE,
+  woocommerceApiUrl,
+} from "./constants"
 import { WooCommerceApiError } from "./error"
 
 /**
@@ -147,20 +151,18 @@ export async function woocommerceListAll<T>(
   itemSchema: z.ZodType<T>,
   onPage: (items: T[]) => Promise<void>,
 ): Promise<void> {
-  let page = 1
-  let totalPages = 1
-  do {
+  // The first page is always read; it tells how many there are.
+  for (let page = 1, totalPages = 1; page <= totalPages; page++) {
     const response = await woocommerceRequest(
       credentials,
       {
         method: "get",
         path: input.path,
-        query: { ...input.query, page, per_page: 100 },
+        query: { ...input.query, page, per_page: WOOCOMMERCE_PAGE_SIZE },
       },
       z.array(itemSchema),
     )
     await onPage(response.data)
     totalPages = response.totalPages
-    page++
-  } while (page <= totalPages)
+  }
 }

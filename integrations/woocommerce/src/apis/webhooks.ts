@@ -1,5 +1,6 @@
 import { z } from "zod"
 import { type WooCommerceCredentials, woocommerceRequest } from "../client"
+import { WOOCOMMERCE_PAGE_SIZE } from "../constants"
 import { type WooCommerceWebhook, wooCommerceWebhookSchema } from "../schemas"
 
 /** Registers one webhook, signed with `secret`. Returns its id. */
@@ -32,7 +33,11 @@ export async function listWooCommerceWebhooks(
 ): Promise<WooCommerceWebhook[]> {
   const { data } = await woocommerceRequest(
     credentials,
-    { method: "get", path: "/webhooks", query: { per_page: 100 } },
+    {
+      method: "get",
+      path: "/webhooks",
+      query: { per_page: WOOCOMMERCE_PAGE_SIZE },
+    },
     z.array(wooCommerceWebhookSchema),
   )
   return data.filter((webhook) => webhook.delivery_url === deliveryUrl)
