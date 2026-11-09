@@ -16,6 +16,7 @@ import {
   uploadMultipleFiles,
 } from "@chatbotx.io/filesystem"
 import type { SendProductsContent } from "@chatbotx.io/flow-config"
+import type { MessageButtonTemplate } from "@chatbotx.io/sdk"
 import { createId } from "@chatbotx.io/utils"
 import { channelTypes } from "@chatbotx.io/utils/channel"
 import {
@@ -78,6 +79,13 @@ type CreateOutgoingInput = (
    * handler). Overrides the `isPrivateReply`-derived default when set.
    */
   contentAttributes?: Record<string, unknown> | null
+  /**
+   * Buttons sent with the text, the same shape a flow's button message uses.
+   * Pair them with a `contentAttributes` button template so the row (inbox
+   * bubble, Messenger button template) shows them too. Server-side only — not
+   * accepted from `messages.create` input.
+   */
+  quickReplies?: MessageButtonTemplate[]
 }
 
 /**
@@ -434,6 +442,7 @@ export const createOutgoing = async (props: {
               clientId: parsedInput.clientId,
               parentCreatedAt: parsedInput.replyToMessageCreatedAt ?? null,
             },
+            quickReplies: parsedInput.quickReplies,
             sendFrom: "inbox",
           },
         },

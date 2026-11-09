@@ -8,6 +8,7 @@
     "./ads-analytics/date-range": "./src/ads-analytics/date-range.ts",
     "./ads-conversion/channel-fields": "./src/ads-conversion/channel-fields.ts",
     "./ads-conversion/schema": "./src/ads-conversion/schema.ts",
+    "./appointment/copy": "./src/appointment/copy.ts",
     "./audit": "./src/audit/index.ts",
     "./branding": "./src/platform/branding.ts",
     "./capabilities": "./src/capabilities/index.ts",

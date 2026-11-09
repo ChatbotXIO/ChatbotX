@@ -16,6 +16,7 @@ import {
   commonApiErrors,
   STRUCTURED_ERROR_CODES,
 } from "./lib/orpc/orpc-error-helper"
+import { tokenHasAnyScope } from "./lib/public-api/token-scope"
 import { authMiddleware } from "./middlewares/auth"
 import { channelApiTokenAuthMidddleware } from "./middlewares/channel-api-token-auth"
 import { base } from "./middlewares/context"
@@ -182,13 +183,8 @@ const requireTokenScope = (
     // chained after workspaceTokenAuthMidddleware via
     // workspaceTokenAuthAPIForScope below — but the base context type marks
     // it optional (shared with authorizedAPI, which never sets it).
-    const scopes = context.apiToken?.scopes
     const required = Array.isArray(scope) ? scope : [scope]
-    if (
-      scopes !== null &&
-      scopes !== undefined &&
-      !required.some((candidate) => scopes.includes(candidate))
-    ) {
+    if (!tokenHasAnyScope(context.apiToken?.scopes, required)) {
       throw new ORPCError("FORBIDDEN", {
         message: `Token is not authorized for the '${required.join("' or '")}' scope`,
       })

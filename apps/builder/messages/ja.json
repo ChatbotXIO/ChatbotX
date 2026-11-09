@@ -8199,6 +8199,7 @@
       "invalidTokenTitle": "この予約リンクはご利用いただけません。",
       "invalidTokenDescription": "リンクが無効か、有効期限が切れている可能性があります。新しい予約リンクをご請求ください。",
       "staleSlot": "この時間はすでに利用できません。別の時間を選択してください。",
+      "alreadyScheduled": "この連絡先には、このカレンダーのこの時間にすでに予約があります。別の時間を選択してください。",
       "availabilityChanged": "時間を選択している間に空き状況が変わりました。もう一度選択してください。",
       "submitFailed": "リクエストを完了できませんでした。もう一度お試しください。"
     },
@@ -8288,6 +8289,15 @@
     },
     "messages": {
       "empty": "まだ予約がありません。"
+    },
+    "actions": {
+      "create": "予約を作成"
+    },
+    "create": {
+      "title": "予約を作成",
+      "description": "この連絡先の予約に使うカレンダーと空き時間を選択してください。",
+      "noConversationHint": "開いている会話がないため、連絡先に確認メッセージは届きません。",
+      "success": "予約を作成しました。"
     }
   },
   "appointmentManagement": {
@@ -11735,5 +11745,18 @@
     "accessRemoved": "The provider removed access to this account. Reconnect to resume.",
     "needsReconnect": "Reconnect required.",
     "inactive": "This channel is inactive."
+  },
+  "inbox": {
+    "createAppointment": {
+      "title": "予約を作成",
+      "description": "カレンダーの予約リンクを連絡先に送信するか、リンクを開いて代理で予約します。",
+      "inactive": "無効",
+      "sendLink": "カレンダーリンクを送信",
+      "goToLink": "カレンダーリンクを開く",
+      "sent": "予約リンクを送信しました。",
+      "failed": "予約リンクを作成できませんでした。",
+      "noCalendars": "予約カレンダーはまだありません。",
+      "manageCalendars": "予約カレンダーを管理"
+    }
   }
 }

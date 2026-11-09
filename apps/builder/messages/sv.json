@@ -8199,6 +8199,7 @@
       "invalidTokenTitle": "Den här bokningslänken är inte tillgänglig.",
       "invalidTokenDescription": "Länken kan vara ogiltig eller ha upphört att gälla. Be om en ny bokningslänk.",
       "staleSlot": "Den här tiden är inte längre tillgänglig. Välj en annan tid.",
+      "alreadyScheduled": "Den här kontakten har redan en bokning vid den här tiden i den här kalendern. Välj en annan tid.",
       "availabilityChanged": "Tillgängligheten ändrades medan du valde tid. Välj igen.",
       "submitFailed": "Vi kunde inte slutföra begäran. Försök igen."
     },
@@ -8288,6 +8289,15 @@
     },
     "messages": {
       "empty": "Inga bokningar än."
+    },
+    "actions": {
+      "create": "Skapa bokning"
+    },
+    "create": {
+      "title": "Skapa bokning",
+      "description": "Välj en kalender och en ledig tid för att boka åt den här kontakten.",
+      "noConversationHint": "Ingen konversation är öppen, så kontakten får inget bekräftelsemeddelande.",
+      "success": "Bokning skapad."
     }
   },
   "appointmentManagement": {
@@ -11735,5 +11745,18 @@
     "accessRemoved": "The provider removed access to this account. Reconnect to resume.",
     "needsReconnect": "Reconnect required.",
     "inactive": "This channel is inactive."
+  },
+  "inbox": {
+    "createAppointment": {
+      "title": "Skapa bokning",
+      "description": "Skicka kontakten en bokningslänk för en kalender, eller öppna den för att boka åt dem.",
+      "inactive": "Inaktiv",
+      "sendLink": "Skicka kalenderlänk",
+      "goToLink": "Gå till kalenderlänk",
+      "sent": "Bokningslänk skickad.",
+      "failed": "Det gick inte att skapa bokningslänken.",
+      "noCalendars": "Inga bokningskalendrar ännu.",
+      "manageCalendars": "Hantera bokningskalendrar"
+    }
   }
 }

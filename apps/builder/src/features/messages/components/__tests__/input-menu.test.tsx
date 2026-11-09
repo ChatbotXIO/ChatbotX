@@ -40,6 +40,20 @@ vi.mock("../send-products-trigger", () => ({
   ),
 }))
 
+vi.mock("../create-appointment-trigger", () => ({
+  CreateAppointmentDialogTrigger: (props: {
+    inboxId: string
+    bypassThreadControlLock?: boolean
+  }) => (
+    <button
+      data-bypass={String(props.bypassThreadControlLock)}
+      data-inbox={props.inboxId}
+      data-testid="create-appointment"
+      type="button"
+    />
+  ),
+}))
+
 let container: HTMLDivElement
 let root: Root
 
@@ -121,5 +135,62 @@ describe("InputMenu — send products", () => {
     expect(
       container.querySelector('[data-testid="flow-dialog"]'),
     ).not.toBeNull()
+  })
+})
+
+describe("InputMenu — create appointment", () => {
+  const createAppointment = () =>
+    container.querySelector<HTMLElement>('[data-testid="create-appointment"]')
+
+  test("is offered on a channel that sends text with buttons, for the inbox it sends through", () => {
+    render({
+      setContent: vi.fn(),
+      contactInbox: { channel: "telegram", inboxId: "inbox-3" },
+      bypassThreadControlLock: false,
+    })
+
+    expect(createAppointment()?.dataset).toMatchObject({
+      inbox: "inbox-3",
+      bypass: "false",
+    })
+  })
+
+  test.each(["messenger", "whatsapp"])("is offered on %s", (channel) => {
+    render({
+      setContent: vi.fn(),
+      contactInbox: { channel, inboxId: "inbox-1" },
+    })
+
+    expect(createAppointment()).not.toBeNull()
+  })
+
+  // The link sits in a URL button; these channels would drop it.
+  test.each([
+    "smtp",
+    "threads",
+    "not-a-channel",
+  ])("is not offered on %s", (channel) => {
+    render({
+      setContent: vi.fn(),
+      contactInbox: { channel, inboxId: "inbox-1" },
+    })
+
+    expect(createAppointment()).toBeNull()
+  })
+
+  test("is not offered before the conversation's inbox is known", () => {
+    render({ setContent: vi.fn() })
+
+    expect(createAppointment()).toBeNull()
+  })
+
+  test("is not offered while replying to a post comment", () => {
+    chatState.activePost = { id: "post-1" }
+    render({
+      setContent: vi.fn(),
+      contactInbox: { channel: "messenger", inboxId: "inbox-1" },
+    })
+
+    expect(createAppointment()).toBeNull()
   })
 })

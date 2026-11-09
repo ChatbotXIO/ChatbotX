@@ -8199,6 +8199,7 @@
       "invalidTokenTitle": "Este link de agendamento está indisponível.",
       "invalidTokenDescription": "O link pode estar inválido ou expirado. Solicite um novo link de agendamento.",
       "staleSlot": "Este horário não está mais disponível. Escolha outro horário.",
+      "alreadyScheduled": "Este contato já tem um agendamento neste horário neste calendário. Escolha outro horário.",
       "availabilityChanged": "A disponibilidade mudou enquanto você escolhia um horário. Escolha novamente.",
       "submitFailed": "Não foi possível concluir esta solicitação. Tente novamente."
     },
@@ -8288,6 +8289,15 @@
     },
     "messages": {
       "empty": "Ainda não há compromissos."
+    },
+    "actions": {
+      "create": "Criar agendamento"
+    },
+    "create": {
+      "title": "Criar agendamento",
+      "description": "Escolha um calendário e um horário disponível para agendar para este contato.",
+      "noConversationHint": "Nenhuma conversa está aberta, então o contato não receberá uma mensagem de confirmação.",
+      "success": "Agendamento criado."
     }
   },
   "appointmentManagement": {
@@ -11735,5 +11745,18 @@
     "accessRemoved": "The provider removed access to this account. Reconnect to resume.",
     "needsReconnect": "Reconnect required.",
     "inactive": "This channel is inactive."
+  },
+  "inbox": {
+    "createAppointment": {
+      "title": "Criar agendamento",
+      "description": "Envie ao contato um link de reserva de um calendário ou abra-o para reservar em nome dele.",
+      "inactive": "Inativo",
+      "sendLink": "Enviar link do calendário",
+      "goToLink": "Ir para o link do calendário",
+      "sent": "Link de reserva enviado.",
+      "failed": "Não foi possível criar o link de reserva.",
+      "noCalendars": "Ainda não há calendários de agendamento.",
+      "manageCalendars": "Gerenciar calendários de agendamento"
+    }
   }
 }

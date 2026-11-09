@@ -85,6 +85,55 @@ describe("booking webview pages", () => {
     })
   })
 
+  test("renders the booking picker in book mode for inbox tokens", async () => {
+    mocks.verifyAppointmentWebviewToken.mockResolvedValue({
+      source: "inbox",
+      mode: "book",
+      workspaceId: "workspace-1",
+      calendarId: "calendar-1",
+      contactId: "contact-1",
+      conversationId: "conversation-1",
+      contactInboxId: "contact-inbox-1",
+    })
+
+    const page = await BookingPickerPage({
+      searchParams: Promise.resolve({ token: "token-1" }),
+    })
+
+    expect(mocks.resolveAvailableSlotsForListing).toHaveBeenCalledWith(
+      expect.objectContaining({
+        workspaceId: "workspace-1",
+        calendarId: "calendar-1",
+        contactId: "contact-1",
+      }),
+    )
+    // Not opened inside a Messenger webview: show the details link instead of
+    // closing, and book (not just select) the slot.
+    const picker = (
+      page as { props: { children: { props: Record<string, unknown> }[] } }
+    ).props.children[1]
+    expect(picker?.props).toMatchObject({
+      closeOnSuccess: false,
+      submitMode: "book",
+    })
+  })
+
+  test("renders range picker only for range tokens, not inbox tokens", async () => {
+    mocks.verifyAppointmentWebviewToken.mockResolvedValue({
+      source: "inbox",
+      mode: "book",
+      workspaceId: "workspace-1",
+      calendarId: "calendar-1",
+      contactId: "contact-1",
+    })
+
+    await BookingRangePickerPage({
+      searchParams: Promise.resolve({ token: "token-1" }),
+    })
+
+    expect(mocks.dateRangePicker).not.toHaveBeenCalled()
+  })
+
   test("does not render booking picker for availability range tokens", async () => {
     mocks.verifyAppointmentWebviewToken.mockResolvedValue({
       mode: "selectAvailabilityRange",

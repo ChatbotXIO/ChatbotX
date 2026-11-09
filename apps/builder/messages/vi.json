@@ -5870,6 +5870,15 @@
     },
     "messages": {
       "empty": "Chưa có cuộc hẹn."
+    },
+    "actions": {
+      "create": "Tạo lịch hẹn"
+    },
+    "create": {
+      "title": "Tạo lịch hẹn",
+      "description": "Chọn calendar và khung giờ trống để đặt lịch cho khách này.",
+      "noConversationHint": "Không có cuộc trò chuyện nào đang mở nên khách sẽ không nhận tin xác nhận.",
+      "success": "Đã tạo lịch hẹn."
     }
   },
   "appointmentManagement": {
@@ -7817,6 +7826,7 @@
       "invalidTokenTitle": "Liên kết đặt lịch không khả dụng.",
       "invalidTokenDescription": "Liên kết có thể không hợp lệ hoặc đã hết hạn. Vui lòng yêu cầu liên kết đặt lịch mới.",
       "staleSlot": "Khung giờ này không còn khả dụng. Vui lòng chọn khung giờ khác.",
+      "alreadyScheduled": "Khách này đã có lịch hẹn vào khung giờ này trên calendar này. Vui lòng chọn khung giờ khác.",
       "availabilityChanged": "Lịch khả dụng đã thay đổi trong khi bạn chọn giờ. Vui lòng chọn lại.",
       "submitFailed": "Không thể hoàn tất yêu cầu này. Vui lòng thử lại."
     },
@@ -11735,5 +11745,18 @@
     "accessRemoved": "Nhà cung cấp đã gỡ quyền truy cập tài khoản này. Hãy kết nối lại để tiếp tục.",
     "needsReconnect": "Cần kết nối lại.",
     "inactive": "Kênh này đang không hoạt động."
+  },
+  "inbox": {
+    "createAppointment": {
+      "title": "Tạo lịch hẹn",
+      "description": "Gửi cho khách link đặt lịch của một calendar, hoặc mở link để đặt lịch thay khách.",
+      "inactive": "Không hoạt động",
+      "sendLink": "Gửi link đặt lịch",
+      "goToLink": "Mở link đặt lịch",
+      "sent": "Đã gửi link đặt lịch.",
+      "failed": "Không tạo được link đặt lịch.",
+      "noCalendars": "Chưa có calendar đặt lịch nào.",
+      "manageCalendars": "Quản lý calendar đặt lịch"
+    }
   }
 }

@@ -274,6 +274,7 @@ const signBookingButtonIfNeeded = async (props: {
   }
 
   const token = await signAppointmentWebviewToken({
+    source: "flow",
     mode: "book",
     workspaceId: props.workspaceId,
     calendarId: calendar.id,

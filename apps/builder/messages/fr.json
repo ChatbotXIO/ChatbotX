@@ -8199,6 +8199,7 @@
       "invalidTokenTitle": "Ce lien de réservation n’est pas disponible.",
       "invalidTokenDescription": "Le lien est peut-être invalide ou expiré. Veuillez demander un nouveau lien de réservation.",
       "staleSlot": "Cet horaire n’est plus disponible. Veuillez choisir un autre horaire.",
+      "alreadyScheduled": "Ce contact a déjà un rendez-vous à cet horaire dans ce calendrier. Veuillez choisir un autre horaire.",
       "availabilityChanged": "Les disponibilités ont changé pendant que vous choisissiez un horaire. Veuillez choisir à nouveau.",
       "submitFailed": "Nous n’avons pas pu terminer cette demande. Veuillez réessayer."
     },
@@ -8288,6 +8289,15 @@
     },
     "messages": {
       "empty": "Aucun rendez-vous pour le moment."
+    },
+    "actions": {
+      "create": "Créer un rendez-vous"
+    },
+    "create": {
+      "title": "Créer un rendez-vous",
+      "description": "Choisissez un calendrier et un créneau disponible pour réserver pour ce contact.",
+      "noConversationHint": "Aucune conversation n'est ouverte, le contact ne recevra donc pas de message de confirmation.",
+      "success": "Rendez-vous créé."
     }
   },
   "appointmentManagement": {
@@ -11735,5 +11745,18 @@
     "accessRemoved": "The provider removed access to this account. Reconnect to resume.",
     "needsReconnect": "Reconnect required.",
     "inactive": "This channel is inactive."
+  },
+  "inbox": {
+    "createAppointment": {
+      "title": "Créer un rendez-vous",
+      "description": "Envoyez au contact un lien de réservation pour un calendrier, ou ouvrez-le pour réserver à sa place.",
+      "inactive": "Inactif",
+      "sendLink": "Envoyer le lien du calendrier",
+      "goToLink": "Ouvrir le lien du calendrier",
+      "sent": "Lien de réservation envoyé.",
+      "failed": "Impossible de créer le lien de réservation.",
+      "noCalendars": "Aucun calendrier de rendez-vous pour l'instant.",
+      "manageCalendars": "Gérer les calendriers de rendez-vous"
+    }
   }
 }

@@ -8199,6 +8199,7 @@
       "invalidTokenTitle": "Deze boekingslink is niet beschikbaar.",
       "invalidTokenDescription": "De link is mogelijk ongeldig of verlopen. Vraag om een nieuwe boekingslink.",
       "staleSlot": "Deze tijd is niet meer beschikbaar. Kies een andere tijd.",
+      "alreadyScheduled": "Dit contact heeft al een afspraak op dit tijdstip in deze agenda. Kies een andere tijd.",
       "availabilityChanged": "De beschikbaarheid is gewijzigd terwijl je een tijd koos. Kies opnieuw.",
       "submitFailed": "We konden dit verzoek niet voltooien. Probeer het opnieuw."
     },
@@ -8288,6 +8289,15 @@
     },
     "messages": {
       "empty": "Nog geen afspraken."
+    },
+    "actions": {
+      "create": "Afspraak maken"
+    },
+    "create": {
+      "title": "Afspraak maken",
+      "description": "Kies een agenda en een beschikbare tijd om voor dit contact te boeken.",
+      "noConversationHint": "Er is geen gesprek geopend, dus het contact ontvangt geen bevestigingsbericht.",
+      "success": "Afspraak gemaakt."
     }
   },
   "appointmentManagement": {
@@ -11735,5 +11745,18 @@
     "accessRemoved": "The provider removed access to this account. Reconnect to resume.",
     "needsReconnect": "Reconnect required.",
     "inactive": "This channel is inactive."
+  },
+  "inbox": {
+    "createAppointment": {
+      "title": "Afspraak maken",
+      "description": "Stuur het contact een boekingslink voor een agenda, of open de link om namens hen te boeken.",
+      "inactive": "Inactief",
+      "sendLink": "Agendalink versturen",
+      "goToLink": "Naar agendalink",
+      "sent": "Boekingslink verstuurd.",
+      "failed": "Kan de boekingslink niet maken.",
+      "noCalendars": "Nog geen afspraakagenda's.",
+      "manageCalendars": "Afspraakagenda's beheren"
+    }
   }
 }

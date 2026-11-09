@@ -8199,6 +8199,7 @@
       "invalidTokenTitle": "Bu randevu bağlantısı kullanılamıyor.",
       "invalidTokenDescription": "Bağlantı geçersiz veya süresi dolmuş olabilir. Lütfen yeni bir randevu bağlantısı isteyin.",
       "staleSlot": "Bu saat artık uygun değil. Lütfen başka bir saat seçin.",
+      "alreadyScheduled": "Bu kişinin bu takvimde bu saatte zaten bir randevusu var. Lütfen başka bir saat seçin.",
       "availabilityChanged": "Saat seçerken uygunluk değişti. Lütfen tekrar seçin.",
       "submitFailed": "Bu isteği tamamlayamadık. Lütfen tekrar deneyin."
     },
@@ -8288,6 +8289,15 @@
     },
     "messages": {
       "empty": "Henüz randevu yok."
+    },
+    "actions": {
+      "create": "Randevu oluştur"
+    },
+    "create": {
+      "title": "Randevu oluştur",
+      "description": "Bu kişi için randevu almak üzere bir takvim ve uygun bir saat seçin.",
+      "noConversationHint": "Açık bir konuşma olmadığından kişi onay mesajı almayacak.",
+      "success": "Randevu oluşturuldu."
     }
   },
   "appointmentManagement": {
@@ -11735,5 +11745,18 @@
     "accessRemoved": "The provider removed access to this account. Reconnect to resume.",
     "needsReconnect": "Reconnect required.",
     "inactive": "This channel is inactive."
+  },
+  "inbox": {
+    "createAppointment": {
+      "title": "Randevu oluştur",
+      "description": "Kişiye bir takvim için rezervasyon bağlantısı gönderin veya onun adına rezervasyon yapmak için açın.",
+      "inactive": "Pasif",
+      "sendLink": "Takvim bağlantısını gönder",
+      "goToLink": "Takvim bağlantısına git",
+      "sent": "Rezervasyon bağlantısı gönderildi.",
+      "failed": "Rezervasyon bağlantısı oluşturulamadı.",
+      "noCalendars": "Henüz randevu takvimi yok.",
+      "manageCalendars": "Randevu takvimlerini yönet"
+    }
   }
 }

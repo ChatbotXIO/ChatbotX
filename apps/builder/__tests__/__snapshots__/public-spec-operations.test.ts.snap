@@ -573,6 +573,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "path": "/v1/appointments/{id}/cancel",
   },
   {
+    "method": "POST",
+    "operationId": "appointments.createBookingLink",
+    "path": "/v1/conversations/{conversationId}/appointment-booking-link",
+  },
+  {
     "method": "DELETE",
     "operationId": "appointments.delete",
     "path": "/v1/appointments/{id}",

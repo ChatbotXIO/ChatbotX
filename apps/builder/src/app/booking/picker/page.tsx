@@ -4,10 +4,9 @@ import type { Metadata } from "next"
 import Script from "next/script"
 import { getTranslations } from "next-intl/server"
 import { DateTimePicker } from "@/features/booking-webview/components/date-time-picker"
+import { DEFAULT_SLOT_WINDOW_DAYS } from "@/features/booking-webview/lib/slots"
 
 export const runtime = "nodejs"
-
-const DEFAULT_SLOT_WINDOW_DAYS = 90
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("bookingWebview")

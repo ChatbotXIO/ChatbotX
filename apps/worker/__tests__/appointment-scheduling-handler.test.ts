@@ -167,6 +167,7 @@ describe("appointmentScheduling handler", () => {
     } as never)
 
     expect(signAppointmentWebviewToken).toHaveBeenCalledWith({
+      source: "flow",
       mode: "book",
       workspaceId: "workspace-1",
       calendarId: "calendar-1",
@@ -262,6 +263,7 @@ describe("appointmentScheduling handler", () => {
     } as never)
 
     expect(signAppointmentWebviewToken).toHaveBeenCalledWith({
+      source: "flow",
       mode: "selectAvailabilityRange",
       workspaceId: "workspace-1",
       calendarId: "calendar-1",

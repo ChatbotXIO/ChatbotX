@@ -26,7 +26,9 @@ import type {
  */
 type MemberScopeContext = {
   workspace: Pick<WorkspaceModel, "id">
-  member?: WorkspaceMemberModel
+  // Only these fields are read, so a server action can pass the membership
+  // `resolveWorkspaceAccess` resolved (real or synthetic support access).
+  member?: Pick<WorkspaceMemberModel, "userId" | "permissions">
   user?: Pick<UserModel, "id">
   memberConversationScope?: Promise<ConversationMemberScope>
 }

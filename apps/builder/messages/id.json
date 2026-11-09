@@ -8199,6 +8199,7 @@
       "invalidTokenTitle": "Tautan pemesanan ini tidak tersedia.",
       "invalidTokenDescription": "Tautan mungkin tidak valid atau sudah kedaluwarsa. Silakan minta tautan pemesanan baru.",
       "staleSlot": "Waktu ini sudah tidak tersedia. Silakan pilih waktu lain.",
+      "alreadyScheduled": "Kontak ini sudah memiliki janji temu pada waktu ini di kalender ini. Silakan pilih waktu lain.",
       "availabilityChanged": "Ketersediaan berubah saat Anda memilih waktu. Silakan pilih lagi.",
       "submitFailed": "Kami tidak dapat menyelesaikan permintaan ini. Silakan coba lagi."
     },
@@ -8288,6 +8289,15 @@
     },
     "messages": {
       "empty": "Belum ada janji temu."
+    },
+    "actions": {
+      "create": "Buat janji temu"
+    },
+    "create": {
+      "title": "Buat janji temu",
+      "description": "Pilih kalender dan waktu yang tersedia untuk memesan bagi kontak ini.",
+      "noConversationHint": "Tidak ada percakapan yang terbuka, jadi kontak tidak akan menerima pesan konfirmasi.",
+      "success": "Janji temu dibuat."
     }
   },
   "appointmentManagement": {
@@ -11735,5 +11745,18 @@
     "accessRemoved": "The provider removed access to this account. Reconnect to resume.",
     "needsReconnect": "Reconnect required.",
     "inactive": "This channel is inactive."
+  },
+  "inbox": {
+    "createAppointment": {
+      "title": "Buat Janji Temu",
+      "description": "Kirim tautan pemesanan kalender ke kontak, atau buka untuk memesan atas nama mereka.",
+      "inactive": "Tidak aktif",
+      "sendLink": "Kirim Tautan Kalender",
+      "goToLink": "Buka Tautan Kalender",
+      "sent": "Tautan pemesanan terkirim.",
+      "failed": "Tidak dapat membuat tautan pemesanan.",
+      "noCalendars": "Belum ada kalender janji temu.",
+      "manageCalendars": "Kelola kalender janji temu"
+    }
   }
 }

@@ -8199,6 +8199,7 @@
       "invalidTokenTitle": "Tämä ajanvarauslinkki ei ole käytettävissä.",
       "invalidTokenDescription": "Linkki saattaa olla virheellinen tai vanhentunut. Pyydä uusi ajanvarauslinkki.",
       "staleSlot": "Tämä aika ei ole enää saatavilla. Valitse toinen aika.",
+      "alreadyScheduled": "Tällä yhteystiedolla on jo tapaaminen tähän aikaan tässä kalenterissa. Valitse toinen aika.",
       "availabilityChanged": "Saatavuus muuttui, kun valitsit aikaa. Valitse uudelleen.",
       "submitFailed": "Emme voineet suorittaa tätä pyyntöä. Yritä uudelleen."
     },
@@ -8288,6 +8289,15 @@
     },
     "messages": {
       "empty": "Ei vielä ajanvarauksia."
+    },
+    "actions": {
+      "create": "Luo tapaaminen"
+    },
+    "create": {
+      "title": "Luo tapaaminen",
+      "description": "Valitse kalenteri ja vapaa aika varataksesi tälle yhteyshenkilölle.",
+      "noConversationHint": "Keskustelua ei ole auki, joten yhteyshenkilö ei saa vahvistusviestiä.",
+      "success": "Tapaaminen luotu."
     }
   },
   "appointmentManagement": {
@@ -11735,5 +11745,18 @@
     "accessRemoved": "The provider removed access to this account. Reconnect to resume.",
     "needsReconnect": "Reconnect required.",
     "inactive": "This channel is inactive."
+  },
+  "inbox": {
+    "createAppointment": {
+      "title": "Luo tapaaminen",
+      "description": "Lähetä yhteyshenkilölle kalenterin varauslinkki tai avaa se varataksesi hänen puolestaan.",
+      "inactive": "Ei käytössä",
+      "sendLink": "Lähetä kalenterilinkki",
+      "goToLink": "Siirry kalenterilinkkiin",
+      "sent": "Varauslinkki lähetetty.",
+      "failed": "Varauslinkin luominen epäonnistui.",
+      "noCalendars": "Ei vielä tapaamiskalentereita.",
+      "manageCalendars": "Hallitse tapaamiskalentereita"
+    }
   }
 }

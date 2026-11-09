@@ -6843,6 +6843,15 @@
     },
     "messages": {
       "empty": "No appointments yet."
+    },
+    "actions": {
+      "create": "Create appointment"
+    },
+    "create": {
+      "title": "Create appointment",
+      "description": "Pick a calendar and an available time to book for this contact.",
+      "noConversationHint": "No conversation is open, so the contact won't receive a confirmation message.",
+      "success": "Appointment created."
     }
   },
   "appointmentManagement": {
@@ -8457,6 +8466,7 @@
       "invalidTokenTitle": "This booking link is unavailable.",
       "invalidTokenDescription": "The link may be invalid or expired. Please ask for a new booking link.",
       "staleSlot": "This time is no longer available. Please choose another time.",
+      "alreadyScheduled": "This contact already has an appointment at this time on this calendar. Please choose another time.",
       "availabilityChanged": "Availability changed while you were choosing a time. Please choose again.",
       "submitFailed": "We couldn't complete this request. Please try again."
     },
@@ -11735,5 +11745,18 @@
     "accessRemoved": "The provider removed access to this account. Reconnect to resume.",
     "needsReconnect": "Reconnect required.",
     "inactive": "This channel is inactive."
+  },
+  "inbox": {
+    "createAppointment": {
+      "title": "Create Appointment",
+      "description": "Send the contact a booking link for a calendar, or open it to book on their behalf.",
+      "inactive": "Inactive",
+      "sendLink": "Send Calendar Link",
+      "goToLink": "Go to Calendar Link",
+      "sent": "Booking link sent.",
+      "failed": "Couldn't create the booking link.",
+      "noCalendars": "No appointment calendars yet.",
+      "manageCalendars": "Manage appointment calendars"
+    }
   }
 }

@@ -191,6 +191,58 @@ describe("messageService.createOutgoing", () => {
     )
   })
 
+  test("passes server-side buttons to the channel send with the button template on the row", async () => {
+    const button = {
+      id: "button-1",
+      label: "Select Date",
+      buttonType: "url" as const,
+      url: "https://app.test/booking/picker?token=t",
+    }
+    const contentAttributes = {
+      type: "template",
+      payload: { templateType: "button", buttons: [button] },
+    }
+
+    await createOutgoing({
+      conversation: conversation as never,
+      contactInbox: contactInbox as never,
+      input: {
+        text: "Choose an appointment time",
+        contentAttributes,
+        quickReplies: [button],
+      },
+      user: { id: "user-1" } as never,
+    })
+
+    expect(mockRepositoryCreate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        senderType: "user",
+        contentAttributes,
+      }),
+    )
+    expect(mockChatQueueAdd).toHaveBeenCalledWith(
+      "sendChannelMessage",
+      expect.objectContaining({
+        data: expect.objectContaining({
+          quickReplies: [button],
+          sendFrom: "inbox",
+        }),
+      }),
+    )
+  })
+
+  test("sends no buttons for a plain text message", async () => {
+    await createOutgoing({
+      conversation: conversation as never,
+      contactInbox: contactInbox as never,
+      input: { text: "hello" },
+    })
+
+    expect(
+      mockChatQueueAdd.mock.calls[0]?.[1].data.quickReplies,
+    ).toBeUndefined()
+  })
+
   test("uses attempts=1 for manual Threads comment replies", async () => {
     await createOutgoing({
       conversation: conversation as never,

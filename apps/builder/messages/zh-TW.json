@@ -8193,6 +8193,15 @@
     },
     "messages": {
       "empty": "尚無預約。"
+    },
+    "actions": {
+      "create": "建立預約"
+    },
+    "create": {
+      "title": "建立預約",
+      "description": "選擇日曆和空閒時間，為此聯絡人預約。",
+      "noConversationHint": "目前沒有開啟的對話，聯絡人將不會收到確認訊息。",
+      "success": "預約已建立。"
     }
   },
   "appointmentManagement": {
@@ -8410,6 +8419,7 @@
       "invalidTokenTitle": "此預約連結目前無法使用。",
       "invalidTokenDescription": "此連結可能無效或已過期，請索取新的預約連結。",
       "staleSlot": "此時段已不可用，請選擇其他時間。",
+      "alreadyScheduled": "此聯絡人在這個行事曆的這個時段已有預約，請選擇其他時間。",
       "availabilityChanged": "在您選擇時間的過程中，可預約時間已變更，請重新選擇。",
       "submitFailed": "我們無法完成此請求，請再試一次。"
     },
@@ -11735,5 +11745,18 @@
     "accessRemoved": "The provider removed access to this account. Reconnect to resume.",
     "needsReconnect": "Reconnect required.",
     "inactive": "This channel is inactive."
+  },
+  "inbox": {
+    "createAppointment": {
+      "title": "建立預約",
+      "description": "向聯絡人傳送日曆的預約連結，或開啟連結代其預約。",
+      "inactive": "未啟用",
+      "sendLink": "傳送日曆連結",
+      "goToLink": "開啟日曆連結",
+      "sent": "預約連結已傳送。",
+      "failed": "無法建立預約連結。",
+      "noCalendars": "尚無預約日曆。",
+      "manageCalendars": "管理預約日曆"
+    }
   }
 }

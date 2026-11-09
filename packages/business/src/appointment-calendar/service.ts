@@ -1107,12 +1107,34 @@ class AppointmentCalendarService extends BaseService {
       ? (calendar.maxPerSlot ?? Number.POSITIVE_INFINITY)
       : 1
 
+    const calendarDays = listZonedCalendarDays(
+      bounds.start,
+      bounds.end,
+      calendarTimezone,
+    )
+
+    // The daily limit counts every appointment of a calendar day, so the
+    // lookup must cover whole days even when the requested window starts
+    // or ends mid-day (single-slot booking checks, pickers loading from now).
+    const dailyLimitActive =
+      calendar.dailyLimitEnabled && calendar.maxPerDay != null
+    const firstDay = calendarDays.at(0)
+    const lastDay = calendarDays.at(-1)
+    const countStart =
+      dailyLimitActive && firstDay
+        ? fromZonedTime(`${firstDay.date}T00:00:00.000`, calendarTimezone)
+        : bounds.start
+    const countEnd =
+      dailyLimitActive && lastDay
+        ? fromZonedTime(`${lastDay.date}T23:59:59.999`, calendarTimezone)
+        : bounds.end
+
     const existingAppointments = await tx.query.appointmentModel.findMany({
       where: {
         workspaceId: input.workspaceId,
         calendarId: input.calendarId,
         status: "scheduled",
-        startAt: { gte: bounds.start, lte: bounds.end },
+        startAt: { gte: countStart, lte: countEnd },
         deletedAt: { isNull: true },
       },
       columns: { startAt: true },
@@ -1124,17 +1146,12 @@ class AppointmentCalendarService extends BaseService {
     }
 
     const slots: AvailableSlot[] = []
-    const calendarDays = listZonedCalendarDays(
-      bounds.start,
-      bounds.end,
-      calendarTimezone,
-    )
 
     for (const day of calendarDays) {
       const dayLabel = day.date
       const intervals = byWeekday.get(day.weekday) ?? []
 
-      if (calendar.dailyLimitEnabled && calendar.maxPerDay != null) {
+      if (dailyLimitActive && calendar.maxPerDay != null) {
         const dayStart = fromZonedTime(
           `${dayLabel}T00:00:00.000`,
           calendarTimezone,
