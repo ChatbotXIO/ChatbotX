@@ -117,9 +117,14 @@ describe("trustedOrigins during next build", () => {
     const origins = await config.trustedOrigins()
 
     expect(origins).toEqual(
-      expect.arrayContaining([BROKER_URL, BUILDER_URL, "chatconnectxapp://"]),
+      expect.arrayContaining([
+        BROKER_URL,
+        BUILDER_URL,
+        "chatconnectxapp://",
+        "chatbotxmobileapp://",
+      ]),
     )
-    expect(origins).toHaveLength(3)
+    expect(origins).toHaveLength(4)
     expect(listActiveDomains).not.toHaveBeenCalled()
   })
 
