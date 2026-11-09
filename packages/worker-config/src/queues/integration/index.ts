@@ -359,12 +359,9 @@ export type IntegrationJobRunFlowNode = {
      * hands its Continue here when it branches, so the branch's messages go
      * out first: the chain forwards it to its next step or next node, and the
      * job where the chain stops (waits for the contact, or has nothing after
-     * it) enqueues it, exactly once.
-     *
-     * Known limit: a step that jumps by enqueuing its own run (Condition,
-     * Start Another Node, Split Traffic, Start External Flow/Node) does not
-     * carry it, so when such a step ends the chain the continuation runs
-     * alongside the jumped-to node, as before this field existed.
+     * it) enqueues it, exactly once. A step that ends the node by starting
+     * another node (Condition, Split Traffic, Start Another Node, Start
+     * External Flow/Node) carries it along to that node's chain.
      */
     thenSendFlow?: IntegrationJobRunFlowNode["data"]
     /**

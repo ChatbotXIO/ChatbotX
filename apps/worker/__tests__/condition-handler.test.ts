@@ -150,6 +150,43 @@ describe("handleCondition", () => {
     })
   })
 
+  test("a matched jump carries the run's pending continuation", async () => {
+    matchesContactFilter.mockResolvedValue(true)
+    const pending = {
+      conversationId: "c",
+      contactInboxId: "ci",
+      nodeId: "continue-node",
+    }
+    const takeContinuation = vi.fn(() => pending)
+
+    await handleCondition({
+      ...makeProps(makeStep(), [
+        { sourceHandle: "first-case", target: "first-target" },
+      ] as EdgeSchema[]),
+      takeContinuation,
+    })
+
+    expect(takeContinuation).toHaveBeenCalledOnce()
+    const [, job] = integrationQueueAdd.mock.calls[0] as unknown as [
+      string,
+      { data: { thenSendFlow?: unknown } },
+    ]
+    expect(job.data.thenSendFlow).toEqual(pending)
+  })
+
+  test("a branch with nothing connected leaves the continuation to the run", async () => {
+    matchesContactFilter.mockResolvedValue(true)
+    const takeContinuation = vi.fn()
+
+    await handleCondition({
+      ...makeProps(makeStep(), [] as EdgeSchema[]),
+      takeContinuation,
+    })
+
+    expect(integrationQueueAdd).not.toHaveBeenCalled()
+    expect(takeContinuation).not.toHaveBeenCalled()
+  })
+
   test.each([
     ["matched", true, true],
     ["matched", undefined, undefined],

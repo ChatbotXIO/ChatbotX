@@ -45,6 +45,7 @@ export async function handleCondition(
     commentAnchor,
     appointmentId,
     startedByContactMessage,
+    takeContinuation,
   } = props
 
   const resolveMatchedHandleId = async (): Promise<string> => {
@@ -122,6 +123,7 @@ export async function handleCondition(
       nodeVisits,
       commentAnchor,
       origin: webhookChannelOrigin(),
+      thenSendFlow: takeContinuation?.(),
     },
   })
 }
