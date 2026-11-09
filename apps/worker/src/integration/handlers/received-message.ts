@@ -1485,7 +1485,7 @@ const persistMessage = async (
     // The client renders `attachment.url` as-is, so resolve it here: a
     // lazily-ingested attachment is a provider URL that must go through the
     // media proxy (which also stores it), never be hotlinked from `originPath`.
-    queueMessageCreatedEvent(
+    await queueMessageCreatedEvent(
       inbox.workspaceId,
       await messageService.withResolvedAttachmentUrls(message, {
         channel: contactInbox.channel,
