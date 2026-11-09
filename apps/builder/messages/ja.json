@@ -7699,9 +7699,9 @@
         "partial": "一部発送"
       },
       "viewDetails": "詳細を表示",
-      "viewOnShopify": "Shopify で表示",
+      "viewOnStore": "{store} で表示",
       "detailsTitle": "注文 {name}",
-      "placedOn": "Shopify ストアで注文 • {date}",
+      "placedOn": "{store} ストアで注文 • {date}",
       "customerDetails": "お客様の詳細",
       "shippingAddress": "配送先住所",
       "noShippingAddress": "配送先住所がありません",
@@ -7839,19 +7839,19 @@
       "track": "在庫を追跡する"
     },
     "shopify": {
-      "openShopify": "Shopify を開く",
+      "openStore": "{store} を開く",
       "syncProducts": "商品を同期",
       "syncStarted": "同期を開始しました",
       "syncError": "同期を開始できませんでした",
       "viewDetails": "詳細を表示",
-      "editOnShopify": "Shopify で編集",
+      "editOnStore": "{store} で編集",
       "copyProductLink": "商品リンクをコピー",
       "linkCopied": "商品リンクをコピーしました",
       "noProductLink": "この商品にはストアフロントのリンクがありません",
       "inStock": "在庫 {count}",
       "inStockWithVariants": "在庫 {count}（{variants} バリエーション）",
       "detailsTitle": "商品の詳細 — {name}",
-      "detailsSubtitle": "Shopify ストア {shop} から同期済み",
+      "detailsSubtitle": "{store} ストア {shop} から同期済み",
       "summaryLine": "カテゴリ：{category} • 合計在庫：{variants, plural, one {# バリエーション} other {# バリエーション}}で {units} 個",
       "uncategorized": "未分類",
       "variantsTitle": "バリエーション（{count}）",
@@ -10537,7 +10537,8 @@
       "payments": "支払い",
       "shipping": "配送",
       "checkout": "チェックアウト",
-      "shopify": "Shopify"
+      "shopify": "Shopify",
+      "woocommerce": "WooCommerce"
     },
     "general": {
       "orderingAvailable": {
@@ -10608,10 +10609,11 @@
       },
       "storeSource": {
         "label": "ストアソース",
-        "description": "商品、在庫、注文の管理に使用するストアソースを選択します。Shopify を選択すると、すべての商品と注文が Shopify ストアから直接管理されます。",
+        "description": "商品、在庫、注文の管理に使用するストアソースを選択します。Shopify / WooCommerce を選択すると、すべての商品と注文が Shopify / WooCommerce ストアから直接管理されます。",
         "options": {
           "chatbotx": "ChatbotX",
-          "shopify": "Shopify"
+          "shopify": "Shopify",
+          "woocommerce": "WooCommerce"
         }
       }
     },
@@ -10751,9 +10753,22 @@
         "label": "割引コードを自動適用",
         "description": "チェックアウトにリダイレクトする前に、お客様がカートに Shopify の割引コードを直接適用できるようにします。"
       },
+      "wooCommerceCheckoutMethod": {
+        "description": "顧客が WooCommerce ストアの支払いページで支払うか、Web ショップで直接注文する（代金引換）かを選択します。",
+        "options": {
+          "webCheckout": "WooCommerce 支払いページ",
+          "inApp": "アプリ内チェックアウト"
+        }
+      },
+      "wooCommerceAutoApplyDiscounts": {
+        "description": "チェックアウトにリダイレクトする前に、お客様がカートに WooCommerce の割引コードを直接適用できるようにします。"
+      },
       "inAppDeliveryCost": {
         "label": "配送料",
         "description": "アプリ内チェックアウトの注文に加算される配送料です。"
+      },
+      "wooCommerceDeliveryCost": {
+        "description": "WooCommerce に送信される注文に加算される配送料です（両方のチェックアウト方法に適用）。"
       }
     },
     "shopify": {
@@ -10799,6 +10814,46 @@
         "label": "同期ステータス",
         "description": "商品、割引コード、注文は Shopify ストアからミラーリングされます。",
         "connectedTo": "{shopDomain} に接続済み",
+        "lastSynced": "最終同期：{time}（商品 {productCount} 件、注文 {orderCount} 件）",
+        "neverSynced": "まだ同期されていません",
+        "noReason": "続行するにはストアを再接続してください。",
+        "invalid": "接続は無効になりました：{reason}",
+        "state": {
+          "idle": "待機中",
+          "queued": "同期をキューに追加しました...",
+          "running": "同期中...",
+          "succeeded": "前回の同期は成功しました",
+          "failed": "前回の同期に失敗しました"
+        }
+      }
+    },
+    "woocommerce": {
+      "siteUrl": {
+        "label": "ストアURL",
+        "placeholder": "https://example.com",
+        "hint": "https:// で始まる WordPress サイトのアドレスです。WordPress の Settings → Permalinks を Plain にしないでください。",
+        "connectedHint": "接続済みの WooCommerce ストアです。"
+      },
+      "consumerKey": {
+        "label": "Consumer key",
+        "hint": "WooCommerce → Settings → Advanced → REST API → Add key で Read/Write 権限のキーを作成し、その Consumer key (ck_…) を貼り付けてください。",
+        "connectedHint": "接続済みキーの先頭部分です。キーは暗号化して保存されます。"
+      },
+      "consumerSecret": {
+        "label": "Consumer secret",
+        "hint": "キーの Consumer secret (cs_…) です。暗号化して保存されます。"
+      },
+      "webhookUrl": {
+        "label": "Webhook URL",
+        "description": "接続時に WooCommerce へ自動登録され、商品、在庫、注文の更新をリアルタイムで受信します。"
+      },
+      "syncNow": "今すぐ同期",
+      "syncStarted": "同期を開始しました",
+      "syncError": "同期を開始できませんでした",
+      "syncStatus": {
+        "label": "同期ステータス",
+        "description": "商品、割引コード、注文は WooCommerce ストアからミラーリングされます。",
+        "connectedTo": "{store} に接続済み",
         "lastSynced": "最終同期：{time}（商品 {productCount} 件、注文 {orderCount} 件）",
         "neverSynced": "まだ同期されていません",
         "noReason": "続行するにはストアを再接続してください。",

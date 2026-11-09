@@ -7379,9 +7379,9 @@
         "partial": "Parțială"
       },
       "viewDetails": "Vezi detalii",
-      "viewOnShopify": "Vezi în Shopify",
+      "viewOnStore": "Vezi în {store}",
       "detailsTitle": "Comanda {name}",
-      "placedOn": "Plasată în magazinul Shopify • {date}",
+      "placedOn": "Plasată în magazinul {store} • {date}",
       "customerDetails": "Detalii client",
       "shippingAddress": "Adresa de livrare",
       "noShippingAddress": "Nicio adresă de livrare",
@@ -7788,19 +7788,19 @@
     },
     "title": "Produse",
     "shopify": {
-      "openShopify": "Deschide Shopify",
+      "openStore": "Deschide {store}",
       "syncProducts": "Sincronizează produsele",
       "syncStarted": "Sincronizarea a început",
       "syncError": "Nu s-a putut porni sincronizarea",
       "viewDetails": "Vezi detalii",
-      "editOnShopify": "Editează în Shopify",
+      "editOnStore": "Editează în {store}",
       "copyProductLink": "Copiază linkul produsului",
       "linkCopied": "Linkul produsului a fost copiat",
       "noProductLink": "Acest produs nu are link în magazin",
       "inStock": "{count} în stoc",
       "inStockWithVariants": "{count} în stoc ({variants} variante)",
       "detailsTitle": "Detalii produs — {name}",
-      "detailsSubtitle": "Sincronizat din magazinul Shopify {shop}",
+      "detailsSubtitle": "Sincronizat din magazinul {store} {shop}",
       "summaryLine": "Categorie: {category} • Stoc total: {units} unități în {variants, plural, one {# variantă} other {# de variante}}",
       "uncategorized": "Fără categorie",
       "variantsTitle": "Variante ({count})",
@@ -10537,7 +10537,8 @@
       "payments": "Plăți",
       "shipping": "Livrare",
       "checkout": "Finalizare comandă",
-      "shopify": "Shopify"
+      "shopify": "Shopify",
+      "woocommerce": "WooCommerce"
     },
     "general": {
       "orderingAvailable": {
@@ -10608,10 +10609,11 @@
       },
       "storeSource": {
         "label": "Sursa magazinului",
-        "description": "Selectează sursa magazinului folosită pentru gestionarea produselor, stocului și comenzilor. Când este setat Shopify, toate produsele și comenzile sunt gestionate direct din magazinul tău Shopify.",
+        "description": "Selectează sursa magazinului folosită pentru gestionarea produselor, stocului și comenzilor. Când este setat Shopify / WooCommerce, toate produsele și comenzile sunt gestionate direct din magazinul tău Shopify / WooCommerce.",
         "options": {
           "chatbotx": "ChatbotX",
-          "shopify": "Shopify"
+          "shopify": "Shopify",
+          "woocommerce": "WooCommerce"
         }
       }
     },
@@ -10751,9 +10753,22 @@
         "label": "Aplică automat codurile de reducere",
         "description": "Permite clienților să aplice codurile de reducere Shopify direct în coș înainte de redirecționarea către checkout."
       },
+      "wooCommerceCheckoutMethod": {
+        "description": "Alege dacă clienții plătesc pe pagina de plată a magazinului tău WooCommerce sau plasează comanda direct în magazinul online (plată la livrare).",
+        "options": {
+          "webCheckout": "Pagina de plată WooCommerce",
+          "inApp": "Checkout în aplicație"
+        }
+      },
+      "wooCommerceAutoApplyDiscounts": {
+        "description": "Permite clienților să aplice codurile de reducere WooCommerce direct în coș înainte de redirecționarea către checkout."
+      },
       "inAppDeliveryCost": {
         "label": "Cost de livrare",
         "description": "Taxa de livrare adăugată comenzilor din checkout-ul în aplicație."
+      },
+      "wooCommerceDeliveryCost": {
+        "description": "Taxa de livrare adăugată comenzilor trimise către WooCommerce, pentru ambele metode de checkout."
       }
     },
     "shopify": {
@@ -10799,6 +10814,46 @@
         "label": "Starea sincronizării",
         "description": "Produsele, codurile de reducere și comenzile sunt oglindite din magazinul tău Shopify.",
         "connectedTo": "Conectat la {shopDomain}",
+        "lastSynced": "Ultima sincronizare: {time} ({productCount} produse, {orderCount} comenzi)",
+        "neverSynced": "Nesincronizat încă",
+        "noReason": "Reconectează magazinul pentru a continua.",
+        "invalid": "Conexiunea nu mai este validă: {reason}",
+        "state": {
+          "idle": "Inactiv",
+          "queued": "Sincronizare în coadă...",
+          "running": "Se sincronizează...",
+          "succeeded": "Ultima sincronizare a reușit",
+          "failed": "Ultima sincronizare a eșuat"
+        }
+      }
+    },
+    "woocommerce": {
+      "siteUrl": {
+        "label": "URL-ul magazinului",
+        "placeholder": "https://example.com",
+        "hint": "Adresa site-ului tău WordPress, care începe cu https://. În WordPress, Settings → Permalinks nu trebuie să fie setat pe Plain.",
+        "connectedHint": "Magazinul tău WooCommerce conectat."
+      },
+      "consumerKey": {
+        "label": "Consumer key",
+        "hint": "Creează o cheie în WooCommerce → Settings → Advanced → REST API → Add key cu permisiunea Read/Write și lipește Consumer key-ul ei (ck_…).",
+        "connectedHint": "Începutul cheii conectate. Cheile sunt stocate criptat."
+      },
+      "consumerSecret": {
+        "label": "Consumer secret",
+        "hint": "Consumer secret-ul cheii (cs_…). Este stocat criptat."
+      },
+      "webhookUrl": {
+        "label": "URL webhook",
+        "description": "Înregistrat automat în WooCommerce la conectare pentru a primi în timp real actualizări despre produse, stoc și comenzi."
+      },
+      "syncNow": "Sincronizează acum",
+      "syncStarted": "Sincronizarea a început",
+      "syncError": "Nu s-a putut porni sincronizarea",
+      "syncStatus": {
+        "label": "Starea sincronizării",
+        "description": "Produsele, codurile de reducere și comenzile sunt oglindite din magazinul tău WooCommerce.",
+        "connectedTo": "Conectat la {store}",
         "lastSynced": "Ultima sincronizare: {time} ({productCount} produse, {orderCount} comenzi)",
         "neverSynced": "Nesincronizat încă",
         "noReason": "Reconectează magazinul pentru a continua.",

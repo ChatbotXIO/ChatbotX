@@ -7699,9 +7699,9 @@
         "partial": "Kısmi"
       },
       "viewDetails": "Ayrıntıları görüntüle",
-      "viewOnShopify": "Shopify'da görüntüle",
+      "viewOnStore": "{store}'da görüntüle",
       "detailsTitle": "Sipariş {name}",
-      "placedOn": "Shopify mağazasında verildi • {date}",
+      "placedOn": "{store} mağazasında verildi • {date}",
       "customerDetails": "Müşteri ayrıntıları",
       "shippingAddress": "Teslimat adresi",
       "noShippingAddress": "Teslimat adresi yok",
@@ -7839,19 +7839,19 @@
       "track": "Stok takibi yap"
     },
     "shopify": {
-      "openShopify": "Shopify'ı aç",
+      "openStore": "{store}'ı aç",
       "syncProducts": "Ürünleri senkronize et",
       "syncStarted": "Senkronizasyon başladı",
       "syncError": "Senkronizasyon başlatılamadı",
       "viewDetails": "Ayrıntıları görüntüle",
-      "editOnShopify": "Shopify'da düzenle",
+      "editOnStore": "{store}'da düzenle",
       "copyProductLink": "Ürün bağlantısını kopyala",
       "linkCopied": "Ürün bağlantısı kopyalandı",
       "noProductLink": "Bu ürünün mağaza bağlantısı yok",
       "inStock": "{count} stokta",
       "inStockWithVariants": "{count} stokta ({variants} varyant)",
       "detailsTitle": "Ürün ayrıntıları — {name}",
-      "detailsSubtitle": "{shop} Shopify mağazasından senkronize edildi",
+      "detailsSubtitle": "{shop} {store} mağazasından senkronize edildi",
       "summaryLine": "Kategori: {category} • Toplam stok: {variants, plural, one {# varyantta} other {# varyantta}} {units} adet",
       "uncategorized": "Kategorisiz",
       "variantsTitle": "Varyantlar ({count})",
@@ -10537,7 +10537,8 @@
       "payments": "Ödemeler",
       "shipping": "Gönderim",
       "checkout": "Ödeme sayfası",
-      "shopify": "Shopify"
+      "shopify": "Shopify",
+      "woocommerce": "WooCommerce"
     },
     "general": {
       "orderingAvailable": {
@@ -10608,10 +10609,11 @@
       },
       "storeSource": {
         "label": "Mağaza kaynağı",
-        "description": "Ürünlerinizi, stokunuzu ve siparişlerinizi yönetmek için kullanılan mağaza kaynağını seçin. Shopify seçildiğinde tüm ürünler ve siparişler doğrudan Shopify mağazanızdan yönetilir.",
+        "description": "Ürünlerinizi, stokunuzu ve siparişlerinizi yönetmek için kullanılan mağaza kaynağını seçin. Shopify / WooCommerce seçildiğinde tüm ürünler ve siparişler doğrudan Shopify / WooCommerce mağazanızdan yönetilir.",
         "options": {
           "chatbotx": "ChatbotX",
-          "shopify": "Shopify"
+          "shopify": "Shopify",
+          "woocommerce": "WooCommerce"
         }
       }
     },
@@ -10751,9 +10753,22 @@
         "label": "İndirim kodlarını otomatik uygula",
         "description": "Müşterilerin ödemeye yönlendirilmeden önce Shopify indirim kodlarını doğrudan sepetlerine uygulamasına izin verin."
       },
+      "wooCommerceCheckoutMethod": {
+        "description": "Müşterilerin WooCommerce mağazanızın ödeme sayfasında mı ödeyeceğini yoksa siparişi doğrudan web mağazasında mı vereceğini (kapıda ödeme) seçin.",
+        "options": {
+          "webCheckout": "WooCommerce ödeme sayfası",
+          "inApp": "Uygulama içi ödeme"
+        }
+      },
+      "wooCommerceAutoApplyDiscounts": {
+        "description": "Müşterilerin ödemeye yönlendirilmeden önce WooCommerce indirim kodlarını doğrudan sepetlerine uygulamasına izin verin."
+      },
       "inAppDeliveryCost": {
         "label": "Teslimat ücreti",
         "description": "Uygulama içi ödeme siparişlerine eklenen teslimat ücreti."
+      },
+      "wooCommerceDeliveryCost": {
+        "description": "WooCommerce'e gönderilen siparişlere her iki ödeme yönteminde de eklenen teslimat ücreti."
       }
     },
     "shopify": {
@@ -10799,6 +10814,46 @@
         "label": "Senkronizasyon durumu",
         "description": "Ürünler, indirim kodları ve siparişler Shopify mağazanızdan yansıtılır.",
         "connectedTo": "{shopDomain} mağazasına bağlı",
+        "lastSynced": "Son senkronizasyon: {time} ({productCount} ürün, {orderCount} sipariş)",
+        "neverSynced": "Henüz senkronize edilmedi",
+        "noReason": "Devam etmek için mağazanızı yeniden bağlayın.",
+        "invalid": "Bağlantı artık geçerli değil: {reason}",
+        "state": {
+          "idle": "Beklemede",
+          "queued": "Senkronizasyon sırada...",
+          "running": "Senkronize ediliyor...",
+          "succeeded": "Son senkronizasyon başarılı",
+          "failed": "Son senkronizasyon başarısız"
+        }
+      }
+    },
+    "woocommerce": {
+      "siteUrl": {
+        "label": "Mağaza URL'si",
+        "placeholder": "https://example.com",
+        "hint": "WordPress sitenizin https:// ile başlayan adresi. WordPress'te Settings → Permalinks ayarı Plain olmamalıdır.",
+        "connectedHint": "Bağlı WooCommerce mağazanız."
+      },
+      "consumerKey": {
+        "label": "Consumer key",
+        "hint": "WooCommerce → Settings → Advanced → REST API → Add key bölümünde Read/Write izniyle bir anahtar oluşturun ve Consumer key değerini (ck_…) yapıştırın.",
+        "connectedHint": "Bağlı anahtarın başlangıcı. Anahtarlar şifrelenmiş olarak saklanır."
+      },
+      "consumerSecret": {
+        "label": "Consumer secret",
+        "hint": "Anahtarın Consumer secret değeri (cs_…). Şifrelenmiş olarak saklanır."
+      },
+      "webhookUrl": {
+        "label": "Webhook URL'si",
+        "description": "Ürün, stok ve sipariş güncellemelerini gerçek zamanlı almak için bağlantı sırasında WooCommerce'a otomatik olarak kaydedilir."
+      },
+      "syncNow": "Şimdi senkronize et",
+      "syncStarted": "Senkronizasyon başladı",
+      "syncError": "Senkronizasyon başlatılamadı",
+      "syncStatus": {
+        "label": "Senkronizasyon durumu",
+        "description": "Ürünler, indirim kodları ve siparişler WooCommerce mağazanızdan yansıtılır.",
+        "connectedTo": "{store} mağazasına bağlı",
         "lastSynced": "Son senkronizasyon: {time} ({productCount} ürün, {orderCount} sipariş)",
         "neverSynced": "Henüz senkronize edilmedi",
         "noReason": "Devam etmek için mağazanızı yeniden bağlayın.",

@@ -16,17 +16,6 @@ export const shopifyCredentialsInvalidException = (detail?: string) => {
   return error
 }
 
-/**
- * Products, categories, vendors, discount codes and orders mirrored from
- * Shopify are changed in Shopify; the next sync would undo an edit here.
- */
-export const shopifyManagedException = () =>
-  new ChatbotXException(
-    "This store is managed in Shopify. Change it in Shopify and it syncs here.",
-    "shopifyManaged",
-    409,
-  )
-
 export const shopifySyncInProgressException = () =>
   new ChatbotXException(
     "A Shopify sync is already running. Wait for it to finish.",

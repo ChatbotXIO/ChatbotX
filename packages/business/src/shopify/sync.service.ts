@@ -1,19 +1,18 @@
-import { db } from "@chatbotx.io/database/client"
 import type { ShopifySyncScope } from "@chatbotx.io/database/partials"
 import {
-  cartRepository,
+  externalStoreRepository,
   type OrderItemInsertValues,
   productCategoryRepository,
   shopifyRepository,
   vendorRepository,
 } from "@chatbotx.io/database/repositories"
 import type { IntegrationShopifyModel } from "@chatbotx.io/database/types"
-import { verifyShopToken } from "@chatbotx.io/encryption/shop-token"
 import {
   getShopifyCodeDiscount,
   getShopifyInventoryItemProductId,
   getShopifyOrder,
   getShopifyProduct,
+  getShopifyShop,
   listShopifyCodeDiscounts,
   listShopifyOrders,
   listShopifyProducts,
@@ -25,8 +24,15 @@ import {
 } from "@chatbotx.io/integration-shopify"
 import { roundMoney } from "@chatbotx.io/utils/money"
 import { BaseService } from "../base.service"
-import { contactService } from "../contact/service"
 import { ecommerceSettingsService } from "../ecommerce-settings/service"
+import { adoptExternalStoreCurrency } from "../ecommerce-settings/store-source"
+import {
+  EXTERNAL_CONTACT_ATTRIBUTE,
+  removeOrderedFromCart,
+  resolveExternalOrderContact,
+  syncErrorMessage,
+  variantLabelOf,
+} from "../external-store/orders"
 import { logger } from "../logger"
 import { orderService } from "../order/service"
 import { resolveShopifyCredentials } from "./auth"
@@ -41,22 +47,12 @@ import {
 } from "./mappers"
 
 /** The order note attribute a web shop checkout stamps with the customer. */
-export const SHOPIFY_CONTACT_ATTRIBUTE = "cbx_ref"
-
-const SYNC_ERROR_LENGTH = 500
+export const SHOPIFY_CONTACT_ATTRIBUTE = EXTERNAL_CONTACT_ATTRIBUTE
 
 type SyncContext = {
   row: IntegrationShopifyModel
   credentials: ShopifyCredentials
 }
-
-/** "Size: M, Color: Black" — as our own order lines label a variant. */
-const variantLabelOf = (combination: Record<string, string> | null) =>
-  combination
-    ? Object.entries(combination)
-        .map(([option, value]) => `${option}: ${value}`)
-        .join(", ")
-    : null
 
 class ShopifySyncService extends BaseService {
   /**
@@ -75,9 +71,10 @@ class ShopifySyncService extends BaseService {
       values: { syncStatus: "running", syncError: null },
     })
     try {
+      const credentials = await resolveShopifyCredentials(row)
       const context: SyncContext = {
-        row,
-        credentials: await resolveShopifyCredentials(row),
+        row: await this.refreshStoreCurrency(row, credentials),
+        credentials,
       }
       let orderCount = row.orderCount
       if (input.scope !== "orders") {
@@ -93,23 +90,20 @@ class ShopifySyncService extends BaseService {
           syncStatus: "succeeded",
           syncError: null,
           lastSyncedAt: new Date(),
-          productCount: await shopifyRepository.countProducts(
-            input.workspaceId,
-          ),
+          productCount: await externalStoreRepository.countProducts({
+            workspaceId: input.workspaceId,
+            source: "shopify",
+          }),
           orderCount,
           status: "active",
           statusReason: null,
         },
       })
     } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "The sync failed."
+      const message = syncErrorMessage(error)
       await shopifyRepository.updateIntegration({
         workspaceId: input.workspaceId,
-        values: {
-          syncStatus: "failed",
-          syncError: message.slice(0, SYNC_ERROR_LENGTH),
-        },
+        values: { syncStatus: "failed", syncError: message },
       })
       if (error instanceof ShopifyApiError && error.unauthorized) {
         await shopifyIntegrationService.markInvalid(input.workspaceId, message)
@@ -124,6 +118,33 @@ class ShopifySyncService extends BaseService {
     }
   }
 
+  /**
+   * The store's currency, read again with every sync: products are priced
+   * in it, and a store selling from Shopify shows prices and charges orders
+   * in it (`payments.currency`). Returns the connection with it.
+   */
+  private async refreshStoreCurrency(
+    row: IntegrationShopifyModel,
+    credentials: ShopifyCredentials,
+  ): Promise<IntegrationShopifyModel> {
+    const shop = await getShopifyShop(credentials)
+    const currency = shop.currencyCode.toUpperCase()
+    let current = row
+    if (currency !== row.currency || shop.name !== row.shopName) {
+      current =
+        (await shopifyRepository.updateIntegration({
+          workspaceId: row.workspaceId,
+          values: { currency, shopName: shop.name },
+        })) ?? row
+    }
+    await adoptExternalStoreCurrency({
+      workspaceId: row.workspaceId,
+      source: "shopify",
+      currency,
+    })
+    return current
+  }
+
   // ─── Webhook handlers: each reads the object back from Shopify ─────────
 
   async syncProduct(workspaceId: string, productId: string) {
@@ -135,7 +156,8 @@ class ShopifySyncService extends BaseService {
     if (product) {
       await this.saveProduct(context, product)
     } else {
-      await shopifyRepository.deleteProductByExternalId({
+      await externalStoreRepository.deleteProductByExternalId({
+        source: "shopify",
         workspaceId,
         externalId: productId,
       })
@@ -144,7 +166,8 @@ class ShopifySyncService extends BaseService {
   }
 
   async deleteProduct(workspaceId: string, productId: string) {
-    await shopifyRepository.deleteProductByExternalId({
+    await externalStoreRepository.deleteProductByExternalId({
+      source: "shopify",
       workspaceId,
       externalId: productId,
     })
@@ -174,7 +197,8 @@ class ShopifySyncService extends BaseService {
     const node = await getShopifyCodeDiscount(context.credentials, discountId)
     const saved = node ? await this.saveDiscount(context, node) : false
     if (!saved) {
-      await shopifyRepository.deleteDiscountByExternalId({
+      await externalStoreRepository.deleteDiscountByExternalId({
+        source: "shopify",
         workspaceId,
         externalId: discountId,
       })
@@ -182,7 +206,8 @@ class ShopifySyncService extends BaseService {
   }
 
   async deleteDiscount(workspaceId: string, discountId: string) {
-    await shopifyRepository.deleteDiscountByExternalId({
+    await externalStoreRepository.deleteDiscountByExternalId({
+      source: "shopify",
       workspaceId,
       externalId: discountId,
     })
@@ -224,6 +249,7 @@ class ShopifySyncService extends BaseService {
 
     const result = await orderService.syncExternal({
       workspaceId: row.workspaceId,
+      source: "shopify",
       externalId: order.id,
       announce: options.announce,
       status: state.status,
@@ -269,55 +295,13 @@ class ShopifySyncService extends BaseService {
       items,
     })
     if (result.created && contact?.fromShopLink) {
-      await this.removeOrderedFromCart(row.workspaceId, contact, items)
+      await removeOrderedFromCart({
+        workspaceId: row.workspaceId,
+        contact,
+        items,
+      })
     }
     return result
-  }
-
-  /**
-   * A customer who checked out on Shopify from our shop link: what they
-   * ordered leaves their cart, as it does for an order placed here.
-   */
-  private async removeOrderedFromCart(
-    workspaceId: string,
-    contact: { contactId: string; contactInboxId: string | null },
-    items: OrderItemInsertValues[],
-  ) {
-    const ordered = new Set(
-      items.map((item) => `${item.productId}\u0000${item.variantId ?? ""}`),
-    )
-    try {
-      await db.transaction(async (tx) => {
-        const cart = await cartRepository.findForUpdate(
-          { workspaceId, contactId: contact.contactId },
-          tx,
-        )
-        if (!cart) {
-          return
-        }
-        const left = cart.items.filter(
-          (line) =>
-            !ordered.has(`${line.productId}\u0000${line.variantId ?? ""}`),
-        )
-        if (left.length === cart.items.length) {
-          return
-        }
-        await cartRepository.upsert(
-          {
-            workspaceId,
-            contactId: contact.contactId,
-            contactInboxId: contact.contactInboxId,
-            items: left,
-          },
-          tx,
-        )
-      })
-    } catch (err) {
-      logger.warn(
-        { err, workspaceId, contactId: contact.contactId },
-        "[shopify] could not empty the cart of a Shopify order",
-      )
-    }
   }
 
   // ─── Full sync steps ───────────────────────────────────────────────────
@@ -335,7 +319,8 @@ class ShopifySyncService extends BaseService {
       after = page.pageInfo.hasNextPage ? page.pageInfo.endCursor : null
     } while (after)
     // Only after every page was read, so a failed page deletes nothing.
-    await shopifyRepository.deleteProductsNotIn({
+    await externalStoreRepository.deleteProductsNotIn({
+      source: "shopify",
       workspaceId: context.row.workspaceId,
       keepExternalIds: keep,
     })
@@ -354,7 +339,8 @@ class ShopifySyncService extends BaseService {
       }
       after = page.pageInfo.hasNextPage ? page.pageInfo.endCursor : null
     } while (after)
-    await shopifyRepository.deleteDiscountsNotIn({
+    await externalStoreRepository.deleteDiscountsNotIn({
+      source: "shopify",
       workspaceId: context.row.workspaceId,
       keepExternalIds: keep,
     })
@@ -422,7 +408,8 @@ class ShopifySyncService extends BaseService {
           })
         )[0]?.id ?? null
     }
-    await shopifyRepository.upsertProduct({
+    await externalStoreRepository.upsertProduct({
+      source: "shopify",
       workspaceId,
       externalId: mapped.externalId,
       values: { ...mapped.values, categoryId, vendorId },
@@ -443,7 +430,8 @@ class ShopifySyncService extends BaseService {
     const { workspaceId } = context.row
     let productIds: string[] = []
     if (mapped.appliesTo === "products") {
-      const products = await shopifyRepository.findProductsByExternalIds({
+      const products = await externalStoreRepository.findProductsByExternalIds({
+        source: "shopify",
         workspaceId,
         externalIds: mapped.productExternalIds,
       })
@@ -457,7 +445,8 @@ class ShopifySyncService extends BaseService {
       productExternalIds: _productExternalIds,
       ...values
     } = mapped
-    await shopifyRepository.upsertDiscount({
+    await externalStoreRepository.upsertDiscount({
+      source: "shopify",
       workspaceId,
       externalId,
       values: {
@@ -477,7 +466,8 @@ class ShopifySyncService extends BaseService {
     order: ShopifyOrder,
   ): Promise<OrderItemInsertValues[]> {
     const lines = order.lineItems.nodes
-    const variants = await shopifyRepository.findVariantsByExternalIds({
+    const variants = await externalStoreRepository.findVariantsByExternalIds({
+      source: "shopify",
       workspaceId,
       externalIds: lines.flatMap((line) =>
         line.variant ? [line.variant.id] : [],
@@ -486,7 +476,8 @@ class ShopifySyncService extends BaseService {
     const byVariant = new Map(
       variants.map((variant) => [variant.externalId, variant]),
     )
-    const products = await shopifyRepository.findProductsByExternalIds({
+    const products = await externalStoreRepository.findProductsByExternalIds({
+      source: "shopify",
       workspaceId,
       externalIds: lines.flatMap((line) =>
         line.product ? [line.product.id] : [],
@@ -534,47 +525,16 @@ class ShopifySyncService extends BaseService {
   /**
    * The contact behind a Shopify order: the signed shop token our checkout
    * stamps on it, or else a contact with exactly the order's email or phone.
-   * An order placed on the storefront by someone we never talked to has none.
    */
   private async resolveContact(workspaceId: string, order: ShopifyOrder) {
-    const ref = order.customAttributes.find(
-      (attribute) => attribute.key === SHOPIFY_CONTACT_ATTRIBUTE,
-    )?.value
-    if (ref) {
-      try {
-        const payload = await verifyShopToken(ref)
-        if (
-          payload.mode === "customer" &&
-          payload.workspaceId === workspaceId
-        ) {
-          return {
-            contactId: payload.contactId,
-            contactInboxId: payload.contactInboxId,
-            conversationId: payload.conversationId,
-            fromShopLink: true,
-          }
-        }
-      } catch {
-        // A forged or expired reference falls back to email and phone.
-      }
-    }
-    for (const identifier of shopifyOrderContactIdentifiers(order)) {
-      try {
-        const contactId = await contactService.resolveIdByIdentifier({
-          workspaceId,
-          identifier,
-        })
-        return {
-          contactId,
-          contactInboxId: null,
-          conversationId: null,
-          fromShopLink: false,
-        }
-      } catch {
-        // Not a contact of this workspace.
-      }
-    }
-    return null
+    return await resolveExternalOrderContact({
+      workspaceId,
+      reference:
+        order.customAttributes.find(
+          (attribute) => attribute.key === SHOPIFY_CONTACT_ATTRIBUTE,
+        )?.value ?? null,
+      identifiers: shopifyOrderContactIdentifiers(order),
+    })
   }
 
   private async context(workspaceId: string): Promise<SyncContext | null> {

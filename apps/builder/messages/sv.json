@@ -6165,9 +6165,9 @@
         "partial": "Delvis"
       },
       "viewDetails": "Visa detaljer",
-      "viewOnShopify": "Visa i Shopify",
+      "viewOnStore": "Visa i {store}",
       "detailsTitle": "Beställning {name}",
-      "placedOn": "Lagd i Shopify-butiken • {date}",
+      "placedOn": "Lagd i {store}-butiken • {date}",
       "customerDetails": "Kunduppgifter",
       "shippingAddress": "Leveransadress",
       "noShippingAddress": "Ingen leveransadress",
@@ -6677,19 +6677,19 @@
     },
     "title": "Produkter",
     "shopify": {
-      "openShopify": "Öppna Shopify",
+      "openStore": "Öppna {store}",
       "syncProducts": "Synkronisera produkter",
       "syncStarted": "Synkroniseringen startade",
       "syncError": "Det gick inte att starta synkroniseringen",
       "viewDetails": "Visa detaljer",
-      "editOnShopify": "Redigera i Shopify",
+      "editOnStore": "Redigera i {store}",
       "copyProductLink": "Kopiera produktlänk",
       "linkCopied": "Produktlänk kopierad",
       "noProductLink": "Den här produkten har ingen butikslänk",
       "inStock": "{count} i lager",
       "inStockWithVariants": "{count} i lager ({variants} varianter)",
       "detailsTitle": "Produktdetaljer — {name}",
-      "detailsSubtitle": "Synkroniserad från Shopify-butiken {shop}",
+      "detailsSubtitle": "Synkroniserad från {store}-butiken {shop}",
       "summaryLine": "Kategori: {category} • Totalt lager: {units} enheter fördelade på {variants, plural, one {# variant} other {# varianter}}",
       "uncategorized": "Okategoriserad",
       "variantsTitle": "Varianter ({count})",
@@ -10537,7 +10537,8 @@
       "payments": "Betalningar",
       "shipping": "Frakt",
       "checkout": "Kassa",
-      "shopify": "Shopify"
+      "shopify": "Shopify",
+      "woocommerce": "WooCommerce"
     },
     "general": {
       "orderingAvailable": {
@@ -10608,10 +10609,11 @@
       },
       "storeSource": {
         "label": "Butikskälla",
-        "description": "Välj den butikskälla som används för att hantera dina produkter, lager och beställningar. När Shopify är valt hanteras alla produkter och beställningar direkt från din Shopify-butik.",
+        "description": "Välj den butikskälla som används för att hantera dina produkter, lager och beställningar. När Shopify / WooCommerce är valt hanteras alla produkter och beställningar direkt från din Shopify / WooCommerce-butik.",
         "options": {
           "chatbotx": "ChatbotX",
-          "shopify": "Shopify"
+          "shopify": "Shopify",
+          "woocommerce": "WooCommerce"
         }
       }
     },
@@ -10751,9 +10753,22 @@
         "label": "Tillämpa rabattkoder automatiskt",
         "description": "Låt kunder tillämpa Shopify-rabattkoder direkt på sin varukorg innan de skickas vidare till kassan."
       },
+      "wooCommerceCheckoutMethod": {
+        "description": "Välj om kunderna betalar på din WooCommerce-butiks betalningssida eller lägger ordern direkt i webbshoppen (betalning vid leverans).",
+        "options": {
+          "webCheckout": "WooCommerce-betalningssida",
+          "inApp": "Kassa i appen"
+        }
+      },
+      "wooCommerceAutoApplyDiscounts": {
+        "description": "Låt kunder tillämpa WooCommerce-rabattkoder direkt på sin varukorg innan de skickas vidare till kassan."
+      },
       "inAppDeliveryCost": {
         "label": "Leveranskostnad",
         "description": "Leveransavgift som läggs till i beställningar via kassan i appen."
+      },
+      "wooCommerceDeliveryCost": {
+        "description": "Leveransavgift som läggs till ordrar som skickas till WooCommerce, med båda kassametoderna."
       }
     },
     "shopify": {
@@ -10799,6 +10814,46 @@
         "label": "Synkroniseringsstatus",
         "description": "Produkter, rabattkoder och beställningar speglas från din Shopify-butik.",
         "connectedTo": "Ansluten till {shopDomain}",
+        "lastSynced": "Senast synkroniserad: {time} ({productCount} produkter, {orderCount} beställningar)",
+        "neverSynced": "Inte synkroniserad ännu",
+        "noReason": "Anslut din butik igen för att fortsätta.",
+        "invalid": "Anslutningen är inte längre giltig: {reason}",
+        "state": {
+          "idle": "Inaktiv",
+          "queued": "Synkronisering köad...",
+          "running": "Synkroniserar...",
+          "succeeded": "Senaste synkroniseringen lyckades",
+          "failed": "Senaste synkroniseringen misslyckades"
+        }
+      }
+    },
+    "woocommerce": {
+      "siteUrl": {
+        "label": "Butikens URL",
+        "placeholder": "https://example.com",
+        "hint": "Adressen till din WordPress-webbplats, som börjar med https://. I WordPress får Settings → Permalinks inte vara inställt på Plain.",
+        "connectedHint": "Din anslutna WooCommerce-butik."
+      },
+      "consumerKey": {
+        "label": "Consumer key",
+        "hint": "Skapa en nyckel under WooCommerce → Settings → Advanced → REST API → Add key med Read/Write-behörighet och klistra in dess Consumer key (ck_…).",
+        "connectedHint": "Början av den anslutna nyckeln. Nycklar lagras krypterade."
+      },
+      "consumerSecret": {
+        "label": "Consumer secret",
+        "hint": "Nyckelns Consumer secret (cs_…). Den lagras krypterad."
+      },
+      "webhookUrl": {
+        "label": "Webhook-URL",
+        "description": "Registreras automatiskt hos WooCommerce vid anslutning för att ta emot uppdateringar om produkter, lager och beställningar i realtid."
+      },
+      "syncNow": "Synkronisera nu",
+      "syncStarted": "Synkroniseringen startade",
+      "syncError": "Det gick inte att starta synkroniseringen",
+      "syncStatus": {
+        "label": "Synkroniseringsstatus",
+        "description": "Produkter, rabattkoder och beställningar speglas från din WooCommerce-butik.",
+        "connectedTo": "Ansluten till {store}",
         "lastSynced": "Senast synkroniserad: {time} ({productCount} produkter, {orderCount} beställningar)",
         "neverSynced": "Inte synkroniserad ännu",
         "noReason": "Anslut din butik igen för att fortsätta.",

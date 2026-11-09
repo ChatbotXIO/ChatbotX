@@ -7699,9 +7699,9 @@
         "partial": "Partielle"
       },
       "viewDetails": "Voir les détails",
-      "viewOnShopify": "Voir sur Shopify",
+      "viewOnStore": "Voir sur {store}",
       "detailsTitle": "Commande {name}",
-      "placedOn": "Passée sur la boutique Shopify • {date}",
+      "placedOn": "Passée sur la boutique {store} • {date}",
       "customerDetails": "Détails du client",
       "shippingAddress": "Adresse de livraison",
       "noShippingAddress": "Aucune adresse de livraison",
@@ -7839,19 +7839,19 @@
       "track": "Suivre le stock"
     },
     "shopify": {
-      "openShopify": "Ouvrir Shopify",
+      "openStore": "Ouvrir {store}",
       "syncProducts": "Synchroniser les produits",
       "syncStarted": "Synchronisation démarrée",
       "syncError": "Impossible de démarrer la synchronisation",
       "viewDetails": "Voir les détails",
-      "editOnShopify": "Modifier sur Shopify",
+      "editOnStore": "Modifier sur {store}",
       "copyProductLink": "Copier le lien du produit",
       "linkCopied": "Lien du produit copié",
       "noProductLink": "Ce produit n'a pas de lien de boutique",
       "inStock": "{count} en stock",
       "inStockWithVariants": "{count} en stock ({variants} variantes)",
       "detailsTitle": "Détails du produit — {name}",
-      "detailsSubtitle": "Synchronisé depuis la boutique Shopify {shop}",
+      "detailsSubtitle": "Synchronisé depuis la boutique {store} {shop}",
       "summaryLine": "Catégorie : {category} • Stock total : {units} unités sur {variants, plural, one {# variante} other {# variantes}}",
       "uncategorized": "Non catégorisé",
       "variantsTitle": "Variantes ({count})",
@@ -10537,7 +10537,8 @@
       "payments": "Paiements",
       "shipping": "Livraison",
       "checkout": "Paiement",
-      "shopify": "Shopify"
+      "shopify": "Shopify",
+      "woocommerce": "WooCommerce"
     },
     "general": {
       "orderingAvailable": {
@@ -10608,10 +10609,11 @@
       },
       "storeSource": {
         "label": "Source de la boutique",
-        "description": "Sélectionnez la source de boutique utilisée pour gérer vos produits, votre stock et vos commandes. Avec Shopify, tous les produits et commandes sont gérés directement depuis votre boutique Shopify.",
+        "description": "Sélectionnez la source de boutique utilisée pour gérer vos produits, votre stock et vos commandes. Avec Shopify / WooCommerce, tous les produits et commandes sont gérés directement depuis votre boutique Shopify / WooCommerce.",
         "options": {
           "chatbotx": "ChatbotX",
-          "shopify": "Shopify"
+          "shopify": "Shopify",
+          "woocommerce": "WooCommerce"
         }
       }
     },
@@ -10751,9 +10753,22 @@
         "label": "Appliquer automatiquement les codes de réduction",
         "description": "Permet aux clients d'appliquer des codes de réduction Shopify directement à leur panier avant d'être redirigés vers le paiement."
       },
+      "wooCommerceCheckoutMethod": {
+        "description": "Choisissez si les clients paient sur la page de paiement de votre boutique WooCommerce ou passent commande directement sur la boutique en ligne (paiement à la livraison).",
+        "options": {
+          "webCheckout": "Page de paiement WooCommerce",
+          "inApp": "Paiement dans l'application"
+        }
+      },
+      "wooCommerceAutoApplyDiscounts": {
+        "description": "Permet aux clients d'appliquer des codes de réduction WooCommerce directement à leur panier avant d'être redirigés vers le paiement."
+      },
       "inAppDeliveryCost": {
         "label": "Frais de livraison",
         "description": "Frais de livraison ajoutés aux commandes payées dans l'application."
+      },
+      "wooCommerceDeliveryCost": {
+        "description": "Frais de livraison ajoutés aux commandes envoyées à WooCommerce, pour les deux méthodes de paiement."
       }
     },
     "shopify": {
@@ -10799,6 +10814,46 @@
         "label": "Statut de la synchronisation",
         "description": "Les produits, codes de réduction et commandes sont répliqués depuis votre boutique Shopify.",
         "connectedTo": "Connecté à {shopDomain}",
+        "lastSynced": "Dernière synchronisation : {time} ({productCount} produits, {orderCount} commandes)",
+        "neverSynced": "Pas encore synchronisé",
+        "noReason": "Reconnectez votre boutique pour continuer.",
+        "invalid": "La connexion n'est plus valide : {reason}",
+        "state": {
+          "idle": "Inactif",
+          "queued": "Synchronisation en attente...",
+          "running": "Synchronisation en cours...",
+          "succeeded": "Dernière synchronisation réussie",
+          "failed": "Dernière synchronisation échouée"
+        }
+      }
+    },
+    "woocommerce": {
+      "siteUrl": {
+        "label": "URL de la boutique",
+        "placeholder": "https://example.com",
+        "hint": "L'adresse de votre site WordPress, commençant par https://. Dans WordPress, Settings → Permalinks ne doit pas être sur Plain.",
+        "connectedHint": "Votre boutique WooCommerce connectée."
+      },
+      "consumerKey": {
+        "label": "Consumer key",
+        "hint": "Créez une clé dans WooCommerce → Settings → Advanced → REST API → Add key avec l'autorisation Read/Write, puis collez sa Consumer key (ck_…).",
+        "connectedHint": "Le début de la clé connectée. Les clés sont stockées chiffrées."
+      },
+      "consumerSecret": {
+        "label": "Consumer secret",
+        "hint": "Le Consumer secret de la clé (cs_…). Il est stocké chiffré."
+      },
+      "webhookUrl": {
+        "label": "URL du webhook",
+        "description": "Enregistrée automatiquement sur WooCommerce lors de la connexion pour recevoir en temps réel les mises à jour des produits, du stock et des commandes."
+      },
+      "syncNow": "Synchroniser maintenant",
+      "syncStarted": "Synchronisation démarrée",
+      "syncError": "Impossible de démarrer la synchronisation",
+      "syncStatus": {
+        "label": "Statut de la synchronisation",
+        "description": "Les produits, codes de réduction et commandes sont répliqués depuis votre boutique WooCommerce.",
+        "connectedTo": "Connecté à {store}",
         "lastSynced": "Dernière synchronisation : {time} ({productCount} produits, {orderCount} commandes)",
         "neverSynced": "Pas encore synchronisé",
         "noReason": "Reconnectez votre boutique pour continuer.",

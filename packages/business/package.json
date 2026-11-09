@@ -92,6 +92,7 @@
     "@chatbotx.io/integration-google-calendar": "workspace:*",
     "@chatbotx.io/integration-shopify": "workspace:*",
     "@chatbotx.io/integration-tiktok": "workspace:*",
+    "@chatbotx.io/integration-woocommerce": "workspace:*",
     "@chatbotx.io/javascript-sandbox": "workspace:*",
     "@chatbotx.io/logger": "workspace:*",
     "@chatbotx.io/mail": "workspace:*",

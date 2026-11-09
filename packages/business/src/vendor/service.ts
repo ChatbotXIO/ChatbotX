@@ -3,6 +3,7 @@ import {
   db,
   isUniqueViolationError,
 } from "@chatbotx.io/database/client"
+import { isExternalStoreSource } from "@chatbotx.io/database/partials"
 import {
   productCategoryRepository,
   type VendorListInput,
@@ -12,7 +13,7 @@ import { BaseService } from "../base.service"
 import { ecommerceOpenHoursService } from "../ecommerce-open-hours/service"
 import { resolveStoreSource } from "../ecommerce-settings/store-source"
 import { ChatbotXException, notFoundException } from "../errors"
-import { shopifyManagedException } from "../shopify/errors"
+import { externalStoreManagedException } from "../external-store/errors"
 
 const normalizeVendorName = (name: string): string => name.trim()
 
@@ -63,18 +64,20 @@ class VendorService extends BaseService {
     workspaceId: string
     vendorId: string
   }) {
-    if ((await resolveStoreSource(input.workspaceId)) !== "shopify") {
+    const storeSource = await resolveStoreSource(input.workspaceId)
+    if (!isExternalStoreSource(storeSource)) {
       return
     }
     const row = await vendorRepository.find(input)
-    if (row?.source === "shopify") {
-      throw shopifyManagedException()
+    if (row?.source === storeSource) {
+      throw externalStoreManagedException(storeSource)
     }
   }
 
   async create(input: VendorWriteData & { workspaceId: string }) {
-    if ((await resolveStoreSource(input.workspaceId)) === "shopify") {
-      throw shopifyManagedException()
+    const storeSource = await resolveStoreSource(input.workspaceId)
+    if (isExternalStoreSource(storeSource)) {
+      throw externalStoreManagedException(storeSource)
     }
     const name = normalizeVendorName(input.name)
     if (!name) {

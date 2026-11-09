@@ -5,8 +5,10 @@ import {
 } from "@chatbotx.io/database/client"
 import {
   type EcommerceSettings,
+  type ExternalStoreSource,
   getOrderStatusesAllowedBefore,
   isAwaitingOnlinePayment,
+  isExternalStoreSource,
   isOnlinePaymentMethod,
   type OrderActorType,
   type OrderShippingAddress,
@@ -60,6 +62,7 @@ import {
 } from "../discount-code/service"
 import { ecommerceSettingsService } from "../ecommerce-settings/service"
 import { ChatbotXException, notFoundException } from "../errors"
+import { externalStoreManagedException } from "../external-store/errors"
 import { logger } from "../logger"
 import { messageService } from "../message/service"
 import {
@@ -67,7 +70,6 @@ import {
   settlePaymentsForCancel,
 } from "../order-payment/settle"
 import { paymentMethodUnavailableException } from "../payment-provider/errors"
-import { shopifyManagedException } from "../shopify/errors"
 import { workspaceService } from "../workspace/service"
 import {
   buildOrderConfirmationText,
@@ -597,10 +599,10 @@ class OrderService extends BaseService {
   }
 
   private async defaultSources(workspaceId: string): Promise<OrderSource[]> {
-    return (await ecommerceSettingsService.storeSource(workspaceId)) ===
-      "shopify"
-      ? ["shopify"]
-      : orderSources.options.filter((source) => source !== "shopify")
+    const storeSource = await ecommerceSettingsService.storeSource(workspaceId)
+    return isExternalStoreSource(storeSource)
+      ? [storeSource]
+      : orderSources.options.filter((source) => !isExternalStoreSource(source))
   }
 
   /**
@@ -1040,8 +1042,8 @@ class OrderService extends BaseService {
         throw notFoundException("Order does not exist.")
       }
       // A mirrored order moves on its own store; it follows along here.
-      if (current.source === "shopify") {
-        throw shopifyManagedException()
+      if (isExternalStoreSource(current.source)) {
+        throw externalStoreManagedException(current.source)
       }
       // Refused before any money moves: a refund for a move that cannot
       // happen would be one too many.
@@ -1131,6 +1133,8 @@ class OrderService extends BaseService {
    */
   async syncExternal(input: {
     workspaceId: string
+    /** The external store the order is mirrored from. */
+    source: ExternalStoreSource
     externalId: string
     announce: boolean
     values: Omit<
@@ -1189,7 +1193,7 @@ class OrderService extends BaseService {
               ...(createdAt ? { createdAt } : {}),
               workspaceId: input.workspaceId,
               number,
-              source: "shopify",
+              source: input.source,
               externalId: input.externalId,
               status: input.status,
             },
@@ -1347,8 +1351,8 @@ class OrderService extends BaseService {
       if (!current) {
         throw notFoundException("Order does not exist.")
       }
-      if (current.source === "shopify") {
-        throw shopifyManagedException()
+      if (isExternalStoreSource(current.source)) {
+        throw externalStoreManagedException(current.source)
       }
       // A paid online order is cancelled (and refunded), never deleted with
       // the money kept; an unpaid one's payment pages are closed first.

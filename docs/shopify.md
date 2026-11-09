@@ -7,8 +7,9 @@ the public API keep working on the mirrored rows.
 
 ## Store source
 
-`EcommerceSettings.storeSource` is `chatbotx` (the default, our own catalog)
-or `shopify`. Every catalog row carries the source it came from
+`EcommerceSettings.storeSource` is `chatbotx` (the default, our own catalog),
+`shopify` or `woocommerce` (see `docs/woocommerce.md`; both external stores
+share the rules below). Every catalog row carries the source it came from
 (`Product`, `ProductCategory`, `Vendor`, `DiscountCode` — `source`, plus
 `externalId` where Shopify has an id), and every list shows only the rows of the
 current source:
@@ -22,10 +23,17 @@ current source:
 - `orderService.list` without a `source` filter shows `shopify` orders in
   Shopify mode and every other source otherwise.
 
-Switching back and forth hides rows; it never deletes them. Disconnecting
-Shopify switches the store back to `chatbotx`.
+Switching back and forth hides rows; it never deletes them. Switching to
+Shopify or WooCommerce (from any other source) queues a full sync of that
+store (`syncSwitchedStore` in `ecommerceSettingsService.update`), so its
+catalog and recent orders are current from the start; a sync already running
+covers it, and a failure to queue one does not undo the switch. Disconnecting
+Shopify switches a store selling from Shopify back to `chatbotx` (one selling
+from WooCommerce is left as it is).
 
-Mirrored rows are read-only here (`shopifyManaged`, 409): creating or editing a
+Mirrored rows are read-only here (`externalStoreManaged`, 409, with
+`data.store` naming the store — `externalStoreManagedException` in
+`packages/business/src/external-store/errors.ts`): creating or editing a
 product, category, vendor or code while in Shopify mode, and moving or deleting
 a Shopify order. A product's `status` follows Shopify and cannot be changed
 here; a category's `isVisible` and a vendor's `isActive` stay ours — they
@@ -96,6 +104,15 @@ Mapping (`packages/business/src/shopify/mappers.ts`):
   others (collections, buy X get Y, app discounts) are left out and still work
   when typed on Shopify's checkout.
 
+## Currency
+
+Switching `storeSource` to `shopify`, and every sync after, sets
+`payments.currency` to the Shopify store's currency (and its usual symbol,
+e.g. `₫`): every price shown and order charged reads it, and the mirrored
+products are priced in it. A store that sold from Shopify before this rule
+gets its currency fixed by Sync Now. See
+`docs/woocommerce.md` → "Currency".
+
 ## Orders
 
 `orderService.syncExternal` writes a Shopify order by `Order.externalId`:
@@ -137,7 +154,8 @@ customer's cart when it arrives.
 
 ## Checkout
 
-`webshopService.checkout` branches on `checkout.shopifyCheckoutMethod`:
+`webshopService.checkout` (`checkoutOnExternalStore`) branches on
+`checkout.externalCheckoutMethod`, shared with WooCommerce:
 
 - `webCheckout` — returns a cart permalink
   (`https://{shop}/cart/{variant}:{qty},…?checkout[email]=…&discount=…&attributes[cbx_ref]=…`)
@@ -148,7 +166,7 @@ customer's cart when it arrives.
   cart. The delivery line is `shipping.deliveryCost`; a free-text state goes
   into the note because Shopify takes a province code.
 
-`checkout.shopifyAutoApplyDiscounts` off hides discount codes in the cart and
+`checkout.externalAutoApplyDiscounts` off hides discount codes in the cart and
 passes none to Shopify. `checkout.checkoutMode` does not apply to a Shopify
 store (its settings hide it), so an `externalLink` left from before the switch
 does not block checkout.
@@ -156,8 +174,9 @@ does not block checkout.
 ## Public API
 
 `shopify.getStatus`, `shopify.connect`, `shopify.sync`, `shopify.disconnect`
-(scope `ecommerce`); `ecommerceSettings.update` for `storeSource`,
-`shopifyCheckoutMethod`, `shopifyAutoApplyDiscounts`; `orders.list` filters
+(scope `ecommerce`); `ecommerceSettings.update` for `storeSource` (refused
+with `externalStoreNotConnected` for a store that is not connected),
+`externalCheckoutMethod`, `externalAutoApplyDiscounts`; `orders.list` filters
 `paymentStatus` and `fulfillmentStatus`; `orders.export` returns the CSV the
 Orders page downloads.
 

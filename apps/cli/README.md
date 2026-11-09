@@ -1271,10 +1271,10 @@ An order paid online (`--paymentMethod stripe|paypal`, needs `--contact`) waits
 30 minutes for its payment and is cancelled if none comes; nothing about it is
 announced until it is paid.
 
-While the store source is Shopify, `orders list` shows the orders mirrored from
-Shopify (`source: shopify`, with `externalName` such as `#1004`, fulfillment
-and tracking); they are read-only here — accept/ship/conclude/cancel/delete
-answer `shopifyManaged`.
+While the store source is Shopify or WooCommerce, `orders list` shows the
+orders mirrored from that store (`source: shopify` or `woocommerce`, with
+`externalName` such as `#1004`, fulfillment and tracking); they are read-only
+here — accept/ship/conclude/cancel/delete answer `externalStoreManaged`.
 
 ---
 
@@ -1292,9 +1292,31 @@ Connecting checks the credentials, subscribes the store's webhooks, stores the
 credentials encrypted and queues a full sync (products, discount codes, the
 last 60 days of orders). Then switch the store to it with `chatbotx ecommerce
 settings update --general '{"storeSource":"shopify"}'`; choose the checkout with
-`--checkout '{"shopifyCheckoutMethod":"webCheckout"}'` (or `inApp`). Shopify
+`--checkout '{"externalCheckoutMethod":"webCheckout"}'` (or `inApp`). Shopify
 products, categories, vendors and discount codes are read-only here — a
-product's `status` included, which follows Shopify.
+product's `status` included, which follows Shopify (`externalStoreManaged`).
+
+---
+
+### `woocommerce` (scope `ecommerce`)
+
+```bash
+chatbotx woocommerce get                                # The connected store, its last sync and counts, or connected: false (never a credential)
+chatbotx woocommerce create --siteUrl <https://example.com> --consumerKey <ck_…> --consumerSecret <cs_…>
+chatbotx woocommerce sync [--scope all|products|orders] # Queue a sync (and turn disabled webhooks back on); poll `woocommerce get`
+chatbotx woocommerce delete                             # Disconnect: remove the webhooks, switch a WooCommerce store back to its own catalog
+```
+
+The keys come from WooCommerce → Settings → Advanced → REST API (Read/Write);
+the store must be on `https://` with permalinks not set to Plain. Connecting
+checks the keys, registers the store's webhooks (signed with a secret
+generated on connect), stores the keys encrypted and queues a full sync
+(products, coupons, the last 60 days of orders). Then switch the store to it
+with `chatbotx ecommerce settings update --general
+'{"storeSource":"woocommerce"}'`. With `externalCheckoutMethod: webCheckout`
+the web shop creates an unpaid order on WooCommerce and sends the customer to
+its payment page; `inApp` places a cash-on-delivery order. Mirrored rows are
+read-only here (`externalStoreManaged`).
 
 ---
 

@@ -1,8 +1,5 @@
-import {
-  ecommerceSettingsService,
-  orderService,
-  shopifyIntegrationService,
-} from "@chatbotx.io/business"
+import { ecommerceSettingsService, orderService } from "@chatbotx.io/business"
+import { resolveExternalStoreLinks } from "@/features/external-store/lib/resolve-store-links"
 import { OrdersTable } from "@/features/orders/orders-table"
 import { listOrdersSearchParams } from "@/features/orders/schema/query"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
@@ -29,15 +26,15 @@ export default async function OrdersPage({
     }),
     ecommerceSettingsService.get(workspaceId),
   ])
-  const shopifyStore = await resolveShopifyStore(
+  const externalStore = await resolveExternalStoreLinks(
     workspaceId,
     settings.general.storeSource,
   )
 
   return (
     <OrdersTable
+      externalStore={externalStore}
       orders={orders}
-      shopifyStore={shopifyStore}
       store={{
         currency: settings.payments.currency,
         currencySymbol: settings.payments.currencySymbol,
@@ -46,16 +43,4 @@ export default async function OrdersPage({
       workspaceId={workspaceId}
     />
   )
-}
-
-/** The connected store's links, when Shopify is the order source. */
-async function resolveShopifyStore(workspaceId: string, storeSource: string) {
-  if (storeSource !== "shopify") {
-    return
-  }
-  const status = await shopifyIntegrationService.getStatus(workspaceId)
-  if (!status.connected) {
-    return
-  }
-  return { shopDomain: status.shopDomain, adminUrl: status.adminUrl }
 }

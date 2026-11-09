@@ -4,13 +4,13 @@ import {
   orderService,
 } from "@chatbotx.io/business"
 import {
+  externalStoreManagedErrors,
   possibleErrorsOnCreatingDiscountCode,
   possibleErrorsOnDeletingResource,
   possibleErrorsOnFindingResource,
   possibleErrorsOnListingResource,
   possibleErrorsOnMutatingDiscountCode,
   possibleIdempotencyErrors,
-  shopifyManagedErrors,
 } from "@/lib/orpc/orpc-error-helper"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
 import { toDiscountCodeInput, toDiscountCodePatch } from "../lib/to-input"
@@ -158,7 +158,10 @@ export const discountCodesPublicRouter = {
     })
     .input(discountCodeIdRequest)
     .output(publicDiscountCodeResource)
-    .errors({ ...possibleErrorsOnDeletingResource, ...shopifyManagedErrors })
+    .errors({
+      ...possibleErrorsOnDeletingResource,
+      ...externalStoreManagedErrors,
+    })
     .handler(
       async ({ context, input }) =>
         await discountCodeService.delete({

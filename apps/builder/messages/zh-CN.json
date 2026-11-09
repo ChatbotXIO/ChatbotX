@@ -6165,9 +6165,9 @@
         "partial": "部分履约"
       },
       "viewDetails": "查看详情",
-      "viewOnShopify": "在 Shopify 中查看",
+      "viewOnStore": "在 {store} 中查看",
       "detailsTitle": "订单 {name}",
-      "placedOn": "在 Shopify 店铺下单 • {date}",
+      "placedOn": "在 {store} 店铺下单 • {date}",
       "customerDetails": "客户详情",
       "shippingAddress": "收货地址",
       "noShippingAddress": "无收货地址",
@@ -6677,19 +6677,19 @@
     },
     "title": "产品",
     "shopify": {
-      "openShopify": "打开 Shopify",
+      "openStore": "打开 {store}",
       "syncProducts": "同步商品",
       "syncStarted": "同步已开始",
       "syncError": "无法开始同步",
       "viewDetails": "查看详情",
-      "editOnShopify": "在 Shopify 中编辑",
+      "editOnStore": "在 {store} 中编辑",
       "copyProductLink": "复制商品链接",
       "linkCopied": "商品链接已复制",
       "noProductLink": "此商品没有店铺链接",
       "inStock": "库存 {count}",
       "inStockWithVariants": "库存 {count}（{variants} 个变体）",
       "detailsTitle": "商品详情 — {name}",
-      "detailsSubtitle": "已从 Shopify 店铺 {shop} 同步",
+      "detailsSubtitle": "已从 {store} 店铺 {shop} 同步",
       "summaryLine": "分类：{category} • 总库存：{variants, plural, one {# 个变体} other {# 个变体}}共 {units} 件",
       "uncategorized": "未分类",
       "variantsTitle": "变体（{count}）",
@@ -10537,7 +10537,8 @@
       "payments": "支付",
       "shipping": "配送",
       "checkout": "结账",
-      "shopify": "Shopify"
+      "shopify": "Shopify",
+      "woocommerce": "WooCommerce"
     },
     "general": {
       "orderingAvailable": {
@@ -10608,10 +10609,11 @@
       },
       "storeSource": {
         "label": "店铺来源",
-        "description": "选择用于管理商品、库存和订单的店铺来源。设置为 Shopify 后，所有商品和订单都将直接在您的 Shopify 店铺中管理。",
+        "description": "选择用于管理商品、库存和订单的店铺来源。设置为 Shopify / WooCommerce 后，所有商品和订单都将直接在您的 Shopify / WooCommerce 店铺中管理。",
         "options": {
           "chatbotx": "ChatbotX",
-          "shopify": "Shopify"
+          "shopify": "Shopify",
+          "woocommerce": "WooCommerce"
         }
       }
     },
@@ -10751,9 +10753,22 @@
         "label": "自动应用折扣码",
         "description": "允许客户在跳转到结账页之前，直接在购物车中使用 Shopify 折扣码。"
       },
+      "wooCommerceCheckoutMethod": {
+        "description": "选择客户是在您 WooCommerce 店铺的付款页面付款，还是直接在网店下单（货到付款）。",
+        "options": {
+          "webCheckout": "WooCommerce 付款页面",
+          "inApp": "应用内结账"
+        }
+      },
+      "wooCommerceAutoApplyDiscounts": {
+        "description": "允许客户在跳转到结账页之前，直接在购物车中使用 WooCommerce 折扣码。"
+      },
       "inAppDeliveryCost": {
         "label": "配送费用",
         "description": "添加到应用内结账订单的配送费。"
+      },
+      "wooCommerceDeliveryCost": {
+        "description": "发送到 WooCommerce 的订单所加收的配送费，两种结账方式均适用。"
       }
     },
     "shopify": {
@@ -10799,6 +10814,46 @@
         "label": "同步状态",
         "description": "商品、折扣码和订单会从您的 Shopify 店铺镜像同步。",
         "connectedTo": "已连接到 {shopDomain}",
+        "lastSynced": "上次同步：{time}（{productCount} 件商品，{orderCount} 个订单）",
+        "neverSynced": "尚未同步",
+        "noReason": "请重新连接您的店铺以继续。",
+        "invalid": "连接已失效：{reason}",
+        "state": {
+          "idle": "空闲",
+          "queued": "同步已加入队列...",
+          "running": "正在同步...",
+          "succeeded": "上次同步成功",
+          "failed": "上次同步失败"
+        }
+      }
+    },
+    "woocommerce": {
+      "siteUrl": {
+        "label": "店铺网址",
+        "placeholder": "https://example.com",
+        "hint": "您的 WordPress 网站地址，以 https:// 开头。在 WordPress 中，Settings → Permalinks 不能设置为 Plain。",
+        "connectedHint": "已连接的 WooCommerce 店铺。"
+      },
+      "consumerKey": {
+        "label": "Consumer key",
+        "hint": "在 WooCommerce → Settings → Advanced → REST API → Add key 中创建具有 Read/Write 权限的密钥，并粘贴其 Consumer key（ck_…）。",
+        "connectedHint": "已连接密钥的开头部分。密钥以加密方式存储。"
+      },
+      "consumerSecret": {
+        "label": "Consumer secret",
+        "hint": "该密钥的 Consumer secret（cs_…），以加密方式存储。"
+      },
+      "webhookUrl": {
+        "label": "Webhook URL",
+        "description": "连接时自动在 WooCommerce 注册，以实时接收商品、库存和订单更新。"
+      },
+      "syncNow": "立即同步",
+      "syncStarted": "同步已开始",
+      "syncError": "无法开始同步",
+      "syncStatus": {
+        "label": "同步状态",
+        "description": "商品、折扣码和订单会从您的 WooCommerce 店铺镜像同步。",
+        "connectedTo": "已连接到 {store}",
         "lastSynced": "上次同步：{time}（{productCount} 件商品，{orderCount} 个订单）",
         "neverSynced": "尚未同步",
         "noReason": "请重新连接您的店铺以继续。",

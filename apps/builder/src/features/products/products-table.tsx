@@ -17,14 +17,14 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { use, useMemo, useState } from "react"
+import { ProductExternalDetailsDialog } from "@/features/external-store/components/product-external-details-dialog"
+import { ProductExternalHeaderActions } from "@/features/external-store/components/product-external-header-actions"
+import type { ExternalStoreLinks } from "@/features/external-store/lib/store-links"
 import type { listImports } from "@/features/import/queries/list-imports.queries"
-import { ProductShopifyDetailsDialog } from "@/features/shopify/components/product-shopify-details-dialog"
-import { ProductShopifyHeaderActions } from "@/features/shopify/components/product-shopify-header-actions"
 import { TemplateLockedList } from "@/features/templates/components/lock-context"
 import { ImportProductDialog } from "./components/import-product-dialog"
 import { MetaCatalogDialog } from "./components/meta-catalog-dialog"
 import { DeleteProductsDialog } from "./delete-product-dialog"
-import type { ShopifyStoreLinks } from "./lib/shopify-admin-url"
 import { getProductColumns } from "./products-table-columns"
 import { ProductsTableToolbarActions } from "./products-table-toolbar-actions"
 import type { ListProductsResponse } from "./schema/query"
@@ -37,9 +37,9 @@ type ProductsTableProps = {
   initialMetaCatalogState: Parameters<
     typeof MetaCatalogDialog
   >[0]["initialState"]
-  /** Set while the store source is Shopify: the table is read-only. */
-  shopify?: {
-    store: ShopifyStoreLinks
+  /** Set while the store source is an external store: the table is read-only. */
+  externalStore?: {
+    store: ExternalStoreLinks
   }
 }
 
@@ -48,7 +48,7 @@ export function ProductsTable({
   workspaceId,
   importHistoryPromise,
   initialMetaCatalogState,
-  shopify,
+  externalStore,
 }: ProductsTableProps) {
   const t = useTranslations()
   const router = useRouter()
@@ -59,8 +59,8 @@ export function ProductsTable({
     useState<DataTableRowAction<ProductResource> | null>(null)
 
   const columns = useMemo(
-    () => getProductColumns({ t, setRowAction, shopify }),
-    [t, shopify],
+    () => getProductColumns({ t, setRowAction, externalStore }),
+    [t, externalStore],
   )
 
   const { table } = useDataTable({
@@ -86,9 +86,9 @@ export function ProductsTable({
           {t("products.title")}
         </CardTitle>
         <CardAction>
-          {shopify ? (
-            <ProductShopifyHeaderActions
-              adminUrl={shopify.store.adminUrl}
+          {externalStore ? (
+            <ProductExternalHeaderActions
+              store={externalStore.store}
               workspaceId={workspaceId}
             />
           ) : (
@@ -130,11 +130,11 @@ export function ProductsTable({
           </DataTable>
         </TemplateLockedList>
 
-        {shopify && rowAction?.variant === "view" ? (
-          <ProductShopifyDetailsDialog
+        {externalStore && rowAction?.variant === "view" ? (
+          <ProductExternalDetailsDialog
             onOpenChange={() => setRowAction(null)}
             product={rowAction.row.original}
-            store={shopify.store}
+            store={externalStore.store}
             workspaceId={workspaceId}
           />
         ) : null}

@@ -36,16 +36,16 @@ const FULFILLMENT_CLASSES = {
     "border-transparent bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-300",
 } as const satisfies Record<FulfillmentStatus, string>
 
-type OrderShopifyStatusBadgesProps = {
+type OrderExternalStatusBadgesProps = {
   paymentStatus: PaymentStatus
   fulfillmentStatus: FulfillmentStatus | null
 }
 
-/** A Shopify order's payment badge, and its fulfillment badge when known. */
-export function OrderShopifyStatusBadges({
+/** A mirrored order's payment badge, and its fulfillment badge when known. */
+export function OrderExternalStatusBadges({
   paymentStatus,
   fulfillmentStatus,
-}: OrderShopifyStatusBadgesProps) {
+}: OrderExternalStatusBadgesProps) {
   const t = useTranslations()
   return (
     <span className="inline-flex flex-wrap items-center gap-1">

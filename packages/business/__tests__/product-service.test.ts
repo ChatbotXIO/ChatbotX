@@ -199,7 +199,7 @@ describe("productService status", () => {
         productId: "product-1",
         data: { status: "draft" },
       }),
-    ).rejects.toMatchObject({ code: "shopifyManaged" })
+    ).rejects.toMatchObject({ code: "externalStoreManaged" })
     expect(mocks.productUpdate).not.toHaveBeenCalled()
   })
 

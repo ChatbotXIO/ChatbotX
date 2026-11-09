@@ -47,6 +47,11 @@ vi.mock("../../workspace-lifecycle/with-blocked-owner-guard", () => ({
     mocks.freezeReason(...args),
 }))
 
+vi.mock("../../woocommerce/checkout", () => ({
+  buildWooCommerceWebCheckoutUrl: vi.fn(),
+  placeWooCommerceInAppOrder: vi.fn(),
+}))
+
 vi.mock("../../shopify/checkout", () => ({
   buildShopifyWebCheckoutUrl: (...args: unknown[]) =>
     mocks.buildShopifyWebCheckoutUrl(...args),
@@ -360,7 +365,7 @@ describe("webshopService.checkout", () => {
         checkout: {
           checkoutMode: "externalLink",
           checkoutLink: "https://pay.example",
-          shopifyCheckoutMethod: "webCheckout",
+          externalCheckoutMethod: "webCheckout",
         },
       }),
     )

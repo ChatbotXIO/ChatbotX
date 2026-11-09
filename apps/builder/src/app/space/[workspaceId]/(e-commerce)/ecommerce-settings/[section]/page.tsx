@@ -3,6 +3,7 @@ import {
   flowService,
   paymentProviderService,
   shopifyIntegrationService,
+  wooCommerceIntegrationService,
 } from "@chatbotx.io/business"
 import { notFound, redirect } from "next/navigation"
 import { CheckoutSettingsForm } from "@/features/ecommerce-settings/components/checkout-settings-form"
@@ -13,9 +14,10 @@ import { ShippingSettingsForm } from "@/features/ecommerce-settings/components/s
 import { getEcommerceSettings } from "@/features/ecommerce-settings/lib/get-ecommerce-settings"
 import {
   ecommerceSettingsSections,
-  shopifyHiddenSections,
+  externalStoreHiddenSections,
 } from "@/features/ecommerce-settings/lib/sections"
 import { ShopifySettingsForm } from "@/features/shopify/components/shopify-settings-form"
+import { WooCommerceSettingsForm } from "@/features/woocommerce/components/woocommerce-settings-form"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 
 export default async function EcommerceSettingsSectionPage({
@@ -31,12 +33,18 @@ export default async function EcommerceSettingsSectionPage({
   await assertCurrentUserCanAccessChatbot(workspaceId)
 
   const settings = await getEcommerceSettings(workspaceId)
-  const shopifyStatus = await shopifyIntegrationService.getStatus(workspaceId)
-  // A connected Shopify store owns payment and delivery.
-  const hiddenSections =
-    settings.general.storeSource === "shopify" && shopifyStatus.connected
-      ? shopifyHiddenSections
-      : []
+  const [shopifyStatus, wooCommerceStatus] = await Promise.all([
+    shopifyIntegrationService.getStatus(workspaceId),
+    wooCommerceIntegrationService.getStatus(workspaceId),
+  ])
+  const sellsFromConnectedStore =
+    (settings.general.storeSource === "shopify" && shopifyStatus.connected) ||
+    (settings.general.storeSource === "woocommerce" &&
+      wooCommerceStatus.connected)
+  // A connected external store owns payment and delivery.
+  const hiddenSections = sellsFromConnectedStore
+    ? externalStoreHiddenSections
+    : []
   if (hiddenSections.includes(section)) {
     redirect(`/space/${workspaceId}/ecommerce-settings/general`)
   }
@@ -83,6 +91,12 @@ export default async function EcommerceSettingsSectionPage({
         {section === "shopify" ? (
           <ShopifySettingsForm
             status={shopifyStatus}
+            workspaceId={workspaceId}
+          />
+        ) : null}
+        {section === "woocommerce" ? (
+          <WooCommerceSettingsForm
+            status={wooCommerceStatus}
             workspaceId={workspaceId}
           />
         ) : null}

@@ -2082,6 +2082,31 @@ importers:
         specifier: 'catalog:'
         version: 5.1.0(@opentelemetry/api@1.9.1)(@types/node@24.13.1)(@vitest/coverage-v8@5.1.0)(jsdom@25.0.1)(msw@2.14.6(@types/node@24.13.1)(typescript@5.9.3))(vite@7.3.5(@types/node@24.13.1)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.23.0)(yaml@2.9.0))
 
+  integrations/woocommerce:
+    dependencies:
+      ky:
+        specifier: 'catalog:'
+        version: 2.0.2
+      zod:
+        specifier: 4.6.7
+        version: 4.6.7
+    devDependencies:
+      '@chatbotx.io/typescript-config':
+        specifier: workspace:*
+        version: link:../../packages/typescript-config
+      '@chatbotx.io/vitest-config':
+        specifier: workspace:*
+        version: link:../../packages/vitest-config
+      '@types/node':
+        specifier: 24.x
+        version: 24.13.1
+      typescript:
+        specifier: ^5
+        version: 5.9.3
+      vitest:
+        specifier: 'catalog:'
+        version: 5.1.0(@opentelemetry/api@1.9.1)(@types/node@24.13.1)(@vitest/coverage-v8@5.1.0)(jsdom@25.0.1)(msw@2.14.6(@types/node@24.13.1)(typescript@5.9.3))(vite@7.3.5(@types/node@24.13.1)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.23.0)(yaml@2.9.0))
+
   integrations/zalo:
     dependencies:
       '@chatbotx.io/flow-config':
@@ -2495,6 +2520,9 @@ importers:
       '@chatbotx.io/integration-tiktok':
         specifier: workspace:*
         version: link:../../integrations/tiktok
+      '@chatbotx.io/integration-woocommerce':
+        specifier: workspace:*
+        version: link:../../integrations/woocommerce
       '@chatbotx.io/javascript-sandbox':
         specifier: workspace:*
         version: link:../javascript-sandbox

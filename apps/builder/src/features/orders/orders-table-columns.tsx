@@ -20,11 +20,11 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 import type { useTranslations } from "next-intl"
+import { OrderExternalStatusBadges } from "@/features/external-store/components/order-external-status-badges"
 import {
-  type ShopifyStoreLinks,
-  shopifyOrderAdminUrl,
-} from "@/features/products/lib/shopify-admin-url"
-import { OrderShopifyStatusBadges } from "@/features/shopify/components/order-shopify-status-badges"
+  type ExternalStoreLinks,
+  externalOrderAdminUrl,
+} from "@/features/external-store/lib/store-links"
 import { OrderPaymentBadge } from "./components/order-payment-badge"
 import { OrderStatusBadge } from "./components/order-status-badge"
 import { formatOrderMoney, type StoreCurrencyFormat } from "./lib/order-money"
@@ -41,8 +41,8 @@ type GetColumnsProps = {
   store: StoreCurrencyFormat
   workspaceId: string
   setRowAction: (action: OrderRowAction | null) => void
-  /** Set while the store source is Shopify: orders are read-only. */
-  shopifyStore?: ShopifyStoreLinks
+  /** Set while the store source is an external store: orders are read-only. */
+  externalStore?: ExternalStoreLinks
 }
 
 export function getOrderColumns({
@@ -51,15 +51,15 @@ export function getOrderColumns({
   store,
   workspaceId,
   setRowAction,
-  shopifyStore,
+  externalStore,
 }: GetColumnsProps): ColumnDef<OrderListItem>[] {
-  if (shopifyStore) {
-    return getShopifyOrderColumns({
+  if (externalStore) {
+    return getExternalStoreOrderColumns({
       t,
       locale,
       store,
       setRowAction,
-      shopifyStore,
+      externalStore,
     })
   }
 
@@ -228,14 +228,14 @@ export function getOrderColumns({
   ]
 }
 
-function getShopifyOrderColumns({
+function getExternalStoreOrderColumns({
   t,
   locale,
   store,
   setRowAction,
-  shopifyStore,
+  externalStore,
 }: Omit<GetColumnsProps, "workspaceId"> & {
-  shopifyStore: ShopifyStoreLinks
+  externalStore: ExternalStoreLinks
 }): ColumnDef<OrderListItem>[] {
   return [
     {
@@ -303,7 +303,7 @@ function getShopifyOrderColumns({
         />
       ),
       cell: ({ row }) => (
-        <OrderShopifyStatusBadges
+        <OrderExternalStatusBadges
           fulfillmentStatus={row.original.fulfillmentStatus}
           paymentStatus={row.original.paymentStatus}
         />
@@ -384,15 +384,17 @@ function getShopifyOrderColumns({
             <DropdownMenuItem
               render={
                 <a
-                  href={shopifyOrderAdminUrl({
-                    adminUrl: shopifyStore.adminUrl,
+                  href={externalOrderAdminUrl({
+                    store: externalStore,
                     externalId: row.original.externalId,
                   })}
                   rel="noopener noreferrer"
                   target="_blank"
                 >
                   <ExternalLinkIcon className="me-2 h-4 w-4" />
-                  {t("orders.shopify.viewOnShopify")}
+                  {t("orders.shopify.viewOnStore", {
+                    store: externalStore.storeName,
+                  })}
                 </a>
               }
             />

@@ -1,4 +1,12 @@
 import { z } from "zod"
+import {
+  type ExternalStoreConnectionStatus,
+  type ExternalStoreSyncScope,
+  type ExternalStoreSyncStatus,
+  externalStoreConnectionStatuses,
+  externalStoreSyncScopes,
+  externalStoreSyncStatuses,
+} from "./external-store"
 
 /**
  * How the store's Shopify app authenticates:
@@ -29,21 +37,15 @@ export const shopifyAuthSecretSchema = z.discriminatedUnion("kind", [
 export type ShopifyAuthSecret = z.infer<typeof shopifyAuthSecretSchema>
 
 /** `active` until Shopify refuses the credentials or the app is uninstalled. */
-export const shopifyConnectionStatuses = z.enum(["active", "invalid"])
-export type ShopifyConnectionStatus = z.infer<typeof shopifyConnectionStatuses>
+export const shopifyConnectionStatuses = externalStoreConnectionStatuses
+export type ShopifyConnectionStatus = ExternalStoreConnectionStatus
 
-export const shopifySyncStatuses = z.enum([
-  "idle",
-  "queued",
-  "running",
-  "succeeded",
-  "failed",
-])
-export type ShopifySyncStatus = z.infer<typeof shopifySyncStatuses>
+export const shopifySyncStatuses = externalStoreSyncStatuses
+export type ShopifySyncStatus = ExternalStoreSyncStatus
 
 /** What a manual sync pulls again. */
-export const shopifySyncScopes = z.enum(["all", "products", "orders"])
-export type ShopifySyncScope = z.infer<typeof shopifySyncScopes>
+export const shopifySyncScopes = externalStoreSyncScopes
+export type ShopifySyncScope = ExternalStoreSyncScope
 
 const URL_SCHEME = /^https?:\/\//
 const URL_PATH = /\/.*$/

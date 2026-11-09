@@ -4,7 +4,9 @@ The store side of ChatbotX after the catalog: orders, the vendors products are
 sold by, and the per-workspace store settings. Products, categories, Meta
 Catalog sync and product messages are covered in
 [`product-messages.md`](./product-messages.md). A store can instead mirror a
-Shopify store (`storeSource: shopify`): see [`shopify.md`](./shopify.md).
+Shopify store (`storeSource: shopify`): see [`shopify.md`](./shopify.md); a
+WooCommerce store (`storeSource: woocommerce`): see
+[`woocommerce.md`](./woocommerce.md).
 
 ## Data model
 

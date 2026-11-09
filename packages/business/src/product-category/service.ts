@@ -3,6 +3,7 @@ import {
   db,
   isUniqueViolationError,
 } from "@chatbotx.io/database/client"
+import { isExternalStoreSource } from "@chatbotx.io/database/partials"
 import {
   discountCodeRepository,
   productCategoryRepository,
@@ -10,7 +11,7 @@ import {
 import { BaseService } from "../base.service"
 import { resolveStoreSource } from "../ecommerce-settings/store-source"
 import { ChatbotXException, notFoundException } from "../errors"
-import { shopifyManagedException } from "../shopify/errors"
+import { externalStoreManagedException } from "../external-store/errors"
 import {
   assertResourceEditable,
   changedKeysOf,
@@ -121,12 +122,13 @@ class ProductCategoryService extends BaseService {
     workspaceId: string
     categoryId: string
   }) {
-    if ((await resolveStoreSource(input.workspaceId)) !== "shopify") {
+    const storeSource = await resolveStoreSource(input.workspaceId)
+    if (!isExternalStoreSource(storeSource)) {
       return
     }
     const row = await productCategoryRepository.find(input)
-    if (row?.source === "shopify") {
-      throw shopifyManagedException()
+    if (row?.source === storeSource) {
+      throw externalStoreManagedException(storeSource)
     }
   }
 
@@ -138,8 +140,9 @@ class ProductCategoryService extends BaseService {
     imageUrl?: string | null
     isVisible?: boolean
   }) {
-    if ((await resolveStoreSource(input.workspaceId)) === "shopify") {
-      throw shopifyManagedException()
+    const storeSource = await resolveStoreSource(input.workspaceId)
+    if (isExternalStoreSource(storeSource)) {
+      throw externalStoreManagedException(storeSource)
     }
     const name = normalizeCategoryName(input.name)
     if (!name) {

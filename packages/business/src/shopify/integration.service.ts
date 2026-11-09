@@ -4,10 +4,7 @@ import {
   type ShopifySyncScope,
   shopifyShopDomainSchema,
 } from "@chatbotx.io/database/partials"
-import {
-  ecommerceSettingsRepository,
-  shopifyRepository,
-} from "@chatbotx.io/database/repositories"
+import { shopifyRepository } from "@chatbotx.io/database/repositories"
 import type { IntegrationShopifyModel } from "@chatbotx.io/database/types"
 import {
   createShopifyWebhookSubscription,
@@ -26,7 +23,10 @@ import {
   integrationQueue,
 } from "@chatbotx.io/worker-config"
 import { BaseService } from "../base.service"
-import { ecommerceSettingsCacheTag } from "../ecommerce-settings/store-source"
+import {
+  ecommerceSettingsCacheTag,
+  switchStoreBackFrom,
+} from "../ecommerce-settings/store-source"
 import { logger } from "../logger"
 import { resolveWorkspaceAppUrl } from "../platform/settings"
 import {
@@ -335,10 +335,7 @@ class ShopifyIntegrationService extends BaseService {
   }
 
   private async switchStoreBackToChatbotx(workspaceId: string) {
-    await ecommerceSettingsRepository.setStoreSource({
-      workspaceId,
-      storeSource: "chatbotx",
-    })
+    await switchStoreBackFrom(workspaceId, "shopify")
     await this.invalidateCacheTags(ecommerceSettingsCacheTag(workspaceId))
   }
 

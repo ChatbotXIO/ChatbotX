@@ -31,15 +31,20 @@ export const publicProductResource = createSelectSchema(productModel, {
   inventoryPolicy: inventoryPolicyTypes,
   vendorId: z.string().nullable(),
   source: storeSources.describe(
-    "`shopify` for a product mirrored from the connected Shopify store: read-only, edited in Shopify — its `status` included.",
+    "`shopify` or `woocommerce` for a product mirrored from the connected store: read-only, edited on that store — its `status` included.",
   ),
-  externalId: z.string().nullable().describe("Shopify's product GID."),
+  externalId: z
+    .string()
+    .nullable()
+    .describe(
+      "The store's product id: Shopify's product GID, or WooCommerce's product id.",
+    ),
   externalHandle: z
     .string()
     .nullable()
-    .describe("Shopify's product handle, as in its storefront URL."),
+    .describe("The product's handle (Shopify) or slug (WooCommerce)."),
   status: productStatuses.describe(
-    "Only `active` is shown and orderable; `draft` and `unlisted` are hidden. A Shopify product mirrors Shopify's status (`ARCHIVED` reads as `draft`); set our own products' status with `products.setActive`.",
+    "Only `active` is shown and orderable; `draft` and `unlisted` are hidden. A mirrored product follows its store's status (Shopify `ARCHIVED` and WooCommerce drafts read as `draft`; a hidden or private WooCommerce product as `unlisted`); set our own products' status with `products.setActive`.",
   ),
 })
   .extend({
@@ -101,13 +106,15 @@ const variant = z.object({
     .nullable()
     .optional()
     .describe(
-      "Stock of this variant alone (Shopify variants); null when stock is kept on the product.",
+      "Stock of this variant alone (Shopify and WooCommerce variants); null when stock is kept on the product.",
     ),
   externalId: z
     .string()
     .nullable()
     .optional()
-    .describe("Shopify's variant GID."),
+    .describe(
+      "The store's variant id: Shopify's variant GID, or WooCommerce's variation id (with `~n` for one of an \"Any …\" variation's combinations).",
+    ),
 })
 
 const addon = z.object({

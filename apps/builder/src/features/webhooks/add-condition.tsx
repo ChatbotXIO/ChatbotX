@@ -1,6 +1,7 @@
 "use client"
 
 import {
+  isExternalStoreSource,
   type StoreSource,
   type TriggerEventType,
   triggerEventTypes,
@@ -37,7 +38,7 @@ type ConditionOption = {
 }
 
 /**
- * WhatsApp catalog events; a Shopify store has no WhatsApp catalog, so they
+ * WhatsApp catalog events; an external store (Shopify, WooCommerce) has no WhatsApp catalog, so they
  * can never fire there.
  */
 const WHATSAPP_CATALOG_EVENTS: ReadonlySet<TriggerEventType> = new Set([
@@ -217,7 +218,10 @@ export function AddCondition({
           )
             .filter(
               (type) =>
-                storeSource !== "shopify" || !WHATSAPP_CATALOG_EVENTS.has(type),
+                !(
+                  isExternalStoreSource(storeSource) &&
+                  WHATSAPP_CATALOG_EVENTS.has(type)
+                ),
             )
             .map((type) => ({
               label: t(`trigger.conditions.${type}`),
