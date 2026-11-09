@@ -19,8 +19,6 @@ export type ProvisionResellerAccountInput = {
   email: string
   /** End-customer's display name. */
   name: string
-  /** Live vs test credential selector; defaults to test. */
-  livemode?: boolean
   /** Override the sign-in link; defaults to the reseller's branded app URL. */
   signInUrl?: string
 }
@@ -45,7 +43,6 @@ export async function provisionResellerAccount(
   input: ProvisionResellerAccountInput,
 ): Promise<ProvisionResellerAccountResult> {
   const { resellerUserId, email, name } = input
-  const livemode = input.livemode ?? false
 
   // The Facebook placeholder domain belongs to phone-only Facebook users; a
   // verified row on it would capture that person's Facebook sign-in while the
@@ -65,7 +62,6 @@ export async function provisionResellerAccount(
   const smtp = await platformCredentialService.findDecryptedForUser({
     userId: resellerUserId,
     type: "smtp",
-    livemode,
   })
   if (!smtp) {
     throw new ChatbotXException(

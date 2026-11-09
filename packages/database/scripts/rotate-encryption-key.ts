@@ -25,6 +25,8 @@ import {
   type CredentialType,
   credentialEncryptedSchema,
   credentialSchemas,
+  platformCredentialAad,
+  userCredentialAad,
 } from "../src/partials/credential"
 import { platformCredentialModel } from "../src/schema/platform-credential"
 
@@ -63,8 +65,8 @@ const main = async (): Promise<void> => {
       const blob = credentialEncryptedSchema.parse(row.value)
       const type = row.type as CredentialType
       const aad = row.userId
-        ? `user:${row.userId}:${type}:${row.livemode}`
-        : `platform:${type}:${row.livemode}`
+        ? userCredentialAad(row.userId, type)
+        : platformCredentialAad(type)
       const schema = credentialSchemas[type] as unknown as z.ZodType<
         CredentialByType[CredentialType]
       >

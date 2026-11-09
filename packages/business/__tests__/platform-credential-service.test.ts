@@ -27,11 +27,13 @@ vi.mock("@chatbotx.io/database/partials", () => ({
   credentialSchemas: {
     threads: {},
   },
+  platformCredentialAad: (type: string) => `platform:${type}:false`,
+  userCredentialAad: (userId: string, type: string) =>
+    `user:${userId}:${type}:false`,
 }))
 vi.mock("@chatbotx.io/database/schema", () => ({
   platformCredentialModel: {
     id: "id",
-    livemode: "livemode",
     publicConfig: "publicConfig",
     type: "type",
     usePlatformCredential: "usePlatformCredential",
@@ -384,7 +386,6 @@ describe("findDecryptedThreadsByClientId", () => {
     const row = {
       createdAt: new Date("2026-08-12T00:00:00Z"),
       id: "platform-row",
-      livemode: false,
       publicConfig: { clientId: "thread-app" },
       type: "threads",
       updatedAt: new Date("2026-08-12T00:00:00Z"),

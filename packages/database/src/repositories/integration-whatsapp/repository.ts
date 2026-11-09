@@ -203,7 +203,7 @@ const providerAccountScopeFilter = (
         sql`NOT (${isManualIntegration})`,
         connectedThroughApp(
           scope.appId,
-          sql`NOT EXISTS (SELECT 1 FROM ${platformCredentialModel} WHERE ${platformCredentialModel.userId} = ${credentialOwnerId} AND ${platformCredentialModel.type} = 'whatsapp' AND ${platformCredentialModel.usePlatformCredential} = false AND ${platformCredentialModel.livemode} = false)`,
+          sql`NOT EXISTS (SELECT 1 FROM ${platformCredentialModel} WHERE ${platformCredentialModel.userId} = ${credentialOwnerId} AND ${platformCredentialModel.type} = 'whatsapp' AND ${platformCredentialModel.usePlatformCredential} = false)`,
         ),
       )
     default: {
