@@ -15,6 +15,8 @@ import {
 } from "@chatbotx.io/flow-config"
 import { createId } from "@chatbotx.io/utils"
 import {
+  type FlowJobPriorityOptions,
+  flowContinuationJobOptions,
   IntegrationJobAction,
   type IntegrationJobData,
   integrationQueue,
@@ -25,6 +27,8 @@ import { logger } from "../../lib/logger"
 type SmartDelayJobSpec = {
   name: IntegrationJobData["type"]
   data: IntegrationJobData
+  /** The resumed run's tier (`flowContinuationJobOptions`). */
+  opts: FlowJobPriorityOptions
 }
 
 type SmartDelayResumeJobExtras = {
@@ -44,15 +48,22 @@ const parseResumeMetadata = (
   return parsed.success ? parsed.data : undefined
 }
 
+const resolveResumeMetadata = (
+  row: SmartDelayRow,
+  extras?: SmartDelayResumeJobExtras,
+): MetadataPayload | undefined =>
+  extras?.metadata ?? parseResumeMetadata(row.metadata)
+
 export const buildSendFlowResumeJob = (
   row: SmartDelayRow,
   extras?: SmartDelayResumeJobExtras,
 ): SmartDelayJobSpec => {
-  const metadata = extras?.metadata ?? parseResumeMetadata(row.metadata)
+  const metadata = resolveResumeMetadata(row, extras)
   const appointmentId = extras?.appointmentId ?? row.appointmentId ?? undefined
 
   return {
     name: IntegrationJobAction.sendFlow,
+    opts: flowContinuationJobOptions(metadata),
     data: {
       type: IntegrationJobAction.sendFlow,
       data: {
@@ -69,8 +80,12 @@ export const buildSendFlowResumeJob = (
   }
 }
 
-const buildResumeFollowUpJob = (row: SmartDelayRow): SmartDelayJobSpec => ({
+const buildResumeFollowUpJob = (
+  row: SmartDelayRow,
+  extras?: SmartDelayResumeJobExtras,
+): SmartDelayJobSpec => ({
   name: IntegrationJobAction.resumeFollowUp,
+  opts: flowContinuationJobOptions(resolveResumeMetadata(row, extras)),
   data: {
     type: IntegrationJobAction.resumeFollowUp,
     data: { smartDelayId: row.id },
@@ -79,8 +94,10 @@ const buildResumeFollowUpJob = (row: SmartDelayRow): SmartDelayJobSpec => ({
 
 const buildResumeQuickReplyFollowUpJob = (
   row: SmartDelayRow,
+  extras?: SmartDelayResumeJobExtras,
 ): SmartDelayJobSpec => ({
   name: IntegrationJobAction.resumeQuickReplyFollowUp,
+  opts: flowContinuationJobOptions(resolveResumeMetadata(row, extras)),
   data: {
     type: IntegrationJobAction.resumeQuickReplyFollowUp,
     data: { smartDelayId: row.id },
@@ -89,16 +106,22 @@ const buildResumeQuickReplyFollowUpJob = (
 
 const buildResumeStepInputTimeoutJob = (
   row: SmartDelayRow,
+  extras?: SmartDelayResumeJobExtras,
 ): SmartDelayJobSpec => ({
   name: IntegrationJobAction.resumeStepInputTimeout,
+  opts: flowContinuationJobOptions(resolveResumeMetadata(row, extras)),
   data: {
     type: IntegrationJobAction.resumeStepInputTimeout,
     data: { smartDelayId: row.id },
   },
 })
 
-const buildResumeWaitJob = (row: SmartDelayRow): SmartDelayJobSpec => ({
+const buildResumeWaitJob = (
+  row: SmartDelayRow,
+  extras?: SmartDelayResumeJobExtras,
+): SmartDelayJobSpec => ({
   name: IntegrationJobAction.resumeWait,
+  opts: flowContinuationJobOptions(resolveResumeMetadata(row, extras)),
   data: {
     type: IntegrationJobAction.resumeWait,
     data: { smartDelayId: row.id },
@@ -189,6 +212,7 @@ export async function scheduleSmartDelayResume(props: {
       appointmentId: props.appointmentId,
     })
     await integrationQueue.add(job.name, job.data, {
+      ...job.opts,
       delay: Math.max(0, diffMs),
       jobId: buildJobId(persistedRow.id, persistedRow.triggerAt),
     })

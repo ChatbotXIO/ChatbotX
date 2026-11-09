@@ -43,6 +43,9 @@ export const env = createEnv({
       .min(1)
       .max(200)
       .default(50),
+    // A slot is mostly idle I/O: a message step holds it while the `chat` queue
+    // sends. Raise together with CHAT_WORKER_CONCURRENCY (keep chat at least half
+    // of this) and DATABASE_POOL_MAX; see docs/scaling-messaging.md.
     INTEGRATION_WORKER_CONCURRENCY: z.coerce
       .number()
       .int()

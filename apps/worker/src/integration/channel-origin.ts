@@ -5,6 +5,7 @@ import {
 
 const CHANNEL_ORIGINATED_JOB_TYPES: ReadonlySet<string> = new Set([
   IntegrationJobAction.incomingMessage,
+  IntegrationJobAction.incomingMessageEcho,
   IntegrationJobAction.incomingComment,
   IntegrationJobAction.runFlowPostback,
   IntegrationJobAction.runFlowQuickReply,

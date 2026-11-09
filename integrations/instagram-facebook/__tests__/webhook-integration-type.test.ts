@@ -87,6 +87,41 @@ describe("instagram-facebook webhook integrationType routing", () => {
     )
   })
 
+  test("an echo of a message the account sent is enqueued as incomingMessageEcho", async () => {
+    const body = JSON.stringify({
+      object: "instagram",
+      entry: [
+        {
+          id: "ig-account-id",
+          time: 1_783_674_105,
+          messaging: [
+            {
+              sender: { id: "ig-account-id" },
+              recipient: { id: "customer-id" },
+              timestamp: 1_783_674_105,
+              message: { mid: "mid-echo", text: "agent reply", is_echo: true },
+            },
+          ],
+        },
+      ],
+    })
+    const add = vi.fn()
+
+    await webhookHandler({
+      config: { clientSecret: CLIENT_SECRET },
+      req: await signedRequest(body),
+      queue: { add },
+    } as never)
+
+    expect(add).toHaveBeenCalledWith(
+      "incomingMessageEcho",
+      expect.objectContaining({
+        type: "incomingMessageEcho",
+        data: expect.objectContaining({ integrationType: "instagram" }),
+      }),
+    )
+  })
+
   test("contactMarkAsRead is still enqueued with integrationType instagram (unchanged)", async () => {
     const body = JSON.stringify({
       object: "instagram",

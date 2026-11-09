@@ -903,6 +903,86 @@ describe("executeMultipleSteps — explicit status routing", () => {
     expect(secondOptions.jobId).toBe(firstOptions.jobId)
   })
 
+  test.each([
+    ["a live flow", undefined, undefined],
+    ["a broadcast run", { type: "broadcast" }, 5],
+    ["a sequence run", { type: "sequenceSchedule" }, 5],
+  ] as const)("queues the state continuation of %s with priority %s and keeps its jobId", async (_label, metadata, priority) => {
+    const stateId = "state-ok"
+    const step = makeStep("autoAssignConversation", [
+      { id: stateId, stateType: "success" },
+    ])
+    const flowVersion = makeFlowVersion(
+      [],
+      [
+        {
+          id: "e1",
+          source: "n1",
+          sourceHandle: stateId,
+          target: "success-node",
+          targetHandle: "input",
+        },
+      ],
+    )
+    const { flowStepHandlers } = await import(
+      "../src/integration/handlers/step"
+    )
+    mockSpy(flowStepHandlers, "autoAssignConversation").mockResolvedValue({
+      status: "success",
+      result: null,
+    })
+
+    await executeMultipleSteps({
+      ...makeBaseProps(flowVersion),
+      flowExecutionKey: "parent-job-1:123",
+      nodeVisits: { "node-1": 1 },
+      metadata,
+      steps: [step],
+    })
+
+    const [, , options] = integrationQueueAdd.mock.calls[0] as unknown as [
+      string,
+      unknown,
+      { jobId?: string; priority?: number },
+    ]
+    expect(options.priority).toBe(priority)
+    expect(options.jobId).toMatch(stateContinuationJobIdPattern)
+  })
+
+  test("queues a live continuation without a durable key with no priority", async () => {
+    const stateId = "state-ok"
+    const step = makeStep("autoAssignConversation", [
+      { id: stateId, stateType: "success" },
+    ])
+    const flowVersion = makeFlowVersion(
+      [],
+      [
+        {
+          id: "e1",
+          source: "n1",
+          sourceHandle: stateId,
+          target: "success-node",
+          targetHandle: "input",
+        },
+      ],
+    )
+    const { flowStepHandlers } = await import(
+      "../src/integration/handlers/step"
+    )
+    mockSpy(flowStepHandlers, "autoAssignConversation").mockResolvedValue({
+      status: "success",
+      result: null,
+    })
+
+    await executeMultipleSteps({ ...makeBaseProps(flowVersion), steps: [step] })
+
+    expect(integrationQueueAdd).toHaveBeenCalledWith(
+      "sendFlow",
+      expect.anything(),
+      {},
+    )
+  })
+
   test("error status routes to error-connected node, not success node", async () => {
     const successStateId = "state-ok"
     const errorStateId = "state-err"

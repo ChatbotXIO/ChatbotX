@@ -24,6 +24,13 @@ install, sync, uninstall and fan-out) in `src/default/worker.ts`. Marketing Mess
 campaign steps have their own `marketingMessage` worker, while schedule crons enqueue them.
 Check `apps/worker/tsdown.config.ts` for the authoritative entry list.
 
+The `low` queue is a workload-class queue too: besides media and replay backfill it hosts the
+bookkeeping ingress that `enqueueIntegrationJob` routes off `integration` (`messageStatus`
+without a flow branch, `contactMarkAsRead`, `incomingMessageEcho`), so a new "nobody waits
+on this" webhook action is added to `isLowRoutedIntegrationJob` and `LowRoutedIntegrationJob`
+(`packages/worker-config/src/queues/integration/index.ts`), not given a queue of its own.
+Producers of bulk work on `low` set `priority: LOW_BULK_PRIORITY` so that ingress passes them.
+
 The `heavy` queue/worker is a **workload-class** queue, not a domain queue:
 use it for bounded but RAM/CPU/I/O/model-heavy jobs that should not occupy
 latency-sensitive domain workers. AI file processing, media generation,

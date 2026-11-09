@@ -12,6 +12,7 @@ const { runFlowNode, smartDelayService } = vi.hoisted(() => ({
 vi.mock("@chatbotx.io/business/smart-delay", () => ({ smartDelayService }))
 
 vi.mock("@chatbotx.io/worker-config", () => ({
+  flowContinuationJobOptions: () => ({}),
   IntegrationJobAction: {
     resumeFollowUp: "resumeFollowUp",
     resumeWait: "resumeWait",

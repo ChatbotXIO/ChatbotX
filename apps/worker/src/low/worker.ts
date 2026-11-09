@@ -14,39 +14,87 @@ import { env } from "../env"
 import { captureContactProfileSnapshot } from "../integration/handlers/capture-contact-profile-snapshot"
 import { coexistAttachmentDownload } from "../integration/handlers/coexist/attachment-download"
 import { updateContactAvatar } from "../integration/handlers/contact/update-avatar"
+import { contactMarkAsRead } from "../integration/handlers/conversation"
+import { processIncomingMessage } from "../integration/handlers/incoming-message"
+import { handleMessageStatus } from "../integration/handlers/message-status"
 import { receiveComment } from "../integration/handlers/received-message"
+import { runIntegrationJobWithWebhookContext } from "../integration/job-context"
 import { processLeaderboardJob } from "../leaderboard/process-job"
 import { createQueueWorker } from "../lib/create-queue-worker"
+import { deferOnLockContention } from "../lib/lock-contention-deferral"
 import { logger } from "../lib/logger"
+import { resolveWorkspaceId } from "../lib/resolve-workspace-id"
 import { runJobWithAuditContext } from "../lib/run-job-with-audit-context"
 import { runWorker } from "../lib/shutdown"
 
 /**
- * Runs one `low` job behind the blocked-owner guard, dispatching on its type.
+ * The workspace a `low` job belongs to. Jobs routed here from the integration
+ * ingress carry only the integration identifiers, so they resolve through the
+ * integration, as the integration worker does; `undefined` (unresolvable) makes
+ * the guard fail open, like every other job that cannot be attributed.
  */
-async function processLowJob(job: Job<LowJobData>): Promise<void> {
-  const workspaceId = job.data.data.workspaceId
+async function resolveLowJobWorkspaceId(
+  data: LowJobData["data"],
+): Promise<string | undefined> {
+  return "workspaceId" in data
+    ? data.workspaceId
+    : await resolveWorkspaceId(data)
+}
+
+/**
+ * Runs one `low` job behind the blocked-owner guard, dispatching on its type.
+ * `token` is the worker lock token an echo needs to be parked in the delayed
+ * set when it loses a distributed-lock race.
+ */
+async function processLowJob(
+  job: Job<LowJobData>,
+  token: string | undefined,
+): Promise<void> {
+  const workspaceId = await resolveLowJobWorkspaceId(job.data.data)
   await withBlockedOwnerGuard(workspaceId, async () => {
     await runJobWithAuditContext(
       { workspaceId, source: `low:${job.data.type}` },
       async () => {
-        switch (job.data.type) {
+        const jobData = job.data
+        switch (jobData.type) {
           case LowJobAction.coexistAttachmentDownload: {
-            await coexistAttachmentDownload(job, job.data.data)
+            await coexistAttachmentDownload(job, jobData.data)
             return
           }
           case LowJobAction.updateContactAvatar: {
-            await updateContactAvatar(job.data.data)
+            await updateContactAvatar(jobData.data)
             return
           }
           case LowJobAction.replayMissedComment: {
-            await receiveComment(job.data.data)
+            await receiveComment(jobData.data)
+            return
+          }
+          case LowJobAction.messageStatus: {
+            await runIntegrationJobWithWebhookContext(jobData, () =>
+              handleMessageStatus(jobData.data, job),
+            )
+            return
+          }
+          case LowJobAction.contactMarkAsRead: {
+            await runIntegrationJobWithWebhookContext(jobData, () =>
+              contactMarkAsRead(jobData.data),
+            )
+            return
+          }
+          case LowJobAction.incomingMessageEcho: {
+            // Same lock-race policy as the integration queue: a lost race
+            // defers the echo instead of burning one of its two attempts.
+            await deferOnLockContention(job, token, () =>
+              runIntegrationJobWithWebhookContext(jobData, () =>
+                processIncomingMessage(jobData.data),
+              ),
+            )
             return
           }
           default: {
             // Exhaustiveness guard — a new LowJobData variant without a
             // case here becomes a compile error.
-            const _exhaustive: never = job.data
+            const _exhaustive: never = jobData
             logger.warn({ data: _exhaustive }, "Unhandled low job type")
             return
           }
@@ -100,9 +148,9 @@ async function settleMissedCommentReplay(job: Job<LowJobData>): Promise<void> {
 function startLowWorker() {
   createQueueWorker(
     queueNames.enum.low,
-    async (job: Job<LowJobData>) => {
+    async (job: Job<LowJobData>, token) => {
       try {
-        await processLowJob(job)
+        await processLowJob(job, token)
       } finally {
         await settleMissedCommentReplay(job)
       }

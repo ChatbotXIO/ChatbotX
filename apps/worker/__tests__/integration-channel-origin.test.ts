@@ -24,6 +24,20 @@ describe("isChannelOriginatedJob", () => {
     expect(isChannelOriginatedJob(jobData)).toBe(true)
   })
 
+  test("treats a channel echo as channel-originated so it runs in webhook context", () => {
+    const jobData = {
+      type: IntegrationJobAction.incomingMessageEcho,
+      data: {
+        integrationType: "zalo",
+        integrationIdentifier: "oa-1",
+        payload: {},
+      },
+    } satisfies IntegrationJobData
+
+    expect(isChannelOriginatedJob(jobData)).toBe(true)
+    expect(isInboundWebhookJob(jobData)).toBe(true)
+  })
+
   test("keeps questionnaire challenge replies in webhook context", () => {
     const jobData = {
       type: IntegrationJobAction.runChallenge,

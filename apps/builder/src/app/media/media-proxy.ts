@@ -11,6 +11,7 @@ import type { MediaTokenPayload } from "@chatbotx.io/encryption"
 import { verifyMediaToken } from "@chatbotx.io/encryption"
 import { getPublicOriginFromRequest } from "@chatbotx.io/utils"
 import {
+  LOW_BULK_PRIORITY,
   LowJobAction,
   type LowJobCoexistAttachmentDownload,
   lowQueue,
@@ -148,7 +149,7 @@ const addAttachmentJob = (
     .add(
       LowJobAction.coexistAttachmentDownload,
       { type: LowJobAction.coexistAttachmentDownload, data },
-      options,
+      { ...options, priority: LOW_BULK_PRIORITY },
     )
     .catch((err: unknown) => {
       httpLogger.error(
@@ -238,6 +239,7 @@ export const enqueueAvatarMirror = (input: {
       },
       {
         jobId: `update-avatar-${input.contactInboxId}`,
+        priority: LOW_BULK_PRIORITY,
         attempts: 2,
         removeOnComplete: true,
         removeOnFail: { count: 100 },

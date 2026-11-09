@@ -82,18 +82,18 @@ describe("webhookHandler", () => {
   })
 
   test.each([
-    "im_receive_msg",
-    "im_send_msg",
-  ])("enqueues %s as an incoming TikTok message", async (event) => {
+    ["im_receive_msg", "incomingMessage"],
+    ["im_send_msg", "incomingMessageEcho"],
+  ])("enqueues %s as an incoming TikTok message", async (event, expectedJob) => {
     const payload = buildPayload(event)
 
     await expect(webhookHandler(makeProps(payload, queue))).resolves.toBe("ok")
 
     expect(queue.add).toHaveBeenCalledTimes(1)
     const [jobName, job, options] = queue.add.mock.calls[0] ?? []
-    expect(jobName).toBe("incomingMessage")
+    expect(jobName).toBe(expectedJob)
     expect(job).toEqual({
-      type: "incomingMessage",
+      type: expectedJob,
       data: {
         integrationType: "tiktok",
         integrationIdentifier: "account-open-id",

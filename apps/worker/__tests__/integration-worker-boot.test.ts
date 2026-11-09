@@ -24,6 +24,12 @@ const workerState = vi.hoisted(() => ({
   capturedWorkers: [] as CapturedWorker[],
   dispatchAdsConversionJob: vi.fn(async () => undefined),
   ensureBootstrapped: vi.fn(async () => undefined),
+  getJobCounts: vi.fn(async () => ({
+    waiting: 3,
+    prioritized: 2,
+    delayed: 1,
+    active: 4,
+  })),
   getStoryReply: vi.fn(),
   handleWhatsappIdentityChange: vi.fn(async () => undefined),
   receiveMessage: vi.fn(),
@@ -76,6 +82,7 @@ vi.mock("@chatbotx.io/worker-config", async () => ({
   HeavyJobAction: { aiGenerateImage: "aiGenerateImage" },
   IntegrationJobAction: {
     incomingMessage: "incomingMessage",
+    incomingMessageEcho: "incomingMessageEcho",
     processAutomatedResonse: "processAutomatedResponse",
     commentAIReply: "commentAIReply",
     processStoryReplyAutomation: "processStoryReplyAutomation",
@@ -87,10 +94,14 @@ vi.mock("@chatbotx.io/worker-config", async () => ({
     whatsappIdentityChange: "whatsappIdentityChange",
   },
   PURGE_WORKSPACES_INTERVAL_MINUTES: 60,
-  integrationQueue: { add: vi.fn() },
+  chatQueue: { getJobCounts: workerState.getJobCounts },
+  integrationQueue: { add: vi.fn(), getJobCounts: workerState.getJobCounts },
+  lowQueue: { getJobCounts: workerState.getJobCounts },
   queueNames: {
     enum: {
       integration: "integration",
+      chat: "chat",
+      low: "low",
       callTranscription: "callTranscription",
       whatsappVoipSignaling: "whatsappVoipSignaling",
     },
@@ -293,10 +304,15 @@ vi.mock("../src/integration/routing", async (importOriginal) => ({
 // Importing the worker module boots it exactly once (ESM module cache) —
 // the three `new Worker(...)` calls happen as a side effect of this import,
 // so they must happen once, before any assertions, rather than per-test.
+const setIntervalSpy = vi.spyOn(globalThis, "setInterval")
 await import("../src/integration/worker")
 await vi.waitFor(() => {
   expect(workerState.capturedWorkers).toHaveLength(3)
 })
+// Captured at boot: mock call history is cleared between tests.
+const queueDepthTick = setIntervalSpy.mock.calls.find(
+  ([, delay]) => delay === 60_000,
+)?.[0] as (() => void) | undefined
 
 describe("integration worker process boot", () => {
   test("boots exactly three Workers: the shared integration queue, the dedicated callTranscription queue, and the dedicated whatsappVoipSignaling queue", () => {
@@ -305,6 +321,54 @@ describe("integration worker process boot", () => {
     expect(workerState.capturedWorkers[1]?.queueName).toBe("callTranscription")
     expect(workerState.capturedWorkers[2]?.queueName).toBe(
       "whatsappVoipSignaling",
+    )
+  })
+
+  test("logs the depth of the integration, chat and low queues every minute", async () => {
+    const { logger } = await import("../src/lib/logger")
+    expect(queueDepthTick).toBeDefined()
+    vi.mocked(logger.info).mockClear()
+
+    queueDepthTick?.()
+    await vi.waitFor(() => {
+      expect(logger.info).toHaveBeenCalledTimes(3)
+    })
+
+    expect(vi.mocked(logger.info).mock.calls.map(([fields]) => fields)).toEqual(
+      [
+        {
+          queue: "integration",
+          waiting: 3,
+          prioritized: 2,
+          delayed: 1,
+          active: 4,
+        },
+        { queue: "chat", waiting: 3, prioritized: 2, delayed: 1, active: 4 },
+        { queue: "low", waiting: 3, prioritized: 2, delayed: 1, active: 4 },
+      ],
+    )
+    expect(workerState.getJobCounts).toHaveBeenCalledWith(
+      "waiting",
+      "prioritized",
+      "delayed",
+      "active",
+    )
+  })
+
+  test("a failed depth read is logged and does not stop the other queues", async () => {
+    const { logger } = await import("../src/lib/logger")
+    vi.mocked(logger.info).mockClear()
+    vi.mocked(logger.warn).mockClear()
+    workerState.getJobCounts.mockRejectedValueOnce(new Error("redis down"))
+
+    queueDepthTick?.()
+    await vi.waitFor(() => {
+      expect(logger.info).toHaveBeenCalledTimes(2)
+    })
+
+    expect(logger.warn).toHaveBeenCalledWith(
+      expect.objectContaining({ queue: "integration" }),
+      "Failed to read queue depth",
     )
   })
 

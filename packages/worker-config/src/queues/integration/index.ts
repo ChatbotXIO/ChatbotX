@@ -13,10 +13,12 @@ import type {
   ContactInboxModel,
   ConversationModel,
 } from "@chatbotx.io/database/types"
-import type {
-  FlowActionTargetType,
-  MetadataPayload,
-  StepInputResolutionReason,
+import {
+  BROADCAST_PAYLOAD_TYPE,
+  type FlowActionTargetType,
+  type MetadataPayload,
+  SEQUENCE_SCHEDULE_PAYLOAD_TYPE,
+  type StepInputResolutionReason,
 } from "@chatbotx.io/flow-config"
 import type {
   ChannelAudienceEventJobData,
@@ -32,6 +34,7 @@ import {
   isNoRedisEnv,
 } from "../../lib/connection"
 import { queueNames } from "../../lib/types"
+import { lowQueue } from "../low"
 import type { BotResponseTrackingContext } from "../types"
 import type { ResolvedFlowFile } from "./flow-response-files"
 
@@ -46,6 +49,7 @@ export const IntegrationJobAction = {
   sendSequenceFlow: "sendSequenceFlow",
   runRef: "runRef",
   incomingMessage: "incomingMessage",
+  incomingMessageEcho: "incomingMessageEcho",
   incomingComment: "incomingComment",
   tiktokHighIntentComment: "tiktokHighIntentComment",
   deferredCommentPrivateReply: "deferredCommentPrivateReply",
@@ -128,6 +132,17 @@ export type IntegrationJobReceiveMessage = {
 }
 
 /**
+ * A message the channel echoes back for something the account itself sent (a
+ * Page-inbox reply, a third-party app, an OA send). Same payload as
+ * `incomingMessage`, but nobody waits on a reply to it, so it is routed to the
+ * `low` queue and never queues ahead of a customer's message.
+ */
+export type IntegrationJobReceiveMessageEcho = {
+  type: typeof IntegrationJobAction.incomingMessageEcho
+  data: IntegrationJobReceiveMessage["data"]
+}
+
+/**
  * Profiles tagged inside a comment. Facebook resolves these to real user ids
  * (`message_tags` on the feed webhook); Instagram supplies nothing here and is
  * resolved from `@handle` text instead — see `comment-automation/comment-tags`.
@@ -155,6 +170,39 @@ export const MISSED_COMMENT_REPLAY_PRIORITY = 10
  * scheduled send, a replay is catch-up work.
  */
 export const BROADCAST_SEND_PRIORITY = 5
+
+/**
+ * BullMQ priority for every send a scheduled sequence makes (its first job per
+ * dispatch and each flow step after it). Same tier as a broadcast: a scheduled
+ * mass send, yielding to live traffic and to flow continuations.
+ */
+export const SEQUENCE_SEND_PRIORITY = 5
+
+const flowJobPriorityByMetadataType: Partial<
+  Record<MetadataPayload["type"], number>
+> = {
+  [BROADCAST_PAYLOAD_TYPE]: BROADCAST_SEND_PRIORITY,
+  [SEQUENCE_SCHEDULE_PAYLOAD_TYPE]: SEQUENCE_SEND_PRIORITY,
+}
+
+/** The BullMQ options a flow job's tier sets. */
+export type FlowJobPriorityOptions = Pick<JobsOptions, "priority">
+
+/**
+ * Job options for a job that continues or schedules a flow run. A mass
+ * scheduled send (`metadata.type` broadcast / sequenceSchedule) keeps its tier
+ * on every step, so it always yields to live traffic. Any other run gets no
+ * priority: its next step stays in FIFO order with customer messages. BullMQ
+ * only takes a prioritized job when no unprioritized one is waiting, so a
+ * lower tier for continuations would let new conversations stall a running
+ * flow indefinitely under sustained load.
+ */
+export const flowContinuationJobOptions = (
+  metadata?: MetadataPayload,
+): FlowJobPriorityOptions => {
+  const priority = metadata && flowJobPriorityByMetadataType[metadata.type]
+  return priority ? { priority } : {}
+}
 
 export type IntegrationJobReceiveComment = {
   type: typeof IntegrationJobAction.incomingComment
@@ -280,6 +328,13 @@ export type IntegrationJobMessageStatus = {
       timestamp: string
       error?: unknown
     }
+    /**
+     * Set at ingress when the message this status belongs to can continue a
+     * flow (a template whose Delivered/Failed button is wired to another
+     * node). Such a status stays on the `integration` queue; every other one
+     * is pure bookkeeping and goes to `low`.
+     */
+    continuesFlow?: boolean
   }
 }
 
@@ -1414,6 +1469,7 @@ export type IntegrationJobAiHandoverTakeBack = {
 
 export type IntegrationJobData =
   | IntegrationJobReceiveMessage
+  | IntegrationJobReceiveMessageEcho
   | IntegrationJobReceiveComment
   | IntegrationJobUpdateIncomingComment
   | IntegrationJobDeleteIncomingComment
@@ -1538,17 +1594,47 @@ const jobOptionsByAction: Partial<
 }
 
 /**
+ * Bookkeeping ingress that is consumed by the `low` worker so it never queues
+ * ahead of a customer reply.
+ */
+export type LowRoutedIntegrationJob =
+  | IntegrationJobMessageStatus
+  | IntegrationJobContactMarkAsRead
+  | IntegrationJobReceiveMessageEcho
+
+/**
+ * Whether a job goes to the `low` queue. A new bookkeeping action joins with a
+ * case here and a variant in `LowRoutedIntegrationJob`.
+ */
+const isLowRoutedIntegrationJob = (
+  job: IntegrationJobData,
+): job is LowRoutedIntegrationJob => {
+  switch (job.type) {
+    case IntegrationJobAction.messageStatus:
+      // A status that may continue a flow stays with live traffic.
+      return job.data.continuesFlow !== true
+    case IntegrationJobAction.contactMarkAsRead:
+    case IntegrationJobAction.incomingMessageEcho:
+      return true
+    default:
+      return false
+  }
+}
+
+/**
  * Enqueue helper that layers per-action retry/priority defaults
- * (`jobOptionsByAction`) under the caller's own opts. Producer opts — most
- * importantly a deterministic `jobId` — MUST win, so they're merged last;
- * BullMQ itself also treats `jobId` as authoritative regardless of merge
- * order, but keeping the spread order explicit avoids relying on that.
+ * (`jobOptionsByAction`) under the caller's own opts, and routes the
+ * bookkeeping actions of `isLowRoutedIntegrationJob` to the `low` queue. Producer
+ * opts — most importantly a deterministic `jobId` — MUST win, so they're
+ * merged last; BullMQ itself also treats `jobId` as authoritative regardless
+ * of merge order, but keeping the spread order explicit avoids relying on that.
  */
 export const enqueueIntegrationJob = (
   job: IntegrationJobData,
   opts?: JobsOptions,
-) =>
-  integrationQueue.add(job.type, job, {
-    ...jobOptionsByAction[job.type],
-    ...opts,
-  })
+) => {
+  const options: JobsOptions = { ...jobOptionsByAction[job.type], ...opts }
+  return isLowRoutedIntegrationJob(job)
+    ? lowQueue.add(job.type, job, options)
+    : integrationQueue.add(job.type, job, options)
+}

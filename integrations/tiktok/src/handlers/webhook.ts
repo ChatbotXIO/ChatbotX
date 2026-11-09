@@ -309,10 +309,12 @@ export const webhookHandler = async (
     return "ok"
   }
 
+  const isEcho = event.data.event === "im_send_msg"
+  const jobType = isEcho ? "incomingMessageEcho" : "incomingMessage"
   await queue?.add(
-    "incomingMessage",
+    jobType,
     {
-      type: "incomingMessage",
+      type: jobType,
       data: {
         integrationType: "tiktok",
         integrationIdentifier,
@@ -321,7 +323,7 @@ export const webhookHandler = async (
     },
     // Add delay for echo events to avoid race condition where echo arrives
     // before the send message API response completes
-    event.data.event === "im_send_msg" ? { delay: 2000 } : undefined,
+    isEcho ? { delay: 2000 } : undefined,
   )
 
   return "ok"

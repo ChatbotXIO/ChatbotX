@@ -73,6 +73,7 @@ describe("step input timeout smart delay", () => {
 
     expect(job).toEqual({
       name: "resumeStepInputTimeout",
+      opts: {},
       data: {
         type: "resumeStepInputTimeout",
         data: { smartDelayId: "row-1" },
@@ -165,5 +166,43 @@ describe("step input timeout smart delay", () => {
 
       expect(mocks.smartDelayService.resetToPending).toHaveBeenCalled()
     })
+  })
+})
+
+describe("resume job priority", () => {
+  test("a live flow's resume gets no priority, a broadcast's keeps the scheduled-send tier", () => {
+    const broadcastRow = {
+      ...row,
+      metadata: {
+        type: "broadcast",
+        broadcastId: "b-1",
+        contactInboxId: "ci-1",
+      },
+    } as unknown as Parameters<typeof buildSendFlowResumeJob>[0]
+
+    expect(buildSendFlowResumeJob(row).opts).toEqual({})
+    expect(buildSendFlowResumeJob(broadcastRow).opts).toEqual({ priority: 5 })
+  })
+
+  test.each([
+    ["waitNode", "resumeWait"],
+    ["followUp", "resumeFollowUp"],
+    ["quickReplyFollowUp", "resumeQuickReplyFollowUp"],
+  ] as const)("the %s resume job (%s) carries the same priority rule", (type, name) => {
+    const broadcastRow = {
+      ...row,
+      metadata: {
+        type: "broadcast",
+        broadcastId: "b-1",
+        contactInboxId: "ci-1",
+      },
+    } as unknown as Parameters<typeof buildSendFlowResumeJob>[0]
+
+    const live = smartDelayResumeJobFactories[type](row)
+    const scheduled = smartDelayResumeJobFactories[type](broadcastRow)
+
+    expect(live.name).toBe(name)
+    expect(live.opts).toEqual({})
+    expect(scheduled.opts).toEqual({ priority: 5 })
   })
 })

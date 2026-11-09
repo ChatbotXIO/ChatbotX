@@ -48,6 +48,7 @@ vi.mock("@chatbotx.io/events/context", () => ({
 }))
 
 vi.mock("@chatbotx.io/worker-config", () => ({
+  flowContinuationJobOptions: () => ({}),
   ChatJobAction: { sendChatMessage: "sendChatMessage" },
   IntegrationJobAction: { sendFlow: "sendFlow" },
   chatQueue: { add: mocks.chatQueueAdd },
@@ -480,17 +481,21 @@ describe("runQuestionnaireEngine", () => {
     )
 
     expect(result).toEqual({ status: "success", result: "submission-1" })
-    expect(mocks.integrationQueueAdd).toHaveBeenCalledWith("sendFlow", {
-      type: "sendFlow",
-      data: expect.objectContaining({
-        conversationId: "conversation-1",
-        contactInboxId: "contact-inbox-1",
-        flowId: "trigger-flow-1",
-        metadata: { type: "updateStatus" },
-        origin: "channel",
-        sendFrom: "inbox",
-      }),
-    })
+    expect(mocks.integrationQueueAdd).toHaveBeenCalledWith(
+      "sendFlow",
+      {
+        type: "sendFlow",
+        data: expect.objectContaining({
+          conversationId: "conversation-1",
+          contactInboxId: "contact-inbox-1",
+          flowId: "trigger-flow-1",
+          metadata: { type: "updateStatus" },
+          origin: "channel",
+          sendFrom: "inbox",
+        }),
+      },
+      {},
+    )
   })
 
   test("scores the leaderboard survey rule when a questionnaire completes", async () => {

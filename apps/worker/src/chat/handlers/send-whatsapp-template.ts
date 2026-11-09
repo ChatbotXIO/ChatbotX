@@ -2,6 +2,7 @@ import {
   contactInboxService,
   conversationService,
   messageService,
+  messageStatusBranchService,
   queueMessageCreatedEvent,
 } from "@chatbotx.io/business"
 import type { messageModel } from "@chatbotx.io/database/schema"
@@ -19,6 +20,7 @@ import {
   type SendWaTemplateMessageStepSchema,
   stepTypes,
   type TemplateComponent,
+  type WaTemplateStatusBranch,
 } from "@chatbotx.io/flow-config"
 import {
   ChannelError,
@@ -103,6 +105,11 @@ export interface ProcessWhatsappTemplateParams {
   metadata?: MetadataPayload
   /** The inbox user who sent the running flow, for `{{admin_name}}` in the params. */
   sentByUserId?: string
+  /**
+   * Statuses whose step button leads somewhere; they are recorded against the
+   * provider message id so ingress keeps those statuses on the integration queue.
+   */
+  statusBranches?: readonly WaTemplateStatusBranch[]
   step?: SendWaTemplateMessageStepSchema
   template: SendWaTemplateMessageStepSchema["template"]
   trackingContext?: BotResponseTrackingContext
@@ -197,6 +204,7 @@ export async function processWhatsappTemplate(
     willRetryOnThrow = false,
     humanSender,
     sentByUserId,
+    statusBranches,
   } = params
   const isBulkOutbound = isBulkOutboundMetadata(
     metadata,
@@ -411,20 +419,34 @@ export async function processWhatsappTemplate(
 
     const providerMessageId = result?.messageIds?.[0]
 
+    let isSourceIdSaved = false
     if (providerMessageId) {
       try {
-        await messageService.updateSourceId({
+        const updated = await messageService.updateSourceId({
           id: newMessage.id,
           sourceId: providerMessageId,
           workspaceId: conversation.workspaceId,
           createdAt: newMessage.createdAt,
         })
+        isSourceIdSaved = updated !== null
       } catch (err) {
         logger.error(
           err,
           "Failed to persist WhatsApp template sourceId after a successful send",
         )
       }
+    }
+
+    if (providerMessageId && isSourceIdSaved && statusBranches?.length) {
+      // Ingress reads this marker to keep those statuses on `integration`.
+      // Written only once the sourceId is saved: a status handled with the
+      // marker must find its message, while one arriving before it goes to
+      // `low` and runs later.
+      await messageStatusBranchService.mark({
+        channel: contactInbox.channel,
+        providerMessageId,
+        statuses: statusBranches,
+      })
     }
 
     return {

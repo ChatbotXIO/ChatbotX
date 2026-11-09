@@ -8,6 +8,7 @@ const { mockAddBulk } = vi.hoisted(() => ({
 // they must be enqueued on the dedicated `low` queue — never the
 // latency-sensitive `integration` queue that drives customer replies.
 vi.mock("@chatbotx.io/worker-config", () => ({
+  LOW_BULK_PRIORITY: 10,
   LowJobAction: {
     coexistAttachmentDownload: "coexistAttachmentDownload",
     updateContactAvatar: "updateContactAvatar",
@@ -51,6 +52,7 @@ describe("enqueueAttachmentDownloadJobs", () => {
       },
       opts: {
         jobId: "att-a1",
+        priority: 10,
         attempts: 5,
         backoff: { type: "exponential", delay: 30_000 },
         removeOnComplete: true,

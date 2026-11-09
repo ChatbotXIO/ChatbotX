@@ -2128,7 +2128,11 @@ class ConversationService extends BaseService {
     const trackingInvalidation = await db.transaction(async (tx) => {
       await tx
         .update(conversationModel)
-        .set({ contactLastReadAt: seenAt })
+        // Advance-only: receipts are processed concurrently, so an older
+        // `read` finishing last must not move the mark backwards.
+        .set({
+          contactLastReadAt: sql`GREATEST(${conversationModel.contactLastReadAt}, ${seenAt})`,
+        })
         .where(
           and(
             eq(conversationModel.id, conversationId),
@@ -2258,7 +2262,9 @@ class ConversationService extends BaseService {
       data.lastStep = props.lastStep
     }
     if (props.contactLastReadAt !== undefined) {
-      data.contactLastReadAt = props.contactLastReadAt
+      // Advance-only: receipts run on another queue than inbound messages, so
+      // an older inbound processed late must not move the read mark backwards.
+      data.contactLastReadAt = sql`GREATEST(${conversationModel.contactLastReadAt}, ${props.contactLastReadAt})`
     }
     if (props.humanReplyWindow) {
       Object.assign(data, humanReplyWindowSet(props.humanReplyWindow))

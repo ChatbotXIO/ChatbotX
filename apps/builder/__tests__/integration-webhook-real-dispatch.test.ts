@@ -37,7 +37,12 @@ vi.mock("@chatbotx.io/channel-registry/registry", () => ({
 }))
 
 vi.mock("@chatbotx.io/worker-config", () => ({
-  IntegrationJobAction: { providerAccountEvent: "providerAccountEvent" },
+  IntegrationJobAction: {
+    providerAccountEvent: "providerAccountEvent",
+    messageStatus: "messageStatus",
+  },
+  enqueueIntegrationJob: (job: { type: string }, options: unknown) =>
+    integrationQueueAdd(job.type, job, options),
   integrationQueue: { add: integrationQueueAdd },
 }))
 

@@ -500,8 +500,14 @@ const handleWebhookEvent = async (
           continue
         }
 
-        await queue?.add("incomingMessage", {
-          type: "incomingMessage",
+        // An echo is a message the Page itself sent (Page inbox, a third-party
+        // app); nobody waits on a reply to it, so it takes the low-priority path.
+        const jobType =
+          messagingEvent.message?.is_echo === true
+            ? "incomingMessageEcho"
+            : "incomingMessage"
+        await queue?.add(jobType, {
+          type: jobType,
           data: {
             integrationType: "messenger",
             integrationIdentifier,

@@ -69,6 +69,7 @@ vi.mock("@chatbotx.io/filesystem", () => ({
 }))
 
 vi.mock("@chatbotx.io/worker-config", () => ({
+  LOW_BULK_PRIORITY: 10,
   LowJobAction: {
     coexistAttachmentDownload: "coexistAttachmentDownload",
     updateContactAvatar: "updateContactAvatar",
@@ -338,6 +339,7 @@ describe("attachment media proxy", () => {
         backoff: { type: "exponential", delay: 30_000 },
         removeOnComplete: true,
         removeOnFail: true,
+        priority: 10,
       },
     )
   })

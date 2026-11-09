@@ -75,6 +75,7 @@ vi.mock("@chatbotx.io/sequence-scheduler", () => ({
 
 vi.mock("@chatbotx.io/worker-config", () => ({
   IntegrationJobAction: { sendSequenceFlow: "sendSequenceFlow" },
+  flowContinuationJobOptions: () => ({ priority: 5 }),
   integrationQueue: { add: integrationQueueAddSpy },
   queueNames: { enum: { sequenceScheduler: "sequence-scheduler" } },
 }))
@@ -259,6 +260,15 @@ describe("sequence scheduler consumer", () => {
     })
 
     expect(integrationQueueAddSpy).toHaveBeenCalledOnce()
+    // A scheduled sequence send yields to live traffic and flow continuations.
+    const [, job, options] = integrationQueueAddSpy.mock.calls[0] as [
+      string,
+      { data: { metadata: { type: string } } },
+      { priority: number; jobId: string },
+    ]
+    expect(job.data.metadata.type).toBe("sequenceSchedule")
+    expect(options.priority).toBe(5)
+    expect(options.jobId).toBe("seq-dispatch-1-0")
   })
 
   test("discards malformed legacy payloads without retrying", async () => {

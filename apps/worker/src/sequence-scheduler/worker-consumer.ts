@@ -4,6 +4,7 @@ import { isLockAcquisitionError, sequenceConnections } from "@chatbotx.io/redis"
 import { SchedulerClient } from "@chatbotx.io/scheduler"
 import { advanceEnrollment } from "@chatbotx.io/sequence-scheduler"
 import {
+  flowContinuationJobOptions,
   IntegrationJobAction,
   integrationQueue,
   queueNames,
@@ -238,6 +239,14 @@ class DispatchConsumer {
         return
       }
 
+      const sequenceMetadata = {
+        type: SEQUENCE_SCHEDULE_PAYLOAD_TYPE,
+        sequenceStepId: step?.id ?? "",
+        sequenceId: step?.sequenceId ?? "",
+        dispatchId: dispatch.id,
+        contactInboxId: dispatch.contactInboxId,
+      } as const
+
       await integrationQueue.add(
         IntegrationJobAction.sendSequenceFlow,
         {
@@ -251,16 +260,11 @@ class DispatchConsumer {
             enrollmentId: dispatch.enrollmentId,
             sequenceId: dispatch.sequenceId,
             bucket: dispatch.bucket,
-            metadata: {
-              type: SEQUENCE_SCHEDULE_PAYLOAD_TYPE,
-              sequenceStepId: step?.id ?? "",
-              sequenceId: step?.sequenceId ?? "",
-              dispatchId: dispatch.id,
-              contactInboxId: dispatch.contactInboxId,
-            },
+            metadata: sequenceMetadata,
           },
         },
         {
+          ...flowContinuationJobOptions(sequenceMetadata),
           jobId: `seq-${dispatch.id}-${dispatch.attempt}`,
           attempts: 3,
           backoff: { type: "exponential", delay: 5000 },

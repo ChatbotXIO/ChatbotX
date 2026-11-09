@@ -1,24 +1,17 @@
 import { createHash } from "node:crypto"
-import {
-  automatedResponseService,
-  isKeywordMediaFileType,
-} from "@chatbotx.io/automated-response"
-import {
-  conversationService,
-  getContactInputAttachments,
-  withBlockedOwnerGuard,
-} from "@chatbotx.io/business"
+import { withBlockedOwnerGuard } from "@chatbotx.io/business"
 import { channelTypes } from "@chatbotx.io/database/partials"
-import { emit } from "@chatbotx.io/event-bus"
 import {
   AIJobAction,
   aiAgentQueue,
   type CallTranscriptionJobData,
+  chatQueue,
   getHeavyJobCompletionWaitTimeoutMs,
   HeavyJobAction,
   IntegrationJobAction,
   type IntegrationJobData,
   integrationQueue,
+  lowQueue,
   queueNames,
   WhatsappVoipSignalingJobAction,
   type WhatsappVoipSignalingJobData,
@@ -32,7 +25,7 @@ import { deferOnLockContention } from "../lib/lock-contention-deferral"
 import { logger } from "../lib/logger"
 import { resolveWorkspaceId } from "../lib/resolve-workspace-id"
 import { runJobWithAuditContext } from "../lib/run-job-with-audit-context"
-import { runWorker } from "../lib/shutdown"
+import { onShutdown, runWorker } from "../lib/shutdown"
 import { integrationService } from "../services/integrations"
 import { mintRandomFlowExecutionKey } from "./flow-execution-key"
 import { handleAdsAutomaticEvent } from "./handlers/ads-automatic-event"
@@ -62,6 +55,7 @@ import { runFollowUpResume } from "./handlers/follow-up"
 import { handleSendGoogleAdsConversion } from "./handlers/google-ads/send-conversion"
 import { resumeHeavyStep } from "./handlers/heavy-step-resume"
 import { handleChannelLabelWebhook } from "./handlers/inbox_labels"
+import { processIncomingMessage } from "./handlers/incoming-message"
 import { processLeadgen } from "./handlers/lead-ads"
 import { processMarketingMessageWebhook } from "./handlers/marketing-message-webhook"
 import { handleMessageStatus } from "./handlers/message-status"
@@ -73,7 +67,6 @@ import {
   deleteIncomingMessage,
   processMessageReaction,
   receiveComment,
-  receiveMessage,
   updateIncomingComment,
 } from "./handlers/received-message"
 import { runRef } from "./handlers/ref"
@@ -96,7 +89,6 @@ import { runWaitResume } from "./handlers/wait-resume"
 import { handleWhatsappCallEvent } from "./handlers/whatsapp-call"
 import { handleWhatsappCallNativeRecordingFetch } from "./handlers/whatsapp-call-native-recording"
 import { handleWhatsappCallNativeTranscriptFetch } from "./handlers/whatsapp-call-native-transcript"
-import { recordWhatsappCallPermissionReply } from "./handlers/whatsapp-call-permission-reply"
 import { handleWhatsappCallRecordingReady } from "./handlers/whatsapp-call-recording"
 import { handleWhatsappCallTranscribe } from "./handlers/whatsapp-call-transcribe"
 import { handleWhatsappIdentityChange } from "./handlers/whatsapp-identity-change"
@@ -109,8 +101,6 @@ import {
   runWooCommerceWebhook,
 } from "./handlers/woocommerce"
 import { runIntegrationJobWithWebhookContext } from "./job-context"
-import { resolveIncomingTextRouting } from "./routing"
-import { dispatchStoryAutomation } from "./story-automation-dispatch"
 
 // Coexist historical sync chunks are bounded to ~4 min via self-continuation
 // (see coexist-messenger-sync / coexist-whatsapp-flush). Lock sized as:
@@ -223,6 +213,47 @@ function handleVoipSignalingFailed(
   }
 }
 
+const QUEUE_DEPTH_LOG_INTERVAL_MS = 60_000
+
+const depthLoggedQueues = [
+  { name: queueNames.enum.integration, queue: integrationQueue },
+  { name: queueNames.enum.chat, queue: chatQueue },
+  { name: queueNames.enum.low, queue: lowQueue },
+] as const
+
+/**
+ * Logs how deep the queues behind customer replies are, once a minute. The
+ * numbers tell an operator whether `integration` is backed up (raise its
+ * concurrency), `chat` is (raise `CHAT_WORKER_CONCURRENCY`), or `low` is (the
+ * bookkeeping ingress is behind). `prioritized` holds broadcast, sequence and
+ * replay sends, which wait behind live traffic by design.
+ */
+function startQueueDepthLogging(): void {
+  const logDepths = async () => {
+    for (const { name, queue } of depthLoggedQueues) {
+      try {
+        const counts = await queue.getJobCounts(
+          "waiting",
+          "prioritized",
+          "delayed",
+          "active",
+        )
+        logger.info({ queue: name, ...counts }, "Queue depth")
+      } catch (err) {
+        logger.warn({ err, queue: name }, "Failed to read queue depth")
+      }
+    }
+  }
+
+  const timer = setInterval(() => {
+    logDepths().catch((err: unknown) => {
+      logger.warn({ err }, "Failed to log queue depth")
+    })
+  }, QUEUE_DEPTH_LOG_INTERVAL_MS)
+  timer.unref()
+  onShutdown("queue-depth-logging", () => clearInterval(timer))
+}
+
 function startIntegrationWorker() {
   const processIntegrationJob = async (job: Job<IntegrationJobData>) => {
     const workspaceId = await resolveWorkspaceId(job.data.data)
@@ -235,157 +266,9 @@ function startIntegrationWorker() {
         { workspaceId, source: `integration:${job.data.type}` },
         async () => {
           switch (job.data.type) {
-            case IntegrationJobAction.incomingMessage: {
-              const received = await receiveMessage(job.data.data)
-              if (!received) {
-                return
-              }
-              const {
-                message,
-                postbackAction,
-                quickReplyAction,
-                conversation,
-                channelType,
-                inboxId,
-                inboxChannel,
-                suppressAutomation,
-                stepInputSkipHandled,
-              } = received
-
-              if (!message) {
-                return
-              }
-
-              const isNotPostbackOrQuickReply = !(
-                postbackAction || quickReplyAction
-              )
-
-              // A call-permission answer is account state, recorded for
-              // standby deliveries too; it never reaches automation.
-              if (
-                isNotPostbackOrQuickReply &&
-                (await recordWhatsappCallPermissionReply({
-                  workspaceId: conversation.workspaceId,
-                  message,
-                }))
-              ) {
-                return
-              }
-
-              // Standby deliveries (another responder owns the thread) are
-              // stored only: no story-reply, routing or fallback analytics.
-              if (suppressAutomation) {
-                return
-              }
-
-              // A Skip tap was enqueued as its own resolution; its text must not
-              // also be routed to the pending challenge as a typed reply.
-              if (stepInputSkipHandled) {
-                return
-              }
-
-              // An image/file message has contentType "text" — only its
-              // `attachments` array distinguishes it; a shared location has
-              // contentType "location".
-              const isFromContact =
-                isNotPostbackOrQuickReply && message.senderType === "contact"
-              const inputAttachments = getContactInputAttachments(message)
-              const hasAttachment = inputAttachments.length > 0
-              const isLocation = message.contentType === "location"
-
-              if (
-                isFromContact &&
-                (await dispatchStoryAutomation({
-                  message,
-                  conversation,
-                  channelType,
-                }))
-              ) {
-                return
-              }
-
-              const attachmentFileTypes = inputAttachments.map(
-                (attachment) => attachment.fileType,
-              )
-              const routing = await resolveIncomingTextRouting({
-                conversation,
-                hasActionableInput: Boolean(
-                  isFromContact &&
-                    (message.text || hasAttachment || isLocation),
-                ),
-                hasText: Boolean(isFromContact && message.text),
-                hasKeywordMedia: Boolean(
-                  isFromContact &&
-                    attachmentFileTypes.some(isKeywordMediaFileType),
-                ),
-                isConversationActive: (conversation) =>
-                  conversationService.ensureActive(conversation),
-              })
-
-              // Messages without content, not from the contact, or media no
-              // keyword matched get no response (postback/quickReply are
-              // tracked in their own handlers).
-              const trackNoResponse = () =>
-                emit("analytics:dashboard", {
-                  eventType: "message:bot_received",
-                  workspaceId: message.workspaceId,
-                  conversationId: message.conversationId,
-                  channel: inboxChannel,
-                  inboxId,
-                  messageId: message.id,
-                  occurredAt: new Date(),
-                  hasResponse: false,
-                  responseType: "none",
-                  routeType: "fallback",
-                  result: "fallback",
-                  aiProvider: "none",
-                  metadata: {
-                    latency: 0,
-                    fallbackReason: message.text
-                      ? "not_from_contact"
-                      : "no_content",
-                  },
-                })
-
-              if (routing.type === "challenge") {
-                await integrationQueue.add(
-                  IntegrationJobAction.runChallenge,
-                  {
-                    type: IntegrationJobAction.runChallenge,
-                    data: {
-                      conversationId: routing.conversation.id,
-                      contactInboxId: message.contactInboxId,
-                      messageId: message.id,
-                      messageCreatedAt: message.createdAt,
-                      challenge: routing.challenge,
-                    },
-                  },
-                  {
-                    jobId: `questionnaire-challenge-${routing.conversation.id}-${message.id}`,
-                  },
-                )
-              } else if (routing.type === "automatedResponse") {
-                const enqueued = await automatedResponseService.enqueue({
-                  conversationId: routing.conversation.id,
-                  contactInboxId: message.contactInboxId,
-                  messageId: message.id,
-                  messageText: message.text ?? "",
-                  attachmentFileTypes,
-                  workspaceId: routing.conversation.workspaceId,
-                })
-                if (!enqueued) {
-                  await trackNoResponse()
-                }
-              } else if (routing.type === "handoffReentry") {
-                await automatedResponseService.enqueueHandoffReentry({
-                  conversationId: routing.conversation.id,
-                  contactInboxId: message.contactInboxId,
-                  messageId: message.id,
-                  workspaceId: routing.conversation.workspaceId,
-                })
-              } else if (isNotPostbackOrQuickReply) {
-                await trackNoResponse()
-              }
+            case IntegrationJobAction.incomingMessage:
+            case IntegrationJobAction.incomingMessageEcho: {
+              await processIncomingMessage(job.data.data)
               return
             }
             case IntegrationJobAction.incomingComment: {
@@ -705,6 +588,8 @@ function startIntegrationWorker() {
       ),
     )
   }
+
+  startQueueDepthLogging()
 
   // A job that lost a distributed-lock race (e.g. the per-owner MAC lock when
   // many new contacts arrive at once) is deferred, not failed: failing it

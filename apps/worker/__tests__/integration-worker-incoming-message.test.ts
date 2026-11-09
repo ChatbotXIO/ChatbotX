@@ -573,12 +573,19 @@ vi.mock("@chatbotx.io/worker-config", async (importOriginal) => ({
   getQueueConnection: () => ({}),
   closeAllQueueEvents: vi.fn().mockResolvedValue(undefined),
   getHeavyJobCompletionWaitTimeoutMs: vi.fn().mockReturnValue(10 * 60 * 1000),
-  queueNames: { enum: { integration: "integration" } },
+  queueNames: {
+    enum: { integration: "integration", chat: "chat", low: "low" },
+  },
   HeavyJobAction: { aiGenerateImage: "aiGenerateImage" },
   ChatJobAction: { sendChatMessage: "sendChatMessage" },
-  chatQueue: { add: vi.fn().mockResolvedValue(undefined) },
+  chatQueue: {
+    add: vi.fn().mockResolvedValue(undefined),
+    getJobCounts: vi.fn().mockResolvedValue({}),
+  },
+  lowQueue: { getJobCounts: vi.fn().mockResolvedValue({}) },
   IntegrationJobAction: {
     incomingMessage: "incomingMessage",
+    incomingMessageEcho: "incomingMessageEcho",
     runFlowPostback: "runFlowPostback",
     runFlowQuickReply: "runFlowQuickReply",
     resolveStepInput: "resolveStepInput",
@@ -589,6 +596,7 @@ vi.mock("@chatbotx.io/worker-config", async (importOriginal) => ({
   integrationQueue: {
     add: vi.fn().mockResolvedValue(undefined),
     getJob: vi.fn().mockResolvedValue(undefined),
+    getJobCounts: vi.fn().mockResolvedValue({}),
   },
 }))
 
@@ -1221,6 +1229,15 @@ describe("integration worker — conversation routing (thread control)", () => {
 
     expect(mockResolveIncomingTextRouting).toHaveBeenCalledTimes(1)
     expect(mockAutomatedResponseEnqueue).toHaveBeenCalledTimes(1)
+  })
+
+  test("an incomingMessageEcho still on the integration queue (drain) is ingested like an incoming message", async () => {
+    mockRunChannelHandler.mockResolvedValue(parsedMessage())
+
+    await runJob({ ...incomingJob, type: "incomingMessageEcho" })
+
+    expect(mockCreateOrUpdate).toHaveBeenCalledTimes(1)
+    expect(mockResolveIncomingTextRouting).toHaveBeenCalledTimes(1)
   })
 
   test("no routing info on the parse result: a delivery never touches thread control", async () => {

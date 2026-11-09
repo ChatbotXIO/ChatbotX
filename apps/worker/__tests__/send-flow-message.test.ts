@@ -181,4 +181,102 @@ describe("sendFlowMessage", () => {
     await resultPromise
     expect(resolved).toBe(true)
   })
+
+  describe("statusBranches for WhatsApp template steps", () => {
+    const templateProps = (buttons: unknown[], edges: unknown[] = []) =>
+      ({
+        ...(makeProps() as object),
+        flowVersion: { id: "fv-1", flowId: "flow-1", edges },
+        step: {
+          id: "step-1",
+          stepType: "sendWaTemplateMessage",
+          template: { id: "t-1", name: "n", language: "en", params: {} },
+          buttons,
+        },
+      }) as never
+
+    const placeholder = (id: string, label: string) => ({
+      id,
+      label,
+      buttonType: null,
+      beforeStep: null,
+      steps: [],
+    })
+
+    const sentData = () =>
+      (
+        mocks.chatQueueAdd.mock.calls[0] as unknown as [
+          string,
+          { data: { statusBranches?: string[] } },
+        ]
+      )[1].data
+
+    test("records only the status whose button is wired to a node", async () => {
+      await sendFlowMessage(
+        templateProps(
+          [placeholder("b1", "Delivered"), placeholder("b2", "Failed")],
+          [{ id: "e1", source: "n1", sourceHandle: "b1", target: "next" }],
+        ),
+      )
+
+      expect(sentData().statusBranches).toEqual(["delivered"])
+    })
+
+    test("records both statuses when both buttons lead somewhere", async () => {
+      await sendFlowMessage(
+        templateProps(
+          [
+            placeholder("b1", "Delivered"),
+            { ...placeholder("b2", "Failed"), steps: [{ id: "s1" }] },
+          ],
+          [{ id: "e1", source: "n1", sourceHandle: "b1", target: "next" }],
+        ),
+      )
+
+      expect(sentData().statusBranches).toEqual(["delivered", "failed"])
+    })
+
+    test("flags the send when a status button runs its own actions", async () => {
+      await sendFlowMessage(
+        templateProps([
+          placeholder("b1", "Delivered"),
+          { ...placeholder("b2", "Failed"), steps: [{ id: "s1" }] },
+        ]),
+      )
+
+      expect(sentData().statusBranches).toEqual(["failed"])
+    })
+
+    test("does not flag a template whose status buttons are bare placeholders", async () => {
+      await sendFlowMessage(
+        templateProps([
+          placeholder("b1", "Delivered"),
+          placeholder("b2", "Failed"),
+        ]),
+      )
+
+      expect(sentData()).not.toHaveProperty("statusBranches")
+    })
+
+    test("does not treat a wired quick-reply button after the status pair as a status branch", async () => {
+      await sendFlowMessage(
+        templateProps(
+          [
+            placeholder("b1", "Delivered"),
+            placeholder("b2", "Failed"),
+            placeholder("b3", "Yes"),
+          ],
+          [{ id: "e1", source: "n1", sourceHandle: "b3", target: "next" }],
+        ),
+      )
+
+      expect(sentData()).not.toHaveProperty("statusBranches")
+    })
+
+    test("never flags a non-template step", async () => {
+      await sendFlowMessage(makeProps())
+
+      expect(sentData()).not.toHaveProperty("statusBranches")
+    })
+  })
 })

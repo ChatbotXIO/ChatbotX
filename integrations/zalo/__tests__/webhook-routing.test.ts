@@ -93,7 +93,7 @@ describe("zalo webhookHandler event routing", () => {
     )
   })
 
-  test("routes oa_send_text echoes to the incomingMessage queue", async () => {
+  test("routes oa_send_text echoes to the incomingMessageEcho queue", async () => {
     const queueAdd = vi.fn()
 
     await webhookHandler(
@@ -110,9 +110,9 @@ describe("zalo webhookHandler event routing", () => {
     )
 
     expect(queueAdd).toHaveBeenCalledWith(
-      "incomingMessage",
+      "incomingMessageEcho",
       expect.objectContaining({
-        type: "incomingMessage",
+        type: "incomingMessageEcho",
         data: expect.objectContaining({
           integrationIdentifier: "oa-1",
         }),

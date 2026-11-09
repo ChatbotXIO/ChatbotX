@@ -1,7 +1,9 @@
 import { contactCustomFieldValueService } from "@chatbotx.io/business/contact-custom-field-value"
 import { smartDelayTypes } from "@chatbotx.io/database/partials"
+import type { FlowVersionModel } from "@chatbotx.io/database/types"
 import { webhookChannelOrigin } from "@chatbotx.io/events/context"
 import {
+  type ButtonStepProps,
   computeTriggerAt,
   type EdgeSchema,
   type SplitTrafficStepSchema,
@@ -9,11 +11,16 @@ import {
   type StartExternalFlowStepSchema,
   type StartExternalNodeStepSchema,
   type StepType,
+  splitWaTemplateStepButtons,
   stepTypes,
+  WA_TEMPLATE_STATUS_BRANCHES,
+  WA_TEMPLATE_STATUS_BUTTON_LABELS,
   type WaitStepSchema,
+  type WaTemplateStatusBranch,
 } from "@chatbotx.io/flow-config"
 import {
   type ChatJobSendFlowStep,
+  flowContinuationJobOptions,
   HeavyJobAction,
   IntegrationJobAction,
   integrationQueue,
@@ -118,6 +125,32 @@ import {
 } from "./tool-handler"
 import { handleTriggerN8nStep } from "./trigger-n8n-handler"
 
+/**
+ * The delivery statuses of a template step whose button does anything when the
+ * status arrives: it runs actions or its handle is wired to another node. A bare
+ * placeholder button does nothing, so its status is plain bookkeeping. Matched
+ * by label, as the message-status handler matches them.
+ */
+function connectedStatusBranches(
+  step: ChatJobSendFlowStep["data"]["step"],
+  flowVersion: FlowVersionModel,
+): WaTemplateStatusBranch[] {
+  if (step.stepType !== stepTypes.enum.sendWaTemplateMessage) {
+    return []
+  }
+  const { statusButtons } = splitWaTemplateStepButtons(step.buttons)
+  const isConnected = (button: ButtonStepProps): boolean =>
+    button.steps.length > 0 ||
+    seekConnectedNode(flowVersion, button.id) !== undefined
+  return WA_TEMPLATE_STATUS_BRANCHES.filter((status) =>
+    statusButtons.some(
+      (button) =>
+        button.label === WA_TEMPLATE_STATUS_BUTTON_LABELS[status] &&
+        isConnected(button),
+    ),
+  )
+}
+
 export async function sendFlowMessage(
   props: ExecuteStepProps<ChatJobSendFlowStep["data"]["step"]>,
 ) {
@@ -135,6 +168,7 @@ export async function sendFlowMessage(
     commentAnchor,
     appointmentId,
   } = props
+  const statusBranches = connectedStatusBranches(step, flowVersion)
   await enqueueFlowStepMessage({
     conversationId: conversation.id,
     contactInboxId: props.contactInbox.id,
@@ -150,6 +184,7 @@ export async function sendFlowMessage(
     sentByUserId,
     commentAnchor,
     appointmentId,
+    ...(statusBranches.length > 0 && { statusBranches }),
   })
 }
 
@@ -199,31 +234,35 @@ async function splitTraffic({
   const connectedEdge = edges.find((edge) => edge.sourceHandle === sourceHandle)
 
   if (connectedEdge?.target) {
-    await integrationQueue.add(IntegrationJobAction.sendFlow, {
-      type: IntegrationJobAction.sendFlow,
-      data: {
-        conversationId: conversation.id,
-        contactInboxId: contactInbox.id,
-        flowId: flowVersion.flowId,
-        flowVersionId: useLatestFlowVersion ? undefined : flowVersion.id,
-        nodeId: connectedEdge.target,
-        // Forward the current job's metadata across the split — without
-        // this, a broadcast-dispatched flow crossing a Split Traffic step
-        // lost its `broadcastId` attribution and the stop/resume guard in
-        // `runFlowNode` never fired for the branch taken here (fix round 1).
-        metadata,
-        isBulkBroadcast,
-        sendFrom,
-        sentByUserId,
-        nodeVisits,
-        triggerMessageId,
-        triggerMessageCreatedAt,
-        startedByContactMessage,
-        commentAnchor,
-        appointmentId,
-        origin: webhookChannelOrigin(),
+    await integrationQueue.add(
+      IntegrationJobAction.sendFlow,
+      {
+        type: IntegrationJobAction.sendFlow,
+        data: {
+          conversationId: conversation.id,
+          contactInboxId: contactInbox.id,
+          flowId: flowVersion.flowId,
+          flowVersionId: useLatestFlowVersion ? undefined : flowVersion.id,
+          nodeId: connectedEdge.target,
+          // Forward the current job's metadata across the split — without
+          // this, a broadcast-dispatched flow crossing a Split Traffic step
+          // lost its `broadcastId` attribution and the stop/resume guard in
+          // `runFlowNode` never fired for the branch taken here (fix round 1).
+          metadata,
+          isBulkBroadcast,
+          sendFrom,
+          sentByUserId,
+          nodeVisits,
+          triggerMessageId,
+          triggerMessageCreatedAt,
+          startedByContactMessage,
+          commentAnchor,
+          appointmentId,
+          origin: webhookChannelOrigin(),
+        },
       },
-    })
+      flowContinuationJobOptions(metadata),
+    )
   }
 }
 
@@ -325,27 +364,31 @@ async function handleWait({
 async function startAnotherNode(
   props: ExecuteStepProps<StartAnotherNodeStepSchema>,
 ) {
-  await integrationQueue.add(IntegrationJobAction.sendFlow, {
-    type: IntegrationJobAction.sendFlow,
-    data: {
-      conversationId: props.conversation.id,
-      contactInboxId: props.contactInbox.id,
-      flowId: props.flowVersion.flowId,
-      flowVersionId: props.flowVersion.id,
-      nodeId: props.step.nodeId,
-      metadata: props.metadata,
-      isBulkBroadcast: props.isBulkBroadcast,
-      appointmentId: props.appointmentId,
-      sendFrom: props.sendFrom,
-      sentByUserId: props.sentByUserId,
-      nodeVisits: props.nodeVisits,
-      triggerMessageId: props.triggerMessageId,
-      triggerMessageCreatedAt: props.triggerMessageCreatedAt,
-      startedByContactMessage: props.startedByContactMessage,
-      commentAnchor: props.commentAnchor,
-      origin: webhookChannelOrigin(),
+  await integrationQueue.add(
+    IntegrationJobAction.sendFlow,
+    {
+      type: IntegrationJobAction.sendFlow,
+      data: {
+        conversationId: props.conversation.id,
+        contactInboxId: props.contactInbox.id,
+        flowId: props.flowVersion.flowId,
+        flowVersionId: props.flowVersion.id,
+        nodeId: props.step.nodeId,
+        metadata: props.metadata,
+        isBulkBroadcast: props.isBulkBroadcast,
+        appointmentId: props.appointmentId,
+        sendFrom: props.sendFrom,
+        sentByUserId: props.sentByUserId,
+        nodeVisits: props.nodeVisits,
+        triggerMessageId: props.triggerMessageId,
+        triggerMessageCreatedAt: props.triggerMessageCreatedAt,
+        startedByContactMessage: props.startedByContactMessage,
+        commentAnchor: props.commentAnchor,
+        origin: webhookChannelOrigin(),
+      },
     },
-  })
+    flowContinuationJobOptions(props.metadata),
+  )
 }
 
 async function startExternalFlow(
@@ -361,6 +404,7 @@ async function startExternalFlow(
       },
       pickSendFlowExtras(props),
     ),
+    flowContinuationJobOptions(props.metadata),
   )
 }
 
@@ -378,6 +422,7 @@ async function startExternalNode(
       },
       pickSendFlowExtras(props),
     ),
+    flowContinuationJobOptions(props.metadata),
   )
 }
 

@@ -10,6 +10,7 @@ import {
   type MetadataPayload,
   messageEventTypeSchema,
   UPDATE_STATUS_PAYLOAD_TYPE,
+  WA_TEMPLATE_STATUS_BUTTON_LABELS,
 } from "@chatbotx.io/flow-config"
 import {
   resolveSourceScopedIdentityMatch,
@@ -219,7 +220,10 @@ export const handleMessageStatus = async (
       return
     }
 
-    const buttonLabel = eventStatus === "delivered" ? "Delivered" : "Failed"
+    const buttonLabel =
+      eventStatus === "delivered"
+        ? WA_TEMPLATE_STATUS_BUTTON_LABELS.delivered
+        : WA_TEMPLATE_STATUS_BUTTON_LABELS.failed
     const button = buttons.find((b) => b.label === buttonLabel)
     if (!button?.postback) {
       return
