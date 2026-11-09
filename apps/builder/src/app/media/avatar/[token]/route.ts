@@ -2,6 +2,7 @@ import { Readable } from "node:stream"
 import {
   contactInboxService,
   contactService,
+  inboxService,
   isNoAvatarSentinelFresh,
   parseNoAvatarSentinel,
 } from "@chatbotx.io/business"
@@ -39,6 +40,15 @@ export const GET = async (request: NextRequest, context: RouteContext) => {
     where: { id: resolvedRequest.refId },
   })
   if (!contactInbox) {
+    return placeholder()
+  }
+  const inbox = await inboxService.find({
+    where: {
+      id: contactInbox.inboxId,
+      workspaceId: resolvedRequest.workspaceId,
+    },
+  })
+  if (!inbox) {
     return placeholder()
   }
   const contact = await contactService.findById({

@@ -12,6 +12,7 @@ const mocks = vi.hoisted(() => {
     findAttachmentById: vi.fn(),
     findContact: vi.fn(),
     findContactInbox: vi.fn(),
+    findInbox: vi.fn(),
     getPresignedDownload: vi.fn(),
     getObjectStream: vi.fn(),
     getPublicFileUrl: vi.fn(),
@@ -33,6 +34,7 @@ vi.mock("@chatbotx.io/encryption", () => ({
 vi.mock("@chatbotx.io/business", () => ({
   contactInboxService: { findByUncached: mocks.findContactInbox },
   contactService: { findById: mocks.findContact },
+  inboxService: { find: mocks.findInbox },
   isFailedOriginPath: (originPath: string) => originPath.startsWith("failed:"),
   isNoAvatarSentinelFresh: (failedAtMs: number, now = Date.now()) =>
     now - failedAtMs < 10 * 60 * 1000,
@@ -703,9 +705,14 @@ describe("avatar media proxy", () => {
       refId: "contact-inbox-1",
       expiresAt: Date.now() + 60_000,
     })
+    mocks.findInbox.mockResolvedValue({
+      id: "inbox-1",
+      workspaceId: "workspace-1",
+    })
     mocks.findContactInbox.mockResolvedValue({
       id: "contact-inbox-1",
       contactId: "contact-1",
+      inboxId: "inbox-1",
       channel: "messenger",
       sourceId: "psid-1",
     })
@@ -738,6 +745,22 @@ describe("avatar media proxy", () => {
     )
     expect(mocks.getPresignedDownload).not.toHaveBeenCalled()
     expect(mocks.resolveFreshContactAvatarUrl).not.toHaveBeenCalled()
+  })
+
+  test("does not serve a contact avatar when its inbox belongs to another workspace", async () => {
+    mocks.findInbox.mockResolvedValue(undefined)
+
+    const response = await getAvatar(
+      new Request("http://localhost/media/avatar/signed-token") as never,
+      tokenContext(),
+    )
+
+    expect(response.status).toBe(302)
+    expect(response.headers.get("location")).toBe(
+      "http://localhost:3123/media/default-avatar.svg",
+    )
+    expect(mocks.findContact).not.toHaveBeenCalled()
+    expect(mocks.getObjectStream).not.toHaveBeenCalled()
   })
 
   test("redirects a fresh no-avatar sentinel to the default placeholder", async () => {
