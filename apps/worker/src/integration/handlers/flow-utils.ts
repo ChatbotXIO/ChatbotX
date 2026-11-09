@@ -22,6 +22,7 @@ import {
   type ChatJobSendFlowStep,
   chatQueue,
   IntegrationJobAction,
+  type IntegrationJobRunFlowNode,
   integrationQueue,
   type NodeVisits,
 } from "@chatbotx.io/worker-config"
@@ -52,6 +53,14 @@ export type ExecuteMultipleStepsProps = {
   commentAnchor?: CommentAnchor
   appointmentId?: string
   flowExecutionKey?: string
+  /**
+   * Hands the run's pending continuation (see
+   * `IntegrationJobRunFlowNode["data"]["thenSendFlow"]`) to a step that starts
+   * another node, so it runs after that node's chain instead of beside it.
+   * Set only for the node's last step. Returns it at most once; a step calls it
+   * only when it actually enqueues the next node.
+   */
+  takeContinuation?: () => IntegrationJobRunFlowNode["data"] | undefined
 }
 
 export type ExecuteStepProps<T> = Omit<ExecuteMultipleStepsProps, "steps"> & {
@@ -317,6 +326,7 @@ export async function sendFlow(
           startedByContactMessage: props.startedByContactMessage,
           commentAnchor: props.commentAnchor,
           origin: webhookChannelOrigin(),
+          thenSendFlow: props.takeContinuation?.(),
         },
       },
       ...broadcastPriorityOptions(props.metadata),

@@ -177,6 +177,7 @@ async function splitTraffic({
   triggerMessageId,
   triggerMessageCreatedAt,
   startedByContactMessage,
+  takeContinuation,
 }: ExecuteStepProps<SplitTrafficStepSchema>) {
   if (!(targetId && step.cases.length)) {
     return
@@ -222,6 +223,7 @@ async function splitTraffic({
         commentAnchor,
         appointmentId,
         origin: webhookChannelOrigin(),
+        thenSendFlow: takeContinuation?.(),
       },
     })
   }
@@ -344,6 +346,7 @@ async function startAnotherNode(
       startedByContactMessage: props.startedByContactMessage,
       commentAnchor: props.commentAnchor,
       origin: webhookChannelOrigin(),
+      thenSendFlow: props.takeContinuation?.(),
     },
   })
 }
@@ -359,7 +362,10 @@ async function startExternalFlow(
         contactInboxId: props.contactInbox.id,
         flowId: props.step.flowId,
       },
-      pickSendFlowExtras(props),
+      {
+        ...pickSendFlowExtras(props),
+        thenSendFlow: props.takeContinuation?.(),
+      },
     ),
   )
 }
@@ -376,7 +382,10 @@ async function startExternalNode(
         flowId: props.step.flowId,
         nodeId: props.step.nodeId,
       },
-      pickSendFlowExtras(props),
+      {
+        ...pickSendFlowExtras(props),
+        thenSendFlow: props.takeContinuation?.(),
+      },
     ),
   )
 }

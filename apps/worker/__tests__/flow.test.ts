@@ -1823,6 +1823,112 @@ describe("runStepsAndQuickReplies — a step that branches and also continues (G
       ])
     })
 
+    test("rides on a jump that ends the node, so it runs after the jumped-to node", async () => {
+      const jump = {
+        ...makeStep("startAnotherNode"),
+        id: "step-1",
+        nodeId: "jump-target",
+      }
+
+      await runStepsAndQuickReplies({
+        ...makeBaseProps(makeFlowVersion([continueNode], [])),
+        details: { steps: [jump] },
+        triggerNextNode: true,
+        thenSendFlow: pending,
+      })
+
+      expect(queuedJobs()).toHaveLength(1)
+      expect(runOrder(queuedJobs()[0])).toEqual([
+        "jump-target",
+        "outer-continue",
+      ])
+    })
+
+    test("stays with the node's Continue chain when the node also continues", async () => {
+      const jump = {
+        ...makeStep("startAnotherNode"),
+        id: "step-1",
+        nodeId: "jump-target",
+      }
+
+      await runStepsAndQuickReplies({
+        ...makeBaseProps(
+          makeFlowVersion([continueNode], [edge("node-1", "continue-node")]),
+        ),
+        details: { steps: [jump] },
+        triggerNextNode: true,
+        thenSendFlow: pending,
+      })
+
+      const [jumpJob, continueJob] = queuedJobs()
+      expect(jumpJob?.nodeId).toBe("jump-target")
+      expect(jumpJob?.thenSendFlow).toBeUndefined()
+      expect(runOrder(continueJob)).toEqual(["continue-node", "outer-continue"])
+    })
+
+    test("is not given to a jump that is not the node's last step", async () => {
+      const jump = {
+        ...makeStep("startAnotherNode"),
+        id: "step-1",
+        nodeId: "jump-target",
+      }
+      const after = { ...makeStep("sendText"), id: "step-2" }
+
+      await runStepsAndQuickReplies({
+        ...makeBaseProps(makeFlowVersion([continueNode], [])),
+        details: { steps: [jump, after] },
+        triggerNextNode: true,
+        thenSendFlow: pending,
+      })
+
+      const [jumpJob, nextStepJob] = queuedJobs()
+      expect(jumpJob?.thenSendFlow).toBeUndefined()
+      expect(nextStepJob).toMatchObject({
+        startFromStepId: "step-2",
+        thenSendFlow: pending,
+      })
+    })
+
+    test("is released by the run when the last-step jump goes nowhere", async () => {
+      const { flowStepHandlers } = await import(
+        "../src/integration/handlers/step"
+      )
+      // A jump with no connected target enqueues nothing and takes nothing.
+      mockSpy(flowStepHandlers, "startAnotherNode").mockResolvedValue({
+        status: "success",
+        result: null,
+      })
+
+      await runStepsAndQuickReplies({
+        ...makeBaseProps(makeFlowVersion([continueNode], [])),
+        details: {
+          steps: [{ ...makeStep("startAnotherNode"), id: "step-1" }],
+        },
+        triggerNextNode: true,
+        thenSendFlow: pending,
+      })
+
+      expect(targetNodes()).toEqual(["outer-continue"])
+    })
+
+    test("rides on a node made of one jump (Start Flow)", async () => {
+      const startFlow = {
+        ...makeStep("startExternalFlow"),
+        id: "before-1",
+        flowId: "other-flow",
+      }
+
+      await runStepsAndQuickReplies({
+        ...makeBaseProps(makeFlowVersion([continueNode], [])),
+        details: { beforeStep: startFlow, steps: [] },
+        triggerNextNode: true,
+        thenSendFlow: pending,
+      })
+
+      expect(queuedJobs()).toHaveLength(1)
+      expect(queuedJobs()[0]).toMatchObject({ thenSendFlow: pending })
+    })
+
     test("is forwarded to the node's next step instead of being run early", async () => {
       const step1 = { ...makeStep("sendText"), id: "step-1" }
       const step2 = { ...makeStep("sendText"), id: "step-2" }
@@ -3407,6 +3513,43 @@ describe("runFlowNode — a target removed from the flow", () => {
   test("runs the pending continuation instead of failing", async () => {
     await runFlowNode({
       ...jobData,
+      thenSendFlow: { ...jobData, nodeId: "outer" },
+    })
+
+    const queued = integrationQueueAdd.mock.calls.map(
+      ([, job]) => (job as { data: { nodeId?: string } }).data.nodeId,
+    )
+    expect(queued).toEqual(["outer"])
+  })
+
+  test("runs the pending continuation when the target flow no longer exists", async () => {
+    detectFlowVersion
+      .mockReset()
+      .mockRejectedValue(new SdkException("FlowVersion not found"))
+
+    await runFlowNode({
+      ...jobData,
+      thenSendFlow: { ...jobData, nodeId: "outer" },
+    })
+
+    const queued = integrationQueueAdd.mock.calls.map(
+      ([, job]) => (job as { data: { nodeId?: string } }).data.nodeId,
+    )
+    expect(queued).toEqual(["outer"])
+  })
+
+  test("a missing flow without a continuation still fails", async () => {
+    detectFlowVersion
+      .mockReset()
+      .mockRejectedValue(new SdkException("FlowVersion not found"))
+
+    await expect(runFlowNode(jobData)).rejects.toThrow("FlowVersion not found")
+  })
+
+  test("a job without a flow id runs its pending continuation", async () => {
+    await runFlowNode({
+      ...jobData,
+      flowId: undefined,
       thenSendFlow: { ...jobData, nodeId: "outer" },
     })
 

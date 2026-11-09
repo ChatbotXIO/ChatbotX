@@ -214,6 +214,33 @@ async function releaseContinuationOfMissingTarget(
   return true
 }
 
+/**
+ * The flow version a run executes. When the flow was deleted or deactivated
+ * since the job was queued, the run can never happen, but the continuation it
+ * carries still can: that is released and undefined returned. Other lookup
+ * failures throw, so the job retries.
+ */
+async function detectRunnableFlowVersion(
+  props: SendFlowJobData,
+  target: { flowId: string; workspaceId: string },
+): Promise<Awaited<ReturnType<typeof detectFlowVersion>> | undefined> {
+  try {
+    return await detectFlowVersion({
+      flowId: target.flowId,
+      flowVersionId: props.flowVersionId,
+      workspaceId: target.workspaceId,
+    })
+  } catch (error) {
+    if (
+      error instanceof SdkException &&
+      (await releaseContinuationOfMissingTarget(props))
+    ) {
+      return
+    }
+    throw error
+  }
+}
+
 /** A job carries either an entity ID or the already-loaded entity. */
 type FlowJobEntityRef =
   | string
@@ -258,6 +285,7 @@ export const runFlowNode = async (
 ) => {
   if (!props.flowId) {
     logger.debug({ props }, "runFlowNode is called without flowId")
+    await releaseContinuationOfMissingTarget(props)
     return
   }
 
@@ -321,11 +349,14 @@ export const runFlowNode = async (
       conversationId: props.conversationId,
       contactInboxId: props.contactInboxId,
     })
-  const { flowVersion, useLatestFlowVersion } = await detectFlowVersion({
+  const detectedFlowVersion = await detectRunnableFlowVersion(props, {
     flowId: props.flowId,
-    flowVersionId: props.flowVersionId,
     workspaceId: conversation.workspaceId,
   })
+  if (!detectedFlowVersion) {
+    return
+  }
+  const { flowVersion, useLatestFlowVersion } = detectedFlowVersion
 
   const nodes = flowVersion.nodes as unknown as FlowNode[]
 
@@ -561,12 +592,24 @@ async function runNodeSteps(
   // node's step jobs); the Continue edge must not send it again.
   let branchTargetNodeId = props.branchedNodeId
 
+  const hasSteps = "steps" in details && Boolean(details.steps?.length)
+  const continueNode = triggerNextNode
+    ? resolveContinueNode({ details, targetType, targetId, flowVersion })
+    : undefined
+  // A jump that ends the node (Condition, Split Traffic, Start Another Node,
+  // Start Flow, ...) takes the pending continuation along to the next node,
+  // unless the node also goes on through its Continue edge: then that chain
+  // carries it, as it would without the jump.
+  const jumpTakeContinuation = continueNode ? undefined : chain.takeThen
+
   if (details.beforeStep && !props.startFromStepId && !skipBeforeStep) {
     const beforeResult = await executeMultipleSteps({
       ...props,
       nodeVisits,
       commentAnchor: remainingAnchor,
       steps: [details.beforeStep],
+      // A node made of one jump (Start Flow) passes the pending continuation on.
+      takeContinuation: hasSteps ? undefined : jumpTakeContinuation,
     })
     remainingAnchor = beforeResult?.commentAnchor
   }
@@ -600,6 +643,10 @@ async function runNodeSteps(
         quickReplies:
           quickReplyCarrier?.id === currentStep.id ? quickReplies : undefined,
         steps: [currentStep],
+        takeContinuation:
+          startIdx === details.steps.length - 1
+            ? jumpTakeContinuation
+            : undefined,
       },
       isContinuingBranchStep
         ? { shouldDeferContinuingBranch: true }
@@ -689,75 +736,81 @@ async function runNodeSteps(
     // Last step — fall through to quickReplies + next-node dispatch
   }
 
-  if (!triggerNextNode) {
+  if (!continueNode) {
     return
   }
+  // A branch and Continue wired to the same node must send that node once.
+  if (continueNode.id === branchTargetNodeId) {
+    return
+  }
+  await chain.enqueue({
+    conversationId: props.conversation.id,
+    contactInboxId: props.contactInbox.id,
+    flowId: flowVersion.flowId,
+    flowVersionId: props.useLatestFlowVersion ? undefined : flowVersion.id,
+    nodeId: continueNode.id,
+    metadata: props.metadata,
+    isBulkBroadcast: props.isBulkBroadcast,
+    appointmentId: props.appointmentId,
+    trackingContext: props.trackingContext,
+    sendFrom: props.sendFrom,
+    sentByUserId: props.sentByUserId,
+    nodeVisits,
+    triggerMessageId: props.triggerMessageId,
+    triggerMessageCreatedAt: props.triggerMessageCreatedAt,
+    startedByContactMessage: props.startedByContactMessage,
+    commentAnchor: remainingAnchor,
+    origin: webhookChannelOrigin(),
+  })
+}
 
-  // send next node if exists
-  //
-  // A tapped button/quickReply resolves its next node through its edge only
-  // when its own action is a node jump — or when it has no action at all
-  // (`buttonType: null`, `whatsappOptionList`), where the edge is the only
-  // routing it has. The canvas keeps type and edge in lockstep: dragging an
-  // edge from a button handle rewrites that button to `startAnotherNode`, and
-  // deleting the edge clears it back to `null` (`updateButtonRoute` /
-  // `createRouteFields` in `flow-config/src/routable-handle.ts`). So a button
-  // carrying an `openWebsite` / `startExternalFlow` / `startExternalNode`
-  // action can never have been wired to a node on purpose — such an edge is
-  // always left over from a config this button has since moved away from, and
-  // following it would fire a node the button no longer targets on top of the
-  // action it actually has.
-  //
-  // An `openMiniApp` button is the exception: it keeps its action when an
-  // edge is drawn from it, and only reaches this point once the contact has
-  // submitted the Mini App, so its edge is where the flow continues.
-  //
-  // `targetType === "step"` keeps never following an edge, as before.
+/**
+ * The node this run continues to through its Continue edge, if any.
+ *
+ * A tapped button/quickReply resolves its next node through its edge only
+ * when its own action is a node jump — or when it has no action at all
+ * (`buttonType: null`, `whatsappOptionList`), where the edge is the only
+ * routing it has. The canvas keeps type and edge in lockstep: dragging an
+ * edge from a button handle rewrites that button to `startAnotherNode`, and
+ * deleting the edge clears it back to `null` (`updateButtonRoute` /
+ * `createRouteFields` in `flow-config/src/routable-handle.ts`). So a button
+ * carrying an `openWebsite` / `startExternalFlow` / `startExternalNode`
+ * action can never have been wired to a node on purpose — such an edge is
+ * always left over from a config this button has since moved away from, and
+ * following it would fire a node the button no longer targets on top of the
+ * action it actually has.
+ *
+ * An `openMiniApp` button is the exception: it keeps its action when an
+ * edge is drawn from it, and only reaches this point once the contact has
+ * submitted the Mini App, so its edge is where the flow continues.
+ *
+ * `targetType === "step"` keeps never following an edge, as before.
+ */
+function resolveContinueNode(props: {
+  details: ExecuteStepsAndQuickRepliesProps["details"]
+  targetType: ExecuteStepsAndQuickRepliesProps["targetType"]
+  targetId: string
+  flowVersion: ExecuteStepsAndQuickRepliesProps["flowVersion"]
+}): FlowNode | undefined {
+  const { details, targetType, targetId, flowVersion } = props
   const followsEdgeToNextNode =
     targetType === "node" ||
     ((targetType === "button" || targetType === "quickReply") &&
       (details.beforeStep == null ||
         details.beforeStep.stepType === stepTypes.enum.startAnotherNode ||
         details.beforeStep.stepType === stepTypes.enum.openMiniApp))
-
-  let relatedEdge: EdgeSchema | null | undefined = null
-  if (followsEdgeToNextNode) {
-    relatedEdge = (flowVersion.edges as EdgeSchema[]).find(
-      (edge) => edge.sourceHandle === targetId,
-    )
+  if (!followsEdgeToNextNode) {
+    return
   }
+  const relatedEdge = (flowVersion.edges as EdgeSchema[]).find(
+    (edge) => edge.sourceHandle === targetId,
+  )
   if (!relatedEdge?.target) {
     return
   }
-
-  const nextNode = (flowVersion.nodes as unknown as FlowNode[]).find(
+  return (flowVersion.nodes as unknown as FlowNode[]).find(
     (node) => node.id === relatedEdge.target,
   )
-  // A branch and Continue wired to the same node must send that node once.
-  if (nextNode && nextNode.id === branchTargetNodeId) {
-    return
-  }
-  if (nextNode) {
-    await chain.enqueue({
-      conversationId: props.conversation.id,
-      contactInboxId: props.contactInbox.id,
-      flowId: flowVersion.flowId,
-      flowVersionId: props.useLatestFlowVersion ? undefined : flowVersion.id,
-      nodeId: nextNode.id,
-      metadata: props.metadata,
-      isBulkBroadcast: props.isBulkBroadcast,
-      appointmentId: props.appointmentId,
-      trackingContext: props.trackingContext,
-      sendFrom: props.sendFrom,
-      sentByUserId: props.sentByUserId,
-      nodeVisits,
-      triggerMessageId: props.triggerMessageId,
-      triggerMessageCreatedAt: props.triggerMessageCreatedAt,
-      startedByContactMessage: props.startedByContactMessage,
-      commentAnchor: remainingAnchor,
-      origin: webhookChannelOrigin(),
-    })
-  }
 }
 
 type ExecuteMultipleStepsResult = ExecuteStepResult & {
