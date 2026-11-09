@@ -48,7 +48,7 @@ vi.mock("@chatbotx.io/events/context", () => ({
 }))
 
 vi.mock("@chatbotx.io/worker-config", () => ({
-  flowContinuationJobOptions: () => ({ priority: 2 }),
+  flowContinuationJobOptions: () => ({}),
   ChatJobAction: { sendChatMessage: "sendChatMessage" },
   IntegrationJobAction: { sendFlow: "sendFlow" },
   chatQueue: { add: mocks.chatQueueAdd },
@@ -494,7 +494,7 @@ describe("runQuestionnaireEngine", () => {
           sendFrom: "inbox",
         }),
       },
-      { priority: 2 },
+      {},
     )
   })
 

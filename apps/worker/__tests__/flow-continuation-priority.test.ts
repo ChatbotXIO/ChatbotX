@@ -29,13 +29,13 @@ beforeEach(() => {
 })
 
 describe("createContinuationChain priority", () => {
-  test("a continuation of a live flow is queued behind live traffic", async () => {
+  test("a continuation of a live flow stays in FIFO order with live traffic (no priority)", async () => {
     await createContinuationChain(undefined).enqueue(continuation)
 
     expect(integrationQueueAdd).toHaveBeenCalledWith(
       "sendFlow",
       { type: "sendFlow", data: continuation },
-      { priority: 2 },
+      {},
     )
   })
 
@@ -52,7 +52,7 @@ describe("createContinuationChain priority", () => {
     )
   })
 
-  test("a deferred branch keeps its dedup jobId and gets the continuation priority", async () => {
+  test("a deferred branch keeps its dedup jobId", async () => {
     const chain = createContinuationChain(undefined)
     chain.deferBranch({
       job: { type: "sendFlow", data: { ...continuation, nodeId: "branch" } },
@@ -66,7 +66,7 @@ describe("createContinuationChain priority", () => {
       expect.objectContaining({
         data: expect.objectContaining({ nodeId: "branch" }),
       }),
-      { priority: 2, jobId: "flow-state-abc" },
+      { jobId: "flow-state-abc" },
     )
   })
 

@@ -73,7 +73,7 @@ describe("step input timeout smart delay", () => {
 
     expect(job).toEqual({
       name: "resumeStepInputTimeout",
-      opts: { priority: 2 },
+      opts: {},
       data: {
         type: "resumeStepInputTimeout",
         data: { smartDelayId: "row-1" },
@@ -170,7 +170,7 @@ describe("step input timeout smart delay", () => {
 })
 
 describe("resume job priority", () => {
-  test("a live flow's resume is a continuation, a broadcast's keeps the scheduled-send tier", () => {
+  test("a live flow's resume gets no priority, a broadcast's keeps the scheduled-send tier", () => {
     const broadcastRow = {
       ...row,
       metadata: {
@@ -180,7 +180,7 @@ describe("resume job priority", () => {
       },
     } as unknown as Parameters<typeof buildSendFlowResumeJob>[0]
 
-    expect(buildSendFlowResumeJob(row).opts).toEqual({ priority: 2 })
+    expect(buildSendFlowResumeJob(row).opts).toEqual({})
     expect(buildSendFlowResumeJob(broadcastRow).opts).toEqual({ priority: 5 })
   })
 
@@ -202,7 +202,7 @@ describe("resume job priority", () => {
     const scheduled = smartDelayResumeJobFactories[type](broadcastRow)
 
     expect(live.name).toBe(name)
-    expect(live.opts).toEqual({ priority: 2 })
+    expect(live.opts).toEqual({})
     expect(scheduled.opts).toEqual({ priority: 5 })
   })
 })

@@ -15,6 +15,7 @@ import {
 } from "@chatbotx.io/flow-config"
 import { createId } from "@chatbotx.io/utils"
 import {
+  type FlowJobPriorityOptions,
   flowContinuationJobOptions,
   IntegrationJobAction,
   type IntegrationJobData,
@@ -26,8 +27,8 @@ import { logger } from "../../lib/logger"
 type SmartDelayJobSpec = {
   name: IntegrationJobData["type"]
   data: IntegrationJobData
-  /** Priority of the resumed flow run: a resume continues a run in progress. */
-  opts: { priority: number }
+  /** The resumed run's tier (`flowContinuationJobOptions`). */
+  opts: FlowJobPriorityOptions
 }
 
 type SmartDelayResumeJobExtras = {

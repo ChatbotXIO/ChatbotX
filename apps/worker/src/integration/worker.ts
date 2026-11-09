@@ -225,8 +225,8 @@ const depthLoggedQueues = [
  * Logs how deep the queues behind customer replies are, once a minute. The
  * numbers tell an operator whether `integration` is backed up (raise its
  * concurrency), `chat` is (raise `CHAT_WORKER_CONCURRENCY`), or `low` is (the
- * bookkeeping ingress is behind). `prioritized` holds continuations and
- * scheduled sends, which wait behind live traffic by design.
+ * bookkeeping ingress is behind). `prioritized` holds broadcast, sequence and
+ * replay sends, which wait behind live traffic by design.
  */
 function startQueueDepthLogging(): void {
   const logDepths = async () => {

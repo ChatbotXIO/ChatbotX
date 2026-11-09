@@ -519,6 +519,7 @@ describe("processWhatsappTemplate", () => {
       messageIds: ["prov-123"],
       sentCount: 1,
     })
+    mockRepositoryUpdateSourceId.mockResolvedValueOnce({ id: "msg-created" })
 
     await processWhatsappTemplate({
       conversation: fakeConversation,
@@ -532,6 +533,11 @@ describe("processWhatsappTemplate", () => {
       providerMessageId: "prov-123",
       statuses: ["delivered"],
     })
+    // The marker comes after the sourceId, so a status kept on `integration`
+    // by it always finds its message.
+    expect(mockMarkStatusBranch.mock.invocationCallOrder[0]).toBeGreaterThan(
+      mockRepositoryUpdateSourceId.mock.invocationCallOrder[0],
+    )
   })
 
   test("records no marker when no status button leads anywhere", async () => {
@@ -544,6 +550,35 @@ describe("processWhatsappTemplate", () => {
       conversation: fakeConversation,
       contactInbox: fakeContactInbox,
       template: fakeTemplate,
+    })
+
+    expect(mockMarkStatusBranch).not.toHaveBeenCalled()
+  })
+
+  test.each([
+    [
+      "was not found",
+      () => mockRepositoryUpdateSourceId.mockResolvedValueOnce(null),
+    ],
+    [
+      "failed",
+      () =>
+        mockRepositoryUpdateSourceId.mockRejectedValueOnce(
+          new Error("db down"),
+        ),
+    ],
+  ])("records no marker when saving the sourceId %s, so the status is routed to low", async (_label, arrange) => {
+    mockSendFlowStep.mockResolvedValue({
+      messageIds: ["prov-123"],
+      sentCount: 1,
+    })
+    arrange()
+
+    await processWhatsappTemplate({
+      conversation: fakeConversation,
+      contactInbox: fakeContactInbox,
+      template: fakeTemplate,
+      statusBranches: ["delivered"],
     })
 
     expect(mockMarkStatusBranch).not.toHaveBeenCalled()

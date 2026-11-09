@@ -97,15 +97,16 @@ prioritized one; among prioritized jobs a lower number goes first.
 
 | Priority | Jobs |
 |---|---|
-| none (0) | Anything started by one customer/agent/system event: incoming messages, postbacks, quick replies, automated replies, the first flow of a trigger |
-| `FLOW_CONTINUATION_PRIORITY` (2) | The next step, branch or timer resume of a flow run already in progress |
+| none (0) | Live traffic: incoming messages, postbacks, quick replies, automated replies, and every step, branch or timer resume of those flow runs |
 | `BROADCAST_SEND_PRIORITY` / `SEQUENCE_SEND_PRIORITY` (5) | Every step of a broadcast or sequence run (chosen by `metadata.type`) |
 | `MISSED_COMMENT_REPLAY_PRIORITY` (10) | Missed-comment replays |
 
-Under load a customer's new message can therefore run before an earlier continuation of
-the same conversation. At low load the wait list is empty and nothing is reordered.
-`flowContinuationJobOptions` (`packages/worker-config`) is the one place that maps a
-job's `metadata` to its tier; add new mass-send types to its table.
+A running flow's next step deliberately has no priority: BullMQ takes a prioritized job
+only when no unprioritized one is waiting, so a lower tier for continuations would let new
+conversations stall a flow half-way through indefinitely under sustained load. Live jobs
+stay in FIFO order with each other. `flowContinuationJobOptions` (`packages/worker-config`)
+is the one place that maps a job's `metadata` to its tier; add new mass-send types to its
+table.
 
 **Bookkeeping ingress runs on `low`.** `enqueueIntegrationJob` routes read receipts
 (`contactMarkAsRead`), delivery statuses (`messageStatus`) and channel echoes
@@ -133,10 +134,14 @@ old `messageStatus` / `contactMarkAsRead` cases to drain what is already queued,
 that was queued on `integration` before the switch and is redelivered afterwards can run
 twice across the two queues during the cutover; the handlers are idempotent.
 
+**Rollback order.** Roll back the builder before the worker. An older `low` worker does not
+know the new job types: it logs `Unhandled low job type` and completes them, so receipts
+and echoes routed to `low` by a newer builder would be dropped.
+
 **Observing it.** The integration worker logs `Queue depth` every 60 s for
 `integration`, `chat` and `low` (`waiting`, `prioritized`, `delayed`, `active`). Many
 `waiting` on `integration` means more integration concurrency; many on `chat` means more
-`CHAT_WORKER_CONCURRENCY`; `prioritized` holds continuations and scheduled sends that
+`CHAT_WORKER_CONCURRENCY`; `prioritized` holds broadcast, sequence and replay sends that
 wait behind live traffic by design.
 
 **Sizing for roughly 3,000–4,000 messages per hour with flows.** The defaults

@@ -419,30 +419,34 @@ export async function processWhatsappTemplate(
 
     const providerMessageId = result?.messageIds?.[0]
 
-    if (providerMessageId && statusBranches?.length) {
-      // Ingress reads this marker to keep those statuses on `integration`;
-      // written as soon as the provider id is known, ahead of the DB update.
-      await messageStatusBranchService.mark({
-        channel: contactInbox.channel,
-        providerMessageId,
-        statuses: statusBranches,
-      })
-    }
-
+    let isSourceIdSaved = false
     if (providerMessageId) {
       try {
-        await messageService.updateSourceId({
+        const updated = await messageService.updateSourceId({
           id: newMessage.id,
           sourceId: providerMessageId,
           workspaceId: conversation.workspaceId,
           createdAt: newMessage.createdAt,
         })
+        isSourceIdSaved = updated !== null
       } catch (err) {
         logger.error(
           err,
           "Failed to persist WhatsApp template sourceId after a successful send",
         )
       }
+    }
+
+    if (providerMessageId && isSourceIdSaved && statusBranches?.length) {
+      // Ingress reads this marker to keep those statuses on `integration`.
+      // Written only once the sourceId is saved: a status handled with the
+      // marker must find its message, while one arriving before it goes to
+      // `low` and runs later.
+      await messageStatusBranchService.mark({
+        channel: contactInbox.channel,
+        providerMessageId,
+        statuses: statusBranches,
+      })
     }
 
     return {

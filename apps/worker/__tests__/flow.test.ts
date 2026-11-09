@@ -904,10 +904,10 @@ describe("executeMultipleSteps — explicit status routing", () => {
   })
 
   test.each([
-    ["a live flow", undefined, 2],
+    ["a live flow", undefined, undefined],
     ["a broadcast run", { type: "broadcast" }, 5],
     ["a sequence run", { type: "sequenceSchedule" }, 5],
-  ] as const)("queues the state continuation of %s with priority %i and keeps its jobId", async (_label, metadata, priority) => {
+  ] as const)("queues the state continuation of %s with priority %s and keeps its jobId", async (_label, metadata, priority) => {
     const stateId = "state-ok"
     const step = makeStep("autoAssignConversation", [
       { id: stateId, stateType: "success" },
@@ -949,7 +949,7 @@ describe("executeMultipleSteps — explicit status routing", () => {
     expect(options.jobId).toMatch(stateContinuationJobIdPattern)
   })
 
-  test("queues a continuation without a durable key with the continuation priority", async () => {
+  test("queues a live continuation without a durable key with no priority", async () => {
     const stateId = "state-ok"
     const step = makeStep("autoAssignConversation", [
       { id: stateId, stateType: "success" },
@@ -979,7 +979,7 @@ describe("executeMultipleSteps — explicit status routing", () => {
     expect(integrationQueueAdd).toHaveBeenCalledWith(
       "sendFlow",
       expect.anything(),
-      { priority: 2 },
+      {},
     )
   })
 

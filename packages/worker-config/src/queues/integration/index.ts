@@ -178,17 +178,6 @@ export const BROADCAST_SEND_PRIORITY = 5
  */
 export const SEQUENCE_SEND_PRIORITY = 5
 
-/**
- * BullMQ priority for a job that continues or resumes a flow run that is
- * already in progress (next step, branch, timer resume). Ahead of the
- * scheduled mass sends, behind live traffic (no priority) — under load the
- * integration queue is therefore ordered: live (0) → continuation (2) →
- * broadcast / sequence (5) → missed-comment replay (10). Within one
- * conversation this can run a later customer message before an earlier
- * continuation; at low load the wait list is empty so nothing is reordered.
- */
-export const FLOW_CONTINUATION_PRIORITY = 2
-
 const flowJobPriorityByMetadataType: Partial<
   Record<MetadataPayload["type"], number>
 > = {
@@ -196,19 +185,23 @@ const flowJobPriorityByMetadataType: Partial<
   [SEQUENCE_SCHEDULE_PAYLOAD_TYPE]: SEQUENCE_SEND_PRIORITY,
 }
 
+/** The BullMQ options a flow job's tier sets. */
+export type FlowJobPriorityOptions = Pick<JobsOptions, "priority">
+
 /**
  * Job options for a job that continues or schedules a flow run. A mass
- * scheduled send (`metadata.type` broadcast / sequenceSchedule) keeps its own
- * tier for every step; anything else is a continuation. Classification rule:
- * mass scheduled send = 5, continuation or resume of a running flow = 2, a job
- * started by one customer/agent/system event = no priority (runs first).
+ * scheduled send (`metadata.type` broadcast / sequenceSchedule) keeps its tier
+ * on every step, so it always yields to live traffic. Any other run gets no
+ * priority: its next step stays in FIFO order with customer messages. BullMQ
+ * only takes a prioritized job when no unprioritized one is waiting, so a
+ * lower tier for continuations would let new conversations stall a running
+ * flow indefinitely under sustained load.
  */
 export const flowContinuationJobOptions = (
   metadata?: MetadataPayload,
-): { priority: number } => {
-  const scheduledPriority =
-    metadata && flowJobPriorityByMetadataType[metadata.type]
-  return { priority: scheduledPriority ?? FLOW_CONTINUATION_PRIORITY }
+): FlowJobPriorityOptions => {
+  const priority = metadata && flowJobPriorityByMetadataType[metadata.type]
+  return priority ? { priority } : {}
 }
 
 export type IntegrationJobReceiveComment = {

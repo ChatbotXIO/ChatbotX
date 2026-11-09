@@ -744,7 +744,6 @@ describe("heavy step enqueue", () => {
       {
         delay: 330_000,
         jobId: `heavy-resume-fallback-${identity}`,
-        priority: 2,
       },
     )
     const [, , options] = mocks.heavyQueueAdd.mock.calls[0] ?? []

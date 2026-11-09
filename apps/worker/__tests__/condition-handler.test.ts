@@ -34,7 +34,7 @@ vi.mock("@chatbotx.io/variables", () => ({
 
 vi.mock("@chatbotx.io/worker-config", () => ({
   IntegrationJobAction: { sendFlow: "sendFlow" },
-  flowContinuationJobOptions: () => ({ priority: 2 }),
+  flowContinuationJobOptions: () => ({}),
   integrationQueue: { add: integrationQueueAdd },
 }))
 
@@ -151,7 +151,7 @@ describe("handleCondition", () => {
           origin: "webhook",
         }),
       },
-      { priority: 2 },
+      {},
     )
   })
 
@@ -193,7 +193,7 @@ describe("handleCondition", () => {
         type: "sendFlow",
         data: expect.objectContaining({ nodeId: "otherwise-target" }),
       },
-      { priority: 2 },
+      {},
     )
   })
 
@@ -212,7 +212,7 @@ describe("handleCondition", () => {
         type: "sendFlow",
         data: expect.objectContaining({ nodeId: "otherwise-target" }),
       },
-      { priority: 2 },
+      {},
     )
   })
 
@@ -272,7 +272,7 @@ describe("handleCondition", () => {
         type: "sendFlow",
         data: expect.objectContaining({ nodeId: "first-target" }),
       },
-      { priority: 2 },
+      {},
     )
   })
 
@@ -301,7 +301,7 @@ describe("handleCondition", () => {
           nodeId: "first-target",
         }),
       },
-      { priority: 2 },
+      {},
     )
   })
 
@@ -330,7 +330,7 @@ describe("handleCondition", () => {
           nodeId: "first-target",
         }),
       },
-      { priority: 2 },
+      {},
     )
   })
 

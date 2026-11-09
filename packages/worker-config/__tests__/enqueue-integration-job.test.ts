@@ -33,7 +33,6 @@ vi.mock("../src/lib/connection", () => ({
 const {
   BROADCAST_SEND_PRIORITY,
   enqueueIntegrationJob,
-  FLOW_CONTINUATION_PRIORITY,
   flowContinuationJobOptions,
   IntegrationJobAction,
   SEQUENCE_SEND_PRIORITY,
@@ -231,26 +230,21 @@ describe("low-queue routing", () => {
 })
 
 describe("flowContinuationJobOptions", () => {
-  test("a continuation of a live flow gets the continuation priority", () => {
-    expect(flowContinuationJobOptions()).toEqual({
-      priority: FLOW_CONTINUATION_PRIORITY,
-    })
-    expect(flowContinuationJobOptions({ type: "other" } as never)).toEqual({
-      priority: FLOW_CONTINUATION_PRIORITY,
-    })
+  test("a continuation of a live flow gets no priority, so it stays in FIFO order with customer messages", () => {
+    expect(flowContinuationJobOptions()).toEqual({})
+    expect(
+      flowContinuationJobOptions({
+        type: "updateStatus",
+      } as never),
+    ).toEqual({})
   })
 
-  test("broadcast and sequence runs keep the scheduled-send priority", () => {
+  test("broadcast and sequence runs keep the scheduled-send priority on every step", () => {
     expect(flowContinuationJobOptions({ type: "broadcast" } as never)).toEqual({
       priority: BROADCAST_SEND_PRIORITY,
     })
     expect(
       flowContinuationJobOptions({ type: "sequenceSchedule" } as never),
     ).toEqual({ priority: SEQUENCE_SEND_PRIORITY })
-  })
-
-  test("orders live < continuation < scheduled", () => {
-    expect(FLOW_CONTINUATION_PRIORITY).toBeGreaterThan(0)
-    expect(FLOW_CONTINUATION_PRIORITY).toBeLessThan(BROADCAST_SEND_PRIORITY)
   })
 })

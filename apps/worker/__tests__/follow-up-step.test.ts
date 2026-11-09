@@ -25,7 +25,7 @@ vi.mock("@chatbotx.io/business/contact-inbox", () => ({ contactInboxService }))
 vi.mock("@chatbotx.io/business/smart-delay", () => ({ smartDelayService }))
 
 vi.mock("@chatbotx.io/worker-config", () => ({
-  flowContinuationJobOptions: () => ({ priority: 2 }),
+  flowContinuationJobOptions: () => ({}),
   IntegrationJobAction: {
     resumeFollowUp: "resumeFollowUp",
     resumeWait: "resumeWait",
@@ -119,7 +119,6 @@ describe("handleFollowUp", () => {
         data: { smartDelayId: rowId },
       },
       {
-        priority: 2,
         delay: 60_000,
         jobId: `smart-delay-${rowId}-${triggerAt.getTime()}`,
       },
