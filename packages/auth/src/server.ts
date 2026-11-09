@@ -950,9 +950,11 @@ export function createAuth(config: AuthConfig) {
       const staticOrigins = [
         getBrokerUrl(),
         env.NEXT_PUBLIC_BUILDER_URL,
-        // Mobile app deep-link scheme (chatbotx-mobile-app) — social sign-in relays back into the
-        // app via this custom scheme instead of an https:// origin.
+        // Mobile app deep-link schemes (chatbotx-mobile-app) — social sign-in relays back into the
+        // app via these custom schemes instead of an https:// origin. Keep in sync with
+        // DEFAULT_MOBILE_APP_SCHEMES in ./keys.
         "chatconnectxapp://",
+        "chatbotxmobileapp://",
       ]
       if (process.env.NEXT_PHASE === PHASE_PRODUCTION_BUILD) {
         return Array.from(new Set(staticOrigins))
