@@ -16,6 +16,7 @@ import type {
 import type {
   FlowActionTargetType,
   MetadataPayload,
+  StepInputResolutionReason,
 } from "@chatbotx.io/flow-config"
 import type {
   ChannelAudienceEventJobData,
@@ -62,6 +63,8 @@ export const IntegrationJobAction = {
   resumeWait: "resumeWait",
   resumeFollowUp: "resumeFollowUp",
   resumeQuickReplyFollowUp: "resumeQuickReplyFollowUp",
+  resumeStepInputTimeout: "resumeStepInputTimeout",
+  resolveStepInput: "resolveStepInput",
   blockContact: "blockContact",
   unblockContact: "unblockContact",
   assignConversation: "assignConversation",
@@ -351,6 +354,25 @@ export type IntegrationJobRunFlowNode = {
     origin?: "channel"
     /** See {@link CommentAnchor}. */
     commentAnchor?: CommentAnchor
+    /**
+     * A continuation that waits for this run's chain to finish. Get User Data
+     * hands its Continue here when it branches, so the branch's messages go
+     * out first: the chain forwards it to its next step or next node, and the
+     * job where the chain stops (waits for the contact, or has nothing after
+     * it) enqueues it, exactly once.
+     *
+     * Known limit: a step that jumps by enqueuing its own run (Condition,
+     * Start Another Node, Split Traffic, Start External Flow/Node) does not
+     * carry it, so when such a step ends the chain the continuation runs
+     * alongside the jumped-to node, as before this field existed.
+     */
+    thenSendFlow?: IntegrationJobRunFlowNode["data"]
+    /**
+     * A node an earlier step of this node's run already branched to. Carried
+     * to the node's next step jobs, so its Continue edge does not send that
+     * node a second time.
+     */
+    branchedNodeId?: string
   }
 }
 
@@ -453,6 +475,52 @@ export type IntegrationJobResumeQuickReplyFollowUp = {
   type: typeof IntegrationJobAction.resumeQuickReplyFollowUp
   data: { smartDelayId: string }
 }
+
+export type IntegrationJobResumeStepInputTimeout = {
+  type: typeof IntegrationJobAction.resumeStepInputTimeout
+  data: { smartDelayId: string }
+}
+
+/**
+ * Ends a pending step input (a `type: "step"` challenge) without a typed
+ * answer: the contact tapped Skip, or the step's timer ran out.
+ * `messageId` is set only when the contact's own tap triggered it.
+ */
+export type IntegrationJobResolveStepInput = {
+  type: typeof IntegrationJobAction.resolveStepInput
+  data: {
+    conversationId: string
+    contactInboxId: string
+    challengeId: string
+    reason: StepInputResolutionReason
+    messageId?: string
+    messageCreatedAt?: Date
+  }
+}
+
+/**
+ * The job (and its dedup id) that ends a pending step input. Every producer
+ * (webhook channels, webchat) builds it here so they cannot drift apart. The
+ * dedup id only holds while a job is waiting or active: a double tap collapses,
+ * while a tap after a finished or no-op resolution is still processed (a fixed
+ * `jobId` would be dropped by the retained completed job). The challenge claim
+ * is the real guard.
+ */
+export const buildResolveStepInputJob = (
+  data: IntegrationJobResolveStepInput["data"],
+): {
+  name: typeof IntegrationJobAction.resolveStepInput
+  data: IntegrationJobResolveStepInput
+  opts: JobsOptions
+} => ({
+  name: IntegrationJobAction.resolveStepInput,
+  data: { type: IntegrationJobAction.resolveStepInput, data },
+  opts: {
+    deduplication: {
+      id: `step-input-${data.conversationId}-${data.challengeId}`,
+    },
+  },
+})
 
 export type IntegrationJobResumeWait = {
   type: typeof IntegrationJobAction.resumeWait
@@ -1322,6 +1390,8 @@ export type IntegrationJobData =
   | IntegrationJobResumeWait
   | IntegrationJobResumeFollowUp
   | IntegrationJobResumeQuickReplyFollowUp
+  | IntegrationJobResumeStepInputTimeout
+  | IntegrationJobResolveStepInput
   | IntegrationJobCreateMessage
   | IntegrationJobProcessAutomatedResponse
   | IntegrationJobSendSequenceFlow

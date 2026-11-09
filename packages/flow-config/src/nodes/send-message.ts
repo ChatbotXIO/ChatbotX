@@ -2,6 +2,10 @@ import { type ChannelType, channelTypes } from "@chatbotx.io/utils/channel"
 import { z } from "zod"
 import { actionSteps } from "../shared"
 import {
+  STEP_INPUT_RESOLUTION_PAYLOAD_TYPE,
+  stepInputResolutionReasons,
+} from "../step-input-resolution"
+import {
   buttonStepSchema,
   refineNoCallPhoneNumberButtons,
 } from "../steps/button"
@@ -229,6 +233,18 @@ export const getUserDataWebviewSelectionPayload = baseMetadataPayload.extend({
   selectedValue: z.iso.datetime(),
 })
 
+/**
+ * Stored in the `metadata` column of a `stepInputTimeout` smart-delay row. It
+ * is never passed as flow-run metadata: run metadata propagates to every
+ * continuation and would re-resolve the step if the flow loops back to it.
+ */
+export const stepInputResolutionPayload = baseMetadataPayload.extend({
+  type: z.literal(STEP_INPUT_RESOLUTION_PAYLOAD_TYPE),
+  stepId: z.string(),
+  challengeId: z.string(),
+  reason: stepInputResolutionReasons,
+})
+
 export type BroadcastMetadataPayload = z.infer<typeof broadcastMetadataPayload>
 
 export type SequenceScheduleMetadataPayload = z.infer<
@@ -248,6 +264,7 @@ export const metadataSchema = z.discriminatedUnion("type", [
   appointmentAvailabilityRangeSelectionPayload,
   appointmentAvailabilityRangeSkippedPayload,
   getUserDataWebviewSelectionPayload,
+  stepInputResolutionPayload,
 ])
 
 export type MetadataPayload = z.infer<typeof metadataSchema>

@@ -428,6 +428,43 @@ class ConversationService extends BaseService {
   }
 
   /**
+   * Compare-and-set on a step challenge's attempt counter: of two concurrent
+   * invalid replies reading the same attempt, exactly one advances it, so only
+   * one sends the retry prompt. Matches the step AND challenge id, so a stale
+   * caller cannot touch a newer cycle's challenge. `lastAttemptAt` moves with
+   * the counter; `startedAt` (the deadline origin) is left alone.
+   */
+  async advanceStepChallengeAttempt(props: {
+    workspaceId: string
+    conversationId: string
+    stepId: string
+    challengeId: string
+    fromAttempts: number
+    toAttempts: number
+    lastAttemptAt: Date
+  }): Promise<boolean> {
+    const challenge = sql`${conversationModel.additionalAttributes}->'challenge'`
+    const rows = await db
+      .update(conversationModel)
+      .set({
+        additionalAttributes: sql`jsonb_set(jsonb_set(${conversationModel.additionalAttributes}, '{challenge,data,attempts}', to_jsonb(${props.toAttempts}::int), false), '{challenge,data,lastAttemptAt}', to_jsonb(${props.lastAttemptAt.toISOString()}::text), false)`,
+      })
+      .where(
+        and(
+          eq(conversationModel.id, props.conversationId),
+          eq(conversationModel.workspaceId, props.workspaceId),
+          sql`${challenge}->>'type' = 'step'`,
+          sql`${challenge}->'data'->>'stepId' = ${props.stepId}`,
+          sql`${challenge}->'data'->>'challengeId' = ${props.challengeId}`,
+          sql`(${challenge}->'data'->>'attempts')::int = ${props.fromAttempts}`,
+        ),
+      )
+      .returning({ id: conversationModel.id })
+
+    return rows.length > 0
+  }
+
+  /**
    * Clears a pending quick-reply retry. Never touches a Get User Data
    * (`type: "step"`) challenge. Returns whether a row changed, so concurrent
    * callers can tell who won. `attempts` makes it a compare-and-set on the

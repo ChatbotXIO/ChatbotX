@@ -168,3 +168,46 @@ describe("whatsapp reply button selection", () => {
     expect(rows[3].title).toBe("R".repeat(24))
   })
 })
+
+describe("whatsapp step input skip quick reply", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockSendMessage.mockResolvedValue({
+      messaging_product: "whatsapp",
+      messages: [{ id: "wamid.provider-1" }],
+    })
+  })
+
+  test("encodes the skip postback unchanged as the reply button id", async () => {
+    await sendFlowStep({
+      ctx,
+      data: {
+        contact,
+        flowId: FLOW_ID,
+        flowVersionId: FLOW_VERSION_ID,
+        step: {
+          id: "text-1",
+          stepType: "sendText",
+          text: "Your email?",
+          buttons: [],
+        },
+        quickReplies: [
+          {
+            id: "skip-1",
+            label: "Skip",
+            buttonType: "postback",
+            postback: "STEP_INPUT_SKIP|11612473309626368",
+          },
+        ],
+      },
+    } as never)
+
+    const action = lastMessage().action as {
+      buttons: { reply: { id: string; title: string } }[]
+    }
+    expect(action.buttons[0].reply).toEqual({
+      id: "STEP_INPUT_SKIP|11612473309626368",
+      title: "Skip",
+    })
+  })
+})

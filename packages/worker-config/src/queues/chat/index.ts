@@ -110,6 +110,11 @@ export type ChatJobSendFlowStep = {
       buttonPayloads: Record<string, DatabaseRichButtonPayloadEntry>
     }
     quickReplies?: ButtonStepProps[]
+    /**
+     * Ready-made quick replies appended after the step's own, for a prompt
+     * whose payloads the caller encodes itself (Get User Data's Skip button).
+     */
+    presetQuickReplies?: MessageButtonTemplate[]
     sendFrom?: "inbox"
     /** See `IntegrationJobRunFlowNode["data"]["sentByUserId"]`. */
     sentByUserId?: string

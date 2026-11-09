@@ -1676,6 +1676,79 @@ describe("sendFlowStep", () => {
     )
   })
 
+  describe("presetQuickReplies (caller-encoded quick replies, e.g. Get User Data's Skip)", () => {
+    const skip = {
+      id: "skip-1",
+      label: "Skip",
+      buttonType: "postback" as const,
+      postback: "STEP_INPUT_SKIP|11612473309626368",
+    }
+
+    test("reaches the channel untouched and is stored as a button of the message", async () => {
+      await sendFlowStep({
+        ...baseParams,
+        step: sendTextStep,
+        presetQuickReplies: [skip],
+      })
+
+      expect(mockSendFlowStepToChannel).toHaveBeenCalledWith(
+        expect.objectContaining({ quickReplies: [skip] }),
+      )
+      expect(mockRepositoryCreate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          contentAttributes: expect.objectContaining({
+            payload: expect.objectContaining({
+              buttons: expect.arrayContaining([skip]),
+            }),
+          }),
+        }),
+      )
+    })
+
+    test("goes after the step's own quick replies", async () => {
+      const quickReplies = [
+        {
+          id: "qr-1",
+          label: "Yes",
+          buttonType: null,
+          beforeStep: null,
+          steps: [],
+        },
+      ]
+
+      await sendFlowStep({
+        ...baseParams,
+        step: sendTextStep,
+        quickReplies,
+        presetQuickReplies: [skip],
+      } as SendFlowStepData & { quickReplies: typeof quickReplies })
+
+      const call = mockSendFlowStepToChannel.mock.calls[0]?.[0] as {
+        quickReplies: { id: string }[]
+      }
+      expect(call.quickReplies.map((reply) => reply.id)).toEqual([
+        "qr-1",
+        "skip-1",
+      ])
+    })
+
+    test.each([
+      ["omitted", undefined],
+      ["empty", []],
+    ])("adds nothing when %s", async (_label, presetQuickReplies) => {
+      await sendFlowStep({
+        ...baseParams,
+        step: sendTextStep,
+        presetQuickReplies,
+      })
+
+      const call = mockSendFlowStepToChannel.mock.calls[0]?.[0] as {
+        quickReplies?: unknown
+      }
+      expect(call.quickReplies).toBeUndefined()
+    })
+  })
+
   test("calls repository.createWithAttachments() for step with url (sendImage)", async () => {
     await sendFlowStep({ ...baseParams, step: sendImageStep })
 

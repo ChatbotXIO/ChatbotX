@@ -79,3 +79,21 @@ describe("zalo incoming GIF messages", () => {
     await expect(receive(USER_SEND_GIF_EVENT)).resolves.toBeNull()
   })
 })
+
+describe("zalo incoming step input skip payload", () => {
+  test("strips the postback_ echo prefix so the worker gets the skip payload unchanged", async () => {
+    const result = await receive({
+      event_name: "user_send_text",
+      app_id: "960762598645803452",
+      sender: { id: "3234151001898787112" },
+      recipient: { id: "4598245833493169062" },
+      message: {
+        text: "postback_STEP_INPUT_SKIP|11612473309626368",
+        msg_id: "skip-msg-1",
+      },
+      timestamp: "1790413469192",
+    })
+
+    expect(result?.postbackAction).toBe("STEP_INPUT_SKIP|11612473309626368")
+  })
+})

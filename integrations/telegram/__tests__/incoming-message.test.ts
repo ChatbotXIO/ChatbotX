@@ -127,6 +127,27 @@ describe("receiveMessage", () => {
     expect(result.contact.locale).toBe("vi")
   })
 
+  test("hands the step input skip callback data to the worker unchanged and echoes it as the message text", async () => {
+    const result = await receiveMessage({
+      ctx,
+      data: {
+        integrationType: "telegram",
+        integrationIdentifier: "bot-1",
+        payload: {
+          update_id: 1,
+          callback_query: {
+            id: "callback-skip",
+            from: { id: 100, is_bot: false, first_name: "Ada" },
+            data: "STEP_INPUT_SKIP|11612473309626368",
+          },
+        },
+      },
+    })
+
+    expect(result.postbackAction).toBe("STEP_INPUT_SKIP|11612473309626368")
+    expect(result.message?.text).toBe("STEP_INPUT_SKIP|11612473309626368")
+  })
+
   test("leaves locale undefined when message sender is absent", async () => {
     const result = await receiveMessage({
       ctx,

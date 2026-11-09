@@ -347,3 +347,55 @@ describe("Instagram-via-Facebook receiveMessage", () => {
     expect(result.referral?.sourcePlatform).toBe("instagram")
   })
 })
+
+describe("Instagram-via-Facebook receiveMessage - step input skip payload", () => {
+  const receive = (messaging: Record<string, unknown>) =>
+    receiveMessage({
+      ctx: { auth: { metadata: { igId: "ig-1" } } } as never,
+      data: {
+        integrationType: "instagram",
+        integrationIdentifier: "inbox-1",
+        payload: {
+          object: "instagram",
+          entry: [
+            {
+              id: "ig-1",
+              time: 1,
+              messaging: [
+                {
+                  sender: { id: "ig-user-1" },
+                  recipient: { id: "ig-1" },
+                  timestamp: 1,
+                  ...messaging,
+                },
+              ],
+            },
+          ],
+        },
+      },
+    })
+
+  test("hands the skip quick_reply payload to the worker unchanged as quickReplyAction", async () => {
+    const result = await receive({
+      message: {
+        mid: "mid-skip-qr",
+        text: "Skip",
+        quick_reply: { payload: "STEP_INPUT_SKIP|11612473309626368" },
+      },
+    })
+
+    expect(result.quickReplyAction).toBe("STEP_INPUT_SKIP|11612473309626368")
+  })
+
+  test("hands the skip postback payload to the worker unchanged as postbackAction", async () => {
+    const result = await receive({
+      postback: {
+        mid: "mid-skip-pb",
+        title: "Skip",
+        payload: "STEP_INPUT_SKIP|11612473309626368",
+      },
+    })
+
+    expect(result.postbackAction).toBe("STEP_INPUT_SKIP|11612473309626368")
+  })
+})

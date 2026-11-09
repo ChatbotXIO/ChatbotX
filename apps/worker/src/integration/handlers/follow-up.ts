@@ -57,7 +57,7 @@ export async function handleFollowUp({
     flowVersionId: useLatestFlowVersion ? null : flowVersion.id,
     conversationId: conversation.id,
     contactInboxId: contactInbox.id,
-    connectedNodeId,
+    nodeId: connectedNodeId,
     stepId: step.id,
     metadata,
     sendFrom,

@@ -135,6 +135,70 @@ describe("runChallenge", () => {
     )
   })
 
+  test("a typed reply is a contact-initiated run and carries no resolution", async () => {
+    await runChallenge(makeChallenge({ messageId: "msg-1" }))
+
+    const run = (
+      mocks.runStepsAndQuickReplies.mock.calls[0] as unknown[]
+    )[0] as {
+      startedByContactMessage: boolean
+      triggerMessageId: string
+      ctx: { variables: { conversation: Record<string, unknown> } }
+    }
+    expect(run.startedByContactMessage).toBe(true)
+    expect(run.triggerMessageId).toBe("msg-1")
+    expect(run.ctx.variables.conversation).not.toHaveProperty(
+      "challengeResolution",
+    )
+  })
+
+  test("exposes the deadline origin and challenge id to the step when the challenge has them", async () => {
+    const startedAt = new Date("2025-12-31T00:00:00Z")
+
+    await runChallenge(
+      makeChallenge({
+        challenge: {
+          data: { startedAt, challengeId: "challenge-1" },
+        } as IntegrationJobRunChallenge["data"]["challenge"],
+      }),
+    )
+
+    const run = (
+      mocks.runStepsAndQuickReplies.mock.calls[0] as unknown[]
+    )[0] as {
+      ctx: { variables: { conversation: Record<string, unknown> } }
+    }
+    expect(run.ctx.variables.conversation).toMatchObject({
+      challengeAttempts: { value: 2 },
+      challengeStartedAt: { type: "date", value: startedAt },
+      challengeId: { type: "string", value: "challenge-1" },
+    })
+  })
+
+  test("a legacy challenge exposes neither, so the step falls back to the last attempt", async () => {
+    await runChallenge(makeChallenge())
+
+    const run = (
+      mocks.runStepsAndQuickReplies.mock.calls[0] as unknown[]
+    )[0] as {
+      ctx: { variables: { conversation: Record<string, unknown> } }
+    }
+    expect(run.ctx.variables.conversation).not.toHaveProperty(
+      "challengeStartedAt",
+    )
+    expect(run.ctx.variables.conversation).not.toHaveProperty("challengeId")
+  })
+
+  test("a missing flow still fails the job so it retries (typed replies keep their behavior)", async () => {
+    mocks.detectFlowVersion.mockRejectedValueOnce(
+      new mocks.SdkException("FlowVersion not found"),
+    )
+
+    await expect(runChallenge(makeChallenge())).rejects.toThrow(
+      "FlowVersion not found",
+    )
+  })
+
   test("delegates a quickReply challenge and does not re-run the node", async () => {
     await runChallenge({
       conversationId: "conversation-1",

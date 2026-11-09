@@ -494,6 +494,40 @@ describe("WhatsApp receiveMessage — interactive replies", () => {
     expect(result.message?.contentAttributes).toEqual(listReply)
   })
 
+  test("button_reply hands the step input skip id to the worker unchanged as postbackAction", async () => {
+    const result = await receiveMessage(
+      buildProps({
+        type: "interactive",
+        interactive: {
+          type: "button_reply",
+          button_reply: {
+            id: "STEP_INPUT_SKIP|11612473309626368",
+            title: "Skip",
+          },
+        },
+      }),
+    )
+
+    expect(result.postbackAction).toBe("STEP_INPUT_SKIP|11612473309626368")
+  })
+
+  test("list_reply hands the step input skip id to the worker unchanged as postbackAction", async () => {
+    const result = await receiveMessage(
+      buildProps({
+        type: "interactive",
+        interactive: {
+          type: "list_reply",
+          list_reply: {
+            id: "STEP_INPUT_SKIP|11612473309626368",
+            title: "Skip",
+          },
+        },
+      }),
+    )
+
+    expect(result.postbackAction).toBe("STEP_INPUT_SKIP|11612473309626368")
+  })
+
   test("nfm_reply with a decodable flow token carrying a buttonId sets postbackAction", async () => {
     const flowToken = encodeButtonPayload({ flowId: "1", buttonId: "2" })
     const result = await receiveMessage(

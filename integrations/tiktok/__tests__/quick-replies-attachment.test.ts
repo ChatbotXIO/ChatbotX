@@ -235,3 +235,44 @@ describe("tiktok quick replies attachment", () => {
     )
   })
 })
+
+describe("tiktok step input skip quick reply", () => {
+  test("encodes the skip postback unchanged as the REPLY button id", () => {
+    const [payload] = Array.from(
+      convertFlowStepText("business-1", {
+        data: {
+          contact: { id: "ci-1", sourceConversationId: "conv-1" },
+          flowId: "flow-1",
+          step: {
+            id: "step-1",
+            stepType: "sendText",
+            text: "Choose",
+            buttons: [],
+          },
+          quickReplies: [
+            {
+              id: "skip-1",
+              label: "Skip",
+              buttonType: "postback",
+              postback: "STEP_INPUT_SKIP|11612473309626368",
+            },
+          ],
+        },
+      } as never),
+    )
+
+    expect(payload).toEqual(
+      expect.objectContaining({
+        template: expect.objectContaining({
+          buttons: [
+            expect.objectContaining({
+              type: "REPLY",
+              id: "STEP_INPUT_SKIP|11612473309626368",
+              title: "Skip",
+            }),
+          ],
+        }),
+      }),
+    )
+  })
+})
