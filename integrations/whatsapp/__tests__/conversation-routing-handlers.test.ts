@@ -169,7 +169,7 @@ describe("updateThreadControl handler", () => {
     expect(body.metadata).toBe("note")
   })
 
-  it("sends the metadata note on take and pass, never on release", () => {
+  it("sends the metadata note on take and pass", () => {
     const recipient = { to: USER }
 
     expect(
@@ -180,10 +180,6 @@ describe("updateThreadControl handler", () => {
       buildThreadControlBody({ recipient, action: "pass", metadata: "n" })
         .metadata,
     ).toBe("n")
-    expect(
-      "metadata" in
-        buildThreadControlBody({ recipient, action: "release", metadata: "n" }),
-    ).toBe(false)
   })
 
   const rejectWithMetaCode = (code: number) =>

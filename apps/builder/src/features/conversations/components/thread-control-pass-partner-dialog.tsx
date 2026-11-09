@@ -21,9 +21,10 @@ import type { ThreadControlChannel } from "@chatbotx.io/utils/channel"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Loader2Icon } from "lucide-react"
 import { useTranslations } from "next-intl"
-import { useEffect, useMemo, useRef } from "react"
+import { useEffect } from "react"
 import { useForm } from "react-hook-form"
 import { THREAD_CONTROL_PASS_COPY_KEYS } from "@/features/messages/lib/thread-control-channel-ui"
+import { useCloseWhenSettled } from "../hooks/use-close-when-settled"
 import { useThreadControlAction } from "../hooks/use-thread-control-action"
 import { useThreadTakePermission } from "../hooks/use-thread-take-permission"
 import type { ListConversationItemResource } from "../schema/resource"
@@ -149,20 +150,9 @@ export function ThreadControlPassPartnerDialog({
   const holdsEscalationRole =
     ownerRole === threadControlRoles.enum.escalation ||
     takePermission === threadTakePermissions.enum.allowed
-  const choices = useMemo(
-    () => resolveThreadPassChoices(holdsEscalationRole),
-    [holdsEscalationRole],
-  )
+  const choices = resolveThreadPassChoices(holdsEscalationRole)
 
-  // Close once the pass settles; a failure keeps its toast and the agent can
-  // reopen the dialog to retry.
-  const wasExecutingRef = useRef(false)
-  useEffect(() => {
-    if (wasExecutingRef.current && !isExecuting) {
-      onOpenChange(false)
-    }
-    wasExecutingRef.current = isExecuting
-  }, [isExecuting, onOpenChange])
+  useCloseWhenSettled(isExecuting, onOpenChange)
 
   const handleSubmit = ({
     targetRole,

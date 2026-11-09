@@ -73,22 +73,17 @@ export async function stepThreadControl({
   try {
     // The target role and the note only exist for a pass; a step switched back
     // to release may still carry them, so they are never forwarded then.
-    const handover =
-      step.action === "pass"
-        ? {
-            targetRole: step.targetRole,
-            metadata: await resolveHandoverNote(step.metadata, {
-              conversation,
-              contactInbox,
-            }),
-          }
-        : {}
+    const isPass = step.action === "pass"
+    const metadata = isPass
+      ? await resolveHandoverNote(step.metadata, { conversation, contactInbox })
+      : undefined
     await requestThreadControlAction({
       workspaceId: conversation.workspaceId,
       contactInboxId: contactInbox.id,
       conversationId: conversation.id,
       action: step.action,
-      ...handover,
+      targetRole: isPass ? step.targetRole : undefined,
+      metadata,
     })
     return { status: "success", result: undefined }
   } catch (err) {

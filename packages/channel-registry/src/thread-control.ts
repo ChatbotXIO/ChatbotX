@@ -24,7 +24,7 @@ import {
 } from "./registry"
 
 /** What a take / pass can carry to the channel besides the action itself. */
-export type ThreadControlActionOptions = {
+type ThreadControlActionOptions = {
   /** Optional `pass` target; omitted means the channel's default (escalation). */
   targetRole?: ThreadControlRole
   /**

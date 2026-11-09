@@ -26,9 +26,6 @@ export const threadControlStepTargetRoles = z.enum([
   "marketing",
   "utility",
 ])
-export type ThreadControlStepTargetRole = z.infer<
-  typeof threadControlStepTargetRoles
->
 
 /** Meta caps the handover note at 2000 characters (parity-tested too). */
 export const THREAD_CONTROL_STEP_METADATA_MAX_LENGTH = 2000

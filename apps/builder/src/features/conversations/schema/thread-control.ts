@@ -7,7 +7,7 @@ import {
 import z from "zod"
 
 /** The public API also offers `sync`, which only reads the owner. */
-export type ThreadControlRequestAction = ThreadControlAction | "sync"
+type ThreadControlRequestAction = ThreadControlAction | "sync"
 
 /**
  * The handover fields a thread-control request may carry. Shared by the inbox

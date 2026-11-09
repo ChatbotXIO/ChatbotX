@@ -14,8 +14,8 @@ import { Form } from "@chatbotx.io/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Loader2Icon } from "lucide-react"
 import { useTranslations } from "next-intl"
-import { useEffect, useRef } from "react"
 import { useForm } from "react-hook-form"
+import { useCloseWhenSettled } from "@/features/conversations/hooks/use-close-when-settled"
 import {
   type ThreadControlNoteFormValues,
   threadControlNoteFormSchema,
@@ -93,13 +93,7 @@ export function ThreadControlTakeDialog({
 }: ThreadControlTakeDialogProps) {
   const t = useTranslations()
 
-  const wasExecutingRef = useRef(false)
-  useEffect(() => {
-    if (wasExecutingRef.current && !isExecuting) {
-      onOpenChange(false)
-    }
-    wasExecutingRef.current = isExecuting
-  }, [isExecuting, onOpenChange])
+  useCloseWhenSettled(isExecuting, onOpenChange)
 
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
