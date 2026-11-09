@@ -491,7 +491,7 @@ export const conversationsPublicRouter = {
       path: "/v1/conversations/{id}/thread-control",
       summary: "Control conversation thread",
       description:
-        "Controls who owns a contact inbox's routing thread on channels that share a conversation with another app (e.g. WhatsApp with Meta AI or a partner): `take` it, `release` it, or `pass` it to the escalation role. `sync` asks the channel who currently owns the thread and updates the stored state to match without changing anything at the channel (channels that cannot report an owner, like WhatsApp, leave it unchanged). Read `contactInboxes[].threadControlState` and `threadOwnerRole` with `conversations.get` first. A `take` the channel refuses returns `status: notEscalation` (HTTP 200) instead of an error. Every successful call returns the routing `snapshot`.",
+        "Controls who owns a contact inbox's routing thread on channels that share a conversation with another app (e.g. WhatsApp with Meta AI or a partner): `take` it, `release` it, or `pass` it to another partner (`targetRole`, default: the escalation partner). `take` and `pass` accept a `metadata` note that is delivered verbatim to the receiving app. `sync` asks the channel who currently owns the thread and updates the stored state to match without changing anything at the channel (channels that cannot report an owner, like WhatsApp, leave it unchanged). Read `contactInboxes[].threadControlState` and `threadOwnerRole` with `conversations.get` first. A `take` the channel refuses returns `status: notEscalation` (HTTP 200) instead of an error. Every successful call returns the routing `snapshot`.",
       tags: ["Conversations"],
     })
     .input(threadControlPublicRequest)
@@ -518,6 +518,8 @@ export const conversationsPublicRouter = {
                 conversation,
                 contactInboxId: input.contactInboxId,
                 action: input.action,
+                targetRole: input.targetRole,
+                metadata: input.metadata,
               })
         return { status: "applied" as const, snapshot }
       } catch (error) {

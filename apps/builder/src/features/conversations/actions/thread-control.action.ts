@@ -17,11 +17,18 @@ import { requireContactAccessForMember } from "@/features/contacts/permissions"
 import { workspaceActionClient } from "@/lib/safe-action"
 import { mapThreadControlError } from "../lib/thread-control-errors"
 import type { ThreadControlRefusal } from "../lib/thread-control-result"
+import {
+  refineThreadControlHandover,
+  threadControlHandoverFields,
+} from "../schema/thread-control"
 
-const threadControlActionRequest = z.object({
-  contactInboxId: zodBigintAsString(),
-  action: threadControlActions,
-})
+const threadControlActionRequest = z
+  .object({
+    contactInboxId: zodBigintAsString(),
+    action: threadControlActions,
+    ...threadControlHandoverFields,
+  })
+  .superRefine(refineThreadControlHandover)
 
 export type ThreadControlActionResult =
   | { status: "applied"; snapshot: ThreadControlSnapshot }
@@ -65,6 +72,8 @@ export const threadControlAction = workspaceActionClient
           conversation,
           contactInboxId: parsedInput.contactInboxId,
           action: parsedInput.action,
+          targetRole: parsedInput.targetRole,
+          metadata: parsedInput.metadata,
         })
         return { status: "applied", snapshot }
       } catch (error) {

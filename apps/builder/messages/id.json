@@ -9559,11 +9559,14 @@
       "success": "Percakapan dilepaskan"
     },
     "pass": {
-      "menuItem": "Teruskan ke eskalasi",
-      "title": "Teruskan ke mitra eskalasi?",
-      "description": "Serahkan percakapan ini ke mitra eskalasi Anda? Balasan Anda akan dijeda hingga percakapan kembali.",
+      "menuItem": "Serahkan ke mitra",
+      "title": "Serahkan ke mitra?",
+      "description": "Pilih siapa yang mengambil alih percakapan ini. Balasan Anda dijeda sampai percakapan kembali.",
       "confirm": "Teruskan",
-      "success": "Percakapan diteruskan ke mitra eskalasi"
+      "success": "Percakapan diteruskan ke mitra eskalasi",
+      "targetLabel": "Serahkan ke",
+      "noteLabel": "Catatan untuk mitra penerima",
+      "successTargeted": "Percakapan diserahkan ke {role}"
     },
     "aiHandover": {
       "label": "BizAI",
@@ -9582,7 +9585,10 @@
       "notEscalation": "Hanya mitra eskalasi yang dapat mengambil alih. Perutean diatur di Meta Business Suite.",
       "notPrimaryReceiver": "Aplikasi ini harus menjadi penerima utama Halaman untuk dapat mengambil alih. Atur di pengaturan Handover Protocol Halaman.",
       "learnMore": "Pelajari lebih lanjut",
-      "dismiss": "Kirim saja"
+      "dismiss": "Kirim saja",
+      "takeOverTitle": "Ambil alih percakapan ini?",
+      "takeOverDescription": "Mitra berhenti menanganinya dan Anda mengambil kendali. Anda dapat meninggalkan catatan untuknya.",
+      "takeOverNoteLabel": "Catatan untuk mitra saat ini"
     },
     "divider": {
       "ownerHandling": "{owner} kini menangani percakapan ini",
@@ -9655,8 +9661,12 @@
     "step": {
       "action": "Aksi",
       "release": "Lepaskan percakapan",
-      "pass": "Teruskan ke mitra eskalasi",
-      "helper": "Hanya WhatsApp. Di kanal lain, atau saat percakapan tidak dimiliki di sini, langkah mengikuti jalur Error."
+      "pass": "Serahkan ke mitra",
+      "helper": "Hanya WhatsApp. Di kanal lain, atau saat percakapan tidak dimiliki di sini, langkah mengikuti jalur Error.",
+      "targetRole": "Serahkan ke",
+      "targetRoleDefault": "Mitra eskalasi (default)",
+      "metadata": "Catatan serah terima",
+      "metadataHelper": "Opsional. Dikirim apa adanya ke aplikasi yang menerima percakapan. Variabel didukung. Maksimal {max} karakter."
     },
     "template": {
       "sent": "Template terkirim"

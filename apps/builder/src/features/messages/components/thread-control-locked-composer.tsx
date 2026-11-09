@@ -12,11 +12,13 @@ import {
   XIcon,
 } from "lucide-react"
 import { useTranslations } from "next-intl"
+import { useState } from "react"
 import { THREAD_CONTROL_TONES } from "@/features/conversations/components/thread-control-tone"
 import { useThreadControlAction } from "@/features/conversations/hooks/use-thread-control-action"
 import { useThreadTakePermission } from "@/features/conversations/hooks/use-thread-take-permission"
 import { THREAD_CONTROL_CHANNEL_UI } from "../lib/thread-control-channel-ui"
 import { SendFlowDialogTrigger } from "./input-menu"
+import { ThreadControlTakeDialog } from "./thread-control-take-dialog"
 
 type ThreadControlLockedComposerProps = {
   /** The routing-capable channel of the locked thread. */
@@ -55,6 +57,7 @@ export function ThreadControlLockedComposer({
   onDismiss,
 }: ThreadControlLockedComposerProps) {
   const t = useTranslations()
+  const [isTakeDialogOpen, setIsTakeDialogOpen] = useState(false)
   const { docsUrl, takeRefusedMessageKey, templateStartType } =
     THREAD_CONTROL_CHANNEL_UI[channel]
   const { execute, isExecuting, isNotEscalation } = useThreadControlAction({
@@ -106,9 +109,7 @@ export function ThreadControlLockedComposer({
           className="w-full sm:w-auto"
           disabled={isExecuting || isTakeForbidden}
           onClick={() =>
-            revealOnTakeOver
-              ? onDismiss()
-              : execute({ contactInboxId, action: "take" })
+            revealOnTakeOver ? onDismiss() : setIsTakeDialogOpen(true)
           }
           type="button"
         >
@@ -133,6 +134,14 @@ export function ThreadControlLockedComposer({
           </SendFlowDialogTrigger>
         )}
       </div>
+      <ThreadControlTakeDialog
+        isExecuting={isExecuting}
+        onConfirm={(metadata) =>
+          execute({ contactInboxId, action: "take", metadata })
+        }
+        onOpenChange={setIsTakeDialogOpen}
+        open={isTakeDialogOpen}
+      />
       {showTakeRefused && (
         <p className="text-destructive text-sm">
           {t(takeRefusedMessageKey)}

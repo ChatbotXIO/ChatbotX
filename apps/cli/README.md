@@ -1079,8 +1079,10 @@ chatbotx inboxes history list <inboxId>                   # [--page --perPage]
 ### Conversation thread control (scope `inbox`)
 
 ```bash
-chatbotx conversations thread-control add <id> --contactInboxId <id> --action take|release|pass|sync
+chatbotx conversations thread-control add <id> --contactInboxId <id> --action take|release|pass|sync [--targetRole ai_agent|ctwa|customer_service|escalation|marketing|utility] [--metadata <note>]
 # --action sync only refreshes the stored thread owner from the channel
+# --targetRole is for pass only (omit it, or escalation, to hand over to the escalation partner)
+# --metadata is a note (max 2000 chars) delivered verbatim to the receiving app, for take and pass only
 ```
 
 ### `workspace` settings (scope `settings`)

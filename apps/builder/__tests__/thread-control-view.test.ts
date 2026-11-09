@@ -183,7 +183,7 @@ describe("resolveThreadControlView", () => {
     })
   })
 
-  test("hides Pass when this app is itself the escalation partner", () => {
+  test("keeps Pass when this app is the escalation partner (it may pass to another role)", () => {
     const view = resolveThreadControlView(
       {
         contactInboxes: [
@@ -196,7 +196,7 @@ describe("resolveThreadControlView", () => {
       NOW,
     )
     expect(view?.canRelease).toBe(true)
-    expect(view?.canPass).toBe(false)
+    expect(view?.canPass).toBe(true)
   })
 
   test("resolves to idle (unlocked) after 24h of silence, and reads ISO strings", () => {

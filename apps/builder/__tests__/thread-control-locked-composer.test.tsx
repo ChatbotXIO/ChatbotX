@@ -159,12 +159,88 @@ describe("ThreadControlLockedComposer", () => {
     expect(onDismiss).toHaveBeenCalledTimes(1)
   })
 
-  test("Take over requests a take on the WhatsApp contact inbox", () => {
+  const dialogForm = () => document.body.querySelector("form")
+  const typeNote = (value: string) => {
+    const textarea = document.body.querySelector("textarea")
+    const setValue = Object.getOwnPropertyDescriptor(
+      HTMLTextAreaElement.prototype,
+      "value",
+    )?.set
+    setValue?.call(textarea, value)
+    act(() => {
+      textarea?.dispatchEvent(new Event("input", { bubbles: true }))
+    })
+  }
+  const confirmTake = async () => {
+    await act(async () => {
+      dialogForm()
+        ?.querySelector<HTMLButtonElement>('button[type="submit"]')
+        ?.click()
+      // Let react-hook-form's async validation settle inside act.
+      await Promise.resolve()
+    })
+  }
+
+  test("Take over opens a confirmation instead of taking straight away", () => {
     act(() => buttonByText("conversationRouting.composer.takeOver")?.click())
-    expect(hookState.execute).toHaveBeenCalledWith({
+
+    expect(document.body.textContent).toContain(
+      "conversationRouting.composer.takeOverTitle",
+    )
+    expect(hookState.execute).not.toHaveBeenCalled()
+  })
+
+  test("confirming requests a take on the WhatsApp contact inbox, without a note", async () => {
+    act(() => buttonByText("conversationRouting.composer.takeOver")?.click())
+    await confirmTake()
+
+    expect(hookState.execute).toHaveBeenCalledExactlyOnceWith({
       contactInboxId: "ci-1",
       action: "take",
+      metadata: undefined,
     })
+  })
+
+  test("the note is trimmed and handed to the partner losing the thread", async () => {
+    act(() => buttonByText("conversationRouting.composer.takeOver")?.click())
+    typeNote("  Agent taking over billing dispute  ")
+    await confirmTake()
+
+    expect(hookState.execute).toHaveBeenCalledExactlyOnceWith({
+      contactInboxId: "ci-1",
+      action: "take",
+      metadata: "Agent taking over billing dispute",
+    })
+  })
+
+  test("a whitespace-only note is dropped", async () => {
+    act(() => buttonByText("conversationRouting.composer.takeOver")?.click())
+    typeNote("     ")
+    await confirmTake()
+
+    expect(hookState.execute).toHaveBeenCalledExactlyOnceWith({
+      contactInboxId: "ci-1",
+      action: "take",
+      metadata: undefined,
+    })
+  })
+
+  test("a note over Meta's 2000-character limit is refused before any call", async () => {
+    act(() => buttonByText("conversationRouting.composer.takeOver")?.click())
+    typeNote("x".repeat(2001))
+    await confirmTake()
+
+    expect(hookState.execute).not.toHaveBeenCalled()
+  })
+
+  test("cancelling the confirmation takes nothing", () => {
+    act(() => buttonByText("conversationRouting.composer.takeOver")?.click())
+    const cancel = Array.from(
+      document.body.querySelectorAll<HTMLButtonElement>("form button"),
+    ).find((button) => button.textContent === "actions.cancel")
+    act(() => cancel?.click())
+
+    expect(hookState.execute).not.toHaveBeenCalled()
   })
 
   test("Take over only reveals the composer (no Meta take) when revealOnTakeOver", () => {

@@ -8,6 +8,7 @@ import {
   type ThreadControlRole,
   type ThreadControlState,
   threadControlEvents,
+  threadControlRoles,
 } from "@chatbotx.io/database/partials"
 import {
   isThreadControlChannel,
@@ -26,7 +27,8 @@ import { findContactInboxByChannel } from "./contact-inbox"
 
 type Translate = ReturnType<typeof useTranslations>
 
-const ROLE_LABEL_KEYS = {
+/** Translation key per routing role, shared by the inbox and the flow step. */
+export const THREAD_CONTROL_ROLE_LABEL_KEYS = {
   ai_agent: "conversationRouting.roles.ai_agent",
   ctwa: "conversationRouting.roles.ctwa",
   customer_service: "conversationRouting.roles.customer_service",
@@ -55,7 +57,7 @@ export function resolveThreadOwnerLabel(
   }
   if (role) {
     return t("conversationRouting.owner.partnerWithRole", {
-      role: t(ROLE_LABEL_KEYS[role]),
+      role: t(THREAD_CONTROL_ROLE_LABEL_KEYS[role]),
     })
   }
   return t("conversationRouting.owner.partner")
@@ -95,8 +97,9 @@ export type ThreadControlView = {
   canRelease: boolean
   /**
    * Pass is offered while this app owns the thread (or holds it idle on a
-   * channel that can pass from idle). Hidden when this app is itself the
-   * escalation partner (Meta forbids it) or the channel cannot pass.
+   * channel that can pass from idle). Hidden when the channel cannot pass, or
+   * when this app already holds the escalation role on a channel whose pass
+   * only goes to that role (`passWhileEscalationOwner: false`, e.g. Messenger).
    */
   canPass: boolean
   /** The composer is locked while another responder owns the thread on its channel. */
@@ -246,7 +249,7 @@ export function resolveThreadControlView(
     canPass:
       capabilities.supportsPass &&
       (state === "owned" || (state === "idle" && capabilities.passFromIdle)) &&
-      ownerRole !== "escalation",
+      (capabilities.passWhileEscalationOwner || ownerRole !== "escalation"),
     isLocked: state === "standby" && composerOwnsThread,
     inlineReplyTakesOver,
     idleAt,
@@ -367,4 +370,36 @@ export function isStaleThreadControlSnapshot(
     parseThreadControlEvent(stored.threadControlLastEvent),
     parseThreadControlEvent(snapshot.threadControlLastEvent),
   )
+}
+
+export type ThreadPassChoices = {
+  /** The roles the pass dialog offers as a target. */
+  roles: readonly ThreadControlRole[]
+  /** The role preselected in the dialog. */
+  defaultRole: ThreadControlRole
+}
+
+const ALL_PASS_TARGET_ROLES = threadControlRoles.options
+
+/**
+ * Who a pass may target. The escalation partner cannot pass to itself (Meta
+ * refuses an untargeted pass from it), so it is offered every other role and
+ * defaults to the Service partner; any other owner defaults to the escalation
+ * partner, which is what Meta does when no target is named.
+ */
+export function resolveThreadPassChoices(
+  holdsEscalationRole: boolean,
+): ThreadPassChoices {
+  if (holdsEscalationRole) {
+    return {
+      roles: ALL_PASS_TARGET_ROLES.filter(
+        (role) => role !== threadControlRoles.enum.escalation,
+      ),
+      defaultRole: threadControlRoles.enum.customer_service,
+    }
+  }
+  return {
+    roles: ALL_PASS_TARGET_ROLES,
+    defaultRole: threadControlRoles.enum.escalation,
+  }
 }

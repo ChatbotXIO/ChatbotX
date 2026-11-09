@@ -52,6 +52,6 @@ export class ThreadControlTakeRefusedError extends ChannelError {
       httpStatusCode: error.httpStatusCode,
       subCode: error.subCode ?? null,
       type: error.type,
-    })
+    }).setOriginError(error.getOriginError())
   }
 }

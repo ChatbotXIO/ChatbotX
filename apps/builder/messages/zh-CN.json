@@ -9559,11 +9559,14 @@
       "success": "对话已释放"
     },
     "pass": {
-      "menuItem": "转交升级处理",
-      "title": "转交给升级处理合作伙伴？",
-      "description": "要将此会话转交给您的升级合作伙伴吗？在会话返回之前，您的回复将暂停。",
+      "menuItem": "移交给合作伙伴",
+      "title": "移交给合作伙伴?",
+      "description": "选择由谁接手这个会话。在会话返回之前,你的回复将暂停。",
       "confirm": "转交",
-      "success": "对话已转交给升级处理合作伙伴"
+      "success": "对话已转交给升级处理合作伙伴",
+      "targetLabel": "移交给",
+      "noteLabel": "给接收方合作伙伴的备注",
+      "successTargeted": "会话已移交给 {role}"
     },
     "aiHandover": {
       "label": "BizAI",
@@ -9582,7 +9585,10 @@
       "notEscalation": "只有升级处理合作伙伴可以接管。路由在 Meta Business Suite 中配置。",
       "notPrimaryReceiver": "此应用必须是主页的主要接收方才能接管。请在主页的 Handover Protocol 设置中配置。",
       "learnMore": "了解详情",
-      "dismiss": "仍然发送"
+      "dismiss": "仍然发送",
+      "takeOverTitle": "接管此会话?",
+      "takeOverDescription": "合作伙伴将停止处理,由你接管。你可以给对方留一条备注。",
+      "takeOverNoteLabel": "给当前合作伙伴的备注"
     },
     "divider": {
       "ownerHandling": "{owner} 现在正在处理此对话",
@@ -9655,8 +9661,12 @@
     "step": {
       "action": "操作",
       "release": "释放对话",
-      "pass": "转交给升级处理合作伙伴",
-      "helper": "仅限 WhatsApp。在其他渠道，或会话不归此处管理时，该步骤将走错误路径。"
+      "pass": "移交给合作伙伴",
+      "helper": "仅限 WhatsApp。在其他渠道，或会话不归此处管理时，该步骤将走错误路径。",
+      "targetRole": "移交给",
+      "targetRoleDefault": "升级处理合作伙伴(默认)",
+      "metadata": "移交备注",
+      "metadataHelper": "可选。将原样发送给接收会话的应用。支持变量。最多 {max} 个字符。"
     },
     "template": {
       "sent": "模板已发送"

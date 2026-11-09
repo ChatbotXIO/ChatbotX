@@ -29,6 +29,7 @@ import {
   handover,
   installClock,
   installGraphMock,
+  lastThreadControlBody,
   messagesOf,
   ownerDelivery,
   postWebhook,
@@ -252,11 +253,11 @@ describe.skipIf(!hasThrowawayDatabase())(
         await threadAction(world, "pass", {
           metadata: "Refund request, order #1234, item arrived broken",
         })
-        const passBody = graphCalls("/thread_control").at(-1)?.body as Record<
-          string,
-          unknown
-        >
+        const passBody = lastThreadControlBody()
         expect(passBody.action).toBe("pass")
+        expect(passBody.metadata).toBe(
+          "Refund request, order #1234, item arrived broken",
+        )
         expect(passBody).not.toHaveProperty("control_pass")
         expect((await stateOf(world)).state).toBe("standby")
 
@@ -450,6 +451,11 @@ describe.skipIf(!hasThrowawayDatabase())(
         await threadAction(world, "pass", {
           metadata: "Delivery issue, previous order not received",
         })
+        expect(lastThreadControlBody()).toMatchObject({
+          action: "pass",
+          metadata: "Delivery issue, previous order not received",
+        })
+        expect(lastThreadControlBody()).not.toHaveProperty("control_pass")
         expect((await stateOf(world)).state).toBe("standby")
         await deliver(
           standbyEchoes(world, textEcho(world, "Support team here")),
@@ -478,6 +484,10 @@ describe.skipIf(!hasThrowawayDatabase())(
           ),
         )
         await threadAction(world, "pass", {
+          metadata: "Address change after shipping",
+        })
+        expect(lastThreadControlBody()).toMatchObject({
+          action: "pass",
           metadata: "Address change after shipping",
         })
         expect((await stateOf(world)).state).toBe("standby")
@@ -531,6 +541,10 @@ describe.skipIf(!hasThrowawayDatabase())(
         await threadAction(world, "take", {
           metadata: "Agent taking over billing dispute",
         })
+        expect(lastThreadControlBody()).toMatchObject({
+          action: "take",
+          metadata: "Agent taking over billing dispute",
+        })
         expect(await stateOf(world)).toMatchObject({
           state: "owned",
           ownerRole: "escalation",
@@ -556,9 +570,10 @@ describe.skipIf(!hasThrowawayDatabase())(
           targetRole: "customer_service",
           metadata: "Refund issued. Customer wants to update email.",
         })
-        expect(graphCalls("/thread_control").at(-1)?.body).toMatchObject({
+        expect(lastThreadControlBody()).toMatchObject({
           action: "pass",
           control_pass: { target_role: "customer_service" },
+          metadata: "Refund issued. Customer wants to update email.",
         })
         expect((await stateOf(world)).state).toBe("standby")
         // 8
@@ -575,6 +590,28 @@ describe.skipIf(!hasThrowawayDatabase())(
         // 10
         await threadAction(world, "release")
         expect((await stateOf(world)).state).toBe("idle")
+      })
+    })
+
+    // ---------------------------------------------------------------- handover note / target role
+    describe("handover note and pass target (Meta thread_control body)", () => {
+      test("passing to the escalation role is an untargeted pass (no control_pass)", async () => {
+        const world = await ownedWorld()
+        await threadAction(world, "pass", {
+          targetRole: "escalation",
+          metadata: "note",
+        })
+
+        const body = lastThreadControlBody()
+        expect(body).toMatchObject({ action: "pass", metadata: "note" })
+        expect(body).not.toHaveProperty("control_pass")
+      })
+
+      test("a release never carries a note (it raises no handover event)", async () => {
+        const world = await ownedWorld()
+        await threadAction(world, "release", { metadata: "ignored" })
+
+        expect(lastThreadControlBody()).not.toHaveProperty("metadata")
       })
     })
 

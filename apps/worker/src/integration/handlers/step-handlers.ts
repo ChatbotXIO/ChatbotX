@@ -29,6 +29,7 @@ import {
   type UnassignConversationStepSchema,
   type UnfollowConversationStepSchema,
 } from "@chatbotx.io/flow-config"
+import { resolveContactVariablesDeep } from "@chatbotx.io/variables"
 import { subHours } from "date-fns"
 import {
   resolveWhatsappMessageSourceId,
@@ -38,6 +39,25 @@ import { logger } from "../../lib/logger"
 import { resolveIntegrationContextFromContactInbox } from "../../services/integrations"
 import type { ExecuteStepProps } from "./flow"
 import type { ExecuteStepResult } from "./step"
+
+/** Resolves `{{variables}}` in the step's note; a plain note costs no query. */
+const resolveHandoverNote = async (
+  note: string | undefined,
+  source: Pick<
+    ExecuteStepProps<ThreadControlStepSchema>,
+    "conversation" | "contactInbox"
+  >,
+): Promise<string | undefined> => {
+  if (!note) {
+    return
+  }
+  const { text } = await resolveContactVariablesDeep(
+    source.conversation.contactId,
+    { text: note },
+    source,
+  )
+  return text.trim() || undefined
+}
 
 /**
  * Releases or passes the conversation's routing thread. A channel with no
@@ -51,11 +71,24 @@ export async function stepThreadControl({
   step,
 }: ExecuteStepProps<ThreadControlStepSchema>): Promise<ExecuteStepResult> {
   try {
+    // The target role and the note only exist for a pass; a step switched back
+    // to release may still carry them, so they are never forwarded then.
+    const handover =
+      step.action === "pass"
+        ? {
+            targetRole: step.targetRole,
+            metadata: await resolveHandoverNote(step.metadata, {
+              conversation,
+              contactInbox,
+            }),
+          }
+        : {}
     await requestThreadControlAction({
       workspaceId: conversation.workspaceId,
       contactInboxId: contactInbox.id,
       conversationId: conversation.id,
       action: step.action,
+      ...handover,
     })
     return { status: "success", result: undefined }
   } catch (err) {

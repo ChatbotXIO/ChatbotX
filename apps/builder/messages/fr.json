@@ -9559,11 +9559,14 @@
       "success": "Conversation libérée"
     },
     "pass": {
-      "menuItem": "Passer à l'escalade",
-      "title": "Passer au partenaire d'escalade ?",
-      "description": "Transférer cette conversation à votre partenaire d'escalade ? Vos réponses seront suspendues jusqu'au retour de la conversation.",
+      "menuItem": "Transférer à un partenaire",
+      "title": "Transférer à un partenaire ?",
+      "description": "Choisissez qui prend en charge cette conversation. Vos réponses sont suspendues jusqu'à son retour.",
       "confirm": "Passer",
-      "success": "Conversation transmise au partenaire d'escalade"
+      "success": "Conversation transmise au partenaire d'escalade",
+      "targetLabel": "Transférer à",
+      "noteLabel": "Note pour le partenaire destinataire",
+      "successTargeted": "Conversation transférée à {role}"
     },
     "aiHandover": {
       "label": "BizAI",
@@ -9582,7 +9585,10 @@
       "notEscalation": "Seul le partenaire d'escalade peut prendre la main. Le routage se configure dans Meta Business Suite.",
       "notPrimaryReceiver": "Cette application doit être le destinataire principal de la Page pour prendre la main. Configurez-le dans les paramètres du Handover Protocol de la Page.",
       "learnMore": "En savoir plus",
-      "dismiss": "Envoyer quand même"
+      "dismiss": "Envoyer quand même",
+      "takeOverTitle": "Prendre le contrôle de cette conversation ?",
+      "takeOverDescription": "Le partenaire cesse de la traiter et vous prenez la main. Vous pouvez lui laisser une note.",
+      "takeOverNoteLabel": "Note pour le partenaire actuel"
     },
     "divider": {
       "ownerHandling": "{owner} gère maintenant cette conversation",
@@ -9655,8 +9661,12 @@
     "step": {
       "action": "Action",
       "release": "Libérer la conversation",
-      "pass": "Passer au partenaire d'escalade",
-      "helper": "WhatsApp uniquement. Sur les autres canaux, ou lorsque la conversation n'est pas gérée ici, l'étape suit le chemin d'erreur."
+      "pass": "Transférer à un partenaire",
+      "helper": "WhatsApp uniquement. Sur les autres canaux, ou lorsque la conversation n'est pas gérée ici, l'étape suit le chemin d'erreur.",
+      "targetRole": "Transférer à",
+      "targetRoleDefault": "Partenaire d'escalade (par défaut)",
+      "metadata": "Note de transfert",
+      "metadataHelper": "Facultatif. Envoyée telle quelle à l'application qui reçoit la conversation. Les variables sont prises en charge. Jusqu'à {max} caractères."
     },
     "template": {
       "sent": "Modèle envoyé"

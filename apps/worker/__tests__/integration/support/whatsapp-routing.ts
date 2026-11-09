@@ -1,6 +1,10 @@
 import { createHmac } from "node:crypto"
 import { messageService, threadControlService } from "@chatbotx.io/business"
 import { db, eq } from "@chatbotx.io/database/client"
+import type {
+  ThreadControlAction,
+  ThreadControlRole,
+} from "@chatbotx.io/database/partials"
 import { contactInboxModel, inboxModel } from "@chatbotx.io/database/schema"
 import { integration as whatsappIntegration } from "@chatbotx.io/integration-whatsapp"
 import { chatQueue } from "@chatbotx.io/worker-config"
@@ -129,6 +133,15 @@ export const failGraphNext = (pathSuffix: string, error: GraphError): void => {
   const queue = graph.failNext.get(pathSuffix) ?? []
   queue.push(error)
   graph.failNext.set(pathSuffix, queue)
+}
+
+/** The JSON body of the most recent `thread_control` call. */
+export const lastThreadControlBody = (): Record<string, unknown> => {
+  const body = graphCalls("/thread_control").at(-1)?.body
+  if (typeof body !== "object" || body === null) {
+    throw new Error("No thread_control call was recorded")
+  }
+  return Object.fromEntries(Object.entries(body))
 }
 
 export const graphCalls = (pathSuffix?: string): GraphCall[] =>
@@ -464,8 +477,8 @@ export const setSourceUserId = async (world: RoutingWorld, userId: string) => {
 /** Our own take / pass / release through the real registry + WhatsApp handler. */
 export const threadAction = async (
   world: RoutingWorld,
-  action: "take" | "pass" | "release",
-  extra: { targetRole?: string; metadata?: string } = {},
+  action: ThreadControlAction,
+  extra: { targetRole?: ThreadControlRole; metadata?: string } = {},
 ) => {
   const { requestThreadControlAction } = await import(
     "@chatbotx.io/channel-registry/thread-control"
@@ -477,7 +490,7 @@ export const threadAction = async (
     conversationId: world.contact.conversationId,
     action,
     ...extra,
-  } as never)
+  })
 }
 
 /**

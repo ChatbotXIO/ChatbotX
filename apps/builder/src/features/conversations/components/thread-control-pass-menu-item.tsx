@@ -7,14 +7,14 @@ import { useState } from "react"
 import { THREAD_CONTROL_CHANNEL_UI } from "@/features/messages/lib/thread-control-channel-ui"
 import { useThreadControl } from "../hooks/use-thread-control"
 import type { ListConversationItemResource } from "../schema/resource"
-import { ThreadControlPassDialog } from "./thread-control-pass-dialog"
+import { ThreadControlPassPartnerDialog } from "./thread-control-pass-partner-dialog"
 
 /**
- * "Pass to escalation" in the conversation's action menu, behind a
- * confirmation because it hands the thread away. Rendered only while this app
- * owns the thread and is not itself the escalation partner (Meta forbids an
- * escalation owner from passing to escalation). Channels that pass to the AI
- * agent (`passTarget: "aiAgent"`) use the header button instead.
+ * "Pass to a partner" in the conversation's action menu, behind a dialog
+ * because it hands the thread away: the agent picks the receiving role and may
+ * leave a note. Rendered while this app owns the thread, including as the
+ * escalation partner (which may pass to any other role). Channels that pass to
+ * the AI agent (`passTarget: "aiAgent"`) use the header button instead.
  */
 export function ThreadControlPassMenuItem({
   conversation,
@@ -42,12 +42,14 @@ export function ThreadControlPassMenuItem({
         <ArrowRightLeftIcon />
         {t("conversationRouting.pass.menuItem")}
       </DropdownMenuItem>
-      <ThreadControlPassDialog
+      <ThreadControlPassPartnerDialog
+        channel={threadControl.channel}
         contactInboxId={threadControl.contactInboxId}
         conversation={conversation}
+        inboxId={threadControl.inboxId}
         onOpenChange={setOpen}
         open={open}
-        passTarget="escalation"
+        ownerRole={threadControl.ownerRole}
       />
     </>
   )

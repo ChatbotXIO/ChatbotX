@@ -9559,11 +9559,14 @@
       "success": "Konversationen släppt"
     },
     "pass": {
-      "menuItem": "Skicka vidare till eskalering",
-      "title": "Skicka vidare till eskaleringspartnern?",
-      "description": "Lämna över den här konversationen till din eskaleringspartner? Dina svar pausas tills konversationen kommer tillbaka.",
+      "menuItem": "Överlämna till en partner",
+      "title": "Överlämna till en partner?",
+      "description": "Välj vem som tar över konversationen. Dina svar pausas tills konversationen kommer tillbaka.",
       "confirm": "Skicka vidare",
-      "success": "Konversationen skickades vidare till eskaleringspartnern"
+      "success": "Konversationen skickades vidare till eskaleringspartnern",
+      "targetLabel": "Överlämna till",
+      "noteLabel": "Anteckning till mottagande partner",
+      "successTargeted": "Konversationen överlämnad till {role}"
     },
     "aiHandover": {
       "label": "BizAI",
@@ -9582,7 +9585,10 @@
       "notEscalation": "Bara eskaleringspartnern kan ta över. Routing konfigureras i Meta Business Suite.",
       "notPrimaryReceiver": "Den här appen måste vara sidans primära mottagare för att kunna ta över. Ställ in det i sidans inställningar för Handover Protocol.",
       "learnMore": "Läs mer",
-      "dismiss": "Skicka ändå"
+      "dismiss": "Skicka ändå",
+      "takeOverTitle": "Ta över konversationen?",
+      "takeOverDescription": "Partnern slutar hantera den och du tar över. Du kan lämna en anteckning till dem.",
+      "takeOverNoteLabel": "Anteckning till nuvarande partner"
     },
     "divider": {
       "ownerHandling": "{owner} hanterar nu den här konversationen",
@@ -9655,8 +9661,12 @@
     "step": {
       "action": "Åtgärd",
       "release": "Släpp konversationen",
-      "pass": "Skicka vidare till eskaleringspartnern",
-      "helper": "Endast WhatsApp. På andra kanaler, eller när konversationen inte ägs här, följer steget felvägen."
+      "pass": "Överlämna till en partner",
+      "helper": "Endast WhatsApp. På andra kanaler, eller när konversationen inte ägs här, följer steget felvägen.",
+      "targetRole": "Överlämna till",
+      "targetRoleDefault": "Eskaleringspartner (standard)",
+      "metadata": "Överlämningsanteckning",
+      "metadataHelper": "Valfritt. Skickas oförändrad till appen som tar emot konversationen. Variabler stöds. Upp till {max} tecken."
     },
     "template": {
       "sent": "Mall skickad"

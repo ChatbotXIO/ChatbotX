@@ -9559,11 +9559,14 @@
       "success": "Conversa libertada"
     },
     "pass": {
-      "menuItem": "Passar para escalonamento",
-      "title": "Passar para o parceiro de escalonamento?",
-      "description": "Passar esta conversa ao seu parceiro de escalonamento? As suas respostas ficarão em pausa até a conversa regressar.",
+      "menuItem": "Transferir para um parceiro",
+      "title": "Transferir para um parceiro?",
+      "description": "Escolha quem assume esta conversa. As suas respostas ficam em pausa até a conversa voltar.",
       "confirm": "Passar",
-      "success": "Conversa passada ao parceiro de escalonamento"
+      "success": "Conversa passada ao parceiro de escalonamento",
+      "targetLabel": "Transferir para",
+      "noteLabel": "Nota para o parceiro recetor",
+      "successTargeted": "Conversa transferida para {role}"
     },
     "aiHandover": {
       "label": "BizAI",
@@ -9582,7 +9585,10 @@
       "notEscalation": "Apenas o parceiro de escalonamento pode assumir. O encaminhamento é configurado no Meta Business Suite.",
       "notPrimaryReceiver": "Esta app tem de ser o recetor principal da Página para assumir. Defina-o nas definições do Handover Protocol da Página.",
       "learnMore": "Saiba mais",
-      "dismiss": "Enviar mesmo assim"
+      "dismiss": "Enviar mesmo assim",
+      "takeOverTitle": "Assumir esta conversa?",
+      "takeOverDescription": "O parceiro deixa de a tratar e você assume o controlo. Pode deixar uma nota para ele.",
+      "takeOverNoteLabel": "Nota para o parceiro atual"
     },
     "divider": {
       "ownerHandling": "{owner} está agora a tratar desta conversa",
@@ -9655,8 +9661,12 @@
     "step": {
       "action": "Ação",
       "release": "Libertar a conversa",
-      "pass": "Passar para o parceiro de escalonamento",
-      "helper": "Apenas WhatsApp. Noutros canais, ou quando a conversa não é gerida aqui, o passo segue o caminho de erro."
+      "pass": "Transferir para um parceiro",
+      "helper": "Apenas WhatsApp. Noutros canais, ou quando a conversa não é gerida aqui, o passo segue o caminho de erro.",
+      "targetRole": "Transferir para",
+      "targetRoleDefault": "Parceiro de escalamento (predefinição)",
+      "metadata": "Nota de transferência",
+      "metadataHelper": "Opcional. Enviada tal como está à app que recebe a conversa. As variáveis são suportadas. Até {max} caracteres."
     },
     "template": {
       "sent": "Modelo enviado"

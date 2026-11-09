@@ -9559,11 +9559,14 @@
       "success": "Gesprek vrijgegeven"
     },
     "pass": {
-      "menuItem": "Doorgeven aan escalatie",
-      "title": "Doorgeven aan de escalatiepartner?",
-      "description": "Dit gesprek overdragen aan je escalatiepartner? Je antwoorden worden gepauzeerd totdat het gesprek terugkomt.",
+      "menuItem": "Overdragen aan een partner",
+      "title": "Overdragen aan een partner?",
+      "description": "Kies wie dit gesprek overneemt. Je antwoorden worden gepauzeerd tot het gesprek terugkomt.",
       "confirm": "Doorgeven",
-      "success": "Gesprek doorgegeven aan de escalatiepartner"
+      "success": "Gesprek doorgegeven aan de escalatiepartner",
+      "targetLabel": "Overdragen aan",
+      "noteLabel": "Notitie voor de ontvangende partner",
+      "successTargeted": "Gesprek overgedragen aan {role}"
     },
     "aiHandover": {
       "label": "BizAI",
@@ -9582,7 +9585,10 @@
       "notEscalation": "Alleen de escalatiepartner kan overnemen. Routing wordt ingesteld in Meta Business Suite.",
       "notPrimaryReceiver": "Deze app moet de primaire ontvanger van de pagina zijn om over te nemen. Stel dit in bij de Handover Protocol-instellingen van de pagina.",
       "learnMore": "Meer informatie",
-      "dismiss": "Toch verzenden"
+      "dismiss": "Toch verzenden",
+      "takeOverTitle": "Dit gesprek overnemen?",
+      "takeOverDescription": "De partner stopt met de afhandeling en jij neemt de controle over. Je kunt een notitie voor hen achterlaten.",
+      "takeOverNoteLabel": "Notitie voor de huidige partner"
     },
     "divider": {
       "ownerHandling": "{owner} behandelt dit gesprek nu",
@@ -9655,8 +9661,12 @@
     "step": {
       "action": "Actie",
       "release": "Het gesprek vrijgeven",
-      "pass": "Doorgeven aan de escalatiepartner",
-      "helper": "Alleen WhatsApp. Op andere kanalen, of wanneer het gesprek hier niet wordt beheerd, volgt de stap het foutpad."
+      "pass": "Overdragen aan een partner",
+      "helper": "Alleen WhatsApp. Op andere kanalen, of wanneer het gesprek hier niet wordt beheerd, volgt de stap het foutpad.",
+      "targetRole": "Overdragen aan",
+      "targetRoleDefault": "Escalatiepartner (standaard)",
+      "metadata": "Overdrachtsnotitie",
+      "metadataHelper": "Optioneel. Ongewijzigd verzonden naar de app die het gesprek ontvangt. Variabelen worden ondersteund. Maximaal {max} tekens."
     },
     "template": {
       "sent": "Sjabloon verzonden"

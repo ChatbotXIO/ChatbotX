@@ -1,11 +1,14 @@
 import { threadControlService } from "@chatbotx.io/business"
 import { toThreadControlTimestamp } from "@chatbotx.io/database/partials"
-import { THREAD_CONTROL_REJECTION_CODES } from "@chatbotx.io/integration-whatsapp"
+import {
+  readWhatsappOriginErrorDetail,
+  THREAD_CONTROL_REJECTION_CODES,
+} from "@chatbotx.io/integration-whatsapp"
 import { ChannelError } from "@chatbotx.io/sdk"
 import { logger } from "../../lib/logger"
 import type { ChannelSendErrorContext } from "./channel-send-error-types"
 
-const isThreadControlRejection = (error: unknown): boolean =>
+const isThreadControlRejection = (error: unknown): error is ChannelError =>
   error instanceof ChannelError &&
   THREAD_CONTROL_REJECTION_CODES.has(Number(error.code))
 
@@ -21,10 +24,21 @@ const isThreadControlRejection = (error: unknown): boolean =>
 export async function reconcileThreadControlRejection(
   context: ChannelSendErrorContext,
 ): Promise<boolean> {
-  if (!isThreadControlRejection(context.error)) {
+  const { error, contactInbox, conversation } = context
+  if (!isThreadControlRejection(error)) {
     return false
   }
-  const { contactInbox, conversation } = context
+  // Meta's fbtrace_id is what its support asks for on a rejected send
+  // (Partner Testing Guide §2.2 / §7): log it as a top-level field.
+  logger.info(
+    {
+      contactInboxId: contactInbox.id,
+      code: error.code,
+      fbtraceId: readWhatsappOriginErrorDetail(error.getOriginError())
+        .fbtraceId,
+    },
+    "WhatsApp Service send rejected: thread not owned",
+  )
   try {
     await threadControlService.recordEvent({
       workspaceId: conversation.workspaceId,

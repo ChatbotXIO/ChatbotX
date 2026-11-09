@@ -28,6 +28,11 @@ vi.mock("@chatbotx.io/database/client", () => ({ gte: vi.fn() }))
 vi.mock("@chatbotx.io/database/schema", () => ({ conversationModel: {} }))
 // step-handlers also hosts the thread-control step; its registry-aware action
 // is out of scope here and would otherwise load the real channel registry.
+// step-handlers also resolves `{{variables}}` for the thread-control step; the
+// real package would load database query modules this suite does not mock.
+vi.mock("@chatbotx.io/variables", () => ({
+  resolveContactVariablesDeep: vi.fn(),
+}))
 vi.mock("@chatbotx.io/channel-registry/thread-control", () => ({
   requestThreadControlAction: vi.fn(),
 }))
