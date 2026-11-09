@@ -268,3 +268,45 @@ describe("Messenger receiveMessage - Business-AI standby echo signals", () => {
     expect(result.threadControl).not.toHaveProperty("ownerRole")
   })
 })
+
+const SKIP_PAYLOAD = "STEP_INPUT_SKIP|11612473309626368"
+
+describe("Messenger receiveMessage - step input skip payload", () => {
+  test("hands the skip quick_reply payload to the worker unchanged as quickReplyAction", async () => {
+    const result = await receive({
+      messaging: [
+        {
+          sender: { id: PSID },
+          recipient: { id: PAGE },
+          timestamp: TS_MS,
+          message: {
+            mid: "mid-skip-qr",
+            text: "Skip",
+            quick_reply: { payload: SKIP_PAYLOAD },
+          },
+        },
+      ],
+    })
+
+    expect(result.quickReplyAction).toBe(SKIP_PAYLOAD)
+  })
+
+  test("hands the skip postback payload to the worker unchanged as postbackAction", async () => {
+    const result = await receive({
+      messaging: [
+        {
+          sender: { id: PSID },
+          recipient: { id: PAGE },
+          timestamp: TS_MS,
+          postback: {
+            mid: "mid-skip-pb",
+            title: "Skip",
+            payload: SKIP_PAYLOAD,
+          },
+        },
+      ],
+    })
+
+    expect(result.postbackAction).toBe(SKIP_PAYLOAD)
+  })
+})

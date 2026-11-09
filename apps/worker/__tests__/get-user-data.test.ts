@@ -2,17 +2,21 @@ import { MessageShardUnavailableError } from "@chatbotx.io/database/errors"
 import type {
   ContentType,
   ConversationAttributes,
+  ConversationStepChallenge,
   FileType,
 } from "@chatbotx.io/database/partials"
 import { getSafeSinceTime } from "@chatbotx.io/database/repositories"
 import { verifyUserDataWebviewToken } from "@chatbotx.io/encryption"
 import type { GetUserDataStepSchema } from "@chatbotx.io/flow-config"
 import {
+  decodeStepInputSkipPostback,
   GET_USER_DATA_WEBVIEW_SELECTION_PAYLOAD_TYPE,
   ReplyFormat,
 } from "@chatbotx.io/flow-config"
+import { createId } from "@chatbotx.io/utils"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 import type { ExecuteStepProps } from "../src/integration/handlers/flow"
+import { logger } from "../src/lib/logger"
 
 // --- mocks ---
 
@@ -30,12 +34,19 @@ const lastMessage: {
   } | null
 } = { current: null }
 const repositoryError: { current: Error | null } = { current: null }
+// The message a run names as its trigger; null means "not found".
+const triggerMessage: {
+  current: NonNullable<(typeof lastMessage)["current"]> | null
+} = { current: null }
+const findTriggerMessage = vi.fn()
 
 const contactInboxUpdateTracking = vi.fn(async () => undefined)
 const contactCustomFieldSetValueByKey = vi.fn(async () => undefined)
 const conversationUpdateChallenge = vi.fn(async () => undefined)
 const conversationConsumeChallenge = vi.fn(async () => true)
 const conversationRestoreChallengeIfAbsent = vi.fn(async () => true)
+const conversationAdvanceStepChallengeAttempt = vi.fn(async () => true)
+const scheduleSmartDelayResume = vi.fn(async () => undefined)
 const workspaceFindById = vi.fn(async () => ({ language: "en" }))
 const contactFindById = vi.fn(
   async (): Promise<{ phoneNumber: string | null; email: string | null }> => ({
@@ -72,6 +83,7 @@ vi.mock("@chatbotx.io/business", () => ({
     updateChallenge: conversationUpdateChallenge,
     consumeChallenge: conversationConsumeChallenge,
     restoreChallengeIfAbsent: conversationRestoreChallengeIfAbsent,
+    advanceStepChallengeAttempt: conversationAdvanceStepChallengeAttempt,
   },
   // Real normalizeLanguage collapses to "vi"/"en"/undefined via a supported-
   // language allowlist; the handler only branches on "vi" vs. everything
@@ -83,6 +95,10 @@ vi.mock("@chatbotx.io/business", () => ({
 
 // Attachment values are stored as a public URL; mirror getPublicFileUrl's join
 // without loading the real module.
+vi.mock("../src/integration/handlers/smart-delay", () => ({
+  scheduleSmartDelayResume,
+}))
+
 vi.mock("@chatbotx.io/business/utils", () => ({
   getPublicFileUrl: (path: string, base: string) => {
     let key = path
@@ -98,6 +114,10 @@ vi.mock("@chatbotx.io/business/utils", () => ({
 // array (findLastByConversation's contract).
 vi.mock("@chatbotx.io/database/repositories", () => ({
   createMessageRepository: vi.fn(async () => ({
+    findTriggerMessage: (options: unknown) => {
+      findTriggerMessage(options)
+      return triggerMessage.current
+    },
     findLastByConversation: vi.fn(() => {
       if (repositoryError.current) {
         throw repositoryError.current
@@ -160,6 +180,8 @@ const { getUserData } = await import(
 
 beforeEach(() => {
   repositoryError.current = null
+  triggerMessage.current = null
+  findTriggerMessage.mockClear()
   chatQueueAdd.mockResolvedValue({ id: "job-1" })
   waitForChatJobCompletion.mockResolvedValue(undefined)
   contactInboxUpdateTracking.mockClear()
@@ -170,6 +192,10 @@ beforeEach(() => {
   conversationConsumeChallenge.mockResolvedValue(true)
   conversationRestoreChallengeIfAbsent.mockClear()
   conversationRestoreChallengeIfAbsent.mockResolvedValue(true)
+  conversationAdvanceStepChallengeAttempt.mockClear()
+  conversationAdvanceStepChallengeAttempt.mockResolvedValue(true)
+  scheduleSmartDelayResume.mockClear()
+  scheduleSmartDelayResume.mockResolvedValue(undefined)
   workspaceFindById.mockClear()
   workspaceFindById.mockResolvedValue({ language: "en" })
 })
@@ -268,7 +294,11 @@ function makeIncomingMessage(
 }
 
 function expectLastInputFailureUpdate(
-  lastInputFailure: "timeout" | "invalid_input_attempts" | null,
+  lastInputFailure:
+    | "timeout"
+    | "invalid_input_attempts"
+    | "user_skipped"
+    | null,
 ) {
   expect(contactInboxUpdateTracking).toHaveBeenCalledWith({
     contactInboxId: "ci-1",
@@ -672,21 +702,21 @@ describe("getUserData — attempt counter (Bug B fix)", () => {
     )
   })
 
-  test("keeps the long-standing blank retry behavior for non-webview formats (sends the blank retry text unchanged)", async () => {
+  test("a blank retry message sends only the question again, never an empty message", async () => {
     await getUserData(makeProps(ReplyFormat.email, { retryMessage: "" }, 1))
 
-    expect(chatQueueAdd).toHaveBeenCalledWith(
-      "sendFlowMessage",
-      {
-        type: "sendFlowMessage",
-        data: expect.objectContaining({
-          step: expect.objectContaining({
-            text: "",
-          }),
-        }),
-      },
-      { priority: 5 },
+    expect(promptTexts()).toEqual(["Please enter your email"])
+  })
+
+  test("sends the retry message first, then the question again", async () => {
+    await getUserData(
+      makeProps(ReplyFormat.email, { retryMessage: "Not a valid email" }, 1),
     )
+
+    expect(promptTexts()).toEqual([
+      "Not a valid email",
+      "Please enter your email",
+    ])
   })
 
   test("falls back to the step message on date retry so the picker prompt is re-sent with its button", async () => {
@@ -703,10 +733,15 @@ describe("getUserData — attempt counter (Bug B fix)", () => {
       expect.objectContaining({
         data: expect.objectContaining({
           text: "Pick your date",
-          quickReplies: [expect.objectContaining({ buttonType: "url" })],
+          quickReplies: [
+            expect.objectContaining({ buttonType: "url" }),
+            expect.objectContaining({ buttonType: "postback", label: "Skip" }),
+          ],
         }),
       }),
     )
+    // The blank retry text is not sent on its own.
+    expect(promptTexts()).toEqual([])
   })
 })
 
@@ -818,7 +853,7 @@ describe("getUserData — challenge lifecycle", () => {
     expect(challengeClearCalls()).toHaveLength(1)
   })
 
-  test("clears challenge after first prompt enqueue failure", async () => {
+  test("clears the challenge it created after a first prompt enqueue failure", async () => {
     chatQueueAdd.mockRejectedValueOnce(new Error("queue down"))
     const props = makeProps(ReplyFormat.email)
     props.ctx = { variables: { conversation: {} } }
@@ -827,7 +862,10 @@ describe("getUserData — challenge lifecycle", () => {
 
     expect(result.status).toBe("error")
     expect(challengeSetCalls()).toHaveLength(1)
-    expect(challengeClearCalls()).toHaveLength(1)
+    expect(conversationConsumeChallenge).toHaveBeenCalledWith(
+      expect.objectContaining({ challengeId: "test-id" }),
+    )
+    expect(challengeClearCalls()).toHaveLength(0)
   })
 })
 
@@ -860,6 +898,14 @@ describe("getUserData — first send (no challenge state)", () => {
             text: "Please enter your email, {{contact.name}}",
             buttons: [],
           },
+          presetQuickReplies: [
+            {
+              id: "test-id",
+              label: "Skip",
+              buttonType: "postback",
+              postback: "STEP_INPUT_SKIP|test-id",
+            },
+          ],
           metadata: {
             type: "broadcast",
             broadcastId: "bc-1",
@@ -890,6 +936,7 @@ describe("getUserData — first send (no challenge state)", () => {
           stepId: "step-1",
           attempts: 1,
           lastAttemptAt: expect.any(Date),
+          startedAt: expect.any(Date),
           challengeId: "test-id",
         },
       },
@@ -1077,6 +1124,15 @@ describe("getUserData — comment-triggered private reply", () => {
   })
 })
 
+/** Texts of the plain flow-step prompts, in the order they were enqueued. */
+function promptTexts(): string[] {
+  return chatQueueAdd.mock.calls
+    .filter(([action]) => action === "sendFlowMessage")
+    .map(
+      ([, job]) => (job as { data: { step: { text: string } } }).data.step.text,
+    )
+}
+
 function findChatJobCall(action: string) {
   const call = chatQueueAdd.mock.calls.find(
     ([callAction]) => callAction === action,
@@ -1123,6 +1179,12 @@ describe("getUserData — date/datetime webview prompt (RF09/RF10)", () => {
         buttonType: "url",
         url: expect.stringContaining("/extensions/datetime-picker"),
         messengerExtensions: true,
+      },
+      {
+        id: "test-id",
+        label: "Skip",
+        buttonType: "postback",
+        postback: "STEP_INPUT_SKIP|test-id",
       },
     ])
   })
@@ -1233,10 +1295,17 @@ describe("getUserData — date/datetime webview prompt (RF09/RF10)", () => {
 
     await getUserData(props)
 
-    const challengeCall = conversationUpdateChallenge.mock.calls[0]?.[0]
-    expect(challengeCall?.challenge?.data.challengeId).toBe(
-      "existing-challenge-id",
+    // A challenge that already has an id advances through the compare-and-set
+    // and keeps that id, so the earlier webview link stays valid.
+    expect(conversationAdvanceStepChallengeAttempt).toHaveBeenCalledWith(
+      expect.objectContaining({
+        stepId: "step-1",
+        challengeId: "existing-challenge-id",
+        fromAttempts: 1,
+        toAttempts: 2,
+      }),
     )
+    expect(conversationUpdateChallenge).not.toHaveBeenCalled()
 
     const job = findChatJobCall("sendChatMessage")
     const url = new URL(job.data.quickReplies?.[0]?.url ?? "")
@@ -1332,7 +1401,7 @@ describe("getUserData — webview submission side-effect failure (crash-safety, 
     return props
   }
 
-  test("restores the challenge (same challengeId) and returns error status when a side effect fails after the claim", async () => {
+  test("restores the challenge (same challengeId) and waits (flow does not continue) when a side effect fails after the claim", async () => {
     conversationConsumeChallenge.mockResolvedValueOnce(true)
     contactCustomFieldSetValueByKey.mockRejectedValueOnce(
       new Error("field write failed"),
@@ -1341,9 +1410,9 @@ describe("getUserData — webview submission side-effect failure (crash-safety, 
 
     const result = await getUserData(props)
 
-    // No unhandled rejection: the promise resolves with an "error" result
+    // No unhandled rejection: the promise resolves with a "wait" result
     // rather than throwing.
-    expect(result.status).toBe("error")
+    expect(result.status).toBe("wait")
     expect(result.result).toBeUndefined()
 
     // Restored with the SAME challengeId that was just claimed, so the
@@ -1381,7 +1450,7 @@ describe("getUserData — webview submission side-effect failure (crash-safety, 
 
     const result = await getUserData(props)
 
-    expect(result.status).toBe("error")
+    expect(result.status).toBe("wait")
     expect(conversationRestoreChallengeIfAbsent).toHaveBeenCalledTimes(1)
   })
 
@@ -1606,14 +1675,51 @@ describe("getUserData — WhatsApp native location request (RF08)", () => {
         },
       ],
     })
-    expect(chatQueueAdd).not.toHaveBeenCalledWith(
-      "sendFlowMessage",
-      expect.anything(),
-    )
     expect(waitForChatJobCompletion).toHaveBeenCalledWith(
       expect.objectContaining({ id: "job-1" }),
       { conversationId: "conv-1", stepId: "step-1" },
     )
+  })
+
+  test("sends the Skip button as its own message after the native request, with the author's label as its text", async () => {
+    const props = makeProps(ReplyFormat.location, {
+      message: "Please share your location",
+      skipButtonLabel: "Bỏ qua bước này",
+    })
+    props.ctx = { variables: { conversation: {} } }
+    props.contactInbox = { ...props.contactInbox, channel: "whatsapp" }
+
+    await getUserData(props)
+
+    expect(chatQueueAdd.mock.calls.map(([action]) => action)).toEqual([
+      "sendChatMessage",
+      "sendFlowMessage",
+    ])
+    const companion = findChatJobCall("sendFlowMessage") as unknown as {
+      data: {
+        step: { text: string }
+        presetQuickReplies: { label: string; postback: string }[]
+      }
+    }
+    expect(companion.data.step.text).toBe("Bỏ qua bước này")
+    expect(companion.data.presetQuickReplies).toEqual([
+      expect.objectContaining({
+        label: "Bỏ qua bước này",
+        postback: "STEP_INPUT_SKIP|test-id",
+      }),
+    ])
+  })
+
+  test("sends no companion message when the Skip label is blank", async () => {
+    const props = makeProps(ReplyFormat.location, { skipButtonLabel: "  " })
+    props.ctx = { variables: { conversation: {} } }
+    props.contactInbox = { ...props.contactInbox, channel: "whatsapp" }
+
+    await getUserData(props)
+
+    expect(chatQueueAdd.mock.calls.map(([action]) => action)).toEqual([
+      "sendChatMessage",
+    ])
   })
 
   test("uses the Vietnamese inbox label when workspace.language is vi", async () => {
@@ -1702,6 +1808,12 @@ describe("getUserData — Show Hint contact quick reply (phone/email)", () => {
         buttonType: "postback",
         postback: "GET_USER_DATA_CONTACT_HINT|0708122593",
       },
+      {
+        id: "test-id",
+        label: "Skip",
+        buttonType: "postback",
+        postback: "STEP_INPUT_SKIP|test-id",
+      },
     ])
     expect(waitForChatJobCompletion).toHaveBeenCalledWith(
       expect.objectContaining({ id: "job-1" }),
@@ -1735,6 +1847,12 @@ describe("getUserData — Show Hint contact quick reply (phone/email)", () => {
         label: "Phone",
         buttonType: "postback",
         postback: "messenger:native-quick-reply:user_phone_number",
+      },
+      {
+        id: "test-id",
+        label: "Skip",
+        buttonType: "postback",
+        postback: "STEP_INPUT_SKIP|test-id",
       },
     ])
   })
@@ -1853,5 +1971,1000 @@ describe("getUserData — Show Hint contact quick reply (phone/email)", () => {
     await getUserData(makeFirstSendProps(ReplyFormat.text, "messenger"))
 
     expectTextPromptPath()
+  })
+})
+
+// --- Auto Skip timer, Skip button, resolution (plan phases 3-4) ---
+
+const HOUR_MS = 3_600_000
+
+type StepChallengeData = ConversationStepChallenge["data"]
+
+function withStepChallenge(
+  props: ExecuteStepProps<GetUserDataStepSchema>,
+  data: Partial<StepChallengeData>,
+): ExecuteStepProps<GetUserDataStepSchema> {
+  props.conversation = {
+    ...props.conversation,
+    additionalAttributes: {
+      challenge: {
+        type: "step",
+        data: {
+          flowId: "flow-1",
+          flowVersionId: "fv-1",
+          nodeId: "node-1",
+          stepId: "step-1",
+          attempts: 1,
+          lastAttemptAt: new Date(),
+          ...data,
+        },
+      },
+    },
+  }
+  return props
+}
+
+function makeFreshFirstSendProps(overrides: StepOverride = {}) {
+  const props = makeProps(ReplyFormat.email, overrides)
+  props.conversation = { ...props.conversation, additionalAttributes: {} }
+  props.ctx = { variables: { conversation: {} } }
+  return props
+}
+
+describe("getUserData — Auto Skip timer", () => {
+  const autoSkipOverrides: StepOverride = {
+    autoSkip: true,
+    autoSkipTimeValue: 1,
+    autoSkipTimeUnit: "hours",
+  }
+
+  beforeEach(() => {
+    chatQueueAdd.mockClear()
+  })
+
+  test("arms one timer from the first prompt, carrying the challenge id for the claim", async () => {
+    await getUserData(makeFreshFirstSendProps(autoSkipOverrides))
+
+    expect(scheduleSmartDelayResume).toHaveBeenCalledTimes(1)
+    const [timer] = scheduleSmartDelayResume.mock.calls[0] as unknown as [
+      { triggerAt: Date } & Record<string, unknown>,
+    ]
+    expect(timer).toMatchObject({
+      type: "stepInputTimeout",
+      workspaceId: "ws-1",
+      flowId: "flow-1",
+      flowVersionId: "fv-1",
+      conversationId: "conv-1",
+      contactInboxId: "ci-1",
+      nodeId: "node-1",
+      stepId: "step-1",
+      metadata: {
+        type: "stepInputResolution",
+        stepId: "step-1",
+        challengeId: "test-id",
+        reason: "timeout",
+      },
+    })
+    const startedAt = challengeSetCalls()[0]?.[0].challenge?.data
+      .startedAt as Date
+    expect(timer.triggerAt.getTime() - startedAt.getTime()).toBe(HOUR_MS)
+  })
+
+  test("honours the configured unit (seconds)", async () => {
+    await getUserData(
+      makeFreshFirstSendProps({
+        ...autoSkipOverrides,
+        autoSkipTimeValue: 30,
+        autoSkipTimeUnit: "seconds",
+      }),
+    )
+
+    const [timer] = scheduleSmartDelayResume.mock.calls[0] as unknown as [
+      { triggerAt: Date },
+    ]
+    const startedAt = challengeSetCalls()[0]?.[0].challenge?.data
+      .startedAt as Date
+    expect(timer.triggerAt.getTime() - startedAt.getTime()).toBe(30_000)
+  })
+
+  test("pins no flow version when the run follows the latest one", async () => {
+    const props = makeFreshFirstSendProps(autoSkipOverrides)
+    props.useLatestFlowVersion = true
+
+    await getUserData(props)
+
+    expect(scheduleSmartDelayResume.mock.calls[0]?.[0]).toMatchObject({
+      flowVersionId: null,
+    })
+  })
+
+  test("carries the appointment so the resumed run keeps it", async () => {
+    const props = makeFreshFirstSendProps(autoSkipOverrides)
+    props.appointmentId = "appointment-1"
+
+    await getUserData(props)
+
+    expect(scheduleSmartDelayResume.mock.calls[0]?.[0]).toMatchObject({
+      appointmentId: "appointment-1",
+    })
+  })
+
+  test("arms no timer when Auto Skip is off", async () => {
+    await getUserData(makeFreshFirstSendProps({ autoSkip: false }))
+
+    expect(scheduleSmartDelayResume).not.toHaveBeenCalled()
+  })
+
+  test("a retry never re-arms the timer (the deadline stays at the first prompt)", async () => {
+    lastMessage.current = makeIncomingMessage({ text: "invalid" })
+
+    const result = await getUserData(
+      withStepChallenge(makeProps(ReplyFormat.email, autoSkipOverrides, 1), {
+        challengeId: "challenge-1",
+      }),
+    )
+
+    expect(result.status).toBe("retry")
+    expect(scheduleSmartDelayResume).not.toHaveBeenCalled()
+  })
+
+  test("writes the challenge before arming the timer and arms it before the prompt", async () => {
+    const order: string[] = []
+    conversationUpdateChallenge.mockImplementationOnce(() => {
+      order.push("challenge")
+      return Promise.resolve()
+    })
+    scheduleSmartDelayResume.mockImplementationOnce(() => {
+      order.push("timer")
+      return Promise.resolve()
+    })
+    chatQueueAdd.mockImplementationOnce(() => {
+      order.push("prompt")
+      return Promise.resolve({ id: "job-1" })
+    })
+
+    await getUserData(
+      makeFreshFirstSendProps({
+        ...autoSkipOverrides,
+        autoSkipTimeValue: 1,
+        autoSkipTimeUnit: "seconds",
+      }),
+    )
+
+    expect(order).toEqual(["challenge", "timer", "prompt"])
+  })
+
+  test("when arming the timer fails, no prompt is sent and the challenge is cleared", async () => {
+    scheduleSmartDelayResume.mockRejectedValueOnce(new Error("db down"))
+
+    const result = await getUserData(makeFreshFirstSendProps(autoSkipOverrides))
+
+    expect(result.status).toBe("error")
+    expect(chatQueueAdd).not.toHaveBeenCalled()
+    expect(conversationConsumeChallenge).toHaveBeenCalledWith(
+      expect.objectContaining({ challengeId: "test-id" }),
+    )
+  })
+
+  test("reuses the id of this step's pending challenge, but never another step's", async () => {
+    const sameStep = makeFreshFirstSendProps(autoSkipOverrides)
+    withStepChallenge(sameStep, { challengeId: "same-step-id" })
+    await getUserData(sameStep)
+    expect(challengeSetCalls()[0]?.[0].challenge?.data.challengeId).toBe(
+      "same-step-id",
+    )
+
+    conversationUpdateChallenge.mockClear()
+    const otherStep = makeFreshFirstSendProps(autoSkipOverrides)
+    withStepChallenge(otherStep, {
+      stepId: "other-step",
+      challengeId: "other-step-id",
+    })
+    await getUserData(otherStep)
+    expect(challengeSetCalls()[0]?.[0].challenge?.data.challengeId).toBe(
+      "test-id",
+    )
+  })
+})
+
+describe("getUserData — Auto Skip deadline", () => {
+  const autoSkipOverrides: StepOverride = {
+    autoSkip: true,
+    autoSkipFailAttempts: 5,
+    autoSkipTimeValue: 1,
+    autoSkipTimeUnit: "hours",
+  }
+
+  beforeEach(() => {
+    lastMessage.current = makeIncomingMessage({ text: "invalid" })
+  })
+
+  function withStartedAt(
+    props: ExecuteStepProps<GetUserDataStepSchema>,
+    startedAt: Date,
+  ) {
+    props.ctx = {
+      variables: {
+        conversation: {
+          ...props.ctx?.variables.conversation,
+          challengeStartedAt: { value: startedAt },
+        },
+      },
+    } as ExecuteStepProps<GetUserDataStepSchema>["ctx"]
+    return props
+  }
+
+  test("counts from the first prompt: a retry that just happened does not restart the clock", async () => {
+    const props = withStartedAt(
+      makeProps(ReplyFormat.email, autoSkipOverrides, 2, new Date()),
+      new Date(Date.now() - 2 * HOUR_MS),
+    )
+
+    const result = await getUserData(props)
+
+    expect(result.status).toBe("skip")
+    expectLastInputFailureUpdate("timeout")
+  })
+
+  test("a challenge without startedAt keeps counting from the last attempt", async () => {
+    const result = await getUserData(
+      makeProps(ReplyFormat.email, autoSkipOverrides, 2, new Date()),
+    )
+
+    expect(result.status).toBe("retry")
+  })
+
+  test("a deadline still in the future does not skip", async () => {
+    const props = withStartedAt(
+      makeProps(ReplyFormat.email, autoSkipOverrides, 2, new Date()),
+      new Date(Date.now() - HOUR_MS / 2),
+    )
+
+    const result = await getUserData(props)
+
+    expect(result.status).toBe("retry")
+  })
+})
+
+describe("getUserData — input resolution (timer or Skip button)", () => {
+  function makeResolutionProps(
+    reason: string,
+    stepOverrides: StepOverride = {},
+    challengeId = "challenge-1",
+  ) {
+    const lastAttemptAt = new Date()
+    const props = withStepChallenge(
+      makeProps(ReplyFormat.email, stepOverrides, 2, lastAttemptAt),
+      { attempts: 2, lastAttemptAt, challengeId },
+    )
+    props.ctx = {
+      variables: {
+        conversation: {
+          challengeAttempts: { value: 2 },
+          challengeLastAttemptAt: { value: lastAttemptAt },
+          challengeId: { value: challengeId },
+          challengeResolution: { value: reason },
+        },
+      },
+    } as ExecuteStepProps<GetUserDataStepSchema>["ctx"]
+    return props
+  }
+
+  beforeEach(() => {
+    chatQueueAdd.mockClear()
+    lastMessage.current = makeIncomingMessage({ text: "ignored" })
+  })
+
+  test("a timeout takes the Skip branch: claims the challenge, then records the timeout", async () => {
+    const result = await getUserData(
+      makeResolutionProps("timeout", { autoSkip: true }),
+    )
+
+    expect(result).toEqual({ result: undefined, status: "skip" })
+    expect(conversationConsumeChallenge).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      conversationId: "conv-1",
+      stepId: "step-1",
+      challengeId: "challenge-1",
+    })
+    expectLastInputFailureUpdate("timeout")
+    expect(
+      conversationConsumeChallenge.mock.invocationCallOrder[0],
+    ).toBeLessThan(contactInboxUpdateTracking.mock.invocationCallOrder[0] ?? 0)
+  })
+
+  test("a Skip tap takes the Skip branch and records user_skipped", async () => {
+    const result = await getUserData(makeResolutionProps("user_skipped"))
+
+    expect(result.status).toBe("skip")
+    expectLastInputFailureUpdate("user_skipped")
+  })
+
+  test("never reads or saves the contact's last reply", async () => {
+    await getUserData(makeResolutionProps("user_skipped"))
+
+    expect(contactCustomFieldSetValueByKey).not.toHaveBeenCalled()
+    expect(chatQueueAdd).not.toHaveBeenCalled()
+  })
+
+  test("ignores a timeout when the step no longer has Auto Skip on (flow edited)", async () => {
+    const result = await getUserData(
+      makeResolutionProps("timeout", { autoSkip: false }),
+    )
+
+    expect(result.status).toBe("wait")
+    expect(conversationConsumeChallenge).not.toHaveBeenCalled()
+    expect(contactInboxUpdateTracking).not.toHaveBeenCalled()
+  })
+
+  test("ignores a Skip tap when the step no longer has a Skip button", async () => {
+    const result = await getUserData(
+      makeResolutionProps("user_skipped", { skipButtonLabel: "  " }),
+    )
+
+    expect(result.status).toBe("wait")
+    expect(conversationConsumeChallenge).not.toHaveBeenCalled()
+  })
+
+  test("losing the claim (the contact answered first) writes nothing and waits", async () => {
+    conversationConsumeChallenge.mockResolvedValueOnce(false)
+
+    const result = await getUserData(
+      makeResolutionProps("timeout", { autoSkip: true }),
+    )
+
+    expect(result.status).toBe("wait")
+    expect(contactInboxUpdateTracking).not.toHaveBeenCalled()
+  })
+
+  test("a timeout still takes the Skip branch when recording fails: no contact is left to retry it", async () => {
+    contactInboxUpdateTracking.mockRejectedValueOnce(new Error("tracking down"))
+
+    const result = await getUserData(
+      makeResolutionProps("timeout", { autoSkip: true }),
+    )
+
+    expect(result).toEqual({ result: undefined, status: "skip" })
+    expect(conversationRestoreChallengeIfAbsent).not.toHaveBeenCalled()
+    expect(logger.warn).toHaveBeenCalledWith(
+      expect.objectContaining({ reason: "timeout" }),
+      expect.stringContaining("taking the Skip branch anyway"),
+    )
+  })
+
+  test("restores the challenge, with its attempts and deadline origin, when recording fails after the claim", async () => {
+    contactInboxUpdateTracking.mockRejectedValueOnce(new Error("tracking down"))
+    const props = makeResolutionProps("user_skipped")
+    const startedAt = new Date(Date.now() - HOUR_MS)
+    withStepChallenge(props, {
+      attempts: 2,
+      challengeId: "challenge-1",
+      startedAt,
+    })
+
+    const result = await getUserData(props)
+
+    expect(result.status).toBe("wait")
+    expect(
+      conversationRestoreChallengeIfAbsent.mock.calls[0]?.[0],
+    ).toMatchObject({
+      challenge: {
+        type: "step",
+        data: { challengeId: "challenge-1", attempts: 2, startedAt },
+      },
+    })
+    // The outer catch must not erase the restore.
+    expect(challengeClearCalls()).toHaveLength(0)
+  })
+
+  test.each([
+    [true, 1],
+    [false, 0],
+  ])("a restored challenge re-arms its timer on the original deadline (autoSkip %s)", async (autoSkip, armCalls) => {
+    contactInboxUpdateTracking.mockRejectedValueOnce(new Error("tracking down"))
+    const props = makeResolutionProps("user_skipped", {
+      autoSkip,
+      autoSkipTimeUnit: "minutes",
+      autoSkipTimeValue: 3,
+    })
+    const startedAt = new Date(Date.now() - HOUR_MS)
+    withStepChallenge(props, {
+      attempts: 2,
+      challengeId: "challenge-1",
+      startedAt,
+    })
+    scheduleSmartDelayResume.mockClear()
+
+    const result = await getUserData(props)
+
+    expect(result.status).toBe("wait")
+    expect(scheduleSmartDelayResume).toHaveBeenCalledTimes(armCalls)
+    if (armCalls > 0) {
+      expect(scheduleSmartDelayResume).toHaveBeenCalledWith(
+        expect.objectContaining({
+          triggerAt: new Date(startedAt.getTime() + 3 * 60 * 1000),
+          metadata: expect.objectContaining({ challengeId: "challenge-1" }),
+        }),
+      )
+    }
+  })
+
+  test("a failed re-arm still reports the restored challenge as waiting", async () => {
+    contactInboxUpdateTracking.mockRejectedValueOnce(new Error("tracking down"))
+    scheduleSmartDelayResume.mockRejectedValueOnce(new Error("db down"))
+    const props = makeResolutionProps("user_skipped", { autoSkip: true })
+    withStepChallenge(props, {
+      attempts: 2,
+      challengeId: "challenge-1",
+      startedAt: new Date(),
+    })
+
+    const result = await getUserData(props)
+
+    expect(result.status).toBe("wait")
+  })
+
+  test("a resolution aimed at another step is not consumed by this one", async () => {
+    lastMessage.current = makeIncomingMessage({ text: "invalid" })
+    const props = makeResolutionProps("user_skipped")
+    withStepChallenge(props, { stepId: "other-step", challengeId: "c-2" })
+
+    const result = await getUserData(props)
+
+    // Not consumed as a resolution: nothing recorded, nothing claimed. The
+    // other step owns the challenge now, so this reply just waits.
+    expect(result.status).toBe("wait")
+    expectNoLastInputFailureUpdate()
+    expect(conversationConsumeChallenge).not.toHaveBeenCalled()
+  })
+
+  test("a run without a resolution (a flow that loops back to the step) asks the question again", async () => {
+    const props = makeFreshFirstSendProps({ autoSkip: true })
+
+    const result = await getUserData(props)
+
+    expect(result.status).toBe("wait")
+    expect(promptTexts()).toEqual(["Please enter your email"])
+  })
+})
+
+describe("getUserData — claim first: a reply that loses writes nothing", () => {
+  beforeEach(() => {
+    lastMessage.current = makeIncomingMessage({ text: "user@example.com" })
+  })
+
+  test("a valid reply that lost to the timeout saves no field and clears no failure", async () => {
+    conversationConsumeChallenge.mockResolvedValueOnce(false)
+
+    const result = await getUserData(
+      withStepChallenge(makeProps(ReplyFormat.email), {
+        challengeId: "challenge-1",
+      }),
+    )
+
+    expect(result.status).toBe("wait")
+    expect(contactCustomFieldSetValueByKey).not.toHaveBeenCalled()
+    expect(contactInboxUpdateTracking).not.toHaveBeenCalled()
+  })
+
+  test("a valid reply never clears another step's id-less challenge (the job's snapshot is stale)", async () => {
+    const props = withStepChallenge(makeProps(ReplyFormat.email), {
+      stepId: "other-step",
+    })
+
+    const result = await getUserData(props)
+
+    expect(result.status).toBe("wait")
+    expect(challengeClearCalls()).toHaveLength(0)
+    expect(conversationConsumeChallenge).not.toHaveBeenCalled()
+    expect(contactCustomFieldSetValueByKey).not.toHaveBeenCalled()
+  })
+
+  test("nor does an auto skip", async () => {
+    lastMessage.current = makeIncomingMessage({ text: "invalid" })
+    const props = withStepChallenge(
+      makeProps(
+        ReplyFormat.email,
+        { autoSkip: true, autoSkipFailAttempts: 1 },
+        1,
+      ),
+      { stepId: "other-step" },
+    )
+
+    const result = await getUserData(props)
+
+    expect(result.status).toBe("wait")
+    expect(challengeClearCalls()).toHaveLength(0)
+    expect(contactInboxUpdateTracking).not.toHaveBeenCalled()
+  })
+
+  test("a valid reply claims the challenge before it writes the field", async () => {
+    await getUserData(
+      withStepChallenge(makeProps(ReplyFormat.email), {
+        challengeId: "challenge-1",
+      }),
+    )
+
+    expect(
+      conversationConsumeChallenge.mock.invocationCallOrder[0],
+    ).toBeLessThan(
+      contactCustomFieldSetValueByKey.mock.invocationCallOrder[0] ?? 0,
+    )
+    expectCustomFieldWrite("user@example.com")
+  })
+
+  test("restores the challenge instead of clearing it when the field write fails after the claim", async () => {
+    contactCustomFieldSetValueByKey.mockRejectedValueOnce(
+      new Error("field write failed"),
+    )
+
+    const result = await getUserData(
+      withStepChallenge(makeProps(ReplyFormat.email), {
+        challengeId: "challenge-1",
+      }),
+    )
+
+    expect(result.status).toBe("wait")
+    expect(
+      conversationRestoreChallengeIfAbsent.mock.calls[0]?.[0],
+    ).toMatchObject({
+      challenge: { data: { challengeId: "challenge-1", stepId: "step-1" } },
+    })
+    expect(challengeClearCalls()).toHaveLength(0)
+  })
+
+  test("an auto skip that lost the claim records no failure", async () => {
+    lastMessage.current = makeIncomingMessage({ text: "invalid" })
+    conversationConsumeChallenge.mockResolvedValueOnce(false)
+
+    const result = await getUserData(
+      withStepChallenge(
+        makeProps(
+          ReplyFormat.email,
+          { autoSkip: true, autoSkipFailAttempts: 1 },
+          1,
+        ),
+        { challengeId: "challenge-1" },
+      ),
+    )
+
+    expect(result.status).toBe("wait")
+    expect(contactInboxUpdateTracking).not.toHaveBeenCalled()
+  })
+})
+
+describe("getUserData — retry asks the question again", () => {
+  beforeEach(() => {
+    chatQueueAdd.mockClear()
+    lastMessage.current = makeIncomingMessage({ text: "invalid" })
+  })
+
+  function makeRetryProps(overrides: StepOverride = {}, challengeId?: string) {
+    const props = makeProps(
+      ReplyFormat.email,
+      { retryMessage: "Not a valid email", ...overrides },
+      1,
+    )
+    return challengeId ? withStepChallenge(props, { challengeId }) : props
+  }
+
+  function flowJobs() {
+    return chatQueueAdd.mock.calls
+      .filter(([action]) => action === "sendFlowMessage")
+      .map(
+        ([, job]) =>
+          (
+            job as {
+              data: Record<string, unknown> & { step: { text: string } }
+            }
+          ).data,
+      )
+  }
+
+  test("advances the attempt with a compare-and-set on step, challenge and attempt", async () => {
+    const result = await getUserData(makeRetryProps({}, "challenge-1"))
+
+    expect(result.status).toBe("retry")
+    expect(conversationAdvanceStepChallengeAttempt).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      conversationId: "conv-1",
+      stepId: "step-1",
+      challengeId: "challenge-1",
+      fromAttempts: 1,
+      toAttempts: 2,
+      lastAttemptAt: expect.any(Date),
+    })
+    expect(conversationUpdateChallenge).not.toHaveBeenCalled()
+  })
+
+  test("the loser of two concurrent invalid replies sends nothing", async () => {
+    conversationAdvanceStepChallengeAttempt.mockResolvedValueOnce(false)
+
+    const result = await getUserData(makeRetryProps({}, "challenge-1"))
+
+    expect(result.status).toBe("wait")
+    expect(chatQueueAdd).not.toHaveBeenCalled()
+  })
+
+  test("sends the retry message without a Skip button, then the question with one", async () => {
+    await getUserData(makeRetryProps({}, "challenge-1"))
+
+    const [retry, question] = flowJobs()
+    expect(retry?.step.text).toBe("Not a valid email")
+    expect(retry).not.toHaveProperty("presetQuickReplies")
+    expect(question?.step.text).toBe("Please enter your email")
+    expect(question?.presetQuickReplies).toEqual([
+      expect.objectContaining({
+        label: "Skip",
+        postback: "STEP_INPUT_SKIP|challenge-1",
+      }),
+    ])
+  })
+
+  test("a legacy challenge (no id) is upgraded in place and its Skip button carries the new id", async () => {
+    const result = await getUserData(makeRetryProps())
+
+    expect(result.status).toBe("retry")
+    expect(conversationAdvanceStepChallengeAttempt).not.toHaveBeenCalled()
+    expect(challengeSetCalls()[0]?.[0].challenge?.data).toMatchObject({
+      attempts: 2,
+      challengeId: "test-id",
+    })
+    expect(flowJobs()[1]?.presetQuickReplies).toEqual([
+      expect.objectContaining({ postback: "STEP_INPUT_SKIP|test-id" }),
+    ])
+  })
+
+  test("an invalid reply that lost to a timeout or Skip tap does not bring the challenge back", async () => {
+    const props = makeRetryProps({}, "challenge-1")
+    // The job's snapshot still has the challenge; the fresh conversation does not.
+    props.conversation = { ...props.conversation, additionalAttributes: {} }
+
+    const result = await getUserData(props)
+
+    expect(result.status).toBe("wait")
+    expect(conversationUpdateChallenge).not.toHaveBeenCalled()
+    expect(conversationAdvanceStepChallengeAttempt).not.toHaveBeenCalled()
+    expect(chatQueueAdd).not.toHaveBeenCalled()
+  })
+
+  test("nor does it overwrite another step's challenge that took over", async () => {
+    const props = withStepChallenge(makeRetryProps(), {
+      stepId: "other-step",
+    })
+
+    const result = await getUserData(props)
+
+    expect(result.status).toBe("wait")
+    expect(conversationUpdateChallenge).not.toHaveBeenCalled()
+    expect(chatQueueAdd).not.toHaveBeenCalled()
+  })
+
+  test("a failed send after the attempt advanced fails the step and clears the challenge", async () => {
+    chatQueueAdd.mockRejectedValueOnce(new Error("queue down"))
+
+    const result = await getUserData(makeRetryProps({}, "challenge-1"))
+
+    expect(result.status).toBe("error")
+    expect(challengeClearCalls()).toHaveLength(1)
+  })
+
+  test("a failed question send after the retry message fails the step", async () => {
+    chatQueueAdd
+      .mockResolvedValueOnce({ id: "job-1" })
+      .mockRejectedValueOnce(new Error("queue down"))
+
+    const result = await getUserData(makeRetryProps({}, "challenge-1"))
+
+    expect(result.status).toBe("error")
+    expect(challengeClearCalls()).toHaveLength(1)
+  })
+})
+
+describe("getUserData — Skip button", () => {
+  beforeEach(() => {
+    chatQueueAdd.mockClear()
+  })
+
+  function presetOf() {
+    const call = chatQueueAdd.mock.calls.find(
+      ([action]) => action === "sendFlowMessage",
+    )
+    return (call?.[1] as { data: { presetQuickReplies?: { label: string }[] } })
+      .data.presetQuickReplies
+  }
+
+  test("its postback decodes back to the challenge id", async () => {
+    vi.mocked(createId).mockReturnValueOnce("11612473309626368")
+
+    await getUserData(makeFreshFirstSendProps())
+
+    const postback = (
+      chatQueueAdd.mock.calls[0]?.[1] as {
+        data: { presetQuickReplies: { postback: string }[] }
+      }
+    ).data.presetQuickReplies[0]?.postback
+    expect(decodeStepInputSkipPostback(postback)).toBe("11612473309626368")
+  })
+
+  test("a blank label sends no button", async () => {
+    await getUserData(makeFreshFirstSendProps({ skipButtonLabel: "   " }))
+
+    expect(presetOf()).toBeUndefined()
+  })
+
+  test("the shown label is shortened to 20 characters, the stored one is not", async () => {
+    const label = "Skip this question and continue"
+
+    await getUserData(makeFreshFirstSendProps({ skipButtonLabel: label }))
+
+    const shown = presetOf()?.[0]?.label ?? ""
+    expect(Array.from(shown)).toHaveLength(20)
+    expect(shown.endsWith("…")).toBe(true)
+  })
+
+  test("never splits an emoji when shortening", async () => {
+    await getUserData(
+      makeFreshFirstSendProps({ skipButtonLabel: "👍".repeat(30) }),
+    )
+
+    const shown = presetOf()?.[0]?.label ?? ""
+    expect(Array.from(shown)).toHaveLength(20)
+    expect(
+      Array.from(shown)
+        .slice(0, 19)
+        .every((c) => c === "👍"),
+    ).toBe(true)
+  })
+
+  test("rides with the contact-hint quick reply", async () => {
+    contactFindById.mockResolvedValueOnce({
+      phoneNumber: "0708122593",
+      email: null,
+    })
+    const props = makeFreshFirstSendProps({ showHint: true })
+    props.step = { ...props.step, replyFormat: ReplyFormat.phone }
+
+    await getUserData(props)
+
+    const job = findChatJobCall("sendChatMessage")
+    expect(job.data.quickReplies?.map((reply) => reply.label)).toEqual([
+      "0708122593",
+      "Skip",
+    ])
+  })
+})
+
+describe("getUserData — a run only acts on the challenge cycle it was queued for", () => {
+  function withRunChallengeId(
+    props: ExecuteStepProps<GetUserDataStepSchema>,
+    challengeId: string,
+  ) {
+    props.ctx = {
+      variables: {
+        conversation: {
+          ...props.ctx?.variables.conversation,
+          challengeId: { value: challengeId },
+        },
+      },
+    } as ExecuteStepProps<GetUserDataStepSchema>["ctx"]
+    return props
+  }
+
+  // The job snapshot says "old-cycle"; the fresh conversation already holds a
+  // newer cycle of the SAME step ("new-cycle").
+  function staleRun(overrides: StepOverride = {}) {
+    return withRunChallengeId(
+      withStepChallenge(makeProps(ReplyFormat.email, overrides, 1), {
+        challengeId: "new-cycle",
+      }),
+      "old-cycle",
+    )
+  }
+
+  beforeEach(() => {
+    chatQueueAdd.mockClear()
+  })
+
+  test("an older invalid reply does not advance the newer cycle", async () => {
+    lastMessage.current = makeIncomingMessage({ text: "invalid" })
+
+    const result = await getUserData(staleRun())
+
+    expect(result.status).toBe("wait")
+    expect(conversationAdvanceStepChallengeAttempt).not.toHaveBeenCalled()
+    expect(chatQueueAdd).not.toHaveBeenCalled()
+  })
+
+  test("an older valid reply does not consume the newer cycle or save its answer", async () => {
+    lastMessage.current = makeIncomingMessage({ text: "user@example.com" })
+
+    const result = await getUserData(staleRun())
+
+    expect(result.status).toBe("wait")
+    expect(conversationConsumeChallenge).not.toHaveBeenCalled()
+    expect(contactCustomFieldSetValueByKey).not.toHaveBeenCalled()
+  })
+
+  test("an older auto skip does not consume the newer cycle either", async () => {
+    lastMessage.current = makeIncomingMessage({ text: "invalid" })
+
+    const result = await getUserData(
+      staleRun({ autoSkip: true, autoSkipFailAttempts: 1 }),
+    )
+
+    expect(result.status).toBe("wait")
+    expect(conversationConsumeChallenge).not.toHaveBeenCalled()
+    expect(contactInboxUpdateTracking).not.toHaveBeenCalled()
+  })
+
+  test("a run for the cycle that is pending proceeds normally", async () => {
+    lastMessage.current = makeIncomingMessage({ text: "user@example.com" })
+    const props = withRunChallengeId(
+      withStepChallenge(makeProps(ReplyFormat.email), {
+        challengeId: "same-cycle",
+      }),
+      "same-cycle",
+    )
+
+    const result = await getUserData(props)
+
+    expect(result.status).toBe("success")
+    expect(conversationConsumeChallenge).toHaveBeenCalledWith(
+      expect.objectContaining({ challengeId: "same-cycle" }),
+    )
+  })
+})
+
+describe("getUserData — the reply judged is the message that triggered the run", () => {
+  const triggerProps = () => {
+    const props = makeProps(ReplyFormat.email)
+    props.triggerMessageId = "msg-answer"
+    props.triggerMessageCreatedAt = new Date("2026-11-09T10:00:00.000Z")
+    return props
+  }
+
+  test("an answer queued before a Skip tap is saved, not the Skip label that is now the latest message", async () => {
+    triggerMessage.current = makeIncomingMessage({ text: "user@example.com" })
+    lastMessage.current = makeIncomingMessage({ text: "Skip" })
+
+    const result = await getUserData(triggerProps())
+
+    expect(result).toEqual({ result: "user@example.com", status: "success" })
+    expectCustomFieldWrite("user@example.com")
+    expect(findTriggerMessage).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: "msg-answer",
+        conversationId: "conv-1",
+        workspaceId: "ws-1",
+        requireCompleteResults: true,
+      }),
+    )
+  })
+
+  test("accepts the trigger time as an ISO string (queue payloads are JSON)", async () => {
+    triggerMessage.current = makeIncomingMessage({ text: "user@example.com" })
+    const props = triggerProps()
+    props.triggerMessageCreatedAt =
+      "2026-11-09T10:00:00.000Z" as unknown as Date
+
+    const result = await getUserData(props)
+
+    expect(result.status).toBe("success")
+  })
+
+  test("falls back to the latest incoming message when the trigger cannot be found", async () => {
+    triggerMessage.current = null
+    lastMessage.current = makeIncomingMessage({ text: "user@example.com" })
+
+    const result = await getUserData(triggerProps())
+
+    expect(result.status).toBe("success")
+    expectCustomFieldWrite("user@example.com")
+  })
+
+  test("a run without a trigger keeps judging the latest incoming message", async () => {
+    lastMessage.current = makeIncomingMessage({ text: "user@example.com" })
+
+    await getUserData(makeProps(ReplyFormat.email))
+
+    expect(findTriggerMessage).not.toHaveBeenCalled()
+  })
+
+  test("a storage failure while reading the trigger still retries the job with the challenge intact", async () => {
+    findTriggerMessage.mockImplementationOnce(() => {
+      throw new MessageShardUnavailableError("shard down")
+    })
+
+    await expect(getUserData(triggerProps())).rejects.toBeInstanceOf(
+      MessageShardUnavailableError,
+    )
+    expect(challengeClearCalls()).toHaveLength(0)
+  })
+})
+
+describe("getUserData — failure cleanup only clears the cycle the run owns", () => {
+  beforeEach(() => {
+    chatQueueAdd.mockClear()
+    lastMessage.current = makeIncomingMessage({ text: "invalid" })
+  })
+
+  // A retry whose send fails after the attempt advanced, for a run bound to cycle "c1".
+  function failingRetry() {
+    chatQueueAdd.mockRejectedValueOnce(new Error("queue down"))
+    const props = withStepChallenge(makeProps(ReplyFormat.email, {}, 1), {
+      challengeId: "c1",
+    })
+    props.ctx = {
+      variables: {
+        conversation: {
+          ...props.ctx?.variables.conversation,
+          challengeId: { value: "c1" },
+        },
+      },
+    } as ExecuteStepProps<GetUserDataStepSchema>["ctx"]
+    return props
+  }
+
+  test("clears its own cycle through the atomic claim and reports the error", async () => {
+    const result = await getUserData(failingRetry())
+
+    expect(result.status).toBe("error")
+    expect(conversationConsumeChallenge).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      conversationId: "conv-1",
+      stepId: "step-1",
+      challengeId: "c1",
+    })
+    expect(challengeClearCalls()).toHaveLength(0)
+  })
+
+  test("when a timeout, Skip or reply already settled the cycle, it neither erases a newer challenge nor continues the flow again", async () => {
+    conversationConsumeChallenge.mockResolvedValueOnce(false)
+
+    const result = await getUserData(failingRetry())
+
+    expect(result.status).toBe("wait")
+    expect(challengeClearCalls()).toHaveLength(0)
+  })
+
+  test("when the cleanup itself fails the job is retried instead of reporting an error the flow would continue past", async () => {
+    conversationConsumeChallenge.mockRejectedValueOnce(new Error("db down"))
+
+    await expect(getUserData(failingRetry())).rejects.toThrow("db down")
+
+    expect(challengeClearCalls()).toHaveLength(0)
+  })
+
+  test("a run that failed before writing its challenge keeps the unconditional clear", async () => {
+    conversationUpdateChallenge.mockRejectedValueOnce(new Error("db down"))
+
+    const result = await getUserData(makeFreshFirstSendProps())
+
+    expect(result.status).toBe("error")
+    expect(challengeClearCalls()).toHaveLength(1)
+    expect(conversationConsumeChallenge).not.toHaveBeenCalled()
+  })
+
+  test("a first prompt whose cleanup fails retries the job instead of clearing unconditionally", async () => {
+    chatQueueAdd.mockRejectedValueOnce(new Error("queue down"))
+    conversationConsumeChallenge.mockRejectedValueOnce(new Error("db down"))
+
+    await expect(getUserData(makeFreshFirstSendProps())).rejects.toThrow(
+      "db down",
+    )
+    expect(challengeClearCalls()).toHaveLength(0)
+  })
+
+  test("a first prompt that fails after its timer already settled the cycle does not erase the newer challenge", async () => {
+    // The timer fired while the prompt was sending: the flow moved on and the
+    // conversation now holds another challenge, so this cycle is no longer pending.
+    chatQueueAdd.mockRejectedValueOnce(new Error("queue down"))
+    conversationConsumeChallenge.mockResolvedValueOnce(false)
+
+    const result = await getUserData(makeFreshFirstSendProps())
+
+    expect(result.status).toBe("wait")
+    expect(challengeClearCalls()).toHaveLength(0)
   })
 })

@@ -304,11 +304,16 @@ vi.mock("@chatbotx.io/utils", async (importOriginal) => {
   return { ...actual, createId: vi.fn(() => "generated-id") }
 })
 
-vi.mock("@chatbotx.io/worker-config", () => ({
+vi.mock("@chatbotx.io/worker-config", async (importOriginal) => ({
+  // The real job builder: the tests assert what producers actually enqueue.
+  buildResolveStepInputJob: (
+    await importOriginal<typeof import("@chatbotx.io/worker-config")>()
+  ).buildResolveStepInputJob,
   chatQueue: { add: mockChatQueueAdd },
   IntegrationJobAction: {
     runChallenge: "runChallenge",
     runFlowPostback: "runFlowPostback",
+    resolveStepInput: "resolveStepInput",
     runRef: "runRef",
     sendFlow: "sendFlow",
   },
@@ -577,6 +582,161 @@ describe("handleCreateWebchatMessage", () => {
       },
     })
     expect(mockAutomatedResponseEnqueue).not.toHaveBeenCalled()
+  })
+
+  describe("step input Skip tap", () => {
+    const CHALLENGE_ID = "11612473309626368"
+    const skipPostback = `STEP_INPUT_SKIP|${CHALLENGE_ID}`
+    const pendingStepChallenge = {
+      type: "step",
+      data: {
+        flowId: "flow-1",
+        nodeId: "node-1",
+        stepId: "step-1",
+        attempts: 1,
+        lastAttemptAt: new Date(),
+        challengeId: CHALLENGE_ID,
+      },
+    }
+
+    function tap(overrides: Record<string, unknown> = {}) {
+      return handleCreateWebchatMessage({
+        parsedInput: {
+          text: "Skip",
+          postback: skipPostback,
+          workspaceId: "ws-1",
+          webchatId: "webchat-1",
+          guestConversationId: "guest-1",
+          ...overrides,
+        },
+      })
+    }
+
+    beforeEach(() => {
+      mockConversationFindBy.mockResolvedValue({
+        ...conversation,
+        additionalAttributes: { challenge: pendingStepChallenge },
+      })
+    })
+
+    test("is resolved by its own job after the tap's message is saved, never as a flow action", async () => {
+      await tap()
+
+      expect(mockAutomatedResponseEnqueueFlowAction).not.toHaveBeenCalled()
+      expect(mockIntegrationQueueAdd).toHaveBeenCalledWith(
+        "resolveStepInput",
+        {
+          type: "resolveStepInput",
+          data: {
+            conversationId: "conv-1",
+            contactInboxId: "ci-1",
+            challengeId: CHALLENGE_ID,
+            reason: "user_skipped",
+            messageId: "msg-1",
+            messageCreatedAt: expect.any(Date),
+          },
+        },
+        // Active-only dedup, never a fixed jobId: a retained completed job
+        // would silently drop a later tap.
+        { deduplication: { id: `step-input-conv-1-${CHALLENGE_ID}` } },
+      )
+      expect(mockRepositoryCreate.mock.invocationCallOrder[0]).toBeLessThan(
+        mockIntegrationQueueAdd.mock.invocationCallOrder[0] ?? 0,
+      )
+    })
+
+    test("a failed enqueue surfaces instead of being swallowed with the best-effort jobs", async () => {
+      mockIntegrationQueueAdd.mockImplementation((action: string) =>
+        action === "resolveStepInput"
+          ? Promise.reject(new Error("redis down"))
+          : Promise.resolve(undefined),
+      )
+
+      await expect(tap()).rejects.toThrow("redis down")
+
+      mockIntegrationQueueAdd.mockReset()
+      mockIntegrationQueueAdd.mockResolvedValue(undefined)
+    })
+
+    test("is never also run as a typed reply to the pending challenge", async () => {
+      await tap()
+
+      expect(mockIntegrationQueueAdd).not.toHaveBeenCalledWith(
+        "runChallenge",
+        expect.anything(),
+        expect.anything(),
+      )
+      expect(mockAutomatedResponseEnqueue).not.toHaveBeenCalled()
+    })
+
+    test.each([
+      ["a non-numeric id", "STEP_INPUT_SKIP|abc"],
+      ["an oversized id", "STEP_INPUT_SKIP|99999999999999999999"],
+    ])("treats %s as an ordinary postback", async (_label, postback) => {
+      await tap({ postback })
+
+      expect(mockAutomatedResponseEnqueueFlowAction).toHaveBeenCalledWith(
+        expect.objectContaining({ kind: "postback" }),
+      )
+      expect(mockIntegrationQueueAdd).not.toHaveBeenCalledWith(
+        "resolveStepInput",
+        expect.anything(),
+        expect.anything(),
+      )
+    })
+
+    test("an ordinary button tap on a pending step challenge keeps its existing behavior", async () => {
+      await tap({ postback: "button-a", text: "clicked" })
+
+      expect(mockAutomatedResponseEnqueueFlowAction).toHaveBeenCalled()
+      expect(mockIntegrationQueueAdd).toHaveBeenCalledWith(
+        "runChallenge",
+        expect.anything(),
+        expect.anything(),
+      )
+    })
+
+    test("each typed reply gets its own run, so a quick second answer is never dropped", async () => {
+      let created = 0
+      mockRepositoryCreate.mockImplementation((input) => {
+        created += 1
+        return Promise.resolve({
+          id: `msg-${created}`,
+          ...input,
+          sourceId: null,
+          updatedAt: input.createdAt,
+        })
+      })
+
+      await tap({ postback: undefined, text: "abc" })
+      await tap({ postback: undefined, text: "me@x.com" })
+
+      const runs = mockIntegrationQueueAdd.mock.calls.filter(
+        ([action]) => action === "runChallenge",
+      ) as [string, { data: { messageId: string } }, { jobId?: string }][]
+      expect(runs.map(([, job]) => job.data.messageId)).toEqual([
+        "msg-1",
+        "msg-2",
+      ])
+      expect(runs.map(([, , options]) => options.jobId)).toEqual([
+        "webchat-challenge-conv-1-msg-1",
+        "webchat-challenge-conv-1-msg-2",
+      ])
+      // A deduplicated (dropped) run would never process its message.
+      expect(runs[0]?.[2]).not.toHaveProperty("deduplication")
+    })
+
+    test("a typed reply names the message it answers, so it is judged on its own text", async () => {
+      await tap({ postback: undefined, text: "user@example.com" })
+
+      const [, job] = mockIntegrationQueueAdd.mock.calls.find(
+        ([action]) => action === "runChallenge",
+      ) as [string, { data: Record<string, unknown> }]
+      expect(job.data).toMatchObject({
+        messageId: "msg-1",
+        messageCreatedAt: expect.any(Date),
+      })
+    })
   })
 
   test("rejects unauthorized webchat origins before resolving conversations", async () => {

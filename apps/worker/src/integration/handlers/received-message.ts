@@ -71,7 +71,9 @@ import {
 import { uploader } from "@chatbotx.io/filesystem"
 import {
   decodeContactHintQuickReplyPayload,
+  decodeStepInputSkipPostback,
   messageEventTypeSchema,
+  stepInputResolutionReasons,
 } from "@chatbotx.io/flow-config"
 import type { MessengerAuthValue } from "@chatbotx.io/integration-messenger"
 import type { ThreadsAuthValue } from "@chatbotx.io/integration-threads"
@@ -113,6 +115,7 @@ import { hasGoogleClick } from "@chatbotx.io/utils/google-click"
 import { isLazyAvatarChannel } from "@chatbotx.io/utils/live-media"
 import { storeIncomingImage } from "@chatbotx.io/utils/store-incoming-image"
 import {
+  buildResolveStepInputJob,
   ChatJobAction,
   chatQueue,
   enqueueStoredImageOptimizations,
@@ -150,7 +153,11 @@ import {
   getProfileRefreshSource,
   refreshExistingContactProfile,
 } from "./contact-profile-refresh"
-import { resolvePostbackButtonLabel, sanitizeFlowAction } from "./flow-action"
+import {
+  resolvePostbackButtonLabel,
+  resolveStepInputSkipLabel,
+  sanitizeFlowAction,
+} from "./flow-action"
 import { resolveMessageFlowFiles } from "./flow-response-files"
 import {
   lookupAndPersistGoogleClick,
@@ -306,6 +313,12 @@ export const receiveMessage = async (
   /** True for a standby (listen-only) delivery: the caller must run no automation. */
   suppressAutomation: boolean
   /**
+   * True when the message is a tap on a step's Skip button. It is resolved on
+   * its own (a `resolveStepInput` job), so the caller must not also route its
+   * text to the pending challenge as a typed reply.
+   */
+  stepInputSkipHandled: boolean
+  /**
    * The stored copy of a standby delivery, also on a retry (the copy is no
    * longer new but still standby and unpromoted), so account-state work that
    * is not automation (a call-permission answer, an idempotent upsert) is not
@@ -381,11 +394,20 @@ export const receiveMessage = async (
   const appointmentCancelToken = suppressAutomation
     ? null
     : parseAppointmentCancelPostback(rawPostbackAction)
-  let postbackAction = sanitizeFlowAction(rawPostbackAction, {
-    kind: "postback",
-    integrationType,
-    integrationIdentifier,
-  })
+  // A Skip tap is resolved by its own job, not as a flow action. Read before
+  // `sanitizeFlowAction`, which would drop (and warn about) the payload.
+  const stepInputSkipChallengeId =
+    decodeStepInputSkipPostback(rawPostbackAction) ??
+    decodeStepInputSkipPostback(rawQuickReplyAction)
+  const isStepInputSkipTap = stepInputSkipChallengeId !== null
+  let postbackAction = sanitizeFlowAction(
+    isStepInputSkipTap ? null : rawPostbackAction,
+    {
+      kind: "postback",
+      integrationType,
+      integrationIdentifier,
+    },
+  )
   // A getUserData "Show Hint" tap: the title may be shortened to Meta's
   // 20-character limit, so the full phone/email from the payload becomes the
   // reply text the pending challenge validates and stores.
@@ -404,7 +426,7 @@ export const receiveMessage = async (
     (rawQuickReplyAction !== null &&
       rawQuickReplyAction === parsedIncomingMessage?.text)
   const quickReplyAction = sanitizeFlowAction(
-    isValueQuickReply ? null : rawQuickReplyAction,
+    isValueQuickReply || isStepInputSkipTap ? null : rawQuickReplyAction,
     {
       kind: "quickReply",
       integrationType,
@@ -461,6 +483,17 @@ export const receiveMessage = async (
     throw new SdkException("Unable to resolve contact and conversation")
   }
   const { contactInbox, conversation, contact, isNewContact } = detected
+  // Zalo and Telegram echo the raw Skip payload as the message text; show the
+  // label the contact pressed instead. A no-op for every other tap.
+  const stepInputSkipLabel = stepInputSkipChallengeId
+    ? await resolveStepInputSkipLabel({
+        challengeId: stepInputSkipChallengeId,
+        conversation,
+        message: rawIncomingMessage,
+        buttonTitle: parsedMessage.buttonTitle,
+      })
+    : null
+  const tapButtonLabel = postbackButtonLabel ?? stepInputSkipLabel
   // A new contact's click was already read and saved while creating it; an
   // existing contact's is looked up here (gated, best effort, saved by itself).
   if (!isNewContact && rawIncomingMessage) {
@@ -480,8 +513,8 @@ export const receiveMessage = async (
   const incomingMessage = await enrichInboundCommerce({
     commerce: parsedMessage.commerce,
     message: markStandbyDelivery(
-      postbackButtonLabel && directedIncomingMessage
-        ? { ...directedIncomingMessage, text: postbackButtonLabel }
+      tapButtonLabel && directedIncomingMessage
+        ? { ...directedIncomingMessage, text: tapButtonLabel }
         : directedIncomingMessage,
       suppressAutomation,
     ),
@@ -489,7 +522,7 @@ export const receiveMessage = async (
     channel: inbox.channel,
   })
   const systemFieldUpdates = getReceivedMessageSystemFieldUpdates({
-    buttonTitle: parsedMessage.buttonTitle || postbackButtonLabel,
+    buttonTitle: parsedMessage.buttonTitle || tapButtonLabel,
     message: incomingMessage,
     referral: parsedMessage.referral,
   })
@@ -575,6 +608,22 @@ export const receiveMessage = async (
         echoOrigin: parsedMessage.echoOrigin,
         ...systemFieldUpdates,
       })
+
+    // Unlike the flow actions below, this also runs on a redelivery: resolving
+    // is idempotent (deduplicated while a job is active, and the challenge
+    // claim settles it once), and a Redis failure here fails the job, so the
+    // retry sees the stored message and MUST still be able to enqueue it.
+    if (stepInputSkipChallengeId && canAutomate) {
+      const job = buildResolveStepInputJob({
+        conversationId: conversation.id,
+        contactInboxId: contactInbox.id,
+        challengeId: stepInputSkipChallengeId,
+        reason: stepInputResolutionReasons.enum.user_skipped,
+        messageId: newMessage.id,
+        messageCreatedAt: newMessage.createdAt,
+      })
+      await integrationQueue.add(job.name, job.data, job.opts)
+    }
 
     if (isNewMessage) {
       await awardInboundMessageLeaderboard({
@@ -944,6 +993,7 @@ export const receiveMessage = async (
     inboxId: inbox.id,
     inboxChannel: inbox.channel,
     suppressAutomation,
+    stepInputSkipHandled: isStepInputSkipTap,
     standbyCopy,
   }
 }

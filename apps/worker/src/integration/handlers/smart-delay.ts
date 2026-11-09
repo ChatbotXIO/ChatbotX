@@ -87,6 +87,16 @@ const buildResumeQuickReplyFollowUpJob = (
   },
 })
 
+const buildResumeStepInputTimeoutJob = (
+  row: SmartDelayRow,
+): SmartDelayJobSpec => ({
+  name: IntegrationJobAction.resumeStepInputTimeout,
+  data: {
+    type: IntegrationJobAction.resumeStepInputTimeout,
+    data: { smartDelayId: row.id },
+  },
+})
+
 const buildResumeWaitJob = (row: SmartDelayRow): SmartDelayJobSpec => ({
   name: IntegrationJobAction.resumeWait,
   data: {
@@ -102,11 +112,13 @@ export const smartDelayResumeJobFactories: Record<
   [smartDelayTypes.enum.waitNode]: buildResumeWaitJob,
   [smartDelayTypes.enum.followUp]: buildResumeFollowUpJob,
   [smartDelayTypes.enum.quickReplyFollowUp]: buildResumeQuickReplyFollowUpJob,
+  [smartDelayTypes.enum.stepInputTimeout]: buildResumeStepInputTimeoutJob,
 }
 
+/** Persists a delay; null when it must not be armed (see the handler). */
 const smartDelayPersistenceHandlers: Record<
   SmartDelayType,
-  (row: SmartDelayRow) => Promise<SmartDelayRow>
+  (row: SmartDelayRow) => Promise<SmartDelayRow | null>
 > = {
   [smartDelayTypes.enum.waitNode]: async (data) => {
     await smartDelayService.create({ data })
@@ -116,6 +128,8 @@ const smartDelayPersistenceHandlers: Record<
     await smartDelayService.upsertFollowUp({ data }),
   [smartDelayTypes.enum.quickReplyFollowUp]: async (data) =>
     await smartDelayService.upsertQuickReplyFollowUp({ data }),
+  [smartDelayTypes.enum.stepInputTimeout]: async (data) =>
+    await smartDelayService.upsertStepInputTimeout({ data }),
 }
 
 export async function scheduleSmartDelayResume(props: {
@@ -126,7 +140,8 @@ export async function scheduleSmartDelayResume(props: {
   flowVersionId: string | null
   conversationId: string
   contactInboxId: string
-  connectedNodeId: string
+  /** The node resumed when the delay fires. */
+  nodeId: string
   stepId: string
   metadata?: MetadataPayload
   sendFrom?: "inbox"
@@ -141,7 +156,7 @@ export async function scheduleSmartDelayResume(props: {
     contactInboxId: props.contactInboxId,
     appointmentId: props.appointmentId ?? null,
     conversationId: props.conversationId,
-    nodeId: props.connectedNodeId,
+    nodeId: props.nodeId,
     stepId: props.stepId,
     metadata: props.metadata ?? null,
     type: props.type,
@@ -152,6 +167,13 @@ export async function scheduleSmartDelayResume(props: {
 
   // Insert tracking record first so a crash during enqueue still has a recovery path via scanner.
   const persistedRow = await smartDelayPersistenceHandlers[props.type](row)
+  if (!persistedRow) {
+    logger.info(
+      { conversationId: props.conversationId, type: props.type },
+      "Smart delay not armed: superseded before it was persisted",
+    )
+    return
+  }
 
   const diffMs = persistedRow.triggerAt.getTime() - Date.now()
   if (diffMs > ENQUEUE_DELAY_MS) {

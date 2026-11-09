@@ -35,4 +35,11 @@ describe("shouldRunWebchatChallenge", () => {
   test("Get User Data keeps its existing behaviour for postbacks", () => {
     expect(shouldRunWebchatChallenge(stepChallenge, true)).toBe(true)
   })
+  test("a Skip tap is resolved by its own job, never run as a typed reply", () => {
+    expect(shouldRunWebchatChallenge(stepChallenge, true, true)).toBe(false)
+  })
+  test("without the Skip flag the third argument changes nothing", () => {
+    expect(shouldRunWebchatChallenge(stepChallenge, true, false)).toBe(true)
+    expect(shouldRunWebchatChallenge(stepChallenge, false)).toBe(true)
+  })
 })

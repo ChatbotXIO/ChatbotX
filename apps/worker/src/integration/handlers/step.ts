@@ -312,7 +312,7 @@ async function handleWait({
     flowVersionId: useLatestFlowVersion ? null : flowVersion.id,
     conversationId: conversation.id,
     contactInboxId,
-    connectedNodeId,
+    nodeId: connectedNodeId,
     stepId: step.id,
     metadata,
     sendFrom,

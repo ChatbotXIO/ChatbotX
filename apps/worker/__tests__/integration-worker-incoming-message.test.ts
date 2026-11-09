@@ -554,7 +554,11 @@ vi.mock("@chatbotx.io/encryption", () => ({
   verifyAppointmentCancelPostback: vi.fn(),
 }))
 
-vi.mock("@chatbotx.io/worker-config", async () => ({
+vi.mock("@chatbotx.io/worker-config", async (importOriginal) => ({
+  // The real job builder: the tests assert what producers actually enqueue.
+  buildResolveStepInputJob: (
+    await importOriginal<typeof import("@chatbotx.io/worker-config")>()
+  ).buildResolveStepInputJob,
   // heavy-step-runner builds its outcome schema from this at import time.
   heavyStepOutputValueSchema: await import("zod").then(({ z }) =>
     z.object({ customFieldId: z.string(), value: z.string() }),
@@ -577,6 +581,7 @@ vi.mock("@chatbotx.io/worker-config", async () => ({
     incomingMessage: "incomingMessage",
     runFlowPostback: "runFlowPostback",
     runFlowQuickReply: "runFlowQuickReply",
+    resolveStepInput: "resolveStepInput",
     runRef: "runRef",
     threadControlEvent: "threadControlEvent",
     threadControlAction: "threadControlAction",
@@ -1128,6 +1133,44 @@ describe("integration worker — conversation routing (thread control)", () => {
     )
     expect(mockResolveIncomingTextRouting).not.toHaveBeenCalled()
     expect(mockAutomatedResponseEnqueue).not.toHaveBeenCalled()
+  })
+
+  describe("a step's Skip button tap", () => {
+    const skipTap = () => ({
+      ...parsedMessage(),
+      message: { ...parsedMessage().message, text: "Skip" },
+      postbackAction: "STEP_INPUT_SKIP|11612473309626368",
+    })
+
+    test("is resolved by its own job and never routed to the pending challenge as a typed reply", async () => {
+      mockRunChannelHandler.mockResolvedValue(skipTap())
+
+      await runJob(incomingJob)
+
+      expect(mockCreateOrUpdate).toHaveBeenCalled()
+      expect(mockResolveIncomingTextRouting).not.toHaveBeenCalled()
+      expect(mockAutomatedResponseEnqueue).not.toHaveBeenCalled()
+    })
+
+    test("a standby delivery of the tap is stored but resolves nothing", async () => {
+      mockRunChannelHandler.mockResolvedValue({
+        ...skipTap(),
+        threadControl: { delivery: "standby" },
+      })
+
+      await runJob(incomingJob)
+
+      expect(mockResolveIncomingTextRouting).not.toHaveBeenCalled()
+      expect(mockAutomatedResponseEnqueue).not.toHaveBeenCalled()
+    })
+
+    test("an ordinary typed message still routes as before (regression)", async () => {
+      mockRunChannelHandler.mockResolvedValue(parsedMessage())
+
+      await runJob(incomingJob)
+
+      expect(mockResolveIncomingTextRouting).toHaveBeenCalled()
+    })
   })
 
   test("a standby delivery with no persistable message still records ownership", async () => {

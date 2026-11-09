@@ -287,3 +287,73 @@ describe("conversationService.restoreChallengeIfAbsent", () => {
     expect(text).toContain("IS NULL")
   })
 })
+
+describe("conversationService.advanceStepChallengeAttempt", () => {
+  const lastAttemptAt = new Date("2026-11-09T10:00:00.000Z")
+  const props = {
+    workspaceId: "ws-1",
+    conversationId: "conv-1",
+    stepId: "step-1",
+    challengeId: "challenge-1",
+    fromAttempts: 1,
+    toAttempts: 2,
+    lastAttemptAt,
+  }
+
+  test("returns true for the one caller whose compare-and-set claims the row", async () => {
+    returningMock.mockResolvedValueOnce([{ id: "conv-1" }])
+
+    await expect(
+      conversationService.advanceStepChallengeAttempt(props),
+    ).resolves.toBe(true)
+  })
+
+  test("returns false, never throws, when a concurrent reply already advanced the attempt", async () => {
+    returningMock.mockResolvedValueOnce([])
+
+    await expect(
+      conversationService.advanceStepChallengeAttempt(props),
+    ).resolves.toBe(false)
+  })
+
+  test("only matches a step challenge of this step and challenge cycle at the expected attempt, all bound as parameters", async () => {
+    returningMock.mockResolvedValueOnce([{ id: "conv-1" }])
+
+    await conversationService.advanceStepChallengeAttempt(props)
+
+    const whereArg = whereMock.mock.calls[0]?.[0]
+    const eqValues = collectSqlValues(whereArg)
+    expect(eqValues).toContain("conv-1")
+    expect(eqValues).toContain("ws-1")
+
+    const rawParams = collectSqlParams(whereArg)
+    expect(rawParams).toContain("step-1")
+    expect(rawParams).toContain("challenge-1")
+    expect(rawParams).toContain(1)
+
+    const text = collectSqlText(whereArg)
+    expect(text).toContain("'step'")
+    expect(text).toContain("stepId")
+    expect(text).toContain("challengeId")
+    expect(text).toContain("attempts")
+  })
+
+  test("moves attempts and lastAttemptAt but leaves startedAt (the deadline origin) untouched", async () => {
+    returningMock.mockResolvedValueOnce([{ id: "conv-1" }])
+
+    await conversationService.advanceStepChallengeAttempt(props)
+
+    const setArg = (
+      setMock.mock.calls as unknown as [{ additionalAttributes: unknown }][]
+    )[0]?.[0].additionalAttributes
+
+    const rawParams = collectSqlParams(setArg)
+    expect(rawParams).toContain(2)
+    expect(rawParams).toContain(lastAttemptAt.toISOString())
+
+    const text = collectSqlText(setArg)
+    expect(text).toContain("{challenge,data,attempts}")
+    expect(text).toContain("{challenge,data,lastAttemptAt}")
+    expect(text).not.toContain("startedAt")
+  })
+})

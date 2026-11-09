@@ -96,7 +96,7 @@ export async function armQuickReplySettings(props: {
         flowVersionId: props.flowVersionId,
         conversationId,
         contactInboxId: props.contactInboxId,
-        connectedNodeId: props.nodeId,
+        nodeId: props.nodeId,
         stepId: followUp.id,
         metadata: props.metadata,
         sendFrom: props.sendFrom,

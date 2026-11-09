@@ -18,8 +18,19 @@ import {
   smartDelayStatuses,
   smartDelayTypes,
 } from "@chatbotx.io/database/partials"
-import { contactOnSmartDelayModel } from "@chatbotx.io/database/schema"
+import {
+  contactOnSmartDelayModel,
+  conversationModel,
+} from "@chatbotx.io/database/schema"
 import { BaseService } from "../base.service"
+
+/** The challenge a step-input timeout belongs to (its metadata names it). */
+const readTimeoutChallengeId = (
+  metadata: SmartDelayInsert["metadata"],
+): string | undefined => {
+  const challengeId = metadata?.challengeId
+  return typeof challengeId === "string" ? challengeId : undefined
+}
 
 /**
  * Active quick-reply follow-ups of a workspace. Mirrors the partial unique
@@ -213,6 +224,74 @@ class SmartDelayService extends BaseService {
     return toSmartDelayRow(row)
   }
 
+  /**
+   * Arms the single pending step-input timeout of a conversation, restarting
+   * it when one is already active. Mirrors the partial unique index
+   * `ContactOnSmartDelay_stepInputTimeout_active_key`. A superseded row's
+   * delayed job fires early and sees a later `triggerAt`, so it stands down.
+   *
+   * Two questions asked at once may arm out of order: the conversation row is
+   * locked and its pending challenge checked first, so the late arm of a
+   * replaced question never takes over the current question's timer. Writing a
+   * new challenge updates the same row, so it waits for this arm to commit.
+   * Returns null when the timer's challenge is no longer the pending one.
+   */
+  async upsertStepInputTimeout(props: {
+    data: SmartDelayInsert
+  }): Promise<SmartDelayRow | null> {
+    const { data } = props
+    const challengeId = readTimeoutChallengeId(data.metadata)
+
+    return await db.transaction(async (tx) => {
+      const [conversation] = await tx
+        .select({
+          challengeId: sql<
+            string | null
+          >`${conversationModel.additionalAttributes}->'challenge'->'data'->>'challengeId'`,
+        })
+        .from(conversationModel)
+        .where(
+          and(
+            eq(conversationModel.id, data.conversationId),
+            eq(conversationModel.workspaceId, data.workspaceId),
+          ),
+        )
+        .for("update")
+      if (!challengeId || conversation?.challengeId !== challengeId) {
+        return null
+      }
+
+      const [row] = await tx
+        .insert(contactOnSmartDelayModel)
+        .values(data)
+        .onConflictDoUpdate({
+          target: [
+            contactOnSmartDelayModel.workspaceId,
+            contactOnSmartDelayModel.conversationId,
+          ],
+          targetWhere: sql`${contactOnSmartDelayModel.status} NOT IN ('completed', 'failed', 'canceled') AND ${contactOnSmartDelayModel.type} = 'stepInputTimeout'`,
+          set: {
+            contactInboxId: data.contactInboxId,
+            flowId: data.flowId,
+            flowVersionId: data.flowVersionId,
+            appointmentId: data.appointmentId,
+            createdAt: new Date(),
+            metadata: data.metadata,
+            nodeId: data.nodeId,
+            stepId: data.stepId,
+            status: smartDelayStatuses.enum.pending,
+            triggerAt: data.triggerAt,
+          },
+        })
+        .returning()
+
+      if (!row) {
+        throw new Error("Failed to upsert step input timeout smart delay")
+      }
+      return toSmartDelayRow(row)
+    })
+  }
+
   async markScheduled(props: {
     tx?: DatabaseClient
     id: string
@@ -329,12 +408,19 @@ class SmartDelayService extends BaseService {
     return rows.map(toSmartDelayRow)
   }
 
+  /**
+   * Claims a scheduled row for one run. `observedTriggerAt` ties the claim to
+   * the deadline the caller read: a row that was re-armed since (a restarted
+   * timer keeps its id but moves its `triggerAt`) is a different timer and must
+   * not be consumed by a stale job.
+   */
   async claimForRun(props: {
     tx?: DatabaseClient
     id: string
     to: "completed" | "canceled"
+    observedTriggerAt?: Date
   }): Promise<boolean> {
-    const { tx = db, id, to } = props
+    const { tx = db, id, to, observedTriggerAt } = props
     const rows = await tx
       .update(contactOnSmartDelayModel)
       .set({ status: smartDelayStatuses.enum[to] })
@@ -345,6 +431,9 @@ class SmartDelayService extends BaseService {
             contactOnSmartDelayModel.status,
             smartDelayStatuses.enum.scheduled,
           ),
+          observedTriggerAt
+            ? eq(contactOnSmartDelayModel.triggerAt, observedTriggerAt)
+            : undefined,
         ),
       )
       .returning({ id: contactOnSmartDelayModel.id })

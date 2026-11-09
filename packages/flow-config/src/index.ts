@@ -74,6 +74,7 @@ export {
 // Export all shared
 export * from "./shared"
 export * from "./states"
+export * from "./step-input-resolution"
 export * from "./steps/active-campaign-sync-contact"
 export * from "./steps/add-contact-notes"
 export * from "./steps/add-contact-tag"

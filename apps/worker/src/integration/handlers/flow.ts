@@ -54,6 +54,12 @@ import {
   mintRandomFlowExecutionKey,
 } from "../flow-execution-key"
 import {
+  type ContinuationChain,
+  createContinuationChain,
+  type DeferredBranchJob,
+  type SendFlowJobData,
+} from "./flow-continuation"
+import {
   type ExecuteMultipleStepsProps,
   MESSAGE_PRODUCING_STEP_TYPES,
   seekConnectedNode,
@@ -135,6 +141,14 @@ export type {
 } from "./flow-utils"
 export { seekConnectedNode, sendFlow } from "./flow-utils"
 
+/**
+ * Steps whose Success/Skip branch runs and then the flow also continues past
+ * the step. Get User Data works this way so a flow can react to the answer
+ * (or the skip) and still carry on, like the Continue output after it.
+ */
+const CONTINUES_AFTER_BRANCH_STEP_TYPES: ReadonlySet<StepType> =
+  new Set<StepType>([stepTypes.enum.getUserData])
+
 type ExecuteStepsAndQuickRepliesProps = {
   conversation: ConversationModel
   contactInbox: ContactInboxModel
@@ -165,6 +179,39 @@ type ExecuteStepsAndQuickRepliesProps = {
   commentAnchor?: CommentAnchor
   appointmentId?: string
   flowExecutionKey?: string
+  /** See `IntegrationJobRunFlowNode["data"]["thenSendFlow"]`. */
+  thenSendFlow?: SendFlowJobData
+  /** See `IntegrationJobRunFlowNode["data"]["branchedNodeId"]`. */
+  branchedNodeId?: string
+}
+
+type ExecuteMultipleStepsOptions = {
+  /** Return the branch of a CONTINUES_AFTER_BRANCH step instead of enqueuing it. */
+  shouldDeferContinuingBranch?: boolean
+  /** Rides on a branch that ends the node's run (see `thenSendFlow`). */
+  thenSendFlow?: SendFlowJobData
+}
+
+/**
+ * A run whose target was removed from the flow (edited since the job was
+ * queued) can never succeed, but the continuation it carries still can: run it
+ * instead of failing, so the flow past the branch is not lost with it.
+ */
+async function releaseContinuationOfMissingTarget(
+  props: SendFlowJobData,
+): Promise<boolean> {
+  if (!props.thenSendFlow) {
+    return false
+  }
+  logger.warn(
+    { flowId: props.flowId, nodeId: props.nodeId, targetId: props.targetId },
+    "sendFlow target no longer exists in the flow; running its pending continuation",
+  )
+  await integrationQueue.add(IntegrationJobAction.sendFlow, {
+    type: IntegrationJobAction.sendFlow,
+    data: props.thenSendFlow,
+  })
+  return true
 }
 
 /** A job carries either an entity ID or the already-loaded entity. */
@@ -300,6 +347,9 @@ export const runFlowNode = async (
       ? resolveFlowActionTarget(nodes, props.targetId)
       : null
     if (!resolved) {
+      if (await releaseContinuationOfMissingTarget(props)) {
+        return
+      }
       throw new SdkException(
         "FlowVersion does not contain the button/quickReply target",
       )
@@ -314,6 +364,9 @@ export const runFlowNode = async (
       ? nodes.find((n) => n.id === props.nodeId)
       : nodes.find((n) => n.data.isStartNode)
     if (!targetNode) {
+      if (await releaseContinuationOfMissingTarget(props)) {
+        return
+      }
       throw new SdkException("FlowVersion does not contain start node")
     }
     details = targetNode.data.details
@@ -347,6 +400,8 @@ export const runFlowNode = async (
       appointmentId: props.appointmentId,
       sentByUserId: props.sentByUserId,
       flowExecutionKey,
+      thenSendFlow: props.thenSendFlow,
+      branchedNodeId: props.branchedNodeId,
     })
   } catch (error) {
     if (props.metadata?.type === BROADCAST_PAYLOAD_TYPE) {
@@ -376,6 +431,16 @@ export const runFlowNode = async (
 
 export async function runStepsAndQuickReplies(
   props: ExecuteStepsAndQuickRepliesProps,
+) {
+  const chain = createContinuationChain(props.thenSendFlow)
+  const result = await runNodeSteps(props, chain)
+  await chain.finish()
+  return result
+}
+
+async function runNodeSteps(
+  props: ExecuteStepsAndQuickRepliesProps,
+  chain: ContinuationChain,
 ) {
   const {
     details,
@@ -492,6 +557,9 @@ export async function runStepsAndQuickReplies(
   // Forwarded across every re-enqueued sendFlow job below (see
   // `executeMultipleStepsGenerator`'s `MESSAGE_PRODUCING_STEP_TYPES` check).
   let remainingAnchor = props.commentAnchor
+  // Node an earlier step of this node already branched to (carried across this
+  // node's step jobs); the Continue edge must not send it again.
+  let branchTargetNodeId = props.branchedNodeId
 
   if (details.beforeStep && !props.startFromStepId && !skipBeforeStep) {
     const beforeResult = await executeMultipleSteps({
@@ -521,15 +589,28 @@ export async function runStepsAndQuickReplies(
     }
 
     const currentStep = details.steps[startIdx]
-    const result = await executeMultipleSteps({
-      ...props,
-      nodeVisits,
-      commentAnchor: remainingAnchor,
-      quickReplies:
-        quickReplyCarrier?.id === currentStep.id ? quickReplies : undefined,
-      steps: [currentStep],
-    })
+    const isContinuingBranchStep = CONTINUES_AFTER_BRANCH_STEP_TYPES.has(
+      currentStep.stepType,
+    )
+    const result = await executeMultipleSteps(
+      {
+        ...props,
+        nodeVisits,
+        commentAnchor: remainingAnchor,
+        quickReplies:
+          quickReplyCarrier?.id === currentStep.id ? quickReplies : undefined,
+        steps: [currentStep],
+      },
+      isContinuingBranchStep
+        ? { shouldDeferContinuingBranch: true }
+        : // A branch that ends this node's run carries the pending continuation.
+          { thenSendFlow: props.thenSendFlow },
+    )
     remainingAnchor = result?.commentAnchor
+    branchTargetNodeId = result?.branchTargetNodeId ?? branchTargetNodeId
+    if (result?.deferredBranch) {
+      chain.deferBranch(result.deferredBranch)
+    }
 
     if (
       targetType === "node" &&
@@ -555,51 +636,53 @@ export async function runStepsAndQuickReplies(
       return result
     }
 
-    if (result?.branched) {
+    // A branching step normally ends the node's run at its branch, and that
+    // branch took the pending continuation along. These steps branch AND let
+    // the flow continue past them (their next step, or the node's Continue
+    // edge): the continuation is attached to the branch, so it runs once the
+    // branch's chain stops, the branch's messages first.
+    if (result?.branched && !isContinuingBranchStep) {
+      chain.takeThen()
       return
     }
 
     const nextIdx = startIdx + 1
     if (nextIdx < details.steps.length) {
       const nextStep = details.steps[nextIdx]
-      await integrationQueue.add(IntegrationJobAction.sendFlow, {
-        type: IntegrationJobAction.sendFlow,
-        data: {
-          conversationId: props.conversation.id,
-          contactInboxId: props.contactInbox.id,
-          flowId: flowVersion.flowId,
-          flowVersionId: props.useLatestFlowVersion
-            ? undefined
-            : flowVersion.id,
-          nodeId: props.targetNodeId,
-          targetType:
-            targetType === "button" || targetType === "quickReply"
-              ? targetType
-              : undefined,
-          targetId:
-            targetType === "button" || targetType === "quickReply"
-              ? targetId
-              : undefined,
-          startFromStepId: nextStep.id,
-          metadata: props.metadata,
-          isBulkBroadcast: props.isBulkBroadcast,
-          appointmentId: props.appointmentId,
-          trackingContext: props.trackingContext,
-          sendFrom: props.sendFrom,
-          sentByUserId: props.sentByUserId,
-          nodeVisits,
-          triggerMessageId: props.triggerMessageId,
-          triggerMessageCreatedAt: props.triggerMessageCreatedAt,
-          startedByContactMessage: props.startedByContactMessage,
-          commentAnchor: remainingAnchor,
-          // The continuation keeps the parent's key: a retried parent enqueues a
-          // second continuation with another job id, and the conversion step
-          // derives its event-mode occurrence from this key.
-          flowExecutionKey: isDurableFlowExecutionKey(props.flowExecutionKey)
-            ? props.flowExecutionKey
+      await chain.enqueue({
+        conversationId: props.conversation.id,
+        contactInboxId: props.contactInbox.id,
+        flowId: flowVersion.flowId,
+        flowVersionId: props.useLatestFlowVersion ? undefined : flowVersion.id,
+        nodeId: props.targetNodeId,
+        targetType:
+          targetType === "button" || targetType === "quickReply"
+            ? targetType
             : undefined,
-          origin: webhookChannelOrigin(),
-        },
+        targetId:
+          targetType === "button" || targetType === "quickReply"
+            ? targetId
+            : undefined,
+        startFromStepId: nextStep.id,
+        branchedNodeId: branchTargetNodeId,
+        metadata: props.metadata,
+        isBulkBroadcast: props.isBulkBroadcast,
+        appointmentId: props.appointmentId,
+        trackingContext: props.trackingContext,
+        sendFrom: props.sendFrom,
+        sentByUserId: props.sentByUserId,
+        nodeVisits,
+        triggerMessageId: props.triggerMessageId,
+        triggerMessageCreatedAt: props.triggerMessageCreatedAt,
+        startedByContactMessage: props.startedByContactMessage,
+        commentAnchor: remainingAnchor,
+        // The continuation keeps the parent's key: a retried parent enqueues a
+        // second continuation with another job id, and the conversion step
+        // derives its event-mode occurrence from this key.
+        flowExecutionKey: isDurableFlowExecutionKey(props.flowExecutionKey)
+          ? props.flowExecutionKey
+          : undefined,
+        origin: webhookChannelOrigin(),
       })
       return
     }
@@ -650,40 +733,47 @@ export async function runStepsAndQuickReplies(
   const nextNode = (flowVersion.nodes as unknown as FlowNode[]).find(
     (node) => node.id === relatedEdge.target,
   )
+  // A branch and Continue wired to the same node must send that node once.
+  if (nextNode && nextNode.id === branchTargetNodeId) {
+    return
+  }
   if (nextNode) {
-    await integrationQueue.add(IntegrationJobAction.sendFlow, {
-      type: IntegrationJobAction.sendFlow,
-      data: {
-        conversationId: props.conversation.id,
-        contactInboxId: props.contactInbox.id,
-        flowId: flowVersion.flowId,
-        flowVersionId: props.useLatestFlowVersion ? undefined : flowVersion.id,
-        nodeId: nextNode.id,
-        metadata: props.metadata,
-        isBulkBroadcast: props.isBulkBroadcast,
-        appointmentId: props.appointmentId,
-        trackingContext: props.trackingContext,
-        sendFrom: props.sendFrom,
-        sentByUserId: props.sentByUserId,
-        nodeVisits,
-        triggerMessageId: props.triggerMessageId,
-        triggerMessageCreatedAt: props.triggerMessageCreatedAt,
-        startedByContactMessage: props.startedByContactMessage,
-        commentAnchor: remainingAnchor,
-        origin: webhookChannelOrigin(),
-      },
+    await chain.enqueue({
+      conversationId: props.conversation.id,
+      contactInboxId: props.contactInbox.id,
+      flowId: flowVersion.flowId,
+      flowVersionId: props.useLatestFlowVersion ? undefined : flowVersion.id,
+      nodeId: nextNode.id,
+      metadata: props.metadata,
+      isBulkBroadcast: props.isBulkBroadcast,
+      appointmentId: props.appointmentId,
+      trackingContext: props.trackingContext,
+      sendFrom: props.sendFrom,
+      sentByUserId: props.sentByUserId,
+      nodeVisits,
+      triggerMessageId: props.triggerMessageId,
+      triggerMessageCreatedAt: props.triggerMessageCreatedAt,
+      startedByContactMessage: props.startedByContactMessage,
+      commentAnchor: remainingAnchor,
+      origin: webhookChannelOrigin(),
     })
   }
 }
 
-export async function executeMultipleSteps(props: ExecuteMultipleStepsProps) {
-  const gen = executeMultipleStepsGenerator(props)
-  let lastResult:
-    | (ExecuteStepResult & {
-        branched: boolean
-        commentAnchor?: CommentAnchor
-      })
-    | undefined
+type ExecuteMultipleStepsResult = ExecuteStepResult & {
+  branched: boolean
+  branchTargetNodeId?: string
+  /** Set only with `shouldDeferContinuingBranch`: the caller enqueues it. */
+  deferredBranch?: DeferredBranchJob
+  commentAnchor?: CommentAnchor
+}
+
+export async function executeMultipleSteps(
+  props: ExecuteMultipleStepsProps,
+  options: ExecuteMultipleStepsOptions = {},
+): Promise<ExecuteMultipleStepsResult | undefined> {
+  const gen = executeMultipleStepsGenerator(props, options)
+  let lastResult: ExecuteMultipleStepsResult | undefined
 
   for await (const result of gen) {
     logger.debug({ result }, "execute multiple steps result")
@@ -697,7 +787,8 @@ export async function executeMultipleSteps(props: ExecuteMultipleStepsProps) {
 
 async function* executeMultipleStepsGenerator(
   props: ExecuteMultipleStepsProps,
-) {
+  options: ExecuteMultipleStepsOptions,
+): AsyncGenerator<ExecuteMultipleStepsResult> {
   const { steps, commentAnchor, ...rest } = props
   // A `private` anchor is claimed by the first message-producing step in this
   // run (however many jobs/nodes it takes to reach one) — see
@@ -765,6 +856,8 @@ async function* executeMultipleStepsGenerator(
 
     // Route to a connected node based on the step's outcome state
     let branched = false
+    let branchTargetNodeId: string | undefined
+    let deferredBranch: DeferredBranchJob | undefined
     if (
       ROUTING_STATUSES.has(result.status as StepRoutingStatus) &&
       stepWithNodeId.states &&
@@ -779,7 +872,7 @@ async function* executeMultipleStepsGenerator(
           targetState.id,
         )
         if (connectedNodeId) {
-          const job = {
+          const job: IntegrationJobRunFlowNode = {
             type: IntegrationJobAction.sendFlow,
             data: {
               conversationId: props.conversation.id,
@@ -806,6 +899,7 @@ async function* executeMultipleStepsGenerator(
                 ? props.flowExecutionKey
                 : undefined,
               origin: webhookChannelOrigin(),
+              thenSendFlow: options.thenSendFlow,
             },
           }
           const jobId = getStateContinuationJobId({
@@ -815,7 +909,12 @@ async function* executeMultipleStepsGenerator(
             stateId: targetState.id,
             targetNodeId: connectedNodeId,
           })
-          if (jobId) {
+          if (
+            options.shouldDeferContinuingBranch &&
+            CONTINUES_AFTER_BRANCH_STEP_TYPES.has(step.stepType)
+          ) {
+            deferredBranch = { job, jobId }
+          } else if (jobId) {
             await integrationQueue.add(IntegrationJobAction.sendFlow, job, {
               jobId,
             })
@@ -823,11 +922,18 @@ async function* executeMultipleStepsGenerator(
             await integrationQueue.add(IntegrationJobAction.sendFlow, job)
           }
           branched = true
+          branchTargetNodeId = connectedNodeId
         }
       }
     }
 
-    yield { ...result, branched, commentAnchor: anchorAvailable }
+    yield {
+      ...result,
+      branched,
+      branchTargetNodeId,
+      deferredBranch,
+      commentAnchor: anchorAvailable,
+    }
   }
 }
 

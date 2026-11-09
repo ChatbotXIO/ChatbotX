@@ -554,7 +554,11 @@ vi.mock("@chatbotx.io/encryption", () => ({
   verifyAppointmentCancelPostback: mockVerifyAppointmentCancelPostback,
 }))
 
-vi.mock("@chatbotx.io/worker-config", () => ({
+vi.mock("@chatbotx.io/worker-config", async (importOriginal) => ({
+  // The real job builder: the tests assert what producers actually enqueue.
+  buildResolveStepInputJob: (
+    await importOriginal<typeof import("@chatbotx.io/worker-config")>()
+  ).buildResolveStepInputJob,
   // `logProviderError` short-circuits on this, as `defaultQueue` does.
   isNoRedisEnv: () => true,
   enqueueStoredImageOptimizations: mockEnqueueStoredImageOptimizations,
@@ -572,6 +576,7 @@ vi.mock("@chatbotx.io/worker-config", () => ({
     processCommentAutomation: "processCommentAutomation",
     replyToInboundCart: "replyToInboundCart",
     captureTemplateFlowResponse: "captureTemplateFlowResponse",
+    resolveStepInput: "resolveStepInput",
   },
   getInboundCartReplyJobId: (messageId: string) =>
     `inbound-cart-reply-${messageId}`,
@@ -2173,6 +2178,231 @@ describe("receiveMessage — message repository branch", () => {
     expect(mockAutomatedResponseEnqueueFlowAction).toHaveBeenCalledWith({
       kind: "postback",
       data: expect.objectContaining({ action: postbackAction }),
+    })
+  })
+
+  describe("a step's Skip button tap", () => {
+    const CHALLENGE_ID = "11612473309626368"
+    const SKIP_PAYLOAD = `STEP_INPUT_SKIP|${CHALLENGE_ID}`
+    const stepChallenge = {
+      type: "step",
+      data: {
+        flowId: "flow-1",
+        flowVersionId: "fv-1",
+        nodeId: "node-1",
+        stepId: "step-1",
+        attempts: 1,
+        lastAttemptAt: new Date(),
+        challengeId: CHALLENGE_ID,
+      },
+    }
+
+    function skipJob() {
+      return mockIntegrationQueueAdd.mock.calls.find(
+        ([action]) => action === "resolveStepInput",
+      )
+    }
+
+    function mockSkipTap(overrides: Record<string, unknown> = {}) {
+      mockRunChannelHandler.mockResolvedValue({
+        message: { ...baseIncomingMessage, text: "Skip", attachments: [] },
+        contact: { sourceId: "psid-123", firstName: "Test" },
+        postbackAction: null,
+        quickReplyAction: null,
+        ref: null,
+        ...overrides,
+      })
+    }
+
+    function pendingStepChallengeOnConversation() {
+      mockConversationFindOrCreate.mockResolvedValue({
+        ...fakeConversation,
+        additionalAttributes: { challenge: stepChallenge },
+      })
+      mockDetectFlowVersion.mockResolvedValue({
+        flowVersion: {
+          id: "fv-1",
+          nodes: [
+            {
+              id: "node-1",
+              data: {
+                details: {
+                  steps: [
+                    {
+                      id: "step-1",
+                      stepType: "getUserData",
+                      skipButtonLabel: "Bỏ qua",
+                    },
+                  ],
+                },
+              },
+            },
+          ],
+        },
+        useLatestFlowVersion: false,
+      })
+    }
+
+    test.each([
+      [
+        "a quick reply (Messenger, Instagram)",
+        { quickReplyAction: SKIP_PAYLOAD },
+      ],
+      [
+        "a postback (WhatsApp, Telegram, Zalo, TikTok)",
+        { postbackAction: SKIP_PAYLOAD },
+      ],
+    ])("%s is resolved by its own job, not as a flow action", async (_label, tap) => {
+      mockSkipTap(tap)
+
+      const result = await receiveMessage(baseProps)
+
+      expect(result.stepInputSkipHandled).toBe(true)
+      expect(result.postbackAction).toBeNull()
+      expect(result.quickReplyAction).toBeNull()
+      expect(mockAutomatedResponseEnqueueFlowAction).not.toHaveBeenCalled()
+      expect(logger.warn).not.toHaveBeenCalledWith(
+        expect.anything(),
+        "Dropping undecodable flow action from channel webhook",
+      )
+      expect(skipJob()).toEqual([
+        "resolveStepInput",
+        {
+          type: "resolveStepInput",
+          data: {
+            conversationId: "conv-1",
+            contactInboxId: expect.any(String),
+            challengeId: CHALLENGE_ID,
+            reason: "user_skipped",
+            messageId: fakeCreatedMessage.id,
+            messageCreatedAt: fakeCreatedMessage.createdAt,
+          },
+        },
+        // Active-only dedup, never a fixed jobId.
+        { deduplication: { id: `step-input-conv-1-${CHALLENGE_ID}` } },
+      ])
+    })
+
+    test("a workspace that is no longer active resolves nothing, but the text is still not routed as a reply", async () => {
+      mockWorkspaceIsActiveNow.mockReturnValue(false)
+      mockSkipTap({ postbackAction: SKIP_PAYLOAD })
+
+      const result = await receiveMessage(baseProps)
+
+      expect(skipJob()).toBeUndefined()
+      expect(result.stepInputSkipHandled).toBe(true)
+    })
+
+    test("a standby (listen-only) delivery resolves nothing", async () => {
+      mockSkipTap({
+        postbackAction: SKIP_PAYLOAD,
+        threadControl: { delivery: "standby", ownerRole: "ai_agent" },
+      })
+
+      const result = await receiveMessage(baseProps)
+
+      expect(skipJob()).toBeUndefined()
+      expect(result.suppressAutomation).toBe(true)
+    })
+
+    test("a redelivered tap (message already stored) still enqueues the idempotent resolution, so a first failed enqueue is recoverable", async () => {
+      mockCreateOrUpdate.mockResolvedValue({
+        message: fakeCreatedMessage,
+        isNew: false,
+      })
+      mockSkipTap({ postbackAction: SKIP_PAYLOAD })
+
+      await receiveMessage(baseProps)
+
+      // Safe to repeat: the dedup id collapses it while a job is active and
+      // the challenge claim settles it once. No flow action is re-run.
+      expect(skipJob()).toBeDefined()
+      expect(mockAutomatedResponseEnqueueFlowAction).not.toHaveBeenCalled()
+    })
+
+    test("a failed enqueue fails the job so the webhook is retried, and the retry then enqueues it", async () => {
+      mockSkipTap({ postbackAction: SKIP_PAYLOAD })
+      mockIntegrationQueueAdd.mockRejectedValueOnce(new Error("redis down"))
+
+      await expect(receiveMessage(baseProps)).rejects.toThrow("redis down")
+
+      mockCreateOrUpdate.mockResolvedValue({
+        message: fakeCreatedMessage,
+        isNew: false,
+      })
+      mockIntegrationQueueAdd.mockClear()
+      await receiveMessage(baseProps)
+
+      expect(skipJob()).toBeDefined()
+    })
+
+    test.each([
+      ["a non-numeric id", "STEP_INPUT_SKIP|abc"],
+      ["an oversized id", "STEP_INPUT_SKIP|99999999999999999999"],
+    ])("%s is dropped like any undecodable payload", async (_label, payload) => {
+      mockSkipTap({ postbackAction: payload })
+
+      const result = await receiveMessage(baseProps)
+
+      expect(result.stepInputSkipHandled).toBe(false)
+      expect(result.postbackAction).toBeNull()
+      expect(skipJob()).toBeUndefined()
+    })
+
+    test("a channel that sends the button title keeps it and reads no flow", async () => {
+      pendingStepChallengeOnConversation()
+      mockDetectFlowVersion.mockClear()
+      mockSkipTap({ postbackAction: SKIP_PAYLOAD, buttonTitle: "Skip" })
+
+      await receiveMessage(baseProps)
+
+      expect(mockDetectFlowVersion).not.toHaveBeenCalled()
+      expect(mockCreateOrUpdate).toHaveBeenCalledWith(
+        expect.objectContaining({ text: "Skip" }),
+      )
+    })
+
+    test.each([
+      ["Telegram (bare payload as text)", "telegram", SKIP_PAYLOAD],
+      ["Zalo (prefixed payload as text)", "zalo", `postback_${SKIP_PAYLOAD}`],
+    ])("%s is stored with the label the contact pressed", async (_label, integrationType, text) => {
+      pendingStepChallengeOnConversation()
+      mockSkipTap({
+        postbackAction: SKIP_PAYLOAD,
+        message: { ...baseIncomingMessage, text, attachments: [] },
+      })
+
+      await receiveMessage({ ...baseProps, integrationType })
+
+      expect(mockCreateOrUpdate).toHaveBeenCalledWith(
+        expect.objectContaining({ text: "Bỏ qua" }),
+      )
+      expect(skipJob()).toBeDefined()
+    })
+
+    test("keeps the raw text, without failing the save, when the challenge or flow is gone", async () => {
+      mockDetectFlowVersion.mockRejectedValue(
+        new Error("FlowVersion not found"),
+      )
+      mockConversationFindOrCreate.mockResolvedValue({
+        ...fakeConversation,
+        additionalAttributes: { challenge: stepChallenge },
+      })
+      mockSkipTap({
+        postbackAction: SKIP_PAYLOAD,
+        message: {
+          ...baseIncomingMessage,
+          text: SKIP_PAYLOAD,
+          attachments: [],
+        },
+      })
+
+      await receiveMessage({ ...baseProps, integrationType: "telegram" })
+
+      expect(mockCreateOrUpdate).toHaveBeenCalledWith(
+        expect.objectContaining({ text: SKIP_PAYLOAD }),
+      )
+      expect(skipJob()).toBeDefined()
     })
   })
 

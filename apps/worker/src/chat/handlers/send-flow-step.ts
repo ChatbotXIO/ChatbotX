@@ -488,6 +488,7 @@ export async function sendFlowStep({
   isBulkBroadcast,
   richResponse,
   quickReplies,
+  presetQuickReplies,
   sendFrom,
   sentByUserId,
   commentAnchor,
@@ -811,8 +812,10 @@ export async function sendFlowStep({
         flowVersionId,
       }
 
-    const canonicalQuickReplies =
-      quickRepliesForSend && quickRepliesForSend.length > 0
+    // The caller's own quick replies (their payloads are not flow buttons) go
+    // after the step's, through the same send path as every other quick reply.
+    const allQuickReplies = [
+      ...(quickRepliesForSend && quickRepliesForSend.length > 0
         ? convertButtonsToTemplate({
             channel: targetContactInbox.channel,
             flowId,
@@ -821,7 +824,11 @@ export async function sendFlowStep({
             metadata,
             contactInboxId: targetContactInbox.id,
           })
-        : undefined
+        : []),
+      ...(presetQuickReplies ?? []),
+    ]
+    const canonicalQuickReplies =
+      allQuickReplies.length > 0 ? allQuickReplies : undefined
 
     const canonicalStepButtons =
       "buttons" in stepForSend && stepForSend.buttons.length > 0

@@ -52,6 +52,13 @@ export type ConversationStepChallenge = {
     stepId: string
     attempts: number
     lastAttemptAt: Date
+    /**
+     * When this challenge cycle first asked its question. Unlike
+     * `lastAttemptAt` it is never moved by a retry, so a step deadline counts
+     * from the first prompt. Absent on challenges written before it existed.
+     * Stored as JSON, so it reads back as an ISO string.
+     */
+    startedAt?: Date
     appointmentId?: string
     challengeId?: string
   }

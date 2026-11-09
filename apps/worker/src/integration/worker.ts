@@ -81,6 +81,10 @@ import { replyToInboundCart } from "./handlers/reply-to-inbound-cart"
 import { recordEmailTrackingTransition } from "./handlers/send-email"
 import { handleSendSequenceFlow } from "./handlers/sequence-flow"
 import { runShopifySync, runShopifyWebhook } from "./handlers/shopify"
+import {
+  runStepInputResolution,
+  runStepInputTimeoutResume,
+} from "./handlers/step-input-resolution"
 import { captureTemplateFlowResponse } from "./handlers/template-flow-response"
 import {
   isThreadControlJobReprocess,
@@ -245,6 +249,7 @@ function startIntegrationWorker() {
                 inboxId,
                 inboxChannel,
                 suppressAutomation,
+                stepInputSkipHandled,
               } = received
 
               if (!message) {
@@ -270,6 +275,12 @@ function startIntegrationWorker() {
               // Standby deliveries (another responder owns the thread) are
               // stored only: no story-reply, routing or fallback analytics.
               if (suppressAutomation) {
+                return
+              }
+
+              // A Skip tap was enqueued as its own resolution; its text must not
+              // also be routed to the pending challenge as a typed reply.
+              if (stepInputSkipHandled) {
                 return
               }
 
@@ -471,6 +482,14 @@ function startIntegrationWorker() {
             }
             case IntegrationJobAction.resumeQuickReplyFollowUp: {
               await runQuickReplyFollowUpResume(job.data.data)
+              return
+            }
+            case IntegrationJobAction.resumeStepInputTimeout: {
+              await runStepInputTimeoutResume(job.data.data)
+              return
+            }
+            case IntegrationJobAction.resolveStepInput: {
+              await runStepInputResolution(job.data.data)
               return
             }
             case IntegrationJobAction.messageStatus: {
