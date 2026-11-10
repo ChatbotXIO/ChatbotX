@@ -194,6 +194,43 @@ describe("extractFlowMediaGroups", () => {
 })
 
 describe("media ids", () => {
+  test("a numeric id marks an uploaded file and is read as its digits", () => {
+    expect(
+      extractFlowMediaGroups({
+        documents: [
+          {
+            id: 1_234_567_890_123,
+            mime_type: PDF,
+            sha256: sha256Of(BYTES),
+            file_name: "contract.pdf",
+          },
+        ],
+        flow_token: "token",
+      }),
+    ).toEqual([
+      {
+        key: "documents",
+        entries: [
+          { id: "1234567890123", fileName: "contract.pdf", mimeType: PDF },
+        ],
+      },
+    ])
+  })
+
+  test.each([
+    ["a fractional number", 1.5],
+    ["a number beyond the safe integer range", 2 ** 53],
+    ["NaN", Number.NaN],
+    ["Infinity", Number.POSITIVE_INFINITY],
+    ["a boolean", true],
+  ])("%s is not a media id", (_label, id) => {
+    expect(
+      extractFlowMediaGroups({
+        docs: [{ id, file_name: "a.pdf", mime_type: PDF }],
+      }),
+    ).toEqual([])
+  })
+
   test("any non-empty id marks an uploaded file (Meta documents no format)", () => {
     expect(
       extractFlowMediaGroups({
@@ -1151,6 +1188,22 @@ describe("readFlowResponseMedia", () => {
     expect(result.attachments).toHaveLength(1)
     // The raw answer is left as Meta sent it.
     expect(entity.flowResponse.photo_picker).toEqual([entry("1")])
+  })
+
+  test("downloads a file whose id arrives as a number", async () => {
+    serveFile("1234567890123")
+    const entity = flowResponseEntity({
+      flow_token: "token",
+      documents: [entry("1234567890123", { id: 1_234_567_890_123 })],
+    })
+
+    const result = await readFlowResponseMedia(buildCtx(), entity)
+
+    expect(result.contentAttributes).toMatchObject({
+      files: { documents: [{ status: "stored", mediaId: "1234567890123" }] },
+    })
+    expect(result.attachments).toHaveLength(1)
+    expect(callsTo(metadataUrl("1234567890123"))).toBe(1)
   })
 
   test("keeps the message the response answers alongside the files", async () => {

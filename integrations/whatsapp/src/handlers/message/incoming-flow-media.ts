@@ -107,11 +107,23 @@ type FlowMediaOutcome = {
 
 type FlowMediaContext = Context<WhatsappAuthValue>
 
+/**
+ * A Flow upload's media id as a string. Meta sends it as a JSON number in
+ * practice and Meta's docs do not fix its type, so both are accepted. A number
+ * that is not a safe integer has already lost digits in parsing: not an id.
+ */
+const toMediaId = (value: unknown): string | null => {
+  if (typeof value === "number") {
+    return Number.isSafeInteger(value) ? String(value) : null
+  }
+  return asString(value)
+}
+
 const toFlowMediaEntry = (value: unknown): FlowMediaEntry | null => {
   if (!isRecord(value)) {
     return null
   }
-  const id = asString(value.id)
+  const id = toMediaId(value.id)
   const fileName = asString(value.file_name)
   const mimeType = asString(value.mime_type)
   return id && fileName && mimeType ? { id, fileName, mimeType } : null
