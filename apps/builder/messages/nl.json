@@ -3249,7 +3249,9 @@
       "removeHint": "Verwijdert het laatste open item van het contact in deze pipeline.",
       "comment": "Opmerking",
       "destinationPipeline": "Doelpipeline",
-      "destinationStage": "Doelfase"
+      "destinationStage": "Doelfase",
+      "missingRequiredFields": "Verplichte velden zonder waarde: {names}. Het item kan pas worden aangemaakt als elk veld een waarde heeft.",
+      "addRequiredFields": "Verplichte velden toevoegen"
     },
     "aiSegmentImage": {
       "label": "{name}: Afbeelding segmenteren"
@@ -4487,6 +4489,9 @@
     "waTemplateMpmTooManySections": "Een multi-productknop kan maximaal 10 secties hebben. Verwijder enkele secties voordat je publiceert.",
     "waTemplateMpmTooManyProducts": "Een multi-productknop kan in totaal maximaal 30 producten hebben. Verwijder enkele producten voordat je publiceert.",
     "waTemplateLtoExpirationRequired": "Kies een vervaldatum voor de tijdelijke aanbieding voordat je verzendt.",
+    "waTemplatePaymentRequestIncomplete": "Vul de betaalgegevens van deze knop in voordat je publiceert.",
+    "waTemplatePaymentRequestInvalid": "Een betaalgegeven heeft een ongeldig formaat. Controleer het bedrag, de link en de kaartcijfers.",
+    "waTemplatePaymentRequestMisplaced": "Betaalgegevens kunnen alleen worden ingesteld op een betaalknop van een gewone sjabloon (geen carrousel).",
     "waTemplateMpmIncompleteProducts": "Elke sectie heeft minstens één geselecteerd product nodig — verwijder lege rijen of kies er een product voor.",
     "unsupportedBlock": "Dit kanaal ondersteunt dit blok niet.",
     "constraintExceeded": "De limiet van dit kanaal is overschreden.",
@@ -4550,7 +4555,21 @@
     "tooManySavedReplyImages": "Een opgeslagen antwoord kan maximaal {max} afbeeldingen bevatten",
     "savedReplyImagesNotSentHere": "Afbeeldingen worden hier niet verstuurd",
     "invalidPhoneNumber": "Dit is geen geldig telefoonnummer. Voeg de landcode toe, bijvoorbeeld +1.",
-    "buttonCallPhoneNumberUnsupported": "Deze knop kan hier geen telefoonnummer bellen. Kies een andere actie."
+    "buttonCallPhoneNumberUnsupported": "Deze knop kan hier geen telefoonnummer bellen. Kies een andere actie.",
+    "paymentRequest": {
+      "title": "Betaalverzoek",
+      "cardEnding": "Kaart eindigend op {lastFourDigits}",
+      "status": "WhatsApp meldt geen betaling. Controleer dit bij je betaalprovider.",
+      "cardStatus": "De bevestiging van de klant schrijft niets af van de kaart. Schrijf af via je betaalprovider.",
+      "sentFromTemplate": "Sjabloon: {name}"
+    },
+    "paymentConfirmation": {
+      "title": "Klant heeft de betaling bevestigd",
+      "cardTitle": "Klant heeft de kaartbetaling bevestigd",
+      "cardEnding": "Kaart eindigend op {lastFourDigits}",
+      "notCharged": "Nog niet afgeschreven. Schrijf af via je betaalprovider.",
+      "reference": "Referentie {referenceId}"
+    }
   },
   "instagram": {
     "description": "Met deze integratie kun je Instagram-bots maken.",
@@ -5122,7 +5141,28 @@
         "mpmSectionLimitReached": "Maximum van 10 secties bereikt.",
         "mpmProductLimitReached": "Maximum van 30 producten bereikt.",
         "mpmProductsSummary": "{productCount} producten in {sectionCount} secties",
-        "unsupportedButtonParam": "Dit knoptype wordt nog niet ondersteund."
+        "unsupportedButtonParam": "Dit knoptype wordt nog niet ondersteund.",
+        "payment": {
+          "method": {
+            "pix": "Pix",
+            "boleto": "Boleto",
+            "payment_link": "Betaallink",
+            "card_on_file": "Kaartbetaling met één klik"
+          },
+          "field": {
+            "code": "Pix-code",
+            "digitableLine": "Boleto-regel",
+            "url": "URL van de betaallink",
+            "lastFourDigits": "Laatste 4 cijfers van de kaart",
+            "credentialId": "Kaart-credential-ID (optioneel)",
+            "amount": "Bedrag in BRL, bijv. 12.34"
+          },
+          "notice": {
+            "general": "Gebruik een variabele zodat elke klant zijn eigen betaalgegevens krijgt.",
+            "cardOnFile": "Kaartbetaling met één klik werkt alleen voor bedrijven die Meta daarvoor heeft ingeschakeld."
+          },
+          "unsupportedButton": "Deze sjabloon heeft een betaalknop die niet kan worden verstuurd: het betaaltype kon niet worden bepaald. Synchroniseer de sjablonen opnieuw of kies een andere."
+        }
       }
     },
     "sampleBodyCardContent": {
@@ -5537,7 +5577,16 @@
     },
     "credentialSecretsRequired": "Voer het app-geheim en het systeemgebruikerstoken in. Ze zijn nog niet opgeslagen.",
     "embeddedSignupCancelled": "De registratie is geannuleerd — je kunt dit tabblad sluiten.",
-    "embeddedSignupFailed": "De registratie is niet voltooid — sluit dit tabblad en probeer het opnieuw."
+    "embeddedSignupFailed": "De registratie is niet voltooid — sluit dit tabblad en probeer het opnieuw.",
+    "payment": {
+      "settings": {
+        "title": "Betalingen",
+        "description": "Hoe dit nummer betaalverzoekknoppen verstuurt.",
+        "pixRedirectLabel": "Pix met doorverwijzing versturen",
+        "pixRedirectDescription": "Kopers openen hun bank-app om te betalen en keren terug naar WhatsApp. Zet dit pas aan nadat Meta je bedrijf heeft aangemeld; kopers die niet kunnen worden doorverwezen krijgen nog steeds kopiëren en plakken.",
+        "adminOnly": "Alleen workspacebeheerders kunnen de betaalinstellingen wijzigen."
+      }
+    }
   },
   "zalo": {
     "title": "Zalo OA",

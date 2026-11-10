@@ -1,6 +1,10 @@
 "use client"
 
-import type { PipelineStepAction } from "@chatbotx.io/flow-config"
+import {
+  findMissingRequiredPipelineFields,
+  type PipelineStepAction,
+  type PipelineStepFieldValue,
+} from "@chatbotx.io/flow-config"
 import { ComboboxField } from "@chatbotx.io/ui/components/form/combobox-field"
 import { MultiSelectField } from "@chatbotx.io/ui/components/form/multi-select-field"
 import { SelectField } from "@chatbotx.io/ui/components/form/select-field"
@@ -119,15 +123,56 @@ function FieldValuesEditor({ parentName, pipelineId }: FieldsProps) {
     control,
     name: `${parentName}.fieldValues`,
   })
+  const fieldValues: PipelineStepFieldValue[] =
+    useWatch({ control, name: `${parentName}.fieldValues` }) ?? []
+  // Same rule publish enforces: creating the item fails without these.
+  const missingRequired = findMissingRequiredPipelineFields(
+    fieldValues,
+    definitions,
+  )
   const options = definitions.map((field) => ({
-    label: field.name,
+    label: field.required ? `${field.name} *` : field.name,
     value: field.id,
   }))
+  const addMissingRequired = () => {
+    const listed = new Set(fieldValues.map((row) => row.pipelineFieldId))
+    for (const field of missingRequired) {
+      if (!listed.has(field.id)) {
+        append({ pipelineFieldId: field.id, value: "" })
+      }
+    }
+  }
   return (
     <div className="flex flex-col gap-3">
       <span className="font-medium text-sm">
         {t("flows.pipelineStep.fieldValues")}
       </span>
+      {missingRequired.length > 0 && (
+        <div
+          className="flex flex-col items-start gap-2 rounded-md border border-destructive/40 bg-destructive/5 p-3 text-destructive text-xs"
+          role="alert"
+        >
+          <span>
+            {t("flows.pipelineStep.missingRequiredFields", {
+              names: missingRequired.map((field) => field.name).join(", "),
+            })}
+          </span>
+          {missingRequired.some(
+            (field) =>
+              !fieldValues.some((row) => row.pipelineFieldId === field.id),
+          ) && (
+            <Button
+              onClick={addMissingRequired}
+              size="sm"
+              type="button"
+              variant="outline"
+            >
+              <PlusIcon size={14} />
+              {t("flows.pipelineStep.addRequiredFields")}
+            </Button>
+          )}
+        </div>
+      )}
       {fields.map((row, index) => (
         <div className="flex flex-col gap-2 rounded-md border p-3" key={row.id}>
           <div className="flex items-end gap-2">

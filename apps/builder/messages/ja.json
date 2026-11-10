@@ -3249,7 +3249,9 @@
       "removeHint": "このパイプラインにあるコンタクトの最新のオープン中アイテムを削除します。",
       "comment": "コメント",
       "destinationPipeline": "移管先のパイプライン",
-      "destinationStage": "移管先のステージ"
+      "destinationStage": "移管先のステージ",
+      "missingRequiredFields": "値のない必須フィールド: {names}。すべてに値が入るまでアイテムを作成できません。",
+      "addRequiredFields": "必須フィールドを追加"
     },
     "aiSegmentImage": {
       "label": "{name}: 画像セグメンテーション"
@@ -4466,6 +4468,9 @@
     "waTemplateMpmTooManySections": "マルチ商品ボタンには最大10個のセクションを設定できます。公開前にセクションを減らしてください。",
     "waTemplateMpmTooManyProducts": "マルチ商品ボタンには合計最大30個の商品を設定できます。公開前に商品を減らしてください。",
     "waTemplateLtoExpirationRequired": "送信する前に期間限定オファーの有効期限を選択してください。",
+    "waTemplatePaymentRequestIncomplete": "公開する前に、このボタンの支払い情報を入力してください。",
+    "waTemplatePaymentRequestInvalid": "支払い情報の形式が正しくありません。金額、リンク、カード番号の下4桁を確認してください。",
+    "waTemplatePaymentRequestMisplaced": "支払い情報は、通常（カルーセル以外）のテンプレートの支払いボタンにのみ設定できます。",
     "waTemplateMpmIncompleteProducts": "各セクションには選択済みの商品が少なくとも1つ必要です。空の行を削除するか、商品を選択してください。",
     "unsupportedBlock": "このチャネルはこのブロックに対応していません。",
     "constraintExceeded": "このチャネルの上限を超えました。",
@@ -4529,7 +4534,21 @@
     "tooManySavedReplyImages": "保存済み返信の画像は最大 {max} 枚です",
     "savedReplyImagesNotSentHere": "ここでは画像は送信されません",
     "invalidPhoneNumber": "電話番号が正しくありません。国番号（例: +1）を含めてください。",
-    "buttonCallPhoneNumberUnsupported": "このボタンではここで電話番号に発信できません。別のアクションを選択してください。"
+    "buttonCallPhoneNumberUnsupported": "このボタンではここで電話番号に発信できません。別のアクションを選択してください。",
+    "paymentRequest": {
+      "title": "支払いリクエスト",
+      "cardEnding": "末尾 {lastFourDigits} のカード",
+      "status": "WhatsApp は支払いを通知しません。決済プロバイダーで確認してください。",
+      "cardStatus": "お客様の確認だけではカードに請求されません。決済プロバイダーで請求してください。",
+      "sentFromTemplate": "テンプレート: {name}"
+    },
+    "paymentConfirmation": {
+      "title": "お客様が支払いを確認しました",
+      "cardTitle": "お客様がカード決済を確認しました",
+      "cardEnding": "末尾 {lastFourDigits} のカード",
+      "notCharged": "まだ請求されていません。決済プロバイダーで請求してください。",
+      "reference": "参照番号 {referenceId}"
+    }
   },
   "instagram": {
     "description": "この連携を使用すると、Instagramボットを作成できます。",
@@ -5101,7 +5120,28 @@
         "mpmSectionLimitReached": "セクションの上限（10個）に達しました。",
         "mpmProductLimitReached": "商品の上限（30個）に達しました。",
         "mpmProductsSummary": "{sectionCount}個のセクションに{productCount}個の商品",
-        "unsupportedButtonParam": "このボタンタイプはまだサポートされていません。"
+        "unsupportedButtonParam": "このボタンタイプはまだサポートされていません。",
+        "payment": {
+          "method": {
+            "pix": "Pix",
+            "boleto": "Boleto",
+            "payment_link": "支払いリンク",
+            "card_on_file": "ワンクリックカード決済"
+          },
+          "field": {
+            "code": "Pix コード",
+            "digitableLine": "Boleto の入力用番号",
+            "url": "支払いリンクの URL",
+            "lastFourDigits": "カード番号の下4桁",
+            "credentialId": "カード認証情報 ID（任意）",
+            "amount": "BRL での金額（例: 12.34）"
+          },
+          "notice": {
+            "general": "変数を使うと、顧客ごとに異なる支払い情報を送れます。",
+            "cardOnFile": "ワンクリックカード決済は、Meta が有効化した事業者のみ利用できます。"
+          },
+          "unsupportedButton": "このテンプレートには送信できない支払いボタンがあります。支払い種別を判定できませんでした。テンプレートを再同期するか、別のテンプレートを選んでください。"
+        }
       }
     },
     "sampleBodyCardContent": {
@@ -5516,7 +5556,16 @@
     },
     "credentialSecretsRequired": "アプリシークレットとシステムユーザートークンを入力してください。まだ保存されていません。",
     "embeddedSignupCancelled": "登録はキャンセルされました。このタブを閉じてください。",
-    "embeddedSignupFailed": "登録が完了しませんでした。このタブを閉じて、もう一度お試しください。"
+    "embeddedSignupFailed": "登録が完了しませんでした。このタブを閉じて、もう一度お試しください。",
+    "payment": {
+      "settings": {
+        "title": "支払い",
+        "description": "この番号が支払いリクエストボタンを送信する方法です。",
+        "pixRedirectLabel": "リダイレクト付き Pix で送信",
+        "pixRedirectDescription": "購入者は銀行アプリを開いて支払い、WhatsApp に戻ります。Meta があなたのビジネスをオンボードした後にのみ有効にしてください。リダイレクトできない購入者にはコピー＆ペーストが表示されます。",
+        "adminOnly": "支払い設定を変更できるのはワークスペース管理者のみです。"
+      }
+    }
   },
   "zalo": {
     "title": "Zalo OA",

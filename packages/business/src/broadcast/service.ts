@@ -99,9 +99,12 @@ import {
   likeContains,
 } from "@chatbotx.io/database/utils"
 import {
+  findPaymentRequestMismatches,
   findTemplateStartStep,
   stepTypes,
+  type TemplateComponent,
   type WaTemplateParams,
+  waTemplateParamsSchema,
 } from "@chatbotx.io/flow-config"
 import { casStore } from "@chatbotx.io/redis"
 import { createId } from "@chatbotx.io/utils"
@@ -213,6 +216,8 @@ export type BroadcastTemplateSelection = {
   inboxId?: string | null
   integrationWhatsappId?: string | null
   integrationMessengerId?: string | null
+  /** The params submitted for this template, checked against its stored buttons. */
+  templateData?: Record<string, unknown> | null
 }
 
 /** One page of a multi-page broadcast as submitted by the form. */
@@ -341,11 +346,18 @@ export const broadcastTemplateSelections = (
     | "integrationWhatsappId"
     | "integrationMessengerId"
     | "targets"
+    | "templateData"
   >,
 ): BroadcastTemplateSelection[] => {
   const targetSelections = (data.targets ?? []).flatMap((target) =>
     target.templateId
-      ? [{ templateId: target.templateId, inboxId: target.inboxId }]
+      ? [
+          {
+            templateId: target.templateId,
+            inboxId: target.inboxId,
+            templateData: target.templateData,
+          },
+        ]
       : [],
   )
   if (targetSelections.length > 0 || !data.templateId) {
@@ -356,6 +368,7 @@ export const broadcastTemplateSelections = (
       templateId: data.templateId,
       integrationWhatsappId: data.integrationWhatsappId,
       integrationMessengerId: data.integrationMessengerId,
+      templateData: data.templateData,
     },
   ]
 }
@@ -2721,7 +2734,50 @@ class BroadcastService extends BaseService {
         "targets",
       )
     }
+    this.assertPaymentRequestsMatchTemplates({
+      channel: input.channel,
+      selections: input.selections,
+      details,
+    })
     return this.joinTemplateNames(details)
+  }
+
+  /**
+   * A WhatsApp payment request must match its template's payment buttons one
+   * to one (a Pix payload for a Boleto button would only fail at send time,
+   * once per recipient). Checked against the template rows already loaded for
+   * the naming, so no extra query. Params that do not parse are left to the
+   * other payload validators.
+   */
+  private assertPaymentRequestsMatchTemplates(input: {
+    channel: ChannelType
+    selections: BroadcastTemplateSelection[]
+    details: BroadcastTemplateDetail[]
+  }): void {
+    if (input.channel !== "whatsapp") {
+      return
+    }
+    for (const [position, selection] of input.selections.entries()) {
+      // Absent params are an empty set: a template with payment buttons then
+      // reports them as missing instead of failing once per recipient.
+      const parsed = waTemplateParamsSchema.safeParse(
+        selection.templateData ?? {},
+      )
+      if (!parsed.success) {
+        continue
+      }
+      const components = input.details[position]?.components
+      const mismatches = findPaymentRequestMismatches(
+        parsed.data,
+        Array.isArray(components) ? (components as TemplateComponent[]) : [],
+      )
+      if (mismatches.length > 0) {
+        throw new BroadcastValidationException(
+          "Payment request does not match the template's payment buttons",
+          "templateId",
+        )
+      }
+    }
   }
 
   async listForCalendar(input: {

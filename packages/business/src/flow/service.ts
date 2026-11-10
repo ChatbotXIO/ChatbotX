@@ -52,6 +52,7 @@ import { assertFlowGraphPublishable, flowVersionService } from "../flow-version"
 import { folderService } from "../folder/service"
 import { copyNamePrefix, freeCopyNames } from "../lib/copy-name"
 import { messengerWelcomeMessageFlowService } from "../messenger-welcome-message-flow/service"
+import { assertFlowPipelineStepsPublishable } from "../pipeline/flow-publish-check"
 import { type IdLabel, selectLabelsByIds } from "../select-labels-by-ids"
 import {
   computeCustomFieldNameBindings,
@@ -676,6 +677,10 @@ class FlowService extends BaseService {
   }): Promise<{ id: string }> {
     const { workspaceId, data, graph } = input
     assertFlowGraphPublishable(graph)
+    await assertFlowPipelineStepsPublishable({
+      nodes: graph.nodes,
+      workspaceId,
+    })
 
     if (data.folderId) {
       await folderService.ensureExists({

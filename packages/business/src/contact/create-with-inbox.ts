@@ -26,6 +26,8 @@ import { contactService } from "./service"
 
 type CreateContactInput = {
   phoneNumber?: string
+  /** WhatsApp BSUID; ignored on every other channel. */
+  sourceUserId?: string
   email: string
   contactId?: string
   firstName?: string
@@ -78,11 +80,22 @@ export const createContactWithInbox = async ({
     throw validationException("phoneNumber", "Workspace not found")
   }
 
+  const isWhatsapp = inboxChannel === channelTypes.enum.whatsapp
+  // A WhatsApp contact is identified by its phone (`wa_id`), its BSUID, or both.
+  const sourceUserId = isWhatsapp
+    ? parsedInput.sourceUserId?.trim() || undefined
+    : undefined
+  // A BSUID-only contact is keyed by the BSUID itself (`sourceId ===
+  // sourceUserId`): that equality is what routes outbound sends through
+  // Meta's `recipient` field instead of `to`, which would silently drop them.
+  const isBsuidKeyed = Boolean(sourceUserId) && !parsedInput.phoneNumber
+
   // Normalize any provided phone to E.164 (with country code) so it is stored and
-  // deduped consistently across every channel — not just WhatsApp. WhatsApp always
-  // needs one (it is the wa_id); other channels normalize only when a phone is given.
+  // deduped consistently across every channel — not just WhatsApp. WhatsApp needs
+  // one unless a BSUID identifies the contact; other channels normalize only when
+  // a phone is given.
   let normalizedPhone = parsedInput.phoneNumber
-  if (inboxChannel === channelTypes.enum.whatsapp || parsedInput.phoneNumber) {
+  if ((isWhatsapp && !isBsuidKeyed) || parsedInput.phoneNumber) {
     const e164Phone = normalizePhoneToE164(
       parsedInput.phoneNumber ?? "",
       workspace.targetCountry,
@@ -98,11 +111,16 @@ export const createContactWithInbox = async ({
 
   // Each channel keys its contacts on its own identity (WhatsApp: phone digits,
   // SMTP: email, webchat: minted, others: the channel user id).
-  const sourceId = resolveNewContactInboxSourceId(inboxChannel, {
-    channelUserId: parsedInput.contactId,
-    phoneE164: normalizedPhone,
-    email: parsedInput.email,
-  })
+  let sourceId: string
+  if (isBsuidKeyed && sourceUserId) {
+    sourceId = sourceUserId
+  } else {
+    sourceId = resolveNewContactInboxSourceId(inboxChannel, {
+      channelUserId: parsedInput.contactId,
+      phoneE164: normalizedPhone,
+      email: parsedInput.email,
+    })
+  }
 
   const existedContact =
     normalizedPhone && phoneUniqueness === "workspace"
@@ -123,12 +141,29 @@ export const createContactWithInbox = async ({
     })
     if (existing) {
       let field = "contactId"
-      if (inboxChannel === channelTypes.enum.whatsapp) {
-        field = "phoneNumber"
+      if (isWhatsapp) {
+        field = isBsuidKeyed ? "sourceUserId" : "phoneNumber"
       } else if (inboxChannel === channelTypes.enum.smtp) {
         field = "email"
       }
       throw validationException(field, CONTACT_ALREADY_ON_INBOX_MESSAGE)
+    }
+  }
+
+  // The BSUID is unique per inbox (partial unique index), whether the existing
+  // row is keyed by it or holds it next to a phone-based `wa_id`.
+  if (sourceUserId) {
+    const existingIdentities =
+      await contactInboxService.findExistingSourceIdentities({
+        inboxId: inbox.id,
+        sourceIds: [],
+        sourceUserIds: [sourceUserId],
+      })
+    if (existingIdentities.sourceUserIds.has(sourceUserId)) {
+      throw validationException(
+        "sourceUserId",
+        CONTACT_ALREADY_ON_INBOX_MESSAGE,
+      )
     }
   }
 
@@ -137,6 +172,7 @@ export const createContactWithInbox = async ({
     channel: _channel,
     inboxId: _inboxId,
     contactId: _contactId,
+    sourceUserId: _sourceUserId,
     ...rest
   } = parsedInput
   const contactData = { ...rest, phoneNumber: normalizedPhone }
@@ -161,6 +197,7 @@ export const createContactWithInbox = async ({
             channel: inboxChannel,
             source,
             sourceId,
+            sourceUserId: sourceUserId ?? null,
           })
           .returning()
         if (!contactInbox) {

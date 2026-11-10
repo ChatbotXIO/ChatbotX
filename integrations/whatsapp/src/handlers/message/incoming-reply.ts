@@ -6,13 +6,14 @@ import type {
   IncomingMessage,
   MessageWhatsappCallPermissionReplyEntity,
   MessageWhatsappFlowResponseEntity,
+  MessageWhatsappPaymentMethodEntity,
 } from "@chatbotx.io/sdk"
 import type {
   ServerButtonMessage,
   ServerInteractiveMessage,
 } from "whatsapp-api-js/types"
 import { logger } from "../../lib/logger"
-import { asString } from "../../lib/value"
+import { asString, isRecord } from "../../lib/value"
 
 type WhatsappNfmFlowResponse = Record<string, unknown> & {
   flow_token?: string
@@ -162,6 +163,70 @@ const readCallPermissionReply = (
   }
 }
 
+const asFiniteNumber = (value: unknown): number | undefined => {
+  const parsed = Number(value)
+  return value !== null && value !== "" && Number.isFinite(parsed)
+    ? parsed
+    : undefined
+}
+
+/**
+ * A `payment_method` reply whose payload is not an object: shown like any
+ * unhandled interactive, with the raw value kept in the message and nothing
+ * logged (it can hold a credential).
+ */
+const unreadablePaymentMethodReply = (rawValue: unknown): WhatsappReply => ({
+  postbackAction: null,
+  text: UNHANDLED_INTERACTIVE_TEXT,
+  buttonTitle: null,
+  contentAttributes: {
+    unhandledInteractive: {
+      type: "payment_method",
+      payment_method: rawValue ?? null,
+    },
+  },
+})
+
+/**
+ * One-click payment confirmations (`interactive.type: "payment_method"`). Not
+ * modeled by whatsapp-api-js, and the Cloud API docs only show the Orders
+ * flavor of the payload, so every field but the discriminant is optional and
+ * the raw object is always kept.
+ */
+const readPaymentMethodReply = (
+  reply: WhatsappInteractiveReply,
+): WhatsappReply | undefined => {
+  const raw = reply as unknown as { type?: string; payment_method?: unknown }
+  if (raw.type !== "payment_method") {
+    return
+  }
+  const payload = raw.payment_method
+  if (!isRecord(payload)) {
+    return unreadablePaymentMethodReply(payload)
+  }
+  const lastFourDigits = asString(payload.last_four_digits) ?? undefined
+  const entity: MessageWhatsappPaymentMethodEntity = {
+    type: "whatsapp_payment_method",
+    paymentMethod: asString(payload.payment_method) ?? "unknown",
+    lastFourDigits,
+    credentialId: asString(payload.credential_id) ?? undefined,
+    referenceId: asString(payload.reference_id) ?? undefined,
+    paymentTimestamp: asFiniteNumber(payload.payment_timestamp),
+    raw: payload,
+  }
+
+  return {
+    postbackAction: null,
+    // English fallback for previews; the inbox renders a localized label
+    // from `contentAttributes` instead.
+    text: lastFourDigits
+      ? `Customer confirmed card payment ending ${lastFourDigits} (not charged yet)`
+      : "Customer confirmed payment (not charged yet)",
+    buttonTitle: null,
+    contentAttributes: entity,
+  }
+}
+
 /**
  * Dispatch, keyed by `interactive.type`. The table's key *is* the discriminant
  * just read off `reply`, so the pairing is sound even though TypeScript can't
@@ -175,6 +240,11 @@ export const readInteractiveReply = (
   const callPermissionReply = asCallPermissionReply(reply)
   if (callPermissionReply) {
     return readCallPermissionReply(callPermissionReply)
+  }
+
+  const paymentMethodReply = readPaymentMethodReply(reply)
+  if (paymentMethodReply) {
+    return paymentMethodReply
   }
 
   const read = interactiveReplyReaders[reply.type]

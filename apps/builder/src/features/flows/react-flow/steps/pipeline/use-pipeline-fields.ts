@@ -1,7 +1,7 @@
 import { usePipelineDetail } from "@/features/pipelines/lib/use-pipeline-detail"
 import { useWorkspaceId } from "@/hooks/routing"
 
-const NO_FIELDS: { id: string; name: string }[] = []
+const NO_FIELDS: { id: string; name: string; required: boolean }[] = []
 
 /** Custom fields of one pipeline, for the field pickers of the Pipelines step. */
 export function usePipelineFields(pipelineId: string) {

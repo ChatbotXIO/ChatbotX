@@ -177,6 +177,13 @@ export function FlowEditToolbar({
         invalidateFlows()
         router.refresh()
       },
+      // Server-side publish checks (e.g. a required pipeline field left empty)
+      // must reach the author, or the publish looks like it did nothing.
+      onError: ({ error }) => {
+        if (error.serverError) {
+          toast.error(error.serverError, { duration: 8000 })
+        }
+      },
     },
   )
 

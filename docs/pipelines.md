@@ -503,6 +503,20 @@ the client refetches through its authorised read.
 (a blank field clears it) or a fixed ISO instant. Keys deviate from the plan:
 `pipelineFieldId` / `pipelineFieldIds`.
 
+- **Required fields at publish.** An `addToPipeline` step must give every
+  required field of its pipeline a value: creating the item would reject a
+  missing one at run time and route the step to `error` with only a log line.
+  `assertFlowPipelineStepsPublishable` (`packages/business/src/pipeline/flow-publish-check.ts`,
+  called by `flowVersionService.publish` and `flowService.createPublished`)
+  rejects the publish with a 422 that names each node and field, using the same
+  rule as the step editor (`findMissingRequiredPipelineFields` in flow-config).
+  A blank value is missing; a `{{variable}}` counts as set (it is only known at
+  run time, so an empty variable can still route to `error`). A deleted
+  pipeline is not checked. The editor marks required fields with `*`, warns
+  while they are empty and offers "Add required fields". The trigger action
+  "Pipelines" shows the same warning, but saving a trigger is not checked on the
+  server: a trigger that leaves a required field empty is saved and fails when
+  it runs.
 - **Target resolution.** Every action except `addToPipeline` acts on the
   contact's **most recently created OPEN item** in `pipelineId`
   (`pipelineItemService.resolveTargetForContact`). No open item routes to

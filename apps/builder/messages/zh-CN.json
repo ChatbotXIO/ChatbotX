@@ -4421,7 +4421,9 @@
       "removeHint": "删除联系人在此管道中最近的未结项目。",
       "comment": "评论",
       "destinationPipeline": "目标管道",
-      "destinationStage": "目标阶段"
+      "destinationStage": "目标阶段",
+      "missingRequiredFields": "必填字段尚未填写：{names}。所有必填字段都有值后才能创建条目。",
+      "addRequiredFields": "添加必填字段"
     },
     "aiSegmentImage": {
       "label": "{name}: 图像分割"
@@ -5628,6 +5630,9 @@
     "waTemplateMpmTooManySections": "多商品按钮最多可包含 10 个版块。请在发布前移除部分版块。",
     "waTemplateMpmTooManyProducts": "多商品按钮总共最多可包含 30 个商品。请在发布前移除部分商品。",
     "waTemplateLtoExpirationRequired": "发送前请为限时优惠选择到期时间。",
+    "waTemplatePaymentRequestIncomplete": "发布前请填写此按钮的付款信息。",
+    "waTemplatePaymentRequestInvalid": "付款信息格式无效。请检查金额、链接和卡号后四位。",
+    "waTemplatePaymentRequestMisplaced": "付款信息只能设置在普通（非轮播）模板的付款按钮上。",
     "waTemplateMpmIncompleteProducts": "每个分组至少需要一个已选择的商品——请删除空行或为其选择商品。",
     "unsupportedBlock": "此渠道不支持此模块。",
     "constraintExceeded": "已超出此渠道的限制。",
@@ -5691,7 +5696,21 @@
     "tooManySavedReplyImages": "一条快捷回复最多包含 {max} 张图片",
     "savedReplyImagesNotSentHere": "图片不会在此发送",
     "invalidPhoneNumber": "这不是有效的电话号码。请包含国家代码，例如 +1。",
-    "buttonCallPhoneNumberUnsupported": "此按钮在这里无法拨打电话号码，请选择其他操作。"
+    "buttonCallPhoneNumberUnsupported": "此按钮在这里无法拨打电话号码，请选择其他操作。",
+    "paymentRequest": {
+      "title": "付款请求",
+      "cardEnding": "尾号 {lastFourDigits} 的卡",
+      "status": "WhatsApp 不会通知付款情况，请在支付服务商处查看。",
+      "cardStatus": "客户确认不会扣款，请通过您的支付服务商扣款。",
+      "sentFromTemplate": "模板：{name}"
+    },
+    "paymentConfirmation": {
+      "title": "客户已确认付款",
+      "cardTitle": "客户已确认银行卡付款",
+      "cardEnding": "尾号 {lastFourDigits} 的卡",
+      "notCharged": "尚未扣款，请通过您的支付服务商扣款。",
+      "reference": "参考号 {referenceId}"
+    }
   },
   "messenger": {
     "botProfile": "机器人个人数据",
@@ -7770,7 +7789,28 @@
         "mpmSectionLimitReached": "已达到最多 10 个版块的上限。",
         "mpmProductLimitReached": "已达到最多 30 个商品的上限。",
         "mpmProductsSummary": "{sectionCount} 个版块中共 {productCount} 个商品",
-        "unsupportedButtonParam": "暂不支持此按钮类型。"
+        "unsupportedButtonParam": "暂不支持此按钮类型。",
+        "payment": {
+          "method": {
+            "pix": "Pix",
+            "boleto": "Boleto",
+            "payment_link": "付款链接",
+            "card_on_file": "一键银行卡支付"
+          },
+          "field": {
+            "code": "Pix 代码",
+            "digitableLine": "Boleto 数字行",
+            "url": "付款链接 URL",
+            "lastFourDigits": "银行卡后四位",
+            "credentialId": "银行卡凭据 ID（可选）",
+            "amount": "以 BRL 计的金额，例如 12.34"
+          },
+          "notice": {
+            "general": "使用变量，让每位客户收到各自的付款信息。",
+            "cardOnFile": "一键银行卡支付仅适用于已获 Meta 启用的企业。"
+          },
+          "unsupportedButton": "此模板包含无法发送的付款按钮：无法确定其付款类型。请重新同步模板或选择其他模板。"
+        }
       },
       "text": {
         "label": "文本"
@@ -8116,7 +8156,16 @@
     },
     "credentialSecretsRequired": "请输入应用密钥和系统用户令牌。它们尚未保存。",
     "embeddedSignupCancelled": "注册已取消——你可以关闭此标签页。",
-    "embeddedSignupFailed": "注册未完成——请关闭此标签页并重试。"
+    "embeddedSignupFailed": "注册未完成——请关闭此标签页并重试。",
+    "payment": {
+      "settings": {
+        "title": "付款",
+        "description": "此号码发送付款请求按钮的方式。",
+        "pixRedirectLabel": "以跳转方式发送 Pix",
+        "pixRedirectDescription": "买家打开银行应用付款后返回 WhatsApp。请在 Meta 完成对您企业的接入后再开启；无法跳转的买家仍会收到复制粘贴方式。",
+        "adminOnly": "只有工作区管理员可以更改付款设置。"
+      }
+    }
   },
   "workspace": {
     "deletion": {
