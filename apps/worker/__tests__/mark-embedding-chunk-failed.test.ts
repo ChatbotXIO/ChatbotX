@@ -1,4 +1,4 @@
-import type { Job } from "bullmq"
+import { type Job, UnrecoverableError } from "bullmq"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 import { markEmbeddingChunkFailed } from "../src/ai-agent/lib/mark-embedding-chunk-failed"
 
@@ -57,6 +57,20 @@ describe("markEmbeddingChunkFailed", () => {
     })
 
     expect(mocks.markEmbeddingFailed).not.toHaveBeenCalled()
+  })
+
+  test("marks the chunk failed when the job failed without retrying", async () => {
+    await markEmbeddingChunkFailed({
+      job: jobAfterAttempts(1),
+      jobData: embeddingJobData,
+      workspaceId: "workspace-1",
+      error: new UnrecoverableError("Embedding provider rejected the API key"),
+    })
+
+    expect(mocks.markEmbeddingFailed).toHaveBeenCalledWith({
+      embeddingId: "embedding-1",
+      workspaceId: "workspace-1",
+    })
   })
 
   test("ignores jobs that are not chunk embeddings", async () => {

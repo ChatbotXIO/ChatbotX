@@ -1,9 +1,14 @@
+import { isInvalidApiKeyError } from "@chatbotx.io/ai"
+import type { EmbeddingProvider } from "@chatbotx.io/ai/server"
+import { logProviderError } from "@chatbotx.io/business/error-log"
 import { db, eq, findOrFail } from "@chatbotx.io/database/client"
 import { aiEmbeddingStatuses } from "@chatbotx.io/database/partials"
 import { aiEmbeddingModel } from "@chatbotx.io/database/schema"
 import type { AIJobProcessPendingEmbedding } from "@chatbotx.io/worker-config"
 import { embed } from "ai"
+import { UnrecoverableError } from "bullmq"
 import { resolveEmbeddingModel } from "../../ai-agent/lib/embedding-model"
+import { aiErrorLogProvider } from "../../integration/handlers/shared/ai-error-log-provider"
 import { logger } from "../../lib/logger"
 
 export async function processPendingEmbedding(
@@ -25,13 +30,13 @@ export async function processPendingEmbedding(
     throw new Error("AI embedding is processing or already processed")
   }
 
+  let provider: EmbeddingProvider | undefined
   try {
-    const { model: embeddingModel } = await resolveEmbeddingModel(
-      aiEmbedding.workspaceId,
-    )
+    const resolved = await resolveEmbeddingModel(aiEmbedding.workspaceId)
+    provider = resolved.provider
 
     const { embedding } = await embed({
-      model: embeddingModel,
+      model: resolved.model,
       value: aiEmbedding.content,
       providerOptions: {
         google: { outputDimensionality: 1536 },
@@ -47,6 +52,21 @@ export async function processPendingEmbedding(
       })
       .where(eq(aiEmbeddingModel.id, aiEmbedding.id))
   } catch (error) {
+    if (provider && isInvalidApiKeyError(error)) {
+      // Every retry would be rejected the same way. Surface it on the
+      // workspace's Error Logs, then fail without retrying: the worker's
+      // `failed` hook logs the job and marks the chunk `error`, which a
+      // reindex puts back to `pending` once the key is fixed.
+      await logProviderError({
+        provider: aiErrorLogProvider(provider),
+        workspaceId: aiEmbedding.workspaceId,
+        error,
+      })
+      throw new UnrecoverableError(
+        `Embedding provider rejected the API key: ${error.message}`,
+      )
+    }
+
     logger.error(
       error,
       `processPendingEmbedding item failed for embeddingId: ${aiEmbedding.id}`,

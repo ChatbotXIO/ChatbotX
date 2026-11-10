@@ -207,6 +207,7 @@ function startAIAgentWorker() {
           job,
           jobData: parsedJobData.data,
           workspaceId,
+          error: err,
         })
       },
     },
