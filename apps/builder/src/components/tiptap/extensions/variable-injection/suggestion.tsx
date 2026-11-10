@@ -33,6 +33,12 @@ const suggestion = ({
 
     return {
       onStart: (props) => {
+        // `items` resolves after a delay: the editor can be gone by then, and a
+        // popup opened for it would never be destroyed.
+        if (props.editor.isDestroyed) {
+          return
+        }
+
         component = new ReactRenderer(VariableList, {
           props,
           editor: props.editor,
