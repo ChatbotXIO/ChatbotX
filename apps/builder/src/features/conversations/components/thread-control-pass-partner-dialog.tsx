@@ -24,6 +24,7 @@ import { useTranslations } from "next-intl"
 import { useEffect } from "react"
 import { useForm } from "react-hook-form"
 import { THREAD_CONTROL_PASS_COPY_KEYS } from "@/features/messages/lib/thread-control-channel-ui"
+import { useValidationErrorMap } from "@/lib/validation/use-validation-error-map"
 import { useCloseWhenSettled } from "../hooks/use-close-when-settled"
 import { useThreadControlAction } from "../hooks/use-thread-control-action"
 import { useThreadTakePermission } from "../hooks/use-thread-take-permission"
@@ -53,8 +54,9 @@ function ThreadControlPassForm({
   onSubmit,
 }: PassFormProps) {
   const t = useTranslations()
+  const errorMap = useValidationErrorMap()
   const form = useForm<ThreadControlPassFormValues>({
-    resolver: zodResolver(threadControlPassFormSchema),
+    resolver: zodResolver(threadControlPassFormSchema, { error: errorMap }),
     defaultValues: { targetRole: defaultRole, metadata: "" },
   })
   // The stored roles may arrive after the dialog opened: follow the new default
@@ -85,6 +87,7 @@ function ThreadControlPassForm({
           required
         />
         <TextareaField
+          className="max-h-40"
           label={t("conversationRouting.pass.noteLabel")}
           name="metadata"
           rows={3}

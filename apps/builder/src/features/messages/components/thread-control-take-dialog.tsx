@@ -20,6 +20,7 @@ import {
   type ThreadControlNoteFormValues,
   threadControlNoteFormSchema,
 } from "@/features/conversations/schema/thread-control"
+import { useValidationErrorMap } from "@/lib/validation/use-validation-error-map"
 
 type TakeFormProps = {
   isExecuting: boolean
@@ -34,8 +35,9 @@ function ThreadControlTakeForm({
   onSubmit,
 }: TakeFormProps) {
   const t = useTranslations()
+  const errorMap = useValidationErrorMap()
   const form = useForm<ThreadControlNoteFormValues>({
-    resolver: zodResolver(threadControlNoteFormSchema),
+    resolver: zodResolver(threadControlNoteFormSchema, { error: errorMap }),
     defaultValues: { metadata: "" },
   })
 
@@ -46,6 +48,7 @@ function ThreadControlTakeForm({
         onSubmit={form.handleSubmit(onSubmit)}
       >
         <TextareaField
+          className="max-h-40"
           label={t("conversationRouting.composer.takeOverNoteLabel")}
           name="metadata"
           rows={3}

@@ -297,6 +297,9 @@ describe("ThreadControlPassPartnerDialog", () => {
     await submit()
 
     expect(actionHook.execute).not.toHaveBeenCalled()
+    // Said in the project's translated words, not zod's English sentence.
+    expect(document.body.textContent).toContain("maxLength")
+    expect(document.body.textContent).not.toContain("Too big")
   })
 
   test("keys typed in the note never reach the actions menu around the dialog", () => {
