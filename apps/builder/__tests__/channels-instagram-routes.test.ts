@@ -68,13 +68,14 @@ vi.mock("next/navigation", () => ({
 }))
 
 // The mock request objects below only carry `nextUrl`, not the real
-// `url`/`headers` a NextRequest would have — resolve the public URL (used
+// `url`/`headers` a NextRequest would have — resolve the public host (used
 // to pin the connect session's `originHost`) straight from `nextUrl`.
 vi.mock("@chatbotx.io/utils", async (importOriginal) => {
   const actual = await importOriginal<typeof ChatbotxUtilsModule>()
   return {
     ...actual,
-    getPublicUrlFromRequest: (request: { nextUrl: URL }) => request.nextUrl,
+    getPublicHostFromRequest: (request: { nextUrl: URL }) =>
+      request.nextUrl.host,
   }
 })
 
@@ -113,8 +114,11 @@ vi.mock("@/lib/auth/utils", () => ({
   getCurrentUserId: mockGetCurrentUserId,
 }))
 
-function requestWithWorkspaceId(workspaceId: string | null) {
-  const url = new URL("http://localhost/channels/instagram")
+function requestWithWorkspaceId(
+  workspaceId: string | null,
+  host = "localhost",
+) {
+  const url = new URL(`http://${host}/channels/instagram`)
   if (workspaceId) {
     url.searchParams.set("workspaceId", workspaceId)
   }
@@ -193,6 +197,18 @@ describe.each([
       id: "session-1",
       returnUrl: `${selectPath}?session=session-1`,
     })
+  })
+
+  test("preserves the public port on the OAuth relay host", async () => {
+    const { GET } = await import(routePath)
+
+    await expect(
+      GET(requestWithWorkspaceId("ws-1", "chatbotx.example:8443")),
+    ).rejects.toThrow("redirect:https://facebook.com/oauth-dialog")
+
+    expect(mockStartSession).toHaveBeenCalledWith(
+      expect.objectContaining({ originHost: "chatbotx.example:8443" }),
+    )
   })
 
   test("defers workspace creation into startSession's own transaction when there is no workspaceId yet (first channel ever) — a cancelled/failed start must not leave an empty orphan workspace behind", async () => {
