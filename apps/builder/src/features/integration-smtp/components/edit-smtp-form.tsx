@@ -1,6 +1,7 @@
 "use client"
 
 import {
+  imapHostMap,
   smtpHostMap,
   smtpProviders,
 } from "@chatbotx.io/integration-smtp/schema"
@@ -21,6 +22,8 @@ import { updateSmtpAction } from "../actions/update-smtp.action"
 import { updateSmtpRequest } from "../schema/mutation"
 import type { IntegrationSmtpResource } from "../schema/resource"
 import { smtpProviderLabels } from "../schema/resource"
+import { SmtpReceiveFields } from "./smtp-receive-fields"
+import { SmtpSetupGuide } from "./smtp-setup-guide"
 
 type EditSmtpFormProps = {
   readonly workspaceId: string
@@ -38,6 +41,9 @@ export const EditSmtpForm = ({
   const t = useTranslations()
   const router = useRouter()
   const invalidateInboxes = useInvalidateInboxes()
+
+  const initialProvider =
+    smtpProviders.safeParse(integrationSmtp.provider).data ?? "other"
 
   const providerOptions = useMemo(
     () =>
@@ -69,12 +75,22 @@ export const EditSmtpForm = ({
       },
       formProps: {
         defaultValues: {
-          provider: "other",
-          host: "",
-          port: "",
+          provider: initialProvider,
+          ...(initialProvider === "other"
+            ? { host: "", port: "" }
+            : smtpHostMap[initialProvider]),
           username: "",
           password: "",
-          fromAddress: "",
+          fromAddress: integrationSmtp.fromAddress,
+          imap: {
+            enabled: integrationSmtp.imapEnabled,
+            ...(integrationSmtp.imapHost
+              ? { host: integrationSmtp.imapHost }
+              : {}),
+            ...(integrationSmtp.imapPort
+              ? { port: integrationSmtp.imapPort }
+              : {}),
+          },
         },
       },
     },
@@ -88,6 +104,10 @@ export const EditSmtpForm = ({
       smtpHostMap[value as (typeof smtpProviders.options)[number]]
     form.setValue("host", host)
     form.setValue("port", port || 587)
+    // A relay has no mailbox to read: never carry IMAP over from the old provider.
+    if (imapHostMap[value as (typeof smtpProviders.options)[number]] === null) {
+      form.setValue("imap.enabled", false)
+    }
   }
 
   return (
@@ -104,6 +124,8 @@ export const EditSmtpForm = ({
             }
           }}
         />
+
+        <SmtpSetupGuide provider={selectedProvider} />
 
         <div className="flex gap-2">
           <InputField
@@ -149,6 +171,14 @@ export const EditSmtpForm = ({
           placeholder={t("fields.fromAddress.placeholder")}
           required
           type="email"
+        />
+
+        <Separator />
+
+        <SmtpReceiveFields
+          integrationSmtpId={integrationSmtp.id}
+          provider={selectedProvider}
+          workspaceId={workspaceId}
         />
 
         <div className="flex justify-end gap-2">

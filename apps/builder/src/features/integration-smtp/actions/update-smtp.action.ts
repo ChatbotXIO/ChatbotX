@@ -18,7 +18,8 @@ export const updateSmtpAction = workspaceActionClient
 
     // Merging against the stored auth, the change diff, and the audit record
     // all live in the service.
-    const { host, port, auth } = await prepareSmtpAuth(parsedInput)
+    const { host, port, auth, imap, imapUsername, imapPassword } =
+      await prepareSmtpAuth(parsedInput)
 
     await userService.recordConnectionAuthorization({
       userId: ctx.user.id,
@@ -27,10 +28,11 @@ export const updateSmtpAction = workspaceActionClient
       phase: "credentialsValidated",
       workspaceId,
     })
+    const { imap: _imapRequest, ...smtpFields } = parsedInput
 
     return await integrationSmtpService.update({
       workspaceId,
       id,
-      data: { ...parsedInput, host, port },
+      data: { ...smtpFields, host, port, imap, imapUsername, imapPassword },
     })
   })

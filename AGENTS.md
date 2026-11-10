@@ -225,6 +225,7 @@ See **`.agents/rules/git.md`** for the full canonical rules (commit format, bran
 - Templates (creating, sharing, what an install copies, folders and list order, warning audiences, View Analytics, updates, uninstall, public API, deploy notes): `docs/templates.md`
 - Templates regression testing (rule → test map, public-API end-to-end script `scripts/templates-e2e.mjs`, manual UI checklist): `docs/templates-testing.md`
 - Failed outgoing messages (kept with `sendError` only for a member's Inbox send; every other failed send — API/CLI/MCP, automations, broadcasts — is removed with a `messageRemoved` realtime event and logged to the Error Log; `sendFrom: "inbox" | "api"`, `sentFromInbox` stamp, `settleFailedOutgoingMessage`): `docs/failed-outgoing-messages.md`
+- Email channel (SMTP inbox as a two-way channel: threading identity, send/flow support, IMAP polling cursor and fairness, inbound-parse webhooks for SendGrid/Mailgun/Postmark/Brevo, loop protection, size caps, setup guide): `docs/email-channel.md`
 - Pipelines (CRM kanban boards: data model, access scope/ACL, mutation engine and post-commit effects, locking order, queued stage deletion, keyset cursors, caching policy, pipelineItem* events/webhooks/realtime, Pipelines flow step, `pipelineItem` contact filter, `{{pipelines.*}}` variables, templates, public API/CLI/MCP, analytics, limits): `docs/pipelines.md`
 
 When unsure, search the codebase for an existing feature that resembles the request and mirror its structure, imports, and error-handling style.
