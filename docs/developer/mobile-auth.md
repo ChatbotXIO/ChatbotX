@@ -50,11 +50,10 @@ Content-Type: application/json
 }
 ```
 
-- **`nonce`**: generate a random string, send `SHA256(nonce)` to Apple in the
-  authorization request and the **raw** `nonce` here. The server accepts the
-  token's `nonce` claim when it equals the raw value or its SHA-256 hex. The
-  field is optional in the API, but without it the server cannot detect a
-  replayed identity token (valid for one hour), so the app should always send it.
+- **`nonce`**: **required**. Generate a random string, send `SHA256(nonce)` to
+  Apple in the authorization request and the **raw** `nonce` here. The server
+  accepts the token's `nonce` claim when it equals the raw value or its SHA-256
+  hex.
 - **`user.name`**: Apple returns the name only on the very first authorization
   for an app. Send it in that same call; it cannot be fetched later.
 - **`deviceId`**: optional; generated when omitted, as for the other grants.
@@ -67,7 +66,7 @@ Content-Type: application/json
 
 | Status | `code`                | Meaning                                                         |
 | ------ | --------------------- | --------------------------------------------------------------- |
-| 400    | (validation)          | Unsupported `provider`, missing or oversized `idToken`          |
+| 400    | (validation)          | Missing/empty `nonce`, unsupported `provider`, or bad `idToken` |
 | 401    | `INVALID_ID_TOKEN`    | Bad signature, issuer, audience, expiry or nonce; no email/sub  |
 | 401    | `OAUTH_LINK_ERROR`    | Account could not be linked or created, including blocked signup |
 | 404    | `PROVIDER_NOT_ENABLED`| `APPLE_APP_BUNDLE_IDS` is not configured                        |

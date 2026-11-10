@@ -1,12 +1,21 @@
+import { createHash } from "node:crypto"
+
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 
 /**
  * Hoisted mock handles. `vi.mock` factories run before module top-level, so any
  * value a factory references must be created with `vi.hoisted`.
  */
-const { listActiveDomains, betterAuthMock } = vi.hoisted(() => ({
-  listActiveDomains: vi.fn(),
+const {
+  betterAuthMock,
+  createRemoteJWKSetMock,
+  jwtVerifyMock,
+  listActiveDomains,
+} = vi.hoisted(() => ({
   betterAuthMock: vi.fn((config: Record<string, unknown>) => config),
+  createRemoteJWKSetMock: vi.fn(() => "apple-jwks"),
+  jwtVerifyMock: vi.fn(),
+  listActiveDomains: vi.fn(),
 }))
 
 vi.mock("better-auth", async () => {
@@ -17,6 +26,11 @@ vi.mock("better-auth", async () => {
     betterAuth: betterAuthMock,
   }
 })
+
+vi.mock("jose", () => ({
+  createRemoteJWKSet: createRemoteJWKSetMock,
+  jwtVerify: jwtVerifyMock,
+}))
 
 vi.mock("better-auth/adapters/drizzle", () => ({
   drizzleAdapter: () => ({}),
@@ -88,10 +102,14 @@ type AppleConfig = {
   clientSecret: string
   audience: string[]
   appBundleIdentifier: string
+  verifyIdToken: (token: string, nonce?: string) => Promise<boolean>
 }
 type ProvidersConfig = {
   socialProviders?: Record<string, unknown> & { apple?: AppleConfig }
 }
+
+const sha256Hex = (value: string) =>
+  createHash("sha256").update(value).digest("hex")
 
 describe("createAuth — native Apple provider (APPLE_APP_BUNDLE_IDS)", () => {
   beforeEach(() => {
@@ -102,6 +120,8 @@ describe("createAuth — native Apple provider (APPLE_APP_BUNDLE_IDS)", () => {
     vi.stubEnv("NEXT_PUBLIC_BROKER_URL", BROKER_URL)
     vi.stubEnv("BETTER_AUTH_SECRET", "test-secret")
     vi.stubEnv("NEXT_PHASE", "")
+    createRemoteJWKSetMock.mockClear()
+    jwtVerifyMock.mockReset()
   })
 
   afterEach(() => {
@@ -126,7 +146,7 @@ describe("createAuth — native Apple provider (APPLE_APP_BUNDLE_IDS)", () => {
 
     const config = await buildConfig()
 
-    expect(config.socialProviders?.apple).toEqual({
+    expect(config.socialProviders?.apple).toMatchObject({
       clientId: "com.brand.a",
       clientSecret: "",
       audience: ["com.brand.a", "com.brand.b"],
@@ -138,10 +158,51 @@ describe("createAuth — native Apple provider (APPLE_APP_BUNDLE_IDS)", () => {
     expect((await buildConfig()).socialProviders).toBeUndefined()
 
     vi.resetModules()
+
     betterAuthMock.mockClear()
     vi.stubEnv("APPLE_APP_BUNDLE_IDS", " , ")
 
     expect((await buildConfig()).socialProviders).toBeUndefined()
+  })
+  test("verifies matching Apple nonces against one cached remote key set", async () => {
+    vi.stubEnv("APPLE_APP_BUNDLE_IDS", "com.brand.a,com.brand.b")
+    const config = await buildConfig()
+    const verifyIdToken = config.socialProviders?.apple?.verifyIdToken
+
+    expect(verifyIdToken).toBeTypeOf("function")
+    if (!verifyIdToken) {
+      throw new Error("Apple provider should verify native identity tokens")
+    }
+
+    await expect(verifyIdToken("token", undefined)).resolves.toBe(false)
+    expect(jwtVerifyMock).not.toHaveBeenCalled()
+
+    jwtVerifyMock
+      .mockResolvedValueOnce({ payload: { nonce: sha256Hex("raw-nonce") } })
+      .mockResolvedValueOnce({ payload: { nonce: "raw-nonce" } })
+      .mockResolvedValueOnce({ payload: { nonce: "wrong-nonce" } })
+      .mockResolvedValueOnce({ payload: {} })
+      .mockRejectedValueOnce(new Error("wrong audience"))
+
+    await expect(verifyIdToken("token", "raw-nonce")).resolves.toBe(true)
+    await expect(verifyIdToken("token", "raw-nonce")).resolves.toBe(true)
+    await expect(verifyIdToken("token", "raw-nonce")).resolves.toBe(false)
+    await expect(verifyIdToken("token", "raw-nonce")).resolves.toBe(false)
+    await expect(verifyIdToken("token", "raw-nonce")).resolves.toBe(false)
+
+    expect(createRemoteJWKSetMock).toHaveBeenCalledTimes(1)
+    expect(jwtVerifyMock).toHaveBeenCalledWith(
+      "token",
+      "apple-jwks",
+      expect.objectContaining({
+        algorithms: ["RS256"],
+        audience: ["com.brand.a", "com.brand.b"],
+        clockTolerance: 30,
+        issuer: "https://appleid.apple.com",
+        maxTokenAge: "1h",
+        requiredClaims: ["iss", "sub", "aud", "exp", "iat"],
+      }),
+    )
   })
 
   test("coexists with the per-tenant social providers without touching them", async () => {

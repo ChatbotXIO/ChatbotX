@@ -4,7 +4,6 @@ import {
   schemaCheckFor,
 } from "@better-auth/core/db/internal"
 import { mcp } from "@better-auth/mcp"
-
 import {
   customDomainService,
   mobileRefreshTokenService,
@@ -55,6 +54,7 @@ import {
   magicLink,
   oneTimeToken,
 } from "better-auth/plugins"
+import { createRemoteJWKSet, jwtVerify } from "jose"
 import { PHASE_PRODUCTION_BUILD } from "next/constants"
 import { claimUnverifiedAccountBeforeLink } from "./claim-unverified-account"
 import { resolveGenericOAuthConfig } from "./generic-oauth"
@@ -75,6 +75,47 @@ import {
   type SignUpGateContext,
 } from "./signup-gate"
 import { getTenantId, resolveTenantOwnerId } from "./tenant-context"
+
+const APPLE_JWKS = createRemoteJWKSet(
+  new URL("https://appleid.apple.com/auth/keys"),
+)
+const NATIVE_ONLY_PROVIDERS: Record<string, true> = { apple: true }
+
+const sha256Hex = async (value: string): Promise<string> => {
+  const digest = await crypto.subtle.digest(
+    "SHA-256",
+    new TextEncoder().encode(value),
+  )
+  return Array.from(new Uint8Array(digest), (byte) =>
+    byte.toString(16).padStart(2, "0"),
+  ).join("")
+}
+
+const createAppleIdTokenVerifier =
+  (bundleIds: string[]) =>
+  async (token: string, nonce?: string): Promise<boolean> => {
+    if (!nonce) {
+      return false
+    }
+
+    try {
+      const { payload } = await jwtVerify(token, APPLE_JWKS, {
+        issuer: "https://appleid.apple.com",
+        audience: bundleIds,
+        algorithms: ["RS256"],
+        maxTokenAge: "1h",
+        requiredClaims: ["iss", "sub", "aud", "exp", "iat"],
+        clockTolerance: 30,
+      })
+      const tokenNonce = payload.nonce
+      return (
+        typeof tokenNonce === "string" &&
+        (tokenNonce === nonce || tokenNonce === (await sha256Hex(nonce)))
+      )
+    } catch {
+      return false
+    }
+  }
 
 const getTenantSettings = async (request: Request) => {
   const domain = request.headers.get("x-domain") ?? ""
@@ -394,10 +435,8 @@ export type AuthConfig = {
 }
 
 /**
- * Native Sign in with Apple, verified by `POST /mobile/token` (`id_token`
- * grant). Only the identity token's signature, issuer and `aud` (the iOS bundle
- * IDs) are checked, so there is no client secret and `createAuthorizationURL`
- * fails by design: the web redirect flow cannot start for Apple.
+ * Native Sign in with Apple, verified only by `POST /mobile/token` (`id_token`
+ * grant). Web social and callback paths are blocked by `guardAuthEntryPoints`.
  */
 function buildAppleProvider() {
   const bundleIds = getAppleAppBundleIds()
@@ -410,6 +449,7 @@ function buildAppleProvider() {
     clientSecret: "",
     audience: bundleIds,
     appBundleIdentifier: primaryBundleId,
+    verifyIdToken: createAppleIdTokenVerifier(bundleIds),
   }
 }
 
@@ -576,20 +616,28 @@ function buildDatabaseHooks({
 }
 
 /**
- * Gates `/sign-up/email` on two independent rules, both enforced before
- * better-auth creates the row:
- * - the Facebook placeholder domain is reserved for phone-only Facebook users
- *   (see `placeholder-email.ts`); nobody may register it by hand, or they
- *   could pre-create the row a Facebook sign-in later resolves to by email.
- * - signup lockdown (`AUTH_DISABLE_SIGNUP`): rejected unless the request
- *   carries a live invitation cookie (`isSignUpAllowed`). Existing email
- *   sign-*in* is untouched — only this one path is matched.
+ * Gates `/sign-up/email` and prevents native-only providers from reaching
+ * better-auth's web social endpoints.
  */
-const guardEmailSignUp = createAuthMiddleware(async (ctx) => {
+const guardAuthEntryPoints = createAuthMiddleware(async (ctx) => {
+  const body = ctx.body as { email?: unknown; provider?: unknown } | undefined
   if (
-    ctx.path === "/sign-up/email" &&
-    isPlaceholderEmail((ctx.body as { email?: unknown } | undefined)?.email)
+    (ctx.path === "/sign-in/social" || ctx.path === "/link-social") &&
+    typeof body?.provider === "string" &&
+    NATIVE_ONLY_PROVIDERS[body.provider]
   ) {
+    throw new APIError("NOT_FOUND", {
+      code: "PROVIDER_NOT_ENABLED",
+      message: "Provider is not enabled",
+    })
+  }
+  if (ctx.path === "/callback/:id" && ctx.params?.id === "apple") {
+    throw new APIError("NOT_FOUND", {
+      code: "PROVIDER_NOT_ENABLED",
+      message: "Provider is not enabled",
+    })
+  }
+  if (ctx.path === "/sign-up/email" && isPlaceholderEmail(body?.email)) {
     throw new APIError("BAD_REQUEST", { message: "Invalid email" })
   }
   if (ctx.path === "/sign-up/email" && !(await isSignUpAllowed(ctx))) {
@@ -713,7 +761,7 @@ export function createAuth(config: AuthConfig) {
     },
     socialProviders,
     hooks: {
-      before: guardEmailSignUp,
+      before: guardAuthEntryPoints,
     },
     emailAndPassword: {
       enabled: true,

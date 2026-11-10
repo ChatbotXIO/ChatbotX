@@ -12,6 +12,7 @@ const BUNDLE_ID = "com.example.brand-a"
 const OTHER_BUNDLE_ID = "com.example.brand-b"
 const APPLE_SUB = "001234.abcdef.5678"
 const KEY_ID = "apple-test-key"
+const DEFAULT_NONCE = "native-test-nonce"
 const ONE_HOUR_SECONDS = 3600
 const RSA_ALGORITHM = {
   name: "RSASSA-PKCS1-v1_5",
@@ -77,6 +78,7 @@ const signAppleToken = async (
     sub: APPLE_SUB,
     iat: nowSeconds(),
     exp: nowSeconds() + ONE_HOUR_SECONDS,
+    nonce: sha256Hex(DEFAULT_NONCE),
     email: "agent@example.com",
     email_verified: true,
     ...claims,
@@ -165,6 +167,7 @@ const appleGrant = (auth: TestAuth, body: Record<string, unknown>) =>
       body: JSON.stringify({
         grantType: "id_token",
         provider: "apple",
+        nonce: DEFAULT_NONCE,
         ...body,
       }),
     }),
@@ -321,6 +324,32 @@ describe("POST /mobile/token — id_token grant (Apple)", () => {
   })
 
   describe("nonce", () => {
+    test.each([
+      ["missing", undefined],
+      ["empty", ""],
+    ])("rejects a %s nonce during request validation", async (_description, nonce) => {
+      const auth = createAppleAuth(store)
+
+      const response = await appleGrant(auth, {
+        idToken: await signAppleToken(),
+        nonce,
+      })
+
+      expect(response.status).toBe(400)
+      expect(store.user).toHaveLength(0)
+    })
+
+    test("accepts the raw nonce when the token carries it", async () => {
+      const auth = createAppleAuth(store)
+
+      const response = await appleGrant(auth, {
+        idToken: await signAppleToken({ nonce: "raw-nonce" }),
+        nonce: "raw-nonce",
+      })
+
+      expect(response.status).toBe(200)
+    })
+
     test("accepts the raw nonce when the token carries its SHA-256 hex", async () => {
       const auth = createAppleAuth(store)
 
@@ -377,6 +406,17 @@ describe("POST /mobile/token — id_token grant (Apple)", () => {
       expect(store.account).toHaveLength(0)
       expect(refreshService.issue).not.toHaveBeenCalled()
     })
+  })
+  test("rejects a token with an empty subject", async () => {
+    const auth = createAppleAuth(store)
+
+    const response = await appleGrant(auth, {
+      idToken: await signAppleToken({ sub: "" }),
+    })
+
+    expect(response.status).toBe(401)
+    expect((await response.json()).code).toBe("INVALID_ID_TOKEN")
+    expect(store.user).toHaveLength(0)
   })
 
   test("a token without an email is 401", async () => {

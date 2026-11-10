@@ -78,7 +78,7 @@ const tokenRequestSchema = z.discriminatedUnion("grantType", [
     provider: z.enum(ID_TOKEN_PROVIDERS),
     idToken: z.string().min(1).max(ID_TOKEN_MAX_LENGTH),
     /** Raw nonce; the app sends its SHA-256 to the provider. */
-    nonce: z.string().max(NONCE_MAX_LENGTH).optional(),
+    nonce: z.string().min(1).max(NONCE_MAX_LENGTH),
     /** Apple only sends the name on the first authorization. */
     user: z
       .object({
@@ -322,13 +322,16 @@ const authenticateWithIdToken = async (
       accountId,
       idToken: input.idToken,
     },
+    // AUTH_DISABLE_SIGNUP is enforced by buildDatabaseHooks' user.create.before hook.
     disableSignUp:
-      provider.disableImplicitSignUp || provider.options?.disableSignUp,
+      provider.disableImplicitSignUp ||
+      provider.options?.disableSignUp ||
+      provider.disableSignUp,
     source: {
       method: "oauth",
       oauth: {
         providerId: provider.id,
-        profile: userInfo.data as Record<string, unknown>,
+        profile: { ...userInfo.data },
       },
     },
   })
@@ -348,16 +351,17 @@ const resolveAccountId = async (
   tokens: AccountSubjectInput["tokens"],
   profile: AccountSubjectInput["profile"],
 ): Promise<string> => {
+  let subject: unknown
   try {
-    const subject = await provider.accountSubject({ tokens, profile })
-    if (subject == null) {
-      throw invalidIdToken("Identity token has no subject")
-    }
-    return String(subject).trim()
+    subject = await provider.accountSubject({ tokens, profile })
   } catch {
-    // Falls through to the same error as a missing subject.
+    subject = null
   }
-  throw invalidIdToken("Identity token has no subject")
+  const accountId = subject == null ? "" : String(subject).trim()
+  if (!accountId) {
+    throw invalidIdToken("Identity token has no subject")
+  }
+  return accountId
 }
 
 /** Atomically consumes a one-time exchange code (single use even under races). */
