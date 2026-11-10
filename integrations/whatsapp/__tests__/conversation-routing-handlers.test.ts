@@ -157,6 +157,31 @@ describe("updateThreadControl handler", () => {
     ).toBe(false)
   })
 
+  it("treats a pass targeting escalation as an untargeted pass", () => {
+    const body = buildThreadControlBody({
+      recipient: { to: USER },
+      action: "pass",
+      targetRole: "escalation",
+      metadata: "note",
+    })
+
+    expect("control_pass" in body).toBe(false)
+    expect(body.metadata).toBe("note")
+  })
+
+  it("sends the metadata note on take and pass", () => {
+    const recipient = { to: USER }
+
+    expect(
+      buildThreadControlBody({ recipient, action: "take", metadata: "n" })
+        .metadata,
+    ).toBe("n")
+    expect(
+      buildThreadControlBody({ recipient, action: "pass", metadata: "n" })
+        .metadata,
+    ).toBe("n")
+  })
+
   const rejectWithMetaCode = (code: number) =>
     postMock.mockReturnValueOnce({
       json: vi

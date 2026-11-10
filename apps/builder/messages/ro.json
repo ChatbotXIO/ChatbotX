@@ -9559,11 +9559,14 @@
       "success": "Conversație eliberată"
     },
     "pass": {
-      "menuItem": "Transferă la escaladare",
-      "title": "Transferi către partenerul de escaladare?",
-      "description": "Predai această conversație partenerului tău de escaladare? Răspunsurile tale vor fi suspendate până când conversația revine.",
+      "menuItem": "Predă către un partener",
+      "title": "Predai către un partener?",
+      "description": "Alege cine preia această conversație. Răspunsurile tale sunt puse în pauză până când conversația revine.",
       "confirm": "Transferă",
-      "success": "Conversație transferată partenerului de escaladare"
+      "success": "Conversație transferată partenerului de escaladare",
+      "targetLabel": "Predă către",
+      "noteLabel": "Notă pentru partenerul care preia",
+      "successTargeted": "Conversație predată către {role}"
     },
     "aiHandover": {
       "label": "BizAI",
@@ -9582,7 +9585,10 @@
       "notEscalation": "Doar partenerul de escaladare poate prelua. Rutarea se configurează în Meta Business Suite.",
       "notPrimaryReceiver": "Această aplicație trebuie să fie destinatarul principal al Paginii pentru a prelua. Setează acest lucru în setările Handover Protocol ale Paginii.",
       "learnMore": "Află mai multe",
-      "dismiss": "Trimite oricum"
+      "dismiss": "Trimite oricum",
+      "takeOverTitle": "Preiei această conversație?",
+      "takeOverDescription": "Partenerul nu o mai gestionează, iar tu preiei controlul. Îi poți lăsa o notă.",
+      "takeOverNoteLabel": "Notă pentru partenerul curent"
     },
     "divider": {
       "ownerHandling": "{owner} gestionează acum această conversație",
@@ -9655,8 +9661,12 @@
     "step": {
       "action": "Acțiune",
       "release": "Eliberează conversația",
-      "pass": "Transferă către partenerul de escaladare",
-      "helper": "Doar WhatsApp. Pe alte canale, sau când conversația nu este gestionată aici, pasul urmează calea de eroare."
+      "pass": "Predă către un partener",
+      "helper": "Doar WhatsApp. Pe alte canale, sau când conversația nu este gestionată aici, pasul urmează calea de eroare.",
+      "targetRole": "Predă către",
+      "targetRoleDefault": "Partener de escaladare (implicit)",
+      "metadata": "Notă de predare",
+      "metadataHelper": "Opțional. Trimisă ca atare aplicației care primește conversația. Variabilele sunt acceptate. Până la {max} de caractere."
     },
     "template": {
       "sent": "Șablon trimis"

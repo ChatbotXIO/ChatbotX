@@ -22,6 +22,7 @@ const {
   canReturnToAiAgent,
   findAiHandoverContactInbox,
   resolveThreadControlView,
+  resolveThreadPassChoices,
 } = await import("@/features/conversations/utils/thread-control")
 
 const NOW = new Date("2026-09-29T10:00:00.000Z")
@@ -232,5 +233,57 @@ describe("header return-to-AI resolution (findAiHandoverContactInbox + canReturn
         inbox("ci-ms", "messenger", unobserved),
       ]),
     ).toBe("ci-ms")
+  })
+})
+
+describe("Pass while this app holds the escalation role", () => {
+  const ownedAsEscalation = (channel: string) => ({
+    contactInboxes: [
+      inbox("ci", channel, {
+        threadControlState: "owned",
+        threadOwnerRole: "escalation",
+      }),
+    ],
+  })
+
+  test("WhatsApp still offers Pass (a targeted pass to another role is valid)", () => {
+    expect(
+      resolveThreadControlView(ownedAsEscalation("whatsapp"), NOW, "whatsapp"),
+    ).toMatchObject({ canPass: true })
+  })
+
+  test("Messenger does not: its pass goes to the AI agent", () => {
+    expect(
+      resolveThreadControlView(
+        ownedAsEscalation("messenger"),
+        NOW,
+        "messenger",
+      ),
+    ).toMatchObject({ canPass: false })
+  })
+})
+
+describe("resolveThreadPassChoices", () => {
+  test("any other owner may pass to every role and defaults to the escalation partner", () => {
+    const { roles, defaultRole } = resolveThreadPassChoices(false)
+
+    expect(roles).toEqual([
+      "ai_agent",
+      "ctwa",
+      "customer_service",
+      "escalation",
+      "marketing",
+      "utility",
+    ])
+    expect(defaultRole).toBe("escalation")
+  })
+
+  test("the escalation partner cannot pass to itself and defaults to customer service", () => {
+    const { roles, defaultRole } = resolveThreadPassChoices(true)
+
+    expect(roles).not.toContain("escalation")
+    expect(roles).toHaveLength(5)
+    expect(defaultRole).toBe("customer_service")
+    expect(roles).toContain(defaultRole)
   })
 })

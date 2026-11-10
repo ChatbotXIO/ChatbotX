@@ -1,16 +1,24 @@
 import { readFileSync } from "node:fs"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
-import { threadControlStepDefaultFn } from "@chatbotx.io/flow-config"
+import {
+  type ThreadControlStepSchema,
+  threadControlStepDefaultFn,
+} from "@chatbotx.io/flow-config"
 import { ChannelError, ChannelErrorCategory } from "@chatbotx.io/sdk"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const mocks = vi.hoisted(() => ({
   requestThreadControlAction: vi.fn(),
+  resolveContactVariablesDeep: vi.fn(),
   loggerWarn: vi.fn(),
 }))
 
 vi.mock("@chatbotx.io/channel-registry/thread-control", () => ({
   requestThreadControlAction: mocks.requestThreadControlAction,
+}))
+
+vi.mock("@chatbotx.io/variables", () => ({
+  resolveContactVariablesDeep: mocks.resolveContactVariablesDeep,
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
@@ -47,16 +55,25 @@ const { stepThreadControl } = await import(
   "../src/integration/handlers/step-handlers"
 )
 
-const props = (action: "release" | "pass") =>
+const conversation = { id: "conv-1", workspaceId: "ws-1", contactId: "c-1" }
+const contactInbox = { id: "ci-1", channel: "whatsapp" }
+
+const props = (
+  action: "release" | "pass",
+  step: Partial<ThreadControlStepSchema> = {},
+) =>
   ({
-    conversation: { id: "conv-1", workspaceId: "ws-1" },
-    contactInbox: { id: "ci-1", channel: "whatsapp" },
-    step: threadControlStepDefaultFn({ action }),
+    conversation,
+    contactInbox,
+    step: threadControlStepDefaultFn({ action, ...step }),
   }) as never
 
 beforeEach(() => {
   vi.clearAllMocks()
   mocks.requestThreadControlAction.mockResolvedValue({})
+  mocks.resolveContactVariablesDeep.mockImplementation(
+    async (_contactId: string, value: { text: string }) => value,
+  )
 })
 
 describe("stepThreadControl", () => {
@@ -73,6 +90,77 @@ describe("stepThreadControl", () => {
       action,
     })
     expect(result).toMatchObject({ status: "success" })
+  })
+
+  test("a pass forwards the target role and the note with its variables resolved", async () => {
+    mocks.resolveContactVariablesDeep.mockResolvedValue({
+      text: "Customer Ana wants a refund",
+    })
+
+    await stepThreadControl(
+      props("pass", {
+        targetRole: "customer_service",
+        metadata: "Customer {{first_name}} wants a refund",
+      }),
+    )
+
+    expect(mocks.resolveContactVariablesDeep).toHaveBeenCalledWith(
+      "c-1",
+      { text: "Customer {{first_name}} wants a refund" },
+      { conversation, contactInbox },
+    )
+    expect(mocks.requestThreadControlAction).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      contactInboxId: "ci-1",
+      conversationId: "conv-1",
+      action: "pass",
+      targetRole: "customer_service",
+      metadata: "Customer Ana wants a refund",
+    })
+  })
+
+  test("a pass without a note resolves no variables and sends no note", async () => {
+    await stepThreadControl(props("pass", { targetRole: "marketing" }))
+
+    expect(mocks.resolveContactVariablesDeep).not.toHaveBeenCalled()
+    expect(mocks.requestThreadControlAction).toHaveBeenCalledWith(
+      expect.objectContaining({ targetRole: "marketing", metadata: undefined }),
+    )
+  })
+
+  test("a note that resolves to blank text is dropped", async () => {
+    mocks.resolveContactVariablesDeep.mockResolvedValue({ text: "   " })
+
+    await stepThreadControl(props("pass", { metadata: "{{empty_field}}" }))
+
+    expect(mocks.requestThreadControlAction).toHaveBeenCalledWith(
+      expect.objectContaining({ metadata: undefined }),
+    )
+  })
+
+  test("a release never forwards a stale target role or note", async () => {
+    await stepThreadControl(
+      props("release", { targetRole: "marketing", metadata: "old note" }),
+    )
+
+    expect(mocks.resolveContactVariablesDeep).not.toHaveBeenCalled()
+    expect(mocks.requestThreadControlAction).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      contactInboxId: "ci-1",
+      conversationId: "conv-1",
+      action: "release",
+    })
+  })
+
+  test("a variable lookup failure follows the error path without calling the channel", async () => {
+    mocks.resolveContactVariablesDeep.mockRejectedValue(new Error("db down"))
+
+    const result = await stepThreadControl(
+      props("pass", { metadata: "{{first_name}}" }),
+    )
+
+    expect(result).toMatchObject({ status: "error", errorMessage: "db down" })
+    expect(mocks.requestThreadControlAction).not.toHaveBeenCalled()
   })
 
   test("a channel refusal (e.g. the thread is not ours) follows the error path with the reason", async () => {

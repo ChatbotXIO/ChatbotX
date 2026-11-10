@@ -9559,11 +9559,14 @@
       "success": "Conversation released"
     },
     "pass": {
-      "menuItem": "Pass to escalation",
-      "title": "Pass to the escalation partner?",
-      "description": "Hand this conversation to your escalation partner? Your replies will pause until the thread comes back.",
+      "menuItem": "Tərəfdaşa ötür",
+      "title": "Tərəfdaşa ötürülsün?",
+      "description": "Bu söhbəti kimin öz üzərinə götürəcəyini seçin. Söhbət geri qayıdanadək cavablarınız dayandırılır.",
       "confirm": "Pass",
-      "success": "Conversation passed to the escalation partner"
+      "success": "Conversation passed to the escalation partner",
+      "targetLabel": "Təhvil ver",
+      "noteLabel": "Qəbul edən tərəfdaş üçün qeyd",
+      "successTargeted": "Söhbət {role} tərəfinə ötürüldü"
     },
     "aiHandover": {
       "label": "BizAI",
@@ -9582,7 +9585,10 @@
       "notEscalation": "Only the escalation partner can take over. Routing is configured in Meta Business Suite.",
       "notPrimaryReceiver": "This app must be the Page's primary receiver to take over. Set it in the Page's Handover Protocol settings.",
       "learnMore": "Learn more",
-      "dismiss": "Send anyway"
+      "dismiss": "Send anyway",
+      "takeOverTitle": "Bu söhbət öz üzərinizə götürülsün?",
+      "takeOverDescription": "Tərəfdaş onu idarə etməyi dayandırır, nəzarət sizdə olur. Ona qeyd yaza bilərsiniz.",
+      "takeOverNoteLabel": "Cari tərəfdaş üçün qeyd"
     },
     "divider": {
       "ownerHandling": "{owner} is now handling this conversation",
@@ -9655,8 +9661,12 @@
     "step": {
       "action": "Action",
       "release": "Release the conversation",
-      "pass": "Pass to the escalation partner",
-      "helper": "WhatsApp only. On other channels, or when the conversation isn’t owned here, the step follows the Error path."
+      "pass": "Tərəfdaşa ötür",
+      "helper": "WhatsApp only. On other channels, or when the conversation isn’t owned here, the step follows the Error path.",
+      "targetRole": "Təhvil ver",
+      "targetRoleDefault": "Eskalasiya tərəfdaşı (susmaya görə)",
+      "metadata": "Təhvil qeydi",
+      "metadataHelper": "İstəyə bağlı. Söhbəti qəbul edən tətbiqə olduğu kimi göndərilir. Dəyişənlər dəstəklənir. Ən çox {max} simvol."
     },
     "template": {
       "sent": "Template sent"

@@ -9559,11 +9559,14 @@
       "success": "對話已釋放"
     },
     "pass": {
-      "menuItem": "轉交升級處理",
-      "title": "轉交給升級處理合作夥伴？",
-      "description": "要將此對話轉交給您的升級合作夥伴嗎？在對話返回之前，您的回覆將暫停。",
+      "menuItem": "移交給合作夥伴",
+      "title": "移交給合作夥伴?",
+      "description": "選擇由誰接手此對話。在對話返回之前,你的回覆將暫停。",
       "confirm": "轉交",
-      "success": "對話已轉交給升級處理合作夥伴"
+      "success": "對話已轉交給升級處理合作夥伴",
+      "targetLabel": "移交給",
+      "noteLabel": "給接收方合作夥伴的備註",
+      "successTargeted": "對話已移交給 {role}"
     },
     "aiHandover": {
       "label": "BizAI",
@@ -9582,7 +9585,10 @@
       "notEscalation": "只有升級處理合作夥伴可以接管。路由在 Meta Business Suite 中設定。",
       "notPrimaryReceiver": "此應用程式必須是粉絲專頁的主要接收者才能接管。請在粉絲專頁的 Handover Protocol 設定中設定。",
       "learnMore": "瞭解詳情",
-      "dismiss": "仍然傳送"
+      "dismiss": "仍然傳送",
+      "takeOverTitle": "接管此對話?",
+      "takeOverDescription": "合作夥伴將停止處理,由你接管。你可以留一則備註給對方。",
+      "takeOverNoteLabel": "給目前合作夥伴的備註"
     },
     "divider": {
       "ownerHandling": "{owner} 現在正在處理此對話",
@@ -9655,8 +9661,12 @@
     "step": {
       "action": "動作",
       "release": "釋放對話",
-      "pass": "轉交給升級處理合作夥伴",
-      "helper": "僅限 WhatsApp。在其他管道，或對話不歸此處管理時，此步驟將走錯誤路徑。"
+      "pass": "移交給合作夥伴",
+      "helper": "僅限 WhatsApp。在其他管道，或對話不歸此處管理時，此步驟將走錯誤路徑。",
+      "targetRole": "移交給",
+      "targetRoleDefault": "升級處理合作夥伴(預設)",
+      "metadata": "移交備註",
+      "metadataHelper": "選填。將原樣傳送給接收對話的應用程式。支援變數。最多 {max} 個字元。"
     },
     "template": {
       "sent": "範本已發送"

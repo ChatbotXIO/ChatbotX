@@ -9559,11 +9559,14 @@
       "success": "Konuşma bırakıldı"
     },
     "pass": {
-      "menuItem": "Yükseltmeye aktar",
-      "title": "Yükseltme ortağına aktarılsın mı?",
-      "description": "Bu görüşme yükseltme ortağınıza devredilsin mi? Görüşme geri dönene kadar yanıtlarınız duraklatılır.",
+      "menuItem": "Bir ortağa devret",
+      "title": "Bir ortağa devredilsin mi?",
+      "description": "Bu görüşmeyi kimin devralacağını seçin. Görüşme geri dönene kadar yanıtlarınız duraklatılır.",
       "confirm": "Aktar",
-      "success": "Konuşma yükseltme ortağına aktarıldı"
+      "success": "Konuşma yükseltme ortağına aktarıldı",
+      "targetLabel": "Devret",
+      "noteLabel": "Devralan ortak için not",
+      "successTargeted": "Görüşme {role} ortağına devredildi"
     },
     "aiHandover": {
       "label": "BizAI",
@@ -9582,7 +9585,10 @@
       "notEscalation": "Yalnızca yükseltme ortağı devralabilir. Yönlendirme Meta Business Suite'te yapılandırılır.",
       "notPrimaryReceiver": "Devralabilmesi için bu uygulamanın Sayfa'nın birincil alıcısı olması gerekir. Bunu Sayfa'nın Handover Protocol ayarlarından yapın.",
       "learnMore": "Daha fazla bilgi",
-      "dismiss": "Yine de gönder"
+      "dismiss": "Yine de gönder",
+      "takeOverTitle": "Bu görüşme devralınsın mı?",
+      "takeOverDescription": "Ortak görüşmeyi yönetmeyi bırakır ve kontrol sizde olur. Ona bir not bırakabilirsiniz.",
+      "takeOverNoteLabel": "Mevcut ortak için not"
     },
     "divider": {
       "ownerHandling": "{owner} artık bu konuşmayla ilgileniyor",
@@ -9655,8 +9661,12 @@
     "step": {
       "action": "Eylem",
       "release": "Konuşmayı bırak",
-      "pass": "Yükseltme ortağına aktar",
-      "helper": "Yalnızca WhatsApp. Diğer kanallarda veya görüşme burada yönetilmiyorsa adım Hata yolunu izler."
+      "pass": "Bir ortağa devret",
+      "helper": "Yalnızca WhatsApp. Diğer kanallarda veya görüşme burada yönetilmiyorsa adım Hata yolunu izler.",
+      "targetRole": "Devret",
+      "targetRoleDefault": "Yükseltme ortağı (varsayılan)",
+      "metadata": "Devir notu",
+      "metadataHelper": "İsteğe bağlı. Görüşmeyi alan uygulamaya olduğu gibi gönderilir. Değişkenler desteklenir. En fazla {max} karakter."
     },
     "template": {
       "sent": "Şablon gönderildi"

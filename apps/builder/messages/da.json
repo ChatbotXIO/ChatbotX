@@ -9559,11 +9559,14 @@
       "success": "Samtalen er frigivet"
     },
     "pass": {
-      "menuItem": "Send videre til eskalering",
-      "title": "Send videre til eskaleringspartneren?",
-      "description": "Vil du give denne samtale videre til din eskaleringspartner? Dine svar pauses, indtil tråden kommer tilbage.",
+      "menuItem": "Overdrag til en partner",
+      "title": "Overdrag til en partner?",
+      "description": "Vælg, hvem der overtager samtalen. Dine svar sættes på pause, indtil samtalen kommer tilbage.",
       "confirm": "Send videre",
-      "success": "Samtalen er sendt videre til eskaleringspartneren"
+      "success": "Samtalen er sendt videre til eskaleringspartneren",
+      "targetLabel": "Overdrag til",
+      "noteLabel": "Note til den modtagende partner",
+      "successTargeted": "Samtalen er overdraget til {role}"
     },
     "aiHandover": {
       "label": "BizAI",
@@ -9582,7 +9585,10 @@
       "notEscalation": "Kun eskaleringspartneren kan overtage. Routing konfigureres i Meta Business Suite.",
       "notPrimaryReceiver": "Denne app skal være sidens primære modtager for at kunne overtage. Indstil det i sidens indstillinger for Handover Protocol.",
       "learnMore": "Læs mere",
-      "dismiss": "Send alligevel"
+      "dismiss": "Send alligevel",
+      "takeOverTitle": "Overtag samtalen?",
+      "takeOverDescription": "Partneren holder op med at håndtere den, og du overtager kontrollen. Du kan efterlade en note til dem.",
+      "takeOverNoteLabel": "Note til den nuværende partner"
     },
     "divider": {
       "ownerHandling": "{owner} håndterer nu denne samtale",
@@ -9655,8 +9661,12 @@
     "step": {
       "action": "Handling",
       "release": "Frigiv samtalen",
-      "pass": "Send videre til eskaleringspartneren",
-      "helper": "Kun WhatsApp. På andre kanaler, eller når samtalen ikke ejes her, følger trinnet fejlstien."
+      "pass": "Overdrag til en partner",
+      "helper": "Kun WhatsApp. På andre kanaler, eller når samtalen ikke ejes her, følger trinnet fejlstien.",
+      "targetRole": "Overdrag til",
+      "targetRoleDefault": "Eskaleringspartner (standard)",
+      "metadata": "Overdragelsesnote",
+      "metadataHelper": "Valgfri. Sendes uændret til appen, der modtager samtalen. Variabler understøttes. Op til {max} tegn."
     },
     "template": {
       "sent": "Skabelon sendt"

@@ -121,7 +121,7 @@ const updateThreadControl: ConversationHandlers<MessengerAuthValue>["updateThrea
   async (props): Promise<ThreadControlUpdateResult> => {
     const {
       ctx,
-      data: { contact, action, metadata },
+      data: { contact, action, targetRole, metadata },
     } = props
 
     const psid = contact.sourceId
@@ -136,6 +136,20 @@ const updateThreadControl: ConversationHandlers<MessengerAuthValue>["updateThrea
     if (action === "release") {
       throw permanentError(
         "Messenger conversations cannot be released; take over or return to the bot instead",
+        THREAD_CONTROL_ACTION_UNSUPPORTED_CODE,
+      )
+    }
+
+    // The only pass target on Messenger is the Business-AI app (`ai_agent`). A
+    // named partner role has no equivalent, so it is refused up front rather
+    // than silently dropped while the call still reports success.
+    if (
+      action === "pass" &&
+      targetRole &&
+      targetRole !== threadControlRoles.enum.ai_agent
+    ) {
+      throw permanentError(
+        "Messenger can only pass a conversation back to the AI agent",
         THREAD_CONTROL_ACTION_UNSUPPORTED_CODE,
       )
     }

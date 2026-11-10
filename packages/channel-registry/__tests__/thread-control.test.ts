@@ -131,7 +131,12 @@ describe("requestThreadControlAction", () => {
       "updateThreadControl",
       {
         ctx: { workspaceId: "ws-1" },
-        data: { contact: contactInbox, action: "pass", targetRole: undefined },
+        data: {
+          contact: contactInbox,
+          action: "pass",
+          targetRole: undefined,
+          metadata: undefined,
+        },
       },
     )
     expect(result).toBe(snapshot)
@@ -147,6 +152,46 @@ describe("requestThreadControlAction", () => {
         data: expect.objectContaining({ targetRole: "marketing" }),
       }),
     )
+  })
+
+  test.each([
+    "take",
+    "pass",
+  ] as const)("forwards the handover note on %s", async (action) => {
+    await runWrapped({ ...baseProps, action, metadata: "Refund approved" })
+
+    expect(mocks.runChannelHandler).toHaveBeenCalledWith(
+      "conversation",
+      "updateThreadControl",
+      expect.objectContaining({
+        data: expect.objectContaining({ metadata: "Refund approved" }),
+      }),
+    )
+  })
+
+  test("never forwards a handover note on release (no handover event carries it)", async () => {
+    await runWrapped({ ...baseProps, action: "release", metadata: "ignored" })
+
+    expect(mocks.runChannelHandler).toHaveBeenCalledWith(
+      "conversation",
+      "updateThreadControl",
+      expect.objectContaining({
+        data: expect.objectContaining({ metadata: undefined }),
+      }),
+    )
+  })
+
+  test("keeps the target role and the note out of the recorded service input", async () => {
+    await runWrapped({
+      ...baseProps,
+      action: "pass",
+      targetRole: "marketing",
+      metadata: "note",
+    })
+
+    const [serviceInput] = mocks.requestAction.mock.calls[0] ?? []
+    expect(serviceInput).not.toHaveProperty("targetRole")
+    expect(serviceInput).not.toHaveProperty("metadata")
   })
 
   test("delegates the state recording to the business service with the caller's identifiers", async () => {

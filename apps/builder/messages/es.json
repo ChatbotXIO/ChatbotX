@@ -9559,11 +9559,14 @@
       "success": "Conversación liberada"
     },
     "pass": {
-      "menuItem": "Pasar a escalamiento",
-      "title": "¿Pasar al socio de escalamiento?",
-      "description": "¿Pasar esta conversación a tu socio de escalamiento? Tus respuestas se pausarán hasta que el hilo regrese.",
+      "menuItem": "Transferir a un socio",
+      "title": "¿Transferir a un socio?",
+      "description": "Elige quién se hace cargo de esta conversación. Tus respuestas se pausan hasta que la conversación vuelva.",
       "confirm": "Pasar",
-      "success": "Conversación pasada al socio de escalamiento"
+      "success": "Conversación pasada al socio de escalamiento",
+      "targetLabel": "Transferir a",
+      "noteLabel": "Nota para el socio receptor",
+      "successTargeted": "Conversación transferida a {role}"
     },
     "aiHandover": {
       "label": "BizAI",
@@ -9582,7 +9585,10 @@
       "notEscalation": "Solo el socio de escalamiento puede tomar el control. El enrutamiento se configura en Meta Business Suite.",
       "notPrimaryReceiver": "Esta app debe ser el receptor principal de la página para tomar el control. Configúralo en los ajustes del Handover Protocol de la página.",
       "learnMore": "Más información",
-      "dismiss": "Enviar de todos modos"
+      "dismiss": "Enviar de todos modos",
+      "takeOverTitle": "¿Tomar el control de esta conversación?",
+      "takeOverDescription": "El socio deja de gestionarla y tú tomas el control. Puedes dejarle una nota.",
+      "takeOverNoteLabel": "Nota para el socio actual"
     },
     "divider": {
       "ownerHandling": "{owner} está atendiendo ahora esta conversación",
@@ -9655,8 +9661,12 @@
     "step": {
       "action": "Acción",
       "release": "Liberar la conversación",
-      "pass": "Pasar al socio de escalamiento",
-      "helper": "Solo WhatsApp. En otros canales, o cuando la conversación no es gestionada aquí, el paso sigue la ruta de error."
+      "pass": "Transferir a un socio",
+      "helper": "Solo WhatsApp. En otros canales, o cuando la conversación no es gestionada aquí, el paso sigue la ruta de error.",
+      "targetRole": "Transferir a",
+      "targetRoleDefault": "Socio de escalación (predeterminado)",
+      "metadata": "Nota de traspaso",
+      "metadataHelper": "Opcional. Se envía tal cual a la app que recibe la conversación. Se admiten variables. Hasta {max} caracteres."
     },
     "template": {
       "sent": "Plantilla enviada"

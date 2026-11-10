@@ -9559,11 +9559,14 @@
       "success": "Konversation freigegeben"
     },
     "pass": {
-      "menuItem": "An Eskalation übergeben",
-      "title": "An den Eskalationspartner übergeben?",
-      "description": "Diese Unterhaltung an Ihren Eskalationspartner übergeben? Ihre Antworten pausieren, bis die Unterhaltung zurückkommt.",
+      "menuItem": "An einen Partner übergeben",
+      "title": "An einen Partner übergeben?",
+      "description": "Wähle, wer diese Unterhaltung übernimmt. Deine Antworten pausieren, bis sie zurückkommt.",
       "confirm": "Übergeben",
-      "success": "Konversation an den Eskalationspartner übergeben"
+      "success": "Konversation an den Eskalationspartner übergeben",
+      "targetLabel": "Übergeben an",
+      "noteLabel": "Notiz für den übernehmenden Partner",
+      "successTargeted": "Unterhaltung an {role} übergeben"
     },
     "aiHandover": {
       "label": "BizAI",
@@ -9582,7 +9585,10 @@
       "notEscalation": "Nur der Eskalationspartner kann übernehmen. Das Routing wird in Meta Business Suite konfiguriert.",
       "notPrimaryReceiver": "Diese App muss der primäre Empfänger der Seite sein, um übernehmen zu können. Lege das in den Handover-Protocol-Einstellungen der Seite fest.",
       "learnMore": "Mehr erfahren",
-      "dismiss": "Trotzdem senden"
+      "dismiss": "Trotzdem senden",
+      "takeOverTitle": "Unterhaltung übernehmen?",
+      "takeOverDescription": "Der Partner bearbeitet sie nicht mehr und du übernimmst die Kontrolle. Du kannst ihm eine Notiz hinterlassen.",
+      "takeOverNoteLabel": "Notiz für den aktuellen Partner"
     },
     "divider": {
       "ownerHandling": "{owner} bearbeitet diese Konversation jetzt",
@@ -9655,8 +9661,12 @@
     "step": {
       "action": "Aktion",
       "release": "Konversation freigeben",
-      "pass": "An den Eskalationspartner übergeben",
-      "helper": "Nur WhatsApp. In anderen Kanälen oder wenn die Unterhaltung nicht hier verwaltet wird, folgt der Schritt dem Fehlerpfad."
+      "pass": "An einen Partner übergeben",
+      "helper": "Nur WhatsApp. In anderen Kanälen oder wenn die Unterhaltung nicht hier verwaltet wird, folgt der Schritt dem Fehlerpfad.",
+      "targetRole": "Übergeben an",
+      "targetRoleDefault": "Eskalationspartner (Standard)",
+      "metadata": "Übergabenotiz",
+      "metadataHelper": "Optional. Wird unverändert an die App gesendet, die die Unterhaltung übernimmt. Variablen werden unterstützt. Bis zu {max} Zeichen."
     },
     "template": {
       "sent": "Vorlage gesendet"

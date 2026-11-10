@@ -22,6 +22,9 @@ export type ThreadControlRole = z.infer<typeof threadControlRoles>
 export const threadControlActions = z.enum(["take", "release", "pass"])
 export type ThreadControlAction = z.infer<typeof threadControlActions>
 
+/** Meta caps the free-form handover `metadata` note at 2000 characters. */
+export const THREAD_CONTROL_METADATA_MAX_LENGTH = 2000
+
 export const threadControlEvents = z.enum([
   // We got the user's message as owner (Meta: the receiver becomes owner).
   "inboundReceived",

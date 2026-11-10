@@ -6,6 +6,10 @@ import {
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import z from "zod"
 import { findConversationResponse } from "./resource"
+import {
+  refineThreadControlHandover,
+  threadControlHandoverFields,
+} from "./thread-control"
 
 // Reuses the same shared `findConversationResponse`/`listConversationsItemResource`
 // as the already-public `conversations.list` and the private `findConversation`
@@ -56,9 +60,11 @@ export const threadControlPublicRequest = z
     action: z
       .enum([...threadControlActions.options, "sync"])
       .describe(
-        "`take` the thread from the partner, `release` it back, `pass` it to the channel's escalation role, or `sync` to only refresh the stored owner from the channel (changes nothing at the channel).",
+        "`take` the thread from the partner, `release` it back, `pass` it to another partner (the escalation partner unless `targetRole` names one), or `sync` to only refresh the stored owner from the channel (changes nothing at the channel).",
       ),
+    ...threadControlHandoverFields,
   })
+  .superRefine(refineThreadControlHandover)
   .and(conversationIdPathParam)
 
 export const threadControlPublicResponse = z.object({

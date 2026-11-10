@@ -9559,11 +9559,14 @@
       "success": "Keskustelu vapautettu"
     },
     "pass": {
-      "menuItem": "Siirrä eskalointiin",
-      "title": "Siirretäänkö eskalointikumppanille?",
-      "description": "Siirretäänkö tämä keskustelu eskalointikumppanillesi? Vastauksesi keskeytyvät, kunnes keskustelu palaa.",
+      "menuItem": "Siirrä kumppanille",
+      "title": "Siirretäänkö kumppanille?",
+      "description": "Valitse, kuka ottaa keskustelun hoitaakseen. Vastauksesi keskeytyvät, kunnes keskustelu palaa.",
       "confirm": "Siirrä",
-      "success": "Keskustelu siirretty eskalointikumppanille"
+      "success": "Keskustelu siirretty eskalointikumppanille",
+      "targetLabel": "Siirrä kumppanille",
+      "noteLabel": "Huomautus vastaanottavalle kumppanille",
+      "successTargeted": "Keskustelu siirretty: {role}"
     },
     "aiHandover": {
       "label": "BizAI",
@@ -9582,7 +9585,10 @@
       "notEscalation": "Vain eskalointikumppani voi ottaa keskustelun haltuun. Reititys määritetään Meta Business Suitessa.",
       "notPrimaryReceiver": "Tämän sovelluksen on oltava sivun ensisijainen vastaanottaja, jotta se voi ottaa keskustelun haltuunsa. Määritä se sivun Handover Protocol -asetuksissa.",
       "learnMore": "Lue lisää",
-      "dismiss": "Lähetä silti"
+      "dismiss": "Lähetä silti",
+      "takeOverTitle": "Otetaanko keskustelu haltuun?",
+      "takeOverDescription": "Kumppani lopettaa sen käsittelyn ja sinä otat hallinnan. Voit jättää hänelle huomautuksen.",
+      "takeOverNoteLabel": "Huomautus nykyiselle kumppanille"
     },
     "divider": {
       "ownerHandling": "{owner} käsittelee nyt tätä keskustelua",
@@ -9655,8 +9661,12 @@
     "step": {
       "action": "Toiminto",
       "release": "Vapauta keskustelu",
-      "pass": "Siirrä eskalointikumppanille",
-      "helper": "Vain WhatsApp. Muilla kanavilla tai kun keskustelu ei ole täällä hallinnassa, vaihe seuraa virhepolkua."
+      "pass": "Siirrä kumppanille",
+      "helper": "Vain WhatsApp. Muilla kanavilla tai kun keskustelu ei ole täällä hallinnassa, vaihe seuraa virhepolkua.",
+      "targetRole": "Siirrä kumppanille",
+      "targetRoleDefault": "Eskalointikumppani (oletus)",
+      "metadata": "Siirtohuomautus",
+      "metadataHelper": "Valinnainen. Lähetetään sellaisenaan keskustelun vastaanottavalle sovellukselle. Muuttujat ovat tuettuja. Enintään {max} merkkiä."
     },
     "template": {
       "sent": "Malli lähetetty"

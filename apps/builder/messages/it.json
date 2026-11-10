@@ -9559,11 +9559,14 @@
       "success": "Conversazione rilasciata"
     },
     "pass": {
-      "menuItem": "Passa all'escalation",
-      "title": "Passare al partner di escalation?",
-      "description": "Passare questa conversazione al tuo partner di escalation? Le tue risposte saranno sospese finché la conversazione non tornerà.",
+      "menuItem": "Passa a un partner",
+      "title": "Passare a un partner?",
+      "description": "Scegli chi prende in carico questa conversazione. Le tue risposte sono in pausa finché non torna.",
       "confirm": "Passa",
-      "success": "Conversazione passata al partner di escalation"
+      "success": "Conversazione passata al partner di escalation",
+      "targetLabel": "Passa a",
+      "noteLabel": "Nota per il partner ricevente",
+      "successTargeted": "Conversazione passata a {role}"
     },
     "aiHandover": {
       "label": "BizAI",
@@ -9582,7 +9585,10 @@
       "notEscalation": "Solo il partner di escalation può prendere in carico. L'instradamento si configura in Meta Business Suite.",
       "notPrimaryReceiver": "Questa app deve essere il ricevente principale della Pagina per prendere in carico. Impostalo nelle impostazioni dell'Handover Protocol della Pagina.",
       "learnMore": "Scopri di più",
-      "dismiss": "Invia comunque"
+      "dismiss": "Invia comunque",
+      "takeOverTitle": "Prendere il controllo della conversazione?",
+      "takeOverDescription": "Il partner smette di gestirla e tu prendi il controllo. Puoi lasciargli una nota.",
+      "takeOverNoteLabel": "Nota per il partner attuale"
     },
     "divider": {
       "ownerHandling": "{owner} sta ora gestendo questa conversazione",
@@ -9655,8 +9661,12 @@
     "step": {
       "action": "Azione",
       "release": "Rilascia la conversazione",
-      "pass": "Passa al partner di escalation",
-      "helper": "Solo WhatsApp. Sugli altri canali, o quando la conversazione non è gestita qui, il passaggio segue il percorso di errore."
+      "pass": "Passa a un partner",
+      "helper": "Solo WhatsApp. Sugli altri canali, o quando la conversazione non è gestita qui, il passaggio segue il percorso di errore.",
+      "targetRole": "Passa a",
+      "targetRoleDefault": "Partner di escalation (predefinito)",
+      "metadata": "Nota di passaggio",
+      "metadataHelper": "Facoltativa. Inviata così com'è all'app che riceve la conversazione. Le variabili sono supportate. Fino a {max} caratteri."
     },
     "template": {
       "sent": "Modello inviato"

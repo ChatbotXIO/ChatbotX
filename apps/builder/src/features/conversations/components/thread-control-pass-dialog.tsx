@@ -21,9 +21,10 @@ import { useThreadControlAction } from "../hooks/use-thread-control-action"
 import type { ListConversationItemResource } from "../schema/resource"
 
 /**
- * The confirmation behind every "pass" entry point (the actions menu item and
- * the header button). It hands the thread away, so it always asks first. The
- * copy follows who the channel passes to; the trigger stays with the caller.
+ * The plain confirmation behind the header "return to the AI" button, for
+ * channels whose pass hands the thread to the AI agent (`passTarget: "aiAgent"`).
+ * It hands the thread away, so it always asks first. Passing to a partner role
+ * (WhatsApp) has its own dialog, `ThreadControlPassPartnerDialog`.
  */
 export function ThreadControlPassDialog({
   conversation,

@@ -1,5 +1,5 @@
 import type { ThreadControlAction, ThreadControlRole } from "@chatbotx.io/sdk"
-import ky from "ky"
+import ky, { isHTTPError } from "ky"
 import { API_URL, DEFAULT_API_VERSION } from "../constants"
 import { rescue } from "../exception"
 import {
@@ -18,6 +18,11 @@ export type WhatsappThreadControlBody = WhatsappRecipientParams & {
   control_pass?: { target_role: ThreadControlRole }
 }
 
+const isTargetedPass = (
+  targetRole: ThreadControlRole | undefined,
+): targetRole is ThreadControlRole =>
+  targetRole !== undefined && targetRole !== "escalation"
+
 export const buildThreadControlBody = (input: {
   recipient: WhatsappRecipientParams
   action: ThreadControlAction
@@ -34,11 +39,24 @@ export const buildThreadControlBody = (input: {
     ? { metadata: input.metadata.slice(0, THREAD_CONTROL_METADATA_MAX_LENGTH) }
     : {}),
   // `control_pass` is only valid with `pass`; without a role Meta routes to the
-  // escalation partner.
-  ...(input.action === "pass" && input.targetRole
+  // escalation partner, and targeting `escalation` is the same as no target.
+  ...(input.action === "pass" && isTargetedPass(input.targetRole)
     ? { control_pass: { target_role: input.targetRole } }
     : {}),
 })
+
+/**
+ * Ky keeps the request body on the error it throws, and `rescue` logs that
+ * error: drop it so a handover note, which is private to the agent, never
+ * reaches the logs when Meta rejects the call.
+ */
+const withoutRequestBody = (error: Error): Error => {
+  if (isHTTPError(error)) {
+    // Ky freezes `options`, so swap in a copy that has no body.
+    error.options = { ...error.options, body: undefined }
+  }
+  return error
+}
 
 /** Meta's answer to a successful thread_control call. */
 export type WhatsappThreadControlResult = {
@@ -66,6 +84,7 @@ export const postThreadControl = (
         {
           headers: { Authorization: `Bearer ${auth.tokens.accessToken}` },
           json: body,
+          hooks: { beforeError: [({ error }) => withoutRequestBody(error)] },
         },
       )
       .json<{ request_id?: unknown }>()

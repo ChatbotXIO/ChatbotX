@@ -9559,11 +9559,14 @@
       "success": "Đã trả quyền xử lý hội thoại"
     },
     "pass": {
-      "menuItem": "Chuyển cho đối tác xử lý nâng cao",
-      "title": "Chuyển cho đối tác xử lý nâng cao?",
-      "description": "Chuyển hội thoại này cho đối tác xử lý nâng cao? Tin nhắn của bạn sẽ tạm dừng cho đến khi hội thoại được trả lại.",
+      "menuItem": "Chuyển cho đối tác",
+      "title": "Chuyển cho đối tác?",
+      "description": "Chọn ai sẽ tiếp nhận hội thoại này. Tin nhắn của bạn sẽ tạm dừng cho đến khi hội thoại được trả lại.",
       "confirm": "Chuyển",
-      "success": "Đã chuyển hội thoại cho đối tác xử lý nâng cao"
+      "success": "Đã chuyển hội thoại cho đối tác xử lý nâng cao",
+      "targetLabel": "Chuyển cho",
+      "noteLabel": "Ghi chú cho đối tác nhận",
+      "successTargeted": "Đã chuyển hội thoại cho {role}"
     },
     "aiHandover": {
       "label": "BizAI",
@@ -9582,7 +9585,10 @@
       "notEscalation": "Chỉ đối tác xử lý nâng cao mới có thể tiếp quản. Việc điều phối được cấu hình trong Meta Business Suite.",
       "notPrimaryReceiver": "Ứng dụng này phải là bên nhận chính của Trang để có thể tiếp quản. Hãy thiết lập trong phần cài đặt Handover Protocol của Trang.",
       "learnMore": "Tìm hiểu thêm",
-      "dismiss": "Vẫn gửi"
+      "dismiss": "Vẫn gửi",
+      "takeOverTitle": "Tiếp quản hội thoại này?",
+      "takeOverDescription": "Đối tác sẽ ngừng xử lý và bạn nắm quyền kiểm soát. Bạn có thể để lại ghi chú cho họ.",
+      "takeOverNoteLabel": "Ghi chú cho đối tác hiện tại"
     },
     "divider": {
       "ownerHandling": "{owner} đang xử lý hội thoại này",
@@ -9655,8 +9661,12 @@
     "step": {
       "action": "Hành động",
       "release": "Trả quyền xử lý hội thoại",
-      "pass": "Chuyển cho đối tác xử lý nâng cao",
-      "helper": "Chỉ dành cho WhatsApp. Trên kênh khác, hoặc khi hội thoại không được sở hữu tại đây, bước này sẽ đi theo nhánh Lỗi."
+      "pass": "Chuyển cho đối tác",
+      "helper": "Chỉ dành cho WhatsApp. Trên kênh khác, hoặc khi hội thoại không được sở hữu tại đây, bước này sẽ đi theo nhánh Lỗi.",
+      "targetRole": "Chuyển cho",
+      "targetRoleDefault": "Đối tác xử lý nâng cao (mặc định)",
+      "metadata": "Ghi chú bàn giao",
+      "metadataHelper": "Không bắt buộc. Gửi nguyên văn tới ứng dụng nhận hội thoại. Hỗ trợ biến. Tối đa {max} ký tự."
     },
     "template": {
       "sent": "Đã gửi mẫu"

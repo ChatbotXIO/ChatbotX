@@ -180,9 +180,32 @@ idles out after 24 h. A permanent rejection (we no longer own it) is logged and
 the job completes; a retryable error rethrows for BullMQ.
 
 **Flow step `threadControl`** (`release` | `pass`), states `[success, error]`.
-`pass` always targets Meta's default (the escalation partner). An unsupported
-channel or any channel refusal follows the Error path with the reason; the step
-never throws into a retry.
+A `pass` may name the receiving role (`targetRole`, any of Meta's six pass
+targets; empty means Meta's default, the escalation partner) and carry a
+handover note (`metadata`, up to 2000 characters, `{{variables}}` resolved from
+the contact when the step runs). Both only apply to `pass`: a step switched back
+to `release` never forwards a stale role or note. An unsupported channel, a
+variable lookup failure or any channel refusal follows the Error path with the
+reason; the step never throws into a retry.
+
+**Handover note and pass target.** `take` and `pass` accept a free-form note
+(`metadata`, up to 2000 characters) that Meta delivers verbatim on the
+receiving app's `messaging_handovers` event (SC-2 step 2, SC-5 step 5, SC-6
+step 4, SC-7 steps 4 and 7 of the Partner Testing Guide). A `release` raises no
+handover event, so it never carries one. `pass` may also name the receiving
+role (`control_pass.target_role`: `ai_agent`, `ctwa`, `customer_service`,
+`escalation`, `marketing` or `utility`; never `calls`). Targeting `escalation`
+is the same as no target, so it is sent as an untargeted pass. A Messenger
+inbox accepts no partner role (its pass only goes back to the AI agent), so a
+named role other than `ai_agent` is refused as an unsupported action. A note
+longer than 2000 characters, for example once a flow variable is filled in, is
+cut to 2000 so the handover itself still goes through. The escalation
+partner cannot make an untargeted pass (Meta refuses it, E-7) and must name
+another role. The note and the role travel the same way from every surface: the
+public API (`POST /v1/conversations/{id}/thread-control`: `targetRole`,
+`metadata`; CLI `conversations thread-control add --targetRole --metadata`), the
+inbox dialogs and the flow step all reach `requestThreadControlAction`, which
+hands both to the channel handler.
 
 **Routing roles.** Which roles this app holds on a number (`customer_service`,
 `escalation`, `marketing`, `utility`, `ctwa`, `calls`) and whether it has
@@ -208,7 +231,9 @@ assigned by the business in Meta Business Suite — this app never sets them.
 **Meta request ids.** Every successful `thread_control` call logs Meta's
 `request_id`, every refusal its code and `fbtrace_id` (Partner Testing Guide
 §2.2/§7: support asks for them). Refusals keep the error mapper's category; all
-of them are permanent, so none is retried.
+of them are permanent, so none is retried. A rejected Service send (`131070`)
+logs its `fbtrace_id` as a top-level field, and the take-refused wrapper keeps
+the origin error so the id is not lost.
 
 ## UI surfaces
 
@@ -220,8 +245,8 @@ All render only for a conversation whose WhatsApp contact inbox
 |---|---|---|---|---|
 | `null` | unchanged | unchanged | unchanged | hidden |
 | `idle` | — | — | normal | "No owner" |
-| `owned` | brand pill | **Release** button; **Pass to escalation** in the conversation menu (hidden when our role is `escalation`) | normal | "Handled by <brand>" |
-| `standby` | amber pill "Meta AI" / "Partner · <role>" | — | **locked** card with **Take over** and **Send flow**; lock applies only when the composer sends through WhatsApp | "Handled by <owner>" |
+| `owned` | brand pill | **Release** button; **Pass to a partner** in the conversation menu (opens a dialog to pick the receiving role and leave a note; offered to the escalation partner too, which may pass to any other role) | normal | "Handled by <brand>" |
+| `standby` | amber pill "Meta AI" / "Partner · <role>" | — | **locked** card with **Take over** (confirms in a dialog with an optional note for the partner) and **Send flow**; lock applies only when the composer sends through WhatsApp | "Handled by <owner>" |
 
 The "Bot is active" banner is hidden on `standby`. Take over / Release / Pass
 (`thread-control.action.ts`) are allowed to anyone who can open the conversation
@@ -229,8 +254,10 @@ The "Bot is active" banner is hidden on `standby`. Take over / Release / Pass
 (only the escalation partner may take) is raised by the WhatsApp handler as the
 channel-agnostic `ThreadControlTakeRefusedError` and shows an inline message,
 keeping the lock; any other failure is a toast. After a successful take the
-owner role is recorded as `escalation` (only escalation may take), so **Pass**
-is hidden. The action result patches the store immediately; realtime updates other
+owner role is recorded as `escalation` (only escalation may take), so the pass
+dialog drops `escalation` from its choices and defaults to `customer_service`.
+The same happens when the stored routing roles say this app is the escalation
+partner. The action result patches the store immediately; realtime updates other
 tabs, and older snapshots are ignored. The settings card is always shown on the
 WhatsApp settings page.
 
@@ -254,8 +281,7 @@ WhatsApp settings page.
 - **Up to 30 days of false positives** after a business removes its routing
   config: new threads can still show the brand pill / Release; a Release then
   fails with a permanent error that is logged.
-- Our `pass` always goes to the escalation partner; no role picker. Partner
-  read receipts, an inbox filter for partner-handled conversations and mobile
+- Partner read receipts, an inbox filter for partner-handled conversations and mobile
   app surfaces are out of scope.
 - Numbers already registered on the Cloud API (`status: CONNECTED`,
   `platform_type: CLOUD_API`, e.g. shared via "Share existing WhatsApp phone

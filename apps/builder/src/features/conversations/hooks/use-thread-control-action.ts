@@ -12,6 +12,7 @@ import {
 } from "@/features/messages/lib/thread-control-channel-ui"
 import { threadControlAction } from "../actions/thread-control.action"
 import { THREAD_CONTROL_NOT_ESCALATION } from "../lib/thread-control-result"
+import { THREAD_CONTROL_ROLE_LABEL_KEYS } from "../utils/thread-control"
 
 const SUCCESS_TOAST_KEYS = {
   take: "conversationRouting.composer.takeOverSuccess",
@@ -55,6 +56,14 @@ export function useThreadControlAction(input: {
           return
         }
         patchContactInboxThreadControl(input.conversationId, data.snapshot)
+        if (actionInput.action === "pass" && actionInput.targetRole) {
+          toast.success(
+            t("conversationRouting.pass.successTargeted", {
+              role: t(THREAD_CONTROL_ROLE_LABEL_KEYS[actionInput.targetRole]),
+            }),
+          )
+          return
+        }
         toast.success(
           t(
             actionInput.action === "pass"

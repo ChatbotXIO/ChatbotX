@@ -27,6 +27,13 @@ type ThreadControlChannelUi = {
    */
   passFromIdle: boolean
   /**
+   * Whether the owner can pass while it is itself the escalation partner
+   * (WhatsApp: a targeted pass to another role is valid, only an untargeted
+   * one is refused). Messenger's pass goes to the AI agent, so it is not
+   * offered to a thread already held by the escalation role.
+   */
+  passWhileEscalationOwner: boolean
+  /**
    * Whether this app's stored routing roles on the number say if it may take
    * (WhatsApp `routing_roles`: only the escalation partner can). `true` reads
    * them before offering "Take over"; `false` always asks the channel.
@@ -62,6 +69,7 @@ export const THREAD_CONTROL_CHANNEL_UI: Record<
     supportsPass: true,
     passTarget: "escalation",
     passFromIdle: false,
+    passWhileEscalationOwner: true,
     takePermissionFromRoutingRoles: true,
     docsUrl:
       "https://developers.facebook.com/documentation/business-messaging/whatsapp/conversation-routing/thread-control",
@@ -76,6 +84,7 @@ export const THREAD_CONTROL_CHANNEL_UI: Record<
     supportsPass: true,
     passTarget: "aiAgent",
     passFromIdle: true,
+    passWhileEscalationOwner: false,
     takePermissionFromRoutingRoles: false,
     docsUrl:
       "https://developers.facebook.com/docs/messenger-platform/handover-protocol",
