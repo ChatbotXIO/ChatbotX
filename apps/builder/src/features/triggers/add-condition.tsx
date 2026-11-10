@@ -217,6 +217,26 @@ export function AddCondition({
       },
 
       {
+        label: t("fields.telegram.label"),
+        children: [
+          {
+            label: t("trigger.conditions.contactBlockedBot"),
+            value: triggerEventTypes.enum.contactBlockedBot,
+            defaultFn: createDefaultFn(
+              triggerEventTypes.enum.contactBlockedBot,
+            ),
+          },
+          {
+            label: t("trigger.conditions.contactUnblockedBot"),
+            value: triggerEventTypes.enum.contactUnblockedBot,
+            defaultFn: createDefaultFn(
+              triggerEventTypes.enum.contactUnblockedBot,
+            ),
+          },
+        ],
+      },
+
+      {
         label: t("fields.pipelines.label"),
         children: pipelineItemEventTypes.map((type) => ({
           label: t(`trigger.conditions.${type}`),

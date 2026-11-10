@@ -5998,6 +5998,8 @@
       "productOrdered": "Product Ordered",
       "contactReferredANewContact": "Kontakt Referred A Ny Kontakt",
       "contactReferredExistingContact": "Kontakt Referred Existing Kontakt",
+      "contactBlockedBot": "Kontakt blokerede botten",
+      "contactUnblockedBot": "Kontakt fjernede blokeringen af botten",
       "callRecorded": "Opkald optaget",
       "callTranscribed": "Opkald transskriberet",
       "anyProduct": "Alle produkter",

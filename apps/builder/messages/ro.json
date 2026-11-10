@@ -5998,6 +5998,8 @@
       "productOrdered": "Produs comandat",
       "contactReferredANewContact": "Contactul a recomandat un contact nou",
       "contactReferredExistingContact": "Contactul a recomandat un contact existent",
+      "contactBlockedBot": "Contactul a blocat botul",
+      "contactUnblockedBot": "Contactul a deblocat botul",
       "callRecorded": "Apel înregistrat",
       "callTranscribed": "Apel transcris",
       "anyProduct": "Orice produs",

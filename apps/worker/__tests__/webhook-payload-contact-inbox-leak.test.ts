@@ -108,6 +108,8 @@ const EVENT_DATA_BY_TYPE: Record<string, Record<string, unknown>> = {
     refName: "summer",
     reflinkId: "reflink-1",
   },
+  [triggerEventTypes.enum.contactBlockedBot]: { channel: "telegram" },
+  [triggerEventTypes.enum.contactUnblockedBot]: { channel: "telegram" },
   [triggerEventTypes.enum.newOrder]: {
     orderId: "o-1",
     orderNumber: 7,

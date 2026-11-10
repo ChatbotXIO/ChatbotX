@@ -86,7 +86,8 @@ export const parseTelegramAudienceEvent = (
   update: TelegramUpdate,
 ): ChannelAudienceEventJobData | null => {
   if (update.my_chat_member) {
-    const { chat, new_chat_member, date } = update.my_chat_member
+    const { chat, from, old_chat_member, new_chat_member, date } =
+      update.my_chat_member
     return audienceJob(integrationIdentifier, {
       kind: "botChatStatus",
       chat: {
@@ -95,6 +96,8 @@ export const parseTelegramAudienceEvent = (
         ...(chat.title ? { title: chat.title } : {}),
       },
       status: new_chat_member.status,
+      oldStatus: old_chat_member.status,
+      user: toAudienceUser(from),
       occurredAt: toIso(date),
     })
   }

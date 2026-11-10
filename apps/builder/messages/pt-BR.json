@@ -5633,6 +5633,8 @@
       "productOrdered": "Produto pedido",
       "contactReferredANewContact": "Contato indicou um novo contato",
       "contactReferredExistingContact": "Contato indicou um contato existente",
+      "contactBlockedBot": "Contato bloqueou o bot",
+      "contactUnblockedBot": "Contato desbloqueou o bot",
       "callRecorded": "Chamada gravada",
       "callTranscribed": "Chamada transcrita",
       "anyProduct": "Qualquer produto",

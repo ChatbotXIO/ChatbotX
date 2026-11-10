@@ -6680,6 +6680,8 @@
       "productOrdered": "Məhsul sifariş edilib",
       "contactReferredANewContact": "Kontakt yeni kontakt dəvət edib",
       "contactReferredExistingContact": "Kontakt mövcud kontaktı dəvət edib",
+      "contactBlockedBot": "Kontakt botu bloklayıb",
+      "contactUnblockedBot": "Kontakt botun blokunu açıb",
       "callRecorded": "Zəng qeydə alınıb",
       "callTranscribed": "Zəng mətnə çevrilib",
       "anyProduct": "İstənilən məhsul",

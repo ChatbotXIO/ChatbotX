@@ -5998,6 +5998,8 @@
       "productOrdered": "Product besteld",
       "contactReferredANewContact": "Contact heeft een nieuw contact doorverwezen",
       "contactReferredExistingContact": "Contact heeft een bestaand contact doorverwezen",
+      "contactBlockedBot": "Contact heeft de bot geblokkeerd",
+      "contactUnblockedBot": "Contact heeft de bot gedeblokkeerd",
       "callRecorded": "Oproep opgenomen",
       "callTranscribed": "Oproep getranscribeerd",
       "anyProduct": "Elk product",

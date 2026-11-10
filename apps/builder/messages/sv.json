@@ -7403,6 +7403,8 @@
       "contactInfoUpdated": "Telefonnummer eller e-postadress har uppdaterats",
       "contactReferredANewContact": "Kontakt hänvisade en ny kontakt",
       "contactReferredExistingContact": "Kontakt hänvisade en befintlig kontakt",
+      "contactBlockedBot": "Kontakt blockerade boten",
+      "contactUnblockedBot": "Kontakt avblockerade boten",
       "contactUnsubscribedFormBroadcast": "Kontakt har avregistrerat sig från utskick",
       "conversationAssigned": "Konversation har tilldelats",
       "conversationTransferredToBot": "Konversation har överförts till en bot",

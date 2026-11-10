@@ -6044,6 +6044,8 @@
       "productOrdered": "已訂購產品",
       "contactReferredANewContact": "聯絡人推薦了新聯絡人",
       "contactReferredExistingContact": "聯絡人引用現有聯絡人",
+      "contactBlockedBot": "聯絡人封鎖了機器人",
+      "contactUnblockedBot": "聯絡人解除封鎖機器人",
       "callRecorded": "通話已錄音",
       "callTranscribed": "通話已轉寫",
       "anyProduct": "任何商品",
