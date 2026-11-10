@@ -6316,11 +6316,102 @@
   },
   "smtp": {
     "setting": {
-      "description": "E-Mails über Ihren SMTP-Server senden.",
+      "description": "E-Mails über Ihren SMTP-Server, ein IMAP-Postfach oder einen eingehenden Webhook senden und empfangen.",
       "label": "(E-Mail) SMTP"
     },
     "errors": {
-      "connectionFailed": "Verbindung zum SMTP-Server nicht möglich. Überprüfen Sie Ihre Anmeldedaten und versuchen Sie es erneut."
+      "connectionFailed": "Verbindung zum SMTP-Server nicht möglich. Überprüfen Sie Ihre Anmeldedaten und versuchen Sie es erneut.",
+      "imapConnectionFailed": "Verbindung zum IMAP-Postfach nicht möglich. Bitte prüfen Sie Host, Zugangsdaten und Postfachnamen und versuchen Sie es erneut."
+    },
+    "guide": {
+      "trigger": "Einrichtungsanleitung: {provider}",
+      "openDocs": "Dokumentation von {provider} öffnen",
+      "receiveImap": "E-Mails empfangen",
+      "receiveImapDescription": "Dieses Postfach wird jede Minute abgerufen, und für jede neue E-Mail wird eine Unterhaltung eröffnet. Es werden nur E-Mails importiert, die nach dem Aktivieren eintreffen.",
+      "imapHost": "IMAP-Host",
+      "imapPort": "IMAP-Port",
+      "relayReceive": "Dieser Anbieter kann nur senden. Um Antworten zu empfangen, richten Sie das eingehende Parsing des Anbieters auf eine Webhook-URL aus.",
+      "sendOnly": "Amazon SES empfängt E-Mails über SNS, was hier nicht unterstützt wird. Dieser Posteingang kann nur E-Mails senden.",
+      "webhook": {
+        "title": "URL des eingehenden Webhooks",
+        "hint": "Fügen Sie diese URL in die Einstellungen für eingehende E-Mails Ihres Anbieters ein. Jeder, der sie kennt, kann E-Mails zu diesem Posteingang hinzufügen. Behandeln Sie sie daher wie ein Passwort.",
+        "saveFirst": "Verbinden Sie sich zuerst und öffnen Sie diesen Posteingang dann erneut, um die Webhook-URL zu erhalten.",
+        "show": "Webhook-URL anzeigen",
+        "rotate": "URL erneuern",
+        "copied": "Webhook-URL kopiert",
+        "failed": "Die Webhook-URL konnte nicht geladen werden. Bitte versuchen Sie es erneut."
+      },
+      "status": {
+        "title": "Status",
+        "sending": "Senden",
+        "receivingImap": "Empfang: IMAP",
+        "receivingWebhook": "Empfang: Webhook",
+        "receivingOff": "Empfang: aus",
+        "lastPolled": "Zuletzt geprüft {time}",
+        "neverPolled": "Noch nicht geprüft",
+        "error": "Letzter Fehler: {error}"
+      },
+      "errors": {
+        "title": "Häufige Fehler",
+        "authFailed": "535 oder Authentifizierung fehlgeschlagen: Verwenden Sie ein App-Passwort, nicht Ihr normales Kontopasswort.",
+        "timeout": "Zeitüberschreitung: Versuchen Sie Port 465 (SSL) statt 587 (STARTTLS) und prüfen Sie, ob Ihr Host ausgehende Verbindungen erlaubt.",
+        "imap": "IMAP-Anmeldung fehlgeschlagen: Aktivieren Sie IMAP in den Postfacheinstellungen und verwenden Sie dasselbe App-Passwort."
+      },
+      "providers": {
+        "google": {
+          "step1": "Aktivieren Sie die Bestätigung in zwei Schritten für das Google-Konto.",
+          "step2": "Erstellen Sie ein App-Passwort (Google-Konto > Sicherheit > App-Passwörter).",
+          "step3": "Geben Sie die vollständige Gmail-Adresse als Benutzernamen und das App-Passwort als Passwort ein.",
+          "step4": "Um E-Mails zu empfangen, aktivieren Sie IMAP in Gmail (Einstellungen > Weiterleitung und POP/IMAP) und schalten Sie unten E-Mails empfangen ein."
+        },
+        "outlook": {
+          "step1": "Aktivieren Sie die Zwei-Schritt-Verifizierung für das Microsoft-Konto.",
+          "step2": "Erstellen Sie ein App-Passwort in den Sicherheitseinstellungen Ihres Microsoft-Kontos.",
+          "step3": "Verwenden Sie die vollständige Adresse als Benutzernamen und das App-Passwort als Passwort.",
+          "note": "Microsoft stellt die Standardauthentifizierung für Exchange Online ein. Wenn die Verbindung abgelehnt wird, hat Ihre Organisation sie möglicherweise deaktiviert."
+        },
+        "yahoo": {
+          "step1": "Aktivieren Sie die Zwei-Schritt-Verifizierung in den Sicherheitseinstellungen Ihres Yahoo-Kontos.",
+          "step2": "Erzeugen Sie ein App-Passwort für diese Verbindung.",
+          "step3": "Verwenden Sie Ihre Yahoo-Adresse als Benutzernamen und das App-Passwort als Passwort."
+        },
+        "zoho": {
+          "step1": "Aktivieren Sie die Zwei-Faktor-Authentifizierung für Ihr Zoho-Konto.",
+          "step2": "Erstellen Sie ein anwendungsspezifisches Passwort.",
+          "step3": "Verwenden Sie Ihre Zoho-Adresse als Benutzernamen und dieses Passwort als Passwort. IMAP muss in den Zoho-Mail-Einstellungen aktiviert sein."
+        },
+        "sendgrid": {
+          "step1": "Erstellen Sie einen API-Schlüssel mit der Berechtigung Mail Send. Verwenden Sie den Benutzernamen apikey und den Schlüssel als Passwort.",
+          "step2": "Um E-Mails zu empfangen, verbinden Sie sich, öffnen Sie diesen Posteingang erneut und kopieren Sie die Webhook-URL.",
+          "step3": "Fügen Sie in SendGrid die URL unter Settings > Inbound Parse hinzu und aktivieren Sie \"POST the raw, full MIME message\"."
+        },
+        "mailgun": {
+          "step1": "Verwenden Sie die SMTP-Zugangsdaten Ihrer Sende-Domain (Sending > Domain settings > SMTP credentials).",
+          "step2": "Um E-Mails zu empfangen, verbinden Sie sich, öffnen Sie diesen Posteingang erneut und kopieren Sie die Webhook-URL.",
+          "step3": "Erstellen Sie in Mailgun eine Empfangsroute, die an die URL weiterleitet."
+        },
+        "postmark": {
+          "step1": "Verwenden Sie den API-Token Ihres Servers sowohl als Benutzernamen als auch als Passwort.",
+          "step2": "Um E-Mails zu empfangen, verbinden Sie sich, öffnen Sie diesen Posteingang erneut und kopieren Sie die Webhook-URL.",
+          "step3": "Legen Sie sie in Postmark als Inbound Webhook Ihres Servers fest und schließen Sie den Roh-E-Mail-Inhalt ein."
+        },
+        "brevo": {
+          "step1": "Verwenden Sie Ihren Brevo-SMTP-Login und einen SMTP-Schlüssel als Passwort.",
+          "step2": "Um E-Mails zu empfangen, verbinden Sie sich, öffnen Sie diesen Posteingang erneut und kopieren Sie die Webhook-URL.",
+          "step3": "Fügen Sie in Brevo die URL als Webhook für eingehendes Parsing für Ihre Empfangsdomain hinzu.",
+          "note": "Brevo sendet bei eingehenden E-Mails keine Anhänge mit, daher werden Anhänge nicht empfangen."
+        },
+        "amazonSes": {
+          "step1": "Erstellen Sie SMTP-Zugangsdaten in der Amazon-SES-Konsole. Sie unterscheiden sich von Ihren AWS-Zugriffsschlüsseln.",
+          "step2": "Verwenden Sie den SMTP-Endpunkt Ihrer SES-Region als Host und verifizieren Sie die Absenderadresse.",
+          "step3": "Geben Sie den SMTP-Benutzernamen und das Passwort aus der Konsole ein.",
+          "note": "Dieser Posteingang kann nur E-Mails senden."
+        },
+        "other": {
+          "step1": "Fragen Sie Ihren E-Mail-Anbieter nach SMTP-Host und -Port. Port 587 verwendet STARTTLS und 465 verwendet SSL.",
+          "step2": "Um E-Mails zu empfangen, fragen Sie auch nach IMAP-Host und -Port (meist 993) und schalten Sie dann unten E-Mails empfangen ein."
+        }
+      }
     }
   },
   "botSimulator": {

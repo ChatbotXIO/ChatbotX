@@ -1993,6 +1993,48 @@ class ConversationService extends BaseService {
     )
   }
 
+  /**
+   * The `contentAttributes.email` thread headers (subject, Message-ID,
+   * References) of the contact's latest inbound email in this conversation, so
+   * an outgoing reply can thread under it. `undefined` when the conversation has
+   * no inbound email (a brand-new outreach).
+   */
+  async findLastIncomingEmailThread(props: {
+    conversation: Pick<
+      ConversationModel,
+      "id" | "workspaceId" | "lastActivityAt" | "createdAt"
+    >
+    contactInboxId: string
+  }): Promise<Record<string, unknown> | undefined> {
+    const { conversation, contactInboxId } = props
+    const messageRepository = await createMessageRepository()
+    const messages = await messageRepository.findLastByConversation(
+      conversation.id,
+      {
+        workspaceId: conversation.workspaceId,
+        messageTypes: ["incoming"],
+        limit: 10,
+        withAttachments: false,
+        sinceTime: getSafeSinceTime(
+          conversation.lastActivityAt ?? conversation.createdAt,
+          30 * 24 * 60 * 60 * 1000,
+        ),
+      },
+    )
+
+    for (const message of messages) {
+      const email = message.contentAttributes?.email
+      if (
+        message.contactInboxId === contactInboxId &&
+        typeof email === "object" &&
+        email !== null
+      ) {
+        return email as Record<string, unknown>
+      }
+    }
+    return
+  }
+
   async updateReadStatus(props: {
     workspaceId: string
     id: string

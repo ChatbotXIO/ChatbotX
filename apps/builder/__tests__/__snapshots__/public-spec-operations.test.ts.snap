@@ -3379,8 +3379,18 @@ exports[`public API spec — operation naming guard > operation list (operationI
   },
   {
     "method": "GET",
+    "operationId": "smtpIntegrations.getInboundWebhook",
+    "path": "/v1/smtp-integrations/{id}/inbound-webhook",
+  },
+  {
+    "method": "GET",
     "operationId": "smtpIntegrations.list",
     "path": "/v1/smtp-integrations",
+  },
+  {
+    "method": "POST",
+    "operationId": "smtpIntegrations.rotateInboundWebhook",
+    "path": "/v1/smtp-integrations/{id}/inbound-webhook/rotate",
   },
   {
     "method": "PUT",

@@ -131,8 +131,8 @@ export const inboxRepository = {
   /**
    * The workspace's connected inboxes as a three-column projection for the
    * analytics Channel and Inbox filters. A disconnected inbox has lost its
-   * integration, so it is not offered; its past events still count under "All". `smtp` never carries contact or conversation
-   * traffic. No integration relations are loaded.
+   * integration, so it is not offered; its past events still count under "All".
+   * No integration relations are loaded.
    */
   async listAnalyticsOptionsByWorkspace(input: {
     workspaceId: string
@@ -144,7 +144,6 @@ export const inboxRepository = {
       where: {
         workspaceId: input.workspaceId,
         status: inboxStatuses.enum.connected,
-        channel: { ne: "smtp" },
       },
       orderBy: { name: "asc" },
     })

@@ -72,6 +72,9 @@ catalogs:
     image-size:
       specifier: ^2.0.3
       version: 2.0.3
+    imapflow:
+      specifier: ^2.11.0
+      version: 2.11.0
     ioredis:
       specifier: 5.10.1
       version: 5.10.1
@@ -87,6 +90,9 @@ catalogs:
     lucide-react:
       specifier: ^1.17.0
       version: 1.17.0
+    mailparser:
+      specifier: ^3.9.8
+      version: 3.9.9
     mime-types:
       specifier: ^3.0.2
       version: 3.0.2
@@ -1025,7 +1031,7 @@ importers:
         specifier: ^0.18.12
         version: 0.18.12
       mailparser:
-        specifier: ^3.9.8
+        specifier: 'catalog:'
         version: 3.9.9
       mammoth:
         specifier: ^1.12.0
@@ -1841,9 +1847,24 @@ importers:
 
   integrations/smtp:
     dependencies:
+      '@chatbotx.io/flow-config':
+        specifier: workspace:*
+        version: link:../../packages/flow-config
+      '@chatbotx.io/logger':
+        specifier: workspace:*
+        version: link:../../packages/logger
       '@chatbotx.io/sdk':
         specifier: workspace:*
         version: link:../../packages/sdk
+      '@chatbotx.io/utils':
+        specifier: workspace:*
+        version: link:../../packages/utils
+      imapflow:
+        specifier: 'catalog:'
+        version: 2.11.0
+      mailparser:
+        specifier: 'catalog:'
+        version: 3.9.9
       nodemailer:
         specifier: ^10.3.1
         version: 10.3.1
@@ -1857,6 +1878,9 @@ importers:
       '@chatbotx.io/vitest-config':
         specifier: workspace:*
         version: link:../../packages/vitest-config
+      '@types/mailparser':
+        specifier: ^3.4.6
+        version: 3.4.6
       '@types/node':
         specifier: 24.x
         version: 24.13.1
@@ -7267,6 +7291,10 @@ packages:
   '@zone-eu/mailsplit@5.4.12':
     resolution: {integrity: sha512-w7Gy+NvjZ0MiXm8F6zfjImAqcTONKDImgWVBjDKQVFUXWuz3VFM5levNArkL2M877ajql5+bkS2pDV56injlmg==}
 
+  '@zone-eu/mailsplit@5.4.30':
+    resolution: {integrity: sha512-qN0KT6/ziAFvo5TzscaqpurIJaJQEXPPtqBZnpyhiGrACOKLDVMV6Lm57kXt5e/8zZUWoYiSC8oKl/aewtrJDQ==}
+    engines: {node: '>=20.0.0'}
+
   abbrev@2.0.0:
     resolution: {integrity: sha512-6/mh1E2u2YgEsCHdY0Yx5oW+61gZU+1vXaoiHHrpKeuRNNgFvS+/jrwHiQhB5apAf5oB7UB7E19ol2R2LKH8hQ==}
     engines: {node: ^14.17.0 || ^16.13.0 || >=18.0.0}
@@ -8328,6 +8356,10 @@ packages:
     resolution: {integrity: sha512-EuJWwlHPZ1LbADuKTClvHtwbaFn4rOD+dRAbWysqEOXRc2Uui0hJInNJrsdH0c+OhJA4nrCBdSkW4DD5YxAo6A==}
     engines: {node: '>=8.10.0'}
 
+  encoding-japanese@2.5.0:
+    resolution: {integrity: sha512-5TKhaMWTUF777NQ16OrAkJFuEd1uOnEBw8ODeXFTc/Y9csZZQ6/jiIS5r4aFuzfowu9gLGrE51zqI2H0dLwlmg==}
+    engines: {node: '>=18.0.0'}
+
   encoding-sniffer@0.2.1:
     resolution: {integrity: sha512-5gvq20T6vfpekVtqrYQsSCFZ1wEg5+wW0/QaZMWkFr6BqD3NfKs0rLCx4rrVlSWJeZb5NBJgVLswK/w2MWU+Gw==}
 
@@ -8874,6 +8906,10 @@ packages:
     engines: {node: '>=18'}
     hasBin: true
 
+  imapflow@2.11.0:
+    resolution: {integrity: sha512-Jv/PBBbBsKjBkdN5DUbELRCo7Xm3DQz+gYBkAy4h87ObQthTRd7nu53WV/dKDf2M8imoJZY+eQFBVkQAJagC6g==}
+    engines: {node: '>=20.0.0'}
+
   immediate@3.0.6:
     resolution: {integrity: sha512-XXOFtyqDjNDAQxVfYxuF7g9Il/IbWmmlQg2MYKOH8ExIT1qg6xc4zyS3HaEEATgs1btfzxq15ciUiY7gjSXRGQ==}
 
@@ -9190,14 +9226,26 @@ packages:
   libbase64@1.3.0:
     resolution: {integrity: sha512-GgOXd0Eo6phYgh0DJtjQ2tO8dc0IVINtZJeARPeiIJqge+HdsWSuaDTe8ztQ7j/cONByDZ3zeB325AHiv5O0dg==}
 
+  libbase64@1.4.1:
+    resolution: {integrity: sha512-Nyh3H90B3gRtrcxIe56Ayy7635J0jmh6AbxbQgQae8wrSPQMH5wFqJChiMTB13yKG512L3YspbA5DzumhFTITA==}
+    engines: {node: '>=20.0.0'}
+
   libmime@5.3.8:
     resolution: {integrity: sha512-ZrCY+Q66mPvasAfjsQ/IgahzoBvfE1VdtGRpo1hwRB1oK3wJKxhKA3GOcd2a6j7AH5eMFccxK9fBoCpRZTf8ng==}
+
+  libmime@5.6.4:
+    resolution: {integrity: sha512-QWiiwq3ujIUSsCCjFDldDN7FfXuLYSTnEln0oeYfOjgqyVlRV6WQ3UyJ/paguoz8Ynxy1s7k3kh6xomS3bJkCw==}
+    engines: {node: '>=20.0.0'}
 
   libphonenumber-js@1.13.6:
     resolution: {integrity: sha512-NdB6O6QvlGMCoG003m0YIKG2+Xw7DjmCZhmc1RH+K6HncADUbRf8TZeLegxBBN1VFyPHcNpPTKpIhYLXzJVy1Q==}
 
   libqp@2.1.1:
     resolution: {integrity: sha512-0Wd+GPz1O134cP62YU2GTOPNA7Qgl09XwCqM5zpBv87ERCXdfDtyKXvV7c9U22yWJh44QZqBocFnXN11K96qow==}
+
+  libqp@3.0.1:
+    resolution: {integrity: sha512-7QZxpPX25pga1WiMueduWxmrHMVBFrZPH6ZUaozGYa/H98JH6NVBSET3qVw+4NxzoraIW7rJ81YxSU9IalvCpg==}
+    engines: {node: '>=20.0.0'}
 
   lie@3.3.0:
     resolution: {integrity: sha512-UaiMJzeWRlEujzAuw5LokY1L5ecNQYZKfmyZ9L7wDHb/p5etKaxXhohBcrw0EYby+G/NA52vRSN4N39dxHAIwQ==}
@@ -10802,9 +10850,17 @@ packages:
   slick@1.12.2:
     resolution: {integrity: sha512-4qdtOGcBjral6YIBCWJ0ljFSKNLz9KkhbWtuGvUyRowl1kxfuE1x/Z/aJcaiilpb3do9bl5K7/1h9XC5wWpY/A==}
 
+  smart-buffer@4.2.0:
+    resolution: {integrity: sha512-94hK0Hh8rPqQl2xXc3HsaBoOXKV20MToPkcXvwbISWLEs+64sBq5kFgn2kJDHb1Pry9yrP0dxrCI9RRci7RXKg==}
+    engines: {node: '>= 6.0.0', npm: '>= 3.0.0'}
+
   smol-toml@1.7.0:
     resolution: {integrity: sha512-aqVvWoyO21L23mb+drl4RmMXbf6N7FdHjAhTRA9ZBL7apWBgfWC16KjrASI+1p9GAroljyMHj6fK67i0UiTNvQ==}
     engines: {node: '>= 18'}
+
+  socks@2.8.10:
+    resolution: {integrity: sha512-e0VyvkVTwVYViNovRkZ9aodhxVlyoMn7eJhVUPxZ+eK9P/7CBkxvvsBOHqFPEH416726W8tLXXXjKwqgTErrCQ==}
+    engines: {node: '>= 10.0.0', npm: '>= 3.0.0'}
 
   sonic-boom@4.2.1:
     resolution: {integrity: sha512-w6AxtubXa2wTXAUsZMMWERrsIRAdrK0Sc+FUytWvYAhBJLyuI4llrMIC1DtlNSdI99EI86KZum2MMq3EAZlF9Q==}
@@ -14710,6 +14766,12 @@ snapshots:
       libmime: 5.3.8
       libqp: 2.1.1
 
+  '@zone-eu/mailsplit@5.4.30':
+    dependencies:
+      libbase64: 1.4.1
+      libmime: 5.6.4
+      libqp: 3.0.1
+
   abbrev@2.0.0: {}
 
   accepts@2.0.0:
@@ -15639,6 +15701,8 @@ snapshots:
 
   encoding-japanese@2.2.0: {}
 
+  encoding-japanese@2.5.0: {}
+
   encoding-sniffer@0.2.1:
     dependencies:
       iconv-lite: 0.6.3
@@ -16317,6 +16381,17 @@ snapshots:
 
   image-size@2.0.3: {}
 
+  imapflow@2.11.0:
+    dependencies:
+      '@zone-eu/mailsplit': 5.4.30
+      encoding-japanese: 2.5.0
+      iconv-lite: 0.7.3
+      libbase64: 1.4.1
+      libmime: 5.6.4
+      libqp: 3.0.1
+      pino: 10.3.1
+      socks: 2.8.10
+
   immediate@3.0.6: {}
 
   immer@11.1.15: {}
@@ -16626,6 +16701,8 @@ snapshots:
 
   libbase64@1.3.0: {}
 
+  libbase64@1.4.1: {}
+
   libmime@5.3.8:
     dependencies:
       encoding-japanese: 2.2.0
@@ -16633,9 +16710,18 @@ snapshots:
       libbase64: 1.3.0
       libqp: 2.1.1
 
+  libmime@5.6.4:
+    dependencies:
+      encoding-japanese: 2.5.0
+      iconv-lite: 0.7.3
+      libbase64: 1.4.1
+      libqp: 3.0.1
+
   libphonenumber-js@1.13.6: {}
 
   libqp@2.1.1: {}
+
+  libqp@3.0.1: {}
 
   lie@3.3.0:
     dependencies:
@@ -18676,7 +18762,14 @@ snapshots:
 
   slick@1.12.2: {}
 
+  smart-buffer@4.2.0: {}
+
   smol-toml@1.7.0: {}
+
+  socks@2.8.10:
+    dependencies:
+      ip-address: 10.7.4
+      smart-buffer: 4.2.0
 
   sonic-boom@4.2.1:
     dependencies:

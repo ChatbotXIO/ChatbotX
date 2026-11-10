@@ -16,6 +16,7 @@ const {
   mockRecordPermanentGrant,
   mockMarkReadByOutbound,
   mockFindConversation,
+  mockFindEmailThread,
   mockRecordDelivered,
   mockAllIntegrations,
 } = vi.hoisted(() => {
@@ -49,6 +50,7 @@ const {
     mockRecordPermanentGrant: vi.fn().mockResolvedValue(undefined),
     mockMarkReadByOutbound: vi.fn().mockResolvedValue(true),
     mockFindConversation: vi.fn(),
+    mockFindEmailThread: vi.fn(),
     mockRecordDelivered: vi.fn().mockResolvedValue(true),
     mockAllIntegrations: {} as Record<string, { deliveryReceipts: boolean }>,
   }
@@ -69,6 +71,7 @@ vi.mock("@chatbotx.io/business", () => ({
   contactService: { unblockIfBlocked: mockContactUnblockIfBlocked },
   conversationService: {
     findBy: mockFindConversation,
+    findLastIncomingEmailThread: mockFindEmailThread,
     markReadByOutbound: mockMarkReadByOutbound,
   },
   publishWorkspaceRealtimeEvent: mockQueueWorkspaceRealtimeEvent,
@@ -335,6 +338,88 @@ describe("chat send-message handlers", () => {
       }).catch(() => undefined)
 
       expect(mockRecordDelivered).not.toHaveBeenCalled()
+    })
+  })
+
+  describe("email threading (smtp)", () => {
+    const smtpInbox = { ...contactInbox, channel: "smtp" }
+    const outgoing = (contentAttributes?: Record<string, unknown>) =>
+      ({
+        id: "msg-1",
+        workspaceId: "ws-1",
+        conversationId: "conv-1",
+        contactInboxId: "ci-1",
+        contentType: "text",
+        messageType: "outgoing",
+        senderType: "user",
+        text: "hello",
+        contentAttributes,
+      }) as never
+    const sentMessage = () =>
+      mockRunChannelHandler.mock.calls[0]?.[2].data.message
+
+    beforeEach(() => {
+      mockFindEmailThread.mockResolvedValue(undefined)
+    })
+
+    test("attaches the last inbound email's thread headers to the outgoing message", async () => {
+      mockFindEmailThread.mockResolvedValue({
+        subject: "Order 1234",
+        messageId: "<in@example.com>",
+      })
+
+      await sendMessageToChannel({
+        conversation: conversation as never,
+        contactInbox: smtpInbox as never,
+        message: outgoing({ keep: true }),
+      })
+
+      expect(mockFindEmailThread).toHaveBeenCalledWith({
+        conversation,
+        contactInboxId: "ci-1",
+      })
+      expect(sentMessage().contentAttributes).toEqual({
+        keep: true,
+        email: { subject: "Order 1234", messageId: "<in@example.com>" },
+      })
+    })
+
+    test("an explicit subject on the outgoing message wins over the inherited one", async () => {
+      mockFindEmailThread.mockResolvedValue({
+        subject: "Order 1234",
+        messageId: "<in@example.com>",
+      })
+
+      await sendMessageToChannel({
+        conversation: conversation as never,
+        contactInbox: smtpInbox as never,
+        message: outgoing({ email: { subject: "Custom subject" } }),
+      })
+
+      expect(sentMessage().contentAttributes.email).toEqual({
+        subject: "Custom subject",
+        messageId: "<in@example.com>",
+      })
+    })
+
+    test("sends a fresh outreach unchanged when the conversation has no inbound email", async () => {
+      await sendMessageToChannel({
+        conversation: conversation as never,
+        contactInbox: smtpInbox as never,
+        message: outgoing(),
+      })
+
+      expect(sentMessage().contentAttributes).toBeUndefined()
+    })
+
+    test("does not look up an email thread for other channels", async () => {
+      await sendMessageToChannel({
+        conversation: conversation as never,
+        contactInbox: contactInbox as never,
+        message: outgoing(),
+      })
+
+      expect(mockFindEmailThread).not.toHaveBeenCalled()
     })
   })
 

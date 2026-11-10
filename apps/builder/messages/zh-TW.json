@@ -6362,11 +6362,102 @@
   },
   "smtp": {
     "setting": {
-      "description": "使用您的SMTP 伺服器傳送電子郵件。",
+      "description": "透過您的 SMTP 伺服器、IMAP 信箱或入站 Webhook 收發電子郵件。",
       "label": "（電子郵件）SMTP"
     },
     "errors": {
-      "connectionFailed": "無法連接到SMTP 伺服器。請檢查您的憑證並重試。"
+      "connectionFailed": "無法連接到SMTP 伺服器。請檢查您的憑證並重試。",
+      "imapConnectionFailed": "無法連線到 IMAP 信箱。請檢查主機、憑證和信箱名稱後再試一次。"
+    },
+    "guide": {
+      "trigger": "設定指南：{provider}",
+      "openDocs": "開啟 {provider} 文件",
+      "receiveImap": "接收電子郵件",
+      "receiveImapDescription": "每分鐘檢查一次此信箱，並為每封新郵件建立一個對話。僅會匯入開啟此功能之後收到的郵件。",
+      "imapHost": "IMAP 主機",
+      "imapPort": "IMAP 連接埠",
+      "relayReceive": "此服務供應商僅能傳送郵件。若要接收回覆，請將其入站解析指向 Webhook URL。",
+      "sendOnly": "Amazon SES 透過 SNS 接收郵件，此處不支援。此收件匣只能傳送電子郵件。",
+      "webhook": {
+        "title": "入站 Webhook URL",
+        "hint": "請將此 URL 貼到服務供應商的入站設定中。任何持有此 URL 的人都能將郵件加入此收件匣，請像密碼一樣妥善保管。",
+        "saveFirst": "請先連線，然後重新開啟此收件匣以取得 Webhook URL。",
+        "show": "顯示 Webhook URL",
+        "rotate": "輪替 URL",
+        "copied": "已複製 Webhook URL",
+        "failed": "無法載入 Webhook URL，請再試一次。"
+      },
+      "status": {
+        "title": "狀態",
+        "sending": "傳送",
+        "receivingImap": "接收：IMAP",
+        "receivingWebhook": "接收：Webhook",
+        "receivingOff": "接收：已關閉",
+        "lastPolled": "上次檢查：{time}",
+        "neverPolled": "尚未檢查",
+        "error": "最近一次錯誤：{error}"
+      },
+      "errors": {
+        "title": "常見錯誤",
+        "authFailed": "535 或驗證失敗：請使用應用程式密碼，而非帳戶的一般密碼。",
+        "timeout": "逾時：請嘗試使用 465 連接埠 (SSL) 取代 587 (STARTTLS)，並確認您的主機允許對外連線。",
+        "imap": "IMAP 登入失敗：請在信箱設定中開啟 IMAP，並使用相同的應用程式密碼。"
+      },
+      "providers": {
+        "google": {
+          "step1": "為 Google 帳戶開啟兩步驟驗證。",
+          "step2": "建立應用程式密碼（Google 帳戶 > 安全性 > 應用程式密碼）。",
+          "step3": "輸入完整的 Gmail 地址作為使用者名稱，並以應用程式密碼作為密碼。",
+          "step4": "若要接收郵件，請在 Gmail 中開啟 IMAP（設定 > 轉寄和 POP/IMAP），並開啟下方的「接收電子郵件」。"
+        },
+        "outlook": {
+          "step1": "為 Microsoft 帳戶開啟兩步驟驗證。",
+          "step2": "在 Microsoft 帳戶的安全性設定中建立應用程式密碼。",
+          "step3": "使用完整地址作為使用者名稱，並以應用程式密碼作為密碼。",
+          "note": "Microsoft 正逐步停用 Exchange Online 的基本驗證。若連線遭拒，可能是您的組織已將其關閉。"
+        },
+        "yahoo": {
+          "step1": "在 Yahoo 帳戶的安全性設定中開啟兩步驟驗證。",
+          "step2": "為此連線產生應用程式密碼。",
+          "step3": "使用您的 Yahoo 地址作為使用者名稱，並以應用程式密碼作為密碼。"
+        },
+        "zoho": {
+          "step1": "為您的 Zoho 帳戶開啟雙重驗證。",
+          "step2": "建立應用程式專用密碼。",
+          "step3": "使用您的 Zoho 地址作為使用者名稱，並以該密碼作為密碼。必須在 Zoho Mail 設定中啟用 IMAP。"
+        },
+        "sendgrid": {
+          "step1": "建立具有 Mail Send 權限的 API 金鑰。使用者名稱請輸入 apikey，並以該金鑰作為密碼。",
+          "step2": "若要接收郵件，請先連線，然後重新開啟此收件匣並複製其 Webhook URL。",
+          "step3": "在 SendGrid 中，將該 URL 新增至 Settings > Inbound Parse，並勾選 \"POST the raw, full MIME message\"。"
+        },
+        "mailgun": {
+          "step1": "使用寄送網域的 SMTP 憑證（Sending > Domain settings > SMTP credentials）。",
+          "step2": "若要接收郵件，請先連線，然後重新開啟此收件匣並複製其 Webhook URL。",
+          "step3": "在 Mailgun 中，建立一條轉送至該 URL 的接收路由。"
+        },
+        "postmark": {
+          "step1": "將伺服器的 API 權杖同時作為使用者名稱和密碼。",
+          "step2": "若要接收郵件，請先連線，然後重新開啟此收件匣並複製其 Webhook URL。",
+          "step3": "在 Postmark 中，將其設定為伺服器的 Inbound Webhook，並包含原始郵件內容。"
+        },
+        "brevo": {
+          "step1": "使用您的 Brevo SMTP 登入名稱，並以 SMTP 金鑰作為密碼。",
+          "step2": "若要接收郵件，請先連線，然後重新開啟此收件匣並複製其 Webhook URL。",
+          "step3": "在 Brevo 中，將該 URL 新增為接收網域的入站解析 Webhook。",
+          "note": "Brevo 不會隨入站郵件傳送附件，因此不會收到附件。"
+        },
+        "amazonSes": {
+          "step1": "在 Amazon SES 主控台中建立 SMTP 憑證。它們與您的 AWS 存取金鑰不同。",
+          "step2": "使用您所在 SES 區域的 SMTP 端點作為主機，並驗證寄件者地址。",
+          "step3": "輸入主控台中的 SMTP 使用者名稱和密碼。",
+          "note": "此收件匣只能傳送電子郵件。"
+        },
+        "other": {
+          "step1": "向您的郵件服務供應商詢問 SMTP 主機和連接埠。587 連接埠使用 STARTTLS，465 連接埠使用 SSL。",
+          "step2": "若要接收郵件，另請詢問 IMAP 主機和連接埠（通常為 993），然後開啟下方的「接收電子郵件」。"
+        }
+      }
     }
   },
   "botSimulator": {
