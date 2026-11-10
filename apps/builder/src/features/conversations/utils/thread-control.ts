@@ -403,3 +403,14 @@ export function resolveThreadPassChoices(
     defaultRole: threadControlRoles.enum.escalation,
   }
 }
+
+/**
+ * Whether the thread can be passed to a partner role the agent picks (WhatsApp),
+ * as opposed to a pass that only hands it back to the AI agent (Messenger).
+ */
+export function offersPartnerPass(view: ThreadControlView): boolean {
+  return (
+    view.canPass &&
+    THREAD_CONTROL_CHANNEL_UI[view.channel].passTarget === "escalation"
+  )
+}

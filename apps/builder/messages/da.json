@@ -9556,7 +9556,8 @@
     "release": {
       "label": "Frigiv",
       "tooltip": "Frigiv samtalen, så andre apps kan svare",
-      "success": "Samtalen er frigivet"
+      "success": "Samtalen er frigivet",
+      "menu": "Frigiv eller overdrag"
     },
     "pass": {
       "menuItem": "Overdrag til en partner",

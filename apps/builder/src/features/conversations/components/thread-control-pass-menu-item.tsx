@@ -4,9 +4,9 @@ import { DropdownMenuItem } from "@chatbotx.io/ui/components/ui/dropdown-menu"
 import { ArrowRightLeftIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useState } from "react"
-import { THREAD_CONTROL_CHANNEL_UI } from "@/features/messages/lib/thread-control-channel-ui"
 import { useThreadControl } from "../hooks/use-thread-control"
 import type { ListConversationItemResource } from "../schema/resource"
+import { offersPartnerPass } from "../utils/thread-control"
 import { ThreadControlPassPartnerDialog } from "./thread-control-pass-partner-dialog"
 
 /**
@@ -24,10 +24,7 @@ export function ThreadControlPassMenuItem({
   const t = useTranslations()
   const [open, setOpen] = useState(false)
   const threadControl = useThreadControl(conversation)
-  if (
-    !threadControl?.canPass ||
-    THREAD_CONTROL_CHANNEL_UI[threadControl.channel].passTarget !== "escalation"
-  ) {
+  if (!(threadControl && offersPartnerPass(threadControl))) {
     return null
   }
   return (

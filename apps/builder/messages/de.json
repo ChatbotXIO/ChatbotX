@@ -9556,7 +9556,8 @@
     "release": {
       "label": "Freigeben",
       "tooltip": "Konversation freigeben, damit andere Apps antworten können",
-      "success": "Konversation freigegeben"
+      "success": "Konversation freigegeben",
+      "menu": "Freigeben oder übergeben"
     },
     "pass": {
       "menuItem": "An einen Partner übergeben",

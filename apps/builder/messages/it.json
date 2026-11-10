@@ -9556,7 +9556,8 @@
     "release": {
       "label": "Rilascia",
       "tooltip": "Rilascia questa conversazione così altre app possono rispondere",
-      "success": "Conversazione rilasciata"
+      "success": "Conversazione rilasciata",
+      "menu": "Rilascia o passa"
     },
     "pass": {
       "menuItem": "Passa a un partner",

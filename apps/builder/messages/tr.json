@@ -9556,7 +9556,8 @@
     "release": {
       "label": "Bırak",
       "tooltip": "Diğer uygulamaların yanıtlayabilmesi için bu konuşmayı bırakın",
-      "success": "Konuşma bırakıldı"
+      "success": "Konuşma bırakıldı",
+      "menu": "Bırak veya devret"
     },
     "pass": {
       "menuItem": "Bir ortağa devret",
