@@ -24,6 +24,10 @@ const mocks = vi.hoisted(() => ({
   decrement: vi.fn(async () => undefined),
   rollbackLiveIncrement: vi.fn(async () => undefined),
   findOwnerUserIdByWorkspaceId: vi.fn(async () => "owner-1"),
+  findInboxForUpdate: vi.fn(),
+  listInboxIdentities: vi.fn(),
+  recordDeletion: vi.fn(async () => undefined),
+  loggerError: vi.fn(),
 }))
 
 vi.mock("@chatbotx.io/database/repositories", () => ({
@@ -40,7 +44,11 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
     list: mocks.list,
     count: mocks.count,
   },
-  inboxRepository: { updateConnectionMirror: mocks.mirrorInbox },
+  inboxRepository: {
+    updateConnectionMirror: mocks.mirrorInbox,
+    findByIdForUpdate: mocks.findInboxForUpdate,
+    listIdentitiesByIds: mocks.listInboxIdentities,
+  },
   aiHandoverSettingsRepository: { lockExisting: mocks.lockExisting },
   aiHandoverBulkRunRepository: { cancelLive: mocks.cancelLive },
 }))
@@ -72,6 +80,19 @@ vi.mock("../../workspace-usage/service", () => ({
 
 vi.mock("../../inbox/service", () => ({
   inboxService: { disconnect: mocks.inboxDisconnect },
+}))
+
+vi.mock("../../resource-deletion-log/service", () => ({
+  resourceDeletionLogService: { recordRequest: mocks.recordDeletion },
+}))
+
+vi.mock("../../logger", () => ({
+  logger: {
+    error: mocks.loggerError,
+    warn: vi.fn(),
+    info: vi.fn(),
+    debug: vi.fn(),
+  },
 }))
 
 vi.mock("../../workspace-member/service", () => ({
@@ -120,6 +141,11 @@ beforeEach(() => {
   mocks.rollbackLiveIncrement.mockClear()
   mocks.findOwnerUserIdByWorkspaceId.mockReset()
   mocks.findOwnerUserIdByWorkspaceId.mockResolvedValue("owner-1")
+  mocks.findInboxForUpdate.mockReset()
+  mocks.listInboxIdentities.mockReset()
+  mocks.recordDeletion.mockReset()
+  mocks.recordDeletion.mockResolvedValue(undefined)
+  mocks.loggerError.mockReset()
 
   mocks.tryConsume.mockResolvedValue({ ok: true })
   vi.mocked(db.transaction).mockImplementation(
@@ -702,6 +728,7 @@ describe("ConnectionStateService.disconnectInbox", () => {
 
   test("uses the inbox-only legacy path before Connection backfill", async () => {
     mocks.findByInboxId.mockResolvedValue(undefined)
+    mocks.listInboxIdentities.mockResolvedValue([])
 
     await connectionStateService.disconnectInbox({
       inboxId: "inbox-1",
@@ -732,6 +759,244 @@ describe("ConnectionStateService.disconnectInbox", () => {
 
     expect(mocks.inboxDisconnect).not.toHaveBeenCalled()
     expect(mocks.update).not.toHaveBeenCalled()
+  })
+})
+
+describe("ConnectionStateService — channel deletion log", () => {
+  const channelResource = {
+    type: "channel",
+    id: "inbox-1",
+    workspaceId: "ws-1",
+    subtype: "messenger",
+    name: "My Page",
+  }
+
+  const transitionWith = (
+    event: "user.disconnect" | "teardown.disconnect" | "teardown.pause",
+    tx?: unknown,
+  ) =>
+    connectionStateService.transition({
+      connectionId: "conn-1",
+      event,
+      ownerId: "owner-1",
+      ...(tx ? { tx: tx as never } : {}),
+    })
+
+  test.each([
+    "connected",
+    "needs_reauth",
+    "paused",
+  ])("logs a completed channel deletion for a user.disconnect from %s", async (status) => {
+    mocks.findById.mockResolvedValue(baseConnection({ status }))
+    mocks.update.mockResolvedValue(baseConnection({ status: "disconnected" }))
+
+    await transitionWith("user.disconnect")
+
+    expect(mocks.recordDeletion).toHaveBeenCalledTimes(1)
+    expect(mocks.recordDeletion).toHaveBeenCalledWith({
+      resource: channelResource,
+      status: "completed",
+      tx: expect.anything(),
+    })
+  })
+
+  test("writes the log through the caller-owned transaction", async () => {
+    const callerTx = { marker: "caller-tx" }
+    mocks.findById.mockResolvedValue(baseConnection({ status: "connected" }))
+    mocks.update.mockResolvedValue(baseConnection({ status: "disconnected" }))
+
+    await transitionWith("user.disconnect", callerTx)
+
+    expect(mocks.recordDeletion).toHaveBeenCalledWith(
+      expect.objectContaining({ tx: callerTx }),
+    )
+  })
+
+  test("logs nothing when the connection is already disconnected", async () => {
+    mocks.findById.mockResolvedValue(baseConnection({ status: "disconnected" }))
+    mocks.update.mockResolvedValue(baseConnection({ status: "disconnected" }))
+
+    await transitionWith("user.disconnect")
+
+    expect(mocks.recordDeletion).not.toHaveBeenCalled()
+  })
+
+  test.each([
+    "teardown.disconnect",
+    "teardown.pause",
+  ] as const)("logs nothing for a system %s", async (event) => {
+    mocks.findById.mockResolvedValue(baseConnection({ status: "connected" }))
+    mocks.update.mockResolvedValue(baseConnection({ status: "disconnected" }))
+
+    await transitionWith(event)
+
+    expect(mocks.recordDeletion).not.toHaveBeenCalled()
+  })
+
+  test("logs nothing for a workspace integration, which has no inbox", async () => {
+    mocks.findById.mockResolvedValue(
+      baseConnection({
+        kind: "integration",
+        channel: null,
+        inboxId: null,
+        integrationId: "integration-1",
+        status: "connected",
+      }),
+    )
+    mocks.update.mockResolvedValue(baseConnection({ status: "disconnected" }))
+
+    await transitionWith("user.disconnect")
+
+    expect(mocks.recordDeletion).not.toHaveBeenCalled()
+  })
+
+  test("fails the disconnect before it releases quota when the log cannot be written", async () => {
+    mocks.findById.mockResolvedValue(baseConnection({ status: "connected" }))
+    mocks.update.mockResolvedValue(baseConnection({ status: "disconnected" }))
+    mocks.recordDeletion.mockRejectedValue(new Error("log insert failed"))
+
+    await expect(transitionWith("user.disconnect")).rejects.toThrow(
+      "log insert failed",
+    )
+
+    expect(mocks.release).not.toHaveBeenCalled()
+  })
+
+  describe("disconnectInbox without a Connection row (legacy path)", () => {
+    const inbox = {
+      id: "inbox-1",
+      name: "Legacy Inbox",
+      channel: "telegram",
+      status: "connected",
+    }
+    const legacyResource = {
+      type: "channel",
+      id: "inbox-1",
+      workspaceId: "ws-1",
+      subtype: "telegram",
+      name: "Legacy Inbox",
+    }
+    const input = {
+      inboxId: "inbox-1",
+      workspaceId: "ws-1",
+      ownerId: "owner-1",
+    }
+
+    beforeEach(() => {
+      mocks.findByInboxId.mockResolvedValue(undefined)
+    })
+
+    test("with a caller tx, locks the inbox, disconnects and logs on that tx", async () => {
+      const callerTx = { marker: "caller-tx" }
+      mocks.findInboxForUpdate.mockResolvedValue(inbox)
+
+      await connectionStateService.disconnectInbox({
+        ...input,
+        tx: callerTx as never,
+      })
+
+      expect(mocks.findInboxForUpdate).toHaveBeenCalledWith(
+        { id: "inbox-1", workspaceId: "ws-1" },
+        callerTx,
+      )
+      expect(mocks.inboxDisconnect).toHaveBeenCalledWith({
+        ...input,
+        tx: callerTx,
+        reason: "manual",
+      })
+      expect(mocks.recordDeletion).toHaveBeenCalledWith({
+        resource: legacyResource,
+        status: "completed",
+        tx: callerTx,
+      })
+      expect(mocks.findInboxForUpdate.mock.invocationCallOrder[0]).toBeLessThan(
+        mocks.inboxDisconnect.mock.invocationCallOrder[0],
+      )
+    })
+
+    test("with a caller tx, logs nothing for an inbox that is already disconnected", async () => {
+      mocks.findInboxForUpdate.mockResolvedValue({
+        ...inbox,
+        status: "disconnected",
+      })
+
+      await connectionStateService.disconnectInbox({
+        ...input,
+        tx: {} as never,
+      })
+
+      expect(mocks.inboxDisconnect).toHaveBeenCalledTimes(1)
+      expect(mocks.recordDeletion).not.toHaveBeenCalled()
+    })
+
+    test("with a caller tx, logs nothing when the inbox row is gone", async () => {
+      mocks.findInboxForUpdate.mockResolvedValue(undefined)
+
+      await connectionStateService.disconnectInbox({
+        ...input,
+        tx: {} as never,
+      })
+
+      expect(mocks.recordDeletion).not.toHaveBeenCalled()
+    })
+
+    test("with a caller tx, a failing log write fails the disconnect so the caller rolls back", async () => {
+      mocks.findInboxForUpdate.mockResolvedValue(inbox)
+      mocks.recordDeletion.mockRejectedValue(new Error("log insert failed"))
+
+      await expect(
+        connectionStateService.disconnectInbox({ ...input, tx: {} as never }),
+      ).rejects.toThrow("log insert failed")
+    })
+
+    test("without a tx, reads the inbox first, disconnects unchanged, then logs", async () => {
+      mocks.listInboxIdentities.mockResolvedValue([inbox])
+
+      await connectionStateService.disconnectInbox(input)
+
+      expect(mocks.findInboxForUpdate).not.toHaveBeenCalled()
+      expect(mocks.listInboxIdentities).toHaveBeenCalledWith({
+        workspaceId: "ws-1",
+        ids: ["inbox-1"],
+      })
+      expect(mocks.inboxDisconnect).toHaveBeenCalledWith({
+        ...input,
+        reason: "manual",
+      })
+      expect(mocks.recordDeletion).toHaveBeenCalledWith({
+        resource: legacyResource,
+        status: "completed",
+        tx: db,
+      })
+      expect(mocks.inboxDisconnect.mock.invocationCallOrder[0]).toBeLessThan(
+        mocks.recordDeletion.mock.invocationCallOrder[0],
+      )
+    })
+
+    test("without a tx, never fails a disconnect that already took effect when the log write fails", async () => {
+      mocks.listInboxIdentities.mockResolvedValue([inbox])
+      const logError = new Error("log insert failed")
+      mocks.recordDeletion.mockRejectedValue(logError)
+
+      await expect(
+        connectionStateService.disconnectInbox(input),
+      ).resolves.toBeUndefined()
+
+      expect(mocks.loggerError).toHaveBeenCalledWith(
+        { err: logError, inboxId: "inbox-1", workspaceId: "ws-1" },
+        "resource-deletion-log: failed to record a channel deletion",
+      )
+    })
+
+    test("without a tx, logs nothing for an inbox that is already disconnected", async () => {
+      mocks.listInboxIdentities.mockResolvedValue([
+        { ...inbox, status: "disconnected" },
+      ])
+
+      await connectionStateService.disconnectInbox(input)
+
+      expect(mocks.recordDeletion).not.toHaveBeenCalled()
+    })
   })
 })
 

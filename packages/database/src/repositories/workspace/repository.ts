@@ -11,6 +11,17 @@ import {
 import { inboxModel, workspaceModel } from "../../schema"
 import type { WorkspaceModel } from "../../types"
 
+/** What a workspace deletion request needs from the locked row. */
+export type WorkspaceDeletionRequestState = Pick<
+  WorkspaceModel,
+  | "id"
+  | "name"
+  | "scheduledDeletionAt"
+  | "deletionRequestedAt"
+  | "deletionRequestedById"
+  | "purgeStartedAt"
+>
+
 export const workspaceRepository = {
   /**
    * Takes the shared lock that fences child-table writes against a workspace
@@ -47,6 +58,35 @@ export const workspaceRepository = {
     await tx.execute(
       sql`select pg_advisory_xact_lock(hashtextextended(${lockKey}, 0))`,
     )
+  },
+  /**
+   * Locks one workspace row (`FOR NO KEY UPDATE`) and returns its
+   * deletion-request state. Callers must pass an open transaction: the lock
+   * lasts until it ends, so two concurrent schedule/cancel calls for one
+   * workspace serialize on it, and so does the purge fence's `FOR UPDATE`.
+   * Deliberately not `FOR UPDATE`: that is the only row lock that conflicts
+   * with the `FOR KEY SHARE` every insert into a table with an FK to
+   * `Workspace` takes, so it would stall those writes for the whole workspace
+   * until commit. `NO KEY UPDATE` is the lock the following non-key `UPDATE`
+   * takes anyway.
+   */
+  async findByIdForUpdate(
+    input: { id: string },
+    tx: DatabaseClient,
+  ): Promise<WorkspaceDeletionRequestState | undefined> {
+    const [row] = await tx
+      .select({
+        id: workspaceModel.id,
+        name: workspaceModel.name,
+        scheduledDeletionAt: workspaceModel.scheduledDeletionAt,
+        deletionRequestedAt: workspaceModel.deletionRequestedAt,
+        deletionRequestedById: workspaceModel.deletionRequestedById,
+        purgeStartedAt: workspaceModel.purgeStartedAt,
+      })
+      .from(workspaceModel)
+      .where(eq(workspaceModel.id, input.id))
+      .for("no key update")
+    return row
   },
   /**
    * The live workspace a user already owns — excludes a row mid soft-delete

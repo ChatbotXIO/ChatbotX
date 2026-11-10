@@ -1,8 +1,14 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
-import { ChatbotXException } from "../../errors"
+import { ChatbotXException, WorkspacePurgeIncompleteError } from "../../errors"
 
 const mocks = vi.hoisted(() => ({
   businessLoggerError: vi.fn(),
+  businessLoggerWarn: vi.fn(),
+  resourceDeletionLog: {
+    findPendingId: vi.fn(async (): Promise<string | undefined> => undefined),
+    completePending: vi.fn(async () => 1),
+    recordHistoricalRequest: vi.fn(async () => undefined),
+  },
   teardownPaymentProviders: vi.fn(async () => undefined),
   workspaceInsert: vi.fn(),
   workspaceInsertValues: vi.fn(),
@@ -42,6 +48,10 @@ vi.mock("../../workspace-usage/service", () => ({
   workspaceUsageService: {
     rollbackLiveIncrement: vi.fn(async () => undefined),
   },
+}))
+
+vi.mock("../../resource-deletion-log/service", () => ({
+  resourceDeletionLogService: mocks.resourceDeletionLog,
 }))
 
 vi.mock("../../workspace-deletion-record/service", () => ({
@@ -134,7 +144,7 @@ vi.mock("../../logger", () => ({
   logger: {
     error: mocks.businessLoggerError,
     info: vi.fn(),
-    warn: vi.fn(),
+    warn: mocks.businessLoggerWarn,
   },
 }))
 
@@ -233,9 +243,18 @@ vi.mock("../../template/installation-dispatch", () => ({
 }))
 
 const { workspaceService } = await import("../service")
+const { withPurgeTimeouts } = await import(
+  "../../workspace-lifecycle/purge-batch"
+)
 
 beforeEach(() => {
   mocks.businessLoggerError.mockReset()
+  mocks.businessLoggerWarn.mockReset()
+  mocks.resourceDeletionLog.findPendingId.mockReset()
+  mocks.resourceDeletionLog.findPendingId.mockResolvedValue(undefined)
+  mocks.resourceDeletionLog.completePending.mockReset()
+  mocks.resourceDeletionLog.completePending.mockResolvedValue(1)
+  mocks.resourceDeletionLog.recordHistoricalRequest.mockReset()
   mocks.workspaceInsert.mockReset()
   mocks.workspaceInsertValues.mockReset()
   mocks.workspaceDelete.mockReset()
@@ -570,5 +589,176 @@ describe("WorkspaceService.purgeDueScheduled", () => {
     })
     expect(mocks.workspaceDelete).not.toHaveBeenCalled()
     expect(mocks.workspaceQuotaRelease).not.toHaveBeenCalled()
+  })
+
+  describe("deletion log", () => {
+    const claimedRows = [{ id: "w1", ownerId: "o1", tenantId: "t1" }]
+    const deletedRow = {
+      id: "w1",
+      name: "Acme",
+      deletionRequestedById: "user-1",
+      deletionRequestedAt: new Date("2026-11-01T00:00:00.000Z"),
+    }
+    const mockDeletedRow = () =>
+      mocks.workspaceDelete.mockReturnValueOnce({
+        where: vi.fn(() => ({
+          returning: vi.fn().mockResolvedValue([deletedRow]),
+        })),
+      })
+
+    test("resolves the pending row before the final transaction and completes it by id inside it", async () => {
+      setupPurgeTransactions(claimedRows)
+      mocks.resourceDeletionLog.findPendingId.mockResolvedValue("log-1")
+      mockDeletedRow()
+
+      await expect(
+        workspaceService.purgeDueScheduled({ chunkSize: 1, maxChunks: 1 }),
+      ).resolves.toBe(1)
+
+      expect(mocks.resourceDeletionLog.findPendingId).toHaveBeenCalledWith({
+        resource: { type: "workspace", id: "w1", workspaceId: "w1" },
+        tx: expect.objectContaining({ delete: mocks.workspaceDelete }),
+      })
+      expect(mocks.resourceDeletionLog.completePending).toHaveBeenCalledWith({
+        id: "log-1",
+        tx: expect.objectContaining({ delete: mocks.workspaceDelete }),
+      })
+      expect(
+        mocks.resourceDeletionLog.recordHistoricalRequest,
+      ).not.toHaveBeenCalled()
+      // The unindexed lookup must not run under the final transaction's timeout.
+      expect(
+        mocks.resourceDeletionLog.findPendingId.mock.invocationCallOrder[0],
+      ).toBeLessThan(mocks.workspaceDelete.mock.invocationCallOrder[0])
+    })
+
+    test("records a workspace scheduled before the log existed as completed, from what it stored", async () => {
+      setupPurgeTransactions(claimedRows)
+      mockDeletedRow()
+
+      await expect(
+        workspaceService.purgeDueScheduled({ chunkSize: 1, maxChunks: 1 }),
+      ).resolves.toBe(1)
+
+      expect(mocks.resourceDeletionLog.completePending).not.toHaveBeenCalled()
+      expect(
+        mocks.resourceDeletionLog.recordHistoricalRequest,
+      ).toHaveBeenCalledWith({
+        resource: {
+          type: "workspace",
+          id: "w1",
+          workspaceId: "w1",
+          name: "Acme",
+        },
+        status: "completed",
+        requestedByUserId: "user-1",
+        requestedAt: deletedRow.deletionRequestedAt,
+        tx: expect.objectContaining({ delete: mocks.workspaceDelete }),
+      })
+    })
+
+    test("does not duplicate a row whose pending request is no longer pending", async () => {
+      setupPurgeTransactions(claimedRows)
+      mocks.resourceDeletionLog.findPendingId.mockResolvedValue("log-1")
+      mocks.resourceDeletionLog.completePending.mockResolvedValue(0)
+      mockDeletedRow()
+
+      await expect(
+        workspaceService.purgeDueScheduled({ chunkSize: 1, maxChunks: 1 }),
+      ).resolves.toBe(1)
+
+      expect(
+        mocks.resourceDeletionLog.recordHistoricalRequest,
+      ).not.toHaveBeenCalled()
+      expect(mocks.businessLoggerWarn).toHaveBeenCalledWith(
+        { workspaceId: "w1", pendingLogId: "log-1" },
+        "workspace-purge: deletion log row was no longer pending",
+      )
+    })
+
+    test("leaves the workspace for the next run when completing the log fails", async () => {
+      setupPurgeTransactions(claimedRows)
+      mocks.resourceDeletionLog.findPendingId.mockResolvedValue("log-1")
+      mocks.resourceDeletionLog.completePending.mockRejectedValue(
+        new Error("log update failed"),
+      )
+      mockDeletedRow()
+
+      await expect(
+        workspaceService.purgeDueScheduled({ chunkSize: 1, maxChunks: 1 }),
+      ).resolves.toBe(0)
+
+      expect(mocks.businessLoggerError).toHaveBeenCalledWith(
+        expect.objectContaining({ workspaceId: "w1" }),
+        "workspace-purge: teardown failed, deferring to next run",
+      )
+    })
+
+    test("defers the purge when the pending lookup times out, without deleting the workspace", async () => {
+      setupPurgeTransactions(claimedRows)
+      mocks.resourceDeletionLog.findPendingId.mockRejectedValue(
+        new WorkspacePurgeIncompleteError("w1", "ResourceDeletionLog"),
+      )
+
+      await expect(
+        workspaceService.purgeDueScheduled({ chunkSize: 1, maxChunks: 1 }),
+      ).resolves.toBe(0)
+
+      expect(mocks.workspaceDelete).not.toHaveBeenCalled()
+      expect(mocks.resourceDeletionLog.completePending).not.toHaveBeenCalled()
+    })
+
+    test("does not start the final delete when the pending lookup finishes after the deadline", async () => {
+      setupPurgeTransactions(claimedRows)
+      const PURGE_BUDGET_EXCEEDED_MS = 46 * 60 * 1000
+      const realNow = Date.now()
+      mocks.resourceDeletionLog.findPendingId.mockImplementation(() => {
+        vi.spyOn(Date, "now").mockReturnValue(
+          realNow + PURGE_BUDGET_EXCEEDED_MS,
+        )
+        return Promise.resolve(undefined)
+      })
+
+      try {
+        await expect(
+          workspaceService.purgeDueScheduled({ chunkSize: 1, maxChunks: 1 }),
+        ).resolves.toBe(0)
+      } finally {
+        vi.restoreAllMocks()
+      }
+
+      expect(mocks.workspaceDelete).not.toHaveBeenCalled()
+    })
+
+    test("runs the pending lookup under the purge timeouts", async () => {
+      setupPurgeTransactions(claimedRows)
+      mockDeletedRow()
+
+      await workspaceService.purgeDueScheduled({ chunkSize: 1, maxChunks: 1 })
+
+      expect(withPurgeTimeouts).toHaveBeenCalledWith(
+        expect.objectContaining({
+          table: "ResourceDeletionLog",
+          workspaceId: "w1",
+        }),
+      )
+    })
+
+    test("writes nothing to the log when the workspace row was not deleted", async () => {
+      setupPurgeTransactions(claimedRows)
+      mocks.resourceDeletionLog.findPendingId.mockResolvedValue("log-1")
+      mocks.workspaceDelete.mockReturnValueOnce({
+        where: vi.fn(() => ({ returning: vi.fn().mockResolvedValue([]) })),
+      })
+
+      await expect(
+        workspaceService.purgeDueScheduled({ chunkSize: 1, maxChunks: 1 }),
+      ).resolves.toBe(0)
+
+      expect(mocks.resourceDeletionLog.completePending).not.toHaveBeenCalled()
+      expect(
+        mocks.resourceDeletionLog.recordHistoricalRequest,
+      ).not.toHaveBeenCalled()
+    })
   })
 })

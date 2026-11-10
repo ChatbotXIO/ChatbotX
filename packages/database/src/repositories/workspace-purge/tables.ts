@@ -112,6 +112,12 @@ export const NO_FK_WORKSPACE_TABLES = [
     stage: "retainedBilling",
     table: "WorkspaceDeletionRecord",
   },
+  // Not billing: "retained" is the point — the trail of who deleted a workspace
+  // must outlive it, so this table is never drained (same stage as the above).
+  {
+    stage: "retainedBilling",
+    table: "ResourceDeletionLog",
+  },
 ] as const
 
 export type HeavyWorkspaceTable = (typeof HEAVY_WORKSPACE_TABLES)[number]

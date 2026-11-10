@@ -181,6 +181,7 @@ describe("workspace purge coverage", () => {
       "WorkspaceMac",
       "WorkspaceBotMessageUsage",
       "WorkspaceDeletionRecord",
+      "ResourceDeletionLog",
     ])
   })
 
@@ -218,5 +219,17 @@ describe("workspace purge coverage", () => {
       fixedBaseline,
       "Remove fixed FKs from LEGACY_UNINDEXED_FKS.",
     ).toEqual([])
+  })
+
+  test("keeps ResourceDeletionLog primary-key only so it outlives its workspace", () => {
+    const ofTable = (entityType: string) =>
+      entriesByType(entityType).filter(
+        (entry) => entry.table === "ResourceDeletionLog",
+      )
+
+    expect(ofTable("fks")).toEqual([])
+    expect(ofTable("indexes")).toEqual([])
+    expect(ofTable("uniques")).toEqual([])
+    expect(ofTable("pks").map(indexColumns)).toEqual([["id"]])
   })
 })

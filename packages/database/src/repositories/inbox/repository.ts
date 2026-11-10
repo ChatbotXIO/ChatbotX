@@ -82,6 +82,35 @@ export const inboxRepository = {
   },
 
   /**
+   * Locks one inbox row (`FOR NO KEY UPDATE`) and returns its identity and
+   * status. Callers must pass an open transaction: the lock lasts until it
+   * ends, so two concurrent disconnects of one inbox serialize on it.
+   * Deliberately not `FOR UPDATE`, which would also block the `FOR KEY SHARE`
+   * taken by every message or contact insert that references the inbox.
+   */
+  async findByIdForUpdate(
+    input: { id: string; workspaceId: string },
+    tx: DatabaseClient,
+  ): Promise<InboxIdentity | undefined> {
+    const [row] = await tx
+      .select({
+        id: inboxModel.id,
+        name: inboxModel.name,
+        channel: inboxModel.channel,
+        status: inboxModel.status,
+      })
+      .from(inboxModel)
+      .where(
+        and(
+          eq(inboxModel.id, input.id),
+          eq(inboxModel.workspaceId, input.workspaceId),
+        ),
+      )
+      .for("no key update")
+    return row
+  },
+
+  /**
    * Bounded id/name projection scoped by `workspaceId` and `channel` at the query
    * level. Used by the Calls page's inbox filter instead of
    * `inboxService.listWithIntegrationsByWorkspace`, which eager-loads all nine
