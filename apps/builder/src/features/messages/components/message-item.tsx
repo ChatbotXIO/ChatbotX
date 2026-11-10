@@ -38,6 +38,7 @@ import { cn } from "@chatbotx.io/ui/lib/utils"
 import { format } from "date-fns"
 import {
   BotIcon,
+  CopyIcon,
   ExternalLinkIcon,
   ImageIcon,
   LockIcon,
@@ -53,6 +54,7 @@ import Image from "next/image"
 import Link from "next/link"
 import { useTranslations } from "next-intl"
 import { useState } from "react"
+import { useCopyToClipboard } from "usehooks-ts"
 import type { AttachmentResource } from "@/features/attachments/schema/resource"
 import { useAttachmentSource } from "@/features/attachments/utils"
 import { contactDisplayName } from "@/features/contacts/lib/contact-display-name"
@@ -841,11 +843,51 @@ type TemplateButtonProps = {
  * the message was sent; it is checked again here only so nothing but a plain
  * `+digits` number ever reaches the `tel:` link.
  */
+/** A Copy Text button copies its text here too, as it did for the contact. */
+const CopyTextTemplateButton = ({
+  label,
+  text,
+  className,
+}: {
+  label: string
+  text: string
+  className?: string
+}) => {
+  const [, copy] = useCopyToClipboard()
+  return (
+    <Button
+      className={cn(
+        buttonVariants({ size: "sm", variant: "secondary" }),
+        className,
+      )}
+      onClick={() => {
+        copy(text).catch(() => undefined)
+      }}
+      size="sm"
+      type="button"
+      variant="secondary"
+    >
+      <CopyIcon />
+      {label}
+    </Button>
+  )
+}
+
 const TemplateButton = ({
   button,
   onPostback,
   className,
 }: TemplateButtonProps) => {
+  if (button.buttonType === "copyText") {
+    return (
+      <CopyTextTemplateButton
+        className={className}
+        label={button.label}
+        text={button.copyText}
+      />
+    )
+  }
+
   if (button.buttonType === "url") {
     return (
       <Link

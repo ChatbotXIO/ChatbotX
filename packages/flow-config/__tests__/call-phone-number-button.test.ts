@@ -184,9 +184,11 @@ describe("callPhoneNumber channel policy", () => {
         "callPhoneNumber",
       ])
     }
+    expect(getChannelFlowPolicy("telegram")?.nativeButtonTypes).toEqual([
+      "copyText",
+    ])
     for (const channel of [
       "instagram",
-      "telegram",
       "tiktok",
       "whatsapp",
       "omnichannel",

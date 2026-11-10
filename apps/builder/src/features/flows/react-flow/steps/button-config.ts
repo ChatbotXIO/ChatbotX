@@ -1,6 +1,7 @@
 import { type ButtonType, buttonTypes } from "@chatbotx.io/flow-config"
 import {
   AppWindowIcon,
+  CopyIcon,
   LinkIcon,
   type LucideIcon,
   MessageCircleIcon,
@@ -17,7 +18,7 @@ type IButtonConfig = {
   buttonType: ButtonType
   /**
    * `false` hides "additional steps" in the button editor: for an action the
-   * contact's device handles itself (a call) the bot is never told about the
+   * contact's device handles itself (a call, a copy) the bot is never told about the
    * tap, so steps could never run. Omitted means steps are allowed.
    */
   allowsSteps?: false
@@ -63,6 +64,12 @@ export const allButtonsConfig = (t: TranslationFn): IButtonConfig[] => [
     buttonType: buttonTypes.enum.callPhoneNumber,
     icon: PhoneCallIcon,
     label: t("flows.actions.callPhoneNumber"),
+    allowsSteps: false,
+  },
+  {
+    buttonType: buttonTypes.enum.copyText,
+    icon: CopyIcon,
+    label: t("flows.actions.copyText"),
     allowsSteps: false,
   },
 ]

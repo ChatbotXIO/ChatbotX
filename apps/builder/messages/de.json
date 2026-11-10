@@ -2976,7 +2976,8 @@
       "pipeline": "Pipelines",
       "moreOptions": "Weitere Optionen",
       "findPlacesNearMe": "Orte in meiner Nähe finden",
-      "callPhoneNumber": "Telefonnummer anrufen"
+      "callPhoneNumber": "Telefonnummer anrufen",
+      "copyText": "Text kopieren"
     },
     "externalRequest": {
       "errors": {
@@ -3311,6 +3312,12 @@
       "invalidForCountry": "Das ist keine gültige Telefonnummer für {country}.",
       "needsCountry": "Wähle das Land oder beginne die Nummer mit + und der Ländervorwahl.",
       "invalidInternational": "Das ist keine gültige internationale Telefonnummer."
+    },
+    "copyText": {
+      "textLabel": "Zu kopierender Text",
+      "limitHint": "Bis zu {max} Zeichen nach dem Einsetzen der Variablen, zum Beispiel ein PIX-Code.",
+      "fallbackHint": "Auf Kanälen, die keinen Text kopieren können, erhält der Kontakt diesen Text stattdessen als Antwort.",
+      "viewerTitle": "Kopiert diesen Text"
     }
   },
   "folders": {
@@ -4556,6 +4563,7 @@
     "savedReplyImagesNotSentHere": "Bilder werden hier nicht gesendet",
     "invalidPhoneNumber": "Das ist keine gültige Telefonnummer. Gib die Ländervorwahl an, zum Beispiel +1.",
     "buttonCallPhoneNumberUnsupported": "Diese Schaltfläche kann hier keine Telefonnummer anrufen. Wähle eine andere Aktion.",
+    "buttonCopyTextUnsupported": "Diese Schaltfläche kann hier keinen Text kopieren. Wähle eine andere Aktion.",
     "paymentRequest": {
       "title": "Zahlungsanforderung",
       "cardEnding": "Karte mit Endung {lastFourDigits}",

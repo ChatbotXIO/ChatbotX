@@ -5,8 +5,8 @@ import { baseStepSchema } from "./base"
 import {
   buttonStepDefaultFn,
   buttonStepSchema,
-  refineNoCallPhoneNumberButtons,
   refineNoOpenMiniAppButtons,
+  refineReplyOnlyButtons,
 } from "./button"
 import {
   createEmptyPaymentRequest,
@@ -589,7 +589,7 @@ export const sendWaTemplateMessageStepSchema = baseStepSchema.extend({
   buttons: z
     .array(buttonStepSchema)
     .superRefine(refineNoOpenMiniAppButtons)
-    .superRefine(refineNoCallPhoneNumberButtons)
+    .superRefine(refineReplyOnlyButtons)
     .default([])
     // Buttons are kept as-is: the leading pair are the delivery status
     // branches, and any tail buttons are template quick replies whose

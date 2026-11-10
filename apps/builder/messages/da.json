@@ -2976,7 +2976,8 @@
       "pipeline": "Pipelines",
       "moreOptions": "Flere muligheder",
       "findPlacesNearMe": "Find steder i nærheden",
-      "callPhoneNumber": "Ring til telefonnummer"
+      "callPhoneNumber": "Ring til telefonnummer",
+      "copyText": "Kopiér tekst"
     },
     "externalRequest": {
       "errors": {
@@ -3311,6 +3312,12 @@
       "invalidForCountry": "Dette er ikke et gyldigt telefonnummer for {country}.",
       "needsCountry": "Vælg landet, eller start nummeret med + og landekoden.",
       "invalidInternational": "Dette er ikke et gyldigt internationalt telefonnummer."
+    },
+    "copyText": {
+      "textLabel": "Tekst der skal kopieres",
+      "limitHint": "Op til {max} tegn efter variablerne er udfyldt, f.eks. en PIX-kode.",
+      "fallbackHint": "På kanaler, der ikke kan kopiere tekst, modtager kontakten i stedet denne tekst som svar.",
+      "viewerTitle": "Kopierer denne tekst"
     }
   },
   "folders": {
@@ -4556,6 +4563,7 @@
     "savedReplyImagesNotSentHere": "Billeder bliver ikke sendt her",
     "invalidPhoneNumber": "Dette er ikke et gyldigt telefonnummer. Medtag landekoden, for eksempel +1.",
     "buttonCallPhoneNumberUnsupported": "Denne knap kan ikke ringe til et telefonnummer her. Vælg en anden handling.",
+    "buttonCopyTextUnsupported": "Denne knap kan ikke kopiere tekst her. Vælg en anden handling.",
     "paymentRequest": {
       "title": "Betalingsanmodning",
       "cardEnding": "Kort, der ender på {lastFourDigits}",

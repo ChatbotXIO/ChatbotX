@@ -3174,7 +3174,8 @@
       "pipeline": "Quản lý Pipeline",
       "moreOptions": "Tùy chọn khác",
       "findPlacesNearMe": "Tìm địa điểm gần tôi",
-      "callPhoneNumber": "Gọi số điện thoại"
+      "callPhoneNumber": "Gọi số điện thoại",
+      "copyText": "Sao chép văn bản"
     },
     "externalRequest": {
       "errors": {
@@ -3509,6 +3510,12 @@
       "invalidForCountry": "Số này không phải số điện thoại hợp lệ của {country}.",
       "needsCountry": "Chọn quốc gia, hoặc nhập số bắt đầu bằng + và mã quốc gia.",
       "invalidInternational": "Số điện thoại quốc tế không hợp lệ."
+    },
+    "copyText": {
+      "textLabel": "Nội dung cần sao chép",
+      "limitHint": "Tối đa {max} ký tự sau khi điền biến, ví dụ mã PIX.",
+      "fallbackHint": "Ở kênh không hỗ trợ sao chép, khách sẽ nhận nội dung này dưới dạng tin nhắn trả lời.",
+      "viewerTitle": "Sao chép nội dung này"
     }
   },
   "folders": {
@@ -4598,6 +4605,7 @@
     "savedReplyImagesNotSentHere": "Ảnh sẽ không được gửi ở đây",
     "invalidPhoneNumber": "Số điện thoại không hợp lệ. Hãy kèm mã quốc gia, ví dụ +1.",
     "buttonCallPhoneNumberUnsupported": "Nút này không thể gọi số điện thoại ở đây. Hãy chọn hành động khác.",
+    "buttonCopyTextUnsupported": "Nút này không sao chép văn bản được ở đây. Hãy chọn hành động khác.",
     "paymentRequest": {
       "title": "Yêu cầu thanh toán",
       "cardEnding": "Thẻ đuôi {lastFourDigits}",

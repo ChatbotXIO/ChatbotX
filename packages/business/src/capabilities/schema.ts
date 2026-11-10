@@ -37,7 +37,7 @@ const capabilitiesChannelPolicySchema = z.object({
   nativeButtonTypes: z
     .array(buttonTypes)
     .describe(
-      "Button types this channel renders as its own control (`callPhoneNumber` dials on tap). A button type not listed is sent as a reply button.",
+      "Button types this channel renders as its own control (`callPhoneNumber` dials on tap, `copyText` copies its text on tap). A button type not listed is sent as a reply button.",
     ),
   limits: z.object({
     buttonCount: z.number(),

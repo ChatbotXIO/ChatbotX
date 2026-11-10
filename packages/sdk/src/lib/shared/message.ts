@@ -1060,6 +1060,13 @@ export type MessageButtonTemplate = {
       /** Replayed on channels that cannot dial: the tap replies with the number. */
       postback: string
     }
+  | {
+      buttonType: "copyText"
+      /** Text a tap copies to the contact's clipboard (1–256 characters). */
+      copyText: string
+      /** Replayed on channels that cannot copy: the tap replies with the text. */
+      postback: string
+    }
 )
 
 /**
@@ -1134,7 +1141,7 @@ export const URL_QUICK_REPLY_CAPABLE_CHANNELS: ReadonlySet<string> = new Set([
 export function getCanonicalReplyPayload(
   button: MessageButtonTemplate,
 ): string {
-  if (button.buttonType === "postback" || button.buttonType === "phoneNumber") {
+  if (button.buttonType !== "url") {
     return button.postback
   }
 

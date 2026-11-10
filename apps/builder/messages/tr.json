@@ -3132,7 +3132,8 @@
       "pipeline": "İşlem Hatları",
       "moreOptions": "Daha fazla seçenek",
       "findPlacesNearMe": "Yakınımdaki yerleri bul",
-      "callPhoneNumber": "Telefon numarasını ara"
+      "callPhoneNumber": "Telefon numarasını ara",
+      "copyText": "Metni kopyala"
     },
     "externalRequest": {
       "errors": {
@@ -3467,6 +3468,12 @@
       "invalidForCountry": "Bu, {country} için geçerli bir telefon numarası değil.",
       "needsCountry": "Ülkeyi seçin veya numarayı + ve ülke koduyla başlatın.",
       "invalidInternational": "Bu geçerli bir uluslararası telefon numarası değil."
+    },
+    "copyText": {
+      "textLabel": "Kopyalanacak metin",
+      "limitHint": "Değişkenler doldurulduktan sonra en fazla {max} karakter, örneğin bir PIX kodu.",
+      "fallbackHint": "Metin kopyalayamayan kanallarda kişi bu metni yanıt olarak alır.",
+      "viewerTitle": "Bu metni kopyalar"
     }
   },
   "folders": {
@@ -4556,6 +4563,7 @@
     "savedReplyImagesNotSentHere": "Görseller burada gönderilmeyecek",
     "invalidPhoneNumber": "Bu geçerli bir telefon numarası değil. Ülke kodunu ekleyin, örneğin +1.",
     "buttonCallPhoneNumberUnsupported": "Bu düğme burada bir telefon numarasını arayamaz. Başka bir eylem seçin.",
+    "buttonCopyTextUnsupported": "Bu düğme burada metin kopyalayamaz. Başka bir eylem seçin.",
     "paymentRequest": {
       "title": "Ödeme talebi",
       "cardEnding": "{lastFourDigits} ile biten kart",

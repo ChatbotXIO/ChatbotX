@@ -2976,7 +2976,8 @@
       "pipeline": "Pipelines",
       "moreOptions": "Meer opties",
       "findPlacesNearMe": "Plaatsen bij mij in de buurt zoeken",
-      "callPhoneNumber": "Telefoonnummer bellen"
+      "callPhoneNumber": "Telefoonnummer bellen",
+      "copyText": "Tekst kopiëren"
     },
     "externalRequest": {
       "errors": {
@@ -3311,6 +3312,12 @@
       "invalidForCountry": "Dit is geen geldig telefoonnummer voor {country}.",
       "needsCountry": "Kies het land of begin het nummer met + en de landcode.",
       "invalidInternational": "Dit is geen geldig internationaal telefoonnummer."
+    },
+    "copyText": {
+      "textLabel": "Te kopiëren tekst",
+      "limitHint": "Maximaal {max} tekens nadat de variabelen zijn ingevuld, bijvoorbeeld een PIX-code.",
+      "fallbackHint": "Op kanalen die geen tekst kunnen kopiëren, ontvangt het contact deze tekst als antwoord.",
+      "viewerTitle": "Kopieert deze tekst"
     }
   },
   "folders": {
@@ -4556,6 +4563,7 @@
     "savedReplyImagesNotSentHere": "Afbeeldingen worden hier niet verstuurd",
     "invalidPhoneNumber": "Dit is geen geldig telefoonnummer. Voeg de landcode toe, bijvoorbeeld +1.",
     "buttonCallPhoneNumberUnsupported": "Deze knop kan hier geen telefoonnummer bellen. Kies een andere actie.",
+    "buttonCopyTextUnsupported": "Deze knop kan hier geen tekst kopiëren. Kies een andere actie.",
     "paymentRequest": {
       "title": "Betaalverzoek",
       "cardEnding": "Kaart eindigend op {lastFourDigits}",

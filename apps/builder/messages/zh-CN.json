@@ -4100,7 +4100,8 @@
       "pipeline": "管道",
       "moreOptions": "更多选项",
       "findPlacesNearMe": "查找我附近的地点",
-      "callPhoneNumber": "拨打电话号码"
+      "callPhoneNumber": "拨打电话号码",
+      "copyText": "复制文本"
     },
     "externalRequest": {
       "errors": {
@@ -4483,6 +4484,12 @@
       "invalidForCountry": "这不是有效的{country}电话号码。",
       "needsCountry": "请选择国家/地区，或以 + 和国家代码开头输入号码。",
       "invalidInternational": "这不是有效的国际电话号码。"
+    },
+    "copyText": {
+      "textLabel": "要复制的文本",
+      "limitHint": "填入变量后最多 {max} 个字符，例如 PIX 代码。",
+      "fallbackHint": "在无法复制文本的渠道上，联系人会以回复的形式收到此文本。",
+      "viewerTitle": "复制此文本"
     }
   },
   "folders": {
@@ -5697,6 +5704,7 @@
     "savedReplyImagesNotSentHere": "图片不会在此发送",
     "invalidPhoneNumber": "这不是有效的电话号码。请包含国家代码，例如 +1。",
     "buttonCallPhoneNumberUnsupported": "此按钮在这里无法拨打电话号码，请选择其他操作。",
+    "buttonCopyTextUnsupported": "此按钮在这里无法复制文本。请选择其他操作。",
     "paymentRequest": {
       "title": "付款请求",
       "cardEnding": "尾号 {lastFourDigits} 的卡",

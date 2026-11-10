@@ -8,6 +8,7 @@ import {
 } from "../validation-codes"
 import { BUTTON_LABEL_MAX } from "./button-limits"
 import { callPhoneNumberStepSchema } from "./call-phone-number"
+import { copyTextStepSchema } from "./copy-text"
 import { openMiniAppStepSchema } from "./open-mini-app"
 import { openWebsiteStepSchema } from "./open-website"
 import { startAnotherNodeStepSchema } from "./start-another-node"
@@ -24,6 +25,7 @@ export const buttonTypes = z.enum([
   "whatsappOptionList",
   "openMiniApp",
   "callPhoneNumber",
+  "copyText",
 ])
 export type ButtonType = z.infer<typeof buttonTypes>
 
@@ -97,6 +99,13 @@ export const buttonStepSchema = z
         beforeStep: callPhoneNumberStepSchema,
         steps: z.array(z.union(actionSteps)).max(0),
       }),
+      // A native copy button copies on the contact's device and never reaches
+      // the bot, so — like a call button — it cannot continue the flow.
+      z.object({
+        buttonType: z.literal(buttonTypes.enum.copyText),
+        beforeStep: copyTextStepSchema,
+        steps: z.array(z.union(actionSteps)).max(0),
+      }),
       z.object({
         buttonType: z.literal(null),
         beforeStep: z.null(),
@@ -165,10 +174,28 @@ export const refineNoOpenMiniAppButtons = refineDisallowedButtonType(
 )
 
 /** Surfaces whose buttons are sent as replies, which cannot dial. */
-export const refineNoCallPhoneNumberButtons = refineDisallowedButtonType(
+const refineNoCallPhoneNumberButtons = refineDisallowedButtonType(
   buttonTypes.enum.callPhoneNumber,
   flowValidationCodes.buttonCallPhoneNumberUnsupported,
 )
+
+/** Surfaces whose buttons are sent as replies, which cannot copy text. */
+const refineNoCopyTextButtons = refineDisallowedButtonType(
+  buttonTypes.enum.copyText,
+  flowValidationCodes.buttonCopyTextUnsupported,
+)
+
+/**
+ * Surfaces whose buttons are only ever sent as plain replies (quick replies,
+ * message templates, WhatsApp Flows): neither a call nor a copy button works.
+ */
+export const refineReplyOnlyButtons = (
+  buttons: Pick<ButtonStepProps, "buttonType">[],
+  ctx: z.RefinementCtx,
+): void => {
+  refineNoCallPhoneNumberButtons(buttons, ctx)
+  refineNoCopyTextButtons(buttons, ctx)
+}
 
 export const buttonStepDefaultFn = (
   props?: Pick<ButtonStepProps, "label">,

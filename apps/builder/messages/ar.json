@@ -3132,7 +3132,8 @@
       "pipeline": "خطوط سير العمل",
       "moreOptions": "خيارات إضافية",
       "findPlacesNearMe": "البحث عن أماكن بالقرب مني",
-      "callPhoneNumber": "الاتصال برقم هاتف"
+      "callPhoneNumber": "الاتصال برقم هاتف",
+      "copyText": "نسخ النص"
     },
     "externalRequest": {
       "errors": {
@@ -3467,6 +3468,12 @@
       "invalidForCountry": "هذا ليس رقم هاتف صالحًا في {country}.",
       "needsCountry": "اختر الدولة، أو ابدأ الرقم بـ + ورمز الدولة.",
       "invalidInternational": "هذا ليس رقم هاتف دوليًا صالحًا."
+    },
+    "copyText": {
+      "textLabel": "النص المراد نسخه",
+      "limitHint": "حتى {max} حرفًا بعد ملء المتغيرات، مثل رمز PIX.",
+      "fallbackHint": "في القنوات التي لا يمكنها نسخ النص، تتلقى جهة الاتصال هذا النص كرد بدلاً من ذلك.",
+      "viewerTitle": "ينسخ هذا النص"
     }
   },
   "folders": {
@@ -4556,6 +4563,7 @@
     "savedReplyImagesNotSentHere": "لن يتم إرسال الصور هنا",
     "invalidPhoneNumber": "هذا ليس رقم هاتف صالحًا. أضف رمز الدولة، مثل ‎+1.",
     "buttonCallPhoneNumberUnsupported": "لا يمكن لهذا الزر الاتصال برقم هاتف هنا. اختر إجراءً آخر.",
+    "buttonCopyTextUnsupported": "لا يمكن لهذا الزر نسخ النص هنا. اختر إجراءً آخر.",
     "paymentRequest": {
       "title": "طلب دفع",
       "cardEnding": "بطاقة تنتهي بـ {lastFourDigits}",

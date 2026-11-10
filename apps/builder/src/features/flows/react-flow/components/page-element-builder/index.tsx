@@ -51,12 +51,13 @@ export function PageElementBuilder({ type, parentName }: BuilderProps) {
     case pageElementTypes.enum.button:
       return (
         <ButtonStepEditor
-          // Email buttons have no Open Mini App or Call Phone Number variant
-          // (steps/email.ts).
+          // Email buttons have no Open Mini App, Call Phone Number or Copy
+          // Text variant (steps/email.ts).
           editorConfig={{
             hiddenButtonTypes: [
               buttonTypes.enum.openMiniApp,
               buttonTypes.enum.callPhoneNumber,
+              buttonTypes.enum.copyText,
             ],
           }}
           parentName={`${parentName}`}

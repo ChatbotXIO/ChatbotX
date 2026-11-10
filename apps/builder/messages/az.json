@@ -3814,7 +3814,8 @@
       "pipeline": "Satış xətləri",
       "moreOptions": "Daha çox seçim",
       "findPlacesNearMe": "Yaxınlığımdakı yerləri tap",
-      "callPhoneNumber": "Telefon nömrəsinə zəng et"
+      "callPhoneNumber": "Telefon nömrəsinə zəng et",
+      "copyText": "Mətni kopyala"
     },
     "externalRequest": {
       "errors": {
@@ -4149,6 +4150,12 @@
       "invalidForCountry": "Bu, {country} üçün etibarlı telefon nömrəsi deyil.",
       "needsCountry": "Ölkəni seçin və ya nömrəni + və ölkə kodu ilə başlayın.",
       "invalidInternational": "Bu etibarlı beynəlxalq telefon nömrəsi deyil."
+    },
+    "copyText": {
+      "textLabel": "Kopyalanacaq mətn",
+      "limitHint": "Dəyişənlər doldurulduqdan sonra ən çox {max} simvol, məsələn PIX kodu.",
+      "fallbackHint": "Mətn kopyalaya bilməyən kanallarda kontakt bu mətni cavab kimi alır.",
+      "viewerTitle": "Bu mətni kopyalayır"
     }
   },
   "folders": {
@@ -5238,6 +5245,7 @@
     "savedReplyImagesNotSentHere": "Şəkillər burada göndərilməyəcək",
     "invalidPhoneNumber": "Bu etibarlı telefon nömrəsi deyil. Ölkə kodunu daxil edin, məsələn +1.",
     "buttonCallPhoneNumberUnsupported": "Bu düymə burada telefon nömrəsinə zəng edə bilməz. Başqa əməliyyat seçin.",
+    "buttonCopyTextUnsupported": "Bu düymə burada mətn kopyalaya bilməz. Başqa əməliyyat seçin.",
     "paymentRequest": {
       "title": "Ödəniş sorğusu",
       "cardEnding": "Sonu {lastFourDigits} olan kart",

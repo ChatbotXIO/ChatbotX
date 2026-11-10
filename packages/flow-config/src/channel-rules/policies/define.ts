@@ -92,6 +92,7 @@ const stepExecutionKinds = {
   openWebsite: "worker",
   openMiniApp: "worker",
   callPhoneNumber: "worker",
+  copyText: "worker",
   addNotes: "worker",
   subscribeBroadcast: "worker",
   unsubscribeBroadcast: "worker",
@@ -184,9 +185,9 @@ export type ChannelFlowPolicy = {
   quickRepliesShareButtonSlots: boolean
   /**
    * Button types the channel renders as a native control on step and card
-   * buttons. Today only `callPhoneNumber` (dials on tap): a channel that does
-   * not list it sends that button as a reply showing the number. Informational:
-   * it never gates publish.
+   * buttons: `callPhoneNumber` (dials on tap) and `copyText` (copies on tap). A
+   * channel that does not list one sends that button as a reply, and a tap
+   * answers with the number or text. Informational: it never gates publish.
    */
   nativeButtonTypes: readonly ButtonType[]
   steps: Record<StepType, StepSupport>

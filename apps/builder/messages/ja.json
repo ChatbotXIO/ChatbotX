@@ -2976,7 +2976,8 @@
       "pipeline": "パイプライン",
       "moreOptions": "その他のオプション",
       "findPlacesNearMe": "近くの場所を探す",
-      "callPhoneNumber": "電話番号に発信"
+      "callPhoneNumber": "電話番号に発信",
+      "copyText": "テキストをコピー"
     },
     "externalRequest": {
       "errors": {
@@ -3311,6 +3312,12 @@
       "invalidForCountry": "{country} の電話番号として正しくありません。",
       "needsCountry": "国を選択するか、+ と国番号から番号を入力してください。",
       "invalidInternational": "国際電話番号として正しくありません。"
+    },
+    "copyText": {
+      "textLabel": "コピーするテキスト",
+      "limitHint": "変数を埋めた後で最大{max}文字（例：PIXコード）。",
+      "fallbackHint": "テキストをコピーできないチャネルでは、連絡先はこのテキストを返信として受け取ります。",
+      "viewerTitle": "このテキストをコピー"
     }
   },
   "folders": {
@@ -4535,6 +4542,7 @@
     "savedReplyImagesNotSentHere": "ここでは画像は送信されません",
     "invalidPhoneNumber": "電話番号が正しくありません。国番号（例: +1）を含めてください。",
     "buttonCallPhoneNumberUnsupported": "このボタンではここで電話番号に発信できません。別のアクションを選択してください。",
+    "buttonCopyTextUnsupported": "このボタンではここでテキストをコピーできません。別のアクションを選択してください。",
     "paymentRequest": {
       "title": "支払いリクエスト",
       "cardEnding": "末尾 {lastFourDigits} のカード",

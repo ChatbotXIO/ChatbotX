@@ -2976,7 +2976,8 @@
       "pipeline": "Pipeline",
       "moreOptions": "Opsi lainnya",
       "findPlacesNearMe": "Cari tempat di dekat saya",
-      "callPhoneNumber": "Telepon nomor"
+      "callPhoneNumber": "Telepon nomor",
+      "copyText": "Salin teks"
     },
     "externalRequest": {
       "errors": {
@@ -3311,6 +3312,12 @@
       "invalidForCountry": "Ini bukan nomor telepon yang valid untuk {country}.",
       "needsCountry": "Pilih negara, atau awali nomor dengan + dan kode negara.",
       "invalidInternational": "Ini bukan nomor telepon internasional yang valid."
+    },
+    "copyText": {
+      "textLabel": "Teks yang disalin",
+      "limitHint": "Maksimal {max} karakter setelah variabel diisi, misalnya kode PIX.",
+      "fallbackHint": "Di saluran yang tidak bisa menyalin teks, kontak menerima teks ini sebagai balasan.",
+      "viewerTitle": "Menyalin teks ini"
     }
   },
   "folders": {
@@ -4556,6 +4563,7 @@
     "savedReplyImagesNotSentHere": "Gambar tidak akan dikirim di sini",
     "invalidPhoneNumber": "Ini bukan nomor telepon yang valid. Sertakan kode negara, misalnya +1.",
     "buttonCallPhoneNumberUnsupported": "Tombol ini tidak dapat menelepon nomor di sini. Pilih tindakan lain.",
+    "buttonCopyTextUnsupported": "Tombol ini tidak bisa menyalin teks di sini. Pilih tindakan lain.",
     "paymentRequest": {
       "title": "Permintaan pembayaran",
       "cardEnding": "Kartu berakhiran {lastFourDigits}",

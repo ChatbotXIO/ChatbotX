@@ -9,6 +9,7 @@ import { z } from "zod"
 import { countMessageCharacters } from "../channel-rules/characters"
 import { BUTTON_LABEL_MAX } from "../steps/button"
 import { callPhoneNumberStepSchema } from "../steps/call-phone-number"
+import { copyTextStepSchema } from "../steps/copy-text"
 import {
   PIPELINE_STEP_LIMITS,
   pipelineActionCanSkip,
@@ -66,11 +67,15 @@ export type PipelineStepSpec = {
  * `z.lazy` can close the cycle — zod cannot infer a recursive type from a
  * schema that references itself before it exists.
  */
-/** A button on a `send` step: replies (optionally running `then`) or dials `call`. */
+/**
+ * A button on a `send` step: replies (optionally running `then`), dials
+ * `call`, or copies `copy`.
+ */
 export type FlowSendButtonSpec = {
   text: string
   then?: FlowStepSpec[]
   call?: string
+  copy?: string
 }
 
 export type FlowStepSpec =
@@ -180,11 +185,27 @@ const sendButtonSpecSchema: z.ZodType<FlowSendButtonSpec> = z.lazy(() =>
         .describe(
           "Turns the button into a Call Phone Number button: the number to dial, in international format (e.g. +14155552671), optionally embedding {{variables}}. Cannot be combined with `then`.",
         ),
+      copy: copyTextStepSchema.shape.text
+        .optional()
+        .describe(
+          "Turns the button into a Copy Text button: the text a tap copies to the contact's clipboard (max 256 characters once {{variables}} are resolved), e.g. a PIX code. Native on Telegram; other channels send it as a reply button that answers with the text. Cannot be combined with `then` or `call`.",
+        ),
     })
     .refine((button) => button.call === undefined || !button.then?.length, {
       message: "A call button cannot have `then` steps.",
       path: ["then"],
     })
+    .refine((button) => button.copy === undefined || !button.then?.length, {
+      message: "A copy button cannot have `then` steps.",
+      path: ["then"],
+    })
+    .refine(
+      (button) => button.copy === undefined || button.call === undefined,
+      {
+        message: "A button cannot both `call` and `copy`.",
+        path: ["copy"],
+      },
+    )
     .describe("A quick-reply button attached to a send step."),
 )
 

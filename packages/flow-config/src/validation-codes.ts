@@ -42,6 +42,7 @@ export const flowValidationCodes = {
   sendProductsDuplicateProduct: "sendProductsDuplicateProduct",
   templateButtonOpenMiniAppUnsupported: "templateButtonOpenMiniAppUnsupported",
   buttonCallPhoneNumberUnsupported: "buttonCallPhoneNumberUnsupported",
+  buttonCopyTextUnsupported: "buttonCopyTextUnsupported",
   invalidPhoneNumber: "invalidPhoneNumber",
 } as const
 

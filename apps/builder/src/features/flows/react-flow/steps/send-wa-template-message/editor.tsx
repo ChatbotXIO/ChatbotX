@@ -236,6 +236,7 @@ function SendWaTemplateMessageStepEditor(
                     "openWebsite",
                     "openMiniApp",
                     "callPhoneNumber",
+                    "copyText",
                   ],
                   hideDelete: true,
                 }}

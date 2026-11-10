@@ -3814,7 +3814,8 @@
       "pipeline": "Pipelines",
       "moreOptions": "More options",
       "findPlacesNearMe": "Find places near me",
-      "callPhoneNumber": "Call Phone Number"
+      "callPhoneNumber": "Call Phone Number",
+      "copyText": "Copy Text"
     },
     "externalRequest": {
       "errors": {
@@ -4149,6 +4150,12 @@
       "invalidForCountry": "This isn't a valid phone number for {country}.",
       "needsCountry": "Pick the country, or start the number with + and the country code.",
       "invalidInternational": "This isn't a valid international phone number."
+    },
+    "copyText": {
+      "textLabel": "Text to copy",
+      "limitHint": "Up to {max} characters after variables are filled in, for example a PIX code.",
+      "fallbackHint": "On channels that cannot copy text, the contact receives this text as a reply instead.",
+      "viewerTitle": "Copies this text"
     }
   },
   "folders": {
@@ -5238,6 +5245,7 @@
     "savedReplyImagesNotSentHere": "Images won't be sent here",
     "invalidPhoneNumber": "This isn't a valid phone number. Include the country code, for example +1.",
     "buttonCallPhoneNumberUnsupported": "This button cannot call a phone number here. Choose another action.",
+    "buttonCopyTextUnsupported": "This button cannot copy text here. Choose another action.",
     "paymentRequest": {
       "title": "Payment request",
       "cardEnding": "Card ending {lastFourDigits}",
