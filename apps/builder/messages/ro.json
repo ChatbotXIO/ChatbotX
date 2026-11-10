@@ -9556,7 +9556,8 @@
     "release": {
       "label": "Eliberează",
       "tooltip": "Eliberează această conversație pentru ca alte aplicații să poată răspunde",
-      "success": "Conversație eliberată"
+      "success": "Conversație eliberată",
+      "menu": "Eliberează sau predă"
     },
     "pass": {
       "menuItem": "Predă către un partener",

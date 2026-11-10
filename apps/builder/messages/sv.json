@@ -9556,7 +9556,8 @@
     "release": {
       "label": "Släpp",
       "tooltip": "Släpp konversationen så att andra appar kan svara",
-      "success": "Konversationen släppt"
+      "success": "Konversationen släppt",
+      "menu": "Släpp eller överlämna"
     },
     "pass": {
       "menuItem": "Överlämna till en partner",

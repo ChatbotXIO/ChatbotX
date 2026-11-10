@@ -9556,7 +9556,8 @@
     "release": {
       "label": "Vrijgeven",
       "tooltip": "Geef dit gesprek vrij zodat andere apps kunnen antwoorden",
-      "success": "Gesprek vrijgegeven"
+      "success": "Gesprek vrijgegeven",
+      "menu": "Vrijgeven of overdragen"
     },
     "pass": {
       "menuItem": "Overdragen aan een partner",

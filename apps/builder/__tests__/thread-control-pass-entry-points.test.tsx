@@ -34,9 +34,6 @@ vi.mock("@/features/conversations/hooks/use-thread-control-action", () => ({
 const { ThreadControlPassButton } = await import(
   "@/features/conversations/components/thread-control-pass-button"
 )
-const { ThreadControlPassMenuItem } = await import(
-  "@/features/conversations/components/thread-control-pass-menu-item"
-)
 
 const NOW = new Date("2026-09-29T12:00:00.000Z")
 
@@ -152,34 +149,5 @@ describe("ThreadControlPassButton (header: return to the AI)", () => {
 
     act(() => headerButton()?.click())
     expect(dialogConfirm()?.hasAttribute("disabled")).toBe(true)
-  })
-})
-
-describe("ThreadControlPassMenuItem (actions menu: escalation only)", () => {
-  let container: HTMLDivElement
-  let root: Root
-
-  beforeEach(() => {
-    Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true })
-    container = document.createElement("div")
-    document.body.appendChild(container)
-    root = createRoot(container)
-  })
-
-  afterEach(() => {
-    act(() => root.unmount())
-    container.remove()
-  })
-
-  test("is hidden on a channel that passes to the AI (the header button owns it)", () => {
-    threadControlState.view = view({ channel: "messenger" })
-    act(() => {
-      root.render(
-        <NextIntlClientProvider locale="en" messages={messages} timeZone="UTC">
-          <ThreadControlPassMenuItem conversation={conversation} />
-        </NextIntlClientProvider>,
-      )
-    })
-    expect(container.textContent).toBe("")
   })
 })

@@ -29,7 +29,6 @@ import { archiveConversationAction } from "./actions/archive-conversation.action
 import { followConversationAction } from "./actions/follow-conversation.action"
 import { unarchiveConversationAction } from "./actions/unarchive-conversation.action"
 import { unfollowConversationAction } from "./actions/unfollow-conversation.action"
-import { ThreadControlPassMenuItem } from "./components/thread-control-pass-menu-item"
 import { useMarkConversationUnread } from "./hooks/use-mark-conversation-unread"
 import type { ListConversationItemResource } from "./schema/resource"
 
@@ -230,8 +229,6 @@ export function ConversationAction({ conversation }: ConversationActionProps) {
             {t("actions.blockContact")}
           </DropdownMenuItem>
         )}
-
-        <ThreadControlPassMenuItem conversation={conversation} />
 
         <DeleteContactDialog
           ids={[conversation.contact?.id || ""]}
