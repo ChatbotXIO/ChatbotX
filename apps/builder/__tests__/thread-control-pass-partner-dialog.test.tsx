@@ -261,6 +261,36 @@ describe("ThreadControlPassPartnerDialog", () => {
     })
   })
 
+  test("a pick the choices stop offering is replaced, never sent as an untargeted pass from the escalation partner", async () => {
+    takePermission.value = "unknown"
+    render()
+    const escalation = openRoleOptions().find(
+      (option) =>
+        option.textContent?.trim() === "conversationRouting.roles.escalation",
+    )
+    act(() => {
+      for (const type of [
+        "pointerdown",
+        "mousedown",
+        "pointerup",
+        "mouseup",
+        "click",
+      ]) {
+        escalation?.dispatchEvent(new MouseEvent(type, { bubbles: true }))
+      }
+    })
+    takePermission.value = "allowed"
+    render()
+    await submit()
+
+    expect(actionHook.execute).toHaveBeenCalledExactlyOnceWith({
+      contactInboxId: "ci-1",
+      action: "pass",
+      targetRole: "customer_service",
+      metadata: undefined,
+    })
+  })
+
   test("a note over Meta's 2000-character limit is refused before any call", async () => {
     render()
     typeNote("x".repeat(2001))

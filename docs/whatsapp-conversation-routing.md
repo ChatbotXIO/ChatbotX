@@ -195,7 +195,11 @@ step 4, SC-7 steps 4 and 7 of the Partner Testing Guide). A `release` raises no
 handover event, so it never carries one. `pass` may also name the receiving
 role (`control_pass.target_role`: `ai_agent`, `ctwa`, `customer_service`,
 `escalation`, `marketing` or `utility`; never `calls`). Targeting `escalation`
-is the same as no target, so it is sent as an untargeted pass. The escalation
+is the same as no target, so it is sent as an untargeted pass. A Messenger
+inbox accepts no partner role (its pass only goes back to the AI agent), so a
+named role other than `ai_agent` is refused as an unsupported action. A note
+longer than 2000 characters, for example once a flow variable is filled in, is
+cut to 2000 so the handover itself still goes through. The escalation
 partner cannot make an untargeted pass (Meta refuses it, E-7) and must name
 another role. The note and the role travel the same way from every surface: the
 public API (`POST /v1/conversations/{id}/thread-control`: `targetRole`,

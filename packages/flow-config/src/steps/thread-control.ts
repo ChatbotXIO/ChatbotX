@@ -41,7 +41,7 @@ export const threadControlStepSchema = z.object({
   targetRole: threadControlStepTargetRoles
     .optional()
     .describe(
-      "Only for `pass`: the role to hand the conversation to. Omit it, or use `escalation`, for the escalation partner.",
+      "Only for `pass`, WhatsApp only (Messenger refuses any role but `ai_agent`): the role to hand the conversation to. Omit it, or use `escalation`, for the escalation partner.",
     ),
   metadata: z
     .string()

@@ -17,7 +17,7 @@ export const threadControlHandoverFields = {
   targetRole: threadControlRoles
     .optional()
     .describe(
-      "Only with `pass`: the role of the partner to hand the thread to (WhatsApp `control_pass.target_role`). Omit it, or send `escalation`, to hand it to the escalation partner.",
+      "Only with `pass`, WhatsApp only (a Messenger inbox refuses any role but `ai_agent`): the role of the partner to hand the thread to (`control_pass.target_role`). Omit it, or send `escalation`, to hand it to the escalation partner.",
     ),
   metadata: z
     .string()

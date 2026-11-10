@@ -58,13 +58,16 @@ function ThreadControlPassForm({
     defaultValues: { targetRole: defaultRole, metadata: "" },
   })
   // The stored roles may arrive after the dialog opened: follow the new default
-  // until the agent picks a target themselves.
-  const hasPickedTarget = Boolean(form.formState.dirtyFields.targetRole)
+  // until the agent picks a target themselves, and never keep a target the
+  // choices no longer offer (the escalation partner cannot pass to itself).
+  const pickedRole = form.watch("targetRole")
+  const keepsAgentPick =
+    Boolean(form.formState.dirtyFields.targetRole) && roles.includes(pickedRole)
   useEffect(() => {
-    if (!hasPickedTarget) {
+    if (!keepsAgentPick && pickedRole !== defaultRole) {
       form.setValue("targetRole", defaultRole)
     }
-  }, [defaultRole, form, hasPickedTarget])
+  }, [defaultRole, form, keepsAgentPick, pickedRole])
 
   return (
     <Form {...form}>
