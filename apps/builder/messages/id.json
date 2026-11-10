@@ -9556,7 +9556,8 @@
     "release": {
       "label": "Lepaskan",
       "tooltip": "Lepaskan percakapan ini agar aplikasi lain dapat menjawab",
-      "success": "Percakapan dilepaskan"
+      "success": "Percakapan dilepaskan",
+      "menu": "Lepaskan atau serahkan"
     },
     "pass": {
       "menuItem": "Serahkan ke mitra",

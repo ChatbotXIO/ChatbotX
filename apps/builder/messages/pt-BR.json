@@ -9556,7 +9556,8 @@
     "release": {
       "label": "Liberar",
       "tooltip": "Libere esta conversa para que outros apps possam responder",
-      "success": "Conversa liberada"
+      "success": "Conversa liberada",
+      "menu": "Liberar ou transferir"
     },
     "pass": {
       "menuItem": "Transferir para um parceiro",

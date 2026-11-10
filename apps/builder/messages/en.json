@@ -9556,7 +9556,8 @@
     "release": {
       "label": "Release",
       "tooltip": "Release this conversation so other apps can answer",
-      "success": "Conversation released"
+      "success": "Conversation released",
+      "menu": "Release or pass"
     },
     "pass": {
       "menuItem": "Pass to a partner",
@@ -9621,9 +9622,9 @@
       "currentOwner": "Current owner",
       "noOwner": "No owner",
       "roleLabel": "Your role",
-      "selfOwned": "Active — handling the conversation",
-      "selfStandby": "Standby — listening only",
-      "selfIdle": "Idle — waiting",
+      "selfOwned": "Active handling the conversation",
+      "selfStandby": "Standby listening only",
+      "selfIdle": "Idle waiting",
       "hintOwned": "Release when you're done so other apps can answer.",
       "hintStandby": "While a partner is handling this, your messages are held so the customer doesn't get duplicate replies. Take over from the message box to reply.",
       "hintIdle": "The next customer message decides who answers.",

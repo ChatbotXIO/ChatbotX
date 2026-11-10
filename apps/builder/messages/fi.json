@@ -9556,7 +9556,8 @@
     "release": {
       "label": "Vapauta",
       "tooltip": "Vapauta keskustelu, jotta muut sovellukset voivat vastata",
-      "success": "Keskustelu vapautettu"
+      "success": "Keskustelu vapautettu",
+      "menu": "Vapauta tai siirrä"
     },
     "pass": {
       "menuItem": "Siirrä kumppanille",

@@ -9556,7 +9556,8 @@
     "release": {
       "label": "Trả quyền",
       "tooltip": "Trả quyền xử lý để các ứng dụng khác có thể trả lời",
-      "success": "Đã trả quyền xử lý hội thoại"
+      "success": "Đã trả quyền xử lý hội thoại",
+      "menu": "Trả quyền hoặc chuyển"
     },
     "pass": {
       "menuItem": "Chuyển cho đối tác",

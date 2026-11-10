@@ -9556,7 +9556,8 @@
     "release": {
       "label": "释放",
       "tooltip": "释放此对话，以便其他应用可以回复",
-      "success": "对话已释放"
+      "success": "对话已释放",
+      "menu": "释放或移交"
     },
     "pass": {
       "menuItem": "移交给合作伙伴",
