@@ -35,8 +35,9 @@ export const platformCredentialModel = pgTable(
       .$type<CredentialPublicByType[CredentialType]>()
       .notNull(),
     value: jsonb().$type<CredentialEncrypted>().notNull(),
-    // For payment providers (stripe, paddle): distinguishes live vs test keys.
-    // Non-payment providers always use false.
+    // Unused: code neither reads nor writes it (always false). Kept only so old
+    // pods keep working during rollout. The contract migration drops this
+    // `livemode` column and `*_livemode_key` indexes after full rollout.
     livemode: boolean().notNull().default(false),
     // When true this row is a delegation pointer — use platform credential instead.
     usePlatformCredential: boolean().notNull().default(false),
@@ -46,13 +47,20 @@ export const platformCredentialModel = pgTable(
     lastUsedAt: timestamp(timestampConfig),
   },
   (table) => [
-    // User-scoped: one credential per (user, type, livemode)
+    // Legacy (livemode-aware) indexes — removed by that contract migration.
     uniqueIndex("PlatformCredential_user_type_livemode_key")
       .on(table.userId, table.type, table.livemode)
       .where(sql`${table.userId} IS NOT NULL`),
-    // Platform-scoped: one platform credential per (type, livemode)
     uniqueIndex("PlatformCredential_platform_type_livemode_key")
       .on(table.type, table.livemode)
+      .where(sql`${table.userId} IS NULL`),
+    // User-scoped: one credential per (user, type)
+    uniqueIndex("PlatformCredential_user_type_key")
+      .on(table.userId, table.type)
+      .where(sql`${table.userId} IS NOT NULL`),
+    // Platform-scoped: one platform credential per type
+    uniqueIndex("PlatformCredential_platform_type_key")
+      .on(table.type)
       .where(sql`${table.userId} IS NULL`),
     index("PlatformCredential_userId_idx").using(
       "btree",

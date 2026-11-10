@@ -23,6 +23,7 @@ import { db } from "../src/client"
 import {
   type CredentialByType,
   type CredentialType,
+  credentialAadFor,
   credentialEncryptedSchema,
   credentialSchemas,
 } from "../src/partials/credential"
@@ -62,9 +63,7 @@ const main = async (): Promise<void> => {
     try {
       const blob = credentialEncryptedSchema.parse(row.value)
       const type = row.type as CredentialType
-      const aad = row.userId
-        ? `user:${row.userId}:${type}:${row.livemode}`
-        : `platform:${type}:${row.livemode}`
+      const aad = credentialAadFor({ userId: row.userId, type })
       const schema = credentialSchemas[type] as unknown as z.ZodType<
         CredentialByType[CredentialType]
       >

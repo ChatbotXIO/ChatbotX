@@ -9,8 +9,11 @@ const tiktokHandleRequest = vi.fn()
 const markUnhealthyByIdentifier = vi.fn()
 const markLegacyInboxUnhealthy = vi.fn()
 const findOwnerUserIdByWorkspaceId = vi.fn()
+const findDecryptedForUser = vi.fn()
 const findDecryptedForWebhook = vi.fn()
 const findDecryptedPlatform = vi.fn()
+const findActiveCustomDomain = vi.fn()
+const findTenant = vi.fn()
 const identifyInboxAndIntegrationAuthFromIdentifier = vi.fn()
 const integrationQueueAdd = vi.fn()
 const messengerHandleRequest = vi.fn()
@@ -22,13 +25,13 @@ vi.mock("@chatbotx.io/business", () => ({
     markLegacyInboxUnhealthy,
   },
   workspaceMemberService: { findOwnerUserIdByWorkspaceId },
-  customDomainService: { findActiveByDomain: vi.fn() },
+  customDomainService: { findActiveByDomain: findActiveCustomDomain },
   platformCredentialService: {
-    findDecryptedForUser: vi.fn(),
+    findDecryptedForUser,
     findDecryptedForWebhook,
     findDecryptedPlatform,
   },
-  tenantService: { findById: vi.fn() },
+  tenantService: { findById: findTenant },
 }))
 
 vi.mock("@chatbotx.io/channel-registry/registry", () => ({
@@ -203,6 +206,33 @@ describe("credential-scoped webhook routing", () => {
     expect(
       new URL(messengerHandleRequest.mock.calls[0]?.[0].req.url).pathname,
     ).toBe("/integrations/messenger/webhook")
+  })
+
+  test("uses only an own credential for a custom-domain webhook", async () => {
+    isCloud.mockReturnValue(true)
+    findActiveCustomDomain.mockResolvedValue({ tenantId: "tenant-1" })
+    findTenant.mockResolvedValue({ ownerId: "reseller-1", status: "active" })
+    findDecryptedForUser.mockResolvedValue({
+      config: { clientId: "client-1", clientSecret: "secret-1" },
+      userId: "reseller-1",
+    })
+
+    const response = await handleWebhook(
+      "messenger",
+      Object.assign(
+        new Request("http://localhost/integrations/messenger/webhook", {
+          headers: { "x-domain": "reseller.example.com" },
+        }),
+        { nextUrl: new URL("http://localhost/integrations/messenger/webhook") },
+      ) as never,
+    )
+
+    expect(response.status).toBe(200)
+    expect(findDecryptedForUser).toHaveBeenCalledWith({
+      userId: "reseller-1",
+      type: "messenger",
+      requireOwnCredential: true,
+    })
   })
 
   describe("provider account events", () => {

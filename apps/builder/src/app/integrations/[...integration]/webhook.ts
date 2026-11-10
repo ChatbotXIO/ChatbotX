@@ -335,6 +335,7 @@ export const handleWebhook = async (
       credential = await platformCredentialService.findDecryptedForUser({
         userId: tenant.ownerId,
         type,
+        requireOwnCredential: true,
       })
       customDomainOwnerId = tenant.ownerId
     }
