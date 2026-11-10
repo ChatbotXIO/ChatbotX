@@ -152,3 +152,61 @@ describe("sendWaTemplateMessageStepSchema inboxId persistence", () => {
     expect(parsed.template.inboxId).toBeUndefined()
   })
 })
+
+describe("extractParameterInfos — PAYMENT_REQUEST", () => {
+  const pix = {
+    type: "PAYMENT_REQUEST",
+    text: "Copy Pix code",
+    payment_setting: { type: "pix_dynamic_code" },
+  }
+
+  test("reads the payment method from the template and keeps dense slots", () => {
+    const infos = extractParameterInfos([
+      {
+        type: "BUTTONS",
+        buttons: [
+          { type: "URL", text: "Static", url: "https://a.test" },
+          { type: "URL", text: "Track", url: "https://a.test/{{1}}" },
+          pix,
+        ],
+      },
+    ])
+
+    expect(infos).toEqual([
+      expect.objectContaining({ buttonSubType: "url", paramIndex: 0 }),
+      expect.objectContaining({
+        buttonSubType: "payment_request",
+        paymentMethod: "pix",
+        buttonIndex: 2,
+        paramIndex: 1,
+      }),
+    ])
+  })
+
+  test("a payment button of unknown method offers no field", () => {
+    expect(
+      extractParameterInfos([
+        {
+          type: "BUTTONS",
+          buttons: [{ type: "PAYMENT_REQUEST", text: "Pay now" }],
+        },
+      ]),
+    ).toEqual([])
+  })
+
+  test("a payment button inside a carousel card offers no field", () => {
+    expect(
+      extractParameterInfos([
+        {
+          type: "CAROUSEL",
+          cards: [
+            {
+              card_index: 0,
+              components: [{ type: "BUTTONS", buttons: [pix] }],
+            },
+          ],
+        },
+      ]),
+    ).toEqual([])
+  })
+})

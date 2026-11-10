@@ -2,9 +2,11 @@
 
 import {
   type ButtonSubType,
+  createEmptyPaymentRequest,
   dateToExpirationTimeMs,
   expirationTimeMsToDate,
   extractParameterInfos,
+  findTemplatePaymentButtons,
   type ParameterInfo,
   type TemplateComponent,
   type WhatsappFlowFieldMapping,
@@ -51,6 +53,7 @@ import {
   MetaCatalogProductSelect,
 } from "./meta-catalog-product-select"
 import { MpmSectionsField } from "./mpm-sections-field"
+import { PaymentRequestParamField } from "./payment-request-param-field"
 
 type TemplateParamsFormProps = {
   components: TemplateComponent[]
@@ -193,6 +196,7 @@ const buttonParamFieldRenderers: Record<
   catalog: CatalogButtonParamField,
   mpm: MpmSectionsField,
   quick_reply: UnsupportedButtonParamField,
+  payment_request: PaymentRequestParamField,
 }
 
 function ButtonParamField(props: ButtonParamFieldProps) {
@@ -595,6 +599,19 @@ export function TemplateParamsForm({
             setValue(`${fieldName}.fieldMappings`, [])
           }
         }
+        // The payment method is fixed by the template; values typed for
+        // another method (a different template was picked) are discarded.
+        if (
+          param.buttonSubType === "payment_request" &&
+          param.paymentMethod &&
+          getValues(`${fieldName}.payment_request.method`) !==
+            param.paymentMethod
+        ) {
+          setValue(
+            `${fieldName}.payment_request`,
+            createEmptyPaymentRequest(param.paymentMethod),
+          )
+        }
       } else if (param.type === "carousel" && param.cardIndex !== undefined) {
         setValue(`${fieldName}.card_index`, param.cardIndex)
       } else if (
@@ -610,12 +627,23 @@ export function TemplateParamsForm({
     }
   }, [getValues, parameters, parentName, setValue])
 
-  if (parameters.length === 0) {
+  // A payment button whose method cannot be told from the template can never
+  // be sent, so say so instead of showing nothing.
+  const hasUnsupportedPaymentButton = findTemplatePaymentButtons(
+    components,
+  ).some((button) => button.method === null)
+
+  if (parameters.length === 0 && !hasUnsupportedPaymentButton) {
     return null
   }
 
   return (
     <div className="space-y-2">
+      {hasUnsupportedPaymentButton && (
+        <p className="text-destructive text-xs">
+          {t("whatsapp.messageTemplate.params.payment.unsupportedButton")}
+        </p>
+      )}
       {parameters.map((param: ParameterInfo) => {
         const fieldName = getFieldName(param, parentName)
         const key = `param-${param.type}-${param.format ?? ""}-${param.paramName}-${param.cardIndex ?? ""}-${param.buttonIndex ?? ""}`

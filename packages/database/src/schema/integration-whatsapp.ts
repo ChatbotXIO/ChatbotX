@@ -122,6 +122,12 @@ export const integrationWhatsappModel = pgTable(
      * from the `recording` object's `purpose`/`announcement_language`.
      */
     callRecordingPurpose: text(),
+    /**
+     * Send policy for Pix payment-request buttons: `true` sends them with
+     * `flow_type: APPSWITCH` (Pix with redirect — only for businesses Meta has
+     * onboarded), `false` omits it so the buyer copies and pastes the code.
+     */
+    pixRedirectEnabled: boolean().notNull().default(false),
     coexistAiReadsSyncedHistory: boolean().notNull().default(false),
     isCoexist: boolean().notNull().default(false),
     platformType: text().notNull().default(""),

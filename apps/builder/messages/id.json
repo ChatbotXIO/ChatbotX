@@ -3249,7 +3249,9 @@
       "removeHint": "Menghapus item terbuka terbaru milik kontak di pipeline ini.",
       "comment": "Komentar",
       "destinationPipeline": "Pipeline tujuan",
-      "destinationStage": "Tahap tujuan"
+      "destinationStage": "Tahap tujuan",
+      "missingRequiredFields": "Kolom wajib tanpa nilai: {names}. Item tidak dapat dibuat sampai setiap kolom memiliki nilai.",
+      "addRequiredFields": "Tambahkan kolom wajib"
     },
     "aiSegmentImage": {
       "label": "{name}: Segmentasi gambar"
@@ -4487,6 +4489,9 @@
     "waTemplateMpmTooManySections": "Tombol multi-produk dapat memiliki maksimal 10 bagian. Hapus beberapa bagian sebelum memublikasikan.",
     "waTemplateMpmTooManyProducts": "Tombol multi-produk dapat memiliki maksimal total 30 produk. Hapus beberapa produk sebelum memublikasikan.",
     "waTemplateLtoExpirationRequired": "Pilih tanggal berakhir untuk penawaran waktu terbatas sebelum mengirim.",
+    "waTemplatePaymentRequestIncomplete": "Isi detail pembayaran tombol ini sebelum memublikasikan.",
+    "waTemplatePaymentRequestInvalid": "Format detail pembayaran tidak valid. Periksa jumlah, tautan, dan digit kartu.",
+    "waTemplatePaymentRequestMisplaced": "Detail pembayaran hanya dapat diatur pada tombol pembayaran templat biasa (bukan carousel).",
     "waTemplateMpmIncompleteProducts": "Setiap bagian membutuhkan minimal satu produk terpilih — hapus baris kosong atau pilih produknya.",
     "unsupportedBlock": "Saluran ini tidak mendukung blok ini.",
     "constraintExceeded": "Batas saluran ini telah terlampaui.",
@@ -4550,7 +4555,21 @@
     "tooManySavedReplyImages": "Balasan tersimpan dapat memiliki maksimal {max} gambar",
     "savedReplyImagesNotSentHere": "Gambar tidak akan dikirim di sini",
     "invalidPhoneNumber": "Ini bukan nomor telepon yang valid. Sertakan kode negara, misalnya +1.",
-    "buttonCallPhoneNumberUnsupported": "Tombol ini tidak dapat menelepon nomor di sini. Pilih tindakan lain."
+    "buttonCallPhoneNumberUnsupported": "Tombol ini tidak dapat menelepon nomor di sini. Pilih tindakan lain.",
+    "paymentRequest": {
+      "title": "Permintaan pembayaran",
+      "cardEnding": "Kartu berakhiran {lastFourDigits}",
+      "status": "WhatsApp tidak melaporkan pembayaran. Periksa di penyedia pembayaran Anda.",
+      "cardStatus": "Konfirmasi pelanggan tidak menagih kartu. Tagih melalui penyedia pembayaran Anda.",
+      "sentFromTemplate": "Templat: {name}"
+    },
+    "paymentConfirmation": {
+      "title": "Pelanggan mengonfirmasi pembayaran",
+      "cardTitle": "Pelanggan mengonfirmasi pembayaran kartu",
+      "cardEnding": "Kartu berakhiran {lastFourDigits}",
+      "notCharged": "Belum ditagih. Tagih melalui penyedia pembayaran Anda.",
+      "reference": "Referensi {referenceId}"
+    }
   },
   "instagram": {
     "description": "Integrasi ini memungkinkan Anda membuat bot Instagram.",
@@ -5122,7 +5141,28 @@
         "mpmSectionLimitReached": "Maksimum 10 bagian tercapai.",
         "mpmProductLimitReached": "Maksimum 30 produk tercapai.",
         "mpmProductsSummary": "{productCount} produk dalam {sectionCount} bagian",
-        "unsupportedButtonParam": "Jenis tombol ini belum didukung."
+        "unsupportedButtonParam": "Jenis tombol ini belum didukung.",
+        "payment": {
+          "method": {
+            "pix": "Pix",
+            "boleto": "Boleto",
+            "payment_link": "Tautan pembayaran",
+            "card_on_file": "Pembayaran kartu satu klik"
+          },
+          "field": {
+            "code": "Kode Pix",
+            "digitableLine": "Baris digitabel Boleto",
+            "url": "URL tautan pembayaran",
+            "lastFourDigits": "4 digit terakhir kartu",
+            "credentialId": "ID kredensial kartu (opsional)",
+            "amount": "Jumlah dalam BRL, mis. 12.34"
+          },
+          "notice": {
+            "general": "Gunakan variabel agar setiap pelanggan mendapat detail pembayarannya sendiri.",
+            "cardOnFile": "Pembayaran kartu satu klik hanya berfungsi untuk bisnis yang diaktifkan Meta."
+          },
+          "unsupportedButton": "Templat ini punya tombol pembayaran yang tidak dapat dikirim: jenis pembayarannya tidak dapat ditentukan. Sinkronkan ulang templat atau pilih yang lain."
+        }
       }
     },
     "sampleBodyCardContent": {
@@ -5537,7 +5577,16 @@
     },
     "credentialSecretsRequired": "Masukkan app secret dan system user token. Keduanya belum tersimpan.",
     "embeddedSignupCancelled": "Pendaftaran dibatalkan — Anda dapat menutup tab ini.",
-    "embeddedSignupFailed": "Pendaftaran belum selesai — tutup tab ini dan coba lagi."
+    "embeddedSignupFailed": "Pendaftaran belum selesai — tutup tab ini dan coba lagi.",
+    "payment": {
+      "settings": {
+        "title": "Pembayaran",
+        "description": "Cara nomor ini mengirim tombol permintaan pembayaran.",
+        "pixRedirectLabel": "Kirim Pix dengan pengalihan",
+        "pixRedirectDescription": "Pembeli membuka aplikasi bank untuk membayar lalu kembali ke WhatsApp. Aktifkan hanya setelah Meta mengonboarding bisnis Anda; pembeli yang tidak bisa dialihkan tetap mendapat salin dan tempel.",
+        "adminOnly": "Hanya admin ruang kerja yang dapat mengubah pengaturan pembayaran."
+      }
+    }
   },
   "zalo": {
     "title": "Zalo OA",

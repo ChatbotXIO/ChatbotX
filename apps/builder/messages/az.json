@@ -4087,7 +4087,9 @@
       "removeHint": "Kontaktın bu satış xəttindəki ən son açıq elementini silir.",
       "comment": "Şərh",
       "destinationPipeline": "Təyinat satış xətti",
-      "destinationStage": "Təyinat mərhələsi"
+      "destinationStage": "Təyinat mərhələsi",
+      "missingRequiredFields": "Dəyəri olmayan məcburi sahələr: {names}. Hər birinin dəyəri olana qədər element yaradıla bilməz.",
+      "addRequiredFields": "Məcburi sahələri əlavə et"
     },
     "aiSegmentImage": {
       "label": "{name}: Şəkli seqmentləşdir"
@@ -5169,6 +5171,9 @@
     "waTemplateMpmTooManySections": "Çoxməhsullu düymədə ən çox 10 bölmə ola bilər. Dərc etməzdən əvvəl bəzi bölmələri çıxarın.",
     "waTemplateMpmTooManyProducts": "Çoxməhsullu düymədə ümumilikdə ən çox 30 məhsul ola bilər. Dərc etməzdən əvvəl bəzi məhsulları çıxarın.",
     "waTemplateLtoExpirationRequired": "Göndərməzdən əvvəl müddəti məhdud təklif üçün bitmə tarixi seçin.",
+    "waTemplatePaymentRequestIncomplete": "Dərc etməzdən əvvəl bu düymənin ödəniş məlumatlarını doldurun.",
+    "waTemplatePaymentRequestInvalid": "Ödəniş məlumatının formatı yanlışdır. Məbləği, linki və kart rəqəmlərini yoxlayın.",
+    "waTemplatePaymentRequestMisplaced": "Ödəniş məlumatları yalnız adi (karusel olmayan) şablonun ödəniş düyməsində təyin edilə bilər.",
     "waTemplateMpmIncompleteProducts": "Hər bölmədə ən azı bir məhsul seçilməlidir: boş sətirləri çıxarın və ya onlar üçün məhsul seçin.",
     "unsupportedBlock": "Bu kanal bu bloku dəstəkləmir.",
     "constraintExceeded": "Bu kanalın limiti aşıldı.",
@@ -5232,7 +5237,21 @@
     "tooManySavedReplyImages": "Saxlanmış cavabda ən çox {max} şəkil ola bilər",
     "savedReplyImagesNotSentHere": "Şəkillər burada göndərilməyəcək",
     "invalidPhoneNumber": "Bu etibarlı telefon nömrəsi deyil. Ölkə kodunu daxil edin, məsələn +1.",
-    "buttonCallPhoneNumberUnsupported": "Bu düymə burada telefon nömrəsinə zəng edə bilməz. Başqa əməliyyat seçin."
+    "buttonCallPhoneNumberUnsupported": "Bu düymə burada telefon nömrəsinə zəng edə bilməz. Başqa əməliyyat seçin.",
+    "paymentRequest": {
+      "title": "Ödəniş sorğusu",
+      "cardEnding": "Sonu {lastFourDigits} olan kart",
+      "status": "WhatsApp ödənişi bildirmir. Ödəniş provayderinizdə yoxlayın.",
+      "cardStatus": "Müştərinin təsdiqi kartdan pul çıxmır. Ödəniş provayderiniz vasitəsilə çıxın.",
+      "sentFromTemplate": "Şablon: {name}"
+    },
+    "paymentConfirmation": {
+      "title": "Müştəri ödənişi təsdiqlədi",
+      "cardTitle": "Müştəri kartla ödənişi təsdiqlədi",
+      "cardEnding": "Sonu {lastFourDigits} olan kart",
+      "notCharged": "Hələ çıxılmayıb. Ödəniş provayderiniz vasitəsilə çıxın.",
+      "reference": "İstinad {referenceId}"
+    }
   },
   "instagram": {
     "description": "Bu inteqrasiya Instagram botları yaratmağa imkan verir.",
@@ -5804,7 +5823,28 @@
         "mpmSectionLimitReached": "Maksimum 10 bölmə həddinə çatılıb.",
         "mpmProductLimitReached": "Maksimum 30 məhsul həddinə çatılıb.",
         "mpmProductsSummary": "{sectionCount} bölmədə {productCount} məhsul",
-        "unsupportedButtonParam": "Bu düymə növü hələ dəstəklənmir."
+        "unsupportedButtonParam": "Bu düymə növü hələ dəstəklənmir.",
+        "payment": {
+          "method": {
+            "pix": "Pix",
+            "boleto": "Boleto",
+            "payment_link": "Ödəniş linki",
+            "card_on_file": "Bir klikləyə kartla ödəniş"
+          },
+          "field": {
+            "code": "Pix kodu",
+            "digitableLine": "Boleto sətri",
+            "url": "Ödəniş linkinin URL-i",
+            "lastFourDigits": "Kartın son 4 rəqəmi",
+            "credentialId": "Kart credential ID-si (könüllü)",
+            "amount": "BRL ilə məbləğ, məs. 12.34"
+          },
+          "notice": {
+            "general": "Hər müştərinin öz ödəniş məlumatını alması üçün dəyişəndən istifadə edin.",
+            "cardOnFile": "Bir klikləyə kartla ödəniş yalnız Meta-nın aktivləşdirdiyi bizneslər üçün işləyir."
+          },
+          "unsupportedButton": "Bu şablonda göndərilə bilməyən ödəniş düyməsi var: ödəniş növü müəyyən edilə bilmədi. Şablonları yenidən sinxronlaşdırın və ya başqasını seçin."
+        }
       }
     },
     "sampleBodyCardContent": {
@@ -6219,7 +6259,16 @@
     },
     "credentialSecretsRequired": "Tətbiq sirrini və sistem istifadəçisi tokenini daxil edin. Hələ saxlanmayıb.",
     "embeddedSignupCancelled": "Qeydiyyat ləğv edildi — bu tabı bağlaya bilərsiniz.",
-    "embeddedSignupFailed": "Qeydiyyat tamamlanmadı — bu tabı bağlayın və yenidən cəhd edin."
+    "embeddedSignupFailed": "Qeydiyyat tamamlanmadı — bu tabı bağlayın və yenidən cəhd edin.",
+    "payment": {
+      "settings": {
+        "title": "Ödənişlər",
+        "description": "Bu nömrənin ödəniş sorğusu düymələrini necə göndərməsi.",
+        "pixRedirectLabel": "Pix-i yönləndirmə ilə göndər",
+        "pixRedirectDescription": "Alıcılar ödəmək üçün bank tətbiqini açır və WhatsApp-a qayıdır. Yalnız Meta bizneslərinizi qeydə aldıqdan sonra aktiv edin; yönləndirilə bilməyən alıcılar yenə kopyala-yapışdır alır.",
+        "adminOnly": "Ödəniş ayarlarını yalnız iş sahəsi adminləri dəyişə bilər."
+      }
+    }
   },
   "zalo": {
     "title": "Zalo OA",

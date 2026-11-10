@@ -5,6 +5,7 @@ import type {
 } from "./send-wa-message-template"
 import { validateLimitedTimeOfferParams } from "./wa-template-limited-time-offer"
 import { validateMpmParams } from "./wa-template-mpm-rules"
+import { validatePaymentRequestParams } from "./wa-template-payment-request-rules"
 
 /**
  * Single entry point for every send-blocking WhatsApp template param rule, so
@@ -18,6 +19,7 @@ export function validateWaTemplateSendParams(
 ): void {
   validateMpmParams(params, ctx, basePath)
   validateLimitedTimeOfferParams(params, ctx, basePath)
+  validatePaymentRequestParams(params, ctx, basePath)
 }
 
 /**

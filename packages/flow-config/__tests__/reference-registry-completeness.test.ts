@@ -34,6 +34,7 @@ const NOT_A_WORKSPACE_REFERENCE: Readonly<Record<string, string>> = {
   automationId: "third-party automation",
   campaignId: "third-party campaign",
   contentIds: "Meta CAPI content ids",
+  credentialId: "payment provider saved-card credential",
   conversionActionId: "Google Ads conversion action",
   customAudienceId: "Meta custom audience",
   dedupId: "event dedup key",

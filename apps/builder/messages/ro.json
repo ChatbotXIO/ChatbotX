@@ -450,7 +450,9 @@
       "removeHint": "Șterge cel mai recent element deschis al contactului din acest pipeline.",
       "comment": "Comentariu",
       "destinationPipeline": "Pipeline de destinație",
-      "destinationStage": "Etapă de destinație"
+      "destinationStage": "Etapă de destinație",
+      "missingRequiredFields": "Câmpuri obligatorii fără valoare: {names}. Elementul nu poate fi creat până când fiecare are o valoare.",
+      "addRequiredFields": "Adaugă câmpurile obligatorii"
     },
     "aiSegmentImage": {
       "label": "{name}: Segmentează imaginea"
@@ -4487,6 +4489,9 @@
     "waTemplateMpmTooManySections": "Un buton multi-produs poate avea cel mult 10 secțiuni. Elimină câteva secțiuni înainte de publicare.",
     "waTemplateMpmTooManyProducts": "Un buton multi-produs poate avea în total cel mult 30 de produse. Elimină câteva produse înainte de publicare.",
     "waTemplateLtoExpirationRequired": "Alege o dată de expirare pentru oferta pe timp limitat înainte de a trimite.",
+    "waTemplatePaymentRequestIncomplete": "Completează datele de plată ale acestui buton înainte de publicare.",
+    "waTemplatePaymentRequestInvalid": "O dată de plată are un format nevalid. Verifică suma, linkul și cifrele cardului.",
+    "waTemplatePaymentRequestMisplaced": "Datele de plată pot fi setate doar pe un buton de plată al unui șablon obișnuit (nu carusel).",
     "waTemplateMpmIncompleteProducts": "Fiecare secțiune are nevoie de cel puțin un produs selectat — elimină rândurile goale sau alege un produs.",
     "unsupportedBlock": "Acest canal nu acceptă acest bloc.",
     "constraintExceeded": "Limita acestui canal a fost depășită.",
@@ -4550,7 +4555,21 @@
     "tooManySavedReplyImages": "Un răspuns salvat poate avea cel mult {max} imagini",
     "savedReplyImagesNotSentHere": "Imaginile nu vor fi trimise aici",
     "invalidPhoneNumber": "Acesta nu este un număr de telefon valid. Include prefixul țării, de exemplu +1.",
-    "buttonCallPhoneNumberUnsupported": "Acest buton nu poate apela un număr de telefon aici. Alege altă acțiune."
+    "buttonCallPhoneNumberUnsupported": "Acest buton nu poate apela un număr de telefon aici. Alege altă acțiune.",
+    "paymentRequest": {
+      "title": "Cerere de plată",
+      "cardEnding": "Card care se termină în {lastFourDigits}",
+      "status": "WhatsApp nu raportează plata. Verificați la furnizorul de plăți.",
+      "cardStatus": "Confirmarea clientului nu debitează cardul. Debitați prin furnizorul de plăți.",
+      "sentFromTemplate": "Șablon: {name}"
+    },
+    "paymentConfirmation": {
+      "title": "Clientul a confirmat plata",
+      "cardTitle": "Clientul a confirmat plata cu cardul",
+      "cardEnding": "Card care se termină în {lastFourDigits}",
+      "notCharged": "Nedebitat încă. Debitați prin furnizorul de plăți.",
+      "reference": "Referință {referenceId}"
+    }
   },
   "instagram": {
     "description": "Această integrare îți permite să creezi boți Instagram.",
@@ -5122,7 +5141,28 @@
         "mpmSectionLimitReached": "S-a atins maximul de 10 secțiuni.",
         "mpmProductLimitReached": "S-a atins maximul de 30 de produse.",
         "mpmProductsSummary": "{productCount} produse în {sectionCount} secțiuni",
-        "unsupportedButtonParam": "Acest tip de buton nu este încă acceptat."
+        "unsupportedButtonParam": "Acest tip de buton nu este încă acceptat.",
+        "payment": {
+          "method": {
+            "pix": "Pix",
+            "boleto": "Boleto",
+            "payment_link": "Link de plată",
+            "card_on_file": "Plată cu cardul dintr-un clic"
+          },
+          "field": {
+            "code": "Cod Pix",
+            "digitableLine": "Linie digitabilă Boleto",
+            "url": "URL-ul linkului de plată",
+            "lastFourDigits": "Ultimele 4 cifre ale cardului",
+            "credentialId": "ID credențial card (opțional)",
+            "amount": "Suma în BRL, ex. 12.34"
+          },
+          "notice": {
+            "general": "Folosiți o variabilă ca fiecare client să primească propriile date de plată.",
+            "cardOnFile": "Plata cu cardul dintr-un clic funcționează doar pentru firmele activate de Meta."
+          },
+          "unsupportedButton": "Acest șablon are un buton de plată care nu poate fi trimis: tipul de plată nu a putut fi determinat. Resincronizează șabloanele sau alege altul."
+        }
       }
     },
     "sampleBodyCardContent": {
@@ -5537,7 +5577,16 @@
     },
     "credentialSecretsRequired": "Introdu secretul aplicației și tokenul utilizatorului de sistem. Nu sunt încă salvate.",
     "embeddedSignupCancelled": "Înregistrarea a fost anulată — poți închide această filă.",
-    "embeddedSignupFailed": "Înregistrarea nu s-a finalizat — închide această filă și încearcă din nou."
+    "embeddedSignupFailed": "Înregistrarea nu s-a finalizat — închide această filă și încearcă din nou.",
+    "payment": {
+      "settings": {
+        "title": "Plăți",
+        "description": "Cum trimite acest număr butoanele de cerere de plată.",
+        "pixRedirectLabel": "Trimite Pix cu redirecționare",
+        "pixRedirectDescription": "Cumpărătorii deschid aplicația băncii pentru a plăti și revin în WhatsApp. Activează doar după ce Meta a înscris firma ta; cei care nu pot fi redirecționați primesc în continuare copiere și lipire.",
+        "adminOnly": "Doar administratorii spațiului de lucru pot schimba setările de plată."
+      }
+    }
   },
   "zalo": {
     "title": "Zalo OA",

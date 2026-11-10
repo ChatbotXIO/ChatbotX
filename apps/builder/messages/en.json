@@ -4087,7 +4087,9 @@
       "removeHint": "Deletes the contact's latest open item in this pipeline.",
       "comment": "Comment",
       "destinationPipeline": "Destination pipeline",
-      "destinationStage": "Destination stage"
+      "destinationStage": "Destination stage",
+      "missingRequiredFields": "Required fields without a value: {names}. The item can't be created until each one has a value.",
+      "addRequiredFields": "Add required fields"
     },
     "aiSegmentImage": {
       "label": "{name}: Segment Image"
@@ -5169,6 +5171,9 @@
     "waTemplateMpmTooManySections": "A multi-product button can have at most 10 sections. Remove some sections before publishing.",
     "waTemplateMpmTooManyProducts": "A multi-product button can have at most 30 products in total. Remove some products before publishing.",
     "waTemplateLtoExpirationRequired": "Pick an expiration date for the limited-time offer before sending.",
+    "waTemplatePaymentRequestIncomplete": "Fill in the payment details of this button before publishing.",
+    "waTemplatePaymentRequestInvalid": "A payment detail has an invalid format. Check the amount, link and card digits.",
+    "waTemplatePaymentRequestMisplaced": "Payment details can only be set on a payment button of a regular (non-carousel) template.",
     "waTemplateMpmIncompleteProducts": "Every section needs at least one selected product — remove empty rows or pick a product for them.",
     "unsupportedBlock": "This channel does not support this block.",
     "constraintExceeded": "This channel limit was exceeded.",
@@ -5232,7 +5237,21 @@
     "tooManySavedReplyImages": "A saved reply can have at most {max} images",
     "savedReplyImagesNotSentHere": "Images won't be sent here",
     "invalidPhoneNumber": "This isn't a valid phone number. Include the country code, for example +1.",
-    "buttonCallPhoneNumberUnsupported": "This button cannot call a phone number here. Choose another action."
+    "buttonCallPhoneNumberUnsupported": "This button cannot call a phone number here. Choose another action.",
+    "paymentRequest": {
+      "title": "Payment request",
+      "cardEnding": "Card ending {lastFourDigits}",
+      "status": "WhatsApp doesn't report payment. Check your payment provider.",
+      "cardStatus": "The customer's confirmation doesn't charge the card. Charge it with your payment provider.",
+      "sentFromTemplate": "Template: {name}"
+    },
+    "paymentConfirmation": {
+      "title": "Customer confirmed the payment",
+      "cardTitle": "Customer confirmed the card payment",
+      "cardEnding": "Card ending {lastFourDigits}",
+      "notCharged": "Not charged yet. Charge it with your payment provider.",
+      "reference": "Reference {referenceId}"
+    }
   },
   "instagram": {
     "description": "This integration lets you create Instagram bots.",
@@ -5804,7 +5823,28 @@
         "mpmSectionLimitReached": "Maximum of 10 sections reached.",
         "mpmProductLimitReached": "Maximum of 30 products reached.",
         "mpmProductsSummary": "{productCount} products in {sectionCount} sections",
-        "unsupportedButtonParam": "This button type isn't supported yet."
+        "unsupportedButtonParam": "This button type isn't supported yet.",
+        "payment": {
+          "method": {
+            "pix": "Pix",
+            "boleto": "Boleto",
+            "payment_link": "Payment link",
+            "card_on_file": "One-click card payment"
+          },
+          "field": {
+            "code": "Pix code",
+            "digitableLine": "Boleto digitable line",
+            "url": "Payment link URL",
+            "lastFourDigits": "Last 4 digits of the card",
+            "credentialId": "Card credential ID (optional)",
+            "amount": "Amount in BRL, e.g. 12.34"
+          },
+          "notice": {
+            "general": "Use a variable so each customer gets their own payment details.",
+            "cardOnFile": "One-click card payment only works for businesses Meta has enabled for it."
+          },
+          "unsupportedButton": "This template has a payment button that cannot be sent: its payment type could not be determined. Re-sync the templates or pick another template."
+        }
       }
     },
     "sampleBodyCardContent": {
@@ -6219,7 +6259,16 @@
     },
     "credentialSecretsRequired": "Enter the app secret and system user token. They aren't stored yet.",
     "embeddedSignupCancelled": "Signup was cancelled — you can close this tab.",
-    "embeddedSignupFailed": "Signup didn't finish — close this tab and try again."
+    "embeddedSignupFailed": "Signup didn't finish — close this tab and try again.",
+    "payment": {
+      "settings": {
+        "title": "Payments",
+        "description": "How this number sends payment request buttons.",
+        "pixRedirectLabel": "Send Pix with redirect",
+        "pixRedirectDescription": "Buyers open their bank app to pay and return to WhatsApp. Turn this on only after Meta has onboarded your business; buyers whose app cannot redirect still get copy and paste.",
+        "adminOnly": "Only workspace admins can change payment settings."
+      }
+    }
   },
   "zalo": {
     "title": "Zalo OA",

@@ -861,6 +861,24 @@ class IntegrationWhatsappService extends BaseService {
   }
 
   /**
+   * Turns Pix with redirect on or off for a number. Only a local send policy
+   * (Meta has to onboard the business first), so nothing is called at Meta and
+   * there is no cache to invalidate: the worker reads the integration row
+   * uncached.
+   */
+  async updatePixRedirectEnabled(input: {
+    id: string
+    workspaceId: string
+    enabled: boolean
+  }): Promise<void> {
+    const row =
+      await integrationWhatsappRepository.updatePixRedirectEnabled(input)
+    if (!row) {
+      throw notFoundException("WhatsApp integration not found")
+    }
+  }
+
+  /**
    * Sets (or clears) the flow that runs when Meta hands a conversation to this
    * app. A non-null flow must be an active flow of the same workspace, so
    * a flow id from another workspace can never be stored. Like

@@ -339,6 +339,40 @@ describe("processBroadcastContacts", () => {
     })
   })
 
+  describe("broadcast with a payment request on the WhatsApp channel", () => {
+    test("hands the stored payment request to every recipient's job unchanged", async () => {
+      const templateData = {
+        button: [
+          {
+            sub_type: "payment_request",
+            index: 0,
+            payment_request: { method: "pix", code: "{{pix_code}}" },
+          },
+        ],
+      }
+      listSendableById.mockResolvedValue([
+        makeBroadcast({
+          templateId: "tmpl-1",
+          channel: "whatsapp",
+          templateData: { ...templateData, buttons: [] },
+        }),
+      ])
+      listPendingRecipients.mockResolvedValue([makeContactOnBroadcast()])
+
+      await processBroadcastContacts(BROADCAST_ID)
+
+      expect(chatAddSpy).toHaveBeenCalledWith(
+        "sendWhatsappTemplateMessage",
+        expect.objectContaining({
+          data: expect.objectContaining({
+            templateData: expect.objectContaining(templateData),
+          }),
+        }),
+        expect.anything(),
+      )
+    })
+  })
+
   describe("broadcast with templateId on messenger channel", () => {
     test("enqueues chatQueue sendMessengerTemplateMessage", async () => {
       listSendableById.mockResolvedValue([

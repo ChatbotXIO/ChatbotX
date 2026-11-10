@@ -895,6 +895,20 @@ class IntegrationWhatsappRepository {
       .where(workspaceIntegrationFilter(input))
   }
 
+  /** Sets the Pix-with-redirect send policy; `null` when the number is not in this workspace. */
+  async updatePixRedirectEnabled(
+    input: WorkspaceIntegrationRef & { enabled: boolean },
+    tx: DatabaseClient = db,
+  ): Promise<IntegrationWhatsappModel | null> {
+    const [row] = await tx
+      .update(integrationWhatsappModel)
+      .set({ pixRedirectEnabled: input.enabled })
+      .where(workspaceIntegrationFilter(input))
+      .returning()
+
+    return row ?? null
+  }
+
   /** Updates recording/retention/transcription settings for a number (Calls card). */
   async updateCallSettings(
     input: UpdateCallSettingsInput,

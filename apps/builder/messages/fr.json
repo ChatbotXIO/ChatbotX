@@ -3249,7 +3249,9 @@
       "removeHint": "Supprime le dernier élément ouvert du contact dans ce pipeline.",
       "comment": "Commentaire",
       "destinationPipeline": "Pipeline de destination",
-      "destinationStage": "Étape de destination"
+      "destinationStage": "Étape de destination",
+      "missingRequiredFields": "Champs obligatoires sans valeur : {names}. L'élément ne peut pas être créé tant que chacun n'a pas de valeur.",
+      "addRequiredFields": "Ajouter les champs obligatoires"
     },
     "aiSegmentImage": {
       "label": "{name}: Segmenter l'image"
@@ -4487,6 +4489,9 @@
     "waTemplateMpmTooManySections": "Un bouton multi-produits peut comporter au maximum 10 sections. Supprimez des sections avant de publier.",
     "waTemplateMpmTooManyProducts": "Un bouton multi-produits peut comporter au maximum 30 produits au total. Supprimez des produits avant de publier.",
     "waTemplateLtoExpirationRequired": "Choisissez une date d'expiration pour l'offre à durée limitée avant l'envoi.",
+    "waTemplatePaymentRequestIncomplete": "Renseignez les informations de paiement de ce bouton avant de publier.",
+    "waTemplatePaymentRequestInvalid": "Une information de paiement a un format invalide. Vérifiez le montant, le lien et les chiffres de la carte.",
+    "waTemplatePaymentRequestMisplaced": "Les informations de paiement ne peuvent être définies que sur un bouton de paiement d'un modèle standard (hors carrousel).",
     "waTemplateMpmIncompleteProducts": "Chaque section doit contenir au moins un produit sélectionné — supprimez les lignes vides ou choisissez un produit.",
     "unsupportedBlock": "Ce canal ne prend pas en charge ce bloc.",
     "constraintExceeded": "La limite de ce canal a été dépassée.",
@@ -4550,7 +4555,21 @@
     "tooManySavedReplyImages": "Une réponse enregistrée peut contenir au maximum {max} images",
     "savedReplyImagesNotSentHere": "Les images ne seront pas envoyées ici",
     "invalidPhoneNumber": "Ce n'est pas un numéro de téléphone valide. Indiquez l'indicatif du pays, par exemple +1.",
-    "buttonCallPhoneNumberUnsupported": "Ce bouton ne peut pas appeler un numéro ici. Choisissez une autre action."
+    "buttonCallPhoneNumberUnsupported": "Ce bouton ne peut pas appeler un numéro ici. Choisissez une autre action.",
+    "paymentRequest": {
+      "title": "Demande de paiement",
+      "cardEnding": "Carte se terminant par {lastFourDigits}",
+      "status": "WhatsApp ne signale pas le paiement. Vérifiez auprès de votre prestataire de paiement.",
+      "cardStatus": "La confirmation du client ne débite pas la carte. Débitez-la via votre prestataire de paiement.",
+      "sentFromTemplate": "Modèle : {name}"
+    },
+    "paymentConfirmation": {
+      "title": "Le client a confirmé le paiement",
+      "cardTitle": "Le client a confirmé le paiement par carte",
+      "cardEnding": "Carte se terminant par {lastFourDigits}",
+      "notCharged": "Pas encore débité. Débitez-le via votre prestataire de paiement.",
+      "reference": "Référence {referenceId}"
+    }
   },
   "instagram": {
     "description": "Cette intégration permet de créer des bots Instagram.",
@@ -5122,7 +5141,28 @@
         "mpmSectionLimitReached": "Maximum de 10 sections atteint.",
         "mpmProductLimitReached": "Maximum de 30 produits atteint.",
         "mpmProductsSummary": "{productCount} produits dans {sectionCount} sections",
-        "unsupportedButtonParam": "Ce type de bouton n’est pas encore pris en charge."
+        "unsupportedButtonParam": "Ce type de bouton n’est pas encore pris en charge.",
+        "payment": {
+          "method": {
+            "pix": "Pix",
+            "boleto": "Boleto",
+            "payment_link": "Lien de paiement",
+            "card_on_file": "Paiement par carte en un clic"
+          },
+          "field": {
+            "code": "Code Pix",
+            "digitableLine": "Ligne numérique du boleto",
+            "url": "URL du lien de paiement",
+            "lastFourDigits": "4 derniers chiffres de la carte",
+            "credentialId": "ID d'identifiant de la carte (facultatif)",
+            "amount": "Montant en BRL, ex. 12.34"
+          },
+          "notice": {
+            "general": "Utilisez une variable pour que chaque client reçoive ses propres informations de paiement.",
+            "cardOnFile": "Le paiement par carte en un clic ne fonctionne que pour les entreprises activées par Meta."
+          },
+          "unsupportedButton": "Ce modèle contient un bouton de paiement qui ne peut pas être envoyé : son type de paiement n'a pas pu être déterminé. Resynchronisez les modèles ou choisissez-en un autre."
+        }
       }
     },
     "sampleBodyCardContent": {
@@ -5537,7 +5577,16 @@
     },
     "credentialSecretsRequired": "Saisissez le secret de l'application et le jeton d'utilisateur système. Ils ne sont pas encore enregistrés.",
     "embeddedSignupCancelled": "L'inscription a été annulée — vous pouvez fermer cet onglet.",
-    "embeddedSignupFailed": "L'inscription n'a pas abouti — fermez cet onglet et réessayez."
+    "embeddedSignupFailed": "L'inscription n'a pas abouti — fermez cet onglet et réessayez.",
+    "payment": {
+      "settings": {
+        "title": "Paiements",
+        "description": "Comment ce numéro envoie les boutons de demande de paiement.",
+        "pixRedirectLabel": "Envoyer le Pix avec redirection",
+        "pixRedirectDescription": "L'acheteur ouvre l'appli de sa banque pour payer puis revient sur WhatsApp. N'activez qu'une fois votre entreprise intégrée par Meta ; les acheteurs qui ne peuvent pas être redirigés reçoivent le copier-coller.",
+        "adminOnly": "Seuls les administrateurs de l'espace de travail peuvent modifier les paramètres de paiement."
+      }
+    }
   },
   "zalo": {
     "title": "Zalo OA",

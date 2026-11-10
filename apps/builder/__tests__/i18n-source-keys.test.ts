@@ -245,5 +245,6 @@ test("the scan actually reached the source tree", () => {
   // Template-literal keys are unverifiable by construction. Capping the count
   // (roughly 90 today) keeps that escape hatch from quietly swallowing the
   // check wholesale — raise the ceiling deliberately, with a reason.
-  expect(dynamicKeys).toBeLessThan(200)
+  // 210: the payment request form and card key their labels by method/field.
+  expect(dynamicKeys).toBeLessThan(210)
 })

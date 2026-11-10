@@ -3405,7 +3405,9 @@
       "removeHint": "Elimina el último elemento abierto del contacto en este pipeline.",
       "comment": "Comentario",
       "destinationPipeline": "Pipeline de destino",
-      "destinationStage": "Etapa de destino"
+      "destinationStage": "Etapa de destino",
+      "missingRequiredFields": "Campos obligatorios sin valor: {names}. No se puede crear el elemento hasta que cada uno tenga un valor.",
+      "addRequiredFields": "Añadir campos obligatorios"
     },
     "aiSegmentImage": {
       "label": "{name}: Segmentar imagen"
@@ -4487,6 +4489,9 @@
     "waTemplateMpmTooManySections": "Un botón multiproducto puede tener como máximo 10 secciones. Elimina algunas secciones antes de publicar.",
     "waTemplateMpmTooManyProducts": "Un botón multiproducto puede tener como máximo 30 productos en total. Elimina algunos productos antes de publicar.",
     "waTemplateLtoExpirationRequired": "Elige una fecha de vencimiento para la oferta por tiempo limitado antes de enviar.",
+    "waTemplatePaymentRequestIncomplete": "Completa los datos de pago de este botón antes de publicar.",
+    "waTemplatePaymentRequestInvalid": "Un dato de pago tiene un formato no válido. Revisa el importe, el enlace y los dígitos de la tarjeta.",
+    "waTemplatePaymentRequestMisplaced": "Los datos de pago solo se pueden definir en un botón de pago de una plantilla normal (no carrusel).",
     "waTemplateMpmIncompleteProducts": "Cada sección necesita al menos un producto seleccionado: elimina las filas vacías o elige un producto.",
     "unsupportedBlock": "Este canal no admite este bloque.",
     "constraintExceeded": "Se ha superado el límite de este canal.",
@@ -4550,7 +4555,21 @@
     "tooManySavedReplyImages": "Una respuesta guardada puede tener como máximo {max} imágenes",
     "savedReplyImagesNotSentHere": "Las imágenes no se enviarán aquí",
     "invalidPhoneNumber": "No es un número de teléfono válido. Incluye el código de país, por ejemplo +1.",
-    "buttonCallPhoneNumberUnsupported": "Este botón no puede llamar a un número aquí. Elige otra acción."
+    "buttonCallPhoneNumberUnsupported": "Este botón no puede llamar a un número aquí. Elige otra acción.",
+    "paymentRequest": {
+      "title": "Solicitud de pago",
+      "cardEnding": "Tarjeta terminada en {lastFourDigits}",
+      "status": "WhatsApp no informa del pago. Compruébalo con tu proveedor de pagos.",
+      "cardStatus": "La confirmación del cliente no cobra la tarjeta. Cóbrala con tu proveedor de pagos.",
+      "sentFromTemplate": "Plantilla: {name}"
+    },
+    "paymentConfirmation": {
+      "title": "El cliente confirmó el pago",
+      "cardTitle": "El cliente confirmó el pago con tarjeta",
+      "cardEnding": "Tarjeta terminada en {lastFourDigits}",
+      "notCharged": "Aún no se ha cobrado. Cóbralo con tu proveedor de pagos.",
+      "reference": "Referencia {referenceId}"
+    }
   },
   "instagram": {
     "description": "This integración lets tú Crear Instagram bots.",
@@ -5122,7 +5141,28 @@
         "mpmSectionLimitReached": "Se alcanzó el máximo de 10 secciones.",
         "mpmProductLimitReached": "Se alcanzó el máximo de 30 productos.",
         "mpmProductsSummary": "{productCount} productos en {sectionCount} secciones",
-        "unsupportedButtonParam": "Este tipo de botón aún no es compatible."
+        "unsupportedButtonParam": "Este tipo de botón aún no es compatible.",
+        "payment": {
+          "method": {
+            "pix": "Pix",
+            "boleto": "Boleto",
+            "payment_link": "Enlace de pago",
+            "card_on_file": "Pago con tarjeta en un clic"
+          },
+          "field": {
+            "code": "Código Pix",
+            "digitableLine": "Línea digitable del boleto",
+            "url": "URL del enlace de pago",
+            "lastFourDigits": "Últimos 4 dígitos de la tarjeta",
+            "credentialId": "ID de credencial de la tarjeta (opcional)",
+            "amount": "Importe en BRL, p. ej. 12.34"
+          },
+          "notice": {
+            "general": "Usa una variable para que cada cliente reciba sus propios datos de pago.",
+            "cardOnFile": "El pago con tarjeta en un clic solo funciona para empresas habilitadas por Meta."
+          },
+          "unsupportedButton": "Esta plantilla tiene un botón de pago que no se puede enviar: no se pudo determinar su tipo de pago. Vuelve a sincronizar las plantillas o elige otra."
+        }
       }
     },
     "sampleBodyCardContent": {
@@ -5537,7 +5577,16 @@
     },
     "credentialSecretsRequired": "Introduce el secreto de la app y el token de usuario del sistema. Aún no están guardados.",
     "embeddedSignupCancelled": "Se canceló el registro: puedes cerrar esta pestaña.",
-    "embeddedSignupFailed": "El registro no se completó: cierra esta pestaña e inténtalo de nuevo."
+    "embeddedSignupFailed": "El registro no se completó: cierra esta pestaña e inténtalo de nuevo.",
+    "payment": {
+      "settings": {
+        "title": "Pagos",
+        "description": "Cómo envía este número los botones de solicitud de pago.",
+        "pixRedirectLabel": "Enviar Pix con redirección",
+        "pixRedirectDescription": "El comprador abre la app de su banco para pagar y vuelve a WhatsApp. Actívalo solo cuando Meta haya dado de alta tu empresa; quien no pueda ser redirigido sigue recibiendo copiar y pegar.",
+        "adminOnly": "Solo los administradores del espacio de trabajo pueden cambiar los ajustes de pago."
+      }
+    }
   },
   "zalo": {
     "title": "Zalo OA",

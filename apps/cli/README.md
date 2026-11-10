@@ -208,7 +208,7 @@ The `<identifier>` parameter (`packages/business/src/contact/utils.ts` `parseCon
 ```bash
 # Basic CRUD
 chatbotx contacts list                               # [--page --perPage --sort --keyword --contactFilter]
-chatbotx contacts create --email <email>             # [--phoneNumber --contactId --firstName --lastName]
+chatbotx contacts create --email <email>             # [--phoneNumber --sourceUserId --contactId --firstName --lastName]  (WhatsApp: a phone number, a BSUID in --sourceUserId, or both)
 chatbotx contacts count                              # Count matching filter [--page --perPage --sort --keyword --contactFilter]
 chatbotx contacts get <identifier>
 chatbotx contacts update <identifier>
@@ -1118,6 +1118,8 @@ chatbotx whatsapp-channels list|get <id>              # Same data per channel; a
 chatbotx whatsapp-channels handover-resume-flow update <id> --handoverResumeFlowId <flowId|null>
 chatbotx whatsapp-channels routing-roles list <id>    # This app's Conversation Routing roles as last checked (null = never)
 chatbotx whatsapp-channels routing-roles sync <id>    # Ask Meta again (GET routing_roles) and store the answer
+chatbotx whatsapp-channels payment-settings list <id>   # Whether Pix payment-request buttons are sent with redirect (APPSWITCH)
+chatbotx whatsapp-channels payment-settings update <id> --pixRedirectEnabled <true|false>   # Only after Meta has onboarded the business
 ```
 
 ### `messenger-channels`

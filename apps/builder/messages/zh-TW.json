@@ -1823,6 +1823,9 @@
     "waTemplateMpmTooManySections": "多商品按鈕最多可包含 10 個版塊。請在發布前移除部分版塊。",
     "waTemplateMpmTooManyProducts": "多商品按鈕總共最多可包含 30 項商品。請在發布前移除部分商品。",
     "waTemplateLtoExpirationRequired": "傳送前請為限時優惠選擇到期時間。",
+    "waTemplatePaymentRequestIncomplete": "發佈前請填寫此按鈕的付款資訊。",
+    "waTemplatePaymentRequestInvalid": "付款資訊格式無效。請檢查金額、連結與卡號末四碼。",
+    "waTemplatePaymentRequestMisplaced": "付款資訊只能設定在一般（非輪播）範本的付款按鈕上。",
     "waTemplateMpmIncompleteProducts": "每個分組至少需要一個已選擇的商品——請刪除空白列或為其選擇商品。",
     "unsupportedBlock": "此管道不支援此區塊。",
     "constraintExceeded": "已超出此管道的限制。",
@@ -1886,7 +1889,21 @@
     "tooManySavedReplyImages": "一則快速回覆最多包含 {max} 張圖片",
     "savedReplyImagesNotSentHere": "圖片不會在此傳送",
     "invalidPhoneNumber": "這不是有效的電話號碼。請包含國碼，例如 +1。",
-    "buttonCallPhoneNumberUnsupported": "此按鈕在這裡無法撥打電話號碼，請選擇其他動作。"
+    "buttonCallPhoneNumberUnsupported": "此按鈕在這裡無法撥打電話號碼，請選擇其他動作。",
+    "paymentRequest": {
+      "title": "付款請求",
+      "cardEnding": "末四碼 {lastFourDigits} 的卡",
+      "status": "WhatsApp 不會通知付款狀況，請在金流服務商處查看。",
+      "cardStatus": "客戶確認不會扣款，請透過您的金流服務商扣款。",
+      "sentFromTemplate": "範本：{name}"
+    },
+    "paymentConfirmation": {
+      "title": "客戶已確認付款",
+      "cardTitle": "客戶已確認信用卡付款",
+      "cardEnding": "末四碼 {lastFourDigits} 的卡",
+      "notCharged": "尚未扣款，請透過您的金流服務商扣款。",
+      "reference": "參考編號 {referenceId}"
+    }
   },
   "productCategories": {
     "deleteDescription": "{count, plural, =0 {此分類尚未指派任何商品。} one {# 項商品將移至未分類。} other {# 項商品將移至未分類。}}",
@@ -3663,7 +3680,9 @@
       "removeHint": "刪除聯絡人在此管道中最新的進行中項目。",
       "comment": "留言",
       "destinationPipeline": "目標管道",
-      "destinationStage": "目標階段"
+      "destinationStage": "目標階段",
+      "missingRequiredFields": "必填欄位尚未填寫：{names}。所有必填欄位都有值後才能建立項目。",
+      "addRequiredFields": "新增必填欄位"
     },
     "aiSegmentImage": {
       "label": "{name}: 影像分割"
@@ -5168,7 +5187,28 @@
         "mpmSectionLimitReached": "已達到最多 10 個版塊的上限。",
         "mpmProductLimitReached": "已達到最多 30 項商品的上限。",
         "mpmProductsSummary": "{sectionCount} 個版塊中共 {productCount} 項商品",
-        "unsupportedButtonParam": "此按鈕類型尚不支援。"
+        "unsupportedButtonParam": "此按鈕類型尚不支援。",
+        "payment": {
+          "method": {
+            "pix": "Pix",
+            "boleto": "Boleto",
+            "payment_link": "付款連結",
+            "card_on_file": "一鍵信用卡付款"
+          },
+          "field": {
+            "code": "Pix 代碼",
+            "digitableLine": "Boleto 數字行",
+            "url": "付款連結 URL",
+            "lastFourDigits": "卡片末四碼",
+            "credentialId": "卡片憑證 ID（選填）",
+            "amount": "以 BRL 計的金額，例如 12.34"
+          },
+          "notice": {
+            "general": "使用變數，讓每位客戶收到各自的付款資訊。",
+            "cardOnFile": "一鍵信用卡付款僅適用於已獲 Meta 啟用的企業。"
+          },
+          "unsupportedButton": "此範本包含無法傳送的付款按鈕：無法判斷其付款類型。請重新同步範本或選擇其他範本。"
+        }
       }
     },
     "sampleBodyCardContent": {
@@ -5583,7 +5623,16 @@
     },
     "credentialSecretsRequired": "請輸入應用程式密鑰和系統使用者權杖。它們尚未儲存。",
     "embeddedSignupCancelled": "註冊已取消——你可以關閉此分頁。",
-    "embeddedSignupFailed": "註冊未完成——請關閉此分頁並再試一次。"
+    "embeddedSignupFailed": "註冊未完成——請關閉此分頁並再試一次。",
+    "payment": {
+      "settings": {
+        "title": "付款",
+        "description": "此號碼傳送付款請求按鈕的方式。",
+        "pixRedirectLabel": "以轉址方式傳送 Pix",
+        "pixRedirectDescription": "買家開啟銀行應用程式付款後返回 WhatsApp。請在 Meta 完成您企業的接入後再開啟；無法轉址的買家仍會收到複製貼上方式。",
+        "adminOnly": "只有工作區管理員可以變更付款設定。"
+      }
+    }
   },
   "zalo": {
     "title": "ZaloOA",

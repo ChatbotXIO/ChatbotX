@@ -334,3 +334,35 @@ export const pipelineActionDefaultFn = (
   } = pipelineStepDefaultFn(action, carry)
   return { ...fields, type: "pipeline" } as PipelineActionSchema
 }
+
+/** What `findMissingRequiredPipelineFields` needs to know about a field. */
+export type RequiredPipelineFieldDefinition = {
+  id: string
+  required: boolean
+}
+
+/**
+ * The required pipeline fields an `addToPipeline` action leaves without a
+ * value, in the order of `definitions`. Creating an item rejects a missing
+ * required field at run time (the step then routes to error), so publish and
+ * the step editor check it up front with this one rule. A blank or
+ * whitespace-only value counts as missing; a `{{variable}}` counts as set,
+ * because its text is only known when the flow runs. When a field has several
+ * rows the last one wins, exactly as the action resolves them.
+ */
+export function findMissingRequiredPipelineFields<
+  F extends RequiredPipelineFieldDefinition,
+>(
+  fieldValues: readonly PipelineStepFieldValue[],
+  definitions: readonly F[],
+): F[] {
+  const finalValues = new Map<string, string>()
+  for (const { pipelineFieldId, value } of fieldValues) {
+    finalValues.set(pipelineFieldId, value)
+  }
+  return definitions.filter(
+    (definition) =>
+      definition.required &&
+      (finalValues.get(definition.id) ?? "").trim() === "",
+  )
+}

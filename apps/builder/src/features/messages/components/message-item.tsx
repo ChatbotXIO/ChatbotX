@@ -12,6 +12,7 @@ import {
   getWhatsappCallEntity,
   getWhatsappCallPermissionReply,
   getWhatsappFlowResponse,
+  getWhatsappPaymentMethod,
   isMessageProductEntity,
 } from "@chatbotx.io/sdk"
 import {
@@ -56,6 +57,10 @@ import type { AttachmentResource } from "@/features/attachments/schema/resource"
 import { useAttachmentSource } from "@/features/attachments/utils"
 import { contactDisplayName } from "@/features/contacts/lib/contact-display-name"
 import {
+  getSentPaymentRequests,
+  getSentTemplateName,
+} from "../lib/payment-request-content"
+import {
   getThreadControlActivity,
   getThreadControlContextCard,
   isThreadControlEcho,
@@ -71,6 +76,8 @@ import { ThreadControlContextCard } from "./thread-control-context-card"
 import { ThreadControlDivider } from "./thread-control-divider"
 import { WhatsappCallCard } from "./whatsapp-call-card"
 import { WhatsappFlowResponseCard } from "./whatsapp-flow-response-card"
+import { WhatsappPaymentConfirmation } from "./whatsapp-payment-confirmation"
+import { WhatsappPaymentRequestCard } from "./whatsapp-payment-request-card"
 
 type MessageItemProps = {
   message: MessageResourceWithRelations
@@ -160,6 +167,11 @@ export const MessageItem = (props: MessageItemProps) => {
   const callPermissionReply = getWhatsappCallPermissionReply(
     message.contentAttributes,
   )
+  const paymentMethod = getWhatsappPaymentMethod(message.contentAttributes)
+  // A payment request template renders as its own card (method, amount,
+  // value); the stored "Template: <name>" text would only repeat its name.
+  const paymentRequests = getSentPaymentRequests(message.contentAttributes)
+  const hasPaymentRequests = paymentRequests.length > 0
   const threadControlActivity = getThreadControlActivity(
     message.contentAttributes,
   )
@@ -183,6 +195,8 @@ export const MessageItem = (props: MessageItemProps) => {
       inboundOrder ||
       whatsappCall ||
       callPermissionReply ||
+      paymentMethod ||
+      hasPaymentRequests ||
       threadControlActivity ||
       threadControlContext,
   )
@@ -197,6 +211,12 @@ export const MessageItem = (props: MessageItemProps) => {
     } else {
       variant = guestDisplay ? "right" : "left"
     }
+  }
+
+  // The buyer's payment confirmation is a conversation event, centered like
+  // routing activity, not a chat bubble.
+  if (paymentMethod) {
+    variant = "full"
   }
 
   const createdAt = new Date(message.createdAt)
@@ -294,7 +314,7 @@ export const MessageItem = (props: MessageItemProps) => {
             )}
           </>
         )}
-        {RenderContentAttributes(props)}
+        {RenderContentAttributes(props, paymentRequests)}
       </div>
 
       <div className="flex">
@@ -878,7 +898,10 @@ const TemplateButton = ({
   )
 }
 
-const RenderContentAttributes = (props: MessageItemProps) => {
+const RenderContentAttributes = (
+  props: MessageItemProps,
+  paymentRequests: ReturnType<typeof getSentPaymentRequests>,
+) => {
   const { message, onPostback } = props
   const viewCatalog = getViewCatalogEntity(message.contentAttributes)
   if (viewCatalog) {
@@ -904,6 +927,20 @@ const RenderContentAttributes = (props: MessageItemProps) => {
   if (callPermissionReply) {
     return (
       <WhatsappCallPermissionReply response={callPermissionReply.response} />
+    )
+  }
+
+  const paymentMethod = getWhatsappPaymentMethod(message.contentAttributes)
+  if (paymentMethod) {
+    return <WhatsappPaymentConfirmation entity={paymentMethod} />
+  }
+
+  if (paymentRequests.length > 0) {
+    return (
+      <WhatsappPaymentRequestCard
+        requests={paymentRequests}
+        templateName={getSentTemplateName(message.contentAttributes)}
+      />
     )
   }
 

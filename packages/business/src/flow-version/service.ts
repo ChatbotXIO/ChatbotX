@@ -17,6 +17,7 @@ import { decisionProfileService } from "../decision/profile-service"
 import { notFoundException } from "../errors"
 import { logger } from "../logger"
 import { messengerWelcomeMessageFlowService } from "../messenger-welcome-message-flow/service"
+import { assertFlowPipelineStepsPublishable } from "../pipeline/flow-publish-check"
 import { smartDelayService } from "../smart-delay/service"
 import { assertResourceEditable } from "../template/installed-resource.service"
 import { withTemplateLockedTransaction } from "../template/template-resource-locks"
@@ -581,6 +582,10 @@ class FlowVersionService extends BaseService {
     const nodes = normalizeFlowGraphDecisionMappings(input.nodes)
     assertFlowGraphPublishable({ nodes, edges: input.edges })
     await decisionProfileService.assertFlowReferencesPublishable({
+      nodes,
+      workspaceId: input.workspaceId,
+    })
+    await assertFlowPipelineStepsPublishable({
       nodes,
       workspaceId: input.workspaceId,
     })

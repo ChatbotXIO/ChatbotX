@@ -9,6 +9,12 @@ import { z } from "zod"
 import { contactFilterCriteriaSchema } from "@/features/contact-filter/schema"
 import type { ContactResource } from "./resource"
 
+/**
+ * A BSUID is never digits-only (Meta's shape is `<country>.<id>`), so it can
+ * never be mistaken for a phone-based `wa_id` in `ContactInbox.sourceId`.
+ */
+const WHATSAPP_BSUID_PATTERN = /^(?!\d+$)[A-Za-z0-9._-]+$/
+
 export const contactPrefix = "sys"
 export const contactFieldPrefix = "cus"
 export const contactTagPrefix = "tag"
@@ -26,7 +32,20 @@ export const createContactRequest = z
       ])
       .optional()
       .describe(
-        "Contact's phone number. Required when `channel` is `whatsapp`.",
+        "Contact's phone number (on WhatsApp this is the WhatsApp ID / `wa_id`). When `channel` is `whatsapp`, provide this, `sourceUserId`, or both.",
+      ),
+    sourceUserId: z
+      .union([
+        z.literal(""),
+        z
+          .string()
+          .trim()
+          .max(255)
+          .regex(WHATSAPP_BSUID_PATTERN, "Invalid WhatsApp BSUID"),
+      ])
+      .optional()
+      .describe(
+        "WhatsApp Business-Scoped User ID (BSUID, e.g. `US.13491208655302741918`), for users who hide their phone number. Only for `channel` `whatsapp`; provide this, `phoneNumber`, or both. Without a phone number the contact is keyed and messaged by this BSUID.",
       ),
     email: z
       .union([z.literal(""), z.email().max(100)])
@@ -54,12 +73,19 @@ export const createContactRequest = z
   })
   .superRefine((data, ctx) => {
     const ch = data.channel
+    if (ch !== channelTypes.enum.whatsapp && data.sourceUserId) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["sourceUserId"],
+        message: "BSUID is only supported for WhatsApp",
+      })
+    }
     if (ch === channelTypes.enum.whatsapp) {
-      if (!data.phoneNumber) {
+      if (!(data.phoneNumber || data.sourceUserId)) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           path: ["phoneNumber"],
-          message: "Phone number is required for WhatsApp",
+          message: "Enter a phone number or a BSUID for WhatsApp",
         })
       }
     } else if (ch === channelTypes.enum.smtp) {

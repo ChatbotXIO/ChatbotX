@@ -3249,7 +3249,9 @@
       "removeHint": "Sletter kontaktens seneste åbne element i denne pipeline.",
       "comment": "Kommentar",
       "destinationPipeline": "Destinationspipeline",
-      "destinationStage": "Destinationsfase"
+      "destinationStage": "Destinationsfase",
+      "missingRequiredFields": "Påkrævede felter uden værdi: {names}. Elementet kan ikke oprettes, før hvert felt har en værdi.",
+      "addRequiredFields": "Tilføj påkrævede felter"
     },
     "aiSegmentImage": {
       "label": "{name}: Segmentér billede"
@@ -4487,6 +4489,9 @@
     "waTemplateMpmTooManySections": "En multiprodukt-knap kan højst have 10 sektioner. Fjern nogle sektioner før udgivelse.",
     "waTemplateMpmTooManyProducts": "En multiprodukt-knap kan højst have 30 produkter i alt. Fjern nogle produkter før udgivelse.",
     "waTemplateLtoExpirationRequired": "Vælg en udløbsdato for tilbuddet, før du sender.",
+    "waTemplatePaymentRequestIncomplete": "Udfyld betalingsoplysningerne for denne knap, før du udgiver.",
+    "waTemplatePaymentRequestInvalid": "En betalingsoplysning har et ugyldigt format. Tjek beløb, link og kortcifre.",
+    "waTemplatePaymentRequestMisplaced": "Betalingsoplysninger kan kun angives på en betalingsknap i en almindelig skabelon (ikke karrusel).",
     "waTemplateMpmIncompleteProducts": "Hver sektion skal have mindst ét valgt produkt — fjern tomme rækker, eller vælg et produkt til dem.",
     "unsupportedBlock": "Denne kanal understøtter ikke denne blok.",
     "constraintExceeded": "Denne kanals grænse er overskredet.",
@@ -4550,7 +4555,21 @@
     "tooManySavedReplyImages": "Et gemt svar kan højst have {max} billeder",
     "savedReplyImagesNotSentHere": "Billeder bliver ikke sendt her",
     "invalidPhoneNumber": "Dette er ikke et gyldigt telefonnummer. Medtag landekoden, for eksempel +1.",
-    "buttonCallPhoneNumberUnsupported": "Denne knap kan ikke ringe til et telefonnummer her. Vælg en anden handling."
+    "buttonCallPhoneNumberUnsupported": "Denne knap kan ikke ringe til et telefonnummer her. Vælg en anden handling.",
+    "paymentRequest": {
+      "title": "Betalingsanmodning",
+      "cardEnding": "Kort, der ender på {lastFourDigits}",
+      "status": "WhatsApp rapporterer ikke betaling. Tjek hos din betalingsudbyder.",
+      "cardStatus": "Kundens bekræftelse trækker ikke beløbet på kortet. Træk det via din betalingsudbyder.",
+      "sentFromTemplate": "Skabelon: {name}"
+    },
+    "paymentConfirmation": {
+      "title": "Kunden har bekræftet betalingen",
+      "cardTitle": "Kunden har bekræftet kortbetalingen",
+      "cardEnding": "Kort, der ender på {lastFourDigits}",
+      "notCharged": "Ikke trukket endnu. Træk beløbet via din betalingsudbyder.",
+      "reference": "Reference {referenceId}"
+    }
   },
   "instagram": {
     "description": "Denne integration lets du opret Instagram bots.",
@@ -5122,7 +5141,28 @@
         "mpmSectionLimitReached": "Maks. 10 sektioner nået.",
         "mpmProductLimitReached": "Maks. 30 produkter nået.",
         "mpmProductsSummary": "{productCount} produkter i {sectionCount} sektioner",
-        "unsupportedButtonParam": "Denne knaptype understøttes endnu ikke."
+        "unsupportedButtonParam": "Denne knaptype understøttes endnu ikke.",
+        "payment": {
+          "method": {
+            "pix": "Pix",
+            "boleto": "Boleto",
+            "payment_link": "Betalingslink",
+            "card_on_file": "Kortbetaling med ét klik"
+          },
+          "field": {
+            "code": "Pix-kode",
+            "digitableLine": "Boleto-linje",
+            "url": "URL til betalingslink",
+            "lastFourDigits": "Kortets sidste 4 cifre",
+            "credentialId": "Kortets credential-ID (valgfrit)",
+            "amount": "Beløb i BRL, f.eks. 12.34"
+          },
+          "notice": {
+            "general": "Brug en variabel, så hver kunde får sine egne betalingsoplysninger.",
+            "cardOnFile": "Kortbetaling med ét klik virker kun for virksomheder, som Meta har aktiveret den for."
+          },
+          "unsupportedButton": "Denne skabelon har en betalingsknap, der ikke kan sendes: betalingstypen kunne ikke bestemmes. Synkroniser skabelonerne igen, eller vælg en anden."
+        }
       }
     },
     "sampleBodyCardContent": {
@@ -5537,7 +5577,16 @@
     },
     "credentialSecretsRequired": "Indtast app-hemmeligheden og systembruger-tokenet. De er ikke gemt endnu.",
     "embeddedSignupCancelled": "Tilmeldingen blev annulleret — du kan lukke denne fane.",
-    "embeddedSignupFailed": "Tilmeldingen blev ikke gennemført — luk denne fane, og prøv igen."
+    "embeddedSignupFailed": "Tilmeldingen blev ikke gennemført — luk denne fane, og prøv igen.",
+    "payment": {
+      "settings": {
+        "title": "Betalinger",
+        "description": "Hvordan dette nummer sender knapper til betalingsanmodning.",
+        "pixRedirectLabel": "Send Pix med omdirigering",
+        "pixRedirectDescription": "Købere åbner deres bankapp for at betale og vender tilbage til WhatsApp. Slå det først til, når Meta har onboardet din virksomhed; købere, der ikke kan omdirigeres, får stadig kopiér og indsæt.",
+        "adminOnly": "Kun workspace-administratorer kan ændre betalingsindstillinger."
+      }
+    }
   },
   "zalo": {
     "title": "Zalo OA",

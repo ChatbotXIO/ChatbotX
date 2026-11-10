@@ -512,6 +512,7 @@ export type IncomingMessage = {
     | MessageSharedPostEntity
     | MessageWhatsappCallEntity
     | MessageWhatsappCallPermissionReplyEntity
+    | MessageWhatsappPaymentMethodEntity
     | { [x: string]: unknown }
   attachments?: IncomingAttachment[]
   clientId?: string | null
@@ -651,6 +652,24 @@ export type MessageWhatsappCallPermissionReplyEntity = {
   /** Unix seconds; absent for permanent grants. */
   expirationTimestamp?: number
   responseSource?: string
+}
+
+/**
+ * Carried on the message written when a contact confirms a one-click payment
+ * (`interactive.type: "payment_method"`). It only records the buyer's intent
+ * and the credential to charge: nothing here charges or settles the payment.
+ * The raw webhook object is kept verbatim for fields not modeled here.
+ */
+export type MessageWhatsappPaymentMethodEntity = {
+  type: "whatsapp_payment_method"
+  /** Meta's value, e.g. `offsite_card_pay`; `unknown` when it was missing. */
+  paymentMethod: string
+  lastFourDigits?: string
+  credentialId?: string
+  referenceId?: string
+  /** Unix seconds. */
+  paymentTimestamp?: number
+  raw: Record<string, unknown>
 }
 
 /**
@@ -853,6 +872,18 @@ export const getWhatsappCallPermissionReply = (
   return attrs.type === "whatsapp_call_permission_reply" &&
     (attrs.response === "accept" || attrs.response === "reject")
     ? (contentAttributes as MessageWhatsappCallPermissionReplyEntity)
+    : undefined
+}
+
+export const getWhatsappPaymentMethod = (
+  contentAttributes: unknown,
+): MessageWhatsappPaymentMethodEntity | undefined => {
+  if (!contentAttributes || typeof contentAttributes !== "object") {
+    return
+  }
+  const attrs = contentAttributes as { type?: string }
+  return attrs.type === "whatsapp_payment_method"
+    ? (contentAttributes as MessageWhatsappPaymentMethodEntity)
     : undefined
 }
 

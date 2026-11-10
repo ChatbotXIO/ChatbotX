@@ -16,6 +16,7 @@ import {
   sendCardStepDefaultFn,
   sendCarouselStepDefaultFn,
   sendMessageNodeDefaultFn,
+  sendWaTemplateMessageStepDefaultFn,
   splitTrafficNodeDefaultFn,
   startAnotherNodeStepDefaultFn,
   startExternalFlowStepDefaultFn,
@@ -114,6 +115,57 @@ describe("flow export/import round trip", () => {
     expect(importedFlow.nodes).toEqual(flow.nodes)
     expect(importedFlow.edges).toEqual(flow.edges)
     expect(importedFlow.startNodeId).toEqual(flow.startNodeId)
+  })
+
+  test("a template step with a payment request survives export -> import unchanged", () => {
+    const paymentButton = {
+      sub_type: "payment_request" as const,
+      index: 1,
+      payment_request: {
+        method: "pix" as const,
+        code: "{{pix_code}}",
+        amount: "{{total}}",
+      },
+    }
+    const node = sendMessageNodeDefaultFn({
+      labelVersion: 1,
+      nodeProps: { id: "1" },
+      detailProps: {
+        steps: [
+          sendWaTemplateMessageStepDefaultFn({
+            template: {
+              id: "tpl-1",
+              name: "pay",
+              language: "pt_BR",
+              params: { button: [paymentButton] },
+            },
+          }),
+        ],
+      },
+    })
+    const envelope = {
+      formatVersion: FLOW_EXPORT_FORMAT_VERSION,
+      exportedAt: new Date().toISOString(),
+      source: { workspaceId: "1", flowId: "1" },
+      flows: [
+        {
+          name: "Pay flow",
+          active: true,
+          enableInInbox: true,
+          startNodeId: node.id,
+          nodes: [node],
+          edges: [],
+        },
+      ],
+    }
+
+    const result = parseFlowExport(JSON.parse(JSON.stringify(envelope)))
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+    expect(result.data.flows[0].nodes).toEqual([node])
   })
 
   test("an export produced before the botFields manifest existed still parses, defaulting botFields to {}", () => {
