@@ -881,6 +881,17 @@ describe("receiveMessage — message repository branch", () => {
     mockMarkReadByOutbound.mockResolvedValue(true)
   })
 
+  test("skips without failing the job when the channel parser returns nothing to store", async () => {
+    mockRunChannelHandler.mockResolvedValue(null)
+
+    await expect(receiveMessage(baseProps)).resolves.toBeNull()
+
+    expect(mockFindContactInbox).not.toHaveBeenCalled()
+    expect(mockCreateOrUpdate).not.toHaveBeenCalled()
+    expect(mockCreateOrUpdateWithAttachments).not.toHaveBeenCalled()
+    expect(mockEmit).not.toHaveBeenCalled()
+  })
+
   test("calls repository.createOrUpdate() when message has no attachments", async () => {
     mockRunChannelHandler.mockResolvedValue({
       message: { ...baseIncomingMessage, attachments: [] },

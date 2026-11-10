@@ -372,7 +372,14 @@ export const receiveMessage = async (
     { ctx, data: props },
   )
   if (!parsedMessage) {
-    throw new SdkException("Unable to parse received message")
+    // A channel parser returns null for a webhook event with nothing to store
+    // (e.g. a Zalo `oa_send_template` with no text or attachment). Retrying
+    // cannot change that, so drop it instead of failing the job.
+    logger.warn(
+      { integrationType, inboxId: inbox.id, workspaceId: inbox.workspaceId },
+      "Received message has no storable content, skipping",
+    )
+    return null
   }
 
   const {
