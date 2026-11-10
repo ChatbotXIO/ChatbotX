@@ -27,6 +27,9 @@ vi.mock("@chatbotx.io/database/schema", () => ({
   flowModel: {},
   flowVersionModel: {},
 }))
+vi.mock("../src/pipeline/flow-publish-check", () => ({
+  assertFlowPipelineStepsPublishable: vi.fn(),
+}))
 vi.mock("@chatbotx.io/redis", () => ({ withCache: vi.fn() }))
 vi.mock("../src/base.service", () => ({
   BaseService: class {
