@@ -15,6 +15,14 @@ const update = vi.fn(() => ({ set: setUpdate }))
 
 const findFirstUser = vi.fn(async () => ({ tenantId: "1" }))
 const findActiveByOwnerRepo = vi.fn()
+const findByIdForUpdate = vi.fn()
+const resourceDeletionLogService = {
+  recordRequest: vi.fn(async () => undefined),
+  recordHistoricalRequest: vi.fn(async () => undefined),
+  cancelPending: vi.fn(async () => 0),
+  findPendingId: vi.fn(async () => undefined),
+  completePending: vi.fn(async () => 1),
+}
 const findFirstWorkspace = vi.fn(async () => ({ name: "Old Name" }))
 const findFirstFlow = vi.fn(async () => ({ id: "11" }))
 const countWorkspaces = vi.fn(async () => 0)
@@ -50,7 +58,13 @@ vi.mock("@chatbotx.io/database/schema", () => ({
 // schema, conflicting with the narrow mock above).
 vi.mock("@chatbotx.io/database/repositories", () => ({}))
 vi.mock("@chatbotx.io/database/repositories/workspace", () => ({
-  workspaceRepository: { findActiveByOwner: findActiveByOwnerRepo },
+  workspaceRepository: {
+    findActiveByOwner: findActiveByOwnerRepo,
+    findByIdForUpdate,
+  },
+}))
+vi.mock("../src/resource-deletion-log/service", () => ({
+  resourceDeletionLogService,
 }))
 
 const tenantService = { findByOwner: vi.fn(async () => undefined as unknown) }
@@ -196,6 +210,10 @@ beforeEach(() => {
   setUpdate.mockClear()
   update.mockClear()
   invalidateCacheByTags.mockClear()
+  findByIdForUpdate.mockReset().mockResolvedValue(undefined)
+  resourceDeletionLogService.recordRequest.mockReset()
+  resourceDeletionLogService.recordHistoricalRequest.mockReset()
+  resourceDeletionLogService.cancelPending.mockReset().mockResolvedValue(0)
   isCommunity.mockReset().mockReturnValue(false)
   countWorkspaces.mockReset().mockResolvedValue(0)
   runExclusive
@@ -723,6 +741,233 @@ describe("WorkspaceService.update — member cache invalidation", () => {
     ).rejects.toMatchObject({
       code: "workspaceDeletionStarted",
     })
+    expect(resourceDeletionLogService.cancelPending).not.toHaveBeenCalled()
+  })
+})
+
+const REQUESTED_AT = new Date("2026-11-01T00:00:00.000Z")
+
+const lockedWorkspace = (
+  overrides: Partial<{
+    scheduledDeletionAt: Date | null
+    deletionRequestedAt: Date | null
+    deletionRequestedById: string | null
+  }> = {},
+) => ({
+  id: "ws-1",
+  name: "Old Name",
+  purgeStartedAt: null,
+  scheduledDeletionAt: null,
+  deletionRequestedAt: null,
+  deletionRequestedById: null,
+  ...overrides,
+})
+
+const callOrder = (mock: { mock: { invocationCallOrder: number[] } }) =>
+  mock.mock.invocationCallOrder[0]
+
+describe("WorkspaceService.scheduleDeletion — deletion log", () => {
+  test("records a pending request for the submitting actor in the same transaction as the update", async () => {
+    findByIdForUpdate.mockResolvedValue(lockedWorkspace())
+
+    await workspaceService.scheduleDeletion({ actorId: "user-9", id: "ws-1" })
+
+    expect(transaction).toHaveBeenCalledTimes(1)
+    expect(findByIdForUpdate).toHaveBeenCalledWith({ id: "ws-1" }, db)
+    expect(resourceDeletionLogService.cancelPending).not.toHaveBeenCalled()
+    expect(resourceDeletionLogService.recordRequest).toHaveBeenCalledWith({
+      resource: {
+        type: "workspace",
+        id: "ws-1",
+        workspaceId: "ws-1",
+        name: "New Name",
+      },
+      status: "pending",
+      requestedByUserId: "user-9",
+      tx: db,
+    })
+    expect(dispatchAuditRecord).toHaveBeenCalledWith({
+      action: "schedule_deletion",
+      detail: "scheduled the workspace for deletion",
+    })
+  })
+
+  test("invalidates the workspace caches again after the transaction it opened commits", async () => {
+    findByIdForUpdate.mockResolvedValue(lockedWorkspace())
+
+    await workspaceService.scheduleDeletion({ actorId: "user-9", id: "ws-1" })
+
+    // Once from `update` (before the commit), once after it.
+    expect(invalidateCacheByTags).toHaveBeenCalledTimes(2)
+    expect(invalidateCacheByTags).toHaveBeenLastCalledWith(["workspaces:ws-1"])
+  })
+
+  test("closes the previous request before recording a resubmission", async () => {
+    findByIdForUpdate.mockResolvedValue(
+      lockedWorkspace({
+        scheduledDeletionAt: new Date("2026-11-20T00:00:00.000Z"),
+        deletionRequestedAt: REQUESTED_AT,
+        deletionRequestedById: "user-1",
+      }),
+    )
+    resourceDeletionLogService.cancelPending.mockResolvedValue(1)
+
+    await workspaceService.scheduleDeletion({ actorId: "user-2", id: "ws-1" })
+
+    expect(callOrder(resourceDeletionLogService.cancelPending)).toBeLessThan(
+      callOrder(resourceDeletionLogService.recordRequest),
+    )
+    expect(
+      resourceDeletionLogService.recordHistoricalRequest,
+    ).not.toHaveBeenCalled()
+    expect(resourceDeletionLogService.recordRequest).toHaveBeenCalledWith(
+      expect.objectContaining({ requestedByUserId: "user-2" }),
+    )
+  })
+
+  test("recovers the earlier request of a workspace scheduled before the log existed", async () => {
+    findByIdForUpdate.mockResolvedValue(
+      lockedWorkspace({
+        scheduledDeletionAt: new Date("2026-11-20T00:00:00.000Z"),
+        deletionRequestedAt: REQUESTED_AT,
+        deletionRequestedById: "user-1",
+      }),
+    )
+    resourceDeletionLogService.cancelPending.mockResolvedValue(0)
+
+    await workspaceService.scheduleDeletion({ actorId: "user-2", id: "ws-1" })
+
+    expect(
+      resourceDeletionLogService.recordHistoricalRequest,
+    ).toHaveBeenCalledWith({
+      resource: {
+        type: "workspace",
+        id: "ws-1",
+        workspaceId: "ws-1",
+        name: "Old Name",
+      },
+      status: "canceled",
+      requestedByUserId: "user-1",
+      requestedAt: REQUESTED_AT,
+      tx: db,
+    })
+    expect(resourceDeletionLogService.recordRequest).toHaveBeenCalledWith(
+      expect.objectContaining({
+        status: "pending",
+        requestedByUserId: "user-2",
+      }),
+    )
+  })
+
+  test("uses a caller-owned transaction without opening, auditing or re-invalidating", async () => {
+    const callerTx = { update, query: db.query }
+    findByIdForUpdate.mockResolvedValue(lockedWorkspace())
+
+    await workspaceService.scheduleDeletion({
+      actorId: "user-9",
+      id: "ws-1",
+      tx: callerTx as never,
+    })
+
+    expect(transaction).not.toHaveBeenCalled()
+    expect(findByIdForUpdate).toHaveBeenCalledWith({ id: "ws-1" }, callerTx)
+    expect(resourceDeletionLogService.recordRequest).toHaveBeenCalledWith(
+      expect.objectContaining({ tx: callerTx }),
+    )
+    expect(dispatchAuditRecord).not.toHaveBeenCalled()
+    expect(invalidateCacheByTags).toHaveBeenCalledTimes(1)
+  })
+
+  test("writes nothing when the purge has already started", async () => {
+    findByIdForUpdate.mockResolvedValue(lockedWorkspace())
+    returningUpdatedWorkspace.mockResolvedValueOnce([])
+
+    await expect(
+      workspaceService.scheduleDeletion({ actorId: "user-9", id: "ws-1" }),
+    ).rejects.toMatchObject({ code: "workspaceDeletionStarted" })
+
+    expect(resourceDeletionLogService.recordRequest).not.toHaveBeenCalled()
+    expect(resourceDeletionLogService.cancelPending).not.toHaveBeenCalled()
+    expect(dispatchAuditRecord).not.toHaveBeenCalled()
+  })
+
+  test("does not report success when the log write fails", async () => {
+    findByIdForUpdate.mockResolvedValue(lockedWorkspace())
+    resourceDeletionLogService.recordRequest.mockRejectedValueOnce(
+      new Error("log insert failed"),
+    )
+
+    await expect(
+      workspaceService.scheduleDeletion({ actorId: "user-9", id: "ws-1" }),
+    ).rejects.toThrow("log insert failed")
+
+    expect(dispatchAuditRecord).not.toHaveBeenCalled()
+  })
+})
+
+describe("WorkspaceService.cancelDeletion — deletion log", () => {
+  test("closes the pending request as canceled in the same transaction", async () => {
+    findByIdForUpdate.mockResolvedValue(
+      lockedWorkspace({
+        scheduledDeletionAt: new Date("2026-11-20T00:00:00.000Z"),
+        deletionRequestedAt: REQUESTED_AT,
+        deletionRequestedById: "user-1",
+      }),
+    )
+    resourceDeletionLogService.cancelPending.mockResolvedValue(1)
+
+    await workspaceService.cancelDeletion({ id: "ws-1" })
+
+    expect(resourceDeletionLogService.cancelPending).toHaveBeenCalledWith({
+      resource: {
+        type: "workspace",
+        id: "ws-1",
+        workspaceId: "ws-1",
+        name: "Old Name",
+      },
+      tx: db,
+    })
+    expect(
+      resourceDeletionLogService.recordHistoricalRequest,
+    ).not.toHaveBeenCalled()
+    expect(dispatchAuditRecord).toHaveBeenCalledWith({
+      action: "cancel_deletion",
+      detail: "canceled the workspace deletion",
+    })
+  })
+
+  test("recovers a request made before the log existed instead of losing it", async () => {
+    findByIdForUpdate.mockResolvedValue(
+      lockedWorkspace({
+        scheduledDeletionAt: new Date("2026-11-20T00:00:00.000Z"),
+        deletionRequestedAt: REQUESTED_AT,
+        deletionRequestedById: "user-1",
+      }),
+    )
+    resourceDeletionLogService.cancelPending.mockResolvedValue(0)
+
+    await workspaceService.cancelDeletion({ id: "ws-1" })
+
+    expect(
+      resourceDeletionLogService.recordHistoricalRequest,
+    ).toHaveBeenCalledWith(
+      expect.objectContaining({
+        status: "canceled",
+        requestedByUserId: "user-1",
+        requestedAt: REQUESTED_AT,
+      }),
+    )
+  })
+
+  test("records nothing and scans nothing when no deletion was ever requested", async () => {
+    findByIdForUpdate.mockResolvedValue(lockedWorkspace())
+
+    await workspaceService.cancelDeletion({ id: "ws-1" })
+
+    expect(resourceDeletionLogService.cancelPending).not.toHaveBeenCalled()
+    expect(
+      resourceDeletionLogService.recordHistoricalRequest,
+    ).not.toHaveBeenCalled()
   })
 })
 

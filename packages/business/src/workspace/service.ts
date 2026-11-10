@@ -14,7 +14,10 @@ import {
   workspaceMemberRoles,
 } from "@chatbotx.io/database/partials"
 import { templateUninstallStateRepository } from "@chatbotx.io/database/repositories"
-import { workspaceRepository } from "@chatbotx.io/database/repositories/workspace"
+import {
+  type WorkspaceDeletionRequestState,
+  workspaceRepository,
+} from "@chatbotx.io/database/repositories/workspace"
 import {
   ROOT_TENANT_ID,
   workspaceMemberModel,
@@ -39,6 +42,7 @@ import { isCommunity } from "../keys"
 import { logger } from "../logger"
 import { notifyWorkspaceCurrencyChange } from "../pipeline/currency-refresh"
 import { quotaEnforcementService } from "../quota-enforcement/service"
+import { resourceDeletionLogService } from "../resource-deletion-log/service"
 import { templateInstallIntentService } from "../template/install-intent"
 import { dispatchStagedInstalls } from "../template/installation-dispatch"
 import {
@@ -57,6 +61,11 @@ import {
   workspaceMemberService,
   workspaceRosterCacheTag,
 } from "../workspace-member/service"
+import {
+  closePreviousWorkspaceDeletionRequest,
+  completeWorkspaceDeletionLog,
+  workspaceDeletionTarget,
+} from "./deletion-log"
 import { nextScheduledDeletionAt } from "./deletion-schedule"
 import {
   compensateWorkspaceQuotaConsumption,
@@ -353,13 +362,7 @@ class WorkspaceService extends BaseService {
       throw workspaceDeletionStartedException()
     }
 
-    const memberUserIds = await workspaceMemberService.listUserIdsByWorkspaceId(
-      { tx, workspaceId: id },
-    )
-    await this.invalidateCacheTags([
-      `workspaces:${id}`,
-      ...memberUserIds.map((userId) => workspaceMemberCacheTag(userId)),
-    ])
+    await this.invalidateWorkspaceCache(id, tx)
 
     // Only when a caller-owned transaction hasn't been passed in — emitting
     // here while nested in an open db.transaction(...) would enqueue an audit
@@ -384,6 +387,19 @@ class WorkspaceService extends BaseService {
     }
 
     return updated
+  }
+
+  private async invalidateWorkspaceCache(
+    id: string,
+    tx: DatabaseClient,
+  ): Promise<void> {
+    const memberUserIds = await workspaceMemberService.listUserIdsByWorkspaceId(
+      { tx, workspaceId: id },
+    )
+    await this.invalidateCacheTags([
+      `workspaces:${id}`,
+      ...memberUserIds.map((userId) => workspaceMemberCacheTag(userId)),
+    ])
   }
 
   /** The stored logo path: `null` when unset, `undefined` when there is no such workspace. */
@@ -446,14 +462,31 @@ class WorkspaceService extends BaseService {
     id: string
     tx?: DatabaseClient
   }): Promise<WorkspaceModel> {
-    const { tx = db } = props
-    const workspace = await this.update({
+    const workspace = await this.changeDeletionRequest({
       id: props.id,
-      tx,
-      data: {
-        deletionRequestedAt: new Date(),
-        deletionRequestedById: props.actorId,
-        scheduledDeletionAt: nextScheduledDeletionAt(),
+      tx: props.tx,
+      change: async (tx, current) => {
+        const updated = await this.update({
+          id: props.id,
+          tx,
+          data: {
+            deletionRequestedAt: new Date(),
+            deletionRequestedById: props.actorId,
+            scheduledDeletionAt: nextScheduledDeletionAt(),
+          },
+        })
+        // A repeat submit replaces the earlier request (and its deadline), so
+        // each accepted submit stays its own row with its own requester.
+        if (current?.scheduledDeletionAt) {
+          await closePreviousWorkspaceDeletionRequest(current, tx)
+        }
+        await resourceDeletionLogService.recordRequest({
+          resource: workspaceDeletionTarget(updated.id, updated.name),
+          status: "pending",
+          requestedByUserId: props.actorId,
+          tx,
+        })
+        return updated
       },
     })
     if (!props.tx) {
@@ -469,19 +502,61 @@ class WorkspaceService extends BaseService {
     id: string
     tx?: DatabaseClient
   }): Promise<WorkspaceModel> {
-    const { tx = db } = props
-    const workspace = await this.update({
+    const workspace = await this.changeDeletionRequest({
       id: props.id,
-      tx,
-      data: {
-        deletionRequestedAt: null,
-        deletionRequestedById: null,
-        scheduledDeletionAt: null,
+      tx: props.tx,
+      change: async (tx, current) => {
+        const updated = await this.update({
+          id: props.id,
+          tx,
+          data: {
+            deletionRequestedAt: null,
+            deletionRequestedById: null,
+            scheduledDeletionAt: null,
+          },
+        })
+        // Nothing to close, and no table scan to pay for, on a workspace that
+        // was never scheduled (or whose request an earlier cancel already closed).
+        if (current?.scheduledDeletionAt) {
+          await closePreviousWorkspaceDeletionRequest(current, tx)
+        }
+        return updated
       },
     })
     if (!props.tx) {
       await this.audit("cancel_deletion", "canceled the workspace deletion")
     }
+    return workspace
+  }
+
+  /**
+   * Changes a workspace's deletion request and writes its log row in one
+   * transaction (the caller's when `tx` is passed), under a lock on the
+   * workspace row so concurrent schedule/cancel calls serialize. `change`
+   * receives the row as it was before the change. When this call opened the
+   * transaction the caches are invalidated again after the commit, because
+   * `update` invalidates them before it.
+   */
+  private async changeDeletionRequest(props: {
+    id: string
+    tx?: DatabaseClient
+    change: (
+      tx: DatabaseClient,
+      current: WorkspaceDeletionRequestState | undefined,
+    ) => Promise<WorkspaceModel>
+  }): Promise<WorkspaceModel> {
+    const run = async (tx: DatabaseClient): Promise<WorkspaceModel> => {
+      const current = await workspaceRepository.findByIdForUpdate(
+        { id: props.id },
+        tx,
+      )
+      return await props.change(tx, current)
+    }
+    if (props.tx) {
+      return await run(props.tx)
+    }
+    const workspace = await db.transaction(run)
+    await this.invalidateWorkspaceCache(props.id, db)
     return workspace
   }
 
@@ -735,6 +810,21 @@ class WorkspaceService extends BaseService {
         )
       }
 
+      // Resolved before the final transaction, not inside it: the table has no
+      // index, so the scan must not count against that transaction. It runs
+      // under the purge timeouts (a slow or blocked scan defers the purge) and
+      // before the deadline check below (a late scan cannot start the delete).
+      // After the fence nothing can cancel or resubmit, so the row cannot change.
+      const pendingDeletionLogId = await withPurgeTimeouts({
+        table: "ResourceDeletionLog",
+        workspaceId: fencedWorkspace.id,
+        fn: (tx) =>
+          resourceDeletionLogService.findPendingId({
+            resource: workspaceDeletionTarget(fencedWorkspace.id),
+            tx,
+          }),
+      })
+
       if (Date.now() >= deadlineAt) {
         throw new WorkspacePurgeIncompleteError(fencedWorkspace.id, "deadline")
       }
@@ -765,10 +855,20 @@ class WorkspaceService extends BaseService {
           const deleted = await tx
             .delete(workspaceModel)
             .where(eq(workspaceModel.id, fencedWorkspace.id))
-            .returning({ id: workspaceModel.id })
+            .returning({
+              id: workspaceModel.id,
+              name: workspaceModel.name,
+              deletionRequestedById: workspaceModel.deletionRequestedById,
+              deletionRequestedAt: workspaceModel.deletionRequestedAt,
+            })
           if (deleted[0]) {
             await workspaceDeletionRecordService.markPurged({
               workspaceId: fencedWorkspace.id,
+              tx,
+            })
+            await completeWorkspaceDeletionLog({
+              pendingLogId: pendingDeletionLogId,
+              workspace: deleted[0],
               tx,
             })
           }

@@ -4,6 +4,7 @@ import {
   type ConnectionStatus,
   type ConnectionStatusReason,
   type IntegrationType,
+  inboxStatuses,
   isProviderOffboardedConnection,
   type ProviderAccountEventKind,
 } from "@chatbotx.io/database/partials"
@@ -22,6 +23,7 @@ import { ChatbotXException, channelLimitReachedException } from "../errors"
 import { inboxService } from "../inbox/service"
 import { logger } from "../logger"
 import { quotaEnforcementService } from "../quota-enforcement/service"
+import { resourceDeletionLogService } from "../resource-deletion-log/service"
 import { workspaceMemberService } from "../workspace-member/service"
 import { workspaceUsageService } from "../workspace-usage/service"
 import { authExpiresAtOf } from "./auth-expiry"
@@ -65,6 +67,47 @@ export type ConnectionQuotaConsumption =
 
 /** A `channels` quota release a `transition` call decided on but has not yet executed — see `transition`'s `pendingRelease` handshake and `releasePendingQuota`. */
 export type PendingQuotaRelease = { ownerId: string; workspaceId: string }
+
+type DisconnectInboxInput = {
+  inboxId: string
+  workspaceId: string
+  ownerId: string
+  tx?: DatabaseClient
+}
+
+/** What the deletion log snapshots about a channel at the moment a user removes it. */
+type ChannelDeletionSnapshot = {
+  inboxId: string
+  workspaceId: string
+  channelType?: string
+  name: string
+}
+
+const legacyChannelSnapshot = (
+  inbox: { id: string; name: string; channel: string },
+  workspaceId: string,
+): ChannelDeletionSnapshot => ({
+  inboxId: inbox.id,
+  workspaceId,
+  channelType: inbox.channel,
+  name: inbox.name,
+})
+
+const writeChannelDeletionLog = (
+  channel: ChannelDeletionSnapshot,
+  tx: DatabaseClient,
+): Promise<void> =>
+  resourceDeletionLogService.recordRequest({
+    resource: {
+      type: "channel",
+      id: channel.inboxId,
+      workspaceId: channel.workspaceId,
+      subtype: channel.channelType,
+      name: channel.name,
+    },
+    status: "completed",
+    tx,
+  })
 
 /**
  * How `releaseQuotaEdge` treats the display-only `WorkspaceUsage` counter:
@@ -136,12 +179,7 @@ class ConnectionStateService extends BaseService {
    * Disconnects the connection mirroring an inbox, or preserves the legacy
    * inbox-only path for rows not yet backfilled into `Connection`.
    */
-  async disconnectInbox(input: {
-    inboxId: string
-    workspaceId: string
-    ownerId: string
-    tx?: DatabaseClient
-  }): Promise<void> {
+  async disconnectInbox(input: DisconnectInboxInput): Promise<void> {
     const connection = await connectionRepository.findByInboxId(
       { inboxId: input.inboxId },
       input.tx,
@@ -158,10 +196,103 @@ class ConnectionStateService extends BaseService {
       })
       return
     }
-    await inboxService.disconnect({
-      ...input,
-      reason: "manual",
+    await this.disconnectLegacyInbox(input)
+  }
+
+  /**
+   * A user removing a channel is logged; the system acting on it
+   * (`teardown.*`: trial expiry, suspension, workspace purge) is not. Runs only
+   * for a real transition, so repeating a disconnect writes nothing.
+   */
+  private async logUserChannelDisconnect(
+    connection: ConnectionModel,
+    tx: DatabaseClient,
+  ): Promise<void> {
+    if (connection.kind !== "channel" || !connection.inboxId) {
+      return
+    }
+    await writeChannelDeletionLog(
+      {
+        inboxId: connection.inboxId,
+        workspaceId: connection.workspaceId,
+        channelType: connection.channel ?? undefined,
+        name: connection.displayName,
+      },
+      tx,
+    )
+  }
+
+  /**
+   * The inbox-only path for rows not yet backfilled into `Connection`. It keeps
+   * `inboxService.disconnect` exactly as it was — that method releases quota
+   * before any surrounding transaction commits, so no new transaction is opened
+   * around it — and only adds the log.
+   */
+  private async disconnectLegacyInbox(
+    input: DisconnectInboxInput,
+  ): Promise<void> {
+    if (input.tx) {
+      await this.disconnectLegacyInboxInTransaction(input, input.tx)
+      return
+    }
+    await this.disconnectLegacyInboxWithoutTransaction(input)
+  }
+
+  /**
+   * The inbox row is locked, so a repeat or concurrent disconnect of an already
+   * disconnected inbox logs nothing, and the log commits (or rolls back) with
+   * the caller's transaction.
+   */
+  private async disconnectLegacyInboxInTransaction(
+    input: DisconnectInboxInput,
+    tx: DatabaseClient,
+  ): Promise<void> {
+    const { inboxId, workspaceId } = input
+    const inbox = await inboxRepository.findByIdForUpdate(
+      { id: inboxId, workspaceId },
+      tx,
+    )
+
+    await inboxService.disconnect({ ...input, reason: "manual" })
+
+    if (inbox && inbox.status !== inboxStatuses.enum.disconnected) {
+      await writeChannelDeletionLog(
+        legacyChannelSnapshot(inbox, workspaceId),
+        tx,
+      )
+    }
+  }
+
+  /**
+   * Nothing to lock the inbox with, so its status is read first and the log is
+   * written after the disconnect, best effort: a failed write is logged and
+   * never fails a disconnect that already took effect.
+   */
+  private async disconnectLegacyInboxWithoutTransaction(
+    input: DisconnectInboxInput,
+  ): Promise<void> {
+    const { inboxId, workspaceId } = input
+    const [inbox] = await inboxRepository.listIdentitiesByIds({
+      workspaceId,
+      ids: [inboxId],
     })
+
+    await inboxService.disconnect({ ...input, reason: "manual" })
+
+    if (!inbox || inbox.status === inboxStatuses.enum.disconnected) {
+      return
+    }
+    try {
+      await writeChannelDeletionLog(
+        legacyChannelSnapshot(inbox, workspaceId),
+        db,
+      )
+    } catch (err) {
+      logger.error(
+        { err, inboxId, workspaceId },
+        "resource-deletion-log: failed to record a channel deletion",
+      )
+    }
   }
 
   /**
@@ -508,6 +639,9 @@ class ConnectionStateService extends BaseService {
           reason: result.reason,
           tx: client,
         })
+      }
+      if (input.event === "user.disconnect") {
+        await this.logUserChannelDisconnect(existing, client)
       }
 
       let pendingRelease: RunResult["pendingRelease"] = null

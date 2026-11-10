@@ -154,6 +154,7 @@ import { productRelations } from "./product"
 import { productCategoryRelations } from "./product-category"
 import { questionnaireRelations } from "./questionnaire"
 import { reflinkRelations } from "./reflink"
+import { resourceDeletionLogRelations } from "./resource-deletion-log"
 import { savedReplyRelations } from "./save-reply"
 import { savedReplyImageRelations } from "./saved-reply-image"
 import { sequenceRelations } from "./sequence"
@@ -320,6 +321,7 @@ export const relations = {
   ...telegramChatRelations,
   ...contactToTagChannelRelations,
   ...reflinkRelations,
+  ...resourceDeletionLogRelations,
   ...magicLinkRelations,
   ...sequenceRelations,
   ...sequenceStepRelations,
