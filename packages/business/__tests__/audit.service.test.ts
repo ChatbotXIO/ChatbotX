@@ -325,6 +325,63 @@ describe("audit stdout log (AUDIT_LOG_STDOUT)", () => {
     )
   })
 
+  test("prefixes the service name on the logged action only (BaseService.audit)", async () => {
+    vi.stubEnv("AUDIT_LOG_STDOUT", "true")
+    const service = new TestService()
+
+    await withAuditContext(
+      { userId: "user-1", workspaceId: "workspace-1", source: "builder" },
+      () => service.emitAudit(),
+    )
+
+    expect(mocks.loggerInfo).toHaveBeenCalledTimes(1)
+    const [logged, msg] = mocks.loggerInfo.mock.calls[0] as [
+      { audit: Record<string, unknown> },
+      string,
+    ]
+    expect(msg).toBe("AUDIT TestService.update")
+    expect(logged.audit.action).toBe("TestService.update")
+    expect(JSON.stringify(mocks.loggerInfo.mock.calls)).not.toContain(
+      "Test detail",
+    )
+
+    // The queued job (and so the audit_log row) keeps the bare verb.
+    const [, job] = mocks.defaultQueueAdd.mock.calls[0] as [
+      string,
+      { data: { action: string; detail: string } },
+    ]
+    expect(job.data.action).toBe("update")
+    expect(job.data.detail).toBe("Test detail")
+  })
+
+  test("the service name is not an enumerable field of the dispatched input", () => {
+    const dispatched = vi.fn()
+    const globalForAudit = globalThis as typeof globalThis & {
+      __chatbotxAuditRecord?: unknown
+    }
+    const original = globalForAudit.__chatbotxAuditRecord
+    globalForAudit.__chatbotxAuditRecord = dispatched
+
+    try {
+      new TestService().emitAudit()
+    } finally {
+      globalForAudit.__chatbotxAuditRecord = original
+    }
+
+    expect(dispatched).toHaveBeenCalledWith({
+      action: "update",
+      detail: "Test detail",
+    })
+  })
+
+  test("logs the bare action for records raised outside BaseService", async () => {
+    vi.stubEnv("AUDIT_LOG_STDOUT", "true")
+
+    await record()
+
+    expect(mocks.loggerInfo.mock.calls[0]?.[1]).toBe("AUDIT member.remove")
+  })
+
   test("logs the same id that is enqueued", async () => {
     vi.stubEnv("AUDIT_LOG_STDOUT", "true")
     mocks.defaultQueueAdd.mockImplementationOnce(() => undefined)

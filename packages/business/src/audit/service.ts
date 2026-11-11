@@ -3,6 +3,7 @@ import { DefaultJobAction, defaultQueue } from "@chatbotx.io/worker-config"
 import { normalizeError } from "universal-error-normalizer"
 import { logger } from "../logger"
 import { getAuditActor } from "./context"
+import { AUDIT_SERVICE, type AuditRecordWithService } from "./service-tag"
 
 export type AuditRecordInput = {
   action: string
@@ -28,7 +29,7 @@ export const isAuditLogStdoutEnabled = (
 const MAX_USER_AGENT_LOG_CHARS = 256
 
 class AuditService {
-  async record(input: AuditRecordInput) {
+  async record(input: AuditRecordInput & AuditRecordWithService) {
     const actor = getAuditActor()
     const userId = input.userId ?? actor?.userId
     const workspaceId = input.workspaceId ?? actor?.workspaceId
@@ -63,11 +64,17 @@ class AuditService {
     // are personal data: whoever enables this flag owns the retention and
     // access control of the resulting log stream.
     if (isAuditLogStdoutEnabled()) {
+      // `<Service>.<action>` (e.g. `WorkingHoursService.delete`): without `detail`
+      // the bare verb says someone deleted, not what. Log-only: the job below and
+      // the `audit_log` row keep `input.action` unchanged. Records raised outside
+      // `BaseService.audit()` carry no service and log the bare action.
+      const service = input[AUDIT_SERVICE]
+      const loggedAction = service ? `${service}.${input.action}` : input.action
       logger.info(
         {
           audit: {
             auditLogId,
-            action: input.action,
+            action: loggedAction,
             userId,
             workspaceId,
             ipAddress,
@@ -75,7 +82,7 @@ class AuditService {
             source,
           },
         },
-        `AUDIT ${input.action}`,
+        `AUDIT ${loggedAction}`,
       )
     }
 
