@@ -1,6 +1,6 @@
 "use client"
 
-import Emoji, { gitHubEmojis } from "@tiptap/extension-emoji"
+import Emoji from "@tiptap/extension-emoji"
 import Mention from "@tiptap/extension-mention"
 import Placeholder from "@tiptap/extension-placeholder"
 import { EditorContent, useEditor } from "@tiptap/react"
@@ -13,6 +13,7 @@ import {
   toVariableMentionAttrs,
 } from "./extensions/variable-injection/mention"
 import variableInjectionSuggestion from "./extensions/variable-injection/suggestion"
+import { fullyQualifiedGitHubEmojis } from "./fully-qualified-github-emojis"
 import { htmlToPlainTextWithBlocks } from "./html-to-plain-text"
 import "./tiptap-editor.css"
 import type { ChannelType } from "@chatbotx.io/database/partials"
@@ -89,7 +90,7 @@ export const TiptapEditor = ({
       ...(enableEmoji
         ? [
             Emoji.configure({
-              emojis: gitHubEmojis,
+              emojis: fullyQualifiedGitHubEmojis,
               enableEmoticons: true,
               suggestion: emojiSuggestion,
             }),
