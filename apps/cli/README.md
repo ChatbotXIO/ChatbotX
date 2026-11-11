@@ -400,7 +400,7 @@ chatbotx flows export list <id>                      # [--version published|draf
 
 ---
 
-### `templates` / `template-installations` / `template-previews` (scope `templates`)
+### `templates` / `template-installations` / `template-previews` / `template-store` (scope `templates`)
 
 Publish a snapshot of resources as a share link, and install templates shared by others (same tenant only).
 
@@ -421,6 +421,7 @@ chatbotx templates analytics <id>                    # Installation counts by st
 chatbotx templates installers <id>                   # [--search --cursor --limit]  who installed it: workspace name, installs, oldest version, auto-update, installedAutomatically (a white-label default installed it; that workspace stays unnamed) (publisherRef is opaque)
 chatbotx templates uninstall-preview <id> <installerId>  # What removing the template from that installer would do (counts by outcome, edited copies listed as `deletedModified`); only if they allowed it
 chatbotx templates uninstall-installer <id> <installerId>  # Start removing it (202, runs in the background; follow `uninstallState` in `templates installers`): everything the install created is deleted, edited copies included; shared tags/fields/folders and items something else depends on are kept
+chatbotx template-store list                         # [--categoryId --keyword]  the template store of the token workspace's tenant: `categories` and `templates` with `shareToken` (feed it to `template-previews get` and `template-installations create`) and `shareUrl`; read only
 chatbotx template-previews get <shareToken>          # Can this link be installed into the token's workspace? (installable / reason) + requiredInboxes / requiredChannels to bind + collisions / collisionSummary (what the install would reuse, create or rename here)
 chatbotx template-installations create --shareToken <token>  # [--allowDuplicate --inboxBindings <json>]  queue an install → { installationId }; an already installed template is updated in place → { installationId, syncId } (use --allowDuplicate for a separate copy)
                                                      # inboxBindings: {"<templateInboxId>":"<yourInboxId>"} (ids from `template-previews get` / `inboxes list`); an unbound comment automation installs inactive

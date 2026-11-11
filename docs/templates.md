@@ -142,11 +142,23 @@ tenants is not granted: it shows "Workspace not shared" with Uninstall disabled.
   before, and copies something else depends on. It runs in the background and can be
   retried.
 
+## Template store
+
+Each tenant (the platform's root, or one white-label) curates its own public store of approved templates. A store is never shared across tenants.
+
+- **Managing it:** `/admin/template-store` (super admin, root store) and `/manage/template-store` (reseller, their own store). Add picks a template of that tenant by name or Template ID and, optionally, categories. Categories are chips above the table: filter by one, rename, reorder or delete it from its menu. A template with no category is still published and shows under "All".
+- **The public page:** `/store`, on the host being visited. It shows that host's tenant's store, an unknown host the platform's. The header is the install page's. A card opens `/t/template?id=…&key=…` with the template's *current* key, so a rotated key is followed without any stored copy. Search and category are in the URL (`?q=`, `?category=`).
+- **What is shown:** a template that is live, belongs to the same tenant as the store, has its share link on and not expired. Anything else stays listed in admin with its status (`Published`, `Share link off`, `Template unavailable`) and is hidden publicly.
+- **Limits and concurrency:** at most 50 categories and 500 templates per store. Every write takes a per-tenant advisory lock, so caps, category order and replacing a template's categories cannot race. Adding a template twice answers "already in your store".
+- **Tables:** `TemplateStoreCategory` (tabs, `lower(name)` unique per tenant), `TemplateStoreListing` (one approved template per tenant), `TemplateStoreListingCategory` (links).
+- **Public API:** `GET /v1/template-store` (`templateStore.list`, filters `categoryId` and `keyword`) returns the token workspace's tenant's store: `categories` and `templates` with `shareToken` and `shareUrl`. Preview with `templatePreviews.get` (its `id` is the share token) and install with `templateInstallations.install`. Managing the store (approving, categories) has no API: platform administration is exempt from AGENTS.md invariant 23.
+
 ## Public API
 
 | Area | Operations |
 |---|---|
 | Templates | `GET`/`POST /v1/templates`, `GET`/`PUT`/`DELETE /v1/templates/{id}`, `selectable-resources`, `dependencies-preview`, `locked-resources` |
+| Store | `GET /v1/template-store` |
 | Sharing | `GET {id}/link`, `PUT {id}/share`, `POST {id}/share/rotate`, `GET /v1/template-previews/{id}` |
 | History and installers | `GET {id}/versions`, `{id}/analytics`, `{id}/installers`, `{id}/installers/{installerId}/issues`, `…/uninstall-preview`, `POST …/uninstall` |
 | Installations | `GET`/`POST /v1/template-installations`, `GET`/`PATCH {id}`, `POST {id}/retry`, `GET {id}/resources` |
@@ -154,7 +166,7 @@ tenants is not granted: it shows "Workspace not shared" with Uninstall disabled.
 
 ## Deploying
 
-- Apply the migrations `20261103090000` to `20261109000000`. They stay four: enum values
+- Apply the migrations `20261103090000` to `20261111043231` (the last one adds the template store tables). They stay four: enum values
   must commit before use, and the two `CONCURRENTLY` index builds run outside a transaction.
 - Restart the builder: the `/t/template` rewrites live in `next.config.ts`.
 - Install, sync, uninstall and the auto-update fan-out run on their own `template` queue,

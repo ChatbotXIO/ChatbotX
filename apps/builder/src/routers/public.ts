@@ -109,6 +109,7 @@ import { tagsPublicRouter } from "@/features/tags/api/public"
 import {
   templateInstallationsPublicRouter,
   templatePreviewsPublicRouter,
+  templateStorePublicRouter,
   templatesPublicRouter,
 } from "@/features/templates/api/public"
 import { threadsCommentsPublicRouter } from "@/features/threads-comments/api/public"
@@ -198,6 +199,7 @@ export const publicRouter = {
   pipelines: pipelinesPublicRouter,
   templateInstallations: templateInstallationsPublicRouter,
   templatePreviews: templatePreviewsPublicRouter,
+  templateStore: templateStorePublicRouter,
   templates: templatesPublicRouter,
   openHours: openHoursPublicRouter,
   orders: ordersPublicRouter,

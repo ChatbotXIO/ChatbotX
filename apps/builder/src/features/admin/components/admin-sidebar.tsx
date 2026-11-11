@@ -18,6 +18,7 @@ import {
   ScrollTextIcon,
   SendIcon,
   ShieldCheckIcon,
+  StoreIcon,
 } from "lucide-react"
 import Link from "next/link"
 import { useTranslations } from "next-intl"
@@ -71,6 +72,11 @@ export function AdminSidebar({
       title: t("platformDefaultTemplate.title"),
       url: "/admin/default-template",
       icon: LayoutTemplateIcon,
+    },
+    {
+      title: t("templateStore.title"),
+      url: "/admin/template-store",
+      icon: StoreIcon,
     },
   ]
 

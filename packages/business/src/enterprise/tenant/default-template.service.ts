@@ -1,8 +1,5 @@
 import { db } from "@chatbotx.io/database/client"
-import {
-  ROOT_TENANT_ID,
-  type TenantDefaultTemplateStatus,
-} from "@chatbotx.io/database/partials"
+import type { TenantDefaultTemplateStatus } from "@chatbotx.io/database/partials"
 import {
   templateRepository,
   tenantDefaultTemplateRepository,
@@ -15,12 +12,10 @@ import {
   tenantDefaultTemplateShareDisabledException,
   tenantDefaultTemplateUnavailableException,
 } from "../../template/template-errors"
-import { tenantService } from "./service"
+import { resolveTenantAdminScope, type TenantAdminScope } from "./admin-scope"
 
 /** Whose default template: a reseller's own tenant, or the platform's root tenant. */
-export type DefaultTemplateScope =
-  | { kind: "owner"; ownerId: string }
-  | { kind: "root" }
+export type DefaultTemplateScope = TenantAdminScope
 
 /** A configured default and whether it can install; there is no such value when nothing is configured. */
 export type TenantDefaultTemplateConfig = {
@@ -36,22 +31,12 @@ export type TenantDefaultTemplateConfig = {
 /** Binds the stored key to its tenant, so a ciphertext copied to another row does not decrypt. */
 const keyAad = (tenantId: string): string => `tenantDefaultTemplate:${tenantId}`
 
-/** The tenant a scope names; never taken from client input. */
-const resolveTenantId = async (
-  scope: DefaultTemplateScope,
-): Promise<string | null> => {
-  if (scope.kind === "root") {
-    return ROOT_TENANT_ID
-  }
-  return (await tenantService.findByOwner(scope.ownerId))?.id ?? null
-}
-
 /** The template a white-label installs into every workspace created under it. */
 export const tenantDefaultTemplateService = {
   async getSettings(input: {
     scope: DefaultTemplateScope
   }): Promise<TenantDefaultTemplateConfig | null> {
-    const tenantId = await resolveTenantId(input.scope)
+    const tenantId = await resolveTenantAdminScope(input.scope)
     if (!tenantId) {
       return null
     }
@@ -80,7 +65,7 @@ export const tenantDefaultTemplateService = {
   }): Promise<void> {
     // Never provisions a tenant: only an owner who already has one (the
     // entitlement `reconcileOwnerEntitlement` guards) can set a default.
-    const tenantId = await resolveTenantId(input.scope)
+    const tenantId = await resolveTenantAdminScope(input.scope)
     if (!tenantId) {
       throw tenantDefaultTemplateUnavailableException()
     }
@@ -130,7 +115,7 @@ export const tenantDefaultTemplateService = {
     /** Who is removing it; kept in the tenant's history. */
     actorUserId: string
   }): Promise<void> {
-    const tenantId = await resolveTenantId(input.scope)
+    const tenantId = await resolveTenantAdminScope(input.scope)
     if (!tenantId) {
       return
     }

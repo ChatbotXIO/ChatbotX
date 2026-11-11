@@ -93,7 +93,8 @@ class PlatformCredentialService extends BaseService {
       if (!row || (props.requireOwnCredential && row.usePlatformCredential)) {
         return
       }
-      return this._decrypt(row)
+      // Awaited so a decrypt failure lands in the catch below instead of escaping it.
+      return await this._decrypt(row)
     } catch (err) {
       if (props.strict) {
         throw err
@@ -240,7 +241,8 @@ class PlatformCredentialService extends BaseService {
       if (!row) {
         return
       }
-      return this._decrypt(row)
+      // Awaited so a decrypt failure lands in the catch below instead of escaping it.
+      return await this._decrypt(row)
     } catch (err) {
       if (props.strict) {
         throw err
@@ -278,7 +280,8 @@ class PlatformCredentialService extends BaseService {
         return
       }
 
-      return this._decrypt(row as CredentialRow<"threads">)
+      // Awaited so a decrypt failure lands in the catch below instead of escaping it.
+      return await this._decrypt(row as CredentialRow<"threads">)
     } catch (err) {
       logger.error(
         { clientId, err, type: "threads" },

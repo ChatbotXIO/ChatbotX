@@ -34,9 +34,12 @@ export const savePlatformStripe = async (input: {
    */
   webhookOrigin: string
 }): Promise<void> => {
+  // `strict`: settings that exist but cannot be read must stop the save, not
+  // read as "none", or the stores connected through them would be cut off.
   const existing = await platformCredentialService.findDecrypted({
     userId: input.userId,
     type: "stripe",
+    strict: true,
   })
   // Which Stripe account the key belongs to — also checks the key works.
   let accountId: string
@@ -139,9 +142,11 @@ export const savePlatformStripe = async (input: {
 export const removePlatformStripe = async (input: {
   userId: string | undefined
 }): Promise<void> => {
+  // `strict`: unreadable settings must not skip the "stores still connected" check.
   const existing = await platformCredentialService.findDecrypted({
     userId: input.userId,
     type: "stripe",
+    strict: true,
   })
   if (existing) {
     const connected = await paymentProviderRepository.countByPlatformCredential(
