@@ -2,10 +2,8 @@ import {
   templateInstallationRequestService,
   workspaceMemberService,
 } from "@chatbotx.io/business"
-import { Button } from "@chatbotx.io/ui/components/ui/button"
 import { getPublicFileUrl } from "@chatbotx.io/utils"
 import { getTranslations } from "next-intl/server"
-import type { ComponentProps } from "react"
 import { getTenantSettings } from "@/features/tenant/utils"
 import { CreateWorkspaceFromTemplateLink } from "./create-workspace-from-template-link"
 import { WorkspacePicker } from "./workspace-picker"
@@ -90,29 +88,5 @@ export async function InstallSection({
         shareToken={shareToken}
       />
     </div>
-  )
-}
-
-export function SignInPrompt({
-  shareToken,
-  label,
-  variant,
-}: {
-  shareToken: string
-  label: string
-  variant?: ComponentProps<typeof Button>["variant"]
-}) {
-  return (
-    <Button
-      nativeButton={false}
-      render={
-        <a
-          href={`/auth/sign-in?callbackURL=${encodeURIComponent(`/t/${shareToken}`)}`}
-        >
-          {label}
-        </a>
-      }
-      variant={variant}
-    />
   )
 }

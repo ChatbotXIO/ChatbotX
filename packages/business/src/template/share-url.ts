@@ -10,12 +10,26 @@ export const resolveTemplateShareUrl = async (input: {
   workspaceId: string
   templateId: string
   shareToken: string
-}): Promise<string> => {
-  const url = new URL(
-    "/t/template",
+}): Promise<string> =>
+  buildTemplateShareUrl(
     await resolveWorkspaceAppUrl({ workspaceId: input.workspaceId }),
+    input,
   )
-  url.searchParams.set("id", input.templateId)
-  url.searchParams.set("key", input.shareToken)
-  return url.toString()
+
+/** The share link's path and query, for a page that links on its own host. */
+export const buildTemplateSharePath = (input: {
+  templateId: string
+  shareToken: string
+}): string => {
+  const query = new URLSearchParams({
+    id: input.templateId,
+    key: input.shareToken,
+  })
+  return `/t/template?${query}`
 }
+
+/** The share link of a template on an already-resolved app URL, for lists that resolve the host once. */
+export const buildTemplateShareUrl = (
+  appUrl: string,
+  input: { templateId: string; shareToken: string },
+): string => new URL(buildTemplateSharePath(input), appUrl).toString()

@@ -167,6 +167,7 @@ import { telegramChatRelations } from "./telegram-chat"
 import { templateRelations } from "./template"
 import { templateInstallationRelations } from "./template-installation"
 import { templateInstalledResourceRelations } from "./template-installed-resource"
+import { templateStoreRelations } from "./template-store"
 import { templateUninstallOperationRelations } from "./template-uninstall-operation"
 import { templateVersionRelations } from "./template-version"
 import { triggerRelations } from "./trigger"
@@ -378,6 +379,7 @@ export const relations = {
   ...minigamePlayRelations,
   ...pollRelations,
   ...placeNearMeRelations,
+  ...templateStoreRelations,
   ...leaderboardRelations,
   ...leaderboardParticipantRelations,
   ...leaderboardAuditLogRelations,

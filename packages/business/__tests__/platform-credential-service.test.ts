@@ -75,6 +75,59 @@ afterEach(() => {
   vi.restoreAllMocks()
 })
 
+describe("a credential that cannot be decrypted", () => {
+  // What WebCrypto throws when the AAD or key does not match the ciphertext.
+  const operationError = () =>
+    new DOMException("The operation failed", "OperationError")
+
+  test("reads as no platform credential and is logged, instead of failing the caller", async () => {
+    vi.spyOn(platformCredentialService, "findPlatform").mockResolvedValue({
+      ...PLATFORM,
+      userId: null,
+      value: { aad: "8997070520321:messenger" },
+    } as never)
+    vi.mocked(encryptUtils.decryptObject).mockRejectedValue(operationError())
+
+    await expect(
+      platformCredentialService.findDecryptedPlatform({ type: "messenger" }),
+    ).resolves.toBeUndefined()
+    const { logger } = await import("../src/logger")
+    expect(logger.error).toHaveBeenCalled()
+  })
+
+  test("reads as no own credential for a user", async () => {
+    vi.spyOn(platformCredentialService, "findForUser").mockResolvedValue({
+      ...OWN,
+      userId: "user-1",
+      value: { aad: "8997070520321:messenger" },
+    } as never)
+    vi.mocked(encryptUtils.decryptObject).mockRejectedValue(operationError())
+
+    await expect(
+      platformCredentialService.findDecryptedForUser({
+        userId: "user-1",
+        type: "messenger",
+      }),
+    ).resolves.toBeUndefined()
+  })
+
+  test("still throws in strict mode", async () => {
+    vi.spyOn(platformCredentialService, "findPlatform").mockResolvedValue({
+      ...PLATFORM,
+      userId: null,
+      value: {},
+    } as never)
+    vi.mocked(encryptUtils.decryptObject).mockRejectedValue(operationError())
+
+    await expect(
+      platformCredentialService.findDecryptedPlatform({
+        type: "messenger",
+        strict: true,
+      }),
+    ).rejects.toThrow("The operation failed")
+  })
+})
+
 describe("credential decryption AAD", () => {
   test("passes the user credential AAD to decryptObject", async () => {
     const row = {

@@ -65,6 +65,14 @@ describe("isPublicRoute", () => {
     expect(isPublicRoute("/shopping")).toBe(false)
   })
 
+  test("/store is public so visitors can browse the template store", () => {
+    expect(isPublicRoute("/store")).toBe(true)
+    expect(isPublicRoute("/store/")).toBe(true)
+    // "/storage" is public on its own entry; "/stores" and "/storefront" are not.
+    expect(isPublicRoute("/stores")).toBe(false)
+    expect(isPublicRoute("/storefront")).toBe(false)
+  })
+
   test("an authenticated app path is not public", () => {
     expect(isPublicRoute("/space/1/inbox")).toBe(false)
     expect(isPublicRoute("/channels/create")).toBe(false)

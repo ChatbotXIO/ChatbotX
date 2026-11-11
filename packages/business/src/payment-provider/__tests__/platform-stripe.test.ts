@@ -132,3 +132,35 @@ describe("removePlatformStripe", () => {
     expect(mocks.remove).not.toHaveBeenCalled()
   })
 })
+
+describe("unreadable stored settings", () => {
+  // A stored blob that no longer decrypts must abort every write, never read
+  // as "no settings": that would skip the connected-stores check.
+  const unreadable = () =>
+    new DOMException("The operation failed", "OperationError")
+
+  test("saving reads the stored settings strictly and stops", async () => {
+    mocks.findDecrypted.mockRejectedValue(unreadable())
+    mocks.readPlatformStripeAccountId.mockResolvedValue("acct_other")
+
+    await expect(savePlatformStripe(input)).rejects.toThrow(
+      "The operation failed",
+    )
+    expect(mocks.findDecrypted).toHaveBeenCalledWith(
+      expect.objectContaining({ type: "stripe", strict: true }),
+    )
+    expect(mocks.upsert).not.toHaveBeenCalled()
+  })
+
+  test("removing reads the stored settings strictly and keeps them", async () => {
+    mocks.findDecrypted.mockRejectedValue(unreadable())
+
+    await expect(removePlatformStripe({ userId: undefined })).rejects.toThrow(
+      "The operation failed",
+    )
+    expect(mocks.findDecrypted).toHaveBeenCalledWith(
+      expect.objectContaining({ type: "stripe", strict: true }),
+    )
+    expect(mocks.remove).not.toHaveBeenCalled()
+  })
+})

@@ -42,6 +42,8 @@ export const PUBLIC_ROUTES = [
   // Bot simulator preview: frames a website with the webchat widget for demos.
   "/bs",
   "/t/",
+  // The tenant's public template store; templates open on /t/template.
+  "/store",
   // The neutral `ConnectSession` completion page — the person finishing an
   // API/MCP-started OAuth connect is never necessarily a builder user or a
   // member of the workspace that started it. `sessionId` itself is the

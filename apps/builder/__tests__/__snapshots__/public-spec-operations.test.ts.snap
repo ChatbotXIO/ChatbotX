@@ -3598,6 +3598,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "path": "/v1/templates/{id}/share",
   },
   {
+    "method": "GET",
+    "operationId": "templateStore.list",
+    "path": "/v1/template-store",
+  },
+  {
     "method": "POST",
     "operationId": "threadsComments.create",
     "path": "/v1/threads-comments",

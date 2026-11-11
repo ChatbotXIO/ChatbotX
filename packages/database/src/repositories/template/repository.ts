@@ -45,19 +45,23 @@ const LIST_COLUMNS = {
   payloadHash: false,
 } as const
 
+/** Installations that still hold copied resources. Uninstalled and failed rows drop out. */
+const ACTIVE_INSTALLATION_STATUSES = ["completed", "partial"] as const
+
 /**
- * Attaches the active install count: one `GROUP BY` over the `templateId`
- * index for the whole page. The count sums `successfulInstallEvents` over
+ * Active install count per template: one `GROUP BY` over the `templateId`
+ * index for the whole list. The count sums `successfulInstallEvents` over
  * active installations only (a reinstall counts, an auto/manual sync and an
- * uninstalled copy do not).
+ * uninstalled copy do not). Templates with no installs are absent.
  */
-const withInstallCounts = async (
-  templates: Omit<TemplateListRow, "installCount">[],
-): Promise<TemplateListRow[]> => {
-  if (templates.length === 0) {
-    return []
+export const getInstallCounts = async (
+  templateIds: readonly string[],
+  tx: DatabaseClient = db,
+): Promise<Map<string, number>> => {
+  if (templateIds.length === 0) {
+    return new Map()
   }
-  const counts = await db
+  const counts = await tx
     .select({
       templateId: templateInstallationModel.templateId,
       installCount: sql<number>`coalesce(sum(${templateInstallationModel.successfulInstallEvents}), 0)::int`,
@@ -65,18 +69,28 @@ const withInstallCounts = async (
     .from(templateInstallationModel)
     .where(
       and(
-        inArray(
-          templateInstallationModel.templateId,
-          templates.map((template) => template.id),
-        ),
+        inArray(templateInstallationModel.templateId, [...templateIds]),
         inArray(templateInstallationModel.status, [
           ...ACTIVE_INSTALLATION_STATUSES,
         ]),
       ),
     )
     .groupBy(templateInstallationModel.templateId)
-  const installCountByTemplateId = new Map(
-    counts.map(({ templateId, installCount }) => [templateId, installCount]),
+  const installCountByTemplateId = new Map<string, number>()
+  for (const { templateId, installCount } of counts) {
+    if (templateId) {
+      installCountByTemplateId.set(templateId, installCount)
+    }
+  }
+  return installCountByTemplateId
+}
+
+/** Attaches the active install count (see `getInstallCounts`) to a page of templates. */
+const withInstallCounts = async (
+  templates: Omit<TemplateListRow, "installCount">[],
+): Promise<TemplateListRow[]> => {
+  const installCountByTemplateId = await getInstallCounts(
+    templates.map((template) => template.id),
   )
   return templates.map((template) => ({
     ...template,
@@ -98,9 +112,6 @@ const liveWhere = (key: { id: string; workspaceId: string }) =>
     eq(templateModel.workspaceId, key.workspaceId),
     isNull(templateModel.deletedAt),
   )
-
-/** Installations that still hold copied resources. Uninstalled and failed rows drop out. */
-const ACTIVE_INSTALLATION_STATUSES = ["completed", "partial"] as const
 
 export const templateRepository = {
   /** One live template of a workspace, snapshot included. */

@@ -128,3 +128,53 @@ export const templatePublisherGrantCrossTenantException = () =>
     "templatePublisherGrantCrossTenant",
     409,
   )
+
+/** The template to approve is missing, deleted or belongs to another tenant: one answer for all, so ids are no oracle. */
+export const templateStoreTemplateUnavailableException = () =>
+  new ChatbotXException(
+    "This template is not available for your store",
+    "templateStoreTemplateUnavailable",
+    404,
+  )
+
+export const templateStoreListingExistsException = () =>
+  new ChatbotXException(
+    "This template is already in your store",
+    "templateStoreListingExists",
+    409,
+  )
+
+export const templateStoreListingUnavailableException = () =>
+  new ChatbotXException(
+    "This store listing no longer exists",
+    "templateStoreListingUnavailable",
+    404,
+  )
+
+export const templateStoreListingLimitException = (limit: number) =>
+  new ChatbotXException(
+    `A store can hold at most ${limit} templates`,
+    "templateStoreListingLimit",
+    409,
+  )
+
+export const templateStoreCategoryUnavailableException = () =>
+  new ChatbotXException(
+    "This store category no longer exists",
+    "templateStoreCategoryUnavailable",
+    404,
+  )
+
+export const templateStoreCategoryNameTakenException = () =>
+  new ChatbotXException(
+    "A category with this name already exists",
+    "templateStoreCategoryNameTaken",
+    409,
+  )
+
+export const templateStoreCategoryLimitException = (limit: number) =>
+  new ChatbotXException(
+    `A store can have at most ${limit} categories`,
+    "templateStoreCategoryLimit",
+    409,
+  )

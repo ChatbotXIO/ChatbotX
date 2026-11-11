@@ -70,11 +70,19 @@ export {
   templateService,
   templateShareDisabledException,
 } from "./service"
-export { resolveTemplateShareUrl } from "./share-url"
+export {
+  buildTemplateSharePath,
+  resolveTemplateShareUrl,
+} from "./share-url"
 export {
   templatePayloadTooLargeException,
   templateSaveValidationException,
 } from "./snapshot.service"
+export {
+  type TemplateStoreAdminListing,
+  type TemplateStoreCandidate,
+  templateStoreService,
+} from "./store.service"
 export {
   TEMPLATE_FAN_OUT_BATCH_SIZE,
   type TemplateSyncHistoryItem,

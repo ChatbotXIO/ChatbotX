@@ -387,3 +387,9 @@ export type PipelineItemActivityModel =
   typeof schema.pipelineItemActivityModel.$inferSelect
 export type PipelineFieldModel = typeof schema.pipelineFieldModel.$inferSelect
 export type PipelineMemberModel = typeof schema.pipelineMemberModel.$inferSelect
+export type TemplateStoreCategoryModel =
+  typeof schema.templateStoreCategoryModel.$inferSelect
+export type TemplateStoreListingModel =
+  typeof schema.templateStoreListingModel.$inferSelect
+export type TemplateStoreListingCategoryModel =
+  typeof schema.templateStoreListingCategoryModel.$inferSelect
