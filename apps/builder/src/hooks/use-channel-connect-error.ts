@@ -26,9 +26,9 @@ import {
 // the way `t()` is called below — `i18n-source-keys.test.ts` prepends the
 // namespace itself.
 const MESSAGES_BY_ERROR = {
-  // i18n-check t('duplicated.generic')
+  // declares t('duplicated.generic')
   duplicated: { namespace: "duplicated", fallback: "duplicated.generic" },
-  // i18n-check t('missingScopes.generic')
+  // declares t('missingScopes.generic')
   missingScopes: {
     namespace: "missingScopes",
     fallback: "missingScopes.generic",

@@ -6,7 +6,7 @@ Key components of the project's tech stack.
 
 - [Next.js](https://nextjs.org/docs) 16 (App Router)
 - [React](https://react.dev/) 19
-- [TypeScript](https://www.typescriptlang.org/) 5
+- [TypeScript](https://www.typescriptlang.org/) 7
 
 ### UI Libraries
 

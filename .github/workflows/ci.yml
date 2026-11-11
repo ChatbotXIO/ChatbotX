@@ -70,7 +70,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v7
         with:
-          node-version: 24
+          node-version: 26
           cache: pnpm
 
       - name: Install dependencies
@@ -107,7 +107,8 @@ jobs:
 
       # Independent `tsc --noEmit` runs: no type-check task waits for another
       # (no `composite`/`references` in this repo — see turbo.json).
-      # Each is single-threaded, so concurrency can fill all 4 vCPUs.
+      # TS 7 checks in parallel; builder caps itself at `--checkers 2` (its
+      # package.json script) to bound peak RSS next to worker on one runner.
       - name: Type-check
         run: pnpm turbo run check-types --concurrency=4 ${{ matrix.filter }} -- --incremental
 
@@ -136,7 +137,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v7
         with:
-          node-version: 24
+          node-version: 26
           cache: pnpm
 
       - name: Install dependencies
@@ -152,7 +153,7 @@ jobs:
           server-port: 0
 
       # Root `pnpm lint` runs cheapest-first: check:agent-instructions, then
-      # `turbo run lint` (apps/builder's i18n key-parity check plus 57
+      # `turbo run lint` (packages/database's schema-drift check plus
       # <NONEXISTENT> placeholders), then the slowest step — repo-wide Biome
       # (biome.json globs apps/**, packages/**, integrations/**). One script
       # covers everything; no separate turbo invocation needed.
@@ -194,7 +195,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v7
         with:
-          node-version: 24
+          node-version: 26
           cache: pnpm
 
       - name: Install dependencies

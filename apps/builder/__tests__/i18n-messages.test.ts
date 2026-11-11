@@ -1,5 +1,10 @@
 // @vitest-environment node
 import { readdirSync } from "node:fs"
+import {
+  isStructurallySame,
+  type MessageFormatElement,
+  parse,
+} from "@formatjs/icu-messageformat-parser"
 import { describe, expect, test } from "vitest"
 import {
   isLocale,
@@ -37,7 +42,6 @@ const icuHeaderPattern =
   /\{([A-Za-z][\w.-]*),\s*(plural|select|selectordinal)\s*,/g
 const icuCategoryPattern = /^\s*(=?[\w-]+)\s*\{/
 const zeroWidthPattern = /\u200b|\u200c|\u200d|\ufeff/
-const completeCatalogLocales = ["az", "en", "vi"] as const
 const cjkCatalogLocales = ["zh-TW", "zh-CN"].filter((locale) =>
   isLocale(locale),
 )
@@ -100,13 +104,60 @@ const getIcuStructures = (message: string): IcuStructure[] => {
   return structures
 }
 
+const parseMessage = (
+  locale: Locale,
+  key: string,
+  message: string,
+): MessageFormatElement[] => {
+  try {
+    return parse(message)
+  } catch (error) {
+    throw new Error(
+      `${locale} "${key}" is not a valid ICU message: ${String(error)}`,
+    )
+  }
+}
+
+const parsedEnglishMessages = new Map<string, MessageFormatElement[]>()
+
+for (const [key, message] of Object.entries(englishMessages)) {
+  if (typeof message === "string") {
+    parsedEnglishMessages.set(key, parseMessage("en", key, message))
+  }
+}
+
 describe("builder message catalogs", () => {
-  test.each(
-    completeCatalogLocales,
-  )("%s has the exact English key set", (locale) => {
+  test.each(locales)("%s has the exact English key set", (locale) => {
     expect(
       Object.keys(flattenMessages(messagesByLocale[locale])).sort(),
     ).toEqual(englishKeys)
+  })
+
+  test.each(locales)("%s has no empty messages", (locale) => {
+    const emptyKeys = Object.entries(flattenMessages(messagesByLocale[locale]))
+      .filter(([, value]) => value === "")
+      .map(([key]) => key)
+
+    expect(emptyKeys).toEqual([])
+  })
+
+  test.each(
+    locales,
+  )("%s parses as ICU and keeps English's variables", (locale) => {
+    const translatedMessages = flattenMessages(messagesByLocale[locale])
+
+    for (const [key, parsedEnglishMessage] of parsedEnglishMessages) {
+      const translatedValue = translatedMessages[key]
+      if (typeof translatedValue !== "string") {
+        continue
+      }
+
+      const result = isStructurallySame(
+        parsedEnglishMessage,
+        parseMessage(locale, key, translatedValue),
+      )
+      expect(result.error?.message, `${locale} "${key}"`).toBeUndefined()
+    }
   })
 
   test.each(

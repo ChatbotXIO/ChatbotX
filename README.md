@@ -131,9 +131,9 @@
 
 ## Tech Stack
 
-- Node.js 24
-- TypeScript 5
-- pnpm 10 workspaces
+- Node.js 26
+- TypeScript 7
+- pnpm 12 workspaces
 - Turborepo
 - Next.js 16 and React 19 for `apps/builder`
 - uWebSockets.js gateway with Redis Streams for realtime messaging
@@ -200,7 +200,8 @@ pnpm dev              # run turbo dev
 pnpm build            # build all packages/apps through Turborepo
 pnpm lint             # run Ultracite lint
 pnpm fix              # run Ultracite fix
-pnpm check:circular   # check circular dependencies
+pnpm check:circular   # reject circular dependency edges added beyond the checked-in baseline
+pnpm check:circular:update-baseline # record intentionally accepted circular dependency edges
 pnpm check:unused     # check unused files and dependencies
 ```
 

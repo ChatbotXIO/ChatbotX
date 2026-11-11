@@ -11,7 +11,7 @@ description: >-
 
 ## Project Overview
 
-Monorepo managed by **pnpm workspaces + Turborepo**. Node >= 24, TypeScript 5.
+Monorepo managed by **pnpm workspaces + Turborepo**. Node >= 26, TypeScript 7.
 
 ### Workspace Layout
 
