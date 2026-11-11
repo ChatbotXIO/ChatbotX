@@ -875,6 +875,33 @@ describe("POST /v1/flows/validate", () => {
     expect(result.edges).toEqual([])
   })
 
+  test("compiles a Copy Text button from `copy` on Telegram", async () => {
+    const result = await procedure.handler?.({
+      context: { workspace: { id: "workspace-1" } },
+      input: {
+        spec: {
+          formatVersion: 1,
+          name: "PIX flow",
+          channel: "telegram",
+          steps: [
+            {
+              type: "send",
+              text: "Pague com PIX",
+              buttons: [{ text: "Copiar PIX", copy: "{{pix_code}}" }],
+            },
+          ],
+        },
+      },
+    })
+
+    expect(result.nodes[0].data.details.steps[0].buttons[0]).toMatchObject({
+      buttonType: "copyText",
+      beforeStep: { stepType: "copyText", text: "{{pix_code}}" },
+      steps: [],
+    })
+    expect(result.edges).toEqual([])
+  })
+
   test("rejects a `call` number that is not a real international number", async () => {
     await expect(
       procedure.handler?.({

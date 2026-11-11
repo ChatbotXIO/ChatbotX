@@ -5,10 +5,7 @@ import {
   STEP_INPUT_RESOLUTION_PAYLOAD_TYPE,
   stepInputResolutionReasons,
 } from "../step-input-resolution"
-import {
-  buttonStepSchema,
-  refineNoCallPhoneNumberButtons,
-} from "../steps/button"
+import { buttonStepSchema, refineReplyOnlyButtons } from "../steps/button"
 import {
   chooseChannelStepDefaultFn,
   chooseChannelStepSchema,
@@ -84,7 +81,7 @@ export const sendMessageNodeSchema = baseNodeSchema.extend({
         ),
         quickReplies: z
           .array(buttonStepSchema)
-          .superRefine(refineNoCallPhoneNumberButtons)
+          .superRefine(refineReplyOnlyButtons)
           .max(MAX_QUICK_REPLIES)
           .describe(
             `Quick-reply buttons shown after the last message (max ${MAX_QUICK_REPLIES}); use [] for none.`,

@@ -1890,6 +1890,7 @@
     "savedReplyImagesNotSentHere": "圖片不會在此傳送",
     "invalidPhoneNumber": "這不是有效的電話號碼。請包含國碼，例如 +1。",
     "buttonCallPhoneNumberUnsupported": "此按鈕在這裡無法撥打電話號碼，請選擇其他動作。",
+    "buttonCopyTextUnsupported": "此按鈕在這裡無法複製文字。請選擇其他動作。",
     "paymentRequest": {
       "title": "付款請求",
       "cardEnding": "末四碼 {lastFourDigits} 的卡",
@@ -3407,7 +3408,8 @@
       "pipeline": "管道",
       "moreOptions": "更多選項",
       "findPlacesNearMe": "尋找我附近的地點",
-      "callPhoneNumber": "撥打電話號碼"
+      "callPhoneNumber": "撥打電話號碼",
+      "copyText": "複製文字"
     },
     "externalRequest": {
       "errors": {
@@ -3742,6 +3744,12 @@
       "invalidForCountry": "這不是有效的{country}電話號碼。",
       "needsCountry": "請選擇國家/地區，或以 + 和國碼開頭輸入號碼。",
       "invalidInternational": "這不是有效的國際電話號碼。"
+    },
+    "copyText": {
+      "textLabel": "要複製的文字",
+      "limitHint": "填入變數後最多 {max} 個字元。",
+      "fallbackHint": "在無法複製文字的頻道上，聯絡人會以回覆的形式收到此文字。",
+      "viewerTitle": "複製此文字"
     }
   },
   "folders": {

@@ -2976,7 +2976,8 @@
       "pipeline": "Pipelinet",
       "moreOptions": "Lisää vaihtoehtoja",
       "findPlacesNearMe": "Etsi lähellä olevia paikkoja",
-      "callPhoneNumber": "Soita puhelinnumeroon"
+      "callPhoneNumber": "Soita puhelinnumeroon",
+      "copyText": "Kopioi teksti"
     },
     "externalRequest": {
       "errors": {
@@ -3311,6 +3312,12 @@
       "invalidForCountry": "Tämä ei ole kelvollinen puhelinnumero maassa {country}.",
       "needsCountry": "Valitse maa tai aloita numero +-merkillä ja maatunnuksella.",
       "invalidInternational": "Tämä ei ole kelvollinen kansainvälinen puhelinnumero."
+    },
+    "copyText": {
+      "textLabel": "Kopioitava teksti",
+      "limitHint": "Enintään {max} merkkiä muuttujien täyttämisen jälkeen.",
+      "fallbackHint": "Kanavilla, jotka eivät voi kopioida tekstiä, yhteyshenkilö saa tämän tekstin vastauksena.",
+      "viewerTitle": "Kopioi tämän tekstin"
     }
   },
   "folders": {
@@ -4556,6 +4563,7 @@
     "savedReplyImagesNotSentHere": "Kuvia ei lähetetä täällä",
     "invalidPhoneNumber": "Tämä ei ole kelvollinen puhelinnumero. Lisää maatunnus, esimerkiksi +1.",
     "buttonCallPhoneNumberUnsupported": "Tämä painike ei voi soittaa puhelinnumeroon täällä. Valitse toinen toiminto.",
+    "buttonCopyTextUnsupported": "Tämä painike ei voi kopioida tekstiä tässä. Valitse toinen toiminto.",
     "paymentRequest": {
       "title": "Maksupyyntö",
       "cardEnding": "Kortti, joka päättyy {lastFourDigits}",

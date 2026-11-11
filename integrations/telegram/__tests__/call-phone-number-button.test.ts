@@ -1,6 +1,6 @@
 import {
   type ButtonStepProps,
-  getChannelFlowPolicy,
+  isNativeButtonType,
 } from "@chatbotx.io/flow-config"
 import { describe, expect, test } from "vitest"
 import { buildInlineButton } from "../src/handlers/message/outgoing-message/send-button"
@@ -19,7 +19,7 @@ const callButton = {
 
 describe("telegram call phone number button", () => {
   test("has no native call control, so the policy does not declare one", () => {
-    expect(getChannelFlowPolicy("telegram")?.nativeButtonTypes).toEqual([])
+    expect(isNativeButtonType("telegram", "callPhoneNumber")).toBe(false)
   })
 
   test("is sent as the ordinary reply button", () => {

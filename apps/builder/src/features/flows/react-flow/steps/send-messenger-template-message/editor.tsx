@@ -308,6 +308,7 @@ function SendMessengerTemplateMessageStepEditor(
                       "openWebsite",
                       "openMiniApp",
                       "callPhoneNumber",
+                      "copyText",
                     ],
                     hideDelete: true,
                   }}

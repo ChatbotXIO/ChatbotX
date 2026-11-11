@@ -624,7 +624,8 @@
       "pipeline": "פייפליינים",
       "moreOptions": "אפשרויות נוספות",
       "findPlacesNearMe": "מצא מקומות בקרבתי",
-      "callPhoneNumber": "התקשרות למספר טלפון"
+      "callPhoneNumber": "התקשרות למספר טלפון",
+      "copyText": "העתקת טקסט"
     },
     "externalRequest": {
       "errors": {
@@ -959,6 +960,12 @@
       "invalidForCountry": "זה אינו מספר טלפון תקין עבור {country}.",
       "needsCountry": "בחרו מדינה, או התחילו את המספר ב-+ ובקידומת המדינה.",
       "invalidInternational": "זה אינו מספר טלפון בינלאומי תקין."
+    },
+    "copyText": {
+      "textLabel": "טקסט להעתקה",
+      "limitHint": "עד {max} תווים אחרי מילוי המשתנים.",
+      "fallbackHint": "בערוצים שלא יכולים להעתיק טקסט, איש הקשר מקבל את הטקסט הזה כתשובה.",
+      "viewerTitle": "מעתיק את הטקסט הזה"
     }
   },
   "folders": {
@@ -2204,6 +2211,7 @@
     "savedReplyImagesNotSentHere": "התמונות לא יישלחו כאן",
     "invalidPhoneNumber": "זה אינו מספר טלפון תקין. כללו את קידומת המדינה, לדוגמה ‎+1.",
     "buttonCallPhoneNumberUnsupported": "כפתור זה אינו יכול להתקשר למספר טלפון כאן. בחרו פעולה אחרת.",
+    "buttonCopyTextUnsupported": "הכפתור הזה לא יכול להעתיק טקסט כאן. בחרו פעולה אחרת.",
     "paymentRequest": {
       "title": "בקשת תשלום",
       "cardEnding": "כרטיס המסתיים ב-{lastFourDigits}",

@@ -177,7 +177,8 @@
       "pipeline": "Pipeline-uri",
       "moreOptions": "Mai multe opțiuni",
       "findPlacesNearMe": "Găsește locuri în apropiere",
-      "callPhoneNumber": "Apelează un număr de telefon"
+      "callPhoneNumber": "Apelează un număr de telefon",
+      "copyText": "Copiază textul"
     },
     "externalRequest": {
       "errors": {
@@ -512,6 +513,12 @@
       "invalidForCountry": "Acesta nu este un număr de telefon valid pentru {country}.",
       "needsCountry": "Alege țara sau începe numărul cu + și prefixul țării.",
       "invalidInternational": "Acesta nu este un număr de telefon internațional valid."
+    },
+    "copyText": {
+      "textLabel": "Text de copiat",
+      "limitHint": "Până la {max} caractere după completarea variabilelor.",
+      "fallbackHint": "Pe canalele care nu pot copia text, contactul primește acest text ca răspuns.",
+      "viewerTitle": "Copiază acest text"
     }
   },
   "folders": {
@@ -4556,6 +4563,7 @@
     "savedReplyImagesNotSentHere": "Imaginile nu vor fi trimise aici",
     "invalidPhoneNumber": "Acesta nu este un număr de telefon valid. Include prefixul țării, de exemplu +1.",
     "buttonCallPhoneNumberUnsupported": "Acest buton nu poate apela un număr de telefon aici. Alege altă acțiune.",
+    "buttonCopyTextUnsupported": "Acest buton nu poate copia text aici. Alege altă acțiune.",
     "paymentRequest": {
       "title": "Cerere de plată",
       "cardEnding": "Card care se termină în {lastFourDigits}",

@@ -6,7 +6,7 @@ import { baseStepSchema } from "./base"
 import {
   type ButtonStepProps,
   buttonStepSchema,
-  refineNoCallPhoneNumberButtons,
+  refineReplyOnlyButtons,
 } from "./button"
 import { stepTypes } from "./step-action"
 
@@ -73,7 +73,7 @@ export const whatsappFlowStepSchema = baseStepSchema.extend({
     .array(buttonStepSchema)
     .min(1)
     .max(1)
-    .superRefine(refineNoCallPhoneNumberButtons),
+    .superRefine(refineReplyOnlyButtons),
   inboxId: zodBigintAsString().nullable(),
   flow: whatsappFlowStepFlowSchema,
 })

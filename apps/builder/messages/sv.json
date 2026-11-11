@@ -4097,7 +4097,8 @@
       "pipeline": "Pipelines",
       "moreOptions": "Fler alternativ",
       "findPlacesNearMe": "Hitta platser nära mig",
-      "callPhoneNumber": "Ring ett telefonnummer"
+      "callPhoneNumber": "Ring ett telefonnummer",
+      "copyText": "Kopiera text"
     },
     "externalRequest": {
       "errors": {
@@ -4480,6 +4481,12 @@
       "invalidForCountry": "Det här är inte ett giltigt telefonnummer för {country}.",
       "needsCountry": "Välj land eller börja numret med + och landskoden.",
       "invalidInternational": "Det här är inte ett giltigt internationellt telefonnummer."
+    },
+    "copyText": {
+      "textLabel": "Text att kopiera",
+      "limitHint": "Upp till {max} tecken när variablerna har fyllts i.",
+      "fallbackHint": "I kanaler som inte kan kopiera text får kontakten den här texten som svar i stället.",
+      "viewerTitle": "Kopierar den här texten"
     }
   },
   "folders": {
@@ -5697,6 +5704,7 @@
     "savedReplyImagesNotSentHere": "Bilder skickas inte här",
     "invalidPhoneNumber": "Det här är inte ett giltigt telefonnummer. Ange landskoden, till exempel +1.",
     "buttonCallPhoneNumberUnsupported": "Den här knappen kan inte ringa ett telefonnummer här. Välj en annan åtgärd.",
+    "buttonCopyTextUnsupported": "Den här knappen kan inte kopiera text här. Välj en annan åtgärd.",
     "paymentRequest": {
       "title": "Betalningsbegäran",
       "cardEnding": "Kort som slutar på {lastFourDigits}",

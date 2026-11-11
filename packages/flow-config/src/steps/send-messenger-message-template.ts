@@ -7,7 +7,7 @@ import {
   buttonStepSchema,
   buttonTypes,
   mergeTemplateButtonsWithExisting,
-  refineNoCallPhoneNumberButtons,
+  refineReplyOnlyButtons,
 } from "./button"
 import { openMiniAppStepDefaultFn } from "./open-mini-app"
 import { stepTypes } from "./step-action"
@@ -125,7 +125,7 @@ export const sendMessengerTemplateMessageStepSchema = baseStepSchema.extend({
   // continues once the contact submits that Mini App.
   buttons: z
     .array(buttonStepSchema)
-    .superRefine(refineNoCallPhoneNumberButtons)
+    .superRefine(refineReplyOnlyButtons)
     .default([]),
 })
 

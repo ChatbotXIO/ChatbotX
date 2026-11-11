@@ -50,6 +50,7 @@ import {
   isProactiveOutboundMetadata,
   messageEventTypeSchema,
   type SendCardStepSchema,
+  sendsAsNativeCopyButton,
   stepSupport,
   stepTypes,
 } from "@chatbotx.io/flow-config"
@@ -77,6 +78,7 @@ import {
 } from "../../lib/comment-automation-anchor"
 import { logger } from "../../lib/logger"
 import { resolveCallPhoneButtons } from "../utils/call-phone-buttons"
+import { warnUncopyableCopyTextButtons } from "../utils/copy-text-buttons"
 import { resolveMiniAppLinks } from "../utils/mini-app-buttons"
 import { mapStepButtons } from "../utils/step-buttons"
 import { resolveStoredStepContent } from "../utils/stored-step-content"
@@ -225,6 +227,18 @@ export const convertButtonsToTemplate = (props: {
         label: button.label,
         buttonType: "phoneNumber",
         phoneNumber: button.beforeStep.phoneNumber,
+        postback: buttonPayload,
+      }
+    }
+
+    // A Copy Text button the channel does not copy natively is sent — and so
+    // stored — as a reply button (see `sendsAsNativeCopyButton`).
+    if (sendsAsNativeCopyButton(channel, button)) {
+      return {
+        id: button.id,
+        label: button.label,
+        buttonType: "copyText",
+        copyText: button.beforeStep.text,
         postback: buttonPayload,
       }
     }
@@ -740,6 +754,12 @@ export async function sendFlowStep({
       flowId,
       channel: targetContactInbox.channel,
       step: resolvedStep as SendFlowStepData,
+    })
+    warnUncopyableCopyTextButtons({
+      workspaceId: conversation.workspaceId,
+      flowId,
+      channel: targetContactInbox.channel,
+      step: stepWithCallButtons,
     })
     // Open Mini App buttons become link buttons first, so everything below
     // (booking signing, the `/go` wrap, every channel encoder) only ever sees

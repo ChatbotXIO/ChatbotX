@@ -613,6 +613,32 @@ describe("compileFlowSpec — button routing", () => {
     expect(compiled.edges).toHaveLength(0)
   })
 
+  test("a copy button compiles to a copyText button with no route or edge", () => {
+    const compiled = compileFlowSpec(
+      spec([
+        {
+          type: "send",
+          text: "Pague com PIX",
+          buttons: [{ text: "Copiar PIX", copy: "{{pix_code}}" }],
+        },
+      ]),
+      emptyCtx,
+    )
+
+    const sendNode = compiled.nodes[0]
+    if (sendNode?.type !== "sendMessage") {
+      throw new Error("expected sendMessage node")
+    }
+    const [button] = sendNode.data.details.steps[0]?.buttons ?? []
+    expect(button).toMatchObject({
+      label: "Copiar PIX",
+      buttonType: "copyText",
+      beforeStep: { stepType: "copyText", text: "{{pix_code}}" },
+      steps: [],
+    })
+    expect(compiled.edges).toHaveLength(0)
+  })
+
   test("a routed button writes both the node's beforeStep and a matching edge", () => {
     const compiled = compileFlowSpec(
       spec([

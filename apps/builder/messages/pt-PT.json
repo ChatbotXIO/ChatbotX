@@ -2976,7 +2976,8 @@
       "pipeline": "Funis",
       "moreOptions": "Mais opções",
       "findPlacesNearMe": "Encontrar locais perto de mim",
-      "callPhoneNumber": "Ligar para um número de telefone"
+      "callPhoneNumber": "Ligar para um número de telefone",
+      "copyText": "Copiar texto"
     },
     "externalRequest": {
       "errors": {
@@ -3311,6 +3312,12 @@
       "invalidForCountry": "Este não é um número de telefone válido para {country}.",
       "needsCountry": "Escolha o país ou comece o número com + e o indicativo do país.",
       "invalidInternational": "Este não é um número de telefone internacional válido."
+    },
+    "copyText": {
+      "textLabel": "Texto a copiar",
+      "limitHint": "Até {max} caracteres depois de preenchidas as variáveis.",
+      "fallbackHint": "Em canais que não copiam texto, o contacto recebe este texto como resposta.",
+      "viewerTitle": "Copia este texto"
     }
   },
   "folders": {
@@ -4556,6 +4563,7 @@
     "savedReplyImagesNotSentHere": "As imagens não serão enviadas aqui",
     "invalidPhoneNumber": "Este não é um número de telefone válido. Inclua o indicativo do país, por exemplo +1.",
     "buttonCallPhoneNumberUnsupported": "Este botão não pode ligar para um número aqui. Escolha outra ação.",
+    "buttonCopyTextUnsupported": "Este botão não pode copiar texto aqui. Escolha outra ação.",
     "paymentRequest": {
       "title": "Pedido de pagamento",
       "cardEnding": "Cartão terminado em {lastFourDigits}",

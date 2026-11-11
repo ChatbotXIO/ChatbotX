@@ -1,6 +1,11 @@
-import { type ButtonType, buttonTypes } from "@chatbotx.io/flow-config"
+import {
+  type ButtonType,
+  buttonTypes,
+  isNativeButtonType,
+} from "@chatbotx.io/flow-config"
 import {
   AppWindowIcon,
+  CopyIcon,
   LinkIcon,
   type LucideIcon,
   MessageCircleIcon,
@@ -17,7 +22,7 @@ type IButtonConfig = {
   buttonType: ButtonType
   /**
    * `false` hides "additional steps" in the button editor: for an action the
-   * contact's device handles itself (a call) the bot is never told about the
+   * contact's device handles itself (a call, a copy) the bot is never told about the
    * tap, so steps could never run. Omitted means steps are allowed.
    */
   allowsSteps?: false
@@ -65,4 +70,27 @@ export const allButtonsConfig = (t: TranslationFn): IButtonConfig[] => [
     label: t("flows.actions.callPhoneNumber"),
     allowsSteps: false,
   },
+  {
+    buttonType: buttonTypes.enum.copyText,
+    icon: CopyIcon,
+    label: t("flows.actions.copyText"),
+    allowsSteps: false,
+  },
 ]
+
+/**
+ * The button actions offered for a node on `channel`, minus `hiddenButtonTypes`.
+ * Copy Text is offered only where the channel copies natively (Telegram).
+ */
+export const offeredButtonsConfig = (
+  t: TranslationFn,
+  options: { channel?: string; hiddenButtonTypes?: ButtonType[] },
+): IButtonConfig[] => {
+  const hidden = new Set<ButtonType>(options.hiddenButtonTypes ?? [])
+  if (!isNativeButtonType(options.channel, buttonTypes.enum.copyText)) {
+    hidden.add(buttonTypes.enum.copyText)
+  }
+  return allButtonsConfig(t).filter(
+    (buttonConfig) => !hidden.has(buttonConfig.buttonType),
+  )
+}

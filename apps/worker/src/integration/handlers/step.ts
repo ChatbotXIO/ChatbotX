@@ -51,6 +51,7 @@ import {
   subscribeBroadcast,
   unsubscribeBroadcast,
 } from "./contact"
+import { type CopyTextReplyProps, resolveCopyTextReply } from "./copy-text"
 import { markCouponUsed, setUpCoupon } from "./coupon"
 import { handleAIDeleteMessageHistory } from "./delete-message-history"
 import { subscribeDripSubscriber } from "./drip-handler"
@@ -190,6 +191,13 @@ export async function sendFlowMessage(
 
 async function replyWithCallPhoneNumber(props: CallPhoneNumberReplyProps) {
   const step = await resolveCallPhoneNumberReply(props)
+  if (step) {
+    await sendFlowMessage({ ...props, step, quickReplies: undefined })
+  }
+}
+
+async function replyWithCopyText(props: CopyTextReplyProps) {
+  const step = await resolveCopyTextReply(props)
   if (step) {
     await sendFlowMessage({ ...props, step, quickReplies: undefined })
   }
@@ -511,6 +519,7 @@ export const flowStepHandlers: Record<
   [stepTypes.enum.openWebsite]: undefined,
   [stepTypes.enum.openMiniApp]: undefined,
   [stepTypes.enum.callPhoneNumber]: replyWithCallPhoneNumber,
+  [stepTypes.enum.copyText]: replyWithCopyText,
   [stepTypes.enum.aiAnalyzeImage]: handleAIAnalyzeImage,
   [stepTypes.enum.aiDeleteMessageHistory]: handleAIDeleteMessageHistory,
   [stepTypes.enum.aiEditImage]: (props) =>

@@ -3,6 +3,7 @@ import {
   type ButtonStepProps,
   buttonTypes,
   callPhoneNumberStepDefaultFn,
+  copyTextStepDefaultFn,
   openWebsiteStepDefaultFn,
 } from "@chatbotx.io/flow-config"
 import { act } from "react"
@@ -57,6 +58,24 @@ describe("ButtonStepViewer", () => {
 
     expect(callIcon()?.getAttribute("aria-hidden")).toBe("true")
     expect(container.querySelector("button")?.textContent).toBe("Call us")
+  })
+
+  test("marks a copy button with a copy icon and no route handle", () => {
+    renderButton({
+      id: "3",
+      label: "Copiar PIX",
+      buttonType: buttonTypes.enum.copyText,
+      beforeStep: { ...copyTextStepDefaultFn(), text: "{{pix_code}}" },
+      steps: [],
+    })
+
+    expect(
+      container
+        .querySelector('[data-testid="copy-button-icon"]')
+        ?.getAttribute("aria-hidden"),
+    ).toBe("true")
+    expect(callIcon()).toBeNull()
+    expect(container.querySelector(".react-flow__handle")).toBeNull()
   })
 
   test("shows no phone icon on other buttons", () => {

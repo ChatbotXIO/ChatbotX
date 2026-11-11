@@ -24,6 +24,7 @@ import { changeGamificationScoreStep } from "./change-gamification-score"
 import { chooseChannelStep } from "./choose-channel"
 import { clearCustomFieldStep } from "./clear-custom-field"
 import { conditionStep } from "./condition"
+import { copyTextStep } from "./copy-text"
 import { countCharactersStep } from "./count-characters"
 import { markCouponUsedStep, setUpCouponStep } from "./coupon"
 import type { StepDefinition } from "./definition"
@@ -176,6 +177,7 @@ export const allSteps: Record<StepType, StepDefinition<any> | undefined> = {
   [stepTypes.enum.openWebsite]: openWebsiteStep,
   [stepTypes.enum.openMiniApp]: openMiniAppStep,
   [stepTypes.enum.callPhoneNumber]: callPhoneNumberStep,
+  [stepTypes.enum.copyText]: copyTextStep,
   [stepTypes.enum.setCustomField]: setCustomFieldStep,
   [stepTypes.enum.clearCustomField]: clearCustomFieldStep,
   [stepTypes.enum.landingPage]: undefined,

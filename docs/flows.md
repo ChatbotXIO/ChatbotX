@@ -81,6 +81,30 @@ characters) that is resolved, and validated the same way, when the message is se
   rejected on quick replies (node quick replies and `sendQuickReply` steps), on
   WhatsApp / Messenger message-template steps and as the WhatsApp Flow button.
 
+## Copy Text buttons
+
+A step button (`buttonType: "copyText"`, or `copy` in a flow spec) that copies a
+text to the contact's clipboard when tapped — for example a PIX "copia e cola"
+payment code returned by a Call API step. The text is a literal of at most 256
+characters or an expression embedding `{{variables}}` (at most 1,000 characters
+authored) that is resolved when the message is sent.
+
+- **Native channels** (`selectedChannelPolicy.nativeButtonTypes` contains
+  `copyText`): Telegram, as an inline `copy_text` button (Bot API 7.11). The
+  device copies the text; the bot is not told about the tap. Telegram copies at
+  most 256 characters, so a resolved text that is empty or longer is sent as a
+  reply button instead (logged), and the inbox stores it as that reply button.
+- **Every other channel** sends an ordinary reply button. Tapping it replies with
+  the text as a message the contact can long-press to copy; the reply resolves
+  `{{variables}}` again at tap time. The inbox shows a stored native copy button
+  as a button that copies the text.
+- The builder offers the Copy Text action only on Telegram nodes. The schema
+  still accepts it on every channel (the reply fallback above), so a flow built
+  through the API or switched to another channel keeps working.
+- The button can neither continue the flow nor run additional steps, and it is
+  rejected in the same places as a Call Phone Number button (quick replies,
+  WhatsApp / Messenger message-template steps, the WhatsApp Flow button).
+
 ## Channel capability validation
 
 Publishing, importing, and restoring a flow validate every message step against its
@@ -129,7 +153,7 @@ here, so it cannot drift from the schema.
 
 | Type | Terminal? | Notes |
 |---|---|---|
-| `send` | No | Text, image, or file, with optional `buttons`. Each button's `then` is a nested step list. A button may instead set `call` (an international number such as `+14155552671`, optionally with `{{variables}}`) to become a Call Phone Number button; `call` cannot be combined with `then`. See "Call Phone Number buttons". |
+| `send` | No | Text, image, or file, with optional `buttons`. Each button's `then` is a nested step list. A button may instead set `call` (an international number such as `+14155552671`, optionally with `{{variables}}`) to become a Call Phone Number button; `call` cannot be combined with `then`. See "Call Phone Number buttons". A button may also set `copy` (the text to copy, at most 256 characters once `{{variables}}` are resolved) to become a Copy Text button; `copy` cannot be combined with `then` or `call`. See "Copy Text buttons". |
 | `sendTemplate` | No | Sends an existing WhatsApp template by `templateName`. The template must resolve (by name) to a workspace template with status `APPROVED`. |
 | `sendCollection` | No | A product carousel (Messenger): `collectionType` `automated` picks the products matching `conditions` (`name`, `categoryId`, `subcategoryId`, `vendorId`) when sent, `manual` the chosen `productIds`; at most 10, only what the web shop shows. Each card opens the product in the web shop signed for the contact (`{{shop_token}}`). A collection matching nothing is skipped. See `docs/ecommerce.md`. |
 | `sendProducts` | No | Sends catalog products (`display`: `products` or `carousel`) by ChatbotX product id; get ids from `products.listSendable`. Needs a `channel` that supports product messages (WhatsApp); omnichannel flows reject it. Limits per channel come from `capabilities.get`. See `docs/product-messages.md`. |

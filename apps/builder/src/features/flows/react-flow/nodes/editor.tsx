@@ -130,9 +130,12 @@ const NodeEditorQuickReplies = ({ nodeId }: { nodeId: string }) => {
               key={field.id}
               render={
                 <ButtonStepEditor
-                  // A quick reply is sent as a reply and cannot dial.
+                  // A quick reply is sent as a reply and cannot dial or copy.
                   editorConfig={{
-                    hiddenButtonTypes: [buttonTypes.enum.callPhoneNumber],
+                    hiddenButtonTypes: [
+                      buttonTypes.enum.callPhoneNumber,
+                      buttonTypes.enum.copyText,
+                    ],
                   }}
                   parentName={`quickReplies.${index}`}
                 />

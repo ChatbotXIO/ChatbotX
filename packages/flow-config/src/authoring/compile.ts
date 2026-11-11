@@ -33,6 +33,7 @@ import {
   conditionCaseDefaultFn,
   conditionStepDefaultFn,
 } from "../steps/condition"
+import { copyTextStepDefaultFn } from "../steps/copy-text"
 import {
   type PipelineStepDueDate,
   type PipelineStepSchema,
@@ -372,6 +373,14 @@ function compileSendButton(
         ...callPhoneNumberStepDefaultFn(),
         phoneNumber: buttonSpec.call,
       },
+      steps: [],
+    }
+  }
+  if (buttonSpec.copy !== undefined) {
+    return {
+      ...button,
+      buttonType: buttonTypes.enum.copyText,
+      beforeStep: { ...copyTextStepDefaultFn(), text: buttonSpec.copy },
       steps: [],
     }
   }
