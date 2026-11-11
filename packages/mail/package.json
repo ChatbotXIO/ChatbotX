@@ -6,7 +6,7 @@
     "@chatbotx.io/typescript-config": "workspace:*",
     "@chatbotx.io/vitest-config": "workspace:*",
     "@types/mjml": "^5.0.0",
-    "@types/mjml-core": "^5.0.0",
+    "@types/mjml-core": "^5.1.1",
     "@types/node": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"
