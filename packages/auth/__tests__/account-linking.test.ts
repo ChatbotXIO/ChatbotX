@@ -148,7 +148,7 @@ describe("createAuth account linking", () => {
     }
     const linking = config.account.accountLinking
     expect(linking.enabled).toBe(true)
-    expect(linking.trustedProviders).toEqual(["google", "facebook"])
+    expect(linking.trustedProviders).toEqual(["google", "facebook", "apple"])
     expect(linking.requireLocalEmailVerified).toBe(false)
     expect(linking.allowDifferentEmails).toBeUndefined()
   })

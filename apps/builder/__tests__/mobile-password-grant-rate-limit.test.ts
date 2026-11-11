@@ -111,6 +111,11 @@ describe("rateLimitMobilePasswordGrant", () => {
       TOKEN_PATH,
     ],
     [
+      "the id_token grant",
+      post({ grantType: "id_token", provider: "apple", idToken: "t" }),
+      TOKEN_PATH,
+    ],
+    [
       "another auth path",
       post(
         { grantType: "password", email: "a@b.co" },

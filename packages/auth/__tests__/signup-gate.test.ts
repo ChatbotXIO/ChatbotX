@@ -84,7 +84,8 @@ type UserCreateBeforeHook = (
 
 type BeforeHook = (context: {
   path: string
-  body?: { email?: string }
+  params?: { id?: string }
+  body?: { email?: string; provider?: string; idToken?: string }
   getCookie: (name: string) => string | undefined
   headers?: Headers
 }) => Promise<unknown>
@@ -188,6 +189,65 @@ describe("signup lockdown", () => {
     ).rejects.toMatchObject({ message: "Sign-up is disabled" })
     await expect(
       emailRequestBefore({ ...context, path: "/sign-in/email" }),
+    ).resolves.toBeUndefined()
+  })
+  test.each([
+    "/sign-in/social",
+    "/link-social",
+  ])("blocks Apple from the web auth entry point %s", async (path) => {
+    const { emailRequestBefore } = await getHooks()
+
+    await expect(
+      emailRequestBefore({
+        path,
+        body: { provider: "apple", idToken: "captured-token" },
+        getCookie: () => undefined,
+      }),
+    ).rejects.toMatchObject({
+      statusCode: 404,
+      body: { code: "PROVIDER_NOT_ENABLED" },
+    })
+  })
+
+  test("blocks Apple web social sign-in without an ID token", async () => {
+    const { emailRequestBefore } = await getHooks()
+
+    await expect(
+      emailRequestBefore({
+        path: "/sign-in/social",
+        body: { provider: "apple" },
+        getCookie: () => undefined,
+      }),
+    ).rejects.toMatchObject({
+      statusCode: 404,
+      body: { code: "PROVIDER_NOT_ENABLED" },
+    })
+  })
+
+  test("blocks Apple from the routed callback entry point", async () => {
+    const { emailRequestBefore } = await getHooks()
+
+    await expect(
+      emailRequestBefore({
+        path: "/callback/:id",
+        params: { id: "apple" },
+        getCookie: () => undefined,
+      }),
+    ).rejects.toMatchObject({
+      statusCode: 404,
+      body: { code: "PROVIDER_NOT_ENABLED" },
+    })
+  })
+
+  test("leaves Google web social sign-in enabled", async () => {
+    const { emailRequestBefore } = await getHooks()
+
+    await expect(
+      emailRequestBefore({
+        path: "/sign-in/social",
+        body: { provider: "google" },
+        getCookie: () => undefined,
+      }),
     ).resolves.toBeUndefined()
   })
 

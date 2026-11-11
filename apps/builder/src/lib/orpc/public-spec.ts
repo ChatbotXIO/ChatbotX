@@ -35,7 +35,7 @@ export const PUBLIC_SECURITY_SCHEMES = {
     scheme: "bearer",
     bearerFormat: "JWT",
     description:
-      "A native mobile app access token (JWT, 10 minutes) from POST /api/auth/mobile/token. Acts as the signed-in workspace member; workspace-scoped operations also need the x-workspace-id header.",
+      "A native mobile app access token (JWT, 10 minutes) from POST /api/auth/mobile/token (grants: password, exchange_code, refresh_token, and id_token for native Sign in with Apple). Acts as the signed-in workspace member; workspace-scoped operations also need the x-workspace-id header.",
   },
 } as const
 

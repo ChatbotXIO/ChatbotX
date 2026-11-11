@@ -4,7 +4,6 @@ import {
   schemaCheckFor,
 } from "@better-auth/core/db/internal"
 import { mcp } from "@better-auth/mcp"
-
 import {
   customDomainService,
   mobileRefreshTokenService,
@@ -56,9 +55,16 @@ import {
   oneTimeToken,
 } from "better-auth/plugins"
 import { PHASE_PRODUCTION_BUILD } from "next/constants"
+import { createAppleIdTokenVerifier } from "./apple-id-token"
 import { claimUnverifiedAccountBeforeLink } from "./claim-unverified-account"
 import { resolveGenericOAuthConfig } from "./generic-oauth"
-import { env, getBrokerUrl, getBuilderOrigin, getMcpResourceUrl } from "./keys"
+import {
+  env,
+  getAppleAppBundleIds,
+  getBrokerUrl,
+  getBuilderOrigin,
+  getMcpResourceUrl,
+} from "./keys"
 import { logger } from "./logger"
 import { buildMcpPluginOptions, defaultMcpResource } from "./mcp-config"
 import { mobileAuth } from "./mobile-auth"
@@ -69,6 +75,8 @@ import {
   type SignUpGateContext,
 } from "./signup-gate"
 import { getTenantId, resolveTenantOwnerId } from "./tenant-context"
+
+const NATIVE_ONLY_PROVIDERS: Record<string, true> = { apple: true }
 
 const getTenantSettings = async (request: Request) => {
   const domain = request.headers.get("x-domain") ?? ""
@@ -388,6 +396,25 @@ export type AuthConfig = {
 }
 
 /**
+ * Native Sign in with Apple, verified only by `POST /mobile/token` (`id_token`
+ * grant). Web social and callback paths are blocked by `guardAuthEntryPoints`.
+ */
+function buildAppleProvider() {
+  const bundleIds = getAppleAppBundleIds()
+  const [primaryBundleId] = bundleIds
+  if (!primaryBundleId) {
+    return
+  }
+  return {
+    clientId: primaryBundleId,
+    clientSecret: "",
+    audience: bundleIds,
+    appBundleIdentifier: primaryBundleId,
+    verifyIdToken: createAppleIdTokenVerifier(bundleIds),
+  }
+}
+
+/**
  * Build the `socialProviders` config from the resolved per-provider credentials.
  * Returns `undefined` (all social disabled) during the production build phase —
  * the thunk runs without request context then — or when nothing resolved.
@@ -397,7 +424,7 @@ function buildSocialProviders(
   socialScopes: AuthConfig["socialScopes"],
   redirectOrigin: AuthConfig["socialRedirectOrigin"],
 ) {
-  if (process.env.NEXT_PHASE === PHASE_PRODUCTION_BUILD || !socialCredentials) {
+  if (process.env.NEXT_PHASE === PHASE_PRODUCTION_BUILD) {
     return
   }
 
@@ -414,7 +441,7 @@ function buildSocialProviders(
   } = {}
   const pinnedOrigin = new URL(redirectOrigin ?? getBrokerUrl()).origin
   for (const provider of SOCIAL_PROVIDERS) {
-    const credential = socialCredentials[provider]
+    const credential = socialCredentials?.[provider]
     if (credential?.clientId && credential.clientSecret) {
       const scope = socialScopes?.[provider]
       providers[provider] = {
@@ -447,7 +474,9 @@ function buildSocialProviders(
     }
   }
 
-  return Object.keys(providers).length > 0 ? providers : undefined
+  const apple = buildAppleProvider()
+  const allProviders = { ...providers, ...(apple && { apple }) }
+  return Object.keys(allProviders).length > 0 ? allProviders : undefined
 }
 
 /**
@@ -548,20 +577,28 @@ function buildDatabaseHooks({
 }
 
 /**
- * Gates `/sign-up/email` on two independent rules, both enforced before
- * better-auth creates the row:
- * - the Facebook placeholder domain is reserved for phone-only Facebook users
- *   (see `placeholder-email.ts`); nobody may register it by hand, or they
- *   could pre-create the row a Facebook sign-in later resolves to by email.
- * - signup lockdown (`AUTH_DISABLE_SIGNUP`): rejected unless the request
- *   carries a live invitation cookie (`isSignUpAllowed`). Existing email
- *   sign-*in* is untouched — only this one path is matched.
+ * Gates `/sign-up/email` and prevents native-only providers from reaching
+ * better-auth's web social endpoints.
  */
-const guardEmailSignUp = createAuthMiddleware(async (ctx) => {
+const guardAuthEntryPoints = createAuthMiddleware(async (ctx) => {
+  const body = ctx.body as { email?: unknown; provider?: unknown } | undefined
   if (
-    ctx.path === "/sign-up/email" &&
-    isPlaceholderEmail((ctx.body as { email?: unknown } | undefined)?.email)
+    (ctx.path === "/sign-in/social" || ctx.path === "/link-social") &&
+    typeof body?.provider === "string" &&
+    NATIVE_ONLY_PROVIDERS[body.provider]
   ) {
+    throw new APIError("NOT_FOUND", {
+      code: "PROVIDER_NOT_ENABLED",
+      message: "Provider is not enabled",
+    })
+  }
+  if (ctx.path === "/callback/:id" && ctx.params?.id === "apple") {
+    throw new APIError("NOT_FOUND", {
+      code: "PROVIDER_NOT_ENABLED",
+      message: "Provider is not enabled",
+    })
+  }
+  if (ctx.path === "/sign-up/email" && isPlaceholderEmail(body?.email)) {
     throw new APIError("BAD_REQUEST", { message: "Invalid email" })
   }
   if (ctx.path === "/sign-up/email" && !(await isSignUpAllowed(ctx))) {
@@ -653,6 +690,10 @@ export function createAuth(config: AuthConfig) {
         // below for how an unverified local placeholder is handled.
         trustedProviders: [
           ...SOCIAL_PROVIDERS,
+          // Apple identity tokens always carry `email_verified` (also for
+          // private relay addresses); the claim is attested in
+          // `claim-unverified-account.ts`.
+          "apple",
           ...(env.AUTH_OAUTH_TRUST_EMAIL ? [GENERIC_OAUTH_PROVIDER_ID] : []),
         ],
         // The local side may be an email/password sign-up that never clicked
@@ -681,7 +722,7 @@ export function createAuth(config: AuthConfig) {
     },
     socialProviders,
     hooks: {
-      before: guardEmailSignUp,
+      before: guardAuthEntryPoints,
     },
     emailAndPassword: {
       enabled: true,

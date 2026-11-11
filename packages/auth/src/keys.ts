@@ -17,6 +17,11 @@ const keys = () =>
       // (white-label brands each have their own). The social-login relay at
       // /api/auth/mobile/callback only redirects to one of these.
       MOBILE_APP_SCHEMES: z.string().optional(),
+      // Comma-separated iOS bundle IDs (white-label brands each have their own)
+      // accepted as the `aud` of a native Sign in with Apple identity token.
+      // Unset disables the Apple `id_token` grant. Native verification needs no
+      // client secret (.p8 key).
+      APPLE_APP_BUNDLE_IDS: z.string().optional(),
       AUTH_DISABLE_SIGNUP: z.stringbool().default(false),
       AUTH_OAUTH_ENABLED: z.stringbool().default(false),
       AUTH_OAUTH_CLIENT_ID: z.string().optional(),
@@ -152,6 +157,20 @@ const DEFAULT_MOBILE_APP_SCHEMES = ["chatconnectxapp", "chatbotxmobileapp"]
  * the other's resource server.
  */
 export const getMobileApiAudience = (): string => `${getBuilderOrigin()}/api`
+
+/**
+ * iOS bundle IDs whose Sign in with Apple identity tokens are accepted. Empty
+ * when `APPLE_APP_BUNDLE_IDS` is unset, which leaves the Apple grant disabled.
+ */
+export const getAppleAppBundleIds = (): string[] =>
+  Array.from(
+    new Set(
+      (env.APPLE_APP_BUNDLE_IDS ?? "")
+        .split(",")
+        .map((bundleId) => bundleId.trim())
+        .filter(Boolean),
+    ),
+  )
 
 /** Custom URL schemes the mobile apps may be redirected back to, lowercase, no colon. */
 export const getMobileAppSchemes = (): string[] => {

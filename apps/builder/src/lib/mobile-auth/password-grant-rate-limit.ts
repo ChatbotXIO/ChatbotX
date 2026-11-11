@@ -4,6 +4,13 @@ import { assertApiNotRateLimited } from "@/lib/rate-limit/api-rate-limit"
 const MOBILE_TOKEN_PATH_SUFFIX = "/mobile/token"
 const PASSWORD_GRANT_ACCOUNT_LIMIT = 5
 const RETRY_AFTER_PATTERN = /Retry after (\d+)s\./
+// Grants that carry no password to guess (an `id_token` is provider-signed), so
+// they pass through to better-auth's own per-IP throttle on `/mobile/token`.
+const NON_PASSWORD_GRANTS = new Set([
+  "refresh_token",
+  "exchange_code",
+  "id_token",
+])
 
 type PasswordGrantBody = {
   grantType?: unknown
@@ -32,7 +39,7 @@ const readPasswordGrant = async (
       }
     }
     const grantType = body.grantType ?? body.grant_type
-    if (grantType === "refresh_token" || grantType === "exchange_code") {
+    if (typeof grantType === "string" && NON_PASSWORD_GRANTS.has(grantType)) {
       return { kind: "other" }
     }
     if (grantType !== "password") {
