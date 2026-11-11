@@ -1,6 +1,6 @@
 "use client"
 
-import Emoji, { EmojiSuggestionPluginKey } from "@tiptap/extension-emoji"
+import { EmojiSuggestionPluginKey } from "@tiptap/extension-emoji"
 import Mention from "@tiptap/extension-mention"
 import Placeholder from "@tiptap/extension-placeholder"
 import { DOMParser as ProseMirrorDOMParser } from "@tiptap/pm/model"
@@ -26,7 +26,7 @@ import { cn } from "@chatbotx.io/ui/lib/utils"
 import EmojiPicker, { type EmojiClickData } from "emoji-picker-react"
 import { CodeXml, Smile } from "lucide-react"
 import { useCallback, useEffect, useRef, useState } from "react"
-import { fullyQualifiedGitHubEmojis } from "./fully-qualified-github-emojis"
+import { configureFlowEditorEmoji } from "./fully-qualified-github-emojis"
 import { htmlToPlainTextWithBlocks } from "./html-to-plain-text"
 import { usePromptVariableOptions } from "./use-prompt-variable-options"
 import { useReadOnlyWhenLocked } from "./use-read-only-when-locked"
@@ -157,11 +157,7 @@ export const PlainTextTiptapEditor = ({
         }),
       }),
       ...(disableLineBreaks ? [NoLineBreaks] : []),
-      Emoji.configure({
-        emojis: fullyQualifiedGitHubEmojis,
-        enableEmoticons: true,
-        suggestion: emojiSuggestion,
-      }),
+      configureFlowEditorEmoji(emojiSuggestion),
       Placeholder.configure({
         placeholder,
       }),

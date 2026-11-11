@@ -1,4 +1,9 @@
-import { type EmojiItem, gitHubEmojis } from "@tiptap/extension-emoji"
+import Emoji, {
+  type EmojiItem,
+  type EmojiOptions,
+  gitHubEmojis,
+} from "@tiptap/extension-emoji"
+import type { DOMOutputSpec } from "@tiptap/pm/model"
 
 const VARIATION_SELECTOR_16 = 0xfe_0f
 const MAX_UNICODE_CODE_POINT = 0x10_ff_ff
@@ -77,10 +82,93 @@ const withFullyQualifiedEmoji = (item: EmojiItem): EmojiItem => {
   return { ...item, emoji: qualified }
 }
 
-// `gitHubEmojis` stores keycaps, hearts, warnings and arrows without U+FE0F
-// (`1⃣`, `❤`, `⚠`) while `fallbackImage` names the fully-qualified sequence.
-// `@tiptap/extension-emoji` matches the typed sequence, then `renderText`
-// returns that list character, so `getText()` drops the variation selector.
-export const fullyQualifiedGitHubEmojis: EmojiItem[] = gitHubEmojis.map(
-  withFullyQualifiedEmoji,
-)
+// `@tiptap/extension-emoji` 3.26.0 `emojiToShortcode` strips one variation
+// selector (`\uFE0F` / `\uFE0E`) and then compares that string to `item.emoji`
+// with `===`. The catalogue character has to stay unqualified (`❤`, `1⃣`) or
+// both `❤` and `❤️` miss and stay plain text. `renderText` / `renderHTML` are
+// what `getText()` and the DOM use, so only those emit the fully-qualified
+// character taken from the Apple fallback image.
+//
+// Keys follow `shortcodeToEmoji`: the first catalogue row that owns a name or
+// shortcode wins. A later row must not qualify `sunglasses` into dark
+// sunglasses just because that row's shortcode is `sunglasses`.
+const claimedAttributes = new Set<string>()
+const qualifiedEmojiByAttribute = new Map<string, string>()
+
+for (const item of gitHubEmojis) {
+  const qualified = item.emoji ? withFullyQualifiedEmoji(item).emoji : undefined
+  const override =
+    item.emoji && qualified && qualified !== item.emoji ? qualified : undefined
+
+  for (const attribute of [item.name, ...item.shortcodes]) {
+    if (claimedAttributes.has(attribute)) {
+      continue
+    }
+    claimedAttributes.add(attribute)
+    if (override) {
+      qualifiedEmojiByAttribute.set(attribute, override)
+    }
+  }
+}
+
+const attributeName = (value: unknown): string | undefined =>
+  typeof value === "string" ? value : undefined
+
+const qualifiedEmojiForAttribute = (
+  name: string | undefined,
+): string | undefined =>
+  name ? qualifiedEmojiByAttribute.get(name) : undefined
+
+const withQualifiedText = (
+  rendered: DOMOutputSpec,
+  qualified: string | undefined,
+): DOMOutputSpec => {
+  if (!(qualified && Array.isArray(rendered))) {
+    return rendered
+  }
+
+  const [tag, attributes, content, ...rest] = rendered
+  if (typeof content !== "string" || rest.length > 0) {
+    return rendered
+  }
+
+  return [tag, attributes, qualified]
+}
+
+const FlowEditorEmoji = Emoji.extend({
+  renderText(props) {
+    const qualified = qualifiedEmojiForAttribute(
+      attributeName(props.node.attrs.name),
+    )
+    if (qualified) {
+      return qualified
+    }
+
+    return (
+      this.parent?.(props) ??
+      `:${attributeName(props.node.attrs.name) ?? "emoji"}:`
+    )
+  },
+
+  renderHTML(props) {
+    const rendered = this.parent?.(props) ?? [
+      "span",
+      props.HTMLAttributes,
+      `:${attributeName(props.node.attrs.name) ?? "emoji"}:`,
+    ]
+
+    return withQualifiedText(
+      rendered,
+      qualifiedEmojiForAttribute(attributeName(props.node.attrs.name)),
+    )
+  },
+})
+
+export const configureFlowEditorEmoji = (
+  suggestion: EmojiOptions["suggestion"],
+) =>
+  FlowEditorEmoji.configure({
+    emojis: gitHubEmojis,
+    enableEmoticons: true,
+    suggestion,
+  })
