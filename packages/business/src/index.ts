@@ -161,10 +161,9 @@ export * from "./resource-deletion-log"
 export * from "./response-sla"
 export * from "./saved-reply"
 // Not barrel-exported: `sequenceService.upsertStep`/`deleteStep` reach
-// sequence-scheduler's `createDispatch`, which hashes with Node's `crypto`.
-// This barrel is traced into the builder's Edge Runtime bundle, where a Node
-// built-in is a hard compile error — see edge-safe-import-graph.test.ts and
-// the same pattern for `contact-sequence`. Import from
+// sequence-scheduler's `createDispatch`, which hashes with Node's `crypto`;
+// keeping it out of the barrel keeps the scheduler internals off every
+// barrel importer (same pattern as `contact-sequence`). Import from
 // `@chatbotx.io/business/sequence` instead.
 export * from "./shopify"
 export * from "./smart-delay"

@@ -65,7 +65,7 @@ These instructions apply repository-wide. Read the relevant detailed rule in `.a
 23. **Agent-first: every feature ships a public API** — each new feature or operation, including result-returning ones (link, preview, test run, stats, export, AI generation), adds a procedure to `features/<x>/api/public.ts` first, then the UI; both call the same function. Then run the `cli-mcp-docs` skill. Exemptions are listed in the full reference.
 24. **Workspace purge must stay bounded** — index new FKs, audit high-volume purge paths, and use bounded child-before-parent drains. Read `.agents/skills/workspace-purge/SKILL.md`.
 
-25. **Keep Node-only code out of builder router imports** — split it into a server-only package subpath; Edge instrumentation traces the full router graph. See `apps/builder/__tests__/edge-instrumentation-graph.test.ts`.
+25. **Builder instrumentation imports server code only under `NEXT_RUNTIME === "nodejs"`** — anything outside the guard is compiled into the Edge bundle too (the oRPC server = the whole router graph); the builder has no Edge routes, keep it that way. See `apps/builder/__tests__/instrumentation-runtime-guard.test.ts`.
 <!-- END GENERATED: SHARED-INVARIANTS -->
 
 ## Rule index

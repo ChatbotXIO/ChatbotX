@@ -205,6 +205,21 @@ const nextConfig: NextConfig = {
     "@bull-board/hono",
     "bullmq",
     "@napi-rs/canvas",
+    // Heavy server-only dependencies that Next's default external list
+    // misses. Externalising them stops Turbopack from compiling their module
+    // graphs (~4k modules) into every server bundle: cold first request in
+    // `next dev` dropped from ~16.0s to ~13.6-14.3s. Formbricks and Langfuse
+    // do the same. Turbopack symlinks each one under `.next/node_modules`, so
+    // they resolve even though pnpm doesn't hoist them into the builder.
+    "stripe", // ~750 modules (payments, enterprise billing)
+    "undici", // ~840 modules (business HTTP client)
+    "kysely", // ~900 modules (pulled in by better-auth)
+    "mjml", // mjml-core + htmlnano + js-beautify + cheerio (packages/mail)
+    "nodemailer", // packages/mail, integrations/smtp
+    "exceljs", // packages/imports xlsx parser/template
+    "ioredis", // packages/redis, analytics, scheduler
+    "google-auth-library", // google-ads, google-calendar, google-sheets
+    "qrcode", // packages/business
   ],
 
   outputFileTracingRoot: require("path").join(import.meta.dirname, "../../"),

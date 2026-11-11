@@ -2,6 +2,7 @@
   "extends": "@chatbotx.io/typescript-config/base.json",
   "include": ["src/**/*.ts"],
   "compilerOptions": {
-    "strictNullChecks": true
+    "strictNullChecks": true,
+    "types": ["node"]
   }
 }

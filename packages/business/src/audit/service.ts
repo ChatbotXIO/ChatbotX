@@ -76,4 +76,7 @@ const globalForAudit = globalThis as typeof globalThis & {
   __chatbotxAuditRecord?: typeof auditService.record
 }
 
+// Import-time side effect: this file and `./index.ts` are listed in
+// package.json#sideEffects so bundlers never drop them. Guarded by
+// __tests__/package-side-effects.test.ts.
 globalForAudit.__chatbotxAuditRecord = (input) => auditService.record(input)

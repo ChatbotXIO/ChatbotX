@@ -1,7 +1,6 @@
 /**
  * Error bodies and status policy shared by the Meta Model API (Muse) clients.
- * Plain zod only — no `node:*` or `Buffer` — so it stays safe in the builder's
- * Edge instrumentation graph (AGENTS.md invariant 25).
+ * Plain zod only — no `node:*` or `Buffer` — so any runtime can import it.
  */
 import { z } from "zod"
 

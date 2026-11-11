@@ -7,10 +7,10 @@ import { messagesByLocale } from "@/i18n/messages"
 
 /**
  * Catches keys that are *used in source but absent from `en.json`* — the exact
- * blind spot the existing `i18n:check` lint step cannot see.
+ * blind spot the catalog checks in `i18n-messages.test.ts` cannot see.
  *
- * `i18n:check` and `i18n-messages.test.ts` both compare the translated
- * catalogs *against* English. A key that is missing from every catalog
+ * `i18n-messages.test.ts` compares the translated catalogs *against*
+ * English. A key that is missing from every catalog
  * including English is perfectly consistent, so it sails through both, and the
  * failure only surfaces at runtime as next-intl's `MISSING_MESSAGE` when the
  * component happens to render.
