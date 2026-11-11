@@ -1085,6 +1085,7 @@
     "sources": {
       "direct": "Direto",
       "comments": "Comentários",
+      "liveComments": "Comentários em direto",
       "ads": "Anúncios",
       "fbLeadAd": "Anúncio de contactos do Facebook",
       "inboundMessage": "Mensagem recebida",

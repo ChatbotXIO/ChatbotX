@@ -100,19 +100,39 @@ const contactSourceLabels: Record<ContactSource, string> = {
   [contactSources.enum.botLink]: "Bot Link",
   [contactSources.enum.chatPlugin]: "Chat Plugin",
   [contactSources.enum.comments]: "Facebook/IG Comment",
+  [contactSources.enum.liveComments]: "Facebook/IG Livestream",
   [contactSources.enum.imported]: "Imported",
   [contactSources.enum.api]: "API",
   [contactSources.enum.direct]: "Direct",
   [contactSources.enum.inboundWebhook]: "Inbound Webhook",
 }
 
-const formatContactSource = (source: string | null | undefined): string => {
+// Comments also arrive from channels outside Meta; those get their own name
+// instead of the "Facebook/IG" label. Only Facebook and Instagram have lives.
+const commentSourceLabelsByChannel: Partial<Record<string, string>> = {
+  tiktok: "TikTok Comment",
+  threads: "Threads Comment",
+}
+
+const formatContactSource = (
+  source: string | null | undefined,
+  channel: string | null | undefined,
+): string => {
   if (!source) {
     return "Unknown"
   }
   const parsedSource = contactSources.safeParse(source)
   if (!parsedSource.success) {
     return source
+  }
+  const channelCommentLabel = channel
+    ? commentSourceLabelsByChannel[channel]
+    : undefined
+  if (
+    parsedSource.data === contactSources.enum.comments &&
+    channelCommentLabel
+  ) {
+    return channelCommentLabel
   }
   return contactSourceLabels[parsedSource.data]
 }
@@ -510,7 +530,7 @@ export const getSystemFieldValue = async (
     case systemFieldTypes.enum.workspace_id:
       return contact.workspaceId
     case systemFieldTypes.enum.user_source:
-      return formatContactSource(contactInbox?.source)
+      return formatContactSource(contactInbox?.source, contactInbox?.channel)
     case systemFieldTypes.enum.assigned_admin_name:
       return await resolveAssigneeName(contact.id, contact.workspaceId)
     case systemFieldTypes.enum.assigned_admin_email:

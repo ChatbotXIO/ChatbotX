@@ -3038,6 +3038,7 @@
     "sources": {
       "direct": "直接",
       "comments": "留言",
+      "liveComments": "直播留言",
       "ads": "廣告",
       "fbLeadAd": "FB 領先廣告",
       "inboundMessage": "傳入訊息",

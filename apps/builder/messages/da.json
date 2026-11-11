@@ -1085,6 +1085,7 @@
     "sources": {
       "direct": "Direkte",
       "comments": "Kommentarer",
+      "liveComments": "Livestream-kommentarer",
       "ads": "Annoncer",
       "fbLeadAd": "FB-leadannonce",
       "inboundMessage": "Indgående besked",

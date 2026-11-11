@@ -1085,6 +1085,7 @@
     "sources": {
       "direct": "直接",
       "comments": "コメント",
+      "liveComments": "ライブ配信コメント",
       "ads": "広告",
       "fbLeadAd": "Facebookリード広告",
       "inboundMessage": "受信メッセージ",

@@ -1085,6 +1085,7 @@
     "sources": {
       "direct": "Suora",
       "comments": "Kommentit",
+      "liveComments": "Livestream-kommentit",
       "ads": "Mainokset",
       "fbLeadAd": "FB-liidimainos",
       "inboundMessage": "Saapuva viesti",

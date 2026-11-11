@@ -5501,6 +5501,56 @@ describe("contact source taxonomy", () => {
     )
   })
 
+  test("writes liveComments as the source for a Facebook live comment contact", async () => {
+    vi.mocked(allIntegrations.messenger?.runAction)?.mockImplementation(
+      (action: string) =>
+        Promise.resolve(
+          action === "getCommentAttachment"
+            ? { isLive: true }
+            : { created_time: "2026-01-01T00:00:00.000Z" },
+        ),
+    )
+
+    await receiveComment({
+      integrationType: "messenger",
+      integrationIdentifier: "inbox-1",
+      commentData: {
+        commentId: "comment-live-1",
+        fromId: "commenter-1",
+        fromName: "Commenter",
+        message: "hello live",
+        postId: "post-1",
+        createdTime: 0,
+      },
+    })
+
+    const rows = await runCapturedNewContactCreate()
+    expect(rows).toContainEqual(
+      expect.objectContaining({ source: "liveComments" }),
+    )
+  })
+
+  test("writes liveComments as the source for an Instagram live comment contact", async () => {
+    await receiveComment({
+      integrationType: "instagram",
+      integrationIdentifier: "inbox-1",
+      commentData: {
+        commentId: "ig-live-comment-1",
+        fromId: "commenter-1",
+        fromName: "Commenter",
+        message: "hello live",
+        postId: "live-media-1",
+        createdTime: 0,
+        isLive: true,
+      },
+    })
+
+    const rows = await runCapturedNewContactCreate()
+    expect(rows).toContainEqual(
+      expect.objectContaining({ source: "liveComments" }),
+    )
+  })
+
   test("scores a new top-level comment for leaderboards with its own time", async () => {
     await receiveComment({
       integrationType: "messenger",

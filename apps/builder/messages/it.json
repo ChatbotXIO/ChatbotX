@@ -2762,6 +2762,7 @@
     "sources": {
       "direct": "Diretto",
       "comments": "Commenti",
+      "liveComments": "Commenti in diretta",
       "ads": "Inserzioni",
       "fbLeadAd": "Inserzione per acquisizione contatti di Facebook",
       "inboundMessage": "Messaggio in entrata",

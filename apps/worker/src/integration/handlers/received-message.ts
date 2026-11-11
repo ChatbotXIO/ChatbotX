@@ -1764,6 +1764,32 @@ async function reserveLiveCommentDelay(props: {
   }
 }
 
+/**
+ * Facebook's comment lookup: re-hosts a photo/GIF attachment and reports
+ * whether the comment was made on a live broadcast. Undefined when the Graph
+ * call fails — the comment is still ingested without them.
+ */
+const lookupMessengerCommentAttachment = async (params: {
+  inbox: { workspaceId: string }
+  integrationRow: Parameters<typeof buildContext>[0]["integration"]
+  commentId: string
+}) => {
+  const ctx = await buildContext({
+    workspaceId: params.inbox.workspaceId,
+    integrationType: "messenger",
+    integration: {
+      ...params.integrationRow,
+      auth: params.integrationRow.auth as MessengerAuthValue,
+    },
+  })
+  return await allIntegrations.messenger
+    ?.runAction("getCommentAttachment", {
+      ctx,
+      input: { commentId: params.commentId },
+    })
+    .catch(() => undefined)
+}
+
 export const receiveComment = async (
   props: IntegrationJobReceiveComment["data"],
 ): Promise<void> => {
@@ -1838,11 +1864,34 @@ export const receiveComment = async (
   const commenterAvatarUrl =
     tiktokIdentity?.avatarUrl ?? commentData.fromAvatarUrl
 
+  // Resolved before the contact so a first-time commenter on a live is
+  // recorded with the `liveComments` source. Instagram flags a live comment on
+  // the webhook itself (`live_comments`); Facebook's is resolved from the
+  // attachment lookup. TikTok and Threads have no live comments.
+  const messengerCommentLookup =
+    integrationType === "messenger"
+      ? await lookupMessengerCommentAttachment({
+          inbox,
+          integrationRow,
+          commentId: commentData.commentId,
+        })
+      : undefined
+  const isLiveComment =
+    integrationType === "messenger"
+      ? await resolveLiveComment({
+          integrationId: integrationRow.id,
+          postId: commentData.postId,
+          lookupIsLive: messengerCommentLookup?.isLive,
+        })
+      : commentData.isLive === true
+
   const detected = await detectContactAndConversation({
     incomingContact,
     inbox,
     integrationRow,
-    source: contactSources.enum.comments,
+    source: isLiveComment
+      ? contactSources.enum.liveComments
+      : contactSources.enum.comments,
   })
   if (!detected) {
     throw new SdkException("Unable to resolve contact and conversation")
@@ -1938,31 +1987,9 @@ export const receiveComment = async (
   }
 
   let attachments: IncomingAttachment[] = []
-  // Instagram flags a live comment on the webhook itself (`live_comments`);
-  // Facebook's is resolved from the attachment lookup just below.
-  let isLiveComment = commentData.isLive === true
   if (integrationType === "messenger") {
-    const ctx = await buildContext({
-      workspaceId: inbox.workspaceId,
-      integrationType,
-      integration: {
-        ...integrationRow,
-        auth: integrationRow.auth as MessengerAuthValue,
-      },
-    })
-    const result = await allIntegrations.messenger
-      ?.runAction("getCommentAttachment", {
-        ctx,
-        input: { commentId: commentData.commentId },
-      })
-      .catch(() => undefined)
-    isLiveComment = await resolveLiveComment({
-      integrationId: integrationRow.id,
-      postId: commentData.postId,
-      lookupIsLive: result?.isLive,
-    })
-    if (result?.attachment) {
-      attachments = [result.attachment]
+    if (messengerCommentLookup?.attachment) {
+      attachments = [messengerCommentLookup.attachment]
     } else if (commentData.videoUrl) {
       // The Graph attachment lookup re-hosts photos and GIFs only; a video
       // comment's file arrives solely as the webhook's `video` URL.

@@ -1055,6 +1055,40 @@ describe("getSystemFieldValue", () => {
     ).resolves.toBe("Facebook/IG Comment")
   })
 
+  test("user_source labels a livestream comment source", async () => {
+    await expect(
+      getSystemFieldValue(
+        createContext({
+          contactInbox: {
+            ...contactInbox,
+            channel: "messenger",
+            source: "liveComments",
+          } as ContactInboxModel,
+        }),
+        systemFieldTypes.enum.user_source,
+      ),
+    ).resolves.toBe("Facebook/IG Livestream")
+  })
+
+  test.each([
+    ["tiktok", "TikTok Comment"],
+    ["threads", "Threads Comment"],
+    ["instagram", "Facebook/IG Comment"],
+  ])("user_source names the %s comment channel", async (channel, label) => {
+    await expect(
+      getSystemFieldValue(
+        createContext({
+          contactInbox: {
+            ...contactInbox,
+            channel,
+            source: "comments",
+          } as ContactInboxModel,
+        }),
+        systemFieldTypes.enum.user_source,
+      ),
+    ).resolves.toBe(label)
+  })
+
   test("user_source falls back to the raw value for an unmapped source", async () => {
     await expect(
       getSystemFieldValue(

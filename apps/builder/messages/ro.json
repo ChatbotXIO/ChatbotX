@@ -2480,6 +2480,7 @@
     "sources": {
       "direct": "Direct",
       "comments": "Comentarii",
+      "liveComments": "Comentarii la transmisiunea live",
       "ads": "Reclame",
       "fbLeadAd": "Reclamă FB pentru clienți potențiali",
       "inboundMessage": "Mesaj primit",
