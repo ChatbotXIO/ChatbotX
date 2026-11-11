@@ -155,7 +155,9 @@ export const BaseEditor = ({
       <CardHeader>
         <CardTitle>{label}</CardTitle>
         <Button
-          className="absolute end-0 top-0 hidden hover:bg-red hover:text-destructive group-hover:block"
+          // Shown on hover, on keyboard focus, and always on touch screens,
+          // where hover never fires and the button would be unreachable.
+          className="absolute end-0 top-0 pointer-coarse:block hidden hover:bg-red hover:text-destructive group-focus-within:block group-hover:block"
           onClick={onRemove}
           type="button"
           variant="ghost"
