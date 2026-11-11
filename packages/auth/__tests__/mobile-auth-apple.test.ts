@@ -4,6 +4,8 @@ import { memoryAdapter } from "better-auth/adapters/memory"
 import { jwt } from "better-auth/plugins"
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 
+import { createAppleIdTokenVerifier } from "../src/apple-id-token"
+
 const ISSUER = "https://app.example.com"
 const AUDIENCE = "https://app.example.com/api"
 const APPLE_ISSUER = "https://appleid.apple.com"
@@ -129,6 +131,7 @@ const createAppleAuth = (
               clientSecret: "",
               audience: bundleIds,
               appBundleIdentifier: bundleIds[0],
+              verifyIdToken: createAppleIdTokenVerifier(bundleIds),
               disableSignUp: signUpDisabled,
               disableImplicitSignUp: implicitSignUpDisabled,
             },
@@ -339,7 +342,7 @@ describe("POST /mobile/token — id_token grant (Apple)", () => {
       expect(store.user).toHaveLength(0)
     })
 
-    test("accepts the raw nonce when the token carries it", async () => {
+    test("rejects a token whose nonce claim is the raw nonce", async () => {
       const auth = createAppleAuth(store)
 
       const response = await appleGrant(auth, {
@@ -347,10 +350,12 @@ describe("POST /mobile/token — id_token grant (Apple)", () => {
         nonce: "raw-nonce",
       })
 
-      expect(response.status).toBe(200)
+      expect(response.status).toBe(401)
+      expect((await response.json()).code).toBe("INVALID_ID_TOKEN")
+      expect(store.user).toHaveLength(0)
     })
 
-    test("accepts the raw nonce when the token carries its SHA-256 hex", async () => {
+    test("accepts the nonce when the token carries its SHA-256 hex", async () => {
       const auth = createAppleAuth(store)
 
       const response = await appleGrant(auth, {

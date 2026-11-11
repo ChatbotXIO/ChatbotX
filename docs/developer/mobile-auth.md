@@ -52,8 +52,9 @@ Content-Type: application/json
 
 - **`nonce`**: **required**. Generate a random string, send `SHA256(nonce)` to
   Apple in the authorization request and the **raw** `nonce` here. The server
-  accepts the token's `nonce` claim when it equals the raw value or its SHA-256
-  hex.
+  accepts the token only when its `nonce` claim equals the SHA-256 hex
+  (lowercase) of the raw `nonce` sent here; a token carrying the raw nonce is
+  rejected with `INVALID_ID_TOKEN`.
 - **`user.name`**: Apple returns the name only on the very first authorization
   for an app. Send it in that same call; it cannot be fetched later.
 - **`deviceId`**: optional; generated when omitted, as for the other grants.

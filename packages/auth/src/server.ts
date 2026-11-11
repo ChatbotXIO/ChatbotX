@@ -54,8 +54,8 @@ import {
   magicLink,
   oneTimeToken,
 } from "better-auth/plugins"
-import { createRemoteJWKSet, jwtVerify } from "jose"
 import { PHASE_PRODUCTION_BUILD } from "next/constants"
+import { createAppleIdTokenVerifier } from "./apple-id-token"
 import { claimUnverifiedAccountBeforeLink } from "./claim-unverified-account"
 import { resolveGenericOAuthConfig } from "./generic-oauth"
 import {
@@ -76,46 +76,7 @@ import {
 } from "./signup-gate"
 import { getTenantId, resolveTenantOwnerId } from "./tenant-context"
 
-const APPLE_JWKS = createRemoteJWKSet(
-  new URL("https://appleid.apple.com/auth/keys"),
-)
 const NATIVE_ONLY_PROVIDERS: Record<string, true> = { apple: true }
-
-const sha256Hex = async (value: string): Promise<string> => {
-  const digest = await crypto.subtle.digest(
-    "SHA-256",
-    new TextEncoder().encode(value),
-  )
-  return Array.from(new Uint8Array(digest), (byte) =>
-    byte.toString(16).padStart(2, "0"),
-  ).join("")
-}
-
-const createAppleIdTokenVerifier =
-  (bundleIds: string[]) =>
-  async (token: string, nonce?: string): Promise<boolean> => {
-    if (!nonce) {
-      return false
-    }
-
-    try {
-      const { payload } = await jwtVerify(token, APPLE_JWKS, {
-        issuer: "https://appleid.apple.com",
-        audience: bundleIds,
-        algorithms: ["RS256"],
-        maxTokenAge: "1h",
-        requiredClaims: ["iss", "sub", "aud", "exp", "iat"],
-        clockTolerance: 30,
-      })
-      const tokenNonce = payload.nonce
-      return (
-        typeof tokenNonce === "string" &&
-        (tokenNonce === nonce || tokenNonce === (await sha256Hex(nonce)))
-      )
-    } catch {
-      return false
-    }
-  }
 
 const getTenantSettings = async (request: Request) => {
   const domain = request.headers.get("x-domain") ?? ""

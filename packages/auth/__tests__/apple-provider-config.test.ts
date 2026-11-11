@@ -185,7 +185,7 @@ describe("createAuth — native Apple provider (APPLE_APP_BUNDLE_IDS)", () => {
       .mockRejectedValueOnce(new Error("wrong audience"))
 
     await expect(verifyIdToken("token", "raw-nonce")).resolves.toBe(true)
-    await expect(verifyIdToken("token", "raw-nonce")).resolves.toBe(true)
+    await expect(verifyIdToken("token", "raw-nonce")).resolves.toBe(false)
     await expect(verifyIdToken("token", "raw-nonce")).resolves.toBe(false)
     await expect(verifyIdToken("token", "raw-nonce")).resolves.toBe(false)
     await expect(verifyIdToken("token", "raw-nonce")).resolves.toBe(false)

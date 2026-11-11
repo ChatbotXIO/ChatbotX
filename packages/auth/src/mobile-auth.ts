@@ -354,7 +354,11 @@ const resolveAccountId = async (
   let subject: unknown
   try {
     subject = await provider.accountSubject({ tokens, profile })
-  } catch {
+  } catch (error) {
+    logger.warn(
+      { err: error, provider: provider.id },
+      "Failed to resolve identity token subject",
+    )
     subject = null
   }
   const accountId = subject == null ? "" : String(subject).trim()
