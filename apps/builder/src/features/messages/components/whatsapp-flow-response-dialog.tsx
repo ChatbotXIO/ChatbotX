@@ -110,7 +110,9 @@ function FlowResponseDialogBody(props: WhatsappFlowResponseButtonProps) {
   }
 
   return (
-    <div className="flex flex-col gap-3">
+    // A grid item of the dialog: without min-w-0 a long file name widens the
+    // dialog instead of truncating.
+    <div className="flex min-w-0 flex-col gap-3">
       {labelSource === "fallback" && (
         <p className="text-muted-foreground text-xs">
           {t("labelsUnavailable")}
@@ -154,7 +156,7 @@ export function WhatsappFlowResponseButton({
         {t("viewResponse")}
       </Button>
       <Dialog onOpenChange={setOpen} open={open}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>{t("title")}</DialogTitle>
             <DialogDescription>{t("description")}</DialogDescription>

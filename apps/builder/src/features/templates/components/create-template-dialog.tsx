@@ -11,10 +11,10 @@ import {
 } from "@chatbotx.io/ui/components/ui/dialog"
 import { Input } from "@chatbotx.io/ui/components/ui/input"
 import { Label } from "@chatbotx.io/ui/components/ui/label"
-import { PlusIcon } from "lucide-react"
+import { Loader2Icon, PlusIcon } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
-import { type FormEvent, useState } from "react"
+import { type FormEvent, useState, useTransition } from "react"
 
 const MAX_NAME_LENGTH = 255
 
@@ -27,16 +27,21 @@ export function CreateTemplateDialog({ workspaceId }: { workspaceId: string }) {
   const router = useRouter()
   const [open, setOpen] = useState(false)
   const [name, setName] = useState("")
+  // Pending until the form page has rendered, so a second click cannot
+  // start another navigation while it loads.
+  const [isNavigating, startNavigation] = useTransition()
   const trimmedName = name.trim()
 
   const continueToForm = (event: FormEvent) => {
     event.preventDefault()
-    if (!trimmedName) {
+    if (!trimmedName || isNavigating) {
       return
     }
-    router.push(
-      `/space/${workspaceId}/templates/create?${new URLSearchParams({ name: trimmedName })}`,
-    )
+    startNavigation(() => {
+      router.push(
+        `/space/${workspaceId}/templates/create?${new URLSearchParams({ name: trimmedName })}`,
+      )
+    })
   }
 
   return (
@@ -55,6 +60,7 @@ export function CreateTemplateDialog({ workspaceId }: { workspaceId: string }) {
             <Input
               autoComplete="off"
               autoFocus
+              disabled={isNavigating}
               id="new-template-name"
               maxLength={MAX_NAME_LENGTH}
               onChange={(event) => setName(event.target.value)}
@@ -69,7 +75,8 @@ export function CreateTemplateDialog({ workspaceId }: { workspaceId: string }) {
             >
               {t("actions.cancel")}
             </Button>
-            <Button disabled={!trimmedName} type="submit">
+            <Button disabled={!trimmedName || isNavigating} type="submit">
+              {isNavigating ? <Loader2Icon className="animate-spin" /> : null}
               {t("actions.continue")}
             </Button>
           </DialogFooter>
