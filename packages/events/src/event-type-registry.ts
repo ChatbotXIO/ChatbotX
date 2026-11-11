@@ -20,6 +20,8 @@ export const EMITTED_EVENT_TYPES = [
   triggerEventTypes.enum.unsubscribedFromSequence,
   triggerEventTypes.enum.contactReferredANewContact,
   triggerEventTypes.enum.contactReferredExistingContact,
+  triggerEventTypes.enum.contactBlockedBot,
+  triggerEventTypes.enum.contactUnblockedBot,
   triggerEventTypes.enum.incomingCall,
   triggerEventTypes.enum.missedAudioCall,
   triggerEventTypes.enum.callEnded,

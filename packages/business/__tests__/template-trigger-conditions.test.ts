@@ -106,6 +106,18 @@ describe("remapTriggerConditions", () => {
     expect(conditions).toEqual([])
     expect(dropped).toEqual([{ index: 0, kind: "pipelineStage", id: "77" }])
   })
+
+  test("bot (un)block rows name no resource and are copied as they are", () => {
+    const rows = [
+      row("contactBlockedBot", null),
+      row("contactUnblockedBot", null),
+    ]
+    expect(collectTriggerConditionReferences(rows).size).toBe(0)
+    expect(remapTriggerConditions(rows, idMaps)).toEqual({
+      conditions: rows,
+      dropped: [],
+    })
+  })
 })
 
 describe("canonicalConditionRows", () => {

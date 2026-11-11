@@ -69,6 +69,9 @@ describe("AddCondition order", () => {
       "callEnded",
       "callRecorded",
       "callTranscribed",
+      // Telegram
+      "contactBlockedBot",
+      "contactUnblockedBot",
       // Pipelines
       "pipelineItemCreated",
       "pipelineItemMovedToStage",
@@ -110,6 +113,7 @@ describe("AddCondition order", () => {
       "fields.tags.label",
       "fields.customFields.label",
       "fields.whatsapp.label",
+      "fields.telegram.label",
       "fields.pipelines.label",
       "fields.sequences.label",
       "fields.ecommerce.label",

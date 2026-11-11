@@ -5998,6 +5998,8 @@
       "productOrdered": "تم طلب منتج",
       "contactReferredANewContact": "أحالت جهة الاتصال جهة اتصال جديدة",
       "contactReferredExistingContact": "أحالت جهة الاتصال جهة اتصال موجودة",
+      "contactBlockedBot": "جهة الاتصال حظرت البوت",
+      "contactUnblockedBot": "جهة الاتصال ألغت حظر البوت",
       "callRecorded": "تم تسجيل المكالمة",
       "callTranscribed": "تم تفريغ المكالمة",
       "anyProduct": "أي منتج",

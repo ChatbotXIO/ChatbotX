@@ -5998,6 +5998,8 @@
       "productOrdered": "Prodotto ordinato",
       "contactReferredANewContact": "Il contatto ha segnalato un nuovo contatto",
       "contactReferredExistingContact": "Il contatto ha segnalato un contatto esistente",
+      "contactBlockedBot": "Il contatto ha bloccato il bot",
+      "contactUnblockedBot": "Il contatto ha sbloccato il bot",
       "callRecorded": "Chiamata registrata",
       "callTranscribed": "Chiamata trascritta",
       "anyProduct": "Qualsiasi prodotto",

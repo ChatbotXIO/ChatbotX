@@ -3646,6 +3646,8 @@
       "productOrdered": "מוצר הוזמן",
       "contactReferredANewContact": "איש קשר הפנה איש קשר חדש",
       "contactReferredExistingContact": "איש קשר הפנה איש קשר קיים",
+      "contactBlockedBot": "איש הקשר חסם את הבוט",
+      "contactUnblockedBot": "איש הקשר ביטל את חסימת הבוט",
       "callRecorded": "השיחה הוקלטה",
       "callTranscribed": "השיחה תומללה",
       "anyProduct": "כל מוצר",

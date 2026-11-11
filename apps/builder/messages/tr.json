@@ -5998,6 +5998,8 @@
       "productOrdered": "Ürün Sipariş Edildi",
       "contactReferredANewContact": "Kişi Yeni Bir Kişi Yönlendirdi",
       "contactReferredExistingContact": "Kişi Mevcut Bir Kişiyi Yönlendirdi",
+      "contactBlockedBot": "Kişi Botu Engelledi",
+      "contactUnblockedBot": "Kişi Botun Engelini Kaldırdı",
       "callRecorded": "Arama kaydedildi",
       "callTranscribed": "Arama yazıya döküldü",
       "anyProduct": "Herhangi bir ürün",

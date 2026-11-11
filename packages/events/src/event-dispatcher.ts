@@ -218,6 +218,34 @@ export const emitContactUnsubscribed = async (
     contactInboxId,
   )
 
+export const emitContactBlockedBot = async (
+  workspaceId: string,
+  contactId: string,
+  channel: string,
+  contactInboxId?: string,
+) =>
+  await emitToAllEmitters(
+    "contactBlockedBot",
+    workspaceId,
+    contactId,
+    channel,
+    contactInboxId,
+  )
+
+export const emitContactUnblockedBot = async (
+  workspaceId: string,
+  contactId: string,
+  channel: string,
+  contactInboxId?: string,
+) =>
+  await emitToAllEmitters(
+    "contactUnblockedBot",
+    workspaceId,
+    contactId,
+    channel,
+    contactInboxId,
+  )
+
 export const emitConversationArchived = async (
   workspaceId: string,
   contactId: string,

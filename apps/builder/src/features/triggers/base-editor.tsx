@@ -107,6 +107,10 @@ export const BaseEditor = ({
         return t("trigger.conditions.contactReferredANewContact")
       case triggerEventTypes.enum.contactReferredExistingContact:
         return t("trigger.conditions.contactReferredExistingContact")
+      case triggerEventTypes.enum.contactBlockedBot:
+        return t("trigger.conditions.contactBlockedBot")
+      case triggerEventTypes.enum.contactUnblockedBot:
+        return t("trigger.conditions.contactUnblockedBot")
       default:
         break
     }

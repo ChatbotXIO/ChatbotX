@@ -5998,6 +5998,8 @@
       "productOrdered": "Produk Dipesan",
       "contactReferredANewContact": "Kontak Mereferensikan Kontak Baru",
       "contactReferredExistingContact": "Kontak Mereferensikan Kontak yang Sudah Ada",
+      "contactBlockedBot": "Kontak Memblokir Bot",
+      "contactUnblockedBot": "Kontak Membuka Blokir Bot",
       "callRecorded": "Panggilan direkam",
       "callTranscribed": "Panggilan ditranskripsi",
       "anyProduct": "Produk apa pun",

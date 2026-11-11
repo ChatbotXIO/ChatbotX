@@ -6680,6 +6680,8 @@
       "productOrdered": "Product Ordered",
       "contactReferredANewContact": "Contact Referred A New Contact",
       "contactReferredExistingContact": "Contact Referred Existing Contact",
+      "contactBlockedBot": "Contact Blocked The Bot",
+      "contactUnblockedBot": "Contact Unblocked The Bot",
       "callRecorded": "Call Recorded",
       "callTranscribed": "Call Transcribed",
       "anyProduct": "Any product",

@@ -8,7 +8,15 @@ const {
   resolveExistingContactInbox,
   identifyInbox,
   inboxHasLeaderboardRule,
+  emitContactBlockedBot,
+  emitContactUnblockedBot,
+  redisSet,
+  webhookContexts,
 } = vi.hoisted(() => ({
+  emitContactBlockedBot: vi.fn().mockResolvedValue(undefined),
+  emitContactUnblockedBot: vi.fn().mockResolvedValue(undefined),
+  redisSet: vi.fn().mockResolvedValue("OK"),
+  webhookContexts: [] as unknown[],
   inboxHasLeaderboardRule: vi.fn().mockResolvedValue(true),
   enqueueLeaderboardAward: vi.fn().mockResolvedValue(true),
   enqueueLeaderboardReverse: vi.fn().mockResolvedValue(true),
@@ -34,6 +42,25 @@ vi.mock("../src/services/integrations", () => ({
   integrationService: {
     identifyInboxAndIntegrationAuthFromIdentifier: identifyInbox,
   },
+}))
+
+vi.mock("@chatbotx.io/events", () => ({
+  emitContactBlockedBot,
+  emitContactUnblockedBot,
+}))
+
+vi.mock("@chatbotx.io/events/context", () => ({
+  runWithWebhookExecutionContext: (
+    context: unknown,
+    callback: () => unknown,
+  ) => {
+    webhookContexts.push(context)
+    return callback()
+  },
+}))
+
+vi.mock("@chatbotx.io/worker-config", () => ({
+  getRedisConnection: () => ({ set: redisSet }),
 }))
 
 vi.mock("../src/lib/logger", () => ({
@@ -186,5 +213,118 @@ describe("processChannelAudienceEvent", () => {
       status: "administrator",
     })
     expect(detectContactAndConversation).not.toHaveBeenCalled()
+  })
+})
+
+describe("processChannelAudienceEvent — Telegram private chat (un)block", () => {
+  const privateStatus = (oldStatus: string, status: string) => ({
+    integrationType: "telegram",
+    integrationIdentifier: "bot-1",
+    event: {
+      kind: "botChatStatus" as const,
+      chat: { id: "100", type: "private" },
+      status,
+      oldStatus,
+      user,
+      occurredAt,
+    },
+  })
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    webhookContexts.length = 0
+    identifyInbox.mockResolvedValue({ inbox, integrationRow })
+    redisSet.mockResolvedValue("OK")
+    resolveExistingContactInbox.mockResolvedValue({
+      row: { id: "ci-1", contactId: "contact-1" },
+    })
+  })
+
+  test("blocking fires contactBlockedBot once, as a channel event", async () => {
+    await processChannelAudienceEvent(privateStatus("member", "kicked"))
+
+    expect(resolveExistingContactInbox).toHaveBeenCalledWith({
+      inbox,
+      incomingContact: { sourceId: "100" },
+    })
+    expect(emitContactBlockedBot).toHaveBeenCalledTimes(1)
+    expect(emitContactBlockedBot).toHaveBeenCalledWith(
+      "ws-1",
+      "contact-1",
+      "telegram",
+      "ci-1",
+    )
+    expect(emitContactUnblockedBot).not.toHaveBeenCalled()
+    expect(webhookContexts).toEqual([{ source: "webhook" }])
+    expect(redisSet).toHaveBeenCalledWith(
+      `telegram:bot-block:inbox-1:100:${occurredAt}:blocked`,
+      "1",
+      "EX",
+      86_400,
+      "NX",
+    )
+  })
+
+  test("unblocking fires contactUnblockedBot", async () => {
+    await processChannelAudienceEvent(privateStatus("kicked", "member"))
+
+    expect(emitContactUnblockedBot).toHaveBeenCalledWith(
+      "ws-1",
+      "contact-1",
+      "telegram",
+      "ci-1",
+    )
+    expect(emitContactBlockedBot).not.toHaveBeenCalled()
+  })
+
+  test("a Telegram retry of the same block does not fire twice", async () => {
+    redisSet.mockResolvedValueOnce("OK").mockResolvedValueOnce(null)
+
+    await processChannelAudienceEvent(privateStatus("member", "kicked"))
+    await processChannelAudienceEvent(privateStatus("member", "kicked"))
+
+    expect(emitContactBlockedBot).toHaveBeenCalledTimes(1)
+  })
+
+  test("an unknown user never becomes a contact and fires nothing", async () => {
+    resolveExistingContactInbox.mockResolvedValue(undefined)
+
+    await processChannelAudienceEvent(privateStatus("member", "kicked"))
+
+    expect(detectContactAndConversation).not.toHaveBeenCalled()
+    expect(emitContactBlockedBot).not.toHaveBeenCalled()
+    expect(redisSet).not.toHaveBeenCalled()
+  })
+
+  test("a change that is neither a block nor an unblock fires nothing", async () => {
+    await processChannelAudienceEvent(privateStatus("member", "member"))
+
+    expect(resolveExistingContactInbox).not.toHaveBeenCalled()
+    expect(emitContactBlockedBot).not.toHaveBeenCalled()
+    expect(emitContactUnblockedBot).not.toHaveBeenCalled()
+  })
+
+  test("a private chat is not recorded for the leaderboard group picker", async () => {
+    await processChannelAudienceEvent(privateStatus("member", "kicked"))
+
+    expect(recordTelegramBotChatStatus).not.toHaveBeenCalled()
+  })
+
+  test("a group change still goes to the group picker and fires nothing", async () => {
+    await processChannelAudienceEvent({
+      integrationType: "telegram",
+      integrationIdentifier: "bot-1",
+      event: {
+        kind: "botChatStatus",
+        chat: { id: "-1001", type: "supergroup", title: "Fans" },
+        status: "kicked",
+        oldStatus: "administrator",
+        user,
+        occurredAt,
+      },
+    })
+
+    expect(recordTelegramBotChatStatus).toHaveBeenCalledTimes(1)
+    expect(emitContactBlockedBot).not.toHaveBeenCalled()
   })
 })

@@ -5707,6 +5707,8 @@
       "productOrdered": "Sản phẩm đã đặt",
       "contactReferredANewContact": "Liên hệ giới thiệu liên hệ mới",
       "contactReferredExistingContact": "Liên hệ giới thiệu liên hệ hiện có",
+      "contactBlockedBot": "Liên hệ chặn bot",
+      "contactUnblockedBot": "Liên hệ bỏ chặn bot",
       "callRecorded": "Cuộc gọi đã ghi âm",
       "callTranscribed": "Cuộc gọi đã chuyển văn bản",
       "anyProduct": "Bất kỳ sản phẩm nào",

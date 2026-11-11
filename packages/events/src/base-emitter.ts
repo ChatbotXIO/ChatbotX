@@ -351,6 +351,34 @@ export abstract class BaseEventEmitter {
     })
   }
 
+  /** The contact blocked the bot on `channel` (today only Telegram reports it). */
+  async contactBlockedBot(
+    workspaceId: string,
+    contactId: string,
+    channel: string,
+    contactInboxId?: string,
+  ): Promise<void> {
+    await this.emit(triggerEventTypes.enum.contactBlockedBot, {
+      workspaceId,
+      contactId,
+      metadata: withContactInboxMetadata({ channel }, contactInboxId),
+    })
+  }
+
+  /** The contact unblocked the bot on `channel` (or restarted it after blocking). */
+  async contactUnblockedBot(
+    workspaceId: string,
+    contactId: string,
+    channel: string,
+    contactInboxId?: string,
+  ): Promise<void> {
+    await this.emit(triggerEventTypes.enum.contactUnblockedBot, {
+      workspaceId,
+      contactId,
+      metadata: withContactInboxMetadata({ channel }, contactInboxId),
+    })
+  }
+
   async conversationArchived(
     workspaceId: string,
     contactId: string,

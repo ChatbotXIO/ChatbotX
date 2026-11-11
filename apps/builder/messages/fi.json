@@ -5998,6 +5998,8 @@
       "productOrdered": "Tuote tilattu",
       "contactReferredANewContact": "Yhteystieto suositteli uutta yhteystietoa",
       "contactReferredExistingContact": "Yhteystieto suositteli olemassa olevaa yhteystietoa",
+      "contactBlockedBot": "Yhteystieto esti botin",
+      "contactUnblockedBot": "Yhteystieto poisti botin eston",
       "callRecorded": "Puhelu tallennettu",
       "callTranscribed": "Puhelu litteroitu",
       "anyProduct": "Mikä tahansa tuote",

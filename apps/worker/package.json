@@ -5,6 +5,7 @@
   "scripts": {
     "backfill:messenger-webhook-fields": "dotenv -e ../../.env -- tsx scripts/resubscribe-messenger-webhook-fields.ts",
     "backfill:whatsapp-webhook-fields": "dotenv -e ../../.env -- tsx scripts/resubscribe-whatsapp-webhook-fields.ts",
+    "backfill:telegram-webhooks": "dotenv -e ../../.env -- tsx scripts/reregister-telegram-webhooks.ts",
     "build": "tsdown",
     "check-types": "tsc --noEmit",
     "dev": "pnpm worker:core | pino-pretty",

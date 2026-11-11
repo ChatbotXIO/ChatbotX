@@ -135,10 +135,51 @@ describe("telegram webhook group routing", () => {
           kind: "botChatStatus",
           chat: { id: "-1001", type: "supergroup", title: "Fans" },
           status: "administrator",
+          oldStatus: "member",
+          user: { sourceId: "100", firstName: "Ada", username: "ada" },
           occurredAt: new Date(1_760_000_000_000).toISOString(),
         },
       }),
     })
+  })
+
+  const privateBotStatus = (oldStatus: string, newStatus: string) => ({
+    my_chat_member: {
+      chat: { id: 100, type: "private", first_name: "Ada" },
+      from: user,
+      date: 1_760_000_000,
+      old_chat_member: { user: { ...user, is_bot: true }, status: oldStatus },
+      new_chat_member: { user: { ...user, is_bot: true }, status: newStatus },
+    },
+  })
+
+  test.each([
+    ["blocking", "member", "kicked"],
+    ["unblocking", "kicked", "member"],
+  ])("%s the bot in a private chat carries the user and both statuses", async (_label, oldStatus, newStatus) => {
+    const add = await run(privateBotStatus(oldStatus, newStatus))
+    expect(add).toHaveBeenCalledTimes(1)
+    expect(add).toHaveBeenCalledWith("channelAudienceEvent", {
+      type: "channelAudienceEvent",
+      data: expect.objectContaining({
+        event: {
+          kind: "botChatStatus",
+          chat: { id: "100", type: "private" },
+          status: newStatus,
+          oldStatus,
+          user: { sourceId: "100", firstName: "Ada", username: "ada" },
+          occurredAt: new Date(1_760_000_000_000).toISOString(),
+        },
+      }),
+    })
+  })
+
+  test("a block from a legacy bot without a secret is not trusted", async () => {
+    const add = await run(privateBotStatus("member", "kicked"), {
+      configured: false,
+      secret: null,
+    })
+    expect(add).not.toHaveBeenCalled()
   })
 })
 

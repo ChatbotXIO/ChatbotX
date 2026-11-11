@@ -42,11 +42,19 @@ export type ChannelAudienceEvent =
       occurredAt: string
     }
   | {
-      /** The bot's own status in a group/channel changed. */
+      /**
+       * The bot's own status in a chat changed. In a group/channel it was
+       * added, promoted or removed; in a private chat the user blocked
+       * (`kicked`) or unblocked (`member`) the bot.
+       */
       kind: "botChatStatus"
       chat: { id: string; title?: string; type: string }
       /** The bot's new member status (e.g. administrator, member, left, kicked). */
       status: string
+      /** The bot's status before the change; tells a block from an unblock. */
+      oldStatus?: string
+      /** Who changed it — in a private chat, the user who (un)blocked the bot. */
+      user?: ChannelAudienceUser
       occurredAt: string
     }
 

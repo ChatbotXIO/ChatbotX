@@ -47,6 +47,13 @@ export const contactReferredANewContact = createSimpleCondition(
 export const contactReferredExistingContact = createSimpleCondition(
   triggerEventTypes.enum.contactReferredExistingContact,
 )
+// The contact blocked / unblocked the bot (today only Telegram reports it).
+export const contactBlockedBot = createSimpleCondition(
+  triggerEventTypes.enum.contactBlockedBot,
+)
+export const contactUnblockedBot = createSimpleCondition(
+  triggerEventTypes.enum.contactUnblockedBot,
+)
 
 // The five WhatsApp call conditions: the call happening is the whole condition.
 export const incomingCall = createSimpleCondition(

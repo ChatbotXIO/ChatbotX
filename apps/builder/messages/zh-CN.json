@@ -7403,6 +7403,8 @@
       "contactInfoUpdated": "电话或电子邮件已更新",
       "contactReferredANewContact": "联系人推荐了新联系人",
       "contactReferredExistingContact": "联系人引用现有联系人",
+      "contactBlockedBot": "联系人屏蔽了机器人",
+      "contactUnblockedBot": "联系人取消屏蔽机器人",
       "contactUnsubscribedFormBroadcast": "联系人取消订阅广播",
       "conversationAssigned": "分配的对话",
       "conversationTransferredToBot": "对话已转移到机器人",

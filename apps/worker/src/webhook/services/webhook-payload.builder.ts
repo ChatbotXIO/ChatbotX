@@ -52,6 +52,8 @@ const EVENT_NAMES = {
     "contact_referred_a_new_contact",
   [triggerEventTypes.enum.contactReferredExistingContact]:
     "contact_referred_existing_contact",
+  [triggerEventTypes.enum.contactBlockedBot]: "contact_blocked_bot",
+  [triggerEventTypes.enum.contactUnblockedBot]: "contact_unblocked_bot",
   [triggerEventTypes.enum.dateTimeBasedTrigger]: "datetime_based_trigger",
   [triggerEventTypes.enum.incomingCall]: "incoming_call",
   [triggerEventTypes.enum.missedAudioCall]: "missed_audio_call",
@@ -124,6 +126,17 @@ function buildSequencePayload(
     ...basePayload,
     sequence_id: data.sequenceId as string,
     sequence_name: data.sequenceName as string,
+  }
+}
+
+/** `contact_blocked_bot` / `contact_unblocked_bot`: which channel's bot it was. */
+function buildBotBlockPayload(
+  basePayload: WebhookPayloadBase,
+  data: Record<string, unknown>,
+): WebhookPayload {
+  return {
+    ...basePayload,
+    channel: typeof data.channel === "string" ? data.channel : null,
   }
 }
 
@@ -385,6 +398,8 @@ const PAYLOAD_BUILDERS = {
   [triggerEventTypes.enum.unsubscribedFromSequence]: buildSequencePayload,
   [triggerEventTypes.enum.contactReferredANewContact]: buildReferralPayload,
   [triggerEventTypes.enum.contactReferredExistingContact]: buildReferralPayload,
+  [triggerEventTypes.enum.contactBlockedBot]: buildBotBlockPayload,
+  [triggerEventTypes.enum.contactUnblockedBot]: buildBotBlockPayload,
   [triggerEventTypes.enum.dateTimeBasedTrigger]: (basePayload, data) => ({
     ...basePayload,
     ...data,

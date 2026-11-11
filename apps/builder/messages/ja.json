@@ -5977,6 +5977,8 @@
       "productOrdered": "商品が注文された",
       "contactReferredANewContact": "連絡先が新しい連絡先を紹介した",
       "contactReferredExistingContact": "連絡先が既存の連絡先を紹介した",
+      "contactBlockedBot": "連絡先がボットをブロックした",
+      "contactUnblockedBot": "連絡先がボットのブロックを解除した",
       "callRecorded": "通話が録音されました",
       "callTranscribed": "通話が文字起こしされました",
       "anyProduct": "すべての商品",
