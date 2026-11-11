@@ -4,9 +4,13 @@ import {
   resolveMediaUrl,
 } from "@chatbotx.io/business"
 import { ensureAttachmentStored } from "@chatbotx.io/channel-registry/media-hydration"
-import { contentTypes } from "@chatbotx.io/database/partials"
+import {
+  contentTypes,
+  lastUserInputTypes,
+} from "@chatbotx.io/database/partials"
 import type { MessageWithAttachments } from "@chatbotx.io/database/repositories"
 import type { ConversationModel } from "@chatbotx.io/database/types"
+import { isReelShare } from "@chatbotx.io/sdk"
 import { logger } from "../logger"
 import { resolveContactMessageWindow } from "./message-window"
 import { toPublicStorageUrl } from "./storage-url"
@@ -160,6 +164,10 @@ export const getContactLastInputType = async (
   }
 
   const { message } = latestInput
+  // A shared reel is stored as its video; only its attributes mark it a reel.
+  if (isReelShare(message.contentAttributes)) {
+    return lastUserInputTypes.enum.reel
+  }
 
   return message.attachments[0]?.fileType ?? message.contentType
 }

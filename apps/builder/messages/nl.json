@@ -1445,7 +1445,8 @@
       "audio": "Audio",
       "gif": "GIF",
       "file": "Bestand",
-      "storyMention": "Story-vermelding"
+      "storyMention": "Story-vermelding",
+      "reel": "Reel"
     },
     "lastMonth": {
       "label": "Afgelopen maand"
@@ -2542,6 +2543,48 @@
     "lastAdgroupId": {
       "label": "Laatste advertentiegroep-ID"
     },
+    "locale2": {
+      "label": "Taal (kort)"
+    },
+    "subscribedDate": {
+      "label": "Aanmelddatum"
+    },
+    "lastUserInputType": {
+      "label": "Type laatste gebruikersinvoer"
+    },
+    "chatHistory": {
+      "label": "Chatgeschiedenis"
+    },
+    "chatHistoryLarge": {
+      "label": "Chatgeschiedenis (groot)"
+    },
+    "chatHistoryDetails": {
+      "label": "Chatgeschiedenis met details"
+    },
+    "chatHistoryDetailsLarge": {
+      "label": "Chatgeschiedenis met details (groot)"
+    },
+    "lastUserNote": {
+      "label": "Laatste gebruikersnotitie"
+    },
+    "lastErrorLog": {
+      "label": "Laatste foutlog"
+    },
+    "lastAdName": {
+      "label": "Naam laatste advertentie"
+    },
+    "lastAdsetId": {
+      "label": "Laatste advertentieset-ID"
+    },
+    "lastAdsetName": {
+      "label": "Naam laatste advertentieset"
+    },
+    "lastCampaignId": {
+      "label": "Laatste campagne-ID"
+    },
+    "lastCampaignName": {
+      "label": "Naam laatste campagne"
+    },
     "lastTextInput": {
       "label": "Laatste tekstinvoer"
     },
@@ -2710,7 +2753,8 @@
         "audio": "Audio",
         "gif": "GIF",
         "file": "Bestand",
-        "storyMention": "Story-vermelding"
+        "storyMention": "Story-vermelding",
+        "reel": "Reel"
       },
       "ctwaConversionTypes": {
         "lead": "Lead",

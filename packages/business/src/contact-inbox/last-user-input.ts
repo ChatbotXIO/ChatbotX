@@ -3,7 +3,7 @@ import {
   contentTypes,
   lastUserInputTypes,
 } from "@chatbotx.io/database/partials"
-import { isStoryMention } from "@chatbotx.io/sdk"
+import { isReelShare, isStoryMention } from "@chatbotx.io/sdk"
 import { getPublicFileUrl } from "../utils"
 import { getContactInputAttachments } from "./input-attachments"
 
@@ -45,6 +45,10 @@ function resolveLastUserInputType(
   // in the chat.
   if (isStoryMention(source.contentAttributes)) {
     return lastUserInputTypes.enum.storyMention
+  }
+  // A shared reel is stored as its video; only its attributes mark it a reel.
+  if (isReelShare(source.contentAttributes)) {
+    return lastUserInputTypes.enum.reel
   }
   const parsedType = lastUserInputTypes.safeParse(
     attachment?.fileType ?? source.contentType,

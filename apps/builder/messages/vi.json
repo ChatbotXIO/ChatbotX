@@ -1075,7 +1075,8 @@
         "audio": "Âm thanh",
         "gif": "GIF",
         "file": "Tệp",
-        "storyMention": "Nhắc tới trong Story"
+        "storyMention": "Nhắc tới trong Story",
+        "reel": "Reel"
       },
       "ctwaConversionTypes": {
         "lead": "Khách hàng tiềm năng",
@@ -2445,7 +2446,8 @@
       "audio": "Âm thanh",
       "gif": "GIF",
       "file": "Tệp",
-      "storyMention": "Nhắc tới trong Story"
+      "storyMention": "Nhắc tới trong Story",
+      "reel": "Reel"
     },
     "lastMonth": {
       "label": "Tháng trước"
@@ -2956,6 +2958,48 @@
     },
     "lastAdgroupId": {
       "label": "ID nhóm quảng cáo cuối"
+    },
+    "locale2": {
+      "label": "Ngôn ngữ (rút gọn)"
+    },
+    "subscribedDate": {
+      "label": "Ngày đăng ký"
+    },
+    "lastUserInputType": {
+      "label": "Loại dữ liệu người dùng nhập cuối"
+    },
+    "chatHistory": {
+      "label": "Lịch sử trò chuyện"
+    },
+    "chatHistoryLarge": {
+      "label": "Lịch sử trò chuyện (dài)"
+    },
+    "chatHistoryDetails": {
+      "label": "Lịch sử trò chuyện chi tiết"
+    },
+    "chatHistoryDetailsLarge": {
+      "label": "Lịch sử trò chuyện chi tiết (dài)"
+    },
+    "lastUserNote": {
+      "label": "Ghi chú cuối về người dùng"
+    },
+    "lastErrorLog": {
+      "label": "Nhật ký lỗi cuối"
+    },
+    "lastAdName": {
+      "label": "Tên quảng cáo cuối"
+    },
+    "lastAdsetId": {
+      "label": "ID nhóm quảng cáo (ad set) cuối"
+    },
+    "lastAdsetName": {
+      "label": "Tên nhóm quảng cáo (ad set) cuối"
+    },
+    "lastCampaignId": {
+      "label": "ID chiến dịch cuối"
+    },
+    "lastCampaignName": {
+      "label": "Tên chiến dịch cuối"
     },
     "lastTextInput": {
       "label": "Văn bản nhập cuối"

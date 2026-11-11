@@ -1033,7 +1033,8 @@
         "audio": "Lyd",
         "gif": "GIF",
         "file": "Fil",
-        "storyMention": "Story-omtale"
+        "storyMention": "Story-omtale",
+        "reel": "Reel"
       },
       "ctwaConversionTypes": {
         "lead": "Lead",
@@ -1662,7 +1663,8 @@
       "audio": "Lyd",
       "gif": "GIF",
       "file": "Fil",
-      "storyMention": "Story-omtale"
+      "storyMention": "Story-omtale",
+      "reel": "Reel"
     },
     "lastMonth": {
       "label": "Seneste måned"
@@ -2758,6 +2760,48 @@
     },
     "lastAdgroupId": {
       "label": "Seneste annoncegruppe-ID"
+    },
+    "locale2": {
+      "label": "Sprog (kort)"
+    },
+    "subscribedDate": {
+      "label": "Tilmeldingsdato"
+    },
+    "lastUserInputType": {
+      "label": "Seneste brugerinputtype"
+    },
+    "chatHistory": {
+      "label": "Chathistorik"
+    },
+    "chatHistoryLarge": {
+      "label": "Chathistorik (stor)"
+    },
+    "chatHistoryDetails": {
+      "label": "Chathistorik med detaljer"
+    },
+    "chatHistoryDetailsLarge": {
+      "label": "Chathistorik med detaljer (stor)"
+    },
+    "lastUserNote": {
+      "label": "Seneste brugernote"
+    },
+    "lastErrorLog": {
+      "label": "Seneste fejllog"
+    },
+    "lastAdName": {
+      "label": "Seneste annoncenavn"
+    },
+    "lastAdsetId": {
+      "label": "Seneste annoncesæt-ID"
+    },
+    "lastAdsetName": {
+      "label": "Seneste annoncesætnavn"
+    },
+    "lastCampaignId": {
+      "label": "Seneste kampagne-ID"
+    },
+    "lastCampaignName": {
+      "label": "Seneste kampagnenavn"
     },
     "lastTextInput": {
       "label": "Seneste tekstinput"

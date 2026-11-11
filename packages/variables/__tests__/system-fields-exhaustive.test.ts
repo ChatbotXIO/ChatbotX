@@ -92,6 +92,12 @@ vi.mock("@chatbotx.io/business", () => ({
       formId: "form-1",
       formName: "Form",
       adgroupId: "adgroup-1",
+      adId: "ad-1",
+      adName: "Ad",
+      adsetId: "adset-1",
+      adsetName: "Ad set",
+      campaignId: "campaign-1",
+      campaignName: "Campaign",
     }),
   },
   questionnaireSubmissionService: {

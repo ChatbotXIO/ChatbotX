@@ -15,7 +15,9 @@ import {
 } from "@chatbotx.io/database/partials"
 import {
   getLead,
+  getLeadAdAttribution,
   getLeadgenFormName,
+  type LeadAdAttribution,
   type LeadFieldDatum,
 } from "@chatbotx.io/integration-messenger/apis/leadgen"
 import type { MessengerAuthValue } from "@chatbotx.io/integration-messenger/schema"
@@ -82,6 +84,51 @@ async function resolveFormName(props: {
       "processLeadgen: failed to resolve form name",
     )
     return
+  }
+}
+
+/**
+ * Store the lead's ad, ad set and campaign for `{{last_ad_name}}`,
+ * `{{last_campaign_name}}` and friends. Best-effort like `resolveFormName`:
+ * the names need ad-account access the page token may lack, and a failed read
+ * must not fail a lead whose answers were already applied. `ad_id` falls back
+ * to the webhook's ad group, which Meta uses for the ad itself.
+ */
+async function recordAdAttribution(props: {
+  leadId: string
+  leadgenId: string
+  adgroupId?: string
+  accessToken: string
+  version: string
+}): Promise<void> {
+  let attribution: LeadAdAttribution | undefined
+  try {
+    attribution = await getLeadAdAttribution(
+      props.leadgenId,
+      props.accessToken,
+      props.version,
+    )
+  } catch (err) {
+    logger.warn(
+      { err, leadgenId: props.leadgenId },
+      "processLeadgen: failed to read the lead's ad attribution",
+    )
+  }
+  try {
+    await facebookLeadAdsLeadService.setAdAttribution({
+      id: props.leadId,
+      adId: attribution?.ad_id ?? props.adgroupId,
+      adName: attribution?.ad_name,
+      adsetId: attribution?.adset_id,
+      adsetName: attribution?.adset_name,
+      campaignId: attribution?.campaign_id,
+      campaignName: attribution?.campaign_name,
+    })
+  } catch (err) {
+    logger.warn(
+      { err, leadgenId: props.leadgenId },
+      "processLeadgen: failed to store the lead's ad attribution",
+    )
   }
 }
 
@@ -237,6 +284,14 @@ export async function processLeadgen(
         })
       }
     }
+
+    await recordAdAttribution({
+      leadId: claim.id,
+      leadgenId,
+      adgroupId,
+      accessToken: auth.tokens.accessToken,
+      version: auth.metadata.version,
+    })
 
     // Specific-form automations carry an explicit mapping; the "all forms"
     // automation auto-maps recognized standard fields.

@@ -217,6 +217,33 @@ class FacebookLeadAdsLeadService extends BaseService {
   }
 
   /**
+   * Store the ad, ad set and campaign of a claimed lead (`{{last_ad_name}}`,
+   * `{{last_campaign_name}}`, …). Only provided values are written, so a lead
+   * whose Graph read lacks a name keeps what it already had.
+   */
+  async setAdAttribution(props: {
+    id: string
+    adId?: string | null
+    adName?: string | null
+    adsetId?: string | null
+    adsetName?: string | null
+    campaignId?: string | null
+    campaignName?: string | null
+  }) {
+    const { id, ...attribution } = props
+    const values = Object.fromEntries(
+      Object.entries(attribution).filter(([, value]) => Boolean(value)),
+    ) as Partial<typeof attribution>
+    if (Object.keys(values).length === 0) {
+      return
+    }
+    await db
+      .update(facebookLeadAdsLeadModel)
+      .set(values)
+      .where(eq(facebookLeadAdsLeadModel.id, id))
+  }
+
+  /**
    * The contact's newest lead, scoped to the workspace through its automation.
    * Backs the `{{last_lead_id}}`-style variables: one indexed `LIMIT 1` read
    * (FacebookLeadAdsLead_contactId_createdAt_idx).
@@ -233,6 +260,12 @@ class FacebookLeadAdsLeadService extends BaseService {
         formId: true,
         formName: true,
         adgroupId: true,
+        adId: true,
+        adName: true,
+        adsetId: true,
+        adsetName: true,
+        campaignId: true,
+        campaignName: true,
       },
     })
   }

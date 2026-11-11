@@ -78,6 +78,12 @@ export const reservedCustomFieldIds: {
     labelKey: "fields.locale.label",
   },
   {
+    // Language part of the locale, e.g. `en` for `en_US`.
+    id: systemFieldTypes.enum.locale2,
+    type: "shortText",
+    labelKey: "fields.locale2.label",
+  },
+  {
     id: systemFieldTypes.enum.gender,
     type: "shortText",
     labelKey: "fields.gender.label",
@@ -88,6 +94,21 @@ export const reservedCustomFieldIds: {
     labelKey: "fields.timezone.label",
   },
   {
+    id: systemFieldTypes.enum.timezone_name,
+    type: "shortText",
+    labelKey: "fields.timezoneName.label",
+  },
+  {
+    id: systemFieldTypes.enum.subscribed_date,
+    type: "date",
+    labelKey: "fields.subscribedDate.label",
+  },
+  {
+    id: systemFieldTypes.enum.user_source,
+    type: "shortText",
+    labelKey: "fields.userSource.label",
+  },
+  {
     id: systemFieldTypes.enum.user_id,
     type: "shortText",
     labelKey: "fields.userId.label",
@@ -96,6 +117,11 @@ export const reservedCustomFieldIds: {
     id: systemFieldTypes.enum.user_tags,
     type: "shortText",
     labelKey: "fields.userTags.label",
+  },
+  {
+    id: systemFieldTypes.enum.last_user_note,
+    type: "longText",
+    labelKey: "fields.lastUserNote.label",
   },
   {
     id: systemFieldTypes.enum.workspace_name,
@@ -116,6 +142,12 @@ export const reservedCustomFieldIds: {
     id: systemFieldTypes.enum.last_input,
     type: "shortText",
     labelKey: "fields.lastInput.label",
+  },
+  {
+    // Canonical picker entry; `last_input_type` stays a resolvable alias.
+    id: systemFieldTypes.enum.last_user_input_type,
+    type: "shortText",
+    labelKey: "fields.lastUserInputType.label",
   },
   {
     id: systemFieldTypes.enum.last_opportunity_id,
@@ -174,6 +206,32 @@ export const reservedCustomFieldIds: {
     labelKey: "fields.lastInteraction.label",
   },
   {
+    id: systemFieldTypes.enum.last_outbound_message_at,
+    type: "datetime",
+    labelKey: "fields.lastOutboundMessageAt.label",
+  },
+  {
+    // Last 50 / 200 messages; the `details` variants prefix each line with its sender.
+    id: systemFieldTypes.enum.chat_history,
+    type: "longText",
+    labelKey: "fields.chatHistory.label",
+  },
+  {
+    id: systemFieldTypes.enum.chat_history_large,
+    type: "longText",
+    labelKey: "fields.chatHistoryLarge.label",
+  },
+  {
+    id: systemFieldTypes.enum.chat_history_details,
+    type: "longText",
+    labelKey: "fields.chatHistoryDetails.label",
+  },
+  {
+    id: systemFieldTypes.enum.chat_history_details_large,
+    type: "longText",
+    labelKey: "fields.chatHistoryDetailsLarge.label",
+  },
+  {
     id: systemFieldTypes.enum.inbox_link,
     type: "shortText",
     labelKey: "fields.inboxLink.label",
@@ -194,6 +252,37 @@ export const reservedCustomFieldIds: {
     type: "shortText",
     labelKey: "fields.lastFbComment.label",
     channels: ["messenger", "instagram"],
+  },
+  {
+    id: systemFieldTypes.enum.last_post_id,
+    type: "shortText",
+    labelKey: "fields.lastPostId.label",
+    channels: ["messenger", "instagram"],
+  },
+  {
+    id: systemFieldTypes.enum.last_comment_id,
+    type: "shortText",
+    labelKey: "fields.lastCommentId.label",
+    channels: ["messenger", "instagram"],
+  },
+  {
+    id: systemFieldTypes.enum.last_commented_post_text,
+    type: "longText",
+    labelKey: "fields.lastCommentedPostText.label",
+    channels: ["messenger", "instagram"],
+  },
+  {
+    // Facebook comments only: people mentioned in the contact's comment.
+    id: systemFieldTypes.enum.total_tagged,
+    type: "number",
+    labelKey: "fields.totalTagged.label",
+    channels: ["messenger"],
+  },
+  {
+    id: systemFieldTypes.enum.total_new_tagged,
+    type: "number",
+    labelKey: "fields.totalNewTagged.label",
+    channels: ["messenger"],
   },
   {
     // The inbox user who sent the running flow — not the conversation assignee.
@@ -218,9 +307,37 @@ export const reservedCustomFieldIds: {
     labelKey: "fields.lastPoints.label",
   },
   {
+    id: systemFieldTypes.enum.last_input_failure,
+    type: "shortText",
+    labelKey: "fields.lastInputFailure.label",
+  },
+  {
+    id: systemFieldTypes.enum.last_error_log,
+    type: "longText",
+    labelKey: "fields.lastErrorLog.label",
+  },
+  {
     id: systemFieldTypes.enum.last_ad_headline,
     type: "shortText",
     labelKey: "fields.lastAdHeadline.label",
+    channels: ["messenger", "instagram", "whatsapp"],
+  },
+  {
+    id: systemFieldTypes.enum.last_ad,
+    type: "shortText",
+    labelKey: "fields.lastAd.label",
+    channels: ["messenger", "instagram", "whatsapp"],
+  },
+  {
+    id: systemFieldTypes.enum.last_ad_source_url,
+    type: "shortText",
+    labelKey: "fields.lastAdSourceUrl.label",
+    channels: ["messenger", "instagram", "whatsapp"],
+  },
+  {
+    id: systemFieldTypes.enum.last_ad_source_platform,
+    type: "shortText",
+    labelKey: "fields.lastAdSourcePlatform.label",
     channels: ["messenger", "instagram", "whatsapp"],
   },
   {
@@ -271,6 +388,36 @@ export const reservedCustomFieldIds: {
     id: systemFieldTypes.enum.last_adgroup_id,
     type: "shortText",
     labelKey: "fields.lastAdgroupId.label",
+    channels: ["messenger"],
+  },
+  {
+    id: systemFieldTypes.enum.last_ad_name,
+    type: "shortText",
+    labelKey: "fields.lastAdName.label",
+    channels: ["messenger"],
+  },
+  {
+    id: systemFieldTypes.enum.last_adset_id,
+    type: "shortText",
+    labelKey: "fields.lastAdsetId.label",
+    channels: ["messenger"],
+  },
+  {
+    id: systemFieldTypes.enum.last_adset_name,
+    type: "shortText",
+    labelKey: "fields.lastAdsetName.label",
+    channels: ["messenger"],
+  },
+  {
+    id: systemFieldTypes.enum.last_campaign_id,
+    type: "shortText",
+    labelKey: "fields.lastCampaignId.label",
+    channels: ["messenger"],
+  },
+  {
+    id: systemFieldTypes.enum.last_campaign_name,
+    type: "shortText",
+    labelKey: "fields.lastCampaignName.label",
     channels: ["messenger"],
   },
   {

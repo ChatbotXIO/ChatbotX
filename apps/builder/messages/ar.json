@@ -1033,7 +1033,8 @@
         "audio": "صوت",
         "gif": "GIF",
         "file": "ملف",
-        "storyMention": "إشارة في قصة"
+        "storyMention": "إشارة في قصة",
+        "reel": "ريلز"
       },
       "ctwaConversionTypes": {
         "lead": "عميل محتمل",
@@ -1818,7 +1819,8 @@
       "audio": "صوت",
       "gif": "GIF",
       "file": "ملف",
-      "storyMention": "إشارة في قصة"
+      "storyMention": "إشارة في قصة",
+      "reel": "ريلز"
     },
     "lastMonth": {
       "label": "الشهر الماضي"
@@ -2914,6 +2916,48 @@
     },
     "lastAdgroupId": {
       "label": "آخر معرّف مجموعة إعلانات"
+    },
+    "locale2": {
+      "label": "اللغة (مختصرة)"
+    },
+    "subscribedDate": {
+      "label": "تاريخ الاشتراك"
+    },
+    "lastUserInputType": {
+      "label": "نوع آخر إدخال للمستخدم"
+    },
+    "chatHistory": {
+      "label": "سجل المحادثة"
+    },
+    "chatHistoryLarge": {
+      "label": "سجل المحادثة (موسّع)"
+    },
+    "chatHistoryDetails": {
+      "label": "تفاصيل سجل المحادثة"
+    },
+    "chatHistoryDetailsLarge": {
+      "label": "تفاصيل سجل المحادثة (موسّع)"
+    },
+    "lastUserNote": {
+      "label": "آخر ملاحظة عن المستخدم"
+    },
+    "lastErrorLog": {
+      "label": "آخر سجل خطأ"
+    },
+    "lastAdName": {
+      "label": "اسم آخر إعلان"
+    },
+    "lastAdsetId": {
+      "label": "آخر معرّف مجموعة إعلانية"
+    },
+    "lastAdsetName": {
+      "label": "اسم آخر مجموعة إعلانية"
+    },
+    "lastCampaignId": {
+      "label": "آخر معرّف حملة"
+    },
+    "lastCampaignName": {
+      "label": "اسم آخر حملة"
     },
     "lastTextInput": {
       "label": "آخر إدخال نصي"

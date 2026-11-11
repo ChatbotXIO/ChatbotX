@@ -20,6 +20,8 @@ export const lastUserInputTypes = z.enum([
   "file",
   // An Instagram story in which the contact tagged the connected account.
   "storyMention",
+  // An Instagram reel the contact shared into the chat.
+  "reel",
 ])
 export type LastUserInputType = z.infer<typeof lastUserInputTypes>
 

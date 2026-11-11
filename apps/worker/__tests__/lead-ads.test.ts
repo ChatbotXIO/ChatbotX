@@ -18,6 +18,8 @@ const {
   mockSetValueByKey,
   mockGetLead,
   mockDetect,
+  mockGetLeadAdAttribution,
+  mockSetAdAttribution,
 } = vi.hoisted(() => ({
   mockIdentify: vi.fn(),
   mockFindMatching: vi.fn(),
@@ -32,6 +34,8 @@ const {
   mockSetValueByKey: vi.fn(),
   mockGetLead: vi.fn(),
   mockDetect: vi.fn(),
+  mockGetLeadAdAttribution: vi.fn(),
+  mockSetAdAttribution: vi.fn(),
 }))
 
 const RICH_FIELDS = [
@@ -59,11 +63,13 @@ vi.mock("@chatbotx.io/business", () => ({
     release: mockRelease,
     setContactId: mockSetContactId,
     setFormName: mockSetFormName,
+    setAdAttribution: mockSetAdAttribution,
   },
 }))
 
 vi.mock("@chatbotx.io/integration-messenger/apis/leadgen", () => ({
   getLead: mockGetLead,
+  getLeadAdAttribution: mockGetLeadAdAttribution,
   getLeadgenFormName: mockGetLeadgenFormName,
 }))
 
@@ -133,6 +139,8 @@ function primeResolvers() {
     integrationRow: INTEGRATION_ROW,
   })
   mockClaim.mockResolvedValue({ id: "claim-1" })
+  mockGetLeadAdAttribution.mockResolvedValue({ id: "lead-1" })
+  mockSetAdAttribution.mockResolvedValue(undefined)
   mockDetect.mockResolvedValue({
     contact: { id: "contact-1" },
     contactInbox: { id: "ci-1" },
@@ -417,6 +425,66 @@ describe("processLeadgen", () => {
     await expect(processLeadgen(JOB, bullJob())).resolves.toBeUndefined()
 
     expect(mockSetFormName).not.toHaveBeenCalled()
+    expect(mockRelease).not.toHaveBeenCalled()
+    expect(mockIncrementLeadsHandled).toHaveBeenCalledWith("auto-1")
+  })
+
+  test("stores the ad, ad set and campaign the lead came from", async () => {
+    primeResolvers()
+    mockFindMatching.mockResolvedValue({
+      id: "auto-1",
+      formName: "Form",
+      fieldMapping: [],
+    })
+    mockGetLead.mockResolvedValue(
+      leadWith([{ name: "inbox_url", values: [INBOX_URL] }]),
+    )
+    mockGetLeadAdAttribution.mockResolvedValue({
+      id: "lead-1",
+      ad_id: "ad-9",
+      ad_name: "Summer ad",
+      adset_id: "adset-2",
+      adset_name: "VN 18-35",
+      campaign_id: "campaign-4",
+      campaign_name: "Summer sale",
+    })
+
+    await processLeadgen(JOB, bullJob())
+
+    expect(mockGetLeadAdAttribution).toHaveBeenCalledWith(
+      "lead-1",
+      "page-token",
+      "v23.0",
+    )
+    expect(mockSetAdAttribution).toHaveBeenCalledWith({
+      id: "claim-1",
+      adId: "ad-9",
+      adName: "Summer ad",
+      adsetId: "adset-2",
+      adsetName: "VN 18-35",
+      campaignId: "campaign-4",
+      campaignName: "Summer sale",
+    })
+  })
+
+  test("a failing ad attribution read keeps the webhook ad id and never fails the lead", async () => {
+    primeResolvers()
+    mockFindMatching.mockResolvedValue({
+      id: "auto-1",
+      formName: "Form",
+      fieldMapping: [],
+    })
+    mockGetLead.mockResolvedValue(
+      leadWith([{ name: "inbox_url", values: [INBOX_URL] }]),
+    )
+    mockGetLeadAdAttribution.mockRejectedValue(new Error("graph #100"))
+    mockSetAdAttribution.mockRejectedValueOnce(new Error("db down"))
+
+    await expect(processLeadgen(JOB, bullJob())).resolves.toBeUndefined()
+
+    expect(mockSetAdAttribution).toHaveBeenCalledWith(
+      expect.objectContaining({ id: "claim-1", adId: "adgroup-1" }),
+    )
     expect(mockRelease).not.toHaveBeenCalled()
     expect(mockIncrementLeadsHandled).toHaveBeenCalledWith("auto-1")
   })

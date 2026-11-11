@@ -1033,7 +1033,8 @@
         "audio": "Ses",
         "gif": "GIF",
         "file": "Dosya",
-        "storyMention": "Hikayede bahsetme"
+        "storyMention": "Hikayede bahsetme",
+        "reel": "Reel"
       },
       "ctwaConversionTypes": {
         "lead": "Potansiyel Müşteri",
@@ -1818,7 +1819,8 @@
       "audio": "Ses",
       "gif": "GIF",
       "file": "Dosya",
-      "storyMention": "Hikayede bahsetme"
+      "storyMention": "Hikayede bahsetme",
+      "reel": "Reel"
     },
     "lastMonth": {
       "label": "Geçen ay"
@@ -2914,6 +2916,48 @@
     },
     "lastAdgroupId": {
       "label": "Son reklam grubu kimliği"
+    },
+    "locale2": {
+      "label": "Dil (kısa)"
+    },
+    "subscribedDate": {
+      "label": "Abonelik tarihi"
+    },
+    "lastUserInputType": {
+      "label": "Son kullanıcı girdi türü"
+    },
+    "chatHistory": {
+      "label": "Sohbet geçmişi"
+    },
+    "chatHistoryLarge": {
+      "label": "Sohbet geçmişi (geniş)"
+    },
+    "chatHistoryDetails": {
+      "label": "Sohbet geçmişi ayrıntıları"
+    },
+    "chatHistoryDetailsLarge": {
+      "label": "Sohbet geçmişi ayrıntıları (geniş)"
+    },
+    "lastUserNote": {
+      "label": "Son kullanıcı notu"
+    },
+    "lastErrorLog": {
+      "label": "Son hata günlüğü"
+    },
+    "lastAdName": {
+      "label": "Son reklam adı"
+    },
+    "lastAdsetId": {
+      "label": "Son reklam seti kimliği"
+    },
+    "lastAdsetName": {
+      "label": "Son reklam seti adı"
+    },
+    "lastCampaignId": {
+      "label": "Son kampanya kimliği"
+    },
+    "lastCampaignName": {
+      "label": "Son kampanya adı"
     },
     "lastTextInput": {
       "label": "Son metin girişi"

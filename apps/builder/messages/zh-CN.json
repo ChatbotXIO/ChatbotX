@@ -1519,7 +1519,8 @@
         "refLink": "参考链接",
         "text": "文本",
         "video": "视频",
-        "storyMention": "限时动态提及"
+        "storyMention": "限时动态提及",
+        "reel": "Reels"
       },
       "locale": "语言",
       "messengerList": "Messenger 清单",
@@ -3022,7 +3023,8 @@
       "refLink": "参考链接",
       "text": "文本",
       "video": "视频",
-      "storyMention": "限时动态提及"
+      "storyMention": "限时动态提及",
+      "reel": "Reels"
     },
     "lifeTime": {
       "label": "生命周期"
@@ -3917,6 +3919,48 @@
     },
     "lastAdgroupId": {
       "label": "最近广告组ID"
+    },
+    "locale2": {
+      "label": "语言(简写)"
+    },
+    "subscribedDate": {
+      "label": "订阅日期"
+    },
+    "lastUserInputType": {
+      "label": "用户最近输入类型"
+    },
+    "chatHistory": {
+      "label": "聊天记录"
+    },
+    "chatHistoryLarge": {
+      "label": "聊天记录(大)"
+    },
+    "chatHistoryDetails": {
+      "label": "聊天记录详情"
+    },
+    "chatHistoryDetailsLarge": {
+      "label": "聊天记录详情(大)"
+    },
+    "lastUserNote": {
+      "label": "最近用户备注"
+    },
+    "lastErrorLog": {
+      "label": "最近错误日志"
+    },
+    "lastAdName": {
+      "label": "最近广告名称"
+    },
+    "lastAdsetId": {
+      "label": "最近广告组ID(Ad Set)"
+    },
+    "lastAdsetName": {
+      "label": "最近广告组名称(Ad Set)"
+    },
+    "lastCampaignId": {
+      "label": "最近广告系列ID"
+    },
+    "lastCampaignName": {
+      "label": "最近广告系列名称"
     },
     "lastTextInput": {
       "label": "最近文本输入"

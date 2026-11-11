@@ -396,7 +396,17 @@ const getFlowSenderValue = async (
 
 const getLatestLeadValue = async (
   context: ContactVariableContext,
-  key: "leadgenId" | "formId" | "formName" | "adgroupId",
+  key:
+    | "leadgenId"
+    | "formId"
+    | "formName"
+    | "adgroupId"
+    | "adId"
+    | "adName"
+    | "adsetId"
+    | "adsetName"
+    | "campaignId"
+    | "campaignName",
 ): Promise<string | null> => {
   const lead = await facebookLeadAdsLeadService.findLatestByContact({
     workspaceId: context.contact.workspaceId,
@@ -467,7 +477,9 @@ export const getSystemFieldValue = async (
         }))
     case systemFieldTypes.enum.last_input:
       return await getContactLastInput(contact.id)
+    // `last_user_input_type` is an alias of `last_input_type`.
     case systemFieldTypes.enum.last_input_type:
+    case systemFieldTypes.enum.last_user_input_type:
       return await getContactLastInputType(contact.id)
     case systemFieldTypes.enum.last_text_input:
       return await getContactLastTextInput(contact.id)
@@ -660,8 +672,13 @@ export const getSystemFieldValue = async (
         )
         return null
       }
+    // The ad of the last click-to-message referral, else the ad of the
+    // contact's latest Lead Ads lead.
     case systemFieldTypes.enum.last_ad:
-      return getReferralValue(contactInbox, "adId")
+      return (
+        getReferralValue(contactInbox, "adId") ??
+        (await getLatestLeadValue(context, "adId"))
+      )
     case systemFieldTypes.enum.last_ctwa:
       return getReferralValue(contactInbox, "ctwaClid")
     // Unlike `last_ad`, these read the contact's ad touch log, so they span
@@ -734,6 +751,16 @@ export const getSystemFieldValue = async (
       return await getLatestLeadValue(context, "formName")
     case systemFieldTypes.enum.last_adgroup_id:
       return await getLatestLeadValue(context, "adgroupId")
+    case systemFieldTypes.enum.last_ad_name:
+      return await getLatestLeadValue(context, "adName")
+    case systemFieldTypes.enum.last_adset_id:
+      return await getLatestLeadValue(context, "adsetId")
+    case systemFieldTypes.enum.last_adset_name:
+      return await getLatestLeadValue(context, "adsetName")
+    case systemFieldTypes.enum.last_campaign_id:
+      return await getLatestLeadValue(context, "campaignId")
+    case systemFieldTypes.enum.last_campaign_name:
+      return await getLatestLeadValue(context, "campaignName")
     case systemFieldTypes.enum.booking_link: {
       const appointment = await getAppointment(context)
       if (!appointment) {

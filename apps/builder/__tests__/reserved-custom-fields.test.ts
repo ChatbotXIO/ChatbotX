@@ -12,14 +12,20 @@ const expectedReservedSystemFieldIds = [
   systemFieldTypes.enum.phone,
   systemFieldTypes.enum.avatar,
   systemFieldTypes.enum.locale,
+  systemFieldTypes.enum.locale2,
   systemFieldTypes.enum.gender,
   systemFieldTypes.enum.timezone,
+  systemFieldTypes.enum.timezone_name,
+  systemFieldTypes.enum.subscribed_date,
+  systemFieldTypes.enum.user_source,
   systemFieldTypes.enum.user_id,
   systemFieldTypes.enum.user_tags,
+  systemFieldTypes.enum.last_user_note,
   systemFieldTypes.enum.workspace_name,
   systemFieldTypes.enum.workspace_id,
   systemFieldTypes.enum.page_user_name,
   systemFieldTypes.enum.last_input,
+  systemFieldTypes.enum.last_user_input_type,
   systemFieldTypes.enum.last_opportunity_id,
   systemFieldTypes.enum.last_text_input,
   systemFieldTypes.enum.last_call_recorded,
@@ -31,15 +37,30 @@ const expectedReservedSystemFieldIds = [
   systemFieldTypes.enum.booking_link,
   systemFieldTypes.enum.last_seen,
   systemFieldTypes.enum.last_interaction,
+  systemFieldTypes.enum.last_outbound_message_at,
+  systemFieldTypes.enum.chat_history,
+  systemFieldTypes.enum.chat_history_large,
+  systemFieldTypes.enum.chat_history_details,
+  systemFieldTypes.enum.chat_history_details_large,
   systemFieldTypes.enum.inbox_link,
   systemFieldTypes.enum.last_btn_title,
   systemFieldTypes.enum.fb_chat_link,
   systemFieldTypes.enum.last_fb_comment,
+  systemFieldTypes.enum.last_post_id,
+  systemFieldTypes.enum.last_comment_id,
+  systemFieldTypes.enum.last_commented_post_text,
+  systemFieldTypes.enum.total_tagged,
+  systemFieldTypes.enum.total_new_tagged,
   systemFieldTypes.enum.admin_name,
   systemFieldTypes.enum.admin_team_name,
   systemFieldTypes.enum.booking_id,
   systemFieldTypes.enum.last_points,
+  systemFieldTypes.enum.last_input_failure,
+  systemFieldTypes.enum.last_error_log,
   systemFieldTypes.enum.last_ad_headline,
+  systemFieldTypes.enum.last_ad,
+  systemFieldTypes.enum.last_ad_source_url,
+  systemFieldTypes.enum.last_ad_source_platform,
   systemFieldTypes.enum.ad_ids,
   systemFieldTypes.enum.ad_id,
   systemFieldTypes.enum.last_ad_body,
@@ -48,6 +69,11 @@ const expectedReservedSystemFieldIds = [
   systemFieldTypes.enum.last_form_id,
   systemFieldTypes.enum.last_form_name,
   systemFieldTypes.enum.last_adgroup_id,
+  systemFieldTypes.enum.last_ad_name,
+  systemFieldTypes.enum.last_adset_id,
+  systemFieldTypes.enum.last_adset_name,
+  systemFieldTypes.enum.last_campaign_id,
+  systemFieldTypes.enum.last_campaign_name,
   systemFieldTypes.enum.referral_name,
   systemFieldTypes.enum.empty,
 ]
@@ -92,6 +118,24 @@ describe("reservedCustomFieldIds", () => {
     expect(channelsOf(systemFieldTypes.enum.last_adgroup_id)).toEqual([
       "messenger",
     ])
+    for (const leadAdField of [
+      systemFieldTypes.enum.last_ad_name,
+      systemFieldTypes.enum.last_adset_id,
+      systemFieldTypes.enum.last_adset_name,
+      systemFieldTypes.enum.last_campaign_id,
+      systemFieldTypes.enum.last_campaign_name,
+      systemFieldTypes.enum.total_tagged,
+      systemFieldTypes.enum.total_new_tagged,
+    ]) {
+      expect(channelsOf(leadAdField)).toEqual(["messenger"])
+    }
+    for (const commentField of [
+      systemFieldTypes.enum.last_post_id,
+      systemFieldTypes.enum.last_comment_id,
+      systemFieldTypes.enum.last_commented_post_text,
+    ]) {
+      expect(channelsOf(commentField)).toEqual(["messenger", "instagram"])
+    }
     // Only WhatsApp Click-to-WhatsApp referrals carry an ad body.
     expect(channelsOf(systemFieldTypes.enum.last_ad_body)).toEqual(["whatsapp"])
     // Every channel that records an ad touch (Zalo through a Google click).
@@ -114,6 +158,9 @@ describe("reservedCustomFieldIds", () => {
   test("does not offer the legacy spelling alias beside the canonical field", () => {
     expect(reservedCustomFieldIds.map((field) => field.id)).not.toContain(
       systemFieldTypes.enum.last_btt_title,
+    )
+    expect(reservedCustomFieldIds.map((field) => field.id)).not.toContain(
+      systemFieldTypes.enum.last_input_type,
     )
   })
 

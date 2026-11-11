@@ -1033,7 +1033,8 @@
         "audio": "Áudio",
         "gif": "GIF",
         "file": "Ficheiro",
-        "storyMention": "Menção no Story"
+        "storyMention": "Menção no Story",
+        "reel": "Reel"
       },
       "ctwaConversionTypes": {
         "lead": "Lead",
@@ -1662,7 +1663,8 @@
       "audio": "Áudio",
       "gif": "GIF",
       "file": "Ficheiro",
-      "storyMention": "Menção no Story"
+      "storyMention": "Menção no Story",
+      "reel": "Reel"
     },
     "lastMonth": {
       "label": "Último mês"
@@ -2758,6 +2760,48 @@
     },
     "lastAdgroupId": {
       "label": "Último ID do grupo de anúncios"
+    },
+    "locale2": {
+      "label": "Idioma (curto)"
+    },
+    "subscribedDate": {
+      "label": "Data de subscrição"
+    },
+    "lastUserInputType": {
+      "label": "Tipo da última entrada do utilizador"
+    },
+    "chatHistory": {
+      "label": "Histórico de conversa"
+    },
+    "chatHistoryLarge": {
+      "label": "Histórico de conversa (grande)"
+    },
+    "chatHistoryDetails": {
+      "label": "Histórico de conversa detalhado"
+    },
+    "chatHistoryDetailsLarge": {
+      "label": "Histórico de conversa detalhado (grande)"
+    },
+    "lastUserNote": {
+      "label": "Última nota do utilizador"
+    },
+    "lastErrorLog": {
+      "label": "Último registo de erro"
+    },
+    "lastAdName": {
+      "label": "Nome do último anúncio"
+    },
+    "lastAdsetId": {
+      "label": "ID do último conjunto de anúncios"
+    },
+    "lastAdsetName": {
+      "label": "Nome do último conjunto de anúncios"
+    },
+    "lastCampaignId": {
+      "label": "ID da última campanha"
+    },
+    "lastCampaignName": {
+      "label": "Nome da última campanha"
     },
     "lastTextInput": {
       "label": "Última entrada de texto"

@@ -1033,7 +1033,8 @@
         "audio": "Ääni",
         "gif": "GIF",
         "file": "Tiedosto",
-        "storyMention": "Maininta tarinassa"
+        "storyMention": "Maininta tarinassa",
+        "reel": "Reel"
       },
       "ctwaConversionTypes": {
         "lead": "Liidi",
@@ -1662,7 +1663,8 @@
       "audio": "Ääni",
       "gif": "GIF",
       "file": "Tiedosto",
-      "storyMention": "Maininta tarinassa"
+      "storyMention": "Maininta tarinassa",
+      "reel": "Reel"
     },
     "lastMonth": {
       "label": "Viime kuukausi"
@@ -2758,6 +2760,48 @@
     },
     "lastAdgroupId": {
       "label": "Viimeisin mainosryhmän tunnus"
+    },
+    "locale2": {
+      "label": "Kieli (lyhyt)"
+    },
+    "subscribedDate": {
+      "label": "Tilauspäivä"
+    },
+    "lastUserInputType": {
+      "label": "Käyttäjän viimeisimmän syötteen tyyppi"
+    },
+    "chatHistory": {
+      "label": "Keskusteluhistoria"
+    },
+    "chatHistoryLarge": {
+      "label": "Keskusteluhistoria (laaja)"
+    },
+    "chatHistoryDetails": {
+      "label": "Keskusteluhistorian tiedot"
+    },
+    "chatHistoryDetailsLarge": {
+      "label": "Keskusteluhistorian tiedot (laaja)"
+    },
+    "lastUserNote": {
+      "label": "Viimeisin käyttäjämuistiinpano"
+    },
+    "lastErrorLog": {
+      "label": "Viimeisin virheloki"
+    },
+    "lastAdName": {
+      "label": "Viimeisimmän mainoksen nimi"
+    },
+    "lastAdsetId": {
+      "label": "Viimeisimmän mainossarjan tunnus"
+    },
+    "lastAdsetName": {
+      "label": "Viimeisimmän mainossarjan nimi"
+    },
+    "lastCampaignId": {
+      "label": "Viimeisimmän kampanjan tunnus"
+    },
+    "lastCampaignName": {
+      "label": "Viimeisimmän kampanjan nimi"
     },
     "lastTextInput": {
       "label": "Viimeisin tekstisyöte"

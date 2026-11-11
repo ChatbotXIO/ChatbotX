@@ -239,6 +239,10 @@ describe("getSystemFieldValue — helper-backed fields", () => {
     await expect(
       getSystemFieldValue(context, systemFieldTypes.enum.last_input_type),
     ).resolves.toBe("text")
+    // `last_user_input_type` is an alias of `last_input_type`.
+    await expect(
+      getSystemFieldValue(context, systemFieldTypes.enum.last_user_input_type),
+    ).resolves.toBe("text")
 
     expect(mocks.getContactLastInput).toHaveBeenCalledWith("contact-1")
     expect(mocks.getContactLastInputType).toHaveBeenCalledWith("contact-1")

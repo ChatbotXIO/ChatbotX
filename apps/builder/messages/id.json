@@ -1033,7 +1033,8 @@
         "audio": "Audio",
         "gif": "GIF",
         "file": "File",
-        "storyMention": "Sebutan di Story"
+        "storyMention": "Sebutan di Story",
+        "reel": "Reel"
       },
       "ctwaConversionTypes": {
         "lead": "Lead",
@@ -1662,7 +1663,8 @@
       "audio": "Audio",
       "gif": "GIF",
       "file": "File",
-      "storyMention": "Sebutan di Story"
+      "storyMention": "Sebutan di Story",
+      "reel": "Reel"
     },
     "lastMonth": {
       "label": "Terakhir month"
@@ -2758,6 +2760,48 @@
     },
     "lastAdgroupId": {
       "label": "ID grup iklan terakhir"
+    },
+    "locale2": {
+      "label": "Bahasa (singkat)"
+    },
+    "subscribedDate": {
+      "label": "Tanggal berlangganan"
+    },
+    "lastUserInputType": {
+      "label": "Jenis input pengguna terakhir"
+    },
+    "chatHistory": {
+      "label": "Riwayat obrolan"
+    },
+    "chatHistoryLarge": {
+      "label": "Riwayat obrolan (besar)"
+    },
+    "chatHistoryDetails": {
+      "label": "Detail riwayat obrolan"
+    },
+    "chatHistoryDetailsLarge": {
+      "label": "Detail riwayat obrolan (besar)"
+    },
+    "lastUserNote": {
+      "label": "Catatan pengguna terakhir"
+    },
+    "lastErrorLog": {
+      "label": "Log galat terakhir"
+    },
+    "lastAdName": {
+      "label": "Nama iklan terakhir"
+    },
+    "lastAdsetId": {
+      "label": "ID set iklan terakhir"
+    },
+    "lastAdsetName": {
+      "label": "Nama set iklan terakhir"
+    },
+    "lastCampaignId": {
+      "label": "ID kampanye terakhir"
+    },
+    "lastCampaignName": {
+      "label": "Nama kampanye terakhir"
     },
     "lastTextInput": {
       "label": "Input teks terakhir"

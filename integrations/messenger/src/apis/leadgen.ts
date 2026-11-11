@@ -115,3 +115,36 @@ export function getLead(
     }),
   )
 }
+
+export type LeadAdAttribution = {
+  id: string
+  ad_id?: string
+  ad_name?: string
+  adset_id?: string
+  adset_name?: string
+  campaign_id?: string
+  campaign_name?: string
+}
+
+/**
+ * Ad, ad set and campaign a lead came from. Kept apart from `getLead` because
+ * the names need ad-account access the page token may lack — a failure here
+ * must not cost the lead's answers. Organic leads carry none of these fields.
+ */
+export function getLeadAdAttribution(
+  leadgenId: string,
+  accessToken: string,
+  version: string = DEFAULT_API_VERSION,
+): Promise<LeadAdAttribution> {
+  const endpoint = `${version}/${leadgenId}`
+
+  return rescue(endpoint, () =>
+    facebookGraphClient.get<LeadAdAttribution>(endpoint, {
+      searchParams: {
+        fields:
+          "id,ad_id,ad_name,adset_id,adset_name,campaign_id,campaign_name",
+        access_token: accessToken,
+      },
+    }),
+  )
+}

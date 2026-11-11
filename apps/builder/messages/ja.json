@@ -1033,7 +1033,8 @@
         "audio": "音声",
         "gif": "GIF",
         "file": "ファイル",
-        "storyMention": "ストーリーメンション"
+        "storyMention": "ストーリーメンション",
+        "reel": "リール"
       },
       "ctwaConversionTypes": {
         "lead": "リード",
@@ -1662,7 +1663,8 @@
       "audio": "音声",
       "gif": "GIF",
       "file": "ファイル",
-      "storyMention": "ストーリーメンション"
+      "storyMention": "ストーリーメンション",
+      "reel": "リール"
     },
     "lastMonth": {
       "label": "先月"
@@ -2758,6 +2760,48 @@
     },
     "lastAdgroupId": {
       "label": "最後の広告グループID"
+    },
+    "locale2": {
+      "label": "言語(短縮)"
+    },
+    "subscribedDate": {
+      "label": "登録日"
+    },
+    "lastUserInputType": {
+      "label": "ユーザーの最後の入力タイプ"
+    },
+    "chatHistory": {
+      "label": "チャット履歴"
+    },
+    "chatHistoryLarge": {
+      "label": "チャット履歴(大)"
+    },
+    "chatHistoryDetails": {
+      "label": "チャット履歴の詳細"
+    },
+    "chatHistoryDetailsLarge": {
+      "label": "チャット履歴の詳細(大)"
+    },
+    "lastUserNote": {
+      "label": "ユーザーの最後のメモ"
+    },
+    "lastErrorLog": {
+      "label": "最後のエラーログ"
+    },
+    "lastAdName": {
+      "label": "最後の広告名"
+    },
+    "lastAdsetId": {
+      "label": "最後の広告セットID"
+    },
+    "lastAdsetName": {
+      "label": "最後の広告セット名"
+    },
+    "lastCampaignId": {
+      "label": "最後のキャンペーンID"
+    },
+    "lastCampaignName": {
+      "label": "最後のキャンペーン名"
     },
     "lastTextInput": {
       "label": "最後のテキスト入力"

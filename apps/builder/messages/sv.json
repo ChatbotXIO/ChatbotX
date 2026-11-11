@@ -1318,7 +1318,8 @@
         "refLink": "Referenslänk",
         "text": "Text",
         "video": "Video",
-        "storyMention": "Story-omnämnande"
+        "storyMention": "Story-omnämnande",
+        "reel": "Reel"
       },
       "ctwaConversionTypes": {
         "lead": "Lead",
@@ -3013,7 +3014,8 @@
       "refLink": "Referenslänk",
       "text": "Text",
       "video": "Video",
-      "storyMention": "Story-omnämnande"
+      "storyMention": "Story-omnämnande",
+      "reel": "Reel"
     },
     "lifeTime": {
       "label": "Livstid"
@@ -3914,6 +3916,48 @@
     },
     "lastAdgroupId": {
       "label": "Senaste annonsgrupp-ID"
+    },
+    "locale2": {
+      "label": "Språk (kort)"
+    },
+    "subscribedDate": {
+      "label": "Prenumerationsdatum"
+    },
+    "lastUserInputType": {
+      "label": "Typ av senaste användarinmatning"
+    },
+    "chatHistory": {
+      "label": "Chatthistorik"
+    },
+    "chatHistoryLarge": {
+      "label": "Chatthistorik (stor)"
+    },
+    "chatHistoryDetails": {
+      "label": "Chatthistorik med detaljer"
+    },
+    "chatHistoryDetailsLarge": {
+      "label": "Chatthistorik med detaljer (stor)"
+    },
+    "lastUserNote": {
+      "label": "Senaste användaranteckning"
+    },
+    "lastErrorLog": {
+      "label": "Senaste fellogg"
+    },
+    "lastAdName": {
+      "label": "Senaste annonsnamn"
+    },
+    "lastAdsetId": {
+      "label": "Senaste annonsuppsättnings-ID"
+    },
+    "lastAdsetName": {
+      "label": "Senaste annonsuppsättningsnamn"
+    },
+    "lastCampaignId": {
+      "label": "Senaste kampanj-ID"
+    },
+    "lastCampaignName": {
+      "label": "Senaste kampanjnamn"
     },
     "lastTextInput": {
       "label": "Senaste textinmatning"

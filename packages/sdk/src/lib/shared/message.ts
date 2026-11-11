@@ -731,6 +731,22 @@ export const isStoryMention = (contentAttributes: unknown): boolean =>
   )
 
 /**
+ * Carried on an inbound Instagram message whose attachment is a shared reel
+ * (`ig_reel` / `reel`), so `{{last_user_input_type}}` can say `reel` instead of
+ * the video/file the reel's media is stored as.
+ */
+export type MessageReelShareEntity = {
+  type: "reel_share"
+}
+
+export const isReelShare = (contentAttributes: unknown): boolean =>
+  Boolean(
+    contentAttributes &&
+      typeof contentAttributes === "object" &&
+      (contentAttributes as { type?: unknown }).type === "reel_share",
+  )
+
+/**
  * Centralized so the worker (writer) and inbox renderer (reader) cannot drift
  * on the shape check.
  */
