@@ -4487,7 +4487,7 @@
     },
     "copyText": {
       "textLabel": "要复制的文本",
-      "limitHint": "填入变量后最多 {max} 个字符，例如 PIX 代码。",
+      "limitHint": "填入变量后最多 {max} 个字符。",
       "fallbackHint": "在无法复制文本的渠道上，联系人会以回复的形式收到此文本。",
       "viewerTitle": "复制此文本"
     }

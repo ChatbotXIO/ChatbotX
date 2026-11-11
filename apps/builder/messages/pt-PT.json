@@ -3315,7 +3315,7 @@
     },
     "copyText": {
       "textLabel": "Texto a copiar",
-      "limitHint": "Até {max} caracteres depois de preenchidas as variáveis, por exemplo um código PIX.",
+      "limitHint": "Até {max} caracteres depois de preenchidas as variáveis.",
       "fallbackHint": "Em canais que não copiam texto, o contacto recebe este texto como resposta.",
       "viewerTitle": "Copia este texto"
     }

@@ -3315,7 +3315,7 @@
     },
     "copyText": {
       "textLabel": "Kopioitava teksti",
-      "limitHint": "Enintään {max} merkkiä muuttujien täyttämisen jälkeen, esimerkiksi PIX-koodi.",
+      "limitHint": "Enintään {max} merkkiä muuttujien täyttämisen jälkeen.",
       "fallbackHint": "Kanavilla, jotka eivät voi kopioida tekstiä, yhteyshenkilö saa tämän tekstin vastauksena.",
       "viewerTitle": "Kopioi tämän tekstin"
     }

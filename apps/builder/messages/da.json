@@ -3315,7 +3315,7 @@
     },
     "copyText": {
       "textLabel": "Tekst der skal kopieres",
-      "limitHint": "Op til {max} tegn efter variablerne er udfyldt, f.eks. en PIX-kode.",
+      "limitHint": "Op til {max} tegn efter variablerne er udfyldt.",
       "fallbackHint": "På kanaler, der ikke kan kopiere tekst, modtager kontakten i stedet denne tekst som svar.",
       "viewerTitle": "Kopierer denne tekst"
     }

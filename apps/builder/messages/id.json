@@ -3315,7 +3315,7 @@
     },
     "copyText": {
       "textLabel": "Teks yang disalin",
-      "limitHint": "Maksimal {max} karakter setelah variabel diisi, misalnya kode PIX.",
+      "limitHint": "Maksimal {max} karakter setelah variabel diisi.",
       "fallbackHint": "Di saluran yang tidak bisa menyalin teks, kontak menerima teks ini sebagai balasan.",
       "viewerTitle": "Menyalin teks ini"
     }

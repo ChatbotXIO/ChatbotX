@@ -3315,7 +3315,7 @@
     },
     "copyText": {
       "textLabel": "コピーするテキスト",
-      "limitHint": "変数を埋めた後で最大{max}文字（例：PIXコード）。",
+      "limitHint": "変数を埋めた後で最大{max}文字。",
       "fallbackHint": "テキストをコピーできないチャネルでは、連絡先はこのテキストを返信として受け取ります。",
       "viewerTitle": "このテキストをコピー"
     }

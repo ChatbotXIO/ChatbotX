@@ -98,6 +98,9 @@ authored) that is resolved when the message is sent.
   the text as a message the contact can long-press to copy; the reply resolves
   `{{variables}}` again at tap time. The inbox shows a stored native copy button
   as a button that copies the text.
+- The builder offers the Copy Text action only on Telegram nodes. The schema
+  still accepts it on every channel (the reply fallback above), so a flow built
+  through the API or switched to another channel keeps working.
 - The button can neither continue the flow nor run additional steps, and it is
   rejected in the same places as a Call Phone Number button (quick replies,
   WhatsApp / Messenger message-template steps, the WhatsApp Flow button).

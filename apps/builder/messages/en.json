@@ -4153,7 +4153,7 @@
     },
     "copyText": {
       "textLabel": "Text to copy",
-      "limitHint": "Up to {max} characters after variables are filled in, for example a PIX code.",
+      "limitHint": "Up to {max} characters after variables are filled in.",
       "fallbackHint": "On channels that cannot copy text, the contact receives this text as a reply instead.",
       "viewerTitle": "Copies this text"
     }

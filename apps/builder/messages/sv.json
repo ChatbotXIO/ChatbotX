@@ -4484,7 +4484,7 @@
     },
     "copyText": {
       "textLabel": "Text att kopiera",
-      "limitHint": "Upp till {max} tecken när variablerna har fyllts i, till exempel en PIX-kod.",
+      "limitHint": "Upp till {max} tecken när variablerna har fyllts i.",
       "fallbackHint": "I kanaler som inte kan kopiera text får kontakten den här texten som svar i stället.",
       "viewerTitle": "Kopierar den här texten"
     }

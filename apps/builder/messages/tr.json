@@ -3471,7 +3471,7 @@
     },
     "copyText": {
       "textLabel": "Kopyalanacak metin",
-      "limitHint": "Değişkenler doldurulduktan sonra en fazla {max} karakter, örneğin bir PIX kodu.",
+      "limitHint": "Değişkenler doldurulduktan sonra en fazla {max} karakter.",
       "fallbackHint": "Metin kopyalayamayan kanallarda kişi bu metni yanıt olarak alır.",
       "viewerTitle": "Bu metni kopyalar"
     }

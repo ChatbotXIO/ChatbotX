@@ -40,7 +40,10 @@ import {
   useWatch,
 } from "react-hook-form"
 import { setProperty } from "@/lib/object-util"
-import { ButtonEditorChannelContext } from "./button-editor-channel"
+import {
+  ButtonEditorChannelContext,
+  useButtonEditorChannel,
+} from "./button-editor-channel"
 import RecursiveDropdownMenu from "./components/recursive-dropdown-menu"
 import {
   useCreateButtonTarget,
@@ -49,7 +52,7 @@ import {
 import { sendMessageEditorMenusWithButton } from "./nodes/send-message/menu"
 import type { MenuItem } from "./nodes/types"
 import { allSteps, DynamicStepEditor } from "./steps"
-import { allButtonsConfig } from "./steps/button-config"
+import { allButtonsConfig, offeredButtonsConfig } from "./steps/button-config"
 import { SpreadsheetDialogProvider } from "./steps/spreadsheet/components/spreadsheet-dialog-context"
 import { useStepStore } from "./stores/step-store-provider"
 
@@ -74,15 +77,11 @@ export function AllButtonOptions({
   hiddenButtonTypes?: ButtonType[]
 }) {
   const t = useTranslations()
-  const allButtons = useMemo(() => {
-    const configs = allButtonsConfig(t)
-    if (!hiddenButtonTypes || hiddenButtonTypes.length === 0) {
-      return configs
-    }
-    return configs.filter(
-      (buttonConfig) => !hiddenButtonTypes.includes(buttonConfig.buttonType),
-    )
-  }, [t, hiddenButtonTypes])
+  const channel = useButtonEditorChannel()
+  const allButtons = useMemo(
+    () => offeredButtonsConfig(t, { channel, hiddenButtonTypes }),
+    [t, hiddenButtonTypes, channel],
+  )
 
   return (
     <div className="flex flex-col gap-1.5">

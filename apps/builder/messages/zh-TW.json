@@ -3747,7 +3747,7 @@
     },
     "copyText": {
       "textLabel": "要複製的文字",
-      "limitHint": "填入變數後最多 {max} 個字元，例如 PIX 代碼。",
+      "limitHint": "填入變數後最多 {max} 個字元。",
       "fallbackHint": "在無法複製文字的頻道上，聯絡人會以回覆的形式收到此文字。",
       "viewerTitle": "複製此文字"
     }

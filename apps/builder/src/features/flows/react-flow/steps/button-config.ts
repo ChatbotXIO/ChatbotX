@@ -1,4 +1,8 @@
-import { type ButtonType, buttonTypes } from "@chatbotx.io/flow-config"
+import {
+  type ButtonType,
+  buttonTypes,
+  isNativeButtonType,
+} from "@chatbotx.io/flow-config"
 import {
   AppWindowIcon,
   CopyIcon,
@@ -73,3 +77,20 @@ export const allButtonsConfig = (t: TranslationFn): IButtonConfig[] => [
     allowsSteps: false,
   },
 ]
+
+/**
+ * The button actions offered for a node on `channel`, minus `hiddenButtonTypes`.
+ * Copy Text is offered only where the channel copies natively (Telegram).
+ */
+export const offeredButtonsConfig = (
+  t: TranslationFn,
+  options: { channel?: string; hiddenButtonTypes?: ButtonType[] },
+): IButtonConfig[] => {
+  const hidden = new Set<ButtonType>(options.hiddenButtonTypes ?? [])
+  if (!isNativeButtonType(options.channel, buttonTypes.enum.copyText)) {
+    hidden.add(buttonTypes.enum.copyText)
+  }
+  return allButtonsConfig(t).filter(
+    (buttonConfig) => !hidden.has(buttonConfig.buttonType),
+  )
+}

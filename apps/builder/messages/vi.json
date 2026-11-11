@@ -3513,7 +3513,7 @@
     },
     "copyText": {
       "textLabel": "Nội dung cần sao chép",
-      "limitHint": "Tối đa {max} ký tự sau khi điền biến, ví dụ mã PIX.",
+      "limitHint": "Tối đa {max} ký tự sau khi điền biến.",
       "fallbackHint": "Ở kênh không hỗ trợ sao chép, khách sẽ nhận nội dung này dưới dạng tin nhắn trả lời.",
       "viewerTitle": "Sao chép nội dung này"
     }

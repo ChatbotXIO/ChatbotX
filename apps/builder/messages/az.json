@@ -4153,7 +4153,7 @@
     },
     "copyText": {
       "textLabel": "Kopyalanacaq mətn",
-      "limitHint": "Dəyişənlər doldurulduqdan sonra ən çox {max} simvol, məsələn PIX kodu.",
+      "limitHint": "Dəyişənlər doldurulduqdan sonra ən çox {max} simvol.",
       "fallbackHint": "Mətn kopyalaya bilməyən kanallarda kontakt bu mətni cavab kimi alır.",
       "viewerTitle": "Bu mətni kopyalayır"
     }

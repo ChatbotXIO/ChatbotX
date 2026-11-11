@@ -516,7 +516,7 @@
     },
     "copyText": {
       "textLabel": "Text de copiat",
-      "limitHint": "Până la {max} caractere după completarea variabilelor, de exemplu un cod PIX.",
+      "limitHint": "Până la {max} caractere după completarea variabilelor.",
       "fallbackHint": "Pe canalele care nu pot copia text, contactul primește acest text ca răspuns.",
       "viewerTitle": "Copiază acest text"
     }
