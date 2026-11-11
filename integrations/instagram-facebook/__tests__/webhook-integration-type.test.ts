@@ -1,6 +1,7 @@
 import { describe, expect, test, vi } from "vitest"
 import { webhookHandler } from "../src/handlers/webhook"
 import { hmacSha256Hex } from "../src/lib/webhook"
+import { instagramWebhookEventSchema } from "../src/schema"
 
 const CLIENT_SECRET = "webhook-secret"
 
@@ -150,6 +151,76 @@ describe("instagram-facebook webhook integrationType routing", () => {
 
     expect(add).toHaveBeenCalledWith(
       "contactMarkAsRead",
+      expect.objectContaining({
+        data: expect.objectContaining({ integrationType: "instagram" }),
+      }),
+    )
+  })
+
+  test("accepts a read receipt that has mid and no watermark", async () => {
+    const payload = {
+      object: "instagram" as const,
+      entry: [
+        {
+          id: "ig-account-id",
+          time: 1_783_674_105,
+          messaging: [
+            {
+              sender: { id: "sender-id" },
+              recipient: { id: "recipient-id" },
+              timestamp: 1_783_674_105,
+              read: { mid: "mid-seen" },
+            },
+            {
+              sender: { id: "sender-id" },
+              recipient: { id: "recipient-id" },
+              timestamp: 1_783_674_106,
+              message: { mid: "mid-2", text: "still delivered" },
+            },
+          ],
+        },
+      ],
+    }
+    const parsed = instagramWebhookEventSchema.safeParse(payload)
+    expect(parsed.success ? [] : parsed.error.issues).toEqual([])
+
+    const add = vi.fn()
+    await webhookHandler({
+      config: { clientSecret: CLIENT_SECRET },
+      req: await signedRequest(JSON.stringify(payload)),
+      queue: { add },
+    } as never)
+
+    expect(add).toHaveBeenCalledWith(
+      "contactMarkAsRead",
+      expect.objectContaining({
+        type: "contactMarkAsRead",
+        data: expect.objectContaining({
+          integrationType: "instagram",
+          integrationIdentifier: "ig-account-id",
+          sourceConversationId: "sender-id",
+          payload: {
+            object: "instagram",
+            entry: [
+              {
+                id: "ig-account-id",
+                time: 1_783_674_105,
+                messaging: [
+                  {
+                    sender: { id: "sender-id" },
+                    recipient: { id: "recipient-id" },
+                    timestamp: 1_783_674_105,
+                    read: {},
+                  },
+                ],
+              },
+            ],
+          },
+        }),
+      }),
+    )
+    expect(add).toHaveBeenCalledWith(
+      "incomingMessage",
       expect.objectContaining({
         data: expect.objectContaining({ integrationType: "instagram" }),
       }),

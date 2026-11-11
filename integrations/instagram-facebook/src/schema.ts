@@ -137,7 +137,7 @@ export const instagramMessageSchema = z.object({
 export type InstagramMessage = z.infer<typeof instagramMessageSchema>
 
 export const instagramReadSchema = z.object({
-  watermark: z.number(),
+  watermark: z.number().optional(),
 })
 
 export const instagramPostbackSchema = z.object({
