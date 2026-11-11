@@ -2762,6 +2762,7 @@
     "sources": {
       "direct": "Direct",
       "comments": "Opmerkingen",
+      "liveComments": "Livestream-reacties",
       "ads": "Advertenties",
       "fbLeadAd": "FB-leadadvertentie",
       "inboundMessage": "Inkomend bericht",

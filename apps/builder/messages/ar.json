@@ -1085,6 +1085,7 @@
     "sources": {
       "direct": "مباشر",
       "comments": "التعليقات",
+      "liveComments": "تعليقات البث المباشر",
       "ads": "الإعلانات",
       "fbLeadAd": "إعلان تسجيل بيانات فيسبوك",
       "inboundMessage": "رسالة واردة",

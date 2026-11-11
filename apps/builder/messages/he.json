@@ -8208,6 +8208,7 @@
     "sources": {
       "direct": "ישיר",
       "comments": "תגובות",
+      "liveComments": "תגובות בשידור חי",
       "ads": "מודעות",
       "fbLeadAd": "מודעת לידים של FB",
       "inboundMessage": "הודעה נכנסת",

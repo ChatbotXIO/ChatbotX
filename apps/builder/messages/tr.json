@@ -1085,6 +1085,7 @@
     "sources": {
       "direct": "Doğrudan",
       "comments": "Yorumlar",
+      "liveComments": "Canlı yayın yorumları",
       "ads": "Reklamlar",
       "fbLeadAd": "FB Potansiyel Müşteri Reklamı",
       "inboundMessage": "Gelen Mesaj",

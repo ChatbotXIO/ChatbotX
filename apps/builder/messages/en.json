@@ -1127,6 +1127,7 @@
     "sources": {
       "direct": "Direct",
       "comments": "Comments",
+      "liveComments": "Livestream comments",
       "ads": "Ads",
       "fbLeadAd": "FB Lead Ad",
       "inboundMessage": "Inbound Message",

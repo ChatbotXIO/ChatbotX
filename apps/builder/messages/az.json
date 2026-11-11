@@ -1127,6 +1127,7 @@
     "sources": {
       "direct": "Birbaşa",
       "comments": "Şərhlər",
+      "liveComments": "Canlı yayım şərhləri",
       "ads": "Reklamlar",
       "fbLeadAd": "FB potensial müştəri reklamı",
       "inboundMessage": "Daxil olan mesaj",

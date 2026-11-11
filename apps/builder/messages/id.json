@@ -1085,6 +1085,7 @@
     "sources": {
       "direct": "Langsung",
       "comments": "Komentar",
+      "liveComments": "Komentar siaran langsung",
       "ads": "Iklan",
       "fbLeadAd": "Iklan Prospek FB",
       "inboundMessage": "Pesan Masuk",

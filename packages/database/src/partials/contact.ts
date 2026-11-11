@@ -7,6 +7,7 @@ export const contactSources = z.enum([
   "botLink",
   "chatPlugin",
   "comments",
+  "liveComments",
   "imported",
   "api",
   "direct",

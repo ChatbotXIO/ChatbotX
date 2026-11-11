@@ -1127,6 +1127,7 @@
     "sources": {
       "direct": "Trực tiếp",
       "comments": "Bình luận",
+      "liveComments": "Bình luận livestream",
       "ads": "Quảng cáo",
       "fbLeadAd": "FB Lead Ad",
       "inboundMessage": "Tin nhắn đến",
