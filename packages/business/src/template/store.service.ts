@@ -492,6 +492,15 @@ export const templateStoreService = {
   },
 
   /**
+   * Whether the tenant's store has anything a visitor can open. The tenant
+   * comes from a trusted caller (the host). One bounded probe, no cache:
+   * visibility is time-based (share expiry), so a cached answer could go stale.
+   */
+  async hasPublished(input: { tenantId: string }): Promise<boolean> {
+    return await templateStoreRepository.hasPublishedTemplates(input.tenantId)
+  },
+
+  /**
    * What a visitor of a tenant's store can open: the categories that have a
    * published template, and the templates with the links to open them. The
    * tenant always comes from a trusted caller (the host or the API token).

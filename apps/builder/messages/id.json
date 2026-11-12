@@ -4186,7 +4186,11 @@
     "welcomeBack": "Selamat datang kembali, {name}",
     "subtitle": "Pilih ruang kerja untuk melanjutkan, atau buat yang baru.",
     "noWorkspaces": "Anda belum memiliki ruang kerja.",
-    "owner": "Pemilik"
+    "owner": "Pemilik",
+    "tabs": {
+      "label": "Bagian beranda",
+      "templates": "Template"
+    }
   },
   "notFound": {
     "title": "Halaman tidak ditemukan",
@@ -11895,7 +11899,8 @@
       "categories": "Kategori toko",
       "noResults": "Tidak ada template yang cocok dengan pencarian Anda.",
       "clearSearch": "Hapus pencarian",
-      "by": "Oleh {publisherName}"
+      "by": "Oleh {publisherName}",
+      "loadFailed": "Template tidak dapat dimuat. Coba lagi nanti."
     },
     "picker": {
       "placeholder": "Pilih template",

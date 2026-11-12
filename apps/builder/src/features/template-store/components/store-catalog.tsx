@@ -10,18 +10,73 @@ import { parseAsString, useQueryState } from "nuqs"
 import type { ReactNode } from "react"
 import {
   filterStoreTemplates,
+  type StoreCatalogCategory,
   type StoreCatalogTemplate,
   shouldShowCategoryFilter,
 } from "../lib/filter-store-templates"
 
-type StoreCatalogProps = {
-  tenantName: string
-  categories: { id: string; name: string }[]
-  templates: StoreCatalogTemplate[]
+/** What every layout shares; the variant only adds the page chrome around it. */
+const STORE_CATALOG_BASE_CLASS_NAME = "flex w-full flex-col gap-8"
+
+type StoreCatalogHeadingTag = "h1" | "h2"
+
+type StoreCatalogLayoutConfig = {
+  /** The page's own title is an h1; under another page's h1 it is an h2. */
+  headingTag: StoreCatalogHeadingTag
+  headingClassName: string
+  className: string
+  gridClassName: string
 }
 
 /**
- * The public store: a page heading with search, one chip per category (with
+ * Both layouts share the store header: the title and tagline on the left, the
+ * search on the right, the category chips below. `page` is the public `/store`
+ * page, so its title is the page's h1 and the grid follows the window width.
+ * `embedded` is a tab of the home page, so its title is a smaller h2 under
+ * the page's welcome heading, and the grid follows the width of its own
+ * container (the account rail takes part of the window): as many columns as
+ * fit cards of at least 17rem.
+ */
+const STORE_CATALOG_LAYOUTS = {
+  page: {
+    headingTag: "h1",
+    headingClassName: "font-bold text-3xl tracking-tight sm:text-4xl",
+    className: "mx-auto max-w-6xl pt-4 sm:pt-10",
+    gridClassName: "grid gap-4 sm:grid-cols-2 lg:grid-cols-3",
+  },
+  embedded: {
+    headingTag: "h2",
+    headingClassName: "font-semibold text-lg tracking-tight sm:text-xl",
+    className: "",
+    gridClassName:
+      "grid grid-cols-[repeat(auto-fill,minmax(min(100%,17rem),1fr))] gap-5",
+  },
+} as const satisfies Record<string, StoreCatalogLayoutConfig>
+
+type StoreCatalogLayout = keyof typeof STORE_CATALOG_LAYOUTS
+
+type StoreCatalogProps = {
+  tenantName: string
+  categories: StoreCatalogCategory[]
+  templates: StoreCatalogTemplate[]
+  layout?: StoreCatalogLayout
+}
+
+/**
+ * The catalog is loaded whole, so searching and switching category only
+ * change the URL in the browser: `shallow` keeps the server page from running
+ * again on every keystroke (the app-wide default re-renders it), `replace`
+ * keeps Back from stepping through every letter.
+ */
+const STORE_URL_STATE_OPTIONS = {
+  shallow: true,
+  scroll: false,
+  history: "replace",
+  clearOnDefault: true,
+} as const
+
+/**
+ * The template store: a heading with search, one chip per category (with
  * its template count) and a card per template. The whole catalog is loaded
  * once (it is capped per tenant), so switching category and searching are
  * client-side. Both live in the URL, so a view can be shared.
@@ -30,16 +85,19 @@ export function StoreCatalog({
   tenantName,
   categories,
   templates,
+  layout = "page",
 }: StoreCatalogProps) {
   const t = useTranslations("templateStore.store")
   const tTitle = useTranslations("templateStore")
+  const layoutConfig = STORE_CATALOG_LAYOUTS[layout]
+  const Heading = layoutConfig.headingTag
   const [categoryParam, setCategoryParam] = useQueryState(
     "category",
-    parseAsString.withOptions({ clearOnDefault: true }),
+    parseAsString.withOptions(STORE_URL_STATE_OPTIONS),
   )
   const [query, setQuery] = useQueryState(
     "q",
-    parseAsString.withDefault("").withOptions({ clearOnDefault: true }),
+    parseAsString.withDefault("").withOptions(STORE_URL_STATE_OPTIONS),
   )
 
   if (templates.length === 0) {
@@ -64,12 +122,12 @@ export function StoreCatalog({
       .length
 
   return (
-    <div className="mx-auto flex w-full max-w-6xl flex-col gap-8 pt-4 sm:pt-10">
+    <div className={cn(STORE_CATALOG_BASE_CLASS_NAME, layoutConfig.className)}>
       <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
         <div className="space-y-2">
-          <h1 className="font-bold text-3xl tracking-tight sm:text-4xl">
+          <Heading className={layoutConfig.headingClassName}>
             {tTitle("title")}
-          </h1>
+          </Heading>
           <p className="text-muted-foreground">{t("subtitle")}</p>
         </div>
         <div className="relative w-full sm:max-w-xs">
@@ -122,7 +180,7 @@ export function StoreCatalog({
           </Button>
         </StoreMessage>
       ) : (
-        <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <ul className={layoutConfig.gridClassName}>
           {visible.map((template) => (
             <li key={template.templateId}>
               <Link

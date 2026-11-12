@@ -299,6 +299,68 @@ describe.skipIf(!databaseUrl)("template store repository", () => {
     })
   })
 
+  test("hasPublishedTemplates follows the same rule as the catalog", async () => {
+    const t = (await insertTenant("probe")).tenantId
+    const c = await category(t, "C")
+    expect(await repo.hasPublishedTemplates(t, db)).toBe(false)
+
+    // Nothing in the store is visible: share off, expired, template deleted.
+    await approve(
+      t,
+      await insertTemplate(t, { name: "Off", shareEnabled: false }),
+      [c],
+    )
+    await approve(
+      t,
+      await insertTemplate(t, {
+        name: "Expired",
+        shareExpiresAt: new Date(Date.now() - 60_000),
+      }),
+      [c],
+    )
+    await approve(
+      t,
+      await insertTemplate(t, { name: "Deleted", deletedAt: new Date() }),
+      [c],
+    )
+    expect(await repo.hasPublishedTemplates(t, db)).toBe(false)
+
+    // A visible template with no category still counts: it shows under "All".
+    await approve(t, await insertTemplate(t, { name: "Uncategorised" }), [])
+    expect(await repo.hasPublishedTemplates(t, db)).toBe(true)
+    expect(
+      (await repo.listPublishedTemplates({ tenantId: t }, db)).length,
+    ).toBe(1)
+  })
+
+  test("hasPublishedTemplates ignores another tenant's store and a foreign template", async () => {
+    const t = (await insertTenant("probe-scope")).tenantId
+    const c = await category(t, "C")
+    // Another tenant's visible template, approved into this tenant's store.
+    await approve(t, await insertTemplate(tenantB, { name: "Foreign" }), [c])
+    expect(await repo.hasPublishedTemplates(t, db)).toBe(false)
+
+    const other = (await insertTenant("probe-other")).tenantId
+    await approve(other, await insertTemplate(other, { name: "Own" }), [
+      await category(other, "C"),
+    ])
+    expect(await repo.hasPublishedTemplates(other, db)).toBe(true)
+    expect(await repo.hasPublishedTemplates(t, db)).toBe(false)
+  })
+
+  test("hasPublishedTemplates treats a share expiring exactly now as live", async () => {
+    const t = (await insertTenant("probe-equal")).tenantId
+    const id = await insertTemplate(t, { name: "Equal" })
+    await approve(t, id, [await category(t, "C")])
+    await db.transaction(async (tx) => {
+      await tx
+        .update(schema.templateModel)
+        .set({ shareExpiresAt: sql`now()` })
+        .where(eq(schema.templateModel.id, id))
+      expect(await repo.hasPublishedTemplates(t, tx)).toBe(true)
+    })
+  })
+
   test("a template of another tenant is not published even if listed", async () => {
     const t = (await insertTenant("foreign-template")).tenantId
     const c = await category(t, "C")

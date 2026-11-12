@@ -14,10 +14,13 @@ import { cn } from "@chatbotx.io/ui/lib/utils"
 import { CrownIcon, PlusCircleIcon } from "lucide-react"
 import Link from "next/link"
 import { getTranslations } from "next-intl/server"
+import type { ReactNode } from "react"
 import { UpgradePlanButton } from "@/enterprise/features/billing/upgrade-plan-dialog"
 import { isCloud, isCommunity } from "@/env"
 import { formatScheduleTime } from "../helpers"
+import type { HomeTab } from "../schema/home-search-params"
 import type { WorkspaceResource } from "../schema/resource"
+import { HomeTabs, homeTabLinkId } from "./home-tabs"
 import { WorkspaceStatusSwitch } from "./workspace-status-switch"
 
 type WorkspacesListProps = {
@@ -33,6 +36,12 @@ type WorkspacesListProps = {
   reason?: "status" | "mac" | null
   ownerWorkspaceIds?: string[]
   superAdminWorkspaceIds?: string[]
+  /** The open section of the home page. */
+  activeTab?: HomeTab
+  /** Whether the Templates tab is offered (the tenant's store has something to show). */
+  showTemplatesTab?: boolean
+  /** The content of the Templates tab; the page fills it only while that tab is open. */
+  templatesPanel?: ReactNode
 }
 
 const CARD_STYLES =
@@ -194,6 +203,9 @@ const WorkspacesList = async ({
   reason,
   ownerWorkspaceIds = [],
   superAdminWorkspaceIds = [],
+  activeTab = "workspaces",
+  showTemplatesTab = false,
+  templatesPanel,
 }: WorkspacesListProps) => {
   const t = await getTranslations()
   const createLabel = t("actions.createFeature", {
@@ -212,6 +224,56 @@ const WorkspacesList = async ({
   const greetingName = user.name?.trim() || user.email
   const hasWorkspaces = workspaces.length > 0
 
+  const workspacesContent =
+    hasWorkspaces || showCreateCard ? (
+      <ul className="flex list-none flex-wrap gap-5 p-0 pb-1">
+        {showCreateCard && (
+          <li className="list-none">
+            <CreateWorkspaceCard
+              disabled={isAtLimit || blocked}
+              disabledReason={
+                blocked
+                  ? t(
+                      reason === "mac"
+                        ? "billing.macLimitReached.createDisabled"
+                        : "billing.trialExpired.createDisabled",
+                      { feature: t("fields.workspace.label") },
+                    )
+                  : t("billing.limitReached.workspaces")
+              }
+              label={createLabel}
+            />
+          </li>
+        )}
+        {workspaces.map((workspace) => (
+          <li className="list-none" key={workspace.id}>
+            <WorkspaceCard
+              canManageStatus={superAdminIds.has(workspace.id)}
+              ownerLabel={ownerIds.has(workspace.id) ? ownerLabel : undefined}
+              t={t}
+              workspace={workspace}
+            />
+          </li>
+        ))}
+      </ul>
+    ) : (
+      <p className="text-muted-foreground text-sm">{t("home.noWorkspaces")}</p>
+    )
+
+  const homeTabLabels: Record<HomeTab, string> = {
+    workspaces: t("billing.usage.workspaces"),
+    templates: t("home.tabs.templates"),
+  }
+
+  // The Templates tab exists only while it is offered, so a stale `activeTab`
+  // can never leave the workspaces heading over an empty body.
+  const openTab: HomeTab = showTemplatesTab ? activeTab : "workspaces"
+
+  const tabContent: Record<HomeTab, ReactNode> = {
+    workspaces: workspacesContent,
+    templates: templatesPanel,
+  }
+
   return (
     // `4rem` is 2x the host page's `py-8` (top inset + matching bottom
     // inset), so it must move with that padding — same coupling rule as
@@ -228,13 +290,24 @@ const WorkspacesList = async ({
       </header>
 
       <div className="mt-8 flex shrink-0 items-baseline gap-3">
-        <h2 className="font-semibold text-base">
-          {t("billing.usage.workspaces")}
-        </h2>
-        <span className="font-medium text-muted-foreground text-sm tabular-nums">
-          {usedCount}
-        </span>
-        {isAtLimit && isCloud() && (
+        {showTemplatesTab ? (
+          <HomeTabs
+            activeTab={openTab}
+            labels={homeTabLabels}
+            navLabel={t("home.tabs.label")}
+            workspaceCount={usedCount}
+          />
+        ) : (
+          <>
+            <h2 className="font-semibold text-base">
+              {t("billing.usage.workspaces")}
+            </h2>
+            <span className="font-medium text-muted-foreground text-sm tabular-nums">
+              {usedCount}
+            </span>
+          </>
+        )}
+        {openTab === "workspaces" && isAtLimit && isCloud() && (
           <UpgradePlanButton className="ms-auto" size="sm" variant="outline">
             <CrownIcon aria-hidden className="size-3.5" />
             {t("actions.upgradePlan")}
@@ -250,46 +323,13 @@ const WorkspacesList = async ({
         `account-rail.tsx`. `overscroll-contain` stops scroll-chaining into
         the document once the grid bottoms out.
       */}
-      <div className="mt-5 min-h-0 flex-1 overflow-y-auto overscroll-contain pt-2">
-        {hasWorkspaces || showCreateCard ? (
-          <ul className="flex list-none flex-wrap gap-5 p-0 pb-1">
-            {showCreateCard && (
-              <li className="list-none">
-                <CreateWorkspaceCard
-                  disabled={isAtLimit || blocked}
-                  disabledReason={
-                    blocked
-                      ? t(
-                          reason === "mac"
-                            ? "billing.macLimitReached.createDisabled"
-                            : "billing.trialExpired.createDisabled",
-                          { feature: t("fields.workspace.label") },
-                        )
-                      : t("billing.limitReached.workspaces")
-                  }
-                  label={createLabel}
-                />
-              </li>
-            )}
-            {workspaces.map((workspace) => (
-              <li className="list-none" key={workspace.id}>
-                <WorkspaceCard
-                  canManageStatus={superAdminIds.has(workspace.id)}
-                  ownerLabel={
-                    ownerIds.has(workspace.id) ? ownerLabel : undefined
-                  }
-                  t={t}
-                  workspace={workspace}
-                />
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="text-muted-foreground text-sm">
-            {t("home.noWorkspaces")}
-          </p>
-        )}
-      </div>
+      <section
+        aria-labelledby={showTemplatesTab ? homeTabLinkId(openTab) : undefined}
+        className="mt-5 min-h-0 flex-1 overflow-y-auto overscroll-contain pt-2"
+        key={openTab}
+      >
+        {tabContent[openTab]}
+      </section>
     </main>
   )
 }

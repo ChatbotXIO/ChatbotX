@@ -4186,7 +4186,11 @@
     "welcomeBack": "Bem-vindo de volta, {name}",
     "subtitle": "Escolha um espaço de trabalho para retomar a atividade ou crie um novo.",
     "noWorkspaces": "Ainda não tem espaços de trabalho.",
-    "owner": "Proprietário"
+    "owner": "Proprietário",
+    "tabs": {
+      "label": "Secções da página inicial",
+      "templates": "Templates"
+    }
   },
   "notFound": {
     "title": "Página não encontrada",
@@ -11895,7 +11899,8 @@
       "categories": "Categorias da loja",
       "noResults": "Nenhum template corresponde à sua pesquisa.",
       "clearSearch": "Limpar pesquisa",
-      "by": "Por {publisherName}"
+      "by": "Por {publisherName}",
+      "loadFailed": "Não foi possível carregar os templates. Tente novamente mais tarde."
     },
     "picker": {
       "placeholder": "Selecione um template",

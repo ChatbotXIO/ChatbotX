@@ -4342,7 +4342,11 @@
     "welcomeBack": "Tekrar hoş geldiniz, {name}",
     "subtitle": "Kaldığınız yerden devam etmek için bir çalışma alanı seçin veya yeni bir tane oluşturun.",
     "noWorkspaces": "Henüz hiç çalışma alanınız yok.",
-    "owner": "Sahip"
+    "owner": "Sahip",
+    "tabs": {
+      "label": "Ana sayfa bölümleri",
+      "templates": "Şablonlar"
+    }
   },
   "notFound": {
     "title": "Sayfa bulunamadı",
@@ -11895,7 +11899,8 @@
       "categories": "Mağaza kategorileri",
       "noResults": "Aramanızla eşleşen şablon yok.",
       "clearSearch": "Aramayı temizle",
-      "by": "Yayıncı: {publisherName}"
+      "by": "Yayıncı: {publisherName}",
+      "loadFailed": "Şablonlar yüklenemedi. Lütfen daha sonra tekrar deneyin."
     },
     "picker": {
       "placeholder": "Bir şablon seçin",

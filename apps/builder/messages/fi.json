@@ -4186,7 +4186,11 @@
     "welcomeBack": "Tervetuloa takaisin, {name}",
     "subtitle": "Valitse työtila jatkaaksesi tai luo uusi.",
     "noWorkspaces": "Sinulla ei ole vielä työtiloja.",
-    "owner": "Omistaja"
+    "owner": "Omistaja",
+    "tabs": {
+      "label": "Etusivun osiot",
+      "templates": "Mallit"
+    }
   },
   "notFound": {
     "title": "Sivua ei löytynyt",
@@ -11895,7 +11899,8 @@
       "categories": "Kaupan luokat",
       "noResults": "Mikään malli ei vastaa hakua.",
       "clearSearch": "Tyhjennä haku",
-      "by": "Tekijä: {publisherName}"
+      "by": "Tekijä: {publisherName}",
+      "loadFailed": "Malleja ei voitu ladata. Yritä myöhemmin uudelleen."
     },
     "picker": {
       "placeholder": "Valitse malli",

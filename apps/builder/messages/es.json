@@ -4342,7 +4342,11 @@
     "welcomeBack": "Te damos la bienvenida de nuevo, {name}",
     "subtitle": "Elige un espacio de trabajo para retomar, o crea uno nuevo.",
     "noWorkspaces": "Aún no tienes ningún espacio de trabajo.",
-    "owner": "Propietario"
+    "owner": "Propietario",
+    "tabs": {
+      "label": "Secciones de inicio",
+      "templates": "Plantillas"
+    }
   },
   "notFound": {
     "title": "Página no encontrada",
@@ -11895,7 +11899,8 @@
       "categories": "Categorías de la tienda",
       "noResults": "Ninguna plantilla coincide con tu búsqueda.",
       "clearSearch": "Borrar búsqueda",
-      "by": "Por {publisherName}"
+      "by": "Por {publisherName}",
+      "loadFailed": "No se pudieron cargar las plantillas. Inténtalo de nuevo más tarde."
     },
     "picker": {
       "placeholder": "Selecciona una plantilla",

@@ -496,6 +496,28 @@ export const templateStoreRepository = {
       .limit(input.limit)
   },
 
+  /**
+   * Whether a visitor of this tenant's store can open anything at all. Same
+   * eligibility rule as the catalog, but it stops at the first match: at worst
+   * (nothing visible) a scan of the tenant's listings, bounded by the
+   * per-tenant listing cap.
+   */
+  async hasPublishedTemplates(
+    tenantId: string,
+    tx: DatabaseClient = db,
+  ): Promise<boolean> {
+    const [first] = await tx
+      .select({ one: sql<number>`1` })
+      .from(templateStoreListingModel)
+      .innerJoin(
+        templateModel,
+        eq(templateModel.id, templateStoreListingModel.templateId),
+      )
+      .where(publishedTemplateWhere(tenantId))
+      .limit(1)
+    return first !== undefined
+  },
+
   /** Categories that have at least one template a visitor can open, in tab order. */
   async listPublishedCategories(tenantId: string, tx: DatabaseClient = db) {
     return await tx

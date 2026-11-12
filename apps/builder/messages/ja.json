@@ -7018,7 +7018,11 @@
     "welcomeBack": "おかえりなさい、{name}さん",
     "subtitle": "ワークスペースを選択して再開するか、新しいワークスペースを作成してください。",
     "noWorkspaces": "ワークスペースはまだありません。",
-    "owner": "所有者"
+    "owner": "所有者",
+    "tabs": {
+      "label": "ホームのセクション",
+      "templates": "テンプレート"
+    }
   },
   "notFound": {
     "title": "ページが見つかりません",
@@ -11895,7 +11899,8 @@
       "categories": "ストアのカテゴリ",
       "noResults": "検索に一致するテンプレートはありません。",
       "clearSearch": "検索をクリア",
-      "by": "作成者：{publisherName}"
+      "by": "作成者：{publisherName}",
+      "loadFailed": "テンプレートを読み込めませんでした。しばらくしてからもう一度お試しください。"
     },
     "picker": {
       "placeholder": "テンプレートを選択",

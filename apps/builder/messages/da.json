@@ -4186,7 +4186,11 @@
     "welcomeBack": "Velkommen tilbage, {name}",
     "subtitle": "Vælg et arbejdsområde for at fortsætte, eller opret et nyt.",
     "noWorkspaces": "Du har endnu ingen arbejdsområder.",
-    "owner": "Ejer"
+    "owner": "Ejer",
+    "tabs": {
+      "label": "Sektioner på startsiden",
+      "templates": "Skabeloner"
+    }
   },
   "notFound": {
     "title": "Siden blev ikke fundet",
@@ -11895,7 +11899,8 @@
       "categories": "Butikkens kategorier",
       "noResults": "Ingen skabeloner matcher din søgning.",
       "clearSearch": "Ryd søgning",
-      "by": "Af {publisherName}"
+      "by": "Af {publisherName}",
+      "loadFailed": "Skabelonerne kunne ikke indlæses. Prøv igen senere."
     },
     "picker": {
       "placeholder": "Vælg en skabelon",

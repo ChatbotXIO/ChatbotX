@@ -5024,7 +5024,11 @@
     "welcomeBack": "Yenidən xoş gəlmisiniz, {name}",
     "subtitle": "Davam etmək üçün iş sahəsi seçin və ya yenisini yaradın.",
     "noWorkspaces": "Hələ iş sahəniz yoxdur.",
-    "owner": "Sahib"
+    "owner": "Sahib",
+    "tabs": {
+      "label": "Ana səhifə bölmələri",
+      "templates": "Şablonlar"
+    }
   },
   "notFound": {
     "title": "Səhifə tapılmadı",
@@ -11895,7 +11899,8 @@
       "categories": "Mağaza kateqoriyaları",
       "noResults": "Axtarışınıza uyğun şablon yoxdur.",
       "clearSearch": "Axtarışı təmizlə",
-      "by": "Naşir: {publisherName}"
+      "by": "Naşir: {publisherName}",
+      "loadFailed": "Şablonlar yüklənə bilmədi. Bir az sonra yenidən cəhd edin."
     },
     "picker": {
       "placeholder": "Şablon seçin",
