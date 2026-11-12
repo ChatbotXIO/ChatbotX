@@ -367,6 +367,31 @@
         "noMatches": "No matching chunks were found.",
         "agentHasNoFiles": "This agent has no knowledge files."
       }
+    },
+    "create": {
+      "trigger": "Lägg till kunskap",
+      "title": "Lägg till kunskap",
+      "description": "Ladda upp en fil eller importera den från en offentlig URL. AI-agenten söker i innehållet när den svarar.",
+      "tabs": {
+        "fromUrl": "Från URL"
+      },
+      "urlHelp": "En direktlänk till en fil som stöds, en offentligt delad Google Docs-, Sheets- eller Slides-länk eller en statisk webbsida. Innehåll som renderas med JavaScript kan saknas.",
+      "snapshotNotice": "URL:en laddas ner en gång som en ögonblicksbild. Senare ändringar i källan synkroniseras inte; lägg till den igen för att uppdatera.",
+      "uploadFailed": "Det gick inte att ladda upp {name}",
+      "rateLimited": "För många importer från URL. Vänta några sekunder och försök igen.",
+      "errors": {
+        "urlNotAllowed": "Den här URL:en är inte tillåten. Använd en offentlig internetadress.",
+        "invalidUrl": "URL:en är ogiltig. Använd en fullständig http(s)-länk utan användarnamn eller lösenord.",
+        "googleFileNotPublic": "Den här Google-filen är inte offentligt delad. Ställ in allmän åtkomst på \"Alla som har länken\" och försök igen.",
+        "googlePublishedNotSupported": "Google-länkar för \"Publicera på webben\" stöds inte. Dela filen offentligt och använd dess vanliga länk.",
+        "unsupportedFileType": "Den här filtypen stöds inte som kunskap.",
+        "fileTooLarge": "Filen är större än {maxSize}.",
+        "downloadTimedOut": "Nedladdningen tog för lång tid. Prova en mindre fil eller en snabbare värd.",
+        "downloadFailed": "Källan returnerade ett fel. Kontrollera att länken öppnas utan inloggning.",
+        "tooManyRedirects": "URL:en omdirigerar för många gånger.",
+        "invalidRedirect": "URL:en omdirigerar till en ogiltig adress.",
+        "uploadPathNotAllowed": "Den uppladdade filen är inte tillåten. Ladda upp den igen."
+      }
     }
   },
   "aiFunctions": {

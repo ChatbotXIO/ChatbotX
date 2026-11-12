@@ -361,6 +361,31 @@
         "noMatches": "Không tìm thấy chunk phù hợp.",
         "agentHasNoFiles": "Agent này chưa có file kiến thức."
       }
+    },
+    "create": {
+      "trigger": "Thêm kiến thức",
+      "title": "Thêm kiến thức",
+      "description": "Tải file lên hoặc nhập từ một URL công khai. AI Agent sẽ tìm trong nội dung này khi trả lời.",
+      "tabs": {
+        "fromUrl": "Từ URL"
+      },
+      "urlHelp": "Link trực tiếp tới file được hỗ trợ, link Google Docs, Sheets hoặc Slides đã chia sẻ công khai, hoặc trang web tĩnh. Nội dung hiển thị bằng JavaScript có thể bị thiếu.",
+      "snapshotNotice": "URL chỉ được tải một lần dưới dạng bản chụp. Thay đổi sau này ở nguồn không được đồng bộ; hãy thêm lại để cập nhật.",
+      "uploadFailed": "Tải lên {name} thất bại",
+      "rateLimited": "Nhập từ URL quá nhiều lần. Vui lòng đợi vài giây rồi thử lại.",
+      "errors": {
+        "urlNotAllowed": "URL này không được phép. Hãy dùng địa chỉ internet công khai.",
+        "invalidUrl": "URL không hợp lệ. Hãy dùng link http(s) đầy đủ, không chứa tên đăng nhập hay mật khẩu.",
+        "googleFileNotPublic": "File Google này chưa được chia sẻ công khai. Đặt quyền truy cập chung thành \"Bất kỳ ai có đường liên kết\" rồi thử lại.",
+        "googlePublishedNotSupported": "Không hỗ trợ link \"Xuất bản lên web\" của Google. Hãy chia sẻ file công khai và dùng link thông thường.",
+        "unsupportedFileType": "Loại file này không được hỗ trợ làm kiến thức.",
+        "fileTooLarge": "File lớn hơn {maxSize}.",
+        "downloadTimedOut": "Tải xuống quá lâu. Hãy thử file nhỏ hơn hoặc nơi lưu trữ nhanh hơn.",
+        "downloadFailed": "Nguồn trả về lỗi. Hãy kiểm tra link mở được mà không cần đăng nhập.",
+        "tooManyRedirects": "URL chuyển hướng quá nhiều lần.",
+        "invalidRedirect": "URL chuyển hướng tới địa chỉ không hợp lệ.",
+        "uploadPathNotAllowed": "File đã tải lên không được phép. Vui lòng tải lên lại."
+      }
     }
   },
   "aiFunctions": {

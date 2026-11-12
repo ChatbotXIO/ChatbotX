@@ -319,6 +319,31 @@
         "noMatches": "No matching chunks were found.",
         "agentHasNoFiles": "This agent has no knowledge files."
       }
+    },
+    "create": {
+      "trigger": "Adicionar conhecimento",
+      "title": "Adicionar conhecimento",
+      "description": "Envie um arquivo ou importe-o de uma URL pública. O agente de IA pesquisa o conteúdo ao responder.",
+      "tabs": {
+        "fromUrl": "Por URL"
+      },
+      "urlHelp": "Um link direto para um arquivo compatível, um link do Google Docs, Sheets ou Slides compartilhado publicamente ou uma página web estática. Conteúdo renderizado por JavaScript pode ficar de fora.",
+      "snapshotNotice": "A URL é baixada uma única vez como um instantâneo. Alterações posteriores na origem não são sincronizadas; adicione-a novamente para atualizar.",
+      "uploadFailed": "Falha ao enviar {name}",
+      "rateLimited": "Muitas importações por URL. Aguarde alguns segundos e tente novamente.",
+      "errors": {
+        "urlNotAllowed": "Esta URL não é permitida. Use um endereço público da internet.",
+        "invalidUrl": "A URL é inválida. Use um link http(s) completo sem usuário ou senha.",
+        "googleFileNotPublic": "Este arquivo do Google não está compartilhado publicamente. Defina o acesso geral como \"Qualquer pessoa com o link\" e tente novamente.",
+        "googlePublishedNotSupported": "Links \"Publicar na Web\" do Google não são compatíveis. Compartilhe o arquivo publicamente e use o link normal.",
+        "unsupportedFileType": "Este tipo de arquivo não é compatível como conhecimento.",
+        "fileTooLarge": "O arquivo é maior que {maxSize}.",
+        "downloadTimedOut": "O download demorou demais. Tente um arquivo menor ou um servidor mais rápido.",
+        "downloadFailed": "A origem retornou um erro. Verifique se o link abre sem fazer login.",
+        "tooManyRedirects": "A URL redireciona vezes demais.",
+        "invalidRedirect": "A URL redireciona para um endereço inválido.",
+        "uploadPathNotAllowed": "O arquivo enviado não é permitido. Envie-o novamente."
+      }
     }
   },
   "aiFunctions": {

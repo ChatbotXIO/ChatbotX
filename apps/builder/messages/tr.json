@@ -319,6 +319,31 @@
         "noMatches": "No matching chunks were found.",
         "agentHasNoFiles": "This agent has no knowledge files."
       }
+    },
+    "create": {
+      "trigger": "Bilgi ekle",
+      "title": "Bilgi ekle",
+      "description": "Bir dosya yükleyin veya herkese açık bir URL'den içe aktarın. Yapay zekâ temsilcisi yanıt verirken bu içerikte arama yapar.",
+      "tabs": {
+        "fromUrl": "URL'den"
+      },
+      "urlHelp": "Desteklenen bir dosyanın doğrudan bağlantısı, herkese açık paylaşılmış bir Google Dokümanlar, E-Tablolar veya Slaytlar bağlantısı ya da statik bir web sayfası. JavaScript ile oluşturulan içerik eksik olabilir.",
+      "snapshotNotice": "URL bir kez anlık görüntü olarak indirilir. Kaynaktaki sonraki değişiklikler eşitlenmez; güncellemek için yeniden ekleyin.",
+      "uploadFailed": "{name} yüklenemedi",
+      "rateLimited": "URL'den çok fazla içe aktarma yapıldı. Lütfen birkaç saniye bekleyip tekrar deneyin.",
+      "errors": {
+        "urlNotAllowed": "Bu URL'ye izin verilmiyor. Herkese açık bir internet adresi kullanın.",
+        "invalidUrl": "URL geçersiz. Kullanıcı adı veya şifre içermeyen tam bir http(s) bağlantısı kullanın.",
+        "googleFileNotPublic": "Bu Google dosyası herkese açık paylaşılmamış. Genel erişimi \"Bağlantıya sahip olan herkes\" olarak ayarlayıp tekrar deneyin.",
+        "googlePublishedNotSupported": "Google \"Web'de yayınla\" bağlantıları desteklenmiyor. Dosyayı herkese açık paylaşın ve normal bağlantısını kullanın.",
+        "unsupportedFileType": "Bu dosya türü bilgi olarak desteklenmiyor.",
+        "fileTooLarge": "Dosya {maxSize} boyutundan büyük.",
+        "downloadTimedOut": "İndirme çok uzun sürdü. Daha küçük bir dosya veya daha hızlı bir sunucu deneyin.",
+        "downloadFailed": "Kaynak bir hata döndürdü. Bağlantının oturum açmadan açıldığını kontrol edin.",
+        "tooManyRedirects": "URL çok fazla kez yönlendiriyor.",
+        "invalidRedirect": "URL geçersiz bir adrese yönlendiriyor.",
+        "uploadPathNotAllowed": "Yüklenen dosyaya izin verilmiyor. Lütfen yeniden yükleyin."
+      }
     }
   },
   "aiFunctions": {

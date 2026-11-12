@@ -1,6 +1,9 @@
 import { searchAIFiles } from "@chatbotx.io/ai/server"
 import { aiFileService } from "@chatbotx.io/business"
-import { notFoundException } from "@chatbotx.io/business/errors"
+import {
+  ChatbotXException,
+  notFoundException,
+} from "@chatbotx.io/business/errors"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 import { mcpSpec } from "@/lib/orpc/mcp-annotations"
@@ -16,10 +19,12 @@ import {
 import { publicListRequest, publicListResponse } from "@/lib/public-api/list"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
 import {
+  assertAIFileCreateFromUrlNotRateLimited,
   assertAIFileReindexNotRateLimited,
   assertAIFileSearchNotRateLimited,
 } from "../lib/rate-limit"
 import {
+  AI_FILE_MAX_UPLOAD_SIZE_LABEL,
   createAIFilePublicRequest,
   listAIFileChunksRequest,
   listAIFileChunksResponse,
@@ -87,8 +92,7 @@ export const aiFilesPublicRouter = {
       method: "POST",
       path: "/v1/ai-files",
       summary: "Create AI file",
-      description:
-        "Provide either 'file' (multipart upload, up to 100MB) or 'url' (the server downloads and stores it, up to 100MB). Requires an OpenAI or Gemini integration configured for embeddings. Check `processingRun` in the response: `status = error` with `error = enqueueFailed` means the file was stored but processing could not be queued — call `aiFiles.reindex` with this `id`. Otherwise poll `aiFiles.get` until `processingRun.status` is `success` or `error`.",
+      description: `Provide either 'file' (multipart upload of a knowledge-format file, up to ${AI_FILE_MAX_UPLOAD_SIZE_LABEL}; the request body limit caps it at about 20 MB in practice) or 'url' (the server downloads it once into a private snapshot, up to ${AI_FILE_MAX_UPLOAD_SIZE_LABEL}; reindex never re-fetches the URL). A url may be a direct link to a knowledge-format file, a publicly shared Google Docs/Sheets/Slides link (exported automatically), or a static HTML page. Creating from a url is rate limited to about 30 calls per minute per workspace. A refused file or URL (unsupported type, too large, Google file not public, download timed out, URL not allowed) returns 400 businessError with an English message. Requires an OpenAI or Gemini integration configured for embeddings. Check \`processingRun\` in the response: \`status = error\` with \`error = enqueueFailed\` means the file was stored but processing could not be queued — call \`aiFiles.reindex\` with this \`id\`. Otherwise poll \`aiFiles.get\` until \`processingRun.status\` is \`success\` or \`error\`.`,
       successStatus: 201,
       tags: ["AI Files"],
     })
@@ -97,11 +101,24 @@ export const aiFilesPublicRouter = {
     .errors(possibleErrorsOnCreatingResource)
     .handler(async ({ context, input }) => {
       // The schema's superRefine already guarantees exactly one of
-      // file/url is present; narrow here for aiFileService.create's
-      // discriminated CreateAIFileInput.
+      // file/url is present; narrow for CreateAIFileInput. Only a url
+      // download is rate limited (it makes the server fetch a remote file).
       const { name, file, url } = input
-      const upload = file ? { name, file } : { name, url: url as string }
-      return await aiFileService.create(context.workspace.id, upload)
+      if (file) {
+        return await aiFileService.create(context.workspace.id, { name, file })
+      }
+      if (!url) {
+        throw new ChatbotXException(
+          "Provide either 'file' or 'url'.",
+          "businessError",
+          400,
+        )
+      }
+      await assertAIFileCreateFromUrlNotRateLimited(
+        context.workspace.id,
+        context.resHeaders,
+      )
+      return await aiFileService.create(context.workspace.id, { name, url })
     }),
 
   search: workspaceTokenAuthAPI

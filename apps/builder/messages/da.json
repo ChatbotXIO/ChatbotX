@@ -319,6 +319,31 @@
         "noMatches": "No matching chunks were found.",
         "agentHasNoFiles": "This agent has no knowledge files."
       }
+    },
+    "create": {
+      "trigger": "Tilføj viden",
+      "title": "Tilføj viden",
+      "description": "Upload en fil, eller importér den fra en offentlig URL. AI-agenten søger i indholdet, når den svarer.",
+      "tabs": {
+        "fromUrl": "Fra URL"
+      },
+      "urlHelp": "Et direkte link til en understøttet fil, et offentligt delt Google Docs-, Sheets- eller Slides-link eller en statisk webside. Indhold, der vises med JavaScript, kan mangle.",
+      "snapshotNotice": "URL'en hentes én gang som et øjebliksbillede. Senere ændringer i kilden synkroniseres ikke; tilføj den igen for at opdatere.",
+      "uploadFailed": "Upload af {name} mislykkedes",
+      "rateLimited": "For mange importer fra URL. Vent et par sekunder, og prøv igen.",
+      "errors": {
+        "urlNotAllowed": "Denne URL er ikke tilladt. Brug en offentlig internetadresse.",
+        "invalidUrl": "URL'en er ugyldig. Brug et komplet http(s)-link uden brugernavn eller adgangskode.",
+        "googleFileNotPublic": "Denne Google-fil er ikke delt offentligt. Indstil generel adgang til \"Alle, der har linket\", og prøv igen.",
+        "googlePublishedNotSupported": "Google-links via \"Udgiv på nettet\" understøttes ikke. Del filen offentligt, og brug dens normale link.",
+        "unsupportedFileType": "Denne filtype understøttes ikke som viden.",
+        "fileTooLarge": "Filen er større end {maxSize}.",
+        "downloadTimedOut": "Hentningen tog for lang tid. Prøv en mindre fil eller en hurtigere vært.",
+        "downloadFailed": "Kilden returnerede en fejl. Kontrollér, at linket kan åbnes uden at logge ind.",
+        "tooManyRedirects": "URL'en omdirigerer for mange gange.",
+        "invalidRedirect": "URL'en omdirigerer til en ugyldig adresse.",
+        "uploadPathNotAllowed": "Den uploadede fil er ikke tilladt. Upload den igen."
+      }
     }
   },
   "aiFunctions": {

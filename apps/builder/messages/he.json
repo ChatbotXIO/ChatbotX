@@ -319,6 +319,31 @@
         "noMatches": "No matching chunks were found.",
         "agentHasNoFiles": "This agent has no knowledge files."
       }
+    },
+    "create": {
+      "trigger": "הוספת ידע",
+      "title": "הוספת ידע",
+      "description": "העלו קובץ או ייבאו אותו מכתובת URL ציבורית. סוכן ה-AI מחפש בתוכן שלו בזמן המענה.",
+      "tabs": {
+        "fromUrl": "מכתובת URL"
+      },
+      "urlHelp": "קישור ישיר לקובץ נתמך, קישור Google Docs‏, Sheets או Slides ששותף באופן ציבורי, או דף אינטרנט סטטי. תוכן שמוצג באמצעות JavaScript עלול להיות חסר.",
+      "snapshotNotice": "הכתובת מורדת פעם אחת כתמונת מצב. שינויים מאוחרים יותר במקור לא מסונכרנים; הוסיפו אותה שוב כדי לעדכן.",
+      "uploadFailed": "העלאת {name} נכשלה",
+      "rateLimited": "יותר מדי ייבואים מכתובת URL. המתינו כמה שניות ונסו שוב.",
+      "errors": {
+        "urlNotAllowed": "כתובת URL זו אינה מותרת. השתמשו בכתובת אינטרנט ציבורית.",
+        "invalidUrl": "כתובת ה-URL אינה תקינה. השתמשו בקישור http(s) מלא ללא שם משתמש או סיסמה.",
+        "googleFileNotPublic": "קובץ Google זה לא שותף באופן ציבורי. הגדירו גישה כללית ל\"כל מי שיש לו את הקישור\" ונסו שוב.",
+        "googlePublishedNotSupported": "קישורי \"פרסום באינטרנט\" של Google אינם נתמכים. שתפו את הקובץ באופן ציבורי והשתמשו בקישור הרגיל שלו.",
+        "unsupportedFileType": "סוג קובץ זה אינו נתמך כידע.",
+        "fileTooLarge": "הקובץ גדול מ-{maxSize}.",
+        "downloadTimedOut": "ההורדה נמשכה זמן רב מדי. נסו קובץ קטן יותר או שרת מהיר יותר.",
+        "downloadFailed": "המקור החזיר שגיאה. ודאו שהקישור נפתח ללא התחברות.",
+        "tooManyRedirects": "כתובת ה-URL מפנה יותר מדי פעמים.",
+        "invalidRedirect": "כתובת ה-URL מפנה לכתובת לא תקינה.",
+        "uploadPathNotAllowed": "הקובץ שהועלה אינו מותר. העלו אותו שוב."
+      }
     }
   },
   "aiFunctions": {

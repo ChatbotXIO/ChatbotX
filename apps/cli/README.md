@@ -644,7 +644,7 @@ chatbotx ads find-by-connections <channel> <integrationId>    # Disconnect messa
 ```bash
 chatbotx ai-files list                               # List AI knowledge-base files
 chatbotx ai-files get <id>
-chatbotx ai-files create --name <name>               # [--file --url] (exactly one required)
+chatbotx ai-files create --name <name>               # [--file --url] (exactly one required); max 25 MB; --url snapshots once (public Google Docs/Sheets/Slides exported)
 chatbotx ai-files delete <id>
 chatbotx ai-files search --query <text>             # [--agentId | --fileIds <json>] (exactly one) [--limit --similarityThreshold --expectedText]; full token
 chatbotx ai-files chunks list <id>                  # [--limit --cursor --fromChunkIndex]; document order; repeat with nextCursor until null

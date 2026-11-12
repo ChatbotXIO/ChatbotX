@@ -555,6 +555,31 @@
         "noMatches": "No matching chunks were found.",
         "agentHasNoFiles": "This agent has no knowledge files."
       }
+    },
+    "create": {
+      "trigger": "添加知识",
+      "title": "添加知识",
+      "description": "上传文件或从公开 URL 导入。AI 智能体在回答时会搜索其内容。",
+      "tabs": {
+        "fromUrl": "从 URL"
+      },
+      "urlHelp": "支持格式文件的直接链接、公开共享的 Google 文档/表格/幻灯片链接，或静态网页。由 JavaScript 渲染的内容可能缺失。",
+      "snapshotNotice": "URL 只会作为快照下载一次。来源之后的更改不会同步；如需更新请重新添加。",
+      "uploadFailed": "上传 {name} 失败",
+      "rateLimited": "从 URL 导入过于频繁。请等待几秒后重试。",
+      "errors": {
+        "urlNotAllowed": "不允许使用此 URL。请使用公开的互联网地址。",
+        "invalidUrl": "URL 无效。请使用不含用户名或密码的完整 http(s) 链接。",
+        "googleFileNotPublic": "此 Google 文件未公开共享。请将常规访问权限设为“知道链接的任何人”后重试。",
+        "googlePublishedNotSupported": "不支持 Google“发布到网络”链接。请公开共享文件并使用其普通链接。",
+        "unsupportedFileType": "此文件类型不支持作为知识。",
+        "fileTooLarge": "文件大于 {maxSize}。",
+        "downloadTimedOut": "下载耗时过长。请尝试更小的文件或更快的主机。",
+        "downloadFailed": "来源返回了错误。请确认链接无需登录即可打开。",
+        "tooManyRedirects": "URL 重定向次数过多。",
+        "invalidRedirect": "URL 重定向到了无效地址。",
+        "uploadPathNotAllowed": "不允许使用已上传的文件。请重新上传。"
+      }
     }
   },
   "aiFunctions": {

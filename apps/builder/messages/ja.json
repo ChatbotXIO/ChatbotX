@@ -319,6 +319,31 @@
         "noMatches": "No matching chunks were found.",
         "agentHasNoFiles": "This agent has no knowledge files."
       }
+    },
+    "create": {
+      "trigger": "ナレッジを追加",
+      "title": "ナレッジを追加",
+      "description": "ファイルをアップロードするか、公開 URL からインポートします。AI エージェントは回答時にその内容を検索します。",
+      "tabs": {
+        "fromUrl": "URL から"
+      },
+      "urlHelp": "対応ファイルへの直接リンク、一般公開された Google ドキュメント・スプレッドシート・スライドのリンク、または静的なウェブページ。JavaScript で描画される内容は含まれない場合があります。",
+      "snapshotNotice": "URL はスナップショットとして一度だけダウンロードされます。元の内容の変更は同期されません。更新するには再度追加してください。",
+      "uploadFailed": "{name} のアップロードに失敗しました",
+      "rateLimited": "URL からのインポートが多すぎます。数秒待ってからもう一度お試しください。",
+      "errors": {
+        "urlNotAllowed": "この URL は許可されていません。公開されたインターネットアドレスを使用してください。",
+        "invalidUrl": "URL が無効です。ユーザー名やパスワードを含まない完全な http(s) リンクを使用してください。",
+        "googleFileNotPublic": "この Google ファイルは一般公開されていません。一般的なアクセスを「リンクを知っている全員」に設定してもう一度お試しください。",
+        "googlePublishedNotSupported": "Google の「ウェブに公開」リンクには対応していません。ファイルを一般公開し、通常のリンクを使用してください。",
+        "unsupportedFileType": "このファイル形式はナレッジとしてサポートされていません。",
+        "fileTooLarge": "ファイルが {maxSize} を超えています。",
+        "downloadTimedOut": "ダウンロードに時間がかかりすぎました。より小さいファイルか高速なホストをお試しください。",
+        "downloadFailed": "取得元がエラーを返しました。ログインせずにリンクを開けるか確認してください。",
+        "tooManyRedirects": "URL のリダイレクト回数が多すぎます。",
+        "invalidRedirect": "URL が無効なアドレスにリダイレクトしています。",
+        "uploadPathNotAllowed": "アップロードされたファイルは許可されていません。もう一度アップロードしてください。"
+      }
     }
   },
   "aiFunctions": {

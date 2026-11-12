@@ -36,6 +36,13 @@ import {
   uploadFile,
   uploadFileFromUrl,
 } from "@chatbotx.io/filesystem"
+import {
+  AI_FILE_MAX_UPLOAD_BYTES,
+  isGenericMimeType,
+  isKnowledgeMimeType,
+  knowledgeMimeTypeFromFilename,
+  normalizeBaseMimeType,
+} from "@chatbotx.io/sdk"
 import { createId, isNumericId } from "@chatbotx.io/utils"
 import {
   buildAIFileReindexJobId,
@@ -61,8 +68,77 @@ import {
 } from "../template/installed-resource.service"
 import { withTemplateLockedTransaction } from "../template/template-resource-locks"
 import type { PaginatedResult } from "../types"
+import { AIFileCreateException, isAIFileCreateErrorReason } from "./errors"
+import {
+  type AIFileUrlSource,
+  filenameFromContentDisposition,
+  GOOGLE_DOCS_HOST,
+  normalizeAIFileSourceUrl,
+} from "./public-url"
 
-export const AI_FILE_MAX_UPLOAD_BYTES = 100 * 1000 * 1000
+export { AI_FILE_MAX_UPLOAD_BYTES } from "@chatbotx.io/sdk"
+
+/** Whole download (redirects, body, storage put) for a create from URL. */
+const AI_FILE_URL_DOWNLOAD_TIMEOUT_MS = 60_000
+
+const GOOGLE_CONTENT_HOST_SUFFIX = ".googleusercontent.com"
+
+/**
+ * The knowledge MIME type for a declared type, falling back to the given
+ * filenames (first match wins) when the declared one is generic. `undefined`
+ * when the result is not a knowledge format.
+ */
+function resolveKnowledgeMimeType(
+  declared: string | undefined,
+  filenames: Array<string | undefined>,
+): string | undefined {
+  let resolved = normalizeBaseMimeType(declared ?? "")
+  if (isGenericMimeType(resolved)) {
+    for (const filename of filenames) {
+      const inferred = filename
+        ? knowledgeMimeTypeFromFilename(filename)
+        : undefined
+      if (inferred) {
+        resolved = inferred
+        break
+      }
+    }
+  }
+  return isKnowledgeMimeType(resolved) ? resolved : undefined
+}
+
+const unsupportedFileTypeError = () =>
+  new UploadValidationError("Unsupported file type", "unsupportedFileType")
+
+const fileTooLargeError = () =>
+  new UploadValidationError(
+    `File exceeds the maximum allowed size of ${AI_FILE_MAX_UPLOAD_BYTES} bytes`,
+    "fileTooLarge",
+  )
+
+function hostnameOf(url: string): string | undefined {
+  try {
+    return new URL(url).hostname
+  } catch {
+    return
+  }
+}
+
+function lastPathSegment(url: string): string | undefined {
+  try {
+    const segment = new URL(url).pathname.split("/").pop()
+    return segment ? decodeURIComponent(segment) : undefined
+  } catch {
+    return
+  }
+}
+
+/** A filesystem/service upload refusal as the 400 the caller sees. */
+function toCreateException(error: UploadValidationError): ChatbotXException {
+  return isAIFileCreateErrorReason(error.reason)
+    ? new AIFileCreateException(error.message, error.reason)
+    : new ChatbotXException(error.message, "businessError", 400)
+}
 
 export type AIFileWithProcessing = Omit<
   AIFileModel,
@@ -493,51 +569,161 @@ class AiFileService extends BaseService {
     input: CreateAIFileInput,
   ): Promise<{ name: string; path: string; mimeType: string; size: number }> {
     if ("path" in input) {
-      // The caller names an object they uploaded themselves: it must sit under
-      // this workspace's own AI-file prefix, or a member could point a file at
-      // another workspace's object (and read it back through the presigned URL).
-      const prefix = `workspaces/${workspaceId}/ai-files/`
-      if (!input.path.startsWith(prefix) || input.path.includes("..")) {
-        throw new UploadValidationError("The uploaded file path is not allowed")
-      }
-      return {
-        name: input.name,
-        path: input.path,
-        mimeType: input.mimeType,
-        size: input.size,
-      }
+      return await this.resolveUploadedObject(workspaceId, input)
     }
     const path = `workspaces/${workspaceId}/ai-files/${createId()}`
     if ("file" in input) {
+      // Checked before the upload so a refused file leaves no object behind.
+      if (input.file.size > AI_FILE_MAX_UPLOAD_BYTES) {
+        throw fileTooLargeError()
+      }
+      const mimeType = resolveKnowledgeMimeType(input.file.type, [
+        input.file.name,
+      ])
+      if (!mimeType) {
+        throw unsupportedFileTypeError()
+      }
       const uploaded = await uploadFile(input.file, path, "private")
       return {
         name: input.name ?? uploaded.name,
         path,
-        mimeType: uploaded.mimeType,
+        mimeType,
         size: uploaded.size,
       }
     }
-    const uploaded = await uploadFileFromUrl(
-      input.url,
+    return await this.downloadFromUrl({
       path,
-      "private",
-      AI_FILE_MAX_UPLOAD_BYTES,
-      async (candidateUrl) => {
-        try {
-          await assertPublicUrl(candidateUrl, "AI file URL")
-        } catch {
-          // The guard's own message echoes the submitted URL; replace it with
-          // a safe, caller-fault message before it can reach the API response.
-          throw new UploadValidationError("The provided URL is not allowed")
-        }
-      },
-    )
+      name: input.name,
+      url: input.url,
+    })
+  }
+
+  /**
+   * The UI uploads through a presigned PUT, which binds neither size nor type:
+   * read both from storage instead of trusting the client, and delete the
+   * object when it is refused.
+   */
+  private async resolveUploadedObject(
+    workspaceId: string,
+    input: { name: string; path: string; mimeType: string; size: number },
+  ): Promise<{ name: string; path: string; mimeType: string; size: number }> {
+    // The caller names an object they uploaded themselves: it must sit under
+    // this workspace's own AI-file prefix, or a member could point a file at
+    // another workspace's object (and read it back through the presigned URL).
+    // Not deleted on refusal: the object is not this workspace's.
+    const prefix = `workspaces/${workspaceId}/ai-files/`
+    if (!input.path.startsWith(prefix) || input.path.includes("..")) {
+      throw new UploadValidationError(
+        "The uploaded file path is not allowed",
+        "uploadPathNotAllowed",
+      )
+    }
+    const head = await uploader.headObject(input.path)
+    const size = head.ContentLength ?? input.size
+    const mimeType = resolveKnowledgeMimeType(head.ContentType, [input.name])
+    if (size <= AI_FILE_MAX_UPLOAD_BYTES && mimeType) {
+      return { name: input.name, path: input.path, mimeType, size }
+    }
+    try {
+      await uploader.deleteObject(input.path)
+    } catch (error) {
+      // Best effort: the refusal below is what the caller needs to see.
+      logger.warn(
+        { err: normalizeError(error), workspaceId },
+        "Failed to delete refused AI file upload",
+      )
+    }
+    throw size > AI_FILE_MAX_UPLOAD_BYTES
+      ? fileTooLargeError()
+      : unsupportedFileTypeError()
+  }
+
+  private async downloadFromUrl(input: {
+    path: string
+    name?: string
+    url: string
+  }): Promise<{ name: string; path: string; mimeType: string; size: number }> {
+    const source = normalizeAIFileSourceUrl(input.url)
+    const signal = AbortSignal.timeout(AI_FILE_URL_DOWNLOAD_TIMEOUT_MS)
+    let uploaded: Awaited<ReturnType<typeof uploadFileFromUrl>>
+    try {
+      uploaded = await uploadFileFromUrl(
+        source.url,
+        input.path,
+        "private",
+        AI_FILE_MAX_UPLOAD_BYTES,
+        async (candidateUrl) => {
+          try {
+            await assertPublicUrl(candidateUrl, "AI file URL")
+          } catch {
+            // The guard's own message echoes the submitted URL; replace it
+            // with a safe, caller-fault message before it can reach the API
+            // response.
+            throw new UploadValidationError(
+              "The provided URL is not allowed",
+              "urlNotAllowed",
+            )
+          }
+        },
+        signal,
+        (response) => this.validateUrlResponse(source, response),
+      )
+    } catch (error) {
+      if (signal.aborted && !(error instanceof UploadValidationError)) {
+        throw new UploadValidationError(
+          "Download timed out",
+          "downloadTimedOut",
+        )
+      }
+      throw error
+    }
     return {
       name: input.name ?? uploaded.name,
-      path,
+      path: input.path,
       mimeType: uploaded.mimeType,
       size: uploaded.size,
     }
+  }
+
+  /**
+   * Runs on the final response, before its body is read: a Google file that
+   * is not public redirects to a sign-in page served as 200 HTML, and a
+   * direct link must serve a knowledge format.
+   */
+  private validateUrlResponse(
+    source: AIFileUrlSource,
+    response: {
+      finalUrl: string
+      mimeType: string
+      contentDisposition: string | null
+    },
+  ): { mimeType: string; name?: string } {
+    const dispositionName = filenameFromContentDisposition(
+      response.contentDisposition,
+    )
+    if (source.kind !== "direct") {
+      const host = hostnameOf(response.finalUrl)?.toLowerCase() ?? ""
+      const fromGoogleExport =
+        host === GOOGLE_DOCS_HOST || host.endsWith(GOOGLE_CONTENT_HOST_SUFFIX)
+      if (
+        !fromGoogleExport ||
+        normalizeBaseMimeType(response.mimeType) !== source.expectedMimeType
+      ) {
+        throw new UploadValidationError(
+          "This Google file is not shared publicly",
+          "googleFileNotPublic",
+        )
+      }
+      return { mimeType: source.expectedMimeType, name: dispositionName }
+    }
+    const mimeType = resolveKnowledgeMimeType(response.mimeType, [
+      dispositionName,
+      lastPathSegment(response.finalUrl),
+    ])
+    if (!mimeType) {
+      throw unsupportedFileTypeError()
+    }
+    return { mimeType, name: dispositionName }
   }
 
   async create(
@@ -546,14 +732,26 @@ class AiFileService extends BaseService {
   ): Promise<AIFileWithProcessing> {
     await this.assertEmbeddingProviderConfigured(workspaceId)
 
+    let sourceKind = "upload"
+    if ("file" in input) {
+      sourceKind = "file"
+    } else if ("url" in input) {
+      sourceKind = "url"
+    }
+    // Hostname only: the full URL may carry signed-query tokens.
+    const hostname = "url" in input ? hostnameOf(input.url) : undefined
+
     let resolved: { name: string; path: string; mimeType: string; size: number }
     try {
       resolved = await this.resolveUpload(workspaceId, input)
     } catch (error) {
       if (error instanceof UploadValidationError) {
-        throw new ChatbotXException(error.message, "businessError", 400)
+        throw toCreateException(error)
       }
-      logger.error({ err: error }, "Failed to store AI file")
+      logger.error(
+        { err: normalizeError(error), workspaceId, sourceKind, hostname },
+        "Failed to store AI file",
+      )
       throw new ChatbotXException(
         "Failed to store AI file. Please try again later.",
         "systemError",
@@ -623,6 +821,18 @@ class AiFileService extends BaseService {
     }
 
     await this.audit("create", `created a new Knowledge (#${created.id})`)
+    logger.info(
+      {
+        workspaceId,
+        aiFileId: created.id,
+        runId: processingRun.id,
+        sourceKind,
+        hostname,
+        mimeType: resolved.mimeType,
+        size: resolved.size,
+      },
+      "Created AI file",
+    )
 
     return {
       ...created,

@@ -9,6 +9,9 @@ import {
   EMAIL_MIME_TYPES,
   EPUB_MIME_TYPES,
   HTML_MIME_TYPES,
+  isGenericMimeType,
+  isKnowledgeMimeType,
+  knowledgeMimeTypeFromFilename,
   MARKDOWN_MIME_TYPES,
   PDF_MIME_TYPES,
   PPT_MIME_TYPES,
@@ -29,7 +32,11 @@ import removeMd from "remove-markdown"
 import { read, utils, type WorkSheet } from "xlsx"
 import { logger } from "../../lib/logger"
 import type { KnowledgeDocument, TabularSheet } from "./chunkers/types"
-import { FileFetchError, FileSizeLimitError } from "./extraction-errors"
+import {
+  FileFetchError,
+  FileSizeLimitError,
+  UnsupportedKnowledgeFileTypeError,
+} from "./extraction-errors"
 
 const MAX_EXTRACTABLE_PAGES = 200
 const MAX_EXTRACTED_TEXT_CHARS = 5_000_000
@@ -709,6 +716,20 @@ export async function extractKnowledgeDocument(
   },
 ): Promise<KnowledgeDocument> {
   const loaded = await loadFileForExtraction(remotePath, mimeType, options)
+
+  // A row stored with a generic type (e.g. `notes.txt` as octet-stream from an
+  // older upload) is still readable by its name; anything else that is not a
+  // knowledge format would only decode to noise. Only this knowledge path is
+  // strict: `extractTextFromFile` keeps its UTF-8 fallback.
+  if (isGenericMimeType(loaded.mimeType)) {
+    loaded.mimeType =
+      knowledgeMimeTypeFromFilename(options.sourceName) ?? loaded.mimeType
+  }
+  if (!isKnowledgeMimeType(loaded.mimeType)) {
+    throw new UnsupportedKnowledgeFileTypeError(
+      "The file type is not a supported knowledge format",
+    )
+  }
 
   // A legacy-encoded CSV (e.g. Excel's Windows-1252 "CSV") would decode with
   // U+FFFD in place of every accented letter and be embedded that way without

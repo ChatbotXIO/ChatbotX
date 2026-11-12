@@ -2271,6 +2271,31 @@
         "noMatches": "No matching chunks were found.",
         "agentHasNoFiles": "This agent has no knowledge files."
       }
+    },
+    "create": {
+      "trigger": "新增知識",
+      "title": "新增知識",
+      "description": "上傳檔案或從公開 URL 匯入。AI 代理在回答時會搜尋其內容。",
+      "tabs": {
+        "fromUrl": "從 URL"
+      },
+      "urlHelp": "支援格式檔案的直接連結、公開共用的 Google 文件／試算表／簡報連結，或靜態網頁。以 JavaScript 呈現的內容可能缺漏。",
+      "snapshotNotice": "URL 只會以快照形式下載一次。來源之後的變更不會同步；如需更新請重新新增。",
+      "uploadFailed": "上傳 {name} 失敗",
+      "rateLimited": "從 URL 匯入過於頻繁。請稍候幾秒再試一次。",
+      "errors": {
+        "urlNotAllowed": "不允許使用此 URL。請使用公開的網際網路位址。",
+        "invalidUrl": "URL 無效。請使用不含使用者名稱或密碼的完整 http(s) 連結。",
+        "googleFileNotPublic": "此 Google 檔案未公開共用。請將一般存取權設為「知道連結的任何人」後再試一次。",
+        "googlePublishedNotSupported": "不支援 Google「發布到網路」連結。請公開共用檔案並使用一般連結。",
+        "unsupportedFileType": "此檔案類型不支援作為知識。",
+        "fileTooLarge": "檔案大於 {maxSize}。",
+        "downloadTimedOut": "下載時間過長。請嘗試較小的檔案或較快的主機。",
+        "downloadFailed": "來源傳回錯誤。請確認連結不需登入即可開啟。",
+        "tooManyRedirects": "URL 重新導向次數過多。",
+        "invalidRedirect": "URL 重新導向到無效的位址。",
+        "uploadPathNotAllowed": "不允許使用已上傳的檔案。請重新上傳。"
+      }
     }
   },
   "aiFunctions": {

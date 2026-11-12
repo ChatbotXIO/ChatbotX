@@ -361,6 +361,31 @@
         "noMatches": "No matching chunks were found.",
         "agentHasNoFiles": "This agent has no knowledge files."
       }
+    },
+    "create": {
+      "trigger": "Bilik əlavə et",
+      "title": "Bilik əlavə et",
+      "description": "Fayl yükləyin və ya ictimai URL-dən idxal edin. Süni intellekt agenti cavab verərkən bu məzmunda axtarış edir.",
+      "tabs": {
+        "fromUrl": "URL-dən"
+      },
+      "urlHelp": "Dəstəklənən fayla birbaşa keçid, ictimai paylaşılmış Google Docs, Sheets və ya Slides keçidi, yaxud statik veb səhifə. JavaScript ilə yaradılan məzmun əskik ola bilər.",
+      "snapshotNotice": "URL bir dəfə snapşot kimi endirilir. Mənbədəki sonrakı dəyişikliklər sinxronlaşdırılmır; yeniləmək üçün yenidən əlavə edin.",
+      "uploadFailed": "{name} yüklənmədi",
+      "rateLimited": "URL-dən həddən çox idxal. Bir neçə saniyə gözləyib yenidən cəhd edin.",
+      "errors": {
+        "urlNotAllowed": "Bu URL-ə icazə verilmir. İctimai internet ünvanından istifadə edin.",
+        "invalidUrl": "URL yanlışdır. İstifadəçi adı və ya parol olmadan tam http(s) keçidindən istifadə edin.",
+        "googleFileNotPublic": "Bu Google faylı ictimai paylaşılmayıb. Ümumi girişi \"Keçidi olan hər kəs\" olaraq təyin edib yenidən cəhd edin.",
+        "googlePublishedNotSupported": "Google \"Vebdə dərc et\" keçidləri dəstəklənmir. Faylı ictimai paylaşın və adi keçidindən istifadə edin.",
+        "unsupportedFileType": "Bu fayl növü bilik kimi dəstəklənmir.",
+        "fileTooLarge": "Fayl {maxSize} həcmindən böyükdür.",
+        "downloadTimedOut": "Endirmə çox uzun çəkdi. Daha kiçik fayl və ya daha sürətli server sınayın.",
+        "downloadFailed": "Mənbə xəta qaytardı. Keçidin daxil olmadan açıldığını yoxlayın.",
+        "tooManyRedirects": "URL həddən çox yönləndirir.",
+        "invalidRedirect": "URL yanlış ünvana yönləndirir.",
+        "uploadPathNotAllowed": "Yüklənmiş fayla icazə verilmir. Zəhmət olmasa yenidən yükləyin."
+      }
     }
   },
   "aiFunctions": {

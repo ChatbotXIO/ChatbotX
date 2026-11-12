@@ -13,6 +13,7 @@
     "ai-agents/delete.action:deleteAIAgentAction": "covered:ai-agents",
     "ai-agents/update.action:updateAIAgentAction": "covered:ai-agents",
     "ai-files/create-ai-file.action:createAIFileAction": "covered:ai-files",
+    "ai-files/create-ai-file-from-url.action:createAIFileFromUrlAction": "covered:ai-files",
     "ai-files/delete-ai-file.action:deleteAIFileAction": "covered:ai-files",
     "ai-files/reindex-ai-file.action:reindexAIFileAction": "covered:ai-files",
     "ai-files/search-ai-files.action:searchAIFilesAction": "covered:ai-files",
