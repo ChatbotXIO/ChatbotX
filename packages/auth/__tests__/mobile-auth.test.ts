@@ -545,6 +545,88 @@ describe("social flow — /mobile/callback and exchange_code", () => {
   })
 })
 
+describe("web account handoff", () => {
+  const followHandoff = async (code: string) =>
+    await auth.handler(
+      new Request(`${ISSUER}/api/auth/account/handoff?code=${code}`),
+    )
+
+  test("creates a web session and redirects to account deletion", async () => {
+    const user = await seedUser(auth)
+    const { code } = await auth.api.mobileCreateWebHandoff({
+      body: { userId: user.id },
+    })
+
+    const response = await followHandoff(code)
+
+    expect(response.headers.get("location")).toBe("/account/delete")
+    expect(store.session).toHaveLength(1)
+  })
+
+  test("redirects reused or expired handoff codes to sign-in", async () => {
+    const user = await seedUser(auth)
+    const { code } = await auth.api.mobileCreateWebHandoff({
+      body: { userId: user.id },
+    })
+    await followHandoff(code)
+
+    const response = await followHandoff(code)
+
+    expect(response.headers.get("location")).toBe(
+      "/auth/sign-in?error=handoff_invalid",
+    )
+    expect(store.session).toHaveLength(1)
+  })
+
+  test("redirects a missing, empty, or invalid handoff code to sign-in", async () => {
+    const missing = await auth.handler(
+      new Request(`${ISSUER}/api/auth/account/handoff`),
+    )
+    const empty = await auth.handler(
+      new Request(`${ISSUER}/api/auth/account/handoff?code=`),
+    )
+    const invalid = await followHandoff("not-a-handoff-code")
+
+    for (const response of [missing, empty, invalid]) {
+      expect(response.headers.get("location")).toBe(
+        "/auth/sign-in?error=handoff_invalid",
+      )
+    }
+    expect(store.session).toHaveLength(0)
+  })
+
+  test("redirects an account missing from the primary user store to sign-in", async () => {
+    const user = await seedUser(auth)
+    const { code } = await auth.api.mobileCreateWebHandoff({
+      body: { userId: user.id },
+    })
+    userService.findById.mockResolvedValueOnce(undefined)
+
+    const response = await followHandoff(code)
+
+    expect(response.headers.get("location")).toBe(
+      "/auth/sign-in?error=handoff_invalid",
+    )
+    expect(store.session).toHaveLength(0)
+  })
+
+  test("redirects a pending-deletion user without creating a replacement session", async () => {
+    const user = await seedUser(auth)
+    const { code } = await auth.api.mobileCreateWebHandoff({
+      body: { userId: user.id },
+    })
+    userService.findById.mockResolvedValueOnce({
+      deletionRequestedAt: new Date(),
+      id: user.id,
+    })
+
+    const response = await followHandoff(code)
+
+    expect(response.headers.get("location")).toBe("/account/delete?requested=1")
+    expect(store.session).toHaveLength(0)
+  })
+})
+
 describe("refresh_token grant and revoke", () => {
   test("rotates: returns a new access token and a new refresh token for the same device", async () => {
     const user = await seedUser(auth)
@@ -568,6 +650,35 @@ describe("refresh_token grant and revoke", () => {
     expect(body.deviceId).toBe("install-1")
     const { payload } = await verifyAccessToken(auth, body.accessToken)
     expect(payload.sub).toBe(user.id)
+  })
+
+  test("revokes the refresh-token family for a pending-deletion user", async () => {
+    const user = await seedUser(auth)
+    const login = await (
+      await tokenGrant(auth, {
+        grantType: "password",
+        email: "agent@example.com",
+        password: PASSWORD,
+        deviceId: "install-1",
+      })
+    ).json()
+    userService.findById.mockResolvedValueOnce({
+      deletionRequestedAt: new Date(),
+      id: user.id,
+    })
+
+    const response = await tokenGrant(auth, {
+      grantType: "refresh_token",
+      refreshToken: login.refreshToken,
+    })
+
+    expect(response.status).toBe(401)
+    expect(await response.json()).toMatchObject({
+      code: "ACCOUNT_DELETION_PENDING",
+    })
+    expect(refreshService.revokeAllForUser).toHaveBeenCalledWith({
+      userId: user.id,
+    })
   })
 
   test("reusing a spent refresh token is 401 REFRESH_TOKEN_REUSED", async () => {

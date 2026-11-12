@@ -657,14 +657,27 @@ export const mobileAuth = () =>
 
       webHandoff: createAuthEndpoint(
         "/account/handoff",
-        { method: "GET", query: z.object({ code: z.string().min(1) }) },
+        {
+          method: "GET",
+          query: z.object({ code: z.string().optional() }),
+        },
         async (ctx) => {
+          if (!ctx.query.code) {
+            throw ctx.redirect("/auth/sign-in?error=handoff_invalid")
+          }
           const userId = await consumeWebHandoffCode(ctx, ctx.query.code)
           const user = userId
             ? await ctx.context.internalAdapter.findUserById(userId)
             : null
           if (!user) {
-            throw ctx.redirect("/account/delete?handoff=invalid")
+            throw ctx.redirect("/auth/sign-in?error=handoff_invalid")
+          }
+          const account = await userService.findById(user.id)
+          if (!account) {
+            throw ctx.redirect("/auth/sign-in?error=handoff_invalid")
+          }
+          if (account.deletionRequestedAt) {
+            throw ctx.redirect("/account/delete?requested=1")
           }
           const session = await ctx.context.internalAdapter.createSession(
             user.id,

@@ -1,9 +1,9 @@
 {
   "version": "8",
   "dialect": "postgres",
-  "id": "2edeea82-319e-4568-afdf-14601b2ecbd8",
+  "id": "313aa547-442a-4177-9cfc-0049b576f604",
   "prevIds": [
-    "5e01fadb-a809-4196-badb-f4513f05a3ef"
+    "a065c6e2-2b8e-4a56-bdf2-e13a8c8fb700"
   ],
   "ddl": [
     {
@@ -48253,7 +48253,7 @@
         }
       ],
       "isUnique": false,
-      "where": null,
+      "where": "\"scheduledDeletionAt\" IS NOT NULL",
       "with": "",
       "method": "btree",
       "concurrently": false,
@@ -50559,6 +50559,27 @@
       "nameExplicit": true,
       "columns": [
         {
+          "value": "createdById",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": "\"createdById\" IS NOT NULL",
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "ContactNote_createdById_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "ContactNote"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
           "value": "contactId",
           "isExpression": false,
           "asc": true,
@@ -51343,6 +51364,27 @@
       "nameExplicit": true,
       "columns": [
         {
+          "value": "assignedUserId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": "\"assignedUserId\" IS NOT NULL",
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "Conversation_assignedUserId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "Conversation"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
           "value": "workspaceId",
           "isExpression": false,
           "asc": true,
@@ -51545,6 +51587,27 @@
       "method": "btree",
       "concurrently": false,
       "name": "ConversationParticipant_conversationId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "ConversationParticipant"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "userId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "ConversationParticipant_userId_idx",
       "entityType": "indexes",
       "schema": "public",
       "table": "ConversationParticipant"
@@ -52637,6 +52700,27 @@
       "method": "btree",
       "concurrently": false,
       "name": "AuditLog_workspaceId_userId_createdAt_id_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "AuditLog"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "userId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": "\"userId\" IS NOT NULL",
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "AuditLog_userId_idx",
       "entityType": "indexes",
       "schema": "public",
       "table": "AuditLog"
@@ -66931,7 +67015,7 @@
         "id"
       ],
       "onUpdate": "CASCADE",
-      "onDelete": "CASCADE",
+      "onDelete": "SET NULL",
       "name": "ContactNote_createdById_User_id_fkey",
       "entityType": "fks",
       "schema": "public",

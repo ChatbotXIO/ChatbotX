@@ -31,11 +31,13 @@ const mocks = vi.hoisted(() => {
     capturedProcedures,
     api: makeApi(),
     listMyWorkspaces: vi.fn(),
-    registerDeviceToken: vi.fn(),
-    unregisterDeviceToken: vi.fn(),
     mobileChangePassword: vi.fn(),
-    mintMemberConnectToken: vi.fn(),
+    mobileCreateWebHandoff: vi.fn(),
+    registerDeviceToken: vi.fn(),
     resolveTenantSettings: vi.fn(),
+    unregisterDeviceToken: vi.fn(),
+    userService: { requestAccountDeletion: vi.fn() },
+    mintMemberConnectToken: vi.fn(),
   }
 })
 
@@ -52,7 +54,12 @@ vi.mock("@/features/device-tokens/lib/device-tokens", () => ({
   unregisterDeviceToken: mocks.unregisterDeviceToken,
 }))
 vi.mock("@/lib/auth/auth", () => ({
-  auth: { api: { mobileChangePassword: mocks.mobileChangePassword } },
+  auth: {
+    api: {
+      mobileChangePassword: mocks.mobileChangePassword,
+      mobileCreateWebHandoff: mocks.mobileCreateWebHandoff,
+    },
+  },
 }))
 vi.mock("@/features/realtime/lib/mint-member-connect-token", () => ({
   mintMemberConnectToken: mocks.mintMemberConnectToken,
@@ -60,6 +67,7 @@ vi.mock("@/features/realtime/lib/mint-member-connect-token", () => ({
 vi.mock("@chatbotx.io/business", () => ({
   logger: { error: vi.fn() },
   resolveTenantSettings: mocks.resolveTenantSettings,
+  userService: mocks.userService,
 }))
 
 const { APIError } = await import("better-auth/api")
@@ -196,6 +204,90 @@ describe("/v1/me/device-tokens", () => {
 
     expect(mocks.unregisterDeviceToken).toHaveBeenCalledWith("7", {
       token: "t",
+    })
+  })
+})
+
+describe("POST /v1/me/web-handoff", () => {
+  test("returns a browser handoff URL for the token's user", async () => {
+    mocks.mobileCreateWebHandoff.mockResolvedValue({ code: "handoff-code" })
+
+    const result = await findProcedure("POST", "/v1/me/web-handoff").handler?.({
+      context: withContext({}, { url: new URL("https://app.example.com/api") }),
+      input: {},
+    })
+
+    expect(mocks.mobileCreateWebHandoff).toHaveBeenCalledWith({
+      body: { userId: "7" },
+    })
+    expect(result).toEqual({
+      url: "https://app.example.com/api/auth/account/handoff?code=handoff-code",
+    })
+  })
+})
+
+describe("DELETE /v1/me", () => {
+  test("requires DELETE exactly before scheduling account deletion", async () => {
+    const { accountDeletionRequest } = await import(
+      "@/features/me/schema/public"
+    )
+
+    expect(
+      accountDeletionRequest.safeParse({ confirmation: "delete" }).success,
+    ).toBe(false)
+  })
+
+  test("schedules the signed-in account after validation", async () => {
+    const scheduledDeletionAt = new Date("2026-11-13T12:00:00.000Z")
+    mocks.userService.requestAccountDeletion.mockResolvedValue({
+      scheduledDeletionAt,
+    })
+
+    const result = await findProcedure("DELETE", "/v1/me").handler?.({
+      context: withContext(),
+      input: { confirmation: "DELETE" },
+    })
+
+    expect(mocks.userService.requestAccountDeletion).toHaveBeenCalledWith({
+      actor: { userId: "7" },
+      userId: "7",
+    })
+    expect(result).toEqual({ scheduledDeletionAt })
+  })
+
+  test("marks the deletion response private and does not cache it", async () => {
+    const context = withContext()
+    mocks.userService.requestAccountDeletion.mockResolvedValue({
+      scheduledDeletionAt: new Date("2026-11-13T12:00:00.000Z"),
+    })
+
+    await findProcedure("DELETE", "/v1/me").handler?.({
+      context,
+      input: { confirmation: "DELETE" },
+    })
+
+    expect(context.resHeaders.get("cache-control")).toBe("no-store")
+    expect(context.resHeaders.get("pragma")).toBe("no-cache")
+  })
+
+  test("preserves the reseller support refusal and its 403 status", async () => {
+    const { ChatbotXException } = await import("@chatbotx.io/business/errors")
+    mocks.userService.requestAccountDeletion.mockRejectedValue(
+      new ChatbotXException(
+        "Reseller accounts must contact support to delete their account",
+        "accountDeletionSupportRequired",
+        403,
+      ),
+    )
+
+    await expect(
+      findProcedure("DELETE", "/v1/me").handler?.({
+        context: withContext(),
+        input: { confirmation: "DELETE" },
+      }),
+    ).rejects.toMatchObject({
+      code: "accountDeletionSupportRequired",
+      httpStatusCode: 403,
     })
   })
 })

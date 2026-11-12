@@ -43,8 +43,8 @@ describe("purgeDeletedUsers", () => {
   test("purges a bounded batch and records completed work", async () => {
     mocks.listDueDeletedUserIds.mockResolvedValue(["user-1", "user-2"])
     mocks.purgeDeletedUser
-      .mockResolvedValueOnce(true)
-      .mockResolvedValueOnce(false)
+      .mockResolvedValueOnce("deleted")
+      .mockResolvedValueOnce("pending")
 
     await purgeDeletedUsers()
 
@@ -52,7 +52,7 @@ describe("purgeDeletedUsers", () => {
     expect(mocks.purgeDeletedUser).toHaveBeenNthCalledWith(1, "user-1")
     expect(mocks.purgeDeletedUser).toHaveBeenNthCalledWith(2, "user-2")
     expect(mocks.info).toHaveBeenCalledWith(
-      { attempted: 2, deleted: 1, failed: 0 },
+      { attempted: 2, deleted: 1, failed: 0, notDue: 0, pending: 1 },
       "purgeDeletedUsers: sweep completed",
     )
   })
@@ -62,7 +62,7 @@ describe("purgeDeletedUsers", () => {
     mocks.listDueDeletedUserIds.mockResolvedValue(["user-1", "user-2"])
     mocks.purgeDeletedUser
       .mockRejectedValueOnce(failure)
-      .mockResolvedValueOnce(true)
+      .mockResolvedValueOnce("deleted")
 
     await purgeDeletedUsers()
 
@@ -72,7 +72,7 @@ describe("purgeDeletedUsers", () => {
       "purgeDeletedUsers: user failed",
     )
     expect(mocks.info).toHaveBeenCalledWith(
-      { attempted: 2, deleted: 1, failed: 1 },
+      { attempted: 2, deleted: 1, failed: 1, notDue: 0, pending: 0 },
       "purgeDeletedUsers: sweep completed",
     )
   })
@@ -80,8 +80,8 @@ describe("purgeDeletedUsers", () => {
   test("allows an idempotent rerun after a user was already deleted", async () => {
     mocks.listDueDeletedUserIds.mockResolvedValue(["user-1"])
     mocks.purgeDeletedUser
-      .mockResolvedValueOnce(true)
-      .mockResolvedValueOnce(false)
+      .mockResolvedValueOnce("deleted")
+      .mockResolvedValueOnce("notDue")
 
     await purgeDeletedUsers()
     await purgeDeletedUsers()

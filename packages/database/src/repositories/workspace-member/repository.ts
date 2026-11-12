@@ -67,6 +67,19 @@ class WorkspaceMemberRepository {
         ),
       )
   }
+
+  async deleteAllForUser(
+    userId: string,
+    tx: DatabaseClient,
+  ): Promise<Array<{ userId: string; workspaceId: string }>> {
+    return await tx
+      .delete(workspaceMemberModel)
+      .where(eq(workspaceMemberModel.userId, userId))
+      .returning({
+        userId: workspaceMemberModel.userId,
+        workspaceId: workspaceMemberModel.workspaceId,
+      })
+  }
 }
 
 export const workspaceMemberRepository = new WorkspaceMemberRepository()

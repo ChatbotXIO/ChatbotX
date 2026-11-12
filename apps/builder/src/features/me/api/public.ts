@@ -22,6 +22,7 @@ import {
 } from "@/lib/orpc/orpc-error-helper"
 import { mobileUserAPI, mobileUserPasswordChangeAPI } from "@/orpc"
 import {
+  accountDeletionRequest,
   changeMyPasswordRequest,
   meResource,
   mobileTokenResponse,
@@ -180,7 +181,7 @@ export const mePublicRouter = {
     })
     .input(z.object({}))
     .output(z.object({ url: z.url() }))
-    .errors(possibleErrorsOnMutatingResource)
+    .errors(possibleErrorsOnFindingResource)
     .handler(async ({ context }) => {
       const result = await auth.api.mobileCreateWebHandoff({
         body: { userId: context.user.id },
@@ -204,13 +205,7 @@ export const mePublicRouter = {
         'Schedules deletion of the signed-in account and all workspaces it owns. Send { "confirmation": "DELETE" } to confirm.',
       tags: ["Me"],
     })
-    .input(
-      z.object({
-        confirmation: z
-          .literal("DELETE")
-          .describe("Literal DELETE confirmation"),
-      }),
-    )
+    .input(accountDeletionRequest)
     .output(z.object({ scheduledDeletionAt: z.date() }))
     .errors(possibleErrorsOnSchedulingAccountDeletion)
     .handler(async ({ context }) => {

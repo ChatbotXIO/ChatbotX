@@ -22,5 +22,7 @@ export const IDEMPOTENCY_EXEMPT_READ_PATHS: ReadonlySet<string> = new Set([
   // Read-only lookups that take their ids in the body: the answer follows the
   // workspace's current resources and installs, so a replay would go stale.
   "/v1/templates/dependencies-preview",
+  // A one-time handoff code must not replay a prior browser sign-in URL.
+  "/v1/me/web-handoff",
   "/v1/templates/locked-resources",
 ])

@@ -11913,6 +11913,7 @@
     "warning": "Deletion starts after a 24-hour grace period. It cannot be recovered. Cancel any subscriptions first.",
     "confirmationLabel": "Type DELETE to confirm",
     "confirmationError": "Type DELETE exactly to confirm.",
+    "supportRequired": "Contact support to delete this reseller account.",
     "submit": "Delete account",
     "receivedTitle": "Deletion request received",
     "receivedDescription": "Your account and owned workspaces are scheduled for deletion."

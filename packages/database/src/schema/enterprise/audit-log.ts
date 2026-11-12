@@ -42,6 +42,9 @@ export const auditLogModel = pgTable(
         table.id.desc(),
       )
       .where(sql`"userId" IS NOT NULL`),
+    index("AuditLog_userId_idx")
+      .on(table.userId)
+      .where(sql`${table.userId} IS NOT NULL`),
     index("AuditLog_createdAt_id_idx").using(
       "btree",
       table.createdAt.desc(),

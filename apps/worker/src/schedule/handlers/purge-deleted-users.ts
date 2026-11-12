@@ -33,19 +33,26 @@ export async function purgeDeletedUsers(): Promise<void> {
         })
         let deleted = 0
         let failed = 0
+        let notDue = 0
+        let pending = 0
         for (const userId of userIds) {
           try {
-            if (await userService.purgeDeletedUser(userId)) {
+            const result = await userService.purgeDeletedUser(userId)
+            if (result === "deleted") {
               deleted += 1
+            } else if (result === "pending") {
+              pending += 1
+            } else {
+              notDue += 1
             }
           } catch (error) {
             failed += 1
             log.error({ err: error, userId }, "purgeDeletedUsers: user failed")
           }
         }
-        if (deleted > 0 || failed > 0) {
+        if (deleted > 0 || failed > 0 || pending > 0) {
           log.info(
-            { attempted: userIds.length, deleted, failed },
+            { attempted: userIds.length, deleted, failed, notDue, pending },
             "purgeDeletedUsers: sweep completed",
           )
         }

@@ -181,22 +181,16 @@ export class WorkspaceMemberService extends BaseService {
     tx: DatabaseClient
     userId: string
   }): Promise<Pick<WorkspaceMemberModel, "userId" | "workspaceId">[]> {
-    const members = await props.tx.query.workspaceMemberModel.findMany({
-      where: { userId: props.userId },
-      columns: { userId: true, workspaceId: true },
-    })
-    for (const member of members) {
-      await props.tx
-        .delete(workspaceMemberModel)
-        .where(
-          and(
-            eq(workspaceMemberModel.userId, member.userId),
-            eq(workspaceMemberModel.workspaceId, member.workspaceId),
-          ),
-        )
+    const members = await workspaceMemberRepository.deleteAllForUser(
+      props.userId,
+      props.tx,
+    )
+    for (const workspaceId of new Set(
+      members.map((member) => member.workspaceId),
+    )) {
       await workingHoursService.removeMembersForUsers({
-        workspaceId: member.workspaceId,
-        userIds: [member.userId],
+        workspaceId,
+        userIds: [props.userId],
         tx: props.tx,
       })
     }
@@ -206,24 +200,38 @@ export class WorkspaceMemberService extends BaseService {
   async finalizeAccountDeletionMembershipRemovals(
     members: Pick<WorkspaceMemberModel, "userId" | "workspaceId">[],
   ): Promise<void> {
-    for (const member of members) {
-      await this.invalidateCacheTags(
-        workspaceMemberDeleteCacheTags(member.workspaceId, member.userId),
-      )
-      await workspaceUsageService
-        .decrement(member.workspaceId, "teamMembers")
-        .catch((err) => {
-          logger.warn(
-            { err, workspaceId: member.workspaceId },
-            "workspace usage team member decrement failed",
+    const concurrency = 10
+    for (let index = 0; index < members.length; index += concurrency) {
+      const settled = await Promise.allSettled(
+        members.slice(index, index + concurrency).map(async (member) => {
+          await this.invalidateCacheTags(
+            workspaceMemberDeleteCacheTags(member.workspaceId, member.userId),
           )
-        })
-      await tryRevokeWorkspaceMemberRealtimeConnections({
-        workspaceId: member.workspaceId,
-        userId: member.userId,
-        reason: "deleted",
-        errorMessage: "Failed to revoke deleted account realtime connections",
-      })
+          await workspaceUsageService
+            .decrement(member.workspaceId, "teamMembers")
+            .catch((err) => {
+              logger.warn(
+                { err, workspaceId: member.workspaceId },
+                "workspace usage team member decrement failed",
+              )
+            })
+          await tryRevokeWorkspaceMemberRealtimeConnections({
+            workspaceId: member.workspaceId,
+            userId: member.userId,
+            reason: "deleted",
+            errorMessage:
+              "Failed to revoke deleted account realtime connections",
+          })
+        }),
+      )
+      for (const result of settled) {
+        if (result.status === "rejected") {
+          logger.error(
+            { err: result.reason },
+            "account-deletion: membership cleanup failed",
+          )
+        }
+      }
     }
   }
 

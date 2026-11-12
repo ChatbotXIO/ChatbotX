@@ -1,29 +1,26 @@
 "use server"
 
 import { userService } from "@chatbotx.io/business"
-import { getCurrentUserId } from "@/lib/auth/utils"
+import { ChatbotXException } from "@chatbotx.io/business/errors"
+import { z } from "zod"
+import { authActionClient } from "@/lib/safe-action"
 
-export type AccountDeletionState =
-  | { status: "idle" }
-  | { status: "error" }
-  | { status: "success" }
-
-export const requestAccountDeletion = async (
-  _previousState: AccountDeletionState,
-  formData: FormData,
-): Promise<AccountDeletionState> => {
-  if (formData.get("confirmation") !== "DELETE") {
-    return { status: "error" }
-  }
-
-  const userId = await getCurrentUserId()
-  if (!userId) {
-    return { status: "error" }
-  }
-
-  await userService.requestAccountDeletion({
-    actor: { userId },
-    userId,
+export const requestAccountDeletion = authActionClient
+  .inputSchema(z.object({ confirmation: z.literal("DELETE") }))
+  .action(async ({ ctx }) => {
+    try {
+      await userService.requestAccountDeletion({
+        actor: { userId: ctx.user.id },
+        userId: ctx.user.id,
+      })
+      return { status: "success" as const }
+    } catch (error) {
+      if (
+        error instanceof ChatbotXException &&
+        error.code === "accountDeletionSupportRequired"
+      ) {
+        return { status: "supportRequired" as const }
+      }
+      throw error
+    }
   })
-  return { status: "success" }
-}

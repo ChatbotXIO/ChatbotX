@@ -122,6 +122,17 @@ class OAuthConsentRepository {
 
     return rows.length
   }
+
+  async deleteByUserId(
+    userId: string,
+    tx: DatabaseClient = db,
+  ): Promise<number> {
+    const rows = await tx
+      .delete(oauthConsentModel)
+      .where(eq(oauthConsentModel.userId, userId))
+      .returning({ id: oauthConsentModel.id })
+    return rows.length
+  }
 }
 
 export const oauthConsentRepository = new OAuthConsentRepository()

@@ -1,3 +1,4 @@
+import { sql } from "drizzle-orm"
 import {
   type AnyPgColumn,
   boolean,
@@ -44,6 +45,8 @@ export const userModel = pgTable(
     // (platform or any reseller), all as fully isolated rows.
     uniqueIndex("User_email_tenant_key").on(table.email, table.tenantId),
     index("User_tenantId_idx").on(table.tenantId),
-    index("User_scheduledDeletionAt_idx").on(table.scheduledDeletionAt),
+    index("User_scheduledDeletionAt_idx")
+      .on(table.scheduledDeletionAt)
+      .where(sql`${table.scheduledDeletionAt} IS NOT NULL`),
   ],
 )

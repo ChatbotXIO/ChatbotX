@@ -68,3 +68,9 @@ export const unregisterMyDeviceTokenRequest = z.object({
       "Expo push token to remove, as passed to `me.registerDeviceToken`.",
     ),
 })
+
+export const accountDeletionRequest = z.object({
+  confirmation: z
+    .literal("DELETE")
+    .describe('Confirmation phrase. Must be exactly "DELETE".'),
+})

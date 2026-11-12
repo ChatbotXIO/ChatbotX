@@ -1,25 +1,30 @@
 import {
-  and,
+  type DatabaseClient,
   db,
   eq,
   inArray,
-  lte,
-  notExists,
 } from "@chatbotx.io/database/client"
 import {
-  accountModel,
-  mobileRefreshTokenModel,
-  oauthAccessTokenModel,
-  oauthConsentModel,
-  oauthRefreshTokenModel,
-  sessionModel,
-  userDeviceTokenModel,
-  userModel,
-  workspaceModel,
-} from "@chatbotx.io/database/schema"
+  auditLogRepository,
+  authAccountRepository,
+  contactNoteRepository,
+  conversationParticipantRepository,
+  mobileRefreshTokenRepository,
+  oauthAccessTokenRepository,
+  oauthConsentRepository,
+  oauthRefreshTokenRepository,
+  sessionRepository,
+  unassignUserBatch,
+  userDeviceTokenRepository,
+  userRepository,
+  workspaceRepository,
+} from "@chatbotx.io/database/repositories"
+import { userModel } from "@chatbotx.io/database/schema"
+import { setLocalStatementTimeout } from "@chatbotx.io/database/statement-timeout"
 import type { UserModel } from "@chatbotx.io/database/types"
 import { BaseService } from "../base.service"
 import { ChatbotXException, notFoundException } from "../errors"
+import { logger } from "../logger"
 import { resourceDeletionLogService } from "../resource-deletion-log/service"
 import { nextScheduledDeletionAt } from "../workspace/deletion-schedule"
 import { workspaceService } from "../workspace/service"
@@ -29,6 +34,9 @@ const accountDeletionTarget = (user: Pick<UserModel, "id">) => ({
   type: "user" as const,
   id: user.id,
 })
+
+const USER_PURGE_RETRY_DELAY_MS = 60 * 60 * 1000
+const USER_REFERENCE_DRAIN_STATEMENT_TIMEOUT = "30s"
 
 class UserService extends BaseService {
   /**
@@ -78,11 +86,7 @@ class UserService extends BaseService {
     }
 
     const result = await db.transaction(async (tx) => {
-      const [user] = await tx
-        .select()
-        .from(userModel)
-        .where(eq(userModel.id, props.userId))
-        .for("update")
+      const user = await userRepository.findForAccountDeletion(props.userId, tx)
       if (!user) {
         throw notFoundException("User not found")
       }
@@ -106,14 +110,10 @@ class UserService extends BaseService {
         )
       }
 
-      const ownedWorkspaces = await tx
-        .select({
-          id: workspaceModel.id,
-          scheduledDeletionAt: workspaceModel.scheduledDeletionAt,
-        })
-        .from(workspaceModel)
-        .where(eq(workspaceModel.ownerId, props.userId))
-
+      const ownedWorkspaces = await workspaceRepository.listByOwner(
+        { ownerId: props.userId },
+        tx,
+      )
       for (const workspace of ownedWorkspaces) {
         if (!workspace.scheduledDeletionAt) {
           await workspaceService.scheduleDeletion({
@@ -130,12 +130,16 @@ class UserService extends BaseService {
           userId: props.userId,
         })
 
+      const requestedAt = new Date()
       const scheduledDeletionAt = nextScheduledDeletionAt()
-      await tx
-        .update(userModel)
-        .set({ deletionRequestedAt: new Date(), scheduledDeletionAt })
-        .where(eq(userModel.id, props.userId))
-
+      await userRepository.markDeletionRequested(
+        {
+          userId: props.userId,
+          requestedAt,
+          scheduledDeletionAt,
+        },
+        tx,
+      )
       await resourceDeletionLogService.recordRequest({
         resource: accountDeletionTarget(user),
         requestedByUserId: props.actor.userId,
@@ -143,28 +147,17 @@ class UserService extends BaseService {
         tx,
       })
 
-      await Promise.all([
-        tx.delete(sessionModel).where(eq(sessionModel.userId, props.userId)),
-        tx
-          .delete(mobileRefreshTokenModel)
-          .where(eq(mobileRefreshTokenModel.userId, props.userId)),
-        tx
-          .delete(userDeviceTokenModel)
-          .where(eq(userDeviceTokenModel.userId, props.userId)),
-        tx
-          .delete(oauthAccessTokenModel)
-          .where(eq(oauthAccessTokenModel.userId, props.userId)),
-        tx
-          .delete(oauthConsentModel)
-          .where(eq(oauthConsentModel.userId, props.userId)),
-        tx
-          .delete(oauthRefreshTokenModel)
-          .where(eq(oauthRefreshTokenModel.userId, props.userId)),
-        tx
-          .update(accountModel)
-          .set({ accessToken: null, idToken: null, refreshToken: null })
-          .where(eq(accountModel.userId, props.userId)),
-      ])
+      await sessionRepository.deleteByUserId(props.userId, tx)
+      await mobileRefreshTokenRepository.revokeAllForUser(
+        props.userId,
+        requestedAt,
+        tx,
+      )
+      await userDeviceTokenRepository.deleteByUserId(props.userId, tx)
+      await oauthAccessTokenRepository.deleteByUserId(props.userId, tx)
+      await oauthConsentRepository.deleteByUserId(props.userId, tx)
+      await oauthRefreshTokenRepository.deleteByUserId(props.userId, tx)
+      await authAccountRepository.clearTokensByUserId(props.userId, tx)
 
       return { removedMembers, scheduledDeletionAt }
     })
@@ -179,73 +172,142 @@ class UserService extends BaseService {
     limit?: number
     now?: Date
   }): Promise<string[]> {
-    const rows = await db
-      .select({ id: userModel.id })
-      .from(userModel)
-      .where(
-        and(
-          lte(userModel.scheduledDeletionAt, props?.now ?? new Date()),
-          notExists(
-            db
-              .select({ id: workspaceModel.id })
-              .from(workspaceModel)
-              .where(eq(workspaceModel.ownerId, userModel.id)),
-          ),
-        ),
-      )
-      .orderBy(userModel.scheduledDeletionAt, userModel.id)
-      .limit(props?.limit ?? 100)
-    return rows.map((row) => row.id)
+    return await userRepository.listDueForPurge({
+      limit: props?.limit ?? 100,
+      now: props?.now ?? new Date(),
+    })
   }
 
-  async purgeDeletedUser(userId: string): Promise<boolean> {
+  async drainUserReferences(userId: string): Promise<boolean> {
+    const batchSize = 5000
+    const deadlineAt = Date.now() + 90_000
+    const drainers: Array<(tx: DatabaseClient) => Promise<number>> = [
+      async (tx) => await unassignUserBatch(userId, batchSize, tx),
+      async (tx) =>
+        await auditLogRepository.detachUserBatch(userId, batchSize, tx),
+      async (tx) =>
+        await contactNoteRepository.detachAuthorBatch(userId, batchSize, tx),
+      async (tx) =>
+        await conversationParticipantRepository.deleteByUserBatch(
+          userId,
+          batchSize,
+          tx,
+        ),
+    ]
+
+    for (;;) {
+      let drained = 0
+      for (const drain of drainers) {
+        if (Date.now() >= deadlineAt) {
+          return false
+        }
+        drained += await db.transaction(async (tx) => {
+          await setLocalStatementTimeout(
+            tx,
+            USER_REFERENCE_DRAIN_STATEMENT_TIMEOUT,
+          )
+          return await drain(tx)
+        })
+      }
+
+      if (drained === 0) {
+        return true
+      }
+    }
+  }
+
+  async purgeDeletedUser(
+    userId: string,
+  ): Promise<"deleted" | "pending" | "notDue"> {
+    const now = new Date()
     const user = await this.findById(userId)
-    if (!(user?.deletionRequestedAt && user.scheduledDeletionAt)) {
-      return false
+    if (
+      !(user?.deletionRequestedAt && user.scheduledDeletionAt) ||
+      user.scheduledDeletionAt > now
+    ) {
+      return "notDue"
     }
 
-    const pendingLogId = await resourceDeletionLogService.findPendingId({
-      resource: accountDeletionTarget(user),
-    })
-    return await db.transaction(async (tx) => {
-      const ownedWorkspace = await tx.query.workspaceModel.findFirst({
-        where: { ownerId: userId },
-        columns: { id: true },
+    const deletionRequestedAt = user.deletionRequestedAt
+
+    try {
+      const ownedWorkspaces = await workspaceRepository.listByOwner({
+        ownerId: userId,
       })
-      if (ownedWorkspace) {
-        return false
-      }
-
-      const deleted = await tx
-        .delete(userModel)
-        .where(
-          and(
-            eq(userModel.id, userId),
-            lte(userModel.scheduledDeletionAt, new Date()),
-          ),
-        )
-        .returning({ id: userModel.id })
-      if (deleted.length === 0) {
-        return false
-      }
-
-      if (pendingLogId) {
-        await resourceDeletionLogService.completePending({
-          id: pendingLogId,
-          tx,
+      if (ownedWorkspaces.length > 0) {
+        for (const workspace of ownedWorkspaces) {
+          if (workspace.scheduledDeletionAt) {
+            continue
+          }
+          logger.error(
+            { userId, workspaceId: workspace.id },
+            "account-deletion: rescheduling canceled owned workspace",
+          )
+          await workspaceService.scheduleDeletion({
+            actorId: userId,
+            id: workspace.id,
+          })
+        }
+        await userRepository.postponePurge({
+          userId,
+          until: new Date(Date.now() + USER_PURGE_RETRY_DELAY_MS),
         })
-      } else {
-        await resourceDeletionLogService.recordHistoricalRequest({
+        return "pending"
+      }
+
+      if (!(await this.drainUserReferences(userId))) {
+        await userRepository.postponePurge({
+          userId,
+          until: new Date(Date.now() + USER_PURGE_RETRY_DELAY_MS),
+        })
+        return "pending"
+      }
+
+      return await db.transaction(async (tx) => {
+        if (
+          !(await userRepository.deleteIfDue({
+            userId,
+            now,
+            tx,
+          }))
+        ) {
+          return "notDue"
+        }
+
+        const pendingLogId = await resourceDeletionLogService.findPendingId({
           resource: accountDeletionTarget(user),
-          requestedAt: user.deletionRequestedAt ?? new Date(),
-          requestedByUserId: userId,
-          status: "completed",
           tx,
         })
+        if (pendingLogId) {
+          await resourceDeletionLogService.completePending({
+            id: pendingLogId,
+            tx,
+          })
+        } else {
+          await resourceDeletionLogService.recordHistoricalRequest({
+            resource: accountDeletionTarget(user),
+            requestedAt: deletionRequestedAt,
+            requestedByUserId: userId,
+            status: "completed",
+            tx,
+          })
+        }
+        return "deleted"
+      })
+    } catch (error) {
+      try {
+        await userRepository.postponePurge({
+          userId,
+          until: new Date(Date.now() + USER_PURGE_RETRY_DELAY_MS),
+        })
+      } catch (postponeError) {
+        logger.error(
+          { err: postponeError, userId },
+          "account-deletion: failed to postpone user purge",
+        )
       }
-
-      return true
-    })
+      throw error
+    }
   }
 
   /**

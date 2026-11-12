@@ -87,6 +87,9 @@ export const conversationModel = pgTable(
       .on(table.contactId)
       .where(sql`${table.sourceId} IS NULL`),
     index("Conversation_contactId_idx").on(table.contactId),
+    index("Conversation_assignedUserId_idx")
+      .on(table.assignedUserId)
+      .where(sql`${table.assignedUserId} IS NOT NULL`),
     // Inbox SLA filter: only the (few) conversations with an open SLA window.
     index("Conversation_workspaceId_responseDueAt_idx")
       .on(table.workspaceId, table.responseDueAt)
