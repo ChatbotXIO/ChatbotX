@@ -35,6 +35,7 @@
     "appointment-management/create-inbox-booking-link.action:createInboxBookingLinkAction": "covered:appointment-management",
     "appointment-management/delete-appointment.action:deleteAppointmentAction": "covered:appointment-management",
     "auth/force-change-password:forceChangePasswordAction": "private:no public surface yet (UI-only, not yet audited)",
+    "account-deletion/request-account-deletion:requestAccountDeletion": "private:personal account deletion; workspace tokens must never schedule a user's deletion",
     "automated-response/create-automated-response-action:createAutomatedResponseAction": "covered:automated-response",
     "automated-response/delete-automated-response-action:deleteAutomatedResponseAction": "covered:automated-response",
     "automated-response/enable-automated-response-action:enableAutomatedResponseAction": "covered:automated-response",

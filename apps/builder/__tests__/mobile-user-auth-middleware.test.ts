@@ -31,6 +31,9 @@ vi.mock("@chatbotx.io/auth/mobile-resource-candidate", () => ({
 
 const { mobileUserAuthMiddleware, mobileUserPasswordChangeAuthMiddleware } =
   await import("@/middlewares/mobile-user-auth")
+const { toSessionUser } = await import(
+  "@/lib/mobile-auth/resolve-mobile-principal"
+)
 
 const next = vi.fn(async (opts?: { context: Record<string, unknown> }) => ({
   output: "ok",
@@ -82,6 +85,17 @@ describe("mobile user auth middleware (/v1/me)", () => {
       mobileDeviceId: "install-1",
       apiCredentialId: "mobile:7:install-1",
     })
+  })
+
+  test("removes deletion lifecycle fields from a session user", () => {
+    const sessionUser = toSessionUser({
+      ...dbUser,
+      deletionRequestedAt: new Date("2026-11-12T00:00:00.000Z"),
+      scheduledDeletionAt: new Date("2026-11-13T00:00:00.000Z"),
+    } as never)
+
+    expect(sessionUser).not.toHaveProperty("deletionRequestedAt")
+    expect(sessionUser).not.toHaveProperty("scheduledDeletionAt")
   })
 
   test.each([

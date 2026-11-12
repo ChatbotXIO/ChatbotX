@@ -70,5 +70,8 @@ export const fileModel = pgTable(
     index("File_export_createdAt_idx")
       .on(table.createdAt)
       .where(sql`${table.contextType} = 'export'`),
+    index("File_userId_idx")
+      .on(table.userId)
+      .where(sql`${table.userId} IS NOT NULL`),
   ],
 )

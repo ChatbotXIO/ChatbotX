@@ -4193,9 +4193,6 @@
     "description": "Den side, du leder efter, findes ikke eller er muligvis blevet flyttet.",
     "backToHome": "Tilbage til forsiden"
   },
-  "editProfile": {
-    "title": "Rediger profil"
-  },
   "channels": {
     "title": "Kanaler",
     "duplicated": {
@@ -11907,6 +11904,40 @@
       "error": "Skabeloner kunne ikke indlæses.",
       "retry": "Prøv igen",
       "meta": "ID {id} · {workspace}"
+    }
+  },
+  "accountDeletion": {
+    "title": "Delete account",
+    "description": "Your owned workspaces will be deleted with your account.",
+    "workspacesTitle": "Arbejdsområder, der bliver slettet",
+    "noWorkspaces": "Du ejer ingen arbejdsområder.",
+    "warningGracePeriod": "Sletning starter efter en frist på 24 timer.",
+    "warningIrreversible": "Denne handling kan ikke fortrydes.",
+    "warningSubscriptions": "Annuller eventuelle abonnementer først.",
+    "signedInAs": "Logget ind som {email}",
+    "confirmationLabel": "Bekræftelse",
+    "confirmationHint": "Skriv <code>DELETE</code> for at bekræfte.",
+    "confirmationError": "Type DELETE exactly to confirm.",
+    "supportRequired": "Contact support to delete this reseller account.",
+    "submit": "Delete account",
+    "cancel": "Annuller",
+    "backToSignIn": "Tilbage til log ind",
+    "receivedTitle": "Deletion request received",
+    "receivedDescription": "Your account and owned workspaces are scheduled for deletion."
+  },
+  "account": {
+    "title": "Account settings",
+    "description": "Manage your profile and account settings.",
+    "backToWorkspaces": "Workspaces",
+    "profile": {
+      "title": "Profile",
+      "description": "Update your name and profile image."
+    },
+    "emailReadOnly": "Email can't be changed",
+    "dangerZone": {
+      "title": "Danger zone",
+      "description": "Deletes your account and the {count, plural, =0 {0 workspaces} one {# workspace} other {# workspaces}} you own.",
+      "openSettings": "Delete account"
     }
   }
 }

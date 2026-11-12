@@ -138,7 +138,11 @@ const logger = { info: vi.fn(), warn: vi.fn(), error: vi.fn() }
 vi.mock("../src/logger", () => ({ logger }))
 
 const dispatchAuditRecord = vi.fn()
-vi.mock("../src/audit/dispatcher", () => ({ dispatchAuditRecord }))
+const dispatchAuditRecordSafely = vi.fn(async () => undefined)
+vi.mock("../src/audit/dispatcher", () => ({
+  dispatchAuditRecord,
+  dispatchAuditRecordSafely,
+}))
 
 const notifyWorkspaceCurrencyChange = vi.fn(async () => undefined)
 vi.mock("../src/pipeline/currency-refresh", () => ({
@@ -201,6 +205,7 @@ beforeEach(() => {
   dispatchStagedInstalls.mockReset().mockResolvedValue(undefined)
   logger.error.mockClear()
   dispatchAuditRecord.mockClear()
+  dispatchAuditRecordSafely.mockClear()
   notifyWorkspaceCurrencyChange.mockClear()
   transaction.mockClear()
   workspaceUsageService.rollbackLiveIncrement.mockClear()
@@ -786,10 +791,15 @@ describe("WorkspaceService.scheduleDeletion — deletion log", () => {
       requestedByUserId: "user-9",
       tx: db,
     })
-    expect(dispatchAuditRecord).toHaveBeenCalledWith({
-      action: "schedule_deletion",
-      detail: "scheduled the workspace for deletion",
-    })
+    expect(dispatchAuditRecordSafely).toHaveBeenCalledWith(
+      {
+        action: "schedule_deletion",
+        detail: "scheduled the workspace for deletion",
+        userId: "user-9",
+        workspaceId: "ws-1",
+      },
+      "workspace-deletion: failed to dispatch schedule audit record",
+    )
   })
 
   test("invalidates the workspace caches again after the transaction it opened commits", async () => {

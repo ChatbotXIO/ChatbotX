@@ -1,11 +1,11 @@
 # Resource deletion log
 
 This document is for developers touching workspace deletion, channel
-disconnects, or anything that should leave a durable "who deleted this, from
-where, and when" trail. `ResourceDeletionLog`
+disconnects, account deletion, or anything that should leave a durable "who
+deleted this, from where, and when" trail. `ResourceDeletionLog`
 (`packages/database/src/schema/resource-deletion-log.ts`) records that trail
-for workspaces and channels today, and is shaped so another resource type is
-one more enum value, not a new table.
+for workspaces, channels, and users today, and is shaped so another resource
+type is one more enum value, not a new table.
 
 It exists because nothing else survives a workspace purge: `AuditLog` has a
 cascading `workspaceId` FK and is drained as a heavy table before the final
@@ -21,8 +21,8 @@ that outlives the workspace, the user and the resource it describes.
 
 | Column | Meaning |
 | --- | --- |
-| `workspaceId` | Owning workspace. For a workspace row it equals `resourceId`. |
-| `resourceType` | `workspace` or `channel` (`resourceDeletionResourceTypes`). |
+| `workspaceId` | Owning workspace. For a workspace row it equals `resourceId`; null for an account deletion. |
+| `resourceType` | `workspace`, `channel`, or `user` (`resourceDeletionResourceTypes`). |
 | `resourceId` | Text, so a resource whose key is not a bigint still fits. |
 | `resourceSubtype` | Resource-defined kind. For a channel, its `ChannelType`. Text, so shared code never lists channels. |
 | `resourceName` | Snapshot of the name — the row it came from is gone later. |
@@ -66,6 +66,11 @@ stored (`deletionRequestedById`, `deletionRequestedAt`) and write it with an
 unknown origin: the actor running now did not make that request, so its IP,
 user agent and source are never copied onto it
 (`resourceDeletionLogService.recordHistoricalRequest`).
+
+**User.** Account deletion is asynchronous. The request records one `user`
+row with a null `workspaceId`, then schedules each owned workspace. The user
+purge only completes the row after no owned workspace remains and the `User`
+row is deleted.
 
 **Channel.** A disconnect is synchronous, so its row is written already
 `completed`.

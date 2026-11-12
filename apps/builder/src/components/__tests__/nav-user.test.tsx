@@ -92,10 +92,6 @@ vi.mock("@/features/auth/sign-out", () => ({
   SignOut: () => null,
 }))
 
-vi.mock("@/features/workspaces/components/edit-profile-dialog", () => ({
-  EditProfileDialog: () => null,
-}))
-
 vi.mock(
   "@/features/workspaces/components/refresh-all-channel-tokens-button",
   () => ({
@@ -191,5 +187,16 @@ describe("NavUser", () => {
     render({ canAccessManage: true, cloud: false })
 
     expect(findManageLink()).toBeUndefined()
+  })
+
+  it("links account controls to account settings instead of account deletion", () => {
+    render()
+
+    const accountLinks = Array.from(container.querySelectorAll("a")).filter(
+      (link) => link.getAttribute("href") === "/account",
+    )
+
+    expect(accountLinks).toHaveLength(2)
+    expect(container.querySelector('a[href="/account/delete"]')).toBeNull()
   })
 })

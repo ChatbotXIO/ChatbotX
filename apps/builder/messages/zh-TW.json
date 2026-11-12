@@ -4625,9 +4625,6 @@
     "description": "您造訪的頁面不存在，或可能已被移動。",
     "backToHome": "返回首頁"
   },
-  "editProfile": {
-    "title": "編輯個人資料"
-  },
   "instagram": {
     "description": "此整合可讓您建立Instagram 機器人。",
     "selectInstagramAccount": "選擇Instagram 帳戶",
@@ -11907,6 +11904,40 @@
       "error": "無法載入範本。",
       "retry": "重試",
       "meta": "ID {id} · {workspace}"
+    }
+  },
+  "accountDeletion": {
+    "title": "Delete account",
+    "description": "Your owned workspaces will be deleted with your account.",
+    "workspacesTitle": "將被刪除的工作區",
+    "noWorkspaces": "您沒有任何工作區。",
+    "warningGracePeriod": "刪除將在 24 小時寬限期後開始。",
+    "warningIrreversible": "此操作無法復原。",
+    "warningSubscriptions": "請先取消所有訂閱。",
+    "signedInAs": "已登入為 {email}",
+    "confirmationLabel": "確認",
+    "confirmationHint": "輸入 <code>DELETE</code> 以確認。",
+    "confirmationError": "Type DELETE exactly to confirm.",
+    "supportRequired": "Contact support to delete this reseller account.",
+    "submit": "Delete account",
+    "cancel": "取消",
+    "backToSignIn": "返回登入",
+    "receivedTitle": "Deletion request received",
+    "receivedDescription": "Your account and owned workspaces are scheduled for deletion."
+  },
+  "account": {
+    "title": "Account settings",
+    "description": "Manage your profile and account settings.",
+    "backToWorkspaces": "Workspaces",
+    "profile": {
+      "title": "Profile",
+      "description": "Update your name and profile image."
+    },
+    "emailReadOnly": "Email can't be changed",
+    "dangerZone": {
+      "title": "Danger zone",
+      "description": "Deletes your account and the {count, plural, =0 {0 workspaces} one {# workspace} other {# workspaces}} you own.",
+      "openSettings": "Delete account"
     }
   }
 }

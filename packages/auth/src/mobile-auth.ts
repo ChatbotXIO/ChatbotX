@@ -8,7 +8,7 @@ import {
   getSessionFromCtx,
   isAPIError,
 } from "better-auth/api"
-import { deleteSessionCookie } from "better-auth/cookies"
+import { deleteSessionCookie, setSessionCookie } from "better-auth/cookies"
 import {
   handleOAuthUserInfo,
   supportsIdTokenSignIn,
@@ -32,6 +32,7 @@ export const MOBILE_ACCESS_TOKEN_TTL_SECONDS = 10 * 60
 export const MOBILE_EXCHANGE_CODE_TTL_MS = 60 * 1000
 
 const MOBILE_CODE_IDENTIFIER_PREFIX = "mobile-auth-code:"
+const WEB_HANDOFF_IDENTIFIER_PREFIX = "web-handoff:"
 const MOBILE_TOKEN_PATH = "/mobile/token"
 const DEVICE_ID_MAX_LENGTH = 128
 const DEVICE_ID_PATTERN = /^[\w.:-]+$/
@@ -135,6 +136,16 @@ type AccountSubjectInput = Parameters<IdTokenProvider["accountSubject"]>[0]
 const unauthorized = (code: string, message: string) =>
   APIError.from("UNAUTHORIZED", { code, message })
 
+const assertAccountIsActive = async (userId: string): Promise<void> => {
+  const user = await userService.findById(userId)
+  if (user?.deletionRequestedAt) {
+    throw unauthorized(
+      "ACCOUNT_DELETION_PENDING",
+      "Account deletion is pending",
+    )
+  }
+}
+
 const mintAccessToken = async (
   ctx: AuthContext,
   user: MobileUser,
@@ -194,6 +205,7 @@ const issueTokenResponse = async (props: {
   deviceId: string
 }): Promise<MobileTokenResponse> => {
   const { ctx, user, deviceId } = props
+  await assertAccountIsActive(user.id)
   const refreshToken = await mobileRefreshTokenService.issue({
     userId: user.id,
     deviceId,
@@ -410,6 +422,34 @@ const storeExchangeCode = async (
   return code
 }
 
+const consumeWebHandoffCode = async (
+  ctx: AuthContext,
+  code: string,
+): Promise<string | null> => {
+  const row = await ctx.context.internalAdapter.consumeVerificationValue(
+    `${WEB_HANDOFF_IDENTIFIER_PREFIX}${await hashExchangeCode(code)}`,
+  )
+  if (!row) {
+    return null
+  }
+  try {
+    const parsed = JSON.parse(row.value) as { userId?: unknown }
+    return typeof parsed.userId === "string" ? parsed.userId : null
+  } catch {
+    return null
+  }
+}
+
+const storeWebHandoffCode = async (ctx: AuthContext, userId: string) => {
+  const code = createExchangeCode()
+  await ctx.context.internalAdapter.createVerificationValue({
+    identifier: `${WEB_HANDOFF_IDENTIFIER_PREFIX}${await hashExchangeCode(code)}`,
+    value: JSON.stringify({ userId }),
+    expiresAt: new Date(Date.now() + MOBILE_EXCHANGE_CODE_TTL_MS),
+  })
+  return code
+}
+
 const parseRedirectUri = (value: string | undefined): URL | null => {
   if (!(value && URL.canParse(value))) {
     return null
@@ -494,6 +534,14 @@ export const mobileAuth = () =>
                 "INVALID_REFRESH_TOKEN",
                 "Invalid or expired refresh token",
               )
+            }
+            try {
+              await assertAccountIsActive(rotation.userId)
+            } catch (error) {
+              await mobileRefreshTokenService.revokeAllForUser({
+                userId: rotation.userId,
+              })
+              throw error
             }
             return ctx.json(
               await buildTokenResponse({
@@ -605,6 +653,46 @@ export const mobileAuth = () =>
           })
           return ctx.json({ success: true as const })
         },
+      ),
+
+      webHandoff: createAuthEndpoint(
+        "/account/handoff",
+        {
+          method: "GET",
+          query: z.object({ code: z.string().optional() }),
+        },
+        async (ctx) => {
+          if (!ctx.query.code) {
+            throw ctx.redirect("/auth/sign-in?error=handoff_invalid")
+          }
+          const userId = await consumeWebHandoffCode(ctx, ctx.query.code)
+          const user = userId ? await userService.findById(userId) : null
+          if (!user) {
+            throw ctx.redirect("/auth/sign-in?error=handoff_invalid")
+          }
+          if (user.deletionRequestedAt) {
+            throw ctx.redirect("/account/delete?requested=1")
+          }
+          const session = await ctx.context.internalAdapter.createSession(
+            user.id,
+          )
+          if (!session) {
+            throw APIError.from("INTERNAL_SERVER_ERROR", {
+              code: "ACCOUNT_HANDOFF_SESSION_FAILED",
+              message: "Could not create account handoff session",
+            })
+          }
+          await setSessionCookie(ctx, {
+            session,
+            user: { ...user, name: user.name ?? "" },
+          })
+          throw ctx.redirect("/account/delete")
+        },
+      ),
+      mobileCreateWebHandoff: createAuthEndpoint.serverOnly(
+        { method: "POST", body: z.object({ userId: z.string().min(1) }) },
+        async (ctx) =>
+          ctx.json({ code: await storeWebHandoffCode(ctx, ctx.body.userId) }),
       ),
 
       // Server-only (no HTTP path): reachable solely through

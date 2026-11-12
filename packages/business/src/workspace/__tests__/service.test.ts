@@ -211,6 +211,7 @@ vi.mock("../../contact-inbox-post/service", () => ({
 
 vi.mock("../../audit/dispatcher", () => ({
   dispatchAuditRecord: mocks.dispatchAuditRecord,
+  dispatchAuditRecordSafely: vi.fn(),
 }))
 
 vi.mock("../../pipeline/currency-refresh", () => ({

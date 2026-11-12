@@ -12,6 +12,7 @@ import {
   resolvePlatformSmtpTransport,
   resolveTenantSettingsByDomain,
   toSmtpTransport,
+  userService,
 } from "@chatbotx.io/business"
 import { db } from "@chatbotx.io/database/client"
 import {
@@ -557,6 +558,21 @@ function buildDatabaseHooks({
 
   return {
     user: userHooks,
+    session: {
+      create: {
+        before: async (session: Record<string, unknown>) => {
+          const userId =
+            typeof session.userId === "string" ? session.userId : ""
+          const user = userId ? await userService.findById(userId) : undefined
+          if (user?.deletionRequestedAt) {
+            throw new APIError("FORBIDDEN", {
+              code: "ACCOUNT_DELETION_PENDING",
+              message: "Account deletion is pending",
+            })
+          }
+        },
+      },
+    },
     account: {
       create: {
         before: async (

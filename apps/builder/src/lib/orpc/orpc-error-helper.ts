@@ -243,6 +243,14 @@ export const possibleErrorsOnMutatingResource = {
   ...possibleIdempotencyErrors,
 } satisfies ErrorMap
 
+export const possibleErrorsOnSchedulingAccountDeletion = {
+  ...possibleErrorsOnMutatingResource,
+  accountDeletionSupportRequired: {
+    message: "Reseller accounts must contact support to delete their account",
+    status: 403,
+  },
+} satisfies ErrorMap
+
 /** Reindex with parameters while a processing run is already active. */
 export const possibleErrorsOnReindexingResource = {
   ...possibleErrorsOnMutatingResource,

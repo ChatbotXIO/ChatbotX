@@ -190,3 +190,27 @@ export async function closeHumanReplyWindow(
     closedResponseSlaTargetSeconds: row.closedResponseSlaTargetSeconds,
   }
 }
+
+export async function unassignUserBatch(
+  userId: string,
+  limit: number,
+  tx: DatabaseClient = db,
+): Promise<number> {
+  const result = await tx.execute<{ id: string }>(sql`
+    WITH batch AS (
+      SELECT "id"
+      FROM "Conversation"
+      WHERE "assignedUserId" = ${userId}
+      ORDER BY "id"
+      LIMIT ${limit}
+      FOR UPDATE SKIP LOCKED
+    )
+    UPDATE "Conversation"
+    SET "assignedUserId" = NULL
+    FROM batch
+    WHERE "Conversation"."id" = batch."id"
+    RETURNING "Conversation"."id"
+  `)
+
+  return result.rows.length
+}

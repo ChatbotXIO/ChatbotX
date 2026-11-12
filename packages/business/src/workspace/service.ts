@@ -26,7 +26,10 @@ import {
 import type { WorkspaceModel } from "@chatbotx.io/database/types"
 import { distributedLock, withCache } from "@chatbotx.io/redis"
 import { formatInTimeZone } from "date-fns-tz"
-import { dispatchAuditRecord } from "../audit/dispatcher"
+import {
+  dispatchAuditRecord,
+  dispatchAuditRecordSafely,
+} from "../audit/dispatcher"
 import { BaseService } from "../base.service"
 import { connectionStateService } from "../connection/state-service"
 import { contactActivityService } from "../contact-activity/service"
@@ -490,12 +493,35 @@ class WorkspaceService extends BaseService {
       },
     })
     if (!props.tx) {
-      await this.audit(
-        "schedule_deletion",
-        "scheduled the workspace for deletion",
-      )
+      await this.writeScheduledDeletionAudit({
+        actorId: props.actorId,
+        id: props.id,
+      })
     }
     return workspace
+  }
+
+  async finalizeScheduledDeletion(props: {
+    actorId: string
+    id: string
+  }): Promise<void> {
+    await this.invalidateWorkspaceCache(props.id, db)
+    await this.writeScheduledDeletionAudit(props)
+  }
+
+  private async writeScheduledDeletionAudit(props: {
+    actorId: string
+    id: string
+  }): Promise<void> {
+    await dispatchAuditRecordSafely(
+      {
+        action: "schedule_deletion",
+        detail: "scheduled the workspace for deletion",
+        userId: props.actorId,
+        workspaceId: props.id,
+      },
+      "workspace-deletion: failed to dispatch schedule audit record",
+    )
   }
 
   async cancelDeletion(props: {

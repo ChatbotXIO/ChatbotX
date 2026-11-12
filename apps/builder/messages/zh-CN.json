@@ -1863,9 +1863,6 @@
     "description": "创建并管理您的电子商务商店。",
     "title": "电子商务"
   },
-  "editProfile": {
-    "title": "编辑个人数据"
-  },
   "emailTopics": {
     "title": "电子邮件主题"
   },
@@ -11907,6 +11904,40 @@
       "error": "无法加载模板。",
       "retry": "重试",
       "meta": "ID {id} · {workspace}"
+    }
+  },
+  "accountDeletion": {
+    "title": "Delete account",
+    "description": "Your owned workspaces will be deleted with your account.",
+    "workspacesTitle": "将被删除的工作区",
+    "noWorkspaces": "您没有任何工作区。",
+    "warningGracePeriod": "删除将在 24 小时宽限期后开始。",
+    "warningIrreversible": "此操作无法恢复。",
+    "warningSubscriptions": "请先取消所有订阅。",
+    "signedInAs": "已登录为 {email}",
+    "confirmationLabel": "确认",
+    "confirmationHint": "输入 <code>DELETE</code> 以确认。",
+    "confirmationError": "Type DELETE exactly to confirm.",
+    "supportRequired": "Contact support to delete this reseller account.",
+    "submit": "Delete account",
+    "cancel": "取消",
+    "backToSignIn": "返回登录",
+    "receivedTitle": "Deletion request received",
+    "receivedDescription": "Your account and owned workspaces are scheduled for deletion."
+  },
+  "account": {
+    "title": "Account settings",
+    "description": "Manage your profile and account settings.",
+    "backToWorkspaces": "Workspaces",
+    "profile": {
+      "title": "Profile",
+      "description": "Update your name and profile image."
+    },
+    "emailReadOnly": "Email can't be changed",
+    "dangerZone": {
+      "title": "Danger zone",
+      "description": "Deletes your account and the {count, plural, =0 {0 workspaces} one {# workspace} other {# workspaces}} you own.",
+      "openSettings": "Delete account"
     }
   }
 }

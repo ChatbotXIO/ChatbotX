@@ -4193,9 +4193,6 @@
     "description": "Die gesuchte Seite existiert nicht oder wurde möglicherweise verschoben.",
     "backToHome": "Zurück zur Startseite"
   },
-  "editProfile": {
-    "title": "Profil bearbeiten"
-  },
   "channels": {
     "title": "Kanäle",
     "duplicated": {
@@ -11907,6 +11904,40 @@
       "error": "Templates konnten nicht geladen werden.",
       "retry": "Erneut versuchen",
       "meta": "ID {id} · {workspace}"
+    }
+  },
+  "accountDeletion": {
+    "title": "Delete account",
+    "description": "Your owned workspaces will be deleted with your account.",
+    "workspacesTitle": "Arbeitsbereiche, die gelöscht werden",
+    "noWorkspaces": "Sie besitzen keine Arbeitsbereiche.",
+    "warningGracePeriod": "Die Löschung beginnt nach einer 24-stündigen Frist.",
+    "warningIrreversible": "Diese Aktion kann nicht rückgängig gemacht werden.",
+    "warningSubscriptions": "Kündigen Sie zuerst alle Abonnements.",
+    "signedInAs": "Angemeldet als {email}",
+    "confirmationLabel": "Bestätigung",
+    "confirmationHint": "Geben Sie <code>DELETE</code> zur Bestätigung ein.",
+    "confirmationError": "Type DELETE exactly to confirm.",
+    "supportRequired": "Contact support to delete this reseller account.",
+    "submit": "Delete account",
+    "cancel": "Abbrechen",
+    "backToSignIn": "Zurück zur Anmeldung",
+    "receivedTitle": "Deletion request received",
+    "receivedDescription": "Your account and owned workspaces are scheduled for deletion."
+  },
+  "account": {
+    "title": "Account settings",
+    "description": "Manage your profile and account settings.",
+    "backToWorkspaces": "Workspaces",
+    "profile": {
+      "title": "Profile",
+      "description": "Update your name and profile image."
+    },
+    "emailReadOnly": "Email can't be changed",
+    "dangerZone": {
+      "title": "Danger zone",
+      "description": "Deletes your account and the {count, plural, =0 {0 workspaces} one {# workspace} other {# workspaces}} you own.",
+      "openSettings": "Delete account"
     }
   }
 }

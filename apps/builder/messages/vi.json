@@ -4391,9 +4391,6 @@
     "description": "Trang bạn đang tìm không tồn tại hoặc có thể đã được di chuyển.",
     "backToHome": "Về trang chủ"
   },
-  "editProfile": {
-    "title": "Chỉnh sửa hồ sơ"
-  },
   "messages": {
     "timeAgo": {
       "now": "Vừa xong",
@@ -11907,6 +11904,40 @@
       "error": "Không tải được danh sách template.",
       "retry": "Thử lại",
       "meta": "ID {id} · {workspace}"
+    }
+  },
+  "accountDeletion": {
+    "title": "Delete account",
+    "description": "Your owned workspaces will be deleted with your account.",
+    "workspacesTitle": "Không gian làm việc sẽ bị xoá",
+    "noWorkspaces": "Bạn không sở hữu không gian làm việc nào.",
+    "warningGracePeriod": "Việc xoá bắt đầu sau thời gian ân hạn 24 giờ.",
+    "warningIrreversible": "Không thể khôi phục thao tác này.",
+    "warningSubscriptions": "Hãy huỷ mọi gói đăng ký trước.",
+    "signedInAs": "Đã đăng nhập với {email}",
+    "confirmationLabel": "Xác nhận",
+    "confirmationHint": "Nhập <code>DELETE</code> để xác nhận.",
+    "confirmationError": "Type DELETE exactly to confirm.",
+    "supportRequired": "Contact support to delete this reseller account.",
+    "submit": "Delete account",
+    "cancel": "Huỷ",
+    "backToSignIn": "Quay lại đăng nhập",
+    "receivedTitle": "Deletion request received",
+    "receivedDescription": "Your account and owned workspaces are scheduled for deletion."
+  },
+  "account": {
+    "title": "Account settings",
+    "description": "Manage your profile and account settings.",
+    "backToWorkspaces": "Workspaces",
+    "profile": {
+      "title": "Profile",
+      "description": "Update your name and profile image."
+    },
+    "emailReadOnly": "Email can't be changed",
+    "dangerZone": {
+      "title": "Danger zone",
+      "description": "Deletes your account and the {count, plural, =0 {0 workspaces} one {# workspace} other {# workspaces}} you own.",
+      "openSettings": "Delete account"
     }
   }
 }

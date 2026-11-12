@@ -36,6 +36,10 @@ export const conversationParticipantModel = pgTable(
       "btree",
       table.conversationId.asc().nullsLast(),
     ),
+    index("ConversationParticipant_userId_idx").using(
+      "btree",
+      table.userId.asc().nullsLast(),
+    ),
     uniqueIndex("ConversationParticipant_conversationId_userId_key").using(
       "btree",
       table.conversationId.asc().nullsLast(),

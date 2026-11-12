@@ -1,4 +1,4 @@
-import { and, type DatabaseClient, db, desc, eq } from "../../client"
+import { and, type DatabaseClient, db, desc, eq, isNull } from "../../client"
 import type {
   ResourceDeletionResourceType,
   ResourceDeletionStatus,
@@ -6,7 +6,7 @@ import type {
 import { resourceDeletionLogModel } from "../../schema"
 
 export type ResourceDeletionLogInsert = {
-  workspaceId: string
+  workspaceId: string | null
   resourceType: ResourceDeletionResourceType
   resourceId: string
   resourceSubtype: string | null
@@ -22,7 +22,7 @@ export type ResourceDeletionLogInsert = {
 }
 
 export type ResourceDeletionLogResourceKey = {
-  workspaceId: string
+  workspaceId?: string
   resourceType: ResourceDeletionResourceType
   resourceId: string
 }
@@ -45,12 +45,15 @@ class ResourceDeletionLogRepository {
     key: ResourceDeletionLogResourceKey,
     client: DatabaseClient = db,
   ): Promise<string | undefined> {
+    const workspaceWhere = key.workspaceId
+      ? eq(resourceDeletionLogModel.workspaceId, key.workspaceId)
+      : isNull(resourceDeletionLogModel.workspaceId)
     const [row] = await client
       .select({ id: resourceDeletionLogModel.id })
       .from(resourceDeletionLogModel)
       .where(
         and(
-          eq(resourceDeletionLogModel.workspaceId, key.workspaceId),
+          workspaceWhere,
           eq(resourceDeletionLogModel.resourceType, key.resourceType),
           eq(resourceDeletionLogModel.resourceId, key.resourceId),
           eq(resourceDeletionLogModel.status, "pending"),
@@ -91,12 +94,15 @@ class ResourceDeletionLogRepository {
     input: ResourceDeletionLogResourceKey & { canceledAt: Date },
     client: DatabaseClient = db,
   ): Promise<number> {
+    const workspaceWhere = input.workspaceId
+      ? eq(resourceDeletionLogModel.workspaceId, input.workspaceId)
+      : isNull(resourceDeletionLogModel.workspaceId)
     const updated = await client
       .update(resourceDeletionLogModel)
       .set({ status: "canceled", canceledAt: input.canceledAt })
       .where(
         and(
-          eq(resourceDeletionLogModel.workspaceId, input.workspaceId),
+          workspaceWhere,
           eq(resourceDeletionLogModel.resourceType, input.resourceType),
           eq(resourceDeletionLogModel.resourceId, input.resourceId),
           eq(resourceDeletionLogModel.status, "pending"),

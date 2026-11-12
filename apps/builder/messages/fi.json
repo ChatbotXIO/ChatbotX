@@ -4193,9 +4193,6 @@
     "description": "Etsimääsi sivua ei ole olemassa tai se on voitu siirtää.",
     "backToHome": "Takaisin etusivulle"
   },
-  "editProfile": {
-    "title": "Muokkaa profiilia"
-  },
   "channels": {
     "title": "Kanavat",
     "duplicated": {
@@ -11907,6 +11904,40 @@
       "error": "Malleja ei voitu ladata.",
       "retry": "Yritä uudelleen",
       "meta": "ID {id} · {workspace}"
+    }
+  },
+  "accountDeletion": {
+    "title": "Delete account",
+    "description": "Your owned workspaces will be deleted with your account.",
+    "workspacesTitle": "Työtilat, jotka poistetaan",
+    "noWorkspaces": "Et omista yhtään työtilaa.",
+    "warningGracePeriod": "Poisto alkaa 24 tunnin lisäajan jälkeen.",
+    "warningIrreversible": "Tätä toimintoa ei voi palauttaa.",
+    "warningSubscriptions": "Peruuta kaikki tilaukset ensin.",
+    "signedInAs": "Kirjautunut sisään käyttäjänä {email}",
+    "confirmationLabel": "Vahvistus",
+    "confirmationHint": "Kirjoita <code>DELETE</code> vahvistaaksesi.",
+    "confirmationError": "Type DELETE exactly to confirm.",
+    "supportRequired": "Contact support to delete this reseller account.",
+    "submit": "Delete account",
+    "cancel": "Peruuta",
+    "backToSignIn": "Takaisin kirjautumiseen",
+    "receivedTitle": "Deletion request received",
+    "receivedDescription": "Your account and owned workspaces are scheduled for deletion."
+  },
+  "account": {
+    "title": "Account settings",
+    "description": "Manage your profile and account settings.",
+    "backToWorkspaces": "Workspaces",
+    "profile": {
+      "title": "Profile",
+      "description": "Update your name and profile image."
+    },
+    "emailReadOnly": "Email can't be changed",
+    "dangerZone": {
+      "title": "Danger zone",
+      "description": "Deletes your account and the {count, plural, =0 {0 workspaces} one {# workspace} other {# workspaces}} you own.",
+      "openSettings": "Delete account"
     }
   }
 }

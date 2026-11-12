@@ -64,5 +64,6 @@ export const workspaceMemberModel = pgTable(
       table.workspaceId.asc().nullsLast(),
       table.userId.asc().nullsLast(),
     ),
+    index("WorkspaceMember_userId_idx").on(table.userId),
   ],
 )

@@ -4,8 +4,9 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
  * Hoisted mock handles. `vi.mock` factories run before module top-level, so any
  * value a factory references must be created with `vi.hoisted`.
  */
-const { betterAuthMock, revokeAllForUser } = vi.hoisted(() => ({
+const { betterAuthMock, findById, revokeAllForUser } = vi.hoisted(() => ({
   betterAuthMock: vi.fn((config: Record<string, unknown>) => config),
+  findById: vi.fn(),
   revokeAllForUser: vi.fn(async () => undefined),
 }))
 
@@ -67,6 +68,7 @@ vi.mock("@chatbotx.io/business", () => ({
   resolveTenantSettingsByDomain: vi.fn(),
   invitationService: { findActiveByCode: vi.fn().mockResolvedValue(null) },
   mobileRefreshTokenService: { revokeAllForUser },
+  userService: { findById },
 }))
 
 vi.mock("@chatbotx.io/utils", () => ({
@@ -102,6 +104,30 @@ describe("createAuth account linking", () => {
 
   afterEach(() => {
     vi.unstubAllEnvs()
+  })
+
+  test("blocks creation of a browser session while account deletion is pending", async () => {
+    findById.mockResolvedValue({ deletionRequestedAt: new Date() })
+    const { createAuth } = await import("../src/server")
+    createAuth({})
+    const config = betterAuthMock.mock.calls.at(-1)?.[0] as {
+      databaseHooks: {
+        session: {
+          create: {
+            before: (session: { userId: string }) => Promise<void>
+          }
+        }
+      }
+    }
+
+    await expect(
+      config.databaseHooks.session.create.before({ userId: "user-1" }),
+    ).rejects.toMatchObject({ body: { code: "ACCOUNT_DELETION_PENDING" } })
+
+    findById.mockResolvedValue({ deletionRequestedAt: null })
+    await expect(
+      config.databaseHooks.session.create.before({ userId: "user-1" }),
+    ).resolves.toBeUndefined()
   })
 
   test("revokes mobile refresh tokens after a successful password reset", async () => {

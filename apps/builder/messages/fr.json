@@ -4193,9 +4193,6 @@
     "description": "La page que vous recherchez n'existe pas ou a peut-être été déplacée.",
     "backToHome": "Retour à l'accueil"
   },
-  "editProfile": {
-    "title": "Modifier le profil"
-  },
   "channels": {
     "title": "Canaux",
     "duplicated": {
@@ -11907,6 +11904,40 @@
       "error": "Impossible de charger les modèles.",
       "retry": "Réessayer",
       "meta": "ID {id} · {workspace}"
+    }
+  },
+  "accountDeletion": {
+    "title": "Delete account",
+    "description": "Your owned workspaces will be deleted with your account.",
+    "workspacesTitle": "Espaces de travail qui seront supprimés",
+    "noWorkspaces": "Vous ne possédez aucun espace de travail.",
+    "warningGracePeriod": "La suppression commence après un délai de grâce de 24 heures.",
+    "warningIrreversible": "Cette action est irréversible.",
+    "warningSubscriptions": "Annulez d'abord tous les abonnements.",
+    "signedInAs": "Connecté en tant que {email}",
+    "confirmationLabel": "Confirmation",
+    "confirmationHint": "Saisissez <code>DELETE</code> pour confirmer.",
+    "confirmationError": "Type DELETE exactly to confirm.",
+    "supportRequired": "Contact support to delete this reseller account.",
+    "submit": "Delete account",
+    "cancel": "Annuler",
+    "backToSignIn": "Retour à la connexion",
+    "receivedTitle": "Deletion request received",
+    "receivedDescription": "Your account and owned workspaces are scheduled for deletion."
+  },
+  "account": {
+    "title": "Account settings",
+    "description": "Manage your profile and account settings.",
+    "backToWorkspaces": "Workspaces",
+    "profile": {
+      "title": "Profile",
+      "description": "Update your name and profile image."
+    },
+    "emailReadOnly": "Email can't be changed",
+    "dangerZone": {
+      "title": "Danger zone",
+      "description": "Deletes your account and the {count, plural, =0 {0 workspaces} one {# workspace} other {# workspaces}} you own.",
+      "openSettings": "Delete account"
     }
   }
 }

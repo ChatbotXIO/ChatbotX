@@ -135,4 +135,18 @@ export const workspaceRepository = {
 
     return workspaces[0]
   },
+
+  async listByOwner(
+    input: { ownerId: string },
+    tx: DatabaseClient = db,
+  ): Promise<Array<{ id: string; scheduledDeletionAt: Date | null }>> {
+    return await tx
+      .select({
+        id: workspaceModel.id,
+        scheduledDeletionAt: workspaceModel.scheduledDeletionAt,
+      })
+      .from(workspaceModel)
+      .where(eq(workspaceModel.ownerId, input.ownerId))
+      .orderBy(asc(workspaceModel.id))
+  },
 }

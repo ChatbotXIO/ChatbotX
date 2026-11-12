@@ -4349,9 +4349,6 @@
     "description": "الصفحة التي تبحث عنها غير موجودة أو ربما تم نقلها.",
     "backToHome": "العودة إلى الصفحة الرئيسية"
   },
-  "editProfile": {
-    "title": "تعديل الملف الشخصي"
-  },
   "messages": {
     "timeAgo": {
       "now": "الآن",
@@ -11907,6 +11904,40 @@
       "error": "تعذّر تحميل القوالب.",
       "retry": "إعادة المحاولة",
       "meta": "ID {id} · {workspace}"
+    }
+  },
+  "accountDeletion": {
+    "title": "Delete account",
+    "description": "Your owned workspaces will be deleted with your account.",
+    "workspacesTitle": "مساحات العمل التي سيتم حذفها",
+    "noWorkspaces": "لا تملك أي مساحات عمل.",
+    "warningGracePeriod": "يبدأ الحذف بعد فترة سماح مدتها 24 ساعة.",
+    "warningIrreversible": "لا يمكن التراجع عن هذا الإجراء.",
+    "warningSubscriptions": "ألغِ أي اشتراكات أولاً.",
+    "signedInAs": "تم تسجيل الدخول باسم {email}",
+    "confirmationLabel": "التأكيد",
+    "confirmationHint": "اكتب <code>DELETE</code> للتأكيد.",
+    "confirmationError": "Type DELETE exactly to confirm.",
+    "supportRequired": "Contact support to delete this reseller account.",
+    "submit": "Delete account",
+    "cancel": "إلغاء",
+    "backToSignIn": "العودة إلى تسجيل الدخول",
+    "receivedTitle": "Deletion request received",
+    "receivedDescription": "Your account and owned workspaces are scheduled for deletion."
+  },
+  "account": {
+    "title": "Account settings",
+    "description": "Manage your profile and account settings.",
+    "backToWorkspaces": "Workspaces",
+    "profile": {
+      "title": "Profile",
+      "description": "Update your name and profile image."
+    },
+    "emailReadOnly": "Email can't be changed",
+    "dangerZone": {
+      "title": "Danger zone",
+      "description": "Deletes your account and the {count, plural, =0 {0 workspaces} one {# workspace} other {# workspaces}} you own.",
+      "openSettings": "Delete account"
     }
   }
 }

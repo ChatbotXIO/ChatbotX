@@ -46,7 +46,9 @@ export const resourceDeletionStatus = pgEnum(
  */
 export const resourceDeletionLogModel = pgTable("ResourceDeletionLog", {
   ...sharedColumns,
-  workspaceId: bigintAsString().notNull(),
+  // Account deletion has no one owning workspace; the other resource types
+  // retain the workspace id that scoped their original request.
+  workspaceId: bigintAsString(),
   resourceType: resourceDeletionResourceType().notNull(),
   resourceId: text().notNull(),
   resourceSubtype: text(),

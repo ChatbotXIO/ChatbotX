@@ -74,14 +74,19 @@ export const authenticateMobileBearer = async (
     return null
   }
   const user = await userService.findById(subject.userId)
-  if (!user) {
+  if (!user || user.deletionRequestedAt) {
     return null
   }
   return { user, deviceId: subject.deviceId }
 }
 
 export const toSessionUser = (user: UserModel): SessionUser => {
-  const { tenantId: _tenantId, ...sessionUser } = user
+  const {
+    deletionRequestedAt: _deletionRequestedAt,
+    scheduledDeletionAt: _scheduledDeletionAt,
+    tenantId: _tenantId,
+    ...sessionUser
+  } = user
   return sessionUser
 }
 

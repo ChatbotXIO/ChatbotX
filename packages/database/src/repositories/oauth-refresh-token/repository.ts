@@ -19,6 +19,17 @@ class OAuthRefreshTokenRepository {
     return rows.length
   }
 
+  async deleteByUserId(
+    userId: string,
+    tx: DatabaseClient = db,
+  ): Promise<number> {
+    const rows = await tx
+      .delete(oauthRefreshTokenModel)
+      .where(eq(oauthRefreshTokenModel.userId, userId))
+      .returning({ id: oauthRefreshTokenModel.id })
+    return rows.length
+  }
+
   async deleteExpired(now: Date, tx: DatabaseClient = db): Promise<number> {
     const rows = await tx
       .delete(oauthRefreshTokenModel)

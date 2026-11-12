@@ -33,7 +33,13 @@ const { refreshService, userService } = vi.hoisted(() => ({
     revokeByToken: vi.fn(),
     revokeAllForUser: vi.fn(),
   },
-  userService: { clearMustChangePassword: vi.fn() },
+  userService: {
+    clearMustChangePassword: vi.fn(),
+    findById: vi.fn(async (id: string) => ({
+      deletionRequestedAt: null,
+      id,
+    })),
+  },
 }))
 
 vi.mock("@chatbotx.io/business", () => ({

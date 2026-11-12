@@ -44,6 +44,7 @@ export const ScheduleJobData = {
   purgeWhatsappSignupSessions: "purgeWhatsappSignupSessions",
   purgeExpiredConnectSessions: "purgeExpiredConnectSessions",
   purgeWorkspaces: "purgeWorkspaces",
+  purgeDeletedUsers: "purgeDeletedUsers",
   clearExpiredSupportAccess: "clearExpiredSupportAccess",
   googleAdsHousekeeping: "googleAdsHousekeeping",
   googleAdsSyncSetups: "googleAdsSyncSetups",
@@ -395,6 +396,11 @@ export type ScheduleJobUnsubscribeExpiredTrials = {
   data: { cursor?: string }
 }
 
+export type ScheduleJobPurgeDeletedUsers = {
+  type: typeof ScheduleJobData.purgeDeletedUsers
+  data: Record<string, never>
+}
+
 export type ScheduleJobTeardownExpiredTrial = {
   type: typeof ScheduleJobData.teardownExpiredTrial
   data: { userId: string }
@@ -468,6 +474,7 @@ export type ScheduleJobData =
   | ScheduleJobPurgeWhatsappSignupSessions
   | ScheduleJobPurgeExpiredConnectSessions
   | ScheduleJobPurgeWorkspaces
+  | ScheduleJobPurgeDeletedUsers
   | ScheduleJobClearExpiredSupportAccess
   | ScheduleJobGoogleAdsHousekeeping
   | ScheduleJobGoogleAdsSyncSetups
