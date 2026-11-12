@@ -451,10 +451,12 @@ describe("processLeadgen", () => {
 
     await processLeadgen(JOB, bullJob())
 
+    expect(mockGetLeadAdAttribution).toHaveBeenCalledTimes(1)
     expect(mockGetLeadAdAttribution).toHaveBeenCalledWith(
       "lead-1",
       "page-token",
       "v23.0",
+      { withNames: true },
     )
     expect(mockSetAdAttribution).toHaveBeenCalledWith({
       id: "claim-1",
@@ -464,6 +466,45 @@ describe("processLeadgen", () => {
       adsetName: "VN 18-35",
       campaignId: "campaign-4",
       campaignName: "Summer sale",
+    })
+  })
+
+  test("a denied names read still stores the ad, ad set and campaign ids", async () => {
+    primeResolvers()
+    mockFindMatching.mockResolvedValue({
+      id: "auto-1",
+      formName: "Form",
+      fieldMapping: [],
+    })
+    mockGetLead.mockResolvedValue(
+      leadWith([{ name: "inbox_url", values: [INBOX_URL] }]),
+    )
+    mockGetLeadAdAttribution
+      .mockRejectedValueOnce(new Error("graph #100 ads_read"))
+      .mockResolvedValueOnce({
+        id: "lead-1",
+        ad_id: "ad-9",
+        adset_id: "adset-2",
+        campaign_id: "campaign-4",
+      })
+
+    await processLeadgen(JOB, bullJob())
+
+    expect(mockGetLeadAdAttribution).toHaveBeenNthCalledWith(
+      2,
+      "lead-1",
+      "page-token",
+      "v23.0",
+      { withNames: false },
+    )
+    expect(mockSetAdAttribution).toHaveBeenCalledWith({
+      id: "claim-1",
+      adId: "ad-9",
+      adName: undefined,
+      adsetId: "adset-2",
+      adsetName: undefined,
+      campaignId: "campaign-4",
+      campaignName: undefined,
     })
   })
 

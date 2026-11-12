@@ -98,7 +98,13 @@ vi.mock("@chatbotx.io/business", () => ({
       adsetName: "Ad set",
       campaignId: "campaign-1",
       campaignName: "Campaign",
+      createdAt: new Date("2026-01-01T00:00:00Z"),
     }),
+  },
+  contactReferralEventService: {
+    findLatestAdTouchAt: vi
+      .fn()
+      .mockResolvedValue(new Date("2026-02-01T00:00:00Z")),
   },
   questionnaireSubmissionService: {
     findLatestCompletedForContact: vi
@@ -210,6 +216,7 @@ const contactInbox = {
   lastOutboundMessageAt: new Date("2026-01-02T03:04:05.000Z"),
   lastBtnTitle: "Choose plan",
   lastStoryId: "story-1",
+  lastUserInputType: "text",
   lastInputFailure: "Invalid email",
   lastErrorLog: "(#551) unavailable",
   webchatParentUrl: "https://shop.example",

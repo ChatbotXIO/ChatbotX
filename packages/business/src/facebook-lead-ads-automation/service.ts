@@ -266,6 +266,7 @@ class FacebookLeadAdsLeadService extends BaseService {
         adsetName: true,
         campaignId: true,
         campaignName: true,
+        createdAt: true,
       },
     })
   }

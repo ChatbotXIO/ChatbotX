@@ -239,6 +239,14 @@ class ContactReferralEventService {
     return await contactReferralEventRepository.listAdIdsByContact(input, tx)
   }
 
+  /** When the contact last arrived through an ad on this inbox; null if never logged. */
+  async findLatestAdTouchAt(
+    input: { workspaceId: string; contactId: string; contactInboxId: string },
+    tx: DatabaseClient = db,
+  ): Promise<Date | null> {
+    return await contactReferralEventRepository.findLatestAdTouchAt(input, tx)
+  }
+
   /**
    * The id of the ad touch a conversion is credited to, to link it for
    * reporting. Attribution itself is unchanged: this only names the touch.

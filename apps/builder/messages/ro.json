@@ -4156,48 +4156,6 @@
     "lastAdgroupId": {
       "label": "Ultimul ID de grup de anunțuri"
     },
-    "locale2": {
-      "label": "Limbă (scurt)"
-    },
-    "subscribedDate": {
-      "label": "Data abonării"
-    },
-    "lastUserInputType": {
-      "label": "Tipul ultimei introduceri a utilizatorului"
-    },
-    "chatHistory": {
-      "label": "Istoric chat"
-    },
-    "chatHistoryLarge": {
-      "label": "Istoric chat (extins)"
-    },
-    "chatHistoryDetails": {
-      "label": "Istoric chat detaliat"
-    },
-    "chatHistoryDetailsLarge": {
-      "label": "Istoric chat detaliat (extins)"
-    },
-    "lastUserNote": {
-      "label": "Ultima notă despre utilizator"
-    },
-    "lastErrorLog": {
-      "label": "Ultimul jurnal de eroare"
-    },
-    "lastAdName": {
-      "label": "Numele ultimului anunț"
-    },
-    "lastAdsetId": {
-      "label": "ID-ul ultimului set de anunțuri"
-    },
-    "lastAdsetName": {
-      "label": "Numele ultimului set de anunțuri"
-    },
-    "lastCampaignId": {
-      "label": "ID-ul ultimei campanii"
-    },
-    "lastCampaignName": {
-      "label": "Numele ultimei campanii"
-    },
     "lastTextInput": {
       "label": "Ultimul text introdus"
     },

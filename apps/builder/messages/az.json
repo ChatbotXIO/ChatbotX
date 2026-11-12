@@ -2959,48 +2959,6 @@
     "lastAdgroupId": {
       "label": "Son reklam qrupu ID-si"
     },
-    "locale2": {
-      "label": "Dil (qısa)"
-    },
-    "subscribedDate": {
-      "label": "Abunə tarixi"
-    },
-    "lastUserInputType": {
-      "label": "İstifadəçinin son daxiletmə növü"
-    },
-    "chatHistory": {
-      "label": "Söhbət tarixçəsi"
-    },
-    "chatHistoryLarge": {
-      "label": "Söhbət tarixçəsi (geniş)"
-    },
-    "chatHistoryDetails": {
-      "label": "Söhbət tarixçəsinin təfərrüatları"
-    },
-    "chatHistoryDetailsLarge": {
-      "label": "Söhbət tarixçəsinin təfərrüatları (geniş)"
-    },
-    "lastUserNote": {
-      "label": "İstifadəçi haqqında son qeyd"
-    },
-    "lastErrorLog": {
-      "label": "Son xəta jurnalı"
-    },
-    "lastAdName": {
-      "label": "Son reklamın adı"
-    },
-    "lastAdsetId": {
-      "label": "Son reklam dəsti ID-si"
-    },
-    "lastAdsetName": {
-      "label": "Son reklam dəstinin adı"
-    },
-    "lastCampaignId": {
-      "label": "Son kampaniya ID-si"
-    },
-    "lastCampaignName": {
-      "label": "Son kampaniyanın adı"
-    },
     "lastTextInput": {
       "label": "Son mətn daxiletməsi"
     },

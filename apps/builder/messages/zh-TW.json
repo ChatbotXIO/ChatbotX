@@ -1637,48 +1637,6 @@
     "lastAdgroupId": {
       "label": "最近廣告群組ID"
     },
-    "locale2": {
-      "label": "語言(簡寫)"
-    },
-    "subscribedDate": {
-      "label": "訂閱日期"
-    },
-    "lastUserInputType": {
-      "label": "使用者最近輸入類型"
-    },
-    "chatHistory": {
-      "label": "聊天記錄"
-    },
-    "chatHistoryLarge": {
-      "label": "聊天記錄(大)"
-    },
-    "chatHistoryDetails": {
-      "label": "聊天記錄詳情"
-    },
-    "chatHistoryDetailsLarge": {
-      "label": "聊天記錄詳情(大)"
-    },
-    "lastUserNote": {
-      "label": "最近使用者備註"
-    },
-    "lastErrorLog": {
-      "label": "最近錯誤日誌"
-    },
-    "lastAdName": {
-      "label": "最近廣告名稱"
-    },
-    "lastAdsetId": {
-      "label": "最近廣告組合ID"
-    },
-    "lastAdsetName": {
-      "label": "最近廣告組合名稱"
-    },
-    "lastCampaignId": {
-      "label": "最近行銷活動ID"
-    },
-    "lastCampaignName": {
-      "label": "最近行銷活動名稱"
-    },
     "lastTextInput": {
       "label": "最近文字輸入"
     },

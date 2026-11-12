@@ -239,13 +239,31 @@ describe("getSystemFieldValue — helper-backed fields", () => {
     await expect(
       getSystemFieldValue(context, systemFieldTypes.enum.last_input_type),
     ).resolves.toBe("text")
-    // `last_user_input_type` is an alias of `last_input_type`.
-    await expect(
-      getSystemFieldValue(context, systemFieldTypes.enum.last_user_input_type),
-    ).resolves.toBe("text")
 
     expect(mocks.getContactLastInput).toHaveBeenCalledWith("contact-1")
     expect(mocks.getContactLastInputType).toHaveBeenCalledWith("contact-1")
+  })
+
+  test("last_user_input_type reads the stored column the contact filter uses", async () => {
+    await expect(
+      getSystemFieldValue(
+        {
+          ...context,
+          contactInbox: {
+            id: "contact-inbox-1",
+            lastUserInputType: "storyMention",
+          } as ContactInboxModel,
+        },
+        systemFieldTypes.enum.last_user_input_type,
+      ),
+    ).resolves.toBe("storyMention")
+    await expect(
+      getSystemFieldValue(
+        { ...context, contactInbox: null },
+        systemFieldTypes.enum.last_user_input_type,
+      ),
+    ).resolves.toBeNull()
+    expect(mocks.getContactLastInputType).not.toHaveBeenCalled()
   })
 
   test("last_text_input calls its own helper", async () => {

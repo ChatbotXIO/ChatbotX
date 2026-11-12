@@ -94,6 +94,42 @@ async function resolveFormName(props: {
  * must not fail a lead whose answers were already applied. `ad_id` falls back
  * to the webhook's ad group, which Meta uses for the ad itself.
  */
+async function fetchAdAttribution(props: {
+  leadgenId: string
+  accessToken: string
+  version: string
+}): Promise<LeadAdAttribution | undefined> {
+  try {
+    return await getLeadAdAttribution(
+      props.leadgenId,
+      props.accessToken,
+      props.version,
+      { withNames: true },
+    )
+  } catch (err) {
+    logger.warn(
+      { err, leadgenId: props.leadgenId },
+      "processLeadgen: failed to read the lead's ad names, retrying ids only",
+    )
+  }
+  // Graph denies the whole read when the token lacks ad-account access for
+  // the names; the ids alone are readable with the page token.
+  try {
+    return await getLeadAdAttribution(
+      props.leadgenId,
+      props.accessToken,
+      props.version,
+      { withNames: false },
+    )
+  } catch (err) {
+    logger.warn(
+      { err, leadgenId: props.leadgenId },
+      "processLeadgen: failed to read the lead's ad attribution",
+    )
+    return
+  }
+}
+
 async function recordAdAttribution(props: {
   leadId: string
   leadgenId: string
@@ -101,19 +137,7 @@ async function recordAdAttribution(props: {
   accessToken: string
   version: string
 }): Promise<void> {
-  let attribution: LeadAdAttribution | undefined
-  try {
-    attribution = await getLeadAdAttribution(
-      props.leadgenId,
-      props.accessToken,
-      props.version,
-    )
-  } catch (err) {
-    logger.warn(
-      { err, leadgenId: props.leadgenId },
-      "processLeadgen: failed to read the lead's ad attribution",
-    )
-  }
+  const attribution = await fetchAdAttribution(props)
   try {
     await facebookLeadAdsLeadService.setAdAttribution({
       id: props.leadId,

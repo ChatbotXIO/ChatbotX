@@ -7548,48 +7548,6 @@
     "lastAdgroupId": {
       "label": "מזהה קבוצת המודעות האחרונה"
     },
-    "locale2": {
-      "label": "שפה (מקוצר)"
-    },
-    "subscribedDate": {
-      "label": "תאריך הרשמה"
-    },
-    "lastUserInputType": {
-      "label": "סוג הקלט האחרון של המשתמש"
-    },
-    "chatHistory": {
-      "label": "היסטוריית צ'אט"
-    },
-    "chatHistoryLarge": {
-      "label": "היסטוריית צ'אט (מורחבת)"
-    },
-    "chatHistoryDetails": {
-      "label": "פרטי היסטוריית צ'אט"
-    },
-    "chatHistoryDetailsLarge": {
-      "label": "פרטי היסטוריית צ'אט (מורחבת)"
-    },
-    "lastUserNote": {
-      "label": "ההערה האחרונה על המשתמש"
-    },
-    "lastErrorLog": {
-      "label": "יומן השגיאה האחרון"
-    },
-    "lastAdName": {
-      "label": "שם המודעה האחרונה"
-    },
-    "lastAdsetId": {
-      "label": "מזהה ערכת המודעות האחרונה"
-    },
-    "lastAdsetName": {
-      "label": "שם ערכת המודעות האחרונה"
-    },
-    "lastCampaignId": {
-      "label": "מזהה הקמפיין האחרון"
-    },
-    "lastCampaignName": {
-      "label": "שם הקמפיין האחרון"
-    },
     "lastTextInput": {
       "label": "קלט הטקסט האחרון"
     },

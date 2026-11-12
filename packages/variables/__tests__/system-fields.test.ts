@@ -29,6 +29,7 @@ const {
   mockAppointmentFindLatestForContact,
   mockQuestionnaireFindLatestCompleted,
   mockLeadAdsFindLatestByContact,
+  mockFindLatestAdTouchAt,
   mockListTeamNamesByUserId,
   mockResolveDefaultTokenPlaintext,
   mockResolveContactAvatarUrl,
@@ -60,6 +61,7 @@ const {
   mockAppointmentFindLatestForContact: vi.fn(),
   mockQuestionnaireFindLatestCompleted: vi.fn(),
   mockLeadAdsFindLatestByContact: vi.fn(),
+  mockFindLatestAdTouchAt: vi.fn(),
   mockListTeamNamesByUserId: vi.fn(),
   mockResolveDefaultTokenPlaintext: vi.fn(),
   mockEnsureContactAvatarMirrored: vi.fn(),
@@ -122,6 +124,9 @@ vi.mock("@chatbotx.io/business", () => ({
   conversationService: {
     findBy: mockConversationFindBy,
     findDMByContact: mockFindDMByContact,
+  },
+  contactReferralEventService: {
+    findLatestAdTouchAt: mockFindLatestAdTouchAt,
   },
   facebookLeadAdsLeadService: {
     findLatestByContact: mockLeadAdsFindLatestByContact,
@@ -2337,21 +2342,62 @@ describe("getSystemFieldValue — last_ad", () => {
     vi.clearAllMocks()
   })
 
-  test("prefers the click-to-message referral over the latest lead", async () => {
-    mockLeadAdsFindLatestByContact.mockResolvedValue({ adId: "lead-ad" })
+  const withReferral = () =>
+    createContext({
+      contactInbox: {
+        ...contactInbox,
+        referral: { adId: "referral-ad" },
+      } as ContactInboxModel,
+    })
+
+  test("returns the referral ad when its touch is newer than the lead", async () => {
+    mockLeadAdsFindLatestByContact.mockResolvedValue({
+      adId: "lead-ad",
+      createdAt: new Date("2026-01-01T00:00:00Z"),
+    })
+    mockFindLatestAdTouchAt.mockResolvedValue(new Date("2026-03-01T00:00:00Z"))
 
     await expect(
-      getSystemFieldValue(
-        createContext({
-          contactInbox: {
-            ...contactInbox,
-            referral: { adId: "referral-ad" },
-          } as ContactInboxModel,
-        }),
-        systemFieldTypes.enum.last_ad,
-      ),
+      getSystemFieldValue(withReferral(), systemFieldTypes.enum.last_ad),
     ).resolves.toBe("referral-ad")
-    expect(mockLeadAdsFindLatestByContact).not.toHaveBeenCalled()
+    expect(mockFindLatestAdTouchAt).toHaveBeenCalledWith({
+      workspaceId: contact.workspaceId,
+      contactId: contact.id,
+      contactInboxId: contactInbox.id,
+    })
+  })
+
+  test("returns the lead ad when the lead is newer than the referral touch", async () => {
+    mockLeadAdsFindLatestByContact.mockResolvedValue({
+      adId: "lead-ad",
+      createdAt: new Date("2026-03-01T00:00:00Z"),
+    })
+    mockFindLatestAdTouchAt.mockResolvedValue(new Date("2026-01-01T00:00:00Z"))
+
+    await expect(
+      getSystemFieldValue(withReferral(), systemFieldTypes.enum.last_ad),
+    ).resolves.toBe("lead-ad")
+  })
+
+  test("returns the lead ad when the referral has no logged touch", async () => {
+    mockLeadAdsFindLatestByContact.mockResolvedValue({
+      adId: "lead-ad",
+      createdAt: new Date("2026-03-01T00:00:00Z"),
+    })
+    mockFindLatestAdTouchAt.mockResolvedValue(null)
+
+    await expect(
+      getSystemFieldValue(withReferral(), systemFieldTypes.enum.last_ad),
+    ).resolves.toBe("lead-ad")
+  })
+
+  test("returns the referral ad when the contact has no lead with an ad", async () => {
+    mockLeadAdsFindLatestByContact.mockResolvedValue(undefined)
+
+    await expect(
+      getSystemFieldValue(withReferral(), systemFieldTypes.enum.last_ad),
+    ).resolves.toBe("referral-ad")
+    expect(mockFindLatestAdTouchAt).not.toHaveBeenCalled()
   })
 
   test("falls back to the ad of the latest lead without a referral", async () => {

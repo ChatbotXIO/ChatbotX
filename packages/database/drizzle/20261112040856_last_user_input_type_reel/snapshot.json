@@ -1,9 +1,9 @@
 {
   "version": "8",
   "dialect": "postgres",
-  "id": "74e7cfdb-0843-4431-bcef-3b18488ebbf5",
+  "id": "92eba09c-e001-4035-99bf-7445ad765ab8",
   "prevIds": [
-    "90d972de-5370-4308-933d-d62a3e55e134"
+    "56712d7e-dbf1-4815-a5b2-7f8289e13d82"
   ],
   "ddl": [
     {
@@ -558,7 +558,8 @@
         "audio",
         "gif",
         "file",
-        "storyMention"
+        "storyMention",
+        "reel"
       ],
       "name": "lastUserInputType",
       "entityType": "enums",
@@ -3072,6 +3073,24 @@
     {
       "isRlsEnabled": false,
       "name": "TemplateResourceBackup",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "TemplateStoreCategory",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "TemplateStoreListingCategory",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "TemplateStoreListing",
       "entityType": "tables",
       "schema": "public"
     },
@@ -41892,6 +41911,201 @@
       "name": "id",
       "entityType": "columns",
       "schema": "public",
+      "table": "TemplateStoreCategory"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "createdAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "TemplateStoreCategory"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "updatedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "TemplateStoreCategory"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "tenantId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "TemplateStoreCategory"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "name",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "TemplateStoreCategory"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "0",
+      "generated": null,
+      "identity": null,
+      "name": "rank",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "TemplateStoreCategory"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "createdBy",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "TemplateStoreCategory"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "listingId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "TemplateStoreListingCategory"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "categoryId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "TemplateStoreListingCategory"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "TemplateStoreListing"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "createdAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "TemplateStoreListing"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "updatedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "TemplateStoreListing"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "tenantId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "TemplateStoreListing"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "templateId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "TemplateStoreListing"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "createdBy",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "TemplateStoreListing"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
       "table": "TemplateUninstallOperation"
     },
     {
@@ -62640,6 +62854,181 @@
       "nameExplicit": true,
       "columns": [
         {
+          "value": "tenantId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "lower(\"name\")",
+          "isExpression": true,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": true,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "TemplateStoreCategory_tenantId_name_key",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "TemplateStoreCategory"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "tenantId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "rank",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "id",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "TemplateStoreCategory_tenantId_rank_id_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "TemplateStoreCategory"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "createdBy",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": "\"createdBy\" IS NOT NULL",
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "TemplateStoreCategory_createdBy_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "TemplateStoreCategory"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "categoryId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "TemplateStoreListingCategory_categoryId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "TemplateStoreListingCategory"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "tenantId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "templateId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": true,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "TemplateStoreListing_tenantId_templateId_key",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "TemplateStoreListing"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "templateId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "TemplateStoreListing_templateId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "TemplateStoreListing"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "createdBy",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": "\"createdBy\" IS NOT NULL",
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "TemplateStoreListing_createdBy_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "TemplateStoreListing"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
           "value": "workspaceId",
           "isExpression": false,
           "asc": true,
@@ -72993,6 +73382,125 @@
     {
       "nameExplicit": false,
       "columns": [
+        "tenantId"
+      ],
+      "schemaTo": "public",
+      "tableTo": "Tenant",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "TemplateStoreCategory_tenantId_Tenant_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "TemplateStoreCategory"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "createdBy"
+      ],
+      "schemaTo": "public",
+      "tableTo": "User",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "CASCADE",
+      "onDelete": "SET NULL",
+      "name": "TemplateStoreCategory_createdBy_User_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "TemplateStoreCategory"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "listingId"
+      ],
+      "schemaTo": "public",
+      "tableTo": "TemplateStoreListing",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "TemplateStoreListingCategory_6NRhid3zrtxN_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "TemplateStoreListingCategory"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "categoryId"
+      ],
+      "schemaTo": "public",
+      "tableTo": "TemplateStoreCategory",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "TemplateStoreListingCategory_8ENSsaBUskGb_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "TemplateStoreListingCategory"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "tenantId"
+      ],
+      "schemaTo": "public",
+      "tableTo": "Tenant",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "TemplateStoreListing_tenantId_Tenant_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "TemplateStoreListing"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "templateId"
+      ],
+      "schemaTo": "public",
+      "tableTo": "Template",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "TemplateStoreListing_templateId_Template_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "TemplateStoreListing"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "createdBy"
+      ],
+      "schemaTo": "public",
+      "tableTo": "User",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "CASCADE",
+      "onDelete": "SET NULL",
+      "name": "TemplateStoreListing_createdBy_User_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "TemplateStoreListing"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
         "workspaceId"
       ],
       "schemaTo": "public",
@@ -74225,6 +74733,17 @@
       "entityType": "pks",
       "schema": "public",
       "table": "SequenceDispatch"
+    },
+    {
+      "columns": [
+        "listingId",
+        "categoryId"
+      ],
+      "nameExplicit": true,
+      "name": "TemplateStoreListingCategory_pkey",
+      "entityType": "pks",
+      "schema": "public",
+      "table": "TemplateStoreListingCategory"
     },
     {
       "columns": [
@@ -76265,6 +76784,26 @@
       "name": "TemplateResourceBackup_pkey",
       "schema": "public",
       "table": "TemplateResourceBackup",
+      "entityType": "pks"
+    },
+    {
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "name": "TemplateStoreCategory_pkey",
+      "schema": "public",
+      "table": "TemplateStoreCategory",
+      "entityType": "pks"
+    },
+    {
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "name": "TemplateStoreListing_pkey",
+      "schema": "public",
+      "table": "TemplateStoreListing",
       "entityType": "pks"
     },
     {
