@@ -98,28 +98,46 @@ describe.skipIf(!databaseUrl)(
         FROM pg_indexes
         WHERE schemaname = 'public'
           AND indexname IN (
-            'User_scheduledDeletionAt_idx',
-            'Conversation_assignedUserId_idx',
+            'Account_userId_idx',
             'AuditLog_userId_idx',
             'ContactNote_createdById_idx',
-            'ConversationParticipant_userId_idx'
+            'Conversation_assignedUserId_idx',
+            'ConversationParticipant_userId_idx',
+            'File_userId_idx',
+            'Import_userId_idx',
+            'Session_userId_idx',
+            'User_scheduledDeletionAt_idx',
+            'WhatsappCall_answeredByUserId_idx',
+            'WhatsappCall_initiatedByUserId_idx',
+            'WorkspaceMember_userId_idx'
           )
       `)
         const indexes = new Map(
           indexRows.rows.map((row) => [row.indexname, row.indexdef]),
         )
         expect([...indexes.keys()].sort()).toEqual([
+          "Account_userId_idx",
           "AuditLog_userId_idx",
           "ContactNote_createdById_idx",
           "ConversationParticipant_userId_idx",
           "Conversation_assignedUserId_idx",
+          "File_userId_idx",
+          "Import_userId_idx",
+          "Session_userId_idx",
           "User_scheduledDeletionAt_idx",
+          "WhatsappCall_answeredByUserId_idx",
+          "WhatsappCall_initiatedByUserId_idx",
+          "WorkspaceMember_userId_idx",
         ])
         for (const indexName of [
           "AuditLog_userId_idx",
           "ContactNote_createdById_idx",
           "Conversation_assignedUserId_idx",
+          "File_userId_idx",
+          "Import_userId_idx",
           "User_scheduledDeletionAt_idx",
+          "WhatsappCall_answeredByUserId_idx",
+          "WhatsappCall_initiatedByUserId_idx",
         ]) {
           expect(indexes.get(indexName)).toContain("WHERE")
         }

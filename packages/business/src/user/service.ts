@@ -14,6 +14,7 @@ import {
   oauthConsentRepository,
   oauthRefreshTokenRepository,
   sessionRepository,
+  tenantRepository,
   unassignUserBatch,
   userDeviceTokenRepository,
   userRepository,
@@ -36,6 +37,9 @@ const accountDeletionTarget = (user: Pick<UserModel, "id">) => ({
 })
 
 const USER_PURGE_RETRY_DELAY_MS = 60 * 60 * 1000
+const USER_FINAL_DELETE_STATEMENT_TIMEOUT = "30s"
+const USER_REFERENCE_DRAIN_BATCH_SIZE = 5000
+const USER_REFERENCE_DRAIN_DEADLINE_MS = 90_000
 const USER_REFERENCE_DRAIN_STATEMENT_TIMEOUT = "30s"
 
 class UserService extends BaseService {
@@ -95,13 +99,11 @@ class UserService extends BaseService {
         return {
           removedMembers: [],
           scheduledDeletionAt: user.scheduledDeletionAt,
+          scheduledWorkspaceIds: [],
         }
       }
 
-      const ownedTenant = await tx.query.tenantModel.findFirst({
-        where: { ownerId: props.userId },
-        columns: { id: true },
-      })
+      const ownedTenant = await tenantRepository.findByOwner(props.userId, tx)
       if (ownedTenant) {
         throw new ChatbotXException(
           "Reseller accounts must contact support to delete their account",
@@ -109,6 +111,8 @@ class UserService extends BaseService {
           403,
         )
       }
+
+      const scheduledWorkspaceIds: string[] = []
 
       const ownedWorkspaces = await workspaceRepository.listByOwner(
         { ownerId: props.userId },
@@ -121,6 +125,7 @@ class UserService extends BaseService {
             id: workspace.id,
             tx,
           })
+          scheduledWorkspaceIds.push(workspace.id)
         }
       }
 
@@ -159,9 +164,22 @@ class UserService extends BaseService {
       await oauthRefreshTokenRepository.deleteByUserId(props.userId, tx)
       await authAccountRepository.clearTokensByUserId(props.userId, tx)
 
-      return { removedMembers, scheduledDeletionAt }
+      return {
+        removedMembers,
+        scheduledDeletionAt,
+        scheduledWorkspaceIds,
+      }
     })
 
+    await Promise.all(
+      result.scheduledWorkspaceIds.map(
+        async (id) =>
+          await workspaceService.finalizeScheduledDeletion({
+            actorId: props.actor.userId,
+            id,
+          }),
+      ),
+    )
     await workspaceMemberService.finalizeAccountDeletionMembershipRemovals(
       result.removedMembers,
     )
@@ -179,18 +197,26 @@ class UserService extends BaseService {
   }
 
   async drainUserReferences(userId: string): Promise<boolean> {
-    const batchSize = 5000
-    const deadlineAt = Date.now() + 90_000
+    const deadlineAt = Date.now() + USER_REFERENCE_DRAIN_DEADLINE_MS
     const drainers: Array<(tx: DatabaseClient) => Promise<number>> = [
-      async (tx) => await unassignUserBatch(userId, batchSize, tx),
       async (tx) =>
-        await auditLogRepository.detachUserBatch(userId, batchSize, tx),
+        await unassignUserBatch(userId, USER_REFERENCE_DRAIN_BATCH_SIZE, tx),
       async (tx) =>
-        await contactNoteRepository.detachAuthorBatch(userId, batchSize, tx),
+        await auditLogRepository.detachUserBatch(
+          userId,
+          USER_REFERENCE_DRAIN_BATCH_SIZE,
+          tx,
+        ),
+      async (tx) =>
+        await contactNoteRepository.detachAuthorBatch(
+          userId,
+          USER_REFERENCE_DRAIN_BATCH_SIZE,
+          tx,
+        ),
       async (tx) =>
         await conversationParticipantRepository.deleteByUserBatch(
           userId,
-          batchSize,
+          USER_REFERENCE_DRAIN_BATCH_SIZE,
           tx,
         ),
     ]
@@ -264,6 +290,8 @@ class UserService extends BaseService {
       }
 
       return await db.transaction(async (tx) => {
+        await setLocalStatementTimeout(tx, USER_FINAL_DELETE_STATEMENT_TIMEOUT)
+
         if (
           !(await userRepository.deleteIfDue({
             userId,

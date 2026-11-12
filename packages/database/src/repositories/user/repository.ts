@@ -71,7 +71,11 @@ class UserRepository {
 
   async findForAccountDeletion(userId: string, tx: DatabaseClient) {
     const [user] = await tx
-      .select()
+      .select({
+        deletionRequestedAt: userModel.deletionRequestedAt,
+        id: userModel.id,
+        scheduledDeletionAt: userModel.scheduledDeletionAt,
+      })
       .from(userModel)
       .where(eq(userModel.id, userId))
       .limit(1)

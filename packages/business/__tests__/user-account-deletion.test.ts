@@ -94,6 +94,7 @@ describe("userService.requestAccountDeletion", () => {
     vi.spyOn(workspaceService, "scheduleDeletion").mockResolvedValue(
       {} as never,
     )
+    vi.spyOn(workspaceService, "finalizeScheduledDeletion").mockResolvedValue()
     vi.spyOn(
       workspaceMemberService,
       "removeForAccountDeletion",
@@ -135,6 +136,84 @@ describe("userService.requestAccountDeletion", () => {
     expect(authAccountRepository.clearTokensByUserId).toHaveBeenCalledWith(
       "user-1",
       transaction,
+    )
+  })
+
+  test("invalidates scheduled workspace caches only after the deletion transaction commits", async () => {
+    const transaction = {
+      query: {
+        tenantModel: { findFirst: vi.fn().mockResolvedValue(undefined) },
+      },
+    }
+    const { promise: commitBarrier, resolve: releaseCommit } =
+      Promise.withResolvers<void>()
+    const { promise: transactionWorkDone, resolve: resolveTransactionWork } =
+      Promise.withResolvers<void>()
+    vi.spyOn(db, "transaction").mockImplementation(async (run) => {
+      const result = await run(transaction)
+      resolveTransactionWork()
+      await commitBarrier
+      return result
+    })
+    vi.spyOn(userRepository, "findForAccountDeletion").mockResolvedValue({
+      ...dueUser,
+      deletionRequestedAt: null,
+      scheduledDeletionAt: null,
+    } as never)
+    vi.spyOn(workspaceRepository, "listByOwner").mockResolvedValue([
+      { id: "workspace-1", scheduledDeletionAt: null },
+      { id: "workspace-2", scheduledDeletionAt: null },
+    ])
+    vi.spyOn(workspaceService, "scheduleDeletion").mockResolvedValue(
+      {} as never,
+    )
+    vi.spyOn(
+      workspaceMemberService,
+      "removeForAccountDeletion",
+    ).mockResolvedValue([])
+    vi.spyOn(
+      workspaceMemberService,
+      "finalizeAccountDeletionMembershipRemovals",
+    ).mockResolvedValue()
+    vi.spyOn(resourceDeletionLogService, "recordRequest").mockResolvedValue()
+    vi.spyOn(userRepository, "markDeletionRequested").mockResolvedValue()
+    vi.spyOn(sessionRepository, "deleteByUserId").mockResolvedValue()
+    vi.spyOn(
+      mobileRefreshTokenRepository,
+      "revokeAllForUser",
+    ).mockResolvedValue()
+    vi.spyOn(userDeviceTokenRepository, "deleteByUserId").mockResolvedValue()
+    vi.spyOn(oauthAccessTokenRepository, "deleteByUserId").mockResolvedValue(0)
+    vi.spyOn(oauthConsentRepository, "deleteByUserId").mockResolvedValue(0)
+    vi.spyOn(oauthRefreshTokenRepository, "deleteByUserId").mockResolvedValue(0)
+    vi.spyOn(authAccountRepository, "clearTokensByUserId").mockResolvedValue()
+    const workspaceServicePrivate = workspaceService as unknown as {
+      invalidateWorkspaceCache: (id: string, tx: unknown) => Promise<void>
+    }
+    const invalidateWorkspaceCache = vi
+      .spyOn(workspaceServicePrivate, "invalidateWorkspaceCache")
+      .mockResolvedValue()
+
+    const request = userService.requestAccountDeletion({
+      actor: { userId: "user-1" },
+      userId: "user-1",
+    })
+    await transactionWorkDone
+
+    expect(invalidateWorkspaceCache).not.toHaveBeenCalled()
+
+    releaseCommit()
+    await request
+
+    expect(invalidateWorkspaceCache).toHaveBeenNthCalledWith(
+      1,
+      "workspace-1",
+      db,
+    )
+    expect(invalidateWorkspaceCache).toHaveBeenNthCalledWith(
+      2,
+      "workspace-2",
+      db,
     )
   })
 })

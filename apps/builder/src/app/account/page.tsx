@@ -1,16 +1,11 @@
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@chatbotx.io/ui/components/ui/card"
+import { Card, CardContent } from "@chatbotx.io/ui/components/ui/card"
 import { ArrowLeftIcon } from "lucide-react"
 import Link from "next/link"
 import { redirect } from "next/navigation"
 import { getTranslations } from "next-intl/server"
 import { ProfileForm } from "@/features/account/components/profile-form"
 import { DeleteAccountDialog } from "@/features/account-deletion/components/delete-account-dialog"
+import { getOwnedWorkspaces } from "@/features/account-deletion/lib/owned-workspaces"
 import { enforcePasswordCurrent } from "@/lib/auth/require-password-current"
 import { getCurrentUserAndAllLinkedWorkspaces } from "@/lib/auth/utils"
 
@@ -24,12 +19,10 @@ export default async function AccountPage() {
   const { user } = userAndWorkspaces
   enforcePasswordCurrent(user)
 
-  const ownedWorkspaces = userAndWorkspaces.allWorkspaceMembers
-    .filter((member) => member.workspace.ownerId === user.id)
-    .map((member) => ({
-      id: member.workspace.id,
-      name: member.workspace.name,
-    }))
+  const ownedWorkspaces = getOwnedWorkspaces({
+    allWorkspaceMembers: userAndWorkspaces.allWorkspaceMembers,
+    userId: user.id,
+  })
 
   return (
     <main className="mx-auto max-w-3xl px-6 py-8">
@@ -81,15 +74,7 @@ export default async function AccountPage() {
             </p>
           </div>
           <Card className="border-destructive/40">
-            <CardHeader>
-              <CardTitle>{t("dangerZone.title")}</CardTitle>
-              <CardDescription>
-                {t("dangerZone.description", {
-                  count: ownedWorkspaces.length,
-                })}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
+            <CardContent className="pt-6">
               <DeleteAccountDialog ownedWorkspaces={ownedWorkspaces} />
             </CardContent>
           </Card>

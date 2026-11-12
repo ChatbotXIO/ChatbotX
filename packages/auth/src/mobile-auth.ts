@@ -666,17 +666,11 @@ export const mobileAuth = () =>
             throw ctx.redirect("/auth/sign-in?error=handoff_invalid")
           }
           const userId = await consumeWebHandoffCode(ctx, ctx.query.code)
-          const user = userId
-            ? await ctx.context.internalAdapter.findUserById(userId)
-            : null
+          const user = userId ? await userService.findById(userId) : null
           if (!user) {
             throw ctx.redirect("/auth/sign-in?error=handoff_invalid")
           }
-          const account = await userService.findById(user.id)
-          if (!account) {
-            throw ctx.redirect("/auth/sign-in?error=handoff_invalid")
-          }
-          if (account.deletionRequestedAt) {
+          if (user.deletionRequestedAt) {
             throw ctx.redirect("/account/delete?requested=1")
           }
           const session = await ctx.context.internalAdapter.createSession(
@@ -688,11 +682,13 @@ export const mobileAuth = () =>
               message: "Could not create account handoff session",
             })
           }
-          await setSessionCookie(ctx, { session, user })
+          await setSessionCookie(ctx, {
+            session,
+            user: { ...user, name: user.name ?? "" },
+          })
           throw ctx.redirect("/account/delete")
         },
       ),
-
       mobileCreateWebHandoff: createAuthEndpoint.serverOnly(
         { method: "POST", body: z.object({ userId: z.string().min(1) }) },
         async (ctx) =>

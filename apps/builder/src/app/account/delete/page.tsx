@@ -14,6 +14,7 @@ import { getTranslations } from "next-intl/server"
 import { AccountDeletionDetails } from "@/features/account-deletion/components/account-deletion-details"
 import { AccountDeletionForm } from "@/features/account-deletion/components/account-deletion-form"
 import { AccountDeletionShell } from "@/features/account-deletion/components/account-deletion-shell"
+import { getOwnedWorkspaces } from "@/features/account-deletion/lib/owned-workspaces"
 import { getCurrentUserAndAllLinkedWorkspaces } from "@/lib/auth/utils"
 
 export default async function AccountDeletionPage({
@@ -55,9 +56,10 @@ export default async function AccountDeletionPage({
     redirect("/auth/sign-in")
   }
 
-  const ownedWorkspaces = userAndWorkspaces.allWorkspaceMembers.filter(
-    (member) => member.workspace.ownerId === userAndWorkspaces.user.id,
-  )
+  const ownedWorkspaces = getOwnedWorkspaces({
+    allWorkspaceMembers: userAndWorkspaces.allWorkspaceMembers,
+    userId: userAndWorkspaces.user.id,
+  })
 
   return (
     <AccountDeletionShell>
@@ -75,12 +77,7 @@ export default async function AccountDeletionPage({
           </div>
         </CardHeader>
         <CardContent className="space-y-6">
-          <AccountDeletionDetails
-            ownedWorkspaces={ownedWorkspaces.map((member) => ({
-              id: member.workspace.id,
-              name: member.workspace.name,
-            }))}
-          />
+          <AccountDeletionDetails ownedWorkspaces={ownedWorkspaces} />
           <Separator />
           <AccountDeletionForm />
         </CardContent>
