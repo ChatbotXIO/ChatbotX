@@ -1,3 +1,5 @@
+import { z } from "zod"
+
 export const AI_FILE_MIME_TYPES = [
   "application/pdf",
   "text/markdown",
@@ -103,3 +105,13 @@ export const EXTENSION_MIME_TYPES: Readonly<Record<string, string>> = {
   txt: "text/plain",
   zip: "application/zip",
 }
+
+/**
+ * Video MIME types a channel's CDN may serve a voice note as (Meta delivers
+ * audio clips as `.mp4` with `content-type: video/mp4`).
+ */
+export const videoMimeTypesServedAsAudio = z.enum([
+  "video/mp4",
+  "video/ogg",
+  "video/webm",
+])
