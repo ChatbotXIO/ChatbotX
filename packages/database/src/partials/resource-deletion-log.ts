@@ -5,7 +5,11 @@ import { z } from "zod"
  * of deletion (a contact, a flow, a team member…) is one more value here — the
  * table itself does not change.
  */
-export const resourceDeletionResourceTypes = z.enum(["workspace", "channel"])
+export const resourceDeletionResourceTypes = z.enum([
+  "workspace",
+  "channel",
+  "user",
+])
 export type ResourceDeletionResourceType = z.infer<
   typeof resourceDeletionResourceTypes
 >

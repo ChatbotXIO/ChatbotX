@@ -1,3 +1,4 @@
+import { userService } from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { createId } from "@chatbotx.io/utils"
 import { ORPCError } from "@orpc/server"
@@ -165,5 +166,58 @@ export const mePublicRouter = {
         logger.error({ err: error }, "Mobile password change failed")
         throw error
       }
+    }),
+
+  webHandoff: mobileUserAPI
+    .route({
+      method: "POST",
+      path: "/v1/me/web-handoff",
+      summary: "Create web account handoff",
+      description:
+        "Creates a one-time, 60-second URL that signs the mobile user into the account deletion page.",
+      tags: ["Me"],
+    })
+    .input(z.object({}))
+    .output(z.object({ url: z.url() }))
+    .errors(possibleErrorsOnMutatingResource)
+    .handler(async ({ context }) => {
+      const result = await auth.api.mobileCreateWebHandoff({
+        body: { userId: context.user.id },
+      })
+      if (!context.url) {
+        throw new ORPCError("INTERNAL_SERVER_ERROR", {
+          message: "Request URL is unavailable",
+        })
+      }
+      const url = new URL("/api/auth/account/handoff", context.url)
+      url.searchParams.set("code", result.code)
+      return { url: url.toString() }
+    }),
+
+  delete: mobileUserAPI
+    .route({
+      method: "DELETE",
+      path: "/v1/me",
+      summary: "Schedule account deletion",
+      description:
+        "Schedules deletion of the signed-in account and all workspaces it owns. Send the literal JSON string DELETE as confirmation.",
+      tags: ["Me"],
+    })
+    .input(
+      z.object({
+        confirmation: z
+          .literal("DELETE")
+          .describe("Literal DELETE confirmation"),
+      }),
+    )
+    .output(z.object({ scheduledDeletionAt: z.date() }))
+    .errors(possibleErrorsOnMutatingResource)
+    .handler(async ({ context }) => {
+      context.resHeaders?.set("Cache-Control", "no-store")
+      context.resHeaders?.set("Pragma", "no-cache")
+      return await userService.requestAccountDeletion({
+        actor: { userId: context.user.id },
+        userId: context.user.id,
+      })
     }),
 }

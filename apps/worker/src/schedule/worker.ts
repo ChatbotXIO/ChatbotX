@@ -42,6 +42,7 @@ import { purgeAutomationThrottle } from "./handlers/purge-automation-throttle"
 import { purgeBroadcasts } from "./handlers/purge-broadcasts"
 import { purgeCoexistStaging } from "./handlers/purge-coexist-staging"
 import { purgeCommentAutomationEvents } from "./handlers/purge-comment-automation-events"
+import { purgeDeletedUsers } from "./handlers/purge-deleted-users"
 import { purgeDraftBroadcastRecipients } from "./handlers/purge-draft-broadcast-recipients"
 import { purgeErrorLogs } from "./handlers/purge-error-logs"
 import { purgeExpiredCallRecordings } from "./handlers/purge-expired-call-recordings"
@@ -224,6 +225,10 @@ async function startScheduleWorker() {
 
             case ScheduleJobData.purgeWorkspaces:
               await purgeWorkspaces()
+              return
+
+            case ScheduleJobData.purgeDeletedUsers:
+              await purgeDeletedUsers()
               return
 
             case ScheduleJobData.clearExpiredSupportAccess:

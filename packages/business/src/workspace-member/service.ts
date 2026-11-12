@@ -172,6 +172,61 @@ export class WorkspaceMemberService extends BaseService {
     return { revokeWarning }
   }
 
+  /**
+   * Removes every membership of a user whose account is being deleted. The
+   * caller owns the transaction and must invoke the returned post-commit work
+   * only after that transaction succeeds.
+   */
+  async removeForAccountDeletion(props: {
+    tx: DatabaseClient
+    userId: string
+  }): Promise<Pick<WorkspaceMemberModel, "userId" | "workspaceId">[]> {
+    const members = await props.tx.query.workspaceMemberModel.findMany({
+      where: { userId: props.userId },
+      columns: { userId: true, workspaceId: true },
+    })
+    for (const member of members) {
+      await props.tx
+        .delete(workspaceMemberModel)
+        .where(
+          and(
+            eq(workspaceMemberModel.userId, member.userId),
+            eq(workspaceMemberModel.workspaceId, member.workspaceId),
+          ),
+        )
+      await workingHoursService.removeMembersForUsers({
+        workspaceId: member.workspaceId,
+        userIds: [member.userId],
+        tx: props.tx,
+      })
+    }
+    return members
+  }
+
+  async finalizeAccountDeletionMembershipRemovals(
+    members: Pick<WorkspaceMemberModel, "userId" | "workspaceId">[],
+  ): Promise<void> {
+    for (const member of members) {
+      await this.invalidateCacheTags(
+        workspaceMemberDeleteCacheTags(member.workspaceId, member.userId),
+      )
+      await workspaceUsageService
+        .decrement(member.workspaceId, "teamMembers")
+        .catch((err) => {
+          logger.warn(
+            { err, workspaceId: member.workspaceId },
+            "workspace usage team member decrement failed",
+          )
+        })
+      await tryRevokeWorkspaceMemberRealtimeConnections({
+        workspaceId: member.workspaceId,
+        userId: member.userId,
+        reason: "deleted",
+        errorMessage: "Failed to revoke deleted account realtime connections",
+      })
+    }
+  }
+
   async listByUserIdUncached(props: {
     tx?: DatabaseClient
     userId: string

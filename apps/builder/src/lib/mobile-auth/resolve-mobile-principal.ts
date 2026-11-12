@@ -74,7 +74,7 @@ export const authenticateMobileBearer = async (
     return null
   }
   const user = await userService.findById(subject.userId)
-  if (!user) {
+  if (!user || user.deletionRequestedAt) {
     return null
   }
   return { user, deviceId: subject.deviceId }

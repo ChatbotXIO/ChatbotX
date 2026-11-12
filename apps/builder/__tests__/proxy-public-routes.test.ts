@@ -93,4 +93,11 @@ describe("isPublicRoute", () => {
     expect(isPublicRoute("/connect")).toBe(true)
     expect(isPublicRoute("/connect/sess-abc123")).toBe(true)
   })
+
+  test("only the account deletion page is public", () => {
+    expect(isPublicRoute("/account/delete")).toBe(true)
+    expect(isPublicRoute("/account")).toBe(false)
+    expect(isPublicRoute("/account/settings")).toBe(false)
+    expect(isPublicRoute("/account/deletex")).toBe(false)
+  })
 })

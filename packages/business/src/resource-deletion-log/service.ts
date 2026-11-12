@@ -31,7 +31,7 @@ const MAX_USER_AGENT_LENGTH = 1024
 export type ResourceDeletionTarget = {
   type: ResourceDeletionResourceType
   id: string
-  workspaceId: string
+  workspaceId?: string
   subtype?: string
   name?: string
 }
@@ -74,7 +74,7 @@ const clipHeaderValue = (
 const toResourceKey = (
   resource: ResourceDeletionTarget,
 ): ResourceDeletionLogResourceKey => ({
-  workspaceId: resource.workspaceId,
+  ...(resource.workspaceId && { workspaceId: resource.workspaceId }),
   resourceType: resource.type,
   resourceId: resource.id,
 })
@@ -87,6 +87,7 @@ const toInsertRow = (input: {
   settledAt: Date
 }): ResourceDeletionLogInsert => ({
   ...toResourceKey(input.resource),
+  workspaceId: input.resource.workspaceId ?? null,
   resourceSubtype: input.resource.subtype ?? null,
   resourceName: input.resource.name ?? null,
   status: input.status,

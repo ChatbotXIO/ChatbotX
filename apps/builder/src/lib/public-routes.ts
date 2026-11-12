@@ -49,6 +49,7 @@ export const PUBLIC_ROUTES = [
   // member of the workspace that started it. `sessionId` itself is the
   // capability token (see `app/connect/[sessionId]/page.tsx`'s doc comment).
   "/connect",
+  "/account/delete",
 ]
 
 /**

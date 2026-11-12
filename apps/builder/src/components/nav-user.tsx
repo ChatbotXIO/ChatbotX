@@ -20,7 +20,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@chatbotx.io/ui/components/ui/sidebar"
-import { CreditCard, Crown, Settings2, ShieldCheck } from "lucide-react"
+import { CreditCard, Crown, Settings2, ShieldCheck, Trash2 } from "lucide-react"
 import Link from "next/link"
 import { useTranslations } from "next-intl"
 import { useState } from "react"
@@ -161,6 +161,17 @@ export function NavUser({
                 {t("fields.theme.label")}
                 <ThemeSwitcher />
               </DropdownMenuItem>
+            </DropdownMenuGroup>
+            <DropdownMenuSeparator />
+            <DropdownMenuGroup>
+              <DropdownMenuItem
+                render={
+                  <Link href="/account/delete">
+                    <Trash2 className="me-2 h-4 w-4" />
+                    {t("accountDeletion.title")}
+                  </Link>
+                }
+              />
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             {/* <DropdownMenuGroup>

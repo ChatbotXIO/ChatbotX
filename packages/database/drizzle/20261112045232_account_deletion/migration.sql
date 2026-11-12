@@ -1,0 +1,1 @@
+CREATE INDEX "User_scheduledDeletionAt_idx" ON "User" ("scheduledDeletionAt");

@@ -204,6 +204,7 @@ See **`.agents/rules/git.md`** for the full canonical rules (commit format, bran
 - Enterprise licensing (offline Ed25519 license keys): `docs/licensing.md`
 - Platform support access (super admin opening any workspace): `docs/support-access.md`
 - Resource deletion log (durable who/where/when trail for deleting a workspace or a channel: `ResourceDeletionLog` table, pending/completed/canceled lifecycle, purge completion, pre-existing-request recovery, no-index trade-off, adding a resource type): `docs/resource-deletion-log.md`
+- Account deletion (request lifecycle, authentication revocation, worker purge, and migration approval): `docs/account-deletion.md`
 - Leaderboards (ranking campaigns: scoring sources, Postgres/Redis split, partitioned score history, ops): `docs/leaderboard.md`
 - Automatic Customer Scan (contact import by scanning channel conversation history; shares the `CoexistSyncRun` table via a `type` discriminator): `docs/contact-scan.md`
 - Ecommerce orders, vendors, store settings and web shop (order lifecycle, money/currency rules, order numbering, stock locking, vendor rules, open-hours schedules, shop token and `/shop` pages, cart and checkout, discount codes, store trigger/webhook events, abandoned carts, product collections, product search by message, sales analytics, purchase contact filters, WhatsApp cart → CHECK OUT, order notifications, Stripe/PayPal online payments (Stripe Connect, payment deadline, refunds), public API): `docs/ecommerce.md`

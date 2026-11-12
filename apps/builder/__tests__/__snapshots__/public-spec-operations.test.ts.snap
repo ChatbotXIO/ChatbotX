@@ -2258,6 +2258,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "path": "/v1/me/password",
   },
   {
+    "method": "DELETE",
+    "operationId": "me.delete",
+    "path": "/v1/me",
+  },
+  {
     "method": "GET",
     "operationId": "me.get",
     "path": "/v1/me",
@@ -2276,6 +2281,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "method": "DELETE",
     "operationId": "me.unregisterDeviceToken",
     "path": "/v1/me/device-tokens",
+  },
+  {
+    "method": "POST",
+    "operationId": "me.webHandoff",
+    "path": "/v1/me/web-handoff",
   },
   {
     "method": "POST",

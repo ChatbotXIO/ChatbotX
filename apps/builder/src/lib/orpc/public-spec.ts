@@ -71,6 +71,7 @@ const MOBILE_APP_TOKEN_ONLY_PATHS: ReadonlySet<string> = new Set([
   "/v1/me/workspaces",
   "/v1/me/device-tokens",
   "/v1/me/password",
+  "/v1/me/web-handoff",
   "/v1/realtime/connect-token",
 ])
 

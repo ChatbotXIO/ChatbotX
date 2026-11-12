@@ -557,6 +557,26 @@ function buildDatabaseHooks({
 
   return {
     user: userHooks,
+    session: {
+      create: {
+        before: async (session: Record<string, unknown>) => {
+          const userId =
+            typeof session.userId === "string" ? session.userId : ""
+          const user = userId
+            ? await db.query.userModel.findFirst({
+                where: { id: userId },
+                columns: { deletionRequestedAt: true },
+              })
+            : undefined
+          if (user?.deletionRequestedAt) {
+            throw new APIError("FORBIDDEN", {
+              code: "ACCOUNT_DELETION_PENDING",
+              message: "Account deletion is pending",
+            })
+          }
+        },
+      },
+    },
     account: {
       create: {
         before: async (

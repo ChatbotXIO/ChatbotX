@@ -458,6 +458,7 @@ describe("public API spec — operation naming guard", () => {
       "/v1/me/workspaces",
       "/v1/me/device-tokens",
       "/v1/me/password",
+      "/v1/me/web-handoff",
       "/v1/realtime/connect-token",
     ])
     const nonChannelOps = operations.filter(
@@ -892,6 +893,7 @@ describe("public API spec — error response coverage", () => {
       "decisionProfiles.deleteMany",
       "inboxTeams.removeMembers",
       "keywords.delete",
+      "me.delete",
       "me.unregisterDeviceToken",
       "messages.delete",
       "miniApps.delete",

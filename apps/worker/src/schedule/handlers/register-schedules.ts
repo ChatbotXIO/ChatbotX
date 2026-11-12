@@ -569,6 +569,20 @@ export const registerSchedules = async () => {
     },
   )
 
+  await scheduleQueue.upsertJobScheduler(
+    ScheduleJobData.purgeDeletedUsers,
+    {
+      pattern: `*/${PURGE_WORKSPACES_INTERVAL_MINUTES} * * * *`,
+    },
+    {
+      name: ScheduleJobData.purgeDeletedUsers,
+      data: {
+        type: ScheduleJobData.purgeDeletedUsers,
+        data: {},
+      },
+    },
+  )
+
   // Access is already gated by comparing `supportAccessUntil > now()` on
   // every read, so this cron only tidies the stale timestamp for
   // display/reporting hygiene — daily is plenty.

@@ -11906,5 +11906,15 @@
       "retry": "Riprova",
       "meta": "ID {id} · {workspace}"
     }
+  },
+  "accountDeletion": {
+    "title": "Delete account",
+    "description": "Your owned workspaces will be deleted with your account.",
+    "warning": "Deletion starts after a 24-hour grace period. It cannot be recovered. Cancel any subscriptions first.",
+    "confirmationLabel": "Type DELETE to confirm",
+    "confirmationError": "Type DELETE exactly to confirm.",
+    "submit": "Delete account",
+    "receivedTitle": "Deletion request received",
+    "receivedDescription": "Your account and owned workspaces are scheduled for deletion."
   }
 }

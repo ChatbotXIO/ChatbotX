@@ -53,7 +53,13 @@ const { refreshTokens, refreshService, userService } = vi.hoisted(() => {
       revokeByToken: vi.fn(async () => undefined),
       revokeAllForUser: vi.fn(async () => undefined),
     },
-    userService: { clearMustChangePassword: vi.fn(async () => undefined) },
+    userService: {
+      clearMustChangePassword: vi.fn(async () => undefined),
+      findById: vi.fn(async (id: string) => ({
+        deletionRequestedAt: null,
+        id,
+      })),
+    },
   }
 })
 
