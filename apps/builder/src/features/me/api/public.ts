@@ -201,7 +201,7 @@ export const mePublicRouter = {
       path: "/v1/me",
       summary: "Schedule account deletion",
       description:
-        "Schedules deletion of the signed-in account and all workspaces it owns. Send the literal JSON string DELETE as confirmation.",
+        'Schedules deletion of the signed-in account and all workspaces it owns. Send { "confirmation": "DELETE" } to confirm.',
       tags: ["Me"],
     })
     .input(

@@ -98,7 +98,7 @@ chatbotx inboxes list                                # List connected inboxes
 
 ### `me` / `realtime` (mobile app only — not in the CLI)
 
-`/v1/me`, `/v1/me/workspaces`, `/v1/me/device-tokens`, `/v1/me/password` and `/v1/realtime/connect-token` act as a signed-in workspace member and need a native mobile app access token (`mobileAppToken` scheme, from `POST /api/auth/mobile/token`). A workspace token has no member identity, so `MOBILE_APP_TOKEN_ONLY_PATHS` (`apps/builder/src/lib/orpc/public-spec.ts`) marks them mobile-only and `isWorkspaceTokenOperation` filters them out of the CLI: there is no `chatbotx me` or `chatbotx realtime` group. Any new mobile-only path must be added to that set, or it surfaces here as a command that always 401s.
+`/v1/me`, `/v1/me/workspaces`, `/v1/me/device-tokens`, `/v1/me/password`, `/v1/me/web-handoff` and `/v1/realtime/connect-token` act as a signed-in workspace member and need a native mobile app access token (`mobileAppToken` scheme, from `POST /api/auth/mobile/token`). A workspace token has no member identity, so `MOBILE_APP_TOKEN_ONLY_PATHS` (`apps/builder/src/lib/orpc/public-spec.ts`) marks them mobile-only and `isWorkspaceTokenOperation` filters them out of the CLI: there is no `chatbotx me` or `chatbotx realtime` group. Any new mobile-only path must be added to that set, or it surfaces here as a command that always 401s.
 
 ---
 
