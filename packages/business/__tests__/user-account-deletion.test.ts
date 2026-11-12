@@ -2,8 +2,8 @@ import { db } from "@chatbotx.io/database/client"
 import { afterEach, describe, expect, test, vi } from "vitest"
 import { resourceDeletionLogService } from "../src/resource-deletion-log/service"
 import { userService } from "../src/user/service"
-import { workspaceMemberService } from "../src/workspace-member/service"
 import { workspaceService } from "../src/workspace/service"
+import { workspaceMemberService } from "../src/workspace-member/service"
 
 afterEach(() => {
   vi.restoreAllMocks()

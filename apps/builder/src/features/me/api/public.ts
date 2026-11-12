@@ -18,6 +18,7 @@ import {
   possibleErrorsOnFindingResource,
   possibleErrorsOnListingResource,
   possibleErrorsOnMutatingResource,
+  possibleErrorsOnSchedulingAccountDeletion,
 } from "@/lib/orpc/orpc-error-helper"
 import { mobileUserAPI, mobileUserPasswordChangeAPI } from "@/orpc"
 import {
@@ -211,7 +212,7 @@ export const mePublicRouter = {
       }),
     )
     .output(z.object({ scheduledDeletionAt: z.date() }))
-    .errors(possibleErrorsOnMutatingResource)
+    .errors(possibleErrorsOnSchedulingAccountDeletion)
     .handler(async ({ context }) => {
       context.resHeaders?.set("Cache-Control", "no-store")
       context.resHeaders?.set("Pragma", "no-cache")
