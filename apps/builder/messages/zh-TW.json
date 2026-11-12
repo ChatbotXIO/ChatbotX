@@ -547,7 +547,8 @@
       "audio": "音頻",
       "gif": "GIF",
       "file": "檔案",
-      "storyMention": "限時動態提及"
+      "storyMention": "限時動態提及",
+      "reel": "Reels"
     },
     "lastMonth": {
       "label": "上個月"
@@ -2986,7 +2987,8 @@
         "audio": "音頻",
         "gif": "GIF",
         "file": "檔案",
-        "storyMention": "限時動態提及"
+        "storyMention": "限時動態提及",
+        "reel": "Reels"
       },
       "ctwaConversionTypes": {
         "lead": "名單",

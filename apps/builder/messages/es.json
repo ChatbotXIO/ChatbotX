@@ -1033,7 +1033,8 @@
         "audio": "Audio",
         "gif": "GIF",
         "file": "Archivo",
-        "storyMention": "Mención en historia"
+        "storyMention": "Mención en historia",
+        "reel": "Reel"
       },
       "ctwaConversionTypes": {
         "lead": "Cliente potencial",
@@ -1818,7 +1819,8 @@
       "audio": "Audio",
       "gif": "GIF",
       "file": "Archivo",
-      "storyMention": "Mención en historia"
+      "storyMention": "Mención en historia",
+      "reel": "Reel"
     },
     "lastMonth": {
       "label": "Último mes"

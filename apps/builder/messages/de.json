@@ -1033,7 +1033,8 @@
         "audio": "Audio",
         "gif": "GIF",
         "file": "Datei",
-        "storyMention": "Story-Erwähnung"
+        "storyMention": "Story-Erwähnung",
+        "reel": "Reel"
       },
       "ctwaConversionTypes": {
         "lead": "Lead",
@@ -1662,7 +1663,8 @@
       "audio": "Audio",
       "gif": "GIF",
       "file": "Datei",
-      "storyMention": "Story-Erwähnung"
+      "storyMention": "Story-Erwähnung",
+      "reel": "Reel"
     },
     "lastMonth": {
       "label": "Letzter Monat"

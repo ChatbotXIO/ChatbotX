@@ -539,7 +539,8 @@
       "audio": "Audio",
       "gif": "GIF",
       "file": "File",
-      "storyMention": "Menzione nella storia"
+      "storyMention": "Menzione nella storia",
+      "reel": "Reel"
     },
     "lastMonth": {
       "label": "Mese scorso"
@@ -2710,7 +2711,8 @@
         "audio": "Audio",
         "gif": "GIF",
         "file": "File",
-        "storyMention": "Menzione nella storia"
+        "storyMention": "Menzione nella storia",
+        "reel": "Reel"
       },
       "ctwaConversionTypes": {
         "lead": "Lead",

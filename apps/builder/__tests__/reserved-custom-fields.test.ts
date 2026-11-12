@@ -35,6 +35,7 @@ const expectedReservedSystemFieldIds = [
   systemFieldTypes.enum.last_btn_title,
   systemFieldTypes.enum.fb_chat_link,
   systemFieldTypes.enum.last_fb_comment,
+  systemFieldTypes.enum.total_tagged,
   systemFieldTypes.enum.admin_name,
   systemFieldTypes.enum.admin_team_name,
   systemFieldTypes.enum.booking_id,
@@ -90,6 +91,10 @@ describe("reservedCustomFieldIds", () => {
       "messenger",
     ])
     expect(channelsOf(systemFieldTypes.enum.last_adgroup_id)).toEqual([
+      "messenger",
+    ])
+    // Mentions are counted on Facebook comments only.
+    expect(channelsOf(systemFieldTypes.enum.total_tagged)).toEqual([
       "messenger",
     ])
     // Only WhatsApp Click-to-WhatsApp referrals carry an ad body.

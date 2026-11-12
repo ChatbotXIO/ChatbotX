@@ -1445,7 +1445,8 @@
       "audio": "Audio",
       "gif": "GIF",
       "file": "Bestand",
-      "storyMention": "Story-vermelding"
+      "storyMention": "Story-vermelding",
+      "reel": "Reel"
     },
     "lastMonth": {
       "label": "Afgelopen maand"
@@ -2710,7 +2711,8 @@
         "audio": "Audio",
         "gif": "GIF",
         "file": "Bestand",
-        "storyMention": "Story-vermelding"
+        "storyMention": "Story-vermelding",
+        "reel": "Reel"
       },
       "ctwaConversionTypes": {
         "lead": "Lead",

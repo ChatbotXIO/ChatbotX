@@ -1318,7 +1318,8 @@
         "refLink": "Referenslänk",
         "text": "Text",
         "video": "Video",
-        "storyMention": "Story-omnämnande"
+        "storyMention": "Story-omnämnande",
+        "reel": "Reel"
       },
       "ctwaConversionTypes": {
         "lead": "Lead",
@@ -3013,7 +3014,8 @@
       "refLink": "Referenslänk",
       "text": "Text",
       "video": "Video",
-      "storyMention": "Story-omnämnande"
+      "storyMention": "Story-omnämnande",
+      "reel": "Reel"
     },
     "lifeTime": {
       "label": "Livstid"

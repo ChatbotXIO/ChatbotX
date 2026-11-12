@@ -196,6 +196,13 @@ export const reservedCustomFieldIds: {
     channels: ["messenger", "instagram"],
   },
   {
+    // Facebook comments only: people mentioned in the contact's comment.
+    id: systemFieldTypes.enum.total_tagged,
+    type: "number",
+    labelKey: "fields.totalTagged.label",
+    channels: ["messenger"],
+  },
+  {
     // The inbox user who sent the running flow — not the conversation assignee.
     // Only set on a flow an inbox user started.
     id: systemFieldTypes.enum.admin_name,

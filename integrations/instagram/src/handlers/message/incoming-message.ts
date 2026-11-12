@@ -108,6 +108,12 @@ export const hasStoryMention = (message: InstagramMessage): boolean =>
     (attachment) => attachment.type === "story_mention",
   ) ?? false
 
+/** An `ig_reel` / `reel` attachment means the contact shared a reel. */
+export const hasReelShare = (message: InstagramMessage): boolean =>
+  message.attachments?.some(
+    (attachment) => attachment.type === "ig_reel" || attachment.type === "reel",
+  ) ?? false
+
 const getMessageContentAttributes = (
   message: InstagramMessage,
 ): Record<string, unknown> | undefined => {
@@ -119,7 +125,10 @@ const getMessageContentAttributes = (
   if (storyReply) {
     return { type: "story_reply", story: storyReply }
   }
-  return hasStoryMention(message) ? { type: "story_mention" } : undefined
+  if (hasStoryMention(message)) {
+    return { type: "story_mention" }
+  }
+  return hasReelShare(message) ? { type: "reel_share" } : undefined
 }
 
 export const receiveMessage: MessageHandlers<InstagramAuthValue>["receiveMessage"] =

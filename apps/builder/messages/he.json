@@ -6450,7 +6450,8 @@
       "audio": "שמע",
       "gif": "GIF",
       "file": "קובץ",
-      "storyMention": "אזכור בסטורי"
+      "storyMention": "אזכור בסטורי",
+      "reel": "ריל"
     },
     "lastMonth": {
       "label": "החודש שעבר"
@@ -8156,7 +8157,8 @@
         "audio": "שמע",
         "gif": "GIF",
         "file": "קובץ",
-        "storyMention": "אזכור בסטורי"
+        "storyMention": "אזכור בסטורי",
+        "reel": "ריל"
       },
       "ctwaConversionTypes": {
         "lead": "ליד",

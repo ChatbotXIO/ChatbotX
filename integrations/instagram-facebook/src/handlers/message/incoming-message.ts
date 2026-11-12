@@ -99,6 +99,12 @@ export const hasStoryMention = (message: InstagramMessage): boolean =>
     (attachment) => attachment.type === "story_mention",
   ) ?? false
 
+/** An `ig_reel` / `reel` attachment means the contact shared a reel. */
+export const hasReelShare = (message: InstagramMessage): boolean =>
+  message.attachments?.some(
+    (attachment) => attachment.type === "ig_reel" || attachment.type === "reel",
+  ) ?? false
+
 const getMessageEntity = async (
   ctx: Context<InstagramAuthValue>,
   messaging: InstagramMessagingEvent,
@@ -125,6 +131,8 @@ const getMessageEntity = async (
       contentAttributes = { type: "story_reply", story: storyReply }
     } else if (hasStoryMention(messaging.message)) {
       contentAttributes = { type: "story_mention" }
+    } else if (hasReelShare(messaging.message)) {
+      contentAttributes = { type: "reel_share" }
     }
     message = {
       sourceId: messaging.message.mid,

@@ -1,6 +1,7 @@
 import {
   appointmentService,
   buildAppointmentUrl,
+  contactReferralEventService,
   conversationService,
   facebookLeadAdsLeadService,
   messageService,
@@ -396,7 +397,17 @@ const getFlowSenderValue = async (
 
 const getLatestLeadValue = async (
   context: ContactVariableContext,
-  key: "leadgenId" | "formId" | "formName" | "adgroupId",
+  key:
+    | "leadgenId"
+    | "formId"
+    | "formName"
+    | "adgroupId"
+    | "adId"
+    | "adName"
+    | "adsetId"
+    | "adsetName"
+    | "campaignId"
+    | "campaignName",
 ): Promise<string | null> => {
   const lead = await facebookLeadAdsLeadService.findLatestByContact({
     workspaceId: context.contact.workspaceId,
@@ -404,6 +415,38 @@ const getLatestLeadValue = async (
   })
 
   return lead?.[key] ?? null
+}
+
+/**
+ * The ad the contact came from most recently: the click-to-message referral
+ * of this inbox or the ad of the latest Lead Ads lead, whichever is newer, so
+ * `{{last_ad}}` names the same ad as `{{last_ad_name}}` when the lead is the
+ * latest. A referral with no logged touch predates the touch log, which is
+ * older than any lead carrying an ad id, so the lead wins then.
+ */
+const getLastAdId = async (
+  context: ContactVariableContext,
+): Promise<string | null> => {
+  const { contact, contactInbox } = context
+  const referralAdId = getReferralValue(contactInbox, "adId")
+  const lead = await facebookLeadAdsLeadService.findLatestByContact({
+    workspaceId: contact.workspaceId,
+    contactId: contact.id,
+  })
+  const leadAdId = lead?.adId || null
+  if (!(referralAdId && contactInbox && lead && leadAdId)) {
+    return referralAdId ?? leadAdId
+  }
+
+  const referralAt = await contactReferralEventService.findLatestAdTouchAt({
+    workspaceId: contact.workspaceId,
+    contactId: contact.id,
+    contactInboxId: contactInbox.id,
+  })
+  if (referralAt && referralAt > lead.createdAt) {
+    return referralAdId
+  }
+  return leadAdId
 }
 
 export const getSystemFieldValue = async (
@@ -469,6 +512,10 @@ export const getSystemFieldValue = async (
       return await getContactLastInput(contact.id)
     case systemFieldTypes.enum.last_input_type:
       return await getContactLastInputType(contact.id)
+    // The stored column the "Last user input type" contact filter reads, so
+    // the variable and the filter agree (`storyMention`, `reel`).
+    case systemFieldTypes.enum.last_user_input_type:
+      return contactInbox?.lastUserInputType ?? null
     case systemFieldTypes.enum.last_text_input:
       return await getContactLastTextInput(contact.id)
     case systemFieldTypes.enum.last_call_recorded:
@@ -661,7 +708,7 @@ export const getSystemFieldValue = async (
         return null
       }
     case systemFieldTypes.enum.last_ad:
-      return getReferralValue(contactInbox, "adId")
+      return await getLastAdId(context)
     case systemFieldTypes.enum.last_ctwa:
       return getReferralValue(contactInbox, "ctwaClid")
     // Unlike `last_ad`, these read the contact's ad touch log, so they span
@@ -734,6 +781,16 @@ export const getSystemFieldValue = async (
       return await getLatestLeadValue(context, "formName")
     case systemFieldTypes.enum.last_adgroup_id:
       return await getLatestLeadValue(context, "adgroupId")
+    case systemFieldTypes.enum.last_ad_name:
+      return await getLatestLeadValue(context, "adName")
+    case systemFieldTypes.enum.last_adset_id:
+      return await getLatestLeadValue(context, "adsetId")
+    case systemFieldTypes.enum.last_adset_name:
+      return await getLatestLeadValue(context, "adsetName")
+    case systemFieldTypes.enum.last_campaign_id:
+      return await getLatestLeadValue(context, "campaignId")
+    case systemFieldTypes.enum.last_campaign_name:
+      return await getLatestLeadValue(context, "campaignName")
     case systemFieldTypes.enum.booking_link: {
       const appointment = await getAppointment(context)
       if (!appointment) {

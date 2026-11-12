@@ -1519,7 +1519,8 @@
         "refLink": "参考链接",
         "text": "文本",
         "video": "视频",
-        "storyMention": "限时动态提及"
+        "storyMention": "限时动态提及",
+        "reel": "Reels"
       },
       "locale": "语言",
       "messengerList": "Messenger 清单",
@@ -3022,7 +3023,8 @@
       "refLink": "参考链接",
       "text": "文本",
       "video": "视频",
-      "storyMention": "限时动态提及"
+      "storyMention": "限时动态提及",
+      "reel": "Reels"
     },
     "lifeTime": {
       "label": "生命周期"

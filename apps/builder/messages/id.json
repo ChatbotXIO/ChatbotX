@@ -1033,7 +1033,8 @@
         "audio": "Audio",
         "gif": "GIF",
         "file": "File",
-        "storyMention": "Sebutan di Story"
+        "storyMention": "Sebutan di Story",
+        "reel": "Reel"
       },
       "ctwaConversionTypes": {
         "lead": "Lead",
@@ -1662,7 +1663,8 @@
       "audio": "Audio",
       "gif": "GIF",
       "file": "File",
-      "storyMention": "Sebutan di Story"
+      "storyMention": "Sebutan di Story",
+      "reel": "Reel"
     },
     "lastMonth": {
       "label": "Terakhir month"

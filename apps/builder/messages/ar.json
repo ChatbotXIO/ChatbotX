@@ -1033,7 +1033,8 @@
         "audio": "صوت",
         "gif": "GIF",
         "file": "ملف",
-        "storyMention": "إشارة في قصة"
+        "storyMention": "إشارة في قصة",
+        "reel": "ريلز"
       },
       "ctwaConversionTypes": {
         "lead": "عميل محتمل",
@@ -1818,7 +1819,8 @@
       "audio": "صوت",
       "gif": "GIF",
       "file": "ملف",
-      "storyMention": "إشارة في قصة"
+      "storyMention": "إشارة في قصة",
+      "reel": "ريلز"
     },
     "lastMonth": {
       "label": "الشهر الماضي"

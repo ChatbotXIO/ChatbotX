@@ -1033,7 +1033,8 @@
         "audio": "Ses",
         "gif": "GIF",
         "file": "Dosya",
-        "storyMention": "Hikayede bahsetme"
+        "storyMention": "Hikayede bahsetme",
+        "reel": "Reel"
       },
       "ctwaConversionTypes": {
         "lead": "Potansiyel Müşteri",
@@ -1818,7 +1819,8 @@
       "audio": "Ses",
       "gif": "GIF",
       "file": "Dosya",
-      "storyMention": "Hikayede bahsetme"
+      "storyMention": "Hikayede bahsetme",
+      "reel": "Reel"
     },
     "lastMonth": {
       "label": "Geçen ay"

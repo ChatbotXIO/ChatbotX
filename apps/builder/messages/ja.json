@@ -1033,7 +1033,8 @@
         "audio": "音声",
         "gif": "GIF",
         "file": "ファイル",
-        "storyMention": "ストーリーメンション"
+        "storyMention": "ストーリーメンション",
+        "reel": "リール"
       },
       "ctwaConversionTypes": {
         "lead": "リード",
@@ -1662,7 +1663,8 @@
       "audio": "音声",
       "gif": "GIF",
       "file": "ファイル",
-      "storyMention": "ストーリーメンション"
+      "storyMention": "ストーリーメンション",
+      "reel": "リール"
     },
     "lastMonth": {
       "label": "先月"

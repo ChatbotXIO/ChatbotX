@@ -34,10 +34,12 @@ import {
 const graph = vi.hoisted(() => ({
   getLead: vi.fn(),
   getLeadgenFormName: vi.fn(),
+  getLeadAdAttribution: vi.fn(),
 }))
 vi.mock("@chatbotx.io/integration-messenger/apis/leadgen", () => ({
   getLead: graph.getLead,
   getLeadgenFormName: graph.getLeadgenFormName,
+  getLeadAdAttribution: graph.getLeadAdAttribution,
 }))
 
 const CLIENT_SECRET = "e2e-secret"
@@ -178,6 +180,9 @@ describe.skipIf(!hasThrowawayDatabase())(
     beforeEach(() => {
       graph.getLead.mockReset()
       graph.getLeadgenFormName.mockReset()
+      // A page token without ad-account access: the names stay empty.
+      graph.getLeadAdAttribution.mockReset()
+      graph.getLeadAdAttribution.mockRejectedValue(new Error("graph #100"))
     })
 
     const run = async (
@@ -235,6 +240,31 @@ describe.skipIf(!hasThrowawayDatabase())(
       expect(await automationCounter(automationId)).toBe(1)
       expect(graph.getLeadgenFormName).not.toHaveBeenCalled()
       expect(await render(world)).toBe("[7001]/[8001]/[Specific Form]/[6002]")
+    })
+
+    test("stores the lead's ad, ad set and campaign, then renders them", async () => {
+      const world = await buildWorld()
+      await seedAutomation(world, { formId: "8001", formName: "Specific Form" })
+      graph.getLead.mockResolvedValue(leadResponse(world.psid))
+      graph.getLeadAdAttribution.mockResolvedValue({
+        id: "7031",
+        ad_id: "6001",
+        ad_name: "Summer ad",
+        adset_id: "5001",
+        adset_name: "VN 18-35",
+        campaign_id: "4001",
+        campaign_name: "Summer sale",
+      })
+
+      await run(world, { leadgen_id: "7031", ad_id: "6001" })
+
+      expect(
+        await renderForContact({
+          contactId: world.contact.contactId,
+          contactInboxId: world.contact.contactInboxId,
+          text: "[{{last_ad}}]/[{{last_ad_name}}]/[{{last_adset_id}}]/[{{last_adset_name}}]/[{{last_campaign_id}}]/[{{last_campaign_name}}]",
+        }),
+      ).toBe("[6001]/[Summer ad]/[5001]/[VN 18-35]/[4001]/[Summer sale]")
     })
 
     test("falls back to ad_id when the webhook carries no adgroup_id", async () => {

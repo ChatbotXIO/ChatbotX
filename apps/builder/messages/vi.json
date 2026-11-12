@@ -1075,7 +1075,8 @@
         "audio": "Âm thanh",
         "gif": "GIF",
         "file": "Tệp",
-        "storyMention": "Nhắc tới trong Story"
+        "storyMention": "Nhắc tới trong Story",
+        "reel": "Reel"
       },
       "ctwaConversionTypes": {
         "lead": "Khách hàng tiềm năng",
@@ -2445,7 +2446,8 @@
       "audio": "Âm thanh",
       "gif": "GIF",
       "file": "Tệp",
-      "storyMention": "Nhắc tới trong Story"
+      "storyMention": "Nhắc tới trong Story",
+      "reel": "Reel"
     },
     "lastMonth": {
       "label": "Tháng trước"

@@ -2428,7 +2428,8 @@
         "audio": "Audio",
         "gif": "GIF",
         "file": "Fișier",
-        "storyMention": "Mențiune în Story"
+        "storyMention": "Mențiune în Story",
+        "reel": "Reel"
       },
       "ctwaConversionTypes": {
         "lead": "Lead",
@@ -3057,7 +3058,8 @@
       "audio": "Audio",
       "gif": "GIF",
       "file": "Fișier",
-      "storyMention": "Mențiune în Story"
+      "storyMention": "Mențiune în Story",
+      "reel": "Reel"
     },
     "lastMonth": {
       "label": "Luna trecută"

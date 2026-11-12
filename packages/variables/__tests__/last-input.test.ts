@@ -251,6 +251,17 @@ describe("last input helpers", () => {
     )
   })
 
+  test("last_input_type keeps the media type for a shared Instagram reel", async () => {
+    mockFindLatestIncomingMessageWithAttachments.mockResolvedValue({
+      contentType: contentTypes.enum.text,
+      text: null,
+      contentAttributes: { type: "reel_share" },
+      attachments: [{ fileType: "video", originPath: "reel.mp4" }],
+    })
+
+    await expect(getContactLastInputType("contact-1")).resolves.toBe("video")
+  })
+
   test("last_input_type returns the attachment file type for media messages", async () => {
     mockFindLatestIncomingMessageWithAttachments.mockResolvedValue({
       contentType: contentTypes.enum.text,

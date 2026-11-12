@@ -434,4 +434,29 @@ export const contactReferralEventRepository = {
   },
 
   listAdIdsByContacts,
+
+  /**
+   * When the contact last arrived through an ad on this inbox, or null when
+   * no touch was logged there. Walks the `(workspaceId, contactId, occurredAt)`
+   * index newest first and stops at the first ad touch of the inbox.
+   */
+  async findLatestAdTouchAt(
+    input: { workspaceId: string; contactId: string; contactInboxId: string },
+    tx: DatabaseClient = db,
+  ): Promise<Date | null> {
+    const [row] = await tx
+      .select({ occurredAt: contactReferralEventModel.occurredAt })
+      .from(contactReferralEventModel)
+      .where(
+        and(
+          eq(contactReferralEventModel.workspaceId, input.workspaceId),
+          eq(contactReferralEventModel.contactId, input.contactId),
+          eq(contactReferralEventModel.contactInboxId, input.contactInboxId),
+          isNotNull(contactReferralEventModel.adId),
+        ),
+      )
+      .orderBy(desc(contactReferralEventModel.occurredAt))
+      .limit(1)
+    return row?.occurredAt ?? null
+  },
 }

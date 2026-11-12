@@ -448,6 +448,8 @@ vi.mock("@chatbotx.io/sdk", () => ({
   // Mirror of the real pure helper — `resolveLastUserInputTracking` calls it.
   isStoryMention: (contentAttributes: unknown) =>
     (contentAttributes as { type?: unknown } | null)?.type === "story_mention",
+  isReelShare: (contentAttributes: unknown) =>
+    (contentAttributes as { type?: unknown } | null)?.type === "reel_share",
   // Mirror of the real pure helper — the module is fully mocked here.
   toKeepOriginal: (attachment: {
     fileType: string

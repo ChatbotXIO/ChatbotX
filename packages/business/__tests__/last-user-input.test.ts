@@ -74,6 +74,20 @@ describe("resolveLastUserInputTracking", () => {
     })
   })
 
+  test("marks a shared Instagram reel as a reel", () => {
+    expect(
+      resolveLastUserInputTracking({
+        contentType: "text",
+        attachments: [{ fileType: "video", originPath: "uploads/reel.mp4" }],
+        contentAttributes: { type: "reel_share" },
+        storageUrl: "https://files.example.com",
+      }),
+    ).toEqual({
+      lastUserInput: "https://files.example.com/uploads/reel.mp4",
+      lastUserInputType: "reel",
+    })
+  })
+
   test("keeps the media type for other content attributes", () => {
     expect(
       resolveLastUserInputTracking({
