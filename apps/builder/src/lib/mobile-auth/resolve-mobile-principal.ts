@@ -81,7 +81,12 @@ export const authenticateMobileBearer = async (
 }
 
 export const toSessionUser = (user: UserModel): SessionUser => {
-  const { tenantId: _tenantId, ...sessionUser } = user
+  const {
+    deletionRequestedAt: _deletionRequestedAt,
+    scheduledDeletionAt: _scheduledDeletionAt,
+    tenantId: _tenantId,
+    ...sessionUser
+  } = user
   return sessionUser
 }
 
