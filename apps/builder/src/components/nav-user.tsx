@@ -20,14 +20,19 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@chatbotx.io/ui/components/ui/sidebar"
-import { CreditCard, Crown, Settings2, ShieldCheck, Trash2 } from "lucide-react"
+import {
+  CreditCard,
+  Crown,
+  Settings2,
+  ShieldCheck,
+  UserCog,
+} from "lucide-react"
 import Link from "next/link"
 import { useTranslations } from "next-intl"
 import { useState } from "react"
 import { UpgradePlanDialog } from "@/enterprise/features/billing/upgrade-plan-dialog"
 import { isCloud } from "@/env"
 import { SignOut } from "@/features/auth/sign-out"
-import { EditProfileDialog } from "@/features/workspaces/components/edit-profile-dialog"
 import { RefreshAllChannelTokensButton } from "@/features/workspaces/components/refresh-all-channel-tokens-button"
 import { useUserAvatarUrl } from "@/lib/auth/avatar"
 import { LangSelector } from "./lang-selector"
@@ -88,30 +93,41 @@ export function NavUser({
             sideOffset={4}
           >
             <DropdownMenuGroup>
-              <DropdownMenuLabel className="p-0 font-normal">
-                <div className="flex items-center gap-2 px-1 py-1.5 text-start text-sm">
-                  <Avatar className="h-8 w-8 rounded-lg">
-                    <AvatarImage alt={user.name} src={avatarUrl ?? ""} />
-                    <AvatarFallback className="rounded-lg">
-                      {user.name.slice(0, 2) || "  "}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="grid flex-1 text-start text-sm leading-tight">
-                    <span className="truncate font-semibold">{user.name}</span>
-                    <span className="truncate text-muted-foreground text-xs">
-                      {user.email}
-                    </span>
-                  </div>
-                  <EditProfileDialog
-                    className="ms-auto shrink-0"
-                    user={{
-                      name: user.name,
-                      email: user.email,
-                      image: user.avatar,
-                    }}
-                  />
-                </div>
-              </DropdownMenuLabel>
+              <DropdownMenuItem
+                className="h-auto p-0 font-normal"
+                render={
+                  <Link
+                    className="flex items-center gap-2 px-1 py-1.5 text-start text-sm"
+                    href="/account"
+                  >
+                    <Avatar className="h-8 w-8 rounded-lg">
+                      <AvatarImage alt={user.name} src={avatarUrl ?? ""} />
+                      <AvatarFallback className="rounded-lg">
+                        {user.name.slice(0, 2) || "  "}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="grid flex-1 text-start text-sm leading-tight">
+                      <span className="truncate font-semibold">
+                        {user.name}
+                      </span>
+                      <span className="truncate text-muted-foreground text-xs">
+                        {user.email}
+                      </span>
+                    </div>
+                  </Link>
+                }
+              />
+            </DropdownMenuGroup>
+            <DropdownMenuSeparator />
+            <DropdownMenuGroup>
+              <DropdownMenuItem
+                render={
+                  <Link href="/account">
+                    <UserCog className="me-2 h-4 w-4" />
+                    {t("account.title")}
+                  </Link>
+                }
+              />
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             {/* Plan + upgrade is cloud-only; self-hosted editions get everything free. */}
@@ -162,29 +178,6 @@ export function NavUser({
                 <ThemeSwitcher />
               </DropdownMenuItem>
             </DropdownMenuGroup>
-            <DropdownMenuSeparator />
-            <DropdownMenuGroup>
-              <DropdownMenuItem
-                render={
-                  <Link href="/account/delete">
-                    <Trash2 className="me-2 h-4 w-4" />
-                    {t("accountDeletion.title")}
-                  </Link>
-                }
-              />
-            </DropdownMenuGroup>
-            <DropdownMenuSeparator />
-            {/* <DropdownMenuGroup>
-              <DropdownMenuItem>
-                <BadgeCheck />
-                Account
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Bell />
-                Notifications
-              </DropdownMenuItem>
-            </DropdownMenuGroup>
-            <DropdownMenuSeparator /> */}
             {(isSuperAdmin || canAccessManage) && (
               <>
                 <DropdownMenuGroup>

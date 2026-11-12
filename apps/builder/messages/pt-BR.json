@@ -7023,9 +7023,6 @@
     "description": "A página que você procura não existe ou pode ter sido movida.",
     "backToHome": "Voltar para a página inicial"
   },
-  "editProfile": {
-    "title": "Editar perfil"
-  },
   "ecommerce": {
     "title": "Comércio eletrônico",
     "description": "Crie e gerencie sua loja virtual."
@@ -11910,12 +11907,35 @@
   "accountDeletion": {
     "title": "Delete account",
     "description": "Your owned workspaces will be deleted with your account.",
-    "warning": "Deletion starts after a 24-hour grace period. It cannot be recovered. Cancel any subscriptions first.",
-    "confirmationLabel": "Type DELETE to confirm",
+    "workspacesTitle": "Espaços de trabalho que serão excluídos",
+    "noWorkspaces": "Você não possui nenhum espaço de trabalho.",
+    "warningGracePeriod": "A exclusão começa após um período de carência de 24 horas.",
+    "warningIrreversible": "Esta ação não pode ser recuperada.",
+    "warningSubscriptions": "Cancele todas as assinaturas primeiro.",
+    "signedInAs": "Conectado como {email}",
+    "confirmationLabel": "Confirmação",
+    "confirmationHint": "Digite <code>DELETE</code> para confirmar.",
     "confirmationError": "Type DELETE exactly to confirm.",
     "supportRequired": "Contact support to delete this reseller account.",
     "submit": "Delete account",
+    "cancel": "Cancelar",
+    "backToSignIn": "Voltar para entrar",
     "receivedTitle": "Deletion request received",
     "receivedDescription": "Your account and owned workspaces are scheduled for deletion."
+  },
+  "account": {
+    "title": "Account settings",
+    "description": "Manage your profile and account settings.",
+    "backToWorkspaces": "Workspaces",
+    "profile": {
+      "title": "Profile",
+      "description": "Update your name and profile image."
+    },
+    "emailReadOnly": "Email can't be changed",
+    "dangerZone": {
+      "title": "Danger zone",
+      "description": "Deletes your account and the {count, plural, =0 {0 workspaces} one {# workspace} other {# workspaces}} you own.",
+      "openSettings": "Delete account"
+    }
   }
 }

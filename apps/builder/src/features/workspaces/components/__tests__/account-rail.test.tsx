@@ -47,10 +47,6 @@ vi.mock("@/features/auth/sign-out", () => ({
   SignOut: () => <button type="button">Sign out</button>,
 }))
 
-vi.mock("../edit-profile-dialog", () => ({
-  EditProfileDialog: () => null,
-}))
-
 // Severs the server-action import chain (refresh action → @/lib/safe-action →
 // @chatbotx.io/business → database/client), which otherwise touches a
 // server-only env var at import time and crashes the whole file before any
@@ -217,5 +213,14 @@ describe("account rail", () => {
     const text = planNameText()
     expect(text).toContain("Current plan")
     expect(text).toContain("Free")
+  })
+
+  it("links the profile summary to account settings without an edit button", async () => {
+    await render()
+
+    expect(findLink("/account")?.textContent).toContain("Jane Doe")
+    expect(
+      container.querySelector('button[aria-label="actions.edit"]'),
+    ).toBeNull()
   })
 })
