@@ -4186,7 +4186,11 @@
     "welcomeBack": "Bon retour, {name}",
     "subtitle": "Choisissez un espace de travail pour reprendre votre activité ou créez-en un.",
     "noWorkspaces": "Vous n’avez pas encore d’espace de travail.",
-    "owner": "Propriétaire"
+    "owner": "Propriétaire",
+    "tabs": {
+      "label": "Sections de l'accueil",
+      "templates": "Modèles"
+    }
   },
   "notFound": {
     "title": "Page introuvable",
@@ -11895,7 +11899,8 @@
       "categories": "Catégories de la boutique",
       "noResults": "Aucun modèle ne correspond à votre recherche.",
       "clearSearch": "Effacer la recherche",
-      "by": "Par {publisherName}"
+      "by": "Par {publisherName}",
+      "loadFailed": "Impossible de charger les modèles. Réessayez plus tard."
     },
     "picker": {
       "placeholder": "Choisir un modèle",

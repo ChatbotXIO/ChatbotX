@@ -4582,6 +4582,10 @@
     "noWorkspaces": "您还没有任何工作区。",
     "owner": "所有者",
     "subtitle": "选择要跳回的工作区，或创建新工作区。",
+    "tabs": {
+      "label": "首页分区",
+      "templates": "模板"
+    },
     "welcomeBack": "欢迎回来，{name}"
   },
   "notFound": {
@@ -11895,7 +11899,8 @@
       "categories": "商店分类",
       "noResults": "没有与搜索匹配的模板。",
       "clearSearch": "清除搜索",
-      "by": "作者：{publisherName}"
+      "by": "作者：{publisherName}",
+      "loadFailed": "无法加载模板。请稍后再试。"
     },
     "picker": {
       "placeholder": "选择模板",

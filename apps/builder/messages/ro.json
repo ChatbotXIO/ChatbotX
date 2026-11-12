@@ -1384,7 +1384,11 @@
     "welcomeBack": "Bine ați revenit, {name}",
     "subtitle": "Alegeți un spațiu de lucru pentru a continua sau creați unul nou.",
     "noWorkspaces": "Nu aveți încă niciun spațiu de lucru.",
-    "owner": "Proprietar"
+    "owner": "Proprietar",
+    "tabs": {
+      "label": "Secțiunile paginii principale",
+      "templates": "Șabloane"
+    }
   },
   "notFound": {
     "title": "Pagina nu a fost găsită",
@@ -11895,7 +11899,8 @@
       "categories": "Categoriile magazinului",
       "noResults": "Niciun șablon nu corespunde căutării.",
       "clearSearch": "Șterge căutarea",
-      "by": "De {publisherName}"
+      "by": "De {publisherName}",
+      "loadFailed": "Șabloanele nu au putut fi încărcate. Încercați din nou mai târziu."
     },
     "picker": {
       "placeholder": "Alege un șablon",

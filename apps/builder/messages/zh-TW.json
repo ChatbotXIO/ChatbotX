@@ -4618,7 +4618,11 @@
     "welcomeBack": "歡迎回來，{name}",
     "subtitle": "選擇要跳回的工作區，或建立新工作區。",
     "noWorkspaces": "您還沒有任何工作區。",
-    "owner": "所有者"
+    "owner": "所有者",
+    "tabs": {
+      "label": "首頁分區",
+      "templates": "範本"
+    }
   },
   "notFound": {
     "title": "找不到頁面",
@@ -11895,7 +11899,8 @@
       "categories": "商店分類",
       "noResults": "沒有符合搜尋的範本。",
       "clearSearch": "清除搜尋",
-      "by": "作者：{publisherName}"
+      "by": "作者：{publisherName}",
+      "loadFailed": "無法載入範本。請稍後再試。"
     },
     "picker": {
       "placeholder": "選擇範本",

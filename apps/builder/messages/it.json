@@ -4186,7 +4186,11 @@
     "welcomeBack": "Bentornato, {name}",
     "subtitle": "Scegli un'area di lavoro per riprendere o creane una nuova.",
     "noWorkspaces": "Non hai ancora alcuna area di lavoro.",
-    "owner": "Proprietario"
+    "owner": "Proprietario",
+    "tabs": {
+      "label": "Sezioni della home",
+      "templates": "Template"
+    }
   },
   "notFound": {
     "title": "Pagina non trovata",
@@ -11895,7 +11899,8 @@
       "categories": "Categorie dello store",
       "noResults": "Nessun template corrisponde alla ricerca.",
       "clearSearch": "Cancella ricerca",
-      "by": "Di {publisherName}"
+      "by": "Di {publisherName}",
+      "loadFailed": "Impossibile caricare i template. Riprova più tardi."
     },
     "picker": {
       "placeholder": "Seleziona un template",

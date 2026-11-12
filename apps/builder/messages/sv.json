@@ -4582,6 +4582,10 @@
     "noWorkspaces": "Du har inga arbetsytor ännu.",
     "owner": "Ägare",
     "subtitle": "Välj en arbetsyta för att fortsätta där du slutade, eller skapa en ny.",
+    "tabs": {
+      "label": "Avsnitt på startsidan",
+      "templates": "Mallar"
+    },
     "welcomeBack": "Välkommen tillbaka, {name}"
   },
   "notFound": {
@@ -11895,7 +11899,8 @@
       "categories": "Butikskategorier",
       "noResults": "Inga mallar matchar din sökning.",
       "clearSearch": "Rensa sökningen",
-      "by": "Av {publisherName}"
+      "by": "Av {publisherName}",
+      "loadFailed": "Det gick inte att läsa in mallarna. Försök igen senare."
     },
     "picker": {
       "placeholder": "Välj en mall",

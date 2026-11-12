@@ -4186,7 +4186,11 @@
     "welcomeBack": "Willkommen zurück, {name}",
     "subtitle": "Wählen Sie einen Arbeitsbereich aus, um weiterzumachen, oder erstellen Sie einen neuen.",
     "noWorkspaces": "Sie haben noch keine Arbeitsbereiche.",
-    "owner": "Inhaber"
+    "owner": "Inhaber",
+    "tabs": {
+      "label": "Bereiche der Startseite",
+      "templates": "Templates"
+    }
   },
   "notFound": {
     "title": "Seite nicht gefunden",
@@ -11895,7 +11899,8 @@
       "categories": "Store-Kategorien",
       "noResults": "Keine Templates passen zu Ihrer Suche.",
       "clearSearch": "Suche zurücksetzen",
-      "by": "Von {publisherName}"
+      "by": "Von {publisherName}",
+      "loadFailed": "Die Templates konnten nicht geladen werden. Bitte versuchen Sie es später erneut."
     },
     "picker": {
       "placeholder": "Template auswählen",

@@ -550,6 +550,11 @@ describe.skipIf(!databaseUrl)("template store service", () => {
     expect(
       (await templateStoreService.listPublished({ tenantId })).templates,
     ).toHaveLength(1)
+    // The home page's tab probe agrees with the catalog, and is scoped to the tenant.
+    expect(await templateStoreService.hasPublished({ tenantId })).toBe(true)
+    expect(
+      await templateStoreService.hasPublished({ tenantId: createId() }),
+    ).toBe(false)
   })
 
   test("concurrent category replacement, remove and category delete leave a consistent store", async () => {

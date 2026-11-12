@@ -5024,7 +5024,11 @@
     "welcomeBack": "Welcome back, {name}",
     "subtitle": "Pick a workspace to jump back in, or create a new one.",
     "noWorkspaces": "You don't have any workspaces yet.",
-    "owner": "Owner"
+    "owner": "Owner",
+    "tabs": {
+      "label": "Home sections",
+      "templates": "Templates"
+    }
   },
   "notFound": {
     "title": "Page not found",
@@ -11895,7 +11899,8 @@
       "categories": "Store categories",
       "noResults": "No templates match your search.",
       "clearSearch": "Clear search",
-      "by": "By {publisherName}"
+      "by": "By {publisherName}",
+      "loadFailed": "Couldn't load the templates. Please try again later."
     },
     "picker": {
       "placeholder": "Select a template",

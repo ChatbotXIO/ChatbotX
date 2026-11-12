@@ -1831,7 +1831,11 @@
     "welcomeBack": "ברוכים השבים, {name}",
     "subtitle": "בחרו סביבת עבודה כדי לחזור אליה, או צרו סביבת עבודה חדשה.",
     "noWorkspaces": "אין לכם עדיין סביבות עבודה.",
-    "owner": "בעלים"
+    "owner": "בעלים",
+    "tabs": {
+      "label": "מדורי דף הבית",
+      "templates": "תבניות"
+    }
   },
   "notFound": {
     "title": "הדף לא נמצא",
@@ -11895,7 +11899,8 @@
       "categories": "קטגוריות החנות",
       "noResults": "אין תבניות שמתאימות לחיפוש.",
       "clearSearch": "ניקוי החיפוש",
-      "by": "מאת {publisherName}"
+      "by": "מאת {publisherName}",
+      "loadFailed": "לא ניתן לטעון את התבניות. נסו שוב מאוחר יותר."
     },
     "picker": {
       "placeholder": "בחרו תבנית",

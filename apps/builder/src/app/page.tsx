@@ -9,12 +9,17 @@ import {
 import { ROOT_TENANT_ID } from "@chatbotx.io/database/schema"
 import { notFound, redirect } from "next/navigation"
 import { getTranslations } from "next-intl/server"
+import type { SearchParams } from "nuqs/server"
 import { ExpiredBanner } from "@/components/expired-banner"
 import { WorkspaceDeletionPendingToast } from "@/components/workspace-deletion-pending-toast"
 import { isCloud } from "@/env"
 import { AccountRail } from "@/features/workspaces/components/account-rail"
 import { DeletedWorkspaces } from "@/features/workspaces/components/deleted-workspaces"
+import { HomeTemplatesPanel } from "@/features/workspaces/components/home-templates-panel"
 import WorkspacesList from "@/features/workspaces/components/workspaces-list"
+import { resolveHomeTemplatesView } from "@/features/workspaces/lib/home-templates-view"
+import { loadHomeTemplateStore } from "@/features/workspaces/lib/load-home-template-store"
+import { homeSearchParamsCache } from "@/features/workspaces/schema/home-search-params"
 import { hasWorkspacePermission } from "@/lib/auth/permission-routes"
 import { enforcePasswordCurrent } from "@/lib/auth/require-password-current"
 import { getCurrentUserAndAllLinkedWorkspaces } from "@/lib/auth/utils"
@@ -26,7 +31,11 @@ import {
 } from "@/lib/quota-metrics"
 import { ensureFirstWorkspace } from "@/lib/workspace/create-first-workspace"
 
-export default async function MainPage() {
+export default async function MainPage({
+  searchParams,
+}: {
+  searchParams: Promise<SearchParams>
+}) {
   const userAndWorkspaces = await getCurrentUserAndAllLinkedWorkspaces()
   if (!userAndWorkspaces) {
     return notFound()
@@ -56,15 +65,30 @@ export default async function MainPage() {
   // community/enterprise installs use every feature freely — no quota gating.
   const cloud = isCloud()
   const domain = await getDomainFromHeader()
-  const [usageSummary, atLimit, quota, ownedTenant, tenantId, superAdmin] =
-    await Promise.all([
-      cloud ? quotaEnforcementService.getUsageSummary(user.id) : null,
-      cloud ? quotaEnforcementService.getAtLimitMap(user.id) : null,
-      cloud ? userQuotaService.getForUser(user.id) : null,
-      cloud ? tenantService.findByOwner(user.id) : null,
-      resolveTenantByDomain(domain),
-      isSuperAdmin(user),
-    ])
+  const { tab } = await homeSearchParamsCache.parse(await searchParams)
+  // One tenant lookup feeds both the platform-context check and the store read.
+  const tenantIdPromise = resolveTenantByDomain(domain)
+  const [
+    usageSummary,
+    atLimit,
+    quota,
+    ownedTenant,
+    tenantId,
+    superAdmin,
+    templateStore,
+  ] = await Promise.all([
+    cloud ? quotaEnforcementService.getUsageSummary(user.id) : null,
+    cloud ? quotaEnforcementService.getAtLimitMap(user.id) : null,
+    cloud ? userQuotaService.getForUser(user.id) : null,
+    cloud ? tenantService.findByOwner(user.id) : null,
+    tenantIdPromise,
+    isSuperAdmin(user),
+    loadHomeTemplateStore({ tab, tenantId: tenantIdPromise }),
+  ])
+  const templatesView = resolveHomeTemplatesView(tab, templateStore)
+  if (templatesView.redirectToHome) {
+    redirect("/")
+  }
   const canAccessManage = cloud && hasOwnCredentialAccess(ownedTenant, quota)
   // "Served with platform identity" — not the same claim as user.tenantId,
   // which the session never carries (see SessionUser in lib/auth/utils.ts).
@@ -91,7 +115,7 @@ export default async function MainPage() {
   const userInfo = { name: user.name, email: user.email, image: user.image }
 
   return (
-    <div className="mx-auto w-full max-w-6xl px-6">
+    <div className="mx-auto w-full max-w-7xl px-6">
       <WorkspaceDeletionPendingToast />
       <ExpiredBanner blocked={cloud && blocked} reason={blockReason} />
       <div className="flex flex-col gap-8 py-8 md:flex-row md:items-start">
@@ -108,15 +132,25 @@ export default async function MainPage() {
 
         <div className="min-w-0 flex-1 space-y-8">
           <WorkspacesList
+            activeTab={templatesView.activeTab}
             blocked={cloud && blocked}
             isAtLimit={atLimit?.workspaces ?? false}
             ownerWorkspaceIds={ownerWorkspaceIds}
             reason={blockReason}
+            showTemplatesTab={templatesView.showTemplatesTab}
             superAdminWorkspaceIds={superAdminWorkspaceIds}
+            templatesPanel={
+              <HomeTemplatesPanel
+                catalog={templateStore.catalog}
+                panel={templatesView.panel}
+              />
+            }
             user={userInfo}
             workspaces={allWorkspaces}
           />
-          <DeletedWorkspaces ownerId={user.id} />
+          {templatesView.activeTab === "workspaces" && (
+            <DeletedWorkspaces ownerId={user.id} />
+          )}
         </div>
       </div>
     </div>

@@ -4186,7 +4186,11 @@
     "welcomeBack": "Welkom terug, {name}",
     "subtitle": "Kies een workspace om verder te gaan of maak een nieuwe.",
     "noWorkspaces": "Je hebt nog geen workspaces.",
-    "owner": "Eigenaar"
+    "owner": "Eigenaar",
+    "tabs": {
+      "label": "Onderdelen van de startpagina",
+      "templates": "Templates"
+    }
   },
   "notFound": {
     "title": "Pagina niet gevonden",
@@ -11895,7 +11899,8 @@
       "categories": "Winkelcategorieën",
       "noResults": "Geen templates komen overeen met je zoekopdracht.",
       "clearSearch": "Zoekopdracht wissen",
-      "by": "Door {publisherName}"
+      "by": "Door {publisherName}",
+      "loadFailed": "De templates konden niet worden geladen. Probeer het later opnieuw."
     },
     "picker": {
       "placeholder": "Kies een template",

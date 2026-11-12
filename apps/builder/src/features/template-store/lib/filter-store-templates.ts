@@ -1,5 +1,7 @@
 import { normalizeSearchText } from "./normalize-search-text"
 
+export type StoreCatalogCategory = { id: string; name: string }
+
 export type StoreCatalogTemplate = {
   templateId: string
   name: string
