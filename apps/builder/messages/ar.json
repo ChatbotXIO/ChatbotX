@@ -6192,6 +6192,7 @@
         "containsPhone": "الرسالة تحتوي على رقم هاتف",
         "containsEmail": "الرسالة تحتوي على بريد إلكتروني",
         "containsImage": "الرسالة تحتوي على صورة",
+        "containsAudio": "الرسالة تحتوي على صوت",
         "containsVideo": "الرسالة تحتوي على فيديو",
         "containsLink": "الرسالة تحتوي على رابط",
         "containsWholeWord": "الرسالة تحتوي على الكلمة كاملة",

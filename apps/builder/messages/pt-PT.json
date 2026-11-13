@@ -6188,6 +6188,7 @@
         "containsPhone": "A mensagem contém telefone",
         "containsEmail": "A mensagem contém e-mail",
         "containsImage": "A mensagem contém imagem",
+        "containsAudio": "A mensagem contém áudio",
         "containsVideo": "A mensagem contém vídeo",
         "containsLink": "A mensagem contém ligação",
         "containsWholeWord": "A mensagem contém a palavra inteira",

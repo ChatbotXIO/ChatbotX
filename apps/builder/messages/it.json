@@ -6192,6 +6192,7 @@
         "containsPhone": "Il messaggio contiene un telefono",
         "containsEmail": "Il messaggio contiene un'e-mail",
         "containsImage": "Il messaggio contiene un'immagine",
+        "containsAudio": "Il messaggio contiene un audio",
         "containsVideo": "Il messaggio contiene un video",
         "containsLink": "Il messaggio contiene un link",
         "containsWholeWord": "Il messaggio contiene la parola intera",

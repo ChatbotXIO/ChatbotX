@@ -5153,6 +5153,7 @@
         "containsPhone": "消息包含电话",
         "containsEmail": "消息包含邮箱",
         "containsImage": "消息包含图片",
+        "containsAudio": "消息包含音频",
         "containsVideo": "消息包含视频",
         "containsLink": "消息包含链接",
         "containsWholeWord": "消息包含完整单词",

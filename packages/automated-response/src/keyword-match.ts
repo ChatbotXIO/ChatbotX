@@ -137,10 +137,13 @@ const matchesRegex = (text: string, pattern: string): boolean =>
 
 const IMAGE_FILE_TYPES: readonly FileType[] = ["image", "gif"]
 const VIDEO_FILE_TYPES: readonly FileType[] = ["video"]
+const AUDIO_FILE_TYPES: readonly FileType[] = ["audio"]
 
-/** Attachment types a keyword condition can match (image/video). */
+/** Attachment types a keyword condition can match (image/video/audio). */
 export const isKeywordMediaFileType = (fileType: FileType): boolean =>
-  IMAGE_FILE_TYPES.includes(fileType) || VIDEO_FILE_TYPES.includes(fileType)
+  IMAGE_FILE_TYPES.includes(fileType) ||
+  VIDEO_FILE_TYPES.includes(fileType) ||
+  AUDIO_FILE_TYPES.includes(fileType)
 
 const hasAttachment = (
   input: KeywordMatchInput,
@@ -189,6 +192,8 @@ export const keywordConditionMatches = (
       return hasAttachment(input, IMAGE_FILE_TYPES)
     case "containsVideo":
       return hasAttachment(input, VIDEO_FILE_TYPES)
+    case "containsAudio":
+      return hasAttachment(input, AUDIO_FILE_TYPES)
     case "isThumbsUp":
       return isThumbsUp(rawText)
     case "matchesRegex":
@@ -212,6 +217,27 @@ export const keywordConditionMatches = (
   )
 }
 
+// A voice note / audio file with no text. Intentionally opt-in: only a rule
+// with an explicit `containsAudio` condition may answer it. Text-negating
+// operators (`notContains`, an empty-matching `matchesRegex`) also match an
+// empty text, so without this a rule like "doesn't contain stop" would start
+// answering audio the moment audio reaches Keywords. Image/video-only messages
+// keep matching those operators as before. Only keyword media decides it — a
+// plain `file` next to the voice note does not make it reachable by text
+// rules — and a whitespace-only caption counts as no text.
+const isAudioOnlyMessage = (input: KeywordMatchInput): boolean => {
+  if (input.text?.trim()) {
+    return false
+  }
+  const mediaFileTypes = input.attachmentFileTypes.filter(
+    isKeywordMediaFileType,
+  )
+  return (
+    mediaFileTypes.length > 0 &&
+    mediaFileTypes.every((fileType) => AUDIO_FILE_TYPES.includes(fileType))
+  )
+}
+
 /**
  * Contact (inbound) rules with `conditions` match when every condition does;
  * rules without them keep the legacy `keywords` + `type` behaviour (Page
@@ -222,6 +248,14 @@ export const ruleMatchesMessage = (
   input: KeywordMatchInput,
 ): boolean => {
   if (rule.conditions && rule.conditions.length > 0) {
+    if (
+      isAudioOnlyMessage(input) &&
+      !rule.conditions.some(
+        (condition) => condition.operator === "containsAudio",
+      )
+    ) {
+      return false
+    }
     return rule.conditions.every((condition) =>
       keywordConditionMatches(condition, input),
     )

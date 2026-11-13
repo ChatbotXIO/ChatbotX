@@ -3837,6 +3837,7 @@
         "containsPhone": "ההודעה מכילה טלפון",
         "containsEmail": "ההודעה מכילה אימייל",
         "containsImage": "ההודעה מכילה תמונה",
+        "containsAudio": "ההודעה מכילה אודיו",
         "containsVideo": "ההודעה מכילה וידאו",
         "containsLink": "ההודעה מכילה קישור",
         "containsWholeWord": "ההודעה מכילה מילה שלמה",

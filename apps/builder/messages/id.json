@@ -6192,6 +6192,7 @@
         "containsPhone": "Pesan berisi nomor telepon",
         "containsEmail": "Pesan berisi email",
         "containsImage": "Pesan berisi gambar",
+        "containsAudio": "Pesan berisi audio",
         "containsVideo": "Pesan berisi video",
         "containsLink": "Pesan berisi tautan",
         "containsWholeWord": "Pesan berisi kata utuh",

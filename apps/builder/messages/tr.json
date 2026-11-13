@@ -6192,6 +6192,7 @@
         "containsPhone": "Mesaj telefon içerir",
         "containsEmail": "Mesaj e-posta içerir",
         "containsImage": "Mesaj görsel içerir",
+        "containsAudio": "Mesaj ses içerir",
         "containsVideo": "Mesaj video içerir",
         "containsLink": "Mesaj bağlantı içerir",
         "containsWholeWord": "Mesaj tam kelimeyi içerir",

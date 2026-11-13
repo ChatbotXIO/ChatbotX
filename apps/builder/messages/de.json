@@ -6192,6 +6192,7 @@
         "containsPhone": "Nachricht enthält Telefonnummer",
         "containsEmail": "Nachricht enthält E-Mail",
         "containsImage": "Nachricht enthält Bild",
+        "containsAudio": "Nachricht enthält Audio",
         "containsVideo": "Nachricht enthält Video",
         "containsLink": "Nachricht enthält Link",
         "containsWholeWord": "Nachricht enthält ganzes Wort",

@@ -6874,6 +6874,7 @@
         "containsPhone": "Message contains phone",
         "containsEmail": "Message contains email",
         "containsImage": "Message contains image",
+        "containsAudio": "Message contains audio",
         "containsVideo": "Message contains video",
         "containsLink": "Message contains link",
         "containsWholeWord": "Message contains whole word",

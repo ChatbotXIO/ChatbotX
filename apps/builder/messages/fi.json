@@ -6192,6 +6192,7 @@
         "containsPhone": "Viesti sisältää puhelinnumeron",
         "containsEmail": "Viesti sisältää sähköpostin",
         "containsImage": "Viesti sisältää kuvan",
+        "containsAudio": "Viesti sisältää äänen",
         "containsVideo": "Viesti sisältää videon",
         "containsLink": "Viesti sisältää linkin",
         "containsWholeWord": "Viesti sisältää kokonaisen sanan",
