@@ -6169,6 +6169,7 @@
         "containsPhone": "メッセージに電話番号を含む",
         "containsEmail": "メッセージにメールを含む",
         "containsImage": "メッセージに画像を含む",
+        "containsAudio": "メッセージに音声を含む",
         "containsVideo": "メッセージに動画を含む",
         "containsLink": "メッセージにリンクを含む",
         "containsWholeWord": "メッセージに単語として含む",

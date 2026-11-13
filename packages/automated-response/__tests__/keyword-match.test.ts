@@ -1,6 +1,7 @@
 import type { KeywordCondition } from "@chatbotx.io/database/partials"
 import { describe, expect, test } from "vitest"
 import {
+  isKeywordMediaFileType,
   type KeywordMatchInput,
   keywordConditionMatches,
   keywordMatchesText,
@@ -146,6 +147,169 @@ describe("ruleMatchesMessage", () => {
       ),
     ).toBe(false)
   })
+
+  describe("audio-only message (no text)", () => {
+    const audioOnly: KeywordMatchInput = {
+      text: null,
+      attachmentFileTypes: ["audio"],
+    }
+    const containsAudio: KeywordCondition = {
+      operator: "containsAudio",
+      values: [],
+    }
+
+    test("matches a rule with a containsAudio condition", () => {
+      expect(ruleMatchesMessage(inboundRule([containsAudio]), audioOnly)).toBe(
+        true,
+      )
+    })
+
+    test("does not match rules that only negate text", () => {
+      expect(
+        ruleMatchesMessage(
+          inboundRule([{ operator: "notContains", values: ["stop"] }]),
+          audioOnly,
+        ),
+      ).toBe(false)
+      expect(
+        ruleMatchesMessage(
+          inboundRule([{ operator: "matchesRegex", values: [".*"] }]),
+          audioOnly,
+        ),
+      ).toBe(false)
+    })
+
+    test("needs every condition of a rule that has containsAudio", () => {
+      expect(
+        ruleMatchesMessage(
+          inboundRule([
+            containsAudio,
+            { operator: "notContains", values: ["stop"] },
+          ]),
+          audioOnly,
+        ),
+      ).toBe(true)
+      expect(
+        ruleMatchesMessage(
+          inboundRule([
+            containsAudio,
+            { operator: "contains", values: ["hi"] },
+          ]),
+          audioOnly,
+        ),
+      ).toBe(false)
+    })
+
+    test("does not match legacy keyword rules without conditions", () => {
+      expect(
+        ruleMatchesMessage(
+          { keywords: ["hi"], conditions: null, type: "inbound" },
+          audioOnly,
+        ),
+      ).toBe(false)
+    })
+
+    test("a rule with only image/video conditions ignores it", () => {
+      expect(
+        ruleMatchesMessage(
+          inboundRule([{ operator: "containsImage", values: [] }]),
+          audioOnly,
+        ),
+      ).toBe(false)
+      expect(
+        ruleMatchesMessage(
+          inboundRule([{ operator: "containsVideo", values: [] }]),
+          audioOnly,
+        ),
+      ).toBe(false)
+    })
+
+    test("audio with text is not audio-only, so text rules still apply", () => {
+      const audioWithText: KeywordMatchInput = {
+        text: "nghe nè",
+        attachmentFileTypes: ["audio"],
+      }
+      expect(
+        ruleMatchesMessage(
+          inboundRule([{ operator: "notContains", values: ["stop"] }]),
+          audioWithText,
+        ),
+      ).toBe(true)
+      expect(
+        ruleMatchesMessage(
+          inboundRule([{ operator: "contains", values: ["nghe"] }]),
+          audioWithText,
+        ),
+      ).toBe(true)
+      expect(
+        ruleMatchesMessage(inboundRule([containsAudio]), audioWithText),
+      ).toBe(true)
+    })
+
+    test("audio plus an image without text is not audio-only", () => {
+      expect(
+        ruleMatchesMessage(
+          inboundRule([{ operator: "notContains", values: ["stop"] }]),
+          { text: null, attachmentFileTypes: ["audio", "image"] },
+        ),
+      ).toBe(true)
+    })
+
+    test("a plain file next to the audio keeps it audio-only", () => {
+      const audioWithFile: KeywordMatchInput = {
+        text: null,
+        attachmentFileTypes: ["audio", "file"],
+      }
+      expect(
+        ruleMatchesMessage(
+          inboundRule([{ operator: "notContains", values: ["stop"] }]),
+          audioWithFile,
+        ),
+      ).toBe(false)
+      expect(
+        ruleMatchesMessage(inboundRule([containsAudio]), audioWithFile),
+      ).toBe(true)
+    })
+
+    test("a whitespace-only caption counts as no text", () => {
+      const audioWithBlankCaption: KeywordMatchInput = {
+        text: "  \n ",
+        attachmentFileTypes: ["audio"],
+      }
+      expect(
+        ruleMatchesMessage(
+          inboundRule([{ operator: "notContains", values: ["stop"] }]),
+          audioWithBlankCaption,
+        ),
+      ).toBe(false)
+      expect(
+        ruleMatchesMessage(inboundRule([containsAudio]), audioWithBlankCaption),
+      ).toBe(true)
+    })
+  })
+
+  // Pinned on purpose: text-negating operators have always matched an empty
+  // text, so image/video-only messages still match them. Only audio is opt-in.
+  test("image/video-only messages still match text-negating rules", () => {
+    for (const fileType of ["image", "gif", "video"] as const) {
+      const input: KeywordMatchInput = {
+        text: null,
+        attachmentFileTypes: [fileType],
+      }
+      expect(
+        ruleMatchesMessage(
+          inboundRule([{ operator: "notContains", values: ["stop"] }]),
+          input,
+        ),
+      ).toBe(true)
+      expect(
+        ruleMatchesMessage(
+          inboundRule([{ operator: "matchesRegex", values: [".*"] }]),
+          input,
+        ),
+      ).toBe(true)
+    }
+  })
 })
 
 describe("keywordConditionMatches", () => {
@@ -272,6 +436,33 @@ describe("keywordConditionMatches", () => {
     expect(matchesCondition(image, withFiles(["video"]))).toBe(false)
     expect(matchesCondition(video, withFiles(["video"]))).toBe(true)
     expect(matchesCondition(video, withFiles([]))).toBe(false)
+  })
+
+  test("detects audio attachments and keeps the media kinds apart", () => {
+    const withFiles = (
+      attachmentFileTypes: KeywordMatchInput["attachmentFileTypes"],
+    ) => ({
+      text: "nghe nè",
+      attachmentFileTypes,
+    })
+    const audio: KeywordCondition = { operator: "containsAudio", values: [] }
+    const image: KeywordCondition = { operator: "containsImage", values: [] }
+    const video: KeywordCondition = { operator: "containsVideo", values: [] }
+    expect(matchesCondition(audio, withFiles(["audio"]))).toBe(true)
+    expect(matchesCondition(audio, withFiles(["image"]))).toBe(false)
+    expect(matchesCondition(audio, withFiles(["gif"]))).toBe(false)
+    expect(matchesCondition(audio, withFiles(["video"]))).toBe(false)
+    expect(matchesCondition(audio, withFiles(["file"]))).toBe(false)
+    expect(matchesCondition(audio, withFiles([]))).toBe(false)
+    expect(matchesCondition(image, withFiles(["audio"]))).toBe(false)
+    expect(matchesCondition(video, withFiles(["audio"]))).toBe(false)
+  })
+
+  test("isKeywordMediaFileType accepts image, gif, video and audio only", () => {
+    for (const fileType of ["image", "gif", "video", "audio"] as const) {
+      expect(isKeywordMediaFileType(fileType)).toBe(true)
+    }
+    expect(isKeywordMediaFileType("file")).toBe(false)
   })
 
   test("isThumbsUp accepts only thumbs-up emoji in any skin tone", () => {

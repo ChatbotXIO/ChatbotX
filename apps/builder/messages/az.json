@@ -6874,6 +6874,7 @@
         "containsPhone": "Mesajda telefon var",
         "containsEmail": "Mesajda e-poçt var",
         "containsImage": "Mesajda şəkil var",
+        "containsAudio": "Mesajda audio var",
         "containsVideo": "Mesajda video var",
         "containsLink": "Mesajda keçid var",
         "containsWholeWord": "Mesajda tam söz var",

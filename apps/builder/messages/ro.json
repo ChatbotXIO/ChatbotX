@@ -6192,6 +6192,7 @@
         "containsPhone": "Mesajul conține telefon",
         "containsEmail": "Mesajul conține e-mail",
         "containsImage": "Mesajul conține imagine",
+        "containsAudio": "Mesajul conține audio",
         "containsVideo": "Mesajul conține video",
         "containsLink": "Mesajul conține link",
         "containsWholeWord": "Mesajul conține cuvântul întreg",

@@ -6238,6 +6238,7 @@
         "containsPhone": "訊息包含電話",
         "containsEmail": "訊息包含電子郵件",
         "containsImage": "訊息包含圖片",
+        "containsAudio": "訊息包含音訊",
         "containsVideo": "訊息包含影片",
         "containsLink": "訊息包含連結",
         "containsWholeWord": "訊息包含完整單字",

@@ -6192,6 +6192,7 @@
         "containsPhone": "Bericht bevat telefoonnummer",
         "containsEmail": "Bericht bevat e-mail",
         "containsImage": "Bericht bevat afbeelding",
+        "containsAudio": "Bericht bevat audio",
         "containsVideo": "Bericht bevat video",
         "containsLink": "Bericht bevat link",
         "containsWholeWord": "Bericht bevat heel woord",

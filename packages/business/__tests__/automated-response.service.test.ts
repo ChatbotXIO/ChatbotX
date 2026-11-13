@@ -589,6 +589,20 @@ describe("automatedResponseService keyword conditions", () => {
     )
   })
 
+  test("stores an audio-only rule with its condition and no trigger keywords", async () => {
+    const conditions = [{ operator: "containsAudio" as const, values: [] }]
+
+    await automatedResponseService.create("workspace-1", {
+      type: "inbound",
+      text: "Hi",
+      conditions,
+    })
+
+    expect(mocks.insertValues).toHaveBeenCalledWith(
+      expect.objectContaining({ keywords: [], conditions }),
+    )
+  })
+
   test("rejects more plain inbound keywords than one condition allows", async () => {
     await expect(
       automatedResponseService.create("workspace-1", {

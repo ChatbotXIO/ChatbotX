@@ -121,7 +121,7 @@ vi.mock("@chatbotx.io/automated-response", () => ({
     enqueueHandoffReentry: mockAutomatedResponseEnqueueHandoffReentry,
   },
   isKeywordMediaFileType: (fileType: string) =>
-    ["image", "gif", "video"].includes(fileType),
+    ["image", "gif", "video", "audio"].includes(fileType),
 }))
 
 vi.mock("@chatbotx.io/business", () => ({

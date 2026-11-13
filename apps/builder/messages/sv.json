@@ -5165,6 +5165,7 @@
         "containsPhone": "Meddelandet innehåller telefonnummer",
         "containsEmail": "Meddelandet innehåller e-post",
         "containsImage": "Meddelandet innehåller bild",
+        "containsAudio": "Meddelandet innehåller ljud",
         "containsVideo": "Meddelandet innehåller video",
         "containsLink": "Meddelandet innehåller länk",
         "containsWholeWord": "Meddelandet innehåller hela ordet",

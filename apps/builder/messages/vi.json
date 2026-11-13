@@ -5901,6 +5901,7 @@
         "containsPhone": "Tin nhắn có số điện thoại",
         "containsEmail": "Tin nhắn có email",
         "containsImage": "Tin nhắn có hình ảnh",
+        "containsAudio": "Tin nhắn có âm thanh",
         "containsVideo": "Tin nhắn có video",
         "containsLink": "Tin nhắn có đường link",
         "containsWholeWord": "Tin nhắn chứa nguyên từ",
