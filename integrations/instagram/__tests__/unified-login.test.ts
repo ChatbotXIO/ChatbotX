@@ -60,6 +60,9 @@ describe("Instagram Unified Login", () => {
         expect(params.get("client_id")).toBe("meta-app-id")
         expect(params.get("client_secret")).toBe("meta-app-secret")
         expect(params.get("code")).toBe("authorization-code")
+        expect(params.get("redirect_uri")).toBe(
+          "https://chatbotx.example/integrations/instagram/callback",
+        )
         return HttpResponse.json({ access_token: ACCESS_TOKEN })
       }),
       http.get(`${GRAPH_URL}/${VERSION}/me`, ({ request }) => {
@@ -78,6 +81,7 @@ describe("Instagram Unified Login", () => {
           version: VERSION,
         },
         "authorization-code",
+        "https://chatbotx.example/integrations/instagram/callback",
       ),
     ).resolves.toEqual({
       accessToken: ACCESS_TOKEN,

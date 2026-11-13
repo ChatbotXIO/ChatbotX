@@ -74,6 +74,7 @@ export function generateUnifiedAuthUrl({
 export function exchangeUnifiedCodeForToken(
   settings: { clientId: string; clientSecret: string; version?: string },
   code: string,
+  redirectUrl: string,
 ): Promise<UnifiedInstagramAuthorization> {
   const version = settings.version ?? "v22.0"
   const endpoint = `${version}/oauth/access_token`
@@ -85,6 +86,7 @@ export function exchangeUnifiedCodeForToken(
         client_id: settings.clientId,
         client_secret: settings.clientSecret,
         code,
+        redirect_uri: redirectUrl,
       },
     })
     const business = await instagramUnifiedGraphClient.get<{

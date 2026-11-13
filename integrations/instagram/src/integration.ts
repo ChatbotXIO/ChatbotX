@@ -66,7 +66,11 @@ const config: IntegrationDefinition<
     exchangeCode: async ({ code, callbackUrl, credential }) => {
       const config = credential as InstagramConfig
       if (config.unifiedLoginConfigId) {
-        const authorization = await exchangeUnifiedCodeForToken(config, code)
+        const authorization = await exchangeUnifiedCodeForToken(
+          config,
+          code,
+          callbackUrl,
+        )
         return oauth2Auth(
           config,
           callbackUrl,
