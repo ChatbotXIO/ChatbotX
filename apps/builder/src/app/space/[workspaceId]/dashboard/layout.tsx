@@ -43,7 +43,7 @@ export default async function DashboardLayout({
     listInboxes({ workspaceId, includes: ["integration"] }),
     getWorkspaceBlockStateForRender(targetWorkspace.ownerId),
   ])
-  const inboxes = inboxesResult.data.filter((inbox) => inbox.channel !== "smtp")
+  const inboxes = inboxesResult.data
   const isSuperAdmin = hasWorkspacePermission(
     userAndWorkspace.targetWorkspaceMember.permissions,
     "superAdmin",

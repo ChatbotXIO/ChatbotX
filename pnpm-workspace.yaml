@@ -36,11 +36,13 @@ catalog:
   drizzle-orm: 1.0.0-beta.22
   google-auth-library: "^10.6.2"
   image-size: "^2.0.3"
+  imapflow: "^2.11.0"
   ioredis: 5.10.1
   jose: "^6.2.3"
   ky: "^2.0.2"
   libphonenumber-js: "^1.12.42"
   lucide-react: "^1.17.0"
+  mailparser: "^3.9.8"
   mime-types: "^3.0.2"
   msw: "^2.7.3"
   next: 16.4.3

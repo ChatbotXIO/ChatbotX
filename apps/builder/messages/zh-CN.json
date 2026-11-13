@@ -7053,11 +7053,102 @@
   },
   "smtp": {
     "errors": {
-      "connectionFailed": "无法连接到SMTP 服务器。请检查您的凭证并重试。"
+      "connectionFailed": "无法连接到SMTP 服务器。请检查您的凭证并重试。",
+      "imapConnectionFailed": "无法连接到 IMAP 邮箱。请检查主机、凭据和邮箱名称后重试。"
     },
     "setting": {
-      "description": "使用您的SMTP 服务器发送电子邮件。",
+      "description": "通过您的 SMTP 服务器、IMAP 邮箱或入站 Webhook 收发邮件。",
       "label": "（电子邮件）SMTP"
+    },
+    "guide": {
+      "trigger": "设置指南：{provider}",
+      "openDocs": "打开 {provider} 文档",
+      "receiveImap": "接收邮件",
+      "receiveImapDescription": "每分钟检查一次此邮箱，并为每封新邮件创建一个对话。仅导入开启此功能之后收到的邮件。",
+      "imapHost": "IMAP 主机",
+      "imapPort": "IMAP 端口",
+      "relayReceive": "此服务商仅支持发送邮件。要接收回复，请将其入站解析指向一个 Webhook URL。",
+      "sendOnly": "Amazon SES 通过 SNS 接收邮件，此处暂不支持。此收件箱只能发送邮件。",
+      "webhook": {
+        "title": "入站 Webhook URL",
+        "hint": "将此 URL 粘贴到服务商的入站设置中。任何拥有此 URL 的人都可以向此收件箱添加邮件，请像对待密码一样妥善保管。",
+        "saveFirst": "请先连接，然后重新打开此收件箱以获取 Webhook URL。",
+        "show": "显示 Webhook URL",
+        "rotate": "轮换 URL",
+        "copied": "已复制 Webhook URL",
+        "failed": "无法加载 Webhook URL，请重试。"
+      },
+      "status": {
+        "title": "状态",
+        "sending": "发送",
+        "receivingImap": "接收：IMAP",
+        "receivingWebhook": "接收：Webhook",
+        "receivingOff": "接收：已关闭",
+        "lastPolled": "上次检查：{time}",
+        "neverPolled": "尚未检查",
+        "error": "最近一次错误：{error}"
+      },
+      "errors": {
+        "title": "常见错误",
+        "authFailed": "535 或身份验证失败：请使用应用专用密码，而不是账户的常规密码。",
+        "timeout": "超时：请尝试使用 465 端口 (SSL) 代替 587 (STARTTLS)，并检查您的主机是否允许出站连接。",
+        "imap": "IMAP 登录失败：请在邮箱设置中开启 IMAP，并使用相同的应用专用密码。"
+      },
+      "providers": {
+        "google": {
+          "step1": "为 Google 账户开启两步验证。",
+          "step2": "创建应用专用密码（Google 账户 > 安全性 > 应用专用密码）。",
+          "step3": "输入完整的 Gmail 地址作为用户名，应用专用密码作为密码。",
+          "step4": "要接收邮件，请在 Gmail 中开启 IMAP（设置 > 转发和 POP/IMAP），并开启下方的“接收邮件”。"
+        },
+        "outlook": {
+          "step1": "为 Microsoft 账户开启两步验证。",
+          "step2": "在 Microsoft 账户的安全设置中创建应用密码。",
+          "step3": "使用完整地址作为用户名，应用密码作为密码。",
+          "note": "Microsoft 正在停用 Exchange Online 的基本身份验证。如果连接被拒绝，可能是您的组织已将其关闭。"
+        },
+        "yahoo": {
+          "step1": "在 Yahoo 账户的安全设置中开启两步验证。",
+          "step2": "为此连接生成应用密码。",
+          "step3": "使用您的 Yahoo 地址作为用户名，应用密码作为密码。"
+        },
+        "zoho": {
+          "step1": "为您的 Zoho 账户开启双重身份验证。",
+          "step2": "创建应用专用密码。",
+          "step3": "使用您的 Zoho 地址作为用户名，该密码作为密码。必须在 Zoho Mail 设置中启用 IMAP。"
+        },
+        "sendgrid": {
+          "step1": "创建具有 Mail Send 权限的 API 密钥。使用用户名 apikey，并将该密钥作为密码。",
+          "step2": "要接收邮件，请先连接，然后重新打开此收件箱并复制其 Webhook URL。",
+          "step3": "在 SendGrid 中，将该 URL 添加到 Settings > Inbound Parse，并勾选 \"POST the raw, full MIME message\"。"
+        },
+        "mailgun": {
+          "step1": "使用发送域名的 SMTP 凭据（Sending > Domain settings > SMTP credentials）。",
+          "step2": "要接收邮件，请先连接，然后重新打开此收件箱并复制其 Webhook URL。",
+          "step3": "在 Mailgun 中，创建一条转发到该 URL 的接收路由。"
+        },
+        "postmark": {
+          "step1": "将服务器的 API 令牌同时用作用户名和密码。",
+          "step2": "要接收邮件，请先连接，然后重新打开此收件箱并复制其 Webhook URL。",
+          "step3": "在 Postmark 中，将其设置为服务器的 Inbound Webhook，并包含原始邮件内容。"
+        },
+        "brevo": {
+          "step1": "使用您的 Brevo SMTP 登录名，并将 SMTP 密钥作为密码。",
+          "step2": "要接收邮件，请先连接，然后重新打开此收件箱并复制其 Webhook URL。",
+          "step3": "在 Brevo 中，将该 URL 添加为接收域名的入站解析 Webhook。",
+          "note": "Brevo 不会随入站邮件发送附件，因此无法接收附件。"
+        },
+        "amazonSes": {
+          "step1": "在 Amazon SES 控制台中创建 SMTP 凭据。它们与您的 AWS 访问密钥不同。",
+          "step2": "使用您所在 SES 区域的 SMTP 端点作为主机，并验证发件人地址。",
+          "step3": "输入控制台中的 SMTP 用户名和密码。",
+          "note": "此收件箱只能发送邮件。"
+        },
+        "other": {
+          "step1": "向您的邮件服务商询问 SMTP 主机和端口。587 端口使用 STARTTLS，465 端口使用 SSL。",
+          "step2": "要接收邮件，还需询问 IMAP 主机和端口（通常为 993），然后开启下方的“接收邮件”。"
+        }
+      }
     }
   },
   "states": {

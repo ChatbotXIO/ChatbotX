@@ -6411,11 +6411,102 @@
   },
   "smtp": {
     "setting": {
-      "description": "Gửi email bằng máy chủ SMTP của bạn.",
+      "description": "Gửi và nhận email qua máy chủ SMTP, hộp thư IMAP hoặc webhook đến của bạn.",
       "label": "(Email) SMTP"
     },
     "errors": {
-      "connectionFailed": "Không thể kết nối đến máy chủ SMTP. Vui lòng kiểm tra thông tin xác thực và thử lại."
+      "connectionFailed": "Không thể kết nối đến máy chủ SMTP. Vui lòng kiểm tra thông tin xác thực và thử lại.",
+      "imapConnectionFailed": "Không thể kết nối tới hộp thư IMAP. Vui lòng kiểm tra máy chủ, thông tin đăng nhập và tên hộp thư rồi thử lại."
+    },
+    "guide": {
+      "trigger": "Hướng dẫn thiết lập: {provider}",
+      "openDocs": "Mở tài liệu của {provider}",
+      "receiveImap": "Nhận email",
+      "receiveImapDescription": "Kiểm tra hộp thư này mỗi phút và mở một cuộc trò chuyện cho mỗi email mới. Chỉ email đến sau khi bạn bật tính năng này mới được nhập.",
+      "imapHost": "Máy chủ IMAP",
+      "imapPort": "Cổng IMAP",
+      "relayReceive": "Nhà cung cấp này chỉ gửi email. Để nhận phản hồi, hãy trỏ chức năng phân tích email đến của nhà cung cấp tới một URL webhook.",
+      "sendOnly": "Amazon SES nhận email qua SNS, hiện chưa được hỗ trợ ở đây. Hộp thư đến này chỉ có thể gửi email.",
+      "webhook": {
+        "title": "URL webhook đến",
+        "hint": "Dán URL này vào phần cài đặt email đến của nhà cung cấp. Bất kỳ ai có URL này đều có thể thêm email vào hộp thư đến này, vì vậy hãy bảo mật nó như mật khẩu.",
+        "saveFirst": "Hãy kết nối trước, sau đó mở lại hộp thư đến này để lấy URL webhook.",
+        "show": "Hiện URL webhook",
+        "rotate": "Đổi URL",
+        "copied": "Đã sao chép URL webhook",
+        "failed": "Không thể tải URL webhook. Vui lòng thử lại."
+      },
+      "status": {
+        "title": "Trạng thái",
+        "sending": "Gửi",
+        "receivingImap": "Nhận: IMAP",
+        "receivingWebhook": "Nhận: webhook",
+        "receivingOff": "Nhận: tắt",
+        "lastPolled": "Kiểm tra lần cuối {time}",
+        "neverPolled": "Chưa kiểm tra",
+        "error": "Lỗi gần nhất: {error}"
+      },
+      "errors": {
+        "title": "Các lỗi thường gặp",
+        "authFailed": "535 hoặc xác thực thất bại: hãy dùng mật khẩu ứng dụng, không dùng mật khẩu tài khoản thông thường.",
+        "timeout": "Hết thời gian chờ: hãy thử cổng 465 (SSL) thay vì 587 (STARTTLS) và kiểm tra xem máy chủ của bạn có cho phép kết nối đi hay không.",
+        "imap": "Đăng nhập IMAP thất bại: hãy bật IMAP trong cài đặt hộp thư và dùng cùng mật khẩu ứng dụng đó."
+      },
+      "providers": {
+        "google": {
+          "step1": "Bật Xác minh 2 bước cho tài khoản Google.",
+          "step2": "Tạo Mật khẩu ứng dụng (Tài khoản Google > Bảo mật > Mật khẩu ứng dụng).",
+          "step3": "Nhập địa chỉ Gmail đầy đủ làm tên người dùng và Mật khẩu ứng dụng làm mật khẩu.",
+          "step4": "Để nhận email, hãy bật IMAP trong Gmail (Cài đặt > Chuyển tiếp và POP/IMAP) và bật Nhận email bên dưới."
+        },
+        "outlook": {
+          "step1": "Bật xác minh 2 bước cho tài khoản Microsoft.",
+          "step2": "Tạo mật khẩu ứng dụng trong phần cài đặt bảo mật tài khoản Microsoft của bạn.",
+          "step3": "Dùng địa chỉ đầy đủ làm tên người dùng và mật khẩu ứng dụng làm mật khẩu.",
+          "note": "Microsoft đang ngừng hỗ trợ xác thực cơ bản cho Exchange Online. Nếu kết nối bị từ chối, có thể tổ chức của bạn đã tắt tính năng này."
+        },
+        "yahoo": {
+          "step1": "Bật xác minh 2 bước trong phần cài đặt bảo mật tài khoản Yahoo của bạn.",
+          "step2": "Tạo mật khẩu ứng dụng cho kết nối này.",
+          "step3": "Dùng địa chỉ Yahoo của bạn làm tên người dùng và mật khẩu ứng dụng làm mật khẩu."
+        },
+        "zoho": {
+          "step1": "Bật xác thực hai yếu tố cho tài khoản Zoho của bạn.",
+          "step2": "Tạo mật khẩu dành riêng cho ứng dụng.",
+          "step3": "Dùng địa chỉ Zoho của bạn làm tên người dùng và mật khẩu đó làm mật khẩu. Phải bật IMAP trong cài đặt Zoho Mail."
+        },
+        "sendgrid": {
+          "step1": "Tạo API key có quyền Mail Send. Dùng tên người dùng apikey và key đó làm mật khẩu.",
+          "step2": "Để nhận email, hãy kết nối, sau đó mở lại hộp thư đến này và sao chép URL webhook của nó.",
+          "step3": "Trong SendGrid, thêm URL vào Settings > Inbound Parse và chọn \"POST the raw, full MIME message\"."
+        },
+        "mailgun": {
+          "step1": "Dùng thông tin xác thực SMTP của tên miền gửi của bạn (Sending > Domain settings > SMTP credentials).",
+          "step2": "Để nhận email, hãy kết nối, sau đó mở lại hộp thư đến này và sao chép URL webhook của nó.",
+          "step3": "Trong Mailgun, tạo một route nhận email chuyển tiếp tới URL này."
+        },
+        "postmark": {
+          "step1": "Dùng API token của máy chủ làm cả tên người dùng lẫn mật khẩu.",
+          "step2": "Để nhận email, hãy kết nối, sau đó mở lại hộp thư đến này và sao chép URL webhook của nó.",
+          "step3": "Trong Postmark, đặt nó làm Inbound Webhook của máy chủ và bao gồm nội dung email thô."
+        },
+        "brevo": {
+          "step1": "Dùng thông tin đăng nhập SMTP của Brevo và một SMTP key làm mật khẩu.",
+          "step2": "Để nhận email, hãy kết nối, sau đó mở lại hộp thư đến này và sao chép URL webhook của nó.",
+          "step3": "Trong Brevo, thêm URL này làm webhook phân tích email đến cho tên miền nhận của bạn.",
+          "note": "Brevo không gửi kèm tệp đính kèm với email đến, vì vậy sẽ không nhận được tệp đính kèm."
+        },
+        "amazonSes": {
+          "step1": "Tạo thông tin xác thực SMTP trong bảng điều khiển Amazon SES. Chúng khác với khóa truy cập AWS của bạn.",
+          "step2": "Dùng SMTP endpoint của vùng SES làm máy chủ và xác minh địa chỉ người gửi.",
+          "step3": "Nhập tên người dùng và mật khẩu SMTP từ bảng điều khiển.",
+          "note": "Hộp thư đến này chỉ có thể gửi email."
+        },
+        "other": {
+          "step1": "Hỏi nhà cung cấp email của bạn về máy chủ và cổng SMTP. Cổng 587 dùng STARTTLS và 465 dùng SSL.",
+          "step2": "Để nhận email, hãy hỏi thêm về máy chủ và cổng IMAP (thường là 993), sau đó bật Nhận email bên dưới."
+        }
+      }
     }
   },
   "botSimulator": {

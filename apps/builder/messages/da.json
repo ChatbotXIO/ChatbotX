@@ -6321,11 +6321,102 @@
   },
   "smtp": {
     "setting": {
-      "description": "Send emails using din SMTP server.",
+      "description": "Send og modtag e-mails via din SMTP-server, en IMAP-postkasse eller en indgående webhook.",
       "label": "(E-mail) SMTP"
     },
     "errors": {
-      "connectionFailed": "Kan ikke forbind til SMTP server. Please check din credentials og try igen."
+      "connectionFailed": "Kan ikke forbind til SMTP server. Please check din credentials og try igen.",
+      "imapConnectionFailed": "Kan ikke oprette forbindelse til IMAP-postkassen. Kontrollér vært, legitimationsoplysninger og postkassens navn, og prøv igen."
+    },
+    "guide": {
+      "trigger": "Opsætningsguide: {provider}",
+      "openDocs": "Åbn dokumentation for {provider}",
+      "receiveImap": "Modtag e-mails",
+      "receiveImapDescription": "Denne postkasse tjekkes hvert minut, og der åbnes en samtale for hver ny e-mail. Kun mails, der ankommer, efter du har slået dette til, importeres.",
+      "imapHost": "IMAP-vært",
+      "imapPort": "IMAP-port",
+      "relayReceive": "Denne udbyder kan kun sende mails. For at modtage svar skal du pege dens indgående parsing på en webhook-URL.",
+      "sendOnly": "Amazon SES modtager mails via SNS, hvilket ikke understøttes her. Denne indbakke kan kun sende e-mails.",
+      "webhook": {
+        "title": "Indgående webhook-URL",
+        "hint": "Indsæt denne URL i din udbyders indstillinger for indgående mails. Alle, der har den, kan tilføje mails til denne indbakke, så behandl den som en adgangskode.",
+        "saveFirst": "Opret forbindelse først, og åbn derefter denne indbakke igen for at få webhook-URL'en.",
+        "show": "Vis webhook-URL",
+        "rotate": "Roter URL",
+        "copied": "Webhook-URL kopieret",
+        "failed": "Webhook-URL'en kunne ikke indlæses. Prøv igen."
+      },
+      "status": {
+        "title": "Status",
+        "sending": "Afsendelse",
+        "receivingImap": "Modtagelse: IMAP",
+        "receivingWebhook": "Modtagelse: webhook",
+        "receivingOff": "Modtagelse: slået fra",
+        "lastPolled": "Sidst tjekket {time}",
+        "neverPolled": "Ikke tjekket endnu",
+        "error": "Seneste fejl: {error}"
+      },
+      "errors": {
+        "title": "Almindelige fejl",
+        "authFailed": "535 eller godkendelse mislykkedes: brug en app-adgangskode, ikke din almindelige kontoadgangskode.",
+        "timeout": "Timeout: prøv port 465 (SSL) i stedet for 587 (STARTTLS), og kontrollér, at din vært tillader udgående forbindelser.",
+        "imap": "IMAP-login mislykkedes: slå IMAP til i postkassens indstillinger, og brug den samme app-adgangskode."
+      },
+      "providers": {
+        "google": {
+          "step1": "Slå 2-trinsbekræftelse til for Google-kontoen.",
+          "step2": "Opret en app-adgangskode (Google-konto > Sikkerhed > App-adgangskoder).",
+          "step3": "Indtast den fulde Gmail-adresse som brugernavn og app-adgangskoden som adgangskode.",
+          "step4": "For at modtage e-mails skal du slå IMAP til i Gmail (Indstillinger > Videresendelse og POP/IMAP) og slå Modtag e-mails til nedenfor."
+        },
+        "outlook": {
+          "step1": "Slå totrinsbekræftelse til for Microsoft-kontoen.",
+          "step2": "Opret en app-adgangskode i sikkerhedsindstillingerne for din Microsoft-konto.",
+          "step3": "Brug den fulde adresse som brugernavn og app-adgangskoden som adgangskode.",
+          "note": "Microsoft udfaser grundlæggende godkendelse for Exchange Online. Hvis forbindelsen afvises, kan din organisation have slået den fra."
+        },
+        "yahoo": {
+          "step1": "Slå totrinsbekræftelse til i sikkerhedsindstillingerne for din Yahoo-konto.",
+          "step2": "Generér en app-adgangskode til denne forbindelse.",
+          "step3": "Brug din Yahoo-adresse som brugernavn og app-adgangskoden som adgangskode."
+        },
+        "zoho": {
+          "step1": "Slå tofaktorgodkendelse til for din Zoho-konto.",
+          "step2": "Opret en programspecifik adgangskode.",
+          "step3": "Brug din Zoho-adresse som brugernavn og den adgangskode som adgangskode. IMAP skal være aktiveret i Zoho Mail-indstillingerne."
+        },
+        "sendgrid": {
+          "step1": "Opret en API-nøgle med tilladelsen Mail Send. Brug brugernavnet apikey og nøglen som adgangskode.",
+          "step2": "For at modtage e-mails skal du oprette forbindelse, derefter åbne denne indbakke igen og kopiere dens webhook-URL.",
+          "step3": "I SendGrid skal du tilføje URL'en under Settings > Inbound Parse og markere \"POST the raw, full MIME message\"."
+        },
+        "mailgun": {
+          "step1": "Brug SMTP-legitimationsoplysningerne for dit afsendelsesdomæne (Sending > Domain settings > SMTP credentials).",
+          "step2": "For at modtage e-mails skal du oprette forbindelse, derefter åbne denne indbakke igen og kopiere dens webhook-URL.",
+          "step3": "I Mailgun skal du oprette en modtagelsesrute, der videresender til URL'en."
+        },
+        "postmark": {
+          "step1": "Brug din servers API-token som både brugernavn og adgangskode.",
+          "step2": "For at modtage e-mails skal du oprette forbindelse, derefter åbne denne indbakke igen og kopiere dens webhook-URL.",
+          "step3": "I Postmark skal du angive den som Inbound Webhook for din server og inkludere det rå e-mailindhold."
+        },
+        "brevo": {
+          "step1": "Brug dit Brevo SMTP-login og en SMTP-nøgle som adgangskode.",
+          "step2": "For at modtage e-mails skal du oprette forbindelse, derefter åbne denne indbakke igen og kopiere dens webhook-URL.",
+          "step3": "I Brevo skal du tilføje URL'en som en webhook til indgående parsing for dit modtagende domæne.",
+          "note": "Brevo sender ikke vedhæftede filer med indgående mails, så vedhæftede filer modtages ikke."
+        },
+        "amazonSes": {
+          "step1": "Opret SMTP-legitimationsoplysninger i Amazon SES-konsollen. De adskiller sig fra dine AWS-adgangsnøgler.",
+          "step2": "Brug SMTP-endpointet for din SES-region som vært, og bekræft afsenderadressen.",
+          "step3": "Indtast SMTP-brugernavnet og adgangskoden fra konsollen.",
+          "note": "Denne indbakke kan kun sende e-mails."
+        },
+        "other": {
+          "step1": "Spørg din e-mailudbyder om SMTP-vært og port. Port 587 bruger STARTTLS, og 465 bruger SSL.",
+          "step2": "For at modtage e-mails skal du også spørge om IMAP-vært og port (normalt 993) og derefter slå Modtag e-mails til nedenfor."
+        }
+      }
     }
   },
   "botSimulator": {

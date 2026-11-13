@@ -1501,8 +1501,10 @@ chatbotx ref-links chat-widget update <id>           # Replace all widget settin
 chatbotx smtp-integrations list
 chatbotx smtp-integrations get <id>
 chatbotx smtp-integrations create --username <username> --password <password> --fromAddress <fromAddress>
-                                                        # [--provider]
-chatbotx smtp-integrations update <id>
+                                                        # [--provider --imap]; imap {enabled,host?,port?,mailbox?,username?,password?} = receive mail by IMAP polling
+chatbotx smtp-integrations update <id>                  # [--imap] same shape; omit to leave receiving unchanged. get/list show provider, imapEnabled, lastPolledAt, lastPollError, inboundWebhookIssued
+chatbotx smtp-integrations get-inbound-webhook <id>    # relay providers (SendGrid/Mailgun/Postmark/Brevo): secret URL to paste into the provider's inbound-parse settings
+chatbotx smtp-integrations rotate-inbound-webhook <id> # replace that URL; the old one stops working at once
 chatbotx smtp-integrations delete <id>
 ```
 

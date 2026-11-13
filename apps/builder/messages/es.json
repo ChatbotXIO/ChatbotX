@@ -6321,11 +6321,102 @@
   },
   "smtp": {
     "setting": {
-      "description": "Enviar correos using tu SMTP server.",
+      "description": "Envía y recibe correos a través de tu servidor SMTP, un buzón IMAP o un webhook entrante.",
       "label": "(Correo) SMTP"
     },
     "errors": {
-      "connectionFailed": "Cannot Conectar un SMTP server. Por favor, check tu credentials y try again."
+      "connectionFailed": "Cannot Conectar un SMTP server. Por favor, check tu credentials y try again.",
+      "imapConnectionFailed": "No se puede conectar al buzón IMAP. Comprueba el host, las credenciales y el nombre del buzón e inténtalo de nuevo."
+    },
+    "guide": {
+      "trigger": "Guía de configuración: {provider}",
+      "openDocs": "Abrir la documentación de {provider}",
+      "receiveImap": "Recibir correos",
+      "receiveImapDescription": "Este buzón se revisa cada minuto y se abre una conversación por cada correo nuevo. Solo se importan los correos que lleguen después de activar esta opción.",
+      "imapHost": "Host IMAP",
+      "imapPort": "Puerto IMAP",
+      "relayReceive": "Este proveedor solo envía correo. Para recibir respuestas, apunta su análisis de correo entrante a una URL de webhook.",
+      "sendOnly": "Amazon SES recibe el correo a través de SNS, lo cual no es compatible aquí. Esta bandeja solo puede enviar correos.",
+      "webhook": {
+        "title": "URL del webhook entrante",
+        "hint": "Pega esta URL en los ajustes de correo entrante de tu proveedor. Cualquiera que la tenga puede añadir correos a esta bandeja, así que trátala como una contraseña.",
+        "saveFirst": "Conéctate primero y luego vuelve a abrir esta bandeja para obtener la URL del webhook.",
+        "show": "Mostrar URL del webhook",
+        "rotate": "Rotar URL",
+        "copied": "URL del webhook copiada",
+        "failed": "No se pudo cargar la URL del webhook. Inténtalo de nuevo."
+      },
+      "status": {
+        "title": "Estado",
+        "sending": "Envío",
+        "receivingImap": "Recepción: IMAP",
+        "receivingWebhook": "Recepción: webhook",
+        "receivingOff": "Recepción: desactivada",
+        "lastPolled": "Última revisión {time}",
+        "neverPolled": "Aún no revisado",
+        "error": "Último error: {error}"
+      },
+      "errors": {
+        "title": "Errores comunes",
+        "authFailed": "535 o error de autenticación: usa una contraseña de aplicación, no la contraseña normal de tu cuenta.",
+        "timeout": "Tiempo de espera agotado: prueba el puerto 465 (SSL) en lugar del 587 (STARTTLS) y comprueba que tu host permita conexiones salientes.",
+        "imap": "Error de inicio de sesión IMAP: activa IMAP en los ajustes del buzón y usa la misma contraseña de aplicación."
+      },
+      "providers": {
+        "google": {
+          "step1": "Activa la verificación en dos pasos en la cuenta de Google.",
+          "step2": "Crea una contraseña de aplicación (Cuenta de Google > Seguridad > Contraseñas de aplicaciones).",
+          "step3": "Introduce la dirección completa de Gmail como nombre de usuario y la contraseña de aplicación como contraseña.",
+          "step4": "Para recibir correos, activa IMAP en Gmail (Configuración > Reenvío y correo POP/IMAP) y activa Recibir correos más abajo."
+        },
+        "outlook": {
+          "step1": "Activa la verificación en dos pasos en la cuenta de Microsoft.",
+          "step2": "Crea una contraseña de aplicación en los ajustes de seguridad de tu cuenta de Microsoft.",
+          "step3": "Usa la dirección completa como nombre de usuario y la contraseña de aplicación como contraseña.",
+          "note": "Microsoft está retirando la autenticación básica para Exchange Online. Si se rechaza la conexión, es posible que tu organización la tenga desactivada."
+        },
+        "yahoo": {
+          "step1": "Activa la verificación en dos pasos en los ajustes de seguridad de tu cuenta de Yahoo.",
+          "step2": "Genera una contraseña de aplicación para esta conexión.",
+          "step3": "Usa tu dirección de Yahoo como nombre de usuario y la contraseña de aplicación como contraseña."
+        },
+        "zoho": {
+          "step1": "Activa la autenticación de dos factores en tu cuenta de Zoho.",
+          "step2": "Crea una contraseña específica de aplicación.",
+          "step3": "Usa tu dirección de Zoho como nombre de usuario y esa contraseña como contraseña. IMAP debe estar activado en los ajustes de Zoho Mail."
+        },
+        "sendgrid": {
+          "step1": "Crea una clave de API con el permiso Mail Send. Usa el nombre de usuario apikey y la clave como contraseña.",
+          "step2": "Para recibir correos, conéctate, vuelve a abrir esta bandeja y copia su URL de webhook.",
+          "step3": "En SendGrid, añade la URL en Settings > Inbound Parse y marca \"POST the raw, full MIME message\"."
+        },
+        "mailgun": {
+          "step1": "Usa las credenciales SMTP de tu dominio de envío (Sending > Domain settings > SMTP credentials).",
+          "step2": "Para recibir correos, conéctate, vuelve a abrir esta bandeja y copia su URL de webhook.",
+          "step3": "En Mailgun, crea una ruta de recepción que reenvíe a la URL."
+        },
+        "postmark": {
+          "step1": "Usa el token de API de tu servidor como nombre de usuario y como contraseña.",
+          "step2": "Para recibir correos, conéctate, vuelve a abrir esta bandeja y copia su URL de webhook.",
+          "step3": "En Postmark, configúrala como el Inbound Webhook de tu servidor e incluye el contenido sin procesar del correo."
+        },
+        "brevo": {
+          "step1": "Usa tu login SMTP de Brevo y una clave SMTP como contraseña.",
+          "step2": "Para recibir correos, conéctate, vuelve a abrir esta bandeja y copia su URL de webhook.",
+          "step3": "En Brevo, añade la URL como webhook de análisis de correo entrante para tu dominio de recepción.",
+          "note": "Brevo no envía los archivos adjuntos con el correo entrante, por lo que no se reciben adjuntos."
+        },
+        "amazonSes": {
+          "step1": "Crea credenciales SMTP en la consola de Amazon SES. Son distintas de tus claves de acceso de AWS.",
+          "step2": "Usa el endpoint SMTP de tu región de SES como host y verifica la dirección del remitente.",
+          "step3": "Introduce el usuario y la contraseña SMTP de la consola.",
+          "note": "Esta bandeja solo puede enviar correos."
+        },
+        "other": {
+          "step1": "Pregunta a tu proveedor de correo por el host y el puerto SMTP. El puerto 587 usa STARTTLS y el 465 usa SSL.",
+          "step2": "Para recibir correos, pregunta también por el host y el puerto IMAP (normalmente 993) y activa Recibir correos más abajo."
+        }
+      }
     }
   },
   "botSimulator": {

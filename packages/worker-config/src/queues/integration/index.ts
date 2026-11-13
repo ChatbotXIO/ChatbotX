@@ -42,6 +42,7 @@ export * from "./ai-handover-bulk-job-ids"
 export * from "./coexist-job-ids"
 export * from "./contact-scan-job-ids"
 export * from "./flow-response-files"
+export * from "./smtp-job-ids"
 
 export const IntegrationJobAction = {
   sendFlow: "sendFlow",
@@ -78,6 +79,7 @@ export const IntegrationJobAction = {
   coexistWhatsappBuffer: "coexistWhatsappBuffer",
   coexistWhatsappFlush: "coexistWhatsappFlush",
   coexistMessengerSync: "coexistMessengerSync",
+  pollSmtpInbox: "pollSmtpInbox",
   coexistInstagramSync: "coexistInstagramSync",
   coexistAttachmentDownload: "coexistAttachmentDownload",
   adsAutomaticEvent: "adsAutomaticEvent",
@@ -641,6 +643,15 @@ export type IntegrationJobCoexistWhatsappFlush = {
   data: {
     runId?: string
     phoneNumberId: string
+  }
+}
+
+/** Reads new mail for one IMAP-enabled SMTP inbox and enqueues it as incoming messages. */
+export type IntegrationJobPollSmtpInbox = {
+  type: typeof IntegrationJobAction.pollSmtpInbox
+  data: {
+    integrationId: string
+    workspaceId: string
   }
 }
 
@@ -1496,6 +1507,7 @@ export type IntegrationJobData =
   | IntegrationJobCoexistWhatsappBuffer
   | IntegrationJobCoexistWhatsappFlush
   | IntegrationJobCoexistMessengerSync
+  | IntegrationJobPollSmtpInbox
   | IntegrationJobCoexistInstagramSync
   | IntegrationJobCoexistAttachmentDownload
   | IntegrationJobAdsAutomaticEvent

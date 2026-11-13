@@ -6321,11 +6321,102 @@
   },
   "smtp": {
     "setting": {
-      "description": "E-postaları SMTP sunucunuzu kullanarak gönderin.",
+      "description": "SMTP sunucunuz, bir IMAP posta kutusu veya gelen webhook üzerinden e-posta gönderin ve alın.",
       "label": "(E-posta) SMTP"
     },
     "errors": {
-      "connectionFailed": "SMTP sunucusuna bağlanılamıyor. Lütfen bilgilerinizi kontrol edip tekrar deneyin."
+      "connectionFailed": "SMTP sunucusuna bağlanılamıyor. Lütfen bilgilerinizi kontrol edip tekrar deneyin.",
+      "imapConnectionFailed": "IMAP posta kutusuna bağlanılamadı. Sunucuyu, kimlik bilgilerini ve posta kutusu adını kontrol edip tekrar deneyin."
+    },
+    "guide": {
+      "trigger": "Kurulum kılavuzu: {provider}",
+      "openDocs": "{provider} belgelerini aç",
+      "receiveImap": "E-posta al",
+      "receiveImapDescription": "Bu posta kutusunu her dakika kontrol eder ve her yeni e-posta için bir konuşma açar. Yalnızca bunu açtıktan sonra gelen e-postalar içe aktarılır.",
+      "imapHost": "IMAP sunucusu",
+      "imapPort": "IMAP bağlantı noktası",
+      "relayReceive": "Bu sağlayıcı yalnızca e-posta gönderir. Yanıtları almak için sağlayıcının gelen e-posta ayrıştırmasını bir webhook URL'sine yönlendirin.",
+      "sendOnly": "Amazon SES e-postaları SNS üzerinden alır ve bu burada desteklenmez. Bu gelen kutusu yalnızca e-posta gönderebilir.",
+      "webhook": {
+        "title": "Gelen webhook URL'si",
+        "hint": "Bu URL'yi sağlayıcınızın gelen e-posta ayarlarına yapıştırın. URL'ye sahip herkes bu gelen kutusuna e-posta ekleyebilir, bu yüzden onu bir parola gibi koruyun.",
+        "saveFirst": "Önce bağlanın, ardından webhook URL'sini almak için bu gelen kutusunu yeniden açın.",
+        "show": "Webhook URL'sini göster",
+        "rotate": "URL'yi yenile",
+        "copied": "Webhook URL'si kopyalandı",
+        "failed": "Webhook URL'si yüklenemedi. Lütfen tekrar deneyin."
+      },
+      "status": {
+        "title": "Durum",
+        "sending": "Gönderim",
+        "receivingImap": "Alım: IMAP",
+        "receivingWebhook": "Alım: webhook",
+        "receivingOff": "Alım: kapalı",
+        "lastPolled": "Son kontrol: {time}",
+        "neverPolled": "Henüz kontrol edilmedi",
+        "error": "Son hata: {error}"
+      },
+      "errors": {
+        "title": "Sık karşılaşılan hatalar",
+        "authFailed": "535 veya kimlik doğrulama başarısız: normal hesap parolanızı değil, bir uygulama parolası kullanın.",
+        "timeout": "Zaman aşımı: 587 (STARTTLS) yerine 465 (SSL) bağlantı noktasını deneyin ve sunucunuzun giden bağlantılara izin verdiğini kontrol edin.",
+        "imap": "IMAP girişi başarısız: posta kutusu ayarlarında IMAP'i açın ve aynı uygulama parolasını kullanın."
+      },
+      "providers": {
+        "google": {
+          "step1": "Google hesabı için 2 Adımlı Doğrulama'yı açın.",
+          "step2": "Bir Uygulama Şifresi oluşturun (Google Hesabı > Güvenlik > Uygulama şifreleri).",
+          "step3": "Kullanıcı adı olarak tam Gmail adresini, parola olarak Uygulama Şifresini girin.",
+          "step4": "E-posta almak için Gmail'de IMAP'i açın (Ayarlar > Yönlendirme ve POP/IMAP) ve aşağıdaki E-posta al seçeneğini etkinleştirin."
+        },
+        "outlook": {
+          "step1": "Microsoft hesabı için iki adımlı doğrulamayı açın.",
+          "step2": "Microsoft hesabınızın güvenlik ayarlarında bir uygulama parolası oluşturun.",
+          "step3": "Kullanıcı adı olarak tam adresi, parola olarak uygulama parolasını kullanın.",
+          "note": "Microsoft, Exchange Online için temel kimlik doğrulamayı kaldırıyor. Bağlantı reddedilirse kuruluşunuz bunu kapatmış olabilir."
+        },
+        "yahoo": {
+          "step1": "Yahoo hesabınızın güvenlik ayarlarında iki adımlı doğrulamayı açın.",
+          "step2": "Bu bağlantı için bir uygulama parolası oluşturun.",
+          "step3": "Kullanıcı adı olarak Yahoo adresinizi, parola olarak uygulama parolasını kullanın."
+        },
+        "zoho": {
+          "step1": "Zoho hesabınız için iki faktörlü kimlik doğrulamayı açın.",
+          "step2": "Uygulamaya özel bir parola oluşturun.",
+          "step3": "Kullanıcı adı olarak Zoho adresinizi, parola olarak bu parolayı kullanın. Zoho Mail ayarlarında IMAP etkin olmalıdır."
+        },
+        "sendgrid": {
+          "step1": "Mail Send iznine sahip bir API anahtarı oluşturun. Kullanıcı adı olarak apikey, parola olarak anahtarı kullanın.",
+          "step2": "E-posta almak için bağlanın, ardından bu gelen kutusunu yeniden açın ve webhook URL'sini kopyalayın.",
+          "step3": "SendGrid'de URL'yi Settings > Inbound Parse altına ekleyin ve \"POST the raw, full MIME message\" seçeneğini işaretleyin."
+        },
+        "mailgun": {
+          "step1": "Gönderim alan adınızın SMTP kimlik bilgilerini kullanın (Sending > Domain settings > SMTP credentials).",
+          "step2": "E-posta almak için bağlanın, ardından bu gelen kutusunu yeniden açın ve webhook URL'sini kopyalayın.",
+          "step3": "Mailgun'da URL'ye yönlendiren bir alım rotası oluşturun."
+        },
+        "postmark": {
+          "step1": "Sunucunuzun API belirtecini hem kullanıcı adı hem de parola olarak kullanın.",
+          "step2": "E-posta almak için bağlanın, ardından bu gelen kutusunu yeniden açın ve webhook URL'sini kopyalayın.",
+          "step3": "Postmark'ta bunu sunucunuzun Inbound Webhook'u olarak ayarlayın ve ham e-posta içeriğini dahil edin."
+        },
+        "brevo": {
+          "step1": "Brevo SMTP girişinizi ve parola olarak bir SMTP anahtarını kullanın.",
+          "step2": "E-posta almak için bağlanın, ardından bu gelen kutusunu yeniden açın ve webhook URL'sini kopyalayın.",
+          "step3": "Brevo'da URL'yi alım alan adınız için gelen e-posta ayrıştırma webhook'u olarak ekleyin.",
+          "note": "Brevo, gelen e-postayla birlikte ekleri göndermez, bu nedenle ekler alınmaz."
+        },
+        "amazonSes": {
+          "step1": "Amazon SES konsolunda SMTP kimlik bilgileri oluşturun. Bunlar AWS erişim anahtarlarınızdan farklıdır.",
+          "step2": "Sunucu olarak SES bölgenizin SMTP uç noktasını kullanın ve gönderen adresini doğrulayın.",
+          "step3": "Konsoldaki SMTP kullanıcı adını ve parolasını girin.",
+          "note": "Bu gelen kutusu yalnızca e-posta gönderebilir."
+        },
+        "other": {
+          "step1": "E-posta sağlayıcınızdan SMTP sunucusunu ve bağlantı noktasını isteyin. 587 numaralı bağlantı noktası STARTTLS, 465 ise SSL kullanır.",
+          "step2": "E-posta almak için IMAP sunucusunu ve bağlantı noktasını da isteyin (genellikle 993), ardından aşağıdaki E-posta al seçeneğini açın."
+        }
+      }
     }
   },
   "botSimulator": {

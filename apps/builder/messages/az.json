@@ -7055,11 +7055,102 @@
   },
   "smtp": {
     "setting": {
-      "description": "SMTP serveriniz vasitəsilə e-poçt göndərin.",
+      "description": "E-poçtu SMTP serveriniz, IMAP poçt qutusu və ya daxil olan webhook vasitəsilə göndərin və qəbul edin.",
       "label": "(E-poçt) SMTP"
     },
     "errors": {
-      "connectionFailed": "SMTP serverinə qoşulmaq mümkün deyil. Giriş məlumatlarınızı yoxlayıb yenidən cəhd edin."
+      "connectionFailed": "SMTP serverinə qoşulmaq mümkün deyil. Giriş məlumatlarınızı yoxlayıb yenidən cəhd edin.",
+      "imapConnectionFailed": "IMAP poçt qutusuna qoşulmaq mümkün olmadı. Host, giriş məlumatları və poçt qutusunun adını yoxlayıb yenidən cəhd edin."
+    },
+    "guide": {
+      "trigger": "Quraşdırma bələdçisi: {provider}",
+      "openDocs": "{provider} sənədlərini aç",
+      "receiveImap": "E-poçt qəbul et",
+      "receiveImapDescription": "Bu poçt qutusu hər dəqiqə yoxlanılır və hər yeni e-poçt üçün söhbət açılır. Yalnız bunu aktiv etdikdən sonra gələn məktublar idxal olunur.",
+      "imapHost": "IMAP hostu",
+      "imapPort": "IMAP portu",
+      "relayReceive": "Bu provayder yalnız məktub göndərir. Cavabları qəbul etmək üçün onun daxil olan məktubların təhlilini webhook URL-inə yönləndirin.",
+      "sendOnly": "Amazon SES məktubları SNS vasitəsilə qəbul edir, bu isə burada dəstəklənmir. Bu gələnlər qutusu yalnız e-poçt göndərə bilər.",
+      "webhook": {
+        "title": "Daxil olan webhook URL-i",
+        "hint": "Bu URL-i provayderinizin daxil olan məktub ayarlarına yapışdırın. Ona sahib olan hər kəs bu gələnlər qutusuna məktub əlavə edə bilər, ona görə də onunla parol kimi davranın.",
+        "saveFirst": "Əvvəlcə qoşulun, sonra webhook URL-ni almaq üçün bu gələnlər qutusunu yenidən açın.",
+        "show": "Webhook URL-ni göstər",
+        "rotate": "URL-i yenilə",
+        "copied": "Webhook URL kopyalandı",
+        "failed": "Webhook URL-ni yükləmək mümkün olmadı. Yenidən cəhd edin."
+      },
+      "status": {
+        "title": "Status",
+        "sending": "Göndərmə",
+        "receivingImap": "Qəbul: IMAP",
+        "receivingWebhook": "Qəbul: webhook",
+        "receivingOff": "Qəbul: söndürülüb",
+        "lastPolled": "Son yoxlama {time}",
+        "neverPolled": "Hələ yoxlanılmayıb",
+        "error": "Son xəta: {error}"
+      },
+      "errors": {
+        "title": "Ümumi xətalar",
+        "authFailed": "535 və ya autentifikasiya uğursuz oldu: adi hesab parolunuzu deyil, tətbiq parolunu istifadə edin.",
+        "timeout": "Vaxt aşımı: 587 (STARTTLS) əvəzinə 465 (SSL) portunu sınayın və hostunuzun çıxan bağlantılara icazə verdiyini yoxlayın.",
+        "imap": "IMAP girişi uğursuz oldu: poçt qutusu ayarlarında IMAP-ı aktiv edin və eyni tətbiq parolunu istifadə edin."
+      },
+      "providers": {
+        "google": {
+          "step1": "Google hesabı üçün 2 addımlı doğrulamanı aktiv edin.",
+          "step2": "Tətbiq parolu yaradın (Google Hesabı > Təhlükəsizlik > Tətbiq parolları).",
+          "step3": "İstifadəçi adı kimi tam Gmail ünvanını, parol kimi isə tətbiq parolunu daxil edin.",
+          "step4": "E-poçt qəbul etmək üçün Gmail-də IMAP-ı aktiv edin (Ayarlar > Yönləndirmə və POP/IMAP) və aşağıda E-poçt qəbul et seçimini işə salın."
+        },
+        "outlook": {
+          "step1": "Microsoft hesabı üçün iki addımlı doğrulamanı aktiv edin.",
+          "step2": "Microsoft hesabınızın təhlükəsizlik ayarlarında tətbiq parolu yaradın.",
+          "step3": "İstifadəçi adı kimi tam ünvanı, parol kimi isə tətbiq parolunu istifadə edin.",
+          "note": "Microsoft Exchange Online üçün əsas autentifikasiyanı ləğv edir. Bağlantı rədd edilərsə, təşkilatınız onu söndürmüş ola bilər."
+        },
+        "yahoo": {
+          "step1": "Yahoo hesabınızın təhlükəsizlik ayarlarında iki addımlı doğrulamanı aktiv edin.",
+          "step2": "Bu bağlantı üçün tətbiq parolu yaradın.",
+          "step3": "İstifadəçi adı kimi Yahoo ünvanınızı, parol kimi isə tətbiq parolunu istifadə edin."
+        },
+        "zoho": {
+          "step1": "Zoho hesabınız üçün iki faktorlu autentifikasiyanı aktiv edin.",
+          "step2": "Tətbiqə xas parol yaradın.",
+          "step3": "İstifadəçi adı kimi Zoho ünvanınızı, parol kimi isə həmin parolu istifadə edin. IMAP Zoho Mail ayarlarında aktiv edilməlidir."
+        },
+        "sendgrid": {
+          "step1": "Mail Send icazəsi olan API açarı yaradın. İstifadəçi adı kimi apikey, parol kimi isə açarı istifadə edin.",
+          "step2": "E-poçt qəbul etmək üçün qoşulun, sonra bu gələnlər qutusunu yenidən açın və webhook URL-ni kopyalayın.",
+          "step3": "SendGrid-də URL-i Settings > Inbound Parse bölməsinə əlavə edin və \"POST the raw, full MIME message\" seçimini işarələyin."
+        },
+        "mailgun": {
+          "step1": "Göndərmə domeninizin SMTP məlumatlarını istifadə edin (Sending > Domain settings > SMTP credentials).",
+          "step2": "E-poçt qəbul etmək üçün qoşulun, sonra bu gələnlər qutusunu yenidən açın və webhook URL-ni kopyalayın.",
+          "step3": "Mailgun-da həmin URL-ə yönləndirən qəbul marşrutu yaradın."
+        },
+        "postmark": {
+          "step1": "Serverinizin API tokenini həm istifadəçi adı, həm də parol kimi istifadə edin.",
+          "step2": "E-poçt qəbul etmək üçün qoşulun, sonra bu gələnlər qutusunu yenidən açın və webhook URL-ni kopyalayın.",
+          "step3": "Postmark-da onu serverinizin Inbound Webhook-u kimi təyin edin və xam e-poçt məzmununu daxil edin."
+        },
+        "brevo": {
+          "step1": "Brevo SMTP loginini və parol kimi SMTP açarını istifadə edin.",
+          "step2": "E-poçt qəbul etmək üçün qoşulun, sonra bu gələnlər qutusunu yenidən açın və webhook URL-ni kopyalayın.",
+          "step3": "Brevo-da URL-i qəbul domeniniz üçün daxil olan məktubların təhlili webhook-u kimi əlavə edin.",
+          "note": "Brevo daxil olan məktublarla əlavələri göndərmir, buna görə əlavələr qəbul edilmir."
+        },
+        "amazonSes": {
+          "step1": "Amazon SES konsolunda SMTP məlumatları yaradın. Onlar AWS giriş açarlarınızdan fərqlənir.",
+          "step2": "Host kimi SES regionunuzun SMTP son nöqtəsini istifadə edin və göndərən ünvanı doğrulayın.",
+          "step3": "Konsoldakı SMTP istifadəçi adını və parolunu daxil edin.",
+          "note": "Bu gələnlər qutusu yalnız e-poçt göndərə bilər."
+        },
+        "other": {
+          "step1": "E-poçt provayderinizdən SMTP host və portunu soruşun. 587 portu STARTTLS, 465 isə SSL istifadə edir.",
+          "step2": "E-poçt qəbul etmək üçün IMAP host və portunu da soruşun (adətən 993), sonra aşağıda E-poçt qəbul et seçimini işə salın."
+        }
+      }
     }
   },
   "botSimulator": {

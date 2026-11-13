@@ -222,6 +222,47 @@ const recordServiceSent = async (props: {
   }
 }
 
+/**
+ * An email reply threads under the contact's latest inbound mail (subject,
+ * `In-Reply-To`, `References`). The thread headers live on the inbound message,
+ * not on the agent's outgoing one, so they are attached here. An explicit
+ * `contentAttributes.email` on the outgoing message (e.g. a composer subject)
+ * wins over the inherited values.
+ */
+async function withEmailThread<
+  T extends { contentAttributes?: unknown },
+>(props: {
+  message: T
+  conversation: Pick<
+    ConversationModel,
+    "id" | "workspaceId" | "lastActivityAt" | "createdAt"
+  >
+  contactInboxId: string
+}): Promise<T> {
+  const thread = await conversationService.findLastIncomingEmailThread({
+    conversation: props.conversation,
+    contactInboxId: props.contactInboxId,
+  })
+  if (!thread) {
+    return props.message
+  }
+  const attributes = (props.message.contentAttributes ?? {}) as Record<
+    string,
+    unknown
+  >
+  const explicit =
+    typeof attributes.email === "object" && attributes.email !== null
+      ? (attributes.email as Record<string, unknown>)
+      : {}
+  return {
+    ...props.message,
+    contentAttributes: {
+      ...attributes,
+      email: { ...thread, ...explicit },
+    },
+  }
+}
+
 export async function sendMessageToChannel(
   data: ChatJobSendChannelMessage["data"],
   attemptsMade = 0,
@@ -312,6 +353,14 @@ export async function sendMessageToChannel(
             null,
         },
       }
+    }
+
+    if (!isComment && contactInbox.channel === channelTypes.enum.smtp) {
+      handlerMessage = await withEmailThread({
+        message: handlerMessage,
+        conversation,
+        contactInboxId: contactInbox.id,
+      })
     }
 
     const handlerData = {

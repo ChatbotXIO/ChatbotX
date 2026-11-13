@@ -6321,11 +6321,102 @@
   },
   "smtp": {
     "setting": {
-      "description": "Lähetä sähköposteja SMTP-palvelimellasi.",
+      "description": "Lähetä ja vastaanota sähköpostia SMTP-palvelimesi, IMAP-postilaatikon tai saapuvan webhookin kautta.",
       "label": "(Sähköposti) SMTP"
     },
     "errors": {
-      "connectionFailed": "SMTP-palvelimeen ei voi muodostaa yhteyttä. Tarkista tunnistetietosi ja yritä uudelleen."
+      "connectionFailed": "SMTP-palvelimeen ei voi muodostaa yhteyttä. Tarkista tunnistetietosi ja yritä uudelleen.",
+      "imapConnectionFailed": "IMAP-postilaatikkoon ei saada yhteyttä. Tarkista palvelin, tunnukset ja postilaatikon nimi ja yritä uudelleen."
+    },
+    "guide": {
+      "trigger": "Käyttöönotto-opas: {provider}",
+      "openDocs": "Avaa {provider}-dokumentaatio",
+      "receiveImap": "Vastaanota sähköpostia",
+      "receiveImapDescription": "Tämä postilaatikko tarkistetaan minuutin välein ja jokaisesta uudesta sähköpostista avataan keskustelu. Vain sen jälkeen saapuneet viestit tuodaan, kun otat tämän käyttöön.",
+      "imapHost": "IMAP-palvelin",
+      "imapPort": "IMAP-portti",
+      "relayReceive": "Tämä palveluntarjoaja vain lähettää sähköpostia. Voit vastaanottaa vastauksia ohjaamalla sen saapuvan postin jäsennyksen webhook-URL-osoitteeseen.",
+      "sendOnly": "Amazon SES vastaanottaa sähköpostia SNS:n kautta, jota ei tueta täällä. Tämä saapuneet-kansio voi vain lähettää sähköpostia.",
+      "webhook": {
+        "title": "Saapuvan webhookin URL",
+        "hint": "Liitä tämä URL palveluntarjoajasi saapuvan postin asetuksiin. Kuka tahansa, jolla se on, voi lisätä viestejä tähän saapuneet-kansioon, joten käsittele sitä kuin salasanaa.",
+        "saveFirst": "Yhdistä ensin ja avaa sitten tämä saapuneet-kansio uudelleen saadaksesi webhook-URL-osoitteen.",
+        "show": "Näytä webhook-URL",
+        "rotate": "Vaihda URL",
+        "copied": "Webhook-URL kopioitu",
+        "failed": "Webhook-URL-osoitteen lataaminen epäonnistui. Yritä uudelleen."
+      },
+      "status": {
+        "title": "Tila",
+        "sending": "Lähetys",
+        "receivingImap": "Vastaanotto: IMAP",
+        "receivingWebhook": "Vastaanotto: webhook",
+        "receivingOff": "Vastaanotto: pois päältä",
+        "lastPolled": "Viimeksi tarkistettu {time}",
+        "neverPolled": "Ei vielä tarkistettu",
+        "error": "Viimeisin virhe: {error}"
+      },
+      "errors": {
+        "title": "Yleiset virheet",
+        "authFailed": "535 tai todennus epäonnistui: käytä sovellussalasanaa, älä tilisi tavallista salasanaa.",
+        "timeout": "Aikakatkaisu: kokeile porttia 465 (SSL) portin 587 (STARTTLS) sijaan ja tarkista, että palvelimesi sallii lähtevät yhteydet.",
+        "imap": "IMAP-kirjautuminen epäonnistui: ota IMAP käyttöön postilaatikon asetuksissa ja käytä samaa sovellussalasanaa."
+      },
+      "providers": {
+        "google": {
+          "step1": "Ota kaksivaiheinen vahvistus käyttöön Google-tilille.",
+          "step2": "Luo sovellussalasana (Google-tili > Suojaus > Sovellussalasanat).",
+          "step3": "Anna koko Gmail-osoite käyttäjätunnukseksi ja sovellussalasana salasanaksi.",
+          "step4": "Voit vastaanottaa sähköpostia ottamalla IMAPin käyttöön Gmailissa (Asetukset > Välitys ja POP/IMAP) ja kytkemällä alla olevan Vastaanota sähköpostia päälle."
+        },
+        "outlook": {
+          "step1": "Ota kaksivaiheinen vahvistus käyttöön Microsoft-tilille.",
+          "step2": "Luo sovellussalasana Microsoft-tilisi suojausasetuksissa.",
+          "step3": "Käytä koko osoitetta käyttäjätunnuksena ja sovellussalasanaa salasanana.",
+          "note": "Microsoft poistaa perustodennuksen käytöstä Exchange Onlinessa. Jos yhteys evätään, organisaatiosi on voinut poistaa sen käytöstä."
+        },
+        "yahoo": {
+          "step1": "Ota kaksivaiheinen vahvistus käyttöön Yahoo-tilisi suojausasetuksissa.",
+          "step2": "Luo sovellussalasana tätä yhteyttä varten.",
+          "step3": "Käytä Yahoo-osoitettasi käyttäjätunnuksena ja sovellussalasanaa salasanana."
+        },
+        "zoho": {
+          "step1": "Ota kaksivaiheinen todennus käyttöön Zoho-tilillesi.",
+          "step2": "Luo sovelluskohtainen salasana.",
+          "step3": "Käytä Zoho-osoitettasi käyttäjätunnuksena ja tuota salasanaa salasanana. IMAP on otettava käyttöön Zoho Mailin asetuksissa."
+        },
+        "sendgrid": {
+          "step1": "Luo API-avain, jolla on Mail Send -oikeus. Käytä käyttäjätunnuksena apikey ja avainta salasanana.",
+          "step2": "Voit vastaanottaa sähköpostia yhdistämällä, avaamalla tämän saapuneet-kansion uudelleen ja kopioimalla sen webhook-URL-osoitteen.",
+          "step3": "Lisää SendGridissä URL kohtaan Settings > Inbound Parse ja valitse \"POST the raw, full MIME message\"."
+        },
+        "mailgun": {
+          "step1": "Käytä lähetysdomainisi SMTP-tunnuksia (Sending > Domain settings > SMTP credentials).",
+          "step2": "Voit vastaanottaa sähköpostia yhdistämällä, avaamalla tämän saapuneet-kansion uudelleen ja kopioimalla sen webhook-URL-osoitteen.",
+          "step3": "Luo Mailgunissa vastaanottoreitti, joka välittää URL-osoitteeseen."
+        },
+        "postmark": {
+          "step1": "Käytä palvelimesi API-tunnusta sekä käyttäjätunnuksena että salasanana.",
+          "step2": "Voit vastaanottaa sähköpostia yhdistämällä, avaamalla tämän saapuneet-kansion uudelleen ja kopioimalla sen webhook-URL-osoitteen.",
+          "step3": "Aseta Postmarkissa se palvelimesi Inbound Webhookiksi ja sisällytä raakasähköpostin sisältö."
+        },
+        "brevo": {
+          "step1": "Käytä Brevon SMTP-kirjautumistunnusta ja SMTP-avainta salasanana.",
+          "step2": "Voit vastaanottaa sähköpostia yhdistämällä, avaamalla tämän saapuneet-kansion uudelleen ja kopioimalla sen webhook-URL-osoitteen.",
+          "step3": "Lisää Brevossa URL saapuvan postin jäsennyksen webhookiksi vastaanottodomainillesi.",
+          "note": "Brevo ei lähetä liitteitä saapuvan postin mukana, joten liitteitä ei vastaanoteta."
+        },
+        "amazonSes": {
+          "step1": "Luo SMTP-tunnukset Amazon SES -konsolissa. Ne eroavat AWS-käyttöavaimistasi.",
+          "step2": "Käytä SES-alueesi SMTP-päätepistettä palvelimena ja vahvista lähettäjän osoite.",
+          "step3": "Anna konsolin SMTP-käyttäjätunnus ja salasana.",
+          "note": "Tämä saapuneet-kansio voi vain lähettää sähköpostia."
+        },
+        "other": {
+          "step1": "Kysy sähköpostipalveluntarjoajaltasi SMTP-palvelin ja -portti. Portti 587 käyttää STARTTLS:ää ja 465 SSL:ää.",
+          "step2": "Voit vastaanottaa sähköpostia kysymällä myös IMAP-palvelimen ja -portin (yleensä 993) ja kytkemällä sitten alla olevan Vastaanota sähköpostia päälle."
+        }
+      }
     }
   },
   "botSimulator": {

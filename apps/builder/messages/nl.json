@@ -6321,11 +6321,102 @@
   },
   "smtp": {
     "setting": {
-      "description": "Verzend e-mails via je SMTP-server.",
+      "description": "Verstuur en ontvang e-mail via je SMTP-server, een IMAP-mailbox of een inkomende webhook.",
       "label": "(E-mail) SMTP"
     },
     "errors": {
-      "connectionFailed": "Kan geen verbinding maken met de SMTP-server. Controleer je inloggegevens en probeer het opnieuw."
+      "connectionFailed": "Kan geen verbinding maken met de SMTP-server. Controleer je inloggegevens en probeer het opnieuw.",
+      "imapConnectionFailed": "Kan geen verbinding maken met de IMAP-mailbox. Controleer de host, inloggegevens en mailboxnaam en probeer het opnieuw."
+    },
+    "guide": {
+      "trigger": "Installatiegids: {provider}",
+      "openDocs": "Documentatie van {provider} openen",
+      "receiveImap": "E-mail ontvangen",
+      "receiveImapDescription": "Controleer deze mailbox elke minuut en open voor elke nieuwe e-mail een gesprek. Alleen e-mail die binnenkomt nadat je dit inschakelt, wordt geïmporteerd.",
+      "imapHost": "IMAP-host",
+      "imapPort": "IMAP-poort",
+      "relayReceive": "Deze provider verstuurt alleen e-mail. Om antwoorden te ontvangen, richt je de inkomende verwerking van de provider op een webhook-URL.",
+      "sendOnly": "Amazon SES ontvangt e-mail via SNS, wat hier niet wordt ondersteund. Deze inbox kan alleen e-mail verzenden.",
+      "webhook": {
+        "title": "Inkomende webhook-URL",
+        "hint": "Plak deze URL in de instellingen voor inkomende e-mail van je provider. Iedereen met deze URL kan e-mail aan deze inbox toevoegen, dus behandel hem als een wachtwoord.",
+        "saveFirst": "Maak eerst verbinding en open deze inbox daarna opnieuw om de webhook-URL te krijgen.",
+        "show": "Webhook-URL tonen",
+        "rotate": "URL vernieuwen",
+        "copied": "Webhook-URL gekopieerd",
+        "failed": "Kan de webhook-URL niet laden. Probeer het opnieuw."
+      },
+      "status": {
+        "title": "Status",
+        "sending": "Verzenden",
+        "receivingImap": "Ontvangen: IMAP",
+        "receivingWebhook": "Ontvangen: webhook",
+        "receivingOff": "Ontvangen: uit",
+        "lastPolled": "Laatst gecontroleerd {time}",
+        "neverPolled": "Nog niet gecontroleerd",
+        "error": "Laatste fout: {error}"
+      },
+      "errors": {
+        "title": "Veelvoorkomende fouten",
+        "authFailed": "535 of authenticatie mislukt: gebruik een app-wachtwoord, niet het gewone wachtwoord van je account.",
+        "timeout": "Time-out: probeer poort 465 (SSL) in plaats van 587 (STARTTLS) en controleer of je host uitgaande verbindingen toestaat.",
+        "imap": "IMAP-aanmelding mislukt: schakel IMAP in bij de mailboxinstellingen en gebruik hetzelfde app-wachtwoord."
+      },
+      "providers": {
+        "google": {
+          "step1": "Schakel tweestapsverificatie in voor het Google-account.",
+          "step2": "Maak een app-wachtwoord aan (Google-account > Beveiliging > App-wachtwoorden).",
+          "step3": "Vul het volledige Gmail-adres in als gebruikersnaam en het app-wachtwoord als wachtwoord.",
+          "step4": "Om e-mail te ontvangen, schakel je IMAP in bij Gmail (Instellingen > Doorsturen en POP/IMAP) en schakel je hieronder E-mail ontvangen in."
+        },
+        "outlook": {
+          "step1": "Schakel tweestapsverificatie in voor het Microsoft-account.",
+          "step2": "Maak een app-wachtwoord aan in de beveiligingsinstellingen van je Microsoft-account.",
+          "step3": "Gebruik het volledige adres als gebruikersnaam en het app-wachtwoord als wachtwoord.",
+          "note": "Microsoft schaft basisverificatie voor Exchange Online af. Als de verbinding wordt geweigerd, heeft je organisatie dit mogelijk uitgeschakeld."
+        },
+        "yahoo": {
+          "step1": "Schakel tweestapsverificatie in bij de beveiligingsinstellingen van je Yahoo-account.",
+          "step2": "Genereer een app-wachtwoord voor deze verbinding.",
+          "step3": "Gebruik je Yahoo-adres als gebruikersnaam en het app-wachtwoord als wachtwoord."
+        },
+        "zoho": {
+          "step1": "Schakel tweefactorauthenticatie in voor je Zoho-account.",
+          "step2": "Maak een toepassingsspecifiek wachtwoord aan.",
+          "step3": "Gebruik je Zoho-adres als gebruikersnaam en dat wachtwoord als wachtwoord. IMAP moet zijn ingeschakeld in de Zoho Mail-instellingen."
+        },
+        "sendgrid": {
+          "step1": "Maak een API-sleutel aan met de machtiging Mail Send. Gebruik de gebruikersnaam apikey en de sleutel als wachtwoord.",
+          "step2": "Om e-mail te ontvangen, maak je verbinding, open je daarna deze inbox opnieuw en kopieer je de webhook-URL.",
+          "step3": "Voeg in SendGrid de URL toe onder Settings > Inbound Parse en vink \"POST the raw, full MIME message\" aan."
+        },
+        "mailgun": {
+          "step1": "Gebruik de SMTP-inloggegevens van je verzenddomein (Sending > Domain settings > SMTP credentials).",
+          "step2": "Om e-mail te ontvangen, maak je verbinding, open je daarna deze inbox opnieuw en kopieer je de webhook-URL.",
+          "step3": "Maak in Mailgun een ontvangstroute die naar de URL doorstuurt."
+        },
+        "postmark": {
+          "step1": "Gebruik het API-token van je server als zowel gebruikersnaam als wachtwoord.",
+          "step2": "Om e-mail te ontvangen, maak je verbinding, open je daarna deze inbox opnieuw en kopieer je de webhook-URL.",
+          "step3": "Stel de URL in Postmark in als Inbound Webhook van je server en neem de ruwe e-mailinhoud op."
+        },
+        "brevo": {
+          "step1": "Gebruik je Brevo SMTP-login en een SMTP-sleutel als wachtwoord.",
+          "step2": "Om e-mail te ontvangen, maak je verbinding, open je daarna deze inbox opnieuw en kopieer je de webhook-URL.",
+          "step3": "Voeg in Brevo de URL toe als webhook voor inkomende verwerking van je ontvangstdomein.",
+          "note": "Brevo stuurt geen bijlagen mee met inkomende e-mail, dus bijlagen worden niet ontvangen."
+        },
+        "amazonSes": {
+          "step1": "Maak SMTP-inloggegevens aan in de Amazon SES-console. Deze verschillen van je AWS-toegangssleutels.",
+          "step2": "Gebruik het SMTP-eindpunt van je SES-regio als host en verifieer het afzenderadres.",
+          "step3": "Vul de SMTP-gebruikersnaam en het wachtwoord uit de console in.",
+          "note": "Deze inbox kan alleen e-mail verzenden."
+        },
+        "other": {
+          "step1": "Vraag je e-mailhost om de SMTP-host en -poort. Poort 587 gebruikt STARTTLS en 465 gebruikt SSL.",
+          "step2": "Vraag om e-mail te ontvangen ook om de IMAP-host en -poort (meestal 993) en schakel hieronder E-mail ontvangen in."
+        }
+      }
     }
   },
   "botSimulator": {

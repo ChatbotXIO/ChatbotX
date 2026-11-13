@@ -48,6 +48,10 @@ export const allInboxConfigs = {
     label: "Webchat",
     value: "webchat",
   },
+  smtp: {
+    label: "Email",
+    value: "smtp",
+  },
 } as const
 
 export const useInboxes = (
@@ -103,10 +107,7 @@ export const useConfiguredInboxTypeOptions = (options?: {
   return useMemo(() => {
     const inboxTypes = new Set<string>(["omnichannel"])
     for (const inbox of inboxes) {
-      // Ignore SMTP inbox type
-      if (inbox.channel !== channelTypes.enum.smtp) {
-        inboxTypes.add(inbox.channel)
-      }
+      inboxTypes.add(inbox.channel)
     }
 
     return Array.from(inboxTypes)

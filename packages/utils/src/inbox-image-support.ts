@@ -41,7 +41,7 @@ export const INBOX_IMAGE_SUPPORT: Record<
   api: { message: 10, comment: 0, privateReply: 0 },
   omnichannel: { message: 10, comment: 0, privateReply: 0 },
   threads: { message: 0, comment: 0, privateReply: 0 },
-  smtp: { message: 0, comment: 0, privateReply: 0 },
+  smtp: { message: 10, comment: 0, privateReply: 0 },
 }
 
 export type InboxImageCheckResult =

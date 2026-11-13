@@ -267,6 +267,8 @@
     "integration-sendgrid/disconnect.action:disconnectSendGridAction": "private:no public surface yet (UI-only, not yet audited)",
     "integration-smtp/create-smtp.action:createSmtpAction": "covered:integration-smtp",
     "integration-smtp/delete-smtp.action:deleteSmtpAction": "covered:integration-smtp",
+    "integration-smtp/get-inbound-webhook.action:getInboundWebhookAction": "covered:integration-smtp",
+    "integration-smtp/rotate-inbound-webhook.action:rotateInboundWebhookAction": "covered:integration-smtp",
     "integration-smtp/update-smtp.action:updateSmtpAction": "covered:integration-smtp",
     "integration-telegram/connect.action:connectTelegramAction": "private:no public surface yet (UI-only, not yet audited)",
     "integration-telegram/disconnect.action:disconnectTelegramAction": "private:no public surface yet (UI-only, not yet audited)",

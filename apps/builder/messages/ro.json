@@ -6321,11 +6321,102 @@
   },
   "smtp": {
     "setting": {
-      "description": "Trimite e-mailuri folosind propriul tău server SMTP.",
+      "description": "Trimite și primește e-mailuri prin serverul tău SMTP, o căsuță poștală IMAP sau un webhook de intrare.",
       "label": "(E-mail) SMTP"
     },
     "errors": {
-      "connectionFailed": "Nu se poate conecta la serverul SMTP. Te rugăm să verifici credențialele și să încerci din nou."
+      "connectionFailed": "Nu se poate conecta la serverul SMTP. Te rugăm să verifici credențialele și să încerci din nou.",
+      "imapConnectionFailed": "Nu se poate realiza conexiunea la căsuța IMAP. Verificați gazda, datele de autentificare și numele căsuței, apoi încercați din nou."
+    },
+    "guide": {
+      "trigger": "Ghid de configurare: {provider}",
+      "openDocs": "Deschide documentația {provider}",
+      "receiveImap": "Primește e-mailuri",
+      "receiveImapDescription": "Verifică această căsuță poștală în fiecare minut și deschide o conversație pentru fiecare e-mail nou. Sunt importate doar e-mailurile care sosesc după ce activezi această opțiune.",
+      "imapHost": "Gazdă IMAP",
+      "imapPort": "Port IMAP",
+      "relayReceive": "Acest furnizor doar trimite e-mailuri. Pentru a primi răspunsuri, îndreaptă procesarea e-mailurilor primite a furnizorului către un URL de webhook.",
+      "sendOnly": "Amazon SES primește e-mailuri prin SNS, care nu este acceptat aici. Această căsuță de mesaje poate doar să trimită e-mailuri.",
+      "webhook": {
+        "title": "URL webhook de intrare",
+        "hint": "Lipește acest URL în setările de intrare ale furnizorului tău. Oricine îl deține poate adăuga e-mailuri în această căsuță de mesaje, așa că tratează-l ca pe o parolă.",
+        "saveFirst": "Conectează-te mai întâi, apoi deschide din nou această căsuță de mesaje pentru a obține URL-ul webhook.",
+        "show": "Afișează URL-ul webhook",
+        "rotate": "Regenerează URL-ul",
+        "copied": "URL-ul webhook a fost copiat",
+        "failed": "Nu s-a putut încărca URL-ul webhook. Încearcă din nou."
+      },
+      "status": {
+        "title": "Stare",
+        "sending": "Trimitere",
+        "receivingImap": "Primire: IMAP",
+        "receivingWebhook": "Primire: webhook",
+        "receivingOff": "Primire: dezactivată",
+        "lastPolled": "Ultima verificare: {time}",
+        "neverPolled": "Încă neverificat",
+        "error": "Ultima eroare: {error}"
+      },
+      "errors": {
+        "title": "Erori frecvente",
+        "authFailed": "535 sau autentificare eșuată: folosește o parolă de aplicație, nu parola obișnuită a contului.",
+        "timeout": "Timeout: încearcă portul 465 (SSL) în loc de 587 (STARTTLS) și verifică dacă gazda ta permite conexiuni de ieșire.",
+        "imap": "Autentificare IMAP eșuată: activează IMAP în setările căsuței poștale și folosește aceeași parolă de aplicație."
+      },
+      "providers": {
+        "google": {
+          "step1": "Activează verificarea în doi pași pentru contul Google.",
+          "step2": "Creează o parolă de aplicație (Cont Google > Securitate > Parole pentru aplicații).",
+          "step3": "Introdu adresa Gmail completă ca nume de utilizator și parola de aplicație ca parolă.",
+          "step4": "Pentru a primi e-mailuri, activează IMAP în Gmail (Setări > Redirecționare și POP/IMAP) și activează Primește e-mailuri mai jos."
+        },
+        "outlook": {
+          "step1": "Activează verificarea în doi pași pentru contul Microsoft.",
+          "step2": "Creează o parolă de aplicație în setările de securitate ale contului tău Microsoft.",
+          "step3": "Folosește adresa completă ca nume de utilizator și parola de aplicație ca parolă.",
+          "note": "Microsoft renunță la autentificarea de bază pentru Exchange Online. Dacă conexiunea este refuzată, este posibil ca organizația ta să o fi dezactivat."
+        },
+        "yahoo": {
+          "step1": "Activează verificarea în doi pași în setările de securitate ale contului tău Yahoo.",
+          "step2": "Generează o parolă de aplicație pentru această conexiune.",
+          "step3": "Folosește adresa ta Yahoo ca nume de utilizator și parola de aplicație ca parolă."
+        },
+        "zoho": {
+          "step1": "Activează autentificarea în doi factori pentru contul tău Zoho.",
+          "step2": "Creează o parolă specifică aplicației.",
+          "step3": "Folosește adresa ta Zoho ca nume de utilizator și acea parolă ca parolă. IMAP trebuie să fie activat în setările Zoho Mail."
+        },
+        "sendgrid": {
+          "step1": "Creează o cheie API cu permisiunea Mail Send. Folosește numele de utilizator apikey și cheia ca parolă.",
+          "step2": "Pentru a primi e-mailuri, conectează-te, apoi deschide din nou această căsuță de mesaje și copiază URL-ul webhook.",
+          "step3": "În SendGrid, adaugă URL-ul la Settings > Inbound Parse și bifează \"POST the raw, full MIME message\"."
+        },
+        "mailgun": {
+          "step1": "Folosește datele de autentificare SMTP ale domeniului tău de trimitere (Sending > Domain settings > SMTP credentials).",
+          "step2": "Pentru a primi e-mailuri, conectează-te, apoi deschide din nou această căsuță de mesaje și copiază URL-ul webhook.",
+          "step3": "În Mailgun, creează o rută de primire care redirecționează către URL."
+        },
+        "postmark": {
+          "step1": "Folosește tokenul API al serverului tău atât ca nume de utilizator, cât și ca parolă.",
+          "step2": "Pentru a primi e-mailuri, conectează-te, apoi deschide din nou această căsuță de mesaje și copiază URL-ul webhook.",
+          "step3": "În Postmark, setează-l ca Inbound Webhook al serverului tău și include conținutul brut al e-mailului."
+        },
+        "brevo": {
+          "step1": "Folosește datele de autentificare SMTP Brevo și o cheie SMTP drept parolă.",
+          "step2": "Pentru a primi e-mailuri, conectează-te, apoi deschide din nou această căsuță de mesaje și copiază URL-ul webhook.",
+          "step3": "În Brevo, adaugă URL-ul ca webhook de procesare a e-mailurilor primite pentru domeniul tău de primire.",
+          "note": "Brevo nu trimite atașamente împreună cu e-mailurile primite, deci atașamentele nu sunt primite."
+        },
+        "amazonSes": {
+          "step1": "Creează date de autentificare SMTP în consola Amazon SES. Acestea diferă de cheile tale de acces AWS.",
+          "step2": "Folosește endpointul SMTP al regiunii tale SES drept gazdă și verifică adresa expeditorului.",
+          "step3": "Introdu numele de utilizator și parola SMTP din consolă.",
+          "note": "Această căsuță de mesaje poate doar să trimită e-mailuri."
+        },
+        "other": {
+          "step1": "Cere de la furnizorul tău de e-mail gazda și portul SMTP. Portul 587 folosește STARTTLS, iar 465 folosește SSL.",
+          "step2": "Pentru a primi e-mailuri, cere și gazda și portul IMAP (de obicei 993), apoi activează Primește e-mailuri mai jos."
+        }
+      }
     }
   },
   "botSimulator": {

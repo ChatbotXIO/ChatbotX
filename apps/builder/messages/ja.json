@@ -6298,11 +6298,102 @@
   },
   "smtp": {
     "setting": {
-      "description": "SMTPサーバーを使用してメールを送信します。",
+      "description": "SMTPサーバー、IMAPメールボックス、または受信Webhookを使用してメールを送受信します。",
       "label": "（メール）SMTP"
     },
     "errors": {
-      "connectionFailed": "SMTPサーバーに接続できません。認証情報を確認して、もう一度お試しください。"
+      "connectionFailed": "SMTPサーバーに接続できません。認証情報を確認して、もう一度お試しください。",
+      "imapConnectionFailed": "IMAP メールボックスに接続できません。ホスト、認証情報、メールボックス名を確認してから、もう一度お試しください。"
+    },
+    "guide": {
+      "trigger": "セットアップガイド: {provider}",
+      "openDocs": "{provider}のドキュメントを開く",
+      "receiveImap": "メールを受信",
+      "receiveImapDescription": "このメールボックスを1分ごとに確認し、新着メールごとに会話を作成します。オンにした後に届いたメールのみが取り込まれます。",
+      "imapHost": "IMAPホスト",
+      "imapPort": "IMAPポート",
+      "relayReceive": "このプロバイダーは送信専用です。返信を受信するには、受信解析をWebhook URLに向けてください。",
+      "sendOnly": "Amazon SESはSNS経由でメールを受信しますが、ここではサポートされていません。この受信箱では送信のみ可能です。",
+      "webhook": {
+        "title": "受信Webhook URL",
+        "hint": "このURLをプロバイダーの受信設定に貼り付けてください。URLを知っている人は誰でもこの受信箱にメールを追加できるため、パスワードと同様に扱ってください。",
+        "saveFirst": "先に接続してから、この受信箱をもう一度開くとWebhook URLを取得できます。",
+        "show": "Webhook URLを表示",
+        "rotate": "URLをローテーション",
+        "copied": "Webhook URLをコピーしました",
+        "failed": "Webhook URLを読み込めませんでした。もう一度お試しください。"
+      },
+      "status": {
+        "title": "ステータス",
+        "sending": "送信中",
+        "receivingImap": "受信: IMAP",
+        "receivingWebhook": "受信: Webhook",
+        "receivingOff": "受信: オフ",
+        "lastPolled": "最終確認: {time}",
+        "neverPolled": "未確認",
+        "error": "最後のエラー: {error}"
+      },
+      "errors": {
+        "title": "一般的なエラー",
+        "authFailed": "535または認証失敗: 通常のアカウントパスワードではなく、アプリパスワードを使用してください。",
+        "timeout": "タイムアウト: 587 (STARTTLS) の代わりにポート465 (SSL) を試し、ホストが外部への接続を許可していることを確認してください。",
+        "imap": "IMAPログインに失敗: メールボックス設定でIMAPをオンにし、同じアプリパスワードを使用してください。"
+      },
+      "providers": {
+        "google": {
+          "step1": "Googleアカウントで2段階認証プロセスをオンにします。",
+          "step2": "アプリ パスワードを作成します (Googleアカウント > セキュリティ > アプリ パスワード)。",
+          "step3": "ユーザー名にGmailの完全なアドレス、パスワードにアプリ パスワードを入力します。",
+          "step4": "メールを受信するには、GmailでIMAPをオンにし (設定 > 転送とPOP/IMAP)、下の「メールを受信」をオンにします。"
+        },
+        "outlook": {
+          "step1": "Microsoftアカウントで2段階認証をオンにします。",
+          "step2": "Microsoftアカウントのセキュリティ設定でアプリパスワードを作成します。",
+          "step3": "ユーザー名に完全なアドレス、パスワードにアプリパスワードを使用します。",
+          "note": "MicrosoftはExchange Onlineの基本認証を廃止しています。接続が拒否される場合は、組織で無効化されている可能性があります。"
+        },
+        "yahoo": {
+          "step1": "Yahooアカウントのセキュリティ設定で2段階認証をオンにします。",
+          "step2": "この接続用のアプリパスワードを生成します。",
+          "step3": "ユーザー名にYahooアドレス、パスワードにアプリパスワードを使用します。"
+        },
+        "zoho": {
+          "step1": "Zohoアカウントで2要素認証をオンにします。",
+          "step2": "アプリケーション固有のパスワードを作成します。",
+          "step3": "ユーザー名にZohoアドレス、パスワードにそのパスワードを使用します。Zoho Mailの設定でIMAPを有効にする必要があります。"
+        },
+        "sendgrid": {
+          "step1": "Mail Send権限を持つAPIキーを作成します。ユーザー名にapikey、パスワードにそのキーを使用します。",
+          "step2": "メールを受信するには、接続後にこの受信箱をもう一度開き、Webhook URLをコピーします。",
+          "step3": "SendGridで、設定 > Inbound ParseにURLを追加し、\"POST the raw, full MIME message\"にチェックを入れます。"
+        },
+        "mailgun": {
+          "step1": "送信ドメインのSMTP認証情報を使用します (Sending > Domain settings > SMTP credentials)。",
+          "step2": "メールを受信するには、接続後にこの受信箱をもう一度開き、Webhook URLをコピーします。",
+          "step3": "Mailgunで、このURLに転送する受信ルートを作成します。"
+        },
+        "postmark": {
+          "step1": "サーバーのAPIトークンをユーザー名とパスワードの両方に使用します。",
+          "step2": "メールを受信するには、接続後にこの受信箱をもう一度開き、Webhook URLをコピーします。",
+          "step3": "Postmarkで、サーバーのInbound Webhookとして設定し、メールの元の内容を含めます。"
+        },
+        "brevo": {
+          "step1": "BrevoのSMTPログインを使用し、パスワードにはSMTPキーを使用します。",
+          "step2": "メールを受信するには、接続後にこの受信箱をもう一度開き、Webhook URLをコピーします。",
+          "step3": "Brevoで、受信ドメインの受信解析Webhookとして、このURLを追加します。",
+          "note": "Brevoは受信メールの添付ファイルを送信しないため、添付ファイルは受信されません。"
+        },
+        "amazonSes": {
+          "step1": "Amazon SESコンソールでSMTP認証情報を作成します。これはAWSアクセスキーとは異なります。",
+          "step2": "ホストにはSESリージョンのSMTPエンドポイントを使用し、送信元アドレスを検証します。",
+          "step3": "コンソールのSMTPユーザー名とパスワードを入力します。",
+          "note": "この受信箱では送信のみ可能です。"
+        },
+        "other": {
+          "step1": "SMTPホストとポートをメールホストに確認してください。ポート587はSTARTTLS、465はSSLを使用します。",
+          "step2": "メールを受信するには、IMAPホストとポート (通常は993) も確認し、下の「メールを受信」をオンにします。"
+        }
+      }
     }
   },
   "botSimulator": {

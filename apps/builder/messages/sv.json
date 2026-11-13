@@ -7053,11 +7053,102 @@
   },
   "smtp": {
     "errors": {
-      "connectionFailed": "Det går inte att ansluta till SMTP-servern. Kontrollera dina inloggningsuppgifter och försök igen."
+      "connectionFailed": "Det går inte att ansluta till SMTP-servern. Kontrollera dina inloggningsuppgifter och försök igen.",
+      "imapConnectionFailed": "Det går inte att ansluta till IMAP-postlådan. Kontrollera värd, inloggningsuppgifter och postlådans namn och försök igen."
     },
     "setting": {
-      "description": "Skicka e-post med din SMTP-server.",
+      "description": "Skicka och ta emot e-post via din SMTP-server, en IMAP-brevlåda eller en inkommande webhook.",
       "label": "(E-post) SMTP"
+    },
+    "guide": {
+      "trigger": "Installationsguide: {provider}",
+      "openDocs": "Öppna dokumentationen för {provider}",
+      "receiveImap": "Ta emot e-post",
+      "receiveImapDescription": "Kontrollera den här brevlådan varje minut och öppna en konversation för varje ny e-post. Endast e-post som kommer in efter att du aktiverat detta importeras.",
+      "imapHost": "IMAP-värd",
+      "imapPort": "IMAP-port",
+      "relayReceive": "Den här leverantören skickar bara e-post. För att ta emot svar, peka leverantörens inkommande bearbetning mot en webhook-URL.",
+      "sendOnly": "Amazon SES tar emot e-post via SNS, vilket inte stöds här. Den här inkorgen kan bara skicka e-post.",
+      "webhook": {
+        "title": "Inkommande webhook-URL",
+        "hint": "Klistra in den här URL:en i leverantörens inställningar för inkommande e-post. Alla som har den kan lägga till e-post i den här inkorgen, så behandla den som ett lösenord.",
+        "saveFirst": "Anslut först och öppna sedan den här inkorgen igen för att hämta webhook-URL:en.",
+        "show": "Visa webhook-URL",
+        "rotate": "Byt URL",
+        "copied": "Webhook-URL kopierad",
+        "failed": "Det gick inte att läsa in webhook-URL:en. Försök igen."
+      },
+      "status": {
+        "title": "Status",
+        "sending": "Skickar",
+        "receivingImap": "Tar emot: IMAP",
+        "receivingWebhook": "Tar emot: webhook",
+        "receivingOff": "Tar emot: av",
+        "lastPolled": "Senast kontrollerad {time}",
+        "neverPolled": "Inte kontrollerad än",
+        "error": "Senaste fel: {error}"
+      },
+      "errors": {
+        "title": "Vanliga fel",
+        "authFailed": "535 eller autentiseringen misslyckades: använd ett applösenord, inte ditt vanliga kontolösenord.",
+        "timeout": "Timeout: prova port 465 (SSL) i stället för 587 (STARTTLS) och kontrollera att din värd tillåter utgående anslutningar.",
+        "imap": "IMAP-inloggningen misslyckades: aktivera IMAP i brevlådans inställningar och använd samma applösenord."
+      },
+      "providers": {
+        "google": {
+          "step1": "Aktivera tvåstegsverifiering för Google-kontot.",
+          "step2": "Skapa ett applösenord (Google-konto > Säkerhet > Applösenord).",
+          "step3": "Ange hela Gmail-adressen som användarnamn och applösenordet som lösenord.",
+          "step4": "För att ta emot e-post, aktivera IMAP i Gmail (Inställningar > Vidarebefordran och POP/IMAP) och slå på Ta emot e-post nedan."
+        },
+        "outlook": {
+          "step1": "Aktivera tvåstegsverifiering för Microsoft-kontot.",
+          "step2": "Skapa ett applösenord i säkerhetsinställningarna för ditt Microsoft-konto.",
+          "step3": "Använd hela adressen som användarnamn och applösenordet som lösenord.",
+          "note": "Microsoft fasar ut grundläggande autentisering för Exchange Online. Om anslutningen nekas kan din organisation ha stängt av den."
+        },
+        "yahoo": {
+          "step1": "Aktivera tvåstegsverifiering i säkerhetsinställningarna för ditt Yahoo-konto.",
+          "step2": "Generera ett applösenord för den här anslutningen.",
+          "step3": "Använd din Yahoo-adress som användarnamn och applösenordet som lösenord."
+        },
+        "zoho": {
+          "step1": "Aktivera tvåfaktorsautentisering för ditt Zoho-konto.",
+          "step2": "Skapa ett applikationsspecifikt lösenord.",
+          "step3": "Använd din Zoho-adress som användarnamn och det lösenordet som lösenord. IMAP måste vara aktiverat i Zoho Mails inställningar."
+        },
+        "sendgrid": {
+          "step1": "Skapa en API-nyckel med behörigheten Mail Send. Använd användarnamnet apikey och nyckeln som lösenord.",
+          "step2": "För att ta emot e-post, anslut, öppna sedan den här inkorgen igen och kopiera webhook-URL:en.",
+          "step3": "Lägg i SendGrid till URL:en under Settings > Inbound Parse och bocka i \"POST the raw, full MIME message\"."
+        },
+        "mailgun": {
+          "step1": "Använd SMTP-uppgifterna för din skickande domän (Sending > Domain settings > SMTP credentials).",
+          "step2": "För att ta emot e-post, anslut, öppna sedan den här inkorgen igen och kopiera webhook-URL:en.",
+          "step3": "Skapa i Mailgun en mottagningsregel som vidarebefordrar till URL:en."
+        },
+        "postmark": {
+          "step1": "Använd din servers API-token som både användarnamn och lösenord.",
+          "step2": "För att ta emot e-post, anslut, öppna sedan den här inkorgen igen och kopiera webhook-URL:en.",
+          "step3": "Ange den i Postmark som Inbound Webhook för din server och inkludera det råa e-postinnehållet."
+        },
+        "brevo": {
+          "step1": "Använd din SMTP-inloggning för Brevo och en SMTP-nyckel som lösenord.",
+          "step2": "För att ta emot e-post, anslut, öppna sedan den här inkorgen igen och kopiera webhook-URL:en.",
+          "step3": "Lägg i Brevo till URL:en som en webhook för inkommande bearbetning för din mottagande domän.",
+          "note": "Brevo skickar inte med bilagor i inkommande e-post, så bilagor tas inte emot."
+        },
+        "amazonSes": {
+          "step1": "Skapa SMTP-uppgifter i Amazon SES-konsolen. De skiljer sig från dina AWS-åtkomstnycklar.",
+          "step2": "Använd SMTP-slutpunkten för din SES-region som värd och verifiera avsändaradressen.",
+          "step3": "Ange SMTP-användarnamnet och lösenordet från konsolen.",
+          "note": "Den här inkorgen kan bara skicka e-post."
+        },
+        "other": {
+          "step1": "Fråga din e-postleverantör efter SMTP-värd och port. Port 587 använder STARTTLS och 465 använder SSL.",
+          "step2": "För att ta emot e-post, fråga också efter IMAP-värd och port (vanligtvis 993) och slå sedan på Ta emot e-post nedan."
+        }
+      }
     }
   },
   "states": {

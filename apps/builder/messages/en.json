@@ -7055,11 +7055,102 @@
   },
   "smtp": {
     "setting": {
-      "description": "Send emails using your SMTP server.",
+      "description": "Send and receive email through your SMTP server, an IMAP mailbox or an inbound webhook.",
       "label": "(Email) SMTP"
     },
     "errors": {
-      "connectionFailed": "Cannot connect to SMTP server. Please check your credentials and try again."
+      "connectionFailed": "Cannot connect to SMTP server. Please check your credentials and try again.",
+      "imapConnectionFailed": "Cannot connect to the IMAP mailbox. Please check the host, credentials and mailbox name, then try again."
+    },
+    "guide": {
+      "trigger": "Setup guide: {provider}",
+      "openDocs": "Open {provider} documentation",
+      "receiveImap": "Receive email",
+      "receiveImapDescription": "Check this mailbox every minute and open a conversation for each new email. Only mail that arrives after you turn this on is imported.",
+      "imapHost": "IMAP host",
+      "imapPort": "IMAP port",
+      "relayReceive": "This provider sends mail only. To receive replies, point its inbound parsing at a webhook URL.",
+      "sendOnly": "Amazon SES receives mail through SNS, which is not supported here. This inbox can only send email.",
+      "webhook": {
+        "title": "Inbound webhook URL",
+        "hint": "Paste this URL into your provider's inbound settings. Anyone with it can add mail to this inbox, so treat it like a password.",
+        "saveFirst": "Connect first, then open this inbox again to get the webhook URL.",
+        "show": "Show webhook URL",
+        "rotate": "Rotate URL",
+        "copied": "Webhook URL copied",
+        "failed": "Could not load the webhook URL. Please try again."
+      },
+      "status": {
+        "title": "Status",
+        "sending": "Sending",
+        "receivingImap": "Receiving: IMAP",
+        "receivingWebhook": "Receiving: webhook",
+        "receivingOff": "Receiving: off",
+        "lastPolled": "Last checked {time}",
+        "neverPolled": "Not checked yet",
+        "error": "Last error: {error}"
+      },
+      "errors": {
+        "title": "Common errors",
+        "authFailed": "535 or authentication failed: use an app password, not your normal account password.",
+        "timeout": "Timeout: try port 465 (SSL) instead of 587 (STARTTLS), and check that your host allows outgoing connections.",
+        "imap": "IMAP login failed: turn on IMAP in the mailbox settings and use the same app password."
+      },
+      "providers": {
+        "google": {
+          "step1": "Turn on 2-Step Verification for the Google account.",
+          "step2": "Create an App Password (Google Account > Security > App passwords).",
+          "step3": "Enter the full Gmail address as the username and the App Password as the password.",
+          "step4": "To receive email, turn on IMAP in Gmail (Settings > Forwarding and POP/IMAP) and switch on Receive email below."
+        },
+        "outlook": {
+          "step1": "Turn on two-step verification for the Microsoft account.",
+          "step2": "Create an app password in your Microsoft account security settings.",
+          "step3": "Use the full address as the username and the app password as the password.",
+          "note": "Microsoft is retiring basic authentication for Exchange Online. If the connection is refused, your organisation may have it turned off."
+        },
+        "yahoo": {
+          "step1": "Turn on two-step verification in your Yahoo account security settings.",
+          "step2": "Generate an app password for this connection.",
+          "step3": "Use your Yahoo address as the username and the app password as the password."
+        },
+        "zoho": {
+          "step1": "Turn on two-factor authentication for your Zoho account.",
+          "step2": "Create an application-specific password.",
+          "step3": "Use your Zoho address as the username and that password as the password. IMAP must be enabled in Zoho Mail settings."
+        },
+        "sendgrid": {
+          "step1": "Create an API key with Mail Send permission. Use the username apikey and the key as the password.",
+          "step2": "To receive email, connect, then open this inbox again and copy its webhook URL.",
+          "step3": "In SendGrid, add the URL under Settings > Inbound Parse and tick \"POST the raw, full MIME message\"."
+        },
+        "mailgun": {
+          "step1": "Use the SMTP credentials of your sending domain (Sending > Domain settings > SMTP credentials).",
+          "step2": "To receive email, connect, then open this inbox again and copy its webhook URL.",
+          "step3": "In Mailgun, create a receiving route that forwards to the URL."
+        },
+        "postmark": {
+          "step1": "Use your server's API token as both the username and the password.",
+          "step2": "To receive email, connect, then open this inbox again and copy its webhook URL.",
+          "step3": "In Postmark, set it as the Inbound Webhook of your server and include the raw email content."
+        },
+        "brevo": {
+          "step1": "Use your Brevo SMTP login and an SMTP key as the password.",
+          "step2": "To receive email, connect, then open this inbox again and copy its webhook URL.",
+          "step3": "In Brevo, add the URL as an inbound parsing webhook for your receiving domain.",
+          "note": "Brevo does not send attachments with inbound mail, so attachments are not received."
+        },
+        "amazonSes": {
+          "step1": "Create SMTP credentials in the Amazon SES console. They differ from your AWS access keys.",
+          "step2": "Use the SMTP endpoint of your SES region as the host and verify the sender address.",
+          "step3": "Enter the SMTP username and password from the console.",
+          "note": "This inbox can only send email."
+        },
+        "other": {
+          "step1": "Ask your email host for the SMTP host and port. Port 587 uses STARTTLS and 465 uses SSL.",
+          "step2": "To receive email, also ask for the IMAP host and port (usually 993), then switch on Receive email below."
+        }
+      }
     }
   },
   "botSimulator": {

@@ -74,6 +74,7 @@ import { replyToInboundCart } from "./handlers/reply-to-inbound-cart"
 import { recordEmailTrackingTransition } from "./handlers/send-email"
 import { handleSendSequenceFlow } from "./handlers/sequence-flow"
 import { runShopifySync, runShopifyWebhook } from "./handlers/shopify"
+import { pollSmtpInbox } from "./handlers/smtp/poll-inbox"
 import {
   runStepInputResolution,
   runStepInputTimeoutResume,
@@ -393,6 +394,10 @@ function startIntegrationWorker() {
             }
             case IntegrationJobAction.coexistWhatsappFlush: {
               await coexistWhatsappFlush(job.data.data)
+              return
+            }
+            case IntegrationJobAction.pollSmtpInbox: {
+              await pollSmtpInbox(job.data.data)
               return
             }
             case IntegrationJobAction.coexistMessengerSync: {

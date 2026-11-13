@@ -191,6 +191,11 @@ export const integrationService = {
         columnName = "openId"
         break
       }
+      case "smtp": {
+        modelName = "IntegrationSmtp"
+        columnName = "inboxId"
+        break
+      }
       case "webchat": {
         modelName = "IntegrationWebchat"
         columnName = "inboxId"

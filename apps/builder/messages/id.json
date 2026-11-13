@@ -6321,11 +6321,102 @@
   },
   "smtp": {
     "setting": {
-      "description": "Kirim email menggunakan server SMTP Anda.",
+      "description": "Kirim dan terima email melalui server SMTP Anda, kotak surat IMAP, atau webhook masuk.",
       "label": "SMTP (Email)"
     },
     "errors": {
-      "connectionFailed": "Tidak dapat terhubung ke server SMTP. Periksa kredensial Anda dan coba lagi."
+      "connectionFailed": "Tidak dapat terhubung ke server SMTP. Periksa kredensial Anda dan coba lagi.",
+      "imapConnectionFailed": "Tidak dapat terhubung ke kotak surat IMAP. Periksa host, kredensial, dan nama kotak surat, lalu coba lagi."
+    },
+    "guide": {
+      "trigger": "Panduan penyiapan: {provider}",
+      "openDocs": "Buka dokumentasi {provider}",
+      "receiveImap": "Terima email",
+      "receiveImapDescription": "Kotak surat ini diperiksa setiap menit dan sebuah percakapan dibuka untuk setiap email baru. Hanya email yang masuk setelah Anda mengaktifkan ini yang diimpor.",
+      "imapHost": "Host IMAP",
+      "imapPort": "Port IMAP",
+      "relayReceive": "Penyedia ini hanya mengirim email. Untuk menerima balasan, arahkan pengurai masuknya ke URL webhook.",
+      "sendOnly": "Amazon SES menerima email melalui SNS, yang tidak didukung di sini. Kotak masuk ini hanya dapat mengirim email.",
+      "webhook": {
+        "title": "URL webhook masuk",
+        "hint": "Tempel URL ini ke pengaturan email masuk penyedia Anda. Siapa pun yang memilikinya dapat menambahkan email ke kotak masuk ini, jadi perlakukan seperti kata sandi.",
+        "saveFirst": "Hubungkan terlebih dahulu, lalu buka kembali kotak masuk ini untuk mendapatkan URL webhook.",
+        "show": "Tampilkan URL webhook",
+        "rotate": "Ganti URL",
+        "copied": "URL webhook disalin",
+        "failed": "Tidak dapat memuat URL webhook. Silakan coba lagi."
+      },
+      "status": {
+        "title": "Status",
+        "sending": "Pengiriman",
+        "receivingImap": "Penerimaan: IMAP",
+        "receivingWebhook": "Penerimaan: webhook",
+        "receivingOff": "Penerimaan: nonaktif",
+        "lastPolled": "Terakhir diperiksa {time}",
+        "neverPolled": "Belum diperiksa",
+        "error": "Kesalahan terakhir: {error}"
+      },
+      "errors": {
+        "title": "Kesalahan umum",
+        "authFailed": "535 atau autentikasi gagal: gunakan kata sandi aplikasi, bukan kata sandi akun biasa Anda.",
+        "timeout": "Waktu habis: coba port 465 (SSL) alih-alih 587 (STARTTLS), dan pastikan host Anda mengizinkan koneksi keluar.",
+        "imap": "Login IMAP gagal: aktifkan IMAP di pengaturan kotak surat dan gunakan kata sandi aplikasi yang sama."
+      },
+      "providers": {
+        "google": {
+          "step1": "Aktifkan Verifikasi 2 Langkah untuk akun Google.",
+          "step2": "Buat kata sandi aplikasi (Akun Google > Keamanan > Sandi aplikasi).",
+          "step3": "Masukkan alamat Gmail lengkap sebagai nama pengguna dan kata sandi aplikasi sebagai kata sandi.",
+          "step4": "Untuk menerima email, aktifkan IMAP di Gmail (Setelan > Penerusan dan POP/IMAP) dan nyalakan Terima email di bawah."
+        },
+        "outlook": {
+          "step1": "Aktifkan verifikasi dua langkah untuk akun Microsoft.",
+          "step2": "Buat kata sandi aplikasi di pengaturan keamanan akun Microsoft Anda.",
+          "step3": "Gunakan alamat lengkap sebagai nama pengguna dan kata sandi aplikasi sebagai kata sandi.",
+          "note": "Microsoft sedang menghentikan autentikasi dasar untuk Exchange Online. Jika koneksi ditolak, organisasi Anda mungkin telah menonaktifkannya."
+        },
+        "yahoo": {
+          "step1": "Aktifkan verifikasi dua langkah di pengaturan keamanan akun Yahoo Anda.",
+          "step2": "Buat kata sandi aplikasi untuk koneksi ini.",
+          "step3": "Gunakan alamat Yahoo Anda sebagai nama pengguna dan kata sandi aplikasi sebagai kata sandi."
+        },
+        "zoho": {
+          "step1": "Aktifkan autentikasi dua faktor untuk akun Zoho Anda.",
+          "step2": "Buat kata sandi khusus aplikasi.",
+          "step3": "Gunakan alamat Zoho Anda sebagai nama pengguna dan kata sandi tersebut sebagai kata sandi. IMAP harus diaktifkan di pengaturan Zoho Mail."
+        },
+        "sendgrid": {
+          "step1": "Buat kunci API dengan izin Mail Send. Gunakan nama pengguna apikey dan kunci tersebut sebagai kata sandi.",
+          "step2": "Untuk menerima email, hubungkan, lalu buka kembali kotak masuk ini dan salin URL webhook-nya.",
+          "step3": "Di SendGrid, tambahkan URL di Settings > Inbound Parse dan centang \"POST the raw, full MIME message\"."
+        },
+        "mailgun": {
+          "step1": "Gunakan kredensial SMTP domain pengiriman Anda (Sending > Domain settings > SMTP credentials).",
+          "step2": "Untuk menerima email, hubungkan, lalu buka kembali kotak masuk ini dan salin URL webhook-nya.",
+          "step3": "Di Mailgun, buat rute penerimaan yang meneruskan ke URL tersebut."
+        },
+        "postmark": {
+          "step1": "Gunakan token API server Anda sebagai nama pengguna sekaligus kata sandi.",
+          "step2": "Untuk menerima email, hubungkan, lalu buka kembali kotak masuk ini dan salin URL webhook-nya.",
+          "step3": "Di Postmark, atur sebagai Inbound Webhook server Anda dan sertakan konten email mentah."
+        },
+        "brevo": {
+          "step1": "Gunakan login SMTP Brevo Anda dan kunci SMTP sebagai kata sandi.",
+          "step2": "Untuk menerima email, hubungkan, lalu buka kembali kotak masuk ini dan salin URL webhook-nya.",
+          "step3": "Di Brevo, tambahkan URL sebagai webhook pengurai masuk untuk domain penerima Anda.",
+          "note": "Brevo tidak mengirim lampiran bersama email masuk, sehingga lampiran tidak diterima."
+        },
+        "amazonSes": {
+          "step1": "Buat kredensial SMTP di konsol Amazon SES. Kredensial ini berbeda dari kunci akses AWS Anda.",
+          "step2": "Gunakan endpoint SMTP wilayah SES Anda sebagai host dan verifikasi alamat pengirim.",
+          "step3": "Masukkan nama pengguna dan kata sandi SMTP dari konsol.",
+          "note": "Kotak masuk ini hanya dapat mengirim email."
+        },
+        "other": {
+          "step1": "Tanyakan host dan port SMTP kepada penyedia email Anda. Port 587 menggunakan STARTTLS dan 465 menggunakan SSL.",
+          "step2": "Untuk menerima email, tanyakan juga host dan port IMAP (biasanya 993), lalu nyalakan Terima email di bawah."
+        }
+      }
     }
   },
   "botSimulator": {

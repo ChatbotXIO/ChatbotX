@@ -17,11 +17,13 @@ export const updateSmtpAction = workspaceActionClient
 
     // Merging against the stored auth, the change diff, and the audit record
     // all live in the service.
-    const { host, port } = await prepareSmtpAuth(parsedInput)
+    const { host, port, imap, imapUsername, imapPassword } =
+      await prepareSmtpAuth(parsedInput)
+    const { imap: _imapRequest, ...smtpFields } = parsedInput
 
     return await integrationSmtpService.update({
       workspaceId,
       id,
-      data: { ...parsedInput, host, port },
+      data: { ...smtpFields, host, port, imap, imapUsername, imapPassword },
     })
   })
