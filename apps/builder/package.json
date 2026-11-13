@@ -117,7 +117,7 @@
     "date-fns-tz": "catalog:",
     "dot-prop": "catalog:",
     "emoji-picker-react": "^4.19.1",
-    "hono": "^4.13.12",
+    "hono": "^4.13.16",
     "html-to-text": "^9.0.5",
     "ky": "catalog:",
     "libphonenumber-js": "catalog:",
