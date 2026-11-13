@@ -4387,6 +4387,7 @@
     "owner": "Chủ sở hữu",
     "tabs": {
       "label": "Các mục trang chủ",
+      "backToTemplates": "Quay lại danh sách mẫu",
       "templates": "Mẫu"
     }
   },

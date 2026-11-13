@@ -4345,6 +4345,7 @@
     "owner": "Propietario",
     "tabs": {
       "label": "Secciones de inicio",
+      "backToTemplates": "Volver a las plantillas",
       "templates": "Plantillas"
     }
   },

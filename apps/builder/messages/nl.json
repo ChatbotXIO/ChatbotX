@@ -4189,6 +4189,7 @@
     "owner": "Eigenaar",
     "tabs": {
       "label": "Onderdelen van de startpagina",
+      "backToTemplates": "Terug naar templates",
       "templates": "Templates"
     }
   },

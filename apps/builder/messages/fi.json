@@ -4189,6 +4189,7 @@
     "owner": "Omistaja",
     "tabs": {
       "label": "Etusivun osiot",
+      "backToTemplates": "Takaisin malleihin",
       "templates": "Mallit"
     }
   },

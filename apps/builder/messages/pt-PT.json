@@ -4189,6 +4189,7 @@
     "owner": "Proprietário",
     "tabs": {
       "label": "Secções da página inicial",
+      "backToTemplates": "Voltar aos templates",
       "templates": "Templates"
     }
   },

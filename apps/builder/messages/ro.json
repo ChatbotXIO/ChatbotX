@@ -1387,6 +1387,7 @@
     "owner": "Proprietar",
     "tabs": {
       "label": "Secțiunile paginii principale",
+      "backToTemplates": "Înapoi la șabloane",
       "templates": "Șabloane"
     }
   },

@@ -4584,6 +4584,7 @@
     "subtitle": "Välj en arbetsyta för att fortsätta där du slutade, eller skapa en ny.",
     "tabs": {
       "label": "Avsnitt på startsidan",
+      "backToTemplates": "Tillbaka till mallar",
       "templates": "Mallar"
     },
     "welcomeBack": "Välkommen tillbaka, {name}"

@@ -4621,6 +4621,7 @@
     "owner": "所有者",
     "tabs": {
       "label": "首頁分區",
+      "backToTemplates": "返回範本列表",
       "templates": "範本"
     }
   },
