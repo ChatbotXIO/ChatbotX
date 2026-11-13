@@ -31,6 +31,7 @@ const mocks = vi.hoisted(() => {
     capturedProcedures,
     api: makeApi(),
     listMyWorkspaces: vi.fn(),
+    ensureFirstWorkspace: vi.fn(),
     mobileChangePassword: vi.fn(),
     mobileCreateWebHandoff: vi.fn(),
     registerDeviceToken: vi.fn(),
@@ -48,6 +49,9 @@ vi.mock("@/orpc", () => ({
 }))
 vi.mock("@/features/workspaces/lib/list-my-workspaces", () => ({
   listMyWorkspaces: mocks.listMyWorkspaces,
+}))
+vi.mock("@/lib/workspace/create-first-workspace", () => ({
+  ensureFirstWorkspace: mocks.ensureFirstWorkspace,
 }))
 vi.mock("@/features/device-tokens/lib/device-tokens", () => ({
   registerDeviceToken: mocks.registerDeviceToken,
@@ -425,5 +429,47 @@ describe("GET /v1/realtime/connect-token", () => {
       connect().handler?.({ context: { workspace: { id: "42" } } }),
     ).rejects.toMatchObject({ code: "FORBIDDEN" })
     expect(mocks.mintMemberConnectToken).not.toHaveBeenCalled()
+  })
+})
+
+describe("POST /v1/me/workspaces/default", () => {
+  const call = (input: Record<string, unknown> = {}) =>
+    findProcedure("POST", "/v1/me/workspaces/default").handler?.({
+      context: withContext(),
+      input,
+    })
+
+  test("creates the first workspace when the user has no membership", async () => {
+    mocks.listMyWorkspaces.mockResolvedValue({ workspaces: [] })
+    mocks.ensureFirstWorkspace.mockResolvedValue({ id: "9" })
+
+    expect(await call({ name: "Mine" })).toEqual({ workspace: { id: "9" } })
+    expect(mocks.ensureFirstWorkspace).toHaveBeenCalledWith("7", {
+      name: "Mine",
+    })
+  })
+
+  test("falls back to a default name", async () => {
+    mocks.listMyWorkspaces.mockResolvedValue({ workspaces: [] })
+    mocks.ensureFirstWorkspace.mockResolvedValue({ id: "9" })
+
+    await call()
+    expect(mocks.ensureFirstWorkspace).toHaveBeenCalledWith("7", {
+      name: "Agent's workspace",
+    })
+  })
+
+  test("returns null without creating when memberships exist", async () => {
+    mocks.listMyWorkspaces.mockResolvedValue({ workspaces: [{ id: "1" }] })
+
+    expect(await call()).toEqual({ workspace: null })
+    expect(mocks.ensureFirstWorkspace).not.toHaveBeenCalled()
+  })
+
+  test("returns null when plan limits block creation", async () => {
+    mocks.listMyWorkspaces.mockResolvedValue({ workspaces: [] })
+    mocks.ensureFirstWorkspace.mockResolvedValue(null)
+
+    expect(await call()).toEqual({ workspace: null })
   })
 })

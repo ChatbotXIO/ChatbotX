@@ -456,6 +456,7 @@ describe("public API spec — operation naming guard", () => {
     const mobileOnlyPaths = new Set([
       "/v1/me",
       "/v1/me/workspaces",
+      "/v1/me/workspaces/default",
       "/v1/me/device-tokens",
       "/v1/me/password",
       "/v1/me/web-handoff",

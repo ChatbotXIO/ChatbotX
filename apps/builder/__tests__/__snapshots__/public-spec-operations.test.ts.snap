@@ -2263,6 +2263,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "path": "/v1/me",
   },
   {
+    "method": "POST",
+    "operationId": "me.ensureDefaultWorkspace",
+    "path": "/v1/me/workspaces/default",
+  },
+  {
     "method": "GET",
     "operationId": "me.get",
     "path": "/v1/me",
