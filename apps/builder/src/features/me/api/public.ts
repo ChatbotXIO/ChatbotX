@@ -20,6 +20,7 @@ import {
   possibleErrorsOnMutatingResource,
   possibleErrorsOnSchedulingAccountDeletion,
 } from "@/lib/orpc/orpc-error-helper"
+import { ensureFirstWorkspace } from "@/lib/workspace/create-first-workspace"
 import { mobileUserAPI, mobileUserPasswordChangeAPI } from "@/orpc"
 import {
   accountDeletionRequest,
@@ -88,6 +89,43 @@ export const mePublicRouter = {
     .output(z.object({ workspaces: z.array(workspaceResource) }))
     .errors(possibleErrorsOnListingResource)
     .handler(async ({ context }) => await listMyWorkspaces(context.user.id)),
+
+  ensureDefaultWorkspace: mobileUserAPI
+    .route({
+      method: "POST",
+      path: "/v1/me/workspaces/default",
+      summary: "Ensure my default workspace",
+      description:
+        "Idempotent. When the signed-in user belongs to no workspace, creates their first one (same as opening the web home page) and returns it. When the user already belongs to a workspace, or the plan limits block creation, returns `workspace: null`.",
+      tags: ["Me"],
+    })
+    .input(
+      z.object({
+        name: z
+          .string()
+          .trim()
+          .min(1)
+          .max(100)
+          .optional()
+          .describe(
+            'Name for the new workspace. Defaults to "<your name>\'s workspace".',
+          ),
+      }),
+    )
+    .output(z.object({ workspace: workspaceResource.nullable() }))
+    .errors(possibleErrorsOnMutatingResource)
+    .handler(async ({ context, input }) => {
+      const { workspaces } = await listMyWorkspaces(context.user.id)
+      if (workspaces.length > 0) {
+        return { workspace: null }
+      }
+      const workspace = await ensureFirstWorkspace(context.user.id, {
+        name:
+          input.name ??
+          `${context.user.name || context.user.email}'s workspace`,
+      })
+      return { workspace }
+    }),
 
   registerDeviceToken: mobileUserAPI
     .route({
