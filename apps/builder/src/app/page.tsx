@@ -65,7 +65,9 @@ export default async function MainPage({
   // community/enterprise installs use every feature freely — no quota gating.
   const cloud = isCloud()
   const domain = await getDomainFromHeader()
-  const { tab } = await homeSearchParamsCache.parse(await searchParams)
+  const { tab, key } = await homeSearchParamsCache.parse(await searchParams)
+  // An empty `?key=` (a cut-off link) means no template, like a missing one.
+  const templateKey = key || null
   // One tenant lookup feeds both the platform-context check and the store read.
   const tenantIdPromise = resolveTenantByDomain(domain)
   const [
@@ -83,9 +85,12 @@ export default async function MainPage({
     cloud ? tenantService.findByOwner(user.id) : null,
     tenantIdPromise,
     isSuperAdmin(user),
-    loadHomeTemplateStore({ tab, tenantId: tenantIdPromise }),
+    loadHomeTemplateStore({ tab, templateKey, tenantId: tenantIdPromise }),
   ])
-  const templatesView = resolveHomeTemplatesView(tab, templateStore)
+  const templatesView = resolveHomeTemplatesView(
+    { tab, templateKey },
+    templateStore,
+  )
   if (templatesView.redirectToHome) {
     redirect("/")
   }
@@ -142,7 +147,9 @@ export default async function MainPage({
             templatesPanel={
               <HomeTemplatesPanel
                 catalog={templateStore.catalog}
+                openedTemplate={templateStore.openedTemplate}
                 panel={templatesView.panel}
+                userId={user.id}
               />
             }
             user={userInfo}

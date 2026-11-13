@@ -4189,6 +4189,7 @@
     "owner": "Pemilik",
     "tabs": {
       "label": "Bagian beranda",
+      "backToTemplates": "Kembali ke template",
       "templates": "Template"
     }
   },

@@ -7021,6 +7021,7 @@
     "owner": "Proprietário",
     "tabs": {
       "label": "Seções da página inicial",
+      "backToTemplates": "Voltar aos templates",
       "templates": "Templates"
     }
   },

@@ -7,7 +7,10 @@ import { getTranslations } from "next-intl/server"
 import type { ReactNode } from "react"
 import { safeHttpUrl } from "../lib/safe-http-url"
 import { YOUTUBE_VIDEO_ID_FORMAT } from "../schema/shared"
-import { PublicTemplateHeading } from "./public-template-heading"
+import {
+  PublicTemplateHeading,
+  type PublicTemplateHeadingTag,
+} from "./public-template-heading"
 
 // Publisher-supplied free text: validate the YouTube id before interpolating
 // it into an iframe src.
@@ -21,12 +24,14 @@ type PublicTemplateCardProps = {
   /** The template's cover, or the tenant's icon when it has none. */
   imageUrl: string
   install: ReactNode
+  headingTag?: PublicTemplateHeadingTag
 }
 
 export async function PublicTemplateCard({
   template,
   imageUrl,
   install,
+  headingTag,
 }: PublicTemplateCardProps) {
   const t = await getTranslations("templatesPublicPage")
   const youtubeVideoId =
@@ -40,7 +45,11 @@ export async function PublicTemplateCard({
   return (
     <Card>
       <CardContent className="flex flex-col gap-8 sm:p-8">
-        <PublicTemplateHeading imageUrl={imageUrl} template={template} />
+        <PublicTemplateHeading
+          headingTag={headingTag}
+          imageUrl={imageUrl}
+          template={template}
+        />
 
         <div className="flex flex-wrap justify-end gap-3">
           {testLink ? (

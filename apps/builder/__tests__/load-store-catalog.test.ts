@@ -109,3 +109,24 @@ describe("loadStoreCatalog", () => {
     await expect(loadStoreCatalog("777")).rejects.toThrow("db down")
   })
 })
+
+describe("loadStoreCatalog card links", () => {
+  test("a caller can make the cards open somewhere other than the share page", async () => {
+    mocks.getTenantSettings.mockResolvedValue({
+      name: "Acme Bots",
+      storageUrl: "https://files.example.test",
+      faviconUrl: "https://app.example.test/favicon.png",
+    })
+    mocks.listPublished.mockResolvedValue({
+      categories: [],
+      templates: [published()],
+    })
+
+    const catalog = await loadStoreCatalog(
+      "777",
+      (template) => `/?tab=templates&key=${template.shareToken}`,
+    )
+
+    expect(catalog.templates[0].href).toBe("/?tab=templates&key=tok-11")
+  })
+})

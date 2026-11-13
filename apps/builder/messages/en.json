@@ -5027,6 +5027,7 @@
     "owner": "Owner",
     "tabs": {
       "label": "Home sections",
+      "backToTemplates": "Back to templates",
       "templates": "Templates"
     }
   },

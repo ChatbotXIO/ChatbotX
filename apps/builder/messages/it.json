@@ -4189,6 +4189,7 @@
     "owner": "Proprietario",
     "tabs": {
       "label": "Sezioni della home",
+      "backToTemplates": "Torna ai template",
       "templates": "Template"
     }
   },

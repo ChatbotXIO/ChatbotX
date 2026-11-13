@@ -7021,6 +7021,7 @@
     "owner": "所有者",
     "tabs": {
       "label": "ホームのセクション",
+      "backToTemplates": "テンプレート一覧に戻る",
       "templates": "テンプレート"
     }
   },
