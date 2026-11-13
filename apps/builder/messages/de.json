@@ -4189,6 +4189,7 @@
     "owner": "Inhaber",
     "tabs": {
       "label": "Bereiche der Startseite",
+      "backToTemplates": "Zurück zu den Templates",
       "templates": "Templates"
     }
   },

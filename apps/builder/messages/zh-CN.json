@@ -4584,6 +4584,7 @@
     "subtitle": "选择要跳回的工作区，或创建新工作区。",
     "tabs": {
       "label": "首页分区",
+      "backToTemplates": "返回模板列表",
       "templates": "模板"
     },
     "welcomeBack": "欢迎回来，{name}"

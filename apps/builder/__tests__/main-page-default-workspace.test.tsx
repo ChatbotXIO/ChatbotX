@@ -300,6 +300,70 @@ describe("MainPage templates tab", () => {
     })
   })
 
+  test("?tab=templates&key= opens that template inside the tab, ready to install", async () => {
+    const openedTemplate = {
+      template: { name: "Welcome flow" },
+      shareToken: "tok-11",
+      imageUrl: "/cover.png",
+    }
+    mocks.loadHomeTemplateStore.mockResolvedValue({
+      status: "ready",
+      hasTemplates: true,
+      catalog: null,
+      openedTemplate,
+    })
+
+    const tree = await renderHome({ tab: "templates", key: "tok-11" })
+
+    expect(mocks.loadHomeTemplateStore.mock.calls[0][0]).toMatchObject({
+      tab: "templates",
+      templateKey: "tok-11",
+    })
+    expect(mocks.redirect).not.toHaveBeenCalled()
+    expect(workspacesListProps(tree)).toMatchObject({
+      activeTab: "templates",
+      showTemplatesTab: true,
+    })
+    expect(templatesPanelProps(tree)).toMatchObject({
+      panel: "template",
+      openedTemplate,
+      userId: "user-1",
+    })
+  })
+
+  test("an unknown template key stays in the tab and says so, without a redirect", async () => {
+    mocks.loadHomeTemplateStore.mockResolvedValue({
+      status: "ready",
+      hasTemplates: true,
+      catalog: null,
+      openedTemplate: null,
+    })
+
+    const tree = await renderHome({ tab: "templates", key: "gone" })
+
+    expect(mocks.redirect).not.toHaveBeenCalled()
+    expect(templatesPanelProps(tree)).toMatchObject({
+      panel: "templateUnavailable",
+    })
+  })
+
+  test.each<{ name: string; query: Record<string, string> }>([
+    { name: "without a key", query: { tab: "templates" } },
+    { name: "with an empty key", query: { tab: "templates", key: "" } },
+  ])("$name the tab asks for the catalog and shows it", async ({ query }) => {
+    mocks.loadHomeTemplateStore.mockResolvedValue({
+      status: "ready",
+      hasTemplates: true,
+      catalog: { tenantName: "Acme", categories: [], templates: [] },
+      openedTemplate: null,
+    })
+
+    const tree = await renderHome(query)
+
+    expect(mocks.loadHomeTemplateStore.mock.calls[0][0].templateKey).toBe(null)
+    expect(templatesPanelProps(tree)).toMatchObject({ panel: "catalog" })
+  })
+
   test("an unknown tab behaves like the default one", async () => {
     await renderHome({ tab: "bogus" })
 
