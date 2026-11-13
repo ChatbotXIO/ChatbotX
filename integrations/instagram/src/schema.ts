@@ -4,6 +4,7 @@ import { z } from "zod"
 export const INSTAGRAM_MESSAGE_METADATA = "SENT_FROM_CHATBOTX"
 
 export type InstagramConfig = Oauth2Config & {
+  unifiedLoginConfigId?: string
   verifyToken?: string
   version: string
   stateParams: {
@@ -17,6 +18,9 @@ export type InstagramAuthValue = Oauth2AuthValue & {
     igName: string
     pageId: string
     version: string
+    loginType?: "direct" | "unified"
+    clientBusinessId?: string
+    username?: string
   }
 }
 

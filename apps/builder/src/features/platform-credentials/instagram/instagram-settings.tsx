@@ -202,9 +202,10 @@ export function EditInstagramSettingsForm({
           mode: "onChange",
           defaultValues: {
             clientId: publicConfig?.clientId ?? "",
-            version: publicConfig?.version ?? "v25.0",
+            version: publicConfig?.version ?? "v27.0",
             verifyToken: publicConfig?.verifyToken ?? "",
             clientSecret: "",
+            unifiedLoginConfigId: publicConfig?.unifiedLoginConfigId ?? "",
           } satisfies InstagramCredentialUpdate,
         },
       },
@@ -244,6 +245,11 @@ export function EditInstagramSettingsForm({
           label={t("fields.apiVersion.label")}
           name="version"
           required
+        />
+
+        <InputField
+          label="Unified Login Configuration ID"
+          name="unifiedLoginConfigId"
         />
 
         <div className="flex items-center justify-between gap-2">

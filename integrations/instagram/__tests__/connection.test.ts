@@ -2,12 +2,18 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const mocks = vi.hoisted(() => ({
   exchangeCodeForToken: vi.fn(),
+  exchangeUnifiedCodeForToken: vi.fn(),
   fetchInstagramAccount: vi.fn(),
+  generateUnifiedAuthUrl: vi.fn(),
+  getUnifiedInstagramAccounts: vi.fn(),
 }))
 
 vi.mock("../src/apis/auth", () => ({
   exchangeCodeForToken: mocks.exchangeCodeForToken,
+  exchangeUnifiedCodeForToken: mocks.exchangeUnifiedCodeForToken,
   fetchInstagramAccount: mocks.fetchInstagramAccount,
+  generateUnifiedAuthUrl: mocks.generateUnifiedAuthUrl,
+  getUnifiedInstagramAccounts: mocks.getUnifiedInstagramAccounts,
 }))
 
 const { integration } = await import("../src/integration")
@@ -47,14 +53,21 @@ describe("Instagram connection identity", () => {
       throw new Error("Instagram connection has no exchangeCode")
     }
 
-    expect(auth).toMatchObject({
+    const [candidate] =
+      (await integration.connection.listCandidates?.({ auth })) ?? []
+    expect(candidate?.auth).toMatchObject({
       metadata: {
         igId: "instagram-user-id",
         pageId: "instagram-page-id",
       },
     })
 
-    await expect(integration.connection.verify({ auth })).resolves.toEqual({
+    if (!candidate) {
+      throw new Error("Instagram connection has no candidate")
+    }
+    await expect(
+      integration.connection.verify({ auth: candidate.auth }),
+    ).resolves.toEqual({
       ok: true,
     })
   })

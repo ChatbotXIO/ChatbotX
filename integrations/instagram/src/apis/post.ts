@@ -1,7 +1,10 @@
 import type { ChannelPostDetails, Context } from "@chatbotx.io/sdk"
 import { DEFAULT_API_VERSION } from "../constants"
 import { rescue } from "../exception"
-import { instagramBusinessClient } from "../lib/http-client"
+import {
+  getInstagramAccountNode,
+  getInstagramGraphClient,
+} from "../lib/http-client"
 import type { InstagramAuthValue } from "../schema"
 
 export type InstagramMediaDetails = {
@@ -50,10 +53,10 @@ export const listInstagramMedia = (props: {
 }): Promise<InstagramMediaListItem[]> => {
   const { auth } = props
   const version = auth.metadata.version ?? DEFAULT_API_VERSION
-  const endpoint = `${version}/me/media`
+  const endpoint = `${version}/${getInstagramAccountNode(auth)}/media`
 
   return rescue(endpoint, async () => {
-    const res = await instagramBusinessClient.get<
+    const res = await getInstagramGraphClient(auth).get<
       InstagramPaginatedResponse<InstagramMediaListItem>
     >(endpoint, {
       headers: {
@@ -79,10 +82,10 @@ export const listInstagramStories = (props: {
 }): Promise<InstagramMediaListItem[]> => {
   const { auth } = props
   const version = auth.metadata.version ?? DEFAULT_API_VERSION
-  const endpoint = `${version}/me/stories`
+  const endpoint = `${version}/${getInstagramAccountNode(auth)}/stories`
 
   return rescue(endpoint, async () => {
-    const res = await instagramBusinessClient.get<
+    const res = await getInstagramGraphClient(auth).get<
       InstagramPaginatedResponse<InstagramMediaListItem>
     >(endpoint, {
       headers: {
@@ -107,7 +110,7 @@ export const getPostDetails = (props: {
   const endpoint = `${version}/${input.postId}`
 
   return rescue(endpoint, () =>
-    instagramBusinessClient.get<InstagramMediaDetails>(endpoint, {
+    getInstagramGraphClient(ctx.auth).get<InstagramMediaDetails>(endpoint, {
       headers: {
         Authorization: `Bearer ${ctx.auth.tokens.accessToken}`,
       },

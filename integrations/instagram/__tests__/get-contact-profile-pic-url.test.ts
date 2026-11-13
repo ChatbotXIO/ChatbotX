@@ -13,6 +13,7 @@ vi.mock("../src/lib/http-client", async (importOriginal) => {
   return {
     ...actual,
     instagramBusinessClient: { get: mockGet },
+    getInstagramGraphClient: () => ({ get: mockGet }),
   }
 })
 

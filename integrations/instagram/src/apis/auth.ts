@@ -3,6 +3,7 @@ import { InstagramException, rescue } from "../exception"
 import {
   instagramBusinessClient,
   instagramOAuthClient,
+  instagramUnifiedGraphClient,
 } from "../lib/http-client"
 import { logger } from "../lib/logger"
 
@@ -23,6 +24,11 @@ export type InstagramAccount = {
   accessToken: string
 }
 
+export type UnifiedInstagramAuthorization = {
+  accessToken: string
+  clientBusinessId?: string
+}
+
 export function generateAuthUrl({
   clientId,
   redirectUrl,
@@ -41,6 +47,101 @@ export function generateAuthUrl({
     scope: INSTAGRAM_BUSINESS_SCOPES.join(","),
   })
   return `${INSTAGRAM_OAUTH_AUTHORIZE_URL}?${params.toString()}`
+}
+
+export function generateUnifiedAuthUrl({
+  clientId,
+  configId,
+  redirectUrl,
+  state,
+}: {
+  clientId: string
+  configId: string
+  redirectUrl: string
+  state: string
+}): string {
+  const params = new URLSearchParams({
+    client_id: clientId,
+    config_id: configId,
+    redirect_uri: redirectUrl,
+    response_type: "code",
+    override_default_response_type: "true",
+    state,
+  })
+  return `https://www.facebook.com/dialog/oauth?${params.toString()}`
+}
+
+export function exchangeUnifiedCodeForToken(
+  settings: { clientId: string; clientSecret: string; version?: string },
+  code: string,
+): Promise<UnifiedInstagramAuthorization> {
+  const version = settings.version ?? "v22.0"
+  const endpoint = `${version}/oauth/access_token`
+  return rescue(endpoint, async () => {
+    const token = await instagramUnifiedGraphClient.get<{
+      access_token: string
+    }>(endpoint, {
+      searchParams: {
+        client_id: settings.clientId,
+        client_secret: settings.clientSecret,
+        code,
+      },
+    })
+    const business = await instagramUnifiedGraphClient.get<{
+      client_business_id?: string
+    }>(`${version}/me`, {
+      searchParams: {
+        fields: "client_business_id",
+        access_token: token.access_token,
+      },
+    })
+    return {
+      accessToken: token.access_token,
+      clientBusinessId: business.client_business_id,
+    }
+  })
+}
+
+export async function getUnifiedInstagramAccounts(
+  accessToken: string,
+  version = "v22.0",
+): Promise<InstagramAccount[]> {
+  const endpoint = `${version}/me/assigned_instagram_accounts`
+  const accounts: InstagramAccount[] = []
+  let after: string | undefined
+
+  do {
+    const response = await rescue(endpoint, () =>
+      instagramUnifiedGraphClient.get<{
+        data: Array<{
+          id: string
+          username?: string
+        }>
+        paging?: { cursors?: { after?: string }; next?: string }
+      }>(endpoint, {
+        searchParams: {
+          fields: "id,username",
+          access_token: accessToken,
+          ...(after ? { after } : {}),
+        },
+      }),
+    )
+    accounts.push(
+      ...response.data.map((account) => ({
+        id: account.id,
+        userId: account.id,
+        name: account.username ?? account.id,
+        username: account.username ?? account.id,
+        accessToken,
+      })),
+    )
+    const nextAfter = response.paging?.next
+      ? response.paging.cursors?.after
+      : undefined
+    after = nextAfter && nextAfter !== after ? nextAfter : undefined
+  } while (after)
+
+  return accounts
 }
 
 // Step 1: exchange authorization code → short-lived user access token + user ID

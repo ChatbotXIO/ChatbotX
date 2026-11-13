@@ -77,11 +77,18 @@ export type MessengerCredentialPublic = z.infer<
   typeof messengerCredentialPublicSchema
 >
 
-export const instagramCredentialSchema = z.object({
+const instagramCredentialBaseSchema = z.object({
   clientId: z.string(),
   version: z.string(),
   verifyToken: z.string(),
   clientSecret: z.string(),
+})
+
+export const instagramCredentialSchema = instagramCredentialBaseSchema.extend({
+  // Meta no longer offers Instagram Login to newly-created apps. When set,
+  // this is the Facebook Login for Business configuration used by Unified
+  // Login. Optional keeps every pre-Unified encrypted credential readable.
+  unifiedLoginConfigId: z.string().optional(),
 })
 export type InstagramCredential = z.infer<typeof instagramCredentialSchema>
 
@@ -89,17 +96,26 @@ export const instagramCredentialPublicSchema = instagramCredentialSchema.pick({
   clientId: true,
   version: true,
   verifyToken: true,
+  unifiedLoginConfigId: true,
 })
 export type InstagramCredentialPublic = z.infer<
   typeof instagramCredentialPublicSchema
 >
 
-export const instagramFacebookCredentialSchema = instagramCredentialSchema
-export type InstagramFacebookCredential = InstagramCredential
+export const instagramFacebookCredentialSchema = instagramCredentialBaseSchema
+export type InstagramFacebookCredential = z.infer<
+  typeof instagramFacebookCredentialSchema
+>
 
 export const instagramFacebookCredentialPublicSchema =
-  instagramCredentialPublicSchema
-export type InstagramFacebookCredentialPublic = InstagramCredentialPublic
+  instagramFacebookCredentialSchema.pick({
+    clientId: true,
+    version: true,
+    verifyToken: true,
+  })
+export type InstagramFacebookCredentialPublic = z.infer<
+  typeof instagramFacebookCredentialPublicSchema
+>
 
 export const threadsCredentialSchema = z.object({
   clientId: z.string(),
@@ -391,14 +407,17 @@ export const instagramCredentialUpdateSchema = z.object({
   version: z.string().trim().min(1),
   verifyToken: z.string().trim().min(1),
   clientSecret: z.string().trim().min(1),
+  unifiedLoginConfigId: z.string().trim().optional(),
 })
 export type InstagramCredentialUpdate = z.infer<
   typeof instagramCredentialUpdateSchema
 >
 
 export const instagramFacebookCredentialUpdateSchema =
-  instagramCredentialUpdateSchema
-export type InstagramFacebookCredentialUpdate = InstagramCredentialUpdate
+  instagramCredentialUpdateSchema.omit({ unifiedLoginConfigId: true })
+export type InstagramFacebookCredentialUpdate = z.infer<
+  typeof instagramFacebookCredentialUpdateSchema
+>
 
 export const threadsCredentialUpdateSchema = z.object({
   clientId: z.string().trim().min(1),
