@@ -10,6 +10,11 @@ vi.mock("../src/lib/http-client", () => ({
     get: mockGet,
     getWithHeaders: mockGetWithHeaders,
   },
+  instagramUnifiedCoexistGraphClient: {
+    get: mockGet,
+    getWithHeaders: mockGetWithHeaders,
+  },
+  getInstagramGraphClientForLoginType: () => ({ get: mockGet }),
 }))
 
 const { fetchInstagramConversationMessages, listInstagramConversations } =

@@ -7,6 +7,7 @@ import {
   InstagramAPIException,
   parseOriginError,
 } from "../exception"
+import type { InstagramAuthValue } from "../schema"
 import { logger } from "./logger"
 
 const EXPECTED_POLICY_ERRORS: ReadonlyArray<{
@@ -177,12 +178,41 @@ export const instagramOAuthClient = new InstagramHttpClient({
   retryDelay: 1000,
 })
 
+export const instagramUnifiedGraphClient = new InstagramHttpClient({
+  baseUrl: "https://graph.facebook.com",
+  timeout: 30_000,
+  retries: 3,
+  retryDelay: 1000,
+})
+
+export const getInstagramGraphClient = (
+  auth: Pick<InstagramAuthValue, "metadata">,
+): InstagramHttpClient =>
+  getInstagramGraphClientForLoginType(auth.metadata.loginType)
+
+export const getInstagramGraphClientForLoginType = (
+  loginType: InstagramAuthValue["metadata"]["loginType"],
+): InstagramHttpClient =>
+  loginType === "unified"
+    ? instagramUnifiedGraphClient
+    : instagramBusinessClient
+
+export const getInstagramAccountNode = (
+  auth: Pick<InstagramAuthValue, "metadata">,
+): string => (auth.metadata.loginType === "unified" ? auth.metadata.igId : "me")
+
 export const instagramCoexistGraphClient = new InstagramHttpClient({
   baseUrl: API_URL,
   // 60s, matching `facebookCoexistGraphClient`: the coexist/contact-scan walk
   // pulls conversation pages at Graph's page-size ceiling, which routinely
   // takes longer than the 30s default on a large account. Retry stays with the
   // handler (`withInlineRetry` + bounded scheduler attempts).
+  timeout: 60_000,
+  retries: 0,
+})
+
+export const instagramUnifiedCoexistGraphClient = new InstagramHttpClient({
+  baseUrl: "https://graph.facebook.com",
   timeout: 60_000,
   retries: 0,
 })

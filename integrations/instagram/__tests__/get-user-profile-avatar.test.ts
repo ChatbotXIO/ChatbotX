@@ -7,6 +7,7 @@ const mockStoreIncomingImage = vi.hoisted(() => vi.fn())
 
 vi.mock("../src/lib/http-client", () => ({
   instagramBusinessClient: { get: instagramGet },
+  getInstagramGraphClient: () => ({ get: instagramGet }),
 }))
 
 vi.mock("@chatbotx.io/utils/media-download", () => ({

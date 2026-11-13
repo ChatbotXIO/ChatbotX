@@ -5,7 +5,13 @@ import {
   oauth2Auth,
   probeVerify,
 } from "@chatbotx.io/sdk"
-import { exchangeCodeForToken, fetchInstagramAccount } from "./apis/auth"
+import {
+  exchangeCodeForToken,
+  exchangeUnifiedCodeForToken,
+  fetchInstagramAccount,
+  generateUnifiedAuthUrl,
+  getUnifiedInstagramAccounts,
+} from "./apis/auth"
 import {
   refreshLongLivedToken,
   subscribePageToInstagramWebhook,
@@ -36,10 +42,18 @@ const config: IntegrationDefinition<
   connection: {
     kind: "channel",
     strategy: "oauth_redirect",
-    multiAccount: false,
+    multiAccount: true,
     configFields: [],
     authorizeUrl: ({ credential, callbackUrl, state }) => {
       const config = credential as InstagramConfig
+      if (config.unifiedLoginConfigId) {
+        return generateUnifiedAuthUrl({
+          clientId: config.clientId,
+          configId: config.unifiedLoginConfigId,
+          redirectUrl: callbackUrl,
+          state,
+        })
+      }
       const params = new URLSearchParams({
         client_id: config.clientId,
         redirect_uri: callbackUrl,
@@ -51,29 +65,75 @@ const config: IntegrationDefinition<
     },
     exchangeCode: async ({ code, callbackUrl, credential }) => {
       const config = credential as InstagramConfig
+      if (config.unifiedLoginConfigId) {
+        const authorization = await exchangeUnifiedCodeForToken(
+          config,
+          code,
+          callbackUrl,
+        )
+        return oauth2Auth(
+          config,
+          callbackUrl,
+          { accessToken: authorization.accessToken },
+          {
+            igId: "",
+            igName: "",
+            pageId: "",
+            version: config.version,
+            loginType: "unified",
+            clientBusinessId: authorization.clientBusinessId,
+          },
+        ) satisfies InstagramAuthValue
+      }
       const { accessToken } = await exchangeCodeForToken(
         config,
         code,
         callbackUrl,
       )
-      const account = await fetchInstagramAccount(accessToken)
-      if (!account) {
-        throw new Error(
-          "Instagram account is not a supported Business/Creator account.",
-        )
-      }
       return oauth2Auth(
         config,
         callbackUrl,
         { accessToken },
         {
-          igId: account.userId,
-          igName: account.name,
-          pageId: account.id,
+          igId: "",
+          igName: "",
+          pageId: "",
           version: config.version,
-          username: account.username,
+          loginType: "direct",
         },
       ) satisfies InstagramAuthValue
+    },
+    listCandidates: async ({ auth }) => {
+      const accounts =
+        auth.metadata.loginType === "unified"
+          ? await getUnifiedInstagramAccounts(
+              auth.tokens.accessToken,
+              auth.metadata.version,
+            )
+          : await (async () => {
+              const account = await fetchInstagramAccount(
+                auth.tokens.accessToken,
+              )
+              return account ? [account] : []
+            })()
+
+      return accounts.map((account) => ({
+        sourceId: account.userId,
+        displayName: account.name,
+        avatarUrl: account.profile_picture_url,
+        auth: oauth2Auth(
+          auth,
+          auth.redirectUrl,
+          { accessToken: auth.tokens.accessToken },
+          {
+            ...auth.metadata,
+            igId: account.userId,
+            igName: account.name,
+            pageId: account.id,
+            username: account.username,
+          },
+        ) satisfies InstagramAuthValue,
+      }))
     },
     candidateToConfig: (auth) => ({
       pageId: auth.metadata.pageId,
@@ -86,8 +146,21 @@ const config: IntegrationDefinition<
     verify: async ({ auth }) =>
       await probeVerify(
         async () => {
-          const account = await fetchInstagramAccount(auth.tokens.accessToken)
-          if (!account || account.userId !== auth.metadata.igId) {
+          const accounts =
+            auth.metadata.loginType === "unified"
+              ? await getUnifiedInstagramAccounts(
+                  auth.tokens.accessToken,
+                  auth.metadata.version,
+                )
+              : await (async () => {
+                  const account = await fetchInstagramAccount(
+                    auth.tokens.accessToken,
+                  )
+                  return account ? [account] : []
+                })()
+          if (
+            !accounts.some((account) => account.userId === auth.metadata.igId)
+          ) {
             throw new Error("Instagram account could not be verified")
           }
         },
@@ -104,12 +177,14 @@ const config: IntegrationDefinition<
           igId: auth.metadata.pageId,
           accessToken: auth.tokens.accessToken,
           version: auth.metadata.version,
+          loginType: auth.metadata.loginType,
         }),
       unsubscribe: ({ auth }) =>
         unsubscribePageFromInstagramWebhook({
           igId: auth.metadata.pageId,
           accessToken: auth.tokens.accessToken,
           version: auth.metadata.version,
+          loginType: auth.metadata.loginType,
         }),
     },
   },
@@ -143,9 +218,15 @@ const config: IntegrationDefinition<
       igId: auth.metadata.pageId,
       accessToken: auth.tokens.accessToken,
       version: auth.metadata.version,
+      loginType: auth.metadata.loginType,
     })
   },
   refreshAuth: async ({ auth }) => {
+    // Unified Login returns a Business Integration System User token. It is
+    // not an Instagram user token and must never be sent to ig_refresh_token.
+    if (auth.metadata.loginType === "unified") {
+      return auth
+    }
     const refreshed = await refreshLongLivedToken(auth.tokens.accessToken)
     return {
       ...auth,

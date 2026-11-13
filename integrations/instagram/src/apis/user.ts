@@ -3,7 +3,7 @@ import { createId } from "@chatbotx.io/utils"
 import { fetchMediaWithLimits } from "@chatbotx.io/utils/media-download"
 import { storeIncomingImage } from "@chatbotx.io/utils/store-incoming-image"
 import { rescue } from "../exception"
-import { instagramBusinessClient } from "../lib/http-client"
+import { getInstagramGraphClient } from "../lib/http-client"
 import { logger } from "../lib/logger"
 import type { InstagramAuthValue, InstagramUserProfile } from "../schema"
 
@@ -19,7 +19,7 @@ const fetchUserProfile = async ({
   const queries = new URLSearchParams({
     fields: "id,name,username,profile_pic",
   })
-  return await instagramBusinessClient.get<InstagramUserProfile>(
+  return await getInstagramGraphClient(ctx.auth).get<InstagramUserProfile>(
     `${ctx.auth.metadata.version}/${psid}?${queries.toString()}`,
     { headers: { Authorization: `Bearer ${ctx.auth.tokens.accessToken}` } },
   )
