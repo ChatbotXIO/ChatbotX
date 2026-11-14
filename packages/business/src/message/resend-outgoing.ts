@@ -4,6 +4,7 @@ import {
 } from "@chatbotx.io/database/partials"
 import { createMessageRepository } from "@chatbotx.io/database/repositories"
 import type { MessageModel } from "@chatbotx.io/database/types"
+import type { MessageButtonTemplate } from "@chatbotx.io/sdk"
 import { ChatJobAction, chatQueue } from "@chatbotx.io/worker-config"
 import { contactInboxService } from "../contact-inbox/service"
 import { conversationService } from "../conversation/service"
@@ -23,6 +24,31 @@ const readReplyTargetCreatedAt = (
   }
   const date = new Date(value)
   return Number.isNaN(date.getTime()) ? null : date
+}
+
+/**
+ * The buttons a message was created with (a booking link), kept on the row as a
+ * button template: some channels (Telegram) build their keyboard only from the
+ * send job's `quickReplies`, so a resend must pass them again.
+ */
+const readStoredButtons = (
+  contentAttributes: MessageModel["contentAttributes"],
+): MessageButtonTemplate[] | undefined => {
+  if (contentAttributes?.type !== "template") {
+    return
+  }
+  const payload: unknown = contentAttributes.payload
+  if (
+    typeof payload !== "object" ||
+    payload === null ||
+    !("templateType" in payload) ||
+    payload.templateType !== "button" ||
+    !("buttons" in payload) ||
+    !Array.isArray(payload.buttons)
+  ) {
+    return
+  }
+  return payload.buttons
 }
 
 /**
@@ -111,6 +137,7 @@ export const resendOutgoing = async (props: {
         conversation,
         contactInbox,
         message: { ...messageWithAttachments, parentCreatedAt },
+        quickReplies: readStoredButtons(message.contentAttributes),
         sendFrom: "inbox",
       },
     })

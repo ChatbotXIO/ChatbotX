@@ -121,6 +121,47 @@ describe("messageService.resendOutgoing", () => {
     )
   })
 
+  test("a booking message is resent with its button, which some channels build their keyboard from", async () => {
+    const button = { type: "web_url", title: "Book", url: "https://x.test/b" }
+    mocks.findById.mockResolvedValue(
+      failedMessage({
+        contentAttributes: {
+          type: "template",
+          payload: { templateType: "button", buttons: [button] },
+        },
+      }),
+    )
+
+    await resend()
+
+    expect(mocks.chatQueueAdd).toHaveBeenCalledWith(
+      "sendChannelMessage",
+      expect.objectContaining({
+        data: expect.objectContaining({ quickReplies: [button] }),
+      }),
+    )
+  })
+
+  test.each([
+    ["no attributes", null],
+    [
+      "another template",
+      { type: "template", payload: { templateType: "generic" } },
+    ],
+    ["a malformed payload", { type: "template", payload: "oops" }],
+  ])("a message with %s is resent without buttons", async (_name, contentAttributes) => {
+    mocks.findById.mockResolvedValue(failedMessage({ contentAttributes }))
+
+    await resend()
+
+    expect(mocks.chatQueueAdd).toHaveBeenCalledWith(
+      "sendChannelMessage",
+      expect.objectContaining({
+        data: expect.objectContaining({ quickReplies: undefined }),
+      }),
+    )
+  })
+
   test("a message with files is resent whole, with resolved attachment urls", async () => {
     mocks.findById.mockResolvedValue(
       failedMessage({

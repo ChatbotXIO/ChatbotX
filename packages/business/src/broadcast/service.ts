@@ -1577,11 +1577,23 @@ class BroadcastService extends BaseService {
             isNull(broadcastModel.deletedAt),
           ),
         )
-        .returning({ id: broadcastModel.id })
+        .returning({
+          id: broadcastModel.id,
+          parentBroadcastId: broadcastModel.parentBroadcastId,
+        })
 
+      // Only series with a run this block actually stopped are paused: a run
+      // that ended or was stopped since the list was read leaves its series be.
+      const stoppedParentIds = new Set(
+        stopped.flatMap((row) =>
+          row.parentBroadcastId === null ? [] : [row.parentBroadcastId],
+        ),
+      )
       await this.pauseSeriesForBlockedAccount(tx, {
         workspaceId: input.workspaceId,
-        series,
+        series: series.filter((recurrence) =>
+          stoppedParentIds.has(recurrence.broadcastId),
+        ),
         reasonColumns,
       })
       return stopped.map((row) => row.id)
