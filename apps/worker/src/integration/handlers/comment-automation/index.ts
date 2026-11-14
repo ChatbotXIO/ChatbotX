@@ -57,6 +57,10 @@ import {
   privateReplyWindowLabel,
   supportsPrivateReply,
 } from "./private-reply"
+import {
+  isPrivateReplyQuotaReached,
+  PRIVATE_REPLY_QUOTA_REACHED_ERROR,
+} from "./private-reply-quota"
 import { executePublicReply } from "./public-reply"
 import {
   logAutomationSkipped,
@@ -280,6 +284,14 @@ export async function processCommentAutomation(
         commentId,
       })
     : false
+
+  // Read at most once per comment, and only once an automation actually has a
+  // private reply to send — see `isPrivateReplyQuotaReached`.
+  let privateReplyQuotaReached: boolean | undefined
+  const resolvePrivateReplyQuotaReached = async (): Promise<boolean> => {
+    privateReplyQuotaReached ??= await isPrivateReplyQuotaReached(workspaceId)
+    return privateReplyQuotaReached
+  }
 
   // Every automation that declines this comment, flushed in ONE insert after
   // the loop. `findActiveAutomations` scopes by workspace + channel + account,
@@ -702,6 +714,9 @@ export async function processCommentAutomation(
         const privateReplyBlockedReason = resolvePrivateReplyBlockedReason({
           privateReply: automation.privateReply,
           privateReplyClaimed,
+          botMessageQuotaReached:
+            willSendReply(automation.privateReply) &&
+            (await resolvePrivateReplyQuotaReached()),
           channelType,
           createdTime,
           delay,
@@ -944,6 +959,8 @@ export async function processCommentAutomation(
 export function resolvePrivateReplyBlockedReason(props: {
   privateReply: CommentReply
   privateReplyClaimed: boolean
+  /** See `isPrivateReplyQuotaReached`: an inline DM bypasses the chat gate. */
+  botMessageQuotaReached: boolean
   channelType: CommentAutomationChannelType
   createdTime: number
   delay: number
@@ -973,6 +990,13 @@ export function resolvePrivateReplyBlockedReason(props: {
     return {
       logReason: `comment older than ${window}`,
       errorDetail: `Private reply not sent: the comment is outside ${window}`,
+    }
+  }
+
+  if (props.botMessageQuotaReached) {
+    return {
+      logReason: "bot message quota reached",
+      errorDetail: PRIVATE_REPLY_QUOTA_REACHED_ERROR,
     }
   }
 
