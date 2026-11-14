@@ -4596,7 +4596,7 @@
       "reference": "Referensi {referenceId}"
     },
     "sendQueue": {
-      "failed": "Sebuah pesan gagal terkirim. Kirim ulang untuk melanjutkan.",
+      "failed": "Sebuah pesan gagal terkirim. Kirim ulang dari percakapan jika bisa, atau lanjutkan pengiriman.",
       "unconfirmed": "Kami tidak dapat memastikan pesan terakhir terkirim. Pilih apakah akan terus mengirim.",
       "continue": "Lanjutkan pengiriman",
       "discard": "Buang pesan dalam antrean",

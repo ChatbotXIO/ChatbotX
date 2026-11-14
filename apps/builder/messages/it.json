@@ -4596,7 +4596,7 @@
       "reference": "Riferimento {referenceId}"
     },
     "sendQueue": {
-      "failed": "Un messaggio non è stato inviato. Invialo di nuovo per continuare.",
+      "failed": "Un messaggio non è stato inviato. Invialo di nuovo dalla conversazione se possibile, o continua a inviare.",
       "unconfirmed": "Non siamo riusciti a confermare l'invio dell'ultimo messaggio. Scegli se continuare a inviare.",
       "continue": "Continua a inviare",
       "discard": "Elimina i messaggi in coda",

@@ -4596,7 +4596,7 @@
       "reference": "Referenz {referenceId}"
     },
     "sendQueue": {
-      "failed": "Eine Nachricht konnte nicht gesendet werden. Sende sie erneut, um fortzufahren.",
+      "failed": "Eine Nachricht konnte nicht gesendet werden. Sende sie wenn möglich aus dem Chat erneut oder sende weiter.",
       "unconfirmed": "Wir konnten nicht bestätigen, dass die letzte Nachricht gesendet wurde. Wähle, ob du weitersenden möchtest.",
       "continue": "Weitersenden",
       "discard": "Wartende Nachrichten verwerfen",

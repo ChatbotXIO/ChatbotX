@@ -5749,7 +5749,7 @@
       "reference": "Referens {referenceId}"
     },
     "sendQueue": {
-      "failed": "Ett meddelande kunde inte skickas. Skicka det igen för att fortsätta.",
+      "failed": "Ett meddelande kunde inte skickas. Skicka det igen från konversationen om möjligt, eller fortsätt skicka.",
       "unconfirmed": "Vi kunde inte bekräfta att det senaste meddelandet skickades. Välj om du vill fortsätta skicka.",
       "continue": "Fortsätt skicka",
       "discard": "Kasta meddelanden i kön",

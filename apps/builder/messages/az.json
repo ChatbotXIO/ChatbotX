@@ -5278,7 +5278,7 @@
       "reference": "İstinad {referenceId}"
     },
     "sendQueue": {
-      "failed": "Mesaj göndərilmədi. Göndərməyə davam etmək üçün onu yenidən göndərin.",
+      "failed": "Mesaj göndərilmədi. Mümkünsə onu söhbətdən yenidən göndərin və ya göndərməyə davam edin.",
       "unconfirmed": "Son mesajın göndərildiyini təsdiqləyə bilmədik. Göndərməyə davam edib-etməyəcəyinizi seçin.",
       "continue": "Göndərməyə davam et",
       "discard": "Növbədəki mesajları sil",

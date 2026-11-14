@@ -510,6 +510,27 @@ describe("message composers", () => {
     expect(sent).toEqual(["1", "2", "3"])
   })
 
+  test("leaving: the catch-up sends stop at the first one the server refuses", async () => {
+    act(() => root.render(<InboxComposer />))
+    await submitMessages(["1", "2", "3"])
+
+    await act(async () => {
+      root.unmount()
+      await Promise.resolve()
+    })
+    root = createRoot(container)
+
+    await act(async () => {
+      action.resolveRequests[1]?.({ serverError: "Send failed" })
+      await Promise.resolve()
+    })
+
+    const sent = action.executeAsync.mock.calls.map(
+      ([input]) => (input as { text: string }).text,
+    )
+    expect(sent).toEqual(["1", "2"])
+  })
+
   test("discarding the held messages unlocks the composer", async () => {
     act(() => root.render(<InboxComposer />))
     await submitMessages(["1", "2"])

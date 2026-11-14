@@ -4596,7 +4596,7 @@
       "reference": "Referentie {referenceId}"
     },
     "sendQueue": {
-      "failed": "Een bericht kon niet worden verzonden. Verstuur het opnieuw om door te gaan.",
+      "failed": "Een bericht kon niet worden verzonden. Verstuur het indien mogelijk opnieuw vanuit het gesprek, of ga door met verzenden.",
       "unconfirmed": "We konden niet bevestigen dat het laatste bericht is verzonden. Kies of je wilt doorgaan met verzenden.",
       "continue": "Doorgaan met verzenden",
       "discard": "Berichten in de wachtrij verwijderen",

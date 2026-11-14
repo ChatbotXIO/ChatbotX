@@ -4596,7 +4596,7 @@
       "reference": "Referință {referenceId}"
     },
     "sendQueue": {
-      "failed": "Un mesaj nu a putut fi trimis. Retrimite-l pentru a continua.",
+      "failed": "Un mesaj nu a putut fi trimis. Retrimite-l din conversație dacă se poate sau continuă trimiterea.",
       "unconfirmed": "Nu am putut confirma că ultimul mesaj a fost trimis. Alege dacă vrei să continui trimiterea.",
       "continue": "Continuă trimiterea",
       "discard": "Renunță la mesajele din coadă",

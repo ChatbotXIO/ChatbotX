@@ -44,8 +44,9 @@ export const useSendQueueRunner = (props: {
   // pipeline item chat) the queues go with it. Messages already cleared from
   // the composer must not be lost, so the ones still waiting are sent now, in
   // order. A held queue is left alone: its owner never chose to go on.
-  const latest = useRef({ sendQueues, workspaceId })
-  latest.current = { sendQueues, workspaceId }
+  const fallbackError = t("messages.unknownError")
+  const latest = useRef({ sendQueues, workspaceId, fallbackError })
+  latest.current = { sendQueues, workspaceId, fallbackError }
   useEffect(
     () => () => {
       flushWaitingSends(latest.current)
@@ -131,11 +132,15 @@ export const useSendQueueRunner = (props: {
   }, [sendQueues, submit, tick, updateSendQueue])
 }
 
-/** Sends one conversation's waiting messages in order; failures only toast. */
+/**
+ * Sends one conversation's waiting messages in order. Stops at the first one
+ * the server refuses, so nothing behind a failure overtakes it.
+ */
 const sendInOrder = async (
   workspaceId: string,
   conversationId: string,
   waiting: QueuedSend<CreateMessageWithRoutingBypassRequest>[],
+  fallbackError: string,
 ): Promise<void> => {
   for (const item of waiting) {
     try {
@@ -144,11 +149,19 @@ const sendInOrder = async (
         conversationId,
         item.input,
       )
-      if (result?.serverError) {
-        toast.error(result.serverError)
+      const refusal =
+        result?.serverError ??
+        (result?.validationErrors
+          ? (flattenValidationErrors(result.validationErrors)[0]?.message ??
+            fallbackError)
+          : undefined)
+      if (refusal) {
+        toast.error(refusal)
+        return
       }
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : String(error))
+      toast.error(error instanceof Error ? error.message : fallbackError)
+      return
     }
   }
 }
@@ -157,10 +170,16 @@ const sendInOrder = async (
 const flushWaitingSends = (state: {
   sendQueues: Record<string, SendQueue<CreateMessageWithRoutingBypassRequest>>
   workspaceId: string
+  fallbackError: string
 }): void => {
   for (const [conversationId, queue] of Object.entries(state.sendQueues)) {
     if (queue.holdReason === null && queue.waiting.length > 0) {
-      sendInOrder(state.workspaceId, conversationId, queue.waiting)
+      sendInOrder(
+        state.workspaceId,
+        conversationId,
+        queue.waiting,
+        state.fallbackError,
+      )
     }
   }
 }

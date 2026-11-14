@@ -820,6 +820,35 @@ describe("chat send-message handlers", () => {
     )
   })
 
+  test("a bookkeeping failure before the stats does not skip counting a delivered bot message", async () => {
+    mockRunChannelHandler.mockResolvedValueOnce({
+      messageIds: ["mid-1"],
+      sentCount: 1,
+    })
+    mockRecordOutboundMessageSent.mockRejectedValueOnce(new Error("db down"))
+
+    await expect(
+      sendMessageToChannel({
+        conversation: conversation as never,
+        contactInbox: contactInbox as never,
+        message: {
+          id: "msg-bot-2",
+          workspaceId: "ws-1",
+          conversationId: "conv-1",
+          contactInboxId: "ci-1",
+          contentType: "text",
+          messageType: "outgoing",
+          senderType: "bot",
+          sourceId: null,
+          text: "automated reply",
+          createdAt: new Date("2026-07-09T08:37:21.108Z"),
+        } as never,
+      }),
+    ).resolves.toEqual({ messageIds: ["mid-1"], sentCount: 1 })
+
+    expect(mockEmit.mock.calls.some(isBotSentDashboardCall)).toBe(true)
+  })
+
   test("does not retry the send when persisting a comment reply's sourceId fails", async () => {
     // Regression: the reply is already live on the channel at this point — a
     // thrown error here must be swallowed, not rethrown, or BullMQ redelivers
@@ -1993,7 +2022,7 @@ describe("chat send-message handlers", () => {
   })
 
   describe("send error is recorded only once it is final", () => {
-    const failing = (willRetryOnThrow: boolean) => {
+    const failing = (willRetryOnThrow: boolean, sendFrom?: "inbox") => {
       mockRunChannelHandler.mockRejectedValueOnce(
         new ChannelError("rate limited", ChannelErrorCategory.RATE_LIMITED, {
           code: "rate_limited",
@@ -2015,7 +2044,7 @@ describe("chat send-message handlers", () => {
             clientId: "client-1",
             createdAt: new Date("2026-07-09T08:37:21.108Z"),
           } as never,
-          sendFrom: "inbox",
+          sendFrom,
         },
         0,
         willRetryOnThrow,
@@ -2023,7 +2052,7 @@ describe("chat send-message handlers", () => {
     }
 
     test("while the job will still retry, nothing is persisted or shown", async () => {
-      await expect(failing(true)).rejects.toBeInstanceOf(ChannelError)
+      await expect(failing(true, "inbox")).rejects.toBeInstanceOf(ChannelError)
 
       expect(mockUpdateSendError).not.toHaveBeenCalled()
       expect(mockQueueWorkspaceRealtimeEvent).not.toHaveBeenCalled()
@@ -2035,7 +2064,7 @@ describe("chat send-message handlers", () => {
     })
 
     test("on the final failure the error is persisted and published", async () => {
-      await expect(failing(false)).rejects.toBeInstanceOf(ChannelError)
+      await expect(failing(false, "inbox")).rejects.toBeInstanceOf(ChannelError)
 
       expect(mockUpdateSendError).toHaveBeenCalledWith(
         "msg-1",
@@ -2049,6 +2078,17 @@ describe("chat send-message handlers", () => {
           eventType: "messageFailed",
           data: expect.objectContaining({ error: "sdk error" }),
         }),
+      )
+    })
+
+    test("a send not from the inbox records every failure, as before, so a retry that never runs still leaves one", async () => {
+      await expect(failing(true)).rejects.toBeInstanceOf(ChannelError)
+
+      expect(mockUpdateSendError).toHaveBeenCalledWith(
+        "msg-1",
+        "sdk error",
+        "ws-1",
+        new Date("2026-07-09T08:37:21.108Z"),
       )
     })
   })

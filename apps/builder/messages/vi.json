@@ -4638,7 +4638,7 @@
       "reference": "Mã tham chiếu {referenceId}"
     },
     "sendQueue": {
-      "failed": "Một tin nhắn gửi thất bại. Hãy gửi lại để tiếp tục gửi.",
+      "failed": "Một tin nhắn gửi thất bại. Hãy gửi lại từ cuộc trò chuyện nếu được, hoặc tiếp tục gửi.",
       "unconfirmed": "Chưa xác nhận được tin nhắn cuối đã gửi. Hãy chọn có tiếp tục gửi hay không.",
       "continue": "Tiếp tục gửi",
       "discard": "Hủy các tin đang chờ",

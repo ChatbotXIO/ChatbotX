@@ -4573,7 +4573,7 @@
       "reference": "Referência {referenceId}"
     },
     "sendQueue": {
-      "failed": "Uma mensagem não foi enviada. Reenvie-a para continuar.",
+      "failed": "Uma mensagem não foi enviada. Reenvie-a pela conversa se possível ou continue enviando.",
       "unconfirmed": "Não foi possível confirmar o envio da última mensagem. Escolha se quer continuar enviando.",
       "continue": "Continuar enviando",
       "discard": "Descartar mensagens na fila",

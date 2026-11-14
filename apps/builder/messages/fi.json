@@ -4596,7 +4596,7 @@
       "reference": "Viite {referenceId}"
     },
     "sendQueue": {
-      "failed": "Viestin lähetys epäonnistui. Lähetä se uudelleen jatkaaksesi.",
+      "failed": "Viestin lähetys epäonnistui. Lähetä se keskustelusta uudelleen, jos mahdollista, tai jatka lähettämistä.",
       "unconfirmed": "Emme voineet vahvistaa, että viimeisin viesti lähetettiin. Valitse, jatketaanko lähettämistä.",
       "continue": "Jatka lähettämistä",
       "discard": "Hylkää jonossa olevat viestit",

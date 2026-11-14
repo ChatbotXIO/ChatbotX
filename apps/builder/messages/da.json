@@ -4596,7 +4596,7 @@
       "reference": "Reference {referenceId}"
     },
     "sendQueue": {
-      "failed": "En besked kunne ikke sendes. Send den igen for at fortsætte.",
+      "failed": "En besked kunne ikke sendes. Send den igen fra samtalen, hvis det er muligt, eller fortsæt med at sende.",
       "unconfirmed": "Vi kunne ikke bekræfte, at den sidste besked blev sendt. Vælg, om du vil fortsætte.",
       "continue": "Fortsæt med at sende",
       "discard": "Kassér beskeder i kø",

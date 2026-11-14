@@ -5278,7 +5278,7 @@
       "reference": "Reference {referenceId}"
     },
     "sendQueue": {
-      "failed": "A message failed to send. Resend it to continue sending.",
+      "failed": "A message failed to send. Resend it from the conversation if possible, or keep sending.",
       "unconfirmed": "We couldn't confirm the last message was sent. Choose whether to keep sending.",
       "continue": "Keep sending",
       "discard": "Discard queued messages",

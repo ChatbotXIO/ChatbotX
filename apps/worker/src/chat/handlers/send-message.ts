@@ -492,7 +492,16 @@ export async function sendMessageToChannel(
           logger.warn(error, "Auto-unblock on successful send failed")
         }
       }
+    } catch (err) {
+      logger.error(
+        { err, messageId: message.id, workspaceId: conversation.workspaceId },
+        "Post-send bookkeeping failed after the channel accepted the message",
+      )
+    }
 
+    // Quota and agent stats in their own block: a failure in the bookkeeping
+    // above must not also skip counting a message that was delivered.
+    try {
       // Bot-message quota accounting: `chat/worker.ts`'s pre-send gate blocks this
       // job type when `senderType === "bot"` (`isBotMessageQuotaReached`), but
       // nothing previously counted it — the quota gate and the quota meter must
@@ -573,10 +582,11 @@ export async function sendMessageToChannel(
       metadata,
       willRetry,
     })
-    // Only a FINAL failure is recorded and shown: while the job will still be
-    // retried the message may yet go out, and an error badge now would invite a
-    // Resend that duplicates it.
-    if (!willRetry) {
+    // An inbox message records only its FINAL failure: while the job will still
+    // be retried it may yet go out, and an error badge now would invite a
+    // Resend that duplicates it. Other sends keep recording every failure, so
+    // a retry that never runs (quota, blocked workspace) still leaves one.
+    if (!willRetry || sendFrom !== "inbox") {
       await recordMessageSendError(
         message?.id,
         message?.clientId,
