@@ -71,7 +71,7 @@ runContactScan engine ── claimContactScanRun (mints claimToken) ── walk 
   the status view and the history list; no new enum value). Nothing running is
   `cancelled: false`, not an error. Disconnecting Messenger or Instagram from the
   inbox cancels the integration's scan in the same transaction (workspace
-  teardown instead ends it as failed, since the workspace is going away). A cancelled scan still counts
+  teardown ends it too: cancelled for Instagram, failed for Messenger). A cancelled scan still counts
   toward the 24 h cooldown (measured from `createdAt`).
 - **Cooldown**: 24 h from `createdAt` before the same inbox can scan again
   (`resolveContactScanAvailability`). ETA shown to the user is `createdAt + 4 h`

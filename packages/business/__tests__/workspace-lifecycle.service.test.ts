@@ -73,6 +73,11 @@ vi.mock("../src/coexist/service", () => ({
   },
 }))
 
+const cancelContactScanMock = vi.hoisted(() => vi.fn())
+vi.mock("../src/contact-scan/service", () => ({
+  contactScanService: { cancelForIntegration: cancelContactScanMock },
+}))
+
 vi.mock("../src/logger", () => ({
   logger: {
     error: vi.fn(),
@@ -240,6 +245,11 @@ test("disconnectWorkspaceChannels tears down active native Instagram coexist run
     integrationId: "integration-ig-1",
     channel: "instagram",
     currentError: "Integration disconnected",
+    tx,
+  })
+  expect(cancelContactScanMock).toHaveBeenCalledWith({
+    channel: "instagram",
+    integrationId: "integration-ig-1",
     tx,
   })
 })

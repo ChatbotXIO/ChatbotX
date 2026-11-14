@@ -80,6 +80,8 @@ const scheduleContinuation = async (
         delay: input.delayMs,
         attempts: 1,
         removeOnComplete: true,
+        // A failed job keeps its id reserved; do not keep it forever.
+        removeOnFail: { count: 100 },
       },
     )
     logger.info(

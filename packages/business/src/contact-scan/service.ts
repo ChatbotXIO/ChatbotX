@@ -357,6 +357,7 @@ class ContactScanService extends BaseService {
     return coexistSyncRunRepository.markMaxAttemptsFailed({
       ...input,
       type: "contact_scan",
+      currentError: CONTACT_SCAN_ERRORS.maxAttempts,
     })
   }
 

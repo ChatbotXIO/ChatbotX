@@ -97,7 +97,7 @@ function startChatWorker() {
               await sendFlowStep(job.data.data)
               return
             case ChatJobAction.sendChatMessage:
-              await sendChatMessage(job.data.data, !isFinalAttempt(job))
+              await sendChatMessage(job.data.data)
               return
             case ChatJobAction.sendWhatsappTemplateMessage:
               await sendWhatsappTemplateMessage(

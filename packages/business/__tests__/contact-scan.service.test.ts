@@ -376,6 +376,7 @@ describe("contactScanService thin delegations", () => {
     expect(mocks.markMaxAttemptsFailed).toHaveBeenCalledWith({
       maxAttempts: 5,
       type: "contact_scan",
+      currentError: "maxAttempts",
     })
   })
 

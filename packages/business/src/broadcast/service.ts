@@ -2968,6 +2968,7 @@ class BroadcastService extends BaseService {
         flow: { columns: { id: true, name: true } },
         integrationWhatsapp: { columns: { id: true, name: true } },
         integrationMessenger: { columns: { id: true, name: true } },
+        statusInbox: { columns: { id: true, name: true } },
         ...withBroadcastTargets,
       },
       orderBy: { schedulesAt: "asc" },

@@ -1230,9 +1230,6 @@ export async function sendFlowStep({
 
 export const sendChatMessage = async (
   props: ChatJobSendChatMessage["data"],
-  // Forwarded from the chat worker: this function rethrows, so a BullMQ attempt
-  // still in hand means another `message:failed` is coming for the same send.
-  willRetryOnThrow = false,
 ) => {
   const {
     conversation,
@@ -1361,7 +1358,9 @@ export const sendChatMessage = async (
           isBulkBroadcast,
         },
         0,
-        willRetryOnThrow,
+        // This function catches every failure below and never rethrows, so no
+        // retry follows: the send error must be recorded now.
+        false,
       ),
     ]
     if (!isBulkOutbound) {

@@ -50,6 +50,7 @@ import {
   connectionStateService,
   type PendingQuotaRelease,
 } from "../connection/state-service"
+import { contactScanService } from "../contact-scan/service"
 import { WorkspacePurgeIncompleteError } from "../errors"
 import { inboxService } from "../inbox/service"
 import { integrationActiveCampaignService } from "../integration-active-campaign/service"
@@ -789,6 +790,13 @@ class WorkspaceLifecycleService extends BaseService {
               tx,
             })
           }
+          // Both Instagram variants support the contact scan, so this is not
+          // gated on the integration type.
+          await contactScanService.cancelForIntegration({
+            channel: "instagram",
+            integrationId: inbox.integrationInstagram.id,
+            tx,
+          })
           await tx
             .delete(integrationInstagramModel)
             .where(

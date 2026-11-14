@@ -484,6 +484,32 @@ describe("message composers", () => {
     expect(textarea.value).toBe("4")
   })
 
+  test("leaving while messages still wait sends them in order instead of dropping them", async () => {
+    act(() => root.render(<InboxComposer />))
+    await submitMessages(["1", "2", "3"])
+    // Only the first has gone out: the others wait for its answer.
+    expect(action.executeAsync).toHaveBeenCalledTimes(1)
+
+    await act(async () => {
+      root.unmount()
+      await Promise.resolve()
+    })
+    root = createRoot(container)
+
+    // Each one is sent only after the previous request has returned.
+    for (let index = 1; index < 3; index += 1) {
+      await act(async () => {
+        action.resolveRequests[index]?.({ data: {} })
+        await Promise.resolve()
+      })
+    }
+
+    const sent = action.executeAsync.mock.calls.map(
+      ([input]) => (input as { text: string }).text,
+    )
+    expect(sent).toEqual(["1", "2", "3"])
+  })
+
   test("discarding the held messages unlocks the composer", async () => {
     act(() => root.render(<InboxComposer />))
     await submitMessages(["1", "2"])

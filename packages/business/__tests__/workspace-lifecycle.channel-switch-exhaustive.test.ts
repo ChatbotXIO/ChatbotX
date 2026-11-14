@@ -83,6 +83,10 @@ vi.mock("../src/coexist/service", () => ({
   },
 }))
 
+vi.mock("../src/contact-scan/service", () => ({
+  contactScanService: { cancelForIntegration: vi.fn() },
+}))
+
 vi.mock("../src/logger", () => ({
   logger: { error: vi.fn(), info: vi.fn(), warn: vi.fn() },
 }))

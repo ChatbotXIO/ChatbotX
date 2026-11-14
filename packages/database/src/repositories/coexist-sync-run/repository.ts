@@ -444,6 +444,8 @@ export class CoexistSyncRunRepository {
      */
     type: CoexistRunType
     maxAttempts: number
+    /** What `currentError` says; defaults to the coexist wording. */
+    currentError?: string
     tx?: DatabaseClient
   }): Promise<void> {
     const { tx = db } = input
@@ -451,7 +453,7 @@ export class CoexistSyncRunRepository {
       .update(coexistSyncRunModel)
       .set({
         status: "failed",
-        currentError: "Max scheduler retries exceeded",
+        currentError: input.currentError ?? "Max scheduler retries exceeded",
         finishedAt: new Date(),
         // Terminal write clears the scan continuation cursor (no-op for
         // coexist rows, which never set it).

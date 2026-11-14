@@ -1,7 +1,7 @@
 "use client"
 
 import { useTranslations } from "next-intl"
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { toast } from "sonner"
 import { useWorkspaceId } from "@/hooks/routing"
 import { useChatStore } from "../../chat/store/chat-store-provider"
@@ -14,6 +14,7 @@ import {
   nextSendToSubmit,
   nextSendWakeAt,
   type QueuedSend,
+  type SendQueue,
 } from "./send-queue"
 import { flattenValidationErrors } from "./validation-errors"
 
@@ -38,6 +39,19 @@ export const useSendQueueRunner = (props: {
   const markMessageFailed = useChatStore((state) => state.markMessageFailed)
   // Bumped by a timer to re-evaluate the queues when a gap or deadline passes.
   const [tick, setTick] = useState(0)
+
+  // When the runner goes away (the person leaves the inbox, or closes the
+  // pipeline item chat) the queues go with it. Messages already cleared from
+  // the composer must not be lost, so the ones still waiting are sent now, in
+  // order. A held queue is left alone: its owner never chose to go on.
+  const latest = useRef({ sendQueues, workspaceId })
+  latest.current = { sendQueues, workspaceId }
+  useEffect(
+    () => () => {
+      flushWaitingSends(latest.current)
+    },
+    [],
+  )
 
   const submit = useCallback(
     async (
@@ -115,4 +129,38 @@ export const useSendQueueRunner = (props: {
       }
     }
   }, [sendQueues, submit, tick, updateSendQueue])
+}
+
+/** Sends one conversation's waiting messages in order; failures only toast. */
+const sendInOrder = async (
+  workspaceId: string,
+  conversationId: string,
+  waiting: QueuedSend<CreateMessageWithRoutingBypassRequest>[],
+): Promise<void> => {
+  for (const item of waiting) {
+    try {
+      const result = await createMessageAction(
+        workspaceId,
+        conversationId,
+        item.input,
+      )
+      if (result?.serverError) {
+        toast.error(result.serverError)
+      }
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : String(error))
+    }
+  }
+}
+
+/** Sends what is still waiting in unheld queues (one chain per conversation). */
+const flushWaitingSends = (state: {
+  sendQueues: Record<string, SendQueue<CreateMessageWithRoutingBypassRequest>>
+  workspaceId: string
+}): void => {
+  for (const [conversationId, queue] of Object.entries(state.sendQueues)) {
+    if (queue.holdReason === null && queue.waiting.length > 0) {
+      sendInOrder(state.workspaceId, conversationId, queue.waiting)
+    }
+  }
 }
