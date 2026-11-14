@@ -35,6 +35,7 @@ import { CloneBroadcastDialog } from "./clone-broadcast-dialog"
 import { BroadcastSeriesSummary } from "./components/broadcast-series-summary"
 import { BroadcastStatsCell } from "./components/broadcast-stats-cell"
 import { BroadcastStatusBadge } from "./components/broadcast-status-badge"
+import { BroadcastStatusReason } from "./components/broadcast-status-reason"
 import { BroadcastsEmptyState } from "./components/broadcasts-empty-state"
 import { BroadcastsTableToolbarActions } from "./components/broadcasts-table-toolbar-actions"
 import { DeleteBroadcastDialog } from "./components/delete-broadcast-dialog"
@@ -261,11 +262,14 @@ export function BroadcastsTable({ promises, filtered }: BroadcastsTableProps) {
           />
         ),
         cell: ({ row }) => (
-          <BroadcastStatusBadge
-            occurrenceAt={row.original.occurrenceAt}
-            schedulesType={row.original.schedulesType}
-            status={row.original.status}
-          />
+          <div className="flex flex-col gap-1">
+            <BroadcastStatusBadge
+              occurrenceAt={row.original.occurrenceAt}
+              schedulesType={row.original.schedulesType}
+              status={row.original.status}
+            />
+            <BroadcastStatusReason broadcast={row.original} />
+          </div>
         ),
         enableSorting: false,
         enableHiding: false,

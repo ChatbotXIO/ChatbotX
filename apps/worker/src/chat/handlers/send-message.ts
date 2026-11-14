@@ -362,154 +362,173 @@ export async function sendMessageToChannel(
       )
     }
 
-    if (isComment) {
-      // When the outgoing message is a comment reply, store the Facebook comment
-      // ID of the new reply so the page manager can edit/delete it later.
-      const replyId = result.messageIds[0]
-      if (message.parentId && replyId && message.id) {
-        // The reply was already sent successfully — a failure past this
-        // point must never rethrow, or BullMQ retries the whole job and
-        // sendComment fires again, posting a second live duplicate reply.
-        try {
-          await messageService.updateSourceId({
-            id: message.id,
-            sourceId: replyId,
-            workspaceId: conversation.workspaceId,
-            createdAt: new Date(message.createdAt),
-          })
+    // The channel accepted the message. Tell the composer right away (before
+    // any bookkeeping) so its send queue can move on.
+    await publishInboxSendConfirmation({
+      sendFrom,
+      silent: isBulkOutbound,
+      conversation,
+      message,
+    })
 
-          // Notify the client so edit/delete buttons appear immediately without a refresh.
-          await queueConversationScopedMessageEvent({
-            workspaceId: conversation.workspaceId,
-            conversationId: conversation.id,
-            eventType: RealtimeEventType.messageIdAssigned,
-            data: { messageId: message.id, commentId: replyId },
-          })
+    // Everything below is bookkeeping for a message that is already delivered:
+    // a failure here must neither mark it failed nor rethrow into a retry, which
+    // would send it a second time.
+    try {
+      if (isComment) {
+        // When the outgoing message is a comment reply, store the Facebook comment
+        // ID of the new reply so the page manager can edit/delete it later.
+        const replyId = result.messageIds[0]
+        if (message.parentId && replyId && message.id) {
+          // The reply was already sent successfully — a failure past this
+          // point must never rethrow, or BullMQ retries the whole job and
+          // sendComment fires again, posting a second live duplicate reply.
+          try {
+            await messageService.updateSourceId({
+              id: message.id,
+              sourceId: replyId,
+              workspaceId: conversation.workspaceId,
+              createdAt: new Date(message.createdAt),
+            })
 
-          if (attemptsMade > 0) {
-            await clearMessageSendError(
-              message.id,
-              message.clientId,
-              conversation.workspaceId,
-              new Date(message.createdAt),
-              { conversationId: conversation.id, silent: isBulkOutbound },
+            // Notify the client so edit/delete buttons appear immediately without a refresh.
+            await queueConversationScopedMessageEvent({
+              workspaceId: conversation.workspaceId,
+              conversationId: conversation.id,
+              eventType: RealtimeEventType.messageIdAssigned,
+              data: { messageId: message.id, commentId: replyId },
+            })
+
+            if (attemptsMade > 0) {
+              await clearMessageSendError(
+                message.id,
+                message.clientId,
+                conversation.workspaceId,
+                new Date(message.createdAt),
+                { conversationId: conversation.id, silent: isBulkOutbound },
+              )
+            }
+          } catch (err) {
+            logger.error(
+              err,
+              "Failed to persist comment reply sourceId after a successful send",
             )
           }
-        } catch (err) {
-          logger.error(
-            err,
-            "Failed to persist comment reply sourceId after a successful send",
+        }
+      } else {
+        // Persist the provider message id as this row's sourceId. The channel
+        // echoes every page-sent message back via webhook (coexist); the echo
+        // handler dedups through createOrUpdate → findBySourceId. Without a
+        // sourceId here, bot/agent outgoing rows stay sourceId=null, the echo
+        // lookup misses, and a duplicate row is inserted as senderType=user.
+        await updateMessageSourceId(
+          message.id,
+          conversation.workspaceId,
+          new Date(message.createdAt),
+          result,
+        )
+
+        if (attemptsMade > 0) {
+          await clearMessageSendError(
+            message.id,
+            message.clientId,
+            conversation.workspaceId,
+            new Date(message.createdAt),
+            { conversationId: conversation.id, silent: isBulkOutbound },
           )
         }
       }
-    } else {
-      // Persist the provider message id as this row's sourceId. The channel
-      // echoes every page-sent message back via webhook (coexist); the echo
-      // handler dedups through createOrUpdate → findBySourceId. Without a
-      // sourceId here, bot/agent outgoing rows stay sourceId=null, the echo
-      // lookup misses, and a duplicate row is inserted as senderType=user.
-      await updateMessageSourceId(
-        message.id,
-        conversation.workspaceId,
-        new Date(message.createdAt),
-        result,
-      )
 
-      if (attemptsMade > 0) {
-        await clearMessageSendError(
-          message.id,
-          message.clientId,
-          conversation.workspaceId,
-          new Date(message.createdAt),
-          { conversationId: conversation.id, silent: isBulkOutbound },
-        )
-      }
-    }
-
-    await contactInboxService.recordOutboundMessageSent({
-      contactInboxId: contactInbox.id,
-      contactId: contactInbox.contactId,
-      workspaceId: conversation.workspaceId,
-      at: message.createdAt ?? new Date(),
-    })
-
-    // A public comment reply reaches no one's inbox; a private reply does.
-    if (!isComment || isPrivateReply) {
-      await recordDeliveredWhenNoReceipts({
-        contactInbox,
-        sentCount: result.sentCount,
+      await contactInboxService.recordOutboundMessageSent({
+        contactInboxId: contactInbox.id,
+        contactId: contactInbox.contactId,
         workspaceId: conversation.workspaceId,
+        at: message.createdAt ?? new Date(),
       })
-    }
 
-    if (!isComment) {
-      await recordServiceSent({
-        conversation,
-        contactInbox: routingContactInbox,
-        isTemplateMessage: false,
-        dispatchedAt,
-      })
-    }
-
-    if (isDeliveredDirectMessage({ message, result })) {
-      await markConversationReadAfterDelivery({
-        workspaceId: conversation.workspaceId,
-        conversationId: conversation.id,
-        inboxId: contactInbox.inboxId,
-        readAt: new Date(message.createdAt),
-        silent: isBulkOutbound,
-      })
-    }
-
-    // The other half of the cross-queue anchor: the integration worker recorded
-    // the attempt optimistically and only this handler knows the Graph API
-    // accepted it. Meta sends no delivery receipt for a public comment reply,
-    // so this is the automation's only delivery signal.
-    await settleCommentAutomationDelivered({
-      contentAttributes: message?.contentAttributes,
-    })
-
-    if (!isComment) {
-      try {
-        await contactService.unblockIfBlocked({
+      // A public comment reply reaches no one's inbox; a private reply does.
+      if (!isComment || isPrivateReply) {
+        await recordDeliveredWhenNoReceipts({
+          contactInbox,
+          sentCount: result.sentCount,
           workspaceId: conversation.workspaceId,
-          id: conversation.contactId,
         })
-      } catch (error) {
-        logger.warn(error, "Auto-unblock on successful send failed")
       }
-    }
 
-    // Bot-message quota accounting: `chat/worker.ts`'s pre-send gate blocks this
-    // job type when `senderType === "bot"` (`isBotMessageQuotaReached`), but
-    // nothing previously counted it — the quota gate and the quota meter must
-    // stay structurally paired or the gate is enforced against a counter that
-    // never moves. Human-sent messages (senderType !== "bot") are unaffected.
-    if (message.senderType === "bot") {
-      await emitBotMessageSentEvents({
-        workspaceId: conversation.workspaceId,
-        contactInbox,
-        result,
-        trigger: {
-          triggerHandler: "sendMessageToChannel",
-          triggerType: "message_bot_sent_channel",
-        },
+      if (!isComment) {
+        await recordServiceSent({
+          conversation,
+          contactInbox: routingContactInbox,
+          isTemplateMessage: false,
+          dispatchedAt,
+        })
+      }
+
+      if (isDeliveredDirectMessage({ message, result })) {
+        await markConversationReadAfterDelivery({
+          workspaceId: conversation.workspaceId,
+          conversationId: conversation.id,
+          inboxId: contactInbox.inboxId,
+          readAt: new Date(message.createdAt),
+          silent: isBulkOutbound,
+        })
+      }
+
+      // The other half of the cross-queue anchor: the integration worker recorded
+      // the attempt optimistically and only this handler knows the Graph API
+      // accepted it. Meta sends no delivery receipt for a public comment reply,
+      // so this is the automation's only delivery signal.
+      await settleCommentAutomationDelivered({
+        contentAttributes: message?.contentAttributes,
       })
-    } else if (message.senderType === "user" && message.senderId) {
-      // A workspace member's message from the inbox composer. `api` and
-      // `system` senders are not human agents and stay out of agent stats.
-      await emitHumanMessageSentEvents({
-        workspaceId: conversation.workspaceId,
-        contactInbox,
-        result,
-        trigger: {
-          triggerHandler: "sendMessageToChannel",
-          triggerType: "message_human_sent_channel",
-        },
-        adminId: message.senderId,
-        messageId: message.id,
-        occurredAt: new Date(message.createdAt),
-      })
+
+      if (!isComment) {
+        try {
+          await contactService.unblockIfBlocked({
+            workspaceId: conversation.workspaceId,
+            id: conversation.contactId,
+          })
+        } catch (error) {
+          logger.warn(error, "Auto-unblock on successful send failed")
+        }
+      }
+
+      // Bot-message quota accounting: `chat/worker.ts`'s pre-send gate blocks this
+      // job type when `senderType === "bot"` (`isBotMessageQuotaReached`), but
+      // nothing previously counted it — the quota gate and the quota meter must
+      // stay structurally paired or the gate is enforced against a counter that
+      // never moves. Human-sent messages (senderType !== "bot") are unaffected.
+      if (message.senderType === "bot") {
+        await emitBotMessageSentEvents({
+          workspaceId: conversation.workspaceId,
+          contactInbox,
+          result,
+          trigger: {
+            triggerHandler: "sendMessageToChannel",
+            triggerType: "message_bot_sent_channel",
+          },
+        })
+      } else if (message.senderType === "user" && message.senderId) {
+        // A workspace member's message from the inbox composer. `api` and
+        // `system` senders are not human agents and stay out of agent stats.
+        await emitHumanMessageSentEvents({
+          workspaceId: conversation.workspaceId,
+          contactInbox,
+          result,
+          trigger: {
+            triggerHandler: "sendMessageToChannel",
+            triggerType: "message_human_sent_channel",
+          },
+          adminId: message.senderId,
+          messageId: message.id,
+          occurredAt: new Date(message.createdAt),
+        })
+      }
+    } catch (err) {
+      logger.error(
+        { err, messageId: message.id, workspaceId: conversation.workspaceId },
+        "Post-send bookkeeping failed after the channel accepted the message",
+      )
     }
 
     return result
@@ -521,14 +540,18 @@ export async function sendMessageToChannel(
       conversation,
       contactInbox: routingContactInbox,
       contentAttributes: message.contentAttributes,
+      metadata,
     })
     logger.error(error, "An error occurred while sending the message")
     const errorData = await parseSdkError(error)
-    const willRetry = willSendRetry({
-      error,
-      channel: contactInbox.channel,
-      willRetryOnThrow,
-    })
+    // A reconciled error returns instead of throwing, so it is never retried.
+    const willRetry =
+      !isReconciledSendError &&
+      willSendRetry({
+        error,
+        channel: contactInbox.channel,
+        willRetryOnThrow,
+      })
     await emit(messageEventTypeSchema.enum["message:failed"], {
       context: {
         workspaceId: conversation.workspaceId,
@@ -550,14 +573,19 @@ export async function sendMessageToChannel(
       metadata,
       willRetry,
     })
-    await recordMessageSendError(
-      message?.id,
-      message?.clientId,
-      conversation.workspaceId,
-      message?.createdAt ? new Date(message.createdAt) : undefined,
-      errorData.message,
-      { conversationId: conversation.id, silent: isBulkOutbound },
-    )
+    // Only a FINAL failure is recorded and shown: while the job will still be
+    // retried the message may yet go out, and an error badge now would invite a
+    // Resend that duplicates it.
+    if (!willRetry) {
+      await recordMessageSendError(
+        message?.id,
+        message?.clientId,
+        conversation.workspaceId,
+        message?.createdAt ? new Date(message.createdAt) : undefined,
+        errorData.message,
+        { conversationId: conversation.id, silent: isBulkOutbound },
+      )
+    }
     // Terminal failures only: an attempt that is about to be retried must not
     // put a row in the automation's Error Logs for a reply that still lands.
     if (!willRetry) {
@@ -885,6 +913,40 @@ const queueConversationScopedMessageEvent = async (input: {
         workspaceId: input.workspaceId,
       },
       "Failed to resolve current conversation route for realtime event",
+    )
+  }
+}
+
+/**
+ * Success signal for a message typed in the inbox: the existing `messageFailed`
+ * event with `error: null`, which the builder already reads as "no error". It
+ * is the composer queue's only "this message was accepted" signal, so it is
+ * published for inbox sends only (broadcasts, flows and sequences stay silent).
+ */
+const publishInboxSendConfirmation = async (input: {
+  sendFrom: ChatJobSendChannelMessage["data"]["sendFrom"]
+  silent: boolean
+  conversation: Pick<ConversationModel, "id" | "workspaceId">
+  message: Pick<MessageModel, "id"> & { clientId?: string | undefined }
+}): Promise<void> => {
+  if (input.sendFrom !== "inbox" || input.silent) {
+    return
+  }
+  try {
+    await queueConversationScopedMessageEvent({
+      workspaceId: input.conversation.workspaceId,
+      conversationId: input.conversation.id,
+      eventType: RealtimeEventType.messageFailed,
+      data: {
+        messageId: input.message.id,
+        clientId: input.message.clientId,
+        error: null,
+      },
+    })
+  } catch (err) {
+    logger.warn(
+      { err, messageId: input.message.id },
+      "Failed to publish the inbox send confirmation",
     )
   }
 }
@@ -1220,6 +1282,7 @@ export async function sendFlowStepToChannel({
       conversation,
       contactInbox,
       contentAttributes: undefined,
+      metadata,
     })
     throw error
   }

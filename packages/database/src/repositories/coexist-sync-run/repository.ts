@@ -134,6 +134,8 @@ export type CoexistRunProgressInput = {
       | "syncProgress"
       // Contact-scan-only: provider `after` cursor for continuation resume.
       | "resumeCursor"
+      // Scan progress resets it to 1 (the running claim), so only consecutive failures count.
+      | "attempts"
     >
   >
   /**
@@ -173,6 +175,13 @@ export type PickDueRunsInput = {
   type: CoexistRunType
   batchSize: number
   maxAttempts: number
+  /**
+   * Also picks a `running` row whose claim was released (`claimToken IS NULL`)
+   * and whose heartbeat is older than this. For a run parked on a delayed job:
+   * if that job is lost the sweeper recovers it after this grace instead of
+   * after the one-hour stale window. Omitted by coexist, which stays unchanged.
+   */
+  releasedGraceMs?: number
   tx?: DatabaseClient
 }
 
@@ -435,6 +444,8 @@ export class CoexistSyncRunRepository {
      */
     type: CoexistRunType
     maxAttempts: number
+    /** What `currentError` says; defaults to the coexist wording. */
+    currentError?: string
     tx?: DatabaseClient
   }): Promise<void> {
     const { tx = db } = input
@@ -442,7 +453,7 @@ export class CoexistSyncRunRepository {
       .update(coexistSyncRunModel)
       .set({
         status: "failed",
-        currentError: "Max scheduler retries exceeded",
+        currentError: input.currentError ?? "Max scheduler retries exceeded",
         finishedAt: new Date(),
         // Terminal write clears the scan continuation cursor (no-op for
         // coexist rows, which never set it).
@@ -478,6 +489,10 @@ export class CoexistSyncRunRepository {
    */
   async pickDueRuns(input: PickDueRunsInput): Promise<PickedCoexistRun[]> {
     const { tx = db } = input
+    const releasedClause =
+      input.releasedGraceMs === undefined
+        ? sql``
+        : sql`OR (status = 'running' AND "claimToken" IS NULL AND "lastHeartbeatAt" < NOW() - make_interval(secs => ${input.releasedGraceMs / 1000}))`
     const picked = await tx.execute<PickedCoexistRun>(sql`
       UPDATE "CoexistSyncRun"
       SET attempts = attempts + 1,
@@ -488,6 +503,7 @@ export class CoexistSyncRunRepository {
         WHERE (
           (status = 'init' AND "updatedAt" < NOW() - INTERVAL '10 seconds')
           OR (status = 'running' AND "lastHeartbeatAt" < NOW() - INTERVAL '1 hour')
+          ${releasedClause}
         )
         AND type = ${input.type}
         AND attempts < ${input.maxAttempts}
@@ -1019,12 +1035,15 @@ export class CoexistSyncRunRepository {
   async yieldForContinuation(input: {
     runId: string
     expect: CoexistRunWriteGuard
+    /** Written with the release; omitted leaves the count as it is. */
+    attempts?: number
     tx?: DatabaseClient
   }): Promise<number> {
     const { tx = db, runId, expect } = input
     const rows = await tx
       .update(coexistSyncRunModel)
       .set({
+        ...(input.attempts === undefined ? {} : { attempts: input.attempts }),
         claimToken: null,
         lastHeartbeatAt: new Date(),
         updatedAt: new Date(),
@@ -1107,6 +1126,97 @@ export class CoexistSyncRunRepository {
     return run ?? null
   }
 
+  /**
+   * Ends a live (`init`/`running`) scan on an integration as `partial` with the
+   * caller's sentinel, in one conditional UPDATE. Clearing `claimToken` and
+   * `resumeCursor` makes the worker's next fenced write match zero rows, so the
+   * walk stops without a new chunk (imported contacts stay). `workspaceId` is
+   * required for the operator's Cancel and omitted by the channel-disconnect
+   * teardown, which already holds the integration.
+   *
+   * @returns how many scans were ended (0 or 1: one live scan per integration).
+   */
+  async cancelActiveContactScanRuns(input: {
+    channel: CoexistChannel
+    integrationId: string
+    workspaceId?: string
+    currentError: string
+    tx?: DatabaseClient
+  }): Promise<number> {
+    const { tx = db } = input
+    const now = new Date()
+    const rows = await tx
+      .update(coexistSyncRunModel)
+      .set({
+        status: "partial",
+        currentError: input.currentError,
+        claimToken: null,
+        resumeCursor: null,
+        finishedAt: now,
+        updatedAt: now,
+      })
+      .where(
+        and(
+          eq(coexistSyncRunModel.type, "contact_scan"),
+          eq(coexistSyncRunModel.channel, input.channel),
+          eq(coexistSyncRunModel.integrationId, input.integrationId),
+          input.workspaceId === undefined
+            ? undefined
+            : eq(coexistSyncRunModel.workspaceId, input.workspaceId),
+          inArray(coexistSyncRunModel.status, PULL_CLAIMABLE_STATUSES),
+        ),
+      )
+      .returning({ id: coexistSyncRunModel.id })
+
+    return rows.length
+  }
+
+  /**
+   * Hands a scan back after a transient failure, in ONE atomic UPDATE: back to
+   * `init` for the sweeper to re-drive while it still has attempts left, else
+   * `failed` right now. It cannot wait for `markMaxAttemptsFailed`, which only
+   * ends a scan whose heartbeat is 10 minutes stale, and `pickDueRuns` no longer
+   * picks it at `maxAttempts`. `attempts` is the sweeper's pick count (a running
+   * claim is 1), so the Nth consecutive failure sees N: a completed page resets
+   * it to 1 and the 5th failure in a row fails the run.
+   *
+   * @returns the outcome, or `null` when the `expect` guard did not hold (the
+   * claim was taken over or the run was cancelled).
+   */
+  async retryOrFailContactScanRun(input: {
+    runId: string
+    maxAttempts: number
+    retryError: string
+    exhaustedError: string
+    expect: CoexistRunWriteGuard
+    tx?: DatabaseClient
+  }): Promise<ContactScanRetryOutcome | null> {
+    const { tx = db } = input
+    const exhausted = sql`${coexistSyncRunModel.attempts} >= ${input.maxAttempts}`
+    const [row] = await tx
+      .update(coexistSyncRunModel)
+      .set({
+        status: sql`CASE WHEN ${exhausted} THEN 'failed'::"coexistRunStatus" ELSE 'init'::"coexistRunStatus" END`,
+        currentError: sql`CASE WHEN ${exhausted} THEN ${input.exhaustedError} ELSE ${input.retryError} END`,
+        finishedAt: sql`CASE WHEN ${exhausted} THEN NOW() ELSE ${coexistSyncRunModel.finishedAt} END`,
+        resumeCursor: sql`CASE WHEN ${exhausted} THEN NULL ELSE ${coexistSyncRunModel.resumeCursor} END`,
+        lastHeartbeatAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .where(
+        and(
+          eq(coexistSyncRunModel.type, "contact_scan"),
+          ...runWriteFilter(input.runId, input.expect),
+        ),
+      )
+      .returning({ status: coexistSyncRunModel.status })
+
+    if (!row) {
+      return null
+    }
+    return row.status === "failed" ? "failed" : "retry"
+  }
+
   /** Newest scan run for this integration, workspace-scoped. */
   async findLatestContactScanRun(input: {
     workspaceId: string
@@ -1174,5 +1284,8 @@ export class CoexistSyncRunRepository {
     }
   }
 }
+
+/** What `retryOrFailContactScanRun` did: handed the run back, or ended it. */
+export type ContactScanRetryOutcome = "retry" | "failed"
 
 export const coexistSyncRunRepository = new CoexistSyncRunRepository()

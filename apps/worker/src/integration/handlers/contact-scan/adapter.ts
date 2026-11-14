@@ -6,24 +6,16 @@ import { instagramContactScanAdapter } from "./adapters/instagram"
 import { messengerContactScanAdapter } from "./adapters/messenger"
 
 /**
- * Generic usage signal surfaced by a provider's list call, so the engine can
- * feed it into a shared throttle (`resolveUsageThrottle`/`sleepForUsageThrottle`,
- * `../coexist/usage-throttle.ts`) without knowing which provider produced it.
+ * Neutral usage signal a provider call yields. Each adapter converts its own
+ * headers and units into these two fields, so the engine and `pacing.ts` know no
+ * header names or units.
  */
-export type ContactScanUsageSignal =
-  | {
-      kind: "meta-app-usage"
-      callCount?: number
-      totalCputime?: number
-      totalTime?: number
-    }
-  | {
-      kind: "meta-business-use-case-usage"
-      estimatedTimeToRegainAccess?: number
-      callCount?: number
-      totalCputime?: number
-      totalTime?: number
-    }
+export type ContactScanUsageSignal = {
+  /** Highest share (0-100) of the provider's quota in use. */
+  usagePercent?: number
+  /** How long the provider asks callers to wait, in milliseconds. */
+  retryAfterMs?: number
+}
 
 export type ContactScanPage = {
   entries: Array<{ contact: IncomingContact; updatedAt: Date | null }>
@@ -36,6 +28,7 @@ export type ContactScanPage = {
 /** How a thrown provider error should be handled by the engine — a table
  *  lookup by the adapter, never a channel-specific if-chain in the engine. */
 export type ContactScanErrorClassification =
+  | "rateLimited"
   | "retryable"
   | "tokenInvalid"
   | "graphPermission"
@@ -64,8 +57,23 @@ export type ContactScanAdapter<Ctx extends { inbox: InboxModel }> = {
   }): Promise<Ctx | null>
   /** Lists one page of conversations/contacts, newest → oldest. */
   listPage(input: { context: Ctx; cursor?: string }): Promise<ContactScanPage>
-  /** Classifies a thrown provider error into the engine's retry/terminal table. */
-  classifyError(error: unknown): ContactScanErrorClassification
+  /**
+   * Classifies a thrown provider error into the engine's table, through the
+   * channel's own error mapper. Takes the context because a channel may have
+   * several providers with different mappers (Instagram login vs Facebook).
+   */
+  classifyError(input: {
+    error: unknown
+    context: Ctx
+  }): ContactScanErrorClassification
+  /**
+   * Reads the quota headers of a FAILED call (they ride the error response) so
+   * a rate-limited scan can wait as long as the provider asks.
+   */
+  readBackoff(input: {
+    error: unknown
+    context: Ctx
+  }): ContactScanUsageSignal | null
   /** `ErrorLog.action` value written by `logProviderError` on a thrown error. */
   provider: ErrorLogProvider
 }

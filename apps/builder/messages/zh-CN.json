@@ -976,6 +976,11 @@
       "paused": "已暂停",
       "ended": "已结束"
     },
+    "statusReason": {
+      "accountPolicyBlocked": "已自动停止：渠道账号因违反政策而被禁止发送。",
+      "accountSendRestricted": "已自动停止：渠道账号的发送功能被暂时限制。",
+      "page": "主页：{name}"
+    },
     "telegramAllContacts": {
       "description": "如果您想向您的Telegram 联系人发送广播，请使用此消息类型。",
       "title": "Telegram"
@@ -1053,7 +1058,14 @@
     "resumeDialog": {
       "title": "Resume broadcast",
       "description": "\"{name}\" will continue sending to recipients who have not received it yet.",
-      "templateDescription": "“{name}”将从下一个计划时间起重新重复。暂停期间的运行已被跳过。"
+      "templateDescription": "“{name}”将从下一个计划时间起重新重复。暂停期间的运行已被跳过。",
+      "blocked": {
+        "title": "因渠道账号无法发送而停止",
+        "description": "如果账号仍被封禁，第一条消息会失败，群发将再次停止。在封禁期间继续发送可能导致更严厉的限制。",
+        "pageLabel": "主页",
+        "errorLabel": "渠道返回的错误",
+        "confirm": "仍然继续"
+      }
     },
     "planLimitDialog": {
       "title": "升级您的套餐",
@@ -1696,7 +1708,8 @@
       "total": "Total customers scanned: {count}",
       "waitCooldown": "You must wait another 24 hours before you can use this feature again.",
       "failed": "The last scan failed. You can try again once the cooldown ends.",
-      "partial": "The last scan finished partially — some conversations could not be imported."
+      "partial": "The last scan finished partially — some conversations could not be imported.",
+      "cancelled": "上一次扫描在完成前已被取消。"
     },
     "errors": {
       "contactScanFromTimeInvalid": "Scan-from time must be in the past.",
@@ -1722,9 +1735,20 @@
         "running": "Running",
         "succeeded": "Succeeded",
         "partial": "Partial",
-        "failed": "Failed"
+        "failed": "Failed",
+        "cancelled": "已取消"
       },
       "empty": "No scans have been run yet."
+    },
+    "cancel": {
+      "button": "取消扫描",
+      "title": "取消此次扫描？",
+      "description": "扫描将停止，已导入的客户会保留。自本次扫描开始起，仍需等待24小时才能再次扫描此收件箱。",
+      "keep": "继续扫描",
+      "confirm": "取消扫描",
+      "success": "扫描已取消。",
+      "notRunning": "此收件箱当前没有正在运行的扫描。",
+      "failed": "无法取消扫描，请重试。"
     }
   },
   "contactAdReferrals": {
@@ -5749,6 +5773,13 @@
       "cardEnding": "尾号 {lastFourDigits} 的卡",
       "notCharged": "尚未扣款，请通过您的支付服务商扣款。",
       "reference": "参考号 {referenceId}"
+    },
+    "sendQueue": {
+      "failed": "有一条消息发送失败。请重新发送以继续。",
+      "unconfirmed": "无法确认最后一条消息是否已发送。请选择是否继续发送。",
+      "continue": "继续发送",
+      "discard": "丢弃排队中的消息",
+      "dismiss": "忽略"
     }
   },
   "messenger": {

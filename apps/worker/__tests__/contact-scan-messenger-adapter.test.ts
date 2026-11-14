@@ -193,26 +193,32 @@ describe("messengerContactScanAdapter", () => {
       expect(page.entries).toEqual([])
     })
 
-    it("maps BUC usage headers to the engine's usage signal shape", async () => {
+    it("maps BUC usage to the neutral signal, converting Meta's minutes to ms", async () => {
       mockListConversations.mockResolvedValue({
         data: [],
         bucUsage: {
           callCount: 12,
           totalCpuTime: 34,
           totalTime: 56,
-          estimatedTimeToRegainAccess: 0,
+          estimatedTimeToRegainAccess: 2,
         },
       })
 
       const page = await messengerContactScanAdapter.listPage({ context })
 
       expect(page.usageSignal).toEqual({
-        kind: "meta-business-use-case-usage",
-        callCount: 12,
-        totalCputime: 34,
-        totalTime: 56,
-        estimatedTimeToRegainAccess: 0,
+        usagePercent: 56,
+        retryAfterMs: 120_000,
       })
+    })
+
+    it("does not retry inline: a failure reaches the engine at once", async () => {
+      mockListConversations.mockRejectedValue(new Error("boom"))
+
+      await expect(
+        messengerContactScanAdapter.listPage({ context }),
+      ).rejects.toThrow("boom")
+      expect(mockListConversations).toHaveBeenCalledTimes(1)
     })
 
     it("returns a null usage signal when no BUC header was present", async () => {
@@ -224,18 +230,13 @@ describe("messengerContactScanAdapter", () => {
     })
   })
 
-  describe("classifyError", () => {
-    // `rescue()` (`@chatbotx.io/integration-messenger/exception`) wraps every
-    // Graph failure `listConversations` can throw into a `MessengerAPIException`
-    // (`extends SdkException`) — a *flat* `httpStatusCode`/`code`/`type`, never
-    // the raw, nested `{ response: { status } }` / `{ response: { error } }`
-    // shape a ky `HTTPError` would carry. Before the fix, the classifier
-    // re-parsed this flat exception as if it were still that raw shape (via
-    // `parseOriginError`), which doesn't recognize it and silently falls back
-    // to `{ httpStatusCode: 400 (fallback), code: undefined, type: undefined }`
-    // — every case below except the last two would have returned "unknown"
-    // against the pre-fix implementation, including the 429/500 cases that
-    // should terminate as retryable rather than as a failed scan.
+  describe("classifyError (through the Messenger error mapper)", () => {
+    const context = {
+      inbox: fakeInbox,
+      accessToken: "token",
+      version: "v20.0",
+      pageId,
+    }
     const apiException = (fields: {
       httpStatusCode?: number
       code?: string | number
@@ -248,56 +249,109 @@ describe("messengerContactScanAdapter", () => {
         undefined,
         fields.type,
       )
+    const classify = (error: unknown) =>
+      messengerContactScanAdapter.classifyError({ error, context })
 
-    it("classifies a 429 MessengerAPIException as retryable", () => {
-      const error = apiException({ httpStatusCode: 429 })
-      expect(messengerContactScanAdapter.classifyError(error)).toBe("retryable")
-    })
-
-    it("classifies a 500 MessengerAPIException as retryable", () => {
-      const error = apiException({ httpStatusCode: 500 })
-      expect(messengerContactScanAdapter.classifyError(error)).toBe("retryable")
-    })
-
-    it("classifies Graph code 4 (app-level rate limit) as retryable even without a 429/5xx status", () => {
-      const error = apiException({ httpStatusCode: 400, code: 4 })
-      expect(messengerContactScanAdapter.classifyError(error)).toBe("retryable")
-    })
-
-    it("classifies Graph code 190 (expired token) as tokenInvalid", () => {
-      const error = apiException({
-        httpStatusCode: 401,
-        code: 190,
-        type: "OAuthException",
-      })
-      expect(messengerContactScanAdapter.classifyError(error)).toBe(
-        "tokenInvalid",
+    it.each([
+      4, 17, 32, 613, 80_001, 80_006,
+    ])("Graph code %i is rateLimited", (code) => {
+      expect(classify(apiException({ httpStatusCode: 400, code }))).toBe(
+        "rateLimited",
       )
     })
 
-    it("classifies Graph code 10 (permission denied) as graphPermission", () => {
-      const error = apiException({ httpStatusCode: 403, code: 10 })
-      expect(messengerContactScanAdapter.classifyError(error)).toBe(
+    it("a 429 is rateLimited", () => {
+      expect(classify(apiException({ httpStatusCode: 429 }))).toBe(
+        "rateLimited",
+      )
+    })
+
+    it("a 500 is retryable", () => {
+      expect(classify(apiException({ httpStatusCode: 500 }))).toBe("retryable")
+    })
+
+    it("Graph code 190 (expired token) is tokenInvalid", () => {
+      expect(
+        classify(
+          apiException({
+            httpStatusCode: 401,
+            code: 190,
+            type: "OAuthException",
+          }),
+        ),
+      ).toBe("tokenInvalid")
+    })
+
+    it.each([
+      10, 200,
+    ])("Graph permission code %i is graphPermission", (code) => {
+      expect(classify(apiException({ httpStatusCode: 403, code }))).toBe(
         "graphPermission",
       )
     })
 
-    it("classifies a Graph code in the 200-series permission range as graphPermission", () => {
-      const error = apiException({ httpStatusCode: 403, code: 200 })
-      expect(messengerContactScanAdapter.classifyError(error)).toBe(
-        "graphPermission",
-      )
-    })
-
-    it("classifies an unrecognized MessengerAPIException as unknown", () => {
-      const error = apiException({ httpStatusCode: 400, code: 999 })
-      expect(messengerContactScanAdapter.classifyError(error)).toBe("unknown")
-    })
-
-    it("classifies a plain non-API error as unknown", () => {
-      expect(messengerContactScanAdapter.classifyError(new Error("boom"))).toBe(
+    it("an unrecognized code is unknown", () => {
+      expect(classify(apiException({ httpStatusCode: 400, code: 999 }))).toBe(
         "unknown",
       )
+    })
+
+    it("a plain non-API error is unknown", () => {
+      expect(classify(new Error("boom"))).toBe("unknown")
+    })
+  })
+
+  describe("readBackoff", () => {
+    const context = {
+      inbox: fakeInbox,
+      accessToken: "token",
+      version: "v20.0",
+      pageId,
+    }
+
+    it("reads Meta's wait (minutes) from the failed call's response headers", () => {
+      const exception = new MessengerAPIException(
+        "limit",
+        429,
+        80_006,
+        undefined,
+        undefined,
+        {
+          response: {
+            headers: new Headers({
+              "x-business-use-case-usage": JSON.stringify({
+                "1": [
+                  {
+                    call_count: 100,
+                    total_cputime: 20,
+                    total_time: 20,
+                    estimated_time_to_regain_access: 3,
+                  },
+                ],
+              }),
+            }),
+          },
+        },
+      )
+
+      expect(
+        messengerContactScanAdapter.readBackoff({ error: exception, context }),
+      ).toEqual({ usagePercent: 100, retryAfterMs: 180_000 })
+    })
+
+    it("returns null when the error carries no usage header", () => {
+      expect(
+        messengerContactScanAdapter.readBackoff({
+          error: new MessengerAPIException("x", 500),
+          context,
+        }),
+      ).toBeNull()
+      expect(
+        messengerContactScanAdapter.readBackoff({
+          error: new Error("boom"),
+          context,
+        }),
+      ).toBeNull()
     })
   })
 })

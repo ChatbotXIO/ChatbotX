@@ -19,12 +19,14 @@ import { scheduleContactScanAction } from "../actions/schedule-contact-scan.acti
 import { DATE_TIME_FORMAT_OPTIONS } from "../lib/constants"
 import { scheduleContactScanRequest } from "../schema/action"
 import type { GetContactScanStatusResponse } from "../schema/query"
+import { CancelContactScanButton } from "./cancel-contact-scan-button"
 import { ContactScanStatusPanel } from "./contact-scan-status-panel"
 
 /** The panel keeps polling until the run settles — or there was never one. */
 const SETTLED_STATUSES: GetContactScanStatusResponse["status"][] = [
   "succeeded",
   "partial",
+  "cancelled",
   "failed",
   "idle",
 ]
@@ -158,6 +160,17 @@ export function ContactScanForm({ workspaceId }: { workspaceId: string }) {
           </p>
 
           <ContactScanStatusPanel data={data} />
+
+          {/* A running scan can be cancelled; the button disappears once it settles. */}
+          {inboxId &&
+            (data?.status === "init" || data?.status === "running") && (
+              <div className="flex justify-end">
+                <CancelContactScanButton
+                  inboxId={inboxId}
+                  workspaceId={workspaceId}
+                />
+              </div>
+            )}
 
           {/* Only actionable state gets a button: a centered "Automatic Scan"
               submit when a new scan is allowed. When a scan is already running

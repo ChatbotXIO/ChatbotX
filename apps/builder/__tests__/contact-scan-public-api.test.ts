@@ -25,10 +25,12 @@ const {
   workspaceTokenAuthAPIForScope,
   capturedProcedures,
   possibleErrorsOnListingResource,
+  possibleErrorsOnMutatingResource,
   possibleErrorsOnSchedulingContactScan,
   getContactScanStatus,
   listContactScanHistoryRows,
   contactScanServiceSchedule,
+  contactScanServiceCancel,
 } = vi.hoisted(() => {
   const capturedProcedures: CapturedProcedure[] = []
   const possibleErrorsOnListingResource = {
@@ -36,6 +38,9 @@ const {
       message: "An error occurred while processing your request",
       status: 400,
     },
+  }
+  const possibleErrorsOnMutatingResource = {
+    notFound: { message: "Not found", status: 404 },
   }
   const possibleErrorsOnSchedulingContactScan = {
     businessError: {
@@ -55,6 +60,7 @@ const {
   const getContactScanStatus = vi.fn()
   const listContactScanHistoryRows = vi.fn()
   const contactScanServiceSchedule = vi.fn()
+  const contactScanServiceCancel = vi.fn()
 
   const makeProcedure = (route: RouteConfig) => {
     const record: CapturedProcedure = { route }
@@ -85,10 +91,12 @@ const {
     ),
     capturedProcedures,
     possibleErrorsOnListingResource,
+    possibleErrorsOnMutatingResource,
     possibleErrorsOnSchedulingContactScan,
     getContactScanStatus,
     listContactScanHistoryRows,
     contactScanServiceSchedule,
+    contactScanServiceCancel,
   }
 })
 
@@ -96,6 +104,7 @@ vi.mock("@/orpc", () => ({ workspaceTokenAuthAPIForScope }))
 
 vi.mock("@/lib/orpc/orpc-error-helper", () => ({
   possibleErrorsOnListingResource,
+  possibleErrorsOnMutatingResource,
   possibleErrorsOnSchedulingContactScan,
 }))
 
@@ -108,7 +117,10 @@ vi.mock("@/features/contact-scan/lib/contact-scan-history", () => ({
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
-  contactScanService: { schedule: contactScanServiceSchedule },
+  contactScanService: {
+    schedule: contactScanServiceSchedule,
+    cancel: contactScanServiceCancel,
+  },
 }))
 
 await import("@/features/contact-scan/api/public")
@@ -251,5 +263,40 @@ describe("POST /v1/contact-scans", () => {
     ).rejects.toThrow("A scan is already running for this inbox.")
 
     expect(procedure.errors).toBe(possibleErrorsOnSchedulingContactScan)
+  })
+})
+
+describe("POST /v1/contact-scans/cancel", () => {
+  const procedure = findProcedure("POST", "/v1/contact-scans/cancel")
+
+  test("cancels the token workspace's scan for the inbox", async () => {
+    contactScanServiceCancel.mockResolvedValueOnce({ cancelled: true })
+
+    await expect(
+      procedure.handler?.({
+        context: { workspace: { id: "workspace-1" } },
+        input: { inboxId: "inbox-1", workspaceId: "attacker-workspace" },
+      }),
+    ).resolves.toEqual({ cancelled: true })
+
+    expect(contactScanServiceCancel).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      inboxId: "inbox-1",
+    })
+  })
+
+  test("reports cancelled:false (not an error) when nothing is running", async () => {
+    contactScanServiceCancel.mockResolvedValueOnce({ cancelled: false })
+
+    await expect(
+      procedure.handler?.({
+        context: { workspace: { id: "workspace-1" } },
+        input: { inboxId: "inbox-1" },
+      }),
+    ).resolves.toEqual({ cancelled: false })
+  })
+
+  test("declares the mutating-resource errors", () => {
+    expect(procedure.errors).toBe(possibleErrorsOnMutatingResource)
   })
 })

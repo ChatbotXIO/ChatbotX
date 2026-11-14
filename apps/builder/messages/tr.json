@@ -551,6 +551,11 @@
       "paused": "Duraklatıldı",
       "ended": "Sona erdi"
     },
+    "statusReason": {
+      "accountPolicyBlocked": "Otomatik olarak durduruldu: kanal hesabının gönderimi, bir politika ihlali nedeniyle engellendi.",
+      "accountSendRestricted": "Otomatik olarak durduruldu: kanal hesabının gönderimi geçici olarak kısıtlandı.",
+      "page": "Sayfa: {name}"
+    },
     "stats": {
       "sent": "Gönderildi",
       "delivered": "Teslim Edildi",
@@ -699,7 +704,14 @@
     "resumeDialog": {
       "title": "Resume broadcast",
       "description": "\"{name}\" will continue sending to recipients who have not received it yet.",
-      "templateDescription": "\"{name}\" bir sonraki planlanan zamandan itibaren yeniden tekrarlanır. Duraklatma sırasındaki çalıştırmalar atlandı."
+      "templateDescription": "\"{name}\" bir sonraki planlanan zamandan itibaren yeniden tekrarlanır. Duraklatma sırasındaki çalıştırmalar atlandı.",
+      "blocked": {
+        "title": "Kanal hesabı gönderemediği için durduruldu",
+        "description": "Hesap hâlâ engelliyse ilk mesaj başarısız olur ve yayın yeniden durur. Engelliyken göndermek daha ağır bir kısıtlamaya yol açabilir.",
+        "pageLabel": "Sayfa",
+        "errorLabel": "Kanaldan gelen hata",
+        "confirm": "Yine de devam et"
+      }
     },
     "planLimitDialog": {
       "title": "Planınızı yükseltin",
@@ -4607,6 +4619,13 @@
       "cardEnding": "{lastFourDigits} ile biten kart",
       "notCharged": "Henüz tahsil edilmedi. Ödeme sağlayıcınız üzerinden tahsil edin.",
       "reference": "Referans {referenceId}"
+    },
+    "sendQueue": {
+      "failed": "Bir mesaj gönderilemedi. Devam etmek için yeniden gönderin.",
+      "unconfirmed": "Son mesajın gönderildiği doğrulanamadı. Göndermeye devam edip etmeyeceğinizi seçin.",
+      "continue": "Göndermeye devam et",
+      "discard": "Kuyruktaki mesajları sil",
+      "dismiss": "Kapat"
     }
   },
   "instagram": {
@@ -6139,7 +6158,8 @@
       "total": "Total customers scanned: {count}",
       "waitCooldown": "You must wait another 24 hours before you can use this feature again.",
       "failed": "The last scan failed. You can try again once the cooldown ends.",
-      "partial": "The last scan finished partially — some conversations could not be imported."
+      "partial": "The last scan finished partially — some conversations could not be imported.",
+      "cancelled": "Son tarama bitmeden iptal edildi."
     },
     "errors": {
       "contactScanFromTimeInvalid": "Scan-from time must be in the past.",
@@ -6165,9 +6185,20 @@
         "running": "Running",
         "succeeded": "Succeeded",
         "partial": "Partial",
-        "failed": "Failed"
+        "failed": "Failed",
+        "cancelled": "İptal edildi"
       },
       "empty": "No scans have been run yet."
+    },
+    "cancel": {
+      "button": "Taramayı iptal et",
+      "title": "Bu tarama iptal edilsin mi?",
+      "description": "Tarama durur ve içe aktarılan müşteriler korunur. Bu gelen kutusunu yeniden taramak için yine de bu taramanın başlangıcından itibaren 24 saat beklemeniz gerekir.",
+      "keep": "Taramaya devam et",
+      "confirm": "Taramayı iptal et",
+      "success": "Tarama iptal edildi.",
+      "notRunning": "Bu gelen kutusu için çalışan bir tarama yok.",
+      "failed": "Tarama iptal edilemedi. Lütfen tekrar deneyin."
     }
   },
   "auditLogs": {

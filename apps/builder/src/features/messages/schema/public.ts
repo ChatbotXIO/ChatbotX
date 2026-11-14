@@ -55,6 +55,13 @@ export const messageIdWithCreatedAtParam = messageIdPathParam.and(
   }),
 )
 
+export const resendMessagePublicResponse = z.object({
+  id: z.string().describe("The message that was queued again."),
+  queued: z
+    .literal(true)
+    .describe("Always true: the message is queued for delivery again."),
+})
+
 // Kept in sync with `editMessage`'s return shape
 // (`@/features/messages/actions/edit-message.action.ts`) via the
 // `satisfies`-style check in that file's test — oRPC output schemas silently

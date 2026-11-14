@@ -21,6 +21,7 @@ import { BroadcastRunGroup } from "./broadcast-run-group"
 import { BroadcastRunUpcoming } from "./broadcast-run-upcoming"
 import { BroadcastSeriesSummary } from "./broadcast-series-summary"
 import { BroadcastStatusBadge } from "./broadcast-status-badge"
+import { BroadcastStatusReason } from "./broadcast-status-reason"
 
 const GROUPS_PER_PAGE = 31
 const SKELETON_ROW_KEYS = ["a", "b", "c", "d"] as const
@@ -88,6 +89,7 @@ export function BroadcastRunsView({
             status={broadcast.status}
           />
         </div>
+        <BroadcastStatusReason broadcast={broadcast} />
         <BroadcastSeriesSummary broadcast={broadcast} />
         {broadcast.recurrence?.pausedAt && (
           <p

@@ -170,6 +170,9 @@ export type CreateMessageRequest = z.infer<typeof createMessageRequest>
 export const createMessageWithRoutingBypassRequest = createMessageRequest.and(
   z.object({ bypassThreadControlLock: bypassField }),
 )
+export type CreateMessageWithRoutingBypassRequest = z.infer<
+  typeof createMessageWithRoutingBypassRequest
+>
 
 export const createWebchatMessageRequest = z
   .union([
@@ -219,6 +222,12 @@ export const deleteMessageRequest = z.object({
   createdAt: z.coerce.date(),
 })
 export type DeleteMessageRequest = z.infer<typeof deleteMessageRequest>
+
+export const resendMessageRequest = z.object({
+  id: zodBigintAsString().describe("Message id."),
+  createdAt: z.coerce.date(),
+})
+export type ResendMessageRequest = z.infer<typeof resendMessageRequest>
 
 export const editMessageRequest = z.object({
   messageId: zodBigintAsString().describe("Message id."),

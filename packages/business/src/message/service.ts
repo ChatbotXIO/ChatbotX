@@ -19,6 +19,7 @@ import {
   listForConversation,
   withResolvedAttachmentUrls,
 } from "./list-for-conversation"
+import { resendOutgoing } from "./resend-outgoing"
 
 type FindByProps = {
   conversationId: string
@@ -28,6 +29,7 @@ type FindByProps = {
 
 class MessageService extends BaseService {
   createOutgoing = createOutgoing
+  resendOutgoing = resendOutgoing
   listForConversation = listForConversation
   findForContact = findForContact
   findByIdWithUrls = findByIdWithUrls

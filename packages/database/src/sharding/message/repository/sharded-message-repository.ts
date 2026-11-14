@@ -809,6 +809,21 @@ export class ShardedMessageRepository implements IMessageRepository {
     )
   }
 
+  claimForResend(params: {
+    id: string
+    workspaceId: string
+    createdAt: Date
+  }): Promise<{ id: string } | null> {
+    return this.updateAcrossShards(
+      params.id,
+      params.workspaceId,
+      { sendError: null },
+      "claimForResend",
+      params.createdAt,
+      sql`${messageModel.sendError} IS NOT NULL AND ${messageModel.sourceId} IS NULL AND ${messageModel.deletedAt} IS NULL`,
+    )
+  }
+
   updateSendError(
     id: string,
     sendError: string | null,

@@ -551,6 +551,11 @@
       "paused": "一時停止中",
       "ended": "終了"
     },
+    "statusReason": {
+      "accountPolicyBlocked": "自動停止: ポリシー違反によりチャネルアカウントの送信がブロックされました。",
+      "accountSendRestricted": "自動停止: チャネルアカウントの送信が一時的に制限されています。",
+      "page": "ページ: {name}"
+    },
     "stats": {
       "sent": "送信済み",
       "delivered": "配信済み",
@@ -699,7 +704,14 @@
     "resumeDialog": {
       "title": "Resume broadcast",
       "description": "\"{name}\" will continue sending to recipients who have not received it yet.",
-      "templateDescription": "「{name}」は次の予定時刻から再び繰り返されます。一時停止中の実行はスキップされました。"
+      "templateDescription": "「{name}」は次の予定時刻から再び繰り返されます。一時停止中の実行はスキップされました。",
+      "blocked": {
+        "title": "チャネルアカウントが送信できないため停止しました",
+        "description": "アカウントがまだブロックされている場合、最初のメッセージは失敗し、配信は再び停止します。ブロック中に送信すると、より厳しい制限につながる可能性があります。",
+        "pageLabel": "ページ",
+        "errorLabel": "チャネルからのエラー",
+        "confirm": "それでも再開"
+      }
     },
     "planLimitDialog": {
       "title": "プランをアップグレード",
@@ -4584,6 +4596,13 @@
       "cardEnding": "末尾 {lastFourDigits} のカード",
       "notCharged": "まだ請求されていません。決済プロバイダーで請求してください。",
       "reference": "参照番号 {referenceId}"
+    },
+    "sendQueue": {
+      "failed": "メッセージを送信できませんでした。再送信すると続行できます。",
+      "unconfirmed": "最後のメッセージが送信されたか確認できませんでした。送信を続けるか選択してください。",
+      "continue": "送信を続ける",
+      "discard": "待機中のメッセージを破棄",
+      "dismiss": "閉じる"
     }
   },
   "instagram": {
@@ -6116,7 +6135,8 @@
       "total": "Total customers scanned: {count}",
       "waitCooldown": "You must wait another 24 hours before you can use this feature again.",
       "failed": "The last scan failed. You can try again once the cooldown ends.",
-      "partial": "The last scan finished partially — some conversations could not be imported."
+      "partial": "The last scan finished partially — some conversations could not be imported.",
+      "cancelled": "前回のスキャンは完了前にキャンセルされました。"
     },
     "errors": {
       "contactScanFromTimeInvalid": "Scan-from time must be in the past.",
@@ -6142,9 +6162,20 @@
         "running": "Running",
         "succeeded": "Succeeded",
         "partial": "Partial",
-        "failed": "Failed"
+        "failed": "Failed",
+        "cancelled": "キャンセル済み"
       },
       "empty": "No scans have been run yet."
+    },
+    "cancel": {
+      "button": "スキャンをキャンセル",
+      "title": "このスキャンをキャンセルしますか？",
+      "description": "スキャンは停止し、取り込み済みの顧客は保持されます。このインボックスを再度スキャンするには、このスキャンの開始から24時間待つ必要があります。",
+      "keep": "スキャンを続ける",
+      "confirm": "スキャンをキャンセル",
+      "success": "スキャンをキャンセルしました。",
+      "notRunning": "このインボックスで実行中のスキャンはありません。",
+      "failed": "スキャンをキャンセルできませんでした。もう一度お試しください。"
     }
   },
   "auditLogs": {

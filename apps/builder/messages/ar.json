@@ -551,6 +551,11 @@
       "paused": "متوقف مؤقتًا",
       "ended": "منتهٍ"
     },
+    "statusReason": {
+      "accountPolicyBlocked": "تم الإيقاف تلقائيًا: تم حظر حساب القناة من الإرسال بعد مخالفة للسياسات.",
+      "accountSendRestricted": "تم الإيقاف تلقائيًا: حساب القناة مقيّد مؤقتًا من الإرسال.",
+      "page": "الصفحة: {name}"
+    },
     "stats": {
       "sent": "مُرسَل",
       "delivered": "مُسلَّم",
@@ -699,7 +704,14 @@
     "resumeDialog": {
       "title": "Resume broadcast",
       "description": "\"{name}\" will continue sending to recipients who have not received it yet.",
-      "templateDescription": "سيعود \"{name}\" إلى التكرار من الموعد المجدول التالي. تم تخطي عمليات التشغيل أثناء الإيقاف."
+      "templateDescription": "سيعود \"{name}\" إلى التكرار من الموعد المجدول التالي. تم تخطي عمليات التشغيل أثناء الإيقاف.",
+      "blocked": {
+        "title": "تم الإيقاف لأن حساب القناة لا يستطيع الإرسال",
+        "description": "إذا كان الحساب لا يزال محظورًا، ستفشل الرسالة الأولى وسيتوقف البث مرة أخرى. قد يؤدي الإرسال أثناء الحظر إلى تقييد أشد.",
+        "pageLabel": "الصفحة",
+        "errorLabel": "الخطأ من القناة",
+        "confirm": "استئناف على أي حال"
+      }
     },
     "planLimitDialog": {
       "title": "ترقية خطتك",
@@ -4607,6 +4619,13 @@
       "cardEnding": "بطاقة تنتهي بـ {lastFourDigits}",
       "notCharged": "لم يتم الخصم بعد. اخصمه عبر مزود الدفع.",
       "reference": "المرجع {referenceId}"
+    },
+    "sendQueue": {
+      "failed": "فشل إرسال رسالة. أعد إرسالها لمتابعة الإرسال.",
+      "unconfirmed": "تعذّر تأكيد إرسال آخر رسالة. اختر ما إذا كنت تريد متابعة الإرسال.",
+      "continue": "متابعة الإرسال",
+      "discard": "تجاهل الرسائل في قائمة الانتظار",
+      "dismiss": "تجاهل"
     }
   },
   "instagram": {
@@ -6139,7 +6158,8 @@
       "total": "Total customers scanned: {count}",
       "waitCooldown": "You must wait another 24 hours before you can use this feature again.",
       "failed": "The last scan failed. You can try again once the cooldown ends.",
-      "partial": "The last scan finished partially — some conversations could not be imported."
+      "partial": "The last scan finished partially — some conversations could not be imported.",
+      "cancelled": "تم إلغاء آخر عملية مسح قبل اكتمالها."
     },
     "errors": {
       "contactScanFromTimeInvalid": "Scan-from time must be in the past.",
@@ -6165,9 +6185,20 @@
         "running": "Running",
         "succeeded": "Succeeded",
         "partial": "Partial",
-        "failed": "Failed"
+        "failed": "Failed",
+        "cancelled": "تم الإلغاء"
       },
       "empty": "No scans have been run yet."
+    },
+    "cancel": {
+      "button": "إلغاء المسح",
+      "title": "هل تريد إلغاء هذا المسح؟",
+      "description": "يتوقف المسح ويتم الاحتفاظ بالعملاء الذين تم استيرادهم بالفعل. لا يزال عليك الانتظار 24 ساعة من بدء هذا المسح قبل أن تتمكن من مسح صندوق الوارد هذا مرة أخرى.",
+      "keep": "متابعة المسح",
+      "confirm": "إلغاء المسح",
+      "success": "تم إلغاء المسح.",
+      "notRunning": "لا توجد عملية مسح قيد التشغيل لصندوق الوارد هذا.",
+      "failed": "تعذّر إلغاء المسح. يرجى المحاولة مرة أخرى."
     }
   },
   "auditLogs": {

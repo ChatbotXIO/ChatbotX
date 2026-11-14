@@ -1,5 +1,6 @@
 import { channelTypes } from "@chatbotx.io/database/partials"
 import type { ContactInboxModel } from "@chatbotx.io/database/types"
+import { reconcileAccountSendBlocked } from "./account-send-blocked"
 import type {
   ChannelSendErrorContext,
   ChannelSendErrorReconciler,
@@ -18,15 +19,24 @@ const channelSendErrorReconcilers: Partial<
   [channelTypes.enum.messenger]: [reconcileMessengerThreadControlRejection],
 }
 
+// Channel-agnostic: reads only the neutral `ChannelError.reason`, so a new
+// channel takes part by assigning a reason in its own error mapper.
+const sharedReconcilers: ChannelSendErrorReconciler[] = [
+  reconcileAccountSendBlocked,
+]
+
 /**
- * Runs every reconciler registered for the channel (each one inspects the
- * error and ignores what is not its own); `true` when any of them reconciled.
+ * Runs the shared reconcilers, then every reconciler registered for the
+ * channel (each one inspects the error and ignores what is not its own);
+ * `true` when any of them reconciled.
  */
 export async function reconcileChannelSendError(
   context: ChannelSendErrorContext,
 ): Promise<boolean> {
-  const reconcilers =
-    channelSendErrorReconcilers[context.contactInbox.channel] ?? []
+  const reconcilers = [
+    ...sharedReconcilers,
+    ...(channelSendErrorReconcilers[context.contactInbox.channel] ?? []),
+  ]
   let isReconciled = false
   for (const reconcile of reconcilers) {
     isReconciled = (await reconcile(context)) || isReconciled

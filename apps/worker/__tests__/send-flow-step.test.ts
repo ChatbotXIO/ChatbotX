@@ -2230,6 +2230,20 @@ describe("sendChatMessage", () => {
     })
   })
 
+  test("never tells the send it will be retried: sendChatMessage swallows failures, so the send error must be recorded at once", async () => {
+    await sendChatMessage({
+      conversation: fakeConversation as never,
+      contactInbox: fakeContactInbox as never,
+      text: "hello from chat",
+    })
+
+    expect(mockSendMessageToChannel).toHaveBeenCalledWith(
+      expect.anything(),
+      0,
+      false,
+    )
+  })
+
   test("uses the resolved fallback inbox when routing the realtime message", async () => {
     mockFindContactInbox.mockResolvedValue(fakeContactInbox)
 

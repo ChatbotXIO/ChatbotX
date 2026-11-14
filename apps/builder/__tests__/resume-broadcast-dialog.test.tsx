@@ -1,4 +1,3 @@
-import type { BroadcastModel } from "@chatbotx.io/database/types"
 import { act, useCallback, useState } from "react"
 import { createRoot, type Root } from "react-dom/client"
 import { useForm, useFormContext } from "react-hook-form"
@@ -6,6 +5,9 @@ import { afterEach, describe, expect, test, vi } from "vitest"
 import { useBroadcastTransitionActionCallbacks } from "@/features/broadcasts/components/broadcast-transition-dialog"
 import { ResumeBroadcastDialog } from "@/features/broadcasts/components/resume-broadcast-dialog"
 import type { BroadcastPlanLimitOutcome } from "@/features/broadcasts/lib/broadcast-plan-limit"
+import type { BroadcastResourceWithRelations } from "@/features/broadcasts/schema/resource"
+
+type BroadcastModel = BroadcastResourceWithRelations
 
 /** Echoes the key back so assertions never depend on the English copy. */
 vi.mock("next-intl", () => ({
@@ -336,5 +338,55 @@ describe("ResumeBroadcastDialog for a repeating broadcast", () => {
     const text = el.textContent ?? ""
     expect(text).toContain("broadcasts.resumeDialog.description")
     expect(text).not.toContain("broadcasts.resumeDialog.templateDescription")
+  })
+})
+
+describe("ResumeBroadcastDialog for a broadcast the system stopped", () => {
+  const BLOCKED = {
+    ...BROADCAST,
+    statusReason: "accountPolicyBlocked",
+    statusErrorMessage: "(#2022) commerce messaging disabled",
+    statusInboxId: "inbox-1",
+    statusInbox: { id: "inbox-1", name: "Spring page" },
+  } as BroadcastModel
+
+  test("shows the reason, page name, provider error and the continue-anyway label", () => {
+    const el = renderDialog(BLOCKED)
+    const text = el.textContent ?? ""
+
+    expect(el.querySelector('[role="alert"]')).not.toBeNull()
+    expect(text).toContain("broadcasts.resumeDialog.blocked.title")
+    expect(text).toContain("broadcasts.statusReason.accountPolicyBlocked")
+    expect(text).toContain("Spring page")
+    expect(text).toContain("(#2022) commerce messaging disabled")
+    expect(text).toContain("broadcasts.resumeDialog.blocked.description")
+    expect(text).toContain("broadcasts.resumeDialog.blocked.confirm")
+    expect(text).not.toContain("actions.resume")
+    expect(text).not.toContain("broadcasts.resumeDialog.description")
+  })
+
+  test("omits the page line when the page was deleted", () => {
+    const el = renderDialog({ ...BLOCKED, statusInbox: null } as BroadcastModel)
+    expect(el.textContent).not.toContain(
+      "broadcasts.resumeDialog.blocked.pageLabel",
+    )
+    expect(el.querySelector('[role="alert"]')).not.toBeNull()
+  })
+
+  test("also warns for a paused repeating series", () => {
+    const el = renderDialog({ ...BLOCKED, ...REPEATING } as BroadcastModel)
+    expect(el.querySelector('[role="alert"]')).not.toBeNull()
+    expect(el.textContent).not.toContain(
+      "broadcasts.resumeDialog.templateDescription",
+    )
+  })
+
+  test("a manually stopped broadcast shows no warning and the normal label", () => {
+    const el = renderDialog()
+    expect(el.querySelector('[role="alert"]')).toBeNull()
+    expect(el.textContent).toContain("actions.resume")
+    expect(el.textContent).not.toContain(
+      "broadcasts.resumeDialog.blocked.confirm",
+    )
   })
 })

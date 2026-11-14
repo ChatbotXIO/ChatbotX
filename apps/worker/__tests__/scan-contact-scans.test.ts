@@ -48,13 +48,18 @@ vi.mock("@chatbotx.io/worker-config", () => ({
   buildContactScanJobId: ({
     runId,
     attempts,
+    generation,
   }: {
     runId: string
     attempts: number
-  }) => `contact-scan-${runId}-${attempts}`,
+    generation?: number
+  }) =>
+    `contact-scan-${runId}-${attempts}${generation === undefined ? "" : `-gen-${generation}`}`,
   IntegrationJobAction: { contactScan: "contactScan" },
   integrationQueue: { add: mockQueueAdd },
 }))
+
+const SCHEDULER_JOB_ID = /^contact-scan-run-a-2-gen-\d+$/
 
 const { scanContactScans } = await import(
   "../src/schedule/handlers/scan-contact-scans"
@@ -127,7 +132,7 @@ describe("scanContactScans", () => {
         data: { runId: "run-a", workspaceId: "ws-1" },
       },
       expect.objectContaining({
-        jobId: "contact-scan-run-a-2",
+        jobId: expect.stringMatching(SCHEDULER_JOB_ID),
         attempts: 1,
         removeOnComplete: true,
       }),

@@ -551,6 +551,11 @@
       "paused": "Pausada",
       "ended": "Encerrada"
     },
+    "statusReason": {
+      "accountPolicyBlocked": "Parado automaticamente: a conta do canal foi bloqueada para envio após uma violação de política.",
+      "accountSendRestricted": "Parado automaticamente: a conta do canal está temporariamente restrita para envio.",
+      "page": "Página: {name}"
+    },
     "stats": {
       "sent": "Enviado",
       "delivered": "Entregue",
@@ -699,7 +704,14 @@
     "resumeDialog": {
       "title": "Resume broadcast",
       "description": "\"{name}\" will continue sending to recipients who have not received it yet.",
-      "templateDescription": "\"{name}\" volta a se repetir a partir do próximo horário agendado. As execuções durante a pausa foram ignoradas."
+      "templateDescription": "\"{name}\" volta a se repetir a partir do próximo horário agendado. As execuções durante a pausa foram ignoradas.",
+      "blocked": {
+        "title": "Parado porque a conta do canal não pode enviar",
+        "description": "Se a conta ainda estiver bloqueada, a primeira mensagem falhará e a transmissão será interrompida novamente. Enviar enquanto bloqueada pode levar a uma restrição mais severa.",
+        "pageLabel": "Página",
+        "errorLabel": "Erro do canal",
+        "confirm": "Retomar mesmo assim"
+      }
     },
     "planLimitDialog": {
       "title": "Faça upgrade do seu plano",
@@ -4584,6 +4596,13 @@
       "cardEnding": "Cartão final {lastFourDigits}",
       "notCharged": "Ainda não cobrado. Faça a cobrança pelo seu provedor de pagamento.",
       "reference": "Referência {referenceId}"
+    },
+    "sendQueue": {
+      "failed": "Uma mensagem não foi enviada. Reenvie-a para continuar.",
+      "unconfirmed": "Não foi possível confirmar o envio da última mensagem. Escolha se quer continuar enviando.",
+      "continue": "Continuar enviando",
+      "discard": "Descartar mensagens na fila",
+      "dismiss": "Dispensar"
     }
   },
   "instagram": {
@@ -5772,7 +5791,8 @@
       "total": "Total customers scanned: {count}",
       "waitCooldown": "You must wait another 24 hours before you can use this feature again.",
       "failed": "The last scan failed. You can try again once the cooldown ends.",
-      "partial": "The last scan finished partially — some conversations could not be imported."
+      "partial": "The last scan finished partially — some conversations could not be imported.",
+      "cancelled": "A última verificação foi cancelada antes de terminar."
     },
     "errors": {
       "contactScanFromTimeInvalid": "Scan-from time must be in the past.",
@@ -5798,9 +5818,20 @@
         "running": "Running",
         "succeeded": "Succeeded",
         "partial": "Partial",
-        "failed": "Failed"
+        "failed": "Failed",
+        "cancelled": "Cancelada"
       },
       "empty": "No scans have been run yet."
+    },
+    "cancel": {
+      "button": "Cancelar verificação",
+      "title": "Cancelar esta verificação?",
+      "description": "A verificação é interrompida e os clientes já importados são mantidos. Você ainda precisa esperar 24 horas desde o início desta verificação para verificar esta caixa de entrada novamente.",
+      "keep": "Continuar verificando",
+      "confirm": "Cancelar verificação",
+      "success": "Verificação cancelada.",
+      "notRunning": "Nenhuma verificação está em andamento nesta caixa de entrada.",
+      "failed": "Não foi possível cancelar a verificação. Tente novamente."
     }
   },
   "auditLogs": {

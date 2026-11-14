@@ -10,6 +10,7 @@ import {
   type InboxDisconnectReason,
 } from "@chatbotx.io/database/partials"
 import {
+  coexistSyncRunRepository,
   connectionRepository,
   HEAVY_WORKSPACE_TABLES,
   LIVE_RUN_STATUSES,
@@ -50,6 +51,7 @@ import {
   connectionStateService,
   type PendingQuotaRelease,
 } from "../connection/state-service"
+import { CONTACT_SCAN_ERRORS } from "../contact-scan/constants"
 import { WorkspacePurgeIncompleteError } from "../errors"
 import { inboxService } from "../inbox/service"
 import { integrationActiveCampaignService } from "../integration-active-campaign/service"
@@ -789,6 +791,17 @@ class WorkspaceLifecycleService extends BaseService {
               tx,
             })
           }
+          // Both Instagram variants support the contact scan, so this is not
+          // gated on the integration type.
+          // Through the repository, not `contactScanService`: importing the
+          // service here closes an import cycle (contact-scan → inbox →
+          // quota → tenant → workspace-lifecycle).
+          await coexistSyncRunRepository.cancelActiveContactScanRuns({
+            channel: "instagram",
+            integrationId: inbox.integrationInstagram.id,
+            currentError: CONTACT_SCAN_ERRORS.cancelled,
+            tx,
+          })
           await tx
             .delete(integrationInstagramModel)
             .where(

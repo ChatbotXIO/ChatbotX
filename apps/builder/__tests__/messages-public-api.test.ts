@@ -53,6 +53,7 @@ const conversationService = {
 const messageService = {
   findByIdWithUrls: vi.fn(),
   createOutgoing: vi.fn(),
+  resendOutgoing: vi.fn(),
 }
 const resolveTemplateParams = vi.fn()
 vi.mock("@chatbotx.io/business", () => ({
@@ -400,6 +401,58 @@ describe("DELETE /v1/conversations/{conversationId}/messages/{messageId}", () =>
       conversationId: "conv-1",
       parsedInput: { id: "msg-1", createdAt },
     })
+  })
+})
+
+describe("POST /v1/conversations/{conversationId}/messages/{messageId}/resend", () => {
+  const procedure = findProcedure(
+    "POST",
+    "/v1/conversations/{conversationId}/messages/{messageId}/resend",
+  )
+
+  test("is a 202 under the Messages tag", () => {
+    expect(procedure.route.successStatus).toBe(202)
+    expect(procedure.route.tags).toContain("Messages")
+  })
+
+  test("delegates to messageService.resendOutgoing with the id field it expects and returns its result", async () => {
+    const createdAt = new Date("2026-01-01T00:00:00Z")
+    messageService.resendOutgoing.mockResolvedValueOnce({
+      id: "msg-1",
+      queued: true,
+    })
+
+    const result = await procedure.handler?.({
+      context,
+      input: { conversationId: "conv-1", messageId: "msg-1", createdAt },
+    })
+
+    expect(messageService.resendOutgoing).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      conversationId: "conv-1",
+      messageId: "msg-1",
+      createdAt,
+    })
+    expect(result).toEqual({ id: "msg-1", queued: true })
+  })
+
+  test("checks the caller may see the conversation first, and resends nothing when it may not", async () => {
+    conversationService.findByOrFail.mockRejectedValueOnce(
+      new Error("Conversation not found"),
+    )
+
+    await expect(
+      procedure.handler?.({
+        context,
+        input: {
+          conversationId: "conv-1",
+          messageId: "msg-1",
+          createdAt: new Date("2026-01-01T00:00:00Z"),
+        },
+      }),
+    ).rejects.toThrow("Conversation not found")
+
+    expect(messageService.resendOutgoing).not.toHaveBeenCalled()
   })
 })
 

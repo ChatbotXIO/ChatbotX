@@ -1,137 +1,118 @@
-import { SdkException } from "@chatbotx.io/sdk"
+import {
+  ChannelError,
+  ChannelErrorCategory,
+  ChannelErrorReason,
+  SdkException,
+} from "@chatbotx.io/sdk"
 import { describe, expect, it } from "vitest"
-import { classifyGraphSdkError } from "../src/integration/handlers/contact-scan/graph-error"
+import { classifyChannelErrorForScan } from "../src/integration/handlers/contact-scan/graph-error"
 
-describe("classifyGraphSdkError", () => {
-  describe("flat SdkException fields (the real wrapped-exception shape)", () => {
-    it("classifies a 429 httpStatusCode as retryable", () => {
-      const error = new SdkException("graph error", "someCode", 429)
-      expect(classifyGraphSdkError(error)).toBe("retryable")
-    })
+// The classifier owns no provider codes: it reads what the channel's mapper
+// decided. A stub mapper makes each decision observable on its own.
+const mapperReturning =
+  (
+    category: ChannelErrorCategory,
+    extra: { reason?: ChannelErrorReason; httpStatusCode?: number } = {},
+  ) =>
+  () =>
+    new ChannelError("mapped", category, extra)
 
-    it("classifies a 500 httpStatusCode as retryable", () => {
-      const error = new SdkException("graph error", "someCode", 500)
-      expect(classifyGraphSdkError(error)).toBe("retryable")
-    })
-
-    it("classifies Graph code 4 (app-level rate limit) as retryable without a 429/5xx status", () => {
-      const error = new SdkException("graph error", 4, 400)
-      expect(classifyGraphSdkError(error)).toBe("retryable")
-    })
-
-    it("classifies Graph code 613 (custom rate limit) as retryable", () => {
-      const error = new SdkException("graph error", 613, 400)
-      expect(classifyGraphSdkError(error)).toBe("retryable")
-    })
-
-    it("classifies OAuthException type as tokenInvalid", () => {
-      const error = new SdkException(
-        "graph error",
-        "unrecognized",
-        401,
-        null,
-        "OAuthException",
-      )
-      expect(classifyGraphSdkError(error)).toBe("tokenInvalid")
-    })
-
-    it("classifies Graph code 190 (expired token) as tokenInvalid", () => {
-      const error = new SdkException("graph error", 190, 401)
-      expect(classifyGraphSdkError(error)).toBe("tokenInvalid")
-    })
-
-    it("classifies Graph code 10 (permission denied) as graphPermission", () => {
-      const error = new SdkException("graph error", 10, 403)
-      expect(classifyGraphSdkError(error)).toBe("graphPermission")
-    })
-
-    it("classifies a Graph code in the 200-series permission range as graphPermission", () => {
-      const error = new SdkException("graph error", 200, 403)
-      expect(classifyGraphSdkError(error)).toBe("graphPermission")
-    })
-
-    it("classifies an unrecognized code/status as unknown", () => {
-      const error = new SdkException("graph error", 999, 400)
-      expect(classifyGraphSdkError(error)).toBe("unknown")
-    })
+const classify = (
+  error: unknown,
+  category: ChannelErrorCategory,
+  extra: { reason?: ChannelErrorReason; httpStatusCode?: number } = {},
+) =>
+  classifyChannelErrorForScan({
+    error,
+    mapToChannelError: mapperReturning(category, extra),
   })
 
-  describe("duck-typed flat fields (not an SdkException instance)", () => {
-    it("classifies a plain object with httpStatusCode 429 as retryable", () => {
-      const error = { httpStatusCode: 429 }
-      expect(classifyGraphSdkError(error)).toBe("retryable")
-    })
-
-    it("classifies a plain object with code 190 + OAuthException as tokenInvalid", () => {
-      const error = { code: 190, type: "OAuthException" }
-      expect(classifyGraphSdkError(error)).toBe("tokenInvalid")
-    })
+describe("classifyChannelErrorForScan", () => {
+  it("a RATE_LIMITED category is rateLimited", () => {
+    expect(classify(new Error("x"), ChannelErrorCategory.RATE_LIMITED)).toBe(
+      "rateLimited",
+    )
   })
 
-  describe("raw-origin fallback (a never-wrapped shape, or the raw error nested via getOriginError())", () => {
-    it("classifies a raw ky-style { response: { status } } object with no flat fields as retryable", () => {
-      const error = { response: { status: 503 } }
-      expect(classifyGraphSdkError(error)).toBe("retryable")
-    })
-
-    it("classifies via getOriginError() when the flat fields alone don't indicate retryable", () => {
-      const error = Object.assign(new Error("wrapped"), {
-        httpStatusCode: 400,
-        code: 999,
-        getOriginError: () => ({ response: { status: 503 } }),
-      })
-      expect(classifyGraphSdkError(error)).toBe("retryable")
-    })
-
-    it("does not let a non-retryable getOriginError() override an unrecognized flat shape", () => {
-      const error = Object.assign(new Error("wrapped"), {
-        httpStatusCode: 400,
-        code: 999,
-        getOriginError: () => ({ response: { status: 404 } }),
-      })
-      expect(classifyGraphSdkError(error)).toBe("unknown")
-    })
+  it("the rate_limited reason alone (no category) is rateLimited", () => {
+    expect(
+      classify(new Error("x"), ChannelErrorCategory.UNKNOWN, {
+        reason: ChannelErrorReason.RATE_LIMITED,
+      }),
+    ).toBe("rateLimited")
   })
 
-  describe("non-object / unrecognized errors", () => {
-    it("classifies a plain Error with no Graph fields as unknown", () => {
-      expect(classifyGraphSdkError(new Error("boom"))).toBe("unknown")
-    })
+  it("a bare HTTP 429 is rateLimited even when the mapper knows no code", () => {
+    expect(
+      classify(new Error("x"), ChannelErrorCategory.UNKNOWN, {
+        httpStatusCode: 429,
+      }),
+    ).toBe("rateLimited")
+  })
 
-    it("classifies null as unknown", () => {
-      expect(classifyGraphSdkError(null)).toBe("unknown")
-    })
+  it("a network failure category is retryable", () => {
+    expect(classify(new Error("x"), ChannelErrorCategory.NETWORK_ERROR)).toBe(
+      "retryable",
+    )
+  })
 
-    it("classifies undefined as unknown", () => {
-      expect(classifyGraphSdkError(undefined)).toBe("unknown")
-    })
+  it("a 5xx SdkException is retryable even if the mapper says unknown", () => {
+    expect(
+      classify(
+        new SdkException("graph", "code", 503),
+        ChannelErrorCategory.UNKNOWN,
+      ),
+    ).toBe("retryable")
+  })
+
+  it("AUTH_FAILED is tokenInvalid", () => {
+    expect(classify(new Error("x"), ChannelErrorCategory.AUTH_FAILED)).toBe(
+      "tokenInvalid",
+    )
+  })
+
+  it("PERMISSION_DENIED is graphPermission", () => {
+    expect(
+      classify(new Error("x"), ChannelErrorCategory.PERMISSION_DENIED),
+    ).toBe("graphPermission")
+  })
+
+  it("anything else is unknown", () => {
+    expect(classify(new Error("x"), ChannelErrorCategory.UNKNOWN)).toBe(
+      "unknown",
+    )
+    expect(classify(null, ChannelErrorCategory.PAYLOAD_INVALID)).toBe("unknown")
+  })
+
+  it("a rate limit wins over a retryable status", () => {
+    expect(
+      classify(
+        new SdkException("graph", 4, 500),
+        ChannelErrorCategory.RATE_LIMITED,
+      ),
+    ).toBe("rateLimited")
   })
 
   describe("request timeouts (the shape that used to fail a whole scan run)", () => {
     const timeoutError = (): Error =>
-      Object.assign(
-        new Error(
-          "Request timed out: GET https://graph.facebook.com/v25.0/1/conversations",
-        ),
-        { name: "TimeoutError" },
-      )
+      Object.assign(new Error("Request timed out: GET /conversations"), {
+        name: "TimeoutError",
+      })
 
-    it("classifies a wrapped Graph timeout as retryable, not unknown", () => {
-      // `rescue()` stamps FALLBACK_HTTP_STATUS (400) + the default
-      // "messengerError" code on a timeout, which is indistinguishable from a
-      // permanent failure by status alone — the run was terminalized as
-      // `failed` on the first slow `/conversations` page.
+    it("a wrapped timeout (stamped 400 by the integration) is retryable, not unknown", () => {
       const wrapped = new SdkException(
-        "Request timed out: GET https://graph.facebook.com/v25.0/1/conversations",
+        "Request timed out",
         "messengerError",
         400,
       )
       wrapped.setOriginError(timeoutError())
-      expect(classifyGraphSdkError(wrapped)).toBe("retryable")
+      expect(classify(wrapped, ChannelErrorCategory.UNKNOWN)).toBe("retryable")
     })
 
-    it("classifies a bare, never-wrapped timeout as retryable", () => {
-      expect(classifyGraphSdkError(timeoutError())).toBe("retryable")
+    it("a bare, never-wrapped timeout is retryable", () => {
+      expect(classify(timeoutError(), ChannelErrorCategory.UNKNOWN)).toBe(
+        "retryable",
+      )
     })
   })
 })

@@ -551,6 +551,11 @@
       "paused": "Tauolla",
       "ended": "Päättynyt"
     },
+    "statusReason": {
+      "accountPolicyBlocked": "Pysäytetty automaattisesti: kanavan tili estettiin lähettämästä käytäntörikkomuksen vuoksi.",
+      "accountSendRestricted": "Pysäytetty automaattisesti: kanavan tilin lähettämistä on tilapäisesti rajoitettu.",
+      "page": "Sivu: {name}"
+    },
     "stats": {
       "sent": "Lähetetty",
       "delivered": "Toimitettu",
@@ -699,7 +704,14 @@
     "resumeDialog": {
       "title": "Resume broadcast",
       "description": "\"{name}\" will continue sending to recipients who have not received it yet.",
-      "templateDescription": "\"{name}\" alkaa toistua uudelleen seuraavasta ajastetusta ajankohdasta. Tauon aikaiset ajot ohitettiin."
+      "templateDescription": "\"{name}\" alkaa toistua uudelleen seuraavasta ajastetusta ajankohdasta. Tauon aikaiset ajot ohitettiin.",
+      "blocked": {
+        "title": "Pysäytetty, koska kanavan tili ei voi lähettää",
+        "description": "Jos tili on edelleen estetty, ensimmäinen viesti epäonnistuu ja lähetys pysähtyy uudelleen. Lähettäminen eston aikana voi johtaa ankarampaan rajoitukseen.",
+        "pageLabel": "Sivu",
+        "errorLabel": "Kanavan virhe",
+        "confirm": "Jatka silti"
+      }
     },
     "planLimitDialog": {
       "title": "Päivitä tilauksesi",
@@ -4607,6 +4619,13 @@
       "cardEnding": "Kortti, joka päättyy {lastFourDigits}",
       "notCharged": "Ei vielä veloitettu. Veloita maksupalveluntarjoajasi kautta.",
       "reference": "Viite {referenceId}"
+    },
+    "sendQueue": {
+      "failed": "Viestin lähetys epäonnistui. Lähetä se uudelleen jatkaaksesi.",
+      "unconfirmed": "Emme voineet vahvistaa, että viimeisin viesti lähetettiin. Valitse, jatketaanko lähettämistä.",
+      "continue": "Jatka lähettämistä",
+      "discard": "Hylkää jonossa olevat viestit",
+      "dismiss": "Hylkää"
     }
   },
   "instagram": {
@@ -6139,7 +6158,8 @@
       "total": "Total customers scanned: {count}",
       "waitCooldown": "You must wait another 24 hours before you can use this feature again.",
       "failed": "The last scan failed. You can try again once the cooldown ends.",
-      "partial": "The last scan finished partially — some conversations could not be imported."
+      "partial": "The last scan finished partially — some conversations could not be imported.",
+      "cancelled": "Viimeisin skannaus peruttiin ennen valmistumista."
     },
     "errors": {
       "contactScanFromTimeInvalid": "Scan-from time must be in the past.",
@@ -6165,9 +6185,20 @@
         "running": "Running",
         "succeeded": "Succeeded",
         "partial": "Partial",
-        "failed": "Failed"
+        "failed": "Failed",
+        "cancelled": "Peruttu"
       },
       "empty": "No scans have been run yet."
+    },
+    "cancel": {
+      "button": "Peruuta skannaus",
+      "title": "Perutaanko tämä skannaus?",
+      "description": "Skannaus pysähtyy ja jo tuodut asiakkaat säilyvät. Sinun on silti odotettava 24 tuntia tämän skannauksen alusta ennen kuin voit skannata tämän postilaatikon uudelleen.",
+      "keep": "Jatka skannausta",
+      "confirm": "Peruuta skannaus",
+      "success": "Skannaus peruttu.",
+      "notRunning": "Tälle postilaatikolle ei ole käynnissä skannausta.",
+      "failed": "Skannausta ei voitu perua. Yritä uudelleen."
     }
   },
   "auditLogs": {

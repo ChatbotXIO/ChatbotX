@@ -30,13 +30,25 @@ export const coexistScanRunStatuses = [
 ] as const
 
 /**
+ * What a scan run is shown as. `cancelled` is derived, never stored: a cancelled
+ * scan is a `partial` row whose `currentError` is the cancel sentinel
+ * (`CONTACT_SCAN_ERRORS.cancelled`), so no enum value or migration is needed.
+ */
+export const contactScanRunStatuses = [
+  ...coexistScanRunStatuses,
+  "cancelled",
+] as const
+
+export type ContactScanRunStatus = (typeof contactScanRunStatuses)[number]
+
+/**
  * View-level statuses the Contact Scan builder UI keys its copy/polling off
- * of: every stored status the scan can be in, plus `"idle"` — a
+ * of: every status a scan run is shown as, plus `"idle"` — a
  * `ContactScanService`-only synthetic status meaning "no scan has ever been
  * requested for this inbox" (never persisted).
  */
 export const contactScanViewStatuses = [
-  ...coexistScanRunStatuses,
+  ...contactScanRunStatuses,
   "idle",
 ] as const
 

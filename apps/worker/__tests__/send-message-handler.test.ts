@@ -60,6 +60,11 @@ vi.mock("@chatbotx.io/analytics", () => ({
   commentAutomationAnalyticsService: { settleEvent: mockSettleEvent },
 }))
 
+const mockReconcileAccountSendBlocked = vi.hoisted(() => vi.fn())
+vi.mock("../src/chat/handlers/account-send-blocked", () => ({
+  reconcileAccountSendBlocked: mockReconcileAccountSendBlocked,
+}))
+
 vi.mock("@chatbotx.io/business", () => ({
   contactActivityService: { recordDelivered: mockRecordDelivered },
   contactInboxService: {
@@ -922,6 +927,62 @@ describe("chat send-message handlers", () => {
 
     expect(mockUpdateSourceId).not.toHaveBeenCalled()
     expect(mockEmit.mock.calls.filter(isBotSentDashboardCall)).toHaveLength(0)
+  })
+
+  describe("hands the broadcast metadata to the account-block reconciler", () => {
+    const metadata = { type: "broadcast", broadcastId: "b-1" }
+
+    test("when sendMessageToChannel's send is refused", async () => {
+      mockReconcileAccountSendBlocked.mockResolvedValue(false)
+      mockRunChannelHandler.mockRejectedValueOnce(new Error("blocked"))
+
+      await sendMessageToChannel({
+        conversation: conversation as never,
+        contactInbox: contactInbox as never,
+        message: {
+          id: "msg-1",
+          workspaceId: "ws-1",
+          conversationId: "conv-1",
+          contactInboxId: "ci-1",
+          contentType: "text",
+          messageType: "outgoing",
+          senderType: "bot",
+          text: "hello",
+          createdAt: new Date("2026-09-15T06:11:52.105Z"),
+        } as never,
+        metadata: metadata as never,
+      }).catch(() => undefined)
+
+      expect(mockReconcileAccountSendBlocked).toHaveBeenCalledWith(
+        expect.objectContaining({ metadata }),
+      )
+    })
+
+    test("when sendFlowStepToChannel's send is refused", async () => {
+      mockReconcileAccountSendBlocked.mockResolvedValue(false)
+      mockRunChannelHandler.mockRejectedValueOnce(new Error("blocked"))
+
+      await sendFlowStepToChannel({
+        conversation: conversation as never,
+        contactInbox: contactInbox as never,
+        flowId: "flow-1",
+        step: {
+          id: "step-1",
+          nodeId: "node-1",
+          stepType: "sendText",
+          text: "hello",
+        } as never,
+        metadata: metadata as never,
+        botSentAnalytics: {
+          triggerHandler: "sendFlowStepToChannel",
+          triggerType: "message_bot_sent_flow_step_channel",
+        },
+      }).catch(() => undefined)
+
+      expect(mockReconcileAccountSendBlocked).toHaveBeenCalledWith(
+        expect.objectContaining({ metadata }),
+      )
+    })
   })
 
   test("passes sendFrom to sendFlowStep channel handler", async () => {
@@ -1817,6 +1878,178 @@ describe("chat send-message handlers", () => {
       })
 
       expect(mockSettleEvent).not.toHaveBeenCalled()
+    })
+  })
+  describe("inbox send result (composer queue signal)", () => {
+    const createdAt = new Date("2026-07-09T08:37:21.108Z")
+    const inboxMessage = (overrides: Record<string, unknown> = {}) =>
+      ({
+        id: "msg-inbox",
+        workspaceId: "ws-1",
+        conversationId: "conv-1",
+        contactInboxId: "ci-1",
+        contentType: "text",
+        messageType: "outgoing",
+        senderType: "user",
+        senderId: "user-1",
+        text: "hello",
+        clientId: "client-1",
+        createdAt,
+        ...overrides,
+      }) as never
+
+    test("a first-attempt inbox send publishes messageFailed with error null, without touching the row", async () => {
+      await sendMessageToChannel({
+        conversation: conversation as never,
+        contactInbox: contactInbox as never,
+        message: inboxMessage(),
+        sendFrom: "inbox",
+      })
+
+      expect(mockQueueWorkspaceRealtimeEvent).toHaveBeenCalledWith("ws-1", {
+        eventType: "messageFailed",
+        data: { messageId: "msg-inbox", clientId: "client-1", error: null },
+        route: { assignedTeamIds: [], assignedUserIds: [] },
+      })
+      expect(mockUpdateSendError).not.toHaveBeenCalled()
+    })
+
+    test("a send that is not from the inbox publishes nothing", async () => {
+      await sendMessageToChannel({
+        conversation: conversation as never,
+        contactInbox: contactInbox as never,
+        message: inboxMessage(),
+      })
+
+      expect(mockQueueWorkspaceRealtimeEvent).not.toHaveBeenCalled()
+    })
+
+    test("a bulk broadcast send publishes nothing even with sendFrom set", async () => {
+      await sendMessageToChannel({
+        conversation: conversation as never,
+        contactInbox: contactInbox as never,
+        isBulkBroadcast: true,
+        message: inboxMessage({
+          senderType: "bot",
+          contentAttributes: {
+            metadata: {
+              type: "broadcast",
+              broadcastId: "b-1",
+              contactInboxId: "ci-1",
+            },
+          },
+        }),
+        sendFrom: "inbox",
+      })
+
+      expect(mockQueueWorkspaceRealtimeEvent).not.toHaveBeenCalled()
+    })
+
+    test("the confirmation goes out even when later bookkeeping fails, which never marks the message failed or retries it", async () => {
+      mockRecordOutboundMessageSent.mockRejectedValueOnce(new Error("db down"))
+
+      await expect(
+        sendMessageToChannel({
+          conversation: conversation as never,
+          contactInbox: contactInbox as never,
+          message: inboxMessage(),
+          sendFrom: "inbox",
+        }),
+      ).resolves.toEqual({ messageIds: ["mid-1"], sentCount: 1 })
+
+      expect(mockQueueWorkspaceRealtimeEvent).toHaveBeenCalledWith(
+        "ws-1",
+        expect.objectContaining({
+          eventType: "messageFailed",
+          data: expect.objectContaining({ error: null }),
+        }),
+      )
+      // Only the confirmation: no error was written or published.
+      expect(mockUpdateSendError).not.toHaveBeenCalled()
+      expect(mockEmit).not.toHaveBeenCalledWith(
+        "message:failed",
+        expect.anything(),
+      )
+      expect(logger.error).toHaveBeenCalledWith(
+        expect.objectContaining({ messageId: "msg-inbox" }),
+        expect.stringContaining("Post-send bookkeeping failed"),
+      )
+    })
+
+    test("a failure to publish the confirmation is only logged", async () => {
+      mockQueueWorkspaceRealtimeEvent.mockImplementationOnce(() => {
+        throw new Error("redis down")
+      })
+
+      await expect(
+        sendMessageToChannel({
+          conversation: conversation as never,
+          contactInbox: contactInbox as never,
+          message: inboxMessage(),
+          sendFrom: "inbox",
+        }),
+      ).resolves.toEqual({ messageIds: ["mid-1"], sentCount: 1 })
+    })
+  })
+
+  describe("send error is recorded only once it is final", () => {
+    const failing = (willRetryOnThrow: boolean) => {
+      mockRunChannelHandler.mockRejectedValueOnce(
+        new ChannelError("rate limited", ChannelErrorCategory.RATE_LIMITED, {
+          code: "rate_limited",
+        }),
+      )
+      return sendMessageToChannel(
+        {
+          conversation: conversation as never,
+          contactInbox: { ...contactInbox, channel: "whatsapp" } as never,
+          message: {
+            id: "msg-1",
+            workspaceId: "ws-1",
+            conversationId: "conv-1",
+            contactInboxId: "ci-1",
+            contentType: "text",
+            messageType: "outgoing",
+            senderType: "user",
+            text: "hello",
+            clientId: "client-1",
+            createdAt: new Date("2026-07-09T08:37:21.108Z"),
+          } as never,
+          sendFrom: "inbox",
+        },
+        0,
+        willRetryOnThrow,
+      )
+    }
+
+    test("while the job will still retry, nothing is persisted or shown", async () => {
+      await expect(failing(true)).rejects.toBeInstanceOf(ChannelError)
+
+      expect(mockUpdateSendError).not.toHaveBeenCalled()
+      expect(mockQueueWorkspaceRealtimeEvent).not.toHaveBeenCalled()
+      // The failure event still carries willRetry for analytics and logs.
+      expect(mockEmit).toHaveBeenCalledWith(
+        "message:failed",
+        expect.objectContaining({ willRetry: true }),
+      )
+    })
+
+    test("on the final failure the error is persisted and published", async () => {
+      await expect(failing(false)).rejects.toBeInstanceOf(ChannelError)
+
+      expect(mockUpdateSendError).toHaveBeenCalledWith(
+        "msg-1",
+        "sdk error",
+        "ws-1",
+        new Date("2026-07-09T08:37:21.108Z"),
+      )
+      expect(mockQueueWorkspaceRealtimeEvent).toHaveBeenCalledWith(
+        "ws-1",
+        expect.objectContaining({
+          eventType: "messageFailed",
+          data: expect.objectContaining({ error: "sdk error" }),
+        }),
+      )
     })
   })
 })

@@ -593,6 +593,11 @@
       "paused": "Paused",
       "ended": "Ended"
     },
+    "statusReason": {
+      "accountPolicyBlocked": "Stopped automatically: the channel account was blocked from sending after a policy violation.",
+      "accountSendRestricted": "Stopped automatically: the channel account is temporarily restricted from sending.",
+      "page": "Page: {name}"
+    },
     "stats": {
       "sent": "Sent",
       "delivered": "Delivered",
@@ -741,7 +746,14 @@
     "resumeDialog": {
       "title": "Resume broadcast",
       "description": "\"{name}\" will continue sending to recipients who have not received it yet.",
-      "templateDescription": "\"{name}\" starts repeating again from its next scheduled time. Runs during the pause were skipped."
+      "templateDescription": "\"{name}\" starts repeating again from its next scheduled time. Runs during the pause were skipped.",
+      "blocked": {
+        "title": "Stopped because the channel account cannot send",
+        "description": "If the account is still blocked, the first message will fail and the broadcast will stop again. Sending while blocked can lead to a heavier restriction.",
+        "pageLabel": "Page",
+        "errorLabel": "Error from the channel",
+        "confirm": "Resume anyway"
+      }
     },
     "planLimitDialog": {
       "title": "Upgrade your plan",
@@ -5289,6 +5301,13 @@
       "cardEnding": "Card ending {lastFourDigits}",
       "notCharged": "Not charged yet. Charge it with your payment provider.",
       "reference": "Reference {referenceId}"
+    },
+    "sendQueue": {
+      "failed": "A message failed to send. Resend it to continue sending.",
+      "unconfirmed": "We couldn't confirm the last message was sent. Choose whether to keep sending.",
+      "continue": "Keep sending",
+      "discard": "Discard queued messages",
+      "dismiss": "Dismiss"
     }
   },
   "instagram": {
@@ -6821,7 +6840,8 @@
       "total": "Total customers scanned: {count}",
       "waitCooldown": "You must wait another 24 hours before you can use this feature again.",
       "failed": "The last scan failed. You can try again once the cooldown ends.",
-      "partial": "The last scan finished partially — some conversations could not be imported."
+      "partial": "The last scan finished partially — some conversations could not be imported.",
+      "cancelled": "The last scan was cancelled before it finished."
     },
     "errors": {
       "contactScanFromTimeInvalid": "Scan-from time must be in the past.",
@@ -6847,9 +6867,20 @@
         "running": "Running",
         "succeeded": "Succeeded",
         "partial": "Partial",
-        "failed": "Failed"
+        "failed": "Failed",
+        "cancelled": "Cancelled"
       },
       "empty": "No scans have been run yet."
+    },
+    "cancel": {
+      "button": "Cancel scan",
+      "title": "Cancel this scan?",
+      "description": "The scan stops and customers already imported are kept. You still have to wait 24 hours from when this scan started before you can scan this inbox again.",
+      "keep": "Keep scanning",
+      "confirm": "Cancel scan",
+      "success": "Scan cancelled.",
+      "notRunning": "No scan is running for this inbox.",
+      "failed": "Could not cancel the scan. Please try again."
     }
   },
   "auditLogs": {

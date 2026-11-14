@@ -551,6 +551,11 @@
       "paused": "En pause",
       "ended": "Terminé"
     },
+    "statusReason": {
+      "accountPolicyBlocked": "Arrêté automatiquement : le compte du canal a été bloqué en envoi après une violation des règles.",
+      "accountSendRestricted": "Arrêté automatiquement : le compte du canal est temporairement limité en envoi.",
+      "page": "Page : {name}"
+    },
     "stats": {
       "sent": "Envoyé",
       "delivered": "Distribué",
@@ -699,7 +704,14 @@
     "resumeDialog": {
       "title": "Resume broadcast",
       "description": "\"{name}\" will continue sending to recipients who have not received it yet.",
-      "templateDescription": "« {name} » reprend à partir de sa prochaine échéance. Les envois pendant la pause ont été ignorés."
+      "templateDescription": "« {name} » reprend à partir de sa prochaine échéance. Les envois pendant la pause ont été ignorés.",
+      "blocked": {
+        "title": "Arrêté car le compte du canal ne peut pas envoyer",
+        "description": "Si le compte est toujours bloqué, le premier message échouera et la diffusion s'arrêtera de nouveau. Envoyer alors que le compte est bloqué peut entraîner une restriction plus sévère.",
+        "pageLabel": "Page",
+        "errorLabel": "Erreur du canal",
+        "confirm": "Reprendre quand même"
+      }
     },
     "planLimitDialog": {
       "title": "Mettre votre forfait à niveau",
@@ -4607,6 +4619,13 @@
       "cardEnding": "Carte se terminant par {lastFourDigits}",
       "notCharged": "Pas encore débité. Débitez-le via votre prestataire de paiement.",
       "reference": "Référence {referenceId}"
+    },
+    "sendQueue": {
+      "failed": "Un message n'a pas pu être envoyé. Renvoyez-le pour continuer.",
+      "unconfirmed": "Nous n'avons pas pu confirmer l'envoi du dernier message. Choisissez de continuer ou non.",
+      "continue": "Continuer l'envoi",
+      "discard": "Supprimer les messages en attente",
+      "dismiss": "Ignorer"
     }
   },
   "instagram": {
@@ -6139,7 +6158,8 @@
       "total": "Total customers scanned: {count}",
       "waitCooldown": "You must wait another 24 hours before you can use this feature again.",
       "failed": "The last scan failed. You can try again once the cooldown ends.",
-      "partial": "The last scan finished partially — some conversations could not be imported."
+      "partial": "The last scan finished partially — some conversations could not be imported.",
+      "cancelled": "Le dernier scan a été annulé avant la fin."
     },
     "errors": {
       "contactScanFromTimeInvalid": "Scan-from time must be in the past.",
@@ -6165,9 +6185,20 @@
         "running": "Running",
         "succeeded": "Succeeded",
         "partial": "Partial",
-        "failed": "Failed"
+        "failed": "Failed",
+        "cancelled": "Annulé"
       },
       "empty": "No scans have been run yet."
+    },
+    "cancel": {
+      "button": "Annuler le scan",
+      "title": "Annuler ce scan ?",
+      "description": "Le scan s'arrête et les clients déjà importés sont conservés. Vous devez tout de même attendre 24 heures après le début de ce scan avant de pouvoir scanner de nouveau cette boîte de réception.",
+      "keep": "Continuer le scan",
+      "confirm": "Annuler le scan",
+      "success": "Scan annulé.",
+      "notRunning": "Aucun scan n'est en cours pour cette boîte de réception.",
+      "failed": "Impossible d'annuler le scan. Veuillez réessayer."
     }
   },
   "auditLogs": {
