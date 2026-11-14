@@ -15,6 +15,7 @@ import { resolveWorkspaceId } from "../lib/resolve-workspace-id"
 import { runJobWithAuditContext } from "../lib/run-job-with-audit-context"
 import { runWorker } from "../lib/shutdown"
 import { checkOutboundAutomatedResponse } from "./handlers/outbound-automated-response"
+import { recordQuotaSkippedSend } from "./handlers/record-quota-skipped-send"
 import { sendChatMessage, sendFlowStep } from "./handlers/send-flow-step"
 import {
   changeMessageStateOnChannel,
@@ -76,6 +77,7 @@ function startChatWorker() {
           { jobId: job.id, workspaceId },
           "Skipping bot send — quota reached",
         )
+        await recordQuotaSkippedSend(job.data)
         return
       }
 

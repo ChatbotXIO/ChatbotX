@@ -7,6 +7,7 @@ const mocks = vi.hoisted(() => ({
   isBlockedWorkspace: vi.fn(),
   isBotMessageQuotaReached: vi.fn(),
   processJob: undefined as undefined | ((job: unknown) => Promise<void>),
+  recordQuotaSkippedSend: vi.fn(),
   resolveWorkspaceId: vi.fn(),
   sendFlowStep: vi.fn(),
   sendMessageToChannel: vi.fn(),
@@ -102,6 +103,9 @@ vi.mock("../src/chat/handlers/send-message", () => ({
   editMessageFromChannel: vi.fn(),
   sendMessageToChannel: mocks.sendMessageToChannel,
   sendTypingToChannel: mocks.sendTypingToChannel,
+}))
+vi.mock("../src/chat/handlers/record-quota-skipped-send", () => ({
+  recordQuotaSkippedSend: mocks.recordQuotaSkippedSend,
 }))
 vi.mock("../src/chat/handlers/send-messenger-template", () => ({
   sendMessengerTemplateMessage: vi.fn(),
@@ -220,6 +224,27 @@ describe("chat worker bot message quota gate", () => {
     })
 
     expect(mocks.sendMessageToChannel).not.toHaveBeenCalled()
+  })
+
+  test("records the skipped send so it is not left looking delivered", async () => {
+    mocks.isBotMessageQuotaReached.mockResolvedValue(true)
+    const data = {
+      type: "sendChannelMessage",
+      data: { message: { senderType: "bot" } },
+    }
+
+    await mocks.processJob?.({ id: "job-1", data })
+
+    expect(mocks.recordQuotaSkippedSend).toHaveBeenCalledWith(data)
+  })
+
+  test("records nothing when the send goes ahead below the quota", async () => {
+    await mocks.processJob?.({
+      id: "job-1",
+      data: { type: "sendFlowMessage", data: {} },
+    })
+
+    expect(mocks.recordQuotaSkippedSend).not.toHaveBeenCalled()
   })
 
   test("invokes a user channel-message handler even when the quota is reached", async () => {
