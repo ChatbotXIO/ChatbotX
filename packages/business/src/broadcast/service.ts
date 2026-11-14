@@ -2990,6 +2990,7 @@ class BroadcastService extends BaseService {
   ): SQL | undefined {
     return and(
       inArray(contactInboxModel.inboxId, inboxIds),
+      isNull(contactInboxModel.channelBlockedAt),
       this.buildDmRequirement(input),
       requiresRecentInteractionWindow(input.subaction)
         ? contactInboxInteractedWithin24hSQL()
@@ -3037,6 +3038,7 @@ class BroadcastService extends BaseService {
 
     return and(
       inArray(contactInboxModel.inboxId, inboxIds),
+      isNull(contactInboxModel.channelBlockedAt),
       contactFilter
         ? buildContactInboxContactFilterSQL({
             contactIdColumn: contactInboxModel.contactId,

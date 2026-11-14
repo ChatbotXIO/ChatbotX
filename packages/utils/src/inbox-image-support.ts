@@ -36,6 +36,7 @@ export const INBOX_IMAGE_SUPPORT: Record<
   tiktok: { message: 10, comment: 0, privateReply: 0 },
   whatsapp: { message: 10, comment: 0, privateReply: 0 },
   telegram: { message: 10, comment: 0, privateReply: 0 },
+  line: { message: 10, comment: 0, privateReply: 0 },
   zalo: { message: 10, comment: 0, privateReply: 0 },
   webchat: { message: 10, comment: 0, privateReply: 0 },
   api: { message: 10, comment: 0, privateReply: 0 },

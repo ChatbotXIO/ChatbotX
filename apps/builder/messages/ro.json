@@ -2017,6 +2017,10 @@
       "title": "Telegram",
       "description": "Folosește acest tip de mesaj dacă vrei să trimiți o difuzare contactelor tale Telegram."
     },
+    "lineAllContacts": {
+      "title": "LINE",
+      "description": "Trimite oricând un mesaj în masă contactelor tale LINE. Fiecare mesaj se contorizează în cota lunară de mesaje a contului tău LINE Official Account. Contactele care ți-au blocat contul sunt omise."
+    },
     "tiktokActiveContacts": {
       "title": "TikTok",
       "description": "Poate conține promoții și va fi trimisă numai utilizatorilor care au trimis mesaje botului în ultimele 24 de ore. Difuzările TikTok acceptă numai text și imagini."
@@ -2780,7 +2784,17 @@
     "button": {
       "label": "Buton",
       "whenPressed": "Când este apăsat acest buton",
-      "callToThisNumber": "Apelează acest număr"
+      "callToThisNumber": "Apelează acest număr",
+      "style": {
+        "label": "Stilul butonului",
+        "description": "Cum arată butonul pentru contact.",
+        "default": "{style} (implicit)",
+        "options": {
+          "primary": "Principal",
+          "secondary": "Secundar",
+          "link": "Link"
+        }
+      }
     },
     "buttonLabel": {
       "label": "Eticheta butonului"
@@ -2956,7 +2970,8 @@
       "threadsUsername": "Nume utilizator Threads",
       "webchatGuestId": "ID vizitator Webchat",
       "externalId": "ID extern",
-      "channelId": "ID canal"
+      "channelId": "ID canal",
+      "lineUserId": "LINE User ID"
     },
     "flow": {
       "label": "Flux"
@@ -3471,6 +3486,7 @@
       "placeholders": {
         "instagram": "ID-ul utilizatorului Instagram",
         "messenger": "PSID Messenger",
+        "line": "LINE user ID",
         "telegram": "ID-ul conversației Telegram",
         "tiktok": "ID-ul utilizatorului TikTok",
         "zalo": "ID-ul utilizatorului Zalo"
@@ -4240,6 +4256,7 @@
     "duplicated": {
       "generic": "Acest cont este deja conectat la un alt spațiu de lucru.",
       "instagram": "Acest cont Instagram este deja conectat la un alt spațiu de lucru.",
+      "line": "This LINE channel is already connected to another workspace.",
       "messenger": "Această pagină de Facebook este deja conectată la un alt spațiu de lucru.",
       "telegram": "Acest bot Telegram este deja conectat la un alt spațiu de lucru.",
       "threads": "Acest cont Threads este deja conectat la un alt spațiu de lucru.",
@@ -5888,7 +5905,8 @@
       "botId": "ID bot Telegram",
       "oaId": "ID Zalo OA",
       "openId": "Open ID cont TikTok",
-      "threadsUserId": "ID utilizator Threads"
+      "threadsUserId": "ID utilizator Threads",
+      "channelId": "LINE Channel ID"
     },
     "channelUserIdKinds": {
       "psid": "PSID Messenger",
@@ -5898,7 +5916,8 @@
       "tiktokCustomerOpenId": "Open ID client TikTok",
       "threadsUsername": "Nume utilizator Threads",
       "apiSourceId": "ID sursă contact",
-      "whatsappId": "ID WhatsApp (wa_id)"
+      "whatsappId": "ID WhatsApp (wa_id)",
+      "lineUserId": "LINE user id"
     },
     "mappings": {
       "title": "Salvează datele primite",
@@ -12001,6 +12020,23 @@
       "title": "Danger zone",
       "description": "Deletes your account and the {count, plural, =0 {0 workspaces} one {# workspace} other {# workspaces}} you own.",
       "openSettings": "Delete account"
+    }
+  },
+  "integrationLine": {
+    "channelIdLabel": "Channel ID",
+    "channelSecretLabel": "Channel secret",
+    "credentialsHelp": "Find both values in the LINE Developers console: open your Messaging API channel and go to Basic settings.",
+    "webhookNotEnabled": "LINE is not delivering messages yet. In LINE Official Account Manager, turn on \"Use webhook\" and turn off \"Auto-reply messages\", then press Test webhook.",
+    "webhookReplaced": "The webhook URL previously set on this LINE channel ({url}) was replaced with ChatbotX's.",
+    "testWebhook": "Test webhook",
+    "testWebhookSuccess": "LINE webhook is working.",
+    "webhookTestFailed": "LINE's webhook test failed: {reason}",
+    "continue": "Continue",
+    "errors": {
+      "channelHidden": "LINE is not available for this workspace.",
+      "credentialsRejected": "Invalid LINE Channel ID or Channel secret.",
+      "webhookRejected": "LINE rejected the webhook URL. Please try again later or contact support.",
+      "providerUnavailable": "LINE is temporarily unavailable. Please try again in a moment."
     }
   }
 }

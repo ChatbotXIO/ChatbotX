@@ -1140,3 +1140,48 @@ describe("compileFlowSpec — setCustomField operations", () => {
     }
   })
 })
+
+describe("compileFlowSpec — button style and per-channel button limits", () => {
+  const fiveButtons = Array.from({ length: 5 }, (_, index) => ({
+    text: `Option ${index + 1}`,
+    ...(index === 0 ? { style: "primary" as const } : {}),
+  }))
+
+  const publishIssues = (nodes: unknown) => {
+    const result = z
+      .array(flowVersionSchema)
+      .superRefine(refineStepsByChannel)
+      .safeParse(nodes)
+    return result.success ? [] : result.error.issues
+  }
+
+  test("carries a button's style onto the compiled button; unset stays unset", () => {
+    const compiled = compileFlowSpec(
+      spec([{ type: "send", text: "Pick", buttons: fiveButtons }], {
+        channel: "line",
+      }),
+      emptyCtx,
+    )
+    const node = compiled.nodes[0]
+    if (node?.type !== "sendMessage") {
+      throw new Error("expected a sendMessage node")
+    }
+    const step = node.data.details.steps[0]
+    const buttons = step && "buttons" in step ? step.buttons : []
+    expect(buttons[0]?.style).toBe("primary")
+    expect(buttons[1]).not.toHaveProperty("style")
+    expectPublishable(compiled.nodes, compiled.edges)
+  })
+
+  test("5 buttons publish on LINE but not on omnichannel (3)", () => {
+    const omnichannel = compileFlowSpec(
+      spec([{ type: "send", text: "Pick", buttons: fiveButtons }]),
+      emptyCtx,
+    )
+    expect(publishIssues(omnichannel.nodes)).toContainEqual(
+      expect.objectContaining({
+        message: "sendText exceeds the omnichannel maximum of 3 buttons.",
+      }),
+    )
+  })
+})

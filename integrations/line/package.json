@@ -1,0 +1,34 @@
+{
+  "name": "@chatbotx.io/integration-line",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "author": "Michael Truong <realcodesiman@gmail.com>",
+  "dependencies": {
+    "@chatbotx.io/business": "workspace:*",
+    "@chatbotx.io/flow-config": "workspace:*",
+    "@chatbotx.io/logger": "workspace:*",
+    "@chatbotx.io/sdk": "workspace:*",
+    "@chatbotx.io/utils": "workspace:*",
+    "ky": "catalog:",
+    "remeda": "catalog:",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@chatbotx.io/typescript-config": "workspace:*",
+    "@chatbotx.io/vitest-config": "workspace:*",
+    "@types/node": "catalog:",
+    "msw": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  },
+  "exports": {
+    ".": "./src/index.ts",
+    "./test-handlers": "./src/test-handlers.ts"
+  },
+  "scripts": {
+    "check-types": "tsc --noEmit",
+    "test": "vitest run --passWithNoTests",
+    "test:watch": "vitest"
+  }
+}

@@ -1,6 +1,8 @@
 import {
+  type ButtonContainer,
   buttonStepDefaultFn,
   CHANNEL_FLOW_POLICIES,
+  getButtonCountLimit,
   getChannelFlowPolicy,
   resolveSendTextLengthLimits,
 } from "@chatbotx.io/flow-config"
@@ -66,10 +68,16 @@ export const ButtonStepEditor = (props: ButtonStepEditorProps) => {
 
 type ButtonGroupEditorProps = {
   parentName: string
+  /**
+   * Whether these are a card's buttons (`sendCard`, a `sendCarousel` card) or
+   * a step's. Required: it picks which of the channel policy's limits caps the
+   * "add" button, and the two differ (Telegram: 10 on a step, 3 on a card).
+   */
+  container: ButtonContainer
 }
 
 export const ButtonGroupEditor = (props: ButtonGroupEditorProps) => {
-  const { parentName } = props
+  const { parentName, container } = props
   const t = useTranslations()
   const { control } = useFormContext()
   const { fields, append, move } = useFieldArray({
@@ -78,9 +86,10 @@ export const ButtonGroupEditor = (props: ButtonGroupEditorProps) => {
   })
   const channel = useWatch({ name: "beforeStep.channel" })
 
-  const maxButtons =
-    getChannelFlowPolicy(channel)?.limits.buttonCount ??
-    CHANNEL_FLOW_POLICIES.omnichannel.limits.buttonCount
+  const maxButtons = getButtonCountLimit(
+    getChannelFlowPolicy(channel) ?? CHANNEL_FLOW_POLICIES.omnichannel,
+    container,
+  )
 
   function addButton() {
     append(

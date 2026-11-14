@@ -7,6 +7,7 @@ import {
 } from "@chatbotx.io/flow-config"
 import { chunk } from "remeda"
 import { MAX_BUTTONS } from "../../../constants"
+import { logger } from "../../../lib/logger"
 import type { InstagramButton } from "../../../schema"
 
 export function getButtonTemplate(props: {
@@ -54,6 +55,20 @@ export function convertButtons({
   buttons: ButtonStepProps[]
   metadata?: MetadataPayload
 }): InstagramButton[] | undefined {
+  // Instagram's button template takes MAX_BUTTONS; the rest are not sent. A
+  // node authored for a channel with a higher limit (LINE: 5) can reach an
+  // Instagram contact via a jump or broadcast, so make the loss visible.
+  if (buttons.length > MAX_BUTTONS) {
+    logger.warn(
+      {
+        flowId,
+        flowVersionId,
+        kept: MAX_BUTTONS,
+        dropped: buttons.length - MAX_BUTTONS,
+      },
+      "Dropping step buttons over the channel's button limit",
+    )
+  }
   const chunks = chunk(buttons, MAX_BUTTONS)
   if (chunks.length > 0 && chunks[0]) {
     return chunks[0].map((button) =>

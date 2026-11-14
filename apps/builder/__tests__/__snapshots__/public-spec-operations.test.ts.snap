@@ -2234,6 +2234,31 @@ exports[`public API spec — operation naming guard > operation list (operationI
   },
   {
     "method": "POST",
+    "operationId": "lineChannels.connect",
+    "path": "/v1/line-channels",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "lineChannels.delete",
+    "path": "/v1/line-channels/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "lineChannels.get",
+    "path": "/v1/line-channels/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "lineChannels.list",
+    "path": "/v1/line-channels",
+  },
+  {
+    "method": "POST",
+    "operationId": "lineChannels.testWebhook",
+    "path": "/v1/line-channels/{id}/test-webhook",
+  },
+  {
+    "method": "POST",
     "operationId": "magicLinks.create",
     "path": "/v1/magic-links",
   },

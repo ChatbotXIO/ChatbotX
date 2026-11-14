@@ -1,3 +1,4 @@
+import { contactInboxService } from "@chatbotx.io/business/contact-inbox"
 import {
   enqueueLeaderboardAward,
   enqueueLeaderboardReverse,
@@ -15,6 +16,10 @@ import type {
   ChannelAudienceUser,
   IncomingContact,
 } from "@chatbotx.io/sdk"
+import {
+  CHANNEL_BLOCK_STATE_CHANNELS,
+  type ChannelType,
+} from "@chatbotx.io/utils/channel"
 import type { IntegrationJobChannelAudienceEvent } from "@chatbotx.io/worker-config"
 import { logger } from "../../lib/logger"
 import { integrationService } from "../../services/integrations"
@@ -151,6 +156,32 @@ export const scoreAudienceEvent = async (props: {
 }
 
 /**
+ * LINE's send API answers 200 for a user who blocked the account, so the block
+ * is tracked from the unfollow/follow webhooks. Both carry their event time so
+ * the service can drop a transition older than the last applied one. Never
+ * creates a contact.
+ */
+const syncChannelBlockState = async (props: {
+  inbox: Pick<InboxModel, "id" | "workspaceId" | "channel">
+  event: PersonEvent
+}): Promise<void> => {
+  const { inbox, event } = props
+  if (event.kind !== "follow" && event.kind !== "unfollow") {
+    return
+  }
+  if (!CHANNEL_BLOCK_STATE_CHANNELS.has(inbox.channel as ChannelType)) {
+    return
+  }
+  await contactInboxService.setChannelBlocked({
+    workspaceId: inbox.workspaceId,
+    inboxId: inbox.id,
+    sourceId: event.user.sourceId,
+    blocked: event.kind === "unfollow",
+    occurredAt: new Date(event.occurredAt),
+  })
+}
+
+/**
  * Follow/unfollow, group join/leave, group messages and the bot's own group
  * membership. None of these is a 1:1 message, so nothing is stored in a
  * conversation and no bot automation runs.
@@ -181,7 +212,9 @@ export const processChannelAudienceEvent = async (
     return
   }
 
-  // Audience events exist only for leaderboard scoring. Check that a live
+  await syncChannelBlockState({ inbox, event })
+
+  // The remaining audience events exist only for leaderboard scoring. Check that a live
   // leaderboard on this inbox scores the rule BEFORE resolving the contact,
   // so a bot in a busy group does not mint a contact (and MAC usage) for
   // every member who posts.

@@ -97,6 +97,7 @@ export const errorLogProviderLabels = {
   zalo: "Zalo",
   smtp: "Email",
   telegram: "Telegram",
+  line: "LINE",
   instagram: "Instagram",
   threads: "Threads",
   tiktok: "TikTok",

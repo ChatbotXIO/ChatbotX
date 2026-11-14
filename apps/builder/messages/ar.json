@@ -620,6 +620,10 @@
       "title": "Telegram",
       "description": "استخدم هذا النوع من الرسائل إذا كنت تريد إرسال بث إلى جهات اتصالك على Telegram."
     },
+    "lineAllContacts": {
+      "title": "LINE",
+      "description": "أرسل بثًا إلى جهات اتصال LINE في أي وقت. تُحتسب كل رسالة ضمن الحصة الشهرية للرسائل في حساب LINE الرسمي الخاص بك. يتم تخطي جهات الاتصال التي حظرت حسابك."
+    },
     "tiktokActiveContacts": {
       "title": "TikTok",
       "description": "قد تتضمن عروضًا ترويجية، ولن تُرسل إلا إلى المستخدمين الذين راسلوا البوت خلال آخر 24 ساعة. تدعم عمليات البث على TikTok النصوص والصور فقط."
@@ -1165,6 +1169,7 @@
     "duplicated": {
       "generic": "هذا الحساب متصل بالفعل بمساحة عمل أخرى.",
       "instagram": "حساب إنستغرام هذا متصل بالفعل بمساحة عمل أخرى.",
+      "line": "This LINE channel is already connected to another workspace.",
       "messenger": "صفحة فيسبوك هذه متصلة بالفعل بمساحة عمل أخرى.",
       "telegram": "بوت تيليجرام هذا متصل بالفعل بمساحة عمل أخرى.",
       "threads": "حساب Threads هذا متصل بالفعل بمساحة عمل أخرى.",
@@ -1539,7 +1544,17 @@
     "button": {
       "label": "زر",
       "whenPressed": "عند الضغط على هذا الزر",
-      "callToThisNumber": "الاتصال بهذا الرقم"
+      "callToThisNumber": "الاتصال بهذا الرقم",
+      "style": {
+        "label": "نمط الزر",
+        "description": "كيف يظهر الزر لجهة الاتصال.",
+        "default": "{style} (افتراضي)",
+        "options": {
+          "primary": "أساسي",
+          "secondary": "ثانوي",
+          "link": "رابط"
+        }
+      }
     },
     "buttonLabel": {
       "label": "تسمية الزر"
@@ -1715,7 +1730,8 @@
       "threadsUsername": "اسم مستخدم Threads",
       "webchatGuestId": "معرّف زائر Webchat",
       "externalId": "المعرّف الخارجي",
-      "channelId": "معرّف القناة"
+      "channelId": "معرّف القناة",
+      "lineUserId": "LINE User ID"
     },
     "flow": {
       "label": "المسار"
@@ -2230,6 +2246,7 @@
       "placeholders": {
         "instagram": "معرّف مستخدم Instagram",
         "messenger": "معرّف PSID في Messenger",
+        "line": "LINE user ID",
         "telegram": "معرّف محادثة Telegram",
         "tiktok": "معرّف مستخدم TikTok",
         "zalo": "معرّف مستخدم Zalo"
@@ -5888,7 +5905,8 @@
       "botId": "معرّف بوت Telegram",
       "oaId": "معرّف Zalo OA",
       "openId": "open id لحساب TikTok",
-      "threadsUserId": "معرّف مستخدم Threads"
+      "threadsUserId": "معرّف مستخدم Threads",
+      "channelId": "LINE Channel ID"
     },
     "channelUserIdKinds": {
       "psid": "Messenger PSID",
@@ -5898,7 +5916,8 @@
       "tiktokCustomerOpenId": "open id لعميل TikTok",
       "threadsUsername": "اسم مستخدم Threads",
       "apiSourceId": "معرّف مصدر جهة الاتصال",
-      "whatsappId": "معرّف WhatsApp (wa_id)"
+      "whatsappId": "معرّف WhatsApp (wa_id)",
+      "lineUserId": "LINE user id"
     },
     "mappings": {
       "title": "حفظ البيانات الواردة",
@@ -12001,6 +12020,23 @@
       "title": "Danger zone",
       "description": "Deletes your account and the {count, plural, =0 {0 workspaces} one {# workspace} other {# workspaces}} you own.",
       "openSettings": "Delete account"
+    }
+  },
+  "integrationLine": {
+    "channelIdLabel": "Channel ID",
+    "channelSecretLabel": "Channel secret",
+    "credentialsHelp": "Find both values in the LINE Developers console: open your Messaging API channel and go to Basic settings.",
+    "webhookNotEnabled": "LINE is not delivering messages yet. In LINE Official Account Manager, turn on \"Use webhook\" and turn off \"Auto-reply messages\", then press Test webhook.",
+    "webhookReplaced": "The webhook URL previously set on this LINE channel ({url}) was replaced with ChatbotX's.",
+    "testWebhook": "Test webhook",
+    "testWebhookSuccess": "LINE webhook is working.",
+    "webhookTestFailed": "LINE's webhook test failed: {reason}",
+    "continue": "Continue",
+    "errors": {
+      "channelHidden": "LINE is not available for this workspace.",
+      "credentialsRejected": "Invalid LINE Channel ID or Channel secret.",
+      "webhookRejected": "LINE rejected the webhook URL. Please try again later or contact support.",
+      "providerUnavailable": "LINE is temporarily unavailable. Please try again in a moment."
     }
   }
 }

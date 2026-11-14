@@ -1007,6 +1007,48 @@ class ContactInboxService extends BaseService {
     await this.invalidateCacheTags([`contacts:${contactId}:contact-inboxes`])
   }
 
+  /**
+   * Records that a contact blocked (`blocked: true`, LINE unfollow) or
+   * unblocked (`blocked: false`, LINE follow) a channel account. One UPDATE by
+   * inbox + sourceId; no row (contact never messaged) is a no-op.
+   *
+   * Webhooks can arrive out of order, so every transition stamps its event
+   * time in `channelBlockChangedAt` and both paths apply only when the event is
+   * not older than the last applied transition. `lte` keeps a redelivery of
+   * the same event idempotent.
+   */
+  async setChannelBlocked(props: {
+    workspaceId: string
+    inboxId: string
+    sourceId: string
+    blocked: boolean
+    occurredAt: Date
+  }): Promise<void> {
+    const { workspaceId, inboxId, sourceId, blocked, occurredAt } = props
+    const rows = await db
+      .update(contactInboxModel)
+      .set({
+        channelBlockedAt: blocked ? occurredAt : null,
+        channelBlockChangedAt: occurredAt,
+      })
+      .where(
+        and(
+          eq(contactInboxModel.inboxId, inboxId),
+          eq(contactInboxModel.sourceId, sourceId),
+          this.workspaceScope(workspaceId),
+          or(
+            isNull(contactInboxModel.channelBlockChangedAt),
+            lte(contactInboxModel.channelBlockChangedAt, occurredAt),
+          ),
+        ),
+      )
+      .returning({ contactId: contactInboxModel.contactId })
+    const contactId = rows[0]?.contactId
+    if (contactId) {
+      await this.invalidateCacheTags(this.getTrackingCacheTags(contactId))
+    }
+  }
+
   async updateLanguage(props: {
     tx?: DatabaseClient
     workspaceId: string

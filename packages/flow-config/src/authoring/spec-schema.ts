@@ -7,7 +7,17 @@ import {
 } from "@chatbotx.io/utils/custom-field-operation"
 import { z } from "zod"
 import { countMessageCharacters } from "../channel-rules/characters"
-import { BUTTON_LABEL_MAX } from "../steps/button"
+import {
+  buttonContainers,
+  CHANNEL_FLOW_POLICIES,
+  CHANNEL_POLICY_VERSION,
+  getButtonCountLimit,
+} from "../channel-rules/policies"
+import {
+  BUTTON_LABEL_MAX,
+  type ButtonStyle,
+  buttonStyleField,
+} from "../steps/button"
 import { callPhoneNumberStepSchema } from "../steps/call-phone-number"
 import { copyTextStepSchema } from "../steps/copy-text"
 import {
@@ -21,7 +31,17 @@ import { isOperandBlank } from "../steps/set-custom-field"
 import { waitStepDelayUnits } from "../steps/wait"
 import { flowValidationCodes } from "../validation-codes"
 
-const MAX_SPEC_BUTTONS = 3
+/**
+ * The per-step ceiling only: the largest step button limit of any channel
+ * policy, since a step schema cannot see the flow's `channel`. The flow's own
+ * channel limit is checked across every send step by `flowSpecSchema`
+ * (`checkSpecButtonCounts`), and again when the compiled flow is published.
+ */
+const MAX_SPEC_BUTTONS = Math.max(
+  ...Object.values(CHANNEL_FLOW_POLICIES).map(
+    (policy) => policy.limits.buttonCount,
+  ),
+)
 const MAX_SPEC_TEXT_LENGTH = 1000
 const MAX_FLOW_NAME_LENGTH = 255
 
@@ -73,6 +93,7 @@ export type PipelineStepSpec = {
  */
 export type FlowSendButtonSpec = {
   text: string
+  style?: ButtonStyle
   then?: FlowStepSpec[]
   call?: string
   copy?: string
@@ -170,6 +191,7 @@ const sendButtonSpecSchema: z.ZodType<FlowSendButtonSpec> = z.lazy(() =>
           description: `Button label shown to the contact (max ${BUTTON_LABEL_MAX} characters).`,
           maxLength: BUTTON_LABEL_MAX,
         }),
+      style: buttonStyleField,
       // DSL vocabulary ("steps to run then"), not an accidental thenable — the
       // value is an array, never callable, so nothing ever treats this object
       // as a Promise.
@@ -206,7 +228,9 @@ const sendButtonSpecSchema: z.ZodType<FlowSendButtonSpec> = z.lazy(() =>
         path: ["copy"],
       },
     )
-    .describe("A quick-reply button attached to a send step."),
+    .describe(
+      "A button attached to a send step (a step button, not a quick reply): replies, optionally running `then`, or dials `call`, or copies `copy`. Takes `style` on channels that render button styles.",
+    ),
 )
 
 const sendStepSpecSchema = z
@@ -243,7 +267,7 @@ const sendStepSpecSchema = z
       .max(MAX_SPEC_BUTTONS)
       .optional()
       .describe(
-        `Up to ${MAX_SPEC_BUTTONS} quick-reply buttons attached to this message.`,
+        `Buttons attached to this message. How many a channel allows is its \`limits.buttonCount\` in \`capabilities.get\` (3 for omnichannel, i.e. when \`channel\` is omitted); a spec with more is rejected, drafts included. Never more than ${MAX_SPEC_BUTTONS}.`,
       ),
   })
   .superRefine((data, ctx) => {
@@ -259,7 +283,7 @@ const sendStepSpecSchema = z
     }
   })
   .describe(
-    "Sends one message (text, image, or file), optionally with quick-reply buttons.",
+    "Sends one message (text, image, or file), optionally with buttons.",
   )
 
 const sendTemplateStepSpecSchema = z
@@ -850,6 +874,69 @@ export const flowSpecStepTypes: FlowSpecStepType[] = flowStepSpecOptions.map(
   }),
 )
 
+/**
+ * Rejects a `send` step with more buttons than the flow's channel allows,
+ * walking every nested step list (`send.buttons[].then`, `branch.cases[].then`,
+ * `branch.otherwise`). It mirrors publish's `maxButtonCount` check so a spec
+ * the agent saves as a draft (`flows.updateDraft`, `flows.create` without
+ * `publish`) — which publish's checks never see — is held to the same limit,
+ * reported at the path the agent wrote.
+ */
+const checkSpecButtonCounts = (
+  steps: FlowStepSpec[],
+  limit: { allowed: number; channel: string },
+  path: (string | number)[],
+  ctx: z.RefinementCtx,
+): void => {
+  steps.forEach((step, index) => {
+    const at = [...path, index]
+    if (step.type === "send") {
+      const buttons = step.buttons ?? []
+      if (buttons.length > limit.allowed) {
+        const capability = {
+          actual: buttons.length,
+          allowed: limit.allowed,
+          block: step.type,
+          channel: limit.channel,
+          code: flowValidationCodes.constraintExceeded,
+          constraintId: "maxButtonCount",
+          policyVersion: CHANNEL_POLICY_VERSION,
+          unit: "buttons",
+        }
+        ctx.addIssue({
+          code: "custom",
+          message: `send exceeds the ${limit.channel} maximum of ${limit.allowed} buttons (received ${buttons.length}). Set \`channel\` to the flow's channel, or use fewer buttons.`,
+          params: { capability },
+          path: [...at, "buttons"],
+        })
+      }
+      buttons.forEach((button, buttonIndex) => {
+        checkSpecButtonCounts(
+          button.then ?? [],
+          limit,
+          [...at, "buttons", buttonIndex, "then"],
+          ctx,
+        )
+      })
+    } else if (step.type === "branch") {
+      step.cases.forEach((branchCase, caseIndex) => {
+        checkSpecButtonCounts(
+          branchCase.then,
+          limit,
+          [...at, "cases", caseIndex, "then"],
+          ctx,
+        )
+      })
+      checkSpecButtonCounts(
+        step.otherwise ?? [],
+        limit,
+        [...at, "otherwise"],
+        ctx,
+      )
+    }
+  })
+}
+
 export const flowSpecSchema = z
   .object({
     formatVersion: z.literal(1).describe("DSL format version. Always 1."),
@@ -868,6 +955,22 @@ export const flowSpecSchema = z
       .array(flowStepSpecSchema)
       .min(1)
       .describe("Ordered steps executed from the flow's start node."),
+  })
+  .superRefine((spec, ctx) => {
+    // An omitted channel compiles to omnichannel nodes (see `compile.ts`).
+    const channel = spec.channel ?? channelTypes.enum.omnichannel
+    checkSpecButtonCounts(
+      spec.steps,
+      {
+        allowed: getButtonCountLimit(
+          CHANNEL_FLOW_POLICIES[channel],
+          buttonContainers.step,
+        ),
+        channel,
+      },
+      ["steps"],
+      ctx,
+    )
   })
   .describe("A complete agent-authored flow DSL document.")
 export type FlowSpec = z.infer<typeof flowSpecSchema>

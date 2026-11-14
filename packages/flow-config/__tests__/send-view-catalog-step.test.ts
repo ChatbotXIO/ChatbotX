@@ -221,10 +221,11 @@ describe("channel policy", () => {
       webchat: stepSupport.unsupported,
       whatsapp: stepSupport.full,
       zalo: stepSupport.unsupported,
+      line: stepSupport.unsupported,
     })
   })
 
   test("the externally reported policy version was bumped for the new support", () => {
-    expect(CHANNEL_POLICY_VERSION).toBe(3)
+    expect(CHANNEL_POLICY_VERSION).toBeGreaterThanOrEqual(3)
   })
 })

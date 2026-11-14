@@ -606,3 +606,47 @@ describe("sendFlowStepToChannel — WhatsApp Flow step", () => {
     expect(sentSourceId()).toBe("meta-flow-a")
   })
 })
+
+describe("send guard — blocked contact (ContactInbox.channelBlockedAt)", () => {
+  const blockedLine = {
+    ...baseContactInbox,
+    channel: "line",
+    channelBlockedAt: iso(HOUR),
+  }
+
+  test("a flow step to a LINE contact who blocked the account throws USER_BLOCKED before the API call", async () => {
+    await expect(
+      sendFlowStepToChannel({
+        ...flowStepArgs,
+        contactInbox: blockedLine as never,
+      }),
+    ).rejects.toMatchObject({
+      category: ChannelErrorCategory.USER_BLOCKED,
+      isPermanent: true,
+      isRetryable: false,
+    })
+    expect(mocks.runChannelHandler).not.toHaveBeenCalled()
+  })
+
+  test("a direct send is refused, recorded as a terminal failure and never retried", async () => {
+    const result = await sendDirect(blockedLine)
+
+    expect(mocks.runChannelHandler).not.toHaveBeenCalled()
+    expect(mocks.updateSendError).toHaveBeenCalledTimes(1)
+    expect(mocks.emit).toHaveBeenCalledWith(
+      "message:failed",
+      expect.objectContaining({ willRetry: false }),
+    )
+    expect(result).toEqual({ messageIds: [], sentCount: 0 })
+  })
+
+  test("an unblocked LINE contact is sent to", async () => {
+    await sendDirect({ ...blockedLine, channelBlockedAt: null })
+    expect(mocks.runChannelHandler).toHaveBeenCalledTimes(1)
+  })
+
+  test("the flag is ignored on channels outside CHANNEL_BLOCK_STATE_CHANNELS", async () => {
+    await sendDirect({ ...blockedLine, channel: "telegram" })
+    expect(mocks.runChannelHandler).toHaveBeenCalledTimes(1)
+  })
+})

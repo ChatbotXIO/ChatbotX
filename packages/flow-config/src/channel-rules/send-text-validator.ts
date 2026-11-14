@@ -25,6 +25,9 @@ export const sendTextValidator = {
   [channelTypes.enum.instagram]: sendTextStepSchema.superRefine(
     refineSendTextLengthForChannel(channelTypes.enum.instagram),
   ),
+  [channelTypes.enum.line]: sendTextStepSchema.superRefine(
+    refineSendTextLengthForChannel(channelTypes.enum.line),
+  ),
   [channelTypes.enum.messenger]: sendTextStepSchema.superRefine(
     refineSendTextLengthForChannel(channelTypes.enum.messenger),
   ),

@@ -318,8 +318,114 @@ describe("flowSpecSchema", () => {
     )
   })
 
+  describe("button count against the flow's own channel", () => {
+    const sendWith = (count: number) => ({
+      type: "send",
+      text: "Pick one",
+      buttons: Array.from({ length: count }, (_, index) => ({
+        text: `B${index + 1}`,
+      })),
+    })
+    const withChannel = (channel: string | undefined, steps: unknown[]) => ({
+      ...createFlowSpec(steps),
+      ...(channel ? { channel } : {}),
+    })
+
+    test("no channel (omnichannel) allows 3: 4 is rejected at the step's buttons", () => {
+      expect(
+        flowSpecSchema.safeParse(withChannel(undefined, [sendWith(3)])).success,
+      ).toBe(true)
+
+      const issues = expectInvalid(withChannel(undefined, [sendWith(4)]))
+      expect(issues).toContainEqual(
+        expect.objectContaining({
+          path: ["steps", 0, "buttons"],
+          params: {
+            capability: expect.objectContaining({
+              actual: 4,
+              allowed: 3,
+              channel: "omnichannel",
+              code: "constraintExceeded",
+              constraintId: "maxButtonCount",
+            }),
+          },
+        }),
+      )
+    })
+
+    test("each channel uses its own step limit", () => {
+      for (const [channel, allowed] of [
+        ["messenger", 3],
+        ["line", 5],
+        ["telegram", 10],
+      ] as const) {
+        expect(
+          flowSpecSchema.safeParse(withChannel(channel, [sendWith(allowed)]))
+            .success,
+        ).toBe(true)
+        if (allowed < 10) {
+          expect(
+            flowSpecSchema.safeParse(
+              withChannel(channel, [sendWith(allowed + 1)]),
+            ).success,
+          ).toBe(false)
+        }
+      }
+    })
+
+    test("send steps nested under a button's then and a branch are checked", () => {
+      const nestedInButton = expectInvalid(
+        withChannel(undefined, [
+          {
+            type: "send",
+            text: "Start",
+            buttons: [
+              {
+                text: "Go",
+                // biome-ignore lint/suspicious/noThenProperty: DSL fixture data
+                then: [sendWith(4)],
+              },
+            ],
+          },
+        ]),
+      )
+      expect(nestedInButton).toContainEqual(
+        expect.objectContaining({
+          path: ["steps", 0, "buttons", 0, "then", 0, "buttons"],
+        }),
+      )
+
+      const nestedInBranch = expectInvalid(
+        withChannel(undefined, [
+          {
+            type: "branch",
+            cases: [
+              {
+                when: [{ field: "email", operator: "isNotEmpty" }],
+                // biome-ignore lint/suspicious/noThenProperty: DSL fixture data
+                then: [sendWith(4)],
+              },
+            ],
+            otherwise: [sendWith(4)],
+          },
+        ]),
+      )
+      expect(nestedInBranch).toContainEqual(
+        expect.objectContaining({
+          path: ["steps", 0, "cases", 0, "then", 0, "buttons"],
+        }),
+      )
+      expect(nestedInBranch).toContainEqual(
+        expect.objectContaining({
+          path: ["steps", 0, "otherwise", 0, "buttons"],
+        }),
+      )
+    })
+  })
+
   test("enforces flow spec limits", () => {
-    const tooManyButtons = Array.from({ length: 4 }, (_, index) => ({
+    // Above every channel's step limit (Telegram's 10 is the largest).
+    const tooManyButtons = Array.from({ length: 11 }, (_, index) => ({
       text: `Option ${index + 1}`,
     }))
 
@@ -423,5 +529,30 @@ describe("setCustomField action operation", () => {
 
   test("without an operation the value stays required", () => {
     expect(parse({ customFieldName: "F" }).success).toBe(false)
+  })
+})
+
+describe("flowSpecSchema button style", () => {
+  test("accepts the three styles and no style; rejects any other value", () => {
+    for (const style of ["primary", "secondary", "link", undefined]) {
+      expect(
+        flowSpecSchema.safeParse(
+          createFlowSpec([
+            { type: "send", text: "Hi", buttons: [{ text: "Go", style }] },
+          ]),
+        ).success,
+      ).toBe(true)
+    }
+    expect(
+      flowSpecSchema.safeParse(
+        createFlowSpec([
+          {
+            type: "send",
+            text: "Hi",
+            buttons: [{ text: "Go", style: "danger" }],
+          },
+        ]),
+      ).success,
+    ).toBe(false)
   })
 })

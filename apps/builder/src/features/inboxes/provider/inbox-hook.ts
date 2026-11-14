@@ -44,6 +44,10 @@ export const allInboxConfigs = {
     label: "TikTok",
     value: "tiktok",
   },
+  line: {
+    label: "LINE",
+    value: "line",
+  },
   webchat: {
     label: "Webchat",
     value: "webchat",

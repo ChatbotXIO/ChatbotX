@@ -61,6 +61,7 @@ const SOURCE_ID_NORMALIZER: Record<
   instagram: asSent,
   telegram: asSent,
   zalo: asSent,
+  line: asSent,
   tiktok: asSent,
   api: asSent,
 }
@@ -125,6 +126,7 @@ const DERIVED_SOURCE_ID: Record<
   instagram: fromChannelUserId("instagram"),
   telegram: fromChannelUserId("telegram"),
   zalo: fromChannelUserId("zalo"),
+  line: fromChannelUserId("line"),
   tiktok: fromChannelUserId("tiktok"),
   threads: fromChannelUserId("threads"),
   api: fromChannelUserId("api"),

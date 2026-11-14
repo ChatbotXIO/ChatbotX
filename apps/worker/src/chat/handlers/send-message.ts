@@ -44,6 +44,10 @@ import {
   type ResolvedProductMessage,
   type SendFlowStepData,
 } from "@chatbotx.io/sdk"
+import {
+  CHANNEL_BLOCK_STATE_CHANNELS,
+  type ChannelType,
+} from "@chatbotx.io/utils/channel"
 import { resolveStackFrames } from "@chatbotx.io/utils/error-log"
 import type {
   ChatJobChangeChannelMessageState,
@@ -142,6 +146,40 @@ const assertThreadOpenForServiceMessage = (
     "Message not sent: another app is handling this conversation",
     ChannelErrorCategory.PERMISSION_DENIED,
     { code: THREAD_NOT_OWNED_ERROR_CODE },
+  )
+}
+
+/**
+ * Error code of a send refused because the contact blocked the channel
+ * account (`ContactInbox.channelBlockedAt`, set from LINE's unfollow webhook).
+ */
+export const CONTACT_BLOCKED_ERROR_CODE = "contact_blocked"
+
+/**
+ * Whether the contact blocked the channel account. Only channels in
+ * `CHANNEL_BLOCK_STATE_CHANNELS` track this; elsewhere the flag is ignored.
+ */
+export const isContactChannelBlocked = (
+  contactInbox: Pick<ContactInboxModel, "channel" | "channelBlockedAt">,
+): boolean =>
+  Boolean(contactInbox.channelBlockedAt) &&
+  CHANNEL_BLOCK_STATE_CHANNELS.has(contactInbox.channel as ChannelType)
+
+/**
+ * LINE answers 200 for a push to a user who blocked the account, so the send
+ * would be recorded as delivered. Refuse it locally with a permanent
+ * `USER_BLOCKED` error (recorded as a send failure, never retried).
+ */
+export const assertContactCanReceive = (
+  contactInbox: Pick<ContactInboxModel, "channel" | "channelBlockedAt">,
+): void => {
+  if (!isContactChannelBlocked(contactInbox)) {
+    return
+  }
+  throw new ChannelError(
+    "Contact has blocked this channel account",
+    ChannelErrorCategory.USER_BLOCKED,
+    { code: CONTACT_BLOCKED_ERROR_CODE },
   )
 }
 
@@ -273,6 +311,7 @@ export async function sendMessageToChannel(
         isTemplateMessage: false,
       })
     }
+    assertContactCanReceive(contactInbox)
 
     const { integration, ctx } =
       await resolveIntegrationContextFromContactInbox({
@@ -871,6 +910,11 @@ export async function sendTypingToChannel(data: ChatJobSendTyping["data"]) {
     return
   }
 
+  if (isContactChannelBlocked(contactInbox)) {
+    // Typing is best-effort; a blocked contact can't see it anyway.
+    return
+  }
+
   const { integration, ctx } = await resolveIntegrationContextFromContactInbox({
     workspaceId: conversation.workspaceId,
     contactInbox,
@@ -1241,6 +1285,7 @@ export async function sendFlowStepToChannel({
     contactInbox,
   })
   assertThreadOpenForServiceMessage(routingContactInbox, { isTemplateMessage })
+  assertContactCanReceive(contactInbox)
 
   const { integration, ctx } = await resolveIntegrationContextFromContactInbox({
     workspaceId: conversation.workspaceId,

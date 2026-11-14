@@ -264,6 +264,12 @@ const getFlowSpecCapabilities = (
       unsupportedSteps,
       noButtonSteps,
       nativeButtonTypes: [...policy.nativeButtonTypes],
+      buttonStyles: policy.buttonStyles
+        ? {
+            options: [...policy.buttonStyles.options],
+            default: policy.buttonStyles.default,
+          }
+        : null,
       limits: policy.limits,
       ...(policy.productMessages
         ? { productMessages: policy.productMessages }

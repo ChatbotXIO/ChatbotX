@@ -132,6 +132,7 @@ export const broadcastSubactionAudienceRules: Record<
   whatsappWithin24Hours: { requiresRecentInteractionWindow: true },
   instagramActiveContacts: { requiresRecentInteractionWindow: true },
   telegramAllContacts: { requiresRecentInteractionWindow: false },
+  lineAllContacts: { requiresRecentInteractionWindow: false },
   tiktokActiveContacts: { requiresRecentInteractionWindow: true },
 }
 
@@ -187,6 +188,12 @@ export const broadcastChannelCapabilities: readonly BroadcastChannelCapability[]
       channel: "telegram",
       subactions: ["telegramAllContacts"],
       defaultSubaction: "telegramAllContacts",
+      supportsTemplateBroadcast: false,
+    },
+    {
+      channel: "line",
+      subactions: ["lineAllContacts"],
+      defaultSubaction: "lineAllContacts",
       supportsTemplateBroadcast: false,
     },
     {

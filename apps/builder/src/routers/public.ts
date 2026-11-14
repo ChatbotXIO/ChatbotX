@@ -62,6 +62,7 @@ import { aiHandoverPublicRouter } from "@/features/integration-ai-handover/api/p
 import { channelsPublicRouter } from "@/features/integration-api/api/public"
 import { googleAdsPublicRouter } from "@/features/integration-google-ads/api/public"
 import { instagramChannelsPublicRouter } from "@/features/integration-instagram/api/public"
+import { lineChannelsPublicRouter } from "@/features/integration-line/api/public"
 import { messengerChannelsPublicRouter } from "@/features/integration-messenger/api/public"
 import { messengerTemplatesPublicRouter } from "@/features/integration-messenger/message-templates/api/public"
 import { smtpIntegrationsPublicRouter } from "@/features/integration-smtp/api/public"
@@ -251,5 +252,6 @@ export const publicRouter = {
   workingHours: workingHoursPublicRouter,
   workspaceMembers: workspaceMembersPublicRouter,
   workspaceSettings: workspaceSettingsPublicRouter,
+  lineChannels: lineChannelsPublicRouter,
   zaloChannels: zaloChannelsPublicRouter,
 }

@@ -3,6 +3,8 @@ import { cn } from "@chatbotx.io/ui/lib/utils"
 import {
   SiInstagram,
   SiInstagramHex,
+  SiLine,
+  SiLineHex,
   SiMessenger,
   SiMessengerHex,
   SiTelegram,
@@ -83,6 +85,11 @@ export const INBOX_ICON_CONFIG: Record<ChannelType, InboxIconConfig> = {
     Icon: SiZalo,
     fill: SiZaloHex,
     defaultLabelKey: "fields.zalo.label",
+  },
+  line: {
+    Icon: SiLine,
+    fill: SiLineHex,
+    defaultLabelKey: "fields.line.label",
   },
   telegram: {
     Icon: SiTelegram,

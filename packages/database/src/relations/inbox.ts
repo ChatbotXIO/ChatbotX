@@ -21,6 +21,10 @@ export const inboxRelations = defineRelationsPart(schema, (r) => ({
       from: r.inboxModel.id,
       to: r.integrationZaloModel.inboxId,
     }),
+    integrationLine: r.one.integrationLineModel({
+      from: r.inboxModel.id,
+      to: r.integrationLineModel.inboxId,
+    }),
     integrationWhatsapp: r.one.integrationWhatsappModel({
       from: r.inboxModel.id,
       to: r.integrationWhatsappModel.inboxId,
