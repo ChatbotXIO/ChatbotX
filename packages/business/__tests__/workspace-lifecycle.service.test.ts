@@ -29,7 +29,11 @@ vi.mock("@chatbotx.io/sequence-scheduler/dispatch-cancel", () => ({
   WORKSPACE_DISPATCH_CANCEL_BATCH_SIZE: 500,
 }))
 
+const cancelContactScanMock = vi.hoisted(() => vi.fn())
 vi.mock("@chatbotx.io/database/repositories", () => ({
+  coexistSyncRunRepository: {
+    cancelActiveContactScanRuns: cancelContactScanMock,
+  },
   connectionRepository: { findByInboxId: findByInboxIdMock },
   HEAVY_WORKSPACE_TABLES: [],
   LIVE_RUN_STATUSES: [],
@@ -71,11 +75,6 @@ vi.mock("../src/coexist/service", () => ({
   coexistService: {
     tearDownForIntegration: tearDownForIntegrationMock,
   },
-}))
-
-const cancelContactScanMock = vi.hoisted(() => vi.fn())
-vi.mock("../src/contact-scan/service", () => ({
-  contactScanService: { cancelForIntegration: cancelContactScanMock },
 }))
 
 vi.mock("../src/logger", () => ({
@@ -250,6 +249,7 @@ test("disconnectWorkspaceChannels tears down active native Instagram coexist run
   expect(cancelContactScanMock).toHaveBeenCalledWith({
     channel: "instagram",
     integrationId: "integration-ig-1",
+    currentError: "cancelled",
     tx,
   })
 })
