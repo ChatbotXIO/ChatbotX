@@ -28,6 +28,7 @@ const {
   mockIntegrationQueueAdd,
   mockChatQueueAdd,
   mockSendPrivateReply,
+  mockIsBotMessageQuotaReached,
   mockSendInstagramPrivateReply,
   mockSendInstagramFacebookPrivateReply,
   mockSendTiktokPrivateReply,
@@ -80,6 +81,7 @@ const {
   mockClaimContentAttributes: vi.fn(),
   mockNeedsAttachmentInfo: vi.fn(),
   mockResolveAttachmentInfo: vi.fn(),
+  mockIsBotMessageQuotaReached: vi.fn(),
 }))
 
 const mockLogProviderError = vi.fn().mockResolvedValue(undefined)
@@ -210,6 +212,10 @@ const mockRecordDeliveredWhenNoReceipts = vi.hoisted(() => vi.fn())
 vi.mock("../src/chat/handlers/send-message", () => ({
   emitBotMessageSentEvents: mockEmitBotMessageSentEvents,
   recordDeliveredWhenNoReceipts: mockRecordDeliveredWhenNoReceipts,
+}))
+
+vi.mock("../src/lib/is-bot-message-quota-reached", () => ({
+  isBotMessageQuotaReached: mockIsBotMessageQuotaReached,
 }))
 
 vi.mock("../src/lib/logger", () => ({
@@ -437,6 +443,7 @@ beforeEach(() => {
   // `clearAllMocks` wipes call history but keeps implementations, so a test
   // that makes a sender reject would leak that into every later test.
   mockSendPrivateReply.mockResolvedValue(undefined)
+  mockIsBotMessageQuotaReached.mockResolvedValue(false)
   mockSendInstagramPrivateReply.mockResolvedValue(undefined)
   mockSendInstagramFacebookPrivateReply.mockResolvedValue(undefined)
   mockChatQueueAdd.mockResolvedValue(undefined)
@@ -3296,6 +3303,58 @@ describe("processCommentAutomation blocked private reply", () => {
       }),
     )
     expect(mockLogProviderError).not.toHaveBeenCalled()
+  })
+
+  // A `text` private reply goes straight to the Send API, past the chat
+  // worker's quota gate, so it is checked before sending.
+  test("records the bot message quota as a failed event and sends nothing", async () => {
+    mockIsBotMessageQuotaReached.mockResolvedValue(true)
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({ privateReply: { type: "text", value: "over quota" } }),
+    ])
+
+    await processCommentAutomation(buildJobData() as any)
+
+    expect(mockSendPrivateReply).not.toHaveBeenCalled()
+    expect(mockRecordEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        replyChannel: "private",
+        replyType: "text",
+        status: "failed",
+        errorDetail: "Private reply not sent: Bot message limit reached",
+      }),
+    )
+    expect(mockLogProviderError).not.toHaveBeenCalled()
+  })
+
+  test("reads the quota once per comment, and not at all without a private reply", async () => {
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({
+        id: "automation-1",
+        publicReply: { type: "text", value: "public only" },
+        privateReply: { type: "none", value: null },
+      }),
+    ])
+
+    await processCommentAutomation(buildJobData() as any)
+
+    expect(mockIsBotMessageQuotaReached).not.toHaveBeenCalled()
+
+    mockIsBotMessageQuotaReached.mockResolvedValue(true)
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({
+        id: "automation-1",
+        privateReply: { type: "text", value: "first" },
+      }),
+      buildAutomation({
+        id: "automation-2",
+        privateReply: { type: "text", value: "second" },
+      }),
+    ])
+
+    await processCommentAutomation(buildJobData() as any)
+
+    expect(mockIsBotMessageQuotaReached).toHaveBeenCalledOnce()
   })
 
   test("the blocked automation's public reply still goes out", async () => {
