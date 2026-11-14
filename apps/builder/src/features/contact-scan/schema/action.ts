@@ -26,3 +26,15 @@ export const scheduleContactScanResponse = z.object({
 export type ScheduleContactScanResponse = z.infer<
   typeof scheduleContactScanResponse
 >
+
+export const cancelContactScanRequest = z.object({
+  inboxId: zodBigintAsString(),
+})
+export type CancelContactScanRequest = z.infer<typeof cancelContactScanRequest>
+
+export const cancelContactScanResponse = z.object({
+  cancelled: z.boolean(),
+})
+export type CancelContactScanResponse = z.infer<
+  typeof cancelContactScanResponse
+>

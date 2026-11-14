@@ -27,6 +27,7 @@ import { BroadcastDetailField } from "./components/broadcast-detail-field"
 import { BroadcastDetailFlows } from "./components/broadcast-detail-flows"
 import { BroadcastDetailTemplates } from "./components/broadcast-detail-templates"
 import { BroadcastStatusBadge } from "./components/broadcast-status-badge"
+import { BroadcastStatusReason } from "./components/broadcast-status-reason"
 import { useBroadcastTemplateDetails } from "./hooks/use-broadcast-template-details"
 import {
   resolveBroadcastPageFlows,
@@ -131,11 +132,14 @@ export function BroadcastDetailDialog({
             <BroadcastDetailField
               label={t("fields.status.label")}
               value={
-                <BroadcastStatusBadge
-                  occurrenceAt={broadcast.occurrenceAt}
-                  schedulesType={broadcast.schedulesType}
-                  status={broadcast.status}
-                />
+                <div className="flex flex-col gap-1">
+                  <BroadcastStatusBadge
+                    occurrenceAt={broadcast.occurrenceAt}
+                    schedulesType={broadcast.schedulesType}
+                    status={broadcast.status}
+                  />
+                  <BroadcastStatusReason broadcast={broadcast} />
+                </div>
               }
             />
             <BroadcastDetailField

@@ -526,6 +526,11 @@
       "paused": "På pause",
       "ended": "Afsluttet"
     },
+    "statusReason": {
+      "accountPolicyBlocked": "Stoppet automatisk: kanalkontoen blev blokeret fra at sende efter en overtrædelse af reglerne.",
+      "accountSendRestricted": "Stoppet automatisk: kanalkontoen er midlertidigt begrænset i at sende.",
+      "page": "Side: {name}"
+    },
     "stats": {
       "sent": "Sendt",
       "delivered": "Leveret",
@@ -674,7 +679,14 @@
     "resumeDialog": {
       "title": "Resume broadcast",
       "description": "\"{name}\" will continue sending to recipients who have not received it yet.",
-      "templateDescription": "\"{name}\" gentages igen fra næste planlagte tidspunkt. Kørsler under pausen blev sprunget over."
+      "templateDescription": "\"{name}\" gentages igen fra næste planlagte tidspunkt. Kørsler under pausen blev sprunget over.",
+      "blocked": {
+        "title": "Stoppet, fordi kanalkontoen ikke kan sende",
+        "description": "Hvis kontoen stadig er blokeret, mislykkes den første besked, og udsendelsen stopper igen. At sende, mens kontoen er blokeret, kan føre til en strengere begrænsning.",
+        "pageLabel": "Side",
+        "errorLabel": "Fejl fra kanalen",
+        "confirm": "Genoptag alligevel"
+      }
     },
     "planLimitDialog": {
       "title": "Opgrader dit abonnement",
@@ -4582,6 +4594,12 @@
       "cardEnding": "Kort, der ender på {lastFourDigits}",
       "notCharged": "Ikke trukket endnu. Træk beløbet via din betalingsudbyder.",
       "reference": "Reference {referenceId}"
+    },
+    "sendQueue": {
+      "failed": "En besked kunne ikke sendes. Send den igen for at fortsætte.",
+      "unconfirmed": "Vi kunne ikke bekræfte, at den sidste besked blev sendt. Vælg, om du vil fortsætte.",
+      "continue": "Fortsæt med at sende",
+      "discard": "Afvis"
     }
   },
   "instagram": {
@@ -6114,7 +6132,8 @@
       "total": "Total customers scanned: {count}",
       "waitCooldown": "You must wait another 24 hours before you can use this feature again.",
       "failed": "The last scan failed. You can try again once the cooldown ends.",
-      "partial": "The last scan finished partially — some conversations could not be imported."
+      "partial": "The last scan finished partially — some conversations could not be imported.",
+      "cancelled": "Den seneste scanning blev annulleret, før den var færdig."
     },
     "errors": {
       "contactScanFromTimeInvalid": "Scan-from time must be in the past.",
@@ -6140,9 +6159,20 @@
         "running": "Running",
         "succeeded": "Succeeded",
         "partial": "Partial",
-        "failed": "Failed"
+        "failed": "Failed",
+        "cancelled": "Annulleret"
       },
       "empty": "No scans have been run yet."
+    },
+    "cancel": {
+      "button": "Annuller scanning",
+      "title": "Annuller denne scanning?",
+      "description": "Scanningen stopper, og allerede importerede kunder bevares. Du skal stadig vente 24 timer fra start af denne scanning, før du kan scanne denne indbakke igen.",
+      "keep": "Fortsæt scanning",
+      "confirm": "Annuller scanning",
+      "success": "Scanningen er annulleret.",
+      "notRunning": "Der kører ingen scanning for denne indbakke.",
+      "failed": "Scanningen kunne ikke annulleres. Prøv igen."
     }
   },
   "auditLogs": {

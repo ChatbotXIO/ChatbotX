@@ -1,6 +1,7 @@
 import {
   ChannelError,
   ChannelErrorCategory,
+  ChannelErrorReason,
   UNKNOWN_ERROR,
 } from "@chatbotx.io/sdk"
 import {
@@ -41,14 +42,18 @@ const PERMISSION_DENIED_CODES = new Set([
 ])
 
 // developers.facebook.com/docs/graph-api/overview/rate-limiting: every code
-// below means "stop calling and wait", never "this request is invalid".
-const RATE_LIMITED_CODES = new Set([
-  4, // API rate limit reached
-  17, // User API rate limit reached
-  32, // Page-level rate limit reached
-  613, // Custom rate limit (incl. subcode 1996: inconsistent request pattern)
-  80_001, // Business Use Case limit: Pages
-  80_006, // Business Use Case limit: Messenger
+// below means "stop calling and wait", never "this request is invalid". Each
+// carries the `rate_limited` reason (read by the contact scan) and, being in
+// this table with a `category`, keeps message sends auto-retrying as before.
+type RateLimitEntry = { category?: ChannelErrorCategory }
+
+const RATE_LIMIT_CODES: ReadonlyMap<number, RateLimitEntry> = new Map([
+  [4, { category: ChannelErrorCategory.RATE_LIMITED }], // API rate limit reached
+  [17, { category: ChannelErrorCategory.RATE_LIMITED }], // User API rate limit reached
+  [32, { category: ChannelErrorCategory.RATE_LIMITED }], // Page-level rate limit reached
+  [613, { category: ChannelErrorCategory.RATE_LIMITED }], // Custom rate limit (incl. subcode 1996: inconsistent request pattern)
+  [80_001, { category: ChannelErrorCategory.RATE_LIMITED }], // Business Use Case limit: Pages
+  [80_006, { category: ChannelErrorCategory.RATE_LIMITED }], // Business Use Case limit: Messenger
 ])
 
 const PAYLOAD_INVALID_CODES = new Set([
@@ -82,8 +87,9 @@ function categorize(
     return ChannelErrorCategory.AUTH_FAILED
   }
 
-  if (RATE_LIMITED_CODES.has(code)) {
-    return ChannelErrorCategory.RATE_LIMITED
+  const rateLimitCategory = RATE_LIMIT_CODES.get(code)?.category
+  if (rateLimitCategory) {
+    return rateLimitCategory
   }
 
   if (USER_BLOCKED_CODES.has(code)) {
@@ -118,6 +124,32 @@ function categorize(
   return ChannelErrorCategory.UNKNOWN
 }
 
+// Account-level send blocks, keyed `code` or `code:subCode`. Sources:
+// developers.facebook.com/docs/messenger-platform/error-codes. Meta's code 368
+// is deliberately absent: it also covers non-messaging policy blocks.
+const ACCOUNT_SEND_BLOCK_REASONS: ReadonlyMap<string, ChannelErrorReason> =
+  new Map([
+    ["2022", ChannelErrorReason.ACCOUNT_POLICY_BLOCKED], // commerce messaging disabled
+    ["10:1893063", ChannelErrorReason.ACCOUNT_SEND_RESTRICTED], // Page temporarily restricted from sending
+  ])
+
+function resolveReason(
+  code: number | undefined,
+  subCode: number | string | undefined,
+): ChannelErrorReason | undefined {
+  if (code === undefined) {
+    return
+  }
+  if (RATE_LIMIT_CODES.has(code)) {
+    return ChannelErrorReason.RATE_LIMITED
+  }
+
+  return (
+    ACCOUNT_SEND_BLOCK_REASONS.get(`${code}:${subCode}`) ??
+    ACCOUNT_SEND_BLOCK_REASONS.get(String(code))
+  )
+}
+
 function defaultHttpStatus(category: ChannelErrorCategory): number {
   switch (category) {
     case ChannelErrorCategory.RATE_LIMITED:
@@ -142,6 +174,7 @@ function mapApiFields(fields: ChannelErrorSource): ChannelError {
     httpStatusCode: fields.httpStatusCode ?? defaultHttpStatus(category),
     subCode: fields.subCode,
     type: fields.type,
+    reason: resolveReason(numCode, fields.subCode ?? undefined),
   })
 }
 

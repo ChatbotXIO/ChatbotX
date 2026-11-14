@@ -41,6 +41,7 @@ export function ChatRealtime() {
     patchContactInboxThreadControl,
     resumeConversationHeadRefresh,
     scheduleConversationHeadRefresh,
+    settleSendResult,
     updateContact,
     updateConversations,
     updateMessageContentAttributes,
@@ -57,6 +58,7 @@ export function ChatRealtime() {
       patchContactInboxThreadControl: state.patchContactInboxThreadControl,
       resumeConversationHeadRefresh: state.resumeConversationHeadRefresh,
       scheduleConversationHeadRefresh: state.scheduleConversationHeadRefresh,
+      settleSendResult: state.settleSendResult,
       updateContact: state.updateContact,
       updateConversations: state.updateConversations,
       updateMessageContentAttributes: state.updateMessageContentAttributes,
@@ -227,6 +229,8 @@ export function ChatRealtime() {
         event.data.clientId,
         event.data.error,
       )
+      // The same event is the composer queue's answer for the message it sent.
+      settleSendResult(event.data)
     },
     messageUpdated: (event) => {
       flushPendingCreatedMessages()

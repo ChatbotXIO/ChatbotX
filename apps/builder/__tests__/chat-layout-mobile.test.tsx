@@ -12,6 +12,10 @@ vi.mock("@/features/chat/chat-realtime", () => ({
   ChatRealtime: () => <div data-testid="realtime" />,
 }))
 
+vi.mock("@/features/messages/components/send-queue-runner", () => ({
+  SendQueueRunner: () => null,
+}))
+
 const { mockMobileState } = vi.hoisted(() => ({
   mockMobileState: {
     isOverridden: false,

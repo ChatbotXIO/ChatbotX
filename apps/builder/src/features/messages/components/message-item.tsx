@@ -1,5 +1,6 @@
 "use client"
 
+import { isResendableMessage } from "@chatbotx.io/database/partials"
 import type {
   MessageButtonTemplate,
   MessageStoryReplyEntity,
@@ -53,7 +54,7 @@ import {
 import Image from "next/image"
 import Link from "next/link"
 import { useTranslations } from "next-intl"
-import { useState } from "react"
+import { type ReactNode, useState } from "react"
 import { useCopyToClipboard } from "usehooks-ts"
 import type { AttachmentResource } from "@/features/attachments/schema/resource"
 import { useAttachmentSource } from "@/features/attachments/utils"
@@ -115,6 +116,12 @@ type MessageItemProps = {
    * and the guest view keep their existing behaviour.
    */
   canPrivateReply?: (message: MessageItemProps["message"]) => boolean
+  /**
+   * The inbox's Resend control, offered next to the error badge of a message
+   * that can be sent again. Passed in (not rendered here) because it needs the
+   * chat store, which the guest webchat view does not have.
+   */
+  renderResend?: (message: MessageItemProps["message"]) => ReactNode
 }
 
 export const MessageItem = (props: MessageItemProps) => {
@@ -127,6 +134,7 @@ export const MessageItem = (props: MessageItemProps) => {
     onReply,
     onPrivateReply,
     canPrivateReply,
+    renderResend,
     onDelete,
     onEdit,
   } = props
@@ -328,6 +336,10 @@ export const MessageItem = (props: MessageItemProps) => {
               label={t("sendFailed")}
             />
           )}
+        {!guestDisplay &&
+          renderResend &&
+          isResendableMessage(message) &&
+          renderResend(message)}
         {/* Meta can terminate an ANSWERED call with no audio (e.g. error
             138021), so this badge isn't gated on the call having been missed. */}
         {whatsappCall?.failureReason && (

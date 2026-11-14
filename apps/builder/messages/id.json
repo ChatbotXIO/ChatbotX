@@ -526,6 +526,11 @@
       "paused": "Dijeda",
       "ended": "Berakhir"
     },
+    "statusReason": {
+      "accountPolicyBlocked": "Dihentikan otomatis: akun kanal diblokir dari pengiriman karena pelanggaran kebijakan.",
+      "accountSendRestricted": "Dihentikan otomatis: akun kanal dibatasi sementara dari pengiriman.",
+      "page": "Halaman: {name}"
+    },
     "stats": {
       "sent": "Terkirim",
       "delivered": "Tersampaikan",
@@ -674,7 +679,14 @@
     "resumeDialog": {
       "title": "Resume broadcast",
       "description": "\"{name}\" will continue sending to recipients who have not received it yet.",
-      "templateDescription": "\"{name}\" berulang kembali mulai waktu terjadwal berikutnya. Eksekusi selama jeda telah dilewati."
+      "templateDescription": "\"{name}\" berulang kembali mulai waktu terjadwal berikutnya. Eksekusi selama jeda telah dilewati.",
+      "blocked": {
+        "title": "Dihentikan karena akun kanal tidak dapat mengirim",
+        "description": "Jika akun masih diblokir, pesan pertama akan gagal dan siaran akan berhenti lagi. Mengirim saat diblokir dapat menyebabkan pembatasan yang lebih berat.",
+        "pageLabel": "Halaman",
+        "errorLabel": "Galat dari kanal",
+        "confirm": "Tetap lanjutkan"
+      }
     },
     "planLimitDialog": {
       "title": "Tingkatkan paket Anda",
@@ -4582,6 +4594,12 @@
       "cardEnding": "Kartu berakhiran {lastFourDigits}",
       "notCharged": "Belum ditagih. Tagih melalui penyedia pembayaran Anda.",
       "reference": "Referensi {referenceId}"
+    },
+    "sendQueue": {
+      "failed": "Sebuah pesan gagal terkirim. Kirim ulang untuk melanjutkan.",
+      "unconfirmed": "Kami tidak dapat memastikan pesan terakhir terkirim. Pilih apakah akan terus mengirim.",
+      "continue": "Lanjutkan pengiriman",
+      "discard": "Tutup"
     }
   },
   "instagram": {
@@ -6114,7 +6132,8 @@
       "total": "Total customers scanned: {count}",
       "waitCooldown": "You must wait another 24 hours before you can use this feature again.",
       "failed": "The last scan failed. You can try again once the cooldown ends.",
-      "partial": "The last scan finished partially — some conversations could not be imported."
+      "partial": "The last scan finished partially — some conversations could not be imported.",
+      "cancelled": "Pemindaian terakhir dibatalkan sebelum selesai."
     },
     "errors": {
       "contactScanFromTimeInvalid": "Scan-from time must be in the past.",
@@ -6140,9 +6159,20 @@
         "running": "Running",
         "succeeded": "Succeeded",
         "partial": "Partial",
-        "failed": "Failed"
+        "failed": "Failed",
+        "cancelled": "Dibatalkan"
       },
       "empty": "No scans have been run yet."
+    },
+    "cancel": {
+      "button": "Batalkan pemindaian",
+      "title": "Batalkan pemindaian ini?",
+      "description": "Pemindaian berhenti dan pelanggan yang sudah diimpor tetap disimpan. Anda tetap harus menunggu 24 jam sejak pemindaian ini dimulai sebelum dapat memindai kotak masuk ini lagi.",
+      "keep": "Lanjutkan pemindaian",
+      "confirm": "Batalkan pemindaian",
+      "success": "Pemindaian dibatalkan.",
+      "notRunning": "Tidak ada pemindaian yang berjalan untuk kotak masuk ini.",
+      "failed": "Pemindaian tidak dapat dibatalkan. Silakan coba lagi."
     }
   },
   "auditLogs": {

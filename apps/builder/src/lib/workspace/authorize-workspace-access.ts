@@ -197,12 +197,21 @@ export const BROADCAST_STOP_TOKEN_PATH = "/v1/broadcasts/{id}/stop"
 export const MARKETING_MESSAGE_STOP_TOKEN_PATH =
   "/v1/marketing-messages/campaigns/{id}/stop"
 
+/**
+ * Cancelling an Automatic Customer Scan must stay possible on a trial-expired
+ * or over-limit workspace, like the builder's `cancelContactScanAction`
+ * (`workspaceActionClientAllowExpired`). It only stops work. Gate-only
+ * allow-list: a `read_only` token still cannot call it.
+ */
+export const CONTACT_SCAN_CANCEL_TOKEN_PATH = "/v1/contact-scans/cancel"
+
 const READ_ONLY_POST_PATHS = new Set<string>([
   CONVERSATIONS_LIST_POST_PATH,
   FILTER_VALUE_LABELS_POST_PATH,
   FILTER_VALUE_LABELS_TOKEN_PATH,
   BROADCAST_STOP_TOKEN_PATH,
   MARKETING_MESSAGE_STOP_TOKEN_PATH,
+  CONTACT_SCAN_CANCEL_TOKEN_PATH,
   BROADCAST_AUDIENCE_PREVIEW_TOKEN_PATH,
   // Template uninstall and its cancel remove or give back copies: a
   // delete/cancel-type action, open on a trial-expired workspace like the UI

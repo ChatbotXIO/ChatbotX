@@ -1905,6 +1905,12 @@
       "cardEnding": "末四碼 {lastFourDigits} 的卡",
       "notCharged": "尚未扣款，請透過您的金流服務商扣款。",
       "reference": "參考編號 {referenceId}"
+    },
+    "sendQueue": {
+      "failed": "有一則訊息傳送失敗。請重新傳送以繼續。",
+      "unconfirmed": "無法確認最後一則訊息是否已傳送。請選擇是否繼續傳送。",
+      "continue": "繼續傳送",
+      "discard": "忽略"
     }
   },
   "productCategories": {
@@ -2480,6 +2486,11 @@
       "paused": "已暫停",
       "ended": "已結束"
     },
+    "statusReason": {
+      "accountPolicyBlocked": "已自動停止：頻道帳號因違反政策而被禁止傳送。",
+      "accountSendRestricted": "已自動停止：頻道帳號的傳送功能暫時受到限制。",
+      "page": "粉絲專頁：{name}"
+    },
     "stats": {
       "sent": "已傳送",
       "delivered": "已交付",
@@ -2628,7 +2639,14 @@
     "resumeDialog": {
       "title": "Resume broadcast",
       "description": "\"{name}\" will continue sending to recipients who have not received it yet.",
-      "templateDescription": "「{name}」將從下一個排定時間起重新重複。暫停期間的執行已被略過。"
+      "templateDescription": "「{name}」將從下一個排定時間起重新重複。暫停期間的執行已被略過。",
+      "blocked": {
+        "title": "因頻道帳號無法傳送而停止",
+        "description": "如果帳號仍被封鎖，第一則訊息會失敗，群發將再次停止。在封鎖期間繼續傳送可能導致更嚴厲的限制。",
+        "pageLabel": "粉絲專頁",
+        "errorLabel": "頻道回傳的錯誤",
+        "confirm": "仍然繼續"
+      }
     },
     "planLimitDialog": {
       "title": "升級您的方案",
@@ -6160,7 +6178,8 @@
       "total": "Total customers scanned: {count}",
       "waitCooldown": "You must wait another 24 hours before you can use this feature again.",
       "failed": "The last scan failed. You can try again once the cooldown ends.",
-      "partial": "The last scan finished partially — some conversations could not be imported."
+      "partial": "The last scan finished partially — some conversations could not be imported.",
+      "cancelled": "上一次掃描在完成前已被取消。"
     },
     "errors": {
       "contactScanFromTimeInvalid": "Scan-from time must be in the past.",
@@ -6186,9 +6205,20 @@
         "running": "Running",
         "succeeded": "Succeeded",
         "partial": "Partial",
-        "failed": "Failed"
+        "failed": "Failed",
+        "cancelled": "已取消"
       },
       "empty": "No scans have been run yet."
+    },
+    "cancel": {
+      "button": "取消掃描",
+      "title": "取消此次掃描？",
+      "description": "掃描將停止，已匯入的客戶會保留。自本次掃描開始起，仍需等待24小時才能再次掃描此收件匣。",
+      "keep": "繼續掃描",
+      "confirm": "取消掃描",
+      "success": "掃描已取消。",
+      "notRunning": "此收件匣目前沒有正在執行的掃描。",
+      "failed": "無法取消掃描，請重試。"
     }
   },
   "auditLogs": {

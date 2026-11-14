@@ -1,12 +1,15 @@
 import { contactScanService } from "@chatbotx.io/business"
 import {
   possibleErrorsOnListingResource,
+  possibleErrorsOnMutatingResource,
   possibleErrorsOnSchedulingContactScan,
 } from "@/lib/orpc/orpc-error-helper"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
 import { listContactScanHistoryRows } from "../lib/contact-scan-history"
 import { getContactScanStatus } from "../lib/get-contact-scan-status"
 import {
+  cancelContactScanPublicRequest,
+  cancelContactScanPublicResponse,
   getContactScanStatusPublicRequest,
   getContactScanStatusResponse,
   listContactScansPublicRequest,
@@ -82,6 +85,26 @@ export const contactScanPublicRouter = {
           // A workspace token has no session user; the column is nullable.
           requestedByUserId: null,
           scanFromAt: input.scanFromAt,
+        }),
+    ),
+
+  cancel: workspaceTokenAuthAPI
+    .route({
+      method: "POST",
+      path: "/v1/contact-scans/cancel",
+      summary: "Cancel running Automatic Customer Scan for inbox",
+      description:
+        "Stops the inbox's running scan; contacts already imported are kept. Returns `cancelled: false` (not an error) when nothing is running, so it is safe to call repeatedly. A cancelled scan still counts toward the 24-hour cooldown before the next one (`contactScans.getStatus` shows `availability`), and its status reads `cancelled`. Use `contactScans.getStatus` first to see whether a scan is running.",
+      tags: ["Contacts"],
+    })
+    .input(cancelContactScanPublicRequest)
+    .output(cancelContactScanPublicResponse)
+    .errors(possibleErrorsOnMutatingResource)
+    .handler(
+      async ({ context, input }) =>
+        await contactScanService.cancel({
+          workspaceId: context.workspace.id,
+          inboxId: input.inboxId,
         }),
     ),
 }

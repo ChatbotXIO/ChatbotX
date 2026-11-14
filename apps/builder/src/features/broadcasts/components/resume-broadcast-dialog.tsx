@@ -5,7 +5,6 @@ import {
   BROADCAST_MAX_SEND_RATE_PER_MINUTE,
   isRecurringTemplate,
 } from "@chatbotx.io/database/partials"
-import type { BroadcastModel } from "@chatbotx.io/database/types"
 import { InputNumberField } from "@chatbotx.io/ui/components/form/input-number-field"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
@@ -29,11 +28,12 @@ import {
   type ResumeBroadcastSchema,
   resumeBroadcastSchema,
 } from "../schema/action"
+import type { BroadcastResourceWithRelations } from "../schema/resource"
 import { BroadcastPlanLimitDialog } from "./broadcast-plan-limit-dialog"
 import { useBroadcastTransitionActionCallbacks } from "./broadcast-transition-dialog"
 
 const resolveResumeFormDefaults = (
-  broadcast: BroadcastModel | null,
+  broadcast: BroadcastResourceWithRelations | null,
 ): ResumeBroadcastSchema => ({
   sendRatePerMinute: broadcast?.sendRatePerMinute ?? null,
 })
@@ -42,13 +42,55 @@ const resumeBroadcastDialogSchema = resumeBroadcastSchema.transform((data) => ({
   sendRatePerMinute: data.sendRatePerMinute ?? null,
 }))
 
+/** Shown when the system stopped the broadcast: resuming overrides a warning. */
+function BlockedAccountWarning({
+  broadcast,
+}: {
+  broadcast: BroadcastResourceWithRelations
+}) {
+  const t = useTranslations()
+
+  return (
+    <div
+      className="flex flex-col gap-2 rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm"
+      role="alert"
+    >
+      <p className="font-medium text-destructive">
+        {t("broadcasts.resumeDialog.blocked.title")}
+      </p>
+      {broadcast.statusReason && (
+        <p>{t(`broadcasts.statusReason.${broadcast.statusReason}`)}</p>
+      )}
+      {broadcast.statusInbox && (
+        <p>
+          <span className="font-medium">
+            {t("broadcasts.resumeDialog.blocked.pageLabel")}:
+          </span>{" "}
+          {broadcast.statusInbox.name}
+        </p>
+      )}
+      {broadcast.statusErrorMessage && (
+        <p className="break-words">
+          <span className="font-medium">
+            {t("broadcasts.resumeDialog.blocked.errorLabel")}:
+          </span>{" "}
+          {broadcast.statusErrorMessage}
+        </p>
+      )}
+      <p className="text-muted-foreground">
+        {t("broadcasts.resumeDialog.blocked.description")}
+      </p>
+    </div>
+  )
+}
+
 export function ResumeBroadcastDialog({
   broadcast,
   open,
   onOpenChange,
   onSuccess,
 }: {
-  broadcast: BroadcastModel | null
+  broadcast: BroadcastResourceWithRelations | null
   open: boolean
   onOpenChange: (open: boolean) => void
   onSuccess?: () => void
@@ -98,15 +140,21 @@ export function ResumeBroadcastDialog({
             >
               <DialogHeader>
                 <DialogTitle>{t("broadcasts.resumeDialog.title")}</DialogTitle>
-                <DialogDescription>
-                  {t(
-                    broadcast && isRecurringTemplate(broadcast)
-                      ? "broadcasts.resumeDialog.templateDescription"
-                      : "broadcasts.resumeDialog.description",
-                    { name: broadcast?.name ?? "" },
-                  )}
-                </DialogDescription>
+                {/* A system-stopped broadcast shows the warning below instead of the reassuring copy. */}
+                {!broadcast?.statusReason && (
+                  <DialogDescription>
+                    {t(
+                      broadcast && isRecurringTemplate(broadcast)
+                        ? "broadcasts.resumeDialog.templateDescription"
+                        : "broadcasts.resumeDialog.description",
+                      { name: broadcast?.name ?? "" },
+                    )}
+                  </DialogDescription>
+                )}
               </DialogHeader>
+              {broadcast?.statusReason && (
+                <BlockedAccountWarning broadcast={broadcast} />
+              )}
               <InputNumberField
                 description={t("broadcasts.sendLimit.rateHint")}
                 label={t("fields.sendRatePerMinute.label")}
@@ -130,7 +178,11 @@ export function ResumeBroadcastDialog({
                   {form.formState.isSubmitting && (
                     <Loader2Icon className="animate-spin" />
                   )}
-                  {t("actions.resume")}
+                  {t(
+                    broadcast?.statusReason
+                      ? "broadcasts.resumeDialog.blocked.confirm"
+                      : "actions.resume",
+                  )}
                 </Button>
               </DialogFooter>
             </form>

@@ -7,13 +7,14 @@ const {
   mockUpdateProgress,
   mockYieldForContinuation,
   mockReopenReleased,
-  mockResetForRetry,
+  mockRetryOrFail,
   mockBulkImportChannelContacts,
   mockIncrementBy,
   mockFindWorkspace,
   mockLoadContext,
   mockListPage,
   mockClassifyError,
+  mockReadBackoff,
   mockLogProviderError,
   mockLowQueueAddBulk,
   mockQueueAdd,
@@ -25,13 +26,14 @@ const {
   mockUpdateProgress: vi.fn(),
   mockYieldForContinuation: vi.fn(),
   mockReopenReleased: vi.fn(),
-  mockResetForRetry: vi.fn(),
+  mockRetryOrFail: vi.fn(),
   mockBulkImportChannelContacts: vi.fn(),
   mockIncrementBy: vi.fn(),
   mockFindWorkspace: vi.fn(),
   mockLoadContext: vi.fn(),
   mockListPage: vi.fn(),
   mockClassifyError: vi.fn(),
+  mockReadBackoff: vi.fn(),
   mockLogProviderError: vi.fn(),
   mockLowQueueAddBulk: vi.fn(),
   mockQueueAdd: vi.fn(),
@@ -47,7 +49,7 @@ vi.mock("@chatbotx.io/business", () => ({
     updateProgress: mockUpdateProgress,
     yieldForContinuation: mockYieldForContinuation,
     reopenReleased: mockReopenReleased,
-    resetForRetry: mockResetForRetry,
+    retryOrFail: mockRetryOrFail,
   },
   quotaEnforcementService: {
     incrementBy: mockIncrementBy,
@@ -86,11 +88,16 @@ vi.mock("@chatbotx.io/worker-config", () => ({
     runId,
     attempts,
     pageNumber,
+    generation,
   }: {
     runId: string
     attempts: number
     pageNumber: number
-  }) => `contact-scan-${runId}-${attempts}-page-${pageNumber}`,
+    generation?: number
+  }) =>
+    `contact-scan-${runId}-${attempts}-page-${pageNumber}${
+      generation === undefined ? "" : `-gen-${generation}`
+    }`,
   integrationQueue: { add: mockQueueAdd },
   lowQueue: { addBulk: mockLowQueueAddBulk },
 }))
@@ -103,6 +110,7 @@ vi.mock("../src/integration/handlers/contact-scan/adapter", () => ({
       loadContext: mockLoadContext,
       listPage: mockListPage,
       classifyError: mockClassifyError,
+      readBackoff: mockReadBackoff,
     },
     instagram: {
       channel: "instagram",
@@ -110,9 +118,26 @@ vi.mock("../src/integration/handlers/contact-scan/adapter", () => ({
       loadContext: mockLoadContext,
       listPage: mockListPage,
       classifyError: mockClassifyError,
+      readBackoff: mockReadBackoff,
     },
   },
 }))
+
+// A tiny page gap keeps the multi-page tests fast; the real 1s value is pinned
+// in contact-scan-pacing.test.ts.
+vi.mock(
+  "../src/integration/handlers/contact-scan/pacing",
+  async (importOriginal) => {
+    const actual =
+      await importOriginal<
+        typeof import("../src/integration/handlers/contact-scan/pacing")
+      >()
+    return {
+      ...actual,
+      CONTACT_SCAN_PACING: { ...actual.CONTACT_SCAN_PACING, pageGapMs: 20 },
+    }
+  },
+)
 
 vi.mock("../src/integration/handlers/profile-snapshot/queue", () => ({
   enqueueProfileSnapshotJobs: mockEnqueueProfileSnapshots,
@@ -122,6 +147,7 @@ const { runContactScan } = await import(
   "../src/integration/handlers/contact-scan/engine"
 )
 
+const SAME_PAGE_RETRY_JOB_ID = /^contact-scan-run-1-3-page-4-gen-\d+$/
 const RUN_ID = "run-1"
 const WORKSPACE_ID = "ws-1"
 const INTEGRATION_ID = "int-1"
@@ -177,7 +203,8 @@ describe("runContactScan", () => {
     mockUpdateProgress.mockResolvedValue(1)
     mockYieldForContinuation.mockResolvedValue(1)
     mockFinish.mockResolvedValue(1)
-    mockResetForRetry.mockResolvedValue(1)
+    mockRetryOrFail.mockResolvedValue("retry")
+    mockReadBackoff.mockReturnValue(null)
     mockReopenReleased.mockResolvedValue(1)
     mockBulkImportChannelContacts.mockResolvedValue(emptyImportResult)
     mockQueueAdd.mockResolvedValue(undefined)
@@ -250,31 +277,29 @@ describe("runContactScan", () => {
     expect(mockListPage).not.toHaveBeenCalled()
   })
 
-  describe("setup throws (FIX 1 — resets for retry, never a stuck `running` row)", () => {
-    it("adapter.loadContext throwing resets for retry with the providerRetryable sentinel, never finishes, and never starts the walk", async () => {
+  describe("setup throws (hands back via retryOrFail, never a stuck `running` row)", () => {
+    it("adapter.loadContext throwing hands the run back via retryOrFail, never finishes, and never starts the walk", async () => {
       mockClaim.mockResolvedValue(baseRun())
       mockLoadContext.mockRejectedValue(new Error("db down"))
 
       await runContactScan({ runId: RUN_ID, workspaceId: WORKSPACE_ID })
 
-      expect(mockResetForRetry).toHaveBeenCalledWith({
+      expect(mockRetryOrFail).toHaveBeenCalledWith({
         runId: RUN_ID,
-        currentError: "providerRetryable",
         expect: EXPECT_GUARD,
       })
       expect(mockFinish).not.toHaveBeenCalled()
       expect(mockListPage).not.toHaveBeenCalled()
     })
 
-    it("workspaceService.find throwing resets for retry with the providerRetryable sentinel, never finishes, and never starts the walk", async () => {
+    it("workspaceService.find throwing hands the run back via retryOrFail, never finishes, and never starts the walk", async () => {
       mockClaim.mockResolvedValue(baseRun())
       mockFindWorkspace.mockRejectedValue(new Error("db down"))
 
       await runContactScan({ runId: RUN_ID, workspaceId: WORKSPACE_ID })
 
-      expect(mockResetForRetry).toHaveBeenCalledWith({
+      expect(mockRetryOrFail).toHaveBeenCalledWith({
         runId: RUN_ID,
-        currentError: "providerRetryable",
         expect: EXPECT_GUARD,
       })
       expect(mockFinish).not.toHaveBeenCalled()
@@ -390,9 +415,8 @@ describe("runContactScan", () => {
       await runContactScan({ runId: RUN_ID, workspaceId: WORKSPACE_ID })
 
       expect(mockUpdateProgress).not.toHaveBeenCalled()
-      expect(mockResetForRetry).toHaveBeenCalledWith({
+      expect(mockRetryOrFail).toHaveBeenCalledWith({
         runId: RUN_ID,
-        currentError: "providerRetryable",
         expect: EXPECT_GUARD,
       })
     })
@@ -409,10 +433,10 @@ describe("runContactScan", () => {
 
       await runContactScan({ runId: RUN_ID, workspaceId: WORKSPACE_ID })
 
-      expect(mockResetForRetry).toHaveBeenCalledWith({
+      expect(mockRetryOrFail).toHaveBeenCalledWith({
         runId: RUN_ID,
-        currentError: "pageImportFailed",
         expect: EXPECT_GUARD,
+        retryError: "pageImportFailed",
       })
       // Nothing persists an advanced watermark — resumeCursor stays at
       // "good-cursor" and currentPageNumber is untouched.
@@ -442,7 +466,7 @@ describe("runContactScan", () => {
 
       await runContactScan({ runId: RUN_ID, workspaceId: WORKSPACE_ID })
 
-      expect(mockResetForRetry).not.toHaveBeenCalled()
+      expect(mockRetryOrFail).not.toHaveBeenCalled()
       expect(mockIncrementProgress).toHaveBeenCalledWith(
         expect.objectContaining({
           increments: expect.objectContaining({ importedContactCount: 1 }),
@@ -469,7 +493,7 @@ describe("runContactScan", () => {
       await runContactScan({ runId: RUN_ID, workspaceId: WORKSPACE_ID })
 
       expect(mockLowQueueAddBulk).not.toHaveBeenCalled()
-      expect(mockResetForRetry).not.toHaveBeenCalled()
+      expect(mockRetryOrFail).not.toHaveBeenCalled()
       expect(mockFinish).toHaveBeenCalledWith(
         expect.objectContaining({ status: "succeeded" }),
       )
@@ -575,6 +599,7 @@ describe("runContactScan", () => {
         },
         expect.objectContaining({
           jobId: "contact-scan-run-1-4-page-2",
+          delay: 5000,
           attempts: 1,
           removeOnComplete: true,
         }),
@@ -611,6 +636,227 @@ describe("runContactScan", () => {
 
       expect(mockReopenReleased).toHaveBeenCalledWith({ runId: RUN_ID })
       vi.restoreAllMocks()
+    })
+  })
+
+  describe("pacing", () => {
+    const emptyPage = (after: string | undefined) => ({
+      entries: [],
+      after,
+    })
+
+    it("ends a chunk after 5 pages and continues 5s later", async () => {
+      mockClaim.mockResolvedValue(baseRun())
+      mockListPage.mockImplementation(() => Promise.resolve(emptyPage("next")))
+
+      await runContactScan({ runId: RUN_ID, workspaceId: WORKSPACE_ID })
+
+      expect(mockListPage).toHaveBeenCalledTimes(5)
+      expect(mockYieldForContinuation).toHaveBeenCalledTimes(1)
+      expect(mockQueueAdd).toHaveBeenCalledWith(
+        "contactScan",
+        expect.anything(),
+        expect.objectContaining({
+          delay: 5000,
+          jobId: "contact-scan-run-1-2-page-6",
+        }),
+      )
+      expect(mockFinish).not.toHaveBeenCalled()
+    })
+
+    it("pauses between two pages of the same chunk", async () => {
+      mockClaim.mockResolvedValue(baseRun())
+      mockListPage
+        .mockResolvedValueOnce(emptyPage("c2"))
+        .mockResolvedValueOnce(emptyPage("c3"))
+        .mockResolvedValueOnce(emptyPage(undefined))
+      const startedAt = Date.now()
+
+      await runContactScan({ runId: RUN_ID, workspaceId: WORKSPACE_ID })
+
+      // Two gaps of the (mocked) 20ms page gap sit between three pages.
+      expect(Date.now() - startedAt).toBeGreaterThanOrEqual(35)
+      expect(mockListPage).toHaveBeenCalledTimes(3)
+    })
+
+    it.each([
+      ["usage 85% waits 2 minutes", { usagePercent: 85 }, 120_000],
+      ["usage 95% waits 10 minutes", { usagePercent: 95 }, 600_000],
+      [
+        "Meta's wait wins",
+        { usagePercent: 99, retryAfterMs: 300_000 },
+        300_000,
+      ],
+      [
+        "Meta's wait is capped at 30 minutes",
+        { retryAfterMs: 90 * 60_000 },
+        1_800_000,
+      ],
+    ])("%s, as a delayed job and not a sleep", async (_name, signal, delay) => {
+      mockClaim.mockResolvedValue(baseRun())
+      mockListPage.mockResolvedValue({
+        entries: [],
+        after: "next",
+        usageSignal: signal,
+      })
+
+      await runContactScan({ runId: RUN_ID, workspaceId: WORKSPACE_ID })
+
+      // The page is persisted first, then the chunk ends: one page, one wait.
+      expect(mockListPage).toHaveBeenCalledTimes(1)
+      expect(mockIncrementProgress).toHaveBeenCalledTimes(1)
+      expect(mockQueueAdd).toHaveBeenCalledWith(
+        "contactScan",
+        expect.anything(),
+        expect.objectContaining({ delay }),
+      )
+    })
+
+    it("usage below 85% keeps walking", async () => {
+      mockClaim.mockResolvedValue(baseRun())
+      mockListPage
+        .mockResolvedValueOnce({
+          entries: [],
+          after: "c2",
+          usageSignal: { usagePercent: 84 },
+        })
+        .mockResolvedValueOnce(emptyPage(undefined))
+
+      await runContactScan({ runId: RUN_ID, workspaceId: WORKSPACE_ID })
+
+      expect(mockListPage).toHaveBeenCalledTimes(2)
+      expect(mockQueueAdd).not.toHaveBeenCalled()
+    })
+
+    it("a finished page resets attempts to the running claim (1) and refreshes the heartbeat in the same write", async () => {
+      mockClaim.mockResolvedValue(baseRun({ attempts: 4 }))
+      mockListPage.mockResolvedValue(emptyPage(undefined))
+
+      await runContactScan({ runId: RUN_ID, workspaceId: WORKSPACE_ID })
+
+      expect(mockIncrementProgress).toHaveBeenCalledWith(
+        expect.objectContaining({
+          fields: expect.objectContaining({
+            attempts: 1,
+            lastHeartbeatAt: expect.any(Date),
+          }),
+        }),
+      )
+    })
+  })
+
+  describe("rate limit", () => {
+    it("waits through the queue with the provider's backoff, retries the SAME page, and resets attempts so the sweeper cannot fail the released run", async () => {
+      mockClaim.mockResolvedValue(
+        baseRun({ attempts: 3, currentPageNumber: 2 }),
+      )
+      mockListPage.mockRejectedValue(new Error("(#80006) rate limited"))
+      mockClassifyError.mockReturnValue("rateLimited")
+      mockReadBackoff.mockReturnValue({ retryAfterMs: 180_000 })
+
+      await runContactScan({ runId: RUN_ID, workspaceId: WORKSPACE_ID })
+
+      expect(mockYieldForContinuation).toHaveBeenCalledWith({
+        runId: RUN_ID,
+        expect: EXPECT_GUARD,
+        attempts: 1,
+      })
+      expect(mockQueueAdd).toHaveBeenCalledWith(
+        "contactScan",
+        expect.anything(),
+        expect.objectContaining({
+          delay: 180_000,
+          jobId: expect.stringMatching(SAME_PAGE_RETRY_JOB_ID),
+        }),
+      )
+      // Not a failure: no retry accounting, no terminal write, no cursor change.
+      expect(mockRetryOrFail).not.toHaveBeenCalled()
+      expect(mockFinish).not.toHaveBeenCalled()
+      expect(mockIncrementProgress).not.toHaveBeenCalled()
+      expect(mockUpdateProgress).not.toHaveBeenCalled()
+    })
+
+    it("with no usage header it backs off 10 minutes", async () => {
+      mockClaim.mockResolvedValue(baseRun())
+      mockListPage.mockRejectedValue(new Error("rate limited"))
+      mockClassifyError.mockReturnValue("rateLimited")
+      mockReadBackoff.mockReturnValue(null)
+
+      await runContactScan({ runId: RUN_ID, workspaceId: WORKSPACE_ID })
+
+      expect(mockQueueAdd).toHaveBeenCalledWith(
+        "contactScan",
+        expect.anything(),
+        expect.objectContaining({ delay: 600_000 }),
+      )
+    })
+
+    it("a rate-limited first page does not clear a resume cursor", async () => {
+      mockClaim.mockResolvedValue(baseRun({ resumeCursor: "good-cursor" }))
+      mockListPage.mockRejectedValue(new Error("rate limited"))
+      mockClassifyError.mockReturnValue("rateLimited")
+
+      await runContactScan({ runId: RUN_ID, workspaceId: WORKSPACE_ID })
+
+      expect(mockUpdateProgress).not.toHaveBeenCalled()
+      expect(mockListPage).toHaveBeenCalledTimes(1)
+    })
+
+    it("a repeatedly rate-limited page keeps waiting and never hot-loops", async () => {
+      mockClaim.mockResolvedValue(baseRun())
+      mockListPage.mockRejectedValue(new Error("rate limited"))
+      mockClassifyError.mockReturnValue("rateLimited")
+
+      await runContactScan({ runId: RUN_ID, workspaceId: WORKSPACE_ID })
+      await runContactScan({ runId: RUN_ID, workspaceId: WORKSPACE_ID })
+
+      // One provider call per job, and every job schedules a delayed next one.
+      expect(mockListPage).toHaveBeenCalledTimes(2)
+      const delays = mockQueueAdd.mock.calls.map(
+        (call) => (call[2] as { delay: number }).delay,
+      )
+      expect(delays).toEqual([600_000, 600_000])
+    })
+
+    it("a lost claim at the park step abandons without queueing a job", async () => {
+      mockClaim.mockResolvedValue(baseRun())
+      mockListPage.mockRejectedValue(new Error("rate limited"))
+      mockClassifyError.mockReturnValue("rateLimited")
+      mockYieldForContinuation.mockResolvedValue(0)
+
+      await runContactScan({ runId: RUN_ID, workspaceId: WORKSPACE_ID })
+
+      expect(mockQueueAdd).not.toHaveBeenCalled()
+    })
+
+    it("a queue failure while parking reopens the run for the sweeper", async () => {
+      mockClaim.mockResolvedValue(baseRun())
+      mockListPage.mockRejectedValue(new Error("rate limited"))
+      mockClassifyError.mockReturnValue("rateLimited")
+      mockQueueAdd.mockRejectedValueOnce(new Error("redis down"))
+
+      await runContactScan({ runId: RUN_ID, workspaceId: WORKSPACE_ID })
+
+      expect(mockReopenReleased).toHaveBeenCalledWith({ runId: RUN_ID })
+    })
+  })
+
+  describe("cancel", () => {
+    it("a cancel that lands during a page fences the next write: no further page, no continuation, no finish", async () => {
+      mockClaim.mockResolvedValue(baseRun())
+      mockListPage.mockResolvedValue({
+        entries: [entry("a", new Date("2026-02-01T00:00:00Z"))],
+        after: "next",
+      })
+      // The cancel cleared the claim, so the page's progress write matches 0 rows.
+      mockIncrementProgress.mockResolvedValue(0)
+
+      await runContactScan({ runId: RUN_ID, workspaceId: WORKSPACE_ID })
+
+      expect(mockListPage).toHaveBeenCalledTimes(1)
+      expect(mockQueueAdd).not.toHaveBeenCalled()
+      expect(mockYieldForContinuation).not.toHaveBeenCalled()
+      expect(mockFinish).not.toHaveBeenCalled()
     })
   })
 
@@ -660,7 +906,7 @@ describe("runContactScan", () => {
   })
 
   describe("error classification table", () => {
-    it("retryable → resetForRetry with the providerRetryable sentinel", async () => {
+    it("retryable → retryOrFail (sweeper retry, or failed on the last attempt)", async () => {
       mockClaim.mockResolvedValue(baseRun())
       mockListPage.mockRejectedValue(new Error("rate limited"))
       mockClassifyError.mockReturnValue("retryable")
@@ -673,9 +919,8 @@ describe("runContactScan", () => {
           workspaceId: WORKSPACE_ID,
         }),
       )
-      expect(mockResetForRetry).toHaveBeenCalledWith({
+      expect(mockRetryOrFail).toHaveBeenCalledWith({
         runId: RUN_ID,
-        currentError: "providerRetryable",
         expect: EXPECT_GUARD,
       })
       expect(mockFinish).not.toHaveBeenCalled()

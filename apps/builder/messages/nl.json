@@ -526,6 +526,11 @@
       "paused": "Gepauzeerd",
       "ended": "Beëindigd"
     },
+    "statusReason": {
+      "accountPolicyBlocked": "Automatisch gestopt: het kanaalaccount is geblokkeerd voor verzenden na een beleidsovertreding.",
+      "accountSendRestricted": "Automatisch gestopt: het kanaalaccount is tijdelijk beperkt in verzenden.",
+      "page": "Pagina: {name}"
+    },
     "stats": {
       "sent": "Verzonden",
       "delivered": "Afgeleverd",
@@ -674,7 +679,14 @@
     "resumeDialog": {
       "title": "Resume broadcast",
       "description": "\"{name}\" will continue sending to recipients who have not received it yet.",
-      "templateDescription": "\"{name}\" herhaalt zich weer vanaf het volgende geplande tijdstip. Uitvoeringen tijdens de pauze zijn overgeslagen."
+      "templateDescription": "\"{name}\" herhaalt zich weer vanaf het volgende geplande tijdstip. Uitvoeringen tijdens de pauze zijn overgeslagen.",
+      "blocked": {
+        "title": "Gestopt omdat het kanaalaccount niet kan verzenden",
+        "description": "Als het account nog steeds geblokkeerd is, mislukt het eerste bericht en stopt de broadcast opnieuw. Verzenden terwijl het account geblokkeerd is kan tot een zwaardere beperking leiden.",
+        "pageLabel": "Pagina",
+        "errorLabel": "Fout van het kanaal",
+        "confirm": "Toch hervatten"
+      }
     },
     "planLimitDialog": {
       "title": "Upgrade je abonnement",
@@ -4582,6 +4594,12 @@
       "cardEnding": "Kaart eindigend op {lastFourDigits}",
       "notCharged": "Nog niet afgeschreven. Schrijf af via je betaalprovider.",
       "reference": "Referentie {referenceId}"
+    },
+    "sendQueue": {
+      "failed": "Een bericht kon niet worden verzonden. Verstuur het opnieuw om door te gaan.",
+      "unconfirmed": "We konden niet bevestigen dat het laatste bericht is verzonden. Kies of je wilt doorgaan met verzenden.",
+      "continue": "Doorgaan met verzenden",
+      "discard": "Sluiten"
     }
   },
   "instagram": {
@@ -6114,7 +6132,8 @@
       "total": "Total customers scanned: {count}",
       "waitCooldown": "You must wait another 24 hours before you can use this feature again.",
       "failed": "The last scan failed. You can try again once the cooldown ends.",
-      "partial": "The last scan finished partially — some conversations could not be imported."
+      "partial": "The last scan finished partially — some conversations could not be imported.",
+      "cancelled": "De laatste scan is geannuleerd voordat hij klaar was."
     },
     "errors": {
       "contactScanFromTimeInvalid": "Scan-from time must be in the past.",
@@ -6140,9 +6159,20 @@
         "running": "Running",
         "succeeded": "Succeeded",
         "partial": "Partial",
-        "failed": "Failed"
+        "failed": "Failed",
+        "cancelled": "Geannuleerd"
       },
       "empty": "No scans have been run yet."
+    },
+    "cancel": {
+      "button": "Scan annuleren",
+      "title": "Deze scan annuleren?",
+      "description": "De scan stopt en reeds geïmporteerde klanten blijven behouden. U moet nog steeds 24 uur wachten vanaf het begin van deze scan voordat u deze inbox opnieuw kunt scannen.",
+      "keep": "Blijven scannen",
+      "confirm": "Scan annuleren",
+      "success": "Scan geannuleerd.",
+      "notRunning": "Er loopt geen scan voor deze inbox.",
+      "failed": "De scan kon niet worden geannuleerd. Probeer het opnieuw."
     }
   },
   "auditLogs": {

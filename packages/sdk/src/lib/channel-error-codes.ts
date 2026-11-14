@@ -26,3 +26,36 @@ export const PERMANENT_CATEGORIES = new Set<ChannelErrorCategory>([
   ChannelErrorCategory.PAYLOAD_INVALID,
   ChannelErrorCategory.QUOTA_EXCEEDED,
 ])
+
+/**
+ * Channel-agnostic finer-grained meaning of an error, assigned by each
+ * integration's error mapper. Independent of {@link ChannelErrorCategory}, so
+ * assigning a reason never changes retry behaviour.
+ */
+export const ChannelErrorReason = {
+  /** The account was blocked from sending after a policy violation. */
+  ACCOUNT_POLICY_BLOCKED: "account_policy_blocked",
+  /** The account is temporarily restricted from sending. */
+  ACCOUNT_SEND_RESTRICTED: "account_send_restricted",
+  /** The provider's rate limit was hit. */
+  RATE_LIMITED: "rate_limited",
+} as const
+
+export type ChannelErrorReason =
+  (typeof ChannelErrorReason)[keyof typeof ChannelErrorReason]
+
+export const channelErrorReasonValues = Object.values(ChannelErrorReason)
+
+export type ErrorWithReason = {
+  category?: string
+  reason?: ChannelErrorReason
+}
+
+/** The whole account (not one recipient) may not send right now. */
+export const isAccountSendBlocked = (error: ErrorWithReason): boolean =>
+  error.reason === ChannelErrorReason.ACCOUNT_POLICY_BLOCKED ||
+  error.reason === ChannelErrorReason.ACCOUNT_SEND_RESTRICTED
+
+export const isRateLimited = (error: ErrorWithReason): boolean =>
+  error.category === ChannelErrorCategory.RATE_LIMITED ||
+  error.reason === ChannelErrorReason.RATE_LIMITED

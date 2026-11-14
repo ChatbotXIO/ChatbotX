@@ -1108,6 +1108,87 @@ describe("ShardedMessageRepository.updateSourceId", () => {
   })
 })
 
+describe("ShardedMessageRepository.claimForResend", () => {
+  const createdAt = new Date("2026-01-01T00:00:00Z")
+  const rangeShard = makeShardInfo("tr:range", "range")
+
+  function makeClient(rows: unknown[]) {
+    const chain = {
+      set: vi.fn().mockReturnThis(),
+      where: vi.fn().mockReturnThis(),
+      returning: vi.fn().mockResolvedValue(rows),
+    }
+    return { update: vi.fn().mockReturnValue(chain), chain }
+  }
+
+  const repoWith = (client: ReturnType<typeof makeClient>) =>
+    new ShardedMessageRepository({
+      getShardsForTimeRange: vi.fn().mockResolvedValue([rangeShard]),
+      getWriteShardInfo: vi.fn().mockResolvedValue(null),
+      getShardClient: vi.fn(() => Promise.resolve(client)),
+    } as never)
+
+  test("clears sendError only while the row is a failed send the channel never accepted", async () => {
+    const client = makeClient([{ id: "msg-1" }])
+
+    const result = await repoWith(client).claimForResend({
+      id: "msg-1",
+      workspaceId: "ws-1",
+      createdAt,
+    })
+
+    expect(client.chain.set).toHaveBeenCalledWith({ sendError: null })
+    const { sql } = new PgDialect().sqlToQuery(
+      client.chain.where.mock.calls[0][0],
+    )
+    expect(sql).toContain('"sendError" IS NOT NULL')
+    expect(sql).toContain('"sourceId" IS NULL')
+    expect(result).toEqual({ id: "msg-1" })
+  })
+
+  test("is scoped to the workspace and the message's createdAt shard key", async () => {
+    const client = makeClient([{ id: "msg-1" }])
+
+    await repoWith(client).claimForResend({
+      id: "msg-1",
+      workspaceId: "ws-1",
+      createdAt,
+    })
+
+    const { sql, params } = new PgDialect().sqlToQuery(
+      client.chain.where.mock.calls[0][0],
+    )
+    expect(sql).toContain('"workspaceId" = $')
+    expect(sql).toContain('"createdAt" >= $')
+    expect(params).toContain("ws-1")
+    expect(params).toContain("msg-1")
+  })
+
+  test("returns null when no row matched (already claimed, sent, or not failed)", async () => {
+    await expect(
+      repoWith(makeClient([])).claimForResend({
+        id: "msg-1",
+        workspaceId: "ws-1",
+        createdAt,
+      }),
+    ).resolves.toBeNull()
+  })
+
+  test("a shard-level failure is swallowed as not claimed", async () => {
+    const repo = new ShardedMessageRepository({
+      getShardsForTimeRange: vi.fn().mockResolvedValue([rangeShard]),
+      getWriteShardInfo: vi.fn().mockResolvedValue(null),
+      getShardClient: vi
+        .fn()
+        .mockRejectedValue(new Error("connection refused")),
+    } as never)
+
+    await expect(
+      repo.claimForResend({ id: "msg-1", workspaceId: "ws-1", createdAt }),
+    ).resolves.toBeNull()
+  })
+})
+
 describe("ShardedMessageRepository.mergeContentAttributesBySourceId", () => {
   const rangeShard = makeShardInfo("tr:range", "range")
   const writeShard = makeShardInfo("tr:write", "write")

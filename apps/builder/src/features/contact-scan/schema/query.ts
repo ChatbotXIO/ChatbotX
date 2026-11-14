@@ -1,5 +1,5 @@
 import {
-  coexistScanRunStatuses,
+  contactScanRunStatuses,
   contactScanViewStatuses,
 } from "@chatbotx.io/database/partials"
 import { getSortingStateParser } from "@chatbotx.io/ui/lib/parsers"
@@ -20,14 +20,11 @@ export type GetContactScanStatusRequest = z.infer<
 >
 
 /**
- * Statuses a *stored* scan run can carry. Narrower than the DB column's full
- * `coexistRunStatus` enum (which also carries `waiting`, WhatsApp-only —
- * `schema/coexist-sync-run.ts`) because a `type='contact_scan'` row can never
- * be set to it (`ContactScanService.schedule`/the worker engine never write
- * it). `queries/get-contact-scan-status.query.ts` narrows the service's
- * wider `CoexistRunStatus` value down to this wire type at the boundary.
+ * Statuses a scan run is shown as: the stored scan statuses plus the derived
+ * `cancelled` (`resolveContactScanRunStatus` in `@chatbotx.io/business`). The
+ * service already returns this type, so no narrowing cast is needed.
  */
-export const contactScanRunStatus = z.enum(coexistScanRunStatuses)
+export const contactScanRunStatus = z.enum(contactScanRunStatuses)
 export type ContactScanRunStatus = z.infer<typeof contactScanRunStatus>
 
 export const contactScanRunResource = z.object({

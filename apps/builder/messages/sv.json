@@ -763,6 +763,11 @@
       "paused": "Pausad",
       "ended": "Avslutad"
     },
+    "statusReason": {
+      "accountPolicyBlocked": "Stoppad automatiskt: kanalkontot blockerades från att skicka efter ett regelbrott.",
+      "accountSendRestricted": "Stoppad automatiskt: kanalkontot är tillfälligt begränsat från att skicka.",
+      "page": "Sida: {name}"
+    },
     "telegramAllContacts": {
       "description": "Använd den här meddelandetypen om du vill skicka ett utskick till dina Telegram-kontakter.",
       "title": "Telegram"
@@ -840,7 +845,14 @@
     "resumeDialog": {
       "title": "Resume broadcast",
       "description": "\"{name}\" will continue sending to recipients who have not received it yet.",
-      "templateDescription": "\"{name}\" börjar upprepas igen från nästa schemalagda tidpunkt. Körningar under pausen hoppades över."
+      "templateDescription": "\"{name}\" börjar upprepas igen från nästa schemalagda tidpunkt. Körningar under pausen hoppades över.",
+      "blocked": {
+        "title": "Stoppad eftersom kanalkontot inte kan skicka",
+        "description": "Om kontot fortfarande är blockerat misslyckas det första meddelandet och utskicket stoppas igen. Att skicka medan kontot är blockerat kan leda till en strängare begränsning.",
+        "pageLabel": "Sida",
+        "errorLabel": "Fel från kanalen",
+        "confirm": "Återuppta ändå"
+      }
     },
     "planLimitDialog": {
       "title": "Uppgradera ditt abonnemang",
@@ -1483,7 +1495,8 @@
       "total": "Total customers scanned: {count}",
       "waitCooldown": "You must wait another 24 hours before you can use this feature again.",
       "failed": "The last scan failed. You can try again once the cooldown ends.",
-      "partial": "The last scan finished partially — some conversations could not be imported."
+      "partial": "The last scan finished partially — some conversations could not be imported.",
+      "cancelled": "Den senaste skanningen avbröts innan den var klar."
     },
     "errors": {
       "contactScanFromTimeInvalid": "Scan-from time must be in the past.",
@@ -1509,9 +1522,20 @@
         "running": "Running",
         "succeeded": "Succeeded",
         "partial": "Partial",
-        "failed": "Failed"
+        "failed": "Failed",
+        "cancelled": "Avbruten"
       },
       "empty": "No scans have been run yet."
+    },
+    "cancel": {
+      "button": "Avbryt skanning",
+      "title": "Avbryta den här skanningen?",
+      "description": "Skanningen stoppas och redan importerade kunder behålls. Du måste fortfarande vänta 24 timmar från att den här skanningen startade innan du kan skanna den här inkorgen igen.",
+      "keep": "Fortsätt skanna",
+      "confirm": "Avbryt skanning",
+      "success": "Skanningen avbröts.",
+      "notRunning": "Ingen skanning pågår för den här inkorgen.",
+      "failed": "Det gick inte att avbryta skanningen. Försök igen."
     }
   },
   "contactAdReferrals": {
@@ -5723,6 +5747,12 @@
       "cardEnding": "Kort som slutar på {lastFourDigits}",
       "notCharged": "Inte debiterat än. Debitera via din betalleverantör.",
       "reference": "Referens {referenceId}"
+    },
+    "sendQueue": {
+      "failed": "Ett meddelande kunde inte skickas. Skicka det igen för att fortsätta.",
+      "unconfirmed": "Vi kunde inte bekräfta att det senaste meddelandet skickades. Välj om du vill fortsätta skicka.",
+      "continue": "Fortsätt skicka",
+      "discard": "Avfärda"
     }
   },
   "messenger": {

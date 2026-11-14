@@ -43,6 +43,9 @@ vi.mock("sonner", () => ({
 vi.mock("@/features/contact-scan/actions/schedule-contact-scan.action", () => ({
   scheduleContactScanAction: vi.fn(),
 }))
+vi.mock("@/features/contact-scan/actions/cancel-contact-scan.action", () => ({
+  cancelContactScanAction: { bind: vi.fn(() => vi.fn()) },
+}))
 
 // The form renders with no inboxes configured — its visibility in the
 // Import submenu is `contacts-list-action.tsx`'s job, not this form's —

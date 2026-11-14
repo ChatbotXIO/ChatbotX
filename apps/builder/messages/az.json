@@ -568,6 +568,11 @@
       "paused": "Dayandırılıb",
       "ended": "Bitib"
     },
+    "statusReason": {
+      "accountPolicyBlocked": "Avtomatik dayandırıldı: kanal hesabı siyasət pozuntusuna görə göndərməkdən bloklandı.",
+      "accountSendRestricted": "Avtomatik dayandırıldı: kanal hesabının göndərməsi müvəqqəti məhdudlaşdırılıb.",
+      "page": "Səhifə: {name}"
+    },
     "stats": {
       "sent": "Göndərilib",
       "delivered": "Çatdırılıb",
@@ -716,7 +721,14 @@
     "resumeDialog": {
       "title": "Kütləvi göndərişə davam et",
       "description": "\"{name}\" hələ onu almamış alıcılara göndərilməyə davam edəcək.",
-      "templateDescription": "\"{name}\" növbəti planlaşdırılmış vaxtdan yenidən təkrarlanır. Fasilə zamanı icralar keçildi."
+      "templateDescription": "\"{name}\" növbəti planlaşdırılmış vaxtdan yenidən təkrarlanır. Fasilə zamanı icralar keçildi.",
+      "blocked": {
+        "title": "Kanal hesabı göndərə bilmədiyi üçün dayandırıldı",
+        "description": "Hesab hələ də bloklanıbsa, ilk mesaj uğursuz olacaq və yayım yenidən dayanacaq. Bloklu ikən göndərmək daha ağır məhdudiyyətə səbəb ola bilər.",
+        "pageLabel": "Səhifə",
+        "errorLabel": "Kanaldan gələn xəta",
+        "confirm": "Yenə də davam et"
+      }
     },
     "planLimitDialog": {
       "title": "Planınızı yüksəldin",
@@ -5264,6 +5276,12 @@
       "cardEnding": "Sonu {lastFourDigits} olan kart",
       "notCharged": "Hələ çıxılmayıb. Ödəniş provayderiniz vasitəsilə çıxın.",
       "reference": "İstinad {referenceId}"
+    },
+    "sendQueue": {
+      "failed": "Mesaj göndərilmədi. Göndərməyə davam etmək üçün onu yenidən göndərin.",
+      "unconfirmed": "Son mesajın göndərildiyini təsdiqləyə bilmədik. Göndərməyə davam edib-etməyəcəyinizi seçin.",
+      "continue": "Göndərməyə davam et",
+      "discard": "Bağla"
     }
   },
   "instagram": {
@@ -6796,7 +6814,8 @@
       "total": "Yoxlanmış müştərilərin ümumi sayı: {count}",
       "waitCooldown": "Bu funksiyadan yenidən istifadə etmək üçün daha 24 saat gözləməlisiniz.",
       "failed": "Son yoxlama uğursuz oldu. Gözləmə müddəti bitdikdən sonra yenidən cəhd edə bilərsiniz.",
-      "partial": "Son yoxlama qismən tamamlandı, bəzi söhbətləri idxal etmək mümkün olmadı."
+      "partial": "Son yoxlama qismən tamamlandı, bəzi söhbətləri idxal etmək mümkün olmadı.",
+      "cancelled": "Son skan bitmədən ləğv edildi."
     },
     "errors": {
       "contactScanFromTimeInvalid": "Yoxlanacaq dövrün başlama vaxtı keçmişdə olmalıdır.",
@@ -6822,9 +6841,20 @@
         "running": "İcra olunur",
         "succeeded": "Uğurlu",
         "partial": "Qismən tamamlanıb",
-        "failed": "Uğursuz"
+        "failed": "Uğursuz",
+        "cancelled": "Ləğv edildi"
       },
       "empty": "Hələ yoxlama aparılmayıb."
+    },
+    "cancel": {
+      "button": "Skanı ləğv et",
+      "title": "Bu skan ləğv edilsin?",
+      "description": "Skan dayanır və artıq idxal edilmiş müştərilər saxlanılır. Bu gələn qutusunu yenidən skan etmək üçün yenə də bu skanın başlanmasından 24 saat gözləməlisiniz.",
+      "keep": "Skana davam et",
+      "confirm": "Skanı ləğv et",
+      "success": "Skan ləğv edildi.",
+      "notRunning": "Bu gələn qutusu üçün işləyən skan yoxdur.",
+      "failed": "Skan ləğv edilə bilmədi. Yenidən cəhd edin."
     }
   },
   "auditLogs": {

@@ -16,6 +16,7 @@ import {
 import { changeMessageAttributes } from "@/features/messages/actions/change-message-attributes.action"
 import { deleteMessage } from "@/features/messages/actions/delete-message.action"
 import { editMessage } from "@/features/messages/actions/edit-message.action"
+import { resendMessage } from "@/features/messages/actions/resend-message.action"
 import { getWhatsappFlowResponseView } from "@/features/messages/lib/get-whatsapp-flow-response"
 import { sendWhatsappTemplateToConversation } from "@/features/messages/lib/send-whatsapp-template"
 import { listMessages } from "@/features/messages/queries"
@@ -34,6 +35,7 @@ import {
   possibleErrorsOnDeletingResource,
   possibleErrorsOnFindingResource,
   possibleErrorsOnMutatingResource,
+  possibleErrorsOnResendingMessage,
   productMessageUnresolvable,
 } from "@/lib/orpc/orpc-error-helper"
 import {
@@ -50,6 +52,7 @@ import {
   messageIdPathParam,
   messageIdWithCreatedAtParam,
   requestCallPermissionPublicRequest,
+  resendMessagePublicResponse,
   sendWhatsappTemplatePublicRequest,
 } from "../schema/public"
 
@@ -305,6 +308,28 @@ export const messagesPublicRouter = {
     .handler(async ({ context, input }) => {
       await assertConversationAccessForCaller(context, input.conversationId)
       await deleteMessage({
+        workspaceId: context.workspace.id,
+        conversationId: input.conversationId,
+        parsedInput: { id: input.messageId, createdAt: input.createdAt },
+      })
+    }),
+
+  resend: workspaceTokenAuthAPI
+    .route({
+      method: "POST",
+      path: "/v1/conversations/{conversationId}/messages/{messageId}/resend",
+      summary: "Resend failed message",
+      description:
+        "Queues a message that failed to send for delivery again, whole (a message with several parts or files is resent in full). Only an outgoing message sent by a person or the API that failed and never reached the channel qualifies; a bot or flow message, a message that was delivered, and a public comment reply are refused with 409 `messageNotResendable`, as is a second resend while the first is queued. A private reply is resent as a DM. Use `messages.list` to find a failed message (its `sendError` is set) and its `messageId`/`createdAt`; the result shows up on the message as it is sent or fails again.",
+      successStatus: 202,
+      tags: ["Messages"],
+    })
+    .input(messageIdWithCreatedAtParam)
+    .output(resendMessagePublicResponse)
+    .errors(possibleErrorsOnResendingMessage)
+    .handler(async ({ context, input }) => {
+      await assertConversationAccessForCaller(context, input.conversationId)
+      return await resendMessage({
         workspaceId: context.workspace.id,
         conversationId: input.conversationId,
         parsedInput: { id: input.messageId, createdAt: input.createdAt },

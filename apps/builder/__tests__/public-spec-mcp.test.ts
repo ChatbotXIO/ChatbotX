@@ -292,6 +292,7 @@ describe("x-mcp outbound policy", () => {
       "leaderboards.publish",
       "leaderboards.triggerRewards",
       "messages.create",
+      "messages.resend",
       "messages.sendWhatsappTemplate",
       "messengerChannels.sendCapiTestEvent",
       "miniApps.publishWhatsapp",

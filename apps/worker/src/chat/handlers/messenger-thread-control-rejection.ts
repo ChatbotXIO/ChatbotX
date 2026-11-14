@@ -5,7 +5,11 @@ import {
 import { syncThreadOwner } from "@chatbotx.io/channel-registry/thread-control"
 import { toThreadControlTimestamp } from "@chatbotx.io/database/partials"
 import { isThreadControlRejection } from "@chatbotx.io/integration-messenger"
-import { ChannelError, ChannelErrorCategory } from "@chatbotx.io/sdk"
+import {
+  ChannelError,
+  ChannelErrorCategory,
+  isAccountSendBlocked,
+} from "@chatbotx.io/sdk"
 import { logger } from "../../lib/logger"
 import type { ChannelSendErrorContext } from "./channel-send-error-types"
 
@@ -64,6 +68,11 @@ export async function reconcileMessengerThreadControlRejection(
       error.category === ChannelErrorCategory.PERMISSION_DENIED
     )
   ) {
+    return false
+  }
+  // The page itself is blocked from sending, so no other app holds the thread:
+  // the owner lookup below cannot explain this refusal.
+  if (isAccountSendBlocked(error)) {
     return false
   }
   if (isThreadControlRejection(error)) {

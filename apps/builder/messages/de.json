@@ -526,6 +526,11 @@
       "paused": "Pausiert",
       "ended": "Beendet"
     },
+    "statusReason": {
+      "accountPolicyBlocked": "Automatisch gestoppt: Das Kanalkonto wurde nach einem Richtlinienverstoß am Senden gehindert.",
+      "accountSendRestricted": "Automatisch gestoppt: Das Kanalkonto ist vorübergehend am Senden eingeschränkt.",
+      "page": "Seite: {name}"
+    },
     "stats": {
       "sent": "Gesendet",
       "delivered": "Zugestellt",
@@ -674,7 +679,14 @@
     "resumeDialog": {
       "title": "Resume broadcast",
       "description": "\"{name}\" will continue sending to recipients who have not received it yet.",
-      "templateDescription": "„{name}“ wiederholt sich wieder ab dem nächsten geplanten Zeitpunkt. Läufe während der Pause wurden übersprungen."
+      "templateDescription": "„{name}“ wiederholt sich wieder ab dem nächsten geplanten Zeitpunkt. Läufe während der Pause wurden übersprungen.",
+      "blocked": {
+        "title": "Gestoppt, weil das Kanalkonto nicht senden kann",
+        "description": "Ist das Konto weiterhin gesperrt, schlägt die erste Nachricht fehl und der Broadcast stoppt erneut. Senden trotz Sperre kann zu einer stärkeren Einschränkung führen.",
+        "pageLabel": "Seite",
+        "errorLabel": "Fehler vom Kanal",
+        "confirm": "Trotzdem fortsetzen"
+      }
     },
     "planLimitDialog": {
       "title": "Tarif upgraden",
@@ -4582,6 +4594,12 @@
       "cardEnding": "Karte mit Endung {lastFourDigits}",
       "notCharged": "Noch nicht belastet. Belasten Sie sie über Ihren Zahlungsanbieter.",
       "reference": "Referenz {referenceId}"
+    },
+    "sendQueue": {
+      "failed": "Eine Nachricht konnte nicht gesendet werden. Sende sie erneut, um fortzufahren.",
+      "unconfirmed": "Wir konnten nicht bestätigen, dass die letzte Nachricht gesendet wurde. Wähle, ob du weitersenden möchtest.",
+      "continue": "Weitersenden",
+      "discard": "Schließen"
     }
   },
   "instagram": {
@@ -6114,7 +6132,8 @@
       "total": "Total customers scanned: {count}",
       "waitCooldown": "You must wait another 24 hours before you can use this feature again.",
       "failed": "The last scan failed. You can try again once the cooldown ends.",
-      "partial": "The last scan finished partially — some conversations could not be imported."
+      "partial": "The last scan finished partially — some conversations could not be imported.",
+      "cancelled": "Der letzte Scan wurde vor dem Abschluss abgebrochen."
     },
     "errors": {
       "contactScanFromTimeInvalid": "Scan-from time must be in the past.",
@@ -6140,9 +6159,20 @@
         "running": "Running",
         "succeeded": "Succeeded",
         "partial": "Partial",
-        "failed": "Failed"
+        "failed": "Failed",
+        "cancelled": "Abgebrochen"
       },
       "empty": "No scans have been run yet."
+    },
+    "cancel": {
+      "button": "Scan abbrechen",
+      "title": "Diesen Scan abbrechen?",
+      "description": "Der Scan wird gestoppt, bereits importierte Kunden bleiben erhalten. Sie müssen ab dem Start dieses Scans trotzdem 24 Stunden warten, bevor Sie diesen Posteingang erneut scannen können.",
+      "keep": "Weiter scannen",
+      "confirm": "Scan abbrechen",
+      "success": "Scan abgebrochen.",
+      "notRunning": "Für diesen Posteingang läuft kein Scan.",
+      "failed": "Der Scan konnte nicht abgebrochen werden. Bitte versuchen Sie es erneut."
     }
   },
   "auditLogs": {

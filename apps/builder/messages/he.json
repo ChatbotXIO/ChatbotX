@@ -2227,6 +2227,12 @@
       "cardEnding": "כרטיס המסתיים ב-{lastFourDigits}",
       "notCharged": "עדיין לא חויב. חייב דרך ספק התשלומים שלך.",
       "reference": "אסמכתה {referenceId}"
+    },
+    "sendQueue": {
+      "failed": "שליחת הודעה נכשלה. שלח אותה שוב כדי להמשיך.",
+      "unconfirmed": "לא הצלחנו לאשר שההודעה האחרונה נשלחה. בחר אם להמשיך לשלוח.",
+      "continue": "המשך לשלוח",
+      "discard": "סגור"
     }
   },
   "instagram": {
@@ -3759,7 +3765,8 @@
       "total": "Total customers scanned: {count}",
       "waitCooldown": "You must wait another 24 hours before you can use this feature again.",
       "failed": "The last scan failed. You can try again once the cooldown ends.",
-      "partial": "The last scan finished partially — some conversations could not be imported."
+      "partial": "The last scan finished partially — some conversations could not be imported.",
+      "cancelled": "הסריקה האחרונה בוטלה לפני שהסתיימה."
     },
     "errors": {
       "contactScanFromTimeInvalid": "Scan-from time must be in the past.",
@@ -3785,9 +3792,20 @@
         "running": "Running",
         "succeeded": "Succeeded",
         "partial": "Partial",
-        "failed": "Failed"
+        "failed": "Failed",
+        "cancelled": "בוטל"
       },
       "empty": "No scans have been run yet."
+    },
+    "cancel": {
+      "button": "ביטול סריקה",
+      "title": "לבטל את הסריקה הזו?",
+      "description": "הסריקה נעצרת והלקוחות שכבר יובאו נשמרים. עדיין צריך להמתין 24 שעות מתחילת הסריקה הזו לפני שאפשר לסרוק שוב את תיבת הדואר הזו.",
+      "keep": "המשך סריקה",
+      "confirm": "ביטול סריקה",
+      "success": "הסריקה בוטלה.",
+      "notRunning": "אין סריקה פועלת עבור תיבת הדואר הזו.",
+      "failed": "לא ניתן היה לבטל את הסריקה. נסו שוב."
     }
   },
   "auditLogs": {
@@ -7652,6 +7670,11 @@
       "paused": "מושהה",
       "ended": "הסתיים"
     },
+    "statusReason": {
+      "accountPolicyBlocked": "נעצר אוטומטית: חשבון הערוץ נחסם מלשלוח בעקבות הפרת מדיניות.",
+      "accountSendRestricted": "נעצר אוטומטית: חשבון הערוץ מוגבל זמנית מלשלוח.",
+      "page": "עמוד: {name}"
+    },
     "stats": {
       "sent": "נשלח",
       "delivered": "נמסר",
@@ -7800,7 +7823,14 @@
     "resumeDialog": {
       "title": "Resume broadcast",
       "description": "\"{name}\" will continue sending to recipients who have not received it yet.",
-      "templateDescription": "\"{name}\" יחזור על עצמו שוב מהמועד המתוזמן הבא. הרצות בזמן ההשהיה דולגו."
+      "templateDescription": "\"{name}\" יחזור על עצמו שוב מהמועד המתוזמן הבא. הרצות בזמן ההשהיה דולגו.",
+      "blocked": {
+        "title": "נעצר כי חשבון הערוץ לא יכול לשלוח",
+        "description": "אם החשבון עדיין חסום, ההודעה הראשונה תיכשל והשידור ייעצר שוב. שליחה בזמן החסימה עלולה להוביל להגבלה חמורה יותר.",
+        "pageLabel": "עמוד",
+        "errorLabel": "שגיאה מהערוץ",
+        "confirm": "המשך בכל זאת"
+      }
     },
     "planLimitDialog": {
       "title": "שדרוג התוכנית",

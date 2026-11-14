@@ -1923,6 +1923,11 @@
       "paused": "Întrerupt",
       "ended": "Încheiat"
     },
+    "statusReason": {
+      "accountPolicyBlocked": "Oprit automat: contul canalului a fost blocat la trimitere după o încălcare a politicilor.",
+      "accountSendRestricted": "Oprit automat: contul canalului este restricționat temporar la trimitere.",
+      "page": "Pagină: {name}"
+    },
     "stats": {
       "sent": "Trimis",
       "delivered": "Livrat",
@@ -2071,7 +2076,14 @@
     "resumeDialog": {
       "title": "Resume broadcast",
       "description": "\"{name}\" will continue sending to recipients who have not received it yet.",
-      "templateDescription": "„{name}” se repetă din nou de la următoarea oră programată. Rulările din timpul pauzei au fost omise."
+      "templateDescription": "„{name}” se repetă din nou de la următoarea oră programată. Rulările din timpul pauzei au fost omise.",
+      "blocked": {
+        "title": "Oprit deoarece contul canalului nu poate trimite",
+        "description": "Dacă contul este în continuare blocat, primul mesaj va eșua, iar difuzarea se va opri din nou. Trimiterea cât timp contul este blocat poate duce la o restricție mai severă.",
+        "pageLabel": "Pagină",
+        "errorLabel": "Eroare de la canal",
+        "confirm": "Reia oricum"
+      }
     },
     "planLimitDialog": {
       "title": "Actualizează planul",
@@ -4582,6 +4594,12 @@
       "cardEnding": "Card care se termină în {lastFourDigits}",
       "notCharged": "Nedebitat încă. Debitați prin furnizorul de plăți.",
       "reference": "Referință {referenceId}"
+    },
+    "sendQueue": {
+      "failed": "Un mesaj nu a putut fi trimis. Retrimite-l pentru a continua.",
+      "unconfirmed": "Nu am putut confirma că ultimul mesaj a fost trimis. Alege dacă vrei să continui trimiterea.",
+      "continue": "Continuă trimiterea",
+      "discard": "Închide"
     }
   },
   "instagram": {
@@ -6114,7 +6132,8 @@
       "total": "Total customers scanned: {count}",
       "waitCooldown": "You must wait another 24 hours before you can use this feature again.",
       "failed": "The last scan failed. You can try again once the cooldown ends.",
-      "partial": "The last scan finished partially — some conversations could not be imported."
+      "partial": "The last scan finished partially — some conversations could not be imported.",
+      "cancelled": "Ultima scanare a fost anulată înainte de a se termina."
     },
     "errors": {
       "contactScanFromTimeInvalid": "Scan-from time must be in the past.",
@@ -6140,9 +6159,20 @@
         "running": "Running",
         "succeeded": "Succeeded",
         "partial": "Partial",
-        "failed": "Failed"
+        "failed": "Failed",
+        "cancelled": "Anulată"
       },
       "empty": "No scans have been run yet."
+    },
+    "cancel": {
+      "button": "Anulează scanarea",
+      "title": "Anulezi această scanare?",
+      "description": "Scanarea se oprește, iar clienții deja importați sunt păstrați. Trebuie totuși să aștepți 24 de ore de la începutul acestei scanări înainte de a putea scana din nou această căsuță.",
+      "keep": "Continuă scanarea",
+      "confirm": "Anulează scanarea",
+      "success": "Scanare anulată.",
+      "notRunning": "Nu rulează nicio scanare pentru această căsuță.",
+      "failed": "Scanarea nu a putut fi anulată. Încearcă din nou."
     }
   },
   "auditLogs": {

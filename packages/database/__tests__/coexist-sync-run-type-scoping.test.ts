@@ -244,6 +244,38 @@ describe("CoexistSyncRun type-discriminator scoping", () => {
     expect(bound).toContain("coexist")
   })
 
+  test("pickDueRuns has no released-claim clause unless a grace is passed (coexist unchanged)", async () => {
+    const execute = vi.fn().mockResolvedValue({ rows: [] })
+    const repository = new CoexistSyncRunRepository()
+
+    await repository.pickDueRuns({
+      type: "coexist",
+      batchSize: 10,
+      maxAttempts: 5,
+      tx: { execute } as never,
+    })
+
+    const query = execute.mock.calls[0]?.[0] as { text: string }
+    expect(JSON.stringify(query)).not.toContain("claimToken")
+  })
+
+  test("pickDueRuns binds a released-claim grace as seconds, never inline", async () => {
+    const execute = vi.fn().mockResolvedValue({ rows: [] })
+    const repository = new CoexistSyncRunRepository()
+
+    await repository.pickDueRuns({
+      type: "contact_scan",
+      batchSize: 10,
+      maxAttempts: 5,
+      releasedGraceMs: 35 * 60 * 1000,
+      tx: { execute } as never,
+    })
+
+    const serialized = JSON.stringify(execute.mock.calls[0]?.[0])
+    expect(serialized).toContain("claimToken")
+    expect(serialized).toContain("2100")
+  })
+
   // --- WhatsApp "belt" recovery selectors: raw SQL, type scoped -----------
   // All three emit `r.type = 'coexist'` as an inline SQL literal (unlike
   // `pickDueRuns`'s `type`, which is a bound parameter), so the filter is

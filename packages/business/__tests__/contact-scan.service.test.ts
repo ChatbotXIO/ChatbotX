@@ -16,6 +16,7 @@ const mocks = vi.hoisted(() => ({
   markMaxAttemptsFailed: vi.fn(),
   findRunById: vi.fn(),
   listContactScanRuns: vi.fn(),
+  cancelActiveContactScanRuns: vi.fn(),
 }))
 
 vi.mock("@chatbotx.io/database/repositories", () => ({
@@ -34,6 +35,7 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
     markMaxAttemptsFailed: mocks.markMaxAttemptsFailed,
     findRunById: mocks.findRunById,
     listContactScanRuns: mocks.listContactScanRuns,
+    cancelActiveContactScanRuns: mocks.cancelActiveContactScanRuns,
   },
 }))
 
@@ -364,6 +366,8 @@ describe("contactScanService thin delegations", () => {
       batchSize: 10,
       maxAttempts: 5,
       type: "contact_scan",
+      // A run parked on a delayed job is recovered after this grace if its job is lost.
+      releasedGraceMs: 35 * 60 * 1000,
     })
   })
 
@@ -523,26 +527,6 @@ describe("contactScanService thin delegations", () => {
       expect: undefined,
     })
   })
-
-  test("resetForRetry wraps updateProgress with status: init and no claimToken change", async () => {
-    mocks.updateProgress.mockResolvedValue(1)
-    await contactScanService.resetForRetry({
-      runId: "run-1",
-      currentError: "providerRetryable",
-    })
-
-    expect(mocks.updateProgress).toHaveBeenCalledWith(
-      expect.objectContaining({
-        runId: "run-1",
-        fields: expect.objectContaining({
-          status: "init",
-          currentError: "providerRetryable",
-        }),
-      }),
-    )
-    const call = mocks.updateProgress.mock.calls.at(-1)?.[0]
-    expect(call.fields).not.toHaveProperty("claimToken")
-  })
 })
 
 const connectedInstagramInbox = {
@@ -589,5 +573,127 @@ describe("contactScanIntegrationRefs channel registry", () => {
         integrationInstagram: null,
       } as never),
     ).toBeNull()
+  })
+})
+
+describe("contactScanService.cancel", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mocks.findWithIntegrations.mockResolvedValue(connectedMessengerInbox)
+    mocks.cancelActiveContactScanRuns.mockResolvedValue(1)
+  })
+
+  test("cancels the inbox's integration scan scoped to the workspace", async () => {
+    await expect(
+      contactScanService.cancel({
+        workspaceId: WORKSPACE_ID,
+        inboxId: INBOX_ID,
+      }),
+    ).resolves.toEqual({ cancelled: true })
+
+    expect(mocks.findWithIntegrations).toHaveBeenCalledWith({
+      where: { id: INBOX_ID, workspaceId: WORKSPACE_ID },
+    })
+    expect(mocks.cancelActiveContactScanRuns).toHaveBeenCalledWith({
+      channel: "messenger",
+      integrationId: INTEGRATION_ID,
+      workspaceId: WORKSPACE_ID,
+      currentError: "cancelled",
+    })
+  })
+
+  test("reports cancelled:false when no scan was running", async () => {
+    mocks.cancelActiveContactScanRuns.mockResolvedValue(0)
+
+    await expect(
+      contactScanService.cancel({
+        workspaceId: WORKSPACE_ID,
+        inboxId: INBOX_ID,
+      }),
+    ).resolves.toEqual({ cancelled: false })
+  })
+
+  test.each([
+    ["the inbox is missing or in another workspace", undefined],
+    [
+      "the channel has no scan",
+      { ...connectedMessengerInbox, channel: "zalo" },
+    ],
+    [
+      "the inbox has no integration",
+      { ...connectedMessengerInbox, integrationMessenger: null },
+    ],
+  ])("returns cancelled:false without touching runs when %s", async (_name, inbox) => {
+    mocks.findWithIntegrations.mockResolvedValue(inbox)
+
+    await expect(
+      contactScanService.cancel({
+        workspaceId: WORKSPACE_ID,
+        inboxId: INBOX_ID,
+      }),
+    ).resolves.toEqual({ cancelled: false })
+    expect(mocks.cancelActiveContactScanRuns).not.toHaveBeenCalled()
+  })
+})
+
+describe("contactScanService.cancelForIntegration", () => {
+  test("ends the integration's scan inside the caller's transaction, without a workspace filter", async () => {
+    vi.clearAllMocks()
+    const tx = {} as never
+
+    await contactScanService.cancelForIntegration({
+      channel: "instagram",
+      integrationId: INTEGRATION_ID,
+      tx,
+    })
+
+    expect(mocks.cancelActiveContactScanRuns).toHaveBeenCalledWith({
+      channel: "instagram",
+      integrationId: INTEGRATION_ID,
+      tx,
+      currentError: "cancelled",
+    })
+  })
+})
+
+describe("a cancelled scan is shown as cancelled", () => {
+  const cancelledRun = {
+    id: "run-1",
+    workspaceId: WORKSPACE_ID,
+    channel: "messenger",
+    status: "partial",
+    currentError: "cancelled",
+    scanFromAt: pastDate,
+    createdAt: new Date(),
+    startedAt: null,
+    finishedAt: new Date(),
+    importedContactCount: 3,
+    currentScan: 5,
+    requestedByUserId: null,
+  }
+
+  test("getStatus and listHistory agree, and it still counts toward the cooldown", async () => {
+    mocks.findWithIntegrations.mockResolvedValue(connectedMessengerInbox)
+    mocks.findLatestContactScanRun.mockResolvedValue(cancelledRun)
+    mocks.listContactScanRuns.mockResolvedValue({
+      data: [cancelledRun],
+      pageCount: 1,
+    })
+
+    const status = await contactScanService.getStatus({
+      workspaceId: WORKSPACE_ID,
+      inboxId: INBOX_ID,
+    })
+    const history = await contactScanService.listHistory({
+      workspaceId: WORKSPACE_ID,
+    })
+
+    expect(status.status).toBe("cancelled")
+    expect(status.latest?.status).toBe("cancelled")
+    expect(history.data[0]?.status).toBe("cancelled")
+    expect(status.availability).toMatchObject({
+      canScan: false,
+      blockedReason: "cooldown",
+    })
   })
 })

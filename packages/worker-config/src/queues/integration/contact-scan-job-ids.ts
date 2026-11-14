@@ -20,10 +20,19 @@ export const buildContactScanJobId = (input: {
 
 /**
  * Id for a run's continuation chunk: same run and attempts, next page.
+ *
+ * `generation` is for a chunk that retries the SAME page (after a rate limit):
+ * its id would equal the id of the job still running it, and BullMQ silently
+ * drops an add whose id still exists. Omitted when the walk moves forward.
  */
 export const buildContactScanPageJobId = (input: {
   runId: string
   attempts: number
   pageNumber: number
-}): string =>
-  `${buildContactScanJobId({ runId: input.runId, attempts: input.attempts })}-page-${input.pageNumber}`
+  generation?: number
+}): string => {
+  const base = `${buildContactScanJobId({ runId: input.runId, attempts: input.attempts })}-page-${input.pageNumber}`
+  return input.generation === undefined
+    ? base
+    : `${base}-gen-${input.generation}`
+}

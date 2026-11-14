@@ -22,6 +22,14 @@ import {
   parseThreadControlEvent,
   type ThreadControlSnapshotPatch,
 } from "@/features/conversations/utils/thread-control"
+import {
+  createSendQueue,
+  isSendQueueIdle,
+  type SendQueue,
+  type SendResultSignal,
+  settleSend,
+} from "@/features/messages/lib/send-queue"
+import type { CreateMessageWithRoutingBypassRequest } from "@/features/messages/schema/mutation"
 import type {
   MessageResource,
   MessageResourceWithRelations,
@@ -183,6 +191,10 @@ export type ChatState = {
 
   // active facebook post (for comment conversations)
   activePost: PostDetails | null
+
+  // Per-conversation composer send queue. Deliberately outside the message
+  // thread state: switching conversations must not lose queued messages.
+  sendQueues: Record<string, SendQueue<CreateMessageWithRoutingBypassRequest>>
 }
 // `messages`/`nextCursorMessage`/`hasNextMessagePage`/`messagesConversationId`
 // must be seeded together or not at all: a `messages` seed without its
@@ -299,6 +311,24 @@ export type ChatActions = {
     clientId: string | undefined,
     error: string | null,
   ) => void
+  // Applies a change to one conversation's composer send queue.
+  updateSendQueue: (
+    conversationId: string,
+    update: (
+      queue: SendQueue<CreateMessageWithRoutingBypassRequest>,
+    ) => SendQueue<CreateMessageWithRoutingBypassRequest>,
+  ) => void
+  // Applies a change to every conversation's queue. A private reply is queued
+  // under the comment's conversation but stored (and resent) under the DM's, so
+  // the queue a resend must unlock is not always the message's own.
+  updateAllSendQueues: (
+    update: (
+      queue: SendQueue<CreateMessageWithRoutingBypassRequest>,
+      conversationId: string,
+    ) => SendQueue<CreateMessageWithRoutingBypassRequest>,
+  ) => void
+  // Feeds the channel's answer for a message into every send queue.
+  settleSendResult: (signal: SendResultSignal) => void
   assignMessageCommentId: (messageId: string, commentId: string) => void
   updateMessageContentAttributes: (
     messageId: string,
@@ -572,6 +602,15 @@ const warnIfActiveConversationUnlisted = (
   }
 }
 
+/** Drops queues with nothing left to do, so the map holds only live conversations. */
+const pruneIdleSendQueues = (
+  queues: ChatState["sendQueues"],
+  now: number,
+): ChatState["sendQueues"] =>
+  Object.fromEntries(
+    Object.entries(queues).filter(([, queue]) => !isSendQueueIdle(queue, now)),
+  )
+
 export const createChatStore = (initialState: ChatStoreInitialState = {}) => {
   warnIfActiveConversationUnlisted(initialState)
 
@@ -607,6 +646,7 @@ export const createChatStore = (initialState: ChatStoreInitialState = {}) => {
       ...conversationListDefaults(),
       filters: {},
       ...messageThreadDefaults(),
+      sendQueues: {},
 
       ...restInitialState,
       ...messagesSeed,
@@ -1143,6 +1183,54 @@ export const createChatStore = (initialState: ChatStoreInitialState = {}) => {
             return { ...message, sendError: error }
           })
           return changed ? { messages } : state
+        })
+      },
+
+      updateSendQueue: (conversationId, update) => {
+        set((state) => ({
+          sendQueues: pruneIdleSendQueues(
+            {
+              ...state.sendQueues,
+              [conversationId]: update(
+                state.sendQueues[conversationId] ??
+                  createSendQueue<CreateMessageWithRoutingBypassRequest>(),
+              ),
+            },
+            Date.now(),
+          ),
+        }))
+      },
+
+      updateAllSendQueues: (update) => {
+        set((state) => {
+          let changed = false
+          const sendQueues: ChatState["sendQueues"] = {}
+          for (const [conversationId, queue] of Object.entries(
+            state.sendQueues,
+          )) {
+            const next = update(queue, conversationId)
+            changed ||= next !== queue
+            sendQueues[conversationId] = next
+          }
+          return changed ? { sendQueues } : state
+        })
+      },
+
+      settleSendResult: (signal) => {
+        const now = Date.now()
+        set((state) => {
+          let changed = false
+          const sendQueues: ChatState["sendQueues"] = {}
+          for (const [conversationId, queue] of Object.entries(
+            state.sendQueues,
+          )) {
+            const settled = settleSend(queue, signal, now)
+            changed ||= settled !== queue
+            sendQueues[conversationId] = settled
+          }
+          return changed
+            ? { sendQueues: pruneIdleSendQueues(sendQueues, now) }
+            : state
         })
       },
 

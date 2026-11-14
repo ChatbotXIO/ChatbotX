@@ -24,6 +24,7 @@ import {
   type BroadcastScheduleType,
   type BroadcastSendLimit,
   type BroadcastStatus,
+  type BroadcastStatusReason,
   type BroadcastSubaction,
   type BroadcastTerminalStatus,
   broadcastScheduleTypes,
@@ -107,6 +108,7 @@ import {
   waTemplateParamsSchema,
 } from "@chatbotx.io/flow-config"
 import { casStore } from "@chatbotx.io/redis"
+import type { ChannelErrorReason } from "@chatbotx.io/sdk"
 import { createId } from "@chatbotx.io/utils"
 import type { RecurrenceRule } from "@chatbotx.io/utils/recurrence"
 import {
@@ -147,6 +149,11 @@ import type {
   BroadcastAudiencePreviewRow,
   BroadcastTemplateDetail,
 } from "./schema"
+import {
+  CLEARED_STATUS_REASON,
+  resolveBroadcastStatusReason,
+  truncateStatusErrorMessage,
+} from "./status-reason"
 
 const DEFAULT_BROADCAST_NAME = "Broadcast"
 /** Next runs shown on a repeating broadcast's detail. */
@@ -1312,6 +1319,7 @@ class BroadcastService extends BaseService {
         contactCount: null,
         handoffCompletedAt: null,
         resumeCount: sql`${broadcastModel.resumeCount} + 1`,
+        ...CLEARED_STATUS_REASON,
       })
       .where(
         and(
@@ -1449,6 +1457,7 @@ class BroadcastService extends BaseService {
         set: {
           status: broadcastStatuses.enum.draft,
           resumeCount: sql`${broadcastModel.resumeCount} + 1`,
+          ...CLEARED_STATUS_REASON,
         },
         failure: "Broadcast is no longer scheduled",
       })
@@ -1512,6 +1521,134 @@ class BroadcastService extends BaseService {
   }
 
   /**
+   * Stops every `sending` broadcast that sends through `inboxId` because its
+   * channel account is blocked from sending, recording why on each row (and on
+   * the series of a run, which is paused so no new run starts). One
+   * transaction: the stop and the series pause land together or not at all.
+   * Idempotent: a second call finds nothing `sending`.
+   */
+  async stopSendingForBlockedAccount(input: {
+    workspaceId: string
+    inboxId: string
+    channel: string
+    reason: ChannelErrorReason
+    errorMessage: string
+  }): Promise<{ stoppedIds: string[] }> {
+    const statusReason = resolveBroadcastStatusReason(input.reason)
+    if (statusReason === null) {
+      return { stoppedIds: [] }
+    }
+    const reasonColumns = {
+      statusReason,
+      statusErrorMessage: truncateStatusErrorMessage(input.errorMessage),
+      statusInboxId: input.inboxId,
+    }
+
+    const stoppedIds = await db.transaction(async (tx) => {
+      const sending = await broadcastRepository.listSendingIdsForInbox(
+        input,
+        tx,
+      )
+      if (sending.length === 0) {
+        return []
+      }
+      const ids = sending.map((row) => row.id)
+      // Series rows are locked before broadcast rows, as everywhere else.
+      const parentIds = [
+        ...new Set(
+          sending.flatMap((row) =>
+            row.parentBroadcastId === null ? [] : [row.parentBroadcastId],
+          ),
+        ),
+      ]
+      const series = await broadcastRecurrenceRepository.lockForWrite(tx, {
+        workspaceId: input.workspaceId,
+        broadcastIds: parentIds,
+      })
+
+      const stopped = await tx
+        .update(broadcastModel)
+        .set({ status: broadcastStatuses.enum.cancelled, ...reasonColumns })
+        .where(
+          and(
+            eq(broadcastModel.workspaceId, input.workspaceId),
+            inArray(broadcastModel.id, ids),
+            eq(broadcastModel.status, broadcastStatuses.enum.sending),
+            isNull(broadcastModel.deletedAt),
+          ),
+        )
+        .returning({ id: broadcastModel.id })
+
+      await this.pauseSeriesForBlockedAccount(tx, {
+        workspaceId: input.workspaceId,
+        series,
+        reasonColumns,
+      })
+      return stopped.map((row) => row.id)
+    })
+
+    if (stoppedIds.length > 0) {
+      await this.audit(
+        "broadcast_stopped",
+        `stopped ${stoppedIds.length} broadcast(s) because the channel account is blocked from sending`,
+      )
+    }
+    return { stoppedIds }
+  }
+
+  /** Pauses (`recurring` -> `cancelled`) the locked series whose template is still running; others are left alone. */
+  private async pauseSeriesForBlockedAccount(
+    tx: DatabaseClient,
+    input: {
+      workspaceId: string
+      series: BroadcastRecurrenceModel[]
+      reasonColumns: {
+        statusReason: BroadcastStatusReason
+        statusErrorMessage: string
+        statusInboxId: string
+      }
+    },
+  ): Promise<void> {
+    if (input.series.length === 0) {
+      return
+    }
+    const paused = await tx
+      .update(broadcastModel)
+      .set({
+        status: broadcastStatuses.enum.cancelled,
+        ...input.reasonColumns,
+      })
+      .where(
+        and(
+          eq(broadcastModel.workspaceId, input.workspaceId),
+          inArray(
+            broadcastModel.id,
+            input.series.map((recurrence) => recurrence.broadcastId),
+          ),
+          eq(broadcastModel.status, broadcastStatuses.enum.recurring),
+          eq(
+            broadcastModel.schedulesType,
+            broadcastScheduleTypes.enum.recurring,
+          ),
+          isNull(broadcastModel.occurrenceAt),
+          isNull(broadcastModel.deletedAt),
+        ),
+      )
+      .returning({ id: broadcastModel.id })
+    const pausedIds = new Set(paused.map((row) => row.id))
+    const now = await broadcastRecurrenceRepository.selectDbNow(tx)
+    for (const recurrence of input.series) {
+      if (pausedIds.has(recurrence.broadcastId)) {
+        await broadcastRecurrenceService.disarm(tx, {
+          recurrence,
+          reason: "paused",
+          now,
+        })
+      }
+    }
+  }
+
+  /**
    * `cancelled` -> `sending`, in a single pinned UPDATE. Clearing
    * `handoffCompletedAt` here (rather than a separate statement) closes both
    * the stop-after-handoff hole and the finalize race: `completeSending`
@@ -1552,6 +1689,7 @@ class BroadcastService extends BaseService {
           status: broadcastStatuses.enum.sending,
           handoffCompletedAt: null,
           resumeCount: sql`${broadcastModel.resumeCount} + 1`,
+          ...CLEARED_STATUS_REASON,
           ...override,
         })
         .where(scope)
@@ -1639,7 +1777,10 @@ class BroadcastService extends BaseService {
         workspaceId: input.workspaceId,
         broadcastId: input.broadcastId,
         from: [broadcastStatuses.enum.cancelled],
-        set: { status: broadcastStatuses.enum.recurring },
+        set: {
+          status: broadcastStatuses.enum.recurring,
+          ...CLEARED_STATUS_REASON,
+        },
         failure: "Broadcast is not stopped",
       })
       const row = await this.activateRecurringTemplate(tx, {

@@ -1,10 +1,18 @@
 import { TOUCH_DEVICE_MEDIA_QUERY } from "@chatbotx.io/ui/hooks/use-touch-device"
-import { act, cloneElement, forwardRef } from "react"
+import { act, cloneElement, forwardRef, useSyncExternalStore } from "react"
 import { createRoot, type Root } from "react-dom/client"
 import { useForm } from "react-hook-form"
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 import { WebchatMessageInput } from "@/features/integration-webchat/webchat-message-input"
 import { MessageInput } from "@/features/messages/components/message-input"
+import { SendQueueRunner } from "@/features/messages/components/send-queue-runner"
+import {
+  AGENT_SEND_CONFIRM_TIMEOUT_MS,
+  AGENT_SEND_GAP_MS,
+  createSendQueue,
+  type SendQueue,
+} from "@/features/messages/lib/send-queue"
+import type { CreateMessageWithRoutingBypassRequest } from "@/features/messages/schema/mutation"
 
 const defaultMatchMedia = window.matchMedia
 let isTouchDevice = false
@@ -93,9 +101,15 @@ vi.mock("@/features/conversations/actions/disable-bot.action", () => ({
 vi.mock("@/features/conversations/hooks/use-thread-control", () => ({
   useThreadControl: () => null,
 }))
+// The queue runner calls the action directly; the form only `.bind()`s it.
 vi.mock("@/features/messages/actions/create-message.action", () => ({
-  createMessageAction: { bind: () => "create-message" },
+  createMessageAction: Object.assign(
+    (_workspaceId: string, _conversationId: string, input: unknown) =>
+      action.executeAsync(input),
+    { bind: () => "create-message" },
+  ),
 }))
+vi.mock("@/hooks/routing", () => ({ useWorkspaceId: () => "1" }))
 vi.mock("@/features/messages/actions/create-webchat-message.action", () => ({
   createWebchatMessageAction: {},
 }))
@@ -163,9 +177,28 @@ vi.mock("@/features/messages/components/emoji-picker", () => ({
   default: () => null,
 }))
 
+type InboxSendQueue = SendQueue<CreateMessageWithRoutingBypassRequest>
+const storeListeners = new Set<() => void>()
+let storeVersion = 0
+const notifyStore = () => {
+  storeVersion += 1
+  for (const listener of storeListeners) {
+    listener()
+  }
+}
+
+/** The composer plus the runner the chat layout mounts beside it. */
+const InboxComposer = () => (
+  <>
+    <MessageInput />
+    <SendQueueRunner />
+  </>
+)
+
 const inboxStore = {
   activeConversationId: "conversation-1",
   appendMessage: vi.fn(),
+  markMessagesDeleted: vi.fn(),
   conversations: [
     {
       botEnabled: true,
@@ -179,17 +212,42 @@ const inboxStore = {
   markMessageFailed: vi.fn(),
   messages: [],
   replyToMessage: null,
+  sendQueues: {} as Record<string, InboxSendQueue>,
   setReplyToMessage: vi.fn(),
   updateConversation: vi.fn(),
   updateConversationViaMessage: vi.fn(),
+  // The same shape as the real store's action: a pure update on one queue.
+  updateSendQueue: (
+    conversationId: string,
+    update: (queue: InboxSendQueue) => InboxSendQueue,
+  ) => {
+    inboxStore.sendQueues = {
+      ...inboxStore.sendQueues,
+      [conversationId]: update(
+        inboxStore.sendQueues[conversationId] ??
+          createSendQueue<CreateMessageWithRoutingBypassRequest>(),
+      ),
+    }
+    notifyStore()
+  },
 }
 vi.mock("@/features/chat/store/chat-store-provider", () => ({
-  useChatStore: (selector: (state: typeof inboxStore) => unknown) =>
-    selector(inboxStore),
+  // Subscribes to the mutable store so queue updates re-render the composer.
+  useChatStore: (selector: (state: typeof inboxStore) => unknown) => {
+    useSyncExternalStore(
+      (listener) => {
+        storeListeners.add(listener)
+        return () => storeListeners.delete(listener)
+      },
+      () => storeVersion,
+    )
+    return selector(inboxStore)
+  },
 }))
 
 const guestStore = {
   appendMessage: vi.fn(),
+  markMessagesDeleted: vi.fn(),
   guestConversationId: "1:00000000-0000-0000-0000-000000000000",
   markMessageFailed: vi.fn(),
   sendMessage: vi.fn(),
@@ -325,11 +383,13 @@ describe("message composers", () => {
     guestStore.markMessageFailed.mockClear()
     guestStore.sendMessage.mockClear()
     inboxStore.appendMessage.mockClear()
+    inboxStore.markMessagesDeleted.mockClear()
     inboxStore.markMessageFailed.mockClear()
     inboxStore.setReplyToMessage.mockClear()
     inboxStore.updateConversationViaMessage.mockClear()
     inboxStore.replyToMessage = null
     inboxStore.isPrivateReply = false
+    inboxStore.sendQueues = {}
     ids.next = 1
     container = document.createElement("div")
     document.body.appendChild(container)
@@ -342,10 +402,154 @@ describe("message composers", () => {
     window.matchMedia = defaultMatchMedia
   })
 
-  test("submits every rapid inbox message independently", async () => {
-    act(() => root.render(<MessageInput />))
+  test("sends rapid inbox messages one at a time, each after the previous one's result", async () => {
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout", "Date"] })
+    try {
+      act(() => root.render(<InboxComposer />))
+      const textarea = await submitMessages(["1", "2", "3"])
 
-    await expectRapidSubmissions()
+      // Only the first goes out; the rest wait for its answer.
+      expect(action.executeAsync).toHaveBeenCalledTimes(1)
+      expect(textarea.value).toBe("")
+
+      for (const expected of ["1", "2", "3"]) {
+        const input = getSubmittedMessage(
+          action.executeAsync.mock.calls.at(-1)?.[0],
+        )
+        expect(input.text).toBe(expected)
+        await act(async () => {
+          action.resolveRequests.at(-1)?.({ data: {} })
+          await Promise.resolve()
+        })
+        // The channel accepts it (the realtime answer), then the 500 ms gap.
+        act(() => {
+          inboxStore.updateSendQueue("conversation-1", (queue) =>
+            queue.inFlight?.clientId === input.clientId
+              ? {
+                  ...queue,
+                  inFlight: null,
+                  nextAllowedAt: Date.now() + AGENT_SEND_GAP_MS,
+                }
+              : queue,
+          )
+        })
+        const expectedCalls = Number(expected) + (expected === "3" ? 0 : 1)
+        if (expected !== "3") {
+          expect(action.executeAsync).toHaveBeenCalledTimes(Number(expected))
+          await act(async () => {
+            await vi.advanceTimersByTimeAsync(AGENT_SEND_GAP_MS)
+          })
+        }
+        expect(action.executeAsync).toHaveBeenCalledTimes(expectedCalls)
+      }
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  test("a failed inbox message holds the ones queued behind it and locks the composer", async () => {
+    act(() => root.render(<InboxComposer />))
+
+    const textarea = await submitMessages(["1", "2", "3"])
+    // The server refuses the first one while the other two are still queued.
+    await act(async () => {
+      action.resolveRequests[0]?.({ serverError: "Send failed" })
+      await Promise.resolve()
+    })
+
+    await vi.waitFor(() => {
+      expect(container.querySelector('[role="alert"]')).not.toBeNull()
+    })
+    // Held: nothing after the failed one went out, and the send button is off.
+    expect(action.executeAsync).toHaveBeenCalledTimes(1)
+    expect(
+      container
+        .querySelector('[aria-label="Send message"]')
+        ?.hasAttribute("disabled"),
+    ).toBe(true)
+    expect(container.textContent).toContain("messages.sendQueue.failed")
+
+    await act(async () => {
+      setTextareaValue(textarea, "4")
+      textarea.dispatchEvent(
+        new KeyboardEvent("keydown", {
+          bubbles: true,
+          cancelable: true,
+          key: "Enter",
+        }),
+      )
+      await Promise.resolve()
+    })
+    expect(action.executeAsync).toHaveBeenCalledTimes(1)
+    expect(textarea.value).toBe("4")
+  })
+
+  test("discarding the held messages unlocks the composer", async () => {
+    act(() => root.render(<InboxComposer />))
+    await submitMessages(["1", "2"])
+    await act(async () => {
+      action.resolveRequests[0]?.({ serverError: "Send failed" })
+      await Promise.resolve()
+    })
+    await vi.waitFor(() => {
+      expect(container.querySelector('[role="alert"]')).not.toBeNull()
+    })
+
+    const discard = Array.from(container.querySelectorAll("button")).find(
+      (button) => button.textContent === "messages.sendQueue.discard",
+    )
+    act(() => {
+      discard?.dispatchEvent(new MouseEvent("click", { bubbles: true }))
+    })
+
+    expect(container.querySelector('[role="alert"]')).toBeNull()
+    expect(inboxStore.sendQueues["conversation-1"]?.waiting).toEqual([])
+    // The dropped message's row leaves the thread instead of looking sent.
+    const dropped = inboxStore.markMessagesDeleted.mock.calls.at(-1)?.[0]
+    expect(dropped).toHaveLength(1)
+    expect(
+      inboxStore.appendMessage.mock.calls.map(([row]) => row.id),
+    ).toContain(dropped?.[0])
+  })
+
+  test("a lost answer stops the queue after 30 s and waits for the person, never sending the next by itself", async () => {
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout", "Date"] })
+    try {
+      act(() => root.render(<InboxComposer />))
+      await submitMessages(["1", "2"])
+      expect(action.executeAsync).toHaveBeenCalledTimes(1)
+
+      await act(async () => {
+        action.resolveRequests.at(-1)?.({ data: {} })
+        await vi.advanceTimersByTimeAsync(AGENT_SEND_CONFIRM_TIMEOUT_MS)
+      })
+
+      expect(container.textContent).toContain("messages.sendQueue.unconfirmed")
+      expect(action.executeAsync).toHaveBeenCalledTimes(1)
+
+      const proceed = Array.from(container.querySelectorAll("button")).find(
+        (button) => button.textContent === "messages.sendQueue.continue",
+      )
+      await act(async () => {
+        proceed?.dispatchEvent(new MouseEvent("click", { bubbles: true }))
+        await vi.advanceTimersByTimeAsync(1)
+      })
+
+      expect(action.executeAsync).toHaveBeenCalledTimes(2)
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  test("queued messages survive a conversation switch", async () => {
+    act(() => root.render(<InboxComposer />))
+    await submitMessages(["1", "2"])
+
+    inboxStore.activeConversationId = "conversation-2"
+    act(() => notifyStore())
+
+    expect(inboxStore.sendQueues["conversation-1"]?.waiting).toHaveLength(1)
+    inboxStore.activeConversationId = "conversation-1"
   })
 
   test("submits every rapid webchat message independently", async () => {
@@ -357,7 +561,7 @@ describe("message composers", () => {
   })
 
   test("submits an inbox message when Enter is pressed on a desktop keyboard", async () => {
-    act(() => root.render(<MessageInput />))
+    act(() => root.render(<InboxComposer />))
     const textarea = container.querySelector("textarea")
     if (!textarea) {
       throw new Error("Message composer did not render a textarea")
@@ -378,7 +582,7 @@ describe("message composers", () => {
 
   test("does not submit an inbox message when Enter is pressed on a touch device", async () => {
     isTouchDevice = true
-    act(() => root.render(<MessageInput />))
+    act(() => root.render(<InboxComposer />))
     const textarea = container.querySelector("textarea")
     if (!textarea) {
       throw new Error("Message composer did not render a textarea")
@@ -399,7 +603,7 @@ describe("message composers", () => {
 
   test("submits an inbox message when Cmd+Enter is pressed on a touch device", async () => {
     isTouchDevice = true
-    act(() => root.render(<MessageInput />))
+    act(() => root.render(<InboxComposer />))
     const textarea = container.querySelector("textarea")
     if (!textarea) {
       throw new Error("Message composer did not render a textarea")
@@ -461,13 +665,13 @@ describe("message composers", () => {
     expect(event.defaultPrevented).toBe(false)
   })
 
-  test("marks an optimistic inbox message failed and keeps its reply target on a server error", async () => {
+  test("marks an optimistic inbox message failed on a server error; the reply target was already consumed at send time", async () => {
     inboxStore.replyToMessage = {
       createdAt: new Date("2026-01-01T00:00:00Z"),
       id: "message-1",
     } as never
     action.executeAsync.mockResolvedValueOnce({ serverError: "Send failed" })
-    act(() => root.render(<MessageInput />))
+    act(() => root.render(<InboxComposer />))
 
     await submitMessages(["hello"])
 
@@ -482,13 +686,16 @@ describe("message composers", () => {
       submittedMessage.clientId,
       "Send failed",
     )
-    expect(inboxStore.setReplyToMessage).not.toHaveBeenCalled()
+    expect(inboxStore.setReplyToMessage).toHaveBeenCalledWith(null)
+    expect(submittedMessage).toMatchObject({
+      replyToMessageId: "message-1",
+    })
     expect(disableBotExecute).not.toHaveBeenCalled()
   })
 
-  test("keeps selected media on an inbox server error", async () => {
+  test("clears selected media at send time and still sends it", async () => {
     action.executeAsync.mockResolvedValueOnce({ serverError: "Send failed" })
-    act(() => root.render(<MessageInput />))
+    act(() => root.render(<InboxComposer />))
     const mediaLibraryButton = container.querySelector(
       '[aria-label="mediaLibrary.openMediaLibrary"]',
     )
@@ -518,12 +725,15 @@ describe("message composers", () => {
     })
     expect(
       container.querySelector('[data-testid="media-file-preview"]'),
-    ).not.toBeNull()
+    ).toBeNull()
+    expect(action.executeAsync.mock.calls[0]?.[0]).toMatchObject({
+      mediaFileIds: ["1"],
+    })
   })
 
   test("catches a rejected inbox send and marks its optimistic message failed", async () => {
     action.executeAsync.mockRejectedValueOnce(new Error("Network offline"))
-    act(() => root.render(<MessageInput />))
+    act(() => root.render(<InboxComposer />))
 
     await submitMessages(["hello"])
 
@@ -545,7 +755,7 @@ describe("message composers", () => {
       id: "message-1",
     } as never
     action.executeAsync.mockResolvedValueOnce({ data: {} })
-    act(() => root.render(<MessageInput />))
+    act(() => root.render(<InboxComposer />))
 
     await submitMessages(["hello"])
 
@@ -560,7 +770,7 @@ describe("message composers", () => {
 
   test("disables the bot after a successful inbox send", async () => {
     action.executeAsync.mockResolvedValueOnce({ data: {} })
-    act(() => root.render(<MessageInput />))
+    act(() => root.render(<InboxComposer />))
 
     await submitMessages(["hello"])
 

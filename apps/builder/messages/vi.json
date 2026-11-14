@@ -568,6 +568,11 @@
       "paused": "Tạm dừng",
       "ended": "Đã kết thúc"
     },
+    "statusReason": {
+      "accountPolicyBlocked": "Đã tự động dừng: tài khoản kênh bị chặn gửi tin do vi phạm chính sách.",
+      "accountSendRestricted": "Đã tự động dừng: tài khoản kênh đang bị hạn chế gửi tin tạm thời.",
+      "page": "Trang: {name}"
+    },
     "stats": {
       "sent": "Đã gửi",
       "delivered": "Đã giao",
@@ -716,7 +721,14 @@
     "resumeDialog": {
       "title": "Tiếp tục broadcast",
       "description": "\"{name}\" sẽ tiếp tục gửi đến những người nhận chưa nhận được tin.",
-      "templateDescription": "\"{name}\" sẽ lặp lại trở lại từ lần gửi theo lịch tiếp theo. Các lần gửi trong thời gian tạm dừng đã bị bỏ qua."
+      "templateDescription": "\"{name}\" sẽ lặp lại trở lại từ lần gửi theo lịch tiếp theo. Các lần gửi trong thời gian tạm dừng đã bị bỏ qua.",
+      "blocked": {
+        "title": "Đã dừng vì tài khoản kênh không thể gửi tin",
+        "description": "Nếu tài khoản vẫn đang bị chặn, tin đầu tiên sẽ lỗi và chiến dịch sẽ dừng lại. Gửi khi đang bị chặn có thể dẫn đến hạn chế nặng hơn.",
+        "pageLabel": "Trang",
+        "errorLabel": "Lỗi từ kênh",
+        "confirm": "Vẫn tiếp tục"
+      }
     },
     "planLimitDialog": {
       "title": "Nâng cấp gói của bạn",
@@ -4624,6 +4636,12 @@
       "cardEnding": "Thẻ đuôi {lastFourDigits}",
       "notCharged": "Chưa trừ tiền. Hãy trừ tiền qua cổng thanh toán của bạn.",
       "reference": "Mã tham chiếu {referenceId}"
+    },
+    "sendQueue": {
+      "failed": "Một tin nhắn gửi thất bại. Hãy gửi lại để tiếp tục gửi.",
+      "unconfirmed": "Chưa xác nhận được tin nhắn cuối đã gửi. Hãy chọn có tiếp tục gửi hay không.",
+      "continue": "Tiếp tục gửi",
+      "discard": "Bỏ qua"
     }
   },
   "instagram": {
@@ -5819,7 +5837,8 @@
       "total": "Tổng số khách hàng quét được: {count}",
       "waitCooldown": "Bạn phải chờ sau 24h tiếp theo mới tiếp tục sử dụng được tính năng này.",
       "failed": "Lượt quét gần nhất đã thất bại. Bạn có thể thử lại sau khi hết thời gian chờ.",
-      "partial": "Lượt quét gần nhất chỉ hoàn tất một phần — một số cuộc hội thoại không thể nhập được."
+      "partial": "Lượt quét gần nhất chỉ hoàn tất một phần — một số cuộc hội thoại không thể nhập được.",
+      "cancelled": "Lần quét gần nhất đã bị hủy trước khi hoàn tất."
     },
     "errors": {
       "contactScanFromTimeInvalid": "Thời gian quét từ phải ở trong quá khứ.",
@@ -5845,9 +5864,20 @@
         "running": "Đang chạy",
         "succeeded": "Thành công",
         "partial": "Một phần",
-        "failed": "Thất bại"
+        "failed": "Thất bại",
+        "cancelled": "Đã hủy"
       },
       "empty": "Chưa có lượt quét nào được chạy."
+    },
+    "cancel": {
+      "button": "Hủy quét",
+      "title": "Hủy lần quét này?",
+      "description": "Việc quét sẽ dừng và các khách hàng đã nhập được giữ lại. Bạn vẫn phải đợi 24 giờ kể từ lúc lần quét này bắt đầu mới quét lại hộp thư này được.",
+      "keep": "Tiếp tục quét",
+      "confirm": "Hủy quét",
+      "success": "Đã hủy lần quét.",
+      "notRunning": "Hộp thư này hiện không có lần quét nào đang chạy.",
+      "failed": "Không thể hủy lần quét. Vui lòng thử lại."
     }
   },
   "errorLogs": {
