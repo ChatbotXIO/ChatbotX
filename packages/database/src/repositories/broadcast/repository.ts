@@ -3,17 +3,28 @@ import {
   type DatabaseClient,
   db,
   eq,
+  exists,
   inArray,
   isNull,
   ne,
+  or,
   relationsFilterToSQL,
 } from "../../client"
 import {
   type BroadcastScheduleType,
   type BroadcastStatus,
+  broadcastStatuses,
+  broadcastTargetModes,
   withBroadcastTargets,
 } from "../../partials/broadcast"
-import { broadcastModel, contactsOnBroadcastsModel } from "../../schema"
+import { channelTypes } from "../../partials/channel"
+import {
+  broadcastModel,
+  broadcastTargetModel,
+  contactsOnBroadcastsModel,
+  integrationMessengerModel,
+  integrationWhatsappModel,
+} from "../../schema"
 import {
   getPaginationWithDefaults,
   likeContains,
@@ -133,6 +144,7 @@ export const broadcastRepository = {
             name: true,
           },
         },
+        statusInbox: { columns: { id: true, name: true } },
         ...withBroadcastTargets,
         ...withBroadcastRecurrence,
       },
@@ -197,6 +209,95 @@ export const broadcastRepository = {
     )
   },
 
+  /**
+   * Ids of the `sending` broadcasts that send through `inboxId`, in one query.
+   * `targets` mode matches a `BroadcastTarget` row. `channel` (legacy) mode
+   * matches the broadcast's integration column, or — when both integration
+   * columns are null — a whole-channel broadcast on the inbox's channel or an
+   * omnichannel one (which reaches every channel). Adding a channel needs no
+   * change here: whole-channel rows are matched on `channel` alone.
+   */
+  async listSendingIdsForInbox(
+    input: { workspaceId: string; inboxId: string; channel: string },
+    tx: DatabaseClient = db,
+  ): Promise<{ id: string; parentBroadcastId: string | null }[]> {
+    const viaTarget = and(
+      eq(broadcastModel.targetMode, broadcastTargetModes.enum.targets),
+      exists(
+        tx
+          .select({ one: broadcastTargetModel.broadcastId })
+          .from(broadcastTargetModel)
+          .where(
+            and(
+              eq(broadcastTargetModel.broadcastId, broadcastModel.id),
+              eq(broadcastTargetModel.inboxId, input.inboxId),
+            ),
+          ),
+      ),
+    )
+    const viaIntegration = or(
+      exists(
+        tx
+          .select({ one: integrationMessengerModel.id })
+          .from(integrationMessengerModel)
+          .where(
+            and(
+              eq(
+                integrationMessengerModel.id,
+                broadcastModel.integrationMessengerId,
+              ),
+              eq(integrationMessengerModel.inboxId, input.inboxId),
+            ),
+          ),
+      ),
+      exists(
+        tx
+          .select({ one: integrationWhatsappModel.id })
+          .from(integrationWhatsappModel)
+          .where(
+            and(
+              eq(
+                integrationWhatsappModel.id,
+                broadcastModel.integrationWhatsappId,
+              ),
+              eq(integrationWhatsappModel.inboxId, input.inboxId),
+            ),
+          ),
+      ),
+    )
+    const wholeChannel = and(
+      isNull(broadcastModel.integrationMessengerId),
+      isNull(broadcastModel.integrationWhatsappId),
+      inArray(broadcastModel.channel, [
+        input.channel,
+        channelTypes.enum.omnichannel,
+      ]),
+    )
+
+    const rows = await tx
+      .select({
+        id: broadcastModel.id,
+        parentBroadcastId: broadcastModel.parentBroadcastId,
+      })
+      .from(broadcastModel)
+      .where(
+        and(
+          eq(broadcastModel.workspaceId, input.workspaceId),
+          eq(broadcastModel.status, broadcastStatuses.enum.sending),
+          isNull(broadcastModel.deletedAt),
+          or(
+            viaTarget,
+            and(
+              eq(broadcastModel.targetMode, broadcastTargetModes.enum.channel),
+              or(viaIntegration, wholeChannel),
+            ),
+          ),
+        ),
+      )
+
+    return rows
+  },
+
   /** id-or-name lookup, scoped to a non-deleted broadcast in the workspace. */
   async findByIdOrName(
     input: { workspaceId: string; idOrName: string },
@@ -211,7 +312,11 @@ export const broadcastRepository = {
 
     return await tx.query.broadcastModel.findFirst({
       where,
-      with: { ...withBroadcastTargets, ...withBroadcastRecurrence },
+      with: {
+        statusInbox: { columns: { id: true, name: true } },
+        ...withBroadcastTargets,
+        ...withBroadcastRecurrence,
+      },
     })
   },
 }

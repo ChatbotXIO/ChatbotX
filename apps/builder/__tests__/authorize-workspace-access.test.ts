@@ -295,6 +295,22 @@ describe("assertWorkspaceOwnerAccessForMethod", () => {
     ).toBe(false)
   })
 
+  test("allows cancelling a contact scan on a trial-expired workspace (UI parity), never for a read_only token", async () => {
+    isCloud.mockReturnValue(true)
+    getAccessState.mockResolvedValue({ blocked: true, reason: "status" })
+
+    await expect(
+      assertWorkspaceOwnerAccessForMethod({
+        method: "POST",
+        ownerId: "owner-1",
+        path: "/v1/contact-scans/cancel",
+      }),
+    ).resolves.toBeUndefined()
+    expect(
+      isReadOnlyTokenAllowedMethod("POST", "/v1/contact-scans/cancel"),
+    ).toBe(false)
+  })
+
   test("blocks a different POST path for a trial-expired workspace", async () => {
     isCloud.mockReturnValue(true)
     getAccessState.mockResolvedValue({ blocked: true, reason: "status" })

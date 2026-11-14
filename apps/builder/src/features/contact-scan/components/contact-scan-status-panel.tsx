@@ -56,13 +56,16 @@ export function ContactScanStatusPanel({ data }: ContactScanStatusPanelProps) {
         {statusMessage()}
       </p>
 
-      {(status === "succeeded" || status === "partial") && latest && (
-        <p className="text-muted-foreground">
-          {t("contactScan.status.total", {
-            count: latest.importedContactCount,
-          })}
-        </p>
-      )}
+      {(status === "succeeded" ||
+        status === "partial" ||
+        status === "cancelled") &&
+        latest && (
+          <p className="text-muted-foreground">
+            {t("contactScan.status.total", {
+              count: latest.importedContactCount,
+            })}
+          </p>
+        )}
 
       {!availability.canScan && availability.blockedReason === "cooldown" && (
         <p className="text-muted-foreground">

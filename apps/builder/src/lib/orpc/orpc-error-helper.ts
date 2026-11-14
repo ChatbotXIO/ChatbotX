@@ -363,6 +363,18 @@ export const possibleErrorsOnPeekingImportHeaders = {
   },
 } satisfies ErrorMap
 
+/** Resending a failed message: only a failed, undelivered DM can be resent (409). */
+export const possibleErrorsOnResendingMessage = {
+  notFound,
+  businessError,
+  messageNotResendable: {
+    message:
+      "The message cannot be resent: it did not fail, was already delivered, was not sent by a person or the API, is a public comment reply, or is already being resent.",
+    status: 409,
+  },
+  ...possibleIdempotencyErrors,
+} satisfies ErrorMap
+
 /** Starting a contact import: only one import may run per workspace (409). */
 export const possibleErrorsOnStartingContactImport = {
   notFound,

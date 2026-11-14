@@ -2252,3 +2252,118 @@ describe("createChatStore seed invariant check", () => {
     expect(loggerWarnMock).not.toHaveBeenCalled()
   })
 })
+
+describe("chat store send queues", () => {
+  const queued = (clientId: string) => ({
+    clientId,
+    input: { text: clientId } as never,
+  })
+
+  test("a queue is created on first use and survives switching the active conversation", async () => {
+    const store = createChatStore()
+    const { enqueueSend } = await import(
+      "../src/features/messages/lib/send-queue"
+    )
+
+    store
+      .getState()
+      .updateSendQueue("conv-1", (queue) => enqueueSend(queue, queued("a")))
+    store.setState({ activeConversationId: "conv-2" })
+
+    expect(store.getState().sendQueues["conv-1"]?.waiting).toHaveLength(1)
+  })
+
+  test("queues of different conversations are independent", async () => {
+    const store = createChatStore()
+    const { enqueueSend } = await import(
+      "../src/features/messages/lib/send-queue"
+    )
+
+    store
+      .getState()
+      .updateSendQueue("conv-1", (queue) => enqueueSend(queue, queued("a")))
+    store
+      .getState()
+      .updateSendQueue("conv-2", (queue) => enqueueSend(queue, queued("b")))
+
+    expect(store.getState().sendQueues["conv-1"]?.waiting[0]?.clientId).toBe(
+      "a",
+    )
+    expect(store.getState().sendQueues["conv-2"]?.waiting[0]?.clientId).toBe(
+      "b",
+    )
+  })
+
+  test("a result settles the matching in-flight message in whichever queue holds it", async () => {
+    const store = createChatStore()
+    const { enqueueSend, markSendSubmitted } = await import(
+      "../src/features/messages/lib/send-queue"
+    )
+    store
+      .getState()
+      .updateSendQueue("conv-1", (queue) =>
+        markSendSubmitted(enqueueSend(queue, queued("a")), "a", 0),
+      )
+
+    store
+      .getState()
+      .settleSendResult({ clientId: "a", messageId: "m-a", error: null })
+
+    expect(store.getState().sendQueues["conv-1"]?.inFlight).toBeNull()
+  })
+
+  test("a drained queue is dropped once its gap is over, so the map keeps only live conversations", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] })
+    try {
+      const store = createChatStore()
+      const { enqueueSend, markSendSubmitted } = await import(
+        "../src/features/messages/lib/send-queue"
+      )
+      store
+        .getState()
+        .updateSendQueue("conv-1", (queue) =>
+          markSendSubmitted(enqueueSend(queue, queued("a")), "a", 0),
+        )
+      store.getState().settleSendResult({ clientId: "a", error: null })
+      // Still inside the 500 ms gap: kept so the next message waits for it.
+      expect(store.getState().sendQueues["conv-1"]).toBeDefined()
+
+      vi.advanceTimersByTime(1000)
+      store.getState().updateSendQueue("conv-2", (queue) => queue)
+
+      expect(store.getState().sendQueues["conv-1"]).toBeUndefined()
+      expect(store.getState().sendQueues["conv-2"]).toBeUndefined()
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  test("a failure result holds the queue only when messages wait behind it", async () => {
+    const store = createChatStore()
+    const { enqueueSend, markSendSubmitted } = await import(
+      "../src/features/messages/lib/send-queue"
+    )
+    store
+      .getState()
+      .updateSendQueue("conv-1", (queue) =>
+        markSendSubmitted(
+          enqueueSend(enqueueSend(queue, queued("a")), queued("b")),
+          "a",
+          0,
+        ),
+      )
+
+    store.getState().settleSendResult({ clientId: "a", error: "refused" })
+
+    expect(store.getState().sendQueues["conv-1"]?.holdReason).toBe("failed")
+  })
+
+  test("a result nobody is waiting for keeps the state reference", () => {
+    const store = createChatStore()
+    const before = store.getState()
+
+    store.getState().settleSendResult({ clientId: "stray", error: null })
+
+    expect(store.getState()).toBe(before)
+  })
+})

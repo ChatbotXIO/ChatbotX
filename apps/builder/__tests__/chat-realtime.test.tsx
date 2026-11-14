@@ -22,6 +22,7 @@ const chatStoreState = {
   handleNewMessages: vi.fn(),
   markMessagesDeleted: vi.fn(),
   markMessageFailed: vi.fn(),
+  settleSendResult: vi.fn(),
   assignMessageCommentId: vi.fn(),
   updateMessageText: vi.fn(),
   updateMessageContentAttributes: vi.fn(),
@@ -175,6 +176,27 @@ describe("ChatRealtime — chat event parity", () => {
       "client-1",
       "boom",
     )
+  })
+
+  test("messageFailed is also the composer queue's answer, success (null) included", async () => {
+    await render()
+    act(() =>
+      emit("messageFailed", { messageId: "m1", clientId: "c1", error: null }),
+    )
+    act(() =>
+      emit("messageFailed", { messageId: "m2", clientId: "c2", error: "boom" }),
+    )
+
+    expect(chatStoreState.settleSendResult).toHaveBeenNthCalledWith(1, {
+      messageId: "m1",
+      clientId: "c1",
+      error: null,
+    })
+    expect(chatStoreState.settleSendResult).toHaveBeenNthCalledWith(2, {
+      messageId: "m2",
+      clientId: "c2",
+      error: "boom",
+    })
   })
 
   test("messageUpdated updates the message text/attachment fields", async () => {

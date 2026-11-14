@@ -26,7 +26,6 @@ import {
   XIcon,
 } from "lucide-react"
 import { useTranslations } from "next-intl"
-import { useAction } from "next-safe-action/hooks"
 import {
   type KeyboardEvent,
   useCallback,
@@ -37,12 +36,7 @@ import {
 } from "react"
 import { Controller, useWatch } from "react-hook-form"
 import { toast } from "sonner"
-import { disableBotAction } from "@/features/conversations/actions/disable-bot.action"
 import { useThreadControl } from "@/features/conversations/hooks/use-thread-control"
-import {
-  BOT_DISABLE_DURATION_MS,
-  isConversationActive,
-} from "@/features/conversations/utils/bot-state"
 import { InboxIcon } from "@/features/inboxes/components/inbox-icon"
 import { MediaLibraryTrigger } from "@/features/media-library/components/media-library-trigger"
 import type { ListFilesResponse } from "@/features/media-library/schema"
@@ -52,12 +46,18 @@ import { authClient } from "@/lib/auth/auth-client"
 import { shouldSendOnEnter } from "@/lib/keyboard/should-send-on-enter"
 import { useChatStore } from "../../chat/store/chat-store-provider"
 import { createMessageAction } from "../actions/create-message.action"
-import { flattenValidationErrors } from "../lib/validation-errors"
+import {
+  discardHeldSends,
+  enqueueSend,
+  isSendQueueLocked,
+  resumeSendQueue,
+} from "../lib/send-queue"
 import { createMessageWithRoutingBypassRequest } from "../schema/mutation"
 import type { MessageResource } from "../schema/resource"
 import { FileUploadPreview } from "./file-upload"
 import { InputMenu } from "./input-menu"
 import { MediaFilePreview } from "./media-file-preview"
+import { SendQueueNotice } from "./send-queue-notice"
 import { ThreadControlLockedComposer } from "./thread-control-locked-composer"
 
 const CHANNEL_WINDOW_SECONDS: Record<ChannelType, number> = {
@@ -98,27 +98,17 @@ export const MessageInput = () => {
 
   const {
     appendMessage,
+    markMessagesDeleted,
     updateConversationViaMessage,
     activeConversationId,
     conversations,
-    updateConversation,
     replyToMessage,
     setReplyToMessage,
     isPrivateReply,
-    markMessageFailed,
     messages,
+    sendQueues,
+    updateSendQueue,
   } = useChatStore((state) => state)
-
-  const replyToMessageRef = useRef(replyToMessage)
-  const selectedMediaFilesRef = useRef(selectedMediaFiles)
-
-  useEffect(() => {
-    replyToMessageRef.current = replyToMessage
-  }, [replyToMessage])
-
-  useEffect(() => {
-    selectedMediaFilesRef.current = selectedMediaFiles
-  }, [selectedMediaFiles])
 
   const lastContactComment = useMemo(() => {
     for (let i = messages.length - 1; i >= 0; i--) {
@@ -189,25 +179,6 @@ export const MessageInput = () => {
   // handover take). Drives the highlighted notice + the send-gate bypass.
   const takeOverOnSend = Boolean(threadControl?.inlineReplyTakesOver)
 
-  const { execute: disableBot } = useAction(
-    disableBotAction.bind(null, conversation?.workspaceId ?? ""),
-    {
-      onSuccess: () => {
-        if (conversation) {
-          updateConversation(conversation.id, {
-            botEnabled: false,
-            botResumeAt: new Date(Date.now() + BOT_DISABLE_DURATION_MS),
-          })
-        }
-      },
-      onError: ({ error }) => {
-        if (error.serverError) {
-          toast.error(error.serverError)
-        }
-      },
-    },
-  )
-
   const defaultValues = useMemo(
     () => ({
       text: "",
@@ -220,7 +191,7 @@ export const MessageInput = () => {
     [],
   )
 
-  const { form, action } = useHookFormAction(
+  const { form } = useHookFormAction(
     createMessageAction.bind(
       null,
       conversation?.workspaceId ?? "",
@@ -390,7 +361,17 @@ export const MessageInput = () => {
     ],
   )
 
+  const sendQueue = activeConversationId
+    ? sendQueues[activeConversationId]
+    : undefined
+  // Messages are held behind a failed (or unconfirmed) one: sending more would
+  // only pile on, so the composer waits for the person's decision.
+  const isSendLocked = sendQueue ? isSendQueueLocked(sendQueue) : false
+
   const sendMessage = useCallback(async () => {
+    if (isSendLocked) {
+      return
+    }
     // Same check as the server, done here so the agent sees which channel
     // refuses the images before anything is sent.
     if (channelType) {
@@ -412,7 +393,6 @@ export const MessageInput = () => {
       }
     }
 
-    const submittedFiles = form.getValues("files")
     const replyTarget = replyToMessage ?? lastContactComment
     const values = {
       ...form.getValues(),
@@ -428,82 +408,42 @@ export const MessageInput = () => {
       return
     }
 
-    const optimisticMessageId = appendOptimistic(parsed.data)
-    form.setValue("text", "")
-    textareaRef.current?.focus()
-
-    try {
-      const result = await action.executeAsync(parsed.data)
-      if (result?.serverError) {
-        markMessageFailed(
-          optimisticMessageId ?? "",
-          parsed.data.clientId,
-          result.serverError,
-        )
-        toast.error(result.serverError)
-        return
-      }
-
-      if (result?.validationErrors) {
-        const validationErrors = flattenValidationErrors(
-          result.validationErrors,
-        )
-        for (const validationError of validationErrors) {
-          form.setError(validationError.path as never, {
-            message: validationError.message,
-          })
-        }
-        const errorMessage =
-          validationErrors[0]?.message ?? t("messages.unknownError")
-        markMessageFailed(
-          optimisticMessageId ?? "",
-          parsed.data.clientId,
-          errorMessage,
-        )
-        toast.error(errorMessage)
-        return
-      }
-
-      if (form.getValues("files") === submittedFiles) {
-        form.setValue("files", [])
-      }
-      if (selectedMediaFilesRef.current === selectedMediaFiles) {
-        form.setValue("mediaFileIds", [])
-        setSelectedMediaFiles([])
-      }
-      if (replyToMessageRef.current === replyToMessage) {
-        setReplyToMessage(null)
-      }
-      if (result?.data && conversation && isConversationActive(conversation)) {
-        disableBot({ ids: [conversation.id] })
-      }
-    } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : t("messages.unknownError")
-      markMessageFailed(
-        optimisticMessageId ?? "",
-        parsed.data.clientId,
-        errorMessage,
-      )
-      toast.error(errorMessage)
+    if (!conversation) {
+      return
     }
+
+    // Everything the message needs is in `parsed.data` (files, media, reply
+    // target, routing bypass), so the composer can be cleared at once: the
+    // queue sends it, in order, when its turn comes.
+    const optimisticMessageId = appendOptimistic(parsed.data)
+    updateSendQueue(conversation.id, (queue) =>
+      enqueueSend(queue, {
+        clientId: values.clientId,
+        input: parsed.data,
+        optimisticMessageId,
+      }),
+    )
+    form.setValue("text", "")
+    form.setValue("files", [])
+    form.setValue("mediaFileIds", [])
+    setSelectedMediaFiles([])
+    setReplyToMessage(null)
+    textareaRef.current?.focus()
   }, [
-    action,
     appendOptimistic,
     bypassThreadControlLock,
     channelType,
     conversation,
-    disableBot,
     form,
     imageLimitMessage,
     isPrivateReply,
+    isSendLocked,
     lastContactComment,
-    markMessageFailed,
     replyToMessage,
     replyKind,
     selectedMediaFiles,
     setReplyToMessage,
-    t,
+    updateSendQueue,
   ])
 
   // Memoize keyboard handler
@@ -679,6 +619,27 @@ export const MessageInput = () => {
               {t("conversationRouting.composer.aiStandbyHint")}
             </p>
           )}
+          {sendQueue && isSendLocked && activeConversationId && (
+            <SendQueueNotice
+              heldCount={sendQueue.waiting.length}
+              onContinue={() =>
+                updateSendQueue(activeConversationId, (queue) =>
+                  resumeSendQueue(queue, Date.now()),
+                )
+              }
+              onDiscard={() => {
+                // The rows shown for the dropped messages must go too, or they
+                // would sit in the thread looking sent.
+                markMessagesDeleted(
+                  sendQueue.waiting.flatMap((item) =>
+                    item.optimisticMessageId ? [item.optimisticMessageId] : [],
+                  ),
+                )
+                updateSendQueue(activeConversationId, discardHeldSends)
+              }}
+              reason={sendQueue.holdReason}
+            />
+          )}
           {replyToMessage && (
             <div className="mx-2.5 mb-1 flex items-start gap-2 rounded-lg border-primary bg-muted px-3 py-2 text-sm">
               {isPrivateReply ? (
@@ -827,7 +788,9 @@ export const MessageInput = () => {
                 aria-label="Send message"
                 className="px-2 py-1.5 [&_svg]:size-5"
                 disabled={
-                  !form.formState.isValid || form.formState.isSubmitting
+                  !form.formState.isValid ||
+                  form.formState.isSubmitting ||
+                  isSendLocked
                 }
                 type="submit"
                 variant="ghost"

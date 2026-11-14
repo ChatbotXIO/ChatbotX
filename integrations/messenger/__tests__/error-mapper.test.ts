@@ -1,4 +1,9 @@
-import { ChannelErrorCategory } from "@chatbotx.io/sdk"
+import {
+  ChannelErrorCategory,
+  ChannelErrorReason,
+  isAccountSendBlocked,
+  isRateLimited,
+} from "@chatbotx.io/sdk"
 import { describe, expect, test } from "vitest"
 import { MessengerException } from "../src/exception"
 import {
@@ -178,5 +183,55 @@ describe("messenger error-mapper rate limits", () => {
       new MessengerException("pattern", 400, 613, 1996),
     )
     expect(error.category).toBe(ChannelErrorCategory.RATE_LIMITED)
+  })
+})
+
+describe("messenger error-mapper account send-block reasons", () => {
+  test("code 2022 is account_policy_blocked", () => {
+    const mapped = mapToChannelError(
+      new MessengerException("blocked", 400, 2022),
+    )
+    expect(mapped.reason).toBe(ChannelErrorReason.ACCOUNT_POLICY_BLOCKED)
+    expect(isAccountSendBlocked(mapped)).toBe(true)
+  })
+
+  test("code 10 + subcode 1893063 is account_send_restricted, category unchanged", () => {
+    const mapped = mapToChannelError(
+      new MessengerException("restricted", 403, 10, 1_893_063),
+    )
+    expect(mapped.reason).toBe(ChannelErrorReason.ACCOUNT_SEND_RESTRICTED)
+    expect(mapped.category).toBe(ChannelErrorCategory.PERMISSION_DENIED)
+  })
+
+  test("code 10 with another subcode has no reason", () => {
+    const mapped = mapToChannelError(
+      new MessengerException("denied", 403, 10, 2_018_300),
+    )
+    expect(mapped.reason).toBeUndefined()
+  })
+
+  test("code 368 deliberately has no reason", () => {
+    const mapped = mapToChannelError(new MessengerException("policy", 400, 368))
+    expect(mapped.reason).toBeUndefined()
+    expect(mapped.category).toBe(ChannelErrorCategory.PERMISSION_DENIED)
+  })
+})
+
+describe("messenger error-mapper rate-limit codes", () => {
+  test.each([
+    4, 17, 32, 613, 80_001, 80_006,
+  ])("code %i keeps the RATE_LIMITED category and carries the reason", (code) => {
+    const mapped = mapToChannelError(new MessengerException("limit", 429, code))
+    expect(mapped.category).toBe(ChannelErrorCategory.RATE_LIMITED)
+    expect(mapped.reason).toBe(ChannelErrorReason.RATE_LIMITED)
+    expect(isRateLimited(mapped)).toBe(true)
+  })
+
+  test.each([
+    80_000, 80_003, 80_004, 80_005, 80_008, 80_009, 80_014,
+  ])("Ads/LeadGen/Catalog code %i is not a Messenger rate limit", (code) => {
+    expect(
+      isRateLimited(mapToChannelError(new MessengerException("x", 400, code))),
+    ).toBe(false)
   })
 })

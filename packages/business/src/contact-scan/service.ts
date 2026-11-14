@@ -1,13 +1,18 @@
+import type { DatabaseClient } from "@chatbotx.io/database/client"
+import type { ContactScanRunStatus } from "@chatbotx.io/database/partials"
 import {
   type CoexistRunProgressInput,
-  type CoexistRunStatus,
   type CoexistRunWriteGuard,
+  type ContactScanRetryOutcome,
   coexistSyncRunRepository,
   type IncrementProgressCounters,
   type PickedCoexistRun,
 } from "@chatbotx.io/database/repositories"
 import type { CoexistSyncRunModel } from "@chatbotx.io/database/types"
-import { isContactScanChannel } from "@chatbotx.io/utils/channel"
+import {
+  type ContactScanChannel,
+  isContactScanChannel,
+} from "@chatbotx.io/utils/channel"
 import { BaseService } from "../base.service"
 import { ChatbotXException } from "../errors"
 import { inboxService } from "../inbox/service"
@@ -18,7 +23,13 @@ import {
   resolveContactScanAvailability,
 } from "./availability"
 import { contactScanIntegrationRefs } from "./channel-registry"
-import { CONTACT_SCAN_TRIGGER_SOURCE } from "./constants"
+import {
+  CONTACT_SCAN_ERRORS,
+  CONTACT_SCAN_MAX_ATTEMPTS,
+  CONTACT_SCAN_RELEASED_GRACE_MS,
+  CONTACT_SCAN_TRIGGER_SOURCE,
+} from "./constants"
+import { resolveContactScanRunStatus } from "./run-status"
 
 export type ContactScanScheduleInput = {
   workspaceId: string
@@ -30,7 +41,6 @@ export type ContactScanScheduleInput = {
 export type ContactScanRunView = Pick<
   CoexistSyncRunModel,
   | "id"
-  | "status"
   | "scanFromAt"
   | "createdAt"
   | "startedAt"
@@ -38,10 +48,10 @@ export type ContactScanRunView = Pick<
   | "importedContactCount"
   | "currentScan"
   | "currentError"
->
+> & { status: ContactScanRunStatus }
 
 export type ContactScanStatusView = {
-  status: CoexistRunStatus | "idle"
+  status: ContactScanRunStatus | "idle"
   latest: ContactScanRunView | null
   availability: ContactScanAvailability
 }
@@ -57,7 +67,6 @@ export type ContactScanHistoryItem = Pick<
   | "id"
   | "workspaceId"
   | "channel"
-  | "status"
   | "scanFromAt"
   | "importedContactCount"
   | "currentScan"
@@ -66,7 +75,7 @@ export type ContactScanHistoryItem = Pick<
   | "createdAt"
   | "requestedByUserId"
   | "currentError"
->
+> & { status: ContactScanRunStatus }
 
 export type ContactScanHistoryView = {
   data: ContactScanHistoryItem[]
@@ -131,7 +140,7 @@ const finishHandlers = {
 
 const toRunView = (run: CoexistSyncRunModel): ContactScanRunView => ({
   id: run.id,
-  status: run.status,
+  status: resolveContactScanRunStatus(run),
   scanFromAt: run.scanFromAt,
   createdAt: run.createdAt,
   startedAt: run.startedAt,
@@ -145,7 +154,7 @@ const toHistoryItem = (run: CoexistSyncRunModel): ContactScanHistoryItem => ({
   id: run.id,
   workspaceId: run.workspaceId,
   channel: run.channel,
-  status: run.status,
+  status: resolveContactScanRunStatus(run),
   scanFromAt: run.scanFromAt,
   importedContactCount: run.importedContactCount,
   currentScan: run.currentScan,
@@ -275,10 +284,60 @@ class ContactScanService extends BaseService {
     })
 
     return {
-      status: latest?.status ?? "idle",
+      status: latest ? resolveContactScanRunStatus(latest) : "idle",
       latest: latest ? toRunView(latest) : null,
       availability: resolveContactScanAvailability({ latest, now: new Date() }),
     }
+  }
+
+  /**
+   * Cancels the inbox's live scan (`init`/`running`) so it stops at its next
+   * write; contacts already imported are kept. Same inbox → integration
+   * resolution as `getStatus`, workspace-scoped. Nothing running (or no such
+   * inbox) is not an error: it returns `cancelled: false`, so the call is safe
+   * to repeat. The cancelled scan still counts toward the 24h cooldown, which
+   * is measured from `createdAt`.
+   */
+  async cancel(input: {
+    workspaceId: string
+    inboxId: string
+  }): Promise<{ cancelled: boolean }> {
+    const { workspaceId, inboxId } = input
+
+    const inbox = await inboxService.findWithIntegrations({
+      where: { id: inboxId, workspaceId },
+    })
+    if (!(inbox && isContactScanChannel(inbox.channel))) {
+      return { cancelled: false }
+    }
+    const integrationRef = contactScanIntegrationRefs[inbox.channel](inbox)
+    if (!integrationRef) {
+      return { cancelled: false }
+    }
+
+    const cancelledRuns =
+      await coexistSyncRunRepository.cancelActiveContactScanRuns({
+        channel: inbox.channel,
+        integrationId: integrationRef.integrationId,
+        workspaceId,
+        currentError: CONTACT_SCAN_ERRORS.cancelled,
+      })
+    return { cancelled: cancelledRuns > 0 }
+  }
+
+  /**
+   * Ends the live scan of an integration that is being disconnected, inside the
+   * caller's transaction, so no scan is left walking a channel that is gone.
+   */
+  async cancelForIntegration(input: {
+    channel: ContactScanChannel
+    integrationId: string
+    tx: DatabaseClient
+  }): Promise<void> {
+    await coexistSyncRunRepository.cancelActiveContactScanRuns({
+      ...input,
+      currentError: CONTACT_SCAN_ERRORS.cancelled,
+    })
   }
 
   /** Scheduler pick — always `type: "contact_scan"`, never passed by the caller. */
@@ -289,6 +348,7 @@ class ContactScanService extends BaseService {
     return coexistSyncRunRepository.pickDueRuns({
       ...input,
       type: "contact_scan",
+      releasedGraceMs: CONTACT_SCAN_RELEASED_GRACE_MS,
     })
   }
 
@@ -297,6 +357,7 @@ class ContactScanService extends BaseService {
     return coexistSyncRunRepository.markMaxAttemptsFailed({
       ...input,
       type: "contact_scan",
+      currentError: CONTACT_SCAN_ERRORS.maxAttempts,
     })
   }
 
@@ -308,6 +369,7 @@ class ContactScanService extends BaseService {
   yieldForContinuation(input: {
     runId: string
     expect: CoexistRunWriteGuard
+    attempts?: number
   }): Promise<number> {
     return coexistSyncRunRepository.yieldForContinuation(input)
   }
@@ -362,24 +424,22 @@ class ContactScanService extends BaseService {
   }
 
   /**
-   * Hands a run back to the scheduler after a TRANSIENT failure: `init` with
-   * a fresh heartbeat, `currentError` set to the classified sentinel.
-   * `claimToken` is deliberately untouched — see `coexist/service.ts`'s
-   * `resetForRetry` for why nulling it here would be unnecessary (a fresh
-   * claim mints its own token regardless of the stale one).
+   * Hands a run back after a TRANSIENT failure (network, 5xx): `init` for the
+   * sweeper while attempts remain, `failed` immediately on the last one.
+   *
+   * @returns `null` when the `expect` guard did not hold.
    */
-  resetForRetry(input: {
+  retryOrFail(input: {
     runId: string
-    currentError: string
-    expect?: CoexistRunWriteGuard
-  }): Promise<number> {
-    return coexistSyncRunRepository.updateProgress({
+    expect: CoexistRunWriteGuard
+    /** The sentinel shown while it waits for the retry; defaults to a provider failure. */
+    retryError?: string
+  }): Promise<ContactScanRetryOutcome | null> {
+    return coexistSyncRunRepository.retryOrFailContactScanRun({
       runId: input.runId,
-      fields: {
-        status: "init",
-        currentError: input.currentError,
-        lastHeartbeatAt: new Date(),
-      },
+      maxAttempts: CONTACT_SCAN_MAX_ATTEMPTS,
+      retryError: input.retryError ?? CONTACT_SCAN_ERRORS.providerRetryable,
+      exhaustedError: CONTACT_SCAN_ERRORS.maxAttempts,
       expect: input.expect,
     })
   }

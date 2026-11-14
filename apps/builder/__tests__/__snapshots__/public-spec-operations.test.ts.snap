@@ -1184,6 +1184,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
   },
   {
     "method": "POST",
+    "operationId": "contactScans.cancel",
+    "path": "/v1/contact-scans/cancel",
+  },
+  {
+    "method": "POST",
     "operationId": "contactScans.create",
     "path": "/v1/contact-scans",
   },
@@ -2386,6 +2391,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "method": "POST",
     "operationId": "messages.requestWhatsappCallPermission",
     "path": "/v1/conversations/{conversationId}/whatsapp-call-permission",
+  },
+  {
+    "method": "POST",
+    "operationId": "messages.resend",
+    "path": "/v1/conversations/{conversationId}/messages/{messageId}/resend",
   },
   {
     "method": "POST",

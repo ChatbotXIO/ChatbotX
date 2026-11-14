@@ -95,6 +95,9 @@ const storeState = {
   replyToMessage: null,
   isPrivateReply: false,
   messages: [],
+  markMessageFailed: vi.fn(),
+  sendQueues: {},
+  updateSendQueue: vi.fn(),
   activeConversationId: "conv-1",
   conversations: [
     {
@@ -111,6 +114,7 @@ const storeState = {
     },
   ],
 }
+vi.mock("@/hooks/routing", () => ({ useWorkspaceId: () => "ws-1" }))
 vi.mock("@/features/chat/store/chat-store-provider", () => ({
   useChatStore: (selector: (state: typeof storeState) => unknown) =>
     selector(storeState),

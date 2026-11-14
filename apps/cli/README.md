@@ -327,6 +327,7 @@ chatbotx conversations messages update <conversationId> <messageId> --createdAt 
                                                      # [--newAttachmentPath --newAttachmentPublicUrl --newAttachmentMimeType
                                                      #  --newAttachmentName --newAttachmentSize --removeAttachment]
 chatbotx conversations message delete <conversationId> <messageId> --createdAt <createdAt>
+chatbotx conversations resend add <conversationId> <messageId> --createdAt <createdAt>  # Resend a failed message (409 if it did not fail or was delivered)
 chatbotx conversations attribute add <conversationId> <messageId> --createdAt <createdAt>  # [--liked --hidden]
 
 # Appointment booking link (scope `appointments`; `--send true` also needs `inbox`)
@@ -819,6 +820,7 @@ AI moderation itself is configured on the automation: `hideComments.aiModeration
 chatbotx contact-scans status --inboxId <inboxId>     # Latest Automatic Customer Scan status for inbox
 chatbotx contact-scans list                           # [--page --perPage]
 chatbotx contact-scans create --inboxId <inboxId> --scanFromAt <scanFromAt>
+chatbotx contact-scans cancel --inboxId <inboxId>    # Cancel running Automatic Customer Scan for inbox
 ```
 
 ---

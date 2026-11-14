@@ -1,7 +1,6 @@
 import { contactScanService } from "@chatbotx.io/business"
 import type { ContactScanChannel } from "@chatbotx.io/utils/channel"
 import type {
-  ContactScanRunStatus,
   ListContactScanHistoryItem,
   ListContactScanHistoryResponse,
 } from "../schema/query"
@@ -29,12 +28,9 @@ export async function listContactScanHistoryRows(input: {
     data: data.map(
       (item): ListContactScanHistoryItem => ({
         ...item,
-        // A `type='contact_scan'` row can never carry the WhatsApp-only
-        // `waiting` status, nor any channel outside `CONTACT_SCAN_CHANNELS`
-        // — narrow both to the wire's scan-only types here, same as
-        // `getContactScanStatus`.
+        // A `type='contact_scan'` row can never carry a channel outside
+        // `CONTACT_SCAN_CHANNELS` — narrow it to the wire's scan-only type.
         channel: item.channel as ContactScanChannel,
-        status: item.status as ContactScanRunStatus,
       }),
     ),
     pageCount,
