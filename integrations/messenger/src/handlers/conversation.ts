@@ -104,6 +104,7 @@ const toThreadControlChannelError = (
         httpStatusCode: error.httpStatusCode,
         subCode: error.subCode ?? null,
         type: error.type,
+        reason: error.reason,
       })
     : error
 

@@ -4641,7 +4641,8 @@
       "failed": "Một tin nhắn gửi thất bại. Hãy gửi lại để tiếp tục gửi.",
       "unconfirmed": "Chưa xác nhận được tin nhắn cuối đã gửi. Hãy chọn có tiếp tục gửi hay không.",
       "continue": "Tiếp tục gửi",
-      "discard": "Bỏ qua"
+      "discard": "Hủy các tin đang chờ",
+      "dismiss": "Bỏ qua"
     }
   },
   "instagram": {

@@ -11,6 +11,17 @@ describe("contact scan job ids", () => {
     )
   })
 
+  it("a scheduler pick with a generation never repeats an id used before", () => {
+    expect(
+      buildContactScanJobId({ runId: "r1", attempts: 2, generation: 100 }),
+    ).toBe("contact-scan-r1-2-gen-100")
+    expect(
+      buildContactScanJobId({ runId: "r1", attempts: 2, generation: 100 }),
+    ).not.toBe(
+      buildContactScanJobId({ runId: "r1", attempts: 2, generation: 200 }),
+    )
+  })
+
   it("a forward continuation id is deterministic", () => {
     const input = { runId: "r1", attempts: 2, pageNumber: 6 }
     expect(buildContactScanPageJobId(input)).toBe("contact-scan-r1-2-page-6")

@@ -3,23 +3,7 @@
 import { messageService } from "@chatbotx.io/business"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { workspaceActionClient } from "@/lib/safe-action"
-import {
-  type ResendMessageRequest,
-  resendMessageRequest,
-} from "../schema/mutation"
-
-/** Shared by the builder action and the public route: one service call. */
-export const resendMessage = async (props: {
-  workspaceId: string
-  conversationId: string
-  parsedInput: ResendMessageRequest
-}) =>
-  await messageService.resendOutgoing({
-    workspaceId: props.workspaceId,
-    conversationId: props.conversationId,
-    messageId: props.parsedInput.id,
-    createdAt: props.parsedInput.createdAt,
-  })
+import { resendMessageRequest } from "../schema/mutation"
 
 export const resendMessageAction = workspaceActionClient
   .bindArgsSchemas([zodBigintAsString(), zodBigintAsString()])
@@ -30,5 +14,10 @@ export const resendMessageAction = workspaceActionClient
       parsedInput,
     } = props
 
-    return await resendMessage({ workspaceId, conversationId, parsedInput })
+    return await messageService.resendOutgoing({
+      workspaceId,
+      conversationId,
+      messageId: parsedInput.id,
+      createdAt: parsedInput.createdAt,
+    })
   })

@@ -82,10 +82,20 @@ export type ResendableMessageFields = {
   /** Empty on a row only the browser knows (a rejected submit): nothing to resend. */
   contactInboxId: string | null
   parentId?: string | null | undefined
+  deletedAt?: Date | null | undefined
 }
 
 /** `contentAttributes` key that keeps a private reply's comment createdAt (ISO string). */
 export const REPLY_TARGET_CREATED_AT_KEY = "replyToMessageCreatedAt"
+
+/** Same marker as the SDK's `getWhatsappCallPermissionRequest` (kept local: partials stay free of the SDK). */
+const isCallPermissionRequestAttributes = (
+  contentAttributes: unknown,
+): boolean =>
+  typeof contentAttributes === "object" &&
+  contentAttributes !== null &&
+  "type" in contentAttributes &&
+  contentAttributes.type === "whatsapp_call_permission_request"
 
 const hasReplyTargetCreatedAt = (contentAttributes: unknown): boolean =>
   typeof contentAttributes === "object" &&
@@ -121,6 +131,10 @@ export const isResendableMessage = (
     message.sendError !== null &&
     message.sourceId === null &&
     Boolean(message.contactInboxId) &&
+    !message.deletedAt &&
+    // A call-permission request is created behind its own gates (call access,
+    // Meta's request limits) that a plain resend would skip.
+    !isCallPermissionRequestAttributes(message.contentAttributes) &&
     // A reply to a comment can only be rebuilt when its createdAt was kept.
     (!message.parentId || hasReplyTargetCreatedAt(message.contentAttributes))
   )

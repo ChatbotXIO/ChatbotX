@@ -17,8 +17,8 @@ type SendQueueNoticeProps = {
 
 /**
  * Shown while messages typed after a failed (or unconfirmed) one are held back.
- * A failed message is resent from its own row; an unconfirmed one needs the
- * person to say whether to go on. Either way the held messages can be dropped.
+ * A failed message is resent from its own row (when it can be); either way the
+ * person can go on regardless or drop what is held.
  */
 export function SendQueueNotice({
   heldCount,
@@ -46,18 +46,15 @@ export function SendQueueNotice({
         </span>
       </p>
       <div className="flex flex-wrap justify-end gap-2">
-        {isUnconfirmed && (
-          <Button
-            onClick={onContinue}
-            size="sm"
-            type="button"
-            variant="outline"
-          >
-            {t("messages.sendQueue.continue")}
-          </Button>
-        )}
+        <Button onClick={onContinue} size="sm" type="button" variant="outline">
+          {t("messages.sendQueue.continue")}
+        </Button>
         <Button onClick={onDiscard} size="sm" type="button" variant="ghost">
-          {t("messages.sendQueue.discard")}
+          {t(
+            heldCount > 0
+              ? "messages.sendQueue.discard"
+              : "messages.sendQueue.dismiss",
+          )}
         </Button>
       </div>
     </div>

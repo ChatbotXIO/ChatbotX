@@ -5752,7 +5752,8 @@
       "failed": "Ett meddelande kunde inte skickas. Skicka det igen för att fortsätta.",
       "unconfirmed": "Vi kunde inte bekräfta att det senaste meddelandet skickades. Välj om du vill fortsätta skicka.",
       "continue": "Fortsätt skicka",
-      "discard": "Avfärda"
+      "discard": "Kasta meddelanden i kön",
+      "dismiss": "Avfärda"
     }
   },
   "messenger": {

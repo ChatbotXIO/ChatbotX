@@ -320,11 +320,33 @@ describe("a lost answer", () => {
     expect(isSendQueueLocked(queue)).toBe(true)
   })
 
-  test("a late answer after the expiry changes nothing", () => {
+  test("a late success after the expiry lifts the hold so the queue goes on", () => {
     let queue = submitNext(queueWith("a", "b"), 0)
     queue = expireInFlightSend(queue, AGENT_SEND_CONFIRM_TIMEOUT_MS)
 
-    expect(settleSend(queue, { clientId: "a", error: null }, 40_000)).toBe(
+    queue = settleSend(queue, { clientId: "a", error: null }, 40_000)
+
+    expect(queue.holdReason).toBeNull()
+    expect(nextSendToSubmit(queue, 40_000 + AGENT_SEND_GAP_MS)?.clientId).toBe(
+      "b",
+    )
+  })
+
+  test("a late failure after the expiry turns the hold into a failure", () => {
+    let queue = submitNext(queueWith("a", "b"), 0)
+    queue = expireInFlightSend(queue, AGENT_SEND_CONFIRM_TIMEOUT_MS)
+
+    queue = settleSend(queue, { clientId: "a", error: "refused" }, 40_000)
+
+    expect(queue.holdReason).toBe("failed")
+    expect(queue.waiting.map((item) => item.clientId)).toEqual(["b"])
+  })
+
+  test("a late answer for some other message changes nothing", () => {
+    let queue = submitNext(queueWith("a", "b"), 0)
+    queue = expireInFlightSend(queue, AGENT_SEND_CONFIRM_TIMEOUT_MS)
+
+    expect(settleSend(queue, { clientId: "zzz", error: null }, 40_000)).toBe(
       queue,
     )
   })

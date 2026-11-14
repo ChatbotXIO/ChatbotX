@@ -4599,7 +4599,8 @@
       "failed": "Viestin lähetys epäonnistui. Lähetä se uudelleen jatkaaksesi.",
       "unconfirmed": "Emme voineet vahvistaa, että viimeisin viesti lähetettiin. Valitse, jatketaanko lähettämistä.",
       "continue": "Jatka lähettämistä",
-      "discard": "Hylkää"
+      "discard": "Hylkää jonossa olevat viestit",
+      "dismiss": "Hylkää"
     }
   },
   "instagram": {

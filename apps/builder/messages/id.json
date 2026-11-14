@@ -4599,7 +4599,8 @@
       "failed": "Sebuah pesan gagal terkirim. Kirim ulang untuk melanjutkan.",
       "unconfirmed": "Kami tidak dapat memastikan pesan terakhir terkirim. Pilih apakah akan terus mengirim.",
       "continue": "Lanjutkan pengiriman",
-      "discard": "Tutup"
+      "discard": "Buang pesan dalam antrean",
+      "dismiss": "Tutup"
     }
   },
   "instagram": {

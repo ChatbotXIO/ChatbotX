@@ -220,6 +220,34 @@ const matchesInFlight = (
   (signal.messageId !== undefined && signal.messageId === inFlight.messageId)
 
 /**
+ * The answer for a message the queue already stopped waiting for (the 30 s
+ * "unconfirmed" hold): it is now known, so the hold becomes a failure or ends.
+ * Any other message's answer changes nothing.
+ */
+const settleLateSend = <TInput>(
+  queue: SendQueue<TInput>,
+  signal: SendResultSignal,
+  now: number,
+): SendQueue<TInput> => {
+  const isLateAnswer =
+    queue.holdReason === SEND_QUEUE_HOLD_REASONS.unconfirmed &&
+    queue.heldBy !== null &&
+    sameMessage(queue.heldBy, signal)
+  if (!isLateAnswer) {
+    return queue
+  }
+  if (signal.error === null) {
+    return {
+      ...queue,
+      holdReason: null,
+      heldBy: null,
+      nextAllowedAt: now + AGENT_SEND_GAP_MS,
+    }
+  }
+  return { ...queue, holdReason: SEND_QUEUE_HOLD_REASONS.failed }
+}
+
+/**
  * Applies the channel's answer. A result for a message that is not the one in
  * flight (another tab's, an old retry, the clearing of an error) changes
  * nothing.
@@ -230,7 +258,7 @@ export const settleSend = <TInput>(
   now: number,
 ): SendQueue<TInput> => {
   if (!(queue.inFlight && matchesInFlight(queue.inFlight, signal))) {
-    return queue
+    return settleLateSend(queue, signal, now)
   }
   if (signal.error === null) {
     return {

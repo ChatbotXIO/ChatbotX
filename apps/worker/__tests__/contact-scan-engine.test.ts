@@ -147,6 +147,7 @@ const { runContactScan } = await import(
   "../src/integration/handlers/contact-scan/engine"
 )
 
+const RESTARTED_WALK_JOB_ID = /^contact-scan-run-1-\d+-page-\d+-gen-\d+$/
 const SAME_PAGE_RETRY_JOB_ID = /^contact-scan-run-1-3-page-4-gen-\d+$/
 const RUN_ID = "run-1"
 const WORKSPACE_ID = "ws-1"
@@ -405,6 +406,31 @@ describe("runContactScan", () => {
       expect(mockFinish).toHaveBeenCalledWith(
         expect.objectContaining({ runId: RUN_ID, expect: EXPECT_GUARD }),
       )
+    })
+
+    it("after a restart from page 1 the next chunk gets a unique job id, so it cannot collide with one used earlier", async () => {
+      mockClaim.mockResolvedValue(
+        baseRun({ resumeCursor: "stale-cursor", currentPageNumber: 5 }),
+      )
+      mockClassifyError.mockReturnValue("unknown")
+      const startedAt = Date.now()
+      mockListPage
+        .mockRejectedValueOnce(new Error("invalid paging cursor"))
+        .mockImplementationOnce(() => {
+          vi.spyOn(Date, "now").mockReturnValue(startedAt + 5 * 60 * 1000)
+          return Promise.resolve({ entries: [], after: "cursor-2" })
+        })
+
+      await runContactScan({ runId: RUN_ID, workspaceId: WORKSPACE_ID })
+
+      expect(mockQueueAdd).toHaveBeenCalledWith(
+        "contactScan",
+        expect.anything(),
+        expect.objectContaining({
+          jobId: expect.stringMatching(RESTARTED_WALK_JOB_ID),
+        }),
+      )
+      vi.restoreAllMocks()
     })
 
     it("a RETRYABLE first-page failure does not clear the cursor — it goes straight to error classification", async () => {

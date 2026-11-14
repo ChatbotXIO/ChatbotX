@@ -5752,7 +5752,8 @@
       "failed": "有一条消息发送失败。请重新发送以继续。",
       "unconfirmed": "无法确认最后一条消息是否已发送。请选择是否继续发送。",
       "continue": "继续发送",
-      "discard": "忽略"
+      "discard": "丢弃排队中的消息",
+      "dismiss": "忽略"
     }
   },
   "messenger": {

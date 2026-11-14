@@ -4599,7 +4599,8 @@
       "failed": "Un message n'a pas pu être envoyé. Renvoyez-le pour continuer.",
       "unconfirmed": "Nous n'avons pas pu confirmer l'envoi du dernier message. Choisissez de continuer ou non.",
       "continue": "Continuer l'envoi",
-      "discard": "Ignorer"
+      "discard": "Supprimer les messages en attente",
+      "dismiss": "Ignorer"
     }
   },
   "instagram": {

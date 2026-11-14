@@ -1212,7 +1212,9 @@ export const createChatStore = (initialState: ChatStoreInitialState = {}) => {
             changed ||= next !== queue
             sendQueues[conversationId] = next
           }
-          return changed ? { sendQueues } : state
+          return changed
+            ? { sendQueues: pruneIdleSendQueues(sendQueues, Date.now()) }
+            : state
         })
       },
 

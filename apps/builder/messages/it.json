@@ -4599,7 +4599,8 @@
       "failed": "Un messaggio non è stato inviato. Invialo di nuovo per continuare.",
       "unconfirmed": "Non siamo riusciti a confermare l'invio dell'ultimo messaggio. Scegli se continuare a inviare.",
       "continue": "Continua a inviare",
-      "discard": "Ignora"
+      "discard": "Elimina i messaggi in coda",
+      "dismiss": "Ignora"
     }
   },
   "instagram": {

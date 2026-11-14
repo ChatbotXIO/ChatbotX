@@ -4599,7 +4599,8 @@
       "failed": "Uma mensagem não foi enviada. Reenvie-a para continuar.",
       "unconfirmed": "Não foi possível confirmar o envio da última mensagem. Escolha se quer continuar a enviar.",
       "continue": "Continuar a enviar",
-      "discard": "Dispensar"
+      "discard": "Descartar mensagens em fila",
+      "dismiss": "Dispensar"
     }
   },
   "instagram": {

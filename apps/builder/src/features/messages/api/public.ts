@@ -16,7 +16,6 @@ import {
 import { changeMessageAttributes } from "@/features/messages/actions/change-message-attributes.action"
 import { deleteMessage } from "@/features/messages/actions/delete-message.action"
 import { editMessage } from "@/features/messages/actions/edit-message.action"
-import { resendMessage } from "@/features/messages/actions/resend-message.action"
 import { getWhatsappFlowResponseView } from "@/features/messages/lib/get-whatsapp-flow-response"
 import { sendWhatsappTemplateToConversation } from "@/features/messages/lib/send-whatsapp-template"
 import { listMessages } from "@/features/messages/queries"
@@ -329,10 +328,11 @@ export const messagesPublicRouter = {
     .errors(possibleErrorsOnResendingMessage)
     .handler(async ({ context, input }) => {
       await assertConversationAccessForCaller(context, input.conversationId)
-      return await resendMessage({
+      return await messageService.resendOutgoing({
         workspaceId: context.workspace.id,
         conversationId: input.conversationId,
-        parsedInput: { id: input.messageId, createdAt: input.createdAt },
+        messageId: input.messageId,
+        createdAt: input.createdAt,
       })
     }),
 

@@ -4599,7 +4599,8 @@
       "failed": "En besked kunne ikke sendes. Send den igen for at fortsætte.",
       "unconfirmed": "Vi kunne ikke bekræfte, at den sidste besked blev sendt. Vælg, om du vil fortsætte.",
       "continue": "Fortsæt med at sende",
-      "discard": "Afvis"
+      "discard": "Kassér beskeder i kø",
+      "dismiss": "Afvis"
     }
   },
   "instagram": {

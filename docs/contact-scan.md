@@ -55,10 +55,10 @@ scanContactScans cron (1 min, distributedLock)  ── pickDueRuns({ type:'conta
    │
 runContactScan engine ── claimContactScanRun (mints claimToken) ── walk /conversations DESC
    │   stop at scanFromAt (ceiling); skip above lastSyncedAt (frontier); bulkImportChannelContacts per page
-   │   4-min chunk budget → yieldForContinuation (release token, stay 'running') → enqueue next chunk → reclaim
+   │   chunk (5 pages or 4 min) → yieldForContinuation (release token, stay 'running') → enqueue next chunk → reclaim
    ├── done          → succeeded | partial (page cap) | failed
    ├── cancelled     → partial + `cancelled` sentinel (operator Cancel, or channel disconnected)
-   ├── rate limit / high usage → park (running, no claim) + delayed job; attempts untouched
+   ├── rate limit / high usage → park (running, no claim) + delayed job; attempts reset to 1
    ├── transient err → retryOrFail: back to 'init' for the sweeper, or failed on the 5th in a row
    └── auth/permission err → failed (currentError sentinel)
 ```
@@ -69,8 +69,9 @@ runContactScan engine ── claimContactScanRun (mints claimToken) ── walk 
   The worker's next write is fenced out, so at most the page in flight finishes.
   It is shown as `cancelled` (one mapping, `resolveContactScanRunStatus`, used by
   the status view and the history list; no new enum value). Nothing running is
-  `cancelled: false`, not an error. Disconnecting Messenger or Instagram cancels
-  the integration's scan in the same transaction. A cancelled scan still counts
+  `cancelled: false`, not an error. Disconnecting Messenger or Instagram from the
+  inbox cancels the integration's scan in the same transaction (workspace
+  teardown instead ends it as failed, since the workspace is going away). A cancelled scan still counts
   toward the 24 h cooldown (measured from `createdAt`).
 - **Cooldown**: 24 h from `createdAt` before the same inbox can scan again
   (`resolveContactScanAvailability`). ETA shown to the user is `createdAt + 4 h`
@@ -131,7 +132,8 @@ worker slot. The scan path no longer uses `withInlineRetry` or
   scan back off without changing how messages are sent.
 - **Error accounting**: `attempts` is the sweeper's pick count, so a running
   claim is 1 and the Nth consecutive failure sees N. A finished page resets it
-  to 1 (same write as the heartbeat); a rate limit leaves it alone; a
+  to 1 (same write as the heartbeat); so does the release for a rate-limit
+  wait (an idle released run must not be failed by the sweeper); a
   transient failure goes through `retryOrFailContactScanRun`, one atomic UPDATE
   that returns the run to `init` or, on the 5th failure in a row, fails it at
   once (it cannot wait for `markMaxAttemptsFailed`).

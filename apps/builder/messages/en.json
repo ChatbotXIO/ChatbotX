@@ -5281,7 +5281,8 @@
       "failed": "A message failed to send. Resend it to continue sending.",
       "unconfirmed": "We couldn't confirm the last message was sent. Choose whether to keep sending.",
       "continue": "Keep sending",
-      "discard": "Dismiss"
+      "discard": "Discard queued messages",
+      "dismiss": "Dismiss"
     }
   },
   "instagram": {

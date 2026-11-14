@@ -1910,7 +1910,8 @@
       "failed": "有一則訊息傳送失敗。請重新傳送以繼續。",
       "unconfirmed": "無法確認最後一則訊息是否已傳送。請選擇是否繼續傳送。",
       "continue": "繼續傳送",
-      "discard": "忽略"
+      "discard": "捨棄佇列中的訊息",
+      "dismiss": "忽略"
     }
   },
   "productCategories": {

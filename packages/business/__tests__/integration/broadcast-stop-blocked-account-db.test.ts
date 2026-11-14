@@ -58,6 +58,8 @@ const workspaceId = createId()
 const blockedInboxId = createId()
 const otherInboxId = createId()
 const messengerIntegrationId = createId()
+const otherMessengerIntegrationId = createId()
+const otherWorkspaceId = createId()
 
 const baseRow = {
   workspaceId,
@@ -203,6 +205,51 @@ describe.skipIf(!databaseUrl)("stopSendingForBlockedAccount", () => {
     await db
       .delete(integrationMessengerModel)
       .where(eq(integrationMessengerModel.id, messengerIntegrationId))
+  })
+
+  test("legacy by integration: a broadcast pinned to ANOTHER page's integration keeps sending", async () => {
+    await db.insert(integrationMessengerModel).values({
+      id: otherMessengerIntegrationId,
+      name: "Other integration",
+      pageId: `page-${otherMessengerIntegrationId}`,
+      auth: {},
+      conversationStarters: [],
+      persistentMenus: [],
+      personas: [],
+      coexistEnabled: false,
+      coexistAiReadsSyncedHistory: false,
+      hasCapiScope: false,
+      workspaceId,
+      inboxId: otherInboxId,
+    })
+    const pinnedElsewhere = await insertBroadcast({
+      integrationMessengerId: otherMessengerIntegrationId,
+    })
+
+    const { stoppedIds } = await stop()
+
+    expect(stoppedIds).not.toContain(pinnedElsewhere)
+    expect((await readRow(pinnedElsewhere)).status).toBe("sending")
+    await db
+      .delete(integrationMessengerModel)
+      .where(eq(integrationMessengerModel.id, otherMessengerIntegrationId))
+  })
+
+  test("another workspace's whole-channel broadcast is never stopped", async () => {
+    await db
+      .insert(workspaceModel)
+      .values({ id: otherWorkspaceId, name: "stop-blocked-other", ownerId })
+    const foreign = await insertBroadcast({ workspaceId: otherWorkspaceId })
+
+    await stop()
+
+    expect((await readRow(foreign)).status).toBe("sending")
+    await db
+      .delete(broadcastModel)
+      .where(eq(broadcastModel.workspaceId, otherWorkspaceId))
+    await db
+      .delete(workspaceModel)
+      .where(eq(workspaceModel.id, otherWorkspaceId))
   })
 
   test("rows that are not sending are untouched, and a second call is a no-op", async () => {

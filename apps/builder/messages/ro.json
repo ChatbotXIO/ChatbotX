@@ -4599,7 +4599,8 @@
       "failed": "Un mesaj nu a putut fi trimis. Retrimite-l pentru a continua.",
       "unconfirmed": "Nu am putut confirma că ultimul mesaj a fost trimis. Alege dacă vrei să continui trimiterea.",
       "continue": "Continuă trimiterea",
-      "discard": "Închide"
+      "discard": "Renunță la mesajele din coadă",
+      "dismiss": "Închide"
     }
   },
   "instagram": {

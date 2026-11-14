@@ -1,9 +1,8 @@
 "use client"
 
 import { Button } from "@chatbotx.io/ui/components/ui/button"
-import { Loader2Icon, RotateCcwIcon } from "lucide-react"
+import { RotateCcwIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
-import { useState } from "react"
 import { toast } from "sonner"
 import { useChatStore } from "../../chat/store/chat-store-provider"
 import { resendMessageAction } from "../actions/resend-message.action"
@@ -38,10 +37,8 @@ export function ResendMessageButton({ message }: ResendMessageButtonProps) {
   const markMessageFailed = useChatStore((state) => state.markMessageFailed)
   const updateSendQueue = useChatStore((state) => state.updateSendQueue)
   const updateAllSendQueues = useChatStore((state) => state.updateAllSendQueues)
-  const [isPending, setIsPending] = useState(false)
 
   const resend = async () => {
-    setIsPending(true)
     markMessageFailed(message.id, undefined, null)
     const ref = { messageId: message.id, clientId: message.clientId }
     const now = Date.now()
@@ -71,25 +68,18 @@ export function ResendMessageButton({ message }: ResendMessageButtonProps) {
       restore(
         error instanceof Error ? error.message : t("messages.unknownError"),
       )
-    } finally {
-      setIsPending(false)
     }
   }
 
   return (
     <Button
       className="self-center"
-      disabled={isPending}
       onClick={resend}
       size="sm"
       type="button"
       variant="ghost"
     >
-      {isPending ? (
-        <Loader2Icon aria-hidden className="size-3.5 animate-spin" />
-      ) : (
-        <RotateCcwIcon aria-hidden className="size-3.5" />
-      )}
+      <RotateCcwIcon aria-hidden className="size-3.5" />
       {t("actions.resend")}
     </Button>
   )

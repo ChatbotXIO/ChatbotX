@@ -4599,7 +4599,8 @@
       "failed": "Een bericht kon niet worden verzonden. Verstuur het opnieuw om door te gaan.",
       "unconfirmed": "We konden niet bevestigen dat het laatste bericht is verzonden. Kies of je wilt doorgaan met verzenden.",
       "continue": "Doorgaan met verzenden",
-      "discard": "Sluiten"
+      "discard": "Berichten in de wachtrij verwijderen",
+      "dismiss": "Sluiten"
     }
   },
   "instagram": {

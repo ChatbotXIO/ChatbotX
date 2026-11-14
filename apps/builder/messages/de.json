@@ -4599,7 +4599,8 @@
       "failed": "Eine Nachricht konnte nicht gesendet werden. Sende sie erneut, um fortzufahren.",
       "unconfirmed": "Wir konnten nicht bestätigen, dass die letzte Nachricht gesendet wurde. Wähle, ob du weitersenden möchtest.",
       "continue": "Weitersenden",
-      "discard": "Schließen"
+      "discard": "Wartende Nachrichten verwerfen",
+      "dismiss": "Schließen"
     }
   },
   "instagram": {

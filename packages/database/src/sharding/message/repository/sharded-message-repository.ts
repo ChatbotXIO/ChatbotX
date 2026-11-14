@@ -820,7 +820,7 @@ export class ShardedMessageRepository implements IMessageRepository {
       { sendError: null },
       "claimForResend",
       params.createdAt,
-      sql`${messageModel.sendError} IS NOT NULL AND ${messageModel.sourceId} IS NULL`,
+      sql`${messageModel.sendError} IS NOT NULL AND ${messageModel.sourceId} IS NULL AND ${messageModel.deletedAt} IS NULL`,
     )
   }
 

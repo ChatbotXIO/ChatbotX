@@ -544,11 +544,14 @@ export async function sendMessageToChannel(
     })
     logger.error(error, "An error occurred while sending the message")
     const errorData = await parseSdkError(error)
-    const willRetry = willSendRetry({
-      error,
-      channel: contactInbox.channel,
-      willRetryOnThrow,
-    })
+    // A reconciled error returns instead of throwing, so it is never retried.
+    const willRetry =
+      !isReconciledSendError &&
+      willSendRetry({
+        error,
+        channel: contactInbox.channel,
+        willRetryOnThrow,
+      })
     await emit(messageEventTypeSchema.enum["message:failed"], {
       context: {
         workspaceId: conversation.workspaceId,
@@ -921,7 +924,7 @@ const queueConversationScopedMessageEvent = async (input: {
  * published for inbox sends only (broadcasts, flows and sequences stay silent).
  */
 const publishInboxSendConfirmation = async (input: {
-  sendFrom: "inbox" | undefined
+  sendFrom: ChatJobSendChannelMessage["data"]["sendFrom"]
   silent: boolean
   conversation: Pick<ConversationModel, "id" | "workspaceId">
   message: Pick<MessageModel, "id"> & { clientId?: string | undefined }

@@ -30,6 +30,11 @@ describe("isResendableMessage", () => {
     ["sent by a bot", { senderType: "bot" }],
     ["incoming", { messageType: "incoming" }],
     ["a public comment reply", { type: "comment" }],
+    ["deleted", { deletedAt: new Date("2026-11-01T00:00:00Z") }],
+    [
+      "a call-permission request",
+      { contentAttributes: { type: "whatsapp_call_permission_request" } },
+    ],
   ])("%s is not resendable", (_name, override) => {
     expect(isResendableMessage({ ...failed, ...override })).toBe(false)
   })

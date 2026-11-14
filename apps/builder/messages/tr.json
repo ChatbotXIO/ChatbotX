@@ -4599,7 +4599,8 @@
       "failed": "Bir mesaj gönderilemedi. Devam etmek için yeniden gönderin.",
       "unconfirmed": "Son mesajın gönderildiği doğrulanamadı. Göndermeye devam edip etmeyeceğinizi seçin.",
       "continue": "Göndermeye devam et",
-      "discard": "Kapat"
+      "discard": "Kuyruktaki mesajları sil",
+      "dismiss": "Kapat"
     }
   },
   "instagram": {

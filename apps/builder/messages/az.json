@@ -5281,7 +5281,8 @@
       "failed": "Mesaj göndərilmədi. Göndərməyə davam etmək üçün onu yenidən göndərin.",
       "unconfirmed": "Son mesajın göndərildiyini təsdiqləyə bilmədik. Göndərməyə davam edib-etməyəcəyinizi seçin.",
       "continue": "Göndərməyə davam et",
-      "discard": "Bağla"
+      "discard": "Növbədəki mesajları sil",
+      "dismiss": "Bağla"
     }
   },
   "instagram": {

@@ -158,7 +158,13 @@ export function ContactScanHistoryTable({
         size: 280,
         header: t("contactScan.histories.columns.error"),
         cell: ({ row }) => (
-          <ContactScanHistoryErrorCell error={row.original.currentError} />
+          <ContactScanHistoryErrorCell
+            error={
+              row.original.status === "cancelled"
+                ? null
+                : row.original.currentError
+            }
+          />
         ),
         enableSorting: false,
         enableHiding: false,

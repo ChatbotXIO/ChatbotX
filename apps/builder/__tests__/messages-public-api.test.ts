@@ -53,6 +53,7 @@ const conversationService = {
 const messageService = {
   findByIdWithUrls: vi.fn(),
   createOutgoing: vi.fn(),
+  resendOutgoing: vi.fn(),
 }
 const resolveTemplateParams = vi.fn()
 vi.mock("@chatbotx.io/business", () => ({
@@ -96,11 +97,6 @@ vi.mock("@/features/messages/actions/edit-message.action", () => ({
 const deleteMessage = vi.fn()
 vi.mock("@/features/messages/actions/delete-message.action", () => ({
   deleteMessage,
-}))
-
-const resendMessage = vi.fn()
-vi.mock("@/features/messages/actions/resend-message.action", () => ({
-  resendMessage,
 }))
 
 const changeMessageAttributes = vi.fn()
@@ -419,19 +415,23 @@ describe("POST /v1/conversations/{conversationId}/messages/{messageId}/resend", 
     expect(procedure.route.tags).toContain("Messages")
   })
 
-  test("delegates to resendMessage with the id field it expects and returns its result", async () => {
+  test("delegates to messageService.resendOutgoing with the id field it expects and returns its result", async () => {
     const createdAt = new Date("2026-01-01T00:00:00Z")
-    resendMessage.mockResolvedValueOnce({ id: "msg-1", queued: true })
+    messageService.resendOutgoing.mockResolvedValueOnce({
+      id: "msg-1",
+      queued: true,
+    })
 
     const result = await procedure.handler?.({
       context,
       input: { conversationId: "conv-1", messageId: "msg-1", createdAt },
     })
 
-    expect(resendMessage).toHaveBeenCalledWith({
+    expect(messageService.resendOutgoing).toHaveBeenCalledWith({
       workspaceId: "ws-1",
       conversationId: "conv-1",
-      parsedInput: { id: "msg-1", createdAt },
+      messageId: "msg-1",
+      createdAt,
     })
     expect(result).toEqual({ id: "msg-1", queued: true })
   })
@@ -452,7 +452,7 @@ describe("POST /v1/conversations/{conversationId}/messages/{messageId}/resend", 
       }),
     ).rejects.toThrow("Conversation not found")
 
-    expect(resendMessage).not.toHaveBeenCalled()
+    expect(messageService.resendOutgoing).not.toHaveBeenCalled()
   })
 })
 

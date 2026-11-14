@@ -38,7 +38,7 @@ type ContinuationInput = {
   pageNumber: number
   expect: CoexistRunWriteGuard
   delayMs: number
-  /** Set when the next chunk re-runs the SAME page: its job id must be unique. */
+  /** Set when the next chunk's page number may already have been used (a same-page retry, a restarted walk): its job id must be unique. */
   retriesSamePage: boolean
   /** Writes `attempts = 1` with the release (a wait that is not a failure). */
   resetAttempts?: boolean
@@ -249,6 +249,9 @@ export const runContactScan = async (
   // rejected-resume-cursor recovery (clear + restart from page 1); every
   // later page failure goes straight to the outer error classification.
   let firstPageCursorRecoveryAvailable = Boolean(cursor)
+  // After a cursor restart the page numbers count again from 1, so a later
+  // continuation id could equal one used earlier in this run.
+  let walkRestarted = false
 
   // Pages walked in THIS chunk, and a wait the pacing asked for after a page.
   let pagesInChunk = 0
@@ -319,6 +322,7 @@ export const runContactScan = async (
           )
           cursor = undefined
           pageNumber = 0
+          walkRestarted = true
           continue
         }
         throw error
@@ -469,7 +473,7 @@ export const runContactScan = async (
         pageNumber,
         expect,
         delayMs: nextChunkDelayMs,
-        retriesSamePage: false,
+        retriesSamePage: walkRestarted,
       })
       return
     }

@@ -60,6 +60,11 @@ vi.mock("@chatbotx.io/analytics", () => ({
   commentAutomationAnalyticsService: { settleEvent: mockSettleEvent },
 }))
 
+const mockReconcileAccountSendBlocked = vi.hoisted(() => vi.fn())
+vi.mock("../src/chat/handlers/account-send-blocked", () => ({
+  reconcileAccountSendBlocked: mockReconcileAccountSendBlocked,
+}))
+
 vi.mock("@chatbotx.io/business", () => ({
   contactActivityService: { recordDelivered: mockRecordDelivered },
   contactInboxService: {
@@ -922,6 +927,62 @@ describe("chat send-message handlers", () => {
 
     expect(mockUpdateSourceId).not.toHaveBeenCalled()
     expect(mockEmit.mock.calls.filter(isBotSentDashboardCall)).toHaveLength(0)
+  })
+
+  describe("hands the broadcast metadata to the account-block reconciler", () => {
+    const metadata = { type: "broadcast", broadcastId: "b-1" }
+
+    test("when sendMessageToChannel's send is refused", async () => {
+      mockReconcileAccountSendBlocked.mockResolvedValue(false)
+      mockRunChannelHandler.mockRejectedValueOnce(new Error("blocked"))
+
+      await sendMessageToChannel({
+        conversation: conversation as never,
+        contactInbox: contactInbox as never,
+        message: {
+          id: "msg-1",
+          workspaceId: "ws-1",
+          conversationId: "conv-1",
+          contactInboxId: "ci-1",
+          contentType: "text",
+          messageType: "outgoing",
+          senderType: "bot",
+          text: "hello",
+          createdAt: new Date("2026-09-15T06:11:52.105Z"),
+        } as never,
+        metadata: metadata as never,
+      }).catch(() => undefined)
+
+      expect(mockReconcileAccountSendBlocked).toHaveBeenCalledWith(
+        expect.objectContaining({ metadata }),
+      )
+    })
+
+    test("when sendFlowStepToChannel's send is refused", async () => {
+      mockReconcileAccountSendBlocked.mockResolvedValue(false)
+      mockRunChannelHandler.mockRejectedValueOnce(new Error("blocked"))
+
+      await sendFlowStepToChannel({
+        conversation: conversation as never,
+        contactInbox: contactInbox as never,
+        flowId: "flow-1",
+        step: {
+          id: "step-1",
+          nodeId: "node-1",
+          stepType: "sendText",
+          text: "hello",
+        } as never,
+        metadata: metadata as never,
+        botSentAnalytics: {
+          triggerHandler: "sendFlowStepToChannel",
+          triggerType: "message_bot_sent_flow_step_channel",
+        },
+      }).catch(() => undefined)
+
+      expect(mockReconcileAccountSendBlocked).toHaveBeenCalledWith(
+        expect.objectContaining({ metadata }),
+      )
+    })
   })
 
   test("passes sendFrom to sendFlowStep channel handler", async () => {

@@ -224,7 +224,7 @@ export const deleteMessageRequest = z.object({
 export type DeleteMessageRequest = z.infer<typeof deleteMessageRequest>
 
 export const resendMessageRequest = z.object({
-  id: z.string().min(1),
+  id: zodBigintAsString().describe("Message id."),
   createdAt: z.coerce.date(),
 })
 export type ResendMessageRequest = z.infer<typeof resendMessageRequest>

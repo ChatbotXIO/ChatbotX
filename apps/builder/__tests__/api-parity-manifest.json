@@ -350,7 +350,6 @@
     "messages/delete-message.action:deleteMessageAction": "covered:messages",
     "messages/edit-message.action:editMessage": "covered:messages",
     "messages/edit-message.action:editMessageAction": "covered:messages",
-    "messages/resend-message.action:resendMessage": "covered:messages",
     "messages/resend-message.action:resendMessageAction": "covered:messages",
     "messages/generate-call-ai-summary.action:generateCallAiSummaryAction": "covered:messages",
     "messages/get-call-recording-url.action:getCallRecordingUrlAction": "covered:messages",

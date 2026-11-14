@@ -34,7 +34,7 @@ afterEach(() => {
 })
 
 describe("SendQueueNotice", () => {
-  test("after a failure it says how many are held and offers only Discard (the resend is on the failed message)", () => {
+  test("after a failure it says so and offers to keep sending or discard the queued messages", () => {
     const onDiscard = vi.fn()
     const onContinue = vi.fn()
     const el = render({
@@ -46,14 +46,26 @@ describe("SendQueueNotice", () => {
 
     expect(el.getAttribute("role")).toBeNull()
     expect(el.querySelector('[role="alert"]')).not.toBeNull()
-    expect(el.textContent).toContain("messages.sendQueue.failed:3")
-    expect(buttonWithText(el, "messages.sendQueue.continue")).toBeUndefined()
+    expect(el.textContent).toContain("messages.sendQueue.failed")
+    expect(buttonWithText(el, "messages.sendQueue.continue")).toBeDefined()
 
     act(() => {
       buttonWithText(el, "messages.sendQueue.discard")?.click()
     })
     expect(onDiscard).toHaveBeenCalledTimes(1)
     expect(onContinue).not.toHaveBeenCalled()
+  })
+
+  test("with nothing queued the discard button reads Dismiss", () => {
+    const el = render({
+      heldCount: 0,
+      reason: "failed",
+      onContinue: vi.fn(),
+      onDiscard: vi.fn(),
+    })
+
+    expect(buttonWithText(el, "messages.sendQueue.dismiss")).toBeDefined()
+    expect(buttonWithText(el, "messages.sendQueue.discard")).toBeUndefined()
   })
 
   test("after a lost answer it offers to send the rest or discard them", () => {
@@ -66,7 +78,7 @@ describe("SendQueueNotice", () => {
       onDiscard,
     })
 
-    expect(el.textContent).toContain("messages.sendQueue.unconfirmed:2")
+    expect(el.textContent).toContain("messages.sendQueue.unconfirmed")
 
     act(() => {
       buttonWithText(el, "messages.sendQueue.continue")?.click()

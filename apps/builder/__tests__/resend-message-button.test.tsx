@@ -112,7 +112,6 @@ describe("ResendMessageButton", () => {
     const { conversationId, update } = lastQueueUpdate(0)
     expect(conversationId).toBe("conv-1")
     expect(update(createSendQueue()).inFlight?.messageId).toBe("msg-1")
-    expect(el.querySelector("button")?.disabled).toBe(true)
 
     await act(async () => finish({ data: { id: "msg-1", queued: true } }))
     expect(toast.error).not.toHaveBeenCalled()
