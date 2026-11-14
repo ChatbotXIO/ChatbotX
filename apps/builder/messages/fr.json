@@ -319,6 +319,31 @@
         "noMatches": "No matching chunks were found.",
         "agentHasNoFiles": "This agent has no knowledge files."
       }
+    },
+    "create": {
+      "trigger": "Ajouter des connaissances",
+      "title": "Ajouter des connaissances",
+      "description": "Importez un fichier ou récupérez-le depuis une URL publique. L'agent IA recherche dans son contenu pour répondre.",
+      "tabs": {
+        "fromUrl": "Depuis une URL"
+      },
+      "urlHelp": "Un lien direct vers un fichier pris en charge, un lien Google Docs, Sheets ou Slides partagé publiquement, ou une page web statique. Le contenu généré par JavaScript peut manquer.",
+      "snapshotNotice": "L'URL est téléchargée une seule fois sous forme d'instantané. Les modifications ultérieures de la source ne sont pas synchronisées ; ajoutez-la à nouveau pour la mettre à jour.",
+      "uploadFailed": "Échec de l'envoi de {name}",
+      "rateLimited": "Trop d'imports depuis une URL. Veuillez patienter quelques secondes et réessayer.",
+      "errors": {
+        "urlNotAllowed": "Cette URL n'est pas autorisée. Utilisez une adresse Internet publique.",
+        "invalidUrl": "L'URL n'est pas valide. Utilisez un lien http(s) complet sans nom d'utilisateur ni mot de passe.",
+        "googleFileNotPublic": "Ce fichier Google n'est pas partagé publiquement. Réglez l'accès général sur « Tous les utilisateurs disposant du lien » et réessayez.",
+        "googlePublishedNotSupported": "Les liens Google « Publier sur le Web » ne sont pas pris en charge. Partagez le fichier publiquement et utilisez son lien habituel.",
+        "unsupportedFileType": "Ce type de fichier n'est pas pris en charge comme connaissance.",
+        "fileTooLarge": "Le fichier dépasse {maxSize}.",
+        "downloadTimedOut": "Le téléchargement a pris trop de temps. Essayez un fichier plus petit ou un hébergeur plus rapide.",
+        "downloadFailed": "La source a renvoyé une erreur. Vérifiez que le lien s'ouvre sans connexion.",
+        "tooManyRedirects": "L'URL effectue trop de redirections.",
+        "invalidRedirect": "L'URL redirige vers une adresse non valide.",
+        "uploadPathNotAllowed": "Le fichier envoyé n'est pas autorisé. Veuillez l'envoyer à nouveau."
+      }
     }
   },
   "aiFunctions": {

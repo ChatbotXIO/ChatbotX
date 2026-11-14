@@ -29,6 +29,7 @@ export type ApiRateLimitScope =
   | "invitation-start-rate-limit"
   | "ai-file-search-rate-limit"
   | "ai-file-reindex-rate-limit"
+  | "ai-file-create-url-rate-limit"
   | "mcp-client-registration"
   | "mobile-user-rate-limit"
   | "mobile-token-password-ip-rate-limit"

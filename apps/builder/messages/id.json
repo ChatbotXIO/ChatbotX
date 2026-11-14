@@ -319,6 +319,31 @@
         "noMatches": "No matching chunks were found.",
         "agentHasNoFiles": "This agent has no knowledge files."
       }
+    },
+    "create": {
+      "trigger": "Tambah pengetahuan",
+      "title": "Tambah pengetahuan",
+      "description": "Unggah file atau impor dari URL publik. Agen AI mencari isinya saat menjawab.",
+      "tabs": {
+        "fromUrl": "Dari URL"
+      },
+      "urlHelp": "Tautan langsung ke file yang didukung, tautan Google Docs, Sheets, atau Slides yang dibagikan secara publik, atau halaman web statis. Konten yang dirender dengan JavaScript mungkin tidak ikut.",
+      "snapshotNotice": "URL diunduh sekali sebagai snapshot. Perubahan berikutnya pada sumber tidak disinkronkan; tambahkan lagi untuk memperbarui.",
+      "uploadFailed": "Gagal mengunggah {name}",
+      "rateLimited": "Terlalu banyak impor dari URL. Harap tunggu beberapa detik lalu coba lagi.",
+      "errors": {
+        "urlNotAllowed": "URL ini tidak diizinkan. Gunakan alamat internet publik.",
+        "invalidUrl": "URL tidak valid. Gunakan tautan http(s) lengkap tanpa nama pengguna atau kata sandi.",
+        "googleFileNotPublic": "File Google ini tidak dibagikan secara publik. Atur akses umum ke \"Siapa saja yang memiliki link\" lalu coba lagi.",
+        "googlePublishedNotSupported": "Tautan Google \"Publikasikan ke web\" tidak didukung. Bagikan file secara publik dan gunakan tautan biasanya.",
+        "unsupportedFileType": "Jenis file ini tidak didukung sebagai pengetahuan.",
+        "fileTooLarge": "Ukuran file melebihi {maxSize}.",
+        "downloadTimedOut": "Unduhan terlalu lama. Coba file yang lebih kecil atau host yang lebih cepat.",
+        "downloadFailed": "Sumber mengembalikan kesalahan. Pastikan tautan dapat dibuka tanpa masuk.",
+        "tooManyRedirects": "URL terlalu sering dialihkan.",
+        "invalidRedirect": "URL dialihkan ke alamat yang tidak valid.",
+        "uploadPathNotAllowed": "File yang diunggah tidak diizinkan. Harap unggah ulang."
+      }
     }
   },
   "aiFunctions": {

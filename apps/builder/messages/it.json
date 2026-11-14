@@ -1997,6 +1997,31 @@
         "noMatches": "No matching chunks were found.",
         "agentHasNoFiles": "This agent has no knowledge files."
       }
+    },
+    "create": {
+      "trigger": "Aggiungi conoscenza",
+      "title": "Aggiungi conoscenza",
+      "description": "Carica un file o importalo da un URL pubblico. L'agente IA cerca nel suo contenuto quando risponde.",
+      "tabs": {
+        "fromUrl": "Da URL"
+      },
+      "urlHelp": "Un link diretto a un file supportato, un link Google Docs, Sheets o Slides condiviso pubblicamente o una pagina web statica. I contenuti generati con JavaScript potrebbero mancare.",
+      "snapshotNotice": "L'URL viene scaricato una sola volta come istantanea. Le modifiche successive alla fonte non vengono sincronizzate; aggiungilo di nuovo per aggiornarlo.",
+      "uploadFailed": "Caricamento di {name} non riuscito",
+      "rateLimited": "Troppe importazioni da URL. Attendi qualche secondo e riprova.",
+      "errors": {
+        "urlNotAllowed": "Questo URL non è consentito. Usa un indirizzo Internet pubblico.",
+        "invalidUrl": "L'URL non è valido. Usa un link http(s) completo senza nome utente o password.",
+        "googleFileNotPublic": "Questo file Google non è condiviso pubblicamente. Imposta l'accesso generale su \"Chiunque abbia il link\" e riprova.",
+        "googlePublishedNotSupported": "I link Google \"Pubblica sul Web\" non sono supportati. Condividi il file pubblicamente e usa il suo link normale.",
+        "unsupportedFileType": "Questo tipo di file non è supportato come conoscenza.",
+        "fileTooLarge": "Il file supera {maxSize}.",
+        "downloadTimedOut": "Il download ha impiegato troppo tempo. Prova un file più piccolo o un host più veloce.",
+        "downloadFailed": "La fonte ha restituito un errore. Verifica che il link si apra senza accedere.",
+        "tooManyRedirects": "L'URL reindirizza troppe volte.",
+        "invalidRedirect": "L'URL reindirizza a un indirizzo non valido.",
+        "uploadPathNotAllowed": "Il file caricato non è consentito. Caricalo di nuovo."
+      }
     }
   },
   "aiFunctions": {

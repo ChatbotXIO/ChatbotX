@@ -319,6 +319,31 @@
         "noMatches": "No matching chunks were found.",
         "agentHasNoFiles": "This agent has no knowledge files."
       }
+    },
+    "create": {
+      "trigger": "Kennis toevoegen",
+      "title": "Kennis toevoegen",
+      "description": "Upload een bestand of importeer het via een openbare URL. De AI-agent doorzoekt de inhoud bij het antwoorden.",
+      "tabs": {
+        "fromUrl": "Via URL"
+      },
+      "urlHelp": "Een directe link naar een ondersteund bestand, een openbaar gedeelde Google Docs-, Sheets- of Slides-link, of een statische webpagina. Inhoud die met JavaScript wordt weergegeven kan ontbreken.",
+      "snapshotNotice": "De URL wordt één keer als momentopname gedownload. Latere wijzigingen in de bron worden niet gesynchroniseerd; voeg hem opnieuw toe om bij te werken.",
+      "uploadFailed": "Uploaden van {name} mislukt",
+      "rateLimited": "Te veel imports via URL. Wacht een paar seconden en probeer het opnieuw.",
+      "errors": {
+        "urlNotAllowed": "Deze URL is niet toegestaan. Gebruik een openbaar internetadres.",
+        "invalidUrl": "De URL is ongeldig. Gebruik een volledige http(s)-link zonder gebruikersnaam of wachtwoord.",
+        "googleFileNotPublic": "Dit Google-bestand is niet openbaar gedeeld. Stel algemene toegang in op \"Iedereen met de link\" en probeer het opnieuw.",
+        "googlePublishedNotSupported": "Google-links via \"Publiceren op internet\" worden niet ondersteund. Deel het bestand openbaar en gebruik de normale link.",
+        "unsupportedFileType": "Dit bestandstype wordt niet ondersteund als kennis.",
+        "fileTooLarge": "Het bestand is groter dan {maxSize}.",
+        "downloadTimedOut": "Het downloaden duurde te lang. Probeer een kleiner bestand of een snellere host.",
+        "downloadFailed": "De bron gaf een fout terug. Controleer of de link opent zonder in te loggen.",
+        "tooManyRedirects": "De URL wordt te vaak doorgestuurd.",
+        "invalidRedirect": "De URL stuurt door naar een ongeldig adres.",
+        "uploadPathNotAllowed": "Het geüploade bestand is niet toegestaan. Upload het opnieuw."
+      }
     }
   },
   "aiFunctions": {

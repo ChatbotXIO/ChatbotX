@@ -25,6 +25,7 @@ import {
 import {
   FileFetchError,
   FileSizeLimitError,
+  UnsupportedKnowledgeFileTypeError,
 } from "../../ai-agent/lib/extraction-errors"
 import { extractKnowledgeDocument } from "../../ai-agent/lib/text-extractor"
 import { env } from "../../env"
@@ -133,6 +134,9 @@ export async function processAIFile(
       ).catch((error: unknown) => {
         if (error instanceof FileSizeLimitError) {
           throw new AIFileProcessingError("fileTooLarge", { cause: error })
+        }
+        if (error instanceof UnsupportedKnowledgeFileTypeError) {
+          throw new AIFileProcessingError("fileUnreadable", { cause: error })
         }
         // Storage errors may be transient: rethrown untouched so BullMQ retries.
         if (error instanceof FileFetchError) {

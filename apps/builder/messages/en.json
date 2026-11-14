@@ -361,6 +361,31 @@
         "noMatches": "No matching chunks were found.",
         "agentHasNoFiles": "This agent has no knowledge files."
       }
+    },
+    "create": {
+      "trigger": "Add knowledge",
+      "title": "Add knowledge",
+      "description": "Upload a file or import one from a public URL. The AI Agent searches its content when answering.",
+      "tabs": {
+        "fromUrl": "From URL"
+      },
+      "urlHelp": "A direct link to a supported file, a publicly shared Google Docs, Sheets or Slides link, or a static web page. Content rendered by JavaScript may be missing.",
+      "snapshotNotice": "The URL is downloaded once as a snapshot. Later changes to the source are not synced; add it again to update.",
+      "uploadFailed": "Failed to upload {name}",
+      "rateLimited": "Too many imports from URL. Please wait a few seconds and try again.",
+      "errors": {
+        "urlNotAllowed": "This URL is not allowed. Use a public internet address.",
+        "invalidUrl": "The URL is invalid. Use a full http(s) link without a username or password.",
+        "googleFileNotPublic": "This Google file is not shared publicly. Set General access to \"Anyone with the link\" and try again.",
+        "googlePublishedNotSupported": "Google \"Publish to the web\" links are not supported. Share the file publicly and use its normal link.",
+        "unsupportedFileType": "This file type is not supported as knowledge.",
+        "fileTooLarge": "The file is larger than {maxSize}.",
+        "downloadTimedOut": "The download took too long. Try a smaller file or a faster host.",
+        "downloadFailed": "The source returned an error. Check that the link opens without signing in.",
+        "tooManyRedirects": "The URL redirects too many times.",
+        "invalidRedirect": "The URL redirects to an invalid address.",
+        "uploadPathNotAllowed": "The uploaded file is not allowed. Please upload it again."
+      }
     }
   },
   "aiFunctions": {

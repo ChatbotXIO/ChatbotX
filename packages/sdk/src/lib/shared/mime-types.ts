@@ -7,6 +7,7 @@ export const AI_FILE_MIME_TYPES = [
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
   "application/msword",
   "text/plain",
+  "application/json",
   "text/csv",
   "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
   "application/vnd.ms-excel",
@@ -26,6 +27,82 @@ export const AI_FILE_MIME_TYPES = [
 ] as const
 
 export type AIFileMimeType = (typeof AI_FILE_MIME_TYPES)[number]
+
+/** Upload/download cap for every AI File create path (UI, multipart, URL). */
+export const AI_FILE_MAX_UPLOAD_BYTES = 25 * 1024 * 1024
+
+/**
+ * Knowledge MIME type by file extension — the single source for both the
+ * upload picker (`allowableKnowledgeExtensionsMap` in `@chatbotx.io/ai`) and
+ * the server, which infers a type from a filename when the bytes arrive as
+ * `application/octet-stream`. Kept apart from `EXTENSION_MIME_TYPES`, which
+ * serves chat-channel media.
+ */
+export const AI_FILE_EXTENSION_MIME_TYPES: Readonly<
+  Record<string, AIFileMimeType>
+> = {
+  pdf: "application/pdf",
+  txt: "text/plain",
+  json: "application/json",
+  md: "text/markdown",
+  markdown: "text/markdown",
+  docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  doc: "application/msword",
+  csv: "text/csv",
+  xlsx: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  xls: "application/vnd.ms-excel",
+  html: "text/html",
+  htm: "text/html",
+  xhtml: "application/xhtml+xml",
+  xml: "application/xml",
+  vtt: "text/vtt",
+  properties: "text/x-java-properties",
+  eml: "message/rfc822",
+  msg: "application/vnd.ms-outlook",
+  rtf: "application/rtf",
+  epub: "application/epub+zip",
+  ppt: "application/vnd.ms-powerpoint",
+  pptx: "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+}
+
+/** Lowercased base type without parameters (`"Text/Plain; charset=x"` → `"text/plain"`). */
+export function normalizeBaseMimeType(mimeType: string): string {
+  return (mimeType.split(";")[0] ?? "").trim().toLowerCase()
+}
+
+/** Types that say nothing about the content (S3 stores `binary/octet-stream`). */
+const GENERIC_MIME_TYPES: ReadonlySet<string> = new Set([
+  "",
+  "application/octet-stream",
+  "binary/octet-stream",
+])
+
+/** Missing or generic binary type: infer the real one from a filename instead. */
+export function isGenericMimeType(mimeType: string | undefined): boolean {
+  return GENERIC_MIME_TYPES.has(normalizeBaseMimeType(mimeType ?? ""))
+}
+
+const AI_FILE_MIME_TYPE_SET: ReadonlySet<string> = new Set(AI_FILE_MIME_TYPES)
+
+export function isKnowledgeMimeType(
+  mimeType: string,
+): mimeType is AIFileMimeType {
+  return AI_FILE_MIME_TYPE_SET.has(normalizeBaseMimeType(mimeType))
+}
+
+/** The knowledge MIME type a filename's last extension maps to, if any. */
+export function knowledgeMimeTypeFromFilename(
+  name: string,
+): AIFileMimeType | undefined {
+  const dot = name.lastIndexOf(".")
+  if (dot === -1 || dot === name.length - 1) {
+    return
+  }
+  const extension = name.slice(dot + 1).toLowerCase()
+  return Object.hasOwn(AI_FILE_EXTENSION_MIME_TYPES, extension)
+    ? AI_FILE_EXTENSION_MIME_TYPES[extension]
+    : undefined
+}
 
 export const PDF_MIME_TYPES = ["application/pdf"] as const
 

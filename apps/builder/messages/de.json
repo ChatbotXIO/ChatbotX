@@ -319,6 +319,31 @@
         "noMatches": "No matching chunks were found.",
         "agentHasNoFiles": "This agent has no knowledge files."
       }
+    },
+    "create": {
+      "trigger": "Wissen hinzufügen",
+      "title": "Wissen hinzufügen",
+      "description": "Lade eine Datei hoch oder importiere sie von einer öffentlichen URL. Der KI-Agent durchsucht ihren Inhalt beim Antworten.",
+      "tabs": {
+        "fromUrl": "Von URL"
+      },
+      "urlHelp": "Ein direkter Link zu einer unterstützten Datei, ein öffentlich geteilter Google Docs-, Sheets- oder Slides-Link oder eine statische Webseite. Per JavaScript gerenderte Inhalte können fehlen.",
+      "snapshotNotice": "Die URL wird einmalig als Momentaufnahme heruntergeladen. Spätere Änderungen an der Quelle werden nicht synchronisiert; füge sie erneut hinzu, um sie zu aktualisieren.",
+      "uploadFailed": "Hochladen von {name} fehlgeschlagen",
+      "rateLimited": "Zu viele Importe von URLs. Bitte warte einige Sekunden und versuche es erneut.",
+      "errors": {
+        "urlNotAllowed": "Diese URL ist nicht erlaubt. Verwende eine öffentliche Internetadresse.",
+        "invalidUrl": "Die URL ist ungültig. Verwende einen vollständigen http(s)-Link ohne Benutzername oder Passwort.",
+        "googleFileNotPublic": "Diese Google-Datei ist nicht öffentlich freigegeben. Setze den allgemeinen Zugriff auf \"Jeder mit dem Link\" und versuche es erneut.",
+        "googlePublishedNotSupported": "Google-Links \"Im Web veröffentlichen\" werden nicht unterstützt. Gib die Datei öffentlich frei und verwende ihren normalen Link.",
+        "unsupportedFileType": "Dieser Dateityp wird als Wissen nicht unterstützt.",
+        "fileTooLarge": "Die Datei ist größer als {maxSize}.",
+        "downloadTimedOut": "Der Download hat zu lange gedauert. Versuche eine kleinere Datei oder einen schnelleren Host.",
+        "downloadFailed": "Die Quelle hat einen Fehler zurückgegeben. Prüfe, ob sich der Link ohne Anmeldung öffnen lässt.",
+        "tooManyRedirects": "Die URL leitet zu oft weiter.",
+        "invalidRedirect": "Die URL leitet an eine ungültige Adresse weiter.",
+        "uploadPathNotAllowed": "Die hochgeladene Datei ist nicht erlaubt. Bitte lade sie erneut hoch."
+      }
     }
   },
   "aiFunctions": {

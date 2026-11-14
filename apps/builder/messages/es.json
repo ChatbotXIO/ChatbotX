@@ -319,6 +319,31 @@
         "noMatches": "No matching chunks were found.",
         "agentHasNoFiles": "This agent has no knowledge files."
       }
+    },
+    "create": {
+      "trigger": "Añadir conocimiento",
+      "title": "Añadir conocimiento",
+      "description": "Sube un archivo o impórtalo desde una URL pública. El agente de IA busca en su contenido al responder.",
+      "tabs": {
+        "fromUrl": "Desde URL"
+      },
+      "urlHelp": "Un enlace directo a un archivo compatible, un enlace de Google Docs, Sheets o Slides compartido públicamente o una página web estática. Puede faltar el contenido generado con JavaScript.",
+      "snapshotNotice": "La URL se descarga una sola vez como instantánea. Los cambios posteriores en el origen no se sincronizan; vuelve a añadirla para actualizarla.",
+      "uploadFailed": "Error al subir {name}",
+      "rateLimited": "Demasiadas importaciones desde URL. Espera unos segundos e inténtalo de nuevo.",
+      "errors": {
+        "urlNotAllowed": "Esta URL no está permitida. Usa una dirección pública de internet.",
+        "invalidUrl": "La URL no es válida. Usa un enlace http(s) completo sin usuario ni contraseña.",
+        "googleFileNotPublic": "Este archivo de Google no está compartido públicamente. Configura el acceso general como \"Cualquier persona con el enlace\" e inténtalo de nuevo.",
+        "googlePublishedNotSupported": "Los enlaces de Google \"Publicar en la Web\" no son compatibles. Comparte el archivo públicamente y usa su enlace normal.",
+        "unsupportedFileType": "Este tipo de archivo no es compatible como conocimiento.",
+        "fileTooLarge": "El archivo supera {maxSize}.",
+        "downloadTimedOut": "La descarga tardó demasiado. Prueba con un archivo más pequeño o un servidor más rápido.",
+        "downloadFailed": "El origen devolvió un error. Comprueba que el enlace se abre sin iniciar sesión.",
+        "tooManyRedirects": "La URL redirige demasiadas veces.",
+        "invalidRedirect": "La URL redirige a una dirección no válida.",
+        "uploadPathNotAllowed": "El archivo subido no está permitido. Vuelve a subirlo."
+      }
     }
   },
   "aiFunctions": {

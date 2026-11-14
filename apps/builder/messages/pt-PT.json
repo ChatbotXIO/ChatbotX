@@ -319,6 +319,31 @@
         "noMatches": "No matching chunks were found.",
         "agentHasNoFiles": "This agent has no knowledge files."
       }
+    },
+    "create": {
+      "trigger": "Adicionar conhecimento",
+      "title": "Adicionar conhecimento",
+      "description": "Carregue um ficheiro ou importe-o a partir de um URL público. O agente de IA pesquisa o conteúdo ao responder.",
+      "tabs": {
+        "fromUrl": "A partir de URL"
+      },
+      "urlHelp": "Uma ligação direta para um ficheiro suportado, uma ligação do Google Docs, Sheets ou Slides partilhada publicamente ou uma página web estática. O conteúdo gerado por JavaScript pode não ser incluído.",
+      "snapshotNotice": "O URL é transferido uma única vez como instantâneo. As alterações posteriores na origem não são sincronizadas; adicione-o novamente para atualizar.",
+      "uploadFailed": "Falha ao carregar {name}",
+      "rateLimited": "Demasiadas importações a partir de URL. Aguarde alguns segundos e tente novamente.",
+      "errors": {
+        "urlNotAllowed": "Este URL não é permitido. Utilize um endereço público da internet.",
+        "invalidUrl": "O URL é inválido. Utilize uma ligação http(s) completa sem nome de utilizador nem palavra-passe.",
+        "googleFileNotPublic": "Este ficheiro do Google não está partilhado publicamente. Defina o acesso geral como \"Qualquer pessoa com a ligação\" e tente novamente.",
+        "googlePublishedNotSupported": "As ligações \"Publicar na Web\" do Google não são suportadas. Partilhe o ficheiro publicamente e utilize a ligação normal.",
+        "unsupportedFileType": "Este tipo de ficheiro não é suportado como conhecimento.",
+        "fileTooLarge": "O ficheiro é maior do que {maxSize}.",
+        "downloadTimedOut": "A transferência demorou demasiado. Experimente um ficheiro mais pequeno ou um servidor mais rápido.",
+        "downloadFailed": "A origem devolveu um erro. Verifique se a ligação abre sem iniciar sessão.",
+        "tooManyRedirects": "O URL redireciona demasiadas vezes.",
+        "invalidRedirect": "O URL redireciona para um endereço inválido.",
+        "uploadPathNotAllowed": "O ficheiro carregado não é permitido. Carregue-o novamente."
+      }
     }
   },
   "aiFunctions": {

@@ -1716,6 +1716,31 @@
         "noMatches": "No matching chunks were found.",
         "agentHasNoFiles": "This agent has no knowledge files."
       }
+    },
+    "create": {
+      "trigger": "Adaugă cunoștințe",
+      "title": "Adaugă cunoștințe",
+      "description": "Încarcă un fișier sau importă-l de la un URL public. Agentul AI caută în conținutul lui când răspunde.",
+      "tabs": {
+        "fromUrl": "Din URL"
+      },
+      "urlHelp": "Un link direct către un fișier acceptat, un link Google Docs, Sheets sau Slides partajat public sau o pagină web statică. Conținutul generat cu JavaScript poate lipsi.",
+      "snapshotNotice": "URL-ul este descărcat o singură dată, ca instantaneu. Modificările ulterioare ale sursei nu sunt sincronizate; adaugă-l din nou pentru actualizare.",
+      "uploadFailed": "Încărcarea {name} a eșuat",
+      "rateLimited": "Prea multe importuri din URL. Așteaptă câteva secunde și încearcă din nou.",
+      "errors": {
+        "urlNotAllowed": "Acest URL nu este permis. Folosește o adresă publică de internet.",
+        "invalidUrl": "URL-ul nu este valid. Folosește un link http(s) complet, fără nume de utilizator sau parolă.",
+        "googleFileNotPublic": "Acest fișier Google nu este partajat public. Setează accesul general la \"Oricine are linkul\" și încearcă din nou.",
+        "googlePublishedNotSupported": "Linkurile Google \"Publică pe web\" nu sunt acceptate. Partajează fișierul public și folosește linkul obișnuit.",
+        "unsupportedFileType": "Acest tip de fișier nu este acceptat drept cunoștințe.",
+        "fileTooLarge": "Fișierul depășește {maxSize}.",
+        "downloadTimedOut": "Descărcarea a durat prea mult. Încearcă un fișier mai mic sau o gazdă mai rapidă.",
+        "downloadFailed": "Sursa a returnat o eroare. Verifică dacă linkul se deschide fără autentificare.",
+        "tooManyRedirects": "URL-ul redirecționează de prea multe ori.",
+        "invalidRedirect": "URL-ul redirecționează către o adresă nevalidă.",
+        "uploadPathNotAllowed": "Fișierul încărcat nu este permis. Încarcă-l din nou."
+      }
     }
   },
   "aiFunctions": {

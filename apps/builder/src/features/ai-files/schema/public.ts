@@ -5,7 +5,9 @@ import {
 } from "@chatbotx.io/database/partials"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
-import { aiFileResource } from "./index"
+import { aiFileNameField, aiFileResource, aiFileUrlField } from "./index"
+
+export const AI_FILE_MAX_UPLOAD_SIZE_LABEL = `${AI_FILE_MAX_UPLOAD_BYTES / (1024 * 1024)} MB`
 
 export const publicAIFileResource = aiFileResource.extend({
   url: z.string(),
@@ -15,26 +17,24 @@ export const publicAIFileResource = aiFileResource.extend({
 
 export const createAIFilePublicRequest = z
   .object({
-    name: z
-      .string()
-      .trim()
-      .min(1)
+    name: aiFileNameField
       .optional()
-      .describe("Display name for the file."),
+      .describe(
+        "Display name for the file. Defaults to the uploaded file name, or for a url to the name the server suggests (Content-Disposition), then the last URL path segment.",
+      ),
     file: z
       .instanceof(File)
       .refine((file) => file.size <= AI_FILE_MAX_UPLOAD_BYTES, {
-        message: "Max file size is 100MB.",
+        message: `Max file size is ${AI_FILE_MAX_UPLOAD_SIZE_LABEL}.`,
       })
       .optional()
       .describe(
-        "Multipart file upload, up to 100MB. Provide this or url, not both.",
+        `Multipart file upload in a knowledge format (PDF, DOCX, TXT, JSON, Markdown, CSV, XLS/XLSX, HTML, XML, RTF, EML/MSG, VTT, properties, EPUB, PPT/PPTX), up to ${AI_FILE_MAX_UPLOAD_SIZE_LABEL}. The request body limit caps multipart uploads at about 20 MB in practice; use url for larger files. Provide this or url, not both.`,
       ),
-    url: z
-      .url()
+    url: aiFileUrlField
       .optional()
       .describe(
-        "URL the server downloads and stores, up to 100MB. Provide this or file, not both.",
+        `Public http(s) URL the server downloads once and stores as a private snapshot (it is not re-fetched on reindex), up to ${AI_FILE_MAX_UPLOAD_SIZE_LABEL}. A direct file link must serve a knowledge format. Public Google Docs, Sheets and Slides links are exported as text, XLSX (every tab) and PPTX; a Google file that is not shared publicly, or a 'Publish to the web' link, is refused. Static HTML pages are indexed as served, without running JavaScript. Provide this or file, not both.`,
       ),
   })
   // A plain z.union resolves to the first matching branch and silently

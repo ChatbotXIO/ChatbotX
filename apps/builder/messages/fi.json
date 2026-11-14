@@ -319,6 +319,31 @@
         "noMatches": "No matching chunks were found.",
         "agentHasNoFiles": "This agent has no knowledge files."
       }
+    },
+    "create": {
+      "trigger": "Lisää tietoa",
+      "title": "Lisää tietoa",
+      "description": "Lataa tiedosto tai tuo se julkisesta URL-osoitteesta. Tekoälyagentti hakee sen sisällöstä vastatessaan.",
+      "tabs": {
+        "fromUrl": "URL-osoitteesta"
+      },
+      "urlHelp": "Suora linkki tuettuun tiedostoon, julkisesti jaettu Google Docs-, Sheets- tai Slides-linkki tai staattinen verkkosivu. JavaScriptillä luotu sisältö voi puuttua.",
+      "snapshotNotice": "URL-osoite ladataan kerran tilannekuvana. Lähteen myöhempiä muutoksia ei synkronoida; lisää se uudelleen päivittääksesi.",
+      "uploadFailed": "Tiedoston {name} lataus epäonnistui",
+      "rateLimited": "Liian monta tuontia URL-osoitteesta. Odota muutama sekunti ja yritä uudelleen.",
+      "errors": {
+        "urlNotAllowed": "Tämä URL-osoite ei ole sallittu. Käytä julkista internetosoitetta.",
+        "invalidUrl": "URL-osoite on virheellinen. Käytä täydellistä http(s)-linkkiä ilman käyttäjänimeä tai salasanaa.",
+        "googleFileNotPublic": "Tätä Google-tiedostoa ei ole jaettu julkisesti. Aseta yleiseksi käyttöoikeudeksi \"Kaikki, joilla on linkki\" ja yritä uudelleen.",
+        "googlePublishedNotSupported": "Googlen \"Julkaise verkossa\" -linkkejä ei tueta. Jaa tiedosto julkisesti ja käytä sen tavallista linkkiä.",
+        "unsupportedFileType": "Tätä tiedostotyyppiä ei tueta tietona.",
+        "fileTooLarge": "Tiedosto on suurempi kuin {maxSize}.",
+        "downloadTimedOut": "Lataus kesti liian kauan. Kokeile pienempää tiedostoa tai nopeampaa palvelinta.",
+        "downloadFailed": "Lähde palautti virheen. Tarkista, että linkki aukeaa kirjautumatta.",
+        "tooManyRedirects": "URL-osoite uudelleenohjaa liian monta kertaa.",
+        "invalidRedirect": "URL-osoite uudelleenohjaa virheelliseen osoitteeseen.",
+        "uploadPathNotAllowed": "Ladattu tiedosto ei ole sallittu. Lataa se uudelleen."
+      }
     }
   },
   "aiFunctions": {
