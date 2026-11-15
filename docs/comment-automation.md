@@ -123,7 +123,7 @@ Each filter that fails calls `logAutomationSkipped(..., reason)` (logged at `inf
 | `type` | `messenger` \| `instagram` \| `instagramFacebook` \| `threads` \| `tiktok` | `findActiveAutomations` filters `type === channelType`, which is the incoming `integrationType`. The builder writes it: `fb-comments` → `messenger`, `ig-comments` → the selected Instagram variant. |
 | `inboxId` | The one connected account (Page, Instagram account, Threads profile, TikTok account) the automation answers on; `NULL` = every account of `type` | `findActiveAutomations` takes the comment's `integrationRow.inboxId` and matches `inboxId IS NULL OR inboxId = :inboxId`, so another account's automation neither answers nor records a miss. See [Account scope](#account-scope). |
 | `startTime`/`endTime` | Daily active window (workspace tz) | `isWithinSchedule` — lexicographic `"HH:mm"` compare, handles overnight windows; null → always within. |
-| `post` (`all` / `postIds` / `live`) | Which posts | `matchPost(post, postId, isLive)` — `live` matches only live-broadcast comments; `all` matches only NON-live comments (Live and post automations never answer the same comment); `postIds` matches via normalized trailing id, live or not. See [Live comments](#live-comments). |
+| `post` (`all` / `postIds` / `hashtags` / `live`) | Which posts | `matchPost(post, postId, isLive)` — `live` matches only live-broadcast comments; `all` matches only NON-live comments (Live and post automations never answer the same comment); `postIds` matches via normalized trailing id, live or not; `hashtags` passes `matchPost` like `all` and is then narrowed by `matchPostHashtags` on the post caption. See [Live comments](#live-comments) and [Post hashtag targeting](#post-hashtag-targeting). |
 | `options.ignoreCommentReplies` (default **true**) | Skip replies-to-comments | Skips only when `isCommentReply(parentId, postId, commentId)` is true. |
 | `includeKeywords` (`all`/`equal`/`contain`/`mentions`) | "Reply to" | `matchKeywords` — both sides lowercased and accent-folded (`normalizeForMatch`). `equal` = whole comment equals a keyword; `contain` = substring. `mentions` ignores keywords: the comment must tag **at least** `includeKeywords.mentionCount` (1–5) accounts — `matchMentionCount`, miss reason `mentionCountNotMatched`. The mention list is the same one tag tracking uses (see [Tag tracking](#tag-tracking)). |
 | `excludeKeywords` + `excludeKeywordsType` (`equal`/`contain`, default `contain`) | Text must not match | `matchKeywords` — `contain` = substring, `equal` = the whole trimmed comment equals a keyword; lowercased and accent-folded both sides. |
@@ -422,6 +422,8 @@ One value per `continue` in the filter chain
 |---|---|
 | `outsideSchedule` | `isWithinSchedule` |
 | `postNotMatched` | `matchPost` |
+| `postHashtagNotMatched` | `matchPostHashtags` — caption carries none of the target hashtags |
+| `postCaptionUnavailable` | `matchPostHashtags` — caption could not be read |
 | `commentIsReply` | `ignoreCommentReplies` + `isCommentReply` |
 | `keywordsNotMatched` | `matchKeywords` |
 | `contactNotNew` | `replyToNewContactsOnly` |
@@ -614,6 +616,39 @@ per inserted log row, exactly like `missedCount`.
 `automation`; the public list drops the commenter's name and avatar) and the
 **Moderated comments** card under the analytics dashboard
 (`moderation-log-card.tsx`), both through `lib/moderation-logs`.
+
+## Post hashtag targeting
+
+`post: { type: "hashtags", value: ["vip", "sale"] }` answers a comment only when the post's
+caption (Facebook `message`, Instagram `caption`, Threads `text`, TikTok `caption`) carries
+**at least one** listed hashtag. No webhook delivers the caption, so the worker reads it.
+
+- **Matching** (`captionHasAnyHashtag`, `packages/database/src/partials/comment-automation.ts`):
+  hashtags are cut by `#[\p{L}\p{M}\p{N}_]+` (Vietnamese with combining marks included),
+  NFC-normalized and lower-cased. Whole tag only — `#vip2` and `#vipmember` do not match `vip`.
+- **Storage**: the service stores the canonical form (`normalizeCommentPostTarget` in
+  `packages/business/src/comment-automation/post-target.ts`, on every create/update path):
+  no `#`, lower case, deduped, 1–20 tags, each ≤ 100 letters/digits/`_`. A bad list is a
+  `validationException` on `post.value`.
+- **Caption lookup** (`post-caption.ts` in the worker): `createPostCaptionResolver` is
+  memoized per comment and only called when an automation targets hashtags. Order: Redis
+  (`comment-automation:post-caption:{integrationId}:{postId}`, 10 min) → the channel API
+  (`getPostDetails` contact handler for Meta, Threads `getPostDetails` action,
+  `tiktokIntegrationService.getPostDetails`) with a 10 s timeout → on failure the caption
+  saved on `ChannelPost` (Facebook/Instagram only). "Unreadable" is cached for 60 s.
+  The 10-minute cache is why an owner who edits `#vip` into a post sees it apply within
+  ~10 minutes.
+- **Unreadable caption = not answered** (`postCaptionUnavailable`). TikTok needs the
+  `video.list` scope (`tiktokCanListVideos`); a connection made before it was approved
+  must reconnect. The TikTok form warns about such accounts
+  (`listInboxIdsWithoutCaptionAccess`).
+- **Order**: right after `matchPost`, before AI moderation — it is part of the post gate.
+  Tag tracking (`tracksTagsForComment`) applies it last, after the cheap sync gates.
+- **Live**: never matches a live comment (`matchPost` treats `hashtags` like `all`).
+- **Templates**: the hashtag list is copied as-is (only `postIds` is cleared on install).
+- **Builder**: `PostHashtagsField` (shared); switching between `postIds` and `hashtags`
+  empties `post.value` (`useClearPostValueOnHashtagsSwitch`); changing the account keeps
+  hashtags (they belong to no account).
 
 ## Process missed comments
 

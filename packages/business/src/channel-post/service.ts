@@ -154,6 +154,19 @@ class ChannelPostService extends BaseService {
     return existing.id
   }
 
+  /**
+   * The caption saved when the post's first comment arrived, or `null` when
+   * none was saved. Only a fallback: it is never refreshed, so a caption the
+   * owner edited afterwards is not reflected here.
+   */
+  async findStoredCaption(input: {
+    channel: string
+    externalPostId: string
+    workspaceId: string
+  }): Promise<string | null> {
+    return await channelPostRepository.findCaptionByExternalId(input)
+  }
+
   async listFilterOptions(input: {
     cursor?: ChannelPostFilterCursor
     limit: number

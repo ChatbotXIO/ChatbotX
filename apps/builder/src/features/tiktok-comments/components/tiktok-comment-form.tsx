@@ -41,8 +41,10 @@ import {
   useAccountChoiceMissing,
 } from "@/features/shared/comment-automation/automation-account-field"
 import { ExcludeKeywordsField } from "@/features/shared/comment-automation/exclude-keywords-field"
+import { PostHashtagsField } from "@/features/shared/comment-automation/post-hashtags-field"
 import { ReplyTextsField } from "@/features/shared/comment-automation/reply-texts-field"
 import { ReplyToField } from "@/features/shared/comment-automation/reply-to-field"
+import { useClearPostValueOnHashtagsSwitch } from "@/features/shared/comment-automation/use-clear-post-value-on-hashtags-switch"
 import { LockedContent } from "@/features/templates/components/locked-editor"
 import { useWorkspaceId } from "@/hooks/routing"
 import type { CreateTiktokCommentRequest } from "../schema/action"
@@ -76,8 +78,30 @@ const SHOW_COMMENTS_AFTER_VALUES = [
   "10d",
 ] as const
 
+/**
+ * The warning above the hashtag field when a TikTok account in scope cannot
+ * read captions: the chosen one, or — for "every account" — any of them.
+ */
+function resolveCaptionAccessWarning(props: {
+  inboxId: string | null | undefined
+  captionUnavailableInboxIds: string[]
+  t: ReturnType<typeof useTranslations>
+}): string | null {
+  const { inboxId, captionUnavailableInboxIds, t } = props
+  if (inboxId) {
+    return captionUnavailableInboxIds.includes(inboxId)
+      ? t("tiktokCommentAutomation.postHashtags.reconnectRequired")
+      : null
+  }
+  return captionUnavailableInboxIds.length > 0
+    ? t("tiktokCommentAutomation.postHashtags.someAccountsReconnectRequired")
+    : null
+}
+
 type Props = {
   form: UseFormReturn<CreateTiktokCommentRequest>
+  /** TikTok accounts that cannot read captions, for the hashtags warning. */
+  captionUnavailableInboxIds: string[]
   isSubmitting: boolean
   submitLabel: string
   onSubmit: (e: React.FormEvent) => void
@@ -86,6 +110,7 @@ type Props = {
 
 export function TiktokCommentForm({
   form,
+  captionUnavailableInboxIds,
   isSubmitting,
   submitLabel,
   onSubmit,
@@ -104,6 +129,7 @@ export function TiktokCommentForm({
     name: "privateReply.type",
   })
   const postType = useWatch({ control: form.control, name: "post.type" })
+  const inboxId = useWatch({ control: form.control, name: "inboxId" })
   const accountChoiceMissing = useAccountChoiceMissing("tiktok")
   const includeKeywordsType = useWatch({
     control: form.control,
@@ -129,6 +155,10 @@ export function TiktokCommentForm({
       toast.error(t("fields.aiAgent.loadError"))
     }
   }, [isAIAgentsError, t])
+
+  useClearPostValueOnHashtagsSwitch(postType, () =>
+    form.setValue("post.value", [], { shouldDirty: true }),
+  )
 
   useEffect(() => {
     if (postType === "all") {
@@ -219,6 +249,10 @@ export function TiktokCommentForm({
                   label: t("tiktokCommentAutomation.postType.specificPosts"),
                   value: "postIds",
                 },
+                {
+                  label: t("commentAutomation.postType.hashtags"),
+                  value: "hashtags",
+                },
               ]}
               orientation="horizontal"
               required
@@ -246,6 +280,16 @@ export function TiktokCommentForm({
                 )}
               />
             ) : null}
+
+            {postType === "hashtags" && (
+              <PostHashtagsField
+                warning={resolveCaptionAccessWarning({
+                  inboxId,
+                  captionUnavailableInboxIds,
+                  t,
+                })}
+              />
+            )}
 
             <RadioGroupField
               description={t("tiktokCommentAutomation.publicReplyDescription")}

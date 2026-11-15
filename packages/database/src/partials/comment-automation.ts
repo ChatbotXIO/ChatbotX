@@ -91,19 +91,103 @@ export function commentAutomationChannelSupportsImageFilter(
   return COMMENT_AUTOMATION_CHANNELS_WITH_IMAGE_DETECTION.has(type)
 }
 
+export const commentPostTypes = z.enum([
+  "published",
+  "ads",
+  "reels",
+  "postIds",
+  "all",
+  "live",
+  "hashtags",
+])
+export type CommentPostType = z.infer<typeof commentPostTypes>
+
 export const commentPostSchema = z.object({
-  type: z
-    .enum(["published", "ads", "reels", "postIds", "all", "live"])
-    .describe(
-      "Which posts the automation watches: `postIds` (only the posts listed in `value`), `live` (live videos), or `all`/`published`/`ads`/`reels` (any post; `value` unused, send `[]`).",
-    ),
+  type: commentPostTypes.describe(
+    "Which posts the automation watches: `postIds` (only the posts listed in `value`), `hashtags` (any non-live post whose caption carries at least one hashtag listed in `value`), `live` (live videos), or `all`/`published`/`ads`/`reels` (any post; `value` unused, send `[]`).",
+  ),
   value: z
     .array(z.string())
     .describe(
-      "Post or media ids to watch. Used only when `type` is `postIds`; get them from the channel's list-posts/list-media route. Send `[]` otherwise.",
+      "For `postIds`: post or media ids to watch (get them from the channel's list-posts/list-media route). For `hashtags`: 1-20 hashtags without the leading `#` (e.g. `vip`); letters, digits and `_` only, matched whole-tag and ignoring case. Send `[]` otherwise.",
     ),
 })
 export type CommentPost = z.infer<typeof commentPostSchema>
+
+/** Upper bound on a `hashtags` post target's list, mirrored by the forms. */
+export const COMMENT_POST_HASHTAGS_MAX = 20
+export const COMMENT_POST_HASHTAG_MAX_LENGTH = 100
+
+/**
+ * What a hashtag is made of on every supported channel: letters (any script,
+ * including Vietnamese with its combining marks), digits and `_`. Anything
+ * else — a space, `-`, `.`, `!` — ends the tag, which is how Facebook,
+ * Instagram, Threads and TikTok all cut `#vip!` down to `#vip`.
+ */
+const HASHTAG_CHARACTERS = "[\\p{L}\\p{M}\\p{N}_]"
+const HASHTAG_BODY_PATTERN = new RegExp(`^${HASHTAG_CHARACTERS}+$`, "u")
+const CAPTION_HASHTAG_PATTERN = new RegExp(`#(${HASHTAG_CHARACTERS}+)`, "gu")
+const LEADING_HASH_PATTERN = /^#+/
+
+/**
+ * The canonical form a hashtag is stored and compared in: no leading `#`,
+ * Unicode NFC (a decomposed `ế` equals the composed one) and lower case, so
+ * `#VIP`, `vip` and `#Vip` are one tag.
+ */
+export function normalizeCommentPostHashtag(raw: string): string {
+  return raw
+    .trim()
+    .replace(LEADING_HASH_PATTERN, "")
+    .normalize("NFC")
+    .toLowerCase()
+}
+
+/** Whether an already-normalized hashtag is one a caption could carry. */
+export function isValidCommentPostHashtag(tag: string): boolean {
+  return (
+    tag.length > 0 &&
+    tag.length <= COMMENT_POST_HASHTAG_MAX_LENGTH &&
+    HASHTAG_BODY_PATTERN.test(tag)
+  )
+}
+
+/** Normalizes a hashtag list and drops blanks and duplicates, keeping order. */
+export function normalizeCommentPostHashtags(values: string[]): string[] {
+  return [
+    ...new Set(
+      values.map(normalizeCommentPostHashtag).filter((tag) => tag.length > 0),
+    ),
+  ]
+}
+
+/** The hashtags a post caption carries, in canonical form. */
+export function extractCaptionHashtags(caption: string): Set<string> {
+  const tags = new Set<string>()
+  for (const match of caption
+    .normalize("NFC")
+    .matchAll(CAPTION_HASHTAG_PATTERN)) {
+    tags.add(match[1].toLowerCase())
+  }
+  return tags
+}
+
+/**
+ * Whether the caption carries at least one of the target hashtags. Whole-tag
+ * only: `#vip2` and `#vipmember` do not match `vip`.
+ */
+export function captionHasAnyHashtag(
+  caption: string,
+  hashtags: string[],
+): boolean {
+  const captionTags = extractCaptionHashtags(caption)
+  return normalizeCommentPostHashtags(hashtags).some((tag) =>
+    captionTags.has(tag),
+  )
+}
+
+export function isHashtagCommentAutomation(post: Pick<CommentPost, "type">) {
+  return post.type === "hashtags"
+}
 
 /**
  * A Live automation answers comments made on any of the account's live

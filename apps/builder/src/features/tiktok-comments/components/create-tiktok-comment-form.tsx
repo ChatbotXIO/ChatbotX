@@ -47,8 +47,11 @@ const defaultValues = {
 
 export function CreateTiktokCommentForm({
   workspaceId,
+  captionUnavailableInboxIds,
 }: {
   workspaceId: string
+  /** TikTok accounts that cannot read captions (see the hashtags target). */
+  captionUnavailableInboxIds: string[]
 }) {
   const t = useTranslations()
   const validationMessages = resolveTiktokCommentValidationMessages(t)
@@ -80,6 +83,7 @@ export function CreateTiktokCommentForm({
   return (
     <Form {...form}>
       <TiktokCommentForm
+        captionUnavailableInboxIds={captionUnavailableInboxIds}
         form={typedForm}
         isSubmitting={form.formState.isSubmitting}
         onCancel={() => router.push(`/space/${workspaceId}/tiktok-comments`)}

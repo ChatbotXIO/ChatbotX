@@ -41,6 +41,12 @@ vi.mock("@chatbotx.io/database/partials", async () => {
     typeof import("../../database/src/partials/comment-automation")
   >("../../database/src/partials/comment-automation")
   return {
+    // The real post-target helpers, so hashtag normalization is what ships.
+    COMMENT_POST_HASHTAGS_MAX: actual.COMMENT_POST_HASHTAGS_MAX,
+    COMMENT_POST_HASHTAG_MAX_LENGTH: actual.COMMENT_POST_HASHTAG_MAX_LENGTH,
+    isHashtagCommentAutomation: actual.isHashtagCommentAutomation,
+    isValidCommentPostHashtag: actual.isValidCommentPostHashtag,
+    normalizeCommentPostHashtags: actual.normalizeCommentPostHashtags,
     commentAutomationChannelSupportsDelete:
       actual.commentAutomationChannelSupportsDelete,
     commentAutomationChannelSupportsHideGif:

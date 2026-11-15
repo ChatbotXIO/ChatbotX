@@ -43,9 +43,12 @@ function toFormPublicReply(
 export function EditTiktokCommentForm({
   workspaceId,
   initialData,
+  captionUnavailableInboxIds,
 }: {
   workspaceId: string
   initialData: TiktokCommentResource
+  /** TikTok accounts that cannot read captions (see the hashtags target). */
+  captionUnavailableInboxIds: string[]
 }) {
   const t = useTranslations()
   const validationMessages = resolveTiktokCommentValidationMessages(t)
@@ -114,6 +117,7 @@ export function EditTiktokCommentForm({
   return (
     <Form {...form}>
       <TiktokCommentForm
+        captionUnavailableInboxIds={captionUnavailableInboxIds}
         form={typedForm}
         isSubmitting={isPending}
         onCancel={() => router.push(`/space/${workspaceId}/tiktok-comments`)}

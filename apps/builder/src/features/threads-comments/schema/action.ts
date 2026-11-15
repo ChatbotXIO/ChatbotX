@@ -29,6 +29,7 @@ const MAX_POST_ID_LENGTH = 120
 const threadsCommentValidationKeyNames = [
   "postIdsMustBeEmptyForAll",
   "postIdsRequired",
+  "hashtagsRequired",
   "keywordsMustBeEmptyForAll",
   "keywordsRequired",
   "delayMustBePositive",
@@ -110,7 +111,7 @@ export function createThreadsCommentRequestSchema(
 
   const threadsPostSchema = z
     .object({
-      type: z.enum(["all", "postIds"]),
+      type: z.enum(["all", "postIds", "hashtags"]),
       value: trimmedArray(MAX_POST_IDS, MAX_POST_ID_LENGTH),
     })
     .superRefine((value, ctx) => {
@@ -126,6 +127,13 @@ export function createThreadsCommentRequestSchema(
           code: "custom",
           path: ["value"],
           message: validationMessages.postIdsRequired,
+        })
+      }
+      if (value.type === "hashtags" && value.value.length === 0) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["value"],
+          message: validationMessages.hashtagsRequired,
         })
       }
     })
@@ -256,7 +264,7 @@ export function createThreadsCommentRequestSchema(
       .describe("Automation name."),
     inboxId: automationInboxIdSchema,
     post: threadsPostSchema.describe(
-      "Which comments to answer: `all` posts or specific `postIds` (get them from `threadsComments.listPosts`).",
+      "Which comments to answer: `all` posts, specific `postIds` (get them from `threadsComments.listPosts`), or `hashtags` — any post whose text carries one of the hashtags in `value` (without `#`).",
     ),
     publicReply: threadsReplySchema.describe(
       "Public reply posted under the comment: `text`, a `flow`, an `AIAgent`, or `none`.",
