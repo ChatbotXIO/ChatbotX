@@ -59,13 +59,14 @@ vi.mock("next/navigation", () => ({
 }))
 
 // The mock request objects below only carry `nextUrl`, not the real
-// `url`/`headers` a NextRequest would have — resolve the public URL (used
+// `url`/`headers` a NextRequest would have — resolve the public host (used
 // to pin the connect session's `originHost`) straight from `nextUrl`.
 vi.mock("@chatbotx.io/utils", async (importOriginal) => {
   const actual = await importOriginal<typeof ChatbotxUtilsModule>()
   return {
     ...actual,
-    getPublicUrlFromRequest: (request: { nextUrl: URL }) => request.nextUrl,
+    getPublicHostFromRequest: (request: { nextUrl: URL }) =>
+      request.nextUrl.host,
   }
 })
 

@@ -14,7 +14,7 @@ import type {
   WorkspaceModel,
 } from "@chatbotx.io/database/types"
 import type { ConnectSessionNextAction } from "@chatbotx.io/sdk"
-import { getPublicUrlFromRequest } from "@chatbotx.io/utils"
+import { getPublicHostFromRequest } from "@chatbotx.io/utils"
 import { notFound, redirect, unstable_rethrow } from "next/navigation"
 import type { NextRequest } from "next/server"
 import { resolveOAuthCredential } from "@/features/connections/lib/resolve-connect-credential"
@@ -164,7 +164,8 @@ export async function startChannelConnect(
     callbackUrl: resolved.callbackUrl,
     actorUserId: userId,
     platformOwnerId,
-    originHost: new URL(getPublicUrlFromRequest(req)).host,
+    // Keep the externally exposed port so OAuth returns to the same public host.
+    originHost: getPublicHostFromRequest(req),
   }
 
   let session: ConnectSessionModel
