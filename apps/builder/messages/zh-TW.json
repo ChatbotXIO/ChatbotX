@@ -9420,6 +9420,11 @@
         "lose": "未中獎",
         "empty": "尚無遊戲紀錄"
       }
+    },
+    "duplicateDialog": {
+      "title": "複製小遊戲",
+      "description": "將建立包含所有設定的小遊戲副本。獎品不會被複製，請之後在副本中新增。",
+      "success": "小遊戲已複製"
     }
   },
   "mediaLibrary": {

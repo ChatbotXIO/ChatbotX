@@ -9420,6 +9420,11 @@
         "lose": "Fără premiu",
         "empty": "Nu există încă înregistrări de joc"
       }
+    },
+    "duplicateDialog": {
+      "title": "Duplică minijocul",
+      "description": "Se va crea o copie a minijocului cu toate setările. Premiile nu sunt copiate — adaugă-le ulterior în copie.",
+      "success": "Minijocul a fost duplicat cu succes"
     }
   },
   "mediaLibrary": {

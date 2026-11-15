@@ -2628,6 +2628,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "path": "/v1/minigames/bulk-delete",
   },
   {
+    "method": "POST",
+    "operationId": "minigames.duplicate",
+    "path": "/v1/minigames/{id}/duplicate",
+  },
+  {
     "method": "GET",
     "operationId": "minigames.get",
     "path": "/v1/minigames/{id}",

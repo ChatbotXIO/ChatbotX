@@ -18,12 +18,42 @@ import type {
 import { minigameModel } from "@chatbotx.io/database/schema"
 import type { MinigameModel } from "@chatbotx.io/database/types"
 import {
+  escapeLikePattern,
   getPaginationWithDefaults,
   likeContains,
   parseOrderBy,
 } from "@chatbotx.io/database/utils"
 import { BaseService } from "../base.service"
 import { ChatbotXException, notFoundException } from "../errors"
+import {
+  type CopyNameOptions,
+  copyNamePrefix,
+  insertWithFreeCopyName,
+} from "../lib/copy-name"
+
+/** `minigameGeneralSettingsSchema.name` allows up to 150 characters. */
+const MINIGAME_NAME_MAX_LENGTH = 150
+
+/** How minigame copies are named: `<name> - Copy`, `<name> - Copy 2`, … */
+const MINIGAME_COPY_NAME: CopyNameOptions = {
+  style: "dash",
+  maxLength: MINIGAME_NAME_MAX_LENGTH,
+}
+
+/**
+ * A copy starts with no prizes: every play is a loss until the admin adds
+ * prizes, so `loseRate` becomes 100 to keep the 100% total valid. The
+ * no-prize outcome's label/image and the prize-name custom field are kept.
+ */
+function withoutPrizes(
+  prizeSettings: MinigamePrizeSettings,
+): MinigamePrizeSettings {
+  return {
+    ...prizeSettings,
+    prizes: [],
+    nonWinning: { ...prizeSettings.nonWinning, loseRate: 100 },
+  }
+}
 
 type ListInput = {
   workspaceId: string
@@ -296,6 +326,74 @@ class MinigameService extends BaseService {
     } catch (error) {
       this.rethrowNameConflict(error)
     }
+  }
+
+  private async listNamesWithPrefix(input: {
+    workspaceId: string
+    prefix: string
+  }): Promise<string[]> {
+    const rows = await db.query.minigameModel.findMany({
+      where: {
+        workspaceId: input.workspaceId,
+        name: { like: `${escapeLikePattern(input.prefix)}%` },
+      },
+      columns: { name: true },
+    })
+    return rows.map((row) => row.name)
+  }
+
+  /**
+   * Copies a minigame's settings into a new minigame named `<name> - Copy`
+   * (then `- Copy 2`, `- Copy 3`, … while taken). Prizes are not copied (see
+   * `withoutPrizes`); plays, players, and counters start from zero.
+   */
+  async duplicate(input: {
+    workspaceId: string
+    id: string
+  }): Promise<MinigameModel> {
+    const source = await this.find(input)
+    const taken = new Set(
+      await this.listNamesWithPrefix({
+        workspaceId: input.workspaceId,
+        prefix: copyNamePrefix(source.name, MINIGAME_COPY_NAME),
+      }),
+    )
+
+    const copy = await insertWithFreeCopyName({
+      constraint: "Minigame_workspaceId_name_key",
+      base: source.name,
+      taken,
+      options: MINIGAME_COPY_NAME,
+      insert: async (name) => {
+        const [row] = await db
+          .insert(minigameModel)
+          .values({
+            workspaceId: input.workspaceId,
+            enabled: source.enabled,
+            ...this.toColumns({
+              workspaceId: input.workspaceId,
+              type: source.type,
+              generalSettings: { ...source.generalSettings, name },
+              appearance: source.appearance,
+              playerSettings: source.playerSettings,
+              prizeSettings: withoutPrizes(source.prizeSettings),
+              winningMessageSettings: source.winningMessageSettings,
+              nonWinningMessageSettings: source.nonWinningMessageSettings,
+            }),
+          })
+          .returning()
+        return row
+      },
+    })
+
+    if (copy) {
+      return copy
+    }
+    throw new ChatbotXException(
+      "Minigame name already exists",
+      "nameAlreadyExists",
+      409,
+    )
   }
 
   async setEnabled(

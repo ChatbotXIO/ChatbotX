@@ -9420,6 +9420,11 @@
         "lose": "Sem prémio",
         "empty": "Ainda não há registos de jogadas"
       }
+    },
+    "duplicateDialog": {
+      "title": "Duplicar minijogo",
+      "description": "Isto cria uma cópia do minijogo com todas as definições. Os prémios não são copiados — adicione-os à cópia depois.",
+      "success": "Minijogo duplicado com sucesso"
     }
   },
   "mediaLibrary": {

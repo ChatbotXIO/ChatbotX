@@ -9420,6 +9420,11 @@
         "lose": "Pas de lot",
         "empty": "Aucun registre de parties pour le moment"
       }
+    },
+    "duplicateDialog": {
+      "title": "Dupliquer le mini-jeu",
+      "description": "Une copie du mini-jeu sera créée avec tous ses paramètres. Les lots ne sont pas copiés : ajoutez-les ensuite à la copie.",
+      "success": "Mini-jeu dupliqué avec succès"
     }
   },
   "mediaLibrary": {

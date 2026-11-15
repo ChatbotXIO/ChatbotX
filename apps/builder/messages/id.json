@@ -9420,6 +9420,11 @@
         "lose": "Tidak menang",
         "empty": "Belum ada catatan permainan"
       }
+    },
+    "duplicateDialog": {
+      "title": "Duplikat minigame",
+      "description": "Ini akan membuat salinan minigame dengan semua pengaturannya. Hadiah tidak disalin — tambahkan ke salinan setelahnya.",
+      "success": "Minigame berhasil diduplikat"
     }
   },
   "mediaLibrary": {

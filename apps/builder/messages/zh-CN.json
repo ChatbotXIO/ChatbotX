@@ -9396,6 +9396,11 @@
         "lose": "未中奖",
         "empty": "暂无游戏记录"
       }
+    },
+    "duplicateDialog": {
+      "title": "复制小游戏",
+      "description": "将创建包含全部设置的小游戏副本。奖品不会被复制，请之后在副本中添加。",
+      "success": "小游戏已复制"
     }
   },
   "userDataWebview": {
