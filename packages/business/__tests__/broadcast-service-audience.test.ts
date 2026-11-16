@@ -1,5 +1,3 @@
-import type { SQL } from "drizzle-orm"
-import { PgDialect } from "drizzle-orm/pg-core"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const { mockFindByIdOrName, mockListAudience, mockCountAudience } = vi.hoisted(
@@ -96,35 +94,5 @@ describe("broadcastService.listAudience deletedAt gate", () => {
       idOrName: "b-1",
       workspaceId: "ws-foreign",
     })
-  })
-})
-
-describe("broadcast audience excludes contacts who blocked the channel", () => {
-  type AudienceInternals = {
-    buildAudienceScopeWhere: (
-      inboxIds: string[],
-      input: Record<string, unknown>,
-    ) => SQL | undefined
-    buildAudienceWhere: (
-      inboxIds: string[],
-      input: Record<string, unknown>,
-    ) => SQL | undefined
-  }
-  const internals = broadcastService as unknown as AudienceInternals
-  const render = (where: SQL | undefined) =>
-    new PgDialect().sqlToQuery(where as SQL).sql
-
-  test("buildAudienceScopeWhere requires channelBlockedAt IS NULL", () => {
-    const where = internals.buildAudienceScopeWhere(["inbox-1"], {
-      workspaceId: "ws-1",
-    })
-    expect(render(where)).toContain('"ContactInbox"."channelBlockedAt" is null')
-  })
-
-  test("buildAudienceWhere requires channelBlockedAt IS NULL", () => {
-    const where = internals.buildAudienceWhere(["inbox-1"], {
-      workspaceId: "ws-1",
-    })
-    expect(render(where)).toContain('"ContactInbox"."channelBlockedAt" is null')
   })
 })

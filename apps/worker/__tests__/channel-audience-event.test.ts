@@ -12,9 +12,7 @@ const {
   emitContactUnblockedBot,
   redisSet,
   webhookContexts,
-  setChannelBlocked,
 } = vi.hoisted(() => ({
-  setChannelBlocked: vi.fn().mockResolvedValue(undefined),
   emitContactBlockedBot: vi.fn().mockResolvedValue(undefined),
   emitContactUnblockedBot: vi.fn().mockResolvedValue(undefined),
   redisSet: vi.fn().mockResolvedValue("OK"),
@@ -33,10 +31,6 @@ vi.mock("@chatbotx.io/business/leaderboard", () => ({
   enqueueLeaderboardReverse,
   recordTelegramBotChatStatus,
   inboxHasLeaderboardRule,
-}))
-
-vi.mock("@chatbotx.io/business/contact-inbox", () => ({
-  contactInboxService: { setChannelBlocked },
 }))
 
 vi.mock("../src/integration/handlers/received-message", () => ({
@@ -332,57 +326,5 @@ describe("processChannelAudienceEvent — Telegram private chat (un)block", () =
 
     expect(recordTelegramBotChatStatus).toHaveBeenCalledTimes(1)
     expect(emitContactBlockedBot).not.toHaveBeenCalled()
-  })
-})
-
-describe("processChannelAudienceEvent — channel block state", () => {
-  const lineInbox = { id: "inbox-2", workspaceId: "ws-1", channel: "line" }
-  const lineUser = { sourceId: "U123" }
-  const run = (kind: "follow" | "unfollow") =>
-    processChannelAudienceEvent({
-      integrationType: "line",
-      integrationIdentifier: "line-1",
-      event: { kind, user: lineUser, occurredAt },
-    })
-
-  beforeEach(() => {
-    vi.clearAllMocks()
-    inboxHasLeaderboardRule.mockResolvedValue(false)
-  })
-
-  test("a LINE unfollow marks the contact inbox blocked, even with no leaderboard rule", async () => {
-    identifyInbox.mockResolvedValue({ inbox: lineInbox, integrationRow })
-    await run("unfollow")
-    expect(setChannelBlocked).toHaveBeenCalledWith({
-      workspaceId: "ws-1",
-      inboxId: "inbox-2",
-      sourceId: "U123",
-      blocked: true,
-      occurredAt: new Date(occurredAt),
-    })
-    expect(detectContactAndConversation).not.toHaveBeenCalled()
-  })
-
-  test("a LINE follow clears the block and carries its event time", async () => {
-    identifyInbox.mockResolvedValue({ inbox: lineInbox, integrationRow })
-    await run("follow")
-    expect(setChannelBlocked).toHaveBeenCalledWith({
-      workspaceId: "ws-1",
-      inboxId: "inbox-2",
-      sourceId: "U123",
-      blocked: false,
-      occurredAt: new Date(occurredAt),
-    })
-    expect(detectContactAndConversation).not.toHaveBeenCalled()
-  })
-
-  test("a channel outside CHANNEL_BLOCK_STATE_CHANNELS is left alone", async () => {
-    identifyInbox.mockResolvedValue({ inbox, integrationRow })
-    await processChannelAudienceEvent({
-      integrationType: "telegram",
-      integrationIdentifier: "bot-1",
-      event: { kind: "unfollow", user, occurredAt },
-    })
-    expect(setChannelBlocked).not.toHaveBeenCalled()
   })
 })

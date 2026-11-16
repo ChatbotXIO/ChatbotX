@@ -22,7 +22,7 @@ ChatbotX connects a LINE Official Account (Messaging API channel) per workspace.
 
 - Groups and rooms are ignored.
 - `follow` / `unfollow` become audience events. `follow` does not create a contact; the contact is created on the first message.
-- Blocking the bot sends `unfollow`; unblocking sends `follow`. For LINE (`CHANNEL_BLOCK_STATE_CHANNELS`) these set and clear `ContactInbox.channelBlockedAt`, even when no leaderboard rule exists. Each applied transition stores its event time in `ContactInbox.channelBlockChangedAt`; a follow or unfollow older than that is ignored, so out-of-order webhooks cannot leave a stale block state (a redelivery of the same event is a no-op).
+- Blocking the bot sends `unfollow`; unblocking sends `follow`. They are used only for leaderboard scoring; the block itself is not stored.
 - The contact's locale comes from the profile's `language` (e.g. `vi`).
 
 ## Sending: reply vs push
@@ -38,7 +38,7 @@ ChatbotX connects a LINE Official Account (Messaging API channel) per workspace.
 
 - Monthly-limit 429: `QUOTA_EXCEEDED`, permanent. Each send fails individually; there is no pause.
 - Other 429: `RATE_LIMITED`, retryable.
-- **A push to a user who blocked the account returns HTTP 200** with a message id; LINE drops it silently and does not count it. So the send API never tells us about a block. Instead, a blocked contact (`channelBlockedAt` set) is excluded from broadcast audiences, and every send to it fails with `USER_BLOCKED` (`contact_blocked`) without calling LINE. The profile endpoint returns 404 for a blocked user.
+- **A push to a user who blocked the account returns HTTP 200** with a message id; LINE drops it silently and does not count it. So the send API never tells us about a block, and block state is not tracked: a blocked contact stays in broadcast audiences and sends to it are recorded as delivered. The profile endpoint returns 404 for a blocked user.
 - Recipient never added the account as a friend: LINE's 400 maps to `USER_BLOCKED`.
 
 ## Flow-step mapping
@@ -68,7 +68,6 @@ A 30-day short-lived v2 token is minted from the client credentials. The daily `
 - Replies sound doubled/robotic: "Auto-reply messages" is still on in Official Account Manager.
 - Sends failing with `QUOTA_EXCEEDED`: the account's monthly push limit is used up; only reply-token sends still work until the month resets or the plan is raised.
 - A webhook URL left on LINE after disconnecting is harmless (events are dropped).
-- Sends to one contact fail with `contact_blocked`: they blocked the account; it clears when they unblock (LINE sends `follow`).
 - A conversation where an agent replied from the inbox pauses the bot for 24 h (`botEnabled: false`, `botResumeAt`); keywords and flows are skipped meanwhile. This is shared behaviour, not LINE-specific.
 
 ## Public API / CLI / MCP

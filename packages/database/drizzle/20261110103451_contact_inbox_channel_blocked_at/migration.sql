@@ -1,1 +1,0 @@
-ALTER TABLE "ContactInbox" ADD COLUMN "channelBlockedAt" timestamp(6) with time zone;

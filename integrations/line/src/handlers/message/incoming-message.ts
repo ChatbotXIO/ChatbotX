@@ -79,8 +79,7 @@ export const receiveMessage = async ({
   }
 
   await stashReplyToken(ctx, event, userId)
-  // LINE's own event time; orders this message against follow/unfollow when
-  // the worker clears a recorded block (see `clearChannelBlockOnInbound`).
+  // LINE's own event time for the message.
   const occurredAt = lineEventTime(event.timestamp)
 
   if (event.postback?.data === LINE_NOOP_POSTBACK_DATA) {

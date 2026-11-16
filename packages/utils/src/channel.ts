@@ -385,13 +385,3 @@ export const supportsArchiveRelease = (
 ): channel is ThreadControlChannel =>
   channel != null &&
   (ARCHIVE_RELEASE_CHANNELS as readonly string[]).includes(channel)
-
-/**
- * Channels whose send API cannot report a block: LINE answers HTTP 200 with a
- * message id for a user who blocked the account (silently dropped), so we track
- * the block from the unfollow/follow webhooks in `ContactInbox.channelBlockedAt`.
- * Other channels return an explicit error on a blocked recipient, which the
- * send path already maps.
- */
-export const CHANNEL_BLOCK_STATE_CHANNELS: ReadonlySet<ChannelType> =
-  new Set<ChannelType>(["line"])

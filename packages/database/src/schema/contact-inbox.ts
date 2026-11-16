@@ -128,13 +128,6 @@ export const contactInboxModel = pgTable(
     profileSnapshotAttempts: integer(),
     profileSnapshotNextAttemptAt: timestamp(timestampConfig),
     language: text(),
-    // When the contact blocked this channel account (LINE unfollow). Null = can
-    // receive. Set/cleared only for channels in CHANNEL_BLOCK_STATE_CHANNELS.
-    channelBlockedAt: timestamp(timestampConfig),
-    // Event time of the last applied follow/unfollow transition. Orders
-    // out-of-order webhooks: an event older than this is ignored, for both
-    // the block and the unblock path.
-    channelBlockChangedAt: timestamp(timestampConfig),
     // Local persona id (MessengerPersona.id) chosen for this contact connection
     // via the "Set Persona" flow action. Resolved to the page's current Facebook
     // persona id at send time; null means the page default persona is used.

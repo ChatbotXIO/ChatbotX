@@ -142,7 +142,6 @@ import {
   isInstagramViaFacebook,
   resolveIntegrationContextFromContactInbox,
 } from "../../services/integrations"
-import { clearChannelBlockOnInbound } from "./clear-channel-block-on-inbound"
 import { isCommentReply, processCommentAutomation } from "./comment-automation"
 import { resolveLiveComment } from "./comment-automation/live-comment"
 import { runAsMissedCommentReplay } from "./comment-automation/replay-priority"
@@ -491,12 +490,6 @@ export const receiveMessage = async (
     throw new SdkException("Unable to resolve contact and conversation")
   }
   const { contactInbox, conversation, contact, isNewContact } = detected
-  await clearChannelBlockOnInbound({
-    workspaceId: inbox.workspaceId,
-    contactInbox,
-    message: rawIncomingMessage,
-    occurredAt: parsedMessage.occurredAt,
-  })
   // Zalo and Telegram echo the raw Skip payload as the message text; show the
   // label the contact pressed instead. A no-op for every other tap.
   const stepInputSkipLabel = stepInputSkipChallengeId
