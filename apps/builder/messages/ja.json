@@ -12038,5 +12038,21 @@
       "webhookRejected": "LINE rejected the webhook URL. Please try again later or contact support.",
       "providerUnavailable": "LINE is temporarily unavailable. Please try again in a moment."
     }
+  },
+  "deleteAccountPage": {
+    "title": "ChatbotX アカウントの削除",
+    "intro": "次のいずれかの方法で、アカウントとそのデータを削除できます。",
+    "waysTitle": "アカウントの削除方法",
+    "wayMobile": "モバイルアプリ：設定 → アカウントを削除。",
+    "wayWeb": "ウェブ：サインインしてアカウント削除ページを開きます。",
+    "wayWebLink": "アカウント削除を開く",
+    "wayEmail": "メール：登録済みのアドレスから {email} 宛にご連絡ください。",
+    "whatHappensTitle": "削除後の流れ",
+    "whatHappens": "削除は24時間の猶予期間の後に開始され、取り消せません。事前にすべてのサブスクリプションを解約してください。",
+    "deletedTitle": "削除するデータ",
+    "deleted": "プロフィール（名前とメールアドレス）、サインイン情報、プッシュ通知トークン、所有するすべてのワークスペース（連絡先、会話、メッセージ、アップロードしたファイルを含む）。",
+    "sharedWorkspace": "所有するワークスペースに他のメンバーがいる場合、そのワークスペースはメンバーからも削除されます。",
+    "retainedTitle": "保持するデータ",
+    "retained": "他の人が所有するワークスペースに書いたメモは、名前を削除した状態で残ります。削除が行われたことの記録は保持されます。請求および領収書の記録は、法律で求められる期間保持される場合があります。"
   }
 }

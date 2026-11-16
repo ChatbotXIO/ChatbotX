@@ -12038,5 +12038,21 @@
       "webhookRejected": "LINE rejected the webhook URL. Please try again later or contact support.",
       "providerUnavailable": "LINE is temporarily unavailable. Please try again in a moment."
     }
+  },
+  "deleteAccountPage": {
+    "title": "刪除您的 ChatbotX 帳號",
+    "intro": "您可以透過以下任一方式刪除帳號及其資料。",
+    "waysTitle": "如何刪除帳號",
+    "wayMobile": "在行動應用程式中：設定 → 刪除帳號。",
+    "wayWeb": "在網頁上：登入後開啟帳號刪除頁面。",
+    "wayWebLink": "開啟帳號刪除頁面",
+    "wayEmail": "透過電子郵件：使用註冊的電子郵件地址寄信至 {email}。",
+    "whatHappensTitle": "接下來會發生什麼",
+    "whatHappens": "刪除將在 24 小時寬限期後開始，且無法復原。請先取消所有訂閱。",
+    "deletedTitle": "我們會刪除的資料",
+    "deleted": "您的個人檔案（姓名和電子郵件）、登入憑證、推播通知權杖，以及您擁有的所有工作區，包括其中的聯絡人、對話、訊息和上傳的檔案。",
+    "sharedWorkspace": "如果您擁有的工作區還有其他成員，該工作區對他們也會被刪除。",
+    "retainedTitle": "我們會保留的資料",
+    "retained": "您在他人擁有的工作區中撰寫的備註會保留，但會移除您的姓名。我們會保留一筆刪除已發生的紀錄。帳單和發票紀錄可能會依法律要求的期限保留。"
   }
 }
