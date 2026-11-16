@@ -988,7 +988,9 @@
       "engagedOnOtherPost": "Har redan interagerat på ett annat inlägg",
       "mentionCountNotMatched": "Antalet omnämnanden stämde inte",
       "noImageAttachment": "Ingen bild bifogad",
-      "moderated": "Dold eller borttagen av moderering"
+      "moderated": "Dold eller borttagen av moderering",
+      "postHashtagNotMatched": "Inlägget har ingen matchande hashtagg",
+      "postCaptionUnavailable": "Inläggets text kunde inte läsas"
     },
     "replyTo": {
       "mentions": "Kommentarer med tillräckligt många omnämnanden",
@@ -1110,6 +1112,15 @@
       "previous": "Föregående",
       "next": "Nästa",
       "page": "Sida {page} av {pageCount}"
+    },
+    "postType": {
+      "hashtags": "Inlägg med hashtaggar"
+    },
+    "postHashtags": {
+      "label": "Hashtaggar",
+      "description": "Svara bara på inlägg vars text innehåller minst en av dessa hashtaggar. Skriv en hashtagg och tryck på Enter. En hashtagg som läggs till i ett inlägg senare upptäcks inom cirka 10 minuter.",
+      "placeholder": "t.ex. automation",
+      "required": "Lägg till minst en hashtagg."
     }
   },
   "channels": {
@@ -4872,7 +4883,8 @@
       "delayMustBeZero": "Delay value must be zero for the selected timing option.",
       "atLeastOneFieldRequired": "At least one field is required.",
       "replyTextRequired": "Ange minst ett svarsmeddelande.",
-      "hideKeywordsRequired": "Enter at least one keyword to hide comments by keyword."
+      "hideKeywordsRequired": "Enter at least one keyword to hide comments by keyword.",
+      "hashtagsRequired": "Lägg till minst en hashtagg."
     },
     "hideCommentsDescription": "Endast svar på översta nivån till dina inlägg kan döljas.",
     "hideComments": {
@@ -4988,13 +5000,18 @@
       "delayMustBeZero": "Delay value must be zero for the selected timing option.",
       "hideKeywordsRequired": "Enter at least one keyword to hide comments by keyword.",
       "atLeastOneFieldRequired": "At least one field is required.",
-      "replyTextRequired": "Ange minst ett svarsmeddelande."
+      "replyTextRequired": "Ange minst ett svarsmeddelande.",
+      "hashtagsRequired": "Lägg till minst en hashtagg."
     },
     "privateReply": "Private reply (Comment-to-Message)",
     "privateReplyDescription": "Send a direct message to the commenter. TikTok only allows this for comments it flags as high intent, so it will not fire for every matching comment.",
     "privateReplyMessage": "Private reply message",
     "privateReplyHighIntentTitle": "TikTok decides which comments can be messaged",
-    "privateReplyHighIntentNotice": "Comment-to-Message must be enabled on the connected TikTok account, and the account must be a Business Account registered in Vietnam, Indonesia or Thailand. TikTok sends the direct message only for first-level comments it flags as high intent, within 48 hours, once per comment, and not if the commenter already messaged you in the past 24 hours."
+    "privateReplyHighIntentNotice": "Comment-to-Message must be enabled on the connected TikTok account, and the account must be a Business Account registered in Vietnam, Indonesia or Thailand. TikTok sends the direct message only for first-level comments it flags as high intent, within 48 hours, once per comment, and not if the commenter already messaged you in the past 24 hours.",
+    "postHashtags": {
+      "reconnectRequired": "Det här TikTok-kontot kan ännu inte läsa videobeskrivningar, så alla kommentarer hoppas över. Anslut kontot igen under Inställningar → Kanaler → TikTok för att tillåta det.",
+      "someAccountsReconnectRequired": "Några av dina TikTok-konton kan ännu inte läsa videobeskrivningar, så deras kommentarer hoppas över. Anslut dem igen under Inställningar → Kanaler → TikTok."
+    }
   },
   "commentAutomationMissedComments": {
     "action": "Bearbeta missade kommentarer",

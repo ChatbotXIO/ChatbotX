@@ -822,7 +822,9 @@
       "engagedOnOtherPost": "Har allerede interageret på et andet opslag",
       "mentionCountNotMatched": "Antal omtaler matchede ikke",
       "noImageAttachment": "Intet billede vedhæftet",
-      "moderated": "Skjult eller slettet af moderering"
+      "moderated": "Skjult eller slettet af moderering",
+      "postHashtagNotMatched": "Opslaget har intet matchende hashtag",
+      "postCaptionUnavailable": "Opslagets tekst kunne ikke læses"
     },
     "replyTo": {
       "mentions": "Kommentarer med nok omtaler",
@@ -944,6 +946,15 @@
       "previous": "Forrige",
       "next": "Næste",
       "page": "Side {page} af {pageCount}"
+    },
+    "postType": {
+      "hashtags": "Opslag med hashtags"
+    },
+    "postHashtags": {
+      "label": "Hashtags",
+      "description": "Svar kun på opslag, hvis tekst indeholder mindst ét af disse hashtags. Skriv et hashtag, og tryk på Enter. Et hashtag, der tilføjes et opslag senere, registreres inden for ca. 10 minutter.",
+      "placeholder": "f.eks. automation",
+      "required": "Tilføj mindst ét hashtag."
     }
   },
   "condition": {
@@ -6875,7 +6886,8 @@
       "delayMustBeZero": "Delay value must be zero for the selected timing option.",
       "atLeastOneFieldRequired": "At least one field is required.",
       "replyTextRequired": "Angiv mindst én svarbesked.",
-      "hideKeywordsRequired": "Enter at least one keyword to hide comments by keyword."
+      "hideKeywordsRequired": "Enter at least one keyword to hide comments by keyword.",
+      "hashtagsRequired": "Tilføj mindst ét hashtag."
     },
     "hideCommentsDescription": "Kun svar på øverste niveau til dine opslag kan skjules.",
     "hideComments": {
@@ -6991,13 +7003,18 @@
       "delayMustBeZero": "Delay value must be zero for the selected timing option.",
       "hideKeywordsRequired": "Enter at least one keyword to hide comments by keyword.",
       "atLeastOneFieldRequired": "At least one field is required.",
-      "replyTextRequired": "Angiv mindst én svarbesked."
+      "replyTextRequired": "Angiv mindst én svarbesked.",
+      "hashtagsRequired": "Tilføj mindst ét hashtag."
     },
     "privateReply": "Private reply (Comment-to-Message)",
     "privateReplyDescription": "Send a direct message to the commenter. TikTok only allows this for comments it flags as high intent, so it will not fire for every matching comment.",
     "privateReplyMessage": "Private reply message",
     "privateReplyHighIntentTitle": "TikTok decides which comments can be messaged",
-    "privateReplyHighIntentNotice": "Comment-to-Message must be enabled on the connected TikTok account, and the account must be a Business Account registered in Vietnam, Indonesia or Thailand. TikTok sends the direct message only for first-level comments it flags as high intent, within 48 hours, once per comment, and not if the commenter already messaged you in the past 24 hours."
+    "privateReplyHighIntentNotice": "Comment-to-Message must be enabled on the connected TikTok account, and the account must be a Business Account registered in Vietnam, Indonesia or Thailand. TikTok sends the direct message only for first-level comments it flags as high intent, within 48 hours, once per comment, and not if the commenter already messaged you in the past 24 hours.",
+    "postHashtags": {
+      "reconnectRequired": "Denne TikTok-konto kan endnu ikke læse videotekster, så alle kommentarer springes over. Forbind kontoen igen under Indstillinger → Kanaler → TikTok for at tillade det.",
+      "someAccountsReconnectRequired": "Nogle af dine TikTok-konti kan endnu ikke læse videotekster, så deres kommentarer springes over. Forbind dem igen under Indstillinger → Kanaler → TikTok."
+    }
   },
   "commentAutomationMissedComments": {
     "action": "Behandl oversete kommentarer",

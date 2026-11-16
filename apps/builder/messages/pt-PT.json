@@ -822,7 +822,9 @@
       "engagedOnOtherPost": "Já interagiu noutra publicação",
       "mentionCountNotMatched": "O número de menções não correspondeu",
       "noImageAttachment": "Nenhuma fotografia anexada",
-      "moderated": "Ocultado ou eliminado pela moderação"
+      "moderated": "Ocultado ou eliminado pela moderação",
+      "postHashtagNotMatched": "A publicação não tem uma hashtag correspondente",
+      "postCaptionUnavailable": "Não foi possível ler o texto da publicação"
     },
     "replyTo": {
       "mentions": "Comentários com menções suficientes",
@@ -944,6 +946,15 @@
       "previous": "Anterior",
       "next": "Seguinte",
       "page": "Página {page} de {pageCount}"
+    },
+    "postType": {
+      "hashtags": "Publicações com hashtags"
+    },
+    "postHashtags": {
+      "label": "Hashtags",
+      "description": "Responder apenas a publicações cujo texto contenha pelo menos uma destas hashtags. Escreva uma hashtag e prima Enter. Uma hashtag adicionada mais tarde a uma publicação é detetada em cerca de 10 minutos.",
+      "placeholder": "p. ex. automation",
+      "required": "Adicione pelo menos uma hashtag."
     }
   },
   "condition": {
@@ -6871,7 +6882,8 @@
       "delayMustBeZero": "Delay value must be zero for the selected timing option.",
       "atLeastOneFieldRequired": "At least one field is required.",
       "replyTextRequired": "Introduza pelo menos uma mensagem de resposta.",
-      "hideKeywordsRequired": "Enter at least one keyword to hide comments by keyword."
+      "hideKeywordsRequired": "Enter at least one keyword to hide comments by keyword.",
+      "hashtagsRequired": "Adicione pelo menos uma hashtag."
     },
     "hideCommentsDescription": "Apenas as respostas de primeiro nível às suas publicações podem ser ocultadas.",
     "hideComments": {
@@ -6987,13 +6999,18 @@
       "delayMustBeZero": "Delay value must be zero for the selected timing option.",
       "hideKeywordsRequired": "Enter at least one keyword to hide comments by keyword.",
       "atLeastOneFieldRequired": "At least one field is required.",
-      "replyTextRequired": "Introduza pelo menos uma mensagem de resposta."
+      "replyTextRequired": "Introduza pelo menos uma mensagem de resposta.",
+      "hashtagsRequired": "Adicione pelo menos uma hashtag."
     },
     "privateReply": "Private reply (Comment-to-Message)",
     "privateReplyDescription": "Send a direct message to the commenter. TikTok only allows this for comments it flags as high intent, so it will not fire for every matching comment.",
     "privateReplyMessage": "Private reply message",
     "privateReplyHighIntentTitle": "TikTok decides which comments can be messaged",
-    "privateReplyHighIntentNotice": "Comment-to-Message must be enabled on the connected TikTok account, and the account must be a Business Account registered in Vietnam, Indonesia or Thailand. TikTok sends the direct message only for first-level comments it flags as high intent, within 48 hours, once per comment, and not if the commenter already messaged you in the past 24 hours."
+    "privateReplyHighIntentNotice": "Comment-to-Message must be enabled on the connected TikTok account, and the account must be a Business Account registered in Vietnam, Indonesia or Thailand. TikTok sends the direct message only for first-level comments it flags as high intent, within 48 hours, once per comment, and not if the commenter already messaged you in the past 24 hours.",
+    "postHashtags": {
+      "reconnectRequired": "Esta conta do TikTok ainda não consegue ler as descrições dos vídeos, por isso todos os comentários serão ignorados. Volte a ligar a conta em Definições → Canais → TikTok para o permitir.",
+      "someAccountsReconnectRequired": "Algumas das suas contas do TikTok ainda não conseguem ler as descrições dos vídeos, por isso os comentários delas serão ignorados. Volte a ligá-las em Definições → Canais → TikTok."
+    }
   },
   "commentAutomationMissedComments": {
     "action": "Processar comentários perdidos",

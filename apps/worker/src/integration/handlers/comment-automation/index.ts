@@ -33,6 +33,7 @@ import {
   matchKeywords,
   matchMentionCount,
   matchPost,
+  matchPostHashtags,
   needsMentionCount,
   willSendReply,
   withLiveCapabilityLimits,
@@ -49,6 +50,7 @@ import {
 } from "./comment-tags"
 import { enqueueDeferredPrivateReply } from "./deferred-private-reply"
 import { applyHideRules, moderateCommentWithAI } from "./moderation"
+import { createPostCaptionResolver, type PostCaption } from "./post-caption"
 import {
   executePrivateReply,
   isCommentFlaggedHighIntent,
@@ -226,6 +228,15 @@ export async function processCommentAutomation(
     auth,
   })
 
+  // The post's caption, read at most once per comment and only when an
+  // automation targets hashtags.
+  const loadPostCaption = createPostCaptionResolver({
+    channelType,
+    workspaceId,
+    postId,
+    integrationRow,
+  })
+
   // The incoming comment's own message row, looked up at most once per run —
   // tag tracking reads it before the loop, and every automation hangs its
   // like/hide/parent threading off it inside.
@@ -252,15 +263,14 @@ export async function processCommentAutomation(
   // purpose. Awaited before any reply dispatches so `{{total_tagged}}` renders
   // the total that includes this comment.
   if (
-    automations.some((automation) =>
-      tracksTagsForComment(automation, workspace.timezone, {
-        postId,
-        commentId,
-        parentId,
-        message,
-        isLive,
-      }),
-    )
+    await anyAutomationTracksTags(automations, workspace.timezone, {
+      postId,
+      commentId,
+      parentId,
+      message,
+      isLive,
+      loadPostCaption,
+    })
   ) {
     await trackCommentTags({
       workspaceId,
@@ -349,6 +359,29 @@ export async function processCommentAutomation(
           reason: "post does not match",
         })
         collectMiss(automation.id, "postNotMatched")
+        continue
+      }
+      const hashtagMatch = await matchPostHashtags(
+        automation.post,
+        loadPostCaption,
+      )
+      if (hashtagMatch !== "matched") {
+        const captionUnavailable = hashtagMatch === "captionUnavailable"
+        logAutomationSkipped({
+          automationId: automation.id,
+          commentId,
+          postId,
+          workspaceId,
+          reason: captionUnavailable
+            ? "post caption unavailable for the hashtag filter"
+            : "post has none of the target hashtags",
+        })
+        collectMiss(
+          automation.id,
+          captionUnavailable
+            ? "postCaptionUnavailable"
+            : "postHashtagNotMatched",
+        )
         continue
       }
 
@@ -1003,6 +1036,15 @@ export function resolvePrivateReplyBlockedReason(props: {
   return null
 }
 
+type TagTrackingComment = {
+  postId: string
+  commentId: string
+  parentId: string | undefined
+  message: string | undefined
+  isLive: boolean
+  loadPostCaption: () => Promise<PostCaption>
+}
+
 /**
  * Whether this automation wants the comment's tags counted: the same schedule,
  * post, reply and keyword filters the dispatch loop applies, so a comment no
@@ -1011,20 +1053,17 @@ export function resolvePrivateReplyBlockedReason(props: {
  * checks) is left out on purpose — it is about replying, and must not stop a
  * user's later comments from being counted. So is the mention-count filter,
  * which needs the very lookup this gate exists to spare.
+ *
+ * The post-hashtag gate is checked last: it may cost a caption fetch, which
+ * the cheap synchronous gates spare whenever they already say no.
  */
-function tracksTagsForComment(
+async function tracksTagsForComment(
   automation: CommentAutomationModel,
   timezone: string,
-  comment: {
-    postId: string
-    commentId: string
-    parentId: string | undefined
-    message: string | undefined
-    isLive: boolean
-  },
-): boolean {
+  comment: TagTrackingComment,
+): Promise<boolean> {
   const { postId, commentId, parentId, message, isLive } = comment
-  return (
+  const passesSyncGates =
     automation.options.trackUserTags &&
     commentAutomationService.isWithinSchedule(automation, timezone) &&
     matchPost(automation.post, postId, isLive) &&
@@ -1038,7 +1077,26 @@ function tracksTagsForComment(
       message,
       automation.excludeKeywordsType,
     )
+  if (!passesSyncGates) {
+    return false
+  }
+  return (
+    (await matchPostHashtags(automation.post, comment.loadPostCaption)) ===
+    "matched"
   )
+}
+
+async function anyAutomationTracksTags(
+  automations: CommentAutomationModel[],
+  timezone: string,
+  comment: TagTrackingComment,
+): Promise<boolean> {
+  for (const automation of automations) {
+    if (await tracksTagsForComment(automation, timezone, comment)) {
+      return true
+    }
+  }
+  return false
 }
 
 /**

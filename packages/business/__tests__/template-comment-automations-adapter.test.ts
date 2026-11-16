@@ -148,6 +148,18 @@ describe("comment automations adapter: inbox scope and posts", () => {
     })
   })
 
+  test("a hashtag automation keeps its hashtags and stays on", async () => {
+    const { inserted, warnings } = await install({
+      post: { type: "hashtags", value: ["vip", "sale"] },
+    })
+
+    expect(inserted).toMatchObject({
+      post: { type: "hashtags", value: ["vip", "sale"] },
+      isActive: true,
+    })
+    expect(warnings).toEqual([])
+  })
+
   test("an automation that was switched off stays off even when fully bound", async () => {
     const { inserted } = await install(
       { isActive: false, inboxSourceId: "src-inbox" },

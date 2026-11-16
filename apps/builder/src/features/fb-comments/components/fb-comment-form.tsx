@@ -35,8 +35,10 @@ import {
   useAccountChoiceMissing,
 } from "@/features/shared/comment-automation/automation-account-field"
 import { ExcludeKeywordsField } from "@/features/shared/comment-automation/exclude-keywords-field"
+import { PostHashtagsField } from "@/features/shared/comment-automation/post-hashtags-field"
 import { ReplyTextsField } from "@/features/shared/comment-automation/reply-texts-field"
 import { ReplyToField } from "@/features/shared/comment-automation/reply-to-field"
+import { useClearPostValueOnHashtagsSwitch } from "@/features/shared/comment-automation/use-clear-post-value-on-hashtags-switch"
 import { LockedContent } from "@/features/templates/components/locked-editor"
 import { useWorkspaceId } from "@/hooks/routing"
 import { useFbCommentPostsStore } from "../provider/fb-comment-posts-store-context"
@@ -121,7 +123,12 @@ export function FbCommentForm({
       label: t("facebookCommentAutomation.postType.specificPosts"),
       value: "postIds",
     },
+    { label: t("commentAutomation.postType.hashtags"), value: "hashtags" },
   ]
+
+  useClearPostValueOnHashtagsSwitch(postType, () =>
+    form.setValue("post.value", [], { shouldDirty: true }),
+  )
 
   const replyAfterTypeOptions = [
     {
@@ -253,6 +260,8 @@ export function FbCommentForm({
                 />
               </>
             )}
+
+            {postType === "hashtags" && <PostHashtagsField />}
 
             <div className="flex flex-col gap-2 space-y-2">
               <RadioGroupField

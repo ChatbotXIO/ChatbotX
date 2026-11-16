@@ -822,7 +822,9 @@
       "engagedOnOtherPost": "Al gereageerd op een ander bericht",
       "mentionCountNotMatched": "Aantal vermeldingen kwam niet overeen",
       "noImageAttachment": "Geen foto bijgevoegd",
-      "moderated": "Verborgen of verwijderd door moderatie"
+      "moderated": "Verborgen of verwijderd door moderatie",
+      "postHashtagNotMatched": "Bericht heeft geen overeenkomende hashtag",
+      "postCaptionUnavailable": "Tekst van het bericht kon niet worden gelezen"
     },
     "replyTo": {
       "mentions": "Reacties met genoeg vermeldingen",
@@ -944,6 +946,15 @@
       "previous": "Vorige",
       "next": "Volgende",
       "page": "Pagina {page} van {pageCount}"
+    },
+    "postType": {
+      "hashtags": "Berichten met hashtags"
+    },
+    "postHashtags": {
+      "label": "Hashtags",
+      "description": "Alleen reageren op berichten waarvan de tekst minstens één van deze hashtags bevat. Typ een hashtag en druk op Enter. Een hashtag die later aan een bericht wordt toegevoegd, wordt binnen ongeveer 10 minuten herkend.",
+      "placeholder": "bijv. automation",
+      "required": "Voeg minstens één hashtag toe."
     }
   },
   "fields": {
@@ -6875,7 +6886,8 @@
       "delayMustBeZero": "Delay value must be zero for the selected timing option.",
       "atLeastOneFieldRequired": "At least one field is required.",
       "replyTextRequired": "Voer minstens één antwoordbericht in.",
-      "hideKeywordsRequired": "Enter at least one keyword to hide comments by keyword."
+      "hideKeywordsRequired": "Enter at least one keyword to hide comments by keyword.",
+      "hashtagsRequired": "Voeg minstens één hashtag toe."
     },
     "hideCommentsDescription": "Alleen antwoorden op het hoogste niveau op je berichten kunnen worden verborgen.",
     "hideComments": {
@@ -6991,13 +7003,18 @@
       "delayMustBeZero": "Delay value must be zero for the selected timing option.",
       "hideKeywordsRequired": "Enter at least one keyword to hide comments by keyword.",
       "atLeastOneFieldRequired": "At least one field is required.",
-      "replyTextRequired": "Voer minstens één antwoordbericht in."
+      "replyTextRequired": "Voer minstens één antwoordbericht in.",
+      "hashtagsRequired": "Voeg minstens één hashtag toe."
     },
     "privateReply": "Private reply (Comment-to-Message)",
     "privateReplyDescription": "Send a direct message to the commenter. TikTok only allows this for comments it flags as high intent, so it will not fire for every matching comment.",
     "privateReplyMessage": "Private reply message",
     "privateReplyHighIntentTitle": "TikTok decides which comments can be messaged",
-    "privateReplyHighIntentNotice": "Comment-to-Message must be enabled on the connected TikTok account, and the account must be a Business Account registered in Vietnam, Indonesia or Thailand. TikTok sends the direct message only for first-level comments it flags as high intent, within 48 hours, once per comment, and not if the commenter already messaged you in the past 24 hours."
+    "privateReplyHighIntentNotice": "Comment-to-Message must be enabled on the connected TikTok account, and the account must be a Business Account registered in Vietnam, Indonesia or Thailand. TikTok sends the direct message only for first-level comments it flags as high intent, within 48 hours, once per comment, and not if the commenter already messaged you in the past 24 hours.",
+    "postHashtags": {
+      "reconnectRequired": "Dit TikTok-account kan nog geen videobeschrijvingen lezen, dus alle reacties worden overgeslagen. Koppel het account opnieuw via Instellingen → Kanalen → TikTok om dit toe te staan.",
+      "someAccountsReconnectRequired": "Sommige van je TikTok-accounts kunnen nog geen videobeschrijvingen lezen, dus hun reacties worden overgeslagen. Koppel ze opnieuw via Instellingen → Kanalen → TikTok."
+    }
   },
   "commentAutomationMissedComments": {
     "action": "Gemiste reacties verwerken",

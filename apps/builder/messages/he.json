@@ -4492,7 +4492,8 @@
       "delayMustBeZero": "Delay value must be zero for the selected timing option.",
       "atLeastOneFieldRequired": "At least one field is required.",
       "replyTextRequired": "הזינו לפחות הודעת תגובה אחת.",
-      "hideKeywordsRequired": "Enter at least one keyword to hide comments by keyword."
+      "hideKeywordsRequired": "Enter at least one keyword to hide comments by keyword.",
+      "hashtagsRequired": "הוסיפו לפחות האשטג אחד."
     },
     "hideCommentsDescription": "ניתן להסתיר רק תגובות ברמה העליונה לפוסטים שלכם.",
     "hideComments": {
@@ -4608,13 +4609,18 @@
       "delayMustBeZero": "Delay value must be zero for the selected timing option.",
       "hideKeywordsRequired": "Enter at least one keyword to hide comments by keyword.",
       "atLeastOneFieldRequired": "At least one field is required.",
-      "replyTextRequired": "הזינו לפחות הודעת תגובה אחת."
+      "replyTextRequired": "הזינו לפחות הודעת תגובה אחת.",
+      "hashtagsRequired": "הוסיפו לפחות האשטג אחד."
     },
     "privateReply": "Private reply (Comment-to-Message)",
     "privateReplyDescription": "Send a direct message to the commenter. TikTok only allows this for comments it flags as high intent, so it will not fire for every matching comment.",
     "privateReplyMessage": "Private reply message",
     "privateReplyHighIntentTitle": "TikTok decides which comments can be messaged",
-    "privateReplyHighIntentNotice": "Comment-to-Message must be enabled on the connected TikTok account, and the account must be a Business Account registered in Vietnam, Indonesia or Thailand. TikTok sends the direct message only for first-level comments it flags as high intent, within 48 hours, once per comment, and not if the commenter already messaged you in the past 24 hours."
+    "privateReplyHighIntentNotice": "Comment-to-Message must be enabled on the connected TikTok account, and the account must be a Business Account registered in Vietnam, Indonesia or Thailand. TikTok sends the direct message only for first-level comments it flags as high intent, within 48 hours, once per comment, and not if the commenter already messaged you in the past 24 hours.",
+    "postHashtags": {
+      "reconnectRequired": "חשבון TikTok זה עדיין לא יכול לקרוא תיאורי סרטונים, ולכן כל התגובות ידולגו. חברו מחדש את החשבון בהגדרות ← ערוצים ← TikTok כדי לאפשר זאת.",
+      "someAccountsReconnectRequired": "חלק מחשבונות ה-TikTok שלכם עדיין לא יכולים לקרוא תיאורי סרטונים, ולכן התגובות שלהם ידולגו. חברו אותם מחדש בהגדרות ← ערוצים ← TikTok."
+    }
   },
   "commentAutomationMissedComments": {
     "action": "עיבוד תגובות שפוספסו",
@@ -7983,7 +7989,9 @@
       "engagedOnOtherPost": "כבר היה מעורב בפוסט אחר",
       "mentionCountNotMatched": "מספר האזכורים לא תאם",
       "noImageAttachment": "לא צורפה תמונה",
-      "moderated": "הוסתר או נמחק על ידי ניהול התוכן"
+      "moderated": "הוסתר או נמחק על ידי ניהול התוכן",
+      "postHashtagNotMatched": "בפוסט אין האשטג תואם",
+      "postCaptionUnavailable": "לא ניתן היה לקרוא את טקסט הפוסט"
     },
     "replyTo": {
       "mentions": "תגובות עם מספיק אזכורים",
@@ -8105,6 +8113,15 @@
       "previous": "הקודם",
       "next": "הבא",
       "page": "עמוד {page} מתוך {pageCount}"
+    },
+    "postType": {
+      "hashtags": "פוסטים עם האשטגים"
+    },
+    "postHashtags": {
+      "label": "האשטגים",
+      "description": "להגיב רק לפוסטים שהטקסט שלהם מכיל לפחות אחד מההאשטגים האלה. הקלידו האשטג ולחצו Enter. האשטג שנוסף לפוסט מאוחר יותר יזוהה תוך כ-10 דקות.",
+      "placeholder": "לדוגמה: automation",
+      "required": "הוסיפו לפחות האשטג אחד."
     }
   },
   "condition": {

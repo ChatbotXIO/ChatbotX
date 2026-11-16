@@ -39,6 +39,17 @@ export const commentAutomationMissReasons = z.enum([
    * here — Postgres enum values can only be appended.
    */
   "moderated",
+  /**
+   * A `hashtags` post target, and the post's caption carries none of its
+   * hashtags. Part of the post gate (right after `postNotMatched`).
+   */
+  "postHashtagNotMatched",
+  /**
+   * A `hashtags` post target, and the post's caption could not be read (post
+   * deleted, API error, TikTok connection without `video.list`). The comment
+   * is not answered — guessing would reply on posts the user excluded.
+   */
+  "postCaptionUnavailable",
 ])
 
 export type CommentAutomationMissReason = z.infer<

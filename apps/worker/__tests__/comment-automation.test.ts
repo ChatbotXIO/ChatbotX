@@ -43,6 +43,8 @@ const {
   mockClaimContentAttributes,
   mockNeedsAttachmentInfo,
   mockResolveAttachmentInfo,
+  mockLoadPostCaption,
+  mockCreatePostCaptionResolver,
 } = vi.hoisted(() => ({
   mockFindContactInboxBy: vi.fn(),
   mockFindActiveAutomations: vi.fn(),
@@ -81,6 +83,8 @@ const {
   mockClaimContentAttributes: vi.fn(),
   mockNeedsAttachmentInfo: vi.fn(),
   mockResolveAttachmentInfo: vi.fn(),
+  mockLoadPostCaption: vi.fn(),
+  mockCreatePostCaptionResolver: vi.fn(),
   mockIsBotMessageQuotaReached: vi.fn(),
 }))
 
@@ -249,6 +253,10 @@ vi.mock(
   }),
 )
 
+vi.mock("../src/integration/handlers/comment-automation/post-caption", () => ({
+  createPostCaptionResolver: mockCreatePostCaptionResolver,
+}))
+
 vi.mock("../src/integration/handlers/automated-response/replies", () => ({
   generateAIReplyText: mockGenerateAIReplyText,
   createGuardedCommentInputMessage: vi.fn(({ channel, comment }) => ({
@@ -394,6 +402,8 @@ function buildJobData(
 
 beforeEach(() => {
   vi.clearAllMocks()
+  mockCreatePostCaptionResolver.mockReturnValue(mockLoadPostCaption)
+  mockLoadPostCaption.mockResolvedValue("")
   mockClaimDedup.mockResolvedValue(true)
   mockIdentifyInboxAndIntegrationAuth.mockResolvedValue({
     integrationRow: { auth: { accessToken: "token" }, inboxId: "inbox-1" },
@@ -4238,6 +4248,25 @@ describe("processCommentAutomation misses", () => {
       job: { isLive: true },
     },
     {
+      reason: "postHashtagNotMatched",
+      automation: { post: { type: "hashtags", value: ["vip"] } },
+      arrange: () =>
+        mockLoadPostCaption.mockResolvedValue("New drop #vip2 #sale"),
+    },
+    {
+      // A TikTok connection without `video.list`, a deleted post, an API
+      // outage: the caption is unknown, so the comment is not answered.
+      reason: "postCaptionUnavailable",
+      automation: { post: { type: "hashtags", value: ["vip"] } },
+      arrange: () => mockLoadPostCaption.mockResolvedValue(null),
+    },
+    {
+      // A hashtag automation still never answers a live comment.
+      reason: "postNotMatched",
+      automation: { post: { type: "hashtags", value: ["vip"] } },
+      job: { isLive: true },
+    },
+    {
       // The read said "not yet replied", but a concurrent comment from the
       // same person won the atomic claim first.
       reason: "alreadyRepliedOnPost",
@@ -4791,5 +4820,56 @@ describe("processCommentAutomation moderation", () => {
     expect(mockMessageCreate).toHaveBeenCalledWith(
       expect.objectContaining({ text: "answer" }),
     )
+  })
+})
+
+describe("processCommentAutomation post hashtags", () => {
+  test("answers a comment on a post whose caption carries a target hashtag", async () => {
+    mockLoadPostCaption.mockResolvedValue("Ưu đãi riêng cho khách #VIP!")
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({
+        post: { type: "hashtags", value: ["vip"] },
+        publicReply: { type: "text", value: "answer" },
+      }),
+    ])
+
+    await processCommentAutomation(buildJobData() as any)
+
+    expect(mockRecordMisses.mock.calls[0]?.[0]).toEqual([])
+    expect(mockRecordEvent).toHaveBeenCalled()
+  })
+
+  test("reads the caption once however many hashtag automations see the comment", async () => {
+    mockLoadPostCaption.mockResolvedValue("#sale")
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({
+        id: "automation-1",
+        post: { type: "hashtags", value: ["vip"] },
+      }),
+      buildAutomation({
+        id: "automation-2",
+        post: { type: "hashtags", value: ["sale"] },
+      }),
+    ])
+
+    await processCommentAutomation(buildJobData() as any)
+
+    expect(mockCreatePostCaptionResolver).toHaveBeenCalledTimes(1)
+    expect(mockRecordMisses.mock.calls[0]?.[0]).toEqual([
+      expect.objectContaining({
+        automationId: "automation-1",
+        reason: "postHashtagNotMatched",
+      }),
+    ])
+  })
+
+  test("never reads the caption when no automation targets hashtags", async () => {
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({ publicReply: { type: "text", value: "answer" } }),
+    ])
+
+    await processCommentAutomation(buildJobData() as any)
+
+    expect(mockLoadPostCaption).not.toHaveBeenCalled()
   })
 })

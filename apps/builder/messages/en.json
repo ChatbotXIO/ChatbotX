@@ -864,7 +864,9 @@
       "engagedOnOtherPost": "Already engaged on another post",
       "mentionCountNotMatched": "Mention count did not match",
       "noImageAttachment": "No photo attached",
-      "moderated": "Hidden or deleted by moderation"
+      "moderated": "Hidden or deleted by moderation",
+      "postHashtagNotMatched": "Post has no matching hashtag",
+      "postCaptionUnavailable": "Couldn't read the post caption"
     },
     "replyTo": {
       "mentions": "Comments when enough mentions",
@@ -986,6 +988,15 @@
       "previous": "Previous",
       "next": "Next",
       "page": "Page {page} of {pageCount}"
+    },
+    "postType": {
+      "hashtags": "Posts with hashtags"
+    },
+    "postHashtags": {
+      "label": "Hashtags",
+      "description": "Reply only on posts whose caption contains at least one of these hashtags. Type a hashtag and press Enter. A hashtag added to a post later is picked up within about 10 minutes.",
+      "placeholder": "e.g. automation",
+      "required": "Add at least one hashtag."
     }
   },
   "condition": {
@@ -7609,7 +7620,8 @@
       "delayMustBeZero": "Delay value must be zero for the selected timing option.",
       "atLeastOneFieldRequired": "At least one field is required.",
       "replyTextRequired": "Enter at least one reply message.",
-      "hideKeywordsRequired": "Enter at least one keyword to hide comments by keyword."
+      "hideKeywordsRequired": "Enter at least one keyword to hide comments by keyword.",
+      "hashtagsRequired": "Add at least one hashtag."
     },
     "hideCommentsDescription": "Only top-level replies to your posts can be hidden.",
     "hideComments": {
@@ -7725,13 +7737,18 @@
       "delayMustBeZero": "Delay value must be zero for the selected timing option.",
       "hideKeywordsRequired": "Enter at least one keyword to hide comments by keyword.",
       "atLeastOneFieldRequired": "At least one field is required.",
-      "replyTextRequired": "Enter at least one reply message."
+      "replyTextRequired": "Enter at least one reply message.",
+      "hashtagsRequired": "Add at least one hashtag."
     },
     "privateReply": "Private reply (Comment-to-Message)",
     "privateReplyDescription": "Send a direct message to the commenter. TikTok only allows this for comments it flags as high intent, so it will not fire for every matching comment.",
     "privateReplyMessage": "Private reply message",
     "privateReplyHighIntentTitle": "TikTok decides which comments can be messaged",
-    "privateReplyHighIntentNotice": "Comment-to-Message must be enabled on the connected TikTok account, and the account must be a Business Account registered in Vietnam, Indonesia or Thailand. TikTok sends the direct message only for first-level comments it flags as high intent, within 48 hours, once per comment, and not if the commenter already messaged you in the past 24 hours."
+    "privateReplyHighIntentNotice": "Comment-to-Message must be enabled on the connected TikTok account, and the account must be a Business Account registered in Vietnam, Indonesia or Thailand. TikTok sends the direct message only for first-level comments it flags as high intent, within 48 hours, once per comment, and not if the commenter already messaged you in the past 24 hours.",
+    "postHashtags": {
+      "reconnectRequired": "This TikTok account can't read video captions yet, so every comment will be skipped. Reconnect the account in Settings → Channels → TikTok to allow it.",
+      "someAccountsReconnectRequired": "Some of your TikTok accounts can't read video captions yet, so their comments will be skipped. Reconnect them in Settings → Channels → TikTok."
+    }
   },
   "commentAutomationMissedComments": {
     "action": "Process missed comments",

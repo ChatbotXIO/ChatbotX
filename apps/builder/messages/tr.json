@@ -822,7 +822,9 @@
       "engagedOnOtherPost": "Başka bir gönderide zaten etkileşime girdi",
       "mentionCountNotMatched": "Bahsetme sayısı eşleşmedi",
       "noImageAttachment": "Fotoğraf eklenmemiş",
-      "moderated": "Moderasyon tarafından gizlendi veya silindi"
+      "moderated": "Moderasyon tarafından gizlendi veya silindi",
+      "postHashtagNotMatched": "Gönderide eşleşen hashtag yok",
+      "postCaptionUnavailable": "Gönderi metni okunamadı"
     },
     "replyTo": {
       "mentions": "Yeterli bahsetme içeren yorumlar",
@@ -944,6 +946,15 @@
       "previous": "Önceki",
       "next": "Sonraki",
       "page": "Sayfa {page} / {pageCount}"
+    },
+    "postType": {
+      "hashtags": "Hashtag içeren gönderiler"
+    },
+    "postHashtags": {
+      "label": "Hashtag'ler",
+      "description": "Yalnızca metninde bu hashtag'lerden en az biri bulunan gönderilere yanıt verin. Bir hashtag yazıp Enter'a basın. Bir gönderiye sonradan eklenen hashtag yaklaşık 10 dakika içinde algılanır.",
+      "placeholder": "örn. automation",
+      "required": "En az bir hashtag ekleyin."
     }
   },
   "condition": {
@@ -6875,7 +6886,8 @@
       "delayMustBeZero": "Delay value must be zero for the selected timing option.",
       "atLeastOneFieldRequired": "At least one field is required.",
       "replyTextRequired": "En az bir yanıt mesajı girin.",
-      "hideKeywordsRequired": "Enter at least one keyword to hide comments by keyword."
+      "hideKeywordsRequired": "Enter at least one keyword to hide comments by keyword.",
+      "hashtagsRequired": "En az bir hashtag ekleyin."
     },
     "hideCommentsDescription": "Yalnızca gönderilerinize verilen üst düzey yanıtlar gizlenebilir.",
     "hideComments": {
@@ -6991,13 +7003,18 @@
       "delayMustBeZero": "Delay value must be zero for the selected timing option.",
       "hideKeywordsRequired": "Enter at least one keyword to hide comments by keyword.",
       "atLeastOneFieldRequired": "At least one field is required.",
-      "replyTextRequired": "En az bir yanıt mesajı girin."
+      "replyTextRequired": "En az bir yanıt mesajı girin.",
+      "hashtagsRequired": "En az bir hashtag ekleyin."
     },
     "privateReply": "Private reply (Comment-to-Message)",
     "privateReplyDescription": "Send a direct message to the commenter. TikTok only allows this for comments it flags as high intent, so it will not fire for every matching comment.",
     "privateReplyMessage": "Private reply message",
     "privateReplyHighIntentTitle": "TikTok decides which comments can be messaged",
-    "privateReplyHighIntentNotice": "Comment-to-Message must be enabled on the connected TikTok account, and the account must be a Business Account registered in Vietnam, Indonesia or Thailand. TikTok sends the direct message only for first-level comments it flags as high intent, within 48 hours, once per comment, and not if the commenter already messaged you in the past 24 hours."
+    "privateReplyHighIntentNotice": "Comment-to-Message must be enabled on the connected TikTok account, and the account must be a Business Account registered in Vietnam, Indonesia or Thailand. TikTok sends the direct message only for first-level comments it flags as high intent, within 48 hours, once per comment, and not if the commenter already messaged you in the past 24 hours.",
+    "postHashtags": {
+      "reconnectRequired": "Bu TikTok hesabı henüz video açıklamalarını okuyamıyor, bu yüzden tüm yorumlar atlanacak. İzin vermek için hesabı Ayarlar → Kanallar → TikTok bölümünden yeniden bağlayın.",
+      "someAccountsReconnectRequired": "Bazı TikTok hesaplarınız henüz video açıklamalarını okuyamıyor, bu yüzden yorumları atlanacak. Onları Ayarlar → Kanallar → TikTok bölümünden yeniden bağlayın."
+    }
   },
   "commentAutomationMissedComments": {
     "action": "Kaçırılan yorumları işle",

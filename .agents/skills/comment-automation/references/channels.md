@@ -16,6 +16,7 @@
    | `onlyCommentsWithImage` reply filter (`commentAutomationChannelSupportsImageFilter`) | ✅ | ❌ | ❌ | ✅ | ❌ |
    | GIF hide (`commentAutomationChannelSupportsHideGif`) | ✅ | ❌ | ❌ | ✅ | ❌ |
    | tag tracking / `mentions` filter | ✅ exact | ✅ text | ✅ text | ✅ text | ✅ text |
+   | post hashtag target (`post.type: "hashtags"`, caption read via `post-caption.ts`) | ✅ | ✅ | ✅ | ✅ | ⚠️ needs `video.list` |
 
    Threads has no DM API at all; it hides only TOP-LEVEL replies (`manage_reply` — the worker
    skips nested ones via `supportsHideForComment`) and

@@ -37,7 +37,7 @@ export const tiktokCommentResource = createSelectSchema(
     workspaceId: z.string(),
     inboxId: automationInboxIdResourceSchema,
     post: z.object({
-      type: z.enum(["all", "postIds"]),
+      type: z.enum(["all", "postIds", "hashtags"]),
       value: z.array(z.string()),
     }),
     // No `flow` variant: Comment-to-Message grants one comment-anchored message

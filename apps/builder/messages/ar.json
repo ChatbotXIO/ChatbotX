@@ -822,7 +822,9 @@
       "engagedOnOtherPost": "تفاعل مسبقًا على منشور آخر",
       "mentionCountNotMatched": "عدد الإشارات غير مطابق",
       "noImageAttachment": "لا توجد صورة مرفقة",
-      "moderated": "تم إخفاؤه أو حذفه بواسطة الإشراف"
+      "moderated": "تم إخفاؤه أو حذفه بواسطة الإشراف",
+      "postHashtagNotMatched": "المنشور لا يحتوي على وسم مطابق",
+      "postCaptionUnavailable": "تعذّرت قراءة نص المنشور"
     },
     "replyTo": {
       "mentions": "التعليقات التي تحتوي على عدد كافٍ من الإشارات",
@@ -944,6 +946,15 @@
       "previous": "السابق",
       "next": "التالي",
       "page": "الصفحة {page} من {pageCount}"
+    },
+    "postType": {
+      "hashtags": "المنشورات التي تحتوي على وسوم"
+    },
+    "postHashtags": {
+      "label": "الوسوم",
+      "description": "الرد فقط على المنشورات التي يحتوي نصها على وسم واحد على الأقل من هذه الوسوم. اكتب الوسم واضغط Enter. يتم التعرف على الوسم المضاف إلى منشور لاحقًا خلال 10 دقائق تقريبًا.",
+      "placeholder": "مثال: automation",
+      "required": "أضف وسمًا واحدًا على الأقل."
     }
   },
   "condition": {
@@ -7905,7 +7916,8 @@
       "delayMustBeZero": "Delay value must be zero for the selected timing option.",
       "atLeastOneFieldRequired": "At least one field is required.",
       "replyTextRequired": "أدخل رسالة رد واحدة على الأقل.",
-      "hideKeywordsRequired": "Enter at least one keyword to hide comments by keyword."
+      "hideKeywordsRequired": "Enter at least one keyword to hide comments by keyword.",
+      "hashtagsRequired": "أضف وسمًا واحدًا على الأقل."
     },
     "hideCommentsDescription": "يمكن إخفاء الردود المباشرة على منشوراتك فقط.",
     "hideComments": {
@@ -8021,13 +8033,18 @@
       "delayMustBeZero": "Delay value must be zero for the selected timing option.",
       "hideKeywordsRequired": "Enter at least one keyword to hide comments by keyword.",
       "atLeastOneFieldRequired": "At least one field is required.",
-      "replyTextRequired": "أدخل رسالة رد واحدة على الأقل."
+      "replyTextRequired": "أدخل رسالة رد واحدة على الأقل.",
+      "hashtagsRequired": "أضف وسمًا واحدًا على الأقل."
     },
     "privateReply": "Private reply (Comment-to-Message)",
     "privateReplyDescription": "Send a direct message to the commenter. TikTok only allows this for comments it flags as high intent, so it will not fire for every matching comment.",
     "privateReplyMessage": "Private reply message",
     "privateReplyHighIntentTitle": "TikTok decides which comments can be messaged",
-    "privateReplyHighIntentNotice": "Comment-to-Message must be enabled on the connected TikTok account, and the account must be a Business Account registered in Vietnam, Indonesia or Thailand. TikTok sends the direct message only for first-level comments it flags as high intent, within 48 hours, once per comment, and not if the commenter already messaged you in the past 24 hours."
+    "privateReplyHighIntentNotice": "Comment-to-Message must be enabled on the connected TikTok account, and the account must be a Business Account registered in Vietnam, Indonesia or Thailand. TikTok sends the direct message only for first-level comments it flags as high intent, within 48 hours, once per comment, and not if the commenter already messaged you in the past 24 hours.",
+    "postHashtags": {
+      "reconnectRequired": "لا يمكن لحساب TikTok هذا قراءة أوصاف الفيديو بعد، لذلك سيتم تخطي كل التعليقات. أعد ربط الحساب من الإعدادات ← القنوات ← TikTok للسماح بذلك.",
+      "someAccountsReconnectRequired": "بعض حسابات TikTok لا يمكنها قراءة أوصاف الفيديو بعد، لذلك سيتم تخطي تعليقاتها. أعد ربطها من الإعدادات ← القنوات ← TikTok."
+    }
   },
   "commentAutomationMissedComments": {
     "action": "معالجة التعليقات الفائتة",

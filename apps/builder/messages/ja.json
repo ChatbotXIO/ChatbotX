@@ -822,7 +822,9 @@
       "engagedOnOtherPost": "他の投稿で既に反応済み",
       "mentionCountNotMatched": "メンション数が一致しませんでした",
       "noImageAttachment": "写真が添付されていません",
-      "moderated": "モデレーションにより非表示または削除されました"
+      "moderated": "モデレーションにより非表示または削除されました",
+      "postHashtagNotMatched": "投稿に一致するハッシュタグがありません",
+      "postCaptionUnavailable": "投稿の本文を読み取れませんでした"
     },
     "replyTo": {
       "mentions": "十分なメンションがあるコメント",
@@ -944,6 +946,15 @@
       "previous": "前へ",
       "next": "次へ",
       "page": "{page} / {pageCount} ページ"
+    },
+    "postType": {
+      "hashtags": "ハッシュタグ付きの投稿"
+    },
+    "postHashtags": {
+      "label": "ハッシュタグ",
+      "description": "本文にこれらのハッシュタグのいずれかを含む投稿にのみ返信します。ハッシュタグを入力して Enter を押してください。後から投稿に追加したハッシュタグは約10分以内に反映されます。",
+      "placeholder": "例: automation",
+      "required": "ハッシュタグを1つ以上追加してください。"
     }
   },
   "condition": {
@@ -6852,7 +6863,8 @@
       "delayMustBeZero": "Delay value must be zero for the selected timing option.",
       "atLeastOneFieldRequired": "At least one field is required.",
       "replyTextRequired": "返信メッセージを1件以上入力してください。",
-      "hideKeywordsRequired": "Enter at least one keyword to hide comments by keyword."
+      "hideKeywordsRequired": "Enter at least one keyword to hide comments by keyword.",
+      "hashtagsRequired": "ハッシュタグを1つ以上追加してください。"
     },
     "hideCommentsDescription": "非表示にできるのは投稿への最上位の返信のみです。",
     "hideComments": {
@@ -6968,13 +6980,18 @@
       "delayMustBeZero": "Delay value must be zero for the selected timing option.",
       "hideKeywordsRequired": "Enter at least one keyword to hide comments by keyword.",
       "atLeastOneFieldRequired": "At least one field is required.",
-      "replyTextRequired": "返信メッセージを1件以上入力してください。"
+      "replyTextRequired": "返信メッセージを1件以上入力してください。",
+      "hashtagsRequired": "ハッシュタグを1つ以上追加してください。"
     },
     "privateReply": "Private reply (Comment-to-Message)",
     "privateReplyDescription": "Send a direct message to the commenter. TikTok only allows this for comments it flags as high intent, so it will not fire for every matching comment.",
     "privateReplyMessage": "Private reply message",
     "privateReplyHighIntentTitle": "TikTok decides which comments can be messaged",
-    "privateReplyHighIntentNotice": "Comment-to-Message must be enabled on the connected TikTok account, and the account must be a Business Account registered in Vietnam, Indonesia or Thailand. TikTok sends the direct message only for first-level comments it flags as high intent, within 48 hours, once per comment, and not if the commenter already messaged you in the past 24 hours."
+    "privateReplyHighIntentNotice": "Comment-to-Message must be enabled on the connected TikTok account, and the account must be a Business Account registered in Vietnam, Indonesia or Thailand. TikTok sends the direct message only for first-level comments it flags as high intent, within 48 hours, once per comment, and not if the commenter already messaged you in the past 24 hours.",
+    "postHashtags": {
+      "reconnectRequired": "このTikTokアカウントはまだ動画の説明文を読み取れないため、すべてのコメントがスキップされます。設定 → チャネル → TikTok でアカウントを再接続して許可してください。",
+      "someAccountsReconnectRequired": "一部のTikTokアカウントはまだ動画の説明文を読み取れないため、それらのコメントはスキップされます。設定 → チャネル → TikTok で再接続してください。"
+    }
   },
   "commentAutomationMissedComments": {
     "action": "見逃したコメントを処理",

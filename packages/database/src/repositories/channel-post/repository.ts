@@ -60,6 +60,36 @@ export const channelPostRepository = {
     return row ?? null
   },
 
+  /**
+   * The stored caption of a post, or `null` when the post is not tracked or
+   * its metadata was never fetched. A post whose metadata was fetched but has
+   * no caption answers `""`, so a caller can tell "no hashtags" from "unknown".
+   */
+  async findCaptionByExternalId(
+    input: { channel: string; externalPostId: string; workspaceId: string },
+    tx: DatabaseClient = db,
+  ): Promise<string | null> {
+    const [row] = await tx
+      .select({
+        caption: channelPostModel.caption,
+        metadataFetchedAt: channelPostModel.metadataFetchedAt,
+      })
+      .from(channelPostModel)
+      .where(
+        and(
+          channelPostScope(input.workspaceId),
+          eq(channelPostModel.channel, input.channel),
+          eq(channelPostModel.externalPostId, input.externalPostId),
+        ),
+      )
+      .limit(1)
+
+    if (!row?.metadataFetchedAt) {
+      return null
+    }
+    return row.caption ?? ""
+  },
+
   async insertBare(
     input: {
       channel: string

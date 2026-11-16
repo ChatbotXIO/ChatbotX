@@ -1176,7 +1176,9 @@
       "engagedOnOtherPost": "已在其他帖子互动过",
       "mentionCountNotMatched": "提及人数不匹配",
       "noImageAttachment": "未附带图片",
-      "moderated": "已被审核隐藏或删除"
+      "moderated": "已被审核隐藏或删除",
+      "postHashtagNotMatched": "帖子没有匹配的话题标签",
+      "postCaptionUnavailable": "无法读取帖子正文"
     },
     "replyTo": {
       "mentions": "提及人数足够的评论",
@@ -1298,6 +1300,15 @@
       "previous": "上一页",
       "next": "下一页",
       "page": "第 {page} 页，共 {pageCount} 页"
+    },
+    "postType": {
+      "hashtags": "带话题标签的帖子"
+    },
+    "postHashtags": {
+      "label": "话题标签",
+      "description": "仅回复正文包含以下至少一个话题标签的帖子。输入话题标签后按 Enter。之后添加到帖子的话题标签会在约 10 分钟内生效。",
+      "placeholder": "例如：automation",
+      "required": "请至少添加一个话题标签。"
     }
   },
   "channels": {
@@ -4872,7 +4883,8 @@
       "delayMustBeZero": "所选的时机选项不支持延迟时间，请设为零。",
       "atLeastOneFieldRequired": "请至少填写一个字段。",
       "replyTextRequired": "请至少输入一条回复消息。",
-      "hideKeywordsRequired": "Enter at least one keyword to hide comments by keyword."
+      "hideKeywordsRequired": "Enter at least one keyword to hide comments by keyword.",
+      "hashtagsRequired": "请至少添加一个话题标签。"
     },
     "hideCommentsDescription": "只能隐藏您帖子下的顶级回复。",
     "hideComments": {
@@ -4988,13 +5000,18 @@
       "delayMustBeZero": "Delay value must be zero for the selected timing option.",
       "hideKeywordsRequired": "Enter at least one keyword to hide comments by keyword.",
       "atLeastOneFieldRequired": "At least one field is required.",
-      "replyTextRequired": "请至少输入一条回复消息。"
+      "replyTextRequired": "请至少输入一条回复消息。",
+      "hashtagsRequired": "请至少添加一个话题标签。"
     },
     "privateReply": "Private reply (Comment-to-Message)",
     "privateReplyDescription": "Send a direct message to the commenter. TikTok only allows this for comments it flags as high intent, so it will not fire for every matching comment.",
     "privateReplyMessage": "Private reply message",
     "privateReplyHighIntentTitle": "TikTok decides which comments can be messaged",
-    "privateReplyHighIntentNotice": "Comment-to-Message must be enabled on the connected TikTok account, and the account must be a Business Account registered in Vietnam, Indonesia or Thailand. TikTok sends the direct message only for first-level comments it flags as high intent, within 48 hours, once per comment, and not if the commenter already messaged you in the past 24 hours."
+    "privateReplyHighIntentNotice": "Comment-to-Message must be enabled on the connected TikTok account, and the account must be a Business Account registered in Vietnam, Indonesia or Thailand. TikTok sends the direct message only for first-level comments it flags as high intent, within 48 hours, once per comment, and not if the commenter already messaged you in the past 24 hours.",
+    "postHashtags": {
+      "reconnectRequired": "此 TikTok 账号暂时无法读取视频描述，因此所有评论都会被跳过。请在 设置 → 渠道 → TikTok 中重新连接账号以授权。",
+      "someAccountsReconnectRequired": "部分 TikTok 账号暂时无法读取视频描述，因此它们的评论会被跳过。请在 设置 → 渠道 → TikTok 中重新连接。"
+    }
   },
   "commentAutomationMissedComments": {
     "action": "处理遗漏的评论",

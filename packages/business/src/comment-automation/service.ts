@@ -59,6 +59,10 @@ import {
   withTemplateLockedTransaction,
 } from "../template/template-resource-locks"
 import { assertAutomationAccount } from "./account-scope"
+import {
+  normalizeCommentPostTarget,
+  withNormalizedPostTarget,
+} from "./post-target"
 
 type ListFbCommentsInput = {
   workspaceId: string
@@ -135,7 +139,7 @@ type ThreadsCommentAutomationReply =
   | { type: "flow" | "AIAgent"; value: string }
 
 type ThreadsCommentAutomationPost = {
-  type: "all" | "postIds"
+  type: "all" | "postIds" | "hashtags"
   value: string[]
 }
 
@@ -1112,7 +1116,7 @@ class CommentAutomationService extends BaseService {
         id: createId(),
         workspaceId: input.workspaceId,
         type: commentAutomationTypes.enum.messenger,
-        ...this.withNormalizedReplies(input.data),
+        ...withNormalizedPostTarget(this.withNormalizedReplies(input.data)),
       })
       .returning()
     return created
@@ -1151,7 +1155,7 @@ class CommentAutomationService extends BaseService {
 
         const [updated] = await tx
           .update(commentAutomationModel)
-          .set(this.withNormalizedReplies(data))
+          .set(withNormalizedPostTarget(this.withNormalizedReplies(data)))
           .where(
             and(
               eq(commentAutomationModel.id, ctx.id),
@@ -1436,7 +1440,7 @@ class CommentAutomationService extends BaseService {
             input.type,
             this.withSupportedHideComments(
               input.type,
-              this.withNormalizedReplies(input.data),
+              withNormalizedPostTarget(this.withNormalizedReplies(input.data)),
             ),
           ),
         ),
@@ -1487,7 +1491,7 @@ class CommentAutomationService extends BaseService {
                 this.withSupportedHideComments(
                   // `findInstagramOrFail` only matches `igCommentAutomationTypes`.
                   type,
-                  this.withNormalizedReplies(data),
+                  withNormalizedPostTarget(this.withNormalizedReplies(data)),
                 ),
               ),
               existing,
@@ -1623,7 +1627,7 @@ class CommentAutomationService extends BaseService {
         inboxId: data.inboxId ?? null,
         isActive: data.isActive ?? true,
         name: data.name,
-        post: data.post,
+        post: normalizeCommentPostTarget(data.post),
         privateReply: this.threadsDefaults.privateReply,
         publicReply: normalizeReplyTexts(data.publicReply as CommentReply),
         includeKeywords: data.includeKeywords,
@@ -1705,7 +1709,7 @@ class CommentAutomationService extends BaseService {
       values.inboxId = data.inboxId
     }
     if (data.post !== undefined) {
-      values.post = data.post
+      values.post = normalizeCommentPostTarget(data.post)
     }
     if (data.publicReply !== undefined) {
       values.publicReply = normalizeReplyTexts(data.publicReply as CommentReply)
@@ -1853,7 +1857,7 @@ class CommentAutomationService extends BaseService {
         inboxId: data.inboxId ?? null,
         isActive: data.isActive ?? true,
         name: data.name,
-        post: data.post,
+        post: normalizeCommentPostTarget(data.post),
         privateReply: this.buildTiktokPrivateReply(data.privateReply),
         publicReply: normalizeReplyTexts(data.publicReply as CommentReply),
         includeKeywords: data.includeKeywords,
@@ -1935,7 +1939,7 @@ class CommentAutomationService extends BaseService {
       values.inboxId = data.inboxId
     }
     if (data.post !== undefined) {
-      values.post = data.post
+      values.post = normalizeCommentPostTarget(data.post)
     }
     if (data.publicReply !== undefined) {
       values.publicReply = normalizeReplyTexts(data.publicReply as CommentReply)

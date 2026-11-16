@@ -2219,7 +2219,9 @@
       "engagedOnOtherPost": "A interacționat deja la altă postare",
       "mentionCountNotMatched": "Numărul de mențiuni nu s-a potrivit",
       "noImageAttachment": "Nicio fotografie atașată",
-      "moderated": "Ascuns sau șters de moderare"
+      "moderated": "Ascuns sau șters de moderare",
+      "postHashtagNotMatched": "Postarea nu are niciun hashtag potrivit",
+      "postCaptionUnavailable": "Textul postării nu a putut fi citit"
     },
     "replyTo": {
       "mentions": "Comentarii cu suficiente mențiuni",
@@ -2341,6 +2343,15 @@
       "previous": "Înapoi",
       "next": "Înainte",
       "page": "Pagina {page} din {pageCount}"
+    },
+    "postType": {
+      "hashtags": "Postări cu hashtaguri"
+    },
+    "postHashtags": {
+      "label": "Hashtaguri",
+      "description": "Răspunde doar la postările al căror text conține cel puțin unul dintre aceste hashtaguri. Scrie un hashtag și apasă Enter. Un hashtag adăugat ulterior unei postări este detectat în aproximativ 10 minute.",
+      "placeholder": "ex. automation",
+      "required": "Adaugă cel puțin un hashtag."
     }
   },
   "condition": {
@@ -7056,7 +7067,8 @@
       "delayMustBeZero": "Delay value must be zero for the selected timing option.",
       "atLeastOneFieldRequired": "At least one field is required.",
       "replyTextRequired": "Introdu cel puțin un mesaj de răspuns.",
-      "hideKeywordsRequired": "Enter at least one keyword to hide comments by keyword."
+      "hideKeywordsRequired": "Enter at least one keyword to hide comments by keyword.",
+      "hashtagsRequired": "Adaugă cel puțin un hashtag."
     },
     "hideCommentsDescription": "Doar răspunsurile de prim nivel la postările tale pot fi ascunse.",
     "hideComments": {
@@ -7172,13 +7184,18 @@
       "delayMustBeZero": "Delay value must be zero for the selected timing option.",
       "hideKeywordsRequired": "Enter at least one keyword to hide comments by keyword.",
       "atLeastOneFieldRequired": "At least one field is required.",
-      "replyTextRequired": "Introdu cel puțin un mesaj de răspuns."
+      "replyTextRequired": "Introdu cel puțin un mesaj de răspuns.",
+      "hashtagsRequired": "Adaugă cel puțin un hashtag."
     },
     "privateReply": "Private reply (Comment-to-Message)",
     "privateReplyDescription": "Send a direct message to the commenter. TikTok only allows this for comments it flags as high intent, so it will not fire for every matching comment.",
     "privateReplyMessage": "Private reply message",
     "privateReplyHighIntentTitle": "TikTok decides which comments can be messaged",
-    "privateReplyHighIntentNotice": "Comment-to-Message must be enabled on the connected TikTok account, and the account must be a Business Account registered in Vietnam, Indonesia or Thailand. TikTok sends the direct message only for first-level comments it flags as high intent, within 48 hours, once per comment, and not if the commenter already messaged you in the past 24 hours."
+    "privateReplyHighIntentNotice": "Comment-to-Message must be enabled on the connected TikTok account, and the account must be a Business Account registered in Vietnam, Indonesia or Thailand. TikTok sends the direct message only for first-level comments it flags as high intent, within 48 hours, once per comment, and not if the commenter already messaged you in the past 24 hours.",
+    "postHashtags": {
+      "reconnectRequired": "Acest cont TikTok nu poate încă citi descrierile videoclipurilor, așa că toate comentariile vor fi omise. Reconectează contul din Setări → Canale → TikTok pentru a permite acest lucru.",
+      "someAccountsReconnectRequired": "Unele dintre conturile tale TikTok nu pot încă citi descrierile videoclipurilor, așa că comentariile lor vor fi omise. Reconectează-le din Setări → Canale → TikTok."
+    }
   },
   "commentAutomationMissedComments": {
     "action": "Procesează comentariile ratate",

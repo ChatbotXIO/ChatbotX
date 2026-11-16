@@ -137,6 +137,11 @@ export function AutomationAccountField({
     if (!target?.value || target.value.length === 0) {
       return
     }
+    // Hashtags are not owned by any account: the same `#vip` applies on
+    // whichever account the automation moves to.
+    if (target.type === "hashtags") {
+      return
+    }
     const kept = keepTargetsOfAccount(
       target.value,
       nextInboxId,

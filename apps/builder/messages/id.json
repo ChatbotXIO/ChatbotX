@@ -822,7 +822,9 @@
       "engagedOnOtherPost": "Sudah berinteraksi di postingan lain",
       "mentionCountNotMatched": "Jumlah sebutan tidak cocok",
       "noImageAttachment": "Tidak ada foto terlampir",
-      "moderated": "Disembunyikan atau dihapus oleh moderasi"
+      "moderated": "Disembunyikan atau dihapus oleh moderasi",
+      "postHashtagNotMatched": "Postingan tidak memiliki hashtag yang cocok",
+      "postCaptionUnavailable": "Teks postingan tidak dapat dibaca"
     },
     "replyTo": {
       "mentions": "Komentar dengan cukup sebutan",
@@ -944,6 +946,15 @@
       "previous": "Sebelumnya",
       "next": "Berikutnya",
       "page": "Halaman {page} dari {pageCount}"
+    },
+    "postType": {
+      "hashtags": "Postingan dengan hashtag"
+    },
+    "postHashtags": {
+      "label": "Hashtag",
+      "description": "Balas hanya di postingan yang teksnya berisi setidaknya satu hashtag ini. Ketik hashtag lalu tekan Enter. Hashtag yang ditambahkan ke postingan belakangan akan terdeteksi dalam sekitar 10 menit.",
+      "placeholder": "mis. automation",
+      "required": "Tambahkan setidaknya satu hashtag."
     }
   },
   "condition": {
@@ -6875,7 +6886,8 @@
       "delayMustBeZero": "Delay value must be zero for the selected timing option.",
       "atLeastOneFieldRequired": "At least one field is required.",
       "replyTextRequired": "Masukkan setidaknya satu pesan balasan.",
-      "hideKeywordsRequired": "Enter at least one keyword to hide comments by keyword."
+      "hideKeywordsRequired": "Enter at least one keyword to hide comments by keyword.",
+      "hashtagsRequired": "Tambahkan setidaknya satu hashtag."
     },
     "hideCommentsDescription": "Hanya balasan tingkat atas pada postingan Anda yang dapat disembunyikan.",
     "hideComments": {
@@ -6991,13 +7003,18 @@
       "delayMustBeZero": "Delay value must be zero for the selected timing option.",
       "hideKeywordsRequired": "Enter at least one keyword to hide comments by keyword.",
       "atLeastOneFieldRequired": "At least one field is required.",
-      "replyTextRequired": "Masukkan setidaknya satu pesan balasan."
+      "replyTextRequired": "Masukkan setidaknya satu pesan balasan.",
+      "hashtagsRequired": "Tambahkan setidaknya satu hashtag."
     },
     "privateReply": "Private reply (Comment-to-Message)",
     "privateReplyDescription": "Send a direct message to the commenter. TikTok only allows this for comments it flags as high intent, so it will not fire for every matching comment.",
     "privateReplyMessage": "Private reply message",
     "privateReplyHighIntentTitle": "TikTok decides which comments can be messaged",
-    "privateReplyHighIntentNotice": "Comment-to-Message must be enabled on the connected TikTok account, and the account must be a Business Account registered in Vietnam, Indonesia or Thailand. TikTok sends the direct message only for first-level comments it flags as high intent, within 48 hours, once per comment, and not if the commenter already messaged you in the past 24 hours."
+    "privateReplyHighIntentNotice": "Comment-to-Message must be enabled on the connected TikTok account, and the account must be a Business Account registered in Vietnam, Indonesia or Thailand. TikTok sends the direct message only for first-level comments it flags as high intent, within 48 hours, once per comment, and not if the commenter already messaged you in the past 24 hours.",
+    "postHashtags": {
+      "reconnectRequired": "Akun TikTok ini belum dapat membaca keterangan video, sehingga semua komentar akan dilewati. Hubungkan ulang akun di Pengaturan → Saluran → TikTok untuk mengizinkannya.",
+      "someAccountsReconnectRequired": "Beberapa akun TikTok Anda belum dapat membaca keterangan video, sehingga komentarnya akan dilewati. Hubungkan ulang di Pengaturan → Saluran → TikTok."
+    }
   },
   "commentAutomationMissedComments": {
     "action": "Proses komentar yang terlewat",

@@ -864,7 +864,9 @@
       "engagedOnOtherPost": "Başqa paylaşımla artıq qarşılıqlı əlaqə qurulub",
       "mentionCountNotMatched": "Etiketlənən şəxslərin sayı uyğun gəlmədi",
       "noImageAttachment": "Şəkil əlavə edilməyib",
-      "moderated": "Moderasiya tərəfindən gizlədildi və ya silindi"
+      "moderated": "Moderasiya tərəfindən gizlədildi və ya silindi",
+      "postHashtagNotMatched": "Paylaşımda uyğun heşteq yoxdur",
+      "postCaptionUnavailable": "Paylaşımın mətni oxunmadı"
     },
     "replyTo": {
       "mentions": "Kifayət qədər şəxsin etiketləndiyi şərhlər",
@@ -986,6 +988,15 @@
       "previous": "Əvvəlki",
       "next": "Növbəti",
       "page": "Səhifə {page} / {pageCount}"
+    },
+    "postType": {
+      "hashtags": "Heşteqli paylaşımlar"
+    },
+    "postHashtags": {
+      "label": "Heşteqlər",
+      "description": "Yalnız mətnində bu heşteqlərdən ən azı biri olan paylaşımlara cavab verin. Heşteqi yazıb Enter düyməsini basın. Paylaşıma sonradan əlavə edilən heşteq təxminən 10 dəqiqə ərzində tanınır.",
+      "placeholder": "məs. automation",
+      "required": "Ən azı bir heşteq əlavə edin."
     }
   },
   "condition": {
@@ -7609,7 +7620,8 @@
       "delayMustBeZero": "Seçilmiş vaxt seçimi üçün gecikmə dəyəri sıfır olmalıdır.",
       "atLeastOneFieldRequired": "Ən azı bir sahə məcburidir.",
       "replyTextRequired": "Ən azı bir cavab mesajı daxil edin.",
-      "hideKeywordsRequired": "Şərhləri açar sözə görə gizlətmək üçün ən azı bir açar söz daxil edin."
+      "hideKeywordsRequired": "Şərhləri açar sözə görə gizlətmək üçün ən azı bir açar söz daxil edin.",
+      "hashtagsRequired": "Ən azı bir heşteq əlavə edin."
     },
     "hideCommentsDescription": "Yalnız paylaşımlarınıza birbaşa verilən cavablar gizlədilə bilər.",
     "hideComments": {
@@ -7725,13 +7737,18 @@
       "delayMustBeZero": "Seçilmiş vaxt seçimi üçün gecikmə dəyəri sıfır olmalıdır.",
       "hideKeywordsRequired": "Şərhləri açar sözə görə gizlətmək üçün ən azı bir açar söz daxil edin.",
       "atLeastOneFieldRequired": "Ən azı bir sahə doldurulmalıdır.",
-      "replyTextRequired": "Ən azı bir cavab mesajı daxil edin."
+      "replyTextRequired": "Ən azı bir cavab mesajı daxil edin.",
+      "hashtagsRequired": "Ən azı bir heşteq əlavə edin."
     },
     "privateReply": "Şəxsi cavab (şərhdən mesaja)",
     "privateReplyDescription": "Şərh müəllifinə birbaşa mesaj göndərin. TikTok buna yalnız yüksək maraq ifadə etdiyini müəyyənləşdirdiyi şərhlər üçün icazə verir, buna görə hər uyğun şərh üçün mesaj göndərilməyəcək.",
     "privateReplyMessage": "Şəxsi cavab mesajı",
     "privateReplyHighIntentTitle": "Hansı şərhlərə mesaj göndərilə biləcəyini TikTok müəyyən edir",
-    "privateReplyHighIntentNotice": "Qoşulmuş TikTok hesabında şərhdən mesaja funksiyası aktiv olmalı və hesab Vyetnam, İndoneziya və ya Taylandda qeydiyyatdan keçmiş biznes hesabı olmalıdır. TikTok birbaşa mesajı yalnız yüksək maraq ifadə etdiyini müəyyənləşdirdiyi, videoya birbaşa yazılmış şərhlər üçün, 48 saat ərzində və hər şərhə bir dəfə göndərir. Şərh müəllifi son 24 saat ərzində sizə artıq mesaj göndəribsə, mesaj göndərilmir."
+    "privateReplyHighIntentNotice": "Qoşulmuş TikTok hesabında şərhdən mesaja funksiyası aktiv olmalı və hesab Vyetnam, İndoneziya və ya Taylandda qeydiyyatdan keçmiş biznes hesabı olmalıdır. TikTok birbaşa mesajı yalnız yüksək maraq ifadə etdiyini müəyyənləşdirdiyi, videoya birbaşa yazılmış şərhlər üçün, 48 saat ərzində və hər şərhə bir dəfə göndərir. Şərh müəllifi son 24 saat ərzində sizə artıq mesaj göndəribsə, mesaj göndərilmir.",
+    "postHashtags": {
+      "reconnectRequired": "Bu TikTok hesabı hələ video mətnlərini oxuya bilmir, buna görə bütün şərhlər ötürüləcək. İcazə vermək üçün hesabı Parametrlər → Kanallar → TikTok bölməsində yenidən qoşun.",
+      "someAccountsReconnectRequired": "Bəzi TikTok hesablarınız hələ video mətnlərini oxuya bilmir, buna görə onların şərhləri ötürüləcək. Onları Parametrlər → Kanallar → TikTok bölməsində yenidən qoşun."
+    }
   },
   "commentAutomationMissedComments": {
     "action": "Buraxılmış şərhləri emal et",

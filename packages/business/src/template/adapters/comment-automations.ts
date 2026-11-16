@@ -1,5 +1,8 @@
 import { db } from "@chatbotx.io/database/client"
-import type { CommentAutomationType } from "@chatbotx.io/database/partials"
+import type {
+  CommentAutomationType,
+  CommentPostType,
+} from "@chatbotx.io/database/partials"
 import { commentAutomationModel } from "@chatbotx.io/database/schema"
 import { createId } from "@chatbotx.io/utils"
 import { listAutomationAccounts } from "../../comment-automation/account-scope"
@@ -20,8 +23,10 @@ import type {
 } from "./types"
 
 type TemplateCommentPost = {
-  type: "published" | "ads" | "reels" | "postIds" | "all" | "live"
-  // External Facebook post ids — copied verbatim, never remapped. Sibling
+  type: CommentPostType
+  // External Facebook post ids — copied verbatim, never remapped — or, for a
+  // `hashtags` target, plain hashtags, which mean the same thing in any
+  // workspace and are kept on install (only `postIds` is cleared). Sibling
   // of `privateReply.value`/`publicReply.value`/`includeKeywords.value`,
   // which is exactly why this adapter resolves the reply fields explicitly
   // rather than through the generic key-name-driven remapper (a bare

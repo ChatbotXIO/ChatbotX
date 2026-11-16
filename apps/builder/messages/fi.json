@@ -822,7 +822,9 @@
       "engagedOnOtherPost": "Jo vuorovaikutuksessa toisessa julkaisussa",
       "mentionCountNotMatched": "Mainintojen määrä ei täsmännyt",
       "noImageAttachment": "Ei liitettyä kuvaa",
-      "moderated": "Moderointi piilotti tai poisti"
+      "moderated": "Moderointi piilotti tai poisti",
+      "postHashtagNotMatched": "Julkaisussa ei ole vastaavaa aihetunnistetta",
+      "postCaptionUnavailable": "Julkaisun tekstiä ei voitu lukea"
     },
     "replyTo": {
       "mentions": "Kommentit, joissa on tarpeeksi mainintoja",
@@ -944,6 +946,15 @@
       "previous": "Edellinen",
       "next": "Seuraava",
       "page": "Sivu {page}/{pageCount}"
+    },
+    "postType": {
+      "hashtags": "Julkaisut, joissa on aihetunnisteita"
+    },
+    "postHashtags": {
+      "label": "Aihetunnisteet",
+      "description": "Vastaa vain julkaisuihin, joiden tekstissä on vähintään yksi näistä aihetunnisteista. Kirjoita aihetunniste ja paina Enter. Julkaisuun myöhemmin lisätty aihetunniste tunnistetaan noin 10 minuutin kuluessa.",
+      "placeholder": "esim. automation",
+      "required": "Lisää vähintään yksi aihetunniste."
     }
   },
   "condition": {
@@ -6875,7 +6886,8 @@
       "delayMustBeZero": "Delay value must be zero for the selected timing option.",
       "atLeastOneFieldRequired": "At least one field is required.",
       "replyTextRequired": "Anna vähintään yksi vastausviesti.",
-      "hideKeywordsRequired": "Enter at least one keyword to hide comments by keyword."
+      "hideKeywordsRequired": "Enter at least one keyword to hide comments by keyword.",
+      "hashtagsRequired": "Lisää vähintään yksi aihetunniste."
     },
     "hideCommentsDescription": "Vain julkaisujesi ylimmän tason vastaukset voidaan piilottaa.",
     "hideComments": {
@@ -6991,13 +7003,18 @@
       "delayMustBeZero": "Delay value must be zero for the selected timing option.",
       "hideKeywordsRequired": "Enter at least one keyword to hide comments by keyword.",
       "atLeastOneFieldRequired": "At least one field is required.",
-      "replyTextRequired": "Anna vähintään yksi vastausviesti."
+      "replyTextRequired": "Anna vähintään yksi vastausviesti.",
+      "hashtagsRequired": "Lisää vähintään yksi aihetunniste."
     },
     "privateReply": "Private reply (Comment-to-Message)",
     "privateReplyDescription": "Send a direct message to the commenter. TikTok only allows this for comments it flags as high intent, so it will not fire for every matching comment.",
     "privateReplyMessage": "Private reply message",
     "privateReplyHighIntentTitle": "TikTok decides which comments can be messaged",
-    "privateReplyHighIntentNotice": "Comment-to-Message must be enabled on the connected TikTok account, and the account must be a Business Account registered in Vietnam, Indonesia or Thailand. TikTok sends the direct message only for first-level comments it flags as high intent, within 48 hours, once per comment, and not if the commenter already messaged you in the past 24 hours."
+    "privateReplyHighIntentNotice": "Comment-to-Message must be enabled on the connected TikTok account, and the account must be a Business Account registered in Vietnam, Indonesia or Thailand. TikTok sends the direct message only for first-level comments it flags as high intent, within 48 hours, once per comment, and not if the commenter already messaged you in the past 24 hours.",
+    "postHashtags": {
+      "reconnectRequired": "Tämä TikTok-tili ei vielä voi lukea videoiden kuvauksia, joten kaikki kommentit ohitetaan. Yhdistä tili uudelleen kohdassa Asetukset → Kanavat → TikTok salliaksesi sen.",
+      "someAccountsReconnectRequired": "Osa TikTok-tileistäsi ei vielä voi lukea videoiden kuvauksia, joten niiden kommentit ohitetaan. Yhdistä ne uudelleen kohdassa Asetukset → Kanavat → TikTok."
+    }
   },
   "commentAutomationMissedComments": {
     "action": "Käsittele väliin jääneet kommentit",

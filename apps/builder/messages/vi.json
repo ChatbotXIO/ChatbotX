@@ -864,7 +864,9 @@
       "engagedOnOtherPost": "Đã tương tác ở bài viết khác",
       "mentionCountNotMatched": "Số lượt nhắc tên không khớp",
       "noImageAttachment": "Không có ảnh đính kèm",
-      "moderated": "Đã bị ẩn hoặc xoá khi kiểm duyệt"
+      "moderated": "Đã bị ẩn hoặc xoá khi kiểm duyệt",
+      "postHashtagNotMatched": "Bài viết không có hashtag phù hợp",
+      "postCaptionUnavailable": "Không đọc được nội dung bài viết"
     },
     "replyTo": {
       "mentions": "Bình luận có đủ số người được nhắc tên",
@@ -986,6 +988,15 @@
       "previous": "Trước",
       "next": "Sau",
       "page": "Trang {page}/{pageCount}"
+    },
+    "postType": {
+      "hashtags": "Bài viết có hashtag"
+    },
+    "postHashtags": {
+      "label": "Hashtag",
+      "description": "Chỉ trả lời ở bài viết có ít nhất một hashtag trong danh sách này. Gõ hashtag rồi nhấn Enter. Nếu bạn sửa bài để thêm hashtag sau, hệ thống sẽ nhận ra trong khoảng 10 phút.",
+      "placeholder": "ví dụ: automation",
+      "required": "Hãy thêm ít nhất một hashtag."
     }
   },
   "condition": {
@@ -6965,7 +6976,8 @@
       "delayMustBeZero": "Giá trị độ trễ phải bằng 0 với tùy chọn thời gian đã chọn.",
       "atLeastOneFieldRequired": "Cần ít nhất một trường để cập nhật.",
       "replyTextRequired": "Nhập ít nhất một tin nhắn trả lời.",
-      "hideKeywordsRequired": "Nhập ít nhất một từ khóa để ẩn bình luận theo từ khóa."
+      "hideKeywordsRequired": "Nhập ít nhất một từ khóa để ẩn bình luận theo từ khóa.",
+      "hashtagsRequired": "Hãy thêm ít nhất một hashtag."
     },
     "hideCommentsDescription": "Chỉ có thể ẩn các trả lời cấp cao nhất trên bài viết của bạn.",
     "hideComments": {
@@ -7081,13 +7093,18 @@
       "delayMustBeZero": "Giá trị độ trễ phải bằng 0 với tùy chọn thời điểm đã chọn.",
       "hideKeywordsRequired": "Nhập ít nhất một từ khóa để ẩn bình luận theo từ khóa.",
       "atLeastOneFieldRequired": "Cần ít nhất một trường.",
-      "replyTextRequired": "Nhập ít nhất một tin nhắn trả lời."
+      "replyTextRequired": "Nhập ít nhất một tin nhắn trả lời.",
+      "hashtagsRequired": "Hãy thêm ít nhất một hashtag."
     },
     "privateReply": "Trả lời riêng (Comment-to-Message)",
     "privateReplyDescription": "Gửi tin nhắn riêng cho người bình luận. TikTok chỉ cho phép với bình luận được TikTok đánh dấu là có ý định mua cao, nên sẽ không chạy với mọi bình luận khớp điều kiện.",
     "privateReplyMessage": "Nội dung tin nhắn riêng",
     "privateReplyHighIntentTitle": "TikTok quyết định bình luận nào được nhắn tin",
-    "privateReplyHighIntentNotice": "Tài khoản TikTok đã kết nối phải bật Comment-to-Message, và phải là Business Account đăng ký tại Việt Nam, Indonesia hoặc Thái Lan. TikTok chỉ gửi tin nhắn riêng cho bình luận cấp 1 mà TikTok đánh dấu là có ý định mua cao, trong vòng 48 giờ, mỗi bình luận một lần, và không gửi nếu người bình luận đã nhắn tin cho bạn trong 24 giờ qua."
+    "privateReplyHighIntentNotice": "Tài khoản TikTok đã kết nối phải bật Comment-to-Message, và phải là Business Account đăng ký tại Việt Nam, Indonesia hoặc Thái Lan. TikTok chỉ gửi tin nhắn riêng cho bình luận cấp 1 mà TikTok đánh dấu là có ý định mua cao, trong vòng 48 giờ, mỗi bình luận một lần, và không gửi nếu người bình luận đã nhắn tin cho bạn trong 24 giờ qua.",
+    "postHashtags": {
+      "reconnectRequired": "Tài khoản TikTok này chưa có quyền đọc nội dung video, nên mọi bình luận sẽ bị bỏ qua. Hãy kết nối lại tài khoản trong Cài đặt → Kênh → TikTok để cấp quyền.",
+      "someAccountsReconnectRequired": "Một số tài khoản TikTok chưa có quyền đọc nội dung video, nên bình luận của các tài khoản đó sẽ bị bỏ qua. Hãy kết nối lại trong Cài đặt → Kênh → TikTok."
+    }
   },
   "commentAutomationMissedComments": {
     "action": "Xử lý bình luận bị bỏ sót",
