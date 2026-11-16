@@ -2477,6 +2477,9 @@
     "configId": {
       "label": "معرّف إعداد التطبيق"
     },
+    "unifiedLoginConfigId": {
+      "label": "Unified Login Configuration ID"
+    },
     "systemUserId": {
       "label": "معرّف مستخدم النظام"
     },

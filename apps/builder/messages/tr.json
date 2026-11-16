@@ -2477,6 +2477,9 @@
     "configId": {
       "label": "Uygulama Yapılandırma Kimliği"
     },
+    "unifiedLoginConfigId": {
+      "label": "Unified Login Configuration ID"
+    },
     "systemUserId": {
       "label": "Sistem Kullanıcısı Kimliği"
     },

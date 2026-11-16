@@ -2528,6 +2528,9 @@
     "configId": {
       "label": "App Config ID"
     },
+    "unifiedLoginConfigId": {
+      "label": "Unified Login Configuration ID"
+    },
     "systemUserId": {
       "label": "System User ID"
     },

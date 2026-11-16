@@ -2321,6 +2321,9 @@
     "configId": {
       "label": "Identifiant de configuration de l’application"
     },
+    "unifiedLoginConfigId": {
+      "label": "Unified Login Configuration ID"
+    },
     "systemUserId": {
       "label": "Identifiant de l’utilisateur système"
     },

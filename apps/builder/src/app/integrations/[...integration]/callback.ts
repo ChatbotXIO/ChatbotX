@@ -356,28 +356,27 @@ const runConnectSessionCallback = async ({
       credential: resolved.credential,
     })
 
-    // A non-multi-account provider's grant always resolves to exactly one
-    // selectable target — finish the connect immediately so an API/MCP
-    // caller (one with no builder session, `actorTokenId` set) never has to
-    // make a second `targets` call for it. A builder-initiated session
-    // (`actorUserId` set) skips this: its picker page — Instagram's direct
-    // login is non-multi-account too, but still shows a confirm screen with
-    // per-row coexist/sync-history opt-ins the person must set before the
-    // connect actually runs — owns finishing the connect itself via its own
-    // `connectTargets` call from the "Continue" button.
+    // Finish any API/MCP connect immediately when the provider returned
+    // exactly one selectable target. This preserves the one-step behavior of
+    // legacy providers even when a new credential mode makes the provider
+    // multi-account capable (Instagram Unified Login is the first example).
+    // Multiple selectable targets still require the caller to choose through
+    // the session targets operation. A builder-initiated session
+    // (`actorUserId` set) always skips this because its picker page owns the
+    // final `connectTargets` call and any per-row options.
+    const selectableTargets = completed.targets.filter(
+      (target) => target.selectable,
+    )
     if (
       completed.status === "awaiting_selection" &&
-      !adapter.provider.multiAccount &&
+      selectableTargets.length === 1 &&
       !completed.actorUserId
     ) {
-      const onlyTarget = completed.targets[0]
-      if (onlyTarget?.selectable) {
-        await connectionService.connectTargets({
-          sessionId: completed.id,
-          workspaceId: completed.workspaceId,
-          targetIds: [onlyTarget.id],
-        })
-      }
+      await connectionService.connectTargets({
+        sessionId: completed.id,
+        workspaceId: completed.workspaceId,
+        targetIds: [selectableTargets[0].id],
+      })
     }
   } catch (err) {
     // `completeAuthorization` already marks the session `failed` for its own

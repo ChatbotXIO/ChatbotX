@@ -2477,6 +2477,9 @@
     "configId": {
       "label": "应用程序设置 ID"
     },
+    "unifiedLoginConfigId": {
+      "label": "Unified Login Configuration ID"
+    },
     "consecutiveFailedReply": {
       "label": "连续回复失败"
     },

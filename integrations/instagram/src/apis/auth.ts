@@ -1,4 +1,4 @@
-import { INSTAGRAM_BUSINESS_SCOPES } from "../constants"
+import { DEFAULT_API_VERSION, INSTAGRAM_BUSINESS_SCOPES } from "../constants"
 import { InstagramException, rescue } from "../exception"
 import {
   instagramBusinessClient,
@@ -76,7 +76,7 @@ export function exchangeUnifiedCodeForToken(
   code: string,
   redirectUrl: string,
 ): Promise<UnifiedInstagramAuthorization> {
-  const version = settings.version ?? "v22.0"
+  const version = settings.version ?? DEFAULT_API_VERSION
   const endpoint = `${version}/oauth/access_token`
   return rescue(endpoint, async () => {
     const token = await instagramUnifiedGraphClient.get<{
@@ -106,7 +106,7 @@ export function exchangeUnifiedCodeForToken(
 
 export async function getUnifiedInstagramAccounts(
   accessToken: string,
-  version = "v22.0",
+  version = DEFAULT_API_VERSION,
 ): Promise<InstagramAccount[]> {
   const endpoint = `${version}/me/assigned_instagram_accounts`
   const accounts: InstagramAccount[] = []

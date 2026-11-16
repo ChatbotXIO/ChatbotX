@@ -3718,6 +3718,9 @@
     "configId": {
       "label": "ID-ul configurației aplicației"
     },
+    "unifiedLoginConfigId": {
+      "label": "Unified Login Configuration ID"
+    },
     "systemUserId": {
       "label": "ID-ul utilizatorului de sistem"
     },

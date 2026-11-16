@@ -6,4 +6,4 @@ Mutating tools return `CONFIRMATION_REQUIRED`; show its proposed action and curr
 
 Never treat a plan, validation response, queued job, or API error as a completed action. Do not retry a send, booking, publish, schedule, or other mutation unless the user requests it.
 
-OAuth connections can require a browser redirect or user selection. Return the supplied URL or `nextAction` to the user, wait for the callback or selection result, then read the connection status before continuing.
+OAuth connections can require a browser redirect or user selection. Return the supplied URL or `nextAction` to the user, wait for the callback, then read the connection status before continuing. A callback with exactly one selectable target completes automatically; `awaiting_selection` means several targets remain and `connectSessions.connectTargets` must be called with the user's choices.

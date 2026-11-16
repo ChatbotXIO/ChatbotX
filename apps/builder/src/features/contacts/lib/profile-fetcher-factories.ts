@@ -10,6 +10,7 @@ import {
   zaloIntegrationService,
 } from "@chatbotx.io/business"
 import type { InstagramAuthValue } from "@chatbotx.io/integration-instagram/schema"
+import type { InstagramAuthValue as InstagramFacebookAuthValue } from "@chatbotx.io/integration-instagram-facebook"
 import type { MessengerAuthValue } from "@chatbotx.io/integration-messenger/schema"
 import type { TelegramAuthValue } from "@chatbotx.io/integration-telegram"
 import type { ZaloAuthValue } from "@chatbotx.io/integration-zalo/schema"
@@ -100,17 +101,27 @@ export const profileFetcherFactories: Record<
         workspaceId,
       })
       // Mirrors apps/worker/src/services/integrations.ts (isInstagramViaFacebook).
-      const registry =
-        row.type === "facebook"
-          ? integrations.instagramFacebook
-          : integrations.instagram
+      if (row.type === "facebook") {
+        return fetchChannelProfile<InstagramFacebookAuthValue>({
+          workspaceId,
+          sourceId,
+          integrationType: "instagram",
+          row: { ...row, auth: row.auth as InstagramFacebookAuthValue },
+          runChannelHandler: (group, name, props) =>
+            integrations.instagramFacebook.runChannelHandler(
+              group,
+              name,
+              props,
+            ),
+        })
+      }
       return fetchChannelProfile<InstagramAuthValue>({
         workspaceId,
         sourceId,
         integrationType: "instagram",
         row: { ...row, auth: row.auth as InstagramAuthValue },
         runChannelHandler: (group, name, props) =>
-          registry.runChannelHandler(group, name, props),
+          integrations.instagram.runChannelHandler(group, name, props),
       })
     },
   zalo:

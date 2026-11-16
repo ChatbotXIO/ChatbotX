@@ -647,7 +647,7 @@ describe("handleCallback — ConnectSession state dispatch", () => {
     })
   })
 
-  test("does not auto-complete a multiAccount provider's awaiting_selection session", async () => {
+  test("auto-completes a multiAccount provider when exactly one target is selectable", async () => {
     mockFindByNonce.mockResolvedValueOnce({
       id: "123",
       provider: "messenger",
@@ -658,7 +658,36 @@ describe("handleCallback — ConnectSession state dispatch", () => {
       id: "123",
       workspaceId: "ws-1",
       status: "awaiting_selection",
-      targets: [{ id: "page-1", selectable: true }],
+      targets: [
+        { id: "page-1", selectable: true },
+        { id: "page-2", selectable: false },
+      ],
+    })
+
+    await handleCallback("messenger", buildRequest("123.abc-nonce"))
+
+    expect(mockConnectTargets).toHaveBeenCalledWith({
+      sessionId: "123",
+      workspaceId: "ws-1",
+      targetIds: ["page-1"],
+    })
+  })
+
+  test("does not auto-complete a multiAccount provider with multiple selectable targets", async () => {
+    mockFindByNonce.mockResolvedValueOnce({
+      id: "123",
+      provider: "messenger",
+      returnUrl: null,
+      platformOwnerId: "owner-1",
+    })
+    mockCompleteAuthorization.mockResolvedValueOnce({
+      id: "123",
+      workspaceId: "ws-1",
+      status: "awaiting_selection",
+      targets: [
+        { id: "page-1", selectable: true },
+        { id: "page-2", selectable: true },
+      ],
     })
 
     await handleCallback("messenger", buildRequest("123.abc-nonce"))

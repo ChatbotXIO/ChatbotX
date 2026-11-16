@@ -202,7 +202,7 @@ export function EditInstagramSettingsForm({
           mode: "onChange",
           defaultValues: {
             clientId: publicConfig?.clientId ?? "",
-            version: publicConfig?.version ?? "v27.0",
+            version: publicConfig?.version ?? "v25.0",
             verifyToken: publicConfig?.verifyToken ?? "",
             clientSecret: "",
             unifiedLoginConfigId: publicConfig?.unifiedLoginConfigId ?? "",
@@ -248,7 +248,7 @@ export function EditInstagramSettingsForm({
         />
 
         <InputField
-          label="Unified Login Configuration ID"
+          label={t("fields.unifiedLoginConfigId.label")}
           name="unifiedLoginConfigId"
         />
 
