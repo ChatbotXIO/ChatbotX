@@ -44,6 +44,10 @@ import {
   ButtonEditorChannelContext,
   useButtonEditorChannel,
 } from "./button-editor-channel"
+import {
+  ButtonStyleField,
+  resolveButtonStylePicker,
+} from "./button-style-field"
 import RecursiveDropdownMenu from "./components/recursive-dropdown-menu"
 import {
   useCreateButtonTarget,
@@ -264,6 +268,12 @@ export function ButtonEditorDialog() {
 
     return isQuickReply ? limits.quickReplyLabel : limits.buttonLabel
   }, [channel, isQuickReply])
+  // Only on a channel whose policy declares styles; elsewhere a stored style
+  // is left as is and ignored when sending.
+  const styleSupport = resolveButtonStylePicker({
+    channel,
+    isQuickReply: !!isQuickReply,
+  })
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: wip
   useEffect(() => {
@@ -438,6 +448,10 @@ export function ButtonEditorDialog() {
                   name="label"
                   required
                 />
+
+                {styleSupport ? (
+                  <ButtonStyleField support={styleSupport} />
+                ) : null}
 
                 <div className="mt-2 font-medium">
                   {t("fields.button.whenPressed")}

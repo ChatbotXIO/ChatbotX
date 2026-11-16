@@ -51,7 +51,7 @@ const getMessagesFromStoreAndProcess = async (props: {
     return { status: "noEligibleMessage" }
   }
 
-  // Text messages, plus image/video-only messages for the attachment
+  // Text messages, plus image/video/audio-only messages for the attachment
   // keyword conditions.
   const messageRepository = await createMessageRepository()
   const messages = await messageRepository

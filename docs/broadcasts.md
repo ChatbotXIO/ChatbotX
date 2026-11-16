@@ -43,3 +43,34 @@ preparation stops, and any recipients it already wrote are cleared in the
 background. Until the preparation has stopped and the cleanup is done,
 scheduling the draft again is refused with a message to try again shortly;
 after that, scheduling goes through.
+
+## Automatic stop when the channel account is blocked
+
+When a **broadcast** message is refused because the channel account itself is
+blocked from sending (not one recipient), every `sending` broadcast of that
+page is stopped (`cancelled`) and the reason is recorded on the broadcast:
+`statusReason` (`accountPolicyBlocked` or `accountSendRestricted`),
+`statusErrorMessage` (the provider's text, at most 500 characters) and
+`statusInboxId` (the page). The public API returns the three fields; the
+builder shows a red line under the status.
+
+- **Which errors:** each channel's error mapper assigns a neutral
+  `ChannelError.reason` to the codes its provider documents for an
+  account-level send block (Messenger `2022` and `10/1893063`, Instagram
+  `100/2534029`, WhatsApp `368` and `131064`, Zalo ZNS `-1351`). The worker,
+  the service and the UI read only the reason, so another channel takes part by
+  assigning a reason in its own mapper. Codes with two meanings or no documented
+  meaning (WhatsApp `131031`, Zalo `-248`, Messenger `368`) are deliberately not
+  assigned.
+- **Scope:** only a broadcast send triggers it. Sequences, flows and inbox sends
+  are not stopped. One blocked page stops the whole broadcast, including a
+  multi-page or omnichannel one; a repeating series is paused with the same
+  reason (a run's series carries all three fields).
+- **Only synchronous errors:** the stop reads the error the channel returns to
+  the send call. A failure the provider reports later through a status webhook
+  (WhatsApp delivery receipts) does not reach this path and does not stop
+  broadcasts.
+- **Resume:** resuming or moving the broadcast back to draft clears the reason
+  fields. The resume dialog shows a warning (reason, page, provider error) with a
+  "continue anyway" button; the public `resume` does not block. If the page is
+  still blocked the first message fails and the broadcast stops again.

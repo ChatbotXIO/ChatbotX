@@ -106,7 +106,6 @@ describe("processPendingMessages", () => {
   test("does not dispatch attachment, postback, challenge, or quick-reply batches without text", async () => {
     mockFindManyByIds.mockResolvedValue([
       { id: "attachment", text: null, attachmentFileTypes: ["file"] },
-      { id: "audio", text: null, attachmentFileTypes: ["audio"] },
       { id: "postback", text: "", attachmentFileTypes: [] },
     ])
 
@@ -138,6 +137,28 @@ describe("processPendingMessages", () => {
         messageId: "image",
         text: "",
         attachmentFileTypes: ["image"],
+      }),
+    )
+  })
+
+  test("dispatches an audio-only message with its attachment types", async () => {
+    mockFindManyByIds.mockResolvedValue([
+      { id: "audio", text: null, attachmentFileTypes: ["audio"] },
+    ])
+    mockDispatchReply.mockResolvedValue(true)
+
+    await expect(
+      processPendingMessages({
+        contactInbox: contactInbox as never,
+        conversation: conversation as never,
+      }),
+    ).resolves.toEqual({ status: "handled" })
+
+    expect(mockDispatchReply).toHaveBeenCalledWith(
+      expect.objectContaining({
+        messageId: "audio",
+        text: "",
+        attachmentFileTypes: ["audio"],
       }),
     )
   })

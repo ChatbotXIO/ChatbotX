@@ -1,5 +1,6 @@
 import {
   coexistService,
+  contactScanService,
   instagramIntegrationService,
   messengerIntegrationService,
 } from "@chatbotx.io/business"
@@ -137,6 +138,11 @@ const tearDownMessengerConnection = async (input: {
         integrationId,
         channel: "messenger",
         currentError: "Integration disconnected",
+        tx,
+      })
+      await contactScanService.cancelForIntegration({
+        channel: "messenger",
+        integrationId,
         tx,
       })
 

@@ -19,6 +19,14 @@ export const CONTACT_SCAN_ETA_MS = 4 * 60 * 60 * 1000
  */
 export const CONTACT_SCAN_MAX_ATTEMPTS = 5
 
+/**
+ * A scan parked on a delayed job (rate limit / high usage) holds no claim. If the
+ * job is lost the sweeper takes it back after this long. It must exceed the
+ * longest wait a scan can ask for (`maxProviderWaitMs`, 30 minutes, in the
+ * worker's `contact-scan/pacing.ts`, which has a test pinning the relation).
+ */
+export const CONTACT_SCAN_RELEASED_GRACE_MS = 35 * 60 * 1000
+
 /** `CoexistSyncRun.triggerSource` value written by `ContactScanService.schedule`. */
 export const CONTACT_SCAN_TRIGGER_SOURCE = "contact-scan-manual"
 
@@ -56,7 +64,7 @@ export const CONTACT_SCAN_ERRORS = {
    * `bulkImportChannelContacts` threw for the current page. Distinct from
    * `pageFailed` (which used to mean "the walk continued past a lost page"):
    * this sentinel means the walk STOPPED and handed the run back to the
-   * scheduler via `resetForRetry` so the SAME page is retried from the last
+   * scheduler (`retryOrFail`) so the SAME page is retried from the last
    * persisted `resumeCursor` — no cursor advance, no contacts skipped.
    */
   pageImportFailed: "pageImportFailed",
@@ -64,6 +72,11 @@ export const CONTACT_SCAN_ERRORS = {
   channelUnsupported: "channelUnsupported",
   /** The walk hit `CONTACT_SCAN_MAX_PAGES` and stopped early as a runaway guard. */
   scanLimitReached: "scanLimitReached",
+  /**
+   * The operator cancelled the scan, or its channel was disconnected. Stored as
+   * `partial` + this sentinel; shown as `cancelled` (`resolveContactScanRunStatus`).
+   */
+  cancelled: "cancelled",
 } as const
 
 export type ContactScanErrorSentinel =

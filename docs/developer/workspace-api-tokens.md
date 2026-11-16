@@ -76,6 +76,16 @@ was stored but its processing job could not be queued — call
 `aiFiles.reindex` with that `id`. A run with `stale = true` has had no worker
 heartbeat for an hour and can be replaced by a new `aiFiles.reindex`.
 
+`aiFiles.create` accepts files up to 25 MB (multipart uploads are capped at
+about 20 MB by the request body limit, so use `url` for larger files). A `url`
+is downloaded once into a private snapshot — reindex never re-fetches it — and
+creating from a `url` shares the same ~30 requests per minute limit with the
+builder UI. Public Google Docs, Sheets and Slides links are exported
+automatically (text, XLSX with every tab, PPTX); a Google file that is not
+shared publicly, a "Publish to the web" link, an unsupported file type, an
+oversized file or a download over 60 seconds is refused with `400
+businessError`.
+
 After `aiFiles.reindex`, poll `aiFiles.get`. `processingRun.status` reports
 the extract/chunk/enqueue run (`success` does not mean all embeddings have
 finished); wait for both `processingRun.status = success` and

@@ -55,7 +55,7 @@ type ConnectFlowActor =
  * query on top. A no-op for a non-channel provider or a workspace with no
  * tenant policy.
  */
-const assertChannelCreatable = async (
+export const assertChannelCreatable = async (
   workspaceId: string,
   provider: IntegrationType,
 ): Promise<void> => {

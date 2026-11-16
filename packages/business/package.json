@@ -130,6 +130,7 @@
     "@types/node": "catalog:",
     "@types/qrcode": "^1.5.6",
     "dotenv-cli": "catalog:",
+    "sharp": "0.35.5",
     "typescript": "catalog:",
     "vitest": "catalog:"
   },

@@ -119,6 +119,30 @@ describe("keywordsAdapter", () => {
       expect(values).not.toHaveProperty("keywords")
     })
 
+    test("installs an audio-only keyword with its condition instead of falling back to keywords", async () => {
+      mockCreate.mockResolvedValue({ id: "created" })
+      const ctx = buildContext()
+      const audioConditions = [
+        { operator: "containsAudio" as const, values: [] },
+      ]
+
+      await keywordsAdapter.insert(ctx, [
+        {
+          sourceId: "k1",
+          type: "inbound",
+          text: null,
+          keywords: [],
+          conditions: audioConditions,
+          flowId: null,
+          folderId: null,
+        },
+      ])
+
+      const [, values] = mockCreate.mock.calls[0]
+      expect(values).toMatchObject({ conditions: audioConditions })
+      expect(ctx.warn).not.toHaveBeenCalled()
+    })
+
     test("installs a keyword from a template made before conditions from its plain keywords", async () => {
       mockCreate.mockResolvedValue({ id: "created" })
       const ctx = buildContext()

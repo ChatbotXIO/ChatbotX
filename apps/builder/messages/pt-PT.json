@@ -319,6 +319,31 @@
         "noMatches": "No matching chunks were found.",
         "agentHasNoFiles": "This agent has no knowledge files."
       }
+    },
+    "create": {
+      "trigger": "Adicionar conhecimento",
+      "title": "Adicionar conhecimento",
+      "description": "Carregue um ficheiro ou importe-o a partir de um URL público. O agente de IA pesquisa o conteúdo ao responder.",
+      "tabs": {
+        "fromUrl": "A partir de URL"
+      },
+      "urlHelp": "Uma ligação direta para um ficheiro suportado, uma ligação do Google Docs, Sheets ou Slides partilhada publicamente ou uma página web estática. O conteúdo gerado por JavaScript pode não ser incluído.",
+      "snapshotNotice": "O URL é transferido uma única vez como instantâneo. As alterações posteriores na origem não são sincronizadas; adicione-o novamente para atualizar.",
+      "uploadFailed": "Falha ao carregar {name}",
+      "rateLimited": "Demasiadas importações a partir de URL. Aguarde alguns segundos e tente novamente.",
+      "errors": {
+        "urlNotAllowed": "Este URL não é permitido. Utilize um endereço público da internet.",
+        "invalidUrl": "O URL é inválido. Utilize uma ligação http(s) completa sem nome de utilizador nem palavra-passe.",
+        "googleFileNotPublic": "Este ficheiro do Google não está partilhado publicamente. Defina o acesso geral como \"Qualquer pessoa com a ligação\" e tente novamente.",
+        "googlePublishedNotSupported": "As ligações \"Publicar na Web\" do Google não são suportadas. Partilhe o ficheiro publicamente e utilize a ligação normal.",
+        "unsupportedFileType": "Este tipo de ficheiro não é suportado como conhecimento.",
+        "fileTooLarge": "O ficheiro é maior do que {maxSize}.",
+        "downloadTimedOut": "A transferência demorou demasiado. Experimente um ficheiro mais pequeno ou um servidor mais rápido.",
+        "downloadFailed": "A origem devolveu um erro. Verifique se a ligação abre sem iniciar sessão.",
+        "tooManyRedirects": "O URL redireciona demasiadas vezes.",
+        "invalidRedirect": "O URL redireciona para um endereço inválido.",
+        "uploadPathNotAllowed": "O ficheiro carregado não é permitido. Carregue-o novamente."
+      }
     }
   },
   "aiFunctions": {
@@ -526,6 +551,11 @@
       "paused": "Pausada",
       "ended": "Encerrada"
     },
+    "statusReason": {
+      "accountPolicyBlocked": "Parado automaticamente: a conta do canal foi bloqueada para envio após uma violação de política.",
+      "accountSendRestricted": "Parado automaticamente: a conta do canal está temporariamente restringida para envio.",
+      "page": "Página: {name}"
+    },
     "stats": {
       "sent": "Enviado",
       "delivered": "Entregue",
@@ -589,6 +619,10 @@
     "telegramAllContacts": {
       "title": "Telegram",
       "description": "Utilize este tipo de mensagem se pretender enviar uma transmissão aos seus contactos do Telegram."
+    },
+    "lineAllContacts": {
+      "title": "LINE",
+      "description": "Envie uma difusão para os seus contactos do LINE a qualquer momento. Cada mensagem conta para a quota mensal de mensagens da sua LINE Official Account. Os contactos que bloquearam a sua conta são ignorados."
     },
     "tiktokActiveContacts": {
       "title": "TikTok",
@@ -674,7 +708,14 @@
     "resumeDialog": {
       "title": "Resume broadcast",
       "description": "\"{name}\" will continue sending to recipients who have not received it yet.",
-      "templateDescription": "\"{name}\" volta a se repetir a partir do próximo horário agendado. As execuções durante a pausa foram ignoradas."
+      "templateDescription": "\"{name}\" volta a se repetir a partir do próximo horário agendado. As execuções durante a pausa foram ignoradas.",
+      "blocked": {
+        "title": "Parado porque a conta do canal não pode enviar",
+        "description": "Se a conta continuar bloqueada, a primeira mensagem falhará e a difusão será interrompida novamente. Enviar enquanto bloqueada pode levar a uma restrição mais severa.",
+        "pageLabel": "Página",
+        "errorLabel": "Erro do canal",
+        "confirm": "Retomar mesmo assim"
+      }
     },
     "planLimitDialog": {
       "title": "Atualize o seu plano",
@@ -1346,7 +1387,17 @@
     "button": {
       "label": "Botão",
       "whenPressed": "Quando este botão for premido",
-      "callToThisNumber": "Ligar para este número"
+      "callToThisNumber": "Ligar para este número",
+      "style": {
+        "label": "Estilo do botão",
+        "description": "Como o botão aparece ao contacto.",
+        "default": "{style} (predefinido)",
+        "options": {
+          "primary": "Primário",
+          "secondary": "Secundário",
+          "link": "Ligação"
+        }
+      }
     },
     "buttonLabel": {
       "label": "Texto do botão"
@@ -1522,7 +1573,8 @@
       "threadsUsername": "Nome de utilizador do Threads",
       "webchatGuestId": "ID de visitante do Webchat",
       "externalId": "ID externo",
-      "channelId": "ID do canal"
+      "channelId": "ID do canal",
+      "lineUserId": "LINE User ID"
     },
     "flow": {
       "label": "Fluxo"
@@ -2037,6 +2089,7 @@
       "placeholders": {
         "instagram": "ID de utilizador do Instagram",
         "messenger": "PSID do Messenger",
+        "line": "LINE user ID",
         "telegram": "ID de chat do Telegram",
         "tiktok": "ID de utilizador do TikTok",
         "zalo": "ID de utilizador do Zalo"
@@ -4206,6 +4259,7 @@
     "duplicated": {
       "generic": "Esta conta já está ligada a outro espaço de trabalho.",
       "instagram": "Esta conta do Instagram já está ligada a outro espaço de trabalho.",
+      "line": "This LINE channel is already connected to another workspace.",
       "messenger": "Esta Página do Facebook já está ligada a outro espaço de trabalho.",
       "telegram": "Este bot do Telegram já está ligado a outro espaço de trabalho.",
       "threads": "Esta conta do Threads já está ligada a outro espaço de trabalho.",
@@ -4585,6 +4639,13 @@
       "cardEnding": "Cartão terminado em {lastFourDigits}",
       "notCharged": "Ainda não cobrado. Cobre através do seu prestador de pagamentos.",
       "reference": "Referência {referenceId}"
+    },
+    "sendQueue": {
+      "failed": "Uma mensagem não foi enviada. Reenvie-a a partir da conversa se possível ou continue a enviar.",
+      "unconfirmed": "Não foi possível confirmar o envio da última mensagem. Escolha se quer continuar a enviar.",
+      "continue": "Continuar a enviar",
+      "discard": "Descartar mensagens em fila",
+      "dismiss": "Dispensar"
     }
   },
   "instagram": {
@@ -5847,7 +5908,8 @@
       "botId": "ID do bot do Telegram",
       "oaId": "ID do Zalo OA",
       "openId": "Open ID da conta do TikTok",
-      "threadsUserId": "ID de utilizador do Threads"
+      "threadsUserId": "ID de utilizador do Threads",
+      "channelId": "LINE Channel ID"
     },
     "channelUserIdKinds": {
       "psid": "PSID do Messenger",
@@ -5857,7 +5919,8 @@
       "tiktokCustomerOpenId": "Open ID do cliente do TikTok",
       "threadsUsername": "Nome de utilizador do Threads",
       "apiSourceId": "ID da origem do contacto",
-      "whatsappId": "ID do WhatsApp (wa_id)"
+      "whatsappId": "ID do WhatsApp (wa_id)",
+      "lineUserId": "LINE user id"
     },
     "mappings": {
       "title": "Guardar dados recebidos",
@@ -6113,7 +6176,8 @@
       "total": "Total customers scanned: {count}",
       "waitCooldown": "You must wait another 24 hours before you can use this feature again.",
       "failed": "The last scan failed. You can try again once the cooldown ends.",
-      "partial": "The last scan finished partially — some conversations could not be imported."
+      "partial": "The last scan finished partially — some conversations could not be imported.",
+      "cancelled": "A última verificação foi cancelada antes de terminar."
     },
     "errors": {
       "contactScanFromTimeInvalid": "Scan-from time must be in the past.",
@@ -6139,9 +6203,20 @@
         "running": "Running",
         "succeeded": "Succeeded",
         "partial": "Partial",
-        "failed": "Failed"
+        "failed": "Failed",
+        "cancelled": "Cancelada"
       },
       "empty": "No scans have been run yet."
+    },
+    "cancel": {
+      "button": "Cancelar verificação",
+      "title": "Cancelar esta verificação?",
+      "description": "A verificação é interrompida e os clientes já importados são mantidos. Ainda tem de esperar 24 horas desde o início desta verificação para verificar esta caixa de entrada novamente.",
+      "keep": "Continuar a verificar",
+      "confirm": "Cancelar verificação",
+      "success": "Verificação cancelada.",
+      "notRunning": "Não está em curso nenhuma verificação nesta caixa de entrada.",
+      "failed": "Não foi possível cancelar a verificação. Tente novamente."
     }
   },
   "auditLogs": {
@@ -6191,6 +6266,7 @@
         "containsPhone": "A mensagem contém telefone",
         "containsEmail": "A mensagem contém e-mail",
         "containsImage": "A mensagem contém imagem",
+        "containsAudio": "A mensagem contém áudio",
         "containsVideo": "A mensagem contém vídeo",
         "containsLink": "A mensagem contém ligação",
         "containsWholeWord": "A mensagem contém a palavra inteira",
@@ -11947,6 +12023,23 @@
       "title": "Danger zone",
       "description": "Deletes your account and the {count, plural, =0 {0 workspaces} one {# workspace} other {# workspaces}} you own.",
       "openSettings": "Delete account"
+    }
+  },
+  "integrationLine": {
+    "channelIdLabel": "Channel ID",
+    "channelSecretLabel": "Channel secret",
+    "credentialsHelp": "Find both values in the LINE Developers console: open your Messaging API channel and go to Basic settings.",
+    "webhookNotEnabled": "LINE is not delivering messages yet. In LINE Official Account Manager, turn on \"Use webhook\" and turn off \"Auto-reply messages\", then press Test webhook.",
+    "webhookReplaced": "The webhook URL previously set on this LINE channel ({url}) was replaced with ChatbotX's.",
+    "testWebhook": "Test webhook",
+    "testWebhookSuccess": "LINE webhook is working.",
+    "webhookTestFailed": "LINE's webhook test failed: {reason}",
+    "continue": "Continue",
+    "errors": {
+      "channelHidden": "LINE is not available for this workspace.",
+      "credentialsRejected": "Invalid LINE Channel ID or Channel secret.",
+      "webhookRejected": "LINE rejected the webhook URL. Please try again later or contact support.",
+      "providerUnavailable": "LINE is temporarily unavailable. Please try again in a moment."
     }
   }
 }

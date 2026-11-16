@@ -38,7 +38,7 @@ export async function resolveIncomingTextRouting(props: {
   hasActionableInput: boolean
   // Automated (AI) responses stay text-driven only…
   hasText: boolean
-  // …except an image/video, which may still match a Keyword condition.
+  // …except an image/video/audio, which may still match a Keyword condition.
   hasKeywordMedia?: boolean
   isConversationActive: (conversation: ConversationModel) => Promise<boolean>
 }): Promise<IncomingRoutingDecision> {

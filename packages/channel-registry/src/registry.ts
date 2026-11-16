@@ -26,6 +26,7 @@ import { integration as integrationGoogleSheets } from "@chatbotx.io/integration
 import { integration as integrationInstagram } from "@chatbotx.io/integration-instagram"
 import { integration as integrationInstagramFacebook } from "@chatbotx.io/integration-instagram-facebook"
 import { integration as integrationKlaviyo } from "@chatbotx.io/integration-klaviyo"
+import { integration as integrationLine } from "@chatbotx.io/integration-line"
 import { integration as integrationMailchimp } from "@chatbotx.io/integration-mailchimp"
 import { integration as integrationMailerLite } from "@chatbotx.io/integration-mailer-lite"
 import { integration as integrationMessenger } from "@chatbotx.io/integration-messenger"
@@ -64,6 +65,7 @@ export const integrations = {
   instagram: integrationInstagram,
   instagramFacebook: integrationInstagramFacebook,
   klaviyo: integrationKlaviyo,
+  line: integrationLine,
   mailchimp: integrationMailchimp,
   mailerLite: integrationMailerLite,
   messenger: integrationMessenger,
@@ -170,6 +172,11 @@ export const integrationService = {
         columnName = "botId"
         break
       }
+      case "line": {
+        modelName = "IntegrationLine"
+        columnName = "channelId"
+        break
+      }
       case "messenger": {
         modelName = "IntegrationMessenger"
         columnName = "pageId"
@@ -253,6 +260,7 @@ export const integrationService = {
     const integrationTableByChannel: Partial<Record<string, string>> = {
       api: "IntegrationApi",
       instagram: "IntegrationInstagram",
+      line: "IntegrationLine",
       messenger: "IntegrationMessenger",
       smtp: "IntegrationSmtp",
       telegram: "IntegrationTelegram",

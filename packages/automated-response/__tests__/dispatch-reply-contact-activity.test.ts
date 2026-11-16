@@ -164,6 +164,87 @@ describe("dispatchAutomatedResponseReply contact activity", () => {
     expect(mocks.recordKeywordMatch).not.toHaveBeenCalled()
   })
 
+  describe("audio-only message", () => {
+    const audioRule = (overrides: Record<string, unknown> = {}) =>
+      rule({
+        keywords: [],
+        conditions: [{ operator: "containsAudio", values: [] }],
+        flowId: "flow-1",
+        text: null,
+        ...overrides,
+      })
+
+    const dispatchAudio = (rules: ReturnType<typeof rule>[]) =>
+      dispatchAutomatedResponseReply({
+        conversation,
+        contactInbox,
+        messageId: createId(),
+        text: "",
+        attachmentFileTypes: ["audio"],
+        rules: rules as never,
+        triggerType: "contact_message_in",
+        startedByContactMessage: true,
+      })
+
+    test("sends the flow with an empty recorded text and automated_response tracking", async () => {
+      expect(await dispatchAudio([audioRule()])).toBe(true)
+
+      expect(mocks.recordKeywordMatch).toHaveBeenCalledWith(
+        expect.objectContaining({ automatedResponseId: "ar-1", text: "" }),
+      )
+      expect(mocks.integrationAdd).toHaveBeenCalledTimes(1)
+      expect(mocks.integrationAdd.mock.calls[0]?.[1]).toMatchObject({
+        type: "sendFlow",
+        data: expect.objectContaining({
+          flowId: "flow-1",
+          startedByContactMessage: true,
+          trackingContext: expect.objectContaining({
+            aiProvider: "none",
+          }),
+        }),
+      })
+    })
+
+    test("is not handled when the flow has no published version", async () => {
+      mocks.findFlow.mockResolvedValue(null)
+
+      expect(await dispatchAudio([audioRule()])).toBe(false)
+
+      expect(mocks.recordKeywordMatch).not.toHaveBeenCalled()
+      expect(mocks.integrationAdd).not.toHaveBeenCalled()
+    })
+
+    test("is ignored by a rule that only negates text", async () => {
+      expect(
+        await dispatchAudio([
+          audioRule({
+            conditions: [{ operator: "notContains", values: ["stop"] }],
+          }),
+        ]),
+      ).toBe(false)
+
+      expect(mocks.integrationAdd).not.toHaveBeenCalled()
+    })
+
+    test("the oldest matching rule wins, and one that cannot send falls through", async () => {
+      mocks.findFlow
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce({ id: "flow-2" })
+
+      expect(
+        await dispatchAudio([
+          audioRule({ id: "ar-dead", flowId: "flow-gone" }),
+          audioRule({ id: "ar-live", flowId: "flow-2" }),
+        ]),
+      ).toBe(true)
+
+      expect(mocks.recordKeywordMatch).toHaveBeenCalledTimes(1)
+      expect(
+        mocks.recordKeywordMatch.mock.calls[0]?.[0].automatedResponseId,
+      ).toBe("ar-live")
+    })
+  })
+
   test("sends nothing when recording fails, so the job retries cleanly", async () => {
     mocks.recordKeywordMatch.mockRejectedValue(new Error("db down"))
 

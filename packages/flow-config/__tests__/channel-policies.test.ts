@@ -17,6 +17,7 @@ import { stepTypes } from "../src/steps/step-action"
 const MEDIA_SUPPORT_BY_CHANNEL = {
   api: ["noButtons", "noButtons", "noButtons", "noButtons", "full"],
   instagram: ["noButtons", "noButtons", "noButtons", "noButtons", "full"],
+  line: ["full", "full", "full", "full", "full"],
   messenger: ["full", "full", "noButtons", "noButtons", "full"],
   omnichannel: ["full", "full", "full", "full", "full"],
   smtp: [
@@ -63,6 +64,7 @@ const MEDIA_STEP_TYPES = [
 const TEXT_LIMITS = {
   api: 6000,
   instagram: 1000,
+  line: 5000,
   messenger: 2000,
   omnichannel: 1000,
   smtp: 6000,

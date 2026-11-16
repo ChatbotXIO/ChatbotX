@@ -364,7 +364,10 @@ function compileSendButton(
   buttonPath: string,
   state: CompileState,
 ): ButtonStepProps {
-  const button = buttonStepDefaultFn({ label: buttonSpec.text })
+  const button: ButtonStepProps = {
+    ...buttonStepDefaultFn({ label: buttonSpec.text }),
+    ...(buttonSpec.style ? { style: buttonSpec.style } : {}),
+  }
   if (buttonSpec.call !== undefined) {
     return {
       ...button,

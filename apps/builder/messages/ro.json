@@ -1716,6 +1716,31 @@
         "noMatches": "No matching chunks were found.",
         "agentHasNoFiles": "This agent has no knowledge files."
       }
+    },
+    "create": {
+      "trigger": "Adaugă cunoștințe",
+      "title": "Adaugă cunoștințe",
+      "description": "Încarcă un fișier sau importă-l de la un URL public. Agentul AI caută în conținutul lui când răspunde.",
+      "tabs": {
+        "fromUrl": "Din URL"
+      },
+      "urlHelp": "Un link direct către un fișier acceptat, un link Google Docs, Sheets sau Slides partajat public sau o pagină web statică. Conținutul generat cu JavaScript poate lipsi.",
+      "snapshotNotice": "URL-ul este descărcat o singură dată, ca instantaneu. Modificările ulterioare ale sursei nu sunt sincronizate; adaugă-l din nou pentru actualizare.",
+      "uploadFailed": "Încărcarea {name} a eșuat",
+      "rateLimited": "Prea multe importuri din URL. Așteaptă câteva secunde și încearcă din nou.",
+      "errors": {
+        "urlNotAllowed": "Acest URL nu este permis. Folosește o adresă publică de internet.",
+        "invalidUrl": "URL-ul nu este valid. Folosește un link http(s) complet, fără nume de utilizator sau parolă.",
+        "googleFileNotPublic": "Acest fișier Google nu este partajat public. Setează accesul general la \"Oricine are linkul\" și încearcă din nou.",
+        "googlePublishedNotSupported": "Linkurile Google \"Publică pe web\" nu sunt acceptate. Partajează fișierul public și folosește linkul obișnuit.",
+        "unsupportedFileType": "Acest tip de fișier nu este acceptat drept cunoștințe.",
+        "fileTooLarge": "Fișierul depășește {maxSize}.",
+        "downloadTimedOut": "Descărcarea a durat prea mult. Încearcă un fișier mai mic sau o gazdă mai rapidă.",
+        "downloadFailed": "Sursa a returnat o eroare. Verifică dacă linkul se deschide fără autentificare.",
+        "tooManyRedirects": "URL-ul redirecționează de prea multe ori.",
+        "invalidRedirect": "URL-ul redirecționează către o adresă nevalidă.",
+        "uploadPathNotAllowed": "Fișierul încărcat nu este permis. Încarcă-l din nou."
+      }
     }
   },
   "aiFunctions": {
@@ -1923,6 +1948,11 @@
       "paused": "Întrerupt",
       "ended": "Încheiat"
     },
+    "statusReason": {
+      "accountPolicyBlocked": "Oprit automat: contul canalului a fost blocat la trimitere după o încălcare a politicilor.",
+      "accountSendRestricted": "Oprit automat: contul canalului este restricționat temporar la trimitere.",
+      "page": "Pagină: {name}"
+    },
     "stats": {
       "sent": "Trimis",
       "delivered": "Livrat",
@@ -1986,6 +2016,10 @@
     "telegramAllContacts": {
       "title": "Telegram",
       "description": "Folosește acest tip de mesaj dacă vrei să trimiți o difuzare contactelor tale Telegram."
+    },
+    "lineAllContacts": {
+      "title": "LINE",
+      "description": "Trimite oricând un mesaj în masă contactelor tale LINE. Fiecare mesaj se contorizează în cota lunară de mesaje a contului tău LINE Official Account. Contactele care ți-au blocat contul sunt omise."
     },
     "tiktokActiveContacts": {
       "title": "TikTok",
@@ -2071,7 +2105,14 @@
     "resumeDialog": {
       "title": "Resume broadcast",
       "description": "\"{name}\" will continue sending to recipients who have not received it yet.",
-      "templateDescription": "„{name}” se repetă din nou de la următoarea oră programată. Rulările din timpul pauzei au fost omise."
+      "templateDescription": "„{name}” se repetă din nou de la următoarea oră programată. Rulările din timpul pauzei au fost omise.",
+      "blocked": {
+        "title": "Oprit deoarece contul canalului nu poate trimite",
+        "description": "Dacă contul este în continuare blocat, primul mesaj va eșua, iar difuzarea se va opri din nou. Trimiterea cât timp contul este blocat poate duce la o restricție mai severă.",
+        "pageLabel": "Pagină",
+        "errorLabel": "Eroare de la canal",
+        "confirm": "Reia oricum"
+      }
     },
     "planLimitDialog": {
       "title": "Actualizează planul",
@@ -2743,7 +2784,17 @@
     "button": {
       "label": "Buton",
       "whenPressed": "Când este apăsat acest buton",
-      "callToThisNumber": "Apelează acest număr"
+      "callToThisNumber": "Apelează acest număr",
+      "style": {
+        "label": "Stilul butonului",
+        "description": "Cum arată butonul pentru contact.",
+        "default": "{style} (implicit)",
+        "options": {
+          "primary": "Principal",
+          "secondary": "Secundar",
+          "link": "Link"
+        }
+      }
     },
     "buttonLabel": {
       "label": "Eticheta butonului"
@@ -2919,7 +2970,8 @@
       "threadsUsername": "Nume utilizator Threads",
       "webchatGuestId": "ID vizitator Webchat",
       "externalId": "ID extern",
-      "channelId": "ID canal"
+      "channelId": "ID canal",
+      "lineUserId": "LINE User ID"
     },
     "flow": {
       "label": "Flux"
@@ -3434,6 +3486,7 @@
       "placeholders": {
         "instagram": "ID-ul utilizatorului Instagram",
         "messenger": "PSID Messenger",
+        "line": "LINE user ID",
         "telegram": "ID-ul conversației Telegram",
         "tiktok": "ID-ul utilizatorului TikTok",
         "zalo": "ID-ul utilizatorului Zalo"
@@ -4206,6 +4259,7 @@
     "duplicated": {
       "generic": "Acest cont este deja conectat la un alt spațiu de lucru.",
       "instagram": "Acest cont Instagram este deja conectat la un alt spațiu de lucru.",
+      "line": "This LINE channel is already connected to another workspace.",
       "messenger": "Această pagină de Facebook este deja conectată la un alt spațiu de lucru.",
       "telegram": "Acest bot Telegram este deja conectat la un alt spațiu de lucru.",
       "threads": "Acest cont Threads este deja conectat la un alt spațiu de lucru.",
@@ -4585,6 +4639,13 @@
       "cardEnding": "Card care se termină în {lastFourDigits}",
       "notCharged": "Nedebitat încă. Debitați prin furnizorul de plăți.",
       "reference": "Referință {referenceId}"
+    },
+    "sendQueue": {
+      "failed": "Un mesaj nu a putut fi trimis. Retrimite-l din conversație dacă se poate sau continuă trimiterea.",
+      "unconfirmed": "Nu am putut confirma că ultimul mesaj a fost trimis. Alege dacă vrei să continui trimiterea.",
+      "continue": "Continuă trimiterea",
+      "discard": "Renunță la mesajele din coadă",
+      "dismiss": "Închide"
     }
   },
   "instagram": {
@@ -5847,7 +5908,8 @@
       "botId": "ID bot Telegram",
       "oaId": "ID Zalo OA",
       "openId": "Open ID cont TikTok",
-      "threadsUserId": "ID utilizator Threads"
+      "threadsUserId": "ID utilizator Threads",
+      "channelId": "LINE Channel ID"
     },
     "channelUserIdKinds": {
       "psid": "PSID Messenger",
@@ -5857,7 +5919,8 @@
       "tiktokCustomerOpenId": "Open ID client TikTok",
       "threadsUsername": "Nume utilizator Threads",
       "apiSourceId": "ID sursă contact",
-      "whatsappId": "ID WhatsApp (wa_id)"
+      "whatsappId": "ID WhatsApp (wa_id)",
+      "lineUserId": "LINE user id"
     },
     "mappings": {
       "title": "Salvează datele primite",
@@ -6117,7 +6180,8 @@
       "total": "Total customers scanned: {count}",
       "waitCooldown": "You must wait another 24 hours before you can use this feature again.",
       "failed": "The last scan failed. You can try again once the cooldown ends.",
-      "partial": "The last scan finished partially — some conversations could not be imported."
+      "partial": "The last scan finished partially — some conversations could not be imported.",
+      "cancelled": "Ultima scanare a fost anulată înainte de a se termina."
     },
     "errors": {
       "contactScanFromTimeInvalid": "Scan-from time must be in the past.",
@@ -6143,9 +6207,20 @@
         "running": "Running",
         "succeeded": "Succeeded",
         "partial": "Partial",
-        "failed": "Failed"
+        "failed": "Failed",
+        "cancelled": "Anulată"
       },
       "empty": "No scans have been run yet."
+    },
+    "cancel": {
+      "button": "Anulează scanarea",
+      "title": "Anulezi această scanare?",
+      "description": "Scanarea se oprește, iar clienții deja importați sunt păstrați. Trebuie totuși să aștepți 24 de ore de la începutul acestei scanări înainte de a putea scana din nou această căsuță.",
+      "keep": "Continuă scanarea",
+      "confirm": "Anulează scanarea",
+      "success": "Scanare anulată.",
+      "notRunning": "Nu rulează nicio scanare pentru această căsuță.",
+      "failed": "Scanarea nu a putut fi anulată. Încearcă din nou."
     }
   },
   "auditLogs": {
@@ -6195,6 +6270,7 @@
         "containsPhone": "Mesajul conține telefon",
         "containsEmail": "Mesajul conține e-mail",
         "containsImage": "Mesajul conține imagine",
+        "containsAudio": "Mesajul conține audio",
         "containsVideo": "Mesajul conține video",
         "containsLink": "Mesajul conține link",
         "containsWholeWord": "Mesajul conține cuvântul întreg",
@@ -11947,6 +12023,23 @@
       "title": "Danger zone",
       "description": "Deletes your account and the {count, plural, =0 {0 workspaces} one {# workspace} other {# workspaces}} you own.",
       "openSettings": "Delete account"
+    }
+  },
+  "integrationLine": {
+    "channelIdLabel": "Channel ID",
+    "channelSecretLabel": "Channel secret",
+    "credentialsHelp": "Find both values in the LINE Developers console: open your Messaging API channel and go to Basic settings.",
+    "webhookNotEnabled": "LINE is not delivering messages yet. In LINE Official Account Manager, turn on \"Use webhook\" and turn off \"Auto-reply messages\", then press Test webhook.",
+    "webhookReplaced": "The webhook URL previously set on this LINE channel ({url}) was replaced with ChatbotX's.",
+    "testWebhook": "Test webhook",
+    "testWebhookSuccess": "LINE webhook is working.",
+    "webhookTestFailed": "LINE's webhook test failed: {reason}",
+    "continue": "Continue",
+    "errors": {
+      "channelHidden": "LINE is not available for this workspace.",
+      "credentialsRejected": "Invalid LINE Channel ID or Channel secret.",
+      "webhookRejected": "LINE rejected the webhook URL. Please try again later or contact support.",
+      "providerUnavailable": "LINE is temporarily unavailable. Please try again in a moment."
     }
   }
 }

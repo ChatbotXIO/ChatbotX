@@ -1,4 +1,5 @@
 import {
+  buttonStyles,
   buttonTypes,
   productMessageConditions,
   sendProductsDisplays,
@@ -39,8 +40,30 @@ const capabilitiesChannelPolicySchema = z.object({
     .describe(
       "Button types this channel renders as its own control (`callPhoneNumber` dials on tap, `copyText` copies its text on tap). A button type not listed is sent as a reply button.",
     ),
+  buttonStyles: z
+    .object({
+      options: z
+        .array(buttonStyles)
+        .describe("Values a button's `style` may take on this channel."),
+      default: buttonStyles.describe(
+        "Style of a button whose `style` is omitted.",
+      ),
+    })
+    .nullable()
+    .describe(
+      "Button styles this channel renders on step and card buttons (set a button's `style`), or null when it has none and ignores `style`. A style never blocks publish.",
+    ),
   limits: z.object({
-    buttonCount: z.number(),
+    buttonCount: z
+      .number()
+      .describe(
+        "Most buttons on one text or media step (on channels that share slots, counting the node's quick replies on a text step).",
+      ),
+    cardButtonCount: z
+      .number()
+      .describe(
+        "Most buttons on one card: a `sendCard` step and each card of a `sendCarousel`.",
+      ),
     buttonLabel: z.number(),
     cardTitle: z.number().optional(),
     text: z.number(),

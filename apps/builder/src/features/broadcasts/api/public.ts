@@ -392,7 +392,7 @@ export const broadcastsPublicRouter = {
       path: BROADCAST_STOP_TOKEN_PATH,
       summary: "Stop broadcast",
       description:
-        "Stops a broadcast while it is sending and returns its id. On a repeating broadcast (status `recurring`) it pauses the schedule: no new runs start, a run already sending carries on. Allowed even when the workspace trial has expired, like the builder. Call `broadcasts.get` to confirm its state first, or use `broadcasts.moveToDraft` for scheduled broadcasts.",
+        "Stops a broadcast while it is sending and returns its id. On a repeating broadcast (status `recurring`) it pauses the schedule: no new runs start, a run already sending carries on. Allowed even when the workspace trial has expired, like the builder. Call `broadcasts.get` to confirm its state first, or use `broadcasts.moveToDraft` for scheduled broadcasts. The system also stops a broadcast on its own when the channel page is blocked from sending: the broadcast then has a `statusReason` (and `statusErrorMessage`, `statusInboxId`) in `broadcasts.get`.",
       tags: ["Broadcasts"],
       spec: mcpSpec({ visibility: "default" }),
     })
@@ -419,7 +419,7 @@ export const broadcastsPublicRouter = {
       path: "/v1/broadcasts/{id}/resume",
       summary: "Resume stopped broadcast",
       description:
-        "Resumes sending a stopped broadcast where it left off. On a paused repeating broadcast it restarts the schedule and returns `nextRunAt`; slots that passed while it was paused are not sent. Only matches a broadcast whose status is `cancelled`; 404 otherwise. Use `broadcasts.stop` to pause a sending broadcast.",
+        "Resumes sending a stopped broadcast where it left off. On a paused repeating broadcast it restarts the schedule and returns `nextRunAt`; slots that passed while it was paused are not sent. Only matches a broadcast whose status is `cancelled`; 404 otherwise. Use `broadcasts.stop` to pause a sending broadcast. A broadcast the system stopped (it has a `statusReason`) is resumed the same way and is not blocked, but if the channel page is still blocked from sending the first message fails and it stops again, and sending while blocked can lead to a heavier restriction: check the page is unblocked first. Resuming clears `statusReason`.",
       tags: ["Broadcasts"],
     })
     .input(

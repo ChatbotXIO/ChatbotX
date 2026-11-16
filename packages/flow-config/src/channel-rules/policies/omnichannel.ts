@@ -8,6 +8,7 @@ import {
 export const omnichannelFlowPolicy = defineChannelFlowPolicy({
   limits: {
     buttonCount: 3,
+    cardButtonCount: 3,
     buttonLabel: 20,
     text: 1000,
   },

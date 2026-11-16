@@ -141,6 +141,14 @@ export function buildInboxLink(
       refKey: "ref",
       refValue,
     },
+    // LINE has no deep-link ref parameter, so `refValue` stays unset.
+    line: inbox.integrationLine?.basicId
+      ? {
+          url: `https://line.me/R/ti/p/${inbox.integrationLine.basicId}`,
+          refKey: "ref",
+          refValue: undefined,
+        }
+      : undefined,
     webchat: {
       url: `${appUrl}/webchat?workspaceId=${inbox.workspaceId}&webchatId=${inbox.sourceId}`,
       refKey: "ref",
@@ -195,6 +203,7 @@ export function buildPostLink(channel: ChannelType, postId: string): string {
     whatsapp: "",
     telegram: "",
     zalo: "",
+    line: "",
     tiktok: "",
     webchat: "",
     smtp: "",
@@ -216,6 +225,7 @@ export function buildMessageLink(
     whatsapp: "",
     telegram: "",
     zalo: "",
+    line: "",
     tiktok: "",
     webchat: "",
     smtp: "",

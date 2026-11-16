@@ -1,5 +1,6 @@
 import {
   coexistService,
+  contactScanService,
   instagramIntegrationService,
   messengerIntegrationService,
   workspaceService,
@@ -80,6 +81,14 @@ export const disconnectInstagram = async (ctx: {
         tx,
       })
     }
+
+    // The contact scan supports both Instagram variants, so unlike coexist
+    // this is not gated on the integration type.
+    await contactScanService.cancelForIntegration({
+      channel: "instagram",
+      integrationId: integrationInstagram.id,
+      tx,
+    })
 
     // Polymorphic FK cleanup — stale MetaCapiEvent rows would keep occupying
     // the (workspaceId, channel, sourceKey) dedup slot after a reconnect.

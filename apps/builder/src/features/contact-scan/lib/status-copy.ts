@@ -26,6 +26,7 @@ export const contactScanStatusCopy = {
   running: { key: "contactScan.status.running", tone: "info" },
   succeeded: { key: "contactScan.status.finished", tone: "success" },
   partial: { key: "contactScan.status.partial", tone: "warning" },
+  cancelled: { key: "contactScan.status.cancelled", tone: "warning" },
   failed: { key: "contactScan.status.failed", tone: "destructive" },
 } satisfies Record<ContactScanViewStatus, ContactScanStatusCopy>
 

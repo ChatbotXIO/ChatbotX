@@ -300,7 +300,7 @@ vi.mock("@chatbotx.io/automated-response", () => ({
     enqueueHandoffReentry: vi.fn().mockResolvedValue(undefined),
   },
   isKeywordMediaFileType: (fileType: string) =>
-    ["image", "gif", "video"].includes(fileType),
+    ["image", "gif", "video", "audio"].includes(fileType),
 }))
 
 vi.mock("@chatbotx.io/database/client", () => ({
@@ -1229,6 +1229,58 @@ describe("integration worker — conversation routing (thread control)", () => {
 
     expect(mockResolveIncomingTextRouting).toHaveBeenCalledTimes(1)
     expect(mockAutomatedResponseEnqueue).toHaveBeenCalledTimes(1)
+  })
+
+  describe("a voice note with no text", () => {
+    const audioMessage = {
+      ...fakeCreatedMessage,
+      text: null,
+      attachments: [
+        {
+          fileType: "audio",
+          mimeType: "audio/ogg",
+          originPath: "public/space/ws-1/conversations/conv-1/voice-note",
+          size: 1024,
+        },
+      ],
+    }
+
+    beforeEach(async () => {
+      // A message with attachments is saved through
+      // `createOrUpdateWithAttachments`, which returns `{ result, isNew }`.
+      const repository = await mockCreateMessageRepository()
+      repository.createOrUpdateWithAttachments.mockResolvedValue({
+        result: audioMessage,
+        isNew: true,
+      })
+    })
+
+    test("reaches the Keywords route as keyword media and is enqueued with its file type", async () => {
+      mockRunChannelHandler.mockResolvedValue({
+        ...parsedMessage({ delivery: "owner" }),
+        message: {
+          ...parsedMessage().message,
+          text: undefined,
+          attachments: audioMessage.attachments,
+        },
+      })
+
+      await runJob(incomingJob)
+
+      expect(mockResolveIncomingTextRouting).toHaveBeenCalledWith(
+        expect.objectContaining({
+          hasActionableInput: true,
+          hasText: false,
+          hasKeywordMedia: true,
+        }),
+      )
+      expect(mockAutomatedResponseEnqueue).toHaveBeenCalledWith(
+        expect.objectContaining({
+          messageId: "msg-created",
+          attachmentFileTypes: ["audio"],
+        }),
+      )
+    })
   })
 
   test("an incomingMessageEcho still on the integration queue (drain) is ingested like an incoming message", async () => {

@@ -221,10 +221,45 @@ describe("speechToTextOutput", () => {
     expect(mocks.transcribeWithMuse).not.toHaveBeenCalled()
   })
 
+  test("lets the OpenAI path name a generic content type by the file's bytes", async () => {
+    const transcription = vi.fn(() => "whisper-model")
+    mocks.aiFindBy.mockResolvedValue({ auth: {} })
+    mocks.getAIModel.mockReturnValue({ transcription })
+    mocks.transcribe.mockResolvedValue({ text: "hello" })
+
+    await run(
+      AISpeechToTextDefaultFn({
+        inputFieldId: "field-in",
+        outputFieldId: "field-out",
+      }),
+    )
+
+    const [options] = mocks.downloadWithByteLimit.mock.calls[0] ?? []
+    expect(options.sniffer.bytes).toBeGreaterThanOrEqual(12)
+    // The sniffer is the real one: an MP4 voice note is audio/mp4, HTML is not.
+    const mp4 = Uint8Array.from([
+      0, 0, 0, 0x18, 0x66, 0x74, 0x79, 0x70, 0x6d, 0x70, 0x34, 0x32,
+    ])
+    expect(options.sniffer.sniff(mp4)).toBe("audio/mp4")
+    expect(
+      options.sniffer.sniff(new TextEncoder().encode("<html></html>")),
+    ).toBeNull()
+    // Every type it can return is one the allowlist accepts.
+    expect(options.allowedMimeTypes.has("audio/mp4")).toBe(true)
+  })
+
+  test("does not ask Muse for sniffing: it inspects the bytes itself", async () => {
+    await run()
+
+    const [options] = mocks.downloadWithByteLimit.mock.calls[0] ?? []
+    expect(options.sniffer).toBeUndefined()
+    expect(options.allowedMimeTypes).toBeUndefined()
+  })
+
   test("keeps the OpenAI content-type allowlist", async () => {
     mocks.aiFindBy.mockResolvedValue({ auth: {} })
     mocks.getAIModel.mockReturnValue({ transcription: vi.fn() })
-    serveAudio(makeWav(), "binary/octet-stream")
+    serveAudio(makeWav(), "text/html")
 
     const error = await captureError(
       run(

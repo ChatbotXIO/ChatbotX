@@ -21,6 +21,7 @@ const mocks = vi.hoisted(() => {
       callback(tx),
     ),
     coexistTearDownForIntegration: vi.fn().mockResolvedValue(undefined),
+    contactScanCancel: vi.fn().mockResolvedValue(undefined),
     connectionStateDisconnect: vi.fn().mockResolvedValue(undefined),
     findOrFail: vi.fn(),
     instagramExists: vi.fn().mockResolvedValue(false),
@@ -65,6 +66,7 @@ vi.mock("@chatbotx.io/business", () => ({
   coexistService: {
     tearDownForIntegration: mocks.coexistTearDownForIntegration,
   },
+  contactScanService: { cancelForIntegration: mocks.contactScanCancel },
   instagramIntegrationService: {
     existsForPage: mocks.instagramExists,
     findByIdForWorkspace: mocks.findOrFail,
@@ -264,6 +266,14 @@ describe("Meta disconnect actions", () => {
     expect(mocks.instagramFacebookDisconnect).toHaveBeenCalledWith(
       instagramFacebookRow.auth,
     )
+    // The contact scan supports both Instagram variants, so a Facebook-backed
+    // one is cancelled too (unlike coexist, which is native-only).
+    expect(mocks.contactScanCancel).toHaveBeenCalledWith({
+      channel: "instagram",
+      integrationId: "instagram-1",
+      tx: mocks.tx,
+    })
+    expect(mocks.coexistTearDownForIntegration).not.toHaveBeenCalled()
     expect(mocks.metaCapiDeleteByIntegration).toHaveBeenCalledWith(
       {
         workspaceId: "workspace-1",

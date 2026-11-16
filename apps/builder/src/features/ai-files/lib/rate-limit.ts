@@ -2,8 +2,9 @@ import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { getTranslations } from "next-intl/server"
 import { assertApiNotRateLimited } from "@/lib/rate-limit/api-rate-limit"
 
-// Both spend the workspace's own embedding key (search embeds the query,
-// reindex re-embeds changed chunks): 5 per 10-second window ≈ 30/minute.
+// Search and reindex spend the workspace's own embedding key (search embeds
+// the query, reindex re-embeds changed chunks); create-from-URL makes the
+// server download a remote file: 5 per 10-second window ≈ 30/minute each.
 const AI_FILE_OPERATION_LIMIT = 5
 
 export async function assertAIFileSearchNotRateLimited(
@@ -30,10 +31,33 @@ export async function assertAIFileReindexNotRateLimited(
   })
 }
 
+/** One bucket for the UI action and `aiFiles.create` with a `url`. */
+export async function assertAIFileCreateFromUrlNotRateLimited(
+  workspaceId: string,
+  resHeaders?: Headers,
+): Promise<void> {
+  await assertApiNotRateLimited({
+    scope: "ai-file-create-url-rate-limit",
+    key: workspaceId,
+    limit: AI_FILE_OPERATION_LIMIT,
+    resHeaders,
+  })
+}
+
 const rateLimitedMessageKey = {
   search: "aiFiles.testQuery.rateLimited",
   reindex: "aiFiles.reindex.rateLimited",
+  create: "aiFiles.create.rateLimited",
 } as const
+
+const assertNotRateLimited = {
+  search: assertAIFileSearchNotRateLimited,
+  reindex: assertAIFileReindexNotRateLimited,
+  create: assertAIFileCreateFromUrlNotRateLimited,
+} as const satisfies Record<
+  keyof typeof rateLimitedMessageKey,
+  (workspaceId: string) => Promise<void>
+>
 
 /**
  * Server-action variant: same buckets as the public API (so neither path can
@@ -44,9 +68,7 @@ export async function assertAIFileActionNotRateLimited(
   workspaceId: string,
 ): Promise<void> {
   try {
-    await (operation === "search"
-      ? assertAIFileSearchNotRateLimited(workspaceId)
-      : assertAIFileReindexNotRateLimited(workspaceId))
+    await assertNotRateLimited[operation](workspaceId)
   } catch (error) {
     if (
       error instanceof ChatbotXException &&

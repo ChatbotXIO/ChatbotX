@@ -320,4 +320,113 @@ describe("enqueueMessage", () => {
       expect(mockAiAgentQueueAdd).not.toHaveBeenCalled()
     })
   })
+
+  describe("audio without text", () => {
+    const audioProps = {
+      ...enqueueProps,
+      messageText: "",
+      attachmentFileTypes: ["audio" as const],
+    }
+
+    test("is queued when an inbound audio condition matches it", async () => {
+      mockWorkspaceFindById.mockResolvedValue({})
+      mockAutomatedResponseGetAll.mockResolvedValue([
+        {
+          type: "inbound",
+          keywords: [],
+          conditions: [{ operator: "containsAudio", values: [] }],
+        },
+      ])
+
+      await expect(enqueueMessage(audioProps)).resolves.toBe(true)
+
+      expect(mockAiAgentQueueAdd).toHaveBeenCalledTimes(1)
+      expect(mockSimpleQueueEnqueue).toHaveBeenCalledWith(
+        queueKey,
+        "message-1",
+        expect.any(Number),
+      )
+    })
+
+    test("is not queued when only image/video rules exist", async () => {
+      mockWorkspaceFindById.mockResolvedValue({})
+      mockAutomatedResponseGetAll.mockResolvedValue([
+        {
+          type: "inbound",
+          keywords: [],
+          conditions: [{ operator: "containsImage", values: [] }],
+        },
+        {
+          type: "inbound",
+          keywords: [],
+          conditions: [{ operator: "containsVideo", values: [] }],
+        },
+      ])
+
+      await expect(enqueueMessage(audioProps)).resolves.toBe(false)
+
+      expect(mockAiAgentQueueAdd).not.toHaveBeenCalled()
+      expect(mockSimpleQueueEnqueue).not.toHaveBeenCalled()
+    })
+
+    test("is not queued by a rule that only negates text", async () => {
+      mockWorkspaceFindById.mockResolvedValue({})
+      mockAutomatedResponseGetAll.mockResolvedValue([
+        {
+          type: "inbound",
+          keywords: [],
+          conditions: [{ operator: "notContains", values: ["stop"] }],
+        },
+      ])
+
+      await expect(enqueueMessage(audioProps)).resolves.toBe(false)
+
+      expect(mockAiAgentQueueAdd).not.toHaveBeenCalled()
+    })
+
+    test("loads the keyword rules once when smart delay is on", async () => {
+      mockWorkspaceFindById.mockResolvedValue({ smartResponseDelaySeconds: 30 })
+      mockAutomatedResponseGetAll.mockResolvedValue([
+        {
+          type: "inbound",
+          keywords: [],
+          conditions: [{ operator: "containsAudio", values: [] }],
+        },
+      ])
+
+      await expect(enqueueMessage(audioProps)).resolves.toBe(true)
+
+      // The media-only gate and the smart-delay check share one lookup.
+      expect(mockAutomatedResponseGetAll).toHaveBeenCalledTimes(1)
+      // A matching keyword keeps the v1 env timing, not the 30 s smart delay.
+      expect(mockAiAgentQueueAdd).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.any(Object),
+        expect.objectContaining({ delay: 2000 }),
+      )
+    })
+
+    test("is not queued by an outbound rule", async () => {
+      mockWorkspaceFindById.mockResolvedValue({})
+      mockAutomatedResponseGetAll.mockResolvedValue([
+        {
+          type: "outbound",
+          keywords: [],
+          conditions: [{ operator: "containsAudio", values: [] }],
+        },
+      ])
+
+      await expect(enqueueMessage(audioProps)).resolves.toBe(false)
+
+      expect(mockAiAgentQueueAdd).not.toHaveBeenCalled()
+    })
+
+    test("is not queued when the keyword lookup fails", async () => {
+      mockAutomatedResponseGetAll.mockRejectedValue(new Error("redis down"))
+
+      await expect(enqueueMessage(audioProps)).resolves.toBe(false)
+
+      expect(mockAiAgentQueueAdd).not.toHaveBeenCalled()
+    })
+  })
 })

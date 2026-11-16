@@ -94,7 +94,7 @@ export const dispatchAutomatedResponseReply = async (props: {
     AutomatedResponseModel,
     "id" | "keywords" | "conditions" | "flowId" | "text" | "type"
   >[]
-  /** File types attached to the trigger message (image/video conditions). */
+  /** File types attached to the trigger message (image/video/audio conditions). */
   attachmentFileTypes?: readonly FileType[]
   triggerType: string
   /** The rule fired for a contact's inbound message (not an outbound echo). */

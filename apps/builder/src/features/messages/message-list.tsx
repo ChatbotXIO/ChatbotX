@@ -21,6 +21,7 @@ import { changeMessageAttributesAction } from "./actions/change-message-attribut
 import { deleteMessageAction } from "./actions/delete-message.action"
 import { editMessageAction } from "./actions/edit-message.action"
 import { MessageItem } from "./components/message-item"
+import { ResendMessageButton } from "./components/resend-message-button"
 import { canPrivateReplyToComment } from "./lib/private-reply"
 import type { MessageResourceWithRelations } from "./schema/resource"
 
@@ -332,6 +333,9 @@ export function MessageList() {
               onEdit={handleEditMessage}
               onPrivateReply={handlePrivateReplyComment}
               onReply={handleReplyComment}
+              renderResend={(failed) => (
+                <ResendMessageButton message={failed} />
+              )}
             />
           </div>
         )}

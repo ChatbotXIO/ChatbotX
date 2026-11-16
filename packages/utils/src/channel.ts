@@ -26,6 +26,7 @@ export const channelTypes = z.enum([
   "instagram",
   "threads",
   "tiktok",
+  "line",
   "api",
 ])
 
@@ -164,6 +165,13 @@ export const CHANNEL_CAPABILITIES: Record<ChannelType, ChannelCapability> = {
     creatable: true,
     manageable: true,
     requiresCredential: true,
+    order: 8,
+    callable: false,
+  },
+  line: {
+    creatable: true,
+    manageable: true,
+    requiresCredential: false,
     order: 7,
     callable: false,
   },
@@ -171,21 +179,21 @@ export const CHANNEL_CAPABILITIES: Record<ChannelType, ChannelCapability> = {
     creatable: true,
     manageable: true,
     requiresCredential: false,
-    order: 8,
+    order: 9,
     callable: false,
   },
   smtp: {
     creatable: false,
     manageable: true,
     requiresCredential: false,
-    order: 9,
+    order: 10,
     callable: false,
   },
   api: {
     creatable: true,
     manageable: true,
     requiresCredential: false,
-    order: 10,
+    order: 11,
     callable: false,
   },
   // Not a real connectable channel — the fallback icon/label for unknown
@@ -195,7 +203,7 @@ export const CHANNEL_CAPABILITIES: Record<ChannelType, ChannelCapability> = {
     creatable: false,
     manageable: false,
     requiresCredential: false,
-    order: 11,
+    order: 12,
     callable: false,
   },
 }

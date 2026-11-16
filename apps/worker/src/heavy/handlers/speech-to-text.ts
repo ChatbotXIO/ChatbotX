@@ -14,6 +14,7 @@ import type { HeavyStepComputeProps } from "../../integration/handlers/flow-util
 import { readCustomFieldValue } from "../../integration/utils/contact"
 import { logger } from "../../lib/logger"
 import { getSpeechToTextAttemptTimeoutMs } from "../timeouts"
+import { audioSniffer } from "./audio-signature"
 import { downloadWithByteLimit } from "./bounded-download"
 import { ExpectedHeavyStepError } from "./errors"
 
@@ -72,6 +73,10 @@ async function transcribeOpenAI({
     label: "audio",
     maxBytes: env.HEAVY_MAX_AUDIO_BYTES,
     signal,
+    // Storage may serve a voice note as `application/octet-stream`; the bytes
+    // then say what it is, and a file that is not audio is dropped after its
+    // first few bytes.
+    sniffer: audioSniffer,
     url: audioUrl,
   })
 

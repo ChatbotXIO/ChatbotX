@@ -333,8 +333,8 @@ export async function handleCreateWebchatMessage({
     )
 
     const promises: Promise<unknown>[] = []
-    // An image/video without text still reaches Keywords (image/video
-    // conditions); the enqueue only queues it when a keyword rule matches.
+    // An image/video/audio without text still reaches Keywords (image/video/
+    // audio conditions); the enqueue only queues it when a keyword rule matches.
     const attachmentFileTypes = newMessage.attachments.map(
       (attachment) => attachment.fileType,
     )

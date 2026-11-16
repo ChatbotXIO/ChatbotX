@@ -4,7 +4,13 @@ import {
   getChannelMediaPrefix,
   getStoragePrefix,
 } from "@chatbotx.io/filesystem"
-import type { AuthStore, AuthValue, Context } from "@chatbotx.io/sdk"
+import { distributedStore } from "@chatbotx.io/redis"
+import type {
+  AuthStore,
+  AuthValue,
+  Context,
+  ContextEphemeralStore,
+} from "@chatbotx.io/sdk"
 import { publishGuestRealtimeEvent } from "../platform/realtime-broadcast"
 import { resolveTenantSettings } from "../platform/settings"
 import { type AuthStoreIntegrationRow, makeAuthStore } from "./auth-store"
@@ -39,6 +45,18 @@ export type IntegrationContext<TAuth extends AuthValue = AuthValue> = {
   integrationDetail: Record<string, unknown>
   uploader: typeof defaultUploader
   platform: PlatformData
+  ephemeral?: ContextEphemeralStore
+}
+
+const buildEphemeralStore = (
+  workspaceMedia: Omit<ChannelMediaLocation, "workspaceId">,
+): ContextEphemeralStore => {
+  const prefix = `integration-ephemeral:${workspaceMedia.channel}:${workspaceMedia.integrationId}:`
+  return {
+    put: (key, value, ttlSeconds) =>
+      distributedStore.put(`${prefix}${key}`, value, ttlSeconds),
+    take: (key) => distributedStore.take<string>(`${prefix}${key}`),
+  }
 }
 
 /**
@@ -78,6 +96,7 @@ export async function buildContextWithAuthStore<TAuth extends AuthValue>(args: {
           }),
         }
       : {}),
+    ...(args.media ? { ephemeral: buildEphemeralStore(args.media) } : {}),
     auth: args.auth,
     authStore: args.authStore,
     integrationDetail: args.integrationDetail,

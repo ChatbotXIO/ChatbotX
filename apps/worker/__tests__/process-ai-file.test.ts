@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 import {
   FileFetchError,
   FileSizeLimitError,
+  UnsupportedKnowledgeFileTypeError,
 } from "../src/ai-agent/lib/extraction-errors"
 import { AIFileProcessingError } from "../src/heavy/handlers/ai-file-processing-error"
 import { processAIFile } from "../src/heavy/handlers/process-ai-file"
@@ -328,6 +329,13 @@ describe("processAIFile", () => {
       "fileUnreadable",
       () =>
         mocks.extractKnowledgeDocument.mockRejectedValue(new Error("bad zip")),
+    ],
+    [
+      "fileUnreadable",
+      () =>
+        mocks.extractKnowledgeDocument.mockRejectedValue(
+          new UnsupportedKnowledgeFileTypeError("not a knowledge format"),
+        ),
     ],
     [
       "fileTooLarge",

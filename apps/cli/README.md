@@ -327,6 +327,7 @@ chatbotx conversations messages update <conversationId> <messageId> --createdAt 
                                                      # [--newAttachmentPath --newAttachmentPublicUrl --newAttachmentMimeType
                                                      #  --newAttachmentName --newAttachmentSize --removeAttachment]
 chatbotx conversations message delete <conversationId> <messageId> --createdAt <createdAt>
+chatbotx conversations resend add <conversationId> <messageId> --createdAt <createdAt>  # Resend a failed message (409 if it did not fail or was delivered)
 chatbotx conversations attribute add <conversationId> <messageId> --createdAt <createdAt>  # [--liked --hidden]
 
 # Appointment booking link (scope `appointments`; `--send true` also needs `inbox`)
@@ -552,7 +553,7 @@ chatbotx keywords create --conditions <conditions>   # inbound only, instead of 
                                                      # {"operator","values"}: conditions are ANDed, values ORed
                                                      # operators: is, similarTo, contains, containsWholeWord,
                                                      # beginsWith, endsWith, notContains, matchesRegex,
-                                                     # containsPhone|Email|Link|Image|Video, isThumbsUp (no values)
+                                                     # containsPhone|Email|Link|Image|Audio|Video, isThumbsUp (no values)
 chatbotx keywords update <id>                        # [--type --keywords | --conditions --text --flowId --folderId]
 chatbotx keywords status update <id> --status <status>  # [--type]  enable/disable without touching other fields
 chatbotx keywords delete <id>                        # [--type]
@@ -668,7 +669,7 @@ chatbotx ads find-by-connections <channel> <integrationId>    # Disconnect messa
 ```bash
 chatbotx ai-files list                               # List AI knowledge-base files
 chatbotx ai-files get <id>
-chatbotx ai-files create --name <name>               # [--file --url] (exactly one required)
+chatbotx ai-files create --name <name>               # [--file --url] (exactly one required); max 25 MB; --url snapshots once (public Google Docs/Sheets/Slides exported)
 chatbotx ai-files delete <id>
 chatbotx ai-files search --query <text>             # [--agentId | --fileIds <json>] (exactly one) [--limit --similarityThreshold --expectedText]; full token
 chatbotx ai-files chunks list <id>                  # [--limit --cursor --fromChunkIndex]; document order; repeat with nextCursor until null
@@ -842,6 +843,7 @@ AI moderation itself is configured on the automation: `hideComments.aiModeration
 chatbotx contact-scans status --inboxId <inboxId>     # Latest Automatic Customer Scan status for inbox
 chatbotx contact-scans list                           # [--page --perPage]
 chatbotx contact-scans create --inboxId <inboxId> --scanFromAt <scanFromAt>
+chatbotx contact-scans cancel --inboxId <inboxId>    # Cancel running Automatic Customer Scan for inbox
 ```
 
 ---
@@ -1619,6 +1621,17 @@ chatbotx webchats delete <id>
 ```bash
 chatbotx zalo-channels list|get <id>
 chatbotx zalo-channels tag-sync update <id> --enabled <enabled>
+```
+
+---
+
+### `line-channels`
+
+```bash
+chatbotx line-channels list|get <id>
+chatbotx line-channels create --channelId <id> --channelSecret <secret>
+chatbotx line-channels delete <id>
+chatbotx line-channels test-webhook add <id>   # POST /v1/line-channels/{id}/test-webhook; no collision, derived name ends in `:add`
 ```
 
 ---

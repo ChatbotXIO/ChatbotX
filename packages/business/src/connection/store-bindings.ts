@@ -170,6 +170,13 @@ export const makeChannelBinding = <TTable extends ChannelSatelliteTable>(opts: {
   extraWhere?: Partial<Record<Extract<keyof TTable, string>, unknown>>
   /** See `ConnectionStoreBinding.configColumns`. */
   configColumns?: readonly ConfigColumn<TTable>[]
+  /**
+   * Server-derived satellite columns read from the validated auth value
+   * (e.g. LINE's NOT NULL `botUserId`/`basicId` from `auth.metadata`). Never
+   * client input: unlike `configColumns`, nothing from a `config` request
+   * reaches these, so the generic credentials path cannot spoof them.
+   */
+  valuesFromAuth?: (auth: AuthValue) => Record<string, unknown>
 }): ConnectionStoreBinding<ConfigColumn<TTable>> => {
   const { table } = opts
   // `.from()`/`.insert()` reject a generic `TTable` param (Drizzle's typing
@@ -225,7 +232,11 @@ export const makeChannelBinding = <TTable extends ChannelSatelliteTable>(opts: {
       )
       const updated = await tx
         .update(table)
-        .set({ ...safeConfig, auth } as InferInsertModel<TTable>)
+        .set({
+          ...safeConfig,
+          ...opts.valuesFromAuth?.(auth),
+          auth,
+        } as InferInsertModel<TTable>)
         .where(withExtraWhere(eq(table.inboxId, inboxId), workspaceId))
         .returning({ id: table.id })
       return updated.length > 0
@@ -246,6 +257,7 @@ export const makeChannelBinding = <TTable extends ChannelSatelliteTable>(opts: {
       const values = {
         ...safeConfig,
         ...opts.extraInsertValues,
+        ...opts.valuesFromAuth?.(input.auth),
         workspaceId: input.workspaceId,
         inboxId: input.inboxId,
         auth: input.auth,

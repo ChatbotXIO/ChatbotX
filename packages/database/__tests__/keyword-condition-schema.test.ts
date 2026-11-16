@@ -23,6 +23,13 @@ describe("keywordConditionSchema", () => {
     expect(issueMessages({ operator: "contains", values: ["giá"] })).toEqual([])
   })
 
+  test("accepts containsAudio with no values and rejects values on it", () => {
+    expect(issueMessages({ operator: "containsAudio", values: [] })).toEqual([])
+    expect(issueMessages({ operator: "containsAudio", values: ["x"] })).toEqual(
+      ["keywordConditionTakesNoValues"],
+    )
+  })
+
   test("rejects values on value-less operators", () => {
     expect(issueMessages({ operator: "containsImage", values: [] })).toEqual([])
     expect(issueMessages({ operator: "isThumbsUp", values: ["x"] })).toEqual([
@@ -93,6 +100,7 @@ describe("flattenKeywordConditionValues", () => {
       flattenKeywordConditionValues([
         { operator: "contains", values: ["a", "b"] },
         { operator: "containsVideo", values: [] },
+        { operator: "containsAudio", values: [] },
         { operator: "beginsWith", values: ["b", "c"] },
       ]),
     ).toEqual(["a", "b", "c"])

@@ -8,8 +8,10 @@ import { type StepType, stepTypes } from "../steps/step-action"
 import { flowValidationCodes } from "../validation-codes"
 import { resolveStepValidator } from "./channel-validator"
 import {
+  buttonContainers,
   CHANNEL_FLOW_POLICIES,
   CHANNEL_POLICY_VERSION,
+  getButtonCountLimit,
   stepSupport,
 } from "./policies"
 import { isTiktokQuickReplyCardTitleTooLong } from "./tiktok-text-rules"
@@ -88,16 +90,10 @@ export const refineStepsByChannel = (
         return
       }
 
-      const buttonCount = checkButtonCount(
-        step,
-        quickReplyCount,
-        policy.quickRepliesShareButtonSlots,
-        policy.limits.buttonCount,
-      )
-      if (buttonCount.total > policy.limits.buttonCount) {
+      const maxButtonCountIssue = (actual: number, allowed: number) => {
         const capability = {
-          actual: buttonCount.total,
-          allowed: policy.limits.buttonCount,
+          actual,
+          allowed,
           block: step.stepType,
           channel,
           code: flowValidationCodes.constraintExceeded,
@@ -105,7 +101,45 @@ export const refineStepsByChannel = (
           policyVersion: CHANNEL_POLICY_VERSION,
           unit: "buttons",
         }
-        const message = `${step.stepType} exceeds the ${channel} maximum of ${capability.allowed} ${capability.unit}.`
+        return {
+          capability,
+          message: `${step.stepType} exceeds the ${channel} maximum of ${capability.allowed} ${capability.unit}.`,
+        }
+      }
+
+      // A card's buttons — a sendCard step, or each card of a sendCarousel —
+      // have the policy's card limit, never the step one.
+      if (step.stepType === stepTypes.enum.sendCarousel) {
+        const allowed = getButtonCountLimit(policy, buttonContainers.card)
+        step.cards.forEach((card, cardIndex) => {
+          if (card.buttons.length > allowed) {
+            const issue = maxButtonCountIssue(card.buttons.length, allowed)
+            addStepIssue(
+              issue.message,
+              ["cards", cardIndex, "buttons"],
+              issue.capability,
+            )
+          }
+        })
+      }
+
+      const buttonLimit = getButtonCountLimit(
+        policy,
+        step.stepType === stepTypes.enum.sendCard
+          ? buttonContainers.card
+          : buttonContainers.step,
+      )
+      const buttonCount = checkButtonCount(
+        step,
+        quickReplyCount,
+        policy.quickRepliesShareButtonSlots,
+        buttonLimit,
+      )
+      if (buttonCount.total > buttonLimit) {
+        const { capability, message } = maxButtonCountIssue(
+          buttonCount.total,
+          buttonLimit,
+        )
 
         if (
           buttonCount.quickRepliesCauseOverflow &&

@@ -13,6 +13,7 @@ vi.mock("@chatbotx.io/filesystem", () => ({
 import {
   FileFetchError,
   FileSizeLimitError,
+  UnsupportedKnowledgeFileTypeError,
 } from "../src/ai-agent/lib/extraction-errors"
 import {
   extractKnowledgeDocument,
@@ -264,6 +265,52 @@ describe("extractKnowledgeDocument", () => {
         sourceName: "notes.txt",
       }),
     ).resolves.toEqual({ kind: "prose", text: legacy })
+  })
+
+  describe("file type", () => {
+    test("reads an octet-stream row by its file name", async () => {
+      mockStoredFile(Buffer.from("Opening hours: 9-17"))
+
+      await expect(
+        extractKnowledgeDocument(
+          "workspaces/w/ai-files/1",
+          "application/octet-stream",
+          { sourceName: "notes.txt" },
+        ),
+      ).resolves.toEqual({ kind: "prose", text: "Opening hours: 9-17" })
+    })
+
+    test.each([
+      ["application/octet-stream", "blob"],
+      ["image/png", "photo.png"],
+      ["application/zip", "notes.txt"],
+    ])("refuses %s named %s instead of decoding it as text", async (mimeType, sourceName) => {
+      mockStoredFile(Buffer.from([0x89, 0x50, 0x4e, 0x47]))
+
+      await expect(
+        extractKnowledgeDocument("workspaces/w/ai-files/1", mimeType, {
+          sourceName,
+        }),
+      ).rejects.toBeInstanceOf(UnsupportedKnowledgeFileTypeError)
+    })
+
+    test("keeps JSON on the UTF-8 path", async () => {
+      mockStoredFile(Buffer.from('{"plan":"Pro"}'))
+
+      await expect(
+        extractKnowledgeDocument("k/a.json", "application/json", {
+          sourceName: "a.json",
+        }),
+      ).resolves.toEqual({ kind: "prose", text: '{"plan":"Pro"}' })
+    })
+
+    test("extractTextFromFile keeps its UTF-8 fallback for other types", async () => {
+      mockStoredFile(Buffer.from("plain bytes"))
+
+      await expect(
+        extractTextFromFile("k/blob", "application/octet-stream"),
+      ).resolves.toBe("plain bytes")
+    })
   })
 
   describe("failures and fallback", () => {

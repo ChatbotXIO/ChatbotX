@@ -3,15 +3,16 @@ import {
   messengerIntegrationService,
 } from "@chatbotx.io/business"
 import type { InboxModel } from "@chatbotx.io/database/types"
+import { mapToChannelError } from "@chatbotx.io/integration-messenger"
 import { listConversations } from "@chatbotx.io/integration-messenger/apis/sync"
 import {
   messengerAuthSchema,
   participantSourceId,
   splitName,
-  withInlineRetry,
 } from "../../coexist/messenger-helpers"
 import type { ContactScanAdapter, ContactScanPage } from "../adapter"
-import { classifyGraphSdkError } from "../graph-error"
+import { classifyChannelErrorForScan } from "../graph-error"
+import { bucUsageToSignal, readBackoffFromErrorResponse } from "../usage-signal"
 
 export type MessengerContactScanContext = {
   inbox: InboxModel
@@ -56,14 +57,14 @@ export const messengerContactScanAdapter: ContactScanAdapter<MessengerContactSca
     },
 
     async listPage({ context, cursor }): Promise<ContactScanPage> {
-      const page = await withInlineRetry(() =>
-        listConversations({
-          pageId: context.pageId,
-          accessToken: context.accessToken,
-          version: context.version,
-          after: cursor,
-        }),
-      )
+      // No inline retry: a transient failure or a rate limit is handed back to
+      // the engine, which waits through the queue instead of sleeping here.
+      const page = await listConversations({
+        pageId: context.pageId,
+        accessToken: context.accessToken,
+        version: context.version,
+        after: cursor,
+      })
 
       const entries: ContactScanPage["entries"] = []
       for (const conv of page.data) {
@@ -85,18 +86,12 @@ export const messengerContactScanAdapter: ContactScanAdapter<MessengerContactSca
       return {
         entries,
         after: page.after,
-        usageSignal: page.bucUsage
-          ? {
-              kind: "meta-business-use-case-usage",
-              callCount: page.bucUsage.callCount,
-              totalCputime: page.bucUsage.totalCpuTime,
-              totalTime: page.bucUsage.totalTime,
-              estimatedTimeToRegainAccess:
-                page.bucUsage.estimatedTimeToRegainAccess,
-            }
-          : null,
+        usageSignal: bucUsageToSignal(page.bucUsage),
       }
     },
 
-    classifyError: classifyGraphSdkError,
+    classifyError: ({ error }) =>
+      classifyChannelErrorForScan({ error, mapToChannelError }),
+
+    readBackoff: ({ error }) => readBackoffFromErrorResponse(error),
   }

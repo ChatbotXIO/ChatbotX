@@ -72,7 +72,7 @@ describe("getCapabilities", () => {
     })
 
     expect(result.flowSpec?.selectedChannelPolicy).toMatchObject({
-      policyVersion: 3,
+      policyVersion: 4,
       nativeButtonTypes,
       limits: { buttonCount },
     })
@@ -82,6 +82,40 @@ describe("getCapabilities", () => {
     expect(result.flowSpec?.selectedChannelPolicy?.noButtonSteps).toEqual(
       expect.arrayContaining(noButtonSteps),
     )
+  })
+
+  test("exposes LINE's button styles and 5-button step and card limits", async () => {
+    const line = await getCapabilities({
+      channel: "line",
+      include: ["flowSpec"],
+      workspaceId: "ws-1",
+    })
+    const policy =
+      capabilitiesResponseSchema.parse(line).flowSpec?.selectedChannelPolicy
+    expect(policy?.buttonStyles).toEqual({
+      options: ["primary", "secondary", "link"],
+      default: "link",
+    })
+    expect(policy?.limits).toMatchObject({
+      buttonCount: 5,
+      cardButtonCount: 5,
+    })
+  })
+
+  test.each([
+    ["messenger", 3, 3],
+    ["telegram", 10, 3],
+    ["omnichannel", 3, 3],
+  ])("projects no button styles and the %s step/card limits", async (channel, buttonCount, cardButtonCount) => {
+    const result = await getCapabilities({
+      channel,
+      include: ["flowSpec"],
+      workspaceId: "ws-1",
+    })
+    const policy =
+      capabilitiesResponseSchema.parse(result).flowSpec?.selectedChannelPolicy
+    expect(policy?.buttonStyles).toBeNull()
+    expect(policy?.limits).toMatchObject({ buttonCount, cardButtonCount })
   })
 
   test("exposes the product-message rules only for a channel that declares them", async () => {

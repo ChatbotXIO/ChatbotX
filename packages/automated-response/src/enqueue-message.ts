@@ -25,8 +25,9 @@ const findInboundKeywordRules = async (workspaceId: string) =>
 
 /**
  * Queues a contact message for Keywords → AI. Returns false when nothing was
- * queued: an image/video without text is queued only when an inbound keyword
- * rule matches it, so the AI agent / Global Router never answer a bare photo.
+ * queued: an image/video/audio without text is queued only when an inbound
+ * keyword rule matches it, so the AI agent / Global Router never answer a bare
+ * photo or voice note.
  */
 export const enqueueMessage = async (props: {
   conversationId: string
@@ -44,10 +45,15 @@ export const enqueueMessage = async (props: {
   }
   const hasMatchInput =
     Boolean(matchInput.text) || matchInput.attachmentFileTypes.length > 0
+  let rulesLookup: ReturnType<typeof findInboundKeywordRules> | undefined
+  const loadKeywordRules = () => {
+    rulesLookup ??= findInboundKeywordRules(props.workspaceId)
+    return rulesLookup
+  }
 
   if (!matchInput.text && hasMatchInput) {
     try {
-      const keywordRules = await findInboundKeywordRules(props.workspaceId)
+      const keywordRules = await loadKeywordRules()
       if (!matchesAnyKeywordRule(matchInput, keywordRules)) {
         return false
       }
@@ -66,9 +72,7 @@ export const enqueueMessage = async (props: {
 
     if (isSmartResponseDelayOption(workspaceDelay)) {
       const [keywordRules, aiAgent, hasGlobalRouter] = await Promise.all([
-        hasMatchInput
-          ? findInboundKeywordRules(props.workspaceId)
-          : Promise.resolve([]),
+        hasMatchInput ? loadKeywordRules() : Promise.resolve([]),
         aiAgentService.findDefault(props.workspaceId),
         decisionProfileService.hasGlobalRouterEnabled(props.workspaceId),
       ])

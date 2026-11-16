@@ -23,6 +23,16 @@ type RawBucEntry = {
   estimated_time_to_regain_access?: number
 }
 
+const MS_PER_MINUTE = 60_000
+
+/**
+ * `estimated_time_to_regain_access` is in MINUTES (Meta: Graph API "Rate
+ * Limits"), not seconds. The one place that converts it, so no caller guesses
+ * the unit again.
+ */
+export const estimatedMinutesToMs = (minutes: number): number =>
+  minutes * MS_PER_MINUTE
+
 /** Returns the first BUC entry in the header, or `null` if absent/malformed. */
 export const parseBucHeader = (header: string | null): BucUsage | null => {
   if (!header) {

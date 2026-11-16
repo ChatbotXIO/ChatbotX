@@ -75,6 +75,7 @@ class InboxService extends BaseService {
     integrationInstagram: true,
     integrationThreads: true,
     integrationZalo: true,
+    integrationLine: true,
     integrationTelegram: true,
     integrationSmtp: true,
     integrationTiktok: true,

@@ -4,6 +4,7 @@ import {
   type ContactProfileFetcher,
   type IntegrationContext,
   instagramIntegrationService,
+  lineIntegrationService,
   messengerIntegrationService,
   type OnDemandProfileChannel,
   telegramIntegrationService,
@@ -11,6 +12,7 @@ import {
 } from "@chatbotx.io/business"
 import type { InstagramAuthValue } from "@chatbotx.io/integration-instagram/schema"
 import type { InstagramAuthValue as InstagramFacebookAuthValue } from "@chatbotx.io/integration-instagram-facebook"
+import type { LineAuthValue } from "@chatbotx.io/integration-line"
 import type { MessengerAuthValue } from "@chatbotx.io/integration-messenger/schema"
 import type { TelegramAuthValue } from "@chatbotx.io/integration-telegram"
 import type { ZaloAuthValue } from "@chatbotx.io/integration-zalo/schema"
@@ -138,6 +140,22 @@ export const profileFetcherFactories: Record<
         row: { ...row, auth: row.auth as ZaloAuthValue },
         runChannelHandler: (group, name, props) =>
           integrations.zalo.runChannelHandler(group, name, props),
+      })
+    },
+  line:
+    ({ workspaceId, inboxId, sourceId }) =>
+    async () => {
+      const row = await lineIntegrationService.findByInboxIdForWorkspace({
+        inboxId,
+        workspaceId,
+      })
+      return fetchChannelProfile<LineAuthValue>({
+        workspaceId,
+        sourceId,
+        integrationType: "line",
+        row: { ...row, auth: row.auth as LineAuthValue },
+        runChannelHandler: (group, name, props) =>
+          integrations.line.runChannelHandler(group, name, props),
       })
     },
   telegram:

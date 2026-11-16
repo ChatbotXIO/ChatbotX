@@ -1,3 +1,4 @@
+import { buttonContainers } from "@chatbotx.io/flow-config"
 import { useParams } from "next/navigation"
 import { useFormContext } from "react-hook-form"
 import { MediaLibraryOrInsertLink } from "@/components/media-library-or-insert-link"
@@ -26,7 +27,10 @@ const SendVideoStepEditor = (props: SendVideoStepEditorProps) => {
         />
       </div>
       <div className="bg-slate-200 px-3 py-2">
-        <ButtonGroupEditor parentName={`${parentName}.buttons`} />
+        <ButtonGroupEditor
+          container={buttonContainers.step}
+          parentName={`${parentName}.buttons`}
+        />
         <MediaStepNotice parentName={parentName} />
       </div>
     </div>

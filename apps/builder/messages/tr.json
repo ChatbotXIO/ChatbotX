@@ -319,6 +319,31 @@
         "noMatches": "No matching chunks were found.",
         "agentHasNoFiles": "This agent has no knowledge files."
       }
+    },
+    "create": {
+      "trigger": "Bilgi ekle",
+      "title": "Bilgi ekle",
+      "description": "Bir dosya yükleyin veya herkese açık bir URL'den içe aktarın. Yapay zekâ temsilcisi yanıt verirken bu içerikte arama yapar.",
+      "tabs": {
+        "fromUrl": "URL'den"
+      },
+      "urlHelp": "Desteklenen bir dosyanın doğrudan bağlantısı, herkese açık paylaşılmış bir Google Dokümanlar, E-Tablolar veya Slaytlar bağlantısı ya da statik bir web sayfası. JavaScript ile oluşturulan içerik eksik olabilir.",
+      "snapshotNotice": "URL bir kez anlık görüntü olarak indirilir. Kaynaktaki sonraki değişiklikler eşitlenmez; güncellemek için yeniden ekleyin.",
+      "uploadFailed": "{name} yüklenemedi",
+      "rateLimited": "URL'den çok fazla içe aktarma yapıldı. Lütfen birkaç saniye bekleyip tekrar deneyin.",
+      "errors": {
+        "urlNotAllowed": "Bu URL'ye izin verilmiyor. Herkese açık bir internet adresi kullanın.",
+        "invalidUrl": "URL geçersiz. Kullanıcı adı veya şifre içermeyen tam bir http(s) bağlantısı kullanın.",
+        "googleFileNotPublic": "Bu Google dosyası herkese açık paylaşılmamış. Genel erişimi \"Bağlantıya sahip olan herkes\" olarak ayarlayıp tekrar deneyin.",
+        "googlePublishedNotSupported": "Google \"Web'de yayınla\" bağlantıları desteklenmiyor. Dosyayı herkese açık paylaşın ve normal bağlantısını kullanın.",
+        "unsupportedFileType": "Bu dosya türü bilgi olarak desteklenmiyor.",
+        "fileTooLarge": "Dosya {maxSize} boyutundan büyük.",
+        "downloadTimedOut": "İndirme çok uzun sürdü. Daha küçük bir dosya veya daha hızlı bir sunucu deneyin.",
+        "downloadFailed": "Kaynak bir hata döndürdü. Bağlantının oturum açmadan açıldığını kontrol edin.",
+        "tooManyRedirects": "URL çok fazla kez yönlendiriyor.",
+        "invalidRedirect": "URL geçersiz bir adrese yönlendiriyor.",
+        "uploadPathNotAllowed": "Yüklenen dosyaya izin verilmiyor. Lütfen yeniden yükleyin."
+      }
     }
   },
   "aiFunctions": {
@@ -526,6 +551,11 @@
       "paused": "Duraklatıldı",
       "ended": "Sona erdi"
     },
+    "statusReason": {
+      "accountPolicyBlocked": "Otomatik olarak durduruldu: kanal hesabının gönderimi, bir politika ihlali nedeniyle engellendi.",
+      "accountSendRestricted": "Otomatik olarak durduruldu: kanal hesabının gönderimi geçici olarak kısıtlandı.",
+      "page": "Sayfa: {name}"
+    },
     "stats": {
       "sent": "Gönderildi",
       "delivered": "Teslim Edildi",
@@ -589,6 +619,10 @@
     "telegramAllContacts": {
       "title": "Telegram",
       "description": "Telegram kişilerinize toplu gönderim yapmak istiyorsanız bu mesaj türünü kullanın."
+    },
+    "lineAllContacts": {
+      "title": "LINE",
+      "description": "LINE kişilerinize istediğiniz zaman toplu mesaj gönderin. Her mesaj, LINE Official Account hesabınızın aylık mesaj kotasından düşülür. Hesabınızı engelleyen kişiler atlanır."
     },
     "tiktokActiveContacts": {
       "title": "TikTok",
@@ -674,7 +708,14 @@
     "resumeDialog": {
       "title": "Resume broadcast",
       "description": "\"{name}\" will continue sending to recipients who have not received it yet.",
-      "templateDescription": "\"{name}\" bir sonraki planlanan zamandan itibaren yeniden tekrarlanır. Duraklatma sırasındaki çalıştırmalar atlandı."
+      "templateDescription": "\"{name}\" bir sonraki planlanan zamandan itibaren yeniden tekrarlanır. Duraklatma sırasındaki çalıştırmalar atlandı.",
+      "blocked": {
+        "title": "Kanal hesabı gönderemediği için durduruldu",
+        "description": "Hesap hâlâ engelliyse ilk mesaj başarısız olur ve yayın yeniden durur. Engelliyken göndermek daha ağır bir kısıtlamaya yol açabilir.",
+        "pageLabel": "Sayfa",
+        "errorLabel": "Kanaldan gelen hata",
+        "confirm": "Yine de devam et"
+      }
     },
     "planLimitDialog": {
       "title": "Planınızı yükseltin",
@@ -1128,6 +1169,7 @@
     "duplicated": {
       "generic": "Bu hesap zaten başka bir çalışma alanına bağlı.",
       "instagram": "Bu Instagram hesabı zaten başka bir çalışma alanına bağlı.",
+      "line": "This LINE channel is already connected to another workspace.",
       "messenger": "Bu Facebook Sayfası zaten başka bir çalışma alanına bağlı.",
       "telegram": "Bu Telegram botu zaten başka bir çalışma alanına bağlı.",
       "threads": "Bu Threads hesabı zaten başka bir çalışma alanına bağlı.",
@@ -1502,7 +1544,17 @@
     "button": {
       "label": "Düğme",
       "whenPressed": "Bu düğmeye basıldığında",
-      "callToThisNumber": "Bu numarayı ara"
+      "callToThisNumber": "Bu numarayı ara",
+      "style": {
+        "label": "Düğme stili",
+        "description": "Düğmenin kişiye nasıl göründüğü.",
+        "default": "{style} (varsayılan)",
+        "options": {
+          "primary": "Birincil",
+          "secondary": "İkincil",
+          "link": "Bağlantı"
+        }
+      }
     },
     "buttonLabel": {
       "label": "Düğme Etiketi"
@@ -1678,7 +1730,8 @@
       "threadsUsername": "Threads Kullanıcı Adı",
       "webchatGuestId": "Webchat Ziyaretçi Kimliği",
       "externalId": "Harici Kimlik",
-      "channelId": "Kanal Kimliği"
+      "channelId": "Kanal Kimliği",
+      "lineUserId": "LINE User ID"
     },
     "flow": {
       "label": "Akış"
@@ -2193,6 +2246,7 @@
       "placeholders": {
         "instagram": "Instagram kullanıcı kimliği",
         "messenger": "Messenger PSID",
+        "line": "LINE user ID",
         "telegram": "Telegram sohbet kimliği",
         "tiktok": "TikTok kullanıcı kimliği",
         "zalo": "Zalo kullanıcı kimliği"
@@ -4585,6 +4639,13 @@
       "cardEnding": "{lastFourDigits} ile biten kart",
       "notCharged": "Henüz tahsil edilmedi. Ödeme sağlayıcınız üzerinden tahsil edin.",
       "reference": "Referans {referenceId}"
+    },
+    "sendQueue": {
+      "failed": "Bir mesaj gönderilemedi. Mümkünse sohbetten yeniden gönderin veya göndermeye devam edin.",
+      "unconfirmed": "Son mesajın gönderildiği doğrulanamadı. Göndermeye devam edip etmeyeceğinizi seçin.",
+      "continue": "Göndermeye devam et",
+      "discard": "Kuyruktaki mesajları sil",
+      "dismiss": "Kapat"
     }
   },
   "instagram": {
@@ -5847,7 +5908,8 @@
       "botId": "Telegram bot kimliği",
       "oaId": "Zalo OA kimliği",
       "openId": "TikTok hesap open id",
-      "threadsUserId": "Threads kullanıcı kimliği"
+      "threadsUserId": "Threads kullanıcı kimliği",
+      "channelId": "LINE Channel ID"
     },
     "channelUserIdKinds": {
       "psid": "Messenger PSID",
@@ -5857,7 +5919,8 @@
       "tiktokCustomerOpenId": "TikTok müşteri open id",
       "threadsUsername": "Threads kullanıcı adı",
       "apiSourceId": "Kişi kaynağı kimliği",
-      "whatsappId": "WhatsApp kimliği (wa_id)"
+      "whatsappId": "WhatsApp kimliği (wa_id)",
+      "lineUserId": "LINE user id"
     },
     "mappings": {
       "title": "Gelen verileri kaydet",
@@ -6117,7 +6180,8 @@
       "total": "Total customers scanned: {count}",
       "waitCooldown": "You must wait another 24 hours before you can use this feature again.",
       "failed": "The last scan failed. You can try again once the cooldown ends.",
-      "partial": "The last scan finished partially — some conversations could not be imported."
+      "partial": "The last scan finished partially — some conversations could not be imported.",
+      "cancelled": "Son tarama bitmeden iptal edildi."
     },
     "errors": {
       "contactScanFromTimeInvalid": "Scan-from time must be in the past.",
@@ -6143,9 +6207,20 @@
         "running": "Running",
         "succeeded": "Succeeded",
         "partial": "Partial",
-        "failed": "Failed"
+        "failed": "Failed",
+        "cancelled": "İptal edildi"
       },
       "empty": "No scans have been run yet."
+    },
+    "cancel": {
+      "button": "Taramayı iptal et",
+      "title": "Bu tarama iptal edilsin mi?",
+      "description": "Tarama durur ve içe aktarılan müşteriler korunur. Bu gelen kutusunu yeniden taramak için yine de bu taramanın başlangıcından itibaren 24 saat beklemeniz gerekir.",
+      "keep": "Taramaya devam et",
+      "confirm": "Taramayı iptal et",
+      "success": "Tarama iptal edildi.",
+      "notRunning": "Bu gelen kutusu için çalışan bir tarama yok.",
+      "failed": "Tarama iptal edilemedi. Lütfen tekrar deneyin."
     }
   },
   "auditLogs": {
@@ -6195,6 +6270,7 @@
         "containsPhone": "Mesaj telefon içerir",
         "containsEmail": "Mesaj e-posta içerir",
         "containsImage": "Mesaj görsel içerir",
+        "containsAudio": "Mesaj ses içerir",
         "containsVideo": "Mesaj video içerir",
         "containsLink": "Mesaj bağlantı içerir",
         "containsWholeWord": "Mesaj tam kelimeyi içerir",
@@ -11947,6 +12023,23 @@
       "title": "Danger zone",
       "description": "Deletes your account and the {count, plural, =0 {0 workspaces} one {# workspace} other {# workspaces}} you own.",
       "openSettings": "Delete account"
+    }
+  },
+  "integrationLine": {
+    "channelIdLabel": "Channel ID",
+    "channelSecretLabel": "Channel secret",
+    "credentialsHelp": "Find both values in the LINE Developers console: open your Messaging API channel and go to Basic settings.",
+    "webhookNotEnabled": "LINE is not delivering messages yet. In LINE Official Account Manager, turn on \"Use webhook\" and turn off \"Auto-reply messages\", then press Test webhook.",
+    "webhookReplaced": "The webhook URL previously set on this LINE channel ({url}) was replaced with ChatbotX's.",
+    "testWebhook": "Test webhook",
+    "testWebhookSuccess": "LINE webhook is working.",
+    "webhookTestFailed": "LINE's webhook test failed: {reason}",
+    "continue": "Continue",
+    "errors": {
+      "channelHidden": "LINE is not available for this workspace.",
+      "credentialsRejected": "Invalid LINE Channel ID or Channel secret.",
+      "webhookRejected": "LINE rejected the webhook URL. Please try again later or contact support.",
+      "providerUnavailable": "LINE is temporarily unavailable. Please try again in a moment."
     }
   }
 }

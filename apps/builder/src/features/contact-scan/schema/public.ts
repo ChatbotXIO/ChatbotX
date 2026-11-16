@@ -2,6 +2,7 @@ import { zodBigintAsString } from "@chatbotx.io/utils"
 import { contactScanChannels } from "@chatbotx.io/utils/channel"
 import { z } from "zod"
 import { publicListRequest, publicListResponse } from "@/lib/public-api/list"
+import { cancelContactScanResponse } from "./action"
 import { contactScanRunStatus, getContactScanStatusRequest } from "./query"
 
 export const getContactScanStatusPublicRequest =
@@ -21,6 +22,22 @@ export const scheduleContactScanPublicRequest = z.object({
       "Only scan conversations whose last activity is after this date (a conversation updated exactly at this instant is not included).",
     ),
 })
+
+export const cancelContactScanPublicRequest = z.object({
+  inboxId: zodBigintAsString().describe(
+    "Inbox id. Get it from `inboxes.list`.",
+  ),
+})
+
+export const cancelContactScanPublicResponse = cancelContactScanResponse.extend(
+  {
+    cancelled: z
+      .boolean()
+      .describe(
+        "`true` when a running scan was cancelled; `false` when the inbox has no running scan (not an error).",
+      ),
+  },
+)
 
 export const scheduleContactScanPublicResponse = z.object({
   runId: z.string(),

@@ -2,6 +2,7 @@ import type { ChannelType } from "@chatbotx.io/database/partials"
 import { logger } from "../../lib/logger"
 import { refreshInstagramFacebookTokens } from "./refresh-instagram-facebook-tokens"
 import { refreshInstagramTokens } from "./refresh-instagram-tokens"
+import { refreshLineTokens } from "./refresh-line-tokens"
 import { refreshMessengerTokens } from "./refresh-messenger-tokens"
 import { refreshThreadsTokens } from "./refresh-threads-tokens"
 import { refreshTiktokTokens } from "./refresh-tiktok-tokens"
@@ -20,6 +21,7 @@ const refreshTokenAdapter: Record<
   (() => Promise<void>) | undefined
 > = {
   zalo: refreshZaloTokens,
+  line: refreshLineTokens,
   tiktok: refreshTiktokTokens,
   threads: refreshThreadsTokens,
   instagram: refreshInstagramAndFacebookTokens,

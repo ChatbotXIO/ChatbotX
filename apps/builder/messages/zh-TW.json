@@ -245,7 +245,17 @@
     "button": {
       "label": "按鈕",
       "whenPressed": "當按下此按鈕時",
-      "callToThisNumber": "撥打此號碼"
+      "callToThisNumber": "撥打此號碼",
+      "style": {
+        "label": "按鈕樣式",
+        "description": "按鈕在聯絡人端的顯示方式。",
+        "default": "{style}（預設）",
+        "options": {
+          "primary": "主要",
+          "secondary": "次要",
+          "link": "連結"
+        }
+      }
     },
     "buttonLabel": {
       "label": "按鈕標籤"
@@ -406,7 +416,8 @@
       "threadsUsername": "Threads 使用者名稱",
       "webchatGuestId": "網頁聊天訪客 ID",
       "externalId": "外部 ID",
-      "channelId": "頻道 ID"
+      "channelId": "頻道 ID",
+      "lineUserId": "LINE User ID"
     },
     "flow": {
       "label": "流程"
@@ -913,6 +924,7 @@
       "placeholders": {
         "instagram": "Instagram 使用者 ID",
         "messenger": "MessengerPSID",
+        "line": "LINE user ID",
         "telegram": "Telegram 聊天 ID",
         "tiktok": "TikTok 使用者 ID",
         "zalo": "Zalo 使用者 ID"
@@ -1908,6 +1920,13 @@
       "cardEnding": "末四碼 {lastFourDigits} 的卡",
       "notCharged": "尚未扣款，請透過您的金流服務商扣款。",
       "reference": "參考編號 {referenceId}"
+    },
+    "sendQueue": {
+      "failed": "有一則訊息傳送失敗。如可以，請在對話中重新傳送，或繼續傳送。",
+      "unconfirmed": "無法確認最後一則訊息是否已傳送。請選擇是否繼續傳送。",
+      "continue": "繼續傳送",
+      "discard": "捨棄佇列中的訊息",
+      "dismiss": "忽略"
     }
   },
   "productCategories": {
@@ -2276,6 +2295,31 @@
         "noMatches": "No matching chunks were found.",
         "agentHasNoFiles": "This agent has no knowledge files."
       }
+    },
+    "create": {
+      "trigger": "新增知識",
+      "title": "新增知識",
+      "description": "上傳檔案或從公開 URL 匯入。AI 代理在回答時會搜尋其內容。",
+      "tabs": {
+        "fromUrl": "從 URL"
+      },
+      "urlHelp": "支援格式檔案的直接連結、公開共用的 Google 文件／試算表／簡報連結，或靜態網頁。以 JavaScript 呈現的內容可能缺漏。",
+      "snapshotNotice": "URL 只會以快照形式下載一次。來源之後的變更不會同步；如需更新請重新新增。",
+      "uploadFailed": "上傳 {name} 失敗",
+      "rateLimited": "從 URL 匯入過於頻繁。請稍候幾秒再試一次。",
+      "errors": {
+        "urlNotAllowed": "不允許使用此 URL。請使用公開的網際網路位址。",
+        "invalidUrl": "URL 無效。請使用不含使用者名稱或密碼的完整 http(s) 連結。",
+        "googleFileNotPublic": "此 Google 檔案未公開共用。請將一般存取權設為「知道連結的任何人」後再試一次。",
+        "googlePublishedNotSupported": "不支援 Google「發布到網路」連結。請公開共用檔案並使用一般連結。",
+        "unsupportedFileType": "此檔案類型不支援作為知識。",
+        "fileTooLarge": "檔案大於 {maxSize}。",
+        "downloadTimedOut": "下載時間過長。請嘗試較小的檔案或較快的主機。",
+        "downloadFailed": "來源傳回錯誤。請確認連結不需登入即可開啟。",
+        "tooManyRedirects": "URL 重新導向次數過多。",
+        "invalidRedirect": "URL 重新導向到無效的位址。",
+        "uploadPathNotAllowed": "不允許使用已上傳的檔案。請重新上傳。"
+      }
     }
   },
   "aiFunctions": {
@@ -2483,6 +2527,11 @@
       "paused": "已暫停",
       "ended": "已結束"
     },
+    "statusReason": {
+      "accountPolicyBlocked": "已自動停止：頻道帳號因違反政策而被禁止傳送。",
+      "accountSendRestricted": "已自動停止：頻道帳號的傳送功能暫時受到限制。",
+      "page": "粉絲專頁：{name}"
+    },
     "stats": {
       "sent": "已傳送",
       "delivered": "已交付",
@@ -2546,6 +2595,10 @@
     "telegramAllContacts": {
       "title": "Telegram",
       "description": "如果您想向您的Telegram 聯絡人傳送廣播，請使用此訊息類型。"
+    },
+    "lineAllContacts": {
+      "title": "LINE",
+      "description": "隨時向您的 LINE 聯絡人傳送群發訊息。每則訊息都會計入您的 LINE 官方帳號每月訊息額度。已封鎖您帳號的聯絡人將被略過。"
     },
     "tiktokActiveContacts": {
       "title": "TikTok",
@@ -2631,7 +2684,14 @@
     "resumeDialog": {
       "title": "Resume broadcast",
       "description": "\"{name}\" will continue sending to recipients who have not received it yet.",
-      "templateDescription": "「{name}」將從下一個排定時間起重新重複。暫停期間的執行已被略過。"
+      "templateDescription": "「{name}」將從下一個排定時間起重新重複。暫停期間的執行已被略過。",
+      "blocked": {
+        "title": "因頻道帳號無法傳送而停止",
+        "description": "如果帳號仍被封鎖，第一則訊息會失敗，群發將再次停止。在封鎖期間繼續傳送可能導致更嚴厲的限制。",
+        "pageLabel": "粉絲專頁",
+        "errorLabel": "頻道回傳的錯誤",
+        "confirm": "仍然繼續"
+      }
     },
     "planLimitDialog": {
       "title": "升級您的方案",
@@ -3085,6 +3145,7 @@
     "duplicated": {
       "generic": "此帳戶已連接到另一個工作區。",
       "instagram": "此 Instagram 帳戶已連接到另一個工作區。",
+      "line": "This LINE channel is already connected to another workspace.",
       "messenger": "此Facebook 頁面已連接到另一個工作區。",
       "telegram": "此Telegram 機器人已連接到另一個工作區。",
       "threads": "此Threads帳戶已連接到另一個工作區。",
@@ -5893,7 +5954,8 @@
       "botId": "Telegram 機器人 ID",
       "oaId": "Zalo OA ID",
       "openId": "TikTok 帳號 open id",
-      "threadsUserId": "Threads 使用者 ID"
+      "threadsUserId": "Threads 使用者 ID",
+      "channelId": "LINE Channel ID"
     },
     "channelUserIdKinds": {
       "psid": "Messenger PSID",
@@ -5903,7 +5965,8 @@
       "tiktokCustomerOpenId": "TikTok 客戶 open id",
       "threadsUsername": "Threads 使用者名稱",
       "apiSourceId": "聯絡人來源 ID",
-      "whatsappId": "WhatsApp ID (wa_id)"
+      "whatsappId": "WhatsApp ID (wa_id)",
+      "lineUserId": "LINE user id"
     },
     "mappings": {
       "title": "儲存傳入資料",
@@ -6163,7 +6226,8 @@
       "total": "Total customers scanned: {count}",
       "waitCooldown": "You must wait another 24 hours before you can use this feature again.",
       "failed": "The last scan failed. You can try again once the cooldown ends.",
-      "partial": "The last scan finished partially — some conversations could not be imported."
+      "partial": "The last scan finished partially — some conversations could not be imported.",
+      "cancelled": "上一次掃描在完成前已被取消。"
     },
     "errors": {
       "contactScanFromTimeInvalid": "Scan-from time must be in the past.",
@@ -6189,9 +6253,20 @@
         "running": "Running",
         "succeeded": "Succeeded",
         "partial": "Partial",
-        "failed": "Failed"
+        "failed": "Failed",
+        "cancelled": "已取消"
       },
       "empty": "No scans have been run yet."
+    },
+    "cancel": {
+      "button": "取消掃描",
+      "title": "取消此次掃描？",
+      "description": "掃描將停止，已匯入的客戶會保留。自本次掃描開始起，仍需等待24小時才能再次掃描此收件匣。",
+      "keep": "繼續掃描",
+      "confirm": "取消掃描",
+      "success": "掃描已取消。",
+      "notRunning": "此收件匣目前沒有正在執行的掃描。",
+      "failed": "無法取消掃描，請重試。"
     }
   },
   "auditLogs": {
@@ -6241,6 +6316,7 @@
         "containsPhone": "訊息包含電話",
         "containsEmail": "訊息包含電子郵件",
         "containsImage": "訊息包含圖片",
+        "containsAudio": "訊息包含音訊",
         "containsVideo": "訊息包含影片",
         "containsLink": "訊息包含連結",
         "containsWholeWord": "訊息包含完整單字",
@@ -11947,6 +12023,23 @@
       "title": "Danger zone",
       "description": "Deletes your account and the {count, plural, =0 {0 workspaces} one {# workspace} other {# workspaces}} you own.",
       "openSettings": "Delete account"
+    }
+  },
+  "integrationLine": {
+    "channelIdLabel": "Channel ID",
+    "channelSecretLabel": "Channel secret",
+    "credentialsHelp": "Find both values in the LINE Developers console: open your Messaging API channel and go to Basic settings.",
+    "webhookNotEnabled": "LINE is not delivering messages yet. In LINE Official Account Manager, turn on \"Use webhook\" and turn off \"Auto-reply messages\", then press Test webhook.",
+    "webhookReplaced": "The webhook URL previously set on this LINE channel ({url}) was replaced with ChatbotX's.",
+    "testWebhook": "Test webhook",
+    "testWebhookSuccess": "LINE webhook is working.",
+    "webhookTestFailed": "LINE's webhook test failed: {reason}",
+    "continue": "Continue",
+    "errors": {
+      "channelHidden": "LINE is not available for this workspace.",
+      "credentialsRejected": "Invalid LINE Channel ID or Channel secret.",
+      "webhookRejected": "LINE rejected the webhook URL. Please try again later or contact support.",
+      "providerUnavailable": "LINE is temporarily unavailable. Please try again in a moment."
     }
   }
 }

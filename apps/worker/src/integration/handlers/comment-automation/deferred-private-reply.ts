@@ -19,6 +19,10 @@ import {
   privateReplyWindowLabel,
 } from "./private-reply"
 import {
+  isPrivateReplyQuotaReached,
+  PRIVATE_REPLY_QUOTA_REACHED_ERROR,
+} from "./private-reply-quota"
+import {
   recordAndDispatchReply,
   recordBlockedPrivateReply,
   recordReplyFailure,
@@ -191,6 +195,28 @@ export async function runDeferredCommentPrivateReply(
       replyChannel: "private",
       replyType: privateReply.type,
       errorDetail: `Private reply not sent: the comment is outside ${window}`,
+    })
+    return
+  }
+
+  // Re-checked at send time: the quota can run out during the deferral wait,
+  // and this DM goes straight to the Send API, past the chat worker's gate.
+  if (await isPrivateReplyQuotaReached(workspaceId)) {
+    logger.info(
+      { automationId, commentId, workspaceId },
+      "Deferred private reply skipped: bot message quota reached",
+    )
+    await recordBlockedPrivateReply({
+      workspaceId,
+      automationId,
+      contactInbox,
+      commentId,
+      postId,
+      message,
+      occurredAt,
+      replyChannel: "private",
+      replyType: privateReply.type,
+      errorDetail: PRIVATE_REPLY_QUOTA_REACHED_ERROR,
     })
     return
   }

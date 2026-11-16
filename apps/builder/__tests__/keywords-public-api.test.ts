@@ -328,6 +328,31 @@ describe("keyword conditions on create/update", () => {
     ).toBe(true)
   })
 
+  test("create and update accept a containsAudio condition with no values", () => {
+    const audio = [{ operator: "containsAudio", values: [] }]
+    expect(
+      create.input?.safeParse({
+        type: "inbound",
+        conditions: audio,
+        text: "Hi",
+      }).success,
+    ).toBe(true)
+    expect(
+      update.input?.safeParse({ id: "1", type: "inbound", conditions: audio })
+        .success,
+    ).toBe(true)
+  })
+
+  test("create rejects values on a containsAudio condition", () => {
+    expect(
+      create.input?.safeParse({
+        type: "inbound",
+        conditions: [{ operator: "containsAudio", values: ["voice"] }],
+        text: "Hi",
+      }).success,
+    ).toBe(false)
+  })
+
   test("create rejects keywords and conditions together, or neither", () => {
     expect(
       create.input?.safeParse({

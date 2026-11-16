@@ -32,6 +32,8 @@ const userIdPlaceholderKey = (channel: ChannelType) => {
   switch (channel) {
     case channelTypes.enum.instagram:
       return "fields.userId.placeholders.instagram"
+    case channelTypes.enum.line:
+      return "fields.userId.placeholders.line"
     case channelTypes.enum.messenger:
       return "fields.userId.placeholders.messenger"
     case channelTypes.enum.telegram:

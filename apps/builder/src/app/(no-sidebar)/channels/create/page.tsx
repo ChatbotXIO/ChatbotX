@@ -9,6 +9,7 @@ import { notFound, redirect } from "next/navigation"
 import InboxSelectCard from "@/features/inboxes/components/inbox-select-card"
 import { CreateApiForm } from "@/features/integration-api/components/create-api-form"
 import { InstagramLoginSelect } from "@/features/integration-instagram/components/instagram-login-select"
+import { LineConnect } from "@/features/integration-line/components/line-connect"
 import { TelegramConnect } from "@/features/integration-telegram/components/telegram-connect"
 import { generateThreadsRedirectUri } from "@/features/integration-threads/libs/oauth"
 import { generateTiktokRedirectUri } from "@/features/integration-tiktok/libs/tiktok"
@@ -83,6 +84,10 @@ export default async function CreateChannelPage(props: CreateChannelPageProps) {
 
   if (selectedChannel === "telegram" && isVisible("telegram")) {
     return <TelegramConnect autoOpen={true} workspaceId={workspaceId} />
+  }
+
+  if (selectedChannel === "line" && isVisible("line")) {
+    return <LineConnect autoOpen={true} workspaceId={workspaceId} />
   }
 
   if (selectedChannel === "webchat" && isVisible("webchat")) {
