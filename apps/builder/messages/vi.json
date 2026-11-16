@@ -7867,6 +7867,22 @@
     "portalSmtp": "Cài đặt SMTP",
     "portalPricingPage": "Bảng giá"
   },
+  "deleteAccountPage": {
+    "title": "Xóa tài khoản ChatbotX của bạn",
+    "intro": "Bạn có thể xóa tài khoản và dữ liệu liên quan theo một trong các cách sau.",
+    "waysTitle": "Cách xóa tài khoản",
+    "wayMobile": "Trong ứng dụng di động: Cài đặt → Xóa tài khoản.",
+    "wayWeb": "Trên web: đăng nhập rồi mở trang xóa tài khoản.",
+    "wayWebLink": "Mở trang xóa tài khoản",
+    "wayEmail": "Qua email: gửi yêu cầu tới {email} từ địa chỉ email bạn đã đăng ký.",
+    "whatHappensTitle": "Điều gì xảy ra tiếp theo",
+    "whatHappens": "Việc xóa bắt đầu sau 24 giờ chờ và không thể hoàn tác. Hãy hủy các gói đăng ký trước.",
+    "deletedTitle": "Dữ liệu chúng tôi xóa",
+    "deleted": "Hồ sơ của bạn (tên và email), thông tin đăng nhập, token thông báo đẩy, và mọi workspace bạn sở hữu, gồm liên hệ, hội thoại, tin nhắn và tệp đã tải lên.",
+    "sharedWorkspace": "Nếu workspace bạn sở hữu có thành viên khác, workspace đó cũng bị xóa với họ.",
+    "retainedTitle": "Dữ liệu chúng tôi giữ lại",
+    "retained": "Ghi chú bạn viết trong workspace của người khác được giữ lại, nhưng tên bạn bị gỡ. Bản ghi cho biết việc xóa đã diễn ra vẫn được lưu. Hồ sơ thanh toán và hóa đơn có thể được giữ theo thời hạn luật yêu cầu."
+  },
   "unsubscribePage": {
     "title": "Bạn đã hủy đăng ký.",
     "description": "Bạn sẽ không còn nhận email từ người gửi này nữa.",

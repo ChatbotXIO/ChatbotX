@@ -12038,5 +12038,21 @@
       "webhookRejected": "LINE rejected the webhook URL. Please try again later or contact support.",
       "providerUnavailable": "LINE is temporarily unavailable. Please try again in a moment."
     }
+  },
+  "deleteAccountPage": {
+    "title": "Eliminar tu cuenta de ChatbotX",
+    "intro": "Puedes eliminar tu cuenta y sus datos de cualquiera de estas formas.",
+    "waysTitle": "Cómo eliminar tu cuenta",
+    "wayMobile": "En la app móvil: Ajustes → Eliminar cuenta.",
+    "wayWeb": "En la web: inicia sesión y abre la página de eliminación de cuenta.",
+    "wayWebLink": "Abrir eliminación de cuenta",
+    "wayEmail": "Por correo: escribe a {email} desde tu dirección registrada.",
+    "whatHappensTitle": "Qué ocurre después",
+    "whatHappens": "La eliminación comienza tras un periodo de gracia de 24 horas y no se puede deshacer. Cancela antes cualquier suscripción.",
+    "deletedTitle": "Datos que eliminamos",
+    "deleted": "Tu perfil (nombre y correo), credenciales de acceso, tokens de notificaciones push y cada espacio de trabajo que posees, incluidos sus contactos, conversaciones, mensajes y archivos subidos.",
+    "sharedWorkspace": "Si otras personas son miembros de un espacio de trabajo que posees, también se elimina para ellas.",
+    "retainedTitle": "Datos que conservamos",
+    "retained": "Las notas que escribiste en espacios de trabajo de otros se conservan sin tu nombre. Se guarda un registro de que la eliminación tuvo lugar. Los datos de facturación pueden conservarse el tiempo que exija la ley."
   }
 }

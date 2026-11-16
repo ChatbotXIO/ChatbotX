@@ -12038,5 +12038,21 @@
       "webhookRejected": "LINE rejected the webhook URL. Please try again later or contact support.",
       "providerUnavailable": "LINE is temporarily unavailable. Please try again in a moment."
     }
+  },
+  "deleteAccountPage": {
+    "title": "Poista ChatbotX-tilisi",
+    "intro": "Voit poistaa tilisi ja sen tiedot jollakin seuraavista tavoista.",
+    "waysTitle": "Tilin poistaminen",
+    "wayMobile": "Mobiilisovelluksessa: Asetukset → Poista tili.",
+    "wayWeb": "Verkossa: kirjaudu sisään ja avaa tilin poistosivu.",
+    "wayWebLink": "Avaa tilin poisto",
+    "wayEmail": "Sähköpostilla: kirjoita osoitteeseen {email} rekisteröidystä osoitteestasi.",
+    "whatHappensTitle": "Mitä seuraavaksi tapahtuu",
+    "whatHappens": "Poisto alkaa 24 tunnin odotusajan jälkeen, eikä sitä voi perua. Peruuta ensin kaikki tilaukset.",
+    "deletedTitle": "Tiedot, jotka poistamme",
+    "deleted": "Profiilisi (nimi ja sähköposti), kirjautumistiedot, push-ilmoitustunnisteet ja kaikki omistamasi workspacet yhteystietoineen, keskusteluineen, viesteineen ja ladattuine tiedostoineen.",
+    "sharedWorkspace": "Jos omistamasi workspacen jäsenenä on muita, se poistetaan myös heiltä.",
+    "retainedTitle": "Tiedot, jotka säilytämme",
+    "retained": "Muiden workspaceihin kirjoittamasi muistiinpanot säilyvät ilman nimeäsi. Tieto poiston tapahtumisesta säilytetään. Laskutustietoja voidaan säilyttää lain vaatiman ajan."
   }
 }

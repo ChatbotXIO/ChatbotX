@@ -12038,5 +12038,21 @@
       "webhookRejected": "LINE rejected the webhook URL. Please try again later or contact support.",
       "providerUnavailable": "LINE is temporarily unavailable. Please try again in a moment."
     }
+  },
+  "deleteAccountPage": {
+    "title": "Radera ditt ChatbotX-konto",
+    "intro": "Du kan radera ditt konto och dess data på något av följande sätt.",
+    "waysTitle": "Så raderar du ditt konto",
+    "wayMobile": "I mobilappen: Inställningar → Radera konto.",
+    "wayWeb": "På webben: logga in och öppna sidan för kontoradering.",
+    "wayWebLink": "Öppna kontoradering",
+    "wayEmail": "Via e-post: skriv till {email} från din registrerade adress.",
+    "whatHappensTitle": "Vad som händer sedan",
+    "whatHappens": "Raderingen startar efter en respitperiod på 24 timmar och kan inte ångras. Avsluta alla prenumerationer först.",
+    "deletedTitle": "Data vi raderar",
+    "deleted": "Din profil (namn och e-post), inloggningsuppgifter, tokens för pushnotiser och varje workspace du äger, inklusive kontakter, konversationer, meddelanden och uppladdade filer.",
+    "sharedWorkspace": "Om andra är medlemmar i en workspace du äger raderas den även för dem.",
+    "retainedTitle": "Data vi behåller",
+    "retained": "Anteckningar du skrivit i andras workspaces finns kvar, utan ditt namn. En post om att raderingen har skett behålls. Faktureringsuppgifter kan behållas så länge lagen kräver."
   }
 }
